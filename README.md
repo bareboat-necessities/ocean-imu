@@ -1,2 +1,2 @@
 # ocean-imu
-Collection of algorithms for IMU data processing in marine environment. Spectral wave analysis, boat heave, wave direction, wave height, attitude (yaw, roll, pitch), tilt compensated compass, GPS fusion
+Collection of algorithms for IMU data processing in marine environment. Spectral wave analysis, boat heave, wave direction, wave height, attitude (yaw, roll, pitch), tilt compensated compass, GPS fusion, NMEA sensors with IMU, marine AHRS/INS, marine Kalman filters 
