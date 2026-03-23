@@ -1,0 +1,52 @@
+name: build
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make libeigen3-dev \
+            texlive-xetex texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra texlive-fonts-extra dvipng \
+            python3-pip python3-matplotlib python3-numpy python3-pandas
+
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: "*.tex"
+          pre_compile: |
+            echo "openout_any = a" | tee -a $(kpsewhich texmf.cnf)
+            curl -L https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml.jar -o plantuml.jar && export PLANTUML_JAR=$(pwd)/plantuml.jar
+            curl -L https://mirrors.ctan.org/macros/luatex/latex/plantuml/plantuml.sty -o plantuml.sty
+            echo ">> Debug: TeX config patched, now checking PlantUML installation"
+            plantuml -version || true
+            java -version || true
+          work_in_root_file_dir: true
+          working_directory: doc
+          latexmk_use_lualatex: true
+          latexmk_shell_escape: true
+          args: "-shell-escape"
+          extra_system_packages: "inkscape ghostscript graphviz ncurses openjdk11-jre"
+        env:
+          PLANTUML_JAR: ${{ github.workspace }}/doc/plantuml.jar
+
+      - name: Upload PDF artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: latex-pdfs
+          path: doc/**/*.pdf
+          if-no-files-found: error
+
+      - name: Upload PDF to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: "**/*.pdf"
+          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref }}
+          overwrite: true
+          file_glob: true
