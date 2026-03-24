@@ -35,9 +35,9 @@ jobs:
           cd plots/${{ matrix.dir }}
           chmod +x *.sh
           ./draw_plots.sh
-          mv *.pgf ../../doc/${{ matrix.dir }}/
-          mv *.svg ../../doc/${{ matrix.dir }}/
-          mv *.png ../../doc/${{ matrix.dir }}/
+          mv *.pgf ../../doc/${{ matrix.dir }}/ || true
+          mv *.svg ../../doc/${{ matrix.dir }}/ || true
+          mv *.png ../../doc/${{ matrix.dir }}/ || true
           cd ../..
 
       - name: Compile LaTeX document (${{ matrix.dir }})
