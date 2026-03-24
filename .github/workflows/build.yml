@@ -39,7 +39,7 @@ jobs:
       - name: Compile LaTeX document (${{ matrix.dir }})
         uses: xu-cheng/latex-action@v4
         with:
-          root_file: "${{ matrix.dir }}-*.tex"
+          root_file: ${{ matrix.dir }}"-*.tex"
           pre_compile: |
             echo "openout_any = a" | tee -a $(kpsewhich texmf.cnf)
             curl -L https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml.jar -o plantuml.jar && export PLANTUML_JAR=$(pwd)/plantuml.jar
