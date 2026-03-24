@@ -13,6 +13,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Download sim data from oceanography-waves-lib GitHub repo release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.0.3 --repo bareboat-necessities/oceanography-waves-lib --pattern "sim-data-files.zip" --clobber
+
+      - name: Unpack simulation data
+        run: |
+          unzip -o sim-data-files.zip -d "$HOME"/work/bbn-wave-period-esp32/bbn-wave-period-esp32/bbn_wave_freq_m5atomS3/data-sim
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
