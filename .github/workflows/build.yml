@@ -21,7 +21,7 @@ jobs:
 
       - name: Unpack simulation data
         run: |
-          unzip -o sim-data-files.zip -d "$HOME"/work/bbn-wave-period-esp32/bbn-wave-period-esp32/bbn_wave_freq_m5atomS3/data-sim
+          unzip -o sim-data-files.zip -d "$HOME"/work/ocean-imu/ocean-imu/plots
 
       - name: Install build dependencies
         run: |
