@@ -19,9 +19,9 @@ jobs:
         run: |
           gh release download v1.0.3 --repo bareboat-necessities/oceanography-waves-lib --pattern "sim-data-files.zip" --clobber
 
-      - name: Unpack simulation data
+      - name: Unpack simulation data (${{ matrix.dir }})
         run: |
-          unzip -o sim-data-files.zip -d "$HOME"/work/ocean-imu/ocean-imu/plots
+          unzip -o sim-data-files.zip -d "$HOME"/work/ocean-imu/ocean-imu/plots/${{ matrix.dir }}
 
       - name: Install build dependencies
         run: |
