@@ -30,6 +30,12 @@ jobs:
             texlive-xetex texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra texlive-fonts-extra dvipng \
             python3-pip python3-matplotlib python3-numpy python3-pandas
 
+      - name: Generate PGF plots (${{ matrix.dir }})
+        run: |
+          cd plots/${{ matrix.dir }}
+          chmod +x *.sh
+          ./draw_plots.sh
+
       - name: Compile LaTeX document (${{ matrix.dir }})
         uses: xu-cheng/latex-action@v4
         with:
