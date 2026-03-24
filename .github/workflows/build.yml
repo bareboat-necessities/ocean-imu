@@ -35,6 +35,7 @@ jobs:
           cd plots/${{ matrix.dir }}
           chmod +x *.sh
           ./draw_plots.sh
+          cd ../..
 
       - name: Compile LaTeX document (${{ matrix.dir }})
         uses: xu-cheng/latex-action@v4
