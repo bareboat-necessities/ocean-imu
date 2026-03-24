@@ -21,7 +21,7 @@ jobs:
 
       - name: Unpack simulation data (${{ matrix.dir }})
         run: |
-          unzip -o sim-data-files.zip -d "$HOME"/work/ocean-imu/ocean-imu/plots/${{ matrix.dir }}
+          unzip -o sim-data-files.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
 
       - name: Install build dependencies
         run: |
