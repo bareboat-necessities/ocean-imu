@@ -26,17 +26,17 @@ AREA_LABELS = [
 ]
 
 AREA_COLORS = [
-    "#7f7f7f",  # Beyond breaking / invalid - dark gray
-    "#4f81bd",  # Linear (Airy) - blue
-    "#c49a6c",  # Stokes II - tan
-    "#7fbf7b",  # Stokes III - green
-    "#e06666",  # Stokes IV - red
-    "#8e7cc3",  # Stokes V - purple
-    "#f1c232",  # Cnoidal - gold
-    "#c27ba0",  # Cnoidal III - magenta
-    "#8b5a2b",  # Cnoidal V - brown
-    "#2aa198",  # Solitary-wave side - teal
-    "#3db7e9",  # Fenton stream-function / numerical - cyan
+    "#b7b7b7",  # Beyond breaking / invalid - soft gray
+    "#9fc5e8",  # Linear (Airy) - soft blue
+    "#d9b38c",  # Stokes II - soft tan
+    "#b6d7a8",  # Stokes III - soft green
+    "#ea9999",  # Stokes IV - soft red
+    "#b4a7d6",  # Stokes V - soft purple
+    "#ffe599",  # Cnoidal - soft gold
+    "#d5a6bd",  # Cnoidal III - soft magenta
+    "#b08b59",  # Cnoidal V - softened brown
+    "#8fd3c7",  # Solitary-wave side - soft teal
+    "#9ad9f5",  # Fenton stream-function / numerical - soft cyan
 ]
 
 
@@ -152,6 +152,26 @@ def line_box(ax, x, y, text, color, rotation=0):
     )
 
 
+
+def multi_callout(ax, text, xy_list, xytext):
+    xy_valid = [xy for xy in xy_list if xy is not None]
+    if not xy_valid:
+        return
+    ax.text(
+        xytext[0], xytext[1], text,
+        ha="center", va="center", fontsize=9,
+        bbox=dict(boxstyle="round,pad=0.22", fc="white", ec="0.35", alpha=0.96),
+        zorder=12,
+    )
+    for xy in xy_valid:
+        ax.annotate(
+            "",
+            xy=xy, xytext=xytext, textcoords="data",
+            arrowprops=dict(arrowstyle="->", color="0.25", lw=1.0, shrinkA=6, shrinkB=4),
+            zorder=11,
+        )
+
+
 def callout(ax, text, xy, xytext):
     if xy is None:
         return
@@ -178,6 +198,25 @@ def endpoint_label(ax, x, y, text, dx, dy, color='0.25'):
         arrowprops=dict(arrowstyle='->', color=color, lw=0.9, shrinkA=2, shrinkB=3),
         zorder=12
     )
+
+
+
+def two_component_interior_points(xgrid2d, ygrid2d, category2d, code):
+    mask = category2d == code
+    if not np.any(mask):
+        return []
+    structure = np.array([[0,1,0],[1,1,1],[0,1,0]], dtype=int)
+    labels, ncomp = ndimage.label(mask, structure=structure)
+    pts = []
+    for comp in range(1, ncomp + 1):
+        cmask = labels == comp
+        if not np.any(cmask):
+            continue
+        dist = ndimage.distance_transform_edt(cmask)
+        idx = np.unravel_index(np.argmax(dist), dist.shape)
+        pts.append((float(xgrid2d[idx]), float(ygrid2d[idx]), dist[idx]))
+    pts.sort(key=lambda t: t[2], reverse=True)
+    return [(x, y) for x, y, _ in pts[:2]]
 
 
 def build_figure():
@@ -328,7 +367,7 @@ def build_figure():
     line_m96, = ax.plot(x_m96_plot, y_m96_plot, ":", linewidth=2.2, zorder=5, label=r"$m = 0.96$")
     line_msol, = ax.plot(x_msol_plot, y_msol_plot, "-", linewidth=2.2, zorder=5, label=r"$m = 1 - 4\times10^{-8}$")
 
-    # depth regime labels only
+    # depth regime labels with dashed vertical separators
     y_top = 0.275
     ax.text(np.sqrt(0.01 * 0.05), y_top, "Shallow", fontsize=10, ha="center",
             bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.5', alpha=0.92))
@@ -337,7 +376,7 @@ def build_figure():
     ax.text(np.sqrt(0.5 * 1.0), y_top, "Deep", fontsize=10, ha="center",
             bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.5', alpha=0.92))
     for xpos, txt in [(0.05, r"$h/L=0.05$"), (0.5, r"$h/L=0.5$")]:
-        ax.plot([xpos, xpos], [0.235, 0.262], color="0.45", lw=1.0, zorder=6)
+        ax.axvline(xpos, color="0.55", lw=1.0, ls=(0, (4, 4)), zorder=3)
         ax.text(xpos, 0.228, txt, ha="center", va="top", fontsize=8,
                 bbox=dict(boxstyle='round,pad=0.12', fc='white', ec='0.5', alpha=0.9))
 
