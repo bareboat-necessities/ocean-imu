@@ -469,15 +469,38 @@ def build_figure():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Generate the tidied wave-theory applicability chart.")
-    parser.add_argument("--formats", nargs="+", default=["png"], choices=["png", "svg", "pgf"])
-    parser.add_argument("--output-dir", default=".")
-    parser.add_argument("--basename", default="wave_theory_applicability_tidy")
+    parser = argparse.ArgumentParser(
+        description="Generate the wave-theory applicability chart."
+    )
+    parser.add_argument(
+        "--formats",
+        nargs="+",
+        default=None,
+        choices=["png", "svg", "pgf"],
+        help="Output formats to save. If omitted, show the figure on screen.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=".",
+        help="Directory where output files will be written.",
+    )
+    parser.add_argument(
+        "--basename",
+        default="wave_sim-theories",
+        help="Base filename without extension.",
+    )
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
+
+    # No --formats given: just draw on screen
+    if not args.formats:
+        fig = build_figure()
+        plt.show()
+        return
+
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
