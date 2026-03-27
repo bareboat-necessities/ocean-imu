@@ -57,6 +57,18 @@ def contour_level_segments(xgrid2d, ygrid2d, zgrid2d, level=0.01):
     return segs
 
 
+def representative_point(xgrid2d, ygrid2d, category2d, code, x_quant=0.5, y_quant=0.5):
+    mask = category2d == code
+    if not np.any(mask):
+        return None
+    lx = np.log10(xgrid2d[mask])
+    ly = np.log10(ygrid2d[mask])
+    tx = np.quantile(lx, x_quant)
+    ty = np.quantile(ly, y_quant)
+    idx = np.argmin((lx - tx) ** 2 + (ly - ty) ** 2)
+    return 10 ** lx[idx], 10 ** ly[idx]
+
+
 def interp_log_curve(x, y, x_new):
     mask = np.isfinite(x) & np.isfinite(y) & (x > 0) & (y > 0)
     x = np.asarray(x)[mask]
@@ -67,11 +79,8 @@ def interp_log_curve(x, y, x_new):
     order = np.argsort(x)
     x = x[order]
     y = y[order]
-
     xu, idx = np.unique(x, return_index=True)
     yu = y[idx]
-    if len(xu) < 2:
-        return np.full_like(x_new, np.nan, dtype=float)
 
     out = np.full_like(x_new, np.nan, dtype=float)
     valid = (x_new >= xu.min()) & (x_new <= xu.max())
@@ -80,10 +89,6 @@ def interp_log_curve(x, y, x_new):
 
 
 def fenton_cnoidal_curve(m, h=10.0, hvals=None):
-    """
-    Return x=h/L, y=H/L curve for a chosen elliptic modulus m using the same
-    Fenton (1999) series form already present in the user's MATLAB code.
-    """
     if hvals is None:
         hvals = np.arange(0.01, 7.8 + 1e-12, 0.001)
 
@@ -115,6 +120,8 @@ def fenton_cnoidal_curve(m, h=10.0, hvals=None):
 
 
 def callout(ax, text, xy, xytext):
+    if xy is None:
+        return
     ax.annotate(
         text,
         xy=xy,
@@ -130,9 +137,6 @@ def callout(ax, text, xy, xytext):
 
 
 def build_figure():
-    # -------------------------------------------------------
-    # Same computational setup as the user's MATLAB workflow
-    # -------------------------------------------------------
     kh = (10.0 ** np.arange(-3, 0.8001, 0.02))[:, None]
     kH = (10.0 ** np.arange(-5, -0.23 + 1e-12, 0.02)) * 2.0
     HOverL, hOverL = np.meshgrid(kH / (2 * np.pi), kh[:, 0] / (2 * np.pi))
@@ -162,7 +166,6 @@ def build_figure():
          + 1326 * alpha1**2 + 827 * alpha1 + 130) * 5
     ) / (((alpha1 - 1) ** 6) * (12 * alpha1**2 + 11 * alpha1 + 2) * 384)
 
-    # Stokes-region solve
     stokes_mask = HOverL <= (UR_lim * hOverL ** 3)
     C = np.where(stokes_mask, np.pi * HOverL, np.nan)
     A = B31 + B33
@@ -194,28 +197,23 @@ def build_figure():
     eta_ratio4 = eta4 / (eta1 + eta2 + eta3)
     eta_ratio5 = eta5 / (eta1 + eta2 + eta3 + eta4)
 
-    # Order-boundary contours for legend/overlay only
-    A2_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio2, 0.01)
-    A3_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio3, 0.01)
-    A4_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio4, 0.01)
-    A5_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio5, 0.01)
-
-    # Breaking line
-    lambda_over_h = 2 * np.pi / kh[:, 0]
-    HoverL_break = (
+    y_break = (
         kh[:, 0]
-        * (0.141063 * lambda_over_h
-           + 0.0095721 * lambda_over_h**2
-           + 0.0077829 * lambda_over_h**3)
-        / (1
-           + 0.0788340 * lambda_over_h
-           + 0.0317567 * lambda_over_h**2
-           + 0.0093407 * lambda_over_h**3)
+        * (
+            0.141063 * (2 * np.pi / kh[:, 0])
+            + 0.0095721 * (2 * np.pi / kh[:, 0])**2
+            + 0.0077829 * (2 * np.pi / kh[:, 0])**3
+        )
+        / (
+            1
+            + 0.0788340 * (2 * np.pi / kh[:, 0])
+            + 0.0317567 * (2 * np.pi / kh[:, 0])**2
+            + 0.0093407 * (2 * np.pi / kh[:, 0])**3
+        )
         / (2 * np.pi)
     )
-    y_break_2d = HoverL_break[:, None]
+    y_break_2d = y_break[:, None]
 
-    # Cnoidal family boundaries
     x1d = hOverL[:, 0]
     x_m05_raw, y_m05_raw = fenton_cnoidal_curve(0.5)
     x_m96_raw, y_m96_raw = fenton_cnoidal_curve(0.96)
@@ -225,93 +223,71 @@ def build_figure():
     y_m96 = interp_log_curve(x_m96_raw, y_m96_raw, x1d)[:, None]
     y_msol = interp_log_curve(x_msol_raw, y_msol_raw, x1d)[:, None]
 
-    # Optional numerical/stream-function limit line from the MATLAB script
-    y_num = (0.4 * x1d)
+    y_num = 0.4 * x1d
     y_num[(x1d > 0.20004) | (x1d < 0.024)] = np.nan
 
-    # -------------------------------------------------------
-    # Disjoint classification: one category per grid cell
-    # -------------------------------------------------------
-    # Codes:
-    # 0 beyond breaking / invalid
-    # 1 linear
-    # 2 stokes ii
-    # 3 stokes iii
-    # 4 stokes iv
-    # 5 stokes v
-    # 6 cnoidal
-    # 7 cnoidal iii
-    # 8 cnoidal v
-    # 9 solitary-wave side
-    # 10 stream-function / numerical fallback
     category = np.full(HOverL.shape, 10, dtype=int)
-
-    # Above breaking is invalid
     category[HOverL > y_break_2d] = 0
 
-    # Stokes side (UR <= 26) below breaking
     stokes_valid = stokes_mask & (HOverL <= y_break_2d)
-    category[stokes_valid] = 5  # default deepest Stokes order below breaking
+    category[stokes_valid] = 5
     category[stokes_valid & (eta_ratio5 < 0.01)] = 4
     category[stokes_valid & (eta_ratio4 < 0.01)] = 3
     category[stokes_valid & (eta_ratio3 < 0.01)] = 2
     category[stokes_valid & (eta_ratio2 < 0.01)] = 1
 
-    # Shallow-water / non-Stokes side
     nonstokes = (~stokes_mask) & (HOverL <= y_break_2d)
-
-    # Start with stream-function/numerical fallback for all non-Stokes points,
-    # then overwrite where cnoidal/solitary boundaries classify them.
     category[nonstokes] = 10
     category[nonstokes & (HOverL < y_m05)] = 6
     category[nonstokes & (HOverL >= y_m05) & (HOverL < y_m96)] = 7
     category[nonstokes & (HOverL >= y_m96) & (HOverL < y_msol)] = 8
     category[nonstokes & (HOverL >= y_msol)] = 9
 
-    # -------------------------------------------------------
-    # Plot
-    # -------------------------------------------------------
+    # Overlay contours for Stokes boundaries
+    A2_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio2, 0.01)
+    A3_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio3, 0.01)
+    A4_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio4, 0.01)
+    A5_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio5, 0.01)
+
     fig, ax = plt.subplots(figsize=(12, 8.5))
 
     cmap_base = plt.get_cmap("tab20")
     colors = [cmap_base(i) for i in [14, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19]]
     cmap = ListedColormap(colors)
     norm = BoundaryNorm(np.arange(-0.5, len(AREA_LABELS) + 0.5, 1), cmap.N)
+    ax.pcolormesh(hOverL, HOverL, category, cmap=cmap, norm=norm, shading="nearest", alpha=0.30)
 
-    pm = ax.pcolormesh(hOverL, HOverL, category, cmap=cmap, norm=norm, shading="nearest", alpha=0.30)
-
-    # Boundary overlays
     for paths in [A2_paths, A3_paths, A4_paths, A5_paths]:
         p = longest_path(paths)
         if p is not None:
             ax.plot(p[:, 0], p[:, 1], "-", linewidth=1.8, color="k")
 
-    line_break, = ax.plot(x1d, HoverL_break, "-.", linewidth=2.2, label="Breaking limit")
+    line_break, = ax.plot(x1d, y_break, "-.", linewidth=2.2, label="Breaking limit")
     line_ur26, = ax.plot(x1d, 26 * x1d**3, "--", linewidth=2.0, label=r"$U_r = 26$")
     line_m05, = ax.plot(x_m05_raw, y_m05_raw, ":", linewidth=2.2, label=r"$m = 0.5$")
     line_m96, = ax.plot(x_m96_raw, y_m96_raw, ":", linewidth=2.2, label=r"$m = 0.96$")
-    line_msol, = ax.plot(x_msol_raw, y_msol_raw, "-", linewidth=2.2, label=r"$m = 1 - 4\times 10^{-8}$")
+    line_msol, = ax.plot(x_msol_raw, y_msol_raw, "-", linewidth=2.2, label=r"$m = 1 - 4\times10^{-8}$")
     line_num, = ax.plot(x1d, y_num, "-.", linewidth=2.0, label="Stream-function / numerical limit")
-    line_h005 = ax.axvline(0.05, linestyle="--", linewidth=1.2, color="0.4")
-    line_h05 = ax.axvline(0.5, linestyle="--", linewidth=1.2, color="0.4")
+    ax.axvline(0.05, linestyle="--", linewidth=1.2, color="0.4")
+    ax.axvline(0.5, linestyle="--", linewidth=1.2, color="0.4")
 
     ax.text(1.25e-2, 6.4e-5, r"$U_r = 26$", rotation=45)
     ax.text(2.1e-2, 1.8e-4, r"$m = 0.5$", rotation=45)
     ax.text(1.8e-2, 1.2e-2, r"$m = 1-4\times 10^{-8}$", rotation=56)
 
-    # Callouts for disjoint areas
-    callout(ax, "Linear", xy=(0.22, 2.1e-3), xytext=(0.34, 1.0e-3))
-    callout(ax, "Stokes II", xy=(0.20, 1.35e-2), xytext=(0.33, 8.0e-3))
-    callout(ax, "Stokes III", xy=(0.24, 3.8e-2), xytext=(0.39, 2.8e-2))
-    callout(ax, "Stokes IV", xy=(0.30, 6.6e-2), xytext=(0.48, 5.6e-2))
-    callout(ax, "Stokes V", xy=(0.14, 7.5e-2), xytext=(0.12, 1.20e-1))
+    # Callouts anchored to actual region masks
+    callout(ax, "Linear", representative_point(hOverL, HOverL, category, 1, 0.60, 0.35), (0.34, 1.0e-3))
+    callout(ax, "Stokes II", representative_point(hOverL, HOverL, category, 2, 0.58, 0.50), (0.33, 8.0e-3))
+    callout(ax, "Stokes III", representative_point(hOverL, HOverL, category, 3, 0.62, 0.55), (0.39, 2.8e-2))
+    callout(ax, "Stokes IV", representative_point(hOverL, HOverL, category, 4, 0.66, 0.55), (0.48, 5.6e-2))
+    callout(ax, "Stokes V", representative_point(hOverL, HOverL, category, 5, 0.25, 0.55), (0.12, 1.20e-1))
 
-    callout(ax, "Cnoidal", xy=(0.040, 3.5e-4), xytext=(0.026, 7.0e-4))
-    callout(ax, "Cnoidal III", xy=(0.060, 4.0e-3), xytext=(0.026, 3.0e-3))
-    callout(ax, "Cnoidal V", xy=(0.095, 2.4e-2), xytext=(0.030, 2.1e-2))
-    callout(ax, "Solitary-wave\nside", xy=(0.017, 8.0e-3), xytext=(0.013, 1.9e-2))
-    callout(ax, "Stream-function /\nnumerical", xy=(0.11, 3.8e-2), xytext=(0.23, 1.05e-1))
-    callout(ax, "Beyond breaking /\ninvalid", xy=(0.11, 1.7e-1), xytext=(0.24, 2.1e-1))
+    callout(ax, "Cnoidal", representative_point(hOverL, HOverL, category, 6, 0.40, 0.35), (0.028, 7.0e-4))
+    callout(ax, "Cnoidal III", representative_point(hOverL, HOverL, category, 7, 0.42, 0.45), (0.030, 3.0e-3))
+    callout(ax, "Cnoidal V", representative_point(hOverL, HOverL, category, 8, 0.42, 0.55), (0.030, 2.1e-2))
+    callout(ax, "Solitary-wave\nside", representative_point(hOverL, HOverL, category, 9, 0.22, 0.45), (0.013, 1.9e-2))
+    callout(ax, "Stream-function /\nnumerical", representative_point(hOverL, HOverL, category, 10, 0.42, 0.55), (0.23, 1.05e-1))
+    callout(ax, "Beyond breaking /\ninvalid", representative_point(hOverL, HOverL, category, 0, 0.55, 0.45), (0.24, 2.1e-1))
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -322,9 +298,10 @@ def build_figure():
     ax.set_title("Wave-theory applicability chart with disjoint regions")
     ax.grid(True, which="major", alpha=0.25)
 
+    present_codes = [i for i in range(len(AREA_LABELS)) if np.any(category == i)]
     area_handles = [
         Patch(facecolor=colors[i], edgecolor="none", alpha=0.30, label=AREA_LABELS[i])
-        for i in range(len(AREA_LABELS))
+        for i in present_codes
     ]
     leg_area = ax.legend(
         handles=area_handles,
