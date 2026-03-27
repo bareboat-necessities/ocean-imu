@@ -13,7 +13,7 @@ from scipy import special, ndimage
 
 AREA_LABELS = [
     "Beyond breaking / invalid",
-    "Linear",
+    "Linear (Airy)",
     "Stokes II",
     "Stokes III",
     "Stokes IV",
@@ -26,17 +26,17 @@ AREA_LABELS = [
 ]
 
 AREA_COLORS = [
-    "#d0d0d0",  # invalid
-    "#cfe1f2",  # linear
-    "#efdcc4",  # stokes ii
-    "#d8ead2",  # stokes iii
-    "#f4cccc",  # stokes iv
-    "#d9d2e9",  # stokes v
-    "#fff2cc",  # cnoidal
-    "#ead1dc",  # cnoidal iii
-    "#d9d9d9",  # cnoidal v
-    "#d9ead3",  # solitary
-    "#cfe2f3",  # stream/numerical
+    "#d0d0d0",
+    "#cfe1f2",
+    "#efdcc4",
+    "#d8ead2",
+    "#f4cccc",
+    "#d9d2e9",
+    "#fff2cc",
+    "#ead1dc",
+    "#d9d9d9",
+    "#d9ead3",
+    "#cfe2f3",
 ]
 
 
@@ -71,17 +71,14 @@ def contour_level_segments(xgrid2d, ygrid2d, zgrid2d, level=0.01):
     return segs
 
 
-def interior_point(xgrid2d, ygrid2d, category2d, code):
-    """
-    Pick an interior point farthest from the region boundary using a distance transform.
-    This avoids arrows landing on borders.
-    """
-    mask = category2d == code
+def interior_point_visible(xgrid2d, ygrid2d, category2d, code, xlim, ylim):
+    vis = (xgrid2d >= xlim[0]) & (xgrid2d <= xlim[1]) & (ygrid2d >= ylim[0]) & (ygrid2d <= ylim[1])
+    mask = (category2d == code) & vis
     if not np.any(mask):
         return None
     dist = ndimage.distance_transform_edt(mask)
     idx = np.unravel_index(np.argmax(dist), dist.shape)
-    return xgrid2d[idx], ygrid2d[idx]
+    return float(xgrid2d[idx]), float(ygrid2d[idx])
 
 
 def fenton_cnoidal_curve(m, h=10.0, hvals=None):
@@ -132,6 +129,16 @@ def interp_curve_to_x(x1d, xraw, yraw):
     return out
 
 
+def first_visible_point(x, y, frac=0.3):
+    mask = np.isfinite(x) & np.isfinite(y)
+    if not np.any(mask):
+        return None
+    xv = np.asarray(x)[mask]
+    yv = np.asarray(y)[mask]
+    idx = max(0, min(len(xv) - 1, int(frac * (len(xv) - 1))))
+    return float(xv[idx]), float(yv[idx])
+
+
 def callout(ax, text, xy, xytext):
     if xy is None:
         return
@@ -149,13 +156,25 @@ def callout(ax, text, xy, xytext):
     )
 
 
+def endpoint_label(ax, x, y, text, dx, dy):
+    ax.plot([x], [y], marker='o', markersize=3.0, color='0.2', zorder=8)
+    ax.annotate(
+        text, xy=(x, y), xytext=(dx, dy), textcoords='offset points',
+        fontsize=8, ha='left', va='center',
+        bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.45', alpha=0.92),
+        arrowprops=dict(arrowstyle='->', color='0.3', lw=0.85, shrinkA=2, shrinkB=3),
+        zorder=12
+    )
+
+
 def build_figure():
     kh = (10.0 ** np.arange(-3, 0.8001, 0.02))[:, None]
     kH = (10.0 ** np.arange(-5, -0.23 + 1e-12, 0.02)) * 2.0
     HOverL, hOverL = np.meshgrid(kH / (2 * np.pi), kh[:, 0] / (2 * np.pi))
     x1d = hOverL[:, 0]
 
-    ax_range = [0.01, 1.0, 1e-5, 0.3]
+    xlim = (0.01, 1.0)
+    ylim = (1e-5, 0.3)
     UR_lim = 26.0
 
     sigma = np.tanh(kh)
@@ -211,7 +230,6 @@ def build_figure():
     eta_ratio4 = eta4 / (eta1 + eta2 + eta3)
     eta_ratio5 = eta5 / (eta1 + eta2 + eta3 + eta4)
 
-    # Main named boundaries
     lambda_over_h = 2 * np.pi / kh[:, 0]
     y_break = (
         kh[:, 0]
@@ -238,8 +256,7 @@ def build_figure():
     y_m96 = interp_curve_to_x(x1d, x_m96_raw, y_m96_raw)[:, None]
     y_msol = interp_curve_to_x(x1d, x_msol_raw, y_msol_raw)[:, None]
 
-    # Sub-breaking disjoint classification
-    category = np.full(HOverL.shape, 10, dtype=int)  # default stream/numerical
+    category = np.full(HOverL.shape, 10, dtype=int)
     category[HOverL > y_break_2d] = 0
 
     stokes_valid = stokes_mask & (HOverL <= y_break_2d)
@@ -250,76 +267,120 @@ def build_figure():
     category[stokes_valid & (eta_ratio2 < 0.01)] = 1
 
     nonstokes = (~stokes_mask) & (HOverL <= y_break_2d)
-    # overwrite fallback with cnoidal families where the corresponding curves exist
     category[nonstokes & np.isfinite(y_m05) & (HOverL < y_m05)] = 6
     category[nonstokes & np.isfinite(y_m05) & np.isfinite(y_m96) & (HOverL >= y_m05) & (HOverL < y_m96)] = 7
     category[nonstokes & np.isfinite(y_m96) & np.isfinite(y_msol) & (HOverL >= y_m96) & (HOverL < y_msol)] = 8
     category[nonstokes & np.isfinite(y_msol) & (HOverL >= y_msol) & (HOverL <= y_break_2d)] = 9
 
-    # Stokes order contours for overlay
     A2_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio2, 0.01)
     A3_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio3, 0.01)
     A4_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio4, 0.01)
     A5_paths = contour_level_segments(hOverL, np.where(stokes_mask, HOverL, np.nan), eta_ratio5, 0.01)
 
-    fig, ax = plt.subplots(figsize=(12, 8.5))
-
+    fig, ax = plt.subplots(figsize=(12, 8.3))
     cmap = ListedColormap(AREA_COLORS)
     norm = BoundaryNorm(np.arange(-0.5, len(AREA_LABELS) + 0.5, 1), cmap.N)
 
-    # opaque fill, no alpha blending
     ax.pcolormesh(hOverL, HOverL, category, cmap=cmap, norm=norm, shading="nearest", zorder=1)
+    ax.contour(hOverL, HOverL, category, levels=np.arange(0.5, len(AREA_LABELS) - 0.5, 1.0),
+               colors="white", linewidths=0.7, zorder=2)
 
-    # Thin complete boundaries between all colored areas
-    ax.contour(
-        hOverL, HOverL, category,
-        levels=np.arange(0.5, len(AREA_LABELS) - 0.5, 1.0),
-        colors="white", linewidths=0.6, alpha=0.9, zorder=2
-    )
-
-    # Overlay named boundaries used in interpretation
     for paths in [A2_paths, A3_paths, A4_paths, A5_paths]:
         p = longest_path(paths)
         if p is not None:
             ax.plot(p[:, 0], p[:, 1], "-", linewidth=1.8, color="k", zorder=4)
 
-    line_break, = ax.plot(x1d, y_break, "-.", linewidth=2.2, zorder=5, label="Breaking limit")
+    line_break, = ax.plot(x1d, y_break, "-.", linewidth=2.2, zorder=5, label="Breaking waves line")
     line_ur26, = ax.plot(x1d, 26 * x1d**3, "--", linewidth=2.0, zorder=5, label=r"$U_r = 26$")
-    line_m05, = ax.plot(x_m05_raw, y_m05_raw, ":", linewidth=2.2, zorder=5, label=r"$m = 0.5$")
-    line_m96, = ax.plot(x_m96_raw, y_m96_raw, ":", linewidth=2.2, zorder=5, label=r"$m = 0.96$")
-    line_msol, = ax.plot(x_msol_raw, y_msol_raw, "-", linewidth=2.2, zorder=5, label=r"$m = 1 - 4\times10^{-8}$")
-    ax.axvline(0.05, linestyle="--", linewidth=1.2, color="0.4", zorder=5)
-    ax.axvline(0.5, linestyle="--", linewidth=1.2, color="0.4", zorder=5)
 
-    ax.text(1.25e-2, 6.4e-5, r"$U_r = 26$", rotation=45)
-    ax.text(2.2e-2, 1.7e-4, r"$m = 0.5$", rotation=45)
-    ax.text(1.8e-2, 1.2e-2, r"$m = 1-4\times 10^{-8}$", rotation=56)
+    ur26_raw_m05 = 26 * x_m05_raw**3
+    ur26_raw_m96 = 26 * x_m96_raw**3
+    ur26_raw_msol = 26 * x_msol_raw**3
+    y_break_on_m05 = np.interp(x_m05_raw, x1d, y_break, left=np.nan, right=np.nan)
+    y_break_on_m96 = np.interp(x_m96_raw, x1d, y_break, left=np.nan, right=np.nan)
+    y_break_on_msol = np.interp(x_msol_raw, x1d, y_break, left=np.nan, right=np.nan)
 
-    # Arrow targets are interior points, not borders
-    callout(ax, "Linear", interior_point(hOverL, HOverL, category, 1), (0.34, 1.0e-3))
-    callout(ax, "Stokes II", interior_point(hOverL, HOverL, category, 2), (0.33, 8.0e-3))
-    callout(ax, "Stokes III", interior_point(hOverL, HOverL, category, 3), (0.39, 2.8e-2))
-    callout(ax, "Stokes IV", interior_point(hOverL, HOverL, category, 4), (0.48, 5.6e-2))
-    callout(ax, "Stokes V", interior_point(hOverL, HOverL, category, 5), (0.12, 1.15e-1))
-    callout(ax, "Cnoidal", interior_point(hOverL, HOverL, category, 6), (0.028, 7.0e-4))
-    callout(ax, "Cnoidal III", interior_point(hOverL, HOverL, category, 7), (0.030, 3.0e-3))
-    callout(ax, "Cnoidal V", interior_point(hOverL, HOverL, category, 8), (0.033, 2.0e-2))
-    callout(ax, "Solitary-wave\nside", interior_point(hOverL, HOverL, category, 9), (0.013, 1.9e-2))
-    callout(ax, "Stream-function /\nnumerical", interior_point(hOverL, HOverL, category, 10), (0.23, 1.05e-1))
-    callout(ax, "Beyond breaking /\ninvalid", interior_point(hOverL, HOverL, category, 0), (0.24, 2.1e-1))
+    m05_mask = np.isfinite(x_m05_raw) & np.isfinite(y_m05_raw) & (y_m05_raw >= ur26_raw_m05) & (y_m05_raw <= y_break_on_m05)
+    m96_mask = np.isfinite(x_m96_raw) & np.isfinite(y_m96_raw) & (y_m96_raw >= ur26_raw_m96) & (y_m96_raw <= y_break_on_m96)
+    msol_mask = np.isfinite(x_msol_raw) & np.isfinite(y_msol_raw) & (y_msol_raw >= ur26_raw_msol) & (y_msol_raw <= y_break_on_msol)
+
+    x_m05_plot = np.where(m05_mask, x_m05_raw, np.nan)
+    y_m05_plot = np.where(m05_mask, y_m05_raw, np.nan)
+    x_m96_plot = np.where(m96_mask, x_m96_raw, np.nan)
+    y_m96_plot = np.where(m96_mask, y_m96_raw, np.nan)
+    x_msol_plot = np.where(msol_mask, x_msol_raw, np.nan)
+    y_msol_plot = np.where(msol_mask, y_msol_raw, np.nan)
+
+    line_m05, = ax.plot(x_m05_plot, y_m05_plot, ":", linewidth=2.2, zorder=5, label=r"Cnoidal line $(m=0.5)$")
+    line_m96, = ax.plot(x_m96_plot, y_m96_plot, ":", linewidth=2.2, zorder=5, label=r"$m = 0.96$")
+    line_msol, = ax.plot(x_msol_plot, y_msol_plot, "-", linewidth=2.2, zorder=5, label=r"$m = 1 - 4\times10^{-8}$")
+
+    # depth regime labels only
+    y_top = 0.275
+    ax.text(np.sqrt(0.01 * 0.05), y_top, "Shallow", fontsize=10, ha="center",
+            bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.5', alpha=0.92))
+    ax.text(np.sqrt(0.05 * 0.5), y_top, "Intermediate", fontsize=10, ha="center",
+            bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.5', alpha=0.92))
+    ax.text(np.sqrt(0.5 * 1.0), y_top, "Deep", fontsize=10, ha="center",
+            bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.5', alpha=0.92))
+    for xpos, txt in [(0.05, r"$h/L=0.05$"), (0.5, r"$h/L=0.5$")]:
+        ax.plot([xpos, xpos], [0.235, 0.262], color="0.45", lw=1.0, zorder=6)
+        ax.text(xpos, 0.228, txt, ha="center", va="top", fontsize=8,
+                bbox=dict(boxstyle='round,pad=0.12', fc='white', ec='0.5', alpha=0.9))
+
+    # line labels
+    ax.annotate("Breaking waves line",
+                xy=(0.19, float(np.interp(0.19, x1d, y_break))),
+                xytext=(0.34, 0.175),
+                fontsize=9,
+                bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.4', alpha=0.94),
+                arrowprops=dict(arrowstyle='->', color='0.3', lw=0.9),
+                zorder=12)
+    p_cnoidal_line = first_visible_point(x_m05_plot, y_m05_plot, frac=0.35)
+    if p_cnoidal_line is not None:
+        ax.annotate("Cnoidal line",
+                    xy=p_cnoidal_line,
+                    xytext=(0.022, 2.0e-4),
+                    fontsize=9,
+                    bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.4', alpha=0.94),
+                    arrowprops=dict(arrowstyle='->', color='0.3', lw=0.9),
+                    zorder=12)
+
+    valid96 = np.isfinite(x_m96_plot) & np.isfinite(y_m96_plot)
+    validsol = np.isfinite(x_msol_plot) & np.isfinite(y_msol_plot)
+    if np.any(valid96):
+        endpoint_label(ax, x_m96_plot[valid96][-1], y_m96_plot[valid96][-1], "Cnoidal III ends", 12, 8)
+    if np.any(validsol):
+        endpoint_label(ax, x_msol_plot[validsol][-1], y_msol_plot[validsol][-1], "Cnoidal V ends", 14, -8)
+
+    # callouts anchored to visible interiors with cleaner layout
+    callout(ax, "Linear\n(Airy wave theory)", interior_point_visible(hOverL, HOverL, category, 1, xlim, ylim), (0.52, 1.3e-3))
+    callout(ax, "Stokes II", interior_point_visible(hOverL, HOverL, category, 2, xlim, ylim), (0.38, 8.5e-3))
+    callout(ax, "Stokes III", interior_point_visible(hOverL, HOverL, category, 3, xlim, ylim), (0.44, 2.9e-2))
+    callout(ax, "Stokes IV", interior_point_visible(hOverL, HOverL, category, 4, xlim, ylim), (0.56, 5.8e-2))
+    callout(ax, "Stokes V", interior_point_visible(hOverL, HOverL, category, 5, xlim, ylim), (0.11, 1.12e-1))
+    # no separate "Cnoidal" area callout because that region is not visible in this plotting window
+    callout(ax, "Cnoidal III", interior_point_visible(hOverL, HOverL, category, 7, xlim, ylim), (0.022, 2.7e-3))
+    callout(ax, "Cnoidal V", interior_point_visible(hOverL, HOverL, category, 8, xlim, ylim), (0.030, 1.8e-2))
+    callout(ax, "Solitary-wave\nside", interior_point_visible(hOverL, HOverL, category, 9, xlim, ylim), (0.014, 6.0e-2))
+    callout(ax, "Stream-function /\nnumerical", interior_point_visible(hOverL, HOverL, category, 10, xlim, ylim), (0.13, 4.5e-2))
+    callout(ax, "Beyond breaking /\ninvalid", interior_point_visible(hOverL, HOverL, category, 0, xlim, ylim), (0.08, 0.18))
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlim(ax_range[0], ax_range[1])
-    ax.set_ylim(ax_range[2], ax_range[3])
+    ax.set_xlim(*xlim)
+    ax.set_ylim(*ylim)
     ax.set_xlabel(r"$h/L$")
     ax.set_ylabel("H/L")
-    ax.set_title("Wave-theory applicability chart with complete disjoint areas")
+    ax.set_title("Wave-theory applicability chart")
     ax.grid(True, which="major", alpha=0.25)
 
+    # legends: only visible region classes in this plotting window
+    vis = (hOverL >= xlim[0]) & (hOverL <= xlim[1]) & (HOverL >= ylim[0]) & (HOverL <= ylim[1])
+    present_codes = [i for i in range(len(AREA_LABELS)) if np.any((category == i) & vis)]
     area_handles = [
         Patch(facecolor=AREA_COLORS[i], edgecolor="none", label=AREA_LABELS[i])
-        for i in range(len(AREA_LABELS))
+        for i in present_codes
     ]
     leg_area = ax.legend(
         handles=area_handles,
@@ -338,12 +399,11 @@ def build_figure():
         Line2D([0], [0], color="k", linewidth=1.8, label=r"A3/(A1+A2) = 1%"),
         Line2D([0], [0], color="k", linewidth=1.8, label=r"A4/(A1+A2+A3) = 1%"),
         Line2D([0], [0], color="k", linewidth=1.8, label=r"A5/(A1+A2+A3+A4) = 1%"),
-        Line2D([0], [0], color=line_break.get_color(), linestyle="-.", linewidth=2.2, label="Breaking limit"),
+        Line2D([0], [0], color=line_break.get_color(), linestyle="-.", linewidth=2.2, label="Breaking waves line"),
         Line2D([0], [0], color=line_ur26.get_color(), linestyle="--", linewidth=2.0, label=r"$U_r = 26$"),
-        Line2D([0], [0], color=line_m05.get_color(), linestyle=":", linewidth=2.2, label=r"$m = 0.5$"),
+        Line2D([0], [0], color=line_m05.get_color(), linestyle=":", linewidth=2.2, label=r"Cnoidal line $(m=0.5)$"),
         Line2D([0], [0], color=line_m96.get_color(), linestyle=":", linewidth=2.2, label=r"$m = 0.96$"),
         Line2D([0], [0], color=line_msol.get_color(), linestyle="-", linewidth=2.2, label=r"$m = 1 - 4\times10^{-8}$"),
-        Line2D([0], [0], color="0.4", linestyle="--", linewidth=1.2, label=r"$h/L = 0.05,\ 0.5$"),
     ]
     leg_lines = ax.legend(
         handles=line_legend_handles,
@@ -357,31 +417,14 @@ def build_figure():
     )
     ax.add_artist(leg_lines)
 
-    fig.tight_layout()
     return fig
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Generate the wave-theory applicability chart with complete disjoint areas."
-    )
-    parser.add_argument(
-        "--formats",
-        nargs="+",
-        default=["png"],
-        choices=["png", "svg", "pgf"],
-        help="Output formats to save. Example: --formats png svg pgf",
-    )
-    parser.add_argument(
-        "--output-dir",
-        default=".",
-        help="Directory where output files will be written.",
-    )
-    parser.add_argument(
-        "--basename",
-        default="wave_theory_applicability_finalfinal",
-        help="Base filename without extension.",
-    )
+    parser = argparse.ArgumentParser(description="Generate the tidied wave-theory applicability chart.")
+    parser.add_argument("--formats", nargs="+", default=["png"], choices=["png", "svg", "pgf"])
+    parser.add_argument("--output-dir", default=".")
+    parser.add_argument("--basename", default="wave_theory_applicability_tidy")
     return parser.parse_args()
 
 
