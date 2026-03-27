@@ -22,21 +22,21 @@ AREA_LABELS = [
     "Cnoidal III",
     "Cnoidal V",
     "Solitary-wave side",
-    "Stream-function / numerical",
+    "Fenton stream-function / numerical",
 ]
 
 AREA_COLORS = [
-    "#d0d0d0",
-    "#cfe1f2",
-    "#efdcc4",
-    "#d8ead2",
-    "#f4cccc",
-    "#d9d2e9",
-    "#fff2cc",
-    "#ead1dc",
-    "#d9d9d9",
-    "#d9ead3",
-    "#cfe2f3",
+    "#7f7f7f",  # Beyond breaking / invalid - dark gray
+    "#4f81bd",  # Linear (Airy) - blue
+    "#c49a6c",  # Stokes II - tan
+    "#7fbf7b",  # Stokes III - green
+    "#e06666",  # Stokes IV - red
+    "#8e7cc3",  # Stokes V - purple
+    "#f1c232",  # Cnoidal - gold
+    "#c27ba0",  # Cnoidal III - magenta
+    "#8b5a2b",  # Cnoidal V - brown
+    "#2aa198",  # Solitary-wave side - teal
+    "#3db7e9",  # Fenton stream-function / numerical - cyan
 ]
 
 
@@ -139,6 +139,19 @@ def first_visible_point(x, y, frac=0.3):
     return float(xv[idx]), float(yv[idx])
 
 
+
+def line_box(ax, x, y, text, color, rotation=0):
+    ax.text(
+        x, y, text,
+        rotation=rotation,
+        fontsize=9,
+        color=color,
+        ha="center", va="center",
+        bbox=dict(boxstyle="square,pad=0.18", fc="white", ec=color, lw=1.2, alpha=0.96),
+        zorder=12
+    )
+
+
 def callout(ax, text, xy, xytext):
     if xy is None:
         return
@@ -156,13 +169,13 @@ def callout(ax, text, xy, xytext):
     )
 
 
-def endpoint_label(ax, x, y, text, dx, dy):
-    ax.plot([x], [y], marker='o', markersize=3.0, color='0.2', zorder=8)
+def endpoint_label(ax, x, y, text, dx, dy, color='0.25'):
+    ax.plot([x], [y], marker='o', markersize=3.0, color=color, zorder=8)
     ax.annotate(
         text, xy=(x, y), xytext=(dx, dy), textcoords='offset points',
-        fontsize=8, ha='left', va='center',
-        bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.45', alpha=0.92),
-        arrowprops=dict(arrowstyle='->', color='0.3', lw=0.85, shrinkA=2, shrinkB=3),
+        fontsize=8, ha='left', va='center', color=color,
+        bbox=dict(boxstyle='square,pad=0.16', fc='white', ec=color, lw=1.0, alpha=0.96),
+        arrowprops=dict(arrowstyle='->', color=color, lw=0.9, shrinkA=2, shrinkB=3),
         zorder=12
     )
 
@@ -311,7 +324,7 @@ def build_figure():
     x_msol_plot = np.where(msol_mask, x_msol_raw, np.nan)
     y_msol_plot = np.where(msol_mask, y_msol_raw, np.nan)
 
-    line_m05, = ax.plot(x_m05_plot, y_m05_plot, ":", linewidth=2.2, zorder=5, label=r"Cnoidal line $(m=0.5)$")
+    line_m05, = ax.plot(x_m05_plot, y_m05_plot, "-", linewidth=3.4, zorder=7, label=r"$m=0.5$ (cnoidal divider)")
     line_m96, = ax.plot(x_m96_plot, y_m96_plot, ":", linewidth=2.2, zorder=5, label=r"$m = 0.96$")
     line_msol, = ax.plot(x_msol_plot, y_msol_plot, "-", linewidth=2.2, zorder=5, label=r"$m = 1 - 4\times10^{-8}$")
 
@@ -332,39 +345,35 @@ def build_figure():
     ax.annotate("Breaking waves line",
                 xy=(0.19, float(np.interp(0.19, x1d, y_break))),
                 xytext=(0.34, 0.175),
-                fontsize=9,
-                bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.4', alpha=0.94),
-                arrowprops=dict(arrowstyle='->', color='0.3', lw=0.9),
+                fontsize=9, color=line_break.get_color(),
+                bbox=dict(boxstyle='square,pad=0.18', fc='white', ec=line_break.get_color(), lw=1.2, alpha=0.96),
+                arrowprops=dict(arrowstyle='->', color=line_break.get_color(), lw=1.0),
                 zorder=12)
-    p_cnoidal_line = first_visible_point(x_m05_plot, y_m05_plot, frac=0.35)
-    if p_cnoidal_line is not None:
-        ax.annotate("Cnoidal line",
-                    xy=p_cnoidal_line,
-                    xytext=(0.022, 2.0e-4),
-                    fontsize=9,
-                    bbox=dict(boxstyle='round,pad=0.16', fc='white', ec='0.4', alpha=0.94),
-                    arrowprops=dict(arrowstyle='->', color='0.3', lw=0.9),
-                    zorder=12)
+    # Rectangle labels on the guide lines, colored to match the legend/lines
+    line_box(ax, 0.021, 8.8e-5, r"$U_r=26$", color=line_ur26.get_color(), rotation=46)
+    line_box(ax, 0.026, 3.3e-4, r"$m=0.5$\n(cnoidal)", color=line_m05.get_color(), rotation=47)
+    line_box(ax, 0.023, 2.9e-2, r"$m=1-4\times10^{-8}$", color=line_msol.get_color(), rotation=60)
+    line_box(ax, 0.121, 1.18e-1, r"$m=0.96$", color=line_m96.get_color(), rotation=46)
 
     valid96 = np.isfinite(x_m96_plot) & np.isfinite(y_m96_plot)
     validsol = np.isfinite(x_msol_plot) & np.isfinite(y_msol_plot)
     if np.any(valid96):
-        endpoint_label(ax, x_m96_plot[valid96][-1], y_m96_plot[valid96][-1], "Cnoidal III ends", 12, 8)
+        endpoint_label(ax, x_m96_plot[valid96][-1], y_m96_plot[valid96][-1], "Cnoidal III ends", 18, 4, color=line_m96.get_color())
     if np.any(validsol):
-        endpoint_label(ax, x_msol_plot[validsol][-1], y_msol_plot[validsol][-1], "Cnoidal V ends", 14, -8)
+        endpoint_label(ax, x_msol_plot[validsol][-1], y_msol_plot[validsol][-1], "Cnoidal V ends", 22, -16, color=line_msol.get_color())
 
     # callouts anchored to visible interiors with cleaner layout
     callout(ax, "Linear\n(Airy wave theory)", interior_point_visible(hOverL, HOverL, category, 1, xlim, ylim), (0.52, 1.3e-3))
     callout(ax, "Stokes II", interior_point_visible(hOverL, HOverL, category, 2, xlim, ylim), (0.38, 8.5e-3))
     callout(ax, "Stokes III", interior_point_visible(hOverL, HOverL, category, 3, xlim, ylim), (0.44, 2.9e-2))
     callout(ax, "Stokes IV", interior_point_visible(hOverL, HOverL, category, 4, xlim, ylim), (0.56, 5.8e-2))
-    callout(ax, "Stokes V", interior_point_visible(hOverL, HOverL, category, 5, xlim, ylim), (0.11, 1.12e-1))
+    callout(ax, "Stokes V", interior_point_visible(hOverL, HOverL, category, 5, xlim, ylim), (0.095, 1.15e-1))
     # no separate "Cnoidal" area callout because that region is not visible in this plotting window
-    callout(ax, "Cnoidal III", interior_point_visible(hOverL, HOverL, category, 7, xlim, ylim), (0.022, 2.7e-3))
-    callout(ax, "Cnoidal V", interior_point_visible(hOverL, HOverL, category, 8, xlim, ylim), (0.030, 1.8e-2))
-    callout(ax, "Solitary-wave\nside", interior_point_visible(hOverL, HOverL, category, 9, xlim, ylim), (0.014, 6.0e-2))
-    callout(ax, "Stream-function /\nnumerical", interior_point_visible(hOverL, HOverL, category, 10, xlim, ylim), (0.13, 4.5e-2))
-    callout(ax, "Beyond breaking /\ninvalid", interior_point_visible(hOverL, HOverL, category, 0, xlim, ylim), (0.08, 0.18))
+    callout(ax, "Cnoidal III", interior_point_visible(hOverL, HOverL, category, 7, xlim, ylim), (0.024, 2.8e-3))
+    callout(ax, "Cnoidal V", interior_point_visible(hOverL, HOverL, category, 8, xlim, ylim), (0.026, 1.7e-2))
+    callout(ax, "Solitary-wave\nside", interior_point_visible(hOverL, HOverL, category, 9, xlim, ylim), (0.014, 7.0e-2))
+    callout(ax, "Fenton stream-function /\nnumerical", interior_point_visible(hOverL, HOverL, category, 10, xlim, ylim), (0.16, 5.0e-2))
+    callout(ax, "Beyond breaking /\ninvalid", interior_point_visible(hOverL, HOverL, category, 0, xlim, ylim), (0.075, 0.17))
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -401,7 +410,7 @@ def build_figure():
         Line2D([0], [0], color="k", linewidth=1.8, label=r"A5/(A1+A2+A3+A4) = 1%"),
         Line2D([0], [0], color=line_break.get_color(), linestyle="-.", linewidth=2.2, label="Breaking waves line"),
         Line2D([0], [0], color=line_ur26.get_color(), linestyle="--", linewidth=2.0, label=r"$U_r = 26$"),
-        Line2D([0], [0], color=line_m05.get_color(), linestyle=":", linewidth=2.2, label=r"Cnoidal line $(m=0.5)$"),
+        Line2D([0], [0], color=line_m05.get_color(), linestyle="-", linewidth=3.0, label=r"$m=0.5$ (cnoidal divider)"),
         Line2D([0], [0], color=line_m96.get_color(), linestyle=":", linewidth=2.2, label=r"$m = 0.96$"),
         Line2D([0], [0], color=line_msol.get_color(), linestyle="-", linewidth=2.2, label=r"$m = 1 - 4\times10^{-8}$"),
     ]
