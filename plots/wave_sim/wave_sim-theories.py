@@ -29,7 +29,6 @@ def interp_log_curve(x, y, x_new):
     order = np.argsort(x)
     x = x[order]
     y = y[order]
-
     xu, idx = np.unique(x, return_index=True)
     yu = y[idx]
     if len(xu) < 2:
@@ -41,9 +40,24 @@ def interp_log_curve(x, y, x_new):
     return out
 
 
+def callout(ax, text, xy, xytext):
+    ax.annotate(
+        text,
+        xy=xy,
+        xytext=xytext,
+        textcoords='data',
+        ha='center',
+        va='center',
+        fontsize=9,
+        bbox=dict(boxstyle='round,pad=0.22', fc='white', ec='0.35', alpha=0.92),
+        arrowprops=dict(arrowstyle='->', color='0.25', lw=1.0, shrinkA=4, shrinkB=4),
+        zorder=8
+    )
+
+
 def main():
     # -------------------------------------------------------
-    # Reproduce core MATLAB calculations
+    # Core calculations translated from the MATLAB workflow
     # -------------------------------------------------------
     kh = (10.0 ** np.arange(-3, 0.8001, 0.02))[:, None]
     kH = (10.0 ** np.arange(-5, -0.23 + 1e-12, 0.02)) * 2.0
@@ -119,8 +133,7 @@ def main():
     p4 = longest_path(A4_paths)
     p5 = longest_path(A5_paths)
 
-    # Continuous x-grid for fills
-    x = np.logspace(np.log10(ax_range[0]), np.log10(ax_range[1]), 800)
+    x = np.logspace(np.log10(ax_range[0]), np.log10(ax_range[1]), 900)
     y_min = np.full_like(x, ax_range[2], dtype=float)
 
     y_a2 = interp_log_curve(p2[:, 0], p2[:, 1], x) if p2 is not None else np.full_like(x, np.nan)
@@ -180,29 +193,23 @@ def main():
     y_num = 0.4 * x
     y_num[(x > 0.20004) | (x < 0.024)] = np.nan
 
-    # -------------------------------------------------------
-    # Plot
-    # -------------------------------------------------------
-    fig, ax = plt.subplots(figsize=(10, 7.5))
+    fig, ax = plt.subplots(figsize=(12, 8.5))
 
-    def fill_region(y_lo, y_hi, where, label):
-        ax.fill_between(x, y_lo, y_hi, where=where, alpha=0.22, label=label)
+    # Colored areas
+    fills = []
+    fills.append(ax.fill_between(x, y_min, y_a2, where=np.isfinite(y_a2), alpha=0.22))
+    fills.append(ax.fill_between(x, y_a2, y_a3, where=np.isfinite(y_a2) & np.isfinite(y_a3), alpha=0.22))
+    fills.append(ax.fill_between(x, y_a3, y_a4, where=np.isfinite(y_a3) & np.isfinite(y_a4), alpha=0.22))
+    fills.append(ax.fill_between(x, y_a4, y_a5, where=np.isfinite(y_a4) & np.isfinite(y_a5), alpha=0.22))
+    fills.append(ax.fill_between(x, y_a5, y_break, where=np.isfinite(y_a5) & np.isfinite(y_break), alpha=0.22))
 
-    # Theory areas
-    fill_region(y_min, y_a2, np.isfinite(y_a2), "Linear")
-    fill_region(y_a2, y_a3, np.isfinite(y_a2) & np.isfinite(y_a3), "Stokes II")
-    fill_region(y_a3, y_a4, np.isfinite(y_a3) & np.isfinite(y_a4), "Stokes III")
-    fill_region(y_a4, y_a5, np.isfinite(y_a4) & np.isfinite(y_a5), "Stokes IV")
-    fill_region(y_a5, y_break, np.isfinite(y_a5) & np.isfinite(y_break), "Stokes V")
+    fills.append(ax.fill_between(x, y_ur1, y_ur10, where=np.isfinite(y_ur1) & np.isfinite(y_ur10), alpha=0.22))
+    fills.append(ax.fill_between(x, y_ur10, y_m96, where=np.isfinite(y_ur10) & np.isfinite(y_m96), alpha=0.22))
+    fills.append(ax.fill_between(x, y_m96, y_msol, where=np.isfinite(y_m96) & np.isfinite(y_msol), alpha=0.22))
+    fills.append(ax.fill_between(x, y_msol, y_break, where=np.isfinite(y_msol) & np.isfinite(y_break), alpha=0.22))
+    fills.append(ax.fill_between(x, y_num, y_break, where=np.isfinite(y_num) & np.isfinite(y_break), alpha=0.18))
 
-    fill_region(y_ur1, y_ur10, np.isfinite(y_ur1) & np.isfinite(y_ur10), "Cnoidal (low-order)")
-    fill_region(y_ur10, y_m96, np.isfinite(y_ur10) & np.isfinite(y_m96), "Cnoidal III")
-    fill_region(y_m96, y_msol, np.isfinite(y_m96) & np.isfinite(y_msol), "Cnoidal V")
-    fill_region(y_msol, y_break, np.isfinite(y_msol) & np.isfinite(y_break), "Solitary-wave side")
-
-    fill_region(y_num, y_break, np.isfinite(y_num) & np.isfinite(y_break), "Numerical / stream-function")
-
-    # Boundary curves and contours
+    # Boundary curves
     if p2 is not None:
         ax.plot(p2[:, 0], p2[:, 1], '-', linewidth=1.8, color='k')
     if p3 is not None:
@@ -219,37 +226,46 @@ def main():
     ax.plot(x_m96_raw, y_m96_raw, ':', linewidth=2.2)
     ax.plot(x_msol_raw, y_msol_raw, '-', linewidth=2.2)
     ax.plot(x, y_num, '-.', linewidth=2.0)
-
     ax.axvline(0.05, linestyle='--', linewidth=1.2, color='0.4')
     ax.axvline(0.5, linestyle='--', linewidth=1.2, color='0.4')
 
+    # Existing boundary labels
     ax.text(1.22e-2, 6.3e-5, r'$U_r = 26$', rotation=45)
     ax.text(2.05e-2, 6.0e-5, r'$U_r = 10$', rotation=45)
     ax.text(2.70e-2, 1.5e-5, r'$U_r = 1$', rotation=45)
 
-    # Axes
+    # Callouts for all colored regions
+    callout(ax, 'Linear', xy=(0.22, 2.1e-3), xytext=(0.34, 1.0e-3))
+    callout(ax, 'Stokes II', xy=(0.20, 1.35e-2), xytext=(0.33, 8.0e-3))
+    callout(ax, 'Stokes III', xy=(0.24, 3.8e-2), xytext=(0.39, 2.8e-2))
+    callout(ax, 'Stokes IV', xy=(0.30, 6.6e-2), xytext=(0.48, 5.6e-2))
+    callout(ax, 'Stokes V', xy=(0.14, 7.5e-2), xytext=(0.12, 1.20e-1))
+
+    callout(ax, 'Cnoidal\n(low-order)', xy=(0.030, 8.5e-5), xytext=(0.015, 1.7e-4))
+    callout(ax, 'Cnoidal III', xy=(0.060, 3.0e-3), xytext=(0.026, 2.8e-3))
+    callout(ax, 'Cnoidal V', xy=(0.090, 3.1e-2), xytext=(0.030, 2.0e-2))
+    callout(ax, 'Solitary-wave\nside', xy=(0.017, 8.0e-3), xytext=(0.013, 1.9e-2))
+    callout(ax, 'Numerical /\nstream-function', xy=(0.12, 4.5e-2), xytext=(0.22, 1.05e-1))
+
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlim(ax_range[0], ax_range[1])
     ax.set_ylim(ax_range[2], ax_range[3])
     ax.set_xlabel(r'$h/L$')
     ax.set_ylabel('H/L')
-    ax.set_title('Wave-theory applicability chart with colored regions')
-    ax.tick_params(length=7)
+    ax.set_title('Wave-theory applicability chart with colored regions and callouts')
     ax.grid(True, which='major', alpha=0.25)
 
-    # Two legends
     theory_labels = [
-        "Linear", "Stokes II", "Stokes III", "Stokes IV", "Stokes V",
-        "Cnoidal (low-order)", "Cnoidal III", "Cnoidal V",
-        "Solitary-wave side", "Numerical / stream-function"
+        'Linear', 'Stokes II', 'Stokes III', 'Stokes IV', 'Stokes V',
+        'Cnoidal (low-order)', 'Cnoidal III', 'Cnoidal V',
+        'Solitary-wave side', 'Numerical / stream-function'
     ]
     theory_handles = [
-        Patch(facecolor=ax.collections[i].get_facecolor()[0], edgecolor='none',
+        Patch(facecolor=fills[i].get_facecolor()[0], edgecolor='none',
               alpha=0.22 if i < 9 else 0.18, label=theory_labels[i])
         for i in range(len(theory_labels))
     ]
-
     leg1 = ax.legend(handles=theory_handles, title='Colored applicability areas',
                      loc='lower right', fontsize=9, title_fontsize=10, framealpha=0.95)
     ax.add_artist(leg1)
@@ -268,13 +284,13 @@ def main():
         Line2D([0], [0], color='C6', linestyle='-.', linewidth=2.0, label='Numerical / stream-function limit'),
         Line2D([0], [0], color='0.4', linestyle='--', linewidth=1.2, label=r'$h/L = 0.05,\ 0.5$'),
     ]
-
     ax.legend(handles=line_legend_handles, title='Contours and boundaries',
               loc='upper left', fontsize=9, title_fontsize=10, framealpha=0.95)
 
     fig.tight_layout()
+    fig.savefig('wave_theory_applicability_callouts.png', dpi=220, bbox_inches='tight')
     plt.show()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
