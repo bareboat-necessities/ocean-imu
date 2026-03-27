@@ -1,8 +1,34 @@
+#!/usr/bin/env python3
+import argparse
+from pathlib import Path
+
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy import special
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
+
+
+def configure_pgf():
+    """
+    Enable PGF/XeLaTeX export styling.
+    This is only activated if --formats includes pgf.
+    """
+    mpl.rcParams.update({
+        "pgf.texsystem": "xelatex",
+        "font.family": "serif",
+        "text.usetex": True,
+        "pgf.rcfonts": False,
+        "pgf.preamble": "\n".join([
+            r"\usepackage{fontspec}",
+            r"\usepackage{unicode-math}",
+            r"\usepackage{amsmath}",
+            r"\setmainfont{DejaVu Serif}",
+            r"\setmathfont{Latin Modern Math}",
+            r"\providecommand{\mathdefault}[1]{#1}",
+        ]),
+    })
 
 
 def longest_path(paths):
@@ -55,7 +81,7 @@ def callout(ax, text, xy, xytext):
     )
 
 
-def main():
+def build_figure():
     # -------------------------------------------------------
     # Core calculations translated from the MATLAB workflow
     # -------------------------------------------------------
@@ -122,7 +148,6 @@ def main():
     eta_ratio4 = eta4 / (eta1 + eta2 + eta3)
     eta_ratio5 = eta5 / (eta1 + eta2 + eta3 + eta4)
 
-    # 1% contour paths for Stokes order boundaries
     A2_paths = contour_level_segments(hOverL, HOverL_masked, eta_ratio2, 0.01)
     A3_paths = contour_level_segments(hOverL, HOverL_masked, eta_ratio3, 0.01)
     A4_paths = contour_level_segments(hOverL, HOverL_masked, eta_ratio4, 0.01)
@@ -141,7 +166,6 @@ def main():
     y_a4 = interp_log_curve(p4[:, 0], p4[:, 1], x) if p4 is not None else np.full_like(x, np.nan)
     y_a5 = interp_log_curve(p5[:, 0], p5[:, 1], x) if p5 is not None else np.full_like(x, np.nan)
 
-    # Breaking line by Fenton
     lambda_over_h = 2 * np.pi / kh[:, 0]
     HoverL_break = (
         kh[:, 0]
@@ -156,7 +180,6 @@ def main():
     )
     y_break = interp_log_curve(hOverL[:, 0], HoverL_break, x)
 
-    # Ursell lines
     y_ur1 = x**3
     y_ur10 = 10 * x**3
     y_ur26 = 26 * x**3
@@ -164,7 +187,6 @@ def main():
     y_ur10 = np.where(y_ur10 <= y_break, y_ur10, np.nan)
     y_ur26 = np.where(y_ur26 <= y_break, y_ur26, np.nan)
 
-    # Cnoidal m-curves from Fenton (1999)
     h = 10.0
     H = np.arange(0.01, 7.8 + 1e-12, 0.001)
 
@@ -189,13 +211,11 @@ def main():
     y_m96 = interp_log_curve(x_m96_raw, y_m96_raw, x)
     y_msol = interp_log_curve(x_msol_raw, y_msol_raw, x)
 
-    # Numerical / stream-function region boundary
     y_num = 0.4 * x
     y_num[(x > 0.20004) | (x < 0.024)] = np.nan
 
     fig, ax = plt.subplots(figsize=(12, 8.5))
 
-    # Colored areas
     fills = []
     fills.append(ax.fill_between(x, y_min, y_a2, where=np.isfinite(y_a2), alpha=0.22))
     fills.append(ax.fill_between(x, y_a2, y_a3, where=np.isfinite(y_a2) & np.isfinite(y_a3), alpha=0.22))
@@ -209,7 +229,6 @@ def main():
     fills.append(ax.fill_between(x, y_msol, y_break, where=np.isfinite(y_msol) & np.isfinite(y_break), alpha=0.22))
     fills.append(ax.fill_between(x, y_num, y_break, where=np.isfinite(y_num) & np.isfinite(y_break), alpha=0.18))
 
-    # Boundary curves
     if p2 is not None:
         ax.plot(p2[:, 0], p2[:, 1], '-', linewidth=1.8, color='k')
     if p3 is not None:
@@ -229,12 +248,10 @@ def main():
     ax.axvline(0.05, linestyle='--', linewidth=1.2, color='0.4')
     ax.axvline(0.5, linestyle='--', linewidth=1.2, color='0.4')
 
-    # Existing boundary labels
     ax.text(1.22e-2, 6.3e-5, r'$U_r = 26$', rotation=45)
     ax.text(2.05e-2, 6.0e-5, r'$U_r = 10$', rotation=45)
     ax.text(2.70e-2, 1.5e-5, r'$U_r = 1$', rotation=45)
 
-    # Callouts for all colored regions
     callout(ax, 'Linear', xy=(0.22, 2.1e-3), xytext=(0.34, 1.0e-3))
     callout(ax, 'Stokes II', xy=(0.20, 1.35e-2), xytext=(0.33, 8.0e-3))
     callout(ax, 'Stokes III', xy=(0.24, 3.8e-2), xytext=(0.39, 2.8e-2))
@@ -288,9 +305,55 @@ def main():
               loc='upper left', fontsize=9, title_fontsize=10, framealpha=0.95)
 
     fig.tight_layout()
-    fig.savefig('wave_theory_applicability_callouts.png', dpi=220, bbox_inches='tight')
-    plt.show()
+    return fig
 
 
-if __name__ == '__main__':
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate the wave-theory applicability chart with colored regions and callouts."
+    )
+    parser.add_argument(
+        "--formats",
+        nargs="+",
+        default=["png"],
+        choices=["png", "svg", "pgf"],
+        help="Output formats to save. Example: --formats png svg pgf",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=".",
+        help="Directory where output files will be written.",
+    )
+    parser.add_argument(
+        "--basename",
+        default="wave_theory_applicability_callouts",
+        help="Base filename without extension.",
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if "pgf" in args.formats:
+        configure_pgf()
+
+    fig = build_figure()
+
+    saved = []
+    for fmt in args.formats:
+        out = output_dir / f"{args.basename}.{fmt}"
+        fig.savefig(out, bbox_inches="tight", dpi=220 if fmt == "png" else None)
+        saved.append(out)
+
+    plt.close(fig)
+
+    print("Saved files:")
+    for path in saved:
+        print(path)
+
+
+if __name__ == "__main__":
     main()
