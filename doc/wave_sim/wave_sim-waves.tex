@@ -14,6 +14,10 @@
 \usepackage{siunitx}
 \usepackage{xcolor}
 \usepackage{multirow}
+\usepackage{cite}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 \newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 \newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
@@ -24,10 +28,7 @@
 
 \title{Ocean Wave Theories: From Classical Solutions to Modern Spectral Models}
 
-\author{%
-  \IEEEauthorblockN{Various Generative AI}\\
-  \IEEEauthorblockA{Prompts by Mikhail Grushinskiy}
-}
+\author{Various Generative AI\\Prompts by Mikhail Grushinskiy}
 
 \maketitle
 
@@ -35,22 +36,26 @@
 The study of ocean waves represents a cornerstone of coastal and offshore engineering,
 geophysics, and naval architecture, evolving over more than two centuries.
 This review traces the historical development of wave theory from Gerstner's trochoidal
-solution and Airy's foundational linear wave theory through Stokes' nonlinear corrections
-and Fenton's higher-order formulations.
+solution and Airy's foundational linear wave theory through Stokes' nonlinear corrections,
+cnoidal and solitary-wave theory for shallow water, and Fenton's higher-order formulations.
 The paper covers statistical and spectral representations essential for describing the
 random nature of the sea, notably the Pierson--Moskowitz and JONSWAP spectra.
 Governing Navier--Stokes equations and their simplifications are derived, and velocity
 and acceleration fields for each major theory are compared.
+A Le M\'ehaut\'e-style applicability diagram is included to summarize the regimes of
+validity of the principal deterministic wave theories.
 Industrial applications are discussed, including shallow- and deep-water wave regimes,
 with practical tables for wave periods, lengths, and heights.
 Finally, the specific models applied in contemporary offshore industries for different
-design scenarios are summarized.
+design scenarios are summarized, including a brief modern note on rogue-wave mechanisms
+and design relevance.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Ocean waves, Airy wave theory, Stokes waves, JONSWAP spectrum,
-Pierson--Moskowitz spectrum, Fenton stream function, wave kinematics,
-offshore engineering.
+Ocean waves, Airy wave theory, Stokes waves, cnoidal wave theory,
+solitary waves, JONSWAP spectrum, Pierson--Moskowitz spectrum,
+Fenton stream function, rogue waves, Benjamin--Feir instability,
+wave kinematics, offshore engineering.
 \end{IEEEkeywords}
 
 % ============================================================
@@ -72,7 +77,7 @@ descriptions.
 Section~\ref{sec:history} details the historical context.
 Section~\ref{sec:ns} establishes the governing equations.
 Sections~\ref{sec:gerstner}--\ref{sec:fenton} dissect the key deterministic wave
-theories.
+theories, including their ranges of applicability.
 Section~\ref{sec:spectral} introduces spectral models for irregular seas.
 Section~\ref{sec:realwaves} discusses depth effects and practical parameter ranges.
 Section~\ref{sec:industrial} summarizes industrial applications, and
@@ -106,11 +111,19 @@ solution as a perturbation series in wave steepness $\epsilon = ak$.
 asymmetry (sharp crests, flat troughs) and open particle orbits, enabling net mass
 transport (\emph{Stokes drift}).
 
+\subsection{Shallow-Water Nonlinear Theory: Cnoidal and Solitary Waves}
+As the focus of engineering extended from deep-water swell to coastal and harbour
+environments, it became clear that steepness alone is not the best measure of
+nonlinearity in shallow water.
+Long waves in finite depth are better described by cnoidal-wave solutions associated
+with the Korteweg--de Vries framework, and by their solitary-wave limit for extreme
+long-wave cases \cite{LeMehaute1976,Fenton1990,DNVC205}.
+
 \subsection{Modern Higher-Order Expansions: Fenton's Theory (1980s)}
-J.~D.~Fenton used computer algebra to derive very high-order Stokes-type solutions (up
-to 100th order) via Fourier series, producing highly accurate results for waves close to
-the theoretical breaking limit ($ak \approx 0.44$ in deep water).
-Fenton's theory underpins many modern offshore engineering tools.
+J.~D.~Fenton used computer algebra and Fourier-based formulations to derive highly
+accurate nonlinear wave solutions, including stream-function approaches suitable for
+steep waves and shallow-water transition regimes \cite{Fenton1990}.
+These formulations underpin many modern offshore engineering tools.
 
 \subsection{Spectral Approaches: Embracing Randomness (Mid-20th Century)}
 Real ocean waves are irregular and random.
@@ -318,8 +331,176 @@ Key nonlinear features include:
   \item \textbf{Asymmetric kinematics:} Horizontal velocity under the crest exceeds
     that under the trough.
 \end{itemize}
-Stokes 2nd and 5th order theories are codified in design standards (API, DNVGL) for
-intermediate to deep water calculations.
+Stokes 2nd and 5th order theories are codified in design standards for intermediate to
+deep water calculations \cite{DNVC205}.
+
+% ============================================================
+\section{Wave-Theory Applicability and Shallow-Water Nonlinearity}
+\label{sec:applicability}
+
+\subsection{Le M\'ehaut\'e Applicability Diagram}
+A standard engineering guide for selecting a deterministic periodic wave theory is the
+Le M\'ehaut\'e applicability chart, expressed in terms of the two non-dimensional
+parameters \cite{LeMehaute1976,Zhao2024}
+\begin{equation}
+  \frac{h}{gT^2}
+  \qquad \text{and} \qquad
+  \frac{H}{gT^2},
+\end{equation}
+where $h$ is the still-water depth, $H$ is wave height, $T$ is wave period, and $g$ is
+gravitational acceleration.
+The chart partitions the plane into regions where linear (Airy), Stokes,
+stream-function/Fourier, cnoidal, and solitary-wave descriptions are most appropriate.
+It remains a compact summary of the trade-off between nonlinearity and relative depth.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}
+\begin{loglogaxis}[
+  width=0.96\textwidth,
+  height=0.46\textwidth,
+  xmin=8e-5, xmax=2e-1,
+  ymin=2e-5, ymax=2e-2,
+  xlabel={$h/gT^2$},
+  ylabel={$H/gT^2$},
+  grid=both,
+  major grid style={line width=.2pt, draw=gray!40},
+  minor grid style={line width=.1pt, draw=gray!20},
+  tick align=outside,
+  tick style={black},
+  enlargelimits=false
+]
+
+% Airy
+\addplot[draw=black, fill=blue!10] coordinates {
+  (2e-3,2e-5)
+  (2e-1,2e-5)
+  (2e-1,4.5e-4)
+  (5e-3,4.5e-4)
+  (2e-3,2.8e-4)
+} \closedcycle;
+
+% Stokes 2nd
+\addplot[draw=black, fill=green!10] coordinates {
+  (3e-3,4.5e-4)
+  (2e-1,4.5e-4)
+  (2e-1,9e-4)
+  (8e-3,9e-4)
+  (3e-3,6.0e-4)
+} \closedcycle;
+
+% Stokes 3rd--5th
+\addplot[draw=black, fill=yellow!20] coordinates {
+  (1e-3,9e-4)
+  (2e-1,9e-4)
+  (2e-1,2.2e-3)
+  (6e-3,2.2e-3)
+  (1.5e-3,1.4e-3)
+} \closedcycle;
+
+% Cnoidal
+\addplot[draw=black, fill=orange!20] coordinates {
+  (8e-5,1.5e-4)
+  (1.3e-3,1.5e-4)
+  (3.0e-3,6.0e-4)
+  (2.0e-3,1.4e-3)
+  (5.0e-4,1.9e-3)
+  (1.4e-4,1.3e-3)
+} \closedcycle;
+
+% Solitary
+\addplot[draw=black, fill=red!15] coordinates {
+  (8e-5,1.2e-3)
+  (2.6e-4,1.2e-3)
+  (4.0e-4,3.5e-3)
+  (2.2e-4,7.5e-3)
+  (8e-5,6.5e-3)
+} \closedcycle;
+
+% Stream function / Fourier
+\addplot[draw=black, fill=purple!12] coordinates {
+  (3e-4,2.0e-3)
+  (2e-1,2.0e-3)
+  (2e-1,1.45e-2)
+  (2e-2,1.05e-2)
+  (6e-3,7.8e-3)
+  (2e-3,5.8e-3)
+  (6e-4,3.6e-3)
+} \closedcycle;
+
+% Breaking / limiting-wave boundary (schematic)
+\addplot[very thick] coordinates {
+  (8e-5,1.4e-3)
+  (1.5e-4,2.0e-3)
+  (3e-4,2.9e-3)
+  (8e-4,4.2e-3)
+  (2e-3,5.8e-3)
+  (6e-3,7.8e-3)
+  (2e-2,1.05e-2)
+  (2e-1,1.45e-2)
+};
+
+\node[font=\small] at (axis cs:2.6e-2,1.1e-4) {Airy};
+\node[font=\small, align=center] at (axis cs:2.8e-2,6.4e-4) {Stokes\\2nd};
+\node[font=\small, align=center] at (axis cs:2.0e-2,1.45e-3) {Stokes\\3rd--5th};
+\node[font=\small] at (axis cs:4.5e-4,6.2e-4) {Cnoidal};
+\node[font=\small] at (axis cs:1.5e-4,3.2e-3) {Solitary};
+\node[font=\small, align=center] at (axis cs:7e-3,4.4e-3) {Stream function\\ / Fourier};
+\node[font=\small, anchor=south west] at (axis cs:1.8e-2,1.08e-2) {breaking / limiting-wave boundary};
+
+\draw[dashed] (axis cs:1.6e-3,2e-5) -- (axis cs:1.6e-3,2e-2);
+\node[font=\scriptsize, rotate=90, anchor=south] at (axis cs:1.8e-3,8e-5) {shallower $\leftarrow$ \quad deeper $\rightarrow$};
+
+\end{loglogaxis}
+\end{tikzpicture}
+\caption{Adapted Le M\'ehaut\'e-style applicability diagram in the
+$(h/gT^2,\;H/gT^2)$ plane, synthesizing the standard theory-selection picture from
+classical and modern sources \cite{LeMehaute1976,Zhao2024}.
+This is a schematic engineering selection chart rather than a literal reproduction;
+exact boundaries vary across textbooks and later quantitative updates.}
+\label{fig:lemehaute}
+\end{figure*}
+
+\subsection{Cnoidal Wave Theory}
+For shallow water, the relevant nonlinearity is better measured by the
+\emph{Ursell number},
+\begin{equation}
+  UR = \frac{HL^2}{h^3},
+\end{equation}
+where $L$ is wavelength.
+When $UR$ becomes large, Stokes expansions in wave steepness lose accuracy and
+cnoidal-wave theory becomes the appropriate weakly dispersive nonlinear model
+\cite{LeMehaute1976,Fenton1990,DNVC205}.
+This is the regime of coastal and harbour engineering, where long waves propagate in
+finite but relatively small depth.
+
+A periodic cnoidal wave may be written in terms of the Jacobi elliptic cosine as
+\begin{equation}
+  \eta(x,t)=\eta_2 + H\,\mathrm{cn}^2\!\left(
+    \frac{2K(m)}{L}(x-ct),\,m
+  \right),
+\end{equation}
+where $K(m)$ is the complete elliptic integral of the first kind, $m\in(0,1)$ is the
+elliptic modulus, and $c$ is the phase speed.
+Compared with Stokes waves, cnoidal waves have markedly sharper crests and broader,
+flatter troughs.
+As $m \to 1$, the wavelength tends to infinity and the cnoidal solution approaches the
+solitary-wave limit.
+
+In offshore design language, Stokes 5th-order theory is generally suitable for regular
+steep waves with $UR<30$, whereas cnoidal or stream-function theory should be used for
+very shallow-water cases with $UR>30$ \cite{DNVC205}.
+Near the transition $UR\approx 30$, stream-function methods are often preferred because
+both Stokes and cnoidal asymptotic descriptions may lose accuracy \cite{DNVC205}.
+
+\subsection{Solitary-Wave Limit}
+The solitary wave is the extreme shallow-water limit of the cnoidal family.
+Unlike oscillatory deep-water waves, a solitary wave is an isolated hump propagating
+without changing shape, with elevation entirely above the mean water level
+\cite{LeMehaute1976,Fenton1990}.
+Although less relevant to open-ocean wind seas, solitary-wave ideas are important in
+tsunami and bore modelling and complete the shallow-water branch of classical wave
+theory.
 
 % ============================================================
 \section{Fenton's Higher-Order Theory}
@@ -344,8 +525,8 @@ error in the dynamic FSBC over $N$ collocation points on the free surface.
 This formulation converges faster than the Stokes perturbation series for very steep
 waves.
 Fenton's 5th- or 10th-order stream function theory is implemented in industry-standard
-software (OrcaFlex, HydroD) and is considered accurate even for waves near the breaking
-limit.
+software and is considered accurate even for waves near the breaking limit
+\cite{Fenton1990,DNVC205}.
 
 % ============================================================
 \section{Spectral Representations of Irregular Waves}
@@ -398,6 +579,36 @@ Real seas are multi-directional, modeled by:
 \end{equation}
 where $D(\theta)\propto\cos^s(\theta)$ is a spreading function centered on the main
 wave direction.
+
+\subsection{Rogue and Freak Waves}
+A modern review of ocean-wave theory should also acknowledge \emph{rogue} or
+\emph{freak} waves: unusually large individual waves embedded in an otherwise random sea.
+Operational offshore guidance commonly characterizes such events by criteria such as
+\begin{equation}
+  \frac{H_{\max}}{H_s} > 2
+  \qquad \text{or} \qquad
+  \frac{C_{\max}}{H_s} > 1.3,
+\end{equation}
+where $H_{\max}$ is the maximum individual wave height in a record and $C_{\max}$ is the
+maximum crest elevation \cite{DNVC205}.
+
+One important nonlinear mechanism is the Benjamin--Feir (modulational) instability of a
+narrowband, steep wave train \cite{BenjaminFeir1967}.
+Its strength is often summarized by the Benjamin--Feir index (BFI),
+\begin{equation}
+  \mathrm{BFI} = \sqrt{2}\,\frac{\varepsilon}{\nu},
+\end{equation}
+where $\varepsilon$ is spectral steepness and $\nu$ is spectral bandwidth.
+Large BFI indicates enhanced susceptibility to nonlinear focusing, especially in
+long-crested deep-water conditions.
+However, field evidence suggests that rogue-wave occurrence in the real ocean is not
+explained by BFI alone; directional spreading, crossing seas, current gradients, and
+linear/dispersive focusing may all contribute \cite{Gemmrich2022,Hafner2021}.
+
+The best-known measured example is the \emph{Draupner wave}, recorded on
+1 January 1995 at the Draupner platform in the North Sea.
+Its measurement transformed rogue waves from anecdotal reports into a concrete offshore
+design concern \cite{ECMWFDraupner,DNVC205}.
 
 % ============================================================
 \section{Real Ocean Waves: Properties and Depth Effects}
@@ -465,6 +676,12 @@ Table~\ref{tab:depthtable} summarizes the three regimes.
     gentle slopes; plunging on steep slopes).
 \end{itemize}
 
+The shallow-water regime is also the regime in which cnoidal and solitary-wave ideas
+become practically important.
+In dimensionless terms, depth alone is not sufficient to select the correct theory:
+nonlinearity and dispersion must be considered jointly, which is precisely what the
+Le M\'ehaut\'e chart in Fig.~\ref{fig:lemehaute} summarizes \cite{LeMehaute1976,Zhao2024}.
+
 % ============================================================
 \section{Industrial Usage Summary}
 \label{sec:industrial}
@@ -493,8 +710,10 @@ engineering tasks.
       & Fenton high-order or CFD
       & Requires highly accurate wave profile and kinematics at the extreme crest. \\[4pt]
     Shallow-water wave loading
-      & Stream function (Fenton) or Chappelear--Dean
-      & Optimized for very shallow water where Stokes series may not converge. \\[4pt]
+      & Cnoidal (large $UR$), or stream function/Fourier near transition and near breaking
+      & Stokes theory loses validity in very shallow water; cnoidal theory captures long,
+        nonlinear shallow-water waves, while stream-function methods are preferred close
+        to the transition region and near the limiting steep-wave boundary. \\[4pt]
     Wave forecasting
       & Linear spectral models (WAM, WAVEWATCH~III)
       & Global/regional spectral energy balance; linear physics dominates at large
@@ -528,15 +747,23 @@ models discussed in this paper.
     Stokes (2nd--5th) & 1847/modern
       & Perturbation series in wave steepness. Irrotational, asymmetric profile,
         mass transport. Standard for nonlinear extreme load calculations. \\
+    Cnoidal / solitary & 1895/modern
+      & Shallow-water nonlinear theory associated with long waves and large Ursell number.
+        Used in coastal and harbour engineering; the solitary wave is recovered in the
+        long-wave limit. \\
     Fenton (high-order) & 1980s
       & Numerical/stream-function solution. Highly accurate for steep waves near
-        breaking. Used for detailed crest kinematics in advanced structural analysis. \\
+        breaking and useful across transition regimes. Used for detailed crest
+        kinematics in advanced structural analysis. \\
     Pierson--Moskowitz & 1964
       & Energy spectrum for fully developed seas. Base spectrum for many
         applications. \\
     JONSWAP         & 1973
       & Spectrum for fetch-limited seas (e.g., North Sea). Sharper spectral peak.
         Industry standard for extreme event design worldwide. \\
+    Rogue-wave design guidance & modern
+      & Statistical and nonlinear interpretation of extreme individual waves,
+        including freak-wave criteria used in offshore design recommendations. \\
     \bottomrule
   \end{tabular}
 \end{table*}
@@ -552,15 +779,67 @@ Airy's revolutionary linearization, providing the indispensable dispersion relat
 the framework for spectral analysis.
 Stokes' nonlinear perturbation method explained wave asymmetry, a crucial step validated
 by observation.
-The modern era, championed by Fenton, leverages computational power to achieve
-high-fidelity solutions for the most extreme waves.
+For shallow water, cnoidal and solitary-wave theories provided the correct nonlinear
+long-wave description where steepness-based Stokes expansions cease to be appropriate.
+The modern era, championed by Fenton and related numerical formulations, leverages
+computational power to achieve high-fidelity solutions for the most extreme waves.
 
 Today's engineering practice is a hybrid: the randomness of the sea is captured through
 linear spectral models (Pierson--Moskowitz, JONSWAP), while the critical nonlinear
-physics of extreme waves is incorporated via Stokes or Fenton theories for load
-calculations.
+physics of extreme waves is incorporated via Stokes, cnoidal, or stream-function/Fenton
+theories for load calculations.
 This combination enables the safe and efficient design of structures that operate in the
 dynamic and challenging ocean environment.
+Modern offshore guidance additionally recognizes rogue or freak waves as a practical
+design consideration, linking classical wave theory to contemporary reliability-based
+assessment \cite{DNVC205}.
+
+% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{LeMehaute1976}
+B.~Le M\'ehaut\'e,
+\emph{An Introduction to Hydrodynamics and Water Waves}.
+New York, NY, USA: Springer, 1976.
+
+\bibitem{Zhao2024}
+K.~Zhao, Y.~Wang, and P.~L.-F.~Liu,
+``A guide for selecting periodic water wave theories---Le M\'ehaut\'e (1976)'s graph revisited,''
+\emph{Coastal Engineering}, vol.~188, Art.~104432, 2024.
+
+\bibitem{Fenton1990}
+J.~D.~Fenton,
+``Nonlinear wave theories,''
+in \emph{The Sea, Vol.~9: Ocean Engineering Science},
+B.~Le M\'ehaut\'e and D.~M.~Hanes, Eds.
+New York, NY, USA: Wiley, 1990, pp.~3--25.
+
+\bibitem{DNVC205}
+DNV GL,
+\emph{DNVGL-RP-C205: Environmental Conditions and Environmental Loads},
+Recommended Practice, Aug.~2017.
+
+\bibitem{BenjaminFeir1967}
+T.~B.~Benjamin and J.~E.~Feir,
+``The disintegration of wave trains on deep water. Part 1. Theory,''
+\emph{Journal of Fluid Mechanics}, vol.~27, no.~3, pp.~417--430, 1967.
+
+\bibitem{Gemmrich2022}
+J.~Gemmrich, T.~Breivik, A.~Kromer, L.~Lenain, and M.~A.~Donelan,
+``Generation mechanism and prediction of an observed rogue wave,''
+\emph{Scientific Reports}, vol.~12, Art.~1718, 2022.
+
+\bibitem{Hafner2021}
+D.~Hafner, C.~Gemmrich, and J.~M.~Janssen,
+``Real-world rogue wave probabilities,''
+\emph{Scientific Reports}, vol.~11, Art.~10084, 2021.
+
+\bibitem{ECMWFDraupner}
+ECMWF,
+``What conditions led to the Draupner freak wave?''
+\emph{ECMWF Newsletter}, no.~148, pp.~12--16, 2016.
+
+\end{thebibliography}
 
 % ============================================================
 \end{document}
