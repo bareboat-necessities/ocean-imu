@@ -284,7 +284,8 @@ def build_figure():
         for i in range(len(theory_labels))
     ]
     leg1 = ax.legend(handles=theory_handles, title='Colored applicability areas',
-                     loc='lower right', fontsize=9, title_fontsize=10, framealpha=0.95)
+                     loc='lower right', bbox_to_anchor=(0.995, 0.01),
+                     borderaxespad=0.4, fontsize=9, title_fontsize=10, framealpha=0.95)
     ax.add_artist(leg1)
 
     line_legend_handles = [
@@ -301,8 +302,10 @@ def build_figure():
         Line2D([0], [0], color='C6', linestyle='-.', linewidth=2.0, label='Numerical / stream-function limit'),
         Line2D([0], [0], color='0.4', linestyle='--', linewidth=1.2, label=r'$h/L = 0.05,\ 0.5$'),
     ]
-    ax.legend(handles=line_legend_handles, title='Contours and boundaries',
-              loc='upper left', fontsize=9, title_fontsize=10, framealpha=0.95)
+    leg2 = ax.legend(handles=line_legend_handles, title='Contours and boundaries',
+                     loc='lower right', bbox_to_anchor=(0.73, 0.01),
+                     borderaxespad=0.4, fontsize=9, title_fontsize=10, framealpha=0.95)
+    ax.add_artist(leg2)
 
     fig.tight_layout()
     return fig
