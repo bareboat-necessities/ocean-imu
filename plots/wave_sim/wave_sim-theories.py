@@ -1,33 +1,65 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import special
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 
 
-def reproduce_wave_theory_chart():
-    # ----------------------------
-    # Direct Python translation of the MATLAB workflow
-    # ----------------------------
-    kh = (10.0 ** np.arange(-3, 0.8001, 0.02))[:, None]   # column vector
+def longest_path(paths):
+    if not paths:
+        return None
+    return max(paths, key=lambda p: (np.nanmax(p[:, 0]) - np.nanmin(p[:, 0]), len(p)))
+
+
+def contour_level_segments(xgrid2d, ygrid2d, zgrid2d, level=0.01):
+    fig, ax = plt.subplots()
+    cs = ax.contour(xgrid2d, ygrid2d, zgrid2d, levels=[level])
+    segs = [np.asarray(seg) for seg in cs.allsegs[0] if len(seg) > 1]
+    plt.close(fig)
+    return segs
+
+
+def interp_log_curve(x, y, x_new):
+    mask = np.isfinite(x) & np.isfinite(y) & (x > 0) & (y > 0)
+    x = np.asarray(x)[mask]
+    y = np.asarray(y)[mask]
+    if len(x) < 2:
+        return np.full_like(x_new, np.nan, dtype=float)
+
+    order = np.argsort(x)
+    x = x[order]
+    y = y[order]
+
+    xu, idx = np.unique(x, return_index=True)
+    yu = y[idx]
+    if len(xu) < 2:
+        return np.full_like(x_new, np.nan, dtype=float)
+
+    out = np.full_like(x_new, np.nan, dtype=float)
+    valid = (x_new >= xu.min()) & (x_new <= xu.max())
+    out[valid] = 10 ** np.interp(np.log10(x_new[valid]), np.log10(xu), np.log10(yu))
+    return out
+
+
+def main():
+    # -------------------------------------------------------
+    # Reproduce core MATLAB calculations
+    # -------------------------------------------------------
+    kh = (10.0 ** np.arange(-3, 0.8001, 0.02))[:, None]
     kH = (10.0 ** np.arange(-5, -0.23 + 1e-12, 0.02)) * 2.0
     HOverL, hOverL = np.meshgrid(kH / (2 * np.pi), kh[:, 0] / (2 * np.pi))
 
     ax_range = [0.01, 1.0, 1e-5, 0.3]
-    UR_lim = 26.0  # Stokes wave applicable in the range with Ursell <= 26
+    UR_lim = 26.0
 
-    # Mask Stokes region beyond UR = 26
     HOverL_masked = HOverL.copy()
     HOverL_masked[HOverL > (UR_lim * hOverL ** 3)] = np.nan
 
-    # ----------------------------
-    # Coefficients
-    # ----------------------------
     sigma = np.tanh(kh)
-
     B31 = (3 + 8 * sigma**2 - 9 * sigma**4) / (16 * sigma**4)
     B33 = (27 - 9 * sigma**2 + 9 * sigma**4 - 3 * sigma**6) / (64 * sigma**6)
 
     alpha1 = np.cosh(2 * kh)
-
     B51 = (
         121 * alpha1**5 + 263 * alpha1**4 + 376 * alpha1**3
         - 1999 * alpha1**2 + 2509 * alpha1 - 1108
@@ -45,19 +77,11 @@ def reproduce_wave_theory_chart():
          + 1326 * alpha1**2 + 827 * alpha1 + 130) * 5
     ) / (((alpha1 - 1) ** 6) * (12 * alpha1**2 + 11 * alpha1 + 2) * 384)
 
-    # ----------------------------
-    # Solve for ka from:
-    # 2*pi*H/L - ka*(2 + 2*(B31+B33)*ka^2 + 2*(B51+B53+B55)*ka^4) = 0
-    # which simplifies to:
-    # pi*H/L = ka + A*ka^3 + B*ka^5
-    # ----------------------------
     A = B31 + B33
     B = B51 + B53 + B55
     C = np.pi * HOverL_masked
 
-    ka = np.where(np.isnan(C), np.nan, C.copy())  # small-wave initial guess
-
-    # Newton iteration
+    ka = np.where(np.isnan(C), np.nan, C.copy())
     for _ in range(30):
         f = ka + A * ka**3 + B * ka**5 - C
         fp = 1 + 3 * A * ka**2 + 5 * B * ka**4
@@ -66,9 +90,6 @@ def reproduce_wave_theory_chart():
         ka_new = np.where(ka_new > 0, ka_new, ka / 2)
         ka = np.where(np.isnan(ka), np.nan, ka_new)
 
-    # ----------------------------
-    # Free-surface order contributions evaluated at crest (theta = 0)
-    # ----------------------------
     eta1 = np.ones_like(ka)
     eta2 = ka / 4 * (3 - sigma**2) / sigma**3
     eta3 = ka**2 * (B31 + B33)
@@ -80,7 +101,6 @@ def reproduce_wave_theory_chart():
         + (24 * alpha1**6 + 116 * alpha1**5 + 214 * alpha1**4 + 188 * alpha1**3
            + 133 * alpha1**2 + 101 * alpha1 + 34)
     )
-
     eta5 = ka**4 * (B51 + B53 + B55)
 
     eta_ratio2 = eta2 / eta1
@@ -88,59 +108,27 @@ def reproduce_wave_theory_chart():
     eta_ratio4 = eta4 / (eta1 + eta2 + eta3)
     eta_ratio5 = eta5 / (eta1 + eta2 + eta3 + eta4)
 
-    # ----------------------------
-    # Helper functions
-    # ----------------------------
-    def contour_level_segments(Z, level=0.01):
-        fig, ax = plt.subplots()
-        cs = ax.contour(hOverL, HOverL_masked, Z, levels=[level])
-        segs = [np.asarray(seg) for seg in cs.allsegs[0] if len(seg) > 1]
-        plt.close(fig)
-        return segs
+    # 1% contour paths for Stokes order boundaries
+    A2_paths = contour_level_segments(hOverL, HOverL_masked, eta_ratio2, 0.01)
+    A3_paths = contour_level_segments(hOverL, HOverL_masked, eta_ratio3, 0.01)
+    A4_paths = contour_level_segments(hOverL, HOverL_masked, eta_ratio4, 0.01)
+    A5_paths = contour_level_segments(hOverL, HOverL_masked, eta_ratio5, 0.01)
 
-    def plot_contourf(Z, title):
-        fig, ax = plt.subplots(figsize=(7, 5.5))
-        cs = ax.contourf(hOverL, HOverL_masked, Z, levels=[0.01, 0.05, 0.1, 0.2])
-        fig.colorbar(cs, ax=ax)
-        ax.set_xscale("log")
-        ax.set_yscale("log")
-        ax.set_xlim(ax_range[0], ax_range[1])
-        ax.set_ylim(ax_range[2], ax_range[3])
-        ax.set_xlabel("h/L")
-        ax.set_ylabel("H/L")
-        ax.set_title(title)
-        fig.tight_layout()
-        return fig, ax
+    p2 = longest_path(A2_paths)
+    p3 = longest_path(A3_paths)
+    p4 = longest_path(A4_paths)
+    p5 = longest_path(A5_paths)
 
-    # ----------------------------
-    # Individual contour figures
-    # ----------------------------
-    plot_contourf(eta_ratio2, "A2 / A1 at crest")
-    plot_contourf(eta_ratio3, "A3 / (A1 + A2) at crest")
-    plot_contourf(eta_ratio4, "A4 / (A1 + A2 + A3) at crest")
-    plot_contourf(eta_ratio5, "A5 / (A1 + A2 + A3 + A4) at crest")
+    # Continuous x-grid for fills
+    x = np.logspace(np.log10(ax_range[0]), np.log10(ax_range[1]), 800)
+    y_min = np.full_like(x, ax_range[2], dtype=float)
 
-    # Extract 1% contour lines
-    A2_paths = contour_level_segments(eta_ratio2, 0.01)
-    A3_paths = contour_level_segments(eta_ratio3, 0.01)
-    A4_paths = contour_level_segments(eta_ratio4, 0.01)
-    A5_paths = contour_level_segments(eta_ratio5, 0.01)
+    y_a2 = interp_log_curve(p2[:, 0], p2[:, 1], x) if p2 is not None else np.full_like(x, np.nan)
+    y_a3 = interp_log_curve(p3[:, 0], p3[:, 1], x) if p3 is not None else np.full_like(x, np.nan)
+    y_a4 = interp_log_curve(p4[:, 0], p4[:, 1], x) if p4 is not None else np.full_like(x, np.nan)
+    y_a5 = interp_log_curve(p5[:, 0], p5[:, 1], x) if p5 is not None else np.full_like(x, np.nan)
 
-    # ----------------------------
-    # Combined plot
-    # ----------------------------
-    fig, ax = plt.subplots(figsize=(8, 6.2))
-
-    for seg in A2_paths:
-        ax.plot(seg[:, 0], seg[:, 1], 'k')
-    for seg in A3_paths:
-        ax.plot(seg[:, 0], seg[:, 1], 'k')
-    for seg in A4_paths:
-        ax.plot(seg[:, 0], seg[:, 1], 'k')
-    for seg in A5_paths:
-        ax.plot(seg[:, 0], seg[:, 1], 'k')
-
-    # Breaking lines by Fenton
+    # Breaking line by Fenton
     lambda_over_h = 2 * np.pi / kh[:, 0]
     HoverL_break = (
         kh[:, 0]
@@ -153,24 +141,17 @@ def reproduce_wave_theory_chart():
            + 0.0093407 * lambda_over_h**3)
         / (2 * np.pi)
     )
-    ax.plot(hOverL[:, 0], HoverL_break, 'b-.', linewidth=2)
+    y_break = interp_log_curve(hOverL[:, 0], HoverL_break, x)
 
-    # Ursell number lines
-    Ur10 = 10 * hOverL[:, 0] ** 3
-    Ur10[Ur10 > HoverL_break] = np.nan
-    ax.plot(hOverL[:, 0], Ur10, 'b', linewidth=2)
+    # Ursell lines
+    y_ur1 = x**3
+    y_ur10 = 10 * x**3
+    y_ur26 = 26 * x**3
+    y_ur1 = np.where(y_ur1 <= y_break, y_ur1, np.nan)
+    y_ur10 = np.where(y_ur10 <= y_break, y_ur10, np.nan)
+    y_ur26 = np.where(y_ur26 <= y_break, y_ur26, np.nan)
 
-    Ur1 = 1 * hOverL[:, 0] ** 3
-    Ur1[Ur1 > HoverL_break] = np.nan
-    ax.plot(hOverL[:, 0], Ur1, 'b--', linewidth=2)
-
-    Ur26 = 26 * hOverL[:, 0] ** 3
-    Ur26[Ur26 > HoverL_break] = np.nan
-    ax.plot(hOverL[:, 0], Ur26, 'b--', linewidth=2)
-
-    # ----------------------------
-    # Plot m curves based on Fenton's cnoidal wave solutions
-    # ----------------------------
+    # Cnoidal m-curves from Fenton (1999)
     h = 10.0
     H = np.arange(0.01, 7.8 + 1e-12, 0.001)
 
@@ -189,42 +170,111 @@ def reproduce_wave_theory_chart():
         ) * h
         return h / L, H / L
 
-    x96, y96 = fenton_cnoidal_curve(0.96)
-    ax.plot(x96, y96, 'r:', linewidth=2)
+    x_m96_raw, y_m96_raw = fenton_cnoidal_curve(0.96)
+    x_msol_raw, y_msol_raw = fenton_cnoidal_curve(1 - 4e-8)
 
-    xsol, ysol = fenton_cnoidal_curve(1 - 4e-8)
-    ax.plot(xsol, ysol, 'r', linewidth=2)
+    y_m96 = interp_log_curve(x_m96_raw, y_m96_raw, x)
+    y_msol = interp_log_curve(x_msol_raw, y_msol_raw, x)
 
-    # Numerical solutions region as analytical solution becomes problematic
-    sol_lim = hOverL[:, 0] * 0.4
-    sol_lim[hOverL[:, 0] > 0.20004] = np.nan
-    sol_lim[hOverL[:, 0] < 0.024] = np.nan
-    ax.plot(hOverL[:, 0], sol_lim, 'k-.', linewidth=2)
+    # Numerical / stream-function region boundary
+    y_num = 0.4 * x
+    y_num[(x > 0.20004) | (x < 0.024)] = np.nan
 
-    # Vertical reference lines
-    ax.axvline(0.5, color='k', linestyle='--', linewidth=1)
-    ax.axvline(0.05, color='k', linestyle='--', linewidth=1)
+    # -------------------------------------------------------
+    # Plot
+    # -------------------------------------------------------
+    fig, ax = plt.subplots(figsize=(10, 7.5))
 
-    # Annotation
-    xt = [1.2e-2, 2.1e-2, 2.7e-2]
-    yt = [6e-5, 6e-5, 1.4e-5]
-    labels = [r'$U_r = 26$', r'$U_r = 10,\ m \approx 0.5$', r'$U_r = 1$']
-    for x, y, txt in zip(xt, yt, labels):
-        ax.text(x, y, txt, rotation=45, color='b')
+    def fill_region(y_lo, y_hi, where, label):
+        ax.fill_between(x, y_lo, y_hi, where=where, alpha=0.22, label=label)
 
+    # Theory areas
+    fill_region(y_min, y_a2, np.isfinite(y_a2), "Linear")
+    fill_region(y_a2, y_a3, np.isfinite(y_a2) & np.isfinite(y_a3), "Stokes II")
+    fill_region(y_a3, y_a4, np.isfinite(y_a3) & np.isfinite(y_a4), "Stokes III")
+    fill_region(y_a4, y_a5, np.isfinite(y_a4) & np.isfinite(y_a5), "Stokes IV")
+    fill_region(y_a5, y_break, np.isfinite(y_a5) & np.isfinite(y_break), "Stokes V")
+
+    fill_region(y_ur1, y_ur10, np.isfinite(y_ur1) & np.isfinite(y_ur10), "Cnoidal (low-order)")
+    fill_region(y_ur10, y_m96, np.isfinite(y_ur10) & np.isfinite(y_m96), "Cnoidal III")
+    fill_region(y_m96, y_msol, np.isfinite(y_m96) & np.isfinite(y_msol), "Cnoidal V")
+    fill_region(y_msol, y_break, np.isfinite(y_msol) & np.isfinite(y_break), "Solitary-wave side")
+
+    fill_region(y_num, y_break, np.isfinite(y_num) & np.isfinite(y_break), "Numerical / stream-function")
+
+    # Boundary curves and contours
+    if p2 is not None:
+        ax.plot(p2[:, 0], p2[:, 1], '-', linewidth=1.8, color='k')
+    if p3 is not None:
+        ax.plot(p3[:, 0], p3[:, 1], '-', linewidth=1.8, color='k')
+    if p4 is not None:
+        ax.plot(p4[:, 0], p4[:, 1], '-', linewidth=1.8, color='k')
+    if p5 is not None:
+        ax.plot(p5[:, 0], p5[:, 1], '-', linewidth=1.8, color='k')
+
+    ax.plot(hOverL[:, 0], HoverL_break, '-.', linewidth=2.2)
+    ax.plot(x, y_ur26, '--', linewidth=2.0)
+    ax.plot(x, y_ur10, '--', linewidth=2.0)
+    ax.plot(x, y_ur1, '--', linewidth=2.0)
+    ax.plot(x_m96_raw, y_m96_raw, ':', linewidth=2.2)
+    ax.plot(x_msol_raw, y_msol_raw, '-', linewidth=2.2)
+    ax.plot(x, y_num, '-.', linewidth=2.0)
+
+    ax.axvline(0.05, linestyle='--', linewidth=1.2, color='0.4')
+    ax.axvline(0.5, linestyle='--', linewidth=1.2, color='0.4')
+
+    ax.text(1.22e-2, 6.3e-5, r'$U_r = 26$', rotation=45)
+    ax.text(2.05e-2, 6.0e-5, r'$U_r = 10$', rotation=45)
+    ax.text(2.70e-2, 1.5e-5, r'$U_r = 1$', rotation=45)
+
+    # Axes
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlim(ax_range[0], ax_range[1])
     ax.set_ylim(ax_range[2], ax_range[3])
     ax.set_xlabel(r'$h/L$')
     ax.set_ylabel('H/L')
-    ax.set_title('Combined applicability chart reproduced from MATLAB workflow')
-    ax.tick_params(length=8)
-    ax.set_axisbelow(False)
+    ax.set_title('Wave-theory applicability chart with colored regions')
+    ax.tick_params(length=7)
+    ax.grid(True, which='major', alpha=0.25)
 
+    # Two legends
+    theory_labels = [
+        "Linear", "Stokes II", "Stokes III", "Stokes IV", "Stokes V",
+        "Cnoidal (low-order)", "Cnoidal III", "Cnoidal V",
+        "Solitary-wave side", "Numerical / stream-function"
+    ]
+    theory_handles = [
+        Patch(facecolor=ax.collections[i].get_facecolor()[0], edgecolor='none',
+              alpha=0.22 if i < 9 else 0.18, label=theory_labels[i])
+        for i in range(len(theory_labels))
+    ]
+
+    leg1 = ax.legend(handles=theory_handles, title='Colored applicability areas',
+                     loc='lower right', fontsize=9, title_fontsize=10, framealpha=0.95)
+    ax.add_artist(leg1)
+
+    line_legend_handles = [
+        Line2D([0], [0], color='k', linewidth=1.8, label=r'A2/A1 = 1%'),
+        Line2D([0], [0], color='k', linewidth=1.8, label=r'A3/(A1+A2) = 1%'),
+        Line2D([0], [0], color='k', linewidth=1.8, label=r'A4/(A1+A2+A3) = 1%'),
+        Line2D([0], [0], color='k', linewidth=1.8, label=r'A5/(A1+A2+A3+A4) = 1%'),
+        Line2D([0], [0], color='C0', linestyle='-.', linewidth=2.2, label='Breaking limit'),
+        Line2D([0], [0], color='C1', linestyle='--', linewidth=2.0, label=r'$U_r = 26$'),
+        Line2D([0], [0], color='C2', linestyle='--', linewidth=2.0, label=r'$U_r = 10$'),
+        Line2D([0], [0], color='C3', linestyle='--', linewidth=2.0, label=r'$U_r = 1$'),
+        Line2D([0], [0], color='C4', linestyle=':', linewidth=2.2, label=r'$m = 0.96$'),
+        Line2D([0], [0], color='C5', linestyle='-', linewidth=2.2, label=r'$m = 1 - 4\times10^{-8}$'),
+        Line2D([0], [0], color='C6', linestyle='-.', linewidth=2.0, label='Numerical / stream-function limit'),
+        Line2D([0], [0], color='0.4', linestyle='--', linewidth=1.2, label=r'$h/L = 0.05,\ 0.5$'),
+    ]
+
+    ax.legend(handles=line_legend_handles, title='Contours and boundaries',
+              loc='upper left', fontsize=9, title_fontsize=10, framealpha=0.95)
+
+    fig.tight_layout()
     plt.show()
 
 
 if __name__ == "__main__":
-    reproduce_wave_theory_chart()
-  
+    main()
