@@ -390,7 +390,7 @@ def build_figure():
                 zorder=12)
     # Rectangle labels on the guide lines, colored to match the legend/lines
     line_box(ax, 0.021, 8.8e-5, r"$U_r=26$", color=line_ur26.get_color(), rotation=46)
-    line_box(ax, 0.026, 3.3e-4, r"$m=0.5$\n(cnoidal)", color=line_m05.get_color(), rotation=47)
+    line_box(ax, 0.026, 3.3e-4, r"$m=0.5$ (cnoidal)", color=line_m05.get_color(), rotation=47)
     line_box(ax, 0.023, 2.9e-2, r"$m=1-4\times10^{-8}$", color=line_msol.get_color(), rotation=60)
     line_box(ax, 0.121, 1.18e-1, r"$m=0.96$", color=line_m96.get_color(), rotation=46)
 
