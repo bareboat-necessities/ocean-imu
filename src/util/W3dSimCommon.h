@@ -230,16 +230,11 @@ class IW3dFusionAdapter {
 public:
     virtual ~IW3dFusionAdapter() = default;
     virtual void updateMag(const Vector3f& mag_body_ned) = 0;
-    virtual void update(float dt,
-                        const Vector3f& gyr_meas_ned,
-                        const Vector3f& acc_meas_ned,
-                        float temperature_c) = 0;
+    virtual void update(float dt, const Vector3f& gyr_meas_ned, const Vector3f& acc_meas_ned, float temperature_c) = 0;
     virtual FilterSnapshot snapshot() const = 0;
 };
 
-using ImuNoiseInjector = std::function<void(Vector3f& acc_body_zu,
-                                            Vector3f& gyr_body_zu,
-                                            float dt)>;
+using ImuNoiseInjector = std::function<void(Vector3f& acc_body_zu, Vector3f& gyr_body_zu, float dt)>;
 using MagNoiseInjector = std::function<void(Vector3f& mag_body_enu, float dt_mag)>;
 
 struct SimulationNoiseModels {
