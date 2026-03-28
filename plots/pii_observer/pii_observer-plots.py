@@ -173,23 +173,6 @@ for fname in files:
     axes[-1].set_xlabel("Time (s)")
     finalize_plot(fig, outbase)
 
-    # === Angle errors (summary, only if enabled) ===
-    if PLOT_ERRORS:
-        error_cols = [
-            ("err_roll",  "Roll err [deg]",  "tab:red"),
-            ("err_pitch", "Pitch err [deg]", "tab:red"),
-            ("err_yaw",   "Yaw err [deg]",   "tab:red"),
-            ("angle_err", "Quat err [deg]",  "tab:purple"),
-        ]
-        nrows = len(error_cols)
-        fig, axes = make_subplots(nrows, latex_safe(f"{variant_label}: {basename}") + " (Angle Errors)")
-        for ax, (col, ylabel, color) in zip(axes, error_cols):
-            ax.plot(time, df[col], color=color)
-            ax.set_ylabel(ylabel)
-            ax.grid(True)
-        axes[-1].set_xlabel("Time (s)")
-        finalize_plot(fig, outbase, "_angle_errs")
-
     # === Z-axis kinematics ===
     nrows = 6 if PLOT_ERRORS else 3
     fig, axes = make_subplots(nrows, latex_safe(f"{variant_label}: {basename}") + " (Z-axis)")
@@ -234,106 +217,6 @@ for fname in files:
 
     axes[-1].set_xlabel("Time (s)")
     finalize_plot(fig, outbase, "_zkin")
-
-    # === XY kinematics ===
-    nrows = 6 if PLOT_ERRORS else 3
-    fig, axes = make_subplots(nrows, latex_safe(f"{variant_label}: {basename}") + " (X/Y axes)")
-    for i, prefix in enumerate(["disp", "vel", "acc"]):
-        if PLOT_ERRORS:
-            ax_val = axes[2*i]
-            ax_err = axes[2*i + 1]
-        else:
-            ax_val = axes[i]
-            ax_err = None
-
-        ax_val.plot(time, df[f"{prefix}_ref_x"], label="Ref X", color="tab:blue")
-        ax_val.plot(time, df[f"{prefix}_est_x"], label="Est X", linestyle="--", color="tab:blue")
-        ax_val.plot(time, df[f"{prefix}_ref_y"], label="Ref Y", color="tab:orange")
-        ax_val.plot(time, df[f"{prefix}_est_y"], label="Est Y", linestyle="--", color="tab:orange")
-        ax_val.set_ylabel(f"{prefix.capitalize()} XY")
-        ax_val.legend(ncol=2, fontsize=8)
-        ax_val.grid(True)
-
-        if PLOT_ERRORS:
-            ax_err.plot(time, df[f"{prefix}_err_x"], label="Err X", color="tab:blue")
-            ax_err.plot(time, df[f"{prefix}_err_y"], label="Err Y", color="tab:orange")
-            ax_err.set_ylabel("Error")
-            ax_err.legend(ncol=2, fontsize=8)
-            ax_err.grid(True)
-
-    axes[-1].set_xlabel("Time (s)")
-    finalize_plot(fig, outbase, "_xykin")
-
-    # === Accelerometer bias estimates vs true ===
-    acc_pairs = [
-        ("acc_bias_x",  "acc_bias_est_x",  "Accel bias X"),
-        ("acc_bias_y",  "acc_bias_est_y",  "Accel bias Y"),
-        ("acc_bias_z",  "acc_bias_est_z",  "Accel bias Z"),
-    ]
-    fig, axes = make_subplots(len(acc_pairs), latex_safe(f"{variant_label}: {basename}") + " (Accelerometer Biases)")
-    for ax, (true_col, est_col, label) in zip(axes, acc_pairs):
-        ax.plot(time, df[true_col], label="True", linewidth=1.5)
-        ax.plot(time, df[est_col], label="Estimated", linestyle="--", linewidth=1.0)
-        ax.set_ylabel(latex_safe(label))
-        ax.grid(True)
-        ax.legend(loc="upper right")
-    axes[-1].set_xlabel("Time (s)")
-    finalize_plot(fig, outbase, "_acc_bias")
-
-    # === Gyroscope bias estimates vs true ===
-    gyro_pairs = [
-        ("gyro_bias_x", "gyro_bias_est_x", "Gyro bias X"),
-        ("gyro_bias_y", "gyro_bias_est_y", "Gyro bias Y"),
-        ("gyro_bias_z", "gyro_bias_est_z", "Gyro bias Z"),
-    ]
-    fig, axes = make_subplots(len(gyro_pairs), latex_safe(f"{variant_label}: {basename}") + " (Gyroscope Biases)")
-    for ax, (true_col, est_col, label) in zip(axes, gyro_pairs):
-        ax.plot(time, df[true_col], label="True", linewidth=1.5)
-        ax.plot(time, df[est_col], label="Estimated", linestyle="--", linewidth=1.0)
-        ax.set_ylabel(latex_safe(label))
-        ax.grid(True)
-        ax.legend(loc="upper right")
-    axes[-1].set_xlabel("Time (s)")
-    finalize_plot(fig, outbase, "_gyro_bias")
-
-    # === Magnetometer bias estimates vs true (+ errors) ===
-    mag_pairs = [
-        ("mag_bias_x", "mag_bias_est_x", "Mag bias X"),
-        ("mag_bias_y", "mag_bias_est_y", "Mag bias Y"),
-        ("mag_bias_z", "mag_bias_est_z", "Mag bias Z"),
-    ]
-
-    # Only plot if the required columns exist
-    needed = [c for t,e,_ in mag_pairs for c in (t,e)]
-    if all(c in df.columns for c in needed):
-        nrows = 2 * len(mag_pairs) if PLOT_ERRORS else len(mag_pairs)
-        fig, axes = make_subplots(nrows, latex_safe(f"{variant_label}: {basename}") + " (Magnetometer Biases)")
-
-        for i, (true_col, est_col, label) in enumerate(mag_pairs):
-            if PLOT_ERRORS:
-                ax_val = axes[2*i]
-                ax_err = axes[2*i + 1]
-            else:
-                ax_val = axes[i]
-                ax_err = None
-
-            ax_val.plot(time, df[true_col], label="True", linewidth=1.5)
-            ax_val.plot(time, df[est_col], label="Estimated", linestyle="--", linewidth=1.0)
-            ax_val.set_ylabel(latex_safe(label) + r" [$\mu$T]")
-            ax_val.grid(True)
-            ax_val.legend(loc="upper right")
-
-            if PLOT_ERRORS:
-                err = df[est_col] - df[true_col]
-                ax_err.plot(time, err, color="tab:red")
-                ax_err.set_ylabel(r"Error [$\mu$T]")
-                ax_err.grid(True)
-
-        axes[-1].set_xlabel("Time (s)")
-        finalize_plot(fig, outbase, "_mag_bias")
-    else:
-        missing = [c for c in needed if c not in df.columns]
-        print(f"  (skip mag bias plots; missing columns: {missing})")
 
     # === Frequency / Tuner ===
     # We plot accel std-dev (sqrt variance) and sigma_a on the same axis.
