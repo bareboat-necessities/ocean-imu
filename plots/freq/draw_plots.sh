@@ -1,4 +1,3 @@
 #!/bin/bash -e
 
-python3 ./freq-plots.sh
-
+python3 ./freq-plots.py
