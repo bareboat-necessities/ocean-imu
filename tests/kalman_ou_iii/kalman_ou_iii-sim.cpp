@@ -24,10 +24,10 @@ bool attitude_only = false;
 class FusionAdapter_OU_III final : public IW3dFusionAdapter {
 public:
     FusionAdapter_OU_III(bool with_mag,
-                   const Vector3f& sigma_a_init,
-                   const Vector3f& sigma_g,
-                   const Vector3f& sigma_m,
-                   const Vector3f& mag_world_a)
+                         const Vector3f& sigma_a_init,
+                         const Vector3f& sigma_g,
+                         const Vector3f& sigma_m,
+                         const Vector3f& mag_world_a)
     {
         cfg_.with_mag = with_mag;
         cfg_.sigma_a = sigma_a_init;
