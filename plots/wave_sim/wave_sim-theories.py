@@ -383,7 +383,7 @@ def build_figure():
     # line labels
     ax.annotate("Breaking waves line",
                 xy=(0.19, float(np.interp(0.19, x1d, y_break))),
-                xytext=(0.34, 0.175),
+                xytext=(0.22, 0.175),
                 fontsize=9, color=line_break.get_color(),
                 bbox=dict(boxstyle='square,pad=0.18', fc='white', ec=line_break.get_color(), lw=1.2, alpha=0.96),
                 arrowprops=dict(arrowstyle='->', color=line_break.get_color(), lw=1.0),
@@ -404,15 +404,15 @@ def build_figure():
     # callouts anchored to visible interiors with cleaner layout
     callout(ax, "Linear\n(Airy wave theory)", interior_point_visible(hOverL, HOverL, category, 1, xlim, ylim), (0.52, 1.3e-3))
     callout(ax, "Stokes II", interior_point_visible(hOverL, HOverL, category, 2, xlim, ylim), (0.38, 8.5e-3))
-    callout(ax, "Stokes III", interior_point_visible(hOverL, HOverL, category, 3, xlim, ylim), (0.44, 2.9e-2))
-    callout(ax, "Stokes IV", interior_point_visible(hOverL, HOverL, category, 4, xlim, ylim), (0.56, 5.8e-2))
-    callout(ax, "Stokes V", interior_point_visible(hOverL, HOverL, category, 5, xlim, ylim), (0.095, 1.15e-1))
+    callout(ax, "Stokes III", interior_point_visible(hOverL, HOverL, category, 3, xlim, ylim), (0.24, 3.9e-2))
+    callout(ax, "Stokes IV", interior_point_visible(hOverL, HOverL, category, 4, xlim, ylim), (0.56, 9.8e-2))
+    callout(ax, "Stokes V", interior_point_visible(hOverL, HOverL, category, 5, xlim, ylim), (0.295, 1.15e-1))
     # no separate "Cnoidal" area callout because that region is not visible in this plotting window
-    callout(ax, "Cnoidal III", interior_point_visible(hOverL, HOverL, category, 7, xlim, ylim), (0.024, 2.8e-3))
-    callout(ax, "Cnoidal V", interior_point_visible(hOverL, HOverL, category, 8, xlim, ylim), (0.026, 1.7e-2))
+    callout(ax, "Cnoidal III", interior_point_visible(hOverL, HOverL, category, 7, xlim, ylim), (0.043, 2.8e-3))
+    callout(ax, "Cnoidal V", interior_point_visible(hOverL, HOverL, category, 8, xlim, ylim), (0.019, 1.7e-3))
     callout(ax, "Solitary-wave\nside", interior_point_visible(hOverL, HOverL, category, 9, xlim, ylim), (0.014, 7.0e-2))
-    callout(ax, "Fenton stream-function /\nnumerical", interior_point_visible(hOverL, HOverL, category, 10, xlim, ylim), (0.16, 5.0e-2))
-    callout(ax, "Beyond breaking /\ninvalid", interior_point_visible(hOverL, HOverL, category, 0, xlim, ylim), (0.075, 0.17))
+    callout(ax, "Fenton stream-function /\nnumerical", interior_point_visible(hOverL, HOverL, category, 10, xlim, ylim), (0.05, 5.0e-2))
+    callout(ax, "Beyond breaking /\ninvalid", interior_point_visible(hOverL, HOverL, category, 0, xlim, ylim), (0.025, 0.17))
 
     ax.set_xscale("log")
     ax.set_yscale("log")
