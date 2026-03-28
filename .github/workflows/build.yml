@@ -32,7 +32,8 @@ jobs:
 
       - name: Compile tests (${{ matrix.dir }})
         run: |
-          cd tests/${{ matrix.dir }} && make && cd ..
+          cd tests/${{ matrix.dir }}
+          make
 
       - name: Copy test data (${{ matrix.dir }})
         run: |
@@ -40,9 +41,13 @@ jobs:
 
       - name: Run tests (${{ matrix.dir }})
         run: |
-          cd tests/${{ matrix.dir }} && chmod +x *.sh && ./run_tests.sh && cp *.csv ../../plots/${{ matrix.dir }} && cd ..
+          cd tests/${{ matrix.dir }}
+          chmod +x *.sh
+          ./run_tests.sh
+          cp *.csv ../../plots/${{ matrix.dir }}
 
       - name: Generate PGF plots (${{ matrix.dir }})
+        shell: bash
         run: |
           cd plots/${{ matrix.dir }}
           chmod +x *.sh
@@ -50,7 +55,6 @@ jobs:
           mv -v *.pgf ../../doc/${{ matrix.dir }}/ || true
           mv -v *.svg ../../doc/${{ matrix.dir }}/ || true
           mv -v *.png ../../doc/${{ matrix.dir }}/ || true
-          cd ../..
 
       - name: Compile LaTeX document (${{ matrix.dir }})
         uses: xu-cheng/latex-action@v4
@@ -58,7 +62,8 @@ jobs:
           root_file: "*.tex"
           pre_compile: |
             echo "openout_any = a" | tee -a $(kpsewhich texmf.cnf)
-            curl -L https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml.jar -o plantuml.jar && export PLANTUML_JAR=$(pwd)/plantuml.jar
+            curl -L https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml.jar -o plantuml.jar
+            export PLANTUML_JAR=$(pwd)/plantuml.jar
             curl -L https://mirrors.ctan.org/macros/luatex/latex/plantuml/plantuml.sty -o plantuml.sty
             echo ">> Debug: TeX config patched, now checking PlantUML installation"
             plantuml -version || true
@@ -79,19 +84,8 @@ jobs:
           path: doc/${{ matrix.dir }}/**/*.pdf
           if-no-files-found: error
 
-      - name: Upload PDF to release (${{ matrix.dir }})
-        if: github.event_name == 'push'
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: doc/${{ matrix.dir }}/**/*.pdf
-          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
-          overwrite: true
-          file_glob: true
-
-      - name: Find SVGs to upload (${{ matrix.dir }})
+      - name: Find SVGs (${{ matrix.dir }})
         id: find_svgs
-        if: github.event_name == 'push'
         shell: bash
         run: |
           shopt -s nullglob globstar
@@ -99,26 +93,69 @@ jobs:
             doc/${{ matrix.dir }}/**/*pmstokes*H1.5*.svg
             doc/${{ matrix.dir }}/**/*pmstokes*medium*.svg
           )
+
           if [ ${#files[@]} -gt 0 ]; then
-            echo "Found ${#files[@]} matching SVG file(s):"
-            printf '  %s\n' "${files[@]}"
-            {
-              echo "found=true"
-              echo "files<<EOF"
-              printf '%s\n' "${files[@]}"
-              echo "EOF"
-            } >> "$GITHUB_OUTPUT"
+            mkdir -p release-svg/${{ matrix.dir }}
+            for f in "${files[@]}"; do
+              cp -v "$f" release-svg/${{ matrix.dir }}/
+            done
+            echo "found=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No matching SVG files found."
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Upload SVG to release (${{ matrix.dir }})
-        if: github.event_name == 'push' && steps.find_svgs.outputs.found == 'true'
+      - name: Upload SVG artifacts (${{ matrix.dir }})
+        if: steps.find_svgs.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-svgs-${{ matrix.dir }}
+          path: release-svg/${{ matrix.dir }}/**/*.svg
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download all workflow artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: false
+
+      - name: Show downloaded files
+        shell: bash
+        run: |
+          find release-assets -type f | sort
+
+      - name: Upload PDFs to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ steps.find_svgs.outputs.files }}
+          file: release-assets/latex-pdfs-*/*.pdf
           tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
           overwrite: true
-          file_glob: false
+          file_glob: true
+
+      - name: Upload SVGs to release
+        shell: bash
+        run: |
+          shopt -s nullglob globstar
+          files=(release-assets/release-svgs-*/*.svg)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No matching SVG files to upload."
+            exit 0
+          fi
+          printf '%s\n' "${files[@]}" > svg_files.txt
+          cat svg_files.txt
+
+      - name: Upload SVGs to release (serialized)
+        if: hashFiles('release-assets/release-svgs-*/*.svg') != ''
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: release-assets/release-svgs-*/*.svg
+          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
+          overwrite: true
+          file_glob: true
