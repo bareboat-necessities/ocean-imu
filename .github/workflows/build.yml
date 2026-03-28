@@ -102,7 +102,6 @@ jobs:
           if [ ${#files[@]} -gt 0 ]; then
             echo "Found ${#files[@]} matching SVG file(s):"
             printf '  %s\n' "${files[@]}"
-
             {
               echo "found=true"
               echo "files<<EOF"
