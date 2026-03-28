@@ -94,7 +94,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: plots/${{ matrix.dir }}/**/*.svg
+          file: doc/${{ matrix.dir }}/**/*.svg
           tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
           overwrite: true
           file_glob: true
