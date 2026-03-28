@@ -1,0 +1,67 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fullpage}
+\usepackage{mathrsfs}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{pgf}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
+\usepackage{bm}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{array,booktabs,makecell,adjustbox}
+
+% Keep this — needed by PGF outputs that reference \mathdefault
+\providecommand{\mathdefault}[1]{#1}
+
+\title{Wave Simulation Charts}
+\author{Mikhail Grushinskiy}
+\date{2025}
+
+\begin{document}
+    \maketitle
+
+% === QMEKF Filter Euler Angle Comparisons ===
+
+% PM Stokes
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{qmekf_pmstokes_low.pgf}}
+    \caption{Kalman filter Euler angle comparison — PM Stokes, low $H_s$.}
+    \label{fig:qmekf_pmstokes_low}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{qmekf_pmstokes_medium.pgf}}
+    \caption{Kalman filter Euler angle comparison — PM Stokes, medium $H_s$.}
+    \label{fig:qmekf_pmstokes_medium}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{qmekf_pmstokes_high.pgf}}
+    \caption{Kalman filter Euler angle comparison — PM Stokes, high $H_s$.}
+    \label{fig:qmekf_pmstokes_high}
+    \end{figure}
+
+% JONSWAP
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{qmekf_jonswap_low.pgf}}
+    \caption{Kalman filter Euler angle comparison — JONSWAP, low $H_s$.}
+    \label{fig:qmekf_jonswap_low}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{qmekf_jonswap_medium.pgf}}
+    \caption{Kalman filter Euler angle comparison — JONSWAP, medium $H_s$.}
+    \label{fig:qmekf_jonswap_medium}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{qmekf_jonswap_high.pgf}}
+    \caption{Kalman filter Euler angle comparison — JONSWAP, high $H_s$.}
+    \label{fig:qmekf_jonswap_high}
+    \end{figure}
+
+\end{document}
