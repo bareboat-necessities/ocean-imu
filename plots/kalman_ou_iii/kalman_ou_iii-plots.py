@@ -126,7 +126,7 @@ for fname in files:
     if group_name is None:
         continue
 
-    outbase_tokens = ["w3d"]
+    outbase_tokens = ["w3d_ou3"]
     if variant:
         outbase_tokens.append(variant)
     outbase_tokens.extend([wave_type, group_name])
