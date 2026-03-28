@@ -1,59 +1,150 @@
-\documentclass[11pt,letterpaper]{article}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{fullpage}
+\documentclass[journal,10pt,twocolumn]{IEEEtran}
+
+% ------------------------------------------------------------
+% Core packages
+% ------------------------------------------------------------
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+
+\usepackage{amsthm}
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+
+\interdisplaylinepenalty=2500
+\allowdisplaybreaks
+\emergencystretch=2em
+
 \usepackage{mathrsfs}
 \usepackage{graphicx}
 \usepackage{cite}
 \usepackage{pgf}
-\usepackage{bm}
+\usepackage{pgfplots}
+\usepackage{xcolor}
 \usepackage{float}
-\usepackage{microtype}
+\usepackage[final]{microtype}
+\usepackage{etoolbox}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{adjustbox}
+\usepackage{placeins}
+\usepackage{siunitx}
+\usepackage{flafter}
+
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
 
 \providecommand{\mathdefault}[1]{#1}
+\pgfplotsset{compat=1.18}
 
-\title{Nonlinear Periodic Wave Computation via Fenton’s Spectral Method}
+% ------------------------------------------------------------
+% Typography / spacing
+% ------------------------------------------------------------
+\sisetup{
+    detect-weight = true,
+    detect-family = true,
+    per-mode = symbol,
+}
+
+\AtBeginEnvironment{equation}{\small}
+\AtBeginEnvironment{align}{\small}
+
+\setlist[description]{font=\footnotesize\bfseries, labelsep=0.6em, leftmargin=1.8em}
+
+\pdfstringdefDisableCommands{%
+    \def\SI#1#2{#1 #2}%
+    \def\bm#1{#1}%
+    \def\omega{omega}%
+    \def\eta{eta}%
+    \def\psi{psi}%
+    \def\phi{phi}%
+    \def\partial{d}%
+    \def\mathrm#1{#1}%
+    \def\text#1{#1}%
+    \def\_{}%
+    \def\cdot{}%
+    \def\;{ }%
+}
+
+\ifPDFTeX
+\DeclareUnicodeCharacter{2013}{\textendash}
+\DeclareUnicodeCharacter{2014}{\textemdash}
+\DeclareUnicodeCharacter{2018}{\textquoteleft}
+\DeclareUnicodeCharacter{2019}{\textquoteright}
+\DeclareUnicodeCharacter{201C}{\textquotedblleft}
+\DeclareUnicodeCharacter{201D}{\textquotedblright}
+\DeclareUnicodeCharacter{2212}{\textminus}
+\fi
+
+\setcounter{topnumber}{5}
+\setcounter{dbltopnumber}{5}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.9}
+
+\makeatletter
+\@ifpackageloaded{cite}{%
+    \renewcommand{\citepunct}{,\penalty\citepunctpenalty\,}%
+    \renewcommand{\citedash}{--}%
+}{}
+\makeatother
+
+% ------------------------------------------------------------
+% Title / author
+% ------------------------------------------------------------
+\title{Nonlinear Periodic Wave Computation via Fenton's Spectral Method}
 \author{}
-\date{}
-
 \begin{document}
-
     \maketitle
+
+    \begin{abstract}
+        This paper summarizes the mathematical formulation of Fenton's spectral method for steady periodic surface gravity waves in finite depth and briefly describes its \texttt{C++} implementation in \texttt{FentonWave.h}. The governing free-surface problem is posed for inviscid, incompressible, irrotational flow and represented through truncated Fourier series for the stream function and free-surface elevation. The resulting nonlinear collocation system is solved by Newton--Raphson iteration using an analytically assembled Jacobian. In addition to the core wave solution, the implementation provides derived kinematic and dynamic quantities, including velocity, pressure, energy flux, momentum flux, and Stokes drift. A companion \texttt{WaveSurfaceTracker} class models the motion of a small floating object constrained to the computed free surface.
+    \end{abstract}
+
+    \begin{IEEEkeywords}
+        Fenton wave, nonlinear periodic waves, stream function method, spectral method, steady gravity waves, collocation method, Newton--Raphson, free-surface flow
+    \end{IEEEkeywords}
 
     \section{Nonlinear Periodic Fenton Wave}
     \label{sec:fenton_method}
 
-
-    This paper summarizes the mathematical formulation of Fenton’s method for steady periodic surface gravity waves in finite depth \cite{Fenton1988}, followed by a brief description of its \verb|C++| implementation (see \texttt{FentonWave.h}).
+    This paper summarizes the mathematical formulation of Fenton's method for steady periodic surface gravity waves in finite depth \cite{Fenton1988}, followed by a brief description of its \texttt{C++} implementation (see \texttt{FentonWave.h}).
 
     \subsection{Governing Equations}
 
-    Let $(x,z)$ denote the horizontal and vertical coordinates, with the seabed at $z=-d$ and free surface at $z=\eta(x)$. Under the assumptions of irrotational, incompressible, inviscid flow, there exists a stream function $\psi(x,z)$ satisfying Laplace’s equation,
+    Let $(x,z)$ denote the horizontal and vertical coordinates, with the seabed at $z=-d$ and free surface at $z=\eta(x)$. Under the assumptions of irrotational, incompressible, inviscid flow, there exists a stream function $\psi(x,z)$ satisfying Laplace's equation,
     \begin{equation}
-        \nabla^2 \psi = \psi_{xx} + \psi_{zz} = 0\,, \quad -d \le z \le \eta(x)\,.
+        \nabla^2 \psi = \psi_{xx} + \psi_{zz} = 0,\quad -d \le z \le \eta(x).
     \end{equation}
     At the free surface $z=\eta(x)$, the dynamic (Bernoulli) and kinematic boundary conditions are
     \begin{align}
         \underbrace{\tfrac12\bigl(\psi_x^2 + \psi_z^2\bigr) + g\,\eta}_{\text{total head}}
-        &= R + c\,\psi_x\,,
+        &= R + c\,\psi_x,
         \label{eq:bernoulli}\\
-        \psi_z &= \eta_x\,\psi_x\,,
+        \psi_z &= \eta_x\,\psi_x,
         \label{eq:kinematic}
     \end{align}
-    where $g$ is gravity, $c$ the phase speed, and $R$ a constant (Bernoulli constant). At the bed $z=-d$, no‐flow implies
+    where $g$ is gravity, $c$ the phase speed, and $R$ a constant (Bernoulli constant). At the bed $z=-d$, no-flow implies
     \begin{equation}
-        \psi(x,-d)=0\,.
+        \psi(x,-d)=0.
     \end{equation}
 
     \subsection{Spectral Representation}
 
-    Let's expand the stream function and surface elevation in truncated Fourier series up to order $N$:
+    We expand the stream function and surface elevation in truncated Fourier series up to order $N$:
     \begin{align}
         \psi(x,z) &= B_0\,(z + d)
-        \;+\;\sum_{j=1}^{N} B_j\;\frac{\sinh\!\bigl[j\,k\,(z + d)\bigr]}{\cosh(j\,k\,d)}
-        \,\cos(j\,k\,x)\,,
+        + \sum_{j=1}^{N} B_j\;\frac{\sinh\!\bigl[j\,k\,(z + d)\bigr]}{\cosh(j\,k\,d)}
+        \,\cos(j\,k\,x),
         \label{eq:psi_series}\\
-        \eta(x) &= \sum_{j=0}^{N} E_j\;\cos(j\,k\,x)\,,
+        \eta(x) &= \sum_{j=0}^{N} E_j\;\cos(j\,k\,x),
         \label{eq:eta_series}
     \end{align}
     where
@@ -62,7 +153,7 @@
         \quad L = \text{wavelength},
         \quad \{B_j\},\{E_j\},c,R
     \]
-    are unknowns to be solved for. The coefficients $E_j$ are obtained from the collocation‐space values $\eta(x_i)$ via a DCT‐I transform:
+    are unknowns to be solved for. The coefficients $E_j$ are obtained from the collocation-space values $\eta(x_i)$ via a DCT-I transform:
     \[
         E = \mathrm{DCT\text{-}I}\bigl[\eta(x_i)\bigr],
         \quad x_i = \frac{i\pi}{N},\; i=0,\dots,N.
@@ -71,19 +162,27 @@
     \subsection{Discrete Nonlinear System}
 
     Enforce \eqref{eq:bernoulli} and \eqref{eq:kinematic} at the $N+1$ collocation points $x_i$, plus two global constraints:
-    \begin{itemize}
-        \item Mean elevation constraint: \(\displaystyle \frac{1}{N}\sum_{i=0}^N w_i\,\eta(x_i)=0,\quad w_0=w_N=\tfrac12,\;w_i=1\,.\)
-        \item Prescribed wave height: \(\max_i\eta(x_i)-\min_i\eta(x_i)=H.\)
+    \begin{itemize}[leftmargin=1.4em]
+        \item Mean elevation constraint:
+        \[
+            \frac{1}{N}\sum_{i=0}^N w_i\,\eta(x_i)=0,\quad
+            w_0=w_N=\tfrac12,\;w_i=1.
+        \]
+        \item Prescribed wave height:
+        \[
+            \max_i\eta(x_i)-\min_i\eta(x_i)=H.
+        \]
     \end{itemize}
     Let
     \[
-        \mathbf{X} = \begin{bmatrix}
-                         B_0,\dots,B_N,\;
-                         \eta(x_0),\dots,\eta(x_N),\;
-                         Q,\;R
-        \end{bmatrix}^T,
+        \mathbf{X} =
+        \begin{bmatrix}
+            B_0,\dots,B_N,\;
+            \eta(x_0),\dots,\eta(x_N),\;
+            Q,\;R
+        \end{bmatrix}^{T},
     \]
-    where $Q$ is the volume flux. Let's form the residual vector
+    where $Q$ is the volume flux. We form the residual vector
     \[
         \mathbf{F}(\mathbf{X}) =
         \begin{bmatrix}
@@ -97,16 +196,16 @@
     \[
         \mathbf{F}(\mathbf{X}) = \mathbf{0}
     \]
-    by Newton–Raphson:
+    by Newton--Raphson:
     \begin{equation}
         \mathbf{X}^{(n+1)}
         = \mathbf{X}^{(n)}
-        - \alpha
-        \;\mathbf{J}^{-1}\!\bigl(\mathbf{X}^{(n)}\bigr)
-        \;\mathbf{F}\bigl(\mathbf{X}^{(n)}\bigr),
+        - \alpha\,
+        \mathbf{J}^{-1}\!\bigl(\mathbf{X}^{(n)}\bigr)\,
+        \mathbf{F}\bigl(\mathbf{X}^{(n)}\bigr),
         \quad 0<\alpha\le1,
     \end{equation}
-    where $\mathbf{J} = \partial\mathbf{F}/\partial\mathbf{X}$ is the Jacobian (analytically constructed in the code), and $\alpha$ is a relaxation parameter (default 0.5).
+    where $\mathbf{J} = \partial\mathbf{F}/\partial\mathbf{X}$ is the Jacobian (analytically constructed in the code), and $\alpha$ is a relaxation parameter (default $0.5$).
 
     \subsection{Jacobian Matrix}
     \label{sec:jacobian}
@@ -129,7 +228,7 @@
             f_{2N+3}
         \end{bmatrix},
     \]
-    where, for each collocation point \(x_{m} = \tfrac{m\pi}{N}\) and surface elevation \(\eta_{m} = \eta(x_{m})\),
+    where, for each collocation point $x_{m} = \tfrac{m\pi}{N}$ and surface elevation $\eta_{m} = \eta(x_{m})$,
     \begin{align}
         f_{m} &= -\,B_{0}\,\eta_{m}
         + \sum_{j=1}^{N} B_{j}\,\frac{\sinh(k_{j}\,\eta_{m})}{\cosh(k_{j}\,d)}\,\cos(jk\,x_{m})
@@ -142,10 +241,10 @@
     \end{align}
     with
     \begin{align}
-        k_{j} = j\,k, \\[0.5ex]
-        u_{m} = -B_{0} + \sum_{j=1}^{N} k_{j}B_{j}\,\frac{\cosh[k_{j}(z=\eta_{m}+d)]}{\cosh(k_{j}d)}\cos(jk\,x_{m}),
-        \\[0.5ex]
-        v_{m} = \sum_{j=1}^{N} k_{j}B_{j}\,\frac{\sinh[k_{j}(z=\eta_{m}+d)]}{\cosh(k_{j}d)}\sin(jk\,x_{m}). \\[0.5ex]
+        k_{j} &= j\,k, \\[0.5ex]
+        u_{m} &= -B_{0} + \sum_{j=1}^{N} k_{j}B_{j}\,\frac{\cosh[k_{j}(z=\eta_{m}+d)]}{\cosh(k_{j}d)}\cos(jk\,x_{m}),
+        \\
+        v_{m} &= \sum_{j=1}^{N} k_{j}B_{j}\,\frac{\sinh[k_{j}(z=\eta_{m}+d)]}{\cosh(k_{j}d)}\sin(jk\,x_{m}).
     \end{align}
     The two global constraints are
     \begin{align}
@@ -155,29 +254,29 @@
         f_{2N+3} &= \max_{0\le i\le N}\!\eta_{i}\;-\;\min_{0\le i\le N}\!\eta_{i}\;-\;H.
     \end{align}
 
-    The Jacobian matrix \(\mathbf{J} = [J_{pq}]=\partial F_{p}/\partial X_{q}\) has the following nonzero blocks:
+    The Jacobian matrix $\mathbf{J} = [J_{pq}]=\partial F_{p}/\partial X_{q}$ has the following nonzero blocks.
 
-    \paragraph{Bernoulli rows \(p=m\), \(0\le m\le N\):}
+    \paragraph{Bernoulli rows $p=m$, $0\le m\le N$:}
     \begin{align}
         \frac{\partial f_{m}}{\partial B_{0}}
         &= -\eta_{m},
-        \\[0.5ex]
+        \\
         \frac{\partial f_{m}}{\partial B_{j}}
         &= \frac{\sinh(k_{j}\,\eta_{m})}{\cosh(k_{j}d)}\cos(jk\,x_{m}),\; j\ge1,
         \\
         \frac{\partial f_{m}}{\partial \eta_{m}}
         &= -B_{0}
         + \sum_{j=1}^{N}B_{j}\,k_{j}\,\frac{\cosh(k_{j}\,\eta_{m})}{\cosh(k_{j}d)}\cos(jk\,x_{m}),
-        &
+        \\
         \frac{\partial f_{m}}{\partial Q}
         &= 1.
     \end{align}
 
-    \paragraph{Dynamic rows \(p=N+1+m\), \(0\le m\le N\):}
+    \paragraph{Dynamic rows $p=N+1+m$, $0\le m\le N$:}
     \begin{align}
         \frac{\partial f_{N+1+m}}{\partial B_{0}}
         &= -\,u_{m},
-        \\[0.5ex]
+        \\
         \frac{\partial f_{N+1+m}}{\partial B_{j}}
         &= k_{j}\,\bigl(u_{m}\,C_{jm} + v_{m}\,S_{jm}\bigr),
         \\
@@ -187,7 +286,7 @@
         B_{j}\,k_{j}^{2}
         \Bigl(u_{m}\,\frac{\partial S_{jm}}{\partial \eta_{m}}
         + v_{m}\,\frac{\partial C_{jm}}{\partial \eta_{m}}\Bigr),
-        &
+        \\
         \frac{\partial f_{N+1+m}}{\partial R}
         &= -1,
     \end{align}
@@ -198,42 +297,44 @@
         S_{jm} = \frac{\sinh[k_{j}(\eta_{m}+d)]}{\cosh(k_{j}d)}\sin(jk\,x_{m}),
     \]
     and
-    \(\partial S_{jm}/\partial \eta_{m} = k_{j} \,C_{jm}\),
-    \(\partial C_{jm}/\partial \eta_{m} = k_{j} \,S_{jm}.\)
+    \[
+        \frac{\partial S_{jm}}{\partial \eta_{m}} = k_{j} \,C_{jm},
+        \qquad
+        \frac{\partial C_{jm}}{\partial \eta_{m}} = k_{j} \,S_{jm}.
+    \]
 
-    \paragraph{Mean‐elevation row \(p=2N+2\):}
+    \paragraph{Mean-elevation row $p=2N+2$:}
     \[
         \frac{\partial f_{2N+2}}{\partial \eta_{i}}
         = \frac{w_i}{N},\quad i=0,\dots,N.
     \]
 
-    \paragraph{Wave‐height row \(p=2N+3\):}
+    \paragraph{Wave-height row $p=2N+3$:}
     \[
         \frac{\partial f_{2N+3}}{\partial \eta_{i_{\max}}} = 1,
         \quad
         \frac{\partial f_{2N+3}}{\partial \eta_{i_{\min}}} = -1,
     \]
-    where \(i_{\max},i_{\min}\) are the indices of the maximum and minimum \(\eta_{i}\).
+    where $i_{\max},i_{\min}$ are the indices of the maximum and minimum $\eta_{i}$.
 
     \medskip
-    All other partial derivatives are zero.  In the C++ code
-    (\texttt{compute\_jacobian()}), these expressions are implemented exactly---ensuring an analytically exact Jacobian for robust Newton–Raphson convergence.
+    All other partial derivatives are zero. In the C++ code (\texttt{compute\_jacobian()}), these expressions are implemented exactly, ensuring an analytically exact Jacobian for robust Newton--Raphson convergence.
 
     \subsection{Derived Wave Quantities}
     \label{sec:derived_quantities}
 
-    Once the spectral solution \(\{B_j\},\{E_j\},c,R\) is obtained, the implementation computes the following physical fields and integral measures:
+    Once the spectral solution $\{B_j\},\{E_j\},c,R$ is obtained, the implementation computes the following physical fields and integral measures.
 
     \paragraph{Surface kinematics:}
     \begin{align}
-        \eta(x,t) &= \sum_{j=0}^{N} E_{j}\,\cos\bigl[jk(x - ct)\bigr], \\[0.5ex]
-        \eta_{x}(x,t) &= -\sum_{j=0}^{N} j\,k\,E_{j}\,\sin\bigl[jk(x - ct)\bigr], \\[0.5ex]
-        \eta_{t}(x,t) &= -\,c\,\eta_{x}(x,t), \\[0.5ex]
-        \eta_{xx}(x,t) &= -\sum_{j=0}^{N} j^{2}k^{2}\,E_{j}\,\cos\bigl[jk(x - ct)\bigr], \\[0.5ex]
-        \eta_{xt}(x,t) &= \sum_{j=0}^{N} j^{2}k\,c\,E_{j}\,\sin\bigl[jk(x - ct)\bigr], \\[0.5ex]
+        \eta(x,t) &= \sum_{j=0}^{N} E_{j}\,\cos\bigl[jk(x - ct)\bigr], \\
+        \eta_{x}(x,t) &= -\sum_{j=0}^{N} j\,k\,E_{j}\,\sin\bigl[jk(x - ct)\bigr], \\
+        \eta_{t}(x,t) &= -\,c\,\eta_{x}(x,t), \\
+        \eta_{xx}(x,t) &= -\sum_{j=0}^{N} j^{2}k^{2}\,E_{j}\,\cos\bigl[jk(x - ct)\bigr], \\
+        \eta_{xt}(x,t) &= \sum_{j=0}^{N} j^{2}k\,c\,E_{j}\,\sin\bigl[jk(x - ct)\bigr], \\
         \eta_{tt}(x,t) &= -\sum_{j=0}^{N} j^{2}\omega^{2}\,E_{j}\,\cos\bigl[jk(x - ct)\bigr],
     \end{align}
-    where \(\omega = c\,k\).
+    where $\omega = c\,k$.
 
     \paragraph{Stream function and velocities:}
     \begin{align}
@@ -242,12 +343,12 @@
         + \sum_{j=1}^{N} B_{j}\,
         \frac{\sinh\!\bigl[k_{j}(z + d)\bigr]}{\cosh(k_{j}d)}\,
         \cos\bigl[jk(x - ct)\bigr],
-        \\[0.5ex]
+        \\
         u(x,z,t) &= \frac{\partial \psi}{\partial z},
         \quad
         w(x,z,t) = -\,\frac{\partial \psi}{\partial x},
     \end{align}
-    with \(k_{j}=j\,k\).
+    with $k_{j}=j\,k$.
 
     \paragraph{Dynamic pressure:}
     \begin{equation}
@@ -256,8 +357,7 @@
     \end{equation}
 
     \paragraph{Energy densities and flux:}
-
-    Using the 2D trapezoidal integrator:
+    Using the 2D trapezoidal integrator
     \[
         \int_{0}^{L}\!\int_{-d}^{\eta}\!\cdot\,dz\,dx,
     \]
@@ -297,44 +397,39 @@
         = \rho\,\frac{M}{L}.
     \end{align}
 
-    \begin{figure}[H]
+    \begin{figure}[!t]
         \centering
-        \resizebox{\textwidth}{!}{\input{wave_profile.pgf}}
-        \caption{Fenton wave profile}
+        \resizebox{\linewidth}{!}{\input{wave_profile.pgf}}
+        \caption{Fenton wave profile.}
         \label{fig:waveProfile}
     \end{figure}
 
     \subsection{Implementation Notes}
 
-    The provided \verb|FentonWave<N,Real>| class in \texttt{FentonWave.h}:
-    \begin{itemize}
-        \item Uses the Eigen library for vectors and matrices.
-        \item Computes DCT‐I transforms in \\
-        \verb|FentonFFT<N>::compute_inverse_cosine_transform()|.
-        \item Handles hyperbolic functions with numerically stable helpers\\
-        \verb|sinh_by_cosh| and \verb|cosh_by_cosh|.
-        \item Solves the dispersion relation for $\lambda$ via Newton iteration in \\ \verb|compute_wavelength()|.
-        \item Wraps up all physics (surface kinematics, velocities, pressure, energy flux, Stokes drift, etc.) in member functions.
-        \item Includes a \verb|WaveSurfaceTracker| that integrates a floating object’s horizontal motion with RK4 under wave‐induced force and linear drag.
+    The provided \texttt{FentonWave<N,Real>} class in \texttt{FentonWave.h}:
+    \begin{itemize}[leftmargin=1.4em]
+        \item uses the Eigen library for vectors and matrices;
+        \item computes DCT-I transforms in \texttt{FentonFFT<N>::compute\_inverse\_cosine\_transform()};
+        \item handles hyperbolic functions with numerically stable helpers \texttt{sinh\_by\_cosh} and \texttt{cosh\_by\_cosh};
+        \item solves the dispersion relation for $\lambda$ via Newton iteration in \texttt{compute\_wavelength()};
+        \item wraps up all physics (surface kinematics, velocities, pressure, energy flux, Stokes drift, etc.) in member functions;
+        \item includes a \texttt{WaveSurfaceTracker} that integrates a floating object's horizontal motion with RK4 under wave-induced force and linear drag.
     \end{itemize}
 
-    \subsection{Floating‐Object Kinematics: \texttt{WaveSurfaceTracker}}
+    \subsection{Floating-Object Kinematics: \texttt{WaveSurfaceTracker}}
     \label{sec:wave_surface_tracker}
 
-    In addition to wave kinematics, the C++ implementation provides a\\
-    \texttt{WaveSurfaceTracker<N,Real>} class that simulates
-    the motion of a small floating body constrained to the wave surface.  The model assumes:
-
-    \begin{itemize}
-        \item The body’s vertical coordinate exactly follows the instantaneous free‐surface elevation:
+    In addition to wave kinematics, the C++ implementation provides a \texttt{WaveSurfaceTracker<N,Real>} class that simulates the motion of a small floating body constrained to the wave surface. The model assumes:
+    \begin{itemize}[leftmargin=1.4em]
+        \item The body's vertical coordinate exactly follows the instantaneous free-surface elevation:
         \[
             z(t) = \eta\bigl(x(t),\,t\bigr).
         \]
-        \item The horizontal motion is driven by a “slope” force proportional to surface gradient, plus linear drag.
+        \item The horizontal motion is driven by a ``slope'' force proportional to surface gradient, plus linear drag.
     \end{itemize}
 
     \paragraph{Horizontal dynamics.}
-    Let \(x(t)\) be the body’s horizontal position and \(v_x = \dot x\) its horizontal velocity.  Newton’s second law yields
+    Let $x(t)$ be the body's horizontal position and $v_x = \dot x$ its horizontal velocity. Newton's second law yields
     \begin{equation}
         m\,\ddot x \;=\; F_{\rm wave} + F_{\rm drag}
         \;=\;-m\,g\,\eta_x\bigl(x(t),t\bigr)
@@ -351,17 +446,16 @@
     \]
 
     \paragraph{Vertical velocity and acceleration.}
-    Although \(z=\eta\), one can still compute the vertical velocity and acceleration for completeness:
+    Although $z=\eta$, one can still compute the vertical velocity and acceleration for completeness:
     \begin{align}
         \dot z &= \eta_t + \eta_x\,\dot x,
         \\
         \ddot z &\approx \frac{\dot z(t+\Delta t)-\dot z(t)}{\Delta t},
     \end{align}
-    with \(\eta_t = \partial\eta/\partial t = -\,c\,\eta_x\).
+    with $\eta_t = \partial\eta/\partial t = -\,c\,\eta_x$.
 
     \paragraph{Numerical integration.}
-    The class uses a classical 4th‐order Runge–Kutta scheme (RK4)
-    with time step $\Delta t$, updating both $x$ and $v_x$ simultaneously:
+    The class uses a classical 4th-order Runge--Kutta scheme (RK4) with time step $\Delta t$, updating both $x$ and $v_x$ simultaneously:
     \[
         \begin{aligned}
             k_{1}^{(x)} &= v_x,
@@ -386,30 +480,32 @@
     \]
 
     \paragraph{Implementation Notes.}
-    \begin{itemize}
+    \begin{itemize}[leftmargin=1.4em]
         \item The method is implemented in \texttt{WaveSurfaceTracker::rk4\_step()}.
-        \item The “wrap” function ensures periodicity in \(x\) by mapping \(x\) back into \([0,L)\).
-        \item At each step, a user‐supplied callback can record \((t,\,z,\,\dot z,\,\ddot z,\,x,\,v_x)\).
-        \item Default parameters: drag coefficient \(c_d\), mass \(m\), and time step \(\Delta t\) are configurable.
+        \item The \texttt{wrap} function ensures periodicity in $x$ by mapping $x$ back into $[0,L)$.
+        \item At each step, a user-supplied callback can record $(t,\,z,\,\dot z,\,\ddot z,\,x,\,v_x)$.
+        \item Default parameters: drag coefficient $c_d$, mass $m$, and time step $\Delta t$ are configurable.
     \end{itemize}
 
-    \begin{figure}[H]
+    \begin{figure}[!t]
         \centering
-        \resizebox{\textwidth}{!}{\input{wave_kinematics.pgf}}
-        \caption{Fenton wave float kinematics}
+        \resizebox{\linewidth}{!}{\input{wave_kinematics.pgf}}
+        \caption{Fenton wave float kinematics.}
         \label{fig:waveKinematics}
     \end{figure}
 
-    \begin{figure}[H]
+    \begin{figure}[!t]
         \centering
-        \resizebox{\textwidth}{!}{\input{wave_particle_path.pgf}}
-        \caption{Fenton wave float path}
+        \resizebox{\linewidth}{!}{\input{wave_particle_path.pgf}}
+        \caption{Fenton wave float path.}
         \label{fig:waveParticlePath}
     \end{figure}
 
     \begin{thebibliography}{9}
+
         \bibitem{Fenton1988}
         J.~D.~Fenton, ``The numerical solution of steady water wave problems,'' \emph{Computers \& Geosciences}, vol.~14, no.~3, pp.~357--368, 1988.
+
     \end{thebibliography}
 
 \end{document}
