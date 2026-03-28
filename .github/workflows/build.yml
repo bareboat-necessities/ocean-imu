@@ -30,6 +30,10 @@ jobs:
             texlive-xetex texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra texlive-fonts-extra dvipng \
             python3-pip python3-matplotlib python3-numpy python3-pandas
 
+      - name: Compile tests (${{ matrix.dir }})
+        run: |
+          cd tests/${{ matrix.dir }} && make && cd ..
+          
       - name: Generate PGF plots (${{ matrix.dir }})
         run: |
           cd plots/${{ matrix.dir }}
