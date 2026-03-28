@@ -90,7 +90,12 @@ jobs:
           file_glob: true
 
       - name: Upload SVG to release (${{ matrix.dir }})
-        if: github.event_name == 'push'
+        if: >
+          github.event_name == 'push' &&
+          hashFiles(
+            'doc/${{ matrix.dir }}/**/*pmstokes*H1.5*.svg',
+            'doc/${{ matrix.dir }}/**/*pmstokes*medium*.svg'
+          ) != ''
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
