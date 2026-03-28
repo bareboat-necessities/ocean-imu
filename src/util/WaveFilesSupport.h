@@ -1,4 +1,9 @@
 #pragma once
+
+/*
+  Copyright 2025-2026, Mikhail Grushinskiy
+*/
+
 #include <cmath>
 #include <numbers>
 #include <cstdint>
@@ -9,10 +14,6 @@
 #include <vector>
 #include <fstream>
 #include <stdexcept>
-
-/*
-  Copyright 2025, Mikhail Grushinskiy
-*/
 
 extern const float g_std;
 

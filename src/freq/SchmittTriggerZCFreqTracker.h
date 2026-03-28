@@ -7,7 +7,7 @@
 #include <cstdlib>
 
 /*
-   Copyright 2025, Mikhail Grushinskiy
+   Copyright 2025-2026, Mikhail Grushinskiy
 
    Zero crossing frequency detector with hysteresis and debouncing
 */

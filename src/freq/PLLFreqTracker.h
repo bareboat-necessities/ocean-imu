@@ -1,6 +1,10 @@
 #ifndef PLL_FREQ_TRACKER_H
 #define PLL_FREQ_TRACKER_H
 
+/*
+  Copyright 2026, Mikhail Grushinskiy
+*/
+
 #include <cmath>
 #include <cstdint>
 #include <limits>

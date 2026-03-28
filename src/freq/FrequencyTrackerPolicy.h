@@ -1,12 +1,16 @@
 #pragma once
 
+/*
+  Copyright 2025-2026, Mikhail Grushinskiy
+*/
+
 #include <cmath>
 
-#include "WaveFilesSupport.h"
-#include "AranovskiyFreqTracker.h"
-#include "KalmANFFreqTracker.h"
-#include "PLLFreqTracker.h"
-#include "SchmittTriggerZCFreqTracker.h"
+#include "util/WaveFilesSupport.h"
+#include "freq/AranovskiyFreqTracker.h"
+#include "freq/KalmANFFreqTracker.h"
+#include "freq/PLLFreqTracker.h"
+#include "freq/SchmittTriggerZCFreqTracker.h"
 
 #ifndef FREQ_GUESS
 #define FREQ_GUESS 0.3f

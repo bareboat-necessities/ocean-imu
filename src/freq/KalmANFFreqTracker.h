@@ -1,11 +1,16 @@
 #ifndef KALMANF_FREQ_TRACKER_H
 #define KALMANF_FREQ_TRACKER_H
 
+/*
+  Copyright 2025-2026, Mikhail Grushinskiy
+*/
+
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
+
 
 /*
    See: https://github.com/randyaliased/KalmANF/

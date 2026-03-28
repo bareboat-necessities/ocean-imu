@@ -1,4 +1,9 @@
 #pragma once
+
+/*
+  Copyright 2025-2026, Mikhail Grushinskiy
+*/
+
 #include <cmath>
 #include <algorithm>
 
