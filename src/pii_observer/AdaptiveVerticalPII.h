@@ -10,8 +10,8 @@
 #include <type_traits>
 #include <utility>
 
-#include "VerticalPIIObserver.h"
-#include "FrequencyTrackerPolicy.h"
+#include "pii_observer/VerticalPIIObserver.h"
+#include "freq/FrequencyTrackerPolicy.h"
 
 namespace marine_obs {
 namespace detail {

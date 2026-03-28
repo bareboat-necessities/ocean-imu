@@ -76,8 +76,8 @@
 #include <limits>
 #include <type_traits>
 
-#include "Mahony_AHRS.h"
-#include "AdaptiveVerticalPII.h"
+#include "ahrs/Mahony_AHRS.h"
+#include "pii_observer/AdaptiveVerticalPII.h"
 
 namespace marine_obs {
 
