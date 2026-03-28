@@ -89,17 +89,37 @@ jobs:
           overwrite: true
           file_glob: true
 
+      - name: Find SVGs to upload (${{ matrix.dir }})
+        id: find_svgs
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          shopt -s nullglob globstar
+          files=(
+            doc/${{ matrix.dir }}/**/*pmstokes*H1.5*.svg
+            doc/${{ matrix.dir }}/**/*pmstokes*medium*.svg
+          )
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "Found ${#files[@]} matching SVG file(s):"
+            printf '  %s\n' "${files[@]}"
+
+            {
+              echo "found=true"
+              echo "files<<EOF"
+              printf '%s\n' "${files[@]}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "No matching SVG files found."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload SVG to release (${{ matrix.dir }})
-        if: >
-          github.event_name == 'push' &&
-          hashFiles(
-            'doc/${{ matrix.dir }}/**/*pmstokes*H1.5*.svg',
-            'doc/${{ matrix.dir }}/**/*pmstokes*medium*.svg'
-          ) != ''
+        if: github.event_name == 'push' && steps.find_svgs.outputs.found == 'true'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: doc/${{ matrix.dir }}/**/*pmstokes*{H1.5,medium}*.svg
+          file: ${{ steps.find_svgs.outputs.files }}
           tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
           overwrite: true
-          file_glob: true
+          file_glob: false
