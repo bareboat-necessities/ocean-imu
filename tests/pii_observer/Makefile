@@ -1,22 +1,20 @@
 CC = g++
-
-# Base flags
 BASEFLAGS = -O3 -std=c++20 -funroll-loops -fno-finite-math-only -I./../../src -I/usr/include/eigen3
 
-# Detect platform
 UNAME_S := $(shell uname -s)
-
 ifeq ($(UNAME_S),Linux)
     CXXFLAGS = $(BASEFLAGS) -march=native
-else ifeq ($(UNAME_S),Darwin)   # macOS
+else ifeq ($(UNAME_S),Darwin)
     CXXFLAGS = $(BASEFLAGS) -march=native
 else
-    CXXFLAGS = $(BASEFLAGS)    # Windows / Cygwin / others
+    CXXFLAGS = $(BASEFLAGS)
 endif
 
 LDFLAGS  =
 
-# Targets
+# Tell make to look for source files in ../../src
+VPATH = ../../src/util
+
 TARGETS = pii_observer-adaptive
 
 all: $(TARGETS)
