@@ -40,7 +40,7 @@ jobs:
 
       - name: Run tests (${{ matrix.dir }})
         run: |
-          cd tests/${{ matrix.dir }} && chmod +x *.sh && ./run_tests.sh && cd ..
+          cd tests/${{ matrix.dir }} && chmod +x *.sh && ./run_tests.sh && cp *.csv ../../plots/${{ matrix.dir }} && cd ..
 
       - name: Generate PGF plots (${{ matrix.dir }})
         run: |
