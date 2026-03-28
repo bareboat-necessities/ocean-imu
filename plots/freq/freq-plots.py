@@ -37,9 +37,9 @@ FNAME_RE = re.compile(
 TRACKER_ORDER = ["aranovskiy", "kalmanf", "zerocross", "pll"]
 TRACKER_LABELS = {
     "aranovskiy": "Aranovskiy",
-    "kalmanf": "KalmANFFreqTracker",
+    "kalmanf": "KalmANF",
     "zerocross": "Zero crossing",
-    "pll": "PLLFreqTracker",
+    "pll": "PLL",
 }
 
 # Sampling config
