@@ -1,0 +1,450 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage{amsmath,bm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+
+\title{A Practical Description of the Aranovskiy Frequency Tracker\\
+and Its C\texttt{++} Implementation}
+
+\author{%
+    \IEEEauthorblockN{Mikhail S.\ Grushinskiy}
+    \IEEEauthorblockA{Independent Researcher\\
+    Bareboat Necessities Project\\
+    \texttt{mgrouch@users.github.com}}
+}
+
+\begin{document}
+    \maketitle
+
+    \begin{abstract}
+        This note gives a clean and practical description of the Aranovskiy
+        frequency tracker as implemented in C\texttt{++}. The implementation follows
+        the same core observer-plus-adaptation structure as the original 2013
+        estimator, but expresses it in a discrete-time form suitable for embedded
+        systems. The code keeps a filtered signal state, an adaptive integrator,
+        an algebraic parameter estimate, and several practical outputs such as
+        frequency, phase, confidence, and lock status. This document focuses on what
+        the code actually computes at each sample and how its parameters should be
+        interpreted.
+    \end{abstract}
+
+    \begin{IEEEkeywords}
+        frequency estimation, adaptive observer, sinusoidal tracking, embedded signal processing
+    \end{IEEEkeywords}
+
+    \section{Introduction}
+
+    The goal of the tracker is to estimate the dominant frequency of a scalar
+    oscillatory signal in real time. The intended use case is low-cost,
+    sample-by-sample estimation on embedded hardware, where constant memory,
+    low computational load, and stable behavior at low frequencies are important.
+
+    The implemented tracker is based on the adaptive-observer idea associated
+    with the Aranovskiy frequency estimator. In practical terms, the code uses:
+    \begin{itemize}
+        \item a first-order filtered state driven by the input signal,
+        \item an adaptive integrator that steers the parameter estimate,
+        \item an algebraic reconstruction of the instantaneous frequency parameter,
+        \item practical robustness features such as internal time scaling,
+        weak-signal suppression, and bounded adaptation rate.
+    \end{itemize}
+
+    The result is a lightweight estimator that works well in streaming
+    applications and is straightforward to tune.
+
+    \section{Signal and Main Variables}
+
+    Let $y(t)$ denote the measured scalar signal. In the intended operating
+    regime, $y(t)$ is dominated by a slowly varying sinusoidal component,
+    possibly with noise, drift, or amplitude changes.
+
+    The implementation keeps the following main variables:
+    \begin{align}
+        x_1 &:\ \text{filtered internal state},\\
+        \sigma &:\ \text{adaptive integrator state},\\
+        \theta &:\ \text{algebraic parameter estimate},\\
+        \omega &:\ \text{internal angular-frequency magnitude},\\
+        f &:\ \text{internal frequency variable},\\
+        \phi &:\ \text{phase-like output}.
+    \end{align}
+
+    The public frequency reported to the caller is the physical frequency in hertz,
+    obtained after undoing the internal time scaling described later.
+
+    \section{Observer Structure}
+
+    The estimator uses a first-order observer state:
+    \begin{equation}
+        \dot{x}_1 = -a x_1 + b y.
+    \end{equation}
+
+    This is simply a one-pole filtered version of the input. The observer itself
+    is therefore first-order. The overall estimator has two dynamic states,
+    however, because the adaptive state $\sigma$ is also integrated in time.
+
+    For a sinusoidal input, $x_1$ acts like a lagged, smoothed companion signal.
+    That is useful for adaptation and also for the phase heuristic used by the
+    implementation.
+
+    \section{Adaptive Parameter Structure}
+
+    The implementation does not integrate $\theta$ directly. Instead, it
+    integrates $\sigma$ and reconstructs $\theta$ algebraically:
+    \begin{equation}
+        \theta = \sigma + k b x_1 y.
+    \end{equation}
+
+    The internal angular-frequency magnitude is then computed as
+    \begin{equation}
+        \omega = \sqrt{\max\!\left(|\theta|,\,10^{-7}\right)}.
+    \end{equation}
+
+    The internal frequency variable is
+    \begin{equation}
+        f = \frac{\omega}{2\pi}.
+    \end{equation}
+
+    This internal $f$ is still scaled. The physical frequency returned by the
+    class is obtained by dividing by the time-scale factor.
+
+    \section{Internal Time Scaling}
+
+    To improve low-frequency numerical behavior, the implementation uses the fixed
+    scale factor
+    \begin{equation}
+        S = 20.
+    \end{equation}
+
+    If the user provides an upper-band angular frequency $\omega_{\text{up}}$
+    and adaptation gain $g_{\text{user}}$, the code sets
+    \begin{align}
+        a &= S\,\omega_{\text{up}},\\
+        b &= S\,\omega_{\text{up}},\\
+        k &= S\,g_{\text{user}}.
+    \end{align}
+
+    If the physical sample interval is $\Delta t$, the internal Euler step is
+    \begin{equation}
+        \delta t = \frac{\Delta t}{S}.
+    \end{equation}
+
+    Likewise, the initial values of $\theta$ and $\sigma$ are stored internally as
+    \begin{align}
+        \theta &\leftarrow S^2 \theta_0,\\
+        \sigma &\leftarrow S^2 \sigma_0.
+    \end{align}
+
+    Therefore the physical output frequency in hertz is
+    \begin{equation}
+        f_{\text{Hz}} = \frac{f}{S}
+        = \frac{\omega}{2\pi S}.
+    \end{equation}
+
+    This exactly matches the implementation.
+
+    \section{Initialization}
+
+    The state initialization used by the code is
+    \begin{align}
+        x_1 &= x_{1,0},\\
+        \theta &= S^2 \theta_0,\\
+        \sigma &= S^2 \sigma_0,\\
+        y &= 0.
+    \end{align}
+
+    The initial internal angular frequency is computed from
+    \begin{equation}
+        \omega = \sqrt{\max\!\left(10^{-12}, |\theta|\right)},
+    \end{equation}
+    and then
+    \begin{equation}
+        f = \frac{\omega}{2\pi}.
+    \end{equation}
+
+    The initial phase is set to zero.
+
+    \section{Per-Sample Update in the Code}
+
+    At each valid sample $(y_n,\Delta t)$, the code performs the following steps.
+
+    \subsection{Input Validation}
+
+    If the measurement is non-finite, the update is skipped. If the timestep is
+    non-finite or non-positive, the update is also skipped.
+
+    \subsection{Scaled Timestep}
+
+    The internal integration step is
+    \begin{equation}
+        \delta t = \frac{\Delta t}{S}.
+    \end{equation}
+
+    \subsection{Observer Derivative}
+
+    The filtered-state derivative is computed first:
+    \begin{equation}
+        \dot{x}_{1,n} = -a x_{1,n} + b y_n.
+    \end{equation}
+
+    \subsection{Weak-Signal Weighting}
+
+    The implementation measures instantaneous signal energy using
+    \begin{equation}
+        E_n = x_{1,n}^2 + y_n^2 + 10^{-12}.
+    \end{equation}
+
+    From this it forms the gain-scaling factor
+    \begin{equation}
+        \rho_n = \frac{E_n}{E_n + 10^{-6}}.
+    \end{equation}
+
+    This term is close to one for normal signals and suppresses adaptation when
+    the signal magnitude is extremely small.
+
+    \subsection{Adaptation Error}
+
+    The code next computes
+    \begin{align}
+        \text{tmp}_n &= b y_n + a x_{1,n},\\
+        \phi_n &= \dot{x}_{1,n}\,\text{tmp}_n + x_{1,n}^2\,\theta_n.
+    \end{align}
+
+    Here $\theta_n$ is the value stored at the start of the sample.
+
+    \subsection{Adaptive Integrator Rate}
+
+    The raw adaptation term is
+    \begin{equation}
+        u_n = -k\,\phi_n\,\rho_n.
+    \end{equation}
+
+    The code then bounds the integrator rate:
+    \begin{equation}
+        \dot{\sigma}_n = \operatorname{clip}(u_n,-10^7,10^7).
+    \end{equation}
+
+    This bound is a practical safety measure for finite-precision arithmetic and
+    large transients.
+
+    \subsection{Algebraic Parameter Reconstruction}
+
+    Before integrating the states, the code updates the algebraic parameter:
+    \begin{equation}
+        \theta_n^{+} = \sigma_n + k b x_{1,n} y_n.
+    \end{equation}
+
+    From this it computes
+    \begin{align}
+        \omega_n &= \sqrt{\max\!\left(10^{-7}, |\theta_n^{+}|\right)},\\
+        f_n &= \frac{\omega_n}{2\pi}.
+    \end{align}
+
+    The public frequency estimate returned by the class is then
+    \begin{equation}
+        f_{\text{Hz},n} = \frac{f_n}{S}.
+    \end{equation}
+
+    \subsection{State Integration}
+
+    The two dynamic states are advanced by explicit Euler:
+    \begin{align}
+        x_{1,n+1} &= x_{1,n} + \dot{x}_{1,n}\,\delta t,\\
+        \sigma_{n+1} &= \sigma_n + \dot{\sigma}_n\,\delta t.
+    \end{align}
+
+    A useful detail is that the member variable $\theta$ is already set from the
+    pre-integration values. So the stored $\theta$ used on the next sample is the
+    fresh algebraic estimate from the current sample, but it is not recomputed
+    after the Euler step.
+
+    \subsection{Phase Output}
+
+    After the state update, the implementation reports
+    \begin{equation}
+        \phi_n = \operatorname{atan2}(x_{1,n+1}, y_n).
+    \end{equation}
+
+    This is a practical phase-like output. It is useful as a smooth tracking
+    diagnostic, but it should be viewed as a heuristic rather than a strict
+    analytic-signal phase.
+
+    \section{Confidence and Lock Outputs}
+
+    The original adaptive estimator provides frequency tracking but not an
+    explicit lock detector. The implementation therefore adds a practical
+    confidence and lock layer.
+
+    \subsection{Signal RMS}
+
+    Using the updated state and current input, the instantaneous power is
+    \begin{equation}
+        P_{\text{inst}} = x_1^2 + y^2.
+    \end{equation}
+
+    A one-pole smoother with time constant $\tau_{\text{rms}}$ is applied:
+    \begin{equation}
+        \alpha(\Delta t,\tau) = \frac{\Delta t}{\tau+\Delta t},
+    \end{equation}
+    \begin{equation}
+        P \leftarrow P + \alpha(\Delta t,\tau_{\text{rms}})
+        \bigl(P_{\text{inst}} - P\bigr).
+    \end{equation}
+
+    The signal RMS diagnostic is then
+    \begin{equation}
+        \text{signal\_rms} = \sqrt{\max(P,0)}.
+    \end{equation}
+
+    \subsection{Smoothed Frequency}
+
+    A second one-pole smoother tracks the physical frequency estimate:
+    \begin{equation}
+        f_{\text{smooth}} \leftarrow f_{\text{smooth}}
+        + \alpha(\Delta t,\tau_f)\bigl(f_{\text{Hz}} - f_{\text{smooth}}\bigr).
+    \end{equation}
+
+    This smoothed value is used only for confidence logic.
+
+    \subsection{Frequency Validity Window}
+
+    The frequency is considered valid when
+    \begin{equation}
+        f_{\min} \le f_{\text{Hz}} \le f_{\max}.
+    \end{equation}
+
+    The default range in the code is
+    \begin{equation}
+        f_{\min} = 0.03~\text{Hz}, \qquad
+        f_{\max} = 2.0~\text{Hz}.
+    \end{equation}
+
+    \subsection{Confidence Score}
+
+    If the frequency is valid, the code computes an amplitude term
+    \begin{equation}
+        r_{\text{amp}} =
+        \operatorname{clamp}_{[0,1]}
+        \left(
+        \frac{\text{signal\_rms}}
+        {\max(\text{lock\_rms\_min},10^{-9})}
+        \right),
+    \end{equation}
+    and a stability denominator
+    \begin{equation}
+        d = \max\!\left(0.03,\ 0.25\max(f_{\text{smooth}}, f_{\min})\right).
+    \end{equation}
+
+    The stability term is
+    \begin{equation}
+        r_{\text{stab}} =
+        1 - \min\!\left(1,\ \frac{|f_{\text{Hz}}-f_{\text{smooth}}|}{d}\right).
+    \end{equation}
+
+    The confidence target is then
+    \begin{equation}
+        c^\star =
+        r_{\text{amp}}\bigl(0.35 + 0.65\,r_{\text{stab}}\bigr),
+    \end{equation}
+    and zero otherwise when the frequency is not valid.
+
+    Finally, confidence itself is smoothed:
+    \begin{equation}
+        c \leftarrow c + \alpha(\Delta t,\tau_c)(c^\star - c),
+    \end{equation}
+    with clipping to the interval $[0,1]$.
+
+    \subsection{Lock Flag}
+
+    The lock flag is true when all three conditions hold:
+    \begin{align}
+        &f_{\text{Hz}} \in [f_{\min},f_{\max}],\\
+        &\text{signal\_rms} \ge \text{lock\_rms\_min},\\
+        &c \ge \text{lock\_conf\_threshold}.
+    \end{align}
+
+    So lock is simply a practical decision rule based on signal strength,
+    frequency plausibility, and short-term estimate stability.
+
+    \section{Interpretation and Practical Meaning}
+
+    The implementation is best understood as a practical discrete-time adaptive
+    frequency tracker built on three ideas:
+
+    \begin{enumerate}
+        \item filter the signal into a smooth internal state,
+        \item adapt an internal parameter using a nonlinear update law,
+        \item reconstruct the instantaneous frequency parameter algebraically.
+    \end{enumerate}
+
+    The extra features in the code are all pragmatic:
+    \begin{itemize}
+        \item internal time scaling improves low-frequency numerical behavior,
+        \item energy weighting suppresses meaningless updates at vanishing signal,
+        \item adaptation clipping prevents extreme transient growth,
+        \item confidence and lock provide useful diagnostics for real systems.
+    \end{itemize}
+
+    These additions do not change the main character of the estimator. They make
+    it more practical and robust for embedded use.
+
+    \section{Numerical Notes}
+
+    A few implementation details are especially important in practice.
+
+    \subsection{Explicit Euler}
+
+    The dynamic states are updated with explicit Euler integration. Since the
+    tracker is intended for sample rates comfortably above the tracked frequency
+    band, this is usually sufficient and computationally cheap.
+
+    \subsection{Guaranteed Real Frequency Output}
+
+    The code always returns a real-valued frequency estimate because it computes
+    \begin{equation}
+        \omega = \sqrt{\max(10^{-7}, |\theta|)}.
+    \end{equation}
+    The absolute value and positive floor ensure a valid square root.
+
+    \subsection{Low-Frequency Robustness}
+
+    The internal time scaling is one of the most useful implementation choices.
+    It effectively enlarges the internal dynamics while reducing the Euler step,
+    which helps the tracker behave well in low-frequency regimes.
+
+    \section{Summary}
+
+    The C\texttt{++} implementation is a clean and practical discrete-time
+    realization of the Aranovskiy-style adaptive frequency tracker.
+
+    Its structure is simple:
+    \begin{itemize}
+        \item one filtered observer state $x_1$,
+        \item one adaptive integrator state $\sigma$,
+        \item one algebraic parameter estimate $\theta$,
+        \item one frequency output obtained from $\sqrt{|\theta|}$,
+        \item practical confidence and lock diagnostics layered on top.
+    \end{itemize}
+
+    The code is easy to interpret, numerically lightweight, and well suited to
+    embedded frequency tracking of narrowband oscillatory signals.
+
+    \begin{thebibliography}{1}
+
+        \bibitem{Bobtsov2013}
+        A.~A. Bobtsov, N.~A. Nikolaev, O.~V. Slita, A.~S. Borgul, and
+        S.~V. Aranovskiy,
+        ``The new algorithm of sinusoidal signal frequency estimation,''
+        in \emph{Proceedings of the 11th IFAC International Workshop on Adaptation
+        and Learning in Control and Signal Processing}, Caen, France, 2013,
+        pp.~182--185.
+
+    \end{thebibliography}
+
+\end{document}
