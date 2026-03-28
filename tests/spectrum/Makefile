@@ -1,2 +1,3 @@
-%:
-	@# Do nothing
+.PHONY: all
+all:
+	@true
