@@ -1,0 +1,256 @@
+\documentclass[conference]{IEEEtran}
+
+% Core packages
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+
+\usepackage{amsthm}
+\usepackage{amsmath, bm}
+\usepackage{newtxtext,newtxmath} % Times-like text + math (IEEE-style)
+\usepackage{textcomp}
+
+\interdisplaylinepenalty=2500 % allow page breaks in multiline equations
+\usepackage{pgf}
+\usepackage{pgfplots}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{mathrsfs}
+\usepackage{graphicx}
+\usepackage{placeins} % for \FloatBarrier
+\usepackage{array, booktabs, makecell, adjustbox}
+\usepackage{mathtools}
+\usepackage{nccmath, relsize}
+\usepackage{enumitem}
+
+\usepackage{balance} % balance final page columns
+\usepackage{flafter} % figures/tables won’t appear before they’re definedap
+\usepackage{siunitx}
+\usepackage[final]{microtype}   % better spacing/hyphenation
+\usepackage{etoolbox}
+
+% Vectors and matrices: bold italic (IEEE-style)
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}  % vectors (Latin & Greek)
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}  % matrices (LATIN)
+\DeclareRobustCommand{\matg}[1]{\bm{#1}} % matrices (GREEK)
+
+% === Spaces / groups (quaternions, rotations) ===
+\newcommand{\Quat}{\mathbb{H}}        % all quaternions
+\newcommand{\Sph}{\mathbb{S}}         % spheres; unit quats live in \Sph^3
+\newcommand{\SO}{\mathrm{SO}}         % rotation group
+\newcommand{\SE}{\mathrm{SE}}         % rigid motions
+
+% === Quaternion variables ===
+% Quaternion as a 4-vector: bold italic (consistent with \vct)
+\newcommand{\quat}[1]{\vct{#1}}
+
+% Rotation matrices / operators (leave \mathbf{R} for Kalman measurement noise)
+\newcommand{\Rot}{\bm{\mathcal{R}}}
+
+% Optional helpers (use only if you like the notation)
+\newcommand{\qconj}[1]{\overline{#1}} % quaternion conjugate
+\newcommand{\qreal}[1]{\operatorname{Re}\! \left(#1\right)} % real part
+\newcommand{\qimag}[1]{\operatorname{Im}\! \left(#1\right)} % imaginary/vector part
+
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\sisetup{
+    detect-weight = true,
+    detect-family = true,
+    per-mode = symbol,
+}
+
+% Description labels small & bold
+\setlist[description]{font=\footnotesize\bfseries, labelsep=0.6em, leftmargin=1.8em}
+
+% Make math/siunitx safe in PDF bookmarks
+\pdfstringdefDisableCommands{%
+    \def\SI#1#2{#1 #2}%
+    \def\bm#1{#1}%
+    \def\Skew#1{[#1]_\text{x}}%
+    \def\Id{I}%
+    \def\pct#1{#1\%}%
+    \def\circ{deg}%
+    \def\degree{deg}% siunitx \degree if it leaks into bookmarks
+    \def\propto{∝}%
+    \def\sigma{sigma}%
+    \def\tau{tau}%
+    \def\Phi{Phi}%
+    \def\omega{omega}%
+    \def\_{}%
+    \def\cdot{}%
+    \def\;{ }%
+    \def\I{I}%
+    \def\quat#1{#1}%
+    \def\SO{SO}%
+    \def\SE{SE}%
+    \def\Quat{H}%
+    \def\Sph{S}%
+}
+
+\AtBeginEnvironment{equation}{\small}
+\AtBeginEnvironment{align}{\small}
+
+% Needed by PGF outputs that reference \mathdefault
+\providecommand{\mathdefault}[1]{#1}
+
+\setcounter{topnumber}{5}
+\setcounter{dbltopnumber}{5}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.9}
+
+% For including PGF
+\newcommand{\IncludePGF}[1]{\resizebox{\linewidth}{!}{\input{#1}}}
+
+% Unicode punctuation mappings (pdfLaTeX only)
+\ifPDFTeX
+\DeclareUnicodeCharacter{2013}{\textendash}        % –
+\DeclareUnicodeCharacter{2014}{\textemdash}        % —
+\DeclareUnicodeCharacter{2018}{\textquoteleft}     % ‘
+\DeclareUnicodeCharacter{2019}{\textquoteright}    % ’
+\DeclareUnicodeCharacter{201C}{\textquotedblleft}  % “
+\DeclareUnicodeCharacter{201D}{\textquotedblright} % ”
+\DeclareUnicodeCharacter{2212}{\textminus}         % − (math minus)
+\fi
+
+% Make math macros harmless in PDF bookmarks
+\pdfstringdefDisableCommands{%
+    \def\vct#1{#1}%
+    \def\mat#1{#1}%
+    \def\matg#1{#1}%
+    \def\I{I}%
+}
+
+% Theorems: small header/body
+\newtheoremstyle{bodysmall}
+{3pt}{3pt}{\normalfont\small}{0pt}{\bfseries\small}{.}{0.5em}{}
+\theoremstyle{bodysmall}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem*{theorem*}{Theorem}
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% Shortcuts
+\newcommand{\Skew}[1]{\left[#1\right]_\times}
+\newcommand{\Id}{\mat{I}}
+\newcommand{\pct}[1]{#1\%}
+\newcommand{\meanstd}[2]{#1 \pm #2}
+% or
+% \newcommand{\meanstd}[2]{#1\,{\scriptsize$\pm$}\,#2}
+\newcommand{\ci}[2]{#1\,(\,#2\,\text{CI}\,)}
+
+% Itô integral
+\newcommand{\Ito}{\mathrm{It\hat{o}}}
+\newcommand{\ItoInt}[2]{\int_0^{#1} #2\, dW_s^{\Ito}}
+
+\DeclareMathOperator{\proj}{\mathcal{P}}
+\DeclareMathOperator{\clip}{clip}
+\DeclareMathOperator{\wrap}{wrap}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\blkdiag}{blkdiag}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\sym}{sym}
+
+% === Sets and spaces ===
+\newcommand{\set}[1]{\mathcal{#1}}  % generic set, e.g. \set{X}
+\newcommand{\R}{\mathbb{R}}         % real numbers
+\newcommand{\C}{\mathbb{C}}         % complex numbers
+\newcommand{\N}{\mathbb{N}}         % natural numbers
+\newcommand{\Z}{\mathbb{Z}}         % integers
+
+% === Probability / statistics ===
+\newcommand{\E}{\mathbb{E}}         % expectation
+\DeclareMathOperator{\Var}{Var}     % variance
+\DeclareMathOperator{\Cov}{Cov}     % covariance
+
+% Text subscript helper (labels, not variables)
+\newcommand{\ts}[1]{\text{#1}}
+
+% Two-column helper (no layout change)
+\newcommand{\fitcol}[1]{%
+    \adjustbox{max width=\columnwidth}{\ensuremath{\displaystyle #1}}%
+}
+
+\makeatletter
+\@ifpackageloaded{cite}{%
+    \renewcommand{\citepunct}{,\penalty\citepunctpenalty\,}%
+    \renewcommand{\citedash}{--}%
+}{}
+\makeatother
+
+% Allow multi-line displays to break across columns
+\emergencystretch=2em
+\allowdisplaybreaks
+
+% Title & authors (IEEEtran conference style)
+\title{OU-Driven Quaternion MEKF for Marine INS and Wave-State Estimation\\
+(draft)}
+
+\author{%
+    \IEEEauthorblockN{Mikhail S. Grushinskiy}
+    \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+    Bareboat Necessities GitHub Project\\
+    Email: mgrouch@users.github.com}%
+}
+
+\pgfplotsset{compat=1.18}
+
+\begin{document}
+    \maketitle
+
+    \begin{abstract}
+        We present a detailed mathematical development of a quaternion multiplicative EKF for ocean-wave motion that couples attitude to an extended
+        linear kinematic chain for velocity, displacement, and the integral of displacement. World-frame acceleration is modeled as
+        an Ornstein–Uhlenbeck (OU) process, giving stationary variance and realistic temporal correlation. Gyroscope bias is modeled as a random walk;
+        accelerometer bias includes random-walk and temperature-dependent drift. To suppress double-integration drift, we add an anisotropic
+        pseudo-measurement on the integral state. We derive continuous- and discrete-time models with Rodrigues/analytic discretizations and
+        provide explicit Jacobians for accelerometer and magnetometer updates. A lightweight Kalman filter estimates horizontal wave direction
+        using the tracked carrier frequency. We also outline practical tuning and a novel adaptive law that scales the pseudo-measurement
+        variance with the OU parameters, enabling stable behavior across sea states. The approach targets embedded, low-cost IMU deployments, enabling accurate, real-time heave and wave direction estimation for dynamic positioning, unmanned vehicles, maritime safety, and oceanographic studies.
+    \end{abstract}
+
+    \begin{IEEEkeywords}
+        extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, MRU, Ornstein--Uhlenbeck process, Heave Reference System, HRS, heave sensor,
+        wave height estimation, wave measurement buoy
+    \end{IEEEkeywords}
+
+% === CORE SECTIONS ===
+    \input{w3d-intro.tex-part}
+    \input{w3d-state.tex-part}
+    \input{w3d-meas.tex-part}
+    \input{w3d-wind-heel.tex-part}
+    \input{w3d-proc-cont.tex-part}
+    \input{w3d-lti-discrete.tex-part}
+    \input{w3d-analytic-coeff.tex-part}
+    \input{w3d-kalm-up.tex-part}
+    \input{w3d-init.tex-part}
+    \input{fus-methods.tex-part}
+    \input{sim-charts.tex-part}
+    \input{w3d-gps-fusion.tex-part}
+
+    \FloatBarrier
+
+    \section*{Acknowledgments}
+    This work was prepared with the supervised assistance of artificial intelligence tools, including ChatGPT and DeepSeek, which were employed to aid in code generation, mathematical drafting, and editorial preparation. All conceptual development, validation of results, and final revisions were conducted independently by the author.
+
+    \section*{Disclosure Statement}
+    The author declares no conflicts of interest and received no funding for this research.
+
+%\nocite{*}
+    \bibliographystyle{IEEEtran}
+    \bibliography{w3d}
+
+% Balance final page columns (optional, IEEE-style)
+    \balance
+
+\end{document}
