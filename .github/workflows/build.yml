@@ -33,7 +33,15 @@ jobs:
       - name: Compile tests (${{ matrix.dir }})
         run: |
           cd tests/${{ matrix.dir }} && make && cd ..
-          
+
+      - name: Copy test data (${{ matrix.dir }})
+        run: |
+          cp ${{ github.workspace }}/plots/${{ matrix.dir }}/*.csv tests/${{ matrix.dir }}
+
+      - name: Run tests (${{ matrix.dir }})
+        run: |
+          cd tests/${{ matrix.dir }} && chmod +x *.sh && ./run_tests.sh && cd ..
+
       - name: Generate PGF plots (${{ matrix.dir }})
         run: |
           cd plots/${{ matrix.dir }}
