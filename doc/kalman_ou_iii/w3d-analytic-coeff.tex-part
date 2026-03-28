@@ -1,0 +1,251 @@
+\section{Block structure of the discrete transition \texorpdfstring{$\matg{\Phi}$}{Phi} and covariance \texorpdfstring{$\matg{Q}_d$}{Qd}}
+\label{sec:block-Phi-Qd}
+
+Let $h>0$ be the sampling step and let the error-state be ordered as in the continuous-time state model.
+We group indices into three blocks:
+\[
+\fitcol{
+\underbrace{(\delta\vct{\theta},\ \vct{b}_g)}_{\text{attitude\,+\,gyro-bias}} \in \mathbb R^{N_A},\quad
+\underbrace{(\vct{v},\ \vct{p},\ \vct{S},\ \vct{a}_w)}_{\text{OU-driven linear chain}} \in \mathbb R^{N_L},\quad
+\underbrace{\vct{b}_a}_{\text{accel-bias}}\in \mathbb R^{N_B},
+}
+\]
+with $N_A=3$ or $6$ (no/with $\vct{b}_g$), $N_L=12$, $N_B=3$.
+
+\paragraph{Attitude + gyro-bias block \(\matg{\Phi}_{\!AA}(h)\) and \(\matg{Q}_{\!AA}(h)\)}
+For the attitude error + gyro-bias (size \(3{+}3\)), the algorithm uses a structured
+path that matches the Q-MEKF with piecewise-constant \(\hat{\vct{\omega}}=
+\vct{\omega}_m-\vct{b}_g\) over the step:
+\begin{itemize}
+  \item \(\matg{\Phi}_{\!AA}(h)\) implements the right-multiplicative small-angle
+        transition: the \(\delta\vct{\theta}\)-block is the Rodrigues
+        expression
+        \(\Phi_{\theta\theta}(h)=\Id - \sin\theta\,\mat{D} + (1-\cos\theta)\,\mat{D}^2\)
+        with \(\theta=\|\hat{\vct{\omega}}\|h\) and
+        \(\mat{D}=\Skew{\hat{\vct{\omega}}/\|\hat{\vct{\omega}}\|}\);
+        the \(\delta\vct{\theta}\)–\(\vct{b}_g\) block is \(-\Id\,h\).
+  \item \(\matg{Q}_{\!AA}(h)\) is built from rotation integrals:
+        \[
+        \matg{Q}_{\theta\theta}=\int_0^{h}\! \Rot(s)\,\matg{Q}_g\,\Rot(s)^\top ds
+        \;+\; \int_0^{h}\! \mat{B}(s)\,\matg{Q}_{bg}\,\mat{B}(s)^\top ds,
+        \]
+        \(\matg{Q}_{bb}=\matg{Q}_{bg}\,h\),
+        \(\matg{Q}_{\theta b}=\Big(\int_0^{h}\! \mat{B}(s)\,ds\Big)\matg{Q}_{bg}\),
+        with \(\Rot(s)\triangleq \exp\!\bigl(-\Skew{\hat{\vct{\omega}}}\,s\bigr)\in SO(3)\) the
+        attitude-error rotation (Rodrigues form for constant \(\hat{\vct{\omega}}\)),
+        and \(\mat{B}(s)\) the associated closed-form gyro-bias coupling term
+        (exact for isotropic \(\matg{Q}_g\); Simpson quadrature otherwise).
+\end{itemize}
+
+\paragraph{Linear OU chain block \(\matg{\Phi}_{\!LL}(h)\)}
+The linear \(12\times12\) block corresponds to the stacked axes
+\([\vct{v},\vct{p},\vct{S},\vct{a}_w]\) (3D). It is formed by
+placing three identical \(4\times4\) axis transitions on the block diagonal:
+\begin{equation}
+\begin{aligned}
+\matg{\Phi}_{\!LL}(h)
+  &= \mathrm{blkdiag}\!\big(
+      \Phi_{\text{axis}},
+      \Phi_{\text{axis}},
+      \Phi_{\text{axis}}
+     \big),\\[4pt]
+\Phi_{\text{axis}}
+  &=
+  \begin{bmatrix}
+  1 & 0 & 0 & \phi_{va}\\
+  h & 1 & 0 & \phi_{pa}\\
+  \tfrac{1}{2}h^2 & h & 1 & \phi_{Sa}\\
+  0 & 0 & 0 & \alpha
+  \end{bmatrix}.
+\end{aligned}
+\end{equation}
+
+where \(x \equiv \frac{h}{\tau}\), and the algorithm uses the following
+expressions:
+\[
+\fitcol{
+\begin{aligned}
+\phi_{va} &= -\tau\,(e^{-x}-1),\qquad
+\phi_{pa} = \tau^2\big(x + (e^{-x}-1)\big),\\
+\phi_{Sa} &= \tau^3\Big(\tfrac12 x^2 - x - (e^{-x}-1)\Big).
+\end{aligned}
+}
+\]
+
+\paragraph{Linear OU chain covariance block \(\matg{Q}_{\!LL}(h)\). Uncorrelated axes (diagonal stationary variance)}
+
+For a single axis with OU correlation time \(\tau>0\), stationary variance
+\(\sigma^2\), and sampling step \(h\), we write
+\[
+\alpha \equiv e^{-x},\qquad
+\alpha_2 \equiv e^{-2x},\qquad
+q_c \equiv \frac{2\sigma^2}{\tau}.
+\]
+The scalar OU process is driven by
+\(
+da = -\tfrac1{\tau}a\,dt + \sqrt{q_c}\,dW
+\),
+and the stacked state for one axis is
+\(
+z \equiv [v,\,p,\,S,\,a]^\top.
+\)
+The algorithm uses the exact discrete covariance
+\[
+\fitcol{
+\matg{Q}_{d,\text{axis}}(h)
+= \int_0^h \Phi_{\text{axis}}(t)\,
+    \mat{G}\,q_c\,\mat{G}^\top
+    \Phi_{\text{axis}}(t)^\top dt,
+\quad
+\mat{G} = [0,\,0,\,0,\,1]^\top,
+}
+\]
+implemented in two numerically stable branches.
+
+\medskip
+\noindent\textbf{General closed form (\(|x|>x_0\))}
+For \(|x|>x_0\) with \(x_0 \approx 10^{-2}\) the algorithm uses the exact coefficient matrix
+\[
+\mathcal{K} \;=\; [\kappa_{ij}]_{i,j\in\{v,p,S,a\}},
+\]
+and constructs
+\[
+\matg{Q}_{d,\text{axis}}(h) = q_c\,\mathrm{sym}\,\mathcal{K},
+\qquad
+\mathrm{sym}(\mathcal{K}) \equiv \tfrac12(\mathcal{K}+\mathcal{K}^\top).
+\]
+The method uses the following expressions:
+\[
+\fitcol{
+\begin{aligned}
+\kappa_{vv} &= \tfrac12\tau^3\bigl(-\alpha_2 + 4\alpha + 2x - 3\bigr),\\
+\kappa_{vp} &= \tfrac12\tau^4\bigl(\alpha_2 + 2\alpha(x-1) + x^2 - 2x + 1\bigr),\\
+\kappa_{vS} &= \tfrac16\tau^5\bigl(-3\alpha_2 + 3\alpha(x^2+4)
+                              + x^3 - 3x^2 + 6x - 9\bigr),\\
+\kappa_{va} &= \tfrac12\tau^2\bigl(\alpha_2 - 2\alpha + 1\bigr),\\[4pt]
+\kappa_{pp} &= \tau^5\Bigl(
+           -\tfrac12\alpha_2 - 2\alpha x
+           + \tfrac13 x^3 - x^2 + x + \tfrac12
+         \Bigr),\\
+\kappa_{pS} &= \tau^6\Bigl(
+           \tfrac12\alpha_2
+           + \tfrac12\alpha(-x^2 + 2x - 2)
+           + \tfrac18 x^4 - \tfrac12 x^3 + x^2 - x + \tfrac12
+         \Bigr),\\
+\kappa_{pa} &= \tfrac12\tau^3\bigl(-\alpha_2 - 2\alpha x + 1\bigr),\\[4pt]
+\kappa_{SS} &= \tau^7\Bigl(
+           -\tfrac12\alpha_2
+           + \alpha(x^2 + 2)
+           + \tfrac1{20}x^5 - \tfrac14 x^4 + \tfrac23 x^3
+           - x^2 + x - \tfrac32
+         \Bigr),\\
+\kappa_{Sa} &= \tfrac12\tau^4\bigl(\alpha_2 - \alpha(x^2+2) + 1\bigr),\\
+\kappa_{aa} &= \tfrac12\tau\bigl(1 - \alpha_2\bigr).
+\end{aligned}
+}
+\]
+
+\medskip
+\noindent\textbf{Small-\(x\) series (\(|x|\le x_0\))}
+For \(|x|\le x_0\), the implementation uses a
+Maclaurin expansion in \(h\) up to \(O(h^5)\).
+
+\iffalse
+Writing \(h^k/\tau^\ell\) explicitly, the nonzero entries are
+\[
+\fitcol{
+\begin{aligned}
+Q_{vv}
+&\approx \sigma^2\Big(
+    \tfrac{2}{3}\frac{h^3}{\tau}
+  - \tfrac{1}{2}\frac{h^4}{\tau^2}
+  + \tfrac{7}{30}\frac{h^5}{\tau^3}
+\Big),\\[2pt]
+Q_{vp}=Q_{pv}
+&\approx \sigma^2\Big(
+    \tfrac{1}{4}\frac{h^4}{\tau}
+  - \tfrac{1}{6}\frac{h^5}{\tau^2}
+\Big),\\[2pt]
+Q_{vS}=Q_{Sv}
+&\approx \sigma^2\Big(
+  \tfrac{1}{15}\frac{h^5}{\tau}
+\Big),\\[2pt]
+Q_{va}=Q_{av}
+&\approx \sigma^2\Big(
+    \frac{h^2}{\tau}
+  - \frac{h^3}{\tau^2}
+  + \tfrac{7}{12}\frac{h^4}{\tau^3}
+  - \tfrac{1}{4}\frac{h^5}{\tau^4}
+\Big),\\[2pt]
+Q_{pp}
+&\approx \sigma^2\Big(
+  \tfrac{1}{10}\frac{h^5}{\tau}
+\Big),\\[2pt]
+Q_{pa}=Q_{ap}
+&\approx \sigma^2\Big(
+    \tfrac{1}{3}\frac{h^3}{\tau}
+  - \tfrac{1}{3}\frac{h^4}{\tau^2}
+  + \tfrac{11}{60}\frac{h^5}{\tau^3}
+\Big),\\[2pt]
+Q_{Sa}=Q_{aS}
+&\approx \sigma^2\Big(
+    \tfrac{1}{12}\frac{h^4}{\tau}
+  - \tfrac{1}{12}\frac{h^5}{\tau^2}
+\Big),\\[2pt]
+Q_{aa}
+&\approx \sigma^2\Big(
+    2\frac{h}{\tau}
+  - 2\frac{h^2}{\tau^2}
+  + \tfrac{4}{3}\frac{h^3}{\tau^3}
+  - \tfrac{2}{3}\frac{h^4}{\tau^4}
+  + \tfrac{4}{15}\frac{h^5}{\tau^5}
+\Big).
+\end{aligned}
+}
+\]
+All omitted entries are of order \(O(h^6)\) or higher in \(h\) and are
+set to zero in the implementation. The matrix is then projected to the
+nearest PSD matrix (and symmetrized) to remove roundoff.
+\fi
+
+\medskip
+All other entries of \(\mathcal{K}\) follow by symmetry,
+\(\kappa_{ij}=\kappa_{ji}\). As in the small-\(x\) branch, \(\matg{Q}_{d,\text{axis}}\)
+is post-processed by a PSD projection and symmetrization.
+
+\medskip
+\noindent\textbf{Assembly of \(\matg{Q}_{\!LL}(h)\)}
+For uncorrelated axes with diagonal stationary covariance
+\(\Sigma_{\!a_w} = \mathrm{diag}(\sigma_x^2,\sigma_y^2,\sigma_z^2)\)
+the full linear-block covariance is the block-diagonal stacking
+\[
+\matg{Q}_{\!LL}(h)
+= \mathrm{blkdiag}\bigl(
+   \matg{Q}_{d,\text{axis}}(\sigma_x^2),\,
+   \matg{Q}_{d,\text{axis}}(\sigma_y^2),\,
+   \matg{Q}_{d,\text{axis}}(\sigma_z^2)
+\bigr).
+\]
+In the correlated case, the implementation uses a Kronecker product
+construction
+\(
+\matg{Q}_{\!LL} = \Sigma_{\!a_w}\otimes \matg{Q}_{d,\text{axis}}(\sigma^2{=}1)
+\),
+followed by a PSD projection.
+
+\paragraph{Accelerometer bias block}
+The accelerometer bias random walk contributes
+\[
+\Phi_{bb}(h)=\mat{I}_3,\qquad \matg{Q}_{bb}(h)=\matg{Q}_{ba}\,h.
+\]
+
+\paragraph{Analytic coefficients summary}
+In short, the discrete transition and covariance used by the method's algorithm are
+\[
+\begin{aligned}
+\matg{\Phi}(h) &=\mathrm{blkdiag}\big(\matg{\Phi}_{\!AA}(h),\,\matg{\Phi}_{\!LL}(h),\,\mat{I}_3\big),\qquad\\
+\matg{Q}_d(h) &=\mathrm{blkdiag}\big(\matg{Q}_{\!AA},\,\matg{Q}_{\!LL},\,\matg{Q}_{bb}\big),
+\end{aligned}
+\]
+with \(\Phi_{\text{axis}},\,\phi_{va},\phi_{pa},\phi_{Sa}\) and
+\(\matg{Q}_{d,\text{axis}}=q_c\,\mathrm{sym}\,\mathcal{K}\) as given above.

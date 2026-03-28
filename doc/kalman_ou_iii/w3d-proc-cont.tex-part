@@ -1,0 +1,194 @@
+\section{Process Model (Continuous Time)}
+\label{sec:proc}
+
+We separate (i) the quaternion attitude subsystem used by the right--multiplicative
+EKF and (ii) the linear OU--driven kinematic chain. The former is propagated on
+the manifold (nominal quaternion); the latter is a vector LTI SDE in continuous time.
+
+\subsection{Attitude subsystem (Q--MEKF nominal and error)}
+Let $\vct{\omega}_m$ be the measured gyro rate (body), $\vct{b}_g$ the gyro bias,
+and $\vct{n}_g$ gyro noise (white, zero–mean). The \emph{nominal} quaternion
+$q$ (world$\to$body) obeys
+\begin{equation}
+\begin{aligned}
+\dot{q} =& \tfrac12\,\Omega\!\left(\vct{\omega}_m-\vct{b}_g\right)\,q,
+\qquad
+q \in \mathbb{H}_1,\qquad\\
+\Omega(\vct{\omega}) =&
+\begin{bmatrix}
+0 & -\vct{\omega}^\top\\[1ex]
+\vct{\omega} & -\Skew{\vct{\omega}}
+\end{bmatrix},
+\end{aligned}
+\end{equation}
+with unit–norm enforcement in implementation. The gyro bias follows a random walk
+\begin{equation}
+\fitcol{
+\dot{\vct{b}}_g = \vct{w}_{bg}, \qquad
+\vct{w}_{bg}\sim\mathcal N(\vct{0},\ \matg{Q}_{bg}),
+}
+\end{equation}
+where $\matg{Q}_{bg}$ is the continuous–time spectral density (per axis).
+
+For the right--multiplicative error state, we use a small rotation vector
+$\delta\vct{\theta}$ so that $q^+ = q\otimes\exp(\tfrac12\,\delta\vct{\theta})$.
+Linearizing the attitude error dynamics gives the standard Q--MEKF form
+\begin{equation}
+\dot{\delta\vct{\theta}}
+\;\approx\;
+-\Skew{\vct{\omega}_m-\vct{b}_g}\,\delta\vct{\theta}
+\;-\;\vct{n}_g,
+\qquad
+\vct{n}_g\sim\mathcal N(\vct{0},\ \matg{Q}_g),
+\label{eq:att-error}
+\end{equation}
+where $\matg{Q}_g$ is the gyro white–noise spectral density.
+
+\subsection{Linear kinematic chain with OU acceleration}
+Let $\vct{a}_w$ be the latent world–frame acceleration (NED). Along each axis
+the chain $\dot{\vct{v}}=\vct{a}_w$, $\dot{\vct{p}}=\vct{v}$,
+$\dot{\vct{S}}=\vct{p}$ is driven by a vector OU process
+\begin{equation}
+\begin{aligned}
+\dot{\vct{a}}_w &= -\tfrac{1}{\tau}\,\vct{a}_w
++ \sqrt{\tfrac{2}{\tau}}\;\mat{L}_a\,\vct{w}_a(t),\\
+\mat{L}_a \mat{L}_a^\top &= \matg{\Sigma}_{aw}, \qquad
+\text{$\vct{w}_a$ is standard white noise.}
+\end{aligned}
+\label{eq:ou-ct}
+\end{equation}
+Here $\tau>0$ is the correlation time and $\matg{\Sigma}_{aw}\succ0$ the stationary
+covariance (diagonal or correlated).
+
+The sea wave-induced floating body acceleration is not OU; instead,
+\eqref{eq:ou-ct} is used as a low-order \emph{stationary Gauss--Markov prior} that captures
+a key property for inertial drift control: the effective wave-driven acceleration is
+\emph{colored} with a finite correlation time on the order of the dominant wave time scale.
+The parameter $\tau$ sets this correlation time, while the stationary covariance
+$\matg{\Sigma}_{aw}$ sets the acceleration energy level; both can be tuned (or adapted
+online) from measured specific-force statistics. From an estimation standpoint, the OU
+prior is attractive because it is Markov (minimal state), mean-reverting with bounded
+variance, and admits closed-form discretization for $\matg{\Phi}(h)$ and $\matg{Q}_d(h)$.
+
+In the frequency domain, each scalar OU component has PSD
+\(
+S_a(\omega)=\tfrac{2\sigma_a^2\tau}{1+\omega^2\tau^2}
+\),
+so relative to a white--acceleration model the OU dynamics act as a
+first--order low--pass filter on the driving noise, with corner frequency
+$\omega_c\approx 1/\tau$. This concentrates acceleration energy in a finite
+band around the dominant wave time scale and suppresses unrealistically fast
+(very high--frequency) components.
+
+We model the accelerometer bias as a (temperature--offset) random walk,
+\begin{equation}
+\dot{\vct{b}}_a = \vct{w}_{ba},\qquad
+\vct{w}_{ba}\sim\mathcal N(\vct{0},\ \matg{Q}_{ba}),
+\label{eq:ba-rw}
+\end{equation}
+while its temperature dependence
+$\vct{b}_a(T)=\vct{b}_{a0}+\vct{k}_a(T-T_0)$
+enters the \emph{measurement} model, not the process.
+
+\subsection{Unified Continuous-Time LTI SDE (Attitude + Linear States)}
+\label{sec:lti-sde}
+
+Over each small sampling interval we assume the body angular velocity
+$\vct{\omega}_m-\vct{b}_g$ is constant. Under this standard Q--MEKF
+approximation, the small-angle attitude error $\delta\vct{\theta}$ evolves
+linearly, so both the attitude and the linear kinematic chains can be
+combined into a single continuous-time LTI stochastic differential
+equation with full error-state vector.
+
+\[
+\dot{\vct{x}}_{\rm err}
+= \mat{F}\,\vct{x}_{\rm err}
++ \mat{L}\,\vct{w},
+\]
+
+where $\vct{w}$ collects all driving white noises
+$\vct{w}=[\,\vct{n}_g^\top,\ \vct{w}_{bg}^\top,\
+\vct{w}_a^\top,\ \vct{w}_{ba}^\top\,]^\top$.
+
+The continuous-time dynamics are linearized about the nominal trajectory
+and take the block structure
+\[
+\fitcol{
+\mat{F} =
+\begingroup\setlength\arraycolsep{4pt}
+\begin{bmatrix}
+-\Skew{\vct{\omega}_m-\vct{b}_g} & -\Id & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0}\\
+\mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0}\\
+\mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \Id & \mat{0}\\
+\mat{0} & \mat{0} & \Id & \mat{0} & \mat{0} & \mat{0} & \mat{0}\\
+\mat{0} & \mat{0} & \mat{0} & \Id & \mat{0} & \mat{0} & \mat{0}\\
+\mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} & -\tfrac{1}{\tau}\Id & \mat{0}\\
+\mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0}
+\end{bmatrix}
+\endgroup,
+}
+\]
+with each block $3\times3$ and block rows corresponding to
+$[\delta\vct{\theta},\,\vct{b}_g,\,\vct{v},\,\vct{p},\,\vct{S},\,\vct{a}_w,\,\vct{b}_a]$.
+
+The diffusion matrix $\mat{L}$ injects the independent process noises:
+\[
+\fitcol{
+\mat{L} =
+\begingroup\setlength\arraycolsep{4pt}
+\begin{bmatrix}
+-\Id & \mat{0} & \mat{0} & \mat{0}\\
+\mat{0} & \Id & \mat{0} & \mat{0}\\
+\mat{0} & \mat{0} & \mat{0} & \mat{0}\\
+\mat{0} & \mat{0} & \mat{0} & \mat{0}\\
+\mat{0} & \mat{0} & \mat{0} & \mat{0}\\
+\mat{0} & \mat{0} & \sqrt{\tfrac{2}{\tau}}\,\mat{L}_a & \mat{0}\\
+\mat{0} & \mat{0} & \mat{0} & \Id
+\end{bmatrix}
+\endgroup,
+\\
+\qquad
+\mathbb E[\vct{w}\,\vct{w}^\top]
+= \mathrm{blkdiag}\!\left(
+\matg{Q}_g,\ \matg{Q}_{bg},\ \mat{I}_3,\ \matg{Q}_{ba}
+\right).
+}
+\]
+
+Hence the full continuous-time process model compactly reads
+\begin{equation}
+\dot{\vct{x}}_{\rm err}(t)
+= \mat{F}\,\vct{x}_{\rm err}(t)
++ \mat{L}\,\vct{w}(t),
+\qquad
+\matg{Q}_c = \mat{L}\,\mathbb E[\vct{w}\vct{w}^\top]\,\mat{L}^\top,
+\label{eq:full-sde}
+\end{equation}
+where $\mat{F}$ and $\mat{L}$ are the Jacobian (linearized) dynamics and
+noise-input matrices, and $\matg{Q}_c$ is the
+continuous-time spectral density of the driving white noises.
+
+Let $\mat{P}(t)$ be the error covariance. The \emph{propagation} (no measurement)
+obeys the continuous Lyapunov equation
+\begin{equation}
+\dot{\mat{P}} \;=\; \mat{F}\,\mat{P} + \mat{P}\,\mat{F}^\top
+\;+\; \matg{Q}_c.
+\label{eq:lyap-prop}
+\end{equation}
+If continuous-time measurements $\vct{z}=\mat{H}\,\delta\vct{x}+\vct{\eta}$
+with $\mathbb E[\vct{\eta}\vct{\eta}^\top]=\mat{R}$ are considered,
+the \emph{Kalman--Bucy Riccati} adds the information term
+\begin{equation}
+\dot{\mat{P}} \;=\; \mat{F}\,\mat{P} + \mat{P}\,\mat{F}^\top
+\;+\; \matg{Q}_c
+\;-\; \mat{P}\,\mat{H}^\top \mat{R}^{-1}\mat{H}\,\mat{P}.
+\label{eq:kbc}
+\end{equation}
+Equations \eqref{eq:lyap-prop}--\eqref{eq:kbc} are the continuous counterparts of
+the discrete Joseph-form covariance update used in implementation.
+
+This unified linear system provides the foundation for analytic
+discretization in the next section: the per-axis exponential of
+$\mat{F}$ yields the transition $\matg{\Phi}(h)$, and the corresponding
+integral gives the discrete process covariance $\matg{Q}_d(h)$ used in
+the Kalman time-update.

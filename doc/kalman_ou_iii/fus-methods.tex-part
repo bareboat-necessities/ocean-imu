@@ -1,0 +1,559 @@
+% =======================================================
+\section{Frequency Tracking from Vertical Specific Force}
+\label{sec:freq-tracking}
+
+To estimate parameters adaptively we need a stable, real-time estimate of the dominant frequency of acceleration from the IMU. Using the vertical specific force $a_z(t)$, we normalize by gravity to form a dimensionless input $u(t)$ that drives one of three trackers. Each tracker outputs a raw frequency, which is then clamped and smoothed to produce a reliable $\bar f_k$ for downstream adaptation and direction estimation.
+
+\paragraph{Signal}
+Track frequency from the vertical specific force $a_z(t)$ (IMU; body), normalized by $g$:
+\[
+u(t)=\frac{a_z(t)}{g}.
+\]
+Let $\omega=2\pi f$ and $\phi(t)=\int_0^t \omega(\tau)\,d\tau$.
+
+\subsection{\textsc{KalmANFFreqTracker}: Kalman-updated adaptive notch}
+
+KalmANFFreqTracker filter \cite{Ali2023DAFx} models the signal with a second-order notch parameterized by $a=2\cos\omega$. It treats $a$ as a (slowly varying) state and updates it via a scalar Kalman step driven by the instantaneous prediction error.
+
+\paragraph{Method}
+Embed the notch with parameter $a\in(-2,2)$:
+\begin{align}
+x_{k+1} &= \begin{bmatrix} 0 & 1 \\ -1 & a_k \end{bmatrix} x_k + \begin{bmatrix} 0 \\ 1 \end{bmatrix} u_k, \qquad
+y_k = \begin{bmatrix} 1 & 0 \end{bmatrix} x_k,\\
+a_{k+1} &= a_k + w_k, \quad w_k\sim\mathcal{N}(0,q_a).
+\end{align}
+Treat $a$ as a scalar state; run a Kalman correction on $a$ using the instantaneous prediction error $\varepsilon_k=u_k-y_k$:
+\begin{align}
+\tilde a_k &= a_k, \quad P_k^- = P_{k-1}+q_a, \\
+K_k &= \frac{P_k^-\,\partial \varepsilon_k/\partial a}{(\partial \varepsilon_k/\partial a)^2 P_k^- + r}, \\
+a_k &\leftarrow \tilde a_k + K_k\,\varepsilon_k,\qquad
+P_k=(1-K_k\,\partial \varepsilon_k/\partial a)P_k^-,
+\end{align}
+with $\partial \varepsilon_k/\partial a$ obtained from the standard state-sensitivity recursion. Frequency readout:
+\[
+\hat\omega_k=\arccos\!\left(\tfrac{1}{2}\,\clip(a_k,-2,2)\right), \quad \hat f_k=\hat\omega_k/(2\pi).
+\]
+
+
+\subsection{Aranovskiy-type adaptive resonator}
+
+Aranovskiy filter \cite{Bobtsov2013182} drives a lightly damped virtual resonator by $u(t)$ and adjusts its natural frequency so its output matches the input. If the resonator frequency equals the signal's, the error energy is minimized.
+
+\paragraph{Method}
+Internal lightly damped resonator:
+\begin{align}
+\ddot\xi + 2\zeta\,\omega\,\dot\xi + \omega^2 \xi &= u, \\
+e &= u - \xi, \qquad y=\dot\xi .
+\end{align}
+Frequency adaptation (gradient/energy-based) with projection $\proj_{[\omega_{\min},\omega_{\max}]}$:
+\begin{align}
+\dot\omega &= \gamma_\omega\, e\, y, \qquad \omega \leftarrow \proj_{[\omega_{\min},\omega_{\max}]}(\omega).
+\end{align}
+Discrete-time (sample $k$ at $\Delta t$):
+\[
+\fitcol{
+\omega_{k+1}
+ = \proj_{[\omega_{\min},\,\omega_{\max}]}
+   \!\left(\omega_k + \gamma_{\omega}\, e_k\, y_k\, \Delta t\right),
+\qquad
+\omega_k \in [\omega_{\min},\,\omega_{\max}].
+}
+\]
+
+
+\iffalse
+\subsection{Zero-crossing baseline with hysteresis}
+
+Use debounced threshold crossings to estimate period directly; smooth to reduce jitter.
+
+\paragraph{Method}
+Times of upcrossings of $u$ through band $[-h,+h]$ (debounced by $T_{\mathrm{deb}}$). Period estimate
+\(
+\hat T_k=(1-\alpha_T)\hat T_{k-1}+\alpha_T (t_k-t_{k-1}), \quad \hat f_k=1/\hat T_k.
+\)
+
+Clamp $\hat f_k \in [f_{\min}, f_{\max}]$, then apply a short EMA:
+\(
+\bar f_k=(1-\alpha_s)\bar f_{k-1}+\alpha_s \hat f_k.
+\)
+\fi
+
+% =======================================================
+\section{Variance-Informed Online Adaptation}
+\label{sec:adaptation}
+
+
+\subsection{Spectral scaling and pseudo-measurement on $S$}
+\label{sec:spectral-Rs}
+\label{app:rs-scaling}
+
+The pseudo-measurement on the triple-integral state
+\[
+y_S = 0 = S + n_S,\qquad n_S \sim \mathcal{N}(0,R_S^2)
+\]
+is not a physical sensor but a regularizer. Its design should reflect the
+\emph{natural} fluctuations of $S$ under a given sea state, so that $R_S$
+scales with the sea state in a physically consistent and, ideally,
+sea-state–invariant way.
+
+The key steps are:
+\begin{enumerate}\itemsep2pt
+\item Express the variance of $S$ in terms of the vertical-acceleration
+spectrum.
+\item Show that, for a broad class of spectra, the standard deviation
+$\sigma_S$ of $S$ scales as
+\[
+\sigma_S \sim c_{\text{spec}}\;\sigma_a\,\tau^3,
+\]
+where $c_{\text{spec}}$ is a dimensionless \emph{spectral shape factor}.
+\item Choose the pseudo-measurement noise $R_S$ proportional to this physical
+scale $\sigma_S$. This makes the pseudo-measurement effectively
+\emph{sea-state invariant}.
+\end{enumerate}
+
+\subsection{Variance of $S$ from the acceleration spectrum}
+
+Let $a(t)$ denote vertical acceleration and let
+\[
+\dot v = a,\qquad \dot p = v,\qquad \dot S = p,
+\]
+so that $S$ is the triple time-integral of $a$. In the frequency domain, the
+transfer function from $a$ to $S$ is
+\[
+H_S(j\omega) = \frac{1}{(j\omega)^3},\qquad
+\big|H_S(j\omega)\big|^2 = \frac{1}{\omega^6}.
+\]
+If $a(t)$ is stationary with one-sided PSD $S_a(\omega)$, standard linear
+systems theory gives
+\[
+\mathrm{Var}[S]
+= \frac{1}{2\pi}\int_{-\infty}^{\infty}
+ S_a(\omega)\,\big|H_S(j\omega)\big|^2\,d\omega
+= \frac{1}{\pi}\int_0^\infty \frac{S_a(\omega)}{\omega^6}\,d\omega.
+\]
+
+For linear deep-water waves, displacement $\eta$ and acceleration $a$ are
+related by $a(\omega)=-(j\omega)^2\eta(\omega)$, so
+$S_a(\omega)=\omega^4 S_\eta(\omega)$ and
+\[
+\mathrm{Var}[S]
+= \frac{1}{\pi}\int_0^\infty \frac{\omega^4 S_\eta(\omega)}{\omega^6}\,d\omega
+= \frac{1}{\pi}\int_0^\infty \frac{S_\eta(\omega)}{\omega^2}\,d\omega.
+\]
+Either representation (in terms of $S_a$ or $S_\eta$) leads to the same scaling
+law once the spectrum is parameterized.
+
+\subsection{Normalization and spectral shape factor}
+
+We now separate \emph{scale} from \emph{shape}. Let $\sigma_a^2$ denote the
+variance of vertical acceleration and let $\tau$ be a characteristic time
+scale of the sea state (e.g.\ the OU correlation time or a quantity
+proportional to the peak period). We write the acceleration spectrum in the
+normalized form
+\begin{equation}
+\label{eq:Sa-normalized}
+S_a(\omega)
+= \sigma_a^2\,\tau\,\Phi(\omega\tau),
+\end{equation}
+where $\Phi(u)$ is a dimensionless shape function and the prefactor is chosen
+so that
+\[
+\frac{1}{\pi}\int_0^\infty \Phi(u)\,du = 1
+\quad\Longleftrightarrow\quad
+\frac{1}{\pi}\int_0^\infty S_a(\omega)\,d\omega = \sigma_a^2.
+\]
+
+In practice, any realistic spectrum has negligible energy below some
+effective nonzero frequency $\omega_{\min}>0$. We model this by
+\[
+\mathrm{Var}[S]
+= \frac{1}{\pi}\int_{\omega_{\min}}^\infty \frac{S_a(\omega)}{\omega^6}\,d\omega.
+\]
+Substituting \eqref{eq:Sa-normalized} and changing variables $u=\omega\tau$,
+$d\omega=du/\tau$, we obtain
+\begin{equation}
+\label{eq:varS-shape}
+\fitcol{
+\mathrm{Var}[S]
+= \sigma_a^2\tau^6\,
+\Bigg[\frac{1}{\pi}\int_{u_{\min}}^\infty \frac{\Phi(u)}{u^6}\,du\Bigg],
+}
+\end{equation}
+where $u_{\min}:=\omega_{\min}\tau$ is a (dimensionless) low-frequency cutoff
+in normalized coordinates.
+
+This motivates the definition
+\begin{equation}
+\label{eq:c-spec-def}
+c_{\mathrm{spec}}^{2}(u_{\min})
+:= \frac{1}{\pi}\int_{u_{\min}}^\infty \frac{\Phi(u)}{u^6}\,du,
+\end{equation}
+so that
+\begin{equation}
+\label{eq:sigmaS-scaling}
+\sigma_S(\sigma_a,\tau)
+:= \sqrt{\mathrm{Var}[S]}
+= c_{\text{spec}}(u_{\min})\,\sigma_a\,\tau^3.
+\end{equation}
+The factor $c_{\text{spec}}$ is \emph{dimensionless} and encodes only the
+spectral shape (and the choice of effective low-frequency cutoff), while
+$\sigma_a$ and $\tau$ carry the physical scale.
+
+\begin{remark}[Dimensional consistency]
+$\sigma_a$ has units $\mathrm{m/s^2}$ and $\tau$ has units $\mathrm{s}$, so
+$\sigma_a\tau^3$ has units $\mathrm{m\cdot s}$, the same units as the
+triple-integral state $S$ (since $S$ integrates displacement $p$ once more in
+time). Thus \eqref{eq:sigmaS-scaling} is dimensionally correct, and
+$c_{\text{spec}}$ is a pure number.
+\end{remark}
+
+\paragraph{Narrowband vs.\ broadband spectra}
+For a given $(\sigma_a,\tau)$, the value of $c_{\text{spec}}$ depends mainly on
+how much spectral mass lies near the low frequencies emphasized by the
+$1/u^6$ weight in \eqref{eq:c-spec-def}:
+\begin{itemize}[itemsep=1pt,topsep=1pt,leftmargin=*]
+\item A \emph{narrowband} spectrum (e.g.\ an idealized very sharp JONSWAP)
+concentrates variance near a single normalized frequency $u\approx 1$ and
+yields a relatively large $c_{\text{spec}}$.
+\item A more \emph{broadband} spectrum (e.g.\ Pierson--Moskowitz or a
+low-$\gamma$ JONSWAP) spreads energy across higher normalized frequencies.
+Because of the $1/u^6$ factor, this reduces $c_{\text{spec}}$ even though
+$\sigma_a$ and $\tau$ are kept fixed.
+\end{itemize}
+In particular, $c_{\text{spec}}$ is much more sensitive to spectral
+\emph{shape} (narrowness, bandwidth, tail behavior) than to overall energy
+($\sigma_a^2$) or peak period ($\tau$), which have already been factored out
+in \eqref{eq:sigmaS-scaling}.
+
+As a concrete example, for an OU surrogate with
+$\Phi_{\mathrm{OU}}(u)=2/(1+u^2)$ and a modest cutoff $u_{\min}\approx 1$, the
+integral \eqref{eq:c-spec-def} gives $c_{\text{spec}}\approx 0.16$.
+
+\subsection{From physical $\sigma_S$ to pseudo-measurement $R_S$}
+
+The pseudo-measurement
+\[
+y_S = 0 = S + n_S,\qquad n_S \sim \mathcal{N}(0,R_S^2)
+\]
+encodes a prior belief that $S$ fluctuates around zero with some expected
+spread. The spectral result \eqref{eq:sigmaS-scaling} provides exactly that
+spread: the \emph{physical} standard deviation $\sigma_S(\sigma_a,\tau)$
+generated by the sea state described by $(\sigma_a,\tau)$ and by the chosen
+spectral shape.
+
+A natural Gaussian design is therefore
+\begin{equation}
+\label{eq:Rs-from-sigmaS}
+R_S(\sigma_a,\tau)
+= k_i\,\sigma_S(\sigma_a,\tau)
+= k_i\,c_{\text{spec}}(u_{\min})\,\sigma_a\,\tau^3,
+\end{equation}
+with $k_i>0$ a dimensionless “comfort factor.” Values $k_i\approx 1$ make the
+pseudo-measurement noise comparable to the natural spread of $S$, $k_i>1$ are
+more conservative, and $k_i<1$ are more aggressive.
+
+Absorbing the (unknown but bounded) shape factor $c_{\text{spec}}$ into
+$k_i$ leads to the practical adaptation law used in the filter:
+\begin{equation}
+\label{eq:Rs-sigmaa-tau3}
+R_S(\sigma_a,\tau)
+= k_i\,\sigma_a\,\tau^3,
+\end{equation}
+where $k_i$ is now understood as a \emph{spectral design coefficient}. It is
+chosen large enough to cover the expected range of realistic spectra (OU,
+Pierson--Moskowitz, JONSWAP with typical $\gamma$) and reasonable effective
+low-frequency cutoffs $u_{\min}$.
+
+\begin{remark}[Sea-state invariance]
+Under \eqref{eq:sigmaS-scaling} and \eqref{eq:Rs-from-sigmaS}, the ratio
+\[
+\frac{\sigma_S^2(\sigma_a,\tau)}{R_S^2(\sigma_a,\tau)}
+= \Big(\frac{c_{\text{spec}}(u_{\min})}{k_i}\Big)^2
+\]
+is a pure number independent of $(\sigma_a,\tau)$. In other words, $S$ is
+always measured in units of its physically expected spread for that sea
+state. This makes the pseudo-measurement \emph{sea-state invariant}: a calm
+sea and a steep sea produce innovation statistics of the same order once
+normalized by $R_S$, and the qualitative effect of the pseudo-measurement on
+the filter does not depend on wave height or period, only on the choice of
+$k_i$ and on spectral shape.
+\end{remark}
+
+\subsection{Online Adaptation Implementation}
+\label{sec:adapt-impl}
+
+The implementation adapts three MEKF parameters online:
+the OU time constant $\tau$, the OU stationary acceleration scale $\sigma_a$,
+and the integral pseudo-measurement level $R_S$.
+
+\subsubsection{Vertical signal}
+Let $a_{z,\text{inert}}=a_z+g$ denote vertical inertial acceleration in the body/NED convention.
+We use the up-positive signal
+\[
+a_{\uparrow}:=-a_{z,\text{inert}}.
+\]
+
+\subsubsection{Frequency and period-tied variance horizon}
+A dominant frequency estimate $f$ is tracked from $a_{\uparrow}$ (Aranovskiy or KalmANFFreqTracker),
+then clamped and smoothed to an internal tuning frequency $f_{\text{tune}}\in[f_{\min},f_{\max}]$.
+To make the acceleration scale adapt with comparable responsiveness across chop and swell,
+the variance of $a_{\uparrow}$ is estimated over a \emph{fixed number of periods}:
+\begin{equation}
+\begin{aligned}
+T_{\text{eff}} = \frac{1}{f_{\text{tune}}}, \qquad
+\tau_{\text{var}} &=
+\clip\!\Big(
+K_{\text{periods}}\,T_{\text{eff}},
+\ \tau_{\text{var,min}},
+\ \tau_{\text{var,max}}
+\Big),\\
+\alpha_{\text{var}} &= 1 - e^{-\Delta t/\tau_{\text{var}}}.
+\end{aligned}
+\end{equation}
+Using $\alpha_{\text{var}}$, the tuner maintains an online estimate $\widehat{\sigma}^2_{\text{tot}}\approx\mathrm{Var}[a_{\uparrow}]$.
+
+\subsubsection{Noise-floor subtraction}
+A configured acceleration noise floor $\sigma_{\text{nf}}$ is subtracted in variance:
+\[
+\widehat{\sigma}^2_{\text{wave}}
+=\max\{0,\ \widehat{\sigma}^2_{\text{tot}}-\sigma_{\text{nf}}^2\}.
+\]
+
+\subsubsection{Targets (half-period scaling)}
+Targets follow the half-period rule and the cubic $R_S$ scaling:
+\begin{equation}\label{eq:tuner-targets}
+\begin{aligned}
+\tau_\star &= c_{\tau}\,\frac{1}{2f_{\text{tune}}},\qquad
+\sigma_{a,\star} = c_{\sigma}\,\sqrt{\max\!\bigl(\widehat{\sigma}^2_{\text{wave}},\epsilon\bigr)},\\
+R_{S,\star} &= c_R\,\sigma_{a,\star}\,\tau_\star^3.
+\end{aligned}
+\end{equation}
+
+\subsubsection{Smoothing}
+Applied $(\tau,\sigma_a)$ are EMA filtered toward their targets with a fixed adaptation time constant
+$\tau_{\text{adapt}}$:
+\begin{equation}\label{eq:adapt-ewma}
+\begin{aligned}
+\alpha &= 1 - e^{-\Delta t/\tau_{\text{adapt}}},\qquad
+\tau_{\text{appl}} \leftarrow \tau_{\text{appl}} + \alpha\bigl(\tau_\star - \tau_{\text{appl}}\bigr),\\
+\sigma_{a,\text{appl}} &\leftarrow \sigma_{a,\text{appl}}
+  + \alpha\bigl(\sigma_{a,\star} - \sigma_{a,\text{appl}}\bigr).
+\end{aligned}
+\end{equation}
+
+In contrast, $R_S$ is EMA-smoothed with a time constant proportional to the current wave time scale:
+\begin{equation}\label{eq:adapt-RS}
+\begin{aligned}
+\tau_{R_S} &= m_{R_S}\,\tau_\star,\qquad
+\alpha_{R_S} = 1 - e^{-\Delta t/\tau_{R_S}},\\
+R_{S,\text{appl}} &\leftarrow R_{S,\text{appl}}
+ + \alpha_{R_S}\bigl(R_{S,\star} - R_{S,\text{appl}}\bigr).
+\end{aligned}
+\end{equation}
+
+Thus $R_S$ responds faster for short-period seas and more slowly for long-period swell.
+
+\subsubsection{Anisotropy}
+When applied to the MEKF, the OU stationary standard deviation is set anisotropically,
+\[
+\Sigma_{a_w}^{1/2}=\diag(S_{\sigma}\sigma_{a,\text{appl}},\ S_{\sigma}\sigma_{a,\text{appl}},\ \sigma_{a,\text{appl}}),
+\]
+and the $S$ pseudo-measurement uses anisotropic noise
+\[
+\mat{R}_S=\diag(\rho_{xy}R_{S,\text{appl}},\ \rho_{xy}R_{S,\text{appl}},\ R_{S,\text{appl}}).
+\]
+
+\subsubsection{Optional drift correction via a displacement envelope}
+An extra drift correction can be enabled to damp large heave drift excursions using a
+\emph{displacement envelope} derived from the current targets $(\sigma_{a,\star},\tau_\star)$.
+Approximating the dominant motion as narrowband with $\omega\approx\pi/\tau_\star$,
+a sinusoid gives $\sigma_\eta \approx \sigma_{a,\star}/\omega^2 \approx \sigma_{a,\star}\tau_\star^2/\pi^2$.
+Using the Longuet--Higgins convention $H_s\approx 4\sigma_\eta$, the crest-to-trough scale
+$H_s/\sqrt{2}$ yields the envelope
+\[
+p_{\text{env}}
+\;\triangleq\;
+\frac{H_s}{\sqrt{2}}
+\;\approx\;
+\underbrace{\frac{2\sqrt{2}}{\pi^2}}_{C_{HS}}\;\sigma_{a,\star}\,\tau_\star^2.
+\]
+When the estimated heave magnitude exceeds a multiple of this envelope
+(e.g.\ $|p_z|>\kappa\,p_{\text{env}}$), the filter applies a soft pseudo-measurement on $p_z$
+(equivalently, temporarily strengthens drift control) with noise set from the same scale,
+for example $\sigma_p=k_p\,p_{\text{env}}$.
+
+\subsubsection{Implementation note (readiness, clamping, and floors)}
+All tuner statistics are maintained with \emph{debiased} EMAs (value+weight) so that early-time estimates do not depend on initial conditions.
+Tuning is enabled only once the debiasing weights exceed a small readiness threshold (warm-up complete).
+For safety and numerical robustness, the internal frequency $f_{\text{tune}}$ and all targets $(\tau_\star,\sigma_{a,\star},R_{S,\star})$
+are clipped to configured bounds before smoothing, and the applied acceleration scale is floored
+(e.g.\ $\sigma_{a,\text{appl}}\leftarrow \max(\sigma_{a,\text{appl}},\sigma_{\text{nf}})$) to prevent ill-conditioning in very calm seas.
+
+% =======================================================
+\section{Horizontal Wave Direction: Angle and Sign}
+\label{sec:direction}
+
+We estimate a slowly varying horizontal acceleration amplitude vector $\vct{A}_k$ whose direction gives wave azimuth modulo $180^\circ$. This section first motivates the simple cosine–gain model from a standard sinusoidal representation, then shows how a 2D Kalman filter recursively recovers $\vct{A}_k$.
+
+\subsection{Motivation from a sinusoidal horizontal acceleration}
+Consider the world–horizontal specific force
+\[
+\vct{z}_k =
+\begin{bmatrix}
+a_x(k)\\[2pt]
+a_y(k)
+\end{bmatrix}
+\in\mathbb{R}^2
+\]
+at sample time $t_k = k\,\Delta t$. For a single dominant narrow–band wave at known angular frequency $\omega$, the horizontal acceleration can be expressed as a sinusoid in some fixed direction,
+\begin{equation}
+\label{eq:dir-sinusoid}
+\vct{z}_k \approx \vct{A}\,\cos\bigl(\omega t_k + \phi_0\bigr) + \vct{\eta}_k,
+\end{equation}
+where
+\begin{itemize}
+  \item $\vct{A}\in\mathbb{R}^2$ is a constant horizontal \emph{amplitude vector} whose direction matches the wave propagation line (modulo $180^\circ$),
+  \item $\phi_0$ is an unknown constant phase offset, and
+  \item $\vct{\eta}_k$ collects noise and model mismatch.
+\end{itemize}
+Direction depends only on the ratio of the components of $\vct{z}_k$:
+\[
+\frac{a_y(k)}{a_x(k)}
+=
+\frac{A_y\cos(\omega t_k + \phi_0)}{A_x\cos(\omega t_k + \phi_0)}
+= \frac{A_y}{A_x},
+\]
+whenever $\cos(\omega t_k + \phi_0)\neq 0$. Thus any unknown constant phase merely scales the vector $\vct{A}$; the \emph{direction} is still encoded in $\vct{A}$.
+
+Expanding \eqref{eq:dir-sinusoid} using
+$\cos(\omega t_k + \phi_0)
+= \cos\phi_0 \cos(\omega t_k) - \sin\phi_0 \sin(\omega t_k)$
+gives
+\begin{equation}
+\label{eq:dir-cos-sin}
+\vct{z}_k
+\approx \vct{A}_c \cos(\omega t_k) + \vct{A}_s \sin(\omega t_k) + \vct{\eta}_k,
+\end{equation}
+with
+$\vct{A}_c = \vct{A}\cos\phi_0$ and
+$\vct{A}_s = -\vct{A}\sin\phi_0$.
+For a pure travelling wave, $\vct{A}_c$ and $\vct{A}_s$ are collinear and share the same direction as $\vct{A}$.
+
+Now consider a least–squares estimator that fits \eqref{eq:dir-cos-sin} using \emph{only} the cosine basis function, i.e.\ that chooses $\vct{A}$ to minimise
+\[
+J(\vct{A})
+= \sum_{k=1}^N
+\bigl\|\vct{z}_k - \cos\phi_k\,\vct{A}\bigr\|^2,
+\quad \phi_k := \omega t_k.
+\]
+Setting $\partial J/\partial \vct{A}=0$ yields
+\begin{equation}
+\fitcol{
+\label{eq:A-ls}
+\sum_{k=1}^N \cos\phi_k\,\vct{z}_k
+= \left(\sum_{k=1}^N \cos^2\phi_k\right)\vct{A},
+\Rightarrow
+\vct{A}_{\text{LS}}
+= \frac{\sum_k \cos\phi_k\,\vct{z}_k}
+       {\sum_k \cos^2\phi_k}.
+}
+\end{equation}
+Thus the best–fit amplitude vector is exactly the
+\emph{demodulated and averaged} signal: multiply each sample by $\cos\phi_k$ (projection onto the known carrier), sum over time, and normalise.
+
+When the phase samples $\phi_k$ are well spread over the cycle, the denominator in \eqref{eq:A-ls} behaves like a scalar constant, and $\vct{A}_{\text{LS}}$ is parallel to the true wave direction. The simplified measurement model
+\[
+\vct{z}_k \approx \cos\phi_k\,\vct{A}
+\]
+is therefore a natural online counterpart of this cosine–projection least–squares problem: a filter that incrementally adjusts $\vct{A}_k$ so that $\cos\phi_k\,\vct{A}_k$ tracks the observed horizontal acceleration.
+
+In the following we adopt this model and implement the recursive least–squares estimator for $\vct{A}_k$ as a 2D Kalman filter.
+
+\subsection{State and measurement model (angle modulo $180^\circ$)}
+Let $\vct{A}_k\in\mathbb{R}^2$ denote the \emph{horizontal acceleration amplitude vector} at step $k$. Its direction gives the wave azimuth modulo $180^\circ$, while its norm reflects the horizontal acceleration level. The phase $\phi_k$ is advanced using the tracked frequency:
+\[
+\phi_{k+1}=\wrap_{(-\pi,\pi]}\bigl(\phi_k + \omega_k \Delta t\bigr),
+\qquad
+\omega_k=2\pi \bar f_k,
+\]
+with $\bar f_k$ from \S\ref{sec:freq-tracking}. We use a simple random–walk process model
+\begin{align}
+\vct{A}_{k+1} &= \vct{A}_k + \vct{w}_k,
+\qquad
+\vct{w}_k\sim\mathcal{N}(0,\matg{Q}),
+\end{align}
+and the cosine–gain observation model motivated above:
+\begin{align}
+\vct{z}_k &= \cos\phi_k\, \vct{A}_k + \vct{\eta}_k,
+\qquad
+\vct{\eta}_k\sim\mathcal{N}(0,\matg{R}),
+\end{align}
+where $\vct{z}_k=[a_x(k), a_y(k)]^\top$ is the world–horizontal specific force. In matrix form this is
+\[
+\vct{z}_k = \mat{H}_k \vct{A}_k + \vct{\eta}_k,
+\qquad
+\mat{H}_k = \cos\phi_k\, \mat{I}_2.
+\]
+
+This linear–Gaussian model is exactly a recursive least–squares fit of $\vct{z}_k$ onto the known regressor $\cos\phi_k$ (cf.\ \eqref{eq:A-ls}), with the process noise $\matg{Q}$ acting as a forgetting mechanism so that $\vct{A}_k$ can slowly adapt as the sea state changes.
+
+We perform the usual Kalman prediction and Joseph–form update on $\vct{A}_k$ and its covariance $\mat{P}_k$:
+\begin{align}
+&\vct{A}_k^- = \vct{A}_{k-1},\qquad
+\mat{P}_k^- = \mat{P}_{k-1} + \matg{Q},\\[2pt]
+&\mat{K}_k = \mat{P}_k^- \mat{H}_k^\top \bigl(\mat{H}_k \mat{P}_k^- \mat{H}_k^\top + \matg{R}\bigr)^{-1},\\
+&\vct{A}_k \leftarrow \vct{A}_k^- + \mat{K}_k\bigl(\vct{z}_k - \mat{H}_k \vct{A}_k^-\bigr),\\
+&\mat{P}_k \leftarrow (\mat{I}_2-\mat{K}_k \mat{H}_k)\mat{P}_k^- (\mat{I}_2-\mat{K}_k \mat{H}_k)^\top + \mat{K}_k \matg{R} \mat{K}_k^\top.
+\end{align}
+When $|\cos\phi_k|<\varepsilon_{\min}$, the measurement carries almost no information about $\vct{A}_k$ and the update is skipped:
+$\vct{A}_k=\vct{A}_k^-$, $\mat{P}_k=\mat{P}_k^-$.
+This avoids injecting noise near horizontal zero crossings.
+
+\subsection{Azimuth, uncertainty, and sign disambiguation}
+
+Angle modulo $180^\circ$ is obtained from the unit vector
+\[
+\widehat{\vct{d}}=\frac{\vct{A}_k}{\|\vct{A}_k\|},\quad
+\theta=\wrap_{[0,180)}\!\Big(
+\operatorname{atan2}(\widehat d_y,\widehat d_x)\cdot\frac{180}{\pi}
+\Big).
+\]
+To avoid spurious $180^\circ$ flips, we sign–stabilize against the previous estimate and apply an EWMA:
+\[
+\widehat{\vct{d}}
+\leftarrow \sgn\bigl(\widehat{\vct{d}}\!\cdot\!\widehat{\vct{d}}_{\mathrm{last}}\bigr)\,\widehat{\vct{d}},
+\]
+then low–pass filter $\widehat{\vct{d}}$ over time.
+
+For an approximate $95\%$ confidence interval, we project the covariance of $\vct{A}_k$ onto the tangent of the unit circle. Let $\mat{P}_A$ be the $2\times 2$ covariance of $\vct{A}_k$, and define the unit tangent
+$\vct{t}=(-\widehat d_y,\widehat d_x)$. A first–order approximation gives
+\[
+\sigma_\theta^2 \approx \frac{\vct{t}^\top \mat{P}_A \vct{t}}{\|\vct{A}_k\|^2},\qquad
+\theta_{95}=2\,\sigma_\theta \cdot \frac{180}{\pi},
+\]
+reported modulo $180^\circ$.
+
+\paragraph{Travel sense (sign) via vertical–horizontal phase discriminator}
+The amplitude filter above recovers only the \emph{line} of propagation (modulo $180^\circ$). To decide which way along this line the waves travel, we exploit the phase relation between horizontal amplitude and vertical motion.
+
+Define a horizontal envelope and a short–horizon vertical derivative,
+\[
+r_k=\left\|\vct{z}_k\right\|,\qquad
+d_k=\frac{a_{z,k}-a_{z,k-1}}{\Delta t}.
+\]
+We track their correlation with an EMA,
+\[
+s_k=(1-\alpha_s)s_{k-1}+\alpha_s\, (r_k\, d_k),
+\]
+and interpret its sign with hysteresis $\pm\gamma$:
+\[
+\mathrm{sign}_k=\begin{cases}
++1, & s_k>\gamma,\\
+-1, & s_k<-\gamma,\\
+\mathrm{sign}_{k-1}, & \text{otherwise}.
+\end{cases}
+\]
+The reported directed azimuth is then
+$\Theta_k=\mathrm{sign}_k\cdot \theta$,
+with $180^\circ$ periodicity handled in post–processing (e.g.\ wrapping to $[0,360)$). Intuitively, $\theta$ specifies the wave line, while $\mathrm{sign}_k$ chooses which direction along that line is currently active.
+

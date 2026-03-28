@@ -1,0 +1,245 @@
+\section{Simulation Dataset and Evaluation Protocol}
+\label{sec:sim-and-eval}
+
+\subsection{Synthetic Wave Scenarios}
+We evaluate the proposed Kalman filter against several canonical wave models.
+
+\begin{itemize}
+    \item \textbf{JONSWAP directional seas}: Realistic broadband spectra with randomized directional spreading that mimics North Sea conditions, testing the filter's ability to handle \textit{multicomponent interference} and \textit{cross-coupling} in attitude estimation
+    \item \textbf{Pierson–Moskowitz (PM) Stokes seas}: Fully-developed sea state with third-order bound harmonics that introduce \textit{nonlinear wave–wave interactions} and subtle phase coupling effects
+\end{itemize}
+
+\begin{table}[t]
+  \centering
+  \caption{Wave scenarios. Runs: \SI{20}{min} at \SI{200}{Hz} capturing $\sim$240{,}000 samples.}
+  \label{tab:scenarios}
+  \sisetup{table-number-alignment = center}
+  \setlength{\tabcolsep}{2pt}%
+  \begin{tabular}{@{}l p{3.1cm} p{0.9cm} p{0.9cm} p{2.1cm}@{}}
+    \toprule
+    Scenario & Model & $H_s$ [m] & $T_p$ [s] & Dir.\ spread \\
+    \midrule
+    W1 & \{JONSWAP, PM-Stokes\} & 0.27 & 3.0  & +30° / cos-spread \\
+    W2 & \{JONSWAP, PM-Stokes\} & 1.50 & 5.7  & -30° / cos-spread \\
+    W3 & \{JONSWAP, PM-Stokes\} & 4.00 & 8.5  & +30° / cos-spread \\
+    W4 & \{JONSWAP, PM-Stokes\} & 8.50 & 11.4 & -30° / cos-spread \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Each scenario undergoes \SI{20}{min} simulation at \SI{200}{Hz}, producing time series of world-frame displacement, velocity, and 
+acceleration alongside body-frame IMU measurements (specific force and angular rate). Directional seas employ a randomized $\cos^{2s}$ spread 
+about a nominal direction, with each spectral component receiving independent phase randomization while maintaining ensemble energy consistency.
+
+\begin{figure}[!t]\centering
+  \begin{minipage}{0.49\columnwidth}\centering
+    \IncludePGF{spectrum_jonswap_medium_polar.pgf}
+  \end{minipage}\hfill
+  \begin{minipage}{0.49\columnwidth}\centering
+    \IncludePGF{spectrum_jonswap_medium_3d.pgf}
+  \end{minipage}
+  \caption{JONSWAP: Directional spectrum (medium $H_s$). Left: polar heatmap $E(f,\theta)$; right: 3D surface.}
+  \label{fig:jonswap_spec_medium}
+\end{figure}
+
+\subsection{Reference and Measurements}
+For each time $t_k$, the simulator outputs world-frame reference kinematics
+$\big(\mathbf{p}_{\mathrm{ref}},\mathbf{v}_{\mathrm{ref}},\mathbf{a}_{\mathrm{ref}}\big)$ for the surface particle (buoy),
+and ideal body-frame IMU triads $\big(\vct{f}_b,\boldsymbol{\omega}_b\big)$.
+Magnetometer readings are synthesized from the ground-truth attitude and a world magnetic field $\vct{B}_w$
+in physical units (e.g.\ $\mu$T). This provides both estimator inputs and ground-truth for scoring.
+
+% Requires: \usepackage{booktabs,siunitx,array}
+\begin{table}[t]
+  \centering
+  \caption{Simulation parameters, timing, sensor error models.}
+  \label{tab:sim_constants}
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.15}
+  \sisetup{detect-all}
+  \begin{tabular}{@{}p{3.25cm} p{2.25cm} >{\raggedright\arraybackslash}p{2.45cm}@{}}
+    \toprule
+    \textbf{Quantity} & \textbf{Value} & \textbf{Notes} \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Timing / protocol}} \\
+    IMU sample rate & \SI{200}{\hertz} & $\Delta t = 1/200$ \\
+    Magnetometer ODR & \SI{100}{\hertz} & hold-last-sample \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Accelerometer noise/bias model (per axis)}} \\
+    White noise (RMS) & $1.51\times10^{-3}g$ & $\approx \SI{0.0148}{\meter\per\second\squared}$ \\
+    Residual bias half-range & $5\times10^{-3}g$ & $\approx \SI{0.049}{\meter\per\second\squared}$ \\
+    Bias random-walk & \SI{5e-4}{\meter\per\second\squared\per\second\tothe{0.5}} & increment std $\propto \sqrt{\Delta t}$ \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Gyroscope noise/bias model (per axis)}} \\
+    White noise (RMS) & \SI{0.00157}{\radian\per\second} & $\approx \SI{0.09}{\degree\per\second}$ \\
+    Residual bias half-range & \SI{8.73e-4}{\radian\per\second} & \SI{0.05}{\degree\per\second} \\
+    Bias random-walk & \SI{1e-5}{\radian\per\second\per\second\tothe{0.5}} & increment std $\propto \sqrt{\Delta t}$ \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Magnetometer model (per mag sample)}} \\
+    White noise (RMS) & \SI{0.60}{\micro\tesla} & at \SI{100}{\hertz} \\
+    Hard-iron residual half-range & \SI{2.0}{\micro\tesla} & uniform \\
+    Bias random-walk & \SI{0.01}{\micro\tesla\per\second\tothe{0.5}} & additive drift \\
+    Scale error bound & $\le 1.5\%$ & diag scale in $\mat{M}_{\mathrm{mis}}$ \\
+    Cross-axis bound & $\le 1.0\%$ & sym coupling ($\mat{M}_{\mathrm{mis}}$) \\
+    Misalignment bound & $\le \SI{1}{\degree}$ & rotation in $\mat{M}_{\mathrm{mis}}$ \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Filter initialization (measurement noise std)}} \\
+    $\sigma_a$ init & $2.8\,\sigma_{a,\mathrm{white}}$ & per-axis \\
+    $\sigma_g$ init & $2.0\,\sigma_{g,\mathrm{white}}$ & per-axis \\
+    $\sigma_m$ init & $1.2\,\sigma_{m,\mathrm{white}}$ & per-axis \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Multi-rate timing and update schedule (condition under test: asynchrony)}
+The inertial channels $\vct{f}_b$ and $\boldsymbol{\omega}_b$ are streamed at $200$~Hz.
+Magnetometer samples are produced at an independent ODR of $100$~Hz and delivered with hold-last-sample
+between magnetometer ticks. The filter is stepped once per IMU sample: each step performs a time update
+driven by $\vct{\omega}_{\text{meas}}$ and a rank--3 accelerometer update driven by $\vct{f}_{\text{meas}}$,
+while magnetometer updates are injected only on magnetometer ticks.
+
+\paragraph{Noise, residual bias, and drifting bias (condition under test: realistic IMU errors)}
+Optionally, each sensor channel is corrupted by a composite error model
+\[
+\vct{y}_{\text{meas}}(t_k)
+= \vct{y}_{\text{true}}(t_k) + \vct{b}_0 + \vct{b}_{\mathrm{rw}}(t_k) + \vct{w}(t_k),
+\]
+where $\vct{w}$ is per-sample white noise (RMS set to sensor-like levels), $\vct{b}_0$ is a fixed residual bias drawn from
+a specified half-range (imperfect calibration), and $\vct{b}_{\mathrm{rw}}$ is a slowly drifting random-walk bias whose
+increments scale with $\sqrt{\Delta t}$.
+
+\paragraph{Magnetometer distortion realism (condition under test: non-ideal compass)}
+The magnetometer model includes both additive and multiplicative effects:
+\[
+\vct{m}_{\text{meas}} = \mat{M}_{\mathrm{mis}}\,\vct{m}_{\text{true}} + \vct{b}_{m,0} + \vct{b}_{m,\mathrm{rw}} + \vct{w}_m.
+\]
+Here $\mat{M}_{\mathrm{mis}}\approx \mat{I}$ is a near-identity distortion matrix capturing residual soft-iron/scale error,
+cross-axis coupling, and a small misalignment rotation; $\vct{b}_{m,0}$ and $\vct{b}_{m,\mathrm{rw}}$ represent residual
+hard-iron bias and slow drift, and $\vct{w}_m$ is per-sample white noise.
+
+% JONSWAP - medium
+
+\iffalse
+\begin{figure}[!t]\centering
+  \IncludePGF{freqtrack_jonswap_H1.500.pgf}
+  \caption{Frequency tracking comparison for JONSWAP wave, $H_s = 1.500$ m.}
+  \label{fig:freqtrack_jonswap_medium}
+\end{figure}
+\fi
+
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_jonswap_medium.pgf}
+  \caption{Euler angle comparison -- JONSWAP, medium $H_s$.}
+  \label{fig:w3d_jonswap_medium}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_jonswap_medium_zkin.pgf}
+  \caption{Vertical kinematics (displacement, velocity, acceleration) -- JONSWAP, medium $H_s$.}
+  \label{fig:w3d_jonswap_medium_zkin}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_jonswap_medium_tuner.pgf}
+  \caption{Frequency tracker and auto-tuner traces -- JONSWAP, medium $H_s$.}
+  \label{fig:w3d_jonswap_medium_tuner}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_jonswap_medium_dir.pgf}
+  \caption{Wave direction -- JONSWAP, medium $H_s$.}
+  \label{fig:w3d_jonswap_medium_dir}
+\end{figure}
+
+\iffalse
+% PM Stokes - medium
+\begin{figure}[!t]\centering
+  \begin{minipage}{0.49\columnwidth}\centering
+    \IncludePGF{spectrum_pmstokes_medium_polar.pgf}
+  \end{minipage}\hfill
+  \begin{minipage}{0.49\columnwidth}\centering
+    \IncludePGF{spectrum_pmstokes_medium_3d.pgf}
+  \end{minipage}
+  \caption{PM Stokes: Directional spectrum (medium $H_s$). Left: polar heatmap $E(f,\theta)$; right: 3D surface.}
+  \label{fig:pmstokes_spec_medium}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{freqtrack_pmstokes_H1.500.pgf}
+  \caption{Frequency tracking comparison for PM Stokes wave, $H_s = 1.500$ m.}
+  \label{fig:freqtrack_pmstokes_medium}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_pmstokes_medium_zkin.pgf}
+  \caption{Kalman 3D filter vertical kinematics (displacement, velocity, acceleration) -- PM Stokes, medium $H_s$.}
+  \label{fig:w3d_pmstokes_medium_zkin}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_pmstokes_medium.pgf}
+  \caption{Kalman 3D filter Euler angle comparison -- PM Stokes, medium $H_s$.}
+  \label{fig:w3d_pmstokes_medium}
+\end{figure}
+\fi
+
+\paragraph{Scoring window}
+Performance is summarized over a trailing window $T_{\mathrm{RMS}}=60$~s using RMS displacement error (per-axis and 3D)
+and RMS roll/pitch/yaw error; the runner also logs frequency and tuning traces $(f,\tau,\sigma_a,R_S)$ for diagnostics.
+
+% Requires: \usepackage{booktabs,siunitx}
+\begin{table}[t]
+  \centering
+  \caption{Simulation results (last \SI{60}{s} RMS window).}
+  \label{tab:sim_results_rms_dir_basic}
+  \setlength{\tabcolsep}{2.2pt}
+  \renewcommand{\arraystretch}{1.08}
+  \footnotesize
+  \sisetup{detect-all}
+
+  \begin{tabular}{@{}l
+                  S[table-format=1.6]
+                  S[table-format=1.1]
+                  S[table-format=1.3]
+                  S[table-format=1.2]
+                  S[table-format=1.2]
+                  S[table-format=1.4]
+                  S[table-format=2.1]
+                  l
+                  @{}}
+    \toprule
+    {Case} &
+    {$H_s$} &
+    {Z RMS} &
+    {Z\%$H_s$} &
+    {R} &
+    {P} &
+    {Y} &
+    {$\bar\theta$} &
+    {T/A/U} \\
+    \midrule
+    JONSWAP    & 0.27 & 0.014 & 5.3 & 0.67 & 0.92 & 0.36 & 30.6  & 99.3/0.0/0.7 \\
+    JONSWAP    & 1.50 & 0.046 & 3.1 & 0.69 & 0.89 & 0.46 & -35.6 & 99.9/0.0/0.1 \\
+    JONSWAP    & 4.00 & 0.266 & 6.7 & 0.70 & 0.97 & 0.69 & 28.9  & 98.9/1.0/0.1 \\
+    JONSWAP    & 8.50 & 0.413 & 4.9 & 0.67 & 0.97 & 0.56 & -31.8 & 97.7/2.0/0.3 \\
+    \addlinespace
+    PM+Stokes  & 0.27 & 0.012 & 4.3 & 0.68 & 0.90 & 0.67 & 32.2  & 98.7/0.0/1.3 \\
+    PM+Stokes  & 1.50 & 0.071 & 4.8 & 0.67 & 1.19 & 1.52 & -28.5 & 99.8/0.0/0.2 \\
+    PM+Stokes  & 4.00 & 0.386 & 9.7 & 0.79 & 1.66 & 2.87 & 27.6  & 99.9/0.0/0.1 \\
+    PM+Stokes  & 8.50 & 0.822 & 9.7 & 0.84 & 2.40 & 3.82 & -25.3 & 100/0/0 \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{1pt}
+  \footnotesize
+  R/P/Y are roll/pitch/yaw RMS in degrees.
+  Direction $\theta\in[-90^\circ,90^\circ]$;
+  T/A/U = Toward/Away/Uncertain (\% of samples).
+\end{table}
+
+\medskip
+The full filter and simulation source code is available on GitHub in the Bareboat Necessities project, 
+implemented in modern idiomatic C++ with the embedded-friendly Eigen linear algebra library.
+
+\section{Conclusion and Future Work}
+\label{sec:future-work}
+
+A natural next direction for future work is the development of a comprehensive testing and benchmarking framework.
+Such a framework would enable the rigorous comparison of different wave kinematics algorithms by 
+evaluating their performance against standardized reference datasets. Furthermore, this infrastructure would 
+facilitate large-scale Monte Carlo simulations, providing the data necessary for the robust statistical tuning 
+of each method's parameters.

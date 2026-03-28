@@ -1,0 +1,57 @@
+\section{State Definition}
+\label{sec:state}
+
+The extended state vector of our filter combines
+rotational attitude, linear kinematics, and stochastic acceleration subsystems within a
+single nonlinear estimator. It is defined as
+\begin{equation}
+\label{eq:state-vector}
+\vct{x} =
+\begin{bmatrix}
+\delta\vct{\theta} &
+\vct{b}_g &
+\vct{v} &
+\vct{p} &
+\vct{S} &
+\vct{a}_w &
+\vct{b}_a
+\end{bmatrix}^{\!\top},
+\end{equation}
+where each subvector has the following physical meaning:
+\begin{itemize}
+  \item $\delta\vct{\theta}\in\mathbb{R}^3$ --- small attitude-error
+        vector used in the multiplicative EKF formulation
+        (right-multiplicative quaternion correction).
+  \item $\vct{b}_g\in\mathbb{R}^3$ --- gyroscope bias, modeled as a
+        random-walk process.
+  \item $\vct{v}\in\mathbb{R}^3$ --- velocity in the world (NED) frame.
+  \item $\vct{p}\in\mathbb{R}^3$ --- position or displacement in the world frame.
+  \item $\vct{S}\in\mathbb{R}^3$ --- integral of displacement,
+        $\vct{S}(t)=\int_0^t\vct{p}(\tau)\,d\tau$, used to constrain
+        long-term drift by a zero pseudo-measurement.
+  \item $\vct{a}_w\in\mathbb{R}^3$ --- latent world-frame acceleration
+        following an Ornstein--Uhlenbeck (OU) process,
+        \(
+           \dot{\vct{a}}_w = -\tfrac{1}{\tau_{a_w}}\vct{a}_w
+           + \vct{\eta}_{w}(t)
+        \),
+        representing correlated ocean-wave forcing.
+  \item $\vct{b}_a\in\mathbb{R}^3$ --- random-walk accelerometer bias with optional
+        temperature-dependent drift.
+\end{itemize}
+
+The complete state dimension is
+\[
+\fitcol{
+N_X =
+\underbrace{3}_{\delta\vct{\theta}} +
+\underbrace{3}_{\vct{b}_g} +
+\underbrace{3}_{\vct{v}} +
+\underbrace{3}_{\vct{p}} +
+\underbrace{3}_{\vct{S}} +
+\underbrace{3}_{\vct{a}_w} +
+\underbrace{3}_{\vct{b}_a}
+= 21,
+}
+\]
+with both gyro and accelerometer bias.
