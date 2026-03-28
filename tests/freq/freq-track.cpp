@@ -1,3 +1,7 @@
+/*
+  Copyright 2025-2026, Mikhail Grushinskiy
+*/
+
 #include <cmath>
 #include <cassert>
 #include <cstdio>

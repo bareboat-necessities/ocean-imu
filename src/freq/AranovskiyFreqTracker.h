@@ -1,12 +1,6 @@
 #ifndef ARANOVSKIY_FREQ_TRACKER_H
 #define ARANOVSKIY_FREQ_TRACKER_H
 
-#include <cmath>
-#include <algorithm>
-#include <limits>
-#include <stdexcept>
-#include <cstdlib>
-
 /*
   Copyright 2024-2026, Mikhail Grushinskiy
 
@@ -25,6 +19,12 @@
     - Default lock thresholds assume input is roughly normalized to "g" units,
       as in your TrackerPolicy where a/g_std is passed in.
 */
+
+#include <cmath>
+#include <algorithm>
+#include <limits>
+#include <stdexcept>
+#include <cstdlib>
 
 template <typename Real = double>
 class AranovskiyFreqTracker {
