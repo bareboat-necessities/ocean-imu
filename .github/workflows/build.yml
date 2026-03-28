@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [spectrum, freq, wave_sim, pii_observer]
+        dir: [spectrum, freq, wave_sim, pii_observer, kalman_ou_ii, kalman_ou_iii]
 
     steps:
       - name: Checkout

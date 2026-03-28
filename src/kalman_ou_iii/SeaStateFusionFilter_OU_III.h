@@ -58,7 +58,7 @@
 #include "ahrs/FrameConversions.h"
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
-#include "TimeAwareSpikeFilter.h"
+#include "util/TimeAwareSpikeFilter.h"
 
 // Shared constants
 
