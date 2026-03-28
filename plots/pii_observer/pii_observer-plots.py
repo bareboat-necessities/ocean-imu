@@ -98,7 +98,7 @@ def finalize_plot(fig, outbase: str, suffix: str = "", exts=("pgf", "svg")):
     plt.close(fig)
 
 # === Find all *_w3d.csv files ===
-files = glob.glob(os.path.join(DATA_DIR, "*_fusion.csv"))
+files = glob.glob(os.path.join(DATA_DIR, "*_nonkalman_fusion.csv"))
 if not files:
     print("No *_fusion.csv files found in", DATA_DIR)
     exit()
