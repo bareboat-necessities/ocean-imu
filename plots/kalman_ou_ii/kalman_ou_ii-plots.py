@@ -100,7 +100,7 @@ def finalize_plot(fig, outbase: str, suffix: str = "", exts=("pgf", "svg")):
 # === Find all *_w3d.csv files ===
 files = glob.glob(os.path.join(DATA_DIR, "*_fusion_ou2.csv"))
 if not files:
-    print("No *_fusion.csv files found in", DATA_DIR)
+    print("No *_fusion_ou2.csv files found in", DATA_DIR)
     exit()
 
 for fname in files:
