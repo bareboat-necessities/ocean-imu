@@ -1,0 +1,431 @@
+#!/usr/bin/env python3
+import glob
+import os
+import re
+import pandas as pd
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+
+# === Matplotlib PGF/LaTeX config ===
+mpl.use("pgf")
+plt.rcParams.update({
+    "pgf.texsystem": "xelatex",
+    "font.family": "serif",
+    "text.usetex": True,
+    "pgf.rcfonts": False,
+    "pgf.preamble": "\n".join([
+        r"\usepackage{fontspec}",
+        r"\usepackage{unicode-math}",
+        r"\usepackage{amsmath}",
+        r"\setmainfont{DejaVu Serif}",
+        r"\setmathfont{Latin Modern Math}",
+        r"\providecommand{\mathdefault}[1]{#1}"
+    ])
+})
+
+# === Config ===
+DATA_DIR = "./"             # Directory with *_w3d.csv files
+SAMPLE_RATE_HZ = 200        # Simulator sample rate
+SKIP_TIME_S = 1140.0        # Skip first n seconds (warmup)
+PLOT_TIME_S = 60.0          # Plot next m seconds
+MAX_TIME_S  = SKIP_TIME_S + PLOT_TIME_S
+MAX_ROWS    = int(SAMPLE_RATE_HZ * MAX_TIME_S)
+
+# Toggle error plots
+PLOT_ERRORS = False   # set True to enable
+
+# === Groups we care about (included heights in meters) ===
+height_groups = {
+    "low":    0.27,
+    "medium": 1.50,
+    "high":   8.50,
+}
+
+# === Allowed wave types ===
+ALLOWED_WAVES = {"jonswap", "pmstokes"}
+
+# === Regex to extract wave type / height and optional dataset variant from filename ===
+pattern = re.compile(
+    r".*?_(?P<wave>[a-zA-Z0-9]+)_H(?P<height>[-0-9\.]+).*?_fusion_ou2\.csv$"
+)
+variant_pattern = re.compile(r"(?:_(?P<variant>[A-Za-z0-9]+))?_fusion_ou2\.csv$")
+
+VARIANT_LABELS = {
+    "nonkalman": "Adaptive PII/Mahony",
+}
+
+def latex_safe(s: str) -> str:
+    return s.replace("_", r"\_")
+
+# === Helpers ===
+def plot_envelope(ax, t, env, label=r"Envelope $\pm$ disp\_scale", shade=True):
+    """
+    Plot +/- envelope around zero.
+    env can contain NaNs; they will be masked out.
+    """
+    env = np.asarray(env, dtype=float)
+    m = np.isfinite(env)
+    if not np.any(m):
+        return
+
+    # dashed lines
+    ax.plot(t[m],  env[m], linestyle=":", linewidth=1.0, label=label)
+    ax.plot(t[m], -env[m], linestyle=":", linewidth=1.0)
+
+    # optional shading
+    if shade:
+        ax.fill_between(t[m], -env[m], env[m], alpha=0.12)
+
+def make_subplots(nrows: int, title: str, width: float = 10.0, row_height: float = 2.5, sharex: bool = True):
+    """
+    Create a figure with nrows stacked subplots, auto-scaling height.
+    """
+    fig_height = row_height * nrows
+    fig, axes = plt.subplots(nrows, 1, figsize=(width, fig_height), sharex=sharex)
+    fig.suptitle(title)
+    if nrows == 1:
+        axes = [axes]
+    return fig, axes
+
+def finalize_plot(fig, outbase: str, suffix: str = "", exts=("pgf", "svg")):
+    """
+    Finalize a plot: layout, save to multiple formats, and close.
+    """
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    for ext in exts:
+        fig.savefig(f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")
+    plt.close(fig)
+
+# === Find all *_w3d.csv files ===
+files = glob.glob(os.path.join(DATA_DIR, "*_fusion_ou2.csv"))
+if not files:
+    print("No *_fusion.csv files found in", DATA_DIR)
+    exit()
+
+for fname in files:
+    basename = os.path.basename(fname)
+    m = pattern.match(basename)
+    if not m:
+        continue
+    wave_type = m.group("wave").lower()
+    if wave_type not in ALLOWED_WAVES:
+        continue
+    try:
+        height_val = float(m.group("height"))
+    except (TypeError, ValueError):
+        continue
+    variant_match = variant_pattern.search(basename)
+    variant = variant_match.group("variant") if variant_match else None
+    variant_label = VARIANT_LABELS.get(variant, variant.replace("_", " ").title()) if variant else "Kalman 3D"
+    group_name = None
+    for name, h in height_groups.items():
+        if abs(height_val - h) < 1e-6:
+            group_name = name
+            break
+    if group_name is None:
+        continue
+
+    outbase_tokens = ["w3d"]
+    if variant:
+        outbase_tokens.append(variant)
+    outbase_tokens.extend([wave_type, group_name])
+    outbase = "_".join(outbase_tokens)
+    outbase = re.sub(r"[^A-Za-z0-9_\-]", "_", outbase)
+    outbase = os.path.join(DATA_DIR, outbase)
+
+    print(f"Plotting {fname} → {outbase} ({variant_label}) ...")
+    df = pd.read_csv(fname, nrows=MAX_ROWS)
+    df = df[(df["time"] >= SKIP_TIME_S) & (df["time"] <= MAX_TIME_S)].reset_index(drop=True)
+    time = df["time"]
+
+    # === Angles (Reference vs Estimated, optional errors) ===
+    nrows = 3 if not PLOT_ERRORS else 6
+    fig, axes = make_subplots(nrows, latex_safe(f"{variant_label}: {basename}"))
+    for i, (ref_col, est_col, label) in enumerate([
+        ("roll_ref", "roll_est", "Roll (deg)"),
+        ("pitch_ref", "pitch_est", "Pitch (deg)"),
+        ("yaw_ref", "yaw_est", "Yaw (deg)")
+    ]):
+        if PLOT_ERRORS:
+            ax_val = axes[2*i]
+            ax_err = axes[2*i + 1]
+        else:
+            ax_val = axes[i]
+            ax_err = None
+
+        ax_val.plot(time, df[ref_col], label="Reference", linewidth=1.5)
+        ax_val.plot(time, df[est_col], label="Estimated", linewidth=1.0, linestyle="--")
+        ax_val.set_ylabel(latex_safe(label))
+        ax_val.grid(True)
+        ax_val.legend(loc="upper right")
+
+        if PLOT_ERRORS:
+            err_col = {
+                "Roll (deg)": "err_roll",
+                "Pitch (deg)": "err_pitch",
+                "Yaw (deg)": "err_yaw"
+            }[label]
+            ax_err.plot(time, df[err_col], color="tab:red")
+            ax_err.set_ylabel("Error [deg]")
+            ax_err.grid(True)
+
+    axes[-1].set_xlabel("Time (s)")
+    finalize_plot(fig, outbase)
+
+    # === Angle errors (summary, only if enabled) ===
+    if PLOT_ERRORS:
+        error_cols = [
+            ("err_roll",  "Roll err [deg]",  "tab:red"),
+            ("err_pitch", "Pitch err [deg]", "tab:red"),
+            ("err_yaw",   "Yaw err [deg]",   "tab:red"),
+            ("angle_err", "Quat err [deg]",  "tab:purple"),
+        ]
+        nrows = len(error_cols)
+        fig, axes = make_subplots(nrows, latex_safe(f"{variant_label}: {basename}") + " (Angle Errors)")
+        for ax, (col, ylabel, color) in zip(axes, error_cols):
+            ax.plot(time, df[col], color=color)
+            ax.set_ylabel(ylabel)
+            ax.grid(True)
+        axes[-1].set_xlabel("Time (s)")
+        finalize_plot(fig, outbase, "_angle_errs")
+
+    # === Z-axis kinematics ===
+    nrows = 6 if PLOT_ERRORS else 3
+    fig, axes = make_subplots(nrows, latex_safe(f"{variant_label}: {basename}") + " (Z-axis)")
+    for i, prefix in enumerate(["disp", "vel", "acc"]):
+        if PLOT_ERRORS:
+            ax_val = axes[2*i]
+            ax_err = axes[2*i + 1]
+        else:
+            ax_val = axes[i]
+            ax_err = None
+
+        ax_val.plot(time, df[f"{prefix}_ref_z"], label="Ref")
+        ax_val.plot(time, df[f"{prefix}_est_z"], label="Est", linestyle="--")
+
+        # --- Envelope overlays ---
+        if prefix == "disp":
+            if "disp_scale_m" in df.columns:
+                plot_envelope(ax_val, time.to_numpy(), df["disp_scale_m"].to_numpy(),
+                              label=r"Envelope $\pm$ disp\_scale", shade=True)
+            else:
+                ax_val.text(0.01, 0.10, "Missing: " + latex_safe("disp_scale_m"), transform=ax_val.transAxes)
+        elif prefix == "vel":
+            if "vel_scale_mps" in df.columns:
+                plot_envelope(ax_val, time.to_numpy(), df["vel_scale_mps"].to_numpy(),
+                              label=r"Envelope $\pm$ vel\_scale", shade=True)
+            else:
+                ax_val.text(0.01, 0.10, "Missing: " + latex_safe("vel_scale_mps"), transform=ax_val.transAxes)
+
+        ax_val.set_ylabel(f"{prefix.capitalize()} Z")
+        ax_val.grid(True)
+        ax_val.legend(loc="upper right", fontsize=8)
+
+        if PLOT_ERRORS:
+            ax_err.plot(time, df[f"{prefix}_err_z"], color="tab:red")
+            ax_err.set_ylabel("Error")
+            ax_err.grid(True)
+
+        if PLOT_ERRORS:
+            ax_err.plot(time, df[f"{prefix}_err_z"], color="tab:red")
+            ax_err.set_ylabel("Error")
+            ax_err.grid(True)
+
+    axes[-1].set_xlabel("Time (s)")
+    finalize_plot(fig, outbase, "_zkin")
+
+    # === XY kinematics ===
+    nrows = 6 if PLOT_ERRORS else 3
+    fig, axes = make_subplots(nrows, latex_safe(f"{variant_label}: {basename}") + " (X/Y axes)")
+    for i, prefix in enumerate(["disp", "vel", "acc"]):
+        if PLOT_ERRORS:
+            ax_val = axes[2*i]
+            ax_err = axes[2*i + 1]
+        else:
+            ax_val = axes[i]
+            ax_err = None
+
+        ax_val.plot(time, df[f"{prefix}_ref_x"], label="Ref X", color="tab:blue")
+        ax_val.plot(time, df[f"{prefix}_est_x"], label="Est X", linestyle="--", color="tab:blue")
+        ax_val.plot(time, df[f"{prefix}_ref_y"], label="Ref Y", color="tab:orange")
+        ax_val.plot(time, df[f"{prefix}_est_y"], label="Est Y", linestyle="--", color="tab:orange")
+        ax_val.set_ylabel(f"{prefix.capitalize()} XY")
+        ax_val.legend(ncol=2, fontsize=8)
+        ax_val.grid(True)
+
+        if PLOT_ERRORS:
+            ax_err.plot(time, df[f"{prefix}_err_x"], label="Err X", color="tab:blue")
+            ax_err.plot(time, df[f"{prefix}_err_y"], label="Err Y", color="tab:orange")
+            ax_err.set_ylabel("Error")
+            ax_err.legend(ncol=2, fontsize=8)
+            ax_err.grid(True)
+
+    axes[-1].set_xlabel("Time (s)")
+    finalize_plot(fig, outbase, "_xykin")
+
+    # === Accelerometer bias estimates vs true ===
+    acc_pairs = [
+        ("acc_bias_x",  "acc_bias_est_x",  "Accel bias X"),
+        ("acc_bias_y",  "acc_bias_est_y",  "Accel bias Y"),
+        ("acc_bias_z",  "acc_bias_est_z",  "Accel bias Z"),
+    ]
+    fig, axes = make_subplots(len(acc_pairs), latex_safe(f"{variant_label}: {basename}") + " (Accelerometer Biases)")
+    for ax, (true_col, est_col, label) in zip(axes, acc_pairs):
+        ax.plot(time, df[true_col], label="True", linewidth=1.5)
+        ax.plot(time, df[est_col], label="Estimated", linestyle="--", linewidth=1.0)
+        ax.set_ylabel(latex_safe(label))
+        ax.grid(True)
+        ax.legend(loc="upper right")
+    axes[-1].set_xlabel("Time (s)")
+    finalize_plot(fig, outbase, "_acc_bias")
+
+    # === Gyroscope bias estimates vs true ===
+    gyro_pairs = [
+        ("gyro_bias_x", "gyro_bias_est_x", "Gyro bias X"),
+        ("gyro_bias_y", "gyro_bias_est_y", "Gyro bias Y"),
+        ("gyro_bias_z", "gyro_bias_est_z", "Gyro bias Z"),
+    ]
+    fig, axes = make_subplots(len(gyro_pairs), latex_safe(f"{variant_label}: {basename}") + " (Gyroscope Biases)")
+    for ax, (true_col, est_col, label) in zip(axes, gyro_pairs):
+        ax.plot(time, df[true_col], label="True", linewidth=1.5)
+        ax.plot(time, df[est_col], label="Estimated", linestyle="--", linewidth=1.0)
+        ax.set_ylabel(latex_safe(label))
+        ax.grid(True)
+        ax.legend(loc="upper right")
+    axes[-1].set_xlabel("Time (s)")
+    finalize_plot(fig, outbase, "_gyro_bias")
+
+    # === Magnetometer bias estimates vs true (+ errors) ===
+    mag_pairs = [
+        ("mag_bias_x", "mag_bias_est_x", "Mag bias X"),
+        ("mag_bias_y", "mag_bias_est_y", "Mag bias Y"),
+        ("mag_bias_z", "mag_bias_est_z", "Mag bias Z"),
+    ]
+
+    # Only plot if the required columns exist
+    needed = [c for t,e,_ in mag_pairs for c in (t,e)]
+    if all(c in df.columns for c in needed):
+        nrows = 2 * len(mag_pairs) if PLOT_ERRORS else len(mag_pairs)
+        fig, axes = make_subplots(nrows, latex_safe(f"{variant_label}: {basename}") + " (Magnetometer Biases)")
+
+        for i, (true_col, est_col, label) in enumerate(mag_pairs):
+            if PLOT_ERRORS:
+                ax_val = axes[2*i]
+                ax_err = axes[2*i + 1]
+            else:
+                ax_val = axes[i]
+                ax_err = None
+
+            ax_val.plot(time, df[true_col], label="True", linewidth=1.5)
+            ax_val.plot(time, df[est_col], label="Estimated", linestyle="--", linewidth=1.0)
+            ax_val.set_ylabel(latex_safe(label) + r" [$\mu$T]")
+            ax_val.grid(True)
+            ax_val.legend(loc="upper right")
+
+            if PLOT_ERRORS:
+                err = df[est_col] - df[true_col]
+                ax_err.plot(time, err, color="tab:red")
+                ax_err.set_ylabel(r"Error [$\mu$T]")
+                ax_err.grid(True)
+
+        axes[-1].set_xlabel("Time (s)")
+        finalize_plot(fig, outbase, "_mag_bias")
+    else:
+        missing = [c for c in needed if c not in df.columns]
+        print(f"  (skip mag bias plots; missing columns: {missing})")
+
+    # === Frequency / Tuner ===
+    # We plot accel std-dev (sqrt variance) and sigma_a on the same axis.
+    tuner_panels = [
+        ("freq_tracker_hz", "Frequency (Hz)"),
+        ("accel_std_combo", r"Accel std and $\sigma_a$ applied ($m/s^2$)"),
+        ("tau_applied",     r"$\tau$ applied (s)"),
+        ("p0_combo",        r"$R_{p0}$ / $p_{0,S}$ applied"),
+    ]
+
+    fig, axes = make_subplots(len(tuner_panels), latex_safe(f"{variant_label}: {basename}") + " (Frequency / Tuner)")
+    for ax, (key, ylabel) in zip(axes, tuner_panels):
+
+        if key == "accel_std_combo":
+            have_any = False
+
+            # Prefer accel_std_tuner if it exists; otherwise compute sqrt(accel_var_tuner)
+            if "accel_std_tuner" in df.columns:
+                ax.plot(time, df["accel_std_tuner"], linewidth=1.2, label=r"Accel std (tuner)")
+                have_any = True
+            elif "accel_var_tuner" in df.columns:
+                var = df["accel_var_tuner"].to_numpy()
+                std = np.sqrt(np.clip(var, 0.0, None))
+                ax.plot(time, std, linewidth=1.2, label=r"Accel std ($\sqrt{\mathrm{var}}$)")
+                have_any = True
+            else:
+                ax.text(0.01, 0.60, "Missing: " + latex_safe("accel_std_tuner") + " or " + latex_safe("accel_var_tuner"), transform=ax.transAxes)
+
+            if "sigma_a_applied" in df.columns:
+                ax.plot(time, df["sigma_a_applied"], linewidth=1.2, linestyle="--", label=r"$\sigma_a$ applied")
+                have_any = True
+            else:
+                ax.text(0.01, 0.40, "Missing: " + latex_safe("sigma_a_applied"), transform=ax.transAxes)
+
+            ax.set_ylabel(ylabel)
+            ax.grid(True)
+            if have_any:
+                ax.legend(loc="upper right", fontsize=8)
+            continue
+
+        if key == "p0_combo":
+            # Old logs use R_p0_applied; newer adapt-4 logs expose p0_S_applied.
+            if "R_p0_applied" in df.columns:
+                ax.plot(time, df["R_p0_applied"], linewidth=1.2, label=r"$R_{p0}$ applied")
+            elif "p0_S_applied" in df.columns:
+                ax.plot(time, df["p0_S_applied"], linewidth=1.2, label=r"$p_{0,S}$ applied")
+            else:
+                ax.text(0.01, 0.50, "Missing: " + latex_safe("R_p0_applied") + " or " + latex_safe("p0_S_applied"), transform=ax.transAxes)
+                ax.set_axis_off()
+                continue
+
+            ax.set_ylabel(ylabel)
+            ax.grid(True)
+            ax.legend(loc="upper right", fontsize=8)
+            continue
+
+        # Normal single-series panels
+        if key not in df.columns:
+            ax.text(0.01, 0.5, f"Missing: {latex_safe(key)}", transform=ax.transAxes)
+            ax.set_axis_off()
+            continue
+
+        ax.plot(time, df[key], linewidth=1.2)
+        ax.set_ylabel(ylabel)
+        ax.grid(True)
+
+    axes[-1].set_xlabel("Time (s)")
+    finalize_plot(fig, outbase, "_tuner")
+
+    # === Direction ===
+    dir_cols = [
+        ("dir_deg",        r"Dir (deg, axial)"),
+        ("dir_uncert_deg", r"Uncert (deg, $\sim 95\%$)"),
+        ("dir_conf",       "Confidence"),
+        ("dir_sign_num",   "Sign (+1/-1/0)"),
+    ]
+
+    fig, axes = make_subplots(len(dir_cols), latex_safe(f"{variant_label}: {basename}") + " (Direction)")
+    for ax, (col, ylabel) in zip(axes, dir_cols):
+        if col not in df.columns:
+            ax.text(0.01, 0.5, f"Missing: {latex_safe(col)}", transform=ax.transAxes)
+            ax.set_axis_off()
+            continue
+
+        if col == "dir_sign_num":
+            ax.step(time, df[col], where="post", linewidth=1.2)
+            ax.set_yticks([-1, 0, 1])
+        else:
+            ax.plot(time, df[col], linewidth=1.2)
+
+        ax.set_ylabel(ylabel)
+        ax.grid(True)
+
+    axes[-1].set_xlabel("Time (s)")
+    finalize_plot(fig, outbase, "_dir")
