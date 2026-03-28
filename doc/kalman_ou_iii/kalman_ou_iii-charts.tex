@@ -1,0 +1,305 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fullpage}
+\usepackage{mathrsfs}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{pgf}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
+\usepackage{bm}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{array,booktabs,makecell,adjustbox}
+
+% Keep this — needed by PGF outputs that reference \mathdefault
+\providecommand{\mathdefault}[1]{#1}
+
+\title{Wave Simulation Charts}
+\author{Mikhail Grushinskiy}
+\date{2025}
+
+\begin{document}
+    \maketitle
+
+% === Kalman 3D Filter Euler Angle Comparisons ===
+
+% PM Stokes
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_low.pgf}}
+    \caption{Kalman 3D filter Euler angle comparison — PM Stokes, low $H_s$.}
+    \label{fig:w3d_pmstokes_low}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_medium.pgf}}
+    \caption{Kalman 3D filter Euler angle comparison — PM Stokes, medium $H_s$.}
+    \label{fig:w3d_pmstokes_medium}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_high.pgf}}
+    \caption{Kalman 3D filter Euler angle comparison — PM Stokes, high $H_s$.}
+    \label{fig:w3d_pmstokes_high}
+    \end{figure}
+
+% JONSWAP
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_low.pgf}}
+    \caption{Kalman 3D filter Euler angle comparison — JONSWAP, low $H_s$.}
+    \label{fig:w3d_jonswap_low}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_medium.pgf}}
+    \caption{Kalman 3D filter Euler angle comparison — JONSWAP, medium $H_s$.}
+    \label{fig:w3d_jonswap_medium}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_high.pgf}}
+    \caption{Kalman 3D filter Euler angle comparison — JONSWAP, high $H_s$.}
+    \label{fig:w3d_jonswap_high}
+    \end{figure}
+
+
+% === Kalman 3D Filter: Frequency / Tuner Charts ===
+
+% PM Stokes
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_low_tuner.pgf}}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — PM Stokes, low $H_s$.}
+    \label{fig:w3d_pmstokes_low_tuner}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_medium_tuner.pgf}}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — PM Stokes, medium $H_s$.}
+    \label{fig:w3d_pmstokes_medium_tuner}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_high_tuner.pgf}}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — PM Stokes, high $H_s$.}
+    \label{fig:w3d_pmstokes_high_tuner}
+    \end{figure}
+
+% JONSWAP
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_low_tuner.pgf}}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — JONSWAP, low $H_s$.}
+    \label{fig:w3d_jonswap_low_tuner}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_medium_tuner.pgf}}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — JONSWAP, medium $H_s$.}
+    \label{fig:w3d_jonswap_medium_tuner}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_high_tuner.pgf}}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — JONSWAP, high $H_s$.}
+    \label{fig:w3d_jonswap_high_tuner}
+    \end{figure}
+
+
+% === Kalman 3D Filter: Wave Direction Charts ===
+
+% PM Stokes
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_low_dir.pgf}}
+    \caption{Kalman 3D filter wave direction telemetry (direction angle, uncertainty, confidence, amplitude, sign, direction vector) — PM Stokes, low $H_s$.}
+    \label{fig:w3d_pmstokes_low_dir}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_medium_dir.pgf}}
+    \caption{Kalman 3D filter wave direction telemetry (direction angle, uncertainty, confidence, amplitude, sign, direction vector) — PM Stokes, medium $H_s$.}
+    \label{fig:w3d_pmstokes_medium_dir}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_high_dir.pgf}}
+    \caption{Kalman 3D filter wave direction telemetry (direction angle, uncertainty, confidence, amplitude, sign, direction vector) — PM Stokes, high $H_s$.}
+    \label{fig:w3d_pmstokes_high_dir}
+    \end{figure}
+
+% JONSWAP
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_low_dir.pgf}}
+    \caption{Kalman 3D filter wave direction telemetry (direction angle, uncertainty, confidence, amplitude, sign, direction vector) — JONSWAP, low $H_s$.}
+    \label{fig:w3d_jonswap_low_dir}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_medium_dir.pgf}}
+    \caption{Kalman 3D filter wave direction telemetry (direction angle, uncertainty, confidence, amplitude, sign, direction vector) — JONSWAP, medium $H_s$.}
+    \label{fig:w3d_jonswap_medium_dir}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_high_dir.pgf}}
+    \caption{Kalman 3D filter wave direction telemetry (direction angle, uncertainty, confidence, amplitude, sign, direction vector) — JONSWAP, high $H_s$.}
+    \label{fig:w3d_jonswap_high_dir}
+    \end{figure}
+
+
+
+% === Kalman 3D Filter: Error and Kinematics Charts ===
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_low_zkin.pgf}}
+    \caption{Kalman 3D filter vertical kinematics (displacement, velocity, acceleration + errors) — PM Stokes, low $H_s$.}
+    \label{fig:w3d_pmstokes_low_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_low_xykin.pgf}}
+    \caption{Kalman 3D filter horizontal kinematics (X/Y displacement, velocity, acceleration + errors) — PM Stokes, low $H_s$.}
+    \label{fig:w3d_pmstokes_low_xykin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_medium_zkin.pgf}}
+    \caption{Kalman 3D filter vertical kinematics (displacement, velocity, acceleration + errors) — PM Stokes, medium $H_s$.}
+    \label{fig:w3d_pmstokes_medium_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_medium_xykin.pgf}}
+    \caption{Kalman 3D filter horizontal kinematics (X/Y displacement, velocity, acceleration + errors) — PM Stokes, medium $H_s$.}
+    \label{fig:w3d_pmstokes_medium_xykin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_high_zkin.pgf}}
+    \caption{Kalman 3D filter vertical kinematics (displacement, velocity, acceleration + errors) — PM Stokes, high $H_s$.}
+    \label{fig:w3d_pmstokes_high_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_high_xykin.pgf}}
+    \caption{Kalman 3D filter horizontal kinematics (X/Y displacement, velocity, acceleration + errors) — PM Stokes, high $H_s$.}
+    \label{fig:w3d_pmstokes_high_xykin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_low_zkin.pgf}}
+    \caption{Kalman 3D filter vertical kinematics (displacement, velocity, acceleration + errors) — JONSWAP, low $H_s$.}
+    \label{fig:w3d_jonswap_low_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_low_xykin.pgf}}
+    \caption{Kalman 3D filter horizontal kinematics (X/Y displacement, velocity, acceleration + errors) — JONSWAP, low $H_s$.}
+    \label{fig:w3d_jonswap_low_xykin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_medium_zkin.pgf}}
+    \caption{Kalman 3D filter vertical kinematics (displacement, velocity, acceleration + errors) — JONSWAP, medium $H_s$.}
+    \label{fig:w3d_jonswap_medium_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_medium_xykin.pgf}}
+    \caption{Kalman 3D filter horizontal kinematics (X/Y displacement, velocity, acceleration + errors) — JONSWAP, medium $H_s$.}
+    \label{fig:w3d_jonswap_medium_xykin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_high_zkin.pgf}}
+    \caption{Kalman 3D filter vertical kinematics (displacement, velocity, acceleration + errors) — JONSWAP, high $H_s$.}
+    \label{fig:w3d_jonswap_high_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_high_xykin.pgf}}
+    \caption{Kalman 3D filter horizontal kinematics (X/Y displacement, velocity, acceleration + errors) — JONSWAP, high $H_s$.}
+    \label{fig:w3d_jonswap_high_xykin}
+    \end{figure}
+
+% === Kalman 3D Filter: Bias Convergence Charts ===
+
+% PM Stokes - low
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_low_acc_bias.pgf}}
+    \caption{Kalman 3D filter accelerometer bias convergence — PM Stokes, low $H_s$.}
+    \label{fig:w3d_pmstokes_low_acc_bias}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_low_gyro_bias.pgf}}
+    \caption{Kalman 3D filter gyroscope bias convergence — PM Stokes, low $H_s$.}
+    \label{fig:w3d_pmstokes_low_gyro_bias}
+    \end{figure}
+
+% PM Stokes - medium
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_medium_acc_bias.pgf}}
+    \caption{Kalman 3D filter accelerometer bias convergence — PM Stokes, medium $H_s$.}
+    \label{fig:w3d_pmstokes_medium_acc_bias}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_medium_gyro_bias.pgf}}
+    \caption{Kalman 3D filter gyroscope bias convergence — PM Stokes, medium $H_s$.}
+    \label{fig:w3d_pmstokes_medium_gyro_bias}
+    \end{figure}
+
+% PM Stokes - high
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_high_acc_bias.pgf}}
+    \caption{Kalman 3D filter accelerometer bias convergence — PM Stokes, high $H_s$.}
+    \label{fig:w3d_pmstokes_high_acc_bias}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_pmstokes_high_gyro_bias.pgf}}
+    \caption{Kalman 3D filter gyroscope bias convergence — PM Stokes, high $H_s$.}
+    \label{fig:w3d_pmstokes_high_gyro_bias}
+    \end{figure}
+
+% JONSWAP - low
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_low_acc_bias.pgf}}
+    \caption{Kalman 3D filter accelerometer bias convergence — JONSWAP, low $H_s$.}
+    \label{fig:w3d_jonswap_low_acc_bias}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_low_gyro_bias.pgf}}
+    \caption{Kalman 3D filter gyroscope bias convergence — JONSWAP, low $H_s$.}
+    \label{fig:w3d_jonswap_low_gyro_bias}
+    \end{figure}
+
+% JONSWAP - medium
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_medium_acc_bias.pgf}}
+    \caption{Kalman 3D filter accelerometer bias convergence — JONSWAP, medium $H_s$.}
+    \label{fig:w3d_jonswap_medium_acc_bias}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_medium_gyro_bias.pgf}}
+    \caption{Kalman 3D filter gyroscope bias convergence — JONSWAP, medium $H_s$.}
+    \label{fig:w3d_jonswap_medium_gyro_bias}
+    \end{figure}
+
+% JONSWAP - high
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_high_acc_bias.pgf}}
+    \caption{Kalman 3D filter accelerometer bias convergence — JONSWAP, high $H_s$.}
+    \label{fig:w3d_jonswap_high_acc_bias}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_jonswap_high_gyro_bias.pgf}}
+    \caption{Kalman 3D filter gyroscope bias convergence — JONSWAP, high $H_s$.}
+    \label{fig:w3d_jonswap_high_gyro_bias}
+    \end{figure}
+
+\end{document}
