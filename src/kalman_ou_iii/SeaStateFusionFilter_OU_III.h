@@ -50,14 +50,14 @@
 #include <memory>
 #include <algorithm>
 
-#include "FirstOrderIIRSmoother.h"
-#include "FrequencyTrackerPolicy.h"
-#include "SeaStateAutoTuner.h"
-#include "MagAutoTuner.h"
-#include "Kalman3D_Wave_OU_III.h"
-#include "FrameConversions.h"
-#include "KalmanWaveDirection.h"
-#include "WaveDirectionDetector.h"
+#include "freq/FirstOrderIIRSmoother.h"
+#include "freq/FrequencyTrackerPolicy.h"
+#include "tuner/SeaStateAutoTuner.h"
+#include "tuner/MagAutoTuner.h"
+#include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
+#include "ahrs/FrameConversions.h"
+#include "wave_dir/KalmanWaveDirection.h"
+#include "wave_dir/WaveDirectionDetector.h"
 #include "TimeAwareSpikeFilter.h"
 
 // Shared constants
