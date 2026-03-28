@@ -21,9 +21,9 @@ using Eigen::Vector3f;
 bool add_noise = true;
 bool attitude_only = false;
 
-class FusionAdapter3 final : public IW3dFusionAdapter {
+class FusionAdapter_OU_III final : public IW3dFusionAdapter {
 public:
-    FusionAdapter3(bool with_mag,
+    FusionAdapter_OU_III(bool with_mag,
                    const Vector3f& sigma_a_init,
                    const Vector3f& sigma_g,
                    const Vector3f& sigma_m,
@@ -128,7 +128,7 @@ static constexpr W3dSummaryLabels SUMMARY_LABELS{
 static void process_wave_file_for_tracker(const std::string& filename, float dt, bool with_mag)
 {
     constexpr float MAG_ODR_HZ = 100.0f;
-    auto result = process_wave_file_for_tracker<FusionAdapter3>(filename, dt, with_mag, add_noise, MAG_ODR_HZ);
+    auto result = process_wave_file_for_tracker<FusionAdapter_OU_III>(filename, dt, with_mag, add_noise, MAG_ODR_HZ);
     if (!result) return;
     print_summary_and_fail_if_needed(*result, dt, FAIL_LIMITS, SUMMARY_LABELS);
 }
