@@ -17,11 +17,11 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = freq_track
+TARGETS = freq-track
 
 all: $(TARGETS)
 
-freq_track: freq_track.o
+freq-track: freq-track.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
