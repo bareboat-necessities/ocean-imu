@@ -1,1 +1,686 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage{amsmath,bm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{cite}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+
+% ---- Code listing style -----------------------------------------------
+\lstdefinestyle{cppstyle}{
+    language=C++,
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{blue!70!black}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{orange!80!black},
+    breaklines=true,
+    breakatwhitespace=true,
+    frame=single,
+    rulecolor=\color{black!30},
+    xleftmargin=4pt,
+    xrightmargin=4pt,
+    numbers=none,
+    tabsize=2,
+}
+\lstset{style=cppstyle}
+
+% -----------------------------------------------------------------------
+
+\title{Embedded-Friendly IMU Calibration:\\
+Ellipsoid Fitting, Temperature Compensation,\\
+and Robust Estimation in C\texttt{++}/Eigen}
+
+\author{%
+    \IEEEauthorblockN{Mikhail S.\ Grushinskiy}
+    \IEEEauthorblockA{Independent Researcher\\
+    Bareboat Necessities Project\\
+    \texttt{mgrouch@users.github.com}}
+}
+
+\begin{document}
+    \maketitle
+
+% -----------------------------------------------------------------------
+    \begin{abstract}
+        This note documents \texttt{imu\_cal}, a modern, header-only C\texttt{++}
+        library for in-situ calibration of the three sensor axes of an Inertial
+        Measurement Unit (IMU): accelerometer, magnetometer, and gyroscope.
+        The library is designed for Arduino-class embedded targets using the
+        Eigen linear-algebra library.
+        It fits each sensor to an ellipsoidal model via a robust algebraic
+        10-parameter least-squares solver, applies trimmed iterative reweighting
+        to suppress outliers, enforces positive-definiteness of the recovered
+        shape matrix, and optionally compensates for temperature-dependent
+        bias drift.
+        Accelerometer calibration additionally enforces axis alignment and
+        gravity renormalization.
+        Magnetometer calibration works in a numerically scaled coordinate
+        frame to maintain well-conditioned matrices at microtesla magnitudes.
+        All calibrators require a minimum of 80 samples and enforce
+        geometric coverage checks before fitting.
+        The public API is a small collection of typed structs and two-line
+        \texttt{fit()} calls; the complete implementation is contained
+        in a single \texttt{.h} file of under 900 lines.
+    \end{abstract}
+
+    \begin{IEEEkeywords}
+        IMU calibration, ellipsoid fitting, robust estimation,
+        temperature compensation, Eigen, embedded systems, Arduino,
+        accelerometer, magnetometer, gyroscope
+    \end{IEEEkeywords}
+
+% -----------------------------------------------------------------------
+    \section{Introduction}
+
+    Low-cost MEMS IMUs suffer from well-known systematic errors:
+    scale-factor mismatches, inter-axis cross-sensitivity, constant bias,
+    and temperature-dependent bias drift \cite{Frosio2009}.
+    Without calibration, these errors accumulate rapidly in attitude
+    and heading estimates.
+
+    Classical batch calibration techniques require a precision turntable
+    or a known-orientation jig.
+    In contrast, \emph{in-situ} or \emph{motional} calibration methods
+    collect raw sensor data while the device is rotated freely and
+    then recover the error model from the geometry of the measurements
+    \cite{Vasconcelos2011}.
+    For the accelerometer and magnetometer, the underlying observation
+    is that the true sensor output should lie on a sphere of known
+    radius ($g$ for acceleration, the local field magnitude $B$ for
+    the magnetometer).
+    Systematic errors deform this sphere into an ellipsoid; recovering
+    the ellipsoid and inverting the distortion yields the calibration map.
+
+    \texttt{imu\_cal} implements this approach for all three sensor axes
+    in a self-contained, dependency-light C\texttt{++} header suitable
+    for deployment on Arduino-class hardware.
+    The library uses Eigen \cite{Eigen} for all matrix operations
+    and exposes a minimal, typed API.
+
+% -----------------------------------------------------------------------
+    \section{Sensor Error Models}
+
+    \subsection{Accelerometer and Magnetometer}
+
+    Let $\mathbf{v}_\text{raw} \in \mathbb{R}^3$ be the raw sensor reading.
+    The standard affine error model is
+    \begin{equation}
+        \mathbf{v}_\text{raw} = \mathbf{M}\,\mathbf{v}_\text{true} + \mathbf{b}
+        + \boldsymbol{\eta},
+    \end{equation}
+    where $\mathbf{M} \in \mathbb{R}^{3\times 3}$ captures scale factors and
+    cross-sensitivity, $\mathbf{b} \in \mathbb{R}^3$ is the constant bias, and
+    $\boldsymbol{\eta}$ is noise.
+    The calibrated output is therefore
+    \begin{equation}
+        \mathbf{v}_\text{cal} = \mathbf{S}\bigl(\mathbf{v}_\text{raw} -
+        \mathbf{b}(T)\bigr),
+        \label{eq:cal_model}
+    \end{equation}
+    where $\mathbf{S} = \mathbf{M}^{-1}$ is the whitening matrix and
+    $\mathbf{b}(T)$ is the temperature-dependent bias (Section~\ref{sec:tempbias}).
+
+    \subsection{Gyroscope}
+
+    The gyroscope error model used here is the simpler bias-only form,
+    because scale-factor and cross-sensitivity calibration requires a
+    precision rate rig:
+    \begin{equation}
+        \boldsymbol{\omega}_\text{cal} = \mathbf{S}\bigl(\boldsymbol{\omega}_\text{raw}
+        - \mathbf{b}(T)\bigr),
+        \quad \mathbf{S} = \mathbf{I}_3.
+    \end{equation}
+    The identity scale matrix is retained in the struct so that a measured-rate
+    rig can upgrade it without changing the API.
+
+    \subsection{Temperature Bias Model}
+    \label{sec:tempbias}
+
+    Gyroscope and accelerometer biases are strongly temperature-dependent.
+    The library models this as a first-order linear expansion about a
+    reference temperature $T_0$ (\SI{25}{\degreeCelsius} by default):
+    \begin{equation}
+        \mathbf{b}(T) = \mathbf{b}_0 + \mathbf{k}(T - T_0),
+        \label{eq:tempbias}
+    \end{equation}
+    with intercept $\mathbf{b}_0 \in \mathbb{R}^3$ and slope
+    $\mathbf{k} \in \mathbb{R}^3$ estimated by least squares from
+    per-temperature-bin calibration centers (Section~\ref{sec:accel_fit}).
+
+% -----------------------------------------------------------------------
+    \section{Ellipsoid Fitting}
+    \label{sec:ellipsoid}
+
+    \subsection{Algebraic Form}
+
+    A general ellipsoid centred at $\mathbf{b}$ satisfying
+    $\|\mathbf{A}(\mathbf{x}-\mathbf{b})\| = R$ can be written in the
+    quadratic algebraic form
+    \begin{equation}
+        \mathbf{x}^\top \mathbf{Q}\,\mathbf{x}
+        + 2\mathbf{q}^\top\mathbf{x} + c = 0,
+    \end{equation}
+    where $\mathbf{Q} \in \mathbb{R}^{3\times 3}$ is symmetric positive
+    definite, $\mathbf{q} \in \mathbb{R}^3$, and $c \in \mathbb{R}$.
+    Expanding the defining equation:
+    \begin{align}
+        \mathbf{Q} &= \mathbf{A}^\top\mathbf{A}, \\
+        \mathbf{q} &= -\mathbf{Q}\mathbf{b}, \\
+        c &= \mathbf{b}^\top\mathbf{Q}\mathbf{b} - R^2.
+    \end{align}
+
+    \subsection{10-Parameter Regression}
+    \label{sec:regression}
+
+    Define the feature vector for sample $\mathbf{x}_i = (X,Y,Z)^\top$:
+    \begin{equation}
+        \mathbf{d}_i = \bigl[X^2,\,Y^2,\,Z^2,\,2XY,\,2XZ,\,2YZ,\,
+        2X,\,2Y,\,2Z,\,1\bigr]^\top.
+    \end{equation}
+    The algebraic constraint becomes $\mathbf{d}_i^\top\mathbf{p} = 0$,
+    where $\mathbf{p} \in \mathbb{R}^{10}$ encodes $\mathbf{Q}$, $\mathbf{q}$, $c$.
+    Because the constraint is homogeneous, we fix the normalisation by
+    setting the right-hand side to 1 (corresponding to $c = 1$), leading
+    to the linear system
+    \begin{equation}
+        \mathbf{H}\,\mathbf{p} = \mathbf{g},
+        \quad
+        \mathbf{H} = \sum_i \mathbf{d}_i\mathbf{d}_i^\top,
+        \quad
+        \mathbf{g} = \sum_i \mathbf{d}_i.
+        \label{eq:lsq}
+    \end{equation}
+    A small Tikhonov ridge
+    $\lambda = \lambda_\text{rel}\!\left(\tfrac{\mathrm{tr}(\mathbf{H})}{10}
+    + 10^{-12}\right)$
+    is added to the diagonal of $\mathbf{H}$ before solving via LDLT
+    decomposition:
+    \begin{equation}
+    (\mathbf{H} + \lambda\mathbf{I})\,\mathbf{p} = \mathbf{g}.
+    \label{eq:ridge}
+    \end{equation}
+    The default ridge scale is $\lambda_\text{rel} = 10^{-6}$, which is
+    harmless for normal data but prevents numerical failure with
+    near-planar samples.
+
+    \subsection{Model Reconstruction}
+
+    From the solution $\mathbf{p}$, the centre and shape matrix are recovered as:
+    \begin{align}
+        \mathbf{b} &= -\mathbf{Q}^{-1}\mathbf{q}, \\
+        s &= 1 + \mathbf{b}^\top\mathbf{Q}\mathbf{b} - c, \\
+        \mathbf{M} &= \mathbf{Q}/s.
+    \end{align}
+    The matrix $\mathbf{M}$ is projected to symmetric positive definite (SPD)
+    via eigenvalue clamping (Section~\ref{sec:spd}), then Cholesky-factored
+    $\mathbf{M} = \mathbf{U}^\top\mathbf{U}$ to obtain the unit-sphere
+    whitening matrix $\mathbf{A}_\text{unit} = \mathbf{U}$.
+    The final calibration matrix scaled to the target radius $R$ is
+    \begin{equation}
+        \mathbf{A} = \mathbf{A}_\text{unit}\,R.
+    \end{equation}
+
+% -----------------------------------------------------------------------
+    \section{Robust Fitting}
+    \label{sec:robust}
+
+    A single pass of algebraic fitting is sensitive to outliers, animal
+    interference near the magnetometer, and the unavoidable non-uniformity
+    of free-motion data collection.
+    The library therefore wraps the linear solve inside an iterative
+    trimming loop.
+
+    \subsection{Algorithm Overview}
+
+    \begin{enumerate}
+        \item Initialise all sample weights as inliers.
+        \item Solve \eqref{eq:lsq}--\eqref{eq:ridge} on the current inlier set.
+        \item Compute residuals $e_i = \|\mathbf{A}(\mathbf{x}_i - \mathbf{b})\| - R$.
+        \item Compute the Median Absolute Deviation (MAD) of $\{e_i\}$.
+        \item Mark as outliers any sample with $|e_i| > \tau$, where
+        $\tau = \min(\tau_\text{MAD},\,\tau_\text{quantile})$.
+        \item Repeat from step 2 for a fixed number of iterations
+        (default 3).
+        \item Final solve on the converged inlier set.
+    \end{enumerate}
+
+    \subsection{MAD Threshold}
+
+    The MAD-based threshold is
+    \begin{equation}
+        \tau_\text{MAD} = 5.2\,\max(\mathrm{MAD},\,10^{-4}) + 10^{-6}.
+    \end{equation}
+    The factor 5.2 is chosen empirically to be permissive enough for
+    real sensor noise while still rejecting gross outliers.
+
+    \subsection{Quantile Threshold}
+
+    A trimming fraction $\alpha$ (default \SI{15}{\percent}) is applied by
+    sorting the absolute residuals and setting
+    \begin{equation}
+        \tau_\text{quantile} = |e|_{(\lceil(1-\alpha)n\rceil)},
+    \end{equation}
+    the $(1-\alpha)$-quantile of the absolute residual distribution.
+    Samples above this threshold are excluded.
+
+    \subsection{Fallback}
+
+    If the joint threshold would leave fewer than 10 inliers, the code
+    relaxes to the looser of the two thresholds.
+    If that still leaves fewer than 10, fitting fails with
+    \texttt{INLIERS\_TOO\_FEW}.
+
+% -----------------------------------------------------------------------
+    \section{SPD Projection}
+    \label{sec:spd}
+
+    Numerical noise can cause the recovered matrix $\mathbf{M}$ to have
+    small negative eigenvalues, which would break the subsequent Cholesky
+    factorisation.
+    The library projects any symmetric matrix to the nearest SPD matrix
+    by clamping its eigenvalues:
+    \begin{equation}
+        \mathbf{M} \leftarrow \mathbf{V}\,
+        \mathrm{diag}\!\left(\max(|\lambda_i|,\,\epsilon)\right)\,
+        \mathbf{V}^\top,
+    \end{equation}
+    where $\mathbf{V}$ are the eigenvectors of $\mathbf{M}$ and
+    \begin{equation}
+        \epsilon = \max\!\bigl(\epsilon_\text{rel}\,\lambda_\text{max},\;
+        \epsilon_\text{abs}\bigr),
+        \quad
+        \epsilon_\text{rel} = 10^{-5},\;
+        \epsilon_\text{abs} = 10^{-7}.
+    \end{equation}
+    This is the nearest-SPD projection under the Frobenius norm for
+    symmetric matrices \cite{Higham1988}.
+
+% -----------------------------------------------------------------------
+    \section{Coverage and Degeneracy Checks}
+    \label{sec:coverage}
+
+    Before fitting, the library verifies that the collected samples
+    adequately cover the sphere.
+    Let $\hat{\mathbf{x}}_i = (\mathbf{x}_i - \boldsymbol{\mu})/
+    \|\mathbf{x}_i - \boldsymbol{\mu}\|$ be the unit-direction vectors
+    after mean-centering.
+
+    Three conditions must hold simultaneously:
+    \begin{enumerate}
+        \item \textbf{Axis span}: the centred sample range on each axis
+        must satisfy $\Delta_j \ge 0.90\,R_\text{expected}$.
+        \item \textbf{Sign balance}: at least \SI{8}{\percent} of samples
+        must fall on each side of zero on every axis.
+        \item \textbf{Directional spread}: the direction covariance
+        $\mathbf{C} = \frac{1}{m}\sum_i \hat{\mathbf{x}}_i
+        \hat{\mathbf{x}}_i^\top$
+        must satisfy $\det(\mathbf{C}) \ge 10^{-3}$.
+        For a uniform sphere $\mathbf{C} \approx \tfrac{1}{3}\mathbf{I}$
+        with $\det \approx 0.037$; the threshold rejects planar or
+        linear sample distributions.
+    \end{enumerate}
+    Failure in any condition produces \texttt{DEGENERATE\_COVERAGE}.
+
+% -----------------------------------------------------------------------
+    \section{Accelerometer Calibration}
+    \label{sec:accel_fit}
+
+    \subsection{Static Sample Gating}
+
+    Only samples collected while the IMU is near-stationary are useful for
+    accelerometer calibration.
+    The \texttt{addSample} method enforces two gates:
+    \begin{align}
+        \bigl|\|\mathbf{a}_\text{raw}\| - g\bigr| &< \delta_a
+        \quad (\delta_a = \SI{0.25}{\meter\per\second\squared}), \\
+        \|\boldsymbol{\omega}_\text{raw}\| &< \delta_\omega
+        \quad (\delta_\omega = \SI{0.07}{\radian\per\second}).
+    \end{align}
+    Samples not passing both gates are silently discarded.
+
+    \subsection{Temperature Binning}
+
+    Samples are partitioned into $K = 8$ temperature bins of equal width
+    spanning $[T_\text{min}, T_\text{max}]$.
+    Each bin with at least 30 samples is independently fitted by
+    \texttt{ellipsoid\_to\_sphere\_robust} with target radius $g$.
+
+    \subsection{Axis-Rotation Prevention}
+    \label{sec:polar}
+
+    The raw whitening matrix $\mathbf{A}$ returned by the ellipsoid fit
+    may contain a rigid rotation component that would misalign the calibrated
+    axes.
+    To remove it, the library extracts the \emph{polar SPD factor}:
+    \begin{equation}
+        \mathbf{P} = \sqrt{\mathbf{A}^\top\mathbf{A}},
+        \quad\text{so that}\quad
+        \mathbf{A} = \mathbf{R}\,\mathbf{P},\;
+        \mathbf{P} \succ 0.
+    \end{equation}
+    $\mathbf{P}$ captures scale and cross-sensitivity while discarding any
+    rotation $\mathbf{R}$.
+    Optionally, only the diagonal of $\mathbf{P}$ is retained
+    (\texttt{AccelSMode::DiagonalOnly}, the default), which further
+    prevents axis permutation at the cost of ignoring minor cross-axis
+    terms.
+
+    \subsection{Plausibility Gates}
+
+    A bin's $\mathbf{S}$ matrix is accepted only if:
+    \begin{itemize}
+        \item all diagonal entries lie in $[0.80,\,1.25]$,
+        \item the SPD condition number satisfies $\kappa(\mathbf{S}) \le 3.5$,
+        \item in \texttt{PolarSPD} mode, the off-diagonal RMS satisfies
+        $\text{rms}_\text{off}(\mathbf{S}) \le 0.05$.
+    \end{itemize}
+    These thresholds reject numerically or physically implausible fits
+    (\texttt{ACCEL\_S\_UNPHYSICAL}).
+
+    \subsection{Gravity Renormalisation}
+
+    After fitting, the scalar magnitude of the calibrated output is
+    matched to $g$ using a robust median of quiet-period norms:
+    \begin{equation}
+        \mathbf{S} \leftarrow \frac{g}{\mathrm{med}\bigl(
+        \|\mathbf{S}(\mathbf{a}_i - \mathbf{b}(T_i))\|\bigr)}\,\mathbf{S}.
+    \end{equation}
+    The scale factor is clamped to $[0.97,\,1.03]$ (relaxing to
+    $[0.90,\,1.10]$ on fallback).
+    This step corrects for any remaining uniform scale error without
+    rotating the axes.
+
+% -----------------------------------------------------------------------
+    \section{Magnetometer Calibration}
+    \label{sec:mag_fit}
+
+    \subsection{Numeric Scaling}
+
+    Raw magnetometer values are typically in the range
+    $\sim\SI{25}{}$--$\SI{65}{\micro\tesla}$, which leads to condition
+    numbers of order $10^6$ in the Gram matrix $\mathbf{H}$
+    of \eqref{eq:lsq}.
+    The library therefore normalises all samples by a robust radius estimate:
+    \begin{equation}
+        \mathbf{x}' = \mathbf{x} / \hat{B},
+        \quad
+        \hat{B} = \mathrm{med}\bigl(\|\mathbf{x}_i - \boldsymbol{\mu}\|\bigr),
+    \end{equation}
+    fits the unit-sphere model ($R'=1$) in the normalised frame, then
+    unscales the result:
+    \begin{align}
+        \mathbf{b}_{\si{\micro\tesla}} &= \hat{B}\,\mathbf{b}', \\
+        \mathbf{A}_{\si{\micro\tesla}} &= \frac{\mathbf{A}'}{{\hat{B}}}\,B_\text{med},
+    \end{align}
+    where $B_\text{med}$ is the median corrected radius in physical units.
+
+    \subsection{Field Plausibility Check}
+
+    The recovered field magnitude $B_\text{med}$ is accepted only if
+    $12 \le B_\text{med} \le \SI{120}{\micro\tesla}$.
+    This rejects degenerate solutions and catches situations where
+    the sensor was near a strong magnetic disturbance during the
+    entire collection.
+
+% -----------------------------------------------------------------------
+    \section{Gyroscope Calibration}
+    \label{sec:gyro_fit}
+
+    The gyroscope calibrator collects stationary samples gated by:
+    \begin{align}
+        \|\boldsymbol{\omega}_\text{raw}\| &< \SI{0.07}{\radian\per\second}, \\
+        \bigl|\|\mathbf{a}_\text{raw}\| - g\bigr| &< \SI{0.25}{\meter\per\second\squared}.
+    \end{align}
+
+    Samples are binned by temperature (same $K=8$ scheme as the accelerometer).
+    Within each bin, the mean reading is taken as the bias estimate.
+    If at least two bins are populated, a linear temperature model
+    \eqref{eq:tempbias} is fitted by ordinary least squares.
+    Otherwise a constant bias ($\mathbf{k}=\mathbf{0}$) is used.
+
+% -----------------------------------------------------------------------
+    \section{Software Architecture}
+    \label{sec:arch}
+
+    \subsection{Namespace and Configuration}
+
+    All symbols are enclosed in namespace \texttt{imu\_cal}.
+    The compile-time constant
+    \begin{lstlisting}
+static constexpr int IMU_CAL_MAX_SAMPLES = 400;
+    \end{lstlisting}
+    limits the size of all fixed-capacity arrays to prevent dynamic
+    allocation.
+
+    \subsection{Error Reporting}
+
+    Failures are reported through a typed enum:
+    \begin{lstlisting}
+enum class FitFail : uint8_t {
+  OK = 0,
+  BAD_ARG, TOO_FEW_SAMPLES,
+  NON_FINITE_INPUT,
+  DEGENERATE_COVERAGE,
+  SOLVE_LDLT_FAIL,
+  MODEL_LU_NOT_INVERTIBLE,
+  MODEL_S_NONPOSITIVE,
+  MODEL_SPD_PROJECT_FAIL,
+  MODEL_CHOLESKY_FAIL,
+  INLIERS_TOO_FEW,
+  MAG_FIELD_OUT_OF_RANGE,
+  TEMP_BINS_EMPTY,
+  ACCEL_S_UNPHYSICAL,
+};
+    \end{lstlisting}
+    The helper \texttt{fitFailStr()} converts any code to a printable
+    C string for serial diagnostics.
+
+    \subsection{Sample Buffer}
+
+    \texttt{SampleBuffer3<T,N>} is a fixed-capacity ring buffer for
+    3-D vectors with associated temperature readings:
+    \begin{lstlisting}
+template <typename T, int N>
+struct SampleBuffer3 {
+  Eigen::Matrix<T,3,1> v[N];
+  T    tempC[N];
+  int  n = 0;
+  bool push(const Vec3& x, T tC = T(0));
+};
+    \end{lstlisting}
+    \texttt{push} validates finiteness and rejects samples beyond capacity.
+
+    \subsection{Calibration Result Structs}
+
+    Each sensor has a corresponding result struct:
+    \begin{itemize}
+        \item \texttt{AccelCalibration<T>}: stores $g$, $\mathbf{S}$,
+        \texttt{TempBias3}, RMS, and an \texttt{apply()} method.
+        \item \texttt{MagCalibration<T>}: stores $\mathbf{A}$, $\mathbf{b}$,
+        $B_\text{field}$, RMS, and an \texttt{apply()} method.
+        \item \texttt{GyroCalibration<T>}: stores $\mathbf{S}$,
+        \texttt{TempBias3}, and an \texttt{apply()} method.
+    \end{itemize}
+    All structs carry a Boolean \texttt{ok} flag and use
+    \texttt{EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW} for correct Eigen alignment.
+
+    \subsection{Calibrator Templates}
+
+    Three template calibrators own a sample buffer and expose a
+    two-method API: \texttt{addSample} and \texttt{fit}.
+
+    \begin{lstlisting}
+template <typename T, int N, int K_TBINS = 8>
+struct AccelCalibrator {
+  bool addSample(const Vec3& a, const Vec3& w, T tempC);
+  bool fit(AccelCalibration<T>& out, ...);
+};
+
+template <typename T, int N>
+struct MagCalibrator {
+  bool addSample(const Vec3& m_uT);
+  bool fit(MagCalibration<T>& out, ...);
+};
+
+template <typename T, int N, int K_TBINS = 8>
+struct GyroCalibrator {
+  bool addSample(const Vec3& w, const Vec3& a, T tempC);
+  bool fit(GyroCalibration<T>& out, ...);
+};
+    \end{lstlisting}
+
+% -----------------------------------------------------------------------
+    \section{Typical Usage}
+    \label{sec:usage}
+
+    The following snippet illustrates a typical calibration workflow
+    for a float-precision magnetometer with 200 sample capacity:
+
+    \begin{lstlisting}
+#include "imu_cal.h"
+using namespace imu_cal;
+
+MagCalibrator<float, 200> cal;
+
+// -- collection phase (rotate device freely) --
+while (!cal.buf.n < 100) {
+  Eigen::Vector3f m_raw;
+  readMag(m_raw);          // application-specific
+  cal.addSample(m_raw);
+}
+
+// -- fitting phase --
+MagCalibration<float> result;
+FitFail why;
+if (!cal.fit(result, 3, 0.15f, 1e-6f, &why)) {
+  Serial.println(fitFailStr(why));
+  return;
+}
+
+// -- application phase --
+Eigen::Vector3f m_cal = result.apply(m_raw);
+    \end{lstlisting}
+
+    The accelerometer and gyroscope calibrators additionally require a
+    simultaneous gyroscope / accelerometer reading for their respective
+    static-motion gates.
+
+% -----------------------------------------------------------------------
+    \section{Numerical Notes}
+    \label{sec:numerical}
+
+    \subsection{Precision}
+
+    The library is parameterised by scalar type \texttt{T}.
+    \texttt{float} (32-bit) is sufficient for field deployment.
+    \texttt{double} (64-bit) is recommended when validating the algorithm
+    on a host machine.
+    Internally, all \texttt{sqrt}, \texttt{fabs}, and \texttt{isfinite}
+    calls are cast through \texttt{double} to avoid platform-specific
+    float precision issues on AVR-class targets.
+
+    \subsection{No Dynamic Allocation}
+
+    All internal arrays (residuals, inlier mask, sorted quantile buffer)
+    are declared at fixed size \texttt{IMU\_CAL\_MAX\_SAMPLES}.
+    The AccelCalibrator keeps its per-bin index arrays in a mutable
+    \texttt{Workspace} member to reduce stack pressure inside \texttt{fit()}.
+
+    \subsection{Eigen Dependency}
+
+    The header conditionally includes either \texttt{<Eigen/Dense>} and
+    \texttt{<Eigen/Eigenvalues>} (host builds) or
+    \texttt{<ArduinoEigenDense.h>} (Arduino builds):
+    \begin{lstlisting}
+#ifdef EIGEN_NON_ARDUINO
+#  include <Eigen/Dense>
+#  include <Eigen/Eigenvalues>
+#else
+#  include <ArduinoEigenDense.h>
+#endif
+    \end{lstlisting}
+    No other external dependencies are required.
+
+% -----------------------------------------------------------------------
+    \section{Failure Mode Summary}
+
+    Table~\ref{tab:failures} summarises the failure codes, their root
+    causes, and typical remedies.
+
+    \begin{table}[t]
+        \centering
+        \caption{Failure codes and remedies}
+        \label{tab:failures}
+        \renewcommand{\arraystretch}{1.2}
+        \begin{tabular}{@{}lp{4.2cm}@{}}
+            \toprule
+            \textbf{Code} & \textbf{Meaning / Remedy} \\
+            \midrule
+            \texttt{TOO\_FEW\_SAMPLES}      & Collect at least 80 samples per bin \\
+            \texttt{NON\_FINITE\_INPUT}     & Check ADC / I$^2$C link for errors \\
+            \texttt{DEGENERATE\_COVERAGE}   & Rotate more; cover all six hemisphere faces \\
+            \texttt{SOLVE\_LDLT\_FAIL}      & Increase ridge; unlikely with normal data \\
+            \texttt{MODEL\_S\_NONPOSITIVE}  & Sensor may be saturated; check range \\
+            \texttt{MODEL\_SPD\_PROJECT\_FAIL} & Near-degenerate geometry; collect more data \\
+            \texttt{MODEL\_CHOLESKY\_FAIL}  & SPD projection failed; rarely occurs \\
+            \texttt{INLIERS\_TOO\_FEW}      & Too many outliers; check mounting, vibration \\
+            \texttt{MAG\_FIELD\_OUT\_OF\_RANGE} & Keep away from strong magnets; recheck sensor \\
+            \texttt{TEMP\_BINS\_EMPTY}      & Too few samples per temperature bin; slow down cooling \\
+            \texttt{ACCEL\_S\_UNPHYSICAL}   & Diagonal or condition check failed; check gates \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+
+% -----------------------------------------------------------------------
+    \section{Conclusion}
+
+    \texttt{imu\_cal} provides a complete, self-contained in-situ IMU
+    calibration pipeline in fewer than 900 lines of C\texttt{++}/Eigen.
+    The core algorithm is a 10-parameter ellipsoid fit solved by LDLT
+    with iterative trimmed reweighting and MAD-based robust scaling.
+    Accelerometer calibration adds temperature binning, polar-SPD
+    axis-alignment enforcement, and gravity renormalisation.
+    Magnetometer calibration applies a coordinate scaling step to improve
+    conditioning at microtesla magnitudes.
+    Gyroscope calibration extracts a linear temperature-bias model from
+    quiet-stationary data.
+    The library is header-only, allocation-free, and configurable via
+    template parameters, making it directly deployable on
+    Arduino-compatible embedded targets.
+
+% -----------------------------------------------------------------------
+    \begin{thebibliography}{9}
+
+        \bibitem{Frosio2009}
+        I.~Frosio, F.~Pedersini, and N.~A.~Borghese,
+        ``Autocalibration of MEMS Accelerometers,''
+        \emph{IEEE Trans.\ Instrumentation and Measurement},
+        vol.~58, no.~6, pp.~2034--2041, Jun.\ 2009.
+
+        \bibitem{Vasconcelos2011}
+        J.~F.~Vasconcelos, G.~Elkaim, C.~Silvestre, P.~Oliveira, and B.~Cardeira,
+        ``Geometric Approach to Strapdown Magnetometer Calibration in Sensor Frame,''
+        \emph{IEEE Trans.\ Aerospace and Electronic Systems},
+        vol.~47, no.~2, pp.~1293--1306, Apr.\ 2011.
+
+        \bibitem{Eigen}
+        G.~Guennebaud, B.~Jacob, et al.,
+        ``Eigen v3,''
+        \url{http://eigen.tuxfamily.org}, 2010.
+
+        \bibitem{Higham1988}
+        N.~J.~Higham,
+        ``Computing a Nearest Symmetric Positive Semidefinite Matrix,''
+        \emph{Linear Algebra and its Applications},
+        vol.~103, pp.~103--118, 1988.
+
+    \end{thebibliography}
+
+\end{document}
 
