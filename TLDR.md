@@ -6,7 +6,7 @@ In simple terms:
 - Each `dt` step is solved via matrix exponential.
 - With very small `dt`, matrices can become numerically ill-conditioned (a.k.a. math gets seasick).
 - So Joseph form and small-series approximations are used for numerical stability.
-- Includes double-integration drift-correction measures.
-- Kalman parameters must be adapted to match all sea states.
+- Includes double-integration drift-correction pseudo-measurements.
+- Kalman parameters must be adapted to match actual sea states.
 - Adaptation uses acceleration-frequency tracking for time-scale tuning, and direct acceleration-variance estimation for amplitude-scale tuning.
-- IMU sample timestamps are validated using FIFO timestamps.
+- IMU sample timestamps are using accurate FIFO timestamps. Correct sample timestamps are very important due to samples being double integrated over time steps. 
