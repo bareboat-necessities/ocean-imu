@@ -83,7 +83,10 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     const Vector3f sigma_a(0.10f, 0.10f, 0.16f);
     const Vector3f sigma_g(0.00045f, 0.00045f, 0.00045f);
     const Vector3f sigma_m(2.5f, 2.5f, 7.0f);
-    QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m);
+    const float Pq0 = 1e-5f;
+    const float Pb0 = 5e-4f;
+    const float b0  = 1e-10f;
+    QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0);
 
     // World magnetic field in aerospace NED
     Vector3f B_world = MagSim_WMM::mag_world_aero();
