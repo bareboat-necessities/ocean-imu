@@ -76,9 +76,13 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     WaveDataCSVReader reader(filename);
 
     // Process/measurement stddevs (squared internally in the filter)
-    const Vector3f sigma_a(0.05f,  0.05f,  0.05f);
-    const Vector3f sigma_g(0.00134f, 0.00134f, 0.00134f);
-    const Vector3f sigma_m(0.03f, 0.03f, 0.03f);
+    // accel update uses acc_f / g_std, so sigma_a is in normalized-g units.
+    // mag update uses raw simulated field in microteslas.
+    // sigma_m is intentionally much larger than before to stop overtrusting
+    // the full dipped magnetic vector for yaw.
+    const Vector3f sigma_a(0.12f, 0.12f, 0.12f);
+    const Vector3f sigma_g(0.00035f, 0.00035f, 0.00035f);
+    const Vector3f sigma_m(3.0f, 3.0f, 6.0f);
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m);
 
     // World magnetic field in aerospace NED
