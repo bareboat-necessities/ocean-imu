@@ -3,7 +3,7 @@ from pathlib import Path
 import csv
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TEST_DIR = SCRIPT_DIR.parent / "../imu_calibrate/tests"
+TEST_DIR = SCRIPT_DIR.parent / "../tests/imu_calibrate"
 OUT_PATH = SCRIPT_DIR / "calibrate_imu_quality.pgf"
 SAMPLES_CSV = TEST_DIR / "calibrate_imu_test_output.csv"
 SUMMARY_CSV = TEST_DIR / "calibrate_imu_test_summary.csv"
