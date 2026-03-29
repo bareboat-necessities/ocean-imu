@@ -1,6 +1,6 @@
 In simple terms:
 
-- Common Quaternion Multiplicative EKF (Extended Kalman Filter) model, with additional states for 3D kinematics.
+- Common Quaternion Multiplicative EKF (Extended Kalman Filter) model, with additional states for 3D kinematics in ocean waves. 
 - Acceleration measurements are regularized with an Ornstein–Uhlenbeck (OU) stochastic autocorrelation process.
 - The whole continuous-time system is linear time-varying (LTV) stochastic.
 - Each `dt` step is solved via matrix exponential.
