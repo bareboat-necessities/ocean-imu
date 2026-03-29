@@ -30,7 +30,7 @@ Kalman3D_Wave_OU_II results
 
 ## Main Article
 
-The articale describing the main method: https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_ou-w3d.pdf
+This article describes the main method: https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_ou-w3d.pdf
 
 ## Repository layout
 
