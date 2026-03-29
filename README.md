@@ -88,8 +88,7 @@ Results of the tests, simulations and documentation of the code build from devel
 Kalman3D_Wave_OU_II results
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bareboat-necessities/ocean-imu/db6bf66c5f0c0ec8764fdd3ec3f169d2ba625943/img/samples/w3d_ou2_pmstokes_medium.svg" 
-    style="max-width: 50%;">
+  <img src="./img/samples/w3d_ou2_pmstokes_medium.svg?raw=true" style="max-width: 50%;">
 </p>
 
 ## Notes
