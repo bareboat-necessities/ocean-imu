@@ -87,7 +87,7 @@ Results of the tests, simulations and documentation of the code build from devel
 
 Kalman3D_Wave_OU_II results
 
-![Wave plot](/bareboat-necessities/ocean-imu/releases/download/vTest/w3d_ou2_pmstokes_medium.svg)
+<img src="/bareboat-necessities/ocean-imu/releases/download/vTest/w3d_ou2_pmstokes_medium.svg" alt="Wave plot" width="800">
 
 ## Notes
 
