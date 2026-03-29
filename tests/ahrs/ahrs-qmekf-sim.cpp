@@ -81,7 +81,7 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     const Vector3f sigma_m(0.03f, 0.03f, 0.03f);
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m);
 
-    // World magnetic field in aerospace NED (force horizontal, yaw-only)
+    // World magnetic field in aerospace NED
     Vector3f B_world = MagSim_WMM::mag_world_aero();
 
     // Noise models (fixed params, seeded differently)
