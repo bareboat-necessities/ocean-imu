@@ -78,7 +78,7 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     // Process/measurement stddevs (squared internally in the filter)
     // accel update uses acc_f / g_std, so sigma_a is in normalized-g units.
     // mag update uses raw simulated field in microteslas.
-    // sigma_m is intentionally much larger than before to stop overtrusting
+    // sigma_m is intentionally larger to stop overtrusting
     // the full dipped magnetic vector for yaw.
     const Vector3f sigma_a(0.10f, 0.10f, 0.16f);
     const Vector3f sigma_g(0.00045f, 0.00045f, 0.00045f);
