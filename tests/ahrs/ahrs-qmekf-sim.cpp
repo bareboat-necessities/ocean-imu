@@ -80,9 +80,9 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     // mag update uses raw simulated field in microteslas.
     // sigma_m is intentionally much larger than before to stop overtrusting
     // the full dipped magnetic vector for yaw.
-    const Vector3f sigma_a(0.12f, 0.12f, 0.12f);
-    const Vector3f sigma_g(0.00035f, 0.00035f, 0.00035f);
-    const Vector3f sigma_m(3.0f, 3.0f, 6.0f);
+    const Vector3f sigma_a(0.10f, 0.10f, 0.16f);
+    const Vector3f sigma_g(0.00045f, 0.00045f, 0.00045f);
+    const Vector3f sigma_m(2.5f, 2.5f, 7.0f);
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m);
 
     // World magnetic field in aerospace NED
