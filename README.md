@@ -88,7 +88,9 @@ Results of the tests, simulations and documentation of the code build from devel
 Kalman3D_Wave_OU_II results
 
 <p align="center">
-<img src="https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/w3d_ou2_pmstokes_medium.svg" alt="Wave plot" style="width: 50%; height: auto;">
+
+  <img src="https://camo.githubusercontent.com/d27978e87b3d5547e472ae3f6610ae64892cffc1ab7628ed0b8e683142d2bf8e/68747470733a2f2f6c65676f69736c616e642e6f72672f70726f67726573732f49534c4550524f47524553532e535647" data-canonical-src="https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/w3d_ou2_pmstokes_medium.svg" style="max-width: 50%;">
+<img src="" alt="Wave plot" style="width: 50%; height: auto;">
 </p>
 
 ## Notes
