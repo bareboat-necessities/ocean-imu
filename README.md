@@ -28,6 +28,10 @@ Kalman3D_Wave_OU_II results
   <img src="./img/samples/w3d_ou2_pmstokes_medium.svg?raw=true" style="max-width: 50%;">
 </p>
 
+## Main Article
+
+The articale describing the main method: https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_ou-w3d.pdf
+
 ## Repository layout
 
 ```text
