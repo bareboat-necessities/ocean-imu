@@ -1,14 +1,12 @@
 In simple terms:
 
-- Common Quaternion Multiplicative EKF (Extended Kalman Filter) model
-model with additional states for 3D kinematics
-- Acceleration measurement regularized with OU stochastic autocorrelation process
-- Whole thing in contious time is LTE stochastic
-- Over dt step is solved via matrix exponential
-- With small dt matrices can become numericsllly ill conditioned
-- So Joseph form and small series are used
-- Double integral drift correction measures
-- Adaptation of Kalman parameters required to match sea all sea states
-- Adapration is using acceleratetion freq tracking for time scale and acceleration variance direct estimatiion for amplitude scale
-- Making sure timestamps of samples from IMU are correct using FIFO timestamps
-- 
+- Common Quaternion Multiplicative EKF (Extended Kalman Filter) model, with additional states for 3D kinematics.
+- Acceleration measurements are regularized with an Ornstein–Uhlenbeck (OU) stochastic autocorrelation process.
+- The whole continuous-time system is linear time-varying (LTV) stochastic.
+- Each `dt` step is solved via matrix exponential.
+- With very small `dt`, matrices can become numerically ill-conditioned (a.k.a. math gets seasick).
+- So Joseph form and small-series approximations are used for numerical stability.
+- Includes double-integration drift-correction measures.
+- Kalman parameters must be adapted to match all sea states.
+- Adaptation uses acceleration-frequency tracking for time-scale tuning, and direct acceleration-variance estimation for amplitude-scale tuning.
+- IMU sample timestamps are validated using FIFO timestamps.
