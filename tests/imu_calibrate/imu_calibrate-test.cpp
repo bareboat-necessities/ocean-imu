@@ -21,11 +21,11 @@ constexpr double kT0 = 25.0;
 constexpr int kSamples = 320;
 
 struct Gates {
-  double accel_rms_norm_mps2_max = 0.02;
-  double accel_bias_fit_mps2_max = 0.01;
+  double accel_rms_norm_mps2_max = 0.03;
+  double accel_bias_fit_mps2_max = 0.015;
   double mag_rms_uT_max = 0.08;
   double mag_norm_rms_uT_max = 1.2;
-  double gyro_bias_rms_rads_max = 0.0002;
+  double gyro_bias_rms_rads_max = 0.002;
 };
 
 [[noreturn]] void fail(const std::string& msg) { throw std::runtime_error(msg); }

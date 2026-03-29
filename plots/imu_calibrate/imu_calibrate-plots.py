@@ -45,7 +45,7 @@ def main() -> None:
   grid=both,
   grid style={{line width=.1pt, draw=gray!25}},
   major grid style={{line width=.2pt, draw=gray!40}},
-  xlabel={{Sample index}},
+  xlabel={{}},
   ylabel near ticks,
 ]
 \\nextgroupplot[
