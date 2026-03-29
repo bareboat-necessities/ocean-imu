@@ -9,4 +9,5 @@ In simple terms:
 - Includes double-integration drift-correction pseudo-measurements.
 - Kalman parameters must be adapted to match actual sea states.
 - Adaptation uses acceleration-frequency tracking for time-scale tuning, and direct acceleration-variance estimation for amplitude-scale tuning.
-- IMU sample timestamps are using accurate FIFO timestamps. Correct sample timestamps are very important due to samples being double integrated over time steps. 
+- IMU sample timestamps are using accurate FIFO timestamps. Correct sample timestamps are very important due to samples being double integrated over time steps.
+- Performs initial learning of gravity relation to magnetic field needed because sensor might be turned on when already in waves motion
