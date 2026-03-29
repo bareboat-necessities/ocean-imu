@@ -85,6 +85,10 @@ For module-level validation, run `make all` inside the relevant folder under `te
 
 Results of the tests, simulations and documentation of the code build from development branch: https://github.com/bareboat-necessities/ocean-imu/releases/tag/vTest
 
+Kalman3D_Wave_OU_II results
+
+![Wave plot](/bareboat-necessities/ocean-imu/releases/download/vTest/w3d_ou2_pmstokes_medium.svg)
+
 ## Notes
 
 - This repository is designed for targeted, module-by-module builds.
