@@ -14,6 +14,24 @@ Marine IMU and wave-processing algorithms in modern C++ for sensor fusion, sea-s
 - Kalman-based sea-state models (OU-II and OU-III variants)
 - Tuning and filtering helpers for marine sensor pipelines
 
+## Results
+
+Results of the tests, simulations and documentation of the code build from development branch: https://github.com/bareboat-necessities/ocean-imu/releases/tag/vTest
+
+Kalman3D_Wave_OU_II results
+
+<p align="center">
+  <img src="./img/samples/w3d_ou2_pmstokes_medium_zkin.svg?raw=true" style="max-width: 50%;">
+</p>
+
+<p align="center">
+  <img src="./img/samples/w3d_ou2_pmstokes_medium.svg?raw=true" style="max-width: 50%;">
+</p>
+
+## Main Article
+
+This article describes the main method: https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_ou-w3d.pdf
+
 ## Repository layout
 
 ```text
@@ -80,18 +98,6 @@ make all
 ```
 
 For module-level validation, run `make all` inside the relevant folder under `tests/`.
-
-## Results
-
-Results of the tests, simulations and documentation of the code build from development branch: https://github.com/bareboat-necessities/ocean-imu/releases/tag/vTest
-
-Kalman3D_Wave_OU_II results
-
-<p align="center">
-  <img src="https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/w3d_ou2_pmstokes_medium.svg" 
-    data-canonical-src="https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/w3d_ou2_pmstokes_medium.svg" 
-    style="max-width: 50%;">
-</p>
 
 ## Notes
 
