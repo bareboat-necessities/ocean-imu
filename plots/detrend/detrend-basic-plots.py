@@ -26,7 +26,7 @@ REFERENCE_CSV_CANDIDATES = (
     SCRIPT_DIR / "detrend-basic-data.csv",
     SCRIPT_DIR.parent / ".." / "tests" / "detrend" / "detrend-basic-data.csv",
 )
-GENERATED_CSV = SCRIPT_DIR.parent / "tests" / "adaptive_wave_detrender_test_output.csv"
+GENERATED_CSV = SCRIPT_DIR.parent / ".." / "tests" / "detrend" / "adaptive_wave_detrender_test_output.csv"
 OUT_BASE = SCRIPT_DIR / "adaptive_wave_detrender_performance"
 
 
