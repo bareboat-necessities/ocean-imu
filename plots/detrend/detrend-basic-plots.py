@@ -48,9 +48,9 @@ if __name__ == "__main__":
 
     time_s = gen["time_s"]
 
-    fig, axes = plt.subplots(3, 1, figsize=(13, 11), sharex=True)
+    fig, axes = plt.subplots(2, 1, figsize=(13, 11), sharex=True)
 
-    axes[0].plot(time_s, ref["original_from_screenshot_cm"], color="#444444", linewidth=1.4, label=r"Input wave")
+    axes[0].plot(time_s, ref["original_cm"], color="#444444", linewidth=1.4, label=r"Input wave")
     axes[0].plot(time_s, ref["baseline_slow"], color="#999999", linestyle="--", linewidth=1.2, label=r"Reference baseline")
     axes[0].plot(time_s, gen["actual_baseline_slow"], color="#1f77b4", linewidth=1.0, label=r"C++ baseline")
     axes[0].set_ylabel(r"cm")
@@ -64,15 +64,6 @@ if __name__ == "__main__":
     axes[1].set_title(r"Detrended wave output")
     axes[1].grid(True, alpha=0.3)
     axes[1].legend(loc="upper left", ncol=2, fontsize="small")
-
-    axes[2].plot(time_s, gen["baseline_abs_error"], color="#1f77b4", linewidth=1.0, label=r"Baseline abs. error")
-    axes[2].plot(time_s, gen["wave_clean_abs_error"], color="#d62728", linewidth=1.0, label=r"Wave abs. error")
-    axes[2].plot(time_s, gen["wave_freq_abs_error"], color="#9467bd", linewidth=1.0, label=r"Frequency abs. error")
-    axes[2].set_xlabel(r"Time [s]")
-    axes[2].set_ylabel(r"Abs. error")
-    axes[2].set_title(r"Regression error against stored reference")
-    axes[2].grid(True, alpha=0.3)
-    axes[2].legend(loc="upper right", ncol=3, fontsize="small")
 
     plt.tight_layout()
     fig.savefig(OUT_BASE.with_suffix(".pgf"), bbox_inches="tight")

@@ -21,7 +21,7 @@ namespace {
 
 struct ReferenceRow {
   double x_axis = 0.0;
-  double original_from_screenshot_cm = 0.0;
+  double original_cm = 0.0;
   double baseline_slow = 0.0;
   double wave_raw = 0.0;
   double wave_clean = 0.0;
@@ -90,7 +90,7 @@ ReferenceRow parse_row(const std::vector<std::string>& fields) {
 
   ReferenceRow row;
   row.x_axis = std::stod(fields[0]);
-  row.original_from_screenshot_cm = std::stod(fields[1]);
+  row.original_cm = std::stod(fields[1]);
   row.baseline_slow = std::stod(fields[2]);
   row.wave_raw = std::stod(fields[3]);
   row.wave_clean = std::stod(fields[4]);
@@ -186,7 +186,7 @@ int main(int argc, char* argv[]) {
 
       AdaptiveWaveDetrender::Output output;
       if (i == 0U) {
-        detrender.reset(static_cast<float>(row.original_from_screenshot_cm));
+        detrender.reset(static_cast<float>(row.original_cm));
         output = detrender.lastOutput();
       } else {
         const double dt_s = row.x_axis - reference_rows[i - 1U].x_axis;
@@ -194,7 +194,7 @@ int main(int argc, char* argv[]) {
           throw std::runtime_error("Non-positive dt derived from x_axis at row " + std::to_string(i));
         }
         current_time_s += dt_s;
-        output = detrender.update(static_cast<float>(row.original_from_screenshot_cm), static_cast<float>(dt_s));
+        output = detrender.update(static_cast<float>(row.original_cm), static_cast<float>(dt_s));
       }
 
       const double baseline_error = std::abs(static_cast<double>(output.baseline_slow) - row.baseline_slow);
@@ -229,7 +229,7 @@ int main(int argc, char* argv[]) {
       ofs << i << ','
           << current_time_s << ','
           << row.x_axis << ','
-          << row.original_from_screenshot_cm << ','
+          << row.original_cm << ','
           << row.baseline_slow << ',' << output.baseline_slow << ',' << baseline_error << ','
           << row.wave_raw << ',' << output.wave_raw << ',' << wave_raw_error << ','
           << row.wave_clean << ',' << output.wave_clean << ',' << wave_clean_error << ','
