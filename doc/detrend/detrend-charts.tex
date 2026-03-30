@@ -1,0 +1,35 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fullpage}
+\usepackage{mathrsfs}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{pgf}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
+\usepackage{bm}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{array,booktabs,makecell,adjustbox}
+
+% Keep this — needed by PGF outputs that reference \mathdefault
+\providecommand{\mathdefault}[1]{#1}
+
+\title{Wave Simulation Charts}
+\author{Mikhail Grushinskiy}
+\date{2025}
+
+\begin{document}
+    \maketitle
+
+% === AdaptiveWaveDetrender regression ===
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{adaptive_wave_detrender_performance.pgf}}
+    \caption{AdaptiveWaveDetrender regression on the screenshot-derived wave record. Top: input and learned slow baseline. Middle: detrended output compared with the stored reference. Bottom: absolute regression errors for baseline, detrended wave, and learned dominant frequency.}
+    \label{fig:adaptive_wave_detrender_regression}
+    \end{figure}
+
+\end{document}
