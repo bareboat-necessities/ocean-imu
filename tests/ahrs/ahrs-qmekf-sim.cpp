@@ -168,7 +168,7 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     // mag update uses raw simulated field in microteslas.
     const Vector3f sigma_a(0.055f,    0.055f,    0.055f);
     const Vector3f sigma_g(0.00134f, 0.00134f, 0.00134f);
-    const Vector3f sigma_m(0.025f,    0.025f,    0.025f);
+    const Vector3f sigma_m(0.015f,    0.015f,    0.015f);
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
 
     // World magnetic field in aerospace NED
