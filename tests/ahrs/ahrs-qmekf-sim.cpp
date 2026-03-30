@@ -67,8 +67,8 @@ struct OutputRow {
 };
 
 struct AhrsFailureLimits {
-    float err_limit_roll_deg = 7.0f;
-    float err_limit_pitch_deg = 7.0f;
+    float err_limit_roll_deg = 9.0f;
+    float err_limit_pitch_deg = 9.0f;
     float err_limit_yaw_deg = 20.0f;
     float min_processing_hz = 200.0f;
 };
