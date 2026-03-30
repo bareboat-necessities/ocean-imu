@@ -21,6 +21,9 @@
 
 const float g_std = 9.80665f;      // standard gravity acceleration m/s²
 const float MAG_DELAY_SEC = 5.0f;  // delay before using magnetometer
+const int   IMU_RATE_HZ = 200;
+const int   MAG_RATE_HZ = 25;
+const int   MAG_UPDATE_STRIDE = IMU_RATE_HZ / MAG_RATE_HZ;
 
 #include "ahrs/KalmanQMEKF.h"       // Q-MEKF filter (patched with set_mag_world_ref)
 #include "util/WaveFilesSupport.h"  // file reader/parser + naming
@@ -163,10 +166,10 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     // Process/measurement stddevs (squared internally in the filter)
     // accel update uses acc_f / g_std, so sigma_a is in normalized-g units.
     // mag update uses raw simulated field in microteslas.
-    const Vector3f sigma_a(0.05f,    0.05f,    0.05f);
-    const Vector3f sigma_g(0.00134f, 0.00134f, 0.00134f);
-    const Vector3f sigma_m(0.025f, 0.025f, 0.025f);
-    QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m);
+    const Vector3f sigma_a(0.05f, 0.05f, 0.05f);
+    const Vector3f sigma_g(0.004f, 0.004f, 0.004f);
+    const Vector3f sigma_m(0.003f, 0.003f, 0.003f);
+    QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
 
     // World magnetic field in aerospace NED
     Vector3f B_world = MagSim_WMM::mag_world_aero();
@@ -231,13 +234,13 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
                 mag_enabled = true;
             }
 
-            // Always update accel
-            mekf.measurement_update_acc_only(acc_f / g_std);
-
-            // Update mag only every 3rd iteration
-            if (iter % 3 == 0) {
+            // Magnetometer is sampled at 25 Hz while IMU runs at 200 Hz.
+            if (iter % MAG_UPDATE_STRIDE == 0) {
                 mekf.measurement_update_mag_only(mag_f);
             }
+
+            // Accel update remains at IMU rate (200 Hz).
+            mekf.measurement_update_acc_only(acc_f / g_std);
         } else {
             mekf.measurement_update_acc_only(acc_f / g_std);
         }
