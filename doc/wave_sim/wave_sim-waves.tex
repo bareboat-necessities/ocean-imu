@@ -134,6 +134,14 @@ Governing Navier--Stokes equations and their simplifications are derived, and ve
 and acceleration fields for each major theory are compared.
 A Le M\'ehaut\'e-style applicability diagram is included to summarize the regimes of
 validity of the principal deterministic wave theories.
+The review also clarifies the role of the atmosphere in wave modeling: classical
+deterministic theories generally treat the air only through the free-surface pressure
+boundary condition, whereas spectral wind-sea models represent atmospheric forcing
+statistically through source terms.
+To place these classical models in modern context, the paper further summarizes
+phase-resolved high-order spectral methods, coupled atmosphere--wave forecasting models,
+and fully coupled two-phase air--water CFD approaches that explicitly resolve wind--wave
+interaction with increasing physical fidelity and computational cost.
 Industrial applications are discussed, including shallow- and deep-water wave regimes,
 with practical tables for wave periods, lengths, and heights.
 Finally, the specific models applied in contemporary offshore industries for different
@@ -164,6 +172,19 @@ dynamics.
 The evolution of ocean wave theory is a journey from exact but restrictive solutions to
 linearized approximations, then back to increasingly accurate nonlinear and statistical
 descriptions.
+
+A useful conceptual distinction is that not all ``wave models'' represent the same
+physics.
+Classical deterministic theories such as Airy, Stokes, cnoidal, and stream-function
+formulations are primarily water-side free-surface models.
+By contrast, Pierson--Moskowitz and JONSWAP are not deterministic wave-profile theories
+but statistical spectral descriptions of irregular wind seas.
+Modern practice extends beyond both classes: phase-resolved high-order spectral methods
+capture strongly nonlinear wave evolution over large domains; operational third-generation
+spectral models such as WAVEWATCH~III evolve the wave spectrum under wind input,
+dissipation, and nonlinear interactions; and two-phase air--water CFD can explicitly
+resolve the coupled dynamics of the atmosphere, the water, and the deforming interface.
+
 Section~\ref{sec:history} details the historical context.
 Section~\ref{sec:ns} establishes the governing equations.
 Sections~\ref{sec:gerstner}--\ref{sec:fenton} dissect the key deterministic wave
