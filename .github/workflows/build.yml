@@ -17,7 +17,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download v1.0.6 --repo bareboat-necessities/oceanography-waves-lib --pattern "sim-data-files.zip" --clobber
+          gh release download v1.0.7 --repo bareboat-necessities/oceanography-waves-lib --pattern "sim-data-files.zip" --clobber
 
       - name: Unpack simulation data (${{ matrix.dir }})
         run: |
