@@ -166,9 +166,9 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     // Process/measurement stddevs (squared internally in the filter)
     // accel update uses acc_f / g_std, so sigma_a is in normalized-g units.
     // mag update uses raw simulated field in microteslas.
-    const Vector3f sigma_a(0.05f, 0.05f, 0.05f);
-    const Vector3f sigma_g(0.004f, 0.004f, 0.004f);
-    const Vector3f sigma_m(0.003f, 0.003f, 0.003f);
+    const Vector3f sigma_a(0.07f,    0.07f,    0.07f);
+    const Vector3f sigma_g(0.00134f, 0.00134f, 0.00134f);
+    const Vector3f sigma_m(0.05f,    0.05f,    0.05f);
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
 
     // World magnetic field in aerospace NED
