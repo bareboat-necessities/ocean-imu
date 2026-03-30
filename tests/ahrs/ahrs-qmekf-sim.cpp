@@ -5,10 +5,13 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <chrono>
 #include <algorithm>   // for std::clamp
+#include <cmath>
 #include <string>
 #include <vector>
 #include <random>
+#include <cstdlib>
 
 #define EIGEN_NON_ARDUINO
 
@@ -60,6 +63,88 @@ struct OutputRow {
     float gyro_noisy_x{}, gyro_noisy_y{}, gyro_noisy_z{};
 };
 
+struct AhrsFailureLimits {
+    float err_limit_roll_deg = 4.0f;
+    float err_limit_pitch_deg = 4.0f;
+    float err_limit_yaw_deg = 5.0f;
+    float min_processing_hz = 200.0f;
+};
+
+static float wrap_deg(float a) {
+    a = std::fmod(a + 180.0f, 360.0f);
+    if (a < 0.0f) a += 360.0f;
+    return a - 180.0f;
+}
+
+static float diff_deg(float est_deg, float ref_deg) {
+    return wrap_deg(est_deg - ref_deg);
+}
+
+static void print_summary_and_fail_if_needed(const std::string& output_name,
+                                             const std::vector<OutputRow>& rows,
+                                             float dt,
+                                             bool with_mag,
+                                             double elapsed_sec,
+                                             const AhrsFailureLimits& limits)
+{
+    constexpr float RMS_WINDOW_SEC = 60.0f;
+    const int n_last = static_cast<int>(RMS_WINDOW_SEC / dt);
+    if (rows.size() <= static_cast<size_t>(n_last)) return;
+
+    const size_t start = rows.size() - static_cast<size_t>(n_last);
+    float roll_ss = 0.0f, pitch_ss = 0.0f, yaw_ss = 0.0f;
+    for (size_t i = start; i < rows.size(); ++i) {
+        const float er = diff_deg(rows[i].roll_est, rows[i].roll_ref);
+        const float ep = diff_deg(rows[i].pitch_est, rows[i].pitch_ref);
+        const float ey = diff_deg(rows[i].yaw_est, rows[i].yaw_ref);
+        roll_ss += er * er;
+        pitch_ss += ep * ep;
+        yaw_ss += ey * ey;
+    }
+
+    const float n = static_cast<float>(rows.size() - start);
+    const float roll_rms = std::sqrt(roll_ss / n);
+    const float pitch_rms = std::sqrt(pitch_ss / n);
+    const float yaw_rms = std::sqrt(yaw_ss / n);
+    const double processing_hz = (elapsed_sec > 0.0)
+        ? static_cast<double>(rows.size()) / elapsed_sec
+        : 0.0;
+    const double realtime_x = (elapsed_sec > 0.0)
+        ? (static_cast<double>(rows.size()) * dt) / elapsed_sec
+        : 0.0;
+
+    std::cout << "=== Last 60 s RMS summary for " << output_name << " ===\n";
+    std::cout << "Angles RMS (deg): Roll=" << roll_rms
+              << " Pitch=" << pitch_rms
+              << " Yaw=" << yaw_rms << "\n";
+    std::cout << "Performance: elapsed=" << elapsed_sec
+              << " s, samples=" << rows.size()
+              << ", throughput=" << processing_hz
+              << " samples/s, realtime_x=" << realtime_x << "\n";
+
+    if (roll_rms > limits.err_limit_roll_deg) {
+        std::cerr << "ERROR: Roll RMS above limit (" << roll_rms << " deg > "
+                  << limits.err_limit_roll_deg << " deg). Failing.\n";
+        std::exit(EXIT_FAILURE);
+    }
+    if (pitch_rms > limits.err_limit_pitch_deg) {
+        std::cerr << "ERROR: Pitch RMS above limit (" << pitch_rms << " deg > "
+                  << limits.err_limit_pitch_deg << " deg). Failing.\n";
+        std::exit(EXIT_FAILURE);
+    }
+    if (with_mag && yaw_rms > limits.err_limit_yaw_deg) {
+        std::cerr << "ERROR: Yaw RMS above limit (" << yaw_rms << " deg > "
+                  << limits.err_limit_yaw_deg << " deg). Failing.\n";
+        std::exit(EXIT_FAILURE);
+    }
+    if (processing_hz < limits.min_processing_hz) {
+        std::cerr << "ERROR: Processing throughput below limit (" << processing_hz
+                  << " samples/s < " << limits.min_processing_hz
+                  << " samples/s). Failing.\n";
+        std::exit(EXIT_FAILURE);
+    }
+}
+
 void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     auto parsed = WaveFileNaming::parse_to_params(filename);
     if (!parsed) return;
@@ -94,6 +179,7 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     bool mag_enabled = false;
     int iter = 0;  // iteration counter
     std::vector<OutputRow> rows;
+    const auto t0 = std::chrono::steady_clock::now();
 
     reader.for_each_record([&](const Wave_Data_Sample &rec) {
         iter++;  // count every accelerometer/gyro record
@@ -212,6 +298,11 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
     ofs.close();
 
     std::cout << "Wrote " << outname << "\n";
+
+    const auto t1 = std::chrono::steady_clock::now();
+    const double elapsed_sec = std::chrono::duration<double>(t1 - t0).count();
+    static constexpr AhrsFailureLimits FAIL_LIMITS{};
+    print_summary_and_fail_if_needed(outname, rows, dt, with_mag, elapsed_sec, FAIL_LIMITS);
 }
 
 int main(int argc, char* argv[]) {
