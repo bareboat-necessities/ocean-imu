@@ -23,8 +23,8 @@ plt.rcParams.update({
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REFERENCE_CSV_CANDIDATES = (
-    SCRIPT_DIR / "detrend.csv",
-    SCRIPT_DIR.parent / "data-sim" / "detrend.csv",
+    SCRIPT_DIR / "detrend-basic-data.csv",
+    SCRIPT_DIR.parent / ".." / "tests" / "detrend" / "detrend-basic-data.csv",
 )
 GENERATED_CSV = SCRIPT_DIR.parent / "tests" / "adaptive_wave_detrender_test_output.csv"
 OUT_BASE = SCRIPT_DIR / "adaptive_wave_detrender_performance"
