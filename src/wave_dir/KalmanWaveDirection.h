@@ -16,6 +16,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include "avg/AngleAveraging.h"
+
 #ifdef KALMAN_WAVE_DIRECTION_TEST
 #include <iostream>
 #include <fstream>
@@ -26,8 +28,12 @@ class EIGEN_ALIGN_MAX KalmanWaveDirection {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    KalmanWaveDirection(float initialOmega)
-        : omega(initialOmega), phase(0.0f) {
+    KalmanWaveDirection(float initialOmega, float directionReportAlpha = 0.01f)
+        : omega(initialOmega),
+          phase(0.0f),
+          direction_report_alpha(directionReportAlpha),
+          direction_report_avg(directionReportAlpha)
+    {
         reset();
     }
 
@@ -40,6 +46,9 @@ public:
         lastStableConfidence = 0.0f;
         lastStableCovariance = Eigen::Matrix2f::Identity();
         lastStableDir = Eigen::Vector2f(1.0f, 0.0f);
+        direction_report_avg = AngleAverager(direction_report_alpha);
+        direction_deg_raw = 0.0f;
+        direction_deg_smoothed = 0.0f;
     }
 
     void update(float ax, float ay, float currentOmega, float deltaT) {
@@ -95,11 +104,11 @@ public:
     }
 
     float getDirectionDegrees() const {
-        Eigen::Vector2f dir = getDirection();
-        float deg = std::atan2(dir.y(), dir.x()) * (180.0f / M_PI);
-        if (deg < 0.0f) deg += 180.0f;
-        if (deg >= 180.0f) deg -= 180.0f;
-        return deg;
+        return direction_deg_smoothed;
+    }
+
+    float getDirectionDegreesRaw() const {
+        return direction_deg_raw;
     }
 
     // Returns angular uncertainty in degrees at 95% confidence (~2σ)
@@ -191,6 +200,11 @@ private:
         const float alpha = 0.05f;
         lastStableDir = ((1.0f - alpha) * lastStableDir + alpha * newDir).normalized();
 
+        direction_deg_raw = std::atan2(lastStableDir.y(), lastStableDir.x()) * (180.0f / M_PI);
+        if (direction_deg_raw < 0.0f) direction_deg_raw += 180.0f;
+        if (direction_deg_raw >= 180.0f) direction_deg_raw -= 180.0f;
+        direction_deg_smoothed = direction_report_avg.average180(direction_deg_raw).angle;
+
         // Snapshot of "stable" state
         lastStableAmplitude  = norm;
         lastStableConfidence = confidence;
@@ -211,6 +225,11 @@ private:
     float lastStableAmplitude = 0.0f;
     float lastStableConfidence = 0.0f;
     Eigen::Matrix2f lastStableCovariance = Eigen::Matrix2f::Identity();
+
+    float direction_report_alpha = 0.01f;
+    AngleAverager direction_report_avg{direction_report_alpha};
+    float direction_deg_raw = 0.0f;
+    float direction_deg_smoothed = 0.0f;
 };
 
 #ifdef KALMAN_WAVE_DIRECTION_TEST
