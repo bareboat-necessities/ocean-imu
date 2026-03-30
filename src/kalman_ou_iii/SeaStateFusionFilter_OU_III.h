@@ -528,6 +528,7 @@ public:
     }
 
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
+    inline float getWaveDirectionDeg() const noexcept { return dir_filter_.getDirectionDegrees(); }
 
     Eigen::Vector3f getEulerNautical() const {
         if (!mekf_) return {NAN, NAN, NAN};
@@ -1452,6 +1453,7 @@ if (cur_stage != last_impl_startup_stage_) {
     // Minimal getters
     bool  isLive() const { return stage_ == Stage::Live; }
     float freqHz() const { return impl_.getFreqHz(); }
+    float waveDirectionDeg() const { return impl_.getWaveDirectionDeg(); }
     Eigen::Vector3f eulerNauticalDeg() const { return impl_.getEulerNautical(); }
 
     SeaStateFusionFilter_OU_III<trackerT>& raw() { return impl_; }
