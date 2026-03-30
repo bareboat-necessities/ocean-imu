@@ -28,7 +28,7 @@ class EIGEN_ALIGN_MAX KalmanWaveDirection {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    KalmanWaveDirection(float initialOmega, float directionReportAlpha = 0.05f)
+    KalmanWaveDirection(float initialOmega, float directionReportAlpha = 0.1f)
         : omega(initialOmega),
           phase(0.0f),
           direction_report_alpha(directionReportAlpha),
