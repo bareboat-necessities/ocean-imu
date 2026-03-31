@@ -19,7 +19,7 @@
 
 /*
 
-    Copyright 2025, Mikhail Grushinskiy
+    Copyright 2025-2026, Mikhail Grushinskiy
 
     WaveSpectrumEstimator  (Wavelet-based)
 
