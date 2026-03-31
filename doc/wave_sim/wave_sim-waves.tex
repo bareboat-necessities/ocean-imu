@@ -134,6 +134,14 @@ Governing Navier--Stokes equations and their simplifications are derived, and ve
 and acceleration fields for each major theory are compared.
 A Le M\'ehaut\'e-style applicability diagram is included to summarize the regimes of
 validity of the principal deterministic wave theories.
+The review also clarifies the role of the atmosphere in wave modeling: classical
+deterministic theories generally treat the air only through the free-surface pressure
+boundary condition, whereas spectral wind-sea models represent atmospheric forcing
+statistically through source terms.
+To place these classical models in modern context, the paper further summarizes
+phase-resolved high-order spectral methods, coupled atmosphere--wave forecasting models,
+and fully coupled two-phase air--water CFD approaches that explicitly resolve wind--wave
+interaction with increasing physical fidelity and computational cost.
 Industrial applications are discussed, including shallow- and deep-water wave regimes,
 with practical tables for wave periods, lengths, and heights.
 Finally, the specific models applied in contemporary offshore industries for different
@@ -164,6 +172,19 @@ dynamics.
 The evolution of ocean wave theory is a journey from exact but restrictive solutions to
 linearized approximations, then back to increasingly accurate nonlinear and statistical
 descriptions.
+
+A useful conceptual distinction is that not all ``wave models'' represent the same
+physics.
+Classical deterministic theories such as Airy, Stokes, cnoidal, and stream-function
+formulations are primarily water-side free-surface models.
+By contrast, Pierson--Moskowitz and JONSWAP are not deterministic wave-profile theories
+but statistical spectral descriptions of irregular wind seas.
+Modern practice extends beyond both classes: phase-resolved high-order spectral methods
+capture strongly nonlinear wave evolution over large domains; operational third-generation
+spectral models such as WAVEWATCH~III evolve the wave spectrum under wind input,
+dissipation, and nonlinear interactions; and two-phase air--water CFD can explicitly
+resolve the coupled dynamics of the atmosphere, the water, and the deforming interface.
+
 Section~\ref{sec:history} details the historical context.
 Section~\ref{sec:ns} establishes the governing equations.
 Sections~\ref{sec:gerstner}--\ref{sec:fenton} dissect the key deterministic wave
@@ -281,6 +302,37 @@ The problem reduces to solving~\eqref{eq:laplace} subject to:
 \end{enumerate}
 The nonlinearity of these conditions, which must be applied at the unknown surface
 $z=\eta(x,y,t)$, gives rise to the different wave theories.
+
+\subsection{Role of the Atmosphere and Limits of Classical Water-Wave Theory}
+\label{sec:airrole}
+
+The idealized framework above makes clear why classical wave theories are often said to
+``ignore the air,'' although that statement is only partly correct.
+In Airy-, Stokes-, cnoidal-, and related potential-flow formulations, the water domain is
+solved explicitly, while the atmosphere usually enters only through the dynamic
+free-surface boundary condition, commonly idealized as a prescribed or approximately
+constant pressure at the interface.
+Thus, the air is not treated as a second resolved fluid domain with its own momentum
+equation, turbulence, and interfacial shear stresses.
+
+This approximation is extremely successful for a wide range of engineering problems,
+especially when the main objective is to predict wave kinematics, dispersion, and loading
+in regimes where viscous and aerodynamic details are secondary.
+However, it becomes restrictive when one wishes to describe explicit wind input, airflow
+separation over steep crests, wave growth under sustained wind, breaking-induced air
+entrainment, or feedback from the wave field to atmospheric stress.
+
+Accordingly, modern wave modeling may be viewed as a hierarchy.
+At one end are classical water-wave theories, which are efficient and analytically
+transparent.
+In the middle are phase-resolved nonlinear potential-flow and spectral approaches, which
+retain a water-side free-surface formulation but allow richer nonlinear evolution and, in
+some formulations, wind forcing through pressure or coupled source terms.
+At the most detailed end are two-phase air--water Navier--Stokes models, which solve
+both fluids and the moving interface directly.
+This hierarchy is important in offshore engineering because the physically ``best'' model
+is not always the most appropriate one; the choice depends on the required fidelity,
+spatial scale, and computational budget.
 
 % ============================================================
 \section{Trochoidal (Gerstner) Waves}
@@ -553,6 +605,59 @@ Real seas are multi-directional, modeled by:
 where $D(\theta)\propto\cos^s(\theta)$ is a spreading function centered on the main
 wave direction.
 
+\subsection{From Classical and Spectral Models to Explicit Air--Water Coupling}
+\label{sec:moderncoupling}
+
+The distinction between deterministic wave theory and spectral sea-state description also
+clarifies how the atmosphere is represented.
+
+Classical deterministic theories such as Airy, Stokes, cnoidal, and Fenton stream-function
+methods are primarily water-side formulations.
+They compute the evolving free surface and subsurface kinematics accurately within their
+respective regimes, but they do not ordinarily solve the airflow above the surface as a
+second turbulent fluid.
+Instead, atmospheric influence is absorbed into the surface boundary condition or omitted
+altogether in the derivation.
+
+Spectral models such as Pierson--Moskowitz and JONSWAP incorporate the atmosphere in a
+different sense.
+They do not provide a deterministic crest-by-crest solution of the wave shape.
+Rather, they describe how the variance of the sea surface is distributed over frequency
+(and often direction), with the effect of wind entering empirically or semi-empirically
+through spectral parameters or source terms.
+Hence, PM and JONSWAP include atmospheric forcing statistically, not as an explicit
+resolved air domain.
+
+A more detailed intermediate class is provided by \emph{high-order spectral} (HOS)
+methods and related fully nonlinear potential-flow solvers.
+These methods resolve nonlinear wave evolution phase-by-phase over large domains with much
+greater fidelity than linear superposition and with far lower cost than full CFD.
+They are especially attractive for studying nonlinear focusing, crest amplification,
+long-time wave evolution, and wave--wave interactions.
+However, they still generally rely on potential-flow assumptions in the water and do not
+fully resolve viscous turbulent airflow, spray, or entrained bubbles.
+
+For operational forecasting, the standard modern framework is the \emph{third-generation}
+spectral wave model, exemplified by WAVEWATCH~III.
+In such models the spectrum evolves under source terms representing wind input,
+dissipation, and nonlinear wave--wave interactions.
+These models are not phase resolving, but they are practical for basin-scale and global
+applications and can be coupled with atmospheric and ocean circulation systems, allowing
+sea-state-dependent air--sea fluxes and two-way forecast-system interaction.
+
+At the highest-fidelity end are \emph{two-phase air--water CFD} models, including DNS,
+LES, and RANS/VOF-type approaches.
+These solve the air and water simultaneously and track the deforming interface directly.
+Such methods can represent wind forcing, crest overturning, airflow separation,
+breaking, splash-up, and air entrainment far more explicitly than classical or spectral
+models, but their computational cost is orders of magnitude higher and usually limits
+them to comparatively small domains and short physical durations.
+
+Therefore, the progression from Airy/Stokes to HOS, to coupled third-generation spectral
+forecasting, and finally to two-phase CFD is best understood not as a replacement chain
+but as a hierarchy of models with increasing physical completeness and computational
+expense.
+
 \subsection{Rogue and Freak Waves}
 A modern review of ocean-wave theory should also acknowledge \emph{rogue} or
 \emph{freak} waves: unusually large individual waves embedded in an otherwise random sea.
@@ -687,10 +792,22 @@ engineering tasks.
       & Stokes theory loses validity in very shallow water; cnoidal theory captures long,
         nonlinear shallow-water waves, while stream-function methods are preferred close
         to the transition region and near the limiting steep-wave boundary. \\[4pt]
+    Nonlinear wave evolution in a large domain
+      & High-order spectral (HOS) / fully nonlinear potential-flow methods
+      & Resolves phase-by-phase nonlinear wave interactions and crest evolution more
+        faithfully than linear theory while remaining far cheaper than full CFD. \\[4pt]
     Wave forecasting
-      & Linear spectral models (WAM, WAVEWATCH~III)
-      & Global/regional spectral energy balance; linear physics dominates at large
-        scale. \\
+      & Third-generation spectral models (WAM, WAVEWATCH~III)
+      & Basin- and global-scale forecasting through spectral energy balance with wind
+        input, dissipation, and nonlinear interaction source terms. \\[4pt]
+    Coupled atmosphere--wave forecasting
+      & Coupled atmospheric model $+$ WAVEWATCH~III or similar spectral framework
+      & Allows sea-state-dependent air--sea momentum and energy exchange and forecast
+        feedback between the wave field and atmospheric forcing. \\[4pt]
+    Wind--wave growth, breaking, spray, air entrainment
+      & Two-phase air--water CFD (DNS/LES/RANS-VOF)
+      & Explicitly resolves both fluids and the moving interface, making it the most
+        physically complete class for detailed wind--wave interaction studies. \\
     \bottomrule
   \end{tabular}
 \end{table*}
@@ -707,7 +824,7 @@ models discussed in this paper.
   \caption{Chronology and Summary of Key Ocean Wave Models}
   \label{tab:chronology}
   \small
-  \begin{tabular}{@{}L{2.3cm}lL{8.5cm}@{}}
+  \begin{tabular}{@{}L{2.6cm}lL{8.1cm}@{}}
     \toprule
     Model & Year & Key Characteristics and Applications \\
     \midrule
@@ -728,12 +845,28 @@ models discussed in this paper.
       & Numerical/stream-function solution. Highly accurate for steep waves near
         breaking and useful across transition regimes. Used for detailed crest
         kinematics in advanced structural analysis. \\
+    High-order spectral (HOS) & 1987
+      & Phase-resolved nonlinear potential-flow method with efficient treatment of many
+        interacting modes. Used for nonlinear wave evolution, crest amplification,
+        wave groups, and large-domain phase-resolved simulation. \\
     Pierson--Moskowitz & 1964
       & Energy spectrum for fully developed seas. Base spectrum for many
         applications. \\
     JONSWAP         & 1973
       & Spectrum for fetch-limited seas (e.g., North Sea). Sharper spectral peak.
         Industry standard for extreme event design worldwide. \\
+    Third-generation spectral models & modern
+      & Wave-action / spectral-balance models with wind input, dissipation, and
+        nonlinear interaction source terms. Used for operational hindcast and forecast
+        systems; WAVEWATCH~III is a leading example. \\
+    Coupled atmosphere--wave models & modern
+      & Forecast systems in which the wave model exchanges fields with atmospheric and
+        oceanic components, enabling sea-state-dependent air--sea fluxes and two-way
+        coupling. \\
+    Two-phase air--water CFD & modern
+      & DNS/LES/RANS-VOF-style models that solve both fluids and the moving interface
+        directly. Used for detailed wind--wave growth, breaking, green water, spray,
+        and violent wave--structure interaction. \\
     Rogue-wave design guidance & modern
       & Statistical and nonlinear interpretation of extreme individual waves,
         including freak-wave criteria used in offshore design recommendations. \\
@@ -757,12 +890,32 @@ long-wave description where steepness-based Stokes expansions cease to be approp
 The modern era, championed by Fenton and related numerical formulations, leverages
 computational power to achieve high-fidelity solutions for the most extreme waves.
 
-Today's engineering practice is a hybrid: the randomness of the sea is captured through
-linear spectral models (Pierson--Moskowitz, JONSWAP), while the critical nonlinear
-physics of extreme waves is incorporated via Stokes, cnoidal, or stream-function/Fenton
-theories for load calculations.
-This combination enables the safe and efficient design of structures that operate in the
-dynamic and challenging ocean environment.
+A central lesson is that different classes of wave models represent the atmosphere in
+fundamentally different ways.
+Classical deterministic theories are primarily water-side free-surface models in which
+the air usually appears only through the pressure boundary condition at the interface.
+Pierson--Moskowitz and JONSWAP, in turn, are not deterministic crest-shape theories but
+spectral descriptions of irregular wind seas, so atmospheric influence enters through
+empirical or semi-empirical spectral forcing rather than through an explicit upper-fluid
+solve.
+
+Modern engineering practice therefore relies on a hierarchy of models.
+For most design and forecasting applications, the randomness of the sea is captured
+through linear or weakly nonlinear spectral models such as Pierson--Moskowitz,
+JONSWAP, and third-generation wave forecasting systems such as WAVEWATCH~III.
+When detailed nonlinear crest kinematics are required, Stokes, cnoidal, stream-function,
+and high-order spectral approaches provide phase-resolved improvements at moderate
+computational cost.
+At the highest fidelity, two-phase air--water CFD explicitly resolves wind forcing, wave
+breaking, airflow separation, spray, and air entrainment, but at a much greater
+computational expense.
+
+Thus, progress in wave modeling is best viewed not as a succession of obsolete theories,
+but as a layered toolbox.
+Classical theories remain indispensable for analysis and engineering transparency;
+spectral models remain essential for real-sea statistics and operational prediction;
+and explicit air--water simulations now provide the detailed physics needed for the most
+demanding wind--wave interaction and wave--structure problems.
 Modern offshore guidance additionally recognizes rogue or freak waves as a practical
 design consideration, linking classical wave theory to contemporary reliability-based
 assessment \cite{DNVC205}.
@@ -811,6 +964,31 @@ D.~Hafner, C.~Gemmrich, and J.~M.~Janssen,
 ECMWF,
 ``What conditions led to the Draupner freak wave?''
 \emph{ECMWF Newsletter}, no.~148, pp.~12--16, 2016.
+
+\bibitem{DommermuthYue1987}
+D.~G.~Dommermuth and D.~K.~P.~Yue,
+``A high-order spectral method for the study of nonlinear gravity waves,''
+\emph{Journal of Fluid Mechanics}, vol.~184, pp.~267--288, 1987.
+
+\bibitem{WW3DG2016}
+WAVEWATCH~III Development Group,
+\emph{User Manual and System Documentation of WAVEWATCH~III Version 5.16},
+NOAA/NWS/NCEP/MMAB Technical Note 329, 2016.
+
+\bibitem{HaoShen2019}
+X.~Hao and L.~Shen,
+``Wind-wave coupling study using LES of wind and phase-resolved simulation of nonlinear waves,''
+\emph{Journal of Fluid Mechanics}, vol.~874, pp.~391--425, 2019.
+
+\bibitem{WuPopinetDeike2022}
+J.~Wu, S.~Popinet, and L.~Deike,
+``Revisiting wind wave growth with fully coupled direct numerical simulations,''
+\emph{Journal of Fluid Mechanics}, vol.~951, Art.~A18, 2022.
+
+\bibitem{Cimarelli2023}
+A.~Cimarelli, F.~Romoli, and E.~Stalio,
+``On wind--wave interaction phenomena at low Reynolds numbers,''
+\emph{Journal of Fluid Mechanics}, vol.~956, Art.~A13, 2023.
 
 \end{thebibliography}
 
