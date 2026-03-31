@@ -1,3 +1,4 @@
 #!/bin/bash -e
 
-echo "Nothing to be done."
+./spectrum-estimator-sim
+./spectrum-wavelets-estimator-sim
