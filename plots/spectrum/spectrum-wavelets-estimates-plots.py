@@ -32,7 +32,15 @@ height_groups = {
 }
 
 fname_re = re.compile(
-    r"^spectrum_wavelets_estimate_(?P<wtype>[a-z]+)_H(?P<H>[0-9.]+)_L(?P<L>[0-9.]+)_A(?P<A>[-0-9.]+)_P(?P<P>[-0-9.]+)\.csv$"
+    r"^spectrum_wavelets_"
+    r"(?P<wtype>[A-Za-z0-9]+)_"
+    r"H(?P<H>[-0-9.]+)"
+    r"(?:_L(?P<L>[-0-9.]+))?"
+    r"(?:_A(?P<A>[-0-9.]+))?"
+    r"(?:_P(?P<P>[-0-9.]+))?"
+    r"_N(?P<noise>[-0-9.]+)"
+    r"_B(?P<bias>[-0-9.]+)"
+    r"\.csv$"
 )
 
 
@@ -43,7 +51,7 @@ def parse_filename(fname):
     return {
         "wtype": m.group("wtype"),
         "H": float(m.group("H")),
-        "A": float(m.group("A")),
+        "A": float(m.group("A")) if m.group("A") is not None else 0.0,
     }
 
 
@@ -54,33 +62,17 @@ def save_all(fig, base):
         fig.savefig(f"{base}.png", bbox_inches="tight", dpi=300)
 
 
-def spectrum_cols(df):
-    freq_map = {}
-    for c in df.columns:
-        if c.startswith("S_eta_est_f") and "_Hz=" in c:
-            idx = int(c.split("_f")[1].split("_Hz=")[0])
-            freq_map[idx] = float(c.split("_Hz=")[1])
-    idxs = sorted(freq_map.keys())
-    est_cols = [f"S_eta_est_f{i}_Hz={freq_map[i]}" for i in idxs]
-    ref_cols = [f"S_eta_ref_f{i}" for i in idxs]
-    freqs = np.array([freq_map[i] for i in idxs])
-    return freqs, est_cols, ref_cols
-
-
 def make_plots(fname, group, meta):
     df = pd.read_csv(fname)
     if df.empty:
         return
 
-    freqs, est_cols, ref_cols = spectrum_cols(df)
-    last = df.iloc[-1]
-
     base = f"spectrum_wavelets_estimates_{meta['wtype']}_{group}"
     title = fr"{meta['wtype'].capitalize()} wavelet estimator vs reference ($H_s={meta['H']:.2f}\,\mathrm{{m}}$)"
 
     fig, ax = plt.subplots()
-    ax.plot(freqs, last[est_cols].to_numpy(dtype=float), label="Wavelet estimator", linewidth=2)
-    ax.plot(freqs, last[ref_cols].to_numpy(dtype=float), label="Reference", linewidth=2, linestyle="--")
+    ax.plot(df["freq_hz"], df["S_eta_hz"], label="Wavelet estimator", linewidth=2)
+    ax.plot(df["freq_hz"], df["S_ref_interp"], label="Reference", linewidth=2, linestyle="--")
     ax.set_xlabel(r"Frequency $f$ [Hz]")
     ax.set_ylabel(r"$S_{\eta}(f)$")
     ax.set_title(title)
@@ -90,10 +82,10 @@ def make_plots(fname, group, meta):
     plt.close(fig)
 
     fig2, ax2 = plt.subplots()
-    ax2.plot(df["time"], df["Hs"], label=r"$H_s$", linewidth=2)
-    ax2.plot(df["time"], 1.0 / np.maximum(df["Fp"], 1e-9), label=r"$T_p=1/f_p$", linewidth=2)
-    ax2.set_xlabel("Time [s]")
-    ax2.set_ylabel("Estimate")
+    ax2.plot(df["freq_hz"], df["CumVar_est"], label=r"Estimated cumulative variance", linewidth=2)
+    ax2.plot(df["freq_hz"], df["CumVar_ref"], label=r"Reference cumulative variance", linewidth=2, linestyle="--")
+    ax2.set_xlabel("Frequency [Hz]")
+    ax2.set_ylabel("Cumulative variance")
     ax2.set_title(title)
     ax2.grid(True, alpha=0.3)
     ax2.legend()
@@ -102,9 +94,9 @@ def make_plots(fname, group, meta):
 
 
 if __name__ == "__main__":
-    files = glob.glob("spectrum_wavelets_estimate_*.csv")
+    files = glob.glob("spectrum_wavelets_*.csv")
     if not files:
-        print("No spectrum_wavelets_estimate_*.csv files found.")
+        print("No spectrum_wavelets_*.csv files found.")
         raise SystemExit(0)
 
     for fname in sorted(files):
