@@ -1,10 +1,10 @@
-#include <algorithm>
-#include <cmath>
-#include <cctype>
 /*
   Copyright 2026, Mikhail Grushinskiy
 */
 
+#include <algorithm>
+#include <cmath>
+#include <cctype>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
