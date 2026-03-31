@@ -12,10 +12,10 @@ SAMPLE_RATE_HZ = 200
 DOWNSAMPLE = 10
 HEIGHT_ORDER = [0.27, 1.5, 4.0, 8.5]
 FILE_BY_HEIGHT = {
-    0.27: "adaptive_wave_detrender_sim_h0_270.pgf",
-    1.5: "adaptive_wave_detrender_sim_h1_500.pgf",
-    4.0: "adaptive_wave_detrender_sim_h4_000.pgf",
-    8.5: "adaptive_wave_detrender_sim_h8_500.pgf",
+    0.27: "detrend-wave-plots-h0_270.pgf",
+    1.5: "detrend-wave-plots-h1_500.pgf",
+    4.0: "detrend-wave-plots-h4_000.pgf",
+    8.5: "detrend-wave-plots-h8_500.pgf",
 }
 
 
