@@ -30,4 +30,4 @@ spectrum-wavelets-estimator-sim: spectrum-wavelets-estimator-sim.o
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o $(TARGETS) *.exe spectrum_estimate_*.csv spectrum_wavelets_estimate_*.csv
+	rm -f *.o $(TARGETS) *.exe spectrum_estimate_*.csv spectrum_wavelets_estimate_*.csv reg_spectrum_*.csv
