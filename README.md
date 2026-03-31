@@ -35,23 +35,39 @@ This article describes the main method: https://github.com/bareboat-necessities/
 ## Repository layout
 
 ```text
-src/
-  ahrs/             AHRS-related components
-  freq/             frequency-domain utilities
-  kalman_ou_ii/     OU-II Kalman model components
-  kalman_ou_iii/    OU-III Kalman model components
-  pii_observer/     observer/filter components
-  tuner/            auto-tuning helpers
-  util/             shared support code (e.g., simulation helpers)
-  wave_dir/         wave direction estimation
+src/                 core algorithms and reusable components
+  ahrs/              attitude and heading routines
+  avg/               averaging and smoothing helpers
+  detrend/           detrending helpers
+  discrete/          discrete-time utilities
+  freq/              frequency-domain utilities
+  imu_calibrate/     IMU calibration logic
+  kalman_ou_ii/      OU-II Kalman model components
+  kalman_ou_iii/     OU-III Kalman model components
+  nmea/              NMEA parsing/helpers
+  pii_observer/      observer/filter components
+  spectrum/          spectral estimation helpers
+  tuner/             auto-tuning helpers
+  util/              shared support code
+  wave_dir/          wave direction estimation
 
-tests/
-  freq/             builds freq-track
-  kalman_ou_ii/     builds kalman_ou_ii-sim
-  kalman_ou_iii/    builds kalman_ou_iii-sim
-  pii_observer/     builds pii_observer-adaptive
-  spectrum/         builds spectrum tests
-  wave_sim/         builds waves simulators
+tests/               module-level build and validation targets
+  ahrs/              AHRS-focused tests and examples
+  detrend/           detrending tests
+  freq/              builds freq-track
+  imu_calibrate/     IMU calibration tests
+  kalman_ou_ii/      builds kalman_ou_ii-sim
+  kalman_ou_iii/     builds kalman_ou_iii-sim
+  pii_observer/      builds pii_observer-adaptive
+  spectrum/          builds spectrum tests
+  wave_sim/          wave simulation programs
+
+sensors/             sensor integration and application examples
+  */                 standalone sensor-oriented demos/utilities
+
+doc/                 module documentation and notes
+plots/               generated plotting scripts/assets
+img/                 images and sample result figures
 ```
 
 ## Prerequisites
