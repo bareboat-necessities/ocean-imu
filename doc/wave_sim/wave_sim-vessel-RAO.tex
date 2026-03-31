@@ -1,0 +1,761 @@
+\documentclass[journal,10pt,twocolumn]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+
+\usepackage{amsmath,amsfonts,amssymb,bm,mathtools}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\usepackage[final]{microtype}
+
+\interdisplaylinepenalty=2500
+\allowdisplaybreaks
+
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\ee}{\mathrm{e}}
+\newcommand{\Real}{\operatorname{Re}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\vect}[1]{\bm{#1}}
+
+\title{Applying Vessel Response Amplitude Operators to Existing 3D Wave Simulations}
+
+\author{}
+
+\begin{document}
+    \maketitle
+
+    \begin{abstract}
+        A three-dimensional irregular wave simulation generated from spectra such as Pierson--Moskowitz (PM) or JONSWAP describes the incident sea, but not by itself the resulting vessel behavior. The missing bridge is the vessel hydrodynamic transfer model, usually expressed in linear seakeeping as a set of complex-valued response amplitude operators (RAOs), or more fundamentally by frequency-dependent added mass, radiation damping, hydrostatic restoring, and wave-excitation coefficients. This article gives a self-contained workflow for applying RAOs to an existing 3D wave realization. It covers directional wave-field representation, component-by-component application of complex RAOs, response spectra and root-mean-square (RMS) estimation, time-series synthesis consistent with the original wave realization, extension to time-domain six-degree-of-freedom equations with radiation memory, and practical pitfalls such as phase conventions, encounter frequency, heading conventions, and amplitude normalization.
+    \end{abstract}
+
+    \begin{IEEEkeywords}
+        Seakeeping, response amplitude operator, RAO, PM spectrum, JONSWAP spectrum, irregular waves, vessel motions, wave excitation, spectral response, Cummins equation.
+    \end{IEEEkeywords}
+
+    \section{Introduction}
+
+    Suppose an irregular free surface has already been synthesized in three dimensions from a spectral model such as PM or JONSWAP. A typical realization has the form
+    \begin{equation}
+        \eta(x,y,t),
+    \end{equation}
+    where $\eta$ is the sea-surface elevation. Such a model provides a spatially and temporally coherent incident sea state and reproduces directional spreading, random phase, and realistic wave superposition.
+
+    However, a vessel does not respond to the free surface alone. Vessel behavior depends on the interaction between the incoming wave field and the hull. In linear seakeeping, this interaction is represented by \emph{response amplitude operators} (RAOs), which map a unit-amplitude incident regular wave at a given frequency and heading into a response quantity such as heave, pitch, roll, acceleration, relative motion, or load.
+
+    The essential pipeline is
+    \begin{equation}
+        \boxed{
+            \text{incident wave field}
+            \rightarrow
+            \text{wave components or directional spectrum}
+            \rightarrow
+            \text{vessel transfer model}
+            \rightarrow
+            \text{motions / accelerations / loads}
+        }
+    \end{equation}
+
+    If the vessel transfer model is known in the form of RAOs, then an existing PM/JONSWAP realization can be converted into vessel response in two main ways:
+    \begin{enumerate}[label=(\roman*),leftmargin=1.4em]
+    \item in the frequency domain, by multiplying the wave spectrum by the squared magnitude of the RAO, or
+    \item in the time domain, by applying the complex RAO to every wave component and summing the resulting response contributions.
+    \end{enumerate}
+
+    This paper explains both routes and how they relate to each other.
+
+    \section{What the Existing 3D Wave Simulation Already Contains}
+
+    \subsection{Directional Spectrum and Free-Surface Realization}
+
+    Most irregular-wave simulations begin from a directional spectrum
+    \begin{equation}
+        S_\eta(\omega,\mu),
+    \end{equation}
+    where $\omega$ is angular frequency and $\mu$ is wave propagation direction. Often the directional spectrum is factorized as
+    \begin{equation}
+        S_\eta(\omega,\mu)=S_0(\omega)\,D(\omega,\mu),
+    \end{equation}
+    where $S_0(\omega)$ is a one-dimensional spectrum and $D(\omega,\mu)$ is a directional spreading function satisfying
+    \begin{equation}
+        \int_{-\pi}^{\pi} D(\omega,\mu)\dd\mu = 1.
+    \end{equation}
+
+    The one-dimensional spectrum may be PM, JONSWAP, or another ocean-wave model. Once the sea has been synthesized, the main fact is that the resulting field can be represented as a superposition of many directional sinusoidal components.
+
+    A standard discrete realization is
+    \begin{equation}
+        \eta(\vect{r},t)
+        =
+        \sum_{m=1}^{M}
+        a_m
+        \cos\!\bigl(
+        \vect{k}_m\!\cdot\!\vect{r}
+        -
+        \omega_m t
+        +
+        \phi_m
+        \bigr),
+        \label{eq:wave_realization}
+    \end{equation}
+    where $\vect{r}=[x\;\;y]^T$ is horizontal position, $\vect{k}_m$ is the horizontal wavevector of component $m$, $\omega_m$ is angular frequency, $\phi_m$ is random phase, and $a_m$ is component amplitude.
+
+    For a regular directional discretization in $(\omega,\mu)$, a common choice is
+    \begin{equation}
+        a_m
+        =
+        \sqrt{2\,S_\eta(\omega_m,\mu_m)\,\Delta\omega\,\Delta\mu}.
+        \label{eq:component_amplitude}
+    \end{equation}
+
+    Therefore, a pre-existing PM/JONSWAP 3D simulation already contains what is needed to drive a linear vessel model:
+    \begin{enumerate}[label=(\arabic*),leftmargin=1.4em]
+    \item frequencies $\omega_m$,
+    \item directions $\mu_m$,
+    \item wavevectors $\vect{k}_m$,
+    \item amplitudes $a_m$,
+    \item phases $\phi_m$,
+    \item and spatial phase information through $\vect{k}_m\cdot\vect{r}$.
+    \end{enumerate}
+
+    \subsection{Dispersion Relation}
+
+    When needed, the wavenumber magnitude $k$ is obtained from the dispersion relation. For deep water,
+    \begin{equation}
+        \omega^2=gk,
+        \qquad
+        k=\frac{\omega^2}{g}.
+    \end{equation}
+    For finite depth $h$,
+    \begin{equation}
+        \omega^2=gk\tanh(kh).
+    \end{equation}
+    Thus, if the simulation stores frequency and direction, the wavevector may be written
+    \begin{equation}
+        \vect{k}_m = k_m
+        \begin{bmatrix}
+            \cos\mu_m\\
+            \sin\mu_m
+        \end{bmatrix}.
+    \end{equation}
+
+    \section{What the Wave Simulation Does Not Yet Contain}
+
+    The free surface $\eta(x,y,t)$ is the \emph{incident sea}, not yet the vessel response. To obtain vessel behavior, one also needs the vessel hydrodynamic transfer model. In linear seakeeping, this is typically represented by complex RAOs or equivalent frequency-dependent hydrodynamic coefficients derived from potential-flow panel methods, strip theory, or model tests.
+
+    Typical outputs include:
+    \begin{itemize}[leftmargin=1.2em]
+        \item six rigid-body motions: surge, sway, heave, roll, pitch, yaw,
+        \item translational and angular velocities,
+        \item accelerations at the center of gravity or at arbitrary onboard points,
+        \item relative motion at a bow point, hatch, crane tip, or moonpool,
+        \item loads such as vertical bending moment and shear force,
+        \item fairlead motion for mooring analysis.
+    \end{itemize}
+
+    The free-surface realization alone cannot determine these outputs, because hull geometry and fluid--structure interaction matter.
+
+    \section{Response Amplitude Operators}
+
+    \subsection{Definition}
+
+    For a linear response quantity $q$, the RAO is a complex transfer function
+    \begin{equation}
+        H_q(\omega,\beta),
+    \end{equation}
+    where $\omega$ is wave frequency, or encounter frequency if forward speed matters, and $\beta$ is relative wave heading with respect to the vessel.
+
+    If a unit-amplitude regular wave excites the vessel at $(\omega,\beta)$, the steady-state response can be written
+    \begin{equation}
+        q(t)=\Real\!\left\{H_q(\omega,\beta)\,\ee^{\ii\omega t}\right\}.
+    \end{equation}
+    Equivalently,
+    \begin{equation}
+        H_q(\omega,\beta)
+        =
+        |H_q(\omega,\beta)|\,\ee^{\ii\varphi_q(\omega,\beta)},
+    \end{equation}
+    so the RAO carries both an amplitude gain $|H_q|$ and a phase shift $\varphi_q$.
+
+    \subsection{Units and Normalization}
+
+    The units of an RAO depend on the response quantity:
+    \begin{center}
+        \begin{tabular}{@{}ll@{}}
+            \toprule
+            Response quantity & Typical RAO units \\
+            \midrule
+            Surge, sway, heave & m/m \\
+            Roll, pitch, yaw & rad/m or deg/m \\
+            Acceleration & (m/s$^2$)/m \\
+            Moment & (N$\cdot$m)/m \\
+            Relative motion & m/m \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+
+    A practical detail that must be checked carefully is the normalization convention:
+    \begin{itemize}[leftmargin=1.2em]
+        \item some RAOs are tabulated per \emph{wave amplitude},
+        \item others per \emph{wave height}.
+    \end{itemize}
+    If a published RAO is per wave height $H$, but the wave simulation uses amplitude $a=H/2$, then a factor of $2$ must be applied consistently.
+
+    \section{Coordinates, Headings, and the Six Vessel Motions}
+
+    Let the vessel-fixed body frame be $(x_b,y_b,z_b)$ with the conventional meaning: $x_b$ forward, $y_b$ transverse, and $z_b$ vertical. Let the six rigid-body motions be collected as
+    \begin{equation}
+        \vect{\xi}
+        =
+        \begin{bmatrix}
+            \xi_1 & \xi_2 & \xi_3 & \xi_4 & \xi_5 & \xi_6
+        \end{bmatrix}^{T}
+        =
+        \begin{bmatrix}
+            \text{surge} & \text{sway} & \text{heave} &
+            \text{roll} & \text{pitch} & \text{yaw}
+        \end{bmatrix}^{T}.
+    \end{equation}
+
+    If the absolute wave propagation direction is $\mu$ and the vessel heading is $\psi$, then a relative wave heading may be formed as
+    \begin{equation}
+        \beta=\mu-\psi,
+    \end{equation}
+    up to the exact sign convention used by the hydrodynamic software. This point matters in practice: the heading convention of the RAO data must match the heading convention used in the wave model.
+
+    \section{Applying RAOs to the Existing Wave Components}
+
+    \subsection{Stationary or Slowly Moving Vessel}
+
+    Assume first that the vessel is stationary in mean position, or moving slowly enough that forward-speed effects can be neglected. Let $\vect{r}_0$ be the vessel reference point used for wave phase, for example the center of gravity or RAO reference origin.
+
+    Each incident wave component in \cref{eq:wave_realization} generates a response contribution
+    \begin{equation}
+        q_m(t)
+        =
+        \Real\!\left\{
+        H_q(\omega_m,\beta_m)\,
+        a_m\,
+        \ee^{\ii(
+        \vect{k}_m\cdot\vect{r}_0
+        -
+        \omega_m t
+        +
+        \phi_m
+        )}
+        \right\}.
+    \end{equation}
+
+    The total response is the superposition
+    \begin{equation}
+        q(t)
+        =
+        \sum_{m=1}^{M} q_m(t)
+        =
+        \Real\!\left\{
+        \sum_{m=1}^{M}
+        H_q(\omega_m,\beta_m)\,
+        a_m\,
+        \ee^{\ii(
+        \vect{k}_m\cdot\vect{r}_0
+        -
+        \omega_m t
+        +
+        \phi_m
+        )}
+        \right\}.
+        \label{eq:response_sum}
+    \end{equation}
+
+    Equation \eqref{eq:response_sum} is the central formula for applying RAOs to an existing irregular wave realization.
+
+    \subsection{Interpretation}
+
+    Each wave component is transformed by the RAO:
+    \begin{enumerate}[label=(\arabic*),leftmargin=1.4em]
+    \item the amplitude $a_m$ is scaled by $|H_q|$,
+    \item the phase is shifted by the RAO phase $\varphi_q$,
+    \item the transformed response contributions are summed.
+    \end{enumerate}
+
+    This preserves phase coherence with the original irregular sea realization. Therefore, if the wave field was synthesized with a particular random seed, the vessel response time series produced by \eqref{eq:response_sum} is consistent with that exact realization, not merely with the underlying spectral density.
+
+    \subsection{All Six Rigid-Body Motions}
+
+    If six motion RAOs $H_j(\omega,\beta)$ are available for $j=1,\dots,6$, then the response in each degree of freedom is
+    \begin{equation}
+        \xi_j(t)
+        =
+        \Real\!\left\{
+        \sum_{m=1}^{M}
+        H_j(\omega_m,\beta_m)\,
+        a_m\,
+        \ee^{\ii(
+        \vect{k}_m\cdot\vect{r}_0
+        -
+        \omega_m t
+        +
+        \phi_m
+        )}
+        \right\}.
+        \label{eq:motion_dof}
+    \end{equation}
+    Thus, the six rigid-body motions are reconstructed from the same list of wave components.
+
+    \section{Encounter Frequency and Forward Speed}
+
+    If the vessel moves with approximately constant horizontal velocity $\vect{U}$, then the incident phase observed at the vessel changes with time:
+    \begin{equation}
+        \theta_m(t)
+        =
+        \vect{k}_m\cdot\vect{r}_0(t)
+        -
+        \omega_m t
+        +
+        \phi_m.
+    \end{equation}
+    Differentiating gives the encounter frequency
+    \begin{equation}
+        \omega_{e,m}
+        =
+        \omega_m-\vect{k}_m\cdot\vect{U}.
+        \label{eq:encounter_general}
+    \end{equation}
+
+    If $\chi_m$ is the angle between wave propagation direction and vessel velocity vector, then
+    \begin{equation}
+        \omega_{e,m}
+        =
+        \omega_m-k_mU\cos\chi_m.
+        \label{eq:encounter_scalar}
+    \end{equation}
+
+    When forward speed is important, the RAO should be evaluated at encounter frequency:
+    \begin{equation}
+        q(t)
+        =
+        \Real\!\left\{
+        \sum_{m=1}^{M}
+        H_q(\omega_{e,m},\beta_m)\,
+        a_m\,
+        \ee^{\ii(
+        \vect{k}_m\cdot\vect{r}_0(t)
+        -
+        \omega_m t
+        +
+        \phi_m
+        )}
+        \right\}.
+        \label{eq:response_encounter}
+    \end{equation}
+    For a moored or stationary vessel, one typically has $\vect{U}=\vect{0}$, so $\omega_e=\omega$.
+
+    \section{From Wave Spectrum to Response Spectrum}
+
+    If only statistical measures are needed, such as RMS heave, pitch, or roll, it is often more efficient to work directly in the frequency domain.
+
+    \subsection{Single-Output Response Spectrum}
+
+    For a response quantity $q$ with RAO $H_q(\omega,\beta)$ and directional wave spectrum $S_\eta(\omega,\mu)$, the response spectrum is
+    \begin{equation}
+        S_q(\omega)
+        =
+        \int_{-\pi}^{\pi}
+        |H_q(\omega_e,\beta)|^2
+        S_\eta(\omega,\mu)\dd\mu,
+        \label{eq:response_spectrum}
+    \end{equation}
+    where $\beta$ and $\omega_e$ are determined from wave direction, vessel heading, and forward speed. The response variance is then
+    \begin{equation}
+        \sigma_q^2
+        =
+        \int_0^\infty S_q(\omega)\dd\omega,
+    \end{equation}
+    and the RMS value is
+    \begin{equation}
+        q_{\mathrm{RMS}}=\sigma_q.
+    \end{equation}
+
+    \subsection{Cross-Spectra}
+
+    If correlations between two outputs $q_1$ and $q_2$ are needed, then the cross-spectrum is
+    \begin{equation}
+        S_{q_1q_2}(\omega)
+        =
+        \int_{-\pi}^{\pi}
+        H_{q_1}(\omega_e,\beta)\,
+        H_{q_2}^{*}(\omega_e,\beta)\,
+        S_\eta(\omega,\mu)\dd\mu.
+    \end{equation}
+    This is useful for covariance matrices of vessel motions, combined load effects, multi-axis acceleration statistics, and relative motion between two points or bodies.
+
+    \subsection{When the Spectral Route Is Useful}
+
+    The spectral route is especially useful when the target outputs are:
+    \begin{itemize}[leftmargin=1.2em]
+        \item RMS motions,
+        \item response spectra,
+        \item fatigue analysis inputs,
+        \item operability metrics,
+        \item parametric studies over many headings or sea states.
+    \end{itemize}
+    It is not necessary to reconstruct a long time series if only second-order statistics are required.
+
+    \section{From an Existing 3D Simulation to Vessel Motion Time Series}
+
+    \subsection{Best Case: Original Wave Components Available}
+
+    The best case is when the 3D wave field was generated from an explicit list
+    \begin{equation}
+        \left\{
+        \omega_m,\mu_m,\vect{k}_m,a_m,\phi_m
+        \right\}_{m=1}^{M}.
+    \end{equation}
+
+    Then the workflow is direct:
+    \begin{enumerate}[leftmargin=1.4em]
+        \item For each component $m$, compute the relative heading $\beta_m$.
+        \item If needed, compute the encounter frequency $\omega_{e,m}$.
+        \item Interpolate the complex RAO $H_q(\omega_{e,m},\beta_m)$ from the hydrodynamic database.
+        \item Multiply the wave component by the complex RAO.
+        \item Sum over all components as in \cref{eq:response_sum,eq:motion_dof}.
+    \end{enumerate}
+
+    This yields a response time series consistent with the original wave realization.
+
+    \subsection{If Only the Wave Grid Is Available}
+
+    If the original component list is unavailable but the free surface $\eta(x,y,t)$ is known on a grid, then one may:
+    \begin{enumerate}[leftmargin=1.4em]
+        \item recover directional spectral content using a spatio-temporal Fourier transform,
+        \item estimate an equivalent directional spectrum and synthesize surrogate components,
+        \item or sample locally at the vessel position and use a one-point spectrum if directionality is weak or already known.
+    \end{enumerate}
+
+    However, whenever possible, it is better to retain the original synthesis components from the wave generation stage. That preserves exact phase consistency and avoids spectral estimation error.
+
+    \subsection{Important Conceptual Point}
+
+    In an RAO-based method, the vessel is not driven merely by the local wave height at one point. The RAO already represents the linearized effect of the \emph{entire hull} responding to an incident regular wave. Therefore, the correct input is the wave component amplitude, frequency, and heading, not merely a scalar sample of $\eta$ at one grid point.
+
+    \section{Outputs Beyond the Six Rigid-Body Motions}
+
+    RAOs are not limited to surge, sway, heave, roll, pitch, and yaw. In principle, any linear response quantity can be represented by an RAO. Examples include acceleration at a bridge or sensor location, relative motion at a hatch opening, bow flare motion, crane-tip displacement and acceleration, moonpool motion, fairlead motion, vertical bending moment, and vertical shear force.
+
+    If a solver or hydrodynamic database provides an output RAO $H_q(\omega,\beta)$, then the same component-wise method applies.
+
+    \subsection{Small-Angle Kinematics for a Point on the Vessel}
+
+    Suppose the translational motion of a vessel reference point $G$ is $\vect{u}_G(t)$ and the small rotational motion is $\vect{\theta}(t)$. For another point $P$ fixed in the body at offset $\vect{r}_{GP}$, the first-order displacement is
+    \begin{equation}
+        \vect{u}_P(t)
+        \approx
+        \vect{u}_G(t)+\vect{\theta}(t)\times\vect{r}_{GP}.
+        \label{eq:point_displacement}
+    \end{equation}
+    Differentiating twice gives the corresponding small-angle acceleration approximation
+    \begin{equation}
+        \vect{a}_P(t)
+        \approx
+        \ddot{\vect{u}}_G(t)+\ddot{\vect{\theta}}(t)\times\vect{r}_{GP}.
+        \label{eq:point_accel}
+    \end{equation}
+
+    Therefore, once motion RAOs are known, one may construct point-displacement and point-acceleration transfer functions. Many hydrodynamic tools provide these directly, but they can also be assembled from six-DOF motion RAOs under small-angle assumptions.
+
+    \section{The Time-Domain Route Beyond Plain RAO Superposition}
+
+    \subsection{Why Move Beyond Direct RAO Application}
+
+    Direct RAO superposition is ideal for linear response prediction in an irregular sea. But some applications require a time-domain vessel model, for example mooring-line coupling, control systems and station keeping, transient maneuvers, nonlinear damping, radiation memory effects, and coupling to risers, payloads, cranes, or nearby structures.
+
+    In these cases, the incident sea may still come from the same PM/JONSWAP simulation, but the vessel motion is obtained by integrating equations of motion instead of applying a direct motion RAO.
+
+    \subsection{Cummins-Type Equation of Motion}
+
+    A standard linear potential-flow time-domain model is the Cummins equation:
+    \begin{equation}
+        \left(\vect{M}+\vect{A}_{\infty}\right)\ddot{\vect{\xi}}(t)
+        +
+        \int_{0}^{t}\vect{K}_{r}(t-\tau)\dot{\vect{\xi}}(\tau)\dd\tau
+        +
+        \vect{C}_{h}\vect{\xi}(t)
+        =
+        \vect{F}_{\mathrm{exc}}(t)+\vect{F}_{\mathrm{ext}}(t),
+        \label{eq:cummins}
+    \end{equation}
+    where $\vect{M}$ is rigid-body mass and inertia, $\vect{A}_{\infty}$ is infinite-frequency added mass, $\vect{K}_{r}(t)$ is the radiation memory kernel, $\vect{C}_{h}$ is the hydrostatic restoring matrix, $\vect{F}_{\mathrm{exc}}(t)$ is wave excitation force and moment, and $\vect{F}_{\mathrm{ext}}(t)$ collects mooring, damping, control, or other external forces.
+
+    The frequency-dependent hydrodynamic data needed for \eqref{eq:cummins} are the deeper objects from which motion RAOs are derived: added mass, radiation damping, hydrostatic restoring, and wave-excitation coefficients.
+
+    \subsection{Wave Excitation Force From the Same Incident Wave Components}
+
+    The same incident wave components used in the free-surface simulation can be converted into excitation forces:
+    \begin{equation}
+        \vect{F}_{\mathrm{exc}}(t)
+        =
+        \Real\!\left\{
+        \sum_{m=1}^{M}
+        \vect{X}(\omega_{e,m},\beta_m)\,
+        a_m\,
+        \ee^{\ii(
+        \vect{k}_m\cdot\vect{r}_0(t)
+        -
+        \omega_m t
+        +
+        \phi_m
+        )}
+        \right\}.
+    \end{equation}
+    where $\vect{X}(\omega,\beta)$ is the complex vector of wave-excitation force and moment coefficients.
+
+    Then the vessel motion is obtained by solving \cref{eq:cummins}, rather than by multiplying directly by a motion RAO. This is the deeper time-domain route behind linear seakeeping.
+
+    \subsection{When the Time-Domain Route Is Preferable}
+
+    The time-domain route is usually preferable when:
+    \begin{itemize}[leftmargin=1.2em]
+        \item vessel speed or heading varies in time,
+        \item mooring or control feedback is strong,
+        \item one needs transient response,
+        \item multiple coupled subsystems are present,
+        \item one wants a more physical treatment of radiation memory.
+    \end{itemize}
+
+    \section{A Practical Algorithm}
+
+    Assume a 3D irregular sea has already been synthesized from PM or JONSWAP.
+
+    \subsection*{Step 1: Keep or Reconstruct the Wave Component List}
+
+    For each component $m$, obtain
+    \begin{equation}
+        \omega_m,\qquad
+        \mu_m,\qquad
+        \vect{k}_m,\qquad
+        a_m,\qquad
+        \phi_m.
+    \end{equation}
+
+    \subsection*{Step 2: Obtain Vessel RAOs}
+
+    For each output quantity of interest, obtain a complex RAO table
+    \begin{equation}
+        H_q(\omega,\beta)
+    \end{equation}
+    covering the relevant frequency and heading range.
+
+    \subsection*{Step 3: Define Vessel Mean Pose and Speed}
+
+    Specify vessel heading $\psi$ and, if relevant, mean velocity $\vect{U}$.
+
+    \subsection*{Step 4: Compute Relative Heading}
+
+    For each wave component, compute the relative heading $\beta_m$ consistent with the hydrodynamic convention.
+
+    \subsection*{Step 5: Compute Encounter Frequency if Needed}
+
+    If forward speed matters, compute
+    \begin{equation}
+        \omega_{e,m}=\omega_m-\vect{k}_m\cdot\vect{U}.
+    \end{equation}
+
+    \subsection*{Step 6: Interpolate the Complex RAO}
+
+    Evaluate
+    \begin{equation}
+        H_q(\omega_{e,m},\beta_m)
+    \end{equation}
+    using interpolation on the RAO grid.
+
+    \subsection*{Step 7: Form the Response Component}
+
+    For each wave component,
+    \begin{equation}
+        q_m(t)
+        =
+        \Real\!\left\{
+        H_q(\omega_{e,m},\beta_m)\,
+        a_m\,
+        \ee^{\ii(
+        \vect{k}_m\cdot\vect{r}_0
+        -
+        \omega_m t
+        +
+        \phi_m
+        )}
+        \right\}.
+    \end{equation}
+
+    \subsection*{Step 8: Sum the Response}
+
+    \begin{equation}
+        q(t)=\sum_{m=1}^{M} q_m(t).
+    \end{equation}
+
+    \subsection*{Step 9: Post-Process}
+
+    Compute desired metrics such as RMS values, peak values, accelerations, relative motions, crossing rates, response spectra, and fatigue-relevant statistics.
+
+    \section{Implementation Pitfalls}
+
+    \subsection{Amplitude Convention Mismatch}
+
+    If the wave simulation uses component amplitude $a$ but the RAO is tabulated per wave height $H$, then the relation
+    \begin{equation}
+        H=2a
+    \end{equation}
+    must be applied correctly.
+
+    \subsection{Phase Convention Mismatch}
+
+    Different software packages define RAO phase differently. One must verify whether the phase is a lead or a lag, whether the sign convention is $\ee^{+\ii\omega t}$ or $\ee^{-\ii\omega t}$, what reference point is used for incident wave phase, and what sign convention is used for rotations.
+
+    \subsection{Heading Convention Mismatch}
+
+    The meaning of $\beta=0^\circ$, head seas, following seas, quartering seas, or beam seas is not universal. The RAO heading convention must match the wave model convention.
+
+    \subsection{Frequency Coverage}
+
+    The RAO database must cover the full frequency range occupied by the PM/JONSWAP sea. If the RAO table is too narrow, energetic parts of the wave spectrum may be ignored, causing underprediction of response.
+
+    \subsection{Interpolation of Complex RAOs}
+
+    It is often safer to interpolate real and imaginary parts than to interpolate amplitude and wrapped phase directly.
+
+    \subsection{Using Only Local Wave Height}
+
+    For RAO-based prediction, one should not drive the vessel model solely by a sampled scalar free-surface elevation at a point. The correct input is the directional wave component representation, while the hull effect is handled by the RAO.
+
+    \subsection{Linear Roll Limitations}
+
+    Roll response often depends strongly on viscous damping and may be poorly captured by a purely linear potential-flow RAO unless additional damping corrections are introduced.
+
+    \subsection{Strongly Nonlinear Conditions}
+
+    RAO methods assume linear or weakly nonlinear response. They may become inadequate for slamming, green water, broaching or surf-riding, strongly nonlinear restoring, violent viscous effects, and extreme wave impact problems.
+
+    \section{When RAOs Are Enough and When They Are Not}
+
+    RAOs are usually enough for ordinary seakeeping analysis, RMS motion prediction, irregular-wave motion time series, acceleration and habitability estimates, response spectrum calculations, and many operability studies.
+
+    RAOs are usually not enough for strongly nonlinear events, detailed slamming loads, wave impact on deck, large transient maneuvers, complex strongly coupled time-domain systems, or CFD-resolved hull--wave interaction.
+
+    In such cases, one may still use the same PM/JONSWAP incident wave realization, but the vessel model must be upgraded beyond a simple linear transfer relation.
+
+    \section{Compact Mathematical Summary}
+
+    Let the existing 3D wave realization be
+    \begin{equation}
+        \eta(\vect{r},t)
+        =
+        \sum_{m=1}^{M}
+        a_m
+        \cos\!\left(
+        \vect{k}_m\cdot\vect{r}
+        -
+        \omega_m t
+        +
+        \phi_m
+        \right).
+    \end{equation}
+    Let the vessel response quantity $q$ have complex RAO $H_q(\omega,\beta)$. Then the corresponding response time series is
+    \begin{equation}
+        q(t)
+        =
+        \Real\!\left\{
+        \sum_{m=1}^{M}
+        H_q(\omega_{e,m},\beta_m)\,
+        a_m\,
+        \ee^{\ii(
+        \vect{k}_m\cdot\vect{r}_0(t)
+        -
+        \omega_m t
+        +
+        \phi_m
+        )}
+        \right\}.
+    \end{equation}
+
+    If only second-order statistics are needed, then
+    \begin{equation}
+        S_q(\omega)
+        =
+        \int_{-\pi}^{\pi}
+        |H_q(\omega_e,\beta)|^2
+        S_\eta(\omega,\mu)\dd\mu,
+    \end{equation}
+    and
+    \begin{equation}
+        \sigma_q^2
+        =
+        \int_0^\infty S_q(\omega)\dd\omega.
+    \end{equation}
+
+    If higher-fidelity linear time-domain dynamics are needed, then the vessel can instead be evolved using
+    \begin{equation}
+        \left(\vect{M}+\vect{A}_{\infty}\right)\ddot{\vect{\xi}}(t)
+        +
+        \int_{0}^{t} \vect{K}_{r}(t-\tau)\dot{\vect{\xi}}(\tau)\dd\tau
+        +
+        \vect{C}_{h}\vect{\xi}(t)
+        =
+        \vect{F}_{\mathrm{exc}}(t)+\vect{F}_{\mathrm{ext}}(t),
+    \end{equation}
+    with excitation forces constructed from the same wave components.
+
+    \section{Conclusion}
+
+    A 3D PM or JONSWAP free-surface simulation already provides the incident sea in an ideal form for vessel-response prediction. The missing ingredient is the vessel hydrodynamic transfer model.
+
+    In linear seakeeping, that transfer model is most commonly expressed through complex RAOs. Once the wave realization is decomposed into directional sinusoidal components, each component can be passed through the appropriate complex RAO and the resulting responses summed. This produces vessel motion, acceleration, and load time series that remain phase-consistent with the original irregular sea realization. If only statistical measures are needed, the same mapping can be performed directly in the spectral domain. If stronger coupling or greater fidelity is required, the same incident wave components can drive time-domain equations of motion based on added mass, damping, restoring, and wave-excitation coefficients.
+
+    The practical bridge from an existing PM/JONSWAP wave simulation to vessel behavior is therefore
+    \begin{equation}
+        \boxed{
+            \text{wave realization}
+            +
+            \text{RAOs or hydrodynamic coefficients}
+            \rightarrow
+            \text{vessel response}
+        }
+    \end{equation}
+
+    \begin{thebibliography}{99}
+
+        \bibitem{Newman}
+        J.~N.~Newman,
+        \emph{Marine Hydrodynamics}.
+        Cambridge, MA, USA: MIT Press, 1977.
+
+        \bibitem{Faltinsen}
+        O.~M.~Faltinsen,
+        \emph{Sea Loads on Ships and Offshore Structures}.
+        Cambridge, U.K.: Cambridge Univ. Press, 1990.
+
+        \bibitem{Perez}
+        T.~Perez,
+        \emph{Ship Motion Control: Course Keeping and Roll Stabilisation Using Rudder and Fins}.
+        London, U.K.: Springer, 2005.
+
+        \bibitem{WAMIT}
+        WAMIT, Inc.,
+        \emph{WAMIT User Manual}.
+
+        \bibitem{HydroDyn}
+        OpenFAST Team,
+        \emph{HydroDyn Theory Manual and User Guide}.
+
+    \end{thebibliography}
+
+\end{document}
