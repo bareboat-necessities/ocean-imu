@@ -35,7 +35,7 @@ def classify_height(h):
 
 # === Filename pattern ===
 pattern = re.compile(
-    r"reg_spectrum_"
+    r"spectrum_"
     r"(?P<tracker>[^_]+)_"
     r"(?P<wave>[A-Za-z0-9]+)_"
     r"H(?P<height>[-0-9\.]+)"
@@ -57,7 +57,7 @@ def pick_column(df, candidates):
 
 # === Load all files and group by (wave, height) ===
 groups = {}
-for f in sorted(glob.glob("reg_spectrum_*.csv")):
+for f in sorted(glob.glob("spectrum_*.csv")):
     m = pattern.search(os.path.basename(f))
     if not m:
         print(f"Skipping unrecognized: {f}")
@@ -69,7 +69,7 @@ for f in sorted(glob.glob("reg_spectrum_*.csv")):
     groups.setdefault(key, []).append((tracker, f))
 
 if not groups:
-    print("No recognized reg_spectrum_*.csv files found.")
+    print("No recognized spectrum_*.csv files found.")
     raise SystemExit(0)
 
 # === Plot each wave × height group with all trackers ===

@@ -193,7 +193,7 @@ void process_wave_file(const std::string& data_file, float dt) {
     std::ostringstream nb;
     nb << "_N" << std::fixed << std::setprecision(3) << NOISE_STDDEV
        << "_B" << std::fixed << std::setprecision(3) << BIAS_MEAN;
-    const std::string outname = "reg_spectrum_estimator_" + waveName + tail + nb.str() + ".csv";
+    const std::string outname = "spectrum_estimator_" + waveName + tail + nb.str() + ".csv";
 
     std::ofstream ofs(outname);
     ofs << "freq_hz,S_eta_hz,S_ref_interp,S_ratio,"
