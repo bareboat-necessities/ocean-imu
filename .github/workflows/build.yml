@@ -78,7 +78,7 @@ jobs:
           PLANTUML_JAR: ${{ github.workspace }}/doc/${{ matrix.dir }}/plantuml.jar
 
       - name: Upload PDF artifacts (${{ matrix.dir }})
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: latex-pdfs-${{ matrix.dir }}
           path: doc/${{ matrix.dir }}/**/*.pdf
