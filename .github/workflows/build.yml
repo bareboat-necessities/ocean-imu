@@ -130,7 +130,7 @@ jobs:
           find release-assets -type f | sort
 
       - name: Upload PDFs to release
-        uses: svenstaro/upload-release-action@v2
+        uses: svenstaro/upload-release-action@v4
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: release-assets/latex-pdfs-*/*.pdf
