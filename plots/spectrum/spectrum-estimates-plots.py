@@ -2,14 +2,12 @@
 import glob
 import os
 import re
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-from matplotlib.backends.backend_pgf import FigureCanvasPgf
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
-mpl.backend_bases.register_backend('pgf', FigureCanvasPgf)
+# === Matplotlib PGF/LaTeX config ===
+mpl.use("pgf")
 plt.rcParams.update({
     "pgf.texsystem": "xelatex",
     "font.family": "serif",
@@ -21,97 +19,103 @@ plt.rcParams.update({
         r"\usepackage{amsmath}",
         r"\setmainfont{DejaVu Serif}",
         r"\setmathfont{Latin Modern Math}",
-        r"\providecommand{\mathdefault}[1]{#1}",
-    ]),
+        r"\providecommand{\mathdefault}[1]{#1}"
+    ])
 })
 
-height_groups = {
-    "low": 0.27,
-    "medium": 1.50,
-    "high": 8.50,
-}
+# === Height classification ===
+height_groups = {"low": 0.27, "medium": 1.50, "high": 8.50}
 
-fname_re = re.compile(
-    r"^spectrum_estimate_(?P<wtype>[a-z]+)_H(?P<H>[0-9.]+)_L(?P<L>[0-9.]+)_A(?P<A>[-0-9.]+)_P(?P<P>[-0-9.]+)\.csv$"
+
+def classify_height(h):
+    diffs = {lvl: abs(h - v) for lvl, v in height_groups.items()}
+    return min(diffs, key=diffs.get)
+
+
+# === Filename pattern ===
+pattern = re.compile(
+    r"reg_spectrum_"
+    r"(?P<tracker>[^_]+)_"
+    r"(?P<wave>[A-Za-z0-9]+)_"
+    r"H(?P<height>[-0-9\.]+)"
+    r"(?:_L(?P<length>[-0-9\.]+))?"
+    r"(?:_A(?P<azimuth>[-0-9\.]+))?"
+    r"(?:_P(?P<phase>[-0-9\.]+))?"
+    r"_N(?P<noise>[-0-9\.]+)"
+    r"_B(?P<bias>[-0-9\.]+)"
+    r"\.csv"
 )
 
-
-def parse_filename(fname):
-    m = fname_re.match(os.path.basename(fname))
+# === Load all files and group by (wave, height) ===
+groups = {}
+for f in sorted(glob.glob("reg_spectrum_*.csv")):
+    m = pattern.search(os.path.basename(f))
     if not m:
-        return None
-    return {
-        "wtype": m.group("wtype"),
-        "H": float(m.group("H")),
-        "A": float(m.group("A")),
-    }
+        print(f"Skipping unrecognized: {f}")
+        continue
+    wave = m.group("wave")
+    height = float(m.group("height"))
+    tracker = m.group("tracker")
+    key = (wave, height)
+    groups.setdefault(key, []).append((tracker, f))
 
+if not groups:
+    print("No recognized reg_spectrum_*.csv files found.")
+    raise SystemExit(0)
 
-def save_all(fig, base):
-    fig.savefig(f"{base}.pgf", bbox_inches="tight", backend="pgf")
-    fig.savefig(f"{base}.svg", bbox_inches="tight", dpi=150)
-    with mpl.rc_context({"text.usetex": False}):
-        fig.savefig(f"{base}.png", bbox_inches="tight", dpi=300)
+# === Plot each wave × height group with all trackers ===
+for (wave, height), tracker_files in groups.items():
+    level = classify_height(height)
+    height_str = f"H{height:.2f}".rstrip('0').rstrip('.')
+    print(f"\nPlotting {wave} {level} sea ({height_str} m) with {len(tracker_files)} trackers")
 
+    fig, axes = plt.subplots(3, 1, figsize=(6.5, 8.5), sharex=True)
+    axes = axes.flatten()
 
-def spectrum_cols(df):
-    freq_map = {}
-    for c in df.columns:
-        if c.startswith("S_eta_est_f") and "_Hz=" in c:
-            idx = int(c.split("_f")[1].split("_Hz=")[0])
-            freq_map[idx] = float(c.split("_Hz=")[1])
-    idxs = sorted(freq_map.keys())
-    est_cols = [f"S_eta_est_f{i}_Hz={freq_map[i]}" for i in idxs]
-    ref_cols = [f"S_eta_ref_f{i}" for i in idxs]
-    freqs = np.array([freq_map[i] for i in idxs])
-    return freqs, est_cols, ref_cols
+    for idx, (tracker, f) in enumerate(tracker_files):
+        df = pd.read_csv(f, comment="#")
+        if "freq_hz" not in df.columns:
+            print(f"  skipping {f} (no freq_hz)")
+            continue
 
+        label = tracker.capitalize()
+        lw = 1.8
 
-def make_plots(fname, group, meta):
-    df = pd.read_csv(fname)
-    if df.empty:
-        return
+        # 1. Amplitude spectra
+        axes[0].semilogx(df["freq_hz"], df["A_eta_est"], label=f"{label} est", lw=lw)
+        if "A_eta_ref" in df.columns and idx == 0:
+            axes[0].semilogx(df["freq_hz"], df["A_eta_ref"], "--", color="gray", label="Reference", lw=1.2)
 
-    freqs, est_cols, ref_cols = spectrum_cols(df)
-    last = df.iloc[-1]
+        # 2. Energy density
+        axes[1].semilogx(df["freq_hz"], df["E_eta_est"], label=f"{label} est", lw=lw)
+        if "E_eta_ref" in df.columns and idx == 0:
+            axes[1].semilogx(df["freq_hz"], df["E_eta_ref"], "--", color="gray", label="Reference", lw=1.2)
 
-    base = f"spectrum_estimates_{meta['wtype']}_{group}"
-    title = fr"{meta['wtype'].capitalize()} estimator vs reference ($H_s={meta['H']:.2f}\,\mathrm{{m}}$)"
+        # 3. Cumulative variance
+        if {"CumVar_est", "CumVar_ref"}.issubset(df.columns):
+            est_norm = df["CumVar_est"] / max(df["CumVar_est"].iloc[-1], 1e-12)
+            ref_norm = df["CumVar_ref"] / max(df["CumVar_ref"].iloc[-1], 1e-12)
+            axes[2].semilogx(df["freq_hz"], est_norm, label=f"{label} est", lw=lw)
+            if idx == 0:
+                axes[2].semilogx(df["freq_hz"], ref_norm, "--", color="gray", label="Reference", lw=1.2)
 
-    fig, ax = plt.subplots()
-    ax.plot(freqs, last[est_cols].to_numpy(dtype=float), label="Estimator", linewidth=2)
-    ax.plot(freqs, last[ref_cols].to_numpy(dtype=float), label="Reference", linewidth=2, linestyle="--")
-    ax.set_xlabel(r"Frequency $f$ [Hz]")
-    ax.set_ylabel(r"$S_{\eta}(f)$")
-    ax.set_title(title)
-    ax.grid(True, alpha=0.3)
-    ax.legend()
-    save_all(fig, f"{base}_spectrum")
+    # === Axis formatting ===
+    axes[0].set_ylabel(r"$A_\eta(f)$ [m]")
+    axes[1].set_ylabel(r"$E_\eta(f)=fS_\eta(f)$ [m$^2$]")
+    axes[2].set_ylabel("Cumulative variance fraction")
+    axes[2].set_xlabel("Frequency [Hz]")
+    for ax in axes:
+        ax.grid(True, which="both", lw=0.3, ls=":")
+        ax.legend(fontsize=7)
+        ax.set_xlim(left=0.02, right=2.0)
+
+    fig.suptitle(f"{wave.upper()} — {level.capitalize()} sea ($H_s={height:.2f}$ m)", fontsize=11, y=0.97)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+
+    out_pgf = f"reg_spectrum_plot_{wave}_{level}.pgf"
+    plt.savefig(out_pgf, bbox_inches="tight")
+    print(f"  Saved → {out_pgf}")
+
     plt.close(fig)
 
-    fig2, ax2 = plt.subplots()
-    ax2.plot(df["time"], df["Hs"], label=r"$H_s$", linewidth=2)
-    ax2.plot(df["time"], 1.0 / np.maximum(df["Fp"], 1e-9), label=r"$T_p=1/f_p$", linewidth=2)
-    ax2.set_xlabel("Time [s]")
-    ax2.set_ylabel("Estimate")
-    ax2.set_title(title)
-    ax2.grid(True, alpha=0.3)
-    ax2.legend()
-    save_all(fig2, f"{base}_timeseries")
-    plt.close(fig2)
-
-
-if __name__ == "__main__":
-    files = glob.glob("spectrum_estimate_*.csv")
-    if not files:
-        print("No spectrum_estimate_*.csv files found.")
-        raise SystemExit(0)
-
-    for fname in sorted(files):
-        meta = parse_filename(fname)
-        if not meta:
-            continue
-        for group, target_H in height_groups.items():
-            if abs(meta["H"] - target_H) < 1e-3:
-                print(f"Processing {fname} as {group} ...")
-                make_plots(fname, group, meta)
+print("\nAll combined reg_spectrum plots generated successfully.")
