@@ -27,9 +27,10 @@
       - per-bin valid-region window RMS correction
       - exact Parseval FIR gain normalization
 
-    This version does NOT use:
-      - adaptive cycle count
-      - hard support cap at Nblock/6
+    This version adds:
+      - wavelet-only low-frequency spike veto in a soft guard band above the
+        learned cutoff, to suppress unsupported false peaks that survive just
+        above the shared low-frequency cutoff.
 */
 
 template<int Nfreq = 32, int Nblock = 384>
@@ -287,6 +288,59 @@ private:
         }
     }
 
+    void suppress_unsupported_lowfreq_spikes_(const std::array<double, Nfreq>& S_aa_true_arr) {
+        if (!(last_lowfreq_cut_hz_ > 0.0)) return;
+
+        const double f_soft = 1.45 * last_lowfreq_cut_hz_;
+
+        int k_soft = 0;
+        while (k_soft + 1 < Nfreq && freqs_[k_soft + 1] <= f_soft) ++k_soft;
+        if (k_soft < 2 || k_soft + 1 >= Nfreq) return;
+
+        std::array<double, Nfreq> Eeta{};
+        std::array<double, Nfreq> Eaa{};
+        std::array<double, Nfreq> Eaa_s{};
+
+        for (int i = 0; i < Nfreq; ++i) {
+            const double f = std::max(freqs_[i], 1e-12);
+            Eeta[i] = std::max(0.0, double(lastSpectrum_[i])) * f;
+            Eaa[i]  = std::max(0.0, S_aa_true_arr[i]) * f;
+        }
+
+        if (Nfreq == 1) return;
+        Eaa_s[0] = 0.75 * Eaa[0] + 0.25 * Eaa[1];
+        for (int i = 1; i < Nfreq - 1; ++i) {
+            Eaa_s[i] = 0.25 * Eaa[i - 1] + 0.50 * Eaa[i] + 0.25 * Eaa[i + 1];
+        }
+        Eaa_s[Nfreq - 1] = 0.25 * Eaa[Nfreq - 2] + 0.75 * Eaa[Nfreq - 1];
+
+        const int i_ref = std::min(k_soft + 1, Nfreq - 1);
+        const double Eref = std::max(Eeta[i_ref], 1e-12);
+        const double fref = std::max(freqs_[i_ref], 1e-12);
+        const double Eaa_ref = std::max(Eaa_s[i_ref], 1e-12);
+
+        for (int i = 1; i <= k_soft; ++i) {
+            const bool local_peak =
+                (Eeta[i] > Eeta[i - 1]) &&
+                (Eeta[i] > Eeta[i + 1]);
+
+            const double r = std::max(freqs_[i], 1e-12) / fref;
+            const double env_cap = Eref * std::pow(r, 2.0);
+
+            const double accel_support = Eaa_s[i] / Eaa_ref;
+
+            if (local_peak &&
+                accel_support < 0.25 &&
+                Eeta[i] > 1.6 * env_cap) {
+                Eeta[i] = env_cap;
+            }
+        }
+
+        for (int i = 0; i < Nfreq; ++i) {
+            lastSpectrum_[i] = Eeta[i] / std::max(freqs_[i], 1e-12);
+        }
+    }
+
     void computeSpectrum() {
         constexpr int N = Nblock;
 
@@ -402,6 +456,9 @@ private:
         }
 
         have_ema = true;
+
+        suppress_unsupported_lowfreq_spikes_(S_aa_true_arr);
+
         WaveSpectrumShared::smooth_logfreq_3tap_inplace<Nfreq>(lastSpectrum_, freqs_);
         WaveSpectrumShared::suppress_lowfreq_from_cut_inplace<Nfreq>(
             lastSpectrum_, freqs_, last_lowfreq_cut_hz_);
