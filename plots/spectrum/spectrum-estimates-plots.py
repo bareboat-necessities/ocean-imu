@@ -118,33 +118,6 @@ def estimate_bulk_from_spectrum(df):
     return hs, tp
 
 
-def estimate_tp_from_spectrum(df, min_freq_hz=0.08):
-    fcol = pick_column(df, ["freq_hz", "f_hz", "freq"])
-    scol = pick_column(df, ["S_eta_hz", "S_eta_est", "S_eta", "S_est"])
-    if fcol is None or scol is None:
-        return None
-
-    work = df[[fcol, scol]].copy()
-    work = work[np.isfinite(work[fcol]) & np.isfinite(work[scol])]
-    work = work[work[fcol] > 0.0]
-    if work.empty:
-        return None
-
-    work[scol] = work[scol].clip(lower=0.0)
-    filtered = work[work[fcol] >= min_freq_hz]
-    if filtered.empty:
-        filtered = work
-
-    if filtered[scol].max() <= 0.0:
-        return None
-
-    peak_row = filtered.loc[filtered[scol].idxmax()]
-    fp = float(peak_row[fcol])
-    if fp <= 0.0:
-        return None
-    return 1.0 / fp
-
-
 def plot_mode(mode):
     groups = collect_groups(mode)
     if not groups:
@@ -167,14 +140,15 @@ def plot_mode(mode):
             label = tracker.capitalize()
             lw = 1.8
 
-            if "S_eta_hz" in df.columns:
-                axes[0].loglog(df["freq_hz"], df["S_eta_hz"], label=f"{label} est", lw=lw)
-            if "S_ref_interp" in df.columns and idx == 0:
-                axes[0].loglog(df["freq_hz"], df["S_ref_interp"], "--", color="gray", label="Reference", lw=1.2)
+            if "A_eta_est" in df.columns:
+                axes[0].semilogx(df["freq_hz"], df["A_eta_est"], label=f"{label} est", lw=lw)
+            if "A_eta_ref" in df.columns and idx == 0:
+                axes[0].semilogx(df["freq_hz"], df["A_eta_ref"], "--", color="gray", label="Reference", lw=1.2)
 
-            if "S_ratio" in df.columns:
-                axes[1].semilogx(df["freq_hz"], df["S_ratio"], label=f"{label} est/ref", lw=lw)
-            axes[1].axhline(1.0, color="gray", ls="--", lw=1.0)
+            if "E_eta_est" in df.columns:
+                axes[1].semilogx(df["freq_hz"], df["E_eta_est"], label=f"{label} est", lw=lw)
+            if "E_eta_ref" in df.columns and idx == 0:
+                axes[1].semilogx(df["freq_hz"], df["E_eta_ref"], "--", color="gray", label="Reference", lw=1.2)
 
             if "CumVar_est" in df.columns:
                 est_norm = df["CumVar_est"] / max(df["CumVar_est"].iloc[-1], 1e-12)
@@ -183,8 +157,8 @@ def plot_mode(mode):
                 ref_norm = df["CumVar_ref"] / max(df["CumVar_ref"].iloc[-1], 1e-12)
                 axes[2].semilogx(df["freq_hz"], ref_norm, "--", color="gray", label="Reference", lw=1.2)
 
-        axes[0].set_ylabel(r"$S_\eta(f)$ [m$^2$/Hz]")
-        axes[1].set_ylabel(r"$S_{\eta,\mathrm{est}}/S_{\eta,\mathrm{ref}}$")
+        axes[0].set_ylabel(r"$A_\eta(f)$ [m]")
+        axes[1].set_ylabel(r"$E_\eta(f)=fS_\eta(f)$ [m$^2$]")
         axes[2].set_ylabel("Cumulative variance")
         axes[2].set_xlabel("Frequency [Hz]")
 
@@ -213,31 +187,17 @@ def plot_mode(mode):
 
             if hs_col is not None:
                 hs_values.append((label, float(df[hs_col].iloc[-1])))
-            tp_val = None
             if tp_col is not None:
-                tp_val = float(df[tp_col].iloc[-1])
+                tp_values.append((label, float(df[tp_col].iloc[-1])))
             elif fp_col is not None:
                 safe_fp = max(float(df[fp_col].iloc[-1]), 1e-9)
-                tp_val = 1.0 / safe_fp
+                tp_values.append((label, 1.0 / safe_fp))
 
-            tp_from_spec = estimate_tp_from_spectrum(df)
-            if tp_from_spec is not None:
-                if tp_val is None or not np.isfinite(tp_val) or tp_val > 20.0 or tp_val < 0.5:
-                    tp_val = tp_from_spec
-                else:
-                    fmin = float(df["freq_hz"].iloc[0]) if "freq_hz" in df.columns else None
-                    if fmin is not None and fmin > 0.0:
-                        edge_tp = 1.0 / fmin
-                        if abs(tp_val - edge_tp) / edge_tp < 0.05:
-                            tp_val = tp_from_spec
-            if tp_val is not None:
-                tp_values.append((label, tp_val))
-
-            if hs_col is None or tp_val is None:
+            if hs_col is None or (tp_col is None and fp_col is None):
                 hs_est, tp_est = estimate_bulk_from_spectrum(df)
                 if hs_col is None and hs_est is not None:
                     hs_values.append((label, hs_est))
-                if tp_val is None and tp_est is not None:
+                if tp_col is None and fp_col is None and tp_est is not None:
                     tp_values.append((label, tp_est))
 
         fig_hs, ax_hs = plt.subplots(figsize=(6.5, 2.8))
