@@ -1,3 +1,11 @@
+\ifdefined\SEAMETRICSFRAGMENT
+\else
+\documentclass[11pt,letterpaper]{article}
+\usepackage{booktabs}
+\usepackage{float}
+\begin{document}
+\fi
+
 \begin{table}[H]
 \centering
 \caption{SeaMetricsFromSpectrum validation using two synthetic spectra derived from spectrum-estimator scenarios.}
@@ -11,3 +19,8 @@ broad\_peak\_windsea\_like & 1.500 & 1.498 & 0.13 & 6.000 & 6.006 & Mixed & \tex
 \bottomrule
 \end{tabular}
 \end{table}
+
+\ifdefined\SEAMETRICSFRAGMENT
+\else
+\end{document}
+\fi
