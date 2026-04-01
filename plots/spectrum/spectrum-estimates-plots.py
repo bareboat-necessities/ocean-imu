@@ -92,6 +92,30 @@ def output_prefix(mode):
     return "spectrum_estimates" if mode == "classic" else "spectrum_wavelets_estimates"
 
 
+def estimate_bulk_from_spectrum(df):
+    fcol = pick_column(df, ["freq_hz", "f_hz", "freq"])
+    scol = pick_column(df, ["S_eta_hz", "S_eta_est", "S_eta", "S_est"])
+    if fcol is None or scol is None:
+        return None, None
+
+    f = df[fcol]
+    s = df[scol].clip(lower=0.0)
+    if len(f) < 2 or len(s) < 2:
+        return None, None
+
+    m0 = s.integrate(f)
+    hs = 4.0 * (m0 ** 0.5) if m0 > 0 else None
+
+    fp_idx = s.idxmax() if len(s) > 0 else None
+    tp = None
+    if fp_idx is not None:
+        fp = float(f.loc[fp_idx])
+        if fp > 0.0:
+            tp = 1.0 / fp
+
+    return hs, tp
+
+
 def plot_mode(mode):
     groups = collect_groups(mode)
     if not groups:
@@ -148,48 +172,65 @@ def plot_mode(mode):
         fig.savefig(out_spectrum, bbox_inches="tight")
         plt.close(fig)
 
-        fig2, ax2 = plt.subplots(figsize=(6.5, 3.2))
-        plotted_any = False
+        hs_values = []
+        tp_values = []
 
         for tracker, f in tracker_files:
             df = pd.read_csv(f, comment="#")
-            xcol = pick_column(df, ["time", "time_s", "t", "block_time_s", "block"])
-            if xcol is None:
-                xcol = df.columns[0]
+            label = tracker.capitalize()
 
             hs_col = pick_column(df, ["Hs", "Hs_est", "hs", "hs_est"])
-            fp_col = pick_column(df, ["Fp", "Fp_est", "fp", "fp_est"])
             tp_col = pick_column(df, ["Tp", "Tp_est", "tp", "tp_est"])
+            fp_col = pick_column(df, ["Fp", "Fp_est", "fp", "fp_est"])
 
-            label = tracker.capitalize()
             if hs_col is not None:
-                ax2.plot(df[xcol], df[hs_col], lw=1.6, label=f"{label} $H_s$")
-                plotted_any = True
+                hs_values.append((label, float(df[hs_col].iloc[-1])))
             if tp_col is not None:
-                ax2.plot(df[xcol], df[tp_col], lw=1.6, linestyle="--", label=f"{label} $T_p$")
-                plotted_any = True
+                tp_values.append((label, float(df[tp_col].iloc[-1])))
             elif fp_col is not None:
-                safe_fp = df[fp_col].clip(lower=1e-9)
-                ax2.plot(df[xcol], 1.0 / safe_fp, lw=1.6, linestyle="--", label=f"{label} $T_p$")
-                plotted_any = True
+                safe_fp = max(float(df[fp_col].iloc[-1]), 1e-9)
+                tp_values.append((label, 1.0 / safe_fp))
 
-        if not plotted_any:
-            ax2.text(0.5, 0.5, "No block time-series columns found", ha="center", va="center", transform=ax2.transAxes)
+            if hs_col is None or (tp_col is None and fp_col is None):
+                hs_est, tp_est = estimate_bulk_from_spectrum(df)
+                if hs_col is None and hs_est is not None:
+                    hs_values.append((label, hs_est))
+                if tp_col is None and fp_col is None and tp_est is not None:
+                    tp_values.append((label, tp_est))
 
-        ax2.set_xlabel("Block index / time")
-        ax2.set_ylabel("Estimate")
-        ax2.grid(True, alpha=0.3)
-        if plotted_any:
-            ax2.legend(fontsize=7)
-        ax2.set_title(f"{wave.upper()} — {level.capitalize()} sea")
+        fig_hs, ax_hs = plt.subplots(figsize=(6.5, 2.8))
+        if hs_values:
+            labels = [x[0] for x in hs_values]
+            values = [x[1] for x in hs_values]
+            ax_hs.bar(labels, values, color="#4C78A8")
+        else:
+            ax_hs.text(0.5, 0.5, "No $H_s$ estimates found", ha="center", va="center", transform=ax_hs.transAxes)
+        ax_hs.set_ylabel(r"$H_s$ [m]")
+        ax_hs.set_title(f"{wave.upper()} — {level.capitalize()} sea")
+        ax_hs.grid(True, axis="y", alpha=0.3)
+        fig_hs.tight_layout()
+        out_hs = f"{out_prefix}_{wave}_{level}_hs.pgf"
+        fig_hs.savefig(out_hs, bbox_inches="tight")
+        plt.close(fig_hs)
 
-        out_timeseries = f"{out_prefix}_{wave}_{level}_timeseries.pgf"
-        fig2.tight_layout()
-        fig2.savefig(out_timeseries, bbox_inches="tight")
-        plt.close(fig2)
+        fig_tp, ax_tp = plt.subplots(figsize=(6.5, 2.8))
+        if tp_values:
+            labels = [x[0] for x in tp_values]
+            values = [x[1] for x in tp_values]
+            ax_tp.bar(labels, values, color="#F58518")
+        else:
+            ax_tp.text(0.5, 0.5, "No $T_p$ estimates found", ha="center", va="center", transform=ax_tp.transAxes)
+        ax_tp.set_ylabel(r"$T_p$ [s]")
+        ax_tp.set_title(f"{wave.upper()} — {level.capitalize()} sea")
+        ax_tp.grid(True, axis="y", alpha=0.3)
+        fig_tp.tight_layout()
+        out_tp = f"{out_prefix}_{wave}_{level}_tp.pgf"
+        fig_tp.savefig(out_tp, bbox_inches="tight")
+        plt.close(fig_tp)
 
         print(f"  Saved → {out_spectrum}")
-        print(f"  Saved → {out_timeseries}")
+        print(f"  Saved → {out_hs}")
+        print(f"  Saved → {out_tp}")
 
 
 def main():
