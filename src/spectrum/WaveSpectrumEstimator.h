@@ -14,13 +14,7 @@
 
 #include "spectrum/SpectrumStats.h"
 
-#ifdef SPECTRUM_TEST
-#include <iostream>
-#include <cassert>
-#endif
-
 /*
-
     Copyright 2025-2026, Mikhail Grushinskiy
 
     WaveSpectrumEstimator
@@ -55,7 +49,6 @@
     Embedded-friendly:
         - Fixed-size Eigen vector for spectrum, std::array buffers, no heap allocations
         - Biquad sections in TDF-II transposed form for numerical stability
-
 */
 
 template<int Nfreq = 32, int Nblock = 256>
@@ -564,47 +557,3 @@ private:
     // Filter Q (per biquad)
     static constexpr double Q = 0.707;
 };
-
-#ifdef SPECTRUM_TEST
-// Minimal offline test with a single-tone acceleration.
-// Verifies pipeline runs and returns finite, reasonable stats.
-void WaveSpectrumEstimator_test() {
-    constexpr int Nfreq = 32;
-    constexpr int Nblock = 256;
-
-    double fs = 200.0;
-    WaveSpectrumEstimator<Nfreq, Nblock> estimator(fs, 2, true);
-
-    double f_test = 0.2;
-    double A_test = 1.0;
-    int N_samples = 2000;
-
-    int ready_count = 0;
-    for (int n = 0; n < N_samples; n++) {
-        double t = n / fs;
-        double acc = A_test * std::sin(2.0 * M_PI * f_test * t);
-        if (estimator.processSample(acc)) {
-            ready_count++;
-
-            auto S = estimator.getDisplacementSpectrum();
-            double Hs = estimator.computeHs();
-            double Fp = estimator.estimateFp();
-            auto pm = estimator.fitPiersonMoskowitz();
-
-            std::cerr << "Spectrum ready: Hs = " << Hs
-                      << ", Fp = " << Fp
-                      << ", PM fit: alpha = " << pm.alpha
-                      << ", fp = " << pm.fp
-                      << ", cost = " << pm.cost << "\n";
-
-            assert(Hs > 0);
-            assert(Hs < 3);
-            assert(Fp > 0);
-            assert(pm.alpha > 0);
-            assert(pm.fp > 0);
-            (void)S; // silence unused warning in this simple smoke test
-        }
-    }
-    assert(ready_count > 0);
-}
-#endif

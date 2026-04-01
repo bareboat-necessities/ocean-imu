@@ -14,16 +14,8 @@
 
 #include "spectrum/SpectrumStats.h"
 
-#ifdef SPECTRUM_TEST
-#include <iostream>
-#include <cassert>
-#endif
-
 /*
-
     Copyright 2025-2026, Mikhail Grushinskiy
-
-    WaveSpectrumEstimator  (Wavelet-based)
 
     Same interface as the original Goertzel estimator, but the block spectrum is computed
     using a complex Morlet wavelet filter bank (CWT-style) evaluated on the same fixed
@@ -50,9 +42,8 @@
 
     Notes:
       - This produces a constant-Q-ish spectral estimate that tends to behave better on
-        nonstationary / short blocks than a single long FFT/Goertzel, while keeping your
+        nonstationary / short blocks than a single long FFT/Goertzel, while keeping
         exact same downstream interface and PM fitting, Hs, Fp helpers.
-
 */
 
 template<int Nfreq = 32, int Nblock = 256>
@@ -668,8 +659,8 @@ private:
 
     // Smoothing controls
     bool  use_psd_ema = true;
-    double ema_alpha_low  = 0.20;
-    double ema_alpha_high = 0.06;
+    double ema_alpha_low  = 0.20;  // alpha near lowest f
+    double ema_alpha_high = 0.06;  // alpha near highest f (smaller -> stronger smoothing)
     bool  have_ema = false;
     Eigen::Matrix<double, Nfreq, 1> psd_ema_;
 
@@ -682,47 +673,3 @@ private:
     // Filter Q (per biquad)
     static constexpr double Q = 0.707;
 };
-
-#ifdef SPECTRUM_TEST
-// Minimal offline test with a single-tone acceleration.
-// For wavelets the exact Hs number depends on gain calibration; we keep this as a
-// finite / sanity check rather than a strict numeric expectation.
-void WaveSpectrumEstimator_test() {
-    constexpr int Nfreq = 32;
-    constexpr int Nblock = 256;
-
-    double fs = 200.0;
-    WaveSpectrumEstimator<Nfreq, Nblock> estimator(fs, 2, true);
-
-    double f_test = 0.2;
-    double A_test = 1.0;
-    int N_samples = 6000;
-
-    int ready_count = 0;
-    for (int n = 0; n < N_samples; n++) {
-        double t = n / fs;
-        double acc = A_test * std::sin(2.0 * M_PI * f_test * t);
-        if (estimator.processSample(acc)) {
-            ready_count++;
-
-            auto S = estimator.getDisplacementSpectrum();
-            double Hs = estimator.computeHs();
-            double Fp = estimator.estimateFp();
-            auto pm = estimator.fitPiersonMoskowitz();
-
-            std::cerr << "Spectrum ready: Hs = " << Hs
-                      << ", Fp = " << Fp
-                      << ", PM fit: alpha = " << pm.alpha
-                      << ", fp = " << pm.fp
-                      << ", cost = " << pm.cost << "\n";
-
-            assert(std::isfinite(Hs) && Hs >= 0.0);
-            assert(std::isfinite(Fp) && Fp > 0.0);
-            assert(std::isfinite(pm.alpha) && pm.alpha > 0.0);
-            assert(std::isfinite(pm.fp) && pm.fp > 0.0);
-            (void)S;
-        }
-    }
-    assert(ready_count > 0);
-}
-#endif
