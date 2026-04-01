@@ -15,18 +15,21 @@
 \maketitle
 
 \newcommand{\specplots}[3]{%
-\begin{figure}[H]\centering
-\resizebox{\linewidth}{!}{\input{spectrum_estimates_#1_#2_spectrum.pgf}}
-\caption{#3 estimator against simulation reference spectrum at #2 sea state: final block $S_\eta(f)$ comparison.}
-\end{figure}
-\begin{figure}[H]\centering
-\resizebox{\linewidth}{!}{\input{spectrum_estimates_#1_#2_hs.pgf}}
-\caption{#3 estimator $H_s$ estimates at #2 sea state (separate chart).}
-\end{figure}
-\begin{figure}[H]\centering
-\resizebox{\linewidth}{!}{\input{spectrum_estimates_#1_#2_tp.pgf}}
-\caption{#3 estimator $T_p$ estimates at #2 sea state (separate chart).}
-\end{figure}
+    \begin{figure}[H]\centering
+    \resizebox{\linewidth}{!}{\input{spectrum_estimates_#1_#2_spectrum.pgf}}
+    \caption{#3 estimator against simulation reference spectrum at #2 sea state: final block $S_\eta(f)$ comparison.}
+    \end{figure}
+}
+
+\newcommand{\HTplots}[3]{%
+    \begin{figure}[H]\centering
+    \resizebox{\linewidth}{!}{\input{spectrum_estimates_#1_#2_hs.pgf}}
+    \caption{#3 estimator $H_s$ estimates at #2 sea state (separate chart).}
+    \end{figure}
+    \begin{figure}[H]\centering
+    \resizebox{\linewidth}{!}{\input{spectrum_estimates_#1_#2_tp.pgf}}
+    \caption{#3 estimator $T_p$ estimates at #2 sea state (separate chart).}
+    \end{figure}
 }
 
 \specplots{pmstokes}{low}{PM Stokes}
@@ -35,5 +38,12 @@
 \specplots{jonswap}{low}{JONSWAP}
 \specplots{jonswap}{medium}{JONSWAP}
 \specplots{jonswap}{high}{JONSWAP}
+
+\HTplots{pmstokes}{low}{PM Stokes}
+\HTplots{pmstokes}{medium}{PM Stokes}
+\HTplots{pmstokes}{high}{PM Stokes}
+\HTplots{jonswap}{low}{JONSWAP}
+\HTplots{jonswap}{medium}{JONSWAP}
+\HTplots{jonswap}{high}{JONSWAP}
 
 \end{document}
