@@ -22,23 +22,26 @@
 }%
 }
 
-\newcommand{\specpairw}[3]{%
+\newcommand{\specplotsw}[3]{%
 \begin{figure}[H]\centering
-\begin{minipage}{0.49\textwidth}
 \safeplotinput{spectrum_wavelets_estimates_#1_#2_spectrum.pgf}
-\end{minipage}\hfill
-\begin{minipage}{0.49\textwidth}
-\safeplotinput{spectrum_wavelets_estimates_#1_#2_timeseries.pgf}
-\end{minipage}
-\caption{#3 wavelet estimator against simulation reference spectrum at #2 sea state. Left: final block $S_\eta(f)$ comparison. Right: $H_s$ and $T_p$ evolution over blocks.}
+\caption{#3 wavelet estimator against simulation reference spectrum at #2 sea state: final block $S_\eta(f)$ comparison.}
+\end{figure}
+\begin{figure}[H]\centering
+\safeplotinput{spectrum_wavelets_estimates_#1_#2_hs.pgf}
+\caption{#3 wavelet estimator $H_s$ estimates at #2 sea state (separate chart).}
+\end{figure}
+\begin{figure}[H]\centering
+\safeplotinput{spectrum_wavelets_estimates_#1_#2_tp.pgf}
+\caption{#3 wavelet estimator $T_p$ estimates at #2 sea state (separate chart).}
 \end{figure}
 }
 
-\specpairw{pmstokes}{low}{PM Stokes}
-\specpairw{pmstokes}{medium}{PM Stokes}
-\specpairw{pmstokes}{high}{PM Stokes}
-\specpairw{jonswap}{low}{JONSWAP}
-\specpairw{jonswap}{medium}{JONSWAP}
-\specpairw{jonswap}{high}{JONSWAP}
+\specplotsw{pmstokes}{low}{PM Stokes}
+\specplotsw{pmstokes}{medium}{PM Stokes}
+\specplotsw{pmstokes}{high}{PM Stokes}
+\specplotsw{jonswap}{low}{JONSWAP}
+\specplotsw{jonswap}{medium}{JONSWAP}
+\specplotsw{jonswap}{high}{JONSWAP}
 
 \end{document}
