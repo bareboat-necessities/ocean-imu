@@ -1,5 +1,4 @@
-\ifdefined\SEAMETRICSFRAGMENT
-\else
+\expandafter\ifx\csname SEAMETRICSFRAGMENT\endcsname\relax
 \documentclass[11pt,letterpaper]{article}
 \usepackage{booktabs}
 \usepackage{float}
@@ -20,7 +19,6 @@ broad\_peak\_windsea\_like & 1.500 & 1.498 & 0.13 & 6.000 & 6.006 & Mixed & \tex
 \end{tabular}
 \end{table}
 
-\ifdefined\SEAMETRICSFRAGMENT
-\else
+\expandafter\ifx\csname SEAMETRICSFRAGMENT\endcsname\relax
 \end{document}
 \fi
