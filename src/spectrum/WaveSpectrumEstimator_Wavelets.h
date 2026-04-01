@@ -18,12 +18,15 @@
     Wavelet spectrum estimator with adaptive low-frequency cutoff learned from
     the deconvolved acceleration spectrum before displacement inversion.
 
-    Notes:
-      - Uses shared low-frequency adaptation helpers from WaveSpectrumShared.h
+    Current fixes:
+      - uses shared low-frequency adaptation helpers from WaveSpectrumShared.h
       - estimateFp()/estimateTp() respect the learned cutoff directly
-      - Medium/high sea fix:
-          * learn cutoff from S_aa_true, not S_aa_meas
-          * gentler final inversion knee
+      - cutoff learned from S_aa_true, not S_aa_meas
+      - gentler final inversion knee
+      - wavelet taps orthogonalized to DC and ramp
+      - wavelet amplitude calibration fix:
+          * per-bin valid-region window RMS correction
+          * exact Parseval FIR gain normalization
 */
 
 template<int Nfreq = 32, int Nblock = 256>
@@ -34,8 +37,6 @@ public:
     static constexpr double g = 9.80665;
     using Vec = Eigen::Matrix<double, Nfreq, 1>;
     using Biquad = WaveSpectrumShared::Biquad;
-
-    struct PMFitResult { double alpha, fp, cost; };
 
     WaveSpectrumEstimator(double fs_raw_ = 200.0,
                           int decimFactor_ = 30,
@@ -186,20 +187,19 @@ private:
         wave_im_.fill(0.0f);
         wave_half_.fill(0);
         wave_gain_onesided_hz_.fill(1.0);
+        wave_valid_win_rms2_.fill(1.0);
 
         const double halfMax = double((Nblock - 1) / 2);
         const double sigma_t_max = (fs > 0.0)
             ? (halfMax / (WAVELET_SUPPORT_SIGMA * fs))
             : 0.0;
 
-        std::array<double, WAVELET_NFFT> Hre{};
-        std::array<double, WAVELET_NFFT> Him{};
-
         for (int i = 0; i < Nfreq; ++i) {
             const double f0 = freqs_[i];
             if (!(f0 > 0.0) || !(fs > 0.0)) {
                 wave_gain_onesided_hz_[i] = 1.0;
                 wave_half_[i] = WAVELET_MIN_HALF;
+                wave_valid_win_rms2_[i] = 1.0;
                 continue;
             }
 
@@ -212,6 +212,23 @@ private:
 
             const int L = 2 * half + 1;
             wave_half_[i] = half;
+
+            // Per-bin valid region window power.
+            {
+                const int n0 = half;
+                const int n1 = Nblock - half; // exclusive
+
+                double win_sumsq_valid = 0.0;
+                int M_valid = 0;
+                for (int n = n0; n < n1; ++n) {
+                    const double wv = window_[n];
+                    win_sumsq_valid += wv * wv;
+                    ++M_valid;
+                }
+
+                wave_valid_win_rms2_[i] =
+                    (M_valid > 0) ? (win_sumsq_valid / double(M_valid)) : 1.0;
+            }
 
             const double w0 = 2.0 * M_PI * f0;
             const double C0 = std::exp(-0.5 * (w0 * sigma_t) * (w0 * sigma_t));
@@ -233,6 +250,7 @@ private:
 
             orthogonalize_wavelet_to_dc_and_ramp_(i, L, half);
 
+            // Normalize taps to unit magnitude response at +f0.
             double H0r = 0.0;
             double H0i = 0.0;
             for (int n = 0; n < L; ++n) {
@@ -256,45 +274,16 @@ private:
                 wave_im_[tapIndex_(i, n)] = float(double(wave_im_[tapIndex_(i, n)]) * scale);
             }
 
-            Hre.fill(0.0);
-            Him.fill(0.0);
-
-            const double df = fs / double(WAVELET_NFFT);
-
-            for (int k = 0; k < WAVELET_NFFT; ++k) {
-                const double w = 2.0 * M_PI * double(k) / double(WAVELET_NFFT);
-                const double cw = std::cos(w);
-                const double sw = std::sin(w);
-
-                double cr = 1.0, ci = 0.0;
-                double sr = 0.0, si = 0.0;
-
-                for (int n = 0; n < L; ++n) {
-                    const double re = double(wave_re_[tapIndex_(i, n)]);
-                    const double im = double(wave_im_[tapIndex_(i, n)]);
-
-                    sr += re * cr + im * ci;
-                    si += im * cr - re * ci;
-
-                    const double crn = cr * cw - ci * sw;
-                    const double cin = cr * sw + ci * cw;
-                    cr = crn;
-                    ci = cin;
-                }
-
-                Hre[k] = sr;
-                Him[k] = si;
+            // Exact Parseval gain for real-input one-sided PSD mapping:
+            // G = 0.5 * fs * sum |h[n]|^2
+            double tap_energy = 0.0;
+            for (int n = 0; n < L; ++n) {
+                const double re = double(wave_re_[tapIndex_(i, n)]);
+                const double im = double(wave_im_[tapIndex_(i, n)]);
+                tap_energy += re * re + im * im;
             }
 
-            double gain = 0.0;
-            for (int k = 0; k <= WAVELET_NFFT / 2; ++k) {
-                const int kneg = (k == 0 || k == WAVELET_NFFT / 2) ? k : (WAVELET_NFFT - k);
-                const double mag2_pos = Hre[k] * Hre[k] + Him[k] * Him[k];
-                const double mag2_neg = Hre[kneg] * Hre[kneg] + Him[kneg] * Him[kneg];
-                gain += 0.5 * (mag2_pos + mag2_neg) * df;
-            }
-
-            wave_gain_onesided_hz_[i] = std::max(gain, 1e-12);
+            wave_gain_onesided_hz_[i] = std::max(0.5 * fs * tap_energy, 1e-12);
         }
     }
 
@@ -328,13 +317,9 @@ private:
             xw[n] = xdet * window_[n];
         }
 
-        const double w_rms2 = (N > 0) ? (window_sum_sq / double(N)) : 1.0;
-        const double inv_w_rms2 = 1.0 / std::max(w_rms2, 1e-12);
-
         const double Tblk = (fs > 0.0) ? (double(N) / fs) : 0.0;
         const double f_blk = (Tblk > 0.0) ? (1.0 / (6.0 * Tblk)) : 0.0;
 
-        std::array<double, Nfreq> S_aa_meas_arr{};
         std::array<double, Nfreq> S_aa_true_arr{};
 
         for (int i = 0; i < Nfreq; ++i) {
@@ -362,9 +347,14 @@ private:
             }
 
             const double var_out = (M > 0) ? (pwr / double(M)) : 0.0;
+
+            const double inv_win_rms2 =
+                1.0 / std::max(wave_valid_win_rms2_[i], 1e-12);
+
             const double S_aa_meas =
-                std::max(0.0, (var_out * inv_w_rms2) / std::max(wave_gain_onesided_hz_[i], 1e-12));
-            S_aa_meas_arr[i] = S_aa_meas;
+                std::max(0.0,
+                    (var_out * inv_win_rms2) /
+                    std::max(wave_gain_onesided_hz_[i], 1e-12));
 
             const double Omega_raw = 2.0 * M_PI * f / fs_raw;
             const double H2_hp =
@@ -449,10 +439,6 @@ private:
 
     double last_lowfreq_cut_hz_ = 0.0;
 
-    static constexpr int WAVELET_NFFT =
-        (Nblock <= 256) ? 1024 :
-        (Nblock <= 512) ? 2048 : 4096;
-
     static constexpr double WAVELET_CYCLES_TARGET = 6.0;
     static constexpr double WAVELET_SUPPORT_SIGMA = 3.0;
     static constexpr int WAVELET_MIN_HALF = 8;
@@ -461,4 +447,5 @@ private:
     std::array<float, Nfreq * Nblock> wave_im_{};
     std::array<int, Nfreq> wave_half_{};
     std::array<double, Nfreq> wave_gain_onesided_hz_{};
+    std::array<double, Nfreq> wave_valid_win_rms2_{};
 };
