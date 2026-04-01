@@ -300,106 +300,106 @@ private:
         lastSpectrum_ = Sout;
     }
 
-void suppress_lowfreq_dc_leak_() {
-    if (Nfreq < 4 || fs <= 0.0) return;
-
-    Eigen::Matrix<double, Nfreq, 1> E;
-    for (int i = 0; i < Nfreq; ++i) {
-        E[i] = std::max(0.0, (double)lastSpectrum_[i]) * std::max(freqs_[i], 1e-12);
-    }
-
-    // Mild smoothing in log-frequency direction
-    Eigen::Matrix<double, Nfreq, 1> Es = E;
-    Es[0] = 0.75 * E[0] + 0.25 * E[1];
-    for (int i = 1; i < Nfreq - 1; ++i) {
-        Es[i] = 0.25 * E[i - 1] + 0.50 * E[i] + 0.25 * E[i + 1];
-    }
-    Es[Nfreq - 1] = 0.25 * E[Nfreq - 2] + 0.75 * E[Nfreq - 1];
-
-    // Physical low-f floor from:
-    //   - first usable grid bin
-    //   - block length
-    //   - HP corner
-    const double Tblk = double(Nblock) / std::max(fs, 1e-12);
-    const double f_floor_hz = std::max({
-        1.10 * freqs_[0],
-        2.0 / std::max(Tblk, 1e-12),
-        1.15 * hp_f0_hz
-    });
-
-    int i_floor = 0;
-    while (i_floor + 1 < Nfreq && freqs_[i_floor + 1] < f_floor_hz) ++i_floor;
-
-    // Find the dominant interior peak in E(f)=fS(f), not in S(f)
-    int i_peak = std::max(1, i_floor);
-    double e_peak = Es[i_peak];
-    for (int i = i_peak + 1; i < Nfreq - 1; ++i) {
-        if (Es[i] > e_peak) {
-            e_peak = Es[i];
-            i_peak = i;
+    void suppress_lowfreq_dc_leak_() {
+        if (Nfreq < 4 || fs <= 0.0) return;
+    
+        Eigen::Matrix<double, Nfreq, 1> E;
+        for (int i = 0; i < Nfreq; ++i) {
+            E[i] = std::max(0.0, (double)lastSpectrum_[i]) * std::max(freqs_[i], 1e-12);
+        }
+    
+        // Mild smoothing in log-frequency direction
+        Eigen::Matrix<double, Nfreq, 1> Es = E;
+        Es[0] = 0.75 * E[0] + 0.25 * E[1];
+        for (int i = 1; i < Nfreq - 1; ++i) {
+            Es[i] = 0.25 * E[i - 1] + 0.50 * E[i] + 0.25 * E[i + 1];
+        }
+        Es[Nfreq - 1] = 0.25 * E[Nfreq - 2] + 0.75 * E[Nfreq - 1];
+    
+        // Physical low-f floor from:
+        //   - first usable grid bin
+        //   - block length
+        //   - HP corner
+        const double Tblk = double(Nblock) / std::max(fs, 1e-12);
+        const double f_floor_hz = std::max({
+            1.10 * freqs_[0],
+            2.0 / std::max(Tblk, 1e-12),
+            1.15 * hp_f0_hz
+        });
+    
+        int i_floor = 0;
+        while (i_floor + 1 < Nfreq && freqs_[i_floor + 1] < f_floor_hz) ++i_floor;
+    
+        // Find the dominant interior peak in E(f)=fS(f), not in S(f)
+        int i_peak = std::max(1, i_floor);
+        double e_peak = Es[i_peak];
+        for (int i = i_peak + 1; i < Nfreq - 1; ++i) {
+            if (Es[i] > e_peak) {
+                e_peak = Es[i];
+                i_peak = i;
+            }
+        }
+        if (!(e_peak > 0.0) || i_peak <= i_floor) return;
+    
+        // Find a left-side valley before the main peak
+        int i_valley = i_floor;
+        double e_valley = Es[i_floor];
+        for (int i = i_floor + 1; i < i_peak; ++i) {
+            if (Es[i] < e_valley) {
+                e_valley = Es[i];
+                i_valley = i;
+            }
+        }
+    
+        // Adaptive cutoff:
+        // Prefer a real valley if one exists; otherwise use a peak-relative cutoff.
+        int i_cut = i_floor;
+        const bool valley_is_good =
+            (i_valley > i_floor) &&
+            (e_valley < 0.72 * e_peak) &&
+            (freqs_[i_valley] < 0.85 * freqs_[i_peak]);
+    
+        if (valley_is_good) {
+            i_cut = i_valley;
+        } else {
+            const double f_rel = std::max(f_floor_hz, 0.42 * freqs_[i_peak]);
+            for (int i = i_floor; i < i_peak; ++i) {
+                if (freqs_[i] <= f_rel) i_cut = i;
+            }
+        }
+    
+        if (i_cut <= 0) return;
+    
+        const double f_ref = std::max(freqs_[i_cut], 1e-12);
+        const double E_ref = std::max(E[i_cut], 1e-18);
+    
+        // Adaptive decay exponent:
+        // narrow peak -> stronger suppression, broad peak -> gentler suppression
+        double left_width = std::log(std::max(freqs_[i_peak], 1e-12) / f_ref);
+        left_width = std::clamp(left_width, 0.05, 1.5);
+        const double shape_pow = std::clamp(3.6 - 1.1 * left_width, 2.2, 3.6);
+    
+        // Below cutoff, enforce:
+        //   - no re-growth toward DC
+        //   - steep decay from cutoff
+        double prev = E_ref;
+        for (int i = i_cut - 1; i >= 0; --i) {
+            const double r = std::max(0.0, freqs_[i] / f_ref);
+            const double shape_cap = E_ref * std::pow(r, shape_pow);
+    
+            double v = std::max(0.0, (double)E[i]);
+            v = std::min(v, shape_cap);
+            v = std::min(v, prev);
+    
+            E[i] = v;
+            prev = v;
+        }
+    
+        // Convert back from E(f)=fS(f) to S(f)
+        for (int i = 0; i < Nfreq; ++i) {
+            lastSpectrum_[i] = E[i] / std::max(freqs_[i], 1e-12);
         }
     }
-    if (!(e_peak > 0.0) || i_peak <= i_floor) return;
-
-    // Find a left-side valley before the main peak
-    int i_valley = i_floor;
-    double e_valley = Es[i_floor];
-    for (int i = i_floor + 1; i < i_peak; ++i) {
-        if (Es[i] < e_valley) {
-            e_valley = Es[i];
-            i_valley = i;
-        }
-    }
-
-    // Adaptive cutoff:
-    // Prefer a real valley if one exists; otherwise use a peak-relative cutoff.
-    int i_cut = i_floor;
-    const bool valley_is_good =
-        (i_valley > i_floor) &&
-        (e_valley < 0.72 * e_peak) &&
-        (freqs_[i_valley] < 0.85 * freqs_[i_peak]);
-
-    if (valley_is_good) {
-        i_cut = i_valley;
-    } else {
-        const double f_rel = std::max(f_floor_hz, 0.42 * freqs_[i_peak]);
-        for (int i = i_floor; i < i_peak; ++i) {
-            if (freqs_[i] <= f_rel) i_cut = i;
-        }
-    }
-
-    if (i_cut <= 0) return;
-
-    const double f_ref = std::max(freqs_[i_cut], 1e-12);
-    const double E_ref = std::max(E[i_cut], 1e-18);
-
-    // Adaptive decay exponent:
-    // narrow peak -> stronger suppression, broad peak -> gentler suppression
-    double left_width = std::log(std::max(freqs_[i_peak], 1e-12) / f_ref);
-    left_width = std::clamp(left_width, 0.05, 1.5);
-    const double shape_pow = std::clamp(3.6 - 1.1 * left_width, 2.2, 3.6);
-
-    // Below cutoff, enforce:
-    //   - no re-growth toward DC
-    //   - steep decay from cutoff
-    double prev = E_ref;
-    for (int i = i_cut - 1; i >= 0; --i) {
-        const double r = std::max(0.0, freqs_[i] / f_ref);
-        const double shape_cap = E_ref * std::pow(r, shape_pow);
-
-        double v = std::max(0.0, (double)E[i]);
-        v = std::min(v, shape_cap);
-        v = std::min(v, prev);
-
-        E[i] = v;
-        prev = v;
-    }
-
-    // Convert back from E(f)=fS(f) to S(f)
-    for (int i = 0; i < Nfreq; ++i) {
-        lastSpectrum_[i] = E[i] / std::max(freqs_[i], 1e-12);
-    }
-}
 
     void buildFrequencyGrid() {
         constexpr double f_min = 0.04, f_max = 1.2;
