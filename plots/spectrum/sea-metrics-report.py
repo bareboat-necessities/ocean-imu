@@ -12,7 +12,7 @@ def pass_cell(v: str) -> str:
     return r"\textbf{PASS}" if str(v).strip() in ("1", "true", "True") else r"\textbf{FAIL}"
 
 
-def build_fragment(rows) -> str:
+def build_table(rows) -> str:
     lines = [
         r"\begin{table}[H]",
         r"\centering",
@@ -42,7 +42,21 @@ def build_fragment(rows) -> str:
     return "\n".join(lines) + "\n"
 
 
-def build_main(fragment_path: Path) -> str:
+def build_fragment(rows) -> str:
+    table_tex = build_table(rows).strip()
+    return "\n".join([
+        r"\documentclass[11pt,letterpaper]{article}",
+        r"\usepackage{booktabs}",
+        r"\usepackage{float}",
+        r"\begin{document}",
+        table_tex,
+        r"\end{document}",
+        "",
+    ])
+
+
+def build_main(rows) -> str:
+    table_tex = build_table(rows).strip()
     return "\n".join([
         r"\documentclass[11pt,letterpaper]{article}",
         r"\usepackage{fullpage}",
@@ -53,7 +67,7 @@ def build_main(fragment_path: Path) -> str:
         r"\date{\today}",
         r"\begin{document}",
         r"\maketitle",
-        rf"\input{{{fragment_path.name}}}",
+        table_tex,
         r"\end{document}",
         "",
     ])
@@ -76,7 +90,7 @@ def main() -> None:
     fragment_path.parent.mkdir(parents=True, exist_ok=True)
     main_path.parent.mkdir(parents=True, exist_ok=True)
     fragment_path.write_text(build_fragment(rows), encoding="utf-8")
-    main_path.write_text(build_main(fragment_path), encoding="utf-8")
+    main_path.write_text(build_main(rows), encoding="utf-8")
 
     print(f"Loaded CSV rows: {len(rows)} from {csv_path}")
     print(f"Wrote LaTeX fragment: {fragment_path}")
