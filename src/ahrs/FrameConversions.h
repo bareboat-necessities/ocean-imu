@@ -44,6 +44,7 @@ static inline Vector3f ned_to_zu(const Vector3f& v) {
 
 // Aerospace → Nautical
 static inline void aero_to_nautical(float &roll, float &pitch, float &yaw) {
+    (void)yaw;
     float r_a = roll;
     float p_a = pitch;
     roll  = -p_a;  // aerospace pitch → nautical roll
@@ -53,6 +54,7 @@ static inline void aero_to_nautical(float &roll, float &pitch, float &yaw) {
 
 // Nautical → Aerospace
 static inline void nautical_to_aero(float &roll, float &pitch, float &yaw) {
+    (void)yaw;
     float r_n = roll;
     float p_n = pitch;
     roll  = -p_n;  // nautical pitch → aerospace roll

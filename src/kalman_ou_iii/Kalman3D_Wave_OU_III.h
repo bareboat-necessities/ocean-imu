@@ -124,7 +124,6 @@ inline OUDiscreteCoeffs<T> safe_phi_A_coeffs(T h, T tau) {
         c.phi_Sa = tau3 * (T(1.0/6.0)*x3 - T(1.0/24.0)*x4 + T(1.0/120.0)*x5);
     } else {
         // General closed-form branch
-        const T alpha  = std::exp(-x);
         const T em1    = std::expm1(-x);
         // reuse for stability
         const T phi_pa = tau2 * (x + em1);
