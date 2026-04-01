@@ -198,9 +198,14 @@ inline void process_wave_file(const std::string& data_file,
     const std::string outname = output_prefix + waveName + tail + nb.str() + ".csv";
 
     std::ofstream ofs(outname);
+    const double hs_est = estimator.computeHs();
+    const double fp_est = estimator.estimateFp();
+    const double tp_est = (fp_est > 0.0) ? (1.0 / fp_est) : 0.0;
+
     ofs << "freq_hz,S_eta_hz,S_ref_interp,S_ratio,"
            "A_eta_est,A_eta_ref,E_eta_est,E_eta_ref,"
-           "CumVar_est,CumVar_ref\n";
+           "CumVar_est,CumVar_ref,"
+           "Hs_est,Fp_est,Tp_est\n";
 
     double cum_est = 0.0;
     double cum_ref = 0.0;
@@ -227,7 +232,8 @@ inline void process_wave_file(const std::string& data_file,
         ofs << f_est << "," << S_eta_hz << "," << s_ref << "," << ratio << ","
             << A_eta_est << "," << A_eta_ref << ","
             << E_eta_est << "," << E_eta_ref << ","
-            << cum_est << "," << cum_ref << "\n";
+            << cum_est << "," << cum_ref << ","
+            << hs_est << "," << fp_est << "," << tp_est << "\n";
     }
 
     std::cout << "Finished " << data_file << " with " << block_count

@@ -12,6 +12,8 @@
 #include <limits>
 #include <algorithm> // for std::clamp
 
+#include "spectrum/SpectrumStats.h"
+
 #ifdef SPECTRUM_TEST
 #include <iostream>
 #include <cassert>
@@ -183,54 +185,12 @@ public:
     // m0 = ∫ S_eta(f) df approximated by trapezoidal rule
     // Works for both linear and log-spaced bins (uses Δf[i]).
     double computeHs() const {
-        double m0 = 0.0;
-        // trapezoidal integration over uneven frequency grid
-        for (int i = 0; i < Nfreq; i++) {
-            m0 += lastSpectrum_[i] * df_[i];
-        }
-        return 4.0 * std::sqrt(std::max(m0, 0.0));
+        return SpectrumStats::compute_hs<Nfreq>(lastSpectrum_, df_);
     }
 
     // Peak frequency using proper log-parabolic interpolation
     double estimateFp() const {
-        int k = 0; double vmax = 0.0;
-        for (int i = 0; i < Nfreq; ++i) {
-            if (lastSpectrum_[i] > vmax) { vmax = lastSpectrum_[i]; k = i; }
-        }
-        if (k == 0 || k == Nfreq - 1) return freqs_[k];
-
-        // Use log-frequency for true log-parabolic interpolation
-        const double f0 = freqs_[k-1], f1 = freqs_[k], f2 = freqs_[k+1];
-        if (f0 <= 0 || f1 <= 0 || f2 <= 0) return f1;
-
-        const double x0 = std::log(f0), x1 = std::log(f1), x2 = std::log(f2);
-        const double y0 = safeLog(lastSpectrum_[k-1]);
-        const double y1 = safeLog(lastSpectrum_[k]);
-        const double y2 = safeLog(lastSpectrum_[k+1]);
-
-        // Quadratic fit y = a x^2 + b x + c
-        const double dx01 = x0 - x1, dx02 = x0 - x2, dx12 = x1 - x2;
-        const double denom = (dx01 * dx02 * dx12);
-        if (std::abs(denom) < 1e-18) return f1;
-
-        // Lagrange-based coefficients
-        const double L0a = 1.0 / (dx01 * dx02);
-        const double L1a = 1.0 / ((x1 - x0) * (x1 - x2));
-        const double L2a = 1.0 / ((x2 - x0) * (x2 - x1));
-        const double a = y0 * L0a + y1 * L1a + y2 * L2a;
-
-        const double b =
-            y0 * (-(x1 + x2) * L0a) +
-            y1 * (-(x0 + x2) * L1a) +
-            y2 * (-(x0 + x1) * L2a);
-
-        if (a >= 0.0) return f1; // not a concave peak
-
-        const double x_peak = -b / (2.0 * a);
-        const double f_peak = std::exp(x_peak);
-
-        if (f_peak <= std::min(f0,f2) || f_peak >= std::max(f0,f2)) return f1;
-        return f_peak;
+        return SpectrumStats::estimate_fp<Nfreq>(lastSpectrum_, freqs_);
     }
 
     // Simple PM log-LS fit (α, f_p) with frequency-weighted cost
@@ -362,7 +322,24 @@ private:
                 i_peak = i;
             }
         }
-        if (i_peak <= 1 || s_peak <= 0.0) return;
+        if (s_peak <= 0.0) return;
+
+        // If the global peak is stuck in the first bins (typical DC/leak artifact),
+        // fall back to the strongest interior peak so suppression still engages.
+        if (i_peak <= 1) {
+            int i_alt = -1;
+            double s_alt = 0.0;
+            for (int i = 2; i < Nfreq; ++i) {
+                const double v = std::max(0.0, (double)lastSpectrum_[i]);
+                if (v > s_alt) {
+                    s_alt = v;
+                    i_alt = i;
+                }
+            }
+            if (i_alt < 0 || s_alt <= 0.0) return;
+            i_peak = i_alt;
+            s_peak = s_alt;
+        }
 
         const double f_peak = freqs_[i_peak];
         const double f_cut_target = 0.45 * f_peak;
