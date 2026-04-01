@@ -1,24 +1,6 @@
-\expandafter\ifx\csname SEAMETRICSFRAGMENT\endcsname\relax
 \documentclass[11pt,letterpaper]{article}
 \usepackage{booktabs}
 \usepackage{float}
 \begin{document}
-\fi
-
-\begin{table}[H]
-\centering
-\caption{SeaMetricsFromSpectrum validation using two synthetic spectra derived from spectrum-estimator scenarios.}
-\label{tab:sea_metrics_from_spectrum}
-\begin{tabular}{lrrrrrcl}
-\toprule
-Case & $H_{s,target}$ & $H_{s,est}$ & $H_s$ err [\%] & $T_{p,target}$ & $T_{p,est}$ & Type & Gate \\
-\midrule
-narrow\_peak\_swell\_like & 1.500 & 1.501 & 0.04 & 10.000 & 10.028 & Mixed & \textbf{PASS} \\
-broad\_peak\_windsea\_like & 1.500 & 1.498 & 0.13 & 6.000 & 6.006 & Mixed & \textbf{PASS} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\expandafter\ifx\csname SEAMETRICSFRAGMENT\endcsname\relax
+\input{sea_metrics_from_spectrum_table_content.tex}
 \end{document}
-\fi
