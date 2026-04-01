@@ -601,7 +601,7 @@ orthogonalize_wavelet_to_dc_and_ramp_(i, L, half);
         const double w_rms2 = (N > 0) ? (window_sum_sq / double(N)) : 1.0;
         const double inv_w_rms2 = 1.0 / std::max(w_rms2, 1e-12);
 
-        // Block-based knee (same idea as original)
+        // Block-based knee 
         const double Tblk = (fs > 0.0) ? (double(N) / fs) : 0.0;
         const double f_blk = (Tblk > 0.0) ? (1.0 / (6.0 * Tblk)) : 0.0;
         const double f_knee = std::max(reg_f0_hz, f_blk);
