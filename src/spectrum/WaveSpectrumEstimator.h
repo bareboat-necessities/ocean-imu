@@ -461,12 +461,16 @@ private:
                 biquad_mag2_raw(hp1_, Omega_raw) *
                 biquad_mag2_raw(hp2_, Omega_raw);
 
-            // Cap inverse gain instead of adding a freq-dependent fudge term
-            constexpr double H2_floor = 0.05; // ~ -13 dB floor on |H|^2
-            double S_aa_true = S_aa_meas / std::max(H2_hp, H2_floor);
+            // Soft / regularized inverse of the HP power response.
+            // Much better than 1/max(H2, floor): it does NOT create a low-f plateau.
+            constexpr double hp_deconv_reg = 0.10;   // regularization on |H|^2 scale
+            const double inv_hp = H2_hp / (H2_hp * H2_hp + hp_deconv_reg * hp_deconv_reg);
+            double S_aa_true = S_aa_meas * inv_hp;
 
-            // Fixed Tikhonov regularization (as documented in your comments)
-            const double f_knee = std::max(reg_f0_hz, f_blk);
+            // Keep displacement inversion knee at least near the HP corner.
+            // Otherwise you undo the HP, then immediately let 1/w^4 blow up the same region again.
+            const double f_knee = std::max({reg_f0_hz, 0.8 * hp_f0_hz, f_blk});
+            
             const double lam    = 2.0 * M_PI * f_knee;
             const double w      = 2.0 * M_PI * f;
             const double den    = (w * w + lam * lam);
