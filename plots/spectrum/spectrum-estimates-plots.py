@@ -104,7 +104,8 @@ def estimate_bulk_from_spectrum(df):
     if len(f) < 2 or len(s) < 2:
         return None, None
 
-    m0 = np.trapezoid(s.to_numpy(), f.to_numpy())
+    trapz = getattr(np, "trapezoid", np.trapz)
+    m0 = trapz(s.to_numpy(), f.to_numpy())
     hs = 4.0 * (m0 ** 0.5) if m0 > 0 else None
 
     fp_idx = s.idxmax() if len(s) > 0 else None
