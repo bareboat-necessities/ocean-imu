@@ -479,7 +479,6 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
 
     const float accb_r3_pct = pct_of_max(accb_r3, acc_true_max_3d);
     const float gyrb_r3_pct = pct_of_max(gyrb_r3, gyr_true_max_3d);
-    const float magb_r3_pct = pct_of_max(magb_r3, mag_true_max_3d);
     std::cout << "Bias error RMS (% of max TRUE bias) (acc): X=" << pct_of_max(accb_rx, acc_true_max_x)
               << "% Y=" << pct_of_max(accb_ry, acc_true_max_y)
               << "% Z=" << pct_of_max(accb_rz, acc_true_max_z)
