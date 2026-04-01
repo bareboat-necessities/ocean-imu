@@ -18,18 +18,18 @@
     Wavelet spectrum estimator with adaptive low-frequency cutoff learned from
     the deconvolved acceleration spectrum before displacement inversion.
 
-    Current fixes:
-      - uses shared low-frequency adaptation helpers from WaveSpectrumShared.h
-      - estimateFp()/estimateTp() respect the learned cutoff directly
-      - cutoff learned from S_aa_true, not S_aa_meas
+    This version keeps:
+      - shared low-frequency adaptation via WaveSpectrumShared.h
+      - estimateFp()/estimateTp() using learned low-frequency cutoff
+      - cutoff learned from S_aa_true
       - gentler final inversion knee
       - wavelet taps orthogonalized to DC and ramp
-      - wavelet amplitude calibration fix:
-          * per-bin valid-region window RMS correction
-          * exact Parseval FIR gain normalization
-      - narrower low-frequency wavelets for higher-sea / lower-frequency cases:
-          * adaptive cycle count (3.0 -> 5.5)
-          * hard support cap at Nblock / 6
+      - per-bin valid-region window RMS correction
+      - exact Parseval FIR gain normalization
+
+    This version does NOT use:
+      - adaptive cycle count
+      - hard support cap at Nblock/6
 */
 
 template<int Nfreq = 32, int Nblock = 256>
@@ -160,6 +160,7 @@ private:
             const double k = double(n - half);
             const double re = double(wave_re_[tapIndex_(i, n)]);
             const double im = double(wave_im_[tapIndex_(i, n)]);
+
             sum_re += re;
             sum_im += im;
             sumk_re += k * re;
@@ -192,8 +193,10 @@ private:
         wave_gain_onesided_hz_.fill(1.0);
         wave_valid_win_rms2_.fill(1.0);
 
-        const int half_cap = std::max(WAVELET_MIN_HALF, Nblock / 6);
-        const double halfMax = double(half_cap);
+        const double halfMax = double((Nblock - 1) / 2);
+        const double sigma_t_max = (fs > 0.0)
+            ? (halfMax / (WAVELET_SUPPORT_SIGMA * fs))
+            : 0.0;
 
         for (int i = 0; i < Nfreq; ++i) {
             const double f0 = freqs_[i];
@@ -204,18 +207,8 @@ private:
                 continue;
             }
 
-            const double f_lo = 0.08;
-            const double f_hi = 0.35;
-
-            double tcy = (f0 - f_lo) / std::max(f_hi - f_lo, 1e-12);
-            tcy = std::clamp(tcy, 0.0, 1.0);
-
-            const double cycles_eff =
-                WAVELET_CYCLES_LOW +
-                (WAVELET_CYCLES_HIGH - WAVELET_CYCLES_LOW) * tcy;
-
-            double sigma_t = cycles_eff / (2.0 * M_PI * f0);
-            sigma_t = std::min(sigma_t, std::max(1e-6, halfMax / (WAVELET_SUPPORT_SIGMA * fs)));
+            double sigma_t = WAVELET_CYCLES_TARGET / (2.0 * M_PI * f0);
+            sigma_t = std::min(sigma_t, std::max(1e-6, sigma_t_max));
 
             int half = int(std::ceil(WAVELET_SUPPORT_SIGMA * sigma_t * fs));
             half = std::clamp(half, WAVELET_MIN_HALF, int(halfMax));
@@ -226,7 +219,7 @@ private:
 
             {
                 const int n0 = half;
-                const int n1 = Nblock - half; // exclusive
+                const int n1 = Nblock - half;
 
                 double win_sumsq_valid = 0.0;
                 int M_valid = 0;
@@ -283,8 +276,6 @@ private:
                 wave_im_[tapIndex_(i, n)] = float(double(wave_im_[tapIndex_(i, n)]) * scale);
             }
 
-            // Exact Parseval gain for real-input one-sided PSD mapping:
-            // G = 0.5 * fs * sum |h[n]|^2
             double tap_energy = 0.0;
             for (int n = 0; n < L; ++n) {
                 const double re = double(wave_re_[tapIndex_(i, n)]);
@@ -449,8 +440,7 @@ private:
 
     double last_lowfreq_cut_hz_ = 0.0;
 
-    static constexpr double WAVELET_CYCLES_LOW = 3.0;
-    static constexpr double WAVELET_CYCLES_HIGH = 5.5;
+    static constexpr double WAVELET_CYCLES_TARGET = 6.0;
     static constexpr double WAVELET_SUPPORT_SIGMA = 3.0;
     static constexpr int WAVELET_MIN_HALF = 8;
 
