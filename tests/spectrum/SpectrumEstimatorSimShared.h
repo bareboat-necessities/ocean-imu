@@ -247,4 +247,4 @@ inline std::vector<std::string> discover_wave_data_files() {
     return files;
 }
 
-}  // namespace SpectrumEstimatorSimShared
+}  // namespace
