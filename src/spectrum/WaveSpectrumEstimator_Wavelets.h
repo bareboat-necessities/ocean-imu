@@ -27,6 +27,9 @@
       - wavelet amplitude calibration fix:
           * per-bin valid-region window RMS correction
           * exact Parseval FIR gain normalization
+      - narrower low-frequency wavelets for higher-sea / lower-frequency cases:
+          * adaptive cycle count (3.0 -> 5.5)
+          * hard support cap at Nblock / 6
 */
 
 template<int Nfreq = 32, int Nblock = 256>
@@ -189,10 +192,8 @@ private:
         wave_gain_onesided_hz_.fill(1.0);
         wave_valid_win_rms2_.fill(1.0);
 
-        const double halfMax = double((Nblock - 1) / 2);
-        const double sigma_t_max = (fs > 0.0)
-            ? (halfMax / (WAVELET_SUPPORT_SIGMA * fs))
-            : 0.0;
+        const int half_cap = std::max(WAVELET_MIN_HALF, Nblock / 6);
+        const double halfMax = double(half_cap);
 
         for (int i = 0; i < Nfreq; ++i) {
             const double f0 = freqs_[i];
@@ -203,8 +204,18 @@ private:
                 continue;
             }
 
-            double sigma_t = WAVELET_CYCLES_TARGET / (2.0 * M_PI * f0);
-            sigma_t = std::min(sigma_t, std::max(1e-6, sigma_t_max));
+            const double f_lo = 0.08;
+            const double f_hi = 0.35;
+
+            double tcy = (f0 - f_lo) / std::max(f_hi - f_lo, 1e-12);
+            tcy = std::clamp(tcy, 0.0, 1.0);
+
+            const double cycles_eff =
+                WAVELET_CYCLES_LOW +
+                (WAVELET_CYCLES_HIGH - WAVELET_CYCLES_LOW) * tcy;
+
+            double sigma_t = cycles_eff / (2.0 * M_PI * f0);
+            sigma_t = std::min(sigma_t, std::max(1e-6, halfMax / (WAVELET_SUPPORT_SIGMA * fs)));
 
             int half = int(std::ceil(WAVELET_SUPPORT_SIGMA * sigma_t * fs));
             half = std::clamp(half, WAVELET_MIN_HALF, int(halfMax));
@@ -213,7 +224,6 @@ private:
             const int L = 2 * half + 1;
             wave_half_[i] = half;
 
-            // Per-bin valid region window power.
             {
                 const int n0 = half;
                 const int n1 = Nblock - half; // exclusive
@@ -250,7 +260,6 @@ private:
 
             orthogonalize_wavelet_to_dc_and_ramp_(i, L, half);
 
-            // Normalize taps to unit magnitude response at +f0.
             double H0r = 0.0;
             double H0i = 0.0;
             for (int n = 0; n < L; ++n) {
@@ -407,7 +416,8 @@ private:
             lastSpectrum_, freqs_, last_lowfreq_cut_hz_);
     }
 
-    double fs_raw = 0.0, fs = 0.0;
+    double fs_raw = 0.0;
+    double fs = 0.0;
     int decimFactor = 1;
     bool hannEnabled = true;
 
@@ -439,7 +449,8 @@ private:
 
     double last_lowfreq_cut_hz_ = 0.0;
 
-    static constexpr double WAVELET_CYCLES_TARGET = 6.0;
+    static constexpr double WAVELET_CYCLES_LOW = 3.0;
+    static constexpr double WAVELET_CYCLES_HIGH = 5.5;
     static constexpr double WAVELET_SUPPORT_SIGMA = 3.0;
     static constexpr int WAVELET_MIN_HALF = 8;
 
