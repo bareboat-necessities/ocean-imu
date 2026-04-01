@@ -310,6 +310,53 @@ private:
         lastSpectrum_ = Sout;
     }
 
+    // Adaptive low-frequency/DC leak suppression.
+    // Below a peak-dependent cutoff, enforce a strongly decaying envelope and
+    // prohibit any re-growth toward DC.
+    void suppress_lowfreq_dc_leak_() {
+        if (Nfreq < 4) return;
+
+        int i_peak = 0;
+        double s_peak = std::max(0.0, (double)lastSpectrum_[0]);
+        for (int i = 1; i < Nfreq; ++i) {
+            const double v = std::max(0.0, (double)lastSpectrum_[i]);
+            if (v > s_peak) {
+                s_peak = v;
+                i_peak = i;
+            }
+        }
+        if (i_peak <= 1 || s_peak <= 0.0) return;
+
+        const double f_peak = freqs_[i_peak];
+        const double f_cut_target = 0.45 * f_peak;
+        const double f_cut_floor  = std::max(freqs_[1], 1.8 * hp_f0_hz);
+        const double f_cut_ceil   = 0.85 * f_peak;
+        const double f_cut = std::min(f_cut_ceil, std::max(f_cut_floor, f_cut_target));
+
+        int i_cut = 0;
+        for (int i = i_peak - 1; i >= 0; --i) {
+            if (freqs_[i] <= f_cut) {
+                i_cut = i;
+                break;
+            }
+        }
+
+        const double f_ref = std::max(freqs_[i_cut], 1e-9);
+        const double s_ref = std::max(0.0, (double)lastSpectrum_[i_cut]);
+
+        double prev = s_ref;
+        constexpr double shape_pow = 4.0;
+        for (int i = i_cut - 1; i >= 0; --i) {
+            const double r = std::max(0.0, freqs_[i] / f_ref);
+            const double shape_cap = s_ref * std::pow(r, shape_pow);
+            double v = std::max(0.0, (double)lastSpectrum_[i]);
+            v = std::min(v, shape_cap);
+            v = std::min(v, prev);
+            lastSpectrum_[i] = v;
+            prev = v;
+        }
+    }
+
     void buildFrequencyGrid() {
         constexpr double f_min = 0.04, f_max = 1.2;
 
@@ -606,6 +653,7 @@ private:
 
         have_ema = true;
         smooth_logfreq_3tap();
+        suppress_lowfreq_dc_leak_();
     }
 
     // Members / State
