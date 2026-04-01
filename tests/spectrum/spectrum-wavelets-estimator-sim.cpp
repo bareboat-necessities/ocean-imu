@@ -17,10 +17,12 @@ int main() {
 
     std::cout << "Wavelet spectrum estimator simulation (IMU -> estimator vs ref spectrum files)\n";
 
+    bool all_quality_ok = true;
     for (const auto& fname : SpectrumEstimatorSimShared::discover_wave_data_files()) {
-        SpectrumEstimatorSimShared::process_wave_file<Estimator, Nfreq>(
-            fname, dt, 4321u, "spectrum_wavelets_");
+        all_quality_ok = SpectrumEstimatorSimShared::process_wave_file<Estimator, Nfreq>(
+                             fname, dt, 4321u, "spectrum_wavelets_")
+                         && all_quality_ok;
     }
 
-    return 0;
+    return all_quality_ok ? 0 : 1;
 }

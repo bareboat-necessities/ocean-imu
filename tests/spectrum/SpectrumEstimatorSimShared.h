@@ -132,15 +132,15 @@ inline std::vector<double> build_reference_1d_spectrum(
 }
 
 template <typename TEstimator, int Nfreq>
-inline void process_wave_file(const std::string& data_file,
+inline bool process_wave_file(const std::string& data_file,
                               [[maybe_unused]] float dt,
                               unsigned noise_seed,
                               const std::string& output_prefix) {
     auto parsed = WaveFileNaming::parse_to_params(data_file);
-    if (!parsed) return;
+    if (!parsed) return true;
 
     auto [kind, type, wp] = *parsed;
-    if (kind != FileKind::Data) return;
+    if (kind != FileKind::Data) return true;
 
     std::string spectrum_file = data_file;
     auto pos = spectrum_file.find("wave_data_");
@@ -150,7 +150,7 @@ inline void process_wave_file(const std::string& data_file,
 
     if (!std::filesystem::exists(spectrum_file)) {
         std::cerr << "Skipping " << data_file << " (missing ref spectrum " << spectrum_file << ")\n";
-        return;
+        return true;
     }
 
     std::cout << "Processing " << data_file
@@ -184,7 +184,7 @@ inline void process_wave_file(const std::string& data_file,
     if (!has_last) {
         std::cout << "Finished " << data_file << " with " << block_count
                   << " spectra (no final snapshot)\n\n";
-        return;
+        return true;
     }
 
     const std::string waveName = EnumTraits<WaveType>::to_string(type);
@@ -209,6 +209,7 @@ inline void process_wave_file(const std::string& data_file,
 
     double cum_est = 0.0;
     double cum_ref = 0.0;
+    double sum_sq_amp_error = 0.0;
     for (int i = 0; i < Nfreq; ++i) {
         const double f_est = freqs[i];
         const double S_eta_hz = std::max(0.0, last_s_est[i]);
@@ -223,11 +224,13 @@ inline void process_wave_file(const std::string& data_file,
         const double ratio = (s_ref > 0.0) ? (S_eta_hz / s_ref) : 0.0;
         const double A_eta_est = std::sqrt(std::max(0.0, 2.0 * S_eta_hz * delta_f * f_est));
         const double A_eta_ref = std::sqrt(std::max(0.0, 2.0 * s_ref * delta_f * f_est));
+        const double A_eta_err = A_eta_est - A_eta_ref;
         const double E_eta_est = f_est * S_eta_hz;
         const double E_eta_ref = f_est * s_ref;
 
         cum_est += S_eta_hz * 2.0 * delta_f;
         cum_ref += s_ref * 2.0 * delta_f;
+        sum_sq_amp_error += A_eta_err * A_eta_err;
 
         ofs << f_est << "," << S_eta_hz << "," << s_ref << "," << ratio << ","
             << A_eta_est << "," << A_eta_ref << ","
@@ -236,8 +239,20 @@ inline void process_wave_file(const std::string& data_file,
             << hs_est << "," << fp_est << "," << tp_est << "\n";
     }
 
+    const double amp_err_rms_m = std::sqrt(sum_sq_amp_error / static_cast<double>(Nfreq));
+    const double hs_ref_m = static_cast<double>(wp.height);
+    const double amp_err_rms_pct_hs = (hs_ref_m > 0.0) ? (100.0 * amp_err_rms_m / hs_ref_m) : 0.0;
+    constexpr double AMP_ERR_RMS_LIMIT_PCT_HS = 20.0;
+    const bool quality_ok = amp_err_rms_pct_hs <= AMP_ERR_RMS_LIMIT_PCT_HS;
+
+    std::cout << "Spectrum amplitude error RMS=" << amp_err_rms_m
+              << " m (" << amp_err_rms_pct_hs << "%Hs, gate "
+              << AMP_ERR_RMS_LIMIT_PCT_HS << "%Hs) -> "
+              << (quality_ok ? "PASS" : "FAIL") << "\n";
+
     std::cout << "Finished " << data_file << " with " << block_count
               << " spectra -> " << outname << "\n\n";
+    return quality_ok;
 }
 
 inline std::vector<std::string> discover_wave_data_files() {
