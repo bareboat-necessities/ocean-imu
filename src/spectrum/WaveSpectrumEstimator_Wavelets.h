@@ -331,6 +331,37 @@ private:
         }
     }
 
+void orthogonalize_wavelet_to_dc_and_ramp_(int i, int L, int half) {
+    double sum_re = 0.0, sum_im = 0.0;
+    double sumk_re = 0.0, sumk_im = 0.0;
+    double sumk2 = 0.0;
+
+    for (int n = 0; n < L; ++n) {
+        const double k = double(n - half);
+        const double re = (double)wave_re_[tapIndex_(i, n)];
+        const double im = (double)wave_im_[tapIndex_(i, n)];
+
+        sum_re += re;
+        sum_im += im;
+        sumk_re += k * re;
+        sumk_im += k * im;
+        sumk2 += k * k;
+    }
+
+    const double mean_re  = sum_re / double(L);
+    const double mean_im  = sum_im / double(L);
+    const double slope_re = (sumk2 > 0.0) ? (sumk_re / sumk2) : 0.0;
+    const double slope_im = (sumk2 > 0.0) ? (sumk_im / sumk2) : 0.0;
+
+    for (int n = 0; n < L; ++n) {
+        const double k = double(n - half);
+        wave_re_[tapIndex_(i, n)] =
+            (float)((double)wave_re_[tapIndex_(i, n)] - (mean_re + slope_re * k));
+        wave_im_[tapIndex_(i, n)] =
+            (float)((double)wave_im_[tapIndex_(i, n)] - (mean_im + slope_im * k));
+    }
+}
+
     void buildFrequencyGrid() {
         constexpr double f_min = 0.04, f_max = 1.2;
 
