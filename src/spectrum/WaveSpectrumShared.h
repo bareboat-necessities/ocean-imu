@@ -106,12 +106,13 @@ inline double smoothstep01(double x) {
 inline double lowfreq_taper(double f, double f_cut) {
     if (!(f_cut > 0.0)) return 1.0;
 
-    const double f0 = 0.72 * f_cut;
-    const double f1 = 1.20 * f_cut;
+    // Gentler taper for medium/high seas.
+    const double f0 = 0.45 * f_cut;
+    const double f1 = 1.10 * f_cut;
 
     if (f <= f0) {
         const double r = std::clamp(f / std::max(f0, 1e-12), 0.0, 1.0);
-        return std::pow(r, 6.0);
+        return std::pow(r, 3.0);
     }
     if (f >= f1) return 1.0;
 
@@ -132,10 +133,13 @@ inline void smooth_logfreq_3tap_inplace(SpectrumLike& spectrum,
 
     auto wpair = [&](int i) {
         const double eps = 1e-12;
+
         const double x_im1 = (i > 0)
             ? std::log(std::max(freqs[i - 1], eps))
             : std::log(std::max(freqs[i], eps));
+
         const double x_i = std::log(std::max(freqs[i], eps));
+
         const double x_ip1 = (i < Nfreq - 1)
             ? std::log(std::max(freqs[i + 1], eps))
             : std::log(std::max(freqs[i], eps));
@@ -167,15 +171,41 @@ inline void smooth_logfreq_3tap_inplace(SpectrumLike& spectrum,
 }
 
 template<int Nfreq>
-inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S_aa_meas,
+inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S_aa_true,
                                               const std::array<double, Nfreq>& freqs,
                                               double Tblk,
                                               double hp_f0_hz) {
+    if (Nfreq < 4) {
+        return std::max({
+            1.10 * freqs[0],
+            1.8 / std::max(Tblk, 1e-12),
+            1.35 * hp_f0_hz
+        });
+    }
+
+    // Use partially integrated pseudo-velocity-like spectrum to avoid
+    // right-shifting the cutoff in medium/high sea states.
+    const double f_floor = std::max({
+        1.10 * freqs[0],
+        1.80 / std::max(Tblk, 1e-12),
+        1.35 * hp_f0_hz
+    });
+
+    const double f_pre = std::max({
+        0.85 * hp_f0_hz,
+        1.20 / std::max(Tblk, 1e-12),
+        0.80 * f_floor
+    });
+    const double lam_pre = 2.0 * M_PI * f_pre;
+
     std::array<double, Nfreq> E{};
     std::array<double, Nfreq> Es{};
 
     for (int i = 0; i < Nfreq; ++i) {
-        E[i] = std::max(0.0, S_aa_meas[i]) * std::max(freqs[i], 1e-12);
+        const double f = std::max(freqs[i], 1e-12);
+        const double w = 2.0 * M_PI * f;
+        const double S_mid = std::max(0.0, S_aa_true[i]) / (w * w + lam_pre * lam_pre);
+        E[i] = f * S_mid;
     }
 
     Es[0] = 0.75 * E[0] + 0.25 * E[1];
@@ -183,12 +213,6 @@ inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S
         Es[i] = 0.25 * E[i - 1] + 0.50 * E[i] + 0.25 * E[i + 1];
     }
     Es[Nfreq - 1] = 0.25 * E[Nfreq - 2] + 0.75 * E[Nfreq - 1];
-
-    const double f_floor = std::max({
-        1.35 * freqs[0],
-        2.8 / std::max(Tblk, 1e-12),
-        2.2 * hp_f0_hz
-    });
 
     int i_floor = 0;
     while (i_floor + 1 < Nfreq && freqs[i_floor + 1] < f_floor) ++i_floor;
@@ -215,16 +239,30 @@ inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S
         }
     }
 
+    double f_left_half = freqs[i_floor];
+    for (int i = i_peak; i >= i_floor; --i) {
+        if (Es[i] <= 0.5 * e_peak) {
+            f_left_half = freqs[i];
+            break;
+        }
+    }
+
+    double left_width = std::log(std::max(freqs[i_peak], 1e-12) / std::max(f_left_half, 1e-12));
+    left_width = std::clamp(left_width, 0.05, 1.50);
+
+    const double rel_cut = std::clamp(0.39 - 0.13 * left_width, 0.22, 0.38);
+
     const bool valley_is_good =
         (i_valley > i_floor) &&
         (e_valley < 0.82 * e_peak) &&
         (freqs[i_valley] < 0.88 * freqs[i_peak]);
 
     double f_cut = valley_is_good
-        ? freqs[i_valley]
-        : std::max(f_floor, 0.58 * freqs[i_peak]);
+        ? std::max(f_floor, 0.85 * freqs[i_valley])
+        : std::max(f_floor, rel_cut * freqs[i_peak]);
 
-    f_cut = std::clamp(f_cut, f_floor, 0.90 * freqs[i_peak]);
+    f_cut = std::min(f_cut, 0.65 * freqs[i_peak]);
+    f_cut = std::max(f_cut, f_floor);
     return f_cut;
 }
 
@@ -236,6 +274,7 @@ inline void suppress_lowfreq_from_cut_inplace(SpectrumLike& spectrum,
 
     int i_cut = 0;
     while (i_cut + 1 < Nfreq && freqs[i_cut + 1] <= f_cut_hz) ++i_cut;
+    if (i_cut <= 0) return;
 
     std::array<double, Nfreq> E{};
     for (int i = 0; i < Nfreq; ++i) {
@@ -247,9 +286,9 @@ inline void suppress_lowfreq_from_cut_inplace(SpectrumLike& spectrum,
     const double E_ref = std::max(E[i_ref], 1e-18);
 
     double prev = E_ref;
-    constexpr double shape_pow = 4.8;
+    constexpr double shape_pow = 3.0;
 
-    for (int i = i_cut; i >= 0; --i) {
+    for (int i = i_cut - 1; i >= 0; --i) {
         const double r = std::clamp(freqs[i] / f_ref, 0.0, 1.0);
         const double cap = E_ref * std::pow(r, shape_pow);
 
@@ -289,6 +328,7 @@ inline double estimate_fp_with_guard(const SpectrumLike& spectrum,
     const double f0 = freqs[k - 1];
     const double f1 = freqs[k];
     const double f2 = freqs[k + 1];
+
     if (f0 <= 0.0 || f1 <= 0.0 || f2 <= 0.0) return f1;
 
     const double x0 = std::log(f0);
