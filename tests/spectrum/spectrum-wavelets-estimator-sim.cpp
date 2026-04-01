@@ -12,7 +12,7 @@ const float g_std = 9.80665f;
 int main() {
     constexpr float dt = 1.0f / 200.0f;
     constexpr int Nfreq = 32;
-    constexpr int Nblock = 256;
+    constexpr int Nblock = 384;
     using Estimator = WaveSpectrumEstimator<Nfreq, Nblock>;
 
     std::cout << "Wavelet spectrum estimator simulation (IMU -> estimator vs ref spectrum files)\n";

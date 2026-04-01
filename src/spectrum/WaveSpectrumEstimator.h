@@ -26,7 +26,7 @@
           * gentler final inversion knee
 */
 
-template<int Nfreq = 32, int Nblock = 256>
+template<int Nfreq = 32, int Nblock = 384>
 class EIGEN_ALIGN_MAX WaveSpectrumEstimator {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
