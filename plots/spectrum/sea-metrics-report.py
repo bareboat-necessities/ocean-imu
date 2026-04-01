@@ -43,20 +43,10 @@ def build_table(rows) -> str:
 
 
 def build_fragment(rows) -> str:
-    table_tex = build_table(rows).strip()
-    return "\n".join([
-        r"\documentclass[11pt,letterpaper]{article}",
-        r"\usepackage{booktabs}",
-        r"\usepackage{float}",
-        r"\begin{document}",
-        table_tex,
-        r"\end{document}",
-        "",
-    ])
+    return build_table(rows)
 
 
 def build_main(rows) -> str:
-    table_tex = build_table(rows).strip()
     return "\n".join([
         r"\documentclass[11pt,letterpaper]{article}",
         r"\usepackage{fullpage}",
@@ -67,7 +57,7 @@ def build_main(rows) -> str:
         r"\date{\today}",
         r"\begin{document}",
         r"\maketitle",
-        table_tex,
+        r"\input{sea_metrics_from_spectrum_table_fragment.tex-part}",
         r"\end{document}",
         "",
     ])
@@ -76,7 +66,7 @@ def build_main(rows) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", default="sea_metrics_from_spectrum_report.csv")
-    parser.add_argument("--out-fragment", default="../../doc/spectrum/sea_metrics_from_spectrum_table_fragment.tex")
+    parser.add_argument("--out-fragment", default="../../doc/spectrum/sea_metrics_from_spectrum_table_fragment.tex-part")
     parser.add_argument("--out-main", default="../../doc/spectrum/sea_metrics_from_spectrum_table.tex")
     args = parser.parse_args()
 
