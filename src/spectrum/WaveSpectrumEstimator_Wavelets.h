@@ -16,7 +16,14 @@
 
 /*
     Wavelet spectrum estimator with adaptive low-frequency cutoff learned from
-    the wavelet-measured acceleration spectrum before displacement inversion.
+    the deconvolved acceleration spectrum before displacement inversion.
+
+    Notes:
+      - Uses shared low-frequency adaptation helpers from WaveSpectrumShared.h
+      - estimateFp()/estimateTp() respect the learned cutoff directly
+      - Medium/high sea fix:
+          * learn cutoff from S_aa_true, not S_aa_meas
+          * gentler final inversion knee
 */
 
 template<int Nfreq = 32, int Nblock = 256>
@@ -33,7 +40,8 @@ public:
     WaveSpectrumEstimator(double fs_raw_ = 200.0,
                           int decimFactor_ = 30,
                           bool hannEnabled_ = true)
-        : fs_raw(fs_raw_), decimFactor(decimFactor_), hannEnabled(hannEnabled_) {
+        : fs_raw(fs_raw_), decimFactor(decimFactor_), hannEnabled(hannEnabled_)
+    {
         fs = fs_raw / decimFactor;
 
         WaveSpectrumShared::build_log_frequency_grid<Nfreq>(freqs_, f_edges_, df_);
@@ -462,13 +470,13 @@ private:
 
         last_lowfreq_cut_hz_ =
             WaveSpectrumShared::estimate_lowfreq_cut_from_accel<Nfreq>(
-                S_aa_meas_arr, freqs_, Tblk, hp_f0_hz);
+                S_aa_true_arr, freqs_, Tblk, hp_f0_hz);
 
         const double f_knee = std::max({
             reg_f0_hz,
-            0.90 * last_lowfreq_cut_hz_,
-            1.20 * hp_f0_hz,
-            f_blk
+            0.60 * last_lowfreq_cut_hz_,
+            0.95 * hp_f0_hz,
+            0.90 * f_blk
         });
 
         const double lam = 2.0 * M_PI * f_knee;
