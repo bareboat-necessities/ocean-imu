@@ -472,22 +472,27 @@ void orthogonalize_wavelet_to_dc_and_ramp_(int i, int L, int half) {
             const double w0 = 2.0 * M_PI * f0;
             const double C0 = std::exp(-0.5 * (w0 * sigma_t) * (w0 * sigma_t)); // may underflow -> ok
 
-            // Build taps centered at zero (index n-half)
-            for (int n = 0; n < L; ++n) {
-                const int k = n - half;
-                const double t = double(k) / fs;
-                const double u = t / std::max(1e-9, sigma_t);
-                const double ga = std::exp(-0.5 * u * u);
-                const double phi = 2.0 * M_PI * f0 * t;
-                double re = ga * std::cos(phi);
-                double im = ga * std::sin(phi);
-                // subtract small DC component (pure real)
-                re -= (C0 * ga);
 
-                wave_re_[tapIndex_(i, n)] = (float)re;
-                wave_im_[tapIndex_(i, n)] = (float)im;
-            }
+// Build taps centered at zero
+for (int n = 0; n < L; ++n) {
+    const int k = n - half;
+    const double t = double(k) / fs;
+    const double u = t / std::max(1e-9, sigma_t);
+    const double ga = std::exp(-0.5 * u * u);
+    const double phi = 2.0 * M_PI * f0 * t;
+    double re = ga * std::cos(phi);
+    double im = ga * std::sin(phi);
+    re -= (C0 * ga);
 
+    wave_re_[tapIndex_(i, n)] = (float)re;
+    wave_im_[tapIndex_(i, n)] = (float)im;
+}
+
+// NEW: remove residual response to constant and linear trend
+orthogonalize_wavelet_to_dc_and_ramp_(i, L, half);
+
+// then continue with your H(f0) normalization
+            
             // Normalize taps to unit magnitude response at +f0 (magnitude only).
             // Compute H(f0) = Σ h[k] e^{-j 2π f0 (k/fs)} using centered k.
             double H0r = 0.0, H0i = 0.0;
