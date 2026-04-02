@@ -57,7 +57,7 @@ def build_main(rows) -> str:
         r"\date{\today}",
         r"\begin{document}",
         r"\maketitle",
-        r"\input{sea_metrics_from_spectrum_table_fragment.tex-part}",
+        r"\input{spectrum-sea_metrics.tex-part}",
         r"\end{document}",
         "",
     ])
@@ -66,8 +66,8 @@ def build_main(rows) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", default="sea_metrics_from_spectrum_report.csv")
-    parser.add_argument("--out-fragment", default="../../doc/spectrum/sea_metrics_from_spectrum_table_fragment.tex-part")
-    parser.add_argument("--out-main", default="../../doc/spectrum/sea_metrics_from_spectrum_table.tex")
+    parser.add_argument("--out-fragment", default="../../doc/spectrum/spectrum-sea_metrics.tex-part")
+    parser.add_argument("--out-main", default="../../doc/spectrum/spectrum-sea_metrics.tex")
     args = parser.parse_args()
 
     csv_path = Path(args.csv)
