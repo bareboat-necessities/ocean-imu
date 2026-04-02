@@ -18,12 +18,16 @@
     Goertzel spectrum estimator with adaptive low-frequency cutoff learned from
     the deconvolved acceleration spectrum before displacement inversion.
 
-    Notes:
-      - Uses shared low-frequency adaptation helpers from WaveSpectrumShared.h
-      - estimateFp()/estimateTp() respect the learned cutoff directly
-      - Medium/high sea fix:
-          * learn cutoff from S_aa_true, not S_aa_meas
-          * gentler final inversion knee
+    This version keeps:
+      - shared low-frequency adaptation via WaveSpectrumShared.h
+      - estimateFp()/estimateTp() using learned low-frequency cutoff
+      - cutoff learned from S_aa_true
+      - gentler final inversion knee
+
+    This version adds:
+      - acceleration-anchored low-frequency spike veto before the shared
+        smoothing / suppression stage, so false low-frequency spikes after
+        1/w^4 inversion do not become the reference peak.
 */
 
 template<int Nfreq = 32, int Nblock = 384>
@@ -151,6 +155,97 @@ private:
         return ema_alpha_low + (ema_alpha_high - ema_alpha_low) * t;
     }
 
+    int find_accel_peak_index_(const std::array<double, Nfreq>& S_aa_true_arr) const {
+        if (Nfreq < 3) return 0;
+
+        std::array<double, Nfreq> Eaa{};
+        std::array<double, Nfreq> Eaa_s{};
+
+        for (int i = 0; i < Nfreq; ++i) {
+            Eaa[i] = std::max(0.0, S_aa_true_arr[i]) * std::max(freqs_[i], 1e-12);
+        }
+
+        Eaa_s[0] = 0.75 * Eaa[0] + 0.25 * Eaa[1];
+        for (int i = 1; i < Nfreq - 1; ++i) {
+            Eaa_s[i] = 0.25 * Eaa[i - 1] + 0.50 * Eaa[i] + 0.25 * Eaa[i + 1];
+        }
+        Eaa_s[Nfreq - 1] = 0.25 * Eaa[Nfreq - 2] + 0.75 * Eaa[Nfreq - 1];
+
+        int k0 = 0;
+        const double f0 = std::max(last_lowfreq_cut_hz_, 1.05 * freqs_[0]);
+        while (k0 + 1 < Nfreq && freqs_[k0 + 1] <= f0) ++k0;
+
+        int k_peak = k0;
+        double v_peak = -1.0;
+        for (int i = k0; i < Nfreq; ++i) {
+            if (Eaa_s[i] > v_peak) {
+                v_peak = Eaa_s[i];
+                k_peak = i;
+            }
+        }
+        return k_peak;
+    }
+
+    void suppress_unsupported_lowfreq_spikes_(
+        const std::array<double, Nfreq>& S_aa_true_arr,
+        int k_peak_acc)
+    {
+        if (Nfreq < 4) return;
+        if (!(last_lowfreq_cut_hz_ > 0.0)) return;
+        if (k_peak_acc <= 2 || k_peak_acc >= Nfreq) return;
+
+        double f_soft = 1.40 * last_lowfreq_cut_hz_;
+        f_soft = std::min(f_soft, 0.78 * freqs_[k_peak_acc]);
+
+        int k_soft = 0;
+        while (k_soft + 1 < Nfreq && freqs_[k_soft + 1] <= f_soft) ++k_soft;
+
+        const int k_stop = std::min(k_soft, std::max(1, k_peak_acc - 3));
+        if (k_stop < 2 || k_stop + 1 >= Nfreq) return;
+
+        std::array<double, Nfreq> Eeta{};
+        std::array<double, Nfreq> Eaa{};
+        std::array<double, Nfreq> Eaa_s{};
+
+        for (int i = 0; i < Nfreq; ++i) {
+            const double f = std::max(freqs_[i], 1e-12);
+            Eeta[i] = std::max(0.0, double(lastSpectrum_[i])) * f;
+            Eaa[i]  = std::max(0.0, S_aa_true_arr[i]) * f;
+        }
+
+        Eaa_s[0] = 0.75 * Eaa[0] + 0.25 * Eaa[1];
+        for (int i = 1; i < Nfreq - 1; ++i) {
+            Eaa_s[i] = 0.25 * Eaa[i - 1] + 0.50 * Eaa[i] + 0.25 * Eaa[i + 1];
+        }
+        Eaa_s[Nfreq - 1] = 0.25 * Eaa[Nfreq - 2] + 0.75 * Eaa[Nfreq - 1];
+
+        const int i_ref = std::min(k_stop + 1, Nfreq - 1);
+        const double Eref = std::max(Eeta[i_ref], 1e-12);
+        const double fref = std::max(freqs_[i_ref], 1e-12);
+        const double Eaa_ref = std::max(Eaa_s[i_ref], 1e-12);
+
+        for (int i = 1; i <= k_stop; ++i) {
+            const bool local_peak =
+                (Eeta[i] > Eeta[i - 1]) &&
+                (Eeta[i] > Eeta[i + 1]);
+
+            const double r = std::max(freqs_[i], 1e-12) / fref;
+            const double env_cap = Eref * std::pow(r, 2.0);
+
+            const double accel_support = Eaa_s[i] / Eaa_ref;
+
+            if (local_peak &&
+                accel_support < 0.22 &&
+                Eeta[i] > 1.7 * env_cap) {
+                Eeta[i] = env_cap;
+            }
+        }
+
+        for (int i = 0; i < Nfreq; ++i) {
+            lastSpectrum_[i] = Eeta[i] / std::max(freqs_[i], 1e-12);
+        }
+    }
+
     void computeSpectrum() {
         const int blockSize = std::min(filledSamples, Nblock);
         const int startIdx = (writeIndex + Nblock - blockSize) % Nblock;
@@ -181,7 +276,6 @@ private:
         const double Tblk = (fs > 0.0) ? (double(N) / fs) : 0.0;
         const double f_blk = (Tblk > 0.0) ? (1.0 / (6.0 * Tblk)) : 0.0;
 
-        std::array<double, Nfreq> S_aa_meas_arr{};
         std::array<double, Nfreq> S_aa_true_arr{};
 
         for (int i = 0; i < Nfreq; ++i) {
@@ -201,7 +295,6 @@ private:
 
             const double power = s1 * s1 + s2 * s2 - s1 * s2 * coeffs_[i];
             const double S_aa_meas = std::max(0.0, power * base_scale);
-            S_aa_meas_arr[i] = S_aa_meas;
 
             const double Omega_raw = 2.0 * M_PI * f / fs_raw;
             const double H2_hp =
@@ -248,7 +341,12 @@ private:
             }
         }
 
+        const int k_peak_acc = find_accel_peak_index_(S_aa_true_arr);
+
         have_ema = true;
+
+        suppress_unsupported_lowfreq_spikes_(S_aa_true_arr, k_peak_acc);
+
         WaveSpectrumShared::smooth_logfreq_3tap_inplace<Nfreq>(lastSpectrum_, freqs_);
         WaveSpectrumShared::suppress_lowfreq_from_cut_inplace<Nfreq>(
             lastSpectrum_, freqs_, last_lowfreq_cut_hz_);
