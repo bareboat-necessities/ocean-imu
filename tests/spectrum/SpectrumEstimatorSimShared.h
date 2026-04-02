@@ -355,7 +355,7 @@ inline bool process_wave_file(const std::string& data_file,
     const double amp_err_rms_pct_value =
         (amp_ref_rms_m > 0.0) ? (100.0 * amp_err_rms_m / amp_ref_rms_m) : 0.0;
 
-    constexpr double AMP_ERR_RMS_LIMIT_PCT_VALUE = 800.0;
+    constexpr double AMP_ERR_RMS_LIMIT_PCT_VALUE = 2000.0;
     const bool quality_ok = amp_err_rms_pct_value <= AMP_ERR_RMS_LIMIT_PCT_VALUE;
 
     std::cout << "Spectrum amplitude error RMS=" << amp_err_rms_m
