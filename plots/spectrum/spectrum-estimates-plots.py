@@ -28,7 +28,7 @@ plt.rcParams.update({
 height_groups = {"low": 0.27, "medium": 1.50, "high": 8.50}
 
 classic_pattern = re.compile(
-    r"spectrum_"
+    r"^spectrum_"
     r"(?P<tracker>[^_]+)_"
     r"(?P<wave>[A-Za-z0-9]+)_"
     r"H(?P<height>[-0-9\.]+)"
@@ -37,11 +37,13 @@ classic_pattern = re.compile(
     r"(?:_P(?P<phase>[-0-9\.]+))?"
     r"_N(?P<noise>[-0-9\.]+)"
     r"_B(?P<bias>[-0-9\.]+)"
-    r"\.csv"
+    r"(?:_S(?P<seed>[-0-9]+))?"
+    r"\.csv$"
 )
 
 wavelets_pattern = re.compile(
-    r"spectrum_wavelets_"
+    r"^spectrum_wavelets_"
+    r"(?:(?P<tracker>[^_]+)_)?"
     r"(?P<wave>[A-Za-z0-9]+)_"
     r"H(?P<height>[-0-9\.]+)"
     r"(?:_L(?P<length>[-0-9\.]+))?"
@@ -49,7 +51,8 @@ wavelets_pattern = re.compile(
     r"(?:_P(?P<phase>[-0-9\.]+))?"
     r"_N(?P<noise>[-0-9\.]+)"
     r"_B(?P<bias>[-0-9\.]+)"
-    r"\.csv"
+    r"(?:_S(?P<seed>[-0-9]+))?"
+    r"\.csv$"
 )
 
 
@@ -70,7 +73,10 @@ def collect_groups(mode):
     if mode == "classic":
         files = sorted(glob.glob("spectrum_*.csv"))
         for f in files:
-            m = classic_pattern.search(os.path.basename(f))
+            basename = os.path.basename(f)
+            if basename.startswith("spectrum_wavelets_"):
+                continue
+            m = classic_pattern.search(basename)
             if not m:
                 continue
             tracker = m.group("tracker")
