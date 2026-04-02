@@ -471,10 +471,10 @@ private:
         last_lowfreq_cut_hz_ = WaveSpectrumShared::asym_smooth_hz(
             last_lowfreq_cut_hz_,
             cut_est_hz,
-            0.22,  // rise faster
-            0.08,  // fall slower
-            0.18,  // max +18% per block
-            0.06   // max -6% per block
+            0.16,  // rise faster
+            0.06,  // fall slower
+            0.12,  // max +12% per block
+            0.05   // max -5% per block
         );
         
         const double f_knee = std::max({
