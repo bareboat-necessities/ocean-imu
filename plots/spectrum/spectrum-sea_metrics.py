@@ -124,18 +124,22 @@ def describe_case(case_name: str) -> str:
         mode = "Wavelets estimator"
         stem = stem[len("spectrum_wavelets_"):]
 
-    match = re.match(
-        r"(?P<wave>[a-z0-9]+)_H(?P<h>[0-9.]+)_L(?P<l>[0-9.]+)_A(?P<a>[0-9.]+)_P(?P<p>[0-9.]+)$",
-        stem,
-    )
-    if not match:
+    if "_" not in stem:
         return case_name
 
-    wave_type = match.group("wave").upper()
-    height = float(match.group("h"))
-    length = float(match.group("l"))
-    azimuth = float(match.group("a"))
-    phase = float(match.group("p"))
+    wave_type, _, encoded = stem.partition("_")
+    token_pattern = re.compile(r"([A-Z])([-+]?[0-9]*\.?[0-9]+)")
+    values = {key: value for key, value in token_pattern.findall(encoded)}
+
+    required = {"H", "L", "A", "P"}
+    if not required.issubset(values):
+        return case_name
+
+    height = float(values["H"])
+    length = float(values["L"])
+    azimuth = float(values["A"])
+    phase = float(values["P"])
+    wave_type = wave_type.upper()
     details = f"{wave_type}: H={height:.2f} m, L={length:.2f} m, az={azimuth:.1f}°, phase={phase:.1f}°"
     return f"{mode} — {details}" if mode else details
 
