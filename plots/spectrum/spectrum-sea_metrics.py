@@ -95,6 +95,7 @@ def main() -> None:
     parser.add_argument("--full-metrics-name-value", default="sea_metrics_from_spectrum_full_metrics.txt")
     parser.add_argument("--out-fragment", default="../../doc/spectrum/spectrum-sea_metrics.tex-part")
     parser.add_argument("--out-main", default="../../doc/spectrum/spectrum-sea_metrics.tex")
+    parser.add_argument("--skip-main", action="store_true")
     parser.add_argument("--fragment-input", default="spectrum-sea_metrics.tex-part")
     parser.add_argument("--title", default="SeaMetricsFromSpectrum Test Report")
     parser.add_argument("--caption", default="SeaMetricsFromSpectrum validation from estimator spectra.")
@@ -114,9 +115,10 @@ def main() -> None:
         full_metrics_rows = parse_name_value_lines(full_metrics_path)
 
     fragment_path.parent.mkdir(parents=True, exist_ok=True)
-    main_path.parent.mkdir(parents=True, exist_ok=True)
     fragment_path.write_text(build_fragment(rows, args.caption, args.label, full_metrics_rows), encoding="utf-8")
-    main_path.write_text(build_main(args.fragment_input, args.title), encoding="utf-8")
+    if not args.skip_main:
+        main_path.parent.mkdir(parents=True, exist_ok=True)
+        main_path.write_text(build_main(args.fragment_input, args.title), encoding="utf-8")
 
     print(f"Loaded CSV rows: {len(rows)} from {csv_path}")
     if full_metrics_rows:
@@ -124,7 +126,10 @@ def main() -> None:
     else:
         print(f"Full metrics name=value file not found (optional): {full_metrics_path}")
     print(f"Wrote LaTeX fragment: {fragment_path}")
-    print(f"Wrote LaTeX main: {main_path}")
+    if args.skip_main:
+        print("Skipped writing LaTeX main wrapper (--skip-main).")
+    else:
+        print(f"Wrote LaTeX main: {main_path}")
 
 
 if __name__ == "__main__":
