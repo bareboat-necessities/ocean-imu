@@ -14,16 +14,16 @@
 #include "spectrum/WaveSpectrumShared.h"
 
 template<int Nfreq = 32, int Nblock = 384>
-class EIGEN_ALIGN_MAX WaveSpectrumEstimator {
+class EIGEN_ALIGN_MAX WaveSpectrumEstimator_Wavelets {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     using Vec = Eigen::Matrix<double, Nfreq, 1>;
     using Biquad = WaveSpectrumShared::Biquad;
 
-    WaveSpectrumEstimator(double fs_raw_ = 200.0,
-                          int decimFactor_ = 30,
-                          bool hannEnabled_ = true)
+    WaveSpectrumEstimator_Wavelets(double fs_raw_ = 200.0,
+                                   int decimFactor_ = 30,
+                                   bool hannEnabled_ = true)
         : fs_raw(fs_raw_), decimFactor(decimFactor_), hannEnabled(hannEnabled_) {
         fs = fs_raw / decimFactor;
 
