@@ -12,12 +12,12 @@ def pass_cell(v: str) -> str:
     return r"\textbf{PASS}" if str(v).strip() in ("1", "true", "True") else r"\textbf{FAIL}"
 
 
-def build_table(rows) -> str:
+def build_table(rows, caption: str, label: str) -> str:
     lines = [
         r"\begin{table}[H]",
         r"\centering",
-        r"\caption{SeaMetricsFromSpectrum validation using two synthetic spectra derived from spectrum-estimator scenarios.}",
-        r"\label{tab:sea_metrics_from_spectrum}",
+        rf"\caption{{{caption}}}",
+        rf"\label{{{label}}}",
         r"\begin{tabular}{lrrrrrcl}",
         r"\toprule",
         r"Case & $H_{s,target}$ & $H_{s,est}$ & $H_s$ err [\%] & $T_{p,target}$ & $T_{p,est}$ & Type & Gate \\",
@@ -68,22 +68,22 @@ def parse_name_value_lines(path: Path):
     return rows
 
 
-def build_fragment(rows, full_metrics_rows=None) -> str:
-    return build_table(rows) + build_full_metrics_block(full_metrics_rows or [])
+def build_fragment(rows, caption: str, label: str, full_metrics_rows=None) -> str:
+    return build_table(rows, caption, label) + build_full_metrics_block(full_metrics_rows or [])
 
 
-def build_main(rows) -> str:
+def build_main(fragment_input: str, title: str) -> str:
     return "\n".join([
         r"\documentclass[11pt,letterpaper]{article}",
         r"\usepackage{fullpage}",
         r"\usepackage{booktabs}",
         r"\usepackage{float}",
-        r"\title{SeaMetricsFromSpectrum Test Report}",
+        rf"\title{{{title}}}",
         r"\author{Auto-generated}",
         r"\date{\today}",
         r"\begin{document}",
         r"\maketitle",
-        r"\input{spectrum-sea_metrics.tex-part}",
+        rf"\input{{{fragment_input}}}",
         r"\end{document}",
         "",
     ])
@@ -95,6 +95,10 @@ def main() -> None:
     parser.add_argument("--full-metrics-name-value", default="sea_metrics_from_spectrum_full_metrics.txt")
     parser.add_argument("--out-fragment", default="../../doc/spectrum/spectrum-sea_metrics.tex-part")
     parser.add_argument("--out-main", default="../../doc/spectrum/spectrum-sea_metrics.tex")
+    parser.add_argument("--fragment-input", default="spectrum-sea_metrics.tex-part")
+    parser.add_argument("--title", default="SeaMetricsFromSpectrum Test Report")
+    parser.add_argument("--caption", default="SeaMetricsFromSpectrum validation from estimator spectra.")
+    parser.add_argument("--label", default="tab:sea_metrics_from_spectrum")
     args = parser.parse_args()
 
     csv_path = Path(args.csv)
@@ -111,8 +115,8 @@ def main() -> None:
 
     fragment_path.parent.mkdir(parents=True, exist_ok=True)
     main_path.parent.mkdir(parents=True, exist_ok=True)
-    fragment_path.write_text(build_fragment(rows, full_metrics_rows), encoding="utf-8")
-    main_path.write_text(build_main(rows), encoding="utf-8")
+    fragment_path.write_text(build_fragment(rows, args.caption, args.label, full_metrics_rows), encoding="utf-8")
+    main_path.write_text(build_main(args.fragment_input, args.title), encoding="utf-8")
 
     print(f"Loaded CSV rows: {len(rows)} from {csv_path}")
     if full_metrics_rows:
