@@ -225,9 +225,11 @@ inline double estimate_fp_with_guard(const SpectrumLike& spectrum,
                                      double lowfreq_guard_hz) {
     if (Nfreq == 0) return 0.0;
 
-    int k0 = 0;
     const double f_guard = std::max(lowfreq_guard_hz, freqs[0]);
-    while (k0 + 1 < Nfreq && freqs[k0 + 1] < f_guard) ++k0;
+
+    int k0 = 0;
+    while (k0 < Nfreq && freqs[k0] < f_guard) ++k0;
+    if (k0 >= Nfreq) k0 = Nfreq - 1;
 
     int k = k0;
     double vmax = -1.0;
