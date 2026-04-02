@@ -52,6 +52,36 @@ inline double ema_alpha_for_f(double f,
 }
 
 // -----------------------------
+// Analysis-band helper
+// -----------------------------
+inline double compute_safe_analysis_fmax(double fs_raw,
+                                         int decimFactor,
+                                         double requested_fmax = 1.2,
+                                         double lp_frac_of_decimated_nyquist = 0.32,
+                                         double lp_guard = 0.78,
+                                         double nyquist_guard = 0.85,
+                                         double f_min = 0.04) {
+    if (!(fs_raw > 0.0) || decimFactor <= 0) {
+        return std::max(requested_fmax, 1.05 * f_min);
+    }
+
+    const double fs_dec = fs_raw / double(decimFactor);
+    const double fny_dec = 0.5 * fs_dec;
+    const double lp_cutoff_hz = lp_frac_of_decimated_nyquist * fny_dec;
+
+    const double fmax_lp  = lp_guard * lp_cutoff_hz;
+    const double fmax_nyq = nyquist_guard * fny_dec;
+
+    double fmax = std::min(requested_fmax, std::min(fmax_lp, fmax_nyq));
+
+    if (!(fmax > f_min)) {
+        fmax = 1.05 * f_min;
+    }
+
+    return fmax;
+}
+
+// -----------------------------
 // Frequency grid
 // -----------------------------
 template<int Nfreq>
@@ -60,6 +90,8 @@ inline void build_log_frequency_grid(std::array<double, Nfreq>& freqs,
                                      std::array<double, Nfreq>& df,
                                      double f_min = 0.04,
                                      double f_max = 1.2) {
+    f_max = std::max(f_max, 1.05 * f_min);
+
     for (int i = 0; i <= Nfreq; ++i) {
         const double t = double(i) / double(Nfreq);
         f_edges[i] = f_min * std::pow(f_max / f_min, t);
