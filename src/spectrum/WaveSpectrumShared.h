@@ -147,7 +147,6 @@ inline void smooth_3tap_array(const std::array<double, N>& in,
 
 // -----------------------------
 // Log-frequency smoothing
-// Customizable, peak-preserving
 // -----------------------------
 template<int Nfreq, typename SpectrumLike>
 inline void smooth_logfreq_3tap_custom_inplace(SpectrumLike& spectrum,
