@@ -310,6 +310,7 @@ inline bool process_wave_file(const std::string& data_file,
     double cum_est = 0.0;
     double cum_ref = 0.0;
     double sum_sq_amp_error = 0.0;
+    double sum_sq_amp_ref = 0.0;
     double sum_weight = 0.0;
 
     for (int i = 0; i < Nfreq; ++i) {
@@ -336,6 +337,7 @@ inline bool process_wave_file(const std::string& data_file,
 
         // Weight RMS by bin width so denser grids do not distort the metric.
         sum_sq_amp_error += a_eta_err * a_eta_err * delta_f;
+        sum_sq_amp_ref += a_eta_ref * a_eta_ref * delta_f;
         sum_weight += delta_f;
 
         ofs << f_est << "," << s_est << "," << s_ref << "," << ratio << ","
@@ -347,17 +349,18 @@ inline bool process_wave_file(const std::string& data_file,
 
     const double amp_err_rms_m =
         (sum_weight > 0.0) ? std::sqrt(sum_sq_amp_error / sum_weight) : 0.0;
+    const double amp_ref_rms_m =
+        (sum_weight > 0.0) ? std::sqrt(sum_sq_amp_ref / sum_weight) : 0.0;
 
-    const double hs_ref_m = static_cast<double>(wp.height);
-    const double amp_err_rms_pct_hs =
-        (hs_ref_m > 0.0) ? (100.0 * amp_err_rms_m / hs_ref_m) : 0.0;
+    const double amp_err_rms_pct_value =
+        (amp_ref_rms_m > 0.0) ? (100.0 * amp_err_rms_m / amp_ref_rms_m) : 0.0;
 
-    constexpr double AMP_ERR_RMS_LIMIT_PCT_HS = 800.0;
-    const bool quality_ok = amp_err_rms_pct_hs <= AMP_ERR_RMS_LIMIT_PCT_HS;
+    constexpr double AMP_ERR_RMS_LIMIT_PCT_VALUE = 800.0;
+    const bool quality_ok = amp_err_rms_pct_value <= AMP_ERR_RMS_LIMIT_PCT_VALUE;
 
     std::cout << "Spectrum amplitude error RMS=" << amp_err_rms_m
-              << " m (" << amp_err_rms_pct_hs << "%Hs, gate "
-              << AMP_ERR_RMS_LIMIT_PCT_HS << "%Hs) -> "
+              << " m (" << amp_err_rms_pct_value << "% of reference RMS, gate "
+              << AMP_ERR_RMS_LIMIT_PCT_VALUE << "% of reference RMS) -> "
               << (quality_ok ? "PASS" : "FAIL") << "\n";
 
     std::cout << "Finished " << data_file << " with " << block_count
