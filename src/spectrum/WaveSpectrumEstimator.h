@@ -191,14 +191,19 @@ private:
         }
 
         last_lowfreq_cut_hz_ =
-            WaveSpectrumShared::estimate_lowfreq_cut_from_accel<Nfreq>(
+            WaveSpectrumShared::estimate_lowfreq_cut_from_accel_goertzel<Nfreq>(
                 S_aa_true_arr, freqs_, Tblk, hp_f0_hz);
+
+        const int k_peak_acc = WaveSpectrumShared::find_accel_peak_index<Nfreq>(
+            S_aa_true_arr, freqs_, last_lowfreq_cut_hz_);
+        const double fpk_acc = freqs_[std::clamp(k_peak_acc, 0, Nfreq - 1)];
+        const double rpk = WaveSpectrumShared::peak_regime_from_fpk(fpk_acc);
 
         const double f_knee = std::max({
             reg_f0_hz,
-            0.60 * last_lowfreq_cut_hz_,
-            0.95 * hp_f0_hz,
-            0.90 * f_blk
+            WaveSpectrumShared::lerp(0.40, 0.54, rpk) * last_lowfreq_cut_hz_,
+            0.92 * hp_f0_hz,
+            0.80 * f_blk
         });
 
         const double lam = 2.0 * M_PI * f_knee;
@@ -211,7 +216,8 @@ private:
             double S_eta = (den > 0.0) ? (S_aa_true_arr[i] / (den * den)) : 0.0;
             if (!std::isfinite(S_eta) || S_eta < 0.0) S_eta = 0.0;
 
-            S_eta *= WaveSpectrumShared::lowfreq_taper(f, last_lowfreq_cut_hz_);
+            S_eta *= WaveSpectrumShared::lowfreq_taper_goertzel(
+                f, last_lowfreq_cut_hz_, fpk_acc);
 
             if (use_psd_ema) {
                 const double a = alpha_for_f(f);
@@ -226,7 +232,7 @@ private:
         have_ema = true;
 
         WaveSpectrumShared::finalize_displacement_spectrum_goertzel_inplace<Nfreq>(
-            lastSpectrum_, S_aa_true_arr, freqs_, last_lowfreq_cut_hz_); 
+            lastSpectrum_, S_aa_true_arr, freqs_, last_lowfreq_cut_hz_);
     }
 
     double fs_raw = 0.0;
