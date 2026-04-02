@@ -342,4 +342,26 @@ inline int find_accel_peak_index(const std::array<double, Nfreq>& S_aa_true_arr,
     return k_peak;
 }
 
+inline double asym_smooth_hz(double prev_hz,
+                             double est_hz,
+                             double alpha_up   = 0.22,
+                             double alpha_down = 0.08,
+                             double max_rise_frac = 0.18,
+                             double max_drop_frac = 0.06) {
+    if (!(est_hz > 0.0)) {
+        return (prev_hz > 0.0) ? prev_hz : 0.0;
+    }
+
+    if (!(prev_hz > 0.0)) {
+        return est_hz;
+    }
+
+    const double a = (est_hz > prev_hz) ? alpha_up : alpha_down;
+    double y = (1.0 - a) * prev_hz + a * est_hz;
+
+    const double lo = (1.0 - max_drop_frac) * prev_hz;
+    const double hi = (1.0 + max_rise_frac) * prev_hz;
+    return std::clamp(y, lo, hi);
+}
+
 } // namespace WaveSpectrumShared
