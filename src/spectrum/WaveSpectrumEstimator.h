@@ -183,22 +183,43 @@ private:
             return std::max(f_floor_hz, freqs_[i_valley]);
         }
 
-        const double f_rel = 0.38 * freqs_[i_peak];
-        const double f_cap = 0.70 * freqs_[i_peak];
+        const double f_rel = 0.60 * freqs_[i_peak];
+        const double f_cap = 0.90 * freqs_[i_peak];
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
     }
 
     static double lowfreq_taper_(double f_hz, double f_cut_hz) {
         if (!(f_cut_hz > 0.0)) return 1.0;
 
-        const double f_lo = 0.50 * f_cut_hz;
-        const double f_hi = 1.20 * f_cut_hz;
+        const double f_lo = 0.60 * f_cut_hz;
+        const double f_hi = 1.35 * f_cut_hz;
 
         if (f_hz >= f_hi) return 1.0;
         if (f_hz <= f_lo) return 0.0;
 
         const double t = std::clamp((f_hz - f_lo) / (f_hi - f_lo), 0.0, 1.0);
         return t * t * (3.0 - 2.0 * t);
+    }
+
+    bool lowfreq_edge_is_raised_() const {
+        if (Nfreq < 4) return false;
+        if (!(last_lowfreq_cut_hz_ > 0.0)) return false;
+
+        std::array<double, Nfreq> E{};
+        for (int i = 0; i < Nfreq; ++i) {
+            E[i] = std::max(0.0, double(lastSpectrum_[i])) * std::max(freqs_[i], 1e-12);
+        }
+
+        int i_cut = 0;
+        const double f_eff = 1.00 * last_lowfreq_cut_hz_;
+        while (i_cut + 1 < Nfreq && freqs_[i_cut + 1] <= f_eff) ++i_cut;
+        if (i_cut < 2) return false;
+
+        const double E_ref = std::max(E[i_cut], 1e-18);
+
+        return
+            (E[0] > 1.08 * E_ref) ||
+            (E[1] > 1.04 * std::max(E[2], 1e-18));
     }
 
     bool suppress_unsupported_lowfreq_spikes_(const std::array<double, Nfreq>& S_aa_true_arr,
@@ -264,7 +285,7 @@ private:
         if (Nfreq < 4) return;
         if (!(last_lowfreq_cut_hz_ > 0.0)) return;
 
-        const double f_eff = 0.98 * last_lowfreq_cut_hz_;
+        const double f_eff = 1.05 * last_lowfreq_cut_hz_;
 
         std::array<double, Nfreq> E{};
         for (int i = 0; i < Nfreq; ++i) {
@@ -279,7 +300,8 @@ private:
         const double E_ref = std::max(E[i_cut], 1e-18);
 
         double prev = E_ref;
-        const double shape_pow = 2.0;
+        const double shape_pow = 2.60;
+        const double slope_cap = 1.05;
 
         for (int i = i_cut - 1; i >= 0; --i) {
             const double r = std::max(freqs_[i] / f_ref, 0.0);
@@ -287,7 +309,7 @@ private:
 
             double v = std::max(0.0, E[i]);
             v = std::min(v, cap);
-            v = std::min(v, 1.15 * prev);
+            v = std::min(v, slope_cap * prev);
 
             E[i] = v;
             prev = v;
@@ -309,7 +331,9 @@ private:
         const bool changed =
             suppress_unsupported_lowfreq_spikes_(S_aa_true_arr, k_peak_acc);
 
-        if (changed) {
+        const bool edge_raised = lowfreq_edge_is_raised_();
+
+        if (changed || edge_raised) {
             suppress_lowfreq_from_cut_inplace_();
         }
     }
