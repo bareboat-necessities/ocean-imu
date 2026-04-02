@@ -185,14 +185,13 @@ def build_full_metrics_block(full_metrics_rows, last_case_description: str | Non
     lines = [
         title,
         r"\begin{longtable}{p{0.23\linewidth}p{0.25\linewidth}p{0.35\linewidth}p{0.13\linewidth}}",
-        r"\normalsize",
-        r"\toprule",
+        r"\hline",
         r"Metric key & Metrics Name & Meaning & Value \\",
-        r"\midrule",
+        r"\hline",
         r"\endfirsthead",
-        r"\toprule",
+        r"\hline",
         r"Metric key & Metrics Name & Meaning & Value \\",
-        r"\midrule",
+        r"\hline",
         r"\endhead",
     ]
 
@@ -208,7 +207,7 @@ def build_full_metrics_block(full_metrics_rows, last_case_description: str | Non
             r"\\"
         )
 
-    lines.extend([r"\bottomrule", r"\end{longtable}", ""])
+    lines.extend([r"\hline", r"\end{longtable}", ""])
     return "\n".join(lines)
 
 
