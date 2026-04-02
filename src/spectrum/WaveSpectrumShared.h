@@ -126,7 +126,8 @@ inline double biquad_mag2_raw(const Biquad& bq, double omega_raw) {
 }
 
 // -----------------------------
-// Smoothing
+// Log-frequency smoothing
+// Gentler, with peak preservation
 // -----------------------------
 template<int Nfreq, typename SpectrumLike>
 inline void smooth_logfreq_3tap_inplace(SpectrumLike& spectrum,
@@ -137,8 +138,8 @@ inline void smooth_logfreq_3tap_inplace(SpectrumLike& spectrum,
     std::array<double, Nfreq> out{};
 
     for (int i = 0; i < Nfreq; ++i) {
-        in[i] = spectrum[i];
-        out[i] = spectrum[i];
+        in[i] = std::max(0.0, double(spectrum[i]));
+        out[i] = in[i];
     }
 
     for (int i = 0; i < Nfreq; ++i) {
@@ -149,8 +150,9 @@ inline void smooth_logfreq_3tap_inplace(SpectrumLike& spectrum,
         const double dL = std::max(0.0, xi - xim1);
         const double dR = std::max(0.0, xip1 - xi);
 
-        const double k = 0.35;
-        const double minC = 0.40;
+        // Weaker than before.
+        const double k = 0.20;
+        const double minC = 0.60;
 
         double wL = k * dL;
         double wR = k * dR;
@@ -168,14 +170,31 @@ inline void smooth_logfreq_3tap_inplace(SpectrumLike& spectrum,
         out[i] = wL * Sm1 + wC * Si + wR * Sp1;
     }
 
+    // Preserve sharp local peaks so medium/high-sea spectra do not get blunted.
+    for (int i = 1; i < Nfreq - 1; ++i) {
+        const double li = in[i - 1];
+        const double ci = in[i];
+        const double ri = in[i + 1];
+
+        const bool strong_local_peak =
+            (ci > 1.10 * std::max(li, 1e-18)) &&
+            (ci > 1.10 * std::max(ri, 1e-18));
+
+        if (strong_local_peak) {
+            out[i] = std::max(out[i], 0.90 * ci);
+        }
+    }
+
     for (int i = 0; i < Nfreq; ++i) {
-        spectrum[i] = out[i];
+        spectrum[i] = std::max(0.0, out[i]);
     }
 }
 
 // -----------------------------
 // Adaptive low-frequency cutoff
 // Learned from deconvolved accel spectrum
+//
+// Tuned to be more conservative in energetic seas.
 // -----------------------------
 template<int Nfreq>
 inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S_aa_true,
@@ -198,9 +217,9 @@ inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S
     Es[Nfreq - 1] = 0.25 * E[Nfreq - 2] + 0.75 * E[Nfreq - 1];
 
     const double f_floor_hz = std::max({
-        1.08 * freqs[0],
-        (Tblk > 1e-12) ? (1.5 / Tblk) : 0.0,
-        1.10 * hp_f0_hz
+        1.04 * freqs[0],
+        (Tblk > 1e-12) ? (1.20 / Tblk) : 0.0,
+        1.03 * hp_f0_hz
     });
 
     int i_floor = 0;
@@ -229,47 +248,50 @@ inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S
     }
 
     const bool left_edge_raised =
-        (E[0] > 1.20 * std::max(e_valley, 1e-18)) ||
-        (Nfreq > 2 && E[1] > 1.08 * std::max(E[2], 1e-18));
+        (E[0] > 1.15 * std::max(e_valley, 1e-18)) ||
+        (Nfreq > 2 && E[1] > 1.06 * std::max(E[2], 1e-18));
 
     const bool valley_is_good =
         (i_valley > i_floor) &&
-        (e_valley < 0.74 * e_peak) &&
-        (freqs[i_valley] < 0.86 * freqs[i_peak]);
+        (e_valley < 0.78 * e_peak) &&
+        (freqs[i_valley] < 0.65 * freqs[i_peak]);
 
     if (left_edge_raised && valley_is_good) {
-        return std::max(freqs[i_valley], f_floor_hz);
+        return std::max(f_floor_hz, std::min(freqs[i_valley], 0.50 * freqs[i_peak]));
     }
 
-    double f_rel = std::max(f_floor_hz, 0.38 * freqs[i_peak]);
-    f_rel = std::min(f_rel, 0.82 * freqs[i_peak]);
-    return f_rel;
+    // Conservative fallback: do not let accel peak push the guard too high.
+    return std::max(f_floor_hz, std::min(0.30 * freqs[i_peak], 0.50 * freqs[i_peak]));
 }
 
 // -----------------------------
-// Low-frequency taper (gentler)
+// Low-frequency taper
+// Narrower and gentler, so it does not
+// eat into real higher-sea low-frequency energy.
 // -----------------------------
 inline double lowfreq_taper(double f_hz, double f_cut_hz) {
     if (!(f_cut_hz > 0.0)) return 1.0;
-    if (f_hz >= 1.35 * f_cut_hz) return 1.0;
-    if (f_hz <= 0.60 * f_cut_hz) {
-        const double r = std::max(f_hz / std::max(0.60 * f_cut_hz, 1e-12), 0.0);
-        return std::pow(r, 1.5);
+    if (f_hz >= 1.15 * f_cut_hz) return 1.0;
+
+    if (f_hz <= 0.50 * f_cut_hz) {
+        const double r = std::max(f_hz / std::max(0.50 * f_cut_hz, 1e-12), 0.0);
+        return std::pow(r, 1.10);
     }
 
-    const double x = (f_hz - 0.60 * f_cut_hz) / std::max(0.75 * f_cut_hz, 1e-12);
+    const double x = (f_hz - 0.50 * f_cut_hz) / std::max(0.65 * f_cut_hz, 1e-12);
     const double t = std::clamp(x, 0.0, 1.0);
     const double s = t * t * (3.0 - 2.0 * t);
 
-    const double r0 = std::max(f_hz / std::max(0.60 * f_cut_hz, 1e-12), 0.0);
-    const double g0 = std::pow(std::min(r0, 1.0), 1.5);
+    const double r0 = std::max(f_hz / std::max(0.50 * f_cut_hz, 1e-12), 0.0);
+    const double g0 = std::pow(std::min(r0, 1.0), 1.10);
 
     return g0 + (1.0 - g0) * s;
 }
 
 // -----------------------------
-// Shared low-frequency suppressor (gentler)
-// Operates on E(f) = f S(f)
+// Shared low-frequency suppressor
+// Only acts well below the learned cutoff,
+// and more gently than before.
 // -----------------------------
 template<int Nfreq, typename SpectrumLike>
 inline void suppress_lowfreq_from_cut_inplace(SpectrumLike& spectrum,
@@ -278,21 +300,22 @@ inline void suppress_lowfreq_from_cut_inplace(SpectrumLike& spectrum,
     if (Nfreq < 4) return;
     if (!(f_cut_hz > 0.0)) return;
 
-    std::array<double, Nfreq> E{};
+    const double f_eff = 0.85 * f_cut_hz;
 
+    std::array<double, Nfreq> E{};
     for (int i = 0; i < Nfreq; ++i) {
         E[i] = std::max(0.0, double(spectrum[i])) * std::max(freqs[i], 1e-12);
     }
 
     int i_cut = 0;
-    while (i_cut + 1 < Nfreq && freqs[i_cut + 1] <= f_cut_hz) ++i_cut;
+    while (i_cut + 1 < Nfreq && freqs[i_cut + 1] <= f_eff) ++i_cut;
     if (i_cut <= 0) return;
 
     const double f_ref = std::max(freqs[i_cut], 1e-12);
     const double E_ref = std::max(E[i_cut], 1e-18);
 
     double prev = E_ref;
-    const double shape_pow = 1.8;
+    const double shape_pow = 1.35;
 
     for (int i = i_cut - 1; i >= 0; --i) {
         const double r = std::max(freqs[i] / f_ref, 0.0);
@@ -300,7 +323,7 @@ inline void suppress_lowfreq_from_cut_inplace(SpectrumLike& spectrum,
 
         double v = std::max(0.0, E[i]);
         v = std::min(v, cap);
-        v = std::min(v, prev);
+        v = std::min(v, 1.10 * prev);
 
         E[i] = v;
         prev = v;
@@ -371,6 +394,7 @@ inline double estimate_fp_with_guard(const SpectrumLike& spectrum,
 
 // -----------------------------
 // Shared accel-anchored low-f spike veto
+// Much less aggressive than before.
 // -----------------------------
 template<int Nfreq>
 inline int find_accel_peak_index(const std::array<double, Nfreq>& S_aa_true_arr,
@@ -392,7 +416,7 @@ inline int find_accel_peak_index(const std::array<double, Nfreq>& S_aa_true_arr,
     Eaa_s[Nfreq - 1] = 0.25 * Eaa[Nfreq - 2] + 0.75 * Eaa[Nfreq - 1];
 
     int k0 = 0;
-    const double f0 = std::max(lowfreq_cut_hz, 1.05 * freqs[0]);
+    const double f0 = std::max(lowfreq_cut_hz, 1.03 * freqs[0]);
     while (k0 + 1 < Nfreq && freqs[k0 + 1] <= f0) ++k0;
 
     int k_peak = k0;
@@ -416,15 +440,15 @@ inline void suppress_unsupported_lowfreq_spikes_inplace(
 {
     if (Nfreq < 4) return;
     if (!(lowfreq_cut_hz > 0.0)) return;
-    if (k_peak_acc <= 2 || k_peak_acc >= Nfreq) return;
+    if (k_peak_acc <= 3 || k_peak_acc >= Nfreq) return;
 
-    double f_soft = 1.40 * lowfreq_cut_hz;
-    f_soft = std::min(f_soft, 0.78 * freqs[k_peak_acc]);
+    double f_soft = 1.20 * lowfreq_cut_hz;
+    f_soft = std::min(f_soft, 0.60 * freqs[k_peak_acc]);
 
     int k_soft = 0;
     while (k_soft + 1 < Nfreq && freqs[k_soft + 1] <= f_soft) ++k_soft;
 
-    const int k_stop = std::min(k_soft, std::max(1, k_peak_acc - 3));
+    const int k_stop = std::min(k_soft, std::max(1, k_peak_acc - 4));
     if (k_stop < 2 || k_stop + 1 >= Nfreq) return;
 
     std::array<double, Nfreq> Eeta{};
@@ -454,13 +478,12 @@ inline void suppress_unsupported_lowfreq_spikes_inplace(
             (Eeta[i] > Eeta[i + 1]);
 
         const double r = std::max(freqs[i], 1e-12) / fref;
-        const double env_cap = Eref * std::pow(r, 2.0);
-
+        const double env_cap = Eref * std::pow(r, 1.40);
         const double accel_support = Eaa_s[i] / Eaa_ref;
 
         if (local_peak &&
-            accel_support < 0.22 &&
-            Eeta[i] > 1.7 * env_cap) {
+            accel_support < 0.12 &&
+            Eeta[i] > 2.4 * env_cap) {
             Eeta[i] = env_cap;
         }
     }
@@ -470,6 +493,14 @@ inline void suppress_unsupported_lowfreq_spikes_inplace(
     }
 }
 
+// -----------------------------
+// Shared finalizer
+//
+// Order changed:
+//   1) light peak-preserving smoothing
+//   2) very selective accel-anchored spike veto
+//   3) gentle suppression below effective cut
+// -----------------------------
 template<int Nfreq, typename SpectrumLike>
 inline void finalize_displacement_spectrum_inplace(
     SpectrumLike& spectrum,
@@ -477,13 +508,14 @@ inline void finalize_displacement_spectrum_inplace(
     const std::array<double, Nfreq>& freqs,
     double lowfreq_cut_hz)
 {
+    smooth_logfreq_3tap_inplace<Nfreq>(spectrum, freqs);
+
     const int k_peak_acc =
         find_accel_peak_index<Nfreq>(S_aa_true_arr, freqs, lowfreq_cut_hz);
 
     suppress_unsupported_lowfreq_spikes_inplace<Nfreq>(
         spectrum, S_aa_true_arr, freqs, lowfreq_cut_hz, k_peak_acc);
 
-    smooth_logfreq_3tap_inplace<Nfreq>(spectrum, freqs);
     suppress_lowfreq_from_cut_inplace<Nfreq>(spectrum, freqs, lowfreq_cut_hz);
 }
 
