@@ -184,20 +184,21 @@ def build_full_metrics_block(full_metrics_rows, last_case_description: str | Non
 
     lines = [
         title,
-        r"\begin{longtable}{p{0.20\linewidth}p{0.22\linewidth}p{0.42\linewidth}p{0.12\linewidth}}",
+        r"\begin{longtable}{p{0.23\linewidth}p{0.25\linewidth}p{0.35\linewidth}p{0.13\linewidth}}",
+        r"\normalsize",
         r"\toprule",
-        r"Metric key & Human-readable name & Meaning & Value \\",
+        r"Metric key & Metrics Name & Meaning & Value \\",
         r"\midrule",
         r"\endfirsthead",
         r"\toprule",
-        r"Metric key & Human-readable name & Meaning & Value \\",
+        r"Metric key & Metrics Name & Meaning & Value \\",
         r"\midrule",
         r"\endhead",
     ]
 
     for row in full_metrics_rows:
         metric = row["metric"]
-        value = row["value"]
+        value = format_metric_value(row["value"])
         display_name, meaning = METRIC_METADATA.get(
             metric,
             ("(unmapped metric)", "Metric emitted by report but not yet described in this script."),
@@ -209,6 +210,14 @@ def build_full_metrics_block(full_metrics_rows, last_case_description: str | Non
 
     lines.extend([r"\bottomrule", r"\end{longtable}", ""])
     return "\n".join(lines)
+
+
+def format_metric_value(raw_value: str) -> str:
+    try:
+        value = float(raw_value)
+    except ValueError:
+        return raw_value
+    return f"{value:.6g}"
 
 
 def parse_name_value_lines(path: Path):
