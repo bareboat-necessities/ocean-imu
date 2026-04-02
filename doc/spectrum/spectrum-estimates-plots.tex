@@ -7,28 +7,36 @@
 \usepackage{float}
 \providecommand{\mathdefault}[1]{#1}
 
-\title{Spectrum Estimator Charts}
+\title{Spectrum Estimator Comparison Charts}
 \author{Mikhail Grushinskiy}
 \date{2026}
 
 \begin{document}
 \maketitle
 
+\newcommand{\safeplotinput}[1]{%
+\IfFileExists{#1}{\resizebox{\linewidth}{!}{\input{#1}}}{%
+\fbox{\begin{minipage}[c][0.55\linewidth][c]{0.92\linewidth}\centering
+\textbf{Missing plot file}\\\texttt{#1}
+\end{minipage}}%
+}%
+}
+
 \newcommand{\specplots}[3]{%
     \begin{figure}[H]\centering
-    \resizebox{\linewidth}{!}{\input{spectrum_estimates_#1_#2_spectrum.pgf}}
-    \caption{#3 estimator against simulation reference spectrum at #2 sea state: final block $S_\eta(f)$ comparison.}
+    \safeplotinput{spectrum_estimates_#1_#2_spectrum.pgf}
+    \caption{#3 spectrum estimates at #2 sea state, overlaying classic and wavelets estimators against simulation reference.}
     \end{figure}
 }
 
 \newcommand{\HTplots}[3]{%
     \begin{figure}[H]\centering
-    \resizebox{\linewidth}{!}{\input{spectrum_estimates_#1_#2_hs.pgf}}
-    \caption{#3 estimator $H_s$ estimates at #2 sea state (separate chart).}
+    \safeplotinput{spectrum_estimates_#1_#2_hs.pgf}
+    \caption{#3 $H_s$ estimates at #2 sea state for classic and wavelets estimators.}
     \end{figure}
     \begin{figure}[H]\centering
-    \resizebox{\linewidth}{!}{\input{spectrum_estimates_#1_#2_tp.pgf}}
-    \caption{#3 estimator $T_p$ estimates at #2 sea state (separate chart).}
+    \safeplotinput{spectrum_estimates_#1_#2_tp.pgf}
+    \caption{#3 $T_p$ estimates at #2 sea state for classic and wavelets estimators.}
     \end{figure}
 }
 

@@ -1,8 +1,7 @@
 #!/bin/bash -e
 
 python3 spectrum-plots.py
-python3 spectrum-estimates-plots.py --mode classic
-python3 spectrum-estimates-plots.py --mode wavelets
+python3 spectrum-estimates-plots.py --mode combined
 python3 spectrum-sea_metrics.py \
   --csv sea_metrics_from_spectrum_report_classic.csv \
   --full-metrics-name-value sea_metrics_from_spectrum_full_metrics_classic.txt \

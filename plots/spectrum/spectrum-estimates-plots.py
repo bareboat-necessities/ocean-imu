@@ -82,7 +82,7 @@ def collect_groups(mode):
             tracker = m.group("tracker")
             wave = m.group("wave")
             height = float(m.group("height"))
-            groups.setdefault((wave, height), []).append((tracker, f))
+            groups.setdefault((wave, height), []).append(("classic", tracker, f))
     else:
         files = sorted(glob.glob("spectrum_wavelets_*.csv"))
         for f in files:
@@ -91,12 +91,21 @@ def collect_groups(mode):
                 continue
             wave = m.group("wave")
             height = float(m.group("height"))
-            groups.setdefault((wave, height), []).append(("wavelets", f))
+            tracker = m.group("tracker") or "wavelets"
+            groups.setdefault((wave, height), []).append(("wavelets", tracker, f))
+    return groups
+
+
+def collect_groups_combined():
+    groups = collect_groups("classic")
+    wavelets_groups = collect_groups("wavelets")
+    for key, entries in wavelets_groups.items():
+        groups.setdefault(key, []).extend(entries)
     return groups
 
 
 def output_prefix(mode):
-    return "spectrum_estimates" if mode == "classic" else "spectrum_wavelets_estimates"
+    return "spectrum_estimates" if mode in ("classic", "combined") else "spectrum_wavelets_estimates"
 
 
 def estimate_bulk_from_spectrum(df):
@@ -125,7 +134,10 @@ def estimate_bulk_from_spectrum(df):
 
 
 def plot_mode(mode):
-    groups = collect_groups(mode)
+    if mode == "combined":
+        groups = collect_groups_combined()
+    else:
+        groups = collect_groups(mode)
     if not groups:
         print(f"No recognized CSV files for mode={mode}.")
         return
@@ -138,27 +150,29 @@ def plot_mode(mode):
 
         fig, axes = plt.subplots(3, 1, figsize=(6.5, 8.5), sharex=True)
 
-        for idx, (tracker, f) in enumerate(tracker_files):
+        for idx, (source, tracker, f) in enumerate(tracker_files):
             df = pd.read_csv(f, comment="#")
             if "freq_hz" not in df.columns:
                 continue
 
-            label = tracker.capitalize()
-            lw = 1.8
+            source_prefix = "Classic" if source == "classic" else "Wavelets"
+            label = f"{source_prefix}: {tracker.capitalize()}"
+            lw = 1.8 if source == "classic" else 2.2
+            ls = "-" if source == "classic" else "--"
 
             if "A_eta_est" in df.columns:
-                axes[0].semilogx(df["freq_hz"], df["A_eta_est"], label=f"{label} est", lw=lw)
+                axes[0].semilogx(df["freq_hz"], df["A_eta_est"], label=f"{label} est", lw=lw, ls=ls)
             if "A_eta_ref" in df.columns and idx == 0:
                 axes[0].semilogx(df["freq_hz"], df["A_eta_ref"], "--", color="gray", label="Reference", lw=1.2)
 
             if "E_eta_est" in df.columns:
-                axes[1].semilogx(df["freq_hz"], df["E_eta_est"], label=f"{label} est", lw=lw)
+                axes[1].semilogx(df["freq_hz"], df["E_eta_est"], label=f"{label} est", lw=lw, ls=ls)
             if "E_eta_ref" in df.columns and idx == 0:
                 axes[1].semilogx(df["freq_hz"], df["E_eta_ref"], "--", color="gray", label="Reference", lw=1.2)
 
             if "CumVar_est" in df.columns:
                 est_norm = df["CumVar_est"] / max(df["CumVar_est"].iloc[-1], 1e-12)
-                axes[2].semilogx(df["freq_hz"], est_norm, label=f"{label} est", lw=lw)
+                axes[2].semilogx(df["freq_hz"], est_norm, label=f"{label} est", lw=lw, ls=ls)
             if "CumVar_ref" in df.columns and idx == 0:
                 ref_norm = df["CumVar_ref"] / max(df["CumVar_ref"].iloc[-1], 1e-12)
                 axes[2].semilogx(df["freq_hz"], ref_norm, "--", color="gray", label="Reference", lw=1.2)
@@ -184,9 +198,10 @@ def plot_mode(mode):
         hs_values = []
         tp_values = []
 
-        for tracker, f in tracker_files:
+        for source, tracker, f in tracker_files:
             df = pd.read_csv(f, comment="#")
-            label = tracker.capitalize()
+            source_prefix = "Classic" if source == "classic" else "Wavelets"
+            label = f"{source_prefix}: {tracker.capitalize()}"
 
             hs_col = pick_column(df, ["Hs", "Hs_est", "hs", "hs_est"])
             tp_col = pick_column(df, ["Tp", "Tp_est", "tp", "tp_est"])
@@ -246,9 +261,9 @@ def main():
     parser = argparse.ArgumentParser(description="Generate spectrum estimator PGF plots.")
     parser.add_argument(
         "--mode",
-        choices=["classic", "wavelets"],
-        default="classic",
-        help="Use 'classic' for spectrum_estimator_*.csv or 'wavelets' for spectrum_wavelets_*.csv",
+        choices=["classic", "wavelets", "combined"],
+        default="combined",
+        help="Use 'classic', 'wavelets', or 'combined' for overlaid classic-vs-wavelets charts",
     )
     args = parser.parse_args()
     plot_mode(args.mode)
