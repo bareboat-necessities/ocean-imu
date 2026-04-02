@@ -6,9 +6,10 @@
 #include <ArduinoEigenDense.h>
 #endif
 
-#include <algorithm>
 #include <array>
 #include <cmath>
+#include <algorithm>
+#include <limits>
 
 #include "spectrum/SpectrumStats.h"
 #include "spectrum/WaveSpectrumShared.h"
@@ -20,8 +21,6 @@ public:
 
     using Vec = Eigen::Matrix<double, Nfreq, 1>;
     using Biquad = WaveSpectrumShared::Biquad;
-
-    struct PMFitResult { double alpha, fp, cost; };
 
     WaveSpectrumEstimator(double fs_raw_ = 200.0,
                           int decimFactor_ = 30,
@@ -130,6 +129,203 @@ private:
             f, freqs_[0], freqs_[Nfreq - 1], ema_alpha_low, ema_alpha_high);
     }
 
+    double estimate_lowfreq_cut_from_accel_(const std::array<double, Nfreq>& S_aa_true_arr,
+                                            double Tblk) const {
+        if (Nfreq < 4) return 0.0;
+
+        std::array<double, Nfreq> E{};
+        std::array<double, Nfreq> Es{};
+
+        for (int i = 0; i < Nfreq; ++i) {
+            E[i] = std::max(0.0, S_aa_true_arr[i]) * std::max(freqs_[i], 1e-12);
+        }
+        WaveSpectrumShared::smooth_3tap_array<Nfreq>(E, Es);
+
+        const double f_floor_hz = std::max(
+            std::max(1.04 * freqs_[0], (Tblk > 1e-12) ? (1.20 / Tblk) : 0.0),
+            1.05 * hp_f0_hz);
+
+        int i_floor = 0;
+        while (i_floor + 1 < Nfreq && freqs_[i_floor + 1] <= f_floor_hz) ++i_floor;
+
+        int i_peak = std::max(1, i_floor);
+        double e_peak = Es[i_peak];
+        for (int i = i_peak + 1; i < Nfreq - 1; ++i) {
+            if (Es[i] > e_peak) {
+                e_peak = Es[i];
+                i_peak = i;
+            }
+        }
+
+        if (!(e_peak > 0.0) || i_peak <= i_floor) {
+            return f_floor_hz;
+        }
+
+        int i_valley = i_floor;
+        double e_valley = Es[i_floor];
+        for (int i = i_floor + 1; i < i_peak; ++i) {
+            if (Es[i] < e_valley) {
+                e_valley = Es[i];
+                i_valley = i;
+            }
+        }
+
+        const bool left_edge_raised =
+            (E[0] > 1.15 * std::max(e_valley, 1e-18)) ||
+            (Nfreq > 2 && E[1] > 1.06 * std::max(E[2], 1e-18));
+
+        // FIX: require deeper, earlier valley to avoid misidentifying
+        // the wave spectrum shoulder as the noise/wave boundary.
+        const bool valley_is_good =
+            (i_valley > i_floor) &&
+            (e_valley < 0.68 * e_peak) &&                    // was 0.78
+            (freqs_[i_valley] < 0.72 * freqs_[i_peak]);     // was 0.80
+
+        if (left_edge_raised && valley_is_good) {
+            return std::max(f_floor_hz, freqs_[i_valley]);
+        }
+
+        // FIX: raise fallback cut fraction from 0.30 to 0.38.
+        // For low sea states (fp~0.33 Hz) this moves the cut from 0.099 Hz
+        // to 0.125 Hz, shifting the taper suppression zone up to cover
+        // the 0.10-0.15 Hz spike region. For high sea states the floor
+        // dominates anyway, so the impact is negligible there.
+        const double f_rel = 0.38 * freqs_[i_peak];  // was 0.30
+        const double f_cap = 0.70 * freqs_[i_peak];
+        return std::max(f_floor_hz, std::min(f_rel, f_cap));
+    }
+
+    // FIX: complete rewrite of lowfreq_taper_.
+    //
+    // BUG IN PREVIOUS VERSION: the power-law branch returned pow(r, 1.25) where
+    // r = f / (0.58 * f_cut).  At the branch boundary f = 0.58 * f_cut, r = 1
+    // and pow(1, 1.25) = 1.  The smoothstep transition above that boundary also
+    // evaluated to 1.0 (g0 = pow(min(r0,1),1.25) = 1 for all r0 >= 1).
+    // Result: the taper was exactly 1.0 for all f >= 0.58 * f_cut — leaving the
+    // entire 0.058-0.13 Hz spike zone completely unsuppressed for a 0.10 Hz cut.
+    //
+    // NEW DESIGN: cubic smoothstep from 0 (at 0.50*f_cut) to 1 (at 1.20*f_cut).
+    // For f_cut = 0.125 Hz (low sea, fp~0.33 Hz):
+    //   f = 0.063 Hz → 0.0 (full suppress)   f = 0.10 Hz → 0.36   f = 0.15 Hz → 1.0
+    // For f_cut = 0.032 Hz (high sea, fp~0.08 Hz):
+    //   0.038 Hz = 1.20 * f_cut < 0.04 Hz (lowest bin) → all bins fully passed
+    static double lowfreq_taper_(double f_hz, double f_cut_hz) {
+        if (!(f_cut_hz > 0.0)) return 1.0;
+        const double f_lo = 0.50 * f_cut_hz;
+        const double f_hi = 1.20 * f_cut_hz;
+        if (f_hz >= f_hi) return 1.0;
+        if (f_hz <= f_lo) return 0.0;
+        const double t = std::clamp((f_hz - f_lo) / (f_hi - f_lo), 0.0, 1.0);
+        return t * t * (3.0 - 2.0 * t);  // cubic smoothstep: 0→1
+    }
+
+    void suppress_unsupported_lowfreq_spikes_(const std::array<double, Nfreq>& S_aa_true_arr,
+                                              int k_peak_acc) {
+        if (Nfreq < 4) return;
+        if (!(last_lowfreq_cut_hz_ > 0.0)) return;
+        if (k_peak_acc <= 3 || k_peak_acc >= Nfreq) return;
+
+        double f_soft = 1.35 * last_lowfreq_cut_hz_;
+        f_soft = std::min(f_soft, 0.72 * freqs_[k_peak_acc]);
+
+        int k_soft = 0;
+        while (k_soft + 1 < Nfreq && freqs_[k_soft + 1] <= f_soft) ++k_soft;
+
+        const int k_stop = std::min(k_soft, std::max(1, k_peak_acc - 3));
+        if (k_stop < 2 || k_stop + 1 >= Nfreq) return;
+
+        std::array<double, Nfreq> Eeta{};
+        std::array<double, Nfreq> Eaa{};
+        std::array<double, Nfreq> Eaa_s{};
+
+        for (int i = 0; i < Nfreq; ++i) {
+            const double f = std::max(freqs_[i], 1e-12);
+            Eeta[i] = std::max(0.0, double(lastSpectrum_[i])) * f;
+            Eaa[i]  = std::max(0.0, S_aa_true_arr[i]) * f;
+        }
+        WaveSpectrumShared::smooth_3tap_array<Nfreq>(Eaa, Eaa_s);
+
+        const int i_ref = std::min(k_stop + 1, Nfreq - 1);
+        const double Eref = std::max(Eeta[i_ref], 1e-12);
+        const double fref = std::max(freqs_[i_ref], 1e-12);
+        const double Eaa_ref = std::max(Eaa_s[i_ref], 1e-12);
+
+        for (int i = 1; i <= k_stop; ++i) {
+            const bool local_peak =
+                (Eeta[i] > Eeta[i - 1]) &&
+                (Eeta[i] > Eeta[i + 1]);
+
+            if (!local_peak) continue;
+
+            const double r = std::max(freqs_[i], 1e-12) / fref;
+            const double env_cap = Eref * std::pow(r, 1.55);
+            const double accel_support = Eaa_s[i] / Eaa_ref;
+
+            if (accel_support < 0.18 && Eeta[i] > 1.9 * env_cap) {
+                Eeta[i] = std::max(env_cap, 0.60 * Eeta[i]);
+            }
+        }
+
+        for (int i = 0; i < Nfreq; ++i) {
+            lastSpectrum_[i] = Eeta[i] / std::max(freqs_[i], 1e-12);
+        }
+    }
+
+    void suppress_lowfreq_from_cut_inplace_() {
+        if (Nfreq < 4) return;
+        if (!(last_lowfreq_cut_hz_ > 0.0)) return;
+
+        // FIX: anchor reference at f_cut itself (was 0.88 * f_cut, which left
+        // a gap between the reference and the true cut frequency).
+        const double f_eff = 0.98 * last_lowfreq_cut_hz_;  // was 0.88
+
+        std::array<double, Nfreq> E{};
+        for (int i = 0; i < Nfreq; ++i) {
+            E[i] = std::max(0.0, double(lastSpectrum_[i])) * std::max(freqs_[i], 1e-12);
+        }
+
+        int i_cut = 0;
+        while (i_cut + 1 < Nfreq && freqs_[i_cut + 1] <= f_eff) ++i_cut;
+        if (i_cut <= 0) return;
+
+        const double f_ref = std::max(freqs_[i_cut], 1e-12);
+        const double E_ref = std::max(E[i_cut], 1e-18);
+
+        double prev = E_ref;
+        // FIX: steeper roll-off power (was 1.55) so residual energy below
+        // f_cut decays faster toward zero.
+        const double shape_pow = 2.0;  // was 1.55
+
+        for (int i = i_cut - 1; i >= 0; --i) {
+            const double r = std::max(freqs_[i] / f_ref, 0.0);
+            const double cap = E_ref * std::pow(r, shape_pow);
+
+            double v = std::max(0.0, E[i]);
+            v = std::min(v, cap);
+            v = std::min(v, 1.15 * prev);
+
+            E[i] = v;
+            prev = v;
+        }
+
+        for (int i = 0; i < Nfreq; ++i) {
+            lastSpectrum_[i] = E[i] / std::max(freqs_[i], 1e-12);
+        }
+    }
+
+    void finalize_displacement_spectrum_(
+        const std::array<double, Nfreq>& S_aa_true_arr) {
+        WaveSpectrumShared::smooth_logfreq_3tap_custom_inplace<Nfreq>(
+            lastSpectrum_, freqs_, 0.20, 0.62, 1.08, 0.92);
+
+        const int k_peak_acc =
+            WaveSpectrumShared::find_accel_peak_index<Nfreq>(
+                S_aa_true_arr, freqs_, last_lowfreq_cut_hz_, 1.03);
+
+        suppress_unsupported_lowfreq_spikes_(S_aa_true_arr, k_peak_acc);
+        suppress_lowfreq_from_cut_inplace_();
+    }
+
     void computeSpectrum() {
         const int blockSize = std::min(filledSamples, Nblock);
         const int startIdx = (writeIndex + Nblock - blockSize) % Nblock;
@@ -192,16 +388,16 @@ private:
             S_aa_true_arr[i] = std::max(0.0, S_aa_meas * inv_hp);
         }
 
-        last_lowfreq_cut_hz_ =
-            WaveSpectrumShared::estimate_lowfreq_cut_from_accel<Nfreq>(
-                S_aa_true_arr, freqs_, Tblk, hp_f0_hz);
+        last_lowfreq_cut_hz_ = estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
 
-        const double f_knee = std::max({
-            reg_f0_hz,
-            0.60 * last_lowfreq_cut_hz_,
-            0.95 * hp_f0_hz,
-            0.90 * f_blk
-        });
+        // FIX: reduce regularization knee.
+        // Old: 0.95 * hp_f0_hz = 0.024 Hz → λ = 0.151 rad/s → 15% bias at fp=0.08 Hz
+        // New: 0.72 * hp_f0_hz = 0.018 Hz → λ = 0.113 rad/s →  9% bias at fp=0.08 Hz
+        // Also reduced the last_lowfreq_cut multiplier (0.60→0.48) so f_knee
+        // tracks lower for long-period seas.
+        const double f_knee = std::max(
+            std::max(reg_f0_hz, 0.48 * last_lowfreq_cut_hz_),  // was 0.60
+            std::max(0.72 * hp_f0_hz, 0.90 * f_blk));          // was 0.95
 
         const double lam = 2.0 * M_PI * f_knee;
 
@@ -213,7 +409,7 @@ private:
             double S_eta = (den > 0.0) ? (S_aa_true_arr[i] / (den * den)) : 0.0;
             if (!std::isfinite(S_eta) || S_eta < 0.0) S_eta = 0.0;
 
-            S_eta *= WaveSpectrumShared::lowfreq_taper(f, last_lowfreq_cut_hz_);
+            S_eta *= lowfreq_taper_(f, last_lowfreq_cut_hz_);
 
             if (use_psd_ema) {
                 const double a = alpha_for_f(f);
@@ -226,9 +422,7 @@ private:
         }
 
         have_ema = true;
-
-        WaveSpectrumShared::finalize_displacement_spectrum_goertzel_inplace<Nfreq>(
-            lastSpectrum_, S_aa_true_arr, freqs_, last_lowfreq_cut_hz_);
+        finalize_displacement_spectrum_(S_aa_true_arr);
     }
 
     double fs_raw = 0.0;
@@ -254,8 +448,13 @@ private:
     Eigen::Matrix<double, Nfreq, 1> lastSpectrum_;
 
     bool use_psd_ema = true;
-    double ema_alpha_low = 0.20;
-    double ema_alpha_high = 0.06;
+    // FIX: alphas were backwards.
+    // Old: alpha_low=0.20 (fast/noisy at low freq where 1/ω⁴ amplification is worst),
+    //      alpha_high=0.06 (heavy averaging at high freq where SNR is best).
+    // New: alpha_low=0.06 (heavy averaging at low freq — reduces amplified noise),
+    //      alpha_high=0.20 (faster update at high freq — SNR is fine there).
+    double ema_alpha_low  = 0.06;   // was 0.20
+    double ema_alpha_high = 0.20;  // was 0.06
     bool have_ema = false;
     Eigen::Matrix<double, Nfreq, 1> psd_ema_;
 
