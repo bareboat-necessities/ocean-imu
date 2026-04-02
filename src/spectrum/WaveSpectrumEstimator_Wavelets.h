@@ -22,35 +22,39 @@ public:
     using Vec = Eigen::Matrix<double, Nfreq, 1>;
     using Biquad = WaveSpectrumShared::Biquad;
 
-    WaveSpectrumEstimator_Wavelets(double fs_raw_ = 200.0,
-                                   int decimFactor_ = 30,
-                                   bool hannEnabled_ = true)
-        : fs_raw(fs_raw_), decimFactor(decimFactor_), hannEnabled(hannEnabled_) {
-        fs = fs_raw / decimFactor;
+WaveSpectrumEstimator_Wavelets(double fs_raw_ = 200.0,
+                               int decimFactor_ = 30,
+                               bool hannEnabled_ = true)
+    : fs_raw(fs_raw_), decimFactor(decimFactor_), hannEnabled(hannEnabled_) {
+    fs = fs_raw / decimFactor;
 
-        WaveSpectrumShared::build_log_frequency_grid<Nfreq>(freqs_, f_edges_, df_);
+    const double fny_dec = fs_raw_ / (2.0 * decimFactor_);
+    const double lp_cutoffHz = 0.32 * fny_dec;
 
-        double sumsq = 0.0;
-        for (int n = 0; n < Nblock; ++n) {
-            window_[n] = hannEnabled
-                ? 0.5 * (1.0 - std::cos(2.0 * M_PI * n / (Nblock - 1)))
-                : 1.0;
-            sumsq += window_[n] * window_[n];
-        }
-        window_sum_sq = sumsq;
+    analysis_fmax_hz_ = WaveSpectrumShared::compute_safe_analysis_fmax(
+        fs_raw_, decimFactor_, 1.2, 0.32, 0.78, 0.85, 0.04);
 
-        reset();
+    WaveSpectrumShared::build_log_frequency_grid<Nfreq>(
+        freqs_, f_edges_, df_, 0.04, analysis_fmax_hz_);
 
-        const double fny_dec = fs_raw_ / (2.0 * decimFactor_);
-        const double lp_cutoffHz = 0.32 * fny_dec;
-
-        WaveSpectrumShared::designLowpassBiquad(lp1_, lp_cutoffHz, fs_raw_);
-        WaveSpectrumShared::designLowpassBiquad(lp2_, lp_cutoffHz, fs_raw_);
-        WaveSpectrumShared::designHighpassBiquad(hp1_, hp_f0_hz, fs_raw_);
-        WaveSpectrumShared::designHighpassBiquad(hp2_, hp_f0_hz, fs_raw_);
-
-        buildWaveletBank_();
+    double sumsq = 0.0;
+    for (int n = 0; n < Nblock; ++n) {
+        window_[n] = hannEnabled
+            ? 0.5 * (1.0 - std::cos(2.0 * M_PI * n / (Nblock - 1)))
+            : 1.0;
+        sumsq += window_[n] * window_[n];
     }
+    window_sum_sq = sumsq;
+
+    reset();
+
+    WaveSpectrumShared::designLowpassBiquad(lp1_, lp_cutoffHz, fs_raw_);
+    WaveSpectrumShared::designLowpassBiquad(lp2_, lp_cutoffHz, fs_raw_);
+    WaveSpectrumShared::designHighpassBiquad(hp1_, hp_f0_hz, fs_raw_);
+    WaveSpectrumShared::designHighpassBiquad(hp2_, hp_f0_hz, fs_raw_);
+
+    buildWaveletBank_();
+}
 
     void reset() {
         buffer_.fill(0.0);
@@ -95,6 +99,7 @@ public:
     std::array<double, Nfreq> getFrequencies() const { return freqs_; }
     bool ready() const { return isWarm; }
     double getLowfreqCutHz() const { return last_lowfreq_cut_hz_; }
+    double getAnalysisFmaxHz() const { return analysis_fmax_hz_; }
 
     double computeHs() const {
         return SpectrumStats::compute_hs<Nfreq>(lastSpectrum_, df_);
@@ -514,6 +519,8 @@ private:
 
     double reg_f0_hz = 0.008;
     double hp_f0_hz = 0.025;
+
+    double analysis_fmax_hz_ = 1.2;
 
     std::array<double, Nfreq> freqs_{};
     std::array<double, Nfreq + 1> f_edges_{};
