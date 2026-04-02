@@ -41,3 +41,6 @@
 *.dwo
 
 /.idea/
+
+# Generated spectrum report fragments
+doc/spectrum/spectrum-sea_metrics.tex-part
