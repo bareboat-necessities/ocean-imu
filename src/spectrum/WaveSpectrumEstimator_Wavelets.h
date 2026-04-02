@@ -214,16 +214,16 @@ private:
             return std::max(f_floor_hz, freqs_[i_valley]);
         }
 
-        const double f_rel = 0.38 * freqs_[i_peak];
-        const double f_cap = 0.70 * freqs_[i_peak];
+        const double f_rel = 0.60 * freqs_[i_peak];
+        const double f_cap = 0.90 * freqs_[i_peak];
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
     }
 
     static double lowfreq_taper_(double f_hz, double f_cut_hz) {
         if (!(f_cut_hz > 0.0)) return 1.0;
 
-        const double f_lo = 0.50 * f_cut_hz;
-        const double f_hi = 1.20 * f_cut_hz;
+        const double f_lo = 0.60 * f_cut_hz;
+        const double f_hi = 1.35 * f_cut_hz;
 
         if (f_hz >= f_hi) return 1.0;
         if (f_hz <= f_lo) return 0.0;
@@ -242,22 +242,22 @@ private:
         }
 
         int i_cut = 0;
-        const double f_eff = 0.92 * last_lowfreq_cut_hz_;
+        const double f_eff = 1.00 * last_lowfreq_cut_hz_;
         while (i_cut + 1 < Nfreq && freqs_[i_cut + 1] <= f_eff) ++i_cut;
         if (i_cut < 2) return false;
 
         const double E_ref = std::max(E[i_cut], 1e-18);
 
         return
-            (E[0] > 1.20 * E_ref) ||
-            (E[1] > 1.08 * std::max(E[2], 1e-18));
+            (E[0] > 1.10 * E_ref) ||
+            (E[1] > 1.05 * std::max(E[2], 1e-18));
     }
 
     void suppress_lowfreq_from_cut_inplace_wavelet_() {
         if (Nfreq < 4) return;
         if (!(last_lowfreq_cut_hz_ > 0.0)) return;
 
-        const double f_eff = 0.92 * last_lowfreq_cut_hz_;
+        const double f_eff = 1.02 * last_lowfreq_cut_hz_;
 
         std::array<double, Nfreq> E{};
         for (int i = 0; i < Nfreq; ++i) {
@@ -272,8 +272,8 @@ private:
         const double E_ref = std::max(E[i_cut], 1e-18);
 
         double prev = E_ref;
-        const double shape_pow = 2.30;
-        const double slope_cap = 1.08;
+        const double shape_pow = 2.60;
+        const double slope_cap = 1.04;
 
         for (int i = i_cut - 1; i >= 0; --i) {
             const double r = std::max(freqs_[i] / f_ref, 0.0);
