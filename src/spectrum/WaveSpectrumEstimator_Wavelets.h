@@ -232,6 +232,66 @@ private:
         return t * t * (3.0 - 2.0 * t);
     }
 
+    bool lowfreq_edge_is_raised_() const {
+        if (Nfreq < 4) return false;
+        if (!(last_lowfreq_cut_hz_ > 0.0)) return false;
+
+        std::array<double, Nfreq> E{};
+        for (int i = 0; i < Nfreq; ++i) {
+            E[i] = std::max(0.0, double(lastSpectrum_[i])) * std::max(freqs_[i], 1e-12);
+        }
+
+        int i_cut = 0;
+        const double f_eff = 0.92 * last_lowfreq_cut_hz_;
+        while (i_cut + 1 < Nfreq && freqs_[i_cut + 1] <= f_eff) ++i_cut;
+        if (i_cut < 2) return false;
+
+        const double E_ref = std::max(E[i_cut], 1e-18);
+
+        return
+            (E[0] > 1.20 * E_ref) ||
+            (E[1] > 1.08 * std::max(E[2], 1e-18));
+    }
+
+    void suppress_lowfreq_from_cut_inplace_wavelet_() {
+        if (Nfreq < 4) return;
+        if (!(last_lowfreq_cut_hz_ > 0.0)) return;
+
+        const double f_eff = 0.92 * last_lowfreq_cut_hz_;
+
+        std::array<double, Nfreq> E{};
+        for (int i = 0; i < Nfreq; ++i) {
+            E[i] = std::max(0.0, double(lastSpectrum_[i])) * std::max(freqs_[i], 1e-12);
+        }
+
+        int i_cut = 0;
+        while (i_cut + 1 < Nfreq && freqs_[i_cut + 1] <= f_eff) ++i_cut;
+        if (i_cut <= 0) return;
+
+        const double f_ref = std::max(freqs_[i_cut], 1e-12);
+        const double E_ref = std::max(E[i_cut], 1e-18);
+
+        double prev = E_ref;
+        const double shape_pow = 2.30;
+        const double slope_cap = 1.08;
+
+        for (int i = i_cut - 1; i >= 0; --i) {
+            const double r = std::max(freqs_[i] / f_ref, 0.0);
+            const double cap = E_ref * std::pow(r, shape_pow);
+
+            double v = std::max(0.0, E[i]);
+            v = std::min(v, cap);
+            v = std::min(v, slope_cap * prev);
+
+            E[i] = v;
+            prev = v;
+        }
+
+        for (int i = 0; i < Nfreq; ++i) {
+            lastSpectrum_[i] = E[i] / std::max(freqs_[i], 1e-12);
+        }
+    }
+
     void buildWaveletBank_() {
         wave_re_.fill(0.0f);
         wave_im_.fill(0.0f);
@@ -332,6 +392,10 @@ private:
     void finalize_displacement_spectrum_() {
         WaveSpectrumShared::smooth_logfreq_3tap_custom_inplace<Nfreq>(
             lastSpectrum_, freqs_, 0.18, 0.66, 1.10, 0.94);
+
+        if (lowfreq_edge_is_raised_()) {
+            suppress_lowfreq_from_cut_inplace_wavelet_();
+        }
     }
 
     void computeSpectrum() {
@@ -414,8 +478,8 @@ private:
         last_lowfreq_cut_hz_ = estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
 
         const double f_knee = std::max(
-            std::max(reg_f0_hz, 0.48 * last_lowfreq_cut_hz_),
-            std::max(0.68 * hp_f0_hz, 0.90 * f_blk));
+            std::max(reg_f0_hz, 0.60 * last_lowfreq_cut_hz_),
+            std::max(0.95 * hp_f0_hz, 0.90 * f_blk));
 
         const double lam = 2.0 * M_PI * f_knee;
 
