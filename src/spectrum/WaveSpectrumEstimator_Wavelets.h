@@ -30,7 +30,12 @@
     This version adds:
       - wavelet-only low-frequency spike veto in a soft guard band above the
         learned cutoff, to suppress unsupported false peaks that survive just
-        above the shared low-frequency cutoff.
+        above the shared low-frequency cutoff
+
+    This version further refines that veto to be:
+      - peak-aware
+      - less aggressive
+      - prevented from reaching into the main-peak neighborhood
 */
 
 template<int Nfreq = 32, int Nblock = 384>
@@ -288,14 +293,21 @@ private:
         }
     }
 
-    void suppress_unsupported_lowfreq_spikes_(const std::array<double, Nfreq>& S_aa_true_arr) {
+    void suppress_unsupported_lowfreq_spikes_(
+        const std::array<double, Nfreq>& S_aa_true_arr,
+        int k_peak_prov)
+    {
         if (!(last_lowfreq_cut_hz_ > 0.0)) return;
+        if (k_peak_prov <= 2 || k_peak_prov >= Nfreq) return;
 
-        const double f_soft = 1.45 * last_lowfreq_cut_hz_;
+        double f_soft = 1.25 * last_lowfreq_cut_hz_;
+        f_soft = std::min(f_soft, 0.72 * freqs_[k_peak_prov]);
 
         int k_soft = 0;
         while (k_soft + 1 < Nfreq && freqs_[k_soft + 1] <= f_soft) ++k_soft;
-        if (k_soft < 2 || k_soft + 1 >= Nfreq) return;
+
+        const int k_stop = std::min(k_soft, std::max(1, k_peak_prov - 2));
+        if (k_stop < 2 || k_stop + 1 >= Nfreq) return;
 
         std::array<double, Nfreq> Eeta{};
         std::array<double, Nfreq> Eaa{};
@@ -307,19 +319,18 @@ private:
             Eaa[i]  = std::max(0.0, S_aa_true_arr[i]) * f;
         }
 
-        if (Nfreq == 1) return;
         Eaa_s[0] = 0.75 * Eaa[0] + 0.25 * Eaa[1];
         for (int i = 1; i < Nfreq - 1; ++i) {
             Eaa_s[i] = 0.25 * Eaa[i - 1] + 0.50 * Eaa[i] + 0.25 * Eaa[i + 1];
         }
         Eaa_s[Nfreq - 1] = 0.25 * Eaa[Nfreq - 2] + 0.75 * Eaa[Nfreq - 1];
 
-        const int i_ref = std::min(k_soft + 1, Nfreq - 1);
+        const int i_ref = std::min(k_stop + 1, Nfreq - 1);
         const double Eref = std::max(Eeta[i_ref], 1e-12);
         const double fref = std::max(freqs_[i_ref], 1e-12);
         const double Eaa_ref = std::max(Eaa_s[i_ref], 1e-12);
 
-        for (int i = 1; i <= k_soft; ++i) {
+        for (int i = 1; i <= k_stop; ++i) {
             const bool local_peak =
                 (Eeta[i] > Eeta[i - 1]) &&
                 (Eeta[i] > Eeta[i + 1]);
@@ -330,8 +341,8 @@ private:
             const double accel_support = Eaa_s[i] / Eaa_ref;
 
             if (local_peak &&
-                accel_support < 0.25 &&
-                Eeta[i] > 1.6 * env_cap) {
+                accel_support < 0.18 &&
+                Eeta[i] > 1.9 * env_cap) {
                 Eeta[i] = env_cap;
             }
         }
@@ -455,9 +466,20 @@ private:
             }
         }
 
+        int k_peak_prov = 0;
+        double s_peak_prov = -1.0;
+        for (int i = 0; i < Nfreq; ++i) {
+            const double f = freqs_[i];
+            const double s = std::max(0.0, double(lastSpectrum_[i]));
+            if (f >= std::max(last_lowfreq_cut_hz_, freqs_[0]) && s > s_peak_prov) {
+                s_peak_prov = s;
+                k_peak_prov = i;
+            }
+        }
+
         have_ema = true;
 
-        suppress_unsupported_lowfreq_spikes_(S_aa_true_arr);
+        suppress_unsupported_lowfreq_spikes_(S_aa_true_arr, k_peak_prov);
 
         WaveSpectrumShared::smooth_logfreq_3tap_inplace<Nfreq>(lastSpectrum_, freqs_);
         WaveSpectrumShared::suppress_lowfreq_from_cut_inplace<Nfreq>(
