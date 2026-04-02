@@ -5,14 +5,18 @@
 #include <cmath>
 #include <limits>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 namespace WaveSpectrumShared {
 
-inline double safe_log(double v) {
-    return std::log(std::max(v, 1e-18));
-}
-
+// -----------------------------
+// Common small biquad
+// -----------------------------
 struct Biquad {
-    double b0 = 0.0, b1 = 0.0, b2 = 0.0, a1 = 0.0, a2 = 0.0;
+    double b0 = 0.0, b1 = 0.0, b2 = 0.0;
+    double a1 = 0.0, a2 = 0.0;
     double z1 = 0.0, z2 = 0.0;
 
     inline double process(double x) {
@@ -28,59 +32,28 @@ struct Biquad {
     }
 };
 
-inline void designLowpassBiquad(Biquad& bq, double f_cut, double Fs, double Q = 0.707) {
-    const double Fc = f_cut / Fs;
-    const double K = std::tan(M_PI * Fc);
-    const double norm = 1.0 / (1.0 + K / Q + K * K);
+static constexpr double BIQUAD_Q = 0.707;
 
-    bq.b0 = K * K * norm;
-    bq.b1 = 2.0 * bq.b0;
-    bq.b2 = bq.b0;
-    bq.a1 = 2.0 * (K * K - 1.0) * norm;
-    bq.a2 = (1.0 - K / Q + K * K) * norm;
+// -----------------------------
+// Basic helpers
+// -----------------------------
+inline double safe_pos(double x, double floor = 1e-12) {
+    return std::max(x, floor);
 }
 
-inline void designHighpassBiquad(Biquad& bq, double f_cut, double Fs, double Q = 0.707) {
-    if (f_cut <= 0.0) {
-        bq.b0 = 1.0;
-        bq.b1 = 0.0;
-        bq.b2 = 0.0;
-        bq.a1 = 0.0;
-        bq.a2 = 0.0;
-        bq.reset();
-        return;
-    }
-
-    const double Fc = f_cut / Fs;
-    const double K = std::tan(M_PI * Fc);
-    const double norm = 1.0 / (1.0 + K / Q + K * K);
-
-    bq.b0 = 1.0 * norm;
-    bq.b1 = -2.0 * norm;
-    bq.b2 = 1.0 * norm;
-    bq.a1 = 2.0 * (K * K - 1.0) * norm;
-    bq.a2 = (1.0 - K / Q + K * K) * norm;
-    bq.reset();
+inline double ema_alpha_for_f(double f,
+                              double fmin,
+                              double fmax,
+                              double alpha_low,
+                              double alpha_high) {
+    double t = (f - fmin) / std::max(1e-12, (fmax - fmin));
+    t = std::clamp(t, 0.0, 1.0);
+    return alpha_low + (alpha_high - alpha_low) * t;
 }
 
-inline double biquad_mag2_raw(const Biquad& bq, double Omega_raw) {
-    const double c1 = std::cos(Omega_raw);
-    const double s1 = std::sin(Omega_raw);
-    const double c2 = std::cos(2.0 * Omega_raw);
-    const double s2 = std::sin(2.0 * Omega_raw);
-
-    const double num_re = bq.b0 + bq.b1 * c1 + bq.b2 * c2;
-    const double num_im = -(bq.b1 * s1 + bq.b2 * s2);
-
-    const double den_re = 1.0 + bq.a1 * c1 + bq.a2 * c2;
-    const double den_im = -(bq.a1 * s1 + bq.a2 * s2);
-
-    const double num2 = num_re * num_re + num_im * num_im;
-    const double den2 = den_re * den_re + den_im * den_im;
-
-    return num2 / std::max(den2, 1e-16);
-}
-
+// -----------------------------
+// Frequency grid
+// -----------------------------
 template<int Nfreq>
 inline void build_log_frequency_grid(std::array<double, Nfreq>& freqs,
                                      std::array<double, Nfreq + 1>& f_edges,
@@ -98,114 +71,124 @@ inline void build_log_frequency_grid(std::array<double, Nfreq>& freqs,
     }
 }
 
-inline double smoothstep01(double x) {
-    x = std::clamp(x, 0.0, 1.0);
-    return x * x * (3.0 - 2.0 * x);
+// -----------------------------
+// Biquad design / response
+// -----------------------------
+inline void designLowpassBiquad(Biquad& bq, double f_cut, double Fs) {
+    const double Fc = f_cut / Fs;
+    const double K = std::tan(M_PI * Fc);
+    const double norm = 1.0 / (1.0 + K / BIQUAD_Q + K * K);
+
+    bq.b0 = K * K * norm;
+    bq.b1 = 2.0 * bq.b0;
+    bq.b2 = bq.b0;
+    bq.a1 = 2.0 * (K * K - 1.0) * norm;
+    bq.a2 = (1.0 - K / BIQUAD_Q + K * K) * norm;
+    bq.reset();
 }
 
-inline double lowfreq_taper(double f, double f_cut) {
-    if (!(f_cut > 0.0)) return 1.0;
-
-    // Gentler taper for medium/high seas.
-    const double f0 = 0.45 * f_cut;
-    const double f1 = 1.10 * f_cut;
-
-    if (f <= f0) {
-        const double r = std::clamp(f / std::max(f0, 1e-12), 0.0, 1.0);
-        return std::pow(r, 3.0);
+inline void designHighpassBiquad(Biquad& bq, double f_cut, double Fs) {
+    if (f_cut <= 0.0) {
+        bq.b0 = 1.0; bq.b1 = 0.0; bq.b2 = 0.0;
+        bq.a1 = 0.0; bq.a2 = 0.0;
+        bq.reset();
+        return;
     }
-    if (f >= f1) return 1.0;
 
-    return smoothstep01((f - f0) / std::max(f1 - f0, 1e-12));
+    const double Fc = f_cut / Fs;
+    const double K = std::tan(M_PI * Fc);
+    const double norm = 1.0 / (1.0 + K / BIQUAD_Q + K * K);
+
+    bq.b0 = 1.0 * norm;
+    bq.b1 = -2.0 * norm;
+    bq.b2 = 1.0 * norm;
+    bq.a1 = 2.0 * (K * K - 1.0) * norm;
+    bq.a2 = (1.0 - K / BIQUAD_Q + K * K) * norm;
+    bq.reset();
 }
 
+inline double biquad_mag2_raw(const Biquad& bq, double omega_raw) {
+    const double c1 = std::cos(omega_raw);
+    const double s1 = std::sin(omega_raw);
+    const double c2 = std::cos(2.0 * omega_raw);
+    const double s2 = std::sin(2.0 * omega_raw);
+
+    const double num_re = bq.b0 + bq.b1 * c1 + bq.b2 * c2;
+    const double num_im = -(bq.b1 * s1 + bq.b2 * s2);
+
+    const double den_re = 1.0 + bq.a1 * c1 + bq.a2 * c2;
+    const double den_im = -(bq.a1 * s1 + bq.a2 * s2);
+
+    const double num2 = num_re * num_re + num_im * num_im;
+    const double den2 = den_re * den_re + den_im * den_im;
+
+    return num2 / std::max(den2, 1e-16);
+}
+
+// -----------------------------
+// Smoothing
+// -----------------------------
 template<int Nfreq, typename SpectrumLike>
 inline void smooth_logfreq_3tap_inplace(SpectrumLike& spectrum,
                                         const std::array<double, Nfreq>& freqs) {
     if (Nfreq < 3) return;
 
-    std::array<double, Nfreq> S{};
-    std::array<double, Nfreq> Sout{};
+    std::array<double, Nfreq> in{};
+    std::array<double, Nfreq> out{};
 
     for (int i = 0; i < Nfreq; ++i) {
-        S[i] = static_cast<double>(spectrum[i]);
+        in[i] = spectrum[i];
+        out[i] = spectrum[i];
     }
 
-    auto wpair = [&](int i) {
-        const double eps = 1e-12;
+    for (int i = 0; i < Nfreq; ++i) {
+        const double xim1 = std::log(std::max((i > 0) ? freqs[i - 1] : freqs[i], 1e-12));
+        const double xi   = std::log(std::max(freqs[i], 1e-12));
+        const double xip1 = std::log(std::max((i < Nfreq - 1) ? freqs[i + 1] : freqs[i], 1e-12));
 
-        const double x_im1 = (i > 0)
-            ? std::log(std::max(freqs[i - 1], eps))
-            : std::log(std::max(freqs[i], eps));
-
-        const double x_i = std::log(std::max(freqs[i], eps));
-
-        const double x_ip1 = (i < Nfreq - 1)
-            ? std::log(std::max(freqs[i + 1], eps))
-            : std::log(std::max(freqs[i], eps));
-
-        const double dL = std::max(0.0, x_i - x_im1);
-        const double dR = std::max(0.0, x_ip1 - x_i);
+        const double dL = std::max(0.0, xi - xim1);
+        const double dR = std::max(0.0, xip1 - xi);
 
         const double k = 0.35;
         const double minC = 0.40;
 
-        const double wL = k * dL;
-        const double wR = k * dR;
-        const double wC = std::max(minC, 1.0 - (wL + wR));
+        double wL = k * dL;
+        double wR = k * dR;
+        double wC = std::max(minC, 1.0 - (wL + wR));
         const double W = wL + wC + wR;
 
-        return std::array<double, 3>{wL / W, wC / W, wR / W};
-    };
+        wL /= W;
+        wC /= W;
+        wR /= W;
 
-    for (int i = 0; i < Nfreq; ++i) {
-        const auto w = wpair(i);
-        const double Sm1 = (i > 0) ? S[i - 1] : S[i];
-        const double Sp1 = (i < Nfreq - 1) ? S[i + 1] : S[i];
-        Sout[i] = w[0] * Sm1 + w[1] * S[i] + w[2] * Sp1;
+        const double Sm1 = (i > 0) ? in[i - 1] : in[i];
+        const double Si  = in[i];
+        const double Sp1 = (i < Nfreq - 1) ? in[i + 1] : in[i];
+
+        out[i] = wL * Sm1 + wC * Si + wR * Sp1;
     }
 
     for (int i = 0; i < Nfreq; ++i) {
-        spectrum[i] = Sout[i];
+        spectrum[i] = out[i];
     }
 }
 
+// -----------------------------
+// Adaptive low-frequency cutoff
+// Learned from deconvolved accel spectrum
+// -----------------------------
 template<int Nfreq>
 inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S_aa_true,
                                               const std::array<double, Nfreq>& freqs,
                                               double Tblk,
                                               double hp_f0_hz) {
-    if (Nfreq < 4) {
-        return std::max({
-            1.10 * freqs[0],
-            1.8 / std::max(Tblk, 1e-12),
-            1.35 * hp_f0_hz
-        });
-    }
-
-    // Use partially integrated pseudo-velocity-like spectrum to avoid
-    // right-shifting the cutoff in medium/high sea states.
-    const double f_floor = std::max({
-        1.10 * freqs[0],
-        1.80 / std::max(Tblk, 1e-12),
-        1.35 * hp_f0_hz
-    });
-
-    const double f_pre = std::max({
-        0.85 * hp_f0_hz,
-        1.20 / std::max(Tblk, 1e-12),
-        0.80 * f_floor
-    });
-    const double lam_pre = 2.0 * M_PI * f_pre;
+    if (Nfreq < 4) return 0.0;
 
     std::array<double, Nfreq> E{};
     std::array<double, Nfreq> Es{};
 
     for (int i = 0; i < Nfreq; ++i) {
-        const double f = std::max(freqs[i], 1e-12);
-        const double w = 2.0 * M_PI * f;
-        const double S_mid = std::max(0.0, S_aa_true[i]) / (w * w + lam_pre * lam_pre);
-        E[i] = f * S_mid;
+        E[i] = std::max(0.0, S_aa_true[i]) * std::max(freqs[i], 1e-12);
     }
 
     Es[0] = 0.75 * E[0] + 0.25 * E[1];
@@ -214,8 +197,14 @@ inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S
     }
     Es[Nfreq - 1] = 0.25 * E[Nfreq - 2] + 0.75 * E[Nfreq - 1];
 
+    const double f_floor_hz = std::max({
+        1.08 * freqs[0],
+        (Tblk > 1e-12) ? (1.5 / Tblk) : 0.0,
+        1.10 * hp_f0_hz
+    });
+
     int i_floor = 0;
-    while (i_floor + 1 < Nfreq && freqs[i_floor + 1] < f_floor) ++i_floor;
+    while (i_floor + 1 < Nfreq && freqs[i_floor + 1] < f_floor_hz) ++i_floor;
 
     int i_peak = std::max(1, i_floor);
     double e_peak = Es[i_peak];
@@ -227,7 +216,7 @@ inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S
     }
 
     if (!(e_peak > 0.0) || i_peak <= i_floor) {
-        return f_floor;
+        return f_floor_hz;
     }
 
     int i_valley = i_floor;
@@ -239,57 +228,74 @@ inline double estimate_lowfreq_cut_from_accel(const std::array<double, Nfreq>& S
         }
     }
 
-    double f_left_half = freqs[i_floor];
-    for (int i = i_peak; i >= i_floor; --i) {
-        if (Es[i] <= 0.5 * e_peak) {
-            f_left_half = freqs[i];
-            break;
-        }
-    }
-
-    double left_width = std::log(std::max(freqs[i_peak], 1e-12) / std::max(f_left_half, 1e-12));
-    left_width = std::clamp(left_width, 0.05, 1.50);
-
-    const double rel_cut = std::clamp(0.39 - 0.13 * left_width, 0.22, 0.38);
+    const bool left_edge_raised =
+        (E[0] > 1.20 * std::max(e_valley, 1e-18)) ||
+        (Nfreq > 2 && E[1] > 1.08 * std::max(E[2], 1e-18));
 
     const bool valley_is_good =
         (i_valley > i_floor) &&
-        (e_valley < 0.82 * e_peak) &&
-        (freqs[i_valley] < 0.88 * freqs[i_peak]);
+        (e_valley < 0.74 * e_peak) &&
+        (freqs[i_valley] < 0.86 * freqs[i_peak]);
 
-    double f_cut = valley_is_good
-        ? std::max(f_floor, 0.85 * freqs[i_valley])
-        : std::max(f_floor, rel_cut * freqs[i_peak]);
+    if (left_edge_raised && valley_is_good) {
+        return std::max(freqs[i_valley], f_floor_hz);
+    }
 
-    f_cut = std::min(f_cut, 0.65 * freqs[i_peak]);
-    f_cut = std::max(f_cut, f_floor);
-    return f_cut;
+    double f_rel = std::max(f_floor_hz, 0.38 * freqs[i_peak]);
+    f_rel = std::min(f_rel, 0.82 * freqs[i_peak]);
+    return f_rel;
 }
 
+// -----------------------------
+// Low-frequency taper (gentler)
+// -----------------------------
+inline double lowfreq_taper(double f_hz, double f_cut_hz) {
+    if (!(f_cut_hz > 0.0)) return 1.0;
+    if (f_hz >= 1.35 * f_cut_hz) return 1.0;
+    if (f_hz <= 0.60 * f_cut_hz) {
+        const double r = std::max(f_hz / std::max(0.60 * f_cut_hz, 1e-12), 0.0);
+        return std::pow(r, 1.5);
+    }
+
+    const double x = (f_hz - 0.60 * f_cut_hz) / std::max(0.75 * f_cut_hz, 1e-12);
+    const double t = std::clamp(x, 0.0, 1.0);
+    const double s = t * t * (3.0 - 2.0 * t);
+
+    const double r0 = std::max(f_hz / std::max(0.60 * f_cut_hz, 1e-12), 0.0);
+    const double g0 = std::pow(std::min(r0, 1.0), 1.5);
+
+    return g0 + (1.0 - g0) * s;
+}
+
+// -----------------------------
+// Shared low-frequency suppressor (gentler)
+// Operates on E(f) = f S(f)
+// -----------------------------
 template<int Nfreq, typename SpectrumLike>
 inline void suppress_lowfreq_from_cut_inplace(SpectrumLike& spectrum,
                                               const std::array<double, Nfreq>& freqs,
                                               double f_cut_hz) {
-    if (Nfreq < 3 || !(f_cut_hz > 0.0)) return;
+    if (Nfreq < 4) return;
+    if (!(f_cut_hz > 0.0)) return;
+
+    std::array<double, Nfreq> E{};
+
+    for (int i = 0; i < Nfreq; ++i) {
+        E[i] = std::max(0.0, double(spectrum[i])) * std::max(freqs[i], 1e-12);
+    }
 
     int i_cut = 0;
     while (i_cut + 1 < Nfreq && freqs[i_cut + 1] <= f_cut_hz) ++i_cut;
     if (i_cut <= 0) return;
 
-    std::array<double, Nfreq> E{};
-    for (int i = 0; i < Nfreq; ++i) {
-        E[i] = std::max(0.0, static_cast<double>(spectrum[i])) * std::max(freqs[i], 1e-12);
-    }
-
-    const int i_ref = std::min(i_cut + 1, Nfreq - 1);
-    const double f_ref = std::max(freqs[i_ref], 1e-12);
-    const double E_ref = std::max(E[i_ref], 1e-18);
+    const double f_ref = std::max(freqs[i_cut], 1e-12);
+    const double E_ref = std::max(E[i_cut], 1e-18);
 
     double prev = E_ref;
-    constexpr double shape_pow = 3.0;
+    const double shape_pow = 1.8;
 
     for (int i = i_cut - 1; i >= 0; --i) {
-        const double r = std::clamp(freqs[i] / f_ref, 0.0, 1.0);
+        const double r = std::max(freqs[i] / f_ref, 0.0);
         const double cap = E_ref * std::pow(r, shape_pow);
 
         double v = std::max(0.0, E[i]);
@@ -305,39 +311,44 @@ inline void suppress_lowfreq_from_cut_inplace(SpectrumLike& spectrum,
     }
 }
 
+// -----------------------------
+// Guarded peak-frequency estimate
+// -----------------------------
 template<int Nfreq, typename SpectrumLike>
 inline double estimate_fp_with_guard(const SpectrumLike& spectrum,
                                      const std::array<double, Nfreq>& freqs,
-                                     double f_guard_hz) {
+                                     double lowfreq_guard_hz) {
+    if (Nfreq == 0) return 0.0;
+
     int k0 = 0;
-    const double f_guard = std::max(f_guard_hz, 1.05 * freqs[0]);
-    while (k0 + 1 < Nfreq && freqs[k0 + 1] <= f_guard) ++k0;
+    const double f_guard = std::max(lowfreq_guard_hz, freqs[0]);
+    while (k0 + 1 < Nfreq && freqs[k0] < f_guard) ++k0;
 
     int k = k0;
     double vmax = -1.0;
     for (int i = k0; i < Nfreq; ++i) {
-        const double s = std::max(0.0, static_cast<double>(spectrum[i]));
+        const double s = std::max(0.0, double(spectrum[i]));
         if (s > vmax) {
             vmax = s;
             k = i;
         }
     }
 
+    if (!(vmax > 0.0)) return freqs[k0];
     if (k <= 0 || k >= Nfreq - 1) return freqs[k];
 
     const double f0 = freqs[k - 1];
     const double f1 = freqs[k];
     const double f2 = freqs[k + 1];
-
-    if (f0 <= 0.0 || f1 <= 0.0 || f2 <= 0.0) return f1;
+    if (!(f0 > 0.0 && f1 > 0.0 && f2 > 0.0)) return f1;
 
     const double x0 = std::log(f0);
     const double x1 = std::log(f1);
     const double x2 = std::log(f2);
 
-    const double y0 = safe_log(std::max(0.0, static_cast<double>(spectrum[k - 1])));
-    const double y1 = safe_log(std::max(0.0, static_cast<double>(spectrum[k])));
-    const double y2 = safe_log(std::max(0.0, static_cast<double>(spectrum[k + 1])));
+    const double y0 = std::log(std::max(double(spectrum[k - 1]), 1e-18));
+    const double y1 = std::log(std::max(double(spectrum[k]),     1e-18));
+    const double y2 = std::log(std::max(double(spectrum[k + 1]), 1e-18));
 
     const double L0a = 1.0 / ((x0 - x1) * (x0 - x2));
     const double L1a = 1.0 / ((x1 - x0) * (x1 - x2));
@@ -356,6 +367,124 @@ inline double estimate_fp_with_guard(const SpectrumLike& spectrum,
 
     if (f_peak <= std::min(f0, f2) || f_peak >= std::max(f0, f2)) return f1;
     return f_peak;
+}
+
+// -----------------------------
+// Shared accel-anchored low-f spike veto
+// -----------------------------
+template<int Nfreq>
+inline int find_accel_peak_index(const std::array<double, Nfreq>& S_aa_true_arr,
+                                 const std::array<double, Nfreq>& freqs,
+                                 double lowfreq_cut_hz) {
+    if (Nfreq < 3) return 0;
+
+    std::array<double, Nfreq> Eaa{};
+    std::array<double, Nfreq> Eaa_s{};
+
+    for (int i = 0; i < Nfreq; ++i) {
+        Eaa[i] = std::max(0.0, S_aa_true_arr[i]) * std::max(freqs[i], 1e-12);
+    }
+
+    Eaa_s[0] = 0.75 * Eaa[0] + 0.25 * Eaa[1];
+    for (int i = 1; i < Nfreq - 1; ++i) {
+        Eaa_s[i] = 0.25 * Eaa[i - 1] + 0.50 * Eaa[i] + 0.25 * Eaa[i + 1];
+    }
+    Eaa_s[Nfreq - 1] = 0.25 * Eaa[Nfreq - 2] + 0.75 * Eaa[Nfreq - 1];
+
+    int k0 = 0;
+    const double f0 = std::max(lowfreq_cut_hz, 1.05 * freqs[0]);
+    while (k0 + 1 < Nfreq && freqs[k0 + 1] <= f0) ++k0;
+
+    int k_peak = k0;
+    double v_peak = -1.0;
+    for (int i = k0; i < Nfreq; ++i) {
+        if (Eaa_s[i] > v_peak) {
+            v_peak = Eaa_s[i];
+            k_peak = i;
+        }
+    }
+    return k_peak;
+}
+
+template<int Nfreq, typename SpectrumLike>
+inline void suppress_unsupported_lowfreq_spikes_inplace(
+    SpectrumLike& spectrum,
+    const std::array<double, Nfreq>& S_aa_true_arr,
+    const std::array<double, Nfreq>& freqs,
+    double lowfreq_cut_hz,
+    int k_peak_acc)
+{
+    if (Nfreq < 4) return;
+    if (!(lowfreq_cut_hz > 0.0)) return;
+    if (k_peak_acc <= 2 || k_peak_acc >= Nfreq) return;
+
+    double f_soft = 1.40 * lowfreq_cut_hz;
+    f_soft = std::min(f_soft, 0.78 * freqs[k_peak_acc]);
+
+    int k_soft = 0;
+    while (k_soft + 1 < Nfreq && freqs[k_soft + 1] <= f_soft) ++k_soft;
+
+    const int k_stop = std::min(k_soft, std::max(1, k_peak_acc - 3));
+    if (k_stop < 2 || k_stop + 1 >= Nfreq) return;
+
+    std::array<double, Nfreq> Eeta{};
+    std::array<double, Nfreq> Eaa{};
+    std::array<double, Nfreq> Eaa_s{};
+
+    for (int i = 0; i < Nfreq; ++i) {
+        const double f = std::max(freqs[i], 1e-12);
+        Eeta[i] = std::max(0.0, double(spectrum[i])) * f;
+        Eaa[i]  = std::max(0.0, S_aa_true_arr[i]) * f;
+    }
+
+    Eaa_s[0] = 0.75 * Eaa[0] + 0.25 * Eaa[1];
+    for (int i = 1; i < Nfreq - 1; ++i) {
+        Eaa_s[i] = 0.25 * Eaa[i - 1] + 0.50 * Eaa[i] + 0.25 * Eaa[i + 1];
+    }
+    Eaa_s[Nfreq - 1] = 0.25 * Eaa[Nfreq - 2] + 0.75 * Eaa[Nfreq - 1];
+
+    const int i_ref = std::min(k_stop + 1, Nfreq - 1);
+    const double Eref = std::max(Eeta[i_ref], 1e-12);
+    const double fref = std::max(freqs[i_ref], 1e-12);
+    const double Eaa_ref = std::max(Eaa_s[i_ref], 1e-12);
+
+    for (int i = 1; i <= k_stop; ++i) {
+        const bool local_peak =
+            (Eeta[i] > Eeta[i - 1]) &&
+            (Eeta[i] > Eeta[i + 1]);
+
+        const double r = std::max(freqs[i], 1e-12) / fref;
+        const double env_cap = Eref * std::pow(r, 2.0);
+
+        const double accel_support = Eaa_s[i] / Eaa_ref;
+
+        if (local_peak &&
+            accel_support < 0.22 &&
+            Eeta[i] > 1.7 * env_cap) {
+            Eeta[i] = env_cap;
+        }
+    }
+
+    for (int i = 0; i < Nfreq; ++i) {
+        spectrum[i] = Eeta[i] / std::max(freqs[i], 1e-12);
+    }
+}
+
+template<int Nfreq, typename SpectrumLike>
+inline void finalize_displacement_spectrum_inplace(
+    SpectrumLike& spectrum,
+    const std::array<double, Nfreq>& S_aa_true_arr,
+    const std::array<double, Nfreq>& freqs,
+    double lowfreq_cut_hz)
+{
+    const int k_peak_acc =
+        find_accel_peak_index<Nfreq>(S_aa_true_arr, freqs, lowfreq_cut_hz);
+
+    suppress_unsupported_lowfreq_spikes_inplace<Nfreq>(
+        spectrum, S_aa_true_arr, freqs, lowfreq_cut_hz, k_peak_acc);
+
+    smooth_logfreq_3tap_inplace<Nfreq>(spectrum, freqs);
+    suppress_lowfreq_from_cut_inplace<Nfreq>(spectrum, freqs, lowfreq_cut_hz);
 }
 
 } // namespace WaveSpectrumShared
