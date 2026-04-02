@@ -16,7 +16,7 @@ else
     CXXFLAGS = $(BASEFLAGS) $(EIGEN_INC)
 endif
 
-TARGETS = spectrum-estimator-sim spectrum-wavelets-estimator-sim sea-metrics-from-spectrum-test
+TARGETS = spectrum-estimator-sim spectrum-wavelets-estimator-sim spectrum-sea_metrics-test
 
 all: $(TARGETS)
 
@@ -26,11 +26,12 @@ spectrum-estimator-sim: spectrum-estimator-sim.o
 spectrum-wavelets-estimator-sim: spectrum-wavelets-estimator-sim.o
 	$(CC) $(CXXFLAGS) -o $@ $^
 
+spectrum-sea_metrics-test: spectrum-sea_metrics-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^
+
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f *.o $(TARGETS) *.exe spectrum_*estimate*.csv
 
-sea-metrics-from-spectrum-test: sea-metrics-from-spectrum-test.o
-	$(CC) $(CXXFLAGS) -o $@ $^
