@@ -465,8 +465,18 @@ private:
             S_aa_true_arr[i] = std::max(0.0, S_aa_meas * inv_hp);
         }
 
-        last_lowfreq_cut_hz_ = estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
+        const double cut_est_hz =
+            estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
 
+        last_lowfreq_cut_hz_ = WaveSpectrumShared::asym_smooth_hz(
+            last_lowfreq_cut_hz_,
+            cut_est_hz,
+            0.22,  // rise faster
+            0.08,  // fall slower
+            0.18,  // max +18% per block
+            0.06   // max -6% per block
+        );
+        
         const double f_knee = std::max({
             reg_f0_hz,
             0.50 * last_lowfreq_cut_hz_,
