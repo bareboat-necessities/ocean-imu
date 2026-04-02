@@ -181,7 +181,10 @@ private:
                 continue;
             }
 
-            double sigma_t = WAVELET_CYCLES_TARGET / (2.0 * M_PI * f0);
+            const double rbin = WaveSpectrumShared::peak_regime_from_fpk(f0);
+            const double cycles_eff = WaveSpectrumShared::lerp(4.8, 6.0, rbin);
+
+            double sigma_t = cycles_eff / (2.0 * M_PI * f0);
             sigma_t = std::min(sigma_t, std::max(1e-6, sigma_t_max));
 
             int half = int(std::ceil(WAVELET_SUPPORT_SIGMA * sigma_t * fs));
@@ -341,14 +344,19 @@ private:
         }
 
         last_lowfreq_cut_hz_ =
-            WaveSpectrumShared::estimate_lowfreq_cut_from_accel<Nfreq>(
+            WaveSpectrumShared::estimate_lowfreq_cut_from_accel_wavelet<Nfreq>(
                 S_aa_true_arr, freqs_, Tblk, hp_f0_hz);
+
+        const int k_peak_acc = WaveSpectrumShared::find_accel_peak_index<Nfreq>(
+            S_aa_true_arr, freqs_, last_lowfreq_cut_hz_);
+        const double fpk_acc = freqs_[std::clamp(k_peak_acc, 0, Nfreq - 1)];
+        const double rpk = WaveSpectrumShared::peak_regime_from_fpk(fpk_acc);
 
         const double f_knee = std::max({
             reg_f0_hz,
-            0.60 * last_lowfreq_cut_hz_,
-            0.95 * hp_f0_hz,
-            0.90 * f_blk
+            WaveSpectrumShared::lerp(0.30, 0.44, rpk) * last_lowfreq_cut_hz_,
+            0.90 * hp_f0_hz,
+            0.75 * f_blk
         });
 
         const double lam = 2.0 * M_PI * f_knee;
@@ -361,7 +369,8 @@ private:
             double S_eta = (den > 0.0) ? (S_aa_true_arr[i] / (den * den)) : 0.0;
             if (!std::isfinite(S_eta) || S_eta < 0.0) S_eta = 0.0;
 
-            S_eta *= WaveSpectrumShared::lowfreq_taper(f, last_lowfreq_cut_hz_);
+            S_eta *= WaveSpectrumShared::lowfreq_taper_wavelet(
+                f, last_lowfreq_cut_hz_, fpk_acc);
 
             if (use_psd_ema) {
                 const double a = alpha_for_f(f);
@@ -376,7 +385,7 @@ private:
         have_ema = true;
 
         WaveSpectrumShared::finalize_displacement_spectrum_wavelet_inplace<Nfreq>(
-            lastSpectrum_, S_aa_true_arr, freqs_, last_lowfreq_cut_hz_); 
+            lastSpectrum_, S_aa_true_arr, freqs_, last_lowfreq_cut_hz_);
     }
 
     double fs_raw = 0.0;
@@ -412,7 +421,6 @@ private:
 
     double last_lowfreq_cut_hz_ = 0.0;
 
-    static constexpr double WAVELET_CYCLES_TARGET = 6.0;
     static constexpr double WAVELET_SUPPORT_SIGMA = 3.0;
     static constexpr int WAVELET_MIN_HALF = 8;
 
