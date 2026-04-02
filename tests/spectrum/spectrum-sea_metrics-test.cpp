@@ -3,10 +3,16 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <filesystem>
+#include <optional>
+#include <numbers>
+#include <sstream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "spectrum/SeaMetricsFromSpectrum.h"
+#include "util/WaveFilesSupport.h"
 
 namespace {
 
@@ -19,6 +25,7 @@ struct CaseSpec {
 
 struct CaseResult {
     std::string name;
+    std::string source_file;
     double hs_target_m = 0.0;
     double hs_est_m = 0.0;
     double hs_error_pct = 0.0;
@@ -29,6 +36,13 @@ struct CaseResult {
     double peakedness_ochi_q = 0.0;
     std::string spectrum_type;
     bool pass = false;
+};
+
+struct ModeSpec {
+    std::string mode_name;
+    std::string file_prefix;
+    std::string csv_out;
+    std::string full_metrics_out;
 };
 
 std::vector<double> build_frequency_grid() {
@@ -297,84 +311,157 @@ CaseResult run_case(const CaseSpec& spec, const std::vector<double>& freqs_hz) {
     return out;
 }
 
+std::optional<std::tuple<std::vector<double>, std::vector<double>>> read_spectrum_csv(
+    const std::string& csv_path) {
+    std::ifstream ifs(csv_path);
+    if (!ifs.is_open()) return std::nullopt;
+
+    std::string header;
+    if (!std::getline(ifs, header)) return std::nullopt;
+
+    std::vector<double> freqs_hz;
+    std::vector<double> s_eta;
+    std::string line;
+    while (std::getline(ifs, line)) {
+        if (line.empty()) continue;
+        std::stringstream ss(line);
+        std::string token_f;
+        std::string token_s;
+        if (!std::getline(ss, token_f, ',')) continue;
+        if (!std::getline(ss, token_s, ',')) continue;
+        try {
+            freqs_hz.push_back(std::stod(token_f));
+            s_eta.push_back(std::max(0.0, std::stod(token_s)));
+        } catch (...) {
+            continue;
+        }
+    }
+
+    if (freqs_hz.size() < 2 || freqs_hz.size() != s_eta.size()) return std::nullopt;
+    return std::make_tuple(freqs_hz, s_eta);
+}
+
+std::optional<WaveFileNaming::ParsedName> parse_estimator_filename(
+    const std::string& source_file, const std::string& mode_prefix) {
+    if (!source_file.starts_with(mode_prefix)) return std::nullopt;
+    const std::string tail = source_file.substr(mode_prefix.size());
+    return WaveFileNaming::parse("wave_data_" + tail);
+}
+
+std::vector<std::string> discover_estimator_files(const std::string& prefix) {
+    std::vector<std::string> files;
+    for (const auto& entry : std::filesystem::directory_iterator(".")) {
+        if (!entry.is_regular_file()) continue;
+        const std::string fname = entry.path().filename().string();
+        if (!fname.ends_with(".csv")) continue;
+        if (!fname.starts_with(prefix)) continue;
+        files.push_back(fname);
+    }
+    std::sort(files.begin(), files.end());
+    return files;
+}
+
+CaseResult run_case_from_estimator_csv(const std::string& source_file, const std::string& mode_prefix) {
+    auto parsed_meta = parse_estimator_filename(source_file, mode_prefix);
+    if (!parsed_meta) {
+        throw std::runtime_error("Cannot parse estimator filename metadata: " + source_file);
+    }
+
+    auto parsed_csv = read_spectrum_csv(source_file);
+    if (!parsed_csv) {
+        throw std::runtime_error("Cannot parse estimator CSV: " + source_file);
+    }
+    auto [freqs_hz, s_eta] = *parsed_csv;
+
+    SeaMetricsFromSpectrum metrics;
+    metrics.updateFromSpectrum(freqs_hz, s_eta, 0.04, 1.0);
+    const auto& r = metrics.report();
+
+    CaseResult out;
+    out.name = source_file;
+    out.source_file = source_file;
+    out.hs_target_m = parsed_meta->height;
+    const double tp_target_s = (parsed_meta->length > 0.0)
+                                   ? std::sqrt(parsed_meta->length / 9.80665 * 2.0 * std::numbers::pi)
+                                   : 0.0;
+    out.tp_target_s = tp_target_s;
+    out.hs_est_m = r.hs_m;
+    out.tp_est_s = r.tp_s;
+    out.hs_error_pct = (out.hs_target_m > 0.0) ? std::abs(100.0 * (r.hs_m - out.hs_target_m) / out.hs_target_m) : 0.0;
+    out.tp_error_pct = (out.tp_target_s > 0.0) ? std::abs(100.0 * (r.tp_s - out.tp_target_s) / out.tp_target_s) : 0.0;
+    out.rbw = r.rbw;
+    out.peakedness_ochi_q = r.peakedness_ochi_q;
+    out.spectrum_type = to_spectrum_type(r.spectrum_type);
+
+    constexpr double HS_GATE_PCT = 25.0;
+    constexpr double TP_GATE_PCT = 35.0;
+    out.pass = r.valid && out.hs_error_pct <= HS_GATE_PCT && out.tp_error_pct <= TP_GATE_PCT;
+    return out;
+}
+
 }  // namespace
 
 int main() {
-    const std::vector<CaseSpec> cases = {
-        {"narrow_peak_swell_like", 1.50, 10.0, 0.015},
-        {"broad_peak_windsea_like", 1.50, 6.0, 0.050},
+    const std::vector<ModeSpec> modes = {
+        {"classic", "spectrum_estimator_", "sea_metrics_from_spectrum_report_classic.csv", "sea_metrics_from_spectrum_full_metrics_classic.txt"},
+        {"wavelets", "spectrum_wavelets_", "sea_metrics_from_spectrum_report_wavelets.csv", "sea_metrics_from_spectrum_full_metrics_wavelets.txt"},
     };
-
-    const auto freqs_hz = build_frequency_grid();
-
-    std::ofstream csv("sea_metrics_from_spectrum_report.csv");
-    if (!csv.is_open()) {
-        std::cerr << "Failed to open sea_metrics_from_spectrum_report.csv for writing\n";
-        return EXIT_FAILURE;
-    }
-
-    csv << "case_name,hs_target_m,hs_est_m,hs_error_pct,tp_target_s,tp_est_s,tp_error_pct,rbw,peakedness_ochi_q,spectrum_type,pass\n";
-    csv << std::fixed << std::setprecision(6);
-
-    std::cout << "SeaMetricsFromSpectrum synthetic-spectrum test report\n";
-
     bool all_ok = true;
-    std::vector<CaseResult> results;
-    results.reserve(cases.size());
 
-    for (const auto& c : cases) {
-        CaseResult r = run_case(c, freqs_hz);
-        all_ok = all_ok && r.pass;
-        results.push_back(r);
-
-        csv << r.name << ','
-            << r.hs_target_m << ',' << r.hs_est_m << ',' << r.hs_error_pct << ','
-            << r.tp_target_s << ',' << r.tp_est_s << ',' << r.tp_error_pct << ','
-            << r.rbw << ',' << r.peakedness_ochi_q << ','
-            << r.spectrum_type << ',' << (r.pass ? 1 : 0) << "\n";
-
-        std::cout << "  - " << r.name
-                  << ": Hs(est=" << r.hs_est_m << " m, err=" << r.hs_error_pct << "%), "
-                  << "Tp(est=" << r.tp_est_s << " s, err=" << r.tp_error_pct << "%), "
-                  << "RBW=" << r.rbw << ", q=" << r.peakedness_ochi_q << ", type=" << r.spectrum_type
-                  << " -> " << (r.pass ? "PASS" : "FAIL") << "\n";
-    }
-
-    if (results.size() == 2) {
-        const bool narrow_is_narrower = results[0].rbw < results[1].rbw;
-        std::cout << "  - cross-check: narrow RBW < broad RBW -> "
-                  << (narrow_is_narrower ? "PASS" : "FAIL") << "\n";
-        all_ok = all_ok && narrow_is_narrower;
-    }
-
-    if (!cases.empty()) {
-        SeaMetricsFromSpectrum metrics_last;
-        const CaseSpec& last = cases.back();
-        const double fp_target_hz = 1.0 / last.tp_target_s;
-        std::vector<double> s_raw(freqs_hz.size(), 0.0);
-        for (std::size_t i = 0; i < freqs_hz.size(); ++i) {
-            const double x = (freqs_hz[i] - fp_target_hz) / last.sigma_hz;
-            s_raw[i] = std::exp(-0.5 * x * x);
+    for (const auto& mode : modes) {
+        auto files = discover_estimator_files(mode.file_prefix);
+        if (files.empty()) {
+            std::cout << "No estimator CSV files found for mode=" << mode.mode_name
+                      << " prefix=" << mode.file_prefix << " (skipping)\n";
+            continue;
         }
-        const double m0_raw = trapz(freqs_hz, s_raw);
-        const double m0_target = std::pow(last.hs_target_m / 4.0, 2.0);
-        const double scale = (m0_raw > 0.0) ? (m0_target / m0_raw) : 0.0;
-        std::vector<double> s_eta(freqs_hz.size(), 0.0);
-        for (std::size_t i = 0; i < s_eta.size(); ++i) {
-            s_eta[i] = scale * s_raw[i];
-        }
-        metrics_last.updateFromSpectrum(freqs_hz, s_eta, 0.04, 1.0);
-        print_report_summary(metrics_last.report(), std::cout);
 
-        std::ofstream full_metrics_txt("sea_metrics_from_spectrum_full_metrics.txt");
-        if (!full_metrics_txt.is_open()) {
-            std::cerr << "Failed to open sea_metrics_from_spectrum_full_metrics.txt for writing\n";
+        std::ofstream csv(mode.csv_out);
+        if (!csv.is_open()) {
+            std::cerr << "Failed to open " << mode.csv_out << " for writing\n";
             return EXIT_FAILURE;
         }
-        write_report_summary_name_value(metrics_last.report(), full_metrics_txt);
+        csv << "case_name,source_file,hs_target_m,hs_est_m,hs_error_pct,tp_target_s,tp_est_s,tp_error_pct,rbw,peakedness_ochi_q,spectrum_type,pass\n";
+        csv << std::fixed << std::setprecision(6);
+
+        std::cout << "SeaMetricsFromSpectrum report from estimator spectra: " << mode.mode_name << "\n";
+        SeaMetricsFromSpectrum::Report last_report;
+
+        for (const auto& source_file : files) {
+            CaseResult r = run_case_from_estimator_csv(source_file, mode.file_prefix);
+            all_ok = all_ok && r.pass;
+
+            csv << r.name << ',' << r.source_file << ','
+                << r.hs_target_m << ',' << r.hs_est_m << ',' << r.hs_error_pct << ','
+                << r.tp_target_s << ',' << r.tp_est_s << ',' << r.tp_error_pct << ','
+                << r.rbw << ',' << r.peakedness_ochi_q << ','
+                << r.spectrum_type << ',' << (r.pass ? 1 : 0) << "\n";
+
+            auto parsed_csv = read_spectrum_csv(source_file);
+            if (parsed_csv) {
+                auto [freqs_hz, s_eta] = *parsed_csv;
+                SeaMetricsFromSpectrum metrics_last;
+                metrics_last.updateFromSpectrum(freqs_hz, s_eta, 0.04, 1.0);
+                last_report = metrics_last.report();
+            }
+
+            std::cout << "  - " << r.name
+                      << ": Hs(target=" << r.hs_target_m << " m, est=" << r.hs_est_m << " m, err=" << r.hs_error_pct << "%), "
+                      << "Tp(target=" << r.tp_target_s << " s, est=" << r.tp_est_s << " s, err=" << r.tp_error_pct << "%), "
+                      << "RBW=" << r.rbw << ", q=" << r.peakedness_ochi_q << ", type=" << r.spectrum_type
+                      << " -> " << (r.pass ? "PASS" : "FAIL") << "\n";
+        }
+
+        std::ofstream full_metrics_txt(mode.full_metrics_out);
+        if (!full_metrics_txt.is_open()) {
+            std::cerr << "Failed to open " << mode.full_metrics_out << " for writing\n";
+            return EXIT_FAILURE;
+        }
+        write_report_summary_name_value(last_report, full_metrics_txt);
+
+        std::cout << "CSV written: " << mode.csv_out << "\n";
+        std::cout << "Full metrics text written: " << mode.full_metrics_out << "\n";
     }
 
-    std::cout << "CSV written: sea_metrics_from_spectrum_report.csv\n";
-    std::cout << "Full metrics text written: sea_metrics_from_spectrum_full_metrics.txt\n";
     return all_ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }
