@@ -16,6 +16,11 @@ int main() {
     using Estimator = WaveSpectrumEstimator_Wavelets<Nfreq, Nblock>;
 
     std::cout << "Wavelet spectrum estimator simulation (IMU -> estimator vs ref spectrum files)\n";
+    {
+        const double fs_hz = 1.0 / static_cast<double>(dt);
+        Estimator estimator_info(fs_hz, 30, true);
+        std::cout << "Estimator analysis fmax: " << estimator_info.getAnalysisFmaxHz() << " Hz\n";
+    }
 
     bool all_quality_ok = true;
     for (const auto& fname : SpectrumEstimatorSimShared::discover_wave_data_files()) {
