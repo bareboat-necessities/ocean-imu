@@ -57,6 +57,17 @@ def build_full_metrics_block(full_metrics_rows) -> str:
     ])
 
 
+def parse_name_value_lines(path: Path):
+    rows = []
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        metric, value = line.split("=", 1)
+        rows.append({"metric": metric.strip(), "value": value.strip()})
+    return rows
+
+
 def build_fragment(rows, full_metrics_rows=None) -> str:
     return build_table(rows) + build_full_metrics_block(full_metrics_rows or [])
 
@@ -81,7 +92,7 @@ def build_main(rows) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", default="sea_metrics_from_spectrum_report.csv")
-    parser.add_argument("--full-metrics-csv", default="sea_metrics_from_spectrum_full_metrics.csv")
+    parser.add_argument("--full-metrics-name-value", default="sea_metrics_from_spectrum_full_metrics.txt")
     parser.add_argument("--out-fragment", default="../../doc/spectrum/spectrum-sea_metrics.tex-part")
     parser.add_argument("--out-main", default="../../doc/spectrum/spectrum-sea_metrics.tex")
     args = parser.parse_args()
@@ -94,10 +105,9 @@ def main() -> None:
         rows = list(csv.DictReader(f))
 
     full_metrics_rows = []
-    full_metrics_path = Path(args.full_metrics_csv)
+    full_metrics_path = Path(args.full_metrics_name_value)
     if full_metrics_path.exists():
-        with full_metrics_path.open("r", encoding="utf-8", newline="") as f:
-            full_metrics_rows = list(csv.DictReader(f))
+        full_metrics_rows = parse_name_value_lines(full_metrics_path)
 
     fragment_path.parent.mkdir(parents=True, exist_ok=True)
     main_path.parent.mkdir(parents=True, exist_ok=True)
@@ -106,9 +116,9 @@ def main() -> None:
 
     print(f"Loaded CSV rows: {len(rows)} from {csv_path}")
     if full_metrics_rows:
-        print(f"Loaded full metrics rows: {len(full_metrics_rows)} from {full_metrics_path}")
+        print(f"Loaded full metrics name=value rows: {len(full_metrics_rows)} from {full_metrics_path}")
     else:
-        print(f"Full metrics CSV not found (optional): {full_metrics_path}")
+        print(f"Full metrics name=value file not found (optional): {full_metrics_path}")
     print(f"Wrote LaTeX fragment: {fragment_path}")
     print(f"Wrote LaTeX main: {main_path}")
 
