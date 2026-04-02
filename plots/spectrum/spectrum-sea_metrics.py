@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import csv
+import re
 from pathlib import Path
 
 
@@ -113,6 +114,32 @@ def pass_cell(v: str) -> str:
     return r"\textbf{PASS}" if str(v).strip() in ("1", "true", "True") else r"\textbf{FAIL}"
 
 
+def describe_case(case_name: str) -> str:
+    stem = Path(case_name).stem
+    mode = ""
+    if stem.startswith("spectrum_estimator_"):
+        mode = "Classic estimator"
+        stem = stem[len("spectrum_estimator_"):]
+    elif stem.startswith("spectrum_wavelets_"):
+        mode = "Wavelets estimator"
+        stem = stem[len("spectrum_wavelets_"):]
+
+    match = re.match(
+        r"(?P<wave>[a-z0-9]+)_H(?P<h>[0-9.]+)_L(?P<l>[0-9.]+)_A(?P<a>[0-9.]+)_P(?P<p>[0-9.]+)$",
+        stem,
+    )
+    if not match:
+        return case_name
+
+    wave_type = match.group("wave").upper()
+    height = float(match.group("h"))
+    length = float(match.group("l"))
+    azimuth = float(match.group("a"))
+    phase = float(match.group("p"))
+    details = f"{wave_type}: H={height:.2f} m, L={length:.2f} m, az={azimuth:.1f}°, phase={phase:.1f}°"
+    return f"{mode} — {details}" if mode else details
+
+
 def build_table(rows, caption: str, label: str) -> str:
     lines = [
         r"\begin{table}[H]",
@@ -127,7 +154,7 @@ def build_table(rows, caption: str, label: str) -> str:
 
     for row in rows:
         line = (
-            f"{tex_escape(row['case_name'])} & "
+            f"{tex_escape(describe_case(row['case_name']))} & "
             f"{float(row['hs_target_m']):.3f} & "
             f"{float(row['hs_est_m']):.3f} & "
             f"{float(row['hs_error_pct']):.2f} & "
@@ -143,12 +170,20 @@ def build_table(rows, caption: str, label: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def build_full_metrics_block(full_metrics_rows) -> str:
+def build_full_metrics_block(full_metrics_rows, last_case_description: str | None = None) -> str:
     if not full_metrics_rows:
         return ""
 
+    title = r"\subsection*{Full metrics dump}"
+    if last_case_description:
+        title = (
+            r"\subsection*{Full metrics dump (last synthetic spectrum case: "
+            + tex_escape(last_case_description)
+            + ")}"
+        )
+
     lines = [
-        r"\subsection*{Full metrics dump (last synthetic spectrum case)}",
+        title,
         r"\begin{longtable}{p{0.20\linewidth}p{0.22\linewidth}p{0.42\linewidth}p{0.12\linewidth}}",
         r"\toprule",
         r"Metric key & Human-readable name & Meaning & Value \\",
@@ -188,7 +223,11 @@ def parse_name_value_lines(path: Path):
 
 
 def build_fragment(rows, caption: str, label: str, full_metrics_rows=None) -> str:
-    return build_table(rows, caption, label) + build_full_metrics_block(full_metrics_rows or [])
+    last_case_description = describe_case(rows[-1]["case_name"]) if rows else None
+    return build_table(rows, caption, label) + build_full_metrics_block(
+        full_metrics_rows or [],
+        last_case_description,
+    )
 
 
 def main() -> None:
