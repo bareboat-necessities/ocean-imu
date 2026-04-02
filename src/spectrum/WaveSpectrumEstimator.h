@@ -480,8 +480,8 @@ private:
     Eigen::Matrix<double, Nfreq, 1> lastSpectrum_;
 
     bool use_psd_ema = true;
-    double ema_alpha_low = 0.20;
-    double ema_alpha_high = 0.06;
+    double ema_alpha_low = 0.06;
+    double ema_alpha_high = 0.14;
     bool have_ema = false;
     Eigen::Matrix<double, Nfreq, 1> psd_ema_;
 
