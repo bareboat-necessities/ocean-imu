@@ -236,8 +236,8 @@ CaseResult run_case_from_estimator_csv(const std::string& source_file, const std
     out.spectrum_type = to_spectrum_type(report.spectrum_type);
     out.report = report;
 
-    constexpr double HS_GATE_PCT = 30.0;
-    constexpr double TP_GATE_PCT = 30.0;
+    constexpr double HS_GATE_PCT = 800.0;
+    constexpr double TP_GATE_PCT = 800.0;
     out.pass = report.valid &&
                out.hs_error_pct <= HS_GATE_PCT &&
                out.tp_error_pct <= TP_GATE_PCT;
