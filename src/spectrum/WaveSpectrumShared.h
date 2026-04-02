@@ -500,10 +500,6 @@ inline void finalize_displacement_spectrum_inplace(
     const std::array<double, Nfreq>& freqs,
     double lowfreq_cut_hz)
 {
-    // This matches the behavior that produced the better "#6" plots:
-    // light smoothing + gentle below-cut suppression,
-    // but NO accel-anchored low-frequency spike veto.
-
     smooth_logfreq_3tap_inplace<Nfreq>(spectrum, freqs);
     suppress_lowfreq_from_cut_inplace<Nfreq>(spectrum, freqs, lowfreq_cut_hz);
 }
