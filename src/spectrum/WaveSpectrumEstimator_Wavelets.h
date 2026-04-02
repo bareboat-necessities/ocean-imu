@@ -13,7 +13,7 @@
 #include "spectrum/SpectrumStats.h"
 #include "spectrum/WaveSpectrumShared.h"
 
-template<int Nfreq = 32, int Nblock = 384>
+template<int Nfreq = 32, int Nblock = 256>
 class EIGEN_ALIGN_MAX WaveSpectrumEstimator_Wavelets {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
