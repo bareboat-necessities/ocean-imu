@@ -493,29 +493,18 @@ inline void suppress_unsupported_lowfreq_spikes_inplace(
     }
 }
 
-// -----------------------------
-// Shared finalizer
-//
-// Order changed:
-//   1) light peak-preserving smoothing
-//   2) very selective accel-anchored spike veto
-//   3) gentle suppression below effective cut
-// -----------------------------
 template<int Nfreq, typename SpectrumLike>
 inline void finalize_displacement_spectrum_inplace(
     SpectrumLike& spectrum,
-    const std::array<double, Nfreq>& S_aa_true_arr,
+    const std::array<double, Nfreq>& /*S_aa_true_arr*/,
     const std::array<double, Nfreq>& freqs,
     double lowfreq_cut_hz)
 {
+    // This matches the behavior that produced the better "#6" plots:
+    // light smoothing + gentle below-cut suppression,
+    // but NO accel-anchored low-frequency spike veto.
+
     smooth_logfreq_3tap_inplace<Nfreq>(spectrum, freqs);
-
-    const int k_peak_acc =
-        find_accel_peak_index<Nfreq>(S_aa_true_arr, freqs, lowfreq_cut_hz);
-
-    suppress_unsupported_lowfreq_spikes_inplace<Nfreq>(
-        spectrum, S_aa_true_arr, freqs, lowfreq_cut_hz, k_peak_acc);
-
     suppress_lowfreq_from_cut_inplace<Nfreq>(spectrum, freqs, lowfreq_cut_hz);
 }
 
