@@ -33,9 +33,6 @@ public:
         const double fny_dec = fs_raw / (2.0 * double(decimFactor));
         const double lp_cutoffHz = 0.32 * fny_dec;
 
-        // Keep decimation-safe band limiting, but less conservative than the
-        // current 0.78*LP guard. This stays sane while remaining closer to the
-        // older behavior that plotted better.
         analysis_fmax_hz_ = WaveSpectrumShared::compute_safe_analysis_fmax(
             fs_raw, decimFactor, 1.2, 0.32, 0.90, 0.90, 0.04);
 
@@ -224,8 +221,6 @@ private:
             return std::max(f_floor_hz, freqs_[i_valley]);
         }
 
-        // Revert from the recent aggressive fallback. This is much closer to the
-        // older behavior that gave better plots.
         const double f_rel = 0.60 * freqs_[i_peak];
         const double f_cap = 0.90 * freqs_[i_peak];
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
@@ -288,7 +283,6 @@ private:
         wave_im_.fill(0.0f);
         wave_half_.fill(0);
         wave_gain_onesided_hz_.fill(1.0);
-        wave_valid_win_rms2_.fill(1.0);
 
         const double halfMax = double((Nblock - 1) / 2);
         const double sigma_t_max = (fs > 0.0)
@@ -300,7 +294,6 @@ private:
             if (!(f0 > 0.0) || !(fs > 0.0)) {
                 wave_gain_onesided_hz_[i] = 1.0;
                 wave_half_[i] = WAVELET_MIN_HALF;
-                wave_valid_win_rms2_[i] = 1.0;
                 continue;
             }
 
@@ -313,22 +306,6 @@ private:
 
             const int L = 2 * half + 1;
             wave_half_[i] = half;
-
-            {
-                const int n0 = half;
-                const int n1 = Nblock - half;
-
-                double win_sumsq_valid = 0.0;
-                int M_valid = 0;
-                for (int n = n0; n < n1; ++n) {
-                    const double wv = window_[n];
-                    win_sumsq_valid += wv * wv;
-                    ++M_valid;
-                }
-
-                wave_valid_win_rms2_[i] =
-                    (M_valid > 0) ? (win_sumsq_valid / double(M_valid)) : 1.0;
-            }
 
             const double w0 = 2.0 * M_PI * f0;
             const double C0 = std::exp(-0.5 * (w0 * sigma_t) * (w0 * sigma_t));
@@ -350,6 +327,7 @@ private:
 
             orthogonalize_wavelet_to_dc_and_ramp_(i, L, half);
 
+            // Normalize coherent gain at f0 to ~1.
             double H0r = 0.0;
             double H0i = 0.0;
             for (int n = 0; n < L; ++n) {
@@ -369,18 +347,36 @@ private:
             const double scale = (H0mag > 1e-12) ? (1.0 / H0mag) : 1.0;
 
             for (int n = 0; n < L; ++n) {
-                wave_re_[tapIndex_(i, n)] = float(double(wave_re_[tapIndex_(i, n)]) * scale);
-                wave_im_[tapIndex_(i, n)] = float(double(wave_im_[tapIndex_(i, n)]) * scale);
+                wave_re_[tapIndex_(i, n)] =
+                    float(double(wave_re_[tapIndex_(i, n)]) * scale);
+                wave_im_[tapIndex_(i, n)] =
+                    float(double(wave_im_[tapIndex_(i, n)]) * scale);
             }
 
-            double tap_energy = 0.0;
-            for (int n = 0; n < L; ++n) {
-                const double re = double(wave_re_[tapIndex_(i, n)]);
-                const double im = double(wave_im_[tapIndex_(i, n)]);
-                tap_energy += re * re + im * im;
+            // Exact effective gain under the ACTUAL runtime windowing:
+            // xw[m] = x[m] * window_[m], y[n] = sum_k psi[k] xw[n-k]
+            const int n0 = half;
+            const int n1 = Nblock - half;
+
+            double eff_energy = 0.0;
+            int M_valid = 0;
+
+            for (int n = n0; n < n1; ++n) {
+                double en = 0.0;
+                for (int tn = 0; tn < L; ++tn) {
+                    const int k = tn - half;
+                    const int m = n - k; // valid because n in [half, Nblock-half)
+                    const double wv = window_[m];
+                    const double re = double(wave_re_[tapIndex_(i, tn)]);
+                    const double im = double(wave_im_[tapIndex_(i, tn)]);
+                    en += (re * re + im * im) * (wv * wv);
+                }
+                eff_energy += en;
+                ++M_valid;
             }
 
-            wave_gain_onesided_hz_[i] = std::max(0.5 * fs * tap_energy, 1e-12);
+            eff_energy = (M_valid > 0) ? (eff_energy / double(M_valid)) : 1.0;
+            wave_gain_onesided_hz_[i] = std::max(0.5 * fs * eff_energy, 1e-12);
         }
     }
 
@@ -445,13 +441,8 @@ private:
 
             const double var_out = (M > 0) ? (pwr / double(M)) : 0.0;
 
-            const double inv_win_rms2 =
-                1.0 / std::max(wave_valid_win_rms2_[i], 1e-12);
-
             const double S_aa_meas =
-                std::max(0.0,
-                    (var_out * inv_win_rms2) /
-                    std::max(wave_gain_onesided_hz_[i], 1e-12));
+                std::max(0.0, var_out / std::max(wave_gain_onesided_hz_[i], 1e-12));
 
             const double omega_raw = 2.0 * M_PI * f / fs_raw;
             const double H2_hp =
@@ -476,7 +467,7 @@ private:
             0.12,  // max +12% per block
             0.05   // max -5% per block
         );
-        
+
         const double f_knee = std::max({
             reg_f0_hz,
             0.50 * last_lowfreq_cut_hz_,
@@ -508,7 +499,6 @@ private:
 
         have_ema = true;
 
-        // Revert to simpler old-style finishing: shared mild smoother + mild cutoff cleanup.
         WaveSpectrumShared::smooth_logfreq_3tap_inplace<Nfreq>(lastSpectrum_, freqs_);
         suppress_lowfreq_from_cut_inplace_mild_();
     }
@@ -555,5 +545,4 @@ private:
     std::array<float, Nfreq * Nblock> wave_im_{};
     std::array<int, Nfreq> wave_half_{};
     std::array<double, Nfreq> wave_gain_onesided_hz_{};
-    std::array<double, Nfreq> wave_valid_win_rms2_{};
 };
