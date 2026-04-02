@@ -8,19 +8,37 @@
 
 #include <array>
 #include <cmath>
-#include <algorithm>
 #include <limits>
+#include <algorithm>
 
 #include "spectrum/SpectrumStats.h"
 #include "spectrum/WaveSpectrumShared.h"
+
+/*
+    Classic Goertzel spectrum estimator.
+
+    Hybrid rollback:
+      - keeps decimation sanitization
+      - keeps decimation-aware analysis_fmax_hz_
+      - keeps guarded peak search from WaveSpectrumShared
+      - restores older milder cutoff learning / smoothing / cleanup
+      - avoids aggressive post-inversion low-frequency suppression
+*/
 
 template<int Nfreq = 32, int Nblock = 256>
 class EIGEN_ALIGN_MAX WaveSpectrumEstimator {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    static constexpr double g = 9.80665;
     using Vec = Eigen::Matrix<double, Nfreq, 1>;
     using Biquad = WaveSpectrumShared::Biquad;
+
+    struct PMFitResult {
+        double alpha;
+        double fp;
+        double cost;
+    };
 
     WaveSpectrumEstimator(double fs_raw_ = 200.0,
                           int decimFactor_ = 30,
@@ -33,8 +51,9 @@ public:
         const double fny_dec = fs_raw / (2.0 * double(decimFactor));
         const double lp_cutoffHz = 0.32 * fny_dec;
 
+        // Less conservative than the recent regression-prone tuning.
         analysis_fmax_hz_ = WaveSpectrumShared::compute_safe_analysis_fmax(
-            fs_raw, decimFactor, 1.2, 0.32, 0.78, 0.85, 0.04);
+            fs_raw, decimFactor, 1.2, 0.32, 0.90, 0.90, 0.04);
 
         WaveSpectrumShared::build_log_frequency_grid<Nfreq>(
             freqs_, f_edges_, df_, 0.04, analysis_fmax_hz_);
@@ -67,7 +86,6 @@ public:
         decimCounter = 0;
         filledSamples = 0;
         isWarm = false;
-
         lastSpectrum_.setZero();
 
         hp1_.reset();
@@ -111,17 +129,102 @@ public:
     }
 
     double estimateFp() const {
-        // Back off the aggressive guard. Small margin only.
-        const double f_guard =
-            (last_lowfreq_cut_hz_ > 0.0) ? (1.03 * last_lowfreq_cut_hz_) : 0.0;
-
         return WaveSpectrumShared::estimate_fp_with_guard<Nfreq>(
-            lastSpectrum_, freqs_, f_guard);
+            lastSpectrum_, freqs_, last_lowfreq_cut_hz_);
     }
 
     double estimateTp() const {
         const double fp = estimateFp();
         return (fp > 0.0) ? (1.0 / fp) : 0.0;
+    }
+
+    PMFitResult fitPiersonMoskowitz() const {
+        Vec S_obs = lastSpectrum_;
+        for (int i = 0; i < Nfreq; ++i) {
+            if (S_obs[i] <= 0.0) S_obs[i] = 1e-12;
+        }
+
+        auto cost_fn = [&](double a, double fp) {
+            const double omega_p = 2.0 * M_PI * fp;
+            double cost = 0.0;
+            constexpr double beta = 0.74;
+
+            for (int i = 0; i < Nfreq - 1; ++i) {
+                const double df = df_[i];
+                const double f = freqs_[i];
+                double model = a * g * g * std::pow(2.0 * M_PI * f, -5.0)
+                             * std::exp(-beta * std::pow(omega_p / (2.0 * M_PI * f), 4.0));
+                if (model <= 0.0) model = 1e-12;
+                const double d = safe_log_(S_obs[i]) - safe_log_(model);
+                cost += df * d * d;
+            }
+            return cost;
+        };
+
+        constexpr int N_fp_search = 32;
+        constexpr double fp_min = 0.05;
+        constexpr double fp_transition = 0.1;
+        constexpr double fp_max = 1.0;
+
+        std::array<double, N_fp_search> fp_grid{};
+        const int n_log = static_cast<int>(N_fp_search * 0.4);
+        const int n_lin = N_fp_search - n_log;
+
+        for (int i = 0; i < n_log; ++i) {
+            const double t = double(i) / double(std::max(1, n_log - 1));
+            fp_grid[i] = fp_min * std::pow(fp_transition / fp_min, t);
+        }
+        for (int i = 0; i < n_lin; ++i) {
+            const double t = double(i) / double(std::max(1, n_lin - 1));
+            fp_grid[n_log + i] = fp_transition + t * (fp_max - fp_transition);
+        }
+
+        double bestA = 1e-5;
+        double bestFp = fp_grid[0];
+        double bestC = std::numeric_limits<double>::infinity();
+
+        for (int ia = 0; ia < 8; ++ia) {
+            const double a = 1e-5 + ia * (1.0 - 1e-5) / 7.0;
+            for (int ifp = 0; ifp < N_fp_search; ++ifp) {
+                const double fp = fp_grid[ifp];
+                const double c = cost_fn(a, fp);
+                if (c < bestC) {
+                    bestC = c;
+                    bestA = a;
+                    bestFp = fp;
+                }
+            }
+        }
+
+        double alpha = bestA;
+        double fp = bestFp;
+        double stepA = 0.1;
+        double stepFp = 0.1;
+
+        for (int iter = 0; iter < 40; ++iter) {
+            bool improved = false;
+            double c = 0.0;
+
+            c = cost_fn(alpha + stepA, fp);
+            if (c < bestC) { bestC = c; alpha += stepA; improved = true; }
+
+            c = cost_fn(alpha - stepA, fp);
+            if (c < bestC) { bestC = c; alpha -= stepA; improved = true; }
+
+            c = cost_fn(alpha, fp + stepFp);
+            if (c < bestC) { bestC = c; fp += stepFp; improved = true; }
+
+            c = cost_fn(alpha, fp - stepFp);
+            if (c < bestC) { bestC = c; fp -= stepFp; improved = true; }
+
+            if (!improved) {
+                stepA *= 0.5;
+                stepFp *= 0.5;
+                if (stepA < 1e-12 && stepFp < 1e-12) break;
+            }
+        }
+
+        return {alpha, fp, bestC};
     }
 
     void set_regularization_f0(double f0_hz) {
@@ -135,26 +238,13 @@ public:
     }
 
 private:
+    static double safe_log_(double x) {
+        return std::log(std::max(x, 1e-12));
+    }
+
     inline double alpha_for_f(double f) const {
         return WaveSpectrumShared::ema_alpha_for_f(
             f, freqs_[0], freqs_[Nfreq - 1], ema_alpha_low, ema_alpha_high);
-    }
-
-    double lowfreq_energy_fraction_(double f_mult) const {
-        if (!(last_lowfreq_cut_hz_ > 0.0)) return 0.0;
-
-        const double f_lim = f_mult * last_lowfreq_cut_hz_;
-        double e_lo = 0.0;
-        double e_tot = 0.0;
-
-        for (int i = 0; i < Nfreq; ++i) {
-            const double s = std::max(0.0, double(lastSpectrum_[i]));
-            const double ei = s * std::max(df_[i], 0.0);
-            e_tot += ei;
-            if (freqs_[i] <= f_lim) e_lo += ei;
-        }
-
-        return (e_tot > 1e-18) ? (e_lo / e_tot) : 0.0;
     }
 
     double estimate_lowfreq_cut_from_accel_(const std::array<double, Nfreq>& S_aa_true_arr,
@@ -211,21 +301,8 @@ private:
             return std::max(f_floor_hz, freqs_[i_valley]);
         }
 
-        // Regime-aware fallback:
-        // low accel-peak freq => swell => gentler cutoff
-        // high accel-peak freq => wind sea / low sea => stronger cutoff
-        const double f_peak = freqs_[i_peak];
-        double f_rel = 0.0;
-        double f_cap = 0.0;
-
-        if (f_peak <= 0.16) {
-            f_rel = 0.50 * f_peak;
-            f_cap = 0.75 * f_peak;
-        } else {
-            f_rel = 0.65 * f_peak;
-            f_cap = 0.95 * f_peak;
-        }
-
+        const double f_rel = 0.60 * freqs_[i_peak];
+        const double f_cap = 0.90 * freqs_[i_peak];
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
     }
 
@@ -242,91 +319,11 @@ private:
         return t * t * (3.0 - 2.0 * t);
     }
 
-    bool lowfreq_edge_is_raised_() const {
-        if (Nfreq < 4) return false;
-        if (!(last_lowfreq_cut_hz_ > 0.0)) return false;
-
-        std::array<double, Nfreq> E{};
-        for (int i = 0; i < Nfreq; ++i) {
-            E[i] = std::max(0.0, double(lastSpectrum_[i])) * std::max(freqs_[i], 1e-12);
-        }
-
-        int i_cut = 0;
-        const double f_eff = 1.04 * last_lowfreq_cut_hz_;
-        while (i_cut + 1 < Nfreq && freqs_[i_cut + 1] <= f_eff) ++i_cut;
-        if (i_cut < 2) return false;
-
-        const double E_ref = std::max(E[i_cut], 1e-18);
-
-        return
-            (E[0] > 1.05 * E_ref) ||
-            (E[1] > 1.03 * std::max(E[2], 1e-18));
-    }
-
-    bool suppress_unsupported_lowfreq_spikes_(const std::array<double, Nfreq>& S_aa_true_arr,
-                                              int k_peak_acc) {
-        if (Nfreq < 4) return false;
-        if (!(last_lowfreq_cut_hz_ > 0.0)) return false;
-        if (k_peak_acc <= 3 || k_peak_acc >= Nfreq) return false;
-
-        double f_soft = 1.35 * last_lowfreq_cut_hz_;
-        f_soft = std::min(f_soft, 0.72 * freqs_[k_peak_acc]);
-
-        int k_soft = 0;
-        while (k_soft + 1 < Nfreq && freqs_[k_soft + 1] <= f_soft) ++k_soft;
-
-        const int k_stop = std::min(k_soft, std::max(1, k_peak_acc - 3));
-        if (k_stop < 2 || k_stop + 1 >= Nfreq) return false;
-
-        std::array<double, Nfreq> Eeta{};
-        std::array<double, Nfreq> Eaa{};
-        std::array<double, Nfreq> Eaa_s{};
-
-        for (int i = 0; i < Nfreq; ++i) {
-            const double f = std::max(freqs_[i], 1e-12);
-            Eeta[i] = std::max(0.0, double(lastSpectrum_[i])) * f;
-            Eaa[i]  = std::max(0.0, S_aa_true_arr[i]) * f;
-        }
-        WaveSpectrumShared::smooth_3tap_array<Nfreq>(Eaa, Eaa_s);
-
-        const int i_ref = std::min(k_stop + 1, Nfreq - 1);
-        const double Eref = std::max(Eeta[i_ref], 1e-12);
-        const double fref = std::max(freqs_[i_ref], 1e-12);
-        const double Eaa_ref = std::max(Eaa_s[i_ref], 1e-12);
-
-        bool changed = false;
-
-        for (int i = 1; i <= k_stop; ++i) {
-            const bool local_peak =
-                (Eeta[i] > Eeta[i - 1]) &&
-                (Eeta[i] > Eeta[i + 1]);
-
-            if (!local_peak) continue;
-
-            const double r = std::max(freqs_[i], 1e-12) / fref;
-            const double env_cap = Eref * std::pow(r, 1.55);
-            const double accel_support = Eaa_s[i] / Eaa_ref;
-
-            if (accel_support < 0.18 && Eeta[i] > 1.9 * env_cap) {
-                Eeta[i] = std::max(env_cap, 0.60 * Eeta[i]);
-                changed = true;
-            }
-        }
-
-        if (changed) {
-            for (int i = 0; i < Nfreq; ++i) {
-                lastSpectrum_[i] = Eeta[i] / std::max(freqs_[i], 1e-12);
-            }
-        }
-
-        return changed;
-    }
-
-    void suppress_lowfreq_from_cut_inplace_() {
+    void suppress_lowfreq_from_cut_inplace_mild_() {
         if (Nfreq < 4) return;
         if (!(last_lowfreq_cut_hz_ > 0.0)) return;
 
-        const double f_eff = 1.08 * last_lowfreq_cut_hz_;
+        const double f_eff = 1.00 * last_lowfreq_cut_hz_;
 
         std::array<double, Nfreq> E{};
         for (int i = 0; i < Nfreq; ++i) {
@@ -341,8 +338,8 @@ private:
         const double E_ref = std::max(E[i_cut], 1e-18);
 
         double prev = E_ref;
-        const double shape_pow = 2.70;
-        const double slope_cap = 1.04;
+        const double shape_pow = 2.0;
+        const double slope_cap = 1.08;
 
         for (int i = i_cut - 1; i >= 0; --i) {
             const double r = std::max(freqs_[i] / f_ref, 0.0);
@@ -358,26 +355,6 @@ private:
 
         for (int i = 0; i < Nfreq; ++i) {
             lastSpectrum_[i] = E[i] / std::max(freqs_[i], 1e-12);
-        }
-    }
-
-    void finalize_displacement_spectrum_(const std::array<double, Nfreq>& S_aa_true_arr) {
-        WaveSpectrumShared::smooth_logfreq_3tap_custom_inplace<Nfreq>(
-            lastSpectrum_, freqs_, 0.16, 0.68, 1.05, 0.97);
-
-        const int k_peak_acc =
-            WaveSpectrumShared::find_accel_peak_index<Nfreq>(
-                S_aa_true_arr, freqs_, last_lowfreq_cut_hz_, 1.03);
-
-        const bool changed =
-            suppress_unsupported_lowfreq_spikes_(S_aa_true_arr, k_peak_acc);
-
-        const bool edge_raised = lowfreq_edge_is_raised_();
-        const double lowfrac = lowfreq_energy_fraction_(1.15);
-        const bool windsea_regime = (freqs_[k_peak_acc] > 0.16);
-
-        if (changed || (windsea_regime && (edge_raised || lowfrac > 0.12))) {
-            suppress_lowfreq_from_cut_inplace_();
         }
     }
 
@@ -445,16 +422,19 @@ private:
 
         last_lowfreq_cut_hz_ = estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
 
-        const double f_knee = std::max(
-            std::max(reg_f0_hz, 0.60 * last_lowfreq_cut_hz_),
-            std::max(0.95 * hp_f0_hz, 0.90 * f_blk));
+        const double f_knee = std::max({
+            reg_f0_hz,
+            0.60 * last_lowfreq_cut_hz_,
+            0.95 * hp_f0_hz,
+            0.90 * f_blk
+        });
 
         const double lam = 2.0 * M_PI * f_knee;
 
         for (int i = 0; i < Nfreq; ++i) {
             const double f = freqs_[i];
             const double w = 2.0 * M_PI * f;
-            const double den = w * w + lam * lam;
+            const double den = (w * w + lam * lam);
 
             double S_eta = (den > 0.0) ? (S_aa_true_arr[i] / (den * den)) : 0.0;
             if (!std::isfinite(S_eta) || S_eta < 0.0) S_eta = 0.0;
@@ -472,21 +452,22 @@ private:
         }
 
         have_ema = true;
-        finalize_displacement_spectrum_(S_aa_true_arr);
+
+        WaveSpectrumShared::smooth_logfreq_3tap_inplace<Nfreq>(lastSpectrum_, freqs_);
+        suppress_lowfreq_from_cut_inplace_mild_();
     }
 
     double fs_raw = 0.0;
     double fs = 0.0;
     int decimFactor = 1;
     bool hannEnabled = true;
-    double analysis_fmax_hz_ = 1.2;
 
     double reg_f0_hz = 0.008;
     double hp_f0_hz = 0.025;
+    double analysis_fmax_hz_ = 1.2;
 
     std::array<double, Nfreq> freqs_{};
     std::array<double, Nfreq> coeffs_{};
-
     std::array<double, Nfreq + 1> f_edges_{};
     std::array<double, Nfreq> df_{};
 
@@ -499,8 +480,8 @@ private:
     Eigen::Matrix<double, Nfreq, 1> lastSpectrum_;
 
     bool use_psd_ema = true;
-    double ema_alpha_low  = 0.06;
-    double ema_alpha_high = 0.20;
+    double ema_alpha_low = 0.20;
+    double ema_alpha_high = 0.06;
     bool have_ema = false;
     Eigen::Matrix<double, Nfreq, 1> psd_ema_;
 
