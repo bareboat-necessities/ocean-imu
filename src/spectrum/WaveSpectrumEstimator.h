@@ -8,40 +8,23 @@
 
 #include <array>
 #include <cmath>
-#include <limits>
 #include <algorithm>
 
 #include "spectrum/SpectrumStats.h"
 #include "spectrum/WaveSpectrumShared.h"
-
-/*
-    Goertzel spectrum estimator with adaptive low-frequency cutoff learned from
-    the deconvolved acceleration spectrum before displacement inversion.
-
-    Notes:
-      - Uses shared low-frequency adaptation helpers from WaveSpectrumShared.h
-      - estimateFp()/estimateTp() respect the learned cutoff directly
-      - Medium/high sea fix:
-          * learn cutoff from S_aa_true, not S_aa_meas
-          * gentler final inversion knee
-*/
 
 template<int Nfreq = 32, int Nblock = 384>
 class EIGEN_ALIGN_MAX WaveSpectrumEstimator {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    static constexpr double g = 9.80665;
     using Vec = Eigen::Matrix<double, Nfreq, 1>;
     using Biquad = WaveSpectrumShared::Biquad;
-
-    struct PMFitResult { double alpha, fp, cost; };
 
     WaveSpectrumEstimator(double fs_raw_ = 200.0,
                           int decimFactor_ = 30,
                           bool hannEnabled_ = true)
-        : fs_raw(fs_raw_), decimFactor(decimFactor_), hannEnabled(hannEnabled_)
-    {
+        : fs_raw(fs_raw_), decimFactor(decimFactor_), hannEnabled(hannEnabled_) {
         fs = fs_raw / decimFactor;
 
         WaveSpectrumShared::build_log_frequency_grid<Nfreq>(freqs_, f_edges_, df_);
@@ -49,17 +32,13 @@ public:
         for (int i = 0; i < Nfreq; ++i) {
             const double omega_rs = 2.0 * M_PI * freqs_[i] / fs;
             coeffs_[i] = 2.0 * std::cos(omega_rs);
-            cos1_[i] = std::cos(omega_rs);
-            sin1_[i] = std::sin(omega_rs);
         }
 
         double sumsq = 0.0;
         for (int n = 0; n < Nblock; ++n) {
-            if (hannEnabled) {
-                window_[n] = 0.5 * (1.0 - std::cos(2.0 * M_PI * n / (Nblock - 1)));
-            } else {
-                window_[n] = 1.0;
-            }
+            window_[n] = hannEnabled
+                ? 0.5 * (1.0 - std::cos(2.0 * M_PI * n / (Nblock - 1)))
+                : 1.0;
             sumsq += window_[n] * window_[n];
         }
         window_sum_sq = sumsq;
@@ -81,6 +60,7 @@ public:
         decimCounter = 0;
         filledSamples = 0;
         isWarm = false;
+
         lastSpectrum_.setZero();
 
         hp1_.reset();
@@ -144,11 +124,8 @@ public:
 
 private:
     inline double alpha_for_f(double f) const {
-        const double fmin = freqs_[0];
-        const double fmax = freqs_[Nfreq - 1];
-        double t = (f - fmin) / std::max(1e-12, (fmax - fmin));
-        t = std::clamp(t, 0.0, 1.0);
-        return ema_alpha_low + (ema_alpha_high - ema_alpha_low) * t;
+        return WaveSpectrumShared::ema_alpha_for_f(
+            f, freqs_[0], freqs_[Nfreq - 1], ema_alpha_low, ema_alpha_high);
     }
 
     void computeSpectrum() {
@@ -175,13 +152,12 @@ private:
             : 0.0;
         const double b_lin = (sumx - a_lin * sumn) / double(N);
 
-        const double U = window_sum_sq;
-        const double base_scale = (U > 0.0 && fs > 0.0) ? (2.0 / (fs * U)) : 0.0;
+        const double base_scale =
+            (window_sum_sq > 0.0 && fs > 0.0) ? (2.0 / (fs * window_sum_sq)) : 0.0;
 
         const double Tblk = (fs > 0.0) ? (double(N) / fs) : 0.0;
         const double f_blk = (Tblk > 0.0) ? (1.0 / (6.0 * Tblk)) : 0.0;
 
-        std::array<double, Nfreq> S_aa_meas_arr{};
         std::array<double, Nfreq> S_aa_true_arr{};
 
         for (int i = 0; i < Nfreq; ++i) {
@@ -201,12 +177,11 @@ private:
 
             const double power = s1 * s1 + s2 * s2 - s1 * s2 * coeffs_[i];
             const double S_aa_meas = std::max(0.0, power * base_scale);
-            S_aa_meas_arr[i] = S_aa_meas;
 
-            const double Omega_raw = 2.0 * M_PI * f / fs_raw;
+            const double omega_raw = 2.0 * M_PI * f / fs_raw;
             const double H2_hp =
-                WaveSpectrumShared::biquad_mag2_raw(hp1_, Omega_raw) *
-                WaveSpectrumShared::biquad_mag2_raw(hp2_, Omega_raw);
+                WaveSpectrumShared::biquad_mag2_raw(hp1_, omega_raw) *
+                WaveSpectrumShared::biquad_mag2_raw(hp2_, omega_raw);
 
             constexpr double hp_deconv_reg = 0.10;
             const double inv_hp =
@@ -231,7 +206,7 @@ private:
         for (int i = 0; i < Nfreq; ++i) {
             const double f = freqs_[i];
             const double w = 2.0 * M_PI * f;
-            const double den = (w * w + lam * lam);
+            const double den = w * w + lam * lam;
 
             double S_eta = (den > 0.0) ? (S_aa_true_arr[i] / (den * den)) : 0.0;
             if (!std::isfinite(S_eta) || S_eta < 0.0) S_eta = 0.0;
@@ -249,12 +224,13 @@ private:
         }
 
         have_ema = true;
-        WaveSpectrumShared::smooth_logfreq_3tap_inplace<Nfreq>(lastSpectrum_, freqs_);
-        WaveSpectrumShared::suppress_lowfreq_from_cut_inplace<Nfreq>(
-            lastSpectrum_, freqs_, last_lowfreq_cut_hz_);
+
+        WaveSpectrumShared::finalize_displacement_spectrum_inplace<Nfreq>(
+            lastSpectrum_, S_aa_true_arr, freqs_, last_lowfreq_cut_hz_);
     }
 
-    double fs_raw = 0.0, fs = 0.0;
+    double fs_raw = 0.0;
+    double fs = 0.0;
     int decimFactor = 1;
     bool hannEnabled = true;
 
@@ -263,7 +239,6 @@ private:
 
     std::array<double, Nfreq> freqs_{};
     std::array<double, Nfreq> coeffs_{};
-    std::array<double, Nfreq> cos1_{}, sin1_{};
 
     std::array<double, Nfreq + 1> f_edges_{};
     std::array<double, Nfreq> df_{};
