@@ -225,8 +225,8 @@ private:
 
         have_ema = true;
 
-        WaveSpectrumShared::finalize_displacement_spectrum_inplace<Nfreq>(
-            lastSpectrum_, S_aa_true_arr, freqs_, last_lowfreq_cut_hz_);
+        WaveSpectrumShared::finalize_displacement_spectrum_goertzel_inplace<Nfreq>(
+            lastSpectrum_, S_aa_true_arr, freqs_, last_lowfreq_cut_hz_); 
     }
 
     double fs_raw = 0.0;
