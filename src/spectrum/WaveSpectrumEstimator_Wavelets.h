@@ -109,7 +109,7 @@ public:
 
     double estimateFp() const {
         const double f_guard =
-            (last_lowfreq_cut_hz_ > 0.0) ? (1.08 * last_lowfreq_cut_hz_) : 0.0;
+            (last_lowfreq_cut_hz_ > 0.0) ? (1.02 * last_lowfreq_cut_hz_) : 0.0;
 
         return WaveSpectrumShared::estimate_fp_with_guard<Nfreq>(
             lastSpectrum_, freqs_, f_guard);
@@ -241,8 +241,18 @@ private:
             return std::max(f_floor_hz, freqs_[i_valley]);
         }
 
-        const double f_rel = 0.72 * freqs_[i_peak];
-        const double f_cap = 0.98 * freqs_[i_peak];
+        const double f_peak = freqs_[i_peak];
+        double f_rel = 0.0;
+        double f_cap = 0.0;
+
+        if (f_peak <= 0.16) {
+            f_rel = 0.45 * f_peak;
+            f_cap = 0.70 * f_peak;
+        } else {
+            f_rel = 0.58 * f_peak;
+            f_cap = 0.82 * f_peak;
+        }
+
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
     }
 
@@ -269,14 +279,14 @@ private:
         }
 
         int i_cut = 0;
-        const double f_eff = 1.04 * last_lowfreq_cut_hz_;
+        const double f_eff = 1.02 * last_lowfreq_cut_hz_;
         while (i_cut + 1 < Nfreq && freqs_[i_cut + 1] <= f_eff) ++i_cut;
         if (i_cut < 2) return false;
 
         const double E_ref = std::max(E[i_cut], 1e-18);
 
         return
-            (E[0] > 1.05 * E_ref) ||
+            (E[0] > 1.06 * E_ref) ||
             (E[1] > 1.03 * std::max(E[2], 1e-18));
     }
 
@@ -284,7 +294,7 @@ private:
         if (Nfreq < 4) return;
         if (!(last_lowfreq_cut_hz_ > 0.0)) return;
 
-        const double f_eff = 1.08 * last_lowfreq_cut_hz_;
+        const double f_eff = 1.04 * last_lowfreq_cut_hz_;
 
         std::array<double, Nfreq> E{};
         for (int i = 0; i < Nfreq; ++i) {
@@ -299,8 +309,8 @@ private:
         const double E_ref = std::max(E[i_cut], 1e-18);
 
         double prev = E_ref;
-        const double shape_pow = 2.85;
-        const double slope_cap = 1.03;
+        const double shape_pow = 2.20;
+        const double slope_cap = 1.06;
 
         for (int i = i_cut - 1; i >= 0; --i) {
             const double r = std::max(freqs_[i] / f_ref, 0.0);
@@ -338,8 +348,8 @@ private:
                 continue;
             }
 
-            double sigma_t = WAVELET_CYCLES_TARGET / (2.0 * M_PI * f0);
-            sigma_t = std::min(sigma_t, std::max(1e-6, sigma_t_max));
+            const double sigma_t_nom = WAVELET_CYCLES_TARGET / (2.0 * M_PI * f0);
+            double sigma_t = std::min(sigma_t_nom, 0.92 * std::max(1e-6, sigma_t_max));
 
             int half = int(std::ceil(WAVELET_SUPPORT_SIGMA * sigma_t * fs));
             half = std::clamp(half, WAVELET_MIN_HALF, int(halfMax));
@@ -416,14 +426,19 @@ private:
         }
     }
 
-    void finalize_displacement_spectrum_() {
+    void finalize_displacement_spectrum_(const std::array<double, Nfreq>& S_aa_true_arr) {
         WaveSpectrumShared::smooth_logfreq_3tap_custom_inplace<Nfreq>(
-            lastSpectrum_, freqs_, 0.14, 0.74, 1.04, 0.985);
+            lastSpectrum_, freqs_, 0.16, 0.72, 1.05, 0.975);
 
+        const int k_peak_acc =
+            WaveSpectrumShared::find_accel_peak_index<Nfreq>(
+                S_aa_true_arr, freqs_, last_lowfreq_cut_hz_, 1.03);
+
+        const bool windsea_regime = (freqs_[k_peak_acc] > 0.16);
         const bool edge_raised = lowfreq_edge_is_raised_();
-        const double lowfrac = lowfreq_energy_fraction_(1.12);
+        const double lowfrac = lowfreq_energy_fraction_(1.10);
 
-        if (edge_raised || lowfrac > 0.10) {
+        if (windsea_regime && (edge_raised || lowfrac > 0.14)) {
             suppress_lowfreq_from_cut_inplace_wavelet_();
         }
     }
@@ -534,7 +549,7 @@ private:
         }
 
         have_ema = true;
-        finalize_displacement_spectrum_();
+        finalize_displacement_spectrum_(S_aa_true_arr);
     }
 
     double fs_raw = 0.0;
@@ -544,7 +559,6 @@ private:
 
     double reg_f0_hz = 0.008;
     double hp_f0_hz = 0.025;
-
     double analysis_fmax_hz_ = 1.2;
 
     std::array<double, Nfreq> freqs_{};
@@ -572,7 +586,7 @@ private:
 
     double last_lowfreq_cut_hz_ = 0.0;
 
-    static constexpr double WAVELET_CYCLES_TARGET = 6.0;
+    static constexpr double WAVELET_CYCLES_TARGET = 4.0;
     static constexpr double WAVELET_SUPPORT_SIGMA = 3.0;
     static constexpr int WAVELET_MIN_HALF = 8;
 
