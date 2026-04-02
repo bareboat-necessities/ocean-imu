@@ -170,7 +170,8 @@ def plot_mode(mode):
         fig.suptitle(f"{wave.upper()} — {level.capitalize()} sea ($H_s={height:.2f}$ m)", fontsize=11, y=0.97)
         fig.tight_layout(rect=[0, 0, 1, 0.96])
 
-        out_spectrum = f"{out_prefix}_{wave}_{level}_spectrum.pgf"
+        wave_slug = wave.lower()
+        out_spectrum = f"{out_prefix}_{wave_slug}_{level}_spectrum.pgf"
         fig.savefig(out_spectrum, bbox_inches="tight")
         plt.close(fig)
 
@@ -211,7 +212,7 @@ def plot_mode(mode):
         ax_hs.set_title(f"{wave.upper()} — {level.capitalize()} sea")
         ax_hs.grid(True, axis="y", alpha=0.3)
         fig_hs.tight_layout()
-        out_hs = f"{out_prefix}_{wave}_{level}_hs.pgf"
+        out_hs = f"{out_prefix}_{wave_slug}_{level}_hs.pgf"
         fig_hs.savefig(out_hs, bbox_inches="tight")
         plt.close(fig_hs)
 
@@ -226,7 +227,7 @@ def plot_mode(mode):
         ax_tp.set_title(f"{wave.upper()} — {level.capitalize()} sea")
         ax_tp.grid(True, axis="y", alpha=0.3)
         fig_tp.tight_layout()
-        out_tp = f"{out_prefix}_{wave}_{level}_tp.pgf"
+        out_tp = f"{out_prefix}_{wave_slug}_{level}_tp.pgf"
         fig_tp.savefig(out_tp, bbox_inches="tight")
         plt.close(fig_tp)
 
