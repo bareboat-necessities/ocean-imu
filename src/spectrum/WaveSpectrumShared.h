@@ -293,9 +293,11 @@ inline int find_accel_peak_index(const std::array<double, Nfreq>& S_aa_true_arr,
     }
     smooth_3tap_array<Nfreq>(Eaa, Eaa_s);
 
+    const double f_guard = std::max(lowfreq_cut_hz, guard_scale * freqs[0]);
+
     int k0 = 0;
-    const double f0 = std::max(lowfreq_cut_hz, guard_scale * freqs[0]);
-    while (k0 + 1 < Nfreq && freqs[k0 + 1] <= f0) ++k0;
+    while (k0 < Nfreq && freqs[k0] < f_guard) ++k0;
+    if (k0 >= Nfreq) k0 = Nfreq - 1;
 
     int k_peak = k0;
     double v_peak = -1.0;
