@@ -294,7 +294,7 @@ private:
             return std::max(f_floor_hz, freqs_[i_valley]);
         }
 
-        const double f_rel = 0.60 * freqs_[i_peak];
+        const double f_rel = 0.50 * freqs_[i_peak];
         const double f_cap = 0.90 * freqs_[i_peak];
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
     }
@@ -302,8 +302,8 @@ private:
     static double lowfreq_taper_(double f_hz, double f_cut_hz) {
         if (!(f_cut_hz > 0.0)) return 1.0;
 
-        const double f_lo = 0.45 * f_cut_hz;
-        const double f_hi = 1.10 * f_cut_hz;
+        const double f_lo = 0.60 * f_cut_hz;
+        const double f_hi = 1.35 * f_cut_hz;
 
         if (f_hz >= f_hi) return 1.0;
         if (f_hz <= f_lo) return 0.0;
