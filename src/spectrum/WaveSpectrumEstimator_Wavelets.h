@@ -8,55 +8,65 @@
 
 #include <array>
 #include <cmath>
-#include <algorithm>
 #include <limits>
+#include <algorithm>
 
 #include "spectrum/SpectrumStats.h"
 #include "spectrum/WaveSpectrumShared.h"
 
+/*
+    Wavelet spectrum estimator with adaptive low-frequency cutoff learned from
+    the deconvolved acceleration spectrum before displacement inversion.
+
+    Current fixes:
+      - uses shared low-frequency adaptation helpers from WaveSpectrumShared.h
+      - estimateFp()/estimateTp() respect the learned cutoff directly
+      - cutoff learned from S_aa_true, not S_aa_meas
+      - gentler final inversion knee
+      - wavelet taps orthogonalized to DC and ramp
+      - wavelet amplitude calibration fix:
+          * per-bin valid-region window RMS correction
+          * exact Parseval FIR gain normalization
+*/
+
 template<int Nfreq = 32, int Nblock = 256>
-class EIGEN_ALIGN_MAX WaveSpectrumEstimator_Wavelets {
+class EIGEN_ALIGN_MAX WaveSpectrumEstimator {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    static constexpr double g = 9.80665;
     using Vec = Eigen::Matrix<double, Nfreq, 1>;
     using Biquad = WaveSpectrumShared::Biquad;
 
-    WaveSpectrumEstimator_Wavelets(double fs_raw_ = 200.0,
-                                   int decimFactor_ = 30,
-                                   bool hannEnabled_ = true)
-        : fs_raw(fs_raw_),
-          decimFactor(std::max(1, decimFactor_)),
-          hannEnabled(hannEnabled_) {
-        fs = fs_raw / double(decimFactor);
+    WaveSpectrumEstimator(double fs_raw_ = 200.0,
+                          int decimFactor_ = 30,
+                          bool hannEnabled_ = true)
+        : fs_raw(fs_raw_), decimFactor(decimFactor_), hannEnabled(hannEnabled_)
+    {
+        fs = fs_raw / decimFactor;
 
-        const double fny_dec = fs_raw / (2.0 * double(decimFactor));
-        const double lp_cutoffHz = 0.32 * fny_dec;
-
-        // Keep decimation-safe band limiting, but less conservative than the
-        // current 0.78*LP guard. This stays sane while remaining closer to the
-        // older behavior that plotted better.
-        analysis_fmax_hz_ = WaveSpectrumShared::compute_safe_analysis_fmax(
-            fs_raw, decimFactor, 1.2, 0.32, 0.90, 0.90, 0.04);
-
-        WaveSpectrumShared::build_log_frequency_grid<Nfreq>(
-            freqs_, f_edges_, df_, 0.04, analysis_fmax_hz_);
+        WaveSpectrumShared::build_log_frequency_grid<Nfreq>(freqs_, f_edges_, df_);
 
         double sumsq = 0.0;
         for (int n = 0; n < Nblock; ++n) {
-            window_[n] = hannEnabled
-                ? 0.5 * (1.0 - std::cos(2.0 * M_PI * n / (Nblock - 1)))
-                : 1.0;
+            if (hannEnabled) {
+                window_[n] = 0.5 * (1.0 - std::cos(2.0 * M_PI * n / (Nblock - 1)));
+            } else {
+                window_[n] = 1.0;
+            }
             sumsq += window_[n] * window_[n];
         }
         window_sum_sq = sumsq;
 
         reset();
 
-        WaveSpectrumShared::designLowpassBiquad(lp1_, lp_cutoffHz, fs_raw);
-        WaveSpectrumShared::designLowpassBiquad(lp2_, lp_cutoffHz, fs_raw);
-        WaveSpectrumShared::designHighpassBiquad(hp1_, hp_f0_hz, fs_raw);
-        WaveSpectrumShared::designHighpassBiquad(hp2_, hp_f0_hz, fs_raw);
+        const double fny_dec = fs_raw_ / (2.0 * decimFactor_);
+        const double lp_cutoffHz = 0.32 * fny_dec;
+
+        WaveSpectrumShared::designLowpassBiquad(lp1_, lp_cutoffHz, fs_raw_);
+        WaveSpectrumShared::designLowpassBiquad(lp2_, lp_cutoffHz, fs_raw_);
+        WaveSpectrumShared::designHighpassBiquad(hp1_, hp_f0_hz, fs_raw_);
+        WaveSpectrumShared::designHighpassBiquad(hp2_, hp_f0_hz, fs_raw_);
 
         buildWaveletBank_();
     }
@@ -104,7 +114,6 @@ public:
     std::array<double, Nfreq> getFrequencies() const { return freqs_; }
     bool ready() const { return isWarm; }
     double getLowfreqCutHz() const { return last_lowfreq_cut_hz_; }
-    double getAnalysisFmaxHz() const { return analysis_fmax_hz_; }
 
     double computeHs() const {
         return SpectrumStats::compute_hs<Nfreq>(lastSpectrum_, df_);
@@ -132,12 +141,11 @@ public:
 
 private:
     inline double alpha_for_f(double f) const {
-        return WaveSpectrumShared::ema_alpha_for_f(
-            f, freqs_[0], freqs_[Nfreq - 1], ema_alpha_low, ema_alpha_high);
-    }
-
-    inline int tapIndex_(int i, int n) const {
-        return i * Nblock + n;
+        const double fmin = freqs_[0];
+        const double fmax = freqs_[Nfreq - 1];
+        double t = (f - fmin) / std::max(1e-12, (fmax - fmin));
+        t = std::clamp(t, 0.0, 1.0);
+        return ema_alpha_low + (ema_alpha_high - ema_alpha_low) * t;
     }
 
     void orthogonalize_wavelet_to_dc_and_ramp_(int i, int L, int half) {
@@ -170,115 +178,8 @@ private:
         }
     }
 
-    double estimate_lowfreq_cut_from_accel_(const std::array<double, Nfreq>& S_aa_true_arr,
-                                            double Tblk) const {
-        if (Nfreq < 4) return 0.0;
-
-        std::array<double, Nfreq> E{};
-        std::array<double, Nfreq> Es{};
-
-        for (int i = 0; i < Nfreq; ++i) {
-            E[i] = std::max(0.0, S_aa_true_arr[i]) * std::max(freqs_[i], 1e-12);
-        }
-        WaveSpectrumShared::smooth_3tap_array<Nfreq>(E, Es);
-
-        const double f_floor_hz = std::max(
-            std::max(1.04 * freqs_[0], (Tblk > 1e-12) ? (1.20 / Tblk) : 0.0),
-            1.05 * hp_f0_hz);
-
-        int i_floor = 0;
-        while (i_floor + 1 < Nfreq && freqs_[i_floor + 1] <= f_floor_hz) ++i_floor;
-
-        int i_peak = std::max(1, i_floor);
-        double e_peak = Es[i_peak];
-        for (int i = i_peak + 1; i < Nfreq - 1; ++i) {
-            if (Es[i] > e_peak) {
-                e_peak = Es[i];
-                i_peak = i;
-            }
-        }
-
-        if (!(e_peak > 0.0) || i_peak <= i_floor) {
-            return f_floor_hz;
-        }
-
-        int i_valley = i_floor;
-        double e_valley = Es[i_floor];
-        for (int i = i_floor + 1; i < i_peak; ++i) {
-            if (Es[i] < e_valley) {
-                e_valley = Es[i];
-                i_valley = i;
-            }
-        }
-
-        const bool left_edge_raised =
-            (E[0] > 1.15 * std::max(e_valley, 1e-18)) ||
-            (Nfreq > 2 && E[1] > 1.06 * std::max(E[2], 1e-18));
-
-        const bool valley_is_good =
-            (i_valley > i_floor) &&
-            (e_valley < 0.68 * e_peak) &&
-            (freqs_[i_valley] < 0.72 * freqs_[i_peak]);
-
-        if (left_edge_raised && valley_is_good) {
-            return std::max(f_floor_hz, freqs_[i_valley]);
-        }
-
-        const double f_rel = 0.60 * freqs_[i_peak];
-        const double f_cap = 0.90 * freqs_[i_peak];
-        return std::max(f_floor_hz, std::min(f_rel, f_cap));
-    }
-
-    static double lowfreq_taper_(double f_hz, double f_cut_hz) {
-        if (!(f_cut_hz > 0.0)) return 1.0;
-
-        const double f_lo = 0.60 * f_cut_hz;
-        const double f_hi = 1.35 * f_cut_hz;
-
-        if (f_hz >= f_hi) return 1.0;
-        if (f_hz <= f_lo) return 0.0;
-
-        const double t = std::clamp((f_hz - f_lo) / (f_hi - f_lo), 0.0, 1.0);
-        return t * t * (3.0 - 2.0 * t);
-    }
-
-    void suppress_lowfreq_from_cut_inplace_mild_() {
-        if (Nfreq < 4) return;
-        if (!(last_lowfreq_cut_hz_ > 0.0)) return;
-
-        const double f_eff = 1.00 * last_lowfreq_cut_hz_;
-
-        std::array<double, Nfreq> E{};
-        for (int i = 0; i < Nfreq; ++i) {
-            E[i] = std::max(0.0, double(lastSpectrum_[i])) * std::max(freqs_[i], 1e-12);
-        }
-
-        int i_cut = 0;
-        while (i_cut + 1 < Nfreq && freqs_[i_cut + 1] <= f_eff) ++i_cut;
-        if (i_cut <= 0) return;
-
-        const double f_ref = std::max(freqs_[i_cut], 1e-12);
-        const double E_ref = std::max(E[i_cut], 1e-18);
-
-        double prev = E_ref;
-        const double shape_pow = 2.0;
-        const double slope_cap = 1.08;
-
-        for (int i = i_cut - 1; i >= 0; --i) {
-            const double r = std::max(freqs_[i] / f_ref, 0.0);
-            const double cap = E_ref * std::pow(r, shape_pow);
-
-            double v = std::max(0.0, E[i]);
-            v = std::min(v, cap);
-            v = std::min(v, slope_cap * prev);
-
-            E[i] = v;
-            prev = v;
-        }
-
-        for (int i = 0; i < Nfreq; ++i) {
-            lastSpectrum_[i] = E[i] / std::max(freqs_[i], 1e-12);
-        }
+    inline int tapIndex_(int i, int n) const {
+        return i * Nblock + n;
     }
 
     void buildWaveletBank_() {
@@ -312,9 +213,10 @@ private:
             const int L = 2 * half + 1;
             wave_half_[i] = half;
 
+            // Per-bin valid region window power.
             {
                 const int n0 = half;
-                const int n1 = Nblock - half;
+                const int n1 = Nblock - half; // exclusive
 
                 double win_sumsq_valid = 0.0;
                 int M_valid = 0;
@@ -348,6 +250,7 @@ private:
 
             orthogonalize_wavelet_to_dc_and_ramp_(i, L, half);
 
+            // Normalize taps to unit magnitude response at +f0.
             double H0r = 0.0;
             double H0i = 0.0;
             for (int n = 0; n < L; ++n) {
@@ -371,6 +274,8 @@ private:
                 wave_im_[tapIndex_(i, n)] = float(double(wave_im_[tapIndex_(i, n)]) * scale);
             }
 
+            // Exact Parseval gain for real-input one-sided PSD mapping:
+            // G = 0.5 * fs * sum |h[n]|^2
             double tap_energy = 0.0;
             for (int n = 0; n < L; ++n) {
                 const double re = double(wave_re_[tapIndex_(i, n)]);
@@ -451,10 +356,10 @@ private:
                     (var_out * inv_win_rms2) /
                     std::max(wave_gain_onesided_hz_[i], 1e-12));
 
-            const double omega_raw = 2.0 * M_PI * f / fs_raw;
+            const double Omega_raw = 2.0 * M_PI * f / fs_raw;
             const double H2_hp =
-                WaveSpectrumShared::biquad_mag2_raw(hp1_, omega_raw) *
-                WaveSpectrumShared::biquad_mag2_raw(hp2_, omega_raw);
+                WaveSpectrumShared::biquad_mag2_raw(hp1_, Omega_raw) *
+                WaveSpectrumShared::biquad_mag2_raw(hp2_, Omega_raw);
 
             constexpr double hp_deconv_reg = 0.10;
             const double inv_hp =
@@ -463,44 +368,19 @@ private:
             S_aa_true_arr[i] = std::max(0.0, S_aa_meas * inv_hp);
         }
 
-        const double cut_est_hz =
-            estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
+        last_lowfreq_cut_hz_ =
+            WaveSpectrumShared::estimate_lowfreq_cut_from_accel<Nfreq>(
+                S_aa_true_arr, freqs_, Tblk, hp_f0_hz);
 
-        last_lowfreq_cut_hz_ = WaveSpectrumShared::asym_smooth_hz(
-            last_lowfreq_cut_hz_,
-            cut_est_hz,
-            0.22,
-            0.08,
-            0.18,
-            0.06
-        );
-        
-const int k_peak_accel =
-    WaveSpectrumShared::find_accel_peak_index<Nfreq>(
-        S_aa_true_arr, freqs_, 0.0, 1.03);
+        const double f_knee = std::max({
+            reg_f0_hz,
+            0.60 * last_lowfreq_cut_hz_,
+            0.95 * hp_f0_hz,
+            0.90 * f_blk
+        });
 
-const double fp_accel_hz = freqs_[k_peak_accel];
+        const double lam = 2.0 * M_PI * f_knee;
 
-const double siglog =
-    WaveSpectrumShared::estimate_accel_siglog<Nfreq>(
-        S_aa_true_arr, freqs_, k_peak_accel);
-
-const double knee_cut_cap_hz =
-    WaveSpectrumShared::adaptive_knee_cut_cap_hz(
-        fp_accel_hz, siglog);
-
-const double cut_for_knee =
-    std::min(last_lowfreq_cut_hz_, knee_cut_cap_hz);
-
-const double f_knee = std::max({
-    reg_f0_hz,
-    0.50 * cut_for_knee,
-    0.95 * hp_f0_hz,
-    0.90 * f_blk
-});
-
-const double lam = 2.0 * M_PI * f_knee;
-        
         for (int i = 0; i < Nfreq; ++i) {
             const double f = freqs_[i];
             const double w = 2.0 * M_PI * f;
@@ -509,7 +389,7 @@ const double lam = 2.0 * M_PI * f_knee;
             double S_eta = (den > 0.0) ? (S_aa_true_arr[i] / (den * den)) : 0.0;
             if (!std::isfinite(S_eta) || S_eta < 0.0) S_eta = 0.0;
 
-            S_eta *= lowfreq_taper_(f, last_lowfreq_cut_hz_);
+            S_eta *= WaveSpectrumShared::lowfreq_taper(f, last_lowfreq_cut_hz_);
 
             if (use_psd_ema) {
                 const double a = alpha_for_f(f);
@@ -522,20 +402,17 @@ const double lam = 2.0 * M_PI * f_knee;
         }
 
         have_ema = true;
-
-        // Revert to simpler old-style finishing: shared mild smoother + mild cutoff cleanup.
         WaveSpectrumShared::smooth_logfreq_3tap_inplace<Nfreq>(lastSpectrum_, freqs_);
-        suppress_lowfreq_from_cut_inplace_mild_();
+        WaveSpectrumShared::suppress_lowfreq_from_cut_inplace<Nfreq>(
+            lastSpectrum_, freqs_, last_lowfreq_cut_hz_);
     }
 
-    double fs_raw = 0.0;
-    double fs = 0.0;
+    double fs_raw = 0.0, fs = 0.0;
     int decimFactor = 1;
     bool hannEnabled = true;
 
     double reg_f0_hz = 0.008;
     double hp_f0_hz = 0.025;
-    double analysis_fmax_hz_ = 1.2;
 
     std::array<double, Nfreq> freqs_{};
     std::array<double, Nfreq + 1> f_edges_{};
@@ -550,8 +427,8 @@ const double lam = 2.0 * M_PI * f_knee;
     Eigen::Matrix<double, Nfreq, 1> lastSpectrum_;
 
     bool use_psd_ema = true;
-    double ema_alpha_low  = 0.06;
-    double ema_alpha_high = 0.14;
+    double ema_alpha_low = 0.20;
+    double ema_alpha_high = 0.06;
     bool have_ema = false;
     Eigen::Matrix<double, Nfreq, 1> psd_ema_;
 
