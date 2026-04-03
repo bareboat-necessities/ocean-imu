@@ -140,7 +140,7 @@ def describe_case(case_name: str) -> str:
     azimuth = float(values["A"])
     phase = float(values["P"])
     wave_type = wave_type.upper()
-    details = f"{wave_type}: H={height:.2f} m, L={length:.2f} m, az={azimuth:.1f}°, phase={phase:.1f}°"
+    details = f"{wave_type}: H={height:.2f} m, az={azimuth:.1f}°"
     return details
 
 
@@ -178,10 +178,10 @@ def build_full_metrics_block(full_metrics_rows, last_case_description: str | Non
     if not full_metrics_rows:
         return ""
 
-    title = r"\subsection*{Full metrics dump}"
+    title = r"\subsection*{Full metrics}"
     if last_case_description:
         title = (
-            r"\subsection*{Full metrics dump (last synthetic spectrum case: "
+            r"\subsection*{Full metrics (last synthetic spectrum case: "
             + tex_escape(last_case_description)
             + ")}"
         )
