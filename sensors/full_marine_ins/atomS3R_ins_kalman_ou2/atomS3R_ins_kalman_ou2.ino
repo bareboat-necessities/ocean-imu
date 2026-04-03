@@ -1,0 +1,882 @@
+/*
+  Copyright 2026, Mikhail Grushinskiy
+
+  AtomS3R SeaStateFusion_OU_III (+ optional IMU Calibration Wizard)
+  (SeaStateFusion_OU_III version: Kalman3D_Wave_OU_III + mag init + yaw correction)
+
+  Assumptions:
+    - fusion_.raw().mekf().quaternion_boat() returns BODY->WORLD quaternion (q_bw), world frame is NED (+Z down).
+    - runtime_.apply* already includes temperature compensation.
+*/
+
+#include <Arduino.h>
+
+#ifndef SEA_STATE_ENABLE_WIZARD
+  #define SEA_STATE_ENABLE_WIZARD 1
+#endif
+
+#define ARDUINO_PLOTTER 1
+
+#include <M5Unified.h>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <type_traits>
+
+#ifndef EIGEN_STACK_ALLOCATION_LIMIT
+  #define EIGEN_STACK_ALLOCATION_LIMIT 0
+#endif
+#include <ArduinoEigenDense.h>
+
+#include "Bosch/BoschBmi270_ImuCal.h"
+#if !defined(ATOMS3R_HAVE_BOSCH_SENSORAPI) || !(ATOMS3R_HAVE_BOSCH_SENSORAPI)
+  #error "Bosch BMI270 SensorAPI is not available in this build. Install the library that provides Arduino_BMI270_BMM150.h."
+#endif
+
+#include "AtomS3R/AtomS3R_ImuCal.h"
+
+#include "AtomS3R/AtomS3R_M5Ui.h"
+#if SEA_STATE_ENABLE_WIZARD
+  #include "AtomS3R/ImuCalWizardRunner.h"
+#endif
+#include "AtomS3R/AtomS3R_CompassUI.h"
+#include "nmea/NmeaCompass.h"
+
+// HW
+static constexpr uint8_t BMI270_ADDR = 0x68;  // change to 0x69 if your board straps SA0 high
+
+// UI / serial defaults
+#ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
+  #define SEA_STATE_UI_DEFAULT_GRAPHICS 1
+#endif
+
+#ifndef SEA_STATE_SERIAL_NMEA
+  #define SEA_STATE_SERIAL_NMEA 0
+#endif
+
+#ifndef SEA_STATE_NMEA_TALKER
+  #define SEA_STATE_NMEA_TALKER "II"
+#endif
+
+// SeaStateFusion_OU_III requirements
+constexpr float g_std      = atoms3r_ical::ImuCalCfg::g_std;
+constexpr float FREQ_GUESS = 0.3f;
+
+#define ZERO_CROSSINGS_SCALE          1.0f
+#define ZERO_CROSSINGS_DEBOUNCE_TIME  0.12f
+#define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
+
+enum class TrackerType { ARANOVSKIY = 0, KALMANF = 1, ZEROCROSS = 2 };
+#include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
+#include "detrend/AdaptiveWaveDetrender.h"
+
+#ifndef MAG_DELAY_SEC
+  #define MAG_DELAY_SEC 8.0f
+#endif
+
+static constexpr float    LOOP_HZ        = 200.0f;
+static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LOOP_HZ);
+
+static constexpr uint32_t UI_REFRESH_MS   = 100;
+static constexpr uint32_t DEBUG_SERIAL_MS = 150;
+static constexpr uint32_t NMEA_SERIAL_MS  = 100;
+
+static constexpr float ROT_BIAS_TAU_S       = 5.0f;
+static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
+static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
+
+static constexpr float HEADING_ACCEL_G_TOL_FRAC = 0.18f;
+static constexpr float MAG_MIN_DELTA_uT         = 0.002f;
+
+using namespace atoms3r_ical;
+using Vector3f = Eigen::Vector3f;
+
+static inline float clampf_(float x, float lo, float hi) {
+  return x < lo ? lo : (x > hi ? hi : x);
+}
+
+static inline float wrap360_(float deg) {
+  while (deg < 0.0f) deg += 360.0f;
+  while (deg >= 360.0f) deg -= 360.0f;
+  return deg;
+}
+
+static inline float wrap180_(float deg) {
+  while (deg <= -180.0f) deg += 360.0f;
+  while (deg >   180.0f) deg -= 360.0f;
+  return deg;
+}
+
+static inline bool finite3_(const Vector3f& v) {
+  return std::isfinite(v.x()) && std::isfinite(v.y()) && std::isfinite(v.z());
+}
+
+static inline Vector3f quatRotate_(const Eigen::Quaternionf& q, const Vector3f& v) {
+  const Vector3f qv(q.x(), q.y(), q.z());
+  const Vector3f t = 2.0f * qv.cross(v);
+  return v + q.w() * t + qv.cross(t);
+}
+
+static inline bool magneticHeadingFromDownAndMagBody_(
+    const Vector3f& down_b_unit,
+    const Vector3f& mag_b_uT,
+    float& heading_deg_out)
+{
+  const Vector3f FWD_B(1.0f, 0.0f, 0.0f);
+
+  Vector3f d = down_b_unit;
+  const float dn = d.norm();
+  if (dn < 1e-6f) return false;
+  d /= dn;
+
+  Vector3f m = mag_b_uT;
+  const float mn = m.norm();
+  if (mn < 1e-6f) return false;
+  m /= mn;
+
+  Vector3f east_b = d.cross(m);
+  const float en = east_b.norm();
+  if (en < 1e-6f) return false;
+  east_b /= en;
+
+  Vector3f north_b = east_b.cross(d);
+  const float nn = north_b.norm();
+  if (nn < 1e-6f) return false;
+  north_b /= nn;
+
+  const float e = east_b.dot(FWD_B);
+  const float n = north_b.dot(FWD_B);
+  heading_deg_out = wrap360_(atan2f(e, n) * RAD_TO_DEG);
+  return true;
+}
+
+class FusionApp {
+public:
+  FusionApp() = default;
+
+  void begin() {
+    delay(50);
+    Serial.begin(115200);
+    delay(100);
+
+    auto cfg = M5.config();
+    cfg.internal_imu = false;
+    M5.begin(cfg);
+
+    // AtomS3R internal IMU I2C bus
+    if (!M5.In_I2C.begin((i2c_port_t)0, 45, 0)) {
+      Serial.println("[BOOT] M5.In_I2C.begin failed");
+      while (true) delay(100);
+    }
+
+    ui_.begin();
+    if (use_graphics_) {
+      ui_.setReadRotation();
+      compass_ui_.begin();
+      compass_ui_ready_ = compass_ui_.ok();
+      if (!compass_ui_ready_) use_graphics_ = false;
+    }
+
+    reloadBlobAndRuntime_();
+
+#if SEA_STATE_ENABLE_WIZARD
+    if (!have_blob_) {
+      Serial.println("[BOOT] No saved calibration. Starting wizard...");
+      const bool saved = runWizardFlow_(true);
+      if (saved) {
+        Serial.println("[BOOT] Wizard saved calibration.");
+      } else {
+        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+      }
+    }
+#endif
+
+    reinitBoschImu_();
+    resetFusion_();
+    drawHomeStatic_();
+
+    delay(100);
+  }
+
+  void tick() {
+    const uint32_t loop_start_us = micros();
+
+#if SEA_STATE_ENABLE_WIZARD
+    Input::update();
+
+    if (Input::tapPressed()) {
+      tap_count_++;
+      tap_deadline_ms_ = millis() + M5UiCfg::MENU_TAP_WINDOW_MS;
+      drawHomePending_();
+      Serial.printf("[TAP] count=%d\n", tap_count_);
+    }
+
+    if (tap_count_ > 0 && static_cast<int32_t>(millis() - tap_deadline_ms_) > 0) {
+      if (tap_count_ >= 3) handleErase_();
+      else                 handleRunWizard_();
+      tap_count_ = 0;
+      tap_deadline_ms_ = 0;
+      drawHomeStatic_();
+    }
+#endif
+
+    pollRuntimeMag_();
+
+    BoschAGSample sample{};
+    const bool got_sample = runtime_imu_.fifo().readOneAG(sample);
+    last_fifo_batch_count_ = got_sample ? 1u : 0u;
+
+    const uint32_t skipped_now   = runtime_imu_.fifo().skippedFramesTotal();
+    const uint32_t skipped_delta = skipped_now - last_skipped_total_;
+    last_skipped_total_          = skipped_now;
+    stale_frame_count_           = static_cast<uint16_t>(std::min<uint32_t>(skipped_delta, 0xFFFFu));
+
+    if (got_sample) {
+      updateFilter_(sample);
+    }
+
+    updateUI_();
+    streamSerial_();
+    waitForNextLoopTick_(loop_start_us);
+  }
+
+private:
+  using UI = atoms3r_ical::M5Ui;
+  using Fusion = SeaStateFusion_OU_II<TrackerType::KALMANF>;
+
+  bool use_graphics_ = (SEA_STATE_UI_DEFAULT_GRAPHICS != 0);
+
+  CompassUI compass_ui_{};
+  bool      compass_ui_ready_ = false;
+  UI        ui_{};
+
+  ImuCalStoreNvs store_{};
+  bool           have_blob_ = false;
+  ImuCalBlobV1   blob_{};
+  RuntimeCals    runtime_{};
+
+  BoschBmi270_ImuCal runtime_imu_{};
+
+#if SEA_STATE_ENABLE_WIZARD
+  int      tap_count_ = 0;
+  uint32_t tap_deadline_ms_ = 0;
+#endif
+
+  uint32_t last_ui_ms_     = 0;
+  uint32_t last_serial_ms_ = 0;
+
+  Fusion fusion_{};
+
+  uint32_t last_mag_poll_ms_    = 0;
+  uint32_t last_mag_success_ms_ = 0;
+  bool     have_mag_sample_     = false;
+  Vector3f mag_raw_uT_          = Vector3f::Constant(NAN);
+  bool     pending_mag_update_  = false;
+
+  Vector3f a_cal_ = Vector3f::Zero();
+  Vector3f w_cal_ = Vector3f::Zero();
+  Vector3f m_cal_ = Vector3f::Constant(NAN);
+  float    a_raw_norm_ = 0.0f;
+
+  float dt_              = 0.0f;
+  float roll_deg_        = 0.0f;
+  float pitch_deg_       = 0.0f;
+  float heading_deg_     = 0.0f;
+  float heave_m_         = 0.0f;
+  float wave_envelope_m_ = 0.0f;
+  float wave_hz_         = FREQ_GUESS;
+
+  AdaptiveWaveDetrender z_detrender_{};
+  AdaptiveWaveDetrender::Output z_det_out_{};
+
+  float heave_raw_m_        = 0.0f;   // raw heave from fusion position.z()
+  float heave_baseline_m_   = 0.0f;   // slow baseline actually subtracted
+  float heave_wave_raw_m_   = 0.0f;   // raw residual = heave_raw - baseline
+  float heave_wave_clean_m_ = 0.0f;   // cleaned residual for plotting/output
+
+  bool  mag_ok_      = false;
+  bool  mag_fresh_   = false;
+  float mag_norm_uT_ = NAN;
+
+  uint16_t stale_frame_count_ = 0;
+  uint32_t last_skipped_total_ = 0;
+  uint16_t last_fifo_batch_count_ = 0;
+
+  bool     have_last_fusion_time24_ = false;
+  uint32_t last_fusion_time24_      = 0;
+
+  bool     rot_inited_    = false;
+  float    rot_dpm_filt_  = 0.0f;
+  bool     gyro_bias_ok_  = false;
+  Vector3f gyro_bias_ema_ = Vector3f::Zero();
+
+private:
+  static void waitForNextLoopTick_(uint32_t loop_start_us) {
+    const uint32_t elapsed_us = micros() - loop_start_us;
+    if (elapsed_us < LOOP_PERIOD_US) {
+      delayMicroseconds(LOOP_PERIOD_US - elapsed_us);
+    }
+  }
+
+  float nominalFusionDt_() const {
+    const float dt_nom = runtime_imu_.fifo().nominalDt();
+    if (dt_nom > 0.0f && std::isfinite(dt_nom)) {
+      return dt_nom;
+    }
+    return 1.0f / LOOP_HZ;
+  }
+
+  float computeFusionDtFromFifoTimestamp_(const BoschAGSample& s) {
+    const float dt_nom = nominalFusionDt_();
+
+    if (!s.timestamp_exact) {
+      return dt_nom;
+    }
+
+    const uint32_t curr24 = s.sensortime24 & BMI270_SENSORTIME_MASK;
+    if (!have_last_fusion_time24_) {
+      have_last_fusion_time24_ = true;
+      last_fusion_time24_ = curr24;
+      return dt_nom;
+    }
+
+    const uint32_t dt_ticks = (curr24 - last_fusion_time24_) & BMI270_SENSORTIME_MASK;
+    last_fusion_time24_ = curr24;
+
+    const float dt_fifo_s = static_cast<float>(dt_ticks) * BMI270_SENSORTIME_TICK_S;
+    if (!(dt_fifo_s > 0.0f) || !std::isfinite(dt_fifo_s)) {
+      return dt_nom;
+    }
+
+    return dt_fifo_s;
+  }
+
+  BoschBmi270_ImuCal::Config makeImuConfig_() const {
+    BoschBmi270_ImuCal::Config cfg;
+    cfg.bmi270_addr                = BMI270_ADDR;
+    cfg.ag_hz                      = LOOP_HZ;
+    cfg.enable_mag_aux             = true;
+    cfg.mag_bmm150_addr            = 0x10;
+    cfg.mag_aux_odr_hz             = 25.0f;
+    cfg.mag_startup_settle_ms      = 3;
+    cfg.mag_verify_first_read      = true;
+    cfg.mag_stale_min_us           = 75000u;
+    cfg.mag_stale_factor           = 3u;
+    cfg.enable_mag_recovery        = true;
+    cfg.mag_recover_after_failures = 6u;
+    cfg.mag_recover_cooldown_us    = 1000000u;
+    cfg.tempC_default              = 25.0f;
+    cfg.i2c_hz                     = 400000u;
+    return cfg;
+  }
+
+  uint32_t magPollMs_() const {
+    const float hz = runtime_imu_.config().mag_aux_odr_hz;
+    const float use_hz = (hz > 0.0f && std::isfinite(hz)) ? hz : 25.0f;
+    const float ms_f = 1000.0f / use_hz;
+    if (!(ms_f > 0.0f) || !std::isfinite(ms_f)) {
+      return 40u;
+    }
+    const uint32_t ms = static_cast<uint32_t>(ms_f + 0.5f);
+    return std::max<uint32_t>(1u, ms);
+  }
+
+  uint32_t magStaleMs_() const {
+    return std::max<uint32_t>(75u, 3u * magPollMs_());
+  }
+
+  void reloadBlobAndRuntime_() {
+    have_blob_ = store_.load(blob_);
+    if (!have_blob_) {
+      std::memset(&blob_, 0, sizeof(blob_));
+    }
+    runtime_.rebuildFromBlob(blob_);
+  }
+
+  bool runWizardFlow_(bool boot_mode) {
+#if SEA_STATE_ENABLE_WIZARD
+    (void)boot_mode;
+
+    if (runtime_imu_.ok()) {
+      (void)runtime_imu_.end();
+    }
+
+    ImuCalBlobV1 saved{};
+    const bool did_save = runImuCalWizard(ui_, store_, saved);
+
+    if (did_save) {
+      blob_ = saved;
+      have_blob_ = true;
+      runtime_.rebuildFromBlob(blob_);
+      return true;
+    }
+    return false;
+#else
+    (void)boot_mode;
+    return false;
+#endif
+  }
+
+  void reinitBoschImu_() {
+    const BoschBmi270_ImuCal::Config cfg = makeImuConfig_();
+
+    if (!runtime_imu_.begin(M5.In_I2C, cfg)) {
+      Serial.printf("[BOOT] Bosch IMU init failed: %s\n", runtime_imu_.lastErrorString());
+      Serial.printf("[BOOT] FIFO detail: %s\n", runtime_imu_.fifo().lastErrorString());
+      Serial.printf("[BOOT] FIFO init path: %s\n", runtime_imu_.fifo().initPathString());
+      Serial.printf("[BOOT] FIFO Bosch init rslt: %d\n", (int)runtime_imu_.fifo().lastBoschInitResult());
+      Serial.printf("[BOOT] BMI addr tried: 0x%02X\n", cfg.bmi270_addr);
+      ui_.fail("IMU", runtime_imu_.fifo().lastErrorString());
+      while (true) delay(100);
+    }
+
+    last_mag_poll_ms_    = 0;
+    last_mag_success_ms_ = 0;
+    have_mag_sample_     = false;
+    mag_raw_uT_.setConstant(NAN);
+    pending_mag_update_  = false;
+
+    last_skipped_total_ = runtime_imu_.fifo().skippedFramesTotal();
+    have_last_fusion_time24_ = false;
+    last_fusion_time24_      = 0;
+  }
+
+  void pollRuntimeMag_() {
+#if defined(ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI) && ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI
+    if (!runtime_imu_.magConfigured()) return;
+
+    const uint32_t now_ms  = millis();
+
+    if (!runtime_imu_.mag().ok()) return;
+    const uint32_t poll_ms = magPollMs_();
+
+    if (last_mag_poll_ms_ != 0 &&
+        static_cast<uint32_t>(now_ms - last_mag_poll_ms_) < poll_ms) {
+      return;
+    }
+    last_mag_poll_ms_ = now_ms;
+
+    Vector3f m_s;
+    const bool read_ok = runtime_imu_.mag().readMag_uT(m_s);
+    const bool sample_usable = finite3_(m_s) && (m_s.norm() > 1.0f);
+    if (!read_ok && !sample_usable) return;
+
+    const Vector3f m_body(m_s.y(), m_s.x(), -m_s.z());
+
+    const bool have_prev = finite3_(mag_raw_uT_);
+    const float dm       = have_prev ? (m_body - mag_raw_uT_).norm() : INFINITY;
+
+    if (!have_prev || dm >= MAG_MIN_DELTA_uT) {
+      mag_raw_uT_ = m_body;
+      pending_mag_update_ = true;
+    }
+
+    have_mag_sample_     = true;
+    last_mag_success_ms_ = now_ms;
+#else
+    have_mag_sample_ = false;
+    mag_raw_uT_.setConstant(NAN);
+    pending_mag_update_ = false;
+#endif
+  }
+
+  void resetFusion_() {
+    constexpr bool WANT_LINEAR_BLOCK = true;
+
+    constexpr float IMU_TUNE_REF_HZ = 200.0f;
+    constexpr float MAG_TUNE_REF_HZ = 25.0f;
+
+    constexpr float acc_sigma_ref_mps2 = 0.12f;
+    constexpr float gyr_sigma_ref_rps  = 0.00135f;
+    constexpr float mag_sigma_ref_uT   = 1.80f;
+
+    const float imu_rate_scale = sqrtf(IMU_TUNE_REF_HZ / LOOP_HZ);
+    const float mag_rate_runtime_hz = 1000.0f / static_cast<float>(magPollMs_());
+    const float mag_rate_scale = sqrtf(MAG_TUNE_REF_HZ / mag_rate_runtime_hz);
+
+    const Vector3f sigma_a(acc_sigma_ref_mps2 * imu_rate_scale,
+                           acc_sigma_ref_mps2 * imu_rate_scale,
+                           acc_sigma_ref_mps2 * imu_rate_scale);
+    const Vector3f sigma_g(gyr_sigma_ref_rps * imu_rate_scale,
+                           gyr_sigma_ref_rps * imu_rate_scale,
+                           gyr_sigma_ref_rps * imu_rate_scale);
+    const float sigma_m_uT = mag_sigma_ref_uT * mag_rate_scale;
+    const Vector3f sigma_m(sigma_m_uT, sigma_m_uT, sigma_m_uT);
+
+    Fusion::Config fcfg;
+    fcfg.with_mag = true;
+    fcfg.online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
+    fcfg.use_fixed_mag_world_ref = false;
+    fcfg.mag_world_ref = Vector3f(0.0f, 0.0f, 0.0f);
+
+    fcfg.freeze_acc_bias_until_live = true;
+    fcfg.Racc_warmup = 0.18f;
+
+    fcfg.sigma_a  = sigma_a;
+    fcfg.sigma_g  = sigma_g;
+    fcfg.sigma_m  = sigma_m;
+
+    fcfg.mag_delay_sec       = MAG_DELAY_SEC;
+    fcfg.mag_ref_timeout_sec = 2.0f;
+    fcfg.mag_odr_guess_hz    = MAG_TUNE_REF_HZ;
+    fcfg.use_custom_mag_tuner_cfg = false;
+
+    fusion_.begin(fcfg);
+
+    auto& ff = fusion_.raw();
+    using FF = std::remove_reference_t<decltype(ff)>;
+
+    ff.enableLinearBlock(WANT_LINEAR_BLOCK);
+    ff.enableTuner(true);
+    ff.setWithMag(true);
+    ff.setPFactor(1.4f);
+    ff.setTauCoeff(1.5f);
+    ff.setSigmaCoeff(0.85f);
+    ff.setR_v0_Coeff(0.45f);
+    ff.setR_p0_Coeff(0.3f);
+    ff.setR_p0_XYFactor(0.23f);
+    ff.setAccNoiseFloorSigma(ACC_NOISE_FLOOR_SIGMA_DEFAULT);
+    ff.enableClamp(true);
+    ff.setFreqInputCutoffHz(6.0f);
+
+    rot_inited_   = false;
+    rot_dpm_filt_ = 0.0f;
+    gyro_bias_ok_ = false;
+    gyro_bias_ema_.setZero();
+    heading_deg_  = 0.0f;
+
+    last_mag_poll_ms_    = 0;
+    last_mag_success_ms_ = 0;
+    have_mag_sample_     = false;
+    mag_raw_uT_.setConstant(NAN);
+    pending_mag_update_  = false;
+    mag_ok_              = false;
+    mag_fresh_           = false;
+    mag_norm_uT_         = NAN;
+
+    stale_frame_count_ = 0;
+    have_last_fusion_time24_ = false;
+    last_fusion_time24_      = 0;
+
+    AdaptiveWaveDetrender::Config zcfg;
+    zcfg.init_wave_freq_hz = FREQ_GUESS;   // startup guess
+    zcfg.min_wave_freq_hz  = 0.02f;        // long swell
+    zcfg.max_wave_freq_hz  = 1.20f;        // short chop
+
+    // Slow baseline tracker
+    zcfg.baseline_cutoff_fraction = 0.25f;
+    zcfg.min_baseline_cutoff_hz   = 0.003f;
+    zcfg.max_baseline_cutoff_hz   = 0.25f;
+
+    // Frequency learning from slope
+    zcfg.freq_smooth_tau_s = 12.0f;
+    zcfg.slope_lpf_tau_s   = 0.20f;
+    zcfg.slope_rms_tau_s   = 8.0f;
+
+    // Because input is heave in meters, this threshold is in m/s
+    zcfg.threshold_rms_fraction  = 0.15f;
+    zcfg.min_slope_threshold_abs = 0.002f;
+    zcfg.max_slope_threshold_abs = 1.0e9f;
+
+    zcfg.startup_hold_s     = 2.0f;
+    zcfg.freq_timeout_cycles = 3.0f;
+
+    // Extra cleanup on the residual only
+    zcfg.enable_wave_cleanup   = true;
+    zcfg.cleanup_cutoff_fraction = 1.0f;
+    zcfg.min_cleanup_cutoff_hz = 0.003f;
+    zcfg.max_cleanup_cutoff_hz = 0.50f;
+    zcfg.cleanup_stages        = 2;   // try 2 if LF wobble still leaks through
+
+    zcfg.min_dt_s = 1.0e-4f;
+    zcfg.max_dt_s = 0.25f;            // generous guard for missed samples
+    zcfg.output_abs_limit = 0.0f;     // disabled
+
+    z_detrender_.setConfig(zcfg);
+    z_detrender_.reset(0.0f);
+
+    z_det_out_ = AdaptiveWaveDetrender::Output{};
+    heave_raw_m_        = 0.0f;
+    heave_baseline_m_   = 0.0f;
+    heave_wave_raw_m_   = 0.0f;
+    heave_wave_clean_m_ = 0.0f;
+  }
+
+#if SEA_STATE_ENABLE_WIZARD
+  void handleErase_() {
+    Serial.println("[HOME] ERASE");
+    if (!ui_.eraseConfirm()) {
+      Serial.println("[HOME] erase cancelled");
+      return;
+    }
+
+    store_.erase();
+    reloadBlobAndRuntime_();
+    reinitBoschImu_();
+    resetFusion_();
+  }
+
+  void handleRunWizard_() {
+    Serial.println("[HOME] RUN WIZARD");
+
+    const bool saved = runWizardFlow_(false);
+    if (!saved) {
+      ui_.notSavedNotice();
+    }
+
+    reinitBoschImu_();
+    resetFusion_();
+  }
+
+  void drawHomePending_() {
+    ui_.setReadRotation();
+    ui_.title("COMPASS");
+    M5.Display.printf("Tap count: %d\n", tap_count_);
+    ui_.line("");
+    ui_.line("Wait...");
+    ui_.line("1 tap=CAL");
+    ui_.line("3 taps=ERASE");
+
+    int32_t remain = static_cast<int32_t>(tap_deadline_ms_ - millis());
+    remain = remain < 0 ? 0 : remain;
+    const float t01 = 1.0f - static_cast<float>(remain) / static_cast<float>(M5UiCfg::MENU_TAP_WINDOW_MS);
+    ui_.bar01(t01);
+  }
+#endif
+
+  void updateFilter_(const BoschAGSample& s) {
+    dt_ = computeFusionDtFromFifoTimestamp_(s);
+    constexpr float tempC = 35.0f;
+
+    const Vector3f a_s(s.ax, s.ay, s.az);
+    const Vector3f w_s(s.gx, s.gy, s.gz);
+
+    const Vector3f a_raw(a_s.y(), a_s.x(), -a_s.z());
+    const Vector3f w_raw(w_s.y(), w_s.x(), -w_s.z());
+
+    a_raw_norm_ = a_raw.norm();
+
+    a_cal_ = runtime_.applyAccel(a_raw, tempC);
+    w_cal_ = runtime_.applyGyro (w_raw, tempC);
+
+    Vector3f mag_for_use = mag_raw_uT_;
+    const uint32_t now_ms = millis();
+    if (!have_mag_sample_ ||
+        static_cast<uint32_t>(now_ms - last_mag_success_ms_) > magStaleMs_()) {
+      mag_for_use.setConstant(NAN);
+      pending_mag_update_ = false;
+    }
+
+    m_cal_ = runtime_.applyMag(mag_for_use);
+
+    mag_norm_uT_ = m_cal_.norm();
+    mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
+
+    const bool still =
+        (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
+        (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
+
+    mag_fresh_ = false;
+    if (pending_mag_update_ && mag_ok_) {
+      fusion_.updateMag(m_cal_);
+      mag_fresh_ = true;
+      pending_mag_update_ = false;
+    }
+
+    fusion_.update(dt_, w_cal_, a_cal_);
+
+    Eigen::Quaternionf q_bw = fusion_.raw().mekf().quaternion_boat();
+    q_bw.normalize();
+
+    Vector3f down_b(0.0f, 0.0f, 0.0f);
+    {
+      const Vector3f down_w(0.0f, 0.0f, 1.0f);
+      Vector3f down_q_b = quatRotate_(q_bw.conjugate(), down_w);
+      const float dnq = down_q_b.norm();
+      if (dnq > 1e-6f) down_q_b /= dnq;
+
+      const float a_norm = a_cal_.norm();
+      const bool accel_trust = fabsf(a_norm - g_std) <= (HEADING_ACCEL_G_TOL_FRAC * g_std);
+
+      if (accel_trust && a_norm > 1e-6f) {
+        down_b = a_cal_ / a_norm;
+        if (dnq > 1e-6f && down_b.dot(down_q_b) < 0.0f) down_b = -down_b;
+      } else {
+        down_b = down_q_b;
+      }
+    }
+
+    {
+      float hdg_meas = heading_deg_;
+      if (mag_ok_) {
+        float hdg = heading_deg_;
+        if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg)) {
+          hdg_meas = hdg;
+        }
+      }
+      heading_deg_ = wrap360_(hdg_meas);
+    }
+
+    {
+      const float pitch = asinf(clampf_(-down_b.x(), -1.0f, 1.0f));
+      const float roll  = atan2f(down_b.y(), down_b.z());
+      roll_deg_  = wrap180_(roll  * RAD_TO_DEG);
+      pitch_deg_ = wrap180_(pitch * RAD_TO_DEG);
+    }
+
+    if (still) {
+      const float alpha_b = 1.0f - expf(-dt_ / ROT_BIAS_TAU_S);
+      if (!gyro_bias_ok_) {
+        gyro_bias_ok_  = true;
+        gyro_bias_ema_ = w_cal_;
+      } else {
+        gyro_bias_ema_ += alpha_b * (w_cal_ - gyro_bias_ema_);
+      }
+    }
+
+    Vector3f w_use = w_cal_;
+    if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
+
+    Vector3f w_world = quatRotate_(q_bw, w_use);
+    float rot_dpm_meas = w_world.z() * RAD_TO_DEG * 60.0f;
+    rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
+
+    const float tau_rot = 1.5f;
+    const float alpha_r = 1.0f - expf(-dt_ / tau_rot);
+    if (!rot_inited_) { rot_inited_ = true; rot_dpm_filt_ = rot_dpm_meas; }
+    else              { rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_); }
+
+    heave_m_         = -fusion_.raw().mekf().get_position().z();  // positive-up
+    wave_envelope_m_ =  fusion_.raw().getDisplacementScale();
+    wave_hz_         =  fusion_.raw().getFreqHz();
+
+    heave_raw_m_ = heave_m_;
+
+    const bool ext_freq_valid =
+        fusion_.isLive() &&
+        std::isfinite(wave_hz_) &&
+        (wave_hz_ >= z_detrender_.config().min_wave_freq_hz) &&
+        (wave_hz_ <= z_detrender_.config().max_wave_freq_hz);
+
+    // Option A: blend in SeaStateFusion_OU_III frequency estimate
+    z_det_out_ = z_detrender_.update(heave_raw_m_, dt_, wave_hz_, ext_freq_valid);
+
+    // Option B: let the detrender learn frequency entirely by itself
+    // z_det_out_ = z_detrender_.update(heave_raw_m_, dt_);
+
+    heave_baseline_m_   = z_det_out_.baseline_slow;
+    heave_wave_raw_m_   = z_det_out_.wave_raw;
+    heave_wave_clean_m_ = z_det_out_.wave_clean;
+  }
+
+  void drawHomeStatic_() {
+    ui_.setReadRotation();
+    ui_.title("COMPASS");
+    M5.Display.printf("BLOB: %s\n", have_blob_ ? "YES" : "NO");
+    M5.Display.printf("A:%d G:%d M:%d\n",
+                      static_cast<int>(runtime_.acc.ok),
+                      static_cast<int>(runtime_.gyr.ok),
+                      static_cast<int>(runtime_.mag.ok));
+
+#if SEA_STATE_ENABLE_WIZARD
+    ui_.line("Tap: calibrate");
+    ui_.line("Tap x3: erase");
+#else
+    ui_.line("Wizard: DISABLED");
+    ui_.line("Set SEA_STATE_ENABLE_WIZARD=1");
+#endif
+    ui_.line("");
+    ui_.line("Fusion: FULL");
+  }
+
+  void updateUI_() {
+#if SEA_STATE_ENABLE_WIZARD
+    if (tap_count_ > 0) return;
+#endif
+    const uint32_t now_ms = millis();
+    if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
+    last_ui_ms_ = now_ms;
+
+    if (use_graphics_ && compass_ui_ready_) updateUI_graphics_();
+    else                                   updateUI_text_();
+  }
+
+  void updateUI_graphics_() {
+    ui_.setReadRotation();
+    const bool tiltWarn = (fabsf(roll_deg_) > 35.0f) || (fabsf(pitch_deg_) > 35.0f);
+    compass_ui_.draw(heading_deg_, mag_ok_, mag_norm_uT_, tiltWarn);
+  }
+
+  void updateUI_text_() {
+    ui_.setReadRotation();
+    ui_.title("COMPASS");
+    M5.Display.printf("HDG: %6.1f deg\n", static_cast<double>(heading_deg_));
+    M5.Display.printf("ROL: %6.1f deg\n", static_cast<double>(roll_deg_));
+    M5.Display.printf("PIT: %6.1f deg\n", static_cast<double>(pitch_deg_));
+    M5.Display.printf("HEV: %6.3f m\n", static_cast<double>(heave_m_));
+    M5.Display.printf("FRQ: %6.3f Hz\n", static_cast<double>(wave_hz_));
+    M5.Display.printf("MAG: %s %s\n", mag_ok_ ? "OK " : "BAD", mag_fresh_ ? "NEW" : "OLD");
+    M5.Display.printf("|m|: %6.1f uT\n", static_cast<double>(mag_norm_uT_));
+    M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n",
+                      static_cast<double>(a_raw_norm_),
+                      static_cast<double>(a_cal_.norm()));
+    ui_.line("");
+  }
+
+  void streamSerial_() {
+    const uint32_t now_ms = millis();
+
+#if SEA_STATE_SERIAL_NMEA
+    if (now_ms - last_serial_ms_ < NMEA_SERIAL_MS) return;
+#else
+    if (now_ms - last_serial_ms_ < DEBUG_SERIAL_MS) return;
+#endif
+    last_serial_ms_ = now_ms;
+
+#if SEA_STATE_SERIAL_NMEA
+    const bool valid = fusion_.isLive();
+    nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
+    nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
+    nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
+    nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
+    nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, valid);
+#else
+    const float mag_delta_ms = have_mag_sample_
+                               ? static_cast<float>(now_ms - last_mag_success_ms_)
+                               : 0.0f;
+    const float mag_target_ms = static_cast<float>(magPollMs_());
+
+#if ARDUINO_PLOTTER
+    Serial.printf(
+      "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\n",
+      static_cast<double>(heave_raw_m_        * 100.0f),
+      static_cast<double>(wave_envelope_m_ * 100.0f),
+      static_cast<double>(heave_wave_clean_m_ * 100.0f));
+#else
+    Serial.printf(
+      "FIFO batch=%u | dt_imu_ms=%.2f | mag_valid=%u | dt_mag_ms=%s%.2f (target~%.2f) | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
+      static_cast<unsigned>(last_fifo_batch_count_),
+      static_cast<double>(dt_ * 1000.0f),
+      mag_ok_ ? 1U : 0U,
+      mag_fresh_ ? "+" : "~",
+      static_cast<double>(mag_delta_ms),
+      static_cast<double>(mag_target_ms),
+      static_cast<double>(a_cal_.x()),
+      static_cast<double>(a_cal_.y()),
+      static_cast<double>(a_cal_.z()),
+      static_cast<double>(w_cal_.x()),
+      static_cast<double>(w_cal_.y()),
+      static_cast<double>(w_cal_.z()),
+      static_cast<double>(m_cal_.x()),
+      static_cast<double>(m_cal_.y()),
+      static_cast<double>(m_cal_.z()));
+#endif
+
+#endif
+  }
+};
+
+static FusionApp g_app;
+
+void setup() { g_app.begin(); }
+void loop()  { g_app.tick(); }
