@@ -152,7 +152,7 @@ def build_table(rows, caption: str, label: str) -> str:
         rf"\label{{{label}}}",
         r"\begin{tabular}{lrrrrrcl}",
         r"\toprule",
-        r"Case & $H_{s,target}$ & $H_{s,est}$ & $H_s$ err [\%] & $T_{p,target}$ & $T_{p,est}$ & Type & Gate \\",
+        r"Case & $H_{s,target}$ & $H_{s,est}$ & $H_s$ err [\%] & $T_{p,target}$ & $T_{p,est}$ \\",
         r"\midrule",
     ]
 
@@ -163,9 +163,7 @@ def build_table(rows, caption: str, label: str) -> str:
             f"{float(row['hs_est_m']):.3f} & "
             f"{float(row['hs_error_pct']):.2f} & "
             f"{float(row['tp_target_s']):.3f} & "
-            f"{float(row['tp_est_s']):.3f} & "
-            f"{tex_escape(row['spectrum_type'])} & "
-            f"{pass_cell(row['pass'])} "
+            f"{float(row['tp_est_s']):.3f} "
             r"\\"
         )
         lines.append(line)
