@@ -55,9 +55,6 @@ std::string to_spectrum_type(SeaMetricsFromSpectrum::SpectrumType t) {
 
 void write_report_summary(const SeaMetricsFromSpectrum::Report& r, std::ostream& os) {
     os << std::fixed << std::setprecision(6);
-    os << "valid=" << (r.valid ? 1 : 0) << "\n";
-    os << "lowfreq_guard_hz=" << r.lowfreq_guard_hz << "\n";
-    os << "observation_duration_s=" << r.observation_duration_s << "\n";
     os << "m_neg1=" << r.m_neg1 << "\n";
     os << "m0=" << r.m0 << "\n";
     os << "m1=" << r.m1 << "\n";
