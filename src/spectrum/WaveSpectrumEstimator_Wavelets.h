@@ -475,15 +475,32 @@ private:
             0.06
         );
         
-        const double f_knee = std::max({
-            reg_f0_hz,
-            0.50 * last_lowfreq_cut_hz_,
-            0.95 * hp_f0_hz,
-            0.90 * f_blk
-        });
+const int k_peak_accel =
+    WaveSpectrumShared::find_accel_peak_index<Nfreq>(
+        S_aa_true_arr, freqs_, 0.0, 1.03);
 
-        const double lam = 2.0 * M_PI * f_knee;
+const double fp_accel_hz = freqs_[k_peak_accel];
 
+const double siglog =
+    WaveSpectrumShared::estimate_accel_siglog<Nfreq>(
+        S_aa_true_arr, freqs_, k_peak_accel);
+
+const double knee_cut_cap_hz =
+    WaveSpectrumShared::adaptive_knee_cut_cap_hz(
+        fp_accel_hz, siglog);
+
+const double cut_for_knee =
+    std::min(last_lowfreq_cut_hz_, knee_cut_cap_hz);
+
+const double f_knee = std::max({
+    reg_f0_hz,
+    0.50 * cut_for_knee,
+    0.95 * hp_f0_hz,
+    0.90 * f_blk
+});
+
+const double lam = 2.0 * M_PI * f_knee;
+        
         for (int i = 0; i < Nfreq; ++i) {
             const double f = freqs_[i];
             const double w = 2.0 * M_PI * f;
