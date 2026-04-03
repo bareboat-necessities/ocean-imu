@@ -18,19 +18,22 @@
     Wavelet spectrum estimator with adaptive low-frequency cutoff learned from
     the deconvolved acceleration spectrum before displacement inversion.
 
-    Current fixes:
-      - uses shared low-frequency adaptation helpers from WaveSpectrumShared.h
-      - estimateFp()/estimateTp() respect the learned cutoff directly
-      - cutoff learned from S_aa_true, not S_aa_meas
+    This version keeps:
+      - shared low-frequency adaptation via WaveSpectrumShared.h
+      - estimateFp()/estimateTp() using learned low-frequency cutoff
+      - cutoff learned from S_aa_true
       - gentler final inversion knee
       - wavelet taps orthogonalized to DC and ramp
-      - wavelet amplitude calibration fix:
-          * per-bin valid-region window RMS correction
-          * exact Parseval FIR gain normalization
+      - per-bin valid-region window RMS correction
+      - exact Parseval FIR gain normalization
+
+    This version does NOT use:
+      - adaptive cycle count
+      - hard support cap at Nblock/6
 */
 
 template<int Nfreq = 32, int Nblock = 256>
-class EIGEN_ALIGN_MAX WaveSpectrumEstimator_Wavelets {
+class EIGEN_ALIGN_MAX WaveSpectrumEstimator {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -38,9 +41,9 @@ public:
     using Vec = Eigen::Matrix<double, Nfreq, 1>;
     using Biquad = WaveSpectrumShared::Biquad;
 
-    WaveSpectrumEstimator_Wavelets(double fs_raw_ = 200.0,
-                                   int decimFactor_ = 30,
-                                   bool hannEnabled_ = true)
+    WaveSpectrumEstimator(double fs_raw_ = 200.0,
+                          int decimFactor_ = 30,
+                          bool hannEnabled_ = true)
         : fs_raw(fs_raw_), decimFactor(decimFactor_), hannEnabled(hannEnabled_)
     {
         fs = fs_raw / decimFactor;
@@ -157,6 +160,7 @@ private:
             const double k = double(n - half);
             const double re = double(wave_re_[tapIndex_(i, n)]);
             const double im = double(wave_im_[tapIndex_(i, n)]);
+
             sum_re += re;
             sum_im += im;
             sumk_re += k * re;
@@ -213,10 +217,9 @@ private:
             const int L = 2 * half + 1;
             wave_half_[i] = half;
 
-            // Per-bin valid region window power.
             {
                 const int n0 = half;
-                const int n1 = Nblock - half; // exclusive
+                const int n1 = Nblock - half;
 
                 double win_sumsq_valid = 0.0;
                 int M_valid = 0;
@@ -250,7 +253,6 @@ private:
 
             orthogonalize_wavelet_to_dc_and_ramp_(i, L, half);
 
-            // Normalize taps to unit magnitude response at +f0.
             double H0r = 0.0;
             double H0i = 0.0;
             for (int n = 0; n < L; ++n) {
@@ -274,8 +276,6 @@ private:
                 wave_im_[tapIndex_(i, n)] = float(double(wave_im_[tapIndex_(i, n)]) * scale);
             }
 
-            // Exact Parseval gain for real-input one-sided PSD mapping:
-            // G = 0.5 * fs * sum |h[n]|^2
             double tap_energy = 0.0;
             for (int n = 0; n < L; ++n) {
                 const double re = double(wave_re_[tapIndex_(i, n)]);
@@ -407,7 +407,8 @@ private:
             lastSpectrum_, freqs_, last_lowfreq_cut_hz_);
     }
 
-    double fs_raw = 0.0, fs = 0.0;
+    double fs_raw = 0.0;
+    double fs = 0.0;
     int decimFactor = 1;
     bool hannEnabled = true;
 
@@ -427,8 +428,8 @@ private:
     Eigen::Matrix<double, Nfreq, 1> lastSpectrum_;
 
     bool use_psd_ema = true;
-    double ema_alpha_low = 0.06;
-    double ema_alpha_high = 0.14;
+    double ema_alpha_low = 0.20;
+    double ema_alpha_high = 0.06;
     bool have_ema = false;
     Eigen::Matrix<double, Nfreq, 1> psd_ema_;
 
