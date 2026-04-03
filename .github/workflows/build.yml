@@ -184,5 +184,5 @@ jobs:
           extra-arduino-cli-args: >-
             --warnings default
             --build-property compiler.libraries.ldflags=-Wl,--allow-multiple-definition
-            --build-property compiler.cpp.extra_flags="-I${{ github.workspace }}/common/include -mvector -funroll-loops -fno-finite-math-only"
+            --build-property compiler.cpp.extra_flags="-I${{ github.workspace }}/src -mvector -funroll-loops -fno-finite-math-only"
           set-build-path: true
