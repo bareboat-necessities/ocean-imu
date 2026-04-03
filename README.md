@@ -47,7 +47,7 @@ src/                 core algorithms and reusable components
   kalman_ou_iii/     OU-III Kalman model components
   nmea/              NMEA parsing/helpers
   pii_observer/      observer/filter components
-  spectrum/          spectral estimation helpers
+  spectrum/          spectral charts
   tuner/             auto-tuning helpers
   util/              shared support code
   wave_dir/          wave direction estimation
