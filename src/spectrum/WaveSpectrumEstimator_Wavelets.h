@@ -224,9 +224,7 @@ private:
             return std::max(f_floor_hz, freqs_[i_valley]);
         }
 
-        // Revert from the recent aggressive fallback. This is much closer to the
-        // older behavior that gave better plots.
-        const double f_rel = 0.60 * freqs_[i_peak];
+        const double f_rel = 0.50 * freqs_[i_peak];
         const double f_cap = 0.90 * freqs_[i_peak];
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
     }
