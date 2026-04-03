@@ -28,4 +28,5 @@ detrend-basic-test: detrend-basic-test.o
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o $(TARGETS) *.exe *.csv
+	find . -maxdepth 1 -type f -name '*.csv' ! -name 'detrend*.csv' -delete
+	rm -f *.o $(TARGETS) *.exe
