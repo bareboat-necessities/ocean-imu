@@ -18,18 +18,12 @@
     Wavelet spectrum estimator with adaptive low-frequency cutoff learned from
     the deconvolved acceleration spectrum before displacement inversion.
 
-    This version keeps:
-      - shared low-frequency adaptation via WaveSpectrumShared.h
-      - estimateFp()/estimateTp() using learned low-frequency cutoff
-      - cutoff learned from S_aa_true
-      - gentler final inversion knee
-      - wavelet taps orthogonalized to DC and ramp
-      - per-bin valid-region window RMS correction
-      - exact Parseval FIR gain normalization
-
-    This version does NOT use:
-      - adaptive cycle count
-      - hard support cap at Nblock/6
+    Notes:
+      - Uses shared low-frequency adaptation helpers from WaveSpectrumShared.h
+      - estimateFp()/estimateTp() respect the learned cutoff directly
+      - Medium/high sea fix:
+          * learn cutoff from S_aa_true, not S_aa_meas
+          * gentler final inversion knee
 */
 
 template<int Nfreq = 32, int Nblock = 256>
@@ -40,6 +34,8 @@ public:
     static constexpr double g = 9.80665;
     using Vec = Eigen::Matrix<double, Nfreq, 1>;
     using Biquad = WaveSpectrumShared::Biquad;
+
+    struct PMFitResult { double alpha, fp, cost; };
 
     WaveSpectrumEstimator(double fs_raw_ = 200.0,
                           int decimFactor_ = 30,
@@ -132,6 +128,96 @@ public:
         return (fp > 0.0) ? (1.0 / fp) : 0.0;
     }
 
+    PMFitResult fitPiersonMoskowitz() const {
+        Vec S_obs = lastSpectrum_;
+        for (int i = 0; i < Nfreq; ++i) {
+            if (S_obs[i] <= 0.0) S_obs[i] = 1e-12;
+        }
+
+        auto cost_fn = [&](double a, double fp) {
+            const double omega_p = 2.0 * M_PI * fp;
+            double cost = 0.0;
+            constexpr double beta = 0.74;
+
+            for (int i = 0; i < Nfreq - 1; ++i) {
+                const double df = df_[i];
+                const double f = freqs_[i];
+                double model = a * g * g * std::pow(2.0 * M_PI * f, -5.0)
+                             * std::exp(-beta * std::pow(omega_p / (2.0 * M_PI * f), 4.0));
+                if (model <= 0.0) model = 1e-12;
+                const double d = WaveSpectrumShared::safe_log(S_obs[i]) -
+                                 WaveSpectrumShared::safe_log(model);
+                cost += df * d * d;
+            }
+            return cost;
+        };
+
+        constexpr int N_fp_search = 32;
+        constexpr double fp_min = 0.05;
+        constexpr double fp_transition = 0.1;
+        constexpr double fp_max = 1.0;
+
+        std::array<double, N_fp_search> fp_grid{};
+        const int n_log = static_cast<int>(N_fp_search * 0.4);
+        const int n_lin = N_fp_search - n_log;
+
+        for (int i = 0; i < n_log; ++i) {
+            const double t = double(i) / double(n_log - 1);
+            fp_grid[i] = fp_min * std::pow(fp_transition / fp_min, t);
+        }
+        for (int i = 0; i < n_lin; ++i) {
+            const double t = double(i) / double(n_lin - 1);
+            fp_grid[n_log + i] = fp_transition + t * (fp_max - fp_transition);
+        }
+
+        double bestA = 1e-5;
+        double bestFp = fp_grid[0];
+        double bestC = std::numeric_limits<double>::infinity();
+
+        for (int ia = 0; ia < 8; ++ia) {
+            const double a = 1e-5 + ia * (1.0 - 1e-5) / 7.0;
+            for (int ifp = 0; ifp < N_fp_search; ++ifp) {
+                const double fp = fp_grid[ifp];
+                const double c = cost_fn(a, fp);
+                if (c < bestC) {
+                    bestC = c;
+                    bestA = a;
+                    bestFp = fp;
+                }
+            }
+        }
+
+        double alpha = bestA;
+        double fp = bestFp;
+        double stepA = 0.1;
+        double stepFp = 0.1;
+
+        for (int iter = 0; iter < 40; ++iter) {
+            bool improved = false;
+            double c = 0.0;
+
+            c = cost_fn(alpha + stepA, fp);
+            if (c < bestC) { bestC = c; alpha += stepA; improved = true; }
+
+            c = cost_fn(alpha - stepA, fp);
+            if (c < bestC) { bestC = c; alpha -= stepA; improved = true; }
+
+            c = cost_fn(alpha, fp + stepFp);
+            if (c < bestC) { bestC = c; fp += stepFp; improved = true; }
+
+            c = cost_fn(alpha, fp - stepFp);
+            if (c < bestC) { bestC = c; fp -= stepFp; improved = true; }
+
+            if (!improved) {
+                stepA *= 0.5;
+                stepFp *= 0.5;
+                if (stepA < 1e-12 && stepFp < 1e-12) break;
+            }
+        }
+
+        return {alpha, fp, bestC};
+    }
+
     void set_regularization_f0(double f0_hz) {
         reg_f0_hz = std::max(1e-6, f0_hz);
     }
@@ -160,7 +246,6 @@ private:
             const double k = double(n - half);
             const double re = double(wave_re_[tapIndex_(i, n)]);
             const double im = double(wave_im_[tapIndex_(i, n)]);
-
             sum_re += re;
             sum_im += im;
             sumk_re += k * re;
@@ -191,19 +276,20 @@ private:
         wave_im_.fill(0.0f);
         wave_half_.fill(0);
         wave_gain_onesided_hz_.fill(1.0);
-        wave_valid_win_rms2_.fill(1.0);
 
         const double halfMax = double((Nblock - 1) / 2);
         const double sigma_t_max = (fs > 0.0)
             ? (halfMax / (WAVELET_SUPPORT_SIGMA * fs))
             : 0.0;
 
+        std::array<double, WAVELET_NFFT> Hre{};
+        std::array<double, WAVELET_NFFT> Him{};
+
         for (int i = 0; i < Nfreq; ++i) {
             const double f0 = freqs_[i];
             if (!(f0 > 0.0) || !(fs > 0.0)) {
                 wave_gain_onesided_hz_[i] = 1.0;
                 wave_half_[i] = WAVELET_MIN_HALF;
-                wave_valid_win_rms2_[i] = 1.0;
                 continue;
             }
 
@@ -216,22 +302,6 @@ private:
 
             const int L = 2 * half + 1;
             wave_half_[i] = half;
-
-            {
-                const int n0 = half;
-                const int n1 = Nblock - half;
-
-                double win_sumsq_valid = 0.0;
-                int M_valid = 0;
-                for (int n = n0; n < n1; ++n) {
-                    const double wv = window_[n];
-                    win_sumsq_valid += wv * wv;
-                    ++M_valid;
-                }
-
-                wave_valid_win_rms2_[i] =
-                    (M_valid > 0) ? (win_sumsq_valid / double(M_valid)) : 1.0;
-            }
 
             const double w0 = 2.0 * M_PI * f0;
             const double C0 = std::exp(-0.5 * (w0 * sigma_t) * (w0 * sigma_t));
@@ -276,14 +346,45 @@ private:
                 wave_im_[tapIndex_(i, n)] = float(double(wave_im_[tapIndex_(i, n)]) * scale);
             }
 
-            double tap_energy = 0.0;
-            for (int n = 0; n < L; ++n) {
-                const double re = double(wave_re_[tapIndex_(i, n)]);
-                const double im = double(wave_im_[tapIndex_(i, n)]);
-                tap_energy += re * re + im * im;
+            Hre.fill(0.0);
+            Him.fill(0.0);
+
+            const double df = fs / double(WAVELET_NFFT);
+
+            for (int k = 0; k < WAVELET_NFFT; ++k) {
+                const double w = 2.0 * M_PI * double(k) / double(WAVELET_NFFT);
+                const double cw = std::cos(w);
+                const double sw = std::sin(w);
+
+                double cr = 1.0, ci = 0.0;
+                double sr = 0.0, si = 0.0;
+
+                for (int n = 0; n < L; ++n) {
+                    const double re = double(wave_re_[tapIndex_(i, n)]);
+                    const double im = double(wave_im_[tapIndex_(i, n)]);
+
+                    sr += re * cr + im * ci;
+                    si += im * cr - re * ci;
+
+                    const double crn = cr * cw - ci * sw;
+                    const double cin = cr * sw + ci * cw;
+                    cr = crn;
+                    ci = cin;
+                }
+
+                Hre[k] = sr;
+                Him[k] = si;
             }
 
-            wave_gain_onesided_hz_[i] = std::max(0.5 * fs * tap_energy, 1e-12);
+            double gain = 0.0;
+            for (int k = 0; k <= WAVELET_NFFT / 2; ++k) {
+                const int kneg = (k == 0 || k == WAVELET_NFFT / 2) ? k : (WAVELET_NFFT - k);
+                const double mag2_pos = Hre[k] * Hre[k] + Him[k] * Him[k];
+                const double mag2_neg = Hre[kneg] * Hre[kneg] + Him[kneg] * Him[kneg];
+                gain += 0.5 * (mag2_pos + mag2_neg) * df;
+            }
+
+            wave_gain_onesided_hz_[i] = std::max(gain, 1e-12);
         }
     }
 
@@ -317,9 +418,13 @@ private:
             xw[n] = xdet * window_[n];
         }
 
+        const double w_rms2 = (N > 0) ? (window_sum_sq / double(N)) : 1.0;
+        const double inv_w_rms2 = 1.0 / std::max(w_rms2, 1e-12);
+
         const double Tblk = (fs > 0.0) ? (double(N) / fs) : 0.0;
         const double f_blk = (Tblk > 0.0) ? (1.0 / (6.0 * Tblk)) : 0.0;
 
+        std::array<double, Nfreq> S_aa_meas_arr{};
         std::array<double, Nfreq> S_aa_true_arr{};
 
         for (int i = 0; i < Nfreq; ++i) {
@@ -347,14 +452,9 @@ private:
             }
 
             const double var_out = (M > 0) ? (pwr / double(M)) : 0.0;
-
-            const double inv_win_rms2 =
-                1.0 / std::max(wave_valid_win_rms2_[i], 1e-12);
-
             const double S_aa_meas =
-                std::max(0.0,
-                    (var_out * inv_win_rms2) /
-                    std::max(wave_gain_onesided_hz_[i], 1e-12));
+                std::max(0.0, (var_out * inv_w_rms2) / std::max(wave_gain_onesided_hz_[i], 1e-12));
+            S_aa_meas_arr[i] = S_aa_meas;
 
             const double Omega_raw = 2.0 * M_PI * f / fs_raw;
             const double H2_hp =
@@ -407,8 +507,7 @@ private:
             lastSpectrum_, freqs_, last_lowfreq_cut_hz_);
     }
 
-    double fs_raw = 0.0;
-    double fs = 0.0;
+    double fs_raw = 0.0, fs = 0.0;
     int decimFactor = 1;
     bool hannEnabled = true;
 
@@ -440,6 +539,10 @@ private:
 
     double last_lowfreq_cut_hz_ = 0.0;
 
+    static constexpr int WAVELET_NFFT =
+        (Nblock <= 256) ? 1024 :
+        (Nblock <= 512) ? 2048 : 4096;
+
     static constexpr double WAVELET_CYCLES_TARGET = 6.0;
     static constexpr double WAVELET_SUPPORT_SIGMA = 3.0;
     static constexpr int WAVELET_MIN_HALF = 8;
@@ -448,5 +551,4 @@ private:
     std::array<float, Nfreq * Nblock> wave_im_{};
     std::array<int, Nfreq> wave_half_{};
     std::array<double, Nfreq> wave_gain_onesided_hz_{};
-    std::array<double, Nfreq> wave_valid_win_rms2_{};
 };
