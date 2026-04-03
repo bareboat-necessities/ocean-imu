@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all clean fetch-sim-data
 
 TEST_DIRS := \
 	tests/ahrs \
@@ -11,6 +11,11 @@ TEST_DIRS := \
 	tests/spectrum \
 	tests/wave_sim
 
+SIM_DATA_VERSION ?= v1.0.9
+SIM_DATA_REPO ?= bareboat-necessities/oceanography-waves-lib
+SIM_DATA_ZIP ?= sim-data-files.zip
+SIM_DATA_URL ?= https://github.com/$(SIM_DATA_REPO)/releases/download/$(SIM_DATA_VERSION)/$(SIM_DATA_ZIP)
+
 all:
 	@set -e; \
 	for d in $(TEST_DIRS); do \
@@ -21,4 +26,15 @@ clean:
 	@set -e; \
 	for d in $(TEST_DIRS); do \
 		$(MAKE) -C $$d clean >/dev/null 2>&1 || true; \
+	done
+
+fetch-sim-data:
+	@set -e; \
+	echo "Downloading $(SIM_DATA_URL)"; \
+	curl -fL "$(SIM_DATA_URL)" -o "$(SIM_DATA_ZIP)"; \
+	for d in $(TEST_DIRS); do \
+		plot_dir="plots/$${d#tests/}"; \
+		mkdir -p "$$plot_dir"; \
+		unzip -o "$(SIM_DATA_ZIP)" -d "$$plot_dir" >/dev/null; \
+		echo "Unpacked $(SIM_DATA_ZIP) -> $$plot_dir"; \
 	done
