@@ -1,4 +1,4 @@
-I didn’t try last version. But here are results with this code: #pragma once
+#pragma once
 
 #ifdef EIGEN_NON_ARDUINO
 #include <Eigen/Dense>
@@ -448,4 +448,4 @@ private:
     std::array<int, Nfreq> wave_half_{};
     std::array<double, Nfreq> wave_gain_onesided_hz_{};
     std::array<double, Nfreq> wave_valid_win_rms2_{};
-}; wavelets underestimate high seas now
+}; 
