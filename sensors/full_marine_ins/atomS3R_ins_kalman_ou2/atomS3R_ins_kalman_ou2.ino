@@ -66,7 +66,6 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_DEBOUNCE_TIME  0.12f
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
-enum class TrackerType { ARANOVSKIY = 0, KALMANF = 1, ZEROCROSS = 2 };
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
 #include "detrend/AdaptiveWaveDetrender.h"
 
