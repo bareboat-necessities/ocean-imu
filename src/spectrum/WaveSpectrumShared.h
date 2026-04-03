@@ -342,6 +342,94 @@ inline int find_accel_peak_index(const std::array<double, Nfreq>& S_aa_true_arr,
     return k_peak;
 }
 
+struct LowfreqAdaptPolicy {
+    double fp_accel_hz   = 0.0;
+    double siglog        = 0.30;
+    double knee_mult     = 0.50;
+    double taper_lo_mult = 0.60;
+    double taper_hi_mult = 1.35;
+};
+
+inline double lerp(double a, double b, double t) {
+    return a + (b - a) * t;
+}
+
+template<int Nfreq>
+inline LowfreqAdaptPolicy adapt_lowfreq_policy(
+    const std::array<double, Nfreq>& S_aa_true_arr,
+    const std::array<double, Nfreq>& freqs,
+    double lowfreq_cut_hz)
+{
+    LowfreqAdaptPolicy out{};
+
+    if constexpr (Nfreq < 3) {
+        return out;
+    }
+
+    std::array<double, Nfreq> Eaa{};
+    std::array<double, Nfreq> Eaa_s{};
+
+    for (int i = 0; i < Nfreq; ++i) {
+        Eaa[i] = std::max(0.0, S_aa_true_arr[i]) * std::max(freqs[i], 1e-12);
+    }
+    smooth_3tap_array<Nfreq>(Eaa, Eaa_s);
+
+    const int k_peak = find_accel_peak_index<Nfreq>(
+        S_aa_true_arr, freqs, lowfreq_cut_hz, 1.03);
+
+    out.fp_accel_hz = freqs[std::clamp(k_peak, 0, Nfreq - 1)];
+
+    const double f_guard = std::max(lowfreq_cut_hz, 1.03 * freqs[0]);
+    const double Epk = std::max(Eaa_s[k_peak], 1e-18);
+    const double Eth = 0.10 * Epk;
+
+    double wsum = 0.0;
+    double xsum = 0.0;
+
+    for (int i = 0; i < Nfreq; ++i) {
+        if (freqs[i] < f_guard) continue;
+        const double w = Eaa_s[i];
+        if (w < Eth) continue;
+
+        const double x = std::log(std::max(freqs[i], 1e-12));
+        wsum += w;
+        xsum += w * x;
+    }
+
+    double siglog = 0.30;
+    if (wsum > 1e-18) {
+        const double mu = xsum / wsum;
+
+        double vnum = 0.0;
+        for (int i = 0; i < Nfreq; ++i) {
+            if (freqs[i] < f_guard) continue;
+            const double w = Eaa_s[i];
+            if (w < Eth) continue;
+
+            const double x = std::log(std::max(freqs[i], 1e-12));
+            const double dx = x - mu;
+            vnum += w * dx * dx;
+        }
+
+        siglog = std::sqrt(std::max(0.0, vnum / wsum));
+    }
+    out.siglog = siglog;
+
+    const double u_fp =
+        std::clamp((out.fp_accel_hz - 0.10) / (0.22 - 0.10), 0.0, 1.0);
+
+    const double u_w =
+        std::clamp((out.siglog - 0.20) / (0.42 - 0.20), 0.0, 1.0);
+
+    const double aggr = std::clamp(0.55 * u_fp + 0.45 * u_w, 0.0, 1.0);
+
+    out.knee_mult     = lerp(0.34, 0.52, aggr);
+    out.taper_lo_mult = lerp(0.42, 0.62, aggr);
+    out.taper_hi_mult = lerp(1.08, 1.32, aggr);
+
+    return out;
+}
+
 inline double asym_smooth_hz(double prev_hz,
                              double est_hz,
                              double alpha_up   = 0.22,
