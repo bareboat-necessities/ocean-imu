@@ -424,7 +424,7 @@ private:
 
         const double f_knee = std::max({
             reg_f0_hz,
-            0.50 * last_lowfreq_cut_hz_,
+            0.35 * last_lowfreq_cut_hz_,
             0.95 * hp_f0_hz,
             0.90 * f_blk
         });
