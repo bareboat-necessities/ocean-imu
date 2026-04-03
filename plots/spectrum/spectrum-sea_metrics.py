@@ -118,10 +118,10 @@ def describe_case(case_name: str) -> str:
     stem = Path(case_name).stem
     mode = ""
     if stem.startswith("spectrum_estimator_"):
-        mode = "Classic estimator"
+        mode = "Goertzel"
         stem = stem[len("spectrum_estimator_"):]
     elif stem.startswith("spectrum_wavelets_"):
-        mode = "Wavelets estimator"
+        mode = "Wavelets"
         stem = stem[len("spectrum_wavelets_"):]
 
     if "_" not in stem:
@@ -141,7 +141,7 @@ def describe_case(case_name: str) -> str:
     phase = float(values["P"])
     wave_type = wave_type.upper()
     details = f"{wave_type}: H={height:.2f} m, L={length:.2f} m, az={azimuth:.1f}°, phase={phase:.1f}°"
-    return f"{mode} — {details}" if mode else details
+    return details
 
 
 def build_table(rows, caption: str, label: str) -> str:
