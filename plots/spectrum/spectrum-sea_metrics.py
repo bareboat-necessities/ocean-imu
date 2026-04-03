@@ -116,12 +116,9 @@ def pass_cell(v: str) -> str:
 
 def describe_case(case_name: str) -> str:
     stem = Path(case_name).stem
-    mode = ""
     if stem.startswith("spectrum_estimator_"):
-        mode = "Goertzel"
         stem = stem[len("spectrum_estimator_"):]
     elif stem.startswith("spectrum_wavelets_"):
-        mode = "Wavelets"
         stem = stem[len("spectrum_wavelets_"):]
 
     if "_" not in stem:
@@ -136,9 +133,7 @@ def describe_case(case_name: str) -> str:
         return case_name
 
     height = float(values["H"])
-    length = float(values["L"])
     azimuth = float(values["A"])
-    phase = float(values["P"])
     wave_type = wave_type.upper()
     details = f"{wave_type}: H={height:.2f} m, az={azimuth:.1f}°"
     return details
