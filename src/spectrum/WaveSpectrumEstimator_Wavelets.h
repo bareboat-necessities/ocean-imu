@@ -33,6 +33,9 @@ public:
         const double fny_dec = fs_raw / (2.0 * double(decimFactor));
         const double lp_cutoffHz = 0.32 * fny_dec;
 
+        // Keep decimation-safe band limiting, but less conservative than the
+        // current 0.78*LP guard. This stays sane while remaining closer to the
+        // older behavior that plotted better.
         analysis_fmax_hz_ = WaveSpectrumShared::compute_safe_analysis_fmax(
             fs_raw, decimFactor, 1.2, 0.32, 0.90, 0.90, 0.04);
 
@@ -75,12 +78,6 @@ public:
         have_ema = false;
         psd_ema_.setZero();
         last_lowfreq_cut_hz_ = 0.0;
-
-        knee_mult_ = 0.50;
-        taper_lo_mult_ = 0.60;
-        taper_hi_mult_ = 1.35;
-        last_fp_accel_hz_ = 0.0;
-        last_siglog_ = 0.30;
     }
 
     bool processSample(double x_raw) {
@@ -108,11 +105,6 @@ public:
     bool ready() const { return isWarm; }
     double getLowfreqCutHz() const { return last_lowfreq_cut_hz_; }
     double getAnalysisFmaxHz() const { return analysis_fmax_hz_; }
-    double getAdaptiveKneeMult() const { return knee_mult_; }
-    double getAdaptiveTaperLoMult() const { return taper_lo_mult_; }
-    double getAdaptiveTaperHiMult() const { return taper_hi_mult_; }
-    double getAdaptiveAccelFpHz() const { return last_fp_accel_hz_; }
-    double getAdaptiveSiglog() const { return last_siglog_; }
 
     double computeHs() const {
         return SpectrumStats::compute_hs<Nfreq>(lastSpectrum_, df_);
@@ -232,25 +224,18 @@ private:
             return std::max(f_floor_hz, freqs_[i_valley]);
         }
 
+        // Revert from the recent aggressive fallback. This is much closer to the
+        // older behavior that gave better plots.
         const double f_rel = 0.60 * freqs_[i_peak];
         const double f_cap = 0.90 * freqs_[i_peak];
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
     }
 
-    static double lowfreq_taper_(double f_hz,
-                                 double f_cut_hz,
-                                 double taper_lo_mult,
-                                 double taper_hi_mult) {
+    static double lowfreq_taper_(double f_hz, double f_cut_hz) {
         if (!(f_cut_hz > 0.0)) return 1.0;
 
-        const double lo_mult = std::clamp(taper_lo_mult, 0.25, 0.90);
-        const double hi_mult = std::max(
-            std::clamp(taper_hi_mult, 0.80, 1.60),
-            lo_mult + 0.10
-        );
-
-        const double f_lo = lo_mult * f_cut_hz;
-        const double f_hi = hi_mult * f_cut_hz;
+        const double f_lo = 0.60 * f_cut_hz;
+        const double f_hi = 1.35 * f_cut_hz;
 
         if (f_hz >= f_hi) return 1.0;
         if (f_hz <= f_lo) return 0.0;
@@ -262,11 +247,6 @@ private:
     void suppress_lowfreq_from_cut_inplace_mild_() {
         if (Nfreq < 4) return;
         if (!(last_lowfreq_cut_hz_ > 0.0)) return;
-
-        if ((last_fp_accel_hz_ > 0.0 && last_fp_accel_hz_ < 0.15) ||
-            (last_siglog_ < 0.24)) {
-            return;
-        }
 
         const double f_eff = 1.00 * last_lowfreq_cut_hz_;
 
@@ -308,6 +288,7 @@ private:
         wave_im_.fill(0.0f);
         wave_half_.fill(0);
         wave_gain_onesided_hz_.fill(1.0);
+        wave_valid_win_rms2_.fill(1.0);
 
         const double halfMax = double((Nblock - 1) / 2);
         const double sigma_t_max = (fs > 0.0)
@@ -319,6 +300,7 @@ private:
             if (!(f0 > 0.0) || !(fs > 0.0)) {
                 wave_gain_onesided_hz_[i] = 1.0;
                 wave_half_[i] = WAVELET_MIN_HALF;
+                wave_valid_win_rms2_[i] = 1.0;
                 continue;
             }
 
@@ -331,6 +313,22 @@ private:
 
             const int L = 2 * half + 1;
             wave_half_[i] = half;
+
+            {
+                const int n0 = half;
+                const int n1 = Nblock - half;
+
+                double win_sumsq_valid = 0.0;
+                int M_valid = 0;
+                for (int n = n0; n < n1; ++n) {
+                    const double wv = window_[n];
+                    win_sumsq_valid += wv * wv;
+                    ++M_valid;
+                }
+
+                wave_valid_win_rms2_[i] =
+                    (M_valid > 0) ? (win_sumsq_valid / double(M_valid)) : 1.0;
+            }
 
             const double w0 = 2.0 * M_PI * f0;
             const double C0 = std::exp(-0.5 * (w0 * sigma_t) * (w0 * sigma_t));
@@ -371,34 +369,18 @@ private:
             const double scale = (H0mag > 1e-12) ? (1.0 / H0mag) : 1.0;
 
             for (int n = 0; n < L; ++n) {
-                wave_re_[tapIndex_(i, n)] =
-                    float(double(wave_re_[tapIndex_(i, n)]) * scale);
-                wave_im_[tapIndex_(i, n)] =
-                    float(double(wave_im_[tapIndex_(i, n)]) * scale);
+                wave_re_[tapIndex_(i, n)] = float(double(wave_re_[tapIndex_(i, n)]) * scale);
+                wave_im_[tapIndex_(i, n)] = float(double(wave_im_[tapIndex_(i, n)]) * scale);
             }
 
-            const int n0 = half;
-            const int n1 = Nblock - half;
-
-            double eff_energy = 0.0;
-            int M_valid = 0;
-
-            for (int n = n0; n < n1; ++n) {
-                double en = 0.0;
-                for (int tn = 0; tn < L; ++tn) {
-                    const int k = tn - half;
-                    const int m = n - k;
-                    const double wv = window_[m];
-                    const double re = double(wave_re_[tapIndex_(i, tn)]);
-                    const double im = double(wave_im_[tapIndex_(i, tn)]);
-                    en += (re * re + im * im) * (wv * wv);
-                }
-                eff_energy += en;
-                ++M_valid;
+            double tap_energy = 0.0;
+            for (int n = 0; n < L; ++n) {
+                const double re = double(wave_re_[tapIndex_(i, n)]);
+                const double im = double(wave_im_[tapIndex_(i, n)]);
+                tap_energy += re * re + im * im;
             }
 
-            eff_energy = (M_valid > 0) ? (eff_energy / double(M_valid)) : 1.0;
-            wave_gain_onesided_hz_[i] = std::max(0.5 * fs * eff_energy, 1e-12);
+            wave_gain_onesided_hz_[i] = std::max(0.5 * fs * tap_energy, 1e-12);
         }
     }
 
@@ -463,8 +445,13 @@ private:
 
             const double var_out = (M > 0) ? (pwr / double(M)) : 0.0;
 
+            const double inv_win_rms2 =
+                1.0 / std::max(wave_valid_win_rms2_[i], 1e-12);
+
             const double S_aa_meas =
-                std::max(0.0, var_out / std::max(wave_gain_onesided_hz_[i], 1e-12));
+                std::max(0.0,
+                    (var_out * inv_win_rms2) /
+                    std::max(wave_gain_onesided_hz_[i], 1e-12));
 
             const double omega_raw = 2.0 * M_PI * f / fs_raw;
             const double H2_hp =
@@ -478,43 +465,11 @@ private:
             S_aa_true_arr[i] = std::max(0.0, S_aa_meas * inv_hp);
         }
 
-        const double cut_est_hz =
-            estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
-
-        last_lowfreq_cut_hz_ = WaveSpectrumShared::asym_smooth_hz(
-            last_lowfreq_cut_hz_,
-            cut_est_hz,
-            0.16,
-            0.06,
-            0.12,
-            0.05
-        );
-
-        const auto pol = WaveSpectrumShared::adapt_lowfreq_policy<Nfreq>(
-            S_aa_true_arr,
-            freqs_,
-            last_lowfreq_cut_hz_);
-
-        last_fp_accel_hz_ = pol.fp_accel_hz;
-        last_siglog_      = pol.siglog;
-
-        constexpr double policy_alpha = 0.35;
-
-        knee_mult_ =
-            (1.0 - policy_alpha) * knee_mult_ +
-            policy_alpha * pol.knee_mult;
-
-        taper_lo_mult_ =
-            (1.0 - policy_alpha) * taper_lo_mult_ +
-            policy_alpha * pol.taper_lo_mult;
-
-        taper_hi_mult_ =
-            (1.0 - policy_alpha) * taper_hi_mult_ +
-            policy_alpha * pol.taper_hi_mult;
+        last_lowfreq_cut_hz_ = estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
 
         const double f_knee = std::max({
             reg_f0_hz,
-            knee_mult_ * last_lowfreq_cut_hz_,
+            0.50 * last_lowfreq_cut_hz_,
             0.95 * hp_f0_hz,
             0.90 * f_blk
         });
@@ -529,11 +484,7 @@ private:
             double S_eta = (den > 0.0) ? (S_aa_true_arr[i] / (den * den)) : 0.0;
             if (!std::isfinite(S_eta) || S_eta < 0.0) S_eta = 0.0;
 
-            S_eta *= lowfreq_taper_(
-                f,
-                last_lowfreq_cut_hz_,
-                taper_lo_mult_,
-                taper_hi_mult_);
+            S_eta *= lowfreq_taper_(f, last_lowfreq_cut_hz_);
 
             if (use_psd_ema) {
                 const double a = alpha_for_f(f);
@@ -547,6 +498,7 @@ private:
 
         have_ema = true;
 
+        // Revert to simpler old-style finishing: shared mild smoother + mild cutoff cleanup.
         WaveSpectrumShared::smooth_logfreq_3tap_inplace<Nfreq>(lastSpectrum_, freqs_);
         suppress_lowfreq_from_cut_inplace_mild_();
     }
@@ -585,12 +537,6 @@ private:
 
     double last_lowfreq_cut_hz_ = 0.0;
 
-    double knee_mult_ = 0.50;
-    double taper_lo_mult_ = 0.60;
-    double taper_hi_mult_ = 1.35;
-    double last_fp_accel_hz_ = 0.0;
-    double last_siglog_ = 0.30;
-
     static constexpr double WAVELET_CYCLES_TARGET = 6.0;
     static constexpr double WAVELET_SUPPORT_SIGMA = 3.0;
     static constexpr int WAVELET_MIN_HALF = 8;
@@ -599,4 +545,5 @@ private:
     std::array<float, Nfreq * Nblock> wave_im_{};
     std::array<int, Nfreq> wave_half_{};
     std::array<double, Nfreq> wave_gain_onesided_hz_{};
+    std::array<double, Nfreq> wave_valid_win_rms2_{};
 };
