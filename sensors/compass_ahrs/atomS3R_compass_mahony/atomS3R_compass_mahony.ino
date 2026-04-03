@@ -1,0 +1,523 @@
+/*
+  Copyright 2026, Mikhail Grushinskiy
+
+  AtomS3R Tilt-Compensated Compass + IMU Calibration Wizard (Mahony)
+
+*/
+
+#include <Arduino.h>
+#include <M5Unified.h>
+
+#include "AtomS3R/AtomS3R_ImuCal.h"
+#include "AtomS3R/AtomS3R_ImuCalWizard.h"
+#include "AtomS3R/AtomS3R_CompassUI.h"
+#include "nmea/NmeaCompass.h"
+#include "ahrs/Mahony_AHRS.h"
+
+using namespace atoms3r_ical;
+using Vector3f = Eigen::Matrix<float, 3, 1>;
+
+// 1 = graphical compass by default, 0 = text UI by default
+#ifndef COMPASS_UI_DEFAULT_GRAPHICS
+#define COMPASS_UI_DEFAULT_GRAPHICS 1
+#endif
+
+// 0 = keep debug serial
+// 1 = emit NMEA0183 (HDM + XDR + ROT) like pypilot
+#ifndef COMPASS_SERIAL_NMEA
+#define COMPASS_SERIAL_NMEA 1
+#endif
+
+#ifndef COMPASS_NMEA_TALKER
+#define COMPASS_NMEA_TALKER "II"
+#endif
+
+static constexpr float    LOOP_HZ        = 200.0f;
+static constexpr uint32_t LOOP_PERIOD_US = (uint32_t)(1000000.0f / LOOP_HZ);
+
+// Mag update gating
+static constexpr uint32_t MAG_SAMPLE_SPACING_MS    = 12;
+static constexpr float    MAG_MIN_DELTA_uT         = 0.02f;
+static constexpr uint8_t  MAG_STUCK_ALLOW_N        = 10;
+static constexpr uint8_t  MAG_STUCK_REJECT_AFTER_N = 20;
+
+// UI / serial rates
+static constexpr uint32_t UI_REFRESH_MS     = 100;
+static constexpr uint32_t DEBUG_SERIAL_MS   = 200;
+static constexpr uint32_t NMEA_SERIAL_MS    = 100;
+
+// ROT bias removal
+static constexpr float ROT_BIAS_TAU_S          = 20.0f;
+static constexpr float ROT_STILL_G_TOL_FRAC    = 0.12f;
+static constexpr float ROT_STILL_GYRO_RAD_S    = 0.15f;
+
+// Helpers
+static inline float clampf_(float x, float lo, float hi) { return x < lo ? lo : (x > hi ? hi : x); }
+
+static inline float wrap360_(float deg) {
+  while (deg < 0.0f) deg += 360.0f;
+  while (deg >= 360.0f) deg -= 360.0f;
+  return deg;
+}
+static inline float wrap180_(float deg) {
+  while (deg < -180.0f) deg += 360.0f;
+  while (deg >= 180.0f) deg -= 360.0f;
+  return deg;
+}
+
+static inline Vector3f quatRotateBodyToWorld_(float x, float y, float z, float w,
+                                              const Vector3f& v_body) {
+  // (x,y,z,w) unit quaternion rotating body->world
+  Vector3f q(x, y, z);
+  Vector3f t = 2.0f * q.cross(v_body);
+  return v_body + w * t + q.cross(t);
+}
+
+class CompassApp {
+public:
+  CompassApp() : wizard_(ui_, store_) {}
+
+  void begin() {
+    Serial.begin(115200);
+    delay(150);
+    Serial.println();
+    Serial.println("[BOOT] AtomS3R Compass + Cal Wizard (Mahony)");
+
+    auto cfg = M5.config();
+    M5.begin(cfg);
+
+    clearM5UnifiedImuCalibration();
+    delay(250);
+
+    ui_.begin();
+
+    if (use_graphics_) {
+      ui_.setReadRotation();
+      compass_ui_.begin();
+      compass_ui_ready_ = compass_ui_.ok();
+      if (!compass_ui_ready_) use_graphics_ = false;
+    }
+
+    if (!M5.Imu.isEnabled()) {
+      Serial.println("[BOOT] IMU not found / not enabled");
+      ui_.fail("IMU", "Not found");
+      while (true) delay(100);
+    }
+
+    reloadBlobAndRuntime_();
+
+    if (!have_blob_) {
+      Serial.println("[BOOT] No saved calibration. Starting wizard...");
+      ImuCalBlobV1 saved{};
+      if (wizard_.runAndSave(saved)) {
+        Serial.println("[BOOT] Wizard saved calibration. Loaded:");
+        printBlobSummary(Serial, saved);
+        printBlobDetail(Serial, saved);
+        blob_ = saved;
+        have_blob_ = true;
+        runtime_.rebuildFromBlob(blob_);
+      } else {
+        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+      }
+    } else {
+      Serial.println("[BOOT] Found saved calibration:");
+      printBlobSummary(Serial, blob_);
+      printBlobDetail(Serial, blob_);
+    }
+
+    resetMahony_();
+    drawHomeStatic_();
+
+    start_us_ = micros();
+    next_tick_us_ = micros();
+    last_update_us_ = micros();
+  }
+
+  void tick() {
+    const uint32_t now_us = micros();
+    int32_t wait_us = (int32_t)(next_tick_us_ - now_us);
+    if (wait_us > 0) {
+      if (wait_us > 200) delayMicroseconds(200);
+      else delayMicroseconds((uint32_t)wait_us);
+    }
+    next_tick_us_ += LOOP_PERIOD_US;
+
+    Input::update();
+
+    if (Input::tapPressed()) {
+      tap_count_++;
+      tap_deadline_ms_ = millis() + M5UiCfg::MENU_TAP_WINDOW_MS;
+      drawHomePending_();
+      Serial.printf("[TAP] count=%d\n", tap_count_);
+    }
+
+    if (tap_count_ > 0 && (int32_t)(millis() - tap_deadline_ms_) > 0) {
+      if (tap_count_ >= 3) handleErase_();
+      else                 handleRunWizard_();
+      tap_count_ = 0;
+      tap_deadline_ms_ = 0;
+      drawHomeStatic_();
+    }
+
+    ImuSample s;
+    if (readImuMapped(M5.Imu, s)) {
+      updateFilter_(s);
+    }
+    updateUI_();
+    streamSerial_();
+  }
+
+private:
+  bool use_graphics_ = (COMPASS_UI_DEFAULT_GRAPHICS != 0);
+  CompassUI compass_ui_{};
+  bool compass_ui_ready_ = false;
+
+  // ROT estimator
+  bool     rot_inited_    = false;
+  float    rot_dpm_filt_  = 0.0f;
+  bool     gyro_bias_ok_  = false;
+  Vector3f gyro_bias_ema_ = Vector3f::Zero();
+
+  // Plumbing
+  M5Ui ui_{};
+  ImuCalStoreNvs store_{};
+  ImuCalWizard wizard_;
+
+  bool have_blob_ = false;
+  ImuCalBlobV1 blob_{};
+  RuntimeCals runtime_{};
+
+  // Tap state
+  int tap_count_ = 0;
+  uint32_t tap_deadline_ms_ = 0;
+
+  // Timing
+  uint32_t start_us_ = 0;
+  uint32_t next_tick_us_ = 0;
+  uint32_t last_update_us_ = 0;
+  uint32_t last_ui_ms_ = 0;
+  uint32_t last_serial_ms_ = 0;
+
+  // Mahony
+  Mahony_AHRS_Vars mahony_{};
+
+  // Latest calibrated values
+  Vector3f a_cal_ = Vector3f::Zero();
+  Vector3f w_cal_ = Vector3f::Zero();
+  Vector3f m_cal_ = Vector3f::Zero();
+  float a_raw_norm_ = 0.0f;
+
+  // Outputs
+  float roll_deg_ = 0.0f;
+  float pitch_deg_ = 0.0f;
+  float yaw_deg_ = 0.0f;
+  float heading_deg_ = 0.0f;
+
+  // ROT filter state
+  float rot_dpm_filt_state_ = 0.0f;
+
+  // Mag gating
+  bool mag_ok_ = false;
+  bool mag_fresh_ = false;
+  float mag_norm_uT_ = 0.0f;
+  Vector3f last_mag_uT_ = Vector3f::Zero();
+  uint32_t last_mag_ms_ = 0;
+  uint8_t mag_repeat_count_ = 0;
+
+  void reloadBlobAndRuntime_() {
+    have_blob_ = store_.load(blob_);
+    if (!have_blob_) memset(&blob_, 0, sizeof(blob_));
+    runtime_.rebuildFromBlob(blob_);
+  }
+
+  void handleErase_() {
+    Serial.println("[HOME] triple tap => ERASE");
+    if (!ui_.eraseConfirm()) {
+      Serial.println("[HOME] erase cancelled");
+      return;
+    }
+    store_.erase();
+    clearM5UnifiedImuCalibration();
+    reloadBlobAndRuntime_();
+    resetMahony_();
+    Serial.println("[HOME] erased blob + cleared M5Unified cal");
+  }
+
+  void handleRunWizard_() {
+    Serial.println("[HOME] single tap => RUN WIZARD");
+    ImuCalBlobV1 saved{};
+    if (!wizard_.runAndSave(saved)) {
+      ui_.notSavedNotice();
+      return;
+    }
+    Serial.println("[HOME] new calibration saved:");
+    printBlobSummary(Serial, saved);
+    printBlobDetail(Serial, saved);
+
+    blob_ = saved;
+    have_blob_ = true;
+    runtime_.rebuildFromBlob(blob_);
+    resetMahony_();
+  }
+
+  void resetMahony_() {
+    const float twoKp = 2.0f * 6.0f;
+    const float twoKi = 2.0f * 0.0002f;
+    mahony_AHRS_init(&mahony_, twoKp, twoKi);
+
+    mahony_.q0 = 1.0f; mahony_.q1 = 0.0f; mahony_.q2 = 0.0f; mahony_.q3 = 0.0f;
+    mahony_.integralFBx = mahony_.integralFBy = mahony_.integralFBz = 0.0f;
+
+    last_mag_uT_.setZero();
+    last_mag_ms_ = 0;
+    mag_repeat_count_ = 0;
+
+    rot_inited_   = false;
+    rot_dpm_filt_ = 0.0f;
+
+    gyro_bias_ok_  = false;
+    gyro_bias_ema_.setZero();
+
+    Serial.println("[MAHONY] reset");
+  }
+
+  void updateFilter_(const ImuSample& s) {
+    a_raw_norm_ = s.a.norm();
+
+    // Calibrate
+    a_cal_ = runtime_.applyAccel(s.a, s.tempC); // m/s^2 (specific force)
+    w_cal_ = runtime_.applyGyro (s.w, s.tempC); // rad/s
+    m_cal_ = runtime_.applyMag  (s.m);          // uT
+
+    // dt
+    const uint32_t now_us = micros();
+    float dt = (now_us - last_update_us_) * 1e-6f;
+    last_update_us_ = now_us;
+    dt = clampf_(dt, 0.0010f, 0.0200f);
+
+    // Mag validity
+    const float mn = m_cal_.norm();
+    mag_ok_ = (mn > 5.0f && mn < 200.0f);
+    mag_norm_uT_ = mn;
+
+    // Mag gating
+    const uint32_t now_ms = millis();
+    bool mag_fresh = false;
+    if (mag_ok_) {
+      const uint32_t dtm = now_ms - last_mag_ms_;
+      if (dtm >= MAG_SAMPLE_SPACING_MS) {
+        const float dm = (m_cal_ - last_mag_uT_).norm();
+        const bool looks_stuck = (dm < MAG_MIN_DELTA_uT);
+
+        if (!looks_stuck) {
+          mag_repeat_count_ = 0;
+          mag_fresh = true;
+        } else {
+          if (mag_repeat_count_ < MAG_STUCK_ALLOW_N) {
+            mag_repeat_count_++;
+            mag_fresh = true;
+          } else if (mag_repeat_count_ >= MAG_STUCK_REJECT_AFTER_N) {
+            mag_fresh = false;
+          } else {
+            mag_repeat_count_++;
+            mag_fresh = ((mag_repeat_count_ & 1) == 0);
+          }
+        }
+
+        if (mag_fresh) {
+          last_mag_ms_ = now_ms;
+          last_mag_uT_ = m_cal_;
+        }
+      }
+    } else {
+      mag_repeat_count_ = 0;
+    }
+    mag_fresh_ = mag_fresh;
+
+    // Accel input to Mahony: direction only. Keep the sign that makes flat => roll,pitch ~ 0.
+    // If flat still shows ~180, switch to a_att = a_cal_.
+    Vector3f a_att = -a_cal_;
+    const float an = a_att.norm();
+    if (an > 1e-6f) a_att *= (ImuCalCfg::g_std / an);
+
+    // Mag direction (unit vector)
+    Vector3f m_u = Vector3f::Zero();
+    if (mag_ok_ && mn > 1e-6f) m_u = m_cal_ / mn;
+
+    // Run Mahony (ignore its Euler outputs; we compute from quaternion)
+    float pd=0, rd=0, yd=0;
+    if (mag_ok_ && mag_fresh_) {
+      mahony_AHRS_update_mag(&mahony_,
+        w_cal_.x(), w_cal_.y(), w_cal_.z(),
+        a_att.x(), a_att.y(), a_att.z(),
+        m_u.x(), m_u.y(), m_u.z(),
+        &pd, &rd, &yd,
+        dt);
+    } else {
+      mahony_AHRS_update(&mahony_,
+        w_cal_.x(), w_cal_.y(), w_cal_.z(),
+        a_att.x(), a_att.y(), a_att.z(),
+        &pd, &rd, &yd,
+        dt);
+    }
+
+    // This Mahony implementation integrates q as BODY->WORLD already.
+    // Do NOT conjugate here.
+    float w = mahony_.q0;
+    float x = mahony_.q1;
+    float y = mahony_.q2;
+    float z = mahony_.q3;
+
+    // Normalize defensively
+    const float nn = x*x + y*y + z*z + w*w;
+    if (nn > 1e-12f) {
+      const float invn = 1.0f / sqrtf(nn);
+      x *= invn; y *= invn; z *= invn; w *= invn;
+    }
+
+    // Euler (ZYX): roll about +X (USB axis), pitch about +Y, yaw about +Z
+    const float siny_cosp = 2.0f * (w*z + x*y);
+    const float cosy_cosp = 1.0f - 2.0f * (y*y + z*z);
+    const float yaw = atan2f(siny_cosp, cosy_cosp);
+
+    float sinp = 2.0f * (w*y - z*x);
+    sinp = clampf_(sinp, -1.0f, 1.0f);
+    const float pitch = asinf(sinp);
+
+    const float sinr_cosp = 2.0f * (w*x + y*z);
+    const float cosr_cosp = 1.0f - 2.0f * (x*x + y*y);
+    const float roll = atan2f(sinr_cosp, cosr_cosp);
+
+    roll_deg_  = wrap180_(roll  * RAD_TO_DEG);
+    pitch_deg_ =           pitch * RAD_TO_DEG;
+    yaw_deg_   =           yaw   * RAD_TO_DEG;
+
+    heading_deg_ = wrap360_(yaw_deg_);
+
+    // ROT (stillness-gated gyro bias estimate, then project gyro to world)
+    const float g = ImuCalCfg::g_std;
+    const float a_err = fabsf(a_cal_.norm() - g);
+    const bool still = (a_err < ROT_STILL_G_TOL_FRAC * g) && (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
+
+    if (still) {
+      const float alpha_b = 1.0f - expf(-dt / ROT_BIAS_TAU_S);
+      if (!gyro_bias_ok_) {
+        gyro_bias_ok_  = true;
+        gyro_bias_ema_ = w_cal_;
+      } else {
+        gyro_bias_ema_ += alpha_b * (w_cal_ - gyro_bias_ema_);
+      }
+    }
+
+    Vector3f w_use = w_cal_;
+    if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
+
+    Vector3f w_world = quatRotateBodyToWorld_(x, y, z, w, w_use);
+    float rot_dpm_meas = w_world.z() * RAD_TO_DEG * 60.0f;
+    rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
+
+    const float tau_rot = 1.5f;
+    const float alpha_r = 1.0f - expf(-dt / tau_rot);
+    if (!rot_inited_) {
+      rot_inited_   = true;
+      rot_dpm_filt_ = rot_dpm_meas;
+    } else {
+      rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_);
+    }
+  }
+
+  void drawHomeStatic_() {
+    ui_.setReadRotation();
+    ui_.title("COMPASS");
+    M5.Display.printf("BLOB: %s\n", have_blob_ ? "YES" : "NO");
+    M5.Display.printf("A:%d G:%d M:%d\n",
+                      (int)runtime_.acc.ok, (int)runtime_.gyr.ok, (int)runtime_.mag.ok);
+    ui_.line("Tap: calibrate");
+    ui_.line("Tap x3: erase");
+    ui_.line("");
+  }
+
+  void drawHomePending_() {
+    ui_.setReadRotation();
+    ui_.title("COMPASS");
+    M5.Display.printf("Tap count: %d\n", tap_count_);
+    ui_.line("");
+    ui_.line("Wait...");
+    ui_.line("1 tap=CAL");
+    ui_.line("3 taps=ERASE");
+
+    int32_t remain = (int32_t)(tap_deadline_ms_ - millis());
+    remain = remain < 0 ? 0 : remain;
+    float t01 = 1.0f - (float)remain / (float)M5UiCfg::MENU_TAP_WINDOW_MS;
+    ui_.bar01(t01);
+  }
+
+  void updateUI_() {
+    if (tap_count_ > 0) return;
+
+    const uint32_t now_ms = millis();
+    if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
+    last_ui_ms_ = now_ms;
+
+    if (use_graphics_ && compass_ui_ready_) {
+      ui_.setReadRotation();
+      const bool tiltWarn = (fabsf(roll_deg_) > 35.0f) || (fabsf(pitch_deg_) > 35.0f);
+      compass_ui_.draw(heading_deg_, mag_ok_, mag_norm_uT_, tiltWarn);
+    } else {
+      ui_.setReadRotation();
+      ui_.title("COMPASS");
+
+      M5.Display.printf("HDG: %6.1f deg\n", (double)heading_deg_);
+      M5.Display.printf("ROL: %6.1f deg\n", (double)roll_deg_);
+      M5.Display.printf("PIT: %6.1f deg\n", (double)pitch_deg_);
+
+      M5.Display.printf("MAG: %s %s\n",
+                        mag_ok_ ? "OK " : "BAD",
+                        mag_fresh_ ? "NEW" : "OLD");
+      M5.Display.printf("|m|: %6.1f uT\n", (double)mag_norm_uT_);
+      M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n",
+                        (double)a_raw_norm_, (double)a_cal_.norm());
+      ui_.line("");
+      M5.Display.printf("A:%d G:%d M:%d  B:%s\n",
+                        (int)runtime_.acc.ok, (int)runtime_.gyr.ok, (int)runtime_.mag.ok,
+                        have_blob_ ? "YES" : "NO");
+    }
+  }
+
+  void streamSerial_() {
+    const uint32_t now_ms = millis();
+
+#if COMPASS_SERIAL_NMEA
+    if (now_ms - last_serial_ms_ < NMEA_SERIAL_MS) return;
+#else
+    if (now_ms - last_serial_ms_ < DEBUG_SERIAL_MS) return;
+#endif
+    last_serial_ms_ = now_ms;
+
+#if COMPASS_SERIAL_NMEA
+    const bool valid = true;
+    nmea_hdm(COMPASS_NMEA_TALKER, heading_deg_);
+    nmea_xdr_pitch_roll(COMPASS_NMEA_TALKER, pitch_deg_, roll_deg_);
+    nmea_rot(COMPASS_NMEA_TALKER, rot_dpm_filt_, valid);
+#else
+    const float t = (micros() - start_us_) * 1e-6f;
+    Serial.printf("t=%.2f ", (double)t);
+    Serial.printf("HDG:%6.1f ", (double)heading_deg_);
+    Serial.printf("ROLL:%6.1f PITCH:%6.1f ", (double)roll_deg_, (double)pitch_deg_);
+    Serial.printf("mag:%s/%s |m|=%.1f ",
+                  mag_ok_ ? "OK" : "BAD",
+                  mag_fresh_ ? "NEW" : "OLD",
+                  (double)mag_norm_uT_);
+    Serial.printf("|a_raw|=%.4f |a_cal|=%.4f ",
+                  (double)a_raw_norm_, (double)a_cal_.norm());
+    Serial.printf("wC:%+.4f,%+.4f,%+.4f ",
+                  (double)w_cal_.x(), (double)w_cal_.y(), (double)w_cal_.z());
+    Serial.println();
+#endif
+  }
+};
+
+static CompassApp g_app;
+
+void setup() { g_app.begin(); }
+void loop()  { g_app.tick(); }
