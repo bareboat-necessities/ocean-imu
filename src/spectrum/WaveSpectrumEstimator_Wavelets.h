@@ -263,6 +263,11 @@ private:
         if (Nfreq < 4) return;
         if (!(last_lowfreq_cut_hz_ > 0.0)) return;
 
+        if ((last_fp_accel_hz_ > 0.0 && last_fp_accel_hz_ < 0.15) ||
+            (last_siglog_ < 0.24)) {
+            return;
+        }
+
         const double f_eff = 1.00 * last_lowfreq_cut_hz_;
 
         std::array<double, Nfreq> E{};
@@ -493,7 +498,7 @@ private:
         last_fp_accel_hz_ = pol.fp_accel_hz;
         last_siglog_      = pol.siglog;
 
-        constexpr double policy_alpha = 0.15;
+        constexpr double policy_alpha = 0.35;
 
         knee_mult_ =
             (1.0 - policy_alpha) * knee_mult_ +
