@@ -23,7 +23,6 @@ int main() {
     {
         const double fs_hz = 1.0 / static_cast<double>(dt);
         Estimator estimator_info(fs_hz, 30, true);
-        std::cout << "Estimator analysis fmax: " << estimator_info.getAnalysisFmaxHz() << " Hz\n";
     }
 
     bool all_quality_ok = true;
