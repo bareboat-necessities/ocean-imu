@@ -16,13 +16,6 @@
 
 /*
     Classic Goertzel spectrum estimator.
-
-    Hybrid rollback:
-      - keeps decimation sanitization
-      - keeps decimation-aware analysis_fmax_hz_
-      - keeps guarded peak search from WaveSpectrumShared
-      - restores older milder cutoff learning / smoothing / cleanup
-      - avoids aggressive post-inversion low-frequency suppression
 */
 
 template<int Nfreq = 32, int Nblock = 256>
