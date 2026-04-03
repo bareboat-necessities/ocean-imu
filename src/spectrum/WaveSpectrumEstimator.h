@@ -14,6 +14,17 @@
 #include "spectrum/SpectrumStats.h"
 #include "spectrum/WaveSpectrumShared.h"
 
+/*
+    Classic Goertzel spectrum estimator.
+
+    Hybrid rollback:
+      - keeps decimation sanitization
+      - keeps decimation-aware analysis_fmax_hz_
+      - keeps guarded peak search from WaveSpectrumShared
+      - restores older milder cutoff learning / smoothing / cleanup
+      - avoids aggressive post-inversion low-frequency suppression
+*/
+
 template<int Nfreq = 32, int Nblock = 256>
 class EIGEN_ALIGN_MAX WaveSpectrumEstimator {
 public:
@@ -40,6 +51,7 @@ public:
         const double fny_dec = fs_raw / (2.0 * double(decimFactor));
         const double lp_cutoffHz = 0.32 * fny_dec;
 
+        // Less conservative than the recent regression-prone tuning.
         analysis_fmax_hz_ = WaveSpectrumShared::compute_safe_analysis_fmax(
             fs_raw, decimFactor, 1.2, 0.32, 0.90, 0.90, 0.04);
 
@@ -84,12 +96,6 @@ public:
         have_ema = false;
         psd_ema_.setZero();
         last_lowfreq_cut_hz_ = 0.0;
-
-        knee_mult_ = 0.50;
-        taper_lo_mult_ = 0.60;
-        taper_hi_mult_ = 1.35;
-        last_fp_accel_hz_ = 0.0;
-        last_siglog_ = 0.30;
     }
 
     bool processSample(double x_raw) {
@@ -117,11 +123,6 @@ public:
     bool ready() const { return isWarm; }
     double getLowfreqCutHz() const { return last_lowfreq_cut_hz_; }
     double getAnalysisFmaxHz() const { return analysis_fmax_hz_; }
-    double getAdaptiveKneeMult() const { return knee_mult_; }
-    double getAdaptiveTaperLoMult() const { return taper_lo_mult_; }
-    double getAdaptiveTaperHiMult() const { return taper_hi_mult_; }
-    double getAdaptiveAccelFpHz() const { return last_fp_accel_hz_; }
-    double getAdaptiveSiglog() const { return last_siglog_; }
 
     double computeHs() const {
         return SpectrumStats::compute_hs<Nfreq>(lastSpectrum_, df_);
@@ -305,20 +306,11 @@ private:
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
     }
 
-    static double lowfreq_taper_(double f_hz,
-                                 double f_cut_hz,
-                                 double taper_lo_mult,
-                                 double taper_hi_mult) {
+    static double lowfreq_taper_(double f_hz, double f_cut_hz) {
         if (!(f_cut_hz > 0.0)) return 1.0;
 
-        const double lo_mult = std::clamp(taper_lo_mult, 0.25, 0.90);
-        const double hi_mult = std::max(
-            std::clamp(taper_hi_mult, 0.80, 1.60),
-            lo_mult + 0.10
-        );
-
-        const double f_lo = lo_mult * f_cut_hz;
-        const double f_hi = hi_mult * f_cut_hz;
+        const double f_lo = 0.60 * f_cut_hz;
+        const double f_hi = 1.35 * f_cut_hz;
 
         if (f_hz >= f_hi) return 1.0;
         if (f_hz <= f_lo) return 0.0;
@@ -330,11 +322,6 @@ private:
     void suppress_lowfreq_from_cut_inplace_mild_() {
         if (Nfreq < 4) return;
         if (!(last_lowfreq_cut_hz_ > 0.0)) return;
-
-        if ((last_fp_accel_hz_ > 0.0 && last_fp_accel_hz_ < 0.15) ||
-            (last_siglog_ < 0.24)) {
-            return;
-        }
 
         const double f_eff = 1.00 * last_lowfreq_cut_hz_;
 
@@ -433,43 +420,11 @@ private:
             S_aa_true_arr[i] = std::max(0.0, S_aa_meas * inv_hp);
         }
 
-        const double cut_est_hz =
-            estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
-
-        last_lowfreq_cut_hz_ = WaveSpectrumShared::asym_smooth_hz(
-            last_lowfreq_cut_hz_,
-            cut_est_hz,
-            0.22,
-            0.08,
-            0.18,
-            0.06
-        );
-
-        const auto pol = WaveSpectrumShared::adapt_lowfreq_policy<Nfreq>(
-            S_aa_true_arr,
-            freqs_,
-            last_lowfreq_cut_hz_);
-
-        last_fp_accel_hz_ = pol.fp_accel_hz;
-        last_siglog_      = pol.siglog;
-
-        constexpr double policy_alpha = 0.35;
-
-        knee_mult_ =
-            (1.0 - policy_alpha) * knee_mult_ +
-            policy_alpha * pol.knee_mult;
-
-        taper_lo_mult_ =
-            (1.0 - policy_alpha) * taper_lo_mult_ +
-            policy_alpha * pol.taper_lo_mult;
-
-        taper_hi_mult_ =
-            (1.0 - policy_alpha) * taper_hi_mult_ +
-            policy_alpha * pol.taper_hi_mult;
+        last_lowfreq_cut_hz_ = estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
 
         const double f_knee = std::max({
             reg_f0_hz,
-            knee_mult_ * last_lowfreq_cut_hz_,
+            0.50 * last_lowfreq_cut_hz_,
             0.95 * hp_f0_hz,
             0.90 * f_blk
         });
@@ -484,11 +439,7 @@ private:
             double S_eta = (den > 0.0) ? (S_aa_true_arr[i] / (den * den)) : 0.0;
             if (!std::isfinite(S_eta) || S_eta < 0.0) S_eta = 0.0;
 
-            S_eta *= lowfreq_taper_(
-                f,
-                last_lowfreq_cut_hz_,
-                taper_lo_mult_,
-                taper_hi_mult_);
+            S_eta *= lowfreq_taper_(f, last_lowfreq_cut_hz_);
 
             if (use_psd_ema) {
                 const double a = alpha_for_f(f);
@@ -540,10 +491,4 @@ private:
     bool isWarm = false;
 
     double last_lowfreq_cut_hz_ = 0.0;
-
-    double knee_mult_ = 0.50;
-    double taper_lo_mult_ = 0.60;
-    double taper_hi_mult_ = 1.35;
-    double last_fp_accel_hz_ = 0.0;
-    double last_siglog_ = 0.30;
 };
