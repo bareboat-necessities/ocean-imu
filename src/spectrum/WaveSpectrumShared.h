@@ -416,11 +416,11 @@ inline double estimate_accel_siglog(const std::array<double, Nfreq>& S_aa_true_a
 inline double adaptive_knee_cut_cap_hz(double fp_accel_hz,
                                        double siglog) {
     const double cap =
-        0.52 * fp_accel_hz +
-        0.035 * siglog +
-        0.010;
+        0.24 * fp_accel_hz
+      - 0.06 * siglog
+      + 0.049;
 
-    return std::clamp(cap, 0.055, 0.095);
+    return std::clamp(cap, 0.045, 0.090);
 }
 
 } // namespace WaveSpectrumShared
