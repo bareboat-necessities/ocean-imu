@@ -166,7 +166,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ino_dir: [ "imu_fifo" ]
+        ino_dir: [ "full_marine_ins", "imu_fifo" ]
 
     steps:
       - name: Checkout
