@@ -6,9 +6,6 @@ from pathlib import Path
 
 
 METRIC_METADATA = {
-    "valid": ("Valid report", "1 if the spectral report passed internal validity checks, else 0."),
-    "lowfreq_guard_hz": ("Low-frequency guard [Hz]", "Minimum trusted frequency guard used to avoid unstable low-frequency integration."),
-    "observation_duration_s": ("Observation duration [s]", "Total equivalent time window represented by the spectrum."),
     "m_neg1": ("Spectral moment m-1", "Negative-first moment of the spectrum (emphasizes low frequencies)."),
     "m0": ("Spectral moment m0", "Zeroth spectral moment (total variance / energy proxy)."),
     "m1": ("Spectral moment m1", "First spectral moment (energy weighted by frequency)."),
