@@ -368,7 +368,7 @@ template<int Nfreq>
 inline double estimate_accel_siglog(const std::array<double, Nfreq>& S_aa_true_arr,
                                     const std::array<double, Nfreq>& freqs,
                                     int k_peak,
-                                    double floor_frac = 0.10) {
+                                    double floor_frac = 0.15) {
     if (Nfreq < 3) return 0.30;
 
     k_peak = std::clamp(k_peak, 0, Nfreq - 1);
