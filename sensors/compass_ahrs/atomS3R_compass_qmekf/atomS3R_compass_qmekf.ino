@@ -22,6 +22,7 @@
 #include <M5Unified.h>
 #include <new>
 
+#define NO_BOSCH_API
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
 #include "AtomS3R/AtomS3R_CompassUI.h"
@@ -153,7 +154,7 @@ public:
 
     start_us_ = micros();
     next_tick_us_ = micros();
-    last_update_us_ = micros();
+    last_update_us_ = 0;
   }
 
   void tick() {
@@ -171,7 +172,7 @@ public:
     // Tap handling
     if (Input::tapPressed()) {
       tap_count_++;
-      tap_deadline_ms_ = millis() + ImuCalWizardCfg::TAP_WINDOW_MS;
+      tap_deadline_ms_ = millis() + M5UiCfg::MENU_TAP_WINDOW_MS;
       drawHomePending_();
       Serial.printf("[TAP] count=%d\n", tap_count_);
     }
@@ -185,8 +186,11 @@ public:
     }
 
     // Read IMU and update filter
+    const uint32_t sample_us = micros();
+    const uint32_t update_mask = M5.Imu.update();
+
     ImuSample s;
-    if (readImuMapped(M5.Imu, s)) {
+    if (readImuMapped(M5.Imu, update_mask, sample_us, s)) {
       updateFilter_(s);
     }
     updateUI_();
@@ -293,9 +297,8 @@ private:
     m_cal_ = runtime_.applyMag  (s.m);
 
     // dt from micros; clamp sane
-    const uint32_t now_us = micros();
-    float dt = (now_us - last_update_us_) * 1e-6f;
-    last_update_us_ = now_us;
+    float dt = (s.sample_us - last_update_us_) * 1e-6f;
+    last_update_us_ = s.sample_us;
     dt = clampf_(dt, 0.0010f, 0.0200f);
 
     // Mag validity (magnitude sanity)
@@ -446,7 +449,7 @@ private:
 
     int32_t remain = (int32_t)(tap_deadline_ms_ - millis());
     remain = remain < 0 ? 0 : remain;
-    float t01 = 1.0f - (float)remain / (float)ImuCalWizardCfg::TAP_WINDOW_MS;
+    float t01 = 1.0f - (float)remain / (float)M5UiCfg::MENU_TAP_WINDOW_MS;
     ui_.bar01(t01);
   }
 
