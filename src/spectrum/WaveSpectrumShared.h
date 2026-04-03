@@ -364,4 +364,63 @@ inline double asym_smooth_hz(double prev_hz,
     return std::clamp(y, lo, hi);
 }
 
+template<int Nfreq>
+inline double estimate_accel_siglog(const std::array<double, Nfreq>& S_aa_true_arr,
+                                    const std::array<double, Nfreq>& freqs,
+                                    int k_peak,
+                                    double floor_frac = 0.10) {
+    if (Nfreq < 3) return 0.30;
+
+    k_peak = std::clamp(k_peak, 0, Nfreq - 1);
+
+    std::array<double, Nfreq> Eaa{};
+    std::array<double, Nfreq> Eaa_s{};
+
+    for (int i = 0; i < Nfreq; ++i) {
+        Eaa[i] = std::max(0.0, S_aa_true_arr[i]) * std::max(freqs[i], 1e-12);
+    }
+    smooth_3tap_array<Nfreq>(Eaa, Eaa_s);
+
+    const double Epk = std::max(Eaa_s[k_peak], 1e-18);
+    const double Eth = floor_frac * Epk;
+
+    double wsum = 0.0;
+    double xsum = 0.0;
+
+    for (int i = 0; i < Nfreq; ++i) {
+        const double w = Eaa_s[i];
+        if (w < Eth) continue;
+
+        const double x = std::log(std::max(freqs[i], 1e-12));
+        wsum += w;
+        xsum += w * x;
+    }
+
+    if (wsum <= 1e-18) return 0.30;
+
+    const double mu = xsum / wsum;
+
+    double vnum = 0.0;
+    for (int i = 0; i < Nfreq; ++i) {
+        const double w = Eaa_s[i];
+        if (w < Eth) continue;
+
+        const double x = std::log(std::max(freqs[i], 1e-12));
+        const double dx = x - mu;
+        vnum += w * dx * dx;
+    }
+
+    return std::sqrt(std::max(0.0, vnum / wsum));
+}
+
+inline double adaptive_knee_cut_cap_hz(double fp_accel_hz,
+                                       double siglog) {
+    const double cap =
+        0.52 * fp_accel_hz +
+        0.035 * siglog +
+        0.010;
+
+    return std::clamp(cap, 0.055, 0.095);
+}
+
 } // namespace WaveSpectrumShared
