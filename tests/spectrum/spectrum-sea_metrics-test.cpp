@@ -12,6 +12,10 @@
 #include <tuple>
 #include <vector>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #include "spectrum/SeaMetricsFromSpectrum.h"
 #include "util/WaveFilesSupport.h"
 
