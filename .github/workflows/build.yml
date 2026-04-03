@@ -181,5 +181,8 @@ jobs:
           required-libraries: M5Unified@0.2.13,M5GFX@0.2.19,Eigen@0.3.2,Arduino_BMI270_BMM150@1.2.3
           sketch-names: "*.ino"
           sketch-names-find-start: sensors/${{ matrix.ino_dir }}/*
-          extra-arduino-cli-args: "--warnings default --build-property compiler.libraries.ldflags=-Wl,--allow-multiple-definition --build-property compiler.cpp.extra_flag=-mvector --build-property compiler.cpp.extra_flag=-funroll-loops --build-property compiler.cpp.extra_flag=-fno-finite-math-only"
+          extra-arduino-cli-args: >-
+            --warnings default
+            --build-property compiler.libraries.ldflags=-Wl,--allow-multiple-definition
+            --build-property compiler.cpp.extra_flags="-I${{ github.workspace }}/common/include -mvector -funroll-loops -fno-finite-math-only"
           set-build-path: true
