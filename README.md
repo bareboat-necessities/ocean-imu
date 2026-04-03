@@ -60,7 +60,6 @@ tests/               module-level build and validation targets
   kalman_ou_ii/      builds kalman_ou_ii-sim
   kalman_ou_iii/     builds kalman_ou_iii-sim
   pii_observer/      builds pii_observer-adaptive
-  spectrum/          builds spectrum tests
   wave_sim/          wave simulation programs
 
 sensors/             sensor integration and application examples
