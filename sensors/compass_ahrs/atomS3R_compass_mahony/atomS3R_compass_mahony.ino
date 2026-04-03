@@ -8,6 +8,7 @@
 #include <Arduino.h>
 #include <M5Unified.h>
 
+#define NO_BOSCH_API
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
 #include "AtomS3R/AtomS3R_CompassUI.h"
@@ -130,7 +131,7 @@ public:
 
     start_us_ = micros();
     next_tick_us_ = micros();
-    last_update_us_ = micros();
+    last_update_us_ = 0;
   }
 
   void tick() {
@@ -159,8 +160,11 @@ public:
       drawHomeStatic_();
     }
 
+    const uint32_t sample_us = micros();
+    const uint32_t update_mask = M5.Imu.update();
+
     ImuSample s;
-    if (readImuMapped(M5.Imu, s)) {
+    if (readImuMapped(M5.Imu, update_mask, sample_us, s)) {
       updateFilter_(s);
     }
     updateUI_();
@@ -290,9 +294,8 @@ private:
     m_cal_ = runtime_.applyMag  (s.m);          // uT
 
     // dt
-    const uint32_t now_us = micros();
-    float dt = (now_us - last_update_us_) * 1e-6f;
-    last_update_us_ = now_us;
+    float dt = (s.sample_us - last_update_us_) * 1e-6f;
+    last_update_us_ = s.sample_us;
     dt = clampf_(dt, 0.0010f, 0.0200f);
 
     // Mag validity
