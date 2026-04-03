@@ -358,7 +358,7 @@ template<int Nfreq>
 inline LowfreqAdaptPolicy adapt_lowfreq_policy(
     const std::array<double, Nfreq>& S_aa_true_arr,
     const std::array<double, Nfreq>& freqs,
-    double lowfreq_cut_hz)
+    double /*lowfreq_cut_hz*/)
 {
     LowfreqAdaptPolicy out{};
 
@@ -375,11 +375,11 @@ inline LowfreqAdaptPolicy adapt_lowfreq_policy(
     smooth_3tap_array<Nfreq>(Eaa, Eaa_s);
 
     const int k_peak = find_accel_peak_index<Nfreq>(
-        S_aa_true_arr, freqs, lowfreq_cut_hz, 1.03);
+        S_aa_true_arr, freqs, 0.0, 1.03);
 
     out.fp_accel_hz = freqs[std::clamp(k_peak, 0, Nfreq - 1)];
 
-    const double f_guard = std::max(lowfreq_cut_hz, 1.03 * freqs[0]);
+    const double f_guard = 1.03 * freqs[0];
     const double Epk = std::max(Eaa_s[k_peak], 1e-18);
     const double Eth = 0.10 * Epk;
 
@@ -423,9 +423,9 @@ inline LowfreqAdaptPolicy adapt_lowfreq_policy(
 
     const double aggr = std::clamp(0.55 * u_fp + 0.45 * u_w, 0.0, 1.0);
 
-    out.knee_mult     = lerp(0.34, 0.52, aggr);
-    out.taper_lo_mult = lerp(0.42, 0.62, aggr);
-    out.taper_hi_mult = lerp(1.08, 1.32, aggr);
+    out.knee_mult     = lerp(0.22, 0.48, aggr);
+    out.taper_lo_mult = lerp(0.22, 0.58, aggr);
+    out.taper_hi_mult = lerp(0.92, 1.22, aggr);
 
     return out;
 }
