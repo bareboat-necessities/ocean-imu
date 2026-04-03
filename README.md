@@ -88,6 +88,12 @@ Some validation and simulation workflows depend on data released in:
 
 In CI/docs, this is often referenced as `sim-data-files.zip` from that project’s releases.
 
+You can fetch and unpack this data for local runs with:
+
+```bash
+make fetch-sim-data
+```
+
 ## Build
 
 Run builds from the specific test folder you want to validate:
