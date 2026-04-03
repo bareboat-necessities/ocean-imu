@@ -294,7 +294,7 @@ private:
             return std::max(f_floor_hz, freqs_[i_valley]);
         }
 
-        const double f_rel = 0.50 * freqs_[i_peak];
+        const double f_rel = 0.60 * freqs_[i_peak];
         const double f_cap = 0.90 * freqs_[i_peak];
         return std::max(f_floor_hz, std::min(f_rel, f_cap));
     }
@@ -413,11 +413,21 @@ private:
             S_aa_true_arr[i] = std::max(0.0, S_aa_meas * inv_hp);
         }
 
-        last_lowfreq_cut_hz_ = estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
+        const double cut_est_hz =
+             estimate_lowfreq_cut_from_accel_(S_aa_true_arr, Tblk);
 
+        last_lowfreq_cut_hz_ = WaveSpectrumShared::asym_smooth_hz(
+             last_lowfreq_cut_hz_,
+             cut_est_hz,
+             0.22,
+             0.08,
+             0.18,
+             0.06
+        );
+        
         const double f_knee = std::max({
             reg_f0_hz,
-            0.35 * last_lowfreq_cut_hz_,
+            0.50 * last_lowfreq_cut_hz_,
             0.95 * hp_f0_hz,
             0.90 * f_blk
         });
