@@ -367,16 +367,18 @@
         \label{eq:component_response}
     \end{equation}
     The total response is the superposition
-    \begin{equation}
-        q(t)
-        = \sum_{m=1}^{M} q_m(t)
-        = \Real\!\left\{
-        \sum_{m=1}^{M}
-        H_q(\omega_m,\beta_m)\,a_m\,
-        \ee^{\ii(\vect{k}_m\cdot\vect{r}_0 - \omega_m t + \phi_m)}
-        \right\}.
-        \label{eq:response_sum}
-    \end{equation}
+	\begin{equation}
+	\begin{aligned}
+	q(t)
+	&= \sum_{m=1}^{M} q_m(t) \\
+	&= \Real\!\left\{
+	   \sum_{m=1}^{M}
+	   H_q(\omega_m,\beta_m)\,a_m\,
+	   \ee^{\ii(\vect{k}_m\cdot\vect{r}_0 - \omega_m t + \phi_m)}
+	   \right\}.
+	\end{aligned}
+	\label{eq:response_sum}
+	\end{equation}
     \Cref{eq:response_sum} is the central formula of the paper.
     The RAO acts on each component independently, scaling its amplitude by $|H_q|$ and
     shifting its phase by $\varphi_q$, and preserves phase coherence with the original wave
