@@ -326,7 +326,7 @@ class CompassAppBase {
   if ((int32_t)(now_us2 - next_tick_us_) > (int32_t)(4 * LOOP_PERIOD_US))
     next_tick_us_ = now_us2 + LOOP_PERIOD_US;
   else
-    next_tick_us_ += LOOP_PERIOD_US
+    next_tick_us_ += LOOP_PERIOD_US;
       
     Input::update();
 
