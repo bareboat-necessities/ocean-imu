@@ -127,10 +127,16 @@ static inline AttitudeSolution makeAttitudeFromQuat(float x, float y, float z, f
 }
 
 struct MagGateConfig {
-  uint32_t sample_spacing_ms = 12;
+  // Magnetometer ODR is 25 Hz => nominal period is 40 ms.
+  // Use a slightly smaller spacing so a real new sample is usually accepted once,
+  // while repeated polling of the same sample in a 200 Hz loop is suppressed.
+  uint32_t sample_spacing_ms = 35;
+
+  // Used only for soft "stuck" detection, not for rejecting freshness.
   float min_delta_uT = 0.02f;
-  uint8_t stuck_allow_n = 0;
-  uint8_t stuck_reject_after_n = 0;
+
+  // 0 disables stuck flagging.
+  uint8_t stuck_reject_after_n = 20;
 };
 
 class MagGate {
@@ -149,6 +155,7 @@ class MagGate {
       return false;
     }
 
+    // First valid sample: accept immediately.
     if (last_ms_ == 0) {
       last_ms_ = now_ms;
       last_mag_ = m_cal;
@@ -156,14 +163,16 @@ class MagGate {
       return true;
     }
 
+    // Accept at most one sample per configured spacing.
+    // This is a proxy for "new mag sample" when actual mag-update status is unknown.
     const uint32_t dtm = now_ms - last_ms_;
     if (dtm < cfg_.sample_spacing_ms) return false;
 
     const float dm = (m_cal - last_mag_).norm();
     const bool looks_stuck = dm <= cfg_.min_delta_uT;
 
-    // Always treat time-spaced valid mag samples as fresh.
-    // Track repeated nearly-identical values only as soft state.
+    // Always accept a time-spaced valid sample as fresh.
+    // Tiny deltas are tracked only as a soft diagnostic.
     if (looks_stuck) {
       if (repeat_count_ < 255) repeat_count_++;
     } else {
@@ -176,8 +185,8 @@ class MagGate {
   }
 
   bool looksStuck() const {
-    if (cfg_.stuck_reject_after_n == 0) return false;
-    return repeat_count_ >= cfg_.stuck_reject_after_n;
+    return (cfg_.stuck_reject_after_n != 0) &&
+           (repeat_count_ >= cfg_.stuck_reject_after_n);
   }
 
  private:
