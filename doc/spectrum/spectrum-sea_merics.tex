@@ -1,0 +1,861 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage{amsmath,bm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{cite}
+\usepackage{microtype}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+
+% longtable is incompatible with two-column IEEEtran; use tabular* inside
+% table* (full-width float) instead.
+
+% -----------------------------------------------------------------------
+\title{SeaMetrics: Online Estimation of Ocean Wave\\
+Spectral Metrics}
+
+\author{%
+    \IEEEauthorblockN{Mikhail S.\ Grushinskiy}
+    \IEEEauthorblockA{Independent Researcher\\
+    Bareboat Necessities Project\\
+    \texttt{mgrouch@users.github.com}}
+}
+
+\begin{document}
+    \maketitle
+
+% -----------------------------------------------------------------------
+    \begin{abstract}
+        \texttt{SeaMetrics} is a real-time estimator of ocean wave spectral metrics
+        derived from a single vertical acceleration signal $a_z(t)$ and an
+        externally tracked instantaneous frequency $\omega_\text{inst}(t)$.
+        The system demodulates the acceleration record into a displacement envelope
+        power time series, accumulates running spectral moments, and synthesises a
+        comprehensive suite of oceanographic quantities on every update cycle.
+        Outputs range from zeroth-order wave energy and significant wave height
+        through spectral bandwidth, groupiness, nonlinearity, shallow-water
+        dispersion corrections, breaking probability, and human comfort indices,
+        to extreme-value return levels estimated via Weibull and
+        peak-over-threshold analysis.
+        A first-order bias-correction scheme compensates for the Jensen-inequality
+        inflation that afflicts inverse-frequency moments under noisy tracking.
+        The complete pipeline operates sample-by-sample with constant memory and
+        is suited to deployment on embedded and shipborne measurement systems.
+    \end{abstract}
+
+    \begin{IEEEkeywords}
+        ocean wave spectra, spectral moments, significant wave height,
+        wave period, online estimation, embedded signal processing,
+        bandwidth, groupiness, breaking probability, motion sickness
+    \end{IEEEkeywords}
+
+% -----------------------------------------------------------------------
+    \section{Introduction}
+
+    Characterising the sea state from an onboard sensor poses a classical
+    estimation problem: the underlying directional wave spectrum is
+    inaccessible, yet reliable proxies for its integral properties can be
+    extracted from a single well-calibrated scalar record.
+    \texttt{SeaMetrics} exploits the fact that a vertically accelerating
+    platform experiences a signal whose power spectral density is proportional
+    to $\omega^4$ times the displacement spectrum, allowing spectral moments
+    to be accumulated from the demodulated displacement envelope.
+
+    The tool accepts two inputs: the vertical acceleration $a_z(t)$ measured at
+    the sensor location, and an instantaneous frequency estimate
+    $\omega_\text{inst}(t)$ supplied by an external tracker such as the
+    Aranovskiy adaptive observer \cite{Bobtsov2013}.
+    From these, a running estimate of the displacement envelope power
+    $P_\eta(t)$ is maintained, and spectral moments of integer order
+    $n \in \{-1, 0, 1, 2, 3, 4\}$ are accumulated as exponentially weighted
+    averages.
+    The complete set of derived quantities—periods, heights, bandwidths,
+    nonlinear corrections, comfort indices, and extreme-value statistics—is
+    recomputed on every sample, enabling true streaming oceanographic analysis
+    without buffering or batch FFT processing.
+
+    Section~\ref{sec:moments} defines the spectral moments and their physical
+    interpretation.
+    Sections~\ref{sec:central}--\ref{sec:groupiness} derive the standard
+    oceanographic parameters that flow from these moments.
+    Section~\ref{sec:extremes} covers extreme-value analysis.
+    Sections~\ref{sec:shallow}--\ref{sec:quality} address shallow-water
+    corrections, environmental coupling, and data quality diagnostics.
+    Section~\ref{sec:bias} gives the first-order bias-correction theory.
+    Section~\ref{sec:summary} provides a consolidated reference table of
+    all output quantities.
+
+% -----------------------------------------------------------------------
+    \section{Spectral Moments}
+    \label{sec:moments}
+
+    Let $P_\eta(t) \ge 0$ be the instantaneous displacement envelope power
+    and $\omega(t) = \omega_\text{inst}(t) > 0$ the instantaneous angular
+    frequency.
+    The $n$-th spectral moment is defined as the running expectation
+    \begin{equation}
+        M_n \;=\; \bigl\langle P_\eta(t)\;\omega(t)^n \bigr\rangle,
+        \qquad n \in \{-1,\,0,\,1,\,2,\,3,\,4\}.
+        \label{eq:moments}
+    \end{equation}
+    In the ensemble sense, \eqref{eq:moments} coincides with the frequency-domain
+    integral $\int \omega^n S(\omega)\,\mathrm{d}\omega$ over the one-sided
+    spectrum $S(\omega)$ whenever the narrowband assumption holds \cite{Ochi1998}.
+
+    The physical roles of each moment are as follows:
+    \begin{itemize}
+        \item $M_0$: total variance of surface displacement, proportional to
+        the potential energy per unit area of the wave field; the
+        conventional measure of ``wave energy.''
+        \item $M_1$: energy-weighted frequency; its ratio with $M_0$ gives the
+        mean angular frequency of the sea state.
+        \item $M_2$: energy-weighted mean-square frequency; directly linked to
+        the wave slope variance and the zero-upcrossing rate.
+        \item $M_3$, $M_4$: higher-order moments controlling the spectral
+        skewness and kurtosis, and enabling peakedness diagnostics.
+        \item $M_{-1}$: the negative-order moment, which enters the definition
+        of the energy flux period and the mean wave energy period $T_{-1,0}$.
+    \end{itemize}
+
+% -----------------------------------------------------------------------
+    \section{Central Moments and Spectral Shape}
+    \label{sec:central}
+
+    The central spectral moments characterise the shape of the wave spectrum
+    relative to its mean frequency $\bar\omega = M_1/M_0$.
+    They are related to the raw moments by
+    \begin{align}
+        \mu_2 &= \frac{M_2}{M_0} - \bar\omega^2,
+        \label{eq:mu2} \\
+        \mu_3 &= \frac{M_3}{M_0} - 3\bar\omega\frac{M_2}{M_0} + 2\bar\omega^3,
+        \label{eq:mu3} \\
+        \mu_4 &= \frac{M_4}{M_0} - 4\bar\omega\frac{M_3}{M_0}
+        + 6\bar\omega^2\frac{M_2}{M_0} - 3\bar\omega^4.
+        \label{eq:mu4}
+    \end{align}
+
+    The second central moment $\mu_2$ measures spectral spread:
+    a narrow swell peak has small $\mu_2$, while a fully developed sea
+    has large $\mu_2$.
+    The third central moment $\mu_3$ quantifies asymmetry: positive values
+    indicate a high-frequency tail heavier than the low-frequency shoulder,
+    which arises during wind-sea generation.
+    The fourth central moment $\mu_4$ measures spectral peakedness relative
+    to a Gaussian reference shape.
+
+    Three normalised shape diagnostics follow immediately:
+    \begin{equation}
+        \text{Skewness} = \frac{\mu_3}{\mu_2^{3/2}},
+        \quad
+        \text{Kurtosis} = \frac{\mu_4}{\mu_2^2},
+        \quad
+        \text{Excess kurtosis} = \frac{\mu_4}{\mu_2^2} - 3.
+    \end{equation}
+
+    \noindent
+    Three peakedness parameters based on the same moment ratios appear in the
+    engineering literature:
+    \begin{itemize}
+        \item Ochi peakedness \cite{Ochi1998}:
+        $Q_p = M_0 M_4/M_2^2$.
+        \item Benassai parameter: identical definition to $Q_p$, widely used
+        in coastal structure design.
+        \item Goda peakedness \cite{Goda1970}:
+        $Q_G = 2(Q_p - 1)$.
+    \end{itemize}
+    All three are dimensionless and increase as the spectrum narrows toward
+    a monochromatic sea.
+
+% -----------------------------------------------------------------------
+    \section{Frequency Metrics}
+    \label{sec:freq}
+
+    The mean angular frequency and its equivalent in hertz are
+    \begin{equation}
+        \bar\omega = \frac{M_1}{M_0}, \qquad \bar{f} = \frac{\bar\omega}{2\pi}.
+    \end{equation}
+
+    The relative bandwidth (RBW) is the canonical dimensionless measure of
+    spectral width:
+    \begin{equation}
+        \text{RBW} = \frac{\sqrt{\mu_2}}{\bar\omega}.
+        \label{eq:rbw}
+    \end{equation}
+    $\text{RBW} \ll 1$ characterises a narrow swell; $\text{RBW} \sim 0.5$
+    is typical of a mixed wind-sea and swell condition.
+
+    An independent bandwidth estimate is available from the \emph{phase-increment
+    RBW}, computed as the normalised variance of successive phase increments
+    $\Delta\phi/\Delta t$.
+    This estimator is insensitive to amplitude fluctuations and therefore
+    provides a useful consistency check against the moment-based RBW,
+    particularly when envelope demodulation is imperfect.
+
+% -----------------------------------------------------------------------
+    \section{Regularity Metrics}
+    \label{sec:regularity}
+
+    Regularity quantifies how closely the wave record resembles a
+    deterministic sinusoid.
+
+    The \emph{spectral regularity} decays exponentially with bandwidth:
+    \begin{equation}
+        R_\text{spec} = \exp(-\beta\cdot\text{RBW}),
+    \end{equation}
+    where $\beta$ is a tunable decay constant.
+    A value of $R_\text{spec} \approx 1$ indicates a near-monochromatic sea;
+    $R_\text{spec} \approx 0$ indicates a broad, irregular spectrum.
+
+    The \emph{phase regularity} is sensitive to phase coherence rather than
+    amplitude spread:
+    \begin{equation}
+        R_\text{phase} = \left\lVert\left\langle \frac{z}{|z|} \right\rangle\right\rVert,
+    \end{equation}
+    where $z$ is the complex analytic signal formed from the demodulated envelope.
+
+    The classical \emph{spectral narrowness parameter} \cite{Cartwright1956} is
+    \begin{equation}
+        \nu = \sqrt{\frac{M_0 M_2}{M_1^2} - 1},
+    \end{equation}
+    which vanishes for a monochromatic wave and grows with spectral breadth.
+
+% -----------------------------------------------------------------------
+    \section{Wave Period Estimates}
+    \label{sec:periods}
+
+    Several period definitions arise naturally from different moment ratios.
+    Each carries a distinct physical meaning and is standard in different
+    branches of ocean engineering:
+    \begin{align}
+        T_z &= \sqrt{2\pi^2\,\frac{M_0}{M_2}}
+        && \text{(mean zero-crossing period)}, \label{eq:Tz}\\
+        T_1 &= \frac{2\pi M_0}{M_1}
+        && \text{(energy-weighted mean period)}, \label{eq:T1}\\
+        T_{m02} &= 2\pi\sqrt{\frac{M_0}{M_2}}
+        && \text{(variance-based mean period)}, \label{eq:Tm02}\\
+        T_e &= \frac{2\pi M_{-1}}{M_0}
+        && \text{(energy flux period)}, \label{eq:Te}\\
+        T_{m0,-1} &= \frac{M_0}{M_{-1}}, \quad
+        T_{m1,-1} = \frac{M_1}{M_{-1}}.
+    \end{align}
+
+    The mean zero-upcrossing rate—the expected number of complete wave cycles
+    per second—follows from Rice's formula \cite{Longuet1963}:
+    \begin{equation}
+        \nu_\uparrow = \frac{1}{2\pi}\sqrt{\frac{M_2}{M_0}}.
+        \label{eq:upcrossing}
+    \end{equation}
+    The reciprocal $1/\nu_\uparrow$ coincides with $T_{m02}$ up to a numerical
+    factor and provides a direct estimate of average wave count over any
+    observation window.
+
+% -----------------------------------------------------------------------
+    \section{Wave Heights and Steepness}
+    \label{sec:heights}
+
+    Under the Rayleigh amplitude assumption, the surface displacement
+    has standard deviation
+    \begin{equation}
+        \sigma = \sqrt{M_0}
+    \end{equation}
+    and the significant wave height is
+    \begin{equation}
+        H_s = 2\sqrt{2}\,\sigma \approx 4\sigma.
+        \label{eq:Hs}
+    \end{equation}
+    The factor $2\sqrt{2}$ corresponds to the mean of the highest one-third
+    of waves in a Rayleigh distribution \cite{Ochi1998}.
+
+    Deep-water wavelength is approximated from $T_z$ via the linear dispersion
+    relation $\omega^2 = gk$:
+    \begin{equation}
+        L_0 = \frac{g T_z^2}{2\pi}.
+    \end{equation}
+    Wave steepness, the primary nonlinearity indicator in deep water, is then
+    \begin{equation}
+        \text{St} = \frac{H_s}{L_0}.
+    \end{equation}
+    Steep waves ($\text{St} > 0.05$) are subject to whitecapping and
+    modulational instability; limiting steepness in deep water is
+    $\text{St}_\text{max} \approx 0.142$ (Miche criterion).
+
+% -----------------------------------------------------------------------
+    \section{Crest Probabilities and Extremes}
+    \label{sec:probabilities}
+
+    \subsection{Rayleigh Exceedance}
+
+    For a narrow-band Gaussian sea the crest height $H_c$ follows the
+    Rayleigh distribution \cite{Cartwright1956}:
+    \begin{equation}
+        P(H_c > h) = \exp\!\left(-\frac{h^2}{2\sigma^2}\right).
+        \label{eq:rayleigh}
+    \end{equation}
+
+    \subsection{Nonlinear Tayfun Correction}
+
+    For steep, near-breaking seas the Rayleigh model underestimates
+    large-crest probabilities.
+    Tayfun's second-order correction \cite{Tayfun1980} gives
+    \begin{equation}
+        P(H_c > h) \approx
+        \exp\!\left(-\frac{h^2}{2\sigma^2}\right)
+        \exp\!\left(\Lambda\frac{h^3}{\sigma^3}\right),
+    \end{equation}
+    where $\Lambda$ is proportional to the wave steepness $\text{St}$.
+    This model is recommended for wave-structure interaction design in
+    steep-sea conditions.
+
+    \subsection{Characteristic Crest Heights}
+
+    High-percentile crests are estimated by inverting \eqref{eq:rayleigh}:
+    \begin{equation}
+        H_{1/N} = \sigma\sqrt{2\ln N}, \qquad N \in \{10,\,100\}.
+    \end{equation}
+
+    The expected maximum crest in a record containing $N$ waves is
+    approximated by the Gumbel asymptote:
+    \begin{equation}
+        \mathbb{E}[H_\text{max}] \approx
+        \sigma\!\left(\sqrt{2\ln N} + \frac{\gamma_\text{E}}{\sqrt{2\ln N}}\right),
+    \end{equation}
+    where $\gamma_\text{E} \approx 0.5772$ is the Euler–Mascheroni constant
+    and $N = \nu_\uparrow\, T$ for a record of duration $T$.
+
+% -----------------------------------------------------------------------
+    \section{Spectral Bandwidth Parameters}
+    \label{sec:bandwidth}
+
+    Four complementary definitions of spectral bandwidth appear in the
+    standard literature and are all computed by \texttt{SeaMetrics}:
+    \begin{align}
+        \varepsilon_\text{CLH} &= \sqrt{1 - \frac{M_1^2}{M_0 M_2}}
+        && \text{\cite{Cartwright1956}},
+        \label{eq:eCLH}\\
+        \varepsilon_\text{Goda} &= \sqrt{\frac{M_0 M_2}{M_1^2} - 1}
+        && \text{\cite{Goda1970}},
+        \label{eq:eGoda}\\
+        \varepsilon_\text{Kuik} &= \frac{\sqrt{M_0 M_2 - M_1^2}}{M_1}
+        && \text{\cite{Kuik1988}},
+        \label{eq:eKuik}\\
+        \varepsilon_\text{LH} &= \sqrt{\frac{M_0 M_2}{M_1^2} - 1}
+        && \text{(Longuet--Higgins)}.
+        \label{eq:eLH}
+    \end{align}
+    All four vanish for a monochromatic wave; their numerical differences
+    reflect the choice of normalization and are small for narrow spectra.
+    $\varepsilon_\text{CLH}$ is bounded in $[0,1]$ and is particularly
+    convenient for design charts.
+
+% -----------------------------------------------------------------------
+    \section{Groupiness and Modulational Instability}
+    \label{sec:groupiness}
+
+    \subsection{Groupiness Factor}
+
+    Natural wave fields travel in groups whose envelope modulates slowly
+    compared to the carrier frequency.
+    The groupiness factor
+    \begin{equation}
+        G = \frac{T_g}{T_z}
+    \end{equation}
+    measures the ratio of the average group period $T_g$ to the mean
+    zero-crossing period $T_z$.
+    Large values of $G$ indicate pronounced grouping and are associated with
+    enhanced structural loads on offshore platforms.
+
+    \subsection{Benjamin--Feir Index}
+
+    The Benjamin--Feir Index (BFI) quantifies the tendency of a wave train
+    to develop modulational (sideband) instability through the
+    Benjamin--Feir mechanism \cite{BenjaminFeir1967}:
+    \begin{equation}
+        \text{BFI} = \frac{\sqrt{2}\;H_s/L_0}{\Delta f / f_p},
+    \end{equation}
+    where $f_p$ is the peak frequency and $\Delta f$ is the spectral bandwidth.
+    $\text{BFI} > 1$ signals conditions prone to freak-wave formation and is a
+    key input to rogue-wave risk assessment.
+
+% -----------------------------------------------------------------------
+    \section{Wave Energy and Power}
+    \label{sec:energy}
+
+    The mean wave energy density per unit surface area in deep water is
+    \begin{equation}
+        E = \rho g\,M_0,
+    \end{equation}
+    where $\rho$ is seawater density.
+    The energy flux period relates the negative-order moment to the wave
+    energy budget:
+    \begin{equation}
+        T_{e,\text{flux}} = \frac{M_{-1}}{M_0}.
+    \end{equation}
+
+    Deep-water wave power per unit crest length is given by the standard
+    linear formula:
+    \begin{equation}
+        P = \frac{\rho g^2}{64\pi}\,H_s^2\,T_e,
+        \label{eq:power}
+    \end{equation}
+    which is proportional to the square of the significant wave height and
+    linearly proportional to the energy period.
+    Equation~\eqref{eq:power} is the standard metric used to assess
+    wave-energy converter (WEC) resource.
+
+% -----------------------------------------------------------------------
+    \section{Nonlinear and Development Metrics}
+    \label{sec:nonlinear}
+
+    Three parameters characterise the degree of nonlinearity or development
+    of the sea state:
+
+    \begin{itemize}
+        \item \textbf{Ursell number:}
+        $Ur = H L^2 / h^3$
+        expresses the competition between nonlinearity and frequency
+        dispersion in water of finite depth $h$.
+        Deep-water waves have $Ur \ll 1$; shallow-water cnoidal waves
+        have $Ur \gg 1$.
+        \item \textbf{Nonlinearity parameter:}
+        $n = \tfrac{1}{2}H_s k$,
+        a dimensionless spectral-peak steepness that scales directly with
+        the amplitude of Stokes-type bound harmonics.
+        \item \textbf{Wave age:}
+        $c_p/U_{10}$,
+        the ratio of the spectral peak phase speed to the 10-metre wind
+        speed.  Values less than unity indicate a young, actively forced
+        wind sea; values exceeding unity indicate mature or swell-dominated
+        conditions.
+    \end{itemize}
+
+% -----------------------------------------------------------------------
+    \section{Wave Breaking}
+    \label{sec:breaking}
+
+    Two proxy indicators of wave breaking probability are maintained:
+
+    \begin{itemize}
+        \item \textbf{Depth-limited breaking:}
+        $P_b^\text{depth} = \exp\!\bigl(-0.5(0.78\,h/H_s)^2\bigr)$,
+        which rises sharply as the wave height approaches the
+        depth-limited threshold $H_b \approx 0.78\,h$.
+        \item \textbf{Steepness-limited breaking:}
+        $P_b^\text{steep} = 10\,(H_s/L_0)$,
+        a linear proxy that captures whitecapping in deep water as
+        steepness increases toward the Miche limit.
+    \end{itemize}
+
+    The depth-limited maximum crest height is $H_b \approx 0.78\,h$
+    (Battjes--Janssen \cite{Battjes1978}).
+    Both indicators are available simultaneously to support integrated
+    near-shore and offshore analyses.
+
+% -----------------------------------------------------------------------
+    \section{Human Comfort and Motion Sickness}
+    \label{sec:comfort}
+
+    \subsection{Motion Sickness Dose Value}
+
+    The ISO~2631 standard \cite{ISO2631} defines the Motion Sickness Dose
+    Value (MSDV) as the frequency-weighted root-mean-square acceleration
+    integrated over the exposure duration $T$:
+    \begin{equation}
+        \text{MSDV} = \sqrt{M_2}\,\sqrt{T}.
+    \end{equation}
+    The factor $\sqrt{M_2}$ is the RMS of vertical velocity increment,
+    which captures the $\sim\SI{0.2}{\hertz}$ sensitivity peak of the
+    human vestibular system.
+
+    \subsection{Derived Comfort Metrics}
+
+    From MSDV, the following application quantities are derived:
+    \begin{itemize}
+        \item \textbf{Seasickness incidence:} percentage of an average
+        population expected to vomit after exposure, computed from
+        an ISO-calibrated logistic model of MSDV, frequency, and
+        population susceptibility.
+        \item \textbf{Comfort rating:} a heuristic 0--100 scale in which
+        100 represents a flat calm and 0 represents severe discomfort;
+        mapped monotonically from MSDV via an empirical transfer function.
+        \item \textbf{Vertical motion intensity:} $\sqrt{M_2}$, expressed as
+        an RMS vertical acceleration useful for crew workload assessment.
+        \item \textbf{Time to onset of discomfort:}
+        an empirical estimate proportional to $(\text{accel} \cdot f^{0.7})^{-1}$,
+        giving the approximate latency before the average occupant
+        experiences noticeable discomfort.
+    \end{itemize}
+
+% -----------------------------------------------------------------------
+    \section{Extreme Value Analysis}
+    \label{sec:extremes}
+
+    \subsection{Weibull Return Heights}
+
+    For long-return-period design, block maxima of the crest height
+    distribution are fitted with a two-parameter Weibull model.
+    Given a shape parameter $\alpha$ and scale parameter $\beta$,
+    the return height for return period $T_\text{ret}$ satisfies
+    \begin{equation}
+        H_{T_\text{ret}} = \beta
+        \!\left(\ln\frac{T_\text{ret}}{T_\text{obs}}\right)^{1/\alpha},
+    \end{equation}
+    where $T_\text{obs}$ is the observation window duration.
+    This approach accounts for non-Rayleigh tail behaviour observed in
+    steep or shallow-water spectra.
+
+    \subsection{Peak-Over-Threshold Analysis}
+
+    The mean excess function above a threshold $u$ provides an alternative
+    extreme-value diagnostic:
+    \begin{equation}
+        e(u) = \mathbb{E}[H_c - u \mid H_c > u].
+    \end{equation}
+    A linearly increasing $e(u)$ as a function of $u$ is consistent with a
+    generalised Pareto tail; the slope gives the shape parameter of the
+    exceedance distribution.
+    This metric is particularly informative for storm-peak identification
+    and mooring fatigue analysis.
+
+% -----------------------------------------------------------------------
+    \section{Shallow-Water Extensions}
+    \label{sec:shallow}
+
+    When the sensor is deployed in finite water depth $h$, the deep-water
+    dispersion relation $\omega^2 = gk$ is replaced by
+    \begin{equation}
+        \omega^2 = gk\tanh(kh),
+        \label{eq:dispersion}
+    \end{equation}
+    which must be solved iteratively for the wavenumber $k$ given
+    $\omega$ and $h$.
+    Three additional shallow-water metrics are computed:
+
+    \begin{itemize}
+        \item \textbf{Shoaling coefficient $K_s$:} accounts for the change in
+        wave amplitude caused by variation of the group velocity
+        $c_g = \mathrm{d}\omega/\mathrm{d}k$ with depth; it is used to
+        back-calculate offshore wave conditions from near-shore
+        observations.
+        \item \textbf{Refraction coefficient:} derived from Snell's law
+        $c = \omega/k$, it describes the change in wave direction as the
+        bathymetric gradient rotates wave crests toward the depth contours.
+        \item \textbf{Battjes--Janssen breaking probability \cite{Battjes1978}:}
+        a depth-parameterised model that represents wave dissipation by
+        random breaking as a fraction of waves exceeding the depth-limited
+        height $\gamma h$, where $\gamma \approx 0.78$ is the breaker index.
+    \end{itemize}
+
+% -----------------------------------------------------------------------
+    \section{Environmental Coupling and Application Metrics}
+    \label{sec:env}
+
+    \subsection{Wave Age and Sea--Swell Partition}
+
+    When a wind speed $U_{10}$ is available, the wave age $c_p/U_{10}$
+    enables categorical classification of the sea state as young
+    ($c_p/U_{10} < 0.8$), mature ($0.8$--$1.2$), or swell-dominated
+    ($c_p/U_{10} > 1.2$).
+    The fraction of total spectral energy attributable to swell, rather than
+    locally generated wind sea, is estimated from this classification and
+    provides guidance for ship motion prediction and route optimisation.
+
+    \subsection{Radiation Stresses}
+
+    Scalar proxies for the depth-integrated wave momentum flux components
+    \begin{equation}
+        S_{xx} \propto H_s^2,\qquad S_{yy} \propto H_s^2
+    \end{equation}
+    are maintained as diagnostics relevant to wave-driven coastal setup,
+    longshore current generation, and sediment transport modelling.
+
+    \subsection{Bottom Orbital Velocity}
+
+    The near-bed peak orbital velocity is estimated from linear wave theory
+    at depth $h$:
+    \begin{equation}
+        u_b = \frac{\pi H_s}{T_z\,\sinh(kh)},
+    \end{equation}
+    which governs sediment mobilisation and scour around submerged
+    structures.
+
+    \subsection{WEC Capture Width Ratio}
+
+    For wave energy harvesting applications, the capture width ratio
+    \begin{equation}
+        \text{CWR} = \frac{P_\text{absorbed}}{P\,D}
+    \end{equation}
+    is the ratio of power absorbed by a device of aperture $D$ to the
+    incident deep-water wave power $P$ from \eqref{eq:power} per unit crest
+    length.
+    A theoretical maximum of $\text{CWR} = 1/(2\pi)$ applies to a point
+    absorber in deep water.
+
+% -----------------------------------------------------------------------
+    \section{Data Quality and Diagnostics}
+    \label{sec:quality}
+
+    \begin{itemize}
+        \item \textbf{Temporal stability:} the running variance of $H_s$
+        evaluated over a sliding reference window provides a
+        non-stationarity indicator; large values signal a rapidly
+        evolving sea state or sensor drift that may invalidate
+        stationarity assumptions underlying moment-based estimators.
+        \item \textbf{Band-limited SNR:} the ratio of in-band variance to total
+        variance for a user-specified frequency band quantifies how much
+        spectral energy falls outside the wave band of interest, and is
+        useful for detecting sensor noise floors or spurious mechanical
+        resonances.
+        \item \textbf{Data gap fraction:} the fraction of samples rejected as
+        non-finite is tracked continuously; values above a few percent
+        indicate an intermittent sensor or communication fault that should
+        be investigated before trusting the spectral estimates.
+    \end{itemize}
+
+% -----------------------------------------------------------------------
+    \section{Bias Correction}
+    \label{sec:bias}
+
+    \subsection{Motivation}
+
+    When the instantaneous frequency estimate $\omega(t)$ carries
+    measurement noise with variance $\sigma_\omega^2$, any moment of the
+    form $M_n$ with $n < 0$ is systematically biased upward by Jensen's
+    inequality, since the function $\omega \mapsto \omega^{-k}$ is convex
+    for $k > 0$:
+    \begin{equation}
+        \mathbb{E}\!\left[\frac{1}{\omega^k}\right] >
+        \frac{1}{\mathbb{E}[\omega]^k}.
+    \end{equation}
+    The same inflation propagates into all quantities derived from $M_{-1}$
+    and into any ratio where the denominator involves a high positive power
+    of $\omega$.
+    Under jittery tracking—typical of low-frequency swell or turbulent
+    sea conditions—the uncorrected $H_s$ and $T_z$ may be overestimated
+    by several percent.
+
+    \subsection{First-Order Taylor Correction}
+
+    Expanding $\omega^{-n}$ around $\bar\omega = \mathbb{E}[\omega]$
+    to second order gives
+    \begin{equation}
+        \mathbb{E}\!\left[\omega^{-n}\right] \approx
+        \frac{1}{\bar\omega^n}
+        \left(1 + c_n\,\frac{\sigma_\omega^2}{\bar\omega^2}\right),
+        \label{eq:bias_expansion}
+    \end{equation}
+    with polynomial coefficients $c_n = n(n+1)/2$, yielding
+    \begin{equation}
+        c_{-1} = 1,\quad c_{-2} = 3,\quad c_{-3} = 6,\quad c_{-4} = 10.
+    \end{equation}
+    Inverting \eqref{eq:bias_expansion} gives bias-corrected spectral moments:
+    \begin{align}
+        M_0^c &= \frac{M_0}{1 + 10\,\sigma_\omega^2/\bar\omega^2},
+        \label{eq:M0c}\\
+        M_1^c &= \frac{M_1}{1 + 6\,\sigma_\omega^2/\bar\omega^2},
+        \label{eq:M1c}\\
+        M_2^c &= \frac{M_2}{1 + 3\,\sigma_\omega^2/\bar\omega^2},
+        \label{eq:M2c}\\
+        M_3^c &= \frac{M_3}{1 + \sigma_\omega^2/\bar\omega^2},
+        \label{eq:M3c}\\
+        M_4^c &= M_4 \qquad\text{(no correction required)},
+        \label{eq:M4c}\\
+        M_{-1}^c &= \frac{M_{-1}}{1 + 6\,\sigma_\omega^2/\bar\omega^2}.
+        \label{eq:Mm1c}
+    \end{align}
+    All higher-level derived quantities—periods, heights, bandwidths,
+    groupiness, energy flux, and comfort indices—are computed consistently
+    from the corrected set $\{M_n^c\}$ when correction is enabled.
+
+    \subsection{Practical Effect}
+
+    Bias correction most noticeably reduces spurious inflation in the
+    significant wave height $H_s$, zero-crossing period $T_z$, and
+    relative bandwidth under jittery frequency tracking or residual
+    DC offset in the acceleration signal.
+    It is especially beneficial at low frequencies (long-period swell)
+    where the Aranovskiy observer's adaptation rate may induce
+    temporary frequency jitter during sea-state transitions.
+    The correction is always conservative in the sense that it reduces
+    rather than inflates the estimated quantities, providing a closer
+    lower bound on the true spectral moments.
+
+% -----------------------------------------------------------------------
+    \section{Summary of Metrics}
+    \label{sec:summary}
+
+    Table~\ref{tab:metrics} provides a consolidated reference of all
+    quantities computed by \texttt{SeaMetrics}, their mathematical symbols,
+    and their principal application contexts.
+
+% Full-width table spanning both columns
+    \begin{table*}[t]
+        \centering
+        \caption{Summary of metrics computed by \texttt{SeaMetrics}.}
+        \label{tab:metrics}
+        \renewcommand{\arraystretch}{1.20}
+        \small
+        \begin{tabular}{@{}lll@{}}
+            \toprule
+            \textbf{Metric} & \textbf{Symbol} & \textbf{Physical meaning / principal use} \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Spectral moments}} \\
+            Zeroth moment     & $M_0$              & Displacement variance; proportional to wave energy. \\
+            First moment      & $M_1$              & Energy-weighted frequency; defines mean wave frequency. \\
+            Second moment     & $M_2$              & Mean-square frequency; controls zero-upcrossing rate. \\
+            Third/fourth moments & $M_3, M_4$      & Spectral shape (skewness, kurtosis, peakedness). \\
+            Negative moment   & $M_{-1}$           & Energy flux and mean wave energy period. \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Frequency and bandwidth}} \\
+            Mean frequency    & $\bar\omega,\bar f$ & Central frequency of sea state. \\
+            Relative bandwidth & $\text{RBW}$      & Dimensionless spectral width \eqref{eq:rbw}. \\
+            Phase-increment RBW & ---              & Independent phase-jitter bandwidth estimate. \\
+            Bandwidths CLH, Goda, Kuik, LH
+            & $\varepsilon$      & Classical spectral width measures \eqref{eq:eCLH}--\eqref{eq:eLH}. \\
+            Narrowness        & $\nu$              & Classical spectral compactness parameter. \\
+            Regularity        & $R_\text{spec},R_\text{phase}$ & Coherence vs.\ randomness of the wave field. \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Wave periods}} \\
+            Zero-crossing period & $T_z$           & Average time between successive zero crossings \eqref{eq:Tz}. \\
+            Energy period     & $T_e$              & Period linked to wave energy transport \eqref{eq:Te}. \\
+            Mean periods      & $T_1, T_{m02}$     & Alternative averages used in design formulas. \\
+            Group period      & $T_g$              & Average spacing of wave groups. \\
+            Upcrossing rate   & $\nu_\uparrow$     & Expected wave count per second \eqref{eq:upcrossing}. \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Heights, steepness, and nonlinearity}} \\
+            Significant wave height & $H_s$        & Standard design height $\approx 4\sigma$ \eqref{eq:Hs}. \\
+            RMS displacement  & $\sigma$           & Standard deviation of surface elevation. \\
+            Steepness         & $H_s/L_0$          & Nonlinearity indicator; $>0.05$ implies steep waves. \\
+            Ursell number     & $Ur$               & Nonlinearity vs.\ dispersion in finite depth. \\
+            Nonlinearity parameter & $n$           & Spectral-peak dimensionless steepness. \\
+            Wave age          & $c_p/U_{10}$       & Maturity of wind sea; swell classification. \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Crest probabilities and extremes}} \\
+            Rayleigh exceedance & $P(H_c>h)$       & Probability a crest exceeds $h$ (linear model). \\
+            Tayfun exceedance & $P(H_c>h)$         & Second-order nonlinear crest probability. \\
+            Extreme crests    & $H_{1/10},H_{1/100}$ & High-percentile crests; expected maximum. \\
+            Weibull return height & $H_{T_\text{ret}}$ & Crest with specified return period. \\
+            POT mean excess   & $e(u)$             & Average exceedance above threshold. \\
+            Benjamin--Feir Index & $\text{BFI}$    & Modulational instability index. \\
+            Groupiness factor & $G$                & Ratio of group period to $T_z$. \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Energy, power, and peakedness}} \\
+            Wave energy density & $E$              & Energy per unit surface area $= \rho g M_0$. \\
+            Wave power          & $P$              & Mean energy flux per unit crest length \eqref{eq:power}. \\
+            Energy flux period  & $T_{e,\text{flux}}$ & $M_{-1}/M_0$. \\
+            Peakedness          & $Q_p, Q_G$       & Spectral shape sharpness (Ochi, Goda). \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Breaking indicators}} \\
+            Breaking probability & $P_b$           & Depth-limited or steepness-limited proxy. \\
+            Breaking height     & $H_b$            & Depth-limited crest $\approx 0.78\,h$. \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Human comfort}} \\
+            MSDV                & ---              & ISO~2631 motion sickness dose value. \\
+            Seasickness incidence & ---            & Predicted fraction of occupants affected. \\
+            Comfort rating      & ---              & Heuristic 0--100 comfort scale. \\
+            Vertical motion intensity & $\sqrt{M_2}$ & RMS vertical acceleration. \\
+            Time to onset       & ---              & Approximate latency to first discomfort. \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Shallow-water and environmental}} \\
+            Shoaling coefficient & $K_s$           & Amplitude change with depth variation. \\
+            Refraction coefficient & ---           & Wave direction change via Snell's law. \\
+            Battjes--Janssen probability & ---     & Depth-parameterised breaking model. \\
+            Wave age class      & $c_p/U_{10}$     & Young / mature / old-swell category. \\
+            Sea--swell partition & ---             & Fraction of energy attributed to swell. \\
+            Radiation stresses  & $S_{xx},S_{yy}$ & Wave momentum flux proxies. \\
+            Bottom orbital velocity & $u_b$        & Near-bed orbital speed at depth $h$. \\
+            WEC capture width ratio & CWR          & Absorbed power fraction of incident wave power. \\
+            \midrule
+            \multicolumn{3}{@{}l}{\emph{Data quality}} \\
+            Temporal stability  & ---              & Running variance of $H_s$; non-stationarity flag. \\
+            Band-limited SNR    & ---              & In-band vs.\ total variance ratio. \\
+            Data gap fraction   & ---              & Fraction of rejected non-finite samples. \\
+            \bottomrule
+        \end{tabular}
+    \end{table*}
+
+% -----------------------------------------------------------------------
+    \section{Conclusion}
+
+    \texttt{SeaMetrics} provides a rigorous and comprehensive real-time
+    pipeline for ocean wave characterisation from a single vertical
+    acceleration channel.
+    The moment-based architecture ensures that all derived quantities are
+    internally consistent, continuously updated, and computable with
+    constant computational cost per sample.
+    The bias-correction layer makes the system robust to jittery frequency
+    tracking, which is the dominant source of systematic error in
+    embedded adaptive-observer implementations.
+    The full output set—spanning standard oceanographic parameters,
+    nonlinear crest statistics, shallow-water corrections, human comfort
+    indices, and extreme-value return levels—supports applications ranging
+    from recreational sailing safety to offshore structure design and
+    wave energy resource assessment.
+
+% -----------------------------------------------------------------------
+    \begin{thebibliography}{9}
+
+        \bibitem{Cartwright1956}
+        D.~E. Cartwright and M.~S. Longuet-Higgins,
+        ``The statistical distribution of the maxima of a random function,''
+        \emph{Proc.\ R.\ Soc.\ Lond.\ A}, vol.~237, no.~1209,
+        pp.~212--232, 1956.
+
+        \bibitem{Longuet1963}
+        M.~S. Longuet-Higgins,
+        ``The effect of non-linearities on statistical distributions
+        in the theory of sea waves,''
+        \emph{J.\ Fluid Mech.}, vol.~17, no.~3, pp.~459--480, 1963.
+
+        \bibitem{Goda1970}
+        Y.~Goda,
+        ``Numerical experiments on wave statistics with spectral simulation,''
+        \emph{Rep.\ Port Harbour Res.\ Inst.}, vol.~9, no.~3,
+        pp.~3--57, 1970.
+
+        \bibitem{Kuik1988}
+        A.~J. Kuik, G.~P. van Vledder, and L.~H. Holthuijsen,
+        ``A method for the routine analysis of pitch-and-roll buoy wave data,''
+        \emph{J.\ Phys.\ Oceanogr.}, vol.~18, pp.~1020--1034, 1988.
+
+        \bibitem{Tayfun1980}
+        M.~A. Tayfun,
+        ``Narrow-band nonlinear sea waves,''
+        \emph{J.\ Geophys.\ Res.}, vol.~85, no.~C3,
+        pp.~1548--1552, 1980.
+
+        \bibitem{Ochi1998}
+        M.~K. Ochi,
+        \emph{Ocean Waves: The Stochastic Approach}.
+        Cambridge Univ.\ Press, 1998.
+
+        \bibitem{Battjes1978}
+        J.~A. Battjes and J.~P.~F.~M. Janssen,
+        ``Energy loss and set-up due to breaking of random waves,''
+        \emph{Coastal Engineering}, vol.~1, no.~1, pp.~23--40, 1978.
+
+        \bibitem{ISO2631}
+        International Organization for Standardization,
+        \emph{ISO~2631-1: Mechanical Vibration and Shock---Evaluation of Human
+        Exposure to Whole-Body Vibration}.
+        ISO, 1997.
+
+        \bibitem{BenjaminFeir1967}
+        T.~B. Benjamin and J.~E. Feir,
+        ``The disintegration of wave trains on deep water.
+        Part~1. Theory,''
+        \emph{J.\ Fluid Mech.}, vol.~27, no.~3, pp.~417--430, 1967.
+
+        \bibitem{Bobtsov2013}
+        A.~A. Bobtsov, N.~A. Nikolaev, O.~V. Slita, A.~S. Borgul, and
+        S.~V. Aranovskiy,
+        ``The new algorithm of sinusoidal signal frequency estimation,''
+        in \emph{Proc.\ 11th IFAC Workshop on Adaptation and Learning in
+        Control and Signal Processing}, Caen, France, 2013, pp.~182--185.
+
+    \end{thebibliography}
+
+\end{document}
