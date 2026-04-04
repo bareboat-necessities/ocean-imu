@@ -17,7 +17,7 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = detrend-basic-test detrend-wave-test
+TARGETS = detrend-basic-test detrend-wave-test detrend-wave3d-test
 
 all: $(TARGETS)
 
