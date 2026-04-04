@@ -452,9 +452,18 @@
         \]
         with weights $\alpha,\beta$ balancing frequency and directional separation, and $\Delta\theta$ the angular difference.
         \item Assign each bin to the partition of the nearest peak:
-        \[
-            \mathcal{P}_k = \{(f,\theta) : d((f,\theta),(f_k,\theta_k)) < d((f,\theta),(f_p,\theta_p)), \forall p\neq k \}.
-        \]
+		\[
+		\mathcal{P}_k
+		=
+		\left\{
+		(f,\theta) :
+		\begin{aligned}
+		& d\big((f,\theta),(f_k,\theta_k)\big) \\
+		&< d\big((f,\theta),(f_p,\theta_p)\big),
+		\quad \forall\, p \ne k
+		\end{aligned}
+		\right\}.
+		\]
     \end{enumerate}
 
     \textbf{Properties:}
