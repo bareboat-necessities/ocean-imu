@@ -408,26 +408,30 @@ class CompassAppBase {
     last_update_us_ = 0;
   }
 
-  CalibratedSample makeCalibratedSample_(const ImuSample& s) {
-    CalibratedSample out{};
-    out.a_raw_norm = s.a.norm();
+CalibratedSample makeCalibratedSample_(const ImuSample& s) {
+  CalibratedSample out{};
+  out.a_raw_norm = s.a.norm();
 
-    out.a_cal = runtime_.applyAccel(s.a, s.tempC);
-    out.w_cal = runtime_.applyGyro(s.w, s.tempC);
-    out.m_cal = runtime_.applyMag(s.m);
+  out.a_cal = runtime_.applyAccel(s.a, s.tempC);
+  out.w_cal = runtime_.applyGyro(s.w, s.tempC);
+  out.m_cal = runtime_.applyMag(s.m);
 
+  if (last_update_us_ == 0) {
+    out.dt = 1.0f / LOOP_HZ;
+  } else {
     out.dt = (s.sample_us - last_update_us_) * 1e-6f;
-    last_update_us_ = s.sample_us;
-    out.dt = clampf_(out.dt, 0.0010f, 0.0200f);
-
-    out.mag_norm_uT = out.m_cal.norm();
-    out.mag_ok = (out.mag_norm_uT > 5.0f && out.mag_norm_uT < 200.0f);
-
-    if (out.mag_ok && out.mag_norm_uT > 1e-6f) out.m_unit = out.m_cal / out.mag_norm_uT;
-
-    out.mag_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
-    return out;
   }
+  last_update_us_ = s.sample_us;
+  out.dt = clampf_(out.dt, 0.0010f, 0.0200f);
+
+  out.mag_norm_uT = out.m_cal.norm();
+  out.mag_ok = (out.mag_norm_uT > 5.0f && out.mag_norm_uT < 200.0f);
+
+  if (out.mag_ok && out.mag_norm_uT > 1e-6f) out.m_unit = out.m_cal / out.mag_norm_uT;
+
+  out.mag_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
+  return out;
+}
 
   void updateOutputs_(const ImuSample& s) {
     sample_ = makeCalibratedSample_(s);
