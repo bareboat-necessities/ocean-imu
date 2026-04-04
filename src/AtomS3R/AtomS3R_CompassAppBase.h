@@ -149,36 +149,35 @@ class MagGate {
       return false;
     }
 
+    if (last_ms_ == 0) {
+      last_ms_ = now_ms;
+      last_mag_ = m_cal;
+      repeat_count_ = 0;
+      return true;
+    }
+
     const uint32_t dtm = now_ms - last_ms_;
     if (dtm < cfg_.sample_spacing_ms) return false;
 
     const float dm = (m_cal - last_mag_).norm();
     const bool looks_stuck = dm <= cfg_.min_delta_uT;
 
-    bool fresh = false;
-    if (!looks_stuck) {
-      repeat_count_ = 0;
-      fresh = true;
-    } else if (cfg_.stuck_reject_after_n == 0) {
-      fresh = false;
+    // Always treat time-spaced valid mag samples as fresh.
+    // Track repeated nearly-identical values only as soft state.
+    if (looks_stuck) {
+      if (repeat_count_ < 255) repeat_count_++;
     } else {
-      if (repeat_count_ < cfg_.stuck_allow_n) {
-        repeat_count_++;
-        fresh = true;
-      } else if (repeat_count_ >= cfg_.stuck_reject_after_n) {
-        fresh = false;
-      } else {
-        repeat_count_++;
-        fresh = ((repeat_count_ & 1U) == 0U);
-      }
+      repeat_count_ = 0;
     }
 
-    if (fresh) {
-      last_ms_ = now_ms;
-      last_mag_ = m_cal;
-    }
+    last_ms_ = now_ms;
+    last_mag_ = m_cal;
+    return true;
+  }
 
-    return fresh;
+  bool looksStuck() const {
+    if (cfg_.stuck_reject_after_n == 0) return false;
+    return repeat_count_ >= cfg_.stuck_reject_after_n;
   }
 
  private:
