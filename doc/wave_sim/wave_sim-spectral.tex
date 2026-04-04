@@ -665,12 +665,21 @@
 
     \paragraph{(ii) Maximum Entropy (MEM).}
     Choose $D$ to maximize Shannon entropy subject to matching measured harmonics (constraints):
-    \begin{align}
-        \max_{D\ge0}\quad & \mathcal{H}[D] = -\int_{0}^{2\pi} D\ln D\, d\theta,\\
-        \text{s.t.}\quad & \int D\,d\theta=1,\quad
-        \int D \cos n\theta\, d\theta = a_n,\quad
-        \int D \sin n\theta\, d\theta = b_n,\; n=1,\ldots,N_h.
-    \end{align}
+	\begin{equation}
+	\begin{aligned}
+	\max_{D\ge 0}\quad
+	& \mathcal{H}[D]
+	  = -\int_{0}^{2\pi} D \ln D \, d\theta,
+	\\
+	\text{s.t.}\quad
+	& \int D\, d\theta = 1,
+	\\
+	& \int D \cos(n\theta)\, d\theta = a_n,
+	\\
+	& \int D \sin(n\theta)\, d\theta = b_n,
+	\qquad n=1,\ldots,N_h.
+	\end{aligned}
+	\end{equation}
     The solution has the exponential family form
     \begin{equation}
         D(\theta)\propto
@@ -681,11 +690,26 @@
     \paragraph{(iii) Maximum Likelihood/Beamforming (MLM/EMLM).}
     For an array with steering $\mathbf{a}(\theta;f)$ and CSD $\mathbf{C}(f)$, the classic Capon/MLM estimator is
     \begin{equation}
-        \widehat{D}_{\text{MLM}}(f,\theta)
-        = \frac{1}{\mathbf{a}(\theta;f)^{\mathrm{H}}\,
-        \mathbf{C}(f)^{-1}\,\mathbf{a}(\theta;f)}\;\bigg/ \;
-        \int_{0}^{2\pi}\frac{d\varphi}{\mathbf{a}(\varphi;f)^{\mathrm{H}}\,
-        \mathbf{C}(f)^{-1}\,\mathbf{a}(\varphi;f)}.
+    \begin{aligned}
+    \widehat{D}_{\text{MLM}}(f,\theta)
+    &=
+    \frac{
+      \displaystyle
+      \frac{1}{
+        \mathbf{a}(\theta;f)^{\mathrm{H}}
+        \mathbf{C}(f)^{-1}
+        \mathbf{a}(\theta;f)
+      }
+    }{
+      \displaystyle
+      \int_{0}^{2\pi}
+      \frac{d\varphi}{
+        \mathbf{a}(\varphi;f)^{\mathrm{H}}
+        \mathbf{C}(f)^{-1}
+        \mathbf{a}(\varphi;f)
+      }
+    }.
+    \end{aligned}
     \end{equation}
     optionally corrected for bias/noise in EMLM. This provides high directional resolution when aperture and SNR are adequate.
 
@@ -713,12 +737,29 @@
     \paragraph{Outputs and Integral Measures.}
     From $\widehat{S}(f,\theta)$ compute directional moments and spreads:
     \begin{align}
-        \bar{\theta}(f) &= \arg\!\Big(\int e^{\mathrm{i}\theta} D(f,\theta)\, d\theta\Big),
-        &
-        \sigma_\theta^2(f) &= 2\Big(1-\big|\int e^{\mathrm{i}\theta} D(f,\theta)\, d\theta\big|\Big),\\
-        m_n &= \int f^n \bigg(\int S(f,\theta)\,d\theta\bigg)\, df,
-        &
-        H_s &= 4\sqrt{m_0},\quad T_z=\sqrt{m_0/m_2},\quad T_{-10}=m_{-1}/m_0.
+    \bar{\theta}(f)
+    &= \arg\!\left(
+       \int e^{\mathrm{i}\theta} D(f,\theta)\, d\theta
+       \right),
+    \\
+    \sigma_\theta^2(f)
+    &= 2\left(
+       1-\left|
+       \int e^{\mathrm{i}\theta} D(f,\theta)\, d\theta
+       \right|
+       \right),
+    \\
+    m_n
+    &= \int f^n
+       \left(
+       \int S(f,\theta)\, d\theta
+       \right)\, df,
+    \\
+    H_s &= 4\sqrt{m_0},
+    \qquad
+    T_z = \sqrt{m_0/m_2},
+    \qquad
+    T_{-10} = m_{-1}/m_0.
     \end{align}
     Directional partitions (wind sea vs.\ swells) can then be obtained by algorithms in \Cref{sec:wave-partitioning}.
 
