@@ -298,13 +298,26 @@ class CompassAppBase {
   }
 
   void tick() {
+
+  // Wait until next scheduled tick.
+  while (true) {
     const uint32_t now_us = micros();
-    int32_t wait_us = (int32_t)(next_tick_us_ - now_us);
-    if (wait_us > 0) {
+    const int32_t wait_us = (int32_t)(next_tick_us_ - now_us);
+    if (wait_us <= 0) break;
+
+    if (wait_us > 1000)
+      delayMicroseconds(500);
+    else
       delayMicroseconds((uint32_t)wait_us);
-    }
-    next_tick_us_ += LOOP_PERIOD_US;
-    
+  }
+
+  // Advance schedule. If we fell far behind, resync cleanly.
+  const uint32_t now_us2 = micros();
+  if ((int32_t)(now_us2 - next_tick_us_) > (int32_t)(4 * LOOP_PERIOD_US))
+    next_tick_us_ = now_us2 + LOOP_PERIOD_US;
+  else
+    next_tick_us_ += LOOP_PERIOD_US
+      
     Input::update();
 
     if (Input::tapPressed()) {
