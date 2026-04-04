@@ -218,7 +218,10 @@ int main(int argc, char* argv[]) {
       const double gate_rms_m = kRmsGateFractionOfHeight * scenario.height_m;
       const double duration_s = wave_rows.back().time_s;
 
-      AdaptiveWaveDetrender3D detrender;
+      AdaptiveWaveDetrender3D::Config cfg;
+      cfg.baseline_cutoff_fraction = 0.18f;
+      cfg.enable_wave_cleanup = false;
+      AdaptiveWaveDetrender3D detrender(cfg);
       RMSAccumulator3D drift_rms;
       RMSAccumulator3D detrended_rms;
 
