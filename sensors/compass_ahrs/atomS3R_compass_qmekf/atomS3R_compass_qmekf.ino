@@ -25,12 +25,69 @@
 #endif
 
 #include "AtomS3R/AtomS3R_CompassAppBase.h"
+#include "ahrs/KalmanQMEKF.h"
 
 using namespace atoms3r_compass;
 
+class QmekfBackend : public IAttitudeBackend {
+ public:
+  void reset() override {
+    const float g = ImuCalCfg::g_std;
+
+    Vector3f sigma_a;
+    sigma_a << 0.06f * g, 0.06f * g, 0.06f * g;
+    Vector3f sigma_g;
+    sigma_g << 0.0030f, 0.0030f, 0.0030f;
+    Vector3f sigma_m;
+    sigma_m << 0.020f, 0.020f, 0.020f;
+
+    if (mekf_) {
+      mekf_->~QuaternionMEKF<float, true>();
+      mekf_ = nullptr;
+    }
+
+    mekf_ = new (storage_) QuaternionMEKF<float, true>(sigma_a, sigma_g, sigma_m, 0.5f, 1e-2f, 1e-9f);
+    inited_ = false;
+  }
+
+  void step(const CalibratedSample& s, AttitudeSolution& out) override {
+    if (!inited_) {
+      Vector3f a_init = s.a_cal;
+      const float an0 = a_init.norm();
+      if (an0 > 1e-6f) a_init *= (ImuCalCfg::g_std / an0);
+
+      if (s.mag_ok)
+        mekf_->initialize_from_acc_mag(a_init, s.m_unit);
+      else
+        mekf_->initialize_from_acc(a_init);
+
+      inited_ = true;
+    }
+
+    mekf_->time_update(s.w_cal, s.dt);
+
+    Vector3f a_att = s.a_cal;
+    const float an = a_att.norm();
+    if (an > 1e-6f) a_att *= (ImuCalCfg::g_std / an);
+    mekf_->measurement_update_acc_only(a_att);
+
+    if (s.mag_ok && s.mag_fresh) mekf_->measurement_update_mag_only(s.m_unit);
+
+    const auto q = mekf_->quaternion();
+    out = makeAttitudeFromQuat(q(0), q(1), q(2), q(3));
+  }
+
+  bool isValid() const override { return inited_; }
+
+ private:
+  alignas(QuaternionMEKF<float, true>) uint8_t storage_[sizeof(QuaternionMEKF<float, true>)];
+  QuaternionMEKF<float, true>* mekf_ = nullptr;
+  bool inited_ = false;
+};
+
 class MekfCompassApp : public CompassAppBase {
  public:
-  MekfCompassApp() : CompassAppBase(std::make_unique<MekfBackend>(), MagGateConfig{12, 0.02f, 0, 0}, "qMEKF") {}
+  MekfCompassApp() : CompassAppBase(std::make_unique<QmekfBackend>(), MagGateConfig{12, 0.02f, 0, 0}, "qMEKF") {}
 };
 
 static MekfCompassApp g_app;
