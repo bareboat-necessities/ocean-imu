@@ -82,13 +82,24 @@ static inline AttitudeSolution makeAttitudeFromQuat(float x, float y, float z, f
   AttitudeSolution out{};
 
   const float nn = x * x + y * y + z * z + w * w;
-  if (nn > 1e-12f) {
-    const float invn = 1.0f / sqrtf(nn);
-    x *= invn;
-    y *= invn;
-    z *= invn;
-    w *= invn;
+  if (nn <= 1e-12f) {
+    out.valid = false;
+    out.x = 0.0f;
+    out.y = 0.0f;
+    out.z = 0.0f;
+    out.w = 1.0f;
+    out.roll_deg = 0.0f;
+    out.pitch_deg = 0.0f;
+    out.yaw_deg = 0.0f;
+    out.heading_deg = 0.0f;
+    return out;
   }
+
+  const float invn = 1.0f / sqrtf(nn);
+  x *= invn;
+  y *= invn;
+  z *= invn;
+  w *= invn;
 
   out.valid = true;
   out.x = x;
