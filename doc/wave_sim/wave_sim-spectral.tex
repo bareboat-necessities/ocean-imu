@@ -609,11 +609,17 @@
         \label{eq:dispersion_dir}
     \end{equation}
     ($h$ depth). The fundamental idea is that the \emph{first} and \emph{second} directional Fourier moments of $D(f,\theta)$,
-    \begin{equation}
-        R_n(f) = \int_{0}^{2\pi} D(f,\theta)\, e^{\mathrm{i}n\theta}\, d\theta
-        = a_n(f) + \mathrm{i}\,b_n(f), \quad n=0,1,2,\ldots,
-        \qquad R_0\equiv1,
-    \end{equation}
+	\begin{equation}
+	\begin{aligned}
+	R_n(f)
+	&= \int_{0}^{2\pi} D(f,\theta)\, e^{\mathrm{i}n\theta}\, d\theta \\
+	&= a_n(f) + \mathrm{i}\,b_n(f),
+	\qquad n=0,1,2,\ldots
+	\end{aligned}
+	\end{equation}
+	\begin{equation}
+	R_0(f) \equiv 1.
+	\end{equation}
     can be related to normalized cross-spectra of $(\eta,\eta_x,\eta_y)$ (or proxies from pitch/roll). A widely used set of estimators is
     \begin{align}
         a_1(f) &= \frac{\Re\{ S_{\eta\,\eta_x}(f)\}}{k\,S_{\eta\eta}(f)},
