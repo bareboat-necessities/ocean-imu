@@ -34,7 +34,10 @@ fetch-sim-data:
 	curl -fL "$(SIM_DATA_URL)" -o "$(SIM_DATA_ZIP)"; \
 	for d in $(TEST_DIRS); do \
 		plot_dir="plots/$${d#tests/}"; \
+		test_dir="$$d"; \
 		mkdir -p "$$plot_dir"; \
 		unzip -o "$(SIM_DATA_ZIP)" -d "$$plot_dir" >/dev/null; \
 		echo "Unpacked $(SIM_DATA_ZIP) -> $$plot_dir"; \
+		unzip -o "$(SIM_DATA_ZIP)" -d "$$test_dir" >/dev/null; \
+		echo "Unpacked $(SIM_DATA_ZIP) -> $$test_dir"; \
 	done
