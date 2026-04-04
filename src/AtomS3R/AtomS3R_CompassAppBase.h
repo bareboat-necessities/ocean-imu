@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright 2026, Mikhail Grushinskiy
+*/
+
 #include <Arduino.h>
 #include <M5Unified.h>
 #include <memory>
