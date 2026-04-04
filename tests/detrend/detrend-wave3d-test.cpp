@@ -29,6 +29,8 @@ struct Scenario {
 
 struct WaveRow {
   double time_s = 0.0;
+  double disp_x_m = 0.0;
+  double disp_y_m = 0.0;
   double disp_z_m = 0.0;
 };
 
@@ -110,17 +112,26 @@ std::vector<WaveRow> load_wave_rows(const std::string& path) {
 
   const std::vector<std::string> header = split_csv_line(line);
   std::size_t time_idx = std::numeric_limits<std::size_t>::max();
+  std::size_t disp_x_idx = std::numeric_limits<std::size_t>::max();
+  std::size_t disp_y_idx = std::numeric_limits<std::size_t>::max();
   std::size_t disp_z_idx = std::numeric_limits<std::size_t>::max();
   for (std::size_t i = 0; i < header.size(); ++i) {
     if (header[i] == "time") {
       time_idx = i;
+    } else if (header[i] == "disp_x") {
+      disp_x_idx = i;
+    } else if (header[i] == "disp_y") {
+      disp_y_idx = i;
     } else if (header[i] == "disp_z") {
       disp_z_idx = i;
     }
   }
 
-  if (time_idx == std::numeric_limits<std::size_t>::max() || disp_z_idx == std::numeric_limits<std::size_t>::max()) {
-    throw std::runtime_error("Wave CSV missing required columns 'time' and 'disp_z': " + path);
+  if (time_idx == std::numeric_limits<std::size_t>::max() ||
+      disp_x_idx == std::numeric_limits<std::size_t>::max() ||
+      disp_y_idx == std::numeric_limits<std::size_t>::max() ||
+      disp_z_idx == std::numeric_limits<std::size_t>::max()) {
+    throw std::runtime_error("Wave CSV missing required columns 'time', 'disp_x', 'disp_y', and 'disp_z': " + path);
   }
 
   std::vector<WaveRow> rows;
@@ -130,12 +141,15 @@ std::vector<WaveRow> load_wave_rows(const std::string& path) {
     }
 
     const std::vector<std::string> fields = split_csv_line(line);
-    if (fields.size() <= std::max(time_idx, disp_z_idx)) {
+    const std::size_t max_idx = std::max(std::max(time_idx, disp_x_idx), std::max(disp_y_idx, disp_z_idx));
+    if (fields.size() <= max_idx) {
       throw std::runtime_error("Malformed row in wave CSV: " + path);
     }
 
     WaveRow row;
     row.time_s = parse_double_field(fields[time_idx], "time");
+    row.disp_x_m = parse_double_field(fields[disp_x_idx], "disp_x");
+    row.disp_y_m = parse_double_field(fields[disp_y_idx], "disp_y");
     row.disp_z_m = parse_double_field(fields[disp_z_idx], "disp_z");
     rows.push_back(row);
   }
@@ -147,15 +161,8 @@ std::vector<WaveRow> load_wave_rows(const std::string& path) {
   return rows;
 }
 
-Vec3d reference_signal(const Scenario& scenario, double wave_freq_hz, double time_s, double ref_z_m) {
-  const double omega = 2.0 * kPi * wave_freq_hz;
-  Vec3d ref;
-  ref.z = ref_z_m;
-  ref.x = (0.35 * scenario.height_m) * std::sin((omega * time_s) + 0.40) +
-          (0.08 * scenario.height_m) * std::sin((0.50 * omega * time_s) - 0.70);
-  ref.y = (0.28 * scenario.height_m) * std::cos((omega * time_s) - 0.30) +
-          (0.06 * scenario.height_m) * std::sin((0.65 * omega * time_s) + 0.20);
-  return ref;
+Vec3d reference_signal(const WaveRow& row) {
+  return Vec3d{row.disp_x_m, row.disp_y_m, row.disp_z_m};
 }
 
 Vec3d drift_signal(const Scenario& scenario, double wave_freq_hz, double time_s, double duration_s) {
@@ -233,7 +240,7 @@ int main(int argc, char* argv[]) {
           continue;
         }
 
-        const Vec3d reference = reference_signal(scenario, wave_freq_hz, row.time_s, row.disp_z_m);
+        const Vec3d reference = reference_signal(row);
         const Vec3d drift = drift_signal(scenario, wave_freq_hz, row.time_s, duration_s);
         const Vec3d drifted{reference.x + drift.x, reference.y + drift.y, reference.z + drift.z};
 
