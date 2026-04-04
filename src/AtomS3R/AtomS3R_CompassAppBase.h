@@ -9,8 +9,6 @@
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "nmea/NmeaCompass.h"
-#include "ahrs/Mahony_AHRS.h"
-#include "ahrs/KalmanQMEKF.h"
 
 namespace atoms3r_compass {
 
@@ -236,100 +234,6 @@ class IAttitudeBackend {
   virtual void reset() = 0;
   virtual void step(const CalibratedSample& s, AttitudeSolution& out) = 0;
   virtual bool isValid() const = 0;
-};
-
-class MahonyBackend : public IAttitudeBackend {
- public:
-  void reset() override {
-    const float twoKp = 2.0f * 6.0f;
-    const float twoKi = 2.0f * 0.0002f;
-    mahony_AHRS_init(&mahony_, twoKp, twoKi);
-
-    mahony_.q0 = 1.0f;
-    mahony_.q1 = 0.0f;
-    mahony_.q2 = 0.0f;
-    mahony_.q3 = 0.0f;
-    mahony_.integralFBx = mahony_.integralFBy = mahony_.integralFBz = 0.0f;
-    valid_ = true;
-  }
-
-  void step(const CalibratedSample& s, AttitudeSolution& out) override {
-    Vector3f a_att = -s.a_cal;
-    const float an = a_att.norm();
-    if (an > 1e-6f) a_att *= (ImuCalCfg::g_std / an);
-
-    float pd = 0.0f, rd = 0.0f, yd = 0.0f;
-    if (s.mag_ok && s.mag_fresh) {
-      mahony_AHRS_update_mag(&mahony_, s.w_cal.x(), s.w_cal.y(), s.w_cal.z(), a_att.x(), a_att.y(), a_att.z(), s.m_unit.x(),
-                             s.m_unit.y(), s.m_unit.z(), &pd, &rd, &yd, s.dt);
-    } else {
-      mahony_AHRS_update(&mahony_, s.w_cal.x(), s.w_cal.y(), s.w_cal.z(), a_att.x(), a_att.y(), a_att.z(), &pd, &rd, &yd, s.dt);
-    }
-
-    out = makeAttitudeFromQuat(mahony_.q1, mahony_.q2, mahony_.q3, mahony_.q0);
-  }
-
-  bool isValid() const override { return valid_; }
-
- private:
-  Mahony_AHRS_Vars mahony_{};
-  bool valid_ = false;
-};
-
-class MekfBackend : public IAttitudeBackend {
- public:
-  void reset() override {
-    const float g = ImuCalCfg::g_std;
-
-    Vector3f sigma_a;
-    sigma_a << 0.06f * g, 0.06f * g, 0.06f * g;
-    Vector3f sigma_g;
-    sigma_g << 0.0030f, 0.0030f, 0.0030f;
-    Vector3f sigma_m;
-    sigma_m << 0.020f, 0.020f, 0.020f;
-
-    if (mekf_) {
-      mekf_->~QuaternionMEKF<float, true>();
-      mekf_ = nullptr;
-    }
-
-    mekf_ = new (storage_) QuaternionMEKF<float, true>(sigma_a, sigma_g, sigma_m, 0.5f, 1e-2f, 1e-9f);
-    inited_ = false;
-  }
-
-  void step(const CalibratedSample& s, AttitudeSolution& out) override {
-    if (!inited_) {
-      Vector3f a_init = s.a_cal;
-      const float an0 = a_init.norm();
-      if (an0 > 1e-6f) a_init *= (ImuCalCfg::g_std / an0);
-
-      if (s.mag_ok)
-        mekf_->initialize_from_acc_mag(a_init, s.m_unit);
-      else
-        mekf_->initialize_from_acc(a_init);
-
-      inited_ = true;
-    }
-
-    mekf_->time_update(s.w_cal, s.dt);
-
-    Vector3f a_att = s.a_cal;
-    const float an = a_att.norm();
-    if (an > 1e-6f) a_att *= (ImuCalCfg::g_std / an);
-    mekf_->measurement_update_acc_only(a_att);
-
-    if (s.mag_ok && s.mag_fresh) mekf_->measurement_update_mag_only(s.m_unit);
-
-    const auto q = mekf_->quaternion();
-    out = makeAttitudeFromQuat(q(0), q(1), q(2), q(3));
-  }
-
-  bool isValid() const override { return inited_; }
-
- private:
-  alignas(QuaternionMEKF<float, true>) uint8_t storage_[sizeof(QuaternionMEKF<float, true>)];
-  QuaternionMEKF<float, true>* mekf_ = nullptr;
-  bool inited_ = false;
 };
 
 class CompassAppBase {
