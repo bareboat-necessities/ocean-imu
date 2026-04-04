@@ -142,7 +142,7 @@ class MagGate {
     if (dtm < cfg_.sample_spacing_ms) return false;
 
     const float dm = (m_cal - last_mag_).norm();
-    const bool looks_stuck = dm < cfg_.min_delta_uT;
+    const bool looks_stuck = dm <= cfg_.min_delta_uT;
 
     bool fresh = false;
     if (!looks_stuck) {
