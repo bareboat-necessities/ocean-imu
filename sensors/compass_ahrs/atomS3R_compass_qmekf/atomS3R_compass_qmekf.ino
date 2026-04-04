@@ -34,12 +34,9 @@ class QmekfBackend : public IAttitudeBackend {
   void reset() override {
     const float g = ImuCalCfg::g_std;
 
-    Vector3f sigma_a;
-    sigma_a << 0.06f * g, 0.06f * g, 0.06f * g;
-    Vector3f sigma_g;
-    sigma_g << 0.0030f, 0.0030f, 0.0030f;
-    Vector3f sigma_m;
-    sigma_m << 0.020f, 0.020f, 0.020f;
+    Vector3f sigma_a; sigma_a <<  0.06f * g,  0.06f * g,   0.06f * g;
+    Vector3f sigma_g; sigma_g <<    0.0030f,    0.0030f,     0.0030f;
+    Vector3f sigma_m; sigma_m <<     0.020f,     0.020f,      0.020f;
 
     if (mekf_) {
       mekf_->~QuaternionMEKF<float, true>();
