@@ -85,12 +85,12 @@ class QmekfBackend : public IAttitudeBackend {
   bool inited_ = false;
 };
 
-class MekfCompassApp : public CompassAppBase {
+class QmekfCompassApp : public CompassAppBase {
  public:
-  MekfCompassApp() : CompassAppBase(std::make_unique<QmekfBackend>(), MagGateConfig{12, 0.02f, 0, 0}, "qMEKF") {}
+  QmekfCompassApp() : CompassAppBase(std::make_unique<QmekfBackend>(), MagGateConfig{12, 0.02f, 0, 0}, "qMEKF") {}
 };
 
-static MekfCompassApp g_app;
+static QmekfCompassApp g_app;
 
 void setup() { g_app.begin(); }
 void loop() { g_app.tick(); }
