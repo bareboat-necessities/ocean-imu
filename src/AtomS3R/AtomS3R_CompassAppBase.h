@@ -301,13 +301,10 @@ class CompassAppBase {
     const uint32_t now_us = micros();
     int32_t wait_us = (int32_t)(next_tick_us_ - now_us);
     if (wait_us > 0) {
-      if (wait_us > 200)
-        delayMicroseconds(200);
-      else
-        delayMicroseconds((uint32_t)wait_us);
+      delayMicroseconds((uint32_t)wait_us);
     }
     next_tick_us_ += LOOP_PERIOD_US;
-
+    
     Input::update();
 
     if (Input::tapPressed()) {
