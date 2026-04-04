@@ -251,15 +251,17 @@
     Let the vessel-fixed body frame have $x_b$ forward, $y_b$ to port, and $z_b$ upward.
     The six rigid-body motions are
     \begin{equation}
+    \begin{aligned}
         \vect{\xi}
-        = \begin{bmatrix}
+        &= \begin{bmatrix}
               \xi_1 & \xi_2 & \xi_3 & \xi_4 & \xi_5 & \xi_6
-        \end{bmatrix}^T
-        = \begin{bmatrix}
+        \end{bmatrix}^T\\
+        &= \begin{bmatrix}
               \text{surge} & \text{sway} & \text{heave} &
               \text{roll}  & \text{pitch} & \text{yaw}
         \end{bmatrix}^T.
         \label{eq:dofs}
+    \end{aligned}
     \end{equation}
     A separate RAO $H_j(\omega,\beta)$ is defined for each DOF~$j=1,\ldots,6$.
 
@@ -902,16 +904,19 @@
     optionally replaced by the state-space realization of \cref{sec:statespace}.
 
     In one sentence:
-    \begin{equation}
-        \boxed{
-            \text{PM/JONSWAP sea}
-            \;+\;
-            \text{vessel hydrodynamic operator}
-            \;=\;
-            \text{vessel behavior}
-        }
-        \label{eq:oneliner}
-    \end{equation}
+	\begin{equation}
+	\boxed{
+	\begin{aligned}
+	\text{PM/JONSWAP sea}
+	\;&+\;
+	\text{vessel hydrodynamic operator}
+	\\
+	&=\;
+	\text{vessel behavior}
+	\end{aligned}
+	}
+	\label{eq:oneliner}
+	\end{equation}
 
 % ============================================================
     \section{Scope and Limitations of Linear RAO Methods}
