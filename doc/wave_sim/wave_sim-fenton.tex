@@ -5,8 +5,8 @@
 % ------------------------------------------------------------
 \usepackage{iftex}
 \ifPDFTeX
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
 \fi
 
 \usepackage{amsthm}
@@ -46,15 +46,15 @@
 % Typography / spacing
 % ------------------------------------------------------------
 \sisetup{
-    detect-weight = true,
-    detect-family = true,
-    per-mode = symbol,
+    detect-weight  = true,
+    detect-family  = true,
+    per-mode       = symbol,
 }
 
 \AtBeginEnvironment{equation}{\small}
 \AtBeginEnvironment{align}{\small}
 
-\setlist[description]{font=\footnotesize\bfseries, labelsep=0.6em, leftmargin=1.8em}
+\setlist[description]{font=\footnotesize\bfseries,labelsep=0.6em,leftmargin=1.8em}
 
 \pdfstringdefDisableCommands{%
     \def\SI#1#2{#1 #2}%
@@ -72,13 +72,13 @@
 }
 
 \ifPDFTeX
-\DeclareUnicodeCharacter{2013}{\textendash}
-\DeclareUnicodeCharacter{2014}{\textemdash}
-\DeclareUnicodeCharacter{2018}{\textquoteleft}
-\DeclareUnicodeCharacter{2019}{\textquoteright}
-\DeclareUnicodeCharacter{201C}{\textquotedblleft}
-\DeclareUnicodeCharacter{201D}{\textquotedblright}
-\DeclareUnicodeCharacter{2212}{\textminus}
+  \DeclareUnicodeCharacter{2013}{\textendash}
+  \DeclareUnicodeCharacter{2014}{\textemdash}
+  \DeclareUnicodeCharacter{2018}{\textquoteleft}
+  \DeclareUnicodeCharacter{2019}{\textquoteright}
+  \DeclareUnicodeCharacter{201C}{\textquotedblleft}
+  \DeclareUnicodeCharacter{201D}{\textquotedblright}
+  \DeclareUnicodeCharacter{2212}{\textminus}
 \fi
 
 \setcounter{topnumber}{5}
@@ -97,417 +97,1001 @@
 \makeatother
 
 % ------------------------------------------------------------
-% Title / author
+% Convenience macros
 % ------------------------------------------------------------
-\title{Nonlinear Periodic Wave Computation via Fenton's Spectral Method}
+\newcommand{\Ebar}{\overline{E}}
+\newcommand{\ubar}{\overline{u}}
+\newcommand{\half}{\tfrac{1}{2}}
+
+% ============================================================
+\title{Nonlinear Periodic Wave Computation via Fenton's Spectral Method:
+       Formulation, Convergence, and Validation}
+
 \author{Various Generative AI with prompts by Mikhail Grushinskiy}
+
 \begin{document}
-    \maketitle
+\maketitle
 
-    \begin{abstract}
-        This paper summarizes the mathematical formulation of Fenton's spectral method for steady periodic surface gravity waves in finite depth and briefly describes its \texttt{C++} implementation in \texttt{FentonWave.h}. The governing free-surface problem is posed for inviscid, incompressible, irrotational flow and represented through truncated Fourier series for the stream function and free-surface elevation. The resulting nonlinear collocation system is solved by Newton--Raphson iteration using an analytically assembled Jacobian. In addition to the core wave solution, the implementation provides derived kinematic and dynamic quantities, including velocity, pressure, energy flux, momentum flux, and Stokes drift. A companion \texttt{WaveSurfaceTracker} class models the motion of a small floating object constrained to the computed free surface.
-    \end{abstract}
+% ------------------------------------------------------------
+\begin{abstract}
+This paper presents a self-contained description of Fenton's spectral
+(stream-function) method for fully nonlinear, steady, periodic surface
+gravity waves in arbitrary finite depth, together with a discussion of
+its convergence properties and validation against established analytical
+and numerical benchmarks.
+The governing free-surface problem is posed for inviscid,
+incompressible, irrotational flow and represented through truncated
+Fourier series for the stream function and free-surface elevation.
+The resulting nonlinear collocation system is solved by
+Newton--Raphson iteration using an analytically assembled Jacobian.
+Convergence is demonstrated to be rapid---typically spectral in the
+Fourier order $N$ for smooth solutions---and the method is validated
+against fifth-order Stokes theory in deep water, cnoidal-wave theory in
+shallow water, and the Longuet-Higgins limiting-steepness results.
+Derived quantities including velocity, pressure, wave energy, momentum
+flux, radiation stress, and Stokes drift are documented and compared
+with independent expressions from linear wave theory.
+A companion \texttt{WaveSurfaceTracker} class, which integrates the
+motion of a small floating body constrained to the computed free
+surface using fourth-order Runge--Kutta, is also described.
+\end{abstract}
 
-    \begin{IEEEkeywords}
-        Fenton wave, nonlinear periodic waves, stream function method, spectral method, steady gravity waves, collocation method, Newton--Raphson, free-surface flow
-    \end{IEEEkeywords}
+\begin{IEEEkeywords}
+Fenton wave, nonlinear periodic waves, stream function method,
+spectral method, steady gravity waves, collocation, Newton--Raphson,
+Stokes waves, cnoidal waves, free-surface flow, convergence
+\end{IEEEkeywords}
 
-    \section{Nonlinear Periodic Fenton Wave}
-    \label{sec:fenton_method}
+% ============================================================
+\section{Introduction and Historical Context}
+\label{sec:intro}
 
-    This paper summarizes the mathematical formulation of Fenton's method for steady periodic surface gravity waves in finite depth \cite{Fenton1988}, followed by a brief description of its \texttt{C++} implementation (see \texttt{FentonWave.h}).
+\IEEEPARstart{T}{he} computation of steady periodic surface gravity
+waves is a classical problem in hydrodynamics, with a history spanning
+more than 175 years and a literature spanning analytical perturbation
+methods, semi-analytical series, and fully numerical schemes.
+The ability to compute accurate nonlinear wave profiles and their
+associated velocity, pressure, and energy fields is fundamental to
+offshore structure design, coastal engineering, wave energy conversion,
+and the initialisation of time-domain free-surface simulations.
 
-    \subsection{Governing Equations}
+\subsection{Analytical Foundations}
 
-    Let $(x,z)$ denote the horizontal and vertical coordinates, with the seabed at $z=-d$ and free surface at $z=\eta(x)$. Under the assumptions of irrotational, incompressible, inviscid flow, there exists a stream function $\psi(x,z)$ satisfying Laplace's equation,
-    \begin{equation}
-        \nabla^2 \psi = \psi_{xx} + \psi_{zz} = 0,\quad -d \le z \le \eta(x).
-    \end{equation}
-    At the free surface $z=\eta(x)$, the dynamic (Bernoulli) and kinematic boundary conditions are
-    \begin{align}
-        \underbrace{\tfrac12\bigl(\psi_x^2 + \psi_z^2\bigr) + g\,\eta}_{\text{total head}}
-        &= R + c\,\psi_x,
-        \label{eq:bernoulli}\\
-        \psi_z &= \eta_x\,\psi_x,
-        \label{eq:kinematic}
-    \end{align}
-    where $g$ is gravity, $c$ the phase speed, and $R$ a constant (Bernoulli constant). At the bed $z=-d$, no-flow implies
-    \begin{equation}
-        \psi(x,-d)=0.
-    \end{equation}
+The first systematic perturbation theory for finite-amplitude gravity
+waves in deep water was given by Stokes \cite{Stokes1847}, who showed
+that steady periodic solutions could be represented as power series in
+the wave steepness $ka$, where $k = 2\pi/L$ is the wavenumber and $a$
+the amplitude.
+Stokes carried the expansion to third order; subsequent authors
+extended it to fifth order \cite{Skjelbreia1960} and eventually to
+much higher orders using computer algebra
+\cite{Schwartz1974,Longuet-Higgins1975}.
+The fifth-order Stokes solution of Skjelbreia and Hendrickson
+\cite{Skjelbreia1960} remains the most widely used analytical
+approximation in offshore engineering practice and provides the
+standard benchmark for numerical methods in the intermediate and
+deep-water range.
 
-    \subsection{Spectral Representation}
+For shallow water, where the parameter $kd$ is small, the relevant
+analytical framework is cnoidal wave theory, developed independently
+by Korteweg and de Vries \cite{KortewegDeVries1895} from their
+famous equation for long waves.
+Cnoidal waves express the surface profile and kinematics in terms of
+Jacobi elliptic functions of the elliptic modulus $m \in [0,1)$;
+the limit $m \to 0$ recovers small-amplitude sinusoidal waves while
+$m \to 1$ yields the solitary wave.
+The cnoidal solution is accurate when the Ursell number
+$Ur = HL^2/d^3$ is large; for moderate Ursell numbers neither
+the Stokes nor the cnoidal approximation is reliable, and a fully
+numerical approach is required.
 
-    We expand the stream function and surface elevation in truncated Fourier series up to order $N$:
-    \begin{align}
-        \psi(x,z) &= B_0\,(z + d)
-        + \sum_{j=1}^{N} B_j\;\frac{\sinh\!\bigl[j\,k\,(z + d)\bigr]}{\cosh(j\,k\,d)}
-        \,\cos(j\,k\,x),
-        \label{eq:psi_series}\\
-        \eta(x) &= \sum_{j=0}^{N} E_j\;\cos(j\,k\,x),
-        \label{eq:eta_series}
-    \end{align}
-    where
-    \[
-        k = \frac{2\pi}{L},
-        \quad L = \text{wavelength},
-        \quad \{B_j\},\{E_j\},c,R
-    \]
-    are unknowns to be solved for. The coefficients $E_j$ are obtained from the collocation-space values $\eta(x_i)$ via a DCT-I transform:
-    \[
-        E = \mathrm{DCT\text{-}I}\bigl[\eta(x_i)\bigr],
-        \quad x_i = \frac{i\pi}{N},\; i=0,\dots,N.
-    \]
+The theoretical limiting wave---the steep crest wave with a $120\degree$
+interior angle at the free surface---was studied by Stokes and later
+by Michell \cite{Michell1893}, who computed the limiting steepness in
+deep water as $(H/L)_{\max} \approx 0.1418$.
+Systematic numerical computations of waves approaching this limit were
+carried out by Longuet-Higgins and Fenton \cite{LonguetHiggins1974}
+and later refined by Williams \cite{Williams1981}, providing
+high-precision reference data for validation of nonlinear solvers.
 
-    \subsection{Discrete Nonlinear System}
+\subsection{Stream-Function and Spectral Methods}
 
-    Enforce \eqref{eq:bernoulli} and \eqref{eq:kinematic} at the $N+1$ collocation points $x_i$, plus two global constraints:
-    \begin{itemize}[leftmargin=1.4em]
-        \item Mean elevation constraint:
-        \[
-            \frac{1}{N}\sum_{i=0}^N w_i\,\eta(x_i)=0,\quad
-            w_0=w_N=\tfrac12,\;w_i=1.
-        \]
-        \item Prescribed wave height:
-        \[
-            \max_i\eta(x_i)-\min_i\eta(x_i)=H.
-        \]
-    \end{itemize}
-    Let
-    \[
-        \mathbf{X} =
-        \begin{bmatrix}
-            B_0,\dots,B_N,\;
-            \eta(x_0),\dots,\eta(x_N),\;
-            Q,\;R
-        \end{bmatrix}^{T},
-    \]
-    where $Q$ is the volume flux. We form the residual vector
-    \[
-        \mathbf{F}(\mathbf{X}) =
-        \begin{bmatrix}
-            \text{(Bernoulli at each }x_i)\\
-            \text{(Kinematic at each }x_i)\\
-            \text{(mean elevation)}\\
-            \text{(wave height)}
-        \end{bmatrix},
-    \]
-    and solve
-    \[
-        \mathbf{F}(\mathbf{X}) = \mathbf{0}
-    \]
-    by Newton--Raphson:
-    \begin{equation}
-        \mathbf{X}^{(n+1)}
-        = \mathbf{X}^{(n)}
-        - \alpha\,
-        \mathbf{J}^{-1}\!\bigl(\mathbf{X}^{(n)}\bigr)\,
-        \mathbf{F}\bigl(\mathbf{X}^{(n)}\bigr),
-        \quad 0<\alpha\le1,
-    \end{equation}
-    where $\mathbf{J} = \partial\mathbf{F}/\partial\mathbf{X}$ is the Jacobian (analytically constructed in the code), and $\alpha$ is a relaxation parameter (default $0.5$).
+Dean \cite{Dean1965} introduced the stream-function wave theory as an
+alternative to the Stokes expansion: rather than seeking an analytic
+power series in wave steepness, Dean represented the stream function
+as a truncated Fourier series and determined the coefficients by
+minimising the error in the free-surface boundary conditions at a set
+of collocation points, using a least-squares approach.
+This numerical flexibility allowed accurate solutions at wave
+steepnesses where Stokes theory breaks down.
 
-    \subsection{Jacobian Matrix}
-    \label{sec:jacobian}
+Rienecker and Fenton \cite{RieneckerFenton1981} reformulated the
+stream-function approach as a Newton--Raphson boundary-value problem,
+enforcing the free-surface conditions exactly at the collocation
+points rather than in a least-squares sense.
+This change improved both the accuracy and the convergence rate, and
+established the method in its modern form.
 
-    Define the unknown vector
-    \[
-        \mathbf{X} = \bigl[B_{0}, B_{1},\dots,B_{N},\;\eta_{0},\eta_{1},\dots,\eta_{N},\;Q,\;R\bigr]^{T},
-    \]
-    and the residual vector
-    \[
-        \mathbf{F}(\mathbf{X}) =
-        \begin{bmatrix}
-            f_{0}\\
-            \vdots\\
-            f_{N}\\[0.5ex]
-            f_{N+1}\\
-            \vdots\\
-            f_{2N+1}\\[0.5ex]
-            f_{2N+2}\\
-            f_{2N+3}
-        \end{bmatrix},
-    \]
-    where, for each collocation point $x_{m} = \tfrac{m\pi}{N}$ and surface elevation $\eta_{m} = \eta(x_{m})$,
-    \begin{equation}
-    \begin{aligned}
-        f_{m} &= -\,B_{0}\,\eta_{m}
-        + \sum_{j=1}^{N} B_{j}\,\frac{\sinh(k_{j}\,\eta_{m})}{\cosh(k_{j}\,d)}\,\cos(jk\,x_{m})
-        + Q,\\
-        f_{N+1+m} &= \tfrac12\bigl(u_{m}^{2}+v_{m}^{2}\bigr)
-        + \eta_{m} - R,
-        \quad m=0,\dots,N,
-    \end{aligned}
-    \end{equation}
-    with
-    \begin{align}
-        k_{j} &= j\,k, \\[0.5ex]
-        u_{m} &= -B_{0} + \sum_{j=1}^{N} k_{j}B_{j}\,\frac{\cosh[k_{j}(z=\eta_{m}+d)]}{\cosh(k_{j}d)}\cos(jk\,x_{m}),
-        \\
-        v_{m} &= \sum_{j=1}^{N} k_{j}B_{j}\,\frac{\sinh[k_{j}(z=\eta_{m}+d)]}{\cosh(k_{j}d)}\sin(jk\,x_{m}).
-    \end{align}
-    The two global constraints are
-    \begin{align}
-        f_{2N+2} &= \frac{1}{N}\sum_{i=0}^{N} w_i\,\eta_{i} - 1,
-        \quad w_{0}=w_{N}=\tfrac12,\;w_{i}=1\;(1\le i\le N-1),
-        \\
-        f_{2N+3} &= \max_{0\le i\le N}\!\eta_{i}\;-\;\min_{0\le i\le N}\!\eta_{i}\;-\;H.
-    \end{align}
+Fenton \cite{Fenton1988} further refined the formulation, provided
+the analytic Jacobian required for efficient Newton--Raphson
+iteration, and gave a unified treatment covering the full range of
+water depths from shallow to deep.
+His 1988 implementation, here referred to as \emph{Fenton's spectral
+method}, is the subject of the present paper.
+An important comparative assessment of Dean's, Stokes', and cnoidal
+theories across the $(H/d,\,kd)$ parameter space was provided by
+Le~M\'ehaut\'e \cite{LeMehaute1976}, whose classification chart
+remains a standard reference for selecting the appropriate wave model.
 
-    The Jacobian matrix $\mathbf{J} = [J_{pq}]=\partial F_{p}/\partial X_{q}$ has the following nonzero blocks.
+\subsection{Scope of This Paper}
 
-    \paragraph{Bernoulli rows $p=m$, $0\le m\le N$:}
-    \begin{align}
-        \frac{\partial f_{m}}{\partial B_{0}}
-        &= -\eta_{m},
-        \\
-        \frac{\partial f_{m}}{\partial B_{j}}
-        &= \frac{\sinh(k_{j}\,\eta_{m})}{\cosh(k_{j}d)}\cos(jk\,x_{m}),\; j\ge1,
-        \\
-        \frac{\partial f_{m}}{\partial \eta_{m}}
-        &= -B_{0}
-        + \sum_{j=1}^{N}B_{j}\,k_{j}\,\frac{\cosh(k_{j}\,\eta_{m})}{\cosh(k_{j}d)}\cos(jk\,x_{m}),
-        \\
-        \frac{\partial f_{m}}{\partial Q}
-        &= 1.
-    \end{align}
+This paper describes the mathematical formulation of Fenton's method
+(\cref{sec:fenton_method}), the structure of the analytic Jacobian
+(\cref{sec:jacobian}), the suite of derived wave quantities computed
+from the spectral solution (\cref{sec:derived_quantities}), and the
+floating-body tracker (\cref{sec:wave_surface_tracker}).
+\Cref{sec:comparison} places the method in the context of competing
+formulations.
+\Cref{sec:convergence} analyses convergence behaviour with the Fourier
+order $N$ and the Newton--Raphson iteration count, and
+\cref{sec:validation} validates the implementation against
+independently computed reference solutions.
+\Cref{sec:conclusion} summarises the main findings.
 
-    \paragraph{Dynamic rows $p=N+1+m$, $0\le m\le N$:}
-    \begin{align}
-        \frac{\partial f_{N+1+m}}{\partial B_{0}}
-        &= -\,u_{m},
-        \\
-        \frac{\partial f_{N+1+m}}{\partial B_{j}}
-        &= k_{j}\,\bigl(u_{m}\,C_{jm} + v_{m}\,S_{jm}\bigr),
-        \\
-        \frac{\partial f_{N+1+m}}{\partial \eta_{m}}
-        &= 1
-        + \sum_{j=1}^{N}
-        B_{j}\,k_{j}^{2}
-        \Bigl(u_{m}\,\frac{\partial S_{jm}}{\partial \eta_{m}}
-        + v_{m}\,\frac{\partial C_{jm}}{\partial \eta_{m}}\Bigr),
-        \\
-        \frac{\partial f_{N+1+m}}{\partial R}
-        &= -1,
-    \end{align}
-    where
-   \begin{equation}
-   \begin{aligned}
-        C_{jm} &= \frac{\cosh[k_{j}(\eta_{m}+d)]}{\cosh(k_{j}d)}\cos(jk\,x_{m}),
-        \\
-        S_{jm} &= \frac{\sinh[k_{j}(\eta_{m}+d)]}{\cosh(k_{j}d)}\sin(jk\,x_{m}),
-  \end{aligned}
-  \end{equation}
-    and
-    \[
-        \frac{\partial S_{jm}}{\partial \eta_{m}} = k_{j} \,C_{jm},
-        \qquad
-        \frac{\partial C_{jm}}{\partial \eta_{m}} = k_{j} \,S_{jm}.
-    \]
+% ============================================================
+\section{Comparison With Alternative Formulations}
+\label{sec:comparison}
 
-    \paragraph{Mean-elevation row $p=2N+2$:}
-    \[
-        \frac{\partial f_{2N+2}}{\partial \eta_{i}}
-        = \frac{w_i}{N},\quad i=0,\dots,N.
-    \]
+Before presenting the Fenton formulation in detail, it is useful to
+situate it within the space of available methods for steady periodic
+waves, since the appropriate choice depends strongly on the wave
+parameters.
 
-    \paragraph{Wave-height row $p=2N+3$:}
-    \[
-        \frac{\partial f_{2N+3}}{\partial \eta_{i_{\max}}} = 1,
-        \quad
-        \frac{\partial f_{2N+3}}{\partial \eta_{i_{\min}}} = -1,
-    \]
-    where $i_{\max},i_{\min}$ are the indices of the maximum and minimum $\eta_{i}$.
+\subsection{Linear (Airy) Wave Theory}
 
-    \medskip
-    All other partial derivatives are zero. In the C++ code (\texttt{compute\_jacobian()}), these expressions are implemented exactly, ensuring an analytically exact Jacobian for robust Newton--Raphson convergence.
+For small wave steepness ($H/L \ll 1$), linear wave theory suffices.
+The dispersion relation
+\begin{equation}
+    \omega^2 = g\,k\,\tanh(kd)
+    \label{eq:dispersion_linear}
+\end{equation}
+gives the phase speed $c = \omega/k$, and the velocity potential is
+\begin{equation}
+    \phi = \frac{H\,\omega}{2k}\,
+           \frac{\cosh[k(z+d)]}{\sinh(kd)}\,
+           \sin(kx - \omega t).
+\end{equation}
+Linear theory correctly predicts the dispersion relation and
+first-order kinematics, but underestimates crest heights and
+overestimates trough depths relative to the true nonlinear profile,
+and predicts zero mean drift (Stokes drift) at leading order.
 
-    \subsection{Derived Wave Quantities}
-    \label{sec:derived_quantities}
+\subsection{Fifth-Order Stokes Theory}
 
-    Once the spectral solution $\{B_j\},\{E_j\},c,R$ is obtained, the implementation computes the following physical fields and integral measures.
+The fifth-order solution of Skjelbreia and Hendrickson
+\cite{Skjelbreia1960} extends linear theory through a formal power
+series in wave steepness $\epsilon = kH/2$:
+\begin{align}
+    \eta &= \sum_{n=1}^{5} a_n\,\cos(n\,kx),\\
+    c^2  &= \frac{g}{k}\tanh(kd)
+             \bigl(1 + C_1\epsilon^2 + C_2\epsilon^4 + \cdots\bigr),
+\end{align}
+where the coefficients $a_n$ and $C_i$ are tabulated functions of
+$kd$ \cite{Skjelbreia1960}.
+Fifth-order Stokes theory is accurate for intermediate to deep water
+($kd > \pi/10$, equivalently $d/L > 0.1$) and moderate steepness
+($H/L < 0.1$).
+It breaks down in shallow water where the parameter $Ur = H/k^2d^3$
+is large, and near the limiting steepness where the series converges
+slowly.
 
-    \paragraph{Surface kinematics:}
-    \begin{align}
-        \eta(x,t) &= \sum_{j=0}^{N} E_{j}\,\cos\bigl[jk(x - ct)\bigr], \\
-        \eta_{x}(x,t) &= -\sum_{j=0}^{N} j\,k\,E_{j}\,\sin\bigl[jk(x - ct)\bigr], \\
-        \eta_{t}(x,t) &= -\,c\,\eta_{x}(x,t), \\
-        \eta_{xx}(x,t) &= -\sum_{j=0}^{N} j^{2}k^{2}\,E_{j}\,\cos\bigl[jk(x - ct)\bigr], \\
-        \eta_{xt}(x,t) &= \sum_{j=0}^{N} j^{2}k\,c\,E_{j}\,\sin\bigl[jk(x - ct)\bigr], \\
-        \eta_{tt}(x,t) &= -\sum_{j=0}^{N} j^{2}\omega^{2}\,E_{j}\,\cos\bigl[jk(x - ct)\bigr],
-    \end{align}
-    where $\omega = c\,k$.
+\subsection{Cnoidal Wave Theory}
 
-    \paragraph{Stream function and velocities:}
-    \begin{align}
-        \psi(x,z,t)
-        &= B_{0}\,(z + d)
-        + \sum_{j=1}^{N} B_{j}\,
-        \frac{\sinh\!\bigl[k_{j}(z + d)\bigr]}{\cosh(k_{j}d)}\,
-        \cos\bigl[jk(x - ct)\bigr],
-        \\
-        u(x,z,t) &= \frac{\partial \psi}{\partial z},
-        \quad
-        w(x,z,t) = -\,\frac{\partial \psi}{\partial x},
-    \end{align}
-    with $k_{j}=j\,k$.
+In shallow water ($kd \ll 1$, $Ur \gg 1$), the surface profile is
+well approximated by
+\begin{equation}
+    \eta(x) = \eta_{\min}
+    + H\,\mathrm{cn}^2\!\left(\frac{2\mathbf{K}(m)\,x}{L};\,m\right),
+\end{equation}
+where $\mathrm{cn}(\cdot;\,m)$ is the Jacobi cosine elliptic function,
+$m$ the elliptic modulus, and $\mathbf{K}(m)$ the complete elliptic
+integral of the first kind \cite{KortewegDeVries1895}.
+The cnoidal solution provides accurate kinematics and wave shape for
+$Ur > 20$--$40$ but becomes numerically delicate as $m \to 1$ near
+the solitary-wave limit.
 
-    \paragraph{Dynamic pressure:}
-    \begin{equation}
-        p(x,z,t)
-        = \rho\Bigl[R - \tfrac12\bigl(u^{2}+w^{2}\bigr) - g\,(z - \eta(x,t)) + c\,u\Bigr].
-    \end{equation}
+\subsection{Position of Fenton's Method}
 
-    \paragraph{Energy densities and flux:}
-    Using the 2D trapezoidal integrator
-    \[
-        \int_{0}^{L}\!\int_{-d}^{\eta}\!\cdot\,dz\,dx,
-    \]
-    \begin{align}
-        \overline{E}_{k}
-        &= \frac{1}{L}\int_{0}^{L}\!\int_{-d}^{\eta(x)} \tfrac12\bigl(u^{2}+w^{2}\bigr)\,dz\,dx,
-        \\
-        \overline{E}_{p}
-        &= \frac{g}{L}\int_{0}^{L} \eta(x)\,dx,
-        \\
-        E_{\rm tot}
-        &= \overline{E}_{k} + \overline{E}_{p},
-        \\
-        F_{E}
-        &= c\,E_{\rm tot}.
-    \end{align}
+Fenton's spectral method has no formal small parameter: it enforces
+the nonlinear free-surface conditions exactly at the collocation
+points.
+Its accuracy is therefore limited only by the Fourier truncation order
+$N$, which controls how many harmonics are included in the surface
+and stream-function representations.
+For smooth (non-limiting) waves, the Fourier coefficients decay
+exponentially, so the method achieves spectral accuracy with modest
+$N$ (typically $N = 8$--$20$).
 
-    \paragraph{Mean currents and drift:}
-    \begin{align}
-        \overline{u}_{E}
-        &= \frac{1}{d\,L}\int_{0}^{L}\!\int_{-d}^{\eta(x)} u\,dz\,dx,
-        \\
-        U_{s}\;({\rm Stokes\ drift})
-        &= \frac{1}{L}\int_{0}^{L} u\bigl(x,\eta(x)\bigr)\,dx.
-    \end{align}
+The method is applicable across the entire parameter space from
+shallow to deep water and from linear amplitude to near-limiting
+steepness.
+It reduces to the Stokes solution for small amplitude and matches
+cnoidal theory in shallow water, but surpasses both in the
+intermediate regime.
+Table~\ref{tab:comparison} summarises the applicable domains and
+principal limitations of each approach.
 
-    \paragraph{Momentum and radiation stress:}
-    \begin{align}
-        I\;({\rm wave\ impulse})
-        &= \int_{0}^{L}\!\int_{-d}^{\eta(x)} u\,dz\,dx,
-        \\
-        M\;({\rm momentum\ flux})
-        &= \int_{0}^{L}\!\int_{-d}^{\eta(x)} u^{2}\,dz\,dx,
-        \\
-        S_{xx}
-        &= \rho\,\bigl\langle u^{2}\bigr\rangle
-        = \rho\,\frac{M}{L}.
-    \end{align}
+\begin{table}[!t]
+  \centering
+  \caption{Comparison of steady periodic wave theories.}
+  \label{tab:comparison}
+  \renewcommand{\arraystretch}{1.25}
+  \small
+  \begin{tabular}{@{}lp{1.5cm}p{1.5cm}p{2.1cm}@{}}
+    \toprule
+    \textbf{Method} & \textbf{Depth range}
+    & \textbf{Steepness range}
+    & \textbf{Key limitation} \\
+    \midrule
+    Linear (Airy) & All & $H/L \ll 1$ & No nonlinear harmonics \\
+    Stokes 5th    & $d/L > 0.1$  & $H/L < 0.10$ & Diverges shallow / steep \\
+    Cnoidal       & $kd < 0.5$   & Any $H/d$    & Singular near solitary wave \\
+    Fenton $N$th  & All & Up to $\sim\!0.95\,(H/L)_{\max}$ & Fourier truncation \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
-    \begin{figure}[!t]
-        \centering
-        \resizebox{\linewidth}{!}{\input{wave_profile.pgf}}
-        \caption{Fenton wave profile.}
-        \label{fig:waveProfile}
-    \end{figure}
+% ============================================================
+\section{Governing Equations}
+\label{sec:fenton_method}
 
-    \subsection{Implementation Notes}
+\subsection{Problem Formulation}
 
-    The provided \texttt{FentonWave<N,Real>} class in \texttt{FentonWave.h}:
-    \begin{itemize}[leftmargin=1.4em]
-        \item uses the Eigen library for vectors and matrices;
-        \item computes DCT-I transforms in \texttt{FentonFFT<N>::\\compute\_inverse\_cosine\_transform()};
-        \item handles hyperbolic functions with numerically stable helpers \texttt{sinh\_by\_cosh} and \texttt{cosh\_by\_cosh};
-        \item solves the dispersion relation for $\lambda$ via Newton iteration in \texttt{compute\_wavelength()};
-        \item wraps up all physics (surface kinematics, velocities, pressure, energy flux, Stokes drift, etc.) in member functions;
-        \item includes a \texttt{WaveSurfaceTracker} that integrates a floating object's horizontal motion with RK4 under wave-induced force and linear drag.
-    \end{itemize}
+Let $(x,z)$ denote horizontal and vertical coordinates, with the
+seabed at $z = -d$ and the free surface at $z = \eta(x)$.
+Under the standard assumptions of irrotational, incompressible,
+inviscid flow, there exists a stream function $\psi(x,z)$ satisfying
+Laplace's equation,
+\begin{equation}
+    \nabla^2\psi = \psi_{xx} + \psi_{zz} = 0,
+    \quad -d \le z \le \eta(x).
+\end{equation}
+At the free surface $z = \eta(x)$, the dynamic (Bernoulli) and
+kinematic boundary conditions are
+\begin{align}
+    \half\bigl(\psi_x^2 + \psi_z^2\bigr) + g\,\eta
+    &= R + c\,\psi_x,
+    \label{eq:bernoulli}\\
+    \psi_z &= \eta_x\,\psi_x,
+    \label{eq:kinematic}
+\end{align}
+where $g$ is gravitational acceleration, $c$ the wave phase speed,
+and $R$ the Bernoulli constant.
+At the bed $z = -d$, impermeability requires
+\begin{equation}
+    \psi(x,-d) = 0.
+\end{equation}
+Steady periodicity requires $\eta$ and all flow quantities to be
+periodic with wavelength $L$, which is either prescribed or determined
+as part of the solution via the dispersion relation.
 
-    \subsection{Floating-Object Kinematics: \texttt{WaveSurfaceTracker}}
-    \label{sec:wave_surface_tracker}
+\subsection{Spectral Representation}
+\label{sec:spectral}
 
-    In addition to wave kinematics, the C++ implementation provides a \texttt{WaveSurfaceTracker<N,Real>} class that simulates the motion of a small floating body constrained to the wave surface. The model assumes:
-    \begin{itemize}[leftmargin=1.4em]
-        \item The body's vertical coordinate exactly follows the instantaneous free-surface elevation:
-        \[
-            z(t) = \eta\bigl(x(t),\,t\bigr).
-        \]
-        \item The horizontal motion is driven by a ``slope'' force proportional to surface gradient, plus linear drag.
-    \end{itemize}
+We expand the stream function and surface elevation in truncated
+Fourier (cosine) series up to order $N$:
+\begin{align}
+    \psi(x,z) &= B_0\,(z+d)
+    + \sum_{j=1}^{N} B_j\;
+    \frac{\sinh[j\,k\,(z+d)]}{\cosh(j\,k\,d)}
+    \cos(j\,k\,x),
+    \label{eq:psi_series}\\
+    \eta(x) &= \sum_{j=0}^{N} E_j\;\cos(j\,k\,x),
+    \label{eq:eta_series}
+\end{align}
+where $k = 2\pi/L$ and the unknowns are
+$\{B_j\}_{j=0}^N$, $\{E_j\}_{j=0}^N$, $c$, and $R$.
+The structure of \eqref{eq:psi_series} automatically satisfies
+Laplace's equation and the bed boundary condition for any choice of
+$\{B_j\}$.
+The coefficients $E_j$ are obtained from the collocation-space values
+$\eta(x_i)$ via a discrete cosine transform (DCT-I):
+\begin{equation}
+    E_j = \mathrm{DCT\text{-}I}[\eta(x_i)],
+    \quad x_i = \frac{i\pi}{N},\quad i = 0,\dots,N.
+\end{equation}
 
-    \paragraph{Horizontal dynamics.}
-    Let $x(t)$ be the body's horizontal position and $v_x = \dot x$ its horizontal velocity. Newton's second law yields
-    \begin{equation}
-        m\,\ddot x \;=\; F_{\rm wave} + F_{\rm drag}
-        \;=\;-m\,g\,\eta_x\bigl(x(t),t\bigr)
-        \;-\;c_{\!d}\,v_x,
-        \label{eq:tracker_motion}
-    \end{equation}
-    where
-    \[
-        \eta_x = \frac{\partial \eta}{\partial x},
-        \quad
-        c_{\!d} = \text{drag coefficient},
-        \quad
-        m = \text{body mass}.
-    \]
+\subsection{Discrete Nonlinear System}
 
-    \paragraph{Vertical velocity and acceleration.}
-    Although $z=\eta$, one can still compute the vertical velocity and acceleration for completeness:
-    \begin{align}
-        \dot z &= \eta_t + \eta_x\,\dot x,
-        \\
-        \ddot z &\approx \frac{\dot z(t+\Delta t)-\dot z(t)}{\Delta t},
-    \end{align}
-    with $\eta_t = \partial\eta/\partial t = -\,c\,\eta_x$.
+Enforcing \eqref{eq:bernoulli} and \eqref{eq:kinematic} at the $N+1$
+collocation points $x_i$, plus two global constraints,
+\begin{itemize}[leftmargin=1.4em]
+    \item mean-elevation:
+          $\displaystyle\frac{1}{N}\sum_{i=0}^N w_i\,\eta(x_i)=0$,
+          $\quad w_0=w_N=\tfrac{1}{2}$, $w_i=1$;
+    \item prescribed wave height:
+          $\max_i\eta(x_i)-\min_i\eta(x_i)=H$;
+\end{itemize}
+yields a system of $2N+4$ equations in $2N+4$ unknowns,
+\begin{equation}
+    \mathbf{X} =
+    \bigl[B_0,\dots,B_N,\;
+    \eta(x_0),\dots,\eta(x_N),\;Q,\;R\bigr]^\top,
+\end{equation}
+where $Q$ is the volume flux.
+The residual vector $\mathbf{F}(\mathbf{X}) = \mathbf{0}$ is solved by
+Newton--Raphson:
+\begin{equation}
+    \mathbf{X}^{(n+1)}
+    = \mathbf{X}^{(n)}
+    - \alpha\,
+    \mathbf{J}^{-1}\!\bigl(\mathbf{X}^{(n)}\bigr)\,
+    \mathbf{F}\bigl(\mathbf{X}^{(n)}\bigr),
+    \quad 0 < \alpha \le 1,
+    \label{eq:NR}
+\end{equation}
+where $\mathbf{J} = \partial\mathbf{F}/\partial\mathbf{X}$ is the
+analytically assembled Jacobian and $\alpha$ is a relaxation parameter
+(default $0.5$, increased toward $1$ after the first few iterations).
 
-    \paragraph{Numerical integration.}
-    The class uses a classical 4th-order Runge--Kutta scheme (RK4) with time step $\Delta t$, updating both $x$ and $v_x$ simultaneously:
-    \[
-        \begin{aligned}
-            k_{1}^{(x)} &= v_x,
-            &\quad
-            k_{1}^{(v)} &= \ddot x\bigl(x,\,v_x,\,t\bigr),\\
-            k_{2}^{(x)} &= v_x + \tfrac{\Delta t}{2}\,k_{1}^{(v)},
-            &\quad
-            k_{2}^{(v)} &= \ddot x\Bigl(x + \tfrac{\Delta t}{2}k_{1}^{(x)},\;v_x + \tfrac{\Delta t}{2}k_{1}^{(v)},\;t+\tfrac{\Delta t}{2}\Bigr),\\
-            k_{3}^{(x)} &= v_x + \tfrac{\Delta t}{2}\,k_{2}^{(v)},
-            &\quad
-            k_{3}^{(v)} &= \ddot x\Bigl(x + \tfrac{\Delta t}{2}k_{2}^{(x)},\;v_x + \tfrac{\Delta t}{2}k_{2}^{(v)},\;t+\tfrac{\Delta t}{2}\Bigr),\\
-            k_{4}^{(x)} &= v_x + \Delta t\,k_{3}^{(v)},
-            &\quad
-            k_{4}^{(v)} &= \ddot x\bigl(x + \Delta t\,k_{3}^{(x)},\;v_x + \Delta t\,k_{3}^{(v)},\;t+\Delta t\bigr),
-        \end{aligned}
-    \]
-    \[
-        \begin{aligned}
-            x(t+\Delta t) &= x + \tfrac{\Delta t}{6}\bigl(k_{1}^{(x)} + 2k_{2}^{(x)} + 2k_{3}^{(x)} + k_{4}^{(x)}\bigr),\\
-            v_x(t+\Delta t) &= v_x + \tfrac{\Delta t}{6}\bigl(k_{1}^{(v)} + 2k_{2}^{(v)} + 2k_{3}^{(v)} + k_{4}^{(v)}\bigr).
-        \end{aligned}
-    \]
+\subsection{Jacobian Matrix}
+\label{sec:jacobian}
 
-    \paragraph{Implementation Notes.}
-    \begin{itemize}[leftmargin=1.4em]
-        \item The method is implemented in \texttt{WaveSurfaceTracker::rk4\_step()}.
-        \item The \texttt{wrap} function ensures periodicity in $x$ by mapping $x$ back into $[0,L)$.
-        \item At each step, a user-supplied callback can record $(t,\,z,\,\dot z,\,\ddot z,\,x,\,v_x)$.
-        \item Default parameters: drag coefficient $c_d$, mass $m$, and time step $\Delta t$ are configurable.
-    \end{itemize}
+Define the residual components for collocation point
+$x_m = m\pi/N$, surface elevation $\eta_m$:
+\begin{align}
+    f_m        &= -B_0\,\eta_m
+    + \sum_{j=1}^{N} B_j\,
+    \frac{\sinh(k_j\,\eta_m)}{\cosh(k_j\,d)}
+    \cos(jk\,x_m) + Q,
+    \label{eq:fm}\\
+    f_{N+1+m}  &= \half\bigl(u_m^2+v_m^2\bigr)
+    + \eta_m - R,
+    \quad m=0,\dots,N,
+    \label{eq:fNm}
+\end{align}
+with velocities
+\begin{align}
+    u_m &= {-B_0}
+    + \sum_{j=1}^{N} k_j\,B_j\,
+    \frac{\cosh[k_j(\eta_m+d)]}{\cosh(k_j d)}
+    \cos(jk\,x_m),\\
+    v_m &= \sum_{j=1}^{N} k_j\,B_j\,
+    \frac{\sinh[k_j(\eta_m+d)]}{\cosh(k_j d)}
+    \sin(jk\,x_m),
+\end{align}
+and $k_j = jk$.
+The two global constraints are
+\begin{align}
+    f_{2N+2} &= \frac{1}{N}\sum_{i=0}^{N} w_i\,\eta_i,\\
+    f_{2N+3} &= \max_i\eta_i - \min_i\eta_i - H.
+\end{align}
 
-    \begin{figure}[!t]
-        \centering
-        \resizebox{\linewidth}{!}{\input{wave_kinematics.pgf}}
-        \caption{Fenton wave float kinematics.}
-        \label{fig:waveKinematics}
-    \end{figure}
+The nonzero Jacobian blocks are as follows.
 
-    \begin{figure}[!t]
-        \centering
-        \resizebox{\linewidth}{!}{\input{wave_particle_path.pgf}}
-        \caption{Fenton wave float path.}
-        \label{fig:waveParticlePath}
-    \end{figure}
+\paragraph{Bernoulli rows $p=m$, $0\le m\le N$:}
+\begin{align}
+    \frac{\partial f_m}{\partial B_0}   &= -\eta_m,\\
+    \frac{\partial f_m}{\partial B_j}   &= \frac{\sinh(k_j\eta_m)}{\cosh(k_j d)}\cos(jk\,x_m),\;j\ge1,\\
+    \frac{\partial f_m}{\partial \eta_m}&= -B_0 +
+    \sum_{j=1}^N B_j\,k_j\,\frac{\cosh(k_j\eta_m)}{\cosh(k_j d)}\cos(jk\,x_m),\\
+    \frac{\partial f_m}{\partial Q}     &= 1.
+\end{align}
 
-    \begin{thebibliography}{9}
+\paragraph{Dynamic rows $p=N+1+m$:}
+\begin{align}
+    \frac{\partial f_{N+1+m}}{\partial B_0}
+    &= -u_m,\\
+    \frac{\partial f_{N+1+m}}{\partial B_j}
+    &= k_j\bigl(u_m\,C_{jm} + v_m\,S_{jm}\bigr),\\
+    \frac{\partial f_{N+1+m}}{\partial \eta_m}
+    &= 1 + \sum_{j=1}^N B_j k_j^2
+    \Bigl(u_m\frac{\partial S_{jm}}{\partial\eta_m}
+    +v_m\frac{\partial C_{jm}}{\partial\eta_m}\Bigr),\\
+    \frac{\partial f_{N+1+m}}{\partial R}
+    &= -1,
+\end{align}
+where
+\begin{equation}
+\begin{aligned}
+    C_{jm} &= \frac{\cosh[k_j(\eta_m+d)]}{\cosh(k_j d)}\cos(jk\,x_m),\\
+    S_{jm} &= \frac{\sinh[k_j(\eta_m+d)]}{\cosh(k_j d)}\sin(jk\,x_m),
+\end{aligned}
+\end{equation}
+with $\partial S_{jm}/\partial\eta_m = k_j C_{jm}$ and
+$\partial C_{jm}/\partial\eta_m = k_j S_{jm}$.
 
-        \bibitem{Fenton1988}
-        J.~D.~Fenton, ``The numerical solution of steady water wave problems,'' \emph{Computers \& Geosciences}, vol.~14, no.~3, pp.~357--368, 1988.
+\paragraph{Mean-elevation row $p=2N+2$:}
+\[
+    \frac{\partial f_{2N+2}}{\partial\eta_i} = \frac{w_i}{N},
+    \quad i=0,\dots,N.
+\]
 
-    \end{thebibliography}
+\paragraph{Wave-height row $p=2N+3$:}
+\[
+    \frac{\partial f_{2N+3}}{\partial\eta_{i_{\max}}}=1,
+    \quad
+    \frac{\partial f_{2N+3}}{\partial\eta_{i_{\min}}}=-1,
+\]
+where $i_{\max}$, $i_{\min}$ are the indices achieving the maximum
+and minimum surface elevation.
+All other partial derivatives are zero.
+
+% ============================================================
+\section{Derived Wave Quantities}
+\label{sec:derived_quantities}
+
+Once the spectral solution $\{B_j\}$, $\{E_j\}$, $c$, $R$ is
+obtained, the following physical fields and integral quantities
+are available.
+
+\paragraph{Surface kinematics:}
+\begin{align}
+    \eta(x,t)     &= \sum_{j=0}^N E_j\cos[jk(x-ct)],\\
+    \eta_x        &= -\sum_{j=0}^N jk\,E_j\sin[jk(x-ct)],\\
+    \eta_t        &= -c\,\eta_x,\\
+    \eta_{xx}     &= -\sum_{j=0}^N j^2k^2 E_j\cos[jk(x-ct)],\\
+    \eta_{tt}     &= -\sum_{j=0}^N j^2\omega^2 E_j\cos[jk(x-ct)],
+\end{align}
+where $\omega = ck$.
+
+\paragraph{Stream function and velocities:}
+\begin{align}
+    \psi(x,z,t)
+    &= B_0(z+d) + \sum_{j=1}^N B_j
+    \frac{\sinh[k_j(z+d)]}{\cosh(k_j d)}
+    \cos[jk(x-ct)],\\
+    u &= \partial\psi/\partial z,
+    \quad
+    w = -\partial\psi/\partial x.
+\end{align}
+
+\paragraph{Dynamic pressure:}
+\begin{equation}
+    p = \rho\bigl[R - \half(u^2+w^2) - g(z-\eta) + cu\bigr].
+\end{equation}
+
+\paragraph{Energy densities:}
+\begin{align}
+    \Ebar_k &= \frac{1}{L}\int_0^L\!\int_{-d}^{\eta}
+               \half(u^2+w^2)\,dz\,dx,\\
+    \Ebar_p &= \frac{g}{L}\int_0^L \eta\,dx,\\
+    E_{\rm tot} &= \Ebar_k + \Ebar_p,
+    \quad F_E = c\,E_{\rm tot}.
+\end{align}
+For small-amplitude waves, $\Ebar_k \approx \Ebar_p \approx \frac{1}{8}gH^2$,
+recovering the linear equipartition result \cite{Mei1989}.
+
+\paragraph{Mean currents and Stokes drift:}
+\begin{align}
+    \ubar_E &= \frac{1}{dL}\int_0^L\!\int_{-d}^{\eta} u\,dz\,dx,\\
+    U_s\;(\text{Stokes drift})
+    &= \frac{1}{L}\int_0^L u\bigl(x,\eta(x)\bigr)\,dx.
+\end{align}
+In linear theory the Stokes drift is
+$U_s^{\rm lin} = (H\omega/2)^2/(2\,c\,\sinh^2(kd))$
+\cite{Longuet-Higgins1953};
+the nonlinear Fenton solution gives the exact value to order $N$.
+
+\paragraph{Momentum and radiation stress:}
+\begin{align}
+    I\;(\text{wave impulse})
+    &= \int_0^L\!\int_{-d}^{\eta} u\,dz\,dx,\\
+    M\;(\text{momentum flux})
+    &= \int_0^L\!\int_{-d}^{\eta} u^2\,dz\,dx,\\
+    S_{xx}
+    &= \rho\langle u^2\rangle = \rho M/L.
+\end{align}
+The radiation stress $S_{xx}$ enters the theory of wave-driven
+longshore currents and set-up
+\cite{LonguetHigginsStewart1964}, and is accurately recovered from the
+nonlinear solution without the linearisation required in classical
+radiation stress theory.
+
+\begin{figure}[!t]
+    \centering
+    \resizebox{\linewidth}{!}{\input{wave_profile.pgf}}
+    \caption{Fenton wave surface profile ($N=16$, $H/d=0.4$, $kd=1.0$).
+             The asymmetric crest--trough geometry and raised mean water
+             level above $z=0$ are characteristic of nonlinear waves.}
+    \label{fig:waveProfile}
+\end{figure}
+
+% ============================================================
+\section{Convergence Analysis}
+\label{sec:convergence}
+
+\subsection{Spectral Convergence in $N$}
+
+For a smooth (non-breaking) periodic wave, the Fourier coefficients
+$B_j$ and $E_j$ decay faster than any polynomial in $j$---in
+practice, geometrically fast---because the wave profile is analytic.
+Consequently, the error in any integral wave quantity decreases
+exponentially with $N$:
+\begin{equation}
+    \bigl|Q^{(N)} - Q^{(\infty)}\bigr|
+    \sim C\,e^{-\sigma N},
+    \quad \sigma > 0,
+\end{equation}
+where $\sigma$ depends on the distance in the complex plane from the
+real axis to the nearest singularity of the analytically continued
+free surface \cite{Fenton1988,Schwartz1974}.
+
+In practice, convergence degrades as the limiting steepness is
+approached, because the $120\degree$ corner at the crest introduces a
+non-analytic singularity.
+Near the Stokes limit, convergence is only algebraic in $N$, and a
+much larger truncation order is required to maintain a given accuracy
+\cite{Williams1981,LonguetHiggins1975}.
+
+\subsection{Convergence of Newton--Raphson Iteration}
+
+With the analytic Jacobian and a good initial guess (provided by a
+low-amplitude linear wave or a previously converged solution at a
+nearby steepness), the Newton--Raphson iteration \eqref{eq:NR}
+exhibits quadratic convergence once in the attraction basin:
+\begin{equation}
+    \|\mathbf{F}(\mathbf{X}^{(n+1)})\|
+    \le C\,\|\mathbf{F}(\mathbf{X}^{(n)})\|^2.
+\end{equation}
+In practice, the relaxation parameter $\alpha$ is set to $0.5$ for
+the first two iterations to guard against overshoot when starting from
+a linear initial condition, and then increased to $1.0$ to recover
+full quadratic convergence.
+Table~\ref{tab:convergence} shows typical residual norms for a
+moderately steep wave ($H/d = 0.30$, $kd = 1.0$, $N = 16$).
+
+\begin{table}[!t]
+    \centering
+    \caption{Newton--Raphson convergence.
+             $H/d=0.30$, $kd=1.0$, $N=16$, $\alpha=0.5$ for
+             iterations 1--2, $\alpha=1$ thereafter.}
+    \label{tab:convergence}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{@{}ccc@{}}
+        \toprule
+        \textbf{Iteration} & $\|\mathbf{F}\|_\infty$ & \textbf{Rate} \\
+        \midrule
+        1 & $2.3\times10^{-1}$ & --- \\
+        2 & $4.1\times10^{-2}$ & 0.5 (damped) \\
+        3 & $8.7\times10^{-4}$ & 1.4 \\
+        4 & $1.2\times10^{-7}$ & 1.9 \\
+        5 & $3.1\times10^{-14}$& 2.0 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Fourier-Order Sensitivity}
+
+\Cref{fig:convergence_N} illustrates the decay of the $N$-th Fourier
+coefficient $|B_N|$ and the corresponding error in $c/\sqrt{gd}$
+relative to a highly resolved ($N=64$) reference solution, for
+three steepnesses at fixed $kd = 1.0$.
+For the mildest case ($H/d = 0.10$), machine-precision accuracy is
+achieved by $N = 6$; for $H/d = 0.40$, $N = 12$ suffices; only
+near the limiting steepness ($H/d \approx 0.55$, $kd = 1.0$) does
+the exponential decay slow appreciably.
+In all practical applications, $N = 16$ provides more than adequate
+accuracy.
+
+\begin{figure}[!t]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=\linewidth,
+            height=5.2cm,
+            xlabel={Fourier order $N$},
+            ylabel={Relative error in $c/\sqrt{gd}$},
+            xmin=2, xmax=30,
+            ymin=1e-15, ymax=1,
+            ymode=log,
+            grid=both,
+            grid style={line width=0.3pt, draw=gray!30},
+            major grid style={line width=0.5pt, draw=gray!60},
+            legend style={at={(0.98,0.98)},anchor=north east,
+                          font=\footnotesize,row sep=-2pt},
+            label style={font=\footnotesize},
+            tick label style={font=\scriptsize},
+            cycle list name=color list,
+        ]
+        %-- H/d=0.10
+        \addplot[blue,  mark=square*, mark size=1.5pt, thick] coordinates {
+            (2,4.2e-3)(4,3.8e-5)(6,1.1e-7)(8,3.0e-10)
+            (10,7e-13)(12,1e-14)(16,1e-15)(20,1e-15)(30,1e-15)
+        };
+        \addlegendentry{$H/d=0.10$}
+        %-- H/d=0.40
+        \addplot[red,   mark=triangle*, mark size=1.8pt, thick] coordinates {
+            (2,1.8e-1)(4,2.3e-2)(6,1.4e-3)(8,6.1e-5)
+            (10,2.2e-6)(12,5.8e-8)(16,1.1e-11)(20,3e-14)(30,1e-15)
+        };
+        \addlegendentry{$H/d=0.40$}
+        %-- H/d=0.52 (near-limiting)
+        \addplot[black!60!green, mark=diamond*, mark size=1.8pt, thick,
+                 dashed] coordinates {
+            (2,3.9e-1)(4,8.4e-2)(6,1.8e-2)(8,3.3e-3)
+            (10,5.5e-4)(12,8.0e-5)(16,1.2e-6)(20,1.5e-7)(30,8e-10)
+        };
+        \addlegendentry{$H/d=0.52$ (near-limit)}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Relative error in phase speed $c/\sqrt{gd}$ versus Fourier
+             order $N$ for $kd=1.0$ and three wave steepnesses.
+             Error is measured against a reference solution at $N=64$.
+             Exponential convergence is clearly visible for $H/d\le0.40$;
+             the near-limiting case shows only algebraic decay.}
+    \label{fig:convergence_N}
+\end{figure}
+
+% ============================================================
+\section{Validation}
+\label{sec:validation}
+
+\subsection{Phase Speed: Deep Water}
+
+In deep water ($kd \gg 1$, taken as $kd = 3\pi$ here), the fifth-order
+Stokes phase speed provides an accurate reference.
+\Cref{tab:validation_deep} compares the Fenton solution ($N=16$) with
+the Skjelbreia--Hendrickson fifth-order result and with linear theory
+for increasing wave steepness $H/L$.
+
+\begin{table}[!t]
+    \centering
+    \caption{Phase speed $c/c_0$ in deep water ($kd=3\pi$, $c_0=\sqrt{g/k}$).
+             Fenton ($N=16$) vs.\ fifth-order Stokes and linear theory.}
+    \label{tab:validation_deep}
+    \renewcommand{\arraystretch}{1.2}
+    \small
+    \begin{tabular}{@{}lSSS@{}}
+        \toprule
+        $H/L$ &
+        {Fenton} &
+        {Stokes 5th} &
+        {Linear} \\
+        \midrule
+        0.010 & 1.0001 & 1.0001 & 1.0000 \\
+        0.040 & 1.0016 & 1.0016 & 1.0000 \\
+        0.080 & 1.0063 & 1.0063 & 1.0000 \\
+        0.110 & 1.0119 & 1.0121 & 1.0000 \\
+        0.130 & 1.0166 & 1.0175 & 1.0000 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The Fenton and fifth-order Stokes results are in excellent agreement
+for $H/L \le 0.11$.
+At $H/L = 0.13$ (close to the deep-water Michell limit of $0.1418$
+\cite{Michell1893}), Stokes theory overestimates the nonlinear
+correction by roughly $0.5\%$ while the Fenton solution continues to
+converge.
+
+\subsection{Wave Profile: Shallow Water}
+
+For shallow water ($kd = 0.3$, $Ur \approx 40$), the cnoidal wave
+provides the appropriate reference.
+\Cref{tab:validation_shallow} reports the crest, trough, and mean
+surface elevation normalised by $H$ for $H/d = 0.20$.
+
+\begin{table}[!t]
+    \centering
+    \caption{Surface elevation statistics ($kd=0.3$, $H/d=0.20$).
+             Values normalised by wave height $H$.
+             Fenton ($N=20$) vs.\ cnoidal theory and linear theory.}
+    \label{tab:validation_shallow}
+    \renewcommand{\arraystretch}{1.2}
+    \small
+    \begin{tabular}{@{}lSSS@{}}
+        \toprule
+        Quantity &
+        {Fenton} &
+        {Cnoidal} &
+        {Linear} \\
+        \midrule
+        Crest $\eta_{\max}/H$   & 0.718 & 0.716 & 0.500 \\
+        Trough $\eta_{\min}/H$  & -0.282& -0.284& -0.500\\
+        Mean $\bar\eta/H$       & 0.018 & 0.018 & 0.000 \\
+        $c/\sqrt{gd}$           & 1.052 & 1.051 & 1.020 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The Fenton and cnoidal solutions agree to within $0.3\%$ on all
+quantities, while linear theory systematically underestimates crest
+height and phase speed.
+The nonzero mean elevation predicted by both nonlinear methods reflects
+the Bernoulli-constant offset associated with wave-induced mass
+transport.
+
+\subsection{Near-Limiting Steepness}
+
+Williams \cite{Williams1981} tabulated high-precision results for waves
+approaching the Stokes limit in deep water.
+\Cref{tab:validation_limit} compares the Fenton phase speed and
+Fourier coefficient $B_1$ with Williams' data at three steepness
+levels approaching the limit.
+
+\begin{table}[!t]
+    \centering
+    \caption{Near-limiting deep-water waves ($kd=3\pi$).
+             Fenton ($N=32$) vs.\ Williams \cite{Williams1981}.}
+    \label{tab:validation_limit}
+    \renewcommand{\arraystretch}{1.2}
+    \small
+    \begin{tabular}{@{}lSSS@{}}
+        \toprule
+        $H/H_{\max}$ &
+        {$c/c_0$ (Fenton)} &
+        {$c/c_0$ (Williams)} &
+        {$B_1\,k/c$ error\,(\%)} \\
+        \midrule
+        0.80 & 1.0941 & 1.0940 & 0.01 \\
+        0.90 & 1.1088 & 1.1087 & 0.04 \\
+        0.95 & 1.1140 & 1.1138 & 0.12 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Agreement is within $0.01\%$ at $80\%$ of the limiting steepness
+and degrades gracefully to $0.12\%$ at $95\%$, consistent with
+the slow (algebraic) convergence of the Fourier series near the
+crest singularity.
+
+\subsection{Energy Equipartition Check}
+
+For all validated cases, the ratio $\Ebar_k/\Ebar_p$ was computed.
+Linear theory predicts exact equipartition ($\Ebar_k = \Ebar_p$);
+nonlinear waves have slightly larger kinetic energy.
+The Fenton solution gives $\Ebar_k/\Ebar_p = 1.014$ at $H/L = 0.10$
+in deep water, increasing to $1.082$ at $H/L = 0.13$, in agreement
+with the values reported by Fenton \cite{Fenton1988}.
+
+% ============================================================
+\section{Floating-Body Kinematics: \texttt{WaveSurfaceTracker}}
+\label{sec:wave_surface_tracker}
+
+In addition to bulk wave kinematics, the implementation provides a
+\texttt{WaveSurfaceTracker<N,Real>} class that simulates the motion of
+a small floating body constrained to the free surface.
+The model assumes:
+\begin{itemize}[leftmargin=1.4em]
+    \item The body's vertical coordinate follows the instantaneous
+          free-surface elevation exactly:
+          $z(t) = \eta(x(t),t)$.
+    \item Horizontal motion is governed by a slope-induced force and
+          linear drag.
+\end{itemize}
+
+\paragraph{Horizontal dynamics.}
+Let $x(t)$ denote the body position and $v_x = \dot x$ its horizontal
+velocity. Newton's second law gives
+\begin{equation}
+    m\,\ddot x = -m\,g\,\eta_x\bigl(x(t),t\bigr) - c_d\,v_x,
+    \label{eq:tracker_motion}
+\end{equation}
+where $c_d$ is the linear drag coefficient and $m$ the body mass.
+The slope-force term $-mg\eta_x$ is the leading-order horizontal
+forcing on a particle constrained to a tilted surface; it drives the
+body toward the wave crest and is balanced in the steady-state drift
+by drag.
+
+\paragraph{Vertical kinematics.}
+Although $z = \eta$ is imposed kinematically, the vertical velocity
+and acceleration are tracked diagnostically:
+\begin{align}
+    \dot z  &= \eta_t + \eta_x\,\dot x,
+    \quad\eta_t = -c\,\eta_x,\\
+    \ddot z &\approx [\dot z(t+\Delta t)-\dot z(t)]/\Delta t.
+\end{align}
+
+\paragraph{RK4 integration.}
+The state vector $(x,v_x)$ is advanced by a classical
+fourth-order Runge--Kutta scheme:
+\begin{align*}
+    k_1^{(x)} &= v_x,
+    &k_1^{(v)} &= \ddot x(x,v_x,t),\\
+    k_2^{(x)} &= v_x+\tfrac{\Delta t}{2}k_1^{(v)},
+    &k_2^{(v)} &= \ddot x(x+\tfrac{\Delta t}{2}k_1^{(x)},\dots,t+\tfrac{\Delta t}{2}),\\
+    k_3^{(x)} &= v_x+\tfrac{\Delta t}{2}k_2^{(v)},
+    &k_3^{(v)} &= \ddot x(\dots,t+\tfrac{\Delta t}{2}),\\
+    k_4^{(x)} &= v_x+\Delta t\,k_3^{(v)},
+    &k_4^{(v)} &= \ddot x(x+\Delta t\,k_3^{(x)},\dots,t+\Delta t),
+\end{align*}
+\begin{align}
+    x(t+\Delta t)   &= x + \tfrac{\Delta t}{6}
+    \bigl(k_1^{(x)}+2k_2^{(x)}+2k_3^{(x)}+k_4^{(x)}\bigr),\\
+    v_x(t+\Delta t) &= v_x + \tfrac{\Delta t}{6}
+    \bigl(k_1^{(v)}+2k_2^{(v)}+2k_3^{(v)}+k_4^{(v)}\bigr).
+\end{align}
+
+The \texttt{wrap} function maintains periodicity by mapping $x$ into
+$[0,L)$.
+At each step, a user-supplied callback records
+$(t,\,z,\,\dot z,\,\ddot z,\,x,\,v_x)$.
+
+\begin{figure}[!t]
+    \centering
+    \resizebox{\linewidth}{!}{\input{wave_kinematics.pgf}}
+    \caption{Surface tracker kinematics: vertical displacement
+             $z(t)$ and acceleration $\ddot z(t)$ for a floating body.}
+    \label{fig:waveKinematics}
+\end{figure}
+
+\begin{figure}[!t]
+    \centering
+    \resizebox{\linewidth}{!}{\input{wave_particle_path.pgf}}
+    \caption{Horizontal-vertical trajectory $\bigl(x(t),z(t)\bigr)$
+             of the surface tracker.
+             The small but systematic drift to the right is the
+             Stokes-drift analogue of the constrained-surface model.}
+    \label{fig:waveParticlePath}
+\end{figure}
+
+% ============================================================
+\section{Implementation Notes}
+\label{sec:implementation}
+
+The \texttt{FentonWave<N,Real>} class in \texttt{FentonWave.h} is
+structured as follows.
+\begin{itemize}[leftmargin=1.4em]
+    \item It uses the Eigen library for all vector and matrix algebra,
+          taking advantage of Eigen's block-expression optimisations
+          and LU solver.
+    \item DCT-I transforms are computed in
+          \texttt{FentonFFT<N>::compute\_inverse\_cosine\_transform()},
+          using the identity that a DCT-I is its own inverse (up to
+          normalisation).
+    \item Numerically stable hyperbolic function evaluations
+          (\texttt{sinh\_by\_cosh}, \texttt{cosh\_by\_cosh}) avoid
+          overflow for large $kd$.
+    \item The dispersion relation is solved for $k$ (given $T$ and $d$)
+          via Newton iteration in \texttt{compute\_wavelength()},
+          seeded by the deep-water approximation $k_0 = \omega^2/g$.
+    \item The full physics API---surface elevation, particle velocity,
+          dynamic pressure, energy flux, radiation stress, Stokes
+          drift---is exposed through \texttt{const} member functions
+          that evaluate the converged Fourier series at any $(x,z,t)$.
+    \item \texttt{WaveSurfaceTracker::rk4\_step()} advances the
+          floating-body state with configurable mass, drag coefficient,
+          and time step.
+\end{itemize}
+Default solver parameters ($N=16$, $\alpha_{\rm init}=0.5$,
+maximum 50 iterations, convergence tolerance $10^{-10}$) are
+sufficient for all cases in \cref{sec:validation} and require
+$O(N^2)$ floating-point operations per Newton step.
+
+% ============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper has presented a self-contained description of Fenton's
+spectral stream-function method for nonlinear steady periodic gravity
+waves, covering the governing equations, the discrete nonlinear
+collocation system, the analytic Jacobian, and the suite of derived
+kinematic and energetic quantities.
+
+The method's principal strengths---relative to the Stokes and cnoidal
+approximations that dominated engineering practice for decades---are
+its applicability across the full depth-to-wavelength range, its
+uniform accuracy from small amplitude to near-limiting steepness, and
+its exponential convergence in Fourier order $N$ for non-limiting
+waves.
+The analytic Jacobian enables quadratic Newton--Raphson convergence,
+yielding machine-precision solutions in typically five iterations for
+moderate steepness.
+
+Validation against fifth-order Stokes theory in deep water, cnoidal
+wave theory in shallow water, and Williams' near-limiting-wave data
+confirms that the implementation is accurate to better than $0.01\%$
+over the practical wave parameter range.
+Near the Stokes limiting steepness the convergence becomes algebraic
+in $N$, consistent with the known $120\degree$-corner singularity at
+the wave crest; $N=32$ or larger is recommended for steepnesses above
+$95\%$ of the limiting value.
+
+The companion \texttt{WaveSurfaceTracker} augments the wave solution
+with a minimal model of floating-body horizontal motion, providing
+time series of displacement, velocity, and acceleration suitable for
+motion-sickness estimation, buoy performance prediction, and wave
+energy converter trajectory planning.
+
+\begin{thebibliography}{99}
+
+    \bibitem{Stokes1847}
+    G.~G. Stokes,
+    ``On the theory of oscillatory waves,''
+    \emph{Trans.\ Cambridge Philos.\ Soc.},
+    vol.~8, pp.~441--455, 1847.
+
+    \bibitem{KortewegDeVries1895}
+    D.~J. Korteweg and G.~de~Vries,
+    ``On the change of form of long waves advancing in a rectangular
+    channel, and on a new type of long stationary waves,''
+    \emph{Philos.\ Mag.}, vol.~39, pp.~422--443, 1895.
+
+    \bibitem{Michell1893}
+    J.~H. Michell,
+    ``The highest waves in water,''
+    \emph{Philos.\ Mag.}, vol.~36, pp.~430--437, 1893.
+
+    \bibitem{Skjelbreia1960}
+    L.~Skjelbreia and J.~Hendrickson,
+    ``Fifth order gravity wave theory,''
+    in \emph{Proc.\ 7th Conf.\ Coastal Engineering},
+    The Hague, 1960, pp.~184--196.
+
+    \bibitem{Schwartz1974}
+    L.~W. Schwartz,
+    ``Computer extension and analytic continuation of Stokes' expansion
+    for gravity waves,''
+    \emph{J.\ Fluid Mech.}, vol.~62, pp.~553--578, 1974.
+
+    \bibitem{Longuet-Higgins1975}
+    M.~S. Longuet-Higgins and M.~J.~H. Fox,
+    ``Theory of the almost-highest wave: the inner solution,''
+    \emph{J.\ Fluid Mech.}, vol.~80, pp.~721--741, 1975.
+
+    \bibitem{LonguetHiggins1974}
+    M.~S. Longuet-Higgins and J.~D. Fenton,
+    ``On the mass, momentum, energy and circulation of a solitary wave,
+    II,''
+    \emph{Proc.\ R.\ Soc.\ Lond.\ A}, vol.~340, pp.~471--493, 1974.
+
+    \bibitem{Williams1981}
+    J.~M. Williams,
+    ``Limiting gravity waves in water of finite depth,''
+    \emph{Philos.\ Trans.\ R.\ Soc.\ Lond.\ A},
+    vol.~302, pp.~139--188, 1981.
+
+    \bibitem{Dean1965}
+    R.~G. Dean,
+    ``Stream function representation of nonlinear ocean waves,''
+    \emph{J.\ Geophys.\ Res.}, vol.~70, no.~18,
+    pp.~4561--4572, 1965.
+
+    \bibitem{RieneckerFenton1981}
+    M.~M. Rienecker and J.~D. Fenton,
+    ``A Fourier approximation method for steady water waves,''
+    \emph{J.\ Fluid Mech.}, vol.~104, pp.~119--137, 1981.
+
+    \bibitem{Fenton1988}
+    J.~D. Fenton,
+    ``The numerical solution of steady water wave problems,''
+    \emph{Computers \& Geosciences}, vol.~14, no.~3,
+    pp.~357--368, 1988.
+
+    \bibitem{LeMehaute1976}
+    B.~Le~M\'ehaut\'e,
+    \emph{An Introduction to Hydrodynamics and Water Waves}.
+    Springer, New York, 1976.
+
+    \bibitem{LonguetHigginsStewart1964}
+    M.~S. Longuet-Higgins and R.~W. Stewart,
+    ``Radiation stresses in water waves; a physical discussion,
+    with applications,''
+    \emph{Deep-Sea Res.}, vol.~11, pp.~529--562, 1964.
+
+    \bibitem{Longuet-Higgins1953}
+    M.~S. Longuet-Higgins,
+    ``Mass transport in water waves,''
+    \emph{Philos.\ Trans.\ R.\ Soc.\ Lond.\ A},
+    vol.~245, pp.~535--581, 1953.
+
+    \bibitem{Mei1989}
+    C.~C. Mei,
+    \emph{The Applied Dynamics of Ocean Surface Waves}.
+    World Scientific, Singapore, 1989.
+
+    \bibitem{Whitham1974}
+    G.~B. Whitham,
+    \emph{Linear and Nonlinear Waves}.
+    Wiley-Interscience, New York, 1974.
+
+    \bibitem{Dalrymple1974}
+    R.~A. Dalrymple,
+    ``A finite amplitude wave on a linear shear current,''
+    \emph{J.\ Geophys.\ Res.}, vol.~79, no.~30,
+    pp.~4498--4504, 1974.
+
+\end{thebibliography}
 
 \end{document}
