@@ -70,7 +70,7 @@ class MahonyBackend : public IAttitudeBackend {
 class MahonyCompassApp : public CompassAppBase {
  public:
   MahonyCompassApp()
-      : CompassAppBase(std::make_unique<MahonyBackend>(), MagGateConfig{35, 0.02f, 20}, "Mahony") {}
+      : CompassAppBase(std::make_unique<MahonyBackend>(), MagGateConfig{35, 0.001f, 20}, "Mahony") {}
 };
 
 static MahonyCompassApp g_app;

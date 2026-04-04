@@ -137,7 +137,7 @@ struct MagGateConfig {
   uint32_t sample_spacing_ms = 35;
 
   // Used only for soft "stuck" detection, not for rejecting freshness.
-  float min_delta_uT = 0.02f;
+  float min_delta_uT = 0.001f;
 
   // 0 disables stuck flagging.
   uint8_t stuck_reject_after_n = 20;
