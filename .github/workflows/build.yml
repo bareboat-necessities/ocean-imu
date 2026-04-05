@@ -167,11 +167,11 @@ jobs:
       fail-fast: false
       matrix:
         ino_dir: [ "full_marine_ins", "compass_ahrs", "imu_fifo" ]
-
+  
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
+  
       - name: Compile sketch
         uses: ArminJo/arduino-test-compile@v3
         with:
@@ -182,8 +182,9 @@ jobs:
           sketch-names: "*.ino"
           sketch-names-find-start: sensors/${{ matrix.ino_dir }}/*
           build-properties: >-
-            { "All": "-I${{ github.workspace }}/src -funroll-loops -fno-finite-math-only" }
+            { "All": "-funroll-loops -fno-finite-math-only" }
           extra-arduino-cli-args: >-
             --warnings default
+            --library ${{ github.workspace }}
             --build-property compiler.libraries.ldflags=-Wl,--allow-multiple-definition
           set-build-path: true
