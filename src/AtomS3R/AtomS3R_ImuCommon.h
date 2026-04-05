@@ -6,6 +6,8 @@
 namespace atoms3r_ical {
 
 constexpr float kDefaultImuOdrHz = 200.0f;
+constexpr uint32_t kDefaultImuLogPeriodUs = 50000u;          // 20 Hz
+constexpr uint32_t kDefaultNoSampleLogPeriodUs = 500000u;    // 2 Hz
 
 constexpr uint32_t loopPeriodUsFromHz(float hz)
 {
@@ -55,6 +57,45 @@ struct ImuLogRow
   float magN = 0.0f;
   float magE = 0.0f;
   float magD = 0.0f;
+};
+
+struct ImuLoopLogState
+{
+  uint32_t lastLogUs = 0u;
+  uint32_t lastNoSampleLogUs = 0u;
+  uint32_t consecutiveReadFailures = 0u;
+
+  void markReadFailure()
+  {
+    ++consecutiveReadFailures;
+  }
+
+  void markReadSuccess()
+  {
+    consecutiveReadFailures = 0u;
+  }
+
+  bool shouldLogNoSample(uint32_t nowUs, uint32_t periodUs = kDefaultNoSampleLogPeriodUs)
+  {
+    if (static_cast<uint32_t>(nowUs - lastNoSampleLogUs) < periodUs)
+    {
+      return false;
+    }
+
+    lastNoSampleLogUs = nowUs;
+    return true;
+  }
+
+  bool shouldLogSample(uint32_t nowUs, uint32_t periodUs = kDefaultImuLogPeriodUs)
+  {
+    if (static_cast<uint32_t>(nowUs - lastLogUs) < periodUs)
+    {
+      return false;
+    }
+
+    lastLogUs = nowUs;
+    return true;
+  }
 };
 
 inline void printImuLogRow(const ImuLogRow& row)

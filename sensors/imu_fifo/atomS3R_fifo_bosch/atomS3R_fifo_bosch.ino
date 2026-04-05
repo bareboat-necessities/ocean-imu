@@ -60,13 +60,27 @@ void setup()
 void loop()
 {
   const uint32_t loopStartUs = micros();
+  static ImuLoopLogState logState{};
 
   ImuSample sample{};
   if (!imu.read(sample))
   {
+    logState.markReadFailure();
+    const uint32_t nowUs = micros();
+    if (logState.shouldLogNoSample(nowUs))
+    {
+      Serial.printf("Waiting for FIFO sample (failures=%lu): imu=%s fifo=%s len=%u req=%u got=%u\n",
+                    static_cast<unsigned long>(logState.consecutiveReadFailures),
+                    imu.lastErrorString(),
+                    imu.fifo().lastErrorString(),
+                    static_cast<unsigned int>(imu.fifo().lastFifoLen()),
+                    static_cast<unsigned int>(imu.fifo().lastFifoReq()),
+                    static_cast<unsigned int>(imu.fifo().lastFifoGot()));
+    }
     waitForNextLoopTick(loopStartUs, kLoopPeriodUs);
     return;
   }
+  logState.markReadSuccess();
 
   ImuLogRow row{};
   row.fifoLen = static_cast<int32_t>(imu.fifo().lastFifoLen());
@@ -92,6 +106,10 @@ void loop()
   row.magE = sample.m.y();
   row.magD = sample.m.z();
 
-  printImuLogRow(row);
+  const uint32_t nowUs = micros();
+  if (logState.shouldLogSample(nowUs))
+  {
+    printImuLogRow(row);
+  }
   waitForNextLoopTick(loopStartUs, kLoopPeriodUs);
 }
