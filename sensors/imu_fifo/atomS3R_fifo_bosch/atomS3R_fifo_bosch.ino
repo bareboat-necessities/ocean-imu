@@ -10,8 +10,6 @@ using namespace atoms3r_ical;
 
 constexpr float kImuOdrHz = kDefaultImuOdrHz;
 constexpr uint32_t kLoopPeriodUs = loopPeriodUsFromHz(kImuOdrHz);
-constexpr uint32_t kLogPeriodUs = 50000u;       // 20 Hz serial output keeps logs readable at 115200 baud.
-constexpr uint32_t kNoSampleLogPeriodUs = 500000u; // 2 Hz diagnostic when FIFO produces no sample.
 
 BoschBmi270_ImuCal imu;
 
@@ -62,20 +60,17 @@ void setup()
 void loop()
 {
   const uint32_t loopStartUs = micros();
-  static uint32_t lastLogUs = 0u;
-  static uint32_t lastNoSampleLogUs = 0u;
-  static uint32_t consecutiveReadFailures = 0u;
+  static ImuLoopLogState logState{};
 
   ImuSample sample{};
   if (!imu.read(sample))
   {
-    ++consecutiveReadFailures;
+    logState.markReadFailure();
     const uint32_t nowUs = micros();
-    if (static_cast<uint32_t>(nowUs - lastNoSampleLogUs) >= kNoSampleLogPeriodUs)
+    if (logState.shouldLogNoSample(nowUs))
     {
-      lastNoSampleLogUs = nowUs;
       Serial.printf("Waiting for FIFO sample (failures=%lu): imu=%s fifo=%s len=%u req=%u got=%u\n",
-                    static_cast<unsigned long>(consecutiveReadFailures),
+                    static_cast<unsigned long>(logState.consecutiveReadFailures),
                     imu.lastErrorString(),
                     imu.fifo().lastErrorString(),
                     static_cast<unsigned int>(imu.fifo().lastFifoLen()),
@@ -85,7 +80,7 @@ void loop()
     waitForNextLoopTick(loopStartUs, kLoopPeriodUs);
     return;
   }
-  consecutiveReadFailures = 0u;
+  logState.markReadSuccess();
 
   ImuLogRow row{};
   row.fifoLen = static_cast<int32_t>(imu.fifo().lastFifoLen());
@@ -112,9 +107,8 @@ void loop()
   row.magD = sample.m.z();
 
   const uint32_t nowUs = micros();
-  if (static_cast<uint32_t>(nowUs - lastLogUs) >= kLogPeriodUs)
+  if (logState.shouldLogSample(nowUs))
   {
-    lastLogUs = nowUs;
     printImuLogRow(row);
   }
   waitForNextLoopTick(loopStartUs, kLoopPeriodUs);
