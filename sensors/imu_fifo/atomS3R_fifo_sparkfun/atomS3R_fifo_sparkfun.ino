@@ -25,6 +25,7 @@ void waitForNextLoopTick(uint32_t loopStartUs)
 
 ImuReader imuReader;
 MagReader magReader;
+bool magAvailable = false;
 
 void setup()
 {
@@ -43,7 +44,8 @@ void setup()
     }
   }
 
-  if (!magReader.begin(imuReader.sensor(), kMagOdr, kAuxOdr))
+  magAvailable = magReader.begin(imuReader.sensor(), kMagOdr, kAuxOdr);
+  if (!magAvailable)
   {
     Serial.println("Magnetometer init failed; continuing without valid mag data.");
   }
@@ -63,7 +65,9 @@ void loop()
     return;
   }
 
-  const MagReader::Sample magSample = magReader.readLatestSample(imuReader.sensor(), imuSample.timestampMs);
+  const MagReader::Sample magSample =
+    magAvailable ? magReader.readLatestSample(imuReader.sensor(), imuSample.timestampMs)
+                 : MagReader::Sample{};
 
   float accNorth = 0.0f;
   float accEast = 0.0f;
@@ -90,10 +94,14 @@ void loop()
   }
 
   Serial.printf(
-    "FIFO batch=%u | dt_imu_ms=%.2f | mag_valid=%u | dt_mag_ms=%s%.2f (target~%.2f) | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | gyro_ned[dps] N=%.3f E=%.3f D=%.3f | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
+    "FIFO batch=%u | dt_imu_ms=%.2f | mag_valid=%u | mag_updated=%u | mag_age_ms=%s%.2f (target~%.2f) | "
+    "acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | "
+    "gyro_ned[dps] N=%.3f E=%.3f D=%.3f | "
+    "mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
     imuSample.framesRead,
     imuSample.imuDeltaMs,
     magSample.valid ? 1U : 0U,
+    magSample.updated ? 1U : 0U,
     magSample.updated ? "+" : "~",
     magSample.deltaMs,
     kMagPeriodMs,
