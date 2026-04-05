@@ -4,10 +4,10 @@
    Copyright 2025, Mikhail Grushinskiy
  */
 
-#ifdef EIGEN_NON_ARDUINO
-#include <Eigen/Dense>
-#else
+#ifdef ARDUINO
 #include <ArduinoEigenDense.h>
+#else
+#include <Eigen/Dense>
 #endif
 
 #include <cmath>
