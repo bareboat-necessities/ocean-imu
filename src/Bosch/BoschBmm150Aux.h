@@ -56,15 +56,23 @@ class BoschBmm150Aux {
 public:
   struct Config {
     uint8_t  bmm_addr = BMM150_DEFAULT_I2C_ADDRESS; // usually 0x10
-    float    aux_odr_hz = 25.0f;                    // BMI270 AUX service rate
+
+    // Target BMM150 magnetometer output data rate.
+    // This is NOT the BMI270 accel/gyro ODR.
+    float    aux_odr_hz = 25.0f;
+
     uint8_t  preset_mode = BMM150_PRESETMODE_REGULAR;
     uint16_t startup_settle_ms = 200;
     bool     verify_first_read = true;
 
+    // If true, host-side wall-clock throttling is enforced based on the
+    // effective configured BMM150 rate.
+    bool     gate_reads_by_wall_time = true;
+
     // If caller polls faster than the configured mag rate:
-    //  - true  => return last good finite sample
-    //  - false => return false immediately (non-blocking)
-    bool     return_last_on_fast_poll = true;
+    //  - true  => return last good finite sample and report success
+    //  - false => return false with lastError()==NONE
+    bool     return_last_on_fast_poll = false;
 
     // On read failure, output last good sample if available, else zeros.
     // Function still returns false.
@@ -121,6 +129,17 @@ public:
   const char* lastEndErrorString() const { return errorString_(last_end_error_); }
 
   const Config& config() const { return cfg_; }
+
+  float effectiveMagHz() const { return effective_mag_hz_; }
+
+  uint32_t minReadIntervalUs() const {
+    const float hz = (effective_mag_hz_ > 0.0f && std::isfinite(effective_mag_hz_))
+                   ? effective_mag_hz_
+                   : 25.0f;
+    const double us = 1.0e6 / static_cast<double>(hz);
+    const long out = lround(us);
+    return (out > 0) ? static_cast<uint32_t>(out) : 40000u;
+  }
 
   uint32_t initFailuresTotal() const            { return init_fail_total_; }
   uint32_t readOkTotal() const                  { return read_ok_total_; }
@@ -495,26 +514,6 @@ private:
     }
   }
 
-  static uint8_t presetOdrCode_(uint8_t preset_mode) {
-    switch (preset_mode) {
-      case BMM150_PRESETMODE_HIGHACCURACY:  return 0x05u; // 20 Hz
-      case BMM150_PRESETMODE_LOWPOWER:
-      case BMM150_PRESETMODE_REGULAR:
-      case BMM150_PRESETMODE_ENHANCED:
-      default:                              return 0x00u; // 10 Hz
-    }
-  }
-
-  static float presetModeHz_(uint8_t preset_mode) {
-    switch (preset_mode) {
-      case BMM150_PRESETMODE_HIGHACCURACY:  return 20.0f;
-      case BMM150_PRESETMODE_LOWPOWER:
-      case BMM150_PRESETMODE_REGULAR:
-      case BMM150_PRESETMODE_ENHANCED:
-      default:                              return 10.0f;
-    }
-  }
-
   static uint8_t odrCodeFromHz_(float hz) {
     if (!(hz > 0.0f) || !std::isfinite(hz)) return 0x06u; // 25 Hz default
     if (hz >= 27.5f) return 0x07u; // 30 Hz
@@ -547,7 +546,7 @@ private:
                    : 25.0f;
     const float ms = 1000.0f / hz;
     const long out = lroundf(ms);
-    return out > 0 ? static_cast<uint32_t>(out) : 100u;
+    return out > 0 ? static_cast<uint32_t>(out) : 40u;
   }
 
   bool setAuxPullup2k_() {
@@ -674,6 +673,7 @@ private:
     }
 
     op &= static_cast<uint8_t>(~(kOpModeBitsMask | kOdrBitsMask));
+
     const uint8_t odr_code = odrCodeFromHz_(cfg_.aux_odr_hz);
     op |= static_cast<uint8_t>((odr_code << 3) & kOdrBitsMask);
     op |= kOpModeNormal;
@@ -727,9 +727,6 @@ private:
     trim_.dig_z1 = u16le_(b);
 
     if (!auxRead_(kRegDigXYZ1Lsb, b, 2)) return false;
-    // Bosch reference parsing masks bit7 of the MSB for dig_xyz1:
-    //   temp_msb = (trim_xy1xy2[5] & 0x7F) << 8
-    //   dig_xyz1 = temp_msb | trim_xy1xy2[4]
     trim_.dig_xyz1 = static_cast<uint16_t>(
       (static_cast<uint16_t>(b[0])) |
       (static_cast<uint16_t>(b[1] & 0x7Fu) << 8)
@@ -790,13 +787,11 @@ private:
     s.z = signExtend15_(z_u);
     s.rhall = rh_u;
 
-    // Bosch overflow sentinels / invalid hall.
     if (s.rhall == 0u || s.rhall == 0x3FFFu || s.x == -4096 || s.y == -4096 || s.z == -16384) {
       last_error_ = Error::RAW_MAG_INVALID;
       return false;
     }
 
-    // Reject all-zero raw sample too.
     if (s.x == 0 && s.y == 0 && s.z == 0) {
       last_error_ = Error::RAW_MAG_INVALID;
       return false;
@@ -814,7 +809,6 @@ private:
     const float rhall = static_cast<float>(s.rhall);
     const float dig_xyz1 = static_cast<float>(trim_.dig_xyz1);
 
-    // X compensation (Bosch formula, guarded)
     const float x0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
     const float x1 = (static_cast<float>(trim_.dig_xy2) * (x0 * x0 / 268435456.0f));
     const float x2 = x0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
@@ -822,7 +816,6 @@ private:
     const float x = ((((static_cast<float>(s.x) * ((x1 + x2 + 256.0f) * x3)) / 8192.0f) +
                      (static_cast<float>(trim_.dig_x1) * 8.0f)) / 16.0f);
 
-    // Y compensation
     const float y0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
     const float y1 = (static_cast<float>(trim_.dig_xy2) * (y0 * y0 / 268435456.0f));
     const float y2 = y0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
@@ -830,7 +823,6 @@ private:
     const float y = ((((static_cast<float>(s.y) * ((y1 + y2 + 256.0f) * y3)) / 8192.0f) +
                      (static_cast<float>(trim_.dig_y1) * 8.0f)) / 16.0f);
 
-    // Z compensation
     const float z_denom = ((static_cast<float>(trim_.dig_z2)) +
                           ((static_cast<float>(trim_.dig_z1) * rhall) / 32768.0f)) * 4.0f;
     if (z_denom == 0.0f || !std::isfinite(z_denom)) {
@@ -866,10 +858,10 @@ private:
   }
 
   bool readMagInternal_(Vector3f& m_uT_out, bool count_stats) {
-    uint32_t now_ms = millis();
+    const uint32_t now_ms = millis();
     const uint32_t min_ms = minReadIntervalMs_();
 
-    if (have_last_good_) {
+    if (cfg_.gate_reads_by_wall_time && have_last_good_) {
       const uint32_t elapsed = static_cast<uint32_t>(now_ms - last_read_ms_);
       if (elapsed < min_ms) {
         if (cfg_.return_last_on_fast_poll) {
@@ -890,10 +882,8 @@ private:
 
     RawSample raw{};
     Vector3f  out = Vector3f::Zero();
-
     bool success = false;
 
-    // Try a few times before giving up.
     for (int attempt = 0; attempt < 4; ++attempt) {
       if (attempt == 1) delay(2);
       if (attempt == 2) delay(5);
@@ -905,6 +895,7 @@ private:
       if (!compensateRawTo_uT_(raw, out)) {
         continue;
       }
+
       success = true;
       break;
     }
@@ -953,7 +944,7 @@ private:
     have_last_good_ = false;
     last_good_uT_ = Vector3f::Zero();
     last_read_ms_ = 0;
-    effective_mag_hz_ = 25.0f;
+    effective_mag_hz_ = 0.0f;
   }
 
   void bestEffortRollback_() {
@@ -1004,7 +995,7 @@ private:
   bool     have_last_good_ = false;
   Vector3f last_good_uT_ = Vector3f::Zero();
   uint32_t last_read_ms_ = 0;
-  float    effective_mag_hz_ = 25.0f;
+  float    effective_mag_hz_ = 0.0f;
 };
 
 #else
@@ -1021,7 +1012,8 @@ public:
     uint8_t  preset_mode = 0;
     uint16_t startup_settle_ms = 200;
     bool     verify_first_read = true;
-    bool     return_last_on_fast_poll = true;
+    bool     gate_reads_by_wall_time = true;
+    bool     return_last_on_fast_poll = false;
     bool     return_last_good_on_error = true;
     int8_t   axis_map[3] = { +1, +2, +3 };
   };
@@ -1047,6 +1039,14 @@ public:
     return "Bosch SensorAPI headers not found in this build";
   }
 
+  const Config& config() const {
+    static const Config kCfg{};
+    return kCfg;
+  }
+
+  float effectiveMagHz() const { return 0.0f; }
+  uint32_t minReadIntervalUs() const { return 0u; }
+
   uint32_t initFailuresTotal() const { return 0; }
   uint32_t readOkTotal() const { return 0; }
   uint32_t readFailuresTotal() const { return 0; }
@@ -1061,11 +1061,6 @@ public:
   }
 
   bool haveLastGoodMag() const { return false; }
-
-  const Config& config() const {
-    static const Config kCfg{};
-    return kCfg;
-  }
 
   template <typename Dummy = void>
   bool begin(struct bmi2_dev*) {
