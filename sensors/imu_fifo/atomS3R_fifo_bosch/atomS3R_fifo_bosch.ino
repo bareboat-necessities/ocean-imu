@@ -8,7 +8,6 @@ using namespace atoms3r_ical;
 
 constexpr float kImuOdrHz = 200.0f;
 constexpr uint32_t kLoopPeriodUs = static_cast<uint32_t>(1000000.0f / kImuOdrHz);
-constexpr float kMagPeriodMs = 1000.0f / 25.0f;
 
 void waitForNextLoopTick(uint32_t loopStartUs)
 {
@@ -59,6 +58,10 @@ void setup()
   }
 
   Serial.printf("Bosch FIFO initialized via %s\n", imu.fifo().initPathString());
+  Serial.printf("Requested mag rate: %.2f Hz, effective mag rate: %.2f Hz, mag step: %.2f ms\n",
+                imuCfg.mag_aux_odr_hz,
+                imu.effectiveMagHz(),
+                1.0e-3f * static_cast<float>(imu.magStepUs64()));
 }
 
 void loop()
@@ -74,6 +77,20 @@ void loop()
 
   const float dtImuMs = imu.fifo().nominalDt() * 1000.0f;
   const bool magValid = imu.magHealthy();
+  const bool magUpdated = imu.magUpdatedThisRead();
+
+  const float magAgeMs =
+    magValid ? static_cast<float>((imu.sampleClockUs64() - imu.lastMagSampleUs64()) * 1e-3) : -1.0f;
+
+  const float magStepMs =
+    (imu.magStepUs64() > 0u)
+      ? static_cast<float>(imu.magStepUs64()) * 1.0e-3f
+      : -1.0f;
+
+  const float lastMagDtMs =
+    (imu.lastMagPeriodUs64() > 0u)
+      ? static_cast<float>(imu.lastMagPeriodUs64()) * 1.0e-3f
+      : -1.0f;
 
   const float gyroNorthDps = sample.w.x() * RAD_TO_DEG;
   const float gyroEastDps = sample.w.y() * RAD_TO_DEG;
@@ -82,7 +99,8 @@ void loop()
   const Vector3f magBody = sample.m;
 
   Serial.printf(
-    "FIFO len=%u req=%u got=%u | dt_imu_ms=%.2f | mag_valid=%u | mag_age_ms=%.2f (target~%.2f) | "
+    "FIFO len=%u req=%u got=%u | dt_imu_ms=%.2f | "
+    "mag_valid=%u mag_updated=%u | mag_age_ms=%.2f | mag_step_ms=%.2f | last_mag_dt_ms=%.2f | "
     "acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | "
     "gyro_ned[dps] N=%.3f E=%.3f D=%.3f | "
     "mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
@@ -91,8 +109,10 @@ void loop()
     imu.fifo().lastFifoGot(),
     dtImuMs,
     magValid ? 1U : 0U,
-    magValid ? static_cast<float>((imu.sampleClockUs64() - imu.lastMagSampleUs64()) * 1e-3) : -1.0f,
-    kMagPeriodMs,
+    magUpdated ? 1U : 0U,
+    magAgeMs,
+    magStepMs,
+    lastMagDtMs,
     sample.a.x(),
     sample.a.y(),
     sample.a.z(),
@@ -102,6 +122,14 @@ void loop()
     magBody.x(),
     magBody.y(),
     magBody.z());
+
+  // Example for future fusion:
+  // only do mag update when there is a NEW mag sample.
+  //
+  // if (magUpdated && magValid) {
+  //   const float dtMagS = 1.0e-6f * static_cast<float>(imu.lastMagPeriodUs64());
+  //   // mag fusion step here
+  // }
 
   waitForNextLoopTick(loopStartUs);
 }
