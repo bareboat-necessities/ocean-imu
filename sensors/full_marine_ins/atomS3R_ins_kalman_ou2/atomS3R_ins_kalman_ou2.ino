@@ -28,6 +28,8 @@
 #endif
 #include <ArduinoEigenDense.h>
 
+#include <ArduinoOceanImu.h>
+
 #include "Bosch/BoschBmi270_ImuCal.h"
 #if !defined(ATOMS3R_HAVE_BOSCH_SENSORAPI) || !(ATOMS3R_HAVE_BOSCH_SENSORAPI)
   #error "Bosch BMI270 SensorAPI is not available in this build. Install the library that provides Arduino_BMI270_BMM150.h."

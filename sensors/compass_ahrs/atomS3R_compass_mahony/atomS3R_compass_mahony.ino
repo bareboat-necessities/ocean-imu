@@ -9,6 +9,8 @@
 
 #define NO_BOSCH_API
 
+#include <ArduinoOceanImu.h>
+
 // 1 = graphical compass by default, 0 = text UI by default
 #ifndef COMPASS_UI_DEFAULT_GRAPHICS
 #define COMPASS_UI_DEFAULT_GRAPHICS 1
