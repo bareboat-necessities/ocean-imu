@@ -1,0 +1,41 @@
+{
+  "name": "ocean-imu",
+  "version": "0.1.0",
+  "description": "Marine IMU, AHRS, and wave-processing algorithms with AtomS3R integrations for M5Stack AtomS3R.",
+  "keywords": [
+    "imu",
+    "ahrs",
+    "kalman",
+    "m5stack",
+    "atoms3r",
+    "marine",
+    "wave"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bareboat-necessities/ocean-imu.git"
+  },
+  "authors": [
+    {
+      "name": "Bareboat Necessities"
+    }
+  ],
+  "license": "MIT",
+  "frameworks": [
+    "arduino"
+  ],
+  "platforms": [
+    "espressif32"
+  ],
+  "dependencies": [
+    {
+      "name": "M5Unified"
+    },
+    {
+      "name": "Eigen"
+    }
+  ],
+  "build": {
+    "srcFilter": "+<src/>"
+  }
+}
