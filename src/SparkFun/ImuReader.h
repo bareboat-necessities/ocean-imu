@@ -109,8 +109,7 @@ public:
       framesRead = kDefaultFifoWatermarkFrames;
     }
 
-    imu.getFIFOData(fifoFrames, &framesRead);
-    if (framesRead == 0)
+    if (imu.getFIFOData(fifoFrames, &framesRead) != BMI2_OK)
     {
       return sample;
     }
