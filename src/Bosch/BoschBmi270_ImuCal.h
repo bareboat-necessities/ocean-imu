@@ -18,7 +18,8 @@
   - Reuses atoms3r_ical::ImuSample / Vector3f from AtomS3R_ImuCal.h.
   - sample_us is FIFO-time-derived, not read-time-derived.
   - out.mask intentionally reports accel+gyro only, matching AtomS3R_ImuCal.h.
-  - Mag validity is communicated by finite out.m versus NaN, plus hasMag().
+  - out.m is the latest healthy cached magnetometer sample.
+  - Use magUpdatedThisRead() to know whether a NEW mag sample arrived on this read.
 */
 
 #include <Arduino.h>
@@ -43,7 +44,7 @@ public:
 
     bool     enable_mag_aux             = true;
     uint8_t  mag_bmm150_addr            = 0x10;
-    float    mag_aux_odr_hz             = 25.0f;   // manual AUX bridge service rate
+    float    mag_aux_odr_hz             = 25.0f;   // target BMM150 output data rate
     uint16_t mag_startup_settle_ms      = 3;
     bool     mag_verify_first_read      = true;
 
@@ -82,6 +83,8 @@ public:
   bool magHealthy() const {
     return mag_configured_ && have_valid_mag_ && !magCurrentlyStale_();
   }
+
+  bool magUpdatedThisRead() const { return mag_updated_this_read_; }
 
   bool haveValidTemperature() const { return have_valid_temp_; }
   float lastTemperatureC() const { return last_tempC_; }
@@ -123,6 +126,9 @@ public:
 
   uint64_t sampleClockUs64() const { return sample_clock_us_; }
   uint64_t lastMagSampleUs64() const { return last_mag_sample_us_; }
+  uint64_t magStepUs64() const { return mag_step_us_; }
+  uint64_t lastMagPeriodUs64() const { return last_mag_period_us_; }
+  float effectiveMagHz() const { return effective_mag_hz_; }
 
   const Vector3f& lastGoodMag_uT() const { return last_mag_uT_; }
   bool haveLastGoodMag() const { return have_last_good_mag_; }
@@ -236,6 +242,7 @@ public:
     const Vector3f a_b(a_s.y(), a_s.x(), -a_s.z());
     const Vector3f w_b(w_s.y(), w_s.x(), -w_s.z());
 
+    mag_updated_this_read_ = false;
     maybePollMag_(sample_us64);
     updateMagFreshness_(sample_us64);
 
@@ -332,7 +339,6 @@ private:
         static_cast<uint16_t>(buf[0]) |
         (static_cast<uint16_t>(buf[1]) << 8));
 
-    // Bosch invalid sentinel.
     if (raw == static_cast<int16_t>(0x8000)) {
       return false;
     }
@@ -353,17 +359,28 @@ private:
     return hz;
   }
 
+  float actualMagHz_() const {
+    if (effective_mag_hz_ > 0.0f && std::isfinite(effective_mag_hz_)) {
+      return effective_mag_hz_;
+    }
+    return sanitizedMagOdrHz_();
+  }
+
   uint64_t nominalDtUs_() const {
     return (cfg_.ag_hz > 150.0f) ? 5000ull : 10000ull;
   }
 
   uint64_t magPollUs_() const {
-    const float hz = sanitizedMagOdrHz_();
-    const float us_f = 1.0e6f / hz;
-    if (!(us_f > 0.0f) || !std::isfinite(us_f)) {
+    if (mag_step_us_ > 0ull) {
+      return clampU64_(mag_step_us_, 5000ull, 1000000ull);
+    }
+
+    const float hz = actualMagHz_();
+    const double us_f = 1.0e6 / static_cast<double>(hz);
+    if (!(us_f > 0.0) || !std::isfinite(us_f)) {
       return 40000ull;
     }
-    const uint64_t us = static_cast<uint64_t>(us_f + 0.5f);
+    const uint64_t us = static_cast<uint64_t>(us_f + 0.5);
     return clampU64_(us, 5000ull, 1000000ull);
   }
 
@@ -412,39 +429,58 @@ private:
       return;
     }
 
-    if (!have_mag_poll_time_ || (sample_us - last_mag_poll_us_) >= magPollUs_()) {
-      have_mag_poll_time_ = true;
-      last_mag_poll_us_ = sample_us;
-      ++mag_poll_total_;
+    const bool due = !have_mag_poll_time_ || (sample_us - last_mag_poll_us_) >= magPollUs_();
+    if (!due) {
+      return;
+    }
 
-      Vector3f m_s;
-      if (mag_.readMag_uT(m_s) && finite3_(m_s)) {
-        last_mag_uT_ = Vector3f(m_s.y(), m_s.x(), -m_s.z());
+    Vector3f m_s;
+    const bool ok = mag_.readMag_uT(m_s);
 
-        have_last_good_mag_ = true;
-        have_valid_mag_ = true;
-        mag_marked_stale_ = false;
-        last_mag_sample_us_ = sample_us;
+    // Soft "too soon" path from BoschBmm150Aux when wall-time gating rejects
+    // the read. This is not a bus error and should not consume the poll slot.
+    if (!ok && mag_.lastError() == BoschBmm150Aux::Error::NONE) {
+      return;
+    }
+
+    have_mag_poll_time_ = true;
+    last_mag_poll_us_ = sample_us;
+    ++mag_poll_total_;
+
+    if (ok && finite3_(m_s)) {
+      last_mag_uT_ = Vector3f(m_s.y(), m_s.x(), -m_s.z());
+
+      have_last_good_mag_ = true;
+      have_valid_mag_ = true;
+      mag_marked_stale_ = false;
+
+      last_mag_period_us_ =
+        (last_mag_sample_us_ > 0ull && sample_us >= last_mag_sample_us_)
+          ? (sample_us - last_mag_sample_us_)
+          : 0ull;
+
+      last_mag_sample_us_ = sample_us;
+      mag_updated_this_read_ = true;
+
+      mag_consecutive_failures_ = 0;
+      ++mag_ok_total_;
+      return;
+    }
+
+    ++mag_fail_total_;
+    ++mag_consecutive_failures_;
+    last_error_ = Error::MAG_READ_FAILED;
+
+    if (cfg_.enable_mag_recovery &&
+        mag_consecutive_failures_ >= cfg_.mag_recover_after_failures &&
+        (last_mag_recover_attempt_us_ == 0ull ||
+         (sample_us - last_mag_recover_attempt_us_) >= static_cast<uint64_t>(cfg_.mag_recover_cooldown_us))) {
+      last_mag_recover_attempt_us_ = sample_us;
+      if (recoverMag_()) {
+        ++mag_recover_total_;
         mag_consecutive_failures_ = 0;
-        ++mag_ok_total_;
-        return;
-      }
-
-      ++mag_fail_total_;
-      ++mag_consecutive_failures_;
-      last_error_ = Error::MAG_READ_FAILED;
-
-      if (cfg_.enable_mag_recovery &&
-          mag_consecutive_failures_ >= cfg_.mag_recover_after_failures &&
-          (last_mag_recover_attempt_us_ == 0ull ||
-           (sample_us - last_mag_recover_attempt_us_) >= static_cast<uint64_t>(cfg_.mag_recover_cooldown_us))) {
-        last_mag_recover_attempt_us_ = sample_us;
-        if (recoverMag_()) {
-          ++mag_recover_total_;
-          mag_consecutive_failures_ = 0;
-        } else {
-          last_error_ = Error::MAG_RECOVER_FAILED;
-        }
+      } else {
+        last_error_ = Error::MAG_RECOVER_FAILED;
       }
     }
 #else
@@ -488,6 +524,12 @@ private:
       return false;
     }
 
+    have_valid_mag_ = false;
+    mag_marked_stale_ = false;
+    mag_updated_this_read_ = false;
+    have_mag_poll_time_ = false;
+    last_mag_poll_us_ = 0ull;
+
     if (mag_configured_) {
       (void)mag_.end();
     }
@@ -503,15 +545,16 @@ private:
 #endif
   }
 
-
   bool beginMagWithAddrFallback_() {
 #if defined(ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI) && ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI
     mag_configured_ = false;
 
     BoschBmm150Aux::Config mcfg;
-    mcfg.aux_odr_hz        = sanitizedMagOdrHz_();
-    mcfg.startup_settle_ms = cfg_.mag_startup_settle_ms;
-    mcfg.verify_first_read = cfg_.mag_verify_first_read;
+    mcfg.aux_odr_hz               = sanitizedMagOdrHz_();
+    mcfg.startup_settle_ms        = cfg_.mag_startup_settle_ms;
+    mcfg.verify_first_read        = cfg_.mag_verify_first_read;
+    mcfg.gate_reads_by_wall_time  = true;
+    mcfg.return_last_on_fast_poll = false;
 
     const uint8_t preferred = cfg_.mag_bmm150_addr;
     const uint8_t alternate = (preferred == 0x10u) ? 0x12u : 0x10u;
@@ -522,6 +565,15 @@ private:
       if (mag_.begin(rawBmiDev_(), mcfg)) {
         cfg_.mag_bmm150_addr = addr;
         mag_configured_ = true;
+
+        effective_mag_hz_ = mag_.effectiveMagHz();
+        if (!(effective_mag_hz_ > 0.0f) || !std::isfinite(effective_mag_hz_)) {
+          effective_mag_hz_ = sanitizedMagOdrHz_();
+        }
+
+        const double step_us_f = 1.0e6 / static_cast<double>(effective_mag_hz_);
+        mag_step_us_ = clampU64_(static_cast<uint64_t>(step_us_f + 0.5), 5000ull, 1000000ull);
+
         return true;
       }
     }
@@ -538,6 +590,7 @@ private:
     have_last_good_mag_ = false;
     have_valid_mag_ = false;
     mag_marked_stale_ = false;
+    mag_updated_this_read_ = false;
 
     have_sample_clock_ = false;
     sample_clock_us_ = 0ull;
@@ -546,7 +599,11 @@ private:
     have_mag_poll_time_ = false;
     last_mag_poll_us_ = 0ull;
     last_mag_sample_us_ = 0ull;
+    last_mag_period_us_ = 0ull;
     last_mag_recover_attempt_us_ = 0ull;
+
+    effective_mag_hz_ = 0.0f;
+    mag_step_us_ = 40000ull;
 
     mag_consecutive_failures_ = 0u;
 
@@ -571,6 +628,7 @@ private:
   bool     have_last_good_mag_ = false;
   bool     have_valid_mag_     = false;
   bool     mag_marked_stale_   = false;
+  bool     mag_updated_this_read_ = false;
 
   bool     have_sample_clock_    = false;
   uint64_t sample_clock_us_      = 0ull;
@@ -579,7 +637,11 @@ private:
   bool     have_mag_poll_time_          = false;
   uint64_t last_mag_poll_us_            = 0ull;
   uint64_t last_mag_sample_us_          = 0ull;
+  uint64_t last_mag_period_us_          = 0ull;
   uint64_t last_mag_recover_attempt_us_ = 0ull;
+
+  float    effective_mag_hz_ = 0.0f;
+  uint64_t mag_step_us_      = 40000ull;
 
   uint8_t  mag_consecutive_failures_ = 0u;
 
