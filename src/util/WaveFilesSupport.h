@@ -4,6 +4,9 @@
   Copyright 2025-2026, Mikhail Grushinskiy
 */
 
+#ifdef ARDUINO
+#else
+
 #include <cmath>
 #include <numbers>
 #include <cstdint>
@@ -375,3 +378,5 @@ private:
         return false;
     }
 };
+
+#endif

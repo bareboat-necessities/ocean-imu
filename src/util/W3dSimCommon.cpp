@@ -4,6 +4,9 @@
 
 extern const float g_std = 9.80665f;
 
+#ifdef ARDUINO
+#else
+
 #include "util/W3dSimCommon.h"
 
 #include <cstdlib>
@@ -584,3 +587,5 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
         std::exit(EXIT_FAILURE);
     }
 }
+
+#endif

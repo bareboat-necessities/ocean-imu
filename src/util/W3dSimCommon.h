@@ -4,9 +4,8 @@
   Copyright 2025-2026, Mikhail Grushinskiy
 */
 
-#ifndef EIGEN_NON_ARDUINO
-#define EIGEN_NON_ARDUINO
-#endif
+#ifdef ARDUINO
+#else
 
 #include <algorithm>
 #include <cmath>
@@ -369,3 +368,5 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
     W3dSimulationRunner runner(options, std::move(noise_models), adapter);
     return runner.run(filename);
 }
+
+#endif

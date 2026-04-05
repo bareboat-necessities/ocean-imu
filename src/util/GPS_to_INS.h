@@ -1,6 +1,12 @@
 #pragma once
+
 #include <cmath>
+
+#ifdef EIGEN_NON_ARDUINO
 #include <Eigen/Dense>
+#else
+#include <ArduinoEigenDense.h>
+#endif
 
 // WGS84 constants
 constexpr double WGS84_A = 6378137.0;       // semi-major axis [m]
