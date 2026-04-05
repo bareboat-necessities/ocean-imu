@@ -4,9 +4,6 @@
   Copyright 2025-2026, Mikhail Grushinskiy
 */
 
-#ifdef ARDUINO
-#else
-
 #include <cmath>
 #include <numbers>
 #include <cstdint>
@@ -86,6 +83,9 @@ struct EnumTraits<FileKind> {
         return { FileKind::Data, FileKind::Spectrum };
     }
 };
+
+#ifdef ARDUINO
+#else
 
 // Core data structures
 struct WaveParameters {
