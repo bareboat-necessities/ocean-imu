@@ -82,23 +82,26 @@ void loop()
   const Vector3f magBody = sample.m;
 
   Serial.printf(
-    "FIFO len=%u req=%u got=%u | dt_imu_ms=%.2f | mag_valid=%u | dt_mag_ms~%.2f (target~%.2f) | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | gyro_ned[dps] N=%.3f E=%.3f D=%.3f | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
-    imu.fifo().lastFifoLen(),
-    imu.fifo().lastFifoReq(),
-    imu.fifo().lastFifoGot(),
-    dtImuMs,
-    magValid ? 1U : 0U,
-    magValid ? static_cast<float>((imu.sampleClockUs64() - imu.lastMagSampleUs64()) * 1e-3) : -1.0f,
-    kMagPeriodMs,
-    sample.a.x(),
-    sample.a.y(),
-    sample.a.z(),
-    gyroNorthDps,
-    gyroEastDps,
-    gyroDownDps,
-    magBody.x(),
-    magBody.y(),
-    magBody.z());
+  "FIFO len=%u req=%u got=%u | dt_imu_ms=%.2f | mag_valid=%u | mag_age_ms=%.2f (target~%.2f) | "
+  "acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | "
+  "gyro_ned[dps] N=%.3f E=%.3f D=%.3f | "
+  "mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
+  imu.fifo().lastFifoLen(),
+  imu.fifo().lastFifoReq(),
+  imu.fifo().lastFifoGot(),
+  dtImuMs,
+  magValid ? 1U : 0U,
+  magValid ? static_cast<float>((imu.sampleClockUs64() - imu.lastMagSampleUs64()) * 1e-3) : -1.0f,
+  kMagPeriodMs,
+  sample.a.x(),
+  sample.a.y(),
+  sample.a.z(),
+  gyroNorthDps,
+  gyroEastDps,
+  gyroDownDps,
+  magBody.x(),
+  magBody.y(),
+  magBody.z());
 
   waitForNextLoopTick(loopStartUs);
 }
