@@ -98,9 +98,7 @@ public:
   {
     Sample sample{};
     uint16_t fifoLength = 0;
-    imu.getFIFOLength(&fifoLength);
-
-    if (fifoLength == 0)
+    if (imu.getFIFOLength(&fifoLength) != BMI2_OK)
     {
       return sample;
     }
