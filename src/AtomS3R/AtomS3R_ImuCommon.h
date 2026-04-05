@@ -2,19 +2,16 @@
 
 #include <Arduino.h>
 #include <stdint.h>
-#include <math.h>
 
 namespace atoms3r_ical {
 
 constexpr float kDefaultImuOdrHz = 200.0f;
 
-inline uint32_t loopPeriodUsFromHz(float hz)
+constexpr uint32_t loopPeriodUsFromHz(float hz)
 {
-  if (!(hz > 0.0f) || !isfinite(hz))
-  {
-    hz = kDefaultImuOdrHz;
-  }
-  return static_cast<uint32_t>(1000000.0f / hz);
+  return (hz > 0.0f)
+    ? static_cast<uint32_t>(1000000.0f / hz)
+    : static_cast<uint32_t>(1000000.0f / kDefaultImuOdrHz);
 }
 
 inline void waitForNextLoopTick(uint32_t loopStartUs, uint32_t loopPeriodUs)
