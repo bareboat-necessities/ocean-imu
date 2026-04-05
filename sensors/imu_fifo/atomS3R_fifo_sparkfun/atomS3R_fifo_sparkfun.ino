@@ -1,27 +1,21 @@
 #include <Wire.h>
 
+#include "AtomS3R/AtomS3R_ImuCommon.h"
 #include "SparkFun/ImuReader.h"
 #include "SparkFun/MagReader.h"
+
+using namespace atoms3r_ical;
 
 constexpr uint8_t ATOMS3R_SENSOR_SDA_PIN = 45;
 constexpr uint8_t ATOMS3R_SENSOR_SCL_PIN = 0;
 constexpr uint32_t ATOMS3R_SENSOR_I2C_HZ = 400000;
-constexpr uint32_t kImuOdrHz = 200;
+
+constexpr float kImuOdrHz = kDefaultImuOdrHz;
 constexpr uint8_t kImuAccelOdr = ImuReader::kDefaultAccelOdr;
 constexpr uint8_t kImuGyroOdr = ImuReader::kDefaultGyroOdr;
 constexpr uint8_t kMagOdr = MagReader::kDefaultBmm150Odr;
 constexpr uint8_t kAuxOdr = MagReader::kDefaultAuxOdr;
-constexpr float kMagPeriodMs = MagReader::odrSettingToPeriodMs(kMagOdr);
-constexpr uint32_t kLoopPeriodUs = 1000000UL / kImuOdrHz;
-
-void waitForNextLoopTick(uint32_t loopStartUs)
-{
-  const uint32_t elapsedUs = micros() - loopStartUs;
-  if (elapsedUs < kLoopPeriodUs)
-  {
-    delayMicroseconds(kLoopPeriodUs - elapsedUs);
-  }
-}
+constexpr uint32_t kLoopPeriodUs = loopPeriodUsFromHz(kImuOdrHz);
 
 ImuReader imuReader;
 MagReader magReader;
@@ -61,12 +55,13 @@ void loop()
   const ImuReader::Sample imuSample = imuReader.readLatestSample();
   if (!imuSample.valid)
   {
-    waitForNextLoopTick(loopStartUs);
+    waitForNextLoopTick(loopStartUs, kLoopPeriodUs);
     return;
   }
 
   const MagReader::Sample magSample =
-    magAvailable ? magReader.readLatestSample(imuReader.sensor(), imuSample.timestampMs) : MagReader::Sample{};
+    magAvailable ? magReader.readLatestSample(imuReader.sensor(), imuSample.timestampMs)
+                 : MagReader::Sample{};
 
   float accNorth = 0.0f, accEast = 0.0f, accDown = 0.0f;
   ImuReader::sensorToNED(imuSample.accelX, imuSample.accelY, imuSample.accelZ, accNorth, accEast, accDown);
@@ -86,27 +81,30 @@ void loop()
       magDownUt);
   }
 
-  Serial.printf(
-    "FIFO batch=%u | dt_imu_ms=%.2f | mag_valid=%u | mag_updated=%u | mag_age_ms=%s%.2f (target~%.2f) | "
-    "acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | "
-    "gyro_ned[dps] N=%.3f E=%.3f D=%.3f | "
-    "mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
-    imuSample.framesRead,
-    imuSample.imuDeltaMs,
-    magSample.valid ? 1U : 0U,
-    magSample.updated ? 1U : 0U,
-    magSample.updated ? "+" : "~",
-    magSample.deltaMs,
-    kMagPeriodMs,
-    accNorth,
-    accEast,
-    accDown,
-    gyrNorth,
-    gyrEast,
-    gyrDown,
-    magNorthUt,
-    magEastUt,
-    magDownUt);
+  ImuLogRow row{};
+  row.fifoLen = static_cast<int32_t>(imuSample.framesRead);
+  row.fifoReq = -1;
+  row.fifoGot = -1;
 
-  waitForNextLoopTick(loopStartUs);
+  row.dtImuMs = imuSample.imuDeltaMs;
+  row.magValid = magSample.valid;
+  row.magUpdated = magSample.updated;
+  row.magAgeMs = magSample.valid ? magSample.deltaMs : -1.0f;
+  row.magStepMs = MagReader::odrSettingToPeriodMs(kMagOdr);
+  row.lastMagDtMs = magSample.updated ? magSample.deltaMs : -1.0f;
+
+  row.accN = accNorth;
+  row.accE = accEast;
+  row.accD = accDown;
+
+  row.gyrN = gyrNorth;
+  row.gyrE = gyrEast;
+  row.gyrD = gyrDown;
+
+  row.magN = magNorthUt;
+  row.magE = magEastUt;
+  row.magD = magDownUt;
+
+  printImuLogRow(row);
+  waitForNextLoopTick(loopStartUs, kLoopPeriodUs);
 }
