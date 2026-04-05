@@ -66,22 +66,15 @@ void loop()
   }
 
   const MagReader::Sample magSample =
-    magAvailable ? magReader.readLatestSample(imuReader.sensor(), imuSample.timestampMs)
-                 : MagReader::Sample{};
+    magAvailable ? magReader.readLatestSample(imuReader.sensor(), imuSample.timestampMs) : MagReader::Sample{};
 
-  float accNorth = 0.0f;
-  float accEast = 0.0f;
-  float accDown = 0.0f;
+  float accNorth = 0.0f, accEast = 0.0f, accDown = 0.0f;
   ImuReader::sensorToNED(imuSample.accelX, imuSample.accelY, imuSample.accelZ, accNorth, accEast, accDown);
 
-  float gyrNorth = 0.0f;
-  float gyrEast = 0.0f;
-  float gyrDown = 0.0f;
+  float gyrNorth = 0.0f, gyrEast = 0.0f, gyrDown = 0.0f;
   ImuReader::sensorToNED(imuSample.gyroX, imuSample.gyroY, imuSample.gyroZ, gyrNorth, gyrEast, gyrDown);
 
-  float magNorthUt = 0.0f;
-  float magEastUt = 0.0f;
-  float magDownUt = 0.0f;
+  float magNorthUt = 0.0f, magEastUt = 0.0f, magDownUt = 0.0f;
   if (magSample.valid)
   {
     ImuReader::sensorToNED(
