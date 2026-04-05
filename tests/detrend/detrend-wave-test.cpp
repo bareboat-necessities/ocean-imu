@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#define EIGEN_NON_ARDUINO
+
 #include "detrend/AdaptiveWaveDetrender.h"
 
 namespace {
