@@ -806,34 +806,42 @@ private:
       return false;
     }
 
-    const float rhall = static_cast<float>(s.rhall);
-    const float dig_xyz1 = static_cast<float>(trim_.dig_xyz1);
-
-    const float x0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
-    const float x1 = (static_cast<float>(trim_.dig_xy2) * (x0 * x0 / 268435456.0f));
-    const float x2 = x0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
-    const float x3 = static_cast<float>(trim_.dig_x2) + 160.0f;
-    const float x = ((((static_cast<float>(s.x) * ((x1 + x2 + 256.0f) * x3)) / 8192.0f) +
-                     (static_cast<float>(trim_.dig_x1) * 8.0f)) / 16.0f);
-
-    const float y0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
-    const float y1 = (static_cast<float>(trim_.dig_xy2) * (y0 * y0 / 268435456.0f));
-    const float y2 = y0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
-    const float y3 = static_cast<float>(trim_.dig_y2) + 160.0f;
-    const float y = ((((static_cast<float>(s.y) * ((y1 + y2 + 256.0f) * y3)) / 8192.0f) +
-                     (static_cast<float>(trim_.dig_y1) * 8.0f)) / 16.0f);
-
-    const float z_denom = ((static_cast<float>(trim_.dig_z2)) +
-                          ((static_cast<float>(trim_.dig_z1) * rhall) / 32768.0f)) * 4.0f;
-    if (z_denom == 0.0f || !std::isfinite(z_denom)) {
+    // Keep this path consistent with Bosch reference SensorAPI compensation.
+    // Ref: bmm150.c (compensate_x / compensate_y / compensate_z).
+    // https://github.com/boschsensortec/BMM150_SensorAPI/blob/master/bmm150.c
+    if (s.x == -4096 || s.y == -4096 || s.z == -16384) {
       last_error_ = Error::COMP_INVALID;
       return false;
     }
 
-    const float z_num =
-      ((static_cast<float>(s.z) - static_cast<float>(trim_.dig_z4)) * 131072.0f) -
-      (static_cast<float>(trim_.dig_z3) * (rhall - dig_xyz1));
-    const float z = (z_num / z_denom) / 16.0f;
+    const float rhall = static_cast<float>(s.rhall);
+    const float dig_xyz1 = static_cast<float>(trim_.dig_xyz1);
+
+    const float x0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
+    const float x1 = static_cast<float>(trim_.dig_xy2) * (x0 * x0 / 268435456.0f);
+    const float x2 = x1 + x0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
+    const float x3 = static_cast<float>(trim_.dig_x2) + 160.0f;
+    const float x4 = static_cast<float>(s.x) * ((x2 + 256.0f) * x3);
+    const float x = ((x4 / 8192.0f) + (static_cast<float>(trim_.dig_x1) * 8.0f)) / 16.0f;
+
+    const float y0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
+    const float y1 = static_cast<float>(trim_.dig_xy2) * (y0 * y0 / 268435456.0f);
+    const float y2 = y1 + y0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
+    const float y3 = static_cast<float>(trim_.dig_y2) + 160.0f;
+    const float y4 = static_cast<float>(s.y) * ((y2 + 256.0f) * y3);
+    const float y = ((y4 / 8192.0f) + (static_cast<float>(trim_.dig_y1) * 8.0f)) / 16.0f;
+
+    const float z0 = static_cast<float>(s.z) - static_cast<float>(trim_.dig_z4);
+    const float z1 = rhall - dig_xyz1;
+    const float z2 = static_cast<float>(trim_.dig_z3) * z1;
+    const float z3 = static_cast<float>(trim_.dig_z1) * rhall / 32768.0f;
+    const float z4 = static_cast<float>(trim_.dig_z2) + z3;
+    if (z4 == 0.0f || !std::isfinite(z4)) {
+      last_error_ = Error::COMP_INVALID;
+      return false;
+    }
+    const float z5 = (z0 * 131072.0f) - z2;
+    const float z = (z5 / (z4 * 4.0f)) / 16.0f;
 
     if (!finite3_(x, y, z)) {
       last_error_ = Error::NONFINITE_MAG;
