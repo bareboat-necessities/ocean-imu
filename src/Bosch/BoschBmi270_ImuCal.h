@@ -555,6 +555,13 @@ private:
     mcfg.verify_first_read        = cfg_.mag_verify_first_read;
     mcfg.gate_reads_by_wall_time  = true;
     mcfg.return_last_on_fast_poll = false;
+    // AtomS3R board-level fixed magnetometer mounting:
+    // M5Unified applies X/Z inversion for BMM150 on AtomS3R series.
+    // Keep this low-level map aligned so Bosch AUX path matches the
+    // reference M5/SparkFun orientation before NED conversion.
+    mcfg.axis_map[0] = -1;
+    mcfg.axis_map[1] = +2;
+    mcfg.axis_map[2] = -3;
 
     const uint8_t preferred = cfg_.mag_bmm150_addr;
     const uint8_t alternate = (preferred == 0x10u) ? 0x12u : 0x10u;
