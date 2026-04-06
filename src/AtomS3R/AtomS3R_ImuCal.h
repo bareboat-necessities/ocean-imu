@@ -132,11 +132,14 @@ static inline Vector3f map_mag_to_body_uT_(const m5::imu_3d_t& m_raw) {
 // Blob + CRC utilities
 struct ImuCalBlobV1 {
   static constexpr uint32_t IMU_CAL_MAGIC   = 0x434C554D; // 'MULC'
-  static constexpr uint16_t IMU_CAL_VERSION = 1;
+  static constexpr uint16_t IMU_CAL_VERSION = 2;
+  static constexpr uint8_t  IMU_CAL_MODE_BOSCH_API = 1;
+  static constexpr uint8_t  IMU_CAL_MODE_NO_BOSCH_API = 2;
 
   uint32_t magic = IMU_CAL_MAGIC;
   uint16_t version = IMU_CAL_VERSION;
   uint16_t size_bytes = sizeof(ImuCalBlobV1);
+  uint8_t  build_mode = 0;
 
   uint8_t  accel_ok = 0;
   float    accel_g = ImuCalCfg::g_std;
@@ -197,6 +200,13 @@ static inline bool validateBlob(const ImuCalBlobV1& b) {
   if (b.magic != ImuCalBlobV1::IMU_CAL_MAGIC) return false;
   if (b.version != ImuCalBlobV1::IMU_CAL_VERSION) return false;
   if (b.size_bytes != sizeof(ImuCalBlobV1)) return false;
+  const uint8_t expected_mode =
+#if defined(NO_BOSCH_API)
+      ImuCalBlobV1::IMU_CAL_MODE_NO_BOSCH_API;
+#else
+      ImuCalBlobV1::IMU_CAL_MODE_BOSCH_API;
+#endif
+  if (b.build_mode != expected_mode) return false;
   const uint32_t want = b.crc;
   return (computeBlobCrc(b) == want);
 }
@@ -230,6 +240,12 @@ public:
     tmp.magic = ImuCalBlobV1::IMU_CAL_MAGIC;
     tmp.version = ImuCalBlobV1::IMU_CAL_VERSION;
     tmp.size_bytes = sizeof(ImuCalBlobV1);
+    tmp.build_mode =
+#if defined(NO_BOSCH_API)
+      ImuCalBlobV1::IMU_CAL_MODE_NO_BOSCH_API;
+#else
+      ImuCalBlobV1::IMU_CAL_MODE_BOSCH_API;
+#endif
     tmp.crc = 0;
     tmp.crc = computeBlobCrc(tmp);
 
@@ -326,6 +342,10 @@ static inline void printMatHeader(Print& out, const char* name, const char* mean
 
 // Print helpers (startup serial)
 static inline void printBlobSummary(Print& out, const ImuCalBlobV1& b) {
+  const char* mode = "unknown";
+  if (b.build_mode == ImuCalBlobV1::IMU_CAL_MODE_BOSCH_API) mode = "bosch_api";
+  else if (b.build_mode == ImuCalBlobV1::IMU_CAL_MODE_NO_BOSCH_API) mode = "no_bosch_api";
+  out.printf("  build_mode: %s\n", mode);
   out.printf("  ok: A=%d G=%d M=%d\n", (int)b.accel_ok, (int)b.gyro_ok, (int)b.mag_ok);
 }
 
