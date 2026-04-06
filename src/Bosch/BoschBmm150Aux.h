@@ -838,11 +838,12 @@ private:
     float z = 0.0f;
 
   #if defined(BMM150_USE_FIXED_POINT)
-    // Bosch fixed-point mode stores magnetometer outputs with 4 fractional bits.
-    // Convert to physical microtesla units expected by the rest of this pipeline.
-    x = static_cast<float>(mag.x) * (1.0f / 16.0f);
-    y = static_cast<float>(mag.y) * (1.0f / 16.0f);
-    z = static_cast<float>(mag.z) * (1.0f / 16.0f);
+    // bmm150_aux_mag_data() already returns compensated values in microtesla
+    // for both fixed-point and floating-point builds of Bosch SensorAPI.
+    // Do not divide by 16 here or we will under-report field strength.
+    x = static_cast<float>(mag.x);
+    y = static_cast<float>(mag.y);
+    z = static_cast<float>(mag.z);
   #else
     x = static_cast<float>(mag.x);
     y = static_cast<float>(mag.y);
