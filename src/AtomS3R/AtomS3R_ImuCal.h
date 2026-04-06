@@ -103,6 +103,13 @@ struct ImuCalCfg {
 };
 
 // Axis mapping (AtomS3R)
+//
+// Internal convention in this library is BODY-NED (x=north, y=east, z=down).
+// End-user "nautical Z-up" is therefore z_up = -z_down.
+//
+// With the board lying still, screen facing up:
+//   - accelerometer body Z (down) is expected near -g specific force
+//   - user-facing Z-up value is the opposite sign.
 // acc_body = ( ay, ax, -az ) * g
 // gyr_body = ( gy, gx, -gz ) * deg2rad
 // mag_body = ( my, mx, -mz ) * (1/10)
