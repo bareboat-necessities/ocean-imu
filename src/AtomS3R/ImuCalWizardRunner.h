@@ -13,6 +13,7 @@ static constexpr uint8_t RUNNER_BMI270_ADDR = 0x68;
 static constexpr float   RUNNER_AG_HZ       = 200.0f;
 
 inline bool runImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV2& out_saved) {
+#if ATOMS3R_WIZARD_USE_BOSCH
   BoschBmi270_ImuCal imu;
 
   BoschBmi270_ImuCal::Config cfg;
@@ -45,6 +46,10 @@ inline bool runImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV2& out_s
 
   (void)imu.end();
   return ok;
+#else
+  ImuCalWizard wizard(ui, store);
+  return wizard.runAndSave(out_saved);
+#endif
 }
 
 } // namespace atoms3r_ical
