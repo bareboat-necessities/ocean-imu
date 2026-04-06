@@ -6,10 +6,6 @@
 #include <cstring>
 #include <type_traits>
 
-#ifndef BMM150_USE_FLOATING_POINT
-  #define BMM150_USE_FLOATING_POINT 1
-#endif
-
 #include <Arduino_BMI270_BMM150.h>
 
 #if defined(__has_include)
@@ -742,6 +738,19 @@ private:
     trim_.dig_xy1 = v;
 
     trim_.valid = (trim_.dig_xyz1 != 0u) && (trim_.dig_z1 != 0u);
+    if (trim_.valid) {
+      bmm_dev_.trim_data.dig_x1   = trim_.dig_x1;
+      bmm_dev_.trim_data.dig_y1   = trim_.dig_y1;
+      bmm_dev_.trim_data.dig_x2   = trim_.dig_x2;
+      bmm_dev_.trim_data.dig_y2   = trim_.dig_y2;
+      bmm_dev_.trim_data.dig_z1   = trim_.dig_z1;
+      bmm_dev_.trim_data.dig_z2   = trim_.dig_z2;
+      bmm_dev_.trim_data.dig_z3   = trim_.dig_z3;
+      bmm_dev_.trim_data.dig_z4   = trim_.dig_z4;
+      bmm_dev_.trim_data.dig_xy1  = trim_.dig_xy1;
+      bmm_dev_.trim_data.dig_xy2  = trim_.dig_xy2;
+      bmm_dev_.trim_data.dig_xyz1 = trim_.dig_xyz1;
+    }
     return trim_.valid;
   }
 
@@ -764,6 +773,7 @@ private:
     if (!auxRead_(kRegDataXLSB, buf, 8)) {
       return false;
     }
+    memcpy(last_aux_raw_, buf, sizeof(last_aux_raw_));
 
     const uint16_t x_u = static_cast<uint16_t>(
       (static_cast<uint16_t>(buf[1]) << 5) |
@@ -806,42 +816,36 @@ private:
       return false;
     }
 
-    // Keep this path consistent with Bosch reference SensorAPI compensation.
-    // Ref: bmm150.c (compensate_x / compensate_y / compensate_z).
-    // https://github.com/boschsensortec/BMM150_SensorAPI/blob/master/bmm150.c
+    // Use Bosch SensorAPI AUX compensation directly so output units and
+    // overflow behavior exactly match Bosch/Arduino reference libraries.
     if (s.x == -4096 || s.y == -4096 || s.z == -16384) {
       last_error_ = Error::COMP_INVALID;
       return false;
     }
 
-    const float rhall = static_cast<float>(s.rhall);
-    const float dig_xyz1 = static_cast<float>(trim_.dig_xyz1);
+    uint8_t aux_raw[8];
+    memcpy(aux_raw, last_aux_raw_, sizeof(aux_raw));
 
-    const float x0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
-    const float x1 = static_cast<float>(trim_.dig_xy2) * (x0 * x0 / 268435456.0f);
-    const float x2 = x1 + x0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
-    const float x3 = static_cast<float>(trim_.dig_x2) + 160.0f;
-    const float x4 = static_cast<float>(s.x) * ((x2 + 256.0f) * x3);
-    const float x = ((x4 / 8192.0f) + (static_cast<float>(trim_.dig_x1) * 8.0f)) / 16.0f;
-
-    const float y0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
-    const float y1 = static_cast<float>(trim_.dig_xy2) * (y0 * y0 / 268435456.0f);
-    const float y2 = y1 + y0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
-    const float y3 = static_cast<float>(trim_.dig_y2) + 160.0f;
-    const float y4 = static_cast<float>(s.y) * ((y2 + 256.0f) * y3);
-    const float y = ((y4 / 8192.0f) + (static_cast<float>(trim_.dig_y1) * 8.0f)) / 16.0f;
-
-    const float z0 = static_cast<float>(s.z) - static_cast<float>(trim_.dig_z4);
-    const float z1 = rhall - dig_xyz1;
-    const float z2 = static_cast<float>(trim_.dig_z3) * z1;
-    const float z3 = static_cast<float>(trim_.dig_z1) * rhall / 32768.0f;
-    const float z4 = static_cast<float>(trim_.dig_z2) + z3;
-    if (z4 == 0.0f || !std::isfinite(z4)) {
+    bmm150_mag_data mag{};
+    if (bmm150_aux_mag_data(aux_raw, &mag, &bmm_dev_) != BMM150_OK) {
       last_error_ = Error::COMP_INVALID;
       return false;
     }
-    const float z5 = (z0 * 131072.0f) - z2;
-    const float z = (z5 / (z4 * 4.0f)) / 16.0f;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+
+  #if defined(BMM150_USE_FIXED_POINT)
+    // Bosch fixed-point mode stores magnetometer outputs with 4 fractional bits.
+    // Convert to physical microtesla units expected by the rest of this pipeline.
+    x = static_cast<float>(mag.x) * (1.0f / 16.0f);
+    y = static_cast<float>(mag.y) * (1.0f / 16.0f);
+    z = static_cast<float>(mag.z) * (1.0f / 16.0f);
+  #else
+    x = static_cast<float>(mag.x);
+    y = static_cast<float>(mag.y);
+    z = static_cast<float>(mag.z);
+  #endif
 
     if (!finite3_(x, y, z)) {
       last_error_ = Error::NONFINITE_MAG;
@@ -942,12 +946,14 @@ private:
     session_attached_ = false;
     cfg_ = Config{};
     bmi_dev_ = nullptr;
+    std::memset(&bmm_dev_, 0, sizeof(bmm_dev_));
 
     saved_aux_cfg_valid_ = false;
     saved_aux_was_enabled_ = false;
     std::memset(&saved_aux_cfg_, 0, sizeof(saved_aux_cfg_));
 
     trim_ = TrimData{};
+    std::memset(last_aux_raw_, 0, sizeof(last_aux_raw_));
 
     have_last_good_ = false;
     last_good_uT_ = Vector3f::Zero();
@@ -986,12 +992,14 @@ private:
 
   Config cfg_{};
   struct bmi2_dev* bmi_dev_ = nullptr;
+  struct bmm150_dev bmm_dev_{};
 
   struct bmi2_sens_config saved_aux_cfg_{};
   bool saved_aux_cfg_valid_ = false;
   bool saved_aux_was_enabled_ = false;
 
   TrimData trim_{};
+  uint8_t last_aux_raw_[8] = {0};
 
   uint32_t init_fail_total_ = 0;
   uint32_t read_ok_total_ = 0;
