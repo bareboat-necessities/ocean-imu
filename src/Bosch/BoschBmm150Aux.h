@@ -568,6 +568,19 @@ private:
     return allZero3_(v.x(), v.y(), v.z());
   }
 
+  template <typename T>
+  static float compValueToMicroTesla_(T v) {
+    // Bosch BMM150 SensorAPI behavior:
+    // - floating-point mode: bmm150_mag_data.{x,y,z} are already microtesla.
+    // - fixed-point mode: values are int16 with 4 fractional bits (LSB/16 = uT).
+    // Detect by type (not macro) to stay correct across library variants.
+    if constexpr (std::is_floating_point<T>::value) {
+      return static_cast<float>(v);
+    } else {
+      return static_cast<float>(v) * (1.0f / 16.0f);
+    }
+  }
+
   static float pickAxis_(int8_t code, const Vector3f& v) {
     switch (code) {
       case +1: return  v.x();
@@ -833,21 +846,9 @@ private:
       last_error_ = Error::COMP_INVALID;
       return false;
     }
-    float x = 0.0f;
-    float y = 0.0f;
-    float z = 0.0f;
-
-  #if defined(BMM150_USE_FIXED_POINT)
-    // Bosch fixed-point mode stores magnetometer outputs with 4 fractional bits.
-    // Convert to physical microtesla units expected by the rest of this pipeline.
-    x = static_cast<float>(mag.x) * (1.0f / 16.0f);
-    y = static_cast<float>(mag.y) * (1.0f / 16.0f);
-    z = static_cast<float>(mag.z) * (1.0f / 16.0f);
-  #else
-    x = static_cast<float>(mag.x);
-    y = static_cast<float>(mag.y);
-    z = static_cast<float>(mag.z);
-  #endif
+    const float x = compValueToMicroTesla_(mag.x);
+    const float y = compValueToMicroTesla_(mag.y);
+    const float z = compValueToMicroTesla_(mag.z);
 
     if (!finite3_(x, y, z)) {
       last_error_ = Error::NONFINITE_MAG;
