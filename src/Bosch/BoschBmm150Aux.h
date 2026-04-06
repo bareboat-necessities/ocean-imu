@@ -219,8 +219,10 @@ public:
     sc.cfg.aux.i2c_device_addr = cfg_.bmm_addr;
     sc.cfg.aux.fcu_write_en    = BMI2_ENABLE;
     sc.cfg.aux.man_rd_burst    = manualBurstLen_();
+    sc.cfg.aux.aux_rd_burst    = manualBurstLen_();
     sc.cfg.aux.read_addr       = kRegDataXLSB;
     sc.cfg.aux.manual_en       = BMI2_ENABLE;
+    sc.cfg.aux.offset          = 0;
 
     if (bmi270_set_sensor_config(&sc, 1, bmi_dev_) != BMI2_OK) {
       ++init_fail_total_;
