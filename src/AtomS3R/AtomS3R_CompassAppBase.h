@@ -11,15 +11,7 @@
 
 #include "AtomS3R/AtomS3R_ImuCal.h"
 
-#ifndef NO_BOSCH_API
-#define NO_BOSCH_API
-#define ATOMS3R_COMPASSAPPBASE_LOCAL_NO_BOSCH_API 1
-#endif
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
-#if defined(ATOMS3R_COMPASSAPPBASE_LOCAL_NO_BOSCH_API)
-#undef ATOMS3R_COMPASSAPPBASE_LOCAL_NO_BOSCH_API
-#undef NO_BOSCH_API
-#endif
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "nmea/NmeaCompass.h"
 
