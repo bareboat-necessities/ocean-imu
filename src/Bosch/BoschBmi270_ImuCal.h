@@ -313,6 +313,12 @@ private:
     return Vector3f::Constant(std::numeric_limits<float>::quiet_NaN());
   }
 
+  // Convert board/sensor-frame mag to this library BODY-NED convention.
+  // Keep identical to AtomS3R_ImuCal.h mapping: (my, mx, -mz).
+  static Vector3f mapMagToBodyNed_(const Vector3f& m_sensor_uT) {
+    return Vector3f(m_sensor_uT.y(), m_sensor_uT.x(), -m_sensor_uT.z());
+  }
+
   static bool finite3_(const Vector3f& v) {
     return std::isfinite(v.x()) && std::isfinite(v.y()) && std::isfinite(v.z());
   }
@@ -448,7 +454,7 @@ private:
     ++mag_poll_total_;
 
     if (ok && finite3_(m_s)) {
-      last_mag_uT_ = Vector3f(m_s.y(), m_s.x(), -m_s.z());
+      last_mag_uT_ = mapMagToBodyNed_(m_s);
 
       have_last_good_mag_ = true;
       have_valid_mag_ = true;
@@ -558,7 +564,12 @@ private:
     // AtomS3R board-level fixed magnetometer mounting:
     // M5Unified applies X/Z inversion for BMM150 on AtomS3R series.
     // Keep this low-level map aligned so Bosch AUX path matches the
-    // reference M5/SparkFun orientation before NED conversion.
+    // reference M5/SparkFun orientation before BODY-NED conversion.
+    //
+    // Net Bosch mapping:
+    //   AUX axis_map: (-x, +y, -z)
+    //   BODY-NED map: (my, mx, -mz)
+    // => body mag = (y, -x, +z) in original BMM150 sensor axes.
     mcfg.axis_map[0] = -1;
     mcfg.axis_map[1] = +2;
     mcfg.axis_map[2] = -3;

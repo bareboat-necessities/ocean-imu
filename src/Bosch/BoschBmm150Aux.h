@@ -570,12 +570,15 @@ private:
 
   template <typename T>
   static float compValueToMicroTesla_(T v) {
-    // Bosch BMM150 SensorAPI behavior (Bosch + Arduino + SparkFun forks):
-    // - floating-point mode: bmm150_mag_data.{x,y,z} are in microtesla.
-    // - fixed-point mode: bmm150_mag_data.{x,y,z} are int16 microtesla values
-    //   (compensation already applies internal /16 scaling before return).
-    // Therefore both paths should be interpreted directly as uT.
+    // Bosch BMM150 SensorAPI behavior:
+    // - floating-point mode: output is in microtesla.
+    // - fixed-point mode: output is in 16 LSB per microtesla.
+    // Normalize both build modes to microtesla here.
+#if defined(BMM150_USE_FLOATING_POINT) && (BMM150_USE_FLOATING_POINT)
     return static_cast<float>(v);
+#else
+    return static_cast<float>(v) / 16.0f;
+#endif
   }
 
   static float pickAxis_(int8_t code, const Vector3f& v) {
