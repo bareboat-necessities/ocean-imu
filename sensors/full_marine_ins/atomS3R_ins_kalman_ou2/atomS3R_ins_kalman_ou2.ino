@@ -71,7 +71,7 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
-#include "detrend/AdaptiveWaveDetrender.h"
+#include "detrend/AdaptiveWaveDetrender3D.h"
 
 #ifndef MAG_DELAY_SEC
   #define MAG_DELAY_SEC 8.0f
@@ -289,8 +289,8 @@ private:
   float wave_envelope_m_ = 0.0f;
   float wave_hz_         = FREQ_GUESS;
 
-  AdaptiveWaveDetrender z_detrender_{};
-  AdaptiveWaveDetrender::Output z_det_out_{};
+  AdaptiveWaveDetrender3D z_detrender_{};
+  AdaptiveWaveDetrender3D::Output z_det_out_{};
 
   float heave_raw_m_        = 0.0f;   // raw heave from fusion position.z()
   float heave_baseline_m_   = 0.0f;   // slow baseline actually subtracted
@@ -561,7 +561,7 @@ private:
     have_last_fusion_time24_ = false;
     last_fusion_time24_      = 0;
 
-    AdaptiveWaveDetrender::Config zcfg;
+    AdaptiveWaveDetrender3D::Config zcfg;
     zcfg.init_wave_freq_hz = FREQ_GUESS;   // startup guess
     zcfg.min_wave_freq_hz  = 0.02f;        // long swell
     zcfg.max_wave_freq_hz  = 1.20f;        // short chop
@@ -575,6 +575,7 @@ private:
     zcfg.freq_smooth_tau_s = 12.0f;
     zcfg.slope_lpf_tau_s   = 0.20f;
     zcfg.slope_rms_tau_s   = 8.0f;
+    zcfg.freq_learn_axis   = 2;  // learn from heave(Z)
 
     // Because input is heave in meters, this threshold is in m/s
     zcfg.threshold_rms_fraction  = 0.15f;
@@ -596,9 +597,9 @@ private:
     zcfg.output_abs_limit = 0.0f;     // disabled
 
     z_detrender_.setConfig(zcfg);
-    z_detrender_.reset(0.0f);
+    z_detrender_.reset(0.0f, 0.0f, 0.0f);
 
-    z_det_out_ = AdaptiveWaveDetrender::Output{};
+    z_det_out_ = AdaptiveWaveDetrender3D::Output{};
     heave_raw_m_        = 0.0f;
     heave_baseline_m_   = 0.0f;
     heave_wave_raw_m_   = 0.0f;
@@ -762,14 +763,14 @@ private:
         (wave_hz_ <= z_detrender_.config().max_wave_freq_hz);
 
     // Option A: blend in SeaStateFusion_OU_III frequency estimate
-    z_det_out_ = z_detrender_.update(heave_raw_m_, dt_, wave_hz_, ext_freq_valid);
+    z_det_out_ = z_detrender_.update(0.0f, 0.0f, heave_raw_m_, dt_, wave_hz_, ext_freq_valid);
 
     // Option B: let the detrender learn frequency entirely by itself
     // z_det_out_ = z_detrender_.update(heave_raw_m_, dt_);
 
-    heave_baseline_m_   = z_det_out_.baseline_slow;
-    heave_wave_raw_m_   = z_det_out_.wave_raw;
-    heave_wave_clean_m_ = z_det_out_.wave_clean;
+    heave_baseline_m_   = z_det_out_.baseline_slow.z();
+    heave_wave_raw_m_   = z_det_out_.wave_raw.z();
+    heave_wave_clean_m_ = z_det_out_.wave_clean.z();
   }
 
   void drawHomeStatic_() {
