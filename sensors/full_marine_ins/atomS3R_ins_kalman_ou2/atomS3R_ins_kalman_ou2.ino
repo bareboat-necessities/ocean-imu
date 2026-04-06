@@ -28,6 +28,8 @@
 #endif
 #include <ArduinoEigenDense.h>
 
+#define NO_BOSCH_API
+
 #include <ArduinoOceanImu.h>
 
 #include "Bosch/BoschBmi270_ImuCal.h"
