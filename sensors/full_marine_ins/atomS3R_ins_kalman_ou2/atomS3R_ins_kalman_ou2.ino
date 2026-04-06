@@ -291,8 +291,9 @@ private:
 
   AdaptiveWaveDetrender3D z_detrender_{};
   AdaptiveWaveDetrender3D::Output z_det_out_{};
+  Vector3f pos_raw_up_m_ = Vector3f::Zero();
 
-  float heave_raw_m_        = 0.0f;   // raw heave from fusion position.z()
+  float heave_raw_m_        = 0.0f;   // raw heave from fusion position.z() (up-positive)
   float heave_baseline_m_   = 0.0f;   // slow baseline actually subtracted
   float heave_wave_raw_m_   = 0.0f;   // raw residual = heave_raw - baseline
   float heave_wave_clean_m_ = 0.0f;   // cleaned residual for plotting/output
@@ -600,6 +601,7 @@ private:
     z_detrender_.reset(0.0f, 0.0f, 0.0f);
 
     z_det_out_ = AdaptiveWaveDetrender3D::Output{};
+    pos_raw_up_m_.setZero();
     heave_raw_m_        = 0.0f;
     heave_baseline_m_   = 0.0f;
     heave_wave_raw_m_   = 0.0f;
@@ -750,7 +752,10 @@ private:
     if (!rot_inited_) { rot_inited_ = true; rot_dpm_filt_ = rot_dpm_meas; }
     else              { rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_); }
 
-    heave_m_         = -fusion_.raw().mekf().get_position().z();  // positive-up
+    const Vector3f pos_ned_m = fusion_.raw().mekf().get_position();
+    pos_raw_up_m_ = Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
+
+    heave_m_         = pos_raw_up_m_.z();  // positive-up
     wave_envelope_m_ =  fusion_.raw().getDisplacementScale();
     wave_hz_         =  fusion_.raw().getFreqHz();
 
@@ -763,10 +768,10 @@ private:
         (wave_hz_ <= z_detrender_.config().max_wave_freq_hz);
 
     // Option A: blend in SeaStateFusion_OU_III frequency estimate
-    z_det_out_ = z_detrender_.update(0.0f, 0.0f, heave_raw_m_, dt_, wave_hz_, ext_freq_valid);
+    z_det_out_ = z_detrender_.update(pos_raw_up_m_, dt_, wave_hz_, ext_freq_valid);
 
     // Option B: let the detrender learn frequency entirely by itself
-    // z_det_out_ = z_detrender_.update(heave_raw_m_, dt_);
+    // z_det_out_ = z_detrender_.update(pos_raw_up_m_, dt_);
 
     heave_baseline_m_   = z_det_out_.baseline_slow.z();
     heave_wave_raw_m_   = z_det_out_.wave_raw.z();
