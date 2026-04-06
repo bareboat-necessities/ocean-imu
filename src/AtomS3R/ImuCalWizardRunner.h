@@ -12,7 +12,7 @@ namespace atoms3r_ical {
 static constexpr uint8_t RUNNER_BMI270_ADDR = 0x68;
 static constexpr float   RUNNER_AG_HZ       = 200.0f;
 
-inline bool runImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV1& out_saved) {
+inline bool runImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV2& out_saved) {
   BoschBmi270_ImuCal imu;
 
   BoschBmi270_ImuCal::Config cfg;

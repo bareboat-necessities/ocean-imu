@@ -309,7 +309,7 @@ class CompassAppBase {
 
     if (!have_blob_) {
       Serial.println("[BOOT] No saved calibration. Starting wizard...");
-      ImuCalBlobV1 saved{};
+      ImuCalBlobV2 saved{};
       if (wizard_.runAndSave(saved)) {
         Serial.println("[BOOT] Wizard saved calibration. Loaded:");
         printBlobSummary(Serial, saved);
@@ -415,7 +415,7 @@ class CompassAppBase {
   void handleRunWizard_() {
     Serial.println("[HOME] single tap => RUN WIZARD");
 
-    ImuCalBlobV1 saved{};
+    ImuCalBlobV2 saved{};
     if (!wizard_.runAndSave(saved)) {
       ui_.notSavedNotice();
       return;
@@ -603,7 +603,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s, const bool* mag_fresh
 #endif
 
   bool have_blob_ = false;
-  ImuCalBlobV1 blob_{};
+  ImuCalBlobV2 blob_{};
 
   bool use_graphics_ = (COMPASS_UI_DEFAULT_GRAPHICS != 0);
   bool compass_ui_ready_ = false;

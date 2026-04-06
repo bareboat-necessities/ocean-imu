@@ -255,7 +255,7 @@ private:
 
   ImuCalStoreNvs store_{};
   bool           have_blob_ = false;
-  ImuCalBlobV1   blob_{};
+  ImuCalBlobV2   blob_{};
   RuntimeCals    runtime_{};
 
   BoschBmi270_ImuCal runtime_imu_{};
@@ -404,7 +404,7 @@ private:
       (void)runtime_imu_.end();
     }
 
-    ImuCalBlobV1 saved{};
+    ImuCalBlobV2 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
 
     if (did_save) {

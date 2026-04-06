@@ -153,7 +153,7 @@ public:
 
   // Runs full wizard and saves to NVS. Returns true only if saved successfully.
   // out_saved is filled with the saved blob (readback-validated).
-  bool runAndSave(ImuCalBlobV1& out_saved) {
+  bool runAndSave(ImuCalBlobV2& out_saved) {
     Serial.println("[WIZ] start");
 
     for (;;) {
@@ -206,7 +206,7 @@ public:
         Serial.println("[MAG] unavailable -> skipping mag calibration");
         mag_out_.ok = false;
         // Build + save blob (accel+gyro only)
-        ImuCalBlobV1 blob{};
+        ImuCalBlobV2 blob{};
         fillBlob_(blob);
         blob.mag_ok = 0;
 
@@ -215,7 +215,7 @@ public:
         ui_.line("Writing...");
         const bool wrote = store_.save(blob);
 
-        ImuCalBlobV1 rb{};
+        ImuCalBlobV2 rb{};
         const bool okrb = store_.load(rb);
 
         Serial.printf("[SAVE] wrote=%d readback=%d\n", (int)wrote, (int)okrb);
@@ -278,7 +278,7 @@ public:
       }
 
       // Build blob from fitted calibrations
-      ImuCalBlobV1 blob{};
+      ImuCalBlobV2 blob{};
       fillBlob_(blob);
 
       ui_.setReadRotation();
@@ -287,7 +287,7 @@ public:
       const bool wrote = store_.save(blob);
 
       // Readback validation (also ensures CRC correctness)
-      ImuCalBlobV1 rb{};
+      ImuCalBlobV2 rb{};
       const bool okrb = store_.load(rb);
 
       Serial.printf("[SAVE] wrote=%d readback=%d\n", (int)wrote, (int)okrb);
@@ -794,11 +794,11 @@ private:
     return false;
   }
 
-  void fillBlob_(ImuCalBlobV1& blob) {
+  void fillBlob_(ImuCalBlobV2& blob) {
     memset(&blob, 0, sizeof(blob));
-    blob.magic = ImuCalBlobV1::IMU_CAL_MAGIC;
-    blob.version = ImuCalBlobV1::IMU_CAL_VERSION;
-    blob.size_bytes = sizeof(ImuCalBlobV1);
+    blob.magic = ImuCalBlobV2::IMU_CAL_MAGIC;
+    blob.version = ImuCalBlobV2::IMU_CAL_VERSION;
+    blob.size_bytes = sizeof(ImuCalBlobV2);
 
     blob.accel_ok = acc_out_.ok ? 1 : 0;
     blob.accel_g  = acc_out_.g;
