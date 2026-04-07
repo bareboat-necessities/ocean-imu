@@ -161,20 +161,11 @@ public:
     if (cfg_.enable_mag_aux) {
       if (!beginMagWithAddrFallback_()) {
         last_error_ = Error::MAG_BEGIN_FAILED;
-        ok_ = false;
-        (void)endFifo_();
-        return false;
       }
     } else {
       mag_configured_ = false;
     }
 #else
-    if (cfg_.enable_mag_aux) {
-      last_error_ = Error::MAG_BEGIN_FAILED;
-      ok_ = false;
-      (void)endFifo_();
-      return false;
-    }
     mag_configured_ = false;
 #endif
 
