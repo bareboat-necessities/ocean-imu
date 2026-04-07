@@ -44,7 +44,7 @@ public:
 
     bool     enable_mag_aux             = true;
     uint8_t  mag_bmm150_addr            = 0x10;
-    float    mag_aux_odr_hz             = 25.0f;   // target BMM150 output data rate
+    float    mag_aux_odr_hz             = 25.0f;
     uint16_t mag_startup_settle_ms      = 3;
     bool     mag_verify_first_read      = true;
 
@@ -145,7 +145,6 @@ public:
     }
 
     cfg_ = cfg;
-
     resetRuntimeState_();
     last_error_ = Error::NONE;
 
@@ -162,11 +161,20 @@ public:
     if (cfg_.enable_mag_aux) {
       if (!beginMagWithAddrFallback_()) {
         last_error_ = Error::MAG_BEGIN_FAILED;
+        ok_ = false;
+        (void)endFifo_();
+        return false;
       }
     } else {
       mag_configured_ = false;
     }
 #else
+    if (cfg_.enable_mag_aux) {
+      last_error_ = Error::MAG_BEGIN_FAILED;
+      ok_ = false;
+      (void)endFifo_();
+      return false;
+    }
     mag_configured_ = false;
 #endif
 
@@ -313,8 +321,6 @@ private:
     return Vector3f::Constant(std::numeric_limits<float>::quiet_NaN());
   }
 
-  // Convert board/sensor-frame mag to this library BODY-NED convention.
-  // Keep identical to AtomS3R_ImuCal.h mapping: (my, mx, -mz).
   static Vector3f mapMagToBodyNed_(const Vector3f& m_sensor_uT) {
     return Vector3f(m_sensor_uT.y(), m_sensor_uT.x(), -m_sensor_uT.z());
   }
@@ -443,8 +449,8 @@ private:
     Vector3f m_s;
     const bool ok = mag_.readMag_uT(m_s);
 
-    // Soft "too soon" path from BoschBmm150Aux when wall-time gating rejects
-    // the read. This is not a bus error and should not consume the poll slot.
+    // If the AUX layer still reports a soft "too soon" style false with
+    // Error::NONE, do not consume the outer poll slot.
     if (!ok && mag_.lastError() == BoschBmm150Aux::Error::NONE) {
       return;
     }
@@ -559,17 +565,13 @@ private:
     mcfg.aux_odr_hz               = sanitizedMagOdrHz_();
     mcfg.startup_settle_ms        = cfg_.mag_startup_settle_ms;
     mcfg.verify_first_read        = cfg_.mag_verify_first_read;
-    mcfg.gate_reads_by_wall_time  = true;
+
+    // Important: outer class already schedules reads by FIFO/sample time.
+    // Do not add a second, unrelated wall-time gate inside the AUX driver.
+    mcfg.gate_reads_by_wall_time  = false;
     mcfg.return_last_on_fast_poll = false;
-    // AtomS3R board-level fixed magnetometer mounting:
-    // M5Unified applies X/Z inversion for BMM150 on AtomS3R series.
-    // Keep this low-level map aligned so Bosch AUX path matches the
-    // reference M5/SparkFun orientation before BODY-NED conversion.
-    //
-    // Net Bosch mapping:
-    //   AUX axis_map: (-x, +y, -z)
-    //   BODY-NED map: (my, mx, -mz)
-    // => body mag = (y, -x, +z) in original BMM150 sensor axes.
+
+    // AtomS3R board-level fixed magnetometer mounting.
     mcfg.axis_map[0] = -1;
     mcfg.axis_map[1] = +2;
     mcfg.axis_map[2] = -3;
