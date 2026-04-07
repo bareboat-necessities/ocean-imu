@@ -55,7 +55,7 @@ using Vector3f = Eigen::Vector3f;
 class BoschBmm150Aux {
 public:
   struct Config {
-    uint8_t  bmm_addr = BMM150_DEFAULT_I2C_ADDRESS; // usually 0x10
+    uint8_t  bmm_addr = BMM150_DEFAULT_I2C_ADDRESS; // normally 0x10
 
     // Desired BMM150 output data rate.
     float    aux_odr_hz = 25.0f;
@@ -217,7 +217,7 @@ public:
 
     bmi2_sens_config sc = saved_aux_cfg_;
     sc.type = BMI2_AUX;
-    sc.cfg.aux.odr             = auxOdrFromHz_(cfg_.aux_odr_hz);
+    sc.cfg.aux.odr             = auxBridgeOdr_();
     sc.cfg.aux.aux_en          = BMI2_ENABLE;
     sc.cfg.aux.i2c_device_addr = cfg_.bmm_addr;
     sc.cfg.aux.fcu_write_en    = BMI2_ENABLE;
@@ -402,6 +402,16 @@ private:
       return BMI2_AUX_READ_LEN_1;
     #else
       return BMI2_AUX_READ_LEN_0;
+    #endif
+  }
+
+  static uint8_t auxBridgeOdr_() {
+    #if defined(BMI2_AUX_ODR_100HZ)
+      return BMI2_AUX_ODR_100HZ;
+    #elif defined(BMI2_AUX_ODR_50HZ)
+      return BMI2_AUX_ODR_50HZ;
+    #else
+      return auxOdrFromHz_(25.0f);
     #endif
   }
 
@@ -623,10 +633,11 @@ private:
     if (!self || !self->bmi_dev_ || !reg_data || len == 0u) {
       return BMM150_E_COM_FAIL;
     }
-    const int8_t r = bmi2_write_aux_man_mode(reg_addr,
-                                             const_cast<uint8_t*>(reg_data),
-                                             len,
-                                             self->bmi_dev_);
+    const int8_t r = bmi2_write_aux_man_mode(
+      reg_addr,
+      const_cast<uint8_t*>(reg_data),
+      len,
+      self->bmi_dev_);
     return (r == BMI2_OK) ? BMM150_OK : BMM150_E_COM_FAIL;
   }
 
@@ -635,7 +646,9 @@ private:
     if (period >= 1000u) {
       delay(period / 1000u);
       const uint32_t rem = period % 1000u;
-      if (rem) delayMicroseconds(rem);
+      if (rem) {
+        delayMicroseconds(rem);
+      }
     } else {
       delayMicroseconds(period);
     }
@@ -644,7 +657,6 @@ private:
   bool initBmmDev_() {
     std::memset(&bmm_dev_, 0, sizeof(bmm_dev_));
 
-    bmm_dev_.chip_id  = cfg_.bmm_addr;
     bmm_dev_.intf     = BMM150_I2C_INTF;
     bmm_dev_.intf_ptr = this;
     bmm_dev_.read     = bmmReadThunk_;
@@ -874,9 +886,6 @@ public:
 
   const char* lastErrorString() const {
     return "Bosch SensorAPI headers not found in this build";
-  }
-
-  const     return "Bosch SensorAPI headers not found in this build";
   }
 
   const char* lastEndErrorString() const {
