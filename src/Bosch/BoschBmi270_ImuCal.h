@@ -161,20 +161,11 @@ public:
     if (cfg_.enable_mag_aux) {
       if (!beginMagWithAddrFallback_()) {
         last_error_ = Error::MAG_BEGIN_FAILED;
-        ok_ = false;
-        (void)endFifo_();
-        return false;
       }
     } else {
       mag_configured_ = false;
     }
 #else
-    if (cfg_.enable_mag_aux) {
-      last_error_ = Error::MAG_BEGIN_FAILED;
-      ok_ = false;
-      (void)endFifo_();
-      return false;
-    }
     mag_configured_ = false;
 #endif
 
@@ -578,23 +569,32 @@ private:
 
     const uint8_t preferred = cfg_.mag_bmm150_addr;
     const uint8_t alternate = (preferred == 0x10u) ? 0x12u : 0x10u;
-
     const uint8_t candidates[2] = { preferred, alternate };
-    for (uint8_t addr : candidates) {
-      mcfg.bmm_addr = addr;
-      if (mag_.begin(rawBmiDev_(), mcfg)) {
-        cfg_.mag_bmm150_addr = addr;
-        mag_configured_ = true;
 
-        effective_mag_hz_ = mag_.effectiveMagHz();
-        if (!(effective_mag_hz_ > 0.0f) || !std::isfinite(effective_mag_hz_)) {
-          effective_mag_hz_ = sanitizedMagOdrHz_();
+    // Some boards need a second AUX bring-up pass after FIFO init.
+    // Retry each candidate address once with a longer settle.
+    for (uint8_t addr : candidates) {
+      for (int attempt = 0; attempt < 2; ++attempt) {
+        mcfg.bmm_addr = addr;
+        mcfg.startup_settle_ms = static_cast<uint16_t>(
+          cfg_.mag_startup_settle_ms + static_cast<uint16_t>(attempt * 20u));
+
+        if (mag_.begin(rawBmiDev_(), mcfg)) {
+          cfg_.mag_bmm150_addr = addr;
+          mag_configured_ = true;
+
+          effective_mag_hz_ = mag_.effectiveMagHz();
+          if (!(effective_mag_hz_ > 0.0f) || !std::isfinite(effective_mag_hz_)) {
+            effective_mag_hz_ = sanitizedMagOdrHz_();
+          }
+
+          const double step_us_f = 1.0e6 / static_cast<double>(effective_mag_hz_);
+          mag_step_us_ = clampU64_(static_cast<uint64_t>(step_us_f + 0.5), 5000ull, 1000000ull);
+          return true;
         }
 
-        const double step_us_f = 1.0e6 / static_cast<double>(effective_mag_hz_);
-        mag_step_us_ = clampU64_(static_cast<uint64_t>(step_us_f + 0.5), 5000ull, 1000000ull);
-
-        return true;
+        (void)mag_.end();
+        delay(5);
       }
     }
 
