@@ -232,6 +232,13 @@ public:
       return false;
     }
 
+    if (!powerOn_()) {
+      ++init_fail_total_;
+      last_error_ = Error::BMM_POWER_ON_FAILED;
+      bestEffortRollback_();
+      return false;
+    }
+
     uint8_t chip_id = 0;
     if (!readChipIdRaw_(chip_id)) {
       ++init_fail_total_;
@@ -242,13 +249,6 @@ public:
     if (chip_id != kExpectedChipId) {
       ++init_fail_total_;
       last_error_ = Error::CHIP_ID_MISMATCH;
-      bestEffortRollback_();
-      return false;
-    }
-
-    if (!powerOn_()) {
-      ++init_fail_total_;
-      last_error_ = Error::BMM_POWER_ON_FAILED;
       bestEffortRollback_();
       return false;
     }
