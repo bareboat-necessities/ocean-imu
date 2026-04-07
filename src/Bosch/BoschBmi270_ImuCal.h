@@ -30,8 +30,8 @@
 #include <limits>
 #include <type_traits>
 
-#include "Bosch/BoschBmi270Fifo.h"
 #include "Bosch/BoschBmm150Aux.h"
+#include "Bosch/BoschBmi270Fifo.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 
 namespace atoms3r_ical {
