@@ -672,7 +672,11 @@ private:
 
       ImuSample s;
       if (!readSample_(s)) { delay(2); continue; }
-      if (!finite3_(s.m)) { delay(2); continue; }
+      if (!finite3_(s.m)) {
+        Serial.println("[MAG] invalid sample (NaN/Inf) -> failing MAG capture");
+        out_why = "MAG returned NaN/Inf";
+        return false;
+      }
 
       const uint32_t now = millis();
 
