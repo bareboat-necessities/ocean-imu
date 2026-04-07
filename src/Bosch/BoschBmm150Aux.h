@@ -67,7 +67,7 @@ public:
     bool     verify_first_read = true;
 
     // If a higher-level class already schedules mag reads, this is often best false.
-    bool     gate_reads_by_wall_time = true;
+    bool     gate_reads_by_wall_time = false;
 
     // If caller polls faster than the configured mag rate:
     //  - true  => return last good sample and report success
@@ -862,10 +862,10 @@ public:
   struct Config {
     uint8_t  bmm_addr = 0x10;
     float    aux_odr_hz = 25.0f;
-    uint8_t  preset_mode = 0;
+    uint8_t  preset_mode = BMM150_PRESETMODE_REGULAR;
     uint16_t startup_settle_ms = 200;
     bool     verify_first_read = true;
-    bool     gate_reads_by_wall_time = true;
+    bool     gate_reads_by_wall_time = false;
     bool     return_last_on_fast_poll = false;
     bool     return_last_good_on_error = true;
     int8_t   axis_map[3] = { +1, +2, +3 };
