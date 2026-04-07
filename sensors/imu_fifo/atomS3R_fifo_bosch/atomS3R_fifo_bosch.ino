@@ -28,7 +28,7 @@ void setup()
   imuCfg.enable_mag_aux = true;
   imuCfg.mag_bmm150_addr = 0x10;
   imuCfg.mag_aux_odr_hz = 25.0f;
-  imuCfg.mag_startup_settle_ms = 3;
+  imuCfg.mag_startup_settle_ms = 200;
   imuCfg.mag_verify_first_read = true;
   imuCfg.mag_stale_min_us = 75000u;
   imuCfg.mag_stale_factor = 3u;
