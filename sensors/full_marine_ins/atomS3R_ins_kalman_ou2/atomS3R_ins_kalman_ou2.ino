@@ -465,7 +465,7 @@ private:
     const bool sample_usable = ::finite3_(m_s) && (m_s.norm() > 1.0f);
     if (!read_ok && !sample_usable) return;
 
-    const Vector3f m_body(m_s.y(), m_s.x(), -m_s.z());
+    const Vector3f m_body = map_sensor_vec_to_body_ned_(m_s);
 
     const bool have_prev = ::finite3_(mag_raw_uT_);
     const float dm       = have_prev ? (m_body - mag_raw_uT_).norm() : INFINITY;

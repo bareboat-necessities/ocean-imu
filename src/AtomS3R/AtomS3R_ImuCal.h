@@ -113,20 +113,22 @@ struct ImuCalCfg {
 // acc_body = ( ay, ax, -az ) * g
 // gyr_body = ( gy, gx, -gz ) * deg2rad
 // mag_body = ( my, mx, -mz ) * (1/10)
+static inline Vector3f map_sensor_xyz_to_body_ned_(float sx, float sy, float sz, float scale = 1.0f) {
+  return Vector3f(sy * scale, sx * scale, -sz * scale);
+}
+
+static inline Vector3f map_sensor_vec_to_body_ned_(const Vector3f& v_sensor, float scale = 1.0f) {
+  return map_sensor_xyz_to_body_ned_(v_sensor.x(), v_sensor.y(), v_sensor.z(), scale);
+}
+
 static inline Vector3f map_acc_to_body_ned_(const m5::imu_3d_t& a_g) {
-  return Vector3f(a_g.y * ImuCalCfg::g_std,
-                  a_g.x * ImuCalCfg::g_std,
-                 -a_g.z * ImuCalCfg::g_std);
+  return map_sensor_xyz_to_body_ned_(a_g.x, a_g.y, a_g.z, ImuCalCfg::g_std);
 }
 static inline Vector3f map_gyr_to_body_ned_(const m5::imu_3d_t& w_deg_s) {
-  return Vector3f(w_deg_s.y * ImuCalCfg::DEG2RAD,
-                  w_deg_s.x * ImuCalCfg::DEG2RAD,
-                 -w_deg_s.z * ImuCalCfg::DEG2RAD);
+  return map_sensor_xyz_to_body_ned_(w_deg_s.x, w_deg_s.y, w_deg_s.z, ImuCalCfg::DEG2RAD);
 }
 static inline Vector3f map_mag_to_body_uT_(const m5::imu_3d_t& m_raw) {
-  return Vector3f(m_raw.y / 10.0f,
-                  m_raw.x / 10.0f,
-                 -m_raw.z / 10.0f);
+  return map_sensor_xyz_to_body_ned_(m_raw.x, m_raw.y, m_raw.z, 0.1f);
 }
 
 // Blob + CRC utilities
