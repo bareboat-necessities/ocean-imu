@@ -163,6 +163,7 @@ public:
     auto cfg = M5.config();
     cfg.internal_imu = false;
     M5.begin(cfg);
+    clearM5UnifiedImuCalibration();
 
     // AtomS3R internal IMU I2C bus
     if (!M5.In_I2C.begin((i2c_port_t)0, 45, 0)) {
@@ -402,6 +403,7 @@ private:
     if (runtime_imu_.ok()) {
       (void)runtime_imu_.end();
     }
+    clearM5UnifiedImuCalibration();
 
     ImuCalBlobV2 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
