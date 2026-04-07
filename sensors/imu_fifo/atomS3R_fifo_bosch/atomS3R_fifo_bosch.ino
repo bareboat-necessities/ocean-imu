@@ -15,6 +15,10 @@ constexpr float kImuOdrHz = kDefaultImuOdrHz;
 constexpr uint32_t kLoopPeriodUs = loopPeriodUsFromHz(kImuOdrHz);
 
 BoschBmi270_ImuCal imu;
+ImuCalStoreNvs calStore;
+ImuCalBlobV2 calBlob;
+RuntimeCals runtimeCals;
+bool hasSavedCalibration = false;
 
 void setup()
 {
@@ -59,6 +63,20 @@ void setup()
                 imuCfg.mag_aux_odr_hz,
                 imu.effectiveMagHz(),
                 usToMs(imu.magStepUs64()));
+
+  hasSavedCalibration = calStore.load(calBlob);
+  if (hasSavedCalibration)
+  {
+    runtimeCals.rebuildFromBlob(calBlob);
+    Serial.println("Loaded IMU calibration from NVS; magnetometer output will include calibrated values.");
+  }
+  else
+  {
+    runtimeCals.mag.ok = true;
+    runtimeCals.mag.A = Matrix3f::Identity();
+    runtimeCals.mag.b = Vector3f::Zero();
+    Serial.println("No IMU calibration in NVS; assuming zero mag calibration (A=I, b=0).");
+  }
 }
 
 void loop()
@@ -109,6 +127,10 @@ void loop()
   row.magN = sample.m.x();
   row.magE = sample.m.y();
   row.magD = sample.m.z();
+  const Vector3f magCal = runtimeCals.applyMag(sample.m);
+  row.magCalN = magCal.x();
+  row.magCalE = magCal.y();
+  row.magCalD = magCal.z();
 
   const uint32_t nowUs = micros();
   if (logState.shouldLogSample(nowUs))

@@ -21,6 +21,10 @@ constexpr uint32_t kLoopPeriodUs = loopPeriodUsFromHz(kImuOdrHz);
 ImuReader imuReader;
 MagReader magReader;
 bool magAvailable = false;
+ImuCalStoreNvs calStore;
+ImuCalBlobV2 calBlob;
+RuntimeCals runtimeCals;
+bool hasSavedCalibration = false;
 
 void setup()
 {
@@ -47,6 +51,20 @@ void setup()
 
   imuReader.configureFIFO(ImuReader::kDefaultFifoWatermarkFrames, kImuAccelOdr, kImuGyroOdr);
   Serial.println("BMI270 initialized and FIFO configured.");
+
+  hasSavedCalibration = calStore.load(calBlob);
+  if (hasSavedCalibration)
+  {
+    runtimeCals.rebuildFromBlob(calBlob);
+    Serial.println("Loaded IMU calibration from NVS; magnetometer output will include calibrated values.");
+  }
+  else
+  {
+    runtimeCals.mag.ok = true;
+    runtimeCals.mag.A = Matrix3f::Identity();
+    runtimeCals.mag.b = Vector3f::Zero();
+    Serial.println("No IMU calibration in NVS; assuming zero mag calibration (A=I, b=0).");
+  }
 }
 
 void loop()
@@ -114,6 +132,10 @@ void loop()
   row.magN = magNorthUt;
   row.magE = magEastUt;
   row.magD = magDownUt;
+  const Vector3f magCal = runtimeCals.applyMag(Vector3f(magNorthUt, magEastUt, magDownUt));
+  row.magCalN = magCal.x();
+  row.magCalE = magCal.y();
+  row.magCalD = magCal.z();
 
   const uint32_t nowUs = micros();
   if (logState.shouldLogSample(nowUs))
