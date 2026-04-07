@@ -45,7 +45,7 @@ public:
     bool     enable_mag_aux             = true;
     uint8_t  mag_bmm150_addr            = 0x10;
     float    mag_aux_odr_hz             = 25.0f;
-    uint16_t mag_startup_settle_ms      = 3;
+    uint16_t mag_startup_settle_ms      = 200;
     bool     mag_verify_first_read      = true;
 
     uint32_t mag_stale_min_us           = 75000u;

@@ -22,7 +22,7 @@ inline bool runImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV2& out_s
   cfg.enable_mag_aux             = true;
   cfg.mag_bmm150_addr            = 0x10;
   cfg.mag_aux_odr_hz             = 25.0f;
-  cfg.mag_startup_settle_ms      = 3;
+  cfg.mag_startup_settle_ms      = 200;
   cfg.mag_verify_first_read      = true;
   cfg.mag_stale_min_us           = 75000u;
   cfg.mag_stale_factor           = 3u;
