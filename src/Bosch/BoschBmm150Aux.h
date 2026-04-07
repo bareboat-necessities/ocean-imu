@@ -12,7 +12,9 @@
 
 #include <Arduino_BMI270_BMM150.h>
 
-#if defined(__has_include)
+#if defined(NO_BOSCH_API)
+  #define ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI 0
+#elif defined(__has_include)
   #if __has_include(<utilities/BMI270-Sensor-API/bmi2.h>) && \
       __has_include(<utilities/BMI270-Sensor-API/bmi270.h>) && \
       __has_include(<utilities/BMM150-Sensor-API/bmm150.h>) && \
