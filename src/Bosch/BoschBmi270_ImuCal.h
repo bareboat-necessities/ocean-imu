@@ -562,11 +562,6 @@ private:
     mcfg.gate_reads_by_wall_time  = false;
     mcfg.return_last_on_fast_poll = false;
 
-    // AtomS3R board-level fixed magnetometer mounting.
-    mcfg.axis_map[0] = -1;
-    mcfg.axis_map[1] = +2;
-    mcfg.axis_map[2] = -3;
-
     const uint8_t preferred = cfg_.mag_bmm150_addr;
     const uint8_t alternate = (preferred == 0x10u) ? 0x12u : 0x10u;
     const uint8_t candidates[2] = { preferred, alternate };
