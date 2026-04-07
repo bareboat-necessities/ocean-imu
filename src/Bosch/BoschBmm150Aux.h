@@ -6,6 +6,10 @@
 #include <cstring>
 #include <type_traits>
 
+#ifndef BMM150_USE_FLOATING_POINT
+  #define BMM150_USE_FLOATING_POINT 1
+#endif
+
 #include <Arduino_BMI270_BMM150.h>
 
 #if defined(__has_include)
@@ -61,9 +65,8 @@ public:
     uint16_t startup_settle_ms = 200;
     bool     verify_first_read = true;
 
-    // Optional internal wall-time throttling. For BoschBmi270_ImuCal this
-    // should normally be false, because that class already schedules mag polls
-    // using FIFO/sample time.
+    // Optional internal wall-time throttling. If a higher-level class already
+    // schedules magnetometer polls, this is often better left false.
     bool     gate_reads_by_wall_time = true;
 
     // If caller polls faster than the configured mag rate:
@@ -220,21 +223,12 @@ public:
     sc.cfg.aux.i2c_device_addr = cfg_.bmm_addr;
     sc.cfg.aux.fcu_write_en    = BMI2_ENABLE;
     sc.cfg.aux.man_rd_burst    = manualBurstLen_();
-    sc.cfg.aux.aux_rd_burst    = manualBurstLen_();
     sc.cfg.aux.read_addr       = kRegDataXLSB;
     sc.cfg.aux.manual_en       = BMI2_ENABLE;
-    sc.cfg.aux.offset          = 0;
 
     if (bmi270_set_sensor_config(&sc, 1, bmi_dev_) != BMI2_OK) {
       ++init_fail_total_;
       last_error_ = Error::BMI_SET_AUX_CFG_FAILED;
-      bestEffortRollback_();
-      return false;
-    }
-
-    if (!powerOn_()) {
-      ++init_fail_total_;
-      last_error_ = Error::BMM_POWER_ON_FAILED;
       bestEffortRollback_();
       return false;
     }
@@ -249,6 +243,13 @@ public:
     if (chip_id != kExpectedChipId) {
       ++init_fail_total_;
       last_error_ = Error::CHIP_ID_MISMATCH;
+      bestEffortRollback_();
+      return false;
+    }
+
+    if (!powerOn_()) {
+      ++init_fail_total_;
+      last_error_ = Error::BMM_POWER_ON_FAILED;
       bestEffortRollback_();
       return false;
     }
@@ -271,7 +272,6 @@ public:
       delay(cfg_.startup_settle_ms);
     }
 
-    // Discard a couple of initial samples.
     {
       RawSample raw{};
       (void)readRawSample_(raw);
@@ -569,15 +569,6 @@ private:
     return allZero3_(v.x(), v.y(), v.z());
   }
 
-  template <typename T>
-  static float compValueToMicroTesla_(T v) {
-#if defined(BMM150_USE_FLOATING_POINT) && (BMM150_USE_FLOATING_POINT)
-    return static_cast<float>(v);
-#else
-    return static_cast<float>(v) / 16.0f;
-#endif
-  }
-
   static float pickAxis_(int8_t code, const Vector3f& v) {
     switch (code) {
       case +1: return  v.x();
@@ -736,7 +727,7 @@ private:
 
     if (!auxRead_(kRegDigXYZ1Lsb, b, 2)) return false;
     trim_.dig_xyz1 = static_cast<uint16_t>(
-      (static_cast<uint16_t>(b[0])) |
+      static_cast<uint16_t>(b[0]) |
       (static_cast<uint16_t>(b[1] & 0x7Fu) << 8)
     );
 
@@ -750,19 +741,6 @@ private:
     trim_.dig_xy1 = v;
 
     trim_.valid = (trim_.dig_xyz1 != 0u) && (trim_.dig_z1 != 0u);
-    if (trim_.valid) {
-      bmm_dev_.trim_data.dig_x1   = trim_.dig_x1;
-      bmm_dev_.trim_data.dig_y1   = trim_.dig_y1;
-      bmm_dev_.trim_data.dig_x2   = trim_.dig_x2;
-      bmm_dev_.trim_data.dig_y2   = trim_.dig_y2;
-      bmm_dev_.trim_data.dig_z1   = trim_.dig_z1;
-      bmm_dev_.trim_data.dig_z2   = trim_.dig_z2;
-      bmm_dev_.trim_data.dig_z3   = trim_.dig_z3;
-      bmm_dev_.trim_data.dig_z4   = trim_.dig_z4;
-      bmm_dev_.trim_data.dig_xy1  = trim_.dig_xy1;
-      bmm_dev_.trim_data.dig_xy2  = trim_.dig_xy2;
-      bmm_dev_.trim_data.dig_xyz1 = trim_.dig_xyz1;
-    }
     return trim_.valid;
   }
 
@@ -785,7 +763,6 @@ private:
     if (!auxRead_(kRegDataXLSB, buf, 8)) {
       return false;
     }
-    memcpy(last_aux_raw_, buf, sizeof(last_aux_raw_));
 
     const uint16_t x_u = static_cast<uint16_t>(
       (static_cast<uint16_t>(buf[1]) << 5) |
@@ -809,7 +786,8 @@ private:
     s.z = signExtend15_(z_u);
     s.rhall = rh_u;
 
-    if (s.rhall == 0u || s.rhall == 0x3FFFu || s.x == -4096 || s.y == -4096 || s.z == -16384) {
+    if (s.rhall == 0u || s.rhall == 0x3FFFu ||
+        s.x == -4096 || s.y == -4096 || s.z == -16384) {
       last_error_ = Error::RAW_MAG_INVALID;
       return false;
     }
@@ -828,23 +806,37 @@ private:
       return false;
     }
 
-    if (s.x == -4096 || s.y == -4096 || s.z == -16384) {
+    const float rhall    = static_cast<float>(s.rhall);
+    const float dig_xyz1 = static_cast<float>(trim_.dig_xyz1);
+
+    const float x0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
+    const float x1 = static_cast<float>(trim_.dig_xy2) * (x0 * x0 / 268435456.0f);
+    const float x2 = x0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
+    const float x3 = static_cast<float>(trim_.dig_x2) + 160.0f;
+    const float x  = ((((static_cast<float>(s.x) * ((x1 + x2 + 256.0f) * x3)) / 8192.0f) +
+                      (static_cast<float>(trim_.dig_x1) * 8.0f)) / 16.0f);
+
+    const float y0 = ((dig_xyz1 * 16384.0f) / rhall) - 16384.0f;
+    const float y1 = static_cast<float>(trim_.dig_xy2) * (y0 * y0 / 268435456.0f);
+    const float y2 = y0 * (static_cast<float>(trim_.dig_xy1) / 16384.0f);
+    const float y3 = static_cast<float>(trim_.dig_y2) + 160.0f;
+    const float y  = ((((static_cast<float>(s.y) * ((y1 + y2 + 256.0f) * y3)) / 8192.0f) +
+                      (static_cast<float>(trim_.dig_y1) * 8.0f)) / 16.0f);
+
+    const float z_denom =
+      (static_cast<float>(trim_.dig_z2) +
+       (static_cast<float>(trim_.dig_z1) * rhall) / 32768.0f) * 4.0f;
+
+    if (z_denom == 0.0f || !std::isfinite(z_denom)) {
       last_error_ = Error::COMP_INVALID;
       return false;
     }
 
-    uint8_t aux_raw[8];
-    memcpy(aux_raw, last_aux_raw_, sizeof(aux_raw));
+    const float z_num =
+      ((static_cast<float>(s.z) - static_cast<float>(trim_.dig_z4)) * 131072.0f) -
+      (static_cast<float>(trim_.dig_z3) * (rhall - dig_xyz1));
 
-    bmm150_mag_data mag{};
-    if (bmm150_aux_mag_data(aux_raw, &mag, &bmm_dev_) != BMM150_OK) {
-      last_error_ = Error::COMP_INVALID;
-      return false;
-    }
-
-    const float x = compValueToMicroTesla_(mag.x);
-    const float y = compValueToMicroTesla_(mag.y);
-    const float z = compValueToMicroTesla_(mag.z);
+    const float z = (z_num / z_denom) / 16.0f;
 
     if (!finite3_(x, y, z)) {
       last_error_ = Error::NONFINITE_MAG;
@@ -892,7 +884,7 @@ private:
     }
 
     RawSample raw{};
-    Vector3f  out = Vector3f::Zero();
+    Vector3f out = Vector3f::Zero();
     bool success = false;
 
     for (int attempt = 0; attempt < 4; ++attempt) {
@@ -945,14 +937,12 @@ private:
     session_attached_ = false;
     cfg_ = Config{};
     bmi_dev_ = nullptr;
-    std::memset(&bmm_dev_, 0, sizeof(bmm_dev_));
 
     saved_aux_cfg_valid_ = false;
     saved_aux_was_enabled_ = false;
     std::memset(&saved_aux_cfg_, 0, sizeof(saved_aux_cfg_));
 
     trim_ = TrimData{};
-    std::memset(last_aux_raw_, 0, sizeof(last_aux_raw_));
 
     have_last_good_ = false;
     last_good_uT_ = Vector3f::Zero();
@@ -991,14 +981,12 @@ private:
 
   Config cfg_{};
   struct bmi2_dev* bmi_dev_ = nullptr;
-  struct bmm150_dev bmm_dev_{};
 
   struct bmi2_sens_config saved_aux_cfg_{};
   bool saved_aux_cfg_valid_ = false;
   bool saved_aux_was_enabled_ = false;
 
   TrimData trim_{};
-  uint8_t last_aux_raw_[8] = {0};
 
   uint32_t init_fail_total_ = 0;
   uint32_t read_ok_total_ = 0;
