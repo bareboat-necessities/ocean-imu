@@ -182,7 +182,7 @@ jobs:
           sketch-names: "*.ino"
           sketch-names-find-start: sensors/${{ matrix.ino_dir }}/*
           build-properties: >-
-            { "All": "-funroll-loops -fno-finite-math-only" }
+            { "All": "-DBMM150_USE_FLOATING_POINT=1 -funroll-loops -fno-finite-math-only" }
           extra-arduino-cli-args: >-
             --warnings default
             --library ${{ github.workspace }}
