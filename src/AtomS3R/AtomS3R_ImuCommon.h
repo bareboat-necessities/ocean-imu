@@ -57,6 +57,10 @@ struct ImuLogRow
   float magN = 0.0f;
   float magE = 0.0f;
   float magD = 0.0f;
+
+  float magCalN = 0.0f;
+  float magCalE = 0.0f;
+  float magCalD = 0.0f;
 };
 
 struct ImuLoopLogState
@@ -105,7 +109,8 @@ inline void printImuLogRow(const ImuLogRow& row)
     "mag_valid=%u mag_updated=%u | mag_age_ms=%.2f | mag_step_ms=%.2f | last_mag_dt_ms=%.2f | "
     "acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | "
     "gyro_ned[dps] N=%.3f E=%.3f D=%.3f | "
-    "mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
+    "mag_ned[uT] N=%.2f E=%.2f D=%.2f | "
+    "mag_cal_ned[uT] N=%.2f E=%.2f D=%.2f\n",
     static_cast<long>(row.fifoLen),
     static_cast<long>(row.fifoReq),
     static_cast<long>(row.fifoGot),
@@ -123,7 +128,10 @@ inline void printImuLogRow(const ImuLogRow& row)
     row.gyrD,
     row.magN,
     row.magE,
-    row.magD);
+    row.magD,
+    row.magCalN,
+    row.magCalE,
+    row.magCalD);
 }
 
 } // namespace atoms3r_ical
