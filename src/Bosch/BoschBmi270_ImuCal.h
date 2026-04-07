@@ -238,8 +238,8 @@ public:
     const Vector3f a_s(ag.ax, ag.ay, ag.az);
     const Vector3f w_s(ag.gx, ag.gy, ag.gz);
 
-    const Vector3f a_b(a_s.y(), a_s.x(), -a_s.z());
-    const Vector3f w_b(w_s.y(), w_s.x(), -w_s.z());
+    const Vector3f a_b = map_sensor_vec_to_body_ned_(a_s);
+    const Vector3f w_b = map_sensor_vec_to_body_ned_(w_s);
 
     mag_updated_this_read_ = false;
     maybePollMag_(sample_us64);
@@ -313,7 +313,7 @@ private:
   }
 
   static Vector3f mapMagToBodyNed_(const Vector3f& m_sensor_uT) {
-    return Vector3f(m_sensor_uT.y(), m_sensor_uT.x(), -m_sensor_uT.z());
+    return map_sensor_vec_to_body_ned_(m_sensor_uT);
   }
 
   static bool finite3_(const Vector3f& v) {
