@@ -673,9 +673,10 @@ private:
       ImuSample s;
       if (!readSample_(s)) { delay(2); continue; }
       if (!finite3_(s.m)) {
-        Serial.println("[MAG] invalid sample (NaN/Inf) -> failing MAG capture");
-        out_why = "MAG returned NaN/Inf";
-        return false;
+        // During startup/recovery the mag path may briefly report NaN/Inf.
+        // Treat this as "no usable sample yet" rather than a hard failure.
+        delay(2);
+        continue;
       }
 
       const uint32_t now = millis();
