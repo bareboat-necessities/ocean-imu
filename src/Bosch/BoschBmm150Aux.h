@@ -61,8 +61,9 @@ public:
     uint16_t startup_settle_ms = 200;
     bool     verify_first_read = true;
 
-    // If true, host-side wall-clock throttling is enforced based on the
-    // effective configured BMM150 rate.
+    // Optional internal wall-time throttling. For BoschBmi270_ImuCal this
+    // should normally be false, because that class already schedules mag polls
+    // using FIFO/sample time.
     bool     gate_reads_by_wall_time = true;
 
     // If caller polls faster than the configured mag rate:
@@ -570,10 +571,6 @@ private:
 
   template <typename T>
   static float compValueToMicroTesla_(T v) {
-    // Bosch BMM150 SensorAPI behavior:
-    // - floating-point mode: output is in microtesla.
-    // - fixed-point mode: output is in 16 LSB per microtesla.
-    // Normalize both build modes to microtesla here.
 #if defined(BMM150_USE_FLOATING_POINT) && (BMM150_USE_FLOATING_POINT)
     return static_cast<float>(v);
 #else
@@ -831,8 +828,6 @@ private:
       return false;
     }
 
-    // Use Bosch SensorAPI AUX compensation directly so output units and
-    // overflow behavior exactly match Bosch/Arduino reference libraries.
     if (s.x == -4096 || s.y == -4096 || s.z == -16384) {
       last_error_ = Error::COMP_INVALID;
       return false;
@@ -846,6 +841,7 @@ private:
       last_error_ = Error::COMP_INVALID;
       return false;
     }
+
     const float x = compValueToMicroTesla_(mag.x);
     const float y = compValueToMicroTesla_(mag.y);
     const float z = compValueToMicroTesla_(mag.z);
