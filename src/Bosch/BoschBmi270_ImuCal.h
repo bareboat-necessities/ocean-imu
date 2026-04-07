@@ -157,7 +157,16 @@ public:
 
     ok_ = true;
 
-#if defined(ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI) && ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI
+#if defined(NO_BOSCH_API)
+    if (cfg_.enable_mag_aux) {
+      mag_configured_ = true;
+      effective_mag_hz_ = sanitizedMagOdrHz_();
+      const double step_us_f = 1.0e6 / static_cast<double>(effective_mag_hz_);
+      mag_step_us_ = clampU64_(static_cast<uint64_t>(step_us_f + 0.5), 5000ull, 1000000ull);
+    } else {
+      mag_configured_ = false;
+    }
+#elif defined(ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI) && ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI
     if (cfg_.enable_mag_aux) {
       if (!beginMagWithAddrFallback_()) {
         last_error_ = Error::MAG_BEGIN_FAILED;
@@ -427,7 +436,44 @@ private:
   }
 
   void maybePollMag_(uint64_t sample_us) {
-#if defined(ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI) && ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI
+#if defined(NO_BOSCH_API)
+    if (!mag_configured_) {
+      return;
+    }
+
+    const bool due = !have_mag_poll_time_ || (sample_us - last_mag_poll_us_) >= magPollUs_();
+    if (!due) {
+      return;
+    }
+
+    have_mag_poll_time_ = true;
+    last_mag_poll_us_ = sample_us;
+    ++mag_poll_total_;
+
+    const auto data = M5.Imu.getImuData();
+    const Vector3f m_b = map_mag_to_body_uT_(data.mag);
+    const bool ok = finite3_(m_b) && (m_b.x() != 0.0f || m_b.y() != 0.0f || m_b.z() != 0.0f);
+
+    if (ok) {
+      last_mag_uT_ = m_b;
+      have_last_good_mag_ = true;
+      have_valid_mag_ = true;
+      mag_marked_stale_ = false;
+      last_mag_period_us_ =
+        (last_mag_sample_us_ > 0ull && sample_us >= last_mag_sample_us_)
+          ? (sample_us - last_mag_sample_us_)
+          : 0ull;
+      last_mag_sample_us_ = sample_us;
+      mag_updated_this_read_ = true;
+      mag_consecutive_failures_ = 0;
+      ++mag_ok_total_;
+      return;
+    }
+
+    ++mag_fail_total_;
+    ++mag_consecutive_failures_;
+    last_error_ = Error::MAG_READ_FAILED;
+#elif defined(ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI) && ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI
     if (!mag_configured_) {
       return;
     }
