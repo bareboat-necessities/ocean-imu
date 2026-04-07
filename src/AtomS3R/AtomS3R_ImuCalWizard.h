@@ -470,8 +470,35 @@ private:
     if (!imu_) return false;
     return imu_->hasMag();
 #else
-    // Legacy path: assume mag exists; captureMag_ will fail if it doesn't change.
-    return true;
+    // Legacy (non-Bosch) path: actively probe MAG so we can skip calibration
+    // cleanly when magnetometer data is unavailable/stuck.
+    Vector3f m = Vector3f::Zero();
+    bool have_prev = false;
+    Vector3f prev = Vector3f::Zero();
+    constexpr uint32_t probe_ms = 1200;
+    const uint32_t t0 = millis();
+
+    while ((uint32_t)(millis() - t0) < probe_ms) {
+      if (!readMagSample_(m)) {
+        delay(4);
+        continue;
+      }
+      const float mn = m.norm();
+      if (!(mn > 1.0f) || !std::isfinite(mn)) {
+        delay(4);
+        continue;
+      }
+      if (have_prev) {
+        const float dm = (m - prev).norm();
+        if (std::isfinite(dm) && dm >= ImuCalWizardCfg::MAG_MIN_DELTA_uT) {
+          return true;
+        }
+      }
+      prev = m;
+      have_prev = true;
+      delay(4);
+    }
+    return false;
 #endif
   }
 
@@ -482,6 +509,20 @@ private:
     return imu_->read(s);
 #else
     return readImuMapped(M5.Imu, s);
+#endif
+  }
+
+  bool readMagSample_(Vector3f& m_out) {
+#if ATOMS3R_WIZARD_USE_BOSCH
+    ImuSample s{};
+    if (!readSample_(s) || !finite3_(s.m)) return false;
+    m_out = s.m;
+    return true;
+#else
+    (void)M5.Imu.update();
+    const auto data = M5.Imu.getImuData();
+    m_out = map_mag_to_body_uT_(data.mag);
+    return finite3_(m_out);
 #endif
   }
 
@@ -670,9 +711,8 @@ private:
     while ((uint32_t)(millis() - tcap0) < ImuCalWizardCfg::MAG_TIMEOUT_MS) {
       Input::update();
 
-      ImuSample s;
-      if (!readSample_(s)) { delay(2); continue; }
-      if (!finite3_(s.m)) {
+      Vector3f m;
+      if (!readMagSample_(m)) {
         // During startup/recovery the mag path may briefly report NaN/Inf.
         // Treat this as "no usable sample yet" rather than a hard failure.
         delay(2);
@@ -686,25 +726,25 @@ private:
         // reject stale repeats
         bool accept = true;
         if (isfinite(last_added.x())) {
-          const Vector3f d = s.m - last_added;
+          const Vector3f d = m - last_added;
           if (d.norm() < ImuCalWizardCfg::MAG_MIN_DELTA_uT) accept = false;
         }
 
         if (accept) {
           const int before = magCal_.buf.n;
-          magCal_.addSample(s.m);
+          magCal_.addSample(m);
           const int after = magCal_.buf.n;
 
           if (after > before) {
             last_add_ms = now;
-            last_added = s.m;
+            last_added = m;
 
-            vmin = vmin.cwiseMin(s.m);
-            vmax = vmax.cwiseMax(s.m);
+            vmin = vmin.cwiseMin(m);
+            vmax = vmax.cwiseMax(m);
 
             center = 0.5f * (vmin + vmax);
 
-            Vector3f c = s.m - center;
+            Vector3f c = m - center;
             const float cn = c.norm();
             if (cn > 1e-6f) {
               const Vector3f u = c / cn;

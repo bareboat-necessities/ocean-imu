@@ -28,8 +28,6 @@
 #endif
 #include <ArduinoEigenDense.h>
 
-#define NO_BOSCH_API
-
 #include <ArduinoOceanImu.h>
 
 #include "Bosch/BoschBmi270_ImuCal.h"
@@ -165,6 +163,7 @@ public:
     auto cfg = M5.config();
     cfg.internal_imu = false;
     M5.begin(cfg);
+    clearM5UnifiedImuCalibration();
 
     // AtomS3R internal IMU I2C bus
     if (!M5.In_I2C.begin((i2c_port_t)0, 45, 0)) {
@@ -404,6 +403,7 @@ private:
     if (runtime_imu_.ok()) {
       (void)runtime_imu_.end();
     }
+    clearM5UnifiedImuCalibration();
 
     ImuCalBlobV2 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
@@ -657,8 +657,10 @@ private:
     const Vector3f a_s(s.ax, s.ay, s.az);
     const Vector3f w_s(s.gx, s.gy, s.gz);
 
-    const Vector3f a_raw(a_s.y(), a_s.x(), -a_s.z());
-    const Vector3f w_raw(w_s.y(), w_s.x(), -w_s.z());
+    // Keep accel/gyro frame mapping identical to the working compass path:
+    // sensor XYZ -> BODY-NED (x=north, y=east, z=down).
+    const Vector3f a_raw = map_sensor_vec_to_body_ned_(a_s);
+    const Vector3f w_raw = map_sensor_vec_to_body_ned_(w_s);
 
     a_raw_norm_ = a_raw.norm();
 
