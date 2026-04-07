@@ -42,6 +42,7 @@ void setup()
   {
     Serial.printf("Bosch IMU init failed: %s\n", imu.lastErrorString());
     Serial.printf("FIFO detail: %s\n", imu.fifo().lastErrorString());
+    Serial.printf("MAG detail: %s\n", imu.mag().lastErrorString());
     Serial.printf("FIFO init path: %s\n", imu.fifo().initPathString());
     Serial.printf("FIFO Bosch init rslt: %d\n", static_cast<int>(imu.fifo().lastBoschInitResult()));
     while (true)
