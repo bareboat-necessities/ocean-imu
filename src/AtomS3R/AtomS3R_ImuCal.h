@@ -296,7 +296,11 @@ struct RuntimeCals {
 
   Vector3f applyAccel(const Vector3f& a_raw, float tempC) const { return acc.ok ? acc.apply(a_raw, tempC) : a_raw; }
   Vector3f applyGyro (const Vector3f& w_raw, float tempC) const { return gyr.ok ? gyr.apply(w_raw, tempC) : w_raw; }
-  Vector3f applyMag  (const Vector3f& m_raw) const { return mag.ok ? mag.apply(m_raw) : m_raw; }
+  Vector3f applyMag  (const Vector3f& m_raw) const {
+    if (!mag.ok) return m_raw;
+    const Vector3f m_cal = mag.apply(m_raw);
+    return m_cal.allFinite() ? m_cal : m_raw;
+  }
 };
 
 // Pretty 3x3 print from row-major float[9].
