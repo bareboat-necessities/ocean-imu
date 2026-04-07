@@ -28,8 +28,6 @@
 #endif
 #include <ArduinoEigenDense.h>
 
-#define NO_BOSCH_API
-
 #include <ArduinoOceanImu.h>
 
 #include "Bosch/BoschBmi270_ImuCal.h"
@@ -657,8 +655,10 @@ private:
     const Vector3f a_s(s.ax, s.ay, s.az);
     const Vector3f w_s(s.gx, s.gy, s.gz);
 
-    const Vector3f a_raw(a_s.y(), a_s.x(), -a_s.z());
-    const Vector3f w_raw(w_s.y(), w_s.x(), -w_s.z());
+    // Keep accel/gyro frame mapping identical to the working compass path:
+    // sensor XYZ -> BODY-NED (x=north, y=east, z=down).
+    const Vector3f a_raw = map_sensor_vec_to_body_ned_(a_s);
+    const Vector3f w_raw = map_sensor_vec_to_body_ned_(w_s);
 
     a_raw_norm_ = a_raw.norm();
 
