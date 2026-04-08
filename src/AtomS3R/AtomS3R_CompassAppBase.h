@@ -264,11 +264,7 @@ class CompassAppBase {
  public:
   CompassAppBase(std::unique_ptr<IAttitudeBackend> backend, MagGateConfig mag_cfg, const char* boot_name)
       : backend_(std::move(backend))
-#if ATOMS3R_WIZARD_USE_BOSCH
-      , wizard_(ui_, store_, bosch_),
-#else
       , wizard_(ui_, store_),
-#endif
       mag_gate_(mag_cfg), boot_name_(boot_name) {}
 
   void begin() {
@@ -292,18 +288,11 @@ class CompassAppBase {
       if (!compass_ui_ready_) use_graphics_ = false;
     }
 
-#if ATOMS3R_WIZARD_USE_BOSCH
-    if (!beginBoschImu_()) {
-      ui_.fail("IMU", "Bosch init fail");
-      while (true) delay(100);
-    }
-#else
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] IMU not found / not enabled");
       ui_.fail("IMU", "Not found");
       while (true) delay(100);
     }
-#endif
 
     reloadBlobAndRuntime_();
 
@@ -374,17 +363,10 @@ class CompassAppBase {
     }
 
     ImuSample s;
-#if ATOMS3R_WIZARD_USE_BOSCH
-    if (bosch_.read(s)) {
-      const bool mag_fresh = bosch_.magUpdatedThisRead();
-      updateOutputs_(s, &mag_fresh);
-    }
-#else
     const uint32_t sample_us = micros();
     const uint32_t update_mask = M5.Imu.update();
     if (readImuMapped(M5.Imu, update_mask, sample_us, s))
       updateOutputs_(s);
-#endif
 
     updateUI_();
     streamSerial_();
@@ -440,7 +422,7 @@ class CompassAppBase {
     last_update_us_ = 0;
   }
 
-CalibratedSample makeCalibratedSample_(const ImuSample& s, const bool* mag_fresh_hint = nullptr) {
+CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   CalibratedSample out{};
   out.a_raw_norm = s.a.norm();
 
@@ -461,56 +443,15 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s, const bool* mag_fresh
 
   if (out.mag_ok && out.mag_norm_uT > 1e-6f) out.m_unit = out.m_cal / out.mag_norm_uT;
 
-  if (mag_fresh_hint) {
-    // Bosch path provides an explicit "updated on this read" hint.
-    // Keep that fast-path, but also fall back to the same time-gate used by
-    // the non-Bosch path so behavior stays aligned if the hint becomes sparse.
-    const bool hinted_fresh = out.mag_ok && (*mag_fresh_hint);
-    const bool gated_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
-    out.mag_fresh = hinted_fresh || gated_fresh;
-  } else {
-    out.mag_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
-  }
+  out.mag_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
   
   return out;
 }
 
-  void updateOutputs_(const ImuSample& s, const bool* mag_fresh_hint = nullptr) {
-    sample_ = makeCalibratedSample_(s, mag_fresh_hint);
+  void updateOutputs_(const ImuSample& s) {
+    sample_ = makeCalibratedSample_(s);
     backend_->step(sample_, outputs_.att);
     outputs_.rot_dpm = rot_.update(sample_.dt, sample_.a_cal, sample_.w_cal, outputs_.att);
-  }
-
-  bool beginBoschImu_() {
-#if ATOMS3R_WIZARD_USE_BOSCH
-    BoschBmi270_ImuCal::Config cfg;
-    cfg.bmi270_addr                = 0x68;
-    cfg.ag_hz                      = LOOP_HZ;
-    cfg.enable_mag_aux             = true;
-    cfg.mag_bmm150_addr            = 0x10;
-    cfg.mag_aux_odr_hz             = 25.0f;
-    cfg.mag_startup_settle_ms      = 200;
-    cfg.mag_verify_first_read      = true;
-    cfg.mag_stale_min_us           = 75000u;
-    cfg.mag_stale_factor           = 3u;
-    cfg.enable_mag_recovery        = true;
-    cfg.mag_recover_after_failures = 6u;
-    cfg.mag_recover_cooldown_us    = 1000000u;
-    cfg.tempC_default              = 35.0f;
-    cfg.i2c_hz                     = 400000u;
-
-    if (!bosch_.begin(M5.In_I2C, cfg)) {
-      Serial.printf("[BOOT] Bosch IMU init failed: %s\n", bosch_.lastErrorString());
-      Serial.printf("[BOOT] FIFO detail: %s\n", bosch_.fifo().lastErrorString());
-      Serial.printf("[BOOT] FIFO init path: %s\n", bosch_.fifo().initPathString());
-      Serial.printf("[BOOT] FIFO Bosch init rslt: %d\n", (int)bosch_.fifo().lastBoschInitResult());
-      Serial.printf("[BOOT] BMI addr tried: 0x%02X\n", cfg.bmi270_addr);
-      return false;
-    }
-    return true;
-#else
-    return false;
-#endif
   }
 
   void drawHomeStatic_() {
@@ -603,10 +544,6 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s, const bool* mag_fresh
   std::unique_ptr<IAttitudeBackend> backend_;
   MagGate mag_gate_;
   RotEstimator rot_;
-
-#if ATOMS3R_WIZARD_USE_BOSCH
-  BoschBmi270_ImuCal bosch_{};
-#endif
 
   bool have_blob_ = false;
   ImuCalBlobV2 blob_{};

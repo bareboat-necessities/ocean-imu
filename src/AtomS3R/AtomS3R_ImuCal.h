@@ -135,8 +135,7 @@ static inline Vector3f map_mag_to_body_uT_(const m5::imu_3d_t& m_raw) {
 struct ImuCalBlobV2 {
   static constexpr uint32_t IMU_CAL_MAGIC   = 0x434C554D; // 'MULC'
   static constexpr uint16_t IMU_CAL_VERSION = 2;
-  static constexpr uint8_t  IMU_CAL_MODE_BOSCH_API = 1;
-  static constexpr uint8_t  IMU_CAL_MODE_NO_BOSCH_API = 2;
+  static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = 1;
 
   uint32_t magic = IMU_CAL_MAGIC;
   uint16_t version = IMU_CAL_VERSION;
@@ -202,12 +201,7 @@ static inline bool validateBlob(const ImuCalBlobV2& b) {
   if (b.magic != ImuCalBlobV2::IMU_CAL_MAGIC) return false;
   if (b.version != ImuCalBlobV2::IMU_CAL_VERSION) return false;
   if (b.size_bytes != sizeof(ImuCalBlobV2)) return false;
-  const uint8_t expected_mode =
-#if defined(NO_BOSCH_API)
-      ImuCalBlobV2::IMU_CAL_MODE_NO_BOSCH_API;
-#else
-      ImuCalBlobV2::IMU_CAL_MODE_BOSCH_API;
-#endif
+  const uint8_t expected_mode = ImuCalBlobV2::IMU_CAL_MODE_M5_IMU_API;
   if (b.build_mode != expected_mode) return false;
   const uint32_t want = b.crc;
   return (computeBlobCrc(b) == want);
@@ -217,18 +211,12 @@ static inline bool validateBlob(const ImuCalBlobV2& b) {
 class ImuCalStoreNvs {
 public:
   // Namespace kept stable so different sketches share saved cals.
-  // Keys are mode-specific to avoid Bosch/non-Bosch collisions.
   static constexpr const char* kNamespace = "imu_cal";
   static constexpr const char* kKeyLegacy = "blob";
-  static constexpr const char* kKeyBosch  = "blob_bosch";
-  static constexpr const char* kKeyNoBosch = "blob_nob";
+  static constexpr const char* kKeyM5ImuApi = "blob_m5";
 
   static constexpr const char* modeKey() {
-#if defined(NO_BOSCH_API)
-    return kKeyNoBosch;
-#else
-    return kKeyBosch;
-#endif
+    return kKeyM5ImuApi;
   }
 
   bool loadByKey_(Preferences& prefs, const char* key, ImuCalBlobV2& out) {
@@ -257,12 +245,7 @@ public:
     tmp.magic = ImuCalBlobV2::IMU_CAL_MAGIC;
     tmp.version = ImuCalBlobV2::IMU_CAL_VERSION;
     tmp.size_bytes = sizeof(ImuCalBlobV2);
-    tmp.build_mode =
-#if defined(NO_BOSCH_API)
-      ImuCalBlobV2::IMU_CAL_MODE_NO_BOSCH_API;
-#else
-      ImuCalBlobV2::IMU_CAL_MODE_BOSCH_API;
-#endif
+    tmp.build_mode = ImuCalBlobV2::IMU_CAL_MODE_M5_IMU_API;
     tmp.crc = 0;
     tmp.crc = computeBlobCrc(tmp);
 
@@ -364,8 +347,7 @@ static inline void printMatHeader(Print& out, const char* name, const char* mean
 // Print helpers (startup serial)
 static inline void printBlobSummary(Print& out, const ImuCalBlobV2& b) {
   const char* mode = "unknown";
-  if (b.build_mode == ImuCalBlobV2::IMU_CAL_MODE_BOSCH_API) mode = "bosch_api";
-  else if (b.build_mode == ImuCalBlobV2::IMU_CAL_MODE_NO_BOSCH_API) mode = "no_bosch_api";
+  if (b.build_mode == ImuCalBlobV2::IMU_CAL_MODE_M5_IMU_API) mode = "m5_imu_api";
   out.printf("  build_mode: %s\n", mode);
   out.printf("  ok: A=%d G=%d M=%d\n", (int)b.accel_ok, (int)b.gyro_ok, (int)b.mag_ok);
 }

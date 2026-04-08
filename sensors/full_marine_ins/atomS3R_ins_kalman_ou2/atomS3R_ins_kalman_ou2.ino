@@ -16,7 +16,6 @@
 #endif
 
 #define ARDUINO_PLOTTER 1
-#define NO_BOSCH_API
 
 #include <M5Unified.h>
 #include <cmath>

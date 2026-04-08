@@ -7,8 +7,6 @@
 #include <Arduino.h>
 #include <M5Unified.h>
 
-#define NO_BOSCH_API
-
 #include <ArduinoOceanImu.h>
 
 // 1 = graphical compass by default, 0 = text UI by default
