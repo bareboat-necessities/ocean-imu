@@ -52,7 +52,11 @@ class MahonyBackend : public IAttitudeBackend {
     if (an > 1e-6f) a_att *= (ImuCalCfg::g_std / an);
 
     float pd = 0.0f, rd = 0.0f, yd = 0.0f;
-    if (s.mag_ok && s.mag_fresh) {
+    // With Bosch FIFO/AUX path the magnetometer update flag can be sparse
+    // or temporarily stop toggling. Using only mag_fresh makes yaw rely on
+    // gyro integration for long periods and the compass can appear "stuck".
+    // Feed the latest healthy calibrated magnetometer whenever it is valid.
+    if (s.mag_ok) {
       mahony_AHRS_update_mag(&mahony_, s.w_cal.x(), s.w_cal.y(), s.w_cal.z(), a_att.x(), a_att.y(), a_att.z(), s.m_unit.x(),
                              s.m_unit.y(), s.m_unit.z(), &pd, &rd, &yd, s.dt);
     } else {
