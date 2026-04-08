@@ -202,13 +202,6 @@ static inline bool validateBlob(const ImuCalBlobV2& b) {
   if (b.magic != ImuCalBlobV2::IMU_CAL_MAGIC) return false;
   if (b.version != ImuCalBlobV2::IMU_CAL_VERSION) return false;
   if (b.size_bytes != sizeof(ImuCalBlobV2)) return false;
-  const uint8_t expected_mode =
-#if defined(NO_BOSCH_API)
-      ImuCalBlobV2::IMU_CAL_MODE_NO_BOSCH_API;
-#else
-      ImuCalBlobV2::IMU_CAL_MODE_BOSCH_API;
-#endif
-  if (b.build_mode != expected_mode) return false;
   const uint32_t want = b.crc;
   return (computeBlobCrc(b) == want);
 }
