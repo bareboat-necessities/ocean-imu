@@ -1,8 +1,5 @@
 #include <Arduino.h>
 #include <M5Unified.h>
-
-//#define NO_BOSCH_API
-
 #include <ArduinoOceanImu.h>
 
 #include "AtomS3R/AtomS3R_ImuCal.h"
