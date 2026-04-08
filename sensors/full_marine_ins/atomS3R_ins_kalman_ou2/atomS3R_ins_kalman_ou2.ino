@@ -490,9 +490,9 @@ private:
 
     const auto data = M5.Imu.getImuData();
     const Vector3f m_s(
-      data.mag.value.x,
-      data.mag.value.y,
-      data.mag.value.z);
+      data.mag.value[0],
+      data.mag.value[1],
+      data.mag.value[2]);
     const Vector3f m_body = map_sensor_vec_to_body_ned_(m_s);
     const bool sample_usable = ::finite3_(m_body) &&
                                (m_body.x() != 0.0f || m_body.y() != 0.0f || m_body.z() != 0.0f);
