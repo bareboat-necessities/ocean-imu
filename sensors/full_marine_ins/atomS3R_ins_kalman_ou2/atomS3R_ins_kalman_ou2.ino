@@ -212,7 +212,6 @@ public:
 
     ImuSample sample{};
     const bool got_sample = readImuMapped(M5.Imu, sample);
-    last_fifo_batch_count_ = got_sample ? 1u : 0u;
     stale_frame_count_           = 0;
 
     if (got_sample) {
@@ -283,8 +282,6 @@ private:
 
   uint16_t stale_frame_count_ = 0;
   uint32_t last_skipped_total_ = 0;
-  uint16_t last_fifo_batch_count_ = 0;
-
   bool     have_last_sample_us_ = false;
   uint32_t last_sample_us_      = 0;
 
@@ -783,8 +780,7 @@ private:
       static_cast<double>(heave_wave_clean_m_ * 100.0f));
 #else
     Serial.printf(
-      "FIFO batch=%u | dt_imu_ms=%.2f | mag_valid=%u | dt_mag_ms=%s%.2f (target~%.2f) | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
-      static_cast<unsigned>(last_fifo_batch_count_),
+      "dt_imu_ms=%.2f | mag_valid=%u | dt_mag_ms=%s%.2f (target~%.2f) | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
       static_cast<double>(dt_ * 1000.0f),
       mag_ok_ ? 1U : 0U,
       mag_fresh_ ? "+" : "~",

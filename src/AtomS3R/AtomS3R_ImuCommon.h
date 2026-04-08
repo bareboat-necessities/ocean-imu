@@ -32,11 +32,6 @@ inline float usToMs(uint64_t us)
 
 struct ImuLogRow
 {
-  // FIFO / batch stats
-  int32_t fifoLen = -1;
-  int32_t fifoReq = -1;
-  int32_t fifoGot = -1;
-
   // Timing
   float dtImuMs = -1.0f;
   bool magValid = false;
@@ -105,15 +100,12 @@ struct ImuLoopLogState
 inline void printImuLogRow(const ImuLogRow& row)
 {
   Serial.printf(
-    "FIFO len=%ld req=%ld got=%ld | dt_imu_ms=%.2f | "
+    "dt_imu_ms=%.2f | "
     "mag_valid=%u mag_updated=%u | mag_age_ms=%.2f | mag_step_ms=%.2f | last_mag_dt_ms=%.2f | "
     "acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | "
     "gyro_ned[dps] N=%.3f E=%.3f D=%.3f | "
     "mag_ned[uT] N=%.2f E=%.2f D=%.2f | "
     "mag_cal_ned[uT] N=%.2f E=%.2f D=%.2f\n",
-    static_cast<long>(row.fifoLen),
-    static_cast<long>(row.fifoReq),
-    static_cast<long>(row.fifoGot),
     row.dtImuMs,
     row.magValid ? 1U : 0U,
     row.magUpdated ? 1U : 0U,
