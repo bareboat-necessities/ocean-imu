@@ -9,6 +9,10 @@ using namespace atoms3r_ical;
 
 constexpr float kImuOdrHz = kDefaultImuOdrHz;
 constexpr uint32_t kLoopPeriodUs = loopPeriodUsFromHz(kImuOdrHz);
+constexpr uint32_t kMagPeriodUs = 40000u; // 25 Hz
+constexpr float kImuDtMs = 1000.0f / kImuOdrHz;
+constexpr float kMagDtMs = 40.0f;
+constexpr uint32_t kMagCadenceDiv = (kMagPeriodUs / kLoopPeriodUs);
 
 ImuCalStoreNvs calStore;
 ImuCalBlobV2 calBlob;
@@ -54,13 +58,26 @@ void setup()
 
 void loop()
 {
-  const uint32_t loopStartUs = micros();
   static ImuLoopLogState logState{};
-  static uint32_t lastSampleUs = 0u;
+  static uint32_t loopTickUs = 0u;
+  static uint32_t imuTickCount = 0u;
   static uint32_t lastMagSampleUs = 0u;
   static uint32_t prevMagSampleUs = 0u;
 
+  if (loopTickUs == 0u)
+  {
+    loopTickUs = micros();
+  }
+
+  const uint32_t nowUs = micros();
+  if (static_cast<uint32_t>(nowUs - loopTickUs) < kLoopPeriodUs)
+  {
+    delayMicroseconds(kLoopPeriodUs - static_cast<uint32_t>(nowUs - loopTickUs));
+  }
+
   const uint32_t sampleUs = micros();
+  loopTickUs = sampleUs;
+
   const uint32_t updateMask = M5.Imu.update();
 
   ImuSample sample{};
@@ -74,12 +91,14 @@ void loop()
                     static_cast<unsigned long>(logState.consecutiveReadFailures),
                     static_cast<unsigned long>(updateMask));
     }
-    waitForNextLoopTick(loopStartUs, kLoopPeriodUs);
     return;
   }
   logState.markReadSuccess();
+  ++imuTickCount;
 
-  if ((updateMask & ATOMS3R_IMU_MASK_MAG) != 0u)
+  const bool magCadenceTick = (kMagCadenceDiv > 0u) && ((imuTickCount % kMagCadenceDiv) == 0u);
+
+  if (magCadenceTick)
   {
     prevMagSampleUs = lastMagSampleUs;
     lastMagSampleUs = sampleUs;
@@ -90,12 +109,12 @@ void loop()
   row.fifoReq = -1;
   row.fifoGot = -1;
 
-  row.dtImuMs = (lastSampleUs != 0u) ? usToMs(static_cast<uint32_t>(sampleUs - lastSampleUs)) : -1.0f;
+  row.dtImuMs = (imuTickCount > 1u) ? kImuDtMs : -1.0f;
   row.magValid = (lastMagSampleUs != 0u);
-  row.magUpdated = ((updateMask & ATOMS3R_IMU_MASK_MAG) != 0u);
+  row.magUpdated = magCadenceTick;
   row.magAgeMs = row.magValid ? usToMs(static_cast<uint32_t>(sampleUs - lastMagSampleUs)) : -1.0f;
-  row.magStepMs = (lastMagSampleUs != 0u && prevMagSampleUs != 0u)
-    ? usToMs(static_cast<uint32_t>(lastMagSampleUs - prevMagSampleUs))
+  row.magStepMs = (lastMagSampleUs != 0u && prevMagSampleUs != 0u && magCadenceTick)
+    ? kMagDtMs
     : -1.0f;
   row.lastMagDtMs = row.magStepMs;
 
@@ -116,12 +135,8 @@ void loop()
   row.magCalE = magCal.y();
   row.magCalD = magCal.z();
 
-  const uint32_t nowUs = micros();
-  if (logState.shouldLogSample(nowUs))
+  if (logState.shouldLogSample(sampleUs))
   {
     printImuLogRow(row);
   }
-
-  lastSampleUs = sampleUs;
-  waitForNextLoopTick(loopStartUs, kLoopPeriodUs);
 }
