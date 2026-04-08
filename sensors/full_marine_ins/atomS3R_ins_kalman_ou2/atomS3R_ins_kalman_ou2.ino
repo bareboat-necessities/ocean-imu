@@ -16,6 +16,7 @@
 #endif
 
 #define ARDUINO_PLOTTER 1
+#define NO_BOSCH_API
 
 #include <M5Unified.h>
 #include <cmath>
@@ -31,7 +32,7 @@
 #include <ArduinoOceanImu.h>
 
 #include "Bosch/BoschBmi270_ImuCal.h"
-#if !defined(ATOMS3R_HAVE_BOSCH_SENSORAPI) || !(ATOMS3R_HAVE_BOSCH_SENSORAPI)
+#if (!defined(NO_BOSCH_API)) && (!defined(ATOMS3R_HAVE_BOSCH_SENSORAPI) || !(ATOMS3R_HAVE_BOSCH_SENSORAPI))
   #error "Bosch BMI270 SensorAPI is not available in this build. Install the library that provides Arduino_BMI270_BMM150.h."
 #endif
 
@@ -475,6 +476,30 @@ private:
       pending_mag_update_ = true;
     }
 
+    have_mag_sample_     = true;
+    last_mag_success_ms_ = now_ms;
+#elif defined(NO_BOSCH_API)
+    const uint32_t now_ms = millis();
+    constexpr uint32_t kCompassMagSpacingMs = 35u;
+
+    if (last_mag_poll_ms_ != 0 &&
+        static_cast<uint32_t>(now_ms - last_mag_poll_ms_) < kCompassMagSpacingMs) {
+      return;
+    }
+    last_mag_poll_ms_ = now_ms;
+
+    const auto data = M5.Imu.getImuData();
+    const Vector3f m_s(
+      data.mag.value.x,
+      data.mag.value.y,
+      data.mag.value.z);
+    const Vector3f m_body = map_sensor_vec_to_body_ned_(m_s);
+    const bool sample_usable = ::finite3_(m_body) &&
+                               (m_body.x() != 0.0f || m_body.y() != 0.0f || m_body.z() != 0.0f);
+    if (!sample_usable) return;
+
+    mag_raw_uT_ = m_body;
+    pending_mag_update_ = true;
     have_mag_sample_     = true;
     last_mag_success_ms_ = now_ms;
 #else
