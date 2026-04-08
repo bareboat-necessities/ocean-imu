@@ -60,7 +60,6 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
-#include "detrend/AdaptiveWaveDetrender3D.h"
 
 #ifndef MAG_DELAY_SEC
   #define MAG_DELAY_SEC 8.0f
@@ -266,10 +265,6 @@ private:
   float wave_envelope_m_ = 0.0f;
   float wave_hz_         = FREQ_GUESS;
 
-  AdaptiveWaveDetrender3D z_detrender_{};
-  AdaptiveWaveDetrender3D::Output z_det_out_{};
-  Vector3f pos_raw_up_m_ = Vector3f::Zero();
-
   float heave_raw_m_        = 0.0f;   // raw heave from fusion position.z() (up-positive)
   float heave_baseline_m_   = 0.0f;   // slow baseline actually subtracted
   float heave_wave_raw_m_   = 0.0f;   // raw residual = heave_raw - baseline
@@ -444,6 +439,7 @@ private:
     fcfg.mag_ref_timeout_sec = 2.0f;
     fcfg.mag_odr_guess_hz    = MAG_TUNE_REF_HZ;
     fcfg.use_custom_mag_tuner_cfg = false;
+    fcfg.enable_displacement_detrend = true;
 
     fusion_.begin(fcfg);
 
@@ -481,47 +477,6 @@ private:
     stale_frame_count_ = 0;
     have_last_sample_us_ = false;
     last_sample_us_      = 0;
-
-    AdaptiveWaveDetrender3D::Config zcfg;
-    zcfg.init_wave_freq_hz = FREQ_GUESS;   // startup guess
-    zcfg.min_wave_freq_hz  = 0.02f;        // long swell
-    zcfg.max_wave_freq_hz  = 1.20f;        // short chop
-
-    // Slow baseline tracker
-    zcfg.baseline_cutoff_fraction = 0.25f;
-    zcfg.min_baseline_cutoff_hz   = 0.003f;
-    zcfg.max_baseline_cutoff_hz   = 0.25f;
-
-    // Frequency learning from slope
-    zcfg.freq_smooth_tau_s = 12.0f;
-    zcfg.slope_lpf_tau_s   = 0.20f;
-    zcfg.slope_rms_tau_s   = 8.0f;
-    zcfg.freq_learn_axis   = 2;  // learn from heave(Z)
-
-    // Because input is heave in meters, this threshold is in m/s
-    zcfg.threshold_rms_fraction  = 0.15f;
-    zcfg.min_slope_threshold_abs = 0.002f;
-    zcfg.max_slope_threshold_abs = 1.0e9f;
-
-    zcfg.startup_hold_s     = 2.0f;
-    zcfg.freq_timeout_cycles = 3.0f;
-
-    // Extra cleanup on the residual only
-    zcfg.enable_wave_cleanup   = true;
-    zcfg.cleanup_cutoff_fraction = 1.0f;
-    zcfg.min_cleanup_cutoff_hz = 0.003f;
-    zcfg.max_cleanup_cutoff_hz = 0.50f;
-    zcfg.cleanup_stages        = 2;   // try 2 if LF wobble still leaks through
-
-    zcfg.min_dt_s = 1.0e-4f;
-    zcfg.max_dt_s = 0.25f;            // generous guard for missed samples
-    zcfg.output_abs_limit = 0.0f;     // disabled
-
-    z_detrender_.setConfig(zcfg);
-    z_detrender_.reset(0.0f, 0.0f, 0.0f);
-
-    z_det_out_ = AdaptiveWaveDetrender3D::Output{};
-    pos_raw_up_m_.setZero();
     heave_raw_m_        = 0.0f;
     heave_baseline_m_   = 0.0f;
     heave_wave_raw_m_   = 0.0f;
@@ -668,30 +623,17 @@ private:
     if (!rot_inited_) { rot_inited_ = true; rot_dpm_filt_ = rot_dpm_meas; }
     else              { rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_); }
 
-    const Vector3f pos_ned_m = fusion_.raw().mekf().get_position();
-    pos_raw_up_m_ = Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
+    const Vector3f displacement_raw_up_m = fusion_.displacementUpMeters();
+    const auto& displacement_det_out = fusion_.displacementDetrend();
 
-    heave_m_         = pos_raw_up_m_.z();  // positive-up
+    heave_m_         = displacement_raw_up_m.z();  // positive-up
     wave_envelope_m_ =  fusion_.raw().getDisplacementScale();
     wave_hz_         =  fusion_.raw().getFreqHz();
 
     heave_raw_m_ = heave_m_;
-
-    const bool ext_freq_valid =
-        fusion_.isLive() &&
-        std::isfinite(wave_hz_) &&
-        (wave_hz_ >= z_detrender_.config().min_wave_freq_hz) &&
-        (wave_hz_ <= z_detrender_.config().max_wave_freq_hz);
-
-    // Option A: blend in SeaStateFusion_OU_III frequency estimate
-    z_det_out_ = z_detrender_.update(pos_raw_up_m_, dt_, wave_hz_, ext_freq_valid);
-
-    // Option B: let the detrender learn frequency entirely by itself
-    // z_det_out_ = z_detrender_.update(pos_raw_up_m_, dt_);
-
-    heave_baseline_m_   = z_det_out_.baseline_slow.z();
-    heave_wave_raw_m_   = z_det_out_.wave_raw.z();
-    heave_wave_clean_m_ = z_det_out_.wave_clean.z();
+    heave_baseline_m_   = displacement_det_out.baseline_slow.z();
+    heave_wave_raw_m_   = displacement_det_out.wave_raw.z();
+    heave_wave_clean_m_ = displacement_det_out.wave_clean.z();
   }
 
   void drawHomeStatic_() {
