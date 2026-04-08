@@ -4,8 +4,6 @@
 
 - Keep changes minimal and targeted.
 - Do not change public APIs, filenames, or build targets unless the task requires it.
-- Prefer fixing build and include-path issues over rewriting working logic.
-- Trust code way more than its comments
 
 ## Build and validation
 
