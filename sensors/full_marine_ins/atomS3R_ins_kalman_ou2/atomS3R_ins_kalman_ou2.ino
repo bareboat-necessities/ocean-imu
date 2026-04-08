@@ -52,7 +52,6 @@
   #define SEA_STATE_NMEA_TALKER "II"
 #endif
 
-// SeaStateFusion_OU_II requirements
 constexpr float g_std      = atoms3r_ical::ImuCalCfg::g_std;
 constexpr float FREQ_GUESS = 0.3f;
 
