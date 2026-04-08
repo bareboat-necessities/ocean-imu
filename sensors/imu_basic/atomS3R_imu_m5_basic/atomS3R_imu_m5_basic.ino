@@ -105,10 +105,6 @@ void loop()
   }
 
   ImuLogRow row{};
-  row.fifoLen = -1;
-  row.fifoReq = -1;
-  row.fifoGot = -1;
-
   row.dtImuMs = (imuTickCount > 1u) ? kImuDtMs : -1.0f;
   row.magValid = (lastMagSampleUs != 0u);
   row.magUpdated = magCadenceTick;
