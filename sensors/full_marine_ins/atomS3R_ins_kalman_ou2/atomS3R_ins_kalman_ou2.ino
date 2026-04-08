@@ -31,11 +31,6 @@
 
 #include <ArduinoOceanImu.h>
 
-#include "Bosch/BoschBmi270_ImuCal.h"
-#if (!defined(NO_BOSCH_API)) && (!defined(ATOMS3R_HAVE_BOSCH_SENSORAPI) || !(ATOMS3R_HAVE_BOSCH_SENSORAPI))
-  #error "Bosch BMI270 SensorAPI is not available in this build. Install the library that provides Arduino_BMI270_BMM150.h."
-#endif
-
 #include "AtomS3R/AtomS3R_ImuCal.h"
 
 #include "AtomS3R/AtomS3R_M5Ui.h"
@@ -44,9 +39,6 @@
 #endif
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "nmea/NmeaCompass.h"
-
-// HW
-static constexpr uint8_t BMI270_ADDR = 0x68;  // change to 0x69 if your board straps SA0 high
 
 // UI / serial defaults
 #ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
@@ -162,15 +154,9 @@ public:
     delay(100);
 
     auto cfg = M5.config();
-    cfg.internal_imu = false;
+    cfg.internal_imu = true;
     M5.begin(cfg);
     clearM5UnifiedImuCalibration();
-
-    // AtomS3R internal IMU I2C bus
-    if (!M5.In_I2C.begin((i2c_port_t)0, 45, 0)) {
-      Serial.println("[BOOT] M5.In_I2C.begin failed");
-      while (true) delay(100);
-    }
 
     ui_.begin();
     if (use_graphics_) {
@@ -194,7 +180,7 @@ public:
     }
 #endif
 
-    reinitBoschImu_();
+    reinitImu_();
     resetFusion_();
     drawHomeStatic_();
 
@@ -225,14 +211,10 @@ public:
 
     pollRuntimeMag_();
 
-    BoschAGSample sample{};
-    const bool got_sample = runtime_imu_.fifo().readOneAG(sample);
+    ImuSample sample{};
+    const bool got_sample = readImuMapped(M5.Imu, sample);
     last_fifo_batch_count_ = got_sample ? 1u : 0u;
-
-    const uint32_t skipped_now   = runtime_imu_.fifo().skippedFramesTotal();
-    const uint32_t skipped_delta = skipped_now - last_skipped_total_;
-    last_skipped_total_          = skipped_now;
-    stale_frame_count_           = static_cast<uint16_t>(std::min<uint32_t>(skipped_delta, 0xFFFFu));
+    stale_frame_count_           = 0;
 
     if (got_sample) {
       updateFilter_(sample);
@@ -257,8 +239,6 @@ private:
   bool           have_blob_ = false;
   ImuCalBlobV2   blob_{};
   RuntimeCals    runtime_{};
-
-  BoschBmi270_ImuCal runtime_imu_{};
 
 #if SEA_STATE_ENABLE_WIZARD
   int      tap_count_ = 0;
@@ -306,8 +286,8 @@ private:
   uint32_t last_skipped_total_ = 0;
   uint16_t last_fifo_batch_count_ = 0;
 
-  bool     have_last_fusion_time24_ = false;
-  uint32_t last_fusion_time24_      = 0;
+  bool     have_last_sample_us_ = false;
+  uint32_t last_sample_us_      = 0;
 
   bool     rot_inited_    = false;
   float    rot_dpm_filt_  = 0.0f;
@@ -323,60 +303,26 @@ private:
   }
 
   float nominalFusionDt_() const {
-    const float dt_nom = runtime_imu_.fifo().nominalDt();
-    if (dt_nom > 0.0f && std::isfinite(dt_nom)) {
-      return dt_nom;
-    }
     return 1.0f / LOOP_HZ;
   }
 
-  float computeFusionDtFromFifoTimestamp_(const BoschAGSample& s) {
+  float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
     const float dt_nom = nominalFusionDt_();
-
-    if (!s.timestamp_exact) {
+    if (!have_last_sample_us_) {
+      have_last_sample_us_ = true;
+      last_sample_us_ = s.sample_us;
       return dt_nom;
     }
 
-    const uint32_t curr24 = s.sensortime24 & BMI270_SENSORTIME_MASK;
-    if (!have_last_fusion_time24_) {
-      have_last_fusion_time24_ = true;
-      last_fusion_time24_ = curr24;
-      return dt_nom;
-    }
-
-    const uint32_t dt_ticks = (curr24 - last_fusion_time24_) & BMI270_SENSORTIME_MASK;
-    last_fusion_time24_ = curr24;
-
-    const float dt_fifo_s = static_cast<float>(dt_ticks) * BMI270_SENSORTIME_TICK_S;
-    if (!(dt_fifo_s > 0.0f) || !std::isfinite(dt_fifo_s)) {
-      return dt_nom;
-    }
-
-    return dt_fifo_s;
-  }
-
-  BoschBmi270_ImuCal::Config makeImuConfig_() const {
-    BoschBmi270_ImuCal::Config cfg;
-    cfg.bmi270_addr                = BMI270_ADDR;
-    cfg.ag_hz                      = LOOP_HZ;
-    cfg.enable_mag_aux             = true;
-    cfg.mag_bmm150_addr            = 0x10;
-    cfg.mag_aux_odr_hz             = 25.0f;
-    cfg.mag_startup_settle_ms      = 200;
-    cfg.mag_verify_first_read      = true;
-    cfg.mag_stale_min_us           = 75000u;
-    cfg.mag_stale_factor           = 3u;
-    cfg.enable_mag_recovery        = true;
-    cfg.mag_recover_after_failures = 6u;
-    cfg.mag_recover_cooldown_us    = 1000000u;
-    cfg.tempC_default              = 25.0f;
-    cfg.i2c_hz                     = 400000u;
-    return cfg;
+    const uint32_t dt_us = s.sample_us - last_sample_us_;
+    last_sample_us_ = s.sample_us;
+    const float dt_s = static_cast<float>(dt_us) * 1.0e-6f;
+    if (!(dt_s > 0.0f) || !std::isfinite(dt_s)) return dt_nom;
+    return dt_s;
   }
 
   uint32_t magPollMs_() const {
-    const float hz = runtime_imu_.config().mag_aux_odr_hz;
-    const float use_hz = (hz > 0.0f && std::isfinite(hz)) ? hz : 25.0f;
+    const float use_hz = 25.0f;
     const float ms_f = 1000.0f / use_hz;
     if (!(ms_f > 0.0f) || !std::isfinite(ms_f)) {
       return 40u;
@@ -401,9 +347,6 @@ private:
 #if SEA_STATE_ENABLE_WIZARD
     (void)boot_mode;
 
-    if (runtime_imu_.ok()) {
-      (void)runtime_imu_.end();
-    }
     clearM5UnifiedImuCalibration();
 
     ImuCalBlobV2 saved{};
@@ -422,16 +365,10 @@ private:
 #endif
   }
 
-  void reinitBoschImu_() {
-    const BoschBmi270_ImuCal::Config cfg = makeImuConfig_();
-
-    if (!runtime_imu_.begin(M5.In_I2C, cfg)) {
-      Serial.printf("[BOOT] Bosch IMU init failed: %s\n", runtime_imu_.lastErrorString());
-      Serial.printf("[BOOT] FIFO detail: %s\n", runtime_imu_.fifo().lastErrorString());
-      Serial.printf("[BOOT] FIFO init path: %s\n", runtime_imu_.fifo().initPathString());
-      Serial.printf("[BOOT] FIFO Bosch init rslt: %d\n", (int)runtime_imu_.fifo().lastBoschInitResult());
-      Serial.printf("[BOOT] BMI addr tried: 0x%02X\n", cfg.bmi270_addr);
-      ui_.fail("IMU", runtime_imu_.fifo().lastErrorString());
+  void reinitImu_() {
+    if (!M5.Imu.isEnabled()) {
+      Serial.println("[BOOT] M5.Imu is not enabled");
+      ui_.fail("IMU", "M5.Imu disabled");
       while (true) delay(100);
     }
 
@@ -441,44 +378,12 @@ private:
     mag_raw_uT_.setConstant(NAN);
     pending_mag_update_  = false;
 
-    last_skipped_total_ = runtime_imu_.fifo().skippedFramesTotal();
-    have_last_fusion_time24_ = false;
-    last_fusion_time24_      = 0;
+    last_skipped_total_ = 0;
+    have_last_sample_us_ = false;
+    last_sample_us_      = 0;
   }
 
   void pollRuntimeMag_() {
-#if defined(ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI) && ATOMS3R_HAVE_BOSCH_BMM150_AUX_SENSORAPI
-    if (!runtime_imu_.magConfigured()) return;
-
-    const uint32_t now_ms  = millis();
-
-    if (!runtime_imu_.mag().ok()) return;
-    const uint32_t poll_ms = magPollMs_();
-
-    if (last_mag_poll_ms_ != 0 &&
-        static_cast<uint32_t>(now_ms - last_mag_poll_ms_) < poll_ms) {
-      return;
-    }
-    last_mag_poll_ms_ = now_ms;
-
-    Vector3f m_s;
-    const bool read_ok = runtime_imu_.mag().readMag_uT(m_s);
-    const bool sample_usable = ::finite3_(m_s) && (m_s.norm() > 1.0f);
-    if (!read_ok && !sample_usable) return;
-
-    const Vector3f m_body = map_sensor_vec_to_body_ned_(m_s);
-
-    const bool have_prev = ::finite3_(mag_raw_uT_);
-    const float dm       = have_prev ? (m_body - mag_raw_uT_).norm() : INFINITY;
-
-    if (!have_prev || dm >= MAG_MIN_DELTA_uT) {
-      mag_raw_uT_ = m_body;
-      pending_mag_update_ = true;
-    }
-
-    have_mag_sample_     = true;
-    last_mag_success_ms_ = now_ms;
-#elif defined(NO_BOSCH_API)
     const uint32_t now_ms = millis();
     constexpr uint32_t kCompassMagSpacingMs = 35u;
 
@@ -502,11 +407,6 @@ private:
     pending_mag_update_ = true;
     have_mag_sample_     = true;
     last_mag_success_ms_ = now_ms;
-#else
-    have_mag_sample_ = false;
-    mag_raw_uT_.setConstant(NAN);
-    pending_mag_update_ = false;
-#endif
   }
 
   void resetFusion_() {
@@ -584,8 +484,8 @@ private:
     mag_norm_uT_         = NAN;
 
     stale_frame_count_ = 0;
-    have_last_fusion_time24_ = false;
-    last_fusion_time24_      = 0;
+    have_last_sample_us_ = false;
+    last_sample_us_      = 0;
 
     AdaptiveWaveDetrender3D::Config zcfg;
     zcfg.init_wave_freq_hz = FREQ_GUESS;   // startup guess
@@ -643,7 +543,7 @@ private:
 
     store_.erase();
     reloadBlobAndRuntime_();
-    reinitBoschImu_();
+    reinitImu_();
     resetFusion_();
   }
 
@@ -655,7 +555,7 @@ private:
       ui_.notSavedNotice();
     }
 
-    reinitBoschImu_();
+    reinitImu_();
     resetFusion_();
   }
 
@@ -675,17 +575,11 @@ private:
   }
 #endif
 
-  void updateFilter_(const BoschAGSample& s) {
-    dt_ = computeFusionDtFromFifoTimestamp_(s);
-    constexpr float tempC = 35.0f;
-
-    const Vector3f a_s(s.ax, s.ay, s.az);
-    const Vector3f w_s(s.gx, s.gy, s.gz);
-
-    // Keep accel/gyro frame mapping identical to the working compass path:
-    // sensor XYZ -> BODY-NED (x=north, y=east, z=down).
-    const Vector3f a_raw = map_sensor_vec_to_body_ned_(a_s);
-    const Vector3f w_raw = map_sensor_vec_to_body_ned_(w_s);
+  void updateFilter_(const ImuSample& s) {
+    dt_ = computeFusionDtFromSampleTimestamp_(s);
+    const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
+    const Vector3f a_raw = s.a;
+    const Vector3f w_raw = s.w;
 
     a_raw_norm_ = a_raw.norm();
 
