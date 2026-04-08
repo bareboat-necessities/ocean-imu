@@ -462,10 +462,16 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s, const bool* mag_fresh
   if (out.mag_ok && out.mag_norm_uT > 1e-6f) out.m_unit = out.m_cal / out.mag_norm_uT;
 
   if (mag_fresh_hint) {
-    out.mag_fresh = out.mag_ok && (*mag_fresh_hint);
+    // Bosch path provides an explicit "updated on this read" hint.
+    // Keep that fast-path, but also fall back to the same time-gate used by
+    // the non-Bosch path so behavior stays aligned if the hint becomes sparse.
+    const bool hinted_fresh = out.mag_ok && (*mag_fresh_hint);
+    const bool gated_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
+    out.mag_fresh = hinted_fresh || gated_fresh;
   } else {
     out.mag_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
   }
+  
   return out;
 }
 
