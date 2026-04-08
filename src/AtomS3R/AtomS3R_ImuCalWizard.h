@@ -5,9 +5,7 @@
 
   AtomS3R IMU calibration wizard UI (Accel + Gyro + Mag) using imu_cal::* calibrators.
 
-  Build switch:
-    - Define NO_BOSCH_API to force readImuMapped
-    - Default (NO_BOSCH_API not defined): use BoschBmi270_ImuCal as the IMU sample source
+  Uses M5Unified IMU API as the IMU sample source.
 */
 
 #include <Arduino.h>
@@ -25,14 +23,6 @@
 #include "AtomS3R/AtomS3R_ImuCal.h"         // ImuSample, axis mapping conventions, blob/store/runtime helpers
 #include "AtomS3R/AtomS3R_M5Ui.h"           // UI + Input + clamp01_
 #include "imu_calibrate/CalibrateIMU.h"     // imu_cal::* + FitFail
-
-// Bosch path (default unless NO_BOSCH_API is defined)
-#if !defined(NO_BOSCH_API)
-  #include "Bosch/BoschBmi270_ImuCal.h"
-  #define ATOMS3R_WIZARD_USE_BOSCH 1
-#else
-  #define ATOMS3R_WIZARD_USE_BOSCH 0
-#endif
 
 namespace atoms3r_ical {
 
@@ -143,13 +133,8 @@ struct Pose {
 
 class ImuCalWizard {
 public:
-#if ATOMS3R_WIZARD_USE_BOSCH
-  ImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store, BoschBmi270_ImuCal& imu)
-  : ui_(ui), store_(store), imu_(&imu) {}
-#else
   ImuCalWizard(M5Ui& ui, ImuCalStoreNvs& store)
   : ui_(ui), store_(store) {}
-#endif
 
   // Runs full wizard and saves to NVS. Returns true only if saved successfully.
   // out_saved is filled with the saved blob (readback-validated).
@@ -201,7 +186,7 @@ public:
       }
       if (!runFitTask_(FitKind::GYRO, "GYRO", true)) return false;
 
-      // If mag is unavailable (Bosch path failed / absent), skip MAG stage cleanly.
+      // If mag is unavailable, skip MAG stage cleanly.
       if (!magAvailable_()) {
         Serial.println("[MAG] unavailable -> skipping mag calibration");
         mag_out_.ok = false;
@@ -466,12 +451,8 @@ private:
   }
 
   bool magAvailable_() {
-#if ATOMS3R_WIZARD_USE_BOSCH
-    if (!imu_) return false;
-    return imu_->hasMag();
-#else
-    // Legacy (non-Bosch) path: actively probe MAG so we can skip calibration
-    // cleanly when magnetometer data is unavailable/stuck.
+    // Actively probe MAG so we can skip calibration cleanly when
+    // magnetometer data is unavailable/stuck.
     Vector3f m = Vector3f::Zero();
     bool have_prev = false;
     Vector3f prev = Vector3f::Zero();
@@ -499,31 +480,18 @@ private:
       delay(4);
     }
     return false;
-#endif
   }
 
   // Capture steps
   bool readSample_(ImuSample& s) {
-#if ATOMS3R_WIZARD_USE_BOSCH
-    if (!imu_) return false;
-    return imu_->read(s);
-#else
     return readImuMapped(M5.Imu, s);
-#endif
   }
 
   bool readMagSample_(Vector3f& m_out) {
-#if ATOMS3R_WIZARD_USE_BOSCH
-    ImuSample s{};
-    if (!readSample_(s) || !finite3_(s.m)) return false;
-    m_out = s.m;
-    return true;
-#else
     (void)M5.Imu.update();
     const auto data = M5.Imu.getImuData();
     m_out = map_mag_to_body_uT_(data.mag);
     return finite3_(m_out);
-#endif
   }
 
   void configureCalibrators_() {
@@ -868,10 +836,6 @@ private:
 private:
   M5Ui& ui_;
   ImuCalStoreNvs& store_;
-
-#if ATOMS3R_WIZARD_USE_BOSCH
-  BoschBmi270_ImuCal* imu_ = nullptr;
-#endif
 
 public:
   // Stored inside wizard => not on stack
