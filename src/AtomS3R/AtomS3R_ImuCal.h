@@ -202,6 +202,13 @@ static inline bool validateBlob(const ImuCalBlobV2& b) {
   if (b.magic != ImuCalBlobV2::IMU_CAL_MAGIC) return false;
   if (b.version != ImuCalBlobV2::IMU_CAL_VERSION) return false;
   if (b.size_bytes != sizeof(ImuCalBlobV2)) return false;
+  const uint8_t expected_mode =
+#if defined(NO_BOSCH_API)
+      ImuCalBlobV2::IMU_CAL_MODE_NO_BOSCH_API;
+#else
+      ImuCalBlobV2::IMU_CAL_MODE_BOSCH_API;
+#endif
+  if (b.build_mode != expected_mode) return false;
   const uint32_t want = b.crc;
   return (computeBlobCrc(b) == want);
 }
@@ -209,25 +216,40 @@ static inline bool validateBlob(const ImuCalBlobV2& b) {
 // NVS store (Preferences)
 class ImuCalStoreNvs {
 public:
-  // Namespace/key kept stable so different sketches share the same saved cal.
-  // If you want per-app separation, change these strings.
+  // Namespace kept stable so different sketches share saved cals.
+  // Keys are mode-specific to avoid Bosch/non-Bosch collisions.
   static constexpr const char* kNamespace = "imu_cal";
-  static constexpr const char* kKey       = "blob";
+  static constexpr const char* kKeyLegacy = "blob";
+  static constexpr const char* kKeyBosch  = "blob_bosch";
+  static constexpr const char* kKeyNoBosch = "blob_nob";
+
+  static constexpr const char* modeKey() {
+#if defined(NO_BOSCH_API)
+    return kKeyNoBosch;
+#else
+    return kKeyBosch;
+#endif
+  }
+
+  bool loadByKey_(Preferences& prefs, const char* key, ImuCalBlobV2& out) {
+    size_t n = prefs.getBytesLength(key);
+    if (n != sizeof(ImuCalBlobV2)) return false;
+
+    ImuCalBlobV2 tmp;
+    size_t got = prefs.getBytes(key, &tmp, sizeof(tmp));
+    if (got != sizeof(tmp)) return false;
+    if (!validateBlob(tmp)) return false;
+
+    out = tmp;
+    return true;
+  }
 
   bool load(ImuCalBlobV2& out) {
     Preferences prefs;
     prefs.begin(kNamespace, true);
-    size_t n = prefs.getBytesLength(kKey);
-    if (n != sizeof(ImuCalBlobV2)) { prefs.end(); return false; }
-
-    ImuCalBlobV2 tmp;
-    size_t got = prefs.getBytes(kKey, &tmp, sizeof(tmp));
+    const bool ok = loadByKey_(prefs, modeKey(), out) || loadByKey_(prefs, kKeyLegacy, out);
     prefs.end();
-    if (got != sizeof(tmp)) return false;
-
-    if (!validateBlob(tmp)) return false;
-    out = tmp;
-    return true;
+    return ok;
   }
 
   bool save(const ImuCalBlobV2& in) {
@@ -246,7 +268,7 @@ public:
 
     Preferences prefs;
     prefs.begin(kNamespace, false);
-    size_t wrote = prefs.putBytes(kKey, &tmp, sizeof(tmp));
+    size_t wrote = prefs.putBytes(modeKey(), &tmp, sizeof(tmp));
     prefs.end();
     return (wrote == sizeof(tmp));
   }
@@ -254,7 +276,7 @@ public:
   void erase() {
     Preferences prefs;
     prefs.begin(kNamespace, false);
-    prefs.remove(kKey);
+    prefs.remove(modeKey());
     prefs.end();
   }
 };
