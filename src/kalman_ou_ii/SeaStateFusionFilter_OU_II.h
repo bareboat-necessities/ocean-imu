@@ -55,7 +55,6 @@
 #include "freq/FirstOrderIIRSmoother.h"
 #include "freq/FrequencyTrackerPolicy.h"
 #include "tuner/SeaStateAutoTuner.h"
-#include "tuner/MagAutoTuner.h"
 #include "kalman_ou_ii/Kalman3D_Wave_OU_II.h"
 #include "ahrs/FrameConversions.h"
 #include "wave_dir/KalmanWaveDirection.h"
@@ -1024,32 +1023,32 @@ public:
     struct Config {
         bool with_mag = true;
 
-        // Init / staging
+        // Internal filter staging
         float mag_delay_sec          = MAG_DELAY_SEC;
         float online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
-        // If you want: fixed world mag ref (WMM), or “learn from measurement”
+        // Optional fixed world magnetic field reference (for example WMM).
+        // If false, do one-shot north-lock from accel+mag after tilt settles.
         bool  use_fixed_mag_world_ref = false;
-        Eigen::Vector3f mag_world_ref = Eigen::Vector3f(0,0,0); // caller sets (e.g. WMM)
+        Eigen::Vector3f mag_world_ref = Eigen::Vector3f::Zero();
 
         // Bias freeze behavior
         bool  freeze_acc_bias_until_live = true;
         float Racc_warmup = 0.5f;
 
         // Sensor noise
-        Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f,0.2f,0.2f);
-        Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f,0.01f,0.01f);
-        Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f,0.3f,0.3f);
+        Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
+        Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
+        Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        // How long after mag_delay we’re willing to wait for MagAutoTuner
-        float mag_ref_timeout_sec = 4.5f; // fallback guard
-
-        // Used only if dt_mag can’t be inferred
-        float mag_odr_guess_hz = 25.0f;
-
-        // MagAutoTuner config override (optional)
-        bool use_custom_mag_tuner_cfg = false;
-        MagAutoTuner::Config mag_tuner_cfg{};
+        // Simpler mag-init policy:
+        // wait a bit for tilt to settle, then average only a short stable window.
+        float mag_init_min_tilt_sec   = 1.5f;   // allow tilt to settle first
+        float mag_init_window_sec     = 0.50f;  // short averaging window
+        int   mag_init_min_samples    = 8;      // enough samples for a robust mean
+        float mag_init_accel_tol_frac = 0.20f;  // accept if ||a|-g| < 20% g
+        float mag_init_max_gyro_dps   = 35.0f;  // reject if rotating too fast
+        float mag_init_min_mag_norm   = 1e-3f;  // basic sanity gate
 
         // Optional displacement detrending on fused displacement in UP frame.
         bool enable_displacement_detrend = false;
@@ -1060,53 +1059,33 @@ public:
     void begin(const Config& cfg) {
         cfg_ = cfg;
 
-        // Reset wrapper state
         begun_ = true;
         stage_ = Stage::Uninitialized;
         t_ = 0.0f;
         stage_t_ = 0.0f;
 
-        mag_ref_set_ = false;
-        mag_body_hold_.setZero();
-        last_mag_time_sec_ = NAN;
-        dt_mag_sec_ = NAN;
-        mag_ref_deadline_sec_ = cfg_.mag_delay_sec + cfg_.mag_ref_timeout_sec;
+        resetMagInit_();
 
-        // Fallback running means (used only if MagAutoTuner is not ready by timeout)
-        fallback_acc_mean_.setZero();
-        fallback_mag_mean_.setZero();
-        fallback_mean_count_ = 0;
-
-        // Reset tuner
-        if (cfg_.use_custom_mag_tuner_cfg) {
-            mag_auto_.setConfig(cfg_.mag_tuner_cfg);
-        } else {
-            mag_auto_.reset();
-            cfg_.mag_tuner_cfg = makeDefaultMagInitCfg(cfg_.mag_odr_guess_hz);
-            mag_auto_.setConfig(cfg_.mag_tuner_cfg);
-        }
-
-        // Track last IMU samples for gating
         last_acc_body_ned_.setZero();
         last_gyro_body_ned_.setZero();
         last_imu_dt_ = NAN;
         have_last_imu_ = false;
 
-        // Configure internal impl without reassign
-        impl_.setWithMag(cfg.with_mag);
-        impl_.setFreezeAccBiasUntilLive(cfg.freeze_acc_bias_until_live);
-        impl_.setWarmupRaccStd(cfg.Racc_warmup);
-        impl_.setMagDelaySec(cfg.mag_delay_sec);
-        impl_.setOnlineTuneWarmupSec(cfg.online_tune_warmup_sec);
+        impl_.setWithMag(cfg_.with_mag);
+        impl_.setFreezeAccBiasUntilLive(cfg_.freeze_acc_bias_until_live);
+        impl_.setWarmupRaccStd(cfg_.Racc_warmup);
+        impl_.setMagDelaySec(cfg_.mag_delay_sec);
+        impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
 
-        impl_.initialize(cfg.sigma_a, cfg.sigma_g, cfg.sigma_m);
+        impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
         last_impl_startup_stage_ = impl_.getStartupStage();
 
-        // IMPORTANT: allow warmup to restore nominal accel measurement noise
-        impl_.setNominalRaccStd(cfg.sigma_a);
+        // Allow warmup code to restore nominal accel measurement noise later.
+        impl_.setNominalRaccStd(cfg_.sigma_a);
 
         displacement_up_m_.setZero();
         displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
+
         if (cfg_.enable_displacement_detrend) {
             if (cfg_.use_custom_displacement_detrend_cfg) {
                 displacement_detrender_.setConfig(cfg_.displacement_detrend_cfg);
@@ -1141,15 +1120,17 @@ public:
         }
     }
 
-    // One IMU sample
-    void update(float dt, const Eigen::Vector3f& gyro_body_ned, const Eigen::Vector3f& acc_body_ned, float tempC = 35.0f)
+    void update(float dt,
+                const Eigen::Vector3f& gyro_body_ned,
+                const Eigen::Vector3f& acc_body_ned,
+                float tempC = 35.0f)
     {
         if (!begun_) return;
         if (!(dt > 0.0f) || !std::isfinite(dt)) return;
 
         t_ += dt;
 
-        // auto tilt-init on first IMU sample
+        // First IMU sample: accel-only init for tilt.
         if (stage_ == Stage::Uninitialized) {
             impl_.initialize_from_acc(acc_body_ned);
             stage_ = Stage::Warming;
@@ -1158,17 +1139,16 @@ public:
             stage_t_ += dt;
         }
 
-        // Store last IMU samples for MagAutoTuner gating
         last_acc_body_ned_  = acc_body_ned;
         last_gyro_body_ned_ = gyro_body_ned;
         last_imu_dt_        = dt;
         have_last_imu_      = true;
 
-        // Normal IMU fusion
         impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
 
         const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
         displacement_up_m_ = Eigen::Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
+
         if (cfg_.enable_displacement_detrend) {
             const float wave_hz = impl_.getFreqHz();
             const bool ext_freq_valid =
@@ -1187,23 +1167,12 @@ public:
             displacement_det_out_.wave_clean = displacement_up_m_;
         }
 
-        // If internal filter fell back to Cold (tilt reset), force mag ref re-learn
+        // If internal filter drops back to Cold during startup, forget mag init
+        // and reacquire north from scratch later.
         const auto cur_stage = impl_.getStartupStage();
-
         if (cur_stage != last_impl_startup_stage_) {
             if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
-                // Entered Cold (startup or non-Live tilt reset): reset mag-init ONCE
-                mag_ref_set_ = false;
-                mag_auto_.reset();
-
-                last_mag_time_sec_ = NAN;
-                dt_mag_sec_ = NAN;
-
-                fallback_acc_mean_.setZero();
-                fallback_mag_mean_.setZero();
-                fallback_mean_count_ = 0;
-
-                mag_ref_deadline_sec_ = std::max(t_, cfg_.mag_delay_sec) + cfg_.mag_ref_timeout_sec;
+                resetMagInit_();
             }
             last_impl_startup_stage_ = cur_stage;
         }
@@ -1216,106 +1185,27 @@ public:
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!begun_ || !cfg_.with_mag) return;
 
-        mag_body_hold_ = mag_body_ned;
+        if (!mag_body_ned.allFinite()) return;
 
-        // Track effective magnetometer sample period.
-        if (std::isfinite(last_mag_time_sec_)) {
-            dt_mag_sec_ = t_ - last_mag_time_sec_;
-        }
-        last_mag_time_sec_ = t_;
-
-        // Learning path: accumulate only stable acc+mag+gyro samples.
-        if (have_last_imu_) {
-            float dtm = dt_mag_sec_;
-            if (!std::isfinite(dtm) || dtm <= 0.0f) {
-                dtm = 1.0f / std::max(1.0f, cfg_.mag_odr_guess_hz);
-            }
-            (void)mag_auto_.addMagSample(dtm, last_acc_body_ned_, mag_body_ned, last_gyro_body_ned_);
-        }
-
-        // Keep robust running means as a timeout fallback (method-level safety net).
-        // This avoids latching world magnetic reference from one instantaneous sample.
-        if (have_last_imu_) {
-            const float an = last_acc_body_ned_.norm();
-            const float mn = mag_body_ned.norm();
-            const float g = 9.80665f;
-            const bool accel_ok = last_acc_body_ned_.allFinite() && std::fabs(an - g) < 0.12f * g;
-            const bool mag_ok   = mag_body_ned.allFinite() && (mn > 1e-3f);
-            const float gyro_n = last_gyro_body_ned_.norm();
-            const bool gyro_ok = last_gyro_body_ned_.allFinite() &&
-                                 (gyro_n < (60.0f * float(M_PI) / 180.0f)); // 60 deg/s
-            if (accel_ok && mag_ok && gyro_ok) {
-                fallback_mean_count_++;
-                const float invN = 1.0f / static_cast<float>(fallback_mean_count_);
-                fallback_acc_mean_ += (last_acc_body_ned_ - fallback_acc_mean_) * invN;
-                fallback_mag_mean_ += (mag_body_ned      - fallback_mag_mean_) * invN;
-            }
-        }
-
-        if (!mag_ref_set_) {
-            if (cfg_.use_fixed_mag_world_ref) {
+        // Path 1: fixed known world magnetic field reference.
+        if (!mag_ref_set_ && cfg_.use_fixed_mag_world_ref) {
+            if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
                 impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
                 mag_ref_set_ = true;
-            } else {
-                // If a valid world-field prior exists (e.g., WMM), use it immediately
-                // once mag fusion window opens. This avoids prolonged yaw drift while
-                // waiting for learned alignment under rough sea/noisy startup.
-                if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
-                    impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
-                    mag_ref_set_ = true;
-                }
-
-                Eigen::Vector3f mag_body_for_ref = mag_body_ned;
-                Eigen::Vector3f acc_for_ref = last_acc_body_ned_;
-                bool have_ref_candidate = false;
-
-                // Preferred: learned relation from stable samples only.
-                Eigen::Vector3f acc_mean, mag_raw_mean, mag_unit_mean;
-                if (!mag_ref_set_ && mag_auto_.getResult(acc_mean, mag_raw_mean, mag_unit_mean)) {
-                    if (acc_mean.allFinite() && acc_mean.norm() > 1e-3f &&
-                        mag_raw_mean.allFinite() && mag_raw_mean.norm() > 1e-3f)
-                    {
-                        acc_for_ref = acc_mean;
-                        mag_body_for_ref = mag_raw_mean;
-                        have_ref_candidate = true;
-                    }
-                }
-
-                // Timeout fallback policy:
-                //  1) Prefer caller-provided world-field prior if valid.
-                //  2) Else use robust running means (many samples), never one-shot sample.
-                if (!have_ref_candidate &&
-                    std::isfinite(mag_ref_deadline_sec_) && t_ >= mag_ref_deadline_sec_)
-                {
-                    if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
-                        impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
-                        mag_ref_set_ = true;
-                    } else if (fallback_mean_count_ >= 200 &&
-                               fallback_acc_mean_.allFinite() && fallback_acc_mean_.norm() > 1e-3f &&
-                               fallback_mag_mean_.allFinite() && fallback_mag_mean_.norm() > 1e-3f)
-                    {
-                        acc_for_ref = fallback_acc_mean_;
-                        mag_body_for_ref = fallback_mag_mean_;
-                        have_ref_candidate = true;
-                    } else {
-                        // Keep waiting; extend deadline to avoid busy re-checking.
-                        mag_ref_deadline_sec_ = t_ + cfg_.mag_ref_timeout_sec;
-                    }
-                }
-
-                if (!mag_ref_set_ && have_ref_candidate) {
-                    northLockFromAccelMag_(acc_for_ref, mag_body_for_ref);
-                }
             }
         }
 
-        // Delay only ongoing mag EKF correction, not initial north-lock.
+        // Path 2: one-shot north-lock from short stable acc+mag window.
+        if (!mag_ref_set_ && !cfg_.use_fixed_mag_world_ref) {
+            tryOneShotNorthLock_(mag_body_ned);
+        }
+
+        // Only ongoing mag EKF correction is delayed.
         if (mag_ref_set_ && t_ >= cfg_.mag_delay_sec) {
-          impl_.updateMag(mag_body_ned);
+            impl_.updateMag(mag_body_ned);
         }
     }
 
-    // Minimal getters
     bool  isLive() const { return stage_ == Stage::Live; }
     float freqHz() const { return impl_.getFreqHz(); }
     float waveDirectionDeg() const { return impl_.getWaveDirectionDeg(); }
@@ -1324,23 +1214,112 @@ public:
     const AdaptiveWaveDetrender3D::Output& displacementDetrend() const { return displacement_det_out_; }
 
     SeaStateFusionFilter_OU_II<trackerT>& raw() { return impl_; }
+    const SeaStateFusionFilter_OU_II<trackerT>& raw() const { return impl_; }
 
 private:
     enum class Stage { Uninitialized, Warming, Live };
 
+    static bool finiteVec_(const Eigen::Vector3f& v) {
+        return v.allFinite();
+    }
+
+    void resetMagInit_() {
+        mag_ref_set_ = false;
+        mag_init_sum_acc_.setZero();
+        mag_init_sum_mag_.setZero();
+        mag_init_count_ = 0;
+        mag_init_window_start_sec_ = NAN;
+    }
+
+    bool magInitSampleAccepted_(const Eigen::Vector3f& acc_body,
+                                const Eigen::Vector3f& mag_body,
+                                const Eigen::Vector3f& gyro_body) const
+    {
+        if (!finiteVec_(acc_body) || !finiteVec_(mag_body) || !finiteVec_(gyro_body)) {
+            return false;
+        }
+
+        const float g = 9.80665f;
+        const float an = acc_body.norm();
+        const float gn = gyro_body.norm();
+        const float mn = mag_body.norm();
+
+        if (!(an > 1e-6f) || !(mn > cfg_.mag_init_min_mag_norm)) {
+            return false;
+        }
+
+        const bool accel_ok = std::fabs(an - g) < (cfg_.mag_init_accel_tol_frac * g);
+        const bool gyro_ok  = gn < (cfg_.mag_init_max_gyro_dps * float(M_PI) / 180.0f);
+
+        return accel_ok && gyro_ok;
+    }
+
+    void pushMagInitSample_(const Eigen::Vector3f& acc_body,
+                            const Eigen::Vector3f& mag_body)
+    {
+        if (mag_init_count_ == 0) {
+            mag_init_window_start_sec_ = t_;
+        }
+        mag_init_sum_acc_ += acc_body;
+        mag_init_sum_mag_ += mag_body;
+        mag_init_count_++;
+    }
+
+    void tryOneShotNorthLock_(const Eigen::Vector3f& mag_body_ned) {
+        if (!have_last_imu_) return;
+
+        // Let tilt settle first.
+        if (t_ < cfg_.mag_init_min_tilt_sec) return;
+
+        // Gate samples hard. If unstable, discard partial window and wait again.
+        if (!magInitSampleAccepted_(last_acc_body_ned_, mag_body_ned, last_gyro_body_ned_)) {
+            mag_init_sum_acc_.setZero();
+            mag_init_sum_mag_.setZero();
+            mag_init_count_ = 0;
+            mag_init_window_start_sec_ = NAN;
+            return;
+        }
+
+        pushMagInitSample_(last_acc_body_ned_, mag_body_ned);
+
+        const float win_sec =
+            (std::isfinite(mag_init_window_start_sec_) ? (t_ - mag_init_window_start_sec_) : 0.0f);
+
+        if (mag_init_count_ < std::max(1, cfg_.mag_init_min_samples)) return;
+        if (win_sec < std::max(0.0f, cfg_.mag_init_window_sec)) return;
+
+        const float invN = 1.0f / static_cast<float>(mag_init_count_);
+        const Eigen::Vector3f acc_mean = mag_init_sum_acc_ * invN;
+        const Eigen::Vector3f mag_mean = mag_init_sum_mag_ * invN;
+
+        northLockFromAccelMag_(acc_mean, mag_mean);
+
+        // Whether success or not, clear the accumulation window.
+        mag_init_sum_acc_.setZero();
+        mag_init_sum_mag_.setZero();
+        mag_init_count_ = 0;
+        mag_init_window_start_sec_ = NAN;
+    }
+
     void northLockFromAccelMag_(const Eigen::Vector3f& acc_body,
-                                const Eigen::Vector3f& mag_body) {
+                                const Eigen::Vector3f& mag_body)
+    {
+        if (!finiteVec_(acc_body) || !finiteVec_(mag_body)) return;
+        if (!(acc_body.norm() > 1e-6f) || !(mag_body.norm() > cfg_.mag_init_min_mag_norm)) return;
+
+        // One-shot tilt + yaw initialization from averaged stable samples.
         impl_.mekf().initialize_from_acc_mag(acc_body, mag_body);
 
-        Eigen::Quaternionf q0 = impl_.mekf().quaternion_boat();
-        const float nq = q0.norm();
+        Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
+        const float nq = q_bw.norm();
         if (!(nq > 1e-6f) || !std::isfinite(nq)) return;
-        q0.normalize();
+        q_bw.normalize();
 
-        const Eigen::Vector3f mag_world_ref_uT = q0 * mag_body;
-        if (!mag_world_ref_uT.allFinite() || !(mag_world_ref_uT.norm() > 1e-3f)) return;
+        // Store the corresponding world magnetic vector.
+        const Eigen::Vector3f mag_world_ref = q_bw * mag_body;
+        if (!finiteVec_(mag_world_ref) || !(mag_world_ref.norm() > 1e-3f)) return;
 
-        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+        impl_.mekf().set_mag_world_ref(mag_world_ref);
         mag_ref_set_ = true;
     }
 
@@ -1353,29 +1332,23 @@ private:
     Stage stage_ = Stage::Uninitialized;
     float t_ = 0.0f;
     float stage_t_ = 0.0f;
+
     typename SeaStateFusionFilter_OU_II<trackerT>::StartupStage last_impl_startup_stage_ =
-             SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold;
+        SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold;
 
-    // Mag init state
-    bool mag_ref_set_ = false;
-    Eigen::Vector3f mag_body_hold_ = Eigen::Vector3f::Zero();
-
-    float last_mag_time_sec_ = NAN;
-    float dt_mag_sec_ = NAN;
-    float mag_ref_deadline_sec_ = NAN;
-
-    // Last IMU samples (for MagAutoTuner gating)
+    // Last IMU sample for mag-init gating.
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
     float last_imu_dt_ = NAN;
     bool  have_last_imu_ = false;
 
-    // Robust running means used only as timeout fallback for mag-world ref init.
-    Eigen::Vector3f fallback_acc_mean_ = Eigen::Vector3f::Zero();
-    Eigen::Vector3f fallback_mag_mean_ = Eigen::Vector3f::Zero();
-    int fallback_mean_count_ = 0;
+    // One-shot mag-init state.
+    bool mag_ref_set_ = false;
+    Eigen::Vector3f mag_init_sum_acc_ = Eigen::Vector3f::Zero();
+    Eigen::Vector3f mag_init_sum_mag_ = Eigen::Vector3f::Zero();
+    int   mag_init_count_ = 0;
+    float mag_init_window_start_sec_ = NAN;
 
-    MagAutoTuner mag_auto_;
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
     Eigen::Vector3f displacement_up_m_ = Eigen::Vector3f::Zero();
