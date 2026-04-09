@@ -1308,15 +1308,15 @@ public:
                 }
 
                 if (!mag_ref_set_ && have_ref_candidate) {
-                    const Eigen::Quaternionf q_bw_hint = impl_.mekf().quaternion();
-                    const Eigen::Vector3f down_b_hint = downBodyFromQuatBW_(q_bw_hint);
-                    const Eigen::Vector3f acc_sf = accelAsSpecificForceUp_(acc_for_ref, down_b_hint);
-
-                    Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_sf);
-                    q_tilt.normalize();
-
-                    Eigen::Vector3f mag_world_ref_uT = q_tilt * mag_body_for_ref; // keep raw uT
-                    if (mag_world_ref_uT.allFinite() && mag_world_ref_uT.norm() > 1e-3f) {
+                    Eigen::Quaternionf q_bw_mag = Eigen::Quaternionf::Identity();
+                    Eigen::Vector3f mag_world_ref_uT = Eigen::Vector3f::Zero();
+                    if (quatFromAccelMagBodyToWorldNed_(acc_for_ref, mag_body_for_ref,
+                                                        q_bw_mag, &mag_world_ref_uT))
+                    {
+                        // Lock yaw convention explicitly from accel+mag together.
+                        // This aligns attitude and learned world magnetic reference
+                        // to a single body->world NED compass frame at initialization.
+                        impl_.mekf().initialize_from_acc_mag(acc_for_ref, mag_body_for_ref);
                         impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
                         mag_ref_set_ = true;
                     }
@@ -1341,68 +1341,45 @@ public:
 private:
     enum class Stage { Uninitialized, Warming, Live };
 
-    static Eigen::Vector3f downBodyFromQuatBW_(const Eigen::Quaternionf& q_bw) {
-        Eigen::Vector3f d = q_bw.conjugate() * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-        const float dn = d.norm();
-        if (!(dn > 1e-6f) || !d.allFinite()) return Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-        return d / dn;
-    }
+    static bool quatFromAccelMagBodyToWorldNed_(const Eigen::Vector3f& acc_body_ned,
+                                                const Eigen::Vector3f& mag_body_ned,
+                                                Eigen::Quaternionf& q_bw_out,
+                                                Eigen::Vector3f* mag_world_out_uT = nullptr) {
+        if (!acc_body_ned.allFinite() || !mag_body_ned.allFinite()) return false;
 
-    static Eigen::Vector3f accelAsSpecificForceUp_(const Eigen::Vector3f& acc_body_ned,
-                                                   const Eigen::Vector3f& down_body_hint_unit) {
-        Eigen::Vector3f a = acc_body_ned;
-        if (!a.allFinite()) return a;
+        const float an = acc_body_ned.norm();
+        const float mn = mag_body_ned.norm();
+        if (!(an > 1e-6f) || !(mn > 1e-6f)) return false;
 
-        Eigen::Vector3f d = down_body_hint_unit;
-        const float dn = d.norm();
-        if (!(dn > 1e-6f) || !d.allFinite()) d = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-        else                                 d /= dn;
+        // In this stack, at-rest specific force is ~ -g along body down.
+        Eigen::Vector3f down_b = (-acc_body_ned / an);
 
-        // Keep sign convention consistent with MEKF tilt initialization expectation.
-        if (a.dot(d) > 0.0f) a = -a;
-        return a;
-    }
+        // Build local N/E/D basis in body coordinates.
+        Eigen::Vector3f east_b = down_b.cross(mag_body_ned);
+        const float en = east_b.norm();
+        if (!(en > 1e-6f) || !east_b.allFinite()) return false;
+        east_b /= en;
 
-    // Tilt-only (yaw-free) quaternion body->world from accel.
-    // We assume “rest accel” direction represents gravity (up to sign convention),
-    // so we align BODY measured down with WORLD down (NED: +Z down).
-    static Eigen::Quaternionf tiltOnlyQuatFromAccel_(const Eigen::Vector3f& acc_body_ned) {
-        // At rest, specific force typically points ~ -g in world coordinates.
-        // But your code already deals with sign mismatches elsewhere, so we do:
-        //   body_down ≈ -(acc / |acc|)
-        Eigen::Vector3f a = acc_body_ned;
-        const float an = a.norm();
-        if (!(an > 1e-6f) || !a.allFinite()) {
-            return Eigen::Quaternionf::Identity();
+        Eigen::Vector3f north_b = east_b.cross(down_b);
+        const float nn = north_b.norm();
+        if (!(nn > 1e-6f) || !north_b.allFinite()) return false;
+        north_b /= nn;
+        down_b.normalize();
+
+        Eigen::Matrix3f R_wb;
+        R_wb.col(0) = north_b; // world north in body coords
+        R_wb.col(1) = east_b;  // world east  in body coords
+        R_wb.col(2) = down_b;  // world down  in body coords
+
+        const Eigen::Matrix3f R_bw = R_wb.transpose();
+        Eigen::Quaternionf q_bw(R_bw);
+        q_bw.normalize();
+        q_bw_out = q_bw;
+
+        if (mag_world_out_uT) {
+            *mag_world_out_uT = q_bw * mag_body_ned;
         }
-
-        Eigen::Vector3f body_down = (-a / an);              // body frame "down" direction
-        const Eigen::Vector3f world_down(0.0f, 0.0f, 1.0f); // NED down
-
-        // Quaternion from vector u -> v (shortest arc)
-        const float d = std::max(-1.0f, std::min(1.0f, body_down.dot(world_down)));
-        Eigen::Vector3f axis = body_down.cross(world_down);
-        const float axis_n = axis.norm();
-
-        if (axis_n < 1e-6f) {
-            // parallel or anti-parallel
-            if (d > 0.0f) {
-                return Eigen::Quaternionf::Identity();
-            } else {
-                // 180 deg flip around any axis perpendicular to body_down
-                Eigen::Vector3f ortho = std::fabs(body_down.z()) < 0.9f
-                    ? Eigen::Vector3f(0,0,1).cross(body_down)
-                    : Eigen::Vector3f(0,1,0).cross(body_down);
-                ortho.normalize();
-                return Eigen::Quaternionf(Eigen::AngleAxisf(float(M_PI), ortho));
-            }
-        }
-
-        axis /= axis_n;
-        const float angle = std::acos(d);
-        Eigen::Quaternionf q(Eigen::AngleAxisf(angle, axis));
-        q.normalize();
-        return q;
+        return true;
     }
 
 private:
