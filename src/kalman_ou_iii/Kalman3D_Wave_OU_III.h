@@ -1942,13 +1942,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
         return;
     }
     last_mag_diag_.S = S_mat;
-    const T nis = nis3_from_ldlt_(ldlt, r);
-    last_mag_diag_.nis = nis;
-    // 3D NIS gate (~99.7% chi-square region for 3 DoF).
-    if (!std::isfinite(nis) || nis > T(14.2)) {
-        last_mag_diag_.accepted = false;
-        return;
-    }
+
     MatrixNX3& K = K_scratch_;
     K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
 
