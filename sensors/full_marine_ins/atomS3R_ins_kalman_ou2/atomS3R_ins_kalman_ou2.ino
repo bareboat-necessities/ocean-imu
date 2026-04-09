@@ -2,7 +2,11 @@
   Copyright 2026, Mikhail Grushinskiy
 
   AtomS3R SeaStateFusion_OU_II (+ optional IMU Calibration Wizard)
-  (SeaStateFusion_OU_II version: Kalman3D_Wave_OU_II + mag init + yaw correction)
+   
+    - filter learns tilt during startup
+    - one-shot magnetic north lock inside SeaStateFusion_OU_II
+    - filter yaw is the primary heading output
+    - tilt-compensated magnetic heading is kept only for diagnostics
 
   Assumptions:
     - fusion_.raw().mekf().quaternion_boat() returns BODY->WORLD quaternion (q_bw), world frame is NED (+Z down).
@@ -19,9 +23,8 @@
 
 #include <M5Unified.h>
 #include <cmath>
-#include <limits>
 #include <algorithm>
-#include <type_traits>
+#include <cstring>
 
 #ifndef EIGEN_STACK_ALLOCATION_LIMIT
   #define EIGEN_STACK_ALLOCATION_LIMIT 0
@@ -31,7 +34,6 @@
 #include <ArduinoOceanImu.h>
 
 #include "AtomS3R/AtomS3R_ImuCal.h"
-
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #if SEA_STATE_ENABLE_WIZARD
   #include "AtomS3R/ImuCalWizardRunner.h"
@@ -76,8 +78,6 @@ static constexpr float ROT_BIAS_TAU_S       = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
-static constexpr float HEADING_ACCEL_G_TOL_FRAC = 0.18f;
-
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
 
@@ -97,19 +97,10 @@ static inline float wrap180_(float deg) {
   return deg;
 }
 
-static inline bool finite3_(const Vector3f& v) {
-  return std::isfinite(v.x()) && std::isfinite(v.y()) && std::isfinite(v.z());
-}
-
 static inline Vector3f quatRotate_(const Eigen::Quaternionf& q, const Vector3f& v) {
   const Vector3f qv(q.x(), q.y(), q.z());
   const Vector3f t = 2.0f * qv.cross(v);
   return v + q.w() * t + qv.cross(t);
-}
-
-static inline float headingFromQuatBodyToWorldNed_(const Eigen::Quaternionf& q_bw) {
-  const Vector3f fwd_w = quatRotate_(q_bw, Vector3f(1.0f, 0.0f, 0.0f));  // body +X in world NED
-  return wrap360_(atan2f(fwd_w.y(), fwd_w.x()) * RAD_TO_DEG);            // atan2(E, N)
 }
 
 static inline bool rollPitchHeadingFromQuatBw_(
@@ -139,8 +130,8 @@ static inline bool rollPitchHeadingFromQuatBw_(
   const float cosr_cosp = 1.0f - 2.0f * (x * x + y * y);
   const float roll = atan2f(sinr_cosp, cosr_cosp);
 
-  roll_deg_out = wrap180_(roll * RAD_TO_DEG);
-  pitch_deg_out = wrap180_(pitch * RAD_TO_DEG);
+  roll_deg_out    = wrap180_(roll * RAD_TO_DEG);
+  pitch_deg_out   = wrap180_(pitch * RAD_TO_DEG);
   heading_deg_out = wrap360_(yaw * RAD_TO_DEG);
   return true;
 }
@@ -289,8 +280,6 @@ private:
   Fusion fusion_{};
 
   uint32_t mag_gate_last_ms_ = 0;
-  Vector3f mag_gate_last_cal_ = Vector3f::Zero();
-  uint8_t  mag_gate_repeat_count_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -310,9 +299,9 @@ private:
   float heave_wave_raw_m_   = 0.0f;   // raw residual = heave_raw - baseline
   float heave_wave_clean_m_ = 0.0f;   // cleaned residual for plotting/output
 
-  bool  mag_ok_      = false;
-  bool  mag_fresh_   = false;
-  float mag_norm_uT_ = NAN;
+  bool  mag_ok_         = false;
+  bool  mag_fresh_      = false;
+  float mag_norm_uT_    = NAN;
   float heading_mag_deg_ = NAN;
   bool  heading_mag_ok_  = false;
 
@@ -338,37 +327,24 @@ private:
     return 1.0f / LOOP_HZ;
   }
 
-  bool updateMagFreshGate_(const Vector3f& m_cal, bool mag_ok, uint32_t now_ms) {
+  bool updateMagFreshGate_(bool mag_ok, uint32_t now_ms) {
     constexpr uint32_t kSampleSpacingMs = 35u;
-    constexpr float    kMinDeltaUT      = 0.001f;
 
     if (!mag_ok) {
-      mag_gate_repeat_count_ = 0;
+      mag_gate_last_ms_ = 0;
       return false;
     }
 
     if (mag_gate_last_ms_ == 0) {
       mag_gate_last_ms_ = now_ms;
-      mag_gate_last_cal_ = m_cal;
-      mag_gate_repeat_count_ = 0;
       return true;
     }
 
-    const uint32_t dtm = now_ms - mag_gate_last_ms_;
-    if (dtm < kSampleSpacingMs) return false;
-
-    const float dm = (m_cal - mag_gate_last_cal_).norm();
-    const bool looks_stuck = dm <= kMinDeltaUT;
-    if (looks_stuck) {
-      if (mag_gate_repeat_count_ < 255) mag_gate_repeat_count_++;
-    } else {
-      mag_gate_repeat_count_ = 0;
+    if ((now_ms - mag_gate_last_ms_) < kSampleSpacingMs) {
+      return false;
     }
 
     mag_gate_last_ms_ = now_ms;
-    mag_gate_last_cal_ = m_cal;
-    // Keep cadence aligned with atomS3R_compass_qmekf:
-    // once sample spacing is met, accept as fresh; repeat_count tracks "stuck" softly.
     return true;
   }
 
@@ -435,8 +411,6 @@ private:
     }
 
     mag_gate_last_ms_ = 0;
-    mag_gate_last_cal_.setZero();
-    mag_gate_repeat_count_ = 0;
 
     last_skipped_total_ = 0;
     have_last_sample_us_ = false;
@@ -469,27 +443,31 @@ private:
     Fusion::Config fcfg;
     fcfg.with_mag = true;
     fcfg.online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
+
+    // Use one-shot north-lock from stable accel+mag window.
     fcfg.use_fixed_mag_world_ref = false;
-    fcfg.mag_world_ref = Vector3f(0.0f, 0.0f, 0.0f);
+    fcfg.mag_world_ref = Vector3f::Zero();
 
     fcfg.freeze_acc_bias_until_live = true;
     fcfg.Racc_warmup = 0.18f;
 
-    fcfg.sigma_a  = sigma_a;
-    fcfg.sigma_g  = sigma_g;
-    fcfg.sigma_m  = sigma_m;
+    fcfg.sigma_a = sigma_a;
+    fcfg.sigma_g = sigma_g;
+    fcfg.sigma_m = sigma_m;
 
-    fcfg.mag_delay_sec       = MAG_DELAY_SEC;
-    fcfg.mag_ref_timeout_sec = 2.0f;
-    fcfg.mag_odr_guess_hz    = MAG_TUNE_REF_HZ;
-    fcfg.use_custom_mag_tuner_cfg = false;
+    fcfg.mag_delay_sec = MAG_DELAY_SEC;
+    fcfg.mag_init_min_tilt_sec   = 1.5f;
+    fcfg.mag_init_window_sec     = 0.50f;
+    fcfg.mag_init_min_samples    = 8;
+    fcfg.mag_init_accel_tol_frac = 0.20f;
+    fcfg.mag_init_max_gyro_dps   = 35.0f;
+    fcfg.mag_init_min_mag_norm   = 5.0f;
+
     fcfg.enable_displacement_detrend = true;
 
     fusion_.begin(fcfg);
 
     auto& ff = fusion_.raw();
-    using FF = std::remove_reference_t<decltype(ff)>;
-
     ff.enableLinearBlock(WANT_LINEAR_BLOCK);
     ff.enableTuner(true);
     ff.setWithMag(true);
@@ -510,21 +488,19 @@ private:
     heading_deg_  = 0.0f;
 
     mag_gate_last_ms_ = 0;
-    mag_gate_last_cal_.setZero();
-    mag_gate_repeat_count_ = 0;
-    mag_ok_              = false;
-    mag_fresh_           = false;
-    mag_norm_uT_         = NAN;
-    heading_mag_deg_     = NAN;
-    heading_mag_ok_      = false;
+    mag_ok_           = false;
+    mag_fresh_        = false;
+    mag_norm_uT_      = NAN;
+    heading_mag_deg_  = NAN;
+    heading_mag_ok_   = false;
 
     stale_frame_count_ = 0;
     have_last_sample_us_ = false;
     last_sample_us_      = 0;
-    heave_raw_m_        = 0.0f;
-    heave_baseline_m_   = 0.0f;
-    heave_wave_raw_m_   = 0.0f;
-    heave_wave_clean_m_ = 0.0f;
+    heave_raw_m_         = 0.0f;
+    heave_baseline_m_    = 0.0f;
+    heave_wave_raw_m_    = 0.0f;
+    heave_wave_clean_m_  = 0.0f;
   }
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -572,73 +548,58 @@ private:
   void updateFilter_(const ImuSample& s) {
     dt_ = computeFusionDtFromSampleTimestamp_(s);
     const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
+
     const Vector3f a_raw = s.a;
     const Vector3f w_raw = s.w;
 
     a_raw_norm_ = a_raw.norm();
 
     a_cal_ = runtime_.applyAccel(a_raw, tempC);
-    w_cal_ = runtime_.applyGyro (w_raw, tempC);
-
-    // Apply compass calibration before any magnetometer use in the filter chain.
+    w_cal_ = runtime_.applyGyro(w_raw, tempC);
     m_cal_ = runtime_.applyMag(s.m);
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
-    mag_fresh_ = updateMagFreshGate_(m_cal_, mag_ok_, millis());
+    mag_fresh_ = updateMagFreshGate_(mag_ok_, millis());
 
     const bool still =
         (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
         (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
 
     fusion_.update(dt_, w_cal_, a_cal_);
-    if (mag_ok_ && mag_fresh_) fusion_.updateMag(m_cal_);
+    if (mag_ok_ && mag_fresh_) {
+      fusion_.updateMag(m_cal_);
+    }
 
     Eigen::Quaternionf q_bw = fusion_.raw().mekf().quaternion_boat();
     q_bw.normalize();
 
-    Vector3f down_b(0.0f, 0.0f, 1.0f);
-    {
-      const Vector3f down_w(0.0f, 0.0f, 1.0f);
-      Vector3f down_q_b = quatRotate_(q_bw.conjugate(), down_w);
-      const float dnq = down_q_b.norm();
-      if (dnq > 1e-6f) {
-        down_b = down_q_b / dnq;
-      }
-
-      const float a_norm = a_cal_.norm();
-      const bool accel_trust = fabsf(a_norm - g_std) <= (HEADING_ACCEL_G_TOL_FRAC * g_std);
-      if (accel_trust && a_norm > 1e-6f) {
-        Vector3f down_acc_b = -a_cal_ / a_norm; // specific force at rest points up, so down = -a
-        if (down_acc_b.dot(down_b) < 0.0f) down_acc_b = -down_acc_b;
-        const float blend = 0.25f; // keep quaternion tilt as primary, accel as corrective hint
-        down_b = ((1.0f - blend) * down_b + blend * down_acc_b).normalized();
-      }
-    }
-
     float roll_est_deg = roll_deg_;
     float pitch_est_deg = pitch_deg_;
-    float heading_est_deg = headingFromQuatBodyToWorldNed_(q_bw);
+    float heading_est_deg = heading_deg_;
+
     if (rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg)) {
-      roll_deg_ = roll_est_deg;
+      roll_deg_  = roll_est_deg;
       pitch_deg_ = pitch_est_deg;
-    } else {
-      heading_est_deg = headingFromQuatBodyToWorldNed_(q_bw);
+      heading_deg_ = heading_est_deg;
     }
 
+    // Diagnostic-only magnetic heading using filter tilt + current mag sample.
     heading_mag_ok_ = false;
     heading_mag_deg_ = NAN;
     if (mag_ok_) {
-      float hdg_mag = NAN;
-      if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag)) {
-        heading_mag_ok_ = true;
-        heading_mag_deg_ = hdg_mag;
+      const Vector3f down_w(0.0f, 0.0f, 1.0f);
+      Vector3f down_b = quatRotate_(q_bw.conjugate(), down_w);
+      const float dn = down_b.norm();
+      if (dn > 1e-6f) {
+        down_b /= dn;
+        float hdg_mag = NAN;
+        if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag)) {
+          heading_mag_ok_ = true;
+          heading_mag_deg_ = hdg_mag;
+        }
       }
     }
-
-    // Use fused filter yaw as primary heading output.
-    // Keep tilt-compensated magnetic heading for diagnostics only.
-    heading_deg_ = heading_est_deg;
 
     if (still) {
       const float alpha_b = 1.0f - expf(-dt_ / ROT_BIAS_TAU_S);
@@ -653,23 +614,27 @@ private:
     Vector3f w_use = w_cal_;
     if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
 
-    Vector3f w_world = quatRotate_(q_bw, w_use);
+    const Vector3f w_world = quatRotate_(q_bw, w_use);
     float rot_dpm_meas = w_world.z() * RAD_TO_DEG * 60.0f;
     rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
 
     const float tau_rot = 1.5f;
     const float alpha_r = 1.0f - expf(-dt_ / tau_rot);
-    if (!rot_inited_) { rot_inited_ = true; rot_dpm_filt_ = rot_dpm_meas; }
-    else              { rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_); }
+    if (!rot_inited_) {
+      rot_inited_ = true;
+      rot_dpm_filt_ = rot_dpm_meas;
+    } else {
+      rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_);
+    }
 
     const Vector3f displacement_raw_up_m = fusion_.displacementUpMeters();
     const auto& displacement_det_out = fusion_.displacementDetrend();
 
     heave_m_         = displacement_raw_up_m.z();  // positive-up
-    wave_envelope_m_ =  fusion_.raw().getDisplacementScale();
-    wave_hz_         =  fusion_.raw().getFreqHz();
+    wave_envelope_m_ = fusion_.raw().getDisplacementScale();
+    wave_hz_         = fusion_.raw().getFreqHz();
 
-    heave_raw_m_ = heave_m_;
+    heave_raw_m_        = heave_m_;
     heave_baseline_m_   = displacement_det_out.baseline_slow.z();
     heave_wave_raw_m_   = displacement_det_out.wave_raw.z();
     heave_wave_clean_m_ = displacement_det_out.wave_clean.z();
@@ -704,7 +669,7 @@ private:
     last_ui_ms_ = now_ms;
 
     if (use_graphics_ && compass_ui_ready_) updateUI_graphics_();
-    else                                   updateUI_text_();
+    else                                    updateUI_text_();
   }
 
   void updateUI_graphics_() {
@@ -750,23 +715,25 @@ private:
     nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, valid);
 #else
-#if ARDUINO_PLOTTER
+  #if ARDUINO_PLOTTER
     Serial.printf(
       "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\n",
-      static_cast<double>(heave_raw_m_        * 100.0f),
-      static_cast<double>(wave_envelope_m_ * 100.0f),
+      static_cast<double>(heave_raw_m_      * 100.0f),
+      static_cast<double>(wave_envelope_m_  * 100.0f),
       static_cast<double>(heave_wave_clean_m_ * 100.0f));
-#else
+  #else
     Serial.printf(
-      "hdg_filt=%.2f | hdg_mag=%s%.2f | dt_imu_ms=%.2f | mag_valid=%u | dt_mag_ms=%s%.2f (target~%.2f) | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
+      "hdg_filt=%.2f | hdg_mag=%s%.2f | dt_imu_ms=%.2f | mag_ok=%u | mag_fresh=%u | |m|=%.2f"
+      " | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f"
+      " | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f"
+      " | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
       static_cast<double>(heading_deg_),
       heading_mag_ok_ ? "" : "~",
       static_cast<double>(heading_mag_deg_),
       static_cast<double>(dt_ * 1000.0f),
       mag_ok_ ? 1U : 0U,
-      mag_fresh_ ? "+" : "~",
-      mag_fresh_ ? 0.0 : -1.0,
-      35.0,
+      mag_fresh_ ? 1U : 0U,
+      static_cast<double>(mag_norm_uT_),
       static_cast<double>(a_cal_.x()),
       static_cast<double>(a_cal_.y()),
       static_cast<double>(a_cal_.z()),
@@ -776,8 +743,7 @@ private:
       static_cast<double>(m_cal_.x()),
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
-#endif
-
+  #endif
 #endif
   }
 };
