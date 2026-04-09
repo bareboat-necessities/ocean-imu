@@ -582,6 +582,28 @@ public:
 
 private:
     static inline float sgnf_(float x) noexcept { return (x >= 0.0f) ? 1.0f : -1.0f; }
+    static Eigen::Vector3f downBodyFromQuatBW_(const Eigen::Quaternionf& q_bw) {
+        Eigen::Vector3f d = q_bw.conjugate() * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        const float dn = d.norm();
+        if (!(dn > 1e-6f) || !d.allFinite()) return Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        return d / dn;
+    }
+
+    static Eigen::Vector3f accelAsSpecificForceUp_(const Eigen::Vector3f& acc_body_ned,
+                                                   const Eigen::Vector3f& down_body_hint_unit) {
+        Eigen::Vector3f a = acc_body_ned;
+        if (!a.allFinite()) return a;
+
+        Eigen::Vector3f d = down_body_hint_unit;
+        const float dn = d.norm();
+        if (!(dn > 1e-6f) || !d.allFinite()) d = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        else                                 d /= dn;
+
+        // MEKF initialization expects specific force at rest (~ -g along body down).
+        // If runtime accel is down-positive (~ +g along body down), flip it here.
+        if (a.dot(d) > 0.0f) a = -a;
+        return a;
+    }
 
     // Simple first-order low-pass filter for vertical accel → tracker input
     struct FreqInputLPF {
@@ -1286,7 +1308,11 @@ public:
                 }
 
                 if (!mag_ref_set_ && have_ref_candidate) {
-                    Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_for_ref);
+                    const Eigen::Quaternionf q_bw_hint = impl_.mekf().quaternion();
+                    const Eigen::Vector3f down_b_hint = downBodyFromQuatBW_(q_bw_hint);
+                    const Eigen::Vector3f acc_sf = accelAsSpecificForceUp_(acc_for_ref, down_b_hint);
+
+                    Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_sf);
                     q_tilt.normalize();
 
                     Eigen::Vector3f mag_world_ref_uT = q_tilt * mag_body_for_ref; // keep raw uT
