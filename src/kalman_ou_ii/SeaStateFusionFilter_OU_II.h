@@ -220,12 +220,12 @@ public:
             }
 
             if (tilt_over_limit_sec_ >= TILT_RESET_HOLD_SEC && tilt_reset_cooldown_sec_ <= 0.0f) {
-                // Re-lock attitude to gravity.
-                mekf_->initialize_from_acc(acc);
-
-                // Only force full Cold re-entry while not yet fully live. In Live, keep
-                // linear states running to avoid long "frozen heave" plateaus.
-                if (startup_stage_ != StartupStage::Live) {
+                if (startup_stage_ == StartupStage::Live) {
+                    // In Live, re-lock only tilt while preserving yaw/north frame.
+                    mekf_->initialize_from_acc_preserve_yaw(acc);
+                } else {
+                    // During startup stages, accel-only re-lock is acceptable.
+                    mekf_->initialize_from_acc(acc);
                     enterCold_();
                     resetTrackingState_();
                 }
@@ -1252,10 +1252,6 @@ public:
             }
         }
 
-        // Respect mag delay for actual mag fusion, but keep learning active
-        // from startup so the first post-delay reference is better conditioned.
-        if (t_ < cfg_.mag_delay_sec) return;
-
         if (!mag_ref_set_) {
             if (cfg_.use_fixed_mag_world_ref) {
                 impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
@@ -1308,22 +1304,13 @@ public:
                 }
 
                 if (!mag_ref_set_ && have_ref_candidate) {
-                    Eigen::Quaternionf q_bw_mag = Eigen::Quaternionf::Identity();
-                    Eigen::Vector3f mag_world_ref_uT = Eigen::Vector3f::Zero();
-                    if (quatFromAccelMagBodyToWorldNed_(acc_for_ref, mag_body_for_ref,
-                                                        q_bw_mag, &mag_world_ref_uT))
-                    {
-                        // Lock yaw convention explicitly from accel+mag together.
-                        // This aligns attitude and learned world magnetic reference
-                        // to a single body->world NED compass frame at initialization.
-                        impl_.mekf().initialize_from_acc_mag(acc_for_ref, mag_body_for_ref);
-                        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
-                        mag_ref_set_ = true;
-                    }
+                    northLockFromAccelMag_(acc_for_ref, mag_body_for_ref);
                 }
             }
         }
-        if (mag_ref_set_) {
+
+        // Delay only ongoing mag EKF correction, not initial north-lock.
+        if (mag_ref_set_ && t_ >= cfg_.mag_delay_sec) {
           impl_.updateMag(mag_body_ned);
         }
     }
@@ -1341,45 +1328,20 @@ public:
 private:
     enum class Stage { Uninitialized, Warming, Live };
 
-    static bool quatFromAccelMagBodyToWorldNed_(const Eigen::Vector3f& acc_body_ned,
-                                                const Eigen::Vector3f& mag_body_ned,
-                                                Eigen::Quaternionf& q_bw_out,
-                                                Eigen::Vector3f* mag_world_out_uT = nullptr) {
-        if (!acc_body_ned.allFinite() || !mag_body_ned.allFinite()) return false;
+    void northLockFromAccelMag_(const Eigen::Vector3f& acc_body,
+                                const Eigen::Vector3f& mag_body) {
+        impl_.mekf().initialize_from_acc_mag(acc_body, mag_body);
 
-        const float an = acc_body_ned.norm();
-        const float mn = mag_body_ned.norm();
-        if (!(an > 1e-6f) || !(mn > 1e-6f)) return false;
+        Eigen::Quaternionf q0 = impl_.mekf().quaternion_boat();
+        const float nq = q0.norm();
+        if (!(nq > 1e-6f) || !std::isfinite(nq)) return;
+        q0.normalize();
 
-        // In this stack, at-rest specific force is ~ -g along body down.
-        Eigen::Vector3f down_b = (-acc_body_ned / an);
+        const Eigen::Vector3f mag_world_ref_uT = q0 * mag_body;
+        if (!mag_world_ref_uT.allFinite() || !(mag_world_ref_uT.norm() > 1e-3f)) return;
 
-        // Build local N/E/D basis in body coordinates.
-        Eigen::Vector3f east_b = down_b.cross(mag_body_ned);
-        const float en = east_b.norm();
-        if (!(en > 1e-6f) || !east_b.allFinite()) return false;
-        east_b /= en;
-
-        Eigen::Vector3f north_b = east_b.cross(down_b);
-        const float nn = north_b.norm();
-        if (!(nn > 1e-6f) || !north_b.allFinite()) return false;
-        north_b /= nn;
-        down_b.normalize();
-
-        Eigen::Matrix3f R_wb;
-        R_wb.col(0) = north_b; // world north in body coords
-        R_wb.col(1) = east_b;  // world east  in body coords
-        R_wb.col(2) = down_b;  // world down  in body coords
-
-        const Eigen::Matrix3f R_bw = R_wb.transpose();
-        Eigen::Quaternionf q_bw(R_bw);
-        q_bw.normalize();
-        q_bw_out = q_bw;
-
-        if (mag_world_out_uT) {
-            *mag_world_out_uT = q_bw * mag_body_ned;
-        }
-        return true;
+        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+        mag_ref_set_ = true;
     }
 
 private:

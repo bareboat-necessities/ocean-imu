@@ -238,6 +238,7 @@ class Kalman3D_Wave_OU_II {
     // Initialization / measurement API
     void initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag);
     void initialize_from_acc(Vector3 const& acc);
+    void initialize_from_acc_preserve_yaw(Vector3 const& acc);
     static Eigen::Quaternion<T> quaternion_from_acc(Vector3 const& acc);
 
     // Set the world-frame magnetic reference vector used by the mag measurement model.
@@ -285,6 +286,24 @@ class Kalman3D_Wave_OU_II {
 
         // Composition: B→W = (B'→W) ∘ (B→B') = q_WB' * q_B'B
         return q_WBprime * q_BprimeB;
+    }
+
+    void set_quaternion_boat(const Eigen::Quaternion<T>& q_bw) {
+        Eigen::Quaternion<T> q = q_bw;
+        const T nq = q.norm();
+        if (!(nq > T(1e-8))) return;
+        q.normalize();
+
+        const T half = -wind_heel_rad_ * T(0.5);
+        const T c = std::cos(half);
+        const T s = std::sin(half);
+        const Eigen::Quaternion<T> q_BprimeB(c, s, 0, 0);
+        const Eigen::Quaternion<T> q_BBprime = q_BprimeB.conjugate();
+
+        const Eigen::Quaternion<T> q_WBprime = q * q_BBprime;
+        qref = q_WBprime.conjugate();
+        qref.normalize();
+        xext.template segment<3>(0).setZero();
     }
 
     [[nodiscard]] Vector3 gyroscope_bias() const {
@@ -1412,6 +1431,50 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_ac
     // Use accelerometer to align z axis, yaw remains arbitrary
     qref = quaternion_from_acc(acc_n);
     qref.normalize();
+}
+
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_preserve_yaw(
+    Vector3 const& acc_body)
+{
+    const Eigen::Quaternion<T> q_old_bw = quaternion_boat();
+
+    const T ox = q_old_bw.x();
+    const T oy = q_old_bw.y();
+    const T oz = q_old_bw.z();
+    const T ow = q_old_bw.w();
+    const T siny_cosp = T(2) * (ow * oz + ox * oy);
+    const T cosy_cosp = T(1) - T(2) * (oy * oy + oz * oz);
+    const T yaw_old = std::atan2(siny_cosp, cosy_cosp);
+
+    // Re-lock tilt from accelerometer first.
+    initialize_from_acc(acc_body);
+
+    Eigen::Quaternion<T> q_tilt_bw = quaternion_boat();
+    const T nq_tilt = q_tilt_bw.norm();
+    if (!(nq_tilt > T(1e-8))) return;
+    q_tilt_bw.normalize();
+
+    const T tx = q_tilt_bw.x();
+    const T ty = q_tilt_bw.y();
+    const T tz = q_tilt_bw.z();
+    const T tw = q_tilt_bw.w();
+
+    const T sinp_raw = T(2) * (tw * ty - tz * tx);
+    const T sinp = std::max(T(-1), std::min(T(1), sinp_raw));
+    const T pitch = std::asin(sinp);
+
+    const T sinr_cosp = T(2) * (tw * tx + ty * tz);
+    const T cosr_cosp = T(1) - T(2) * (tx * tx + ty * ty);
+    const T roll = std::atan2(sinr_cosp, cosr_cosp);
+
+    const Eigen::Quaternion<T> q_yaw(Eigen::AngleAxis<T>(yaw_old, Vector3::UnitZ()));
+    const Eigen::Quaternion<T> q_pitch(Eigen::AngleAxis<T>(pitch, Vector3::UnitY()));
+    const Eigen::Quaternion<T> q_roll(Eigen::AngleAxis<T>(roll, Vector3::UnitX()));
+
+    Eigen::Quaternion<T> q_new_bw = q_yaw * q_pitch * q_roll;
+    q_new_bw.normalize();
+    set_quaternion_boat(q_new_bw);
 }
 
 template <typename T, bool with_gyro_bias, bool with_accel_bias>
