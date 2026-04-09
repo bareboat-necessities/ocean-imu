@@ -569,13 +569,13 @@ private:
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
     mag_fresh_ = updateMagFreshGate_(m_cal_, mag_ok_, millis());
-    if (mag_ok_ && mag_fresh_) fusion_.updateMag(m_cal_);
 
     const bool still =
         (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
         (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
 
     fusion_.update(dt_, w_cal_, a_cal_);
+    if (mag_ok_ && mag_fresh_) fusion_.updateMag(m_cal_);
 
     Eigen::Quaternionf q_bw = fusion_.raw().mekf().quaternion_boat();
     q_bw.normalize();
