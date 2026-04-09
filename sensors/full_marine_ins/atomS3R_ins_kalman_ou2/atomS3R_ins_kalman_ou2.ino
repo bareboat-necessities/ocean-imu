@@ -206,14 +206,18 @@ public:
     }
 #endif
 
-    pollRuntimeMag_();
-
     ImuSample sample{};
-    const bool got_sample = readImuMapped(M5.Imu, sample);
-    stale_frame_count_           = 0;
+    const bool got_sample = readImuSampleRobust_(sample);
 
     if (got_sample) {
+      stale_frame_count_ = 0;
+      pollRuntimeMag_();
       updateFilter_(sample);
+    } else {
+      if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
+      if ((stale_frame_count_ % 50u) == 0u) {
+        Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
+      }
     }
 
     updateUI_();
@@ -371,6 +375,28 @@ private:
     last_skipped_total_ = 0;
     have_last_sample_us_ = false;
     last_sample_us_      = 0;
+  }
+
+  bool readImuSampleRobust_(ImuSample& out) {
+    const uint32_t sample_us = micros();
+    const uint32_t update_mask = M5.Imu.update();
+    if (readImuMapped(M5.Imu, update_mask, sample_us, out)) return true;
+
+    // Fallback path: some M5Unified builds do not raise accel/gyro bits reliably.
+    // Keep producing samples if raw vectors are finite.
+    const auto data = M5.Imu.getImuData();
+    out.sample_us = sample_us;
+    out.mask = update_mask;
+    out.tempC = NAN;
+    (void)M5.Imu.getTemp(&out.tempC);
+    out.a = map_acc_to_body_ned_(data.accel);
+    out.w = map_gyr_to_body_ned_(data.gyro);
+    out.m = map_mag_to_body_uT_(data.mag);
+
+    const bool a_ok = finite3_(out.a);
+    const bool w_ok = finite3_(out.w);
+    const bool has_signal = (out.a.norm() > 1e-4f) || (out.w.norm() > 1e-5f);
+    return a_ok && w_ok && has_signal;
   }
 
   void pollRuntimeMag_() {
