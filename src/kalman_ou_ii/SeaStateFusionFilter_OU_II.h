@@ -1341,6 +1341,28 @@ public:
 private:
     enum class Stage { Uninitialized, Warming, Live };
 
+    static Eigen::Vector3f downBodyFromQuatBW_(const Eigen::Quaternionf& q_bw) {
+        Eigen::Vector3f d = q_bw.conjugate() * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        const float dn = d.norm();
+        if (!(dn > 1e-6f) || !d.allFinite()) return Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        return d / dn;
+    }
+
+    static Eigen::Vector3f accelAsSpecificForceUp_(const Eigen::Vector3f& acc_body_ned,
+                                                   const Eigen::Vector3f& down_body_hint_unit) {
+        Eigen::Vector3f a = acc_body_ned;
+        if (!a.allFinite()) return a;
+
+        Eigen::Vector3f d = down_body_hint_unit;
+        const float dn = d.norm();
+        if (!(dn > 1e-6f) || !d.allFinite()) d = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        else                                 d /= dn;
+
+        // Keep sign convention consistent with MEKF tilt initialization expectation.
+        if (a.dot(d) > 0.0f) a = -a;
+        return a;
+    }
+
     // Tilt-only (yaw-free) quaternion body->world from accel.
     // We assume “rest accel” direction represents gravity (up to sign convention),
     // so we align BODY measured down with WORLD down (NED: +Z down).

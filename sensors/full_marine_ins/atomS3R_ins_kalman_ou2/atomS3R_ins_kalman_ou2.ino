@@ -324,7 +324,6 @@ private:
   bool updateMagFreshGate_(const Vector3f& m_cal, bool mag_ok, uint32_t now_ms) {
     constexpr uint32_t kSampleSpacingMs = 35u;
     constexpr float    kMinDeltaUT      = 0.001f;
-    constexpr uint8_t  kMaxRepeats      = 20u;
 
     if (!mag_ok) {
       mag_gate_repeat_count_ = 0;
@@ -351,7 +350,9 @@ private:
 
     mag_gate_last_ms_ = now_ms;
     mag_gate_last_cal_ = m_cal;
-    return mag_gate_repeat_count_ <= kMaxRepeats;
+    // Keep cadence aligned with atomS3R_compass_qmekf:
+    // once sample spacing is met, accept as fresh; repeat_count tracks "stuck" softly.
+    return true;
   }
 
   float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
@@ -562,18 +563,19 @@ private:
     a_cal_ = runtime_.applyAccel(a_raw, tempC);
     w_cal_ = runtime_.applyGyro (w_raw, tempC);
 
+    // Apply compass calibration before any magnetometer use in the filter chain.
     m_cal_ = runtime_.applyMag(s.m);
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
     mag_fresh_ = updateMagFreshGate_(m_cal_, mag_ok_, millis());
-    if (mag_ok_ && mag_fresh_) fusion_.updateMag(m_cal_);
 
     const bool still =
         (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
         (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
 
     fusion_.update(dt_, w_cal_, a_cal_);
+    if (mag_ok_ && mag_fresh_) fusion_.updateMag(m_cal_);
 
     Eigen::Quaternionf q_bw = fusion_.raw().mekf().quaternion_boat();
     q_bw.normalize();
