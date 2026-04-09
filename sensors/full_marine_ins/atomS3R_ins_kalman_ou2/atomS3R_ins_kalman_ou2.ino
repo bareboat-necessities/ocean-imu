@@ -433,7 +433,7 @@ private:
 
     constexpr float acc_sigma_ref_mps2 = 0.12f;
     constexpr float gyr_sigma_ref_rps  = 0.00135f;
-    constexpr float mag_sigma_ref_uT   = 1.80f;
+    constexpr float mag_sigma_ref_uT   = 0.80f;
 
     const float imu_rate_scale = sqrtf(IMU_TUNE_REF_HZ / LOOP_HZ);
     const float mag_rate_runtime_hz = 1000.0f / static_cast<float>(magPollMs_());
