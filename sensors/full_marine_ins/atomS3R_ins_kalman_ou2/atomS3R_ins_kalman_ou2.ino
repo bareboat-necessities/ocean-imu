@@ -324,7 +324,6 @@ private:
   bool updateMagFreshGate_(const Vector3f& m_cal, bool mag_ok, uint32_t now_ms) {
     constexpr uint32_t kSampleSpacingMs = 35u;
     constexpr float    kMinDeltaUT      = 0.001f;
-    constexpr uint8_t  kMaxRepeats      = 20u;
 
     if (!mag_ok) {
       mag_gate_repeat_count_ = 0;
@@ -351,7 +350,9 @@ private:
 
     mag_gate_last_ms_ = now_ms;
     mag_gate_last_cal_ = m_cal;
-    return mag_gate_repeat_count_ <= kMaxRepeats;
+    // Keep cadence aligned with atomS3R_compass_qmekf:
+    // once sample spacing is met, accept as fresh; repeat_count tracks "stuck" softly.
+    return true;
   }
 
   float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
@@ -562,6 +563,7 @@ private:
     a_cal_ = runtime_.applyAccel(a_raw, tempC);
     w_cal_ = runtime_.applyGyro (w_raw, tempC);
 
+    // Apply compass calibration before any magnetometer use in the filter chain.
     m_cal_ = runtime_.applyMag(s.m);
 
     mag_norm_uT_ = m_cal_.norm();
