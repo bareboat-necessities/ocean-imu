@@ -636,8 +636,9 @@ private:
       }
     }
 
-    // For compass UX prefer direct tilt-compensated magnetic heading when valid.
-    heading_deg_ = heading_mag_ok_ ? heading_mag_deg_ : heading_est_deg;
+    // Use fused filter yaw as primary heading output.
+    // Keep tilt-compensated magnetic heading for diagnostics only.
+    heading_deg_ = heading_est_deg;
 
     if (still) {
       const float alpha_b = 1.0f - expf(-dt_ / ROT_BIAS_TAU_S);
