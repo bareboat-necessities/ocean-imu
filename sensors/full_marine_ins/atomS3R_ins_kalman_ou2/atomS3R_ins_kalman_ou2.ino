@@ -622,9 +622,8 @@ private:
     if (rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg)) {
       roll_deg_ = roll_est_deg;
       pitch_deg_ = pitch_est_deg;
-      heading_deg_ = heading_est_deg;
     } else {
-      heading_deg_ = headingFromQuatBodyToWorldNed_(q_bw);
+      heading_est_deg = headingFromQuatBodyToWorldNed_(q_bw);
     }
 
     heading_mag_ok_ = false;
@@ -636,6 +635,9 @@ private:
         heading_mag_deg_ = hdg_mag;
       }
     }
+
+    // For compass UX prefer direct tilt-compensated magnetic heading when valid.
+    heading_deg_ = heading_mag_ok_ ? heading_mag_deg_ : heading_est_deg;
 
     if (still) {
       const float alpha_b = 1.0f - expf(-dt_ / ROT_BIAS_TAU_S);
