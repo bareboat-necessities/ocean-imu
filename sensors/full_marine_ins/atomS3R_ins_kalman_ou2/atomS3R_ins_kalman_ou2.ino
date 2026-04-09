@@ -77,7 +77,6 @@ static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
 static constexpr float HEADING_ACCEL_G_TOL_FRAC = 0.18f;
-static constexpr float MAG_MIN_DELTA_uT         = 0.002f;
 
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
@@ -207,11 +206,12 @@ public:
 #endif
 
     ImuSample sample{};
-    const bool got_sample = readImuSampleRobust_(sample);
+    const uint32_t sample_us = micros();
+    const uint32_t update_mask = M5.Imu.update();
+    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample);
 
     if (got_sample) {
       stale_frame_count_ = 0;
-      pollRuntimeMag_();
       updateFilter_(sample);
     } else {
       if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
@@ -250,11 +250,9 @@ private:
 
   Fusion fusion_{};
 
-  uint32_t last_mag_poll_ms_    = 0;
-  uint32_t last_mag_success_ms_ = 0;
-  bool     have_mag_sample_     = false;
-  Vector3f mag_raw_uT_          = Vector3f::Constant(NAN);
-  bool     pending_mag_update_  = false;
+  uint32_t mag_gate_last_ms_ = 0;
+  Vector3f mag_gate_last_cal_ = Vector3f::Zero();
+  uint8_t  mag_gate_repeat_count_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -300,6 +298,38 @@ private:
     return 1.0f / LOOP_HZ;
   }
 
+  bool updateMagFreshGate_(const Vector3f& m_cal, bool mag_ok, uint32_t now_ms) {
+    constexpr uint32_t kSampleSpacingMs = 35u;
+    constexpr float kMinDeltaUT = 0.001f;
+
+    if (!mag_ok) {
+      mag_gate_repeat_count_ = 0;
+      return false;
+    }
+
+    if (mag_gate_last_ms_ == 0) {
+      mag_gate_last_ms_ = now_ms;
+      mag_gate_last_cal_ = m_cal;
+      mag_gate_repeat_count_ = 0;
+      return true;
+    }
+
+    const uint32_t dtm = now_ms - mag_gate_last_ms_;
+    if (dtm < kSampleSpacingMs) return false;
+
+    const float dm = (m_cal - mag_gate_last_cal_).norm();
+    const bool looks_stuck = dm <= kMinDeltaUT;
+    if (looks_stuck) {
+      if (mag_gate_repeat_count_ < 255) mag_gate_repeat_count_++;
+    } else {
+      mag_gate_repeat_count_ = 0;
+    }
+
+    mag_gate_last_ms_ = now_ms;
+    mag_gate_last_cal_ = m_cal;
+    return true;
+  }
+
   float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
     const float dt_nom = nominalFusionDt_();
     if (!have_last_sample_us_) {
@@ -323,10 +353,6 @@ private:
     }
     const uint32_t ms = static_cast<uint32_t>(ms_f + 0.5f);
     return std::max<uint32_t>(1u, ms);
-  }
-
-  uint32_t magStaleMs_() const {
-    return std::max<uint32_t>(75u, 3u * magPollMs_());
   }
 
   void reloadBlobAndRuntime_() {
@@ -366,63 +392,13 @@ private:
       while (true) delay(100);
     }
 
-    last_mag_poll_ms_    = 0;
-    last_mag_success_ms_ = 0;
-    have_mag_sample_     = false;
-    mag_raw_uT_.setConstant(NAN);
-    pending_mag_update_  = false;
+    mag_gate_last_ms_ = 0;
+    mag_gate_last_cal_.setZero();
+    mag_gate_repeat_count_ = 0;
 
     last_skipped_total_ = 0;
     have_last_sample_us_ = false;
     last_sample_us_      = 0;
-  }
-
-  bool readImuSampleRobust_(ImuSample& out) {
-    const uint32_t sample_us = micros();
-    const uint32_t update_mask = M5.Imu.update();
-    if (readImuMapped(M5.Imu, update_mask, sample_us, out)) return true;
-
-    // Fallback path: some M5Unified builds do not raise accel/gyro bits reliably.
-    // Keep producing samples if raw vectors are finite.
-    const auto data = M5.Imu.getImuData();
-    out.sample_us = sample_us;
-    out.mask = update_mask;
-    out.tempC = NAN;
-    (void)M5.Imu.getTemp(&out.tempC);
-    out.a = map_acc_to_body_ned_(data.accel);
-    out.w = map_gyr_to_body_ned_(data.gyro);
-    out.m = map_mag_to_body_uT_(data.mag);
-
-    const bool a_ok = finite3_(out.a);
-    const bool w_ok = finite3_(out.w);
-    const bool has_signal = (out.a.norm() > 1e-4f) || (out.w.norm() > 1e-5f);
-    return a_ok && w_ok && has_signal;
-  }
-
-  void pollRuntimeMag_() {
-    const uint32_t now_ms = millis();
-    constexpr uint32_t kCompassMagSpacingMs = 35u;
-
-    if (last_mag_poll_ms_ != 0 &&
-        static_cast<uint32_t>(now_ms - last_mag_poll_ms_) < kCompassMagSpacingMs) {
-      return;
-    }
-    last_mag_poll_ms_ = now_ms;
-
-    const auto data = M5.Imu.getImuData();
-    const Vector3f m_s(
-      data.mag.value[0],
-      data.mag.value[1],
-      data.mag.value[2]);
-    const Vector3f m_body = map_sensor_vec_to_body_ned_(m_s);
-    const bool sample_usable = ::finite3_(m_body) &&
-                               (m_body.x() != 0.0f || m_body.y() != 0.0f || m_body.z() != 0.0f);
-    if (!sample_usable) return;
-
-    mag_raw_uT_ = m_body;
-    pending_mag_update_ = true;
-    have_mag_sample_     = true;
-    last_mag_success_ms_ = now_ms;
   }
 
   void resetFusion_() {
@@ -491,11 +467,9 @@ private:
     gyro_bias_ema_.setZero();
     heading_deg_  = 0.0f;
 
-    last_mag_poll_ms_    = 0;
-    last_mag_success_ms_ = 0;
-    have_mag_sample_     = false;
-    mag_raw_uT_.setConstant(NAN);
-    pending_mag_update_  = false;
+    mag_gate_last_ms_ = 0;
+    mag_gate_last_cal_.setZero();
+    mag_gate_repeat_count_ = 0;
     mag_ok_              = false;
     mag_fresh_           = false;
     mag_norm_uT_         = NAN;
@@ -562,29 +536,16 @@ private:
     a_cal_ = runtime_.applyAccel(a_raw, tempC);
     w_cal_ = runtime_.applyGyro (w_raw, tempC);
 
-    Vector3f mag_for_use = mag_raw_uT_;
-    const uint32_t now_ms = millis();
-    if (!have_mag_sample_ ||
-        static_cast<uint32_t>(now_ms - last_mag_success_ms_) > magStaleMs_()) {
-      mag_for_use.setConstant(NAN);
-      pending_mag_update_ = false;
-    }
-
-    m_cal_ = runtime_.applyMag(mag_for_use);
+    m_cal_ = runtime_.applyMag(s.m);
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
+    mag_fresh_ = updateMagFreshGate_(m_cal_, mag_ok_, millis());
+    if (mag_ok_ && mag_fresh_) fusion_.updateMag(m_cal_);
 
     const bool still =
         (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
         (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
-
-    mag_fresh_ = false;
-    if (pending_mag_update_ && mag_ok_) {
-      fusion_.updateMag(m_cal_);
-      mag_fresh_ = true;
-      pending_mag_update_ = false;
-    }
 
     fusion_.update(dt_, w_cal_, a_cal_);
 
@@ -734,11 +695,6 @@ private:
     nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, valid);
 #else
-    const float mag_delta_ms = have_mag_sample_
-                               ? static_cast<float>(now_ms - last_mag_success_ms_)
-                               : 0.0f;
-    const float mag_target_ms = static_cast<float>(magPollMs_());
-
 #if ARDUINO_PLOTTER
     Serial.printf(
       "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\n",
@@ -751,8 +707,8 @@ private:
       static_cast<double>(dt_ * 1000.0f),
       mag_ok_ ? 1U : 0U,
       mag_fresh_ ? "+" : "~",
-      static_cast<double>(mag_delta_ms),
-      static_cast<double>(mag_target_ms),
+      mag_fresh_ ? 0.0 : -1.0,
+      35.0,
       static_cast<double>(a_cal_.x()),
       static_cast<double>(a_cal_.y()),
       static_cast<double>(a_cal_.z()),
