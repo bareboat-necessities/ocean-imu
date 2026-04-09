@@ -112,6 +112,22 @@ static inline float headingFromQuatBodyToWorldNed_(const Eigen::Quaternionf& q_b
   return wrap360_(atan2f(fwd_w.y(), fwd_w.x()) * RAD_TO_DEG);            // atan2(E, N)
 }
 
+static inline bool rollPitchFromDownBody_(const Vector3f& down_b_unit,
+                                          float& roll_deg_out,
+                                          float& pitch_deg_out) {
+  Vector3f d = down_b_unit;
+  const float dn = d.norm();
+  if (dn < 1e-6f) return false;
+  d /= dn;
+
+  const float pitch = asinf(clampf_(-d.x(), -1.0f, 1.0f));
+  const float roll  = atan2f(d.y(), d.z());
+
+  roll_deg_out  = wrap180_(roll  * RAD_TO_DEG);
+  pitch_deg_out = wrap180_(pitch * RAD_TO_DEG);
+  return true;
+}
+
 static inline bool magneticHeadingFromDownAndMagBody_(
     const Vector3f& down_b_unit,
     const Vector3f& mag_b_uT,
@@ -280,6 +296,8 @@ private:
   bool  mag_ok_      = false;
   bool  mag_fresh_   = false;
   float mag_norm_uT_ = NAN;
+  float heading_mag_deg_ = NAN;
+  bool  heading_mag_ok_  = false;
 
   uint16_t stale_frame_count_ = 0;
   uint32_t last_skipped_total_ = 0;
@@ -479,6 +497,8 @@ private:
     mag_ok_              = false;
     mag_fresh_           = false;
     mag_norm_uT_         = NAN;
+    heading_mag_deg_     = NAN;
+    heading_mag_ok_      = false;
 
     stale_frame_count_ = 0;
     have_last_sample_us_ = false;
@@ -577,12 +597,23 @@ private:
     }
 
     heading_deg_ = headingFromQuatBodyToWorldNed_(q_bw);
+    heading_mag_ok_ = false;
+    heading_mag_deg_ = NAN;
+    if (mag_ok_) {
+      float hdg_mag = NAN;
+      if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag)) {
+        heading_mag_ok_ = true;
+        heading_mag_deg_ = hdg_mag;
+      }
+    }
 
     {
-      const float pitch = asinf(clampf_(-down_b.x(), -1.0f, 1.0f));
-      const float roll  = atan2f(down_b.y(), down_b.z());
-      roll_deg_  = wrap180_(roll  * RAD_TO_DEG);
-      pitch_deg_ = wrap180_(pitch * RAD_TO_DEG);
+      float rdeg = roll_deg_;
+      float pdeg = pitch_deg_;
+      if (rollPitchFromDownBody_(down_b, rdeg, pdeg)) {
+        roll_deg_  = rdeg;
+        pitch_deg_ = pdeg;
+      }
     }
 
     if (still) {
@@ -662,6 +693,9 @@ private:
     ui_.setReadRotation();
     ui_.title("COMPASS");
     M5.Display.printf("HDG: %6.1f deg\n", static_cast<double>(heading_deg_));
+    M5.Display.printf("HDM: %6.1f %s\n",
+                      static_cast<double>(heading_mag_deg_),
+                      heading_mag_ok_ ? "MAG" : "---");
     M5.Display.printf("ROL: %6.1f deg\n", static_cast<double>(roll_deg_));
     M5.Display.printf("PIT: %6.1f deg\n", static_cast<double>(pitch_deg_));
     M5.Display.printf("HEV: %6.3f m\n", static_cast<double>(heave_m_));
@@ -700,7 +734,10 @@ private:
       static_cast<double>(heave_wave_clean_m_ * 100.0f));
 #else
     Serial.printf(
-      "dt_imu_ms=%.2f | mag_valid=%u | dt_mag_ms=%s%.2f (target~%.2f) | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
+      "hdg_filt=%.2f | hdg_mag=%s%.2f | dt_imu_ms=%.2f | mag_valid=%u | dt_mag_ms=%s%.2f (target~%.2f) | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
+      static_cast<double>(heading_deg_),
+      heading_mag_ok_ ? "" : "~",
+      static_cast<double>(heading_mag_deg_),
       static_cast<double>(dt_ * 1000.0f),
       mag_ok_ ? 1U : 0U,
       mag_fresh_ ? "+" : "~",
