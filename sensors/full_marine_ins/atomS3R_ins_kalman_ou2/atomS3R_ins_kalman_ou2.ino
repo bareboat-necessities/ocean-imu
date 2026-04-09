@@ -112,19 +112,36 @@ static inline float headingFromQuatBodyToWorldNed_(const Eigen::Quaternionf& q_b
   return wrap360_(atan2f(fwd_w.y(), fwd_w.x()) * RAD_TO_DEG);            // atan2(E, N)
 }
 
-static inline bool rollPitchFromDownBody_(const Vector3f& down_b_unit,
-                                          float& roll_deg_out,
-                                          float& pitch_deg_out) {
-  Vector3f d = down_b_unit;
-  const float dn = d.norm();
-  if (dn < 1e-6f) return false;
-  d /= dn;
+static inline bool rollPitchHeadingFromQuatBw_(
+    const Eigen::Quaternionf& q_bw,
+    float& roll_deg_out,
+    float& pitch_deg_out,
+    float& heading_deg_out) {
+  Eigen::Quaternionf q = q_bw;
+  const float nq = q.norm();
+  if (!(nq > 1e-6f) || !std::isfinite(nq)) return false;
+  q.normalize();
 
-  const float pitch = asinf(clampf_(-d.x(), -1.0f, 1.0f));
-  const float roll  = atan2f(d.y(), d.z());
+  const float x = q.x();
+  const float y = q.y();
+  const float z = q.z();
+  const float w = q.w();
 
-  roll_deg_out  = wrap180_(roll  * RAD_TO_DEG);
+  const float siny_cosp = 2.0f * (w * z + x * y);
+  const float cosy_cosp = 1.0f - 2.0f * (y * y + z * z);
+  const float yaw = atan2f(siny_cosp, cosy_cosp);
+
+  float sinp = 2.0f * (w * y - z * x);
+  sinp = clampf_(sinp, -1.0f, 1.0f);
+  const float pitch = asinf(sinp);
+
+  const float sinr_cosp = 2.0f * (w * x + y * z);
+  const float cosr_cosp = 1.0f - 2.0f * (x * x + y * y);
+  const float roll = atan2f(sinr_cosp, cosr_cosp);
+
+  roll_deg_out = wrap180_(roll * RAD_TO_DEG);
   pitch_deg_out = wrap180_(pitch * RAD_TO_DEG);
+  heading_deg_out = wrap360_(yaw * RAD_TO_DEG);
   return true;
 }
 
@@ -580,25 +597,36 @@ private:
     Eigen::Quaternionf q_bw = fusion_.raw().mekf().quaternion_boat();
     q_bw.normalize();
 
-    Vector3f down_b(0.0f, 0.0f, 0.0f);
+    Vector3f down_b(0.0f, 0.0f, 1.0f);
     {
       const Vector3f down_w(0.0f, 0.0f, 1.0f);
       Vector3f down_q_b = quatRotate_(q_bw.conjugate(), down_w);
       const float dnq = down_q_b.norm();
-      if (dnq > 1e-6f) down_q_b /= dnq;
+      if (dnq > 1e-6f) {
+        down_b = down_q_b / dnq;
+      }
 
       const float a_norm = a_cal_.norm();
       const bool accel_trust = fabsf(a_norm - g_std) <= (HEADING_ACCEL_G_TOL_FRAC * g_std);
-
       if (accel_trust && a_norm > 1e-6f) {
-        down_b = a_cal_ / a_norm;
-        if (dnq > 1e-6f && down_b.dot(down_q_b) < 0.0f) down_b = -down_b;
-      } else {
-        down_b = down_q_b;
+        Vector3f down_acc_b = -a_cal_ / a_norm; // specific force at rest points up, so down = -a
+        if (down_acc_b.dot(down_b) < 0.0f) down_acc_b = -down_acc_b;
+        const float blend = 0.25f; // keep quaternion tilt as primary, accel as corrective hint
+        down_b = ((1.0f - blend) * down_b + blend * down_acc_b).normalized();
       }
     }
 
-    heading_deg_ = headingFromQuatBodyToWorldNed_(q_bw);
+    float roll_est_deg = roll_deg_;
+    float pitch_est_deg = pitch_deg_;
+    float heading_est_deg = headingFromQuatBodyToWorldNed_(q_bw);
+    if (rollPitchHeadingFromQuatBw_(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg)) {
+      roll_deg_ = roll_est_deg;
+      pitch_deg_ = pitch_est_deg;
+      heading_deg_ = heading_est_deg;
+    } else {
+      heading_deg_ = headingFromQuatBodyToWorldNed_(q_bw);
+    }
+
     heading_mag_ok_ = false;
     heading_mag_deg_ = NAN;
     if (mag_ok_) {
@@ -606,15 +634,6 @@ private:
       if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg_mag)) {
         heading_mag_ok_ = true;
         heading_mag_deg_ = hdg_mag;
-      }
-    }
-
-    {
-      float rdeg = roll_deg_;
-      float pdeg = pitch_deg_;
-      if (rollPitchFromDownBody_(down_b, rdeg, pdeg)) {
-        roll_deg_  = rdeg;
-        pitch_deg_ = pdeg;
       }
     }
 
