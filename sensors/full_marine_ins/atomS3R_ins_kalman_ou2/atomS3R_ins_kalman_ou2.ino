@@ -107,6 +107,11 @@ static inline Vector3f quatRotate_(const Eigen::Quaternionf& q, const Vector3f& 
   return v + q.w() * t + qv.cross(t);
 }
 
+static inline float headingFromQuatBodyToWorldNed_(const Eigen::Quaternionf& q_bw) {
+  const Vector3f fwd_w = quatRotate_(q_bw, Vector3f(1.0f, 0.0f, 0.0f));  // body +X in world NED
+  return wrap360_(atan2f(fwd_w.y(), fwd_w.x()) * RAD_TO_DEG);            // atan2(E, N)
+}
+
 static inline bool magneticHeadingFromDownAndMagBody_(
     const Vector3f& down_b_unit,
     const Vector3f& mag_b_uT,
@@ -300,7 +305,8 @@ private:
 
   bool updateMagFreshGate_(const Vector3f& m_cal, bool mag_ok, uint32_t now_ms) {
     constexpr uint32_t kSampleSpacingMs = 35u;
-    constexpr float kMinDeltaUT = 0.001f;
+    constexpr float    kMinDeltaUT      = 0.001f;
+    constexpr uint8_t  kMaxRepeats      = 20u;
 
     if (!mag_ok) {
       mag_gate_repeat_count_ = 0;
@@ -327,7 +333,7 @@ private:
 
     mag_gate_last_ms_ = now_ms;
     mag_gate_last_cal_ = m_cal;
-    return true;
+    return mag_gate_repeat_count_ <= kMaxRepeats;
   }
 
   float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
@@ -570,16 +576,7 @@ private:
       }
     }
 
-    {
-      float hdg_meas = heading_deg_;
-      if (mag_ok_) {
-        float hdg = heading_deg_;
-        if (magneticHeadingFromDownAndMagBody_(down_b, m_cal_, hdg)) {
-          hdg_meas = hdg;
-        }
-      }
-      heading_deg_ = wrap360_(hdg_meas);
-    }
+    heading_deg_ = headingFromQuatBodyToWorldNed_(q_bw);
 
     {
       const float pitch = asinf(clampf_(-down_b.x(), -1.0f, 1.0f));
