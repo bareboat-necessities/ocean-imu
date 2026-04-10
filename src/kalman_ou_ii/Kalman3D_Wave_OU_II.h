@@ -2210,10 +2210,17 @@ Matrix<T, 3, 3> Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::skew_sy
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::applyQuaternionCorrectionFromErrorState()
 {
-    Eigen::Quaternion<T> corr = quat_from_delta_theta((xext.template segment<3>(0)).eval());
-    qref = qref * corr;
+    const Eigen::Quaternion<T> corr =
+        quat_from_delta_theta((xext.template segment<3>(0)).eval());
+
+    // qref stores WORLD->BODY'.
+    // Measurement Jacobians use the left-multiplicative convention:
+    //   z ≈ zhat - [zhat]x * delta_theta
+    // so the correction must be injected on the LEFT.
+    qref = corr * qref;
     qref.normalize();
-    // Clear the local attitude-error state after injection.
+
+    // Clear injected attitude error state.
     xext.template head<3>().setZero();
 }
 
