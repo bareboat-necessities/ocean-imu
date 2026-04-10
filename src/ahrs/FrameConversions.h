@@ -75,31 +75,16 @@ static inline Quaternionf quat_from_euler(float roll_deg, float pitch_deg, float
     return q.normalized();
 }
 
+// Safe CSV quaternion loader for q_wb_zu = world->body in Z-up.
 static inline Quaternionf quat_wb_zu_from_csv(float w, float x, float y, float z) {
     Quaternionf q(w, x, y, z);
-    if (q.norm() < 1e-6f) return Quaternionf::Identity();
+    const bool finite =
+        std::isfinite(q.w()) && std::isfinite(q.x()) &&
+        std::isfinite(q.y()) && std::isfinite(q.z());
+    if (!finite || q.norm() < 1e-6f) {
+        return Quaternionf::Identity();
+    }
     return q.normalized();
-}
-
-static inline void quat_wb_zu_to_euler_nautical(const Quaternionf& q_wb_zu,
-                                                float& roll,
-                                                float& pitch,
-                                                float& yaw)
-{
-    const Matrix3f C_wb_zu = q_wb_zu.normalized().toRotationMatrix();
-    matrix_to_euler_zyx_deg(C_wb_zu, roll, pitch, yaw);
-}
-
-static inline Vector3f mag_body_from_quat_wb_zu(
-    const Quaternionf& q_wb_zu,
-    float declination_deg = MagSim_WMM::default_declination_deg,
-    float inclination_deg = MagSim_WMM::default_inclination_deg,
-    float total_field_uT  = MagSim_WMM::default_total_field_uT)
-{
-    const Matrix3f C_wb_zu = q_wb_zu.normalized().toRotationMatrix();
-    const Vector3f mag_world_zu =
-        MagSim_WMM::mag_world_nautical(declination_deg, inclination_deg, total_field_uT);
-    return C_wb_zu * mag_world_zu;
 }
 
 static inline void matrix_to_euler_zyx_deg(const Matrix3f& R,
@@ -117,6 +102,16 @@ static inline void matrix_to_euler_zyx_deg(const Matrix3f& R,
     roll_deg = roll * RAD2DEG;
     pitch_deg = pitch * RAD2DEG;
     yaw_deg = yaw * RAD2DEG;
+}
+
+// q_wb_zu -> nautical Euler directly.
+static inline void quat_wb_zu_to_euler_nautical(const Quaternionf& q_wb_zu,
+                                                float& roll,
+                                                float& pitch,
+                                                float& yaw)
+{
+    const Matrix3f C_wb_zu = q_wb_zu.normalized().toRotationMatrix();
+    matrix_to_euler_zyx_deg(C_wb_zu, roll, pitch, yaw);
 }
 
 // Aerospace Euler convention in this file:
@@ -144,13 +139,6 @@ static inline Matrix3f rot_wb_zu_to_bw_ned(const Matrix3f& C_wb_zu) {
 
 // Nautical Euler convention in this file:
 //   WORLD->BODY in ENU/Z-up.
-//
-// This preserves the same near-level sign behavior as the old helper:
-//   roll_n  ~= -pitch_a
-//   pitch_n ~= -roll_a
-//   yaw_n   ~=  yaw_a
-//
-// but is correct for finite angles because it converts the full rotation first.
 static inline void quat_to_euler_nautical(const Quaternionf& q_bw_ned,
                                           float& roll,
                                           float& pitch,
@@ -184,8 +172,6 @@ struct MagSim_WMM {
     static constexpr float default_total_field_uT  = 52.0f;  // [uT]
 
     // World magnetic field in ENU (East, North, Up)
-    // East = X, North = Y, Up = Z
-    // Units: microteslas [uT]
     static Eigen::Vector3f mag_world_nautical(
         float declination_deg = default_declination_deg,
         float inclination_deg = default_inclination_deg,
@@ -194,18 +180,18 @@ struct MagSim_WMM {
         const float dec_rad  = declination_deg * std::numbers::pi_v<float> / 180.0f;
         const float incl_rad = inclination_deg * std::numbers::pi_v<float> / 180.0f;
 
-        const float h = std::cos(incl_rad);  // horizontal fraction
-        const float v = -std::sin(incl_rad); // vertical in Z-up
+        const float h = std::cos(incl_rad);
+        const float v = -std::sin(incl_rad);
 
         Eigen::Vector3f mag_world;
-        mag_world.x() = h * std::sin(dec_rad); // East
-        mag_world.y() = h * std::cos(dec_rad); // North
-        mag_world.z() = v;                     // Up
+        mag_world.x() = h * std::sin(dec_rad);
+        mag_world.y() = h * std::cos(dec_rad);
+        mag_world.z() = v;
 
         return mag_world * total_field_uT;
     }
 
-    // World magnetic field vector in aerospace NED frame (North, East, Down)
+    // World magnetic field vector in aerospace NED frame
     static Eigen::Vector3f mag_world_aero(
         float declination_deg = default_declination_deg,
         float inclination_deg = default_inclination_deg,
@@ -215,8 +201,6 @@ struct MagSim_WMM {
     }
 
     // Simulate body-frame magnetometer [uT] from nautical Euler (deg)
-    // Input: nautical Euler = WORLD->BODY in ENU/Z-up
-    // Output: body-frame magnetometer in nautical frame (body ENU/Z-up)
     static Eigen::Vector3f simulate_mag_from_euler_nautical(
         float roll_deg, float pitch_deg, float yaw_deg,
         float declination_deg = default_declination_deg,
@@ -230,8 +214,6 @@ struct MagSim_WMM {
     }
 
     // Simulate body-frame magnetometer [uT] from aerospace Euler (deg)
-    // Input: aerospace Euler = BODY->WORLD in NED
-    // Output: body-frame magnetometer in nautical frame (body ENU/Z-up)
     static Eigen::Vector3f simulate_mag_from_euler_aero(
         float roll_deg, float pitch_deg, float yaw_deg,
         float declination_deg = default_declination_deg,
@@ -245,6 +227,19 @@ struct MagSim_WMM {
         return ned_to_zu(mag_body_ned);
     }
 };
+
+// Quaternion-based mag synthesis from q_wb_zu.
+static inline Vector3f mag_body_from_quat_wb_zu(
+    const Quaternionf& q_wb_zu,
+    float declination_deg = MagSim_WMM::default_declination_deg,
+    float inclination_deg = MagSim_WMM::default_inclination_deg,
+    float total_field_uT  = MagSim_WMM::default_total_field_uT)
+{
+    const Matrix3f C_wb_zu = q_wb_zu.normalized().toRotationMatrix();
+    const Vector3f mag_world_zu =
+        MagSim_WMM::mag_world_nautical(declination_deg, inclination_deg, total_field_uT);
+    return C_wb_zu * mag_world_zu;
+}
 
 #ifdef FRAMECONV_TEST
 
@@ -370,6 +365,17 @@ inline int test_frame_conversions() {
         assert_close(y_e, yn, tol_angle, "quat_to_euler_nautical yaw");
     }
 
+    // Direct q_wb_zu path
+    {
+        const float rn = 12.0f, pn = -7.0f, yn = 33.0f;
+        const Quaternionf q_wb_zu = quat_from_euler(rn, pn, yn);
+        float r_e, p_e, y_e;
+        quat_wb_zu_to_euler_nautical(q_wb_zu, r_e, p_e, y_e);
+        assert_close(r_e, rn, tol_angle, "quat_wb_zu_to_euler_nautical roll");
+        assert_close(p_e, pn, tol_angle, "quat_wb_zu_to_euler_nautical pitch");
+        assert_close(y_e, yn, tol_angle, "quat_wb_zu_to_euler_nautical yaw");
+    }
+
     // Magnetometer world-field tests
     Vector3f mag_enu = MagSim_WMM::mag_world_nautical();
     Vector3f mag_ned = MagSim_WMM::mag_world_aero();
@@ -418,8 +424,18 @@ inline int test_frame_conversions() {
         assert_close(m_from_n.z(), m_from_a.z(), 1e-3f, "Mag nautical/aero z");
     }
 
+    // Cross-check quaternion-based mag synthesis against nautical Euler path.
+    {
+        const float rn = -8.0f, pn = 11.0f, yn = 27.0f;
+        const Quaternionf q_wb_zu = quat_from_euler(rn, pn, yn);
+        const Vector3f m_q = mag_body_from_quat_wb_zu(q_wb_zu);
+        const Vector3f m_e = MagSim_WMM::simulate_mag_from_euler_nautical(rn, pn, yn);
+        assert_close(m_q.x(), m_e.x(), 1e-3f, "Mag quat/euler x");
+        assert_close(m_q.y(), m_e.y(), 1e-3f, "Mag quat/euler y");
+        assert_close(m_q.z(), m_e.z(), 1e-3f, "Mag quat/euler z");
+    }
+
     std::cout << "All frame conversion tests passed\n";
     return 0;
 }
-
 #endif // FRAMECONV_TEST
