@@ -167,9 +167,9 @@ public:
         mekf_->set_exact_att_bias_Qd(true);
     }
 
-    void initialize_from_acc(const Eigen::Vector3f& acc_world) {
+    void initialize_from_acc(const Eigen::Vector3f& acc_body_ned) {
         if (mekf_) {
-            mekf_->initialize_from_acc(acc_world);
+            mekf_->initialize_from_acc(acc_body_ned);
         }
     }
 
