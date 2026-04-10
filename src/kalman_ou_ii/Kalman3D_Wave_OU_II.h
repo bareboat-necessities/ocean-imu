@@ -1363,36 +1363,71 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_ac
     const Vector3 acc = deheel_vector_(acc_body);
     const Vector3 mag = deheel_vector_(mag_body);
 
-    // use acc & mag as if they are BODY-frame (interpreted as B').
-    // Normalize accelerometer
-    T anorm = acc.norm();
+    const T anorm = acc.norm();
     if (anorm < T(1e-8)) {
         throw std::runtime_error("Invalid accelerometer vector: norm too small for initialization");
     }
-    Vector3 acc_n = acc / anorm;
 
-    // Build WORLD axes expressed in BODY coords
-    Vector3 z_world = -acc_n;     // world Z (down) in body coord
-    Vector3 mag_h   = mag - (mag.dot(z_world)) * z_world;
-    if (mag_h.norm() < T(1e-8)) {
+    const T mnorm = mag.norm();
+    if (mnorm < T(1e-8)) {
+        throw std::runtime_error("Invalid magnetometer vector: norm too small for initialization");
+    }
+
+    const Vector3 acc_n = acc / anorm;
+
+    // WORLD axes expressed in BODY' coordinates
+    const Vector3 z_world = -acc_n;  // world down axis in body coords
+
+    Vector3 mag_h = mag - (mag.dot(z_world)) * z_world;
+    const T mh = mag_h.norm();
+    if (mh < T(1e-8)) {
         throw std::runtime_error("Magnetometer vector parallel to gravity - cannot initialize yaw");
     }
-    mag_h.normalize();
-    Vector3 x_world = mag_h;      // chosen horizontal magnetic-reference direction in body coords
-    Vector3 y_world = z_world.cross(x_world).normalized();
+    mag_h /= mh;
 
-    // R_wb: world->body rotation (columns = world axes in body coords)
-    Matrix3 R_wb;
-    R_wb.col(0) = x_world;
-    R_wb.col(1) = y_world;
-    R_wb.col(2) = z_world;
+    const Vector3 x_world = mag_h;                    // magnetic north in body coords
+    const Vector3 y_world = z_world.cross(x_world).normalized();
 
-    // Store quaternion as world->body
-    qref = Eigen::Quaternion<T>(R_wb);
+    Matrix3 R_wb_new;
+    R_wb_new.col(0) = x_world;
+    R_wb_new.col(1) = y_world;
+    R_wb_new.col(2) = z_world;
+
+    qref = Eigen::Quaternion<T>(R_wb_new);
     qref.normalize();
 
-    // Store reference magnetic vector in world frame
-    v2ref = R_bw() * mag;  // body to world, uT
+    // Store world magnetic reference consistent with the new attitude.
+    v2ref = R_bw() * mag;
+
+    // This is an external hard attitude reset. Make EKF state/covariance coherent.
+    xext.template head<3>().setZero();
+
+    // Re-seed attitude covariance.
+    Pext.template block<3,3>(0,0) = Matrix3::Identity() * T(5e-4);
+
+    // Old attitude cross-covariances are now stale.
+    if constexpr (with_gyro_bias) {
+        Pext.template block<3,3>(0,3).setZero();
+        Pext.template block<3,3>(3,0).setZero();
+
+        // Give mag some room to re-tie yaw to gyro bias after relock.
+        auto Pbg = Pext.template block<3,3>(3,3);
+        const T bg_var_floor = T(1e-6);
+        for (int i = 0; i < 3; ++i) {
+            Pbg(i,i) = std::max(Pbg(i,i), bg_var_floor);
+        }
+        Pext.template block<3,3>(3,3) = Pbg;
+    }
+
+    // Zero attitude <-> linear cross-covariances.
+    zero_AL_cross_cov_once_();
+
+    if constexpr (with_accel_bias) {
+        Pext.template block<3,3>(0, OFF_BA).setZero();
+        Pext.template block<3,3>(OFF_BA, 0).setZero();
+    }
+
+    symmetrize_Pext_();
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
@@ -1431,19 +1466,37 @@ Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::quaternion_from_acc(Vec
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_acc(Vector3 const& acc_body)
+void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_acc(
+    Vector3 const& acc_body)
 {
     const Vector3 acc = deheel_vector_(acc_body);
 
-    T anorm = acc.norm();
+    const T anorm = acc.norm();
     if (anorm < T(1e-8)) {
-       throw std::runtime_error("Invalid accelerometer vector: norm too small for initialization");
+        throw std::runtime_error("Invalid accelerometer vector: norm too small for initialization");
     }
-    Vector3 acc_n = acc / anorm;
 
-    // Use accelerometer to align z axis, yaw remains arbitrary
+    const Vector3 acc_n = acc / anorm;
+
     qref = quaternion_from_acc(acc_n);
     qref.normalize();
+
+    xext.template head<3>().setZero();
+    Pext.template block<3,3>(0,0) = Matrix3::Identity() * T(5e-4);
+
+    if constexpr (with_gyro_bias) {
+        Pext.template block<3,3>(0,3).setZero();
+        Pext.template block<3,3>(3,0).setZero();
+    }
+
+    zero_AL_cross_cov_once_();
+
+    if constexpr (with_accel_bias) {
+        Pext.template block<3,3>(0, OFF_BA).setZero();
+        Pext.template block<3,3>(OFF_BA, 0).setZero();
+    }
+
+    symmetrize_Pext_();
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
