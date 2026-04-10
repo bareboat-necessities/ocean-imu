@@ -56,7 +56,6 @@
 #include "freq/FrequencyTrackerPolicy.h"
 #include "tuner/SeaStateAutoTuner.h"
 #include "kalman_ou_ii/Kalman3D_Wave_OU_II.h"
-#include "ahrs/FrameConversions.h"
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
 #include "detrend/AdaptiveWaveDetrender3D.h"
