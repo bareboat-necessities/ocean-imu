@@ -15,8 +15,8 @@
 
     • Dominant frequency tracking using one of:
           – AranovskiyFreqTracker     (frequency estimator)
-          – KalmANFFreqTracker              (adaptive notch / Kalman frequency tracker)
-          – SchmittTrigger       (zero-cross event detector)
+          – KalmANFFreqTracker        (adaptive notch / Kalman frequency tracker)
+          – SchmittTrigger            (zero-cross event detector)
 
     • Dual-stage frequency smoothing:
           – Fast 1st-order IIR (≈ few s, ~90% step) for demodulation / direction
@@ -33,7 +33,7 @@
   – R_v0:     Pseudo-measurement noise controlling v drift suppression
   – R_p0_xy:  Reduced in X/Y (anisotropic weighting for vertical-dominant seas)
 
-  Adaptive update:  exponential smoothing toward targets over ADAPT_TAU_SEC
+  Adaptive update: exponential smoothing toward targets over ADAPT_TAU_SEC
 
   Features
   • Modular tracker selection via TrackerPolicy template
@@ -62,7 +62,6 @@
 #include "detrend/AdaptiveWaveDetrender3D.h"
 
 // Shared constants
-
 extern const float g_std;
 
 #ifndef FREQ_GUESS
@@ -107,13 +106,13 @@ constexpr float MAG_DELAY_SEC              = 8.0f;
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
 
 struct TuneState {
-    float tau_applied   = 1.1f;      // s
-    float sigma_applied = 1e-2f;     // m/s²
-    float R_p0_std_applied  = 0.1f;      // m
-    float R_v0_std_applied  = 0.1f;      // m/s
+    float tau_applied      = 1.1f;   // s
+    float sigma_applied    = 1e-2f;  // m/s²
+    float R_p0_std_applied = 0.1f;   // m
+    float R_v0_std_applied = 0.1f;   // m/s
 };
 
-//  Unified SeaState fusion filter
+// Unified SeaState fusion filter
 template<TrackerType trackerT>
 class SeaStateFusionFilter_OU_II {
 public:
@@ -161,7 +160,8 @@ public:
                         float b0, float R_p0_var_init, float R_v0_var_init,
                         float gravity_magnitude)
     {
-        mekf_ = std::make_unique<Kalman3D_Wave_OU_II<float>>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_p0_var_init, R_v0_var_init, gravity_magnitude);
+        mekf_ = std::make_unique<Kalman3D_Wave_OU_II<float>>(
+            sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_p0_var_init, R_v0_var_init, gravity_magnitude);
         enterCold_();      // applies freeze + warmup Racc + disables linear block
         apply_ou_tune_();
         mekf_->set_exact_att_bias_Qd(true);
@@ -179,14 +179,20 @@ public:
     {
         if (!mekf_) return;
         if (!(dt > 0.0f) || !std::isfinite(dt)) return;
+
         time_ += dt;
-        // Track time spent in current startup stage
         startup_stage_t_ += dt;
 
-        // Keep BODY components around for direction/sign
+        // Keep BODY components around for direction/sign.
         const float a_x_body = acc.x();
         const float a_y_body = acc.y();
-        const float a_z_inertial = acc.z() + g_std;
+
+        // BODY-Z-based proxy used by the tracker/sign logic.
+        // This is NOT true world/inertial vertical acceleration; it is only a
+        // body-Z residual that behaves like up-positive vertical motion when the
+        // platform is near-level:
+        //   acc.z() ~ -g at rest  => proxy ~ 0
+        const float a_z_body_proxy = acc.z() + g_std;
 
         // MEKF updates first (attitude + latent a_w)
         mekf_->time_update(gyro, dt);
@@ -233,18 +239,20 @@ public:
                 tilt_reset_cooldown_sec_ = TILT_RESET_COOLDOWN_SEC;
             }
         }
-        // vertical (up positive)
-        a_vert_up = -a_z_inertial;
 
-        // LPF on vertical accel for tracker input
-        const float a_vert_lp = freq_input_lpf_.step(a_vert_up, dt);
+        // Up-positive BODY-Z proxy used by tracker/tuner/sign logic.
+        // Not true world vertical unless the platform is close to level.
+        a_body_z_up_proxy_ = -a_z_body_proxy;
+
+        // LPF on BODY-Z proxy for tracker input
+        const float a_body_z_up_lp = freq_input_lpf_.step(a_body_z_up_proxy_, dt);
 
         // Raw freq from tracker
-        const float f_tracker = static_cast<float>(tracker_policy_.run(a_vert_lp, dt));
+        const float f_tracker = static_cast<float>(tracker_policy_.run(a_body_z_up_lp, dt));
         f_raw = f_tracker;
 
-        // Stillness detector also sees vertical Z accel
-        const float f_after_still = freq_stillness_.step(a_vert_lp, dt, f_tracker);
+        // Stillness detector also sees the same BODY-Z proxy.
+        const float f_after_still = freq_stillness_.step(a_body_z_up_lp, dt, f_tracker);
 
         // Fast & slow smoothed frequencies
         float f_fast = freq_fast_smoother_.update(f_after_still);
@@ -256,9 +264,8 @@ public:
         freq_hz_      = f_fast;   // demod / direction
         freq_hz_slow_ = f_slow;   // tuner / moments
 
-        // Tuner gets vertical accel
         if (enable_tuner_) {
-            update_tuner(dt, a_vert_up, f_after_still);
+            update_tuner(dt, a_body_z_up_proxy_, f_after_still);
         }
 
         // Keep linear-block R_p0 / R_v0 tuning responsive in Live mode instead of
@@ -270,12 +277,12 @@ public:
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
 
-        // Direction filters run on BODY accel, "sign" uses vertical acceleration
+        // Direction filters run on BODY accel; sign uses the same BODY-Z proxy.
         dir_filter_.update(a_x_body, a_y_body, omega, dt);
-        dir_sign_state_ = dir_sign_.update(a_x_body, a_y_body, a_vert_up, dt);
+        dir_sign_state_ = dir_sign_.update(a_x_body, a_y_body, a_body_z_up_proxy_, dt);
     }
 
-    //  Magnetometer correction
+    // Magnetometer correction
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!with_mag_ || !mekf_) return;
         if (time_ < mag_delay_sec_) return;
@@ -293,15 +300,13 @@ public:
             startup_stage_ == StartupStage::Live &&
             mag_updates_applied_ >= MAG_UPDATES_TO_UNLOCK &&
             std::isfinite(first_mag_update_time_) &&
-            (static_cast<float>(time_) - first_mag_update_time_) > 1.0f) // 1s guard
+            (static_cast<float>(time_) - first_mag_update_time_) > 1.0f)
         {
             accel_bias_locked_ = false;
 
-            // Only allow accel bias to start learning once the system is Live.
             if (freeze_acc_bias_until_live_ && startup_stage_ == StartupStage::Live) {
                 mekf_->set_acc_bias_updates_enabled(true);
 
-                // Restore nominal Racc only when bias learning is allowed.
                 if (warmup_Racc_active_) {
                     if (Racc_nominal_std_.allFinite() && Racc_nominal_std_.maxCoeff() > 0.0f) {
                         mekf_->set_Racc_std(Racc_nominal_std_);
@@ -312,18 +317,15 @@ public:
         }
     }
 
-    void setWithMag(bool with_mag) {
-        with_mag_ = with_mag;
-    }
+    void setWithMag(bool with_mag) { with_mag_ = with_mag; }
 
     // Anisotropy configuration (runtime)
     // P-factor scales horizontal vs vertical stationary std of a_w.
     // R_p0 XY factor scales pseudo-measurement noise in X/Y vs Z.
     void setPFactor(float p) {
-        if (std::isfinite(p) && p > 0.0f) {
-            P_factor_ = p;
-        }
+        if (std::isfinite(p) && p > 0.0f) P_factor_ = p;
     }
+
     void setR_p0_XYFactor(float k) {
         if (std::isfinite(k)) {
             R_p0_xy_factor_ = std::min(std::max(k, 0.0f), 1.0f);
@@ -331,23 +333,18 @@ public:
     }
 
     void setTauCoeff(float c) {
-        if (std::isfinite(c) && c > 0.0f) {
-            tau_coeff_ = c;
-        }
+        if (std::isfinite(c) && c > 0.0f) tau_coeff_ = c;
     }
+
     void setSigmaCoeff(float c) {
-        if (std::isfinite(c) && c > 0.0f) {
-            sigma_coeff_ = c;
-        }
+        if (std::isfinite(c) && c > 0.0f) sigma_coeff_ = c;
     }
+
     void setR_p0_Coeff(float c) {
         if (std::isfinite(c) && c > 0.0f) {
             const float prev = R_p0_coeff_;
             R_p0_coeff_ = c;
 
-            // Keep runtime behavior responsive when the coefficient is changed online.
-            // Otherwise R_p0_std_applied can remain near its previous value for several
-            // adaptation time constants and look like this setter has no effect.
             if (std::isfinite(prev) && prev > 0.0f) {
                 const float scale = c / prev;
 
@@ -363,12 +360,12 @@ public:
             }
         }
     }
+
     void setR_v0_Coeff(float c) {
         if (std::isfinite(c) && c > 0.0f) {
             const float prev = R_v0_coeff_;
             R_v0_coeff_ = c;
 
-            // Keep runtime behavior responsive when the coefficient is changed online.
             if (std::isfinite(prev) && prev > 0.0f) {
                 const float scale = c / prev;
 
@@ -386,51 +383,31 @@ public:
     }
 
     void setAccNoiseFloorSigma(float s) {
-        if (std::isfinite(s) && s > 0.0f) {
-            acc_noise_floor_sigma_ = s;
-        }
-    }
-    float getAccNoiseFloorSigma() const noexcept {
-        return acc_noise_floor_sigma_;
+        if (std::isfinite(s) && s > 0.0f) acc_noise_floor_sigma_ = s;
     }
 
-    // Configure LPF on vertical accel for tracker input
-    void setFreqInputCutoffHz(float fc) {
-        freq_input_lpf_.setCutoff(fc);
-    }
+    float getAccNoiseFloorSigma() const noexcept { return acc_noise_floor_sigma_; }
 
-    void enableClamp(bool flag = true) {
-        enable_clamp_ = flag;
-    }
-    void enableTuner(bool flag = true) {
-        enable_tuner_ = flag;
-    }
-    // Enable/disable use of the extended linear block [v,p,S,a_w] in Kalman3D_Wave_OU_II.
-    //
-    // When flag == false:
-    //   • Kalman3D_Wave_OU_II::set_linear_block_enabled(false) is enforced,
-    //   • startup stages still progress (Cold → TunerWarm → Live),
-    //   • tuner still runs and exposes tau/sigma/R_p0/R_v0 targets & metrics,
-    //   • but OU / v/p/a_w propagation and pseudo-measurements are never used.
-    //
-    // When flag == true (default):
-    //   • the linear block is enabled
+    // Configure LPF on BODY-Z proxy for tracker input
+    void setFreqInputCutoffHz(float fc) { freq_input_lpf_.setCutoff(fc); }
+
+    void enableClamp(bool flag = true) { enable_clamp_ = flag; }
+    void enableTuner(bool flag = true) { enable_tuner_ = flag; }
+
+    // Enable/disable use of the extended linear block [v,p,a_w] in Kalman3D_Wave_OU_II.
     void enableLinearBlock(bool flag = true) {
         enable_linear_block_ = flag;
         if (mekf_) {
-            // Only actually *use* the block in Live stage; Cold/TunerWarm are QMEKF-only.
             const bool on_now = flag && (startup_stage_ == StartupStage::Live);
             mekf_->set_linear_block_enabled(on_now);
         }
     }
 
-    // Tunable adaptation bounds and time constants
     void setFreqBounds(float min_hz, float max_hz) {
         if (!std::isfinite(min_hz) || !std::isfinite(max_hz)) return;
         if (min_hz <= 0.0f || max_hz <= min_hz) return;
         min_freq_hz_ = min_hz;
         max_freq_hz_ = max_hz;
-        // stillness target is conceptually "relax toward min freq"
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
     }
 
@@ -461,61 +438,61 @@ public:
     }
 
     void setAdaptationTimeConstants(float tau_sec) {
-        if (std::isfinite(tau_sec) && tau_sec > 0.0f)   adapt_tau_sec_   = tau_sec;
-     }
+        if (std::isfinite(tau_sec) && tau_sec > 0.0f) adapt_tau_sec_ = tau_sec;
+    }
 
     void setAdaptationUpdatePeriod(float every_sec) {
-        if (std::isfinite(every_sec) && every_sec > 0.0f) {
-            adapt_every_secs_ = every_sec;
-        }
+        if (std::isfinite(every_sec) && every_sec > 0.0f) adapt_every_secs_ = every_sec;
     }
 
     void setOnlineTuneWarmupSec(float warmup_sec) {
-        if (std::isfinite(warmup_sec) && warmup_sec >= 0.0f) {
-            online_tune_warmup_sec_ = warmup_sec;
-        }
+        if (std::isfinite(warmup_sec) && warmup_sec >= 0.0f) online_tune_warmup_sec_ = warmup_sec;
     }
 
     void setMagDelaySec(float delay_sec) {
-        if (std::isfinite(delay_sec) && delay_sec >= 0.0f) {
-            mag_delay_sec_ = delay_sec;
-        }
+        if (std::isfinite(delay_sec) && delay_sec >= 0.0f) mag_delay_sec_ = delay_sec;
     }
 
     void setFreezeAccBiasUntilLive(bool en) { freeze_acc_bias_until_live_ = en; }
-    void setWarmupRaccStd(float r) { if (std::isfinite(r) && r > 0.0f) Racc_warmup_std_ = r; }
 
-    // For SeaStateFusionFilter_OU_II to restore Racc automatically
+    void setWarmupRaccStd(float r) {
+        if (std::isfinite(r) && r > 0.0f) Racc_warmup_std_ = r;
+    }
+
     void setNominalRaccStd(const Eigen::Vector3f& r) { Racc_nominal_std_ = r; }
 
-    //  Exposed getters
-    inline float getFreqHz()            const noexcept { return freq_hz_; }        // fast branch
-    inline float getFreqSlowHz()        const noexcept { return freq_hz_slow_; }   // slow branch
-    inline float getFreqRawHz()         const noexcept { return f_raw; }
-    inline float getTauApplied()        const noexcept { return mekf_ ? mekf_->get_aw_time_constant() : NAN; }
-    inline float getSigmaApplied()      const noexcept { return mekf_ ? mekf_->get_aw_stationary_std().z() : NAN; }
-    inline float getR_p0_std_applied()  const noexcept { return mekf_ ? mekf_->get_Rp0_noise_std().z() : NAN; }
-    inline float getR_v0_std_applied()  const noexcept { return mekf_ ? mekf_->get_Rv0_noise_std().z() : NAN; }
-    inline float getTauTarget()         const noexcept { return tau_target_;   }
-    inline float getSigmaTarget()       const noexcept { return sigma_target_; }
-    inline float getR_p0_std_target()   const noexcept { return R_p0_std_target_; }
-    inline float getR_v0_std_target()   const noexcept { return R_v0_std_target_; }
+    inline float getFreqHz()           const noexcept { return freq_hz_; }
+    inline float getFreqSlowHz()       const noexcept { return freq_hz_slow_; }
+    inline float getFreqRawHz()        const noexcept { return f_raw; }
+    inline float getTauApplied()       const noexcept { return mekf_ ? mekf_->get_aw_time_constant() : NAN; }
+    inline float getSigmaApplied()     const noexcept { return mekf_ ? mekf_->get_aw_stationary_std().z() : NAN; }
+    inline float getR_p0_std_applied() const noexcept { return mekf_ ? mekf_->get_Rp0_noise_std().z() : NAN; }
+    inline float getR_v0_std_applied() const noexcept { return mekf_ ? mekf_->get_Rv0_noise_std().z() : NAN; }
+    inline float getTauTarget()        const noexcept { return tau_target_; }
+    inline float getSigmaTarget()      const noexcept { return sigma_target_; }
+    inline float getR_p0_std_target()  const noexcept { return R_p0_std_target_; }
+    inline float getR_v0_std_target()  const noexcept { return R_v0_std_target_; }
 
-    // Use slow frequency as a more stable "period" proxy
     inline float getPeriodSec() const noexcept {
         return (freq_hz_slow_ > 1e-6f) ? 1.0f / freq_hz_slow_ : NAN;
     }
 
     inline float getAccelVariance() const noexcept { return tuner_.getAccelVariance(); }
-    inline float getAccelVertical() const noexcept { return a_vert_up; }
 
-    inline float getHeaveAbs() const noexcept { if (!mekf_) return NAN; return std::fabs(mekf_->get_position().z()); }
+    // Returns the BODY-Z-based up-positive proxy used by tracker/tuner logic.
+    // This is not a true world/inertial vertical acceleration estimate.
+    inline float getAccelVertical() const noexcept { return a_body_z_up_proxy_; }
+
+    inline float getHeaveAbs() const noexcept {
+        if (!mekf_) return NAN;
+        return std::fabs(mekf_->get_position().z());
+    }
 
     inline float getDisplacementScale(bool smoothed = true) const noexcept {
-        const float tau = smoothed ? tune_.tau_applied : tau_target_;
+        const float tau   = smoothed ? tune_.tau_applied   : tau_target_;
         const float sigma = smoothed ? tune_.sigma_applied : sigma_target_;
         if (!std::isfinite(sigma) || !std::isfinite(tau)) return NAN;
-        constexpr float C_HS  = 2.0f * std::sqrt(2.0f) / (M_PI * M_PI);  // Longuet–Higgins envelope for wave height
+        constexpr float C_HS = 2.0f * std::sqrt(2.0f) / (M_PI * M_PI);
         return C_HS * sigma * tau * tau / 2.0f;
     }
 
@@ -523,8 +500,6 @@ public:
         const float tau   = smoothed ? tune_.tau_applied   : tau_target_;
         const float sigma = smoothed ? tune_.sigma_applied : sigma_target_;
         if (!(tau > 1e-6f) || !std::isfinite(tau) || !std::isfinite(sigma)) return NAN;
-        // RMS of Rayleigh envelope amplitude for narrowband Gaussian v(t):
-        // v_env_rms = sqrt(2) * sigma_v,  sigma_v ≈ sigma_a / omega,  omega = pi/tau
         constexpr float K = std::sqrt(2.0f) / M_PI;
         const float v_env = speed_env_mult_ * K * sigma * tau;
         return std::isfinite(v_env) ? v_env : NAN;
@@ -536,7 +511,6 @@ public:
     Eigen::Vector3f getEulerNautical() const {
         if (!mekf_) return {NAN, NAN, NAN};
 
-        // q_bw: body→world
         Eigen::Quaternionf q_bw = mekf_->quaternion_boat();
         q_bw.normalize();
 
@@ -546,26 +520,23 @@ public:
         const float w = q_bw.w();
         const float two = 2.0f;
 
-        // ZYX (aerospace) from q_bw — radians
-        const float s_yaw = two * std::fma(w, z,  x * y);
-        const float c_yaw = 1.0f - two * std::fma(y, y,  z * z);
-        float yaw         = std::atan2(s_yaw, c_yaw);
+        const float s_yaw = two * std::fma(w, z, x * y);
+        const float c_yaw = 1.0f - two * std::fma(y, y, z * z);
+        float yaw = std::atan2(s_yaw, c_yaw);
 
-        float s_pitch     = two * std::fma(w, y, -z * x);
-        s_pitch           = std::max(-1.0f, std::min(1.0f, s_pitch));
-        float pitch       = std::asin(s_pitch);
+        float s_pitch = two * std::fma(w, y, -z * x);
+        s_pitch = std::max(-1.0f, std::min(1.0f, s_pitch));
+        float pitch = std::asin(s_pitch);
 
-        const float s_roll = two * std::fma(w, x,  y * z);
-        const float c_roll = 1.0f - two * std::fma(x, x,  y * y);
-        float roll         = std::atan2(s_roll, c_roll);
+        const float s_roll = two * std::fma(w, x, y * z);
+        const float c_roll = 1.0f - two * std::fma(x, x, y * y);
+        float roll = std::atan2(s_roll, c_roll);
 
-        // Aerospace/NED → Nautical/ENU (expects radians)
         float rn = roll;
         float pn = pitch;
         float yn = yaw;
         aero_to_nautical(rn, pn, yn);
 
-        // Radians → degrees
         constexpr float RAD2DEG = 57.29577951308232f;
         return { rn * RAD2DEG, pn * RAD2DEG, yn * RAD2DEG };
     }
@@ -581,6 +552,7 @@ public:
 
 private:
     static inline float sgnf_(float x) noexcept { return (x >= 0.0f) ? 1.0f : -1.0f; }
+
     static Eigen::Vector3f downBodyFromQuatBW_(const Eigen::Quaternionf& q_bw) {
         Eigen::Vector3f d = q_bw.conjugate() * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
         const float dn = d.norm();
@@ -596,7 +568,7 @@ private:
         Eigen::Vector3f d = down_body_hint_unit;
         const float dn = d.norm();
         if (!(dn > 1e-6f) || !d.allFinite()) d = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-        else                                 d /= dn;
+        else d /= dn;
 
         // MEKF initialization expects specific force at rest (~ -g along body down).
         // If runtime accel is down-positive (~ +g along body down), flip it here.
@@ -604,25 +576,20 @@ private:
         return a;
     }
 
-    // Simple first-order low-pass filter for vertical accel → tracker input
     struct FreqInputLPF {
         float state       = 0.0f;
-        float fc_hz       = 1.0f;   // cutoff in Hz
+        float fc_hz       = 1.0f;
         bool  initialized = false;
 
         void setCutoff(float fc) {
-            if (std::isfinite(fc) && fc > 0.0f) {
-                fc_hz = fc;
-            }
+            if (std::isfinite(fc) && fc > 0.0f) fc_hz = fc;
         }
 
         float step(float x, float dt) {
-            // y' = -2π fc (y - x)
-            // discrete: y_n = (1 - alpha)*x_n + alpha*y_{n-1}
             const float alpha = std::exp(-2.0f * static_cast<float>(M_PI) * fc_hz * dt);
 
             if (!initialized) {
-                state       = x;
+                state = x;
                 initialized = true;
                 return state;
             }
@@ -631,93 +598,70 @@ private:
         }
     };
 
-    // Detect “stillness” from vertical accel and relax frequency when still.
     struct StillnessAdapter {
-        // Stillness detection
-        float energy_ema      = 0.0f;   // EMA of (a_z/g)^2
-        float energy_alpha    = 0.05f;  // smoothing for energy EMA
-        float energy_thresh   = 8e-4f;  // below this ⇒ effectively still
+        float energy_ema      = 0.0f;
+        float energy_alpha    = 0.05f;
+        float energy_thresh   = 8e-4f;
 
-        float still_time_sec  = 0.0f;   // accumulated still time
-        float still_thresh_s  = 2.0f;   // seconds of low energy before relaxing
+        float still_time_sec  = 0.0f;
+        float still_thresh_s  = 2.0f;
 
-        // Relaxation behaviour
-        float relax_tau_sec   = 1.0f;   // time constant for freq relaxation
-        float target_freq_hz  = MIN_FREQ_HZ; // relaxed target (could also be FREQ_GUESS)
+        float relax_tau_sec   = 1.0f;
+        float target_freq_hz  = MIN_FREQ_HZ;
 
-        // Internal frequency state
         bool  freq_init       = false;
         float freq_state      = FREQ_GUESS;
 
-        // Last stillness flag (for external inspection)
         bool  last_is_still   = false;
 
         void setTargetFreqHz(float f) {
-            if (std::isfinite(f) && f > 0.0f) {
-                target_freq_hz = f;
-            }
+            if (std::isfinite(f) && f > 0.0f) target_freq_hz = f;
         }
 
-        // a_z_inertial_lp: vertical inertial accel (m/s²), low-passed
-        // dt             : timestep (s)
-        // freq_in        : raw tracker freq (Hz)
-        //
-        // Returns adjusted frequency:
-        //   – follows tracker when not still
-        //   – decays toward target_freq_hz when still for long enough
-        float step(float a_z_inertial_lp, float dt, float freq_in) {
-            if (!(dt > 0.0f) || !std::isfinite(freq_in)) {
-                return freq_in;
-            }
+        // a_z_body_proxy_lp:
+        //   low-passed BODY-Z-based up-positive proxy acceleration (m/s²)
+        //   used for tracker/stillness logic. Not true world vertical.
+        float step(float a_z_body_proxy_lp, float dt, float freq_in) {
+            if (!(dt > 0.0f) || !std::isfinite(freq_in)) return freq_in;
 
-            // Initialize internal state from tracker on first valid call
             if (!freq_init || !std::isfinite(freq_state)) {
                 freq_state = freq_in;
-                freq_init  = true;
+                freq_init = true;
             }
 
-            // Normalize by g → dimensionless
-            const float a_norm      = a_z_inertial_lp / g_std;
-            const float inst_energy = a_norm * a_norm; // (a_z/g)^2
+            const float a_norm      = a_z_body_proxy_lp / g_std;
+            const float inst_energy = a_norm * a_norm;
 
-            // EWMA of energy
             energy_ema = (1.0f - energy_alpha) * energy_ema + energy_alpha * inst_energy;
             const bool is_still = (energy_ema < energy_thresh);
             last_is_still = is_still;
 
             if (is_still) {
-                // Count how long we've been still
                 still_time_sec += dt;
                 if (still_time_sec > 60.0f) still_time_sec = 60.0f;
 
-                // After some time still, relax INTERNAL freq_state toward target
                 if (still_time_sec > still_thresh_s) {
                     const float relax_alpha = 1.0f - std::exp(-dt / relax_tau_sec);
                     freq_state += relax_alpha * (target_freq_hz - freq_state);
                 } else {
-                    // before threshold, just track the tracker
                     freq_state = freq_in;
                 }
             } else {
-                // Not still: reset still timer and follow tracker tightly
                 still_time_sec = 0.0f;
-                freq_state     = freq_in;
+                freq_state = freq_in;
             }
             return freq_state;
         }
 
-        // Expose stillness info to tuner
-        bool  isStill()       const { return last_is_still; }
-        float getStillTime()  const { return still_time_sec; }
-        float getEnergyEma()  const { return energy_ema; }
+        bool  isStill()      const { return last_is_still; }
+        float getStillTime() const { return still_time_sec; }
+        float getEnergyEma() const { return energy_ema; }
     };
 
     void apply_ou_tune_() {
         if (!mekf_) return;
         mekf_->set_aw_time_constant(tune_.tau_applied);
 
-        // In attitude-only mode (linear frozen), Σ_aw still matters (marginalization path),
-        // so don’t let sigma collapse to ~0.
         const float sigma_floor = std::max(0.05f, acc_noise_floor_sigma_);
         const float sZ = std::max(sigma_floor, tune_.sigma_applied);
         const float sH = sZ * P_factor_;
@@ -726,8 +670,7 @@ private:
 
     void apply_R_p0_tune_(float rp_scale = 1.0f) {
         if (!mekf_) return;
-        const float p = (std::isfinite(rp_scale) && rp_scale > 0.0f)
-                        ? std::min(rp_scale, 1.0f) : 1.0f;
+        const float p = (std::isfinite(rp_scale) && rp_scale > 0.0f) ? std::min(rp_scale, 1.0f) : 1.0f;
         const float R_p0_b = std::min(std::max(tune_.R_p0_std_applied, MIN_R_p0_std_), MAX_R_p0_std_);
         const float rp_xy = R_p0_b * p * R_p0_xy_factor_;
         mekf_->set_Rp0_noise_std(Eigen::Vector3f(rp_xy, rp_xy, R_p0_b * p));
@@ -735,54 +678,37 @@ private:
 
     void apply_R_v0_tune_(float rv_scale = 1.0f) {
         if (!mekf_) return;
-        const float p = (std::isfinite(rv_scale) && rv_scale > 0.0f)
-                        ? std::min(rv_scale, 1.0f) : 1.0f;
+        const float p = (std::isfinite(rv_scale) && rv_scale > 0.0f) ? std::min(rv_scale, 1.0f) : 1.0f;
         const float R_v0_b = std::min(std::max(tune_.R_v0_std_applied, MIN_R_v0_std_), MAX_R_v0_std_);
         mekf_->set_Rv0_noise_std(Eigen::Vector3f::Constant(R_v0_b * p));
     }
 
-    void update_tuner(float dt, float a_vert_inertial, float freq_hz_for_tuner) {
-        tuner_.update(dt, a_vert_inertial, freq_hz_for_tuner);
+    void update_tuner(float dt, float a_body_z_up_proxy, float freq_hz_for_tuner) {
+        tuner_.update(dt, a_body_z_up_proxy, freq_hz_for_tuner);
 
-        // Startup stage logic
         switch (startup_stage_) {
-           case StartupStage::Cold:
-               // Only track time; no adaptation, no linear block.
-               if (startup_stage_t_ >= online_tune_warmup_sec_) {
-                   startup_stage_   = StartupStage::TunerWarm;
-                   startup_stage_t_ = 0.0f;
-               }
-               return; // remain QMEKF-only
+            case StartupStage::Cold:
+                if (startup_stage_t_ >= online_tune_warmup_sec_) {
+                    startup_stage_   = StartupStage::TunerWarm;
+                    startup_stage_t_ = 0.0f;
+                }
+                return;
 
-          case StartupStage::TunerWarm:
-              // Start tuning as soon as frequency smoothing is "ready"
-              // (tau depends only on f).
-              if (!tuner_.isFreqReady()) return;
+            case StartupStage::TunerWarm:
+                if (!tuner_.isFreqReady()) return;
+                if (tuner_.isReady()) {
+                    enterLive_();
+                }
+                break;
 
-              // Only enter Live once BOTH freq + variance are ready
-              // (so bias unfreeze / linear enable still waits for a sane sigma estimate).
-              if (tuner_.isReady()) {
-                  enterLive_();
-                  // fallthrough to Live adaptation below
-              }
-              break;
-
-           // now Live, continue with adaptation
-           case StartupStage::Live:
-               break;
+            case StartupStage::Live:
+                break;
         }
 
-        // From here on, we are in TunerWarm or Live: compute targets and adapt.
-        // Frequency as seen by the tuner
         float f_tune = tuner_.getFrequencyHz();
-        if (!std::isfinite(f_tune) || f_tune < min_freq_hz_) {
-            f_tune = min_freq_hz_;
-        }
-        if (f_tune > max_freq_hz_) {
-            f_tune = max_freq_hz_;
-        }
+        if (!std::isfinite(f_tune) || f_tune < min_freq_hz_) f_tune = min_freq_hz_;
+        if (f_tune > max_freq_hz_) f_tune = max_freq_hz_;
 
-        // If variance isn't ready yet, treat it as "noise floor only" so sigma doesn't go crazy.
         float var_total = acc_noise_floor_sigma_ * acc_noise_floor_sigma_;
         if (tuner_.isVarReady()) {
             var_total = std::max(0.0f, tuner_.getAccelVariance());
@@ -804,19 +730,20 @@ private:
         float tau_raw = tau_coeff_ * 0.5f / f_tune;
 
         if (enable_clamp_) {
-            tau_target_   = std::min(std::max(tau_raw,  min_tau_s_), max_tau_s_);
-            sigma_target_ = std::min(sigma_wave * sigma_coeff_,      max_sigma_a_);
+            tau_target_   = std::min(std::max(tau_raw, min_tau_s_), max_tau_s_);
+            sigma_target_ = std::min(sigma_wave * sigma_coeff_, max_sigma_a_);
         } else {
             tau_target_   = tau_raw;
             sigma_target_ = sigma_wave;
         }
-        // Keep published sigma_target_ sane before variance is ready
+
         if (!tuner_.isVarReady()) {
             sigma_target_ = std::max(sigma_target_, std::max(0.05f, acc_noise_floor_sigma_));
         }
 
         float R_p0_raw = R_p0_coeff_ * sigma_target_ * tau_target_ * tau_target_;
         float R_v0_raw = R_v0_coeff_ * sigma_target_ * tau_target_;
+
         if (enable_clamp_) {
             R_p0_std_target_ = std::min(std::max(R_p0_raw, MIN_R_p0_std_), MAX_R_p0_std_);
             R_v0_std_target_ = std::min(std::max(R_v0_raw, MIN_R_v0_std_), MAX_R_v0_std_);
@@ -824,22 +751,22 @@ private:
             R_p0_std_target_ = R_p0_raw;
             R_v0_std_target_ = R_v0_raw;
         }
+
         adapt_mekf(dt, tau_target_, sigma_target_, R_p0_std_target_, R_v0_std_target_);
     }
 
     void adapt_mekf(float dt, float tau_t, float sigma_t, float R_p0_t, float R_v0_t) {
         const float alpha = 1.0f - std::exp(-dt / adapt_tau_sec_);
 
-        // R_p0 / R_v0 smoothing depend on tau
         const float R_p0_sec   = ADAPT_R_p0_MULT * tau_t;
         const float R_v0_sec   = ADAPT_R_v0_MULT * tau_t;
         const float alpha_R_p0 = 1.0f - std::exp(-dt / R_p0_sec);
         const float alpha_R_v0 = 1.0f - std::exp(-dt / R_v0_sec);
 
-        tune_.tau_applied       += alpha      * (tau_t   - tune_.tau_applied);
-        tune_.sigma_applied     += alpha      * (sigma_t - tune_.sigma_applied);
-        tune_.R_p0_std_applied  += alpha_R_p0 * (R_p0_t  - tune_.R_p0_std_applied);
-        tune_.R_v0_std_applied  += alpha_R_v0 * (R_v0_t  - tune_.R_v0_std_applied);
+        tune_.tau_applied      += alpha      * (tau_t   - tune_.tau_applied);
+        tune_.sigma_applied    += alpha      * (sigma_t - tune_.sigma_applied);
+        tune_.R_p0_std_applied += alpha_R_p0 * (R_p0_t  - tune_.R_p0_std_applied);
+        tune_.R_v0_std_applied += alpha_R_v0 * (R_v0_t  - tune_.R_v0_std_applied);
 
         if (time_ - last_adapt_time_sec_ > adapt_every_secs_) {
             if (tuner_.isFreqReady()) {
@@ -854,32 +781,25 @@ private:
     }
 
     void resetTrackingState_() {
-        // Reset *all* slow/statistical machinery (not just some of it)
-        tracker_policy_       = TrackingPolicy{};
-        freq_input_lpf_       = FreqInputLPF{};
-        freq_stillness_       = StillnessAdapter{};
+        tracker_policy_ = TrackingPolicy{};
+        freq_input_lpf_ = FreqInputLPF{};
+        freq_stillness_ = StillnessAdapter{};
         freq_input_lpf_.setCutoff(max_freq_hz_);
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
 
         tuner_.reset();
 
-        freq_fast_smoother_   = FirstOrderIIRSmoother<float>(FREQ_SMOOTHER_DT, 3.5f);
-        freq_slow_smoother_   = FirstOrderIIRSmoother<float>(FREQ_SMOOTHER_DT, 10.0f);
+        freq_fast_smoother_ = FirstOrderIIRSmoother<float>(FREQ_SMOOTHER_DT, 3.5f);
+        freq_slow_smoother_ = FirstOrderIIRSmoother<float>(FREQ_SMOOTHER_DT, 10.0f);
 
         freq_hz_      = FREQ_GUESS;
         freq_hz_slow_ = FREQ_GUESS;
         f_raw         = FREQ_GUESS;
 
-        // Optional but recommended: reset direction state too
-        dir_filter_      = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);
-        // dir_sign_ is not re-assigned here because WaveDirectionDetector has const members
-        // and is not assignable; if you want a logical reset, add a reset() method to
-        // WaveDirectionDetector and call it instead.
-        dir_sign_state_  = UNCERTAIN;
+        dir_filter_ = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);
+        dir_sign_state_ = UNCERTAIN;
 
-        // Optional: avoid immediate adapt burst after reset
         last_adapt_time_sec_ = time_;
-
     }
 
     void enterCold_() {
@@ -891,9 +811,8 @@ private:
 
         accel_bias_locked_   = with_mag_;
         mag_updates_applied_ = 0;
-        first_mag_update_time_  = NAN;
+        first_mag_update_time_ = NAN;
 
-        // warmup_Racc_active_
         if (freeze_acc_bias_until_live_) {
             mekf_->set_acc_bias_updates_enabled(false);
             mekf_->set_Racc_std(Eigen::Vector3f::Constant(Racc_warmup_std_));
@@ -909,16 +828,18 @@ private:
         mekf_->set_linear_block_enabled(enable_linear_block_);
 
         if (freeze_acc_bias_until_live_) {
-            // Bias learning may remain locked until magnetometer has stabilized,
-            // but accel measurement noise should still return to nominal in Live.
             const bool allow_bias = !accel_bias_locked_;
             mekf_->set_acc_bias_updates_enabled(allow_bias);
 
-            if (warmup_Racc_active_ && Racc_nominal_std_.allFinite() && Racc_nominal_std_.maxCoeff() > 0.0f) {
+            if (warmup_Racc_active_ &&
+                Racc_nominal_std_.allFinite() &&
+                Racc_nominal_std_.maxCoeff() > 0.0f)
+            {
                 mekf_->set_Racc_std(Racc_nominal_std_);
             }
             warmup_Racc_active_ = false;
         }
+
         apply_ou_tune_();
         if (enable_linear_block_) {
             apply_R_p0_tune_();
@@ -926,48 +847,41 @@ private:
         }
     }
 
-    StartupStage startup_stage_    = StartupStage::Cold;
-    float        startup_stage_t_  = 0.0f;   // seconds since entering this stage
+    StartupStage startup_stage_ = StartupStage::Cold;
+    float        startup_stage_t_ = 0.0f;
 
-    // Warmup behavior
     bool  freeze_acc_bias_until_live_ = true;
-    float Racc_warmup_std_            = 0.5f;   // big accel noise during warmup
+    float Racc_warmup_std_            = 0.5f;
     bool  warmup_Racc_active_         = false;
-    Eigen::Vector3f Racc_nominal_std_ = Eigen::Vector3f::Constant(0.0f); // 0 => don't touch
+    Eigen::Vector3f Racc_nominal_std_ = Eigen::Vector3f::Constant(0.0f);
 
     bool accel_bias_locked_ = true;
     int  mag_updates_applied_ = 0;
-    static constexpr int MAG_UPDATES_TO_UNLOCK = 40;  // tune as needed
+    static constexpr int MAG_UPDATES_TO_UNLOCK = 40;
 
-    //  Members
     bool   with_mag_;
     double time_;
     double last_adapt_time_sec_;
 
     float first_mag_update_time_ = NAN;
 
-    // Tilt-reset gate persistence/cooldown to avoid false transient resets.
     float tilt_over_limit_sec_ = 0.0f;
     float tilt_reset_cooldown_sec_ = 0.0f;
 
-    float freq_hz_       = FREQ_GUESS; // fast branch
-    float freq_hz_slow_  = FREQ_GUESS; // slow branch
-    float f_raw          = FREQ_GUESS;
+    float freq_hz_      = FREQ_GUESS;
+    float freq_hz_slow_ = FREQ_GUESS;
+    float f_raw         = FREQ_GUESS;
 
-    float a_vert_up = 0.0f; // accel vertical (Z-up)
+    // BODY-Z-based up-positive proxy used by tracker/tuner logic.
+    float a_body_z_up_proxy_ = 0.0f;
 
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;
 
-    float speed_env_mult_ = 1.0f;   // v_env ≈ speed_env_mult * ω * z_env
+    float speed_env_mult_ = 1.0f;
 
-    // Controls whether the extended linear block [v,p,a_w] of Kalman3D_Wave_OU_II
-    // is ever enabled. When false, the underlying filter runs as a pure
-    // attitude/bias QMEKF (linear states frozen, no OU, no p/v pseudo-measurements),
-    // while all frequency tracking / tuner / direction logic still operates.
     bool enable_linear_block_ = true;
 
-    // Tunable adaptation parameters (initialized from global constexpr defaults)
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;
     float min_tau_s_              = MIN_TAU_S;
@@ -982,36 +896,34 @@ private:
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
     float mag_delay_sec_          = MAG_DELAY_SEC;
 
-    // Runtime-configurable anisotropy knobs
-    float R_p0_xy_factor_ = 0.23f;  // [0..1] scales XY pseudo-meas vs Z
-    float P_factor_       = 1.5f;   // (>0) scales Σ_aw horizontal std vs vertical
+    float R_p0_xy_factor_ = 0.23f;
+    float P_factor_       = 1.5f;
 
-    TrackingPolicy                  tracker_policy_{};
-    FirstOrderIIRSmoother<float>    freq_fast_smoother_{FREQ_SMOOTHER_DT, 3.5f};   // ~3.5 s to 90% step
-    FirstOrderIIRSmoother<float>    freq_slow_smoother_{FREQ_SMOOTHER_DT, 10.0f};  // ~10 s to 90% step
-    SeaStateAutoTuner               tuner_;
-    TuneState                       tune_;
+    TrackingPolicy               tracker_policy_{};
+    FirstOrderIIRSmoother<float> freq_fast_smoother_{FREQ_SMOOTHER_DT, 3.5f};
+    FirstOrderIIRSmoother<float> freq_slow_smoother_{FREQ_SMOOTHER_DT, 10.0f};
+    SeaStateAutoTuner            tuner_;
+    TuneState                    tune_;
 
-    float tau_target_   = NAN;
-    float sigma_target_ = NAN;
-    float R_p0_std_target_  = NAN;
-    float R_v0_std_target_  = NAN;
+    float tau_target_      = NAN;
+    float sigma_target_    = NAN;
+    float R_p0_std_target_ = NAN;
+    float R_v0_std_target_ = NAN;
 
-    // Runtime-configurable accel noise floor (1σ), m/s²
     float acc_noise_floor_sigma_ = ACC_NOISE_FLOOR_SIGMA_DEFAULT;
 
-    float R_p0_coeff_   = 1.6f;
-    float R_v0_coeff_   = 1.4f;
-    float tau_coeff_    = 1.5f;
-    float sigma_coeff_  = 0.85f;  // Real noise inflates estimated sigma, to get more realistic sigma for OU we reduce it.
+    float R_p0_coeff_  = 1.6f;
+    float R_v0_coeff_  = 1.4f;
+    float tau_coeff_   = 1.5f;
+    float sigma_coeff_ = 0.85f;
 
-    std::unique_ptr<Kalman3D_Wave_OU_II<float>>  mekf_;
-    KalmanWaveDirection                      dir_filter_{2.0f * static_cast<float>(M_PI) * FREQ_GUESS};
+    std::unique_ptr<Kalman3D_Wave_OU_II<float>> mekf_;
+    KalmanWaveDirection dir_filter_{2.0f * static_cast<float>(M_PI) * FREQ_GUESS};
 
-    FreqInputLPF        freq_input_lpf_;   // LPF used only for tracker input
-    StillnessAdapter    freq_stillness_;   // Detector of "still" mode
+    FreqInputLPF     freq_input_lpf_;
+    StillnessAdapter freq_stillness_;
 
-    WaveDirectionDetector<float> dir_sign_{0.002f, 0.005f};   // smoothing, sensitivity
+    WaveDirectionDetector<float> dir_sign_{0.002f, 0.005f};
     WaveDirection                dir_sign_state_ = UNCERTAIN;
 };
 
@@ -1023,7 +935,6 @@ public:
     struct Config {
         bool with_mag = true;
 
-        // Internal filter staging
         float mag_delay_sec          = MAG_DELAY_SEC;
         float online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
@@ -1032,25 +943,22 @@ public:
         bool  use_fixed_mag_world_ref = false;
         Eigen::Vector3f mag_world_ref = Eigen::Vector3f::Zero();
 
-        // Bias freeze behavior
         bool  freeze_acc_bias_until_live = true;
         float Racc_warmup = 0.5f;
 
-        // Sensor noise
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
         // Simpler mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
-        float mag_init_min_tilt_sec   = 1.5f;   // allow tilt to settle first
-        float mag_init_window_sec     = 0.50f;  // short averaging window
-        int   mag_init_min_samples    = 8;      // enough samples for a robust mean
-        float mag_init_accel_tol_frac = 0.20f;  // accept if ||a|-g| < 20% g
-        float mag_init_max_gyro_dps   = 35.0f;  // reject if rotating too fast
-        float mag_init_min_mag_norm   = 1e-3f;  // basic sanity gate
+        float mag_init_min_tilt_sec   = 1.5f;
+        float mag_init_window_sec     = 0.50f;
+        int   mag_init_min_samples    = 8;
+        float mag_init_accel_tol_frac = 0.20f;
+        float mag_init_max_gyro_dps   = 35.0f;
+        float mag_init_min_mag_norm   = 1e-3f;
 
-        // Optional displacement detrending on fused displacement in UP frame.
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
         AdaptiveWaveDetrender3D::Config displacement_detrend_cfg{};
@@ -1080,7 +988,6 @@ public:
         impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
         last_impl_startup_stage_ = impl_.getStartupStage();
 
-        // Allow warmup code to restore nominal accel measurement noise later.
         impl_.setNominalRaccStd(cfg_.sigma_a);
 
         displacement_up_m_.setZero();
@@ -1184,7 +1091,6 @@ public:
 
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!begun_ || !cfg_.with_mag) return;
-
         if (!mag_body_ned.allFinite()) return;
 
         // Path 1: fixed known world magnetic field reference.
@@ -1205,6 +1111,8 @@ public:
             impl_.updateMag(mag_body_ned);
         }
     }
+
+    bool hasMagNorthLock() const noexcept { return mag_ref_set_; }
 
     bool  isLive() const { return stage_ == Stage::Live; }
     float freqHz() const { return impl_.getFreqHz(); }
@@ -1239,7 +1147,7 @@ private:
             return false;
         }
 
-        const float g = 9.80665f;
+        const float g  = 9.80665f;
         const float an = acc_body.norm();
         const float gn = gyro_body.norm();
         const float mn = mag_body.norm();
@@ -1294,7 +1202,6 @@ private:
 
         northLockFromAccelMag_(acc_mean, mag_mean);
 
-        // Whether success or not, clear the accumulation window.
         mag_init_sum_acc_.setZero();
         mag_init_sum_mag_.setZero();
         mag_init_count_ = 0;
@@ -1307,19 +1214,10 @@ private:
         if (!finiteVec_(acc_body) || !finiteVec_(mag_body)) return;
         if (!(acc_body.norm() > 1e-6f) || !(mag_body.norm() > cfg_.mag_init_min_mag_norm)) return;
 
-        // One-shot tilt + yaw initialization from averaged stable samples.
+        // initialize_from_acc_mag() already computes and stores the consistent
+        // world magnetic reference internally, so there is no need to recompute
+        // and re-apply set_mag_world_ref() here.
         impl_.mekf().initialize_from_acc_mag(acc_body, mag_body);
-
-        Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
-        const float nq = q_bw.norm();
-        if (!(nq > 1e-6f) || !std::isfinite(nq)) return;
-        q_bw.normalize();
-
-        // Store the corresponding world magnetic vector.
-        const Eigen::Vector3f mag_world_ref = q_bw * mag_body;
-        if (!finiteVec_(mag_world_ref) || !(mag_world_ref.norm() > 1e-3f)) return;
-
-        impl_.mekf().set_mag_world_ref(mag_world_ref);
         mag_ref_set_ = true;
     }
 
