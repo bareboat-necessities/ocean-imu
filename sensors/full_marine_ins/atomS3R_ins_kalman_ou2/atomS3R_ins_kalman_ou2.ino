@@ -62,10 +62,6 @@ constexpr float FREQ_GUESS = 0.3f;
 
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
 
-#ifndef MAG_DELAY_SEC
-  #define MAG_DELAY_SEC 8.0f
-#endif
-
 static constexpr float    LOOP_HZ        = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LOOP_HZ);
 
@@ -454,7 +450,7 @@ private:
     fcfg.sigma_g = sigma_g;
     fcfg.sigma_m = sigma_m;
 
-    fcfg.mag_delay_sec = MAG_DELAY_SEC;
+    fcfg.mag_delay_sec = 0.0f;
     fcfg.mag_init_min_tilt_sec   = 1.5f;
     fcfg.mag_init_window_sec     = 0.50f;
     fcfg.mag_init_min_samples    = 8;
