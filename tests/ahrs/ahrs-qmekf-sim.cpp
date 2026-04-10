@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <chrono>
-#include <algorithm>   // for std::clamp
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -19,21 +19,22 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-const float g_std = 9.80665f;      // standard gravity acceleration m/s²
-const float MAG_DELAY_SEC = 5.0f;  // delay before using magnetometer
+const float g_std = 9.80665f;
+const float MAG_DELAY_SEC = 5.0f;
 const int   IMU_RATE_HZ = 200;
 const int   MAG_RATE_HZ = 25;
 const int   MAG_UPDATE_STRIDE = IMU_RATE_HZ / MAG_RATE_HZ;
 
-#include "ahrs/KalmanQMEKF.h"       // Q-MEKF filter (patched with set_mag_world_ref)
-#include "util/WaveFilesSupport.h"  // file reader/parser + naming
-#include "ahrs/FrameConversions.h"  // conversions + MagSim_WMM
+#include "ahrs/KalmanQMEKF.h"
+#include "util/WaveFilesSupport.h"
+#include "ahrs/FrameConversions.h"
 
 using Eigen::Vector3f;
 using Eigen::Quaternionf;
+using Eigen::Matrix3f;
 
-// Noise model (accel & gyro noisy by default; disable with --no-noise)
-bool add_noise = true;  // default ON
+// Noise model
+bool add_noise = true;
 
 struct NoiseModel {
     std::default_random_engine rng;
@@ -42,26 +43,35 @@ struct NoiseModel {
 };
 
 NoiseModel make_noise_model(float sigma, float bias_range, unsigned seed) {
-    NoiseModel m{std::default_random_engine(seed), std::normal_distribution<float>(0.0f, sigma), Vector3f::Zero()};
+    NoiseModel m{
+        std::default_random_engine(seed),
+        std::normal_distribution<float>(0.0f, sigma),
+        Vector3f::Zero()
+    };
     std::uniform_real_distribution<float> ub(-bias_range, bias_range);
     m.bias = Vector3f(ub(m.rng), ub(m.rng), ub(m.rng));
     return m;
 }
 
+// Measurement model: meas = truth + bias + white
 Vector3f apply_noise(const Vector3f& v, NoiseModel& m) {
-    return v - m.bias + Vector3f(m.dist(m.rng), m.dist(m.rng), m.dist(m.rng));
+    return v + m.bias + Vector3f(m.dist(m.rng), m.dist(m.rng), m.dist(m.rng));
 }
 
 struct OutputRow {
     double t{};
-    // Reference Euler (deg, nautical: ENU/Z-up)
+
+    // Reference Euler (deg, nautical: world->body in ENU/Z-up)
     float roll_ref{}, pitch_ref{}, yaw_ref{};
-    // Raw IMU inputs (nautical, as read from file)
+
+    // Raw IMU inputs from file (nautical body frame)
     float acc_bx{}, acc_by{}, acc_bz{};
     float gyro_x{}, gyro_y{}, gyro_z{};
+
     // Kalman estimates (deg, nautical)
     float roll_est{}, pitch_est{}, yaw_est{};
-    // Noisy IMU (if enabled; else duplicates raw)
+
+    // Noisy IMU actually fed to filter before frame conversion
     float acc_noisy_x{}, acc_noisy_y{}, acc_noisy_z{};
     float gyro_noisy_x{}, gyro_noisy_y{}, gyro_noisy_z{};
 };
@@ -83,6 +93,35 @@ static float diff_deg(float est_deg, float ref_deg) {
     return wrap_deg(est_deg - ref_deg);
 }
 
+static bool quat_is_placeholder_identity(const IMU_Sample& imu) {
+    constexpr float eps = 1e-6f;
+    return std::fabs(imu.q_wb_zu_w - 1.0f) < eps &&
+           std::fabs(imu.q_wb_zu_x) < eps &&
+           std::fabs(imu.q_wb_zu_y) < eps &&
+           std::fabs(imu.q_wb_zu_z) < eps;
+}
+
+// Prefer the stored quaternion truth when present.
+// Fall back to Euler-derived quaternion for legacy CSVs that lack quaternion columns.
+static Quaternionf reference_quat_wb_zu(const IMU_Sample& imu) {
+    const bool placeholder_q = quat_is_placeholder_identity(imu);
+    const bool euler_nontrivial =
+        std::fabs(imu.roll_deg) > 1e-4f ||
+        std::fabs(imu.pitch_deg) > 1e-4f ||
+        std::fabs(imu.yaw_deg) > 1e-4f;
+
+    if (placeholder_q && euler_nontrivial) {
+        return quat_from_euler(imu.roll_deg, imu.pitch_deg, imu.yaw_deg);
+    }
+
+    return quat_wb_zu_from_csv(
+        imu.q_wb_zu_w,
+        imu.q_wb_zu_x,
+        imu.q_wb_zu_y,
+        imu.q_wb_zu_z
+    );
+}
+
 static void print_summary_and_fail_if_needed(const std::string& output_name,
                                              const std::vector<OutputRow>& rows,
                                              float dt,
@@ -96,6 +135,7 @@ static void print_summary_and_fail_if_needed(const std::string& output_name,
 
     const size_t start = rows.size() - static_cast<size_t>(n_last);
     float roll_ss = 0.0f, pitch_ss = 0.0f, yaw_ss = 0.0f;
+
     for (size_t i = start; i < rows.size(); ++i) {
         const float er = diff_deg(rows[i].roll_est, rows[i].roll_ref);
         const float ep = diff_deg(rows[i].pitch_est, rows[i].pitch_ref);
@@ -109,6 +149,7 @@ static void print_summary_and_fail_if_needed(const std::string& output_name,
     const float roll_rms = std::sqrt(roll_ss / n);
     const float pitch_rms = std::sqrt(pitch_ss / n);
     const float yaw_rms = std::sqrt(yaw_ss / n);
+
     const double processing_hz = (elapsed_sec > 0.0)
         ? static_cast<double>(rows.size()) / elapsed_sec
         : 0.0;
@@ -148,11 +189,11 @@ static void print_summary_and_fail_if_needed(const std::string& output_name,
     }
 }
 
-void process_wave_file(const std::string &filename, float dt, bool with_mag) {
+void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     auto parsed = WaveFileNaming::parse_to_params(filename);
     if (!parsed) return;
-    auto [kind, type, wp] = *parsed;
 
+    auto [kind, type, wp] = *parsed;
     if (kind != FileKind::Data) return;
     if (!(type == WaveType::JONSWAP || type == WaveType::PMSTOKES)) return;
 
@@ -163,35 +204,36 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
 
     WaveDataCSVReader reader(filename);
 
-    // Process/measurement stddevs (squared internally in the filter)
-    // accel update uses acc_f / g_std, so sigma_a is in normalized-g units.
-    // mag update uses raw simulated field in microteslas.
-    const Vector3f sigma_a(0.055f,    0.055f,    0.055f);
+    // accel update uses acc / g_std
+    const Vector3f sigma_a(0.055f,   0.055f,   0.055f);
     const Vector3f sigma_g(0.00134f, 0.00134f, 0.00134f);
-    const Vector3f sigma_m(0.015f,    0.015f,    0.015f);
+    const Vector3f sigma_m(0.015f,   0.015f,   0.015f);
+
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
 
-    // World magnetic field in aerospace NED
-    Vector3f B_world = MagSim_WMM::mag_world_aero();
+    // Fixed world magnetic field in aerospace NED.
+    const Vector3f B_world_ned = MagSim_WMM::mag_world_aero();
+    mekf.set_mag_world_ref(B_world_ned);
 
-    // Noise models (fixed params, seeded differently)
-    static NoiseModel accel_noise = make_noise_model(0.04f, 0.05f, 1234);     // σ=0.02, bias ±0.01
-    static NoiseModel gyro_noise  = make_noise_model(0.001f, 0.0004f, 5678); // σ=0.0005, bias ±0.0002
+    // Noise models
+    static NoiseModel accel_noise = make_noise_model(0.04f,  0.05f,   1234);
+    static NoiseModel gyro_noise  = make_noise_model(0.001f, 0.0004f, 5678);
 
     bool first = true;
     bool mag_enabled = false;
-    int iter = 0;  // iteration counter
+    int iter = 0;
+
     std::vector<OutputRow> rows;
     const auto t0 = std::chrono::steady_clock::now();
 
-    reader.for_each_record([&](const Wave_Data_Sample &rec) {
-        iter++;  // count every accelerometer/gyro record
+    reader.for_each_record([&](const Wave_Data_Sample& rec) {
+        ++iter;
 
-        // IMU in nautical body ENU (raw from file)
+        // Raw body-frame IMU in nautical ENU/Z-up from file
         Vector3f acc_b(rec.imu.acc_bx, rec.imu.acc_by, rec.imu.acc_bz);
         Vector3f gyr_b(rec.imu.gyro_x, rec.imu.gyro_y, rec.imu.gyro_z);
 
-        // Apply optional noise/bias
+        // Apply optional additive noise/bias
         Vector3f acc_noisy = acc_b;
         Vector3f gyr_noisy = gyr_b;
         if (add_noise) {
@@ -199,24 +241,26 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
             gyr_noisy = apply_noise(gyr_b, gyro_noise);
         }
 
-        // Convert to filter frame (aerospace body NED)
-        Vector3f acc_f = zu_to_ned(acc_noisy);
-        Vector3f gyr_f = zu_to_ned(gyr_noisy);
+        // Convert sensor feeds to filter body frame: NED
+        const Vector3f acc_f = zu_to_ned(acc_noisy);
+        const Vector3f gyr_f = zu_to_ned(gyr_noisy);
 
-        // Reference Euler from simulator (nautical)
-        float r_ref_n = rec.imu.roll_deg;
-        float p_ref_n = rec.imu.pitch_deg;
-        float y_ref_n = rec.imu.yaw_deg;
+        // Truth attitude comes from the same source used to synthesize mag: q_wb_zu.
+        const Quaternionf q_ref_wb_zu = reference_quat_wb_zu(rec.imu);
 
-        // Simulated magnetometer in body NED
-        Vector3f mag_f(0,0,0);
+        float r_ref_n = 0.0f;
+        float p_ref_n = 0.0f;
+        float y_ref_n = 0.0f;
+        quat_wb_zu_to_euler_nautical(q_ref_wb_zu, r_ref_n, p_ref_n, y_ref_n);
+
+        // Simulated magnetometer from quaternion truth, then convert body ENU -> body NED.
+        Vector3f mag_f = Vector3f::Zero();
         if (with_mag) {
-            Vector3f mag_b_enu =
-                MagSim_WMM::simulate_mag_from_euler_nautical(r_ref_n, p_ref_n, y_ref_n);
+            const Vector3f mag_b_enu = mag_body_from_quat_wb_zu(q_ref_wb_zu);
             mag_f = zu_to_ned(mag_b_enu);
         }
 
-        // Initialization (accel-only)
+        // Initialize from accel only.
         if (first) {
             mekf.initialize_from_acc(acc_f / g_std);
             first = false;
@@ -225,35 +269,30 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
         // Propagation
         mekf.time_update(gyr_f, dt);
 
-        // Measurement updates
+        // Updates
         if (with_mag && rec.time >= MAG_DELAY_SEC) {
             if (!mag_enabled) {
-                // First time: set world ref + immediate mag update
-                mekf.set_mag_world_ref(B_world);
                 mekf.measurement_update_mag_only(mag_f);
                 mag_enabled = true;
             }
 
-            // Magnetometer is sampled at 25 Hz while IMU runs at 200 Hz.
             if (iter % MAG_UPDATE_STRIDE == 0) {
                 mekf.measurement_update_mag_only(mag_f);
             }
 
-            // Accel update remains at IMU rate (200 Hz).
             mekf.measurement_update_acc_only(acc_f / g_std);
         } else {
             mekf.measurement_update_acc_only(acc_f / g_std);
         }
 
-        // Extract quaternion estimate...
-        auto coeffs = mekf.quaternion(); // [x,y,z,w]
-        Quaternionf q(coeffs(3), coeffs(0), coeffs(1), coeffs(2));
+        // Filter quaternion is BODY->WORLD in NED.
+        const auto coeffs = mekf.quaternion(); // [x,y,z,w]
+        const Quaternionf q_bw_ned(coeffs(3), coeffs(0), coeffs(1), coeffs(2));
 
-        float r_est_a, p_est_a, y_est_a;
-        quat_to_euler_aero(q, r_est_a, p_est_a, y_est_a);
-
-        float r_est = r_est_a, p_est = p_est_a, y_est = y_est_a;
-        aero_to_nautical(r_est, p_est, y_est);
+        float r_est = 0.0f;
+        float p_est = 0.0f;
+        float y_est = 0.0f;
+        quat_to_euler_nautical(q_bw_ned, r_est, p_est, y_est);
 
         rows.push_back({
             rec.time,
@@ -266,7 +305,7 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
         });
     });
 
-    // Write output file
+    // Output file
     std::string outname = filename;
     auto pos_prefix = outname.find("wave_data_");
     if (pos_prefix != std::string::npos) {
@@ -288,7 +327,7 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
         << "acc_noisy_x,acc_noisy_y,acc_noisy_z,"
         << "gyro_noisy_x,gyro_noisy_y,gyro_noisy_z\n";
 
-    for (auto &r : rows) {
+    for (const auto& r : rows) {
         ofs << r.t << ","
             << r.roll_ref << "," << r.pitch_ref << "," << r.yaw_ref << ","
             << r.acc_bx   << "," << r.acc_by    << "," << r.acc_bz << ","
@@ -304,43 +343,46 @@ void process_wave_file(const std::string &filename, float dt, bool with_mag) {
 
     const auto t1 = std::chrono::steady_clock::now();
     const double elapsed_sec = std::chrono::duration<double>(t1 - t0).count();
+
     static constexpr AhrsFailureLimits FAIL_LIMITS{};
     print_summary_and_fail_if_needed(outname, rows, dt, with_mag, elapsed_sec, FAIL_LIMITS);
 }
 
 int main(int argc, char* argv[]) {
-    float dt = 1.0f / 200.0f; // simulator sample rate
+    const float dt = 1.0f / 200.0f;
 
     bool with_mag = true;
-    add_noise = true;  // default: noisy
+    add_noise = true;
 
-    for (int i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if (arg == "--nomag") with_mag = false;
-        if (arg == "--no-noise") add_noise = false;
+        if (arg == "--nomag") {
+            with_mag = false;
+        } else if (arg == "--no-noise") {
+            add_noise = false;
+        }
     }
 
     std::cout << "Simulation starting with_mag=" << (with_mag ? "true" : "false")
-              << ", mag_delay=" << MAG_DELAY_SEC << " sec"
-              << ", noise=" << (add_noise ? "true" : "false") << "\n";
+              << ", mag_delay=" << MAG_DELAY_SEC
+              << " sec, noise=" << (add_noise ? "true" : "false") << "\n";
 
-    // Collect matching files
     std::vector<std::string> files;
-    for (auto &entry : std::filesystem::directory_iterator(".")) {
+    for (auto& entry : std::filesystem::directory_iterator(".")) {
         if (!entry.is_regular_file()) continue;
+
         std::string fname = entry.path().string();
         if (fname.find("wave_data_") == std::string::npos) continue;
+
         if (auto kind = WaveFileNaming::parse_kind_only(fname);
             kind && *kind == FileKind::Data) {
             files.push_back(fname);
         }
     }
 
-    // Sort lexicographically for stable, repeatable order
     std::sort(files.begin(), files.end());
 
-    // Process files in that fixed order
-    for (const auto &fname : files) {
+    for (const auto& fname : files) {
         process_wave_file(fname, dt, with_mag);
     }
 
