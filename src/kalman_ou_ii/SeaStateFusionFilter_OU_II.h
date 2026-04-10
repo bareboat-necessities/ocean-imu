@@ -507,6 +507,16 @@ public:
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
     inline float getWaveDirectionDeg() const noexcept { return dir_filter_.getDirectionDegrees(); }
 
+    // Aerospace → Nautical
+    static inline void aero_to_nautical(float &roll, float &pitch, float &yaw) {
+        (void)yaw;
+        float r_a = roll;
+        float p_a = pitch;
+        roll  = -p_a;  // aerospace pitch → nautical roll
+        pitch = -r_a;  // aerospace roll  → nautical pitch
+        // yaw unchanged
+    }
+
     Eigen::Vector3f getEulerNautical() const {
         if (!mekf_) return {NAN, NAN, NAN};
 
