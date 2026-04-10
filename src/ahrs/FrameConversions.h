@@ -75,6 +75,33 @@ static inline Quaternionf quat_from_euler(float roll_deg, float pitch_deg, float
     return q.normalized();
 }
 
+static inline Quaternionf quat_wb_zu_from_csv(float w, float x, float y, float z) {
+    Quaternionf q(w, x, y, z);
+    if (q.norm() < 1e-6f) return Quaternionf::Identity();
+    return q.normalized();
+}
+
+static inline void quat_wb_zu_to_euler_nautical(const Quaternionf& q_wb_zu,
+                                                float& roll,
+                                                float& pitch,
+                                                float& yaw)
+{
+    const Matrix3f C_wb_zu = q_wb_zu.normalized().toRotationMatrix();
+    matrix_to_euler_zyx_deg(C_wb_zu, roll, pitch, yaw);
+}
+
+static inline Vector3f mag_body_from_quat_wb_zu(
+    const Quaternionf& q_wb_zu,
+    float declination_deg = MagSim_WMM::default_declination_deg,
+    float inclination_deg = MagSim_WMM::default_inclination_deg,
+    float total_field_uT  = MagSim_WMM::default_total_field_uT)
+{
+    const Matrix3f C_wb_zu = q_wb_zu.normalized().toRotationMatrix();
+    const Vector3f mag_world_zu =
+        MagSim_WMM::mag_world_nautical(declination_deg, inclination_deg, total_field_uT);
+    return C_wb_zu * mag_world_zu;
+}
+
 static inline void matrix_to_euler_zyx_deg(const Matrix3f& R,
                                            float& roll_deg,
                                            float& pitch_deg,
@@ -393,33 +420,6 @@ inline int test_frame_conversions() {
 
     std::cout << "All frame conversion tests passed\n";
     return 0;
-}
-
-static inline Quaternionf quat_wb_zu_from_csv(float w, float x, float y, float z) {
-    Quaternionf q(w, x, y, z);
-    if (q.norm() < 1e-6f) return Quaternionf::Identity();
-    return q.normalized();
-}
-
-static inline void quat_wb_zu_to_euler_nautical(const Quaternionf& q_wb_zu,
-                                                float& roll,
-                                                float& pitch,
-                                                float& yaw)
-{
-    const Matrix3f C_wb_zu = q_wb_zu.normalized().toRotationMatrix();
-    matrix_to_euler_zyx_deg(C_wb_zu, roll, pitch, yaw);
-}
-
-static inline Vector3f mag_body_from_quat_wb_zu(
-    const Quaternionf& q_wb_zu,
-    float declination_deg = MagSim_WMM::default_declination_deg,
-    float inclination_deg = MagSim_WMM::default_inclination_deg,
-    float total_field_uT  = MagSim_WMM::default_total_field_uT)
-{
-    const Matrix3f C_wb_zu = q_wb_zu.normalized().toRotationMatrix();
-    const Vector3f mag_world_zu =
-        MagSim_WMM::mag_world_nautical(declination_deg, inclination_deg, total_field_uT);
-    return C_wb_zu * mag_world_zu;
 }
 
 #endif // FRAMECONV_TEST
