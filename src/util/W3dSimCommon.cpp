@@ -193,12 +193,23 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         << "dir_vec_x,dir_vec_y,"
         << "dfilt_ax,dfilt_ay\n";
 
-    const Vector3f mag_world_a = MagSim_WMM::mag_world_aero();
-    (void)mag_world_a;
+    const Vector3f mag_world_zu = MagSim_WMM::mag_world_nautical();
 
     const float mag_dt = 1.0f / options_.mag_odr_hz;
     float mag_phase_s = 0.0f;
     Vector3f mag_body_ned_hold = Vector3f::Zero();
+
+    auto quat_from_csv = [](const IMU_Sample& imu) -> Quaternionf {
+        Quaternionf q(imu.q_wb_zu_w, imu.q_wb_zu_x, imu.q_wb_zu_y, imu.q_wb_zu_z);
+        const bool finite =
+            std::isfinite(q.w()) && std::isfinite(q.x()) &&
+            std::isfinite(q.y()) && std::isfinite(q.z());
+        if (!finite || q.norm() < 1e-6f) {
+            return Quaternionf::Identity();
+        }
+        q.normalize();
+        return q;
+    };
 
     WaveDataCSVReader reader(filename);
     reader.for_each_record([&](const Wave_Data_Sample& rec) {
@@ -217,12 +228,17 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
             }
         }
 
-        Vector3f acc_meas_ned = zu_to_ned(acc_b);
-        Vector3f gyr_meas_ned = zu_to_ned(gyr_b);
+        const Vector3f acc_meas_ned = zu_to_ned(acc_b);
+        const Vector3f gyr_meas_ned = zu_to_ned(gyr_b);
 
-        float r_ref_out = rec.imu.roll_deg;
-        float p_ref_out = rec.imu.pitch_deg;
-        float y_ref_out = rec.imu.yaw_deg;
+        // Reference attitude from CSV quaternion: q_wb_zu = world->body in Z-up.
+        const Quaternionf q_ref_wb_zu = quat_from_csv(rec.imu);
+        const Matrix3f C_wb_zu = q_ref_wb_zu.toRotationMatrix();
+
+        float r_ref_out = 0.0f;
+        float p_ref_out = 0.0f;
+        float y_ref_out = 0.0f;
+        matrix_to_euler_zyx_deg(C_wb_zu, r_ref_out, p_ref_out, y_ref_out);
 
         if (options_.with_mag) {
             mag_phase_s += options_.dt;
@@ -231,8 +247,10 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
                 while (mag_phase_s >= mag_dt) mag_phase_s -= mag_dt;
                 mag_tick = true;
             }
+
             if (mag_tick) {
-                Vector3f mag_b_enu = MagSim_WMM::simulate_mag_from_euler_nautical(r_ref_out, p_ref_out, y_ref_out);
+                Vector3f mag_b_enu = C_wb_zu * mag_world_zu;
+
                 if (options_.add_noise && noise_models_.mag_noise) {
                     mag_b_enu = apply_mag_noise(mag_b_enu, *noise_models_.mag_noise, mag_dt);
                 }
@@ -241,6 +259,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
                         model(mag_b_enu, mag_dt);
                     }
                 }
+
                 mag_body_ned_hold = zu_to_ned(mag_b_enu);
                 fusion_adapter_.updateMag(mag_body_ned_hold);
             }
