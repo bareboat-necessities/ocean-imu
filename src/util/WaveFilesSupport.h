@@ -17,12 +17,12 @@
 
 extern const float g_std;
 
-static constexpr unsigned GLOBAL_SEED  = 42u; // global seed for reproducibility
+static constexpr unsigned GLOBAL_SEED = 42u; // global seed for reproducibility
 
 // Enums
-enum class WaveType { GERSTNER=0, JONSWAP=1, FENTON=2, PMSTOKES=3, CNOIDAL=4 };
-enum class FileKind { Data=0, Spectrum=1 };
-enum class TrackerType { ARANOVSKIY=0, KALMANF=1, ZEROCROSS=2, PLL=3 };
+enum class WaveType { GERSTNER = 0, JONSWAP = 1, FENTON = 2, PMSTOKES = 3, CNOIDAL = 4 };
+enum class FileKind { Data = 0, Spectrum = 1 };
+enum class TrackerType { ARANOVSKIY = 0, KALMANF = 1, ZEROCROSS = 2, PLL = 3 };
 
 // EnumTraits
 template <typename T>
@@ -42,7 +42,7 @@ struct EnumTraits<WaveType> {
         return "unknown";
     }
 
-    static std::optional<WaveType> from_string(const std::string &name) {
+    static std::optional<WaveType> from_string(const std::string& name) {
         if (name == "gerstner") return WaveType::GERSTNER;
         if (name == "jonswap")  return WaveType::JONSWAP;
         if (name == "fenton")   return WaveType::FENTON;
@@ -73,7 +73,7 @@ struct EnumTraits<FileKind> {
         return "unknown";
     }
 
-    static std::optional<FileKind> from_string(const std::string &name) {
+    static std::optional<FileKind> from_string(const std::string& name) {
         if (name == "data")     return FileKind::Data;
         if (name == "spectrum") return FileKind::Spectrum;
         return std::nullopt;
@@ -105,6 +105,9 @@ struct IMU_Sample {
     float acc_bx{}, acc_by{}, acc_bz{};
     float gyro_x{}, gyro_y{}, gyro_z{};
     float roll_deg{}, pitch_deg{}, yaw_deg{};
+
+    // Reference quaternion for the world->body rotation in Z-up / nautical frame.
+    float q_wb_zu_w{}, q_wb_zu_x{}, q_wb_zu_y{}, q_wb_zu_z{};
 };
 
 struct Wave_Data_Sample {
@@ -133,11 +136,11 @@ public:
     };
 
     // Generate filename (data or spectrum)
-    static std::string generate(FileKind kind, WaveType type, const WaveParameters &wp) {
-        double length = (wp.period > 0.0)
-                      ? (g_std * wp.period * wp.period / (2.0 * std::numbers::pi_v<float>))
-                      : 0.0;
-        double phaseDeg = wp.phase * 180.0 / std::numbers::pi_v<float>;
+    static std::string generate(FileKind kind, WaveType type, const WaveParameters& wp) {
+        const double length = (wp.period > 0.0)
+            ? (g_std * wp.period * wp.period / (2.0 * std::numbers::pi_v<float>))
+            : 0.0;
+        const double phaseDeg = wp.phase * 180.0 / std::numbers::pi_v<float>;
 
         std::ostringstream oss;
         oss << "wave_" << EnumTraits<FileKind>::to_string(kind) << "_"
@@ -151,7 +154,7 @@ public:
     }
 
     // Lightweight detection: just classify kind (Data/Spectrum)
-    static std::optional<FileKind> parse_kind_only(const std::string &filename) {
+    static std::optional<FileKind> parse_kind_only(const std::string& filename) {
         std::string stem = strip_path(filename);
         if (!ends_with(stem, ".csv")) return std::nullopt;
 
@@ -161,7 +164,7 @@ public:
     }
 
     // Full parse (common part of name)
-    static std::optional<ParsedName> parse(const std::string &filename) {
+    static std::optional<ParsedName> parse(const std::string& filename) {
         ParsedName result{};
         std::string stem = strip_path(filename);
 
@@ -191,10 +194,10 @@ public:
 
         try {
             for (size_t i = 1; i < tokens.size(); ++i) {
-                if (tokens[i].starts_with("H")) result.height   = std::stod(tokens[i].substr(1));
-                else if (tokens[i].starts_with("L")) result.length  = std::stod(tokens[i].substr(1));
-                else if (tokens[i].starts_with("A")) result.azimuth = std::stod(tokens[i].substr(1));
-                else if (tokens[i].starts_with("P")) result.phaseDeg= std::stod(tokens[i].substr(1));
+                if (tokens[i].starts_with("H"))      result.height   = std::stod(tokens[i].substr(1));
+                else if (tokens[i].starts_with("L")) result.length   = std::stod(tokens[i].substr(1));
+                else if (tokens[i].starts_with("A")) result.azimuth  = std::stod(tokens[i].substr(1));
+                else if (tokens[i].starts_with("P")) result.phaseDeg = std::stod(tokens[i].substr(1));
             }
         } catch (...) {
             return std::nullopt;
@@ -202,9 +205,9 @@ public:
         return result;
     }
 
-    // Convert filename → (kind, type, parameters)
+    // Convert filename -> (kind, type, parameters)
     static std::optional<std::tuple<FileKind, WaveType, WaveParameters>>
-    parse_to_params(const std::string &filename) {
+    parse_to_params(const std::string& filename) {
         auto parsed = parse(filename);
         if (!parsed) return std::nullopt;
 
@@ -214,7 +217,7 @@ public:
         wp.phase     = static_cast<float>(parsed->phaseDeg * std::numbers::pi_v<float> / 180.0);
 
         if (parsed->length > 0.0) {
-            double T = std::sqrt(parsed->length / g_std * 2 * std::numbers::pi_v<float>);
+            const double T = std::sqrt(parsed->length / g_std * 2.0 * std::numbers::pi_v<float>);
             wp.period = static_cast<float>(T);
         } else {
             wp.period = 0.0f;
@@ -224,32 +227,34 @@ public:
     }
 
 private:
-    static std::string strip_path(const std::string &filename) {
-        auto posSlash = filename.find_last_of("/\\");
-        if (posSlash != std::string::npos)
+    static std::string strip_path(const std::string& filename) {
+        const auto posSlash = filename.find_last_of("/\\");
+        if (posSlash != std::string::npos) {
             return filename.substr(posSlash + 1);
+        }
         return filename;
     }
 
-    static bool ends_with(const std::string &s, const std::string &suffix) {
+    static bool ends_with(const std::string& s, const std::string& suffix) {
         return s.size() >= suffix.size() &&
                s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
     }
 
-    static std::vector<std::string> split(const std::string &s, char delim) {
+    static std::vector<std::string> split(const std::string& s, char delim) {
         std::vector<std::string> elems;
         std::stringstream ss(s);
         std::string item;
-        while (std::getline(ss, item, delim)) elems.push_back(item);
+        while (std::getline(ss, item, delim)) {
+            elems.push_back(item);
+        }
         return elems;
     }
 };
 
 // CSV Writers / Readers
-// Wave data writer
 class WaveDataCSVWriter {
 public:
-    explicit WaveDataCSVWriter(const std::string &filename, bool append = false) {
+    explicit WaveDataCSVWriter(const std::string& filename, bool append = false) {
         if (append) ofs.open(filename, std::ios::app);
         else ofs.open(filename, std::ios::trunc);
         if (!ofs.is_open()) throw std::runtime_error("Failed to open " + filename);
@@ -262,17 +267,20 @@ public:
             << "acc_x,acc_y,acc_z,"
             << "acc_bx,acc_by,acc_bz,"
             << "gyro_x,gyro_y,gyro_z,"
-            << "roll_deg,pitch_deg,yaw_deg\n";
+            << "roll_deg,pitch_deg,yaw_deg,"
+            << "q_wb_zu_w,q_wb_zu_x,q_wb_zu_y,q_wb_zu_z\n";
     }
 
-    void write(const Wave_Data_Sample &s) {
+    void write(const Wave_Data_Sample& s) {
         ofs << s.time << ","
             << s.wave.disp_x << "," << s.wave.disp_y << "," << s.wave.disp_z << ","
-            << s.wave.vel_x  << "," << s.wave.vel_y  << "," << s.wave.vel_z << ","
-            << s.wave.acc_x  << "," << s.wave.acc_y  << "," << s.wave.acc_z << ","
-            << s.imu.acc_bx  << "," << s.imu.acc_by  << "," << s.imu.acc_bz << ","
-            << s.imu.gyro_x  << "," << s.imu.gyro_y  << "," << s.imu.gyro_z << ","
-            << s.imu.roll_deg << "," << s.imu.pitch_deg << "," << s.imu.yaw_deg
+            << s.wave.vel_x  << "," << s.wave.vel_y  << "," << s.wave.vel_z  << ","
+            << s.wave.acc_x  << "," << s.wave.acc_y  << "," << s.wave.acc_z  << ","
+            << s.imu.acc_bx  << "," << s.imu.acc_by  << "," << s.imu.acc_bz  << ","
+            << s.imu.gyro_x  << "," << s.imu.gyro_y  << "," << s.imu.gyro_z  << ","
+            << s.imu.roll_deg << "," << s.imu.pitch_deg << "," << s.imu.yaw_deg << ","
+            << s.imu.q_wb_zu_w << "," << s.imu.q_wb_zu_x << ","
+            << s.imu.q_wb_zu_y << "," << s.imu.q_wb_zu_z
             << "\n";
     }
 
@@ -283,12 +291,12 @@ private:
     std::ofstream ofs;
 };
 
-// Wave data reader
 class WaveDataCSVReader {
 public:
-    explicit WaveDataCSVReader(const std::string &filename) : ifs(filename) {
+    explicit WaveDataCSVReader(const std::string& filename) : ifs(filename) {
         if (!ifs.is_open()) throw std::runtime_error("Failed to open " + filename);
-        std::string header; std::getline(ifs, header); // skip header
+        std::string header;
+        std::getline(ifs, header); // skip header
     }
 
     template<typename Callback>
@@ -306,41 +314,58 @@ public:
 private:
     std::ifstream ifs;
 
-    static bool read_csv_record(const std::string &line, Wave_Data_Sample &s) {
+    static bool read_csv_record(const std::string& line, Wave_Data_Sample& s) {
         std::istringstream iss(line);
-        char comma;
-        iss >> s.time >> comma
-            >> s.wave.disp_x >> comma >> s.wave.disp_y >> comma >> s.wave.disp_z >> comma
-            >> s.wave.vel_x  >> comma >> s.wave.vel_y  >> comma >> s.wave.vel_z  >> comma
-            >> s.wave.acc_x  >> comma >> s.wave.acc_y  >> comma >> s.wave.acc_z  >> comma
-            >> s.imu.acc_bx  >> comma >> s.imu.acc_by  >> comma >> s.imu.acc_bz  >> comma
-            >> s.imu.gyro_x  >> comma >> s.imu.gyro_y  >> comma >> s.imu.gyro_z  >> comma
-            >> s.imu.roll_deg >> comma >> s.imu.pitch_deg >> comma >> s.imu.yaw_deg;
-        return static_cast<bool>(iss);
+        char comma = '\0';
+
+        if (!(iss >> s.time >> comma
+                  >> s.wave.disp_x >> comma >> s.wave.disp_y >> comma >> s.wave.disp_z >> comma
+                  >> s.wave.vel_x  >> comma >> s.wave.vel_y  >> comma >> s.wave.vel_z  >> comma
+                  >> s.wave.acc_x  >> comma >> s.wave.acc_y  >> comma >> s.wave.acc_z  >> comma
+                  >> s.imu.acc_bx  >> comma >> s.imu.acc_by  >> comma >> s.imu.acc_bz  >> comma
+                  >> s.imu.gyro_x  >> comma >> s.imu.gyro_y  >> comma >> s.imu.gyro_z  >> comma
+                  >> s.imu.roll_deg >> comma >> s.imu.pitch_deg >> comma >> s.imu.yaw_deg)) {
+            return false;
+        }
+
+        if (iss >> comma
+                >> s.imu.q_wb_zu_w >> comma >> s.imu.q_wb_zu_x >> comma
+                >> s.imu.q_wb_zu_y >> comma >> s.imu.q_wb_zu_z) {
+            return true;
+        }
+
+        // Backward compatibility with older CSV files without quaternion columns.
+        s.imu.q_wb_zu_w = 1.0f;
+        s.imu.q_wb_zu_x = 0.0f;
+        s.imu.q_wb_zu_y = 0.0f;
+        s.imu.q_wb_zu_z = 0.0f;
+        return true;
     }
 };
 
-// Spectrum writer
 class WaveSpectrumCSVWriter {
 public:
-    explicit WaveSpectrumCSVWriter(const std::string &filename) : ofs(filename) {
+    explicit WaveSpectrumCSVWriter(const std::string& filename) : ofs(filename) {
         if (!ofs.is_open()) throw std::runtime_error("Failed to open " + filename);
         ofs << "f_Hz,theta_deg,E\n";
     }
+
     void write(double f, double theta_deg, double E) {
         ofs << f << "," << theta_deg << "," << E << "\n";
     }
+
     void close() { if (ofs.is_open()) ofs.close(); }
+
 private:
     std::ofstream ofs;
 };
 
-// Spectrum reader
 class WaveSpectrumCSVReader {
 public:
-    explicit WaveSpectrumCSVReader(const std::string &filename) : ifs(filename) {
+    explicit WaveSpectrumCSVReader(const std::string& filename) : ifs(filename) {
         if (!ifs.is_open()) throw std::runtime_error("Failed to open " + filename);
-        std::string header; std::getline(ifs, header); // skip header
+        std::string header;
+        std::getline(ifs, header); // skip header
     }
 
     template<typename Callback>
@@ -352,7 +377,7 @@ public:
             WaveSpectrumRecord rec{};
             if (read_csv_record(line, rec)) {
                 ++count;
-                if constexpr (std::is_same<decltype(cb(rec)), bool>::value) {
+                if constexpr (std::is_same_v<decltype(cb(rec)), bool>) {
                     if (!cb(rec)) break;
                 } else {
                     cb(rec);
@@ -367,7 +392,7 @@ public:
 private:
     std::ifstream ifs;
 
-    static bool read_csv_record(const std::string &line, WaveSpectrumRecord &rec) {
+    static bool read_csv_record(const std::string& line, WaveSpectrumRecord& rec) {
         std::istringstream iss(line);
         char comma;
         if ((iss >> rec.f_Hz >> comma
