@@ -113,11 +113,11 @@ private:
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap = 2009.97f,
     .err_limit_percent_z_pmstokes = 2009.9f,
-    .err_limit_yaw_deg = 300000.98f,
-    .err_limit_percent_3d_jonswap = 50000.0f,
-    .err_limit_percent_3d_pmstokes = 50000.0f,
-    .acc_z_bias_percent = 2800000.0f,
-    .bias_3d_percent = 25000000.0f,
+    .err_limit_yaw_deg = 3000.98f,
+    .err_limit_percent_3d_jonswap = 5000.0f,
+    .err_limit_percent_3d_pmstokes = 5000.0f,
+    .acc_z_bias_percent = 2800.0f,
+    .bias_3d_percent = 2500.0f,
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
