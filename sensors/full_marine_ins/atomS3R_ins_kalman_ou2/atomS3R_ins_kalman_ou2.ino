@@ -2,10 +2,10 @@
   Copyright 2026, Mikhail Grushinskiy
 
   AtomS3R SeaStateFusion_OU_II (+ optional IMU Calibration Wizard)
-   
+
     - filter learns tilt during startup
     - one-shot magnetic north lock inside SeaStateFusion_OU_II
-    - filter yaw is the primary heading output
+    - filter yaw is the primary heading output after north-lock
     - tilt-compensated magnetic heading is kept only for diagnostics
 
   Assumptions:
@@ -41,7 +41,6 @@
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "nmea/NmeaCompass.h"
 
-// UI / serial defaults
 #ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
   #define SEA_STATE_UI_DEFAULT_GRAPHICS 1
 #endif
@@ -286,22 +285,23 @@ private:
   Vector3f m_cal_ = Vector3f::Constant(NAN);
   float    a_raw_norm_ = 0.0f;
 
-  float dt_              = 0.0f;
-  float roll_deg_        = 0.0f;
-  float pitch_deg_       = 0.0f;
-  float heading_deg_     = 0.0f;
-  float heave_m_         = 0.0f;
-  float wave_envelope_m_ = 0.0f;
-  float wave_hz_         = FREQ_GUESS;
+  float dt_               = 0.0f;
+  float roll_deg_         = 0.0f;
+  float pitch_deg_        = 0.0f;
+  float heading_deg_      = 0.0f;
+  bool  heading_valid_    = false;
+  float heave_m_          = 0.0f;
+  float wave_envelope_m_  = 0.0f;
+  float wave_hz_          = FREQ_GUESS;
 
-  float heave_raw_m_        = 0.0f;   // raw heave from fusion position.z() (up-positive)
-  float heave_baseline_m_   = 0.0f;   // slow baseline actually subtracted
-  float heave_wave_raw_m_   = 0.0f;   // raw residual = heave_raw - baseline
-  float heave_wave_clean_m_ = 0.0f;   // cleaned residual for plotting/output
+  float heave_raw_m_        = 0.0f;
+  float heave_baseline_m_   = 0.0f;
+  float heave_wave_raw_m_   = 0.0f;
+  float heave_wave_clean_m_ = 0.0f;
 
-  bool  mag_ok_         = false;
-  bool  mag_fresh_      = false;
-  float mag_norm_uT_    = NAN;
+  bool  mag_ok_          = false;
+  bool  mag_fresh_       = false;
+  float mag_norm_uT_     = NAN;
   float heading_mag_deg_ = NAN;
   bool  heading_mag_ok_  = false;
 
@@ -444,7 +444,6 @@ private:
     fcfg.with_mag = true;
     fcfg.online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
-    // Use one-shot north-lock from stable accel+mag window.
     fcfg.use_fixed_mag_world_ref = false;
     fcfg.mag_world_ref = Vector3f::Zero();
 
@@ -485,7 +484,9 @@ private:
     rot_dpm_filt_ = 0.0f;
     gyro_bias_ok_ = false;
     gyro_bias_ema_.setZero();
-    heading_deg_  = 0.0f;
+
+    heading_deg_   = 0.0f;
+    heading_valid_ = false;
 
     mag_gate_last_ms_ = 0;
     mag_ok_           = false;
@@ -571,6 +572,8 @@ private:
       fusion_.updateMag(m_cal_);
     }
 
+    heading_valid_ = fusion_.hasMagNorthLock();
+
     Eigen::Quaternionf q_bw = fusion_.raw().mekf().quaternion_boat();
     q_bw.normalize();
 
@@ -630,7 +633,7 @@ private:
     const Vector3f displacement_raw_up_m = fusion_.displacementUpMeters();
     const auto& displacement_det_out = fusion_.displacementDetrend();
 
-    heave_m_         = displacement_raw_up_m.z();  // positive-up
+    heave_m_         = displacement_raw_up_m.z();
     wave_envelope_m_ = fusion_.raw().getDisplacementScale();
     wave_hz_         = fusion_.raw().getFreqHz();
 
@@ -675,13 +678,20 @@ private:
   void updateUI_graphics_() {
     ui_.setReadRotation();
     const bool tiltWarn = (fabsf(roll_deg_) > 35.0f) || (fabsf(pitch_deg_) > 35.0f);
-    compass_ui_.draw(heading_deg_, mag_ok_, mag_norm_uT_, tiltWarn);
+    const float hdg_draw = heading_valid_ ? heading_deg_ : 0.0f;
+    compass_ui_.draw(hdg_draw, heading_valid_ && mag_ok_, mag_norm_uT_, tiltWarn);
   }
 
   void updateUI_text_() {
     ui_.setReadRotation();
     ui_.title("COMPASS");
-    M5.Display.printf("HDG: %6.1f deg\n", static_cast<double>(heading_deg_));
+
+    if (heading_valid_) {
+      M5.Display.printf("HDG: %6.1f deg\n", static_cast<double>(heading_deg_));
+    } else {
+      M5.Display.printf("HDG:   --- WAIT\n");
+    }
+
     M5.Display.printf("HDM: %6.1f %s\n",
                       static_cast<double>(heading_mag_deg_),
                       heading_mag_ok_ ? "MAG" : "---");
@@ -708,8 +718,10 @@ private:
     last_serial_ms_ = now_ms;
 
 #if SEA_STATE_SERIAL_NMEA
-    const bool valid = fusion_.isLive();
-    nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
+    const bool valid = fusion_.isLive() && heading_valid_;
+    if (heading_valid_) {
+      nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
+    }
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
     nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
@@ -718,15 +730,16 @@ private:
   #if ARDUINO_PLOTTER
     Serial.printf(
       "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\n",
-      static_cast<double>(heave_raw_m_      * 100.0f),
-      static_cast<double>(wave_envelope_m_  * 100.0f),
+      static_cast<double>(heave_raw_m_ * 100.0f),
+      static_cast<double>(wave_envelope_m_ * 100.0f),
       static_cast<double>(heave_wave_clean_m_ * 100.0f));
   #else
     Serial.printf(
-      "hdg_filt=%.2f | hdg_mag=%s%.2f | dt_imu_ms=%.2f | mag_ok=%u | mag_fresh=%u | |m|=%.2f"
+      "hdg_filt=%s%.2f | hdg_mag=%s%.2f | dt_imu_ms=%.2f | mag_ok=%u | mag_fresh=%u | |m|=%.2f"
       " | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f"
       " | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f"
       " | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
+      heading_valid_ ? "" : "~",
       static_cast<double>(heading_deg_),
       heading_mag_ok_ ? "" : "~",
       static_cast<double>(heading_mag_deg_),
