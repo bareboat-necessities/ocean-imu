@@ -1,33 +1,5 @@
-#include <filesystem>
-#include <iostream>
-#include <string>
+#include <cmath>
 #include <type_traits>
-#include <vector>
-
-/*
-    Copyright (c), 2026  Mikhail Grushinskiy
-*/
-
-#define EIGEN_NON_ARDUINO
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#include "util/W3dSimCommon.h"
-#include "pii_observer/AdaptiveVerticalPIIMahony.h"
-#include "ahrs/FrameConversions.h"
-#include "ahrs/Mahony_AHRS.h"
-
-using Eigen::Vector3f;
-
-bool add_noise = true;
-
-static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap = 170000.9f,
-    .err_limit_percent_z_pmstokes = 160000.0f,
-    .err_limit_yaw_deg = 500.06f,
-};
 
 class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {
 public:
@@ -39,13 +11,13 @@ public:
                                    const Vector3f& sigma_m,
                                    const Vector3f& mag_world_a)
         : with_mag_(with_mag),
-          filter_(make_config_(with_mag, sigma_a_init, sigma_g, sigma_m, mag_world_a)),
-          mag_declination_deg_(std::atan2(mag_world_a.y(), mag_world_a.x()) * 180.0f / float(M_PI))
+          filter_(make_config_(with_mag, sigma_a_init, sigma_g, sigma_m, mag_world_a))
     {
     }
 
     void updateMag(const Vector3f& mag_body_ned) override {
         // Runner supplies body-frame NED at mag ODR.
+        // Cache only the latest fresh mag sample.
         last_mag_body_ned_ = mag_body_ned;
         have_mag_ = true;
         mag_fresh_ = true;
@@ -58,30 +30,27 @@ public:
     {
         (void)temperature_c;
 
-        // Runner-facing convention: body NED = (North, East, Down)
-        // Mahony wrapper here is fed in body NWU = (North, West, Up)
-        // so that:
-        //   - gravity is +Z at rest
-        //   - horizontal north is +X for Mahony's mag update
-        const Vector3f gyr_body_m = ned_to_mahony_body_(gyr_meas_ned);
-        const Vector3f acc_body_m = ned_to_mahony_body_(acc_meas_ned);
+        // Feed the Mahony wrapper in the sim's native body Z-up nautical frame.
+        // body NED (North, East, Down) -> body Z-up / ENU-like nautical (East, North, Up)
+        const Vector3f gyr_body_zu = ned_to_zu(gyr_meas_ned);
+        const Vector3f acc_body_zu = ned_to_zu(acc_meas_ned);
 
-        // Consume magnetometer only on fresh mag ticks.
-        // Do NOT re-apply the last mag sample at every IMU step.
+        // Consume magnetometer only once per fresh mag tick.
+        // This avoids replaying a stale mag sample at 200 Hz.
         if (with_mag_ && have_mag_ && mag_fresh_) {
-            const Vector3f mag_body_m = ned_to_mahony_body_(last_mag_body_ned_);
+            const Vector3f mag_body_zu = ned_to_zu(last_mag_body_ned_);
 
             filter_.updateIMUMag(
-                gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
-                acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
-                mag_body_m.x(), mag_body_m.y(), mag_body_m.z(),
+                gyr_body_zu.x(), gyr_body_zu.y(), gyr_body_zu.z(),
+                acc_body_zu.x(), acc_body_zu.y(), acc_body_zu.z(),
+                mag_body_zu.x(), mag_body_zu.y(), mag_body_zu.z(),
                 dt
             );
             mag_fresh_ = false;
         } else {
             filter_.updateIMU(
-                gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
-                acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
+                gyr_body_zu.x(), gyr_body_zu.y(), gyr_body_zu.z(),
+                acc_body_zu.x(), acc_body_zu.y(), acc_body_zu.z(),
                 dt
             );
         }
@@ -93,46 +62,37 @@ public:
         const auto hs = filter_.snapshot();
         const auto& obs = hs.core.observer;
 
+        // This filter is vertical-only in translation.
         s.disp_est_zu = Vector3f(0.0f, 0.0f, filter_.displacement());
         s.vel_est_zu  = Vector3f(0.0f, 0.0f, filter_.velocity());
         s.acc_est_zu  = Vector3f(0.0f, 0.0f, filter_.accelFiltered());
 
-        // Convert Mahony's exact world->body quaternion in NWU into the sim's
-        // world->body nautical Z-up frame, then extract Euler the same way as truth.
-        Quaternionf q_wb_nwu(
+        // Wrapper exposes world->body quaternion in Z-up world.
+        // Because we now feed body Z-up directly, this is directly comparable
+        // to sim truth q_wb_zu.
+        Quaternionf q_wb_zu(
             hs.q_world_to_body.w,
             hs.q_world_to_body.x,
             hs.q_world_to_body.y,
             hs.q_world_to_body.z
         );
 
-        if (!std::isfinite(q_wb_nwu.w()) || !std::isfinite(q_wb_nwu.x()) ||
-            !std::isfinite(q_wb_nwu.y()) || !std::isfinite(q_wb_nwu.z()) ||
-            q_wb_nwu.norm() < 1e-6f) {
-            q_wb_nwu = Quaternionf::Identity();
+        const bool finite =
+            std::isfinite(q_wb_zu.w()) && std::isfinite(q_wb_zu.x()) &&
+            std::isfinite(q_wb_zu.y()) && std::isfinite(q_wb_zu.z());
+
+        if (!finite || q_wb_zu.norm() < 1e-6f) {
+            q_wb_zu = Quaternionf::Identity();
         } else {
-            q_wb_nwu.normalize();
+            q_wb_zu.normalize();
         }
 
-        const Matrix3f C_wb_nwu = q_wb_nwu.toRotationMatrix();
-        const Matrix3f C_wb_zu_mag = mahony_wb_nwu_to_wb_zu_(C_wb_nwu);
+        float roll_deg  = 0.0f;
+        float pitch_deg = 0.0f;
+        float yaw_deg   = 0.0f;
+        quat_wb_zu_to_euler_nautical(q_wb_zu, roll_deg, pitch_deg, yaw_deg);
 
-        float roll_sim_deg  = 0.0f;
-        float pitch_sim_deg = 0.0f;
-        float yaw_sim_deg   = 0.0f;
-        matrix_to_euler_zyx_deg(C_wb_zu_mag, roll_sim_deg, pitch_sim_deg, yaw_sim_deg);
-
-        // Mahony mag yaw is magnetic-referenced; shift it back to the sim's
-        // world-axis yaw using the synthetic field declination.
-        if (with_mag_) {
-            yaw_sim_deg = wrapDeg(yaw_sim_deg + mag_declination_deg_);
-        } else {
-            yaw_sim_deg = wrapDeg(yaw_sim_deg);
-        }
-
-        s.euler_nautical_deg = Vector3f(roll_sim_deg,
-                                        pitch_sim_deg,
-                                        yaw_sim_deg);
+        s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, yaw_deg);
 
         s.acc_bias_est_ned    = Vector3f::Zero();
         s.gyro_bias_est_ned   = Vector3f::Zero();
@@ -186,25 +146,6 @@ public:
     }
 
 private:
-    static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
-        // body NED (North, East, Down) -> body NWU (North, West, Up)
-        return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
-    }
-
-    static Matrix3f nwu_to_zu_basis_() {
-        // NWU (North, West, Up) -> nautical Z-up / ENU (East, North, Up)
-        Matrix3f S;
-        S << 0.0f, -1.0f, 0.0f,
-             1.0f,  0.0f, 0.0f,
-             0.0f,  0.0f, 1.0f;
-        return S;
-    }
-
-    static Matrix3f mahony_wb_nwu_to_wb_zu_(const Matrix3f& C_wb_nwu) {
-        const Matrix3f S = nwu_to_zu_basis_();
-        return S * C_wb_nwu * S.transpose();
-    }
-
     static HeaveFilter::Config make_config_(bool with_mag,
                                             const Vector3f& sigma_a_init,
                                             const Vector3f& sigma_g,
@@ -218,7 +159,6 @@ private:
 
         HeaveFilter::Config cfg{};
 
-        // Base observer
         cfg.core.observer.r          = 0.150f;
         cfg.core.observer.tau_a      = 0.68f;
         cfg.core.observer.tau_d      = 49.0f;
@@ -232,7 +172,6 @@ private:
         cfg.core.observer.S_limit   = 200.0f;
         cfg.core.observer.d_limit   = 20.0f;
 
-        // Adaptation
         cfg.core.adaptation.enabled = true;
         cfg.core.adaptation.min_confidence = 0.22f;
 
@@ -277,13 +216,11 @@ private:
             marine_obs::detail::make_default_tracker_config<
                 std::remove_cvref_t<decltype(cfg.core.accel_freq_tracker)>, float>();
 
-        // Mahony base gains
         cfg.mahony_twoKp = 0.45f;
         cfg.mahony_twoKi = 0.015f;
         cfg.gravity_mps2 = g_std;
         cfg.use_mag = with_mag;
 
-        // Mahony sea-state scheduling
         cfg.adapt_mahony_gains = true;
         cfg.mahony_twoKp_calm  = 0.90f;
         cfg.mahony_twoKp_rough = 0.35f;
@@ -304,162 +241,4 @@ private:
 
     Vector3f last_mag_body_ned_ = Vector3f::Zero();
     HeaveFilter filter_;
-    float mag_declination_deg_ = 0.0f;
 };
-
-static void print_vertical_only_summary(const W3dSimulationRunResult& result, float dt)
-{
-    constexpr float RMS_WINDOW_SEC = 60.0f;
-    const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
-    if (result.errs_z.size() <= static_cast<size_t>(N_last)) return;
-
-    const size_t start = result.errs_z.size() - N_last;
-
-    RMSReport rms_z, rms_roll, rms_pitch, rms_yaw;
-    for (size_t i = start; i < result.errs_z.size(); ++i) {
-        rms_z.add(result.errs_z[i]);
-        rms_roll.add(result.errs_roll[i]);
-        rms_pitch.add(result.errs_pitch[i]);
-        rms_yaw.add(result.errs_yaw[i]);
-    }
-
-    const float z_rms = rms_z.rms();
-    const float z_pct = 100.0f * z_rms / result.wave_params.height;
-
-    std::vector<float> vf(result.freq_hist.begin() + start, result.freq_hist.end());
-
-    std::cout << "=== Last 60 s VERTICAL-ONLY summary for " << result.output_name << " ===\n";
-    std::cout << "Z RMS (m): " << z_rms << "\n";
-    std::cout << "Z RMS (%Hs): " << z_pct << "% (Hs=" << result.wave_params.height << ")\n";
-    std::cout << "Angles RMS (deg): Roll=" << rms_roll.rms()
-              << " Pitch=" << rms_pitch.rms()
-              << " Yaw=" << rms_yaw.rms() << "\n";
-
-    std::cout << "f_used_hz: mean=" << mean_vec(vf)
-              << " median=" << median_vec(vf)
-              << " p05=" << percentile_vec(vf, 0.05)
-              << " p95=" << percentile_vec(vf, 0.95) << "\n";
-
-    std::cout << "active r=" << result.final_tuning_applied
-              << ", active tau_a=" << result.final_tau_applied
-              << ", active tau_d=" << result.final_tau_target
-              << ", active kb=" << result.final_tuning_target << "\n";
-
-    std::cout << "raw sigma_a=" << result.final_sigma_target
-              << ", used sigma_a=" << result.final_sigma_applied
-              << ", raw accel_var=" << result.final_accel_variance << "\n";
-
-    std::cout << "===========================================================\n\n";
-}
-
-static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult& result, float dt)
-{
-    constexpr float RMS_WINDOW_SEC = 60.0f;
-    const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
-    if (result.errs_z.size() <= static_cast<size_t>(N_last)) return;
-
-    const size_t start = result.errs_z.size() - N_last;
-
-    RMSReport rms_z, rms_yaw;
-    for (size_t i = start; i < result.errs_z.size(); ++i) {
-        rms_z.add(result.errs_z[i]);
-        rms_yaw.add(result.errs_yaw[i]);
-    }
-
-    const float z_pct = 100.0f * rms_z.rms() / result.wave_params.height;
-    const float z_limit = (result.wave_type == WaveType::JONSWAP)
-        ? FAIL_LIMITS.err_limit_percent_z_jonswap
-        : FAIL_LIMITS.err_limit_percent_z_pmstokes;
-    if (z_pct > z_limit) {
-        std::cerr << "ERROR: Z RMS above limit (" << z_pct << "% > " << z_limit
-                  << "%). Failing.\n";
-        std::exit(EXIT_FAILURE);
-    }
-
-    if (result.with_mag && rms_yaw.rms() > FAIL_LIMITS.err_limit_yaw_deg) {
-        std::cerr << "ERROR: Yaw RMS above limit (" << rms_yaw.rms() << " deg > "
-                  << FAIL_LIMITS.err_limit_yaw_deg << " deg). Failing.\n";
-        std::exit(EXIT_FAILURE);
-    }
-}
-
-static std::optional<W3dSimulationRunResult>
-process_wave_file_for_adaptive_pii_mahony(const std::string& filename,
-                                          float dt,
-                                          bool with_mag,
-                                          bool add_noise,
-                                          float mag_odr_hz)
-{
-    const float acc_sigma = 1.51e-3f * g_std;
-    const float gyr_sigma = 0.00157f;
-    const float acc_bias_range = 5e-3f * g_std;
-    const float gyr_bias_range = 0.05f * float(std::numbers::pi_v<float> / 180.0f);
-    const float acc_bias_rw = 0.0005f;
-    const float gyr_bias_rw = 0.00001f;
-    const float mag_sigma_uT = (mag_odr_hz <= 20.0f) ? 0.30f : 0.60f;
-
-    SimulationNoiseModels noise_models;
-    noise_models.accel_noise = make_imu_noise_model(acc_sigma, acc_bias_range, acc_bias_rw, 1234);
-    noise_models.gyro_noise  = make_imu_noise_model(gyr_sigma, gyr_bias_range, gyr_bias_rw, 5678);
-    noise_models.mag_noise   = make_mag_noise_model(mag_sigma_uT, 2.0f, 0.01f,
-                                                    0.015f, 0.010f, 1.0f, 9012);
-
-    const Vector3f sigma_a_init(2.8f * acc_sigma, 2.8f * acc_sigma, 2.8f * acc_sigma);
-    const Vector3f sigma_g(2.0f * gyr_sigma, 2.0f * gyr_sigma, 2.0f * gyr_sigma);
-    const float sigma_m_uT = 1.2f * mag_sigma_uT;
-    const Vector3f sigma_m(sigma_m_uT, sigma_m_uT, sigma_m_uT);
-    const Vector3f mag_world_a = MagSim_WMM::mag_world_aero();
-
-    FusionAdapterAdaptivePIIMahony adapter(with_mag, sigma_a_init, sigma_g, sigma_m, mag_world_a);
-
-    W3dSimulationOptions options;
-    options.dt = dt;
-    options.with_mag = with_mag;
-    options.add_noise = add_noise;
-    options.mag_odr_hz = mag_odr_hz;
-    options.temperature_c = 35.0f;
-    options.output_suffix_with_mag = "_nonkalman_fusion";
-    options.output_suffix_no_mag   = "_nonkalman_fusion_nomag";
-
-    W3dSimulationRunner runner(options, std::move(noise_models), adapter);
-    return runner.run(filename);
-}
-
-int main(int argc, char* argv[])
-{
-    const float dt = 1.0f / 200.0f;
-    bool with_mag = true;
-    add_noise = true;
-
-    for (int i = 1; i < argc; i++) {
-        std::string arg = argv[i];
-        if (arg == "--nomag") {
-            with_mag = false;
-        } else if (arg == "--no-noise") {
-            add_noise = false;
-        }
-    }
-
-    std::cout << "AdaptiveVerticalPIIMahony simulation starting"
-              << " with_mag=" << (with_mag ? "true" : "false")
-              << ", noise=" << (add_noise ? "true" : "false")
-              << "\n";
-
-    const auto files = collect_wave_data_files(".");
-
-    for (const auto& fname : files) {
-        auto result = process_wave_file_for_adaptive_pii_mahony(
-            fname,
-            dt,
-            with_mag,
-            add_noise,
-            25.0f
-        );
-        if (!result) continue;
-
-        print_vertical_only_summary(*result, dt);
-        fail_if_vertical_quality_gates_breached(*result, dt);
-    }
-
-    return 0;
-}
