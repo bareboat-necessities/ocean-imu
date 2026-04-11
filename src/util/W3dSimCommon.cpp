@@ -240,6 +240,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         float y_ref_out = 0.0f;
         matrix_to_euler_zyx_deg(C_wb_zu, r_ref_out, p_ref_out, y_ref_out);
 
+        fusion_adapter_.update(options_.dt, gyr_meas_ned, acc_meas_ned, options_.temperature_c);
         if (options_.with_mag) {
             mag_phase_s += options_.dt;
             bool mag_tick = false;
@@ -247,7 +248,6 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
                 while (mag_phase_s >= mag_dt) mag_phase_s -= mag_dt;
                 mag_tick = true;
             }
-
             if (mag_tick) {
                 Vector3f mag_b_enu = C_wb_zu * mag_world_zu;
 
@@ -259,13 +259,10 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
                         model(mag_b_enu, mag_dt);
                     }
                 }
-
                 mag_body_ned_hold = zu_to_ned(mag_b_enu);
                 fusion_adapter_.updateMag(mag_body_ned_hold);
             }
         }
-
-        fusion_adapter_.update(options_.dt, gyr_meas_ned, acc_meas_ned, options_.temperature_c);
         const FilterSnapshot snap = fusion_adapter_.snapshot();
 
         Vector3f disp_ref(rec.wave.disp_x, rec.wave.disp_y, rec.wave.disp_z);
