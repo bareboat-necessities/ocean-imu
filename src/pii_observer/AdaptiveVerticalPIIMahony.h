@@ -508,11 +508,11 @@ private:
                                       T vx, T vy, T vz,
                                       T& ox, T& oy, T& oz)
     {
-        // body->world quaternion = conjugate(world->body)
+        // Mahony quaternion is used here as body->world in this project.
         const T qw = static_cast<T>(m.q0);
-        const T qx = static_cast<T>(-m.q1);
-        const T qy = static_cast<T>(-m.q2);
-        const T qz = static_cast<T>(-m.q3);
+        const T qx = static_cast<T>(m.q1);
+        const T qy = static_cast<T>(m.q2);
+        const T qz = static_cast<T>(m.q3);
 
         const T tx = T(2) * (qy * vz - qz * vy);
         const T ty = T(2) * (qz * vx - qx * vz);
