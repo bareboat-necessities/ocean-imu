@@ -338,7 +338,7 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
 {
     const float acc_sigma = 1.51e-3f * g_std;
     const float gyr_sigma = 0.00157f;
-    const float acc_bias_range = 5e-3f * g_std;
+    const float acc_bias_range = 5e-2f * g_std;
     const float gyr_bias_range = 0.05f * float(std::numbers::pi_v<float> / 180.0f);
     const float acc_bias_rw = 0.0005f;
     const float gyr_bias_rw = 0.00001f;
