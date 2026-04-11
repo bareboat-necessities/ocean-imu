@@ -16,6 +16,7 @@
 #include "util/W3dSimCommon.h"
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 
+using Eigen::Quaternionf;
 using Eigen::Vector3f;
 
 bool add_noise = true;
@@ -71,7 +72,15 @@ public:
         s.disp_est_zu = ned_to_zu(filter.mekf().get_position());
         s.vel_est_zu = ned_to_zu(filter.mekf().get_velocity());
         s.acc_est_zu = ned_to_zu(filter.mekf().get_world_accel());
-        s.euler_nautical_deg = filter.getEulerNautical();
+        const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
+
+        float roll_deg  = 0.0f;
+        float pitch_deg = 0.0f;
+        float yaw_deg   = 0.0f;
+
+        quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
+        yaw_deg = wrapDeg(yaw_deg + MagSim_WMM::default_declination_deg);
+        s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, yaw_deg);
         s.acc_bias_est_ned = filter.mekf().get_acc_bias();
         s.gyro_bias_est_ned = filter.mekf().gyroscope_bias();
         s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf());
