@@ -45,9 +45,10 @@ public:
     }
 
     void updateMag(const Vector3f& mag_body_ned) override {
-        // Runner supplies body-frame NED.
+        // Runner supplies body-frame NED at mag ODR.
         last_mag_body_ned_ = mag_body_ned;
         have_mag_ = true;
+        mag_fresh_ = true;
     }
 
     void update(float dt,
@@ -58,14 +59,16 @@ public:
         (void)temperature_c;
 
         // Runner-facing convention: body NED = (North, East, Down)
-        // Mahony here is used in body NWU = (North, West, Up)
+        // Mahony wrapper here is fed in body NWU = (North, West, Up)
         // so that:
         //   - gravity is +Z at rest
         //   - horizontal north is +X for Mahony's mag update
         const Vector3f gyr_body_m = ned_to_mahony_body_(gyr_meas_ned);
         const Vector3f acc_body_m = ned_to_mahony_body_(acc_meas_ned);
 
-        if (with_mag_ && have_mag_) {
+        // Consume magnetometer only on fresh mag ticks.
+        // Do NOT re-apply the last mag sample at every IMU step.
+        if (with_mag_ && have_mag_ && mag_fresh_) {
             const Vector3f mag_body_m = ned_to_mahony_body_(last_mag_body_ned_);
 
             filter_.updateIMUMag(
@@ -74,6 +77,7 @@ public:
                 mag_body_m.x(), mag_body_m.y(), mag_body_m.z(),
                 dt
             );
+            mag_fresh_ = false;
         } else {
             filter_.updateIMU(
                 gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
@@ -93,20 +97,38 @@ public:
         s.vel_est_zu  = Vector3f(0.0f, 0.0f, filter_.velocity());
         s.acc_est_zu  = Vector3f(0.0f, 0.0f, filter_.accelFiltered());
 
-        // Mahony internal Euler here is in its NWU convention.
-        // Convert back to the sim's nautical convention for RMS comparison.
-        //
-        // Derived mapping:
-        //   roll_nautical  =  pitch_mahony
-        //   pitch_nautical = -roll_mahony
-        //   yaw_nautical   = -yaw_mahony (+ declination when mag is used)
-        const float roll_m_deg  = filter_.rollDeg();
-        const float pitch_m_deg = filter_.pitchDeg();
-        const float yaw_m_deg   = filter_.yawDeg();
+        // Convert Mahony's exact world->body quaternion in NWU into the sim's
+        // world->body nautical Z-up frame, then extract Euler the same way as truth.
+        Quaternionf q_wb_nwu(
+            hs.q_world_to_body.w,
+            hs.q_world_to_body.x,
+            hs.q_world_to_body.y,
+            hs.q_world_to_body.z
+        );
 
-        const float roll_sim_deg  = -pitch_m_deg;
-        const float pitch_sim_deg = roll_m_deg;
-        const float yaw_sim_deg   = wrapDeg(-yaw_m_deg + (with_mag_ ? mag_declination_deg_ : 0.0f));
+        if (!std::isfinite(q_wb_nwu.w()) || !std::isfinite(q_wb_nwu.x()) ||
+            !std::isfinite(q_wb_nwu.y()) || !std::isfinite(q_wb_nwu.z()) ||
+            q_wb_nwu.norm() < 1e-6f) {
+            q_wb_nwu = Quaternionf::Identity();
+        } else {
+            q_wb_nwu.normalize();
+        }
+
+        const Matrix3f C_wb_nwu = q_wb_nwu.toRotationMatrix();
+        const Matrix3f C_wb_zu_mag = mahony_wb_nwu_to_wb_zu_(C_wb_nwu);
+
+        float roll_sim_deg  = 0.0f;
+        float pitch_sim_deg = 0.0f;
+        float yaw_sim_deg   = 0.0f;
+        matrix_to_euler_zyx_deg(C_wb_zu_mag, roll_sim_deg, pitch_sim_deg, yaw_sim_deg);
+
+        // Mahony mag yaw is magnetic-referenced; shift it back to the sim's
+        // world-axis yaw using the synthetic field declination.
+        if (with_mag_) {
+            yaw_sim_deg = wrapDeg(yaw_sim_deg + mag_declination_deg_);
+        } else {
+            yaw_sim_deg = wrapDeg(yaw_sim_deg);
+        }
 
         s.euler_nautical_deg = Vector3f(roll_sim_deg,
                                         pitch_sim_deg,
@@ -167,6 +189,20 @@ private:
     static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
         // body NED (North, East, Down) -> body NWU (North, West, Up)
         return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
+    }
+
+    static Matrix3f nwu_to_zu_basis_() {
+        // NWU (North, West, Up) -> nautical Z-up / ENU (East, North, Up)
+        Matrix3f S;
+        S << 0.0f, -1.0f, 0.0f,
+             1.0f,  0.0f, 0.0f,
+             0.0f,  0.0f, 1.0f;
+        return S;
+    }
+
+    static Matrix3f mahony_wb_nwu_to_wb_zu_(const Matrix3f& C_wb_nwu) {
+        const Matrix3f S = nwu_to_zu_basis_();
+        return S * C_wb_nwu * S.transpose();
     }
 
     static HeaveFilter::Config make_config_(bool with_mag,
@@ -264,6 +300,7 @@ private:
 private:
     bool with_mag_ = true;
     bool have_mag_ = false;
+    bool mag_fresh_ = false;
 
     Vector3f last_mag_body_ned_ = Vector3f::Zero();
     HeaveFilter filter_;
