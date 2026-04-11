@@ -56,11 +56,11 @@ inline OUPrims<T> make_prims(T h, T tau) {
     return {alpha, em1};
 }
 
-// Full exponential-map correction (Rodrigues in quaternion form).
-// Accurate for both small and large |δθ|.
-// Right-multiply convention: q_new = qref ⊗ δq(δθ), where δθ = vector increment.
-// Uses Maclaurin expansion with FMA for small |δθ| to avoid 0/0 and cancellation.
-// Series preserves 2nd-order accuracy in propagation and correction.
+// Quaternion from a rotation vector delta_theta.
+// Accurate for both small and large |delta_theta|.
+// This helper is convention-agnostic by itself; the filter convention depends
+// on how the returned quaternion is multiplied into qref.
+// Uses a small-angle series to avoid loss of precision near |delta_theta| = 0.
 template<typename T>
 inline Eigen::Quaternion<T> quat_from_delta_theta(const Eigen::Matrix<T,3,1>& dtheta) {
     const T theta = dtheta.norm();
@@ -596,7 +596,20 @@ class Kalman3D_Wave_OU_III {
   private:
     const T gravity_magnitude_ = T(STD_GRAVITY);
 
-    // MEKF internals
+    // MEKF quaternion convention:
+    //   - qref stores WORLD -> BODY' attitude, where BODY' is the virtual
+    //     un-heeled body frame used internally by the filter.
+    //   - quaternion() returns BODY' -> WORLD via qref.conjugate().
+    //   - A world-frame reference vector v_world is predicted in BODY' as:
+    //         v_bodyprime = R_wb() * v_world
+    //   - Attitude error is injected left-multiplicatively in BODY' coordinates:
+    //         qref <- dq(delta_theta_bodyprime) * qref
+    //
+    // Important:
+    //   v2ref is stored in WORLD coordinates (see initialize_from_acc_mag():
+    //   v2ref = R_bw() * mag). Therefore the magnetometer prediction must be
+    //   +R_wb() * v2ref. Flipping that sign here without also changing how
+    //   v2ref is stored makes the innovation wrong even at the correct attitude.
     Eigen::Quaternion<T> qref;
     Vector3 v2ref = Vector3::UnitX();
 
@@ -1412,9 +1425,12 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     }
     prev_omega_b_ = omega_b;
 
-    // Δθ = ω·Ts → right-multiplicative quaternion increment
-    Eigen::Quaternion<T> dq = quat_from_delta_theta((last_gyr_bias_corrected * Ts).eval());
-    qref = qref * dq;
+    // qref stores WORLD->BODY'.
+    // With body-frame angular rate omega^{B'}, propagate as:
+    //   q_wb(k+1) = dq(-omega*dt) * q_wb(k)
+    const Eigen::Quaternion<T> dq_wb =
+        quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
+    qref = dq_wb * qref;
     qref.normalize();
 
     // Attitude block F_AA, Q_AA
@@ -2005,10 +2021,17 @@ Matrix<T, 3, 3> Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::skew_s
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyQuaternionCorrectionFromErrorState()
 {
-    Eigen::Quaternion<T> corr = quat_from_delta_theta((xext.template segment<3>(0)).eval());
-    qref = qref * corr;
+    const Eigen::Quaternion<T> corr =
+        quat_from_delta_theta((xext.template segment<3>(0)).eval());
+
+    // qref stores WORLD->BODY'.
+    // Measurement Jacobians use the left-multiplicative convention:
+    //   z ≈ zhat - [zhat]x * delta_theta
+    // so the correction must be injected on the LEFT.
+    qref = corr * qref;
     qref.normalize();
-    // Clear error-state attitude correction after applying
+
+    // Clear injected attitude error state.
     xext.template head<3>().setZero();
 }
 
