@@ -205,7 +205,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     WaveDataCSVReader reader(filename);
 
     // accel update uses acc / g_std
-    const Vector3f sigma_a(0.055f,   0.055f,   0.055f);
+    const Vector3f sigma_a(0.095f,   0.095f,   0.095f);
     const Vector3f sigma_g(0.00074f, 0.00074f, 0.00074f);
     const Vector3f sigma_m(0.015f,   0.015f,   0.015f);
 
