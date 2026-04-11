@@ -22,7 +22,7 @@
 const float g_std = 9.80665f;
 const float MAG_DELAY_SEC = 5.0f;
 const int   IMU_RATE_HZ = 200;
-const int   MAG_RATE_HZ = 100;
+const int   MAG_RATE_HZ = 25;
 const int   MAG_UPDATE_STRIDE = IMU_RATE_HZ / MAG_RATE_HZ;
 
 #include "ahrs/KalmanQMEKF.h"
