@@ -24,9 +24,9 @@ using Eigen::Vector3f;
 bool add_noise = true;
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap = 170000.9f,
-    .err_limit_percent_z_pmstokes = 160000.0f,
-    .err_limit_yaw_deg = 500.06f,
+    .err_limit_percent_z_jonswap = 18.0f,
+    .err_limit_percent_z_pmstokes = 18.0f,
+    .err_limit_yaw_deg = 6.0f,
 };
 
 class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {
