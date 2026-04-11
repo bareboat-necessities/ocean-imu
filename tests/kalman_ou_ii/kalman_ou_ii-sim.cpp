@@ -4,7 +4,7 @@
 #include <vector>
 
 /*
-    Copyright (c) 2025-2026  Mikhail Grushinskiy
+   Copyright (c) 2025-2026  Mikhail Grushinskiy
 */
 
 #define EIGEN_NON_ARDUINO
