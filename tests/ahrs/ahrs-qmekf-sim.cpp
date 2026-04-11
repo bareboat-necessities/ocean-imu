@@ -205,9 +205,9 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     WaveDataCSVReader reader(filename);
 
     // accel update uses acc / g_std
-    const Vector3f sigma_a(0.095f,   0.095f,   0.095f);
-    const Vector3f sigma_g(0.002f,   0.002f,   0.002f);
-    const Vector3f sigma_m(0.015f,   0.015f,   0.015f);
+    const Vector3f sigma_a(0.115f,   0.115f,   0.115f);
+    const Vector3f sigma_g(0.003f,   0.003f,   0.003f);
+    const Vector3f sigma_m(0.012f,   0.012f,   0.012f);
 
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
 
