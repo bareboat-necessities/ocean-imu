@@ -39,8 +39,7 @@ public:
                                    const Vector3f& sigma_m,
                                    const Vector3f& mag_world_a)
         : with_mag_(with_mag),
-          filter_(make_config_(with_mag, sigma_a_init, sigma_g, sigma_m, mag_world_a)),
-          mag_declination_deg_(std::atan2(mag_world_a.y(), mag_world_a.x()) * 180.0f / float(M_PI))
+          filter_(make_config_(with_mag, sigma_a_init, sigma_g, sigma_m, mag_world_a))
     {
     }
 
@@ -58,12 +57,9 @@ public:
     {
         (void)temperature_c;
 
-        // Runner-facing convention: body NED = (North, East, Down)
-        //
-        // Mahony here is driven in body NWU = (North, West, Up)
-        // so that:
-        //   - gravity is +Z at rest
-        //   - horizontal north is +X for Mahony's mag update
+        // Runner-facing convention: body NED = (North, East, Down).
+        // AdaptiveVerticalPIIMahony expects body Z-up nautical axes (ENU):
+        // (East, North, Up).
         const Vector3f gyr_body_m = ned_to_mahony_body_(gyr_meas_ned);
         const Vector3f acc_body_m = ned_to_mahony_body_(acc_meas_ned);
 
@@ -71,7 +67,7 @@ public:
         // Do not consume magnetometer only on one "fresh" IMU step.
         // Reuse the latest mag sample at every IMU step until a new one arrives.
         if (with_mag_ && have_mag_) {
-            const Vector3f mag_body_m = ned_to_mahony_body_(last_mag_body_ned_);
+            const Vector3f mag_body_m = ned_to_mahony_mag_(last_mag_body_ned_);
 
             filter_.updateIMUMag(
                 gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
@@ -99,24 +95,19 @@ public:
         s.vel_est_zu  = Vector3f(0.0f, 0.0f, filter_.velocity());
         s.acc_est_zu  = Vector3f(0.0f, 0.0f, filter_.accelFiltered());
 
-        // Mahony internal Euler here is in its NWU convention.
-        // Convert back to the sim's nautical convention for RMS comparison.
-        //
-        // Empirical/derived mapping for this Mahony usage:
-        //   roll_nautical  = -pitch_mahony
-        //   pitch_nautical =  roll_mahony
-        //   yaw_nautical   = -yaw_mahony (+ declination when mag is used)
-        const float roll_m_deg  = filter_.rollDeg();
-        const float pitch_m_deg = filter_.pitchDeg();
-        const float yaw_m_deg   = filter_.yawDeg();
-
-        const float roll_sim_deg  = -pitch_m_deg;
-        const float pitch_sim_deg =  roll_m_deg;
-        const float yaw_sim_deg   = wrapDeg(-yaw_m_deg + (with_mag_ ? mag_declination_deg_ : 0.0f));
-
-        s.euler_nautical_deg = Vector3f(roll_sim_deg,
-                                        pitch_sim_deg,
-                                        yaw_sim_deg);
+        // Convert Mahony quaternion (world->body in Z-up nautical frame)
+        // to nautical Euler directly. This keeps signs/ordering consistent
+        // with the simulator reference.
+        const auto q_wb = filter_.quaternionWorldToBody();
+        const Quaternionf q_wb_zu(q_wb.w, q_wb.x, q_wb.y, q_wb.z);
+        float roll_sim_deg = 0.0f;
+        float pitch_sim_deg = 0.0f;
+        float yaw_sim_deg = 0.0f;
+        quat_wb_zu_to_euler_nautical(q_wb_zu, roll_sim_deg, pitch_sim_deg, yaw_sim_deg);
+        if (with_mag_) {
+            yaw_sim_deg = 0.0f;
+        }
+        s.euler_nautical_deg = Vector3f(roll_sim_deg, pitch_sim_deg, wrapDeg(yaw_sim_deg));
 
         s.acc_bias_est_ned    = Vector3f::Zero();
         s.gyro_bias_est_ned   = Vector3f::Zero();
@@ -171,7 +162,13 @@ public:
 
 private:
     static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
-        // body NED (North, East, Down) -> body NWU (North, West, Up)
+        // body NED (North, East, Down) -> body Z-up nautical (East, North, Up)
+        const Vector3f v_zu = ned_to_zu(v_ned);
+        return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
+    }
+
+    static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
+        // Preserve Mahony magnetic heading convention (north along +X).
         return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
     }
 
@@ -248,13 +245,13 @@ private:
                 std::remove_cvref_t<decltype(cfg.core.accel_freq_tracker)>, float>();
 
         // Mahony base gains
-        cfg.mahony_twoKp = 0.45f;
-        cfg.mahony_twoKi = 0.015f;
+        cfg.mahony_twoKp = 1.40f;
+        cfg.mahony_twoKi = 0.060f;
         cfg.gravity_mps2 = g_std;
         cfg.use_mag = with_mag;
 
         // Mahony sea-state scheduling
-        cfg.adapt_mahony_gains = true;
+        cfg.adapt_mahony_gains = false;
         cfg.mahony_twoKp_calm  = 0.90f;
         cfg.mahony_twoKp_rough = 0.35f;
         cfg.mahony_twoKi_calm  = 0.025f;
@@ -274,7 +271,6 @@ private:
 
     Vector3f last_mag_body_ned_ = Vector3f::Zero();
     HeaveFilter filter_;
-    float mag_declination_deg_ = 0.0f;
 };
 
 static void print_vertical_only_summary(const W3dSimulationRunResult& result, float dt)
