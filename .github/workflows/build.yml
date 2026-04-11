@@ -45,7 +45,6 @@ jobs:
           chmod +x *.sh
           ./run_tests.sh
           cp *.csv ../../plots/${{ matrix.dir }}
-          cp sea_metrics_from_spectrum_full_metrics_*.txt ../../plots/${{ matrix.dir }} || true
 
       - name: Generate PGF plots (${{ matrix.dir }})
         shell: bash
