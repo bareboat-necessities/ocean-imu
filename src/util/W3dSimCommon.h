@@ -253,7 +253,7 @@ struct W3dSimulationOptions {
     float dt = 0.005f;
     bool with_mag = true;
     bool add_noise = true;
-    float mag_odr_hz = 100.0f;
+    float mag_odr_hz = 25.0f;
     float temperature_c = 35.0f;
     std::string output_suffix_with_mag = "_fusion";
     std::string output_suffix_no_mag = "_fusion_nomag";
