@@ -238,8 +238,8 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         float r_ref_out = 0.0f;
         float p_ref_out = 0.0f;
         float y_ref_out = 0.0f;
-        matrix_to_euler_zyx_deg(C_wb_zu, r_ref_out, p_ref_out, y_ref_out);
-
+        quat_wb_zu_to_euler_nautical(q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
+      
         fusion_adapter_.update(options_.dt, gyr_meas_ned, acc_meas_ned, options_.temperature_c);
         if (options_.with_mag) {
             mag_phase_s += options_.dt;
