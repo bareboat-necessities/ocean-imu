@@ -766,7 +766,7 @@ class Kalman3D_Wave_OU_II {
         const Matrix3 W = skew_symmetric_matrix(w);
 
         if (wnorm < T(1e-7)) {
-            // Series (stable as omega->0)
+            // Series (stable as ω→0)
             const T t2 = t*t, t3 = t2*t;
             R = Matrix3::Identity() - W * t + T(0.5) * (W*W) * t2;
 
@@ -780,13 +780,12 @@ class Kalman3D_Wave_OU_II {
         const T theta = wnorm * t;
         const T s = std::sin(theta), c = std::cos(theta);
         const T invw = T(1) / wnorm;
-        const Matrix3 K = W * invw; // [u]x
+        const Matrix3 K = W * invw; // [u]×
 
-        // exp(-[omega]x t) = I - sin(theta) K + (1 - cos(theta)) K^2
+        // exp(-[ω]× t) = I - sinθ K + (1 - cosθ) K^2
         R = Matrix3::Identity() - s*K + (T(1)-c)*(K*K);
 
-        // B(t) = int_0^t R(tau) dtau
-        //      = t I - (1 - cos(theta))/omega^2 W + (t - sin(theta)/omega)/omega^2 W^2
+        // B(t) = ∫_0^t R(τ) dτ = t I - (1 - cosθ)/ω^2 W + (t - sinθ/ω)/ω^2 W^2
         const T invw2 = invw * invw;
 
         const Matrix3 term1 = Matrix3::Identity() * t;
@@ -801,7 +800,7 @@ class Kalman3D_Wave_OU_II {
         const Matrix3 W = skew_symmetric_matrix(w);
 
         if (wnorm < T(1e-7)) {
-            // int B ≈ 1/2 T^2 I - 1/6 W T^3 + 1/24 W^2 T^4
+            // ∫ B ≈ 1/2 T^2 I - 1/6 W T^3 + 1/24 W^2 T^4
             const T T2 = Tstep*Tstep, T3 = T2*Tstep, T4 = T3*Tstep;
             IB = ( Matrix3::Identity()*(T(0.5)*T2)
                  - W*(T(1.0/6.0)*T3)
@@ -916,14 +915,14 @@ class Kalman3D_Wave_OU_II {
                                              const Eigen::Matrix<T,NX,3>& PCt)
     {
         // We use that:
-        //  * PCt = P C^T  (N x 3)
-        //  * CP approximately (PCt)^T since P approximately P^T
+        //  • PCt = P Cᵀ  (N×3)
+        //  • CP ≈ (PCt)ᵀ since P ≈ Pᵀ
         //
         // So:
-        //   KCP(i,j) = sum_l K(i,l) * CP(l,j) approximately sum_l K(i,l) * PCt(j,l)
-        //   (KCP)^T(j,i) = KCP(j,i)
+        //   KCP(i,j) = Σ_l K(i,l) * CP(l,j) ≈ Σ_l K(i,l) * PCt(j,l)
+        //   (KCP)ᵀ(j,i) = KCP(j,i)
         //
-        // And K S K^T is symmetric because S is symmetric.
+        // And K S Kᵀ is symmetric because S is symmetric.
 
         for (int i = 0; i < NX; ++i) {
             for (int j = i; j < NX; ++j) {
@@ -934,8 +933,8 @@ class Kalman3D_Wave_OU_II {
                 for (int l = 0; l < 3; ++l) {
                     const T Ki_l = K(i,l);
                     const T Kj_l = K(j,l);
-                    const T Pj_l = PCt(j,l); // CP(l,j) approximately PCt(j,l)
-                    const T Pi_l = PCt(i,l); // CP(l,i) approximately PCt(i,l)
+                    const T Pj_l = PCt(j,l); // CP(l,j) ≈ PCt(j,l)
+                    const T Pi_l = PCt(i,l); // CP(l,i) ≈ PCt(i,l)
 
                     KCP_ij += Ki_l * Pj_l;
                     if (j != i) {
@@ -946,7 +945,7 @@ class Kalman3D_Wave_OU_II {
                     KCP_ji = KCP_ij;
                 }
 
-                // K S K^T (i,j)
+                // K S Kᵀ (i,j)
                 T KSK_ij = T(0);
                 for (int a = 0; a < 3; ++a) {
                     const T Kia = K(i,a);
@@ -1029,7 +1028,7 @@ class Kalman3D_Wave_OU_II {
     }
 
     // Retarget internal B' frame after heel changes.
-    // Keeps the physical attitude and bias meaning continuous.
+	// Keeps the *physical* attitude and bias meaning continuous.
     void retarget_bodyprime_frame_(T delta_heel_rad)
     {
         if (std::abs(delta_heel_rad) < T(1e-12)) return;
@@ -1289,10 +1288,10 @@ Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::Kalman3D_Wave_OU_II(
         log_tau_aw_f_.x    = std::log(clamp_pos_(tau_aw, tau_min_, tau_max_));
 
         // Reasonable default uncertainties (in log-domain)
-        log_sigma_acc_f_.P = Vector3::Constant(T(0.10) * T(0.10)); // ~10% 1sigma
-        log_sigma_p0_f_.P  = Vector3::Constant(T(0.15) * T(0.15)); // ~15% 1sigma
-        log_sigma_v0_f_.P  = Vector3::Constant(T(0.15) * T(0.15)); // ~15% 1sigma
-        log_tau_aw_f_.P    = T(0.20) * T(0.20);                    // ~20% 1sigma
+	    log_sigma_acc_f_.P = Vector3::Constant(T(0.10) * T(0.10)); // ~10% 1σ
+	    log_sigma_p0_f_.P  = Vector3::Constant(T(0.15) * T(0.15)); // ~15% 1σ
+	    log_sigma_v0_f_.P  = Vector3::Constant(T(0.15) * T(0.15)); // ~15% 1σ
+	    log_tau_aw_f_.P    = T(0.20) * T(0.20);                    // ~20% 1σ
 
         // Default RW diffusion (log units per sqrt(s)) -> variance per second
         const T rw_sig_acc = T(0.02); // ~2%/sqrt(s)
@@ -1356,8 +1355,8 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::set_aw_stationary_
 
 // Initialization from accelerometer + magnetometer
 // Inputs:
-//   acc_body  - accelerometer specific force in body frame (NED)
-//   mag_body  - magnetometer measurement in body frame (NED)
+//   acc_body  — accelerometer specific force in body frame (NED)
+//   mag_body  — magnetometer measurement in body frame (NED)
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_mag(
     Vector3 const& acc_body,
