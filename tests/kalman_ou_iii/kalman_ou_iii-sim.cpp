@@ -79,7 +79,7 @@ public:
         float yaw_deg   = 0.0f;
 
         quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
-        yaw_deg = wrapDeg(yaw_deg + MagSim_WMM::default_declination_deg);
+        yaw_deg = wrapDeg(yaw_deg); //wrapDeg(yaw_deg + MagSim_WMM::default_declination_deg);
         s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, yaw_deg);
         s.acc_bias_est_ned = filter.mekf().get_acc_bias();
         s.gyro_bias_est_ned = filter.mekf().gyroscope_bias();
