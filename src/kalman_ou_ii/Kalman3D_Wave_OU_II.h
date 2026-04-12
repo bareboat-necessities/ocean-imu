@@ -1614,8 +1614,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     // qref stores WORLD->BODY'.
     // With body-frame angular rate omega^{B'}, propagate as:
     //   q_wb(k+1) = dq(-omega*dt) * q_wb(k)
-    const Eigen::Quaternion<T> dq_wb =
-        quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
+    const Eigen::Quaternion<T> dq_wb = quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
     qref = dq_wb * qref;
     qref.normalize();
 
