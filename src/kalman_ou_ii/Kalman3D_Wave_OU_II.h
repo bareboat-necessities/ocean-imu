@@ -761,66 +761,65 @@ class Kalman3D_Wave_OU_II {
     // Closed-form helpers for rotation & integrals (constant ω over [0, t])
 
     // Rodrigues rotation and the integral B(t) = -∫_0^t exp(-[ω]× τ) dτ
-EIGEN_STRONG_INLINE void rot_and_B_from_wt_(const Vector3& w, T t, Matrix3& R, Matrix3& B) const {
-    const T wnorm = w.norm();
-    const Matrix3 W = skew_symmetric_matrix(w);
+    EIGEN_STRONG_INLINE void rot_and_B_from_wt_(const Vector3& w, T t, Matrix3& R, Matrix3& B) const {
+        const T wnorm = w.norm();
+        const Matrix3 W = skew_symmetric_matrix(w);
 
-    if (wnorm < T(1e-7)) {
-        // Series (stable as omega->0)
-        const T t2 = t*t, t3 = t2*t;
-        R = Matrix3::Identity() - W * t + T(0.5) * (W*W) * t2;
+        if (wnorm < T(1e-7)) {
+            // Series (stable as omega->0)
+            const T t2 = t*t, t3 = t2*t;
+            R = Matrix3::Identity() - W * t + T(0.5) * (W*W) * t2;
 
-        // B = t I - 1/2 W t^2 + 1/6 W^2 t^3
-        B = ( Matrix3::Identity()*t
-            - T(0.5)*W*t2
-            + (W*W)*(t3/T(6)) );
-        return;
+            // B = t I - 1/2 W t^2 + 1/6 W^2 t^3
+            B = ( Matrix3::Identity()*t
+                - T(0.5)*W*t2
+                + (W*W)*(t3/T(6)) );
+            return;
+        }
+
+        const T theta = wnorm * t;
+        const T s = std::sin(theta), c = std::cos(theta);
+        const T invw = T(1) / wnorm;
+        const Matrix3 K = W * invw; // [u]x
+
+        // exp(-[omega]x t) = I - sin(theta) K + (1 - cos(theta)) K^2
+        R = Matrix3::Identity() - s*K + (T(1)-c)*(K*K);
+
+        // B(t) = int_0^t R(tau) dtau
+        //      = t I - (1 - cos(theta))/omega^2 W + (t - sin(theta)/omega)/omega^2 W^2
+        const T invw2 = invw * invw;
+
+        const Matrix3 term1 = Matrix3::Identity() * t;
+        const Matrix3 term2 = ((T(1)-c) * invw2) * W;
+        const Matrix3 term3 = ((t - s*invw) * invw2) * (W*W);
+        B = term1 - term2 + term3;
     }
 
-    const T theta = wnorm * t;
-    const T s = std::sin(theta), c = std::cos(theta);
-    const T invw = T(1) / wnorm;
-    const Matrix3 K = W * invw; // [u]x
+    // ∫_0^T B(s) ds  (closed form; used for Q_{θb})
+    EIGEN_STRONG_INLINE void integral_B_ds_(const Vector3& w, T Tstep, Matrix3& IB) const {
+        const T wnorm = w.norm();
+        const Matrix3 W = skew_symmetric_matrix(w);
 
-    // exp(-[omega]x t) = I - sin(theta) K + (1 - cos(theta)) K^2
-    R = Matrix3::Identity() - s*K + (T(1)-c)*(K*K);
+        if (wnorm < T(1e-7)) {
+            // int B ≈ 1/2 T^2 I - 1/6 W T^3 + 1/24 W^2 T^4
+            const T T2 = Tstep*Tstep, T3 = T2*Tstep, T4 = T3*Tstep;
+            IB = ( Matrix3::Identity()*(T(0.5)*T2)
+                 - W*(T(1.0/6.0)*T3)
+                 + (W*W)*(T(1.0/24.0)*T4) );
+            return;
+        }
 
-    // B(t) = int_0^t R(tau) dtau
-    //      = t I - (1 - cos(theta))/omega^2 W + (t - sin(theta)/omega)/omega^2 W^2
-    const T invw2 = invw * invw;
+        const T theta = wnorm * Tstep;
+        const T s = std::sin(theta), c = std::cos(theta);
+        const T invw  = T(1) / wnorm;
+        const T invw2 = invw * invw;
 
-    const Matrix3 term1 = Matrix3::Identity() * t;
-    const Matrix3 term2 = ((T(1)-c) * invw2) * W;
-    const Matrix3 term3 = ((t - s*invw) * invw2) * (W*W);
-    B = term1 - term2 + term3;
-}
+        const Matrix3 termI  = Matrix3::Identity() * (T(0.5) * Tstep*Tstep);
+        const Matrix3 termW  = ((Tstep - s*invw) * invw2) * W;
+        const Matrix3 termW2 = ( (T(0.5)*Tstep*Tstep) + ((c - T(1)) * invw2) ) * invw2 * (W*W);
 
-// ∫_0^T B(s) ds  (closed form; used for Q_{θb})
-EIGEN_STRONG_INLINE void integral_B_ds_(const Vector3& w, T Tstep, Matrix3& IB) const {
-    const T wnorm = w.norm();
-    const Matrix3 W = skew_symmetric_matrix(w);
-
-    if (wnorm < T(1e-7)) {
-        // int B ≈ 1/2 T^2 I - 1/6 W T^3 + 1/24 W^2 T^4
-        const T T2 = Tstep*Tstep, T3 = T2*Tstep, T4 = T3*Tstep;
-        IB = ( Matrix3::Identity()*(T(0.5)*T2)
-             - W*(T(1.0/6.0)*T3)
-             + (W*W)*(T(1.0/24.0)*T4) );
-        return;
+        IB = termI - termW + termW2;
     }
-
-    const T theta = wnorm * Tstep;
-    const T s = std::sin(theta), c = std::cos(theta);
-    const T invw  = T(1) / wnorm;
-    const T invw2 = invw * invw;
-
-    // IB = ∫_0^T B(s) ds = -[ 1/2 T^2 I - ((T - sinθ/ω)/ω^2) W + ((1/2 T^2) + (cosθ - 1)/ω^2)/ω^2 W^2 ]
-    const Matrix3 termI  = Matrix3::Identity() * (T(0.5) * Tstep*Tstep);
-    const Matrix3 termW  = ((Tstep - s*invw) * invw2) * W;
-    const Matrix3 termW2 = ( (T(0.5)*Tstep*Tstep) + ((c - T(1)) * invw2) ) * invw2 * (W*W);
-
-    IB = termI - termW + termW2;
-}
 
     // d/dω of (ω×(ω×r)) = (ω·r) I + ω rᵀ - 2 r ωᵀ
     EIGEN_STRONG_INLINE Matrix3 d_omega_x_omega_x_r_domega_(const Vector3& w, const Vector3& r) const {
