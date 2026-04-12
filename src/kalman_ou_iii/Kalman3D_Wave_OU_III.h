@@ -621,8 +621,6 @@ class Kalman3D_Wave_OU_III {
     //   - quaternion() returns BODY' -> WORLD via qref.conjugate().
     //   - A world-frame reference vector v_world is predicted in BODY' as:
     //         v_bodyprime = R_wb() * v_world
-    //   - Attitude error is injected left-multiplicatively in BODY' coordinates:
-    //         qref <- dq(delta_theta_bodyprime) * qref
     //
     // Important:
     //   v2ref is stored in WORLD coordinates (see initialize_from_acc_mag():
