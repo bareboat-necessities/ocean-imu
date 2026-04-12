@@ -249,6 +249,7 @@ class Kalman3D_Wave_OU_III {
     // Initialization / measurement API
     void initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag);
     void initialize_from_acc(Vector3 const& acc);
+    void initialize_from_acc_preserve_yaw(Vector3 const& acc);
     static Eigen::Quaternion<T> quaternion_from_acc(Vector3 const& acc);
 
     // Set the world-frame magnetic reference vector used by the mag measurement model.
@@ -299,6 +300,24 @@ class Kalman3D_Wave_OU_III {
 
         // Composition: B→W = (B'→W) ∘ (B→B') = q_WB' * q_B'B
         return q_WBprime * q_BprimeB;
+    }
+
+    void set_quaternion_boat(const Eigen::Quaternion<T>& q_bw) {
+        Eigen::Quaternion<T> q = q_bw;
+        const T nq = q.norm();
+        if (!(nq > T(1e-8))) return;
+        q.normalize();
+
+        const T half = -wind_heel_rad_ * T(0.5);
+        const T c = std::cos(half);
+        const T s = std::sin(half);
+        const Eigen::Quaternion<T> q_BprimeB(c, s, 0, 0);
+        const Eigen::Quaternion<T> q_BBprime = q_BprimeB.conjugate();
+
+        const Eigen::Quaternion<T> q_WBprime = q * q_BBprime;
+        qref = q_WBprime.conjugate();
+        qref.normalize();
+        xext.template segment<3>(0).setZero();
     }
 
     [[nodiscard]] Vector3 gyroscope_bias() const {
@@ -623,7 +642,7 @@ class Kalman3D_Wave_OU_III {
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(1e-6);
 
     // Accelerometer bias temperature coefficient (per-axis), units: m/s^2 per °C.
-    // Default here reflects BMI270 typical accel drift (~0.003 m/s^2/°C).
+    // Default here reflects BMI270 typical accel drift (~0.002 m/s^2/°C).
     Vector3 k_a_ = Vector3::Constant(T(0.002));
 
 
@@ -704,8 +723,8 @@ class Kalman3D_Wave_OU_III {
             // Series (stable as ω→0)
             const T t2 = t*t, t3 = t2*t;
             R = Matrix3::Identity() - W * t + T(0.5) * (W*W) * t2;
-            // B = -( t I - 1/2 W t^2 + 1/6 W^2 t^3 )
-            B = -( Matrix3::Identity()*t - T(0.5)*W*t2 + (W*W)*(t3/T(6)) );
+            // B = t I - 1/2 W t^2 + 1/6 W^2 t^3
+            B = ( Matrix3::Identity()*t - T(0.5)*W*t2 + (W*W)*(t3/T(6)) );
             return;
         }
 
@@ -717,13 +736,13 @@ class Kalman3D_Wave_OU_III {
         // exp(-[ω]× t) = I - sinθ K + (1 - cosθ) K^2
         R = Matrix3::Identity() - s*K + (T(1)-c)*(K*K);
 
-        // B(t) = - ∫_0^t R(τ) dτ = -[ t I - (1 - cosθ)/ω^2 W + (t - sinθ/ω)/ω^2 W^2 ]
+        // B(t) = ∫_0^t R(τ) dτ = t I - (1 - cosθ)/ω^2 W + (t - sinθ/ω)/ω^2 W^2
         const T invw2 = invw * invw;
 
         const Matrix3 term1 = Matrix3::Identity() * t;
         const Matrix3 term2 = ((T(1)-c) * invw2) * W;
         const Matrix3 term3 = ((t - s*invw) * invw2) * (W*W);
-        B = -( term1 - term2 + term3 );
+        B = term1 - term2 + term3;
     }
 
     // ∫_0^T B(s) ds  (closed form; used for Q_{θb})
@@ -732,9 +751,9 @@ class Kalman3D_Wave_OU_III {
         const Matrix3 W = skew_symmetric_matrix(w);
 
         if (wnorm < T(1e-7)) {
-            // ∫ B ≈ -[ 1/2 T^2 I - 1/6 W T^3 + 1/24 W^2 T^4 ]
+            // ∫ B ≈ 1/2 T^2 I - 1/6 W T^3 + 1/24 W^2 T^4
             const T T2 = Tstep*Tstep, T3 = T2*Tstep, T4 = T3*Tstep;
-            IB = -( Matrix3::Identity()*(T(0.5)*T2)
+            IB = ( Matrix3::Identity()*(T(0.5)*T2)
                   - W*(T(1.0/6.0)*T3)
                   + (W*W)*(T(1.0/24.0)*T4) );
             return;
@@ -745,12 +764,12 @@ class Kalman3D_Wave_OU_III {
         const T invw  = T(1) / wnorm;
         const T invw2 = invw * invw;
 
-        // IB = ∫_0^T B(s) ds = -[ 1/2 T^2 I - ((T - sinθ/ω)/ω^2) W + ((1/2 T^2) + (cosθ - 1)/ω^2)/ω^2 W^2 ]
+        // IB = ∫_0^T B(s) ds = 1/2 T^2 I - ((T - sinθ/ω)/ω^2) W + ((1/2 T^2) + (cosθ - 1)/ω^2)/ω^2 W^2
         const Matrix3 termI = Matrix3::Identity() * (T(0.5) * Tstep*Tstep);
         const Matrix3 termW = ((Tstep - s*invw) * invw2) * W;
         const Matrix3 termW2 = ( (T(0.5)*Tstep*Tstep) + ((c - T(1)) * invw2) ) * invw2 * (W*W);
 
-        IB = -( termI - termW + termW2 );
+        IB = termI - termW + termW2;
     }
 
     // d/dω of (ω×(ω×r)) = (ω·r) I + ω rᵀ - 2 r ωᵀ
@@ -1275,34 +1294,71 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
 
     // use acc & mag as if they are BODY-frame (interpreted as B').
     // Normalize accelerometer
-    T anorm = acc.norm();
+    const T anorm = acc.norm();
     if (anorm < T(1e-8)) {
         throw std::runtime_error("Invalid accelerometer vector: norm too small for initialization");
     }
-    Vector3 acc_n = acc / anorm;
 
-    // Build WORLD axes expressed in BODY coords
-    Vector3 z_world = -acc_n;                         // world Z (down) in body coord
-    Vector3 mag_h   = mag - (mag.dot(z_world)) * z_world;
-    if (mag_h.norm() < T(1e-8)) {
-        throw std::runtime_error("Magnetometer vector parallel to gravity — cannot initialize yaw");
+    const T mnorm = mag.norm();
+    if (mnorm < T(1e-8)) {
+        throw std::runtime_error("Invalid magnetometer vector: norm too small for initialization");
     }
-    mag_h.normalize();
-    Vector3 x_world = mag_h;                          // world X (north) in body coords
-    Vector3 y_world = z_world.cross(x_world).normalized();
 
-    // R_wb: world→body rotation (columns = world axes in body coords)
-    Matrix3 R_wb;
-    R_wb.col(0) = x_world;
-    R_wb.col(1) = y_world;
-    R_wb.col(2) = z_world;
+    const Vector3 acc_n = acc / anorm;
 
-    // Store quaternion as world→body
-    qref = Eigen::Quaternion<T>(R_wb);
+    // WORLD axes expressed in BODY' coordinates
+    const Vector3 z_world = -acc_n;  // world down axis in body coords
+
+    Vector3 mag_h = mag - (mag.dot(z_world)) * z_world;
+    const T mh = mag_h.norm();
+    if (mh < T(1e-8)) {
+        throw std::runtime_error("Magnetometer vector parallel to gravity - cannot initialize yaw");
+    }
+    mag_h /= mh;
+
+    const Vector3 x_world = mag_h;                    // magnetic north in body coords
+    const Vector3 y_world = z_world.cross(x_world).normalized();
+
+    Matrix3 R_wb_new;
+    R_wb_new.col(0) = x_world;
+    R_wb_new.col(1) = y_world;
+    R_wb_new.col(2) = z_world;
+
+    qref = Eigen::Quaternion<T>(R_wb_new);
     qref.normalize();
 
-    // Store reference magnetic vector in world frame
-    v2ref = R_bw() * mag;  // body to world, µT
+    // Store world magnetic reference consistent with the new attitude.
+    v2ref = R_bw() * mag;
+
+    // This is an external hard attitude reset. Make EKF state/covariance coherent.
+    xext.template head<3>().setZero();
+
+    // Re-seed attitude covariance.
+    Pext.template block<3,3>(0,0) = Matrix3::Identity() * T(5e-4);
+
+    // Old attitude cross-covariances are now stale.
+    if constexpr (with_gyro_bias) {
+        Pext.template block<3,3>(0,3).setZero();
+        Pext.template block<3,3>(3,0).setZero();
+
+        // Give mag some room to re-tie yaw to gyro bias after relock.
+        auto Pbg = Pext.template block<3,3>(3,3);
+        const T bg_var_floor = T(1e-6);
+        for (int i = 0; i < 3; ++i) {
+            Pbg(i,i) = std::max(Pbg(i,i), bg_var_floor);
+        }
+        Pext.template block<3,3>(3,3) = Pbg;
+    }
+
+    // Zero attitude <-> linear cross-covariances.
+    zero_AL_cross_cov_once_();
+
+    if constexpr (with_accel_bias) {
+        Pext.template block<3,3>(0, OFF_BA).setZero();
+        Pext.template block<3,3>(OFF_BA, 0).setZero();
+    }
+
+    symmetrize_Pext_();
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
@@ -1345,15 +1401,76 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
 {
     const Vector3 acc = deheel_vector_(acc_body);
 
-    T anorm = acc.norm();
+    const T anorm = acc.norm();
     if (anorm < T(1e-8)) {
        throw std::runtime_error("Invalid accelerometer vector: norm too small for initialization");
     }
-    Vector3 acc_n = acc / anorm;
+    const Vector3 acc_n = acc / anorm;
 
     // Use accelerometer to align z axis, yaw remains arbitrary
     qref = quaternion_from_acc(acc_n);
     qref.normalize();
+
+    xext.template head<3>().setZero();
+    Pext.template block<3,3>(0,0) = Matrix3::Identity() * T(5e-4);
+
+    if constexpr (with_gyro_bias) {
+        Pext.template block<3,3>(0,3).setZero();
+        Pext.template block<3,3>(3,0).setZero();
+    }
+
+    zero_AL_cross_cov_once_();
+
+    if constexpr (with_accel_bias) {
+        Pext.template block<3,3>(0, OFF_BA).setZero();
+        Pext.template block<3,3>(OFF_BA, 0).setZero();
+    }
+
+    symmetrize_Pext_();
+}
+
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_preserve_yaw(
+    Vector3 const& acc_body)
+{
+    const Eigen::Quaternion<T> q_old_bw = quaternion_boat();
+
+    const T ox = q_old_bw.x();
+    const T oy = q_old_bw.y();
+    const T oz = q_old_bw.z();
+    const T ow = q_old_bw.w();
+    const T siny_cosp = T(2) * (ow * oz + ox * oy);
+    const T cosy_cosp = T(1) - T(2) * (oy * oy + oz * oz);
+    const T yaw_old = std::atan2(siny_cosp, cosy_cosp);
+
+    // Re-lock tilt from accelerometer first.
+    initialize_from_acc(acc_body);
+
+    Eigen::Quaternion<T> q_tilt_bw = quaternion_boat();
+    const T nq_tilt = q_tilt_bw.norm();
+    if (!(nq_tilt > T(1e-8))) return;
+    q_tilt_bw.normalize();
+
+    const T tx = q_tilt_bw.x();
+    const T ty = q_tilt_bw.y();
+    const T tz = q_tilt_bw.z();
+    const T tw = q_tilt_bw.w();
+
+    const T sinp_raw = T(2) * (tw * ty - tz * tx);
+    const T sinp = std::max(T(-1), std::min(T(1), sinp_raw));
+    const T pitch = std::asin(sinp);
+
+    const T sinr_cosp = T(2) * (tw * tx + ty * tz);
+    const T cosr_cosp = T(1) - T(2) * (tx * tx + ty * ty);
+    const T roll = std::atan2(sinr_cosp, cosr_cosp);
+
+    const Eigen::Quaternion<T> q_yaw(Eigen::AngleAxis<T>(yaw_old, Vector3::UnitZ()));
+    const Eigen::Quaternion<T> q_pitch(Eigen::AngleAxis<T>(pitch, Vector3::UnitY()));
+    const Eigen::Quaternion<T> q_roll(Eigen::AngleAxis<T>(roll, Vector3::UnitX()));
+
+    Eigen::Quaternion<T> q_new_bw = q_yaw * q_pitch * q_roll;
+    q_new_bw.normalize();
+    set_quaternion_boat(q_new_bw);
 }
 
 template <typename T, bool with_gyro_bias, bool with_accel_bias>
@@ -1428,8 +1545,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     // qref stores WORLD->BODY'.
     // With body-frame angular rate omega^{B'}, propagate as:
     //   q_wb(k+1) = dq(-omega*dt) * q_wb(k)
-    const Eigen::Quaternion<T> dq_wb =
-        quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
+    const Eigen::Quaternion<T> dq_wb = quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
     qref = dq_wb * qref;
     qref.normalize();
 
@@ -1918,7 +2034,11 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     const T mag_norm = mag_meas.norm();
     if (!(mag_norm > T(1e-6))) return;
 
-    // Predicted no-bias field for Jacobian
+    // Predicted no-bias field for Jacobian.
+    // Convention:
+    //   qref  = WORLD->BODY'
+    //   v2ref = WORLD-frame magnetic reference
+    // So the predicted BODY' magnetometer measurement is +R_wb() * v2ref.
     const Vector3 v2hat = R_wb() * v2ref;
 
     const Vector3 zhat = v2hat;
@@ -2030,8 +2150,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyQuaternionCo
     // so the correction must be injected on the LEFT.
     qref = corr * qref;
     qref.normalize();
-
-    // Clear injected attitude error state.
+    // Clear the local attitude-error state after injection.
     xext.template head<3>().setZero();
 }
 
