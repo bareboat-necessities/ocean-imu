@@ -1493,14 +1493,41 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_t
         xext.template segment<3>(OFF_BA).setZero();  // accel bias block
     }
 
-    // q_bw is BODY→WORLD (NED). Internally we store WORLD→BODY'.
-    qref = q_bw.conjugate();
-    qref.normalize();
+    // Input q_bw is the PHYSICAL boat/body attitude B->W.
+    // Internally we store qref = W->B', where B' is the virtual un-heeled body frame.
+    //
+    // q_B'B : B -> B'  ("un-heel" rotation)
+    // q_BB' : B' -> B
+    // q_WB' = q_BW * q_BB'
+    Eigen::Quaternion<T> q_in = q_bw;
+    const T nq = q_in.norm();
+    if (!(nq > T(1e-8))) {
+        qref.setIdentity();
+    } else {
+        q_in.normalize();
+
+        const T half = -wind_heel_rad_ * T(0.5);
+        const T c = std::cos(half);
+        const T s = std::sin(half);
+
+        const Eigen::Quaternion<T> q_BprimeB(c, s, 0, 0);   // B -> B'
+        const Eigen::Quaternion<T> q_BBprime = q_BprimeB.conjugate(); // B' -> B
+
+        const Eigen::Quaternion<T> q_WBprime = q_in * q_BBprime; // B' -> W
+        qref = q_WBprime.conjugate();                            // W -> B'
+        qref.normalize();
+    }
 
     // Reset covariance
     Pext.setZero();
     const T p_0 = T(1e-5);
     Pext.diagonal().array() = p_0;
+
+    // Keep cached kinematics coherent with the fresh reset
+    last_gyr_bias_corrected.setZero();
+    prev_omega_b_.setZero();
+    alpha_b_.setZero();
+    have_prev_omega_ = false;
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
