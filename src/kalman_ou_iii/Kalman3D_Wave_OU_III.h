@@ -1430,7 +1430,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
-void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_preserve_yaw(
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_acc_preserve_yaw(
     Vector3 const& acc_body)
 {
     const Eigen::Quaternion<T> q_old_bw = quaternion_boat();
