@@ -342,7 +342,7 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
     const float gyr_bias_range = 0.05f * float(std::numbers::pi_v<float> / 180.0f);
     const float acc_bias_rw = 0.0005f;
     const float gyr_bias_rw = 0.00001f;
-    const float mag_sigma_uT = (mag_odr_hz <= 20.0f) ? 0.30f : 0.60f;
+    const float mag_sigma_uT = (mag_odr_hz <= 20.0f) ? 0.40f : 0.80f;
 
     SimulationNoiseModels noise_models;
     noise_models.accel_noise = make_imu_noise_model(acc_sigma, acc_bias_range, acc_bias_rw, 1234);
