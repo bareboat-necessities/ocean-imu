@@ -769,11 +769,8 @@ class Kalman3D_Wave_OU_II {
             // Series (stable as ω→0)
             const T t2 = t*t, t3 = t2*t;
             R = Matrix3::Identity() - W * t + T(0.5) * (W*W) * t2;
-
             // B = t I - 1/2 W t^2 + 1/6 W^2 t^3
-            B = ( Matrix3::Identity()*t
-                - T(0.5)*W*t2
-                + (W*W)*(t3/T(6)) );
+            B = ( Matrix3::Identity()*t - T(0.5)*W*t2 + (W*W)*(t3/T(6)) );
             return;
         }
 
@@ -813,6 +810,7 @@ class Kalman3D_Wave_OU_II {
         const T invw  = T(1) / wnorm;
         const T invw2 = invw * invw;
 
+        // IB = ∫_0^T B(s) ds = 1/2 T^2 I - ((T - sinθ/ω)/ω^2) W + ((1/2 T^2) + (cosθ - 1)/ω^2)/ω^2 W^2
         const Matrix3 termI  = Matrix3::Identity() * (T(0.5) * Tstep*Tstep);
         const Matrix3 termW  = ((Tstep - s*invw) * invw2) * W;
         const Matrix3 termW2 = ( (T(0.5)*Tstep*Tstep) + ((c - T(1)) * invw2) ) * invw2 * (W*W);
@@ -907,8 +905,8 @@ class Kalman3D_Wave_OU_II {
         return std::isfinite(v) ? v : std::numeric_limits<T>::quiet_NaN();
     }
 
-    // Joseph covariance update: P <- P - KCP - (KCP)^T + K S K^T.
-    // Stack-light version: no NXxNX temporaries, only scalar loops.
+    // Joseph covariance update: P ← P - KCP - (KCP)ᵀ + K S Kᵀ.
+    // Stack-light version: no NX×NX temporaries, only scalar loops.
     // Assumes Pext is symmetric on entry.
     EIGEN_STRONG_INLINE void joseph_update3_(const Eigen::Matrix<T,NX,3>& K,
                                              const Matrix3& S,
@@ -1436,7 +1434,7 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 Eigen::Quaternion<T>
 Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::quaternion_from_acc(Vector3 const& acc)
 {
-    // Raw accelerometer is specific force; at rest in NED: acc approximately (0,0,-g) in body
+    // Raw accelerometer is specific force; at rest in NED: acc ≈ (0,0,-g) in body
     // We want body +Z (down) to align with world +Z (down), i.e. align zb to -acc.
     Vector3 an = acc.normalized();
     Vector3 zb = Vector3::UnitZ();
