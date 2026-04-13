@@ -150,8 +150,8 @@ public:
         }();
 
         // Mahony gains used when adaptation is disabled, and as reset/initial values
-        T mahony_twoKp = static_cast<T>(0.45);
-        T mahony_twoKi = static_cast<T>(0.015);
+        T mahony_twoKp = static_cast<T>(1.40);
+        T mahony_twoKi = static_cast<T>(0.060);
 
         // Gravity magnitude used to convert specific force -> inertial accel
         T gravity_mps2 = static_cast<T>(9.80665);
@@ -200,8 +200,8 @@ public:
 
         T vertical_world_accel_up = T(0);
 
-        T mahony_twoKp = static_cast<T>(0.45);
-        T mahony_twoKi = static_cast<T>(0.015);
+        T mahony_twoKp = static_cast<T>(1.40);
+        T mahony_twoKi = static_cast<T>(0.060);
         T gravity_mps2 = static_cast<T>(9.80665);
 
         T mahony_accel_norm_err = T(0);
@@ -472,8 +472,8 @@ private:
             cfg.gravity_mps2 = static_cast<T>(9.80665);
         }
 
-        if (!std::isfinite(cfg.mahony_twoKp)) cfg.mahony_twoKp = static_cast<T>(Mahony_AHRS<T>::twoKpDef);
-        if (!std::isfinite(cfg.mahony_twoKi)) cfg.mahony_twoKi = static_cast<T>(Mahony_AHRS<T>::twoKiDef);
+        if (!std::isfinite(cfg.mahony_twoKp)) cfg.mahony_twoKp = static_cast<T>(1.40);
+        if (!std::isfinite(cfg.mahony_twoKi)) cfg.mahony_twoKi = static_cast<T>(0.060);
 
         if (!std::isfinite(cfg.mahony_twoKp_calm))  cfg.mahony_twoKp_calm  = cfg.mahony_twoKp;
         if (!std::isfinite(cfg.mahony_twoKp_rough)) cfg.mahony_twoKp_rough = cfg.mahony_twoKp;
