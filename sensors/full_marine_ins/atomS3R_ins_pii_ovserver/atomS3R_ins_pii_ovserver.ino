@@ -37,6 +37,7 @@
   #include "AtomS3R/ImuCalWizardRunner.h"
 #endif
 #include "ahrs/FrameConversions.h"
+#include "detrend/AdaptiveWaveDetrender.h"
 #include "nmea/NmeaCompass.h"
 #include "pii_observer/AdaptiveVerticalPIIMahony.h"
 
@@ -196,6 +197,10 @@ class FusionApp {
   float heave_m_ = 0.0f;
   float wave_envelope_m_ = 0.0f;
   float wave_hz_ = FREQ_GUESS;
+  float heave_raw_m_ = 0.0f;
+  float heave_baseline_m_ = 0.0f;
+  float heave_wave_raw_m_ = 0.0f;
+  float heave_wave_clean_m_ = 0.0f;
 
   bool mag_ok_ = false;
   bool mag_fresh_ = false;
@@ -209,6 +214,7 @@ class FusionApp {
   float rot_dpm_filt_ = 0.0f;
   bool gyro_bias_ok_ = false;
   Vector3f gyro_bias_ema_ = Vector3f::Zero();
+  AdaptiveWaveDetrender z_detrender_{};
 
   static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
     const Vector3f v_zu = ned_to_zu(v_ned);
@@ -366,6 +372,36 @@ class FusionApp {
     heave_m_ = 0.0f;
     wave_envelope_m_ = 0.0f;
     wave_hz_ = FREQ_GUESS;
+    heave_raw_m_ = 0.0f;
+    heave_baseline_m_ = 0.0f;
+    heave_wave_raw_m_ = 0.0f;
+    heave_wave_clean_m_ = 0.0f;
+
+    AdaptiveWaveDetrender::Config dcfg{};
+    dcfg.init_wave_freq_hz = FREQ_GUESS;
+    dcfg.min_wave_freq_hz  = 0.02f;
+    dcfg.max_wave_freq_hz  = 1.20f;
+    dcfg.baseline_cutoff_fraction = 0.25f;
+    dcfg.min_baseline_cutoff_hz   = 0.003f;
+    dcfg.max_baseline_cutoff_hz   = 0.25f;
+    dcfg.freq_smooth_tau_s = 12.0f;
+    dcfg.slope_lpf_tau_s   = 0.20f;
+    dcfg.slope_rms_tau_s   = 8.0f;
+    dcfg.threshold_rms_fraction  = 0.15f;
+    dcfg.min_slope_threshold_abs = 0.002f;
+    dcfg.max_slope_threshold_abs = 1.0e9f;
+    dcfg.startup_hold_s      = 2.0f;
+    dcfg.freq_timeout_cycles = 3.0f;
+    dcfg.enable_wave_cleanup    = true;
+    dcfg.cleanup_cutoff_fraction = 1.0f;
+    dcfg.min_cleanup_cutoff_hz  = 0.003f;
+    dcfg.max_cleanup_cutoff_hz  = 0.50f;
+    dcfg.cleanup_stages         = 2;
+    dcfg.min_dt_s = 1.0e-4f;
+    dcfg.max_dt_s = 0.25f;
+    dcfg.output_abs_limit = 0.0f;
+    z_detrender_.setConfig(dcfg);
+    z_detrender_.reset(0.0f);
   }
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -466,6 +502,7 @@ class FusionApp {
 
     const auto hs = fusion_.snapshot();
     heave_m_ = fusion_.displacement();
+    heave_raw_m_ = heave_m_;
     wave_hz_ = hs.core.accel_freq_hz;
 
     const float omega = (wave_hz_ > 1e-6f) ? (2.0f * PI * wave_hz_) : NAN;
@@ -475,6 +512,11 @@ class FusionApp {
     } else {
       wave_envelope_m_ = 0.0f;
     }
+
+    const auto z_det = z_detrender_.update(heave_raw_m_, dt_, wave_hz_, (wave_hz_ > 1e-6f));
+    heave_baseline_m_ = z_det.baseline_slow;
+    heave_wave_raw_m_ = z_det.wave_raw;
+    heave_wave_clean_m_ = z_det.wave_clean;
   }
 
   void drawHomeStatic_() {
@@ -513,7 +555,7 @@ class FusionApp {
     M5.Display.printf("HDG: %6.1f %s\n", static_cast<double>(heading_deg_), heading_valid_ ? "deg" : "WAIT");
     M5.Display.printf("ROL: %6.1f deg\n", static_cast<double>(roll_deg_));
     M5.Display.printf("PIT: %6.1f deg\n", static_cast<double>(pitch_deg_));
-    M5.Display.printf("HEV: %6.3f m\n", static_cast<double>(heave_m_));
+    M5.Display.printf("HEV: %6.3f m\n", static_cast<double>(heave_raw_m_));
     M5.Display.printf("ENV: %6.3f m\n", static_cast<double>(wave_envelope_m_));
     M5.Display.printf("FRQ: %6.3f Hz\n", static_cast<double>(wave_hz_));
     M5.Display.printf("MAG: %s %s\n", mag_ok_ ? "OK " : "BAD", mag_fresh_ ? "NEW" : "OLD");
@@ -533,14 +575,15 @@ class FusionApp {
 #if SEA_STATE_SERIAL_NMEA
     if (heading_valid_) nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
-    nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_m_);
+    nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
     nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, heading_valid_);
 #else
   #if ARDUINO_PLOTTER
-    Serial.printf("HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\n",
-                  static_cast<double>(heave_m_ * 100.0f),
-                  static_cast<double>(wave_envelope_m_ * 100.0f));
+    Serial.printf("HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\n",
+                  static_cast<double>(heave_raw_m_ * 100.0f),
+                  static_cast<double>(wave_envelope_m_ * 100.0f),
+                  static_cast<double>(heave_wave_clean_m_ * 100.0f));
   #else
     Serial.printf("hdg=%.2f roll=%.2f pitch=%.2f heave=%.3f env=%.3f frq=%.3f\n",
                   static_cast<double>(heading_deg_),
