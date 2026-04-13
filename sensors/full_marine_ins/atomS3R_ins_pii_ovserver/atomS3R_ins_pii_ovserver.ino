@@ -53,7 +53,7 @@
 #endif
 
 constexpr float g_std = atoms3r_ical::ImuCalCfg::g_std;
-constexpr float FREQ_GUESS = 0.30f;
+//constexpr float FREQ_GUESS = 0.30f;
 
 static constexpr float LOOP_HZ = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LOOP_HZ);
