@@ -469,12 +469,12 @@ private:
         cfg.sigma_var_tau_s  = std::max(finite_or_default_(cfg.sigma_var_tau_s,  T(6)),  eps_());
         cfg.sigma_floor      = std::max(finite_or_default_(cfg.sigma_floor, T(1e-4)), T(0));
 
-        cfg.auto_schedule_period_s =  std::max(finite_or_default_(cfg.auto_schedule_period_s, T(0.25)), eps_());
+        cfg.auto_schedule_period_s =  std::max(finite_or_default_(cfg.auto_schedule_period_s, T(0.50)), eps_());
         cfg.default_external_confidence = clamp01_(finite_or_default_(cfg.default_external_confidence, T(1)));
-        cfg.fallback_confidence_floor = clamp01_(finite_or_default_(cfg.fallback_confidence_floor, T(0.35)));
-        cfg.fallback_confidence_when_locked = clamp01_(finite_or_default_(cfg.fallback_confidence_when_locked, T(0.70)));
-        cfg.coarse_schedule_blend = clamp01_(finite_or_default_(cfg.coarse_schedule_blend, T(0.50)));
-        cfg.coarse_schedule_confidence_floor = clamp01_(finite_or_default_(cfg.coarse_schedule_confidence_floor, T(0.45)));
+        cfg.fallback_confidence_floor = clamp01_(finite_or_default_(cfg.fallback_confidence_floor, T(0.52)));
+        cfg.fallback_confidence_when_locked = clamp01_(finite_or_default_(cfg.fallback_confidence_when_locked, T(0.82)));
+        cfg.coarse_schedule_blend = clamp01_(finite_or_default_(cfg.coarse_schedule_blend, T(0.48)));
+        cfg.coarse_schedule_confidence_floor = clamp01_(finite_or_default_(cfg.coarse_schedule_confidence_floor, T(0.62)));
 
         if (cfg.auto_schedule_from_accel_freq &&
             cfg.force_enable_adaptation_when_auto_schedule) {
