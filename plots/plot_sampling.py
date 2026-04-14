@@ -5,7 +5,7 @@ import os
 from typing import Optional
 
 BASE_SAMPLE_RATE_HZ = 200.0
-DEFAULT_PLOT_RATE_HZ = BASE_SAMPLE_RATE_HZ / 10
+DEFAULT_PLOT_RATE_HZ = BASE_SAMPLE_RATE_HZ / 40
 
 
 def get_plot_rate_hz() -> float:
