@@ -729,7 +729,8 @@ class Kalman3D_Wave_OU_III {
             // Series (stable as ω→0)
             const T t2 = t*t, t3 = t2*t;
             R = Matrix3::Identity() - W * t + T(0.5) * (W*W) * t2;
-            // B = t I - 1/2 W t^2 + 1/6 W^2 t^3
+            // B(t) = ∫_0^t exp(-[ω]× s) ds
+            //      ≈ t I - 1/2 W t^2 + 1/6 W^2 t^3
             B = ( Matrix3::Identity()*t - T(0.5)*W*t2 + (W*W)*(t3/T(6)) );
             return;
         }
