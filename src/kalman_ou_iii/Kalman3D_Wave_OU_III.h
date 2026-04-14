@@ -1090,7 +1090,7 @@ class Kalman3D_Wave_OU_III {
 	}
 
 	// Enable/disable commanded-parameter filtering
-	bool param_rw_enabled_ = true;
+	bool param_rw_enabled_ = false;
 
 	// Log-parameters we filter:
 	//  - log(sigma_acc)  -> used to build Racc
