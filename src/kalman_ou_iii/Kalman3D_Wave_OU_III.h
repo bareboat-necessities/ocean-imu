@@ -2118,6 +2118,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
         return;
     }
     last_mag_diag_.S = S_mat;
+    last_mag_diag_.nis = nis3_from_ldlt_(ldlt, r);
 
     MatrixNX3& K = K_scratch_;
     K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
