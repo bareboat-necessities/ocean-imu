@@ -873,6 +873,7 @@ class Kalman3D_Wave_OU_II {
 
     // Inject the current local attitude-error state into qref, then clear the attitude-error slot in xext.
     void applyQuaternionCorrectionFromErrorState();
+    void apply_error_state_reset_jacobian_(const Vector3& dtheta_injected);
 
     static void PhiAxis3x1_analytic(T tau, T h, Eigen::Matrix<T,3,3>& Phi_axis);
     static void QdAxis3x1_analytic(T tau, T h, T sigma2, Eigen::Matrix<T,3,3>& Qd_axis);
@@ -2229,10 +2230,48 @@ Matrix<T, 3, 3> Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::skew_sy
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::apply_error_state_reset_jacobian_(
+    const Vector3& dtheta_injected)
+{
+    if (!dtheta_injected.allFinite()) return;
+
+    const T n2 = dtheta_injected.squaredNorm();
+    if (!(n2 > T(0))) return;
+
+    // Left-multiplicative reset:
+    //
+    //   q_new = Exp(dtheta_hat) * q_old
+    //
+    // If the pre-reset attitude error is δθ, then after injection the new local
+    // attitude error is, to first order:
+    //
+    //   δθ_new ≈ (I + 1/2 [dtheta_hat]×) (δθ - dtheta_hat)
+    //
+    // So the covariance reset Jacobian is:
+    //
+    //   G = I + 1/2 [dtheta_hat]×
+    //
+    const Matrix3 G =
+        Matrix3::Identity() + T(0.5) * skew_symmetric_matrix(dtheta_injected);
+
+    MatrixNX Tm = MatrixNX::Identity();
+    Tm.template block<3,3>(0,0) = G;
+
+    MatrixNX Pnew = Tm * Pext * Tm.transpose();
+    Pext = T(0.5) * (Pnew + Pnew.transpose());
+}
+
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::applyQuaternionCorrectionFromErrorState()
 {
-    const Eigen::Quaternion<T> corr =
-        quat_from_delta_theta((xext.template segment<3>(0)).eval());
+    const Vector3 dtheta = xext.template segment<3>(0);
+
+    if (!dtheta.allFinite()) {
+        xext.template head<3>().setZero();
+        return;
+    }
+
+    const Eigen::Quaternion<T> corr = quat_from_delta_theta(dtheta);
 
     // qref stores WORLD->BODY'.
     // Measurement Jacobians use the left-multiplicative convention:
@@ -2240,6 +2279,11 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::applyQuaternionCor
     // so the correction must be injected on the LEFT.
     qref = corr * qref;
     qref.normalize();
+
+    // Reset covariance consistently with the quaternion injection
+    // before clearing the local attitude-error state.
+    apply_error_state_reset_jacobian_(dtheta);
+
     // Clear the local attitude-error state after injection.
     xext.template head<3>().setZero();
 }
