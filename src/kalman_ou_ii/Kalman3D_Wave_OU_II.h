@@ -1672,7 +1672,10 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
         // exact discrete attitude error transition
         F_AA.template topLeftCorner<3,3>() = Rstep;
 
-        // exact cross-term instead of I*Ts
+        // exact cross-term
+        //   Φ_{θb} = +∫_0^Ts exp(-[ω]× s) ds
+        // small-angle limit:
+        //   +I*Ts - 1/2 [ω]× Ts² + ...
         F_AA.template block<3,3>(0,3) = Bstep;
     }
 
