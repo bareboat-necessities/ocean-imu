@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import csv
+import sys
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+from plot_sampling import BASE_SAMPLE_RATE_HZ, get_decimation_step
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 TEST_DIR = SCRIPT_DIR.parent / ".." / "tests" / "detrend"
@@ -8,8 +12,7 @@ OUT_DIR = SCRIPT_DIR
 SAMPLES_CSV = TEST_DIR / "adaptive_wave_detrender_sim_output.csv"
 SUMMARY_CSV = TEST_DIR / "adaptive_wave_detrender_sim_summary.csv"
 TIME_WINDOW_S = 80.0
-SAMPLE_RATE_HZ = 200
-DOWNSAMPLE = 10
+SAMPLE_RATE_HZ = BASE_SAMPLE_RATE_HZ
 HEIGHT_ORDER = [0.27, 1.5, 4.0, 8.5]
 FILE_BY_HEIGHT = {
     0.27: "detrend-wave-plots-h0_270.pgf",
@@ -81,7 +84,7 @@ def main() -> None:
         scenario = case['scenario']
         case_rows = [row for row in samples if row['scenario'] == scenario]
         case_rows = case_rows[-int(TIME_WINDOW_S * SAMPLE_RATE_HZ):]
-        case_rows = case_rows[::DOWNSAMPLE]
+        case_rows = case_rows[::get_decimation_step(SAMPLE_RATE_HZ)]
         out_path = OUT_DIR / FILE_BY_HEIGHT[height_m]
         write_plot(out_path, case_rows, case)
         print(f"saved {out_path}")

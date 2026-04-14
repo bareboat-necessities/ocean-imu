@@ -2,9 +2,14 @@
 import os
 import re
 import glob
+import sys
+from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+from plot_sampling import BASE_SAMPLE_RATE_HZ, get_decimation_step
 
 # === Matplotlib PGF/LaTeX config ===
 mpl.use("pgf")
@@ -43,7 +48,7 @@ TRACKER_LABELS = {
 }
 
 # Sampling config
-SAMPLE_RATE_HZ = 200
+SAMPLE_RATE_HZ = BASE_SAMPLE_RATE_HZ
 MAX_TIME_S = 300.0
 MAX_ROWS = int(SAMPLE_RATE_HZ * MAX_TIME_S)
 
@@ -66,6 +71,7 @@ def load_all_data(folder):
 
         # Limit to first 300 seconds (≈72k samples)
         df = pd.read_csv(filepath, nrows=MAX_ROWS)
+        df = df.iloc[::get_decimation_step(SAMPLE_RATE_HZ)].reset_index(drop=True)
         df['tracker'] = tracker
         df['wave'] = wave
         df['H'] = H
