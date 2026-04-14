@@ -2213,8 +2213,14 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::apply_error_state
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyQuaternionCorrectionFromErrorState()
 {
-    const Eigen::Quaternion<T> corr =
-        quat_from_delta_theta((xext.template segment<3>(0)).eval());
+    const Vector3 dtheta = xext.template segment<3>(0);
+
+    if (!dtheta.allFinite()) {
+        xext.template head<3>().setZero();
+        return;
+    }
+
+    const Eigen::Quaternion<T> corr = quat_from_delta_theta(dtheta);
 
     // qref stores WORLD->BODY'.
     // Measurement Jacobians use the left-multiplicative convention:
