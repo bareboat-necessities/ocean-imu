@@ -1277,6 +1277,8 @@ public:
         impl_.setOnlineTuneWarmupSec(cfg.online_tune_warmup_sec);
 
         impl_.initialize(cfg.sigma_a, cfg.sigma_g, cfg.sigma_m);
+        impl_.mekf().set_acc_tilt_only_mode(true);
+        impl_.mekf().set_mag_yaw_only_mode(true);
         last_impl_startup_stage_ = impl_.getStartupStage();
 
         // IMPORTANT: allow warmup to restore nominal accel measurement noise
@@ -1299,6 +1301,7 @@ public:
             impl_.initialize_from_acc(acc_body_ned);
             stage_ = Stage::Warming;
             stage_t_ = 0.0f;
+            mag_stage_ = MagStage::TiltWarm;
         } else {
             stage_t_ += dt;
         }
@@ -1315,11 +1318,15 @@ public:
         // If internal filter fell back to Cold (tilt reset), force mag ref re-learn
 const auto cur_stage = impl_.getStartupStage();
 
-if (cur_stage != last_impl_startup_stage_) {
+    if (cur_stage != last_impl_startup_stage_) {
     if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
         // Entered Cold (startup or non-Live tilt reset): reset mag-init ONCE
         mag_ref_set_ = false;
         mag_auto_.reset();
+        mag_stage_ = MagStage::TiltWarm;
+        mag_grace_updates_ = 0;
+        impl_.mekf().set_acc_tilt_only_mode(true);
+        impl_.mekf().set_mag_yaw_only_mode(true);
 
         last_mag_time_sec_ = NAN;
         dt_mag_sec_ = NAN;
@@ -1336,6 +1343,9 @@ if (cur_stage != last_impl_startup_stage_) {
 
         if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
             stage_ = Stage::Live;
+            if (mag_stage_ == MagStage::TiltWarm) {
+                mag_stage_ = MagStage::MagCollect;
+            }
         }
     }
 
@@ -1381,6 +1391,10 @@ if (cur_stage != last_impl_startup_stage_) {
         // Respect mag delay for actual mag fusion, but keep learning active
         // from startup so the first post-delay reference is better conditioned.
         if (t_ < cfg_.mag_delay_sec) return;
+
+        if (mag_stage_ == MagStage::TiltWarm && impl_.isAdaptiveLive()) {
+            mag_stage_ = MagStage::MagCollect;
+        }
 
         if (!mag_ref_set_) {
             if (cfg_.use_fixed_mag_world_ref) {
@@ -1445,8 +1459,33 @@ if (cur_stage != last_impl_startup_stage_) {
                 }
             }
         }
-        if (mag_ref_set_) {
+        if (mag_ref_set_ && mag_stage_ == MagStage::MagCollect && have_last_imu_) {
+            const Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(last_acc_body_ned_);
+            float dtm = dt_mag_sec_;
+            if (!std::isfinite(dtm) || dtm <= 0.0f) {
+                dtm = 1.0f / std::max(1.0f, cfg_.mag_odr_guess_hz);
+            }
+            (void)mag_auto_.addHeadingSample(dtm, q_tilt, mag_body_ned, last_acc_body_ned_, last_gyro_body_ned_);
+
+            float psi_mean = 0.0f, psi_var = 0.0f, n_eff = 1.0f;
+            if (mag_auto_.getHeadingStats(psi_mean, psi_var, n_eff)) {
+                const float yaw_std = std::sqrt(std::max(1e-4f, 0.02f * 0.02f + psi_var / std::max(1.0f, n_eff)));
+                impl_.mekf().measurement_update_heading_only(psi_mean, yaw_std);
+                impl_.mekf().set_acc_tilt_only_mode(false);
+                mag_stage_ = MagStage::MagGrace;
+                mag_grace_updates_ = 0;
+            }
+        }
+
+        if (mag_ref_set_ && mag_stage_ != MagStage::MagCollect) {
           impl_.updateMag(mag_body_ned);
+          if (mag_stage_ == MagStage::MagGrace) {
+              mag_grace_updates_++;
+              if (mag_grace_updates_ >= 100) {
+                  impl_.mekf().set_mag_yaw_only_mode(false);
+                  mag_stage_ = MagStage::Live;
+              }
+          }
         }
     }
 
@@ -1460,6 +1499,7 @@ if (cur_stage != last_impl_startup_stage_) {
 
 private:
     enum class Stage { Uninitialized, Warming, Live };
+    enum class MagStage { TiltWarm, MagCollect, MagGrace, Live };
 
     // Tilt-only (yaw-free) quaternion body->world from accel.
     // We assume “rest accel” direction represents gravity (up to sign convention),
@@ -1512,6 +1552,8 @@ private:
     Stage stage_ = Stage::Uninitialized;
     float t_ = 0.0f;
     float stage_t_ = 0.0f;
+    MagStage mag_stage_ = MagStage::TiltWarm;
+    int mag_grace_updates_ = 0;
     typename SeaStateFusionFilter_OU_III<trackerT>::StartupStage last_impl_startup_stage_ =
              SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold;
 
