@@ -758,7 +758,15 @@ class Kalman3D_Wave_OU_II {
 
     // Closed-form helpers for rotation & integrals (constant ω over [0, t])
 
-    // Rodrigues rotation and the integral B(t) = -∫_0^t exp(-[ω]× τ) dτ
+    // Rodrigues rotation and the integral
+    //   B(t) = ∫_0^t exp(-[ω]× τ) dτ
+    //
+    // For this filter's left-multiplicative WORLD->BODY' attitude-error convention:
+    //
+    //   δθ̇ = -[ω]× δθ + δb_g + ...
+    //
+    // so the exact discrete cross-term is positive:
+    //   Φ_{θb}(t) = +B(t)
     EIGEN_STRONG_INLINE void rot_and_B_from_wt_(const Vector3& w, T t, Matrix3& R, Matrix3& B) const {
         const T wnorm = w.norm();
         const Matrix3 W = skew_symmetric_matrix(w);
