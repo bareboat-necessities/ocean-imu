@@ -1607,7 +1607,12 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
 		// exact discrete attitude error transition
 		F_AA.template topLeftCorner<3,3>() = Rstep;
 
-		// exact cross-term instead of -I*Ts
+        // Left-multiplicative WORLD->BODY' attitude error:
+        //   δθ̇ = -[ω]× δθ + δb_g + ...
+        // Hence the exact discrete cross-term is
+        //   Φ_{θb} = +∫_0^Ts exp(-[ω]× s) ds
+        // whose small-angle limit is
+        //   +I*Ts - 1/2 [ω]× Ts² + ...
 		F_AA.template block<3,3>(0,3) = Bstep;
     }
 
