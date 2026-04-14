@@ -252,6 +252,7 @@ class Kalman3D_Wave_OU_II {
     // Measurement updates (operate on extended state internally)
     void measurement_update_acc_only(Vector3 const& acc, T tempC = tempC_ref);
     void measurement_update_mag_only(Vector3 const& mag);
+    void measurement_update_heading_only(T heading_rad_meas, T heading_std_rad);
 
     // Extended-only API:
     // 3D pseudo-measurement on position p (world, NED):
@@ -884,6 +885,24 @@ class Kalman3D_Wave_OU_II {
     // convenience getters
     Matrix3 R_wb() const { return qref.toRotationMatrix(); }               // world→body'
     Matrix3 R_bw() const { return qref.toRotationMatrix().transpose(); }   // body'→world
+
+    static T wrap_pi_(T a) {
+        const T pi = T(M_PI);
+        const T two_pi = T(2) * pi;
+        while (a > pi) a -= two_pi;
+        while (a < -pi) a += two_pi;
+        return a;
+    }
+
+    static T yaw_from_quat_bw_(const Eigen::Quaternion<T>& q_bw) {
+        const T qx = q_bw.x();
+        const T qy = q_bw.y();
+        const T qz = q_bw.z();
+        const T qw = q_bw.w();
+        const T siny_cosp = T(2) * (qw * qz + qx * qy);
+        const T cosy_cosp = T(1) - T(2) * (qy * qy + qz * qz);
+        return std::atan2(siny_cosp, cosy_cosp);
+    }
 
     // Helpers
     Matrix3 skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const;
@@ -2243,6 +2262,78 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     joseph_update3_(K, S_mat, PCt);
     applyQuaternionCorrectionFromErrorState();
     last_mag_diag_.accepted = true;
+}
+
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update_heading_only(
+    T heading_rad_meas, T heading_std_rad)
+{
+    if (!std::isfinite(heading_rad_meas) || !std::isfinite(heading_std_rad)) return;
+    const T sigma = std::max(T(1e-5), heading_std_rad);
+    const T R = sigma * sigma;
+
+    const T yaw_pred = yaw_from_quat_bw_(quaternion_boat());
+    const T r = wrap_pi_(heading_rad_meas - yaw_pred);
+    if (!std::isfinite(r)) return;
+
+    // Numerical Jacobian d(yaw)/d(delta_theta) at current attitude.
+    Eigen::Matrix<T,1,3> Hth;
+    Hth.setZero();
+
+    constexpr T eps = T(1e-4);
+    for (int i = 0; i < 3; ++i) {
+        Vector3 d = Vector3::Zero();
+        d(i) = eps;
+        Eigen::Quaternion<T> q_plus = quat_from_delta_theta(d) * qref;
+        q_plus.normalize();
+        const T yaw_plus = yaw_from_quat_bw_(q_plus.conjugate());
+
+        d(i) = -eps;
+        Eigen::Quaternion<T> q_minus = quat_from_delta_theta(d) * qref;
+        q_minus.normalize();
+        const T yaw_minus = yaw_from_quat_bw_(q_minus.conjugate());
+
+        const T dy = wrap_pi_(yaw_plus - yaw_minus);
+        Hth(i) = dy / (T(2) * eps);
+    }
+
+    Eigen::Matrix<T,1,NX> H;
+    H.setZero();
+    H.template block<1,3>(0,0) = Hth;
+
+    if (!linear_block_enabled_) {
+        H.template block<1,9>(0, OFF_V).setZero();
+    }
+    if constexpr (with_accel_bias) {
+        if (!acc_bias_updates_enabled_) {
+            H.template block<1,3>(0, OFF_BA).setZero();
+        }
+    }
+
+    const Eigen::Matrix<T,NX,1> PHt = Pext * H.transpose();
+    T S = (H * PHt)(0,0) + R;
+    if (!(S > T(0)) || !std::isfinite(S)) return;
+
+    Eigen::Matrix<T,NX,1> K = PHt / S;
+    if (!linear_block_enabled_) {
+        K.template block<9,1>(OFF_V,0).setZero();
+    }
+    if constexpr (with_accel_bias) {
+        if (!acc_bias_updates_enabled_) {
+            K.template block<3,1>(OFF_BA,0).setZero();
+        }
+    }
+
+    xext.noalias() += K * r;
+
+    // Joseph scalar form:
+    // P = P - K*PHt' - PHt*K' + K*S*K'
+    Pext.noalias() -= K * PHt.transpose();
+    Pext.noalias() -= PHt * K.transpose();
+    Pext.noalias() += K * S * K.transpose();
+    symmetrize_Pext_();
+
+    applyQuaternionCorrectionFromErrorState();
 }
 
 // specific force prediction (BODY'):

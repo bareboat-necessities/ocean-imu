@@ -1149,19 +1149,39 @@ private:
         if (!mag_init_tuner_.getResult(acc_mean, mag_raw_mean, mag_unit_mean)) return;
 
         (void)mag_unit_mean;
-        northLockFromAccelMag_(acc_mean, mag_raw_mean);
+        float heading_mean = 0.0f;
+        float heading_var = NAN;
+        float heading_neff = 0.0f;
+        if (!mag_init_tuner_.getHeadingEstimate(heading_mean, heading_var, heading_neff)) return;
+
+        northLockFromAccelMag_(acc_mean, mag_raw_mean, heading_mean, heading_var, heading_neff);
     }
 
     void northLockFromAccelMag_(const Eigen::Vector3f& acc_body,
-                                const Eigen::Vector3f& mag_body)
+                                const Eigen::Vector3f& mag_body,
+                                float heading_mean_rad,
+                                float heading_var_rad2,
+                                float heading_neff)
     {
         if (!finiteVec_(acc_body) || !finiteVec_(mag_body)) return;
         if (!(acc_body.norm() > 1e-6f) || !(mag_body.norm() > 1e-3f)) return;
+        if (!std::isfinite(heading_mean_rad) || !std::isfinite(heading_var_rad2) || !(heading_neff > 0.0f)) return;
 
-        // initialize_from_acc_mag() already computes and stores the consistent
-        // world magnetic reference internally, so there is no need to recompute
-        // and re-apply set_mag_world_ref() here.
-        impl_.mekf().initialize_from_acc_mag(acc_body, mag_body);
+        // Bayesian heading commit:
+        //  1) re-lock tilt only (preserve current yaw frame),
+        //  2) apply a single heading pseudo-measurement using circular stats,
+        //  3) set world magnetic reference from committed attitude + raw mag mean.
+        impl_.mekf().initialize_from_acc_preserve_yaw(acc_body);
+
+        const float var_floor = std::pow(1.5f * static_cast<float>(M_PI) / 180.0f, 2.0f);
+        const float heading_var_eff = var_floor + heading_var_rad2 / heading_neff;
+        const float heading_std = std::sqrt(std::max(1.0e-6f, heading_var_eff));
+        impl_.mekf().measurement_update_heading_only(heading_mean_rad, heading_std);
+
+        const Eigen::Vector3f mag_world = impl_.mekf().quaternion_boat().toRotationMatrix() * mag_body;
+        if (mag_world.allFinite() && mag_world.norm() > 1.0e-3f) {
+            impl_.mekf().set_mag_world_ref(mag_world);
+        }
         mag_ref_set_ = true;
 
         // End startup tilt-only accel phase once heading has been initialized.

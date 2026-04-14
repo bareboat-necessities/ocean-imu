@@ -89,6 +89,7 @@ public:
     heading_C_ = 0.0f;
     heading_S_ = 0.0f;
     heading_wsum_ = 0.0f;
+    heading_wsum_sq_ = 0.0f;
   }
 
   // Call only when you actually have a NEW mag sample.
@@ -137,6 +138,7 @@ public:
     heading_C_ += w * std::cos(heading_rad);
     heading_S_ += w * std::sin(heading_rad);
     heading_wsum_ += w;
+    heading_wsum_sq_ += w * w;
     if (heading_wsum_ > 1.0e-6f) {
       heading_mean_rad_ = std::atan2(heading_S_, heading_C_);
       have_heading_mean_ = true;
@@ -202,6 +204,33 @@ public:
     const float C = heading_C_ / heading_wsum_;
     const float S = heading_S_ / heading_wsum_;
     return std::sqrt(C * C + S * S);
+  }
+
+  float headingMeanRad() const {
+    return have_heading_mean_ ? heading_mean_rad_ : 0.0f;
+  }
+
+  float headingCircularVarianceRad2() const {
+    const float conc = std::max(1.0e-6f, headingConcentration());
+    return -2.0f * std::log(conc);
+  }
+
+  float headingEffectiveSamples() const {
+    if (!(heading_wsum_sq_ > 1.0e-12f)) return 0.0f;
+    return (heading_wsum_ * heading_wsum_) / heading_wsum_sq_;
+  }
+
+  bool getHeadingEstimate(float& heading_mean_rad,
+                          float& heading_var_rad2,
+                          float& heading_neff) const {
+    if (!ready_ || !have_heading_mean_) return false;
+    heading_mean_rad = heading_mean_rad_;
+    heading_var_rad2 = headingCircularVarianceRad2();
+    heading_neff = headingEffectiveSamples();
+    return std::isfinite(heading_mean_rad) &&
+           std::isfinite(heading_var_rad2) &&
+           std::isfinite(heading_neff) &&
+           heading_neff > 0.0f;
   }
 
 private:
@@ -311,6 +340,7 @@ private:
   float heading_C_ = 0.0f;
   float heading_S_ = 0.0f;
   float heading_wsum_ = 0.0f;
+  float heading_wsum_sq_ = 0.0f;
 
   // Heel-safe accel direction EMA
   Eigen::Vector3f acc_dir_ema_ = Eigen::Vector3f::Zero();
