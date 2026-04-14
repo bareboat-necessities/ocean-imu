@@ -2,9 +2,14 @@
 import glob
 import os
 import re
+import sys
+from pathlib import Path
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+from plot_sampling import BASE_SAMPLE_RATE_HZ, get_decimation_step
 
 # === Matplotlib PGF/LaTeX config ===
 mpl.use("pgf")
@@ -25,7 +30,7 @@ plt.rcParams.update({
 
 # === Config ===
 DATA_DIR = "./"             # Directory with *_kalman.csv files
-SAMPLE_RATE_HZ = 200        # Simulator sample rate
+SAMPLE_RATE_HZ = BASE_SAMPLE_RATE_HZ
 SKIP_TIME_S = 840.0         # Skip first n seconds (warmup)
 PLOT_TIME_S = 60.0          # Plot next m seconds
 MAX_TIME_S  = SKIP_TIME_S + PLOT_TIME_S
@@ -97,6 +102,7 @@ for fname in files:
     # Load limited rows
     df = pd.read_csv(fname, nrows=MAX_ROWS)
     df = df[(df["time"] >= SKIP_TIME_S) & (df["time"] <= MAX_TIME_S)].reset_index(drop=True)
+    df = df.iloc[::get_decimation_step(SAMPLE_RATE_HZ)].reset_index(drop=True)
     time = df["time"]
 
     # Reference vs estimated Euler angles
