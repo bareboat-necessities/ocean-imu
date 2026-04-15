@@ -247,7 +247,7 @@ public:
         const float f_tracker = static_cast<float>(tracker_policy_.run(a_vert_lp, dt));
         f_raw = f_tracker;
 
-        // Stillness detector also sees vertical Z accel
+        // Stillness detector also sees the same BODY-Z proxy.
         const float f_after_still = freq_stillness_.step(a_vert_lp, dt, f_tracker);
 
         // Fast & slow smoothed frequencies
@@ -273,7 +273,7 @@ public:
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
 
-        // Direction filters run on BODY accel, "sign" uses vertical acceleration
+        // Direction filters run on BODY accel; sign uses the same BODY-Z proxy.
         dir_filter_.update(a_x_body, a_y_body, omega, dt);
         dir_sign_state_ = dir_sign_.update(a_x_body, a_y_body, a_body_z_up_proxy_, dt);
     }
@@ -377,7 +377,7 @@ public:
         return acc_noise_floor_sigma_;
     }
 
-    // Configure LPF on vertical accel for tracker input
+    // Configure LPF on BODY-Z proxy for tracker input
     void setFreqInputCutoffHz(float fc) {
         freq_input_lpf_.setCutoff(fc);
     }
@@ -482,7 +482,10 @@ public:
     }
 
     inline float getAccelVariance() const noexcept { return tuner_.getAccelVariance(); }
-    inline float getAccelVertical() const noexcept { return a_vert_up; }
+
+    // Returns the BODY-Z-based up-positive proxy used by tracker/tuner logic.
+    // This is not a true world/inertial vertical acceleration estimate.
+    inline float getAccelVertical() const noexcept { return a_body_z_up_proxy_; }
 
     inline float getHeaveAbs() const noexcept { if (!mekf_) return NAN; return std::fabs(mekf_->get_position().z()); }
 
@@ -895,7 +898,7 @@ private:
     float freq_hz_slow_  = FREQ_GUESS; // slow branch
     float f_raw          = FREQ_GUESS;
 
-    float a_body_z_up_proxy_ = 0.0f; // accel vertical (Z-up)
+    float a_body_z_up_proxy_ = 0.0f; // BODY-Z-based up-positive proxy used by tracker/tuner logic.
 
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;

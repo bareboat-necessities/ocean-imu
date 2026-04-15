@@ -848,8 +848,7 @@ private:
     float freq_hz_slow_ = FREQ_GUESS;
     float f_raw         = FREQ_GUESS;
 
-    // BODY-Z-based up-positive proxy used by tracker/tuner logic.
-    float a_body_z_up_proxy_ = 0.0f;
+    float a_body_z_up_proxy_ = 0.0f;  // BODY-Z-based up-positive proxy used by tracker/tuner logic.
 
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;
