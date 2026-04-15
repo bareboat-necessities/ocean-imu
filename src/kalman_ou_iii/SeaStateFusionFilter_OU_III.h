@@ -58,7 +58,6 @@
 #include "ahrs/FrameConversions.h"
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
-#include "avg/TimeAwareSpikeFilter.h"
 
 // Shared constants
 
@@ -260,7 +259,7 @@ public:
         // waiting for slow adaptation cadence.
         if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
             apply_RS_tune_();
-            applyDriftPseudoMeasurements_(dt, acc, a_vert_up);
+            applyDriftPseudoMeasurements_(dt);
         }
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
@@ -327,7 +326,6 @@ public:
     void setPseudoVzZeroOnPosBreachCfg(const DriftPseudoCfg& c) { pm_vz_zero_on_pos_breach_ = c; }
     void setPseudoPosZeroCfg(const DriftPseudoCfg& c)           { pm_pos_zero_              = c; }
     void setPseudoVzClampCfg(const DriftPseudoCfg& c)           { pm_vz_clamp_              = c; }
-    void setPseudoHarmonicPosCfg(const DriftPseudoCfg& c)       { pm_harmonic_pos_          = c; }
 
     void setWithMag(bool with_mag) {
         with_mag_ = with_mag;
@@ -401,14 +399,6 @@ public:
     }
     void enableTuner(bool flag = true) {
         enable_tuner_ = flag;
-    }
-
-    void setHarmonicPositionDespikeConfig(int window_size, float threshold) {
-        if (window_size < 3) return;
-        if (!std::isfinite(threshold) || threshold <= 0.0f) return;
-        harmonic_despike_window_ = window_size;
-        harmonic_despike_threshold_ = threshold;
-        initHarmonicDespikeFilters_();
     }
 
     // Enable/disable use of the extended linear block [v,p,S,a_w] in Kalman3D_Wave_OU_III.
@@ -713,85 +703,10 @@ private:
         ));
     }
 
-    void initHarmonicDespikeFilters_() {
-        despike_ax_ = std::make_unique<TimeAwareSpikeFilter>(harmonic_despike_window_, harmonic_despike_threshold_);
-        despike_ay_ = std::make_unique<TimeAwareSpikeFilter>(harmonic_despike_window_, harmonic_despike_threshold_);
-        despike_az_ = std::make_unique<TimeAwareSpikeFilter>(harmonic_despike_window_, harmonic_despike_threshold_);
-    }
-
     void resetDriftCorrections_() {
         pm_ctr_vz_zero_  = 0;
         pm_ctr_pos_zero_ = 0;
         pm_ctr_vz_clamp_ = 0;
-        pm_ctr_harmonic_pos_ = 0;
-        initHarmonicDespikeFilters_();
-    }
-
-    void applyHarmonicPositionCorrection_(float dt,
-                                          const Eigen::Vector3f& acc_body_ned,
-                                          float a_vert_up_osc)
-    {
-        if (!mekf_) return;
-        if (!pm_harmonic_pos_.enabled) return;
-        if (!(dt > 0.0f) || !std::isfinite(dt)) return;
-
-        // Envelope gate (drift-risk only)
-        float env_scale = getDisplacementScale(true);
-        if (!std::isfinite(env_scale) || env_scale <= 0.0f) env_scale = 1.0f;
-
-        const float absz = std::fabs(mekf_->get_position().z());
-        const float gate = std::max(0.0f, pm_harmonic_pos_.gate_scale) * env_scale;
-        if (!(absz > gate)) return;
-
-        // Cadence (same pattern as other pm_* corrections)
-        if (++pm_ctr_harmonic_pos_ < std::max(1, pm_harmonic_pos_.period_steps)) return;
-        pm_ctr_harmonic_pos_ = 0;
-
-        // Frequency for harmonic proxy
-        const float harmonic_freq_hz =
-            (std::isfinite(freq_hz_) && freq_hz_ > 0.0f) ? freq_hz_ : freq_hz_slow_;
-
-        const float omega = 2.0f * static_cast<float>(M_PI) *
-                            std::max(harmonic_freq_hz, min_freq_hz_);
-        const float omega_sq = omega * omega;
-        if (!(omega_sq > 1e-4f) || !std::isfinite(omega_sq)) return;
-
-        if (!acc_body_ned.allFinite()) return;
-
-        // “no backfeed”: use raw IMU accel (no attitude rotation), but use oscillatory vertical for z.
-        const Eigen::Vector3f a_world_ned = acc_body_ned;
-
-        if (!despike_ax_ || !despike_ay_ || !despike_az_) {
-            initHarmonicDespikeFilters_();
-        }
-
-        // NED-down oscillatory vertical accel
-        const float a_z_ned_osc = -a_vert_up_osc;
-
-        const Eigen::Vector3f a_despiked(
-            despike_ax_->filterWithDelta(a_world_ned.x(), dt),
-            despike_ay_->filterWithDelta(a_world_ned.y(), dt),
-            despike_az_->filterWithDelta(a_z_ned_osc, dt)
-        );
-        if (!a_despiked.allFinite()) return;
-
-        // p ≈ -a / ω² (componentwise, in NED)
-        const Eigen::Vector3f p_meas = -a_despiked / omega_sq;
-        if (!p_meas.allFinite()) return;
-
-        // position std ≈ (sigma_a * tau^2) * sigma_mult, with anisotropy via S_factor_.
-        Eigen::Vector3f sig = sigmaP_fromSigmaTau_(pm_harmonic_pos_.sigma_mult);
-
-        const float smin = std::max(1e-6f, pm_harmonic_pos_.sigma_min);
-        sig.x() = std::max(sig.x(), smin);
-        sig.y() = std::max(sig.y(), smin);
-        sig.z() = std::max(sig.z(), smin);
-
-        mekf_->measurement_update_position_pseudo(p_meas, sig);
-    }
-
-    static Eigen::Vector3f harmonicPseudoPositionFromAccel_(const Eigen::Vector3f& a_ned, float omega_sq) {
-        return -a_ned / omega_sq;
     }
 
     void update_tuner(float dt, float a_vert_inertial, float freq_hz_for_tuner) {
@@ -1009,12 +924,6 @@ private:
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;
 
-    float harmonic_despike_threshold_ = 4.0f;
-    int harmonic_despike_window_ = 5;
-    std::unique_ptr<TimeAwareSpikeFilter> despike_ax_;
-    std::unique_ptr<TimeAwareSpikeFilter> despike_ay_;
-    std::unique_ptr<TimeAwareSpikeFilter> despike_az_;
-
     // drift pseudo-measurement configs
     DriftPseudoCfg pm_vz_zero_on_pos_breach_ {
         /*enabled*/ true, /*period*/ 3, /*sigma_mult*/ 2.0f, /*sigma_min*/ 0.03f, /*gate*/ 0.8f
@@ -1025,17 +934,11 @@ private:
     DriftPseudoCfg pm_vz_clamp_ {
         /*enabled*/ true, /*period*/ 3, /*sigma_mult*/ 2.0f, /*sigma_min*/ 0.03f, /*gate*/ 0.9f
     };
-    DriftPseudoCfg pm_harmonic_pos_ {
-        /*enabled*/ true, /*period*/ 5, /*sigma_mult*/ 6.0f, /*sigma_min*/ 0.05f, /*gate*/ 0.10f
-    };
-
     float speed_env_mult_ = 1.0f;   // v_env ≈ speed_env_mult * ω * z_env
 
     int pm_ctr_vz_zero_ = 0;
     int pm_ctr_pos_zero_ = 0;
     int pm_ctr_vz_clamp_ = 0;
-    int pm_ctr_harmonic_pos_ = 0;
-
     // Controls whether the extended linear block [v,p,S,a_w] of Kalman3D_Wave_OU_III
     // is ever enabled. When false, the underlying filter runs as a pure
     // attitude/bias QMEKF (linear states frozen, no OU, no S pseudo-measurements),
@@ -1085,9 +988,7 @@ private:
     WaveDirectionDetector<float> dir_sign_{0.002f, 0.005f};   // smoothing, sensitivity
     WaveDirection                dir_sign_state_ = UNCERTAIN;
 
-    void applyDriftPseudoMeasurements_(float dt,
-                                       const Eigen::Vector3f& acc_body_ned,
-                                       float a_vert_up_osc)
+    void applyDriftPseudoMeasurements_(float dt)
     {
         if (!mekf_) return;
         if (startup_stage_ != StartupStage::Live) return;
@@ -1100,11 +1001,6 @@ private:
 
         const float pz = mekf_->get_position().z();     // NED down
         const float absz = std::fabs(pz);
-
-        // Harmonic approximation
-        if (pm_harmonic_pos_.enabled) {
-            applyHarmonicPositionCorrection_(dt, acc_body_ned, a_vert_up_osc);
-        }
 
         // On displacement envelope breach: pseudo-measure v_z -> 0
         if (pm_vz_zero_on_pos_breach_.enabled) {
