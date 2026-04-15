@@ -263,6 +263,7 @@ class Kalman3D_Wave_OU_III {
     // Measurement updates preserved (operate on extended state internally)
     void measurement_update_acc_only(Vector3 const& acc, T tempC = tempC_ref);
     void measurement_update_mag_only(Vector3 const& mag);
+    void measurement_update_heading_only(T yaw_meas_rad, T yaw_std_rad);
 
     // Extended-only API:
     // Apply zero pseudo-measurement on S (integral drift correction)
@@ -357,6 +358,8 @@ class Kalman3D_Wave_OU_III {
         linear_block_enabled_ = on;
     }
     bool linear_block_enabled() const      { return linear_block_enabled_; }
+    void set_accel_tilt_only_mode(bool en) { accel_tilt_only_mode_ = en; }
+    bool accel_tilt_only_mode() const      { return accel_tilt_only_mode_; }
 
     void set_warmup_mode(bool on) {
         set_linear_block_enabled(!on);                 // off during warmup
@@ -660,6 +663,7 @@ class Kalman3D_Wave_OU_III {
 
     bool linear_block_enabled_ = true;
     bool acc_bias_updates_enabled_ = true;
+    bool accel_tilt_only_mode_ = true;
 
     bool has_cross_cov_a_xy = false;
     bool use_exact_att_bias_Qd_ = true;
@@ -1894,7 +1898,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     }
 
     const Vector3 f_meas = acc_meas;
-    const Vector3 r = f_meas - f_pred;
+    Vector3 r = f_meas - f_pred;
 
     last_acc_diag_.r = r;
 
@@ -1914,9 +1918,33 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
         J_aw.setZero(); // no aw Jacobian when linear is OFF
     }
 
+    Matrix3 J_ba = Matrix3::Identity();
+    Matrix3 Racc_eff = Racc;
+    if (accel_tilt_only_mode_) {
+        Vector3 g_pred_b = R_wb() * (Vector3::Zero() - g_world);
+        T gn = g_pred_b.norm();
+        if (!(gn > T(1e-6))) {
+            g_pred_b = f_pred;
+            gn = g_pred_b.norm();
+        }
+        if (gn > T(1e-6)) {
+            const Vector3 ghat = g_pred_b / gn;
+            const Matrix3 Ptilt = Matrix3::Identity() - (ghat * ghat.transpose());
+
+            r = Ptilt * r;
+            J_att = Ptilt * J_att;
+            J_aw  = Ptilt * J_aw;
+            J_bg  = Ptilt * J_bg;
+            J_ba  = Ptilt;
+
+            const T rmax = std::max({Racc(0,0), Racc(1,1), Racc(2,2), T(1e-6)});
+            Racc_eff = Ptilt * Racc * Ptilt.transpose() + (ghat * ghat.transpose()) * (rmax * T(1e6));
+        }
+    }
+
     // Innovation covariance S = C P Cᵀ + Racc (3×3)
     Matrix3& S_mat = S_scratch_;
-    S_mat = Racc;
+    S_mat = Racc_eff;
     {
         constexpr int OFF_TH = 0;
         const int off_aw = OFF_AW;
@@ -1944,7 +1972,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 		    if (use_ba) {
 		        const Matrix3 P_th_ba = Pext.template block<3,3>(OFF_TH, off_ba);
 
-		        // J_ba = I
+		        // J_ba = I (or tilt projector in startup)
 		        S_mat.noalias() += J_att * P_th_ba;
 		        S_mat.noalias() += P_th_ba.transpose() * J_att.transpose();
 		        S_mat.noalias() += P_ba_ba;
@@ -1959,7 +1987,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 		        // (If code already zeroed P_th_ba/P_aw_ba when disabling BA updates, these are 0 anyway.)
 		        const Matrix3 P_th_ba = Pext.template block<3,3>(OFF_TH, off_ba);
 
-		        // J_ba = I
+		        // J_ba = I (or tilt projector in startup)
 		        S_mat.noalias() += J_att * P_th_ba;
 		        S_mat.noalias() += P_th_ba.transpose() * J_att.transpose();
 
@@ -1990,8 +2018,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
                 if constexpr (with_accel_bias) {
                     if (use_ba) {
                         const Matrix3 P_bg_ba = Pext.template block<3,3>(OFF_BG, OFF_BA);
-                        S_mat.noalias() += J_bg * P_bg_ba; // J_ba = I
-                        S_mat.noalias() += P_bg_ba.transpose() * J_bg.transpose();
+                        S_mat.noalias() += J_bg * P_bg_ba * J_ba.transpose();
+                        S_mat.noalias() += J_ba * P_bg_ba.transpose() * J_bg.transpose();
                     }
                 }
             }
@@ -2012,7 +2040,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
         if constexpr (with_accel_bias) {
             if (use_ba) {
                 const auto P_all_ba = Pext.template block<NX,3>(0, OFF_BA);
-                PCt.noalias() += P_all_ba; // J_ba = I
+                PCt.noalias() += P_all_ba * J_ba.transpose();
             }
         }
         if constexpr (with_gyro_bias) {
@@ -2031,7 +2059,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 
     // Gain
     Eigen::LDLT<Matrix3> ldlt;
-    if (!safe_ldlt3_(S_mat, ldlt, Racc.norm())) {
+    if (!safe_ldlt3_(S_mat, ldlt, Racc_eff.norm())) {
         // provide what we have
         last_acc_diag_.S = S_mat;
         last_acc_diag_.nis = std::numeric_limits<T>::quiet_NaN();
@@ -2049,6 +2077,18 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     }
     if constexpr (with_accel_bias) {
         if (!use_ba) freeze_acc_bias_rows_(K);
+    }
+    if (accel_tilt_only_mode_) {
+        Vector3 g_pred_b = R_wb() * (Vector3::Zero() - g_world);
+        const T gn = g_pred_b.norm();
+        if (gn > T(1e-6)) {
+            const Vector3 ghat = g_pred_b / gn;
+            const Matrix3 Ptilt = Matrix3::Identity() - (ghat * ghat.transpose());
+            K.template block<3,3>(0,0) = Ptilt * K.template block<3,3>(0,0);
+            if constexpr (with_gyro_bias) {
+                K.template block<3,3>(3,0) = Ptilt * K.template block<3,3>(3,0);
+            }
+        }
     }
 
     xext.noalias() += K * r;          // State update
@@ -2137,6 +2177,41 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     joseph_update3_(K, S_mat, PCt);
     applyQuaternionCorrectionFromErrorState();
 	last_mag_diag_.accepted = true;
+}
+
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_heading_only(
+    T yaw_meas_rad, T yaw_std_rad)
+{
+    if (!std::isfinite(yaw_meas_rad) || !std::isfinite(yaw_std_rad) || !(yaw_std_rad > T(1e-6))) return;
+
+    Eigen::Quaternion<T> qbw = quaternion_boat();
+    qbw.normalize();
+    const T x = qbw.x(), y = qbw.y(), z = qbw.z(), w = qbw.w();
+    const T siny_cosp = T(2) * (w * z + x * y);
+    const T cosy_cosp = T(1) - T(2) * (y * y + z * z);
+    const T yaw_hat = std::atan2(siny_cosp, cosy_cosp);
+
+    T r = yaw_meas_rad - yaw_hat;
+    while (r > T(M_PI)) r -= T(2 * M_PI);
+    while (r < T(-M_PI)) r += T(2 * M_PI);
+
+    Eigen::Matrix<T,1,NX> H = Eigen::Matrix<T,1,NX>::Zero();
+    H(0,2) = T(1);
+
+    const Eigen::Matrix<T,NX,1> PHt = Pext * H.transpose();
+    const T R = yaw_std_rad * yaw_std_rad;
+    const T S = (H * PHt)(0,0) + R;
+    if (!(S > T(1e-12)) || !std::isfinite(S)) return;
+
+    const Eigen::Matrix<T,NX,1> K = PHt / S;
+    xext.noalias() += K * r;
+
+    const Eigen::Matrix<T,NX,NX> I = Eigen::Matrix<T,NX,NX>::Identity();
+    const Eigen::Matrix<T,NX,NX> KH = K * H;
+    Pext = (I - KH) * Pext * (I - KH).transpose() + (K * R) * K.transpose();
+    symmetrize_Pext_();
+    applyQuaternionCorrectionFromErrorState();
 }
 
 // specific force prediction (BODY'):
