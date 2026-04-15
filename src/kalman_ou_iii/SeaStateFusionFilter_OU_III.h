@@ -324,7 +324,6 @@ public:
     };
 
     void setPseudoPosZeroCfg(const DriftPseudoCfg& c)           { pm_pos_zero_              = c; }
-    void setPseudoVzClampCfg(const DriftPseudoCfg& c)           { pm_vz_clamp_              = c; }
 
     void setWithMag(bool with_mag) {
         with_mag_ = with_mag;
@@ -704,7 +703,6 @@ private:
 
     void resetDriftCorrections_() {
         pm_ctr_pos_zero_ = 0;
-        pm_ctr_vz_clamp_ = 0;
     }
 
     void update_tuner(float dt, float a_vert_inertial, float freq_hz_for_tuner) {
@@ -926,13 +924,9 @@ private:
     DriftPseudoCfg pm_pos_zero_ {
         /*enabled*/ true, /*period*/ 5, /*sigma_mult*/ 8.0f, /*sigma_min*/ 0.05f, /*gate*/ 0.3f
     };
-    DriftPseudoCfg pm_vz_clamp_ {
-        /*enabled*/ true, /*period*/ 3, /*sigma_mult*/ 2.0f, /*sigma_min*/ 0.03f, /*gate*/ 0.9f
-    };
     float speed_env_mult_ = 1.0f;   // v_env ≈ speed_env_mult * ω * z_env
 
     int pm_ctr_pos_zero_ = 0;
-    int pm_ctr_vz_clamp_ = 0;
     // Controls whether the extended linear block [v,p,S,a_w] of Kalman3D_Wave_OU_III
     // is ever enabled. When false, the underlying filter runs as a pure
     // attitude/bias QMEKF (linear states frozen, no OU, no S pseudo-measurements),
@@ -1015,31 +1009,6 @@ private:
             }
         }
 
-        // Speed envelope estimate + clamp v_z when breached
-        if (pm_vz_clamp_.enabled) {
-            if (++pm_ctr_vz_clamp_ >= std::max(1, pm_vz_clamp_.period_steps)) {
-                pm_ctr_vz_clamp_ = 0;
-                const float v_env = getVerticalSpeedEnvelopeMps(true);
-                if (std::isfinite(v_env) && v_env > 0.0f) {
-                    const float vz = mekf_->get_velocity().z();  // NED down
-                    const float abs_vz = std::fabs(vz);
-                    const float gate_v = std::max(0.05f, pm_vz_clamp_.gate_scale) * v_env;
-                    if (abs_vz > gate_v) {
-                        const float vz_clamped = (vz >= 0.0f) ? std::min(vz, v_env) : std::max(vz, -v_env);
-                        const float sigma_vz = std::max(
-                            sigmaV_fromSigmaTau_(pm_vz_clamp_.sigma_mult).z(),
-                            pm_vz_clamp_.sigma_min
-                        );
-                        // Only affect z velocity (keep x/y at predicted)
-                        Eigen::Vector3f v_meas = mekf_->get_velocity();
-                        v_meas.z() = vz_clamped;
-                        const float BIG = 1e6f;
-                        Eigen::Vector3f sig(BIG, BIG, sigma_vz);
-                        mekf_->measurement_update_velocity_pseudo(v_meas, sig);
-                    }
-                }
-            }
-        }
     }
 
     static inline float clampf_(float x, float lo, float hi) {
@@ -1056,15 +1025,6 @@ private:
         return Eigen::Vector3f(sH * k, sH * k, sZ * k); // meters
     }
 
-    Eigen::Vector3f sigmaV_fromSigmaTau_(float sigma_mult) const {
-        const float tau = std::max(getTauApplied(), 1e-3f);
-        const float sigma_floor = std::max(0.05f, acc_noise_floor_sigma_);
-        const float sZ = std::max(sigma_floor, getSigmaApplied());
-        const float sH = sZ * S_factor_;
-
-        const float k = std::max(0.0f, sigma_mult) * tau;
-        return Eigen::Vector3f(sH * k, sH * k, sZ * k); // m/s
-    }
 };
 
 template<TrackerType trackerT>
