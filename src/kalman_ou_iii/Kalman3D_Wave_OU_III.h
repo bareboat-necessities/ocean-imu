@@ -2203,11 +2203,20 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::apply_error_state
     const Matrix3 G =
         Matrix3::Identity() + T(0.5) * skew_symmetric_matrix(dtheta_injected);
 
-    MatrixNX Tm = MatrixNX::Identity();
-    Tm.template block<3,3>(0,0) = G;
+    // Structured similarity update for Tm = diag(G, I):
+    //   Paa' = G * Paa * Gᵀ
+    //   Pax' = G * Pax
+    //   Pxa' = Pax'ᵀ  (enforce symmetry)
+    //   Pxx' = Pxx    (unchanged)
+    const Matrix3 Paa_old = Pext.template block<3,3>(0, 0);
+    const Matrix<T, 3, NX - 3> Pax_old = Pext.template block<3, NX - 3>(0, 3);
 
-    MatrixNX Pnew = Tm * Pext * Tm.transpose();
-    Pext = T(0.5) * (Pnew + Pnew.transpose());
+    Pext.template block<3,3>(0, 0).noalias() = G * Paa_old * G.transpose();
+    Pext.template block<3, NX - 3>(0, 3).noalias() = G * Pax_old;
+    Pext.template block<NX - 3, 3>(3, 0) = Pext.template block<3, NX - 3>(0, 3).transpose();
+
+    // Keep covariance exactly symmetric against floating-point noise.
+    Pext = T(0.5) * (Pext + Pext.transpose());
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
