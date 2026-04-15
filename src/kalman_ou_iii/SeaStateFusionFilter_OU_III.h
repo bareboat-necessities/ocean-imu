@@ -557,7 +557,6 @@ public:
     inline const WaveDirectionDetector<float>& dir_sign() const noexcept { return dir_sign_; }
 
 private:
-    static inline float sgnf_(float x) noexcept { return (x >= 0.0f) ? 1.0f : -1.0f; }
 
     // Simple first-order low-pass filter for vertical accel → tracker input
     struct FreqInputLPF {
@@ -950,20 +949,6 @@ private:
 
     WaveDirectionDetector<float> dir_sign_{0.002f, 0.005f};   // smoothing, sensitivity
     WaveDirection                dir_sign_state_ = UNCERTAIN;
-
-    static inline float clampf_(float x, float lo, float hi) {
-        return std::max(lo, std::min(hi, x));
-    }
-
-    Eigen::Vector3f sigmaP_fromSigmaTau_(float sigma_mult) const {
-        const float tau = std::max(getTauApplied(), 1e-3f);
-        const float sigma_floor = std::max(0.05f, acc_noise_floor_sigma_);
-        const float sZ = std::max(sigma_floor, getSigmaApplied());
-        const float sH = sZ * S_factor_;
-
-        const float k = std::max(0.0f, sigma_mult) * (tau * tau);
-        return Eigen::Vector3f(sH * k, sH * k, sZ * k); // meters
-    }
 };
 
 template<TrackerType trackerT>
