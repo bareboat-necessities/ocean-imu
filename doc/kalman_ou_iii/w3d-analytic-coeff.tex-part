@@ -17,13 +17,13 @@ For the attitude error + gyro-bias (size \(3{+}3\)), the algorithm uses a struct
 path that matches the Q-MEKF with piecewise-constant \(\hat{\vct{\omega}}=
 \vct{\omega}_m-\vct{b}_g\) over the step:
 \begin{itemize}
-  \item \(\matg{\Phi}_{\!AA}(h)\) implements the right-multiplicative small-angle
+  \item \(\matg{\Phi}_{\!AA}(h)\) implements the left-multiplicative small-angle
         transition: the \(\delta\vct{\theta}\)-block is the Rodrigues
         expression
         \(\Phi_{\theta\theta}(h)=\Id - \sin\theta\,\mat{D} + (1-\cos\theta)\,\mat{D}^2\)
         with \(\theta=\|\hat{\vct{\omega}}\|h\) and
         \(\mat{D}=\Skew{\hat{\vct{\omega}}/\|\hat{\vct{\omega}}\|}\);
-        the \(\delta\vct{\theta}\)–\(\vct{b}_g\) block is \(-\Id\,h\).
+        the \(\delta\vct{\theta}\)–\(\vct{b}_g\) block is \(+\Id\,h\) to match the left-multiplicative error model.
   \item \(\matg{Q}_{\!AA}(h)\) is built from rotation integrals:
         \[
         \matg{Q}_{\theta\theta}=\int_0^{h}\! \Rot(s)\,\matg{Q}_g\,\Rot(s)^\top ds

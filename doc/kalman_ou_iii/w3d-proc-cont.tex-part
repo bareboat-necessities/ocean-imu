@@ -1,7 +1,7 @@
 \section{Process Model (Continuous Time)}
 \label{sec:proc}
 
-We separate (i) the quaternion attitude subsystem used by the right--multiplicative
+We separate (i) the quaternion attitude subsystem used by the left--multiplicative
 EKF and (ii) the linear OU--driven kinematic chain. The former is propagated on
 the manifold (nominal quaternion); the latter is a vector LTI SDE in continuous time.
 
@@ -11,7 +11,7 @@ and $\vct{n}_g$ gyro noise (white, zero–mean). The \emph{nominal} quaternion
 $q$ (world$\to$body) obeys
 \begin{equation}
 \begin{aligned}
-\dot{q} =& \tfrac12\,\Omega\!\left(\vct{\omega}_m-\vct{b}_g\right)\,q,
+\dot{q} =& -\tfrac12\,\Omega\!\left(\vct{\omega}_m-\vct{b}_g\right)\,q,
 \qquad
 q \in \mathbb{H}_1,\qquad\\
 \Omega(\vct{\omega}) =&
@@ -30,13 +30,14 @@ with unit–norm enforcement in implementation. The gyro bias follows a random w
 \end{equation}
 where $\matg{Q}_{bg}$ is the continuous–time spectral density (per axis).
 
-For the right--multiplicative error state, we use a small rotation vector
-$\delta\vct{\theta}$ so that $q^+ = q\otimes\exp(\tfrac12\,\delta\vct{\theta})$.
+For the left--multiplicative error state, we use a small rotation vector
+$\delta\vct{\theta}$ so that $q^+ = \exp(\tfrac12\,\delta\vct{\theta})\otimes q$.
 Linearizing the attitude error dynamics gives the standard Q--MEKF form
 \begin{equation}
 \dot{\delta\vct{\theta}}
 \;\approx\;
 -\Skew{\vct{\omega}_m-\vct{b}_g}\,\delta\vct{\theta}
+\;+\;\delta\vct{b}_g
 \;-\;\vct{n}_g,
 \qquad
 \vct{n}_g\sim\mathcal N(\vct{0},\ \matg{Q}_g),
@@ -117,7 +118,7 @@ and take the block structure
 \mat{F} =
 \begingroup\setlength\arraycolsep{4pt}
 \begin{bmatrix}
--\Skew{\vct{\omega}_m-\vct{b}_g} & -\Id & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0}\\
+-\Skew{\vct{\omega}_m-\vct{b}_g} & +\Id & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0}\\
 \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0}\\
 \mat{0} & \mat{0} & \mat{0} & \mat{0} & \mat{0} & \Id & \mat{0}\\
 \mat{0} & \mat{0} & \Id & \mat{0} & \mat{0} & \mat{0} & \mat{0}\\

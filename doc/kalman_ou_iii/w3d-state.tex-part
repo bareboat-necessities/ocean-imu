@@ -21,7 +21,7 @@ where each subvector has the following physical meaning:
 \begin{itemize}
   \item $\delta\vct{\theta}\in\mathbb{R}^3$ --- small attitude-error
         vector used in the multiplicative EKF formulation
-        (right-multiplicative quaternion correction).
+        (left-multiplicative quaternion correction).
   \item $\vct{b}_g\in\mathbb{R}^3$ --- gyroscope bias, modeled as a
         random-walk process.
   \item $\vct{v}\in\mathbb{R}^3$ --- velocity in the world (NED) frame.
