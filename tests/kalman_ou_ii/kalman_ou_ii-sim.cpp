@@ -20,6 +20,7 @@ using Eigen::Vector3f;
 
 bool add_noise = true;
 bool attitude_only = false;
+static constexpr float SIM_MAG_DELAY_SEC = 0.0f;
 
 class FusionAdapter_OU_II final : public IW3dFusionAdapter {
 public:
@@ -33,7 +34,7 @@ public:
         cfg_.sigma_a = sigma_a_init;
         cfg_.sigma_g = sigma_g;
         cfg_.sigma_m = sigma_m;
-        cfg_.mag_delay_sec = 0.0f; //MAG_DELAY_SEC;
+        cfg_.mag_delay_sec = SIM_MAG_DELAY_SEC;
         cfg_.use_fixed_mag_world_ref = false;
         cfg_.mag_world_ref = mag_world_a;
         cfg_.freeze_acc_bias_until_live = true;
@@ -127,7 +128,7 @@ private:
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap = 11.5f,
     .err_limit_percent_z_pmstokes = 11.0f,
-    .err_limit_yaw_deg = 4.0f,
+    .err_limit_yaw_deg = 3.0f,
     .err_limit_percent_3d_jonswap = 60.0f,
     .err_limit_percent_3d_pmstokes = 60.0f,
     .acc_z_bias_percent = 280.0f,
@@ -163,7 +164,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "Simulation starting with_mag=" << (with_mag ? "true" : "false")
-              << ", mag_delay=" << MAG_DELAY_SEC
+              << ", mag_delay=" << SIM_MAG_DELAY_SEC
               << " sec, noise=" << (add_noise ? "true" : "false")
               << "\n";
 

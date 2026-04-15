@@ -1228,6 +1228,9 @@ public:
 
         // Used only if dt_mag can’t be inferred
         float mag_odr_guess_hz = 80.0f;
+        int mag_grace_updates = 20;
+        float mag_grace_nis_max = 18.0f;
+        Eigen::Vector3f sigma_m_grace_scale = Eigen::Vector3f(2.5f, 2.5f, 4.0f);
 
         // MagAutoTuner config override (optional)
         bool use_custom_mag_tuner_cfg = false;
@@ -1240,10 +1243,12 @@ public:
         // Reset wrapper state
         begun_ = true;
         stage_ = Stage::Uninitialized;
+        mag_phase_ = MagStartupPhase::TiltWarm;
         t_ = 0.0f;
         stage_t_ = 0.0f;
 
         mag_ref_set_ = false;
+        mag_grace_good_updates_ = 0;
         mag_body_hold_.setZero();
         last_mag_time_sec_ = NAN;
         dt_mag_sec_ = NAN;
@@ -1280,6 +1285,10 @@ public:
         impl_.mekf().set_acc_tilt_only_mode(true);
         impl_.mekf().set_mag_yaw_only_mode(true);
         last_impl_startup_stage_ = impl_.getStartupStage();
+        sigma_m_nominal_ = cfg.sigma_m;
+        sigma_m_grace_ = cfg.sigma_m.cwiseProduct(cfg.sigma_m_grace_scale).cwiseMax(Eigen::Vector3f::Constant(1e-4f));
+        impl_.mekf().set_Rmag(sigma_m_grace_);
+        impl_.mekf().set_acc_tilt_only_mode(true);
 
         // IMPORTANT: allow warmup to restore nominal accel measurement noise
         impl_.setNominalRacc(cfg.sigma_a);
@@ -1318,15 +1327,15 @@ public:
         // If internal filter fell back to Cold (tilt reset), force mag ref re-learn
 const auto cur_stage = impl_.getStartupStage();
 
-    if (cur_stage != last_impl_startup_stage_) {
+        if (cur_stage != last_impl_startup_stage_) {
     if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
         // Entered Cold (startup or non-Live tilt reset): reset mag-init ONCE
         mag_ref_set_ = false;
+        mag_phase_ = MagStartupPhase::TiltWarm;
+        mag_grace_good_updates_ = 0;
         mag_auto_.reset();
-        mag_stage_ = MagStage::TiltWarm;
-        mag_grace_updates_ = 0;
+        impl_.mekf().set_Rmag(sigma_m_grace_);
         impl_.mekf().set_acc_tilt_only_mode(true);
-        impl_.mekf().set_mag_yaw_only_mode(true);
 
         last_mag_time_sec_ = NAN;
         dt_mag_sec_ = NAN;
@@ -1346,6 +1355,9 @@ const auto cur_stage = impl_.getStartupStage();
             if (mag_stage_ == MagStage::TiltWarm) {
                 mag_stage_ = MagStage::MagCollect;
             }
+        }
+        if (mag_phase_ != MagStartupPhase::Live) {
+            impl_.mekf().set_acc_tilt_only_mode(true);
         }
     }
 
@@ -1388,104 +1400,86 @@ const auto cur_stage = impl_.getStartupStage();
             }
         }
 
-        // Respect mag delay for actual mag fusion, but keep learning active
-        // from startup so the first post-delay reference is better conditioned.
+        // Respect mag delay for actual mag fusion, but keep learning active.
         if (t_ < cfg_.mag_delay_sec) return;
 
-        if (mag_stage_ == MagStage::TiltWarm && impl_.isAdaptiveLive()) {
-            mag_stage_ = MagStage::MagCollect;
+        if (mag_phase_ == MagStartupPhase::TiltWarm) {
+            mag_phase_ = MagStartupPhase::MagCollect;
+        }
+
+        if (!mag_ref_set_ && cfg_.use_fixed_mag_world_ref &&
+            cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
+            impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
+            mag_ref_set_ = true;
+            mag_phase_ = MagStartupPhase::MagGrace;
+            mag_grace_good_updates_ = 0;
+            impl_.mekf().set_Rmag(sigma_m_grace_);
         }
 
         if (!mag_ref_set_) {
-            if (cfg_.use_fixed_mag_world_ref) {
-                impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
-                mag_ref_set_ = true;
-            } else {
-                // If a valid world-field prior exists (e.g., WMM), use it immediately
-                // once mag fusion window opens. This avoids prolonged yaw drift while
-                // waiting for learned alignment under rough sea/noisy startup.
+            Eigen::Vector3f acc_for_ref = last_acc_body_ned_;
+            Eigen::Vector3f mag_body_for_ref = mag_body_ned;
+            bool have_ref_candidate = false;
+
+            Eigen::Vector3f acc_mean, mag_raw_mean, mag_unit_mean;
+            float heading_mean = 0.0f, heading_sigma = 0.0f, heading_neff = 0.0f;
+            const bool have_tuner_ref = mag_auto_.getResult(acc_mean, mag_raw_mean, mag_unit_mean);
+            const bool have_heading_stats = mag_auto_.getHeadingEstimate(heading_mean, heading_sigma, heading_neff);
+            if (have_tuner_ref && have_heading_stats &&
+                acc_mean.allFinite() && acc_mean.norm() > 1e-3f &&
+                mag_raw_mean.allFinite() && mag_raw_mean.norm() > 1e-3f &&
+                heading_neff >= 8.0f)
+            {
+                acc_for_ref = acc_mean;
+                mag_body_for_ref = mag_raw_mean;
+                have_ref_candidate = true;
+            }
+
+            if (!have_ref_candidate &&
+                std::isfinite(mag_ref_deadline_sec_) && t_ >= mag_ref_deadline_sec_)
+            {
                 if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
                     impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
                     mag_ref_set_ = true;
-                }
-
-                Eigen::Vector3f mag_body_for_ref = mag_body_ned;
-                Eigen::Vector3f acc_for_ref = last_acc_body_ned_;
-                bool have_ref_candidate = false;
-
-                // Preferred: learned relation from stable samples only.
-                Eigen::Vector3f acc_mean, mag_raw_mean, mag_unit_mean;
-                if (!mag_ref_set_ && mag_auto_.getResult(acc_mean, mag_raw_mean, mag_unit_mean)) {
-                    if (acc_mean.allFinite() && acc_mean.norm() > 1e-3f &&
-                        mag_raw_mean.allFinite() && mag_raw_mean.norm() > 1e-3f)
-                    {
-                        acc_for_ref = acc_mean;
-                        mag_body_for_ref = mag_raw_mean;
-                        have_ref_candidate = true;
-                    }
-                }
-
-                // Timeout fallback policy:
-                //  1) Prefer caller-provided world-field prior if valid.
-                //  2) Else use robust running means (many samples), never one-shot sample.
-                if (!have_ref_candidate &&
-                    std::isfinite(mag_ref_deadline_sec_) && t_ >= mag_ref_deadline_sec_)
+                } else if (fallback_mean_count_ >= 200 &&
+                           fallback_acc_mean_.allFinite() && fallback_acc_mean_.norm() > 1e-3f &&
+                           fallback_mag_mean_.allFinite() && fallback_mag_mean_.norm() > 1e-3f)
                 {
-                    if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
-                        impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
-                        mag_ref_set_ = true;
-                    } else if (fallback_mean_count_ >= 200 &&
-                               fallback_acc_mean_.allFinite() && fallback_acc_mean_.norm() > 1e-3f &&
-                               fallback_mag_mean_.allFinite() && fallback_mag_mean_.norm() > 1e-3f)
-                    {
-                        acc_for_ref = fallback_acc_mean_;
-                        mag_body_for_ref = fallback_mag_mean_;
-                        have_ref_candidate = true;
-                    } else {
-                        // Keep waiting; extend deadline to avoid busy re-checking.
-                        mag_ref_deadline_sec_ = t_ + cfg_.mag_ref_timeout_sec;
-                    }
+                    acc_for_ref = fallback_acc_mean_;
+                    mag_body_for_ref = fallback_mag_mean_;
+                    have_ref_candidate = true;
+                } else {
+                    mag_ref_deadline_sec_ = t_ + cfg_.mag_ref_timeout_sec;
                 }
+            }
 
-                if (!mag_ref_set_ && have_ref_candidate) {
-                    Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_for_ref);
-                    q_tilt.normalize();
-
-                    Eigen::Vector3f mag_world_ref_uT = q_tilt * mag_body_for_ref; // keep raw uT
-                    if (mag_world_ref_uT.allFinite() && mag_world_ref_uT.norm() > 1e-3f) {
-                        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
-                        mag_ref_set_ = true;
-                    }
+            if (!mag_ref_set_ && have_ref_candidate) {
+                Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_for_ref);
+                q_tilt.normalize();
+                Eigen::Vector3f mag_world_ref_uT = q_tilt * mag_body_for_ref;
+                if (mag_world_ref_uT.allFinite() && mag_world_ref_uT.norm() > 1e-3f) {
+                    impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+                    mag_ref_set_ = true;
+                    mag_phase_ = MagStartupPhase::MagGrace;
+                    mag_grace_good_updates_ = 0;
+                    impl_.mekf().set_Rmag(sigma_m_grace_);
                 }
             }
         }
-        if (mag_ref_set_ && mag_stage_ == MagStage::MagCollect && have_last_imu_) {
-            const Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(last_acc_body_ned_);
-            float dtm = dt_mag_sec_;
-            if (!std::isfinite(dtm) || dtm <= 0.0f) {
-                dtm = 1.0f / std::max(1.0f, cfg_.mag_odr_guess_hz);
-            }
-            (void)mag_auto_.addHeadingSample(dtm, q_tilt, mag_body_ned, last_acc_body_ned_, last_gyro_body_ned_);
 
-            float psi_mean = 0.0f, psi_var = 0.0f, n_eff = 1.0f;
-            if (mag_auto_.getHeadingStats(psi_mean, psi_var, n_eff)) {
-                const float yaw_std = std::sqrt(std::max(1e-4f, 0.02f * 0.02f + psi_var / std::max(1.0f, n_eff)));
-                impl_.mekf().measurement_update_heading_only(psi_mean, yaw_std);
+        if (!mag_ref_set_) return;
+
+        impl_.updateMag(mag_body_ned);
+        const auto& mdiag = impl_.mekf().lastMagDiag();
+        if (mag_phase_ == MagStartupPhase::MagGrace) {
+            if (mdiag.accepted && std::isfinite(mdiag.nis) && mdiag.nis < cfg_.mag_grace_nis_max) {
+                mag_grace_good_updates_++;
+            }
+            if (mag_grace_good_updates_ >= std::max(1, cfg_.mag_grace_updates)) {
+                impl_.mekf().set_Rmag(sigma_m_nominal_);
                 impl_.mekf().set_acc_tilt_only_mode(false);
-                mag_stage_ = MagStage::MagGrace;
-                mag_grace_updates_ = 0;
+                mag_phase_ = MagStartupPhase::Live;
             }
-        }
-
-        if (mag_ref_set_ && mag_stage_ != MagStage::MagCollect) {
-          impl_.updateMag(mag_body_ned);
-          if (mag_stage_ == MagStage::MagGrace) {
-              mag_grace_updates_++;
-              if (mag_grace_updates_ >= 100) {
-                  impl_.mekf().set_mag_yaw_only_mode(false);
-                  mag_stage_ = MagStage::Live;
-              }
-          }
         }
     }
 
@@ -1499,7 +1493,7 @@ const auto cur_stage = impl_.getStartupStage();
 
 private:
     enum class Stage { Uninitialized, Warming, Live };
-    enum class MagStage { TiltWarm, MagCollect, MagGrace, Live };
+    enum class MagStartupPhase { TiltWarm, MagCollect, MagGrace, Live };
 
     // Tilt-only (yaw-free) quaternion body->world from accel.
     // We assume “rest accel” direction represents gravity (up to sign convention),
@@ -1550,6 +1544,7 @@ private:
     bool begun_ = false;
 
     Stage stage_ = Stage::Uninitialized;
+    MagStartupPhase mag_phase_ = MagStartupPhase::TiltWarm;
     float t_ = 0.0f;
     float stage_t_ = 0.0f;
     MagStage mag_stage_ = MagStage::TiltWarm;
@@ -1575,6 +1570,9 @@ private:
     Eigen::Vector3f fallback_acc_mean_ = Eigen::Vector3f::Zero();
     Eigen::Vector3f fallback_mag_mean_ = Eigen::Vector3f::Zero();
     int fallback_mean_count_ = 0;
+    Eigen::Vector3f sigma_m_nominal_ = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
+    Eigen::Vector3f sigma_m_grace_ = Eigen::Vector3f(0.75f, 0.75f, 1.2f);
+    int mag_grace_good_updates_ = 0;
 
     MagAutoTuner mag_auto_;
 };
