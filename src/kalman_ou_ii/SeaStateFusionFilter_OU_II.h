@@ -16,6 +16,7 @@
     • Dominant frequency tracking using one of:
           – AranovskiyFreqTracker     (frequency estimator)
           – KalmANFFreqTracker        (adaptive notch / Kalman frequency tracker)
+          - PLLFreqTracker            (PLL frequency tracker)
           – SchmittTrigger            (zero-cross event detector)
 
     • Dual-stage frequency smoothing:
