@@ -33,7 +33,7 @@ public:
         cfg_.sigma_a = sigma_a_init;
         cfg_.sigma_g = sigma_g;
         cfg_.sigma_m = sigma_m;
-        cfg_.mag_delay_sec = 0.0f; //MAG_DELAY_SEC;
+        cfg_.mag_delay_sec = MAG_DELAY_SEC;
         cfg_.use_fixed_mag_world_ref = false;
         cfg_.mag_world_ref = mag_world_a;
         cfg_.freeze_acc_bias_until_live = true;
@@ -80,10 +80,8 @@ public:
 
         // Use the exact same finite-angle conversion path as the sim truth side.
         quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
-        // Reporting correction: mag-based north lock is magnetic-north-referenced,
-        // while truth yaw is true-north-referenced in the wave CSV data.
-        // Convert estimated yaw to true-north heading using WMM declination.
-        yaw_deg = wrapDeg(yaw_deg + MagSim_WMM::default_declination_deg);
+        // Keep yaw in the same reference as OU_III simulation reporting.
+        // (No extra declination correction in post-processing.)
         s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, yaw_deg);
 
         s.acc_bias_est_ned = filter.mekf().get_acc_bias();
