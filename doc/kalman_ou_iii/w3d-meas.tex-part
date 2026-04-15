@@ -33,7 +33,7 @@ where
 \end{itemize}
 
 The corresponding Jacobians, consistent with the
-right-multiplicative attitude convention, are
+left-multiplicative attitude convention, are
 \begin{align}
 \frac{\partial \vct{f}_b}{\partial \vct{\theta}}
   &= -\Skew{\hat{\vct{f}}_{\mathrm{cog},b}}, &
