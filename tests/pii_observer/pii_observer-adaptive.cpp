@@ -251,7 +251,7 @@ private:
         cfg.use_mag = with_mag;
 
         // Mahony sea-state scheduling
-        cfg.adapt_mahony_gains = false;
+        cfg.adapt_mahony_gains = true;
         cfg.mahony_twoKp_calm  = 0.90f;
         cfg.mahony_twoKp_rough = 0.35f;
         cfg.mahony_twoKi_calm  = 0.025f;
