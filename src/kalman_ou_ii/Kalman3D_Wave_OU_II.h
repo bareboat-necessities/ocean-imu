@@ -1369,6 +1369,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_ac
 {
     const Vector3 acc = deheel_vector_(acc_body);
     const Vector3 mag = deheel_vector_(mag_body);
+    if (!acc.allFinite() || !mag.allFinite()) {
+        throw std::runtime_error("Invalid accel/mag vector: non-finite value in initialization");
+    }
 
     const T anorm = acc.norm();
     if (anorm < T(1e-8)) {
@@ -1511,6 +1514,12 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_ac
     Vector3 const& acc_body)
 {
     const Eigen::Quaternion<T> q_old_bw = quaternion_boat();
+    if (!std::isfinite(q_old_bw.x()) || !std::isfinite(q_old_bw.y()) ||
+        !std::isfinite(q_old_bw.z()) || !std::isfinite(q_old_bw.w()))
+    {
+        initialize_from_acc(acc_body);
+        return;
+    }
 
     const T ox = q_old_bw.x();
     const T oy = q_old_bw.y();
