@@ -924,13 +924,8 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        // Simpler mag-init policy:
+        // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
-        float mag_init_min_tilt_sec   = 1.5f;
-        float mag_init_window_sec     = 0.50f;
-        int   mag_init_min_samples    = 8;
-        float mag_init_accel_tol_frac = 0.20f;
-        float mag_init_max_gyro_dps   = 35.0f;
         float mag_init_min_mag_norm   = 1e-3f;
 
         bool enable_displacement_detrend = false;
