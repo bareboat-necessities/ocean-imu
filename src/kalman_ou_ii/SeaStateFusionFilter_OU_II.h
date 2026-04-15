@@ -944,6 +944,7 @@ public:
         cfg_ = cfg;
 
         begun_ = true;
+        impl_ready_ = false;
         stage_ = Stage::Uninitialized;
         t_ = 0.0f;
         stage_t_ = 0.0f;
@@ -962,6 +963,7 @@ public:
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
 
         impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
+        impl_ready_ = true;
         last_impl_startup_stage_ = impl_.getStartupStage();
         mag_sigma_nominal_ = cfg_.sigma_m;
         mag_grace_active_ = false;
@@ -1124,6 +1126,7 @@ private:
         mag_init_tuner_.reset();
         mag_grace_active_ = false;
         mag_grace_start_sec_ = NAN;
+        if (!impl_ready_) return;
         if (mag_sigma_nominal_.allFinite() && mag_sigma_nominal_.maxCoeff() > 0.0f) {
             impl_.mekf().set_Rmag_std(mag_sigma_nominal_);
         }
@@ -1179,6 +1182,7 @@ private:
     SeaStateFusionFilter_OU_II<trackerT> impl_{false};
 
     bool begun_ = false;
+    bool impl_ready_ = false;
 
     Stage stage_ = Stage::Uninitialized;
     float t_ = 0.0f;

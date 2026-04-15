@@ -58,6 +58,9 @@ public:
     // Optional heading-consistency gate on tilt-compensated horizontal field.
     float heading_jump_deg_max = 20.0f;
     float min_heading_concentration = 0.75f;
+    float max_heading_sigma_rad = 0.70f; // circular std proxy gate
+    float weight_accel_dyn = 0.10f;
+    float weight_gyro_dyn = 2.0f;
 
     // How many accepted samples we require
     int   min_good_samples  = 40;    // e.g. 0.4s @ 100 Hz mag
@@ -89,6 +92,7 @@ public:
     heading_C_ = 0.0f;
     heading_S_ = 0.0f;
     heading_wsum_ = 0.0f;
+    heading_wsum2_ = 0.0f;
   }
 
   // Call only when you actually have a NEW mag sample.
@@ -133,10 +137,16 @@ public:
     good_count_++;
     t_good_ += dt;
 
-    const float w = 1.0f / std::max(1.0e-6f, mag_norm_ema_);
+    const float acc_dyn = std::fabs(acc_body_ned.norm() - cfg_.g);
+    const float gyro_dyn = gyro_body_ned.norm();
+    const float w = 1.0f / std::max(1.0e-6f,
+                                    mag_norm_ema_
+                                      + cfg_.weight_accel_dyn * acc_dyn * acc_dyn
+                                      + cfg_.weight_gyro_dyn * gyro_dyn * gyro_dyn);
     heading_C_ += w * std::cos(heading_rad);
     heading_S_ += w * std::sin(heading_rad);
     heading_wsum_ += w;
+    heading_wsum2_ += w * w;
     if (heading_wsum_ > 1.0e-6f) {
       heading_mean_rad_ = std::atan2(heading_S_, heading_C_);
       have_heading_mean_ = true;
@@ -152,7 +162,9 @@ public:
         const float mrn = mr.norm();
         if (std::isfinite(mrn) && mrn > cfg_.mag_norm_min) {
           const float conc = headingConcentration();
-          if (std::isfinite(conc) && conc >= cfg_.min_heading_concentration) {
+          const float sigma_psi = headingSigmaRad();
+          if (std::isfinite(conc) && conc >= cfg_.min_heading_concentration &&
+              std::isfinite(sigma_psi) && sigma_psi <= cfg_.max_heading_sigma_rad) {
             ready_ = true;
           }
         }
@@ -202,6 +214,21 @@ public:
     const float C = heading_C_ / heading_wsum_;
     const float S = heading_S_ / heading_wsum_;
     return std::sqrt(C * C + S * S);
+  }
+
+  float headingSigmaRad() const {
+    const float conc = headingConcentration();
+    if (!(conc > 1.0e-6f) || !std::isfinite(conc)) return std::numeric_limits<float>::infinity();
+    return std::sqrt(std::max(0.0f, -2.0f * std::log(std::min(1.0f, conc))));
+  }
+
+  bool getHeadingEstimate(float& heading_mean_rad, float& sigma_heading_rad, float& n_eff) const {
+    if (!ready_ || !have_heading_mean_) return false;
+    if (!(heading_wsum_ > 1.0e-6f) || !(heading_wsum2_ > 1.0e-6f)) return false;
+    heading_mean_rad = heading_mean_rad_;
+    sigma_heading_rad = headingSigmaRad();
+    n_eff = (heading_wsum_ * heading_wsum_) / heading_wsum2_;
+    return std::isfinite(heading_mean_rad) && std::isfinite(sigma_heading_rad) && std::isfinite(n_eff);
   }
 
 private:
@@ -311,6 +338,7 @@ private:
   float heading_C_ = 0.0f;
   float heading_S_ = 0.0f;
   float heading_wsum_ = 0.0f;
+  float heading_wsum2_ = 0.0f;
 
   // Heel-safe accel direction EMA
   Eigen::Vector3f acc_dir_ema_ = Eigen::Vector3f::Zero();
@@ -357,6 +385,9 @@ static inline MagAutoTuner::Config makeDefaultMagInitCfg(float mag_odr_hz) {
 
     c.heading_jump_deg_max = 18.0f;
     c.min_heading_concentration = 0.82f;
+    c.max_heading_sigma_rad = 0.55f;
+    c.weight_accel_dyn = 0.20f;
+    c.weight_gyro_dyn = 2.5f;
 
     // Require about ~0.7 s of good data, but cap samples so 100 Hz doesn’t wait forever.
     c.min_good_time_sec = 0.70f;
