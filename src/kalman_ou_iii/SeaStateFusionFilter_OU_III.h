@@ -182,7 +182,13 @@ public:
         // Keep BODY components around for direction/sign
         const float a_x_body = acc.x();
         const float a_y_body = acc.y();
-        const float a_z_inertial = acc.z() + g_std;
+
+        // BODY-Z-based proxy used by the tracker/sign logic.
+        // This is NOT true world/inertial vertical acceleration; it is only a
+        // body-Z residual that behaves like up-positive vertical motion when the
+        // platform is near-level:
+        //   acc.z() ~ -g at rest  => proxy ~ 0
+        const float a_z_body_proxy = acc.z() + g_std;
 
         // MEKF updates first (attitude + latent a_w)
         mekf_->time_update(gyro, dt);
@@ -229,11 +235,13 @@ public:
                 tilt_reset_cooldown_sec_ = TILT_RESET_COOLDOWN_SEC;
             }
         }
-        // vertical (up positive)
-        a_vert_up = -a_z_inertial;
 
-        // LPF on vertical accel for tracker input
-        const float a_vert_lp = freq_input_lpf_.step(a_vert_up, dt);
+        // Up-positive BODY-Z proxy used by tracker/tuner/sign logic.
+        // Not true world vertical unless the platform is close to level.
+        a_body_z_up_proxy_ = -a_z_body_proxy;
+
+        // LPF on BODY-Z proxy for tracker input
+        const float a_vert_lp = freq_input_lpf_.step(a_body_z_up_proxy_, dt);
 
         // Raw freq from tracker
         const float f_tracker = static_cast<float>(tracker_policy_.run(a_vert_lp, dt));
@@ -254,7 +262,7 @@ public:
 
         // Tuner gets vertical accel
         if (enable_tuner_) {
-            update_tuner(dt, a_vert_up, f_after_still);
+            update_tuner(dt, a_body_z_up_proxy_, f_after_still);
         }
 
         // Keep linear-block R_S tuning responsive in Live mode instead of
@@ -267,7 +275,7 @@ public:
 
         // Direction filters run on BODY accel, "sign" uses vertical acceleration
         dir_filter_.update(a_x_body, a_y_body, omega, dt);
-        dir_sign_state_ = dir_sign_.update(a_x_body, a_y_body, a_vert_up, dt);
+        dir_sign_state_ = dir_sign_.update(a_x_body, a_y_body, a_body_z_up_proxy_, dt);
     }
 
     //  Magnetometer correction
@@ -887,7 +895,7 @@ private:
     float freq_hz_slow_  = FREQ_GUESS; // slow branch
     float f_raw          = FREQ_GUESS;
 
-    float a_vert_up = 0.0f; // accel vertical (Z-up)
+    float a_body_z_up_proxy_ = 0.0f; // accel vertical (Z-up)
 
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;
