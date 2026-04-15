@@ -291,7 +291,6 @@ public:
             (static_cast<float>(time_) - first_mag_update_time_) > 1.0f) // 1s guard
         {
             accel_bias_locked_ = false;
-            mekf_->set_accel_tilt_only_mode(false);
 
             // Only allow accel bias to start learning once the system is Live.
             if (freeze_acc_bias_until_live_ && startup_stage_ == StartupStage::Live) {
@@ -938,7 +937,6 @@ private:
 
         if (!mekf_) return;
         mekf_->set_linear_block_enabled(false);
-        mekf_->set_accel_tilt_only_mode(true);
 
         accel_bias_locked_   = with_mag_;
         mag_updates_applied_ = 0;
@@ -960,7 +958,6 @@ private:
 
         if (!mekf_) return;
         mekf_->set_linear_block_enabled(enable_linear_block_);
-        mekf_->set_accel_tilt_only_mode(with_mag_ ? accel_bias_locked_ : false);
 
         if (freeze_acc_bias_until_live_) {
             // Bias learning may remain locked until magnetometer has stabilized,
@@ -1247,8 +1244,6 @@ public:
         stage_t_ = 0.0f;
 
         mag_ref_set_ = false;
-        mag_heading_committed_ = false;
-        mag_grace_updates_left_ = 0;
         mag_body_hold_.setZero();
         last_mag_time_sec_ = NAN;
         dt_mag_sec_ = NAN;
@@ -1324,8 +1319,6 @@ if (cur_stage != last_impl_startup_stage_) {
     if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
         // Entered Cold (startup or non-Live tilt reset): reset mag-init ONCE
         mag_ref_set_ = false;
-        mag_heading_committed_ = false;
-        mag_grace_updates_left_ = 0;
         mag_auto_.reset();
 
         last_mag_time_sec_ = NAN;
@@ -1452,25 +1445,8 @@ if (cur_stage != last_impl_startup_stage_) {
                 }
             }
         }
-        if (mag_ref_set_ && !mag_heading_committed_) {
-            float heading_mean = 0.0f;
-            float heading_std = 0.0f;
-            float heading_neff = 0.0f;
-            if (mag_auto_.getHeadingInit(heading_mean, heading_std, heading_neff)) {
-                const float std_eff = std::max(heading_std / std::sqrt(std::max(1.0f, heading_neff)),
-                                               2.5f * float(M_PI) / 180.0f);
-                impl_.mekf().measurement_update_heading_only(heading_mean, std_eff);
-                mag_heading_committed_ = true;
-                mag_grace_updates_left_ = MAG_GRACE_UPDATES;
-            }
-            return;
-        }
-
         if (mag_ref_set_) {
           impl_.updateMag(mag_body_ned);
-          if (mag_grace_updates_left_ > 0) {
-              --mag_grace_updates_left_;
-          }
         }
     }
 
@@ -1541,9 +1517,6 @@ private:
 
     // Mag init state
     bool mag_ref_set_ = false;
-    bool mag_heading_committed_ = false;
-    int  mag_grace_updates_left_ = 0;
-    static constexpr int MAG_GRACE_UPDATES = 30;
     Eigen::Vector3f mag_body_hold_ = Eigen::Vector3f::Zero();
 
     float last_mag_time_sec_ = NAN;

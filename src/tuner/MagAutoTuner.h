@@ -59,12 +59,6 @@ public:
     int   min_good_samples  = 40;    // e.g. 0.4s @ 100 Hz mag
     int   max_total_samples = 400;   // safety cap
     float min_good_time_sec = 0.45f;
-
-    // Heading-collector gates (Stage B/C startup).
-    float heading_jump_max_deg = 25.0f;   // reject circular outliers
-    float heading_concentration_min = 0.80f; // R >= this to accept init
-    int   heading_min_samples = 24;
-    float heading_std_floor_deg = 4.0f;
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
@@ -86,11 +80,6 @@ public:
     acc_dir_ema_valid_ = false;
 
     ready_ = false;
-    heading_last_mean_valid_ = false;
-    heading_C_ = 0.0f;
-    heading_S_ = 0.0f;
-    heading_W_ = 0.0f;
-    heading_samples_ = 0;
   }
 
   // Call only when you actually have a NEW mag sample.
@@ -126,8 +115,6 @@ public:
 
     good_count_++;
     t_good_ += dt;
-
-    addHeadingCandidate_(acc_body_ned, mag_body, gyro_body_ned);
 
     if (good_count_ >= cfg_.min_good_samples && t_good_ >= cfg_.min_good_time_sec) {
       // Direction mean must be well-defined (not near-cancelled)
@@ -179,71 +166,6 @@ public:
     const float mun = mu.norm();
     mag_unit_mean = (mun > 1e-6f) ? (mu / mun) : Eigen::Vector3f(1,0,0);
     return mag_unit_mean.allFinite();
-  }
-
-  bool getHeadingInit(float& heading_mean_rad, float& heading_std_rad, float& heading_neff) const {
-    if (heading_samples_ < std::max(1, cfg_.heading_min_samples) || !(heading_W_ > 1e-6f)) return false;
-
-    const float Cn = heading_C_ / heading_W_;
-    const float Sn = heading_S_ / heading_W_;
-    const float R = std::sqrt(Cn * Cn + Sn * Sn);
-    if (!(R >= cfg_.heading_concentration_min) || !std::isfinite(R)) return false;
-
-    heading_mean_rad = std::atan2(Sn, Cn);
-    float var = -2.0f * std::log(std::max(1e-6f, R));
-    const float floor = cfg_.heading_std_floor_deg * float(M_PI) / 180.0f;
-    var = std::max(var, floor * floor);
-    heading_std_rad = std::sqrt(var);
-    heading_neff = heading_W_;
-    return std::isfinite(heading_mean_rad) && std::isfinite(heading_std_rad) && std::isfinite(heading_neff);
-  }
-
-private:
-  static float wrapPi_(float a) {
-    while (a > float(M_PI)) a -= 2.0f * float(M_PI);
-    while (a < -float(M_PI)) a += 2.0f * float(M_PI);
-    return a;
-  }
-
-  void addHeadingCandidate_(const Eigen::Vector3f& acc_body_ned,
-                            const Eigen::Vector3f& mag_body,
-                            const Eigen::Vector3f& gyro_body_ned)
-  {
-    const float an = acc_body_ned.norm();
-    const float mn = mag_body.norm();
-    if (!(an > 1e-6f) || !(mn > cfg_.mag_norm_min)) return;
-
-    const Eigen::Vector3f zb = -acc_body_ned / an; // body "down"
-    const float roll = std::atan2(zb.y(), zb.z());
-    const float pitch = std::atan2(-zb.x(), std::sqrt(zb.y() * zb.y() + zb.z() * zb.z()));
-
-    const float sr = std::sin(roll), cr = std::cos(roll);
-    const float sp = std::sin(pitch), cp = std::cos(pitch);
-
-    const float mx = mag_body.x();
-    const float my = mag_body.y();
-    const float mz = mag_body.z();
-    const float mN = cp * mx + sp * sr * my + sp * cr * mz;
-    const float mE = cr * my - sr * mz;
-    if (!std::isfinite(mN) || !std::isfinite(mE)) return;
-    const float psi = std::atan2(mE, mN);
-
-    if (heading_last_mean_valid_) {
-      const float d = std::fabs(wrapPi_(psi - heading_last_mean_rad_));
-      const float max_jump = cfg_.heading_jump_max_deg * float(M_PI) / 180.0f;
-      if (d > max_jump) return;
-    }
-
-    const float dyn = std::fabs(an - cfg_.g);
-    const float w = 1.0f / (1.0f + 2.5f * dyn * dyn + 0.2f * gyro_body_ned.squaredNorm());
-    if (!(w > 1e-6f) || !std::isfinite(w)) return;
-
-    heading_C_ += w * std::cos(psi);
-    heading_S_ += w * std::sin(psi);
-    heading_W_ += w;
-    heading_samples_++;
-    heading_last_mean_rad_ = std::atan2(heading_S_, heading_C_);
-    heading_last_mean_valid_ = true;
   }
 
 private:
@@ -321,14 +243,6 @@ private:
   // Heel-safe accel direction EMA
   Eigen::Vector3f acc_dir_ema_ = Eigen::Vector3f::Zero();
   bool acc_dir_ema_valid_ = false;
-
-  // Circular heading accumulator from accepted startup samples.
-  float heading_C_ = 0.0f;
-  float heading_S_ = 0.0f;
-  float heading_W_ = 0.0f;
-  int heading_samples_ = 0;
-  float heading_last_mean_rad_ = 0.0f;
-  bool heading_last_mean_valid_ = false;
 };
 
 static inline MagAutoTuner::Config makeDefaultMagInitCfg(float mag_odr_hz) {
