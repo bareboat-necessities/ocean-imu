@@ -612,14 +612,14 @@ private:
             }
         }
 
-        // a_z_inertial_lp: vertical inertial accel (m/s²), low-passed
+        // a_z_body_proxy_lp:
         // dt             : timestep (s)
         // freq_in        : raw tracker freq (Hz)
         //
         // Returns adjusted frequency:
         //   – follows tracker when not still
         //   – decays toward target_freq_hz when still for long enough
-        float step(float a_z_inertial_lp, float dt, float freq_in) {
+        float step(float a_z_body_proxy_lp, float dt, float freq_in) {
             if (!(dt > 0.0f) || !std::isfinite(freq_in)) {
                 return freq_in;
             }
@@ -631,7 +631,7 @@ private:
             }
 
             // Normalize by g → dimensionless
-            const float a_norm      = a_z_inertial_lp / g_std;
+            const float a_norm      = a_z_body_proxy_lp / g_std;
             const float inst_energy = a_norm * a_norm; // (a_z/g)^2
 
             // EWMA of energy
