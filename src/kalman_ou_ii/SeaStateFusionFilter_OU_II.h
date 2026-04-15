@@ -500,7 +500,7 @@ public:
         const float sigma = smoothed ? tune_.sigma_applied : sigma_target_;
         if (!(tau > 1e-6f) || !std::isfinite(tau) || !std::isfinite(sigma)) return NAN;
         constexpr float K = std::sqrt(2.0f) / M_PI;
-        const float v_env = speed_env_mult_ * K * sigma * tau;
+        const float v_env = K * sigma * tau;
         return std::isfinite(v_env) ? v_env : NAN;
     }
 
@@ -853,8 +853,6 @@ private:
 
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;
-
-    float speed_env_mult_ = 1.0f;
 
     bool enable_linear_block_ = true;
 
