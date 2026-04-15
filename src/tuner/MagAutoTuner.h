@@ -6,7 +6,6 @@
 
 #include <cmath>
 #include <algorithm>
-#include <limits>
 
 #ifdef EIGEN_NON_ARDUINO
   #include <Eigen/Dense>
@@ -14,51 +13,18 @@
   #include <ArduinoEigenDense.h>
 #endif
 
-// Robust “only accept good samples” accumulator for initial acc+mag alignment.
-//
-// Key changes vs your earlier version:
-//  - DOES NOT require ax≈0, ay≈0 (heel-safe). Instead gates on:
-//      • |a| ≈ g
-//      • normalized accel direction is STABLE over time (EMA on unit vector)
-//  - Optional gyro gate remains (not rotating).
-//  - Mag gating remains units-agnostic (EMA stability on norm).
-//  - Keeps RAW mag mean in same units as input (e.g. µT) for consistent reference.
-//
-// Output provides BOTH:
-//   (1) mag_raw_mean : mean magnetic field vector in body frame in SAME UNITS as input (e.g. µT)
-//   (2) mag_unit_mean: mean unit direction (dimensionless)
+// Common startup helper for estimating world magnetic reference from
+// stable body-frame accel + gyro + mag measurements.
 class MagAutoTuner {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   struct Config {
     float g = 9.80665f;
-
-    // |a| gating (fraction of g)
-    float accel_norm_min = 0.92f;
-    float accel_norm_max = 1.08f;
-
-    // Heel-safe “direction stability” gate:
-    // Keep an EMA of a_unit, require current a_unit to be close to EMA direction.
-    // Good starting values: alpha 0.02..0.05, cos_min 0.995..0.999
-    float acc_dir_ema_alpha   = 0.03f;
-    float acc_dir_cos_min     = 0.997f;   // ~4.4 deg
-    float acc_dir_min_valid_n = 1e-6f;
-
-    // Optional “not rotating” gating
-    bool  use_gyro_gate = true;
-    float gyro_norm_max = 8.0f * float(M_PI) / 180.0f; // 8 deg/s
-
-    // Mag gating (units-agnostic): not tiny + stability by EMA on norm
-    float mag_norm_min = 1e-6f;
-    float mag_ema_ratio_min = 0.65f;
-    float mag_ema_ratio_max = 1.55f;
-    float mag_norm_ema_alpha = 0.02f;
-
-    // How many accepted samples we require
-    int   min_good_samples  = 40;    // e.g. 0.4s @ 100 Hz mag
-    int   max_total_samples = 400;   // safety cap
-    float min_good_time_sec = 0.45f;
+    float accel_band_frac = 0.15f;                      // ±15% around 1g
+    float gyro_norm_max = 50.0f * float(M_PI) / 180.0f; // 50 deg/s
+    float mag_norm_min = 1e-3f;
+    int   min_samples = 40;
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
@@ -67,229 +33,104 @@ public:
   void setConfig(const Config& cfg) { cfg_ = cfg; reset(); }
 
   void reset() {
-    t_good_ = 0.0f;
-    good_count_ = 0;
-    total_count_ = 0;
     acc_sum_.setZero();
-    mag_raw_sum_.setZero();
-    mag_unit_sum_.setZero();
-
-    mag_norm_ema_ = std::numeric_limits<float>::quiet_NaN();
-
-    acc_dir_ema_.setZero();
-    acc_dir_ema_valid_ = false;
-
+    mag_sum_.setZero();
+    accepted_count_ = 0;
     ready_ = false;
+    mag_world_ref_.setZero();
   }
 
-  // Call only when you actually have a NEW mag sample.
-  // dt: time since previous mag sample (or a reasonable estimate)
-  // acc_body_ned: accelerometer sample (specific force or accel; we only use it to detect stable gravity direction)
-  // mag_body: raw mag vector (µT recommended if you want µT-consistent output)
-  // gyro_body_ned: [rad/s] optional, but recommended
-  bool addMagSample(float dt,
-                    const Eigen::Vector3f& acc_body_ned,
-                    const Eigen::Vector3f& mag_body,
-                    const Eigen::Vector3f& gyro_body_ned = Eigen::Vector3f::Zero())
+  bool addSample(const Eigen::Vector3f& acc_body_ned,
+                 const Eigen::Vector3f& gyro_body_ned,
+                 const Eigen::Vector3f& mag_body_ned)
   {
     if (ready_) return true;
-    if (!(dt > 0.0f) || !std::isfinite(dt)) return false;
-    if (!acc_body_ned.allFinite() || !mag_body.allFinite() || !gyro_body_ned.allFinite()) return false;
+    if (!isStableSample_(acc_body_ned, gyro_body_ned)) return false;
+    if (!mag_body_ned.allFinite()) return false;
 
-    total_count_++;
-    if (total_count_ > cfg_.max_total_samples) {
-      // Give up gracefully; caller decides fallback.
-      return false;
-    }
+    const float mag_n = mag_body_ned.norm();
+    if (!(mag_n > cfg_.mag_norm_min) || !std::isfinite(mag_n)) return false;
 
-    if (!isGoodAccel_(acc_body_ned)) return false;
-    if (cfg_.use_gyro_gate && !isGoodGyro_(gyro_body_ned)) return false;
+    acc_sum_ += acc_body_ned;
+    mag_sum_ += mag_body_ned;
+    ++accepted_count_;
 
-    Eigen::Vector3f mag_u;
-    if (!isGoodMag_(mag_body, mag_u)) return false;
+    if (accepted_count_ < cfg_.min_samples) return false;
 
-    // Accept sample
-    acc_sum_      += acc_body_ned;
-    mag_raw_sum_  += mag_body; // KEEP RAW UNITS (µT stays µT)
-    mag_unit_sum_ += mag_u;
+    const Eigen::Vector3f acc_mean = acc_sum_ / static_cast<float>(accepted_count_);
+    const Eigen::Vector3f mag_mean = mag_sum_ / static_cast<float>(accepted_count_);
 
-    good_count_++;
-    t_good_ += dt;
+    Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_mean);
+    q_tilt.normalize();
 
-    if (good_count_ >= cfg_.min_good_samples && t_good_ >= cfg_.min_good_time_sec) {
-      // Direction mean must be well-defined (not near-cancelled)
-      Eigen::Vector3f mu = mag_unit_sum_ / float(good_count_);
-      const float mun = mu.norm();
-      if (mun > 0.2f) {
-        // Raw mean magnitude not tiny
-        Eigen::Vector3f mr = mag_raw_sum_ / float(good_count_);
-        const float mrn = mr.norm();
-        if (std::isfinite(mrn) && mrn > cfg_.mag_norm_min) {
-          ready_ = true;
-        }
-      }
-    }
-
+    mag_world_ref_ = q_tilt * mag_mean;
+    ready_ = mag_world_ref_.allFinite() && (mag_world_ref_.norm() > cfg_.mag_norm_min);
     return ready_;
   }
 
-  bool  isReady()     const { return ready_; }
-  int   goodCount()   const { return good_count_; }
-  float goodTimeSec() const { return t_good_; }
-  int   totalCount()  const { return total_count_; }
+  bool isReady() const { return ready_; }
+  int acceptedCount() const { return accepted_count_; }
 
-  bool getResult(Eigen::Vector3f& acc_mean,
-                 Eigen::Vector3f& mag_raw_mean,
-                 Eigen::Vector3f& mag_unit_mean) const
-  {
-    if (!ready_ || good_count_ <= 0) return false;
-
-    acc_mean     = acc_sum_ / float(good_count_);
-    mag_raw_mean = mag_raw_sum_ / float(good_count_);
-
-    Eigen::Vector3f mu = mag_unit_sum_ / float(good_count_);
-    const float mun = mu.norm();
-    mag_unit_mean = (mun > 1e-6f) ? (mu / mun) : Eigen::Vector3f(1,0,0);
-
-    return acc_mean.allFinite() && mag_raw_mean.allFinite() && mag_unit_mean.allFinite();
-  }
-
-  bool getMagMeanRaw(Eigen::Vector3f& mag_raw_mean) const {
-    if (!ready_ || good_count_ <= 0) return false;
-    mag_raw_mean = mag_raw_sum_ / float(good_count_);
-    return mag_raw_mean.allFinite();
-  }
-
-  bool getMagMeanUnit(Eigen::Vector3f& mag_unit_mean) const {
-    if (!ready_ || good_count_ <= 0) return false;
-    Eigen::Vector3f mu = mag_unit_sum_ / float(good_count_);
-    const float mun = mu.norm();
-    mag_unit_mean = (mun > 1e-6f) ? (mu / mun) : Eigen::Vector3f(1,0,0);
-    return mag_unit_mean.allFinite();
+  bool getMagWorldRef(Eigen::Vector3f& mag_world_ref) const {
+    if (!ready_) return false;
+    mag_world_ref = mag_world_ref_;
+    return mag_world_ref.allFinite();
   }
 
 private:
-  bool isGoodAccel_(const Eigen::Vector3f& a) {
+  bool isStableSample_(const Eigen::Vector3f& a,
+                       const Eigen::Vector3f& gyro_body_ned) const
+  {
+    if (!a.allFinite() || !gyro_body_ned.allFinite()) return false;
+
     const float g = cfg_.g;
-    const float an = a.norm();
-    if (!(an > cfg_.accel_norm_min * g && an < cfg_.accel_norm_max * g)) return false;
+    const float acc_band = cfg_.accel_band_frac * g;
+    const float acc_n = a.norm();
+    const float gyro_n = gyro_body_ned.norm();
 
-    // Direction stability gate (heel-safe):
-    // Use a_unit = a / |a|, compare to EMA direction.
-    if (!(an > cfg_.acc_dir_min_valid_n) || !std::isfinite(an)) return false;
-    Eigen::Vector3f a_unit = a / an;
-
-    if (!acc_dir_ema_valid_) {
-      acc_dir_ema_ = a_unit;
-      acc_dir_ema_valid_ = true;
-      return true; // first accepted direction
-    }
-
-    // Update EMA in a “sign-consistent” way (avoid flip if sensor convention differs)
-    // Choose sign that keeps it closest to EMA.
-    float dot0 = a_unit.dot(acc_dir_ema_);
-    if (dot0 < 0.0f) a_unit = -a_unit;
-
-    // cos(angle) between current and EMA direction
-    const float ema_n = std::max(1e-9f, acc_dir_ema_.norm());
-    const float cosang = (a_unit.dot(acc_dir_ema_)) / ema_n;
-
-    if (!(cosang >= cfg_.acc_dir_cos_min)) return false;
-
-    // EMA update
-    const float aE = std::min(std::max(cfg_.acc_dir_ema_alpha, 0.0f), 1.0f);
-    acc_dir_ema_ = (1.0f - aE) * acc_dir_ema_ + aE * a_unit;
-
-    return acc_dir_ema_.allFinite();
+    return std::isfinite(acc_n) &&
+           std::isfinite(gyro_n) &&
+           (std::fabs(acc_n - g) <= acc_band) &&
+           (gyro_n <= cfg_.gyro_norm_max);
   }
 
-  bool isGoodGyro_(const Eigen::Vector3f& w) const {
-    return (w.norm() < cfg_.gyro_norm_max);
-  }
-
-  bool isGoodMag_(const Eigen::Vector3f& m_raw, Eigen::Vector3f& m_unit_out) {
-    const float mn = m_raw.norm();
-    if (!(mn > cfg_.mag_norm_min) || !std::isfinite(mn)) return false;
-
-    // EMA-based stability gate (units-agnostic)
-    if (!std::isfinite(mag_norm_ema_)) {
-      mag_norm_ema_ = mn;
-    } else {
-      mag_norm_ema_ = (1.0f - cfg_.mag_norm_ema_alpha) * mag_norm_ema_
-                    + cfg_.mag_norm_ema_alpha * mn;
-      const float denom = std::max(1e-9f, mag_norm_ema_);
-      const float r = mn / denom;
-      if (r < cfg_.mag_ema_ratio_min || r > cfg_.mag_ema_ratio_max) return false;
+  static Eigen::Quaternionf tiltOnlyQuatFromAccel_(const Eigen::Vector3f& acc_body_ned) {
+    const float an = acc_body_ned.norm();
+    if (!(an > 1e-6f) || !acc_body_ned.allFinite()) {
+      return Eigen::Quaternionf::Identity();
     }
 
-    m_unit_out = m_raw / mn;
-    return m_unit_out.allFinite();
+    const Eigen::Vector3f body_down = -(acc_body_ned / an);
+    const Eigen::Vector3f world_down(0.0f, 0.0f, 1.0f);
+
+    const float d = std::max(-1.0f, std::min(1.0f, body_down.dot(world_down)));
+    Eigen::Vector3f axis = body_down.cross(world_down);
+    const float axis_n = axis.norm();
+
+    if (axis_n < 1e-6f) {
+      if (d > 0.0f) {
+        return Eigen::Quaternionf::Identity();
+      }
+      Eigen::Vector3f ortho = (std::fabs(body_down.z()) < 0.9f)
+        ? Eigen::Vector3f(0, 0, 1).cross(body_down)
+        : Eigen::Vector3f(0, 1, 0).cross(body_down);
+      ortho.normalize();
+      return Eigen::Quaternionf(Eigen::AngleAxisf(float(M_PI), ortho));
+    }
+
+    axis /= axis_n;
+    const float angle = std::acos(d);
+    Eigen::Quaternionf q(Eigen::AngleAxisf(angle, axis));
+    q.normalize();
+    return q;
   }
 
 private:
   Config cfg_;
 
-  float t_good_ = 0.0f;
-  int   good_count_ = 0;
-  int   total_count_ = 0;
+  Eigen::Vector3f acc_sum_ = Eigen::Vector3f::Zero();
+  Eigen::Vector3f mag_sum_ = Eigen::Vector3f::Zero();
+  int accepted_count_ = 0;
   bool  ready_ = false;
-
-  Eigen::Vector3f acc_sum_     = Eigen::Vector3f::Zero();
-  Eigen::Vector3f mag_raw_sum_ = Eigen::Vector3f::Zero();
-  Eigen::Vector3f mag_unit_sum_= Eigen::Vector3f::Zero();
-
-  float mag_norm_ema_ = std::numeric_limits<float>::quiet_NaN();
-
-  // Heel-safe accel direction EMA
-  Eigen::Vector3f acc_dir_ema_ = Eigen::Vector3f::Zero();
-  bool acc_dir_ema_valid_ = false;
+  Eigen::Vector3f mag_world_ref_ = Eigen::Vector3f::Zero();
 };
-
-static inline MagAutoTuner::Config makeDefaultMagInitCfg(float mag_odr_hz) {
-    MagAutoTuner::Config c{};
-
-    // Clamp odr to a sane range
-    float odr = mag_odr_hz;
-    if (!std::isfinite(odr) || odr <= 1.0f) odr = 80.0f;
-    odr = std::min(std::max(odr, 10.0f), 200.0f);
-
-    // Accept |a| close to g (allows mild motion / small waves while still rejecting big dynamics).
-    c.accel_norm_min = 0.90f;
-    c.accel_norm_max = 1.10f;
-
-    // Heel-safe: require accel *direction* stability (current a_unit close to EMA).
-    // Convert desired time constant -> per-sample alpha.
-    const float tau_acc_dir_sec = 0.6f;
-    c.acc_dir_ema_alpha = 1.0f - std::exp(-1.0f / (odr * tau_acc_dir_sec));
-    c.acc_dir_ema_alpha = std::min(std::max(c.acc_dir_ema_alpha, 0.01f), 0.08f);
-
-    // Tight enough to reject rocking during init, but not insane.
-    // 0.9985 ~ 3.0 deg.
-    c.acc_dir_cos_min = 0.9985f;
-
-    // Gyro “not rotating” gate (helps a lot)
-    c.use_gyro_gate = true;
-    c.gyro_norm_max = 10.0f * float(M_PI) / 180.0f; // 10 deg/s
-
-    // Units-agnostic. Reject near-zero vectors (sensor not ready / all-zeros).
-    c.mag_norm_min = 1e-3f;
-
-    // Norm stability gate (EMA of norm). Narrower than your 0.65..1.55 to reject disturbances.
-    c.mag_ema_ratio_min = 0.80f;
-    c.mag_ema_ratio_max = 1.25f;
-
-    // Per-sample alpha from desired time constant
-    const float tau_mag_norm_sec = 1.0f;
-    c.mag_norm_ema_alpha = 1.0f - std::exp(-1.0f / (odr * tau_mag_norm_sec));
-    c.mag_norm_ema_alpha = std::min(std::max(c.mag_norm_ema_alpha, 0.005f), 0.05f);
-
-    // Require about ~0.7 s of good data, but cap samples so 100 Hz doesn’t wait forever.
-    c.min_good_time_sec = 0.70f;
-    c.min_good_samples  = (int)std::ceil(c.min_good_time_sec * odr);
-    c.min_good_samples  = std::min(std::max(c.min_good_samples, 12), 70);
-
-    // Safety cap: ~6x the target window
-    c.max_total_samples = std::min(400, std::max(80, 6 * c.min_good_samples));
-
-    return c;
-}

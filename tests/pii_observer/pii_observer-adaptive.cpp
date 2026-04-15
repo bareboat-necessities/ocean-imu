@@ -95,16 +95,12 @@ public:
         s.vel_est_zu  = Vector3f(0.0f, 0.0f, filter_.velocity());
         s.acc_est_zu  = Vector3f(0.0f, 0.0f, filter_.accelFiltered());
 
-        // Convert Mahony quaternion (world->body in Z-up nautical frame)
-        // to nautical Euler directly. This keeps signs/ordering consistent
-        // with the simulator reference.
-        const auto q_wb = filter_.quaternionWorldToBody();
-        const Quaternionf q_wb_zu(q_wb.w, q_wb.x, q_wb.y, q_wb.z);
-        float roll_sim_deg = 0.0f;
-        float pitch_sim_deg = 0.0f;
-        float yaw_sim_deg = 0.0f;
-        quat_wb_zu_to_euler_nautical(q_wb_zu, roll_sim_deg, pitch_sim_deg, yaw_sim_deg);
-        if (with_mag_) {
+        // Report the filter's own estimated Euler angles so CSV/charts/RMS
+        // reflect the observer output directly.
+        float roll_sim_deg = hs.roll_deg;
+        float pitch_sim_deg = hs.pitch_deg;
+        float yaw_sim_deg = hs.yaw_deg;
+        if (!with_mag_) {
             yaw_sim_deg = 0.0f;
         }
         s.euler_nautical_deg = Vector3f(roll_sim_deg, pitch_sim_deg, wrapDeg(yaw_sim_deg));
