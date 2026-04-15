@@ -349,7 +349,7 @@ class FusionApp {
 
     cfg.mahony_twoKp = 1.40f;
     cfg.mahony_twoKi = 0.060f;
-    cfg.adapt_mahony_gains = false;
+    cfg.adapt_mahony_gains = true;
 
     fusion_.configure(cfg);
     fusion_.reset();
