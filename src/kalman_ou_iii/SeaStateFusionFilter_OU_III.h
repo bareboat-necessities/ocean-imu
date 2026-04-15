@@ -492,7 +492,7 @@ public:
         // RMS of Rayleigh envelope amplitude for narrowband Gaussian v(t):
         // v_env_rms = sqrt(2) * sigma_v,  sigma_v ≈ sigma_a / omega,  omega = pi/tau
         constexpr float K = std::sqrt(2.0f) / M_PI;
-        const float v_env = speed_env_mult_ * K * sigma * tau;
+        const float v_env = K * sigma * tau;
         return std::isfinite(v_env) ? v_env : NAN;
     }
 
