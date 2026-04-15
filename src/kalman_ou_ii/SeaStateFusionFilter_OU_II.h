@@ -946,11 +946,20 @@ public:
         t_ = 0.0f;
         stage_t_ = 0.0f;
 
-        resetMagInit_();
+        mag_ref_set_ = false;
+        mag_body_hold_.setZero();
+        last_mag_time_sec_ = NAN;
+        dt_mag_sec_ = NAN;
+        mag_init_sum_acc_.setZero();
+        mag_init_sum_mag_.setZero();
+        mag_init_count_ = 0;
+        mag_init_window_start_sec_ = NAN;
+
+        tilt_init_acc_sum_.setZero();
+        tilt_init_count_ = 0;
 
         last_acc_body_ned_.setZero();
         last_gyro_body_ned_.setZero();
-        last_imu_dt_ = NAN;
         have_last_imu_ = false;
 
         impl_.setWithMag(cfg_.with_mag);
@@ -1011,41 +1020,53 @@ public:
 
         t_ += dt;
 
-        // First IMU sample: accel-only init for tilt.
+        // Stage 1: tilt learning from stable gravity samples.
         if (stage_ == Stage::Uninitialized) {
-            impl_.initialize_from_acc(acc_body_ned);
-            stage_ = Stage::Warming;
-            stage_t_ = 0.0f;
+            if (isStableInitSample_(acc_body_ned, gyro_body_ned)) {
+                tilt_init_acc_sum_ += acc_body_ned;
+                ++tilt_init_count_;
+            }
+
+            constexpr int TILT_INIT_MIN_SAMPLES = 80; // ~0.4 s @ 200 Hz
+            if (tilt_init_count_ >= TILT_INIT_MIN_SAMPLES) {
+                const Eigen::Vector3f acc_mean = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
+                impl_.initialize_from_acc(acc_mean);
+                stage_ = Stage::Warming;
+                stage_t_ = 0.0f;
+                tilt_init_acc_sum_.setZero();
+                tilt_init_count_ = 0;
+            }
         } else {
             stage_t_ += dt;
         }
 
         last_acc_body_ned_  = acc_body_ned;
         last_gyro_body_ned_ = gyro_body_ned;
-        last_imu_dt_        = dt;
         have_last_imu_      = true;
 
-        impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+        if (stage_ != Stage::Uninitialized) {
+            impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
 
-        const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
-        displacement_up_m_ = Eigen::Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
+            const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
+            displacement_up_m_ = Eigen::Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
 
-        if (cfg_.enable_displacement_detrend) {
-            const float wave_hz = impl_.getFreqHz();
-            const bool ext_freq_valid =
-                isLive() &&
-                std::isfinite(wave_hz) &&
-                (wave_hz >= displacement_detrender_.config().min_wave_freq_hz) &&
-                (wave_hz <= displacement_detrender_.config().max_wave_freq_hz);
+            if (cfg_.enable_displacement_detrend) {
+                const float wave_hz = impl_.getFreqHz();
+                const bool ext_freq_valid =
+                    isLive() &&
+                    std::isfinite(wave_hz) &&
+                    (wave_hz >= displacement_detrender_.config().min_wave_freq_hz) &&
+                    (wave_hz <= displacement_detrender_.config().max_wave_freq_hz);
 
-            displacement_det_out_ = displacement_detrender_.update(
-                displacement_up_m_, dt, wave_hz, ext_freq_valid);
-        } else {
-            displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
-            displacement_det_out_.input = displacement_up_m_;
-            displacement_det_out_.baseline_slow = Eigen::Vector3f::Zero();
-            displacement_det_out_.wave_raw = displacement_up_m_;
-            displacement_det_out_.wave_clean = displacement_up_m_;
+                displacement_det_out_ = displacement_detrender_.update(
+                    displacement_up_m_, dt, wave_hz, ext_freq_valid);
+            } else {
+                displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
+                displacement_det_out_.input = displacement_up_m_;
+                displacement_det_out_.baseline_slow = Eigen::Vector3f::Zero();
+                displacement_det_out_.wave_raw = displacement_up_m_;
+                displacement_det_out_.wave_clean = displacement_up_m_;
+            }
         }
 
         // If internal filter drops back to Cold during startup, forget mag init
@@ -1053,7 +1074,13 @@ public:
         const auto cur_stage = impl_.getStartupStage();
         if (cur_stage != last_impl_startup_stage_) {
             if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
-                resetMagInit_();
+                mag_ref_set_ = false;
+                last_mag_time_sec_ = NAN;
+                dt_mag_sec_ = NAN;
+                mag_init_sum_acc_.setZero();
+                mag_init_sum_mag_.setZero();
+                mag_init_count_ = 0;
+                mag_init_window_start_sec_ = NAN;
             }
             last_impl_startup_stage_ = cur_stage;
         }
@@ -1065,23 +1092,51 @@ public:
 
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!begun_ || !cfg_.with_mag) return;
-        if (!mag_body_ned.allFinite()) return;
+        if (stage_ == Stage::Uninitialized) return;
 
-        // Path 1: fixed known world magnetic field reference.
+        mag_body_hold_ = mag_body_ned;
+        if (std::isfinite(last_mag_time_sec_)) {
+            dt_mag_sec_ = t_ - last_mag_time_sec_;
+        }
+        last_mag_time_sec_ = t_;
+        if (t_ < cfg_.mag_delay_sec) return;
+
         if (!mag_ref_set_ && cfg_.use_fixed_mag_world_ref) {
             if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
                 impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
                 mag_ref_set_ = true;
             }
+        } else if (!mag_ref_set_) {
+            if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
+                impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
+                mag_ref_set_ = true;
+            } else if (have_last_imu_ &&
+                       isStableInitSample_(last_acc_body_ned_, last_gyro_body_ned_) &&
+                       mag_body_ned.allFinite() && mag_body_ned.norm() > cfg_.mag_init_min_mag_norm)
+            {
+                mag_init_sum_acc_ += last_acc_body_ned_;
+                mag_init_sum_mag_ += mag_body_ned;
+                ++mag_init_count_;
+
+                constexpr int MAG_INIT_MIN_SAMPLES = 40;
+                if (mag_init_count_ >= MAG_INIT_MIN_SAMPLES) {
+                    const Eigen::Vector3f acc_mean = mag_init_sum_acc_ /
+                                                     static_cast<float>(mag_init_count_);
+                    const Eigen::Vector3f mag_mean = mag_init_sum_mag_ /
+                                                     static_cast<float>(mag_init_count_);
+                    Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_mean);
+                    q_tilt.normalize();
+
+                    Eigen::Vector3f mag_world_ref_uT = q_tilt * mag_mean;
+                    if (mag_world_ref_uT.allFinite() && mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm) {
+                        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+                        mag_ref_set_ = true;
+                    }
+                }
+            }
         }
 
-        // Path 2: one-shot north-lock from short stable acc+mag window.
-        if (!mag_ref_set_ && !cfg_.use_fixed_mag_world_ref) {
-            tryOneShotNorthLock_(mag_body_ned);
-        }
-
-        // Only ongoing mag EKF correction is delayed.
-        if (mag_ref_set_ && t_ >= cfg_.mag_delay_sec) {
+        if (mag_ref_set_) {
             impl_.updateMag(mag_body_ned);
         }
     }
@@ -1100,98 +1155,50 @@ public:
 private:
     enum class Stage { Uninitialized, Warming, Live };
 
-    static bool finiteVec_(const Eigen::Vector3f& v) {
-        return v.allFinite();
-    }
-
-    void resetMagInit_() {
-        mag_ref_set_ = false;
-        mag_init_sum_acc_.setZero();
-        mag_init_sum_mag_.setZero();
-        mag_init_count_ = 0;
-        mag_init_window_start_sec_ = NAN;
-    }
-
-    bool magInitSampleAccepted_(const Eigen::Vector3f& acc_body,
-                                const Eigen::Vector3f& mag_body,
-                                const Eigen::Vector3f& gyro_body) const
+    static bool isStableInitSample_(const Eigen::Vector3f& acc_body,
+                                    const Eigen::Vector3f& gyro_body)
     {
-        if (!finiteVec_(acc_body) || !finiteVec_(mag_body) || !finiteVec_(gyro_body)) {
-            return false;
-        }
+        constexpr float G = 9.80665f;
+        constexpr float ACC_BAND = 0.15f * G;                    // ±15% around 1g
+        constexpr float GYRO_MAX = 50.0f * float(M_PI) / 180.0f; // 50 deg/s
 
-        const float g  = 9.80665f;
-        const float an = acc_body.norm();
-        const float gn = gyro_body.norm();
-        const float mn = mag_body.norm();
-
-        if (!(an > 1e-6f) || !(mn > cfg_.mag_init_min_mag_norm)) {
-            return false;
-        }
-
-        const bool accel_ok = std::fabs(an - g) < (cfg_.mag_init_accel_tol_frac * g);
-        const bool gyro_ok  = gn < (cfg_.mag_init_max_gyro_dps * float(M_PI) / 180.0f);
-
-        return accel_ok && gyro_ok;
+        if (!acc_body.allFinite() || !gyro_body.allFinite()) return false;
+        const float acc_n = acc_body.norm();
+        const float gyro_n = gyro_body.norm();
+        return (std::fabs(acc_n - G) <= ACC_BAND) && (gyro_n <= GYRO_MAX);
     }
 
-    void pushMagInitSample_(const Eigen::Vector3f& acc_body,
-                            const Eigen::Vector3f& mag_body)
-    {
-        if (mag_init_count_ == 0) {
-            mag_init_window_start_sec_ = t_;
-        }
-        mag_init_sum_acc_ += acc_body;
-        mag_init_sum_mag_ += mag_body;
-        mag_init_count_++;
-    }
-
-    void tryOneShotNorthLock_(const Eigen::Vector3f& mag_body_ned) {
-        if (!have_last_imu_) return;
-
-        // Let tilt settle first.
-        if (t_ < cfg_.mag_init_min_tilt_sec) return;
-
-        // Gate samples hard. If unstable, discard partial window and wait again.
-        if (!magInitSampleAccepted_(last_acc_body_ned_, mag_body_ned, last_gyro_body_ned_)) {
-            mag_init_sum_acc_.setZero();
-            mag_init_sum_mag_.setZero();
-            mag_init_count_ = 0;
-            mag_init_window_start_sec_ = NAN;
-            return;
+    static Eigen::Quaternionf tiltOnlyQuatFromAccel_(const Eigen::Vector3f& acc_body_ned) {
+        Eigen::Vector3f a = acc_body_ned;
+        const float an = a.norm();
+        if (!(an > 1e-6f) || !a.allFinite()) {
+            return Eigen::Quaternionf::Identity();
         }
 
-        pushMagInitSample_(last_acc_body_ned_, mag_body_ned);
+        Eigen::Vector3f body_down = (-a / an);
+        const Eigen::Vector3f world_down(0.0f, 0.0f, 1.0f);
 
-        const float win_sec =
-            (std::isfinite(mag_init_window_start_sec_) ? (t_ - mag_init_window_start_sec_) : 0.0f);
+        const float d = std::max(-1.0f, std::min(1.0f, body_down.dot(world_down)));
+        Eigen::Vector3f axis = body_down.cross(world_down);
+        const float axis_n = axis.norm();
 
-        if (mag_init_count_ < std::max(1, cfg_.mag_init_min_samples)) return;
-        if (win_sec < std::max(0.0f, cfg_.mag_init_window_sec)) return;
+        if (axis_n < 1e-6f) {
+            if (d > 0.0f) {
+                return Eigen::Quaternionf::Identity();
+            } else {
+                Eigen::Vector3f ortho = std::fabs(body_down.z()) < 0.9f
+                    ? Eigen::Vector3f(0,0,1).cross(body_down)
+                    : Eigen::Vector3f(0,1,0).cross(body_down);
+                ortho.normalize();
+                return Eigen::Quaternionf(Eigen::AngleAxisf(float(M_PI), ortho));
+            }
+        }
 
-        const float invN = 1.0f / static_cast<float>(mag_init_count_);
-        const Eigen::Vector3f acc_mean = mag_init_sum_acc_ * invN;
-        const Eigen::Vector3f mag_mean = mag_init_sum_mag_ * invN;
-
-        northLockFromAccelMag_(acc_mean, mag_mean);
-
-        mag_init_sum_acc_.setZero();
-        mag_init_sum_mag_.setZero();
-        mag_init_count_ = 0;
-        mag_init_window_start_sec_ = NAN;
-    }
-
-    void northLockFromAccelMag_(const Eigen::Vector3f& acc_body,
-                                const Eigen::Vector3f& mag_body)
-    {
-        if (!finiteVec_(acc_body) || !finiteVec_(mag_body)) return;
-        if (!(acc_body.norm() > 1e-6f) || !(mag_body.norm() > cfg_.mag_init_min_mag_norm)) return;
-
-        // initialize_from_acc_mag() already computes and stores the consistent
-        // world magnetic reference internally, so there is no need to recompute
-        // and re-apply set_mag_world_ref() here.
-        impl_.mekf().initialize_from_acc_mag(acc_body, mag_body);
-        mag_ref_set_ = true;
+        axis /= axis_n;
+        const float angle = std::acos(d);
+        Eigen::Quaternionf q(Eigen::AngleAxisf(angle, axis));
+        q.normalize();
+        return q;
     }
 
 private:
@@ -1210,15 +1217,19 @@ private:
     // Last IMU sample for mag-init gating.
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
-    float last_imu_dt_ = NAN;
     bool  have_last_imu_ = false;
 
     // One-shot mag-init state.
     bool mag_ref_set_ = false;
+    Eigen::Vector3f mag_body_hold_ = Eigen::Vector3f::Zero();
+    float last_mag_time_sec_ = NAN;
+    float dt_mag_sec_ = NAN;
     Eigen::Vector3f mag_init_sum_acc_ = Eigen::Vector3f::Zero();
     Eigen::Vector3f mag_init_sum_mag_ = Eigen::Vector3f::Zero();
     int   mag_init_count_ = 0;
     float mag_init_window_start_sec_ = NAN;
+    Eigen::Vector3f tilt_init_acc_sum_ = Eigen::Vector3f::Zero();
+    int tilt_init_count_ = 0;
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
