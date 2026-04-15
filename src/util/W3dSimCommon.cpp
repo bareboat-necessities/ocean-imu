@@ -211,6 +211,27 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         return q;
     };
 
+    auto reference_euler_from_csv = [&](const IMU_Sample& imu,
+                                        const Quaternionf& q_wb_zu,
+                                        float& roll_deg,
+                                        float& pitch_deg,
+                                        float& yaw_deg) {
+        const bool finite_csv =
+            std::isfinite(imu.roll_deg) && std::isfinite(imu.pitch_deg) && std::isfinite(imu.yaw_deg);
+
+        // Prefer explicit Euler values written by the generator.
+        // This avoids introducing apparent yaw from a ZYX decomposition of a pure-tilt quaternion.
+        if (finite_csv) {
+            roll_deg = imu.roll_deg;
+            pitch_deg = imu.pitch_deg;
+            yaw_deg = imu.yaw_deg;
+            return;
+        }
+
+        // Legacy fallback for malformed rows.
+        quat_wb_zu_to_euler_nautical(q_wb_zu, roll_deg, pitch_deg, yaw_deg);
+    };
+
     WaveDataCSVReader reader(filename);
     reader.for_each_record([&](const Wave_Data_Sample& rec) {
         Vector3f acc_b(rec.imu.acc_bx, rec.imu.acc_by, rec.imu.acc_bz);
@@ -235,15 +256,10 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         const Quaternionf q_ref_wb_zu = quat_from_csv(rec.imu);
         const Matrix3f C_wb_zu = q_ref_wb_zu.toRotationMatrix();
 
-        // Use the Euler angles recorded in the CSV as reference outputs.
-        //
-        // The simulator can generate a pure tilt orientation (no physical yaw), but
-        // decomposing a generic quaternion with ZYX Euler can introduce an apparent
-        // yaw term due to rotation-order coupling. Reading the explicit CSV Euler
-        // fields avoids this convention mismatch in error statistics.
-        const float r_ref_out = rec.imu.roll_deg;
-        const float p_ref_out = rec.imu.pitch_deg;
-        const float y_ref_out = rec.imu.yaw_deg;
+        float r_ref_out = 0.0f;
+        float p_ref_out = 0.0f;
+        float y_ref_out = 0.0f;
+        reference_euler_from_csv(rec.imu, q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
       
         fusion_adapter_.update(options_.dt, gyr_meas_ned, acc_meas_ned, options_.temperature_c);
         if (options_.with_mag) {
