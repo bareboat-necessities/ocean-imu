@@ -54,7 +54,6 @@
 #include "freq/FirstOrderIIRSmoother.h"
 #include "freq/FrequencyTrackerPolicy.h"
 #include "tuner/SeaStateAutoTuner.h"
-#include "tuner/MagAutoTuner.h"
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
 #include "ahrs/FrameConversions.h"
 #include "wave_dir/KalmanWaveDirection.h"
@@ -184,7 +183,7 @@ public:
         const float a_y_body = acc.y();
 
         // BODY-Z-based proxy used by the tracker/sign logic.
-        // This is NOT true world/inertial vertical acceleration; it is only a
+        // This is NOT a true vertical acceleration estimate; it is only a
         // body-Z residual that behaves like up-positive vertical motion when the
         // platform is near-level:
         //   acc.z() ~ -g at rest  => proxy ~ 0
@@ -484,7 +483,7 @@ public:
     inline float getAccelVariance() const noexcept { return tuner_.getAccelVariance(); }
 
     // Returns the BODY-Z-based up-positive proxy used by tracker/tuner logic.
-    // This is not a true world/inertial vertical acceleration estimate.
+    // This is not a true vertical acceleration estimate.
     inline float getAccelVertical() const noexcept { return a_body_z_up_proxy_; }
 
     inline float getHeaveAbs() const noexcept { if (!mekf_) return NAN; return std::fabs(mekf_->get_position().z()); }
@@ -992,16 +991,6 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f,0.01f,0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f,0.3f,0.3f);
 
-        // How long after mag_delay we’re willing to wait for MagAutoTuner
-        float mag_ref_timeout_sec = 4.5f; // fallback guard
-
-        // Used only if dt_mag can’t be inferred
-        float mag_odr_guess_hz = 80.0f;
-
-        // MagAutoTuner config override
-        bool use_custom_mag_tuner_cfg = false;
-        MagAutoTuner::Config mag_tuner_cfg{};
-
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
         AdaptiveWaveDetrender3D::Config displacement_detrend_cfg{};
@@ -1014,12 +1003,8 @@ public:
         begun_ = true;
         stage_ = Stage::Uninitialized;
         t_ = 0.0f;
-        stage_t_ = 0.0f;
 
         mag_ref_set_ = false;
-        mag_body_hold_.setZero();
-        last_mag_time_sec_ = NAN;
-        dt_mag_sec_ = NAN;
         mag_init_acc_sum_.setZero();
         mag_init_mag_sum_.setZero();
         mag_init_count_ = 0;
@@ -1106,12 +1091,9 @@ public:
                 const Eigen::Vector3f acc_mean = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
                 impl_.initialize_from_acc(acc_mean);
                 stage_ = Stage::Warming;
-                stage_t_ = 0.0f;
                 tilt_init_acc_sum_.setZero();
                 tilt_init_count_ = 0;
             }
-        } else {
-            stage_t_ += dt;
         }
 
         // Store last IMU samples for startup gating / mag reference averaging.
@@ -1152,9 +1134,6 @@ public:
             if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
                 // Entered Cold (startup or non-Live tilt reset): reset mag-init ONCE
                 mag_ref_set_ = false;
-
-                last_mag_time_sec_ = NAN;
-                dt_mag_sec_ = NAN;
                 mag_init_acc_sum_.setZero();
                 mag_init_mag_sum_.setZero();
                 mag_init_count_ = 0;
@@ -1172,19 +1151,14 @@ public:
         if (!begun_ || !cfg_.with_mag) return;
         if (stage_ == Stage::Uninitialized) return;
 
-        mag_body_hold_ = mag_body_ned;
-
-        // Track effective magnetometer sample period.
-        if (std::isfinite(last_mag_time_sec_)) {
-            dt_mag_sec_ = t_ - last_mag_time_sec_;
-        }
-        last_mag_time_sec_ = t_;
         if (t_ < cfg_.mag_delay_sec) return;
 
         if (!mag_ref_set_) {
             if (cfg_.use_fixed_mag_world_ref) {
-                impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
-                mag_ref_set_ = true;
+                if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
+                    impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
+                    mag_ref_set_ = true;
+                }
             } else {
                 // If a valid world-field prior exists (e.g., WMM), use it immediately
                 // once mag fusion window opens.
@@ -1297,16 +1271,12 @@ private:
 
     Stage stage_ = Stage::Uninitialized;
     float t_ = 0.0f;
-    float stage_t_ = 0.0f;
     typename SeaStateFusionFilter_OU_III<trackerT>::StartupStage last_impl_startup_stage_ =
              SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold;
 
     // Mag init state
     bool mag_ref_set_ = false;
-    Eigen::Vector3f mag_body_hold_ = Eigen::Vector3f::Zero();
 
-    float last_mag_time_sec_ = NAN;
-    float dt_mag_sec_ = NAN;
     Eigen::Vector3f mag_init_acc_sum_ = Eigen::Vector3f::Zero();
     Eigen::Vector3f mag_init_mag_sum_ = Eigen::Vector3f::Zero();
     int mag_init_count_ = 0;

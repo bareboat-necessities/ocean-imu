@@ -939,16 +939,11 @@ public:
         begun_ = true;
         stage_ = Stage::Uninitialized;
         t_ = 0.0f;
-        stage_t_ = 0.0f;
 
         mag_ref_set_ = false;
-        mag_body_hold_.setZero();
-        last_mag_time_sec_ = NAN;
-        dt_mag_sec_ = NAN;
         mag_init_sum_acc_.setZero();
         mag_init_sum_mag_.setZero();
         mag_init_count_ = 0;
-        mag_init_window_start_sec_ = NAN;
 
         tilt_init_acc_sum_.setZero();
         tilt_init_count_ = 0;
@@ -1027,12 +1022,9 @@ public:
                 const Eigen::Vector3f acc_mean = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
                 impl_.initialize_from_acc(acc_mean);
                 stage_ = Stage::Warming;
-                stage_t_ = 0.0f;
                 tilt_init_acc_sum_.setZero();
                 tilt_init_count_ = 0;
             }
-        } else {
-            stage_t_ += dt;
         }
 
         last_acc_body_ned_  = acc_body_ned;
@@ -1070,12 +1062,9 @@ public:
         if (cur_stage != last_impl_startup_stage_) {
             if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
                 mag_ref_set_ = false;
-                last_mag_time_sec_ = NAN;
-                dt_mag_sec_ = NAN;
                 mag_init_sum_acc_.setZero();
                 mag_init_sum_mag_.setZero();
                 mag_init_count_ = 0;
-                mag_init_window_start_sec_ = NAN;
             }
             last_impl_startup_stage_ = cur_stage;
         }
@@ -1089,11 +1078,6 @@ public:
         if (!begun_ || !cfg_.with_mag) return;
         if (stage_ == Stage::Uninitialized) return;
 
-        mag_body_hold_ = mag_body_ned;
-        if (std::isfinite(last_mag_time_sec_)) {
-            dt_mag_sec_ = t_ - last_mag_time_sec_;
-        }
-        last_mag_time_sec_ = t_;
         if (t_ < cfg_.mag_delay_sec) return;
 
         if (!mag_ref_set_ && cfg_.use_fixed_mag_world_ref) {
@@ -1204,7 +1188,6 @@ private:
 
     Stage stage_ = Stage::Uninitialized;
     float t_ = 0.0f;
-    float stage_t_ = 0.0f;
 
     typename SeaStateFusionFilter_OU_II<trackerT>::StartupStage last_impl_startup_stage_ =
         SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold;
@@ -1216,13 +1199,9 @@ private:
 
     // One-shot mag-init state.
     bool mag_ref_set_ = false;
-    Eigen::Vector3f mag_body_hold_ = Eigen::Vector3f::Zero();
-    float last_mag_time_sec_ = NAN;
-    float dt_mag_sec_ = NAN;
     Eigen::Vector3f mag_init_sum_acc_ = Eigen::Vector3f::Zero();
     Eigen::Vector3f mag_init_sum_mag_ = Eigen::Vector3f::Zero();
     int   mag_init_count_ = 0;
-    float mag_init_window_start_sec_ = NAN;
     Eigen::Vector3f tilt_init_acc_sum_ = Eigen::Vector3f::Zero();
     int tilt_init_count_ = 0;
 
