@@ -162,9 +162,9 @@ public:
         mekf_->set_exact_att_bias_Qd(true);
     }
 
-    void initialize_from_acc(const Eigen::Vector3f& acc_world) {
+    void initialize_from_acc(const Eigen::Vector3f& acc_body_ned) {
         if (mekf_) {
-            mekf_->initialize_from_acc(acc_world);
+            mekf_->initialize_from_acc(acc_body_ned);
         }
     }
 
@@ -1106,9 +1106,6 @@ public:
             dt_mag_sec_ = t_ - last_mag_time_sec_;
         }
         last_mag_time_sec_ = t_;
-
-        // Respect mag delay for actual mag fusion, but keep learning active
-        // from startup so the first post-delay reference is better conditioned.
         if (t_ < cfg_.mag_delay_sec) return;
 
         if (!mag_ref_set_) {
@@ -1128,7 +1125,7 @@ public:
                     mag_init_mag_sum_ += mag_body_ned;
                     ++mag_init_count_;
 
-                    constexpr int MAG_INIT_MIN_SAMPLES = 60;
+                    constexpr int MAG_INIT_MIN_SAMPLES = 40;
                     if (mag_init_count_ >= MAG_INIT_MIN_SAMPLES) {
                         const Eigen::Vector3f acc_mean = mag_init_acc_sum_ /
                                                           static_cast<float>(mag_init_count_);
