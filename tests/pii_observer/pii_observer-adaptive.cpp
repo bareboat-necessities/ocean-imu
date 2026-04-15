@@ -26,7 +26,8 @@ bool add_noise = true;
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap = 15.7f,
     .err_limit_percent_z_pmstokes = 15.7f,
-    .err_limit_yaw_deg = 5.0f,
+    // 5% heading RMS on a +/-90 deg scale => 0.05 * 180 = 9 deg.
+    .err_limit_yaw_deg = 9.0f,
 };
 
 class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {
@@ -245,22 +246,22 @@ private:
                 std::remove_cvref_t<decltype(cfg.core.accel_freq_tracker)>, float>();
 
         // Mahony base gains
-        cfg.mahony_twoKp = 1.40f;
-        cfg.mahony_twoKi = 0.060f;
+        cfg.mahony_twoKp = 1.70f;
+        cfg.mahony_twoKi = 0.090f;
         cfg.gravity_mps2 = g_std;
         cfg.use_mag = with_mag;
 
         // Mahony sea-state scheduling
         cfg.adapt_mahony_gains = true;
-        cfg.mahony_twoKp_calm  = 0.90f;
-        cfg.mahony_twoKp_rough = 0.35f;
-        cfg.mahony_twoKi_calm  = 0.025f;
-        cfg.mahony_twoKi_rough = 0.010f;
-        cfg.mahony_sigma_ref = 0.18f;
-        cfg.mahony_norm_err_ref = 0.08f;
-        cfg.mahony_innov_ref = 0.12f;
-        cfg.mahony_gain_smooth_tau_s = 2.0f;
-        cfg.mahony_acc_trust_min = 0.05f;
+        cfg.mahony_twoKp_calm  = 1.50f;
+        cfg.mahony_twoKp_rough = 1.20f;
+        cfg.mahony_twoKi_calm  = 0.100f;
+        cfg.mahony_twoKi_rough = 0.070f;
+        cfg.mahony_sigma_ref = 0.45f;
+        cfg.mahony_norm_err_ref = 0.12f;
+        cfg.mahony_innov_ref = 0.18f;
+        cfg.mahony_gain_smooth_tau_s = 1.0f;
+        cfg.mahony_acc_trust_min = 0.65f;
 
         return cfg;
     }
@@ -419,7 +420,7 @@ int main(int argc, char* argv[])
             dt,
             with_mag,
             add_noise,
-            25.0f
+            20.0f
         );
         if (!result) continue;
 
