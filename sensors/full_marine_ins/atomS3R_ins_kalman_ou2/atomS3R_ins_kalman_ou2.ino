@@ -451,11 +451,6 @@ private:
     fcfg.sigma_m = sigma_m;
 
     fcfg.mag_delay_sec = 0.0f;
-    fcfg.mag_init_min_tilt_sec   = 1.5f;
-    fcfg.mag_init_window_sec     = 0.50f;
-    fcfg.mag_init_min_samples    = 8;
-    fcfg.mag_init_accel_tol_frac = 0.20f;
-    fcfg.mag_init_max_gyro_dps   = 35.0f;
     fcfg.mag_init_min_mag_norm   = 5.0f;
 
     fcfg.enable_displacement_detrend = true;
