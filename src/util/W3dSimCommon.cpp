@@ -235,10 +235,15 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         const Quaternionf q_ref_wb_zu = quat_from_csv(rec.imu);
         const Matrix3f C_wb_zu = q_ref_wb_zu.toRotationMatrix();
 
-        float r_ref_out = 0.0f;
-        float p_ref_out = 0.0f;
-        float y_ref_out = 0.0f;
-        quat_wb_zu_to_euler_nautical(q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
+        // Use the Euler angles recorded in the CSV as reference outputs.
+        //
+        // The simulator can generate a pure tilt orientation (no physical yaw), but
+        // decomposing a generic quaternion with ZYX Euler can introduce an apparent
+        // yaw term due to rotation-order coupling. Reading the explicit CSV Euler
+        // fields avoids this convention mismatch in error statistics.
+        const float r_ref_out = rec.imu.roll_deg;
+        const float p_ref_out = rec.imu.pitch_deg;
+        const float y_ref_out = rec.imu.yaw_deg;
       
         fusion_adapter_.update(options_.dt, gyr_meas_ned, acc_meas_ned, options_.temperature_c);
         if (options_.with_mag) {
