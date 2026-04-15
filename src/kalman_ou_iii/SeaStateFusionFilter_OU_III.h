@@ -807,7 +807,7 @@ private:
         freq_hz_slow_ = FREQ_GUESS;
         f_raw         = FREQ_GUESS;
 
-        // Optional but recommended: reset direction state too
+        // reset direction state too
         dir_filter_      = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);
         // dir_sign_ is not re-assigned here because WaveDirectionDetector has const members
         // and is not assignable; if you want a logical reset, add a reset() method to
@@ -829,7 +829,7 @@ private:
         mag_updates_applied_ = 0;
         first_mag_update_time_  = NAN;
 
-        // optionally: warmup_Racc_active_
+        // warmup_Racc_active_
         if (freeze_acc_bias_until_live_) {
             mekf_->set_acc_bias_updates_enabled(false);
             mekf_->set_Racc(Eigen::Vector3f::Constant(Racc_warmup_));
@@ -987,7 +987,7 @@ public:
         // Used only if dt_mag can’t be inferred
         float mag_odr_guess_hz = 80.0f;
 
-        // MagAutoTuner config override (optional)
+        // MagAutoTuner config override
         bool use_custom_mag_tuner_cfg = false;
         MagAutoTuner::Config mag_tuner_cfg{};
 
