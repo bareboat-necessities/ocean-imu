@@ -221,12 +221,12 @@ public:
             }
 
             if (tilt_over_limit_sec_ >= TILT_RESET_HOLD_SEC && tilt_reset_cooldown_sec_ <= 0.0f) {
-                // Re-lock attitude to gravity.
-                mekf_->initialize_from_acc(acc);
-
-                // Only force full Cold re-entry while not yet fully live. In Live, keep
-                // linear states running to avoid long "frozen heave" plateaus.
-                if (startup_stage_ != StartupStage::Live) {
+                if (startup_stage_ == StartupStage::Live) {
+                    // In Live, re-lock only tilt while preserving yaw/north frame.
+                    mekf_->initialize_from_acc_preserve_yaw(acc);
+                } else {
+                    // During startup stages, accel-only re-lock is acceptable.
+                    mekf_->initialize_from_acc(acc);
                     enterCold_();
                     resetTrackingState_();
                 }
