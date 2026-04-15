@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-  Copyright (c) 2025  Mikhail Grushinskiy
+  Copyright (c) 2025-2026  Mikhail Grushinskiy
   Released under the MIT License
 
   SeaStateFusionFilter_OU_III
@@ -14,8 +14,9 @@
 
     • Dominant frequency tracking using one of:
           – AranovskiyFreqTracker     (frequency estimator)
-          – KalmANFFreqTracker              (adaptive notch / Kalman frequency tracker)
-          – SchmittTrigger       (zero-cross event detector)
+          – KalmANFFreqTracker        (adaptive notch / Kalman frequency tracker)
+          - PLLFreqTracker            (PLL frequency tracker)
+          – SchmittTrigger            (zero-cross event detector)
 
     • Dual-stage frequency smoothing:
           – Fast 1st-order IIR (≈ few s, ~90% step) for demodulation / direction
@@ -259,7 +260,6 @@ public:
         // waiting for slow adaptation cadence.
         if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
             apply_RS_tune_();
-            applyDriftPseudoMeasurements_(dt);
         }
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
@@ -305,25 +305,6 @@ public:
             }
         }
     }
-
-    // Drift pseudo-measurements bundle
-    //
-    // All std dev are derived from current (sigma_a, tau) coming from the tuner:
-    //   pos std  ~  (sigma_a * tau^2) * sigma_mult
-    //   vel std  ~  (sigma_a * tau)   * sigma_mult
-    //
-    // Each pseudo-meas has:
-    //   enabled, period_steps, sigma_mult, gate_scale (threshold vs envelope).
-    //
-    struct DriftPseudoCfg {
-        bool  enabled      = false;
-        int   period_steps = 6;      // cadence in IMU cycles
-        float sigma_mult   = 10.0f;  // dimensionless multiplier (default HIGH = light touch)
-        float sigma_min    = 0.02f;  // absolute floor (units depend on measurement)
-        float gate_scale   = 1.2f;   // envelope gate (e.g. 1.2 => breach at 120% envelope)
-    };
-
-    void setPseudoPosZeroCfg(const DriftPseudoCfg& c)           { pm_pos_zero_              = c; }
 
     void setWithMag(bool with_mag) {
         with_mag_ = with_mag;
@@ -701,10 +682,6 @@ private:
         ));
     }
 
-    void resetDriftCorrections_() {
-        pm_ctr_pos_zero_ = 0;
-    }
-
     void update_tuner(float dt, float a_vert_inertial, float freq_hz_for_tuner) {
         tuner_.update(dt, a_vert_inertial, freq_hz_for_tuner);
 
@@ -836,10 +813,8 @@ private:
         // WaveDirectionDetector and call it instead.
         dir_sign_state_  = UNCERTAIN;
 
-        // Optional: avoid immediate adapt burst after reset
+        // avoid immediate adapt burst after reset
         last_adapt_time_sec_ = time_;
-
-        resetDriftCorrections_();
     }
 
     void enterCold_() {
@@ -859,8 +834,6 @@ private:
             mekf_->set_Racc(Eigen::Vector3f::Constant(Racc_warmup_));
             warmup_Racc_active_ = true;
         }
-
-        resetDriftCorrections_();
     }
 
     void enterLive_() {
@@ -883,8 +856,6 @@ private:
         }
         apply_ou_tune_();
         if (enable_linear_block_) apply_RS_tune_();
-
-        resetDriftCorrections_();
     }
 
     StartupStage startup_stage_    = StartupStage::Cold;
@@ -920,13 +891,6 @@ private:
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;
 
-    // drift pseudo-measurement configs
-    DriftPseudoCfg pm_pos_zero_ {
-        /*enabled*/ true, /*period*/ 5, /*sigma_mult*/ 8.0f, /*sigma_min*/ 0.05f, /*gate*/ 0.3f
-    };
-    float speed_env_mult_ = 1.0f;   // v_env ≈ speed_env_mult * ω * z_env
-
-    int pm_ctr_pos_zero_ = 0;
     // Controls whether the extended linear block [v,p,S,a_w] of Kalman3D_Wave_OU_III
     // is ever enabled. When false, the underlying filter runs as a pure
     // attitude/bias QMEKF (linear states frozen, no OU, no S pseudo-measurements),
@@ -976,41 +940,6 @@ private:
     WaveDirectionDetector<float> dir_sign_{0.002f, 0.005f};   // smoothing, sensitivity
     WaveDirection                dir_sign_state_ = UNCERTAIN;
 
-    void applyDriftPseudoMeasurements_(float dt)
-    {
-        if (!mekf_) return;
-        if (startup_stage_ != StartupStage::Live) return;
-        if (!enable_linear_block_) return;
-        if (!(dt > 0.0f) || !std::isfinite(dt)) return;
-
-        // Displacement envelope (your existing model)
-        float z_env = getDisplacementScale(true);
-        if (!std::isfinite(z_env) || z_env <= 0.0f) z_env = 0.3f;
-
-        const float absz = std::fabs(mekf_->get_position().z()); // NED down
-
-        // Direct displacement zero (z only), gentle, high sigma by default
-        if (pm_pos_zero_.enabled) {
-            if (++pm_ctr_pos_zero_ >= std::max(1, pm_pos_zero_.period_steps)) {
-                pm_ctr_pos_zero_ = 0;
-                const float gate = std::max(0.05f, pm_pos_zero_.gate_scale) * z_env;
-                if (absz > gate) {
-                    const float sigma_z = std::max(
-                        sigmaP_fromSigmaTau_(pm_pos_zero_.sigma_mult).z(),
-                        pm_pos_zero_.sigma_min
-                    );
-                    // Only affect z: keep x/y "measured" at their current predicted values
-                    Eigen::Vector3f p_meas = mekf_->get_position();
-                    p_meas.z() = 0.0f;
-                    const float BIG = 1e5f;
-                    Eigen::Vector3f sig(BIG, BIG, sigma_z);
-                    mekf_->measurement_update_position_pseudo(p_meas, sig);
-                }
-            }
-        }
-
-    }
-
     static inline float clampf_(float x, float lo, float hi) {
         return std::max(lo, std::min(hi, x));
     }
@@ -1024,7 +953,6 @@ private:
         const float k = std::max(0.0f, sigma_mult) * (tau * tau);
         return Eigen::Vector3f(sH * k, sH * k, sZ * k); // meters
     }
-
 };
 
 template<TrackerType trackerT>
