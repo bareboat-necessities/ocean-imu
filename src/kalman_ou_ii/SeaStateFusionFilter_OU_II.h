@@ -508,16 +508,6 @@ public:
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
     inline float getWaveDirectionDeg() const noexcept { return dir_filter_.getDirectionDegrees(); }
 
-    // Aerospace → Nautical
-    static inline void aero_to_nautical(float &roll, float &pitch, float &yaw) {
-        (void)yaw;
-        float r_a = roll;
-        float p_a = pitch;
-        roll  = -p_a;  // aerospace pitch → nautical roll
-        pitch = -r_a;  // aerospace roll  → nautical pitch
-        // yaw unchanged
-    }
-
     inline auto& mekf() noexcept { return *mekf_; }
     inline const auto& mekf() const noexcept { return *mekf_; }
 
@@ -528,30 +518,6 @@ public:
     inline const WaveDirectionDetector<float>& dir_sign() const noexcept { return dir_sign_; }
 
 private:
-    static inline float sgnf_(float x) noexcept { return (x >= 0.0f) ? 1.0f : -1.0f; }
-
-    static Eigen::Vector3f downBodyFromQuatBW_(const Eigen::Quaternionf& q_bw) {
-        Eigen::Vector3f d = q_bw.conjugate() * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-        const float dn = d.norm();
-        if (!(dn > 1e-6f) || !d.allFinite()) return Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-        return d / dn;
-    }
-
-    static Eigen::Vector3f accelAsSpecificForceUp_(const Eigen::Vector3f& acc_body_ned,
-                                                   const Eigen::Vector3f& down_body_hint_unit) {
-        Eigen::Vector3f a = acc_body_ned;
-        if (!a.allFinite()) return a;
-
-        Eigen::Vector3f d = down_body_hint_unit;
-        const float dn = d.norm();
-        if (!(dn > 1e-6f) || !d.allFinite()) d = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-        else d /= dn;
-
-        // MEKF initialization expects specific force at rest (~ -g along body down).
-        // If runtime accel is down-positive (~ +g along body down), flip it here.
-        if (a.dot(d) > 0.0f) a = -a;
-        return a;
-    }
 
     struct FreqInputLPF {
         float state       = 0.0f;
