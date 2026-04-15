@@ -59,6 +59,7 @@
 #include "ahrs/FrameConversions.h"
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
+#include "detrend/AdaptiveWaveDetrender3D.h"
 
 // Shared constants
 
@@ -989,6 +990,10 @@ public:
         // MagAutoTuner config override (optional)
         bool use_custom_mag_tuner_cfg = false;
         MagAutoTuner::Config mag_tuner_cfg{};
+
+        bool enable_displacement_detrend = false;
+        bool use_custom_displacement_detrend_cfg = false;
+        AdaptiveWaveDetrender3D::Config displacement_detrend_cfg{};
     };
 
     void begin(const Config& cfg) {
@@ -1029,6 +1034,42 @@ public:
 
         // IMPORTANT: allow warmup to restore nominal accel measurement noise
         impl_.setNominalRacc(cfg.sigma_a);
+
+        displacement_up_m_.setZero();
+        displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
+
+        if (cfg_.enable_displacement_detrend) {
+            if (cfg_.use_custom_displacement_detrend_cfg) {
+                displacement_detrender_.setConfig(cfg_.displacement_detrend_cfg);
+            } else {
+                AdaptiveWaveDetrender3D::Config dcfg;
+                dcfg.init_wave_freq_hz = FREQ_GUESS;
+                dcfg.min_wave_freq_hz  = 0.02f;
+                dcfg.max_wave_freq_hz  = 1.20f;
+                dcfg.baseline_cutoff_fraction = 0.25f;
+                dcfg.min_baseline_cutoff_hz   = 0.003f;
+                dcfg.max_baseline_cutoff_hz   = 0.25f;
+                dcfg.freq_smooth_tau_s = 12.0f;
+                dcfg.slope_lpf_tau_s   = 0.20f;
+                dcfg.slope_rms_tau_s   = 8.0f;
+                dcfg.freq_learn_axis   = 2;
+                dcfg.threshold_rms_fraction  = 0.15f;
+                dcfg.min_slope_threshold_abs = 0.002f;
+                dcfg.max_slope_threshold_abs = 1.0e9f;
+                dcfg.startup_hold_s      = 2.0f;
+                dcfg.freq_timeout_cycles = 3.0f;
+                dcfg.enable_wave_cleanup    = true;
+                dcfg.cleanup_cutoff_fraction = 1.0f;
+                dcfg.min_cleanup_cutoff_hz  = 0.003f;
+                dcfg.max_cleanup_cutoff_hz  = 0.50f;
+                dcfg.cleanup_stages         = 2;
+                dcfg.min_dt_s = 1.0e-4f;
+                dcfg.max_dt_s = 0.25f;
+                dcfg.output_abs_limit = 0.0f;
+                displacement_detrender_.setConfig(dcfg);
+            }
+            displacement_detrender_.reset(0.0f, 0.0f, 0.0f);
+        }
     }
 
     // One IMU sample
@@ -1070,6 +1111,27 @@ public:
         // IMU fusion starts once tilt is initialized.
         if (stage_ != Stage::Uninitialized) {
             impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+
+            const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
+            displacement_up_m_ = Eigen::Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
+
+            if (cfg_.enable_displacement_detrend) {
+                const float wave_hz = impl_.getFreqHz();
+                const bool ext_freq_valid =
+                    isLive() &&
+                    std::isfinite(wave_hz) &&
+                    (wave_hz >= displacement_detrender_.config().min_wave_freq_hz) &&
+                    (wave_hz <= displacement_detrender_.config().max_wave_freq_hz);
+
+                displacement_det_out_ = displacement_detrender_.update(
+                    displacement_up_m_, dt, wave_hz, ext_freq_valid);
+            } else {
+                displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
+                displacement_det_out_.input = displacement_up_m_;
+                displacement_det_out_.baseline_slow = Eigen::Vector3f::Zero();
+                displacement_det_out_.wave_raw = displacement_up_m_;
+                displacement_det_out_.wave_clean = displacement_up_m_;
+            }
         }
 
         // If internal filter fell back to Cold (tilt reset), force mag ref re-learn
@@ -1153,6 +1215,8 @@ public:
     float freqHz() const { return impl_.getFreqHz(); }
     float waveDirectionDeg() const { return impl_.getWaveDirectionDeg(); }
     Eigen::Vector3f eulerNauticalDeg() const { return impl_.getEulerNautical(); }
+    const Eigen::Vector3f& displacementUpMeters() const { return displacement_up_m_; }
+    const AdaptiveWaveDetrender3D::Output& displacementDetrend() const { return displacement_det_out_; }
 
     SeaStateFusionFilter_OU_III<trackerT>& raw() { return impl_; }
 
@@ -1244,4 +1308,8 @@ private:
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
     bool  have_last_imu_ = false;
+
+    AdaptiveWaveDetrender3D displacement_detrender_{};
+    AdaptiveWaveDetrender3D::Output displacement_det_out_{};
+    Eigen::Vector3f displacement_up_m_ = Eigen::Vector3f::Zero();
 };
