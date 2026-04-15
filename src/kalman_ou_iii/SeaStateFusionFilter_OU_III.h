@@ -1282,6 +1282,8 @@ public:
         impl_.setOnlineTuneWarmupSec(cfg.online_tune_warmup_sec);
 
         impl_.initialize(cfg.sigma_a, cfg.sigma_g, cfg.sigma_m);
+        impl_.mekf().set_acc_tilt_only_mode(true);
+        impl_.mekf().set_mag_yaw_only_mode(true);
         last_impl_startup_stage_ = impl_.getStartupStage();
         sigma_m_nominal_ = cfg.sigma_m;
         sigma_m_grace_ = cfg.sigma_m.cwiseProduct(cfg.sigma_m_grace_scale).cwiseMax(Eigen::Vector3f::Constant(1e-4f));
@@ -1308,6 +1310,7 @@ public:
             impl_.initialize_from_acc(acc_body_ned);
             stage_ = Stage::Warming;
             stage_t_ = 0.0f;
+            mag_stage_ = MagStage::TiltWarm;
         } else {
             stage_t_ += dt;
         }
@@ -1349,6 +1352,9 @@ const auto cur_stage = impl_.getStartupStage();
 
         if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
             stage_ = Stage::Live;
+            if (mag_stage_ == MagStage::TiltWarm) {
+                mag_stage_ = MagStage::MagCollect;
+            }
         }
         if (mag_phase_ != MagStartupPhase::Live) {
             impl_.mekf().set_acc_tilt_only_mode(true);
@@ -1541,6 +1547,8 @@ private:
     MagStartupPhase mag_phase_ = MagStartupPhase::TiltWarm;
     float t_ = 0.0f;
     float stage_t_ = 0.0f;
+    MagStage mag_stage_ = MagStage::TiltWarm;
+    int mag_grace_updates_ = 0;
     typename SeaStateFusionFilter_OU_III<trackerT>::StartupStage last_impl_startup_stage_ =
              SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold;
 

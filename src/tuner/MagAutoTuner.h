@@ -66,6 +66,14 @@ public:
     int   min_good_samples  = 40;    // e.g. 0.4s @ 100 Hz mag
     int   max_total_samples = 400;   // safety cap
     float min_good_time_sec = 0.45f;
+
+    // Staged heading initialization (circular stats)
+    float heading_gyro_norm_max = 20.0f * float(M_PI) / 180.0f;
+    float heading_accel_dev_g_max = 0.18f;
+    int   min_heading_samples = 24;
+    float min_heading_concentration = 0.82f;
+    float heading_weight_accel = 0.25f;
+    float heading_weight_gyro = 0.03f;
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
@@ -326,6 +334,7 @@ private:
   int   good_count_ = 0;
   int   total_count_ = 0;
   bool  ready_ = false;
+  bool  heading_ready_ = false;
 
   Eigen::Vector3f acc_sum_     = Eigen::Vector3f::Zero();
   Eigen::Vector3f mag_raw_sum_ = Eigen::Vector3f::Zero();
@@ -343,6 +352,12 @@ private:
   // Heel-safe accel direction EMA
   Eigen::Vector3f acc_dir_ema_ = Eigen::Vector3f::Zero();
   bool acc_dir_ema_valid_ = false;
+
+  float heading_C_ = 0.0f;
+  float heading_S_ = 0.0f;
+  float heading_W_ = 0.0f;
+  float heading_W2_ = 0.0f;
+  int   heading_count_ = 0;
 };
 
 static inline MagAutoTuner::Config makeDefaultMagInitCfg(float mag_odr_hz) {

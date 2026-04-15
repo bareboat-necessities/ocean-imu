@@ -507,6 +507,10 @@ class Kalman3D_Wave_OU_III {
     void set_Rmag(const Vector3& sigma_mag) {
         Rmag = sigma_mag.array().square().matrix().asDiagonal();
     }
+    void set_acc_tilt_only_mode(bool en) { accel_tilt_only_mode_ = en; }
+    void set_mag_yaw_only_mode(bool en)  { mag_yaw_only_mode_ = en; }
+    bool acc_tilt_only_mode() const { return accel_tilt_only_mode_; }
+    bool mag_yaw_only_mode() const { return mag_yaw_only_mode_; }
 
     void set_initial_linear_uncertainty(T sigma_v0, T sigma_p0, T sigma_S0) {
         Pext.template block<3,3>(OFF_V, OFF_V) = Matrix3::Identity() * (sigma_v0 * sigma_v0);   // v (3)
@@ -702,6 +706,8 @@ class Kalman3D_Wave_OU_III {
 
     MeasDiag3 last_acc_diag_;
     MeasDiag3 last_mag_diag_;
+    bool accel_tilt_only_mode_ = false;
+    bool mag_yaw_only_mode_ = false;
 
     EIGEN_STRONG_INLINE void symmetrize_Pext_() {
         for (int i = 0; i < NX; ++i) {
@@ -2112,15 +2118,32 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     const Vector3 v2hat = R_wb() * v2ref;
 
     const Vector3 zhat = v2hat;
-    const Vector3 r = mag_meas - zhat;
+    Vector3 r = mag_meas - zhat;
     last_mag_diag_.r = r;
 
     // Jacobian uses the no-bias predicted vector
-    const Matrix3 J_att = -skew_symmetric_matrix(v2hat);
+    Matrix3 J_att = -skew_symmetric_matrix(v2hat);
+
+    if (mag_yaw_only_mode_) {
+        const Vector3 ghat_b = (R_wb() * Vector3(0,0,+gravity_magnitude_)).normalized();
+        if (ghat_b.allFinite()) {
+            Matrix3 Ptilt = Matrix3::Identity() - ghat_b * ghat_b.transpose();
+            r = Ptilt * r;
+            J_att = Ptilt * J_att;
+        }
+    }
 
     // Innovation covariance S = C P Cᵀ + R
     Matrix3& S_mat = S_scratch_;
     S_mat = Rmag;
+    if (mag_yaw_only_mode_) {
+        const Vector3 ghat_b = (R_wb() * Vector3(0,0,+gravity_magnitude_)).normalized();
+        if (ghat_b.allFinite()) {
+            const Matrix3 Ptilt = Matrix3::Identity() - ghat_b * ghat_b.transpose();
+            const T par_var = std::max<T>(Rmag.diagonal().maxCoeff() * T(150.0), T(10.0));
+            S_mat = Ptilt * Rmag * Ptilt.transpose() + par_var * (ghat_b * ghat_b.transpose());
+        }
+    }
 
     const Matrix3 P_th_th = Pext.template block<3,3>(0,0);
     S_mat.noalias() += J_att * P_th_th * J_att.transpose();
@@ -2207,6 +2230,75 @@ Matrix<T, 3, 3> Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::skew_s
          vec(2), 0, -vec(0),
         -vec(1), vec(0), 0;
     return M;
+}
+
+template<typename T>
+static inline T wrap_pi_(T a) {
+    while (a > T(M_PI)) a -= T(2.0 * M_PI);
+    while (a < T(-M_PI)) a += T(2.0 * M_PI);
+    return a;
+}
+
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_update_heading_only(
+    T yaw_meas_rad, T yaw_std_rad)
+{
+    if (!(yaw_std_rad > T(0)) || !std::isfinite(yaw_meas_rad)) return;
+
+    const auto yaw_from_qbw = [](const Eigen::Quaternion<T>& qbw) -> T {
+        const T x = qbw.x(), y = qbw.y(), z = qbw.z(), w = qbw.w();
+        const T s_yaw = T(2) * (w * z + x * y);
+        const T c_yaw = T(1) - T(2) * (y * y + z * z);
+        return std::atan2(s_yaw, c_yaw);
+    };
+
+    Eigen::Quaternion<T> q_bw = quaternion_boat();
+    q_bw.normalize();
+    const T yaw_hat = yaw_from_qbw(q_bw);
+    const T r = wrap_pi_(yaw_meas_rad - yaw_hat);
+
+    Eigen::Matrix<T,1,NX> H;
+    H.setZero();
+
+    constexpr T eps = T(1e-4);
+    for (int i = 0; i < 3; ++i) {
+        Vector3 d = Vector3::Zero();
+        d(i) = eps;
+        Eigen::Quaternion<T> qref_p = quat_from_delta_theta(d) * qref;
+        qref_p.normalize();
+        Eigen::Quaternion<T> qwb_p = qref_p.conjugate();
+
+        const T half = -wind_heel_rad_ * T(0.5);
+        const T c = std::cos(half);
+        const T s = std::sin(half);
+        const Eigen::Quaternion<T> q_BprimeB(c, s, 0, 0);
+        const Eigen::Quaternion<T> qbw_p = qwb_p * q_BprimeB;
+
+        const T dyaw = wrap_pi_(yaw_from_qbw(qbw_p) - yaw_hat);
+        H(i) = dyaw / eps;
+    }
+
+    Eigen::Matrix<T,NX,1> PHt = Pext * H.transpose();
+    if (!linear_block_enabled_) {
+        PHt.template segment<12>(OFF_V).setZero();
+    }
+    if constexpr (with_accel_bias) {
+        if (!acc_bias_updates_enabled_) {
+            PHt.template segment<3>(OFF_BA).setZero();
+        }
+    }
+
+    T S = (H * PHt)(0,0) + yaw_std_rad * yaw_std_rad;
+    if (!(S > T(1e-12)) || !std::isfinite(S)) return;
+
+    Eigen::Matrix<T,NX,1> K = PHt / S;
+    xext.noalias() += K * r;
+
+    MatrixNX I = MatrixNX::Identity();
+    MatrixNX A = I - K * H;
+    Pext = A * Pext * A.transpose() + (yaw_std_rad * yaw_std_rad) * (K * K.transpose());
+    symmetrize_Pext_();
+    applyQuaternionCorrectionFromErrorState();
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
