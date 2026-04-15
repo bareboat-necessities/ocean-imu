@@ -1313,26 +1313,26 @@ public:
         impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
 
         // If internal filter fell back to Cold (tilt reset), force mag ref re-learn
-const auto cur_stage = impl_.getStartupStage();
+        const auto cur_stage = impl_.getStartupStage();
 
-if (cur_stage != last_impl_startup_stage_) {
-    if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
-        // Entered Cold (startup or non-Live tilt reset): reset mag-init ONCE
-        mag_ref_set_ = false;
-        mag_auto_.reset();
+        if (cur_stage != last_impl_startup_stage_) {
+            if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
+                // Entered Cold (startup or non-Live tilt reset): reset mag-init ONCE
+                mag_ref_set_ = false;
+                mag_auto_.reset();
 
-        last_mag_time_sec_ = NAN;
-        dt_mag_sec_ = NAN;
+                last_mag_time_sec_ = NAN;
+                dt_mag_sec_ = NAN;
 
-        fallback_acc_mean_.setZero();
-        fallback_mag_mean_.setZero();
-        fallback_mean_count_ = 0;
+                fallback_acc_mean_.setZero();
+                fallback_mag_mean_.setZero();
+                fallback_mean_count_ = 0;
 
-        mag_ref_deadline_sec_ = std::max(t_, cfg_.mag_delay_sec) + cfg_.mag_ref_timeout_sec;
-    }
+                mag_ref_deadline_sec_ = std::max(t_, cfg_.mag_delay_sec) + cfg_.mag_ref_timeout_sec;
+            }
 
-    last_impl_startup_stage_ = cur_stage;
-}
+            last_impl_startup_stage_ = cur_stage;
+        }
 
         if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
             stage_ = Stage::Live;
