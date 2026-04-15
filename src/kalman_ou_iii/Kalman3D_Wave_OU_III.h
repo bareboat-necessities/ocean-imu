@@ -269,15 +269,15 @@ class Kalman3D_Wave_OU_III {
 
     // 3D pseudo-measurement on position p (world, NED):
     //   p_meas ≈ p (meters), with per-axis std sigma_meas.
-    // This does a full 3x3 Joseph update on the position block and its cross-covariances.
+    // This does a full 3x3 Joseph update on the position block and its cross-covariances. Can be used for GPS fusion
     void measurement_update_position_pseudo(const Vector3& p_meas, const Vector3& sigma_meas);
 
     // 3D pseudo-measurement on velocity v (world, NED):
-    //   v_meas ≈ v (m/s), with per-axis std sigma_meas.
+    //   v_meas ≈ v (m/s), with per-axis std sigma_meas. Can be used for GPS fusion
     void measurement_update_velocity_pseudo(const Vector3& v_meas, const Vector3& sigma_meas);
 
     // 1D pseudo-measurement on vertical velocity only (world z, NED down):
-    //   vz_meas ≈ v_z (m/s), with std sigma_meas.
+    //   vz_meas ≈ v_z (m/s), with std sigma_meas. Can be used for GPS fusion
     void measurement_update_vert_velocity_pseudo(T vz_meas, T sigma_meas);
 
     // Accessors
