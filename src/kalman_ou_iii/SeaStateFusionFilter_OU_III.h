@@ -54,6 +54,7 @@
 #include "freq/FirstOrderIIRSmoother.h"
 #include "freq/FrequencyTrackerPolicy.h"
 #include "tuner/SeaStateAutoTuner.h"
+#include "tuner/MagAutoTuner.h"
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
 #include "ahrs/FrameConversions.h"
 #include "wave_dir/KalmanWaveDirection.h"
@@ -990,9 +991,7 @@ public:
         t_ = 0.0f;
 
         mag_ref_set_ = false;
-        mag_init_acc_sum_.setZero();
-        mag_init_mag_sum_.setZero();
-        mag_init_count_ = 0;
+        mag_auto_tuner_.reset();
 
         // Startup learning buffers (tilt from gravity, then mag reference).
         tilt_init_acc_sum_.setZero();
@@ -1119,9 +1118,7 @@ public:
             if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
                 // Entered Cold (startup or non-Live tilt reset): reset mag-init ONCE
                 mag_ref_set_ = false;
-                mag_init_acc_sum_.setZero();
-                mag_init_mag_sum_.setZero();
-                mag_init_count_ = 0;
+                mag_auto_tuner_.reset();
             }
 
             last_impl_startup_stage_ = cur_stage;
@@ -1150,27 +1147,13 @@ public:
                 if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
                     impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
                     mag_ref_set_ = true;
-                } else if (have_last_imu_ && isStableInitSample_(last_acc_body_ned_, last_gyro_body_ned_) &&
-                           mag_body_ned.allFinite() && mag_body_ned.norm() > 1e-3f)
+                } else if (have_last_imu_ &&
+                           mag_auto_tuner_.addSample(last_acc_body_ned_, last_gyro_body_ned_, mag_body_ned))
                 {
-                    mag_init_acc_sum_ += last_acc_body_ned_;
-                    mag_init_mag_sum_ += mag_body_ned;
-                    ++mag_init_count_;
-
-                    constexpr int MAG_INIT_MIN_SAMPLES = 40;
-                    if (mag_init_count_ >= MAG_INIT_MIN_SAMPLES) {
-                        const Eigen::Vector3f acc_mean = mag_init_acc_sum_ /
-                                                          static_cast<float>(mag_init_count_);
-                        const Eigen::Vector3f mag_mean = mag_init_mag_sum_ /
-                                                          static_cast<float>(mag_init_count_);
-                        Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_mean);
-                        q_tilt.normalize();
-
-                        Eigen::Vector3f mag_world_ref_uT = q_tilt * mag_mean; // keep raw uT
-                        if (mag_world_ref_uT.allFinite() && mag_world_ref_uT.norm() > 1e-3f) {
-                            impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
-                            mag_ref_set_ = true;
-                        }
+                    Eigen::Vector3f mag_world_ref_uT;
+                    if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT)) {
+                        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+                        mag_ref_set_ = true;
                     }
                 }
             }
@@ -1206,48 +1189,6 @@ private:
         return (std::fabs(acc_n - G) <= ACC_BAND) && (gyro_n <= GYRO_MAX);
     }
 
-    // Tilt-only (yaw-free) quaternion body->world from accel.
-    // We assume “rest accel” direction represents gravity (up to sign convention),
-    // so we align BODY measured down with WORLD down (NED: +Z down).
-    static Eigen::Quaternionf tiltOnlyQuatFromAccel_(const Eigen::Vector3f& acc_body_ned) {
-        // At rest, specific force typically points ~ -g in world coordinates.
-        // But your code already deals with sign mismatches elsewhere, so we do:
-        //   body_down ≈ -(acc / |acc|)
-        Eigen::Vector3f a = acc_body_ned;
-        const float an = a.norm();
-        if (!(an > 1e-6f) || !a.allFinite()) {
-            return Eigen::Quaternionf::Identity();
-        }
-
-        Eigen::Vector3f body_down = (-a / an);              // body frame "down" direction
-        const Eigen::Vector3f world_down(0.0f, 0.0f, 1.0f); // NED down
-
-        // Quaternion from vector u -> v (shortest arc)
-        const float d = std::max(-1.0f, std::min(1.0f, body_down.dot(world_down)));
-        Eigen::Vector3f axis = body_down.cross(world_down);
-        const float axis_n = axis.norm();
-
-        if (axis_n < 1e-6f) {
-            // parallel or anti-parallel
-            if (d > 0.0f) {
-                return Eigen::Quaternionf::Identity();
-            } else {
-                // 180 deg flip around any axis perpendicular to body_down
-                Eigen::Vector3f ortho = std::fabs(body_down.z()) < 0.9f
-                    ? Eigen::Vector3f(0,0,1).cross(body_down)
-                    : Eigen::Vector3f(0,1,0).cross(body_down);
-                ortho.normalize();
-                return Eigen::Quaternionf(Eigen::AngleAxisf(float(M_PI), ortho));
-            }
-        }
-
-        axis /= axis_n;
-        const float angle = std::acos(d);
-        Eigen::Quaternionf q(Eigen::AngleAxisf(angle, axis));
-        q.normalize();
-        return q;
-    }
-
 private:
     Config cfg_{};
     SeaStateFusionFilter_OU_III<trackerT> impl_{false};
@@ -1262,9 +1203,7 @@ private:
     // Mag init state
     bool mag_ref_set_ = false;
 
-    Eigen::Vector3f mag_init_acc_sum_ = Eigen::Vector3f::Zero();
-    Eigen::Vector3f mag_init_mag_sum_ = Eigen::Vector3f::Zero();
-    int mag_init_count_ = 0;
+    MagAutoTuner mag_auto_tuner_{};
 
     // Initial tilt learning before entering the internal warmup stages.
     Eigen::Vector3f tilt_init_acc_sum_ = Eigen::Vector3f::Zero();
