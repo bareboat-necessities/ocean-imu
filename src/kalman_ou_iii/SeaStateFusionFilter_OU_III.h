@@ -692,8 +692,8 @@ private:
         ));
     }
 
-    void update_tuner(float dt, float a_vert_inertial, float freq_hz_for_tuner) {
-        tuner_.update(dt, a_vert_inertial, freq_hz_for_tuner);
+    void update_tuner(float dt, float a_body_z_up_proxy, float freq_hz_for_tuner) {
+        tuner_.update(dt, a_body_z_up_proxy, freq_hz_for_tuner);
 
         // Startup stage logic
         switch (startup_stage_) {
