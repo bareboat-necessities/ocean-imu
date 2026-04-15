@@ -323,7 +323,6 @@ public:
         float gate_scale   = 1.2f;   // envelope gate (e.g. 1.2 => breach at 120% envelope)
     };
 
-    void setPseudoVzZeroOnPosBreachCfg(const DriftPseudoCfg& c) { pm_vz_zero_on_pos_breach_ = c; }
     void setPseudoPosZeroCfg(const DriftPseudoCfg& c)           { pm_pos_zero_              = c; }
     void setPseudoVzClampCfg(const DriftPseudoCfg& c)           { pm_vz_clamp_              = c; }
 
@@ -704,7 +703,6 @@ private:
     }
 
     void resetDriftCorrections_() {
-        pm_ctr_vz_zero_  = 0;
         pm_ctr_pos_zero_ = 0;
         pm_ctr_vz_clamp_ = 0;
     }
@@ -925,9 +923,6 @@ private:
     bool enable_tuner_ = true;
 
     // drift pseudo-measurement configs
-    DriftPseudoCfg pm_vz_zero_on_pos_breach_ {
-        /*enabled*/ true, /*period*/ 3, /*sigma_mult*/ 2.0f, /*sigma_min*/ 0.03f, /*gate*/ 0.8f
-    };
     DriftPseudoCfg pm_pos_zero_ {
         /*enabled*/ true, /*period*/ 5, /*sigma_mult*/ 8.0f, /*sigma_min*/ 0.05f, /*gate*/ 0.3f
     };
@@ -936,7 +931,6 @@ private:
     };
     float speed_env_mult_ = 1.0f;   // v_env ≈ speed_env_mult * ω * z_env
 
-    int pm_ctr_vz_zero_ = 0;
     int pm_ctr_pos_zero_ = 0;
     int pm_ctr_vz_clamp_ = 0;
     // Controls whether the extended linear block [v,p,S,a_w] of Kalman3D_Wave_OU_III
@@ -999,28 +993,7 @@ private:
         float z_env = getDisplacementScale(true);
         if (!std::isfinite(z_env) || z_env <= 0.0f) z_env = 0.3f;
 
-        const float pz = mekf_->get_position().z();     // NED down
-        const float absz = std::fabs(pz);
-
-        // On displacement envelope breach: pseudo-measure v_z -> 0
-        if (pm_vz_zero_on_pos_breach_.enabled) {
-            if (++pm_ctr_vz_zero_ >= std::max(1, pm_vz_zero_on_pos_breach_.period_steps)) {
-                pm_ctr_vz_zero_ = 0;
-                const float gate = std::max(0.05f, pm_vz_zero_on_pos_breach_.gate_scale) * z_env;
-                if (absz > gate) {
-                    const float vz = mekf_->get_velocity().z(); // NED down
-                    // Apply only if moving AWAY from sea level (z=0): pz and vz same sign => |pz| increasing
-                    // (If pz>0 and vz>0 => going down further; pz<0 and vz<0 => going up further.)
-                    if (std::isfinite(vz) && (pz * vz > 0.0f)) {
-                        const float sigma_vz = std::max(
-                            sigmaV_fromSigmaTau_(pm_vz_zero_on_pos_breach_.sigma_mult).z(),
-                            pm_vz_zero_on_pos_breach_.sigma_min
-                        );
-                        mekf_->measurement_update_vert_velocity_pseudo(0.0f, sigma_vz);
-                    }
-                }
-            }
-        }
+        const float absz = std::fabs(mekf_->get_position().z()); // NED down
 
         // Direct displacement zero (z only), gentle, high sigma by default
         if (pm_pos_zero_.enabled) {
