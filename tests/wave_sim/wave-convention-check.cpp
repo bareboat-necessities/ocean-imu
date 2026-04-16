@@ -31,6 +31,13 @@ struct Accum3 {
     }
 };
 
+struct ScalarAccum {
+    double sxx = 0.0;
+    std::size_t n = 0;
+    void add(float v) { sxx += double(v) * double(v); ++n; }
+    float rms() const { return (n == 0) ? 0.0f : std::sqrt(float(sxx / n)); }
+};
+
 Quaternionf quat_from_sample(const IMU_Sample& imu) {
     Quaternionf q(imu.q_wb_zu_w, imu.q_wb_zu_x, imu.q_wb_zu_y, imu.q_wb_zu_z);
     if (!std::isfinite(q.w()) || !std::isfinite(q.x()) || !std::isfinite(q.y()) || !std::isfinite(q.z()) || q.norm() < 1e-6f) {
@@ -56,12 +63,23 @@ int check_file(const std::filesystem::path& file, bool& prefer_inverted_out) {
     bool has_prev = false;
     Wave_Data_Sample prev{};
     Accum3 gyro_err_same{}, gyro_err_invert{}, euler_err{};
+    ScalarAccum yaw_csv_abs{}, yaw_quat_world_abs{}, yaw_quat_body_abs{};
+    ScalarAccum yaw_csv_vs_quat_world{}, yaw_csv_vs_quat_body{};
 
     reader.for_each_record([&](const Wave_Data_Sample& rec) {
         const auto q = quat_from_sample(rec.imu);
         float r_q = 0.0f, p_q = 0.0f, y_q = 0.0f;
         quat_wb_zu_to_euler_nautical(q, r_q, p_q, y_q);
         euler_err.add(Vector3f(diff_deg(rec.imu.roll_deg, r_q), diff_deg(rec.imu.pitch_deg, p_q), diff_deg(rec.imu.yaw_deg, y_q)));
+        yaw_csv_abs.add(wrap_deg(rec.imu.yaw_deg));
+        yaw_quat_world_abs.add(wrap_deg(y_q));
+        yaw_csv_vs_quat_world.add(diff_deg(rec.imu.yaw_deg, y_q));
+
+        float r_b = 0.0f, p_b = 0.0f, y_b = 0.0f;
+        matrix_to_euler_zyx_deg(q.conjugate().toRotationMatrix(), r_b, p_b, y_b);
+        yaw_quat_body_abs.add(wrap_deg(y_b));
+        yaw_csv_vs_quat_body.add(diff_deg(rec.imu.yaw_deg, y_b));
+
         if (has_prev) {
             const float dt = float(rec.time - prev.time);
             const auto q_prev = quat_from_sample(prev.imu);
@@ -77,16 +95,29 @@ int check_file(const std::filesystem::path& file, bool& prefer_inverted_out) {
     const Vector3f rms_e = euler_err.rms();
     const float norm_same = gyro_err_same.rms().norm();
     const float norm_inv = gyro_err_invert.rms().norm();
+    const float yaw_csv_rms = yaw_csv_abs.rms();
+    const float yaw_quat_world_rms = yaw_quat_world_abs.rms();
+    const float yaw_quat_body_rms = yaw_quat_body_abs.rms();
+    const float yaw_match_world_rms = yaw_csv_vs_quat_world.rms();
+    const float yaw_match_body_rms = yaw_csv_vs_quat_body.rms();
     prefer_inverted_out = norm_inv < norm_same;
 
     std::cout << "[convention] " << file.filename().string() << "\n"
               << "  Euler CSV-vs-q RMS deg: roll=" << rms_e.x() << " pitch=" << rms_e.y() << " yaw=" << rms_e.z() << "\n"
+              << "  Yaw RMS from CSV Euler:           " << yaw_csv_rms << " deg\n"
+              << "  Yaw RMS from q_wb_zu (world->body): " << yaw_quat_world_rms << " deg\n"
+              << "  Yaw RMS from q_bw_zu (body->world): " << yaw_quat_body_rms << " deg\n"
+              << "  Yaw mismatch RMS: CSV vs world->body q: " << yaw_match_world_rms << " deg\n"
+              << "  Yaw mismatch RMS: CSV vs body->world q: " << yaw_match_body_rms << " deg\n"
               << "  Gyro RMS (csv - dQ):      " << norm_same << " rad/s\n"
               << "  Gyro RMS (csv + dQ):      " << norm_inv << " rad/s\n"
               << "  Preferred gyro sign:      " << (prefer_inverted_out ? "inverted (csv ~= -dQ)" : "same (csv ~= +dQ)") << "\n";
 
     bool ok = true;
     if (rms_e.x() > 2.0f || rms_e.y() > 2.0f || rms_e.z() > 2.0f) ok = false;
+    if (yaw_csv_rms > 3.0f || yaw_quat_world_rms > 3.0f) ok = false;
+    if (yaw_match_world_rms > 2.0f) ok = false;
+    if (!(yaw_match_world_rms + 0.5f < yaw_match_body_rms)) ok = false;
     if (std::min(norm_same, norm_inv) > 0.25f) ok = false;
     if (!ok) {
         std::cerr << "ERROR: convention mismatch in " << file.filename().string() << "\n";
