@@ -63,7 +63,17 @@ public:
     Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_mean);
     q_tilt.normalize();
 
-    mag_world_ref_ = q_tilt * mag_mean;
+    const Eigen::Vector3f mag_world_tilt = q_tilt * mag_mean;
+    const float horiz = std::sqrt(mag_world_tilt.x() * mag_world_tilt.x() +
+                                  mag_world_tilt.y() * mag_world_tilt.y());
+    if (!(horiz > cfg_.mag_norm_min) || !std::isfinite(horiz)) {
+      ready_ = false;
+      return false;
+    }
+
+    // Define world frame so that +X is magnetic north and +Z is down.
+    // Keep measured dip (Z component), but remove unknown yaw by forcing E=0.
+    mag_world_ref_ = Eigen::Vector3f(horiz, 0.0f, mag_world_tilt.z());
     ready_ = mag_world_ref_.allFinite() && (mag_world_ref_.norm() > cfg_.mag_norm_min);
     return ready_;
   }
