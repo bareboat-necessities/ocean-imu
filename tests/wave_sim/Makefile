@@ -1,5 +1,7 @@
 CC = g++
-CFLAGS = -O3 -std=c++20 -funroll-loops -fno-finite-math-only -I./../../src $(CPPFLAGS)
+EIGEN_DIR ?= ../../third_party/eigen
+EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-I$(EIGEN_DIR),-I/usr/include/eigen3)
+CFLAGS = -O3 -std=c++20 -funroll-loops -fno-finite-math-only -I./../../src $(EIGEN_CPPFLAGS) $(CPPFLAGS)
 TARGETS = wave-convention-check
 
 .PHONY: all
