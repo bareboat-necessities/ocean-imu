@@ -211,25 +211,54 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         return q;
     };
 
+    auto wrap_deg = [](float deg) -> float {
+        float wrapped = std::fmod(deg + 180.0f, 360.0f);
+        if (wrapped < 0.0f) wrapped += 360.0f;
+        return wrapped - 180.0f;
+    };
+
+    auto diff_deg = [&](float a, float b) -> float { return wrap_deg(a - b); };
+
     auto reference_euler_from_csv = [&](const IMU_Sample& imu,
                                         const Quaternionf& q_wb_zu,
                                         float& roll_deg,
                                         float& pitch_deg,
                                         float& yaw_deg) {
+        float r_w = 0.0f, p_w = 0.0f, y_w = 0.0f;
+        quat_wb_zu_to_euler_nautical(q_wb_zu, r_w, p_w, y_w);
+
         const bool finite_csv =
             std::isfinite(imu.roll_deg) && std::isfinite(imu.pitch_deg) && std::isfinite(imu.yaw_deg);
-
-        // Prefer explicit Euler values written by the generator.
-        // This avoids introducing apparent yaw from a ZYX decomposition of a pure-tilt quaternion.
-        if (finite_csv) {
-            roll_deg = imu.roll_deg;
-            pitch_deg = imu.pitch_deg;
-            yaw_deg = imu.yaw_deg;
+        if (!finite_csv) {
+            roll_deg = r_w;
+            pitch_deg = p_w;
+            yaw_deg = y_w;
             return;
         }
 
-        // Legacy fallback for malformed rows.
-        quat_wb_zu_to_euler_nautical(q_wb_zu, roll_deg, pitch_deg, yaw_deg);
+        float r_b = 0.0f, p_b = 0.0f, y_b = 0.0f;
+        matrix_to_euler_zyx_deg(q_wb_zu.conjugate().toRotationMatrix(), r_b, p_b, y_b);
+
+        const float err_world =
+            std::abs(diff_deg(imu.roll_deg, r_w)) +
+            std::abs(diff_deg(imu.pitch_deg, p_w)) +
+            std::abs(diff_deg(imu.yaw_deg, y_w));
+        const float err_body =
+            std::abs(diff_deg(imu.roll_deg, r_b)) +
+            std::abs(diff_deg(imu.pitch_deg, p_b)) +
+            std::abs(diff_deg(imu.yaw_deg, y_b));
+
+        // Upstream datasets may encode legacy Euler conventions; choose the
+        // quaternion-consistent interpretation instead of trusting CSV Euler blindly.
+        if (std::min(err_world, err_body) <= 6.0f) {
+            roll_deg = imu.roll_deg;
+            pitch_deg = imu.pitch_deg;
+            yaw_deg = imu.yaw_deg;
+        } else {
+            roll_deg = r_w;
+            pitch_deg = p_w;
+            yaw_deg = y_w;
+        }
     };
 
     WaveDataCSVReader reader(filename);
