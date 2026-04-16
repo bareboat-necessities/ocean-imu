@@ -29,6 +29,7 @@ public:
                          const Vector3f& sigma_g,
                          const Vector3f& sigma_m,
                          const Vector3f& mag_world_a)
+        : with_mag_(with_mag)
     {
         cfg_.with_mag = with_mag;
         cfg_.sigma_a = sigma_a_init;
@@ -79,8 +80,11 @@ public:
         float yaw_deg   = 0.0f;
 
         quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
-        //yaw_deg = wrapDeg(yaw_deg + MagSim_WMM::default_declination_deg);
-        s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, yaw_deg);
+        if (with_mag_) {
+            // Convert magnetic heading to true/world heading for chart output.
+            yaw_deg -= MagSim_WMM::default_declination_deg;
+        }
+        s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
         s.acc_bias_est_ned = filter.mekf().get_acc_bias();
         s.gyro_bias_est_ned = filter.mekf().gyroscope_bias();
         s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf());
@@ -113,6 +117,7 @@ public:
     }
 
 private:
+    bool with_mag_ = true;
     using Fusion = SeaStateFusion_OU_III<TrackerType::KALMANF>;
     mutable Fusion fusion_;
     Fusion::Config cfg_{};
