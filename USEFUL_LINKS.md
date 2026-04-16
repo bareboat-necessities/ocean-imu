@@ -5,3 +5,4 @@
 - The Modular and Robust State-Estimation Framework, MaRS: https://github.com/aau-cns/mars_lib
 - Arduino library for an IMU filter based on a quaternion: https://github.com/RCmags/imuFilter
 - A C++ implementation of a nonlinear 3D IMU fusion algorithm: https://github.com/AIS-Bonn/attitude_estimator
+- Eigen-based C++ Library for Lie group operations common in IMU applications: https://github.com/aau-cns/Lie-plusplus
