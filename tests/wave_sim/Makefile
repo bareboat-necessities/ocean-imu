@@ -1,11 +1,21 @@
 CC = g++
-EIGEN_DIR ?= ../../third_party/eigen
+TEST_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+REPO_ROOT := $(abspath $(TEST_DIR)/../..)
+EIGEN_DIR ?= $(REPO_ROOT)/third_party/eigen
 EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-I$(EIGEN_DIR),-I/usr/include/eigen3)
-CFLAGS = -O3 -std=c++20 -funroll-loops -fno-finite-math-only -I./../../src $(EIGEN_CPPFLAGS) $(CPPFLAGS)
+CFLAGS = -O3 -std=c++20 -funroll-loops -fno-finite-math-only -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) $(CPPFLAGS)
 TARGETS = wave-convention-check
 
-.PHONY: all
-all: $(TARGETS)
+.PHONY: all build test ensure-sim-data
+all: build test
+
+build: $(TARGETS)
+
+test: ensure-sim-data $(TARGETS)
+	bash ./run_tests.sh
+
+ensure-sim-data:
+	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 
 wave-convention-check: wave-convention-check.o
 	$(CC) $(CFLAGS) -o $@ $^
