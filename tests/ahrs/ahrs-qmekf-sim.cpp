@@ -221,6 +221,45 @@ static void print_summary_and_fail_if_needed(const std::string& output_name,
     }
 }
 
+struct MagStartupConfig {
+    // If true:
+    //   At first mag enable time, initialize attitude from accel+mag
+    //   and set the filter's world mag reference from that sample.
+    //
+    // If false:
+    //   Keep using a fixed world mag reference and start with mag-only updates.
+    bool learn_mag_ref_on_enable = true;
+
+    // If true, renormalize synthetic mag measurement to the filter reference magnitude
+    // before update. Useful when you want directional mismatch without magnitude mismatch.
+    bool match_truth_mag_norm_to_filter_ref = false;
+
+    // Magnetic field used for TRUTH synthesis (NED world frame).
+    float truth_declination_deg = MagSim_WMM::default_declination_deg;
+    float truth_inclination_deg = MagSim_WMM::default_inclination_deg;
+    float truth_total_field_uT  = MagSim_WMM::default_total_field_uT;
+
+    // Magnetic field used by FILTER reference model (NED world frame).
+    float filter_declination_deg = MagSim_WMM::default_declination_deg;
+    float filter_inclination_deg = MagSim_WMM::default_inclination_deg;
+    float filter_total_field_uT  = MagSim_WMM::default_total_field_uT;
+};
+
+static Vector3f make_world_mag_ned(float decl_deg, float incl_deg, float total_uT) {
+    return MagSim_WMM::mag_world_aero(decl_deg, incl_deg, total_uT);
+}
+
+static Vector3f maybe_match_mag_norm(const Vector3f& mag_body_ned,
+                                     const Vector3f& B_filter_world_ned,
+                                     bool enable)
+{
+    if (!enable) return mag_body_ned;
+    const float n = mag_body_ned.norm();
+    const float target = B_filter_world_ned.norm();
+    if (n < 1e-6f || target < 1e-6f) return mag_body_ned;
+    return mag_body_ned * (target / n);
+}
+
 void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     auto parsed = WaveFileNaming::parse_to_params(filename);
     if (!parsed) return;
@@ -237,15 +276,35 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     WaveDataCSVReader reader(filename);
 
     // accel update uses acc / g_std
-    const Vector3f sigma_a(0.115f,   0.115f,   0.115f);
-    const Vector3f sigma_g(0.002f,   0.002f,   0.002f);
-    const Vector3f sigma_m(0.012f,   0.012f,   0.012f);
+    const Vector3f sigma_a(0.115f, 0.115f, 0.115f);
+    const Vector3f sigma_g(0.002f, 0.002f, 0.002f);
+    const Vector3f sigma_m(1.5f, 1.5f, 1.5f);
 
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
 
-    // Fixed world magnetic field in aerospace NED.
-    const Vector3f B_world_ned = MagSim_WMM::mag_world_aero();
-    mekf.set_mag_world_ref(B_world_ned);
+    // Magnetic startup / mismatch config
+    MagStartupConfig mag_cfg{};
+
+    // Example: simulate slight WMM mismatch by uncommenting these:
+    // mag_cfg.truth_declination_deg  = -12.6f;
+    // mag_cfg.truth_inclination_deg  =  66.5f;
+    // mag_cfg.truth_total_field_uT   =  52.0f;
+    // mag_cfg.filter_declination_deg = -10.0f;
+    // mag_cfg.filter_inclination_deg =  64.0f;
+    // mag_cfg.filter_total_field_uT  =  50.0f;
+
+    const Vector3f B_truth_world_ned =
+        make_world_mag_ned(mag_cfg.truth_declination_deg,
+                           mag_cfg.truth_inclination_deg,
+                           mag_cfg.truth_total_field_uT);
+
+    const Vector3f B_filter_world_ned =
+        make_world_mag_ned(mag_cfg.filter_declination_deg,
+                           mag_cfg.filter_inclination_deg,
+                           mag_cfg.filter_total_field_uT);
+
+    // Default filter mag reference. May be overwritten later if learning on enable.
+    mekf.set_mag_world_ref(B_filter_world_ned);
 
     // Fresh noise models per file
     NoiseModel accel_noise = make_noise_model(0.04f,  0.05f,   1234);
@@ -261,11 +320,11 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     reader.for_each_record([&](const Wave_Data_Sample& rec) {
         ++iter;
 
-        // Raw body-frame IMU from file
+        // Raw body-frame IMU from file (generator's body/Z-up convention)
         Vector3f acc_b(rec.imu.acc_bx, rec.imu.acc_by, rec.imu.acc_bz);
         Vector3f gyr_b(rec.imu.gyro_x, rec.imu.gyro_y, rec.imu.gyro_z);
 
-        // Apply optional additive noise/bias
+        // Optional additive noise/bias
         Vector3f acc_noisy = acc_b;
         Vector3f gyr_noisy = gyr_b;
         if (add_noise) {
@@ -273,11 +332,11 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
             gyr_noisy = apply_noise(gyr_b, gyro_noise);
         }
 
-        // Convert sensor feeds to filter body frame: NED
+        // Convert body signals to filter convention: NED body frame
         const Vector3f acc_f = zu_to_ned(acc_noisy);
         const Vector3f gyr_f = zu_to_ned(gyr_noisy);
 
-        // Truth attitude converted to SAME convention as filter estimate: BODY->WORLD in NED
+        // Truth attitude in SAME convention as filter estimate: BODY->WORLD in NED
         const Quaternionf q_ref_bw_ned = reference_quat_bw_ned(rec.imu);
 
         float r_ref_n = 0.0f;
@@ -285,13 +344,15 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
         float y_ref_n = 0.0f;
         quat_to_euler_nautical(q_ref_bw_ned, r_ref_n, p_ref_n, y_ref_n);
 
-        // Simulated magnetometer directly from truth q_bw_ned and same world mag field used by the filter.
+        // Synthetic magnetometer truth directly from truth attitude and chosen truth field.
         Vector3f mag_f = Vector3f::Zero();
         if (with_mag) {
-            mag_f = mag_body_from_truth_bw_ned(q_ref_bw_ned, B_world_ned);
+            mag_f = mag_body_from_truth_bw_ned(q_ref_bw_ned, B_truth_world_ned);
+            mag_f = maybe_match_mag_norm(mag_f, B_filter_world_ned,
+                                         mag_cfg.match_truth_mag_norm_to_filter_ref);
         }
 
-        // Initialize from accel only
+        // Initial tilt from accel only.
         if (first) {
             mekf.initialize_from_acc(acc_f / g_std);
             first = false;
@@ -302,20 +363,28 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
 
         // Updates
         if (with_mag && rec.time >= MAG_DELAY_SEC) {
-            bool do_mag_update = false;
-
             if (!mag_enabled) {
                 mag_enabled = true;
-                do_mag_update = true; // one immediate mag update at enable time
-            } else if (iter % MAG_UPDATE_STRIDE == 0) {
-                do_mag_update = true;
-            }
 
-            if (do_mag_update) {
-                mekf.measurement_update_mag_only(mag_f);
-            }
+                if (mag_cfg.learn_mag_ref_on_enable) {
+                    // Robust startup:
+                    // initialize attitude from accel + mag, and let the filter learn the
+                    // world magnetic reference from this first post-delay sample.
+                    mekf.initialize_from_acc_mag(acc_f / g_std, mag_f);
+                } else {
+                    // Fixed-reference startup:
+                    // use one immediate mag update at enable time.
+                    mekf.measurement_update_mag_only(mag_f);
+                }
 
-            mekf.measurement_update_acc_only(acc_f / g_std);
+                // Also do the normal accel update this sample.
+                mekf.measurement_update_acc_only(acc_f / g_std);
+            } else {
+                if (iter % MAG_UPDATE_STRIDE == 0) {
+                    mekf.measurement_update_mag_only(mag_f);
+                }
+                mekf.measurement_update_acc_only(acc_f / g_std);
+            }
         } else {
             mekf.measurement_update_acc_only(acc_f / g_std);
         }
