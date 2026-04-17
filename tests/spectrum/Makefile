@@ -12,3 +12,6 @@ test: ensure-sim-data
 
 ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
+
+clean:
+	rm -f *.o $(TARGETS) *.exe *.csv
