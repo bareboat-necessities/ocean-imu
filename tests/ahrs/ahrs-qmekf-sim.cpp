@@ -79,7 +79,7 @@ struct OutputRow {
 struct AhrsFailureLimits {
     float err_limit_roll_deg = 7.0f;
     float err_limit_pitch_deg = 7.0f;
-    float err_limit_yaw_deg = 17.0f;
+    float err_limit_yaw_deg = 16.0f;
     float min_processing_hz = 100.0f;
 };
 
@@ -251,14 +251,14 @@ struct MagEnableGateConfig {
     bool enable = true;
 
     // Require this many consecutive passing samples before enabling mag.
-    int consecutive_samples_required = 40; 
+    int consecutive_samples_required = 20; 
 
     // Accel norm must satisfy:
     //   | ||acc|| - g | <= accel_norm_tol_frac * g
-    float accel_norm_tol_frac = 0.07f;
+    float accel_norm_tol_frac = 0.055f;
 
     // Gyro magnitude must be below this threshold
-    float gyro_norm_max_rad_s = 0.4f;
+    float gyro_norm_max_rad_s = 0.45f;
 
     // Magnetic total norm must be at least this
     float mag_norm_min_uT = 8.0f;
@@ -334,7 +334,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
 
     // accel update uses acc / g_std
     const Vector3f sigma_a(0.15f, 0.15f, 0.15f);
-    const Vector3f sigma_g(0.01f, 0.01f, 0.01f);
+    const Vector3f sigma_g(0.001f, 0.001f, 0.001f);
     const Vector3f sigma_m(0.8f, 0.8f, 1.8f);
 
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
