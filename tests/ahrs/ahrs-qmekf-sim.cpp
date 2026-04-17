@@ -251,14 +251,14 @@ struct MagEnableGateConfig {
     bool enable = true;
 
     // Require this many consecutive passing samples before enabling mag.
-    int consecutive_samples_required = 20; 
+    int consecutive_samples_required = 30; 
 
     // Accel norm must satisfy:
     //   | ||acc|| - g | <= accel_norm_tol_frac * g
     float accel_norm_tol_frac = 0.055f;
 
     // Gyro magnitude must be below this threshold
-    float gyro_norm_max_rad_s = 0.45f;
+    float gyro_norm_max_rad_s = 0.35f;
 
     // Magnetic total norm must be at least this
     float mag_norm_min_uT = 8.0f;
