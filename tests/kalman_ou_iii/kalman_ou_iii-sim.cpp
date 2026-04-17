@@ -74,16 +74,16 @@ public:
         s.vel_est_zu = ned_to_zu(filter.mekf().get_velocity());
         s.acc_est_zu = ned_to_zu(filter.mekf().get_world_accel());
         const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
+        const Matrix3f C_bw_ned = q_bw_ned.toRotationMatrix();
+        const Matrix3f C_wb_zu = rot_bw_ned_to_wb_zu(C_bw_ned);
+        const Quaternionf q_wb_zu(C_wb_zu);
 
         float roll_deg  = 0.0f;
         float pitch_deg = 0.0f;
         float yaw_deg   = 0.0f;
-
-        quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
-        if (with_mag_) {
-            // Convert magnetic heading to true/world heading for chart output.
-            yaw_deg -= MagSim_WMM::default_declination_deg;
-        }
+        // Compare world-frame nautical Euler (ENU/Z-up, world->body), exactly
+        // like the q_wb_zu reference path used by W3dSimCommon.
+        quat_wb_zu_to_euler_nautical(q_wb_zu, roll_deg, pitch_deg, yaw_deg);
         s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
         s.acc_bias_est_ned = filter.mekf().get_acc_bias();
         s.gyro_bias_est_ned = filter.mekf().gyroscope_bias();

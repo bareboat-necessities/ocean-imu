@@ -74,17 +74,17 @@ public:
         s.acc_est_zu = ned_to_zu(filter.mekf().get_world_accel());
 
         const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
+        const Matrix3f C_bw_ned = q_bw_ned.toRotationMatrix();
+        const Matrix3f C_wb_zu = rot_bw_ned_to_wb_zu(C_bw_ned);
+        const Quaternionf q_wb_zu(C_wb_zu);
 
         float roll_deg  = 0.0f;
         float pitch_deg = 0.0f;
         float yaw_deg   = 0.0f;
-
-        // Use the exact same finite-angle conversion path as the sim truth side.
-        quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
+        // Compare world-frame nautical Euler (ENU/Z-up, world->body), exactly
+        // like the q_wb_zu reference path used by W3dSimCommon.
+        quat_wb_zu_to_euler_nautical(q_wb_zu, roll_deg, pitch_deg, yaw_deg);
         (void)with_mag_;
-        // q_bw_ned is already expressed in world/NED when using the fixed
-        // WMM world-field prior (cfg_.use_fixed_mag_world_ref=true), so yaw
-        // is already true heading. Do not apply declination again.
         s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
 
         s.acc_bias_est_ned = filter.mekf().get_acc_bias();
