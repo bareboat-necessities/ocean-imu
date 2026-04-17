@@ -335,9 +335,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     // accel update uses acc / g_std
     const Vector3f sigma_a(0.115f, 0.115f, 0.115f);
     const Vector3f sigma_g(0.002f, 0.002f, 0.002f);
-
-    // More realistic than 0.012 uT for a full-vector magnetometer model.
-    const Vector3f sigma_m(1.5f, 1.5f, 1.5f);
+    const Vector3f sigma_m(0.8f, 0.8f, 1.5f);
 
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
 
