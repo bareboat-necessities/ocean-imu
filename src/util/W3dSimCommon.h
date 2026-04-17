@@ -353,9 +353,8 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
     const Vector3f sigma_g(2.0f * gyr_sigma, 2.0f * gyr_sigma, 2.0f * gyr_sigma);
     const float sigma_m_uT = 1.2f * mag_sigma_uT;
     const Vector3f sigma_m(sigma_m_uT, sigma_m_uT, sigma_m_uT);
-    const Vector3f mag_world_a = MagSim_WMM::mag_world_aero();
 
-    AdapterT adapter(with_mag, sigma_a_init, sigma_g, sigma_m, mag_world_a);
+    AdapterT adapter(with_mag, sigma_a_init, sigma_g, sigma_m);
     W3dSimulationOptions options;
     options.dt = dt;
     options.with_mag = with_mag;
