@@ -45,6 +45,7 @@ jobs:
           chmod +x *.sh
           ./run_tests.sh
           cp *.csv ../../plots/${{ matrix.dir }}
+          make clean
 
       - name: Generate PGF plots (${{ matrix.dir }})
         shell: bash
