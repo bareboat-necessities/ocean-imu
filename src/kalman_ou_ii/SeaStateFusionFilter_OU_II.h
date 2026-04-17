@@ -1037,23 +1037,18 @@ public:
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!begun_ || !cfg_.with_mag) return;
         if (stage_ == Stage::Uninitialized) return;
-
         if (t_ < cfg_.mag_delay_sec) return;
 
-        if (!mag_ref_set_ && cfg_.use_fixed_mag_world_ref) {
-            if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
-                impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
-                mag_ref_set_ = true;
-            }
-        } else if (!mag_ref_set_) {
-            if (cfg_.mag_world_ref.allFinite() && cfg_.mag_world_ref.norm() > 1e-3f) {
-                impl_.mekf().set_mag_world_ref(cfg_.mag_world_ref);
-                mag_ref_set_ = true;
-            } else if (have_last_imu_ &&
-                       mag_auto_tuner_.addSample(last_acc_body_ned_, last_gyro_body_ned_, mag_body_ned))
+        // Learn magnetic world reference from measurements only.
+        if (!mag_ref_set_) {
+            if (have_last_imu_ &&
+                mag_auto_tuner_.addSample(last_acc_body_ned_, last_gyro_body_ned_, mag_body_ned))
             {
                 Eigen::Vector3f mag_world_ref_uT;
-                if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT)) {
+                if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
+                    mag_world_ref_uT.allFinite() &&
+                    mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
+                {
                     impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
                     mag_ref_set_ = true;
                 }
