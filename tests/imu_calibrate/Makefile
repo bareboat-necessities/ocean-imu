@@ -42,4 +42,5 @@ imu_calibrate-test: imu_calibrate-test.o
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o $(TARGETS) *.exe *.csv
+	find . -maxdepth 1 -type f -name '*.csv' ! -name 'calibrate*.csv' -delete
+	rm -f *.o $(TARGETS) *.exe
