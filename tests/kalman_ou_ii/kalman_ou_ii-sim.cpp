@@ -82,10 +82,10 @@ public:
 
         // Use the exact same finite-angle conversion path as the sim truth side.
         quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
-        if (with_mag_) {
-            // Convert magnetic heading to true/world heading for chart output.
-            yaw_deg -= MagSim_WMM::default_declination_deg;
-        }
+        (void)with_mag_;
+        // q_bw_ned is already expressed in world/NED when using the fixed
+        // WMM world-field prior (cfg_.use_fixed_mag_world_ref=true), so yaw
+        // is already true heading. Do not apply declination again.
         s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
 
         s.acc_bias_est_ned = filter.mekf().get_acc_bias();
