@@ -80,7 +80,7 @@ struct AhrsFailureLimits {
     float err_limit_roll_deg = 8.0f;
     float err_limit_pitch_deg = 8.0f;
     float err_limit_yaw_deg = 19.0f;
-    float min_processing_hz = 200.0f;
+    float min_processing_hz = 100.0f;
 };
 
 static float wrap_deg(float a) {
@@ -101,8 +101,6 @@ static bool quat_is_placeholder_identity(const IMU_Sample& imu) {
            std::fabs(imu.q_wb_zu_z) < eps;
 }
 
-// Prefer the stored quaternion truth when present.
-// Fall back to Euler-derived quaternion for legacy CSVs that lack quaternion columns.
 static Quaternionf reference_quat_wb_zu(const IMU_Sample& imu) {
     const bool placeholder_q = quat_is_placeholder_identity(imu);
     const bool euler_nontrivial =
