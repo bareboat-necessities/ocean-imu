@@ -109,7 +109,7 @@ public:
         } else {
             // Mahony yaw is magnetic heading unless the reference field is
             // explicitly declination-compensated. Test truth yaw is true heading.
-            yaw_sim_deg -= MagSim_WMM::default_declination_deg;
+            yaw_sim_deg += MagSim_WMM::default_declination_deg;
         }
         s.euler_nautical_deg = Vector3f(roll_sim_deg, pitch_sim_deg, wrapDeg(yaw_sim_deg));
 
