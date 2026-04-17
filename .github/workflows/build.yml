@@ -33,7 +33,7 @@ jobs:
       - name: Compile tests (${{ matrix.dir }})
         run: |
           cd tests/${{ matrix.dir }}
-          make
+          make build
 
       - name: Copy test data (${{ matrix.dir }})
         run: |
