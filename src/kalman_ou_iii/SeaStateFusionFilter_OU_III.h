@@ -1125,27 +1125,27 @@ public:
         }
     }
 
-void updateMag(const Eigen::Vector3f& mag_body_ned) {
-    if (!begun_ || !cfg_.with_mag) return;
-    if (stage_ == Stage::Uninitialized) return;
-    if (t_ < cfg_.mag_delay_sec) return;
+    void updateMag(const Eigen::Vector3f& mag_body_ned) {
+        if (!begun_ || !cfg_.with_mag) return;
+        if (stage_ == Stage::Uninitialized) return;
+        if (t_ < cfg_.mag_delay_sec) return;
 
-    if (!mag_ref_set_) {
-        if (have_last_imu_ &&
-            mag_auto_tuner_.addSample(last_acc_body_ned_, last_gyro_body_ned_, mag_body_ned))
-        {
-            Eigen::Vector3f mag_world_ref_uT;
-            if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT)) {
-                impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
-                mag_ref_set_ = true;
+        if (!mag_ref_set_) {
+            if (have_last_imu_ &&
+                mag_auto_tuner_.addSample(last_acc_body_ned_, last_gyro_body_ned_, mag_body_ned))
+            {
+                Eigen::Vector3f mag_world_ref_uT;
+                if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT)) {
+                    impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+                    mag_ref_set_ = true;
+                }
             }
         }
-    }
 
-    if (mag_ref_set_) {
-        impl_.updateMag(mag_body_ned);
+        if (mag_ref_set_) {
+            impl_.updateMag(mag_body_ned);
+        }
     }
-}
 
     // Minimal getters
     bool  isLive() const { return stage_ == Stage::Live; }
