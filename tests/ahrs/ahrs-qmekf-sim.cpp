@@ -255,10 +255,10 @@ struct MagEnableGateConfig {
 
     // Accel norm must satisfy:
     //   | ||acc|| - g | <= accel_norm_tol_frac * g
-    float accel_norm_tol_frac = 0.08f;
+    float accel_norm_tol_frac = 0.07f;
 
     // Gyro magnitude must be below this threshold
-    float gyro_norm_max_rad_s = 0.45f;
+    float gyro_norm_max_rad_s = 0.4f;
 
     // Magnetic total norm must be at least this
     float mag_norm_min_uT = 8.0f;
@@ -334,7 +334,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
 
     // accel update uses acc / g_std
     const Vector3f sigma_a(0.15f, 0.15f, 0.15f);
-    const Vector3f sigma_g(0.0004f, 0.0004f, 0.0004f);
+    const Vector3f sigma_g(0.01f, 0.01f, 0.01f);
     const Vector3f sigma_m(0.8f, 0.8f, 1.8f);
 
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
