@@ -11,7 +11,7 @@ TEST_DIRS := \
 	tests/spectrum \
 	tests/wave_sim
 
-SIM_DATA_VERSION ?= v1.1.2
+SIM_DATA_VERSION ?= v1.1.3
 SIM_DATA_REPO ?= bareboat-necessities/oceanography-waves-lib
 SIM_DATA_ZIP ?= sim-data-files.zip
 SIM_DATA_URL ?= https://github.com/$(SIM_DATA_REPO)/releases/download/$(SIM_DATA_VERSION)/$(SIM_DATA_ZIP)
