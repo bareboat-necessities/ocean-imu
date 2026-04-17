@@ -879,11 +879,6 @@ public:
         float mag_delay_sec          = MAG_DELAY_SEC;
         float online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
-        // Optional fixed world magnetic field reference (for example WMM).
-        // If false, do one-shot north-lock from accel+mag after tilt settles.
-        bool  use_fixed_mag_world_ref = false;
-        Eigen::Vector3f mag_world_ref = Eigen::Vector3f::Zero();
-
         bool  freeze_acc_bias_until_live = true;
         float Racc_warmup = 0.5f;
 
