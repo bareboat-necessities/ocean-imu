@@ -87,6 +87,7 @@ static inline Quaternionf quat_wb_zu_from_csv(float w, float x, float y, float z
     return q.normalized();
 }
 
+// Extract ZYX Euler from a BODY->WORLD rotation matrix.
 static inline void matrix_to_euler_zyx_deg(const Matrix3f& R,
                                            float& roll_deg,
                                            float& pitch_deg,
@@ -111,7 +112,8 @@ static inline void quat_wb_zu_to_euler_nautical(const Quaternionf& q_wb_zu,
                                                 float& yaw)
 {
     const Matrix3f C_wb_zu = q_wb_zu.normalized().toRotationMatrix();
-    matrix_to_euler_zyx_deg(C_wb_zu, roll, pitch, yaw);
+    const Matrix3f C_bw_zu = C_wb_zu.transpose();
+    matrix_to_euler_zyx_deg(C_bw_zu, roll, pitch, yaw);
 }
 
 // Aerospace Euler convention in this file:
@@ -146,14 +148,16 @@ static inline void quat_to_euler_nautical(const Quaternionf& q_bw_ned,
 {
     const Matrix3f C_bw_ned = q_bw_ned.normalized().toRotationMatrix();
     const Matrix3f C_wb_zu = rot_bw_ned_to_wb_zu(C_bw_ned);
-    matrix_to_euler_zyx_deg(C_wb_zu, roll, pitch, yaw);
+    const Matrix3f C_bw_zu = C_wb_zu.transpose();
+    matrix_to_euler_zyx_deg(C_bw_zu, roll, pitch, yaw);
 }
 
 // Finite-angle conversion: aerospace BODY->WORLD NED -> nautical WORLD->BODY ENU/Z-up.
 static inline void aero_to_nautical(float& roll, float& pitch, float& yaw) {
     const Matrix3f C_bw_ned = quat_from_euler(roll, pitch, yaw).toRotationMatrix();
     const Matrix3f C_wb_zu = rot_bw_ned_to_wb_zu(C_bw_ned);
-    matrix_to_euler_zyx_deg(C_wb_zu, roll, pitch, yaw);
+    const Matrix3f C_bw_zu = C_wb_zu.transpose();
+    matrix_to_euler_zyx_deg(C_bw_zu, roll, pitch, yaw);
 }
 
 // Finite-angle conversion: nautical WORLD->BODY ENU/Z-up -> aerospace BODY->WORLD NED.
