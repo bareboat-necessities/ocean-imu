@@ -26,7 +26,7 @@ bool add_noise = true;
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap = 15.5f,
     .err_limit_percent_z_pmstokes = 15.5f,
-    .err_limit_yaw_deg = 85.75f,
+    .err_limit_yaw_deg = 8.5f,
 };
 
 class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {
