@@ -223,26 +223,52 @@ static void print_summary_and_fail_if_needed(const std::string& output_name,
 
 struct MagStartupConfig {
     // If true:
-    //   At first mag enable time, initialize attitude from accel+mag
-    //   and set the filter's world mag reference from that sample.
+    //   At first gated mag-enable time, initialize attitude from accel+mag
+    //   and let the filter learn the world mag reference from that sample.
     //
     // If false:
-    //   Keep using a fixed world mag reference and start with mag-only updates.
+    //   Keep the fixed world mag reference in the filter and enable mag updates
+    //   only after the gate passes.
     bool learn_mag_ref_on_enable = true;
 
-    // If true, renormalize synthetic mag measurement to the filter reference magnitude
-    // before update. Useful when you want directional mismatch without magnitude mismatch.
+    // If true, renormalize synthetic mag measurement to the filter-reference norm.
+    // Useful if you want direction mismatch without magnitude mismatch.
     bool match_truth_mag_norm_to_filter_ref = false;
 
-    // Magnetic field used for TRUTH synthesis (NED world frame).
+    // Truth magnetic field (used to synthesize measurements), NED world frame.
     float truth_declination_deg = MagSim_WMM::default_declination_deg;
     float truth_inclination_deg = MagSim_WMM::default_inclination_deg;
     float truth_total_field_uT  = MagSim_WMM::default_total_field_uT;
 
-    // Magnetic field used by FILTER reference model (NED world frame).
+    // Filter magnetic field reference (used by measurement model), NED world frame.
     float filter_declination_deg = MagSim_WMM::default_declination_deg;
     float filter_inclination_deg = MagSim_WMM::default_inclination_deg;
     float filter_total_field_uT  = MagSim_WMM::default_total_field_uT;
+};
+
+struct MagEnableGateConfig {
+    // Master switch for gating
+    bool enable = true;
+
+    // Require this many consecutive passing samples before enabling mag.
+    int consecutive_samples_required = 200; // 1.0 s at 200 Hz
+
+    // Accel norm must satisfy:
+    //   | ||acc|| - g | <= accel_norm_tol_frac * g
+    float accel_norm_tol_frac = 0.12f;
+
+    // Gyro magnitude must be below this threshold
+    float gyro_norm_max_rad_s = 0.35f;
+
+    // Magnetic total norm must be at least this
+    float mag_norm_min_uT = 10.0f;
+
+    // Horizontal magnetic norm in body-NED (sqrt(mx^2 + my^2)) must be at least this
+    float mag_horizontal_min_uT = 5.0f;
+};
+
+struct MagEnableGateState {
+    int consecutive_good = 0;
 };
 
 static Vector3f make_world_mag_ned(float decl_deg, float incl_deg, float total_uT) {
@@ -258,6 +284,37 @@ static Vector3f maybe_match_mag_norm(const Vector3f& mag_body_ned,
     const float target = B_filter_world_ned.norm();
     if (n < 1e-6f || target < 1e-6f) return mag_body_ned;
     return mag_body_ned * (target / n);
+}
+
+static bool mag_enable_gate_passes(const Vector3f& acc_f,
+                                   const Vector3f& gyr_f,
+                                   const Vector3f& mag_f,
+                                   const MagEnableGateConfig& cfg)
+{
+    if (!cfg.enable) return true;
+
+    const float acc_norm = acc_f.norm();
+    const float gyr_norm = gyr_f.norm();
+    const float mag_norm = mag_f.norm();
+    const float mag_horiz = std::sqrt(mag_f.x() * mag_f.x() + mag_f.y() * mag_f.y());
+
+    const bool acc_ok =
+        std::isfinite(acc_norm) &&
+        std::fabs(acc_norm - g_std) <= cfg.accel_norm_tol_frac * g_std;
+
+    const bool gyr_ok =
+        std::isfinite(gyr_norm) &&
+        gyr_norm <= cfg.gyro_norm_max_rad_s;
+
+    const bool mag_ok =
+        std::isfinite(mag_norm) &&
+        mag_norm >= cfg.mag_norm_min_uT;
+
+    const bool mag_h_ok =
+        std::isfinite(mag_horiz) &&
+        mag_horiz >= cfg.mag_horizontal_min_uT;
+
+    return acc_ok && gyr_ok && mag_ok && mag_h_ok;
 }
 
 void process_wave_file(const std::string& filename, float dt, bool with_mag) {
@@ -278,6 +335,8 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     // accel update uses acc / g_std
     const Vector3f sigma_a(0.115f, 0.115f, 0.115f);
     const Vector3f sigma_g(0.002f, 0.002f, 0.002f);
+
+    // More realistic than 0.012 uT for a full-vector magnetometer model.
     const Vector3f sigma_m(1.5f, 1.5f, 1.5f);
 
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
@@ -285,7 +344,11 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     // Magnetic startup / mismatch config
     MagStartupConfig mag_cfg{};
 
-    // Example: simulate slight WMM mismatch by uncommenting these:
+    // Real enable gate config
+    MagEnableGateConfig gate_cfg{};
+    MagEnableGateState gate_state{};
+
+    // Example mismatch setup:
     // mag_cfg.truth_declination_deg  = -12.6f;
     // mag_cfg.truth_inclination_deg  =  66.5f;
     // mag_cfg.truth_total_field_uT   =  52.0f;
@@ -303,7 +366,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
                            mag_cfg.filter_inclination_deg,
                            mag_cfg.filter_total_field_uT);
 
-    // Default filter mag reference. May be overwritten later if learning on enable.
+    // Default filter mag reference; may be replaced later if learning at enable time
     mekf.set_mag_world_ref(B_filter_world_ned);
 
     // Fresh noise models per file
@@ -320,7 +383,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     reader.for_each_record([&](const Wave_Data_Sample& rec) {
         ++iter;
 
-        // Raw body-frame IMU from file (generator's body/Z-up convention)
+        // Raw body-frame IMU from file
         Vector3f acc_b(rec.imu.acc_bx, rec.imu.acc_by, rec.imu.acc_bz);
         Vector3f gyr_b(rec.imu.gyro_x, rec.imu.gyro_y, rec.imu.gyro_z);
 
@@ -344,7 +407,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
         float y_ref_n = 0.0f;
         quat_to_euler_nautical(q_ref_bw_ned, r_ref_n, p_ref_n, y_ref_n);
 
-        // Synthetic magnetometer truth directly from truth attitude and chosen truth field.
+        // Synthetic body-frame magnetometer truth in NED
         Vector3f mag_f = Vector3f::Zero();
         if (with_mag) {
             mag_f = mag_body_from_truth_bw_ned(q_ref_bw_ned, B_truth_world_ned);
@@ -352,7 +415,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
                                          mag_cfg.match_truth_mag_norm_to_filter_ref);
         }
 
-        // Initial tilt from accel only.
+        // Initial tilt from accel only
         if (first) {
             mekf.initialize_from_acc(acc_f / g_std);
             first = false;
@@ -364,21 +427,38 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
         // Updates
         if (with_mag && rec.time >= MAG_DELAY_SEC) {
             if (!mag_enabled) {
-                mag_enabled = true;
+                const bool gate_ok = mag_enable_gate_passes(acc_f, gyr_f, mag_f, gate_cfg);
 
-                if (mag_cfg.learn_mag_ref_on_enable) {
-                    // Robust startup:
-                    // initialize attitude from accel + mag, and let the filter learn the
-                    // world magnetic reference from this first post-delay sample.
-                    mekf.initialize_from_acc_mag(acc_f / g_std, mag_f);
+                if (gate_ok) {
+                    gate_state.consecutive_good++;
                 } else {
-                    // Fixed-reference startup:
-                    // use one immediate mag update at enable time.
-                    mekf.measurement_update_mag_only(mag_f);
+                    gate_state.consecutive_good = 0;
                 }
 
-                // Also do the normal accel update this sample.
-                mekf.measurement_update_acc_only(acc_f / g_std);
+                const bool enable_now =
+                    (!gate_cfg.enable) ||
+                    (gate_state.consecutive_good >= gate_cfg.consecutive_samples_required);
+
+                if (enable_now) {
+                    mag_enabled = true;
+
+                    if (mag_cfg.learn_mag_ref_on_enable) {
+                        // Robust startup:
+                        // initialize attitude from accel + mag and learn world mag reference
+                        // from the first good post-delay sample.
+                        mekf.initialize_from_acc_mag(acc_f / g_std, mag_f);
+                    } else {
+                        // Fixed-reference startup:
+                        // one immediate mag update at enable time.
+                        mekf.measurement_update_mag_only(mag_f);
+                    }
+
+                    // Also do the normal accel update on the enable sample.
+                    mekf.measurement_update_acc_only(acc_f / g_std);
+                } else {
+                    // Until the gate passes, keep using accel-only updates.
+                    mekf.measurement_update_acc_only(acc_f / g_std);
+                }
             } else {
                 if (iter % MAG_UPDATE_STRIDE == 0) {
                     mekf.measurement_update_mag_only(mag_f);
