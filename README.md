@@ -18,15 +18,15 @@ Marine IMU and wave-processing algorithms in modern C++ for sensor fusion, sea-s
 
 Results of the tests, simulations and documentation of the code build from development branch: https://github.com/bareboat-necessities/ocean-imu/releases/tag/vTest
 
-Kalman3D_Wave_OU_III results
+Kalman3D_Wave_OU_II results
 
 <p align="center">
-  <img src="./img/samples/w3d_ou3_pmstokes_medium_zkin.svg?raw=true" style="max-width: 50%;">
+  <img src="./img/samples/w3d_ou2_pmstokes_medium_zkin.svg?raw=true" style="max-width: 50%;">
 </p>
 
 
 <p align="center">
-  <img src="./img/samples/w3d_ou3_pmstokes_medium.svg?raw=true" style="max-width: 50%;">
+  <img src="./img/samples/w3d_ou2_pmstokes_medium.svg?raw=true" style="max-width: 50%;">
 </p>
 
 ## Main Article
