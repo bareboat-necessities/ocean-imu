@@ -964,10 +964,6 @@ public:
         float mag_delay_sec          = MAG_DELAY_SEC;
         float online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
-        // If you want: fixed world mag ref (WMM), or “learn from measurement”
-        bool  use_fixed_mag_world_ref = false;
-        Eigen::Vector3f mag_world_ref = Eigen::Vector3f(0,0,0); // caller sets (e.g. WMM)
-
         // Bias freeze behavior
         bool  freeze_acc_bias_until_live = true;
         float Racc_warmup = 0.5f;
