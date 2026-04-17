@@ -229,7 +229,7 @@ struct MagStartupConfig {
     // If false:
     //   Keep the fixed world mag reference in the filter and enable mag updates
     //   only after the gate passes.
-    bool learn_mag_ref_on_enable = true;
+    bool learn_mag_ref_on_enable = false;
 
     // If true, renormalize synthetic mag measurement to the filter-reference norm.
     // Useful if you want direction mismatch without magnitude mismatch.
