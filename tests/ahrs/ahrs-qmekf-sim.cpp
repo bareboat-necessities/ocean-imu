@@ -61,10 +61,10 @@ Vector3f apply_noise(const Vector3f& v, NoiseModel& m) {
 struct OutputRow {
     double t{};
 
-    // Reference Euler (deg, nautical: world->body in ENU/Z-up)
+    // Reference Euler (deg, nautical, extracted in SAME convention as estimate)
     float roll_ref{}, pitch_ref{}, yaw_ref{};
 
-    // Raw IMU inputs from file (nautical body frame)
+    // Raw IMU inputs from file (surface/body frame written by generator)
     float acc_bx{}, acc_by{}, acc_bz{};
     float gyro_x{}, gyro_y{}, gyro_z{};
 
@@ -101,7 +101,9 @@ static bool quat_is_placeholder_identity(const IMU_Sample& imu) {
            std::fabs(imu.q_wb_zu_z) < eps;
 }
 
-static Quaternionf reference_quat_wb_zu(const IMU_Sample& imu) {
+// Legacy fallback only for files without quaternion truth.
+// This keeps previous behavior for placeholder-identity files.
+static Quaternionf reference_quat_wb_zu_legacy(const IMU_Sample& imu) {
     const bool placeholder_q = quat_is_placeholder_identity(imu);
     const bool euler_nontrivial =
         std::fabs(imu.roll_deg) > 1e-4f ||
@@ -118,6 +120,38 @@ static Quaternionf reference_quat_wb_zu(const IMU_Sample& imu) {
         imu.q_wb_zu_y,
         imu.q_wb_zu_z
     );
+}
+
+// Build the linear map S such that v_ned = S * v_zu.
+static Matrix3f zu_to_ned_basis_matrix() {
+    Matrix3f S;
+    S.col(0) = zu_to_ned(Vector3f::UnitX());
+    S.col(1) = zu_to_ned(Vector3f::UnitY());
+    S.col(2) = zu_to_ned(Vector3f::UnitZ());
+    return S;
+}
+
+// Convert CSV truth quaternion from q_wb_zu (world->body in Z-up)
+// to q_bw_ned (body->world in NED), so truth and estimate use the SAME convention.
+static Quaternionf reference_quat_bw_ned(const IMU_Sample& imu) {
+    const Quaternionf q_wb_zu = reference_quat_wb_zu_legacy(imu);
+    const Matrix3f C_wb_zu = q_wb_zu.toRotationMatrix();
+
+    static const Matrix3f S = zu_to_ned_basis_matrix();
+
+    // Same physical rotation expressed in NED coordinates.
+    const Matrix3f C_wb_ned = S * C_wb_zu * S.transpose();
+
+    Quaternionf q_bw_ned(C_wb_ned.transpose());
+    q_bw_ned.normalize();
+    return q_bw_ned;
+}
+
+// Simulated magnetometer in body NED directly from truth attitude and world magnetic field.
+static Vector3f mag_body_from_truth_bw_ned(const Quaternionf& q_bw_ned,
+                                           const Vector3f& B_world_ned) {
+    const Matrix3f C_wb_ned = q_bw_ned.conjugate().toRotationMatrix(); // world -> body
+    return C_wb_ned * B_world_ned;
 }
 
 static void print_summary_and_fail_if_needed(const std::string& output_name,
@@ -213,9 +247,9 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     const Vector3f B_world_ned = MagSim_WMM::mag_world_aero();
     mekf.set_mag_world_ref(B_world_ned);
 
-    // Noise models
-    static NoiseModel accel_noise = make_noise_model(0.04f,  0.05f,   1234);
-    static NoiseModel gyro_noise  = make_noise_model(0.001f, 0.0004f, 5678);
+    // Fresh noise models per file
+    NoiseModel accel_noise = make_noise_model(0.04f,  0.05f,   1234);
+    NoiseModel gyro_noise  = make_noise_model(0.001f, 0.0004f, 5678);
 
     bool first = true;
     bool mag_enabled = false;
@@ -227,7 +261,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     reader.for_each_record([&](const Wave_Data_Sample& rec) {
         ++iter;
 
-        // Raw body-frame IMU in nautical ENU/Z-up from file
+        // Raw body-frame IMU from file
         Vector3f acc_b(rec.imu.acc_bx, rec.imu.acc_by, rec.imu.acc_bz);
         Vector3f gyr_b(rec.imu.gyro_x, rec.imu.gyro_y, rec.imu.gyro_z);
 
@@ -243,22 +277,21 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
         const Vector3f acc_f = zu_to_ned(acc_noisy);
         const Vector3f gyr_f = zu_to_ned(gyr_noisy);
 
-        // Truth attitude comes from the same source used to synthesize mag: q_wb_zu.
-        const Quaternionf q_ref_wb_zu = reference_quat_wb_zu(rec.imu);
+        // Truth attitude converted to SAME convention as filter estimate: BODY->WORLD in NED
+        const Quaternionf q_ref_bw_ned = reference_quat_bw_ned(rec.imu);
 
         float r_ref_n = 0.0f;
         float p_ref_n = 0.0f;
         float y_ref_n = 0.0f;
-        quat_wb_zu_to_euler_nautical(q_ref_wb_zu, r_ref_n, p_ref_n, y_ref_n);
+        quat_to_euler_nautical(q_ref_bw_ned, r_ref_n, p_ref_n, y_ref_n);
 
-        // Simulated magnetometer from quaternion truth, then convert body ENU -> body NED.
+        // Simulated magnetometer directly from truth q_bw_ned and same world mag field used by the filter.
         Vector3f mag_f = Vector3f::Zero();
         if (with_mag) {
-            const Vector3f mag_b_enu = mag_body_from_quat_wb_zu(q_ref_wb_zu);
-            mag_f = zu_to_ned(mag_b_enu);
+            mag_f = mag_body_from_truth_bw_ned(q_ref_bw_ned, B_world_ned);
         }
 
-        // Initialize from accel only.
+        // Initialize from accel only
         if (first) {
             mekf.initialize_from_acc(acc_f / g_std);
             first = false;
@@ -269,12 +302,16 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
 
         // Updates
         if (with_mag && rec.time >= MAG_DELAY_SEC) {
+            bool do_mag_update = false;
+
             if (!mag_enabled) {
-                mekf.measurement_update_mag_only(mag_f);
                 mag_enabled = true;
+                do_mag_update = true; // one immediate mag update at enable time
+            } else if (iter % MAG_UPDATE_STRIDE == 0) {
+                do_mag_update = true;
             }
 
-            if (iter % MAG_UPDATE_STRIDE == 0) {
+            if (do_mag_update) {
                 mekf.measurement_update_mag_only(mag_f);
             }
 
@@ -285,12 +322,13 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
 
         // Filter quaternion is BODY->WORLD in NED.
         const auto coeffs = mekf.quaternion(); // [x,y,z,w]
-        const Quaternionf q_bw_ned(coeffs(3), coeffs(0), coeffs(1), coeffs(2));
+        Quaternionf q_est_bw_ned(coeffs(3), coeffs(0), coeffs(1), coeffs(2));
+        q_est_bw_ned.normalize();
 
         float r_est = 0.0f;
         float p_est = 0.0f;
         float y_est = 0.0f;
-        quat_to_euler_nautical(q_bw_ned, r_est, p_est, y_est);
+        quat_to_euler_nautical(q_est_bw_ned, r_est, p_est, y_est);
 
         rows.push_back({
             rec.time,
