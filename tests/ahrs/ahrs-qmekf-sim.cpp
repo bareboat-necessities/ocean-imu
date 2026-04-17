@@ -251,20 +251,20 @@ struct MagEnableGateConfig {
     bool enable = true;
 
     // Require this many consecutive passing samples before enabling mag.
-    int consecutive_samples_required = 200; // 1.0 s at 200 Hz
+    int consecutive_samples_required = 15; 
 
     // Accel norm must satisfy:
     //   | ||acc|| - g | <= accel_norm_tol_frac * g
-    float accel_norm_tol_frac = 0.12f;
+    float accel_norm_tol_frac = 0.08f;
 
     // Gyro magnitude must be below this threshold
-    float gyro_norm_max_rad_s = 0.35f;
+    float gyro_norm_max_rad_s = 0.45f;
 
     // Magnetic total norm must be at least this
-    float mag_norm_min_uT = 10.0f;
+    float mag_norm_min_uT = 8.0f;
 
     // Horizontal magnetic norm in body-NED (sqrt(mx^2 + my^2)) must be at least this
-    float mag_horizontal_min_uT = 5.0f;
+    float mag_horizontal_min_uT = 4.0f;
 };
 
 struct MagEnableGateState {
@@ -333,9 +333,9 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     WaveDataCSVReader reader(filename);
 
     // accel update uses acc / g_std
-    const Vector3f sigma_a(0.115f, 0.115f, 0.115f);
+    const Vector3f sigma_a(0.15f, 0.15f, 0.15f);
     const Vector3f sigma_g(0.002f, 0.002f, 0.002f);
-    const Vector3f sigma_m(0.8f, 0.8f, 1.5f);
+    const Vector3f sigma_m(0.8f, 0.8f, 1.8f);
 
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
 
