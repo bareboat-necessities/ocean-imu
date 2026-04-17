@@ -14,4 +14,5 @@ ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 
 clean:
-	rm -f *.o $(TARGETS) *.exe *.csv
+	find . -maxdepth 1 -type f -name '*.csv' ! -name 'spectrum*.csv' -delete
+	rm -f *.o $(TARGETS) *.exe
