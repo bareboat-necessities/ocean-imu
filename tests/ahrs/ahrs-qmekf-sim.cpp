@@ -251,7 +251,7 @@ struct MagEnableGateConfig {
     bool enable = true;
 
     // Require this many consecutive passing samples before enabling mag.
-    int consecutive_samples_required = 15; 
+    int consecutive_samples_required = 40; 
 
     // Accel norm must satisfy:
     //   | ||acc|| - g | <= accel_norm_tol_frac * g
@@ -334,7 +334,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
 
     // accel update uses acc / g_std
     const Vector3f sigma_a(0.15f, 0.15f, 0.15f);
-    const Vector3f sigma_g(0.002f, 0.002f, 0.002f);
+    const Vector3f sigma_g(0.0004f, 0.0004f, 0.0004f);
     const Vector3f sigma_m(0.8f, 0.8f, 1.8f);
 
     QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 1e-06f);
