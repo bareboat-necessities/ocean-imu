@@ -12,6 +12,7 @@
      S (3)   : integral of displacement (∫ p dt) — with zero pseudo-measurement for drift correction
      a_w (3) : latent world-frame inertial acceleration (NED)
 
+  - The quaternion MEKF logic (time_update, measurement_update, partial updates, quaternion correction) is implemented.
   - The extended linear states are driven by a latent OU world-acceleration a_w
     (accelerometer input is used only in the measurement update).
   - Accelerometer and magnetometer inputs must be given in aerospace/NED (x north, y east, z down)
