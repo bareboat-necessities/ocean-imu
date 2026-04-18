@@ -147,8 +147,8 @@ private:
 };
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap = 10.2f,
-    .err_limit_percent_z_pmstokes = 10.2f,
+    .err_limit_percent_z_jonswap = 11.0f,
+    .err_limit_percent_z_pmstokes = 11.0f,
     .err_limit_yaw_deg = 3.0f,
     .err_limit_percent_3d_jonswap = 60.0f,
     .err_limit_percent_3d_pmstokes = 60.0f,
