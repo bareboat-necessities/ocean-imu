@@ -17,6 +17,8 @@
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
 
 using Eigen::Vector3f;
+using Eigen::Matrix3f;
+using Eigen::Quaternionf;
 
 bool add_noise = true;
 bool attitude_only = false;
@@ -39,6 +41,7 @@ public:
 
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
+
         if (attitude_only) {
             filter.enableLinearBlock(false);
             filter.mekf().set_initial_acc_bias(Vector3f::Zero());
@@ -52,81 +55,89 @@ public:
         }
     }
 
-    void updateMag(const Vector3f& mag_body_ned) override { fusion_.updateMag(mag_body_ned); }
+    void updateMag(const Vector3f& mag_body_ned) override {
+        fusion_.updateMag(mag_body_ned);
+    }
 
     void update(float dt,
                 const Vector3f& gyr_meas_ned,
                 const Vector3f& acc_meas_ned,
-                float temperature_c) override {
+                float temperature_c) override
+    {
         fusion_.update(dt, gyr_meas_ned, acc_meas_ned, temperature_c);
     }
 
-FilterSnapshot snapshot() const override {
-    const auto& filter = fusion_.raw();
-    const auto& d = filter.dir();
+    FilterSnapshot snapshot() const override {
+        const auto& filter = fusion_.raw();
+        const auto& d = filter.dir();
 
-    FilterSnapshot s;
-    s.disp_est_zu = ned_to_zu(filter.mekf().get_position());
-    s.vel_est_zu  = ned_to_zu(filter.mekf().get_velocity());
-    s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_accel());
+        FilterSnapshot s;
+        s.disp_est_zu = ned_to_zu(filter.mekf().get_position());
+        s.vel_est_zu  = ned_to_zu(filter.mekf().get_velocity());
+        s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_accel());
 
-    // Filter attitude is BODY->WORLD in the filter's world frame.
-    // After mag lock / learned mag reference, that world frame is magnetic north.
-    Quaternionf q_bw_mag_ned = filter.mekf().quaternion_boat().normalized();
+        // Filter attitude is BODY->WORLD in NED.
+        // Before mag lock this is just the filter's current world frame.
+        // After mag lock it is BODY->WORLD in MAGNETIC-NORTH world.
+        Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
 
-    // Convert magnetic-world attitude to true/world attitude with a full 3D world-frame rotation.
-    // For east-positive declination:
-    //   heading_true = heading_mag + declination
-    // so BODY->WORLD_true = Rz(declination) * BODY->WORLD_mag
-    const Quaternionf q_mag_to_true_ned =
-        quat_from_euler(0.0f, 0.0f, MagSim_WMM::default_declination_deg);
+        // Convert magnetic-world attitude into true/world attitude only after
+        // magnetic north has actually been learned/locked.
+        if (with_mag_ && fusion_.hasMagNorthLock()) {
+            // East-positive declination:
+            // heading_true = heading_mag + declination
+            // Therefore:
+            //   C_bw_true = C_true<-mag * C_bw_mag
+            const Quaternionf q_mag_to_true_ned =
+                quat_from_euler(0.0f, 0.0f, MagSim_WMM::default_declination_deg);
+            q_bw_ned = (q_mag_to_true_ned * q_bw_ned).normalized();
+        }
 
-    const Quaternionf q_bw_true_ned = (q_mag_to_true_ned * q_bw_mag_ned).normalized();
+        float roll_deg  = 0.0f;
+        float pitch_deg = 0.0f;
+        float yaw_deg   = 0.0f;
+        quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
 
-    float roll_deg  = 0.0f;
-    float pitch_deg = 0.0f;
-    float yaw_deg   = 0.0f;
-    quat_to_euler_nautical(q_bw_true_ned, roll_deg, pitch_deg, yaw_deg);
+        s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
 
-    s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
+        s.acc_bias_est_ned    = filter.mekf().get_acc_bias();
+        s.gyro_bias_est_ned   = filter.mekf().gyroscope_bias();
+        s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf());
 
-    s.acc_bias_est_ned    = filter.mekf().get_acc_bias();
-    s.gyro_bias_est_ned   = filter.mekf().gyroscope_bias();
-    s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf());
+        s.tau_target     = filter.getTauTarget();
+        s.sigma_target   = filter.getSigmaTarget();
+        s.tuning_target  = p0_s_from_sigma_tau(s.sigma_target, s.tau_target);
 
-    s.tau_target    = filter.getTauTarget();
-    s.sigma_target  = filter.getSigmaTarget();
-    s.tuning_target = p0_s_from_sigma_tau(s.sigma_target, s.tau_target);
-    s.tau_applied   = filter.getTauApplied();
-    s.sigma_applied = filter.getSigmaApplied();
-    s.tuning_applied = p0_s_from_sigma_tau(s.sigma_applied, s.tau_applied);
+        s.tau_applied    = filter.getTauApplied();
+        s.sigma_applied  = filter.getSigmaApplied();
+        s.tuning_applied = p0_s_from_sigma_tau(s.sigma_applied, s.tau_applied);
 
-    s.freq_hz            = filter.getFreqHz();
-    s.period_sec         = filter.getPeriodSec();
-    s.accel_variance     = filter.getAccelVariance();
-    s.displacement_scale_m = filter.getDisplacementScale();
-    s.velocity_scale_mps   = filter.getVerticalSpeedEnvelopeMps(true);
+        s.freq_hz             = filter.getFreqHz();
+        s.period_sec          = filter.getPeriodSec();
+        s.accel_variance      = filter.getAccelVariance();
+        s.displacement_scale_m = filter.getDisplacementScale();
+        s.velocity_scale_mps   = filter.getVerticalSpeedEnvelopeMps(true);
 
-    s.direction.phase = d.getPhase();
-    s.direction.direction_deg = d.getDirectionDegrees();
-    s.direction.direction_deg_generator_signed = dirDegGeneratorSignedFromVec(d.getDirection());
-    s.direction.uncertainty_deg = d.getDirectionUncertaintyDegrees();
-    s.direction.confidence = d.getLastStableConfidence();
-    s.direction.amplitude = d.getAmplitude();
-    s.direction.direction_vec = d.getDirection();
-    s.direction.filtered_signal = d.getFilteredSignal();
+        s.direction.phase = d.getPhase();
+        s.direction.direction_deg = d.getDirectionDegrees();
+        s.direction.direction_deg_generator_signed = dirDegGeneratorSignedFromVec(d.getDirection());
+        s.direction.uncertainty_deg = d.getDirectionUncertaintyDegrees();
+        s.direction.confidence = d.getLastStableConfidence();
+        s.direction.amplitude = d.getAmplitude();
+        s.direction.direction_vec = d.getDirection();
+        s.direction.filtered_signal = d.getFilteredSignal();
 
-    constexpr float CONF_THRESH = 20.0f;
-    constexpr float AMP_THRESH  = 0.08f;
-    if (s.direction.confidence > CONF_THRESH && s.direction.amplitude > AMP_THRESH) {
-        s.direction.sign = filter.getDirSignState();
-        s.direction.sign_num =
-            (s.direction.sign == FORWARD) ? 1 :
-            (s.direction.sign == BACKWARD ? -1 : 0);
+        constexpr float CONF_THRESH = 20.0f;
+        constexpr float AMP_THRESH  = 0.08f;
+        if (s.direction.confidence > CONF_THRESH && s.direction.amplitude > AMP_THRESH) {
+            s.direction.sign = filter.getDirSignState();
+            s.direction.sign_num =
+                (s.direction.sign == FORWARD) ? 1 :
+                (s.direction.sign == BACKWARD ? -1 : 0);
+        }
+
+        return s;
     }
-
-    return s;
-}
 
 private:
     bool with_mag_ = true;
@@ -134,7 +145,6 @@ private:
     mutable Fusion fusion_;
     Fusion::Config cfg_{};
 };
-
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap = 10.2f,
@@ -154,8 +164,10 @@ static constexpr W3dSummaryLabels SUMMARY_LABELS{
 static void process_wave_file_for_tracker(const std::string& filename, float dt, bool with_mag)
 {
     constexpr float MAG_ODR_HZ = 25.0f;
-    auto result = process_wave_file_for_tracker<FusionAdapter_OU_II>(filename, dt, with_mag, add_noise, MAG_ODR_HZ,
-                                                                     "_fusion_ou2", "_fusion_ou2_nomag");
+    auto result = process_wave_file_for_tracker<FusionAdapter_OU_II>(
+        filename, dt, with_mag, add_noise, MAG_ODR_HZ,
+        "_fusion_ou2", "_fusion_ou2_nomag");
+
     if (!result) return;
     print_summary_and_fail_if_needed(*result, dt, FAIL_LIMITS, SUMMARY_LABELS);
 }
@@ -184,5 +196,6 @@ int main(int argc, char* argv[]) {
     for (const auto& fname : files) {
         process_wave_file_for_tracker(fname, dt, with_mag);
     }
+
     return 0;
 }
