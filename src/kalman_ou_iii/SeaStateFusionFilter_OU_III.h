@@ -98,7 +98,7 @@ constexpr float ADAPT_TAU_SEC              = 1.5f;
 constexpr float ADAPT_EVERY_SECS           = 0.1f;
 constexpr float ADAPT_RS_MULT              = 5.0f;   // dimensionless
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
-constexpr float MAG_DELAY_SEC              = 8.0f;
+constexpr float MAG_DELAY_SEC              = 7.0f;
 
 // Frequency smoother dt (SeaStateFusionFilter_OU_III is designed for 200 Hz)
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
@@ -922,8 +922,8 @@ private:
     float mag_delay_sec_          = MAG_DELAY_SEC;
 
     // Runtime-configurable anisotropy knobs
-    float R_S_xy_factor_ = 0.17f;  // [0..1] scales XY pseudo-meas vs Z
-    float S_factor_      = 1.7f;   // (>0) scales Σ_aw horizontal std vs vertical
+    float R_S_xy_factor_ = 0.28f;  // [0..1] scales XY pseudo-meas vs Z
+    float S_factor_      = 1.8f;   // (>0) scales Σ_aw horizontal std vs vertical
 
     TrackingPolicy                  tracker_policy_{};
     FirstOrderIIRSmoother<float>    freq_fast_smoother_{FREQ_SMOOTHER_DT, 3.5f};   // ~3.5 s to 90% step
@@ -939,7 +939,7 @@ private:
     float acc_noise_floor_sigma_ = ACC_NOISE_FLOOR_SIGMA_DEFAULT;
 
     float R_S_coeff_    = 1.2f;
-    float tau_coeff_    = 1.4f;
+    float tau_coeff_    = 1.5f;
     float sigma_coeff_  = 0.9f;  // Real noise inflates estimated sigma, to get more realistic sigma for OU we reduce it.
 
     std::unique_ptr<Kalman3D_Wave_OU_III<float>>  mekf_;
