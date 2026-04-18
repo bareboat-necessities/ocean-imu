@@ -147,13 +147,13 @@ private:
 };
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap = 11.0f,
-    .err_limit_percent_z_pmstokes = 11.0f,
+    .err_limit_percent_z_jonswap = 10.1f,
+    .err_limit_percent_z_pmstokes = 9.8f,
     .err_limit_yaw_deg = 3.0f,
-    .err_limit_percent_3d_jonswap = 60.0f,
-    .err_limit_percent_3d_pmstokes = 60.0f,
-    .acc_z_bias_percent = 280.0f,
-    .bias_3d_percent = 1800.0f,
+    .err_limit_percent_3d_jonswap = 40.0f,
+    .err_limit_percent_3d_pmstokes = 40.0f,
+    .acc_z_bias_percent = 40.0f,
+    .bias_3d_percent = 650.0f,
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
