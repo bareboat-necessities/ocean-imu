@@ -880,15 +880,14 @@ public:
         float online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
         bool  freeze_acc_bias_until_live = true;
-        float Racc_warmup_std = 0.5f;
+        float Racc_warmup_std = 1.0f;   // was 0.5f
 
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        // mag-init policy:
-        // wait a bit for tilt to settle, then average only a short stable window.
-        float mag_init_min_mag_norm   = 1e-3f;
+        // mag-init policy
+        float mag_init_min_mag_norm = 1e-3f;
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
@@ -907,8 +906,7 @@ public:
         mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
         mag_auto_tuner_.setConfig(mag_cfg);
 
-        tilt_init_acc_sum_.setZero();
-        tilt_init_count_ = 0;
+        resetGravityInit_();
 
         last_acc_body_ned_.setZero();
         last_gyro_body_ned_.setZero();
@@ -972,26 +970,20 @@ public:
 
         t_ += dt;
 
-        // Stage 1: tilt learning from stable gravity samples.
-        if (stage_ == Stage::Uninitialized) {
-            if (isStableInitSample_(acc_body_ned, gyro_body_ned)) {
-                tilt_init_acc_sum_ += acc_body_ned;
-                ++tilt_init_count_;
-            }
-
-            constexpr int TILT_INIT_MIN_SAMPLES = 600; // @ 200 Hz
-            if (tilt_init_count_ >= TILT_INIT_MIN_SAMPLES) {
-                const Eigen::Vector3f acc_mean = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
-                impl_.initialize_from_acc(acc_mean);
-                stage_ = Stage::Warming;
-                tilt_init_acc_sum_.setZero();
-                tilt_init_count_ = 0;
-            }
-        }
-
         last_acc_body_ned_  = acc_body_ned;
         last_gyro_body_ned_ = gyro_body_ned;
         have_last_imu_      = true;
+
+        // Learn a long-term gravity direction in body frame from stable-enough samples.
+        updateGravityLP_(dt, acc_body_ned, gyro_body_ned);
+
+        // Stage 1: initialize tilt only after the gravity LP has settled.
+        if (stage_ == Stage::Uninitialized) {
+            if (gravityInitReady_()) {
+                impl_.initialize_from_acc(gravity_lp_body_ned_);
+                stage_ = Stage::Warming;
+            }
+        }
 
         if (stage_ != Stage::Uninitialized) {
             impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
@@ -1016,15 +1008,29 @@ public:
                 displacement_det_out_.wave_raw = displacement_up_m_;
                 displacement_det_out_.wave_clean = displacement_up_m_;
             }
+        } else {
+            displacement_up_m_.setZero();
+            displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
         }
 
-        // If internal filter drops back to Cold during startup, forget mag init
-        // and reacquire north from scratch later.
+        // If internal filter drops back to Cold during startup, discard mag init
+        // and reacquire tilt from filtered gravity from scratch.
         const auto cur_stage = impl_.getStartupStage();
         if (cur_stage != last_impl_startup_stage_) {
             if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
                 mag_ref_set_ = false;
                 mag_auto_tuner_.reset();
+
+                if (stage_ != Stage::Live) {
+                    stage_ = Stage::Uninitialized;
+                    resetGravityInit_();
+
+                    displacement_up_m_.setZero();
+                    displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
+                    if (cfg_.enable_displacement_detrend) {
+                        displacement_detrender_.reset(0.0f, 0.0f, 0.0f);
+                    }
+                }
             }
             last_impl_startup_stage_ = cur_stage;
         }
@@ -1039,10 +1045,14 @@ public:
         if (stage_ == Stage::Uninitialized) return;
         if (t_ < cfg_.mag_delay_sec) return;
 
-        // Learn magnetic world reference from measurements only.
+        // Learn magnetic world reference using the filtered gravity direction,
+        // not the raw instantaneous wave-contaminated accel sample.
         if (!mag_ref_set_) {
+            const Eigen::Vector3f acc_for_mag =
+                gravity_lp_initialized_ ? gravity_lp_body_ned_ : last_acc_body_ned_;
+
             if (have_last_imu_ &&
-                mag_auto_tuner_.addSample(last_acc_body_ned_, last_gyro_body_ned_, mag_body_ned))
+                mag_auto_tuner_.addSample(acc_for_mag, last_gyro_body_ned_, mag_body_ned))
             {
                 Eigen::Vector3f mag_world_ref_uT;
                 if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
@@ -1074,17 +1084,80 @@ public:
 private:
     enum class Stage { Uninitialized, Warming, Live };
 
-    static bool isStableInitSample_(const Eigen::Vector3f& acc_body,
-                                    const Eigen::Vector3f& gyro_body)
-    {
-        constexpr float G = 9.80665f;
-        constexpr float ACC_BAND = 0.08f * G;                    // ±8% around 1g
-        constexpr float GYRO_MAX = 18.0f * float(M_PI) / 180.0f; // 18 deg/s
+    static float clampf_(float x, float lo, float hi) {
+        return std::max(lo, std::min(x, hi));
+    }
 
-        if (!acc_body.allFinite() || !gyro_body.allFinite()) return false;
-        const float acc_n = acc_body.norm();
-        const float gyro_n = gyro_body.norm();
-        return (std::fabs(acc_n - G) <= ACC_BAND) && (gyro_n <= GYRO_MAX);
+    void resetGravityInit_() {
+        gravity_lp_body_ned_ = Eigen::Vector3f(0.0f, 0.0f, -g_std);
+        gravity_lp_initialized_ = false;
+        gravity_lp_age_sec_ = 0.0f;
+        gravity_dir_change_ema_rad_ = 1.0f;
+    }
+
+    void updateGravityLP_(float dt,
+                          const Eigen::Vector3f& acc_body_ned,
+                          const Eigen::Vector3f& gyro_body_ned)
+    {
+        if (!(dt > 0.0f)) return;
+        if (!acc_body_ned.allFinite() || !gyro_body_ned.allFinite()) return;
+
+        const float an = acc_body_ned.norm();
+        if (!(an > 1e-3f) || !std::isfinite(an)) return;
+
+        // Deliberately looser than the old init gate: we are low-passing direction,
+        // not trusting one sample.
+        const float G = g_std;
+        const float acc_band = 0.20f * G; // ±20%
+        const float gyro_max = 35.0f * float(M_PI) / 180.0f;
+
+        const float gyro_n = gyro_body_ned.norm();
+        if (!std::isfinite(gyro_n)) return;
+        if (std::fabs(an - G) > acc_band) return;
+        if (gyro_n > gyro_max) return;
+
+        const Eigen::Vector3f u = acc_body_ned / an; // specific-force direction
+
+        if (!gravity_lp_initialized_) {
+            gravity_lp_body_ned_ = u * G;
+            gravity_lp_initialized_ = true;
+            gravity_lp_age_sec_ = 0.0f;
+            gravity_dir_change_ema_rad_ = 0.0f;
+            return;
+        }
+
+        const float prev_n = gravity_lp_body_ned_.norm();
+        if (!(prev_n > 1e-6f) || !std::isfinite(prev_n)) {
+            gravity_lp_body_ned_ = u * G;
+            gravity_lp_initialized_ = true;
+            gravity_lp_age_sec_ = 0.0f;
+            gravity_dir_change_ema_rad_ = 0.0f;
+            return;
+        }
+
+        const Eigen::Vector3f prev_u = gravity_lp_body_ned_ / prev_n;
+
+        constexpr float TAU_SEC = 6.0f;
+        const float a = 1.0f - std::exp(-dt / TAU_SEC);
+
+        Eigen::Vector3f mix = (1.0f - a) * prev_u + a * u;
+        const float mix_n = mix.norm();
+        if (!(mix_n > 1e-6f) || !mix.allFinite()) return;
+        mix /= mix_n;
+
+        const float c = clampf_(prev_u.dot(mix), -1.0f, 1.0f);
+        const float dtheta = std::acos(c);
+
+        gravity_lp_body_ned_ = mix * G;
+        gravity_lp_age_sec_ += dt;
+        gravity_dir_change_ema_rad_ =
+            0.98f * gravity_dir_change_ema_rad_ + 0.02f * dtheta;
+    }
+
+    bool gravityInitReady_() const {
+        return gravity_lp_initialized_
+            && gravity_lp_age_sec_ >= 6.0f
+            && gravity_dir_change_ema_rad_ < (1.0f * float(M_PI) / 180.0f);
     }
 
 private:
@@ -1102,13 +1175,17 @@ private:
     // Last IMU sample for mag-init gating.
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
-    bool  have_last_imu_ = false;
+    bool have_last_imu_ = false;
+
+    // Low-passed startup gravity estimate in body/NED specific-force coordinates.
+    Eigen::Vector3f gravity_lp_body_ned_ = Eigen::Vector3f(0.0f, 0.0f, -g_std);
+    bool  gravity_lp_initialized_ = false;
+    float gravity_lp_age_sec_ = 0.0f;
+    float gravity_dir_change_ema_rad_ = 1.0f;
 
     // One-shot mag-init state.
     bool mag_ref_set_ = false;
     MagAutoTuner mag_auto_tuner_{};
-    Eigen::Vector3f tilt_init_acc_sum_ = Eigen::Vector3f::Zero();
-    int tilt_init_count_ = 0;
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
