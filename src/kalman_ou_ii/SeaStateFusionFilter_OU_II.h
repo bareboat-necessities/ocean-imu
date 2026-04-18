@@ -979,7 +979,7 @@ public:
                 ++tilt_init_count_;
             }
 
-            constexpr int TILT_INIT_MIN_SAMPLES = 380; // @ 200 Hz
+            constexpr int TILT_INIT_MIN_SAMPLES = 300; // @ 200 Hz
             if (tilt_init_count_ >= TILT_INIT_MIN_SAMPLES) {
                 const Eigen::Vector3f acc_mean = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
                 impl_.initialize_from_acc(acc_mean);
