@@ -1147,8 +1147,9 @@ public:
         }
     }
 
-    // Minimal getters
+    // getters
     bool  isLive() const { return stage_ == Stage::Live; }
+    bool hasMagNorthLock() const noexcept { return mag_ref_set_; }
     float freqHz() const { return impl_.getFreqHz(); }
     float waveDirectionDeg() const { return impl_.getWaveDirectionDeg(); }
     Eigen::Vector3f eulerNauticalDeg() const { return impl_.getEulerNautical(); }
