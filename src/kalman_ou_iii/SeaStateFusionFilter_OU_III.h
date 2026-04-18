@@ -1136,12 +1136,7 @@ public:
         if (stage_ == Stage::Uninitialized) return;
         if (t_ < cfg_.mag_delay_sec) return;
 
-        // Learn magnetic world reference only after wrapper startup reaches Live.
-        // This avoids locking north from early warmup transients that can create
-        // persistent yaw/acc-bias coupling under waves.
         if (!mag_ref_set_) {
-            if (stage_ != Stage::Live) return;
-
             if (have_last_imu_ &&
                 mag_auto_tuner_.addSample(last_acc_body_ned_, last_gyro_body_ned_, mag_body_ned))
             {
@@ -1180,8 +1175,8 @@ private:
                                     const Eigen::Vector3f& gyro_body_ned)
     {
         constexpr float G = 9.80665f;
-        constexpr float ACC_BAND = 0.16f * G;                    // ±16% around 1g
-        constexpr float GYRO_MAX = 23.0f * float(M_PI) / 180.0f; // 23 deg/s
+        constexpr float ACC_BAND = 0.08f * G;                    // ±8% around 1g
+        constexpr float GYRO_MAX = 18.0f * float(M_PI) / 180.0f; // 18 deg/s
 
         if (!acc_body_ned.allFinite() || !gyro_body_ned.allFinite()) return false;
         const float acc_n = acc_body_ned.norm();
