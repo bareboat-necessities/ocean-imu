@@ -1166,6 +1166,7 @@ public:
     const AdaptiveWaveDetrender3D::Output& displacementDetrend() const { return displacement_det_out_; }
 
     SeaStateFusionFilter_OU_III<trackerT>& raw() { return impl_; }
+    const SeaStateFusionFilter_OU_III<trackerT>& raw() { return impl_; }
 
 private:
     enum class Stage { Uninitialized, Warming, Live };
