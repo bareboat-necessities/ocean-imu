@@ -98,7 +98,7 @@ constexpr float ADAPT_TAU_SEC              = 1.5f;
 constexpr float ADAPT_EVERY_SECS           = 0.1f;
 constexpr float ADAPT_RS_MULT              = 5.0f;   // dimensionless
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
-constexpr float MAG_DELAY_SEC              = 10.0f;
+constexpr float MAG_DELAY_SEC              = 8.0f;
 
 // Frequency smoother dt (SeaStateFusionFilter_OU_III is designed for 200 Hz)
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
