@@ -978,7 +978,7 @@ public:
                 ++tilt_init_count_;
             }
 
-            constexpr int TILT_INIT_MIN_SAMPLES = 600; // @ 200 Hz
+            constexpr int TILT_INIT_MIN_SAMPLES = 800; // @ 200 Hz
             if (tilt_init_count_ >= TILT_INIT_MIN_SAMPLES) {
                 tilt_init_acc_mean_ = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
                 have_tilt_init_acc_mean_ = true;
