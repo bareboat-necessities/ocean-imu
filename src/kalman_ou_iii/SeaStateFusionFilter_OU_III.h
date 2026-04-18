@@ -973,6 +973,10 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f,0.01f,0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f,0.3f,0.3f);
 
+        // mag-init policy:
+        // wait a bit for tilt to settle, then average only a short stable window.
+        float mag_init_min_mag_norm   = 1e-3f;
+
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
         AdaptiveWaveDetrender3D::Config displacement_detrend_cfg{};
@@ -987,7 +991,9 @@ public:
         t_ = 0.0f;
 
         mag_ref_set_ = false;
-        mag_auto_tuner_.reset();
+        MagAutoTuner::Config mag_cfg;
+        mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
+        mag_auto_tuner_.setConfig(mag_cfg);
 
         // Startup learning buffers (tilt from gravity, then mag reference).
         tilt_init_acc_sum_.setZero();
@@ -1135,7 +1141,10 @@ public:
                 mag_auto_tuner_.addSample(last_acc_body_ned_, last_gyro_body_ned_, mag_body_ned))
             {
                 Eigen::Vector3f mag_world_ref_uT;
-                if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT)) {
+                if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
+                    mag_world_ref_uT.allFinite() &&
+                    mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
+                {
                     impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
                     mag_ref_set_ = true;
                 }
