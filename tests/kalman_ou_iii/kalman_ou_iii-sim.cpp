@@ -18,6 +18,7 @@
 
 using Eigen::Quaternionf;
 using Eigen::Vector3f;
+using Eigen::Matrix3f;
 
 bool add_noise = true;
 bool attitude_only = false;
@@ -53,12 +54,15 @@ public:
         }
     }
 
-    void updateMag(const Vector3f& mag_body_ned) override { fusion_.updateMag(mag_body_ned); }
+    void updateMag(const Vector3f& mag_body_ned) override {
+        fusion_.updateMag(mag_body_ned);
+    }
 
     void update(float dt,
                 const Vector3f& gyr_meas_ned,
                 const Vector3f& acc_meas_ned,
-                float temperature_c) override {
+                float temperature_c) override
+    {
         fusion_.update(dt, gyr_meas_ned, acc_meas_ned, temperature_c);
     }
 
@@ -68,36 +72,34 @@ public:
 
         FilterSnapshot s;
         s.disp_est_zu = ned_to_zu(filter.mekf().get_position());
-        s.vel_est_zu = ned_to_zu(filter.mekf().get_velocity());
-        s.acc_est_zu = ned_to_zu(filter.mekf().get_world_accel());
+        s.vel_est_zu  = ned_to_zu(filter.mekf().get_velocity());
+        s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_accel());
+
         const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
-        const Matrix3f C_bw_ned = q_bw_ned.toRotationMatrix();
-        const Matrix3f C_wb_zu = rot_bw_ned_to_wb_zu(C_bw_ned);
-        const Quaternionf q_wb_zu(C_wb_zu);
 
         float roll_deg  = 0.0f;
         float pitch_deg = 0.0f;
         float yaw_deg   = 0.0f;
         quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
-        if (with_mag_) {
-            // Convert magnetic heading to true/world heading for chart output.
-            yaw_deg -= MagSim_WMM::default_declination_deg;
-        }
+
         s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
-        s.acc_bias_est_ned = filter.mekf().get_acc_bias();
-        s.gyro_bias_est_ned = filter.mekf().gyroscope_bias();
+
+        s.acc_bias_est_ned    = filter.mekf().get_acc_bias();
+        s.gyro_bias_est_ned   = filter.mekf().gyroscope_bias();
         s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf());
-        s.tau_target = filter.getTauTarget();
-        s.sigma_target = filter.getSigmaTarget();
-        s.tuning_target = filter.getRSTarget();
-        s.tau_applied = filter.getTauApplied();
-        s.sigma_applied = filter.getSigmaApplied();
-        s.tuning_applied = filter.getRSApplied();
-        s.freq_hz = filter.getFreqHz();
-        s.period_sec = filter.getPeriodSec();
-        s.accel_variance = filter.getAccelVariance();
+
+        s.tau_target      = filter.getTauTarget();
+        s.sigma_target    = filter.getSigmaTarget();
+        s.tuning_target   = filter.getRSTarget();
+        s.tau_applied     = filter.getTauApplied();
+        s.sigma_applied   = filter.getSigmaApplied();
+        s.tuning_applied  = filter.getRSApplied();
+        s.freq_hz         = filter.getFreqHz();
+        s.period_sec      = filter.getPeriodSec();
+        s.accel_variance  = filter.getAccelVariance();
         s.displacement_scale_m = filter.getDisplacementScale();
-        s.velocity_scale_mps = filter.getVerticalSpeedEnvelopeMps(true);
+        s.velocity_scale_mps   = filter.getVerticalSpeedEnvelopeMps(true);
+
         s.direction.phase = d.getPhase();
         s.direction.direction_deg = d.getDirectionDegrees();
         s.direction.direction_deg_generator_signed = dirDegGeneratorSignedFromVec(d.getDirection());
@@ -106,12 +108,16 @@ public:
         s.direction.amplitude = d.getAmplitude();
         s.direction.direction_vec = d.getDirection();
         s.direction.filtered_signal = d.getFilteredSignal();
+
         constexpr float CONF_THRESH = 20.0f;
-        constexpr float AMP_THRESH = 0.08f;
+        constexpr float AMP_THRESH  = 0.08f;
         if (s.direction.confidence > CONF_THRESH && s.direction.amplitude > AMP_THRESH) {
             s.direction.sign = filter.getDirSignState();
-            s.direction.sign_num = (s.direction.sign == FORWARD) ? 1 : (s.direction.sign == BACKWARD ? -1 : 0);
+            s.direction.sign_num =
+                (s.direction.sign == FORWARD) ? 1 :
+                (s.direction.sign == BACKWARD ? -1 : 0);
         }
+
         return s;
     }
 
@@ -122,27 +128,27 @@ private:
     Fusion::Config cfg_{};
 };
 
-
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap = 15.2f,
-    .err_limit_percent_z_pmstokes = 15.2f,
-    .err_limit_yaw_deg = 4.5f,
-    .err_limit_percent_3d_jonswap = 60.0f,
+    .err_limit_percent_z_jonswap   = 15.2f,
+    .err_limit_percent_z_pmstokes  = 15.2f,
+    .err_limit_yaw_deg             = 4.5f,
+    .err_limit_percent_3d_jonswap  = 60.0f,
     .err_limit_percent_3d_pmstokes = 65.0f,
-    .acc_z_bias_percent = 30.0f,
-    .bias_3d_percent = 320.0f,
+    .acc_z_bias_percent            = 30.0f,
+    .bias_3d_percent               = 320.0f,
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
-    .target = "RS_target",
+    .target  = "RS_target",
     .applied = "RS_applied",
 };
 
 static void process_wave_file_for_tracker(const std::string& filename, float dt, bool with_mag)
 {
     constexpr float MAG_ODR_HZ = 25.0f;
-    auto result = process_wave_file_for_tracker<FusionAdapter_OU_III>(filename, dt, with_mag, add_noise, MAG_ODR_HZ,
-                                                                      "_fusion_ou3", "_fusion_ou3_nomag");
+    auto result = process_wave_file_for_tracker<FusionAdapter_OU_III>(
+        filename, dt, with_mag, add_noise, MAG_ODR_HZ,
+        "_fusion_ou3", "_fusion_ou3_nomag");
     if (!result) return;
     print_summary_and_fail_if_needed(*result, dt, FAIL_LIMITS, SUMMARY_LABELS);
 }
