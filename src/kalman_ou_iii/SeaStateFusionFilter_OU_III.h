@@ -876,7 +876,7 @@ private:
 
     // Warmup behavior
     bool  freeze_acc_bias_until_live_ = true;
-    float Racc_warmup_std_            = 0.5f;   // big accel noise during warmup
+    float Racc_warmup_std_            = 0.8f;   // big accel noise during warmup
     bool  warmup_Racc_active_         = false;
     Eigen::Vector3f Racc_nominal_     = Eigen::Vector3f::Constant(0.0f); // 0 => don't touch
 
