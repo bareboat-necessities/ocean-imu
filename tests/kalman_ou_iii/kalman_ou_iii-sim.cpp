@@ -47,7 +47,7 @@ public:
             filter.mekf().set_initial_acc_bias(Vector3f::Zero());
             filter.mekf().set_initial_acc_bias_std(0.0f);
             filter.mekf().set_Q_bacc_rw(Vector3f::Zero());
-            filter.mekf().set_Racc(Vector3f::Constant(0.5f));
+            filter.mekf().set_Racc(Vector3f::Constant(0.4f));
         } else {
             filter.enableLinearBlock(true);
             filter.enableTuner(true);
