@@ -1136,7 +1136,12 @@ public:
         if (stage_ == Stage::Uninitialized) return;
         if (t_ < cfg_.mag_delay_sec) return;
 
+        // Learn magnetic world reference only after wrapper startup reaches Live.
+        // This avoids locking north from early warmup transients that can create
+        // persistent yaw/acc-bias coupling under waves.
         if (!mag_ref_set_) {
+            if (stage_ != Stage::Live) return;
+
             if (have_last_imu_ &&
                 mag_auto_tuner_.addSample(last_acc_body_ned_, last_gyro_body_ned_, mag_body_ned))
             {
