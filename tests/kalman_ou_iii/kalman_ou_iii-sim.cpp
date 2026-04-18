@@ -147,12 +147,12 @@ private:
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 9.8f,
-    .err_limit_percent_z_pmstokes  = 9.8f,
-    .err_limit_yaw_deg             = 3.0f,
-    .err_limit_percent_3d_jonswap  = 60.0f,
-    .err_limit_percent_3d_pmstokes = 65.0f,
-    .acc_z_bias_percent            = 70.0f,
-    .bias_3d_percent               = 1500.0f,
+    .err_limit_percent_z_pmstokes  = 8.0f,
+    .err_limit_yaw_deg             = 2.4f,
+    .err_limit_percent_3d_jonswap  = 47.0f,
+    .err_limit_percent_3d_pmstokes = 51.0f,
+    .acc_z_bias_percent            = 35.0f,
+    .bias_3d_percent               = 650.0f,
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
