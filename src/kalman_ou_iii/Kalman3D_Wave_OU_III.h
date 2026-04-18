@@ -16,8 +16,6 @@
     is preserved where possible.
   - The extended linear states are driven by a latent OU world-acceleration a_w
     (accelerometer input is used only in the measurement update).
-  - A full extended covariance (Pext) and transition Jacobian Fext are constructed; the top-left corner
-    contains the MEKF's P/Q blocks (attitude error + optional gyro bias).
   - Accelerometer and magnetometer inputs must be given in aerospace/NED (x north, y east, z down)
 */
 
