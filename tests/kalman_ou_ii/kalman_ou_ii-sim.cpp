@@ -37,7 +37,7 @@ public:
         cfg_.sigma_m = sigma_m;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         cfg_.freeze_acc_bias_until_live = true;
-        cfg_.Racc_warmup = 0.5f;
+        cfg_.Racc_warmup_std = 0.5f;
 
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();

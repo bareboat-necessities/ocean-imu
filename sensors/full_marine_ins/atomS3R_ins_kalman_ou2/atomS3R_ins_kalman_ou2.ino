@@ -441,7 +441,7 @@ private:
     fcfg.online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
     fcfg.freeze_acc_bias_until_live = true;
-    fcfg.Racc_warmup = 0.18f;
+    fcfg.Racc_warmup_std = 0.18f;
 
     fcfg.sigma_a = sigma_a;
     fcfg.sigma_g = sigma_g;

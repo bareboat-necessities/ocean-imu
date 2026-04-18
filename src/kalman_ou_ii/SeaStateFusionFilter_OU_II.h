@@ -880,7 +880,7 @@ public:
         float online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
         bool  freeze_acc_bias_until_live = true;
-        float Racc_warmup = 0.5f;
+        float Racc_warmup_std = 0.5f;
 
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
@@ -916,7 +916,7 @@ public:
 
         impl_.setWithMag(cfg_.with_mag);
         impl_.setFreezeAccBiasUntilLive(cfg_.freeze_acc_bias_until_live);
-        impl_.setWarmupRaccStd(cfg_.Racc_warmup);
+        impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
         impl_.setMagDelaySec(cfg_.mag_delay_sec);
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
 

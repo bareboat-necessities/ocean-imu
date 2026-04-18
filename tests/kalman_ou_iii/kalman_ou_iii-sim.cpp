@@ -37,7 +37,7 @@ public:
         cfg_.sigma_m = sigma_m;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         cfg_.freeze_acc_bias_until_live = true;
-        cfg_.Racc_warmup = 0.5f;
+        cfg_.Racc_warmup_std = 0.5f;
 
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
@@ -47,7 +47,7 @@ public:
             filter.mekf().set_initial_acc_bias(Vector3f::Zero());
             filter.mekf().set_initial_acc_bias_std(0.0f);
             filter.mekf().set_Q_bacc_rw(Vector3f::Zero());
-            filter.mekf().set_Racc(Vector3f::Constant(0.4f));
+            filter.mekf().set_Racc_std(Vector3f::Constant(0.4f));
         } else {
             filter.enableLinearBlock(true);
             filter.enableTuner(true);

@@ -307,7 +307,7 @@ public:
                 // Restore nominal Racc only when bias learning is allowed.
                 if (warmup_Racc_active_) {
                     if (Racc_nominal_.allFinite() && Racc_nominal_.maxCoeff() > 0.0f) {
-                        mekf_->set_Racc(Racc_nominal_);
+                        mekf_->set_Racc_std(Racc_nominal_);
                         warmup_Racc_active_ = false;
                     }
                 }
@@ -460,10 +460,10 @@ public:
     }
 
     void setFreezeAccBiasUntilLive(bool en) { freeze_acc_bias_until_live_ = en; }
-    void setWarmupRacc(float r) { if (std::isfinite(r) && r > 0.0f) Racc_warmup_ = r; }
+    void setWarmupRaccStd(float r) { if (std::isfinite(r) && r > 0.0f) Racc_warmup_std_ = r; }
 
     // For SeaStateFusionFilter_OU_III to restore Racc automatically
-    void setNominalRacc(const Eigen::Vector3f& r) { Racc_nominal_ = r; }
+    void setNominalRaccStd(const Eigen::Vector3f& r) { Racc_nominal_ = r; }
 
     //  Exposed getters
     inline float getFreqHz()        const noexcept { return freq_hz_; }        // fast branch
@@ -842,7 +842,7 @@ private:
         // warmup_Racc_active_
         if (freeze_acc_bias_until_live_) {
             mekf_->set_acc_bias_updates_enabled(false);
-            mekf_->set_Racc(Eigen::Vector3f::Constant(Racc_warmup_));
+            mekf_->set_Racc_std(Eigen::Vector3f::Constant(Racc_warmup_std_));
             warmup_Racc_active_ = true;
         }
     }
@@ -861,7 +861,7 @@ private:
             mekf_->set_acc_bias_updates_enabled(allow_bias);
 
             if (warmup_Racc_active_ && Racc_nominal_.allFinite() && Racc_nominal_.maxCoeff() > 0.0f) {
-                mekf_->set_Racc(Racc_nominal_);
+                mekf_->set_Racc_std(Racc_nominal_);
             }
             warmup_Racc_active_ = false;
         }
@@ -874,7 +874,7 @@ private:
 
     // Warmup behavior
     bool  freeze_acc_bias_until_live_ = true;
-    float Racc_warmup_               = 0.5f;   // big accel noise during warmup
+    float Racc_warmup_std_            = 0.5f;   // big accel noise during warmup
     bool  warmup_Racc_active_         = false;
     Eigen::Vector3f Racc_nominal_     = Eigen::Vector3f::Constant(0.0f); // 0 => don't touch
 
@@ -966,7 +966,7 @@ public:
 
         // Bias freeze behavior
         bool  freeze_acc_bias_until_live = true;
-        float Racc_warmup = 0.5f;
+        float Racc_warmup_std = 0.5f;
 
         // Sensor noise
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f,0.2f,0.2f);
@@ -1001,7 +1001,7 @@ public:
         // Configure internal impl without reassign
         impl_.setWithMag(cfg.with_mag);
         impl_.setFreezeAccBiasUntilLive(cfg.freeze_acc_bias_until_live);
-        impl_.setWarmupRacc(cfg.Racc_warmup);
+        impl_.setWarmupRaccStd(cfg.Racc_warmup_std);
         impl_.setMagDelaySec(cfg.mag_delay_sec);
         impl_.setOnlineTuneWarmupSec(cfg.online_tune_warmup_sec);
 
@@ -1009,7 +1009,7 @@ public:
         last_impl_startup_stage_ = impl_.getStartupStage();
 
         // IMPORTANT: allow warmup to restore nominal accel measurement noise
-        impl_.setNominalRacc(cfg.sigma_a);
+        impl_.setNominalRaccStd(cfg.sigma_a);
 
         displacement_up_m_.setZero();
         displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};

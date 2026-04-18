@@ -495,7 +495,7 @@ class Kalman3D_Wave_OU_III {
 	}
 
     // Accelerometer measurement noise (std in m/s² per axis)
-	void set_Racc(const Vector3& sigma_acc) {
+	void set_Racc_std(const Vector3& sigma_acc) {
 	    if (param_rw_enabled_) { param_rw_update_sigma_acc_cmd_(sigma_acc); return; }
 	    Racc = sigma_acc.array().square().matrix().asDiagonal();
 	}
@@ -1132,7 +1132,7 @@ class Kalman3D_Wave_OU_III {
 
 	EIGEN_STRONG_INLINE void param_rw_update_sigma_acc_cmd_(const Vector3& sigma_acc_cmd) {
 	    if (!param_rw_enabled_) {
-	        set_Racc(sigma_acc_cmd);
+	        set_Racc_std(sigma_acc_cmd);
 	        return;
 	    }
 	    Vector3 s = clamp_pos_vec_(sigma_acc_cmd, sigma_acc_min_, sigma_acc_max_);
