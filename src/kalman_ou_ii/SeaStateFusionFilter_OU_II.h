@@ -886,9 +886,7 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        // mag-init policy:
-        // wait a bit for tilt to settle, then average only a short stable window.
-        float mag_init_min_mag_norm   = 1e-3f;
+        float mag_init_min_mag_norm = 1e-3f;
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
@@ -908,6 +906,7 @@ public:
         mag_auto_tuner_.setConfig(mag_cfg);
 
         resetTiltInit_();
+        resetMagTiltInit_();
 
         last_acc_body_ned_.setZero();
         last_gyro_body_ned_.setZero();
@@ -971,7 +970,7 @@ public:
 
         t_ += dt;
 
-        // Stage 1: original tilt learning from stable gravity-like samples.
+        // Original tilt init logic
         if (stage_ == Stage::Uninitialized) {
             if (isStableInitSample_(acc_body_ned, gyro_body_ned)) {
                 tilt_init_acc_sum_ += acc_body_ned;
@@ -988,12 +987,20 @@ public:
 
                 tilt_init_acc_sum_.setZero();
                 tilt_init_count_ = 0;
+
+                // Start a fresh post-tilt stable average for mag init.
+                resetMagTiltInit_();
             }
         }
 
         last_acc_body_ned_  = acc_body_ned;
         last_gyro_body_ned_ = gyro_body_ned;
         have_last_imu_      = true;
+
+        // Build a short stable accel average after tilt init, until mag ref is learned.
+        if (stage_ != Stage::Uninitialized && !mag_ref_set_) {
+            updateMagTiltInit_(acc_body_ned, gyro_body_ned);
+        }
 
         if (stage_ != Stage::Uninitialized) {
             impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
@@ -1020,13 +1027,12 @@ public:
             }
         }
 
-        // If internal filter drops back to Cold during startup, forget mag init
-        // and reacquire tilt from scratch.
         const auto cur_stage = impl_.getStartupStage();
         if (cur_stage != last_impl_startup_stage_) {
             if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
                 mag_ref_set_ = false;
                 mag_auto_tuner_.reset();
+                resetMagTiltInit_();
 
                 if (stage_ != Stage::Live) {
                     stage_ = Stage::Uninitialized;
@@ -1052,11 +1058,11 @@ public:
         if (stage_ == Stage::Uninitialized) return;
         if (t_ < cfg_.mag_delay_sec) return;
 
-        // Learn magnetic world reference using the SAME frozen accel mean that
-        // initialized tilt, not the instantaneous wave-contaminated accel sample.
         if (!mag_ref_set_) {
             const Eigen::Vector3f acc_for_mag =
-                have_tilt_init_acc_mean_ ? tilt_init_acc_mean_ : last_acc_body_ned_;
+                magTiltAccReady_() ? mag_tilt_acc_mean_
+                                   : (have_tilt_init_acc_mean_ ? tilt_init_acc_mean_
+                                                               : last_acc_body_ned_);
 
             if (have_last_imu_ &&
                 mag_auto_tuner_.addSample(acc_for_mag, last_gyro_body_ned_, mag_body_ned))
@@ -1098,17 +1104,42 @@ private:
         have_tilt_init_acc_mean_ = false;
     }
 
+    void resetMagTiltInit_() {
+        mag_tilt_acc_sum_.setZero();
+        mag_tilt_acc_count_ = 0;
+        mag_tilt_acc_mean_ = Eigen::Vector3f::Zero();
+    }
+
     static bool isStableInitSample_(const Eigen::Vector3f& acc_body,
                                     const Eigen::Vector3f& gyro_body)
     {
         constexpr float G = 9.80665f;
-        constexpr float ACC_BAND = 0.08f * G;                     // ±8% around 1g
-        constexpr float GYRO_MAX = 18.0f * float(M_PI) / 180.0f; // 18 deg/s
+        constexpr float ACC_BAND = 0.08f * G;
+        constexpr float GYRO_MAX = 18.0f * float(M_PI) / 180.0f;
 
         if (!acc_body.allFinite() || !gyro_body.allFinite()) return false;
         const float acc_n = acc_body.norm();
         const float gyro_n = gyro_body.norm();
         return (std::fabs(acc_n - G) <= ACC_BAND) && (gyro_n <= GYRO_MAX);
+    }
+
+    void updateMagTiltInit_(const Eigen::Vector3f& acc_body_ned,
+                            const Eigen::Vector3f& gyro_body_ned)
+    {
+        if (!isStableInitSample_(acc_body_ned, gyro_body_ned)) return;
+
+        mag_tilt_acc_sum_ += acc_body_ned;
+        ++mag_tilt_acc_count_;
+
+        if (mag_tilt_acc_count_ > 0) {
+            mag_tilt_acc_mean_ =
+                mag_tilt_acc_sum_ / static_cast<float>(mag_tilt_acc_count_);
+        }
+    }
+
+    bool magTiltAccReady_() const {
+        constexpr int MAG_TILT_MIN_SAMPLES = 200; // ~1 s @ 200 Hz
+        return mag_tilt_acc_count_ >= MAG_TILT_MIN_SAMPLES;
     }
 
 private:
@@ -1123,20 +1154,23 @@ private:
     typename SeaStateFusionFilter_OU_II<trackerT>::StartupStage last_impl_startup_stage_ =
         SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold;
 
-    // Last IMU sample for mag-init gating.
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
     bool  have_last_imu_ = false;
 
-    // One-shot mag-init state.
     bool mag_ref_set_ = false;
     MagAutoTuner mag_auto_tuner_{};
 
-    // Original tilt-init averaging, but keep the frozen mean that was used to initialize tilt.
+    // Original tilt-init averaging
     Eigen::Vector3f tilt_init_acc_sum_ = Eigen::Vector3f::Zero();
     int tilt_init_count_ = 0;
     Eigen::Vector3f tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
     bool have_tilt_init_acc_mean_ = false;
+
+    // Separate short stable post-tilt average for mag init
+    Eigen::Vector3f mag_tilt_acc_sum_ = Eigen::Vector3f::Zero();
+    int mag_tilt_acc_count_ = 0;
+    Eigen::Vector3f mag_tilt_acc_mean_ = Eigen::Vector3f::Zero();
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
