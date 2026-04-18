@@ -1438,6 +1438,12 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     Vector3 const& acc_body)
 {
     const Eigen::Quaternion<T> q_old_bw = quaternion_boat();
+    if (!std::isfinite(q_old_bw.x()) || !std::isfinite(q_old_bw.y()) ||
+        !std::isfinite(q_old_bw.z()) || !std::isfinite(q_old_bw.w()))
+    {
+        initialize_from_acc(acc_body);
+        return;
+    }
 
     const T ox = q_old_bw.x();
     const T oy = q_old_bw.y();
