@@ -21,7 +21,7 @@ public:
 
   struct Config {
     float g = 9.80665f;
-    float accel_band_frac = 0.15f;                      // ±15% around 1g
+    float accel_band_frac = 0.15f;                       // ±15% around 1g
     float gyro_norm_max = 50.0f * float(M_PI) / 180.0f; // 50 deg/s
     float mag_norm_min = 1e-3f;
     int   min_samples = 40;
@@ -30,11 +30,13 @@ public:
   MagAutoTuner() : cfg_(Config{}) { reset(); }
   explicit MagAutoTuner(const Config& cfg) : cfg_(cfg) { reset(); }
 
-  void setConfig(const Config& cfg) { cfg_ = cfg; reset(); }
+  void setConfig(const Config& cfg) {
+    cfg_ = cfg;
+    reset();
+  }
 
   void reset() {
-    acc_sum_.setZero();
-    mag_sum_.setZero();
+    mag_world_sum_.setZero();
     accepted_count_ = 0;
     ready_ = false;
     mag_world_ref_.setZero();
@@ -51,30 +53,38 @@ public:
     const float mag_n = mag_body_ned.norm();
     if (!(mag_n > cfg_.mag_norm_min) || !std::isfinite(mag_n)) return false;
 
-    acc_sum_ += acc_body_ned;
-    mag_sum_ += mag_body_ned;
+    // IMPORTANT:
+    //   Do NOT average body-frame mag first and tilt-compensate once at the end.
+    //   In waves, tilt compensation is nonlinear and that causes a heading bias.
+    //   Instead, tilt-compensate EACH accepted sample into world frame, then average.
+    Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_body_ned);
+    q_tilt.normalize();
+
+    const Eigen::Vector3f mag_world_i = q_tilt * mag_body_ned;
+    if (!mag_world_i.allFinite()) return false;
+
+    mag_world_sum_ += mag_world_i;
     ++accepted_count_;
 
     if (accepted_count_ < cfg_.min_samples) return false;
 
-    const Eigen::Vector3f acc_mean = acc_sum_ / static_cast<float>(accepted_count_);
-    const Eigen::Vector3f mag_mean = mag_sum_ / static_cast<float>(accepted_count_);
+    const Eigen::Vector3f mag_world_mean =
+        mag_world_sum_ / static_cast<float>(accepted_count_);
 
-    Eigen::Quaternionf q_tilt = tiltOnlyQuatFromAccel_(acc_mean);
-    q_tilt.normalize();
+    const float horiz = std::sqrt(
+        mag_world_mean.x() * mag_world_mean.x() +
+        mag_world_mean.y() * mag_world_mean.y());
 
-    const Eigen::Vector3f mag_world_tilt = q_tilt * mag_mean;
-    const float horiz = std::sqrt(mag_world_tilt.x() * mag_world_tilt.x() +
-                                  mag_world_tilt.y() * mag_world_tilt.y());
     if (!(horiz > cfg_.mag_norm_min) || !std::isfinite(horiz)) {
       ready_ = false;
       return false;
     }
 
-    // Define world frame so that +X is magnetic north and +Z is down.
-    // Keep measured dip (Z component), but remove unknown yaw by forcing E=0.
-    mag_world_ref_ = Eigen::Vector3f(horiz, 0.0f, mag_world_tilt.z());
-    ready_ = mag_world_ref_.allFinite() && (mag_world_ref_.norm() > cfg_.mag_norm_min);
+    // Define learned world frame so that +X is magnetic north and +Z is down.
+    // Keep measured dip (Z component), but remove unknown yaw by forcing Y=0.
+    mag_world_ref_ = Eigen::Vector3f(horiz, 0.0f, mag_world_mean.z());
+    ready_ = mag_world_ref_.allFinite() &&
+             (mag_world_ref_.norm() > cfg_.mag_norm_min);
     return ready_;
   }
 
@@ -88,14 +98,14 @@ public:
   }
 
 private:
-  bool isStableSample_(const Eigen::Vector3f& a,
+  bool isStableSample_(const Eigen::Vector3f& acc_body_ned,
                        const Eigen::Vector3f& gyro_body_ned) const
   {
-    if (!a.allFinite() || !gyro_body_ned.allFinite()) return false;
+    if (!acc_body_ned.allFinite() || !gyro_body_ned.allFinite()) return false;
 
     const float g = cfg_.g;
     const float acc_band = cfg_.accel_band_frac * g;
-    const float acc_n = a.norm();
+    const float acc_n = acc_body_ned.norm();
     const float gyro_n = gyro_body_ned.norm();
 
     return std::isfinite(acc_n) &&
@@ -110,6 +120,8 @@ private:
       return Eigen::Quaternionf::Identity();
     }
 
+    // For specific force at rest in NED, acc_body_ned ~= [0, 0, -g].
+    // Therefore body-down is opposite to the measured accel direction.
     const Eigen::Vector3f body_down = -(acc_body_ned / an);
     const Eigen::Vector3f world_down(0.0f, 0.0f, 1.0f);
 
@@ -121,9 +133,11 @@ private:
       if (d > 0.0f) {
         return Eigen::Quaternionf::Identity();
       }
-      Eigen::Vector3f ortho = (std::fabs(body_down.z()) < 0.9f)
-        ? Eigen::Vector3f(0, 0, 1).cross(body_down)
-        : Eigen::Vector3f(0, 1, 0).cross(body_down);
+
+      Eigen::Vector3f ortho =
+          (std::fabs(body_down.z()) < 0.9f)
+              ? Eigen::Vector3f(0.0f, 0.0f, 1.0f).cross(body_down)
+              : Eigen::Vector3f(0.0f, 1.0f, 0.0f).cross(body_down);
       ortho.normalize();
       return Eigen::Quaternionf(Eigen::AngleAxisf(float(M_PI), ortho));
     }
@@ -138,9 +152,10 @@ private:
 private:
   Config cfg_;
 
-  Eigen::Vector3f acc_sum_ = Eigen::Vector3f::Zero();
-  Eigen::Vector3f mag_sum_ = Eigen::Vector3f::Zero();
+  // Average tilt-compensated world-frame magnetic vectors.
+  Eigen::Vector3f mag_world_sum_ = Eigen::Vector3f::Zero();
+
   int accepted_count_ = 0;
-  bool  ready_ = false;
+  bool ready_ = false;
   Eigen::Vector3f mag_world_ref_ = Eigen::Vector3f::Zero();
 };
