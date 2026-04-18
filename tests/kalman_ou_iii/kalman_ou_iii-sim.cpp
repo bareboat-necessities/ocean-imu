@@ -41,6 +41,7 @@ public:
 
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
+
         if (attitude_only) {
             filter.enableLinearBlock(false);
             filter.mekf().set_initial_acc_bias(Vector3f::Zero());
@@ -75,7 +76,23 @@ public:
         s.vel_est_zu  = ned_to_zu(filter.mekf().get_velocity());
         s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_accel());
 
-        const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
+        // Filter attitude is BODY->WORLD in NED.
+        // Before mag lock this is just the filter's internal world frame.
+        // After mag lock it becomes BODY->WORLD in magnetic-north world.
+        Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
+
+        // Convert magnetic-world attitude to true/world attitude only after
+        // magnetic north has actually been learned.
+        if (with_mag_ && fusion_.hasMagNorthLock()) {
+            // East-positive declination:
+            //   heading_true = heading_mag + declination
+            // therefore
+            //   C_bw_true = C_true<-mag * C_bw_mag
+            const Quaternionf q_mag_to_true_ned =
+                quat_from_euler(0.0f, 0.0f, MagSim_WMM::default_declination_deg);
+
+            q_bw_ned = (q_mag_to_true_ned * q_bw_ned).normalized();
+        }
 
         float roll_deg  = 0.0f;
         float pitch_deg = 0.0f;
