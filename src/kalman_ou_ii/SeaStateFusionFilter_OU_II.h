@@ -795,7 +795,7 @@ private:
     float        startup_stage_t_ = 0.0f;
 
     bool  freeze_acc_bias_until_live_ = true;
-    float Racc_warmup_std_            = 0.8f;
+    float Racc_warmup_std_            = 0.6f;
     bool  warmup_Racc_active_         = false;
     Eigen::Vector3f Racc_nominal_std_ = Eigen::Vector3f::Constant(0.0f);
 
