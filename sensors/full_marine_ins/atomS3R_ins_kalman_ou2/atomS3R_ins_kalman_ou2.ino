@@ -440,9 +440,6 @@ private:
     fcfg.with_mag = true;
     fcfg.online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
 
-    fcfg.use_fixed_mag_world_ref = false;
-    fcfg.mag_world_ref = Vector3f::Zero();
-
     fcfg.freeze_acc_bias_until_live = true;
     fcfg.Racc_warmup = 0.18f;
 
