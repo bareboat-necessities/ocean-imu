@@ -24,7 +24,7 @@ public:
     float accel_band_frac = 0.15f;                       // ±15% around 1g
     float gyro_norm_max = 50.0f * float(M_PI) / 180.0f; // 50 deg/s
     float mag_norm_min = 1e-3f;
-    int   min_samples = 5;
+    int   min_samples = 25;
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
