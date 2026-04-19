@@ -1153,19 +1153,18 @@ public:
         }
     }
 
-    void updateMag(const Eigen::Vector3f& mag_body_ned) {
-        if (!begun_ || !cfg_.with_mag) return;
-        if (stage_ == Stage::Uninitialized) return;
-        if (t_ < cfg_.mag_delay_sec) return;
+    // Learn magnetic world reference using CURRENT filter tilt
+    // Keep current accel/gyro only for sample acceptance gating.
+    if (!mag_ref_set_) {
+        if (have_last_imu_) {
+            const Eigen::Quaternionf q_tilt_bw =
+                tiltOnlyQuatFromBoatQuat_(impl_.mekf().quaternion_boat());
 
-        // Learn magnetic world reference using the SAME frozen accel mean that
-        // initialized tilt, not the instantaneous wave-contaminated accel sample.
-        if (!mag_ref_set_) {
-            const Eigen::Vector3f acc_for_mag =
-                have_tilt_init_acc_mean_ ? tilt_init_acc_mean_ : last_acc_body_ned_;
-
-            if (have_last_imu_ &&
-                mag_auto_tuner_.addSample(acc_for_mag, last_gyro_body_ned_, mag_body_ned))
+            if (mag_auto_tuner_.addSampleWithTiltQuat(
+                    q_tilt_bw,
+                    last_acc_body_ned_,
+                    last_gyro_body_ned_,
+                    mag_body_ned))
             {
                 Eigen::Vector3f mag_world_ref_uT;
                 if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
@@ -1176,10 +1175,6 @@ public:
                     mag_ref_set_ = true;
                 }
             }
-        }
-
-        if (mag_ref_set_) {
-            impl_.updateMag(mag_body_ned);
         }
     }
 
@@ -1203,6 +1198,52 @@ private:
         tilt_init_count_ = 0;
         tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
         have_tilt_init_acc_mean_ = false;
+    }
+
+    static Eigen::Quaternionf tiltOnlyQuatFromBoatQuat_(const Eigen::Quaternionf& q_bw_in)
+    {
+        if (!q_bw_in.coeffs().allFinite()) {
+            return Eigen::Quaternionf::Identity();
+        }
+
+        Eigen::Quaternionf q_bw = q_bw_in;
+        q_bw.normalize();
+
+        // Current world-frame direction of body-down.
+        Eigen::Vector3f body_down_world = q_bw * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        const float n = body_down_world.norm();
+        if (!(n > 1e-6f) || !body_down_world.allFinite()) {
+            return Eigen::Quaternionf::Identity();
+        }
+        body_down_world /= n;
+
+        // Build the shortest-arc body->world rotation that maps body-down [0,0,1]
+        // onto the current world-frame body-down direction. This preserves roll/pitch
+        // and removes yaw.
+        const Eigen::Vector3f body_down_body(0.0f, 0.0f, 1.0f);
+
+        float d = body_down_body.dot(body_down_world);
+        d = std::max(-1.0f, std::min(1.0f, d));
+
+        Eigen::Vector3f axis = body_down_body.cross(body_down_world);
+        const float axis_n = axis.norm();
+
+        if (axis_n < 1e-6f) {
+            if (d > 0.0f) {
+                return Eigen::Quaternionf::Identity();
+            }
+
+            // 180 deg case: any axis orthogonal to body-down is valid.
+            return Eigen::Quaternionf(
+                Eigen::AngleAxisf(float(M_PI), Eigen::Vector3f(1.0f, 0.0f, 0.0f)));
+        }
+
+        axis /= axis_n;
+        const float angle = std::acos(d);
+
+        Eigen::Quaternionf q_tilt_bw(Eigen::AngleAxisf(angle, axis));
+        q_tilt_bw.normalize();
+        return q_tilt_bw;
     }
 
     static bool isStableInitSample_(const Eigen::Vector3f& acc_body_ned,
