@@ -1,0 +1,31 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{pgf}
+\usepackage{float}
+\usepackage{microtype}
+
+\providecommand{\mathdefault}[1]{#1}
+
+\title{Vertical Acceleration Double-Integration Drift}
+\author{Mikhail Grushinskiy}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\begin{figure}[H]\centering
+\resizebox{\textwidth}{!}{\input{pmstokes_vertical_accel_drift.pgf}}
+\caption{PM/Stokes datasets: reference vertical displacement, displacement from direct double integration of noisy world-frame vertical acceleration, and the same displacement after AdaptiveWaveDetrender.}
+\label{fig:pmstokes_vertical_accel_drift}
+\end{figure}
+
+\begin{figure}[H]\centering
+\resizebox{\textwidth}{!}{\input{jonswap_vertical_accel_drift.pgf}}
+\caption{JONSWAP datasets: reference vertical displacement, displacement from direct double integration of noisy world-frame vertical acceleration, and the same displacement after AdaptiveWaveDetrender.}
+\label{fig:jonswap_vertical_accel_drift}
+\end{figure}
+
+\end{document}
