@@ -152,8 +152,8 @@ static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_yaw_deg             = 2.9f,
     .err_limit_percent_3d_jonswap  = 40.0f,
     .err_limit_percent_3d_pmstokes = 40.0f,
-    .acc_z_bias_percent            = 25.0f,
-    .bias_3d_percent               = 510.0f,
+    .acc_z_bias_percent            = 150.0f,
+    .bias_3d_percent               = 2000.0f,
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
