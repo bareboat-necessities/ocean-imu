@@ -1125,18 +1125,18 @@ public:
             }
         }
 
-        // If internal filter fell back to Cold during startup, force mag ref re-learn
-        // and reacquire tilt from scratch.
+        // If the inner filter drops back to Cold during startup, forget only mag init.
+        // Do NOT restart the outer N-sample tilt-init loop from scratch.
         const auto cur_stage = impl_.getStartupStage();
-
         if (cur_stage != last_impl_startup_stage_) {
-            if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
+            if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
                 mag_ref_set_ = false;
                 mag_auto_tuner_.reset();
 
                 if (stage_ != Stage::Live) {
-                    stage_ = Stage::Uninitialized;
-                    resetTiltInit_();
+                    // Inner filter already re-locked tilt internally.
+                    // Keep outer wrapper in Warming instead of going back to Uninitialized.
+                    stage_ = Stage::Warming;
 
                     displacement_up_m_.setZero();
                     displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
@@ -1145,7 +1145,6 @@ public:
                     }
                 }
             }
-
             last_impl_startup_stage_ = cur_stage;
         }
 
