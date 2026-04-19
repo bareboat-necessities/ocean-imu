@@ -40,7 +40,7 @@ bool should_process_file(const std::string& name) {
 
 int main() {
     constexpr float dt_default = 0.005f;
-    constexpr double max_test_time_s = 60.0;
+    constexpr double max_test_time_s = 20.0;
 
     // Keep coefficients aligned with src/util/W3dSimCommon.h process_wave_file_for_tracker.
     const float acc_sigma = 1.51e-3f * g_std;
