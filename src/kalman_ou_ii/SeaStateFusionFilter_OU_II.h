@@ -886,8 +886,13 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        // mag-init policy:
-        // wait a bit for tilt to settle, then average only a short stable window.
+        // Startup mag-init gate based on short-term tilt consistency.
+        float mag_tilt_trust_err_deg   = 12.0f;
+        float mag_tilt_trust_gyro_dps  = 35.0f;
+        float mag_tilt_trust_hold_sec  = 0.35f;
+        float mag_tilt_fallback_sec    = 2.0f;  // after mag_delay opens
+
+        // mag-init policy
         float mag_init_min_mag_norm   = 1e-3f;
 
         bool enable_displacement_detrend = false;
@@ -902,9 +907,15 @@ public:
         stage_ = Stage::Uninitialized;
         t_ = 0.0f;
 
+        mag_tilt_good_sec_ = 0.0f;
+        mag_init_eligible_t0_ = NAN;
+
         mag_ref_set_ = false;
         MagAutoTuner::Config mag_cfg;
-        mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
+        mag_cfg.mag_norm_min    = cfg_.mag_init_min_mag_norm;
+        mag_cfg.accel_band_frac = 0.25f; // looser for waves
+        mag_cfg.gyro_norm_max   = 60.0f * float(M_PI) / 180.0f;
+        mag_cfg.min_samples     = 20;
         mag_auto_tuner_.setConfig(mag_cfg);
 
         resetTiltInit_();
@@ -994,7 +1005,6 @@ public:
 
             if (enough_good_samples || timeout_with_some_samples) {
                 tilt_init_acc_mean_ = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
-                have_tilt_init_acc_mean_ = true;
 
                 impl_.initialize_from_acc(tilt_init_acc_mean_);
                 stage_ = Stage::Warming;
@@ -1010,6 +1020,24 @@ public:
 
         if (stage_ != Stage::Uninitialized) {
             impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+
+            const float tilt_err_deg =
+                tiltConsistencyErrDeg_(impl_.mekf().quaternion_boat(), acc_body_ned);
+
+            const float gyro_dps = gyro_body_ned.norm() * 57.295779513f;
+
+            const bool tilt_good_now =
+                std::isfinite(tilt_err_deg) &&
+                (tilt_err_deg <= cfg_.mag_tilt_trust_err_deg) &&
+                std::isfinite(gyro_dps) &&
+                (gyro_dps <= cfg_.mag_tilt_trust_gyro_dps);
+
+            if (tilt_good_now) {
+                mag_tilt_good_sec_ += dt;
+                if (mag_tilt_good_sec_ > 10.0f) mag_tilt_good_sec_ = 10.0f;
+            } else {
+                mag_tilt_good_sec_ = std::max(0.0f, mag_tilt_good_sec_ - 2.0f * dt);
+            }
 
             const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
             displacement_up_m_ = Eigen::Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
@@ -1040,6 +1068,8 @@ public:
             if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
                 mag_ref_set_ = false;
                 mag_auto_tuner_.reset();
+                mag_tilt_good_sec_ = 0.0f;
+                mag_init_eligible_t0_ = NAN;
 
                 if (stage_ != Stage::Live) {
                     // Inner filter already re-locked tilt internally.
@@ -1066,9 +1096,22 @@ public:
         if (stage_ == Stage::Uninitialized) return;
         if (t_ < cfg_.mag_delay_sec) return;
 
+        if (!std::isfinite(mag_init_eligible_t0_)) {
+            mag_init_eligible_t0_ = t_;
+        }
+
+        const bool tilt_trusted =
+            (mag_tilt_good_sec_ >= cfg_.mag_tilt_trust_hold_sec);
+
+        const bool fallback_ok =
+            ((t_ - mag_init_eligible_t0_) >= cfg_.mag_tilt_fallback_sec);
+
         // Learn magnetic world reference using CURRENT filter tilt.
-        // Keep current accel/gyro only for sample acceptance gating.
         if (!mag_ref_set_) {
+            if (!tilt_trusted && !fallback_ok) {
+                return;
+            }
+
             if (have_last_imu_) {
                 const Eigen::Quaternionf q_tilt_bw =
                     tiltOnlyQuatFromBoatQuat_(impl_.mekf().quaternion_boat());
@@ -1114,7 +1157,6 @@ private:
         tilt_init_acc_sum_.setZero();
         tilt_init_count_ = 0;
         tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
-        have_tilt_init_acc_mean_ = false;
     }
 
     static Eigen::Quaternionf tiltOnlyQuatFromBoatQuat_(const Eigen::Quaternionf& q_bw_in)
@@ -1163,6 +1205,40 @@ private:
         return q_tilt_bw;
     }
 
+    static float tiltConsistencyErrDeg_(const Eigen::Quaternionf& q_bw_in,
+                                        const Eigen::Vector3f& acc_body_ned)
+    {
+        if (!q_bw_in.coeffs().allFinite() || !acc_body_ned.allFinite()) {
+            return 180.0f;
+        }
+
+        const float an = acc_body_ned.norm();
+        if (!(an > 1e-6f) || !std::isfinite(an)) {
+            return 180.0f;
+        }
+
+        Eigen::Quaternionf q_bw = q_bw_in;
+        q_bw.normalize();
+
+        // Predicted body-frame specific-force direction at rest:
+        // acc_body ~= -(world_down expressed in body)
+        const Eigen::Vector3f world_down(0.0f, 0.0f, 1.0f);
+        Eigen::Vector3f pred_acc_dir_body = -(q_bw.conjugate() * world_down);
+
+        const float pn = pred_acc_dir_body.norm();
+        if (!(pn > 1e-6f) || !pred_acc_dir_body.allFinite()) {
+            return 180.0f;
+        }
+        pred_acc_dir_body /= pn;
+
+        const Eigen::Vector3f meas_acc_dir_body = acc_body_ned / an;
+
+        float c = pred_acc_dir_body.dot(meas_acc_dir_body);
+        c = std::max(-1.0f, std::min(1.0f, c));
+
+        return std::acos(c) * 57.295779513f;
+    }
+
     static bool isStableInitSample_(const Eigen::Vector3f& acc_body,
                                     const Eigen::Vector3f& gyro_body)
     {
@@ -1197,13 +1273,15 @@ private:
     bool mag_ref_set_ = false;
     MagAutoTuner mag_auto_tuner_{};
 
-    // Original tilt-init averaging, but keep the frozen mean that was used to initialize tilt.
+    // Startup tilt-init averaging for initial accel-only bootstrap.
     Eigen::Vector3f tilt_init_acc_sum_ = Eigen::Vector3f::Zero();
     int tilt_init_count_ = 0;
     Eigen::Vector3f tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
-    bool have_tilt_init_acc_mean_ = false;
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
     Eigen::Vector3f displacement_up_m_ = Eigen::Vector3f::Zero();
+
+    float mag_tilt_good_sec_ = 0.0f;
+    float mag_init_eligible_t0_ = NAN;
 };
