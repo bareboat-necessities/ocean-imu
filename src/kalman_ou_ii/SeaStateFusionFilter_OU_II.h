@@ -916,7 +916,9 @@ public:
         impl_.setWithMag(cfg_.with_mag);
         impl_.setFreezeAccBiasUntilLive(cfg_.freeze_acc_bias_until_live);
         impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
-        impl_.setMagDelaySec(cfg_.mag_delay_sec);
+        // Outer wrapper already enforces cfg_.mag_delay_sec before mag-init/update.
+        // Disable the inner delay so startup is not delayed twice on two different clocks.
+        impl_.setMagDelaySec(0.0f);
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
 
         impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
@@ -971,15 +973,26 @@ public:
 
         t_ += dt;
 
-        // Stage 1: original tilt learning from stable gravity-like samples.
+        // Stage 1: tilt learning from stable gravity-like samples, but bounded in time.
+        // Do not wait forever for N perfect samples in waves.
         if (stage_ == Stage::Uninitialized) {
             if (isStableInitSample_(acc_body_ned, gyro_body_ned)) {
                 tilt_init_acc_sum_ += acc_body_ned;
                 ++tilt_init_count_;
             }
 
-            constexpr int TILT_INIT_MIN_SAMPLES = 800; // @ 200 Hz
-            if (tilt_init_count_ >= TILT_INIT_MIN_SAMPLES) {
+            constexpr int   TILT_INIT_MIN_SAMPLES          = 250; // ~1.25 s @ 200 Hz
+            constexpr int   TILT_INIT_MIN_FALLBACK_SAMPLES = 60;  // ~0.30 s @ 200 Hz
+            constexpr float TILT_INIT_TIMEOUT_SEC          = 5.0f;
+
+            const bool enough_good_samples =
+                (tilt_init_count_ >= TILT_INIT_MIN_SAMPLES);
+
+            const bool timeout_with_some_samples =
+                (t_ >= TILT_INIT_TIMEOUT_SEC) &&
+                (tilt_init_count_ >= TILT_INIT_MIN_FALLBACK_SAMPLES);
+
+            if (enough_good_samples || timeout_with_some_samples) {
                 tilt_init_acc_mean_ = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
                 have_tilt_init_acc_mean_ = true;
 
