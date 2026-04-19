@@ -21,7 +21,7 @@ public:
 
   struct Config {
     float g = 9.80665f;
-    float accel_band_frac = 0.09f;                       // ±9% around 1g
+    float accel_band_frac = 0.12f;                       // ±12% around 1g
     float gyro_norm_max = 30.0f * float(M_PI) / 180.0f; // 20 deg/s
     float mag_norm_min = 1e-3f;
     int   min_samples = 25;
