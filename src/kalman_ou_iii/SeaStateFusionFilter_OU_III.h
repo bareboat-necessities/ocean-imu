@@ -905,9 +905,9 @@ public:
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f,0.3f,0.3f);
 
         float mag_tilt_trust_err_deg   = 10.0f; // wave-tolerant
-        float mag_tilt_trust_gyro_dps  = 30.0f;
+        float mag_tilt_trust_gyro_dps  = 20.0f;
         float mag_tilt_trust_hold_sec  = 0.5f;
-        float mag_tilt_fallback_sec    = 2.0f;  // after mag_delay opens
+        float mag_tilt_fallback_sec    = 2.7f;  // after mag_delay opens
 
         // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
@@ -931,9 +931,9 @@ public:
         mag_ref_set_ = false;
         MagAutoTuner::Config mag_cfg;
         mag_cfg.mag_norm_min    = cfg_.mag_init_min_mag_norm;
-        mag_cfg.accel_band_frac = 0.25f;
-        mag_cfg.gyro_norm_max   = 60.0f * float(M_PI) / 180.0f;
-        mag_cfg.min_samples     = 20;
+        mag_cfg.accel_band_frac = 0.21f;
+        mag_cfg.gyro_norm_max   = 15.0f * float(M_PI) / 180.0f;
+        mag_cfg.min_samples     = 25;
         mag_auto_tuner_.setConfig(mag_cfg);
 
         resetTiltInit_();
