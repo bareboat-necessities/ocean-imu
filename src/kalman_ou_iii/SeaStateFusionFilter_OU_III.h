@@ -1153,28 +1153,38 @@ public:
         }
     }
 
-    // Learn magnetic world reference using CURRENT filter tilt
-    // Keep current accel/gyro only for sample acceptance gating.
-    if (!mag_ref_set_) {
-        if (have_last_imu_) {
-            const Eigen::Quaternionf q_tilt_bw =
-                tiltOnlyQuatFromBoatQuat_(impl_.mekf().quaternion_boat());
+    void updateMag(const Eigen::Vector3f& mag_body_ned) {
+        if (!begun_ || !cfg_.with_mag) return;
+        if (stage_ == Stage::Uninitialized) return;
+        if (t_ < cfg_.mag_delay_sec) return;
 
-            if (mag_auto_tuner_.addSampleWithTiltQuat(
-                    q_tilt_bw,
-                    last_acc_body_ned_,
-                    last_gyro_body_ned_,
-                    mag_body_ned))
-            {
-                Eigen::Vector3f mag_world_ref_uT;
-                if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
-                    mag_world_ref_uT.allFinite() &&
-                    mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
+        // Learn magnetic world reference using CURRENT filter tilt.
+        // Keep current accel/gyro only for sample acceptance gating.
+        if (!mag_ref_set_) {
+            if (have_last_imu_) {
+                const Eigen::Quaternionf q_tilt_bw =
+                    tiltOnlyQuatFromBoatQuat_(impl_.mekf().quaternion_boat());
+
+                if (mag_auto_tuner_.addSampleWithTiltQuat(
+                        q_tilt_bw,
+                        last_acc_body_ned_,
+                        last_gyro_body_ned_,
+                        mag_body_ned))
                 {
-                    impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
-                    mag_ref_set_ = true;
+                    Eigen::Vector3f mag_world_ref_uT;
+                    if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
+                        mag_world_ref_uT.allFinite() &&
+                        mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
+                    {
+                        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+                        mag_ref_set_ = true;
+                    }
                 }
             }
+        }
+
+        if (mag_ref_set_) {
+            impl_.updateMag(mag_body_ned);
         }
     }
 
