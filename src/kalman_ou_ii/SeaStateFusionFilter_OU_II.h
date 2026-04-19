@@ -983,7 +983,7 @@ public:
 
             constexpr int   TILT_INIT_MIN_SAMPLES          = 200; // @ 200 Hz
             constexpr int   TILT_INIT_MIN_FALLBACK_SAMPLES = 40;  // @ 200 Hz
-            constexpr float TILT_INIT_TIMEOUT_SEC          = 3.0f;
+            constexpr float TILT_INIT_TIMEOUT_SEC          = 0.3f;
 
             const bool enough_good_samples =
                 (tilt_init_count_ >= TILT_INIT_MIN_SAMPLES);
