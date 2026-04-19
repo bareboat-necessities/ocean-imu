@@ -914,7 +914,7 @@ public:
         MagAutoTuner::Config mag_cfg;
         mag_cfg.mag_norm_min    = cfg_.mag_init_min_mag_norm;
         mag_cfg.accel_band_frac = 0.21f;
-        mag_cfg.gyro_norm_max   = 22.0f * float(M_PI) / 180.0f;
+        mag_cfg.gyro_norm_max   = 24.0f * float(M_PI) / 180.0f;
         mag_cfg.min_samples     = 25;
         mag_auto_tuner_.setConfig(mag_cfg);
 
