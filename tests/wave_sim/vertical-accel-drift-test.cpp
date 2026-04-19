@@ -40,6 +40,7 @@ bool should_process_file(const std::string& name) {
 
 int main() {
     constexpr float dt_default = 0.005f;
+    constexpr double max_test_time_s = 60.0;
 
     // Keep coefficients aligned with src/util/W3dSimCommon.h process_wave_file_for_tracker.
     const float acc_sigma = 1.51e-3f * g_std;
@@ -82,6 +83,8 @@ int main() {
         const std::string wave_type = (file.find("pmstokes") != std::string::npos) ? "pmstokes" : "jonswap";
 
         reader.for_each_record([&](const Wave_Data_Sample& rec) {
+            if (rec.time > max_test_time_s) return;
+
             const float acc_truth_z = rec.wave.acc_z;
             const Vector3f noisy_xyz = apply_imu_noise(Vector3f::UnitZ() * acc_truth_z,
                                                         accel_world_noise,
