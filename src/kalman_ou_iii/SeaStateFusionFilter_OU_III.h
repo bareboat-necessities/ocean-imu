@@ -1266,7 +1266,7 @@ private:
     {
         constexpr float G = 9.80665f;
         constexpr float ACC_BAND = 0.08f * G;                     // ±8% around 1g
-        constexpr float GYRO_MAX = 18.0f * float(M_PI) / 180.0f; // 18 deg/s
+        constexpr float GYRO_MAX = 12.0f * float(M_PI) / 180.0f; // 12 deg/s
 
         if (!acc_body_ned.allFinite() || !gyro_body_ned.allFinite()) return false;
         const float acc_n = acc_body_ned.norm();
