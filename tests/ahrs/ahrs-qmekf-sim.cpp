@@ -20,7 +20,7 @@
 #endif
 
 const float g_std = 9.80665f;
-const float MAG_DELAY_SEC = 8.0f;
+const float MAG_DELAY_SEC = 3.0f;
 const int   IMU_RATE_HZ = 200;
 const int   MAG_RATE_HZ = 100;
 const int   MAG_UPDATE_STRIDE = IMU_RATE_HZ / MAG_RATE_HZ;
