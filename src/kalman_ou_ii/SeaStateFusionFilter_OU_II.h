@@ -981,7 +981,7 @@ public:
                 ++tilt_init_count_;
             }
 
-            constexpr int   TILT_INIT_MIN_SAMPLES          = 120; // @ 200 Hz
+            constexpr int   TILT_INIT_MIN_SAMPLES          = 100; // @ 200 Hz
             constexpr int   TILT_INIT_MIN_FALLBACK_SAMPLES = 20;  // @ 200 Hz
             constexpr float TILT_INIT_TIMEOUT_SEC          = 1.2f;
 
