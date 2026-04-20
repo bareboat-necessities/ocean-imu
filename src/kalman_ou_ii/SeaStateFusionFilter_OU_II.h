@@ -892,6 +892,14 @@ public:
         float mag_tilt_fallback_sec       = 4.0f;
         float mag_extreme_gyro_dps        = 120.0f; // veto only extreme violent motion
 
+        float bootstrap_gravity_fast_tau_sec  = 0.60f; // follows low-freq gravity in waves
+        float bootstrap_gravity_slow_tau_sec  = 2.50f; // robust mean gravity direction
+        float bootstrap_gravity_align_max_sin = 0.12f; // sin(theta)
+        float bootstrap_gravity_hold_sec      = 0.75f; // require persistence
+        float bootstrap_gravity_min_sec       = 1.0f;  // never initialize too early
+        float bootstrap_gravity_timeout_sec   = 5.0f;  // bounded fallback
+        float bootstrap_gravity_norm_frac     = 0.25f; // loose norm sanity check
+
         // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
         float mag_init_min_mag_norm   = 1e-3f;
@@ -1162,6 +1170,11 @@ private:
     enum class Stage { Uninitialized, Warming, Live };
 
     void resetTiltInit_() {
+        bootstrap_gravity_fast_lpf_.reset();
+        bootstrap_gravity_slow_lpf_.reset();
+        bootstrap_gravity_good_sec_ = 0.0f;
+
+        // Optional: keep these zeroed if you leave the old members in place.
         tilt_init_acc_sum_.setZero();
         tilt_init_count_ = 0;
         tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
@@ -1191,6 +1204,28 @@ private:
             return state;
         }
     };
+
+    static float unitVecAlignSin_(const Eigen::Vector3f& a,
+                                  const Eigen::Vector3f& b)
+    {
+        if (!a.allFinite() || !b.allFinite()) return 1.0f;
+
+        const float an = a.norm();
+        const float bn = b.norm();
+        if (!(an > 1e-6f) || !(bn > 1e-6f) ||
+            !std::isfinite(an) || !std::isfinite(bn))
+        {
+            return 1.0f;
+        }
+
+        const Eigen::Vector3f ua = a / an;
+        const Eigen::Vector3f ub = b / bn;
+
+        const float s = ua.cross(ub).norm(); // sin(theta)
+        if (!std::isfinite(s)) return 1.0f;
+
+        return std::min(std::max(s, 0.0f), 1.0f);
+    }
 
     static Eigen::Vector3f predictedGravityDirBody_(const Eigen::Quaternionf& q_bw_in)
     {
