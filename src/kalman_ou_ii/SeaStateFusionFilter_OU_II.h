@@ -912,9 +912,6 @@ public:
         mag_gravity_good_sec_ = 0.0f;
         mag_init_eligible_t0_ = NAN;
 
-        mag_tilt_good_sec_ = 0.0f;
-        mag_init_eligible_t0_ = NAN;
-
         mag_ref_set_ = false;
         MagAutoTuner::Config mag_cfg;
         mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
@@ -1328,9 +1325,6 @@ private:
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
     Eigen::Vector3f displacement_up_m_ = Eigen::Vector3f::Zero();
-
-    float mag_tilt_good_sec_ = 0.0f;
-    float mag_init_eligible_t0_ = NAN;
 
     Vec3LPF gravity_gate_acc_lpf_{};
     float mag_gravity_good_sec_ = 0.0f;
