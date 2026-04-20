@@ -889,7 +889,7 @@ public:
         float mag_gravity_align_max_sin   = 0.08f; // sin(deg)
         float mag_gravity_align_hold_sec  = 0.20f;
         float mag_gravity_align_lpf_tau   = 0.35f; // accel LPF for gravity-direction gate
-        float mag_tilt_fallback_sec       = 3.0f;
+        float mag_tilt_fallback_sec       = 2.0f;
         float mag_extreme_gyro_dps        = 90.0f; // veto only extreme violent motion
 
         // mag-init policy:
