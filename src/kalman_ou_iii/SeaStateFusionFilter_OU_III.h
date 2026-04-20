@@ -904,10 +904,10 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f,0.01f,0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f,0.3f,0.3f);
 
-        float mag_tilt_trust_err_deg   = 12.0f;  // wave-tolerant
-        float mag_tilt_trust_gyro_dps  = 30.0f;
-        float mag_tilt_trust_hold_sec  = 0.8f;
-        float mag_tilt_fallback_sec    = 2.0f;  // after mag_delay opens
+        float mag_tilt_trust_err_deg      = 10.0f;   // main trust gate
+        float mag_tilt_trust_hold_sec     = 0.50f;   // must persist this long
+        float mag_tilt_fallback_sec       = 3.0f;    // bounded fallback after mag_delay
+        float mag_tilt_extreme_gyro_dps   = 120.0f;  // veto only truly violent motion
 
         // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
@@ -1047,11 +1047,16 @@ public:
 
             const float gyro_dps = gyro_body_ned.norm() * 57.295779513f;
 
+            // Main trust gate is tilt consistency only.
+            // Gyro is used only as an extreme-motion veto, not a normal low-rate requirement.
+            const bool extreme_motion =
+                !std::isfinite(gyro_dps) ||
+                (gyro_dps > cfg_.mag_tilt_extreme_gyro_dps);
+
             const bool tilt_good_now =
                 std::isfinite(tilt_err_deg) &&
                 (tilt_err_deg <= cfg_.mag_tilt_trust_err_deg) &&
-                std::isfinite(gyro_dps) &&
-                (gyro_dps <= cfg_.mag_tilt_trust_gyro_dps);
+                !extreme_motion;
 
             if (tilt_good_now) {
                 mag_tilt_good_sec_ += dt;
