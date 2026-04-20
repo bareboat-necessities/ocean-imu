@@ -898,7 +898,7 @@ public:
         float bootstrap_gravity_hold_sec      = 0.60f; // require persistence
         float bootstrap_gravity_min_sec       = 1.0f;  // never initialize too early
         float bootstrap_gravity_timeout_sec   = 5.0f;  // bounded fallback
-        float bootstrap_gravity_norm_frac     = 0.25f; // loose norm sanity check
+        float bootstrap_gravity_norm_frac     = 0.35f; // loose norm sanity check
 
         // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
