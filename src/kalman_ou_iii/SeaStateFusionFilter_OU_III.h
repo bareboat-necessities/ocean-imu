@@ -910,9 +910,9 @@ public:
         float mag_tilt_fallback_sec       = 3.0f;
         float mag_extreme_gyro_dps        = 140.0f; // veto only extreme violent motion
 
-        float bootstrap_gravity_fast_tau_sec  = 0.06f; // follows low-freq gravity in waves
+        float bootstrap_gravity_fast_tau_sec  = 0.60f; // follows low-freq gravity in waves
         float bootstrap_gravity_slow_tau_sec  = 3.00f; // robust mean gravity direction
-        float bootstrap_gravity_align_max_sin = 0.08f; // sin(theta)
+        float bootstrap_gravity_align_max_sin = 0.06f; // sin(theta)
         float bootstrap_gravity_hold_sec      = 0.60f; // require persistence
         float bootstrap_gravity_min_sec       = 1.0f;  // never initialize too early
         float bootstrap_gravity_timeout_sec   = 5.0f;  // bounded fallback
