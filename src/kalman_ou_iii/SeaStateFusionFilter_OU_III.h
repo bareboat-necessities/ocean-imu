@@ -907,7 +907,7 @@ public:
         float mag_tilt_trust_err_deg   = 8.0f;  // wave-tolerant
         float mag_tilt_trust_gyro_dps  = 24.0f;
         float mag_tilt_trust_hold_sec  = 0.6f;
-        float mag_tilt_fallback_sec    = 5.0f;  // after mag_delay opens
+        float mag_tilt_fallback_sec    = 2.0f;  // after mag_delay opens
 
         // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
