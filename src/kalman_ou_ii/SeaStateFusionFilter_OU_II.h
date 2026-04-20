@@ -1287,8 +1287,8 @@ private:
                                     const Eigen::Vector3f& gyro_body)
     {
         constexpr float G = 9.80665f;
-        constexpr float ACC_BAND = 0.08f * G;                     // ±8% around 1g
-        constexpr float GYRO_MAX = 14.0f * float(M_PI) / 180.0f; // 14 deg/s
+        constexpr float ACC_BAND = 0.075f * G;                     // ±7.5% around 1g
+        constexpr float GYRO_MAX = 13.0f * float(M_PI) / 180.0f; // 13 deg/s
 
         if (!acc_body.allFinite() || !gyro_body.allFinite()) return false;
         const float acc_n = acc_body.norm();
