@@ -908,7 +908,7 @@ public:
         float mag_gravity_align_hold_sec  = 0.50f;
         float mag_gravity_align_lpf_tau   = 0.35f; // accel LPF for gravity-direction gate
         float mag_tilt_fallback_sec       = 4.0f;
-        float mag_extreme_gyro_dps        = 90.0f; // veto only extreme violent motion
+        float mag_extreme_gyro_dps        = 120.0f; // veto only extreme violent motion
 
         // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
