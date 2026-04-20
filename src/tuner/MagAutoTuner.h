@@ -95,43 +95,6 @@ public:
   }
 
 private:
-
-  static Eigen::Quaternionf tiltOnlyQuatFromAccel_(const Eigen::Vector3f& acc_body_ned) {
-    const float an = acc_body_ned.norm();
-    if (!(an > 1e-6f) || !acc_body_ned.allFinite()) {
-      return Eigen::Quaternionf::Identity();
-    }
-
-    // For specific force at rest in NED, acc_body_ned ~= [0, 0, -g].
-    // Therefore body-down is opposite to the measured accel direction.
-    const Eigen::Vector3f body_down = -(acc_body_ned / an);
-    const Eigen::Vector3f world_down(0.0f, 0.0f, 1.0f);
-
-    const float d = std::max(-1.0f, std::min(1.0f, body_down.dot(world_down)));
-    Eigen::Vector3f axis = body_down.cross(world_down);
-    const float axis_n = axis.norm();
-
-    if (axis_n < 1e-6f) {
-      if (d > 0.0f) {
-        return Eigen::Quaternionf::Identity();
-      }
-
-      Eigen::Vector3f ortho =
-          (std::fabs(body_down.z()) < 0.9f)
-              ? Eigen::Vector3f(0.0f, 0.0f, 1.0f).cross(body_down)
-              : Eigen::Vector3f(0.0f, 1.0f, 0.0f).cross(body_down);
-      ortho.normalize();
-      return Eigen::Quaternionf(Eigen::AngleAxisf(float(M_PI), ortho));
-    }
-
-    axis /= axis_n;
-    const float angle = std::acos(d);
-    Eigen::Quaternionf q(Eigen::AngleAxisf(angle, axis));
-    q.normalize();
-    return q;
-  }
-
-private:
   Config cfg_;
 
   // Average tilt-compensated world-frame magnetic vectors.
