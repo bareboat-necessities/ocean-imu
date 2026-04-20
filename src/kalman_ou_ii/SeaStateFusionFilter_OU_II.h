@@ -894,7 +894,7 @@ public:
 
         // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
-        float mag_init_min_mag_norm   = 1e-3f;
+        float mag_init_min_mag_norm   = 1e-4f;
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
