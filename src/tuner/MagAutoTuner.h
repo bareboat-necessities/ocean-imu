@@ -21,7 +21,7 @@ public:
 
   struct Config {
     float accel_band_frac = 0.30f;                       // ±30% around 1g
-    float mag_norm_min = 1e-4f;
+    float mag_norm_min = 1e-3f;
     int   min_samples = 20;
   };
 
