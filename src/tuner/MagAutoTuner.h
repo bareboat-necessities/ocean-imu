@@ -105,21 +105,6 @@ public:
   }
 
 private:
-  bool isStableSample_(const Eigen::Vector3f& acc_body_ned,
-                       const Eigen::Vector3f& gyro_body_ned) const
-  {
-    if (!acc_body_ned.allFinite() || !gyro_body_ned.allFinite()) return false;
-
-    const float g = cfg_.g;
-    const float acc_band = cfg_.accel_band_frac * g;
-    const float acc_n = acc_body_ned.norm();
-    const float gyro_n = gyro_body_ned.norm();
-
-    return std::isfinite(acc_n) &&
-           std::isfinite(gyro_n) &&
-           (std::fabs(acc_n - g) <= acc_band) &&
-           (gyro_n <= cfg_.gyro_norm_max);
-  }
 
   static Eigen::Quaternionf tiltOnlyQuatFromAccel_(const Eigen::Vector3f& acc_body_ned) {
     const float an = acc_body_ned.norm();
