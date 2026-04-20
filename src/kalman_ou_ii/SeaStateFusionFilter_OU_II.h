@@ -886,7 +886,7 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        float mag_tilt_trust_err_deg   = 10.0f;  // wave-tolerant
+        float mag_tilt_trust_err_deg   = 12.0f;  // wave-tolerant
         float mag_tilt_trust_gyro_dps  = 30.0f;
         float mag_tilt_trust_hold_sec  = 0.4f;
         float mag_tilt_fallback_sec    = 2.0f;  // after mag_delay opens
