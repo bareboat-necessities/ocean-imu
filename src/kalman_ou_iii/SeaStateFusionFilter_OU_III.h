@@ -1059,7 +1059,7 @@ public:
 
                     if (std::isfinite(g_slow_n) && g_slow_n > 1e-6f) {
                         const Eigen::Vector3f g_slow_u = g_slow / g_slow_n;
-                        Eigen::Vector3f blend = 0.70f * s_obs + 0.30f * g_slow_u;
+                        Eigen::Vector3f blend = 0.90f * s_obs + 0.10f * g_slow_u;
                         const float bn = blend.norm();
                         if (std::isfinite(bn) && bn > 1e-6f) {
                             g_init_dir = blend / bn;
