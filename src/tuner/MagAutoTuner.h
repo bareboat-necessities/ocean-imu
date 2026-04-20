@@ -21,7 +21,7 @@ public:
 
   struct Config {
     float mag_norm_min = 1e-3f;
-    int   min_samples = 20;
+    int   min_samples = 40;
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
