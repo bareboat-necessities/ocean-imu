@@ -905,10 +905,10 @@ public:
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
         float mag_gravity_align_max_sin   = 0.14f; // sin(max_deg)
-        float mag_gravity_align_hold_sec  = 0.50f;
+        float mag_gravity_align_hold_sec  = 0.60f;
         float mag_gravity_align_lpf_tau   = 0.35f; // accel LPF for gravity-direction gate
-        float mag_tilt_fallback_sec       = 2.0f;
-        float mag_extreme_gyro_dps        = 120.0f; // veto only extreme violent motion
+        float mag_tilt_fallback_sec       = 3.0f;
+        float mag_extreme_gyro_dps        = 140.0f; // veto only extreme violent motion
 
         float bootstrap_gravity_fast_tau_sec  = 0.60f; // follows low-freq gravity in waves
         float bootstrap_gravity_slow_tau_sec  = 3.00f; // robust mean gravity direction
