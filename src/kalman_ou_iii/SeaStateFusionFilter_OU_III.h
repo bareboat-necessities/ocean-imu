@@ -907,6 +907,7 @@ public:
         float mag_gravity_align_lpf_tau   = 0.35f;
         float mag_tilt_fallback_sec       = 6.0f;
         float mag_extreme_gyro_dps        = 90.0f; // veto only truly violent motion
+        float mag_init_min_mag_norm       = 1e-3f;
 
         // Bootstrap tilt observer for dynamic motion in waves.
         float bootstrap_tilt_obs_acc_tau_sec  = 1.50f; // accel correction time constant
@@ -916,8 +917,6 @@ public:
         float bootstrap_gravity_min_sec       = 4.0f;
         float bootstrap_gravity_timeout_sec   = 6.0f;
         float bootstrap_gravity_norm_frac     = 0.35f; // downweight accel when |a| departs from g
-
-        float mag_init_min_mag_norm = 1e-3f;
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
