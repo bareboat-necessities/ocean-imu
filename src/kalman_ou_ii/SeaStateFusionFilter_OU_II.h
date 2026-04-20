@@ -992,33 +992,64 @@ public:
 
         t_ += dt;
 
-        // Stage 1: tilt learning from stable gravity-like samples, but bounded in time.
-        // Do not wait forever for N perfect samples in waves.
+        // Stage 1: bootstrap gravity direction from all accel samples using
+        // fast/slow LPFs, which is more suitable for dynamic wave motion than
+        // selecting "stable" samples and averaging them.
         if (stage_ == Stage::Uninitialized) {
-            if (isStableInitSample_(acc_body_ned, gyro_body_ned)) {
-                tilt_init_acc_sum_ += acc_body_ned;
-                ++tilt_init_count_;
-            }
+            if (acc_body_ned.allFinite()) {
+                const Eigen::Vector3f g_fast =
+                    bootstrap_gravity_fast_lpf_.step(
+                        acc_body_ned, dt, cfg_.bootstrap_gravity_fast_tau_sec);
 
-            constexpr int   TILT_INIT_MIN_SAMPLES          = 160; // @ 200 Hz
-            constexpr int   TILT_INIT_MIN_FALLBACK_SAMPLES = 40;  // @ 200 Hz
-            constexpr float TILT_INIT_TIMEOUT_SEC          = 4.0f;
+                const Eigen::Vector3f g_slow =
+                    bootstrap_gravity_slow_lpf_.step(
+                        acc_body_ned, dt, cfg_.bootstrap_gravity_slow_tau_sec);
 
-            const bool enough_good_samples =
-                (tilt_init_count_ >= TILT_INIT_MIN_SAMPLES);
+                const float align_sin = unitVecAlignSin_(g_fast, g_slow);
 
-            const bool timeout_with_some_samples =
-                (t_ >= TILT_INIT_TIMEOUT_SEC) &&
-                (tilt_init_count_ >= TILT_INIT_MIN_FALLBACK_SAMPLES);
+                const float g_slow_n = g_slow.norm();
+                const float g_rel_err =
+                    (std::isfinite(g_slow_n) && g_std > 1e-6f)
+                        ? std::fabs(g_slow_n - g_std) / g_std
+                        : INFINITY;
 
-            if (enough_good_samples || timeout_with_some_samples) {
-                tilt_init_acc_mean_ = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
+                const bool gravity_good_now =
+                    std::isfinite(align_sin) &&
+                    (align_sin <= cfg_.bootstrap_gravity_align_max_sin) &&
+                    std::isfinite(g_rel_err) &&
+                    (g_rel_err <= cfg_.bootstrap_gravity_norm_frac);
 
-                impl_.initialize_from_acc(tilt_init_acc_mean_);
-                stage_ = Stage::Warming;
+                if (gravity_good_now) {
+                    bootstrap_gravity_good_sec_ += dt;
+                    if (bootstrap_gravity_good_sec_ > 10.0f) {
+                        bootstrap_gravity_good_sec_ = 10.0f;
+                    }
+                } else {
+                    bootstrap_gravity_good_sec_ =
+                        std::max(0.0f, bootstrap_gravity_good_sec_ - 2.0f * dt);
+                }
 
-                tilt_init_acc_sum_.setZero();
-                tilt_init_count_ = 0;
+                const bool ready_by_quality =
+                    (t_ >= cfg_.bootstrap_gravity_min_sec) &&
+                    (bootstrap_gravity_good_sec_ >= cfg_.bootstrap_gravity_hold_sec);
+
+                const bool ready_by_timeout =
+                    (t_ >= cfg_.bootstrap_gravity_timeout_sec) &&
+                    std::isfinite(g_slow_n) &&
+                    (g_slow_n > 1e-3f);
+
+                if (ready_by_quality || ready_by_timeout) {
+                    // Slight blend reduces pure slow-LPF lag while staying robust.
+                    Eigen::Vector3f g_init = 0.25f * g_fast + 0.75f * g_slow;
+                    const float g_init_n = g_init.norm();
+
+                    if (!(g_init_n > 1e-6f) || !g_init.allFinite()) {
+                        g_init = g_slow;
+                    }
+
+                    impl_.initialize_from_acc(g_init);
+                    stage_ = Stage::Warming;
+                }
             }
         }
 
