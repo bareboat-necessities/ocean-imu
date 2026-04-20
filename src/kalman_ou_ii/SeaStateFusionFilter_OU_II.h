@@ -886,7 +886,7 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        float mag_gravity_align_max_sin   = 0.06f; // sin(max_deg)
+        float mag_gravity_align_max_sin   = 0.05f; // sin(max_deg)
         float mag_gravity_align_hold_sec  = 0.80f;
         float mag_gravity_align_lpf_tau   = 0.50f; // accel LPF for gravity-direction gate
         float mag_tilt_fallback_sec       = 12.0f;
