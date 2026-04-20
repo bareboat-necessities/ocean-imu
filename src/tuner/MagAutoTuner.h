@@ -20,9 +20,8 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   struct Config {
-    float g = 9.80665f;
     float mag_norm_min = 1e-3f;
-    int   min_samples = 20;
+    int   min_samples = 10;
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
