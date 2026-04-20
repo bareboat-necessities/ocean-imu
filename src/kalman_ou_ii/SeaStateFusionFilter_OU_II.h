@@ -886,9 +886,9 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        float mag_tilt_trust_err_deg      = 8.0f;    // main trust gate
-        float mag_tilt_trust_hold_sec     = 0.40f;   // must persist this long
-        float mag_tilt_fallback_sec       = 4.0f;    // bounded fallback after mag_delay
+        float mag_tilt_trust_err_deg      = 7.5f;    // main trust gate
+        float mag_tilt_trust_hold_sec     = 0.30f;   // must persist this long
+        float mag_tilt_fallback_sec       = 2.5f;    // bounded fallback after mag_delay
         float mag_tilt_extreme_gyro_dps   = 120.0f;  // veto only truly violent motion
 
         // mag-init policy:
