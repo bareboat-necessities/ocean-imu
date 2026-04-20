@@ -911,7 +911,7 @@ public:
         // Bootstrap tilt observer for dynamic motion in waves.
         float bootstrap_tilt_obs_acc_tau_sec  = 1.50f; // accel correction time constant
         float bootstrap_gravity_slow_tau_sec  = 3.00f; // slow gravity reference LPF
-        float bootstrap_gravity_align_max_sin = 0.12f; // sin(deg)
+        float bootstrap_gravity_align_max_sin = 0.10f; // sin(deg)
         float bootstrap_gravity_hold_sec      = 0.5f;
         float bootstrap_gravity_min_sec       = 4.0f;
         float bootstrap_gravity_timeout_sec   = 6.0f;
