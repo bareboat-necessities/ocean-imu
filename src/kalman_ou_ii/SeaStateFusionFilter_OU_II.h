@@ -896,7 +896,7 @@ public:
         float bootstrap_gravity_slow_tau_sec  = 2.50f; // robust mean gravity direction
         float bootstrap_gravity_align_max_sin = 0.14f; // sin(theta)
         float bootstrap_gravity_hold_sec      = 0.30f; // require persistence
-        float bootstrap_gravity_min_sec       = 3.0f;  // never initialize too early
+        float bootstrap_gravity_min_sec       = 2.0f;  // never initialize too early
         float bootstrap_gravity_timeout_sec   = 5.0f;  // bounded fallback
         float bootstrap_gravity_norm_frac     = 0.30f; // loose norm sanity check
 
