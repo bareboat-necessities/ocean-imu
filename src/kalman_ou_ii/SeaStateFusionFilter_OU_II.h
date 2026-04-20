@@ -888,7 +888,7 @@ public:
 
         float mag_tilt_trust_err_deg   = 10.0f; // wave-tolerant
         float mag_tilt_trust_gyro_dps  = 30.0f;
-        float mag_tilt_trust_hold_sec  = 0.5f;
+        float mag_tilt_trust_hold_sec  = 0.6f;
         float mag_tilt_fallback_sec    = 2.0f;  // after mag_delay opens
 
         // mag-init policy:
@@ -913,8 +913,8 @@ public:
         mag_ref_set_ = false;
         MagAutoTuner::Config mag_cfg;
         mag_cfg.mag_norm_min    = cfg_.mag_init_min_mag_norm;
-        mag_cfg.accel_band_frac = 0.18f;
-        mag_cfg.gyro_norm_max   = 40.0f * float(M_PI) / 180.0f;
+        mag_cfg.accel_band_frac = 0.23f;
+        mag_cfg.gyro_norm_max   = 22.0f * float(M_PI) / 180.0f;
         mag_cfg.min_samples     = 20;
         mag_auto_tuner_.setConfig(mag_cfg);
 
