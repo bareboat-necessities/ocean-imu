@@ -97,7 +97,7 @@ constexpr float ADAPT_TAU_SEC              = 1.5f;
 constexpr float ADAPT_EVERY_SECS           = 0.1f;
 constexpr float ADAPT_RS_MULT              = 5.0f;   // dimensionless
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
-constexpr float MAG_DELAY_SEC              = 7.5f;
+constexpr float MAG_DELAY_SEC              = 7.0f;
 
 // Frequency smoother dt (SeaStateFusionFilter_OU_III is designed for 200 Hz)
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
@@ -911,11 +911,11 @@ public:
         // Bootstrap tilt observer for dynamic motion in waves.
         float bootstrap_tilt_obs_acc_tau_sec  = 1.50f; // accel correction time constant
         float bootstrap_gravity_slow_tau_sec  = 3.50f; // slow gravity reference LPF
-        float bootstrap_gravity_align_max_sin = 0.22f; // sin(deg)
+        float bootstrap_gravity_align_max_sin = 0.21f; // sin(deg)
         float bootstrap_gravity_hold_sec      = 0.6f;
         float bootstrap_gravity_min_sec       = 4.0f;
-        float bootstrap_gravity_timeout_sec   = 7.0f;
-        float bootstrap_gravity_norm_frac     = 0.30f; // downweight accel when |a| departs from g
+        float bootstrap_gravity_timeout_sec   = 6.0f;
+        float bootstrap_gravity_norm_frac     = 0.35f; // downweight accel when |a| departs from g
 
         float mag_init_min_mag_norm = 1e-3f;
 
