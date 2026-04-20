@@ -22,7 +22,7 @@ public:
   struct Config {
     float accel_band_frac = 0.30f;                       // ±30% around 1g
     float mag_norm_min = 1e-4f;
-    int   min_samples = 15;
+    int   min_samples = 20;
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
