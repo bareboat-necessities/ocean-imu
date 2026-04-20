@@ -23,7 +23,7 @@ public:
     float g = 9.80665f;
     float accel_band_frac = 0.30f;                       // ±30% around 1g
     float mag_norm_min = 1e-3f;
-    int   min_samples = 20;
+    int   min_samples = 15;
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
