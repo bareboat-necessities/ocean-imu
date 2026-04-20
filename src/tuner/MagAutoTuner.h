@@ -13,8 +13,8 @@
   #include <ArduinoEigenDense.h>
 #endif
 
-// Common startup helper for estimating world magnetic reference from
-// stable body-frame accel + gyro + mag measurements.
+// Startup helper for estimating a world magnetic reference by averaging
+// tilt-compensated magnetometer samples.
 class MagAutoTuner {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
