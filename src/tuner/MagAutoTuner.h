@@ -20,7 +20,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   struct Config {
-    float accel_band_frac = 0.30f;                       // ±30% around 1g
     float mag_norm_min = 1e-3f;
     int   min_samples = 20;
   };
