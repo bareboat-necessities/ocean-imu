@@ -906,14 +906,14 @@ public:
         float mag_gravity_align_hold_sec  = 0.60f;
         float mag_gravity_align_lpf_tau   = 0.35f;
         float mag_tilt_fallback_sec       = 3.0f;
-        float mag_extreme_gyro_dps        = 140.0f; // veto only truly violent motion
+        float mag_extreme_gyro_dps        = 90.0f; // veto only truly violent motion
 
         // Bootstrap tilt observer for dynamic motion in waves.
         float bootstrap_tilt_obs_acc_tau_sec  = 1.50f; // accel correction time constant
         float bootstrap_gravity_slow_tau_sec  = 3.50f; // slow gravity reference LPF
-        float bootstrap_gravity_align_max_sin = 0.15f; // ~5.7 deg
+        float bootstrap_gravity_align_max_sin = 0.14f; // sin(deg)
         float bootstrap_gravity_hold_sec      = 0.5f;
-        float bootstrap_gravity_min_sec       = 2.5f;
+        float bootstrap_gravity_min_sec       = 4.0f;
         float bootstrap_gravity_timeout_sec   = 6.0f;
         float bootstrap_gravity_norm_frac     = 0.30f; // downweight accel when |a| departs from g
 
