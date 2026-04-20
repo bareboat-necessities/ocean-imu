@@ -1204,11 +1204,6 @@ private:
         bootstrap_gravity_fast_lpf_.reset();
         bootstrap_gravity_slow_lpf_.reset();
         bootstrap_gravity_good_sec_ = 0.0f;
-
-        // Optional: keep these zeroed if you leave the old members in place.
-        tilt_init_acc_sum_.setZero();
-        tilt_init_count_ = 0;
-        tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
     }
 
     struct Vec3LPF {
