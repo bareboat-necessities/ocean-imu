@@ -101,7 +101,7 @@ constexpr float ADAPT_EVERY_SECS           = 0.1f;
 constexpr float ADAPT_R_p0_MULT            = 5.0f;   // dimensionless
 constexpr float ADAPT_R_v0_MULT            = 5.0f;   // dimensionless
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
-constexpr float MAG_DELAY_SEC              = 7.5f;
+constexpr float MAG_DELAY_SEC              = 7.0f;
 
 // Frequency smoother dt (SeaStateFusionFilter_OU_II is designed for 200 Hz)
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
@@ -899,8 +899,8 @@ public:
         float bootstrap_gravity_align_max_sin = 0.24f; // permissive for waves
         float bootstrap_gravity_hold_sec      = 0.60f;
         float bootstrap_gravity_min_sec       = 4.0f;
-        float bootstrap_gravity_timeout_sec   = 7.0f;
-        float bootstrap_gravity_norm_frac     = 0.30f; // downweight accel when |a| departs from g
+        float bootstrap_gravity_timeout_sec   = 6.0f;
+        float bootstrap_gravity_norm_frac     = 0.35f; // downweight accel when |a| departs from g
 
         float mag_init_min_mag_norm = 1e-3f;
 
