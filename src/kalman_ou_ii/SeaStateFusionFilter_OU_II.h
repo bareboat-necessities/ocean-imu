@@ -886,15 +886,15 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        float mag_gravity_align_max_sin   = 0.14f; // sin(deg)
-        float mag_gravity_align_hold_sec  = 0.60f;
+        float mag_gravity_align_max_sin   = 0.12f; // sin(deg)
+        float mag_gravity_align_hold_sec  = 0.50f;
         float mag_gravity_align_lpf_tau   = 0.35f; // accel LPF for gravity-direction gate
         float mag_tilt_fallback_sec       = 3.0f;
-        float mag_extreme_gyro_dps        = 120.0f; // veto only extreme violent motion
+        float mag_extreme_gyro_dps        = 90.0f; // veto only extreme violent motion
 
         // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
-        float mag_init_min_mag_norm   = 1e-4f;
+        float mag_init_min_mag_norm   = 1e-3f;
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
@@ -1287,8 +1287,8 @@ private:
                                     const Eigen::Vector3f& gyro_body)
     {
         constexpr float G = 9.80665f;
-        constexpr float ACC_BAND = 0.075f * G;                     // ±7.5% around 1g
-        constexpr float GYRO_MAX = 13.0f * float(M_PI) / 180.0f; // 13 deg/s
+        constexpr float ACC_BAND = 0.08f * G;                     // ±8% around 1g
+        constexpr float GYRO_MAX = 14.0f * float(M_PI) / 180.0f; // 14 deg/s
 
         if (!acc_body.allFinite() || !gyro_body.allFinite()) return false;
         const float acc_n = acc_body.norm();
