@@ -886,23 +886,15 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        // Mag-start gate: gravity-direction agreement using current tilt.
-        float mag_gravity_align_max_sin   = 0.14f; // ~8 deg
+        float mag_gravity_align_max_sin   = 0.14f; // ~8 deg, since sin(8°)=0.139
         float mag_gravity_align_hold_sec  = 0.60f;
-        float mag_gravity_align_lpf_tau   = 0.35f;
+        float mag_gravity_align_lpf_tau   = 0.35f; // accel LPF for gravity-direction gate
         float mag_tilt_fallback_sec       = 3.0f;
-        float mag_extreme_gyro_dps        = 140.0f; // veto only truly violent motion
+        float mag_extreme_gyro_dps        = 140.0f; // veto only extreme violent motion
 
-        // Bootstrap tilt observer for dynamic motion in waves.
-        float bootstrap_tilt_obs_acc_tau_sec  = 1.50f; // accel correction time constant
-        float bootstrap_gravity_slow_tau_sec  = 3.00f; // slow gravity reference LPF
-        float bootstrap_gravity_align_max_sin = 0.10f; // ~5.7 deg
-        float bootstrap_gravity_hold_sec      = 0.75f;
-        float bootstrap_gravity_min_sec       = 1.5f;
-        float bootstrap_gravity_timeout_sec   = 6.0f;
-        float bootstrap_gravity_norm_frac     = 0.20f; // downweight accel when |a| departs from g
-
-        float mag_init_min_mag_norm = 1e-3f;
+        // mag-init policy:
+        // wait a bit for tilt to settle, then average only a short stable window.
+        float mag_init_min_mag_norm   = 1e-3f;
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
@@ -968,11 +960,11 @@ public:
                 dcfg.max_slope_threshold_abs = 1.0e9f;
                 dcfg.startup_hold_s      = 2.0f;
                 dcfg.freq_timeout_cycles = 3.0f;
-                dcfg.enable_wave_cleanup     = true;
+                dcfg.enable_wave_cleanup    = true;
                 dcfg.cleanup_cutoff_fraction = 1.0f;
-                dcfg.min_cleanup_cutoff_hz   = 0.003f;
-                dcfg.max_cleanup_cutoff_hz   = 0.50f;
-                dcfg.cleanup_stages          = 2;
+                dcfg.min_cleanup_cutoff_hz  = 0.003f;
+                dcfg.max_cleanup_cutoff_hz  = 0.50f;
+                dcfg.cleanup_stages         = 2;
                 dcfg.min_dt_s = 1.0e-4f;
                 dcfg.max_dt_s = 0.25f;
                 dcfg.output_abs_limit = 0.0f;
@@ -992,70 +984,33 @@ public:
 
         t_ += dt;
 
-        // Stage 1: bootstrap tilt with a gyro-propagated tilt observer that is
-        // corrected slowly toward accel. This is more suitable for dynamic waves
-        // than comparing two LPFs of raw specific force.
+        // Stage 1: tilt learning from stable gravity-like samples, but bounded in time.
+        // Do not wait forever for N perfect samples in waves.
         if (stage_ == Stage::Uninitialized) {
-            if (acc_body_ned.allFinite()) {
-                const Eigen::Vector3f s_obs =
-                    bootstrap_tilt_obs_.step(
-                        gyro_body_ned,
-                        acc_body_ned,
-                        dt,
-                        cfg_.bootstrap_tilt_obs_acc_tau_sec,
-                        g_std,
-                        cfg_.bootstrap_gravity_norm_frac);
+            if (isStableInitSample_(acc_body_ned, gyro_body_ned)) {
+                tilt_init_acc_sum_ += acc_body_ned;
+                ++tilt_init_count_;
+            }
 
-                const Eigen::Vector3f g_slow =
-                    bootstrap_gravity_slow_lpf_.step(
-                        acc_body_ned, dt, cfg_.bootstrap_gravity_slow_tau_sec);
+            constexpr int   TILT_INIT_MIN_SAMPLES          = 160; // @ 200 Hz
+            constexpr int   TILT_INIT_MIN_FALLBACK_SAMPLES = 40;  // @ 200 Hz
+            constexpr float TILT_INIT_TIMEOUT_SEC          = 4.0f;
 
-                const float align_sin = unitVecAlignSin_(s_obs, g_slow);
+            const bool enough_good_samples =
+                (tilt_init_count_ >= TILT_INIT_MIN_SAMPLES);
 
-                const float g_slow_n = g_slow.norm();
-                const float g_rel_err =
-                    (std::isfinite(g_slow_n) && g_std > 1e-6f)
-                        ? std::fabs(g_slow_n - g_std) / g_std
-                        : INFINITY;
+            const bool timeout_with_some_samples =
+                (t_ >= TILT_INIT_TIMEOUT_SEC) &&
+                (tilt_init_count_ >= TILT_INIT_MIN_FALLBACK_SAMPLES);
 
-                const bool gravity_good_now =
-                    std::isfinite(align_sin) &&
-                    (align_sin <= cfg_.bootstrap_gravity_align_max_sin) &&
-                    std::isfinite(g_rel_err) &&
-                    (g_rel_err <= cfg_.bootstrap_gravity_norm_frac);
+            if (enough_good_samples || timeout_with_some_samples) {
+                tilt_init_acc_mean_ = tilt_init_acc_sum_ / static_cast<float>(tilt_init_count_);
 
-                if (gravity_good_now) {
-                    bootstrap_gravity_good_sec_ += dt;
-                    if (bootstrap_gravity_good_sec_ > 10.0f) {
-                        bootstrap_gravity_good_sec_ = 10.0f;
-                    }
-                } else {
-                    bootstrap_gravity_good_sec_ =
-                        std::max(0.0f, bootstrap_gravity_good_sec_ - 2.0f * dt);
-                }
+                impl_.initialize_from_acc(tilt_init_acc_mean_);
+                stage_ = Stage::Warming;
 
-                const bool ready_by_quality =
-                    (t_ >= cfg_.bootstrap_gravity_min_sec) &&
-                    (bootstrap_gravity_good_sec_ >= cfg_.bootstrap_gravity_hold_sec);
-
-                const bool ready_by_timeout =
-                    (t_ >= cfg_.bootstrap_gravity_timeout_sec);
-
-                if (ready_by_quality || ready_by_timeout) {
-                    Eigen::Vector3f g_init_dir = s_obs;
-
-                    if (std::isfinite(g_slow_n) && g_slow_n > 1e-6f) {
-                        const Eigen::Vector3f g_slow_u = g_slow / g_slow_n;
-                        Eigen::Vector3f blend = 0.70f * s_obs + 0.30f * g_slow_u;
-                        const float bn = blend.norm();
-                        if (std::isfinite(bn) && bn > 1e-6f) {
-                            g_init_dir = blend / bn;
-                        }
-                    }
-
-                    impl_.initialize_from_acc(g_std * g_init_dir);
-                    stage_ = Stage::Warming;
-                }
+                tilt_init_acc_sum_.setZero();
+                tilt_init_count_ = 0;
             }
         }
 
@@ -1115,7 +1070,7 @@ public:
         }
 
         // If the inner filter drops back to Cold during startup, forget only mag init.
-        // Do NOT restart the outer bootstrap loop from scratch.
+        // Do NOT restart the outer N-sample tilt-init loop from scratch.
         const auto cur_stage = impl_.getStartupStage();
         if (cur_stage != last_impl_startup_stage_) {
             if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
@@ -1206,6 +1161,12 @@ public:
 private:
     enum class Stage { Uninitialized, Warming, Live };
 
+    void resetTiltInit_() {
+        tilt_init_acc_sum_.setZero();
+        tilt_init_count_ = 0;
+        tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
+    }
+
     struct Vec3LPF {
         Eigen::Vector3f state = Eigen::Vector3f::Zero();
         bool initialized = false;
@@ -1230,109 +1191,6 @@ private:
             return state;
         }
     };
-
-    struct StartupTiltObserver {
-        Eigen::Vector3f s_body = Eigen::Vector3f(0.0f, 0.0f, -1.0f); // predicted specific-force dir at rest
-        bool initialized = false;
-
-        void reset() {
-            s_body = Eigen::Vector3f(0.0f, 0.0f, -1.0f);
-            initialized = false;
-        }
-
-        Eigen::Vector3f step(const Eigen::Vector3f& gyro_body_ned,
-                             const Eigen::Vector3f& acc_body_ned,
-                             float dt,
-                             float acc_tau_sec,
-                             float g_ref,
-                             float norm_frac)
-        {
-            if (!(dt > 0.0f) || !std::isfinite(dt)) {
-                return s_body;
-            }
-
-            // Initialize directly from first valid accel direction.
-            if (!initialized) {
-                if (acc_body_ned.allFinite()) {
-                    const float an = acc_body_ned.norm();
-                    if (std::isfinite(an) && an > 1e-6f) {
-                        s_body = acc_body_ned / an;
-                        initialized = true;
-                    }
-                }
-                return s_body;
-            }
-
-            // Propagate with gyro: s_dot = -omega x s
-            Eigen::Vector3f s_pred = s_body;
-            if (gyro_body_ned.allFinite()) {
-                s_pred += dt * (-gyro_body_ned.cross(s_pred));
-                const float sn = s_pred.norm();
-                if (std::isfinite(sn) && sn > 1e-6f) {
-                    s_pred /= sn;
-                } else {
-                    s_pred = s_body;
-                }
-            }
-
-            // Correct slowly toward measured accel direction, with norm-based weighting.
-            if (acc_body_ned.allFinite()) {
-                const float an = acc_body_ned.norm();
-                if (std::isfinite(an) && an > 1e-6f) {
-                    const Eigen::Vector3f u_a = acc_body_ned / an;
-
-                    const float rel_err =
-                        std::fabs(an - g_ref) / std::max(g_ref, 1e-6f);
-
-                    float w = 1.0f - rel_err / std::max(norm_frac, 1e-3f);
-                    w = std::min(std::max(w, 0.0f), 1.0f);
-
-                    const float tau = std::max(acc_tau_sec, 1.0e-3f);
-                    const float alpha = w * (1.0f - std::exp(-dt / tau));
-
-                    Eigen::Vector3f s_upd = (1.0f - alpha) * s_pred + alpha * u_a;
-                    const float un = s_upd.norm();
-                    if (std::isfinite(un) && un > 1e-6f) {
-                        s_body = s_upd / un;
-                    } else {
-                        s_body = s_pred;
-                    }
-                    return s_body;
-                }
-            }
-
-            s_body = s_pred;
-            return s_body;
-        }
-    };
-
-    void resetTiltInit_() {
-        bootstrap_tilt_obs_.reset();
-        bootstrap_gravity_slow_lpf_.reset();
-        bootstrap_gravity_good_sec_ = 0.0f;
-    }
-
-    static float unitVecAlignSin_(const Eigen::Vector3f& a,
-                                  const Eigen::Vector3f& b)
-    {
-        if (!a.allFinite() || !b.allFinite()) return 1.0f;
-
-        const float an = a.norm();
-        const float bn = b.norm();
-        if (!(an > 1e-6f) || !(bn > 1e-6f) ||
-            !std::isfinite(an) || !std::isfinite(bn))
-        {
-            return 1.0f;
-        }
-
-        const Eigen::Vector3f ua = a / an;
-        const Eigen::Vector3f ub = b / bn;
-
-        const float s = ua.cross(ub).norm();
-        if (!std::isfinite(s)) return 1.0f;
-
-        return std::min(std::max(s, 0.0f), 1.0f);
-    }
 
     static Eigen::Vector3f predictedGravityDirBody_(const Eigen::Quaternionf& q_bw_in)
     {
@@ -1371,6 +1229,7 @@ private:
         const float gn = u_g.norm();
         if (!(gn > 1e-6f) || !u_g.allFinite()) return 1.0f;
 
+        // ||u_a x u_g|| = sin(theta)
         const Eigen::Vector3f r = u_a.cross(u_g);
         const float s = r.norm();
         if (!std::isfinite(s)) return 1.0f;
@@ -1424,6 +1283,19 @@ private:
         return q_tilt_bw;
     }
 
+    static bool isStableInitSample_(const Eigen::Vector3f& acc_body,
+                                    const Eigen::Vector3f& gyro_body)
+    {
+        constexpr float G = 9.80665f;
+        constexpr float ACC_BAND = 0.08f * G;                     // ±8% around 1g
+        constexpr float GYRO_MAX = 14.0f * float(M_PI) / 180.0f; // 14 deg/s
+
+        if (!acc_body.allFinite() || !gyro_body.allFinite()) return false;
+        const float acc_n = acc_body.norm();
+        const float gyro_n = gyro_body.norm();
+        return (std::fabs(acc_n - G) <= ACC_BAND) && (gyro_n <= GYRO_MAX);
+    }
+
 private:
     Config cfg_{};
     SeaStateFusionFilter_OU_II<trackerT> impl_{false};
@@ -1439,21 +1311,22 @@ private:
     // Last IMU sample for mag-init gating.
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
-    bool have_last_imu_ = false;
+    bool  have_last_imu_ = false;
 
     // One-shot mag-init state.
     bool mag_ref_set_ = false;
     MagAutoTuner mag_auto_tuner_{};
+
+    // Startup tilt-init averaging for initial accel-only bootstrap.
+    Eigen::Vector3f tilt_init_acc_sum_ = Eigen::Vector3f::Zero();
+    int tilt_init_count_ = 0;
+    Eigen::Vector3f tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
     Eigen::Vector3f displacement_up_m_ = Eigen::Vector3f::Zero();
 
     Vec3LPF gravity_gate_acc_lpf_{};
-    float   mag_gravity_good_sec_ = 0.0f;
-    float   mag_init_eligible_t0_ = NAN;
-
-    StartupTiltObserver bootstrap_tilt_obs_{};
-    Vec3LPF             bootstrap_gravity_slow_lpf_{};
-    float               bootstrap_gravity_good_sec_ = 0.0f;
+    float mag_gravity_good_sec_ = 0.0f;
+    float mag_init_eligible_t0_ = NAN;
 };
