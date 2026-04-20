@@ -87,6 +87,15 @@ public:
     return ready_;
   }
 
+  bool isReady() const { return ready_; }
+  int acceptedCount() const { return accepted_count_; }
+
+  bool getMagWorldRef(Eigen::Vector3f& mag_world_ref) const {
+    if (!ready_) return false;
+    mag_world_ref = mag_world_ref_;
+    return mag_world_ref.allFinite();
+  }
+
 private:
   Config cfg_;
 
