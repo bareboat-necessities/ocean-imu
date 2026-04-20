@@ -886,10 +886,11 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        float mag_tilt_trust_err_deg      = 7.5f;    // main trust gate
-        float mag_tilt_trust_hold_sec     = 0.30f;   // must persist this long
-        float mag_tilt_fallback_sec       = 2.5f;    // bounded fallback after mag_delay
-        float mag_tilt_extreme_gyro_dps   = 120.0f;  // veto only truly violent motion
+        float mag_gravity_align_max_sin   = 0.14f; // ~8 deg, since sin(8°)=0.139
+        float mag_gravity_align_hold_sec  = 0.60f;
+        float mag_gravity_align_lpf_tau   = 0.35f; // accel LPF for gravity-direction gate
+        float mag_tilt_fallback_sec       = 3.0f;
+        float mag_extreme_gyro_dps        = 140.0f; // veto only extreme violent motion
 
         // mag-init policy:
         // wait a bit for tilt to settle, then average only a short stable window.
@@ -907,14 +908,17 @@ public:
         stage_ = Stage::Uninitialized;
         t_ = 0.0f;
 
+        gravity_gate_acc_lpf_.reset();
+        mag_gravity_good_sec_ = 0.0f;
+        mag_init_eligible_t0_ = NAN;
+
         mag_tilt_good_sec_ = 0.0f;
         mag_init_eligible_t0_ = NAN;
 
         mag_ref_set_ = false;
         MagAutoTuner::Config mag_cfg;
-        mag_cfg.mag_norm_min    = cfg_.mag_init_min_mag_norm;
-        mag_cfg.accel_band_frac = 0.23f;
-        mag_cfg.min_samples     = 30;
+        mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
+        mag_cfg.min_samples  = 30;
         mag_auto_tuner_.setConfig(mag_cfg);
 
         resetTiltInit_();
@@ -1020,27 +1024,30 @@ public:
         if (stage_ != Stage::Uninitialized) {
             impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
 
-            const float tilt_err_deg =
-                tiltConsistencyErrDeg_(impl_.mekf().quaternion_boat(), acc_body_ned);
+            const Eigen::Vector3f acc_gate_lp =
+                gravity_gate_acc_lpf_.step(acc_body_ned, dt, cfg_.mag_gravity_align_lpf_tau);
+
+            const float align_sin =
+                gravityAlignResidualSin_(impl_.mekf().quaternion_boat(), acc_gate_lp);
 
             const float gyro_dps = gyro_body_ned.norm() * 57.295779513f;
 
-            // Main trust gate is tilt consistency only.
-            // Gyro is used only as an extreme-motion veto, not a normal low-rate requirement.
+            // Main gate: gravity-direction agreement only.
+            // Gyro only vetoes truly violent motion.
             const bool extreme_motion =
                 !std::isfinite(gyro_dps) ||
-                (gyro_dps > cfg_.mag_tilt_extreme_gyro_dps);
+                (gyro_dps > cfg_.mag_extreme_gyro_dps);
 
-            const bool tilt_good_now =
-                std::isfinite(tilt_err_deg) &&
-                (tilt_err_deg <= cfg_.mag_tilt_trust_err_deg) &&
+            const bool gravity_good_now =
+                std::isfinite(align_sin) &&
+                (align_sin <= cfg_.mag_gravity_align_max_sin) &&
                 !extreme_motion;
 
-            if (tilt_good_now) {
-                mag_tilt_good_sec_ += dt;
-                if (mag_tilt_good_sec_ > 10.0f) mag_tilt_good_sec_ = 10.0f;
+            if (gravity_good_now) {
+                mag_gravity_good_sec_ += dt;
+                if (mag_gravity_good_sec_ > 10.0f) mag_gravity_good_sec_ = 10.0f;
             } else {
-                mag_tilt_good_sec_ = std::max(0.0f, mag_tilt_good_sec_ - 2.0f * dt);
+                mag_gravity_good_sec_ = std::max(0.0f, mag_gravity_good_sec_ - 2.0f * dt);
             }
 
             const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
@@ -1072,7 +1079,8 @@ public:
             if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
                 mag_ref_set_ = false;
                 mag_auto_tuner_.reset();
-                mag_tilt_good_sec_ = 0.0f;
+                gravity_gate_acc_lpf_.reset();
+                mag_gravity_good_sec_ = 0.0f;
                 mag_init_eligible_t0_ = NAN;
 
                 if (stage_ != Stage::Live) {
@@ -1104,15 +1112,14 @@ public:
             mag_init_eligible_t0_ = t_;
         }
 
-        const bool tilt_trusted =
-            (mag_tilt_good_sec_ >= cfg_.mag_tilt_trust_hold_sec);
+        const bool gravity_trusted =
+            (mag_gravity_good_sec_ >= cfg_.mag_gravity_align_hold_sec);
 
         const bool fallback_ok =
             ((t_ - mag_init_eligible_t0_) >= cfg_.mag_tilt_fallback_sec);
 
-        // Learn magnetic world reference using CURRENT filter tilt.
         if (!mag_ref_set_) {
-            if (!tilt_trusted && !fallback_ok) {
+            if (!gravity_trusted && !fallback_ok) {
                 return;
             }
 
@@ -1161,6 +1168,76 @@ private:
         tilt_init_acc_sum_.setZero();
         tilt_init_count_ = 0;
         tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
+    }
+
+    struct Vec3LPF {
+        Eigen::Vector3f state = Eigen::Vector3f::Zero();
+        bool initialized = false;
+
+        void reset() {
+            state.setZero();
+            initialized = false;
+        }
+
+        Eigen::Vector3f step(const Eigen::Vector3f& x, float dt, float tau_sec) {
+            if (!x.allFinite()) return state;
+            const float tau = std::max(1.0e-3f, tau_sec);
+            const float alpha = 1.0f - std::exp(-dt / tau);
+
+            if (!initialized) {
+                state = x;
+                initialized = true;
+                return state;
+            }
+
+            state += alpha * (x - state);
+            return state;
+        }
+    };
+
+    static Eigen::Vector3f predictedGravityDirBody_(const Eigen::Quaternionf& q_bw_in)
+    {
+        if (!q_bw_in.coeffs().allFinite()) {
+            return Eigen::Vector3f::Zero();
+        }
+
+        Eigen::Quaternionf q_bw = q_bw_in;
+        q_bw.normalize();
+
+        const Eigen::Vector3f world_down(0.0f, 0.0f, 1.0f);
+
+        // Predicted specific-force direction at rest in body frame:
+        // acc_body ~= -(world_down expressed in body)
+        Eigen::Vector3f u_g_body = -(q_bw.conjugate() * world_down);
+
+        const float n = u_g_body.norm();
+        if (!(n > 1e-6f) || !u_g_body.allFinite()) {
+            return Eigen::Vector3f::Zero();
+        }
+
+        return u_g_body / n;
+    }
+
+    static float gravityAlignResidualSin_(const Eigen::Quaternionf& q_bw_in,
+                                          const Eigen::Vector3f& acc_body_ned)
+    {
+        if (!acc_body_ned.allFinite()) return 1.0f;
+
+        const float an = acc_body_ned.norm();
+        if (!(an > 1e-6f) || !std::isfinite(an)) return 1.0f;
+
+        const Eigen::Vector3f u_a = acc_body_ned / an;
+        const Eigen::Vector3f u_g = predictedGravityDirBody_(q_bw_in);
+
+        const float gn = u_g.norm();
+        if (!(gn > 1e-6f) || !u_g.allFinite()) return 1.0f;
+
+        // ||u_a x u_g|| = sin(theta)
+        const Eigen::Vector3f r = u_a.cross(u_g);
+        const float s = r.norm();
+        if (!std::isfinite(s)) return 1.0f;
+
+        return std::min(std::max(s, 0.0f), 1.0f);
     }
 
     static Eigen::Quaternionf tiltOnlyQuatFromBoatQuat_(const Eigen::Quaternionf& q_bw_in)
@@ -1287,5 +1364,9 @@ private:
     Eigen::Vector3f displacement_up_m_ = Eigen::Vector3f::Zero();
 
     float mag_tilt_good_sec_ = 0.0f;
+    float mag_init_eligible_t0_ = NAN;
+
+    Vec3LPF gravity_gate_acc_lpf_{};
+    float mag_gravity_good_sec_ = 0.0f;
     float mag_init_eligible_t0_ = NAN;
 };
