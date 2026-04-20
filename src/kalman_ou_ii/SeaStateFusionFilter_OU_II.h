@@ -894,8 +894,8 @@ public:
 
         float bootstrap_gravity_fast_tau_sec  = 0.80f; // follows low-freq gravity in waves
         float bootstrap_gravity_slow_tau_sec  = 2.50f; // robust mean gravity direction
-        float bootstrap_gravity_align_max_sin = 0.09f; // sin(theta)
-        float bootstrap_gravity_hold_sec      = 0.50f; // require persistence
+        float bootstrap_gravity_align_max_sin = 0.10f; // sin(theta)
+        float bootstrap_gravity_hold_sec      = 0.75f; // require persistence
         float bootstrap_gravity_min_sec       = 1.5f;  // never initialize too early
         float bootstrap_gravity_timeout_sec   = 5.0f;  // bounded fallback
         float bootstrap_gravity_norm_frac     = 0.20f; // loose norm sanity check
