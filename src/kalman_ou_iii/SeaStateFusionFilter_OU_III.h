@@ -906,7 +906,7 @@ public:
 
         float mag_tilt_trust_err_deg      = 15.0f;   // main trust gate
         float mag_tilt_trust_hold_sec     = 0.60f;   // must persist this long
-        float mag_tilt_fallback_sec       = 2.0f;    // bounded fallback after mag_delay
+        float mag_tilt_fallback_sec       = 4.0f;    // bounded fallback after mag_delay
         float mag_tilt_extreme_gyro_dps   = 120.0f;  // veto only truly violent motion
 
         // mag-init policy:
@@ -933,7 +933,7 @@ public:
         mag_cfg.mag_norm_min    = cfg_.mag_init_min_mag_norm;
         mag_cfg.accel_band_frac = 0.23f;
         mag_cfg.gyro_norm_max   = 60.0f * float(M_PI) / 180.0f;
-        mag_cfg.min_samples     = 20;
+        mag_cfg.min_samples     = 30;
         mag_auto_tuner_.setConfig(mag_cfg);
 
         resetTiltInit_();
