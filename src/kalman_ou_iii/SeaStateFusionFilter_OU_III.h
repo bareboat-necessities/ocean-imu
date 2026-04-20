@@ -1100,7 +1100,8 @@ public:
             if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
                 mag_ref_set_ = false;
                 mag_auto_tuner_.reset();
-                mag_tilt_good_sec_ = 0.0f;
+                gravity_gate_acc_lpf_.reset();
+                mag_gravity_good_sec_ = 0.0f;
                 mag_init_eligible_t0_ = NAN;
 
                 if (stage_ != Stage::Live) {
