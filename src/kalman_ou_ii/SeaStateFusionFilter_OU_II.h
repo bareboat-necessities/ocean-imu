@@ -1364,4 +1364,8 @@ private:
     Vec3LPF gravity_gate_acc_lpf_{};
     float mag_gravity_good_sec_ = 0.0f;
     float mag_init_eligible_t0_ = NAN;
+
+    Vec3LPF bootstrap_gravity_fast_lpf_{};
+    Vec3LPF bootstrap_gravity_slow_lpf_{};
+    float bootstrap_gravity_good_sec_ = 0.0f;
 };
