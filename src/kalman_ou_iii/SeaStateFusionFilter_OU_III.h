@@ -1045,27 +1045,30 @@ public:
         if (stage_ != Stage::Uninitialized) {
             impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
 
-            const float tilt_err_deg =
-                tiltConsistencyErrDeg_(impl_.mekf().quaternion_boat(), acc_body_ned);
+            const Eigen::Vector3f acc_gate_lp =
+                gravity_gate_acc_lpf_.step(acc_body_ned, dt, cfg_.mag_gravity_align_lpf_tau);
+
+            const float align_sin =
+                gravityAlignResidualSin_(impl_.mekf().quaternion_boat(), acc_gate_lp);
 
             const float gyro_dps = gyro_body_ned.norm() * 57.295779513f;
 
-            // Main trust gate is tilt consistency only.
-            // Gyro is used only as an extreme-motion veto, not a normal low-rate requirement.
+            // Main gate: gravity-direction agreement only.
+            // Gyro only vetoes truly violent motion.
             const bool extreme_motion =
                 !std::isfinite(gyro_dps) ||
-                (gyro_dps > cfg_.mag_tilt_extreme_gyro_dps);
+                (gyro_dps > cfg_.mag_extreme_gyro_dps);
 
-            const bool tilt_good_now =
-                std::isfinite(tilt_err_deg) &&
-                (tilt_err_deg <= cfg_.mag_tilt_trust_err_deg) &&
+            const bool gravity_good_now =
+                std::isfinite(align_sin) &&
+                (align_sin <= cfg_.mag_gravity_align_max_sin) &&
                 !extreme_motion;
 
-            if (tilt_good_now) {
-                mag_tilt_good_sec_ += dt;
-                if (mag_tilt_good_sec_ > 10.0f) mag_tilt_good_sec_ = 10.0f;
+            if (gravity_good_now) {
+                mag_gravity_good_sec_ += dt;
+                if (mag_gravity_good_sec_ > 10.0f) mag_gravity_good_sec_ = 10.0f;
             } else {
-                mag_tilt_good_sec_ = std::max(0.0f, mag_tilt_good_sec_ - 2.0f * dt);
+                mag_gravity_good_sec_ = std::max(0.0f, mag_gravity_good_sec_ - 2.0f * dt);
             }
 
             const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
