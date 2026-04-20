@@ -1371,19 +1371,6 @@ private:
         return q_tilt_bw;
     }
 
-    static bool isStableInitSample_(const Eigen::Vector3f& acc_body_ned,
-                                    const Eigen::Vector3f& gyro_body_ned)
-    {
-        constexpr float G = 9.80665f;
-        constexpr float ACC_BAND = 0.08f * G;                     // ±8% around 1g
-        constexpr float GYRO_MAX = 14.0f * float(M_PI) / 180.0f; // 14 deg/s
-
-        if (!acc_body_ned.allFinite() || !gyro_body_ned.allFinite()) return false;
-        const float acc_n = acc_body_ned.norm();
-        const float gyro_n = gyro_body_ned.norm();
-        return (std::fabs(acc_n - G) <= ACC_BAND) && (gyro_n <= GYRO_MAX);
-    }
-
 private:
     Config cfg_{};
     SeaStateFusionFilter_OU_III<trackerT> impl_{false};
@@ -1398,11 +1385,6 @@ private:
     // Mag init state
     bool mag_ref_set_ = false;
     MagAutoTuner mag_auto_tuner_{};
-
-    // Startup tilt-init averaging for initial accel-only bootstrap.
-    Eigen::Vector3f tilt_init_acc_sum_ = Eigen::Vector3f::Zero();
-    int tilt_init_count_ = 0;
-    Eigen::Vector3f tilt_init_acc_mean_ = Eigen::Vector3f::Zero();
 
     // Last IMU samples (for startup gating / mag reference averaging).
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
