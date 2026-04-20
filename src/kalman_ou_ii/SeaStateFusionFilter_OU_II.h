@@ -1286,40 +1286,6 @@ private:
         return q_tilt_bw;
     }
 
-    static float tiltConsistencyErrDeg_(const Eigen::Quaternionf& q_bw_in,
-                                        const Eigen::Vector3f& acc_body_ned)
-    {
-        if (!q_bw_in.coeffs().allFinite() || !acc_body_ned.allFinite()) {
-            return 180.0f;
-        }
-
-        const float an = acc_body_ned.norm();
-        if (!(an > 1e-6f) || !std::isfinite(an)) {
-            return 180.0f;
-        }
-
-        Eigen::Quaternionf q_bw = q_bw_in;
-        q_bw.normalize();
-
-        // Predicted body-frame specific-force direction at rest:
-        // acc_body ~= -(world_down expressed in body)
-        const Eigen::Vector3f world_down(0.0f, 0.0f, 1.0f);
-        Eigen::Vector3f pred_acc_dir_body = -(q_bw.conjugate() * world_down);
-
-        const float pn = pred_acc_dir_body.norm();
-        if (!(pn > 1e-6f) || !pred_acc_dir_body.allFinite()) {
-            return 180.0f;
-        }
-        pred_acc_dir_body /= pn;
-
-        const Eigen::Vector3f meas_acc_dir_body = acc_body_ned / an;
-
-        float c = pred_acc_dir_body.dot(meas_acc_dir_body);
-        c = std::max(-1.0f, std::min(1.0f, c));
-
-        return std::acos(c) * 57.295779513f;
-    }
-
     static bool isStableInitSample_(const Eigen::Vector3f& acc_body,
                                     const Eigen::Vector3f& gyro_body)
     {
