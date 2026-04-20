@@ -923,7 +923,7 @@ public:
         mag_ref_set_ = false;
         MagAutoTuner::Config mag_cfg;
         mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
-        mag_cfg.min_samples  = 30;
+        mag_cfg.min_samples  = 50;
         mag_auto_tuner_.setConfig(mag_cfg);
 
         resetTiltInit_();
