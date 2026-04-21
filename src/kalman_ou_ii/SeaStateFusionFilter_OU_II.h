@@ -887,7 +887,7 @@ public:
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
         // Mag-start gate: gravity-direction agreement using current tilt.
-        float mag_gravity_align_max_sin   = 0.16f; // sin(deg)
+        float mag_gravity_align_max_sin   = 0.15f; // sin(deg)
         float mag_gravity_align_hold_sec  = 0.60f;
         float mag_gravity_align_lpf_tau   = 0.35f;
         float mag_tilt_fallback_sec       = 6.0f;
