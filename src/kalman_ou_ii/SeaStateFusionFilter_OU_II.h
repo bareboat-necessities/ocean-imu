@@ -990,8 +990,7 @@ public:
         t_ += dt;
 
         // Stage 1: bootstrap tilt with a gyro-propagated tilt observer that is
-        // corrected slowly toward accel. This is more suitable for dynamic waves
-        // than selecting "stable" samples and averaging them.
+        // corrected slowly toward accel.
         if (stage_ == Stage::Uninitialized) {
             if (acc_body_ned.allFinite()) {
                 const Eigen::Vector3f s_obs =
