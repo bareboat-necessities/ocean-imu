@@ -888,7 +888,7 @@ public:
 
         // Mag-start gate: gravity-direction agreement using current tilt.
         float mag_gravity_align_max_sin   = 0.15f; // sin(deg)
-        float mag_gravity_align_hold_sec  = 0.55f;
+        float mag_gravity_align_hold_sec  = 0.60f;
         float mag_gravity_align_lpf_tau   = 0.35f;
         float mag_tilt_fallback_sec       = 6.0f;
         float mag_extreme_gyro_dps        = 90.0f; // veto only truly violent motion
