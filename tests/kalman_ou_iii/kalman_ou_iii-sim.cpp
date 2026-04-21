@@ -146,13 +146,13 @@ private:
 };
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 9.9f,
+    .err_limit_percent_z_jonswap   = 9.85f,
     .err_limit_percent_z_pmstokes  = 7.6f,
     .err_limit_yaw_deg             = 2.6f,
     .err_limit_percent_3d_jonswap  = 47.0f,
     .err_limit_percent_3d_pmstokes = 50.0f,
-    .acc_z_bias_percent            = 20.0f,
-    .bias_3d_percent               = 340.0f,
+    .acc_z_bias_percent            = 19.0f,
+    .bias_3d_percent               = 330.0f,
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
