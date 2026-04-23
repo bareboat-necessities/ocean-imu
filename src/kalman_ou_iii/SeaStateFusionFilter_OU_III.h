@@ -884,31 +884,8 @@ public:
             if (cfg_.use_custom_displacement_detrend_cfg) {
                 displacement_detrender_.setConfig(cfg_.displacement_detrend_cfg);
             } else {
-                AdaptiveWaveDetrender3D::Config dcfg;
-                dcfg.init_wave_freq_hz = FREQ_GUESS;
-                dcfg.min_wave_freq_hz  = 0.02f;
-                dcfg.max_wave_freq_hz  = 1.20f;
-                dcfg.baseline_cutoff_fraction = 0.25f;
-                dcfg.min_baseline_cutoff_hz   = 0.003f;
-                dcfg.max_baseline_cutoff_hz   = 0.25f;
-                dcfg.freq_smooth_tau_s = 12.0f;
-                dcfg.slope_lpf_tau_s   = 0.20f;
-                dcfg.slope_rms_tau_s   = 8.0f;
-                dcfg.freq_learn_axis   = 2;
-                dcfg.threshold_rms_fraction  = 0.15f;
-                dcfg.min_slope_threshold_abs = 0.002f;
-                dcfg.max_slope_threshold_abs = 1.0e9f;
-                dcfg.startup_hold_s      = 2.0f;
-                dcfg.freq_timeout_cycles = 3.0f;
-                dcfg.enable_wave_cleanup     = true;
-                dcfg.cleanup_cutoff_fraction = 1.0f;
-                dcfg.min_cleanup_cutoff_hz   = 0.003f;
-                dcfg.max_cleanup_cutoff_hz   = 0.50f;
-                dcfg.cleanup_stages          = 2;
-                dcfg.min_dt_s = 1.0e-4f;
-                dcfg.max_dt_s = 0.25f;
-                dcfg.output_abs_limit = 0.0f;
-                displacement_detrender_.setConfig(dcfg);
+                displacement_detrender_.setConfig(
+                    seastate::common::defaultDisplacementDetrenderConfig<AdaptiveWaveDetrender3D::Config>(FREQ_GUESS));
             }
             displacement_detrender_.reset(0.0f, 0.0f, 0.0f);
         }
@@ -1161,80 +1138,7 @@ private:
         }
     };
 
-    struct StartupTiltObserver {
-        Eigen::Vector3f s_body = Eigen::Vector3f(0.0f, 0.0f, -1.0f); // predicted specific-force dir at rest
-        bool initialized = false;
-
-        void reset() {
-            s_body = Eigen::Vector3f(0.0f, 0.0f, -1.0f);
-            initialized = false;
-        }
-
-        Eigen::Vector3f step(const Eigen::Vector3f& gyro_body_ned,
-                             const Eigen::Vector3f& acc_body_ned,
-                             float dt,
-                             float acc_tau_sec,
-                             float g_ref,
-                             float norm_frac)
-        {
-            if (!(dt > 0.0f) || !std::isfinite(dt)) {
-                return s_body;
-            }
-
-            // Initialize directly from first valid accel direction.
-            if (!initialized) {
-                if (acc_body_ned.allFinite()) {
-                    const float an = acc_body_ned.norm();
-                    if (std::isfinite(an) && an > 1e-6f) {
-                        s_body = acc_body_ned / an;
-                        initialized = true;
-                    }
-                }
-                return s_body;
-            }
-
-            // Propagate with gyro: s_dot = -omega x s
-            Eigen::Vector3f s_pred = s_body;
-            if (gyro_body_ned.allFinite()) {
-                s_pred += dt * (-gyro_body_ned.cross(s_pred));
-                const float sn = s_pred.norm();
-                if (std::isfinite(sn) && sn > 1e-6f) {
-                    s_pred /= sn;
-                } else {
-                    s_pred = s_body;
-                }
-            }
-
-            // Correct slowly toward measured accel direction, with norm-based weighting.
-            if (acc_body_ned.allFinite()) {
-                const float an = acc_body_ned.norm();
-                if (std::isfinite(an) && an > 1e-6f) {
-                    const Eigen::Vector3f u_a = acc_body_ned / an;
-
-                    const float rel_err =
-                        std::fabs(an - g_ref) / std::max(g_ref, 1e-6f);
-
-                    float w = 1.0f - rel_err / std::max(norm_frac, 1e-3f);
-                    w = std::min(std::max(w, 0.0f), 1.0f);
-
-                    const float tau = std::max(acc_tau_sec, 1.0e-3f);
-                    const float alpha = w * (1.0f - std::exp(-dt / tau));
-
-                    Eigen::Vector3f s_upd = (1.0f - alpha) * s_pred + alpha * u_a;
-                    const float un = s_upd.norm();
-                    if (std::isfinite(un) && un > 1e-6f) {
-                        s_body = s_upd / un;
-                    } else {
-                        s_body = s_pred;
-                    }
-                    return s_body;
-                }
-            }
-
-            s_body = s_pred;
-            return s_body;
-        }
-    };
+    using StartupTiltObserver = seastate::common::StartupTiltObserver;
 
     void resetTiltInit_() {
         bootstrap_tilt_obs_.reset();
