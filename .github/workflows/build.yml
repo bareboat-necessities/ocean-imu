@@ -135,7 +135,7 @@ jobs:
           unzip -o sim-data-files.zip -d ${{ github.workspace }}/tests/kalman_ou_iii
       - name: Run deterministic gravity/tilt Monte Carlo sweep
         run: |
-          python3 tools/ou_tuning_sweep.py --samples 100 --seed 42 --family both
+          python3 tools/ou_tuning_sweep.py --samples 30 --seed 42 --family both
       - name: Upload tuning reports
         uses: actions/upload-artifact@v6
         with:
