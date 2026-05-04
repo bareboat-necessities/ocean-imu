@@ -228,5 +228,6 @@ int main(int argc, char* argv[]) {
         process_wave_file_for_tracker(fname, dt, with_mag);
     }
 
+    if (std::getenv("W3D_COLLECT_ALL_GATES") && w3d_any_quality_gate_failed()) return 1;
     return 0;
 }

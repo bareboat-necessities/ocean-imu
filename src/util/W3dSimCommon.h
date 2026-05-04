@@ -326,6 +326,7 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
                                       const W3dSummaryLabels& labels = {});
 
 std::vector<std::string> collect_wave_data_files(const std::filesystem::path& directory);
+bool w3d_any_quality_gate_failed();
 
 template <typename AdapterT>
 inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const std::string& filename,

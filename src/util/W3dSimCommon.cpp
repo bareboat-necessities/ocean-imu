@@ -12,6 +12,7 @@ extern const float g_std = 9.80665f;
 #include <cstdlib>
 #include <iostream>
 #include <numbers>
+static bool g_w3d_any_gate_failed = false;
 
 ImuNoiseModel make_imu_noise_model(float sigma_white,
                                    float bias_half_range,
@@ -582,10 +583,15 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     const float limit_3d = (result.wave_type == WaveType::JONSWAP)
         ? limits.err_limit_percent_3d_jonswap
         : limits.err_limit_percent_3d_pmstokes;
+    const bool collect_all_gates = (std::getenv("W3D_COLLECT_ALL_GATES") != nullptr);
+    bool failed = false;
+    std::string fail_reason = "ok";
     auto fail_if = [&](const char* label, float pct, float limit) {
         if (pct > limit) {
+            failed = true;
+            fail_reason = std::string(label) + "_limit_exceeded";
             std::cerr << "ERROR: " << label << " RMS above limit (" << pct << "% > " << limit << "%). Failing.\n";
-            std::exit(EXIT_FAILURE);
+            if (!collect_all_gates) std::exit(EXIT_FAILURE);
         }
     };
 
@@ -593,30 +599,46 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     fail_if("3D", pct_3d, limit_3d);
 
     if (result.with_mag && rms_yaw.rms() > limits.err_limit_yaw_deg) {
+        failed = true;
+        fail_reason = "yaw_limit_exceeded";
         std::cerr << "ERROR: Yaw RMS above limit (" << rms_yaw.rms() << " deg > "
                   << limits.err_limit_yaw_deg << " deg). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        if (!collect_all_gates) std::exit(EXIT_FAILURE);
     }
 
     const float accb_z_pct = pct_of_max(accb_rz, acc_true_max_z);
     if (std::isfinite(accb_z_pct) && accb_z_pct > limits.acc_z_bias_percent) {
+        failed = true;
+        fail_reason = "acc_z_bias_percent_exceeded";
         std::cerr << "ERROR: accel Z bias error RMS above limit ("
                   << accb_z_pct << "% > " << limits.acc_z_bias_percent
                   << "% of max TRUE Z bias). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        if (!collect_all_gates) std::exit(EXIT_FAILURE);
     }
     if (std::isfinite(accb_r3_pct) && accb_r3_pct > limits.bias_3d_percent) {
+        failed = true;
+        fail_reason = "acc_bias_3d_percent_exceeded";
         std::cerr << "ERROR: 3D accel bias error RMS above limit ("
                   << accb_r3_pct << "% > " << limits.bias_3d_percent
                   << "% of max TRUE bias). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        if (!collect_all_gates) std::exit(EXIT_FAILURE);
     }
     if (std::isfinite(gyrb_r3_pct) && gyrb_r3_pct > limits.bias_3d_percent) {
+        failed = true;
+        fail_reason = "gyro_bias_3d_percent_exceeded";
         std::cerr << "ERROR: 3D gyro bias error RMS above limit ("
                   << gyrb_r3_pct << "% > " << limits.bias_3d_percent
                   << "% of max TRUE bias). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        if (!collect_all_gates) std::exit(EXIT_FAILURE);
     }
+    if (failed) g_w3d_any_gate_failed = true;
+    std::cout << "QUALITY_GATE: PASS=" << (failed ? 0 : 1)
+              << " REASON=" << fail_reason << "\n";
+}
+
+bool w3d_any_quality_gate_failed()
+{
+    return g_w3d_any_gate_failed;
 }
 
 #endif
