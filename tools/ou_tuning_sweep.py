@@ -78,12 +78,29 @@ def report(rows,args):
   fr=[r for r in rows if r['family']==fam]; by=defaultdict(list)
   for r in fr: by[r['candidate']].append(r)
   agg=[]
-  for c,it in by.items(): agg.append((sum(float(x['score']) for x in it)/len(it),c,it))
+  for c,it in by.items():
+   if not all(bool(x.get('quality_gate_pass')) and int(x.get('returncode',1))==0 for x in it): continue
+   agg.append((sum(float(x['score']) for x in it)/len(it),c,it))
+  if not agg:
+   raise RuntimeError(f'No quality-gate-passing candidates found for {fam}')
   best=min(agg,key=lambda x:x[0])
-  md=REPORTS/f'{fam.lower()}_best_report.md'
-  with md.open('w') as f:
+  txt=REPORTS/f'{fam.lower()}_best_report.txt'
+  with txt.open('w') as f:
    f.write(f'family: {fam}\nbest_candidate: {best[1]}\nmean_score: {best[0]:.6f}\nquality_rows: {sum(1 for x in best[2] if x["quality_gate_pass"])} / {len(best[2])}\n')
    f.write('priority: accel_bias_rms_3d > attitude(r/p norm) > yaw\n')
+   f.write('\n')
+   param_keys=sorted({k for k in best[2][0].keys() if k.startswith('SF_') or k.startswith('OU_')})
+   f.write('best_found_parameters:\n')
+   for k in param_keys: f.write(f'  {k}: {best[2][0][k]}\n')
+   f.write('\n')
+   f.write('per_wave_rms:\n')
+   for r in sorted(best[2],key=lambda x:x['wave_dataset']):
+    f.write(f"  wave_dataset: {r['wave_dataset']}\n")
+    f.write(f"    xyz_rms_m: X={r['x_rms']}, Y={r['y_rms']}, Z={r['z_rms']}\n")
+    f.write(f"    rms_3d_m: {r['rms_3d']}\n")
+    f.write(f"    angles_rms_deg: Roll={r['roll_rms']}, Pitch={r['pitch_rms']}, Yaw={r['yaw_rms']}\n")
+    f.write(f"    acc_bias_rms_mps2: X={r['acc_bias_rms_x']}, Y={r['acc_bias_rms_y']}, Z={r['acc_bias_rms_z']}, |3D|={r['acc_bias_rms_3d']}\n")
+    f.write(f"    quality_gate_pass: {r['quality_gate_pass']}\n")
  return out
 
 def main():
