@@ -65,8 +65,11 @@ def run_candidate(fam,cid,p,tier,seed,collect):
  return rows
 
 def eval_set(fam, cand_list, tier='quick', collect=True, seed=42):
- rows=[]
- for cid,p in cand_list: rows.extend(run_candidate(fam,cid,p,tier,seed,collect))
+ rows=[]; total=len(cand_list); report_every=max(1,total//10)
+ for i,(cid,p) in enumerate(cand_list,1):
+  rows.extend(run_candidate(fam,cid,p,tier,seed,collect))
+  if i==1 or i==total or i%report_every==0:
+   print(f'[{fam}] progress: {i}/{total} candidates complete')
  return rows
 
 def percentile(vals,p):
