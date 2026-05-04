@@ -44,13 +44,17 @@ def parse(text):
 
 def run_family(fam,args):
  tdir=ROOT/'tests'/('kalman_ou_ii' if fam=='OU_II' else 'kalman_ou_iii'); bin_name='./kalman_ou_ii-sim' if fam=='OU_II' else './kalman_ou_iii-sim'; rows=[]
- for cid,p in cands(fam,args.samples,args.seed,args.with_mag_sweep):
+ cc=cands(fam,args.samples,args.seed,args.with_mag_sweep); total=len(cc); interval=max(1,total//20)
+ for idx,(cid,p) in enumerate(cc,start=1):
   env=os.environ.copy(); env.update({k:f'{v:.6g}' if isinstance(v,float) else str(v) for k,v in p.items()})
   pr=subprocess.run([bin_name],cwd=tdir,text=True,capture_output=True,env=env)
   for m in parse(pr.stdout+'\n'+pr.stderr):
    m.update(dict(family=fam,candidate=cid,seed=args.seed,returncode=pr.returncode,quality_gate_pass=(pr.returncode==0),fail_reason='' if pr.returncode==0 else 'nonzero_return_or_gate_fail',roll_pitch_rms_norm=math.hypot(m['roll_rms'],m['pitch_rms']) if math.isfinite(m['roll_rms']) and math.isfinite(m['pitch_rms']) else float('nan'),xy_rms=math.hypot(m['x_rms'],m['y_rms']) if math.isfinite(m['x_rms']) and math.isfinite(m['y_rms']) else float('nan')))
    for k,v in p.items(): m[k]=v
    rows.append(m)
+  if idx==1 or idx==total or (idx%interval)==0:
+   pct=100.0*idx/total if total else 100.0
+   print(f'[{fam}] progress {idx}/{total} ({pct:.1f}%)',flush=True)
  return rows
 
 def score(rows):
