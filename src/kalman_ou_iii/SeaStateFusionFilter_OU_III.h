@@ -828,6 +828,7 @@ public:
         float mag_tilt_fallback_sec       = 6.0f;
         float mag_extreme_gyro_dps        = 90.0f; // veto only truly violent motion
         float mag_init_min_mag_norm       = 1e-3f;
+        int   mag_min_samples             = 48;
 
         // Bootstrap tilt observer for dynamic motion in waves.
         float bootstrap_tilt_obs_acc_tau_sec  = 1.50f; // accel correction time constant
@@ -857,7 +858,7 @@ public:
         mag_ref_set_ = false;
         MagAutoTuner::Config mag_cfg;
         mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
-        mag_cfg.min_samples  = 48;
+        mag_cfg.min_samples  = cfg_.mag_min_samples;
         mag_auto_tuner_.setConfig(mag_cfg);
 
         resetTiltInit_();
