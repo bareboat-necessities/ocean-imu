@@ -104,7 +104,7 @@ def report(rows,args):
  return out
 
 def main():
- ap=argparse.ArgumentParser(); ap.add_argument('--samples',type=int,default=100); ap.add_argument('--seed',type=int,default=42); ap.add_argument('--family',choices=['OU_II','OU_III','both'],default='both'); ap.add_argument('--with-mag-sweep',action='store_true',default=True)
+ ap=argparse.ArgumentParser(); ap.add_argument('--samples',type=int,default=100); ap.add_argument('--seed',type=int,default=42); ap.add_argument('--family',choices=['OU_II','OU_III','both'],default='both'); ap.add_argument('--with-mag-sweep',action='store_true',default=False)
  a=ap.parse_args(); subprocess.run(['make','-C',str(ROOT/'tests/kalman_ou_ii'),'build'],check=True); subprocess.run(['make','-C',str(ROOT/'tests/kalman_ou_iii'),'build'],check=True)
  fams=['OU_II','OU_III'] if a.family=='both' else [a.family]; rows=[]
  for fam in fams: rows.extend(run_family(fam,a))
