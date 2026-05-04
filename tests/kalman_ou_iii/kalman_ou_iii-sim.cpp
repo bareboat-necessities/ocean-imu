@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <iostream>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -38,6 +39,7 @@ public:
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         cfg_.freeze_acc_bias_until_live = true;
         cfg_.Racc_warmup_std = 0.5f;
+        apply_env_overrides();
 
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
@@ -52,7 +54,32 @@ public:
             filter.enableLinearBlock(true);
             filter.enableTuner(true);
             filter.enableClamp(true);
+            if (const char* s = std::getenv("OU_TAU_COEFF")) filter.setTauCoeff(std::atof(s));
+            if (const char* s = std::getenv("OU_SIGMA_COEFF")) filter.setSigmaCoeff(std::atof(s));
+            if (const char* s = std::getenv("OU_ACC_NOISE_FLOOR_SIGMA")) filter.setAccNoiseFloorSigma(std::atof(s));
+            if (const char* s = std::getenv("OU_ADAPT_TAU_SEC")) filter.setAdaptationTimeConstants(std::atof(s));
+            if (const char* s = std::getenv("OU_ADAPT_EVERY_SECS")) filter.setAdaptationUpdatePeriod(std::atof(s));
+            if (const char* s = std::getenv("OU_FREQ_INPUT_CUTOFF_HZ")) filter.setFreqInputCutoffHz(std::atof(s));
         }
+    }
+    void apply_env_overrides() {
+        if (const char* s = std::getenv("SF_MAG_DELAY_SEC")) cfg_.mag_delay_sec = std::atof(s);
+        if (const char* s = std::getenv("SF_MAG_GRAV_ALIGN_MAX_SIN")) cfg_.mag_gravity_align_max_sin = std::atof(s);
+        if (const char* s = std::getenv("SF_MAG_GRAV_ALIGN_HOLD_SEC")) cfg_.mag_gravity_align_hold_sec = std::atof(s);
+        if (const char* s = std::getenv("SF_MAG_GRAV_ALIGN_LPF_TAU")) cfg_.mag_gravity_align_lpf_tau = std::atof(s);
+        if (const char* s = std::getenv("SF_MAG_TILT_FALLBACK_SEC")) cfg_.mag_tilt_fallback_sec = std::atof(s);
+        if (const char* s = std::getenv("SF_MAG_EXTREME_GYRO_DPS")) cfg_.mag_extreme_gyro_dps = std::atof(s);
+        if (const char* s = std::getenv("SF_MAG_INIT_MIN_MAG_NORM")) cfg_.mag_init_min_mag_norm = std::atof(s);
+        if (const char* s = std::getenv("SF_MAG_MIN_SAMPLES")) cfg_.mag_min_samples = std::atoi(s);
+        if (const char* s = std::getenv("SF_RACC_WARMUP_STD")) cfg_.Racc_warmup_std = std::atof(s);
+        if (const char* s = std::getenv("SF_ONLINE_TUNE_WARMUP_SEC")) cfg_.online_tune_warmup_sec = std::atof(s);
+        if (const char* s = std::getenv("SF_BOOT_TILT_ACC_TAU")) cfg_.bootstrap_tilt_obs_acc_tau_sec = std::atof(s);
+        if (const char* s = std::getenv("SF_BOOT_GRAV_SLOW_TAU")) cfg_.bootstrap_gravity_slow_tau_sec = std::atof(s);
+        if (const char* s = std::getenv("SF_BOOT_GRAV_ALIGN_MAX_SIN")) cfg_.bootstrap_gravity_align_max_sin = std::atof(s);
+        if (const char* s = std::getenv("SF_BOOT_GRAV_HOLD_SEC")) cfg_.bootstrap_gravity_hold_sec = std::atof(s);
+        if (const char* s = std::getenv("SF_BOOT_GRAV_MIN_SEC")) cfg_.bootstrap_gravity_min_sec = std::atof(s);
+        if (const char* s = std::getenv("SF_BOOT_GRAV_TIMEOUT_SEC")) cfg_.bootstrap_gravity_timeout_sec = std::atof(s);
+        if (const char* s = std::getenv("SF_BOOT_GRAV_NORM_FRAC")) cfg_.bootstrap_gravity_norm_frac = std::atof(s);
     }
 
     void updateMag(const Vector3f& mag_body_ned) override {
