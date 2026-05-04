@@ -66,7 +66,10 @@ def score(rows):
 def report(rows,args):
  REPORTS.mkdir(parents=True,exist_ok=True)
  out=REPORTS/f'ou_sweep_seed{args.seed}_n{args.samples}_mag{int(args.with_mag_sweep)}.csv'
- with out.open('w',newline='') as f: w=csv.DictWriter(f,fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
+ first_fields=list(rows[0].keys())
+ extra_fields=sorted({k for r in rows for k in r.keys()}-set(first_fields))
+ all_fields=first_fields+extra_fields
+ with out.open('w',newline='') as f: w=csv.DictWriter(f,fieldnames=all_fields); w.writeheader(); w.writerows(rows)
  for fam in sorted({r['family'] for r in rows}):
   fr=[r for r in rows if r['family']==fam]; by=defaultdict(list)
   for r in fr: by[r['candidate']].append(r)
