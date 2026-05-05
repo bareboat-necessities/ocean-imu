@@ -812,32 +812,32 @@ public:
         bool with_mag = true;
 
         float mag_delay_sec          = MAG_DELAY_SEC;
-        float online_tune_warmup_sec = ONLINE_TUNE_WARMUP_SEC;
+        float online_tune_warmup_sec = 10.0f;
 
         bool  freeze_acc_bias_until_live = true;
-        float Racc_warmup_std = 0.5f;
+        float Racc_warmup_std = 1.2f;
 
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
         // Mag-start gate: gravity-direction agreement using current tilt.
-        float mag_gravity_align_max_sin   = 0.156f; // sin(deg)
-        float mag_gravity_align_hold_sec  = 0.486f;
-        float mag_gravity_align_lpf_tau   = 0.35f;
-        float mag_tilt_fallback_sec       = 6.0f;
-        float mag_extreme_gyro_dps        = 90.0f; // veto only truly violent motion
+        float mag_gravity_align_max_sin   = 0.070f; // sin(deg)
+        float mag_gravity_align_hold_sec  = 2.0f;
+        float mag_gravity_align_lpf_tau   = 1.0f;
+        float mag_tilt_fallback_sec       = 30.0f;
+        float mag_extreme_gyro_dps        = 45.0f; // veto only truly violent motion
         float mag_init_min_mag_norm       = 1e-3f;
-        int   mag_min_samples             = 48;
+        int   mag_min_samples             = 300;
 
         // Bootstrap tilt observer for dynamic motion in waves.
-        float bootstrap_tilt_obs_acc_tau_sec  = 1.50f; // accel correction time constant
-        float bootstrap_gravity_slow_tau_sec  = 3.50f; // slow gravity reference LPF
-        float bootstrap_gravity_align_max_sin = 0.193f; // sin(deg)
-        float bootstrap_gravity_hold_sec      = 0.617f;
-        float bootstrap_gravity_min_sec       = 4.0f;
-        float bootstrap_gravity_timeout_sec   = 6.0f;
-        float bootstrap_gravity_norm_frac     = 0.49f; // downweight accel when |a| departs from g
+        float bootstrap_tilt_obs_acc_tau_sec  = 2.50f; // accel correction time constant
+        float bootstrap_gravity_slow_tau_sec  = 6.0f; // slow gravity reference LPF
+        float bootstrap_gravity_align_max_sin = 0.070f; // sin(deg)
+        float bootstrap_gravity_hold_sec      = 2.0f;
+        float bootstrap_gravity_min_sec       = 8.0f;
+        float bootstrap_gravity_timeout_sec   = 15.0f;
+        float bootstrap_gravity_norm_frac     = 0.25f; // downweight accel when |a| departs from g
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
