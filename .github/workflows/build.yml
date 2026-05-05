@@ -8,6 +8,22 @@ on:
         description: "Run OU tuning sweep"
         type: boolean
         default: true
+      ou_tuning_samples:
+        description: "OU tuning samples per stage"
+        type: number
+        default: 100
+      ou_tuning_tier:
+        description: "OU tuning tier"
+        type: choice
+        options:
+          - quick
+          - all
+          - final
+        default: quick
+      ou_tuning_top_k:
+        description: "OU tuning finalists per stage"
+        type: number
+        default: 8
 
 jobs:
   build:
@@ -121,37 +137,67 @@ jobs:
           path: release-svg/${{ matrix.dir }}/**/*.svg
           if-no-files-found: error
 
-
   ou-tuning:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_ou_tuning }}
     runs-on: ubuntu-latest
-    needs: build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - family: OU_II
+            subdir: kalman_ou_ii
+            report_name: ou_ii
+          - family: OU_III
+            subdir: kalman_ou_iii
+            report_name: ou_iii
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
       - name: Download sim data from oceanography-waves-lib GitHub repo release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern "sim-data-files.zip" --clobber
-      - name: Install dependencies
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern "sim-data-files.zip" \
+            --clobber
+
+      - name: Install tuning dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y g++ make libeigen3-dev unzip python3
-      - name: Unpack simulation data
+
+      - name: Unpack simulation data for ${{ matrix.family }}
         run: |
-          unzip -o sim-data-files.zip -d ${{ github.workspace }}/tests/kalman_ou_ii
-          unzip -o sim-data-files.zip -d ${{ github.workspace }}/tests/kalman_ou_iii
-      - name: Run deterministic Monte Carlo sweep
+          unzip -o sim-data-files.zip -d "${{ github.workspace }}/tests/${{ matrix.subdir }}"
+
+      - name: Run ${{ matrix.family }} tuning sweep
+        shell: bash
         run: |
-          python3 tools/ou_tuning_sweep.py --samples 30 --seed 42 --family both
-      - name: Upload tuning reports
+          set -o pipefail
+          mkdir -p reports/results
+
+          python3 -u tools/ou_tuning_sweep.py \
+            --family ${{ matrix.family }} \
+            --mode full \
+            --samples ${{ inputs.ou_tuning_samples }} \
+            --seed 42 \
+            --tier ${{ inputs.ou_tuning_tier }} \
+            --top-k ${{ inputs.ou_tuning_top_k }} \
+            --out-csv reports/results/ou_tuning_${{ matrix.report_name }}.csv \
+            2>&1 | tee reports/results/ou_tuning_${{ matrix.report_name }}.log
+
+      - name: Upload ${{ matrix.family }} tuning reports
+        if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou-tuning-reports
+          name: ou-tuning-reports-${{ matrix.report_name }}
           path: reports/results/*
-          if-no-files-found: error
-
+          if-no-files-found: warn
+          
   release:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
