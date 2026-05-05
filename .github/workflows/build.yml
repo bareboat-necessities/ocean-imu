@@ -1,8 +1,13 @@
 name: build
-on: [push, pull_request]
-
-env:
-  ENABLE_OU_TUNING: 'false'
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      enable_ou_tuning:
+        description: "Run OU tuning sweep"
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -118,7 +123,7 @@ jobs:
 
 
   ou-tuning:
-    if: ${{ env.ENABLE_OU_TUNING == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_ou_tuning }}
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -132,7 +137,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ make libeigen3-dev unzip
+          sudo apt-get install -y g++ make libeigen3-dev unzip python3
       - name: Unpack simulation data
         run: |
           unzip -o sim-data-files.zip -d ${{ github.workspace }}/tests/kalman_ou_ii
