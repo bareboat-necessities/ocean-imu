@@ -2,7 +2,7 @@ name: build
 on: [push, pull_request]
 
 env:
-  ENABLE_OU_TUNING: 'true'
+  ENABLE_OU_TUNING: 'false'
 
 jobs:
   build:
