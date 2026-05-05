@@ -138,7 +138,7 @@ jobs:
           if-no-files-found: error
 
   ou-tuning:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_ou_tuning }}
+    if: ${{ github.event_name == 'push' && inputs.enable_ou_tuning }}
     runs-on: ubuntu-latest
 
     strategy:
