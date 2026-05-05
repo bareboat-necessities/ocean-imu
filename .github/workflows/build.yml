@@ -7,7 +7,7 @@ on:
       enable_ou_tuning:
         description: "Run OU tuning sweep"
         type: boolean
-        default: false
+        default: true
       ou_tuning_samples:
         description: "OU tuning samples per stage"
         type: number
