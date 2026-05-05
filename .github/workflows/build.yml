@@ -2,28 +2,6 @@ name: build
 on:
   push:
   pull_request:
-  workflow_dispatch:
-    inputs:
-      enable_ou_tuning:
-        description: "Run OU tuning sweep"
-        type: boolean
-        default: true
-      ou_tuning_samples:
-        description: "OU tuning samples per stage"
-        type: number
-        default: 30
-      ou_tuning_tier:
-        description: "OU tuning tier"
-        type: choice
-        options:
-          - quick
-          - all
-          - final
-        default: quick
-      ou_tuning_top_k:
-        description: "OU tuning finalists per stage"
-        type: number
-        default: 8
 
 jobs:
   build:
