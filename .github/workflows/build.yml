@@ -138,7 +138,7 @@ jobs:
           if-no-files-found: error
 
   ou-tuning:
-    if: ${{ (true && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.enable_ou_tuning != false) }}
+    if: ${{ (true && github.event_name == 'push') }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -183,10 +183,10 @@ jobs:
           python3 -u tools/ou_tuning_sweep.py \
             --family ${{ matrix.family }} \
             --mode full \
-            --samples ${{ inputs.ou_tuning_samples }} \
+            --samples 32 \
             --seed 42 \
-            --tier ${{ inputs.ou_tuning_tier }} \
-            --top-k ${{ inputs.ou_tuning_top_k }} \
+            --tier quick \
+            --top-k 8 \
             --out-csv reports/results/ou_tuning_${{ matrix.report_name }}.csv \
             2>&1 | tee reports/results/ou_tuning_${{ matrix.report_name }}.log
 
