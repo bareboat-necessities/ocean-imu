@@ -227,3 +227,4 @@ jobs:
             --library ${{ github.workspace }}
             --build-property compiler.libraries.ldflags=-Wl,--allow-multiple-definition
           set-build-path: true
+
