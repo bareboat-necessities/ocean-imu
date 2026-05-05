@@ -114,7 +114,7 @@ jobs:
           if-no-files-found: error
 
 
-  ou-gravity-tilt-tuning:
+  ou-tuning:
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -133,13 +133,13 @@ jobs:
         run: |
           unzip -o sim-data-files.zip -d ${{ github.workspace }}/tests/kalman_ou_ii
           unzip -o sim-data-files.zip -d ${{ github.workspace }}/tests/kalman_ou_iii
-      - name: Run deterministic gravity/tilt Monte Carlo sweep
+      - name: Run deterministic Monte Carlo sweep
         run: |
           python3 tools/ou_tuning_sweep.py --samples 30 --seed 42 --family both
       - name: Upload tuning reports
         uses: actions/upload-artifact@v6
         with:
-          name: ou-gravity-tilt-tuning-reports
+          name: ou-tuning-reports
           path: reports/results/*
           if-no-files-found: error
 
