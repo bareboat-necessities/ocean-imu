@@ -30,6 +30,17 @@ OU_COMMON = {
 OU_II_ONLY = {'OU_P_FACTOR': (0.8, 2.5), 'OU_R_P0_XY_FACTOR': (0.10, 0.70), 'OU_R_P0_COEFF': (0.6, 3.5), 'OU_R_V0_COEFF': (0.6, 3.0)}
 
 RX={'ds':re.compile(r"Processing\s+(.+?\.csv)"),'ang':re.compile(r"Angles RMS \(deg\): Roll=([0-9.eE+-]+) Pitch=([0-9.eE+-]+) Yaw=([0-9.eE+-]+)"),'xyz':re.compile(r"XYZ RMS \(m\): X=([0-9.eE+-]+) Y=([0-9.eE+-]+) Z=([0-9.eE+-]+)"),'r3d':re.compile(r"3D RMS \(m\):\s*([0-9.eE+-]+)"),'accb':re.compile(r"Bias error RMS \(acc, m/s\^2\): X=([0-9.eE+-]+) Y=([0-9.eE+-]+) Z=([0-9.eE+-]+) \|3D\|=([0-9.eE+-]+)"),'gate':re.compile(r"QUALITY_GATE:\s+PASS=(\d)\s+REASON=(.*)")}
+PARAM_RE = re.compile(r'^(SF_|OU_)')
+
+def clean_params(p):
+ out = {}
+ for k, v in p.items():
+  if not PARAM_RE.match(k):
+   continue
+  if isinstance(v, float) and not math.isfinite(v):
+   continue
+  out[k] = v
+ return out
 
 def lhs(r,n,rng):
  a=[rng[0]+(i+r.random())/n*(rng[1]-rng[0]) for i in range(n)]; r.shuffle(a); return a
@@ -104,14 +115,17 @@ def run_candidate(fam,cid,p,tier,seed,collect,stage):
  tdir=ROOT/'tests'/('kalman_ou_ii' if fam=='OU_II' else 'kalman_ou_iii'); bin_name='./kalman_ou_ii-sim' if fam=='OU_II' else './kalman_ou_iii-sim'
  env=os.environ.copy(); env['W3D_SEED']=str(seed); env['W3D_TIER']=tier
  if collect: env['W3D_COLLECT_ALL_GATES']='1'
- env.update({k:(f'{v:.6g}' if isinstance(v,float) else str(v)) for k,v in p.items()})
+ input_params = clean_params(p)
+ env.update({k:(f'{v:.6g}' if isinstance(v,float) else str(v)) for k,v in input_params.items()})
  pr=subprocess.run([bin_name],cwd=tdir,text=True,capture_output=True,env=env)
  rows=parse(pr.stdout+'\n'+pr.stderr)
  for r in rows:
   r.update({'family':fam,'candidate':cid,'seed':seed,'tier':tier,'stage':stage,'returncode':pr.returncode,'roll_pitch_rms_norm':math.hypot(r['roll_rms'],r['pitch_rms']),'xy_rms':math.hypot(r['x_rms'],r['y_rms'])})
-  r.update(p)
-  r['SF_BOOT_GRAV_TIMEOUT_SEC']=p.get('SF_BOOT_GRAV_TIMEOUT_SEC', float('nan'))
-  r['timeout_valid']=int((not math.isnan(r['SF_BOOT_GRAV_TIMEOUT_SEC'])) and r['SF_BOOT_GRAV_TIMEOUT_SEC'] <= MAX_BOOT_TIMEOUT_SEC)
+  r.update(input_params)
+  r['_params'] = dict(input_params)
+  r['input_params'] = dict(input_params)
+  timeout = p.get('SF_BOOT_GRAV_TIMEOUT_SEC')
+  r['timeout_valid']=int(timeout is not None and math.isfinite(timeout) and timeout <= MAX_BOOT_TIMEOUT_SEC)
   r['rejected_before_run']=0
   r['reject_reason']=''
  return rows
@@ -128,7 +142,16 @@ def score_rows(rows):
  for _,it in by.items():
   rp=[]; z=[]; r3=[]; yaw=[]; acc=[]; any_fail=False
   for r in it:
-   b=base.get((r['family'],r['wave_dataset'],r['seed'],r['tier']),r)
+   b=base.get((r['family'],r['wave_dataset'],r['seed'],r['tier']))
+   if b is None and r['candidate'] != 'baseline':
+    r['score']=float('inf')
+    fr = r.get('fail_reason','') or ''
+    r['fail_reason'] = (fr + ';missing_matching_baseline').strip(';')
+    r['quality_gate_pass'] = False
+    any_fail = True
+    continue
+   if b is None:
+    b = r
    rf=lambda x: x if math.isfinite(x) and abs(x)>1e-9 else 1e-9
    r['roll_pitch_ratio']=rf(r['roll_pitch_rms_norm'])/rf(b.get('roll_pitch_rms_norm', float('nan'))); r['z_ratio']=rf(r['z_rms'])/rf(b.get('z_rms', float('nan'))); r['rms3d_ratio']=rf(r['rms_3d'])/rf(b.get('rms_3d', float('nan'))); r['yaw_ratio']=rf(r['yaw_rms'])/rf(b.get('yaw_rms', float('nan'))); r['acc_bias_ratio']=rf(r['acc_bias_rms_3d'])/rf(b.get('acc_bias_rms_3d', float('nan')))
    rp.append(r['roll_pitch_ratio']); z.append(r['z_ratio']); r3.append(r['rms3d_ratio']); yaw.append(r['yaw_ratio']); acc.append(r['acc_bias_ratio']); any_fail = any_fail or (not r['quality_gate_pass'])
@@ -143,7 +166,7 @@ def aggregate_candidates(rows, family, tier):
    by[(r['candidate'])].append(r)
  for cand, it in by.items():
   valid = all((rr.get('returncode')==0 and rr.get('quality_gate_pass') and not rr.get('rejected_before_run')) for rr in it)
-  params = {k:v for k,v in it[0].items() if re.match(r'^(SF_|OU_)', k)}
+  params = clean_params(it[0].get('_params', {}))
   obj={'family':family,'candidate':cand,'tier':tier,'params':params,'valid':valid,'n_rows':len(it),'stage':it[0].get('stage','unknown')}
   if valid:
    obj.update({
@@ -158,6 +181,14 @@ def aggregate_candidates(rows, family, tier):
 
 def rank_key(a):
  return (a['mean_score'], a['max_score'], a['mean_rms3d'], a['mean_z_rms'], a['mean_roll_pitch_rms'], a['mean_yaw_rms'])
+
+def print_stage_summary(stage_name, agg):
+ valid = [x for x in agg if x['valid']]
+ print(f"STAGE_{stage_name}_VALID_COUNT {len(valid)}")
+ top = sorted(valid, key=rank_key)[:5]
+ print(f"STAGE_{stage_name}_TOP {','.join(t['candidate'] for t in top) if top else 'none'}")
+ for t in top:
+  print(f"STAGE_{stage_name}_TOP_CAND candidate={t['candidate']} score={t['mean_score']:.6g} params={t['params']}")
 
 def eval_candidates(fam, cand_list, tier, collect, seed, stage):
  rows=[]
@@ -215,11 +246,11 @@ def corr(xs, ys):
  return cov / math.sqrt(vx*vy)
 
 def print_param_sensitivity(rows, fam):
- valid=[r for r in rows if r.get('family')==fam and r.get('returncode')==0 and r.get('quality_gate_pass') and not r.get('rejected_before_run')]
+ valid=[r for r in rows if r.get('family')==fam and r.get('returncode')==0 and r.get('quality_gate_pass') and not r.get('rejected_before_run') and r.get('candidate')!='baseline' and math.isfinite(float(r.get('score', float('nan'))))]
  param_data=defaultdict(lambda: {'x':[], 'y':[]})
  for r in valid:
-  for k,v in r.items():
-   if re.match(r'^(SF_|OU_)', k) and isinstance(v,(float,int)) and math.isfinite(float(v)):
+  for k,v in r.get('input_params', {}).items():
+   if PARAM_RE.match(k) and isinstance(v,(float,int)) and math.isfinite(float(v)):
     param_data[k]['x'].append(float(v)); param_data[k]['y'].append(float(r.get('score', float('nan'))))
  print(f"\nPARAM_SENSITIVITY {fam}")
  print("param,n,min,max,corr_with_score")
@@ -249,7 +280,9 @@ def main():
   stage_b=[('baseline',{})]+minimal_candidates()+explicit_practical_candidates()+grav_mc
   rows_b=eval_candidates(fam, stage_b, tier=a.tier, collect=(a.collect_all_gates or a.tier!='final'), seed=a.seed, stage='B')
   all_rows.extend(rows_b)
-  agg_b=sorted([x for x in aggregate_candidates(rows_b, fam, a.tier) if x['valid']], key=rank_key)
+  agg_b_all=aggregate_candidates(rows_b, fam, a.tier)
+  print_stage_summary('B', agg_b_all)
+  agg_b=sorted([x for x in agg_b_all if x['valid']], key=rank_key)
   gravity_winners=agg_b[:max(1,a.top_k)]
 
   final_candidates=gravity_winners
@@ -266,7 +299,9 @@ def main():
       stage_c.append((f'comb_g{gi:02d}_ou{oi:04d}', comb))
    rows_c=eval_candidates(fam, stage_c, tier=a.tier, collect=(a.collect_all_gates or a.tier!='final'), seed=a.seed, stage='C')
    all_rows.extend(rows_c)
-   agg_c=sorted([x for x in aggregate_candidates(rows_c, fam, a.tier) if x['valid']], key=rank_key)
+   agg_c_all=aggregate_candidates(rows_c, fam, a.tier)
+   print_stage_summary('C', agg_c_all)
+   agg_c=sorted([x for x in agg_c_all if x['valid']], key=rank_key)
    top_c=agg_c[:max(1,a.top_k)]
 
    # Stage D local refinement
@@ -276,30 +311,45 @@ def main():
     local.extend([(f'refine_t{idx:02d}_{cid}', p) for cid,p in sample_local_perturbations(c['params'], local_ranges, rng, max(1, a.samples//max(1,a.top_k)))])
    rows_d=eval_candidates(fam, local, tier=a.tier, collect=(a.collect_all_gates or a.tier!='final'), seed=a.seed, stage='D')
    all_rows.extend(rows_d)
-   agg_d=sorted([x for x in aggregate_candidates(rows_d, fam, a.tier) if x['valid']], key=rank_key)
+   agg_d_all=aggregate_candidates(rows_d, fam, a.tier)
+   print_stage_summary('D', agg_d_all)
+   agg_d=sorted([x for x in agg_d_all if x['valid']], key=rank_key)
    final_candidates=(agg_d[:max(1,a.top_k)] or top_c or gravity_winners)
 
   # Stage E multi-seed final validation
   validate_tier = a.tier if a.tier != 'quick' else 'final'
+  final_candidates=[c for c in final_candidates if c['candidate']!='baseline']
+  if not final_candidates:
+   print("NO_NON_BASELINE_CANDIDATES_SURVIVED")
   stage_e=[]
+  for s in (a.seed, a.seed+1, a.seed+2):
+   stage_e.append(('baseline', {}, s))
   for i,c in enumerate(final_candidates,1):
    for s in (a.seed, a.seed+1, a.seed+2):
-    stage_e.append((f'final_{i:02d}_s{s}', c['params'], s))
+    stage_e.append((f'final_{i:02d}', c['params'], s))
   rows_e=[]
   for cid,p,s in stage_e:
    rows_e.extend(eval_candidates(fam, [(cid,p)], tier=validate_tier, collect=True, seed=s, stage='E'))
   all_rows.extend(rows_e)
   score_rows(all_rows)
-  agg_e=sorted([x for x in aggregate_candidates(rows_e, fam, validate_tier) if x['valid']], key=rank_key)
+  agg_e_all=aggregate_candidates(rows_e, fam, validate_tier)
+  print_stage_summary('E', agg_e_all)
+  agg_e=sorted([x for x in agg_e_all if x['valid'] and x['candidate']!='baseline'], key=rank_key)
   if not agg_e:
-   print(f"\n=== BEST_CONFIG {fam} ===\nNO_VALID_CANDIDATES")
+   base_final=next((x for x in agg_e_all if x['candidate']=='baseline' and x['valid']), None)
+   print(f"\n=== BEST_CONFIG {fam} ===")
+   if base_final:
+    print("NO_NON_BASELINE_CANDIDATES_SURVIVED")
+    print(f"BASELINE_SCORE {base_final['mean_score']:.6g}")
+   else:
+    print("NO_VALID_CANDIDATES")
    continue
   best=agg_e[0]
 
-  base=next((x for x in aggregate_candidates(rows_b, fam, a.tier) if x['candidate']=='baseline' and x['valid']), None)
-  if base:
-   ratio = best['mean_score']/base['mean_score'] if base['mean_score']>0 else float('inf')
-   print(f"BASELINE_SCORE {base['mean_score']:.6g}")
+  base_final=next((x for x in agg_e_all if x['candidate']=='baseline' and x['valid']), None)
+  if base_final:
+   ratio = best['mean_score']/base_final['mean_score'] if base_final['mean_score']>0 else float('inf')
+   print(f"BASELINE_SCORE {base_final['mean_score']:.6g}")
    print(f"BEST_SCORE {best['mean_score']:.6g}")
    print(f"SCORE_RATIO {ratio:.6g}")
    if ratio > 0.99:
