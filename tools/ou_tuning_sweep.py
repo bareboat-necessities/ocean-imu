@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-import argparse, csv, math, os, random, re, subprocess, time
+import argparse, math, os, random, re, subprocess, time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORTS = ROOT / 'reports' / 'results'
 MAX_BOOT_TIMEOUT_SEC = 15.0
 MIN_MARGIN_SEC = 1.0
 MAX_MARGIN_SEC = 4.0
@@ -112,18 +111,17 @@ def run_candidate(fam,cid,p,tier,seed,collect):
   r['reject_reason']=''
  return rows
 
-def progress_line(fam, mode, tier, i, total, cid, seed, rows_count, passed, failed, score, best_cand, best_score, start_ts, out_csv):
+def progress_line(fam, mode, tier, i, total, cid, seed, rows_count, passed, failed, score, best_cand, best_score, start_ts):
  elapsed = time.time() - start_ts
  eta = (elapsed / i) * (total - i) if i > 0 else 0
  fmt = lambda t: time.strftime('%H:%M:%S', time.gmtime(max(t, 0.0)))
  ts = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
- return f"{ts} [{fam}][{mode}][{tier}] {i}/{total} candidate={cid} seed={seed} rows={rows_count} pass={passed} fail={failed} score={score if score is not None else 'na'} best={best_cand} best_score={best_score if best_score is not None else 'na'} elapsed={fmt(elapsed)} eta={fmt(eta)} out={out_csv}"
+ return f"{ts} [{fam}][{mode}][{tier}] {i}/{total} candidate={cid} seed={seed} rows={rows_count} pass={passed} fail={failed} score={score if score is not None else 'na'} best={best_cand} best_score={best_score if best_score is not None else 'na'} elapsed={fmt(elapsed)} eta={fmt(eta)}"
 
-def eval_set(fam, cand_list, tier='quick', collect=True, seed=42, out_csv=''):
- rows=[]; total=len(cand_list); start_ts=time.time(); prog_path=REPORTS/f'ou_sweep_progress_{fam.lower()}_{tier}_seed{seed}.log'
+def eval_set(fam, cand_list, tier='quick', collect=True, seed=42):
+ rows=[]; total=len(cand_list); start_ts=time.time()
  best_score = None; best_cand = 'na'; pass_count=0; fail_count=0
- with prog_path.open('a') as prog:
-  for i,(cid,p) in enumerate(cand_list,1):
+ for i,(cid,p) in enumerate(cand_list,1):
    ok, reason = validate_candidate(p)
    if not ok:
     reject_row = {'family':fam,'candidate':cid,'seed':seed,'tier':tier,'mode':'gravity' if cid.startswith(('grav_','practical_','minimal_')) or cid in ('baseline',) else 'ou',
@@ -145,10 +143,47 @@ def eval_set(fam, cand_list, tier='quick', collect=True, seed=42, out_csv=''):
    if family_rows:
     b = min(family_rows, key=lambda x: x.get('score', float('inf')))
     best_cand, best_score = b['candidate'], b.get('score')
-   line = progress_line(fam, 'gravity' if cid.startswith(('grav_','practical_','minimal_')) or cid in ('baseline',) else 'ou', tier, i, total, cid, seed, len(current), pass_count, fail_count, cand_score, best_cand, best_score, start_ts, out_csv)
+   line = progress_line(fam, 'gravity' if cid.startswith(('grav_','practical_','minimal_')) or cid in ('baseline',) else 'ou', tier, i, total, cid, seed, len(current), pass_count, fail_count, cand_score, best_cand, best_score, start_ts)
    print(line, flush=True)
-   prog.write(line + '\n'); prog.flush()
  return rows
+
+def _metric(v):
+ return v if math.isfinite(v) else float('inf')
+
+def best_by_quality_and_rms(rows):
+ valid = [r for r in rows if (not r.get('rejected_before_run')) and r.get('returncode') == 0 and r.get('quality_gate_pass')]
+ by = defaultdict(list)
+ for r in valid:
+  by[(r['family'], r['candidate'], r['tier'])].append(r)
+ out = {}
+ for key, items in by.items():
+  items_sorted = sorted(items, key=lambda r: (_metric(r.get('rms_3d')), _metric(r.get('z_rms')), _metric(r.get('roll_pitch_rms_norm')), _metric(r.get('yaw_rms'))))
+  rep = items_sorted[0]
+  out[key] = {
+   'family': key[0], 'candidate': key[1], 'tier': key[2], 'n_datasets': len(items),
+   'mean_rms3d': sum(_metric(r.get('rms_3d')) for r in items)/len(items),
+   'mean_z_rms': sum(_metric(r.get('z_rms')) for r in items)/len(items),
+   'mean_rp_rms': sum(_metric(r.get('roll_pitch_rms_norm')) for r in items)/len(items),
+   'mean_yaw_rms': sum(_metric(r.get('yaw_rms')) for r in items)/len(items),
+   'params': {k: rep[k] for k in rep.keys() if re.match(r'^(SF_|OU_)', k)}
+  }
+ return out
+
+def print_cpp_config(fam, result):
+ params = result['params']
+ print(f"\n=== BEST_CONFIG {fam} candidate={result['candidate']} tier={result['tier']} datasets={result['n_datasets']} ===")
+ print(f"RMS_SUMMARY mean_3d={result['mean_rms3d']:.6g} mean_z={result['mean_z_rms']:.6g} mean_roll_pitch={result['mean_rp_rms']:.6g} mean_yaw={result['mean_yaw_rms']:.6g}")
+ print("// C++ snippet:")
+ print("struct TunedParams {")
+ for k in sorted(params.keys()):
+  v = params[k]
+  if isinstance(v, float):
+   print(f"  static constexpr float {k} = {v:.9g}f;")
+  elif isinstance(v, int):
+   print(f"  static constexpr int {k} = {v};")
+  else:
+   print(f'  static constexpr auto {k} = "{v}";')
+ print("};")
 
 def percentile(vals,p):
  if not vals:return float('inf')
@@ -174,8 +209,6 @@ def main():
  ap=argparse.ArgumentParser(); ap.add_argument('--mode',choices=['gravity','ou','full'],default='gravity'); ap.add_argument('--family',choices=['OU_II','OU_III','both'],default='both'); ap.add_argument('--samples',type=int,default=100); ap.add_argument('--seed',type=int,default=42); ap.add_argument('--tier',choices=['quick','all','final'],default='quick'); ap.add_argument('--top-k',type=int,default=8); ap.add_argument('--collect-all-gates',action='store_true',default=False)
  a=ap.parse_args(); subprocess.run(['make','-C',str(ROOT/'tests/kalman_ou_ii'),'build'],check=True); subprocess.run(['make','-C',str(ROOT/'tests/kalman_ou_iii'),'build'],check=True)
  fams=['OU_II','OU_III'] if a.family=='both' else [a.family]; rows=[]
- REPORTS.mkdir(parents=True,exist_ok=True)
- out=REPORTS/f'ou_sweep_{a.mode}_{a.tier}_seed{a.seed}_n{a.samples}.csv'
  for fam in fams:
   rng=random.Random(a.seed+(0 if fam=='OU_II' else 1000000)); grav_mc=[(f'grav_mc_{i:04d}',p) for i,p in enumerate(sample_params(GRAVITY_RANGES[fam],a.samples,rng,gravity=True),1)]
   candidates=[('baseline',{})]+minimal_candidates()+explicit_practical_candidates()+grav_mc
@@ -183,10 +216,18 @@ def main():
    ou_space=dict(OU_COMMON)
    if fam=='OU_II': ou_space.update(OU_II_ONLY)
    candidates += [(f'ou_mc_{i:04d}',p) for i,p in enumerate(sample_params(ou_space,a.samples,rng),1)]
-  rows.extend(eval_set(fam,candidates,tier=a.tier,collect=(a.collect_all_gates or a.tier!='final'),seed=a.seed,out_csv=str(out)))
+  rows.extend(eval_set(fam,candidates,tier=a.tier,collect=(a.collect_all_gates or a.tier!='final'),seed=a.seed))
  score_rows(rows)
- fields=sorted({k for r in rows for k in r.keys()})
- with out.open('w',newline='') as f: w=csv.DictWriter(f,fieldnames=fields); w.writeheader(); w.writerows(rows)
- print(out)
+ best = best_by_quality_and_rms(rows)
+ if not best:
+  print("NO_VALID_CANDIDATES: no candidate passed quality gates and returned success.")
+  return
+ for fam in fams:
+  fam_best = [v for k,v in best.items() if k[0] == fam]
+  if not fam_best:
+   print(f"\n=== BEST_CONFIG {fam} ===\nNO_VALID_CANDIDATES")
+   continue
+  fam_best.sort(key=lambda r: (r['mean_rms3d'], r['mean_z_rms'], r['mean_rp_rms'], r['mean_yaw_rms']))
+  print_cpp_config(fam, fam_best[0])
 
 if __name__=='__main__': main()
