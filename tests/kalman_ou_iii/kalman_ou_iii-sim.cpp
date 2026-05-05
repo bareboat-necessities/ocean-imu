@@ -60,6 +60,26 @@ public:
             if (const char* s = std::getenv("OU_ADAPT_TAU_SEC")) filter.setAdaptationTimeConstants(std::atof(s));
             if (const char* s = std::getenv("OU_ADAPT_EVERY_SECS")) filter.setAdaptationUpdatePeriod(std::atof(s));
             if (const char* s = std::getenv("OU_FREQ_INPUT_CUTOFF_HZ")) filter.setFreqInputCutoffHz(std::atof(s));
+if (const char* s = std::getenv("OU_ACC_BIAS_INIT_STD")) {
+    filter.mekf().set_initial_acc_bias_std(std::atof(s));
+}
+
+if (const char* s = std::getenv("OU_ACC_BIAS_INIT_X")) {
+    Vector3f b = filter.mekf().get_acc_bias();
+    b.x() = std::atof(s);
+    filter.mekf().set_initial_acc_bias(b);
+}
+if (const char* s = std::getenv("OU_ACC_BIAS_INIT_Y")) {
+    Vector3f b = filter.mekf().get_acc_bias();
+    b.y() = std::atof(s);
+    filter.mekf().set_initial_acc_bias(b);
+}
+if (const char* s = std::getenv("OU_ACC_BIAS_INIT_Z")) {
+    Vector3f b = filter.mekf().get_acc_bias();
+    b.z() = std::atof(s);
+    filter.mekf().set_initial_acc_bias(b);
+}
+            
         }
     }
     void apply_env_overrides() {
