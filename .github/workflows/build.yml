@@ -163,7 +163,7 @@ jobs:
             --mode full \
             --samples 32 \
             --seed 42 \
-            --tier quick \
+            --tier full \
             --top-k 8 \
             --out-csv reports/results/ou_tuning_${{ matrix.report_name }}.csv \
             2>&1 | tee reports/results/ou_tuning_${{ matrix.report_name }}.log
