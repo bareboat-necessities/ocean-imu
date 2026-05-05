@@ -35,7 +35,7 @@ RX = {
 
 # kind: "log", "linear", or "int"
 BOOT_SPECS = {
-    "SF_RACC_WARMUP_STD": (0.15, 1.20, "log"),
+    "SF_RACC_WARMUP_STD": (0.12, 1.50, "log"),
     "SF_ONLINE_TUNE_WARMUP_SEC": (1.0, 18.0, "log"),
     "SF_BOOT_TILT_ACC_TAU": (0.6, 6.0, "log"),
     "SF_BOOT_GRAV_SLOW_TAU": (1.5, 12.0, "log"),
@@ -46,13 +46,14 @@ BOOT_SPECS = {
 }
 
 OU_COMMON_SPECS = {
-    # These are real knobs in both sim files. Do not reject them.
     "OU_TAU_COEFF": (0.15, 6.0, "log"),
     "OU_SIGMA_COEFF": (0.15, 6.0, "log"),
     "OU_ACC_NOISE_FLOOR_SIGMA": (0.008, 1.00, "log"),
     "OU_ADAPT_TAU_SEC": (0.08, 45.0, "log"),
     "OU_ADAPT_EVERY_SECS": (0.005, 2.5, "log"),
     "OU_FREQ_INPUT_CUTOFF_HZ": (0.03, 3.0, "log"),
+
+    "OU_ACC_BIAS_INIT_STD": (0.001, 1.20, "log"),
 }
 
 OU_II_EXTRA_SPECS = {
@@ -60,6 +61,13 @@ OU_II_EXTRA_SPECS = {
     "OU_R_P0_XY_FACTOR": (0.015, 4.0, "log"),
     "OU_R_P0_COEFF": (0.03, 25.0, "log"),
     "OU_R_V0_COEFF": (0.03, 25.0, "log"),
+}
+
+# Optional. Off by default because this can overfit to sim seed / specific synthetic bias.
+BIAS_VECTOR_SPECS = {
+    "OU_ACC_BIAS_INIT_X": (-0.30, 0.30, "linear"),
+    "OU_ACC_BIAS_INIT_Y": (-0.30, 0.30, "linear"),
+    "OU_ACC_BIAS_INIT_Z": (-0.50, 0.50, "linear"),
 }
 
 # Optional. Off by default because this can hide OU problems by tuning mag behavior.
@@ -101,7 +109,7 @@ def build_family(fam):
     log(f"BUILD_DONE family={fam}")
 
 
-def make_space(fam, mode, tune_mag):
+def make_space(fam, mode, tune_mag, tune_bias_vector):
     specs = {}
 
     if mode in ("gravity", "full"):
@@ -111,6 +119,8 @@ def make_space(fam, mode, tune_mag):
         specs.update(OU_COMMON_SPECS)
         if fam == "OU_II":
             specs.update(OU_II_EXTRA_SPECS)
+        if tune_bias_vector:
+            specs.update(BIAS_VECTOR_SPECS)
 
     if tune_mag:
         specs.update(MAG_SPECS)
@@ -118,17 +128,17 @@ def make_space(fam, mode, tune_mag):
     return specs
 
 
-def allowed_keys(fam, mode, tune_mag):
-    keys = set(make_space(fam, mode, tune_mag).keys())
+def allowed_keys(fam, mode, tune_mag, tune_bias_vector):
+    keys = set(make_space(fam, mode, tune_mag, tune_bias_vector).keys())
     keys.add("SF_BOOT_GRAV_TIMEOUT_SEC")
     return keys
 
 
-def clean_params(p, fam=None, mode="full", tune_mag=False):
+def clean_params(p, fam=None, mode="full", tune_mag=False, tune_bias_vector=False):
     if fam is None:
         allowed = None
     else:
-        allowed = allowed_keys(fam, mode, tune_mag)
+        allowed = allowed_keys(fam, mode, tune_mag, tune_bias_vector)
 
     out = {}
     for k, v in p.items():
@@ -231,7 +241,6 @@ def probe_candidates(space):
         out.append((f"probe_mid_{k}", {k: value_from_unit(spec, 0.50)}))
         out.append((f"probe_high_{k}", {k: value_from_unit(spec, 0.92)}))
 
-    # Practical known-good-ish startup candidates.
     if "SF_BOOT_GRAV_MIN_SEC" in space:
         base = {
             "SF_BOOT_TILT_ACC_TAU": 2.0,
@@ -248,7 +257,6 @@ def probe_candidates(space):
             p["SF_BOOT_GRAV_TIMEOUT_SEC"] = timeout
             out.append((f"practical_boot_{i:02d}", p))
 
-    # OU probes that change coupled OU behavior, not just one knob.
     if "OU_TAU_COEFF" in space and "OU_SIGMA_COEFF" in space:
         practical = [
             {"OU_TAU_COEFF": 0.35, "OU_SIGMA_COEFF": 0.50},
@@ -265,6 +273,7 @@ def probe_candidates(space):
                 "OU_TAU_COEFF": 0.70,
                 "OU_SIGMA_COEFF": 1.30,
                 "OU_ACC_NOISE_FLOOR_SIGMA": 0.025,
+                "OU_ACC_BIAS_INIT_STD": 0.02,
                 "OU_ADAPT_TAU_SEC": 0.75,
                 "OU_ADAPT_EVERY_SECS": 0.025,
             },
@@ -272,6 +281,7 @@ def probe_candidates(space):
                 "OU_TAU_COEFF": 1.50,
                 "OU_SIGMA_COEFF": 0.75,
                 "OU_ACC_NOISE_FLOOR_SIGMA": 0.12,
+                "OU_ACC_BIAS_INIT_STD": 0.20,
                 "OU_ADAPT_TAU_SEC": 8.0,
                 "OU_ADAPT_EVERY_SECS": 0.20,
             },
@@ -279,15 +289,54 @@ def probe_candidates(space):
                 "OU_TAU_COEFF": 0.45,
                 "OU_SIGMA_COEFF": 2.20,
                 "OU_ACC_NOISE_FLOOR_SIGMA": 0.05,
+                "OU_ACC_BIAS_INIT_STD": 0.08,
                 "OU_FREQ_INPUT_CUTOFF_HZ": 0.18,
             },
             {
                 "OU_TAU_COEFF": 2.20,
                 "OU_SIGMA_COEFF": 0.45,
                 "OU_ACC_NOISE_FLOOR_SIGMA": 0.20,
+                "OU_ACC_BIAS_INIT_STD": 0.30,
                 "OU_FREQ_INPUT_CUTOFF_HZ": 0.80,
             },
         ]
+
+        if "OU_ACC_BIAS_INIT_X" in space:
+            practical.extend(
+                [
+                    {
+                        "OU_ACC_BIAS_INIT_STD": 0.04,
+                        "OU_ACC_BIAS_INIT_X": 0.00,
+                        "OU_ACC_BIAS_INIT_Y": 0.00,
+                        "OU_ACC_BIAS_INIT_Z": 0.00,
+                    },
+                    {
+                        "OU_ACC_BIAS_INIT_STD": 0.10,
+                        "OU_ACC_BIAS_INIT_X": 0.03,
+                        "OU_ACC_BIAS_INIT_Y": -0.03,
+                        "OU_ACC_BIAS_INIT_Z": 0.05,
+                    },
+                    {
+                        "OU_ACC_BIAS_INIT_STD": 0.10,
+                        "OU_ACC_BIAS_INIT_X": -0.03,
+                        "OU_ACC_BIAS_INIT_Y": 0.03,
+                        "OU_ACC_BIAS_INIT_Z": -0.05,
+                    },
+                    {
+                        "OU_ACC_BIAS_INIT_STD": 0.25,
+                        "OU_ACC_BIAS_INIT_X": 0.08,
+                        "OU_ACC_BIAS_INIT_Y": -0.08,
+                        "OU_ACC_BIAS_INIT_Z": 0.12,
+                    },
+                    {
+                        "OU_ACC_BIAS_INIT_STD": 0.25,
+                        "OU_ACC_BIAS_INIT_X": -0.08,
+                        "OU_ACC_BIAS_INIT_Y": 0.08,
+                        "OU_ACC_BIAS_INIT_Z": -0.12,
+                    },
+                ]
+            )
+
         for i, p in enumerate(practical, 1):
             out.append((f"practical_ou_{i:02d}", p))
 
@@ -299,7 +348,15 @@ def dedupe_candidates(cands):
     out = []
 
     for cid, p in cands:
-        key = tuple(sorted((k, round(float(v), 9) if isinstance(v, (float, int)) else v) for k, v in p.items()))
+        key = tuple(
+            sorted(
+                (
+                    k,
+                    round(float(v), 9) if isinstance(v, (float, int)) else v,
+                )
+                for k, v in p.items()
+            )
+        )
         if key in seen:
             continue
         seen.add(key)
@@ -376,11 +433,29 @@ def synthetic_failure_row(fam, cid, p, tier, seed, stage, reason, returncode):
     return row
 
 
-def run_candidate(fam, cid, p, tier, seed, collect, stage, run_timeout_sec, mode, tune_mag):
+def run_candidate(
+    fam,
+    cid,
+    p,
+    tier,
+    seed,
+    collect,
+    stage,
+    run_timeout_sec,
+    mode,
+    tune_mag,
+    tune_bias_vector,
+):
     tdir = ROOT / "tests" / family_subdir(fam)
     bin_name = family_bin(fam)
 
-    input_params = clean_params(p, fam=fam, mode=mode, tune_mag=tune_mag)
+    input_params = clean_params(
+        p,
+        fam=fam,
+        mode=mode,
+        tune_mag=tune_mag,
+        tune_bias_vector=tune_bias_vector,
+    )
 
     env = os.environ.copy()
     env["W3D_SEED"] = str(seed)
@@ -396,7 +471,7 @@ def run_candidate(fam, cid, p, tier, seed, collect, stage, run_timeout_sec, mode
             env[k] = str(v)
 
     try:
-        # IMPORTANT: no --nomag. The user explicitly wants magnetometer enabled.
+        # IMPORTANT: no --nomag. Magnetometer remains enabled.
         pr = subprocess.run(
             [bin_name],
             cwd=tdir,
@@ -529,7 +604,6 @@ def score_rows(rows):
         if not rp or not z or not r3 or not yaw or not acc:
             score = float("inf")
         else:
-            # Lower is better. This version actually rewards lower 3D/Z RMS.
             score = (
                 3.00 * percentile(r3, 0.75)
                 + 2.00 * max(r3)
@@ -540,6 +614,7 @@ def score_rows(rows):
                 + 0.70 * percentile(yaw, 0.75)
                 + 0.40 * max(yaw)
                 + 0.30 * percentile(acc, 0.75)
+                + 0.25 * max(acc)
                 + (100.0 if any_fail else 0.0)
             )
 
@@ -591,10 +666,13 @@ def aggregate_candidates(rows, fam, tier, stage=None):
                     "mean_z_rms": sum(finite_float(r["z_rms"]) for r in items) / len(items),
                     "mean_roll_pitch_rms": sum(finite_float(r["roll_pitch_rms_norm"]) for r in items) / len(items),
                     "mean_yaw_rms": sum(finite_float(r["yaw_rms"]) for r in items) / len(items),
+                    "mean_acc_bias_rms3d": sum(finite_float(r["acc_bias_rms_3d"]) for r in items) / len(items),
                     "mean_rms3d_ratio": sum(finite_float(r.get("rms3d_ratio")) for r in items) / len(items),
                     "max_rms3d_ratio": max(finite_float(r.get("rms3d_ratio")) for r in items),
                     "mean_z_ratio": sum(finite_float(r.get("z_ratio")) for r in items) / len(items),
                     "max_z_ratio": max(finite_float(r.get("z_ratio")) for r in items),
+                    "mean_acc_bias_ratio": sum(finite_float(r.get("acc_bias_ratio")) for r in items) / len(items),
+                    "max_acc_bias_ratio": max(finite_float(r.get("acc_bias_ratio")) for r in items),
                     "max_roll_pitch_ratio": max(finite_float(r.get("roll_pitch_ratio")) for r in items),
                     "max_yaw_ratio": max(finite_float(r.get("yaw_ratio")) for r in items),
                 }
@@ -608,10 +686,13 @@ def aggregate_candidates(rows, fam, tier, stage=None):
                     "mean_z_rms": float("inf"),
                     "mean_roll_pitch_rms": float("inf"),
                     "mean_yaw_rms": float("inf"),
+                    "mean_acc_bias_rms3d": float("inf"),
                     "mean_rms3d_ratio": float("inf"),
                     "max_rms3d_ratio": float("inf"),
                     "mean_z_ratio": float("inf"),
                     "max_z_ratio": float("inf"),
+                    "mean_acc_bias_ratio": float("inf"),
+                    "max_acc_bias_ratio": float("inf"),
                     "max_roll_pitch_ratio": float("inf"),
                     "max_yaw_ratio": float("inf"),
                 }
@@ -630,6 +711,7 @@ def rank_key(a):
         a["max_z_ratio"],
         a["mean_rms3d"],
         a["mean_z_rms"],
+        a["mean_acc_bias_rms3d"],
         a["mean_roll_pitch_rms"],
         a["mean_yaw_rms"],
     )
@@ -645,7 +727,18 @@ def useful_nonbaseline(agg):
     ]
 
 
-def eval_candidates(fam, candidates, tier, collect, seed, stage, run_timeout_sec, mode, tune_mag):
+def eval_candidates(
+    fam,
+    candidates,
+    tier,
+    collect,
+    seed,
+    stage,
+    run_timeout_sec,
+    mode,
+    tune_mag,
+    tune_bias_vector,
+):
     rows = []
     total = len(candidates)
     started = time.time()
@@ -655,7 +748,13 @@ def eval_candidates(fam, candidates, tier, collect, seed, stage, run_timeout_sec
     log(f"STAGE_START family={fam} stage={stage} tier={tier} candidates={total} seed={seed}")
 
     for i, (cid, raw_params) in enumerate(candidates, 1):
-        p = clean_params(raw_params, fam=fam, mode=mode, tune_mag=tune_mag)
+        p = clean_params(
+            raw_params,
+            fam=fam,
+            mode=mode,
+            tune_mag=tune_mag,
+            tune_bias_vector=tune_bias_vector,
+        )
         ok, reason = validate_candidate(p)
 
         if not ok:
@@ -676,6 +775,7 @@ def eval_candidates(fam, candidates, tier, collect, seed, stage, run_timeout_sec
                 run_timeout_sec=run_timeout_sec,
                 mode=mode,
                 tune_mag=tune_mag,
+                tune_bias_vector=tune_bias_vector,
             )
 
         rows.extend(run_rows)
@@ -723,9 +823,10 @@ def print_stage_summary(stage, agg):
             f"STAGE_{stage}_TOP_CAND candidate={t['candidate']} "
             f"score={t['mean_score']:.6g} rms3d={t['mean_rms3d']:.6g} "
             f"z={t['mean_z_rms']:.6g} rp={t['mean_roll_pitch_rms']:.6g} "
-            f"yaw={t['mean_yaw_rms']:.6g} "
+            f"yaw={t['mean_yaw_rms']:.6g} acc_bias={t['mean_acc_bias_rms3d']:.6g} "
             f"r3ratio={t['mean_rms3d_ratio']:.6g}/{t['max_rms3d_ratio']:.6g} "
             f"zratio={t['mean_z_ratio']:.6g}/{t['max_z_ratio']:.6g} "
+            f"accratio={t['mean_acc_bias_ratio']:.6g}/{t['max_acc_bias_ratio']:.6g} "
             f"params={t['params']}"
         )
 
@@ -837,13 +938,16 @@ def print_cpp_config(fam, result):
         f"RMS_SUMMARY mean_3d={result['mean_rms3d']:.6g} "
         f"mean_z={result['mean_z_rms']:.6g} "
         f"mean_roll_pitch={result['mean_roll_pitch_rms']:.6g} "
-        f"mean_yaw={result['mean_yaw_rms']:.6g}"
+        f"mean_yaw={result['mean_yaw_rms']:.6g} "
+        f"mean_acc_bias={result['mean_acc_bias_rms3d']:.6g}"
     )
     log(
         f"RATIO_SUMMARY mean_3d_ratio={result['mean_rms3d_ratio']:.6g} "
         f"max_3d_ratio={result['max_rms3d_ratio']:.6g} "
         f"mean_z_ratio={result['mean_z_ratio']:.6g} "
-        f"max_z_ratio={result['max_z_ratio']:.6g}"
+        f"max_z_ratio={result['max_z_ratio']:.6g} "
+        f"mean_acc_bias_ratio={result['mean_acc_bias_ratio']:.6g} "
+        f"max_acc_bias_ratio={result['max_acc_bias_ratio']:.6g}"
     )
 
     log("// C++ snippet:")
@@ -898,7 +1002,8 @@ def final_report(rows_e, fam, tier):
             f"BASELINE_RMS mean_3d={base['mean_rms3d']:.6g} "
             f"mean_z={base['mean_z_rms']:.6g} "
             f"mean_rp={base['mean_roll_pitch_rms']:.6g} "
-            f"mean_yaw={base['mean_yaw_rms']:.6g}"
+            f"mean_yaw={base['mean_yaw_rms']:.6g} "
+            f"mean_acc_bias={base['mean_acc_bias_rms3d']:.6g}"
         )
 
     if not nonbase:
@@ -915,20 +1020,25 @@ def final_report(rows_e, fam, tier):
         if ratio > 0.995:
             log("NO_MEANINGFUL_SCORE_IMPROVEMENT")
 
-    best_rows = [r for r in rows_e if r.get("candidate") == best["candidate"] and r.get("stage") == "E"]
+    best_rows = [
+        r for r in rows_e
+        if r.get("candidate") == best["candidate"] and r.get("stage") == "E"
+    ]
 
     by_ds = defaultdict(list)
     for r in best_rows:
         rr = finite_float(r.get("rms3d_ratio"))
         zr = finite_float(r.get("z_ratio"))
+        ar = finite_float(r.get("acc_bias_ratio"))
         if math.isfinite(rr):
-            by_ds[r["wave_dataset"]].append((rr, zr))
+            by_ds[r["wave_dataset"]].append((rr, zr, ar))
 
     log("PER_DATASET_RATIOS")
     for ds, vals in sorted(by_ds.items()):
         r3avg = sum(v[0] for v in vals) / len(vals)
         zavg = sum(v[1] for v in vals) / len(vals)
-        log(f"{ds}: rms3d_ratio={r3avg:.6g} z_ratio={zavg:.6g}")
+        aavg = sum(v[2] for v in vals) / len(vals)
+        log(f"{ds}: rms3d_ratio={r3avg:.6g} z_ratio={zavg:.6g} acc_bias_ratio={aavg:.6g}")
 
     log(f"BEST_PARAMS {best['params']}")
     print_cpp_config(fam, best)
@@ -949,6 +1059,12 @@ def main():
     ap.add_argument("--run-timeout-sec", type=float, default=0.0)
     ap.add_argument("--no-build", action="store_true", default=False)
     ap.add_argument("--tune-mag", action="store_true", default=False)
+    ap.add_argument(
+        "--tune-bias-vector",
+        action="store_true",
+        default=False,
+        help="Also sweep OU_ACC_BIAS_INIT_X/Y/Z. Off by default because it can overfit.",
+    )
     args = ap.parse_args()
 
     fams = ["OU_II", "OU_III"] if args.family == "both" else [args.family]
@@ -959,15 +1075,17 @@ def main():
             build_family(fam)
 
     for fam in fams:
-        log(f"\n===== FAMILY_START {fam} mode={args.mode} samples={args.samples} seed={args.seed} =====")
+        log(
+            f"\n===== FAMILY_START {fam} mode={args.mode} samples={args.samples} "
+            f"seed={args.seed} tune_mag={args.tune_mag} tune_bias_vector={args.tune_bias_vector} ====="
+        )
 
         rng = random.Random(args.seed + (0 if fam == "OU_II" else 1000000))
-        space = make_space(fam, args.mode, args.tune_mag)
+        space = make_space(fam, args.mode, args.tune_mag, args.tune_bias_vector)
         require_timeout = args.mode in ("gravity", "full")
 
         log(f"SEARCH_SPACE family={fam} keys={','.join(sorted(space.keys()))}")
 
-        # Stage A: one-at-a-time and practical probes.
         stage_a = dedupe_candidates([("baseline", {})] + probe_candidates(space))
         rows_a = eval_candidates(
             fam=fam,
@@ -979,6 +1097,7 @@ def main():
             run_timeout_sec=args.run_timeout_sec,
             mode=args.mode,
             tune_mag=args.tune_mag,
+            tune_bias_vector=args.tune_bias_vector,
         )
         all_rows.extend(rows_a)
 
@@ -986,7 +1105,6 @@ def main():
         print_stage_summary("A", agg_a)
         print_param_sensitivity(rows_a, fam)
 
-        # Stage B: full random/log-LHS search across all active knobs.
         mc = [
             (f"mc_{i:04d}", p)
             for i, p in enumerate(sample_lhs(space, args.samples, rng, require_timeout=require_timeout), 1)
@@ -1001,6 +1119,7 @@ def main():
             run_timeout_sec=args.run_timeout_sec,
             mode=args.mode,
             tune_mag=args.tune_mag,
+            tune_bias_vector=args.tune_bias_vector,
         )
         all_rows.extend(rows_b)
 
@@ -1015,7 +1134,6 @@ def main():
             log("NO_STAGE_A_OR_B_NONBASELINE_SURVIVORS")
             continue
 
-        # Stage C: local refinement around the best candidates.
         local = []
         per_top = max(2, args.samples // max(1, args.top_k))
 
@@ -1037,6 +1155,7 @@ def main():
                 run_timeout_sec=args.run_timeout_sec,
                 mode=args.mode,
                 tune_mag=args.tune_mag,
+                tune_bias_vector=args.tune_bias_vector,
             )
             all_rows.extend(rows_c)
 
@@ -1049,7 +1168,6 @@ def main():
 
         final_candidates = pool[: max(1, args.top_k)]
 
-        # Stage E: multi-seed validation.
         final_tier = args.final_tier or ("final" if args.tier == "quick" else args.tier)
         rows_e = []
 
@@ -1068,6 +1186,7 @@ def main():
                 run_timeout_sec=args.run_timeout_sec,
                 mode=args.mode,
                 tune_mag=args.tune_mag,
+                tune_bias_vector=args.tune_bias_vector,
             )
             rows_e.extend(seed_rows)
 
@@ -1082,3 +1201,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
