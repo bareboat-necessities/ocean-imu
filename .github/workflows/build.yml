@@ -11,7 +11,7 @@ on:
       ou_tuning_samples:
         description: "OU tuning samples per stage"
         type: number
-        default: 100
+        default: 30
       ou_tuning_tier:
         description: "OU tuning tier"
         type: choice
