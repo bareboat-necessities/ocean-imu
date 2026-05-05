@@ -1,6 +1,9 @@
 name: build
 on: [push, pull_request]
 
+env:
+  ENABLE_OU_TUNING: 'true'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -115,6 +118,7 @@ jobs:
 
 
   ou-tuning:
+    if: ${{ env.ENABLE_OU_TUNING == 'true' }}
     runs-on: ubuntu-latest
     needs: build
     steps:
