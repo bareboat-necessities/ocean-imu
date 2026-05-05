@@ -71,6 +71,10 @@ RX = {
 }
 
 
+def log(msg):
+    print(msg, flush=True)
+
+
 def clean_params(p):
     out = {}
     for k, v in p.items():
@@ -86,6 +90,16 @@ def clean_params(p):
     return out
 
 
+def useful_nonbaseline_candidates(agg):
+    return [
+        x
+        for x in agg
+        if x.get("valid")
+        and x.get("candidate") != "baseline"
+        and clean_params(x.get("params", {}))
+    ]
+
+
 def format_duration(sec):
     sec = max(0, int(sec))
     h, rem = divmod(sec, 3600)
@@ -98,6 +112,10 @@ def lhs(rng, n, span):
     vals = [lo + (i + rng.random()) / n * (hi - lo) for i in range(n)]
     rng.shuffle(vals)
     return vals
+
+
+def random_sample(space, rng):
+    return {k: lo + rng.random() * (hi - lo) for k, (lo, hi) in space.items()}
 
 
 def minimal_candidates():
@@ -135,44 +153,71 @@ def explicit_practical_candidates():
 
 
 def apply_timeout_constraint(p, rng):
-    min_sec = p["SF_BOOT_GRAV_MIN_SEC"]
-    hold_sec = p["SF_BOOT_GRAV_HOLD_SEC"]
+    if "SF_BOOT_GRAV_MIN_SEC" not in p or "SF_BOOT_GRAV_HOLD_SEC" not in p:
+        return True
+
+    min_sec = float(p["SF_BOOT_GRAV_MIN_SEC"])
+    hold_sec = float(p["SF_BOOT_GRAV_HOLD_SEC"])
     margin_max = min(MAX_MARGIN_SEC, MAX_BOOT_TIMEOUT_SEC - min_sec - hold_sec)
+
     if margin_max < MIN_MARGIN_SEC:
         return False
+
     margin = MIN_MARGIN_SEC + rng.random() * (margin_max - MIN_MARGIN_SEC)
     p["SF_BOOT_GRAV_TIMEOUT_SEC"] = min_sec + hold_sec + margin
     return p["SF_BOOT_GRAV_TIMEOUT_SEC"] <= MAX_BOOT_TIMEOUT_SEC
 
 
 def sample_params(space, n, rng, gravity=False):
+    if n <= 0:
+        return []
+
     cols = {k: lhs(rng, n, span) for k, span in space.items()}
     out = []
-    i = 0
-    while i < n:
+
+    for i in range(n):
         p = {k: cols[k][i] for k in cols}
-        if gravity and not apply_timeout_constraint(p, rng):
-            continue
+        if gravity:
+            if not apply_timeout_constraint(p, rng):
+                continue
         out.append(p)
-        i += 1
-    return out
+
+    attempts = 0
+    max_attempts = max(1000, 50 * n)
+    while len(out) < n and attempts < max_attempts:
+        attempts += 1
+        p = random_sample(space, rng)
+        if gravity:
+            if not apply_timeout_constraint(p, rng):
+                continue
+        out.append(p)
+
+    if len(out) < n:
+        log(f"WARNING_SAMPLE_UNDERFILLED requested={n} produced={len(out)} gravity={gravity}")
+
+    return out[:n]
 
 
 def validate_candidate(p):
+    p = clean_params(p)
     bad = []
+
     timeout = p.get("SF_BOOT_GRAV_TIMEOUT_SEC")
-    if timeout is not None and timeout > MAX_BOOT_TIMEOUT_SEC:
+    if timeout is not None and float(timeout) > MAX_BOOT_TIMEOUT_SEC:
         bad.append(f"SF_BOOT_GRAV_TIMEOUT_SEC>{MAX_BOOT_TIMEOUT_SEC}")
-    if timeout is not None:
-        min_sec = p.get("SF_BOOT_GRAV_MIN_SEC", 0.0)
-        hold_sec = p.get("SF_BOOT_GRAV_HOLD_SEC", 0.0)
-        if timeout <= min_sec + hold_sec + MIN_MARGIN_SEC:
+
+    if timeout is not None and "SF_BOOT_GRAV_MIN_SEC" in p and "SF_BOOT_GRAV_HOLD_SEC" in p:
+        min_sec = float(p.get("SF_BOOT_GRAV_MIN_SEC", 0.0))
+        hold_sec = float(p.get("SF_BOOT_GRAV_HOLD_SEC", 0.0))
+        if float(timeout) <= min_sec + hold_sec + MIN_MARGIN_SEC:
             bad.append("SF_BOOT_GRAV_TIMEOUT_SEC<=min+hold+margin")
+
     for key in p:
         if key in REJECTED_KEYS:
             bad.append(f"forbidden_key:{key}")
         if key.startswith(REJECTED_PREFIXES):
             bad.append(f"forbidden_key:{key}")
+
     return (len(bad) == 0), ";".join(bad)
 
 
@@ -184,7 +229,7 @@ def parse(text):
     accb = [m.groups() for m in RX["accb"].finditer(text)]
     gates = [m.groups() for m in RX["gate"].finditer(text)]
 
-    n = max(len(ds), len(ang), len(xyz), len(accb), 1)
+    n = max(len(ds), len(ang), len(xyz), len(r3d), len(accb), 1)
     out = []
 
     def g(arr, i, j):
@@ -193,6 +238,7 @@ def parse(text):
     for i in range(n):
         gp = (gates[i][0] == "1") if i < len(gates) else False
         reason = gates[i][1].strip() if i < len(gates) else "missing_gate_status"
+
         out.append(
             {
                 "wave_dataset": ds[i] if i < len(ds) else f"dataset_{i}",
@@ -208,16 +254,50 @@ def parse(text):
                 "fail_reason": reason,
             }
         )
+
     return out
 
 
-def run_candidate(fam, cid, p, tier, seed, collect, stage):
+def synthetic_failure_row(fam, cid, p, tier, seed, stage, reason, returncode=-1):
+    p = clean_params(p)
+    row = {
+        "family": fam,
+        "candidate": cid,
+        "seed": seed,
+        "tier": tier,
+        "stage": stage,
+        "wave_dataset": "run_failed",
+        "roll_rms": float("nan"),
+        "pitch_rms": float("nan"),
+        "yaw_rms": float("nan"),
+        "x_rms": float("nan"),
+        "y_rms": float("nan"),
+        "z_rms": float("nan"),
+        "rms_3d": float("nan"),
+        "acc_bias_rms_3d": float("nan"),
+        "quality_gate_pass": False,
+        "fail_reason": reason,
+        "returncode": returncode,
+        "roll_pitch_rms_norm": float("nan"),
+        "xy_rms": float("nan"),
+        "_params": dict(p),
+        "input_params": dict(p),
+        "rejected_before_run": 0,
+        "reject_reason": "",
+        "score": float("inf"),
+    }
+    row.update(p)
+    return row
+
+
+def run_candidate(fam, cid, p, tier, seed, collect, stage, run_timeout_sec):
     tdir = ROOT / "tests" / ("kalman_ou_ii" if fam == "OU_II" else "kalman_ou_iii")
     bin_name = "./kalman_ou_ii-sim" if fam == "OU_II" else "./kalman_ou_iii-sim"
 
     env = os.environ.copy()
     env["W3D_SEED"] = str(seed)
     env["W3D_TIER"] = tier
+
     if collect:
         env["W3D_COLLECT_ALL_GATES"] = "1"
 
@@ -229,10 +309,33 @@ def run_candidate(fam, cid, p, tier, seed, collect, stage):
         }
     )
 
-    # IMPORTANT: no --nomag
-    pr = subprocess.run([bin_name], cwd=tdir, text=True, capture_output=True, env=env)
+    try:
+        # IMPORTANT: do not run --nomag.
+        pr = subprocess.run(
+            [bin_name],
+            cwd=tdir,
+            text=True,
+            capture_output=True,
+            env=env,
+            timeout=run_timeout_sec if run_timeout_sec and run_timeout_sec > 0 else None,
+        )
+    except subprocess.TimeoutExpired:
+        return [
+            synthetic_failure_row(
+                fam,
+                cid,
+                input_params,
+                tier,
+                seed,
+                stage,
+                f"subprocess_timeout_{run_timeout_sec}s",
+                returncode=-2,
+            )
+        ]
 
-    rows = parse(pr.stdout + "\n" + pr.stderr)
+    text = pr.stdout + "\n" + pr.stderr
+    rows = parse(text)
+
     for r in rows:
         r.update(
             {
@@ -250,6 +353,7 @@ def run_candidate(fam, cid, p, tier, seed, collect, stage):
                 "reject_reason": "",
             }
         )
+
         timeout = input_params.get("SF_BOOT_GRAV_TIMEOUT_SEC")
         r["timeout_valid"] = int(
             timeout is not None
@@ -257,14 +361,18 @@ def run_candidate(fam, cid, p, tier, seed, collect, stage):
             and math.isfinite(float(timeout))
             and float(timeout) <= MAX_BOOT_TIMEOUT_SEC
         )
+
         for k, v in input_params.items():
             r[k] = v
+
     return rows
 
 
 def percentile(vals, p):
+    vals = [v for v in vals if math.isfinite(float(v))]
     if not vals:
         return float("inf")
+
     s = sorted(vals)
     i = (len(s) - 1) * p
     lo = int(i)
@@ -286,9 +394,13 @@ def score_rows(rows):
     }
 
     def rf(x):
+        try:
+            x = float(x)
+        except Exception:
+            return 1e-9
         return x if math.isfinite(x) and abs(x) > 1e-9 else 1e-9
 
-    for (_, _, _, _), it in by.items():
+    for _, it in by.items():
         rp, z, r3, yaw, acc = [], [], [], [], []
         any_fail = False
 
@@ -304,17 +416,16 @@ def score_rows(rows):
                 continue
 
             if b is None:
-                # baseline self-compare
                 b = r
 
-            r["roll_pitch_ratio"] = rf(r["roll_pitch_rms_norm"]) / rf(
-                b.get("roll_pitch_rms_norm", float("nan"))
+            r["roll_pitch_ratio"] = rf(r.get("roll_pitch_rms_norm")) / rf(
+                b.get("roll_pitch_rms_norm")
             )
-            r["z_ratio"] = rf(r["z_rms"]) / rf(b.get("z_rms", float("nan")))
-            r["rms3d_ratio"] = rf(r["rms_3d"]) / rf(b.get("rms_3d", float("nan")))
-            r["yaw_ratio"] = rf(r["yaw_rms"]) / rf(b.get("yaw_rms", float("nan")))
-            r["acc_bias_ratio"] = rf(r["acc_bias_rms_3d"]) / rf(
-                b.get("acc_bias_rms_3d", float("nan"))
+            r["z_ratio"] = rf(r.get("z_rms")) / rf(b.get("z_rms"))
+            r["rms3d_ratio"] = rf(r.get("rms_3d")) / rf(b.get("rms_3d"))
+            r["yaw_ratio"] = rf(r.get("yaw_rms")) / rf(b.get("yaw_rms"))
+            r["acc_bias_ratio"] = rf(r.get("acc_bias_rms_3d")) / rf(
+                b.get("acc_bias_rms_3d")
             )
 
             rp.append(r["roll_pitch_ratio"])
@@ -322,6 +433,7 @@ def score_rows(rows):
             r3.append(r["rms3d_ratio"])
             yaw.append(r["yaw_ratio"])
             acc.append(r["acc_bias_ratio"])
+
             any_fail = any_fail or (not r.get("quality_gate_pass", False))
 
         if not rp or not z or not r3 or not yaw or not acc:
@@ -341,13 +453,17 @@ def score_rows(rows):
             + 0.5 * percentile(acc, 0.75)
             + (100.0 if any_fail else 0.0)
         )
+
         for r in it:
             r["score"] = s
 
 
 def aggregate_candidates(rows, family, tier):
+    score_rows(rows)
+
     out = []
     by = defaultdict(list)
+
     for r in rows:
         if r.get("family") == family and r.get("tier") == tier:
             by[r["candidate"]].append(r)
@@ -360,7 +476,9 @@ def aggregate_candidates(rows, family, tier):
             and math.isfinite(float(rr.get("score", float("inf"))))
             for rr in it
         )
+
         params = clean_params(it[0].get("_params", it[0].get("input_params", {})))
+
         obj = {
             "family": family,
             "candidate": cand,
@@ -370,22 +488,27 @@ def aggregate_candidates(rows, family, tier):
             "n_rows": len(it),
             "stage": it[0].get("stage", "unknown"),
         }
+
         if valid:
             obj.update(
                 {
-                    "mean_score": sum(r["score"] for r in it) / len(it),
-                    "max_score": max(r["score"] for r in it),
-                    "mean_rms3d": sum(r["rms_3d"] for r in it) / len(it),
-                    "mean_z_rms": sum(r["z_rms"] for r in it) / len(it),
-                    "mean_roll_pitch_rms": sum(r["roll_pitch_rms_norm"] for r in it)
+                    "mean_score": sum(float(r["score"]) for r in it) / len(it),
+                    "max_score": max(float(r["score"]) for r in it),
+                    "mean_rms3d": sum(float(r["rms_3d"]) for r in it) / len(it),
+                    "mean_z_rms": sum(float(r["z_rms"]) for r in it) / len(it),
+                    "mean_roll_pitch_rms": sum(float(r["roll_pitch_rms_norm"]) for r in it)
                     / len(it),
-                    "mean_yaw_rms": sum(r["yaw_rms"] for r in it) / len(it),
-                    "max_rms3d_ratio": max(r.get("rms3d_ratio", float("inf")) for r in it),
-                    "max_z_ratio": max(r.get("z_ratio", float("inf")) for r in it),
-                    "max_roll_pitch_ratio": max(
-                        r.get("roll_pitch_ratio", float("inf")) for r in it
+                    "mean_yaw_rms": sum(float(r["yaw_rms"]) for r in it) / len(it),
+                    "max_rms3d_ratio": max(
+                        float(r.get("rms3d_ratio", float("inf"))) for r in it
                     ),
-                    "max_yaw_ratio": max(r.get("yaw_ratio", float("inf")) for r in it),
+                    "max_z_ratio": max(float(r.get("z_ratio", float("inf"))) for r in it),
+                    "max_roll_pitch_ratio": max(
+                        float(r.get("roll_pitch_ratio", float("inf"))) for r in it
+                    ),
+                    "max_yaw_ratio": max(
+                        float(r.get("yaw_ratio", float("inf"))) for r in it
+                    ),
                 }
             )
         else:
@@ -403,7 +526,9 @@ def aggregate_candidates(rows, family, tier):
                     "max_yaw_ratio": float("inf"),
                 }
             )
+
         out.append(obj)
+
     return out
 
 
@@ -422,14 +547,17 @@ def rank_key(a):
 
 def print_stage_summary(stage_name, agg):
     valid = [x for x in agg if x["valid"]]
-    print(f"STAGE_{stage_name}_VALID_COUNT {len(valid)}")
+    log(f"STAGE_{stage_name}_VALID_COUNT {len(valid)}")
+
     top = sorted(valid, key=rank_key)[:5]
-    print(f"STAGE_{stage_name}_TOP {','.join(t['candidate'] for t in top) if top else 'none'}")
+    log(f"STAGE_{stage_name}_TOP {','.join(t['candidate'] for t in top) if top else 'none'}")
+
     for t in top:
-        print(
-            f"STAGE_{stage_name}_TOP_CAND candidate={t['candidate']} score={t['mean_score']:.6g} "
-            f"rms3d={t['mean_rms3d']:.6g} z={t['mean_z_rms']:.6g} "
-            f"rp={t['mean_roll_pitch_rms']:.6g} yaw={t['mean_yaw_rms']:.6g} params={t['params']}"
+        log(
+            f"STAGE_{stage_name}_TOP_CAND candidate={t['candidate']} "
+            f"score={t['mean_score']:.6g} rms3d={t['mean_rms3d']:.6g} "
+            f"z={t['mean_z_rms']:.6g} rp={t['mean_roll_pitch_rms']:.6g} "
+            f"yaw={t['mean_yaw_rms']:.6g} params={t['params']}"
         )
 
 
@@ -446,6 +574,7 @@ def print_param_sensitivity(rows, fam):
     ]
 
     param_data = defaultdict(lambda: {"x": [], "y": []})
+
     for r in valid:
         for k, v in r.get("input_params", {}).items():
             if (
@@ -458,22 +587,26 @@ def print_param_sensitivity(rows, fam):
                 param_data[k]["x"].append(float(v))
                 param_data[k]["y"].append(float(r["score"]))
 
-    print(f"PARAM_SENSITIVITY {fam}")
-    print("param,n,min,max,corr_with_score")
+    log(f"PARAM_SENSITIVITY {fam}")
+    log("param,n,min,max,corr_with_score")
+
     if not param_data:
-        print("NONE,0,nan,nan,nan")
+        log("NONE,0,nan,nan,nan")
         return
 
     def corr(xs, ys):
         n = len(xs)
         if n < 2:
             return float("nan")
+
         mx = sum(xs) / n
         my = sum(ys) / n
         vx = sum((x - mx) ** 2 for x in xs)
         vy = sum((y - my) ** 2 for y in ys)
+
         if vx < 1e-14 or vy < 1e-14:
             return float("nan")
+
         cov = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
         return cov / math.sqrt(vx * vy)
 
@@ -483,48 +616,57 @@ def print_param_sensitivity(rows, fam):
         mn, mx = min(xs), max(xs)
         c = corr(xs, ys)
         cstr = f"{c:.6g}" if math.isfinite(c) else "nan"
-        print(f"{k},{len(xs)},{mn:.6g},{mx:.6g},{cstr}")
+        log(f"{k},{len(xs)},{mn:.6g},{mx:.6g},{cstr}")
+
         if abs(mx - mn) < 1e-12:
-            print(f"WARNING_PARAM_NO_VARIANCE {k}")
+            log(f"WARNING_PARAM_NO_VARIANCE {k}")
 
 
 def print_cpp_config(fam, result):
     params = clean_params(result.get("params", {}))
-    print(
-        f"\n=== BEST_CONFIG {fam} candidate={result['candidate']} tier={result['tier']} rows={result['n_rows']} ==="
+
+    log(
+        f"\n=== BEST_CONFIG {fam} candidate={result['candidate']} "
+        f"tier={result['tier']} rows={result['n_rows']} ==="
     )
-    print(
-        f"RMS_SUMMARY mean_3d={result['mean_rms3d']:.6g} mean_z={result['mean_z_rms']:.6g} "
-        f"mean_roll_pitch={result['mean_roll_pitch_rms']:.6g} mean_yaw={result['mean_yaw_rms']:.6g}"
+    log(
+        f"RMS_SUMMARY mean_3d={result['mean_rms3d']:.6g} "
+        f"mean_z={result['mean_z_rms']:.6g} "
+        f"mean_roll_pitch={result['mean_roll_pitch_rms']:.6g} "
+        f"mean_yaw={result['mean_yaw_rms']:.6g}"
     )
-    print("// C++ snippet:")
-    print("struct TunedParams {")
+
+    log("// C++ snippet:")
+    log("struct TunedParams {")
     for k in sorted(params):
         v = params[k]
+
         if k in REJECTED_KEYS or k.startswith(REJECTED_PREFIXES):
             continue
+
         if isinstance(v, float):
             if math.isfinite(v):
-                print(f"  static constexpr float {k} = {v:.9g}f;")
+                log(f"  static constexpr float {k} = {v:.9g}f;")
         elif isinstance(v, int):
-            print(f"  static constexpr int {k} = {v};")
-    print("};")
+            log(f"  static constexpr int {k} = {v};")
+        else:
+            log(f'  static constexpr auto {k} = "{v}";')
+    log("};")
 
 
-def eval_candidates(fam, cand_list, tier, collect, seed, stage):
+def eval_candidates(fam, cand_list, tier, collect, seed, stage, run_timeout_sec):
     rows = []
     total = len(cand_list)
     started = time.time()
     best_score = float("inf")
     best_candidate = "none"
 
-    print(
-        f"STAGE_START family={fam} stage={stage} tier={tier} candidates={total} seed={seed}"
-    )
+    log(f"STAGE_START family={fam} stage={stage} tier={tier} candidates={total} seed={seed}")
 
     for i, (cid, raw_p) in enumerate(cand_list, 1):
         p = clean_params(raw_p)
         ok, reason = validate_candidate(p)
+
         if not ok:
             rr = {
                 "family": fam,
@@ -547,27 +689,39 @@ def eval_candidates(fam, cand_list, tier, collect, seed, stage):
 
             elapsed = time.time() - started
             eta = (elapsed / i) * (total - i) if i > 0 else 0.0
-            print(
-                f"PROGRESS family={fam} stage={stage} tier={tier} i={i} total={total} candidate={cid} seed={seed} "
-                f"returncode=-1 rows=1 pass_rows=0 fail_rows=1 score=inf best={best_candidate} "
-                f"best_score={best_score if math.isfinite(best_score) else float('inf'):.6g} "
-                f"elapsed={format_duration(elapsed)} eta={format_duration(eta)}"
+            log(
+                f"PROGRESS family={fam} stage={stage} tier={tier} i={i} total={total} "
+                f"candidate={cid} seed={seed} returncode=-1 rows=1 pass_rows=0 fail_rows=1 "
+                f"score=inf best={best_candidate} best_score=inf "
+                f"elapsed={format_duration(elapsed)} eta={format_duration(eta)} "
+                f"reject_reason={reason}"
             )
             continue
 
-        run_rows = run_candidate(fam, cid, p, tier, seed, collect, stage)
+        run_rows = run_candidate(
+            fam=fam,
+            cid=cid,
+            p=p,
+            tier=tier,
+            seed=seed,
+            collect=collect,
+            stage=stage,
+            run_timeout_sec=run_timeout_sec,
+        )
 
-        # Score current batch (already-run rows + this candidate) for live progress.
         tmp = rows + run_rows
         score_rows(tmp)
-
-        # keep candidate rows with updated scores
         run_rows = tmp[len(rows) :]
         rows.extend(run_rows)
 
         cand_rows = [r for r in run_rows if r.get("candidate") == cid]
-        finite_scores = [r["score"] for r in cand_rows if math.isfinite(r.get("score", float("inf")))]
+        finite_scores = [
+            float(r["score"])
+            for r in cand_rows
+            if math.isfinite(float(r.get("score", float("inf"))))
+        ]
         cand_score = min(finite_scores) if finite_scores else float("inf")
+
         if cand_score < best_score:
             best_score = cand_score
             best_candidate = cid
@@ -578,34 +732,51 @@ def eval_candidates(fam, cand_list, tier, collect, seed, stage):
         elapsed = time.time() - started
         eta = (elapsed / i) * (total - i) if i > 0 else 0.0
 
-        print(
-            f"PROGRESS family={fam} stage={stage} tier={tier} i={i} total={total} candidate={cid} seed={seed} "
-            f"returncode={ret} rows={len(run_rows)} pass_rows={pass_rows} fail_rows={fail_rows} "
-            f"score={cand_score:.6g} best={best_candidate} best_score={best_score:.6g} "
+        score_str = f"{cand_score:.6g}" if math.isfinite(cand_score) else "inf"
+        best_str = f"{best_score:.6g}" if math.isfinite(best_score) else "inf"
+
+        log(
+            f"PROGRESS family={fam} stage={stage} tier={tier} i={i} total={total} "
+            f"candidate={cid} seed={seed} returncode={ret} rows={len(run_rows)} "
+            f"pass_rows={pass_rows} fail_rows={fail_rows} score={score_str} "
+            f"best={best_candidate} best_score={best_str} "
             f"elapsed={format_duration(elapsed)} eta={format_duration(eta)}"
         )
 
+    score_rows(rows)
     return rows
 
 
 def sample_local_perturbations(base_params, ranges, rng, n):
+    base_params = clean_params(base_params)
     out = []
     keys = [k for k in ranges if k in base_params]
+
+    if not keys:
+        return out
+
     for i in range(n):
         p = dict(base_params)
+
         for k in keys:
             lo, hi = ranges[k]
             v = float(p[k])
-            if lo > 0.0 and hi > 0.0:
+
+            if lo > 0.0 and hi > 0.0 and v > 0.0:
                 spread = 0.18 * (math.log(hi) - math.log(lo))
                 nv = math.exp(math.log(v) + rng.uniform(-spread, spread))
             else:
                 spread = 0.18 * (hi - lo)
                 nv = v + rng.uniform(-spread, spread)
+
             p[k] = min(max(nv, lo), hi)
+
         if "SF_BOOT_GRAV_MIN_SEC" in p and "SF_BOOT_GRAV_HOLD_SEC" in p:
-            apply_timeout_constraint(p, rng)
+            if not apply_timeout_constraint(p, rng):
+                continue
+
         out.append((f"local_{i:04d}", p))
+
     return out
 
 
@@ -613,7 +784,9 @@ def write_csv(path, rows):
     keys = set()
     for r in rows:
         keys.update(r.keys())
+
     fields = sorted(keys)
+
     with open(path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
@@ -624,14 +797,22 @@ def warn_identical_to_baseline(agg_rows):
     base = next((x for x in agg_rows if x["candidate"] == "baseline" and x["valid"]), None)
     if not base:
         return
+
     nonbase = [x for x in agg_rows if x["candidate"] != "baseline" and x["valid"]]
     if nonbase and all(abs(x["mean_score"] - base["mean_score"]) < 1e-12 for x in nonbase):
-        print("WARNING_ALL_SCORES_IDENTICAL_TO_BASELINE")
+        log("WARNING_ALL_SCORES_IDENTICAL_TO_BASELINE")
+
+
+def build_family(fam):
+    subdir = "kalman_ou_ii" if fam == "OU_II" else "kalman_ou_iii"
+    log(f"BUILD_START family={fam}")
+    subprocess.run(["make", "-C", str(ROOT / "tests" / subdir), "build"], check=True)
+    log(f"BUILD_DONE family={fam}")
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--mode", choices=["gravity", "ou", "full"], default="gravity")
+    ap.add_argument("--mode", choices=["gravity", "ou", "full"], default="full")
     ap.add_argument("--family", choices=["OU_II", "OU_III", "both"], default="both")
     ap.add_argument("--samples", type=int, default=100)
     ap.add_argument("--seed", type=int, default=42)
@@ -639,149 +820,188 @@ def main():
     ap.add_argument("--top-k", type=int, default=8)
     ap.add_argument("--collect-all-gates", action="store_true", default=False)
     ap.add_argument("--out-csv", default="")
-    a = ap.parse_args()
+    ap.add_argument("--run-timeout-sec", type=float, default=0.0)
+    ap.add_argument("--no-build", action="store_true", default=False)
+    args = ap.parse_args()
 
-    print("BUILD_START family=OU_II")
-    subprocess.run(["make", "-C", str(ROOT / "tests/kalman_ou_ii"), "build"], check=True)
-    print("BUILD_DONE family=OU_II")
+    fams = ["OU_II", "OU_III"] if args.family == "both" else [args.family]
 
-    print("BUILD_START family=OU_III")
-    subprocess.run(["make", "-C", str(ROOT / "tests/kalman_ou_iii"), "build"], check=True)
-    print("BUILD_DONE family=OU_III")
+    if not args.no_build:
+        for fam in fams:
+            build_family(fam)
 
-    fams = ["OU_II", "OU_III"] if a.family == "both" else [a.family]
     all_rows = []
 
     for fam in fams:
-        rng = random.Random(a.seed + (0 if fam == "OU_II" else 1000000))
+        log(f"\n===== FAMILY_START {fam} =====")
 
-        # Stage B: baseline + minimal + practical + gravity MC
+        rng = random.Random(args.seed + (0 if fam == "OU_II" else 1000000))
+
         grav_mc = [
             (f"grav_mc_{i:04d}", p)
-            for i, p in enumerate(sample_params(GRAVITY_RANGES[fam], a.samples, rng, gravity=True), 1)
+            for i, p in enumerate(
+                sample_params(GRAVITY_RANGES[fam], args.samples, rng, gravity=True), 1
+            )
         ]
+
         stage_b = [("baseline", {})] + minimal_candidates() + explicit_practical_candidates() + grav_mc
+
         rows_b = eval_candidates(
-            fam,
-            stage_b,
-            tier=a.tier,
-            collect=(a.collect_all_gates or a.tier != "final"),
-            seed=a.seed,
+            fam=fam,
+            cand_list=stage_b,
+            tier=args.tier,
+            collect=(args.collect_all_gates or args.tier != "final"),
+            seed=args.seed,
             stage="B",
+            run_timeout_sec=args.run_timeout_sec,
         )
         score_rows(rows_b)
         all_rows.extend(rows_b)
 
-        agg_b_all = aggregate_candidates(rows_b, fam, a.tier)
+        agg_b_all = aggregate_candidates(rows_b, fam, args.tier)
         print_stage_summary("B", agg_b_all)
         print_param_sensitivity(rows_b, fam)
         warn_identical_to_baseline(agg_b_all)
 
-        agg_b = sorted([x for x in agg_b_all if x["valid"]], key=rank_key)
-        nonbase_gravity = [x for x in agg_b if x["candidate"] != "baseline"]
-        gravity_winners = nonbase_gravity[: max(1, a.top_k)]
+        agg_b = sorted(useful_nonbaseline_candidates(agg_b_all), key=rank_key)
+        gravity_winners = agg_b[: max(1, args.top_k)]
 
-        if a.mode in ("ou", "full"):
-            gravity_winners = [{"candidate": "baseline_gravity", "params": {}, "valid": True}] + gravity_winners
+        if args.mode in ("ou", "full"):
+            gravity_winners = [
+                {
+                    "candidate": "baseline_gravity",
+                    "params": {},
+                    "valid": True,
+                    "tier": args.tier,
+                    "family": fam,
+                    "n_rows": 0,
+                    "stage": "synthetic",
+                    "mean_score": float("inf"),
+                    "max_score": float("inf"),
+                    "mean_rms3d": float("inf"),
+                    "mean_z_rms": float("inf"),
+                    "mean_roll_pitch_rms": float("inf"),
+                    "mean_yaw_rms": float("inf"),
+                    "max_rms3d_ratio": float("inf"),
+                    "max_z_ratio": float("inf"),
+                    "max_roll_pitch_ratio": float("inf"),
+                    "max_yaw_ratio": float("inf"),
+                }
+            ] + gravity_winners
 
         final_candidates = gravity_winners
 
-        if a.mode in ("ou", "full"):
-            # Stage C: baseline + OU combinations
+        if args.mode in ("ou", "full"):
             ou_space = dict(OU_COMMON)
             if fam == "OU_II":
                 ou_space.update(OU_II_ONLY)
-            sampled_ou = sample_params(ou_space, a.samples, rng)
+
+            sampled_ou = sample_params(ou_space, args.samples, rng, gravity=False)
 
             stage_c = []
             for gi, g in enumerate(gravity_winners, 1):
-                basep = clean_params(g["params"])
+                basep = clean_params(g.get("params", {}))
                 for oi, ou in enumerate(sampled_ou, 1):
-                    stage_c.append((f"comb_g{gi:02d}_ou{oi:04d}", {**basep, **ou}))
+                    combined = {**basep, **ou}
+                    stage_c.append((f"comb_g{gi:02d}_ou{oi:04d}", combined))
 
             rows_c = eval_candidates(
-                fam,
-                [("baseline", {})] + stage_c,
-                tier=a.tier,
-                collect=(a.collect_all_gates or a.tier != "final"),
-                seed=a.seed,
+                fam=fam,
+                cand_list=[("baseline", {})] + stage_c,
+                tier=args.tier,
+                collect=(args.collect_all_gates or args.tier != "final"),
+                seed=args.seed,
                 stage="C",
+                run_timeout_sec=args.run_timeout_sec,
             )
             score_rows(rows_c)
             all_rows.extend(rows_c)
 
-            agg_c_all = aggregate_candidates(rows_c, fam, a.tier)
+            agg_c_all = aggregate_candidates(rows_c, fam, args.tier)
             print_stage_summary("C", agg_c_all)
             print_param_sensitivity(rows_c, fam)
             warn_identical_to_baseline(agg_c_all)
 
-            agg_c = sorted([x for x in agg_c_all if x["valid"]], key=rank_key)
-            top_c = agg_c[: max(1, a.top_k)]
+            top_c = sorted(useful_nonbaseline_candidates(agg_c_all), key=rank_key)[
+                : max(1, args.top_k)
+            ]
 
-            # Stage D: baseline + local refinement
             local = []
             local_ranges = dict(GRAVITY_RANGES[fam])
             local_ranges.update(ou_space)
-            per_top = max(1, a.samples // max(1, a.top_k))
+
+            per_top = max(1, args.samples // max(1, args.top_k))
             for idx, c in enumerate(top_c, 1):
                 local.extend(
                     [
                         (f"refine_t{idx:02d}_{cid}", p)
                         for cid, p in sample_local_perturbations(
-                            clean_params(c["params"]), local_ranges, rng, per_top
+                            clean_params(c.get("params", {})),
+                            local_ranges,
+                            rng,
+                            per_top,
                         )
                     ]
                 )
 
-            rows_d = eval_candidates(
-                fam,
-                [("baseline", {})] + local,
-                tier=a.tier,
-                collect=(a.collect_all_gates or a.tier != "final"),
-                seed=a.seed,
-                stage="D",
-            )
-            score_rows(rows_d)
-            all_rows.extend(rows_d)
+            if local:
+                rows_d = eval_candidates(
+                    fam=fam,
+                    cand_list=[("baseline", {})] + local,
+                    tier=args.tier,
+                    collect=(args.collect_all_gates or args.tier != "final"),
+                    seed=args.seed,
+                    stage="D",
+                    run_timeout_sec=args.run_timeout_sec,
+                )
+                score_rows(rows_d)
+                all_rows.extend(rows_d)
 
-            agg_d_all = aggregate_candidates(rows_d, fam, a.tier)
-            print_stage_summary("D", agg_d_all)
-            print_param_sensitivity(rows_d, fam)
-            warn_identical_to_baseline(agg_d_all)
+                agg_d_all = aggregate_candidates(rows_d, fam, args.tier)
+                print_stage_summary("D", agg_d_all)
+                print_param_sensitivity(rows_d, fam)
+                warn_identical_to_baseline(agg_d_all)
 
-            agg_d = sorted([x for x in agg_d_all if x["valid"]], key=rank_key)
-            final_candidates = (agg_d[: max(1, a.top_k)] or top_c or gravity_winners)
+                top_d = sorted(useful_nonbaseline_candidates(agg_d_all), key=rank_key)[
+                    : max(1, args.top_k)
+                ]
+            else:
+                log("STAGE_D_SKIPPED no_local_candidates")
+                top_d = []
 
-        # Stage E: multi-seed baseline+final candidates per-seed
-        validate_tier = a.tier if a.tier != "quick" else "final"
+            final_candidates = top_d or top_c or [
+                c for c in gravity_winners if clean_params(c.get("params", {}))
+            ]
 
-        final_candidates = [c for c in final_candidates if c.get("candidate") != "baseline"]
+        validate_tier = args.tier if args.tier != "quick" else "final"
 
-        if a.mode == "gravity":
-            final_candidates = [c for c in final_candidates if c.get("params")]
-            if not final_candidates:
-                print("NO_NON_BASELINE_CANDIDATES_SURVIVED")
+        final_candidates = [
+            c for c in final_candidates if clean_params(c.get("params", {}))
+        ][: max(1, args.top_k)]
 
         if not final_candidates:
-            print("NO_NON_BASELINE_CANDIDATES_SURVIVED")
+            log("NO_NON_BASELINE_CANDIDATES_SURVIVED")
 
         rows_e = []
-        for s in (a.seed, a.seed + 1, a.seed + 2):
+
+        for s in (args.seed, args.seed + 1, args.seed + 2):
             seed_batch = [("baseline", {})]
             for i, c in enumerate(final_candidates, 1):
-                seed_batch.append((f"final_{i:02d}", clean_params(c["params"])))
+                seed_batch.append((f"final_{i:02d}", clean_params(c.get("params", {}))))
 
             seed_rows = eval_candidates(
-                fam,
-                seed_batch,
+                fam=fam,
+                cand_list=seed_batch,
                 tier=validate_tier,
                 collect=True,
                 seed=s,
                 stage="E",
+                run_timeout_sec=args.run_timeout_sec,
             )
             score_rows(seed_rows)
             rows_e.extend(seed_rows)
 
+        score_rows(rows_e)
         all_rows.extend(rows_e)
 
         agg_e_all = aggregate_candidates(rows_e, fam, validate_tier)
@@ -790,54 +1010,74 @@ def main():
         warn_identical_to_baseline(agg_e_all)
 
         agg_e = sorted(
-            [x for x in agg_e_all if x["valid"] and x["candidate"] != "baseline"],
+            [
+                x
+                for x in useful_nonbaseline_candidates(agg_e_all)
+                if x.get("candidate") != "baseline"
+            ],
             key=rank_key,
         )
 
-        base_final = next((x for x in agg_e_all if x["candidate"] == "baseline" and x["valid"]), None)
+        base_final = next(
+            (x for x in agg_e_all if x["candidate"] == "baseline" and x["valid"]),
+            None,
+        )
+
         if base_final:
-            print(f"BASELINE_SCORE {base_final['mean_score']:.6g}")
+            log(f"BASELINE_SCORE {base_final['mean_score']:.6g}")
 
         if not agg_e:
-            print(f"\n=== BEST_CONFIG {fam} ===")
+            log(f"\n=== BEST_CONFIG {fam} ===")
             if base_final:
-                print("NO_NON_BASELINE_CANDIDATES_SURVIVED")
+                log("NO_NON_BASELINE_CANDIDATES_SURVIVED")
             else:
-                print("NO_VALID_CANDIDATES")
+                log("NO_VALID_CANDIDATES")
             continue
 
         best = agg_e[0]
-        print(f"BEST_SCORE {best['mean_score']:.6g}")
+        log(f"BEST_SCORE {best['mean_score']:.6g}")
 
         if base_final:
-            ratio = best["mean_score"] / base_final["mean_score"] if base_final["mean_score"] > 0 else float("inf")
-            print(f"SCORE_RATIO {ratio:.6g}")
+            ratio = (
+                best["mean_score"] / base_final["mean_score"]
+                if base_final["mean_score"] > 0
+                else float("inf")
+            )
+            log(f"SCORE_RATIO {ratio:.6g}")
             if ratio > 0.99:
-                print("NO_MEANINGFUL_IMPROVEMENT")
+                log("NO_MEANINGFUL_IMPROVEMENT")
 
-        # ratio summaries
         best_rows = [r for r in rows_e if r.get("candidate") == best["candidate"]]
-        rms3d_ratios = [r.get("rms3d_ratio", float("nan")) for r in best_rows if math.isfinite(float(r.get("rms3d_ratio", float("nan"))))]
+        rms3d_ratios = [
+            float(r.get("rms3d_ratio", float("nan")))
+            for r in best_rows
+            if math.isfinite(float(r.get("rms3d_ratio", float("nan"))))
+        ]
+
         if rms3d_ratios:
-            print(f"MEAN_RMS3D_RATIO {sum(rms3d_ratios) / len(rms3d_ratios):.6g}")
-            print(f"MAX_RMS3D_RATIO {max(rms3d_ratios):.6g}")
+            log(f"MEAN_RMS3D_RATIO {sum(rms3d_ratios) / len(rms3d_ratios):.6g}")
+            log(f"MAX_RMS3D_RATIO {max(rms3d_ratios):.6g}")
 
         byds = defaultdict(list)
         for r in best_rows:
-            rr = r.get("rms3d_ratio", float("nan"))
-            if math.isfinite(float(rr)):
+            rr = float(r.get("rms3d_ratio", float("nan")))
+            if math.isfinite(rr):
                 byds[r["wave_dataset"]].append(rr)
 
-        print("PER_DATASET_RATIOS")
+        log("PER_DATASET_RATIOS")
         for ds, vals in sorted(byds.items()):
-            print(f"{ds}: {sum(vals)/len(vals):.6g}")
+            log(f"{ds}: {sum(vals) / len(vals):.6g}")
 
-        print(f"BEST_PARAMS {clean_params(best['params'])}")
+        log(f"BEST_PARAMS {clean_params(best['params'])}")
         print_cpp_config(fam, best)
 
-    if a.out_csv:
-        write_csv(a.out_csv, all_rows)
+        log(f"===== FAMILY_DONE {fam} =====\n")
+
+    if args.out_csv:
+        write_csv(args.out_csv, all_rows)
+        log(f"WROTE_CSV {args.out_csv}")
 
 
 if __name__ == "__main__":
     main()
+    
