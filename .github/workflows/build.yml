@@ -1,5 +1,17 @@
 name: build
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_ou_tuning:
+        description: "Run ou-tuning job"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
 
 jobs:
   build:
@@ -115,6 +127,7 @@ jobs:
 
 
   ou-tuning:
+    if: github.event_name != 'workflow_dispatch' || inputs.run_ou_tuning == 'true'
     runs-on: ubuntu-latest
     needs: build
     steps:
