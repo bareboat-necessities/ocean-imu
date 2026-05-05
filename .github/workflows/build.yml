@@ -161,8 +161,8 @@ jobs:
           python3 -u tools/ou_tuning_sweep.py \
             --family ${{ matrix.family }} \
             --mode full \
-            --samples 32 \
-            --seed 42 \
+            --samples 75 \
+            --seed 7 \
             --tier full \
             --top-k 8 \
             --out-csv reports/results/ou_tuning_${{ matrix.report_name }}.csv \
