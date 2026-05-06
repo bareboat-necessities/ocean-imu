@@ -77,7 +77,6 @@ MAG_SPECS = {
     "SF_MAG_GRAV_ALIGN_LPF_TAU": (0.4, 8.0, "log"),
     "SF_MAG_TILT_FALLBACK_SEC": (1.0, 12.0, "log"),
     "SF_MAG_EXTREME_GYRO_DPS": (80.0, 480.0, "log"),
-    "SF_MAG_INIT_MIN_MAG_NORM": (20.0, 40.0, "linear"),
     "SF_MAG_MIN_SAMPLES": (4, 60, "int"),
 }
 
