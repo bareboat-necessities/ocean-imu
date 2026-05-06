@@ -312,13 +312,13 @@ private:
 };
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 9.92f,
-    .err_limit_percent_z_pmstokes  = 9.1f,
-    .err_limit_yaw_deg             = 2.8f,
+    .err_limit_percent_z_jonswap   = 9.85f,
+    .err_limit_percent_z_pmstokes  = 9.05f,
+    .err_limit_yaw_deg             = 2.6f,
     .err_limit_percent_3d_jonswap  = 38.0f,
     .err_limit_percent_3d_pmstokes = 38.0f,
-    .acc_z_bias_percent            = 21.0f,
-    .bias_3d_percent               = 325.0f,
+    .acc_z_bias_percent            = 15.0f,
+    .bias_3d_percent               = 250.0f,
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
