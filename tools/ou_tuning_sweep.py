@@ -276,7 +276,7 @@ def probe_candidates(space):
                 "OU_ADAPT_EVERY_SECS": 0.20,
             },
             {
-                "OU_TAU_COEFF": 0.45,
+                "OU_TAU_COEFF": 0.75,
                 "OU_SIGMA_COEFF": 2.10,
                 "OU_ACC_BIAS_INIT_STD": 0.8,
              },
