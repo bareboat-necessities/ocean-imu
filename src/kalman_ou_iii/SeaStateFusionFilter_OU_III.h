@@ -831,7 +831,7 @@ public:
         int   mag_min_samples             = 300;
 
         // Bootstrap tilt observer for dynamic motion in waves.
-        float bootstrap_tilt_obs_acc_tau_sec  = 2.50f; // accel correction time constant
+        float bootstrap_tilt_obs_acc_tau_sec  = 2.15f; // accel correction time constant
         float bootstrap_gravity_slow_tau_sec  = 6.0f; // slow gravity reference LPF
         float bootstrap_gravity_align_max_sin = 0.070f; // sin(deg)
         float bootstrap_gravity_hold_sec      = 2.0f;
