@@ -45,6 +45,7 @@ BOOT_SPECS = {
     "SF_BOOT_GRAV_NORM_FRAC": (0.12, 0.65, "linear"),
 }
 
+# OU_II keeps the current generic OU_* names.
 OU_COMMON_SPECS = {
     "OU_TAU_COEFF": (0.60, 1.50, "log"),
     "OU_SIGMA_COEFF": (0.60, 2.10, "log"),
@@ -60,11 +61,28 @@ OU_II_EXTRA_SPECS = {
     "OU_R_V0_COEFF": (0.60, 2.50, "log"),
 }
 
+# OU_III uses family-specific names so its sweep can be isolated from OU_II.
+OU_III_EXTRA_SPECS = {
+    "OU_III_TAU_COEFF": (0.60, 1.50, "log"),
+    "OU_III_SIGMA_COEFF": (0.60, 2.10, "log"),
+    "OU_III_ACC_NOISE_FLOOR_SIGMA": (0.02, 0.25, "log"),
+    "OU_III_ADAPT_TAU_SEC": (1.0, 12.0, "log"),
+    "OU_III_ADAPT_EVERY_SECS": (0.016, 0.50, "log"),
+    "OU_III_FREQ_INPUT_CUTOFF_HZ": (0.15, 2.50, "log"),
+    "OU_III_ACC_BIAS_INIT_STD": (0.005, 2.00, "log"),
+}
+
 # Optional. Off by default because this can overfit to sim seed / specific synthetic bias.
 BIAS_VECTOR_SPECS = {
     "OU_ACC_BIAS_INIT_X": (-0.30, 0.30, "linear"),
     "OU_ACC_BIAS_INIT_Y": (-0.30, 0.30, "linear"),
     "OU_ACC_BIAS_INIT_Z": (-0.50, 0.50, "linear"),
+}
+
+OU_III_BIAS_VECTOR_SPECS = {
+    "OU_III_ACC_BIAS_INIT_X": (-0.30, 0.30, "linear"),
+    "OU_III_ACC_BIAS_INIT_Y": (-0.30, 0.30, "linear"),
+    "OU_III_ACC_BIAS_INIT_Z": (-0.50, 0.50, "linear"),
 }
 
 # Optional. Off by default because this can hide OU problems by tuning mag behavior.
@@ -112,11 +130,15 @@ def make_space(fam, mode, tune_mag, tune_bias_vector):
         specs.update(BOOT_SPECS)
 
     if mode in ("ou", "full"):
-        specs.update(OU_COMMON_SPECS)
-        if fam == "OU_II":
+        if fam == "OU_III":
+            specs.update(OU_III_EXTRA_SPECS)
+            if tune_bias_vector:
+                specs.update(OU_III_BIAS_VECTOR_SPECS)
+        else:
+            specs.update(OU_COMMON_SPECS)
             specs.update(OU_II_EXTRA_SPECS)
-        if tune_bias_vector:
-            specs.update(BIAS_VECTOR_SPECS)
+            if tune_bias_vector:
+                specs.update(BIAS_VECTOR_SPECS)
 
     if tune_mag:
         specs.update(MAG_SPECS)
@@ -249,6 +271,13 @@ def validate_candidate(p, space=None):
     return len(bad) == 0, ";".join(bad)
 
 
+def find_space_key(space, *names):
+    for name in names:
+        if name in space:
+            return name
+    return None
+
+
 def probe_candidates(space):
     out = []
 
@@ -273,72 +302,88 @@ def probe_candidates(space):
             p["SF_BOOT_GRAV_TIMEOUT_SEC"] = timeout
             out.append((f"practical_boot_{i:02d}", p))
 
-    if "OU_TAU_COEFF" in space and "OU_SIGMA_COEFF" in space:
+    tau_key = find_space_key(space, "OU_TAU_COEFF", "OU_III_TAU_COEFF")
+    sigma_key = find_space_key(space, "OU_SIGMA_COEFF", "OU_III_SIGMA_COEFF")
+    bias_std_key = find_space_key(space, "OU_ACC_BIAS_INIT_STD", "OU_III_ACC_BIAS_INIT_STD")
+    adapt_tau_key = find_space_key(space, "OU_ADAPT_TAU_SEC", "OU_III_ADAPT_TAU_SEC")
+    adapt_every_key = find_space_key(space, "OU_ADAPT_EVERY_SECS", "OU_III_ADAPT_EVERY_SECS")
+
+    if tau_key and sigma_key:
         practical = [
-            {"OU_TAU_COEFF": 0.60, "OU_SIGMA_COEFF": 0.60},
-            {"OU_TAU_COEFF": 0.60, "OU_SIGMA_COEFF": 1.60},
-            {"OU_TAU_COEFF": 1.00, "OU_SIGMA_COEFF": 0.75},
-            {"OU_TAU_COEFF": 1.00, "OU_SIGMA_COEFF": 1.60},
-            {"OU_TAU_COEFF": 1.50, "OU_SIGMA_COEFF": 0.60},
-            {"OU_TAU_COEFF": 1.50, "OU_SIGMA_COEFF": 1.60},
-            {
-                "OU_TAU_COEFF": 0.70,
-                "OU_SIGMA_COEFF": 1.30,
-                "OU_ACC_BIAS_INIT_STD": 0.5,
-                "OU_ADAPT_TAU_SEC": 1.25,
-                "OU_ADAPT_EVERY_SECS": 0.025,
-            },
-            {
-                "OU_TAU_COEFF": 1.50,
-                "OU_SIGMA_COEFF": 0.75,
-                "OU_ACC_BIAS_INIT_STD": 0.6,
-                "OU_ADAPT_TAU_SEC": 8.0,
-                "OU_ADAPT_EVERY_SECS": 0.20,
-            },
-            {
-                "OU_TAU_COEFF": 0.60,
-                "OU_SIGMA_COEFF": 2.10,
-                "OU_ACC_BIAS_INIT_STD": 0.8,
-            },
-            {
-                "OU_TAU_COEFF": 1.20,
-                "OU_SIGMA_COEFF": 0.75,
-                "OU_ACC_BIAS_INIT_STD": 1.15,
-            },
+            {tau_key: 0.60, sigma_key: 0.60},
+            {tau_key: 0.60, sigma_key: 1.60},
+            {tau_key: 1.00, sigma_key: 0.75},
+            {tau_key: 1.00, sigma_key: 1.60},
+            {tau_key: 1.50, sigma_key: 0.60},
+            {tau_key: 1.50, sigma_key: 1.60},
         ]
 
-        if "OU_ACC_BIAS_INIT_X" in space:
+        if bias_std_key and adapt_tau_key and adapt_every_key:
             practical.extend(
                 [
                     {
-                        "OU_ACC_BIAS_INIT_STD": 0.04,
-                        "OU_ACC_BIAS_INIT_X": 0.00,
-                        "OU_ACC_BIAS_INIT_Y": 0.00,
-                        "OU_ACC_BIAS_INIT_Z": 0.00,
+                        tau_key: 0.70,
+                        sigma_key: 1.30,
+                        bias_std_key: 0.5,
+                        adapt_tau_key: 1.25,
+                        adapt_every_key: 0.025,
                     },
                     {
-                        "OU_ACC_BIAS_INIT_STD": 0.10,
-                        "OU_ACC_BIAS_INIT_X": 0.03,
-                        "OU_ACC_BIAS_INIT_Y": -0.03,
-                        "OU_ACC_BIAS_INIT_Z": 0.05,
+                        tau_key: 1.50,
+                        sigma_key: 0.75,
+                        bias_std_key: 0.6,
+                        adapt_tau_key: 8.0,
+                        adapt_every_key: 0.20,
                     },
                     {
-                        "OU_ACC_BIAS_INIT_STD": 0.10,
-                        "OU_ACC_BIAS_INIT_X": -0.03,
-                        "OU_ACC_BIAS_INIT_Y": 0.03,
-                        "OU_ACC_BIAS_INIT_Z": -0.05,
+                        tau_key: 0.60,
+                        sigma_key: 2.10,
+                        bias_std_key: 0.8,
                     },
                     {
-                        "OU_ACC_BIAS_INIT_STD": 0.25,
-                        "OU_ACC_BIAS_INIT_X": 0.08,
-                        "OU_ACC_BIAS_INIT_Y": -0.08,
-                        "OU_ACC_BIAS_INIT_Z": 0.12,
+                        tau_key: 1.20,
+                        sigma_key: 0.75,
+                        bias_std_key: 1.15,
+                    },
+                ]
+            )
+
+        bx_key = find_space_key(space, "OU_ACC_BIAS_INIT_X", "OU_III_ACC_BIAS_INIT_X")
+        by_key = find_space_key(space, "OU_ACC_BIAS_INIT_Y", "OU_III_ACC_BIAS_INIT_Y")
+        bz_key = find_space_key(space, "OU_ACC_BIAS_INIT_Z", "OU_III_ACC_BIAS_INIT_Z")
+
+        if bias_std_key and bx_key and by_key and bz_key:
+            practical.extend(
+                [
+                    {
+                        bias_std_key: 0.04,
+                        bx_key: 0.00,
+                        by_key: 0.00,
+                        bz_key: 0.00,
                     },
                     {
-                        "OU_ACC_BIAS_INIT_STD": 0.25,
-                        "OU_ACC_BIAS_INIT_X": -0.08,
-                        "OU_ACC_BIAS_INIT_Y": 0.08,
-                        "OU_ACC_BIAS_INIT_Z": -0.12,
+                        bias_std_key: 0.10,
+                        bx_key: 0.03,
+                        by_key: -0.03,
+                        bz_key: 0.05,
+                    },
+                    {
+                        bias_std_key: 0.10,
+                        bx_key: -0.03,
+                        by_key: 0.03,
+                        bz_key: -0.05,
+                    },
+                    {
+                        bias_std_key: 0.25,
+                        bx_key: 0.08,
+                        by_key: -0.08,
+                        bz_key: 0.12,
+                    },
+                    {
+                        bias_std_key: 0.25,
+                        bx_key: -0.08,
+                        by_key: 0.08,
+                        bz_key: -0.12,
                     },
                 ]
             )
@@ -766,19 +811,20 @@ def eval_candidates(
         ok, reason = validate_candidate(p, space)
 
         if not ok:
-            rr = synthetic_failure_row(
-                fam,
-                cid,
-                p,
-                tier,
-                seed,
-                stage,
-                f"rejected_before_run:{reason}",
-                -1,
-            )
-            rr["rejected_before_run"] = 1
-            rr["reject_reason"] = reason
-            run_rows = [rr]
+            run_rows = [
+                synthetic_failure_row(
+                    fam,
+                    cid,
+                    p,
+                    tier,
+                    seed,
+                    stage,
+                    f"rejected_before_run:{reason}",
+                    -1,
+                )
+            ]
+            run_rows[0]["rejected_before_run"] = 1
+            run_rows[0]["reject_reason"] = reason
         else:
             run_rows = run_candidate(
                 fam=fam,
@@ -1084,7 +1130,7 @@ def main():
         "--tune-bias-vector",
         action="store_true",
         default=False,
-        help="Also sweep OU_ACC_BIAS_INIT_X/Y/Z. Off by default because it can overfit.",
+        help="Also sweep OU_ACC_BIAS_INIT_X/Y/Z or OU_III_ACC_BIAS_INIT_X/Y/Z. Off by default because it can overfit.",
     )
     args = ap.parse_args()
 
