@@ -255,45 +255,35 @@ def probe_candidates(space):
 
     if "OU_TAU_COEFF" in space and "OU_SIGMA_COEFF" in space:
         practical = [
-            {"OU_TAU_COEFF": 0.35, "OU_SIGMA_COEFF": 0.50},
-            {"OU_TAU_COEFF": 0.35, "OU_SIGMA_COEFF": 1.00},
             {"OU_TAU_COEFF": 0.60, "OU_SIGMA_COEFF": 0.60},
             {"OU_TAU_COEFF": 0.60, "OU_SIGMA_COEFF": 1.60},
             {"OU_TAU_COEFF": 1.00, "OU_SIGMA_COEFF": 0.40},
             {"OU_TAU_COEFF": 1.00, "OU_SIGMA_COEFF": 2.00},
             {"OU_TAU_COEFF": 1.80, "OU_SIGMA_COEFF": 0.60},
             {"OU_TAU_COEFF": 1.80, "OU_SIGMA_COEFF": 1.80},
-            {"OU_TAU_COEFF": 3.20, "OU_SIGMA_COEFF": 0.60},
-            {"OU_TAU_COEFF": 3.20, "OU_SIGMA_COEFF": 2.40},
             {
                 "OU_TAU_COEFF": 0.70,
                 "OU_SIGMA_COEFF": 1.30,
-                "OU_ACC_NOISE_FLOOR_SIGMA": 0.025,
-                "OU_ACC_BIAS_INIT_STD": 0.02,
+                "OU_ACC_BIAS_INIT_STD": 0.5,
                 "OU_ADAPT_TAU_SEC": 0.75,
                 "OU_ADAPT_EVERY_SECS": 0.025,
             },
             {
                 "OU_TAU_COEFF": 1.50,
                 "OU_SIGMA_COEFF": 0.75,
-                "OU_ACC_NOISE_FLOOR_SIGMA": 0.12,
-                "OU_ACC_BIAS_INIT_STD": 0.20,
+                "OU_ACC_BIAS_INIT_STD": 0.6,
                 "OU_ADAPT_TAU_SEC": 8.0,
                 "OU_ADAPT_EVERY_SECS": 0.20,
             },
             {
                 "OU_TAU_COEFF": 0.45,
                 "OU_SIGMA_COEFF": 2.20,
-                "OU_ACC_NOISE_FLOOR_SIGMA": 0.05,
-                "OU_ACC_BIAS_INIT_STD": 0.08,
-                "OU_FREQ_INPUT_CUTOFF_HZ": 0.18,
-            },
+                "OU_ACC_BIAS_INIT_STD": 0.8,
+             },
             {
                 "OU_TAU_COEFF": 2.20,
                 "OU_SIGMA_COEFF": 0.45,
-                "OU_ACC_NOISE_FLOOR_SIGMA": 0.20,
-                "OU_ACC_BIAS_INIT_STD": 0.30,
-                "OU_FREQ_INPUT_CUTOFF_HZ": 0.80,
+                "OU_ACC_BIAS_INIT_STD": 1.15,
             },
         ]
 
