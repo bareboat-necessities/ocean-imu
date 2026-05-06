@@ -49,7 +49,7 @@ OU_COMMON_SPECS = {
     "OU_TAU_COEFF": (0.60, 1.50, "log"),
     "OU_SIGMA_COEFF": (0.60, 1.60, "log"),
     "OU_ADAPT_TAU_SEC": (1.0, 12.0, "log"),
-    "OU_ADAPT_EVERY_SECS": (0.05, 0.50, "log"),
+    "OU_ADAPT_EVERY_SECS": (0.016, 0.50, "log"),
     "OU_ACC_BIAS_INIT_STD": (0.005, 2.00, "log"),
 }
 
@@ -258,14 +258,14 @@ def probe_candidates(space):
             {"OU_TAU_COEFF": 0.60, "OU_SIGMA_COEFF": 0.60},
             {"OU_TAU_COEFF": 0.60, "OU_SIGMA_COEFF": 1.60},
             {"OU_TAU_COEFF": 1.00, "OU_SIGMA_COEFF": 0.40},
-            {"OU_TAU_COEFF": 1.00, "OU_SIGMA_COEFF": 2.00},
-            {"OU_TAU_COEFF": 1.80, "OU_SIGMA_COEFF": 0.60},
-            {"OU_TAU_COEFF": 1.80, "OU_SIGMA_COEFF": 1.80},
+            {"OU_TAU_COEFF": 1.00, "OU_SIGMA_COEFF": 1.60},
+            {"OU_TAU_COEFF": 1.50, "OU_SIGMA_COEFF": 0.60},
+            {"OU_TAU_COEFF": 1.50, "OU_SIGMA_COEFF": 1.60},
             {
                 "OU_TAU_COEFF": 0.70,
                 "OU_SIGMA_COEFF": 1.30,
                 "OU_ACC_BIAS_INIT_STD": 0.5,
-                "OU_ADAPT_TAU_SEC": 0.75,
+                "OU_ADAPT_TAU_SEC": 1.25,
                 "OU_ADAPT_EVERY_SECS": 0.025,
             },
             {
@@ -281,7 +281,7 @@ def probe_candidates(space):
                 "OU_ACC_BIAS_INIT_STD": 0.8,
              },
             {
-                "OU_TAU_COEFF": 2.20,
+                "OU_TAU_COEFF": 1.20,
                 "OU_SIGMA_COEFF": 0.45,
                 "OU_ACC_BIAS_INIT_STD": 1.15,
             },
