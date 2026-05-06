@@ -56,10 +56,10 @@ OU_COMMON_SPECS = {
 }
 
 OU_II_EXTRA_SPECS = {
-    "OU_P_FACTOR": (0.08, 12.0, "log"),
-    "OU_R_P0_XY_FACTOR": (0.015, 4.0, "log"),
-    "OU_R_P0_COEFF": (0.03, 25.0, "log"),
-    "OU_R_V0_COEFF": (0.03, 25.0, "log"),
+    "OU_P_FACTOR": (0.60, 1.80, "log"),
+    "OU_R_P0_XY_FACTOR": (0.12, 0.60, "log"),
+    "OU_R_P0_COEFF": (0.60, 2.50, "log"),
+    "OU_R_V0_COEFF": (0.60, 2.50, "log"),
 }
 
 # Optional. Off by default because this can overfit to sim seed / specific synthetic bias.
