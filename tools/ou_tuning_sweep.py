@@ -211,18 +211,38 @@ def apply_timeout_constraint(p, rng):
     return p["SF_BOOT_GRAV_TIMEOUT_SEC"] <= MAX_BOOT_TIMEOUT_SEC
 
 
-def validate_candidate(p):
+def validate_candidate(p, space=None):
     bad = []
+
+    if space is not None:
+        for k, v in p.items():
+            if k == "SF_BOOT_GRAV_TIMEOUT_SEC":
+                continue
+
+            if k not in space:
+                bad.append(f"unknown_key:{k}")
+                continue
+
+            lo, hi, kind = space[k]
+            fv = float(v)
+
+            if fv < lo or fv > hi:
+                bad.append(f"out_of_range:{k}={fv} not in [{lo},{hi}]")
+
+            if kind == "int" and abs(fv - round(fv)) > 1e-9:
+                bad.append(f"not_int:{k}={fv}")
 
     timeout = p.get("SF_BOOT_GRAV_TIMEOUT_SEC")
     if timeout is not None:
         timeout = float(timeout)
+
         if timeout > MAX_BOOT_TIMEOUT_SEC:
             bad.append(f"SF_BOOT_GRAV_TIMEOUT_SEC>{MAX_BOOT_TIMEOUT_SEC}")
 
         if "SF_BOOT_GRAV_MIN_SEC" in p and "SF_BOOT_GRAV_HOLD_SEC" in p:
             min_sec = float(p["SF_BOOT_GRAV_MIN_SEC"])
             hold_sec = float(p["SF_BOOT_GRAV_HOLD_SEC"])
+
             if timeout <= min_sec + hold_sec + MIN_MARGIN_SEC:
                 bad.append("SF_BOOT_GRAV_TIMEOUT_SEC<=min+hold+margin")
 
@@ -276,10 +296,10 @@ def probe_candidates(space):
                 "OU_ADAPT_EVERY_SECS": 0.20,
             },
             {
-                "OU_TAU_COEFF": 0.75,
+                "OU_TAU_COEFF": 0.60,
                 "OU_SIGMA_COEFF": 2.10,
                 "OU_ACC_BIAS_INIT_STD": 0.8,
-             },
+            },
             {
                 "OU_TAU_COEFF": 1.20,
                 "OU_SIGMA_COEFF": 0.75,
@@ -724,6 +744,7 @@ def eval_candidates(
     mode,
     tune_mag,
     tune_bias_vector,
+    space,
 ):
     rows = []
     total = len(candidates)
@@ -741,13 +762,22 @@ def eval_candidates(
             tune_mag=tune_mag,
             tune_bias_vector=tune_bias_vector,
         )
-        ok, reason = validate_candidate(p)
+
+        ok, reason = validate_candidate(p, space)
 
         if not ok:
-            rr = synthetic_failure_row(fam, cid, p, tier, seed, stage, f"rejected_before_run:{reason}", -1)
+            rr = synthetic_failure_row(
+                fam,
+                cid,
+                p,
+                tier,
+                seed,
+                stage,
+                f"rejected_before_run:{reason}",
+                -1,
+            )
             rr["rejected_before_run"] = 1
             rr["reject_reason"] = reason
-            rows.append(rr)
             run_rows = [rr]
         else:
             run_rows = run_candidate(
@@ -785,12 +815,17 @@ def eval_candidates(
         score_str = f"{cand_score:.6g}" if math.isfinite(cand_score) else "inf"
         best_str = f"{best_score:.6g}" if math.isfinite(best_score) else "inf"
 
+        extra = ""
+        if not ok:
+            extra = f" reject_reason={reason}"
+
         log(
             f"PROGRESS family={fam} stage={stage} tier={tier} i={i} total={total} "
             f"candidate={cid} seed={seed} returncode={ret} rows={len(run_rows)} "
             f"pass_rows={pass_rows} fail_rows={fail_rows} score={score_str} "
             f"best={best_candidate} best_score={best_str} "
             f"elapsed={format_duration(elapsed)} eta={format_duration(eta)}"
+            f"{extra}"
         )
 
     score_rows(rows)
@@ -1084,6 +1119,7 @@ def main():
             mode=args.mode,
             tune_mag=args.tune_mag,
             tune_bias_vector=args.tune_bias_vector,
+            space=space,
         )
         all_rows.extend(rows_a)
 
@@ -1106,6 +1142,7 @@ def main():
             mode=args.mode,
             tune_mag=args.tune_mag,
             tune_bias_vector=args.tune_bias_vector,
+            space=space,
         )
         all_rows.extend(rows_b)
 
@@ -1142,6 +1179,7 @@ def main():
                 mode=args.mode,
                 tune_mag=args.tune_mag,
                 tune_bias_vector=args.tune_bias_vector,
+                space=space,
             )
             all_rows.extend(rows_c)
 
@@ -1173,6 +1211,7 @@ def main():
                 mode=args.mode,
                 tune_mag=args.tune_mag,
                 tune_bias_vector=args.tune_bias_vector,
+                space=space,
             )
             rows_e.extend(seed_rows)
 
