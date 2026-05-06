@@ -24,6 +24,28 @@ using Eigen::Quaternionf;
 bool add_noise = true;
 bool attitude_only = false;
 
+namespace {
+
+bool env_float(const char* name, float& out)
+{
+    if (const char* s = std::getenv(name)) {
+        out = static_cast<float>(std::atof(s));
+        return true;
+    }
+    return false;
+}
+
+bool env_int(const char* name, int& out)
+{
+    if (const char* s = std::getenv(name)) {
+        out = std::atoi(s);
+        return true;
+    }
+    return false;
+}
+
+} // namespace
+
 class FusionAdapter_OU_II final : public IW3dFusionAdapter {
 public:
     FusionAdapter_OU_II(bool with_mag,
@@ -54,55 +76,148 @@ public:
             filter.enableLinearBlock(true);
             filter.enableTuner(true);
             filter.enableClamp(true);
-            if (const char* s = std::getenv("OU_P_FACTOR")) filter.setPFactor(std::atof(s));
-            if (const char* s = std::getenv("OU_R_P0_XY_FACTOR")) filter.setR_p0_XYFactor(std::atof(s));
-            if (const char* s = std::getenv("OU_TAU_COEFF")) filter.setTauCoeff(std::atof(s));
-            if (const char* s = std::getenv("OU_SIGMA_COEFF")) filter.setSigmaCoeff(std::atof(s));
-            if (const char* s = std::getenv("OU_R_P0_COEFF")) filter.setR_p0_Coeff(std::atof(s));
-            if (const char* s = std::getenv("OU_R_V0_COEFF")) filter.setR_v0_Coeff(std::atof(s));
-            if (const char* s = std::getenv("OU_ACC_NOISE_FLOOR_SIGMA")) filter.setAccNoiseFloorSigma(std::atof(s));
-            if (const char* s = std::getenv("OU_ADAPT_TAU_SEC")) filter.setAdaptationTimeConstants(std::atof(s));
-            if (const char* s = std::getenv("OU_ADAPT_EVERY_SECS")) filter.setAdaptationUpdatePeriod(std::atof(s));
-            if (const char* s = std::getenv("OU_FREQ_INPUT_CUTOFF_HZ")) filter.setFreqInputCutoffHz(std::atof(s));
-if (const char* s = std::getenv("OU_ACC_BIAS_INIT_STD")) {
-    filter.mekf().set_initial_acc_bias_std(std::atof(s));
-}
 
-if (const char* s = std::getenv("OU_ACC_BIAS_INIT_X")) {
-    Vector3f b = filter.mekf().get_acc_bias();
-    b.x() = std::atof(s);
-    filter.mekf().set_initial_acc_bias(b);
-}
-if (const char* s = std::getenv("OU_ACC_BIAS_INIT_Y")) {
-    Vector3f b = filter.mekf().get_acc_bias();
-    b.y() = std::atof(s);
-    filter.mekf().set_initial_acc_bias(b);
-}
-if (const char* s = std::getenv("OU_ACC_BIAS_INIT_Z")) {
-    Vector3f b = filter.mekf().get_acc_bias();
-    b.z() = std::atof(s);
-    filter.mekf().set_initial_acc_bias(b);
-}         
+            float v = 0.0f;
+
+            // Generic OU_* names are accepted for compatibility.
+            // OU_II_* names are applied afterward and win if both are set.
+
+            if (env_float("OU_P_FACTOR", v)) {
+                filter.setPFactor(v);
+            }
+            if (env_float("OU_II_P_FACTOR", v)) {
+                filter.setPFactor(v);
+            }
+
+            if (env_float("OU_R_P0_XY_FACTOR", v)) {
+                filter.setR_p0_XYFactor(v);
+            }
+            if (env_float("OU_II_R_P0_XY_FACTOR", v)) {
+                filter.setR_p0_XYFactor(v);
+            }
+
+            if (env_float("OU_TAU_COEFF", v)) {
+                filter.setTauCoeff(v);
+            }
+            if (env_float("OU_II_TAU_COEFF", v)) {
+                filter.setTauCoeff(v);
+            }
+
+            if (env_float("OU_SIGMA_COEFF", v)) {
+                filter.setSigmaCoeff(v);
+            }
+            if (env_float("OU_II_SIGMA_COEFF", v)) {
+                filter.setSigmaCoeff(v);
+            }
+
+            if (env_float("OU_R_P0_COEFF", v)) {
+                filter.setR_p0_Coeff(v);
+            }
+            if (env_float("OU_II_R_P0_COEFF", v)) {
+                filter.setR_p0_Coeff(v);
+            }
+
+            if (env_float("OU_R_V0_COEFF", v)) {
+                filter.setR_v0_Coeff(v);
+            }
+            if (env_float("OU_II_R_V0_COEFF", v)) {
+                filter.setR_v0_Coeff(v);
+            }
+
+            if (env_float("OU_ACC_NOISE_FLOOR_SIGMA", v)) {
+                filter.setAccNoiseFloorSigma(v);
+            }
+            if (env_float("OU_II_ACC_NOISE_FLOOR_SIGMA", v)) {
+                filter.setAccNoiseFloorSigma(v);
+            }
+
+            if (env_float("OU_ADAPT_TAU_SEC", v)) {
+                filter.setAdaptationTimeConstants(v);
+            }
+            if (env_float("OU_II_ADAPT_TAU_SEC", v)) {
+                filter.setAdaptationTimeConstants(v);
+            }
+
+            if (env_float("OU_ADAPT_EVERY_SECS", v)) {
+                filter.setAdaptationUpdatePeriod(v);
+            }
+            if (env_float("OU_II_ADAPT_EVERY_SECS", v)) {
+                filter.setAdaptationUpdatePeriod(v);
+            }
+
+            if (env_float("OU_FREQ_INPUT_CUTOFF_HZ", v)) {
+                filter.setFreqInputCutoffHz(v);
+            }
+            if (env_float("OU_II_FREQ_INPUT_CUTOFF_HZ", v)) {
+                filter.setFreqInputCutoffHz(v);
+            }
+
+            if (env_float("OU_ACC_BIAS_INIT_STD", v)) {
+                filter.mekf().set_initial_acc_bias_std(v);
+            }
+            if (env_float("OU_II_ACC_BIAS_INIT_STD", v)) {
+                filter.mekf().set_initial_acc_bias_std(v);
+            }
+
+            Vector3f b = filter.mekf().get_acc_bias();
+            bool bias_changed = false;
+
+            if (env_float("OU_ACC_BIAS_INIT_X", v)) {
+                b.x() = v;
+                bias_changed = true;
+            }
+            if (env_float("OU_II_ACC_BIAS_INIT_X", v)) {
+                b.x() = v;
+                bias_changed = true;
+            }
+
+            if (env_float("OU_ACC_BIAS_INIT_Y", v)) {
+                b.y() = v;
+                bias_changed = true;
+            }
+            if (env_float("OU_II_ACC_BIAS_INIT_Y", v)) {
+                b.y() = v;
+                bias_changed = true;
+            }
+
+            if (env_float("OU_ACC_BIAS_INIT_Z", v)) {
+                b.z() = v;
+                bias_changed = true;
+            }
+            if (env_float("OU_II_ACC_BIAS_INIT_Z", v)) {
+                b.z() = v;
+                bias_changed = true;
+            }
+
+            if (bias_changed) {
+                filter.mekf().set_initial_acc_bias(b);
+            }
         }
     }
+
     void apply_env_overrides() {
-        if (const char* s = std::getenv("SF_MAG_DELAY_SEC")) cfg_.mag_delay_sec = std::atof(s);
-        if (const char* s = std::getenv("SF_MAG_GRAV_ALIGN_MAX_SIN")) cfg_.mag_gravity_align_max_sin = std::atof(s);
-        if (const char* s = std::getenv("SF_MAG_GRAV_ALIGN_HOLD_SEC")) cfg_.mag_gravity_align_hold_sec = std::atof(s);
-        if (const char* s = std::getenv("SF_MAG_GRAV_ALIGN_LPF_TAU")) cfg_.mag_gravity_align_lpf_tau = std::atof(s);
-        if (const char* s = std::getenv("SF_MAG_TILT_FALLBACK_SEC")) cfg_.mag_tilt_fallback_sec = std::atof(s);
-        if (const char* s = std::getenv("SF_MAG_EXTREME_GYRO_DPS")) cfg_.mag_extreme_gyro_dps = std::atof(s);
-        if (const char* s = std::getenv("SF_MAG_INIT_MIN_MAG_NORM")) cfg_.mag_init_min_mag_norm = std::atof(s);
-        if (const char* s = std::getenv("SF_MAG_MIN_SAMPLES")) cfg_.mag_min_samples = std::atoi(s);
-        if (const char* s = std::getenv("SF_RACC_WARMUP_STD")) cfg_.Racc_warmup_std = std::atof(s);
-        if (const char* s = std::getenv("SF_ONLINE_TUNE_WARMUP_SEC")) cfg_.online_tune_warmup_sec = std::atof(s);
-        if (const char* s = std::getenv("SF_BOOT_TILT_ACC_TAU")) cfg_.bootstrap_tilt_obs_acc_tau_sec = std::atof(s);
-        if (const char* s = std::getenv("SF_BOOT_GRAV_SLOW_TAU")) cfg_.bootstrap_gravity_slow_tau_sec = std::atof(s);
-        if (const char* s = std::getenv("SF_BOOT_GRAV_ALIGN_MAX_SIN")) cfg_.bootstrap_gravity_align_max_sin = std::atof(s);
-        if (const char* s = std::getenv("SF_BOOT_GRAV_HOLD_SEC")) cfg_.bootstrap_gravity_hold_sec = std::atof(s);
-        if (const char* s = std::getenv("SF_BOOT_GRAV_MIN_SEC")) cfg_.bootstrap_gravity_min_sec = std::atof(s);
-        if (const char* s = std::getenv("SF_BOOT_GRAV_TIMEOUT_SEC")) cfg_.bootstrap_gravity_timeout_sec = std::atof(s);
-        if (const char* s = std::getenv("SF_BOOT_GRAV_NORM_FRAC")) cfg_.bootstrap_gravity_norm_frac = std::atof(s);
+        float vf = 0.0f;
+        int vi = 0;
+
+        if (env_float("SF_MAG_DELAY_SEC", vf)) cfg_.mag_delay_sec = vf;
+        if (env_float("SF_MAG_GRAV_ALIGN_MAX_SIN", vf)) cfg_.mag_gravity_align_max_sin = vf;
+        if (env_float("SF_MAG_GRAV_ALIGN_HOLD_SEC", vf)) cfg_.mag_gravity_align_hold_sec = vf;
+        if (env_float("SF_MAG_GRAV_ALIGN_LPF_TAU", vf)) cfg_.mag_gravity_align_lpf_tau = vf;
+        if (env_float("SF_MAG_TILT_FALLBACK_SEC", vf)) cfg_.mag_tilt_fallback_sec = vf;
+        if (env_float("SF_MAG_EXTREME_GYRO_DPS", vf)) cfg_.mag_extreme_gyro_dps = vf;
+        if (env_float("SF_MAG_INIT_MIN_MAG_NORM", vf)) cfg_.mag_init_min_mag_norm = vf;
+        if (env_int("SF_MAG_MIN_SAMPLES", vi)) cfg_.mag_min_samples = vi;
+
+        if (env_float("SF_RACC_WARMUP_STD", vf)) cfg_.Racc_warmup_std = vf;
+        if (env_float("SF_ONLINE_TUNE_WARMUP_SEC", vf)) cfg_.online_tune_warmup_sec = vf;
+
+        if (env_float("SF_BOOT_TILT_ACC_TAU", vf)) cfg_.bootstrap_tilt_obs_acc_tau_sec = vf;
+        if (env_float("SF_BOOT_GRAV_SLOW_TAU", vf)) cfg_.bootstrap_gravity_slow_tau_sec = vf;
+        if (env_float("SF_BOOT_GRAV_ALIGN_MAX_SIN", vf)) cfg_.bootstrap_gravity_align_max_sin = vf;
+        if (env_float("SF_BOOT_GRAV_HOLD_SEC", vf)) cfg_.bootstrap_gravity_hold_sec = vf;
+        if (env_float("SF_BOOT_GRAV_MIN_SEC", vf)) cfg_.bootstrap_gravity_min_sec = vf;
+        if (env_float("SF_BOOT_GRAV_TIMEOUT_SEC", vf)) cfg_.bootstrap_gravity_timeout_sec = vf;
+        if (env_float("SF_BOOT_GRAV_NORM_FRAC", vf)) cfg_.bootstrap_gravity_norm_frac = vf;
     }
 
     void updateMag(const Vector3f& mag_body_ned) override {
