@@ -46,13 +46,12 @@ BOOT_SPECS = {
 }
 
 OU_COMMON_SPECS = {
-    "OU_TAU_COEFF": (0.15, 6.0, "log"),
-    "OU_SIGMA_COEFF": (0.15, 6.0, "log"),
+    "OU_TAU_COEFF": (0.60, 1.50, "log"),
+    "OU_SIGMA_COEFF": (0.60, 1.60, "log"),
     "OU_ACC_NOISE_FLOOR_SIGMA": (0.008, 1.00, "log"),
     "OU_ADAPT_TAU_SEC": (0.08, 45.0, "log"),
     "OU_ADAPT_EVERY_SECS": (0.005, 2.5, "log"),
     "OU_FREQ_INPUT_CUTOFF_HZ": (0.03, 3.0, "log"),
-
     "OU_ACC_BIAS_INIT_STD": (0.001, 1.20, "log"),
 }
 
