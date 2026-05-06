@@ -71,14 +71,14 @@ BIAS_VECTOR_SPECS = {
 
 # Optional. Off by default because this can hide OU problems by tuning mag behavior.
 MAG_SPECS = {
-    "SF_MAG_DELAY_SEC": (0.5, 14.0, "linear"),
-    "SF_MAG_GRAV_ALIGN_MAX_SIN": (0.05, 0.35, "linear"),
+    "SF_MAG_DELAY_SEC": (0.5, 10.0, "linear"),
+    "SF_MAG_GRAV_ALIGN_MAX_SIN": (0.05, 0.31, "linear"),
     "SF_MAG_GRAV_ALIGN_HOLD_SEC": (0.15, 3.0, "log"),
     "SF_MAG_GRAV_ALIGN_LPF_TAU": (0.4, 8.0, "log"),
-    "SF_MAG_TILT_FALLBACK_SEC": (1.0, 20.0, "log"),
-    "SF_MAG_EXTREME_GYRO_DPS": (80.0, 720.0, "log"),
-    "SF_MAG_INIT_MIN_MAG_NORM": (5.0, 45.0, "linear"),
-    "SF_MAG_MIN_SAMPLES": (4, 80, "int"),
+    "SF_MAG_TILT_FALLBACK_SEC": (1.0, 12.0, "log"),
+    "SF_MAG_EXTREME_GYRO_DPS": (80.0, 480.0, "log"),
+    "SF_MAG_INIT_MIN_MAG_NORM": (20.0, 40.0, "linear"),
+    "SF_MAG_MIN_SAMPLES": (4, 60, "int"),
 }
 
 
