@@ -47,11 +47,11 @@ BOOT_SPECS = {
 
 # OU_II keeps generic OU_* names.
 OU_COMMON_SPECS = {
-    "OU_TAU_COEFF": (0.60, 1.50, "log"),
-    "OU_SIGMA_COEFF": (0.60, 2.10, "log"),
-    "OU_ADAPT_TAU_SEC": (1.0, 12.0, "log"),
-    "OU_ADAPT_EVERY_SECS": (0.016, 0.50, "log"),
-    "OU_ACC_BIAS_INIT_STD": (0.005, 2.00, "log"),
+    "OU_TAU_COEFF": (1.15, 1.50, "log"),
+    "OU_SIGMA_COEFF": (1.20, 1.80, "log"),
+    "OU_ADAPT_TAU_SEC": (1.0, 2.2, "log"),
+    "OU_ADAPT_EVERY_SECS": (0.05, 0.15, "log"),
+    "OU_ACC_BIAS_INIT_STD": (0.02, 0.25, "log"),
 }
 
 OU_II_EXTRA_SPECS = {
