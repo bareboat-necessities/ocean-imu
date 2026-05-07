@@ -35,14 +35,14 @@ RX = {
 
 # kind: "log", "linear", or "int"
 BOOT_SPECS = {
-    "SF_RACC_WARMUP_STD": (0.12, 1.50, "log"),
-    "SF_ONLINE_TUNE_WARMUP_SEC": (1.0, 18.0, "log"),
-    "SF_BOOT_TILT_ACC_TAU": (0.6, 6.0, "log"),
-    "SF_BOOT_GRAV_SLOW_TAU": (1.5, 12.0, "log"),
-    "SF_BOOT_GRAV_ALIGN_MAX_SIN": (0.06, 0.32, "linear"),
-    "SF_BOOT_GRAV_HOLD_SEC": (0.25, 2.8, "log"),
-    "SF_BOOT_GRAV_MIN_SEC": (2.0, 11.0, "linear"),
-    "SF_BOOT_GRAV_NORM_FRAC": (0.12, 0.65, "linear"),
+    "SF_RACC_WARMUP_STD": (0.35, 0.65, "log"),
+    "SF_ONLINE_TUNE_WARMUP_SEC": (4.0, 10.0, "log"),
+    "SF_BOOT_TILT_ACC_TAU": (1.2, 2.8, "log"),
+    "SF_BOOT_GRAV_SLOW_TAU": (7.0, 11.0, "log"),
+    "SF_BOOT_GRAV_ALIGN_MAX_SIN": (0.08, 0.16, "linear"),
+    "SF_BOOT_GRAV_HOLD_SEC": (0.8, 2.0, "log"),
+    "SF_BOOT_GRAV_MIN_SEC": (2.0, 5.0, "linear"),
+    "SF_BOOT_GRAV_NORM_FRAC": (0.18, 0.65, "linear"),
 }
 
 # OU_II keeps generic OU_* names.
@@ -55,10 +55,10 @@ OU_COMMON_SPECS = {
 }
 
 OU_II_EXTRA_SPECS = {
-    "OU_P_FACTOR": (0.60, 1.80, "log"),
-    "OU_R_P0_XY_FACTOR": (0.12, 0.60, "log"),
-    "OU_R_P0_COEFF": (0.60, 2.50, "log"),
-    "OU_R_V0_COEFF": (0.60, 2.50, "log"),
+    "OU_P_FACTOR": (1.20, 1.80, "log"),
+    "OU_R_P0_XY_FACTOR": (0.20, 0.45, "log"),
+    "OU_R_P0_COEFF": (1.20, 2.50, "log"),
+    "OU_R_V0_COEFF": (1.20, 2.50, "log"),
 }
 
 # OU_III uses family-specific names and narrowed productive ranges.
