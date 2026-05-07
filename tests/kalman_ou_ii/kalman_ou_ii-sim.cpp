@@ -312,12 +312,12 @@ private:
 };
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 9.85f,
+    .err_limit_percent_z_jonswap   = 9.75f,
     .err_limit_percent_z_pmstokes  = 9.05f,
-    .err_limit_yaw_deg             = 2.6f,
-    .err_limit_percent_3d_jonswap  = 38.0f,
-    .err_limit_percent_3d_pmstokes = 38.0f,
-    .acc_z_bias_percent            = 15.0f,
+    .err_limit_yaw_deg             = 2.45f,
+    .err_limit_percent_3d_jonswap  = 35.0f,
+    .err_limit_percent_3d_pmstokes = 37.0f,
+    .acc_z_bias_percent            = 13.0f,
     .bias_3d_percent               = 250.0f,
 };
 
