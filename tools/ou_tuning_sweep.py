@@ -45,7 +45,7 @@ BOOT_SPECS = {
     "SF_BOOT_GRAV_NORM_FRAC": (0.12, 0.65, "linear"),
 }
 
-# OU_II keeps the current generic OU_* names.
+# OU_II keeps generic OU_* names.
 OU_COMMON_SPECS = {
     "OU_TAU_COEFF": (0.60, 1.50, "log"),
     "OU_SIGMA_COEFF": (0.60, 2.10, "log"),
@@ -61,15 +61,15 @@ OU_II_EXTRA_SPECS = {
     "OU_R_V0_COEFF": (0.60, 2.50, "log"),
 }
 
-# OU_III uses family-specific names so its sweep can be isolated from OU_II.
+# OU_III uses family-specific names and narrowed productive ranges.
 OU_III_EXTRA_SPECS = {
-    "OU_III_TAU_COEFF": (0.60, 1.50, "log"),
-    "OU_III_SIGMA_COEFF": (0.60, 2.10, "log"),
-    "OU_III_ACC_NOISE_FLOOR_SIGMA": (0.02, 0.25, "log"),
-    "OU_III_ADAPT_TAU_SEC": (1.0, 12.0, "log"),
-    "OU_III_ADAPT_EVERY_SECS": (0.016, 0.50, "log"),
-    "OU_III_FREQ_INPUT_CUTOFF_HZ": (0.15, 2.50, "log"),
-    "OU_III_ACC_BIAS_INIT_STD": (0.005, 2.00, "log"),
+    "OU_III_TAU_COEFF": (0.85, 1.25, "log"),
+    "OU_III_SIGMA_COEFF": (1.05, 1.65, "log"),
+    "OU_III_ACC_NOISE_FLOOR_SIGMA": (0.040, 0.090, "log"),
+    "OU_III_ADAPT_TAU_SEC": (6.0, 16.0, "log"),
+    "OU_III_ADAPT_EVERY_SECS": (0.08, 0.24, "log"),
+    "OU_III_FREQ_INPUT_CUTOFF_HZ": (0.30, 0.70, "log"),
+    "OU_III_ACC_BIAS_INIT_STD": (0.05, 0.35, "log"),
 }
 
 # Optional. Off by default because this can overfit to sim seed / specific synthetic bias.
@@ -271,6 +271,16 @@ def validate_candidate(p, space=None):
     return len(bad) == 0, ";".join(bad)
 
 
+def candidate_values_in_space(p, space):
+    ok, _ = validate_candidate(p, space)
+    return ok
+
+
+def add_candidate_if_valid(out, cid, p, space):
+    if candidate_values_in_space(p, space):
+        out.append((cid, p))
+
+
 def find_space_key(space, *names):
     for name in names:
         if name in space:
@@ -300,13 +310,15 @@ def probe_candidates(space):
         for i, timeout in enumerate((8.5, 10.0, 12.0, 15.0), 1):
             p = dict(base)
             p["SF_BOOT_GRAV_TIMEOUT_SEC"] = timeout
-            out.append((f"practical_boot_{i:02d}", p))
+            add_candidate_if_valid(out, f"practical_boot_{i:02d}", p, space)
 
     tau_key = find_space_key(space, "OU_TAU_COEFF", "OU_III_TAU_COEFF")
     sigma_key = find_space_key(space, "OU_SIGMA_COEFF", "OU_III_SIGMA_COEFF")
     bias_std_key = find_space_key(space, "OU_ACC_BIAS_INIT_STD", "OU_III_ACC_BIAS_INIT_STD")
     adapt_tau_key = find_space_key(space, "OU_ADAPT_TAU_SEC", "OU_III_ADAPT_TAU_SEC")
     adapt_every_key = find_space_key(space, "OU_ADAPT_EVERY_SECS", "OU_III_ADAPT_EVERY_SECS")
+    floor_key = find_space_key(space, "OU_III_ACC_NOISE_FLOOR_SIGMA")
+    freq_key = find_space_key(space, "OU_III_FREQ_INPUT_CUTOFF_HZ")
 
     if tau_key and sigma_key:
         practical = [
@@ -389,7 +401,59 @@ def probe_candidates(space):
             )
 
         for i, p in enumerate(practical, 1):
-            out.append((f"practical_ou_{i:02d}", p))
+            add_candidate_if_valid(out, f"practical_ou_{i:02d}", p, space)
+
+    # Productive OU_III bundle seeds from previous useful mc_0017 neighborhood.
+    if (
+        tau_key
+        and sigma_key
+        and floor_key
+        and adapt_tau_key
+        and adapt_every_key
+        and freq_key
+        and bias_std_key
+    ):
+        productive_ou3 = [
+            {
+                tau_key: 1.05,
+                sigma_key: 1.33,
+                floor_key: 0.063,
+                adapt_tau_key: 11.8,
+                adapt_every_key: 0.146,
+                freq_key: 0.423,
+                bias_std_key: 0.18,
+            },
+            {
+                tau_key: 1.00,
+                sigma_key: 1.25,
+                floor_key: 0.055,
+                adapt_tau_key: 10.0,
+                adapt_every_key: 0.12,
+                freq_key: 0.40,
+                bias_std_key: 0.12,
+            },
+            {
+                tau_key: 1.10,
+                sigma_key: 1.45,
+                floor_key: 0.070,
+                adapt_tau_key: 14.0,
+                adapt_every_key: 0.18,
+                freq_key: 0.50,
+                bias_std_key: 0.22,
+            },
+            {
+                tau_key: 0.95,
+                sigma_key: 1.20,
+                floor_key: 0.050,
+                adapt_tau_key: 8.0,
+                adapt_every_key: 0.10,
+                freq_key: 0.35,
+                bias_std_key: 0.08,
+            },
+        ]
+
+        for i, p in enumerate(productive_ou3, 1):
+            add_candidate_if_valid(out, f"productive_ou3_{i:02d}", p, space)
 
     return out
 
@@ -412,6 +476,29 @@ def dedupe_candidates(cands):
             continue
         seen.add(key)
         out.append((cid, p))
+
+    return out
+
+
+def unique_by_params(cands):
+    seen = set()
+    out = []
+
+    for c in cands:
+        params = c.get("params", {})
+        key = tuple(
+            sorted(
+                (
+                    k,
+                    round(float(v), 9) if isinstance(v, (float, int)) else v,
+                )
+                for k, v in params.items()
+            )
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(c)
 
     return out
 
@@ -479,6 +566,8 @@ def synthetic_failure_row(fam, cid, p, tier, seed, stage, reason, returncode):
         "rejected_before_run": 0,
         "reject_reason": "",
         "score": float("inf"),
+        "score_conservative": float("inf"),
+        "score_disp": float("inf"),
     }
     row.update(p)
     return row
@@ -628,6 +717,8 @@ def score_rows(rows):
 
             if r["candidate"] != "baseline" and b is None:
                 r["score"] = float("inf")
+                r["score_conservative"] = float("inf")
+                r["score_disp"] = float("inf")
                 r["quality_gate_pass"] = False
                 fr = (r.get("fail_reason") or "").strip(";")
                 r["fail_reason"] = (fr + ";missing_matching_baseline").strip(";")
@@ -653,9 +744,10 @@ def score_rows(rows):
                 any_fail = True
 
         if not rp or not z or not r3 or not yaw or not acc:
-            score = float("inf")
+            conservative_score = float("inf")
+            disp_score = float("inf")
         else:
-            score = (
+            conservative_score = (
                 3.00 * percentile(r3, 0.75)
                 + 2.00 * max(r3)
                 + 2.50 * percentile(z, 0.75)
@@ -669,8 +761,26 @@ def score_rows(rows):
                 + (100.0 if any_fail else 0.0)
             )
 
+            # Productive displacement-focused score.
+            # This intentionally lets useful 3D/Z improvements survive even if
+            # roll/pitch or bias is mildly worse, while quality gates still reject hard failures.
+            disp_score = (
+                8.00 * percentile(r3, 0.75)
+                + 4.00 * percentile(z, 0.75)
+                + 1.00 * percentile(rp, 0.75)
+                + 0.50 * percentile(yaw, 0.75)
+                + 0.10 * percentile(acc, 0.75)
+                + 0.50 * max(r3)
+                + 0.25 * max(z)
+                + 0.20 * max(rp)
+                + 0.10 * max(acc)
+                + (100.0 if any_fail else 0.0)
+            )
+
         for r in items:
-            r["score"] = score
+            r["score_conservative"] = conservative_score
+            r["score_disp"] = disp_score
+            r["score"] = disp_score
 
 
 def aggregate_candidates(rows, fam, tier, stage=None):
@@ -713,6 +823,8 @@ def aggregate_candidates(rows, fam, tier, stage=None):
                 {
                     "mean_score": sum(finite_float(r["score"]) for r in items) / len(items),
                     "max_score": max(finite_float(r["score"]) for r in items),
+                    "mean_score_conservative": sum(finite_float(r.get("score_conservative")) for r in items) / len(items),
+                    "mean_score_disp": sum(finite_float(r.get("score_disp")) for r in items) / len(items),
                     "mean_rms3d": sum(finite_float(r["rms_3d"]) for r in items) / len(items),
                     "mean_z_rms": sum(finite_float(r["z_rms"]) for r in items) / len(items),
                     "mean_roll_pitch_rms": sum(finite_float(r["roll_pitch_rms_norm"]) for r in items) / len(items),
@@ -733,6 +845,8 @@ def aggregate_candidates(rows, fam, tier, stage=None):
                 {
                     "mean_score": float("inf"),
                     "max_score": float("inf"),
+                    "mean_score_conservative": float("inf"),
+                    "mean_score_disp": float("inf"),
                     "mean_rms3d": float("inf"),
                     "mean_z_rms": float("inf"),
                     "mean_roll_pitch_rms": float("inf"),
@@ -776,6 +890,44 @@ def useful_nonbaseline(agg):
         and x.get("candidate") != "baseline"
         and clean_params(x.get("params", {}))
     ]
+
+
+def build_diverse_pool(agg_a, agg_b, top_k):
+    cands = useful_nonbaseline(agg_a) + useful_nonbaseline(agg_b)
+    valid = [c for c in cands if c.get("valid")]
+
+    if not valid:
+        return []
+
+    picks = []
+
+    picks.extend(sorted(valid, key=rank_key)[:top_k])
+    picks.extend(sorted(valid, key=lambda c: (c["mean_rms3d"], c["max_rms3d_ratio"]))[:top_k])
+    picks.extend(sorted(valid, key=lambda c: (c["mean_z_rms"], c["max_z_ratio"]))[:top_k])
+    picks.extend(sorted(valid, key=lambda c: (c["mean_yaw_rms"], c["max_yaw_ratio"]))[:max(2, top_k // 2)])
+
+    improvers = [
+        c
+        for c in valid
+        if c.get("mean_rms3d_ratio", float("inf")) < 0.985
+        or c.get("mean_z_ratio", float("inf")) < 0.985
+    ]
+    picks.extend(sorted(improvers, key=lambda c: (c["mean_rms3d_ratio"], c["mean_z_ratio"]))[:top_k])
+
+    return unique_by_params(picks)[: max(top_k, 16)]
+
+
+def select_final_candidates(pool, top_k):
+    if not pool:
+        return []
+
+    picks = []
+    picks.extend(sorted(pool, key=rank_key)[:top_k])
+    picks.extend(sorted(pool, key=lambda c: (c["mean_rms3d"], c["mean_z_rms"]))[:top_k])
+    picks.extend(sorted(pool, key=lambda c: (c["mean_rms3d_ratio"], c["mean_z_ratio"]))[:top_k])
+    picks.extend(sorted(pool, key=lambda c: (c["mean_yaw_rms"], c["max_yaw_ratio"]))[:max(2, top_k // 2)])
+
+    return unique_by_params(picks)[: max(top_k, 12)]
 
 
 def eval_candidates(
@@ -888,7 +1040,8 @@ def print_stage_summary(stage, agg):
     for t in top[:5]:
         log(
             f"STAGE_{stage}_TOP_CAND candidate={t['candidate']} "
-            f"score={t['mean_score']:.6g} rms3d={t['mean_rms3d']:.6g} "
+            f"score={t['mean_score']:.6g} score_old={t.get('mean_score_conservative', float('nan')):.6g} "
+            f"rms3d={t['mean_rms3d']:.6g} "
             f"z={t['mean_z_rms']:.6g} rp={t['mean_roll_pitch_rms']:.6g} "
             f"yaw={t['mean_yaw_rms']:.6g} acc_bias={t['mean_acc_bias_rms3d']:.6g} "
             f"r3ratio={t['mean_rms3d_ratio']:.6g}/{t['max_rms3d_ratio']:.6g} "
@@ -1065,6 +1218,7 @@ def final_report(rows_e, fam, tier):
 
     if base:
         log(f"BASELINE_SCORE {base['mean_score']:.6g}")
+        log(f"BASELINE_SCORE_OLD {base.get('mean_score_conservative', float('nan')):.6g}")
         log(
             f"BASELINE_RMS mean_3d={base['mean_rms3d']:.6g} "
             f"mean_z={base['mean_z_rms']:.6g} "
@@ -1080,6 +1234,7 @@ def final_report(rows_e, fam, tier):
 
     best = nonbase[0]
     log(f"BEST_SCORE {best['mean_score']:.6g}")
+    log(f"BEST_SCORE_OLD {best.get('mean_score_conservative', float('nan')):.6g}")
 
     if base and base["mean_score"] > 0:
         ratio = best["mean_score"] / base["mean_score"]
@@ -1088,7 +1243,8 @@ def final_report(rows_e, fam, tier):
             log("NO_MEANINGFUL_SCORE_IMPROVEMENT")
 
     best_rows = [
-        r for r in rows_e
+        r
+        for r in rows_e
         if r.get("candidate") == best["candidate"] and r.get("stage") == "E"
     ]
 
@@ -1196,15 +1352,15 @@ def main():
         print_stage_summary("B", agg_b)
         print_param_sensitivity(rows_b, fam)
 
-        pool = sorted(useful_nonbaseline(agg_a) + useful_nonbaseline(agg_b), key=rank_key)
-        top_pool = pool[: max(1, args.top_k)]
+        pool = build_diverse_pool(agg_a, agg_b, args.top_k)
+        top_pool = pool
 
         if not top_pool:
             log("NO_STAGE_A_OR_B_NONBASELINE_SURVIVORS")
             continue
 
         local = []
-        per_top = max(2, args.samples // max(1, args.top_k))
+        per_top = max(2, args.samples // max(1, len(top_pool)))
 
         for idx, cand in enumerate(top_pool, 1):
             samples = sample_local_perturbations(cand["params"], space, rng, per_top)
@@ -1232,11 +1388,12 @@ def main():
             agg_c = aggregate_candidates(rows_c, fam, args.tier, stage="C")
             print_stage_summary("C", agg_c)
             print_param_sensitivity(rows_c, fam)
-            pool = sorted(pool + useful_nonbaseline(agg_c), key=rank_key)
+
+            pool = unique_by_params(pool + useful_nonbaseline(agg_c))
         else:
             log("STAGE_C_SKIPPED no_local_candidates")
 
-        final_candidates = pool[: max(1, args.top_k)]
+        final_candidates = select_final_candidates(pool, args.top_k)
 
         final_tier = args.final_tier or ("final" if args.tier == "quick" else args.tier)
         rows_e = []
