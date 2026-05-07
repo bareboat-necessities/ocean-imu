@@ -160,7 +160,7 @@ jobs:
 
           python3 -u tools/ou_tuning_sweep.py \
             --family ${{ matrix.family }} \
-            --mode gravity \
+            --mode ou \
             --samples 48 \
             --seed 37 \
             --tier all \
