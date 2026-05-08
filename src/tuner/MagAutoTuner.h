@@ -15,21 +15,6 @@
 
 // Common startup helper for estimating world magnetic reference from
 // stable body-frame accel + gyro + mag measurements.
-//
-// Important behavior:
-//   - Uses tilt-only attitude, so yaw is intentionally unknown during learning.
-//   - Therefore we must NOT average horizontal vector components directly.
-//     If the boat yaws while learning, direct x/y vector averaging shrinks the
-//     horizontal magnetic field and creates a bad reference.
-//
-// This version averages:
-//   - horizontal magnitude sqrt(mx^2 + my^2)
-//   - vertical component z
-//
-// Then it defines the learned magnetic-world reference as:
-//   B_world_ref = [mean_horizontal, 0, mean_z]
-//
-// So the rest of the MEKF code can remain unchanged.
 class MagAutoTuner {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -38,13 +23,11 @@ public:
     float mag_norm_min = 1e-3f;
     int   min_samples = 40;
 
-    // Reject learning if the learned yaw-invariant horizontal magnitude is
-    // too unstable. Relative to mean horizontal field.
-    float max_horiz_rel_std = 0.08f;
-
-    // Reject learning if vertical/dip component is too unstable.
-    // Relative to max(abs(mean_z), mean_horizontal).
-    float max_z_rel_std = 0.08f;
+    // Extra strictness, but deliberately loose enough not to block high-sea runs.
+    // These are evaluated on tilt-compensated mag_world samples.
+    float max_norm_rel_std  = 0.12f;
+    float max_vert_rel_std  = 0.16f;
+    float min_horiz_fraction = 0.15f;
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
@@ -56,8 +39,11 @@ public:
   }
 
   void reset() {
-    horiz_sum_ = 0.0f;
-    horiz_sq_sum_ = 0.0f;
+    mag_world_sum_.setZero();
+    mag_world_sq_sum_.setZero();
+
+    norm_sum_ = 0.0f;
+    norm_sq_sum_ = 0.0f;
     z_sum_ = 0.0f;
     z_sq_sum_ = 0.0f;
 
@@ -83,29 +69,23 @@ public:
     Eigen::Quaternionf q_tilt_bw = q_tilt_bw_in;
     q_tilt_bw.normalize();
 
-    // Rotate mag into a tilt-compensated frame.
-    // Yaw is intentionally not trusted here.
+    // Rotate each accepted mag sample into world using CURRENT filter tilt only.
     const Eigen::Vector3f mag_world_i = q_tilt_bw * mag_body_ned;
     if (!mag_world_i.allFinite()) return false;
 
-    const float horiz_i = std::sqrt(
-        mag_world_i.x() * mag_world_i.x() +
-        mag_world_i.y() * mag_world_i.y());
-
-    const float z_i = mag_world_i.z();
-
-    if (!(horiz_i > cfg_.mag_norm_min) ||
-        !std::isfinite(horiz_i) ||
-        !std::isfinite(z_i))
-    {
+    const float norm_i = mag_world_i.norm();
+    if (!(norm_i > cfg_.mag_norm_min) || !std::isfinite(norm_i)) {
       return false;
     }
 
-    horiz_sum_    += horiz_i;
-    horiz_sq_sum_ += horiz_i * horiz_i;
+    mag_world_sum_ += mag_world_i;
+    mag_world_sq_sum_ += mag_world_i.cwiseProduct(mag_world_i);
 
-    z_sum_    += z_i;
-    z_sq_sum_ += z_i * z_i;
+    norm_sum_ += norm_i;
+    norm_sq_sum_ += norm_i * norm_i;
+
+    z_sum_ += mag_world_i.z();
+    z_sq_sum_ += mag_world_i.z() * mag_world_i.z();
 
     ++accepted_count_;
 
@@ -115,51 +95,62 @@ public:
 
     const float n = static_cast<float>(accepted_count_);
 
-    const float horiz_mean = horiz_sum_ / n;
-    const float z_mean     = z_sum_ / n;
+    const Eigen::Vector3f mag_world_mean = mag_world_sum_ / n;
 
-    const float horiz_var =
-        std::max(0.0f, horiz_sq_sum_ / n - horiz_mean * horiz_mean);
+    const float norm_mean = norm_sum_ / n;
+    const float norm_var = std::max(0.0f, norm_sq_sum_ / n - norm_mean * norm_mean);
+    const float norm_std = std::sqrt(norm_var);
 
-    const float z_var =
-        std::max(0.0f, z_sq_sum_ / n - z_mean * z_mean);
+    const float z_mean = z_sum_ / n;
+    const float z_var = std::max(0.0f, z_sq_sum_ / n - z_mean * z_mean);
+    const float z_std = std::sqrt(z_var);
 
-    const float horiz_std = std::sqrt(horiz_var);
-    const float z_std     = std::sqrt(z_var);
-
-    if (!(horiz_mean > cfg_.mag_norm_min) || !std::isfinite(horiz_mean)) {
+    if (!mag_world_mean.allFinite()) {
       ready_ = false;
       return false;
     }
 
-    if (!std::isfinite(z_mean) ||
-        !std::isfinite(horiz_std) ||
+    if (!(norm_mean > cfg_.mag_norm_min) ||
+        !std::isfinite(norm_mean) ||
+        !std::isfinite(norm_std) ||
         !std::isfinite(z_std))
     {
       ready_ = false;
       return false;
     }
 
-    const float horiz_rel_std = horiz_std / std::max(horiz_mean, cfg_.mag_norm_min);
-    const float z_scale = std::max(std::fabs(z_mean), horiz_mean);
+    const float horiz = std::sqrt(
+        mag_world_mean.x() * mag_world_mean.x() +
+        mag_world_mean.y() * mag_world_mean.y());
+
+    if (!(horiz > cfg_.mag_norm_min) || !std::isfinite(horiz)) {
+      ready_ = false;
+      return false;
+    }
+
+    // Do not accept a nearly vertical learned field; yaw would be weak.
+    if (horiz < cfg_.min_horiz_fraction * norm_mean) {
+      ready_ = false;
+      return false;
+    }
+
+    const float norm_rel_std = norm_std / std::max(norm_mean, cfg_.mag_norm_min);
+    if (norm_rel_std > cfg_.max_norm_rel_std) {
+      ready_ = false;
+      return false;
+    }
+
+    const float z_scale = std::max(std::fabs(z_mean), horiz);
     const float z_rel_std = z_std / std::max(z_scale, cfg_.mag_norm_min);
-
-    if (horiz_rel_std > cfg_.max_horiz_rel_std) {
+    if (z_rel_std > cfg_.max_vert_rel_std) {
       ready_ = false;
       return false;
     }
 
-    if (z_rel_std > cfg_.max_z_rel_std) {
-      ready_ = false;
-      return false;
-    }
-
-    // Define learned world frame so that +X is magnetic north and +Z is down.
-    // We keep measured dip, but yaw is removed by forcing Y=0.
-    //
-    // This remains compatible with:
-    //   impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
-    mag_world_ref_ = Eigen::Vector3f(horiz_mean, 0.0f, z_mean);
+    // Original behavior:
+    // Define learned magnetic-world frame so +X is magnetic north and +Z is down.
+    // Keep measured dip, but remove unknown yaw by forcing Y=0.
+    mag_world_ref_ = Eigen::Vector3f(horiz, 0.0f, mag_world_mean.z());
 
     ready_ = mag_world_ref_.allFinite() &&
              (mag_world_ref_.norm() > cfg_.mag_norm_min);
@@ -176,24 +167,15 @@ public:
     return mag_world_ref.allFinite();
   }
 
-  float horizontalMean() const {
-    if (accepted_count_ <= 0) return NAN;
-    return horiz_sum_ / static_cast<float>(accepted_count_);
-  }
-
-  float verticalMean() const {
-    if (accepted_count_ <= 0) return NAN;
-    return z_sum_ / static_cast<float>(accepted_count_);
-  }
-
 private:
   Config cfg_;
 
-  // Yaw-invariant horizontal magnitude statistics.
-  float horiz_sum_ = 0.0f;
-  float horiz_sq_sum_ = 0.0f;
+  // Average tilt-compensated world-frame magnetic vectors.
+  Eigen::Vector3f mag_world_sum_ = Eigen::Vector3f::Zero();
+  Eigen::Vector3f mag_world_sq_sum_ = Eigen::Vector3f::Zero();
 
-  // Vertical magnetic component statistics.
+  float norm_sum_ = 0.0f;
+  float norm_sq_sum_ = 0.0f;
   float z_sum_ = 0.0f;
   float z_sq_sum_ = 0.0f;
 
