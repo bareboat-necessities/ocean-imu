@@ -1447,7 +1447,10 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     qref.normalize();
 
     xext.template head<3>().setZero();
-    Pext.template block<3,3>(0,0) = Matrix3::Identity() * T(5e-4);
+
+    // Accel-only initialization observes gravity direction only.
+    // It constrains tilt but leaves yaw around world-down unobservable.
+    set_accel_only_attitude_covariance_();
 
     if constexpr (with_gyro_bias) {
         Pext.template block<3,3>(0,3).setZero();
