@@ -1036,6 +1036,23 @@ public:
                         mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
                     {
                         impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+
+                        // Remove the startup yaw gauge error immediately when the
+                        // learned magnetic-north reference becomes available.  This
+                        // keeps later mag updates small and avoids carrying a nearly
+                        // constant yaw offset through the simulation RMS window.
+                        {
+                            Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
+                            q_bw.normalize();
+                            const Eigen::Vector3f mag_world = q_bw * mag_body_ned;
+                            const float yaw_err = std::atan2(mag_world.y(), mag_world.x());
+                            if (std::isfinite(yaw_err)) {
+                                const Eigen::Quaternionf q_corr(
+                                    Eigen::AngleAxisf(-yaw_err, Eigen::Vector3f::UnitZ()));
+                                impl_.mekf().set_quaternion_boat((q_corr * q_bw).normalized());
+                            }
+                        }
+
                         mag_ref_set_ = true;
                     }
                 }
