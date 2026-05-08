@@ -774,7 +774,7 @@ private:
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
     float mag_delay_sec_          = MAG_DELAY_SEC;
 
-    float R_S_xy_factor_ = 0.28f;
+    float R_S_xy_factor_ = 0.31f;
     float S_factor_      = 1.87f;
 
     TrackingPolicy                  tracker_policy_{};
@@ -834,10 +834,10 @@ public:
         float bootstrap_tilt_obs_acc_tau_sec  = 2.15f; // accel correction time constant
         float bootstrap_gravity_slow_tau_sec  = 6.0f; // slow gravity reference LPF
         float bootstrap_gravity_align_max_sin = 0.070f; // sin(deg)
-        float bootstrap_gravity_hold_sec      = 2.0f;
+        float bootstrap_gravity_hold_sec      = 2.5f;
         float bootstrap_gravity_min_sec       = 6.87f;
         float bootstrap_gravity_timeout_sec   = 15.0f;
-        float bootstrap_gravity_norm_frac     = 0.25f; // downweight accel when |a| departs from g
+        float bootstrap_gravity_norm_frac     = 0.22f; // downweight accel when |a| departs from g
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
