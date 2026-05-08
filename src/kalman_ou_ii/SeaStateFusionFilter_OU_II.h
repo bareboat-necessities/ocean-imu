@@ -817,7 +817,7 @@ public:
         float mag_tilt_fallback_sec       = 30.0f;
         float mag_extreme_gyro_dps        = 45.0f; // veto only truly violent motion
         float mag_init_min_mag_norm       = 1e-3f;
-        int   mag_min_samples             = 300;
+        int   mag_min_samples             = 295;
 
         // Bootstrap tilt observer for dynamic motion in waves.
         float bootstrap_tilt_obs_acc_tau_sec  = 2.50f; // accel correction time constant
