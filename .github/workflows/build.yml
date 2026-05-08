@@ -160,11 +160,11 @@ jobs:
 
           python3 -u tools/ou_tuning_sweep.py \
             --family ${{ matrix.family }} \
-            --mode gravity \
-            --samples 52 \
+            --mode full \
+            --samples 48 \
             --seed 37 \
-            --tier all \
-            --top-k 8 \
+            --tier quick \
+            --top-k 5 \
             --tune-mag \
             --out-csv reports/results/ou_tuning_${{ matrix.report_name }}.csv \
             2>&1 | tee reports/results/ou_tuning_${{ matrix.report_name }}.log
