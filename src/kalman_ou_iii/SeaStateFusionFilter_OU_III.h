@@ -1049,9 +1049,7 @@ public:
                         impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
 
                         // Remove the startup yaw gauge error immediately when the
-                        // learned magnetic-north reference becomes available.  This
-                        // keeps later mag updates small and avoids carrying a nearly
-                        // constant yaw offset through the simulation RMS window.
+                        // learned magnetic-north reference becomes available.
                         {
                             Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
                             q_bw.normalize();
