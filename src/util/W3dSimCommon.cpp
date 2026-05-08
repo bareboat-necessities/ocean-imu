@@ -39,7 +39,8 @@ Vector3f apply_imu_noise(const Vector3f& truth, ImuNoiseModel& m, float dt)
         m.bias_rw += Vector3f(s * m.n01(m.rng), s * m.n01(m.rng), s * m.n01(m.rng));
     }
     Vector3f white(m.w(m.rng), m.w(m.rng), m.w(m.rng));
-    return truth + (m.bias0 + m.bias_rw) + white;
+    //return truth + (m.bias0 + m.bias_rw) + white;
+    return truth + white;
 }
 
 MagNoiseModel make_mag_noise_model(float sigma_white_uT,
