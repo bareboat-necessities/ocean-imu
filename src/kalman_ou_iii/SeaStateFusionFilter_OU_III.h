@@ -834,7 +834,7 @@ public:
         float bootstrap_tilt_obs_acc_tau_sec  = 2.15f; // accel correction time constant
         float bootstrap_gravity_slow_tau_sec  = 6.0f; // slow gravity reference LPF
         float bootstrap_gravity_align_max_sin = 0.070f; // sin(deg)
-        float bootstrap_gravity_hold_sec      = 2.5f;
+        float bootstrap_gravity_hold_sec      = 2.0f;
         float bootstrap_gravity_min_sec       = 6.87f;
         float bootstrap_gravity_timeout_sec   = 15.0f;
         float bootstrap_gravity_norm_frac     = 0.22f; // downweight accel when |a| departs from g
