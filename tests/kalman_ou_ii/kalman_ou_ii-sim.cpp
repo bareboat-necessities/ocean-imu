@@ -241,30 +241,22 @@ public:
         s.vel_est_zu  = ned_to_zu(filter.mekf().get_velocity());
         s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_accel());
 
-        // Filter attitude is BODY->WORLD in NED.
-        // Before mag lock this is just the filter's current world frame.
-        // After mag lock it is BODY->WORLD in MAGNETIC-NORTH world.
-        Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
+// Filter attitude is BODY->WORLD in NED.
+//
+// In IMU-only mode, after mag lock this is BODY->WORLD in the learned
+// magnetic-NED frame, not true-north NED.
+//
+// Do not apply WMM/declination correction here. A real IMU does not know true
+// north unless an external declination/location model is explicitly supplied.
+const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
 
-        // Convert magnetic-world attitude into true/world attitude only after
-        // magnetic north has actually been learned/locked.
-        if (with_mag_ && fusion_.hasMagNorthLock()) {
-            // East-positive declination:
-            // heading_true = heading_mag + declination
-            // Therefore:
-            //   C_bw_true = C_true<-mag * C_bw_mag
-            const Quaternionf q_mag_to_true_ned =
-                quat_from_euler(0.0f, 0.0f, MagSim_WMM::default_declination_deg);
-            q_bw_ned = (q_mag_to_true_ned * q_bw_ned).normalized();
-        }
+float roll_deg  = 0.0f;
+float pitch_deg = 0.0f;
+float yaw_deg   = 0.0f;
+quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
 
-        float roll_deg  = 0.0f;
-        float pitch_deg = 0.0f;
-        float yaw_deg   = 0.0f;
-        quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
-
-        s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
-
+s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
+       
         s.acc_bias_est_ned    = filter.mekf().get_acc_bias();
         s.gyro_bias_est_ned   = filter.mekf().gyroscope_bias();
         s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf());
