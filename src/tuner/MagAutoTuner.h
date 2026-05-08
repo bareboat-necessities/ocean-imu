@@ -13,21 +13,41 @@
   #include <ArduinoEigenDense.h>
 #endif
 
-// Common startup helper for estimating world magnetic reference from
-// stable body-frame accel + gyro + mag measurements.
+// Common startup helper for estimating the magnetic reference for IMU-only mode.
+//
+// Important convention:
+//
+//   The filter does NOT know true north.
+//   The filter learns a magnetic-NED frame.
+//
+//   +X = learned magnetic north
+//   +Y = magnetic east
+//   +Z = down
+//
+// With only gyro + accel + mag, absolute true yaw is not observable unless an
+// external declination / heading reference is supplied. Therefore this tuner
+// intentionally fixes the yaw gauge by forcing the learned world magnetic
+// reference to lie in the X-Z plane:
+//
+//   B_world = [horizontal_magnitude, 0, vertical_component]
+//
+// Do not replace this with the raw 3D averaged vector unless the filter is also
+// given an external true-world yaw reference.
 class MagAutoTuner {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   struct Config {
+    // Minimum accepted magnetometer norm.
     float mag_norm_min = 1e-3f;
-    int   min_samples = 40;
 
-    // Extra strictness, but deliberately loose enough not to block high-sea runs.
-    // These are evaluated on tilt-compensated mag_world samples.
-    float max_norm_rel_std  = 0.12f;
-    float max_vert_rel_std  = 0.16f;
-    float min_horiz_fraction = 0.15f;
+    // Number of accepted tilt-compensated samples before declaring ready.
+    int min_samples = 40;
+
+    // Optional sanity checks. Defaults are permissive enough to preserve current
+    // behavior while rejecting clearly invalid samples.
+    float max_sample_norm_ratio_from_mean = 0.35f; // used only after mean exists
+    float min_horizontal_fraction = 0.05f;         // horiz / norm of learned mean
   };
 
   MagAutoTuner() : cfg_(Config{}) { reset(); }
@@ -40,13 +60,7 @@ public:
 
   void reset() {
     mag_world_sum_.setZero();
-    mag_world_sq_sum_.setZero();
-
-    norm_sum_ = 0.0f;
-    norm_sq_sum_ = 0.0f;
-    z_sum_ = 0.0f;
-    z_sq_sum_ = 0.0f;
-
+    mag_world_norm_sum_ = 0.0f;
     accepted_count_ = 0;
     ready_ = false;
     mag_world_ref_.setZero();
@@ -58,6 +72,7 @@ public:
                              const Eigen::Vector3f& mag_body_ned)
   {
     if (ready_) return true;
+
     if (!mag_body_ned.allFinite()) return false;
     if (!q_tilt_bw_in.coeffs().allFinite()) return false;
 
@@ -67,54 +82,57 @@ public:
     }
 
     Eigen::Quaternionf q_tilt_bw = q_tilt_bw_in;
+    const float qn = q_tilt_bw.norm();
+    if (!(qn > 1e-6f) || !std::isfinite(qn)) {
+      return false;
+    }
     q_tilt_bw.normalize();
 
-    // Rotate each accepted mag sample into world using CURRENT filter tilt only.
+    // Rotate sample into the current tilt-leveled world frame.
+    //
+    // q_tilt_bw is BODY->WORLD with yaw removed / gauge-free.
+    // This removes roll/pitch from the mag sample but leaves yaw gauge arbitrary.
     const Eigen::Vector3f mag_world_i = q_tilt_bw * mag_body_ned;
     if (!mag_world_i.allFinite()) return false;
 
-    const float norm_i = mag_world_i.norm();
-    if (!(norm_i > cfg_.mag_norm_min) || !std::isfinite(norm_i)) {
+    const float mag_world_i_n = mag_world_i.norm();
+    if (!(mag_world_i_n > cfg_.mag_norm_min) || !std::isfinite(mag_world_i_n)) {
       return false;
+    }
+
+    // Once we have a running mean, reject samples whose field magnitude is wildly
+    // inconsistent. This catches bad spikes without trying to infer yaw.
+    if (accepted_count_ > 0 && mag_world_norm_sum_ > 0.0f) {
+      const float mean_n = mag_world_norm_sum_ / static_cast<float>(accepted_count_);
+      if (mean_n > cfg_.mag_norm_min && std::isfinite(mean_n)) {
+        const float rel = std::fabs(mag_world_i_n - mean_n) / mean_n;
+        if (std::isfinite(cfg_.max_sample_norm_ratio_from_mean) &&
+            cfg_.max_sample_norm_ratio_from_mean > 0.0f &&
+            rel > cfg_.max_sample_norm_ratio_from_mean)
+        {
+          return false;
+        }
+      }
     }
 
     mag_world_sum_ += mag_world_i;
-    mag_world_sq_sum_ += mag_world_i.cwiseProduct(mag_world_i);
-
-    norm_sum_ += norm_i;
-    norm_sq_sum_ += norm_i * norm_i;
-
-    z_sum_ += mag_world_i.z();
-    z_sq_sum_ += mag_world_i.z() * mag_world_i.z();
-
+    mag_world_norm_sum_ += mag_world_i_n;
     ++accepted_count_;
 
-    if (accepted_count_ < cfg_.min_samples) {
+    if (accepted_count_ < std::max(1, cfg_.min_samples)) {
       return false;
     }
 
-    const float n = static_cast<float>(accepted_count_);
-
-    const Eigen::Vector3f mag_world_mean = mag_world_sum_ / n;
-
-    const float norm_mean = norm_sum_ / n;
-    const float norm_var = std::max(0.0f, norm_sq_sum_ / n - norm_mean * norm_mean);
-    const float norm_std = std::sqrt(norm_var);
-
-    const float z_mean = z_sum_ / n;
-    const float z_var = std::max(0.0f, z_sq_sum_ / n - z_mean * z_mean);
-    const float z_std = std::sqrt(z_var);
+    const Eigen::Vector3f mag_world_mean =
+        mag_world_sum_ / static_cast<float>(accepted_count_);
 
     if (!mag_world_mean.allFinite()) {
       ready_ = false;
       return false;
     }
 
-    if (!(norm_mean > cfg_.mag_norm_min) ||
-        !std::isfinite(norm_mean) ||
-        !std::isfinite(norm_std) ||
-        !std::isfinite(z_std))
-    {
+    const float mean_norm = mag_world_mean.norm();
+    if (!(mean_norm > cfg_.mag_norm_min) || !std::isfinite(mean_norm)) {
       ready_ = false;
       return false;
     }
@@ -128,32 +146,26 @@ public:
       return false;
     }
 
-    // Do not accept a nearly vertical learned field; yaw would be weak.
-    if (horiz < cfg_.min_horiz_fraction * norm_mean) {
+    const float horiz_frac = horiz / mean_norm;
+    if (std::isfinite(cfg_.min_horizontal_fraction) &&
+        cfg_.min_horizontal_fraction > 0.0f &&
+        horiz_frac < cfg_.min_horizontal_fraction)
+    {
       ready_ = false;
       return false;
     }
 
-    const float norm_rel_std = norm_std / std::max(norm_mean, cfg_.mag_norm_min);
-    if (norm_rel_std > cfg_.max_norm_rel_std) {
-      ready_ = false;
-      return false;
-    }
-
-    const float z_scale = std::max(std::fabs(z_mean), horiz);
-    const float z_rel_std = z_std / std::max(z_scale, cfg_.mag_norm_min);
-    if (z_rel_std > cfg_.max_vert_rel_std) {
-      ready_ = false;
-      return false;
-    }
-
-    // Original behavior:
-    // Define learned magnetic-world frame so +X is magnetic north and +Z is down.
-    // Keep measured dip, but remove unknown yaw by forcing Y=0.
+    // IMU-only yaw gauge fix:
+    //
+    // We keep the measured dip/vertical component, but remove the arbitrary
+    // startup yaw angle by defining learned magnetic north as +X.
+    //
+    // This is the correct observable reference for an IMU-only magnetic frame.
     mag_world_ref_ = Eigen::Vector3f(horiz, 0.0f, mag_world_mean.z());
 
-    ready_ = mag_world_ref_.allFinite() &&
-             (mag_world_ref_.norm() > cfg_.mag_norm_min);
+    ready_ =
+        mag_world_ref_.allFinite() &&
+        (mag_world_ref_.norm() > cfg_.mag_norm_min);
 
     return ready_;
   }
@@ -170,16 +182,13 @@ public:
 private:
   Config cfg_;
 
-  // Average tilt-compensated world-frame magnetic vectors.
+  // Sum of tilt-compensated magnetic vectors in the yaw-gauge-free world frame.
   Eigen::Vector3f mag_world_sum_ = Eigen::Vector3f::Zero();
-  Eigen::Vector3f mag_world_sq_sum_ = Eigen::Vector3f::Zero();
-
-  float norm_sum_ = 0.0f;
-  float norm_sq_sum_ = 0.0f;
-  float z_sum_ = 0.0f;
-  float z_sq_sum_ = 0.0f;
+  float mag_world_norm_sum_ = 0.0f;
 
   int accepted_count_ = 0;
   bool ready_ = false;
+
+  // Learned magnetic-world reference used by the MEKF mag measurement model.
   Eigen::Vector3f mag_world_ref_ = Eigen::Vector3f::Zero();
 };
