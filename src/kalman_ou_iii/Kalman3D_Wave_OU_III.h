@@ -824,6 +824,37 @@ class Kalman3D_Wave_OU_III {
     Matrix3 R_wb() const { return qref.toRotationMatrix(); }               // world→body'
     Matrix3 R_bw() const { return qref.toRotationMatrix().transpose(); }   // body'→world
 
+    void set_accel_only_attitude_covariance_(
+        T tilt_sigma_rad = T(0.035),   // about 2 deg
+        T yaw_sigma_rad  = T(1.5708))  // about 90 deg, accel cannot observe yaw
+    {
+        const Vector3 world_down = Vector3::UnitZ();
+
+        // qref is WORLD->BODY', so this is the world-down axis expressed in BODY'.
+        Vector3 u_down_body = R_wb() * world_down;
+
+        const T n = u_down_body.norm();
+        if (!(n > T(1e-8)) || !u_down_body.allFinite()) {
+            Pext.template block<3,3>(0,0) =
+                Matrix3::Identity() * (yaw_sigma_rad * yaw_sigma_rad);
+            return;
+        }
+
+        u_down_body /= n;
+
+        const Matrix3 I = Matrix3::Identity();
+        const Matrix3 P_yaw_axis  = u_down_body * u_down_body.transpose();
+        const Matrix3 P_tilt_axes = I - P_yaw_axis;
+
+        const T tilt_var = tilt_sigma_rad * tilt_sigma_rad;
+        const T yaw_var  = yaw_sigma_rad  * yaw_sigma_rad;
+
+        Matrix3 P_att = tilt_var * P_tilt_axes + yaw_var * P_yaw_axis;
+        P_att = T(0.5) * (P_att + P_att.transpose());
+
+        Pext.template block<3,3>(0,0) = P_att;
+    }
+
     // Helpers
     Matrix3 skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const;
 	Vector3 accelerometer_measurement_func(T tempC) const;
