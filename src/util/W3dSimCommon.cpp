@@ -265,14 +265,27 @@ reference_euler_from_csv(rec.imu, q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
 //
 // i.e. +X is magnetic north in NED.
 //
-// Therefore compare magnetic yaw to magnetic yaw:
+// y_ref_out is produced by quat_wb_zu_to_euler_nautical() from a WORLD->BODY
+// Z-up quaternion. With the current FrameConversions convention, flat yaw is
+// reported with the inverse sign:
 //
-//   heading_true = heading_mag + declination
-//   heading_mag  = heading_true - declination
+//   y_ref_out ≈ -heading_true
+//
+// The filter snapshot uses the same reported-yaw convention. After mag lock,
+// the filter yaw is relative to magnetic north:
+//
+//   heading_mag = heading_true - declination
+//
+// Therefore in this reported-yaw convention:
+//
+//   reported_mag_yaw = -heading_mag
+//                    = -(heading_true - declination)
+//                    = -heading_true + declination
+//                    = reported_true_yaw + declination
 //
 // East-positive declination is used by MagSim_WMM.
 if (options_.with_mag) {
-    y_ref_out = wrapDeg(y_ref_out - MagSim_WMM::default_declination_deg);
+    y_ref_out = wrapDeg(y_ref_out + MagSim_WMM::default_declination_deg);
 }   
       
         fusion_adapter_.update(options_.dt, gyr_meas_ned, acc_meas_ned, options_.temperature_c);
