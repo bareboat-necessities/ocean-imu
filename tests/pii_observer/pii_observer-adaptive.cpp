@@ -20,6 +20,7 @@
 #include "ahrs/Mahony_AHRS.h"
 
 using Eigen::Vector3f;
+using Eigen::Quaternionf;
 
 bool add_noise = true;
 
@@ -95,65 +96,42 @@ public:
         s.vel_est_zu  = Vector3f(0.0f, 0.0f, filter_.velocity());
         s.acc_est_zu  = Vector3f(0.0f, 0.0f, filter_.accelFiltered());
 
-const auto& q_wb = hs.q_world_to_body;
-Quaternionf q_wb_zu(float(q_wb.w), float(q_wb.x), float(q_wb.y), float(q_wb.z));
+        const auto& q_wb = hs.q_world_to_body;
+        Quaternionf q_wb_zu(
+            float(q_wb.w),
+            float(q_wb.x),
+            float(q_wb.y),
+            float(q_wb.z)
+        );
 
-float roll_sim_deg  = 0.0f;
-float pitch_sim_deg = 0.0f;
-float yaw_sim_deg   = 0.0f;
+        float roll_sim_deg  = 0.0f;
+        float pitch_sim_deg = 0.0f;
+        float yaw_sim_deg   = 0.0f;
 
-quat_wb_zu_to_euler_nautical(
-    q_wb_zu,
-    roll_sim_deg,
-    pitch_sim_deg,
-    yaw_sim_deg
-);
+        quat_wb_zu_to_euler_nautical(
+            q_wb_zu,
+            roll_sim_deg,
+            pitch_sim_deg,
+            yaw_sim_deg
+        );
 
-if (!with_mag_) {
-    yaw_sim_deg = 0.0f;
-}
+        if (!with_mag_) {
+            yaw_sim_deg = 0.0f;
+        }
 
-const auto& q_wb = hs.q_world_to_body;
-Quaternionf q_wb_zu(float(q_wb.w), float(q_wb.x), float(q_wb.y), float(q_wb.z));
+        // W3dSimCommon now converts yaw_ref from true-world yaw to
+        // magnetic-frame reported yaw:
+        //
+        //   y_ref_mag_reported = y_ref_true_reported + declination
+        //
+        // Therefore this adapter reports raw Mahony magnetic-frame yaw.
+        // Do not apply declination here.
+        s.euler_nautical_deg = Vector3f(
+            roll_sim_deg,
+            pitch_sim_deg,
+            wrapDeg(yaw_sim_deg)
+        );
 
-float roll_sim_deg  = 0.0f;
-float pitch_sim_deg = 0.0f;
-float yaw_sim_deg   = 0.0f;
-
-quat_wb_zu_to_euler_nautical(
-    q_wb_zu,
-    roll_sim_deg,
-    pitch_sim_deg,
-    yaw_sim_deg
-);
-
-if (!with_mag_) {
-    yaw_sim_deg = 0.0f;
-}
-
-// W3dSimCommon converts yaw_ref from true-world yaw to magnetic-frame yaw:
-//
-//   y_ref_mag_reported = y_ref_true_reported + declination
-//
-// Therefore this adapter must report the raw Mahony magnetic-frame yaw.
-// Do NOT apply declination here.
-s.euler_nautical_deg = Vector3f(
-    roll_sim_deg,
-    pitch_sim_deg,
-    wrapDeg(yaw_sim_deg)
-);
-//
-// W3dSimCommon now converts yaw_ref from true-world yaw to magnetic-frame yaw:
-//
-//   y_ref_mag_reported = y_ref_true_reported + declination
-//
-// Therefore this adapter must report the raw Mahony magnetic-frame yaw.
-// Do NOT apply declination here.
-s.euler_nautical_deg = Vector3f(
-    roll_sim_deg,
-    pitch_sim_deg,
-    wrapDeg(yaw_sim_deg)
-);
         s.acc_bias_est_ned    = Vector3f::Zero();
         s.gyro_bias_est_ned   = Vector3f::Zero();
         s.mag_bias_est_ned_uT = Vector3f::Zero();
