@@ -118,12 +118,24 @@ public:
 
         if (!with_mag_) {
             yaw_sim_deg = 0.0f;
+        } else {
+            // W3dSimCommon compares against magnetic-frame reported yaw:
+            //
+            //   y_ref_mag_reported = y_ref_true_reported + declination
+            //
+            // With this Mahony mag convention, the decoded quaternion yaw lands on
+            // the opposite declination side:
+            //
+            //   y_mahony_reported ≈ y_ref_true_reported - declination
+            //
+            // Convert Mahony's reported yaw to the same magnetic-frame reference:
+            //
+            //   y_mahony_fixed = y_mahony_reported + 2*declination
+            yaw_sim_deg = wrapDeg(
+                yaw_sim_deg + 2.0f * MagSim_WMM::default_declination_deg
+            );
         }
 
-        // Report raw Mahony yaw. Do NOT apply declination here.
-        //
-        // If the simulator runner compares in magnetic-frame yaw, the reference
-        // conversion belongs in W3dSimCommon, not here.
         s.euler_nautical_deg = Vector3f(
             roll_sim_deg,
             pitch_sim_deg,
@@ -193,7 +205,7 @@ private:
         //
         // This Mahony mag path expects magnetic north on +X with this convention.
         // Using the accel/gyro body conversion here flips the magnetic horizontal
-        // convention and causes the large yaw error.
+        // convention and causes a large yaw error.
         return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
     }
 
