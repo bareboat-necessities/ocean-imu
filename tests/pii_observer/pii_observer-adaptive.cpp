@@ -3,6 +3,10 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <optional>
+#include <cstdlib>
+#include <cmath>
+#include <numbers>
 
 /*
     Copyright (c), 2026  Mikhail Grushinskiy
@@ -119,8 +123,8 @@ public:
             yaw_sim_deg = 0.0f;
         }
 
-        // W3dSimCommon now converts yaw_ref from true-world yaw to
-        // magnetic-frame reported yaw:
+        // W3dSimCommon converts yaw_ref from true-world yaw to magnetic-frame
+        // reported yaw:
         //
         //   y_ref_mag_reported = y_ref_true_reported + declination
         //
@@ -185,14 +189,16 @@ public:
 
 private:
     static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
-        // body NED (North, East, Down) -> body Z-up nautical (East, North, Up)
+        // body NED (North, East, Down) -> body Z-up nautical axes used by Mahony.
         const Vector3f v_zu = ned_to_zu(v_ned);
         return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
     }
 
     static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
-        // Preserve Mahony magnetic heading convention (north along +X).
-        return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
+        // Magnetometer is measured in the same physical body axes as accel/gyro.
+        // Use the exact same body-frame conversion. A separate magnetic mapping
+        // flips the horizontal frame and creates the ~2*declination yaw error.
+        return ned_to_mahony_body_(v_ned);
     }
 
     static HeaveFilter::Config make_config_(bool with_mag,
