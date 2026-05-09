@@ -63,14 +63,11 @@ public:
         (void)temperature_c;
 
         // Runner-facing convention: body NED = (North, East, Down).
-        // AdaptiveVerticalPIIMahony expects body Z-up nautical axes (ENU):
-        // (East, North, Up).
+        // AdaptiveVerticalPIIMahony expects body Z-up nautical axes.
         const Vector3f gyr_body_m = ned_to_mahony_body_(gyr_meas_ned);
         const Vector3f acc_body_m = ned_to_mahony_body_(acc_meas_ned);
 
-        // IMPORTANT:
-        // Do not consume magnetometer only on one "fresh" IMU step.
-        // Reuse the latest mag sample at every IMU step until a new one arrives.
+        // Reuse latest mag sample at every IMU step until a new one arrives.
         if (with_mag_ && have_mag_) {
             const Vector3f mag_body_m = ned_to_mahony_mag_(last_mag_body_ned_);
 
@@ -123,13 +120,10 @@ public:
             yaw_sim_deg = 0.0f;
         }
 
-        // W3dSimCommon converts yaw_ref from true-world yaw to magnetic-frame
-        // reported yaw:
+        // Report raw Mahony yaw. Do NOT apply declination here.
         //
-        //   y_ref_mag_reported = y_ref_true_reported + declination
-        //
-        // Therefore this adapter reports raw Mahony magnetic-frame yaw.
-        // Do not apply declination here.
+        // If the simulator runner compares in magnetic-frame yaw, the reference
+        // conversion belongs in W3dSimCommon, not here.
         s.euler_nautical_deg = Vector3f(
             roll_sim_deg,
             pitch_sim_deg,
@@ -195,10 +189,12 @@ private:
     }
 
     static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
-        // Magnetometer is measured in the same physical body axes as accel/gyro.
-        // Use the exact same body-frame conversion. A separate magnetic mapping
-        // flips the horizontal frame and creates the ~2*declination yaw error.
-        return ned_to_mahony_body_(v_ned);
+        // Do NOT use ned_to_mahony_body_() for magnetometer.
+        //
+        // This Mahony mag path expects magnetic north on +X with this convention.
+        // Using the accel/gyro body conversion here flips the magnetic horizontal
+        // convention and causes the large yaw error.
+        return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
     }
 
     static HeaveFilter::Config make_config_(bool with_mag,
@@ -365,6 +361,7 @@ static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult
     const float z_limit = (result.wave_type == WaveType::JONSWAP)
         ? FAIL_LIMITS.err_limit_percent_z_jonswap
         : FAIL_LIMITS.err_limit_percent_z_pmstokes;
+
     if (z_pct > z_limit) {
         std::cerr << "ERROR: Z RMS above limit (" << z_pct << "% > " << z_limit
                   << "%). Failing.\n";
@@ -450,6 +447,7 @@ int main(int argc, char* argv[])
             add_noise,
             20.0f
         );
+
         if (!result) continue;
 
         print_vertical_only_summary(*result, dt);
