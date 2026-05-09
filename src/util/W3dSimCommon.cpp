@@ -39,8 +39,7 @@ Vector3f apply_imu_noise(const Vector3f& truth, ImuNoiseModel& m, float dt)
         m.bias_rw += Vector3f(s * m.n01(m.rng), s * m.n01(m.rng), s * m.n01(m.rng));
     }
     Vector3f white(m.w(m.rng), m.w(m.rng), m.w(m.rng));
-    //return truth + (m.bias0 + m.bias_rw) + white;
-    return truth + white;
+    return truth + (m.bias0 + m.bias_rw) + white;
 }
 
 MagNoiseModel make_mag_noise_model(float sigma_white_uT,
@@ -117,7 +116,8 @@ Vector3f apply_mag_noise(const Vector3f& ideal_mag_uT_body, MagNoiseModel& m, fl
         m.bias_rw_uT += Vector3f(s * m.n01(m.rng), s * m.n01(m.rng), s * m.n01(m.rng));
     }
     Vector3f white(m.w_uT(m.rng), m.w_uT(m.rng), m.w_uT(m.rng));
-    return (m.Mis * ideal_mag_uT_body) + (m.bias0_uT + m.bias_rw_uT) + white;
+    //return (m.Mis * ideal_mag_uT_body) + (m.bias0_uT + m.bias_rw_uT) + white;
+    return ideal_mag_uT_body;
 }
 
 W3dSimulationRunner::W3dSimulationRunner(W3dSimulationOptions options,
