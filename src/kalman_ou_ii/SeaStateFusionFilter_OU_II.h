@@ -32,7 +32,6 @@
 #include "detrend/AdaptiveWaveDetrender3D.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 
-// Shared constants
 extern const float g_std;
 
 #ifndef FREQ_GUESS
@@ -73,7 +72,7 @@ constexpr float MAG_DELAY_SEC              = 7.0f;
 
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
 
-struct TuneStateOU2 {
+struct TuneState {
     float tau_applied      = 1.1f;
     float sigma_applied    = 1e-2f;
     float R_p0_std_applied = 0.1f;
@@ -106,15 +105,22 @@ public:
         startup_stage_t_ = 0.0f;
     }
 
-    StartupStage getStartupStage() const noexcept { return startup_stage_; }
-    bool isAdaptiveLive() const noexcept { return startup_stage_ == StartupStage::Live; }
+    StartupStage getStartupStage() const noexcept {
+        return startup_stage_;
+    }
+
+    bool isAdaptiveLive() const noexcept {
+        return startup_stage_ == StartupStage::Live;
+    }
 
     void initialize(const Eigen::Vector3f& sigma_a,
                     const Eigen::Vector3f& sigma_g,
                     const Eigen::Vector3f& sigma_m)
     {
         mekf_ = std::make_unique<Kalman3D_Wave_OU_II<float>>(
-            sigma_a, sigma_g, sigma_m);
+            sigma_a,
+            sigma_g,
+            sigma_m);
 
         seastate::common::finalizeInitialization(
             mekf_,
@@ -266,7 +272,7 @@ public:
         if (time_ < mag_delay_sec_) return;
 
         mekf_->measurement_update_mag_only(mag_body_ned);
-        ++mag_updates_applied_;
+        mag_updates_applied_++;
 
         if (!std::isfinite(first_mag_update_time_)) {
             first_mag_update_time_ = static_cast<float>(time_);
@@ -280,21 +286,20 @@ public:
         {
             accel_bias_locked_ = false;
 
-            if (freeze_acc_bias_until_live_ &&
-                startup_stage_ == StartupStage::Live)
+            refreshAccelBiasLearning_();
+
+            if (warmup_Racc_active_ &&
+                Racc_nominal_std_.allFinite() &&
+                Racc_nominal_std_.maxCoeff() > 0.0f)
             {
-                restoreNominalRaccIfNeeded_();
-                refreshAccelBiasLearning_();
+                mekf_->set_Racc_std(Racc_nominal_std_);
+                warmup_Racc_active_ = false;
             }
         }
     }
 
     void setWithMag(bool with_mag) {
         with_mag_ = with_mag;
-    }
-
-    void setAccelBiasLearningEnabled(bool en) {
-        accel_bias_learning_enabled_ = en;
         refreshAccelBiasLearning_();
     }
 
@@ -403,7 +408,7 @@ public:
 
         if (mekf_) {
             const bool on_now =
-                flag && (startup_stage_ == StartupStage::Live);
+                flag && startup_stage_ == StartupStage::Live;
 
             mekf_->set_linear_block_enabled(on_now);
         }
@@ -415,7 +420,6 @@ public:
 
         min_freq_hz_ = min_hz;
         max_freq_hz_ = max_hz;
-
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
     }
 
@@ -483,6 +487,11 @@ public:
         refreshAccelBiasLearning_();
     }
 
+    void setAccelBiasLearningEnabled(bool en) {
+        accel_bias_learning_enabled_ = en;
+        refreshAccelBiasLearning_();
+    }
+
     void setWarmupRaccStd(float r) {
         if (std::isfinite(r) && r > 0.0f) {
             Racc_warmup_std_ = r;
@@ -538,7 +547,7 @@ public:
     }
 
     inline float getPeriodSec() const noexcept {
-        return (freq_hz_slow_ > 1e-6f) ? 1.0f / freq_hz_slow_ : NAN;
+        return freq_hz_slow_ > 1e-6f ? 1.0f / freq_hz_slow_ : NAN;
     }
 
     inline float getAccelVariance() const noexcept {
@@ -555,19 +564,19 @@ public:
     }
 
     inline float getDisplacementScale(bool smoothed = true) const noexcept {
-        const float tau   = smoothed ? tune_.tau_applied   : tau_target_;
+        const float tau = smoothed ? tune_.tau_applied : tau_target_;
         const float sigma = smoothed ? tune_.sigma_applied : sigma_target_;
 
-        if (!std::isfinite(sigma) || !std::isfinite(tau)) {
-            return NAN;
-        }
+        if (!std::isfinite(sigma) || !std::isfinite(tau)) return NAN;
 
-        constexpr float C_HS = 2.0f * std::sqrt(2.0f) / (M_PI * M_PI);
+        constexpr float C_HS =
+            2.0f * std::sqrt(2.0f) / (M_PI * M_PI);
+
         return C_HS * sigma * tau * tau / 2.0f;
     }
 
     float getVerticalSpeedEnvelopeMps(bool smoothed = true) const noexcept {
-        const float tau   = smoothed ? tune_.tau_applied   : tau_target_;
+        const float tau = smoothed ? tune_.tau_applied : tau_target_;
         const float sigma = smoothed ? tune_.sigma_applied : sigma_target_;
 
         if (!(tau > 1e-6f) ||
@@ -622,26 +631,20 @@ private:
     void refreshAccelBiasLearning_() {
         if (!mekf_) return;
 
-        const bool allow =
-            accel_bias_learning_enabled_ &&
-            startup_stage_ == StartupStage::Live &&
+        const bool live_ok =
+            !freeze_acc_bias_until_live_ ||
+            startup_stage_ == StartupStage::Live;
+
+        const bool mag_ok =
+            !with_mag_ ||
             !accel_bias_locked_;
 
+        const bool allow =
+            accel_bias_learning_enabled_ &&
+            live_ok &&
+            mag_ok;
+
         mekf_->set_acc_bias_updates_enabled(allow);
-    }
-
-    void restoreNominalRaccIfNeeded_() {
-        if (!mekf_) return;
-
-        if (warmup_Racc_active_) {
-            if (Racc_nominal_std_.allFinite() &&
-                Racc_nominal_std_.maxCoeff() > 0.0f)
-            {
-                mekf_->set_Racc_std(Racc_nominal_std_);
-            }
-
-            warmup_Racc_active_ = false;
-        }
     }
 
     void apply_ou_tune_() {
@@ -652,7 +655,9 @@ private:
         const float sigma_floor =
             std::max(0.05f, acc_noise_floor_sigma_);
 
-        const float sZ = std::max(sigma_floor, tune_.sigma_applied);
+        const float sZ =
+            std::max(sigma_floor, tune_.sigma_applied);
+
         const float sH = sZ * P_factor_;
 
         mekf_->set_aw_stationary_std(Eigen::Vector3f(sH, sH, sZ));
@@ -662,16 +667,17 @@ private:
         if (!mekf_) return;
 
         const float p =
-            (std::isfinite(rp_scale) && rp_scale > 0.0f)
+            std::isfinite(rp_scale) && rp_scale > 0.0f
                 ? std::min(rp_scale, 1.0f)
                 : 1.0f;
 
         const float R_p0_b =
-            std::min(std::max(tune_.R_p0_std_applied,
-                              MIN_R_p0_std_),
-                     MAX_R_p0_std_);
+            std::min(
+                std::max(tune_.R_p0_std_applied, MIN_R_p0_std_),
+                MAX_R_p0_std_);
 
-        const float rp_xy = R_p0_b * p * R_p0_xy_factor_;
+        const float rp_xy =
+            R_p0_b * p * R_p0_xy_factor_;
 
         mekf_->set_Rp0_noise_std(
             Eigen::Vector3f(rp_xy, rp_xy, R_p0_b * p));
@@ -681,14 +687,14 @@ private:
         if (!mekf_) return;
 
         const float p =
-            (std::isfinite(rv_scale) && rv_scale > 0.0f)
+            std::isfinite(rv_scale) && rv_scale > 0.0f
                 ? std::min(rv_scale, 1.0f)
                 : 1.0f;
 
         const float R_v0_b =
-            std::min(std::max(tune_.R_v0_std_applied,
-                              MIN_R_v0_std_),
-                     MAX_R_v0_std_);
+            std::min(
+                std::max(tune_.R_v0_std_applied, MIN_R_v0_std_),
+                MAX_R_v0_std_);
 
         mekf_->set_Rv0_noise_std(
             Eigen::Vector3f::Constant(R_v0_b * p));
@@ -703,7 +709,7 @@ private:
         switch (startup_stage_) {
             case StartupStage::Cold:
                 if (startup_stage_t_ >= online_tune_warmup_sec_) {
-                    startup_stage_   = StartupStage::TunerWarm;
+                    startup_stage_ = StartupStage::TunerWarm;
                     startup_stage_t_ = 0.0f;
                 }
                 return;
@@ -770,14 +776,15 @@ private:
             sigma_target_ =
                 std::min(sigma_wave * sigma_coeff_, max_sigma_a_);
         } else {
-            tau_target_   = tau_raw;
+            tau_target_ = tau_raw;
             sigma_target_ = sigma_wave;
         }
 
         if (!tuner_.isVarReady()) {
             sigma_target_ =
-                std::max(sigma_target_,
-                         std::max(0.05f, acc_noise_floor_sigma_));
+                std::max(
+                    sigma_target_,
+                    std::max(0.05f, acc_noise_floor_sigma_));
         }
 
         const float R_p0_raw =
@@ -788,22 +795,25 @@ private:
 
         if (enable_clamp_) {
             R_p0_std_target_ =
-                std::min(std::max(R_p0_raw, MIN_R_p0_std_),
-                         MAX_R_p0_std_);
+                std::min(
+                    std::max(R_p0_raw, MIN_R_p0_std_),
+                    MAX_R_p0_std_);
 
             R_v0_std_target_ =
-                std::min(std::max(R_v0_raw, MIN_R_v0_std_),
-                         MAX_R_v0_std_);
+                std::min(
+                    std::max(R_v0_raw, MIN_R_v0_std_),
+                    MAX_R_v0_std_);
         } else {
             R_p0_std_target_ = R_p0_raw;
             R_v0_std_target_ = R_v0_raw;
         }
 
-        adapt_mekf(dt,
-                   tau_target_,
-                   sigma_target_,
-                   R_p0_std_target_,
-                   R_v0_std_target_);
+        adapt_mekf(
+            dt,
+            tau_target_,
+            sigma_target_,
+            R_p0_std_target_,
+            R_v0_std_target_);
     }
 
     void adapt_mekf(float dt,
@@ -872,9 +882,9 @@ private:
         freq_slow_smoother_ =
             FirstOrderIIRSmoother<float>(FREQ_SMOOTHER_DT, 10.0f);
 
-        freq_hz_      = FREQ_GUESS;
+        freq_hz_ = FREQ_GUESS;
         freq_hz_slow_ = FREQ_GUESS;
-        f_raw         = FREQ_GUESS;
+        f_raw = FREQ_GUESS;
 
         dir_filter_ =
             KalmanWaveDirection(
@@ -886,43 +896,47 @@ private:
     }
 
     void enterCold_() {
-        startup_stage_   = StartupStage::Cold;
+        startup_stage_ = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
 
         if (!mekf_) return;
 
         mekf_->set_linear_block_enabled(false);
 
-        accel_bias_locked_ =
-            with_mag_;
-
+        accel_bias_locked_ = with_mag_;
         mag_updates_applied_ = 0;
         first_mag_update_time_ = NAN;
 
+        refreshAccelBiasLearning_();
+
         if (freeze_acc_bias_until_live_) {
-            mekf_->set_acc_bias_updates_enabled(false);
             mekf_->set_Racc_std(
                 Eigen::Vector3f::Constant(Racc_warmup_std_));
 
             warmup_Racc_active_ = true;
-        } else {
-            refreshAccelBiasLearning_();
         }
     }
 
     void enterLive_() {
-        startup_stage_   = StartupStage::Live;
+        startup_stage_ = StartupStage::Live;
         startup_stage_t_ = 0.0f;
 
         if (!mekf_) return;
 
         mekf_->set_linear_block_enabled(enable_linear_block_);
 
-        if (freeze_acc_bias_until_live_) {
-            restoreNominalRaccIfNeeded_();
-        }
-
         refreshAccelBiasLearning_();
+
+        if (freeze_acc_bias_until_live_) {
+            if (warmup_Racc_active_ &&
+                Racc_nominal_std_.allFinite() &&
+                Racc_nominal_std_.maxCoeff() > 0.0f)
+            {
+                mekf_->set_Racc_std(Racc_nominal_std_);
+            }
+
+            warmup_Racc_active_ = false;
+        }
 
         apply_ou_tune_();
 
@@ -937,8 +951,7 @@ private:
     float startup_stage_t_ = 0.0f;
 
     bool freeze_acc_bias_until_live_ = true;
-    bool accel_bias_learning_enabled_ = false;
-
+    bool accel_bias_learning_enabled_ = true;
     float Racc_warmup_std_ = 0.6f;
     bool warmup_Racc_active_ = false;
     Eigen::Vector3f Racc_nominal_std_ =
@@ -972,12 +985,10 @@ private:
     float min_tau_s_ = MIN_TAU_S;
     float max_tau_s_ = MAX_TAU_S;
     float max_sigma_a_ = MAX_SIGMA_A;
-
     float MIN_R_p0_std_ = MIN_R_p0_std;
     float MAX_R_p0_std_ = MAX_R_p0_std;
     float MIN_R_v0_std_ = MIN_R_v0_std;
     float MAX_R_v0_std_ = MAX_R_v0_std;
-
     float adapt_tau_sec_ = ADAPT_TAU_SEC;
     float adapt_every_secs_ = ADAPT_EVERY_SECS;
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
@@ -987,7 +998,6 @@ private:
     float P_factor_ = 1.5f;
 
     TrackingPolicy tracker_policy_{};
-
     FirstOrderIIRSmoother<float> freq_fast_smoother_{
         FREQ_SMOOTHER_DT,
         3.5f
@@ -999,7 +1009,7 @@ private:
     };
 
     SeaStateAutoTuner tuner_;
-    TuneStateOU2 tune_;
+    TuneState tune_;
 
     float tau_target_ = NAN;
     float sigma_target_ = NAN;
@@ -1038,8 +1048,7 @@ public:
         float online_tune_warmup_sec = 10.0f;
 
         bool freeze_acc_bias_until_live = true;
-        bool enable_acc_bias_learning = false;
-
+        bool enable_acc_bias_learning = true;
         float Racc_warmup_std = 1.2f;
 
         Eigen::Vector3f sigma_a =
@@ -1051,7 +1060,6 @@ public:
         Eigen::Vector3f sigma_m =
             Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        // Optional gate. Off by default because accel-LPF gravity can be wrong in waves.
         bool mag_require_gravity_gate = false;
         float mag_gravity_align_max_sin = 0.070f;
         float mag_gravity_align_hold_sec = 2.0f;
@@ -1060,23 +1068,19 @@ public:
         float mag_extreme_gyro_dps = 45.0f;
         float mag_init_min_mag_norm = 1e-3f;
 
-        // Match OU3 default mag acquisition.
-        int mag_min_samples = 1500;
-        float mag_min_window_sec = 10.0f;
+        int mag_min_samples = 295;
+        float mag_min_window_sec = 0.0f;
         float mag_max_window_sec = 0.0f;
         float mag_sample_dt_sec = 1.0f / 200.0f;
 
-        // Off by default in waves. Accel/gyro weighting can phase-select samples.
         bool mag_enable_quality_weighting = false;
         float mag_min_effective_weight = 0.0f;
         float mag_acc_norm_rel_soft = 0.22f;
         float mag_gyro_soft_dps = 45.0f;
 
-        // Dedicated yaw-free gravity direction observer for mag leveling.
         float mag_tilt_obs_acc_tau_sec = 2.5f;
         float mag_tilt_obs_norm_frac = 0.22f;
 
-        // Existing startup tilt observer for initializing the main filter.
         float bootstrap_tilt_obs_acc_tau_sec = 2.50f;
         float bootstrap_gravity_slow_tau_sec = 8.0f;
         float bootstrap_gravity_align_max_sin = 0.070f;
@@ -1120,8 +1124,10 @@ public:
             cfg_.mag_enable_quality_weighting;
         mag_cfg.min_effective_weight =
             cfg_.mag_min_effective_weight;
-        mag_cfg.acc_norm_rel_soft = cfg_.mag_acc_norm_rel_soft;
-        mag_cfg.gyro_soft_dps = cfg_.mag_gyro_soft_dps;
+        mag_cfg.acc_norm_rel_soft =
+            cfg_.mag_acc_norm_rel_soft;
+        mag_cfg.gyro_soft_dps =
+            cfg_.mag_gyro_soft_dps;
 
         mag_auto_tuner_.setConfig(mag_cfg);
 
@@ -1132,13 +1138,20 @@ public:
         have_last_imu_ = false;
 
         impl_.setWithMag(cfg_.with_mag);
-        impl_.setFreezeAccBiasUntilLive(cfg_.freeze_acc_bias_until_live);
-        impl_.setAccelBiasLearningEnabled(cfg_.enable_acc_bias_learning);
+        impl_.setFreezeAccBiasUntilLive(
+            cfg_.freeze_acc_bias_until_live);
+        impl_.setAccelBiasLearningEnabled(
+            cfg_.enable_acc_bias_learning);
         impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
         impl_.setMagDelaySec(0.0f);
-        impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
+        impl_.setOnlineTuneWarmupSec(
+            cfg_.online_tune_warmup_sec);
 
-        impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
+        impl_.initialize(
+            cfg_.sigma_a,
+            cfg_.sigma_g,
+            cfg_.sigma_m);
+
         last_impl_startup_stage_ = impl_.getStartupStage();
 
         impl_.setNominalRaccStd(cfg_.sigma_a);
@@ -1211,7 +1224,11 @@ public:
         have_last_imu_ = true;
 
         if (stage_ != Stage::Uninitialized) {
-            impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+            impl_.updateTime(
+                dt,
+                gyro_body_ned,
+                acc_body_ned,
+                tempC);
 
             const Eigen::Vector3f acc_gate_lp =
                 gravity_gate_acc_lpf_.step(
@@ -1229,11 +1246,11 @@ public:
 
             const bool extreme_motion =
                 !std::isfinite(gyro_dps) ||
-                (gyro_dps > cfg_.mag_extreme_gyro_dps);
+                gyro_dps > cfg_.mag_extreme_gyro_dps;
 
             const bool gravity_good_now =
                 std::isfinite(align_sin) &&
-                (align_sin <= cfg_.mag_gravity_align_max_sin) &&
+                align_sin <= cfg_.mag_gravity_align_max_sin &&
                 !extreme_motion;
 
             if (gravity_good_now) {
@@ -1244,7 +1261,9 @@ public:
                 }
             } else {
                 mag_gravity_good_sec_ =
-                    std::max(0.0f, mag_gravity_good_sec_ - 2.0f * dt);
+                    std::max(
+                        0.0f,
+                        mag_gravity_good_sec_ - 2.0f * dt);
             }
 
             const Eigen::Vector3f pos_ned_m =
@@ -1262,10 +1281,10 @@ public:
                 const bool ext_freq_valid =
                     isLive() &&
                     std::isfinite(wave_hz) &&
-                    (wave_hz >=
-                     displacement_detrender_.config().min_wave_freq_hz) &&
-                    (wave_hz <=
-                     displacement_detrender_.config().max_wave_freq_hz);
+                    wave_hz >=
+                        displacement_detrender_.config().min_wave_freq_hz &&
+                    wave_hz <=
+                        displacement_detrender_.config().max_wave_freq_hz;
 
                 displacement_det_out_ =
                     displacement_detrender_.update(
@@ -1274,12 +1293,20 @@ public:
                         wave_hz,
                         ext_freq_valid);
             } else {
-                displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
-                displacement_det_out_.input = displacement_up_m_;
+                displacement_det_out_ =
+                    AdaptiveWaveDetrender3D::Output{};
+
+                displacement_det_out_.input =
+                    displacement_up_m_;
+
                 displacement_det_out_.baseline_slow =
                     Eigen::Vector3f::Zero();
-                displacement_det_out_.wave_raw = displacement_up_m_;
-                displacement_det_out_.wave_clean = displacement_up_m_;
+
+                displacement_det_out_.wave_raw =
+                    displacement_up_m_;
+
+                displacement_det_out_.wave_clean =
+                    displacement_up_m_;
             }
         }
 
@@ -1301,6 +1328,8 @@ public:
                 last_mag_yaw_rel_rad_ = NAN;
                 last_mag_yaw_correction_rad_ = NAN;
 
+                mag_gravity_obs_.reset();
+
                 if (stage_ != Stage::Live) {
                     stage_ = Stage::Warming;
 
@@ -1309,7 +1338,10 @@ public:
                         AdaptiveWaveDetrender3D::Output{};
 
                     if (cfg_.enable_displacement_detrend) {
-                        displacement_detrender_.reset(0.0f, 0.0f, 0.0f);
+                        displacement_detrender_.reset(
+                            0.0f,
+                            0.0f,
+                            0.0f);
                     }
                 }
             }
@@ -1333,10 +1365,11 @@ public:
         }
 
         const bool gravity_trusted =
-            (mag_gravity_good_sec_ >= cfg_.mag_gravity_align_hold_sec);
+            mag_gravity_good_sec_ >= cfg_.mag_gravity_align_hold_sec;
 
         const bool fallback_ok =
-            ((t_ - mag_init_eligible_t0_) >= cfg_.mag_tilt_fallback_sec);
+            (t_ - mag_init_eligible_t0_) >=
+            cfg_.mag_tilt_fallback_sec;
 
         if (cfg_.mag_require_gravity_gate &&
             !gravity_trusted &&
@@ -1349,19 +1382,19 @@ public:
             if (!have_last_imu_) return;
 
             const float dt_mag =
-                (std::isfinite(last_mag_sample_t_) &&
-                 t_ > last_mag_sample_t_)
-                    ? (t_ - last_mag_sample_t_)
+                std::isfinite(last_mag_sample_t_) &&
+                t_ > last_mag_sample_t_
+                    ? t_ - last_mag_sample_t_
                     : cfg_.mag_sample_dt_sec;
 
             last_mag_sample_t_ = t_;
 
-            const Eigen::Vector3f down_body =
-                mag_gravity_obs_.downBody();
+            const Eigen::Quaternionf q_tilt_bw =
+                mag_gravity_obs_.levelQuatBodyToWorld();
 
-            if (mag_auto_tuner_.addSampleWithGravityDirDt(
+            if (mag_auto_tuner_.addSampleWithTiltQuatDt(
                     dt_mag,
-                    down_body,
+                    q_tilt_bw,
                     last_acc_body_ned_,
                     last_gyro_body_ned_,
                     mag_body_ned))
@@ -1370,13 +1403,15 @@ public:
 
                 if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
                     mag_world_ref_uT.allFinite() &&
-                    mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
+                    mag_world_ref_uT.norm() >
+                        cfg_.mag_init_min_mag_norm)
                 {
-                    impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+                    impl_.mekf().set_mag_world_ref(
+                        mag_world_ref_uT);
 
-                    applyInitialMagYawGaugeCorrection_();
-
-                    mag_ref_set_ = true;
+                    if (applyInitialMagYawGaugeCorrection_()) {
+                        mag_ref_set_ = true;
+                    }
                 }
             }
         }
@@ -1474,8 +1509,11 @@ private:
         {
             if (!x.allFinite()) return state;
 
-            const float tau = std::max(1.0e-3f, tau_sec);
-            const float alpha = 1.0f - std::exp(-dt / tau);
+            const float tau =
+                std::max(1.0e-3f, tau_sec);
+
+            const float alpha =
+                1.0f - std::exp(-dt / tau);
 
             if (!initialized) {
                 state = x;
@@ -1495,7 +1533,9 @@ private:
         bool initialized = false;
 
         void reset() {
-            down_body = Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+            down_body =
+                Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+
             initialized = false;
         }
 
@@ -1505,20 +1545,20 @@ private:
                    down_body.norm() > 1.0e-6f;
         }
 
-        Eigen::Vector3f downBody() const {
-            return down_body;
-        }
-
         void resetFromAcc(const Eigen::Vector3f& acc_body_ned) {
             if (!acc_body_ned.allFinite()) return;
 
             const float an = acc_body_ned.norm();
 
-            if (!(an > 1.0e-6f) || !std::isfinite(an)) return;
+            if (!(an > 1.0e-6f) || !std::isfinite(an)) {
+                return;
+            }
 
             Eigen::Vector3f d = -acc_body_ned / an;
 
-            if (!d.allFinite() || !(d.norm() > 1.0e-6f)) return;
+            if (!d.allFinite() || !(d.norm() > 1.0e-6f)) {
+                return;
+            }
 
             down_body = d.normalized();
             initialized = true;
@@ -1548,7 +1588,8 @@ private:
             down_body.normalize();
 
             if (gyro_body_rad_s.allFinite()) {
-                down_body += -dt * gyro_body_rad_s.cross(down_body);
+                down_body +=
+                    -dt * gyro_body_rad_s.cross(down_body);
 
                 const float pn = down_body.norm();
 
@@ -1561,22 +1602,32 @@ private:
 
             const float an = acc_body_ned.norm();
 
-            if (!(an > 1.0e-6f) || !std::isfinite(an)) return;
+            if (!(an > 1.0e-6f) || !std::isfinite(an)) {
+                return;
+            }
 
-            Eigen::Vector3f down_meas = -acc_body_ned / an;
+            Eigen::Vector3f down_meas =
+                -acc_body_ned / an;
 
             if (!down_meas.allFinite()) return;
 
-            const float g = std::max(g_ref, 1.0e-6f);
-            const float rel = std::fabs(an - g) / g;
+            const float g =
+                std::max(g_ref, 1.0e-6f);
 
-            const float soft = std::max(norm_frac, 1.0e-3f);
+            const float rel =
+                std::fabs(an - g) / g;
+
+            const float soft =
+                std::max(norm_frac, 1.0e-3f);
 
             float w = 1.0f - rel / soft;
             w = std::min(std::max(w, 0.0f), 1.0f);
 
-            const float tau = std::max(acc_tau_sec, 1.0e-3f);
-            const float alpha = w * (1.0f - std::exp(-dt / tau));
+            const float tau =
+                std::max(acc_tau_sec, 1.0e-3f);
+
+            const float alpha =
+                w * (1.0f - std::exp(-dt / tau));
 
             down_body += alpha * (down_meas - down_body);
 
@@ -1622,11 +1673,13 @@ private:
                 Eigen::AngleAxisf(std::acos(d), axis));
 
             q.normalize();
+
             return q;
         }
     };
 
-    using StartupTiltObserver = seastate::common::StartupTiltObserver;
+    using StartupTiltObserver =
+        seastate::common::StartupTiltObserver;
 
     void resetTiltInit_() {
         bootstrap_tilt_obs_.reset();
@@ -1635,8 +1688,11 @@ private:
     }
 
     static float wrapPi_(float a) {
-        constexpr float PI_F = 3.14159265358979323846f;
-        constexpr float TWO_PI_F = 2.0f * PI_F;
+        constexpr float PI_F =
+            3.14159265358979323846f;
+
+        constexpr float TWO_PI_F =
+            2.0f * PI_F;
 
         if (!std::isfinite(a)) return NAN;
 
@@ -1690,39 +1746,47 @@ private:
             return NAN;
         }
 
-        Eigen::Quaternionf q_bw = q_body_to_current_world;
-        Eigen::Quaternionf q_level = q_body_to_level_world;
+        Eigen::Quaternionf q_bw =
+            q_body_to_current_world;
+
+        Eigen::Quaternionf q_level =
+            q_body_to_level_world;
 
         q_bw.normalize();
         q_level.normalize();
 
-        Eigen::Quaternionf q_rel = q_bw * q_level.conjugate();
+        Eigen::Quaternionf q_rel =
+            q_bw * q_level.conjugate();
+
         q_rel.normalize();
 
         return yawFromQuatRad_(q_rel);
     }
 
-    void applyInitialMagYawGaugeCorrection_() {
+    bool applyInitialMagYawGaugeCorrection_() {
         const float yaw_level_rad =
             mag_auto_tuner_.getYawGaugeCorrectionRad();
 
-        if (!std::isfinite(yaw_level_rad)) return;
+        if (!std::isfinite(yaw_level_rad)) return false;
 
         Eigen::Quaternionf q_bw =
             impl_.mekf().quaternion_boat();
 
-        if (!q_bw.coeffs().allFinite()) return;
+        if (!q_bw.coeffs().allFinite()) return false;
+
         q_bw.normalize();
 
         const Eigen::Quaternionf q_level =
             mag_gravity_obs_.levelQuatBodyToWorld();
 
-        if (!q_level.coeffs().allFinite()) return;
+        if (!q_level.coeffs().allFinite()) return false;
 
         const float yaw_rel_rad =
-            relativeYawLevelToCurrentWorldRad_(q_bw, q_level);
+            relativeYawLevelToCurrentWorldRad_(
+                q_bw,
+                q_level);
 
-        if (!std::isfinite(yaw_rel_rad)) return;
+        if (!std::isfinite(yaw_rel_rad)) return false;
 
         const float yaw_corr_rad =
             wrapPi_(-(yaw_rel_rad + yaw_level_rad));
@@ -1735,13 +1799,15 @@ private:
         Eigen::Quaternionf q_new = q_corr * q_bw;
         q_new.normalize();
 
-        if (!q_new.coeffs().allFinite()) return;
+        if (!q_new.coeffs().allFinite()) return false;
 
         impl_.mekf().set_quaternion_boat(q_new);
 
         last_mag_yaw_level_rad_ = yaw_level_rad;
         last_mag_yaw_rel_rad_ = yaw_rel_rad;
         last_mag_yaw_correction_rad_ = yaw_corr_rad;
+
+        return true;
     }
 
 private:
@@ -1777,7 +1843,8 @@ private:
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
-    Eigen::Vector3f displacement_up_m_ = Eigen::Vector3f::Zero();
+    Eigen::Vector3f displacement_up_m_ =
+        Eigen::Vector3f::Zero();
 
     Vec3LPF gravity_gate_acc_lpf_{};
     float mag_gravity_good_sec_ = 0.0f;
