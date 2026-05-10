@@ -821,36 +821,34 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
-        // Mag-start gate: gravity-direction agreement using current tilt.
-        float mag_gravity_align_max_sin   = 0.070f; // sin(deg)
+        // Mag-start gate.
+        float mag_gravity_align_max_sin   = 0.070f;
         float mag_gravity_align_hold_sec  = 2.0f;
         float mag_gravity_align_lpf_tau   = 1.0f;
         float mag_tilt_fallback_sec       = 30.0f;
-        float mag_extreme_gyro_dps        = 45.0f; // veto only truly violent motion
+        float mag_extreme_gyro_dps        = 45.0f;
         float mag_init_min_mag_norm       = 1e-3f;
 
-        // Mag reference acquisition.
-        //
-        // Old value 295 was only ~1.5 s at 200 Hz and could lock to one wave phase.
-        // New defaults force a longer phase-averaged mag reference window.
-        int   mag_min_samples             = 1500;  // ~7.5 s at 200 Hz
-        float mag_min_window_sec          = 10.0f;
-        float mag_max_window_sec          = 25.0f;
-        float mag_sample_dt_sec           = 1.0f / 200.0f;
+        // Preserve old mag-acquisition behavior by default.
+        // Do not re-enable long-window/quality weighting until baseline is recovered.
+        int   mag_min_samples              = 295;
+        float mag_min_window_sec           = 0.0f;
+        float mag_max_window_sec           = 0.0f;
+        float mag_sample_dt_sec            = 1.0f / 200.0f;
 
-        bool  mag_enable_quality_weighting = true;
-        float mag_min_effective_weight     = 400.0f;
+        bool  mag_enable_quality_weighting = false;
+        float mag_min_effective_weight     = 0.0f;
         float mag_acc_norm_rel_soft        = 0.22f;
         float mag_gyro_soft_dps            = 45.0f;
 
         // Bootstrap tilt observer for dynamic motion in waves.
-        float bootstrap_tilt_obs_acc_tau_sec  = 2.15f; // accel correction time constant
-        float bootstrap_gravity_slow_tau_sec  = 6.0f;  // slow gravity reference LPF
-        float bootstrap_gravity_align_max_sin = 0.070f; // sin(deg)
+        float bootstrap_tilt_obs_acc_tau_sec  = 2.15f;
+        float bootstrap_gravity_slow_tau_sec  = 6.0f;
+        float bootstrap_gravity_align_max_sin = 0.070f;
         float bootstrap_gravity_hold_sec      = 2.0f;
         float bootstrap_gravity_min_sec       = 6.87f;
         float bootstrap_gravity_timeout_sec   = 15.0f;
-        float bootstrap_gravity_norm_frac     = 0.22f; // downweight accel when |a| departs from g
+        float bootstrap_gravity_norm_frac     = 0.22f;
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
@@ -896,7 +894,7 @@ public:
         impl_.setWithMag(cfg_.with_mag);
         impl_.setFreezeAccBiasUntilLive(cfg_.freeze_acc_bias_until_live);
         impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
-        impl_.setMagDelaySec(0.0f); // outer wrapper owns startup delay
+        impl_.setMagDelaySec(0.0f);
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
 
         impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
@@ -914,6 +912,7 @@ public:
                 displacement_detrender_.setConfig(
                     seastate::common::defaultDisplacementDetrenderConfig<AdaptiveWaveDetrender3D::Config>(FREQ_GUESS));
             }
+
             displacement_detrender_.reset(0.0f, 0.0f, 0.0f);
         }
     }
@@ -928,8 +927,6 @@ public:
 
         t_ += dt;
 
-        // Stage 1: bootstrap tilt with a gyro-propagated tilt observer that is
-        // corrected slowly toward accel.
         if (stage_ == Stage::Uninitialized) {
             const bool tilt_ready = seastate::common::runStartupGravityInit(
                 gyro_body_ned,
@@ -947,7 +944,10 @@ public:
                 bootstrap_tilt_obs_,
                 bootstrap_gravity_slow_lpf_,
                 bootstrap_gravity_good_sec_,
-                [this](const Eigen::Vector3f& acc_init) { impl_.initialize_from_acc(acc_init); });
+                [this](const Eigen::Vector3f& acc_init) {
+                    impl_.initialize_from_acc(acc_init);
+                });
+
             if (tilt_ready) {
                 stage_ = Stage::Warming;
             }
@@ -961,15 +961,19 @@ public:
             impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
 
             const Eigen::Vector3f acc_gate_lp =
-                gravity_gate_acc_lpf_.step(acc_body_ned, dt, cfg_.mag_gravity_align_lpf_tau);
+                gravity_gate_acc_lpf_.step(
+                    acc_body_ned,
+                    dt,
+                    cfg_.mag_gravity_align_lpf_tau);
 
             const float align_sin =
-                seastate::common::gravityAlignResidualSin(impl_.mekf().quaternion_boat(), acc_gate_lp);
+                seastate::common::gravityAlignResidualSin(
+                    impl_.mekf().quaternion_boat(),
+                    acc_gate_lp);
 
-            const float gyro_dps = gyro_body_ned.norm() * 57.295779513f;
+            const float gyro_dps =
+                gyro_body_ned.norm() * 57.295779513f;
 
-            // Main gate: gravity-direction agreement only.
-            // Gyro only vetoes truly violent motion.
             const bool extreme_motion =
                 !std::isfinite(gyro_dps) ||
                 (gyro_dps > cfg_.mag_extreme_gyro_dps);
@@ -981,24 +985,33 @@ public:
 
             if (gravity_good_now) {
                 mag_gravity_good_sec_ += dt;
-                if (mag_gravity_good_sec_ > 10.0f) mag_gravity_good_sec_ = 10.0f;
+                if (mag_gravity_good_sec_ > 10.0f) {
+                    mag_gravity_good_sec_ = 10.0f;
+                }
             } else {
-                mag_gravity_good_sec_ = std::max(0.0f, mag_gravity_good_sec_ - 2.0f * dt);
+                mag_gravity_good_sec_ =
+                    std::max(0.0f, mag_gravity_good_sec_ - 2.0f * dt);
             }
 
             const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
-            displacement_up_m_ = Eigen::Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
+            displacement_up_m_ =
+                Eigen::Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
 
             if (cfg_.enable_displacement_detrend) {
                 const float wave_hz = impl_.getFreqHz();
+
                 const bool ext_freq_valid =
                     isLive() &&
                     std::isfinite(wave_hz) &&
                     (wave_hz >= displacement_detrender_.config().min_wave_freq_hz) &&
                     (wave_hz <= displacement_detrender_.config().max_wave_freq_hz);
 
-                displacement_det_out_ = displacement_detrender_.update(
-                    displacement_up_m_, dt, wave_hz, ext_freq_valid);
+                displacement_det_out_ =
+                    displacement_detrender_.update(
+                        displacement_up_m_,
+                        dt,
+                        wave_hz,
+                        ext_freq_valid);
             } else {
                 displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
                 displacement_det_out_.input = displacement_up_m_;
@@ -1009,6 +1022,7 @@ public:
         }
 
         const auto cur_stage = impl_.getStartupStage();
+
         if (cur_stage != last_impl_startup_stage_) {
             if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
                 mag_ref_set_ = false;
@@ -1019,17 +1033,17 @@ public:
                 last_mag_sample_t_ = NAN;
 
                 if (stage_ != Stage::Live) {
-                    // Inner filter already re-locked tilt internally.
-                    // Keep outer wrapper in Warming instead of going back to Uninitialized.
                     stage_ = Stage::Warming;
 
                     displacement_up_m_.setZero();
                     displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
+
                     if (cfg_.enable_displacement_detrend) {
                         displacement_detrender_.reset(0.0f, 0.0f, 0.0f);
                     }
                 }
             }
+
             last_impl_startup_stage_ = cur_stage;
         }
 
@@ -1067,7 +1081,8 @@ public:
                 last_mag_sample_t_ = t_;
 
                 const Eigen::Quaternionf q_tilt_bw =
-                    tiltOnlyQuatFromBoatQuat_(impl_.mekf().quaternion_boat());
+                    tiltOnlyQuatFromBoatQuat_(
+                        impl_.mekf().quaternion_boat());
 
                 if (mag_auto_tuner_.addSampleWithTiltQuatDt(
                         dt_mag,
@@ -1077,26 +1092,44 @@ public:
                         mag_body_ned))
                 {
                     Eigen::Vector3f mag_world_ref_uT;
+
                     if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
                         mag_world_ref_uT.allFinite() &&
                         mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
                     {
                         impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
 
-                        // Remove startup yaw gauge error using the averaged
-                        // tilt-compensated mag-reference window, not the current
-                        // instantaneous mag sample.
+                        // Correct yaw gauge by ABSOLUTE assignment, not residual.
+                        //
+                        // getYawGaugeCorrectionRad() is the horizontal angle of
+                        // the averaged tilt-compensated magnetic vector in the
+                        // yaw-removed tilt frame.
+                        //
+                        // Therefore:
+                        //
+                        //   yaw_abs = -yaw_gauge
+                        //
+                        // and:
+                        //
+                        //   q_new = Rz(yaw_abs) * yaw_removed_tilt(q_old)
                         {
-                            const float yaw_err = mag_auto_tuner_.getYawGaugeCorrectionRad();
+                            const float yaw_gauge_rad =
+                                mag_auto_tuner_.getYawGaugeCorrectionRad();
 
-                            if (std::isfinite(yaw_err)) {
-                                Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
+                            if (std::isfinite(yaw_gauge_rad)) {
+                                Eigen::Quaternionf q_bw =
+                                    impl_.mekf().quaternion_boat();
                                 q_bw.normalize();
 
-                                const Eigen::Quaternionf q_corr(
-                                    Eigen::AngleAxisf(-yaw_err, Eigen::Vector3f::UnitZ()));
+                                const float yaw_abs_rad =
+                                    wrapPi_(-yaw_gauge_rad);
 
-                                impl_.mekf().set_quaternion_boat((q_corr * q_bw).normalized());
+                                const Eigen::Quaternionf q_new =
+                                    boatQuatWithAbsoluteYaw_(
+                                        q_bw,
+                                        yaw_abs_rad);
+
+                                impl_.mekf().set_quaternion_boat(q_new);
                             }
                         }
 
@@ -1111,20 +1144,48 @@ public:
         }
     }
 
-    bool hasMagNorthLock() const noexcept { return mag_ref_set_; }
+    bool hasMagNorthLock() const noexcept {
+        return mag_ref_set_;
+    }
 
-    bool isLive() const { return stage_ == Stage::Live; }
-    float freqHz() const { return impl_.getFreqHz(); }
-    float waveDirectionDeg() const { return impl_.getWaveDirectionDeg(); }
-    Eigen::Vector3f eulerNauticalDeg() const { return impl_.getEulerNautical(); }
-    const Eigen::Vector3f& displacementUpMeters() const { return displacement_up_m_; }
-    const AdaptiveWaveDetrender3D::Output& displacementDetrend() const { return displacement_det_out_; }
+    bool isLive() const {
+        return stage_ == Stage::Live;
+    }
 
-    SeaStateFusionFilter_OU_III<trackerT>& raw() { return impl_; }
-    const SeaStateFusionFilter_OU_III<trackerT>& raw() const { return impl_; }
+    float freqHz() const {
+        return impl_.getFreqHz();
+    }
+
+    float waveDirectionDeg() const {
+        return impl_.getWaveDirectionDeg();
+    }
+
+    Eigen::Vector3f eulerNauticalDeg() const {
+        return impl_.getEulerNautical();
+    }
+
+    const Eigen::Vector3f& displacementUpMeters() const {
+        return displacement_up_m_;
+    }
+
+    const AdaptiveWaveDetrender3D::Output& displacementDetrend() const {
+        return displacement_det_out_;
+    }
+
+    SeaStateFusionFilter_OU_III<trackerT>& raw() {
+        return impl_;
+    }
+
+    const SeaStateFusionFilter_OU_III<trackerT>& raw() const {
+        return impl_;
+    }
 
 private:
-    enum class Stage { Uninitialized, Warming, Live };
+    enum class Stage {
+        Uninitialized,
+        Warming,
+        Live
+    };
 
     struct Vec3LPF {
         Eigen::Vector3f state = Eigen::Vector3f::Zero();
@@ -1135,8 +1196,12 @@ private:
             initialized = false;
         }
 
-        Eigen::Vector3f step(const Eigen::Vector3f& x, float dt, float tau_sec) {
+        Eigen::Vector3f step(const Eigen::Vector3f& x,
+                             float dt,
+                             float tau_sec)
+        {
             if (!x.allFinite()) return state;
+
             const float tau = std::max(1.0e-3f, tau_sec);
             const float alpha = 1.0f - std::exp(-dt / tau);
 
@@ -1159,131 +1224,110 @@ private:
         bootstrap_gravity_good_sec_ = 0.0f;
     }
 
-static Eigen::Quaternionf shortestArcTiltOnlyQuat_(
-    const Eigen::Quaternionf& q_bw_in)
-{
-    if (!q_bw_in.coeffs().allFinite()) {
-        return Eigen::Quaternionf::Identity();
+    static float wrapPi_(float a) {
+        constexpr float PI_F = float(M_PI);
+
+        while (a > PI_F) {
+            a -= 2.0f * PI_F;
+        }
+
+        while (a <= -PI_F) {
+            a += 2.0f * PI_F;
+        }
+
+        return a;
     }
 
-    Eigen::Quaternionf q_bw = q_bw_in;
-    q_bw.normalize();
+    static float yawFromBoatQuatRad_(const Eigen::Quaternionf& q_bw_in) {
+        if (!q_bw_in.coeffs().allFinite()) return NAN;
 
-    Eigen::Vector3f body_down_world =
-        q_bw * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+        Eigen::Quaternionf q_bw = q_bw_in;
+        const float qn = q_bw.norm();
 
-    const float n = body_down_world.norm();
-    if (!(n > 1e-6f) || !body_down_world.allFinite()) {
-        return Eigen::Quaternionf::Identity();
+        if (!(qn > 1.0e-6f) || !std::isfinite(qn)) {
+            return NAN;
+        }
+
+        q_bw.normalize();
+
+        const Eigen::Matrix3f R = q_bw.toRotationMatrix();
+
+        const float c = R(0, 0);
+        const float s = R(1, 0);
+
+        if (!std::isfinite(c) || !std::isfinite(s)) {
+            return NAN;
+        }
+
+        return std::atan2(s, c);
     }
 
-    body_down_world /= n;
-
-    const Eigen::Vector3f body_down_body(0.0f, 0.0f, 1.0f);
-
-    float d = body_down_body.dot(body_down_world);
-    d = std::max(-1.0f, std::min(1.0f, d));
-
-    Eigen::Vector3f axis = body_down_body.cross(body_down_world);
-    const float axis_n = axis.norm();
-
-    if (axis_n < 1e-6f) {
-        if (d > 0.0f) {
+    static Eigen::Quaternionf yawRemovedBoatQuat_(
+        const Eigen::Quaternionf& q_bw_in)
+    {
+        if (!q_bw_in.coeffs().allFinite()) {
             return Eigen::Quaternionf::Identity();
         }
 
-        return Eigen::Quaternionf(
-            Eigen::AngleAxisf(
-                float(M_PI),
-                Eigen::Vector3f(1.0f, 0.0f, 0.0f)));
-    }
+        Eigen::Quaternionf q_bw = q_bw_in;
+        const float qn = q_bw.norm();
 
-    axis /= axis_n;
-    const float angle = std::acos(d);
-
-    Eigen::Quaternionf q_tilt_bw(Eigen::AngleAxisf(angle, axis));
-    q_tilt_bw.normalize();
-
-    return q_tilt_bw;
-}
-
-static Eigen::Quaternionf tiltOnlyQuatFromBoatQuat_(
-    const Eigen::Quaternionf& q_bw_in)
-{
-    if (!q_bw_in.coeffs().allFinite()) {
-        return Eigen::Quaternionf::Identity();
-    }
-
-    Eigen::Quaternionf q_bw = q_bw_in;
-    const float qn = q_bw.norm();
-
-    if (!(qn > 1e-6f) || !std::isfinite(qn)) {
-        return Eigen::Quaternionf::Identity();
-    }
-
-    q_bw.normalize();
-
-    // q_bw is BODY -> WORLD.
-    //
-    // Remove the ZYX / aerospace yaw component by pre-multiplying with
-    // Rz(-yaw). This gives:
-    //
-    //   q_tilt = Rz(-yaw) * q_bw
-    //
-    // For q_bw = Rz(yaw) * Ry(pitch) * Rx(roll),
-    // this returns q_tilt = Ry(pitch) * Rx(roll).
-    //
-    // This is different from the shortest-arc body-down alignment and is
-    // consistent with the yaw convention used by quaternion_boat() / Euler output.
-    const Eigen::Matrix3f R = q_bw.toRotationMatrix();
-
-    const float c_yaw = R(0, 0);
-    const float s_yaw = R(1, 0);
-    const float h2 = c_yaw * c_yaw + s_yaw * s_yaw;
-
-    if (!(h2 > 1e-8f) || !std::isfinite(h2)) {
-        return shortestArcTiltOnlyQuat_(q_bw);
-    }
-
-    const float yaw = std::atan2(s_yaw, c_yaw);
-
-    if (!std::isfinite(yaw)) {
-        return shortestArcTiltOnlyQuat_(q_bw);
-    }
-
-    Eigen::Quaternionf q_yaw_inv(
-        Eigen::AngleAxisf(-yaw, Eigen::Vector3f::UnitZ()));
-
-    Eigen::Quaternionf q_tilt_bw = q_yaw_inv * q_bw;
-    q_tilt_bw.normalize();
-
-    // Numerical cleanup: remove any tiny residual yaw.
-    {
-        const Eigen::Matrix3f Rt = q_tilt_bw.toRotationMatrix();
-
-        const float c_res = Rt(0, 0);
-        const float s_res = Rt(1, 0);
-        const float h2_res = c_res * c_res + s_res * s_res;
-
-        if (h2_res > 1e-8f && std::isfinite(h2_res)) {
-            const float yaw_res = std::atan2(s_res, c_res);
-
-            if (std::isfinite(yaw_res)) {
-                Eigen::Quaternionf q_res_inv(
-                    Eigen::AngleAxisf(-yaw_res, Eigen::Vector3f::UnitZ()));
-
-                q_tilt_bw = q_res_inv * q_tilt_bw;
-                q_tilt_bw.normalize();
-            }
+        if (!(qn > 1.0e-6f) || !std::isfinite(qn)) {
+            return Eigen::Quaternionf::Identity();
         }
+
+        q_bw.normalize();
+
+        const float yaw = yawFromBoatQuatRad_(q_bw);
+
+        if (!std::isfinite(yaw)) {
+            return Eigen::Quaternionf::Identity();
+        }
+
+        const Eigen::Quaternionf q_yaw_inv(
+            Eigen::AngleAxisf(-yaw, Eigen::Vector3f::UnitZ()));
+
+        Eigen::Quaternionf q_tilt = q_yaw_inv * q_bw;
+        q_tilt.normalize();
+
+        if (!q_tilt.coeffs().allFinite()) {
+            return Eigen::Quaternionf::Identity();
+        }
+
+        return q_tilt;
     }
 
-    if (!q_tilt_bw.coeffs().allFinite()) {
-        return shortestArcTiltOnlyQuat_(q_bw);
+    static Eigen::Quaternionf boatQuatWithAbsoluteYaw_(
+        const Eigen::Quaternionf& q_bw_in,
+        float yaw_abs_rad)
+    {
+        if (!std::isfinite(yaw_abs_rad)) {
+            return q_bw_in;
+        }
+
+        const Eigen::Quaternionf q_tilt =
+            yawRemovedBoatQuat_(q_bw_in);
+
+        const Eigen::Quaternionf q_yaw(
+            Eigen::AngleAxisf(
+                yaw_abs_rad,
+                Eigen::Vector3f::UnitZ()));
+
+        Eigen::Quaternionf q_out = q_yaw * q_tilt;
+        q_out.normalize();
+
+        if (!q_out.coeffs().allFinite()) {
+            return q_bw_in;
+        }
+
+        return q_out;
     }
 
-    return q_tilt_bw;
-}
+    static Eigen::Quaternionf tiltOnlyQuatFromBoatQuat_(
+        const Eigen::Quaternionf& q_bw_in)
+    {
+        return yawRemovedBoatQuat_(q_bw_in);
+    }
 
 private:
     Config cfg_{};
@@ -1297,16 +1341,13 @@ private:
     typename SeaStateFusionFilter_OU_III<trackerT>::StartupStage last_impl_startup_stage_ =
         SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold;
 
-    // Last IMU sample for mag-init gating.
-    Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
+    Eigen::Vector3f last_acc_body_ned_ = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
     bool have_last_imu_ = false;
 
-    // One-shot mag-init state.
     bool mag_ref_set_ = false;
     MagAutoTuner mag_auto_tuner_{};
 
-    // Time of the last mag sample actually submitted to MagAutoTuner.
     float last_mag_sample_t_ = NAN;
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
@@ -1314,10 +1355,10 @@ private:
     Eigen::Vector3f displacement_up_m_ = Eigen::Vector3f::Zero();
 
     Vec3LPF gravity_gate_acc_lpf_{};
-    float   mag_gravity_good_sec_ = 0.0f;
-    float   mag_init_eligible_t0_ = NAN;
+    float mag_gravity_good_sec_ = 0.0f;
+    float mag_init_eligible_t0_ = NAN;
 
     StartupTiltObserver bootstrap_tilt_obs_{};
-    Vec3LPF             bootstrap_gravity_slow_lpf_{};
-    float               bootstrap_gravity_good_sec_ = 0.0f;
+    Vec3LPF bootstrap_gravity_slow_lpf_{};
+    float bootstrap_gravity_good_sec_ = 0.0f;
 };
