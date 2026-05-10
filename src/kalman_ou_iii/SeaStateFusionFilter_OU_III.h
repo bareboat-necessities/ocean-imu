@@ -829,14 +829,12 @@ public:
         float mag_extreme_gyro_dps        = 45.0f;
         float mag_init_min_mag_norm       = 1e-3f;
 
-        // Preserve old mag-acquisition behavior by default.
-        // Do not re-enable long-window/quality weighting until baseline is recovered.
-        int   mag_min_samples              = 295;
-        float mag_min_window_sec           = 0.0f;
-        float mag_max_window_sec           = 0.0f;
+        int   mag_min_samples              = 1500;  // ~7.5 s at 200 Hz
+        float mag_min_window_sec           = 10.0f;
+        float mag_max_window_sec           = 0.0f;  // no timeout; wait for real window
         float mag_sample_dt_sec            = 1.0f / 200.0f;
 
-        bool  mag_enable_quality_weighting = false;
+        bool  mag_enable_quality_weighting = false; // IMPORTANT: keep off for now
         float mag_min_effective_weight     = 0.0f;
         float mag_acc_norm_rel_soft        = 0.22f;
         float mag_gyro_soft_dps            = 45.0f;
