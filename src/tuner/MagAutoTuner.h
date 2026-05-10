@@ -23,11 +23,21 @@
 
       B_world_ref = [horizontal_magnitude, 0, vertical_component]
 
-    The horizontal yaw angle of the averaged tilt-compensated magnetic vector is
-    exposed through getYawGaugeCorrectionRad(). The caller may use this once to
-    rotate the current quaternion into the learned magnetic gauge.
+    getYawGaugeCorrectionRad() returns the horizontal angle of the averaged
+    tilt-compensated magnetic vector in the yaw-removed tilt frame.
 
-  Important:
+    Important:
+
+      This angle is NOT a residual correction to apply on top of the current
+      quaternion. It is a yaw-gauge angle.
+
+      The caller should set absolute yaw like this:
+
+        yaw_abs = -getYawGaugeCorrectionRad()
+
+      then rebuild:
+
+        q_body_to_world = Rz(yaw_abs) * yaw_removed_tilt(q_body_to_world)
 
     Do not replace the gauge-fixed reference with the raw 3D averaged vector
     unless the filter also has an external true-world yaw reference.
@@ -50,64 +60,36 @@ public:
     // Minimum accepted magnetometer norm.
     float mag_norm_min = 1e-3f;
 
-    // Minimum accepted samples before declaring ready.
-    //
-    // For wave motion this should be much larger than the old 295 samples.
-    // At 200 Hz:
-    //   1500 samples ≈ 7.5 s
-    //   2000 samples ≈ 10 s
-    //   3000 samples ≈ 15 s
-    int min_samples = 1500;
+    // Default is intentionally old behavior: 295 samples, no time window,
+    // no quality weighting. This avoids changing mag-lock timing while we
+    // debug yaw-gauge composition.
+    int min_samples = 295;
 
-    // Minimum accepted window duration.
-    //
-    // This prevents locking the mag reference from one biased wave phase.
-    float min_window_sec = 10.0f;
-
-    // Optional timeout. If > 0, the tuner may become ready after this window
-    // even if min_effective_weight is not reached, as long as the sample count
-    // and vector sanity checks pass.
-    float max_window_sec = 25.0f;
+    // Optional accepted-sample time window. Disabled by default.
+    float min_window_sec = 0.0f;
+    float max_window_sec = 0.0f;
 
     // Backward-compatible assumed sample period for callers that do not pass dt.
     float sample_dt_sec = 1.0f / 200.0f;
 
-    // Gravity reference for accel-norm quality weighting.
+    // Gravity reference for optional accel-norm quality weighting.
     float gravity_ref = 9.80665f;
 
     // Optional sanity checks.
-    //
-    // Once a running mean exists, reject samples whose field norm is wildly
-    // inconsistent with the current mean norm.
     float max_sample_norm_ratio_from_mean = 0.35f;
-
-    // Require a non-degenerate horizontal component.
     float min_horizontal_fraction = 0.05f;
 
-    // Quality weighting.
-    //
-    // Weighting is intentionally soft. It should reduce clearly poor samples,
-    // not select only one narrow wave phase.
-    bool enable_quality_weighting = true;
+    // Disabled by default to preserve old behavior.
+    bool enable_quality_weighting = false;
 
-    // Reject samples with weight below this.
+    // Used only when quality weighting is enabled.
     float min_sample_weight = 0.03f;
 
-    // Minimum sum of accepted sample weights before ready.
-    //
-    // If <= 0, disabled.
-    float min_effective_weight = 400.0f;
+    // Disabled by default. If <= 0, ignored.
+    float min_effective_weight = 0.0f;
 
-    // Accel norm error at which accel weight falls to zero:
-    //
-    //   abs(|acc|-g)/g >= acc_norm_rel_soft -> w_acc = 0
-    //
-    // Keep this fairly permissive for boats/waves.
+    // Soft weighting parameters.
     float acc_norm_rel_soft = 0.22f;
-
-    // Gyro rate at which gyro weight falls to zero.
-    //
-    // This is a soft quality weight, not a strict motion detector.
     float gyro_soft_dps = 45.0f;
   };
 
@@ -146,9 +128,6 @@ public:
     last_mag_world_sample_.setZero();
   }
 
-  // Backward-compatible API.
-  //
-  // Uses cfg_.sample_dt_sec as the accepted-sample time increment.
   bool addSampleWithTiltQuat(const Eigen::Quaternionf& q_tilt_bw_in,
                              const Eigen::Vector3f& acc_body_ned,
                              const Eigen::Vector3f& gyro_body_ned,
@@ -162,9 +141,6 @@ public:
         mag_body_ned);
   }
 
-  // Preferred API for simulation / real-time wrappers.
-  //
-  // Pass the actual dt between mag samples.
   bool addSampleWithTiltQuatDt(float dt,
                                const Eigen::Quaternionf& q_tilt_bw_in,
                                const Eigen::Vector3f& acc_body_ned,
@@ -200,10 +176,7 @@ public:
     }
     q_tilt_bw.normalize();
 
-    // Rotate sample into the current tilt-leveled world frame.
-    //
-    // q_tilt_bw is BODY->WORLD with yaw removed / gauge-free.
-    // This removes roll/pitch from the mag sample but leaves yaw gauge arbitrary.
+    // q_tilt_bw must be BODY->WORLD with yaw removed.
     const Eigen::Vector3f mag_world_i = q_tilt_bw * mag_body_ned;
     if (!mag_world_i.allFinite()) {
       ++rejected_count_;
@@ -216,7 +189,6 @@ public:
       return false;
     }
 
-    // Running norm sanity check.
     if (accepted_count_ > 0 && weight_sum_ > 1e-6f) {
       const float mean_n = mag_world_norm_sum_ / weight_sum_;
       if (mean_n > cfg_.mag_norm_min && std::isfinite(mean_n)) {
@@ -233,20 +205,21 @@ public:
     }
 
     float w = 1.0f;
+
     if (cfg_.enable_quality_weighting) {
       w = sampleWeight_(acc_body_ned, gyro_body_ned);
-    }
 
-    if (!std::isfinite(w)) {
-      ++rejected_count_;
-      return false;
-    }
+      if (!std::isfinite(w)) {
+        ++rejected_count_;
+        return false;
+      }
 
-    w = std::min(std::max(w, 0.0f), 1.0f);
+      w = std::min(std::max(w, 0.0f), 1.0f);
 
-    if (w < cfg_.min_sample_weight) {
-      ++rejected_count_;
-      return false;
+      if (w < cfg_.min_sample_weight) {
+        ++rejected_count_;
+        return false;
+      }
     }
 
     const float dt_use =
@@ -302,10 +275,6 @@ public:
     return mag_world_ref.allFinite();
   }
 
-  // Weighted raw tilt-compensated magnetic mean before yaw-gauge fixing.
-  //
-  // This vector may have nonzero Y. Its horizontal angle is the yaw-gauge
-  // correction that should be applied once to the quaternion.
   bool getMagWorldMean(Eigen::Vector3f& mag_world_mean) const {
     if (accepted_count_ <= 0 || !(weight_sum_ > 1e-6f)) return false;
 
@@ -313,20 +282,17 @@ public:
     return mag_world_mean.allFinite();
   }
 
-  // Signed yaw-gauge correction of the averaged tilt-compensated magnetic vector.
+  // Returns yaw-gauge angle of averaged mag vector in yaw-removed tilt frame.
   //
-  // If the averaged mag vector in the gauge-free frame is:
+  // This is NOT a residual correction.
   //
-  //   m = [mx, my, mz]
+  // Caller should use:
   //
-  // then yaw_gauge = atan2(my, mx).
+  //   yaw_abs = -getYawGaugeCorrectionRad()
   //
-  // The caller can rotate the current BODY->WORLD quaternion by:
+  // then rebuild q as:
   //
-  //   q_corr = AngleAxis(-yaw_gauge, UnitZ)
-  //   q_bw   = q_corr * q_bw
-  //
-  // This aligns the learned magnetic north with +X.
+  //   q = Rz(yaw_abs) * yaw_removed_tilt(q)
   float getYawGaugeCorrectionRad() const {
     Eigen::Vector3f m;
     if (!getMagWorldMean(m)) return NAN;
@@ -456,10 +422,7 @@ private:
 
     mag_world_mean_ = mag_world_mean;
 
-    // IMU-only yaw gauge fix:
-    //
-    // Keep the measured dip / vertical component, but remove the arbitrary
-    // startup yaw angle by defining learned magnetic north as +X.
+    // Gauge-fixed magnetic reference.
     mag_world_ref_ = Eigen::Vector3f(horiz, 0.0f, mag_world_mean.z());
 
     ready_ =
@@ -472,31 +435,20 @@ private:
 private:
   Config cfg_;
 
-  // Weighted sum of tilt-compensated magnetic vectors in the yaw-gauge-free
-  // world frame.
   Eigen::Vector3f mag_world_sum_ = Eigen::Vector3f::Zero();
-
-  // Weighted sum of magnetic vector norms.
   float mag_world_norm_sum_ = 0.0f;
 
   int accepted_count_ = 0;
   int rejected_count_ = 0;
 
-  // Duration covered by accepted samples.
   float accepted_window_sec_ = 0.0f;
-
-  // Sum of sample weights.
   float weight_sum_ = 0.0f;
 
   bool ready_ = false;
 
-  // Weighted raw mean before yaw-gauge fixing.
   Eigen::Vector3f mag_world_mean_ = Eigen::Vector3f::Zero();
-
-  // Gauge-fixed reference used by the MEKF mag measurement model.
   Eigen::Vector3f mag_world_ref_ = Eigen::Vector3f::Zero();
 
-  // Diagnostics.
   float last_sample_weight_ = 0.0f;
   Eigen::Vector3f last_mag_world_sample_ = Eigen::Vector3f::Zero();
 };
