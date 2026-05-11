@@ -61,6 +61,7 @@ public:
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         cfg_.freeze_acc_bias_until_live = true;
         cfg_.Racc_warmup_std = 0.5f;
+
         apply_env_overrides();
 
         fusion_.begin(cfg_);
@@ -96,6 +97,26 @@ public:
                 filter.setSigmaCoeff(v);
             }
 
+            // OU_III-specific horizontal stationary accel anisotropy.
+            // This maps to SeaStateFusionFilter_OU_III::setSFactor().
+            if (env_float("OU_III_S_FACTOR", v)) {
+                filter.setSFactor(v);
+            }
+
+            // OU_III-specific R_S anisotropy and coefficient.
+            // These are the real setter names in SeaStateFusionFilter_OU_III.
+            if (env_float("OU_III_R_S_XY_FACTOR", v)) {
+                filter.setRSXYFactor(v);
+            }
+
+            if (env_float("OU_III_R_S_COEFF", v)) {
+                filter.setRSCoeff(v);
+            }
+
+            // NOTE:
+            // SeaStateFusionFilter_OU_III does not expose a V0/R_v0 coefficient setter.
+            // Therefore OU_III_R_V0_COEFF is intentionally not read here.
+
             if (env_float("OU_ACC_NOISE_FLOOR_SIGMA", v)) {
                 filter.setAccNoiseFloorSigma(v);
             }
@@ -124,45 +145,13 @@ public:
                 filter.setFreqInputCutoffHz(v);
             }
 
+            // Scalar accel-bias initialization uncertainty only.
+            // Bias vector X/Y/Z env overrides intentionally removed.
             if (env_float("OU_ACC_BIAS_INIT_STD", v)) {
                 filter.mekf().set_initial_acc_bias_std(v);
             }
             if (env_float("OU_III_ACC_BIAS_INIT_STD", v)) {
                 filter.mekf().set_initial_acc_bias_std(v);
-            }
-
-            Vector3f b = filter.mekf().get_acc_bias();
-            bool bias_changed = false;
-
-            if (env_float("OU_ACC_BIAS_INIT_X", v)) {
-                b.x() = v;
-                bias_changed = true;
-            }
-            if (env_float("OU_III_ACC_BIAS_INIT_X", v)) {
-                b.x() = v;
-                bias_changed = true;
-            }
-
-            if (env_float("OU_ACC_BIAS_INIT_Y", v)) {
-                b.y() = v;
-                bias_changed = true;
-            }
-            if (env_float("OU_III_ACC_BIAS_INIT_Y", v)) {
-                b.y() = v;
-                bias_changed = true;
-            }
-
-            if (env_float("OU_ACC_BIAS_INIT_Z", v)) {
-                b.z() = v;
-                bias_changed = true;
-            }
-            if (env_float("OU_III_ACC_BIAS_INIT_Z", v)) {
-                b.z() = v;
-                bias_changed = true;
-            }
-
-            if (bias_changed) {
-                filter.mekf().set_initial_acc_bias(b);
             }
         }
     }
@@ -213,22 +202,22 @@ public:
         s.vel_est_zu  = ned_to_zu(filter.mekf().get_velocity());
         s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_accel());
 
-// Filter attitude is BODY->WORLD in NED.
-//
-// In IMU-only mode, after mag lock this is BODY->WORLD in the learned
-// magnetic-NED frame, not true-north NED.
-//
-// Do not apply WMM/declination correction here. A real IMU does not know true
-// north unless an external declination/location model is explicitly supplied.
-const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
+        // Filter attitude is BODY->WORLD in NED.
+        //
+        // In IMU-only mode, after mag lock this is BODY->WORLD in the learned
+        // magnetic-NED frame, not true-north NED.
+        //
+        // Do not apply WMM/declination correction here. A real IMU does not know true
+        // north unless an external declination/location model is explicitly supplied.
+        const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
 
-float roll_deg  = 0.0f;
-float pitch_deg = 0.0f;
-float yaw_deg   = 0.0f;
-quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
+        float roll_deg  = 0.0f;
+        float pitch_deg = 0.0f;
+        float yaw_deg   = 0.0f;
+        quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);
 
-s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
-        
+        s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
+
         s.acc_bias_est_ned    = filter.mekf().get_acc_bias();
         s.gyro_bias_est_ned   = filter.mekf().gyroscope_bias();
         s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf());
@@ -236,12 +225,15 @@ s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
         s.tau_target      = filter.getTauTarget();
         s.sigma_target    = filter.getSigmaTarget();
         s.tuning_target   = filter.getRSTarget();
+
         s.tau_applied     = filter.getTauApplied();
         s.sigma_applied   = filter.getSigmaApplied();
         s.tuning_applied  = filter.getRSApplied();
+
         s.freq_hz         = filter.getFreqHz();
         s.period_sec      = filter.getPeriodSec();
         s.accel_variance  = filter.getAccelVariance();
+
         s.displacement_scale_m = filter.getDisplacementScale();
         s.velocity_scale_mps   = filter.getVerticalSpeedEnvelopeMps(true);
 
@@ -256,6 +248,7 @@ s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
 
         constexpr float CONF_THRESH = 20.0f;
         constexpr float AMP_THRESH  = 0.08f;
+
         if (s.direction.confidence > CONF_THRESH && s.direction.amplitude > AMP_THRESH) {
             s.direction.sign = filter.getDirSignState();
             s.direction.sign_num =
@@ -291,10 +284,18 @@ static constexpr W3dSummaryLabels SUMMARY_LABELS{
 static void process_wave_file_for_tracker(const std::string& filename, float dt, bool with_mag)
 {
     constexpr float MAG_ODR_HZ = 25.0f;
+
     auto result = process_wave_file_for_tracker<FusionAdapter_OU_III>(
-        filename, dt, with_mag, add_noise, MAG_ODR_HZ,
-        "_fusion_ou3", "_fusion_ou3_nomag");
+        filename,
+        dt,
+        with_mag,
+        add_noise,
+        MAG_ODR_HZ,
+        "_fusion_ou3",
+        "_fusion_ou3_nomag");
+
     if (!result) return;
+
     print_summary_and_fail_if_needed(*result, dt, FAIL_LIMITS, SUMMARY_LABELS);
 }
 
@@ -305,6 +306,7 @@ int main(int argc, char* argv[]) {
 
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
+
         if (arg == "--nomag") {
             with_mag = false;
         } else if (arg == "--no-noise") {
@@ -323,6 +325,9 @@ int main(int argc, char* argv[]) {
         process_wave_file_for_tracker(fname, dt, with_mag);
     }
 
-    if (std::getenv("W3D_COLLECT_ALL_GATES") && w3d_any_quality_gate_failed()) return 1;
+    if (std::getenv("W3D_COLLECT_ALL_GATES") && w3d_any_quality_gate_failed()) {
+        return 1;
+    }
+
     return 0;
 }
