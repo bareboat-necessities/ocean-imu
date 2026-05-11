@@ -823,7 +823,7 @@ public:
 
         // Optional startup gate. Default OFF because accel-LPF gravity alignment
         // can be wrong in waves. If enabled, it only decides when collection may
-        // begin. It is NOT used for mag leveling.
+        // begin. It is NOT used for mag leveling/reference construction.
         bool  mag_require_gravity_gate    = false;
         float mag_gravity_align_max_sin   = 0.070f;
         float mag_gravity_align_hold_sec  = 2.0f;
@@ -832,11 +832,29 @@ public:
         float mag_extreme_gyro_dps        = 45.0f;
         float mag_init_min_mag_norm       = 1e-3f;
 
-        // Real-device mag acquisition.
+        // Restored mag acquisition path.
         //
-        // The mag reference is accumulated in the current MEKF world frame using
-        // q_mekf * mag_body. Arbitrary startup yaw is removed once by the averaged
-        // horizontal mag angle.
+        // We do NOT hard-rotate/reset the MEKF quaternion after mag reference
+        // acquisition. Instead:
+        //
+        //   1. Take current MEKF boat/body -> world quaternion q_bw.
+        //   2. Remove its world yaw only:
+        //
+        //          q_tilt_bw = Rz(-yaw(q_bw)) * q_bw
+        //
+        //   3. Accumulate mag in this yaw-free tilt frame:
+        //
+        //          mag_level = q_tilt_bw * mag_body
+        //
+        //   4. MagAutoTuner stores:
+        //
+        //          B_ref = [horizontal_magnitude, 0, vertical]
+        //
+        //   5. Set that as the MEKF mag reference.
+        //   6. Let the normal 3D mag update correct yaw through the existing EKF.
+        //
+        // This restores the previous better behavior and avoids the later hard
+        // yaw-gauge correction path.
         int   mag_min_samples              = 1500;  // ~7.5 s at 200 Hz
         float mag_min_window_sec           = 10.0f;
         float mag_max_window_sec           = 0.0f;   // no forced timeout
@@ -848,7 +866,7 @@ public:
         float mag_acc_norm_rel_soft        = 0.22f;
         float mag_gyro_soft_dps            = 45.0f;
 
-        // Legacy / unused in this fixed chain. Kept so existing config code
+        // Legacy / unused in this restored chain. Kept so existing config code
         // still compiles.
         float mag_tilt_obs_acc_tau_sec  = 2.5f;
         float mag_tilt_obs_norm_frac    = 0.22f;
@@ -909,7 +927,11 @@ public:
         impl_.setWithMag(cfg_.with_mag);
         impl_.setFreezeAccBiasUntilLive(cfg_.freeze_acc_bias_until_live);
         impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
-        impl_.setMagDelaySec(0.0f); // outer wrapper owns mag delay
+
+        // Outer wrapper owns mag delay and reference acquisition.
+        // Inner filter should accept mag immediately once outer wrapper releases it.
+        impl_.setMagDelaySec(0.0f);
+
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
 
         impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
@@ -925,7 +947,8 @@ public:
                 displacement_detrender_.setConfig(cfg_.displacement_detrend_cfg);
             } else {
                 displacement_detrender_.setConfig(
-                    seastate::common::defaultDisplacementDetrenderConfig<AdaptiveWaveDetrender3D::Config>(FREQ_GUESS));
+                    seastate::common::defaultDisplacementDetrenderConfig<
+                        AdaptiveWaveDetrender3D::Config>(FREQ_GUESS));
             }
 
             displacement_detrender_.reset(0.0f, 0.0f, 0.0f);
@@ -1043,7 +1066,9 @@ public:
         const auto cur_stage = impl_.getStartupStage();
 
         if (cur_stage != last_impl_startup_stage_) {
-            if (cur_stage == SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold) {
+            if (cur_stage ==
+                SeaStateFusionFilter_OU_III<trackerT>::StartupStage::Cold)
+            {
                 mag_ref_set_ = false;
                 mag_auto_tuner_.reset();
 
@@ -1107,19 +1132,17 @@ public:
 
             last_mag_sample_t_ = t_;
 
-            Eigen::Quaternionf q_bw_for_mag =
-                impl_.mekf().quaternion_boat();
+            Eigen::Quaternionf q_tilt_bw;
+            if (!tiltOnlyQuatFromBoatQuat_(
+                    impl_.mekf().quaternion_boat(),
+                    q_tilt_bw))
+            {
+                return;
+            }
 
-            if (!q_bw_for_mag.coeffs().allFinite()) return;
-
-            const float qn = q_bw_for_mag.norm();
-            if (!(qn > 1.0e-6f) || !std::isfinite(qn)) return;
-
-            q_bw_for_mag.normalize();
-
-            if (mag_auto_tuner_.addSampleWithWorldQuatDt(
+            if (mag_auto_tuner_.addSampleWithTiltQuatDt(
                     dt_mag,
-                    q_bw_for_mag,
+                    q_tilt_bw,
                     last_acc_body_ned_,
                     last_gyro_body_ned_,
                     mag_body_ned))
@@ -1130,12 +1153,16 @@ public:
                     mag_world_ref_uT.allFinite() &&
                     mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
                 {
-                    // Reference is gauge-fixed to learned magnetic north.
+                    // Restored behavior:
+                    // Set the learned magnetic reference only.
+                    // Do NOT call set_quaternion_boat() here.
                     impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
 
-                    // Rotate the MEKF world gauge once so the raw averaged
-                    // magnetic heading becomes +X in the same MEKF frame.
-                    applyInitialMagYawGaugeCorrection_();
+                    last_mag_yaw_gauge_rad_ =
+                        mag_auto_tuner_.getYawGaugeCorrectionRad();
+
+                    // No hard yaw correction is applied in this restored path.
+                    last_mag_yaw_correction_rad_ = 0.0f;
 
                     mag_ref_set_ = true;
                 }
@@ -1264,55 +1291,72 @@ private:
         bootstrap_gravity_good_sec_ = 0.0f;
     }
 
-    static float wrapPi_(float a) {
-        constexpr float PI_F = 3.14159265358979323846f;
-        constexpr float TWO_PI_F = 2.0f * PI_F;
-
-        if (!std::isfinite(a)) return NAN;
-
-        while (a > PI_F) {
-            a -= TWO_PI_F;
+    static bool tiltOnlyQuatFromBoatQuat_(
+        const Eigen::Quaternionf& q_bw_in,
+        Eigen::Quaternionf& q_tilt_bw_out)
+    {
+        if (!q_bw_in.coeffs().allFinite()) {
+            q_tilt_bw_out.setIdentity();
+            return false;
         }
 
-        while (a <= -PI_F) {
-            a += TWO_PI_F;
-        }
-
-        return a;
-    }
-
-    void applyInitialMagYawGaugeCorrection_() {
-        const float yaw_gauge_rad =
-            mag_auto_tuner_.getYawGaugeCorrectionRad();
-
-        if (!std::isfinite(yaw_gauge_rad)) return;
-
-        Eigen::Quaternionf q_bw =
-            impl_.mekf().quaternion_boat();
-
-        if (!q_bw.coeffs().allFinite()) return;
-
+        Eigen::Quaternionf q_bw = q_bw_in;
         const float qn = q_bw.norm();
-        if (!(qn > 1.0e-6f) || !std::isfinite(qn)) return;
+
+        if (!(qn > 1.0e-6f) || !std::isfinite(qn)) {
+            q_tilt_bw_out.setIdentity();
+            return false;
+        }
 
         q_bw.normalize();
 
-        const float yaw_corr_rad =
-            wrapPi_(-yaw_gauge_rad);
+        // q_bw is BODY->WORLD.
+        //
+        // Use the same ZYX yaw extraction convention as getEulerNautical()
+        // before aero_to_nautical conversion:
+        //
+        //   q_bw = Rz(yaw) * Ry(pitch) * Rx(roll)
+        //
+        // Remove only world yaw:
+        //
+        //   q_tilt_bw = Rz(-yaw) * q_bw
+        //
+        // This keeps roll/pitch tilt and gives MagAutoTuner a yaw-free startup
+        // accumulation frame. The main MEKF quaternion is NOT reset here.
+        const float x = q_bw.x();
+        const float y = q_bw.y();
+        const float z = q_bw.z();
+        const float w = q_bw.w();
 
-        const Eigen::Quaternionf q_corr(
-            Eigen::AngleAxisf(yaw_corr_rad,
-                              Eigen::Vector3f::UnitZ()));
+        const float siny_cosp =
+            2.0f * (w * z + x * y);
 
-        Eigen::Quaternionf q_new = q_corr * q_bw;
-        q_new.normalize();
+        const float cosy_cosp =
+            1.0f - 2.0f * (y * y + z * z);
 
-        if (!q_new.coeffs().allFinite()) return;
+        const float yaw =
+            std::atan2(siny_cosp, cosy_cosp);
 
-        impl_.mekf().set_quaternion_boat(q_new);
+        if (!std::isfinite(yaw)) {
+            q_tilt_bw_out.setIdentity();
+            return false;
+        }
 
-        last_mag_yaw_gauge_rad_ = yaw_gauge_rad;
-        last_mag_yaw_correction_rad_ = yaw_corr_rad;
+        const Eigen::Quaternionf q_remove_yaw(
+            Eigen::AngleAxisf(
+                -yaw,
+                Eigen::Vector3f::UnitZ()));
+
+        Eigen::Quaternionf q_tilt = q_remove_yaw * q_bw;
+        q_tilt.normalize();
+
+        if (!q_tilt.coeffs().allFinite()) {
+            q_tilt_bw_out.setIdentity();
+            return false;
+        }
+
+        q_tilt_bw_out = q_tilt;
+        return true;
     }
 
 private:
