@@ -952,7 +952,7 @@ private:
 
     bool freeze_acc_bias_until_live_ = true;
     bool accel_bias_learning_enabled_ = true;
-    float Racc_warmup_std_ = 0.6f;
+    float Racc_warmup_std_ = 0.37f;
     bool warmup_Racc_active_ = false;
     Eigen::Vector3f Racc_nominal_std_ =
         Eigen::Vector3f::Constant(0.0f);
