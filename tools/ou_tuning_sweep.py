@@ -62,10 +62,8 @@ OU_COMMON_SPECS = {
 OU_III_COMMON_SPECS = {
     "OU_TAU_COEFF": (0.75, 1.75, "log"),
     "OU_SIGMA_COEFF": (0.75, 2.10, "log"),
-    "OU_ACC_NOISE_FLOOR_SIGMA": (0.030, 0.120, "log"),
     "OU_ADAPT_TAU_SEC": (1.0, 18.0, "log"),
     "OU_ADAPT_EVERY_SECS": (0.025, 0.250, "log"),
-    "OU_FREQ_INPUT_CUTOFF_HZ": (0.25, 0.80, "log"),
     "OU_ACC_BIAS_INIT_STD": (0.02, 0.35, "log"),
 }
 
