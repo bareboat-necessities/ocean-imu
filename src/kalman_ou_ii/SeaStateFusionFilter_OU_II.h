@@ -182,57 +182,50 @@ public:
 
         {
             Eigen::Quaternionf q_bw = mekf_->quaternion_boat();
+            q_bw.normalize();
 
-            if (q_bw.coeffs().allFinite()) {
-                const float qn = q_bw.norm();
+            const Eigen::Vector3f z_body_down_world =
+                q_bw * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
 
-                if (qn > 1.0e-6f && std::isfinite(qn)) {
-                    q_bw.normalize();
+            const Eigen::Vector3f z_world_down(0.0f, 0.0f, 1.0f);
 
-                    const Eigen::Vector3f z_body_down_world =
-                        q_bw * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
+            float cos_tilt =
+                z_body_down_world.normalized().dot(z_world_down);
 
-                    const Eigen::Vector3f z_world_down(0.0f, 0.0f, 1.0f);
+            cos_tilt = std::max(-1.0f, std::min(1.0f, cos_tilt));
 
-                    float cos_tilt =
-                        z_body_down_world.normalized().dot(z_world_down);
+            const float tilt_deg =
+                std::acos(cos_tilt) * 57.295779513f;
 
-                    cos_tilt = std::max(-1.0f, std::min(1.0f, cos_tilt));
+            constexpr float TILT_RESET_DEG = 70.0f;
+            constexpr float TILT_RESET_HOLD_SEC = 0.35f;
+            constexpr float TILT_RESET_COOLDOWN_SEC = 3.0f;
 
-                    const float tilt_deg =
-                        std::acos(cos_tilt) * 57.295779513f;
+            if (tilt_reset_cooldown_sec_ > 0.0f) {
+                tilt_reset_cooldown_sec_ =
+                    std::max(0.0f, tilt_reset_cooldown_sec_ - dt);
+            }
 
-                    constexpr float TILT_RESET_DEG = 70.0f;
-                    constexpr float TILT_RESET_HOLD_SEC = 0.35f;
-                    constexpr float TILT_RESET_COOLDOWN_SEC = 3.0f;
+            if (tilt_deg > TILT_RESET_DEG) {
+                tilt_over_limit_sec_ += dt;
+            } else {
+                tilt_over_limit_sec_ =
+                    std::max(0.0f, tilt_over_limit_sec_ - 2.0f * dt);
+            }
 
-                    if (tilt_reset_cooldown_sec_ > 0.0f) {
-                        tilt_reset_cooldown_sec_ =
-                            std::max(0.0f, tilt_reset_cooldown_sec_ - dt);
-                    }
-
-                    if (tilt_deg > TILT_RESET_DEG) {
-                        tilt_over_limit_sec_ += dt;
-                    } else {
-                        tilt_over_limit_sec_ =
-                            std::max(0.0f, tilt_over_limit_sec_ - 2.0f * dt);
-                    }
-
-                    if (tilt_over_limit_sec_ >= TILT_RESET_HOLD_SEC &&
-                        tilt_reset_cooldown_sec_ <= 0.0f)
-                    {
-                        if (startup_stage_ == StartupStage::Live) {
-                            mekf_->initialize_from_acc_preserve_yaw(acc);
-                        } else {
-                            mekf_->initialize_from_acc(acc);
-                            enterCold_();
-                            resetTrackingState_();
-                        }
-
-                        tilt_over_limit_sec_ = 0.0f;
-                        tilt_reset_cooldown_sec_ = TILT_RESET_COOLDOWN_SEC;
-                    }
+            if (tilt_over_limit_sec_ >= TILT_RESET_HOLD_SEC &&
+                tilt_reset_cooldown_sec_ <= 0.0f)
+            {
+                if (startup_stage_ == StartupStage::Live) {
+                    mekf_->initialize_from_acc_preserve_yaw(acc);
+                } else {
+                    mekf_->initialize_from_acc(acc);
+                    enterCold_();
+                    resetTrackingState_();
                 }
+
+                tilt_over_limit_sec_ = 0.0f;
+                tilt_reset_cooldown_sec_ = TILT_RESET_COOLDOWN_SEC;
             }
         }
 
@@ -292,7 +285,16 @@ public:
             (static_cast<float>(time_) - first_mag_update_time_) > 1.0f)
         {
             accel_bias_locked_ = false;
+
             refreshAccelBiasLearning_();
+
+            if (warmup_Racc_active_ &&
+                Racc_nominal_std_.allFinite() &&
+                Racc_nominal_std_.maxCoeff() > 0.0f)
+            {
+                mekf_->set_Racc_std(Racc_nominal_std_);
+                warmup_Racc_active_ = false;
+            }
         }
     }
 
@@ -493,63 +495,11 @@ public:
     void setWarmupRaccStd(float r) {
         if (std::isfinite(r) && r > 0.0f) {
             Racc_warmup_std_ = r;
-            refreshAccelBiasLearning_();
         }
     }
 
     void setNominalRaccStd(const Eigen::Vector3f& r) {
         Racc_nominal_std_ = r;
-        refreshAccelBiasLearning_();
-    }
-
-    void setAccelBiasSeaGateEnabled(bool en) {
-        acc_bias_sea_gate_enabled_ = en;
-
-        acc_bias_sea_ready_ =
-            !acc_bias_sea_gate_enabled_;
-
-        acc_bias_sea_good_sec_ =
-            acc_bias_sea_ready_
-                ? acc_bias_sea_gate_hold_sec_
-                : 0.0f;
-
-        refreshAccelBiasLearning_();
-    }
-
-    void setAccelBiasSeaGateMinAccelStd(float s) {
-        if (std::isfinite(s) && s >= 0.0f) {
-            acc_bias_sea_min_std_ = s;
-            acc_bias_sea_ready_ = !acc_bias_sea_gate_enabled_;
-            acc_bias_sea_good_sec_ =
-                acc_bias_sea_ready_
-                    ? acc_bias_sea_gate_hold_sec_
-                    : 0.0f;
-            refreshAccelBiasLearning_();
-        }
-    }
-
-    void setAccelBiasSeaGateHoldSec(float s) {
-        if (std::isfinite(s) && s >= 0.0f) {
-            acc_bias_sea_gate_hold_sec_ = s;
-            acc_bias_sea_ready_ = !acc_bias_sea_gate_enabled_;
-            acc_bias_sea_good_sec_ =
-                acc_bias_sea_ready_
-                    ? acc_bias_sea_gate_hold_sec_
-                    : 0.0f;
-            refreshAccelBiasLearning_();
-        }
-    }
-
-    bool isAccelBiasLearningActive() const noexcept {
-        return accel_bias_learning_active_;
-    }
-
-    bool isAccelBiasSeaReady() const noexcept {
-        return !acc_bias_sea_gate_enabled_ || acc_bias_sea_ready_;
-    }
-
-    float getAccelBiasSeaMetricStd() const noexcept {
-        return acc_bias_sea_metric_std_;
     }
 
     inline float getFreqHz() const noexcept {
@@ -678,33 +628,6 @@ private:
     using FreqInputLPF = seastate::common::FreqInputLPF;
     using StillnessAdapter = seastate::common::StillnessAdapter;
 
-    bool nominalRaccValid_() const {
-        return Racc_nominal_std_.allFinite() &&
-               Racc_nominal_std_.minCoeff() > 0.0f;
-    }
-
-    void applyWarmupRacc_() {
-        if (!mekf_) return;
-
-        if (std::isfinite(Racc_warmup_std_) &&
-            Racc_warmup_std_ > 0.0f)
-        {
-            mekf_->set_Racc_std(
-                Eigen::Vector3f::Constant(Racc_warmup_std_));
-
-            warmup_Racc_active_ = true;
-        }
-    }
-
-    void restoreNominalRaccIfNeeded_() {
-        if (!mekf_) return;
-
-        if (warmup_Racc_active_ && nominalRaccValid_()) {
-            mekf_->set_Racc_std(Racc_nominal_std_);
-            warmup_Racc_active_ = false;
-        }
-    }
-
     void refreshAccelBiasLearning_() {
         if (!mekf_) return;
 
@@ -716,95 +639,12 @@ private:
             !with_mag_ ||
             !accel_bias_locked_;
 
-        const bool sea_ok =
-            !acc_bias_sea_gate_enabled_ ||
-            acc_bias_sea_ready_;
-
         const bool allow =
             accel_bias_learning_enabled_ &&
             live_ok &&
-            mag_ok &&
-            sea_ok;
+            mag_ok;
 
-        accel_bias_learning_active_ = allow;
         mekf_->set_acc_bias_updates_enabled(allow);
-
-        /*
-          Critical fix:
-
-          Racc warmup inflation is only a startup protection.
-
-          Once the filter reaches Live, restore nominal Racc even if accel-bias
-          learning is still blocked by mag lock or low-sea observability.
-
-          Low-Hs/low-sea gating must disable only accel-bias mean learning.
-          It must never keep Racc inflated in Live, otherwise the vertical
-          displacement channel can blow up, especially Hs=0.27 m.
-        */
-        if (freeze_acc_bias_until_live_ &&
-            accel_bias_learning_enabled_ &&
-            !live_ok)
-        {
-            applyWarmupRacc_();
-        } else {
-            restoreNominalRaccIfNeeded_();
-        }
-    }
-
-    void updateAccelBiasSeaGate_(float dt, float var_wave) {
-        if (!std::isfinite(dt) || !(dt > 0.0f)) return;
-
-        const float vw =
-            std::isfinite(var_wave) && var_wave > 0.0f
-                ? var_wave
-                : 0.0f;
-
-        acc_bias_sea_metric_std_ = std::sqrt(vw);
-
-        if (!acc_bias_sea_gate_enabled_) {
-            const bool changed = !acc_bias_sea_ready_;
-
-            acc_bias_sea_ready_ = true;
-            acc_bias_sea_good_sec_ = acc_bias_sea_gate_hold_sec_;
-
-            if (changed) {
-                refreshAccelBiasLearning_();
-            }
-
-            return;
-        }
-
-        const bool context_ok =
-            startup_stage_ == StartupStage::Live &&
-            tuner_.isVarReady() &&
-            !freq_stillness_.isStill();
-
-        const bool good_now =
-            context_ok &&
-            std::isfinite(acc_bias_sea_metric_std_) &&
-            acc_bias_sea_metric_std_ >= acc_bias_sea_min_std_;
-
-        if (good_now) {
-            acc_bias_sea_good_sec_ += dt;
-
-            if (acc_bias_sea_good_sec_ >
-                acc_bias_sea_gate_hold_sec_ + 10.0f)
-            {
-                acc_bias_sea_good_sec_ =
-                    acc_bias_sea_gate_hold_sec_ + 10.0f;
-            }
-        } else {
-            acc_bias_sea_good_sec_ =
-                std::max(0.0f, acc_bias_sea_good_sec_ - 2.0f * dt);
-        }
-
-        const bool new_ready =
-            acc_bias_sea_good_sec_ >= acc_bias_sea_gate_hold_sec_;
-
-        if (new_ready != acc_bias_sea_ready_) {
-            acc_bias_sea_ready_ = new_ready;
-            refreshAccelBiasLearning_();
-        }
     }
 
     void apply_ou_tune_() {
@@ -923,8 +763,6 @@ private:
 
             var_wave *= atten;
         }
-
-        updateAccelBiasSeaGate_(dt, var_wave);
 
         var_wave = std::max(var_wave, 1e-6f);
 
@@ -1061,17 +899,6 @@ private:
         startup_stage_ = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
 
-        acc_bias_sea_ready_ =
-            !acc_bias_sea_gate_enabled_;
-
-        acc_bias_sea_good_sec_ =
-            acc_bias_sea_ready_
-                ? acc_bias_sea_gate_hold_sec_
-                : 0.0f;
-
-        acc_bias_sea_metric_std_ = 0.0f;
-        accel_bias_learning_active_ = false;
-
         if (!mekf_) return;
 
         mekf_->set_linear_block_enabled(false);
@@ -1081,6 +908,13 @@ private:
         first_mag_update_time_ = NAN;
 
         refreshAccelBiasLearning_();
+
+        if (freeze_acc_bias_until_live_) {
+            mekf_->set_Racc_std(
+                Eigen::Vector3f::Constant(Racc_warmup_std_));
+
+            warmup_Racc_active_ = true;
+        }
     }
 
     void enterLive_() {
@@ -1092,6 +926,17 @@ private:
         mekf_->set_linear_block_enabled(enable_linear_block_);
 
         refreshAccelBiasLearning_();
+
+        if (freeze_acc_bias_until_live_) {
+            if (warmup_Racc_active_ &&
+                Racc_nominal_std_.allFinite() &&
+                Racc_nominal_std_.maxCoeff() > 0.0f)
+            {
+                mekf_->set_Racc_std(Racc_nominal_std_);
+            }
+
+            warmup_Racc_active_ = false;
+        }
 
         apply_ou_tune_();
 
@@ -1107,22 +952,10 @@ private:
 
     bool freeze_acc_bias_until_live_ = true;
     bool accel_bias_learning_enabled_ = true;
-    bool accel_bias_learning_active_ = false;
-
     float Racc_warmup_std_ = 0.6f;
     bool warmup_Racc_active_ = false;
-
     Eigen::Vector3f Racc_nominal_std_ =
         Eigen::Vector3f::Constant(0.0f);
-
-    // Gate accel-bias learning only.
-    // This must never hold Racc inflated after Live.
-    bool acc_bias_sea_gate_enabled_ = true;
-    float acc_bias_sea_min_std_ = 0.75f;
-    float acc_bias_sea_gate_hold_sec_ = 2.0f;
-    float acc_bias_sea_good_sec_ = 0.0f;
-    float acc_bias_sea_metric_std_ = 0.0f;
-    bool acc_bias_sea_ready_ = false;
 
     bool accel_bias_locked_ = true;
     int mag_updates_applied_ = 0;
@@ -1219,12 +1052,6 @@ public:
         bool enable_acc_bias_learning = true;
         float Racc_warmup_std = 1.2f;
 
-        // Low-sea gate disables accel-bias learning only.
-        // It does not inflate Racc in Live.
-        bool accel_bias_sea_gate_enabled = true;
-        float accel_bias_sea_gate_min_accel_std = 0.75f;
-        float accel_bias_sea_gate_hold_sec = 2.0f;
-
         Eigen::Vector3f sigma_a =
             Eigen::Vector3f(0.2f, 0.2f, 0.2f);
 
@@ -1234,6 +1061,11 @@ public:
         Eigen::Vector3f sigma_m =
             Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
+        // Optional mag-start gate.
+        //
+        // Keep OFF by default because accel-LPF gravity alignment can be wrong
+        // in waves. If enabled, it only controls when mag collection may start.
+        // It is NOT used for mag leveling/reference construction.
         bool mag_require_gravity_gate = false;
         float mag_gravity_align_max_sin = 0.070f;
         float mag_gravity_align_hold_sec = 2.0f;
@@ -1242,19 +1074,42 @@ public:
         float mag_extreme_gyro_dps = 45.0f;
         float mag_init_min_mag_norm = 1e-3f;
 
-        int mag_min_samples = 1500;
+        // Correct mag acquisition path.
+        //
+        // Samples are accumulated in the current MEKF world frame:
+        //
+        //   mag_world = q_mekf_body_to_world * mag_body
+        //
+        // MagAutoTuner then computes the yaw gauge of that accumulated world
+        // frame and returns a gauge-fixed magnetic reference:
+        //
+        //   B_ref = [horizontal_magnitude, 0, vertical]
+        //
+        // The wrapper then removes the same yaw gauge once from the MEKF:
+        //
+        //   q_new = Rz(-yaw_gauge) * q_old
+        //
+        // After that, normal 3D mag EKF updates are enabled.
+        //
+        // This matches the fixed OU_III chain and avoids the tilt-only/no-reset
+        // path, which can let startup yaw-gauge error leak into gyro-Z bias.
+        int mag_min_samples = 1500;       // ~7.5 s at 200 Hz
         float mag_min_window_sec = 10.0f;
-        float mag_max_window_sec = 0.0f;
+        float mag_max_window_sec = 0.0f;  // no forced timeout
         float mag_sample_dt_sec = 1.0f / 200.0f;
 
+        // Keep off in waves. Weighting by accel/gyro can phase-select samples.
         bool mag_enable_quality_weighting = false;
         float mag_min_effective_weight = 0.0f;
         float mag_acc_norm_rel_soft = 0.22f;
         float mag_gyro_soft_dps = 45.0f;
 
+        // Kept only so existing config code still compiles.
+        // Not used by this corrected wrapper path.
         float mag_tilt_obs_acc_tau_sec = 2.5f;
         float mag_tilt_obs_norm_frac = 0.22f;
 
+        // Startup tilt observer for initializing the main filter.
         float bootstrap_tilt_obs_acc_tau_sec = 2.50f;
         float bootstrap_gravity_slow_tau_sec = 8.0f;
         float bootstrap_gravity_align_max_sin = 0.070f;
@@ -1310,16 +1165,8 @@ public:
         impl_.setAccelBiasLearningEnabled(cfg_.enable_acc_bias_learning);
         impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
 
-        impl_.setAccelBiasSeaGateEnabled(
-            cfg_.accel_bias_sea_gate_enabled);
-
-        impl_.setAccelBiasSeaGateMinAccelStd(
-            cfg_.accel_bias_sea_gate_min_accel_std);
-
-        impl_.setAccelBiasSeaGateHoldSec(
-            cfg_.accel_bias_sea_gate_hold_sec);
-
-        // Outer wrapper owns mag acquisition delay and reference gating.
+        // Outer wrapper owns mag delay and reference acquisition.
+        // Inner filter should accept mag immediately once outer wrapper releases it.
         impl_.setMagDelaySec(0.0f);
 
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
@@ -1566,6 +1413,28 @@ public:
 
             q_bw.normalize();
 
+            /*
+              Correct startup mag acquisition:
+
+                q_bw is BODY -> WORLD.
+
+                MagAutoTuner accumulates magnetometer samples in the same MEKF
+                world frame that will later consume the mag reference:
+
+                    mag_world = q_bw * mag_body
+
+                It then computes the yaw gauge of the average magnetic vector
+                in that frame and returns a gauge-fixed reference:
+
+                    B_ref = [horizontal_magnitude, 0, vertical]
+
+                We remove that same gauge once from the MEKF quaternion:
+
+                    q_new = Rz(-yaw_gauge) * q_bw
+
+                Then normal 3D mag updates can do small corrections without
+                pushing the startup yaw-gauge error into gyro-Z bias.
+            */
             if (mag_auto_tuner_.addSampleWithWorldQuatDt(
                     dt_mag,
                     q_bw,
