@@ -18,6 +18,9 @@ MAX_MARGIN_SEC = 4.0
 
 PARAM_RE = re.compile(r"^(SF_|OU_)")
 
+# "disp", "balanced", or "yaw"
+SCORE_MODE = "disp"
+
 RX = {
     "ds": re.compile(r"Processing\s+(.+?\.csv)"),
     "ang": re.compile(
@@ -38,14 +41,15 @@ BOOT_SPECS = {
     "SF_RACC_WARMUP_STD": (0.35, 0.65, "log"),
     "SF_ONLINE_TUNE_WARMUP_SEC": (4.0, 10.0, "log"),
     "SF_BOOT_TILT_ACC_TAU": (1.2, 2.8, "log"),
-    "SF_BOOT_GRAV_SLOW_TAU": (7.0, 11.0, "log"),
+    "SF_BOOT_GRAV_SLOW_TAU": (4.5, 12.0, "log"),
     "SF_BOOT_GRAV_ALIGN_MAX_SIN": (0.08, 0.16, "linear"),
     "SF_BOOT_GRAV_HOLD_SEC": (0.8, 2.0, "log"),
-    "SF_BOOT_GRAV_MIN_SEC": (2.0, 5.0, "linear"),
+    "SF_BOOT_GRAV_MIN_SEC": (2.0, 7.0, "linear"),
     "SF_BOOT_GRAV_NORM_FRAC": (0.18, 0.65, "linear"),
 }
 
-# OU_II keeps generic OU_* names.
+# OU_II common ranges kept close to the original productive OU_II sweep.
+# Env names are generic OU_*.
 OU_COMMON_SPECS = {
     "OU_TAU_COEFF": (1.15, 1.50, "log"),
     "OU_SIGMA_COEFF": (1.20, 1.80, "log"),
@@ -54,6 +58,18 @@ OU_COMMON_SPECS = {
     "OU_ACC_BIAS_INIT_STD": (0.02, 0.25, "log"),
 }
 
+# OU_III also uses generic OU_* env names, but with its own productive search ranges.
+OU_III_COMMON_SPECS = {
+    "OU_TAU_COEFF": (0.75, 1.75, "log"),
+    "OU_SIGMA_COEFF": (0.75, 2.10, "log"),
+    "OU_ACC_NOISE_FLOOR_SIGMA": (0.030, 0.120, "log"),
+    "OU_ADAPT_TAU_SEC": (1.0, 18.0, "log"),
+    "OU_ADAPT_EVERY_SECS": (0.025, 0.250, "log"),
+    "OU_FREQ_INPUT_CUTOFF_HZ": (0.25, 0.80, "log"),
+    "OU_ACC_BIAS_INIT_STD": (0.02, 0.35, "log"),
+}
+
+# OU_II was already fine. Keep its existing family-specific knobs.
 OU_II_EXTRA_SPECS = {
     "OU_P_FACTOR": (1.20, 1.80, "log"),
     "OU_R_P0_XY_FACTOR": (0.20, 0.45, "log"),
@@ -61,24 +77,11 @@ OU_II_EXTRA_SPECS = {
     "OU_R_V0_COEFF": (1.20, 2.50, "log"),
 }
 
-# OU_III uses family-specific names and narrowed productive ranges.
+# OU_III-specific analogues missing from the sweep.
 OU_III_EXTRA_SPECS = {
-    "OU_III_TAU_COEFF": (0.85, 1.25, "log"),
-    "OU_III_SIGMA_COEFF": (1.05, 1.65, "log"),
-    "OU_III_ACC_BIAS_INIT_STD": (0.05, 0.35, "log"),
-}
-
-# Optional. Off by default because this can overfit to sim seed / specific synthetic bias.
-BIAS_VECTOR_SPECS = {
-    "OU_ACC_BIAS_INIT_X": (-0.30, 0.30, "linear"),
-    "OU_ACC_BIAS_INIT_Y": (-0.30, 0.30, "linear"),
-    "OU_ACC_BIAS_INIT_Z": (-0.50, 0.50, "linear"),
-}
-
-OU_III_BIAS_VECTOR_SPECS = {
-    "OU_III_ACC_BIAS_INIT_X": (-0.30, 0.30, "linear"),
-    "OU_III_ACC_BIAS_INIT_Y": (-0.30, 0.30, "linear"),
-    "OU_III_ACC_BIAS_INIT_Z": (-0.50, 0.50, "linear"),
+    "OU_III_R_S_XY_FACTOR": (0.20, 0.65, "log"),
+    "OU_III_R_S_COEFF": (0.70, 3.20, "log"),
+    "OU_III_R_V0_COEFF": (0.70, 3.20, "log"),
 }
 
 # Optional. Off by default because this can hide OU problems by tuning mag behavior.
@@ -119,22 +122,19 @@ def build_family(fam):
     log(f"BUILD_DONE family={fam}")
 
 
-def make_space(fam, mode, tune_mag, tune_bias_vector):
+def make_space(fam, mode, tune_mag):
     specs = {}
 
     if mode in ("gravity", "full"):
         specs.update(BOOT_SPECS)
 
     if mode in ("ou", "full"):
-        if fam == "OU_III":
-            specs.update(OU_III_EXTRA_SPECS)
-            if tune_bias_vector:
-                specs.update(OU_III_BIAS_VECTOR_SPECS)
-        else:
+        if fam == "OU_II":
             specs.update(OU_COMMON_SPECS)
             specs.update(OU_II_EXTRA_SPECS)
-            if tune_bias_vector:
-                specs.update(BIAS_VECTOR_SPECS)
+        else:
+            specs.update(OU_III_COMMON_SPECS)
+            specs.update(OU_III_EXTRA_SPECS)
 
     if tune_mag:
         specs.update(MAG_SPECS)
@@ -142,17 +142,17 @@ def make_space(fam, mode, tune_mag, tune_bias_vector):
     return specs
 
 
-def allowed_keys(fam, mode, tune_mag, tune_bias_vector):
-    keys = set(make_space(fam, mode, tune_mag, tune_bias_vector).keys())
+def allowed_keys(fam, mode, tune_mag):
+    keys = set(make_space(fam, mode, tune_mag).keys())
     keys.add("SF_BOOT_GRAV_TIMEOUT_SEC")
     return keys
 
 
-def clean_params(p, fam=None, mode="full", tune_mag=False, tune_bias_vector=False):
+def clean_params(p, fam=None, mode="full", tune_mag=False):
     if fam is None:
         allowed = None
     else:
-        allowed = allowed_keys(fam, mode, tune_mag, tune_bias_vector)
+        allowed = allowed_keys(fam, mode, tune_mag)
 
     out = {}
     for k, v in p.items():
@@ -200,6 +200,7 @@ def sample_lhs(space, n, rng, require_timeout=False):
 
     attempts = 0
     max_attempts = max(1000, 60 * n)
+
     while len(out) < n and attempts < max_attempts:
         attempts += 1
         p = {k: value_from_unit(spec, rng.random()) for k, spec in space.items()}
@@ -227,6 +228,41 @@ def apply_timeout_constraint(p, rng):
     margin = MIN_MARGIN_SEC + rng.random() * (margin_max - MIN_MARGIN_SEC)
     p["SF_BOOT_GRAV_TIMEOUT_SEC"] = min_sec + hold_sec + margin
     return p["SF_BOOT_GRAV_TIMEOUT_SEC"] <= MAX_BOOT_TIMEOUT_SEC
+
+
+def finite_float(x, default=float("inf")):
+    try:
+        v = float(x)
+    except Exception:
+        return default
+    return v if math.isfinite(v) else default
+
+
+def coerce_candidate_to_space(p, space):
+    out = {}
+
+    for k, v in p.items():
+        if k == "SF_BOOT_GRAV_TIMEOUT_SEC":
+            out[k] = v
+            continue
+
+        if k not in space:
+            continue
+
+        lo, hi, kind = space[k]
+        fv = finite_float(v)
+
+        if not math.isfinite(fv):
+            continue
+
+        fv = min(max(fv, lo), hi)
+
+        if kind == "int":
+            out[k] = int(round(fv))
+        else:
+            out[k] = fv
+
+    return out
 
 
 def validate_candidate(p, space=None):
@@ -273,6 +309,7 @@ def candidate_values_in_space(p, space):
 
 
 def add_candidate_if_valid(out, cid, p, space):
+    p = coerce_candidate_to_space(p, space)
     if candidate_values_in_space(p, space):
         out.append((cid, p))
 
@@ -284,7 +321,7 @@ def find_space_key(space, *names):
     return None
 
 
-def probe_candidates(space):
+def probe_candidates(space, fam):
     out = []
 
     for k, spec in sorted(space.items()):
@@ -308,13 +345,17 @@ def probe_candidates(space):
             p["SF_BOOT_GRAV_TIMEOUT_SEC"] = timeout
             add_candidate_if_valid(out, f"practical_boot_{i:02d}", p, space)
 
-    tau_key = find_space_key(space, "OU_TAU_COEFF", "OU_III_TAU_COEFF")
-    sigma_key = find_space_key(space, "OU_SIGMA_COEFF", "OU_III_SIGMA_COEFF")
-    bias_std_key = find_space_key(space, "OU_ACC_BIAS_INIT_STD", "OU_III_ACC_BIAS_INIT_STD")
-    adapt_tau_key = find_space_key(space, "OU_ADAPT_TAU_SEC", "OU_III_ADAPT_TAU_SEC")
-    adapt_every_key = find_space_key(space, "OU_ADAPT_EVERY_SECS", "OU_III_ADAPT_EVERY_SECS")
-    floor_key = find_space_key(space, "OU_III_ACC_NOISE_FLOOR_SIGMA")
-    freq_key = find_space_key(space, "OU_III_FREQ_INPUT_CUTOFF_HZ")
+    tau_key = find_space_key(space, "OU_TAU_COEFF")
+    sigma_key = find_space_key(space, "OU_SIGMA_COEFF")
+    bias_std_key = find_space_key(space, "OU_ACC_BIAS_INIT_STD")
+    adapt_tau_key = find_space_key(space, "OU_ADAPT_TAU_SEC")
+    adapt_every_key = find_space_key(space, "OU_ADAPT_EVERY_SECS")
+    floor_key = find_space_key(space, "OU_ACC_NOISE_FLOOR_SIGMA")
+    freq_key = find_space_key(space, "OU_FREQ_INPUT_CUTOFF_HZ")
+
+    rs_xy_key = find_space_key(space, "OU_R_P0_XY_FACTOR", "OU_III_R_S_XY_FACTOR")
+    rs_coeff_key = find_space_key(space, "OU_R_P0_COEFF", "OU_III_R_S_COEFF")
+    rv0_coeff_key = find_space_key(space, "OU_R_V0_COEFF", "OU_III_R_V0_COEFF")
 
     if tau_key and sigma_key:
         practical = [
@@ -332,66 +373,78 @@ def probe_candidates(space):
                     {
                         tau_key: 0.70,
                         sigma_key: 1.30,
-                        bias_std_key: 0.5,
+                        bias_std_key: 0.25,
                         adapt_tau_key: 1.25,
                         adapt_every_key: 0.025,
                     },
                     {
                         tau_key: 1.50,
                         sigma_key: 0.75,
-                        bias_std_key: 0.6,
+                        bias_std_key: 0.30,
                         adapt_tau_key: 8.0,
                         adapt_every_key: 0.20,
                     },
                     {
                         tau_key: 0.60,
                         sigma_key: 2.10,
-                        bias_std_key: 0.8,
+                        bias_std_key: 0.35,
                     },
                     {
                         tau_key: 1.20,
                         sigma_key: 0.75,
-                        bias_std_key: 1.15,
+                        bias_std_key: 0.35,
                     },
                 ]
             )
 
-        bx_key = find_space_key(space, "OU_ACC_BIAS_INIT_X", "OU_III_ACC_BIAS_INIT_X")
-        by_key = find_space_key(space, "OU_ACC_BIAS_INIT_Y", "OU_III_ACC_BIAS_INIT_Y")
-        bz_key = find_space_key(space, "OU_ACC_BIAS_INIT_Z", "OU_III_ACC_BIAS_INIT_Z")
-
-        if bias_std_key and bx_key and by_key and bz_key:
+        if floor_key and freq_key:
             practical.extend(
                 [
                     {
-                        bias_std_key: 0.04,
-                        bx_key: 0.00,
-                        by_key: 0.00,
-                        bz_key: 0.00,
+                        tau_key: 1.00,
+                        sigma_key: 1.25,
+                        floor_key: 0.050,
+                        freq_key: 0.35,
                     },
                     {
-                        bias_std_key: 0.10,
-                        bx_key: 0.03,
-                        by_key: -0.03,
-                        bz_key: 0.05,
+                        tau_key: 1.05,
+                        sigma_key: 1.35,
+                        floor_key: 0.065,
+                        freq_key: 0.42,
                     },
                     {
-                        bias_std_key: 0.10,
-                        bx_key: -0.03,
-                        by_key: 0.03,
-                        bz_key: -0.05,
+                        tau_key: 1.15,
+                        sigma_key: 1.55,
+                        floor_key: 0.080,
+                        freq_key: 0.55,
+                    },
+                ]
+            )
+
+        if rs_xy_key and rs_coeff_key and rv0_coeff_key:
+            practical.extend(
+                [
+                    {
+                        rs_xy_key: 0.25,
+                        rs_coeff_key: 1.00,
+                        rv0_coeff_key: 1.00,
                     },
                     {
-                        bias_std_key: 0.25,
-                        bx_key: 0.08,
-                        by_key: -0.08,
-                        bz_key: 0.12,
+                        rs_xy_key: 0.35,
+                        rs_coeff_key: 1.40,
+                        rv0_coeff_key: 1.30,
                     },
                     {
-                        bias_std_key: 0.25,
-                        bx_key: -0.08,
-                        by_key: 0.08,
-                        bz_key: -0.12,
+                        rs_xy_key: 0.50,
+                        rs_coeff_key: 2.00,
+                        rv0_coeff_key: 1.70,
+                    },
+                    {
+                        tau_key: 1.05,
+                        sigma_key: 1.35,
+                        rs_xy_key: 0.35,
+                        rs_coeff_key: 1.50,
+                        rv0_coeff_key: 1.50,
                     },
                 ]
             )
@@ -399,15 +452,18 @@ def probe_candidates(space):
         for i, p in enumerate(practical, 1):
             add_candidate_if_valid(out, f"practical_ou_{i:02d}", p, space)
 
-    # Productive OU_III bundle seeds from previous useful mc_0017 neighborhood.
     if (
-        tau_key
+        fam == "OU_III"
+        and tau_key
         and sigma_key
         and floor_key
         and adapt_tau_key
         and adapt_every_key
         and freq_key
         and bias_std_key
+        and rs_xy_key
+        and rs_coeff_key
+        and rv0_coeff_key
     ):
         productive_ou3 = [
             {
@@ -418,33 +474,45 @@ def probe_candidates(space):
                 adapt_every_key: 0.146,
                 freq_key: 0.423,
                 bias_std_key: 0.18,
+                rs_xy_key: 0.35,
+                rs_coeff_key: 1.50,
+                rv0_coeff_key: 1.50,
             },
             {
                 tau_key: 1.00,
                 sigma_key: 1.25,
                 floor_key: 0.055,
                 adapt_tau_key: 10.0,
-                adapt_every_key: 0.12,
-                freq_key: 0.40,
+                adapt_every_key: 0.120,
+                freq_key: 0.400,
                 bias_std_key: 0.12,
+                rs_xy_key: 0.30,
+                rs_coeff_key: 1.25,
+                rv0_coeff_key: 1.25,
             },
             {
                 tau_key: 1.10,
                 sigma_key: 1.45,
                 floor_key: 0.070,
                 adapt_tau_key: 14.0,
-                adapt_every_key: 0.18,
-                freq_key: 0.50,
+                adapt_every_key: 0.180,
+                freq_key: 0.500,
                 bias_std_key: 0.22,
+                rs_xy_key: 0.45,
+                rs_coeff_key: 1.80,
+                rv0_coeff_key: 1.60,
             },
             {
                 tau_key: 0.95,
                 sigma_key: 1.20,
                 floor_key: 0.050,
                 adapt_tau_key: 8.0,
-                adapt_every_key: 0.10,
-                freq_key: 0.35,
+                adapt_every_key: 0.100,
+                freq_key: 0.350,
                 bias_std_key: 0.08,
+                rs_xy_key: 0.25,
+                rs_coeff_key: 1.10,
+                rv0_coeff_key: 1.10,
             },
         ]
 
@@ -564,6 +632,7 @@ def synthetic_failure_row(fam, cid, p, tier, seed, stage, reason, returncode):
         "score": float("inf"),
         "score_conservative": float("inf"),
         "score_disp": float("inf"),
+        "score_yaw": float("inf"),
     }
     row.update(p)
     return row
@@ -580,7 +649,6 @@ def run_candidate(
     run_timeout_sec,
     mode,
     tune_mag,
-    tune_bias_vector,
 ):
     tdir = ROOT / "tests" / family_subdir(fam)
     bin_name = family_bin(fam)
@@ -590,7 +658,6 @@ def run_candidate(
         fam=fam,
         mode=mode,
         tune_mag=tune_mag,
-        tune_bias_vector=tune_bias_vector,
     )
 
     env = os.environ.copy()
@@ -657,14 +724,6 @@ def run_candidate(
     return rows
 
 
-def finite_float(x, default=float("inf")):
-    try:
-        v = float(x)
-    except Exception:
-        return default
-    return v if math.isfinite(v) else default
-
-
 def safe_ratio(num, den):
     n = finite_float(num, 1e-9)
     d = finite_float(den, 1e-9)
@@ -690,6 +749,7 @@ def percentile(vals, p):
 
 def score_rows(rows):
     by = defaultdict(list)
+
     for r in rows:
         if not r.get("rejected_before_run"):
             by[(r["family"], r["candidate"], r["seed"], r["tier"], r["stage"])].append(r)
@@ -715,6 +775,7 @@ def score_rows(rows):
                 r["score"] = float("inf")
                 r["score_conservative"] = float("inf")
                 r["score_disp"] = float("inf")
+                r["score_yaw"] = float("inf")
                 r["quality_gate_pass"] = False
                 fr = (r.get("fail_reason") or "").strip(";")
                 r["fail_reason"] = (fr + ";missing_matching_baseline").strip(";")
@@ -742,6 +803,7 @@ def score_rows(rows):
         if not rp or not z or not r3 or not yaw or not acc:
             conservative_score = float("inf")
             disp_score = float("inf")
+            yaw_score = float("inf")
         else:
             conservative_score = (
                 3.00 * percentile(r3, 0.75)
@@ -757,9 +819,6 @@ def score_rows(rows):
                 + (100.0 if any_fail else 0.0)
             )
 
-            # Productive displacement-focused score.
-            # This intentionally lets useful 3D/Z improvements survive even if
-            # roll/pitch or bias is mildly worse, while quality gates still reject hard failures.
             disp_score = (
                 8.00 * percentile(r3, 0.75)
                 + 4.00 * percentile(z, 0.75)
@@ -773,10 +832,29 @@ def score_rows(rows):
                 + (100.0 if any_fail else 0.0)
             )
 
+            yaw_score = (
+                6.00 * percentile(yaw, 0.75)
+                + 4.00 * max(yaw)
+                + 2.00 * percentile(rp, 0.75)
+                + 1.25 * max(rp)
+                + 1.50 * percentile(r3, 0.75)
+                + 0.75 * percentile(z, 0.75)
+                + 0.25 * percentile(acc, 0.75)
+                + 0.20 * max(acc)
+                + (100.0 if any_fail else 0.0)
+            )
+
         for r in items:
             r["score_conservative"] = conservative_score
             r["score_disp"] = disp_score
-            r["score"] = disp_score
+            r["score_yaw"] = yaw_score
+
+            if SCORE_MODE == "balanced":
+                r["score"] = conservative_score
+            elif SCORE_MODE == "yaw":
+                r["score"] = yaw_score
+            else:
+                r["score"] = disp_score
 
 
 def aggregate_candidates(rows, fam, tier, stage=None):
@@ -821,6 +899,7 @@ def aggregate_candidates(rows, fam, tier, stage=None):
                     "max_score": max(finite_float(r["score"]) for r in items),
                     "mean_score_conservative": sum(finite_float(r.get("score_conservative")) for r in items) / len(items),
                     "mean_score_disp": sum(finite_float(r.get("score_disp")) for r in items) / len(items),
+                    "mean_score_yaw": sum(finite_float(r.get("score_yaw")) for r in items) / len(items),
                     "mean_rms3d": sum(finite_float(r["rms_3d"]) for r in items) / len(items),
                     "mean_z_rms": sum(finite_float(r["z_rms"]) for r in items) / len(items),
                     "mean_roll_pitch_rms": sum(finite_float(r["roll_pitch_rms_norm"]) for r in items) / len(items),
@@ -843,6 +922,7 @@ def aggregate_candidates(rows, fam, tier, stage=None):
                     "max_score": float("inf"),
                     "mean_score_conservative": float("inf"),
                     "mean_score_disp": float("inf"),
+                    "mean_score_yaw": float("inf"),
                     "mean_rms3d": float("inf"),
                     "mean_z_rms": float("inf"),
                     "mean_roll_pitch_rms": float("inf"),
@@ -936,7 +1016,6 @@ def eval_candidates(
     run_timeout_sec,
     mode,
     tune_mag,
-    tune_bias_vector,
     space,
 ):
     rows = []
@@ -953,7 +1032,6 @@ def eval_candidates(
             fam=fam,
             mode=mode,
             tune_mag=tune_mag,
-            tune_bias_vector=tune_bias_vector,
         )
 
         ok, reason = validate_candidate(p, space)
@@ -985,7 +1063,6 @@ def eval_candidates(
                 run_timeout_sec=run_timeout_sec,
                 mode=mode,
                 tune_mag=tune_mag,
-                tune_bias_vector=tune_bias_vector,
             )
 
         rows.extend(run_rows)
@@ -1036,7 +1113,10 @@ def print_stage_summary(stage, agg):
     for t in top[:5]:
         log(
             f"STAGE_{stage}_TOP_CAND candidate={t['candidate']} "
-            f"score={t['mean_score']:.6g} score_old={t.get('mean_score_conservative', float('nan')):.6g} "
+            f"score={t['mean_score']:.6g} "
+            f"score_disp={t.get('mean_score_disp', float('nan')):.6g} "
+            f"score_yaw={t.get('mean_score_yaw', float('nan')):.6g} "
+            f"score_old={t.get('mean_score_conservative', float('nan')):.6g} "
             f"rms3d={t['mean_rms3d']:.6g} "
             f"z={t['mean_z_rms']:.6g} rp={t['mean_roll_pitch_rms']:.6g} "
             f"yaw={t['mean_yaw_rms']:.6g} acc_bias={t['mean_acc_bias_rms3d']:.6g} "
@@ -1265,6 +1345,8 @@ def final_report(rows_e, fam, tier):
 
 
 def main():
+    global SCORE_MODE
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", choices=["gravity", "ou", "full"], default="full")
     ap.add_argument("--family", choices=["OU_II", "OU_III", "both"], default="both")
@@ -1279,12 +1361,14 @@ def main():
     ap.add_argument("--no-build", action="store_true", default=False)
     ap.add_argument("--tune-mag", action="store_true", default=False)
     ap.add_argument(
-        "--tune-bias-vector",
-        action="store_true",
-        default=False,
-        help="Also sweep OU_ACC_BIAS_INIT_X/Y/Z or OU_III_ACC_BIAS_INIT_X/Y/Z. Off by default because it can overfit.",
+        "--score-mode",
+        choices=["disp", "balanced", "yaw"],
+        default="disp",
+        help="Score objective. disp is displacement-focused, balanced is conservative, yaw prioritizes yaw stability.",
     )
+
     args = ap.parse_args()
+    SCORE_MODE = args.score_mode
 
     fams = ["OU_II", "OU_III"] if args.family == "both" else [args.family]
     all_rows = []
@@ -1296,16 +1380,17 @@ def main():
     for fam in fams:
         log(
             f"\n===== FAMILY_START {fam} mode={args.mode} samples={args.samples} "
-            f"seed={args.seed} tune_mag={args.tune_mag} tune_bias_vector={args.tune_bias_vector} ====="
+            f"seed={args.seed} tune_mag={args.tune_mag} "
+            f"score_mode={args.score_mode} ====="
         )
 
         rng = random.Random(args.seed + (0 if fam == "OU_II" else 1000000))
-        space = make_space(fam, args.mode, args.tune_mag, args.tune_bias_vector)
+        space = make_space(fam, args.mode, args.tune_mag)
         require_timeout = args.mode in ("gravity", "full")
 
         log(f"SEARCH_SPACE family={fam} keys={','.join(sorted(space.keys()))}")
 
-        stage_a = dedupe_candidates([("baseline", {})] + probe_candidates(space))
+        stage_a = dedupe_candidates([("baseline", {})] + probe_candidates(space, fam))
         rows_a = eval_candidates(
             fam=fam,
             candidates=stage_a,
@@ -1316,7 +1401,6 @@ def main():
             run_timeout_sec=args.run_timeout_sec,
             mode=args.mode,
             tune_mag=args.tune_mag,
-            tune_bias_vector=args.tune_bias_vector,
             space=space,
         )
         all_rows.extend(rows_a)
@@ -1329,6 +1413,7 @@ def main():
             (f"mc_{i:04d}", p)
             for i, p in enumerate(sample_lhs(space, args.samples, rng, require_timeout=require_timeout), 1)
         ]
+
         rows_b = eval_candidates(
             fam=fam,
             candidates=[("baseline", {})] + mc,
@@ -1339,7 +1424,6 @@ def main():
             run_timeout_sec=args.run_timeout_sec,
             mode=args.mode,
             tune_mag=args.tune_mag,
-            tune_bias_vector=args.tune_bias_vector,
             space=space,
         )
         all_rows.extend(rows_b)
@@ -1376,7 +1460,6 @@ def main():
                 run_timeout_sec=args.run_timeout_sec,
                 mode=args.mode,
                 tune_mag=args.tune_mag,
-                tune_bias_vector=args.tune_bias_vector,
                 space=space,
             )
             all_rows.extend(rows_c)
@@ -1409,7 +1492,6 @@ def main():
                 run_timeout_sec=args.run_timeout_sec,
                 mode=args.mode,
                 tune_mag=args.tune_mag,
-                tune_bias_vector=args.tune_bias_vector,
                 space=space,
             )
             rows_e.extend(seed_rows)
@@ -1425,4 +1507,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
