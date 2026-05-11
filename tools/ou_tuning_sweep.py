@@ -81,7 +81,6 @@ OU_II_EXTRA_SPECS = {
 OU_III_EXTRA_SPECS = {
     "OU_III_R_S_XY_FACTOR": (0.20, 0.65, "log"),
     "OU_III_R_S_COEFF": (0.70, 3.20, "log"),
-    "OU_III_R_V0_COEFF": (0.70, 3.20, "log"),
 }
 
 # Optional. Off by default because this can hide OU problems by tuning mag behavior.
