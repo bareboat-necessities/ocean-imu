@@ -292,9 +292,6 @@ public:
             (static_cast<float>(time_) - first_mag_update_time_) > 1.0f)
         {
             accel_bias_locked_ = false;
-
-            // Do not blindly restore nominal Racc here.
-            // refreshAccelBiasLearning_() decides based on Live + mag + sea gate.
             refreshAccelBiasLearning_();
         }
     }
@@ -508,13 +505,13 @@ public:
     void setAccelBiasSeaGateEnabled(bool en) {
         acc_bias_sea_gate_enabled_ = en;
 
-        if (!en) {
-            acc_bias_sea_ready_ = true;
-            acc_bias_sea_good_sec_ = acc_bias_sea_gate_hold_sec_;
-        } else {
-            acc_bias_sea_ready_ = false;
-            acc_bias_sea_good_sec_ = 0.0f;
-        }
+        acc_bias_sea_ready_ =
+            !acc_bias_sea_gate_enabled_;
+
+        acc_bias_sea_good_sec_ =
+            acc_bias_sea_ready_
+                ? acc_bias_sea_gate_hold_sec_
+                : 0.0f;
 
         refreshAccelBiasLearning_();
     }
@@ -522,8 +519,11 @@ public:
     void setAccelBiasSeaGateMinAccelStd(float s) {
         if (std::isfinite(s) && s >= 0.0f) {
             acc_bias_sea_min_std_ = s;
-            acc_bias_sea_ready_ = false;
-            acc_bias_sea_good_sec_ = 0.0f;
+            acc_bias_sea_ready_ = !acc_bias_sea_gate_enabled_;
+            acc_bias_sea_good_sec_ =
+                acc_bias_sea_ready_
+                    ? acc_bias_sea_gate_hold_sec_
+                    : 0.0f;
             refreshAccelBiasLearning_();
         }
     }
@@ -531,8 +531,11 @@ public:
     void setAccelBiasSeaGateHoldSec(float s) {
         if (std::isfinite(s) && s >= 0.0f) {
             acc_bias_sea_gate_hold_sec_ = s;
-            acc_bias_sea_ready_ = false;
-            acc_bias_sea_good_sec_ = 0.0f;
+            acc_bias_sea_ready_ = !acc_bias_sea_gate_enabled_;
+            acc_bias_sea_good_sec_ =
+                acc_bias_sea_ready_
+                    ? acc_bias_sea_gate_hold_sec_
+                    : 0.0f;
             refreshAccelBiasLearning_();
         }
     }
@@ -727,22 +730,21 @@ private:
         mekf_->set_acc_bias_updates_enabled(allow);
 
         /*
-          Low-Hs fix:
+          Critical fix:
 
-          If accel-bias learning is configured ON but temporarily blocked by
-          startup, mag, or sea observability, keep inflated Racc. This prevents
-          weakly observable horizontal accel-bias states from absorbing
-          roll/pitch/wave content in low-Hs PM/JONSWAP cases.
+          Racc warmup inflation is only a startup protection.
 
-          If user explicitly disables accel-bias learning, restore nominal Racc
-          once available so the attitude path is not permanently over-inflated.
+          Once the filter reaches Live, restore nominal Racc even if accel-bias
+          learning is still blocked by mag lock or low-sea observability.
+
+          Low-Hs/low-sea gating must disable only accel-bias mean learning.
+          It must never keep Racc inflated in Live, otherwise the vertical
+          displacement channel can blow up, especially Hs=0.27 m.
         */
-        const bool hold_racc =
-            freeze_acc_bias_until_live_ &&
+        if (freeze_acc_bias_until_live_ &&
             accel_bias_learning_enabled_ &&
-            (!live_ok || !mag_ok || !sea_ok);
-
-        if (hold_racc) {
+            !live_ok)
+        {
             applyWarmupRacc_();
         } else {
             restoreNominalRaccIfNeeded_();
@@ -1059,8 +1061,14 @@ private:
         startup_stage_ = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
 
-        acc_bias_sea_ready_ = false;
-        acc_bias_sea_good_sec_ = 0.0f;
+        acc_bias_sea_ready_ =
+            !acc_bias_sea_gate_enabled_;
+
+        acc_bias_sea_good_sec_ =
+            acc_bias_sea_ready_
+                ? acc_bias_sea_gate_hold_sec_
+                : 0.0f;
+
         acc_bias_sea_metric_std_ = 0.0f;
         accel_bias_learning_active_ = false;
 
@@ -1083,8 +1091,6 @@ private:
 
         mekf_->set_linear_block_enabled(enable_linear_block_);
 
-        // Do not restore nominal Racc unconditionally.
-        // If mag is locked or sea excitation is low, Racc stays inflated.
         refreshAccelBiasLearning_();
 
         apply_ou_tune_();
@@ -1109,8 +1115,8 @@ private:
     Eigen::Vector3f Racc_nominal_std_ =
         Eigen::Vector3f::Constant(0.0f);
 
-    // Sea-observability gate for accel-bias learning.
-    // Low-Hs seas are weakly observable; do not let horizontal ba absorb tilt/wave.
+    // Gate accel-bias learning only.
+    // This must never hold Racc inflated after Live.
     bool acc_bias_sea_gate_enabled_ = true;
     float acc_bias_sea_min_std_ = 0.75f;
     float acc_bias_sea_gate_hold_sec_ = 2.0f;
@@ -1213,7 +1219,8 @@ public:
         bool enable_acc_bias_learning = true;
         float Racc_warmup_std = 1.2f;
 
-        // Prevent accel-bias learning in low-Hs / weakly observable seas.
+        // Low-sea gate disables accel-bias learning only.
+        // It does not inflate Racc in Live.
         bool accel_bias_sea_gate_enabled = true;
         float accel_bias_sea_gate_min_accel_std = 0.75f;
         float accel_bias_sea_gate_hold_sec = 2.0f;
@@ -1235,30 +1242,9 @@ public:
         float mag_extreme_gyro_dps = 45.0f;
         float mag_init_min_mag_norm = 1e-3f;
 
-        /*
-          Correct mag acquisition path:
-
-            1. Accumulate mag samples in the current MEKF world frame:
-
-                   mag_world = q_mekf_body_to_world * mag_body
-
-            2. MagAutoTuner computes the yaw gauge of that accumulated world
-               frame and returns a gauge-fixed magnetic reference:
-
-                   B_ref = [horizontal_magnitude, 0, vertical]
-
-            3. The wrapper removes the same yaw gauge once from the MEKF:
-
-                   q_new = Rz(-yaw_gauge) * q_old
-
-            4. Normal 3D mag EKF updates then run.
-
-          This avoids the tilt-only/no-reset path that can leak startup
-          yaw-gauge error into gyro-Z bias.
-        */
-        int mag_min_samples = 1500;       // ~7.5 s at 200 Hz
+        int mag_min_samples = 1500;
         float mag_min_window_sec = 10.0f;
-        float mag_max_window_sec = 0.0f;  // no forced timeout
+        float mag_max_window_sec = 0.0f;
         float mag_sample_dt_sec = 1.0f / 200.0f;
 
         bool mag_enable_quality_weighting = false;
@@ -1266,12 +1252,9 @@ public:
         float mag_acc_norm_rel_soft = 0.22f;
         float mag_gyro_soft_dps = 45.0f;
 
-        // Kept only so existing config code still compiles.
-        // Not used by this corrected wrapper path.
         float mag_tilt_obs_acc_tau_sec = 2.5f;
         float mag_tilt_obs_norm_frac = 0.22f;
 
-        // Startup tilt observer for initializing the main filter.
         float bootstrap_tilt_obs_acc_tau_sec = 2.50f;
         float bootstrap_gravity_slow_tau_sec = 8.0f;
         float bootstrap_gravity_align_max_sin = 0.070f;
@@ -1337,7 +1320,6 @@ public:
             cfg_.accel_bias_sea_gate_hold_sec);
 
         // Outer wrapper owns mag acquisition delay and reference gating.
-        // Inner filter accepts mag immediately once outer wrapper releases it.
         impl_.setMagDelaySec(0.0f);
 
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
