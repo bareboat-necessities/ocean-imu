@@ -65,10 +65,6 @@ OU_II_EXTRA_SPECS = {
 OU_III_EXTRA_SPECS = {
     "OU_III_TAU_COEFF": (0.85, 1.25, "log"),
     "OU_III_SIGMA_COEFF": (1.05, 1.65, "log"),
-    "OU_III_ACC_NOISE_FLOOR_SIGMA": (0.040, 0.090, "log"),
-    "OU_III_ADAPT_TAU_SEC": (6.0, 16.0, "log"),
-    "OU_III_ADAPT_EVERY_SECS": (0.08, 0.24, "log"),
-    "OU_III_FREQ_INPUT_CUTOFF_HZ": (0.30, 0.70, "log"),
     "OU_III_ACC_BIAS_INIT_STD": (0.05, 0.35, "log"),
 }
 
