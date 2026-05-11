@@ -116,7 +116,7 @@ jobs:
           if-no-files-found: error
 
   ou-tuning:
-    if: ${{ (false && github.event_name == 'push') }}
+    if: ${{ (true && github.event_name == 'push') }}
     runs-on: ubuntu-latest
 
     strategy:
