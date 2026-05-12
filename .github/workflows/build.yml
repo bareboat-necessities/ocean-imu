@@ -162,7 +162,7 @@ jobs:
             --family ${{ matrix.family }} \
             --mode full \
             --samples 48 \
-            --seed 37 \
+            --seed 7 \
             --tier quick \
             --top-k 5 \
             --tune-mag \
