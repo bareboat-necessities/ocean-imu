@@ -846,6 +846,12 @@ public:
         float mag_max_window_sec = 0.0f;          // no forced timeout
         float mag_sample_dt_sec  = 1.0f / 200.0f;
 
+        // Keep off in waves. Accel/gyro weighting can phase-select wave motion.
+        bool  mag_enable_quality_weighting = false;
+        float mag_min_effective_weight     = 0.0f;
+        float mag_acc_norm_rel_soft        = 0.22f;
+        float mag_gyro_soft_dps            = 45.0f;
+
         // Bootstrap tilt observer for dynamic motion in waves.
         float bootstrap_tilt_obs_acc_tau_sec  = 2.15f; // accel correction time constant
         float bootstrap_gravity_slow_tau_sec  = 6.0f; // slow gravity reference LPF
