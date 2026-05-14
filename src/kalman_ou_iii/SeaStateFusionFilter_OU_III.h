@@ -774,7 +774,7 @@ private:
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
     float mag_delay_sec_          = MAG_DELAY_SEC;
 
-    float R_S_xy_factor_ = 0.31f;
+    float R_S_xy_factor_ = 0.36f;
     float S_factor_      = 1.87f;
 
     TrackingPolicy                  tracker_policy_{};
