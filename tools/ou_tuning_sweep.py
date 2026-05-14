@@ -51,8 +51,8 @@ BOOT_SPECS = {
 # OU_II common ranges kept close to the original productive OU_II sweep.
 # Env names are generic OU_*.
 OU_COMMON_SPECS = {
-    "OU_TAU_COEFF": (1.15, 1.50, "log"),
     "OU_SIGMA_COEFF": (1.20, 1.80, "log"),
+    "OU_TAU_COEFF": (1.15, 1.50, "log"),
     "OU_ADAPT_TAU_SEC": (1.0, 2.2, "log"),
     "OU_ADAPT_EVERY_SECS": (0.05, 0.15, "log"),
     "OU_ACC_BIAS_INIT_STD": (0.02, 0.25, "log"),
@@ -60,8 +60,8 @@ OU_COMMON_SPECS = {
 
 # OU_III also uses generic OU_* env names, but with its own productive search ranges.
 OU_III_COMMON_SPECS = {
-    "OU_TAU_COEFF": (0.75, 1.75, "log"),
     "OU_SIGMA_COEFF": (0.75, 2.10, "log"),
+    "OU_TAU_COEFF": (0.75, 1.75, "log"),
     "OU_ADAPT_TAU_SEC": (1.0, 18.0, "log"),
     "OU_ADAPT_EVERY_SECS": (0.025, 0.250, "log"),
     "OU_ACC_BIAS_INIT_STD": (0.02, 0.35, "log"),
@@ -69,27 +69,27 @@ OU_III_COMMON_SPECS = {
 
 # OU_II was already fine. Keep its existing family-specific knobs.
 OU_II_EXTRA_SPECS = {
-    "OU_P_FACTOR": (1.20, 1.80, "log"),
-    "OU_R_P0_XY_FACTOR": (0.20, 0.45, "log"),
     "OU_R_P0_COEFF": (1.20, 2.50, "log"),
+    "OU_R_P0_XY_FACTOR": (0.20, 0.45, "log"),
+    "OU_P_FACTOR": (1.20, 1.80, "log"),
     "OU_R_V0_COEFF": (1.20, 2.50, "log"),
 }
 
 # OU_III-specific analogues missing from the sweep.
 OU_III_EXTRA_SPECS = {
-    "OU_III_R_S_XY_FACTOR": (0.20, 0.65, "log"),
     "OU_III_R_S_COEFF": (0.70, 3.20, "log"),
+    "OU_III_R_S_XY_FACTOR": (0.20, 0.65, "log"),
 }
 
 # Optional. Off by default because this can hide OU problems by tuning mag behavior.
 MAG_SPECS = {
+    "SF_MAG_MIN_SAMPLES": (4, 60, "int"),
     "SF_MAG_DELAY_SEC": (0.5, 10.0, "linear"),
     "SF_MAG_GRAV_ALIGN_MAX_SIN": (0.05, 0.31, "linear"),
     "SF_MAG_GRAV_ALIGN_HOLD_SEC": (0.15, 3.0, "log"),
     "SF_MAG_GRAV_ALIGN_LPF_TAU": (0.4, 8.0, "log"),
     "SF_MAG_TILT_FALLBACK_SEC": (1.0, 12.0, "log"),
     "SF_MAG_EXTREME_GYRO_DPS": (80.0, 480.0, "log"),
-    "SF_MAG_MIN_SAMPLES": (4, 60, "int"),
 }
 
 
