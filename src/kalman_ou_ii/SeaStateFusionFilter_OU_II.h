@@ -830,7 +830,7 @@ public:
         //   q_new = Rz(-yaw_gauge) * q_old
         //
         // Then normal 3D mag EKF updates run.
-        int   mag_min_samples    = 1500;          // ~7.5 s at 200 Hz
+        int   mag_min_samples    = 300;          // ~7.5 s at 200 Hz
         float mag_min_window_sec = 10.0f;
         float mag_max_window_sec = 0.0f;          // no forced timeout
         float mag_sample_dt_sec  = 1.0f / 200.0f;
@@ -843,10 +843,10 @@ public:
 
         // Bootstrap tilt observer for dynamic motion in waves.
         float bootstrap_tilt_obs_acc_tau_sec  = 2.50f;  // accel correction time constant
-        float bootstrap_gravity_slow_tau_sec  = 8.0f;   // slow gravity reference LPF
+        float bootstrap_gravity_slow_tau_sec  = 6.0f;   // slow gravity reference LPF
         float bootstrap_gravity_align_max_sin = 0.070f; // sin(deg)
-        float bootstrap_gravity_hold_sec      = 2.0f;
-        float bootstrap_gravity_min_sec       = 2.4f;
+        float bootstrap_gravity_hold_sec      = 2.3f;
+        float bootstrap_gravity_min_sec       = 8.0f;
         float bootstrap_gravity_timeout_sec   = 15.0f;
         float bootstrap_gravity_norm_frac     = 0.22f;  // downweight accel when |a| departs from g
 
