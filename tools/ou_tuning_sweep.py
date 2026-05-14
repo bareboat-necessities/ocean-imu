@@ -19,7 +19,7 @@ MAX_MARGIN_SEC = 4.0
 PARAM_RE = re.compile(r"^(SF_|OU_)")
 
 # "disp", "balanced", or "yaw"
-SCORE_MODE = "yaw"
+SCORE_MODE = "balanced"
 
 RX = {
     "ds": re.compile(r"Processing\s+(.+?\.csv)"),
