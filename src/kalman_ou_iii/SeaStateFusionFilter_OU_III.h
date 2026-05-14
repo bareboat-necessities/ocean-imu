@@ -828,7 +828,23 @@ public:
         float mag_tilt_fallback_sec       = 30.0f;
         float mag_extreme_gyro_dps        = 45.0f; // veto only truly violent motion
         float mag_init_min_mag_norm       = 1e-3f;
-        int   mag_min_samples             = 295;
+
+        // Mag reference acquisition.
+        // Samples are accumulated in the current MEKF world frame:
+        //   mag_world = q_mekf_body_to_world * mag_body
+        //
+        // MagAutoTuner then estimates the yaw gauge of that world frame and returns
+        // a gauge-fixed reference:
+        //   B_ref = [horizontal_magnitude, 0, vertical]
+        //
+        // The wrapper removes that same yaw gauge once from the MEKF:
+        //   q_new = Rz(-yaw_gauge) * q_old
+        //
+        // Then normal 3D mag EKF updates run.
+        int   mag_min_samples    = 1500;          // ~7.5 s at 200 Hz
+        float mag_min_window_sec = 10.0f;
+        float mag_max_window_sec = 0.0f;          // no forced timeout
+        float mag_sample_dt_sec  = 1.0f / 200.0f;
 
         // Bootstrap tilt observer for dynamic motion in waves.
         float bootstrap_tilt_obs_acc_tau_sec  = 2.15f; // accel correction time constant
@@ -854,11 +870,22 @@ public:
         gravity_gate_acc_lpf_.reset();
         mag_gravity_good_sec_ = 0.0f;
         mag_init_eligible_t0_ = NAN;
-
+        last_mag_sample_t_ = NAN;
+        last_mag_yaw_gauge_rad_ = NAN;
+        last_mag_yaw_correction_rad_ = NAN;
+      
         mag_ref_set_ = false;
         MagAutoTuner::Config mag_cfg;
         mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
-        mag_cfg.min_samples  = cfg_.mag_min_samples;
+        mag_cfg.min_samples = cfg_.mag_min_samples;
+        mag_cfg.min_window_sec = cfg_.mag_min_window_sec;
+        mag_cfg.max_window_sec = cfg_.mag_max_window_sec;
+        mag_cfg.sample_dt_sec = cfg_.mag_sample_dt_sec;
+        mag_cfg.gravity_ref = g_std;
+        mag_cfg.enable_quality_weighting = cfg_.mag_enable_quality_weighting;
+        mag_cfg.min_effective_weight = cfg_.mag_min_effective_weight;
+        mag_cfg.acc_norm_rel_soft = cfg_.mag_acc_norm_rel_soft;
+        mag_cfg.gyro_soft_dps = cfg_.mag_gyro_soft_dps;
         mag_auto_tuner_.setConfig(mag_cfg);
 
         resetTiltInit_();
@@ -990,7 +1017,10 @@ public:
                 gravity_gate_acc_lpf_.reset();
                 mag_gravity_good_sec_ = 0.0f;
                 mag_init_eligible_t0_ = NAN;
-
+                last_mag_sample_t_ = NAN;
+                last_mag_yaw_gauge_rad_ = NAN;
+                last_mag_yaw_correction_rad_ = NAN;
+              
                 if (stage_ != Stage::Live) {
                     // Inner filter already re-locked tilt internally.
                     // Keep outer wrapper in Warming instead of going back to Uninitialized.
@@ -1015,59 +1045,57 @@ public:
         if (!begun_ || !cfg_.with_mag) return;
         if (stage_ == Stage::Uninitialized) return;
         if (t_ < cfg_.mag_delay_sec) return;
-
+    
         if (!std::isfinite(mag_init_eligible_t0_)) {
             mag_init_eligible_t0_ = t_;
         }
-
-        const bool gravity_trusted =
-            (mag_gravity_good_sec_ >= cfg_.mag_gravity_align_hold_sec);
-
-        const bool fallback_ok =
-            ((t_ - mag_init_eligible_t0_) >= cfg_.mag_tilt_fallback_sec);
-
+    
+        const bool gravity_trusted = mag_gravity_good_sec_ >= cfg_.mag_gravity_align_hold_sec;
+        const bool fallback_ok = (t_ - mag_init_eligible_t0_) >= cfg_.mag_tilt_fallback_sec;
+    
         if (!mag_ref_set_) {
-            if (!gravity_trusted && !fallback_ok) {
-                return;
-            }
-
-            if (have_last_imu_) {
-                const Eigen::Quaternionf q_tilt_bw =
-                    tiltOnlyQuatFromBoatQuat_(impl_.mekf().quaternion_boat());
-
-                if (mag_auto_tuner_.addSampleWithTiltQuat(
-                        q_tilt_bw,
-                        last_acc_body_ned_,
-                        last_gyro_body_ned_,
-                        mag_body_ned))
+            if (!gravity_trusted && !fallback_ok) return;
+            if (!have_last_imu_) return;
+    
+            const float dt_mag =
+                std::isfinite(last_mag_sample_t_) && t_ > last_mag_sample_t_
+                    ? t_ - last_mag_sample_t_
+                    : cfg_.mag_sample_dt_sec;
+    
+            last_mag_sample_t_ = t_;
+    
+            Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
+    
+            if (!q_bw.coeffs().allFinite()) return;
+    
+            const float qn = q_bw.norm();
+  
+            if (!(qn > 1.0e-6f) || !std::isfinite(qn)) return;
+    
+            q_bw.normalize();
+    
+            if (mag_auto_tuner_.addSampleWithWorldQuatDt(
+                    dt_mag,
+                    q_bw,
+                    last_acc_body_ned_,
+                    last_gyro_body_ned_,
+                    mag_body_ned))
+            {
+                Eigen::Vector3f mag_world_ref_uT;
+    
+                if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
+                    mag_world_ref_uT.allFinite() &&
+                    mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
                 {
-                    Eigen::Vector3f mag_world_ref_uT;
-                    if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
-                        mag_world_ref_uT.allFinite() &&
-                        mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
-                    {
-                        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
-
-                        // Remove the startup yaw gauge error immediately when the
-                        // learned magnetic-north reference becomes available.
-                        {
-                            Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
-                            q_bw.normalize();
-                            const Eigen::Vector3f mag_world = q_bw * mag_body_ned;
-                            const float yaw_err = std::atan2(mag_world.y(), mag_world.x());
-                            if (std::isfinite(yaw_err)) {
-                                const Eigen::Quaternionf q_corr(
-                                    Eigen::AngleAxisf(-yaw_err, Eigen::Vector3f::UnitZ()));
-                                impl_.mekf().set_quaternion_boat((q_corr * q_bw).normalized());
-                            }
-                        }
-
+                    impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+    
+                    if (applyInitialMagYawGaugeCorrection_()) {
                         mag_ref_set_ = true;
                     }
                 }
             }
         }
-
+    
         if (mag_ref_set_) {
             impl_.updateMag(mag_body_ned);
         }
@@ -1121,50 +1149,58 @@ private:
         bootstrap_gravity_good_sec_ = 0.0f;
     }
 
-    static Eigen::Quaternionf tiltOnlyQuatFromBoatQuat_(const Eigen::Quaternionf& q_bw_in)
-    {
-        if (!q_bw_in.coeffs().allFinite()) {
-            return Eigen::Quaternionf::Identity();
+    static float wrapPi_(float a) {
+        constexpr float PI_F = 3.14159265358979323846f;
+        constexpr float TWO_PI_F = 2.0f * PI_F;
+        if (!std::isfinite(a)) {
+            return NAN;
         }
-
-        Eigen::Quaternionf q_bw = q_bw_in;
+        while (a > PI_F) {
+            a -= TWO_PI_F;
+        }
+        while (a <= -PI_F) {
+            a += TWO_PI_F;
+        }
+        return a;
+    }
+    
+    bool applyInitialMagYawGaugeCorrection_() {
+        const float yaw_gauge_rad = mag_auto_tuner_.getYawGaugeCorrectionRad();
+    
+        if (!std::isfinite(yaw_gauge_rad)) {
+            return false;
+        }
+    
+        Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
+    
+        if (!q_bw.coeffs().allFinite()) {
+            return false;
+        }
+    
+        const float qn = q_bw.norm();
+    
+        if (!(qn > 1.0e-6f) || !std::isfinite(qn)) {
+            return false;
+        }
+    
         q_bw.normalize();
-
-        // Current world-frame direction of body-down.
-        Eigen::Vector3f body_down_world = q_bw * Eigen::Vector3f(0.0f, 0.0f, 1.0f);
-        const float n = body_down_world.norm();
-        if (!(n > 1e-6f) || !body_down_world.allFinite()) {
-            return Eigen::Quaternionf::Identity();
+    
+        const float yaw_corr_rad = wrapPi_(-yaw_gauge_rad);
+        const Eigen::Quaternionf q_corr(Eigen::AngleAxisf(yaw_corr_rad, Eigen::Vector3f::UnitZ()));
+    
+        Eigen::Quaternionf q_new = q_corr * q_bw;
+        q_new.normalize();
+    
+        if (!q_new.coeffs().allFinite()) {
+            return false;
         }
-        body_down_world /= n;
-
-        // Build the shortest-arc body->world rotation that maps body-down [0,0,1]
-        // onto the current world-frame body-down direction. This preserves roll/pitch
-        // and removes yaw.
-        const Eigen::Vector3f body_down_body(0.0f, 0.0f, 1.0f);
-
-        float d = body_down_body.dot(body_down_world);
-        d = std::max(-1.0f, std::min(1.0f, d));
-
-        Eigen::Vector3f axis = body_down_body.cross(body_down_world);
-        const float axis_n = axis.norm();
-
-        if (axis_n < 1e-6f) {
-            if (d > 0.0f) {
-                return Eigen::Quaternionf::Identity();
-            }
-
-            // 180 deg case: any axis orthogonal to body-down is valid.
-            return Eigen::Quaternionf(
-                Eigen::AngleAxisf(float(M_PI), Eigen::Vector3f(1.0f, 0.0f, 0.0f)));
-        }
-
-        axis /= axis_n;
-        const float angle = std::acos(d);
-
-        Eigen::Quaternionf q_tilt_bw(Eigen::AngleAxisf(angle, axis));
-        q_tilt_bw.normalize();
-        return q_tilt_bw;
+    
+        impl_.mekf().set_quaternion_boat(q_new);
+    
+        last_mag_yaw_gauge_rad_ = yaw_gauge_rad;
+        last_mag_yaw_correction_rad_ = yaw_corr_rad;
+    
+        return true;
     }
 
 private:
@@ -1184,9 +1220,13 @@ private:
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
     bool have_last_imu_ = false;
 
-    // One-shot mag-init state.
+    // Mag-init state.
     bool mag_ref_set_ = false;
     MagAutoTuner mag_auto_tuner_{};
+    
+    float last_mag_sample_t_ = NAN;
+    float last_mag_yaw_gauge_rad_ = NAN;
+    float last_mag_yaw_correction_rad_ = NAN;
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
