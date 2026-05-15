@@ -699,13 +699,13 @@ private:
             const bool allow_bias = !accel_bias_locked_;
             mekf_->set_acc_bias_updates_enabled(allow_bias);
 
-            if (warmup_Racc_active_ &&
-                Racc_nominal_std_.allFinite() &&
-                Racc_nominal_std_.maxCoeff() > 0.0f)
-            {
-                mekf_->set_Racc_std(Racc_nominal_std_);
-            }
-            warmup_Racc_active_ = false;
+if (warmup_Racc_active_ && allow_bias &&
+    Racc_nominal_std_.allFinite() &&
+    Racc_nominal_std_.maxCoeff() > 0.0f)
+{
+    mekf_->set_Racc_std(Racc_nominal_std_);
+    warmup_Racc_active_ = false;
+}
         }
 
         apply_ou_tune_();
