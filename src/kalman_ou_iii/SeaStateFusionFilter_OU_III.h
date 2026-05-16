@@ -455,8 +455,8 @@ public:
     inline float getFreqHz()        const noexcept { return freq_hz_; }        // fast branch
     inline float getFreqSlowHz()    const noexcept { return freq_hz_slow_; }   // slow branch
     inline float getFreqRawHz()     const noexcept { return f_raw; }
-    inline float getTauApplied()    const noexcept { return mekf_ ? mekf_->get_aw_time_constant() : NAN; }
-    inline float getSigmaApplied()  const noexcept { return mekf_ ? mekf_->get_aw_stationary_std().z() : NAN; }
+    inline float getTauApplied()    const noexcept { return tune_.tau_applied; }
+    inline float getSigmaApplied()  const noexcept { return tune_.sigma_applied; }
     inline float getRSApplied()     const noexcept { return tune_.RS_applied; }
     inline float getTauTarget()     const noexcept { return tau_target_;   }
     inline float getSigmaTarget()   const noexcept { return sigma_target_; }
