@@ -716,13 +716,13 @@ private:
             const bool allow_bias = !accel_bias_locked_;
             mekf_->set_acc_bias_updates_enabled(allow_bias);
 
-            if (warmup_Racc_active_ &&
+            if (warmup_Racc_active_ && allow_bias &&
                 Racc_nominal_.allFinite() &&
                 Racc_nominal_.maxCoeff() > 0.0f)
             {
                 mekf_->set_Racc_std(Racc_nominal_);
+                warmup_Racc_active_ = false;
             }
-            warmup_Racc_active_ = false;
         }
 
         apply_ou_tune_();
