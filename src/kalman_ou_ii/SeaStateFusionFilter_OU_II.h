@@ -725,7 +725,7 @@ private:
 
     bool accel_bias_locked_ = true;
     int  mag_updates_applied_ = 0;
-    static constexpr int MAG_UPDATES_TO_UNLOCK = 120;
+    static constexpr int MAG_UPDATES_TO_UNLOCK = 240;
 
     bool   with_mag_;
     double time_;
@@ -807,7 +807,7 @@ public:
         float online_tune_warmup_sec = 10.0f;
 
         bool  freeze_acc_bias_until_live = true;
-        float Racc_warmup_std = 0.7f;
+        float Racc_warmup_std = 1.2f;
 
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
