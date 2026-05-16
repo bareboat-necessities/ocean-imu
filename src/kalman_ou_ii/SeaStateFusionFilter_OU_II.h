@@ -807,7 +807,7 @@ public:
         float online_tune_warmup_sec = 10.0f;
 
         bool  freeze_acc_bias_until_live = true;
-        float Racc_warmup_std = 1.2f;
+        float Racc_warmup_std = 0.7f;
 
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
@@ -818,7 +818,7 @@ public:
         float mag_gravity_align_hold_sec  = 2.0f;
         float mag_gravity_align_lpf_tau   = 1.0f;
         float mag_tilt_fallback_sec       = 12.0f;
-        float mag_extreme_gyro_dps        = 45.0f; // veto only truly violent motion
+        float mag_extreme_gyro_dps        = 60.0f; // veto only truly violent motion
         float mag_init_min_mag_norm       = 1e-3f;
 
         // Mag reference acquisition.
