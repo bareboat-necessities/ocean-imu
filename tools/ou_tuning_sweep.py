@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-MAX_BOOT_TIMEOUT_SEC = 15.0
+MAX_BOOT_TIMEOUT_SEC = 20.0
 MIN_MARGIN_SEC = 1.0
 MAX_MARGIN_SEC = 4.0
 
@@ -38,12 +38,12 @@ RX = {
 
 # kind: "log", "linear", or "int"
 BOOT_SPECS = {
-    "SF_RACC_WARMUP_STD": (0.35, 0.65, "log"),
+    "SF_RACC_WARMUP_STD": (0.35, 1.40, "log"),
     "SF_ONLINE_TUNE_WARMUP_SEC": (4.0, 10.0, "log"),
     "SF_BOOT_TILT_ACC_TAU": (1.2, 2.8, "log"),
     "SF_BOOT_GRAV_SLOW_TAU": (4.5, 12.0, "log"),
     "SF_BOOT_GRAV_ALIGN_MAX_SIN": (0.08, 0.16, "linear"),
-    "SF_BOOT_GRAV_HOLD_SEC": (0.8, 2.0, "log"),
+    "SF_BOOT_GRAV_HOLD_SEC": (0.8, 2.5, "log"),
     "SF_BOOT_GRAV_MIN_SEC": (2.0, 7.0, "linear"),
     "SF_BOOT_GRAV_NORM_FRAC": (0.18, 0.65, "linear"),
 }
@@ -54,8 +54,8 @@ OU_COMMON_SPECS = {
     "OU_SIGMA_COEFF": (1.20, 1.80, "log"),
     "OU_TAU_COEFF": (1.15, 1.50, "log"),
     "OU_ADAPT_TAU_SEC": (1.0, 2.2, "log"),
-    "OU_ADAPT_EVERY_SECS": (0.05, 0.15, "log"),
-    "OU_ACC_BIAS_INIT_STD": (0.02, 0.25, "log"),
+    "OU_ADAPT_EVERY_SECS": (0.025, 0.15, "log"),
+    "OU_ACC_BIAS_INIT_STD": (0.02, 0.85, "log"),
 }
 
 # OU_III also uses generic OU_* env names, but with its own productive search ranges.
@@ -63,8 +63,8 @@ OU_III_COMMON_SPECS = {
     "OU_SIGMA_COEFF": (0.75, 2.10, "log"),
     "OU_TAU_COEFF": (0.75, 1.75, "log"),
     "OU_ADAPT_TAU_SEC": (1.0, 18.0, "log"),
-    "OU_ADAPT_EVERY_SECS": (0.025, 0.250, "log"),
-    "OU_ACC_BIAS_INIT_STD": (0.02, 0.35, "log"),
+    "OU_ADAPT_EVERY_SECS": (0.025, 0.15, "log"),
+    "OU_ACC_BIAS_INIT_STD": (0.02, 0.85, "log"),
 }
 
 # OU_II was already fine. Keep its existing family-specific knobs.
@@ -81,7 +81,7 @@ OU_III_EXTRA_SPECS = {
     "OU_III_R_S_XY_FACTOR": (0.20, 0.65, "log"),
 }
 
-# Optional. Off by default because this can hide OU problems by tuning mag behavior.
+# tuning mag behavior.
 MAG_SPECS = {
     "SF_MAG_MIN_SAMPLES": (4, 60, "int"),
     "SF_MAG_DELAY_SEC": (0.5, 10.0, "linear"),
@@ -89,7 +89,7 @@ MAG_SPECS = {
     "SF_MAG_GRAV_ALIGN_HOLD_SEC": (0.15, 3.0, "log"),
     "SF_MAG_GRAV_ALIGN_LPF_TAU": (0.4, 8.0, "log"),
     "SF_MAG_TILT_FALLBACK_SEC": (1.0, 12.0, "log"),
-    "SF_MAG_EXTREME_GYRO_DPS": (80.0, 480.0, "log"),
+    "SF_MAG_EXTREME_GYRO_DPS": (45.0, 480.0, "log"),
 }
 
 
