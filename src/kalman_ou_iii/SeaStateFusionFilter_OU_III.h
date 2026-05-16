@@ -1052,6 +1052,10 @@ public:
         if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
             stage_ = Stage::Live;
         }
+
+        // Re-apply gate every update.
+        // Inner impl only enables the actual MEKF linear block when its own stage is Live.
+        syncLinearBlockGate_();
     }
 
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
