@@ -851,7 +851,7 @@ public:
         float bootstrap_gravity_hold_sec      = 2.3f;
         float bootstrap_gravity_min_sec       = 8.0f;
         float bootstrap_gravity_timeout_sec   = 15.0f;
-        float bootstrap_gravity_norm_frac     = 0.22f;  // downweight accel when |a| departs from g
+        float bootstrap_gravity_norm_frac     = 0.12f;  // downweight accel when |a| departs from g
 
         bool enable_displacement_detrend = false;
         bool use_custom_displacement_detrend_cfg = false;
