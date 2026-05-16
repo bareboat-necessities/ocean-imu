@@ -712,19 +712,23 @@ private:
         if (!mekf_) return;
         mekf_->set_linear_block_enabled(enable_linear_block_);
 
-        if (freeze_acc_bias_until_live_) {
-            const bool allow_bias = !accel_bias_locked_;
-            mekf_->set_acc_bias_updates_enabled(allow_bias);
+if (freeze_acc_bias_until_live_) {
+    const bool allow_bias = !accel_bias_locked_;
 
-            if (warmup_Racc_active_ && allow_bias &&
-                Racc_nominal_.allFinite() &&
-                Racc_nominal_.maxCoeff() > 0.0f)
-            {
-                mekf_->set_Racc_std(Racc_nominal_);
-                warmup_Racc_active_ = false;
-            }
-        }
+    // Keep accel-bias learning gated.
+    mekf_->set_acc_bias_updates_enabled(allow_bias);
 
+    // But restore nominal accel measurement noise as soon as Live starts.
+    // This gives roll/pitch time to settle before accel bias is allowed to learn.
+    if (warmup_Racc_active_ &&
+        Racc_nominal_std_.allFinite() &&
+        Racc_nominal_std_.maxCoeff() > 0.0f)
+    {
+        mekf_->set_Racc_std(Racc_nominal_std_);
+        warmup_Racc_active_ = false;
+    }
+}
+    
         apply_ou_tune_();
         if (enable_linear_block_) apply_RS_tune_();
     }
@@ -829,7 +833,7 @@ public:
         float mag_gravity_align_hold_sec  = 2.0f;
         float mag_gravity_align_lpf_tau   = 1.0f;
         float mag_tilt_fallback_sec       = 12.0f;
-        float mag_extreme_gyro_dps        = 60.0f; // veto only truly violent motion
+        float mag_extreme_gyro_dps        = 30.0f; // veto only truly violent motion
         float mag_init_min_mag_norm       = 1e-3f;
 
         // Mag reference acquisition.
