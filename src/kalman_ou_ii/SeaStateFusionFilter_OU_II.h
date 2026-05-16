@@ -801,7 +801,7 @@ public:
         bool with_mag = true;
 
         bool enable_linear_block = true;
-        bool require_mag_lock_for_linear_block = true;
+        bool require_mag_lock_for_linear_block = false;
 
         float mag_delay_sec          = MAG_DELAY_SEC;
         float online_tune_warmup_sec = 10.0f;
