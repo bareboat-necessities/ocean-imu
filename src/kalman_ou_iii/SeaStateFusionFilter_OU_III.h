@@ -828,7 +828,7 @@ public:
         float mag_gravity_align_max_sin   = 0.070f; // sin(deg)
         float mag_gravity_align_hold_sec  = 2.0f;
         float mag_gravity_align_lpf_tau   = 1.0f;
-        float mag_tilt_fallback_sec       = 13.0f;
+        float mag_tilt_fallback_sec       = 12.0f;
         float mag_extreme_gyro_dps        = 45.0f; // veto only truly violent motion
         float mag_init_min_mag_norm       = 1e-3f;
 
@@ -861,7 +861,7 @@ public:
         float bootstrap_gravity_align_max_sin = 0.070f; // sin(deg)
         float bootstrap_gravity_hold_sec      = 2.0f;
         float bootstrap_gravity_min_sec       = 6.87f;
-        float bootstrap_gravity_timeout_sec   = 15.0f;
+        float bootstrap_gravity_timeout_sec   = 12.0f;
         float bootstrap_gravity_norm_frac     = 0.22f; // downweight accel when |a| departs from g
 
         bool enable_displacement_detrend = false;
