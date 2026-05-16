@@ -811,6 +811,9 @@ public:
     struct Config {
         bool with_mag = true;
 
+        bool enable_linear_block = true;
+        bool require_mag_lock_for_linear_block = false;
+
         float mag_delay_sec          = MAG_DELAY_SEC;
         float online_tune_warmup_sec = 10.0f;
 
@@ -908,6 +911,8 @@ public:
 
         impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
         last_impl_startup_stage_ = impl_.getStartupStage();
+
+        syncLinearBlockGate_();
 
         impl_.setNominalRaccStd(cfg_.sigma_a);
 
@@ -1026,6 +1031,8 @@ public:
                 last_mag_sample_t_ = NAN;
                 last_mag_yaw_gauge_rad_ = NAN;
                 last_mag_yaw_correction_rad_ = NAN;
+                
+                syncLinearBlockGate_();
               
                 if (stage_ != Stage::Live) {
                     // Inner filter already re-locked tilt internally.
@@ -1097,6 +1104,7 @@ public:
     
                     if (applyInitialMagYawGaugeCorrection_()) {
                         mag_ref_set_ = true;
+                        syncLinearBlockGate_();
                     }
                 }
             }
@@ -1153,6 +1161,26 @@ private:
         bootstrap_tilt_obs_.reset();
         bootstrap_gravity_slow_lpf_.reset();
         bootstrap_gravity_good_sec_ = 0.0f;
+    }
+
+    bool linearBlockAllowed_() const {
+        if (!cfg_.enable_linear_block) {
+            return false;
+        }
+    
+        if (!cfg_.with_mag) {
+            return true;
+        }
+    
+        if (!cfg_.require_mag_lock_for_linear_block) {
+            return true;
+        }
+    
+        return mag_ref_set_;
+    }
+    
+    void syncLinearBlockGate_() {
+        impl_.enableLinearBlock(linearBlockAllowed_());
     }
 
     static float wrapPi_(float a) {
