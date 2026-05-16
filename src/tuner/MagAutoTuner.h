@@ -57,9 +57,7 @@ public:
   struct Config {
     float mag_norm_min = 1e-3f;
 
-    // For real boats/waves, a longer averaging window is safer than the old
-    // 295-sample startup latch. The wrapper may still override this.
-    int   min_samples    = 1500;          // ~7.5 s at 200 Hz
+    int   min_samples    = 250;
     float min_window_sec = 10.0f;
     float max_window_sec = 0.0f;          // 0 = no forced timeout
     float sample_dt_sec  = 1.0f / 200.0f;
