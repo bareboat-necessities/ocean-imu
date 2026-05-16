@@ -719,13 +719,13 @@ private:
     float        startup_stage_t_ = 0.0f;
 
     bool  freeze_acc_bias_until_live_ = true;
-    float Racc_warmup_std_            = 0.6f;
+    float Racc_warmup_std_            = 1.2f;
     bool  warmup_Racc_active_         = false;
     Eigen::Vector3f Racc_nominal_std_ = Eigen::Vector3f::Constant(0.0f);
 
     bool accel_bias_locked_ = true;
     int  mag_updates_applied_ = 0;
-    static constexpr int MAG_UPDATES_TO_UNLOCK = 80;
+    static constexpr int MAG_UPDATES_TO_UNLOCK = 120;
 
     bool   with_mag_;
     double time_;
