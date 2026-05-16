@@ -699,13 +699,13 @@ private:
             const bool allow_bias = !accel_bias_locked_;
             mekf_->set_acc_bias_updates_enabled(allow_bias);
 
-if (warmup_Racc_active_ && allow_bias &&
-    Racc_nominal_std_.allFinite() &&
-    Racc_nominal_std_.maxCoeff() > 0.0f)
-{
-    mekf_->set_Racc_std(Racc_nominal_std_);
-    warmup_Racc_active_ = false;
-}
+            if (warmup_Racc_active_ && allow_bias &&
+                Racc_nominal_std_.allFinite() &&
+                Racc_nominal_std_.maxCoeff() > 0.0f)
+            {
+                mekf_->set_Racc_std(Racc_nominal_std_);
+                warmup_Racc_active_ = false;
+            }
         }
 
         apply_ou_tune_();
@@ -1012,44 +1012,43 @@ public:
         }
 
         const auto cur_stage = impl_.getStartupStage();
-if (cur_stage != last_impl_startup_stage_) {
-    if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
-        mag_ref_set_ = false;
-        mag_auto_tuner_.reset();
-        gravity_gate_acc_lpf_.reset();
-        mag_gravity_good_sec_ = 0.0f;
-        mag_init_eligible_t0_ = NAN;
-        last_mag_sample_t_ = NAN;
-        last_mag_yaw_gauge_rad_ = NAN;
-        last_mag_yaw_correction_rad_ = NAN;
-
-        // Since mag lock was lost/reset, force the linear/wave block off again.
-        syncLinearBlockGate_();
-
-        if (stage_ != Stage::Live) {
-            // Inner filter already re-locked tilt internally.
-            // Keep outer wrapper in Warming instead of going back to Uninitialized.
-            stage_ = Stage::Warming;
-
-            displacement_up_m_.setZero();
-            displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
-            if (cfg_.enable_displacement_detrend) {
-                displacement_detrender_.reset(0.0f, 0.0f, 0.0f);
+        if (cur_stage != last_impl_startup_stage_) {
+            if (cur_stage == SeaStateFusionFilter_OU_II<trackerT>::StartupStage::Cold) {
+                mag_ref_set_ = false;
+                mag_auto_tuner_.reset();
+                gravity_gate_acc_lpf_.reset();
+                mag_gravity_good_sec_ = 0.0f;
+                mag_init_eligible_t0_ = NAN;
+                last_mag_sample_t_ = NAN;
+                last_mag_yaw_gauge_rad_ = NAN;
+                last_mag_yaw_correction_rad_ = NAN;
+        
+                // Since mag lock was lost/reset, force the linear/wave block off again.
+                syncLinearBlockGate_();
+        
+                if (stage_ != Stage::Live) {
+                    // Inner filter already re-locked tilt internally.
+                    // Keep outer wrapper in Warming instead of going back to Uninitialized.
+                    stage_ = Stage::Warming;
+        
+                    displacement_up_m_.setZero();
+                    displacement_det_out_ = AdaptiveWaveDetrender3D::Output{};
+                    if (cfg_.enable_displacement_detrend) {
+                        displacement_detrender_.reset(0.0f, 0.0f, 0.0f);
+                    }
+                }
             }
+        
+            last_impl_startup_stage_ = cur_stage;
         }
-    }
-
-    last_impl_startup_stage_ = cur_stage;
-}
-
-if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
-    stage_ = Stage::Live;
-}
-
-// Re-apply gate every update.
-// Inner impl only enables the actual MEKF linear block when its own stage is Live.
-syncLinearBlockGate_();
-
+        
+        if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
+            stage_ = Stage::Live;
+        }
+        
+        // Re-apply gate every update.
+        // Inner impl only enables the actual MEKF linear block when its own stage is Live.
+        syncLinearBlockGate_();
     }
 
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
@@ -1098,14 +1097,14 @@ syncLinearBlockGate_();
                     mag_world_ref_uT.allFinite() &&
                     mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
                 {
-impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
-if (applyInitialMagYawGaugeCorrection_()) {
-    mag_ref_set_ = true;
-
-    // Initial mag yaw-gauge correction is now done, so it is safe to allow
-    // v/p/a_w to become active in the current yaw-fixed world frame.
-    syncLinearBlockGate_();
-}
+                    impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+                    if (applyInitialMagYawGaugeCorrection_()) {
+                        mag_ref_set_ = true;
+                    
+                        // Initial mag yaw-gauge correction is now done, so it is safe to allow
+                        // v/p/a_w to become active in the current yaw-fixed world frame.
+                        syncLinearBlockGate_();
+                    }
                 }
             }
         }
@@ -1162,28 +1161,26 @@ private:
         bootstrap_gravity_good_sec_ = 0.0f;
     }
 
-bool linearBlockAllowed_() const {
-    if (!cfg_.enable_linear_block) {
-        return false;
+    bool linearBlockAllowed_() const {
+        if (!cfg_.enable_linear_block) {
+            return false;
+        }
+    
+        if (!cfg_.with_mag) {
+            return true;
+        }
+    
+        if (!cfg_.require_mag_lock_for_linear_block) {
+            return true;
+        }
+    
+        // require mag north/yaw gauge lock.
+        return mag_ref_set_;
     }
 
-    // No mag mode: preserve old behavior.
-    if (!cfg_.with_mag) {
-        return true;
+    void syncLinearBlockGate_() {
+        impl_.enableLinearBlock(linearBlockAllowed_());
     }
-
-    // Optional escape hatch.
-    if (!cfg_.require_mag_lock_for_linear_block) {
-        return true;
-    }
-
-    // Plan B gate: require mag north/yaw gauge lock.
-    return mag_ref_set_;
-}
-
-void syncLinearBlockGate_() {
-    impl_.enableLinearBlock(linearBlockAllowed_());
-}
 
     static float wrapPi_(float a) {
         constexpr float PI_F = 3.14159265358979323846f;
