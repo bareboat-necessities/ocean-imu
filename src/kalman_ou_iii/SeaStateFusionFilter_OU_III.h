@@ -774,8 +774,8 @@ private:
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
     float mag_delay_sec_          = MAG_DELAY_SEC;
 
-    float R_S_xy_factor_ = 0.36f;
-    float S_factor_      = 1.87f;
+    float R_S_xy_factor_ = 0.35f;
+    float S_factor_      = 1.85f;
 
     TrackingPolicy                  tracker_policy_{};
     FirstOrderIIRSmoother<float>    freq_fast_smoother_{FREQ_SMOOTHER_DT, 3.5f};
@@ -789,9 +789,9 @@ private:
 
     float acc_noise_floor_sigma_ = ACC_NOISE_FLOOR_SIGMA_DEFAULT;
 
-    float R_S_coeff_    = 1.2f;
-    float tau_coeff_    = 1.38f;
-    float sigma_coeff_  = 0.9f;
+    float R_S_coeff_    = 1.3f;
+    float tau_coeff_    = 1.42f;
+    float sigma_coeff_  = 0.85f;
 
     std::unique_ptr<Kalman3D_Wave_OU_III<float>>  mekf_;
     KalmanWaveDirection                    dir_filter_{2.0f * static_cast<float>(M_PI) * FREQ_GUESS};
