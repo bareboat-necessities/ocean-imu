@@ -117,7 +117,7 @@ jobs:
           if-no-files-found: error
 
   ou-tuning:
-    if: ${{ (false && github.event_name == 'push') }}
+    if: ${{ (true && github.event_name == 'push') }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -162,8 +162,8 @@ jobs:
           python3 -u tools/ou_tuning_sweep.py \
             --family ${{ matrix.family }} \
             --mode full \
-            --samples 48 \
-            --seed 71 \
+            --samples 52 \
+            --seed 77 \
             --tier all \
             --top-k 8 \
             --out-csv reports/results/ou_tuning_${{ matrix.report_name }}.csv \
