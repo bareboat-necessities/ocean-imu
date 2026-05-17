@@ -34,9 +34,9 @@ struct StillnessAdapter {
     explicit StillnessAdapter(float gravity_std = 9.80665f,
                               float target_freq_hz_in = 0.2f,
                               float freq_guess = 0.3f)
-        : gravity_std_(gravity_std),
-          target_freq_hz(target_freq_hz_in),
-          freq_state(freq_guess) {}
+        : target_freq_hz(target_freq_hz_in),
+          freq_state(freq_guess),
+          gravity_std_(gravity_std) {}
 
     float energy_ema      = 0.0f;
     float energy_alpha    = 0.05f;

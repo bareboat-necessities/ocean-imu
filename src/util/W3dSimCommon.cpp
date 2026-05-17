@@ -535,6 +535,8 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
               << " Y=" << (gyrb_ry * rad2deg)
               << " Z=" << (gyrb_rz * rad2deg)
               << " |3D|=" << (gyrb_r3 * rad2deg) << "\n";
+    std::cout << "Bias error RMS (mag, uT): X=" << magb_rx << " Y=" << magb_ry << " Z=" << magb_rz
+              << " |3D|=" << magb_r3 << "\n";
 
     auto pct_of_max = [](float rms, float maxv) -> float {
         return (maxv > 1e-12f && std::isfinite(rms)) ? (100.f * rms / maxv) : NAN;

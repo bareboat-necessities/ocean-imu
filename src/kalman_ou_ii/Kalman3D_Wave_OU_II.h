@@ -1266,10 +1266,10 @@ Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::Kalman3D_Wave_OU_II(
     Vector3 const& sigma_g,
     Vector3 const& sigma_m,
     T Pq0, T Pb0, T b0, T R_p0_noise_var, T R_v0_noise_var, T gravity_magnitude)
-  : Qbase(initialize_Q(sigma_g, b0)),
-    gravity_magnitude_(gravity_magnitude),
-    Racc(sigma_a.array().square().matrix().asDiagonal()),
-    Rmag(sigma_m.array().square().matrix().asDiagonal())
+  : gravity_magnitude_(gravity_magnitude),
+    Rmag(sigma_m.array().square().matrix().asDiagonal()),
+    Qbase(initialize_Q(sigma_g, b0)),
+    Racc(sigma_a.array().square().matrix().asDiagonal())
 {
     qref.setIdentity();  // quaternion init
 

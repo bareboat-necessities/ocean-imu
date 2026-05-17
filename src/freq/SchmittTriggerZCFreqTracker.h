@@ -32,20 +32,20 @@ class SchmittTriggerZCFreqTracker {
     // periodsInCycle must be positive integer
     // fallbackToLowFreqTime must be positive time in seconds
     explicit SchmittTriggerZCFreqTracker(
-      float hysteresis = 0.1f,
-      unsigned int periodsInCycle = 1,
-      float fallbackToLowFreqTime = SCHMITT_TRIGGER_FALLBACK_TIME)
-      : hysteresis(std::fabs(hysteresis)),
-        upperThreshold(std::fabs(hysteresis)),
-        lowerThreshold(-std::fabs(hysteresis)),
+      float hysteresis_in = 0.1f,
+      unsigned int periods_in_cycle = 1,
+      float fallback_to_low_freq_time = SCHMITT_TRIGGER_FALLBACK_TIME)
+      : hysteresis(std::fabs(hysteresis_in)),
+        upperThreshold(std::fabs(hysteresis_in)),
+        lowerThreshold(-std::fabs(hysteresis_in)),
         state(State::WAS_NOT_SET),
         frequency(SCHMITT_TRIGGER_FREQ_INIT),
-        fallbackToLowFreqTime(fallbackToLowFreqTime),
+        fallbackToLowFreqTime(fallback_to_low_freq_time),
         lastPeriodEstimate(0.0f),
         periodVariance(0.0f),
         amplitudeRatio(0.0f),
         isFallback(true),
-        periodsInCycle(periodsInCycle),
+        periodsInCycle(periods_in_cycle),
         timeInCycle(0.0f),
         lastLowTime(0.0f),
         lastHighTime(0.0f),

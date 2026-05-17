@@ -35,8 +35,9 @@ inline float diffDeg(float est_deg, float ref_deg) {
     return wrapDeg(est_deg - ref_deg);
 }
 
-static inline float deg_to_rad(float d) { return d * float(std::numbers::pi_v<float> / 180.0); }
-static inline float rad_to_deg(float r) { return r * float(180.0 / std::numbers::pi_v<float>); }
+static inline float deg_to_rad(float d) { return d * (std::numbers::pi_v<float> / 180.0f); }
+static inline float rad_to_deg(float r) { return r * (180.0f / std::numbers::pi_v<float>); }
+static inline float rad_to_deg(double r) { return static_cast<float>(r * (180.0 / std::numbers::pi)); }
 
 inline float wrapAxialDeg90(float a) {
     a = std::fmod(a + 180.0f, 360.0f);
@@ -82,7 +83,7 @@ inline T percentile_vec(std::vector<T> v, double p01) {
     if (p01 <= 0) return *std::min_element(v.begin(), v.end());
     if (p01 >= 1) return *std::max_element(v.begin(), v.end());
     std::sort(v.begin(), v.end());
-    double idx = p01 * (v.size() - 1);
+    double idx = p01 * static_cast<double>(v.size() - 1);
     size_t i = size_t(std::floor(idx));
     double frac = idx - double(i);
     if (i + 1 >= v.size()) return v[i];

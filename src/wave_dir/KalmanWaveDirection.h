@@ -14,6 +14,7 @@
 #endif
 
 #include <cmath>
+#include <numbers>
 #include <algorithm>
 
 #include "avg/AngleAveraging.h"
@@ -137,7 +138,7 @@ public:
 
         // Convert to 2σ uncertainty in degrees (95% confidence)
         float angle_rad = 2.0f * angular_std_rad;
-        float angle_deg = angle_rad * (180.0f / M_PI);
+        float angle_deg = angle_rad * (180.0f / std::numbers::pi_v<float>);
 
         // Clamp to [0, 180] degrees for safety
         return std::max(0.0f, std::min(angle_deg, 180.0f));
@@ -177,7 +178,7 @@ public:
 
 private:
     void updatePhase(float deltaT) {
-        phase = std::remainder(phase + omega * deltaT, 2.0f * M_PI);
+        phase = std::remainder(phase + omega * deltaT, 2.0f * std::numbers::pi_v<float>);
     }
 
     void updateStableDirection() {
@@ -200,7 +201,7 @@ private:
         const float alpha = 0.05f;
         lastStableDir = ((1.0f - alpha) * lastStableDir + alpha * newDir).normalized();
 
-        direction_deg_raw = std::atan2(lastStableDir.y(), lastStableDir.x()) * (180.0f / M_PI);
+        direction_deg_raw = std::atan2(lastStableDir.y(), lastStableDir.x()) * (180.0f / std::numbers::pi_v<float>);
         if (direction_deg_raw < 0.0f) direction_deg_raw += 180.0f;
         if (direction_deg_raw >= 180.0f) direction_deg_raw -= 180.0f;
         direction_deg_smoothed = direction_report_avg.average180(direction_deg_raw).angle;
@@ -246,7 +247,7 @@ void KalmanWaveDirection_test_signal(float t,
   float amp = 0.8f + 0.4f * std::sin(0.005f * t);
 
   // Convert frequency in Hz to angular frequency in rad/s
-  float omega = 2.0f * M_PI * freq_hz;
+  float omega = 2.0f * std::numbers::pi_v<float> * freq_hz;
   float phase = omega * t;
 
   Eigen::Vector2f dir(1.0f, 1.5f);
@@ -267,7 +268,7 @@ void KalmanWaveDirection_test_1() {
   // Frequency of the test wave in Hz
   const float freq_hz = 0.5f;
   // Convert to angular frequency in rad/s for the filter
-  const float omega = 2.0f * M_PI * freq_hz;
+  const float omega = 2.0f * std::numbers::pi_v<float> * freq_hz;
 
   const int num_steps = 2000;
 
