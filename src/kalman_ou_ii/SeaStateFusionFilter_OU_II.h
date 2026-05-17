@@ -812,7 +812,7 @@ public:
         float online_tune_warmup_sec = 10.0f;
 
         bool  freeze_acc_bias_until_live = true;
-        float Racc_warmup_std = 0.6f;
+        float Racc_warmup_std = 0.5f;
 
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
