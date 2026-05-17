@@ -721,10 +721,10 @@ if (freeze_acc_bias_until_live_) {
     // But restore nominal accel measurement noise as soon as Live starts.
     // This gives roll/pitch time to settle before accel bias is allowed to learn.
     if (warmup_Racc_active_ &&
-        Racc_nominal_std_.allFinite() &&
-        Racc_nominal_std_.maxCoeff() > 0.0f)
+        Racc_nominal_.allFinite() &&
+        Racc_nominal_.maxCoeff() > 0.0f)
     {
-        mekf_->set_Racc_std(Racc_nominal_std_);
+        mekf_->set_Racc_std(Racc_nominal_);
         warmup_Racc_active_ = false;
     }
 }
