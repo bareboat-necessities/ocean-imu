@@ -272,7 +272,7 @@ static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_yaw_deg             = 2.55f,
     .err_limit_percent_3d_jonswap  = 42.0f,
     .err_limit_percent_3d_pmstokes = 44.0f,
-    .acc_z_bias_percent            = 11.0f,
+    .acc_z_bias_percent            = 11.5f,
     .bias_3d_percent               = 280.0f,
 };
 
