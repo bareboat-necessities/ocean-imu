@@ -873,8 +873,6 @@ public:
         mag_gravity_good_sec_ = 0.0f;
         mag_init_eligible_t0_ = NAN;
         last_mag_sample_t_ = NAN;
-        last_mag_yaw_gauge_rad_ = NAN;
-        last_mag_yaw_correction_rad_ = NAN;
       
         mag_ref_set_ = false;
         MagAutoTuner::Config mag_cfg;
@@ -1024,8 +1022,6 @@ public:
                 mag_gravity_good_sec_ = 0.0f;
                 mag_init_eligible_t0_ = NAN;
                 last_mag_sample_t_ = NAN;
-                last_mag_yaw_gauge_rad_ = NAN;
-                last_mag_yaw_correction_rad_ = NAN;
         
                 // Since mag lock was lost/reset, force the linear/wave block off again.
                 syncLinearBlockGate_();
@@ -1304,45 +1300,6 @@ private:
         return yawRemovedBoatQuat_(q_bw_in);
     }
     
-    bool applyInitialMagYawGaugeCorrection_() {
-        const float yaw_gauge_rad = mag_auto_tuner_.getYawGaugeCorrectionRad();
-    
-        if (!std::isfinite(yaw_gauge_rad)) {
-            return false;
-        }
-    
-        Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
-    
-        if (!q_bw.coeffs().allFinite()) {
-            return false;
-        }
-    
-        const float qn = q_bw.norm();
-    
-        if (!(qn > 1.0e-6f) || !std::isfinite(qn)) {
-            return false;
-        }
-    
-        q_bw.normalize();
-    
-        const float yaw_corr_rad = wrapPi_(-yaw_gauge_rad);
-        const Eigen::Quaternionf q_corr(Eigen::AngleAxisf(yaw_corr_rad, Eigen::Vector3f::UnitZ()));
-    
-        Eigen::Quaternionf q_new = q_corr * q_bw;
-        q_new.normalize();
-    
-        if (!q_new.coeffs().allFinite()) {
-            return false;
-        }
-    
-        impl_.mekf().set_quaternion_boat(q_new);
-    
-        last_mag_yaw_gauge_rad_ = yaw_gauge_rad;
-        last_mag_yaw_correction_rad_ = yaw_corr_rad;
-    
-        return true;
-    }
-
 private:
     Config cfg_{};
     SeaStateFusionFilter_OU_II<trackerT> impl_{false};
@@ -1365,8 +1322,6 @@ private:
     MagAutoTuner mag_auto_tuner_{};
     
     float last_mag_sample_t_ = NAN;
-    float last_mag_yaw_gauge_rad_ = NAN;
-    float last_mag_yaw_correction_rad_ = NAN;
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
