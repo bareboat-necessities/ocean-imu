@@ -1200,10 +1200,10 @@ Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::Kalman3D_Wave_OU_III(
     Vector3 const& sigma_g,
     Vector3 const& sigma_m,
     T Pq0, T Pb0, T b0, T R_S_noise_var, T gravity_magnitude)
-  : Qbase(initialize_Q(sigma_g, b0)),
-    gravity_magnitude_(gravity_magnitude),
-    Racc(sigma_a.array().square().matrix().asDiagonal()),
-    Rmag(sigma_m.array().square().matrix().asDiagonal())
+  : gravity_magnitude_(gravity_magnitude),
+    Rmag(sigma_m.array().square().matrix().asDiagonal()),
+    Qbase(initialize_Q(sigma_g, b0)),
+    Racc(sigma_a.array().square().matrix().asDiagonal())
 {
     qref.setIdentity();  // quaternion init
 
@@ -1247,8 +1247,8 @@ Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::Kalman3D_Wave_OU_III(
 	    sigma_acc0.z() = std::sqrt(std::max(T(0), Racc(2,2)));
 
 	    // R_S in your ctor is "variance" scalar; convert to std
-	    const T sigma_S0 = std::sqrt(std::max(T(1e-12), R_S_noise_var));
-	    Vector3 sigma_S0v = Vector3::Constant(sigma_S0);
+	    const T sigma_S_noise_std = std::sqrt(std::max(T(1e-12), R_S_noise_var));
+	    Vector3 sigma_S0v = Vector3::Constant(sigma_S_noise_std);
 
 	    log_sigma_acc_f_.x = clamp_pos_vec_(sigma_acc0, sigma_acc_min_, sigma_acc_max_).array().log().matrix();
 	    log_sigma_S_f_.x   = clamp_pos_vec_(sigma_S0v,  sigma_S_min_,   sigma_S_max_  ).array().log().matrix();

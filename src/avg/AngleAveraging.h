@@ -2,6 +2,7 @@
 #define ANGLE_AVERAGING_H
 
 #include <math.h>
+#include <numbers>
 
 /*
   Copyright 2025, Mikhail Grushinskiy
@@ -22,11 +23,12 @@
 
 class AngleAverager {
 public:
+    static constexpr float PI = std::numbers::pi_v<float>;
     // Structure for filtered angle and quality metrics
     struct AngleEstimate {
         float angle = 0.0f;                    // Filtered angle in degrees
         float magnitude = 1e-12f;              // Confidence (0–1)
-        float variance = M_PI * M_PI / 4.0f;   // Estimated circular variance (rad²)
+        float variance = PI * PI / 4.0f;   // Estimated circular variance (rad²)
         float consistency = 0.0f;              // Dot product similarity [0–1]
     };
 
@@ -37,7 +39,7 @@ public:
     // Explicitly set initial angle and reset variance
     void reset(float angle_deg) {
         angle_prev = angle_deg;
-        variance_prev = M_PI * M_PI / 4.0f;
+        variance_prev = PI * PI / 4.0f;
         initialized = true;
     }
 
@@ -114,11 +116,11 @@ public:
     }
 
     static inline float deg2rad(float angle_deg) {
-        return angle_deg * (M_PI / 180.0f);
+        return angle_deg * (PI / 180.0f);
     }
 
     static inline float rad2deg(float angle_rad) {
-        return angle_rad * (180.0f / M_PI);
+        return angle_rad * (180.0f / PI);
     }
 
     static inline float magnitude(float x, float y) {
@@ -138,10 +140,10 @@ private:
     float alpha;
     bool initialized = false;
     float angle_prev = 0.0f;
-    float variance_prev = M_PI * M_PI / 4.0f;
+    float variance_prev = PI * PI / 4.0f;
 
     static inline float estimate_variance(float mag) {
-        if (mag <= 0.0f) return M_PI * M_PI;
+        if (mag <= 0.0f) return PI * PI;
         if (mag > 0.999f) return 0.0f;
         return -2.0f * logf(mag);
     }
