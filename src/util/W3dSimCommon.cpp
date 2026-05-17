@@ -252,42 +252,42 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         const Quaternionf q_ref_wb_zu = quat_from_csv(rec.imu);
         const Matrix3f C_wb_zu = q_ref_wb_zu.toRotationMatrix();
 
-float r_ref_out = 0.0f;
-float p_ref_out = 0.0f;
-float y_ref_out = 0.0f;
-
-reference_euler_from_csv(rec.imu, q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
-
-// The CSV quaternion is true-world attitude.
-// In IMU-only magnetic mode, the filter reports yaw relative to learned
-// magnetic north, because MagAutoTuner defines the learned world frame as:
-//
-//   B_world = [horizontal_magnitude, 0, vertical_component]
-//
-// i.e. +X is magnetic north in NED.
-//
-// y_ref_out is produced by quat_wb_zu_to_euler_nautical() from a WORLD->BODY
-// Z-up quaternion. With the current FrameConversions convention, flat yaw is
-// reported with the inverse sign:
-//
-//   y_ref_out ≈ -heading_true
-//
-// The filter snapshot uses the same reported-yaw convention. After mag lock,
-// the filter yaw is relative to magnetic north:
-//
-//   heading_mag = heading_true - declination
-//
-// Therefore in this reported-yaw convention:
-//
-//   reported_mag_yaw = -heading_mag
-//                    = -(heading_true - declination)
-//                    = -heading_true + declination
-//                    = reported_true_yaw + declination
-//
-// East-positive declination is used by MagSim_WMM.
-if (options_.with_mag) {
-    y_ref_out = wrapDeg(y_ref_out + MagSim_WMM::default_declination_deg);
-}   
+        float r_ref_out = 0.0f;
+        float p_ref_out = 0.0f;
+        float y_ref_out = 0.0f;
+        
+        reference_euler_from_csv(rec.imu, q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
+        
+        // The CSV quaternion is true-world attitude.
+        // In IMU-only magnetic mode, the filter reports yaw relative to learned
+        // magnetic north, because MagAutoTuner defines the learned world frame as:
+        //
+        //   B_world = [horizontal_magnitude, 0, vertical_component]
+        //
+        // i.e. +X is magnetic north in NED.
+        //
+        // y_ref_out is produced by quat_wb_zu_to_euler_nautical() from a WORLD->BODY
+        // Z-up quaternion. With the current FrameConversions convention, flat yaw is
+        // reported with the inverse sign:
+        //
+        //   y_ref_out ≈ -heading_true
+        //
+        // The filter snapshot uses the same reported-yaw convention. After mag lock,
+        // the filter yaw is relative to magnetic north:
+        //
+        //   heading_mag = heading_true - declination
+        //
+        // Therefore in this reported-yaw convention:
+        //
+        //   reported_mag_yaw = -heading_mag
+        //                    = -(heading_true - declination)
+        //                    = -heading_true + declination
+        //                    = reported_true_yaw + declination
+        //
+        // East-positive declination is used by MagSim_WMM.
+        if (options_.with_mag) {
+            y_ref_out = wrapDeg(y_ref_out + MagSim_WMM::default_declination_deg);
+        }   
       
         fusion_adapter_.update(options_.dt, gyr_meas_ned, acc_meas_ned, options_.temperature_c);
         if (options_.with_mag) {
