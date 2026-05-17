@@ -730,7 +730,7 @@ private:
 
     bool accel_bias_locked_ = true;
     int  mag_updates_applied_ = 0;
-    static constexpr int MAG_UPDATES_TO_UNLOCK = 500;
+    static constexpr int MAG_UPDATES_TO_UNLOCK = 200;
 
     bool   with_mag_;
     double time_;
@@ -838,7 +838,7 @@ public:
         //   q_new = Rz(-yaw_gauge) * q_old
         //
         // Then normal 3D mag EKF updates run.
-        int   mag_min_samples    = 295;
+        int   mag_min_samples    = 48;
         float mag_min_window_sec = 0.0f;
         float mag_max_window_sec = 0.0f;          // no forced timeout
         float mag_sample_dt_sec  = 1.0f / 200.0f;
