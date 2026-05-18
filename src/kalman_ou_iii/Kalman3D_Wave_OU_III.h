@@ -782,7 +782,7 @@ class Kalman3D_Wave_OU_III {
     }
 
     // Simpson’s rule for ∫_0^T R(s) Q R(s)^T ds (fast, excellent for anisotropic Q)
-    EIGEN_STRONG_INLINE Matrix3 simpson_R_Q_RT_(const Vector3& w, T Tstep, const Matrix3& Q) const {
+    inline Matrix3 simpson_R_Q_RT_(const Vector3& w, T Tstep, const Matrix3& Q) const {
         Matrix3 R0, Btmp, Rm, R1;
         rot_and_B_from_wt_(w, T(0),   R0, Btmp);
         rot_and_B_from_wt_(w, T(0.5)*Tstep, Rm, Btmp);
@@ -795,7 +795,7 @@ class Kalman3D_Wave_OU_III {
     }
 
     // Simpson’s rule for ∫_0^T B(s) Q B(s)^T ds
-    EIGEN_STRONG_INLINE Matrix3 simpson_B_Q_BT_(const Vector3& w, T Tstep, const Matrix3& Q) const {
+    inline Matrix3 simpson_B_Q_BT_(const Vector3& w, T Tstep, const Matrix3& Q) const {
         Matrix3 Rtmp, B0, Bm, B1;
         rot_and_B_from_wt_(w, T(0),   Rtmp, B0);           // B(0) = 0
         rot_and_B_from_wt_(w, T(0.5)*Tstep, Rtmp, Bm);
@@ -872,7 +872,7 @@ class Kalman3D_Wave_OU_III {
 
     // Factor S with LDLT and a diagonal safety boost if needed.
     // The `noise_scale` argument should be something like R.norm() or S.norm() from the branch.
-    EIGEN_STRONG_INLINE bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, T noise_scale) const {
+    inline bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, T noise_scale) const {
         ldlt.compute(S);
         if (ldlt.info() == Eigen::Success) return true;
 
@@ -884,7 +884,7 @@ class Kalman3D_Wave_OU_III {
         return (ldlt.info() == Eigen::Success);
     }
 
-    EIGEN_STRONG_INLINE T nis3_from_ldlt_(const Eigen::LDLT<Matrix3>& ldlt,
+    inline T nis3_from_ldlt_(const Eigen::LDLT<Matrix3>& ldlt,
                                           const Vector3& r) const
     {
         // Solve S x = r, nis = r^T x
@@ -913,9 +913,9 @@ class Kalman3D_Wave_OU_III {
     // Joseph covariance update: P ← P - KCP - (KCP)ᵀ + K S Kᵀ.
     // Stack-light version: no NX×NX temporaries, only scalar loops.
     // Assumes Pext is symmetric on entry.
-    EIGEN_STRONG_INLINE void joseph_update3_(const Eigen::Matrix<T,NX,3>& K,
-                                             const Matrix3& S,
-                                             const Eigen::Matrix<T,NX,3>& PCt)
+    inline void joseph_update3_(const Eigen::Matrix<T,NX,3>& K,
+                                const Matrix3& S,
+                                const Eigen::Matrix<T,NX,3>& PCt)
     {
         // We use that:
         //  • PCt = P Cᵀ  (N×3)
