@@ -495,43 +495,6 @@ public:
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
     inline float getWaveDirectionDeg() const noexcept { return dir_filter_.getDirectionDegrees(); }
 
-    Eigen::Vector3f getEulerNautical() const {
-        if (!mekf_) return {NAN, NAN, NAN};
-
-        // q_bw: body→world
-        Eigen::Quaternionf q_bw = mekf_->quaternion_boat();
-        q_bw.normalize();
-
-        const float x = q_bw.x();
-        const float y = q_bw.y();
-        const float z = q_bw.z();
-        const float w = q_bw.w();
-        const float two = 2.0f;
-
-        // ZYX (aerospace) from q_bw — radians
-        const float s_yaw = two * std::fma(w, z,  x * y);
-        const float c_yaw = 1.0f - two * std::fma(y, y,  z * z);
-        float yaw         = std::atan2(s_yaw, c_yaw);
-
-        float s_pitch     = two * std::fma(w, y, -z * x);
-        s_pitch           = std::max(-1.0f, std::min(1.0f, s_pitch));
-        float pitch       = std::asin(s_pitch);
-
-        const float s_roll = two * std::fma(w, x,  y * z);
-        const float c_roll = 1.0f - two * std::fma(x, x,  y * y);
-        float roll         = std::atan2(s_roll, c_roll);
-
-        // Aerospace/NED → Nautical/ENU (expects radians)
-        float rn = roll;
-        float pn = pitch;
-        float yn = yaw;
-        aero_to_nautical(rn, pn, yn);
-
-        // Radians → degrees
-        constexpr float RAD2DEG = 57.29577951308232f;
-        return { rn * RAD2DEG, pn * RAD2DEG, yn * RAD2DEG };
-    }
-
     inline auto& mekf() noexcept { return *mekf_; }
     inline const auto& mekf() const noexcept { return *mekf_; }
 
