@@ -67,7 +67,7 @@ static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LO
 
 static constexpr uint32_t UI_REFRESH_MS   = 100;
 static constexpr uint32_t DEBUG_SERIAL_MS = 100;
-static constexpr uint32_t NMEA_SERIAL_MS  = 50;
+static constexpr uint32_t NMEA_SERIAL_MS  = 100;
 
 static constexpr float ROT_BIAS_TAU_S       = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
