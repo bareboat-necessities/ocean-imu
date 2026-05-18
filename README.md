@@ -11,6 +11,41 @@ and additionally reconstruct 3D displacement of a vessel (heave - strongly obser
 
 The code of filters is written in C++ and can run on a microcontroller such as esp32 or on a regular computer. The compass calibration implemented as a part of this library can be run directly on your microcontroller unit. The testing framework uses Stokes/Airy waves with Pierson-Moskowitz or JONSWAP spectrums and a choice of a directional spread model (cosine by default).
 
+## Methods
+
+The articles describing the math behind the methods: 
+
+INS Filters:
+
+- [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_ou-w3d.pdf)
+
+- [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/pii_observer-model.pdf)
+
+
+Frequency tracking:
+
+- [KalmANF Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/freq-tracking_adaptive_notch_kalman.pdf)
+
+- [Aranovskiy Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/freq-tracking_aranovskiy.pdf)
+
+- [PLL Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/freq-tracking_pll.pdf)
+
+- [Zero Crossing Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/freq-tracking_zero_crossing.pdf)
+
+
+IMU Calibration:
+
+- [IMU Calibration Method](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/imu_calibrate-method.pdf)
+
+
+Wave Models:
+
+- [Wave Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-waves.pdf)
+
+- [Spectral Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-spectral.pdf)
+
+- [Vessel RAO](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-vessel-RAO.pdf)
+
 
 ## Overview
 
@@ -38,10 +73,6 @@ Kalman3D_Wave_OU_II results
 <p align="center">
   <img src="./img/samples/w3d_ou2_pmstokes_medium.svg?raw=true" style="max-width: 50%;">
 </p>
-
-## Main Article
-
-This article describes the main method: https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_ou-w3d.pdf
 
 ## Repository layout
 
