@@ -210,9 +210,6 @@ static inline bool degeneracy_check_coverage3(
 }
 
 template <typename T>
-static inline T sqr(T x) { return x*x; }
-
-template <typename T>
 static inline void sort_small(T* a, int n) {
   // Simple insertion sort (n <= ~400)
   for (int i = 1; i < n; ++i) {

@@ -117,10 +117,6 @@ static inline Vector3f map_sensor_xyz_to_body_ned_(float sx, float sy, float sz,
   return Vector3f(sy * scale, sx * scale, -sz * scale);
 }
 
-static inline Vector3f map_sensor_vec_to_body_ned_(const Vector3f& v_sensor, float scale = 1.0f) {
-  return map_sensor_xyz_to_body_ned_(v_sensor.x(), v_sensor.y(), v_sensor.z(), scale);
-}
-
 static inline Vector3f map_acc_to_body_ned_(const m5::imu_3d_t& a_g) {
   return map_sensor_xyz_to_body_ned_(a_g.x, a_g.y, a_g.z, ImuCalCfg::g_std);
 }
