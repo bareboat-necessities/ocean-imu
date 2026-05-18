@@ -57,7 +57,6 @@
 #include "tuner/SeaStateAutoTuner.h"
 #include "tuner/MagAutoTuner.h"
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
-#include "ahrs/FrameConversions.h"
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
 #include "detrend/AdaptiveWaveDetrender3D.h"
