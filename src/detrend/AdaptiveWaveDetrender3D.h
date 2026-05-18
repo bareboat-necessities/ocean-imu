@@ -360,10 +360,6 @@ private:
     return out;
   }
 
-  static float getAxis_(const Vec3& v, int axis) {
-    return v(axis);
-  }
-
   // Convert 1st-order LP cutoff frequency to equivalent time constant.
   static float cutoffToTau_(float cutoff_hz) {
     cutoff_hz = maxf_(cutoff_hz, 1.0e-6f);
