@@ -894,6 +894,22 @@ class Kalman3D_Wave_OU_III {
         return std::isfinite(v) ? v : std::numeric_limits<T>::quiet_NaN();
     }
 
+    // Compute K = PCt * S^-1 using vector solves instead of forming S^-1.
+    // This keeps the ESP32/Arduino Eigen instantiation much smaller than
+    // PCt * ldlt.solve(I), which can make cc1plus exhaust memory on Windows.
+    inline void gain_from_ldlt3_(const Eigen::Matrix<T,NX,3>& PCt,
+                                 const Eigen::LDLT<Matrix3>& ldlt,
+                                 Eigen::Matrix<T,NX,3>& K) const
+    {
+        for (int i = 0; i < NX; ++i) {
+            const Vector3 rhs(PCt(i,0), PCt(i,1), PCt(i,2));
+            const Vector3 sol = ldlt.solve(rhs);
+            K(i,0) = sol(0);
+            K(i,1) = sol(1);
+            K(i,2) = sol(2);
+        }
+    }
+
     // Joseph covariance update: P ← P - KCP - (KCP)ᵀ + K S Kᵀ.
     // Stack-light version: no NX×NX temporaries, only scalar loops.
     // Assumes Pext is symmetric on entry.
@@ -2078,7 +2094,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     last_acc_diag_.S = S_mat;
     last_acc_diag_.nis = nis3_from_ldlt_(ldlt, r);
     MatrixNX3& K = K_scratch_;
-    K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
+    gain_from_ldlt3_(PCt, ldlt, K);
 
     if (!linear_block_enabled_) {
         freeze_linear_rows_(K);
@@ -2157,7 +2173,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     last_mag_diag_.nis = nis3_from_ldlt_(ldlt, r);
 
     MatrixNX3& K = K_scratch_;
-    K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
+    gain_from_ldlt3_(PCt, ldlt, K);
 
     if (!linear_block_enabled_) {
         freeze_linear_rows_(K);
@@ -2307,7 +2323,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyIntegralZero
     Eigen::LDLT<Matrix3> ldlt;
     if (!safe_ldlt3_(S_mat, ldlt, R_S.norm())) return;
     MatrixNX3& K = K_scratch_;
-    K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
+    gain_from_ldlt3_(PCt, ldlt, K);
     if constexpr (with_accel_bias) {
         if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(K);
     }
@@ -2364,7 +2380,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     }
 
     MatrixNX3& K = K_scratch_;
-    K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
+    gain_from_ldlt3_(PCt, ldlt, K);
 
     xext.noalias() += K * r;           // State update
     joseph_update3_(K, S_mat, PCt);    // Covariance update (Joseph form, 3D)
@@ -2409,7 +2425,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     }
 
     MatrixNX3& K = K_scratch_;
-    K.noalias() = PCt * ldlt.solve(Matrix3::Identity());
+    gain_from_ldlt3_(PCt, ldlt, K);
 
     xext.noalias() += K * r;
     joseph_update3_(K, S_mat, PCt);
