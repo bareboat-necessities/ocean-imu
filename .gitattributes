@@ -1,0 +1,8 @@
+# Keep source files normalized as UTF-8 text in the repository.
+*.ino text working-tree-encoding=UTF-8 eol=lf
+*.c text working-tree-encoding=UTF-8 eol=lf
+*.cpp text working-tree-encoding=UTF-8 eol=lf
+*.h text working-tree-encoding=UTF-8 eol=lf
+*.hpp text working-tree-encoding=UTF-8 eol=lf
+*.mk text working-tree-encoding=UTF-8 eol=lf
+Makefile text working-tree-encoding=UTF-8 eol=lf
