@@ -159,34 +159,33 @@ static inline void project_psd(Eigen::Matrix<T,N,N>& S, T eps = T(1e-12)) {
             if (!(lam(i) > T(0))) lam(i) = eps;  // clamp negatives / NaNs
         }
         S = es.eigenvectors() * lam.asDiagonal() * es.eigenvectors().transpose();
-	} else {
-	    // Try LDLT first; if it fails, apply a Gershgorin diagonal bump and retry.
-	    Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt;
-	    ldlt.compute(S);
-	    if (ldlt.info() != Eigen::Success) {
-	        // Gershgorin bump
-	        T min_lb = std::numeric_limits<T>::infinity();
-	        for (int i = 0; i < N; ++i) {
-	            T row_sum = T(0);
-	            for (int j = 0; j < N; ++j) {
-	                if (j == i) continue;
-	                row_sum += std::abs(S(i,j));
-	            }
-	            const T lb = S(i,i) - row_sum;
-	            if (lb < min_lb) min_lb = lb;
-	        }
-	        if (!(min_lb > eps)) {
-	            const T bump = (eps - min_lb);
-	            S.diagonal().array() += bump;
-	        }
-	        // retry
-	        ldlt.compute(S);
-	        if (ldlt.info() != Eigen::Success) {
-	            // last resort: slightly bigger uniform bump
-	            S.diagonal().array() += (T(10) * eps);
-	        }
-	    }
-	}
+    } else if constexpr (N <= 6) {
+        // Try LDLT first; if it fails, apply a Gershgorin diagonal bump and retry.
+        Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt;
+        ldlt.compute(S);
+        if (ldlt.info() != Eigen::Success) {
+            T min_lb = std::numeric_limits<T>::infinity();
+            for (int i = 0; i < N; ++i) {
+                T row_sum = T(0);
+                for (int j = 0; j < N; ++j) {
+                    if (j == i) continue;
+                    row_sum += std::abs(S(i,j));
+                }
+                const T lb = S(i,i) - row_sum;
+                if (lb < min_lb) min_lb = lb;
+            }
+            if (!(min_lb > eps)) {
+                S.diagonal().array() += (eps - min_lb);
+            }
+            ldlt.compute(S);
+            if (ldlt.info() != Eigen::Success) {
+                S.diagonal().array() += (T(10) * eps);
+            }
+        }
+    } else {
+        // Avoid instantiating large fixed-size LDLT (e.g. 12x12) in Arduino
+        // builds; callers use this path only as light numerical hygiene.
+    }
     S = T(0.5) * (S + S.transpose()); // clean float noise
 }
 
@@ -1805,7 +1804,15 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
         x_lin_prev.template segment<3>(9)  = xext.template segment<3>(OFF_AW);
 
         Vector12& x_lin_next = x_lin_next_scratch_;
-        x_lin_next.noalias() = F_LL * x_lin_prev;
+        // x_lin_next = F_LL * x_lin_prev.  Keep this in scalar loops instead
+        // of an Eigen 12x12 expression to avoid cc1plus OOM on Arduino builds.
+        for (int i = 0; i < 12; ++i) {
+            T sum = T(0);
+            for (int k = 0; k < 12; ++k) {
+                sum += F_LL(i,k) * x_lin_prev(k);
+            }
+            x_lin_next(i) = sum;
+        }
         xext.template segment<3>(OFF_V)  = x_lin_next.template segment<3>(0);
         xext.template segment<3>(OFF_P)  = x_lin_next.template segment<3>(3);
         xext.template segment<3>(OFF_S)  = x_lin_next.template segment<3>(6);
@@ -1815,27 +1822,50 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
         constexpr int NA = BASE_N;
         constexpr int NL = 12;
 
-        // LL block
+        // LL block: P_LL_new = F_LL * P_LL_old * F_LLᵀ + Q_LL.
+        // Written as loops to keep fixed-size Eigen template instantiations small.
         Matrix12& tmpLL = tmpLL_scratch_;
+        for (int i = 0; i < NL; ++i) {
+            for (int j = 0; j < NL; ++j) {
+                T sum = T(0);
+                for (int k = 0; k < NL; ++k) {
+                    sum += F_LL(i,k) * Pext(OFF_V + k, OFF_V + j);
+                }
+                tmpLL(i,j) = sum;
+            }
+        }
+        for (int i = 0; i < NL; ++i) {
+            for (int j = i; j < NL; ++j) {
+                T sum = Q_LL(i,j);
+                for (int k = 0; k < NL; ++k) {
+                    sum += tmpLL(i,k) * F_LL(j,k);
+                }
+                Pext(OFF_V + i, OFF_V + j) = sum;
+                if (j != i) Pext(OFF_V + j, OFF_V + i) = sum;
+            }
+        }
 
-        // tmpLL = F_LL * P_LL_old
-        tmpLL.noalias() = F_LL * Pext.template block<NL,NL>(OFF_V,OFF_V);
-
-        // P_LL_new = tmpLL * F_LLᵀ + Q_LL
-        Pext.template block<NL,NL>(OFF_V,OFF_V).noalias() = tmpLL * F_LL.transpose();
-        Pext.template block<NL,NL>(OFF_V,OFF_V).noalias() += Q_LL;
-
-        // AL block (cross-covariance)
+        // AL block: P_AL_new = F_AA * P_AL_old * F_LLᵀ.
         MatrixBaseN12& tmpAL = tmpAL_scratch_;
-
-        // tmpAL = F_AA * P_AL_old
-        tmpAL.noalias() = F_AA * Pext.template block<NA,NL>(0,OFF_V);
-
-        // P_AL_new = tmpAL * F_LLᵀ
-        Pext.template block<NA,NL>(0,OFF_V).noalias() = tmpAL * F_LL.transpose();
-
-        // Keep symmetry: P_LA = P_ALᵀ
-        Pext.template block<NL,NA>(OFF_V,0) = Pext.template block<NA,NL>(0,OFF_V).transpose();
+        for (int i = 0; i < NA; ++i) {
+            for (int j = 0; j < NL; ++j) {
+                T sum = T(0);
+                for (int k = 0; k < NA; ++k) {
+                    sum += F_AA(i,k) * Pext(k, OFF_V + j);
+                }
+                tmpAL(i,j) = sum;
+            }
+        }
+        for (int i = 0; i < NA; ++i) {
+            for (int j = 0; j < NL; ++j) {
+                T sum = T(0);
+                for (int k = 0; k < NL; ++k) {
+                    sum += tmpAL(i,k) * F_LL(j,k);
+                }
+                Pext(i, OFF_V + j) = sum;
+                Pext(OFF_V + j, i) = sum;
+            }
+        }
     }
 
     // Optional accel bias RW and cross terms (F_BB = I)
@@ -1848,13 +1878,31 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
         Pext.template block<NB,NB>(OFF_BA,OFF_BA) = P_BB;
 
         constexpr int NA = BASE_N;
-        Eigen::Matrix<T,NA,NB> tmpAB = F_AA * Pext.template block<NA,NB>(0,OFF_BA);
+        Eigen::Matrix<T,NA,NB> tmpAB;
+        for (int i = 0; i < NA; ++i) {
+            for (int j = 0; j < NB; ++j) {
+                T sum = T(0);
+                for (int k = 0; k < NA; ++k) {
+                    sum += F_AA(i,k) * Pext(k, OFF_BA + j);
+                }
+                tmpAB(i,j) = sum;
+            }
+        }
         Pext.template block<NA,NB>(0,OFF_BA) = tmpAB;
         Pext.template block<NB,NA>(OFF_BA,0) = tmpAB.transpose();
 
         if (linear_block_enabled_) {
             constexpr int NL = 12;
-            Eigen::Matrix<T,NL,NB> tmpLB = F_LL * Pext.template block<NL,NB>(OFF_V,OFF_BA);
+            Eigen::Matrix<T,NL,NB> tmpLB;
+            for (int i = 0; i < NL; ++i) {
+                for (int j = 0; j < NB; ++j) {
+                    T sum = T(0);
+                    for (int k = 0; k < NL; ++k) {
+                        sum += F_LL(i,k) * Pext(OFF_V + k, OFF_BA + j);
+                    }
+                    tmpLB(i,j) = sum;
+                }
+            }
             Pext.template block<NL,NB>(OFF_V,OFF_BA) = tmpLB;
             Pext.template block<NB,NL>(OFF_BA,OFF_V) = tmpLB.transpose();
         }
@@ -2499,18 +2547,28 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     }
 
     Eigen::Matrix<T, NX, 1> PCt;
-    PCt.noalias() = Pext.col(idx_vz);
+    for (int i = 0; i < NX; ++i) {
+        PCt(i) = Pext(i, idx_vz);
+    }
 
     Eigen::Matrix<T, NX, 1> K;
-    K.noalias() = PCt / S;
+    for (int i = 0; i < NX; ++i) {
+        K(i) = PCt(i) / S;
+        xext(i) += K(i) * r;
+    }
 
-    xext.noalias() += K * r;
-
-    // Joseph-form scalar update: P = P - K*PCt' - PCt*K' + K*S*K'
-    Pext.noalias() -= K * PCt.transpose();
-    Pext.noalias() -= PCt * K.transpose();
-    Pext.noalias() += K * S * K.transpose();
-    Pext = T(0.5) * (Pext + Pext.transpose());
+    // Joseph-form scalar update: P = P - K*PCt' - PCt*K' + K*S*K'.
+    // Scalar loops avoid instantiating several NX×NX Eigen outer products.
+    for (int i = 0; i < NX; ++i) {
+        for (int j = i; j < NX; ++j) {
+            const T updated = Pext(i,j)
+                - K(i) * PCt(j)
+                - PCt(i) * K(j)
+                + K(i) * S * K(j);
+            Pext(i,j) = updated;
+            if (j != i) Pext(j,i) = updated;
+        }
+    }
 
     applyQuaternionCorrectionFromErrorState();
 }
