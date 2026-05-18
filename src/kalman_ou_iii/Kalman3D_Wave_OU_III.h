@@ -2240,36 +2240,76 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::apply_error_state
     const T n2 = dtheta_injected.squaredNorm();
     if (!(n2 > T(0))) return;
 
-    // Left-multiplicative reset:
-    //
-    //   q_new = Exp(dtheta_hat) * q_old
-    //
-    // If the pre-reset attitude error is δθ, then after injection the new local
-    // attitude error is, to first order:
-    //
-    //   δθ_new ≈ (I + 1/2 [dtheta_hat]×) (δθ - dtheta_hat)
-    //
-    // So the covariance reset Jacobian is:
-    //
-    //   G = I + 1/2 [dtheta_hat]×
-    //
     const Matrix3 G =
         Matrix3::Identity() + T(0.5) * skew_symmetric_matrix(dtheta_injected);
 
-    // Structured similarity update for Tm = diag(G, I):
-    //   Paa' = G * Paa * Gᵀ
-    //   Pax' = G * Pax
-    //   Pxa' = Pax'ᵀ  (enforce symmetry)
-    //   Pxx' = Pxx    (unchanged)
-    const Matrix3 Paa_old = Pext.template block<3,3>(0, 0);
-    const Matrix<T, 3, NX - 3> Pax_old = Pext.template block<3, NX - 3>(0, 3);
+    // Save old attitude block.
+    Matrix3 Paa_old;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            Paa_old(i,j) = Pext(i,j);
+        }
+    }
 
-    Pext.template block<3,3>(0, 0).noalias() = G * Paa_old * G.transpose();
-    Pext.template block<3, NX - 3>(0, 3).noalias() = G * Pax_old;
-    Pext.template block<NX - 3, 3>(3, 0) = Pext.template block<3, NX - 3>(0, 3).transpose();
+    // Paa_new = G * Paa_old * G^T, but do it manually.
+    Matrix3 GP;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            T sum = T(0);
+            for (int k = 0; k < 3; ++k) {
+                sum += G(i,k) * Paa_old(k,j);
+            }
+            GP(i,j) = sum;
+        }
+    }
 
-    // Keep covariance exactly symmetric against floating-point noise.
-    Pext = T(0.5) * (Pext + Pext.transpose());
+    Matrix3 Paa_new;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            T sum = T(0);
+            for (int k = 0; k < 3; ++k) {
+                sum += GP(i,k) * G(j,k); // G^T access
+            }
+            Paa_new(i,j) = sum;
+        }
+    }
+
+    // Top-left attitude block.
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            Pext(i,j) = Paa_new(i,j);
+        }
+    }
+
+    // Top cross block: Pax_new = G * Pax_old.
+    // Must read old row values before overwriting.
+    for (int col = 3; col < NX; ++col) {
+        const T old0 = Pext(0, col);
+        const T old1 = Pext(1, col);
+        const T old2 = Pext(2, col);
+
+        const T new0 = G(0,0)*old0 + G(0,1)*old1 + G(0,2)*old2;
+        const T new1 = G(1,0)*old0 + G(1,1)*old1 + G(1,2)*old2;
+        const T new2 = G(2,0)*old0 + G(2,1)*old1 + G(2,2)*old2;
+
+        Pext(0, col) = new0;
+        Pext(1, col) = new1;
+        Pext(2, col) = new2;
+
+        Pext(col, 0) = new0;
+        Pext(col, 1) = new1;
+        Pext(col, 2) = new2;
+    }
+
+    // Only clean the attitude block symmetry here.
+    // No full MatrixNX expression.
+    for (int i = 0; i < 3; ++i) {
+        for (int j = i + 1; j < 3; ++j) {
+            const T v = T(0.5) * (Pext(i,j) + Pext(j,i));
+            Pext(i,j) = v;
+            Pext(j,i) = v;
+        }
+    }
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
