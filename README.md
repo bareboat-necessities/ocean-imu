@@ -42,7 +42,11 @@ Wave Models:
 
 - [Wave Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-waves.pdf)
 
+- [Fenton Waves](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-fenton.pdf)
+
 - [Spectral Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-spectral.pdf)
+
+- [Sea Metrics](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/spectrum-sea_merics.pdf)
 
 - [Vessel RAO](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-vessel-RAO.pdf)
 
