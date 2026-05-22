@@ -58,6 +58,7 @@ There are two versions of Kalman INS filters and one filter (PII observer) based
 - PII observer is based on control theory. It is very computationally light-weight with no matrix operations. It's less accurate than Klaman filters.
 - All above filters are adaptive.
 - All filters tested to run on esp32s3.
+- All filters tested to run on Windows and Linux as well.
 
 Arduino .ino schetches for esp32s3 (on atomS3R):
 
