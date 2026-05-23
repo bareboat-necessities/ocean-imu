@@ -53,7 +53,7 @@
   #define SEA_STATE_NMEA_TALKER "II"
 #endif
 
-constexpr float g_std = atoms3r_ical::ImuCalCfg::g_std;
+//constexpr float g_std = atoms3r_ical::ImuCalCfg::g_std;
 //constexpr float FREQ_GUESS = 0.30f;
 
 static constexpr float LOOP_HZ = 200.0f;
