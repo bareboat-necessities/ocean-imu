@@ -53,8 +53,18 @@
   #define SEA_STATE_NMEA_TALKER "II"
 #endif
 
-//constexpr float g_std = atoms3r_ical::ImuCalCfg::g_std;
-//constexpr float FREQ_GUESS = 0.30f;
+/*
+  The sketch reports MAGNETIC heading.
+
+  NMEA HDM remains magnetic by definition.
+*/
+#ifndef SEA_STATE_OUTPUT_TRUE_HEADING
+  #define SEA_STATE_OUTPUT_TRUE_HEADING 0
+#endif
+
+#ifndef SEA_STATE_MAG_DECLINATION_DEG
+  #define SEA_STATE_MAG_DECLINATION_DEG 0.0f
+#endif
 
 static constexpr float LOOP_HZ = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LOOP_HZ);
@@ -67,6 +77,28 @@ static constexpr float ROT_BIAS_TAU_S = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
+/*
+  Magnetometer sanity gates.
+
+  Earth's field is commonly around 25..65 uT depending on location.
+  20..80 uT is a practical runtime gate that rejects many local disturbances
+  while still being tolerant enough for normal use.
+*/
+static constexpr float MAG_FIELD_MIN_UT = 20.0f;
+static constexpr float MAG_FIELD_MAX_UT = 80.0f;
+
+/*
+  Do not feed magnetometer to Mahony at 200 Hz if the physical mag update rate
+  is slower / repeated. This also reduces yaw twitch from noisy mag data.
+*/
+static constexpr uint32_t MAG_UPDATE_SPACING_MS = 35u;
+
+/*
+  Heading remains valid for a short time after last accepted mag correction.
+  Between accepted mag updates, IMU-only propagation continues.
+*/
+static constexpr uint32_t HEADING_MAG_TIMEOUT_MS = 2000u;
+
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
 
@@ -78,6 +110,14 @@ static inline float wrap360_(float deg) {
   while (deg < 0.0f) deg += 360.0f;
   while (deg >= 360.0f) deg -= 360.0f;
   return deg;
+}
+
+static inline float outputHeadingFromMagnetic_(float magnetic_deg) {
+#if SEA_STATE_OUTPUT_TRUE_HEADING
+  return wrap360_(magnetic_deg + SEA_STATE_MAG_DECLINATION_DEG);
+#else
+  return magnetic_deg;
+#endif
 }
 
 class FusionApp {
@@ -182,6 +222,7 @@ class FusionApp {
   Fusion fusion_{};
 
   uint32_t mag_gate_last_ms_ = 0;
+  uint32_t last_mag_correction_ms_ = 0;
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -191,6 +232,8 @@ class FusionApp {
   float dt_ = 0.0f;
   float roll_deg_ = 0.0f;
   float pitch_deg_ = 0.0f;
+
+  float heading_mag_deg_ = 0.0f;
   float heading_deg_ = 0.0f;
   bool heading_valid_ = false;
 
@@ -203,7 +246,9 @@ class FusionApp {
   float heave_wave_clean_m_ = 0.0f;
 
   bool mag_ok_ = false;
+  bool mag_field_sane_ = false;
   bool mag_fresh_ = false;
+  bool mag_used_ = false;
   float mag_norm_uT_ = NAN;
 
   uint16_t stale_frame_count_ = 0;
@@ -216,13 +261,27 @@ class FusionApp {
   Vector3f gyro_bias_ema_ = Vector3f::Zero();
   AdaptiveWaveDetrender z_detrender_{};
 
+  /*
+    IMPORTANT FRAME RULE
+
+    The gyro, accel, and mag must all enter Mahony in the SAME body frame.
+
+    Previous code used:
+        accel/gyro: ned_to_mahony_body_()
+        mag:        ned_to_mahony_mag_() with different signs
+
+    That makes the magnetic reference inconsistent with the inertial frame and
+    causes heading offset / tilt-dependent heading drift.
+
+    So magnetometer now uses the same mapping as accel and gyro.
+  */
   static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
     const Vector3f v_zu = ned_to_zu(v_ned);
     return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
   }
 
   static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
-    return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
+    return ned_to_mahony_body_(v_ned);
   }
 
   static void waitForNextLoopTick_(uint32_t loop_start_us) {
@@ -232,32 +291,46 @@ class FusionApp {
 
   float nominalFusionDt_() const { return 1.0f / LOOP_HZ; }
 
-  bool updateMagFreshGate_(bool mag_ok, uint32_t now_ms) {
-    constexpr uint32_t kSampleSpacingMs = 35u;
-    if (!mag_ok) {
+  bool updateMagFreshGate_(bool mag_candidate_ok, uint32_t now_ms) {
+    if (!mag_candidate_ok) {
       mag_gate_last_ms_ = 0;
       return false;
     }
+
     if (mag_gate_last_ms_ == 0) {
       mag_gate_last_ms_ = now_ms;
       return true;
     }
-    if ((now_ms - mag_gate_last_ms_) < kSampleSpacingMs) return false;
+
+    if ((now_ms - mag_gate_last_ms_) < MAG_UPDATE_SPACING_MS) {
+      return false;
+    }
+
     mag_gate_last_ms_ = now_ms;
     return true;
   }
 
   float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
     const float dt_nom = nominalFusionDt_();
+
     if (!have_last_sample_us_) {
       have_last_sample_us_ = true;
       last_sample_us_ = s.sample_us;
       return dt_nom;
     }
+
     const uint32_t dt_us = s.sample_us - last_sample_us_;
     last_sample_us_ = s.sample_us;
+
     const float dt_s = static_cast<float>(dt_us) * 1.0e-6f;
     if (!(dt_s > 0.0f) || !std::isfinite(dt_s)) return dt_nom;
+
+    /*
+      Protect Mahony and PII from occasional scheduling hiccups.
+      The loop is nominally 200 Hz, so normal dt is around 0.005 s.
+    */
+    if (dt_s > 0.05f) return dt_nom;
+
     return dt_s;
   }
 
@@ -274,6 +347,7 @@ class FusionApp {
 
     ImuCalBlobV2 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
+
     if (did_save) {
       blob_ = saved;
       have_blob_ = true;
@@ -292,6 +366,7 @@ class FusionApp {
     }
 
     mag_gate_last_ms_ = 0;
+    last_mag_correction_ms_ = 0;
     have_last_sample_us_ = false;
     last_sample_us_ = 0;
   }
@@ -301,9 +376,6 @@ class FusionApp {
     cfg.gravity_mps2 = g_std;
     cfg.use_mag = true;
 
-    // Keep runtime behavior aligned with the simulator adapter defaults used in
-    // tests/pii_observer/pii_observer-adaptive.cpp, otherwise Z/heave shape can
-    // diverge noticeably from the expected wave profile.
     cfg.core.observer.r          = 0.150f;
     cfg.core.observer.tau_a      = 0.68f;
     cfg.core.observer.tau_d      = 49.0f;
@@ -347,6 +419,11 @@ class FusionApp {
     cfg.core.coarse_schedule_blend = 0.48f;
     cfg.core.coarse_schedule_confidence_floor = 0.62f;
 
+    /*
+      These are only initial/reset values. The wrapper may adapt them.
+      If the header's adaptMahonyGains_() calls mahony_.init() every sample,
+      patch that header too so it only assigns twoKp/twoKi each sample.
+    */
     cfg.mahony_twoKp = 1.40f;
     cfg.mahony_twoKi = 0.060f;
     cfg.adapt_mahony_gains = true;
@@ -359,12 +436,20 @@ class FusionApp {
     gyro_bias_ok_ = false;
     gyro_bias_ema_.setZero();
 
+    roll_deg_ = 0.0f;
+    pitch_deg_ = 0.0f;
+    heading_mag_deg_ = 0.0f;
     heading_deg_ = 0.0f;
     heading_valid_ = false;
+
     mag_gate_last_ms_ = 0;
+    last_mag_correction_ms_ = 0;
     mag_ok_ = false;
+    mag_field_sane_ = false;
     mag_fresh_ = false;
+    mag_used_ = false;
     mag_norm_uT_ = NAN;
+
     stale_frame_count_ = 0;
     have_last_sample_us_ = false;
     last_sample_us_ = 0;
@@ -400,6 +485,7 @@ class FusionApp {
     dcfg.min_dt_s = 1.0e-4f;
     dcfg.max_dt_s = 0.25f;
     dcfg.output_abs_limit = 0.0f;
+
     z_detrender_.setConfig(dcfg);
     z_detrender_.reset(0.0f);
   }
@@ -431,12 +517,19 @@ class FusionApp {
 
     int32_t remain = static_cast<int32_t>(tap_deadline_ms_ - millis());
     remain = remain < 0 ? 0 : remain;
-    const float t01 = 1.0f - static_cast<float>(remain) / static_cast<float>(M5UiCfg::MENU_TAP_WINDOW_MS);
+
+    const float t01 =
+        1.0f -
+        static_cast<float>(remain) /
+        static_cast<float>(M5UiCfg::MENU_TAP_WINDOW_MS);
+
     ui_.bar01(t01);
   }
 #endif
 
   void updateFilter_(const ImuSample& s) {
+    const uint32_t now_ms = millis();
+
     dt_ = computeFusionDtFromSampleTimestamp_(s);
     const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
 
@@ -447,29 +540,61 @@ class FusionApp {
     m_cal_ = runtime_.applyMag(s.m);
 
     mag_norm_uT_ = m_cal_.norm();
-    mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
-    mag_fresh_ = updateMagFreshGate_(mag_ok_, millis());
+
+    mag_ok_ =
+        std::isfinite(mag_norm_uT_) &&
+        mag_norm_uT_ > 5.0f &&
+        mag_norm_uT_ < 200.0f;
+
+    mag_field_sane_ =
+        std::isfinite(mag_norm_uT_) &&
+        mag_norm_uT_ >= MAG_FIELD_MIN_UT &&
+        mag_norm_uT_ <= MAG_FIELD_MAX_UT;
+
+    /*
+      This is a rate gate for accepted mag corrections, not proof that the
+      sensor produced a physically new sample. It prevents repeatedly feeding
+      the same / noisy magnetometer vector at the 200 Hz IMU loop rate.
+    */
+    mag_fresh_ = updateMagFreshGate_(mag_ok_ && mag_field_sane_, now_ms);
 
     const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
 
-    if (mag_ok_) {
+    const bool mag_usable = mag_ok_ && mag_field_sane_ && mag_fresh_;
+    mag_used_ = mag_usable;
+
+    if (mag_usable) {
+      /*
+        Critical fix:
+        mag must use the same body-frame convention as gyro and accel.
+      */
       const Vector3f mag_body_m = ned_to_mahony_mag_(m_cal_);
+
       fusion_.updateIMUMag(gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
                            acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
                            mag_body_m.x(), mag_body_m.y(), mag_body_m.z(),
                            dt_);
-      heading_valid_ = true;
+
+      last_mag_correction_ms_ = now_ms;
     } else {
       fusion_.updateIMU(gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
-                        acc_body_m.x(), acc_body_m.y(), acc_body_m.z(), dt_);
-      heading_valid_ = false;
+                        acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
+                        dt_);
     }
 
     const auto q_wb = fusion_.quaternionWorldToBody();
     const Quaternionf q_wb_zu(q_wb.w, q_wb.x, q_wb.y, q_wb.z);
-    quat_wb_zu_to_euler_nautical(q_wb_zu, roll_deg_, pitch_deg_, heading_deg_);
-    heading_deg_ = wrap360_(heading_deg_);
+
+    float heading_from_q_deg = 0.0f;
+    quat_wb_zu_to_euler_nautical(q_wb_zu, roll_deg_, pitch_deg_, heading_from_q_deg);
+
+    heading_mag_deg_ = wrap360_(heading_from_q_deg);
+    heading_deg_ = outputHeadingFromMagnetic_(heading_mag_deg_);
+
+    heading_valid_ =
+        last_mag_correction_ms_ != 0 &&
+        (now_ms - last_mag_correction_ms_) <= HEADING_MAG_TIMEOUT_MS;
 
     const bool still =
         (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
@@ -477,6 +602,7 @@ class FusionApp {
 
     if (still) {
       const float alpha_b = 1.0f - expf(-dt_ / ROT_BIAS_TAU_S);
+
       if (!gyro_bias_ok_) {
         gyro_bias_ok_ = true;
         gyro_bias_ema_ = w_cal_;
@@ -493,6 +619,7 @@ class FusionApp {
 
     const float tau_rot = 1.5f;
     const float alpha_r = 1.0f - expf(-dt_ / tau_rot);
+
     if (!rot_inited_) {
       rot_inited_ = true;
       rot_dpm_filt_ = rot_dpm_meas;
@@ -501,19 +628,23 @@ class FusionApp {
     }
 
     const auto hs = fusion_.snapshot();
+
     heave_m_ = fusion_.displacement();
     heave_raw_m_ = heave_m_;
     wave_hz_ = hs.core.accel_freq_hz;
 
     const float omega = (wave_hz_ > 1e-6f) ? (2.0f * PI * wave_hz_) : NAN;
     const float sigma = hs.core.accel_sigma;
+
     if (std::isfinite(omega) && std::isfinite(sigma) && omega > 1e-6f) {
       wave_envelope_m_ = sigma / (omega * omega);
     } else {
       wave_envelope_m_ = 0.0f;
     }
 
-    const auto z_det = z_detrender_.update(heave_raw_m_, dt_, wave_hz_, (wave_hz_ > 1e-6f));
+    const auto z_det =
+        z_detrender_.update(heave_raw_m_, dt_, wave_hz_, wave_hz_ > 1e-6f);
+
     heave_baseline_m_ = z_det.baseline_slow;
     heave_wave_raw_m_ = z_det.wave_raw;
     heave_wave_clean_m_ = z_det.wave_clean;
@@ -523,13 +654,24 @@ class FusionApp {
     ui_.setReadRotation();
     ui_.title("COMPASS");
     M5.Display.printf("BLOB: %s\n", have_blob_ ? "YES" : "NO");
-    M5.Display.printf("A:%d G:%d M:%d\n", static_cast<int>(runtime_.acc.ok), static_cast<int>(runtime_.gyr.ok), static_cast<int>(runtime_.mag.ok));
+    M5.Display.printf("A:%d G:%d M:%d\n",
+                      static_cast<int>(runtime_.acc.ok),
+                      static_cast<int>(runtime_.gyr.ok),
+                      static_cast<int>(runtime_.mag.ok));
+
 #if SEA_STATE_ENABLE_WIZARD
     ui_.line("Tap: calibrate");
     ui_.line("Tap x3: erase");
 #else
     ui_.line("Wizard: DISABLED");
 #endif
+
+#if SEA_STATE_OUTPUT_TRUE_HEADING
+    M5.Display.printf("HDG: TRUE decl=%+.1f\n", static_cast<double>(SEA_STATE_MAG_DECLINATION_DEG));
+#else
+    ui_.line("HDG: MAG");
+#endif
+
     ui_.line("");
     ui_.line("Fusion: PII");
   }
@@ -538,66 +680,113 @@ class FusionApp {
 #if SEA_STATE_ENABLE_WIZARD
     if (tap_count_ > 0) return;
 #endif
+
     const uint32_t now_ms = millis();
     if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
 
     if (use_graphics_ && compass_ui_ready_) {
       ui_.setReadRotation();
-      const bool tiltWarn = (fabsf(roll_deg_) > 35.0f) || (fabsf(pitch_deg_) > 35.0f);
+
+      const bool tiltWarn =
+          (fabsf(roll_deg_) > 35.0f) ||
+          (fabsf(pitch_deg_) > 35.0f);
+
       const float hdg_draw = heading_valid_ ? heading_deg_ : 0.0f;
-      compass_ui_.draw(hdg_draw, heading_valid_ && mag_ok_, mag_norm_uT_, tiltWarn);
+
+      compass_ui_.draw(hdg_draw,
+                       heading_valid_ && mag_ok_ && mag_field_sane_,
+                       mag_norm_uT_,
+                       tiltWarn);
       return;
     }
 
     ui_.setReadRotation();
     ui_.title("COMPASS");
-    M5.Display.printf("HDG: %6.1f %s\n", static_cast<double>(heading_deg_), heading_valid_ ? "deg" : "WAIT");
-    M5.Display.printf("ROL: %6.1f deg\n", static_cast<double>(roll_deg_));
-    M5.Display.printf("PIT: %6.1f deg\n", static_cast<double>(pitch_deg_));
-    M5.Display.printf("HEV: %6.3f m\n", static_cast<double>(heave_raw_m_));
-    M5.Display.printf("ENV: %6.3f m\n", static_cast<double>(wave_envelope_m_));
-    M5.Display.printf("FRQ: %6.3f Hz\n", static_cast<double>(wave_hz_));
-    M5.Display.printf("MAG: %s %s\n", mag_ok_ ? "OK " : "BAD", mag_fresh_ ? "NEW" : "OLD");
-    M5.Display.printf("|m|: %6.1f uT\n", static_cast<double>(mag_norm_uT_));
-    M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n", static_cast<double>(a_raw_norm_), static_cast<double>(a_cal_.norm()));
+
+#if SEA_STATE_OUTPUT_TRUE_HEADING
+    M5.Display.printf("HDG:%7.1f T %s\n",
+                      static_cast<double>(heading_deg_),
+                      heading_valid_ ? "deg" : "WAIT");
+    M5.Display.printf("MAG:%7.1f M\n", static_cast<double>(heading_mag_deg_));
+#else
+    M5.Display.printf("HDG:%7.1f M %s\n",
+                      static_cast<double>(heading_mag_deg_),
+                      heading_valid_ ? "deg" : "WAIT");
+#endif
+
+    M5.Display.printf("ROL:%7.1f deg\n", static_cast<double>(roll_deg_));
+    M5.Display.printf("PIT:%7.1f deg\n", static_cast<double>(pitch_deg_));
+    M5.Display.printf("HEV:%7.3f m\n", static_cast<double>(heave_raw_m_));
+    M5.Display.printf("ENV:%7.3f m\n", static_cast<double>(wave_envelope_m_));
+    M5.Display.printf("FRQ:%7.3f Hz\n", static_cast<double>(wave_hz_));
+
+    M5.Display.printf("MAG:%s %s %s\n",
+                      mag_ok_ ? "OK " : "BAD",
+                      mag_field_sane_ ? "FIELD" : "DIST",
+                      mag_used_ ? "USE" : "SKIP");
+
+    M5.Display.printf("|m|:%7.1f uT\n", static_cast<double>(mag_norm_uT_));
+    M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n",
+                      static_cast<double>(a_raw_norm_),
+                      static_cast<double>(a_cal_.norm()));
   }
 
   void streamSerial_() {
     const uint32_t now_ms = millis();
+
 #if SEA_STATE_SERIAL_NMEA
     if (now_ms - last_serial_ms_ < NMEA_SERIAL_MS) return;
 #else
     if (now_ms - last_serial_ms_ < DEBUG_SERIAL_MS) return;
 #endif
+
     last_serial_ms_ = now_ms;
 
 #if SEA_STATE_SERIAL_NMEA
-    if (heading_valid_) nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
+
+    /*
+      HDM is magnetic heading. Do not send true-heading-corrected value here.
+    */
+    if (heading_valid_) nmea_hdm(SEA_STATE_NMEA_TALKER, heading_mag_deg_);
+
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
     nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, heading_valid_);
+
 #else
+
   #if ARDUINO_PLOTTER
     Serial.printf("HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\n",
                   static_cast<double>(heave_raw_m_ * 100.0f),
                   static_cast<double>(wave_envelope_m_ * 100.0f),
                   static_cast<double>(heave_wave_clean_m_ * 100.0f));
   #else
-    Serial.printf("hdg=%.2f roll=%.2f pitch=%.2f heave=%.3f env=%.3f frq=%.3f\n",
+    Serial.printf("hdg=%.2f mag=%.2f valid=%d roll=%.2f pitch=%.2f |m|=%.1f magUsed=%d magField=%d heave=%.3f env=%.3f frq=%.3f\n",
                   static_cast<double>(heading_deg_),
+                  static_cast<double>(heading_mag_deg_),
+                  static_cast<int>(heading_valid_),
                   static_cast<double>(roll_deg_),
                   static_cast<double>(pitch_deg_),
+                  static_cast<double>(mag_norm_uT_),
+                  static_cast<int>(mag_used_),
+                  static_cast<int>(mag_field_sane_),
                   static_cast<double>(heave_m_),
                   static_cast<double>(wave_envelope_m_),
                   static_cast<double>(wave_hz_));
   #endif
+
 #endif
   }
 };
 
 static FusionApp g_app;
 
-void setup() { g_app.begin(); }
-void loop() { g_app.tick(); }
+void setup() {
+  g_app.begin();
+}
+
+void loop() {
+  g_app.tick();
+}
