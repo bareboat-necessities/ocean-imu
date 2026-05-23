@@ -54,10 +54,10 @@
 #endif
 
 /*
-  The sketch reports MAGNETIC heading by default.
+  Default output is MAGNETIC heading.
 
-  NMEA HDM is magnetic heading by definition, so HDM always sends magnetic
-  heading even when SEA_STATE_OUTPUT_TRUE_HEADING is enabled for display/debug.
+  NMEA HDM is magnetic heading by definition. Even if true-heading display is
+  enabled, HDM still sends magnetic heading.
 */
 #ifndef SEA_STATE_OUTPUT_TRUE_HEADING
   #define SEA_STATE_OUTPUT_TRUE_HEADING 0
@@ -65,6 +65,17 @@
 
 #ifndef SEA_STATE_MAG_DECLINATION_DEG
   #define SEA_STATE_MAG_DECLINATION_DEG 0.0f
+#endif
+
+/*
+  Optional hard field gate for Mahony mag updates.
+
+  Default OFF because hard-gating mag into/out of Mahony can create yaw steps
+  if the field norm hovers around the threshold. Field sanity is still shown in
+  UI/debug.
+*/
+#ifndef SEA_STATE_USE_STRICT_MAG_FIELD_GATE
+  #define SEA_STATE_USE_STRICT_MAG_FIELD_GATE 0
 #endif
 
 static constexpr float g_std = atoms3r_ical::ImuCalCfg::g_std;
@@ -83,24 +94,21 @@ static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
 /*
-  Practical magnetic-field gate.
+  Diagnostic magnetic-field gate.
 
-  5..200 uT is useful for detecting "some mag exists", but it is too loose for
-  compass correction. 20..80 uT rejects many local disturbances while remaining
-  tolerant enough for normal Earth's field.
+  5..200 uT: "mag exists"
+  20..80 uT: field looks plausible for compass use
 */
+static constexpr float MAG_PRESENT_MIN_UT = 5.0f;
+static constexpr float MAG_PRESENT_MAX_UT = 200.0f;
 static constexpr float MAG_FIELD_MIN_UT = 20.0f;
 static constexpr float MAG_FIELD_MAX_UT = 80.0f;
 
 /*
-  Do not feed magnetometer into Mahony at 200 Hz if the physical mag sample is
-  slower / repeated.
+  Diagnostic only. Do not use this to pulse Mahony mag correction.
 */
 static constexpr uint32_t MAG_UPDATE_SPACING_MS = 35u;
 
-/*
-  Heading remains valid for a short time after last accepted mag correction.
-*/
 static constexpr uint32_t HEADING_MAG_TIMEOUT_MS = 2000u;
 
 using namespace atoms3r_ical;
@@ -279,28 +287,26 @@ class FusionApp {
 
  private:
   /*
-    IMPORTANT FRAME RULE
+    Accel/gyro mapping into this Mahony wrapper.
 
-    The gyro, accel, and mag must all enter Mahony in the SAME body frame.
-
-    OU_II feeds:
-        update(dt, w_cal, a_cal)
-        updateMag(m_cal)
-
-    This PII/Mahony wrapper uses its own Z-up auxiliary convention, so all three
-    calibrated vectors must go through the same transform:
-
-        gyr_body_m = ned_to_mahony_body_(w_cal)
-        acc_body_m = ned_to_mahony_body_(a_cal)
-        mag_body_m = ned_to_mahony_body_(m_cal)
+    Your AdaptiveVerticalPIIMahony wrapper says Mahony's auxiliary/world frame is
+    Z-up and identity expects accel approximately (0,0,+g). This helper is the
+    original working accel/gyro path.
   */
   static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
     const Vector3f v_zu = ned_to_zu(v_ned);
     return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
   }
 
+  /*
+    Magnetometer mapping for this Mahony implementation.
+
+    Do NOT replace this with ned_to_mahony_body_(). The classic Mahony magnetic
+    equations use a horizontal magnetic reference convention where this original
+    mapping is the one that keeps north pointing north in your sketch.
+  */
   static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
-    return ned_to_mahony_body_(v_ned);
+    return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
   }
 
   static void waitForNextLoopTick_(uint32_t loop_start_us) {
@@ -576,8 +582,8 @@ class FusionApp {
 
     mag_present_ =
         std::isfinite(mag_norm_uT_) &&
-        mag_norm_uT_ > 5.0f &&
-        mag_norm_uT_ < 200.0f;
+        mag_norm_uT_ >= MAG_PRESENT_MIN_UT &&
+        mag_norm_uT_ <= MAG_PRESENT_MAX_UT;
 
     mag_field_sane_ =
         std::isfinite(mag_norm_uT_) &&
@@ -585,19 +591,21 @@ class FusionApp {
         mag_norm_uT_ <= MAG_FIELD_MAX_UT;
 
     /*
-      Rate gate accepted mag corrections.
+      Diagnostic only. Do not use mag_fresh_ to pulse Mahony. Pulsed mag
+      correction makes heading jerky.
     */
-    mag_fresh_ = updateMagFreshGate_(mag_present_ && mag_field_sane_, now_ms);
+    mag_fresh_ = updateMagFreshGate_(mag_present_, now_ms);
 
-    /*
-      Critical frame consistency:
-      all three calibrated vectors use the same Mahony-body transform.
-    */
     const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
     const Vector3f mag_body_m = ned_to_mahony_mag_(m_cal_);
 
-    const bool mag_usable = mag_present_ && mag_field_sane_ && mag_fresh_;
+#if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
+    const bool mag_usable = mag_present_ && mag_field_sane_;
+#else
+    const bool mag_usable = mag_present_;
+#endif
+
     mag_used_ = mag_usable;
 
     if (mag_usable) {
@@ -614,11 +622,8 @@ class FusionApp {
     }
 
     /*
-      Heading extraction restored to the original PII path.
-
-      AdaptiveVerticalPIIMahony has confusing quaternion accessor names, but
-      since the header was not changed, keep using the same path that your
-      original sketch used.
+      Keep the original PII heading extraction path. Do not replace this with
+      a separate tilt-compensated diagnostic compass formula.
     */
     const auto q_wb = fusion_.quaternionWorldToBody();
     const Quaternionf q_wb_zu(q_wb.w, q_wb.x, q_wb.y, q_wb.z);
@@ -662,8 +667,7 @@ class FusionApp {
     if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
 
     /*
-      Keep original ROT convention for now.
-      This avoids introducing an additional sign/frame change while debugging heading.
+      Keep original ROT convention while debugging compass heading.
     */
     float rot_dpm_meas = w_use.z() * RAD_TO_DEG * 60.0f;
     rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
@@ -725,6 +729,12 @@ class FusionApp {
     ui_.line("HDG: MAG");
 #endif
 
+#if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
+    ui_.line("Mag gate: STRICT");
+#else
+    ui_.line("Mag gate: LOOSE");
+#endif
+
     ui_.line("");
     ui_.line("Fusion: PII");
   }
@@ -748,7 +758,7 @@ class FusionApp {
       const float hdg_draw = heading_valid_ ? heading_deg_ : 0.0f;
 
       compass_ui_.draw(hdg_draw,
-                       heading_valid_ && mag_present_ && mag_field_sane_,
+                       heading_valid_ && mag_present_,
                        mag_norm_uT_,
                        tiltWarn);
       return;
@@ -825,7 +835,7 @@ class FusionApp {
 
     Serial.printf(
         "hdg=%.2f mag=%.2f valid=%d roll=%.2f pitch=%.2f |m|=%.1f "
-        "magUsed=%d magField=%d magHead=%d heave=%.3f env=%.3f frq=%.3f\n",
+        "magUsed=%d magField=%d magFresh=%d heave=%.3f env=%.3f frq=%.3f\n",
         static_cast<double>(heading_deg_),
         static_cast<double>(heading_mag_deg_),
         static_cast<int>(heading_valid_),
@@ -834,7 +844,7 @@ class FusionApp {
         static_cast<double>(mag_norm_uT_),
         static_cast<int>(mag_used_),
         static_cast<int>(mag_field_sane_),
-        static_cast<int>(mag_heading_ok_),
+        static_cast<int>(mag_fresh_),
         static_cast<double>(heave_m_),
         static_cast<double>(wave_envelope_m_),
         static_cast<double>(wave_hz_));
