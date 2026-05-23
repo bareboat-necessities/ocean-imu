@@ -54,10 +54,10 @@
 #endif
 
 /*
-  Default output is MAGNETIC heading.
+  This sketch outputs MAGNETIC heading by default.
 
-  NMEA HDM is magnetic heading by definition. Even if true-heading display is
-  enabled, HDM still sends magnetic heading.
+  NMEA HDM is magnetic heading by definition, so HDM always sends magnetic
+  heading, not true heading.
 */
 #ifndef SEA_STATE_OUTPUT_TRUE_HEADING
   #define SEA_STATE_OUTPUT_TRUE_HEADING 0
@@ -68,11 +68,36 @@
 #endif
 
 /*
-  Optional hard field gate for Mahony mag updates.
+  Additional user/mounting correction after the mathematically required
+  Mahony frame correction.
 
-  Default OFF because hard-gating mag into/out of Mahony can create yaw steps
-  if the field norm hovers around the threshold. Field sanity is still shown in
-  UI/debug.
+  Leave 0 unless you intentionally want to correct a known mounting/calibration
+  bias after calibration.
+*/
+#ifndef SEA_STATE_MAG_HEADING_USER_OFFSET_DEG
+  #define SEA_STATE_MAG_HEADING_USER_OFFSET_DEG 0.0f
+#endif
+
+/*
+  The Mahony-body frame used below is:
+
+      x = -East
+      y = -North
+      z =  Up
+
+  The quaternion-to-nautical heading extraction then comes out 90 deg behind
+  the desired magnetic heading. This offset is deterministic from the chosen
+  body-frame basis, not a declination correction.
+*/
+#ifndef SEA_STATE_MAHONY_FRAME_HEADING_OFFSET_DEG
+  #define SEA_STATE_MAHONY_FRAME_HEADING_OFFSET_DEG 90.0f
+#endif
+
+/*
+  Optional hard magnetic-field gate.
+
+  Default OFF. Hard gating magnetometer in/out can create yaw steps if the
+  magnetic norm hovers near threshold. The field sanity is still displayed.
 */
 #ifndef SEA_STATE_USE_STRICT_MAG_FIELD_GATE
   #define SEA_STATE_USE_STRICT_MAG_FIELD_GATE 0
@@ -94,10 +119,9 @@ static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
 /*
-  Diagnostic magnetic-field gate.
-
-  5..200 uT: "mag exists"
-  20..80 uT: field looks plausible for compass use
+  Magnetic field gates:
+    5..200 uT : magnetometer is present / not completely broken
+    20..80 uT: field looks plausible for compass use
 */
 static constexpr float MAG_PRESENT_MIN_UT = 5.0f;
 static constexpr float MAG_PRESENT_MAX_UT = 200.0f;
@@ -131,6 +155,12 @@ static inline float outputHeadingFromMagnetic_(float magnetic_deg) {
 #else
   return magnetic_deg;
 #endif
+}
+
+static inline float applyHeadingCorrections_(float raw_mag_heading_deg) {
+  return wrap360_(raw_mag_heading_deg +
+                  SEA_STATE_MAHONY_FRAME_HEADING_OFFSET_DEG +
+                  SEA_STATE_MAG_HEADING_USER_OFFSET_DEG);
 }
 
 class FusionApp {
@@ -254,6 +284,7 @@ class FusionApp {
   float roll_deg_ = 0.0f;
   float pitch_deg_ = 0.0f;
 
+  float heading_raw_deg_ = 0.0f;
   float heading_mag_deg_ = 0.0f;
   float heading_deg_ = 0.0f;
   bool heading_valid_ = false;
@@ -287,26 +318,30 @@ class FusionApp {
 
  private:
   /*
-    Accel/gyro mapping into this Mahony wrapper.
+    Correct common Mahony-body mapping for ALL vector sensors.
 
-    Your AdaptiveVerticalPIIMahony wrapper says Mahony's auxiliary/world frame is
-    Z-up and identity expects accel approximately (0,0,+g). This helper is the
-    original working accel/gyro path.
+    FrameConversions:
+      NED vector = [N, E, D]
+      Z-up ENU   = [E, N, U] = [E, N, -D]
+
+    This Mahony body frame is:
+      x = -East
+      y = -North
+      z =  Up
+
+    Therefore:
+      [N,E,D] -> [-E, -N, -D]
+
+    The previous code used this for accel/gyro but a different frame for mag.
+    That was the real inconsistency.
   */
   static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
     const Vector3f v_zu = ned_to_zu(v_ned);
     return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
   }
 
-  /*
-    Magnetometer mapping for this Mahony implementation.
-
-    Do NOT replace this with ned_to_mahony_body_(). The classic Mahony magnetic
-    equations use a horizontal magnetic reference convention where this original
-    mapping is the one that keeps north pointing north in your sketch.
-  */
   static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
-    return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
+    return ned_to_mahony_body_(v_ned);
   }
 
   static void waitForNextLoopTick_(uint32_t loop_start_us) {
@@ -354,10 +389,6 @@ class FusionApp {
     const float dt_s = static_cast<float>(dt_us) * 1.0e-6f;
     if (!(dt_s > 0.0f) || !std::isfinite(dt_s)) return dt_nom;
 
-    /*
-      Protect Mahony and PII from occasional scheduling hiccups.
-      Normal loop dt is around 0.005 s.
-    */
     if (dt_s > 0.05f) return dt_nom;
 
     return dt_s;
@@ -466,6 +497,7 @@ class FusionApp {
     roll_deg_ = 0.0f;
     pitch_deg_ = 0.0f;
 
+    heading_raw_deg_ = 0.0f;
     heading_mag_deg_ = 0.0f;
     heading_deg_ = 0.0f;
     heading_valid_ = false;
@@ -591,11 +623,14 @@ class FusionApp {
         mag_norm_uT_ <= MAG_FIELD_MAX_UT;
 
     /*
-      Diagnostic only. Do not use mag_fresh_ to pulse Mahony. Pulsed mag
-      correction makes heading jerky.
+      Diagnostic only. Do not use mag_fresh_ to pulse Mahony mag correction.
     */
     mag_fresh_ = updateMagFreshGate_(mag_present_, now_ms);
 
+    /*
+      Correct fix:
+      gyro, accel, and mag all enter Mahony in the same body frame.
+    */
     const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
     const Vector3f mag_body_m = ned_to_mahony_mag_(m_cal_);
@@ -622,23 +657,25 @@ class FusionApp {
     }
 
     /*
-      Keep the original PII heading extraction path. Do not replace this with
-      a separate tilt-compensated diagnostic compass formula.
+      Keep your original quaternion heading extraction path, then apply the
+      deterministic +90 deg correction required by the common Mahony-body frame.
     */
     const auto q_wb = fusion_.quaternionWorldToBody();
     const Quaternionf q_wb_zu(q_wb.w, q_wb.x, q_wb.y, q_wb.z);
 
-    float heading_from_q_deg = heading_mag_deg_;
+    float raw_heading_from_q_deg = heading_raw_deg_;
 
     quat_wb_zu_to_euler_nautical(q_wb_zu,
                                  roll_deg_,
                                  pitch_deg_,
-                                 heading_from_q_deg);
+                                 raw_heading_from_q_deg);
 
-    heading_mag_deg_ = wrap360_(heading_from_q_deg);
+    heading_raw_deg_ = wrap360_(raw_heading_from_q_deg);
+    heading_mag_deg_ = applyHeadingCorrections_(heading_raw_deg_);
     heading_deg_ = outputHeadingFromMagnetic_(heading_mag_deg_);
 
     mag_heading_ok_ =
+        std::isfinite(heading_raw_deg_) &&
         std::isfinite(heading_mag_deg_) &&
         std::isfinite(roll_deg_) &&
         std::isfinite(pitch_deg_);
@@ -667,9 +704,12 @@ class FusionApp {
     if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
 
     /*
-      Keep original ROT convention while debugging compass heading.
+      ROT follows the same body-frame convention as the AHRS input.
+      Sign may be changed later if your NMEA ROT convention expects opposite.
     */
-    float rot_dpm_meas = w_use.z() * RAD_TO_DEG * 60.0f;
+    const Vector3f w_use_m = ned_to_mahony_body_(w_use);
+
+    float rot_dpm_meas = w_use_m.z() * RAD_TO_DEG * 60.0f;
     rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
 
     const float tau_rot = 1.5f;
@@ -729,13 +769,16 @@ class FusionApp {
     ui_.line("HDG: MAG");
 #endif
 
+    M5.Display.printf("FrmOff:%+.0f User:%+.1f\n",
+                      static_cast<double>(SEA_STATE_MAHONY_FRAME_HEADING_OFFSET_DEG),
+                      static_cast<double>(SEA_STATE_MAG_HEADING_USER_OFFSET_DEG));
+
 #if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
     ui_.line("Mag gate: STRICT");
 #else
     ui_.line("Mag gate: LOOSE");
 #endif
 
-    ui_.line("");
     ui_.line("Fusion: PII");
   }
 
@@ -779,6 +822,7 @@ class FusionApp {
                       heading_valid_ ? "deg" : "WAIT");
 #endif
 
+    M5.Display.printf("RAW:%7.1f deg\n", static_cast<double>(heading_raw_deg_));
     M5.Display.printf("ROL:%7.1f deg\n", static_cast<double>(roll_deg_));
     M5.Display.printf("PIT:%7.1f deg\n", static_cast<double>(pitch_deg_));
 
@@ -834,10 +878,10 @@ class FusionApp {
   #else
 
     Serial.printf(
-        "hdg=%.2f mag=%.2f valid=%d roll=%.2f pitch=%.2f |m|=%.1f "
+        "hdg=%.2f raw=%.2f valid=%d roll=%.2f pitch=%.2f |m|=%.1f "
         "magUsed=%d magField=%d magFresh=%d heave=%.3f env=%.3f frq=%.3f\n",
-        static_cast<double>(heading_deg_),
         static_cast<double>(heading_mag_deg_),
+        static_cast<double>(heading_raw_deg_),
         static_cast<int>(heading_valid_),
         static_cast<double>(roll_deg_),
         static_cast<double>(pitch_deg_),
