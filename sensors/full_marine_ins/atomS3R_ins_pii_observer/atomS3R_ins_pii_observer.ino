@@ -5,7 +5,7 @@
 
   Produces:
     - magnetic compass heading
-    - AHRS roll/pitch
+    - AHRS roll/pitch/yaw
     - heave Z displacement
     - wave envelope estimate
 */
@@ -67,6 +67,9 @@
   #define SEA_STATE_MAG_DECLINATION_DEG 0.0f
 #endif
 
+static constexpr float g_std = atoms3r_ical::ImuCalCfg::g_std;
+static constexpr float FREQ_GUESS = 0.30f;
+
 static constexpr float LOOP_HZ = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US =
     static_cast<uint32_t>(1000000.0f / LOOP_HZ);
@@ -102,6 +105,7 @@ static constexpr uint32_t HEADING_MAG_TIMEOUT_MS = 2000u;
 
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
+using Quaternionf = Eigen::Quaternionf;
 
 static inline float clampf_(float x, float lo, float hi) {
   return x < lo ? lo : (x > hi ? hi : x);
@@ -299,77 +303,6 @@ class FusionApp {
     return ned_to_mahony_body_(v_ned);
   }
 
-  /*
-    Predict Mahony world +Z direction expressed in Mahony body frame.
-
-    This uses the same formula as AdaptiveVerticalPIIMahony::computeMahonyAccelMetrics_().
-    In this wrapper, identity attitude expects accel approximately (0,0,+g).
-  */
-  static bool mahonyPredictedUpBody_(
-      const typename Fusion::QuaternionT& q,
-      Vector3f& up_b_unit_out)
-  {
-    const float q0 = q.w;
-    const float q1 = q.x;
-    const float q2 = q.y;
-    const float q3 = q.z;
-
-    Vector3f up_b(
-        2.0f * (q1 * q3 - q0 * q2),
-        2.0f * (q0 * q1 + q2 * q3),
-        q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3
-    );
-
-    const float n = up_b.norm();
-    if (!(n > 1e-6f) || !std::isfinite(n)) return false;
-
-    up_b_unit_out = up_b / n;
-    return true;
-  }
-
-  /*
-    Tilt-compensated magnetic heading.
-
-    Inputs are body-frame:
-      down_b_unit : world down direction expressed in body frame
-      mag_b_uT    : calibrated magnetic-field vector expressed in body frame
-
-    Output is magnetic heading: body forward X axis relative to magnetic north.
-  */
-  static bool magneticHeadingFromDownAndMagBody_(
-      const Vector3f& down_b_unit,
-      const Vector3f& mag_b_uT,
-      float& heading_deg_out)
-  {
-    const Vector3f FWD_B(1.0f, 0.0f, 0.0f);
-
-    Vector3f d = down_b_unit;
-    const float dn = d.norm();
-    if (!(dn > 1e-6f) || !std::isfinite(dn)) return false;
-    d /= dn;
-
-    Vector3f m = mag_b_uT;
-    const float mn = m.norm();
-    if (!(mn > 1e-6f) || !std::isfinite(mn)) return false;
-    m /= mn;
-
-    Vector3f east_b = d.cross(m);
-    const float en = east_b.norm();
-    if (!(en > 1e-6f) || !std::isfinite(en)) return false;
-    east_b /= en;
-
-    Vector3f north_b = east_b.cross(d);
-    const float nn = north_b.norm();
-    if (!(nn > 1e-6f) || !std::isfinite(nn)) return false;
-    north_b /= nn;
-
-    const float e = east_b.dot(FWD_B);
-    const float n = north_b.dot(FWD_B);
-
-    heading_deg_out = wrap360_(atan2f(e, n) * RAD_TO_DEG);
-    return std::isfinite(heading_deg_out);
-  }
-
   static void waitForNextLoopTick_(uint32_t loop_start_us) {
     const uint32_t elapsed_us = micros() - loop_start_us;
     if (elapsed_us < LOOP_PERIOD_US) {
@@ -512,14 +445,6 @@ class FusionApp {
     cfg.core.coarse_schedule_blend = 0.48f;
     cfg.core.coarse_schedule_confidence_floor = 0.62f;
 
-    /*
-      These are initial/reset values. The wrapper may adapt them.
-
-      Important header note:
-      AdaptiveVerticalPIIMahony::adaptMahonyGains_() should NOT call
-      mahony_.init(...) every sample if init resets quaternion or integrator
-      state. It should assign twoKp/twoKi only.
-    */
     cfg.mahony_twoKp = 1.40f;
     cfg.mahony_twoKi = 0.060f;
     cfg.adapt_mahony_gains = true;
@@ -689,30 +614,29 @@ class FusionApp {
     }
 
     /*
-      Use wrapper roll/pitch directly. For heading, use direct tilt-compensated
-      magnetic heading from predicted Mahony up vector + calibrated mag vector.
-      This avoids relying on the ambiguous quaternionWorldToBody() accessor name.
+      Heading extraction restored to the original PII path.
+
+      AdaptiveVerticalPIIMahony has confusing quaternion accessor names, but
+      since the header was not changed, keep using the same path that your
+      original sketch used.
     */
-    roll_deg_ = fusion_.rollDeg();
-    pitch_deg_ = fusion_.pitchDeg();
+    const auto q_wb = fusion_.quaternionWorldToBody();
+    const Quaternionf q_wb_zu(q_wb.w, q_wb.x, q_wb.y, q_wb.z);
 
-    mag_heading_ok_ = false;
+    float heading_from_q_deg = heading_mag_deg_;
 
-    if (mag_present_ && mag_field_sane_) {
-      Vector3f up_b;
-      const auto q_raw = fusion_.quaternionWorldToBody();
+    quat_wb_zu_to_euler_nautical(q_wb_zu,
+                                 roll_deg_,
+                                 pitch_deg_,
+                                 heading_from_q_deg);
 
-      if (mahonyPredictedUpBody_(q_raw, up_b)) {
-        const Vector3f down_b = -up_b;
+    heading_mag_deg_ = wrap360_(heading_from_q_deg);
+    heading_deg_ = outputHeadingFromMagnetic_(heading_mag_deg_);
 
-        float hdg_mag = heading_mag_deg_;
-        if (magneticHeadingFromDownAndMagBody_(down_b, mag_body_m, hdg_mag)) {
-          heading_mag_deg_ = hdg_mag;
-          heading_deg_ = outputHeadingFromMagnetic_(heading_mag_deg_);
-          mag_heading_ok_ = true;
-        }
-      }
-    }
+    mag_heading_ok_ =
+        std::isfinite(heading_mag_deg_) &&
+        std::isfinite(roll_deg_) &&
+        std::isfinite(pitch_deg_);
 
     heading_valid_ =
         last_mag_correction_ms_ != 0 &&
@@ -738,13 +662,10 @@ class FusionApp {
     if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
 
     /*
-      ROT in the same Mahony body convention as the AHRS input.
-      For a tilted sensor this is still only an approximation. The full fix
-      would rotate angular rate into Mahony world and take world Z.
+      Keep original ROT convention for now.
+      This avoids introducing an additional sign/frame change while debugging heading.
     */
-    const Vector3f w_use_m = ned_to_mahony_body_(w_use);
-
-    float rot_dpm_meas = w_use_m.z() * RAD_TO_DEG * 60.0f;
+    float rot_dpm_meas = w_use.z() * RAD_TO_DEG * 60.0f;
     rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
 
     const float tau_rot = 1.5f;
