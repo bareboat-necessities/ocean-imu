@@ -32,11 +32,9 @@
       accel_ned = [0, 0, -g] -> [0, 0, +g]
       mag_ned   = [+H, 0, +V] -> [+H, 0, -V]
 
-    That is Mahony yaw zero.
-
     Mahony yaw is CCW-positive in Z-up frame.
     Compass heading is CW-positive.
-    Therefore:
+
       magnetic_heading = -MahonyYaw + user_offset
 
     Startup:
@@ -86,41 +84,18 @@
   #define SEA_STATE_NMEA_TALKER "II"
 #endif
 
-/*
-  Default output is magnetic heading.
-
-  NMEA HDM is magnetic heading by definition.
-*/
 #ifndef SEA_STATE_OUTPUT_TRUE_HEADING
   #define SEA_STATE_OUTPUT_TRUE_HEADING 0
 #endif
 
-/*
-  East-positive declination.
-
-  Used ONLY when SEA_STATE_OUTPUT_TRUE_HEADING = 1.
-  It is NOT used for magnetic-to-magnetic comparison.
-*/
 #ifndef SEA_STATE_MAG_DECLINATION_DEG
   #define SEA_STATE_MAG_DECLINATION_DEG 0.0f
 #endif
 
-/*
-  Optional final fixed correction for residual mounting/calibration error.
-
-  Leave 0 until heading direction is verified.
-  Example:
-    reads 352 when pointed magnetic north -> use +8
-    reads   7 when pointed magnetic north -> use -7
-*/
 #ifndef SEA_STATE_MAG_HEADING_USER_OFFSET_DEG
   #define SEA_STATE_MAG_HEADING_USER_OFFSET_DEG 0.0f
 #endif
 
-/*
-  Default OFF. Use mag if present.
-  Turn ON only if you want to reject mag samples outside 20..80 uT.
-*/
 #ifndef SEA_STATE_USE_STRICT_MAG_FIELD_GATE
   #define SEA_STATE_USE_STRICT_MAG_FIELD_GATE 0
 #endif
@@ -146,16 +121,9 @@ static constexpr float MAG_PRESENT_MAX_UT = 200.0f;
 static constexpr float MAG_FIELD_MIN_UT = 20.0f;
 static constexpr float MAG_FIELD_MAX_UT = 80.0f;
 
-/*
-  Seed only when acceleration norm is close enough to gravity.
-*/
 static constexpr float MAHONY_SEED_G_TOL_FRAC = 0.20f;
 
-/*
-  Diagnostic only. Do not use this to pulse/gate Mahony mag updates.
-*/
 static constexpr uint32_t MAG_UPDATE_SPACING_MS = 35u;
-
 static constexpr uint32_t HEADING_MAG_TIMEOUT_MS = 2000u;
 
 using namespace atoms3r_ical;
@@ -337,41 +305,10 @@ class FusionApp {
   AdaptiveWaveDetrender z_detrender_{};
 
  private:
-  /*
-    One real physical Mahony mapper for gyro, accel, and mag.
-
-    Input calibrated body frame:
-      [N,E,D] = [forward,right,down]
-
-    Mahony body frame:
-      [N,-E,-D] = [forward,left,up]
-  */
   static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
     return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
   }
 
-  /*
-    One-shot Mahony attitude seed from accel + mag.
-
-    Uses the same Mahony frame as runtime update:
-      x = forward
-      y = left
-      z = up
-
-    At rest:
-      accel points world +Z/up in body coordinates.
-
-    Magnetic north horizontal component defines world +X.
-    World +Y is west, so:
-      west_b = up_b x north_b
-
-    Matrix columns are world axes expressed in body coordinates:
-      C_wb = [north_b west_b up_b]
-
-    Current AdaptiveVerticalPIIMahony uses raw Mahony q as BODY -> WORLD
-    for rotating body accel into world, so seed raw q from:
-      C_bw = C_wb^T
-  */
   bool seedMahonyFromAccelMag_(const Vector3f& acc_body_m,
                                const Vector3f& mag_body_m) {
     const float an = acc_body_m.norm();
@@ -525,84 +462,13 @@ class FusionApp {
 
   void resetFusion_() {
     Fusion::Config cfg{};
+
+    /*
+      Keep filter settings at AdaptiveVerticalPIIMahony defaults.
+      Only app/hardware-specific fields are set here.
+    */
     cfg.gravity_mps2 = APP_G_STD;
     cfg.use_mag = true;
-
-    /*
-      Base observer.
-    */
-    cfg.core.observer.r          = 0.150f;
-    cfg.core.observer.tau_a      = 0.68f;
-    cfg.core.observer.tau_d      = 49.0f;
-    cfg.core.observer.kb         = 2.5e-5f;
-    cfg.core.observer.lambda_b   = 3.0e-3f;
-    cfg.core.observer.bias_limit = 0.12f;
-
-    cfg.core.observer.a_f_limit = 50.0f;
-    cfg.core.observer.v_limit   = 50.0f;
-    cfg.core.observer.p_limit   = 20.0f;
-    cfg.core.observer.S_limit   = 200.0f;
-    cfg.core.observer.d_limit   = 20.0f;
-
-    /*
-      PII adaptation.
-    */
-    cfg.core.adaptation.enabled = true;
-    cfg.core.adaptation.min_confidence = 0.22f;
-
-    cfg.core.adaptation.f_disp_ref_hz    = 0.12f;
-    cfg.core.adaptation.sigma_a_ref      = 0.95f;
-    cfg.core.adaptation.input_smooth_tau = 4.5f;
-    cfg.core.adaptation.param_smooth_tau = 7.5f;
-
-    cfg.core.adaptation.r_freq_exp  = 0.28f;
-    cfg.core.adaptation.r_sigma_exp = 0.02f;
-
-    cfg.core.adaptation.tau_a_freq_exp  = -0.40f;
-    cfg.core.adaptation.tau_a_sigma_exp = -0.03f;
-
-    cfg.core.adaptation.tau_d_freq_exp  = -0.03f;
-    cfg.core.adaptation.tau_d_sigma_exp = -0.01f;
-
-    cfg.core.adaptation.kb_freq_exp  = 0.02f;
-    cfg.core.adaptation.kb_sigma_exp = 0.08f;
-
-    cfg.core.adaptation.r_min = 0.145f;
-    cfg.core.adaptation.r_max = 0.225f;
-
-    cfg.core.adaptation.tau_a_min = 0.50f;
-    cfg.core.adaptation.tau_a_max = 0.90f;
-
-    cfg.core.adaptation.tau_d_min = 44.0f;
-    cfg.core.adaptation.tau_d_max = 58.0f;
-
-    cfg.core.adaptation.kb_min = 5e-6f;
-    cfg.core.adaptation.kb_max = 6e-5f;
-
-    cfg.core.auto_schedule_from_accel_freq = true;
-    cfg.core.auto_schedule_period_s = 0.50f;
-    cfg.core.force_enable_adaptation_when_auto_schedule = true;
-    cfg.core.fallback_confidence_floor = 0.52f;
-    cfg.core.fallback_confidence_when_locked = 0.82f;
-    cfg.core.coarse_schedule_blend = 0.48f;
-    cfg.core.coarse_schedule_confidence_floor = 0.62f;
-
-    /*
-      Stronger Mahony gains to avoid minute-long yaw settling.
-    */
-    cfg.mahony_twoKp = 1.70f;
-    cfg.mahony_twoKi = 0.090f;
-
-    cfg.adapt_mahony_gains = true;
-    cfg.mahony_twoKp_calm  = 1.50f;
-    cfg.mahony_twoKp_rough = 1.20f;
-    cfg.mahony_twoKi_calm  = 0.100f;
-    cfg.mahony_twoKi_rough = 0.070f;
-    cfg.mahony_sigma_ref = 0.45f;
-    cfg.mahony_norm_err_ref = 0.12f;
-    cfg.mahony_innov_ref = 0.18f;
-    cfg.mahony_gain_smooth_tau_s = 1.0f;
-    cfg.mahony_acc_trust_min = 0.65f;
 
     fusion_.configure(cfg);
     fusion_.reset();
@@ -740,10 +606,6 @@ class FusionApp {
         mag_norm_uT_ >= MAG_FIELD_MIN_UT &&
         mag_norm_uT_ <= MAG_FIELD_MAX_UT;
 
-    /*
-      Diagnostic only.
-      Do not use mag_fresh_ to pulse Mahony mag updates.
-    */
     mag_fresh_ = updateMagFreshGate_(mag_present_, now_ms);
 
 #if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
@@ -754,17 +616,10 @@ class FusionApp {
 
     mag_used_ = mag_usable;
 
-    /*
-      One common physical Mahony frame for gyro, accel, and mag.
-    */
     const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
     const Vector3f mag_body_m = ned_to_mahony_body_(m_cal_);
 
-    /*
-      One-shot yaw/tilt seed before the first normal mag update.
-      This removes the multi-minute convergence from identity yaw.
-    */
     if (!mahony_seeded_ && mag_usable) {
       const float a_norm = a_cal_.norm();
       const bool accel_seed_ok =
@@ -789,12 +644,6 @@ class FusionApp {
                         dt_);
     }
 
-    /*
-      Mahony-native Euler output.
-
-      With body frame [N,-E,-D]:
-        compass magnetic heading = -MahonyYaw + user offset
-    */
     roll_deg_ = fusion_.rollDeg();
     pitch_deg_ = fusion_.pitchDeg();
     yaw_mahony_deg_ = fusion_.yawDeg();
@@ -827,9 +676,6 @@ class FusionApp {
     Vector3f w_use = w_cal_;
     if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
 
-    /*
-      Original ROT semantics from your first .ino.
-    */
     float rot_dpm_meas = w_use.z() * RAD_TO_DEG * 60.0f;
     rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
 
@@ -899,7 +745,7 @@ class FusionApp {
     ui_.line("Mag gate: LOOSE");
 #endif
 
-    ui_.line("Fusion: PII MAHONY-YAW");
+    ui_.line("Fusion: PII DEFAULTS");
     ui_.line("Startup: ACC+MAG seed");
   }
 
