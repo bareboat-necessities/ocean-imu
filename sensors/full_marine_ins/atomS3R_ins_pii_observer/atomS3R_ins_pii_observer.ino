@@ -38,6 +38,10 @@
     Compass heading is CW-positive.
     Therefore:
       magnetic_heading = -MahonyYaw + user_offset
+
+    Startup:
+      This sketch seeds Mahony quaternion once from accel+mag before normal
+      updateIMUMag(), so yaw does not take minutes to converge from identity.
 */
 
 #include <Arduino.h>
@@ -143,6 +147,11 @@ static constexpr float MAG_FIELD_MIN_UT = 20.0f;
 static constexpr float MAG_FIELD_MAX_UT = 80.0f;
 
 /*
+  Seed only when acceleration norm is close enough to gravity.
+*/
+static constexpr float MAHONY_SEED_G_TOL_FRAC = 0.20f;
+
+/*
   Diagnostic only. Do not use this to pulse/gate Mahony mag updates.
 */
 static constexpr uint32_t MAG_UPDATE_SPACING_MS = 35u;
@@ -151,6 +160,8 @@ static constexpr uint32_t HEADING_MAG_TIMEOUT_MS = 2000u;
 
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
+using Matrix3f = Eigen::Matrix3f;
+using Quaternionf = Eigen::Quaternionf;
 
 static inline float clampf_(float x, float lo, float hi) {
   return x < lo ? lo : (x > hi ? hi : x);
@@ -321,6 +332,8 @@ class FusionApp {
   bool gyro_bias_ok_ = false;
   Vector3f gyro_bias_ema_ = Vector3f::Zero();
 
+  bool mahony_seeded_ = false;
+
   AdaptiveWaveDetrender z_detrender_{};
 
  private:
@@ -335,6 +348,89 @@ class FusionApp {
   */
   static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
     return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
+  }
+
+  /*
+    One-shot Mahony attitude seed from accel + mag.
+
+    Uses the same Mahony frame as runtime update:
+      x = forward
+      y = left
+      z = up
+
+    At rest:
+      accel points world +Z/up in body coordinates.
+
+    Magnetic north horizontal component defines world +X.
+    World +Y is west, so:
+      west_b = up_b x north_b
+
+    Matrix columns are world axes expressed in body coordinates:
+      C_wb = [north_b west_b up_b]
+
+    Current AdaptiveVerticalPIIMahony uses raw Mahony q as BODY -> WORLD
+    for rotating body accel into world, so seed raw q from:
+      C_bw = C_wb^T
+  */
+  bool seedMahonyFromAccelMag_(const Vector3f& acc_body_m,
+                               const Vector3f& mag_body_m) {
+    const float an = acc_body_m.norm();
+    const float mn = mag_body_m.norm();
+
+    if (!(an > 1e-6f) || !(mn > 1e-6f) ||
+        !std::isfinite(an) || !std::isfinite(mn)) {
+      return false;
+    }
+
+    Vector3f up_b = acc_body_m / an;
+
+    Vector3f north_b = mag_body_m - up_b * mag_body_m.dot(up_b);
+    const float nn0 = north_b.norm();
+    if (!(nn0 > 1e-6f) || !std::isfinite(nn0)) {
+      return false;
+    }
+    north_b /= nn0;
+
+    Vector3f west_b = up_b.cross(north_b);
+    const float wn = west_b.norm();
+    if (!(wn > 1e-6f) || !std::isfinite(wn)) {
+      return false;
+    }
+    west_b /= wn;
+
+    north_b = west_b.cross(up_b);
+    const float nn = north_b.norm();
+    if (!(nn > 1e-6f) || !std::isfinite(nn)) {
+      return false;
+    }
+    north_b /= nn;
+
+    Matrix3f C_wb;
+    C_wb.col(0) = north_b;
+    C_wb.col(1) = west_b;
+    C_wb.col(2) = up_b;
+
+    const Matrix3f C_bw = C_wb.transpose();
+
+    Quaternionf q(C_bw);
+    const float qn = q.norm();
+    if (!(qn > 1e-6f) || !std::isfinite(qn)) {
+      return false;
+    }
+    q.normalize();
+
+    auto& m = fusion_.mahonyState();
+
+    m.q0 = q.w();
+    m.q1 = q.x();
+    m.q2 = q.y();
+    m.q3 = q.z();
+
+    m.integralFBx = 0.0f;
+    m.integralFBy = 0.0f;
+    m.integralFBz = 0.0f;
+
+    return true;
   }
 
   static void waitForNextLoopTick_(uint32_t loop_start_us) {
@@ -515,6 +611,7 @@ class FusionApp {
     rot_dpm_filt_ = 0.0f;
     gyro_bias_ok_ = false;
     gyro_bias_ema_.setZero();
+    mahony_seeded_ = false;
 
     roll_deg_ = 0.0f;
     pitch_deg_ = 0.0f;
@@ -664,6 +761,21 @@ class FusionApp {
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
     const Vector3f mag_body_m = ned_to_mahony_body_(m_cal_);
 
+    /*
+      One-shot yaw/tilt seed before the first normal mag update.
+      This removes the multi-minute convergence from identity yaw.
+    */
+    if (!mahony_seeded_ && mag_usable) {
+      const float a_norm = a_cal_.norm();
+      const bool accel_seed_ok =
+          std::isfinite(a_norm) &&
+          fabsf(a_norm - APP_G_STD) < MAHONY_SEED_G_TOL_FRAC * APP_G_STD;
+
+      if (accel_seed_ok) {
+        mahony_seeded_ = seedMahonyFromAccelMag_(acc_body_m, mag_body_m);
+      }
+    }
+
     if (mag_usable) {
       fusion_.updateIMUMag(gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
                            acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
@@ -788,6 +900,7 @@ class FusionApp {
 #endif
 
     ui_.line("Fusion: PII MAHONY-YAW");
+    ui_.line("Startup: ACC+MAG seed");
   }
 
   void updateUI_() {
@@ -833,6 +946,8 @@ class FusionApp {
     M5.Display.printf("YAW:%7.1f deg\n", static_cast<double>(yaw_mahony_deg_));
     M5.Display.printf("ROL:%7.1f deg\n", static_cast<double>(roll_deg_));
     M5.Display.printf("PIT:%7.1f deg\n", static_cast<double>(pitch_deg_));
+
+    M5.Display.printf("SEED:%s\n", mahony_seeded_ ? "YES" : "NO");
 
     M5.Display.printf("HEV:%7.3f m\n", static_cast<double>(heave_raw_m_));
     M5.Display.printf("ENV:%7.3f m\n", static_cast<double>(wave_envelope_m_));
@@ -883,11 +998,12 @@ class FusionApp {
   #else
 
     Serial.printf(
-        "hdg=%.2f yaw=%.2f valid=%d roll=%.2f pitch=%.2f |m|=%.1f "
+        "hdg=%.2f yaw=%.2f valid=%d seed=%d roll=%.2f pitch=%.2f |m|=%.1f "
         "magUsed=%d magField=%d magFresh=%d heave=%.3f env=%.3f frq=%.3f\n",
         static_cast<double>(heading_mag_deg_),
         static_cast<double>(yaw_mahony_deg_),
         static_cast<int>(heading_valid_),
+        static_cast<int>(mahony_seeded_),
         static_cast<double>(roll_deg_),
         static_cast<double>(pitch_deg_),
         static_cast<double>(mag_norm_uT_),
