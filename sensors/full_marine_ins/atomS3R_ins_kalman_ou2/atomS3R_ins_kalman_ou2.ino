@@ -686,7 +686,7 @@ private:
     M5.Display.printf("ROL: %6.1f deg\n", static_cast<double>(roll_deg_));
     M5.Display.printf("PIT: %6.1f deg\n", static_cast<double>(pitch_deg_));
     M5.Display.printf("HEV: %6.3f m\n", static_cast<double>(heave_m_));
-    M5.Display.printf("FRQ: %6.3f Hz\n", static_cast<double>(wave_hz_));
+    //M5.Display.printf("FRQ: %6.3f Hz\n", static_cast<double>(wave_hz_));
     M5.Display.printf("MAG: %s %s\n", mag_ok_ ? "OK " : "BAD", mag_fresh_ ? "NEW" : "OLD");
     M5.Display.printf("|m|: %6.1f uT\n", static_cast<double>(mag_norm_uT_));
     M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n",
