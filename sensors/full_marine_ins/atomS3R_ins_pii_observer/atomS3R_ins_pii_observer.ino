@@ -820,7 +820,7 @@ class FusionApp {
 
     M5.Display.printf("HEV:%7.3f m\n", static_cast<double>(heave_raw_m_));
     M5.Display.printf("ENV:%7.3f m\n", static_cast<double>(wave_envelope_m_));
-    M5.Display.printf("FRQ:%7.3f Hz\n", static_cast<double>(wave_hz_));
+    //M5.Display.printf("FRQ:%7.3f Hz\n", static_cast<double>(wave_hz_));
 
     M5.Display.printf("MAG:%s %s %s\n",
                       mag_present_ ? "OK " : "BAD",
