@@ -77,7 +77,7 @@
 #endif
 
 #ifndef SEA_STATE_SERIAL_NMEA
-  #define SEA_STATE_SERIAL_NMEA 0
+  #define SEA_STATE_SERIAL_NMEA 1
 #endif
 
 #ifndef SEA_STATE_NMEA_TALKER
@@ -104,8 +104,7 @@ static constexpr float APP_G_STD = atoms3r_ical::ImuCalCfg::g_std;
 static constexpr float APP_FREQ_GUESS = 0.30f;
 
 static constexpr float LOOP_HZ = 200.0f;
-static constexpr uint32_t LOOP_PERIOD_US =
-    static_cast<uint32_t>(1000000.0f / LOOP_HZ);
+static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LOOP_HZ);
 
 static constexpr uint32_t UI_REFRESH_MS = 100;
 static constexpr uint32_t DEBUG_SERIAL_MS = 100;
@@ -864,7 +863,7 @@ class FusionApp {
 
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
-    nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
+    //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, heading_valid_);
 
 #else
