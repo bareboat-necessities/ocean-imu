@@ -12,7 +12,6 @@
 
 #include "pii_observer/VerticalPIIObserver.h"
 #include "freq/FrequencyTrackerPolicy.h"
-#include "tuner/SeaStateAutoTuner.h"
 
 namespace marine_obs {
 namespace detail {
@@ -93,7 +92,8 @@ void tracker_reset(Tracker& tracker, T f_init_hz) {
         (void)f_init_hz;
         tracker = Tracker{};
     } else {
-        static_assert(always_false_v<Tracker>, "Tracker must provide reset(f_init_hz) or be default-constructible.");
+        static_assert(always_false_v<Tracker>,
+                      "Tracker must provide reset(f_init_hz) or be default-constructible.");
     }
 }
 
@@ -101,11 +101,13 @@ template<typename Tracker, typename T>
 void tracker_step(Tracker& tracker, T a_meas, T dt) {
     if constexpr (requires { tracker.update(a_meas, dt); }) {
         tracker.update(a_meas, dt);
-    } else if constexpr (requires { tracker.run(static_cast<float>(a_meas),
-                                                static_cast<float>(dt)); }) {
+    } else if constexpr (requires {
+        tracker.run(static_cast<float>(a_meas), static_cast<float>(dt));
+    }) {
         (void)tracker.run(static_cast<float>(a_meas), static_cast<float>(dt));
     } else {
-        static_assert(always_false_v<Tracker>, "Tracker must provide update(a, dt) or run(a, dt).");
+        static_assert(always_false_v<Tracker>,
+                      "Tracker must provide update(a, dt) or run(a, dt).");
     }
 }
 
@@ -143,7 +145,8 @@ T tracker_get_coarse_frequency_hz(const Tracker& tracker) {
 
 template<typename T = float, bool WithBias = true, TrackerType TT = TrackerType::PLL>
 class AdaptiveVerticalPII {
-    static_assert(std::is_floating_point<T>::value, "AdaptiveVerticalPII<T>: T must be a floating-point type.");
+    static_assert(std::is_floating_point<T>::value,
+                  "AdaptiveVerticalPII<T>: T must be a floating-point type.");
 
 public:
     using Observer = VerticalPIIObserver<T, WithBias>;
@@ -220,24 +223,29 @@ public:
         struct EnvelopeConfig {
             bool enabled = true;
 
-            // Matches OU ACC_NOISE_FLOOR_SIGMA_DEFAULT.
+            // Same concept as OU ACC_NOISE_FLOOR_SIGMA_DEFAULT.
             T acc_noise_floor_sigma = T(0.12);
 
-            // Matches SeaStateAutoTuner defaults.
+            // SeaStateAutoTuner-style variance horizon:
+            // tau_var ~= K_periods / f.
             T tuner_K_periods = T(2.0);
+
+            // SeaStateAutoTuner frequency EMA horizon.
             T tuner_tau_freq_s = T(1.0);
 
-            // OU-style envelope law.
+            // OU-style mapping:
+            // tau = tau_coeff * 0.5 / f
+            // sigma = sigma_coeff * sqrt(max(var - noise_floor^2, 0)).
             T tau_coeff = T(1.38);
             T sigma_coeff = T(0.90);
+
+            // Smooth tau/sigma toward targets.
             T adapt_tau_s = T(1.80);
 
             T tau_min_s = T(0.02);
             T tau_max_s = T(3.00);
             T sigma_max = T(6.00);
-        };
-
-        EnvelopeConfig envelope{};
+        } envelope{};
     };
 
     struct Snapshot {
@@ -262,23 +270,25 @@ public:
         bool accel_freq_locked = false;
         bool accel_freq_has_coarse = false;
 
+        bool envelope_enabled = false;
         bool envelope_ready = false;
+        bool adaptation_used_envelope = false;
+
         T envelope_freq_hz = T(0);
         T envelope_accel_var = T(0);
-        T envelope_sigma_target = T(0);
-        T envelope_sigma_applied = T(0);
+
         T envelope_tau_target = T(0);
         T envelope_tau_applied = T(0);
+        T envelope_sigma_target = T(0);
+        T envelope_sigma_applied = T(0);
+
         T displacement_scale_m = T(0);
         T vertical_speed_envelope_mps = T(0);
     };
 
 public:
     explicit AdaptiveVerticalPII(const Config& cfg = Config())
-        : observer_(cfg.observer, cfg.adaptation),
-          accel_freq_tracker_(),
-          envelope_tuner_(2.0f, 1.0f)
-    {
+        : observer_(cfg.observer, cfg.adaptation), accel_freq_tracker_() {
         configure(cfg);
         reset();
     }
@@ -289,10 +299,6 @@ public:
         observer_.configure(cfg_.observer);
         observer_.configure_adaptation(cfg_.adaptation);
         detail::tracker_configure(accel_freq_tracker_, cfg_.accel_freq_tracker);
-
-        envelope_tuner_ = SeaStateAutoTuner(
-            static_cast<float>(cfg_.envelope.tuner_K_periods),
-            static_cast<float>(cfg_.envelope.tuner_tau_freq_s));
 
         if (cfg_.auto_schedule_from_accel_freq &&
             cfg_.force_enable_adaptation_when_auto_schedule) {
@@ -330,16 +336,10 @@ public:
             return observer_.displacement();
         }
 
-        if (!std::isfinite(a_meas)) {
-            a_meas = observer_.accel_filtered();
-        }
-
         updateAccelSigma_(a_meas, dt);
+
         detail::tracker_step(accel_freq_tracker_, a_meas, dt);
 
-        // OU-aligned envelope path:
-        // raw vertical acceleration sample + direct tracker frequency +
-        // SeaStateAutoTuner variance + OU tau/sigma smoothing.
         updateEnvelope_(a_meas, dt);
 
         if (cfg_.auto_schedule_from_accel_freq) {
@@ -369,6 +369,7 @@ public:
 
         last_sched_dt_ = dt_est;
         last_auto_confidence_used_ = confidence;
+        last_adaptation_used_envelope_ = false;
 
         observer_.update_adaptation(
             f_disp_hz,
@@ -388,6 +389,7 @@ public:
 
         last_sched_dt_ = dt_est;
         last_auto_confidence_used_ = confidence;
+        last_adaptation_used_envelope_ = false;
 
         observer_.update_adaptation(
             f_disp_hz,
@@ -397,13 +399,47 @@ public:
         );
     }
 
+    /*
+      Auto adaptation source.
+
+      Old behavior:
+          f = accel-frequency tracker
+          sigma = accel_sigma_ from local EWMA
+
+      New behavior:
+          when OU-style envelope tuner is ready:
+              f = envelope_freq_hz_
+              sigma = envelope_sigma_applied_
+          otherwise fallback to old behavior.
+
+      Important:
+          The displacement envelope itself is NOT fed back.
+          Only the envelope tuner's frequency and acceleration sigma are used
+          as cleaner scheduling signals for VerticalPIIObserver.
+    */
     void updateAdaptationFromAccelFrequencyProxy(T dt_est) {
-        const T f_sched_hz = computeScheduledFrequencyHz_();
+        T f_sched_hz = computeScheduledFrequencyHz_();
+        T sigma_for_adapt = accel_sigma_;
+        bool used_envelope = false;
+
+        if (cfg_.envelope.enabled && envelope_ready_) {
+            if (std::isfinite(envelope_freq_hz_) && envelope_freq_hz_ > T(0)) {
+                f_sched_hz = envelope_freq_hz_;
+                used_envelope = true;
+            }
+
+            if (std::isfinite(envelope_sigma_applied_) && envelope_sigma_applied_ >= T(0)) {
+                sigma_for_adapt = std::max(envelope_sigma_applied_, cfg_.sigma_floor);
+                used_envelope = true;
+            }
+        }
+
         if (!(std::isfinite(f_sched_hz) && f_sched_hz > T(0))) {
             return;
         }
 
         const T conf_used = computeFallbackConfidence_();
+
         last_auto_confidence_used_ = conf_used;
         last_auto_tracker_locked_ = detail::tracker_is_locked(accel_freq_tracker_);
         last_auto_tracker_has_coarse_ = detail::tracker_has_coarse(accel_freq_tracker_);
@@ -412,9 +448,11 @@ public:
             ? detail::tracker_get_coarse_frequency_hz<AccelFreqTracker, T>(accel_freq_tracker_)
             : T(0);
 
+        last_adaptation_used_envelope_ = used_envelope;
+
         observer_.update_adaptation(
             f_sched_hz,
-            accel_sigma_,
+            sigma_for_adapt,
             conf_used,
             dt_est
         );
@@ -470,64 +508,47 @@ public:
     T lastSchedulerDt() const { return last_sched_dt_; }
     T autoScheduledConfidenceUsed() const { return last_auto_confidence_used_; }
 
+    bool adaptationUsedEnvelope() const { return last_adaptation_used_envelope_; }
+
+    bool envelopeReady() const { return envelope_ready_; }
+
+    T envelopeFrequencyHz() const { return envelope_freq_hz_; }
+    T envelopeAccelVariance() const { return envelope_accel_var_; }
+
+    T envelopeTauTarget() const { return envelope_tau_target_; }
+    T envelopeTauApplied() const { return envelope_tau_applied_; }
+
+    T envelopeSigmaTarget() const { return envelope_sigma_target_; }
+    T envelopeSigmaApplied() const { return envelope_sigma_applied_; }
+
     T displacementScale(bool smoothed = true) const {
-        const T tau = smoothed ? env_tau_applied_ : env_tau_target_;
-        const T sigma = smoothed ? env_sigma_applied_ : env_sigma_target_;
+        const T tau = smoothed ? envelope_tau_applied_ : envelope_tau_target_;
+        const T sigma = smoothed ? envelope_sigma_applied_ : envelope_sigma_target_;
 
         if (!(std::isfinite(tau) && tau > T(0)) ||
             !(std::isfinite(sigma) && sigma >= T(0))) {
             return std::numeric_limits<T>::quiet_NaN();
         }
 
-        constexpr T pi = T(3.1415926535897932384626433832795L);
+        const T pi = T(3.1415926535897932384626433832795L);
         const T C_HS = T(2) * std::sqrt(T(2)) / (pi * pi);
 
-        const T scale = T(0.5) * C_HS * sigma * tau * tau;
-        return std::isfinite(scale) ? scale : std::numeric_limits<T>::quiet_NaN();
+        return T(0.5) * C_HS * sigma * tau * tau;
     }
 
     T verticalSpeedEnvelope(bool smoothed = true) const {
-        const T tau = smoothed ? env_tau_applied_ : env_tau_target_;
-        const T sigma = smoothed ? env_sigma_applied_ : env_sigma_target_;
+        const T tau = smoothed ? envelope_tau_applied_ : envelope_tau_target_;
+        const T sigma = smoothed ? envelope_sigma_applied_ : envelope_sigma_target_;
 
         if (!(std::isfinite(tau) && tau > T(0)) ||
             !(std::isfinite(sigma) && sigma >= T(0))) {
             return std::numeric_limits<T>::quiet_NaN();
         }
 
-        constexpr T pi = T(3.1415926535897932384626433832795L);
+        const T pi = T(3.1415926535897932384626433832795L);
         const T K = std::sqrt(T(2)) / pi;
 
-        const T v = K * sigma * tau;
-        return std::isfinite(v) ? v : std::numeric_limits<T>::quiet_NaN();
-    }
-
-    bool envelopeReady() const {
-        return env_ready_;
-    }
-
-    T envelopeFrequencyHz() const {
-        return env_freq_hz_;
-    }
-
-    T envelopeAccelVariance() const {
-        return env_accel_var_;
-    }
-
-    T envelopeSigmaTarget() const {
-        return env_sigma_target_;
-    }
-
-    T envelopeSigmaApplied() const {
-        return env_sigma_applied_;
-    }
-
-    T envelopeTauTarget() const {
-        return env_tau_target_;
-    }
-
-    T envelopeTauApplied() const {
-        return env_tau_applied_;
+        return K * sigma * tau;
     }
 
     Snapshot snapshot() const {
@@ -555,18 +576,48 @@ public:
         s.accel_freq_locked = detail::tracker_is_locked(accel_freq_tracker_);
         s.accel_freq_has_coarse = detail::tracker_has_coarse(accel_freq_tracker_);
 
-        s.envelope_ready = env_ready_;
-        s.envelope_freq_hz = env_freq_hz_;
-        s.envelope_accel_var = env_accel_var_;
-        s.envelope_sigma_target = env_sigma_target_;
-        s.envelope_sigma_applied = env_sigma_applied_;
-        s.envelope_tau_target = env_tau_target_;
-        s.envelope_tau_applied = env_tau_applied_;
+        s.envelope_enabled = cfg_.envelope.enabled;
+        s.envelope_ready = envelope_ready_;
+        s.adaptation_used_envelope = last_adaptation_used_envelope_;
+
+        s.envelope_freq_hz = envelope_freq_hz_;
+        s.envelope_accel_var = envelope_accel_var_;
+
+        s.envelope_tau_target = envelope_tau_target_;
+        s.envelope_tau_applied = envelope_tau_applied_;
+        s.envelope_sigma_target = envelope_sigma_target_;
+        s.envelope_sigma_applied = envelope_sigma_applied_;
+
         s.displacement_scale_m = displacementScale(true);
         s.vertical_speed_envelope_mps = verticalSpeedEnvelope(true);
 
         return s;
     }
+
+private:
+    struct DebiasedEMA_ {
+        T value = T(0);
+        T weight = T(0);
+
+        void reset() {
+            value = T(0);
+            weight = T(0);
+        }
+
+        void update(T x, T alpha) {
+            alpha = std::clamp(alpha, T(0), T(1));
+            value  = (T(1) - alpha) * value + alpha * x;
+            weight = (T(1) - alpha) * weight + alpha;
+        }
+
+        T get() const {
+            return (weight > T(1e-12)) ? (value / weight) : T(0);
+        }
+
+        bool isReady() const {
+            return weight > T(1e-6);
+        }
+    };
 
 private:
     static constexpr T eps_() {
@@ -588,24 +639,37 @@ private:
         return std::clamp(a, T(0), T(1));
     }
 
-    static T one_pole_exp_alpha_(T dt, T tau) {
+    static T exp_alpha_(T dt, T tau) {
         if (!(std::isfinite(dt) && dt > T(0))) return T(0);
         if (!(std::isfinite(tau) && tau > T(0))) return T(1);
-        const T a = T(1) - std::exp(-dt / tau);
+
+        T a = T(1) - std::exp(-dt / tau);
+        if (!std::isfinite(a)) a = T(1);
+
         return std::clamp(a, T(0), T(1));
     }
 
     static Config sanitizeConfig_(Config cfg) {
-        cfg.sigma_mean_tau_s = std::max(finite_or_default_(cfg.sigma_mean_tau_s, T(20)), eps_());
-        cfg.sigma_var_tau_s  = std::max(finite_or_default_(cfg.sigma_var_tau_s,  T(6)),  eps_());
-        cfg.sigma_floor      = std::max(finite_or_default_(cfg.sigma_floor, T(1e-4)), T(0));
+        cfg.sigma_mean_tau_s =
+            std::max(finite_or_default_(cfg.sigma_mean_tau_s, T(20)), eps_());
+        cfg.sigma_var_tau_s =
+            std::max(finite_or_default_(cfg.sigma_var_tau_s, T(6)), eps_());
+        cfg.sigma_floor =
+            std::max(finite_or_default_(cfg.sigma_floor, T(1e-4)), T(0));
 
-        cfg.auto_schedule_period_s =  std::max(finite_or_default_(cfg.auto_schedule_period_s, T(0.50)), eps_());
-        cfg.default_external_confidence = clamp01_(finite_or_default_(cfg.default_external_confidence, T(1)));
-        cfg.fallback_confidence_floor = clamp01_(finite_or_default_(cfg.fallback_confidence_floor, T(0.52)));
-        cfg.fallback_confidence_when_locked = clamp01_(finite_or_default_(cfg.fallback_confidence_when_locked, T(0.82)));
-        cfg.coarse_schedule_blend = clamp01_(finite_or_default_(cfg.coarse_schedule_blend, T(0.48)));
-        cfg.coarse_schedule_confidence_floor = clamp01_(finite_or_default_(cfg.coarse_schedule_confidence_floor, T(0.62)));
+        cfg.auto_schedule_period_s =
+            std::max(finite_or_default_(cfg.auto_schedule_period_s, T(0.50)), eps_());
+
+        cfg.default_external_confidence =
+            clamp01_(finite_or_default_(cfg.default_external_confidence, T(1)));
+        cfg.fallback_confidence_floor =
+            clamp01_(finite_or_default_(cfg.fallback_confidence_floor, T(0.52)));
+        cfg.fallback_confidence_when_locked =
+            clamp01_(finite_or_default_(cfg.fallback_confidence_when_locked, T(0.82)));
+        cfg.coarse_schedule_blend =
+            clamp01_(finite_or_default_(cfg.coarse_schedule_blend, T(0.48)));
+        cfg.coarse_schedule_confidence_floor =
+            clamp01_(finite_or_default_(cfg.coarse_schedule_confidence_floor, T(0.62)));
 
         cfg.envelope.acc_noise_floor_sigma =
             std::max(finite_or_default_(cfg.envelope.acc_noise_floor_sigma, T(0.12)), T(0));
@@ -633,7 +697,7 @@ private:
                      cfg.envelope.tau_min_s + eps_());
 
         cfg.envelope.sigma_max =
-            std::max(finite_or_default_(cfg.envelope.sigma_max, T(6.0)), eps_());
+            std::max(finite_or_default_(cfg.envelope.sigma_max, T(6.0)), T(0));
 
         if (cfg.auto_schedule_from_accel_freq &&
             cfg.force_enable_adaptation_when_auto_schedule) {
@@ -651,28 +715,29 @@ private:
         last_auto_coarse_freq_hz_ = T(0);
         last_auto_tracker_locked_ = false;
         last_auto_tracker_has_coarse_ = false;
+        last_adaptation_used_envelope_ = false;
     }
 
     void resetEnvelopeState_() {
-        envelope_tuner_ = SeaStateAutoTuner(
-            static_cast<float>(cfg_.envelope.tuner_K_periods),
-            static_cast<float>(cfg_.envelope.tuner_tau_freq_s));
+        envelope_A_mean_.reset();
+        envelope_A_sq_.reset();
+        envelope_A_var_.reset();
+        envelope_Freq_smoothed_.reset();
 
-        envelope_tuner_.reset();
+        envelope_ready_ = false;
 
-        env_ready_ = false;
-        env_freq_hz_ = detail::tracker_init_frequency_hz(cfg_.accel_freq_tracker, T(0.12));
-        if (!(std::isfinite(env_freq_hz_) && env_freq_hz_ > T(0))) {
-            env_freq_hz_ = T(0.12);
-        }
+        envelope_freq_hz_ = detail::tracker_init_frequency_hz(cfg_.accel_freq_tracker, T(0.12));
+        envelope_accel_var_ = T(0);
 
-        env_accel_var_ = T(0);
+        envelope_tau_target_ = std::clamp(
+            cfg_.envelope.tau_coeff * T(0.5) / std::max(envelope_freq_hz_, eps_()),
+            cfg_.envelope.tau_min_s,
+            cfg_.envelope.tau_max_s);
 
-        // Same defaults as OU TuneState.
-        env_tau_target_ = T(1.1);
-        env_sigma_target_ = T(1e-2);
-        env_tau_applied_ = T(1.1);
-        env_sigma_applied_ = T(1e-2);
+        envelope_tau_applied_ = envelope_tau_target_;
+
+        envelope_sigma_target_ = T(0);
+        envelope_sigma_applied_ = T(0);
     }
 
     void updateAccelSigma_(T a_meas, T dt) {
@@ -695,6 +760,113 @@ private:
         if (!(std::isfinite(accel_sigma_) && accel_sigma_ >= cfg_.sigma_floor)) {
             accel_sigma_ = cfg_.sigma_floor;
         }
+    }
+
+    void updateEnvelope_(T a_meas, T dt) {
+        if (!cfg_.envelope.enabled) {
+            envelope_ready_ = false;
+            return;
+        }
+
+        if (!std::isfinite(a_meas) || !(std::isfinite(dt) && dt > T(0))) {
+            return;
+        }
+
+        T f_input_hz = computeScheduledFrequencyHz_();
+
+        if (!(std::isfinite(f_input_hz) && f_input_hz > T(0))) {
+            f_input_hz = envelope_freq_hz_;
+        }
+
+        if (!(std::isfinite(f_input_hz) && f_input_hz > T(0))) {
+            f_input_hz = T(0.12);
+        }
+
+        constexpr T F_MIN = T(0.05);
+        constexpr T F_MAX = T(5.00);
+
+        f_input_hz = std::clamp(f_input_hz, F_MIN, F_MAX);
+
+        const T alpha_freq = exp_alpha_(dt, cfg_.envelope.tuner_tau_freq_s);
+        envelope_Freq_smoothed_.update(f_input_hz, alpha_freq);
+
+        T f_eff = envelope_Freq_smoothed_.isReady()
+            ? envelope_Freq_smoothed_.get()
+            : f_input_hz;
+
+        if (!std::isfinite(f_eff)) {
+            f_eff = f_input_hz;
+        }
+
+        f_eff = std::clamp(f_eff, F_MIN, F_MAX);
+        envelope_freq_hz_ = f_eff;
+
+        constexpr T TAU_VAR_MIN = T(0.30);
+        constexpr T TAU_VAR_MAX = T(60.0);
+
+        const T T_eff = T(1) / std::max(f_eff, eps_());
+        const T tau_var_dyn =
+            std::clamp(cfg_.envelope.tuner_K_periods * T_eff,
+                       TAU_VAR_MIN,
+                       TAU_VAR_MAX);
+
+        const T alpha_var = exp_alpha_(dt, tau_var_dyn);
+
+        envelope_A_mean_.update(a_meas, alpha_var);
+        envelope_A_sq_.update(a_meas * a_meas, alpha_var);
+
+        const T mu = envelope_A_mean_.get();
+        const T var_inst = std::max(T(0), envelope_A_sq_.get() - mu * mu);
+
+        envelope_A_var_.update(var_inst, alpha_var);
+
+        envelope_accel_var_ = envelope_A_var_.get();
+        if (!(std::isfinite(envelope_accel_var_) && envelope_accel_var_ >= T(0))) {
+            envelope_accel_var_ = T(0);
+        }
+
+        const T noise_var =
+            cfg_.envelope.acc_noise_floor_sigma *
+            cfg_.envelope.acc_noise_floor_sigma;
+
+        const T wave_var = std::max(T(0), envelope_accel_var_ - noise_var);
+
+        envelope_sigma_target_ =
+            std::sqrt(wave_var) * cfg_.envelope.sigma_coeff;
+
+        envelope_sigma_target_ =
+            std::min(std::max(envelope_sigma_target_, T(0)), cfg_.envelope.sigma_max);
+
+        envelope_tau_target_ =
+            cfg_.envelope.tau_coeff * T(0.5) / std::max(f_eff, eps_());
+
+        envelope_tau_target_ =
+            std::clamp(envelope_tau_target_,
+                       cfg_.envelope.tau_min_s,
+                       cfg_.envelope.tau_max_s);
+
+        const T alpha_adapt = exp_alpha_(dt, cfg_.envelope.adapt_tau_s);
+
+        if (!(std::isfinite(envelope_tau_applied_) && envelope_tau_applied_ > T(0))) {
+            envelope_tau_applied_ = envelope_tau_target_;
+        } else {
+            envelope_tau_applied_ +=
+                alpha_adapt * (envelope_tau_target_ - envelope_tau_applied_);
+        }
+
+        if (!(std::isfinite(envelope_sigma_applied_) && envelope_sigma_applied_ >= T(0))) {
+            envelope_sigma_applied_ = envelope_sigma_target_;
+        } else {
+            envelope_sigma_applied_ +=
+                alpha_adapt * (envelope_sigma_target_ - envelope_sigma_applied_);
+        }
+
+        envelope_ready_ =
+            envelope_Freq_smoothed_.isReady() &&
+            envelope_A_var_.isReady() &&
+            std::isfinite(envelope_freq_hz_) &&
+            std::isfinite(envelope_tau_applied_) &&
+            std::isfinite(envelope_sigma_applied_);
     }
 
     T computeScheduledFrequencyHz_() const {
@@ -728,103 +900,6 @@ private:
         return f_sched;
     }
 
-    T envelopeFrequencyInputHz_() const {
-        // Feed the envelope tuner raw/direct tracker frequency first.
-        // Do not use observer-smoothed f_disp_filt_hz here.
-        T f = detail::tracker_get_raw_frequency_hz<AccelFreqTracker, T>(accel_freq_tracker_);
-        if (std::isfinite(f) && f > T(0)) return f;
-
-        f = detail::tracker_get_frequency_hz<AccelFreqTracker, T>(accel_freq_tracker_);
-        if (std::isfinite(f) && f > T(0)) return f;
-
-        if (detail::tracker_has_coarse(accel_freq_tracker_)) {
-            f = detail::tracker_get_coarse_frequency_hz<AccelFreqTracker, T>(accel_freq_tracker_);
-            if (std::isfinite(f) && f > T(0)) return f;
-        }
-
-        return detail::tracker_init_frequency_hz(cfg_.accel_freq_tracker, T(0.12));
-    }
-
-    void updateEnvelope_(T a_meas, T dt) {
-        if (!cfg_.envelope.enabled) {
-            env_ready_ = false;
-            return;
-        }
-
-        if (!(std::isfinite(dt) && dt > T(0)) || !std::isfinite(a_meas)) {
-            return;
-        }
-
-        T f_in = envelopeFrequencyInputHz_();
-        if (!(std::isfinite(f_in) && f_in > T(0))) {
-            f_in = env_freq_hz_;
-        }
-        if (!(std::isfinite(f_in) && f_in > T(0))) {
-            f_in = T(0.12);
-        }
-
-        envelope_tuner_.update(
-            static_cast<float>(dt),
-            static_cast<float>(a_meas),
-            static_cast<float>(f_in));
-
-        T f_tune = static_cast<T>(envelope_tuner_.getFrequencyHz());
-        if (!(std::isfinite(f_tune) && f_tune > T(0))) {
-            f_tune = f_in;
-        }
-        if (!(std::isfinite(f_tune) && f_tune > T(0))) {
-            f_tune = T(0.12);
-        }
-
-        env_freq_hz_ = f_tune;
-
-        const T var_total = static_cast<T>(envelope_tuner_.getAccelVariance());
-        env_accel_var_ = (std::isfinite(var_total) && var_total >= T(0)) ? var_total : T(0);
-
-        const T var_noise =
-            cfg_.envelope.acc_noise_floor_sigma *
-            cfg_.envelope.acc_noise_floor_sigma;
-
-        T var_wave = env_accel_var_ - var_noise;
-        if (!(std::isfinite(var_wave) && var_wave > T(0))) {
-            var_wave = T(0);
-        }
-
-        T sigma_target = std::sqrt(var_wave) * cfg_.envelope.sigma_coeff;
-        if (!(std::isfinite(sigma_target) && sigma_target >= T(0))) {
-            sigma_target = T(0);
-        }
-
-        if (!envelope_tuner_.isVarReady()) {
-            sigma_target = std::max(
-                sigma_target,
-                std::max(T(0.05), cfg_.envelope.acc_noise_floor_sigma));
-        }
-
-        env_sigma_target_ = std::min(sigma_target, cfg_.envelope.sigma_max);
-
-        const T tau_raw =
-            cfg_.envelope.tau_coeff * T(0.5) / std::max(f_tune, eps_());
-
-        env_tau_target_ =
-            std::clamp(tau_raw, cfg_.envelope.tau_min_s, cfg_.envelope.tau_max_s);
-
-        const T alpha = one_pole_exp_alpha_(dt, cfg_.envelope.adapt_tau_s);
-
-        env_tau_applied_ += alpha * (env_tau_target_ - env_tau_applied_);
-        env_sigma_applied_ += alpha * (env_sigma_target_ - env_sigma_applied_);
-
-        if (!(std::isfinite(env_tau_applied_) && env_tau_applied_ > T(0))) {
-            env_tau_applied_ = env_tau_target_;
-        }
-
-        if (!(std::isfinite(env_sigma_applied_) && env_sigma_applied_ >= T(0))) {
-            env_sigma_applied_ = env_sigma_target_;
-        }
-
-        env_ready_ = envelope_tuner_.isReady();
-    }
-
     T computeFallbackConfidence_() const {
         T conf =
             detail::tracker_get_confidence<AccelFreqTracker, T>(accel_freq_tracker_);
@@ -834,7 +909,10 @@ private:
         }
 
         if (detail::tracker_has_coarse(accel_freq_tracker_)) {
-            conf = std::max(conf, std::max(cfg_.fallback_confidence_floor, cfg_.coarse_schedule_confidence_floor));
+            conf = std::max(
+                conf,
+                std::max(cfg_.fallback_confidence_floor,
+                         cfg_.coarse_schedule_confidence_floor));
         }
 
         if (detail::tracker_is_locked(accel_freq_tracker_)) {
@@ -862,17 +940,23 @@ private:
     T last_auto_coarse_freq_hz_ = T(0);
     bool last_auto_tracker_locked_ = false;
     bool last_auto_tracker_has_coarse_ = false;
+    bool last_adaptation_used_envelope_ = false;
 
-    SeaStateAutoTuner envelope_tuner_;
+    DebiasedEMA_ envelope_A_mean_{};
+    DebiasedEMA_ envelope_A_sq_{};
+    DebiasedEMA_ envelope_A_var_{};
+    DebiasedEMA_ envelope_Freq_smoothed_{};
 
-    bool env_ready_ = false;
-    T env_freq_hz_ = T(0);
-    T env_accel_var_ = T(0);
+    bool envelope_ready_ = false;
 
-    T env_tau_target_ = T(1.1);
-    T env_sigma_target_ = T(1e-2);
-    T env_tau_applied_ = T(1.1);
-    T env_sigma_applied_ = T(1e-2);
+    T envelope_freq_hz_ = T(0.12);
+    T envelope_accel_var_ = T(0);
+
+    T envelope_tau_target_ = T(0);
+    T envelope_tau_applied_ = T(0);
+
+    T envelope_sigma_target_ = T(0);
+    T envelope_sigma_applied_ = T(0);
 };
 
 template<typename T = float, bool WithBias = true>
