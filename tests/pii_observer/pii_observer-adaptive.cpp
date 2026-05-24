@@ -305,10 +305,6 @@ private:
         cfg.core.envelope.acc_noise_floor_sigma = 0.12f;
         cfg.core.envelope.tuner_K_periods = 2.0f;
         cfg.core.envelope.tuner_tau_freq_s = 1.0f;
-        cfg.core.envelope.tuner_f_min_hz = 0.05f;
-        cfg.core.envelope.tuner_f_max_hz = 5.0f;
-        cfg.core.envelope.tuner_tau_var_min_s = 0.30f;
-        cfg.core.envelope.tuner_tau_var_max_s = 60.0f;
         cfg.core.envelope.tau_coeff = 1.38f;
         cfg.core.envelope.sigma_coeff = 0.90f;
         cfg.core.envelope.adapt_tau_s = 1.80f;
