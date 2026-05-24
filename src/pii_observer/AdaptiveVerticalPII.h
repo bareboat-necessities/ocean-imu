@@ -223,10 +223,10 @@ public:
         struct EnvelopeConfig {
             bool enabled = true;
 
-            // Same concept as OU ACC_NOISE_FLOOR_SIGMA_DEFAULT.
+            // OU/SeaStateAutoTuner-aligned acceleration noise floor.
             T acc_noise_floor_sigma = T(0.12);
 
-            // SeaStateAutoTuner-style variance horizon:
+            // SeaStateAutoTuner-style dynamic variance horizon:
             // tau_var ~= K_periods / f.
             T tuner_K_periods = T(2.0);
 
@@ -234,7 +234,7 @@ public:
             T tuner_tau_freq_s = T(1.0);
 
             // OU-style mapping:
-            // tau = tau_coeff * 0.5 / f
+            // tau   = tau_coeff * 0.5 / f
             // sigma = sigma_coeff * sqrt(max(var - noise_floor^2, 0)).
             T tau_coeff = T(1.38);
             T sigma_coeff = T(0.90);
@@ -359,8 +359,15 @@ public:
         return observer_.update(a_meas, dt);
     }
 
-    void updateAdaptationFromDisplacementFrequency(T f_disp_hz, T dt_est,
-                                                   T confidence = std::numeric_limits<T>::quiet_NaN())
+    /*
+      Caller supplies displacement frequency.
+      The core now uses the OU-style envelope sigma when ready.
+      Frequency remains caller-provided.
+    */
+    void updateAdaptationFromDisplacementFrequency(
+        T f_disp_hz,
+        T dt_est,
+        T confidence = std::numeric_limits<T>::quiet_NaN())
     {
         if (!std::isfinite(confidence)) {
             confidence = cfg_.default_external_confidence;
@@ -369,18 +376,30 @@ public:
 
         last_sched_dt_ = dt_est;
         last_auto_confidence_used_ = confidence;
-        last_adaptation_used_envelope_ = false;
+
+        bool used_env_sigma = false;
+        const T sigma_for_adapt = sigmaForAdapt_(used_env_sigma);
+
+        last_adaptation_used_envelope_ = used_env_sigma;
 
         observer_.update_adaptation(
             f_disp_hz,
-            accel_sigma_,
+            sigma_for_adapt,
             confidence,
             dt_est
         );
     }
 
-    void updateAdaptationExternal(T f_disp_hz, T sigma_a, T dt_est,
-                                  T confidence = std::numeric_limits<T>::quiet_NaN())
+    /*
+      Caller supplies frequency and optionally sigma.
+      Valid external sigma wins.
+      If sigma is invalid/NaN, fallback to OU-style envelope sigma when ready.
+    */
+    void updateAdaptationExternal(
+        T f_disp_hz,
+        T sigma_a,
+        T dt_est,
+        T confidence = std::numeric_limits<T>::quiet_NaN())
     {
         if (!std::isfinite(confidence)) {
             confidence = cfg_.default_external_confidence;
@@ -389,11 +408,24 @@ public:
 
         last_sched_dt_ = dt_est;
         last_auto_confidence_used_ = confidence;
-        last_adaptation_used_envelope_ = false;
+
+        bool used_env_sigma = false;
+        T sigma_for_adapt = sigma_a;
+
+        if (!(std::isfinite(sigma_for_adapt) &&
+              sigma_for_adapt >= cfg_.adaptation.sigma_a_min &&
+              sigma_for_adapt <= cfg_.adaptation.sigma_a_max))
+        {
+            sigma_for_adapt = sigmaForAdapt_(used_env_sigma);
+        }
+
+        sigma_for_adapt = clampAdaptSigma_(sigma_for_adapt);
+
+        last_adaptation_used_envelope_ = used_env_sigma;
 
         observer_.update_adaptation(
             f_disp_hz,
-            sigma_a,
+            sigma_for_adapt,
             confidence,
             dt_est
         );
@@ -402,37 +434,20 @@ public:
     /*
       Auto adaptation source.
 
-      Old behavior:
-          f = accel-frequency tracker
-          sigma = accel_sigma_ from local EWMA
+      When envelope is ready:
+          f     = envelope_freq_hz_
+          sigma = envelope_sigma_applied_
 
-      New behavior:
-          when OU-style envelope tuner is ready:
-              f = envelope_freq_hz_
-              sigma = envelope_sigma_applied_
-          otherwise fallback to old behavior.
-
-      Important:
-          The displacement envelope itself is NOT fed back.
-          Only the envelope tuner's frequency and acceleration sigma are used
-          as cleaner scheduling signals for VerticalPIIObserver.
+      Otherwise:
+          f     = accel-frequency tracker / coarse assist
+          sigma = accel_sigma_
     */
     void updateAdaptationFromAccelFrequencyProxy(T dt_est) {
-        T f_sched_hz = computeScheduledFrequencyHz_();
-        T sigma_for_adapt = accel_sigma_;
-        bool used_envelope = false;
+        bool used_env_f = false;
+        bool used_env_sigma = false;
 
-        if (cfg_.envelope.enabled && envelope_ready_) {
-            if (std::isfinite(envelope_freq_hz_) && envelope_freq_hz_ > T(0)) {
-                f_sched_hz = envelope_freq_hz_;
-                used_envelope = true;
-            }
-
-            if (std::isfinite(envelope_sigma_applied_) && envelope_sigma_applied_ >= T(0)) {
-                sigma_for_adapt = std::max(envelope_sigma_applied_, cfg_.sigma_floor);
-                used_envelope = true;
-            }
-        }
+        const T f_sched_hz = frequencyForAutoAdapt_(used_env_f);
+        const T sigma_for_adapt = sigmaForAdapt_(used_env_sigma);
 
         if (!(std::isfinite(f_sched_hz) && f_sched_hz > T(0))) {
             return;
@@ -443,12 +458,14 @@ public:
         last_auto_confidence_used_ = conf_used;
         last_auto_tracker_locked_ = detail::tracker_is_locked(accel_freq_tracker_);
         last_auto_tracker_has_coarse_ = detail::tracker_has_coarse(accel_freq_tracker_);
-        last_auto_sched_freq_hz_ = f_sched_hz;
-        last_auto_coarse_freq_hz_ = last_auto_tracker_has_coarse_
-            ? detail::tracker_get_coarse_frequency_hz<AccelFreqTracker, T>(accel_freq_tracker_)
-            : T(0);
 
-        last_adaptation_used_envelope_ = used_envelope;
+        last_auto_sched_freq_hz_ = f_sched_hz;
+        last_auto_coarse_freq_hz_ =
+            last_auto_tracker_has_coarse_
+                ? detail::tracker_get_coarse_frequency_hz<AccelFreqTracker, T>(accel_freq_tracker_)
+                : T(0);
+
+        last_adaptation_used_envelope_ = used_env_f || used_env_sigma;
 
         observer_.update_adaptation(
             f_sched_hz,
@@ -726,7 +743,9 @@ private:
 
         envelope_ready_ = false;
 
-        envelope_freq_hz_ = detail::tracker_init_frequency_hz(cfg_.accel_freq_tracker, T(0.12));
+        envelope_freq_hz_ =
+            detail::tracker_init_frequency_hz(cfg_.accel_freq_tracker, T(0.12));
+
         envelope_accel_var_ = T(0);
 
         envelope_tau_target_ = std::clamp(
@@ -867,6 +886,66 @@ private:
             std::isfinite(envelope_freq_hz_) &&
             std::isfinite(envelope_tau_applied_) &&
             std::isfinite(envelope_sigma_applied_);
+    }
+
+    bool envelopeFrequencyUsable_() const {
+        return cfg_.envelope.enabled &&
+               envelope_ready_ &&
+               std::isfinite(envelope_freq_hz_) &&
+               envelope_freq_hz_ > T(0);
+    }
+
+    bool envelopeSigmaUsable_() const {
+        return cfg_.envelope.enabled &&
+               envelope_ready_ &&
+               std::isfinite(envelope_sigma_applied_) &&
+               envelope_sigma_applied_ >= T(0);
+    }
+
+    T clampAdaptFrequency_(T f_hz) const {
+        if (!(std::isfinite(f_hz) && f_hz > T(0))) {
+            return T(0);
+        }
+
+        return std::clamp(
+            f_hz,
+            cfg_.adaptation.f_disp_min_hz,
+            cfg_.adaptation.f_disp_max_hz
+        );
+    }
+
+    T clampAdaptSigma_(T sigma_a) const {
+        if (!(std::isfinite(sigma_a) && sigma_a >= T(0))) {
+            sigma_a = cfg_.sigma_floor;
+        }
+
+        sigma_a = std::max(sigma_a, cfg_.sigma_floor);
+        sigma_a = std::max(sigma_a, cfg_.adaptation.sigma_a_min);
+        sigma_a = std::min(sigma_a, cfg_.adaptation.sigma_a_max);
+
+        return sigma_a;
+    }
+
+    T frequencyForAutoAdapt_(bool& used_envelope) const {
+        used_envelope = false;
+
+        if (envelopeFrequencyUsable_()) {
+            used_envelope = true;
+            return clampAdaptFrequency_(envelope_freq_hz_);
+        }
+
+        return clampAdaptFrequency_(computeScheduledFrequencyHz_());
+    }
+
+    T sigmaForAdapt_(bool& used_envelope) const {
+        used_envelope = false;
+
+        if (envelopeSigmaUsable_()) {
+            used_envelope = true;
+            return clampAdaptSigma_(envelope_sigma_applied_);
+        }
+
+        return clampAdaptSigma_(accel_sigma_);
     }
 
     T computeScheduledFrequencyHz_() const {
