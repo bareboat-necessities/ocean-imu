@@ -659,8 +659,8 @@ class FusionApp {
                         dt_);
     }
 
-    roll_deg_ = fusion_.rollDeg();
-    pitch_deg_ = fusion_.pitchDeg();
+    roll_deg_ = -fusion_.rollDeg();
+    pitch_deg_ = -fusion_.pitchDeg();
     yaw_mahony_deg_ = fusion_.yawDeg();
 
     if (mag_usable) {
