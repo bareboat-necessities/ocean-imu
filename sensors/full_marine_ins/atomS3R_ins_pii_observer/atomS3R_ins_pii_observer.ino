@@ -11,7 +11,7 @@
 
   REAL DEVICE MAHONY CONVENTION
 
-    Calibrated device/body frame from runtime_ / OU_II:
+    Calibrated device/body frame from runtime_:
       [N, E, D]
       x = forward
       y = right
@@ -470,9 +470,7 @@ class FusionApp {
     cfg.use_mag = true;
 
     /*
-      OU-style envelope estimator lives in AdaptiveVerticalPII.
-      These are the same defaults as the header, kept explicit here so the
-      sketch behavior is documented and not hidden in the .ino math.
+      Envelope estimator lives in AdaptiveVerticalPII.
     */
     cfg.core.envelope.enabled = true;
     cfg.core.envelope.acc_noise_floor_sigma = 0.12f;
@@ -723,14 +721,7 @@ class FusionApp {
     }
 
     /*
-      Use the core-owned OU-style envelope estimate.
-
-      This replaces:
-          sigma / omega^2
-
-      That old formula was too large because it used raw accel sigma directly
-      as a displacement amplitude proxy. The core now owns the same kind of
-      variance/noise-floor/tau^2 scaling model used by the OU filter.
+      Use the core-owned envelope estimate.
     */
     wave_envelope_m_ = fusion_.displacementScale();
     if (!(std::isfinite(wave_envelope_m_) && wave_envelope_m_ >= 0.0f)) {
@@ -778,9 +769,7 @@ class FusionApp {
     ui_.line("Mag gate: LOOSE");
 #endif
 
-    ui_.line("Fusion: PII DEFAULTS");
-    ui_.line("Startup: ACC+MAG seed");
-    ui_.line("ENV: core OU-style");
+    ui_.line("Fusion: PII");
   }
 
   void updateUI_() {
