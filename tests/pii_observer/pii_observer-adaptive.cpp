@@ -146,45 +146,55 @@ public:
         s.gyro_bias_est_ned   = Vector3f::Zero();
         s.mag_bias_est_ned_uT = Vector3f::Zero();
 
-        const float r_active      = obs.r;
-        const float tau_a_active  = obs.tau_a;
-        const float tau_d_active  = obs.tau_d;
-        const float kb_active     = obs.kb;
+        /*
+          Observer telemetry remains useful for diagnostics:
+            tuning_applied = active PII r
+            tuning_target  = active PII bias gain kb
 
-        const float sigma_raw     = hs.core.accel_sigma;
-        const float sigma_used    = obs.sigma_a_filt;
+          Envelope telemetry must come from the new OU-style envelope path:
+            tau_applied    = envelope tau_applied
+            tau_target     = envelope tau_target
+            sigma_applied  = envelope sigma_applied
+            sigma_target   = envelope sigma_target
+            freq_hz        = envelope frequency
+            accel_variance = envelope tuner variance
 
-        const float f_raw_hz = hs.core.accel_freq_hz;
-        const float f_used_hz =
-            (obs.f_disp_filt_hz > 1e-6f) ? obs.f_disp_filt_hz : f_raw_hz;
+          Do not use:
+            obs.sigma_a_filt
+            obs.f_disp_filt_hz
+            hs.core.accel_var
+            obs.tau_a
 
-        s.tau_target     = tau_d_active;
-        s.sigma_target   = sigma_raw;
+          for wave-height envelope anymore.
+        */
+        const float r_active  = obs.r;
+        const float kb_active = obs.kb;
+
+        const float env_freq_hz     = filter_.envelopeFrequencyHz();
+        const float env_tau_target  = filter_.envelopeTauTarget();
+        const float env_tau_applied = filter_.envelopeTauApplied();
+        const float env_sig_target  = filter_.envelopeSigmaTarget();
+        const float env_sig_applied = filter_.envelopeSigmaApplied();
+        const float env_accel_var   = filter_.envelopeAccelVariance();
+
+        s.tau_target     = env_tau_target;
+        s.sigma_target   = env_sig_target;
         s.tuning_target  = kb_active;
 
-        s.tau_applied    = tau_a_active;
-        s.sigma_applied  = sigma_used;
+        s.tau_applied    = env_tau_applied;
+        s.sigma_applied  = env_sig_applied;
         s.tuning_applied = r_active;
 
-        s.freq_hz = f_used_hz;
-        s.period_sec = (f_used_hz > 1e-6f) ? (1.0f / f_used_hz) : NAN;
-        s.accel_variance = hs.core.accel_var;
+        s.freq_hz = env_freq_hz;
+        s.period_sec =
+            (std::isfinite(env_freq_hz) && env_freq_hz > 1e-6f)
+                ? (1.0f / env_freq_hz)
+                : NAN;
 
-        /*
-          Use the core-owned OU-style envelope estimate.
+        s.accel_variance = env_accel_var;
 
-          This replaces the old:
-              sigma / omega^2
-          approximation, which overestimated envelope badly.
-
-          The new estimate is computed inside AdaptiveVerticalPII using:
-              - SeaStateAutoTuner-style debiased variance
-              - acceleration noise-floor subtraction
-              - OU-style tau = tau_coeff * 0.5 / f
-              - displacement scale = 0.5 * C_HS * sigma * tau^2
-        */
-        s.displacement_scale_m = filter_.displacementScale();
-        s.velocity_scale_mps   = filter_.verticalSpeedEnvelope();
+        s.displacement_scale_m = filter_.displacementScale(true);
+        s.velocity_scale_mps   = filter_.verticalSpeedEnvelope(true);
 
         if (!std::isfinite(s.displacement_scale_m)) {
             s.displacement_scale_m = NAN;
@@ -298,8 +308,14 @@ private:
 
         /*
           OU-style envelope estimator lives in AdaptiveVerticalPII.
-          These are intentionally the same defaults as the header, kept here
-          explicitly so the sim documents the model being tested.
+
+          These match the OU envelope logic:
+            SeaStateAutoTuner K_periods = 2.0
+            tau_freq = 1.0 s
+            acc_noise_floor_sigma = 0.12 m/s^2
+            tau = 1.38 * 0.5 / f
+            sigma = 0.90 * sqrt(max(var - noise_floor^2, 0))
+            envelope = 0.5 * C_HS * sigma * tau^2
         */
         cfg.core.envelope.enabled = true;
         cfg.core.envelope.acc_noise_floor_sigma = 0.12f;
@@ -369,19 +385,19 @@ static void print_vertical_only_summary(const W3dSimulationRunResult& result, fl
               << " Pitch=" << rms_pitch.rms()
               << " Yaw=" << rms_yaw.rms() << "\n";
 
-    std::cout << "f_used_hz: mean=" << mean_vec(vf)
+    std::cout << "env f_used_hz: mean=" << mean_vec(vf)
               << " median=" << median_vec(vf)
               << " p05=" << percentile_vec(vf, 0.05)
               << " p95=" << percentile_vec(vf, 0.95) << "\n";
 
     std::cout << "active r=" << result.final_tuning_applied
-              << ", active tau_a=" << result.final_tau_applied
-              << ", active tau_d=" << result.final_tau_target
+              << ", env tau_applied=" << result.final_tau_applied
+              << ", env tau_target=" << result.final_tau_target
               << ", active kb=" << result.final_tuning_target << "\n";
 
-    std::cout << "raw sigma_a=" << result.final_sigma_target
-              << ", used sigma_a=" << result.final_sigma_applied
-              << ", raw accel_var=" << result.final_accel_variance << "\n";
+    std::cout << "env sigma_target=" << result.final_sigma_target
+              << ", env sigma_applied=" << result.final_sigma_applied
+              << ", env accel_var=" << result.final_accel_variance << "\n";
 
     std::cout << "===========================================================\n\n";
 }
