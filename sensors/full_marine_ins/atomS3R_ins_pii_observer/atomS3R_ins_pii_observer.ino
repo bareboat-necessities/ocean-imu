@@ -694,7 +694,7 @@ class FusionApp {
     float rot_dpm_meas = w_use.z() * RAD_TO_DEG * 60.0f;
     rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
 
-    const float tau_rot = 1.5f;
+    const float tau_rot = 0.5f;
     const float alpha_r = 1.0f - expf(-dt_ / tau_rot);
 
     if (!rot_inited_) {
