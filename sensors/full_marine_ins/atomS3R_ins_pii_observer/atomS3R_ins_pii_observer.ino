@@ -54,7 +54,7 @@
 #endif
 
 /*
-  Default output is MAGNETIC heading.
+  Magnetic heading output.
 
   NMEA HDM is magnetic heading by definition. Do not send true heading in HDM.
 */
@@ -67,40 +67,37 @@
 #endif
 
 /*
-  Optional final user/mounting correction after the deterministic Mahony-frame
-  correction. Leave at 0 unless you have measured a fixed residual offset after
-  proper calibration.
+  Optional final fixed mounting/user correction.
+
+  Leave 0 unless you measure a remaining constant offset after calibration.
 */
 #ifndef SEA_STATE_MAG_HEADING_USER_OFFSET_DEG
   #define SEA_STATE_MAG_HEADING_USER_OFFSET_DEG 0.0f
 #endif
 
 /*
-  Deterministic correction from Mahony internal horizontal frame:
+  Deterministic heading correction for the current Mahony input frame and your
+  current unchanged AdaptiveVerticalPIIMahony quaternion accessor/extraction path.
 
-      Mahony body x = -East
-      Mahony body y = -North
-      Mahony body z =  Up
-
-  With the current quat_wb_zu_to_euler_nautical() extraction, raw yaw is 90 deg
-  behind magnetic heading, so corrected magnetic heading is raw + 90.
+  You tested +90 and it made magnetic north become south.
+  Therefore this current extraction path requires -90.
 */
 #ifndef SEA_STATE_MAHONY_FRAME_HEADING_OFFSET_DEG
-  #define SEA_STATE_MAHONY_FRAME_HEADING_OFFSET_DEG 90.0f
+  #define SEA_STATE_MAHONY_FRAME_HEADING_OFFSET_DEG -90.0f
 #endif
 
 /*
-  Use magnetic field norm sanity with hysteresis.
+  Default OFF to avoid rejecting valid mag updates due to norm variation.
 
-  This is not a sample-rate gate. It does not pulse Mahony updates. It only
-  rejects obviously bad field magnitudes.
+  Field sanity is still displayed. Enable only if you want hard rejection outside
+  the 20..80 uT window.
 */
-#ifndef SEA_STATE_USE_MAG_FIELD_HYSTERESIS_GATE
-  #define SEA_STATE_USE_MAG_FIELD_HYSTERESIS_GATE 1
+#ifndef SEA_STATE_USE_STRICT_MAG_FIELD_GATE
+  #define SEA_STATE_USE_STRICT_MAG_FIELD_GATE 0
 #endif
 
-static constexpr float g_std = atoms3r_ical::ImuCalCfg::g_std;
-static constexpr float FREQ_GUESS = 0.30f;
+static constexpr float APP_G_STD = atoms3r_ical::ImuCalCfg::g_std;
+static constexpr float APP_FREQ_GUESS = 0.30f;
 
 static constexpr float LOOP_HZ = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US =
@@ -115,23 +112,18 @@ static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
 /*
-  Magnetic field gates.
-
-  present:     sensor is not obviously absent/broken
-  enter gate:  plausible Earth's field
-  hold gate:   wider hysteresis to avoid yaw jerk around threshold
+  Magnetic gates:
+    present:      sensor exists / not completely broken
+    field sane:   plausible Earth field, displayed and optionally used as gate
 */
 static constexpr float MAG_PRESENT_MIN_UT = 5.0f;
 static constexpr float MAG_PRESENT_MAX_UT = 200.0f;
 
-static constexpr float MAG_FIELD_ENTER_MIN_UT = 20.0f;
-static constexpr float MAG_FIELD_ENTER_MAX_UT = 80.0f;
-
-static constexpr float MAG_FIELD_HOLD_MIN_UT = 15.0f;
-static constexpr float MAG_FIELD_HOLD_MAX_UT = 100.0f;
+static constexpr float MAG_FIELD_MIN_UT = 20.0f;
+static constexpr float MAG_FIELD_MAX_UT = 80.0f;
 
 /*
-  Diagnostic only. Do not use this to pulse Mahony updates.
+  Diagnostic only. Do not use this to pulse Mahony mag updates.
 */
 static constexpr uint32_t MAG_UPDATE_SPACING_MS = 35u;
 
@@ -293,7 +285,7 @@ class FusionApp {
 
   float heave_m_ = 0.0f;
   float wave_envelope_m_ = 0.0f;
-  float wave_hz_ = FREQ_GUESS;
+  float wave_hz_ = APP_FREQ_GUESS;
 
   float heave_raw_m_ = 0.0f;
   float heave_baseline_m_ = 0.0f;
@@ -301,9 +293,7 @@ class FusionApp {
   float heave_wave_clean_m_ = 0.0f;
 
   bool mag_present_ = false;
-  bool mag_field_enter_sane_ = false;
-  bool mag_field_hold_sane_ = false;
-  bool mag_accepted_ = false;
+  bool mag_field_sane_ = false;
   bool mag_fresh_ = false;
   bool mag_used_ = false;
   bool mag_heading_ok_ = false;
@@ -324,23 +314,22 @@ class FusionApp {
   /*
     Common Mahony-body mapping for all vector sensors.
 
-    OU_II verified convention:
-        calibrated vectors are body-frame NED components [N, E, D].
+    Confirmed input convention from working OU_II path:
+      calibrated vectors are body-frame NED components [N, E, D].
 
     Mahony identity convention from Mahony_AHRS:
-        stationary accel should be [0, 0, +g].
+      stationary accel should be [0, 0, +g].
 
     Stationary NED specific force is [0, 0, -g].
 
-    Therefore the transform must be:
-        [N, E, D] -> [-E, -N, -D]
+    Therefore:
+      [N, E, D] -> [-E, -N, -D]
 
     This maps:
-        accel [0,0,-g] -> [0,0,+g]
+      accel [0,0,-g] -> [0,0,+g]
 
-    It must be used for gyro, accel, and mag. The previous special mag-only
-    mapping was inconsistent with accel/gyro and creates tilt-dependent compass
-    error.
+    Use this for gyro, accel, and mag. Do not use a separate magnetometer-only
+    frame because that creates tilt-dependent heading errors.
   */
   static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
     return Vector3f(-v_ned.y(), -v_ned.x(), -v_ned.z());
@@ -374,26 +363,6 @@ class FusionApp {
 
     mag_gate_last_ms_ = now_ms;
     return true;
-  }
-
-  bool updateMagAcceptance_(bool present, bool enter_sane, bool hold_sane) {
-#if SEA_STATE_USE_MAG_FIELD_HYSTERESIS_GATE
-    if (!present) {
-      mag_accepted_ = false;
-      return false;
-    }
-
-    if (mag_accepted_) {
-      mag_accepted_ = hold_sane;
-    } else {
-      mag_accepted_ = enter_sane;
-    }
-
-    return mag_accepted_;
-#else
-    mag_accepted_ = present;
-    return mag_accepted_;
-#endif
   }
 
   float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
@@ -458,7 +427,7 @@ class FusionApp {
 
   void resetFusion_() {
     Fusion::Config cfg{};
-    cfg.gravity_mps2 = g_std;
+    cfg.gravity_mps2 = APP_G_STD;
     cfg.use_mag = true;
 
     cfg.core.observer.r          = 0.150f;
@@ -528,9 +497,7 @@ class FusionApp {
     last_mag_correction_ms_ = 0;
 
     mag_present_ = false;
-    mag_field_enter_sane_ = false;
-    mag_field_hold_sane_ = false;
-    mag_accepted_ = false;
+    mag_field_sane_ = false;
     mag_fresh_ = false;
     mag_used_ = false;
     mag_heading_ok_ = false;
@@ -542,7 +509,7 @@ class FusionApp {
 
     heave_m_ = 0.0f;
     wave_envelope_m_ = 0.0f;
-    wave_hz_ = FREQ_GUESS;
+    wave_hz_ = APP_FREQ_GUESS;
 
     heave_raw_m_ = 0.0f;
     heave_baseline_m_ = 0.0f;
@@ -550,7 +517,7 @@ class FusionApp {
     heave_wave_clean_m_ = 0.0f;
 
     AdaptiveWaveDetrender::Config dcfg{};
-    dcfg.init_wave_freq_hz = FREQ_GUESS;
+    dcfg.init_wave_freq_hz = APP_FREQ_GUESS;
     dcfg.min_wave_freq_hz  = 0.02f;
     dcfg.max_wave_freq_hz  = 1.20f;
 
@@ -641,25 +608,28 @@ class FusionApp {
         mag_norm_uT_ >= MAG_PRESENT_MIN_UT &&
         mag_norm_uT_ <= MAG_PRESENT_MAX_UT;
 
-    mag_field_enter_sane_ =
+    mag_field_sane_ =
         std::isfinite(mag_norm_uT_) &&
-        mag_norm_uT_ >= MAG_FIELD_ENTER_MIN_UT &&
-        mag_norm_uT_ <= MAG_FIELD_ENTER_MAX_UT;
+        mag_norm_uT_ >= MAG_FIELD_MIN_UT &&
+        mag_norm_uT_ <= MAG_FIELD_MAX_UT;
 
-    mag_field_hold_sane_ =
-        std::isfinite(mag_norm_uT_) &&
-        mag_norm_uT_ >= MAG_FIELD_HOLD_MIN_UT &&
-        mag_norm_uT_ <= MAG_FIELD_HOLD_MAX_UT;
-
+    /*
+      Diagnostic only. Do not gate Mahony with mag_fresh_; pulsing mag updates
+      makes heading jerky.
+    */
     mag_fresh_ = updateMagFreshGate_(mag_present_, now_ms);
 
-    const bool mag_usable =
-        updateMagAcceptance_(mag_present_,
-                             mag_field_enter_sane_,
-                             mag_field_hold_sane_);
+#if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
+    const bool mag_usable = mag_present_ && mag_field_sane_;
+#else
+    const bool mag_usable = mag_present_;
+#endif
 
     mag_used_ = mag_usable;
 
+    /*
+      Common Mahony-frame input for gyro, accel, and mag.
+    */
     const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
     const Vector3f mag_body_m = ned_to_mahony_body_(m_cal_);
@@ -677,6 +647,10 @@ class FusionApp {
                         dt_);
     }
 
+    /*
+      Same Euler extraction path as the original sketch.
+      Only heading is corrected afterward.
+    */
     const auto q_wb = fusion_.quaternionWorldToBody();
     const Quaternionf q_wb_zu(q_wb.w, q_wb.x, q_wb.y, q_wb.z);
 
@@ -703,7 +677,7 @@ class FusionApp {
         mag_heading_ok_;
 
     const bool still =
-        (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
+        (fabsf(a_cal_.norm() - APP_G_STD) < ROT_STILL_G_TOL_FRAC * APP_G_STD) &&
         (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
 
     if (still) {
@@ -720,9 +694,10 @@ class FusionApp {
     Vector3f w_use = w_cal_;
     if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
 
-    const Vector3f w_use_m = ned_to_mahony_body_(w_use);
-
-    float rot_dpm_meas = w_use_m.z() * RAD_TO_DEG * 60.0f;
+    /*
+      Restored to original ROT semantics.
+    */
+    float rot_dpm_meas = w_use.z() * RAD_TO_DEG * 60.0f;
     rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
 
     const float tau_rot = 1.5f;
@@ -786,8 +761,8 @@ class FusionApp {
                       static_cast<double>(SEA_STATE_MAHONY_FRAME_HEADING_OFFSET_DEG),
                       static_cast<double>(SEA_STATE_MAG_HEADING_USER_OFFSET_DEG));
 
-#if SEA_STATE_USE_MAG_FIELD_HYSTERESIS_GATE
-    ui_.line("Mag gate: HYST");
+#if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
+    ui_.line("Mag gate: STRICT");
 #else
     ui_.line("Mag gate: LOOSE");
 #endif
@@ -845,7 +820,7 @@ class FusionApp {
 
     M5.Display.printf("MAG:%s %s %s\n",
                       mag_present_ ? "OK " : "BAD",
-                      mag_field_enter_sane_ ? "FIELD" : "DIST",
+                      mag_field_sane_ ? "FIELD" : "DIST",
                       mag_used_ ? "USE" : "SKIP");
 
     M5.Display.printf("|m|:%7.1f uT\n", static_cast<double>(mag_norm_uT_));
@@ -867,6 +842,9 @@ class FusionApp {
 
 #if SEA_STATE_SERIAL_NMEA
 
+    /*
+      HDM is magnetic heading. Never send true-heading-corrected value here.
+    */
     if (heading_valid_) {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_mag_deg_);
     }
@@ -889,7 +867,7 @@ class FusionApp {
 
     Serial.printf(
         "hdg=%.2f raw=%.2f valid=%d roll=%.2f pitch=%.2f |m|=%.1f "
-        "magUsed=%d magEnter=%d magHold=%d magFresh=%d heave=%.3f env=%.3f frq=%.3f\n",
+        "magUsed=%d magField=%d magFresh=%d heave=%.3f env=%.3f frq=%.3f\n",
         static_cast<double>(heading_mag_deg_),
         static_cast<double>(heading_raw_deg_),
         static_cast<int>(heading_valid_),
@@ -897,8 +875,7 @@ class FusionApp {
         static_cast<double>(pitch_deg_),
         static_cast<double>(mag_norm_uT_),
         static_cast<int>(mag_used_),
-        static_cast<int>(mag_field_enter_sane_),
-        static_cast<int>(mag_field_hold_sane_),
+        static_cast<int>(mag_field_sane_),
         static_cast<int>(mag_fresh_),
         static_cast<double>(heave_m_),
         static_cast<double>(wave_envelope_m_),
