@@ -46,7 +46,7 @@
 #endif
 
 #ifndef SEA_STATE_SERIAL_NMEA
-  #define SEA_STATE_SERIAL_NMEA 0
+  #define SEA_STATE_SERIAL_NMEA 1
 #endif
 
 #ifndef SEA_STATE_NMEA_TALKER
@@ -609,7 +609,7 @@ private:
     float rot_dpm_meas = w_world.z() * RAD_TO_DEG * 60.0f;
     rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
 
-    const float tau_rot = 1.5f;
+    const float tau_rot = 0.1f;
     const float alpha_r = 1.0f - expf(-dt_ / tau_rot);
     if (!rot_inited_) {
       rot_inited_ = true;
@@ -712,7 +712,7 @@ private:
     }
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
-    nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
+    //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, valid);
 #else
   #if ARDUINO_PLOTTER
