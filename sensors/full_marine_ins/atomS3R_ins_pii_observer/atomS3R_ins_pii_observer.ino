@@ -4,28 +4,40 @@
   AtomS3R AdaptiveVerticalPIIMahony (+ optional IMU Calibration Wizard)
 
   Produces:
-    - magnetic compass heading
+    - magnetic compass heading from Mahony yaw
     - AHRS roll/pitch/yaw
     - heave Z displacement
     - wave envelope estimate
 
-  IMPORTANT REAL-DEVICE CONVENTION
+  REAL DEVICE MAHONY CONVENTION
 
-    This sketch matches the working AdaptiveVerticalPIIMahony sim for the
-    sensor-to-Mahony mappings:
+    Calibrated device/body frame from runtime_ / OU_II:
+      [N, E, D]
+      x = forward
+      y = right
+      z = down
 
-      accel/gyro body NED -> Mahony body:
-          [N,E,D] -> [-E,-N,-D]
+    Mahony frame used here:
+      [N, -E, -D]
+      x = forward
+      y = left
+      z = up
 
-      magnetometer body NED -> Mahony mag:
-          [N,E,D] -> [ N,-E,-D]
+    Therefore ALL THREE sensors use the same mapper:
+      gyro  [N,E,D] -> [N,-E,-D]
+      accel [N,E,D] -> [N,-E,-D]
+      mag   [N,E,D] -> [N,-E,-D]
 
-    Magnetic heading output is magnetic-to-magnetic:
+    At level, pointed magnetic north:
+      accel_ned = [0, 0, -g] -> [0, 0, +g]
+      mag_ned   = [+H, 0, +V] -> [+H, 0, -V]
 
-      heading_mag = Mahony decoded yaw + SEA_STATE_MAG_HEADING_USER_OFFSET_DEG
+    That is Mahony yaw zero.
 
-    Declination is NOT applied to magnetic heading. It is only used when
-    SEA_STATE_OUTPUT_TRUE_HEADING is enabled.
+    Mahony yaw is CCW-positive in Z-up frame.
+    Compass heading is CW-positive.
+    Therefore:
+      magnetic_heading = -MahonyYaw + user_offset
 */
 
 #include <Arduino.h>
@@ -54,7 +66,6 @@
 #if SEA_STATE_ENABLE_WIZARD
   #include "AtomS3R/ImuCalWizardRunner.h"
 #endif
-#include "ahrs/FrameConversions.h"
 #include "detrend/AdaptiveWaveDetrender.h"
 #include "nmea/NmeaCompass.h"
 #include "pii_observer/AdaptiveVerticalPIIMahony.h"
@@ -82,17 +93,18 @@
 
 /*
   East-positive declination.
+
   Used ONLY when SEA_STATE_OUTPUT_TRUE_HEADING = 1.
-  Not used for magnetic-to-magnetic comparison.
+  It is NOT used for magnetic-to-magnetic comparison.
 */
 #ifndef SEA_STATE_MAG_DECLINATION_DEG
   #define SEA_STATE_MAG_DECLINATION_DEG 0.0f
 #endif
 
 /*
-  Optional fixed correction for residual mounting/calibration error.
+  Optional final fixed correction for residual mounting/calibration error.
 
-  Leave at 0 until the frame path is verified.
+  Leave 0 until heading direction is verified.
   Example:
     reads 352 when pointed magnetic north -> use +8
     reads   7 when pointed magnetic north -> use -7
@@ -102,8 +114,8 @@
 #endif
 
 /*
-  Default OFF to match the sim behavior: use mag when present.
-  Turn ON only if local magnetic disturbance is severe and you want norm gating.
+  Default OFF. Use mag if present.
+  Turn ON only if you want to reject mag samples outside 20..80 uT.
 */
 #ifndef SEA_STATE_USE_STRICT_MAG_FIELD_GATE
   #define SEA_STATE_USE_STRICT_MAG_FIELD_GATE 0
@@ -131,8 +143,7 @@ static constexpr float MAG_FIELD_MIN_UT = 20.0f;
 static constexpr float MAG_FIELD_MAX_UT = 80.0f;
 
 /*
-  Diagnostic only. Do not use this to gate Mahony mag updates.
-  The sim reuses latest mag on every IMU step.
+  Diagnostic only. Do not use this to pulse/gate Mahony mag updates.
 */
 static constexpr uint32_t MAG_UPDATE_SPACING_MS = 35u;
 
@@ -140,7 +151,6 @@ static constexpr uint32_t HEADING_MAG_TIMEOUT_MS = 2000u;
 
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
-using Quaternionf = Eigen::Quaternionf;
 
 static inline float clampf_(float x, float lo, float hi) {
   return x < lo ? lo : (x > hi ? hi : x);
@@ -150,10 +160,6 @@ static inline float wrap360_(float deg) {
   while (deg < 0.0f) deg += 360.0f;
   while (deg >= 360.0f) deg -= 360.0f;
   return deg;
-}
-
-static inline float magneticHeadingFromMahonyReported_(float mahony_reported_deg) {
-  return wrap360_(mahony_reported_deg + SEA_STATE_MAG_HEADING_USER_OFFSET_DEG);
 }
 
 static inline float outputHeadingFromMagnetic_(float magnetic_deg) {
@@ -282,10 +288,11 @@ class FusionApp {
   float a_raw_norm_ = 0.0f;
 
   float dt_ = 0.0f;
+
   float roll_deg_ = 0.0f;
   float pitch_deg_ = 0.0f;
+  float yaw_mahony_deg_ = 0.0f;
 
-  float heading_mahony_reported_deg_ = 0.0f;
   float heading_mag_deg_ = 0.0f;
   float heading_deg_ = 0.0f;
   bool heading_valid_ = false;
@@ -318,28 +325,15 @@ class FusionApp {
 
  private:
   /*
-    MATCHES THE WORKING SIM.
+    One real physical Mahony mapper for gyro, accel, and mag.
 
-    Device/runner convention:
-      body NED = [North/forward, East/right, Down]
+    Input calibrated body frame:
+      [N,E,D] = [forward,right,down]
 
-    Accel/gyro mapper used by sim:
-      ned_to_zu([N,E,D]) = [E,N,-D]
-      then [-zu.x, -zu.y, zu.z] = [-E,-N,-D]
+    Mahony body frame:
+      [N,-E,-D] = [forward,left,up]
   */
   static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
-    const Vector3f v_zu = ned_to_zu(v_ned);
-    return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
-  }
-
-  /*
-    MATCHES THE WORKING SIM.
-
-    Do not use ned_to_mahony_body_() for magnetometer.
-
-    This Mahony mag path expects magnetic north on +X with this convention.
-  */
-  static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
     return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
   }
 
@@ -439,7 +433,7 @@ class FusionApp {
     cfg.use_mag = true;
 
     /*
-      Base observer: matches sim.
+      Base observer.
     */
     cfg.core.observer.r          = 0.150f;
     cfg.core.observer.tau_a      = 0.68f;
@@ -455,7 +449,7 @@ class FusionApp {
     cfg.core.observer.d_limit   = 20.0f;
 
     /*
-      Adaptation: matches sim.
+      PII adaptation.
     */
     cfg.core.adaptation.enabled = true;
     cfg.core.adaptation.min_confidence = 0.22f;
@@ -465,17 +459,17 @@ class FusionApp {
     cfg.core.adaptation.input_smooth_tau = 4.5f;
     cfg.core.adaptation.param_smooth_tau = 7.5f;
 
-    cfg.core.adaptation.r_freq_exp   = 0.28f;
-    cfg.core.adaptation.r_sigma_exp  = 0.02f;
+    cfg.core.adaptation.r_freq_exp  = 0.28f;
+    cfg.core.adaptation.r_sigma_exp = 0.02f;
 
-    cfg.core.adaptation.tau_a_freq_exp   = -0.40f;
-    cfg.core.adaptation.tau_a_sigma_exp  = -0.03f;
+    cfg.core.adaptation.tau_a_freq_exp  = -0.40f;
+    cfg.core.adaptation.tau_a_sigma_exp = -0.03f;
 
-    cfg.core.adaptation.tau_d_freq_exp   = -0.03f;
-    cfg.core.adaptation.tau_d_sigma_exp  = -0.01f;
+    cfg.core.adaptation.tau_d_freq_exp  = -0.03f;
+    cfg.core.adaptation.tau_d_sigma_exp = -0.01f;
 
-    cfg.core.adaptation.kb_freq_exp   = 0.02f;
-    cfg.core.adaptation.kb_sigma_exp  = 0.08f;
+    cfg.core.adaptation.kb_freq_exp  = 0.02f;
+    cfg.core.adaptation.kb_sigma_exp = 0.08f;
 
     cfg.core.adaptation.r_min = 0.145f;
     cfg.core.adaptation.r_max = 0.225f;
@@ -498,8 +492,7 @@ class FusionApp {
     cfg.core.coarse_schedule_confidence_floor = 0.62f;
 
     /*
-      Mahony gains: matches sim. These are intentionally stronger than the
-      original .ino gains and avoid minute-long yaw convergence.
+      Stronger Mahony gains to avoid minute-long yaw settling.
     */
     cfg.mahony_twoKp = 1.70f;
     cfg.mahony_twoKi = 0.090f;
@@ -525,8 +518,8 @@ class FusionApp {
 
     roll_deg_ = 0.0f;
     pitch_deg_ = 0.0f;
+    yaw_mahony_deg_ = 0.0f;
 
-    heading_mahony_reported_deg_ = 0.0f;
     heading_mag_deg_ = 0.0f;
     heading_deg_ = 0.0f;
     heading_valid_ = false;
@@ -651,8 +644,8 @@ class FusionApp {
         mag_norm_uT_ <= MAG_FIELD_MAX_UT;
 
     /*
-      Diagnostic only. Do not use mag_fresh_ to gate Mahony.
-      The sim reuses latest mag every IMU step.
+      Diagnostic only.
+      Do not use mag_fresh_ to pulse Mahony mag updates.
     */
     mag_fresh_ = updateMagFreshGate_(mag_present_, now_ms);
 
@@ -664,12 +657,14 @@ class FusionApp {
 
     mag_used_ = mag_usable;
 
+    /*
+      One common physical Mahony frame for gyro, accel, and mag.
+    */
     const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
     const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
+    const Vector3f mag_body_m = ned_to_mahony_body_(m_cal_);
 
     if (mag_usable) {
-      const Vector3f mag_body_m = ned_to_mahony_mag_(m_cal_);
-
       fusion_.updateIMUMag(gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
                            acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
                            mag_body_m.x(), mag_body_m.y(), mag_body_m.z(),
@@ -682,34 +677,19 @@ class FusionApp {
                         dt_);
     }
 
-    const auto hs = fusion_.snapshot();
-
     /*
-      Exactly like the working sim:
-        hs.q_world_to_body -> Quaternionf -> quat_wb_zu_to_euler_nautical()
+      Mahony-native Euler output.
+
+      With body frame [N,-E,-D]:
+        compass magnetic heading = -MahonyYaw + user offset
     */
-    const auto& q_wb = hs.q_world_to_body;
-    Quaternionf q_wb_zu(
-        float(q_wb.w),
-        float(q_wb.x),
-        float(q_wb.y),
-        float(q_wb.z)
-    );
-
-    float yaw_reported = heading_mahony_reported_deg_;
-
-    quat_wb_zu_to_euler_nautical(
-        q_wb_zu,
-        roll_deg_,
-        pitch_deg_,
-        yaw_reported
-    );
-
-    heading_mahony_reported_deg_ = wrap360_(yaw_reported);
+    roll_deg_ = fusion_.rollDeg();
+    pitch_deg_ = fusion_.pitchDeg();
+    yaw_mahony_deg_ = fusion_.yawDeg();
 
     if (mag_usable) {
       heading_mag_deg_ =
-          magneticHeadingFromMahonyReported_(heading_mahony_reported_deg_);
+          wrap360_(-yaw_mahony_deg_ + SEA_STATE_MAG_HEADING_USER_OFFSET_DEG);
       heading_deg_ = outputHeadingFromMagnetic_(heading_mag_deg_);
     }
 
@@ -750,6 +730,8 @@ class FusionApp {
     } else {
       rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_);
     }
+
+    const auto hs = fusion_.snapshot();
 
     heave_m_ = fusion_.displacement();
     heave_raw_m_ = heave_m_;
@@ -805,7 +787,7 @@ class FusionApp {
     ui_.line("Mag gate: LOOSE");
 #endif
 
-    ui_.line("Fusion: PII SIM-CONV");
+    ui_.line("Fusion: PII MAHONY-YAW");
   }
 
   void updateUI_() {
@@ -848,8 +830,7 @@ class FusionApp {
                       heading_valid_ ? "deg" : "WAIT");
 #endif
 
-    M5.Display.printf("RAW:%7.1f deg\n",
-                      static_cast<double>(heading_mahony_reported_deg_));
+    M5.Display.printf("YAW:%7.1f deg\n", static_cast<double>(yaw_mahony_deg_));
     M5.Display.printf("ROL:%7.1f deg\n", static_cast<double>(roll_deg_));
     M5.Display.printf("PIT:%7.1f deg\n", static_cast<double>(pitch_deg_));
 
@@ -902,10 +883,10 @@ class FusionApp {
   #else
 
     Serial.printf(
-        "hdg=%.2f raw=%.2f valid=%d roll=%.2f pitch=%.2f |m|=%.1f "
+        "hdg=%.2f yaw=%.2f valid=%d roll=%.2f pitch=%.2f |m|=%.1f "
         "magUsed=%d magField=%d magFresh=%d heave=%.3f env=%.3f frq=%.3f\n",
         static_cast<double>(heading_mag_deg_),
-        static_cast<double>(heading_mahony_reported_deg_),
+        static_cast<double>(yaw_mahony_deg_),
         static_cast<int>(heading_valid_),
         static_cast<double>(roll_deg_),
         static_cast<double>(pitch_deg_),
