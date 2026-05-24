@@ -1,470 +1,934 @@
-#include <filesystem>
-#include <iostream>
-#include <string>
-#include <type_traits>
-#include <vector>
-#include <optional>
-#include <cstdlib>
-#include <cmath>
-#include <numbers>
-
 /*
-    Copyright (c), 2026  Mikhail Grushinskiy
+  Copyright 2026, Mikhail Grushinskiy
+
+  AtomS3R AdaptiveVerticalPIIMahony (+ optional IMU Calibration Wizard)
+
+  Produces:
+    - magnetic compass heading
+    - AHRS roll/pitch/yaw
+    - heave Z displacement
+    - wave envelope estimate
+
+  IMPORTANT REAL-DEVICE CONVENTION
+
+    This sketch matches the working AdaptiveVerticalPIIMahony sim for the
+    sensor-to-Mahony mappings:
+
+      accel/gyro body NED -> Mahony body:
+          [N,E,D] -> [-E,-N,-D]
+
+      magnetometer body NED -> Mahony mag:
+          [N,E,D] -> [ N,-E,-D]
+
+    Magnetic heading output is magnetic-to-magnetic:
+
+      heading_mag = Mahony decoded yaw + SEA_STATE_MAG_HEADING_USER_OFFSET_DEG
+
+    Declination is NOT applied to magnetic heading. It is only used when
+    SEA_STATE_OUTPUT_TRUE_HEADING is enabled.
 */
 
-#define EIGEN_NON_ARDUINO
+#include <Arduino.h>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
+#ifndef SEA_STATE_ENABLE_WIZARD
+  #define SEA_STATE_ENABLE_WIZARD 1
 #endif
 
-#include "util/W3dSimCommon.h"
-#include "pii_observer/AdaptiveVerticalPIIMahony.h"
+#define ARDUINO_PLOTTER 1
+
+#include <M5Unified.h>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+
+#ifndef EIGEN_STACK_ALLOCATION_LIMIT
+  #define EIGEN_STACK_ALLOCATION_LIMIT 0
+#endif
+#include <ArduinoEigenDense.h>
+
+#include <ArduinoOceanImu.h>
+
+#include "AtomS3R/AtomS3R_CompassUI.h"
+#include "AtomS3R/AtomS3R_ImuCal.h"
+#include "AtomS3R/AtomS3R_M5Ui.h"
+#if SEA_STATE_ENABLE_WIZARD
+  #include "AtomS3R/ImuCalWizardRunner.h"
+#endif
 #include "ahrs/FrameConversions.h"
-#include "ahrs/Mahony_AHRS.h"
+#include "detrend/AdaptiveWaveDetrender.h"
+#include "nmea/NmeaCompass.h"
+#include "pii_observer/AdaptiveVerticalPIIMahony.h"
 
-using Eigen::Vector3f;
-using Eigen::Quaternionf;
+#ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
+  #define SEA_STATE_UI_DEFAULT_GRAPHICS 1
+#endif
 
-bool add_noise = true;
+#ifndef SEA_STATE_SERIAL_NMEA
+  #define SEA_STATE_SERIAL_NMEA 0
+#endif
 
-static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap = 15.5f,
-    .err_limit_percent_z_pmstokes = 15.5f,
-    .err_limit_yaw_deg = 8.5f,
+#ifndef SEA_STATE_NMEA_TALKER
+  #define SEA_STATE_NMEA_TALKER "II"
+#endif
+
+/*
+  Default output is magnetic heading.
+
+  NMEA HDM is magnetic heading by definition.
+*/
+#ifndef SEA_STATE_OUTPUT_TRUE_HEADING
+  #define SEA_STATE_OUTPUT_TRUE_HEADING 0
+#endif
+
+/*
+  East-positive declination.
+  Used ONLY when SEA_STATE_OUTPUT_TRUE_HEADING = 1.
+  Not used for magnetic-to-magnetic comparison.
+*/
+#ifndef SEA_STATE_MAG_DECLINATION_DEG
+  #define SEA_STATE_MAG_DECLINATION_DEG 0.0f
+#endif
+
+/*
+  Optional fixed correction for residual mounting/calibration error.
+
+  Leave at 0 until the frame path is verified.
+  Example:
+    reads 352 when pointed magnetic north -> use +8
+    reads   7 when pointed magnetic north -> use -7
+*/
+#ifndef SEA_STATE_MAG_HEADING_USER_OFFSET_DEG
+  #define SEA_STATE_MAG_HEADING_USER_OFFSET_DEG 0.0f
+#endif
+
+/*
+  Default OFF to match the sim behavior: use mag when present.
+  Turn ON only if local magnetic disturbance is severe and you want norm gating.
+*/
+#ifndef SEA_STATE_USE_STRICT_MAG_FIELD_GATE
+  #define SEA_STATE_USE_STRICT_MAG_FIELD_GATE 0
+#endif
+
+static constexpr float APP_G_STD = atoms3r_ical::ImuCalCfg::g_std;
+static constexpr float APP_FREQ_GUESS = 0.30f;
+
+static constexpr float LOOP_HZ = 200.0f;
+static constexpr uint32_t LOOP_PERIOD_US =
+    static_cast<uint32_t>(1000000.0f / LOOP_HZ);
+
+static constexpr uint32_t UI_REFRESH_MS = 100;
+static constexpr uint32_t DEBUG_SERIAL_MS = 100;
+static constexpr uint32_t NMEA_SERIAL_MS = 80;
+
+static constexpr float ROT_BIAS_TAU_S = 5.0f;
+static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
+static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
+
+static constexpr float MAG_PRESENT_MIN_UT = 5.0f;
+static constexpr float MAG_PRESENT_MAX_UT = 200.0f;
+
+static constexpr float MAG_FIELD_MIN_UT = 20.0f;
+static constexpr float MAG_FIELD_MAX_UT = 80.0f;
+
+/*
+  Diagnostic only. Do not use this to gate Mahony mag updates.
+  The sim reuses latest mag on every IMU step.
+*/
+static constexpr uint32_t MAG_UPDATE_SPACING_MS = 35u;
+
+static constexpr uint32_t HEADING_MAG_TIMEOUT_MS = 2000u;
+
+using namespace atoms3r_ical;
+using Vector3f = Eigen::Vector3f;
+using Quaternionf = Eigen::Quaternionf;
+
+static inline float clampf_(float x, float lo, float hi) {
+  return x < lo ? lo : (x > hi ? hi : x);
+}
+
+static inline float wrap360_(float deg) {
+  while (deg < 0.0f) deg += 360.0f;
+  while (deg >= 360.0f) deg -= 360.0f;
+  return deg;
+}
+
+static inline float magneticHeadingFromMahonyReported_(float mahony_reported_deg) {
+  return wrap360_(mahony_reported_deg + SEA_STATE_MAG_HEADING_USER_OFFSET_DEG);
+}
+
+static inline float outputHeadingFromMagnetic_(float magnetic_deg) {
+#if SEA_STATE_OUTPUT_TRUE_HEADING
+  return wrap360_(magnetic_deg + SEA_STATE_MAG_DECLINATION_DEG);
+#else
+  return magnetic_deg;
+#endif
+}
+
+class FusionApp {
+ public:
+  void begin() {
+    delay(50);
+    Serial.begin(115200);
+    delay(100);
+
+    auto cfg = M5.config();
+    cfg.internal_imu = true;
+    M5.begin(cfg);
+    clearM5UnifiedImuCalibration();
+
+    ui_.begin();
+
+    if (use_graphics_) {
+      ui_.setReadRotation();
+      compass_ui_.begin();
+      compass_ui_ready_ = compass_ui_.ok();
+      if (!compass_ui_ready_) use_graphics_ = false;
+    }
+
+    reloadBlobAndRuntime_();
+
+#if SEA_STATE_ENABLE_WIZARD
+    if (!have_blob_) {
+      Serial.println("[BOOT] No saved calibration. Starting wizard...");
+      const bool saved = runWizardFlow_(true);
+      if (saved) {
+        Serial.println("[BOOT] Wizard saved calibration.");
+      } else {
+        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+      }
+    }
+#endif
+
+    reinitImu_();
+    resetFusion_();
+    drawHomeStatic_();
+
+    delay(100);
+  }
+
+  void tick() {
+    const uint32_t loop_start_us = micros();
+
+#if SEA_STATE_ENABLE_WIZARD
+    Input::update();
+
+    if (Input::tapPressed()) {
+      tap_count_++;
+      tap_deadline_ms_ = millis() + M5UiCfg::MENU_TAP_WINDOW_MS;
+      drawHomePending_();
+      Serial.printf("[TAP] count=%d\n", tap_count_);
+    }
+
+    if (tap_count_ > 0 &&
+        static_cast<int32_t>(millis() - tap_deadline_ms_) > 0) {
+      if (tap_count_ >= 3) handleErase_();
+      else handleRunWizard_();
+
+      tap_count_ = 0;
+      tap_deadline_ms_ = 0;
+      drawHomeStatic_();
+    }
+#endif
+
+    ImuSample sample{};
+    const uint32_t sample_us = micros();
+    const uint32_t update_mask = M5.Imu.update();
+    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample);
+
+    if (got_sample) {
+      stale_frame_count_ = 0;
+      updateFilter_(sample);
+    } else if (stale_frame_count_ < 0xFFFFu) {
+      stale_frame_count_++;
+    }
+
+    updateUI_();
+    streamSerial_();
+    waitForNextLoopTick_(loop_start_us);
+  }
+
+ private:
+  using UI = atoms3r_ical::M5Ui;
+  using Fusion = marine_obs::AdaptiveVerticalPIIMahony<float, true, TrackerType::PLL>;
+
+  bool use_graphics_ = (SEA_STATE_UI_DEFAULT_GRAPHICS != 0);
+
+  CompassUI compass_ui_{};
+  bool compass_ui_ready_ = false;
+  UI ui_{};
+
+  ImuCalStoreNvs store_{};
+  bool have_blob_ = false;
+  ImuCalBlobV2 blob_{};
+  RuntimeCals runtime_{};
+
+#if SEA_STATE_ENABLE_WIZARD
+  int tap_count_ = 0;
+  uint32_t tap_deadline_ms_ = 0;
+#endif
+
+  uint32_t last_ui_ms_ = 0;
+  uint32_t last_serial_ms_ = 0;
+
+  Fusion fusion_{};
+
+  uint32_t mag_gate_last_ms_ = 0;
+  uint32_t last_mag_correction_ms_ = 0;
+
+  Vector3f a_cal_ = Vector3f::Zero();
+  Vector3f w_cal_ = Vector3f::Zero();
+  Vector3f m_cal_ = Vector3f::Constant(NAN);
+
+  float a_raw_norm_ = 0.0f;
+
+  float dt_ = 0.0f;
+  float roll_deg_ = 0.0f;
+  float pitch_deg_ = 0.0f;
+
+  float heading_mahony_reported_deg_ = 0.0f;
+  float heading_mag_deg_ = 0.0f;
+  float heading_deg_ = 0.0f;
+  bool heading_valid_ = false;
+
+  float heave_m_ = 0.0f;
+  float wave_envelope_m_ = 0.0f;
+  float wave_hz_ = APP_FREQ_GUESS;
+
+  float heave_raw_m_ = 0.0f;
+  float heave_baseline_m_ = 0.0f;
+  float heave_wave_raw_m_ = 0.0f;
+  float heave_wave_clean_m_ = 0.0f;
+
+  bool mag_present_ = false;
+  bool mag_field_sane_ = false;
+  bool mag_fresh_ = false;
+  bool mag_used_ = false;
+  float mag_norm_uT_ = NAN;
+
+  uint16_t stale_frame_count_ = 0;
+  bool have_last_sample_us_ = false;
+  uint32_t last_sample_us_ = 0;
+
+  bool rot_inited_ = false;
+  float rot_dpm_filt_ = 0.0f;
+  bool gyro_bias_ok_ = false;
+  Vector3f gyro_bias_ema_ = Vector3f::Zero();
+
+  AdaptiveWaveDetrender z_detrender_{};
+
+ private:
+  /*
+    MATCHES THE WORKING SIM.
+
+    Device/runner convention:
+      body NED = [North/forward, East/right, Down]
+
+    Accel/gyro mapper used by sim:
+      ned_to_zu([N,E,D]) = [E,N,-D]
+      then [-zu.x, -zu.y, zu.z] = [-E,-N,-D]
+  */
+  static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
+    const Vector3f v_zu = ned_to_zu(v_ned);
+    return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
+  }
+
+  /*
+    MATCHES THE WORKING SIM.
+
+    Do not use ned_to_mahony_body_() for magnetometer.
+
+    This Mahony mag path expects magnetic north on +X with this convention.
+  */
+  static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
+    return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
+  }
+
+  static void waitForNextLoopTick_(uint32_t loop_start_us) {
+    const uint32_t elapsed_us = micros() - loop_start_us;
+    if (elapsed_us < LOOP_PERIOD_US) {
+      delayMicroseconds(LOOP_PERIOD_US - elapsed_us);
+    }
+  }
+
+  float nominalFusionDt_() const {
+    return 1.0f / LOOP_HZ;
+  }
+
+  bool updateMagFreshGate_(bool mag_candidate_ok, uint32_t now_ms) {
+    if (!mag_candidate_ok) {
+      mag_gate_last_ms_ = 0;
+      return false;
+    }
+
+    if (mag_gate_last_ms_ == 0) {
+      mag_gate_last_ms_ = now_ms;
+      return true;
+    }
+
+    if ((now_ms - mag_gate_last_ms_) < MAG_UPDATE_SPACING_MS) {
+      return false;
+    }
+
+    mag_gate_last_ms_ = now_ms;
+    return true;
+  }
+
+  float computeFusionDtFromSampleTimestamp_(const ImuSample& s) {
+    const float dt_nom = nominalFusionDt_();
+
+    if (!have_last_sample_us_) {
+      have_last_sample_us_ = true;
+      last_sample_us_ = s.sample_us;
+      return dt_nom;
+    }
+
+    const uint32_t dt_us = s.sample_us - last_sample_us_;
+    last_sample_us_ = s.sample_us;
+
+    const float dt_s = static_cast<float>(dt_us) * 1.0e-6f;
+    if (!(dt_s > 0.0f) || !std::isfinite(dt_s)) return dt_nom;
+
+    if (dt_s > 0.05f) return dt_nom;
+
+    return dt_s;
+  }
+
+  void reloadBlobAndRuntime_() {
+    have_blob_ = store_.load(blob_);
+    if (!have_blob_) {
+      std::memset(&blob_, 0, sizeof(blob_));
+    }
+    runtime_.rebuildFromBlob(blob_);
+  }
+
+  bool runWizardFlow_(bool boot_mode) {
+#if SEA_STATE_ENABLE_WIZARD
+    (void)boot_mode;
+    clearM5UnifiedImuCalibration();
+
+    ImuCalBlobV2 saved{};
+    const bool did_save = runImuCalWizard(ui_, store_, saved);
+
+    if (did_save) {
+      blob_ = saved;
+      have_blob_ = true;
+      runtime_.rebuildFromBlob(blob_);
+      return true;
+    }
+#endif
+    return false;
+  }
+
+  void reinitImu_() {
+    if (!M5.Imu.isEnabled()) {
+      Serial.println("[BOOT] M5.Imu is not enabled");
+      ui_.fail("IMU", "M5.Imu disabled");
+      while (true) delay(100);
+    }
+
+    mag_gate_last_ms_ = 0;
+    last_mag_correction_ms_ = 0;
+
+    have_last_sample_us_ = false;
+    last_sample_us_ = 0;
+  }
+
+  void resetFusion_() {
+    Fusion::Config cfg{};
+    cfg.gravity_mps2 = APP_G_STD;
+    cfg.use_mag = true;
+
+    /*
+      Base observer: matches sim.
+    */
+    cfg.core.observer.r          = 0.150f;
+    cfg.core.observer.tau_a      = 0.68f;
+    cfg.core.observer.tau_d      = 49.0f;
+    cfg.core.observer.kb         = 2.5e-5f;
+    cfg.core.observer.lambda_b   = 3.0e-3f;
+    cfg.core.observer.bias_limit = 0.12f;
+
+    cfg.core.observer.a_f_limit = 50.0f;
+    cfg.core.observer.v_limit   = 50.0f;
+    cfg.core.observer.p_limit   = 20.0f;
+    cfg.core.observer.S_limit   = 200.0f;
+    cfg.core.observer.d_limit   = 20.0f;
+
+    /*
+      Adaptation: matches sim.
+    */
+    cfg.core.adaptation.enabled = true;
+    cfg.core.adaptation.min_confidence = 0.22f;
+
+    cfg.core.adaptation.f_disp_ref_hz    = 0.12f;
+    cfg.core.adaptation.sigma_a_ref      = 0.95f;
+    cfg.core.adaptation.input_smooth_tau = 4.5f;
+    cfg.core.adaptation.param_smooth_tau = 7.5f;
+
+    cfg.core.adaptation.r_freq_exp   = 0.28f;
+    cfg.core.adaptation.r_sigma_exp  = 0.02f;
+
+    cfg.core.adaptation.tau_a_freq_exp   = -0.40f;
+    cfg.core.adaptation.tau_a_sigma_exp  = -0.03f;
+
+    cfg.core.adaptation.tau_d_freq_exp   = -0.03f;
+    cfg.core.adaptation.tau_d_sigma_exp  = -0.01f;
+
+    cfg.core.adaptation.kb_freq_exp   = 0.02f;
+    cfg.core.adaptation.kb_sigma_exp  = 0.08f;
+
+    cfg.core.adaptation.r_min = 0.145f;
+    cfg.core.adaptation.r_max = 0.225f;
+
+    cfg.core.adaptation.tau_a_min = 0.50f;
+    cfg.core.adaptation.tau_a_max = 0.90f;
+
+    cfg.core.adaptation.tau_d_min = 44.0f;
+    cfg.core.adaptation.tau_d_max = 58.0f;
+
+    cfg.core.adaptation.kb_min = 5e-6f;
+    cfg.core.adaptation.kb_max = 6e-5f;
+
+    cfg.core.auto_schedule_from_accel_freq = true;
+    cfg.core.auto_schedule_period_s = 0.50f;
+    cfg.core.force_enable_adaptation_when_auto_schedule = true;
+    cfg.core.fallback_confidence_floor = 0.52f;
+    cfg.core.fallback_confidence_when_locked = 0.82f;
+    cfg.core.coarse_schedule_blend = 0.48f;
+    cfg.core.coarse_schedule_confidence_floor = 0.62f;
+
+    /*
+      Mahony gains: matches sim. These are intentionally stronger than the
+      original .ino gains and avoid minute-long yaw convergence.
+    */
+    cfg.mahony_twoKp = 1.70f;
+    cfg.mahony_twoKi = 0.090f;
+
+    cfg.adapt_mahony_gains = true;
+    cfg.mahony_twoKp_calm  = 1.50f;
+    cfg.mahony_twoKp_rough = 1.20f;
+    cfg.mahony_twoKi_calm  = 0.100f;
+    cfg.mahony_twoKi_rough = 0.070f;
+    cfg.mahony_sigma_ref = 0.45f;
+    cfg.mahony_norm_err_ref = 0.12f;
+    cfg.mahony_innov_ref = 0.18f;
+    cfg.mahony_gain_smooth_tau_s = 1.0f;
+    cfg.mahony_acc_trust_min = 0.65f;
+
+    fusion_.configure(cfg);
+    fusion_.reset();
+
+    rot_inited_ = false;
+    rot_dpm_filt_ = 0.0f;
+    gyro_bias_ok_ = false;
+    gyro_bias_ema_.setZero();
+
+    roll_deg_ = 0.0f;
+    pitch_deg_ = 0.0f;
+
+    heading_mahony_reported_deg_ = 0.0f;
+    heading_mag_deg_ = 0.0f;
+    heading_deg_ = 0.0f;
+    heading_valid_ = false;
+
+    mag_gate_last_ms_ = 0;
+    last_mag_correction_ms_ = 0;
+
+    mag_present_ = false;
+    mag_field_sane_ = false;
+    mag_fresh_ = false;
+    mag_used_ = false;
+    mag_norm_uT_ = NAN;
+
+    stale_frame_count_ = 0;
+    have_last_sample_us_ = false;
+    last_sample_us_ = 0;
+
+    heave_m_ = 0.0f;
+    wave_envelope_m_ = 0.0f;
+    wave_hz_ = APP_FREQ_GUESS;
+
+    heave_raw_m_ = 0.0f;
+    heave_baseline_m_ = 0.0f;
+    heave_wave_raw_m_ = 0.0f;
+    heave_wave_clean_m_ = 0.0f;
+
+    AdaptiveWaveDetrender::Config dcfg{};
+    dcfg.init_wave_freq_hz = APP_FREQ_GUESS;
+    dcfg.min_wave_freq_hz  = 0.02f;
+    dcfg.max_wave_freq_hz  = 1.20f;
+
+    dcfg.baseline_cutoff_fraction = 0.25f;
+    dcfg.min_baseline_cutoff_hz   = 0.003f;
+    dcfg.max_baseline_cutoff_hz   = 0.25f;
+
+    dcfg.freq_smooth_tau_s = 12.0f;
+    dcfg.slope_lpf_tau_s   = 0.20f;
+    dcfg.slope_rms_tau_s   = 8.0f;
+
+    dcfg.threshold_rms_fraction  = 0.15f;
+    dcfg.min_slope_threshold_abs = 0.002f;
+    dcfg.max_slope_threshold_abs = 1.0e9f;
+
+    dcfg.startup_hold_s      = 2.0f;
+    dcfg.freq_timeout_cycles = 3.0f;
+
+    dcfg.enable_wave_cleanup     = true;
+    dcfg.cleanup_cutoff_fraction = 1.0f;
+    dcfg.min_cleanup_cutoff_hz   = 0.003f;
+    dcfg.max_cleanup_cutoff_hz   = 0.50f;
+    dcfg.cleanup_stages          = 2;
+
+    dcfg.min_dt_s = 1.0e-4f;
+    dcfg.max_dt_s = 0.25f;
+    dcfg.output_abs_limit = 0.0f;
+
+    z_detrender_.setConfig(dcfg);
+    z_detrender_.reset(0.0f);
+  }
+
+#if SEA_STATE_ENABLE_WIZARD
+  void handleErase_() {
+    if (!ui_.eraseConfirm()) return;
+
+    store_.erase();
+    reloadBlobAndRuntime_();
+    reinitImu_();
+    resetFusion_();
+  }
+
+  void handleRunWizard_() {
+    const bool saved = runWizardFlow_(false);
+    if (!saved) ui_.notSavedNotice();
+
+    reinitImu_();
+    resetFusion_();
+  }
+
+  void drawHomePending_() {
+    ui_.setReadRotation();
+    ui_.title("COMPASS");
+    M5.Display.printf("Tap count: %d\n", tap_count_);
+    ui_.line("");
+    ui_.line("Wait...");
+    ui_.line("1 tap=CAL");
+    ui_.line("3 taps=ERASE");
+
+    int32_t remain = static_cast<int32_t>(tap_deadline_ms_ - millis());
+    remain = remain < 0 ? 0 : remain;
+
+    const float t01 =
+        1.0f -
+        static_cast<float>(remain) /
+        static_cast<float>(M5UiCfg::MENU_TAP_WINDOW_MS);
+
+    ui_.bar01(t01);
+  }
+#endif
+
+  void updateFilter_(const ImuSample& s) {
+    const uint32_t now_ms = millis();
+
+    dt_ = computeFusionDtFromSampleTimestamp_(s);
+    const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
+
+    a_raw_norm_ = s.a.norm();
+
+    a_cal_ = runtime_.applyAccel(s.a, tempC);
+    w_cal_ = runtime_.applyGyro(s.w, tempC);
+    m_cal_ = runtime_.applyMag(s.m);
+
+    mag_norm_uT_ = m_cal_.norm();
+
+    mag_present_ =
+        std::isfinite(mag_norm_uT_) &&
+        mag_norm_uT_ >= MAG_PRESENT_MIN_UT &&
+        mag_norm_uT_ <= MAG_PRESENT_MAX_UT;
+
+    mag_field_sane_ =
+        std::isfinite(mag_norm_uT_) &&
+        mag_norm_uT_ >= MAG_FIELD_MIN_UT &&
+        mag_norm_uT_ <= MAG_FIELD_MAX_UT;
+
+    /*
+      Diagnostic only. Do not use mag_fresh_ to gate Mahony.
+      The sim reuses latest mag every IMU step.
+    */
+    mag_fresh_ = updateMagFreshGate_(mag_present_, now_ms);
+
+#if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
+    const bool mag_usable = mag_present_ && mag_field_sane_;
+#else
+    const bool mag_usable = mag_present_;
+#endif
+
+    mag_used_ = mag_usable;
+
+    const Vector3f gyr_body_m = ned_to_mahony_body_(w_cal_);
+    const Vector3f acc_body_m = ned_to_mahony_body_(a_cal_);
+
+    if (mag_usable) {
+      const Vector3f mag_body_m = ned_to_mahony_mag_(m_cal_);
+
+      fusion_.updateIMUMag(gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
+                           acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
+                           mag_body_m.x(), mag_body_m.y(), mag_body_m.z(),
+                           dt_);
+
+      last_mag_correction_ms_ = now_ms;
+    } else {
+      fusion_.updateIMU(gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
+                        acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
+                        dt_);
+    }
+
+    const auto hs = fusion_.snapshot();
+
+    /*
+      Exactly like the working sim:
+        hs.q_world_to_body -> Quaternionf -> quat_wb_zu_to_euler_nautical()
+    */
+    const auto& q_wb = hs.q_world_to_body;
+    Quaternionf q_wb_zu(
+        float(q_wb.w),
+        float(q_wb.x),
+        float(q_wb.y),
+        float(q_wb.z)
+    );
+
+    float yaw_reported = heading_mahony_reported_deg_;
+
+    quat_wb_zu_to_euler_nautical(
+        q_wb_zu,
+        roll_deg_,
+        pitch_deg_,
+        yaw_reported
+    );
+
+    heading_mahony_reported_deg_ = wrap360_(yaw_reported);
+
+    if (mag_usable) {
+      heading_mag_deg_ =
+          magneticHeadingFromMahonyReported_(heading_mahony_reported_deg_);
+      heading_deg_ = outputHeadingFromMagnetic_(heading_mag_deg_);
+    }
+
+    heading_valid_ =
+        last_mag_correction_ms_ != 0 &&
+        (now_ms - last_mag_correction_ms_) <= HEADING_MAG_TIMEOUT_MS;
+
+    const bool still =
+        (fabsf(a_cal_.norm() - APP_G_STD) < ROT_STILL_G_TOL_FRAC * APP_G_STD) &&
+        (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
+
+    if (still) {
+      const float alpha_b = 1.0f - expf(-dt_ / ROT_BIAS_TAU_S);
+
+      if (!gyro_bias_ok_) {
+        gyro_bias_ok_ = true;
+        gyro_bias_ema_ = w_cal_;
+      } else {
+        gyro_bias_ema_ += alpha_b * (w_cal_ - gyro_bias_ema_);
+      }
+    }
+
+    Vector3f w_use = w_cal_;
+    if (gyro_bias_ok_) w_use -= gyro_bias_ema_;
+
+    /*
+      Original ROT semantics from your first .ino.
+    */
+    float rot_dpm_meas = w_use.z() * RAD_TO_DEG * 60.0f;
+    rot_dpm_meas = clampf_(rot_dpm_meas, -720.0f, 720.0f);
+
+    const float tau_rot = 1.5f;
+    const float alpha_r = 1.0f - expf(-dt_ / tau_rot);
+
+    if (!rot_inited_) {
+      rot_inited_ = true;
+      rot_dpm_filt_ = rot_dpm_meas;
+    } else {
+      rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_);
+    }
+
+    heave_m_ = fusion_.displacement();
+    heave_raw_m_ = heave_m_;
+    wave_hz_ = hs.core.accel_freq_hz;
+
+    const float omega = (wave_hz_ > 1e-6f) ? (2.0f * PI * wave_hz_) : NAN;
+    const float sigma = hs.core.accel_sigma;
+
+    if (std::isfinite(omega) && std::isfinite(sigma) && omega > 1e-6f) {
+      wave_envelope_m_ = sigma / (omega * omega);
+    } else {
+      wave_envelope_m_ = 0.0f;
+    }
+
+    const auto z_det =
+        z_detrender_.update(heave_raw_m_, dt_, wave_hz_, wave_hz_ > 1e-6f);
+
+    heave_baseline_m_ = z_det.baseline_slow;
+    heave_wave_raw_m_ = z_det.wave_raw;
+    heave_wave_clean_m_ = z_det.wave_clean;
+  }
+
+  void drawHomeStatic_() {
+    ui_.setReadRotation();
+    ui_.title("COMPASS");
+
+    M5.Display.printf("BLOB: %s\n", have_blob_ ? "YES" : "NO");
+    M5.Display.printf("A:%d G:%d M:%d\n",
+                      static_cast<int>(runtime_.acc.ok),
+                      static_cast<int>(runtime_.gyr.ok),
+                      static_cast<int>(runtime_.mag.ok));
+
+#if SEA_STATE_ENABLE_WIZARD
+    ui_.line("Tap: calibrate");
+    ui_.line("Tap x3: erase");
+#else
+    ui_.line("Wizard: DISABLED");
+#endif
+
+#if SEA_STATE_OUTPUT_TRUE_HEADING
+    M5.Display.printf("HDG TRUE decl=%+.1f\n",
+                      static_cast<double>(SEA_STATE_MAG_DECLINATION_DEG));
+#else
+    ui_.line("HDG: MAG");
+#endif
+
+    M5.Display.printf("UserOff:%+.1f\n",
+                      static_cast<double>(SEA_STATE_MAG_HEADING_USER_OFFSET_DEG));
+
+#if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
+    ui_.line("Mag gate: STRICT");
+#else
+    ui_.line("Mag gate: LOOSE");
+#endif
+
+    ui_.line("Fusion: PII SIM-CONV");
+  }
+
+  void updateUI_() {
+#if SEA_STATE_ENABLE_WIZARD
+    if (tap_count_ > 0) return;
+#endif
+
+    const uint32_t now_ms = millis();
+    if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
+    last_ui_ms_ = now_ms;
+
+    if (use_graphics_ && compass_ui_ready_) {
+      ui_.setReadRotation();
+
+      const bool tiltWarn =
+          (fabsf(roll_deg_) > 35.0f) ||
+          (fabsf(pitch_deg_) > 35.0f);
+
+      const float hdg_draw = heading_valid_ ? heading_deg_ : 0.0f;
+
+      compass_ui_.draw(hdg_draw,
+                       heading_valid_ && mag_used_,
+                       mag_norm_uT_,
+                       tiltWarn);
+      return;
+    }
+
+    ui_.setReadRotation();
+    ui_.title("COMPASS");
+
+#if SEA_STATE_OUTPUT_TRUE_HEADING
+    M5.Display.printf("HDG:%7.1f T %s\n",
+                      static_cast<double>(heading_deg_),
+                      heading_valid_ ? "deg" : "WAIT");
+    M5.Display.printf("MAG:%7.1f M\n",
+                      static_cast<double>(heading_mag_deg_));
+#else
+    M5.Display.printf("HDG:%7.1f M %s\n",
+                      static_cast<double>(heading_mag_deg_),
+                      heading_valid_ ? "deg" : "WAIT");
+#endif
+
+    M5.Display.printf("RAW:%7.1f deg\n",
+                      static_cast<double>(heading_mahony_reported_deg_));
+    M5.Display.printf("ROL:%7.1f deg\n", static_cast<double>(roll_deg_));
+    M5.Display.printf("PIT:%7.1f deg\n", static_cast<double>(pitch_deg_));
+
+    M5.Display.printf("HEV:%7.3f m\n", static_cast<double>(heave_raw_m_));
+    M5.Display.printf("ENV:%7.3f m\n", static_cast<double>(wave_envelope_m_));
+    M5.Display.printf("FRQ:%7.3f Hz\n", static_cast<double>(wave_hz_));
+
+    M5.Display.printf("MAG:%s %s %s\n",
+                      mag_present_ ? "OK " : "BAD",
+                      mag_field_sane_ ? "FIELD" : "DIST",
+                      mag_used_ ? "USE" : "SKIP");
+
+    M5.Display.printf("|m|:%7.1f uT\n", static_cast<double>(mag_norm_uT_));
+    M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n",
+                      static_cast<double>(a_raw_norm_),
+                      static_cast<double>(a_cal_.norm()));
+  }
+
+  void streamSerial_() {
+    const uint32_t now_ms = millis();
+
+#if SEA_STATE_SERIAL_NMEA
+    if (now_ms - last_serial_ms_ < NMEA_SERIAL_MS) return;
+#else
+    if (now_ms - last_serial_ms_ < DEBUG_SERIAL_MS) return;
+#endif
+
+    last_serial_ms_ = now_ms;
+
+#if SEA_STATE_SERIAL_NMEA
+
+    if (heading_valid_) {
+      nmea_hdm(SEA_STATE_NMEA_TALKER, heading_mag_deg_);
+    }
+
+    nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
+    nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
+    nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
+    nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, heading_valid_);
+
+#else
+
+  #if ARDUINO_PLOTTER
+
+    Serial.printf("HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\n",
+                  static_cast<double>(heave_raw_m_ * 100.0f),
+                  static_cast<double>(wave_envelope_m_ * 100.0f),
+                  static_cast<double>(heave_wave_clean_m_ * 100.0f));
+
+  #else
+
+    Serial.printf(
+        "hdg=%.2f raw=%.2f valid=%d roll=%.2f pitch=%.2f |m|=%.1f "
+        "magUsed=%d magField=%d magFresh=%d heave=%.3f env=%.3f frq=%.3f\n",
+        static_cast<double>(heading_mag_deg_),
+        static_cast<double>(heading_mahony_reported_deg_),
+        static_cast<int>(heading_valid_),
+        static_cast<double>(roll_deg_),
+        static_cast<double>(pitch_deg_),
+        static_cast<double>(mag_norm_uT_),
+        static_cast<int>(mag_used_),
+        static_cast<int>(mag_field_sane_),
+        static_cast<int>(mag_fresh_),
+        static_cast<double>(heave_m_),
+        static_cast<double>(wave_envelope_m_),
+        static_cast<double>(wave_hz_));
+
+  #endif
+
+#endif
+  }
 };
 
-class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {
-public:
-    using HeaveFilter = marine_obs::AdaptiveVerticalPIIMahony<float, true, TrackerType::PLL>;
+static FusionApp g_app;
 
-    FusionAdapterAdaptivePIIMahony(bool with_mag,
-                                   const Vector3f& sigma_a_init,
-                                   const Vector3f& sigma_g,
-                                   const Vector3f& sigma_m,
-                                   const Vector3f& mag_world_a)
-        : with_mag_(with_mag),
-          filter_(make_config_(with_mag, sigma_a_init, sigma_g, sigma_m, mag_world_a))
-    {
-    }
-
-    void updateMag(const Vector3f& mag_body_ned) override {
-        // Runner supplies body-frame NED.
-        // Cache latest sample and reuse it on every IMU step until replaced.
-        last_mag_body_ned_ = mag_body_ned;
-        have_mag_ = true;
-    }
-
-    void update(float dt,
-                const Vector3f& gyr_meas_ned,
-                const Vector3f& acc_meas_ned,
-                float temperature_c) override
-    {
-        (void)temperature_c;
-
-        // Runner-facing convention: body NED = (North, East, Down).
-        // AdaptiveVerticalPIIMahony expects body Z-up nautical axes.
-        const Vector3f gyr_body_m = ned_to_mahony_body_(gyr_meas_ned);
-        const Vector3f acc_body_m = ned_to_mahony_body_(acc_meas_ned);
-
-        // Reuse latest mag sample at every IMU step until a new one arrives.
-        if (with_mag_ && have_mag_) {
-            const Vector3f mag_body_m = ned_to_mahony_mag_(last_mag_body_ned_);
-
-            filter_.updateIMUMag(
-                gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
-                acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
-                mag_body_m.x(), mag_body_m.y(), mag_body_m.z(),
-                dt
-            );
-        } else {
-            filter_.updateIMU(
-                gyr_body_m.x(), gyr_body_m.y(), gyr_body_m.z(),
-                acc_body_m.x(), acc_body_m.y(), acc_body_m.z(),
-                dt
-            );
-        }
-    }
-
-    FilterSnapshot snapshot() const override {
-        FilterSnapshot s;
-
-        const auto hs = filter_.snapshot();
-        const auto& obs = hs.core.observer;
-
-        // Vertical-only translational states from the wrapper.
-        s.disp_est_zu = Vector3f(0.0f, 0.0f, filter_.displacement());
-        s.vel_est_zu  = Vector3f(0.0f, 0.0f, filter_.velocity());
-        s.acc_est_zu  = Vector3f(0.0f, 0.0f, filter_.accelFiltered());
-
-        const auto& q_wb = hs.q_world_to_body;
-        Quaternionf q_wb_zu(
-            float(q_wb.w),
-            float(q_wb.x),
-            float(q_wb.y),
-            float(q_wb.z)
-        );
-
-        float roll_sim_deg  = 0.0f;
-        float pitch_sim_deg = 0.0f;
-        float yaw_sim_deg   = 0.0f;
-
-        quat_wb_zu_to_euler_nautical(
-            q_wb_zu,
-            roll_sim_deg,
-            pitch_sim_deg,
-            yaw_sim_deg
-        );
-
-        if (!with_mag_) {
-            yaw_sim_deg = 0.0f;
-        } else {
-            // W3dSimCommon compares against magnetic-frame reported yaw:
-            //
-            //   y_ref_mag_reported = y_ref_true_reported + declination
-            //
-            // With this Mahony mag convention, the decoded quaternion yaw lands on
-            // the opposite declination side:
-            //
-            //   y_mahony_reported ≈ y_ref_true_reported - declination
-            //
-            // Convert Mahony's reported yaw to the same magnetic-frame reference:
-            //
-            //   y_mahony_fixed = y_mahony_reported + 2*declination
-            yaw_sim_deg = wrapDeg(
-                yaw_sim_deg + 2.0f * MagSim_WMM::default_declination_deg
-            );
-        }
-
-        s.euler_nautical_deg = Vector3f(
-            roll_sim_deg,
-            pitch_sim_deg,
-            wrapDeg(yaw_sim_deg)
-        );
-
-        s.acc_bias_est_ned    = Vector3f::Zero();
-        s.gyro_bias_est_ned   = Vector3f::Zero();
-        s.mag_bias_est_ned_uT = Vector3f::Zero();
-
-        const float r_active      = obs.r;
-        const float tau_a_active  = obs.tau_a;
-        const float tau_d_active  = obs.tau_d;
-        const float kb_active     = obs.kb;
-
-        const float sigma_raw     = hs.core.accel_sigma;
-        const float sigma_used    = obs.sigma_a_filt;
-
-        const float f_raw_hz      = hs.core.accel_freq_hz;
-        const float f_used_hz     = (obs.f_disp_filt_hz > 1e-6f) ? obs.f_disp_filt_hz : f_raw_hz;
-        const float omega_used    = (f_used_hz > 1e-6f) ? (2.0f * float(M_PI) * f_used_hz) : NAN;
-
-        s.tau_target     = tau_d_active;
-        s.sigma_target   = sigma_raw;
-        s.tuning_target  = kb_active;
-
-        s.tau_applied    = tau_a_active;
-        s.sigma_applied  = sigma_used;
-        s.tuning_applied = r_active;
-
-        s.freq_hz = f_used_hz;
-        s.period_sec = (f_used_hz > 1e-6f) ? (1.0f / f_used_hz) : NAN;
-        s.accel_variance = hs.core.accel_var;
-
-        if (std::isfinite(omega_used) && omega_used > 1e-6f &&
-            std::isfinite(sigma_used) && sigma_used >= 0.0f) {
-            s.displacement_scale_m = sigma_used / (omega_used * omega_used);
-            s.velocity_scale_mps   = sigma_used / omega_used;
-        } else {
-            s.displacement_scale_m = NAN;
-            s.velocity_scale_mps   = NAN;
-        }
-
-        s.direction.phase = NAN;
-        s.direction.direction_deg = NAN;
-        s.direction.direction_deg_generator_signed = NAN;
-        s.direction.uncertainty_deg = NAN;
-        s.direction.confidence = NAN;
-        s.direction.amplitude = NAN;
-        s.direction.direction_vec = Eigen::Vector2f::Zero();
-        s.direction.filtered_signal = Eigen::Vector2f::Zero();
-        s.direction.sign = UNCERTAIN;
-        s.direction.sign_num = 0;
-
-        return s;
-    }
-
-private:
-    static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
-        // body NED (North, East, Down) -> body Z-up nautical axes used by Mahony.
-        const Vector3f v_zu = ned_to_zu(v_ned);
-        return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
-    }
-
-    static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
-        // Do NOT use ned_to_mahony_body_() for magnetometer.
-        //
-        // This Mahony mag path expects magnetic north on +X with this convention.
-        // Using the accel/gyro body conversion here flips the magnetic horizontal
-        // convention and causes a large yaw error.
-        return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
-    }
-
-    static HeaveFilter::Config make_config_(bool with_mag,
-                                            const Vector3f& sigma_a_init,
-                                            const Vector3f& sigma_g,
-                                            const Vector3f& sigma_m,
-                                            const Vector3f& mag_world_a)
-    {
-        (void)sigma_a_init;
-        (void)sigma_g;
-        (void)sigma_m;
-        (void)mag_world_a;
-
-        HeaveFilter::Config cfg{};
-
-        // Base observer
-        cfg.core.observer.r          = 0.150f;
-        cfg.core.observer.tau_a      = 0.68f;
-        cfg.core.observer.tau_d      = 49.0f;
-        cfg.core.observer.kb         = 2.5e-5f;
-        cfg.core.observer.lambda_b   = 3.0e-3f;
-        cfg.core.observer.bias_limit = 0.12f;
-
-        cfg.core.observer.a_f_limit = 50.0f;
-        cfg.core.observer.v_limit   = 50.0f;
-        cfg.core.observer.p_limit   = 20.0f;
-        cfg.core.observer.S_limit   = 200.0f;
-        cfg.core.observer.d_limit   = 20.0f;
-
-        // Adaptation
-        cfg.core.adaptation.enabled = true;
-        cfg.core.adaptation.min_confidence = 0.22f;
-
-        cfg.core.adaptation.f_disp_ref_hz    = 0.12f;
-        cfg.core.adaptation.sigma_a_ref      = 0.95f;
-        cfg.core.adaptation.input_smooth_tau = 4.5f;
-        cfg.core.adaptation.param_smooth_tau = 7.5f;
-
-        cfg.core.adaptation.r_freq_exp   = 0.28f;
-        cfg.core.adaptation.r_sigma_exp  = 0.02f;
-
-        cfg.core.adaptation.tau_a_freq_exp   = -0.40f;
-        cfg.core.adaptation.tau_a_sigma_exp  = -0.03f;
-
-        cfg.core.adaptation.tau_d_freq_exp   = -0.03f;
-        cfg.core.adaptation.tau_d_sigma_exp  = -0.01f;
-
-        cfg.core.adaptation.kb_freq_exp   = 0.02f;
-        cfg.core.adaptation.kb_sigma_exp  = 0.08f;
-
-        cfg.core.adaptation.r_min = 0.145f;
-        cfg.core.adaptation.r_max = 0.225f;
-
-        cfg.core.adaptation.tau_a_min = 0.50f;
-        cfg.core.adaptation.tau_a_max = 0.90f;
-
-        cfg.core.adaptation.tau_d_min = 44.0f;
-        cfg.core.adaptation.tau_d_max = 58.0f;
-
-        cfg.core.adaptation.kb_min = 5e-6f;
-        cfg.core.adaptation.kb_max = 6e-5f;
-
-        cfg.core.auto_schedule_from_accel_freq = true;
-        cfg.core.auto_schedule_period_s = 0.50f;
-        cfg.core.force_enable_adaptation_when_auto_schedule = true;
-        cfg.core.fallback_confidence_floor = 0.52f;
-        cfg.core.fallback_confidence_when_locked = 0.82f;
-        cfg.core.coarse_schedule_blend = 0.48f;
-        cfg.core.coarse_schedule_confidence_floor = 0.62f;
-
-        cfg.core.accel_freq_tracker =
-            marine_obs::detail::make_default_tracker_config<
-                std::remove_cvref_t<decltype(cfg.core.accel_freq_tracker)>, float>();
-
-        // Mahony base gains
-        cfg.mahony_twoKp = 1.70f;
-        cfg.mahony_twoKi = 0.090f;
-        cfg.gravity_mps2 = g_std;
-        cfg.use_mag = with_mag;
-
-        // Mahony sea-state scheduling
-        cfg.adapt_mahony_gains = true;
-        cfg.mahony_twoKp_calm  = 1.50f;
-        cfg.mahony_twoKp_rough = 1.20f;
-        cfg.mahony_twoKi_calm  = 0.100f;
-        cfg.mahony_twoKi_rough = 0.070f;
-        cfg.mahony_sigma_ref = 0.45f;
-        cfg.mahony_norm_err_ref = 0.12f;
-        cfg.mahony_innov_ref = 0.18f;
-        cfg.mahony_gain_smooth_tau_s = 1.0f;
-        cfg.mahony_acc_trust_min = 0.65f;
-
-        return cfg;
-    }
-
-private:
-    bool with_mag_ = true;
-    bool have_mag_ = false;
-
-    Vector3f last_mag_body_ned_ = Vector3f::Zero();
-    HeaveFilter filter_;
-};
-
-static void print_vertical_only_summary(const W3dSimulationRunResult& result, float dt)
-{
-    constexpr float RMS_WINDOW_SEC = 60.0f;
-    const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
-    if (result.errs_z.size() <= static_cast<size_t>(N_last)) return;
-
-    const size_t start = result.errs_z.size() - N_last;
-
-    RMSReport rms_z, rms_roll, rms_pitch, rms_yaw;
-    for (size_t i = start; i < result.errs_z.size(); ++i) {
-        rms_z.add(result.errs_z[i]);
-        rms_roll.add(result.errs_roll[i]);
-        rms_pitch.add(result.errs_pitch[i]);
-        rms_yaw.add(result.errs_yaw[i]);
-    }
-
-    const float z_rms = rms_z.rms();
-    const float z_pct = 100.0f * z_rms / result.wave_params.height;
-
-    std::vector<float> vf(result.freq_hist.begin() + start, result.freq_hist.end());
-
-    std::cout << "=== Last 60 s VERTICAL-ONLY summary for " << result.output_name << " ===\n";
-    std::cout << "Z RMS (m): " << z_rms << "\n";
-    std::cout << "Z RMS (%Hs): " << z_pct << "% (Hs=" << result.wave_params.height << ")\n";
-    std::cout << "Angles RMS (deg): Roll=" << rms_roll.rms()
-              << " Pitch=" << rms_pitch.rms()
-              << " Yaw=" << rms_yaw.rms() << "\n";
-
-    std::cout << "f_used_hz: mean=" << mean_vec(vf)
-              << " median=" << median_vec(vf)
-              << " p05=" << percentile_vec(vf, 0.05)
-              << " p95=" << percentile_vec(vf, 0.95) << "\n";
-
-    std::cout << "active r=" << result.final_tuning_applied
-              << ", active tau_a=" << result.final_tau_applied
-              << ", active tau_d=" << result.final_tau_target
-              << ", active kb=" << result.final_tuning_target << "\n";
-
-    std::cout << "raw sigma_a=" << result.final_sigma_target
-              << ", used sigma_a=" << result.final_sigma_applied
-              << ", raw accel_var=" << result.final_accel_variance << "\n";
-
-    std::cout << "===========================================================\n\n";
+void setup() {
+  g_app.begin();
 }
 
-static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult& result, float dt)
-{
-    constexpr float RMS_WINDOW_SEC = 60.0f;
-    const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
-    if (result.errs_z.size() <= static_cast<size_t>(N_last)) return;
-
-    const size_t start = result.errs_z.size() - N_last;
-
-    RMSReport rms_z, rms_yaw;
-    for (size_t i = start; i < result.errs_z.size(); ++i) {
-        rms_z.add(result.errs_z[i]);
-        rms_yaw.add(result.errs_yaw[i]);
-    }
-
-    const float z_pct = 100.0f * rms_z.rms() / result.wave_params.height;
-    const float z_limit = (result.wave_type == WaveType::JONSWAP)
-        ? FAIL_LIMITS.err_limit_percent_z_jonswap
-        : FAIL_LIMITS.err_limit_percent_z_pmstokes;
-
-    if (z_pct > z_limit) {
-        std::cerr << "ERROR: Z RMS above limit (" << z_pct << "% > " << z_limit
-                  << "%). Failing.\n";
-        std::exit(EXIT_FAILURE);
-    }
-
-    if (result.with_mag && rms_yaw.rms() > FAIL_LIMITS.err_limit_yaw_deg) {
-        std::cerr << "ERROR: Yaw RMS above limit (" << rms_yaw.rms() << " deg > "
-                  << FAIL_LIMITS.err_limit_yaw_deg << " deg). Failing.\n";
-        std::exit(EXIT_FAILURE);
-    }
-}
-
-static std::optional<W3dSimulationRunResult>
-process_wave_file_for_adaptive_pii_mahony(const std::string& filename,
-                                          float dt,
-                                          bool with_mag,
-                                          bool add_noise,
-                                          float mag_odr_hz)
-{
-    const float acc_sigma = 1.51e-3f * g_std;
-    const float gyr_sigma = 0.00157f;
-    const float acc_bias_range = 5e-3f * g_std;
-    const float gyr_bias_range = 0.05f * float(std::numbers::pi_v<float> / 180.0f);
-    const float acc_bias_rw = 0.0005f;
-    const float gyr_bias_rw = 0.00001f;
-    const float mag_sigma_uT = (mag_odr_hz <= 20.0f) ? 0.30f : 0.60f;
-
-    SimulationNoiseModels noise_models;
-    noise_models.accel_noise = make_imu_noise_model(acc_sigma, acc_bias_range, acc_bias_rw, 1234);
-    noise_models.gyro_noise  = make_imu_noise_model(gyr_sigma, gyr_bias_range, gyr_bias_rw, 5678);
-    noise_models.mag_noise   = make_mag_noise_model(mag_sigma_uT, 2.0f, 0.01f,
-                                                    0.015f, 0.010f, 1.0f, 9012);
-
-    const Vector3f sigma_a_init(2.8f * acc_sigma, 2.8f * acc_sigma, 2.8f * acc_sigma);
-    const Vector3f sigma_g(2.0f * gyr_sigma, 2.0f * gyr_sigma, 2.0f * gyr_sigma);
-    const float sigma_m_uT = 1.2f * mag_sigma_uT;
-    const Vector3f sigma_m(sigma_m_uT, sigma_m_uT, sigma_m_uT);
-    const Vector3f mag_world_a = MagSim_WMM::mag_world_aero();
-
-    FusionAdapterAdaptivePIIMahony adapter(with_mag, sigma_a_init, sigma_g, sigma_m, mag_world_a);
-
-    W3dSimulationOptions options;
-    options.dt = dt;
-    options.with_mag = with_mag;
-    options.add_noise = add_noise;
-    options.mag_odr_hz = mag_odr_hz;
-    options.temperature_c = 35.0f;
-    options.output_suffix_with_mag = "_nonkalman_fusion";
-    options.output_suffix_no_mag   = "_nonkalman_fusion_nomag";
-
-    W3dSimulationRunner runner(options, std::move(noise_models), adapter);
-    return runner.run(filename);
-}
-
-int main(int argc, char* argv[])
-{
-    const float dt = 1.0f / 200.0f;
-    bool with_mag = true;
-    add_noise = true;
-
-    for (int i = 1; i < argc; i++) {
-        std::string arg = argv[i];
-        if (arg == "--nomag") {
-            with_mag = false;
-        } else if (arg == "--no-noise") {
-            add_noise = false;
-        }
-    }
-
-    std::cout << "AdaptiveVerticalPIIMahony simulation starting"
-              << " with_mag=" << (with_mag ? "true" : "false")
-              << ", noise=" << (add_noise ? "true" : "false")
-              << "\n";
-
-    const auto files = collect_wave_data_files(".");
-
-    for (const auto& fname : files) {
-        auto result = process_wave_file_for_adaptive_pii_mahony(
-            fname,
-            dt,
-            with_mag,
-            add_noise,
-            20.0f
-        );
-
-        if (!result) continue;
-
-        print_vertical_only_summary(*result, dt);
-        fail_if_vertical_quality_gates_breached(*result, dt);
-    }
-
-    return 0;
+void loop() {
+  g_app.tick();
 }
