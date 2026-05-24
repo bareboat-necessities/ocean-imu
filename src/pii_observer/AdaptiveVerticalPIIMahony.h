@@ -36,7 +36,6 @@ public:
     struct Config {
         CoreConfig core = [] {
             CoreConfig cfg{};
-
             cfg.observer.r = T(0.150);
             cfg.observer.tau_a = T(0.68);
             cfg.observer.tau_d = T(49.0);
@@ -48,7 +47,6 @@ public:
             cfg.observer.p_limit = T(20.0);
             cfg.observer.S_limit = T(200.0);
             cfg.observer.d_limit = T(20.0);
-
             cfg.adaptation.enabled = true;
             cfg.adaptation.min_confidence = T(0.22);
             cfg.adaptation.f_disp_ref_hz = T(0.12);
@@ -71,7 +69,6 @@ public:
             cfg.adaptation.tau_d_max = T(58.0);
             cfg.adaptation.kb_min = T(5e-6);
             cfg.adaptation.kb_max = T(6e-5);
-
             cfg.auto_schedule_from_accel_freq = true;
             cfg.auto_schedule_period_s = T(0.50);
             cfg.force_enable_adaptation_when_auto_schedule = true;
@@ -79,10 +76,8 @@ public:
             cfg.fallback_confidence_when_locked = T(0.82);
             cfg.coarse_schedule_blend = T(0.48);
             cfg.coarse_schedule_confidence_floor = T(0.62);
-
             cfg.accel_freq_tracker =
                 detail::make_default_tracker_config<typename Core::AccelFreqTrackerConfig, T>();
-
             return cfg;
         }();
 
@@ -133,14 +128,6 @@ public:
         T mahony_accel_norm_err = T(0);
         T mahony_accel_innov_norm = T(0);
         T mahony_accel_trust = T(1);
-
-        T displacement_scale_m = T(0);
-        T vertical_speed_envelope_mps = T(0);
-        T envelope_freq_hz = T(0);
-        T envelope_accel_var = T(0);
-        T envelope_tau_applied_s = T(0);
-        T envelope_sigma_applied = T(0);
-        bool envelope_ready = false;
     };
 
 public:
@@ -162,13 +149,8 @@ public:
 
         mahony_AHRS_init(&mahony_, mahony_twoKp_active_, mahony_twoKi_active_);
 
-        last_roll_deg_ = T(0);
-        last_pitch_deg_ = T(0);
-        last_yaw_deg_ = T(0);
-
-        ax_world_ = T(0);
-        ay_world_ = T(0);
-        az_world_ = T(0);
+        last_roll_deg_ = last_pitch_deg_ = last_yaw_deg_ = T(0);
+        ax_world_ = ay_world_ = az_world_ = T(0);
         vertical_world_accel_up_ = T(0);
 
         last_accel_norm_err_ = T(0);
@@ -193,9 +175,7 @@ public:
         last_pitch_deg_ = T(0);
         last_yaw_deg_ = T(0);
 
-        ax_world_ = T(0);
-        ay_world_ = T(0);
-        az_world_ = T(0);
+        ax_world_ = ay_world_ = az_world_ = T(0);
         vertical_world_accel_up_ = T(0);
 
         last_accel_norm_err_ = T(0);
@@ -211,7 +191,6 @@ public:
             mahony_twoKp_active_ = twoKp;
             cfg_.mahony_twoKp = twoKp;
         }
-
         if (std::isfinite(twoKi)) {
             mahony_.twoKi = twoKi;
             mahony_twoKi_active_ = twoKi;
@@ -345,13 +324,41 @@ public:
     T accelSigma() const { return core_.accelSigma(); }
     T accelFrequencyHz() const { return core_.accelFrequencyHz(); }
 
-    T displacementScale() const { return core_.displacementScale(); }
-    T verticalSpeedEnvelope() const { return core_.verticalSpeedEnvelope(); }
-    T envelopeFrequencyHz() const { return core_.envelopeFrequencyHz(); }
-    T envelopeAccelVariance() const { return core_.envelopeAccelVariance(); }
-    T envelopeTauApplied() const { return core_.envelopeTauApplied(); }
-    T envelopeSigmaApplied() const { return core_.envelopeSigmaApplied(); }
-    bool envelopeReady() const { return core_.envelopeReady(); }
+    T displacementScale(bool smoothed = true) const {
+        return core_.displacementScale(smoothed);
+    }
+
+    T verticalSpeedEnvelope(bool smoothed = true) const {
+        return core_.verticalSpeedEnvelope(smoothed);
+    }
+
+    bool envelopeReady() const {
+        return core_.envelopeReady();
+    }
+
+    T envelopeFrequencyHz() const {
+        return core_.envelopeFrequencyHz();
+    }
+
+    T envelopeAccelVariance() const {
+        return core_.envelopeAccelVariance();
+    }
+
+    T envelopeSigmaTarget() const {
+        return core_.envelopeSigmaTarget();
+    }
+
+    T envelopeSigmaApplied() const {
+        return core_.envelopeSigmaApplied();
+    }
+
+    T envelopeTauTarget() const {
+        return core_.envelopeTauTarget();
+    }
+
+    T envelopeTauApplied() const {
+        return core_.envelopeTauApplied();
+    }
 
     T mahonyTwoKpActive() const { return mahony_twoKp_active_; }
     T mahonyTwoKiActive() const { return mahony_twoKi_active_; }
@@ -361,37 +368,22 @@ public:
 
     Snapshot snapshot() const {
         Snapshot s;
-
         s.core = core_.snapshot();
-
         s.q_world_to_body = quaternionWorldToBody();
         s.q_body_to_world = quaternionBodyToWorld();
-
         s.roll_deg = last_roll_deg_;
         s.pitch_deg = last_pitch_deg_;
         s.yaw_deg = last_yaw_deg_;
-
         s.ax_world = ax_world_;
         s.ay_world = ay_world_;
         s.az_world = az_world_;
         s.vertical_world_accel_up = vertical_world_accel_up_;
-
         s.mahony_twoKp = mahony_twoKp_active_;
         s.mahony_twoKi = mahony_twoKi_active_;
         s.gravity_mps2 = gravity_mps2_;
-
         s.mahony_accel_norm_err = last_accel_norm_err_;
         s.mahony_accel_innov_norm = last_accel_innov_norm_;
         s.mahony_accel_trust = last_accel_trust_;
-
-        s.displacement_scale_m = core_.displacementScale();
-        s.vertical_speed_envelope_mps = core_.verticalSpeedEnvelope();
-        s.envelope_freq_hz = core_.envelopeFrequencyHz();
-        s.envelope_accel_var = core_.envelopeAccelVariance();
-        s.envelope_tau_applied_s = core_.envelopeTauApplied();
-        s.envelope_sigma_applied = core_.envelopeSigmaApplied();
-        s.envelope_ready = core_.envelopeReady();
-
         return s;
     }
 
@@ -411,7 +403,6 @@ private:
     static T one_pole_alpha_(T dt, T tau) {
         if (!(std::isfinite(dt) && dt > T(0))) return T(0);
         if (!(std::isfinite(tau) && tau > T(0))) return T(1);
-
         const T a = dt / (tau + dt);
         return std::clamp(a, T(0), T(1));
     }
@@ -439,18 +430,11 @@ private:
         cfg.mahony_twoKi_calm  = std::max(cfg.mahony_twoKi_calm,  T(0));
         cfg.mahony_twoKi_rough = std::max(cfg.mahony_twoKi_rough, T(0));
 
-        cfg.mahony_sigma_ref =
-            std::max(finite_or_default_(cfg.mahony_sigma_ref, T(0.18)), eps_());
-
-        cfg.mahony_norm_err_ref =
-            std::max(finite_or_default_(cfg.mahony_norm_err_ref, T(0.08)), eps_());
-
-        cfg.mahony_innov_ref =
-            std::max(finite_or_default_(cfg.mahony_innov_ref, T(0.12)), eps_());
-
+        cfg.mahony_sigma_ref = std::max(finite_or_default_(cfg.mahony_sigma_ref, T(0.18)), eps_());
+        cfg.mahony_norm_err_ref = std::max(finite_or_default_(cfg.mahony_norm_err_ref, T(0.08)), eps_());
+        cfg.mahony_innov_ref = std::max(finite_or_default_(cfg.mahony_innov_ref, T(0.12)), eps_());
         cfg.mahony_gain_smooth_tau_s =
             std::max(finite_or_default_(cfg.mahony_gain_smooth_tau_s, T(2.0)), eps_());
-
         cfg.mahony_acc_trust_min =
             clamp01_(finite_or_default_(cfg.mahony_acc_trust_min, T(0.05)));
 
@@ -494,7 +478,6 @@ private:
 
         const T a2 = ax_body * ax_body + ay_body * ay_body + az_body * az_body;
         const T inv_a = safe_rsqrt_or_zero_(a2);
-
         if (!(inv_a > T(0))) {
             return;
         }
@@ -518,7 +501,6 @@ private:
         const T ex = ay_n * gz_p - az_n * gy_p;
         const T ey = az_n * gx_p - ax_n * gz_p;
         const T ez = ax_n * gy_p - ay_n * gx_p;
-
         innov_norm = std::sqrt(ex * ex + ey * ey + ez * ez);
 
         if (!std::isfinite(norm_err)) norm_err = T(0);
@@ -534,14 +516,12 @@ private:
 
         T norm_err = T(0);
         T innov_norm = T(0);
-
         computeMahonyAccelMetrics_(ax_body, ay_body, az_body, norm_err, innov_norm);
 
         last_accel_norm_err_ = norm_err;
         last_accel_innov_norm_ = innov_norm;
 
         T sigma_a = core_.accelSigma();
-
         if (!(std::isfinite(sigma_a) && sigma_a > T(0))) {
             sigma_a = cfg_.mahony_sigma_ref;
         }
@@ -555,11 +535,9 @@ private:
         const T rho_s = T(1) / (T(1) + s * s);
 
         T trust = rho_n * rho_e * rho_s;
-
         if (!std::isfinite(trust)) {
             trust = cfg_.mahony_acc_trust_min;
         }
-
         trust = std::clamp(trust, cfg_.mahony_acc_trust_min, T(1));
         last_accel_trust_ = trust;
 
@@ -568,7 +546,6 @@ private:
             trust * (cfg_.mahony_twoKp_calm - cfg_.mahony_twoKp_rough);
 
         const T trust_i = trust * trust;
-
         const T ki_cmd =
             cfg_.mahony_twoKi_rough +
             trust_i * (cfg_.mahony_twoKi_calm - cfg_.mahony_twoKi_rough);
@@ -581,7 +558,6 @@ private:
         if (!(std::isfinite(mahony_twoKp_active_) && mahony_twoKp_active_ >= T(0))) {
             mahony_twoKp_active_ = cfg_.mahony_twoKp;
         }
-
         if (!(std::isfinite(mahony_twoKi_active_) && mahony_twoKi_active_ >= T(0))) {
             mahony_twoKi_active_ = cfg_.mahony_twoKi;
         }
