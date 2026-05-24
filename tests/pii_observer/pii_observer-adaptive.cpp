@@ -154,9 +154,9 @@ public:
         const float sigma_raw     = hs.core.accel_sigma;
         const float sigma_used    = obs.sigma_a_filt;
 
-        const float f_raw_hz      = hs.core.accel_freq_hz;
-        const float f_used_hz     = (obs.f_disp_filt_hz > 1e-6f) ? obs.f_disp_filt_hz : f_raw_hz;
-        const float omega_used    = (f_used_hz > 1e-6f) ? (2.0f * float(M_PI) * f_used_hz) : NAN;
+        const float f_raw_hz = hs.core.accel_freq_hz;
+        const float f_used_hz =
+            (obs.f_disp_filt_hz > 1e-6f) ? obs.f_disp_filt_hz : f_raw_hz;
 
         s.tau_target     = tau_d_active;
         s.sigma_target   = sigma_raw;
@@ -170,13 +170,28 @@ public:
         s.period_sec = (f_used_hz > 1e-6f) ? (1.0f / f_used_hz) : NAN;
         s.accel_variance = hs.core.accel_var;
 
-        if (std::isfinite(omega_used) && omega_used > 1e-6f &&
-            std::isfinite(sigma_used) && sigma_used >= 0.0f) {
-            s.displacement_scale_m = sigma_used / (omega_used * omega_used);
-            s.velocity_scale_mps   = sigma_used / omega_used;
-        } else {
+        /*
+          Use the core-owned OU-style envelope estimate.
+
+          This replaces the old:
+              sigma / omega^2
+          approximation, which overestimated envelope badly.
+
+          The new estimate is computed inside AdaptiveVerticalPII using:
+              - SeaStateAutoTuner-style debiased variance
+              - acceleration noise-floor subtraction
+              - OU-style tau = tau_coeff * 0.5 / f
+              - displacement scale = 0.5 * C_HS * sigma * tau^2
+        */
+        s.displacement_scale_m = filter_.displacementScale();
+        s.velocity_scale_mps   = filter_.verticalSpeedEnvelope();
+
+        if (!std::isfinite(s.displacement_scale_m)) {
             s.displacement_scale_m = NAN;
-            s.velocity_scale_mps   = NAN;
+        }
+
+        if (!std::isfinite(s.velocity_scale_mps)) {
+            s.velocity_scale_mps = NAN;
         }
 
         s.direction.phase = NAN;
@@ -280,6 +295,26 @@ private:
         cfg.core.accel_freq_tracker =
             marine_obs::detail::make_default_tracker_config<
                 std::remove_cvref_t<decltype(cfg.core.accel_freq_tracker)>, float>();
+
+        /*
+          OU-style envelope estimator lives in AdaptiveVerticalPII.
+          These are intentionally the same defaults as the header, kept here
+          explicitly so the sim documents the model being tested.
+        */
+        cfg.core.envelope.enabled = true;
+        cfg.core.envelope.acc_noise_floor_sigma = 0.12f;
+        cfg.core.envelope.tuner_K_periods = 2.0f;
+        cfg.core.envelope.tuner_tau_freq_s = 1.0f;
+        cfg.core.envelope.tuner_f_min_hz = 0.05f;
+        cfg.core.envelope.tuner_f_max_hz = 5.0f;
+        cfg.core.envelope.tuner_tau_var_min_s = 0.30f;
+        cfg.core.envelope.tuner_tau_var_max_s = 60.0f;
+        cfg.core.envelope.tau_coeff = 1.38f;
+        cfg.core.envelope.sigma_coeff = 0.90f;
+        cfg.core.envelope.adapt_tau_s = 1.80f;
+        cfg.core.envelope.tau_min_s = 0.02f;
+        cfg.core.envelope.tau_max_s = 3.00f;
+        cfg.core.envelope.sigma_max = 6.00f;
 
         // Mahony base gains
         cfg.mahony_twoKp = 1.70f;
