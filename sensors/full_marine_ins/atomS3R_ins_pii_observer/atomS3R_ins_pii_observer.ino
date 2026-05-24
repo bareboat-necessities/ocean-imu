@@ -470,6 +470,26 @@ class FusionApp {
     cfg.gravity_mps2 = APP_G_STD;
     cfg.use_mag = true;
 
+    /*
+      OU-style envelope estimator lives in AdaptiveVerticalPII.
+      These are the same defaults as the header, kept explicit here so the
+      sketch behavior is documented and not hidden in the .ino math.
+    */
+    cfg.core.envelope.enabled = true;
+    cfg.core.envelope.acc_noise_floor_sigma = 0.12f;
+    cfg.core.envelope.tuner_K_periods = 2.0f;
+    cfg.core.envelope.tuner_tau_freq_s = 1.0f;
+    cfg.core.envelope.tuner_f_min_hz = 0.05f;
+    cfg.core.envelope.tuner_f_max_hz = 5.0f;
+    cfg.core.envelope.tuner_tau_var_min_s = 0.30f;
+    cfg.core.envelope.tuner_tau_var_max_s = 60.0f;
+    cfg.core.envelope.tau_coeff = 1.38f;
+    cfg.core.envelope.sigma_coeff = 0.90f;
+    cfg.core.envelope.adapt_tau_s = 1.80f;
+    cfg.core.envelope.tau_min_s = 0.02f;
+    cfg.core.envelope.tau_max_s = 3.00f;
+    cfg.core.envelope.sigma_max = 6.00f;
+
     fusion_.configure(cfg);
     fusion_.reset();
 
@@ -693,14 +713,32 @@ class FusionApp {
 
     heave_m_ = fusion_.displacement();
     heave_raw_m_ = heave_m_;
-    wave_hz_ = hs.core.accel_freq_hz;
 
-    const float omega = (wave_hz_ > 1e-6f) ? (2.0f * PI * wave_hz_) : NAN;
-    const float sigma = hs.core.accel_sigma;
-
-    if (std::isfinite(omega) && std::isfinite(sigma) && omega > 1e-6f) {
-      wave_envelope_m_ = sigma / (omega * omega);
+    /*
+      Use core-owned envelope frequency when ready. Fall back to the raw accel
+      tracker frequency during startup.
+    */
+    const float env_freq_hz = fusion_.envelopeFrequencyHz();
+    if (fusion_.envelopeReady() &&
+        std::isfinite(env_freq_hz) &&
+        env_freq_hz > 1e-6f) {
+      wave_hz_ = env_freq_hz;
     } else {
+      wave_hz_ = hs.core.accel_freq_hz;
+    }
+
+    /*
+      Use the core-owned OU-style envelope estimate.
+
+      This replaces:
+          sigma / omega^2
+
+      That old formula was too large because it used raw accel sigma directly
+      as a displacement amplitude proxy. The core now owns the same kind of
+      variance/noise-floor/tau^2 scaling model used by the OU filter.
+    */
+    wave_envelope_m_ = fusion_.displacementScale();
+    if (!(std::isfinite(wave_envelope_m_) && wave_envelope_m_ >= 0.0f)) {
       wave_envelope_m_ = 0.0f;
     }
 
@@ -747,6 +785,7 @@ class FusionApp {
 
     ui_.line("Fusion: PII DEFAULTS");
     ui_.line("Startup: ACC+MAG seed");
+    ui_.line("ENV: core OU-style");
   }
 
   void updateUI_() {
@@ -845,7 +884,8 @@ class FusionApp {
 
     Serial.printf(
         "hdg=%.2f yaw=%.2f valid=%d seed=%d roll=%.2f pitch=%.2f |m|=%.1f "
-        "magUsed=%d magField=%d magFresh=%d heave=%.3f env=%.3f frq=%.3f\n",
+        "magUsed=%d magField=%d magFresh=%d heave=%.3f env=%.3f frq=%.3f "
+        "envReady=%d envVar=%.5f envTau=%.3f envSigma=%.3f\n",
         static_cast<double>(heading_mag_deg_),
         static_cast<double>(yaw_mahony_deg_),
         static_cast<int>(heading_valid_),
@@ -858,7 +898,11 @@ class FusionApp {
         static_cast<int>(mag_fresh_),
         static_cast<double>(heave_m_),
         static_cast<double>(wave_envelope_m_),
-        static_cast<double>(wave_hz_));
+        static_cast<double>(wave_hz_),
+        static_cast<int>(fusion_.envelopeReady()),
+        static_cast<double>(fusion_.envelopeAccelVariance()),
+        static_cast<double>(fusion_.envelopeTauApplied()),
+        static_cast<double>(fusion_.envelopeSigmaApplied()));
 
   #endif
 
