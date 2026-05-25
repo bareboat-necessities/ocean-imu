@@ -198,7 +198,7 @@ private:
         }
 
         // EWMA smoothing of direction
-        const float alpha = 0.05f;
+        const float alpha = 0.02f;
         lastStableDir = ((1.0f - alpha) * lastStableDir + alpha * newDir).normalized();
 
         direction_deg_raw = std::atan2(lastStableDir.y(), lastStableDir.x()) * (180.0f / std::numbers::pi_v<float>);
