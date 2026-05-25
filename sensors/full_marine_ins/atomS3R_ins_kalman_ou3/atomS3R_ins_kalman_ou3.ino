@@ -98,6 +98,112 @@ static inline Vector3f quatRotate_(const Eigen::Quaternionf& q, const Vector3f& 
   return v + q.w() * t + qv.cross(t);
 }
 
+static inline uint8_t nmeaChecksumBody_(const char* body) {
+  uint8_t cs = 0;
+  while (*body) {
+    cs ^= static_cast<uint8_t>(*body++);
+  }
+  return cs;
+}
+
+static inline void nmeaPrintBody_(const char* body) {
+  const uint8_t cs = nmeaChecksumBody_(body);
+  Serial.printf("$%s*%02X\r\n", body, static_cast<unsigned>(cs));
+}
+
+// Generic mapper.
+// If your WaveDirection enum does not use negative/positive numeric polarity,
+// replace only this function.
+static inline int waveDirectionSignPolarity_(WaveDirection s) {
+  if (s == UNCERTAIN) {
+    return 0;
+  }
+
+  const int raw = static_cast<int>(s);
+
+  if (raw < 0) return -1;  // opposite axis, add 180 deg
+  if (raw > 0) return +1;  // same axis
+
+  return 0;
+}
+
+static inline int waveDirectionSignRaw_(WaveDirection s) {
+  return static_cast<int>(s);
+}
+
+static inline bool signedWaveDirectionDeg_(float axis_deg,
+                                           int sign_polarity,
+                                           float& signed_deg_out)
+{
+  if (!std::isfinite(axis_deg) || sign_polarity == 0) {
+    signed_deg_out = NAN;
+    return false;
+  }
+
+  signed_deg_out = wrap360_(axis_deg + (sign_polarity < 0 ? 180.0f : 0.0f));
+  return true;
+}
+
+static inline void nmea_xdr_wave_axis_rel(const char* talker,
+                                          float wave_axis_deg,
+                                          bool valid)
+{
+  if (!valid || !std::isfinite(wave_axis_deg)) {
+    return;
+  }
+
+  wave_axis_deg = wrap360_(wave_axis_deg);
+
+  char body[96];
+  snprintf(body,
+           sizeof(body),
+           "%.2sXDR,A,%.1f,D,WAVAXIS",
+           talker,
+           static_cast<double>(wave_axis_deg));
+
+  nmeaPrintBody_(body);
+}
+
+static inline void nmea_xdr_wave_direction_rel(const char* talker,
+                                               float wave_dir_deg,
+                                               bool valid)
+{
+  if (!valid || !std::isfinite(wave_dir_deg)) {
+    return;
+  }
+
+  wave_dir_deg = wrap360_(wave_dir_deg);
+
+  char body[96];
+  snprintf(body,
+           sizeof(body),
+           "%.2sXDR,A,%.1f,D,WAVDIR",
+           talker,
+           static_cast<double>(wave_dir_deg));
+
+  nmeaPrintBody_(body);
+}
+
+static inline void nmea_txt_wave_direction_sign(const char* talker,
+                                                int raw_sign,
+                                                int polarity,
+                                                bool valid)
+{
+  if (!valid) {
+    return;
+  }
+
+  char body[96];
+  snprintf(body,
+           sizeof(body),
+           "%.2sTXT,01,01,00,WAVSGN=%d POL=%d",
+           talker,
+           raw_sign,
+           polarity);
+
+  nmeaPrintBody_(body);
+}
+
 static inline bool rollPitchHeadingFromQuatBw_(
     const Eigen::Quaternionf& q_bw,
     float& roll_deg_out,
@@ -290,6 +396,15 @@ private:
   float wave_envelope_m_  = 0.0f;
   float wave_hz_          = FREQ_GUESS;
 
+  float wave_axis_deg_       = NAN;
+  bool  wave_axis_ok_        = false;
+  WaveDirection wave_sign_   = UNCERTAIN;
+  int   wave_sign_raw_       = 0;
+  int   wave_sign_polarity_  = 0;
+  bool  wave_sign_ok_        = false;
+  float wave_dir_deg_        = NAN;
+  bool  wave_dir_ok_         = false;
+
   float heave_raw_m_        = 0.0f;
   float heave_baseline_m_   = 0.0f;
   float heave_wave_raw_m_   = 0.0f;
@@ -448,7 +563,7 @@ private:
     fcfg.sigma_m = sigma_m;
 
     fcfg.mag_delay_sec = 0.0f;
-    fcfg.mag_init_min_mag_norm   = 5.0f;
+    fcfg.mag_init_min_mag_norm = 5.0f;
 
     fcfg.enable_displacement_detrend = true;
 
@@ -489,6 +604,15 @@ private:
     heave_baseline_m_    = 0.0f;
     heave_wave_raw_m_    = 0.0f;
     heave_wave_clean_m_  = 0.0f;
+
+    wave_axis_deg_      = NAN;
+    wave_axis_ok_       = false;
+    wave_sign_          = UNCERTAIN;
+    wave_sign_raw_      = 0;
+    wave_sign_polarity_ = 0;
+    wave_sign_ok_       = false;
+    wave_dir_deg_       = NAN;
+    wave_dir_ok_        = false;
   }
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -574,7 +698,6 @@ private:
       heading_deg_ = heading_est_deg;
     }
 
-    // Diagnostic-only magnetic heading using filter tilt + current mag sample.
     heading_mag_ok_ = false;
     heading_mag_deg_ = NAN;
     if (mag_ok_) {
@@ -623,6 +746,21 @@ private:
     heave_m_         = displacement_raw_up_m.z();
     wave_envelope_m_ = fusion_.raw().getDisplacementScale();
     wave_hz_         = fusion_.raw().getFreqHz();
+
+    wave_axis_deg_ = fusion_.waveDirectionDeg();
+    wave_axis_ok_  = fusion_.isLive() && std::isfinite(wave_axis_deg_);
+
+    wave_sign_          = fusion_.raw().getDirSignState();
+    wave_sign_raw_      = waveDirectionSignRaw_(wave_sign_);
+    wave_sign_polarity_ = waveDirectionSignPolarity_(wave_sign_);
+    wave_sign_ok_       = fusion_.isLive() && (wave_sign_ != UNCERTAIN);
+
+    wave_dir_ok_ = signedWaveDirectionDeg_(
+        wave_axis_deg_,
+        wave_sign_polarity_,
+        wave_dir_deg_);
+
+    wave_dir_ok_ = wave_dir_ok_ && fusion_.isLive();
 
     heave_raw_m_        = heave_m_;
     heave_baseline_m_   = displacement_det_out.baseline_slow.z();
@@ -685,7 +823,9 @@ private:
     M5.Display.printf("ROL: %6.1f deg\n", static_cast<double>(roll_deg_));
     M5.Display.printf("PIT: %6.1f deg\n", static_cast<double>(pitch_deg_));
     M5.Display.printf("HEV: %6.3f m\n", static_cast<double>(heave_m_));
-    //M5.Display.printf("FRQ: %6.3f Hz\n", static_cast<double>(wave_hz_));
+    M5.Display.printf("WAV: %6.1f s=%d\n",
+                      static_cast<double>(wave_dir_ok_ ? wave_dir_deg_ : wave_axis_deg_),
+                      wave_sign_raw_);
     M5.Display.printf("MAG: %s %s\n", mag_ok_ ? "OK " : "BAD", mag_fresh_ ? "NEW" : "OLD");
     M5.Display.printf("|m|: %6.1f uT\n", static_cast<double>(mag_norm_uT_));
     M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n",
@@ -709,20 +849,33 @@ private:
     if (heading_valid_) {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }
+
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
+
+    nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_axis_deg_, wave_axis_ok_);
+    nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_dir_deg_, wave_dir_ok_);
+    nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER,
+                                 wave_sign_raw_,
+                                 wave_sign_polarity_,
+                                 wave_sign_ok_);
+
     //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, valid);
 #else
   #if ARDUINO_PLOTTER
     Serial.printf(
-      "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\n",
+      "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\tWavAxisDeg:%+.2f\tWavDirDeg:%+.2f\tWavSign:%d\n",
       static_cast<double>(heave_raw_m_ * 100.0f),
       static_cast<double>(wave_envelope_m_ * 100.0f),
-      static_cast<double>(heave_wave_clean_m_ * 100.0f));
+      static_cast<double>(heave_wave_clean_m_ * 100.0f),
+      static_cast<double>(wave_axis_deg_),
+      static_cast<double>(wave_dir_deg_),
+      wave_sign_raw_);
   #else
     Serial.printf(
-      "hdg_filt=%s%.2f | hdg_mag=%s%.2f | dt_imu_ms=%.2f | mag_ok=%u | mag_fresh=%u | |m|=%.2f"
+      "hdg_filt=%s%.2f | hdg_mag=%s%.2f | wav_axis=%.2f | wav_dir=%s%.2f | wav_sign=%d pol=%d"
+      " | dt_imu_ms=%.2f | mag_ok=%u | mag_fresh=%u | |m|=%.2f"
       " | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f"
       " | gyro_ned[rad/s] N=%.3f E=%.3f D=%.3f"
       " | mag_ned[uT] N=%.2f E=%.2f D=%.2f\n",
@@ -730,6 +883,11 @@ private:
       static_cast<double>(heading_deg_),
       heading_mag_ok_ ? "" : "~",
       static_cast<double>(heading_mag_deg_),
+      static_cast<double>(wave_axis_deg_),
+      wave_dir_ok_ ? "" : "~",
+      static_cast<double>(wave_dir_deg_),
+      wave_sign_raw_,
+      wave_sign_polarity_,
       static_cast<double>(dt_ * 1000.0f),
       mag_ok_ ? 1U : 0U,
       mag_fresh_ ? 1U : 0U,
