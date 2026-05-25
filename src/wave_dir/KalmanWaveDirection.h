@@ -29,7 +29,7 @@ class EIGEN_ALIGN_MAX KalmanWaveDirection {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    KalmanWaveDirection(float initialOmega, float directionReportAlpha = 0.01f)
+    KalmanWaveDirection(float initialOmega, float directionReportAlpha = 0.005f)
         : omega(initialOmega),
           phase(0.0f),
           direction_report_alpha(directionReportAlpha),
@@ -198,7 +198,7 @@ private:
         }
 
         // EWMA smoothing of direction
-        const float alpha = 0.02f;
+        const float alpha = 0.015f;
         lastStableDir = ((1.0f - alpha) * lastStableDir + alpha * newDir).normalized();
 
         direction_deg_raw = std::atan2(lastStableDir.y(), lastStableDir.x()) * (180.0f / std::numbers::pi_v<float>);
