@@ -98,19 +98,6 @@ static inline Vector3f quatRotate_(const Eigen::Quaternionf& q, const Vector3f& 
   return v + q.w() * t + qv.cross(t);
 }
 
-static inline uint8_t nmeaChecksumBody_(const char* body) {
-  uint8_t cs = 0;
-  while (*body) {
-    cs ^= static_cast<uint8_t>(*body++);
-  }
-  return cs;
-}
-
-static inline void nmeaPrintBody_(const char* body) {
-  const uint8_t cs = nmeaChecksumBody_(body);
-  Serial.printf("$%s*%02X\r\n", body, static_cast<unsigned>(cs));
-}
-
 // Generic mapper.
 // If your WaveDirection enum does not use negative/positive numeric polarity,
 // replace only this function.
@@ -142,66 +129,6 @@ static inline bool signedWaveDirectionDeg_(float axis_deg,
 
   signed_deg_out = wrap360_(axis_deg + (sign_polarity < 0 ? 180.0f : 0.0f));
   return true;
-}
-
-static inline void nmea_xdr_wave_axis_rel(const char* talker,
-                                          float wave_axis_deg,
-                                          bool valid)
-{
-  if (!valid || !std::isfinite(wave_axis_deg)) {
-    return;
-  }
-
-  wave_axis_deg = wrap360_(wave_axis_deg);
-
-  char body[96];
-  snprintf(body,
-           sizeof(body),
-           "%.2sXDR,A,%.1f,D,WAVAXIS",
-           talker,
-           static_cast<double>(wave_axis_deg));
-
-  nmeaPrintBody_(body);
-}
-
-static inline void nmea_xdr_wave_direction_rel(const char* talker,
-                                               float wave_dir_deg,
-                                               bool valid)
-{
-  if (!valid || !std::isfinite(wave_dir_deg)) {
-    return;
-  }
-
-  wave_dir_deg = wrap360_(wave_dir_deg);
-
-  char body[96];
-  snprintf(body,
-           sizeof(body),
-           "%.2sXDR,A,%.1f,D,WAVDIR",
-           talker,
-           static_cast<double>(wave_dir_deg));
-
-  nmeaPrintBody_(body);
-}
-
-static inline void nmea_txt_wave_direction_sign(const char* talker,
-                                                int raw_sign,
-                                                int polarity,
-                                                bool valid)
-{
-  if (!valid) {
-    return;
-  }
-
-  char body[96];
-  snprintf(body,
-           sizeof(body),
-           "%.2sTXT,01,01,00,WAVSGN=%d POL=%d",
-           talker,
-           raw_sign,
-           polarity);
-
-  nmeaPrintBody_(body);
 }
 
 static inline bool rollPitchHeadingFromQuatBw_(
@@ -849,17 +776,11 @@ private:
     if (heading_valid_) {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }
-
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
-
     nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_axis_deg_, wave_axis_ok_);
     nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_dir_deg_, wave_dir_ok_);
-    nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER,
-                                 wave_sign_raw_,
-                                 wave_sign_polarity_,
-                                 wave_sign_ok_);
-
+    nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER, wave_sign_raw_, wave_sign_polarity_, wave_sign_ok_);
     //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, valid);
 #else
