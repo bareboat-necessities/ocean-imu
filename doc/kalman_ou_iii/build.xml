@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="kalman_ou_iii-doc" default="prepare-assets">
+  <target name="prepare-assets">
+    <copy file="../../img/devices/AtomS3R_device.svg"
+          tofile="./AtomS3R_device.svg"
+          overwrite="true"/>
+  </target>
+</project>
