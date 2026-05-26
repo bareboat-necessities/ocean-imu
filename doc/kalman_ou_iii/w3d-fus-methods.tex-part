@@ -38,9 +38,9 @@ with $\partial \varepsilon_k/\partial a$ obtained from the standard state-sensit
 \hat\omega_k=\arccos\!\left(\tfrac{1}{2}\,\clip(a_k,-2,2)\right), \quad \hat f_k=\hat\omega_k/(2\pi).
 \]
 
-\subsection{AranovskiyFreqTracker: nonlinear adaptive observer}
+\subsection{Aranovskiy Frequency Tracker: nonlinear adaptive observer}
 
-AranovskiyFreqTracker is based on the nonlinear sinusoidal frequency observer of Bobtsov--Nikolaev--Slita--Borgul--Aranovskiy \cite{Bobtsov2013182}. In the implementation it is not a lightly damped resonator with an error-energy gradient law. It uses a filtered copy of the input, an adaptive auxiliary state, and an algebraic frequency parameter.
+Aranovskiy filter is based on the nonlinear sinusoidal frequency observer of Bobtsov--Nikolaev--Slita--Borgul--Aranovskiy \cite{Bobtsov2013182}. In the implementation it is not a lightly damped resonator with an error-energy gradient law. It uses a filtered copy of the input, an adaptive auxiliary state, and an algebraic frequency parameter.
 
 \paragraph{Method}
 The input is first passed through a first-order filter
@@ -67,18 +67,10 @@ The internal angular-frequency estimate is proportional to
 \[
 \Omega=\sqrt{|\theta|}.
 \]
-Since the code uses an internal time scaling $T_s$, the reported physical frequency is
-\[
-\hat f
-=
-\frac{\Omega}{2\pi T_s}.
-\]
 
-The implementation also reports heuristic RMS, confidence, and lock diagnostics. These are not part of the original observer; they are synthesized from signal level, frequency validity, and short-term frequency stability.
+\subsection{PLL Frequency Tracker: prefiltered I/Q phase-locked loop}
 
-\subsection{PLLFreqTracker: prefiltered I/Q phase-locked loop}
-
-PLLFreqTracker is a control-style narrowband tracker. It removes slow drift and high-frequency noise, demodulates the signal against an internal oscillator, and adjusts oscillator frequency with a bounded PI loop.
+PLL filter is a control-style narrowband tracker. It removes slow drift and high-frequency noise, demodulates the signal against an internal oscillator, and adjusts oscillator frequency with a bounded PI loop.
 
 \paragraph{Method}
 The input is converted to a broad band-passed signal $b_k$ using a high-pass stage followed by a low-pass stage. The tracker then demodulates against the internal phase $\phi_k$:
@@ -119,8 +111,7 @@ Here $B_L$ is the configured loop bandwidth, $\zeta$ is the loop damping, and $G
 The reported frequency is
 \[
 \hat f_k=\frac{\omega_k}{2\pi},
-\]
-followed by output smoothing and clamping. The implementation also includes lock and confidence logic based on RMS and I/Q coherence, plus an optional hysteretic coarse period estimate used only to help acquisition.
+\]. 
 
 \iffalse
 \subsection{Zero-crossing baseline with hysteresis}
