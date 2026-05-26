@@ -49,12 +49,13 @@ These models are used as measurement predictions for position and velocity updat
 \qquad
 \bm z_v = \hat{\bm v} + \hat{\Rot}_{bw}(\bm\omega^{\mathcal{B}}\times \bm r_{\text{gps}}^{\mathcal{B}}) + \bm n_v.
 \end{equation}
-Linearizing the lever-arm term gives the attitude Jacobians
+For the left-multiplicative world-to-body attitude convention used in this paper,
+linearizing the lever-arm term gives the attitude Jacobians
 \begin{align}
 \frac{\partial}{\partial\,\delta\bm\theta}\!\left(\hat{\Rot}_{bw}\bm r_{\text{gps}}^{\mathcal{B}}\right)
-&\approx \Skew{\hat{\Rot}_{bw}\bm r_{\text{gps}}^{\mathcal{B}}}, \label{eq:dRr_dth}\\
+&\approx \hat{\Rot}_{bw}\Skew{\bm r_{\text{gps}}^{\mathcal{B}}}, \label{eq:dRr_dth}\\
 \frac{\partial}{\partial\,\delta\bm\theta}\!\left(\hat{\Rot}_{bw}\bm u\right)
-&\approx \Skew{\hat{\Rot}_{bw}\bm u}, \qquad
+&\approx \hat{\Rot}_{bw}\Skew{\bm u}, \qquad
 \bm u \triangleq \bm\omega^{\mathcal{B}}\times\bm r_{\text{gps}}^{\mathcal{B}}.
 \label{eq:dRu_dth}
 \end{align}
