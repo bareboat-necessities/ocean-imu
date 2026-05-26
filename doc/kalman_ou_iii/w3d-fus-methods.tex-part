@@ -2,18 +2,22 @@
 \section{Frequency Tracking from Vertical Specific Force}
 \label{sec:freq-tracking}
 
-To estimate parameters adaptively we need a stable, real-time estimate of the dominant frequency of acceleration from the IMU. Using the vertical specific force $a_z(t)$, we normalize by gravity to form a dimensionless input $u(t)$ that drives one of three trackers. Each tracker outputs a raw frequency, which is then clamped and smoothed to produce a reliable $\bar f_k$ for downstream adaptation and direction estimation.
+To estimate parameters adaptively we need a stable, real-time estimate of the dominant frequency of acceleration from the IMU. Using the vertical specific force or vertical inertial acceleration, we form a scalar input $u(t)$ that drives one of three trackers. Each tracker outputs a raw frequency, which is then clamped and smoothed to produce a reliable $\bar f_k$ for downstream adaptation and direction estimation.
 
 \paragraph{Signal}
-Track frequency from the vertical specific force $a_z(t)$ (IMU; body), normalized by $g$:
+Track frequency from a vertical acceleration-like signal. For normalized operation we use
 \[
 u(t)=\frac{a_z(t)}{g}.
 \]
-Let $\omega=2\pi f$ and $\phi(t)=\int_0^t \omega(\tau)\,d\tau$.
+Some trackers may instead use the up-positive inertial acceleration directly, with their RMS thresholds interpreted in physical acceleration units. Let
+\[
+\omega=2\pi f,\qquad
+\phi(t)=\int_0^t \omega(\tau)\,d\tau .
+\]
 
 \subsection{\textsc{KalmANFFreqTracker}: Kalman-updated adaptive notch}
 
-KalmANFFreqTracker filter \cite{Ali2023DAFx} models the signal with a second-order notch parameterized by $a=2\cos\omega$. It treats $a$ as a (slowly varying) state and updates it via a scalar Kalman step driven by the instantaneous prediction error.
+KalmANFFreqTracker filter \cite{Ali2023DAFx} models the signal with a second-order notch parameterized by $a=2\cos\omega$. It treats $a$ as a slowly varying state and updates it via a scalar Kalman step driven by the instantaneous prediction error.
 
 \paragraph{Method}
 Embed the notch with parameter $a\in(-2,2)$:
@@ -34,32 +38,89 @@ with $\partial \varepsilon_k/\partial a$ obtained from the standard state-sensit
 \hat\omega_k=\arccos\!\left(\tfrac{1}{2}\,\clip(a_k,-2,2)\right), \quad \hat f_k=\hat\omega_k/(2\pi).
 \]
 
+\subsection{AranovskiyFreqTracker: nonlinear adaptive observer}
 
-\subsection{Aranovskiy-type adaptive resonator}
-
-Aranovskiy filter \cite{Bobtsov2013182} drives a lightly damped virtual resonator by $u(t)$ and adjusts its natural frequency so its output matches the input. If the resonator frequency equals the signal's, the error energy is minimized.
+AranovskiyFreqTracker is based on the nonlinear sinusoidal frequency observer of Bobtsov--Nikolaev--Slita--Borgul--Aranovskiy \cite{Bobtsov2013182}. In the implementation it is not a lightly damped resonator with an error-energy gradient law. It uses a filtered copy of the input, an adaptive auxiliary state, and an algebraic frequency parameter.
 
 \paragraph{Method}
-Internal lightly damped resonator:
-\begin{align}
-\ddot\xi + 2\zeta\,\omega\,\dot\xi + \omega^2 \xi &= u, \\
-e &= u - \xi, \qquad y=\dot\xi .
-\end{align}
-Frequency adaptation (gradient/energy-based) with projection $\proj_{[\omega_{\min},\omega_{\max}]}$:
-\begin{align}
-\dot\omega &= \gamma_\omega\, e\, y, \qquad \omega \leftarrow \proj_{[\omega_{\min},\omega_{\max}]}(\omega).
-\end{align}
-Discrete-time (sample $k$ at $\Delta t$):
+The input is first passed through a first-order filter
 \[
-\fitcol{
-\omega_{k+1}
- = \proj_{[\omega_{\min},\,\omega_{\max}]}
-   \!\left(\omega_k + \gamma_{\omega}\, e_k\, y_k\, \Delta t\right),
-\qquad
-\omega_k \in [\omega_{\min},\,\omega_{\max}].
-}
+\dot x_1=-a x_1+b u .
+\]
+The nonlinear observer forms
+\[
+\varphi
+=
+\dot x_1(bu+a x_1)+x_1^2\theta ,
+\]
+and adapts an auxiliary state
+\[
+\dot\sigma=-k\varphi ,
+\]
+with practical signal-energy scaling and clamping in the implementation.
+
+The frequency-related parameter is updated algebraically:
+\[
+\theta = k b x_1 u+\sigma .
+\]
+The internal angular-frequency estimate is proportional to
+\[
+\Omega=\sqrt{|\theta|}.
+\]
+Since the code uses an internal time scaling $T_s$, the reported physical frequency is
+\[
+\hat f
+=
+\frac{\Omega}{2\pi T_s}.
 \]
 
+The implementation also reports heuristic RMS, confidence, and lock diagnostics. These are not part of the original observer; they are synthesized from signal level, frequency validity, and short-term frequency stability.
+
+\subsection{PLLFreqTracker: prefiltered I/Q phase-locked loop}
+
+PLLFreqTracker is a control-style narrowband tracker. It removes slow drift and high-frequency noise, demodulates the signal against an internal oscillator, and adjusts oscillator frequency with a bounded PI loop.
+
+\paragraph{Method}
+The input is converted to a broad band-passed signal $b_k$ using a high-pass stage followed by a low-pass stage. The tracker then demodulates against the internal phase $\phi_k$:
+\[
+I_k \leftarrow \LPF\{b_k\cos\phi_k\},\qquad
+Q_k \leftarrow \LPF\{-b_k\sin\phi_k\}.
+\]
+The phase detector is
+\[
+e_{\phi,k}=\atan2(Q_k,I_k).
+\]
+
+A type-II PLL-style loop updates oscillator frequency and phase:
+\[
+\omega_{k+1}
+=
+\clip_{[\omega_{\min},\omega_{\max}]}
+\left(
+\omega_k + K_iG_ke_{\phi,k}\Delta t
+\right),
+\]
+\[
+\phi_{k+1}
+=
+\wrap_{(-\pi,\pi]}
+\left(
+\phi_k + (\omega_{k+1}+K_pG_ke_{\phi,k})\Delta t
+\right),
+\]
+where
+\[
+K_p=2\zeta\omega_n,\qquad
+K_i=\omega_n^2,\qquad
+\omega_n=2\pi B_L .
+\]
+Here $B_L$ is the configured loop bandwidth, $\zeta$ is the loop damping, and $G_k$ reduces adaptation when confidence is poor.
+
+The reported frequency is
+\[
+\hat f_k=\frac{\omega_k}{2\pi},
+\]
+followed by output smoothing and clamping. The implementation also includes lock and confidence logic based on RMS and I/Q coherence, plus an optional hysteretic coarse period estimate used only to help acquisition.
 
 \iffalse
 \subsection{Zero-crossing baseline with hysteresis}
