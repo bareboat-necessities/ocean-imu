@@ -231,7 +231,7 @@ implemented in modern idiomatic C++ with the embedded-friendly Eigen linear alge
 \label{sec:real-hardware-platform}
 
 \begin{figure}[!t]\centering
-  \includegraphics[width=\columnwidth,keepaspectratio]{AtomS3R_device.svg}
+  \includesvg[width=\columnwidth]{AtomS3R_device}
   \caption{Real-hardware validation setup for the proposed article method, run and tested on the M5Stack AtomS3R device based on the ESP32-S3 MCU.}
   \label{fig:atoms3r_device}
 \end{figure}
