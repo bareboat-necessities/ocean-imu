@@ -83,7 +83,5 @@ $\|\bm r_{\text{gps}}\|$.
 \subsubsection{Timestamp alignment}
 \label{sec:gps_time_short}
 
-GNSS updates are asynchronous (typically 1--10~Hz) relative to the IMU. For best results, apply each
-GNSS update at its measurement timestamp: propagate the state to the GNSS time using buffered IMU
-samples, perform the GNSS measurement update, then continue propagation to ``now''.
-If exact alignment is unavailable, inflate $\bm R_p,\bm R_v$ to absorb timing uncertainty.
+GNSS updates are asynchronous (typically 1--10~Hz) relative to the IMU.
+The exact timestamp alignment is usually unavailable, for best results inflate $\bm R_p,\bm R_v$ to absorb timing uncertainty.
