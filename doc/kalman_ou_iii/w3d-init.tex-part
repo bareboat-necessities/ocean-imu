@@ -1,104 +1,64 @@
+% =======================================================
 \section{Initialization and Reference Alignment}
 \label{sec:init_alignment}
 
-This implementation uses a staged startup that prioritizes a robust
-tilt (roll/pitch) lock from the accelerometer, delays magnetometer yaw
-corrections until a reliable magnetic reference is established, and
-keeps the extended linear navigation block disabled until the online
-tuner has reached a trusted state.
+The startup procedure is designed to avoid using unobservable or poorly
+conditioned states too early.  At boot, the filter first establishes a reliable
+gravity-based tilt frame, then lets the frequency/tuning logic collect enough
+data, and only later enables the full linear wave-displacement block and
+magnetometer yaw correction.
 
-\subsection{Boot Sequence and Tilt-Only Attitude Initialization}
-On the first IMU sample, the filter initializes attitude from the
-accelerometer only (yaw-free). In the world NED convention used here,
-$\vct{e}_z = [0,\,0,\,1]^\top$ points \emph{down}. Let $\vct{a}_b$ denote
-the measured accelerometer vector in the body frame.
-A normalized ``down'' direction in the body frame is formed as
+\subsection{Tilt-First Startup}
+
+Before magnetic north is known, yaw is arbitrary.  Therefore the initial
+attitude is obtained from the accelerometer only: the measured body-frame
+gravity direction is aligned with world down in the NED frame.  This fixes roll
+and pitch but intentionally leaves yaw unconstrained,
 \[
-\vct{d}_b \;\triangleq\; -\frac{\vct{a}_b}{\|\vct{a}_b\|},
-\qquad
-\vct{d}_w \;\triangleq\; \vct{e}_z.
+\Rot(q_{bw,0})
+\left(
+-\frac{\vct{a}_b}{\|\vct{a}_b\|}
+\right)
+=
+\begin{bmatrix}0\\0\\1\end{bmatrix}.
 \]
-The initial quaternion $q_{bw,0}$ (body $\to$ world) is chosen as the
-shortest-arc rotation mapping $\vct{d}_b \mapsto \vct{d}_w$, i.e.,
-\[
-\Rot(q_{bw,0})\,\vct{d}_b = \vct{d}_w,
-\]
-which fixes roll and pitch while leaving yaw unconstrained.
+A gravity-only bootstrap observer and slow acceleration gate are used so that
+this tilt lock is based on a stable estimate of down rather than on a single
+noisy or wave-contaminated sample.
 
-\subsection{Startup Stages and Warm-Up Policy}
-After tilt initialization, the system enters a staged mode schedule:
-\begin{enumerate}[label=(\roman*), leftmargin=*]
-  \item \textbf{Cold:} entered at boot. The
-  extended linear block is disabled (attitude/bias MEKF only). Accelerometer-bias 
-  learning is frozen and the accelerometer measurement
-  noise is inflated to a warm-up value.
-  \item \textbf{TunerWarm:} the frequency tracker and variance estimator
-  collect statistics. Adaptation targets $(\tau,\sigma_a,R_S)$ are computed,
-  but the filter does not yet rely on the full linear block.
-  \item \textbf{Live:} once frequency and variance estimates are deemed
-  ready, the linear block is enabled and the OU/pseudo-measurement tuning
-  is applied periodically.
-\end{enumerate}
+\subsection{Staged Enabling}
 
-\subsection{Magnetometer Reference Alignment}
-Magnetometer updates are delayed by a fixed startup time
-to avoid injecting yaw corrections during
-initial transients. When magnetometer data become available, the filter first
-establishes a \emph{world-frame magnetic reference} $\vct{B}_w$ in one of two ways:
-\begin{itemize}[leftmargin=*]
-  \item \textbf{Fixed reference (optional):} the caller may provide a known
-  $\vct{B}_w$ (e.g., from a geomagnetic model).
-  \item \textbf{Learned-from-measurement reference:} use the current
-  tilt-only attitude (roll/pitch, yaw $=0$) to rotate the measured magnetic
-  field $\vct{m}_b$ into the world frame,
-  \[
-  q_{\text{tilt}} \;\triangleq\; q_y(\theta)\,\otimes\,q_x(\phi),\qquad
-  \vct{B}_w \;\leftarrow\; \Rot(q_{\text{tilt}})\,\vct{m}_b,
-  \]
-  where $(\phi,\theta)$ are the current roll and pitch implied by the MEKF
-  quaternion, and $q_x(\cdot),q_y(\cdot)$ are axis-angle quaternions.
-\end{itemize}
-Only after $\vct{B}_w$ is set does the filter apply magnetometer measurement
-updates (yaw correction) using the internal model $\hat{\vct{m}}_b =
-\Rot_{wb}\,\vct{B}_w$.
+After tilt initialization the system proceeds conservatively through startup
+stages.  In the early stage, the MEKF attitude update runs, but the extended
+linear block is disabled and accelerometer-bias learning may be frozen.  During
+the warm-up stage, the frequency tracker and sea-state tuner collect statistics
+for the dominant period, acceleration variance, and the corresponding
+$(\tau,\sigma_a,R_S)$ tuning targets.  Once these estimates are ready, the
+filter enters the live stage, enables the linear block if allowed by
+configuration, and applies the online OU and pseudo-measurement tuning.
 
-\iffalse
-\paragraph{Quality gating.}
-A heel-safe magnetometer initializer can be used to accept only ``good''
-samples for reference establishment. It gates on (i) $\|\vct{a}_b\|\approx g$,
-(ii) stability of the \emph{direction} of $\vct{a}_b$ via an EMA on the unit
-vector, (iii) optional low angular-rate (gyro) condition, and (iv) stability of
-the magnetometer norm via an EMA ratio test. This improves robustness when the
-platform is heeled or gently moving.
-\fi
+The intent is to prevent the displacement states, acceleration bias, and drift
+regularization from being driven by transient startup data.
 
-\iffalse
-\subsection{Bias Warm-Up and Unlock Conditions}
-To avoid corrupting accelerometer-bias estimates before yaw is stabilized, the
-implementation optionally freezes accelerometer-bias updates during Cold/TunerWarm
-and inflates the accelerometer measurement noise $\mat{R}_{a}$ to a warm-up level.
-Bias learning is only enabled once:
-\begin{enumerate}[label=(\roman*), leftmargin=*]
-  \item the system is in \textbf{Live} stage,
-  \item a minimum number of magnetometer updates have been applied,
-  \item and an additional small time guard after the first mag update has elapsed.
-\end{enumerate}
-At that point the nominal $\mat{R}_{a}$ is restored and accelerometer-bias updates
-are enabled.
-\fi
+\subsection{Magnetic Reference and Yaw Lock}
 
-\iffalse
-\subsection{Automatic Tilt Reset and Re-Initialization}
-During operation, the filter continuously monitors the tilt angle between the
-estimated body-down axis and world-down. If the tilt exceeds a safety threshold
-(default $\approx 65^\circ$), the system performs a recovery:
-\begin{itemize}[leftmargin=*]
-  \item re-initialize attitude from the accelerometer (tilt-only),
-  \item re-enter the \textbf{Cold} stage (linear block disabled),
-  \item reset frequency tracking, smoothers, tuner statistics, and direction state,
-  \item and postpone any adaptation burst by resetting the adaptation timer.
-\end{itemize}
-This mechanism makes the overall system resilient to large disturbances (e.g.,
-handling events or abrupt heel changes) by reverting to a conservative, observable
-tilt lock before resuming full fusion.
-\fi
+Magnetometer updates are also delayed.  The filter first waits for the startup
+delay and for a sufficiently stable gravity/tilt condition.  Magnetometer
+samples are then accumulated in a gravity-only tilt frame to estimate the local
+magnetic field direction.  The horizontal component of the averaged magnetic
+field defines the startup yaw gauge.  A one-time yaw correction removes this
+arbitrary gauge, and the corresponding world magnetic reference is stored for
+subsequent MEKF magnetometer updates.
+
+Thus the magnetometer is not used as an immediate raw yaw correction at boot.
+It is first used to establish a consistent magnetic reference, after which
+normal yaw updates can begin.  If configured, the linear block may also be held
+off until this magnetic north lock has been obtained.
+
+\subsection{Recovery from Bad Tilt}
+
+During operation the implementation monitors excessive tilt error.  If a large
+tilt inconsistency persists, the filter reinitializes from accelerometer tilt
+and returns to a conservative startup state.  In live mode, yaw can be preserved
+during this recovery so that a transient tilt failure does not unnecessarily
+discard the established magnetic heading.
