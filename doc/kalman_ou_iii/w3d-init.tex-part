@@ -52,10 +52,3 @@ magnetic field direction.
 Thus the magnetometer is first used to establish a consistent magnetic reference, after which
 normal yaw updates can begin.
 
-\subsection{Recovery from Bad Tilt}
-
-During operation the implementation monitors excessive tilt error.  If a large
-tilt inconsistency persists, the filter reinitializes from accelerometer tilt
-and returns to a conservative startup state.  In live mode, yaw can be preserved
-during this recovery so that a transient tilt failure does not unnecessarily
-discard the established magnetic heading.
