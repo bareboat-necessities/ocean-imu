@@ -40,7 +40,7 @@ with $\partial \varepsilon_k/\partial a$ obtained from the standard state-sensit
 
 \subsection{Aranovskiy Frequency Tracker: nonlinear adaptive observer}
 
-Aranovskiy filter is based on the nonlinear sinusoidal frequency observer of Bobtsov--Nikolaev--Slita--Borgul--Aranovskiy \cite{Bobtsov2013182}. In the implementation it is not a lightly damped resonator with an error-energy gradient law. It uses a filtered copy of the input, an adaptive auxiliary state, and an algebraic frequency parameter.
+Aranovskiy filter is based on the nonlinear sinusoidal frequency observer of Bobtsov--Nikolaev--Slita--Borgul--Aranovskiy \cite{Bobtsov2013182}. It uses a filtered copy of the input, an adaptive auxiliary state, and an algebraic frequency parameter.
 
 \paragraph{Method}
 The input is first passed through a first-order filter
@@ -55,9 +55,8 @@ The nonlinear observer forms
 \]
 and adapts an auxiliary state
 \[
-\dot\sigma=-k\varphi ,
-\]
-with practical signal-energy scaling and clamping in the implementation.
+\dot\sigma=-k\varphi
+\].
 
 The frequency-related parameter is updated algebraically:
 \[
