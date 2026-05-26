@@ -230,16 +230,61 @@ implemented in modern idiomatic C++ with the embedded-friendly Eigen linear alge
 \section{Real-Hardware Validation Platform}
 \label{sec:real-hardware-platform}
 
-Real-hardware validation setup for the proposed article method, run and tested on the M5Stack AtomS3R device based on the ESP32-S3 MCU.
+To verify that the proposed estimator is suitable for embedded marine
+deployment, the implementation was also run on real hardware using an
+M5Stack AtomS3R development module based on the ESP32-S3 microcontroller.
+This platform provides a compact, low-power target representative of the
+resource-constrained devices for which the filter is intended.
+
+The purpose of the hardware validation is not to replace the controlled
+simulation study of Sec.~\ref{sec:sim-and-eval}, where ground-truth wave
+kinematics are available, but to confirm the practical real-time properties
+of the implementation: stable execution on an MCU-class processor, fixed-rate
+IMU sampling, bounded memory use, sensor calibration handling, and end-to-end
+operation of the attitude, acceleration, frequency-tracking, and wave-state
+estimation pipeline.
 
 \begin{figure}[!t]\centering
   \includesvg[
     width=0.25\columnwidth,
     inkscapelatex=false
   ]{AtomS3R_device}
-  \caption{M5Stack AtomS3R device based on the ESP32-S3 MCU.}
+  \caption{M5Stack AtomS3R device based on the ESP32-S3 MCU, used as the
+  embedded real-hardware validation target.}
   \label{fig:atoms3r_device}
 \end{figure}
+
+The firmware executes the full prediction and correction loop on-device.
+At each IMU sample the gyroscope is used for quaternion propagation, the
+accelerometer update is applied as a rank--3 EKF correction, and the adaptive
+frequency and sea-state tuning logic is updated from the vertical
+acceleration-like signal. When magnetometer data are available, yaw correction
+is applied using the delayed magnetic-reference alignment procedure described
+in Sec.~\ref{sec:init_alignment}. The same left-multiplicative quaternion
+convention and measurement Jacobians used in the mathematical derivation are
+therefore exercised on the embedded target.
+
+Before testing, the device is calibrated for accelerometer bias, gyroscope
+bias, axis alignment, and magnetometer hard-/soft-iron effects. The calibrated
+sensor triads are transformed into the body-frame convention used by the
+filter. For tests on a tilted or heeled mounting, the configured steady
+wind-heel correction maps measurements into the virtual un-heeled frame before
+the EKF update.
+
+During hardware runs, the firmware logs raw IMU samples, calibrated sensor
+triads, quaternion attitude, estimated displacement and velocity, dominant
+frequency, adaptive OU parameters, pseudo-measurement noise levels, and
+innovation statistics. These logs allow offline checks of timing stability,
+startup behavior, residual consistency, and estimator robustness under real
+sensor noise and bias drift.
+
+The real-hardware tests therefore validate three implementation-level claims:
+(i) the proposed OU-driven Q-MEKF can execute in real time on an ESP32-S3-class
+microcontroller, (ii) the staged initialization and calibration pipeline is
+compatible with real MEMS IMU data, and (iii) the adaptive tuning logic remains
+numerically stable outside the idealized simulation environment. Quantitative
+wave-kinematics accuracy is evaluated separately in simulation, where exact
+reference displacement, velocity, acceleration, and attitude are available.
 
 \section{Conclusion and Future Work}
 \label{sec:future-work}
