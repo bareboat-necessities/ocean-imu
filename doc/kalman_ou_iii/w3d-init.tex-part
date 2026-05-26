@@ -3,9 +3,7 @@
 \label{sec:init_alignment}
 
 The startup procedure is designed to avoid using unobservable or poorly conditioned states too early, consistent with practical marine IMU initialization guidance \cite{Kuechler2011_HeaveAcceleration,Auestad2013_HeaveStrapdownIMU}.
-
-The startup procedure is designed to avoid using unobservable or poorly
-conditioned states too early.  At boot, the filter first establishes a reliable
+At boot, the filter first establishes a reliable
 gravity-based tilt frame, then lets the frequency/tuning logic collect enough
 data, and only later enables the full linear wave-displacement block and
 magnetometer yaw correction.
@@ -44,11 +42,11 @@ regularization from being driven by transient startup data.
 
 \subsection{Magnetic Reference and Yaw Lock}
 
-Magnetometer updates are also delayed.  The filter first waits for the startup
-delay and for a sufficiently stable gravity/tilt condition.  Magnetometer
-samples are then accumulated in a gravity-only tilt frame to estimate the local
+Magnetometer updates are also delayed.
+The filter first waits for the startup delay and for a sufficiently stable gravity/tilt condition.
+Magnetometer samples are then accumulated in a gravity-only tilt frame to estimate the local
 magnetic field direction.
 
-Thus the magnetometer is first used to establish a consistent magnetic reference, after which
+Thus, the magnetometer is first used to establish a consistent magnetic reference, after which
 normal yaw updates can begin.
 
