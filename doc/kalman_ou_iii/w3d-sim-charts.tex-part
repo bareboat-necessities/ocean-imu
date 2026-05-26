@@ -97,6 +97,9 @@ Magnetometer samples are produced at an independent ODR of $100$~Hz and delivere
 between magnetometer ticks. The filter is stepped once per IMU sample: each step performs a time update
 driven by $\vct{\omega}_{\text{meas}}$ and a rank--3 accelerometer update driven by $\vct{f}_{\text{meas}}$,
 while magnetometer updates are injected only on magnetometer ticks.
+For all simulation results reported in Table~\ref{tab:sim_results_rms_dir_basic} and
+Figs.~\ref{fig:w3d_jonswap_medium}--\ref{fig:w3d_jonswap_medium_dir}, the KalmANF adaptive-notch tracker
+was used as the frequency-tracking module.
 
 \paragraph{Noise, residual bias, and drifting bias (condition under test: realistic IMU errors)}
 Optionally, each sensor channel is corrupted by a composite error model
