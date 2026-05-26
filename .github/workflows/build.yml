@@ -72,6 +72,9 @@ jobs:
             echo ">> Debug: TeX config patched, now checking PlantUML installation"
             plantuml -version || true
             java -version || true
+            if [ "${{ matrix.dir }}" = "kalman_ou_iii" ]; then
+              cp -v ${{ github.workspace }}/img/devices/AtomS3R_device.svg ${{ github.workspace }}/doc/${{ matrix.dir }}/AtomS3R_device.svg
+            fi
           work_in_root_file_dir: true
           working_directory: doc/${{ matrix.dir }}
           latexmk_use_lualatex: true
