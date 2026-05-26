@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 1280" width="700" height="1280">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f2eee6"/>
+      <stop offset="55%" stop-color="#d9d2c7"/>
+      <stop offset="100%" stop-color="#b9b0a3"/>
+    </linearGradient>
+
+    <linearGradient id="panelGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ebe5da"/>
+      <stop offset="100%" stop-color="#cbc3b6"/>
+    </linearGradient>
+
+    <linearGradient id="screenGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#04122b"/>
+      <stop offset="60%" stop-color="#082a63"/>
+      <stop offset="100%" stop-color="#020816"/>
+    </linearGradient>
+
+    <linearGradient id="labelGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4f4a46"/>
+      <stop offset="100%" stop-color="#3e3a37"/>
+    </linearGradient>
+
+    <line id="majorTick" x1="350" y1="648" x2="350" y2="666" stroke="#93f5ff" stroke-width="4" stroke-linecap="round"/>
+    <line id="minorTick" x1="350" y1="652" x2="350" y2="662" stroke="#93f5ff" stroke-width="2" stroke-linecap="round"/>
+  </defs>
+
+  <!-- Device body -->
+  <g stroke-linejoin="round" stroke-linecap="round">
+    <rect x="95" y="45" width="510" height="1110" rx="64" fill="url(#bodyGrad)" stroke="#7b746b" stroke-width="5"/>
+    <path d="M145 45 L555 45 Q577 45 586 68 L592 115 L108 115 L114 68 Q123 45 145 45 Z"
+          fill="#cfc8ba" stroke="#80786e" stroke-width="4"/>
+
+    <!-- side slots -->
+    <g fill="#8c8477" opacity="0.28">
+      <rect x="102" y="160" width="18" height="42" rx="6"/>
+      <rect x="102" y="225" width="18" height="42" rx="6"/>
+      <rect x="102" y="290" width="18" height="42" rx="6"/>
+      <rect x="102" y="355" width="18" height="42" rx="6"/>
+
+      <rect x="580" y="160" width="18" height="42" rx="6"/>
+      <rect x="580" y="225" width="18" height="42" rx="6"/>
+      <rect x="580" y="290" width="18" height="42" rx="6"/>
+      <rect x="580" y="355" width="18" height="42" rx="6"/>
+
+      <rect x="102" y="690" width="18" height="42" rx="6"/>
+      <rect x="102" y="755" width="18" height="42" rx="6"/>
+      <rect x="102" y="820" width="18" height="42" rx="6"/>
+      <rect x="102" y="885" width="18" height="42" rx="6"/>
+
+      <rect x="580" y="690" width="18" height="42" rx="6"/>
+      <rect x="580" y="755" width="18" height="42" rx="6"/>
+      <rect x="580" y="820" width="18" height="42" rx="6"/>
+      <rect x="580" y="885" width="18" height="42" rx="6"/>
+    </g>
+
+    <!-- Top label panel -->
+    <rect x="132" y="118" width="436" height="338" rx="18" fill="#f7f3eb" stroke="#5d5951" stroke-width="5"/>
+    <rect x="156" y="180" width="388" height="179" fill="#20222a" stroke="#111" stroke-width="3"/>
+
+    <!-- Headers -->
+    <text x="219" y="165" font-family="Arial, Helvetica, sans-serif" font-size="35" text-anchor="middle" fill="#2b2927">P.A</text>
+    <text x="349" y="165" font-family="Arial, Helvetica, sans-serif" font-size="35" text-anchor="middle" fill="#2b2927">P.B</text>
+    <text x="479" y="165" font-family="Arial, Helvetica, sans-serif" font-size="35" text-anchor="middle" fill="#2b2927">P.C</text>
+
+    <!-- P.A -->
+    <rect x="161" y="185" width="118" height="170" fill="#d33530" stroke="#262626" stroke-width="2"/>
+    <rect x="243" y="187" width="34" height="166" fill="#151515" opacity="0.18"/>
+    <rect x="193" y="204" width="44" height="35" rx="3" fill="#262626" stroke="#111" stroke-width="1.5"/>
+    <text x="215" y="230" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="bold" text-anchor="middle" fill="#d5d5d5">G</text>
+    <text x="219" y="274" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="bold" text-anchor="middle" fill="#f05e59">5V</text>
+    <rect x="191" y="285" width="50" height="36" fill="#f8e34a"/>
+    <rect x="191" y="321" width="50" height="34" fill="#f4ede1"/>
+    <text x="216" y="316" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="bold" text-anchor="middle" fill="#111">38</text>
+    <text x="216" y="348" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="bold" text-anchor="middle" fill="#111">39</text>
+
+    <!-- P.B -->
+    <rect x="291" y="185" width="118" height="170" fill="#3b2929" stroke="#262626" stroke-width="2"/>
+    <rect x="373" y="187" width="34" height="166" fill="#151515" opacity="0.18"/>
+    <rect x="323" y="204" width="44" height="35" rx="3" fill="#262626" stroke="#111" stroke-width="1.5"/>
+    <text x="345" y="230" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="bold" text-anchor="middle" fill="#d5d5d5">G</text>
+    <text x="349" y="274" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="bold" text-anchor="middle" fill="#f05e59">5V</text>
+    <rect x="321" y="285" width="50" height="36" fill="#f8e34a"/>
+    <rect x="321" y="321" width="50" height="34" fill="#f4ede1"/>
+    <text x="346" y="316" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="bold" text-anchor="middle" fill="#111">7</text>
+    <text x="346" y="348" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="bold" text-anchor="middle" fill="#111">8</text>
+
+    <!-- P.C -->
+    <rect x="421" y="185" width="118" height="170" fill="#2b77bb" stroke="#262626" stroke-width="2"/>
+    <rect x="503" y="187" width="34" height="166" fill="#151515" opacity="0.18"/>
+    <rect x="453" y="204" width="44" height="35" rx="3" fill="#262626" stroke="#111" stroke-width="1.5"/>
+    <text x="475" y="230" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="bold" text-anchor="middle" fill="#d5d5d5">G</text>
+    <text x="479" y="274" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="bold" text-anchor="middle" fill="#f05e59">5V</text>
+    <rect x="451" y="285" width="50" height="36" fill="#f8e34a"/>
+    <rect x="451" y="321" width="50" height="34" fill="#f4ede1"/>
+    <text x="476" y="316" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="bold" text-anchor="middle" fill="#111">5</text>
+    <text x="476" y="348" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="bold" text-anchor="middle" fill="#111">6</text>
+
+    <!-- Bottom labels -->
+    <text x="176" y="405" font-family="Arial, Helvetica, sans-serif" font-size="35" fill="#2b2927">I2C</text>
+    <text x="293" y="405" font-family="Arial, Helvetica, sans-serif" font-size="35" fill="#2b2927">GPIO</text>
+    <text x="427" y="405" font-family="Arial, Helvetica, sans-serif" font-size="35" fill="#2b2927">UART</text>
+
+    <!-- ATOMS3R -->
+    <rect x="133" y="443" width="434" height="70" rx="8" fill="url(#labelGrad)" stroke="#222" stroke-width="3"/>
+    <text x="350" y="500" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="58" font-weight="bold" text-anchor="middle" fill="#f1eee5">ATOMS3R</text>
+
+    <!-- Lower body / screen bezel -->
+    <rect x="128" y="535" width="444" height="500" rx="62" fill="url(#panelGrad)" stroke="#81786d" stroke-width="5"/>
+    <rect x="176" y="615" width="348" height="350" rx="18" fill="#101216" stroke="#222" stroke-width="4"/>
+    <rect x="190" y="630" width="320" height="320" rx="8" fill="url(#screenGrad)"/>
+
+    <!-- Screen highlight -->
+    <path d="M207 655 Q350 615 494 675 L494 650 Q350 615 207 650 Z" fill="#ffffff" opacity="0.18"/>
+
+    <!-- Compass -->
+    <circle cx="350" cy="790" r="142" fill="none" stroke="#86f8ff" stroke-width="4" opacity="0.95"/>
+    <circle cx="350" cy="790" r="114" fill="none" stroke="#64e8f0" stroke-width="2.5" opacity="0.8"/>
+
+    <!-- Compass ticks -->
+    <use href="#majorTick"/>
+    <use href="#minorTick" transform="rotate(15 350 790)"/>
+    <use href="#minorTick" transform="rotate(30 350 790)"/>
+    <use href="#majorTick" transform="rotate(45 350 790)"/>
+    <use href="#minorTick" transform="rotate(60 350 790)"/>
+    <use href="#minorTick" transform="rotate(75 350 790)"/>
+    <use href="#majorTick" transform="rotate(90 350 790)"/>
+    <use href="#minorTick" transform="rotate(105 350 790)"/>
+    <use href="#minorTick" transform="rotate(120 350 790)"/>
+    <use href="#majorTick" transform="rotate(135 350 790)"/>
+    <use href="#minorTick" transform="rotate(150 350 790)"/>
+    <use href="#minorTick" transform="rotate(165 350 790)"/>
+    <use href="#majorTick" transform="rotate(180 350 790)"/>
+    <use href="#minorTick" transform="rotate(195 350 790)"/>
+    <use href="#minorTick" transform="rotate(210 350 790)"/>
+    <use href="#majorTick" transform="rotate(225 350 790)"/>
+    <use href="#minorTick" transform="rotate(240 350 790)"/>
+    <use href="#minorTick" transform="rotate(255 350 790)"/>
+    <use href="#majorTick" transform="rotate(270 350 790)"/>
+    <use href="#minorTick" transform="rotate(285 350 790)"/>
+    <use href="#minorTick" transform="rotate(300 350 790)"/>
+    <use href="#majorTick" transform="rotate(315 350 790)"/>
+    <use href="#minorTick" transform="rotate(330 350 790)"/>
+    <use href="#minorTick" transform="rotate(345 350 790)"/>
+
+    <!-- Cardinal directions -->
+    <text x="350" y="695" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="bold" text-anchor="middle" fill="#b9ffff">N</text>
+    <text x="452" y="797" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="bold" text-anchor="middle" fill="#b9ffff">E</text>
+    <text x="350" y="899" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="bold" text-anchor="middle" fill="#b9ffff">S</text>
+    <text x="248" y="797" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="bold" text-anchor="middle" fill="#b9ffff">W</text>
+
+    <text x="350" y="800" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="bold" text-anchor="middle" fill="#7af6ff">310°</text>
+    <text x="350" y="850" font-family="Arial, Helvetica, sans-serif" font-size="28" text-anchor="middle" fill="#7eefff" opacity="0.9">NW</text>
+
+    <!-- Thin triangular arrow -->
+    <polygon points="245,690 316,742 286,760" fill="#e8565a" opacity="0.96"/>
+
+    <!-- Bottom connector -->
+    <rect x="258" y="1034" width="184" height="44" rx="10" fill="#0f0f12" stroke="#333" stroke-width="3"/>
+
+    <g fill="#d6c34e" stroke="#7e762e" stroke-width="1">
+      <rect x="278" y="1030" width="14" height="16" rx="2"/>
+      <rect x="302" y="1030" width="14" height="16" rx="2"/>
+      <rect x="326" y="1030" width="14" height="16" rx="2"/>
+      <rect x="350" y="1030" width="14" height="16" rx="2"/>
+      <rect x="374" y="1030" width="14" height="16" rx="2"/>
+      <rect x="398" y="1030" width="14" height="16" rx="2"/>
+      <rect x="422" y="1030" width="14" height="16" rx="2"/>
+    </g>
+
+    <rect x="281" y="1072" width="138" height="68" rx="8" fill="#1b1b1f" stroke="#050505" stroke-width="3"/>
+    <rect x="306" y="1078" width="88" height="16" rx="4" fill="#33343a"/>
+    <path d="M295 1140 H405 Q418 1140 420 1153 H280 Q282 1140 295 1140 Z" fill="#101013"/>
+  </g>
+</svg>
