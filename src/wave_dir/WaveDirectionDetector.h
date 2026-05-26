@@ -20,7 +20,7 @@ private:
 
 public:
   // waveAngle in radians (0=positive X, PI/2=positive Y)
-  WaveDirectionDetector(Real smoothing = Real(0.002),
+  WaveDirectionDetector(Real smoothing = Real(0.001),
                         Real sensitivity = Real(0.005))
     : alpha(smoothing),
       threshold(sensitivity) {
