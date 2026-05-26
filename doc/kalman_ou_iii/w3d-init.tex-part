@@ -47,15 +47,10 @@ regularization from being driven by transient startup data.
 Magnetometer updates are also delayed.  The filter first waits for the startup
 delay and for a sufficiently stable gravity/tilt condition.  Magnetometer
 samples are then accumulated in a gravity-only tilt frame to estimate the local
-magnetic field direction.  The horizontal component of the averaged magnetic
-field defines the startup yaw gauge.  A one-time yaw correction removes this
-arbitrary gauge, and the corresponding world magnetic reference is stored for
-subsequent MEKF magnetometer updates.
+magnetic field direction.
 
-Thus the magnetometer is not used as an immediate raw yaw correction at boot.
-It is first used to establish a consistent magnetic reference, after which
-normal yaw updates can begin.  If configured, the linear block may also be held
-off until this magnetic north lock has been obtained.
+Thus the magnetometer is first used to establish a consistent magnetic reference, after which
+normal yaw updates can begin.
 
 \subsection{Recovery from Bad Tilt}
 
