@@ -12,12 +12,15 @@
 \usepackage{bm}
 \usepackage{float}
 \usepackage{microtype}
+\bibliographystyle{IEEEtran}
+
 \usepackage{array,booktabs,makecell,adjustbox}
 
 % Keep this — needed by PGF outputs that reference \mathdefault
 \providecommand{\mathdefault}[1]{#1}
 
-\title{Wave Simulation Charts}
+\title{Wave Simulation Charts\\
+\large (for the OU-QMEKF study in \cite{Reis2023_DiscreteKalmanHeave,Pascoal2009_KalmanDirectionalSpectrum})}
 \author{Mikhail Grushinskiy}
 \date{2026}
 
@@ -302,4 +305,5 @@
     \label{fig:w3d_ou3_jonswap_high_gyro_bias}
     \end{figure}
 
+\bibliography{w3d}
 \end{document}

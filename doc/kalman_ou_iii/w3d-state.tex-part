@@ -20,7 +20,7 @@ single nonlinear estimator. It is defined as
 where each subvector has the following physical meaning:
 \begin{itemize}
   \item $\delta\vct{\theta}\in\mathbb{R}^3$ --- small attitude-error
-        vector used in the multiplicative EKF formulation
+        vector used in the multiplicative EKF formulation \cite{Shuster1993_AttitudeRepresentations,MarkleyCrassidis2014_Attitude}
         (left-multiplicative quaternion correction).
   \item $\vct{b}_g\in\mathbb{R}^3$ --- gyroscope bias, modeled as a
         random-walk process.
@@ -30,7 +30,7 @@ where each subvector has the following physical meaning:
         $\vct{S}(t)=\int_0^t\vct{p}(\tau)\,d\tau$, used to constrain
         long-term drift by a zero pseudo-measurement.
   \item $\vct{a}_w\in\mathbb{R}^3$ --- latent world-frame acceleration
-        following an Ornstein--Uhlenbeck (OU) process,
+        following an Ornstein--Uhlenbeck (OU) process \cite{UhlenbeckOrnstein1930_OU},
         \(
            \dot{\vct{a}}_w = -\tfrac{1}{\tau_{a_w}}\vct{a}_w
            + \vct{\eta}_{w}(t)

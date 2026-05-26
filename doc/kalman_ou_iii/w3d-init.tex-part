@@ -2,6 +2,8 @@
 \section{Initialization and Reference Alignment}
 \label{sec:init_alignment}
 
+The startup procedure is designed to avoid using unobservable or poorly conditioned states too early, consistent with practical marine IMU initialization guidance \cite{Kuechler2011_HeaveAcceleration,Auestad2013_HeaveStrapdownIMU}.
+
 The startup procedure is designed to avoid using unobservable or poorly
 conditioned states too early.  At boot, the filter first establishes a reliable
 gravity-based tilt frame, then lets the frequency/tuning logic collect enough

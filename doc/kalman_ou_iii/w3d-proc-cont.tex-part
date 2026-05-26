@@ -32,7 +32,7 @@ where $\matg{Q}_{bg}$ is the continuous–time spectral density (per axis).
 
 For the left--multiplicative error state, we use a small rotation vector
 $\delta\vct{\theta}$ so that $q^+ = \exp(\tfrac12\,\delta\vct{\theta})\otimes q$.
-Linearizing the attitude error dynamics gives the standard Q--MEKF form
+Linearizing the attitude error dynamics gives the standard Q--MEKF form \cite{Markley2003AttitudeError,TrawnyRoumeliotis2005_IndirectKF}
 \begin{equation}
 \dot{\delta\vct{\theta}}
 \;\approx\;
@@ -62,7 +62,7 @@ Here $\tau>0$ is the correlation time and $\matg{\Sigma}_{aw}\succ0$ the station
 covariance (diagonal or correlated).
 
 The sea wave-induced floating body acceleration is not OU; instead,
-\eqref{eq:ou-ct} is used as a low-order \emph{stationary Gauss--Markov prior} that captures
+\eqref{eq:ou-ct} is used as a low-order \emph{stationary Gauss--Markov prior} that captures \cite{Maybeck1979_StochasticModels,Jazwinski1970_Filtering}
 a key property for inertial drift control: the effective wave-driven acceleration is
 \emph{colored} with a finite correlation time on the order of the dominant wave time scale.
 The parameter $\tau$ sets this correlation time, while the stationary covariance

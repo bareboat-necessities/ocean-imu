@@ -3,7 +3,7 @@
 
 For a sailing vessel the hull experiences a slowly varying \emph{steady wind heel},
 well-approximated as a rotation about the physical body $x$-axis. If unmodeled, this
-quasi-static roll bias can leak into the attitude solution. 
+quasi-static roll bias can leak into the attitude solution \cite{Pascoal2009_KalmanDirectionalSpectrum}. 
 To mitigate this, the filter optionally introduces a \emph{virtual un-heeled body frame}
 $\mathcal{B}'$ and performs all inertial and magnetic measurement modeling in $\mathcal{B}'$.
 

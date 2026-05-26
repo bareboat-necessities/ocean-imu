@@ -81,7 +81,7 @@ For a single axis with OU correlation time \(\tau>0\), stationary variance
 \alpha_2 \equiv e^{-2x},\qquad
 q_c \equiv \frac{2\sigma^2}{\tau}.
 \]
-The scalar OU process is driven by
+The scalar OU process is driven by \cite{UhlenbeckOrnstein1930_OU}
 \(
 da = -\tfrac1{\tau}a\,dt + \sqrt{q_c}\,dW
 \),
