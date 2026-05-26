@@ -267,16 +267,7 @@ therefore exercised on the embedded target.
 Before testing, the device is calibrated for accelerometer bias, gyroscope
 bias, axis alignment, and magnetometer hard-/soft-iron effects. The calibrated
 sensor triads are transformed into the body-frame convention used by the
-filter. For tests on a tilted or heeled mounting, the configured steady
-wind-heel correction maps measurements into the virtual un-heeled frame before
-the EKF update.
-
-During hardware runs, the firmware logs raw IMU samples, calibrated sensor
-triads, quaternion attitude, estimated displacement and velocity, dominant
-frequency, adaptive OU parameters, pseudo-measurement noise levels, and
-innovation statistics. These logs allow offline checks of timing stability,
-startup behavior, residual consistency, and estimator robustness under real
-sensor noise and bias drift.
+filter. 
 
 The real-hardware tests therefore validate three implementation-level claims:
 (i) the proposed OU-driven Q-MEKF can execute in real time on an ESP32-S3-class
