@@ -2,7 +2,7 @@
 \label{sec:sim-and-eval}
 
 \subsection{Synthetic Wave Scenarios}
-We evaluate the proposed Kalman filter against several canonical wave models.
+We evaluate the proposed Kalman filter against several canonical wave models and against marine heave-estimation practice reported in the literature \cite{Reis2023_DiscreteKalmanHeave,Sharkh2014MEF,Collins2014_AccelerometerBuoys,YurovskyKudinov2025_IMUwaves}.
 
 \begin{itemize}
     \item \textbf{JONSWAP directional seas}: Realistic broadband spectra with randomized directional spreading that mimics North Sea conditions, testing the filter's ability to handle \textit{multicomponent interference} and \textit{cross-coupling} in attitude estimation

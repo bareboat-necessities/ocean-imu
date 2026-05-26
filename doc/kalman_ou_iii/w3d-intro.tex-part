@@ -20,7 +20,7 @@ excitation and MEMS errors in an efficient, embedded-friendly framework.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
-We start from a standard Q-MEKF \cite{Markley2003AttitudeError}, which estimates body attitude and
+We start from a standard Q-MEKF \cite{Markley2003AttitudeError,TrawnyRoumeliotis2005_IndirectKF,Sola2017_QuaternionESKF}, which estimates body attitude and
 gyroscope bias using a left-multiplicative quaternion error
 representation. To enable full wave motion estimation, the state vector
 is augmented to include additional translational quantities:
@@ -32,7 +32,7 @@ instantaneous and cumulative kinematic quantities in the world frame.
 \subsection*{Stochastic Forcing and the OU Acceleration Model}
 
 The latent world acceleration \(\bm{a}_w\) is modeled as an
-Ornstein--Uhlenbeck (OU) process characterized by a stationary variance
+Ornstein--Uhlenbeck (OU) process \cite{UhlenbeckOrnstein1930_OU} characterized by a stationary variance
 \(\Sigma_{aw}\) and a correlation time constant \(\tau_{aw}\) referred hereafter \(\tau\). This choice
 captures the nature of ocean-wave excitation: broadband, temporally correlated but with bounded variance.
 For Lagrangian sensors following surface motion, this leads to

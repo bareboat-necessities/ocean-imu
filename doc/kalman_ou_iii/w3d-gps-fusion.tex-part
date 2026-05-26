@@ -3,7 +3,7 @@
 
 The filter already maintains world-frame navigation states
 $\bm v\in\R^3$ and $\bm p\in\R^3$, so GNSS/GPS can be fused as a
-low-rate absolute reference to control long-term drift.
+low-rate absolute reference to control long-term drift, a common strategy in integrated navigation filters \cite{Jazwinski1970_Filtering,Maybeck1979_StochasticModels}.
 
 \subsubsection{Local frame and measurement preprocessing}
 \label{sec:gps_ned_short}

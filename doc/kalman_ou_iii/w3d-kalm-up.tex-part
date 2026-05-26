@@ -5,7 +5,7 @@
 At each IMU time step the hardware provides body-frame triads:
 gyroscope angular rate $\vct{\omega}_{\text{meas}}$, accelerometer specific force
 $\vct{f}_{\text{meas}}$, and magnetometer field $\vct{m}_{\text{meas}}$.
-After calibration (scale and axis mapping, hard/soft-iron correction, and fixed sensor offsets),
+After calibration (scale and axis mapping, hard/soft-iron correction, and fixed sensor offsets \cite{Rabault2022_OpenMetBuoy,Hope2025_SFY}),
 the signals enter the estimator as follows:
 \begin{itemize}\itemsep2pt
 \item $\vct{\omega}_{\text{meas}}$ is a \emph{propagation input}: it advances the nominal quaternion and drives the
