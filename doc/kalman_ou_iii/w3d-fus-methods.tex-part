@@ -83,12 +83,12 @@ PLLFreqTracker is a control-style narrowband tracker. It removes slow drift and 
 \paragraph{Method}
 The input is converted to a broad band-passed signal $b_k$ using a high-pass stage followed by a low-pass stage. The tracker then demodulates against the internal phase $\phi_k$:
 \[
-I_k \leftarrow \LPF\{b_k\cos\phi_k\},\qquad
-Q_k \leftarrow \LPF\{-b_k\sin\phi_k\}.
+I_k \leftarrow \operatorname{LPF}\!\left\{b_k\cos\phi_k\right\},\qquad
+Q_k \leftarrow \operatorname{LPF}\!\left\{-b_k\sin\phi_k\right\}.
 \]
 The phase detector is
 \[
-e_{\phi,k}=\atan2(Q_k,I_k).
+e_{\phi,k}=\operatorname{atan2}(Q_k,I_k).
 \]
 
 A type-II PLL-style loop updates oscillator frequency and phase:
