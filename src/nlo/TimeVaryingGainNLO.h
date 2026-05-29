@@ -13,7 +13,8 @@
     WithGNSS = true:
       horizontal GNSS/PosRef correction p_xy - p_hat_xy is used.
     WithGNSS = false:
-      horizontal GNSS correction is compiled out logically; x/y drift.
+      horizontal GNSS correction is compiled out logically.
+      Horizontal TMO states are held at zero because they are unobservable.
       Vertical VVR still works.
 
     Mag = None:
@@ -156,7 +157,8 @@ public:
     };
 
     explicit TimeVaryingGainNLO(const Config& cfg = Config{})
-        : cfg_(cfg) {
+        : cfg_(cfg)
+    {
         reset();
     }
 
@@ -184,6 +186,8 @@ public:
         vartheta_ = R(1);
 
         sigma_b_.setZero();
+
+        lockUnobservableStates_();
     }
 
     bool initializeFromAccel(const Vec3& specific_force_b_mps2,
@@ -203,11 +207,14 @@ public:
         Vec3 north_b;
         north_b << std::cos(heading_rad), -std::sin(heading_rad), R(0);
 
-        return setAttitudeFromDownAndHorizontalReference(
+        const bool ok = setAttitudeFromDownAndHorizontalReference(
             down_b,
             north_b,
             nedNorth()
         );
+
+        lockUnobservableStates_();
+        return ok;
     }
 
     bool initializeFromAccelMag(const Vec3& specific_force_b_mps2,
@@ -224,28 +231,43 @@ public:
         Vec3 m_b = mag_b_calibrated / mn;
         Vec3 mag_h_b = m_b - down_b * down_b.dot(m_b);
 
-        return setAttitudeFromDownAndHorizontalReference(
+        const bool ok = setAttitudeFromDownAndHorizontalReference(
             down_b,
             mag_h_b,
             magneticReferenceNED()
         );
+
+        lockUnobservableStates_();
+        return ok;
     }
 
     void setQuaternionBodyToNED(const Quat& q_nb) {
         q_nb_ = q_nb;
         q_nb_.normalize();
+        lockUnobservableStates_();
     }
 
     void setPositionNED(const Vec3& p_n_m) {
         p_n_ = p_n_m;
+        if constexpr (!WithGNSS) {
+            p_n_.x() = R(0);
+            p_n_.y() = R(0);
+        }
     }
 
     void setVelocityNED(const Vec3& v_n_mps) {
         v_n_ = v_n_mps;
+        if constexpr (!WithGNSS) {
+            v_n_.x() = R(0);
+            v_n_.y() = R(0);
+        }
     }
 
     void setGyroBiasBody(const Vec3& bias_rad_s) {
         gyro_bias_b_ = clampNorm(bias_rad_s, cfg_.gyro_bias_limit_rad_s);
+        if constexpr (Mag == NloMagType::None) {
+            gyro_bias_b_.z() = R(0);
+        }
     }
 
     void setAccelBiasBody(const Vec3& bias_mps2) {
@@ -266,6 +288,8 @@ public:
 
         t_s_ += dt;
 
+        lockUnobservableStates_();
+
         const Vec3 f_b = specific_force_b_mps2 - accel_bias_b_;
 
         updateGainSchedules(dt, aux);
@@ -273,17 +297,41 @@ public:
         const Mat3 R_nb_before = q_nb_.toRotationMatrix();
         fhat_n_ = R_nb_before * f_b + xi_n_;
 
+        if constexpr (!WithGNSS) {
+            // Horizontal xi is unobservable without PosRef/GNSS. Keep the
+            // dynamic force estimate from getting horizontal observer drift.
+            xi_n_.x() = R(0);
+            xi_n_.y() = R(0);
+            fhat_n_ = R_nb_before * f_b + xi_n_;
+        }
+
         sigma_b_ = computeSigmaBody(f_b, fhat_n_, aux, R_nb_before);
 
-        // Paper convention: q_dot uses omega - b_g + sigma,
-        // and b_g_dot = Proj(b_g, kI * sigma).
-        const Vec3 bias_dot =
-            projectBallDerivative(gyro_bias_b_,
-                                  kI_ * sigma_b_,
-                                  cfg_.gyro_bias_limit_rad_s);
+        /*
+          Bias observer sign:
+            q_dot uses omega - b_g + sigma
+            b_g_dot = Proj(b_g, -kI * sigma)
+
+          With no yaw reference, z gyro bias is unobservable, so freeze it.
+        */
+        Vec3 bias_dot =
+            projectBallDerivative(
+                gyro_bias_b_,
+                -kI_ * sigma_b_,
+                cfg_.gyro_bias_limit_rad_s
+            );
+
+        if constexpr (Mag == NloMagType::None) {
+            bias_dot.z() = R(0);
+            gyro_bias_b_.z() = R(0);
+        }
 
         gyro_bias_b_ += dt * bias_dot;
         gyro_bias_b_ = clampNorm(gyro_bias_b_, cfg_.gyro_bias_limit_rad_s);
+
+        if constexpr (Mag == NloMagType::None) {
+            gyro_bias_b_.z() = R(0);
+        }
 
         const Vec3 omega_corr_b = gyro_b_rad_s - gyro_bias_b_ + sigma_b_;
         integrateQuaternionRight(dt, omega_corr_b);
@@ -332,19 +380,49 @@ public:
         }
         v_dot.z() += s3 * cfg_.K_vz_p0z * p0z_err;
 
-        // Matches the TimeVarGain paper sign:
-        // xi_dot = R(q) S(sigma) f_IMU + correction terms.
-        Vec3 xi_dot = R_nb * (skew(sigma_b_) * f_b);
+        /*
+          Correction-state dynamics sign:
+            xi_dot = -R(q) S(sigma) f_b + injection terms
+
+          This is important. Positive sign makes the correction state run away
+          in the no-GNSS vertical-only case.
+        */
+        Vec3 xi_dot = -R_nb * (skew(sigma_b_) * f_b);
 
         if (have_gnss) {
             xi_dot.template head<2>() += s4 * (Kxip * pxy_err);
         }
         xi_dot.z() += s4 * cfg_.K_xiz_p0z * p0z_err;
 
+        if constexpr (!WithGNSS) {
+            /*
+              Without horizontal PosRef/GNSS, horizontal translational states
+              are unobservable. Do not integrate p_x/p_y, v_x/v_y, or xi_x/xi_y.
+              Otherwise xi_x/y drift contaminates fhat_n and destroys attitude.
+            */
+            p_dot.x() = R(0);
+            p_dot.y() = R(0);
+
+            v_dot.x() = R(0);
+            v_dot.y() = R(0);
+
+            xi_dot.x() = R(0);
+            xi_dot.y() = R(0);
+
+            p_n_.x() = R(0);
+            p_n_.y() = R(0);
+            v_n_.x() = R(0);
+            v_n_.y() = R(0);
+            xi_n_.x() = R(0);
+            xi_n_.y() = R(0);
+        }
+
         p0z_hat_ += dt * p0z_dot;
         p_n_     += dt * p_dot;
         v_n_     += dt * v_dot;
         xi_n_    += dt * xi_dot;
+
+        lockUnobservableStates_();
 
         fhat_n_ = q_nb_.toRotationMatrix() * f_b + xi_n_;
     }
@@ -408,6 +486,21 @@ private:
     R vartheta_ = R(1);
 
     Vec3 sigma_b_ = Vec3::Zero();
+
+    void lockUnobservableStates_() {
+        if constexpr (!WithGNSS) {
+            p_n_.x() = R(0);
+            p_n_.y() = R(0);
+            v_n_.x() = R(0);
+            v_n_.y() = R(0);
+            xi_n_.x() = R(0);
+            xi_n_.y() = R(0);
+        }
+
+        if constexpr (Mag == NloMagType::None) {
+            gyro_bias_b_.z() = R(0);
+        }
+    }
 
     static bool isFinite(R x) {
         using std::isfinite;
@@ -560,10 +653,12 @@ private:
     }
 
     bool hasUsableGNSS(const Aux& aux) const {
-        if (!WithGNSS) {
+        if constexpr (!WithGNSS) {
+            (void)aux;
             return false;
+        } else {
+            return aux.gnss.valid;
         }
-        return aux.gnss.valid;
     }
 
     void updateGainSchedules(R dt, const Aux& aux) {
@@ -592,11 +687,15 @@ private:
 
         R vartheta1 = cfg_.vartheta1_without_gnss;
 
-        if (WithGNSS && aux.gnss.valid && aux.gnss.rms_xy_m > R(0)) {
-            const R a = clamp(dt / cfg_.gnss_rms_lpf_tau_s, R(0), R(1));
-            gnss_rms_lpf_ += a * (aux.gnss.rms_xy_m - gnss_rms_lpf_);
-            vartheta1 =
-                cfg_.vartheta1_b * std::exp(-cfg_.vartheta1_a * gnss_rms_lpf_);
+        if constexpr (WithGNSS) {
+            if (aux.gnss.valid && aux.gnss.rms_xy_m > R(0)) {
+                const R a = clamp(dt / cfg_.gnss_rms_lpf_tau_s, R(0), R(1));
+                gnss_rms_lpf_ += a * (aux.gnss.rms_xy_m - gnss_rms_lpf_);
+                vartheta1 =
+                    cfg_.vartheta1_b * std::exp(-cfg_.vartheta1_a * gnss_rms_lpf_);
+            }
+        } else {
+            (void)aux;
         }
 
         const R target2 = (t_s_ <= cfg_.vartheta2_switch_s) ? R(1) : R(0);
@@ -623,73 +722,88 @@ private:
     bool makeCompassReference(const Aux& aux,
                               Vec3& c_b,
                               Vec3& c_n) const {
-        if (Mag != NloMagType::Compass || !aux.compass_valid) {
+        if constexpr (Mag != NloMagType::Compass) {
+            (void)aux;
+            (void)c_b;
+            (void)c_n;
             return false;
+        } else {
+            if (!aux.compass_valid) {
+                return false;
+            }
+
+            c_b << std::cos(aux.compass_heading_rad),
+                  -std::sin(aux.compass_heading_rad),
+                   R(0);
+
+            c_b = normalizeSafe(c_b, Vec3(R(1), R(0), R(0)));
+            c_n = nedNorth();
+            return true;
         }
-
-        c_b << std::cos(aux.compass_heading_rad),
-              -std::sin(aux.compass_heading_rad),
-               R(0);
-
-        c_b = normalizeSafe(c_b, Vec3(R(1), R(0), R(0)));
-        c_n = nedNorth();
-        return true;
     }
 
     bool makeMagReference(const Aux& aux,
                           const Mat3& R_nb,
                           Vec3& c_b,
                           Vec3& c_n) const {
-        if (Mag != NloMagType::Magnetometer || !aux.mag_valid) {
+        if constexpr (Mag != NloMagType::Magnetometer) {
+            (void)aux;
+            (void)R_nb;
+            (void)c_b;
+            (void)c_n;
             return false;
-        }
-
-        const R mn = aux.mag_b.norm();
-        if (!isFinite(mn) || mn < R(1e-9)) {
-            return false;
-        }
-
-        if (cfg_.expected_mag_norm > R(0)) {
-            const R rel =
-                std::abs(mn - cfg_.expected_mag_norm) / cfg_.expected_mag_norm;
-            if (rel > cfg_.max_mag_relative_norm_error) {
+        } else {
+            if (!aux.mag_valid) {
                 return false;
             }
+
+            const R mn = aux.mag_b.norm();
+            if (!isFinite(mn) || mn < R(1e-9)) {
+                return false;
+            }
+
+            if (cfg_.expected_mag_norm > R(0)) {
+                const R rel =
+                    std::abs(mn - cfg_.expected_mag_norm) / cfg_.expected_mag_norm;
+                if (rel > cfg_.max_mag_relative_norm_error) {
+                    return false;
+                }
+            }
+
+            Vec3 m_b = aux.mag_b / mn;
+
+            // Current estimated NED down expressed in BODY.
+            const Vec3 down_b = R_nb.transpose() * nedDown();
+
+            // Yaw-only magnetic vector: remove vertical/dip component.
+            Vec3 mh_b = m_b - down_b * down_b.dot(m_b);
+            if (mh_b.norm() < R(1e-6)) {
+                return false;
+            }
+
+            c_b = mh_b.normalized();
+            c_n = magneticReferenceNED();
+            return true;
         }
-
-        Vec3 m_b = aux.mag_b / mn;
-
-        // Current estimated NED down expressed in BODY.
-        const Vec3 down_b = R_nb.transpose() * nedDown();
-
-        // Yaw-only magnetic vector: remove vertical/dip component.
-        Vec3 mh_b = m_b - down_b * down_b.dot(m_b);
-        if (mh_b.norm() < R(1e-6)) {
-            return false;
-        }
-
-        c_b = mh_b.normalized();
-        c_n = magneticReferenceNED();
-        return true;
     }
 
     bool makeYawReference(const Aux& aux,
                           const Mat3& R_nb,
                           Vec3& c_b,
                           Vec3& c_n) const {
-        if (Mag == NloMagType::None) {
+        if constexpr (Mag == NloMagType::None) {
+            (void)aux;
+            (void)R_nb;
+            (void)c_b;
+            (void)c_n;
+            return false;
+        } else if constexpr (Mag == NloMagType::Compass) {
+            return makeCompassReference(aux, c_b, c_n);
+        } else if constexpr (Mag == NloMagType::Magnetometer) {
+            return makeMagReference(aux, R_nb, c_b, c_n);
+        } else {
             return false;
         }
-
-        if (Mag == NloMagType::Compass) {
-            return makeCompassReference(aux, c_b, c_n);
-        }
-
-        if (Mag == NloMagType::Magnetometer) {
-            return makeMagReference(aux, R_nb, c_b, c_n);
-        }
-
-        return false;
     }
 
     Vec3 computeSigmaBody(const Vec3& f_b,
