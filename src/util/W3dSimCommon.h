@@ -16,6 +16,7 @@
 #include <optional>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "util/WaveFilesSupport.h"
@@ -24,6 +25,7 @@
 
 using Eigen::Vector2f;
 using Eigen::Vector3f;
+using Eigen::Matrix3f;
 
 inline float wrapDeg(float a) {
     a = std::fmod(a + 180.0f, 360.0f);
@@ -133,7 +135,6 @@ private:
 
 extern const float g_std;
 
-
 struct ImuNoiseModel {
     std::mt19937 rng;
     std::normal_distribution<float> w;
@@ -226,6 +227,43 @@ struct FilterSnapshot {
     DirectionTelemetry direction;
 };
 
+/*
+  Additive typed snapshot for TimeVarGain NLO.
+  Existing FilterSnapshot is unchanged.
+*/
+struct TvgNloTelemetry {
+    float k1 = NAN;
+    float k2 = NAN;
+    float kI = NAN;
+    float vartheta = NAN;
+    float p0z_hat = NAN;
+
+    Vector3f xi_n = Vector3f::Constant(NAN);
+    Vector3f fhat_n = Vector3f::Constant(NAN);
+    Vector3f sigma_b = Vector3f::Constant(NAN);
+    Vector3f gyro_bias_b = Vector3f::Constant(NAN);
+
+    float xi_norm = NAN;
+    float fhat_norm = NAN;
+    float sigma_norm = NAN;
+    float gyro_bias_norm = NAN;
+};
+
+struct TvgNloFilterSnapshot {
+    Vector3f disp_est_zu = Vector3f::Zero();
+    Vector3f vel_est_zu = Vector3f::Zero();
+    Vector3f acc_est_zu = Vector3f::Zero();
+    Vector3f euler_nautical_deg = Vector3f::Zero();
+
+    Vector3f acc_bias_est_ned = Vector3f::Zero();
+    Vector3f gyro_bias_est_ned = Vector3f::Zero();
+    Vector3f mag_bias_est_ned_uT = Vector3f::Zero();
+
+    DirectionTelemetry direction;
+
+    TvgNloTelemetry tvg;
+};
+
 class IW3dFusionAdapter {
 public:
     virtual ~IW3dFusionAdapter() = default;
@@ -235,6 +273,23 @@ public:
                         const Vector3f& acc_meas_ned,
                         float temperature_c) = 0;
     virtual FilterSnapshot snapshot() const = 0;
+};
+
+template <typename SnapshotT>
+class IW3dFusionAdapterTyped {
+public:
+    using Snapshot = SnapshotT;
+
+    virtual ~IW3dFusionAdapterTyped() = default;
+
+    virtual void updateMag(const Vector3f& mag_body_ned) = 0;
+
+    virtual void update(float dt,
+                        const Vector3f& gyr_meas_ned,
+                        const Vector3f& acc_meas_ned,
+                        float temperature_c) = 0;
+
+    virtual SnapshotT snapshot() const = 0;
 };
 
 using ImuNoiseInjector = std::function<void(Vector3f& acc_body_zu,
@@ -290,6 +345,16 @@ struct W3dSimulationRunResult {
     float final_accel_variance = NAN;
 };
 
+template <typename SnapshotT>
+struct W3dSimulationRunResultTyped : public W3dSimulationRunResult {
+    using Snapshot = SnapshotT;
+
+    std::vector<SnapshotT> snapshots;
+    SnapshotT final_snapshot{};
+};
+
+using TvgNloSimulationRunResult = W3dSimulationRunResultTyped<TvgNloFilterSnapshot>;
+
 struct W3dFailureLimits {
     float err_limit_percent_z_jonswap = 0.0f;
     float err_limit_percent_z_pmstokes = 0.0f;
@@ -319,6 +384,24 @@ private:
     W3dSimulationOptions options_;
     SimulationNoiseModels noise_models_;
     IW3dFusionAdapter& fusion_adapter_;
+};
+
+class TvgNloSimulationRunner {
+public:
+    using Adapter = IW3dFusionAdapterTyped<TvgNloFilterSnapshot>;
+
+    TvgNloSimulationRunner(W3dSimulationOptions options,
+                           SimulationNoiseModels noise_models,
+                           Adapter& fusion_adapter);
+
+    std::optional<TvgNloSimulationRunResult> run(const std::string& filename);
+
+private:
+    std::string make_output_name(const std::string& filename) const;
+
+    W3dSimulationOptions options_;
+    SimulationNoiseModels noise_models_;
+    Adapter& fusion_adapter_;
 };
 
 void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
