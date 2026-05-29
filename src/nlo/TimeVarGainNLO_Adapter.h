@@ -5,18 +5,6 @@
 
   Reusable adapter for TimeVaryingGainNLO.
 
-  Important design note:
-    TimeVaryingGainNLO<false, NloMagType::None> is NOT a fully observable
-    attitude observer. Without GNSS/PosRef and without yaw aid, the NLO
-    force-feedback term can self-cancel:
-        fhat_n ~= R_nb * f_b
-        sigma  ~= f_b x R_nb^T fhat_n ~= 0
-    so attitude is mostly gyro propagation.
-
-  This adapter therefore includes a continuous roll/pitch-only tilt AHRS
-  correction. It keeps yaw free/unobservable when Mag=None, but prevents
-  persistent roll/pitch startup offsets on real devices and in the simulator.
-
   Clients choose compile-time options:
       TimeVarGainNloAdapter<false, NloMagType::None, float>
       TimeVarGainNloAdapter<false, NloMagType::Magnetometer, float>
@@ -49,13 +37,14 @@
     #include <Eigen/Geometry>
   #endif
 #else
-  #include <algorithm>
-  #include <cmath>
-  #include <cstdint>
-  #include <limits>
   #include <Eigen/Dense>
   #include <Eigen/Geometry>
 #endif
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <limits>
 
 #include "nlo/TimeVaryingGainNLO.h"
 
@@ -76,24 +65,24 @@ public:
     static constexpr NloMagType kMagType = Mag;
 
     struct Telemetry {
-        R k1 = nan_();
-        R k2 = nan_();
-        R kI = nan_();
-        R vartheta = nan_();
-        R p0z_hat = nan_();
+        R k1 = std::numeric_limits<R>::quiet_NaN();
+        R k2 = std::numeric_limits<R>::quiet_NaN();
+        R kI = std::numeric_limits<R>::quiet_NaN();
+        R vartheta = std::numeric_limits<R>::quiet_NaN();
+        R p0z_hat = std::numeric_limits<R>::quiet_NaN();
 
-        Vec3 xi_n = nanVec_();
-        Vec3 fhat_n = nanVec_();
-        Vec3 sigma_b = nanVec_();
-        Vec3 gyro_bias_b = nanVec_();
+        Vec3 xi_n = Vec3::Constant(std::numeric_limits<R>::quiet_NaN());
+        Vec3 fhat_n = Vec3::Constant(std::numeric_limits<R>::quiet_NaN());
+        Vec3 sigma_b = Vec3::Constant(std::numeric_limits<R>::quiet_NaN());
+        Vec3 gyro_bias_b = Vec3::Constant(std::numeric_limits<R>::quiet_NaN());
 
-        R xi_norm = nan_();
-        R fhat_norm = nan_();
-        R sigma_norm = nan_();
-        R gyro_bias_norm = nan_();
+        R xi_norm = std::numeric_limits<R>::quiet_NaN();
+        R fhat_norm = std::numeric_limits<R>::quiet_NaN();
+        R sigma_norm = std::numeric_limits<R>::quiet_NaN();
+        R gyro_bias_norm = std::numeric_limits<R>::quiet_NaN();
 
-        R tilt_err_norm = nan_();
-        R tilt_correction_norm = nan_();
+        R tilt_err_norm = std::numeric_limits<R>::quiet_NaN();
+        R tilt_correction_norm = std::numeric_limits<R>::quiet_NaN();
         R tilt_down_lpf_valid = R(0);
     };
 
@@ -141,30 +130,32 @@ public:
         R yaw_seed_rad = R(0);
 
         /*
-          Continuous roll/pitch tilt AHRS correction.
+          Optional roll/pitch-only tilt trim.
 
-          This is intentionally not only a startup trim. For WithGNSS=false and
-          Mag=None, NLO attitude feedback is not observable enough by itself.
+          Default is OFF because in waves, accelerometer tilt trim can chase
+          horizontal wave acceleration and make roll/pitch worse.
+
+          Enable only for bench/calm/still startup or with a real stillness gate.
 
           tilt_trim_duration_s:
             > 0 : stop after this many seconds after initialization
-            <=0 : run forever
+            <=0 : run whenever enabled
         */
-        bool tilt_trim_enabled = true;
-        R tilt_trim_duration_s = R(0);        // <=0 means continuous
-        R tilt_trim_tau_s = R(5.0);           // correction time constant
-        R tilt_trim_acc_lpf_tau_s = R(0.75);  // low-pass accel direction
-        R tilt_trim_max_rate_rad_s = R(0.08); // max body correction rate
-        R tilt_trim_gyro_max_rad_s = R(0.35);
-        R tilt_trim_acc_norm_tol_frac = R(0.30);
+        bool tilt_trim_enabled = false;
+        R tilt_trim_duration_s = R(0);
+        R tilt_trim_tau_s = R(12.0);
+        R tilt_trim_acc_lpf_tau_s = R(0.75);
+        R tilt_trim_max_rate_rad_s = R(0.025);
+        R tilt_trim_gyro_max_rad_s = R(0.08);
+        R tilt_trim_acc_norm_tol_frac = R(0.10);
 
         /*
-          Optional adapter-level roll/pitch gyro-bias learner for the tilt AHRS.
-          Keep z disabled when Mag=None.
+          Optional adapter-level roll/pitch gyro-bias learner for the tilt trim.
+          Default OFF for wave-time operation.
         */
-        bool tilt_bias_enabled = true;
-        R tilt_bias_ki = R(0.0008);
-        R tilt_bias_limit_rad_s = R(0.05);
+        bool tilt_bias_enabled = false;
+        R tilt_bias_ki = R(0);
+        R tilt_bias_limit_rad_s = R(0);
 
         /*
           If false, update() returns before initialized and outputs remain zero.
@@ -396,26 +387,24 @@ public:
             time_since_init_s_ += dt;
         }
 
-        /*
-          Feed adapter-level roll/pitch gyro bias into the NLO before update.
-          z remains untouched when yaw is unobservable.
-        */
         if (cfg_.tilt_bias_enabled) {
             Vec3 current = filter_.gyroBiasBody();
             current.x() = tilt_bias_b_.x();
             current.y() = tilt_bias_b_.y();
+
             if constexpr (Mag == NloMagType::None) {
                 current.z() = R(0);
             } else {
                 current.z() = tilt_bias_b_.z();
             }
+
             filter_.setGyroBiasBody(current);
         }
 
         filter_.update(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
 
         if (initialized_) {
-            applyContinuousTiltAhrs_(dt, gyro_b_rad_s, specific_force_b_mps2);
+            applyOptionalTiltTrim_(dt, gyro_b_rad_s, specific_force_b_mps2);
         }
 
         return initialized_;
@@ -530,14 +519,6 @@ private:
         if constexpr (WithGNSS) {
             aux_.gnss.valid = false;
         }
-    }
-
-    static R nan_() {
-        return std::numeric_limits<R>::quiet_NaN();
-    }
-
-    static Vec3 nanVec_() {
-        return Vec3::Constant(nan_());
     }
 
     static bool isFinite_(R x) {
@@ -685,10 +666,6 @@ private:
             time_since_init_s_ = R(0);
             have_down_lpf_ = false;
 
-            /*
-              Seed adapter tilt bias from the NLO state after initialization.
-              z remains zero in no-yaw-reference mode.
-            */
             tilt_bias_b_ = filter_.gyroBiasBody();
             if constexpr (Mag == NloMagType::None) {
                 tilt_bias_b_.z() = R(0);
@@ -698,9 +675,9 @@ private:
         return ok;
     }
 
-    void applyContinuousTiltAhrs_(R dt,
-                                  const Vec3& gyro_b_rad_s,
-                                  const Vec3& specific_force_b_mps2)
+    void applyOptionalTiltTrim_(R dt,
+                                const Vec3& gyro_b_rad_s,
+                                const Vec3& specific_force_b_mps2)
     {
         last_tilt_err_norm_ = R(0);
         last_tilt_correction_norm_ = R(0);
@@ -744,20 +721,9 @@ private:
         const Vec3 down_hat_b =
             (R_nb.transpose() * nedDown_()).normalized();
 
-        /*
-          Body-frame small-angle correction rotating predicted down toward
-          measured/filtered down.
-
-          For q_new = q * dq(delta_b), the correct direction is:
-              delta_b ~ down_meas_b x down_hat_b
-        */
         Vec3 err_b = down_lpf_b_.cross(down_hat_b);
 
         if constexpr (Mag == NloMagType::None) {
-            /*
-              This error is theoretically roll/pitch only because both vectors
-              are down vectors, but numerical contamination can occur.
-            */
             err_b.z() = R(0);
         }
 
@@ -769,11 +735,6 @@ private:
         last_tilt_err_norm_ = en;
 
         if (cfg_.tilt_bias_enabled) {
-            /*
-              Bias sign matches q update omega - b + correction.
-              If attitude correction wants positive body-rate, persistent
-              positive error means the estimated bias should move negative.
-            */
             tilt_bias_b_ += (-cfg_.tilt_bias_ki * dt) * err_b;
 
             if constexpr (Mag == NloMagType::None) {
