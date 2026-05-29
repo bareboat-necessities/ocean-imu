@@ -11,7 +11,9 @@ extern const float g_std = 9.80665f;
 
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <numbers>
+
 static bool g_w3d_any_gate_failed = false;
 
 ImuNoiseModel make_imu_noise_model(float sigma_white,
@@ -117,7 +119,66 @@ Vector3f apply_mag_noise(const Vector3f& ideal_mag_uT_body, MagNoiseModel& m, fl
     }
     Vector3f white(m.w_uT(m.rng), m.w_uT(m.rng), m.w_uT(m.rng));
     return (m.Mis * ideal_mag_uT_body) + (m.bias0_uT + m.bias_rw_uT) + white;
-    //return ideal_mag_uT_body;
+}
+
+static void write_tvg_nlo_csv_header(std::ofstream& ofs)
+{
+    ofs << ",tvg_k1"
+        << ",tvg_k2"
+        << ",tvg_kI"
+        << ",tvg_vartheta"
+        << ",tvg_p0z_hat"
+
+        << ",tvg_xi_n_x"
+        << ",tvg_xi_n_y"
+        << ",tvg_xi_n_z"
+        << ",tvg_xi_norm"
+
+        << ",tvg_fhat_n_x"
+        << ",tvg_fhat_n_y"
+        << ",tvg_fhat_n_z"
+        << ",tvg_fhat_norm"
+
+        << ",tvg_sigma_b_x"
+        << ",tvg_sigma_b_y"
+        << ",tvg_sigma_b_z"
+        << ",tvg_sigma_norm"
+
+        << ",tvg_gyro_bias_b_x"
+        << ",tvg_gyro_bias_b_y"
+        << ",tvg_gyro_bias_b_z"
+        << ",tvg_gyro_bias_norm";
+}
+
+static void write_tvg_nlo_csv_row(std::ofstream& ofs, const TvgNloFilterSnapshot& snap)
+{
+    const auto& d = snap.tvg;
+
+    ofs << "," << d.k1
+        << "," << d.k2
+        << "," << d.kI
+        << "," << d.vartheta
+        << "," << d.p0z_hat
+
+        << "," << d.xi_n.x()
+        << "," << d.xi_n.y()
+        << "," << d.xi_n.z()
+        << "," << d.xi_norm
+
+        << "," << d.fhat_n.x()
+        << "," << d.fhat_n.y()
+        << "," << d.fhat_n.z()
+        << "," << d.fhat_norm
+
+        << "," << d.sigma_b.x()
+        << "," << d.sigma_b.y()
+        << "," << d.sigma_b.z()
+        << "," << d.sigma_norm
+
+        << "," << d.gyro_bias_b.x()
+        << "," << d.gyro_bias_b.y()
+        << "," << d.gyro_bias_b.z()
+        << "," << d.gyro_bias_norm;
 }
 
 W3dSimulationRunner::W3dSimulationRunner(W3dSimulationOptions options,
@@ -130,6 +191,36 @@ W3dSimulationRunner::W3dSimulationRunner(W3dSimulationOptions options,
 }
 
 std::string W3dSimulationRunner::make_output_name(const std::string& filename) const
+{
+    std::string outname = filename;
+    auto pos_prefix = outname.find("wave_data_");
+    if (pos_prefix != std::string::npos) {
+        outname.replace(pos_prefix, std::string("wave_data_").size(), "w3d_");
+    } else {
+        outname = "w3d_" + outname;
+    }
+
+    auto pos_ext = outname.rfind(".csv");
+    const std::string& suffix = options_.with_mag ? options_.output_suffix_with_mag
+                                                  : options_.output_suffix_no_mag;
+    if (pos_ext != std::string::npos) {
+        outname.insert(pos_ext, suffix);
+    } else {
+        outname += suffix + std::string(".csv");
+    }
+    return outname;
+}
+
+TvgNloSimulationRunner::TvgNloSimulationRunner(W3dSimulationOptions options,
+                                               SimulationNoiseModels noise_models,
+                                               Adapter& fusion_adapter)
+    : options_(std::move(options)),
+      noise_models_(std::move(noise_models)),
+      fusion_adapter_(fusion_adapter)
+{
+}
+
+std::string TvgNloSimulationRunner::make_output_name(const std::string& filename) const
 {
     std::string outname = filename;
     auto pos_prefix = outname.find("wave_data_");
@@ -197,7 +288,10 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
 
     const Vector3f mag_world_zu = MagSim_WMM::mag_world_nautical();
 
-    const float mag_dt = 1.0f / options_.mag_odr_hz;
+    const float mag_dt = (options_.mag_odr_hz > 0.0f)
+        ? (1.0f / options_.mag_odr_hz)
+        : std::numeric_limits<float>::infinity();
+
     float mag_phase_s = 0.0f;
     Vector3f mag_body_ned_hold = Vector3f::Zero();
 
@@ -221,8 +315,6 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         float r_w = 0.0f, p_w = 0.0f, y_w = 0.0f;
         quat_wb_zu_to_euler_nautical(q_wb_zu, r_w, p_w, y_w);
         (void)imu;
-        // For reference CSV output, always use nautical world-frame Euler
-        // angles from q_wb_zu so yaw_ref is true heading in world frame.
         roll_deg = r_w;
         pitch_deg = p_w;
         yaw_deg = y_w;
@@ -248,48 +340,21 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         const Vector3f acc_meas_ned = zu_to_ned(acc_b);
         const Vector3f gyr_meas_ned = zu_to_ned(gyr_b);
 
-        // Reference attitude from CSV quaternion: q_wb_zu = world->body in Z-up.
         const Quaternionf q_ref_wb_zu = quat_from_csv(rec.imu);
         const Matrix3f C_wb_zu = q_ref_wb_zu.toRotationMatrix();
 
         float r_ref_out = 0.0f;
         float p_ref_out = 0.0f;
         float y_ref_out = 0.0f;
-        
+
         reference_euler_from_csv(rec.imu, q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
-        
-        // The CSV quaternion is true-world attitude.
-        // In IMU-only magnetic mode, the filter reports yaw relative to learned
-        // magnetic north, because MagAutoTuner defines the learned world frame as:
-        //
-        //   B_world = [horizontal_magnitude, 0, vertical_component]
-        //
-        // i.e. +X is magnetic north in NED.
-        //
-        // y_ref_out is produced by quat_wb_zu_to_euler_nautical() from a WORLD->BODY
-        // Z-up quaternion. With the current FrameConversions convention, flat yaw is
-        // reported with the inverse sign:
-        //
-        //   y_ref_out ≈ -heading_true
-        //
-        // The filter snapshot uses the same reported-yaw convention. After mag lock,
-        // the filter yaw is relative to magnetic north:
-        //
-        //   heading_mag = heading_true - declination
-        //
-        // Therefore in this reported-yaw convention:
-        //
-        //   reported_mag_yaw = -heading_mag
-        //                    = -(heading_true - declination)
-        //                    = -heading_true + declination
-        //                    = reported_true_yaw + declination
-        //
-        // East-positive declination is used by MagSim_WMM.
+
         if (options_.with_mag) {
             y_ref_out = wrapDeg(y_ref_out + MagSim_WMM::default_declination_deg);
-        }   
-      
+        }
+
         fusion_adapter_.update(options_.dt, gyr_meas_ned, acc_meas_ned, options_.temperature_c);
+
         if (options_.with_mag) {
             mag_phase_s += options_.dt;
             bool mag_tick = false;
@@ -312,6 +377,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
                 fusion_adapter_.updateMag(mag_body_ned_hold);
             }
         }
+
         const FilterSnapshot snap = fusion_adapter_.snapshot();
 
         Vector3f disp_ref(rec.wave.disp_x, rec.wave.disp_y, rec.wave.disp_z);
@@ -415,6 +481,251 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         result.final_freq_hz = snap.freq_hz;
         result.final_period_sec = snap.period_sec;
         result.final_accel_variance = snap.accel_variance;
+    });
+
+    ofs.close();
+    std::cout << "Wrote " << result.output_name << "\n";
+    return result;
+}
+
+std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::string& filename)
+{
+    auto parsed = WaveFileNaming::parse_to_params(filename);
+    if (!parsed) return std::nullopt;
+
+    auto [kind, type, wp] = *parsed;
+    if (kind != FileKind::Data) return std::nullopt;
+    if (!(type == WaveType::JONSWAP || type == WaveType::PMSTOKES)) return std::nullopt;
+
+    TvgNloSimulationRunResult result;
+    result.input_name = filename;
+    result.output_name = make_output_name(filename);
+    result.wave_type = type;
+    result.wave_params = wp;
+    result.with_mag = options_.with_mag;
+
+    std::cout << "Processing " << filename << " (type="
+              << EnumTraits<WaveType>::to_string(type)
+              << ")\n";
+
+    std::ofstream ofs(result.output_name);
+    ofs << "time,roll_ref,pitch_ref,yaw_ref,"
+        << "disp_ref_x,disp_ref_y,disp_ref_z,"
+        << "vel_ref_x,vel_ref_y,vel_ref_z,"
+        << "acc_ref_x,acc_ref_y,acc_ref_z,"
+        << "roll_est,pitch_est,yaw_est,"
+        << "disp_est_x,disp_est_y,disp_est_z,"
+        << "vel_est_x,vel_est_y,vel_est_z,"
+        << "acc_est_x,acc_est_y,acc_est_z,"
+        << "acc_bias_x,acc_bias_y,acc_bias_z,"
+        << "gyro_bias_x,gyro_bias_y,gyro_bias_z,"
+        << "acc_bias_est_x,acc_bias_est_y,acc_bias_est_z,"
+        << "gyro_bias_est_x,gyro_bias_est_y,gyro_bias_est_z,"
+        << "mag_bias_x,mag_bias_y,mag_bias_z,"
+        << "mag_bias_est_x,mag_bias_est_y,mag_bias_est_z,"
+        << "mag_bias_err_x,mag_bias_err_y,mag_bias_err_z,"
+        << "dir_phase,"
+        << "dir_deg,dir_uncert_deg,dir_conf,dir_amp,"
+        << "dir_sign,dir_sign_num,"
+        << "dir_vec_x,dir_vec_y,"
+        << "dfilt_ax,dfilt_ay";
+
+    write_tvg_nlo_csv_header(ofs);
+    ofs << "\n";
+
+    const Vector3f mag_world_zu = MagSim_WMM::mag_world_nautical();
+
+    const float mag_dt = (options_.mag_odr_hz > 0.0f)
+        ? (1.0f / options_.mag_odr_hz)
+        : std::numeric_limits<float>::infinity();
+
+    float mag_phase_s = 0.0f;
+    Vector3f mag_body_ned_hold = Vector3f::Zero();
+
+    auto quat_from_csv = [](const IMU_Sample& imu) -> Quaternionf {
+        Quaternionf q(imu.q_wb_zu_w, imu.q_wb_zu_x, imu.q_wb_zu_y, imu.q_wb_zu_z);
+        const bool finite =
+            std::isfinite(q.w()) && std::isfinite(q.x()) &&
+            std::isfinite(q.y()) && std::isfinite(q.z());
+        if (!finite || q.norm() < 1e-6f) {
+            return Quaternionf::Identity();
+        }
+        q.normalize();
+        return q;
+    };
+
+    auto reference_euler_from_csv = [&](const IMU_Sample& imu,
+                                        const Quaternionf& q_wb_zu,
+                                        float& roll_deg,
+                                        float& pitch_deg,
+                                        float& yaw_deg) {
+        float r_w = 0.0f, p_w = 0.0f, y_w = 0.0f;
+        quat_wb_zu_to_euler_nautical(q_wb_zu, r_w, p_w, y_w);
+        (void)imu;
+        roll_deg = r_w;
+        pitch_deg = p_w;
+        yaw_deg = y_w;
+    };
+
+    WaveDataCSVReader reader(filename);
+    reader.for_each_record([&](const Wave_Data_Sample& rec) {
+        Vector3f acc_b(rec.imu.acc_bx, rec.imu.acc_by, rec.imu.acc_bz);
+        Vector3f gyr_b(rec.imu.gyro_x, rec.imu.gyro_y, rec.imu.gyro_z);
+
+        if (options_.add_noise) {
+            if (noise_models_.accel_noise) {
+                acc_b = apply_imu_noise(acc_b, *noise_models_.accel_noise, options_.dt);
+            }
+            if (noise_models_.gyro_noise) {
+                gyr_b = apply_imu_noise(gyr_b, *noise_models_.gyro_noise, options_.dt);
+            }
+            for (auto& model : noise_models_.extra_imu_noise_models) {
+                model(acc_b, gyr_b, options_.dt);
+            }
+        }
+
+        const Vector3f acc_meas_ned = zu_to_ned(acc_b);
+        const Vector3f gyr_meas_ned = zu_to_ned(gyr_b);
+
+        const Quaternionf q_ref_wb_zu = quat_from_csv(rec.imu);
+        const Matrix3f C_wb_zu = q_ref_wb_zu.toRotationMatrix();
+
+        float r_ref_out = 0.0f;
+        float p_ref_out = 0.0f;
+        float y_ref_out = 0.0f;
+
+        reference_euler_from_csv(rec.imu, q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
+
+        if (options_.with_mag) {
+            y_ref_out = wrapDeg(y_ref_out + MagSim_WMM::default_declination_deg);
+        }
+
+        fusion_adapter_.update(options_.dt, gyr_meas_ned, acc_meas_ned, options_.temperature_c);
+
+        if (options_.with_mag) {
+            mag_phase_s += options_.dt;
+            bool mag_tick = false;
+            if (mag_phase_s >= mag_dt) {
+                while (mag_phase_s >= mag_dt) mag_phase_s -= mag_dt;
+                mag_tick = true;
+            }
+            if (mag_tick) {
+                Vector3f mag_b_enu = C_wb_zu * mag_world_zu;
+
+                if (options_.add_noise && noise_models_.mag_noise) {
+                    mag_b_enu = apply_mag_noise(mag_b_enu, *noise_models_.mag_noise, mag_dt);
+                }
+                if (options_.add_noise) {
+                    for (auto& model : noise_models_.extra_mag_noise_models) {
+                        model(mag_b_enu, mag_dt);
+                    }
+                }
+                mag_body_ned_hold = zu_to_ned(mag_b_enu);
+                fusion_adapter_.updateMag(mag_body_ned_hold);
+            }
+        }
+
+        const TvgNloFilterSnapshot snap = fusion_adapter_.snapshot();
+
+        result.snapshots.push_back(snap);
+        result.final_snapshot = snap;
+
+        Vector3f disp_ref(rec.wave.disp_x, rec.wave.disp_y, rec.wave.disp_z);
+        Vector3f vel_ref(rec.wave.vel_x, rec.wave.vel_y, rec.wave.vel_z);
+        Vector3f acc_ref(rec.wave.acc_x, rec.wave.acc_y, rec.wave.acc_z);
+
+        Vector3f disp_err = snap.disp_est_zu - disp_ref;
+        result.errs_x.push_back(disp_err.x());
+        result.errs_y.push_back(disp_err.y());
+        result.errs_z.push_back(disp_err.z());
+        result.ref_x.push_back(disp_ref.x());
+        result.ref_y.push_back(disp_ref.y());
+        result.ref_z.push_back(disp_ref.z());
+        result.errs_roll.push_back(diffDeg(snap.euler_nautical_deg.x(), r_ref_out));
+        result.errs_pitch.push_back(diffDeg(snap.euler_nautical_deg.y(), p_ref_out));
+        result.errs_yaw.push_back(diffDeg(snap.euler_nautical_deg.z(), y_ref_out));
+
+        const Vector3f acc_bias_true_zu = (options_.add_noise && noise_models_.accel_noise)
+            ? (noise_models_.accel_noise->bias0 + noise_models_.accel_noise->bias_rw).eval()
+            : Vector3f::Zero().eval();
+        const Vector3f gyro_bias_true_zu = (options_.add_noise && noise_models_.gyro_noise)
+            ? (noise_models_.gyro_noise->bias0 + noise_models_.gyro_noise->bias_rw).eval()
+            : Vector3f::Zero().eval();
+        const Vector3f acc_bias_true_ned = zu_to_ned(acc_bias_true_zu);
+        const Vector3f gyro_bias_true_ned = zu_to_ned(gyro_bias_true_zu);
+
+        const Vector3f acc_bias_err = snap.acc_bias_est_ned - acc_bias_true_ned;
+        const Vector3f gyro_bias_err = snap.gyro_bias_est_ned - gyro_bias_true_ned;
+
+        const Vector3f mag_bias_true_zu = (options_.add_noise && options_.with_mag && noise_models_.mag_noise)
+            ? (noise_models_.mag_noise->bias0_uT + noise_models_.mag_noise->bias_rw_uT).eval()
+            : Vector3f::Zero().eval();
+        const Vector3f mag_bias_true_ned = zu_to_ned(mag_bias_true_zu);
+        const Vector3f mag_bias_err = snap.mag_bias_est_ned_uT - mag_bias_true_ned;
+
+        result.accb_err_x.push_back(acc_bias_err.x());
+        result.accb_err_y.push_back(acc_bias_err.y());
+        result.accb_err_z.push_back(acc_bias_err.z());
+        result.gyrb_err_x.push_back(gyro_bias_err.x());
+        result.gyrb_err_y.push_back(gyro_bias_err.y());
+        result.gyrb_err_z.push_back(gyro_bias_err.z());
+        result.magb_err_x.push_back(mag_bias_err.x());
+        result.magb_err_y.push_back(mag_bias_err.y());
+        result.magb_err_z.push_back(mag_bias_err.z());
+
+        result.accb_true_x.push_back(acc_bias_true_ned.x());
+        result.accb_true_y.push_back(acc_bias_true_ned.y());
+        result.accb_true_z.push_back(acc_bias_true_ned.z());
+        result.gyrb_true_x.push_back(gyro_bias_true_ned.x());
+        result.gyrb_true_y.push_back(gyro_bias_true_ned.y());
+        result.gyrb_true_z.push_back(gyro_bias_true_ned.z());
+        result.magb_true_x.push_back(mag_bias_true_ned.x());
+        result.magb_true_y.push_back(mag_bias_true_ned.y());
+        result.magb_true_z.push_back(mag_bias_true_ned.z());
+
+        result.freq_hist.push_back(NAN);
+        result.dir_phase_hist.push_back(snap.direction.phase);
+        result.dir_deg_hist.push_back(snap.direction.direction_deg_generator_signed);
+        result.dir_unc_hist.push_back(snap.direction.uncertainty_deg);
+        result.dir_conf_hist.push_back(snap.direction.confidence);
+        result.dir_amp_hist.push_back(snap.direction.amplitude);
+        result.dir_sign_num_hist.push_back(snap.direction.sign_num);
+
+        ofs << rec.time << ","
+            << r_ref_out << "," << p_ref_out << "," << y_ref_out << ","
+            << disp_ref.x() << "," << disp_ref.y() << "," << disp_ref.z() << ","
+            << vel_ref.x() << "," << vel_ref.y() << "," << vel_ref.z() << ","
+            << acc_ref.x() << "," << acc_ref.y() << "," << acc_ref.z() << ","
+            << snap.euler_nautical_deg.x() << "," << snap.euler_nautical_deg.y() << "," << snap.euler_nautical_deg.z() << ","
+            << snap.disp_est_zu.x() << "," << snap.disp_est_zu.y() << "," << snap.disp_est_zu.z() << ","
+            << snap.vel_est_zu.x() << "," << snap.vel_est_zu.y() << "," << snap.vel_est_zu.z() << ","
+            << snap.acc_est_zu.x() << "," << snap.acc_est_zu.y() << "," << snap.acc_est_zu.z() << ","
+            << acc_bias_true_ned.x() << "," << acc_bias_true_ned.y() << "," << acc_bias_true_ned.z() << ","
+            << gyro_bias_true_ned.x() << "," << gyro_bias_true_ned.y() << "," << gyro_bias_true_ned.z() << ","
+            << snap.acc_bias_est_ned.x() << "," << snap.acc_bias_est_ned.y() << "," << snap.acc_bias_est_ned.z() << ","
+            << snap.gyro_bias_est_ned.x() << "," << snap.gyro_bias_est_ned.y() << "," << snap.gyro_bias_est_ned.z() << ","
+            << mag_bias_true_ned.x() << "," << mag_bias_true_ned.y() << "," << mag_bias_true_ned.z() << ","
+            << snap.mag_bias_est_ned_uT.x() << "," << snap.mag_bias_est_ned_uT.y() << "," << snap.mag_bias_est_ned_uT.z() << ","
+            << mag_bias_err.x() << "," << mag_bias_err.y() << "," << mag_bias_err.z() << ","
+            << snap.direction.phase << "," << snap.direction.direction_deg << "," << snap.direction.uncertainty_deg << ","
+            << snap.direction.confidence << "," << snap.direction.amplitude << ","
+            << (snap.direction.sign == FORWARD ? "TOWARD" : snap.direction.sign == BACKWARD ? "AWAY" : "UNCERTAIN") << ","
+            << snap.direction.sign_num << ","
+            << snap.direction.direction_vec.x() << "," << snap.direction.direction_vec.y() << ","
+            << snap.direction.filtered_signal.x() << "," << snap.direction.filtered_signal.y();
+
+        write_tvg_nlo_csv_row(ofs, snap);
+        ofs << "\n";
+
+        result.final_tau_target = NAN;
+        result.final_sigma_target = NAN;
+        result.final_tuning_target = NAN;
+        result.final_tau_applied = NAN;
+        result.final_sigma_applied = NAN;
+        result.final_tuning_applied = NAN;
+        result.final_freq_hz = NAN;
+        result.final_period_sec = NAN;
+        result.final_accel_variance = NAN;
     });
 
     ofs.close();
@@ -530,6 +841,7 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
               << " |3D|=" << accb_r3 << "\n";
     std::cout << "Bias error RMS (gyro, rad/s): X=" << gyrb_rx << " Y=" << gyrb_ry << " Z=" << gyrb_rz
               << " |3D|=" << gyrb_r3 << "\n";
+
     const float rad2deg = 180.0f / float(std::numbers::pi_v<float>);
     std::cout << "Bias error RMS (gyro, deg/s): X=" << (gyrb_rx * rad2deg)
               << " Y=" << (gyrb_ry * rad2deg)
