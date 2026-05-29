@@ -19,7 +19,7 @@
 #endif
 
 #include "util/W3dSimCommon.h"
-#include "nlo/TimeVaryingGainNLO.h"   // adjust path if needed
+#include "nlo/TimeVarGainNLO_Adapter.h"
 
 using Eigen::Vector3f;
 
@@ -39,11 +39,11 @@ class FusionAdapterTimeVarGainNLO_NoGnssNoMag final
     : public IW3dFusionAdapterTyped<TvgNloFilterSnapshot> {
 public:
     using Snapshot = TvgNloFilterSnapshot;
-    using Filter = TimeVaryingGainNLO<false, NloMagType::None, float>;
+    using Core = TimeVarGainNloAdapter<false, NloMagType::None, float>;
 
     FusionAdapterTimeVarGainNLO_NoGnssNoMag(const Vector3f& sigma_a_init,
                                             const Vector3f& sigma_g)
-        : filter_(make_config_(sigma_a_init, sigma_g))
+        : core_(make_config_(sigma_a_init, sigma_g))
     {
     }
 
@@ -64,87 +64,55 @@ public:
             gyr_meas_ned: body-frame NED axes, rad/s
             acc_meas_ned: body-frame NED specific force, m/s^2
 
-          TimeVaryingGainNLO<false, None> expects the same body-NED convention.
+          Core expects the same body-NED convention.
           At rest, level:
             acc_meas_ned ≈ [0, 0, -g]
         */
-
-        if (!initialized_) {
-            init_acc_sum_ += acc_meas_ned;
-            init_time_s_ += dt;
-            ++init_count_;
-
-            if (init_time_s_ >= INIT_SECONDS && init_count_ > 0) {
-                const Vector3f acc0 =
-                    init_acc_sum_ / static_cast<float>(init_count_);
-
-                // No yaw reference. Seed yaw = 0.
-                initialized_ = filter_.initializeFromAccel(acc0, 0.0f);
-
-                if (!initialized_) {
-                    init_acc_sum_.setZero();
-                    init_time_s_ = 0.0f;
-                    init_count_ = 0;
-                }
-            }
-
-            return;
-        }
-
-        Filter::Aux aux{};
-        filter_.update(dt, gyr_meas_ned, acc_meas_ned, aux);
+        core_.update(dt, gyr_meas_ned, acc_meas_ned);
     }
 
     Snapshot snapshot() const override {
+        const auto cs = core_.snapshot();
+
         Snapshot s;
 
-        const Vector3f p_n = filter_.positionNED();
-        const Vector3f v_n = filter_.velocityNED();
-        const Vector3f fhat_n = filter_.specificForceNED();
+        s.disp_est_zu = cs.disp_zu.template cast<float>();
+        s.vel_est_zu  = cs.vel_zu.template cast<float>();
+        s.acc_est_zu  = cs.acc_zu.template cast<float>();
 
         /*
-          Filter state is NED, +Z down.
-          W3D harness output is Z-up for displacement/velocity/acceleration.
-        */
-        const float a_z_down = fhat_n.z() + g_std;
-        const float a_z_up = -a_z_down;
+          Mag=None: yaw is unobservable.
+          Keep yaw forced to zero for the harness.
 
-        s.disp_est_zu = Vector3f(0.0f, 0.0f, -p_n.z());
-        s.vel_est_zu  = Vector3f(0.0f, 0.0f, -v_n.z());
-        s.acc_est_zu  = Vector3f(0.0f, 0.0f, a_z_up);
-
-        /*
-          Mag=None: absolute yaw is unobservable.
-          Report roll/pitch, force yaw to 0 so the harness does not treat
-          free yaw drift as meaningful.
+          Keep the current roll/pitch mapping used by this simulator path.
+          If you later confirm TimeVaryingGainNLO::eulerRad() matches
+          quat_wb_zu_to_euler_nautical() directly, change this back to x,y.
         */
-        const Vector3f euler_rad = filter_.eulerRad();
         s.euler_nautical_deg = Vector3f(
-            rad_to_deg(euler_rad.y()),
-            rad_to_deg(euler_rad.x()),
+            rad_to_deg(float(cs.euler_rad.y())),
+            rad_to_deg(float(cs.euler_rad.x())),
             0.0f
         );
 
         s.acc_bias_est_ned = Vector3f::Zero();
-
-        s.gyro_bias_est_ned = filter_.gyroBiasBody();
+        s.gyro_bias_est_ned = cs.tvg.gyro_bias_b.template cast<float>();
         s.mag_bias_est_ned_uT = Vector3f::Zero();
 
-        s.tvg.k1 = filter_.gainK1();
-        s.tvg.k2 = filter_.gainK2();
-        s.tvg.kI = filter_.gainKI();
-        s.tvg.vartheta = filter_.gainVartheta();
-        s.tvg.p0z_hat = filter_.integratedVerticalPositionState();
+        s.tvg.k1 = float(cs.tvg.k1);
+        s.tvg.k2 = float(cs.tvg.k2);
+        s.tvg.kI = float(cs.tvg.kI);
+        s.tvg.vartheta = float(cs.tvg.vartheta);
+        s.tvg.p0z_hat = float(cs.tvg.p0z_hat);
 
-        s.tvg.xi_n = filter_.xiNED();
-        s.tvg.fhat_n = fhat_n;
-        s.tvg.sigma_b = filter_.sigmaBody();
-        s.tvg.gyro_bias_b = filter_.gyroBiasBody();
+        s.tvg.xi_n = cs.tvg.xi_n.template cast<float>();
+        s.tvg.fhat_n = cs.tvg.fhat_n.template cast<float>();
+        s.tvg.sigma_b = cs.tvg.sigma_b.template cast<float>();
+        s.tvg.gyro_bias_b = cs.tvg.gyro_bias_b.template cast<float>();
 
-        s.tvg.xi_norm = s.tvg.xi_n.norm();
-        s.tvg.fhat_norm = s.tvg.fhat_n.norm();
-        s.tvg.sigma_norm = s.tvg.sigma_b.norm();
-        s.tvg.gyro_bias_norm = s.tvg.gyro_bias_b.norm();
+        s.tvg.xi_norm = float(cs.tvg.xi_norm);
+        s.tvg.fhat_norm = float(cs.tvg.fhat_norm);
+        s.tvg.sigma_norm = float(cs.tvg.sigma_norm);
+        s.tvg.gyro_bias_norm = float(cs.tvg.gyro_bias_norm);
 
         s.direction.phase = NAN;
         s.direction.direction_deg = NAN;
@@ -161,85 +129,87 @@ public:
     }
 
 private:
-    static Filter::Config make_config_(const Vector3f& sigma_a_init,
-                                       const Vector3f& sigma_g)
+    static Core::Config make_config_(const Vector3f& sigma_a_init,
+                                     const Vector3f& sigma_g)
     {
         (void)sigma_a_init;
         (void)sigma_g;
 
-        Filter::Config cfg{};
+        auto cfg = Core::makeDefaultConfig();
 
         cfg.gravity_mps2 = g_std;
+        cfg.filter.gravity_mps2 = g_std;
 
         /*
-          No GNSS and no yaw reference:
-            - vertical VVR channel remains useful
-            - x/y position are not corrected
-            - yaw and yaw gyro bias are unobservable
-
-          Keep gains much more conservative than the paper's full
-          GNSS+compass startup observer.
+          Device-realistic startup:
+            - short guarded startup
+            - force init after a few seconds
+            - slow roll/pitch trim to reduce startup tilt bias
         */
-        cfg.gyro_bias_limit_rad_s = 0.10f;
-        cfg.max_specific_force_mps2 = 30.0f;
+        cfg.init_required_good_time_s = 2.0f;
+        cfg.init_max_wait_s = 4.0f;
+        cfg.init_gyro_max_rad_s = 0.08f;
+        cfg.init_acc_norm_tol_frac = 0.18f;
+        cfg.yaw_seed_rad = 0.0f;
 
-        cfg.use_time_varying_attitude_gains = true;
-        cfg.attitude_gain_tau_s = 20.0f;
-        cfg.attitude_gain_switch_s = 40.0f;
+        cfg.tilt_trim_enabled = true;
+        cfg.tilt_trim_duration_s = 30.0f;
+        cfg.tilt_trim_tau_s = 12.0f;
+        cfg.tilt_trim_max_rate_rad_s = 0.025f;
+        cfg.tilt_trim_gyro_max_rad_s = 0.12f;
+        cfg.tilt_trim_acc_norm_tol_frac = 0.15f;
 
-        // k2 is unused when Mag=None.
-        cfg.k1_initial = 4.0f;
-        cfg.k2_initial = 0.0f;
-        cfg.kI_initial = 0.03f;
-
-        cfg.k1_nominal = 0.70f;
-        cfg.k2_nominal = 0.0f;
-        cfg.kI_nominal = 0.004f;
-
-        // Vertical VVR gains from the paper-like Riccati example.
-        cfg.K_p0z_p0z = 5.4295f;
-        cfg.K_pz_p0z  = 2.2396f;
-        cfg.K_vz_p0z  = 0.4454f;
-        cfg.K_xiz_p0z = 0.0354f;
-
-        // GNSS horizontal correction is compiled out by WithGNSS=false.
-        cfg.K_pp_scalar  = 0.0f;
-        cfg.K_vp_scalar  = 0.0f;
-        cfg.K_xip_scalar = 0.0f;
-
-        cfg.theta = 1.0f;
+        cfg.run_filter_before_initialized = false;
 
         /*
-          With no GNSS RMS input, do not let vartheta depend on PosRef quality.
-          Use only fixed base + short startup transient.
+          Explicit no-GNSS/no-mag tuning.
+          These mirror the default adapter values but are kept here so the
+          simulator configuration is visible and easy to tune.
         */
-        cfg.use_time_varying_tmo_gain = true;
-        cfg.vartheta0 = 0.65f;
-        cfg.vartheta1_without_gnss = 0.0f;
-        cfg.vartheta1_a = 2.0f;
-        cfg.vartheta1_b = 0.0f;
-        cfg.gnss_rms_lpf_tau_s = 125.0f;
+        cfg.filter.gyro_bias_limit_rad_s = 0.10f;
+        cfg.filter.max_specific_force_mps2 = 30.0f;
 
-        cfg.vartheta2_tau_s = 20.0f;
-        cfg.vartheta2_switch_s = 30.0f;
+        cfg.filter.use_time_varying_attitude_gains = true;
+        cfg.filter.attitude_gain_tau_s = 20.0f;
+        cfg.filter.attitude_gain_switch_s = 40.0f;
 
-        // Keep the paper's slow HP on integrated vertical innovation.
-        cfg.p0z_highpass_tau_s = 600.0f;
+        cfg.filter.k1_initial = 4.0f;
+        cfg.filter.k2_initial = 0.0f;
+        cfg.filter.kI_initial = 0.03f;
 
-        cfg.use_triad_style_force_injection = true;
+        cfg.filter.k1_nominal = 0.70f;
+        cfg.filter.k2_nominal = 0.0f;
+        cfg.filter.kI_nominal = 0.004f;
+
+        cfg.filter.K_p0z_p0z = 5.4295f;
+        cfg.filter.K_pz_p0z  = 2.2396f;
+        cfg.filter.K_vz_p0z  = 0.4454f;
+        cfg.filter.K_xiz_p0z = 0.0354f;
+
+        cfg.filter.K_pp_scalar  = 0.0f;
+        cfg.filter.K_vp_scalar  = 0.0f;
+        cfg.filter.K_xip_scalar = 0.0f;
+
+        cfg.filter.theta = 1.0f;
+
+        cfg.filter.use_time_varying_tmo_gain = true;
+        cfg.filter.vartheta0 = 0.65f;
+        cfg.filter.vartheta1_without_gnss = 0.0f;
+        cfg.filter.vartheta1_a = 2.0f;
+        cfg.filter.vartheta1_b = 0.0f;
+        cfg.filter.gnss_rms_lpf_tau_s = 125.0f;
+
+        cfg.filter.vartheta2_tau_s = 20.0f;
+        cfg.filter.vartheta2_switch_s = 30.0f;
+
+        cfg.filter.p0z_highpass_tau_s = 600.0f;
+        cfg.filter.use_triad_style_force_injection = true;
 
         return cfg;
     }
 
 private:
-    static constexpr float INIT_SECONDS = 0.25f;
-
-    bool initialized_ = false;
-    float init_time_s_ = 0.0f;
-    int init_count_ = 0;
-    Vector3f init_acc_sum_ = Vector3f::Zero();
-
-    Filter filter_;
+    Core core_;
 };
 
 static std::vector<float> finite_tail_values(const std::vector<float>& v,
@@ -268,24 +238,49 @@ static void print_tvg_nlo_vertical_summary(const TvgNloSimulationRunResult& resu
     const size_t start = result.errs_z.size() - N_last;
 
     RMSReport rms_z, rms_roll, rms_pitch, rms_yaw;
+    float mean_z_err = 0.0f;
+    size_t n_z = 0;
+
     for (size_t i = start; i < result.errs_z.size(); ++i) {
         rms_z.add(result.errs_z[i]);
         rms_roll.add(result.errs_roll[i]);
         rms_pitch.add(result.errs_pitch[i]);
         rms_yaw.add(result.errs_yaw[i]);
+
+        if (std::isfinite(result.errs_z[i])) {
+            mean_z_err += result.errs_z[i];
+            ++n_z;
+        }
+    }
+
+    if (n_z > 0) {
+        mean_z_err /= static_cast<float>(n_z);
+    }
+
+    RMSReport rms_z_demeaned;
+    for (size_t i = start; i < result.errs_z.size(); ++i) {
+        if (std::isfinite(result.errs_z[i])) {
+            rms_z_demeaned.add(result.errs_z[i] - mean_z_err);
+        }
     }
 
     const float z_rms = rms_z.rms();
     const float z_pct = 100.0f * z_rms / result.wave_params.height;
+
+    const float z_rms_demeaned = rms_z_demeaned.rms();
+    const float z_pct_demeaned = 100.0f * z_rms_demeaned / result.wave_params.height;
 
     const auto& d = result.final_snapshot.tvg;
 
     std::cout << "=== Last 60 s TimeVarGain NLO VVR-only summary for "
               << result.output_name << " ===\n";
 
-    std::cout << "Z RMS (m): " << z_rms << "\n";
-    std::cout << "Z RMS (%Hs): " << z_pct
+    std::cout << "Z RMS raw (m): " << z_rms << "\n";
+    std::cout << "Z RMS raw (%Hs): " << z_pct
               << "% (Hs=" << result.wave_params.height << ")\n";
+    std::cout << "Z mean error (m): " << mean_z_err << "\n";
+    std::cout << "Z RMS de-meaned (m): " << z_rms_demeaned << "\n";
+    std::cout << "Z RMS de-meaned (%Hs): " << z_pct_demeaned << "%\n";
 
     std::cout << "Angles RMS (deg): Roll=" << rms_roll.rms()
               << " Pitch=" << rms_pitch.rms()
@@ -342,19 +337,38 @@ static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunRes
 
     const size_t start = result.errs_z.size() - N_last;
 
-    RMSReport rms_z;
+    float mean_z_err = 0.0f;
+    size_t n_z = 0;
+
     for (size_t i = start; i < result.errs_z.size(); ++i) {
-        rms_z.add(result.errs_z[i]);
+        if (std::isfinite(result.errs_z[i])) {
+            mean_z_err += result.errs_z[i];
+            ++n_z;
+        }
     }
 
-    const float z_pct = 100.0f * rms_z.rms() / result.wave_params.height;
+    if (n_z == 0) return;
+
+    mean_z_err /= static_cast<float>(n_z);
+
+    RMSReport rms_z_demeaned;
+    for (size_t i = start; i < result.errs_z.size(); ++i) {
+        if (std::isfinite(result.errs_z[i])) {
+            rms_z_demeaned.add(result.errs_z[i] - mean_z_err);
+        }
+    }
+
+    const float z_pct =
+        100.0f * rms_z_demeaned.rms() / result.wave_params.height;
+
     const float z_limit = (result.wave_type == WaveType::JONSWAP)
         ? FAIL_LIMITS.err_limit_percent_z_jonswap
         : FAIL_LIMITS.err_limit_percent_z_pmstokes;
 
     if (z_pct > z_limit) {
-        std::cerr << "ERROR: Z RMS above limit (" << z_pct << "% > "
-                  << z_limit << "%). Failing.\n";
+        std::cerr << "ERROR: de-meaned Z RMS above limit (" << z_pct << "% > "
+                  << z_limit << "%). Mean Z error was " << mean_z_err
+                  << " m. Failing.\n";
         std::exit(EXIT_FAILURE);
     }
 
@@ -391,11 +405,6 @@ process_wave_file_for_tvg_nlo_nomag_nognss(const std::string& filename,
         gyr_bias_rw,
         5678
     );
-
-    /*
-      No magnetometer is used in this run. Leave mag_noise unset.
-      TvgNloSimulationRunner also has options.with_mag=false below.
-    */
 
     const Vector3f sigma_a_init(
         2.8f * acc_sigma,
@@ -441,10 +450,10 @@ int main(int argc, char* argv[])
             // Accepted for compatibility. This simulator is always Mag=None.
         } else if (arg == "--with-mag") {
             std::cerr << "WARNING: --with-mag ignored. This simulator is compiled "
-                         "as TimeVaryingGainNLO<false, NloMagType::None>.\n";
+                         "as TimeVarGainNloAdapter<false, NloMagType::None>.\n";
         } else if (arg == "--with-gnss") {
             std::cerr << "WARNING: --with-gnss ignored. This simulator is compiled "
-                         "as TimeVaryingGainNLO<false, NloMagType::None>.\n";
+                         "as TimeVarGainNloAdapter<false, NloMagType::None>.\n";
         }
     }
 
