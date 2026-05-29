@@ -22,7 +22,7 @@ INS Filters:
 
 - [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/pii_observer-model.pdf)
 
-- [Non-Linear Observer (NLO)] (https://torarnj.folk.ntnu.no/TimeVarGain.pdf)
+- [Non-Linear Observer NLO](https://torarnj.folk.ntnu.no/TimeVarGain.pdf)
 
 Frequency tracking:
 
