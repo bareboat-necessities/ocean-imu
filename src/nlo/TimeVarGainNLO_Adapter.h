@@ -5,6 +5,18 @@
 
   Reusable adapter for TimeVaryingGainNLO.
 
+  Important design note:
+    TimeVaryingGainNLO<false, NloMagType::None> is NOT a fully observable
+    attitude observer. Without GNSS/PosRef and without yaw aid, the NLO
+    force-feedback term can self-cancel:
+        fhat_n ~= R_nb * f_b
+        sigma  ~= f_b x R_nb^T fhat_n ~= 0
+    so attitude is mostly gyro propagation.
+
+  This adapter therefore includes a continuous roll/pitch-only tilt AHRS
+  correction. It keeps yaw free/unobservable when Mag=None, but prevents
+  persistent roll/pitch startup offsets on real devices and in the simulator.
+
   Clients choose compile-time options:
       TimeVarGainNloAdapter<false, NloMagType::None, float>
       TimeVarGainNloAdapter<false, NloMagType::Magnetometer, float>
@@ -79,6 +91,10 @@ public:
         R fhat_norm = nan_();
         R sigma_norm = nan_();
         R gyro_bias_norm = nan_();
+
+        R tilt_err_norm = nan_();
+        R tilt_correction_norm = nan_();
+        R tilt_down_lpf_valid = R(0);
     };
 
     struct Snapshot {
@@ -125,17 +141,30 @@ public:
         R yaw_seed_rad = R(0);
 
         /*
-          Slow roll/pitch-only trim:
-            - does not correct yaw
-            - active only for a limited time after init
-            - uses accelerometer only when norm and gyro are reasonable
+          Continuous roll/pitch tilt AHRS correction.
+
+          This is intentionally not only a startup trim. For WithGNSS=false and
+          Mag=None, NLO attitude feedback is not observable enough by itself.
+
+          tilt_trim_duration_s:
+            > 0 : stop after this many seconds after initialization
+            <=0 : run forever
         */
         bool tilt_trim_enabled = true;
-        R tilt_trim_duration_s = R(30.0);
-        R tilt_trim_tau_s = R(12.0);
-        R tilt_trim_max_rate_rad_s = R(0.025);
-        R tilt_trim_gyro_max_rad_s = R(0.12);
-        R tilt_trim_acc_norm_tol_frac = R(0.15);
+        R tilt_trim_duration_s = R(0);        // <=0 means continuous
+        R tilt_trim_tau_s = R(5.0);           // correction time constant
+        R tilt_trim_acc_lpf_tau_s = R(0.75);  // low-pass accel direction
+        R tilt_trim_max_rate_rad_s = R(0.08); // max body correction rate
+        R tilt_trim_gyro_max_rad_s = R(0.35);
+        R tilt_trim_acc_norm_tol_frac = R(0.30);
+
+        /*
+          Optional adapter-level roll/pitch gyro-bias learner for the tilt AHRS.
+          Keep z disabled when Mag=None.
+        */
+        bool tilt_bias_enabled = true;
+        R tilt_bias_ki = R(0.0008);
+        R tilt_bias_limit_rad_s = R(0.05);
 
         /*
           If false, update() returns before initialized and outputs remain zero.
@@ -230,6 +259,13 @@ public:
         init_all_acc_sum_.setZero();
         init_good_mag_sum_.setZero();
         init_all_mag_sum_.setZero();
+
+        down_lpf_b_.setZero();
+        have_down_lpf_ = false;
+
+        tilt_bias_b_.setZero();
+        last_tilt_err_norm_ = R(0);
+        last_tilt_correction_norm_ = R(0);
     }
 
     bool initialized() const { return initialized_; }
@@ -237,6 +273,7 @@ public:
     bool warming() const {
         return !initialized_ ||
                (cfg_.tilt_trim_enabled &&
+                cfg_.tilt_trim_duration_s > R(0) &&
                 time_since_init_s_ < cfg_.tilt_trim_duration_s);
     }
 
@@ -310,12 +347,17 @@ public:
 
     void setGyroBiasBody(const Vec3& bias_rad_s) {
         filter_.setGyroBiasBody(bias_rad_s);
+        tilt_bias_b_ = bias_rad_s;
+        if constexpr (Mag == NloMagType::None) {
+            tilt_bias_b_.z() = R(0);
+        }
     }
 
     void setQuaternionBodyToNED(const Quat& q_nb) {
         filter_.setQuaternionBodyToNED(q_nb);
         initialized_ = true;
         time_since_init_s_ = R(0);
+        have_down_lpf_ = false;
     }
 
     void setPositionNED(const Vec3& p_n_m) {
@@ -354,10 +396,26 @@ public:
             time_since_init_s_ += dt;
         }
 
+        /*
+          Feed adapter-level roll/pitch gyro bias into the NLO before update.
+          z remains untouched when yaw is unobservable.
+        */
+        if (cfg_.tilt_bias_enabled) {
+            Vec3 current = filter_.gyroBiasBody();
+            current.x() = tilt_bias_b_.x();
+            current.y() = tilt_bias_b_.y();
+            if constexpr (Mag == NloMagType::None) {
+                current.z() = R(0);
+            } else {
+                current.z() = tilt_bias_b_.z();
+            }
+            filter_.setGyroBiasBody(current);
+        }
+
         filter_.update(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
 
         if (initialized_) {
-            applyTiltTrim_(dt, gyro_b_rad_s, specific_force_b_mps2);
+            applyContinuousTiltAhrs_(dt, gyro_b_rad_s, specific_force_b_mps2);
         }
 
         return initialized_;
@@ -368,10 +426,7 @@ public:
 
         s.initialized = initialized_;
         s.warming = warming();
-        s.tilt_trim_active =
-            initialized_ &&
-            cfg_.tilt_trim_enabled &&
-            time_since_init_s_ < cfg_.tilt_trim_duration_s;
+        s.tilt_trim_active = tiltTrimCurrentlyActive_();
 
         s.time_s = time_s_;
         s.time_since_init_s = time_since_init_s_;
@@ -410,6 +465,10 @@ public:
         s.tvg.fhat_norm = s.tvg.fhat_n.norm();
         s.tvg.sigma_norm = s.tvg.sigma_b.norm();
         s.tvg.gyro_bias_norm = s.tvg.gyro_bias_b.norm();
+
+        s.tvg.tilt_err_norm = last_tilt_err_norm_;
+        s.tvg.tilt_correction_norm = last_tilt_correction_norm_;
+        s.tvg.tilt_down_lpf_valid = have_down_lpf_ ? R(1) : R(0);
 
         return s;
     }
@@ -452,6 +511,13 @@ private:
     Vec3 init_good_mag_sum_ = Vec3::Zero();
     Vec3 init_all_mag_sum_ = Vec3::Zero();
 
+    Vec3 down_lpf_b_ = Vec3::Zero();
+    bool have_down_lpf_ = false;
+
+    Vec3 tilt_bias_b_ = Vec3::Zero();
+    R last_tilt_err_norm_ = R(0);
+    R last_tilt_correction_norm_ = R(0);
+
     void resetAuxValidity_() {
         if constexpr (Mag == NloMagType::Compass) {
             aux_.compass_valid = false;
@@ -483,6 +549,14 @@ private:
         return (x < lo) ? lo : ((x > hi) ? hi : x);
     }
 
+    static Vec3 clampNorm_(const Vec3& v, R max_norm) {
+        const R n = v.norm();
+        if (!(max_norm > R(0)) || n <= max_norm || n <= R(1e-12)) {
+            return v;
+        }
+        return v * (max_norm / n);
+    }
+
     static Vec3 nedDown_() {
         Vec3 d;
         d << R(0), R(0), R(1);
@@ -499,6 +573,18 @@ private:
     bool gyroOk_(const Vec3& gyro_b, R max_norm) const {
         const R n = gyro_b.norm();
         return isFinite_(n) && n < max_norm;
+    }
+
+    bool tiltTrimCurrentlyActive_() const {
+        if (!cfg_.tilt_trim_enabled || !initialized_) {
+            return false;
+        }
+
+        if (cfg_.tilt_trim_duration_s <= R(0)) {
+            return true;
+        }
+
+        return time_since_init_s_ <= cfg_.tilt_trim_duration_s;
     }
 
     void updateInitialization_(R dt,
@@ -597,20 +683,29 @@ private:
         if (ok) {
             initialized_ = true;
             time_since_init_s_ = R(0);
+            have_down_lpf_ = false;
+
+            /*
+              Seed adapter tilt bias from the NLO state after initialization.
+              z remains zero in no-yaw-reference mode.
+            */
+            tilt_bias_b_ = filter_.gyroBiasBody();
+            if constexpr (Mag == NloMagType::None) {
+                tilt_bias_b_.z() = R(0);
+            }
         }
 
         return ok;
     }
 
-    void applyTiltTrim_(R dt,
-                        const Vec3& gyro_b_rad_s,
-                        const Vec3& specific_force_b_mps2)
+    void applyContinuousTiltAhrs_(R dt,
+                                  const Vec3& gyro_b_rad_s,
+                                  const Vec3& specific_force_b_mps2)
     {
-        if (!cfg_.tilt_trim_enabled) {
-            return;
-        }
+        last_tilt_err_norm_ = R(0);
+        last_tilt_correction_norm_ = R(0);
 
-        if (time_since_init_s_ > cfg_.tilt_trim_duration_s) {
+        if (!tiltTrimCurrentlyActive_()) {
             return;
         }
 
@@ -630,19 +725,63 @@ private:
         const Vec3 down_meas_b =
             (-specific_force_b_mps2 / fn).normalized();
 
+        const R lpf_tau = std::max(cfg_.tilt_trim_acc_lpf_tau_s, R(1e-3));
+        const R alpha = clamp_(dt / lpf_tau, R(0), R(1));
+
+        if (!have_down_lpf_) {
+            down_lpf_b_ = down_meas_b;
+            have_down_lpf_ = true;
+        } else {
+            const Vec3 blended =
+                (R(1) - alpha) * down_lpf_b_ + alpha * down_meas_b;
+            const R bn = blended.norm();
+            if (bn > R(1e-9) && isFinite_(bn)) {
+                down_lpf_b_ = blended / bn;
+            }
+        }
+
         const Mat3 R_nb = filter_.rotationBodyToNED();
         const Vec3 down_hat_b =
             (R_nb.transpose() * nedDown_()).normalized();
 
         /*
-          Body-frame correction rotating predicted down toward measured down.
-          This is roll/pitch-only; it has no yaw observability.
+          Body-frame small-angle correction rotating predicted down toward
+          measured/filtered down.
+
+          For q_new = q * dq(delta_b), the correct direction is:
+              delta_b ~ down_meas_b x down_hat_b
         */
-        Vec3 err_b = down_meas_b.cross(down_hat_b);
+        Vec3 err_b = down_lpf_b_.cross(down_hat_b);
+
+        if constexpr (Mag == NloMagType::None) {
+            /*
+              This error is theoretically roll/pitch only because both vectors
+              are down vectors, but numerical contamination can occur.
+            */
+            err_b.z() = R(0);
+        }
 
         const R en = err_b.norm();
         if (!(en > R(1e-12)) || !isFinite_(en)) {
             return;
+        }
+
+        last_tilt_err_norm_ = en;
+
+        if (cfg_.tilt_bias_enabled) {
+            /*
+              Bias sign matches q update omega - b + correction.
+              If attitude correction wants positive body-rate, persistent
+              positive error means the estimated bias should move negative.
+            */
+            tilt_bias_b_ += (-cfg_.tilt_bias_ki * dt) * err_b;
+
+            if constexpr (Mag == NloMagType::None) {
+                tilt_bias_b_.z() = R(0);
+            }
+
+            tilt_bias_b_ =
+                clampNorm_(tilt_bias_b_, cfg_.tilt_bias_limit_rad_s);
         }
 
         const R gain = R(1) / std::max(cfg_.tilt_trim_tau_s, R(1e-3));
@@ -653,6 +792,8 @@ private:
         if (dn > max_step && dn > R(1e-12)) {
             delta_b *= max_step / dn;
         }
+
+        last_tilt_correction_norm_ = delta_b.norm();
 
         applyBodyDeltaQuaternion_(delta_b);
     }
