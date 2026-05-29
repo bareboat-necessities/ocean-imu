@@ -3,6 +3,10 @@
 #include <math.h>
 #include <stdint.h>
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+ */
+
 class AdaptiveWaveDetrender {
 public:
   struct Config {
