@@ -127,10 +127,6 @@ public:
 
         s.acc_bias_est_ned = Vector3f::Zero();
 
-        /*
-          This is body-NED gyro-bias estimate. The existing harness compares
-          against the injected body-NED gyro bias, despite the historical name.
-        */
         s.gyro_bias_est_ned = filter_.gyroBiasBody();
         s.mag_bias_est_ned_uT = Vector3f::Zero();
 
