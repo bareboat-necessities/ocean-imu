@@ -1,0 +1,146 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fullpage}
+\usepackage{mathrsfs}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{pgf}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
+\usepackage{bm}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{array,booktabs,makecell,adjustbox}
+
+% Keep this — needed by PGF outputs that reference \mathdefault
+\providecommand{\mathdefault}[1]{#1}
+
+\title{Wave Simulation Charts}
+\author{Mikhail Grushinskiy}
+\date{2026}
+
+\begin{document}
+    \maketitle
+
+% === (Adaptive PII/Mahony): Attitude Charts ===
+
+% PM Stokes
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_low.pgf}}
+    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- PM Stokes, low $H_s$.}
+    \label{fig:w3d_nonkalman_pmstokes_low_angles}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_medium.pgf}}
+    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- PM Stokes, medium $H_s$.}
+    \label{fig:w3d_nonkalman_pmstokes_medium_angles}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_high.pgf}}
+    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- PM Stokes, high $H_s$.}
+    \label{fig:w3d_nonkalman_pmstokes_high_angles}
+    \end{figure}
+
+% JONSWAP
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_low.pgf}}
+    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- JONSWAP, low $H_s$.}
+    \label{fig:w3d_nonkalman_jonswap_low_angles}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_medium.pgf}}
+    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- JONSWAP, medium $H_s$.}
+    \label{fig:w3d_nonkalman_jonswap_medium_angles}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_high.pgf}}
+    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- JONSWAP, high $H_s$.}
+    \label{fig:w3d_nonkalman_jonswap_high_angles}
+    \end{figure}
+
+% PM Stokes
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_low_tuner.pgf}}
+    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- PM Stokes, low $H_s$.}
+    \label{fig:w3d_nonkalman_pmstokes_low_tuner}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_medium_tuner.pgf}}
+    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- PM Stokes, medium $H_s$.}
+    \label{fig:w3d_nonkalman_pmstokes_medium_tuner}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_high_tuner.pgf}}
+    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- PM Stokes, high $H_s$.}
+    \label{fig:w3d_nonkalman_pmstokes_high_tuner}
+    \end{figure}
+
+% JONSWAP
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_low_tuner.pgf}}
+    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- JONSWAP, low $H_s$.}
+    \label{fig:w3d_nonkalman_jonswap_low_tuner}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_medium_tuner.pgf}}
+    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- JONSWAP, medium $H_s$.}
+    \label{fig:w3d_nonkalman_jonswap_medium_tuner}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_high_tuner.pgf}}
+    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- JONSWAP, high $H_s$.}
+    \label{fig:w3d_nonkalman_jonswap_high_tuner}
+    \end{figure}
+
+
+% === (Adaptive PII/Mahony): Vertical Kinematics Charts ===
+
+% PM Stokes
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_low_zkin.pgf}}
+    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- PM Stokes, low $H_s$.}
+    \label{fig:w3d_nonkalman_pmstokes_low_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_medium_zkin.pgf}}
+    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- PM Stokes, medium $H_s$.}
+    \label{fig:w3d_nonkalman_pmstokes_medium_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_high_zkin.pgf}}
+    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- PM Stokes, high $H_s$.}
+    \label{fig:w3d_nonkalman_pmstokes_high_zkin}
+    \end{figure}
+
+% JONSWAP
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_low_zkin.pgf}}
+    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- JONSWAP, low $H_s$.}
+    \label{fig:w3d_nonkalman_jonswap_low_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_medium_zkin.pgf}}
+    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- JONSWAP, medium $H_s$.}
+    \label{fig:w3d_nonkalman_jonswap_medium_zkin}
+    \end{figure}
+
+    \begin{figure}[H]\centering
+    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_high_zkin.pgf}}
+    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- JONSWAP, high $H_s$.}
+    \label{fig:w3d_nonkalman_jonswap_high_zkin}
+    \end{figure}
+
+\end{document}
