@@ -1,6 +1,10 @@
 #pragma once
 
 /*
+  Copyright (c) 2026 Mikhail Grushinskiy
+ */
+
+/*
   Time-varying-gain nonlinear observer, Arduino/Eigen version.
 
   Based on Bryne/Fossen/Johansen:
