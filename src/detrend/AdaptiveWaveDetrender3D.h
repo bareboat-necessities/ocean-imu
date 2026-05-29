@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+  Copyright (c) 2026 Mikhail Grushinskiy
+ */
+
 #include <math.h>
 #include <stdint.h>
 
