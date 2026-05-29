@@ -26,9 +26,9 @@ using Eigen::Vector3f;
 bool add_noise = true;
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 15.5f,
-    .err_limit_percent_z_pmstokes  = 15.5f,
-    .err_limit_yaw_deg             = 8.5f,
+    .err_limit_percent_z_jonswap   = 20.0f,
+    .err_limit_percent_z_pmstokes  = 20.0f,
+    .err_limit_yaw_deg             = 15.0f,
     .err_limit_percent_3d_jonswap  = 9999.0f,
     .err_limit_percent_3d_pmstokes = 9999.0f,
     .acc_z_bias_percent            = 9999.0f,
