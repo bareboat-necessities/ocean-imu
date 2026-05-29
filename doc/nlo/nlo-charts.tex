@@ -14,133 +14,160 @@
 \usepackage{microtype}
 \usepackage{array,booktabs,makecell,adjustbox}
 
-% Keep this — needed by PGF outputs that reference \mathdefault
 \providecommand{\mathdefault}[1]{#1}
 
-\title{Wave Simulation Charts}
+\title{TimeVarGain NLO VVR-Only Wave Simulation Charts}
 \author{Mikhail Grushinskiy}
 \date{2026}
 
+\newcommand{\plotpgf}[3]{%
+    \begin{figure}[H]\centering
+    \IfFileExists{#1.pgf}{%
+        \resizebox{\textwidth}{!}{\input{#1.pgf}}%
+    }{%
+        \fbox{\parbox{0.92\textwidth}{Missing plot file: \texttt{#1.pgf}}}%
+    }%
+    \caption{#2}
+    \label{#3}
+    \end{figure}
+}
+
 \begin{document}
-    \maketitle
+\maketitle
 
-% === (Adaptive PII/Mahony): Attitude Charts ===
+\section*{TimeVarGain NLO, VVR-only, no GNSS, no magnetometer}
 
-% PM Stokes
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_low.pgf}}
-    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- PM Stokes, low $H_s$.}
-    \label{fig:w3d_nonkalman_pmstokes_low_angles}
-    \end{figure}
+This report shows the no-GNSS/no-magnetometer TimeVarGain nonlinear observer simulation.
+The observer uses the vertical VVR constraint and IMU measurements only. Yaw is free and is not interpreted as an observable output.
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_medium.pgf}}
-    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- PM Stokes, medium $H_s$.}
-    \label{fig:w3d_nonkalman_pmstokes_medium_angles}
-    \end{figure}
+\section*{Attitude}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_high.pgf}}
-    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- PM Stokes, high $H_s$.}
-    \label{fig:w3d_nonkalman_pmstokes_high_angles}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_pmstokes_low_att}
+{TimeVarGain NLO attitude, roll and pitch --- PM Stokes, low $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_low_att}
 
-% JONSWAP
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_low.pgf}}
-    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- JONSWAP, low $H_s$.}
-    \label{fig:w3d_nonkalman_jonswap_low_angles}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_pmstokes_medium_att}
+{TimeVarGain NLO attitude, roll and pitch --- PM Stokes, medium $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_medium_att}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_medium.pgf}}
-    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- JONSWAP, medium $H_s$.}
-    \label{fig:w3d_nonkalman_jonswap_medium_angles}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_pmstokes_high_att}
+{TimeVarGain NLO attitude, roll and pitch --- PM Stokes, high $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_high_att}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_high.pgf}}
-    \caption{Adaptive PII/Mahony attitude (roll, pitch, yaw) --- JONSWAP, high $H_s$.}
-    \label{fig:w3d_nonkalman_jonswap_high_angles}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_jonswap_low_att}
+{TimeVarGain NLO attitude, roll and pitch --- JONSWAP, low $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_low_att}
 
-% PM Stokes
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_low_tuner.pgf}}
-    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- PM Stokes, low $H_s$.}
-    \label{fig:w3d_nonkalman_pmstokes_low_tuner}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_jonswap_medium_att}
+{TimeVarGain NLO attitude, roll and pitch --- JONSWAP, medium $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_medium_att}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_medium_tuner.pgf}}
-    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- PM Stokes, medium $H_s$.}
-    \label{fig:w3d_nonkalman_pmstokes_medium_tuner}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_jonswap_high_att}
+{TimeVarGain NLO attitude, roll and pitch --- JONSWAP, high $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_high_att}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_high_tuner.pgf}}
-    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- PM Stokes, high $H_s$.}
-    \label{fig:w3d_nonkalman_pmstokes_high_tuner}
-    \end{figure}
+\section*{Vertical Kinematics}
 
-% JONSWAP
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_low_tuner.pgf}}
-    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- JONSWAP, low $H_s$.}
-    \label{fig:w3d_nonkalman_jonswap_low_tuner}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_pmstokes_low_zkin}
+{TimeVarGain NLO vertical kinematics: displacement, velocity, and acceleration --- PM Stokes, low $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_low_zkin}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_medium_tuner.pgf}}
-    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- JONSWAP, medium $H_s$.}
-    \label{fig:w3d_nonkalman_jonswap_medium_tuner}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_pmstokes_medium_zkin}
+{TimeVarGain NLO vertical kinematics: displacement, velocity, and acceleration --- PM Stokes, medium $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_medium_zkin}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_high_tuner.pgf}}
-    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- JONSWAP, high $H_s$.}
-    \label{fig:w3d_nonkalman_jonswap_high_tuner}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_pmstokes_high_zkin}
+{TimeVarGain NLO vertical kinematics: displacement, velocity, and acceleration --- PM Stokes, high $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_high_zkin}
 
+\plotpgf{w3d_tvg_nlo_jonswap_low_zkin}
+{TimeVarGain NLO vertical kinematics: displacement, velocity, and acceleration --- JONSWAP, low $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_low_zkin}
 
-% === (Adaptive PII/Mahony): Vertical Kinematics Charts ===
+\plotpgf{w3d_tvg_nlo_jonswap_medium_zkin}
+{TimeVarGain NLO vertical kinematics: displacement, velocity, and acceleration --- JONSWAP, medium $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_medium_zkin}
 
-% PM Stokes
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_low_zkin.pgf}}
-    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- PM Stokes, low $H_s$.}
-    \label{fig:w3d_nonkalman_pmstokes_low_zkin}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_jonswap_high_zkin}
+{TimeVarGain NLO vertical kinematics: displacement, velocity, and acceleration --- JONSWAP, high $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_high_zkin}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_medium_zkin.pgf}}
-    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- PM Stokes, medium $H_s$.}
-    \label{fig:w3d_nonkalman_pmstokes_medium_zkin}
-    \end{figure}
+\section*{Scalar Diagnostics}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_pmstokes_high_zkin.pgf}}
-    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- PM Stokes, high $H_s$.}
-    \label{fig:w3d_nonkalman_pmstokes_high_zkin}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_pmstokes_low_tvg_scalars}
+{TimeVarGain NLO scalar diagnostics: $k_1$, $k_I$, $\vartheta$, and $\hat p^0_z$ --- PM Stokes, low $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_low_tvg_scalars}
 
-% JONSWAP
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_low_zkin.pgf}}
-    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- JONSWAP, low $H_s$.}
-    \label{fig:w3d_nonkalman_jonswap_low_zkin}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_pmstokes_medium_tvg_scalars}
+{TimeVarGain NLO scalar diagnostics: $k_1$, $k_I$, $\vartheta$, and $\hat p^0_z$ --- PM Stokes, medium $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_medium_tvg_scalars}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_medium_zkin.pgf}}
-    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- JONSWAP, medium $H_s$.}
-    \label{fig:w3d_nonkalman_jonswap_medium_zkin}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_pmstokes_high_tvg_scalars}
+{TimeVarGain NLO scalar diagnostics: $k_1$, $k_I$, $\vartheta$, and $\hat p^0_z$ --- PM Stokes, high $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_high_tvg_scalars}
 
-    \begin{figure}[H]\centering
-    \resizebox{\textwidth}{!}{\input{w3d_nonkalman_jonswap_high_zkin.pgf}}
-    \caption{Adaptive PII/Mahony vertical kinematics (displacement, velocity, acceleration with learned envelopes) --- JONSWAP, high $H_s$.}
-    \label{fig:w3d_nonkalman_jonswap_high_zkin}
-    \end{figure}
+\plotpgf{w3d_tvg_nlo_jonswap_low_tvg_scalars}
+{TimeVarGain NLO scalar diagnostics: $k_1$, $k_I$, $\vartheta$, and $\hat p^0_z$ --- JONSWAP, low $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_low_tvg_scalars}
+
+\plotpgf{w3d_tvg_nlo_jonswap_medium_tvg_scalars}
+{TimeVarGain NLO scalar diagnostics: $k_1$, $k_I$, $\vartheta$, and $\hat p^0_z$ --- JONSWAP, medium $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_medium_tvg_scalars}
+
+\plotpgf{w3d_tvg_nlo_jonswap_high_tvg_scalars}
+{TimeVarGain NLO scalar diagnostics: $k_1$, $k_I$, $\vartheta$, and $\hat p^0_z$ --- JONSWAP, high $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_high_tvg_scalars}
+
+\section*{Vector Diagnostics}
+
+\plotpgf{w3d_tvg_nlo_pmstokes_low_tvg_vectors}
+{TimeVarGain NLO vector diagnostics: $\xi^n$, $\hat f^n$, $\sigma^b$, and $\hat b_g^b$ --- PM Stokes, low $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_low_tvg_vectors}
+
+\plotpgf{w3d_tvg_nlo_pmstokes_medium_tvg_vectors}
+{TimeVarGain NLO vector diagnostics: $\xi^n$, $\hat f^n$, $\sigma^b$, and $\hat b_g^b$ --- PM Stokes, medium $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_medium_tvg_vectors}
+
+\plotpgf{w3d_tvg_nlo_pmstokes_high_tvg_vectors}
+{TimeVarGain NLO vector diagnostics: $\xi^n$, $\hat f^n$, $\sigma^b$, and $\hat b_g^b$ --- PM Stokes, high $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_high_tvg_vectors}
+
+\plotpgf{w3d_tvg_nlo_jonswap_low_tvg_vectors}
+{TimeVarGain NLO vector diagnostics: $\xi^n$, $\hat f^n$, $\sigma^b$, and $\hat b_g^b$ --- JONSWAP, low $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_low_tvg_vectors}
+
+\plotpgf{w3d_tvg_nlo_jonswap_medium_tvg_vectors}
+{TimeVarGain NLO vector diagnostics: $\xi^n$, $\hat f^n$, $\sigma^b$, and $\hat b_g^b$ --- JONSWAP, medium $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_medium_tvg_vectors}
+
+\plotpgf{w3d_tvg_nlo_jonswap_high_tvg_vectors}
+{TimeVarGain NLO vector diagnostics: $\xi^n$, $\hat f^n$, $\sigma^b$, and $\hat b_g^b$ --- JONSWAP, high $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_high_tvg_vectors}
+
+\section*{Vertical Observer Internals}
+
+\plotpgf{w3d_tvg_nlo_pmstokes_low_tvg_vertical}
+{TimeVarGain NLO vertical internals: $\hat f^n_z$, $\xi^n_z$, and attitude injection components --- PM Stokes, low $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_low_tvg_vertical}
+
+\plotpgf{w3d_tvg_nlo_pmstokes_medium_tvg_vertical}
+{TimeVarGain NLO vertical internals: $\hat f^n_z$, $\xi^n_z$, and attitude injection components --- PM Stokes, medium $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_medium_tvg_vertical}
+
+\plotpgf{w3d_tvg_nlo_pmstokes_high_tvg_vertical}
+{TimeVarGain NLO vertical internals: $\hat f^n_z$, $\xi^n_z$, and attitude injection components --- PM Stokes, high $H_s$.}
+{fig:w3d_tvg_nlo_pmstokes_high_tvg_vertical}
+
+\plotpgf{w3d_tvg_nlo_jonswap_low_tvg_vertical}
+{TimeVarGain NLO vertical internals: $\hat f^n_z$, $\xi^n_z$, and attitude injection components --- JONSWAP, low $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_low_tvg_vertical}
+
+\plotpgf{w3d_tvg_nlo_jonswap_medium_tvg_vertical}
+{TimeVarGain NLO vertical internals: $\hat f^n_z$, $\xi^n_z$, and attitude injection components --- JONSWAP, medium $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_medium_tvg_vertical}
+
+\plotpgf{w3d_tvg_nlo_jonswap_high_tvg_vertical}
+{TimeVarGain NLO vertical internals: $\hat f^n_z$, $\xi^n_z$, and attitude injection components --- JONSWAP, high $H_s$.}
+{fig:w3d_tvg_nlo_jonswap_high_tvg_vertical}
 
 \end{document}
