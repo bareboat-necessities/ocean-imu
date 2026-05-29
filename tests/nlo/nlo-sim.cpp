@@ -120,8 +120,8 @@ public:
         */
         const Vector3f euler_rad = filter_.eulerRad();
         s.euler_nautical_deg = Vector3f(
-            rad_to_deg(euler_rad.x()),
             rad_to_deg(euler_rad.y()),
+            rad_to_deg(euler_rad.x()),
             0.0f
         );
 
