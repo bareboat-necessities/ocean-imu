@@ -26,6 +26,16 @@
 
     Convenience outputs:
       disp_zu / vel_zu / acc_zu use Z-up sign for charting/heave output.
+
+  Startup behavior:
+    - optional Mahony-like bootstrap is ON by default
+    - it initializes q from accel/mag/compass if available
+    - it then gyro-propagates during startup and uses gated accel correction
+    - after bootstrap, it seeds TimeVaryingGainNLO and stops
+
+  Important:
+    Wave-time accelerometer tilt trim is OFF by default because it can chase
+    horizontal wave acceleration and worsen roll/pitch.
 */
 
 #if defined(ARDUINO)
@@ -84,12 +94,17 @@ public:
         R tilt_err_norm = std::numeric_limits<R>::quiet_NaN();
         R tilt_correction_norm = std::numeric_limits<R>::quiet_NaN();
         R tilt_down_lpf_valid = R(0);
+
+        R mahony_boot_time_s = R(0);
+        R mahony_boot_good_time_s = R(0);
+        R mahony_boot_bias_norm = R(0);
     };
 
     struct Snapshot {
         bool initialized = false;
         bool warming = true;
         bool tilt_trim_active = false;
+        bool mahony_bootstrap_active = false;
 
         R time_s = R(0);
         R time_since_init_s = R(0);
@@ -119,9 +134,8 @@ public:
         typename Filter::Config filter{};
 
         /*
-          Startup:
-            - collect short guarded accelerometer average
-            - if conditions are never good, force init after max wait
+          Basic averaging fallback startup.
+          Used only when mahony_bootstrap_enabled == false.
         */
         R init_required_good_time_s = R(2.0);
         R init_max_wait_s = R(4.0);
@@ -130,7 +144,24 @@ public:
         R yaw_seed_rad = R(0);
 
         /*
-          Optional roll/pitch-only tilt trim.
+          Mahony-like bootstrap stage.
+          Enabled by default. This is a startup stage only; it stops once the
+          NLO is initialized.
+        */
+        bool mahony_bootstrap_enabled = true;
+        R mahony_bootstrap_min_time_s = R(2.0);
+        R mahony_bootstrap_max_time_s = R(6.0);
+
+        R mahony_twoKp = R(0.35);
+        R mahony_twoKi = R(0.002);
+
+        R mahony_acc_norm_tol_frac = R(0.18);
+        R mahony_gyro_max_rad_s = R(0.20);
+        R mahony_down_lpf_tau_s = R(0.50);
+        R mahony_bias_limit_rad_s = R(0.03);
+
+        /*
+          Optional roll/pitch-only tilt trim after NLO init.
 
           Default is OFF because in waves, accelerometer tilt trim can chase
           horizontal wave acceleration and make roll/pitch worse.
@@ -150,7 +181,7 @@ public:
         R tilt_trim_acc_norm_tol_frac = R(0.10);
 
         /*
-          Optional adapter-level roll/pitch gyro-bias learner for the tilt trim.
+          Optional adapter-level roll/pitch gyro-bias learner for tilt trim.
           Default OFF for wave-time operation.
         */
         bool tilt_bias_enabled = false;
@@ -257,6 +288,15 @@ public:
         tilt_bias_b_.setZero();
         last_tilt_err_norm_ = R(0);
         last_tilt_correction_norm_ = R(0);
+
+        boot_q_nb_.setIdentity();
+        boot_bias_b_.setZero();
+        boot_down_lpf_b_.setZero();
+
+        boot_started_ = false;
+        boot_have_down_lpf_ = false;
+        boot_time_s_ = R(0);
+        boot_good_time_s_ = R(0);
     }
 
     bool initialized() const { return initialized_; }
@@ -339,8 +379,11 @@ public:
     void setGyroBiasBody(const Vec3& bias_rad_s) {
         filter_.setGyroBiasBody(bias_rad_s);
         tilt_bias_b_ = bias_rad_s;
+        boot_bias_b_ = bias_rad_s;
+
         if constexpr (Mag == NloMagType::None) {
             tilt_bias_b_.z() = R(0);
+            boot_bias_b_.z() = R(0);
         }
     }
 
@@ -349,6 +392,7 @@ public:
         initialized_ = true;
         time_since_init_s_ = R(0);
         have_down_lpf_ = false;
+        boot_started_ = false;
     }
 
     void setPositionNED(const Vec3& p_n_m) {
@@ -416,13 +460,15 @@ public:
         s.initialized = initialized_;
         s.warming = warming();
         s.tilt_trim_active = tiltTrimCurrentlyActive_();
+        s.mahony_bootstrap_active =
+            (!initialized_ && cfg_.mahony_bootstrap_enabled && boot_started_);
 
         s.time_s = time_s_;
         s.time_since_init_s = time_since_init_s_;
         s.init_good_time_s = init_good_time_s_;
         s.init_total_time_s = init_total_time_s_;
 
-        s.q_nb = filter_.quaternionBodyToNED();
+        s.q_nb = initialized_ ? filter_.quaternionBodyToNED() : boot_q_nb_;
 
         s.position_ned = filter_.positionNED();
         s.velocity_ned = filter_.velocityNED();
@@ -437,7 +483,7 @@ public:
         s.vel_zu  << s.velocity_ned.x(), s.velocity_ned.y(), -s.velocity_ned.z();
         s.acc_zu  << s.inertial_accel_ned.x(), s.inertial_accel_ned.y(), -s.inertial_accel_ned.z();
 
-        s.euler_rad = filter_.eulerRad();
+        s.euler_rad = initialized_ ? filter_.eulerRad() : eulerFromQuat_(boot_q_nb_);
 
         s.tvg.k1 = filter_.gainK1();
         s.tvg.k2 = filter_.gainK2();
@@ -458,6 +504,10 @@ public:
         s.tvg.tilt_err_norm = last_tilt_err_norm_;
         s.tvg.tilt_correction_norm = last_tilt_correction_norm_;
         s.tvg.tilt_down_lpf_valid = have_down_lpf_ ? R(1) : R(0);
+
+        s.tvg.mahony_boot_time_s = boot_time_s_;
+        s.tvg.mahony_boot_good_time_s = boot_good_time_s_;
+        s.tvg.mahony_boot_bias_norm = boot_bias_b_.norm();
 
         return s;
     }
@@ -507,6 +557,15 @@ private:
     R last_tilt_err_norm_ = R(0);
     R last_tilt_correction_norm_ = R(0);
 
+    Quat boot_q_nb_ = Quat::Identity();
+    Vec3 boot_bias_b_ = Vec3::Zero();
+    Vec3 boot_down_lpf_b_ = Vec3::Zero();
+
+    bool boot_started_ = false;
+    bool boot_have_down_lpf_ = false;
+    R boot_time_s_ = R(0);
+    R boot_good_time_s_ = R(0);
+
     void resetAuxValidity_() {
         if constexpr (Mag == NloMagType::Compass) {
             aux_.compass_valid = false;
@@ -544,6 +603,16 @@ private:
         return d;
     }
 
+    static Vec3 eulerFromQuat_(const Quat& q_nb) {
+        const Mat3 Rnb = q_nb.toRotationMatrix();
+
+        Vec3 e;
+        e.x() = std::atan2(Rnb(2, 1), Rnb(2, 2));
+        e.y() = -std::asin(clamp_(Rnb(2, 0), R(-1), R(1)));
+        e.z() = std::atan2(Rnb(1, 0), Rnb(0, 0));
+        return e;
+    }
+
     bool accelNormOk_(const Vec3& f_b, R tol_frac) const {
         const R n = f_b.norm();
         return isFinite_(n) &&
@@ -572,6 +641,19 @@ private:
                                const Vec3& gyro_b_rad_s,
                                const Vec3& specific_force_b_mps2,
                                const Aux& aux)
+    {
+        if (cfg_.mahony_bootstrap_enabled) {
+            updateMahonyBootstrap_(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
+            return;
+        }
+
+        updateAveragingInitialization_(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
+    }
+
+    void updateAveragingInitialization_(R dt,
+                                        const Vec3& gyro_b_rad_s,
+                                        const Vec3& specific_force_b_mps2,
+                                        const Aux& aux)
     {
         init_total_time_s_ += dt;
         init_all_acc_sum_ += specific_force_b_mps2;
@@ -606,7 +688,7 @@ private:
             const Vec3 acc0 =
                 init_good_acc_sum_ / static_cast<R>(init_good_count_);
 
-            if (tryInitialize_(acc0, aux, true)) {
+            if (tryInitializeFromAverage_(acc0, aux, true)) {
                 return;
             }
         }
@@ -616,13 +698,13 @@ private:
             const Vec3 acc0 =
                 init_all_acc_sum_ / static_cast<R>(init_all_count_);
 
-            (void)tryInitialize_(acc0, aux, false);
+            (void)tryInitializeFromAverage_(acc0, aux, false);
         }
     }
 
-    bool tryInitialize_(const Vec3& acc0,
-                        const Aux& aux,
-                        bool prefer_good_window)
+    bool tryInitializeFromAverage_(const Vec3& acc0,
+                                   const Aux& aux,
+                                   bool prefer_good_window)
     {
         bool ok = false;
 
@@ -673,6 +755,207 @@ private:
         }
 
         return ok;
+    }
+
+    bool tryStartMahonyBootstrap_(const Vec3& specific_force_b_mps2,
+                                  const Aux& aux)
+    {
+        Filter tmp(cfg_.filter);
+        tmp.reset();
+
+        bool ok = false;
+
+        if constexpr (Mag == NloMagType::Compass) {
+            if (aux.compass_valid) {
+                ok = tmp.initializeFromAccelCompass(
+                    specific_force_b_mps2,
+                    aux.compass_heading_rad
+                );
+            } else {
+                ok = tmp.initializeFromAccel(
+                    specific_force_b_mps2,
+                    cfg_.yaw_seed_rad
+                );
+            }
+        } else if constexpr (Mag == NloMagType::Magnetometer) {
+            if (aux.mag_valid) {
+                ok = tmp.initializeFromAccelMag(
+                    specific_force_b_mps2,
+                    aux.mag_b
+                );
+            }
+
+            if (!ok) {
+                ok = tmp.initializeFromAccel(
+                    specific_force_b_mps2,
+                    cfg_.yaw_seed_rad
+                );
+            }
+        } else {
+            ok = tmp.initializeFromAccel(
+                specific_force_b_mps2,
+                cfg_.yaw_seed_rad
+            );
+        }
+
+        if (!ok) {
+            return false;
+        }
+
+        boot_q_nb_ = tmp.quaternionBodyToNED();
+        boot_q_nb_.normalize();
+
+        boot_bias_b_.setZero();
+        if constexpr (Mag == NloMagType::None) {
+            boot_bias_b_.z() = R(0);
+        }
+
+        boot_started_ = true;
+        boot_have_down_lpf_ = false;
+        boot_time_s_ = R(0);
+        boot_good_time_s_ = R(0);
+
+        return true;
+    }
+
+    void updateMahonyBootstrap_(R dt,
+                                const Vec3& gyro_b_rad_s,
+                                const Vec3& specific_force_b_mps2,
+                                const Aux& aux)
+    {
+        if (!boot_started_) {
+            if (!tryStartMahonyBootstrap_(specific_force_b_mps2, aux)) {
+                return;
+            }
+        }
+
+        boot_time_s_ += dt;
+        init_total_time_s_ = boot_time_s_;
+
+        Vec3 correction_b = Vec3::Zero();
+
+        const bool accel_ok =
+            accelNormOk_(specific_force_b_mps2, cfg_.mahony_acc_norm_tol_frac);
+
+        const bool gyro_ok =
+            gyroOk_(gyro_b_rad_s, cfg_.mahony_gyro_max_rad_s);
+
+        if (accel_ok && gyro_ok) {
+            const R fn = specific_force_b_mps2.norm();
+
+            if (fn > R(1e-9) && isFinite_(fn)) {
+                const Vec3 down_meas_b =
+                    (-specific_force_b_mps2 / fn).normalized();
+
+                const R alpha = clamp_(
+                    dt / std::max(cfg_.mahony_down_lpf_tau_s, R(1e-3)),
+                    R(0),
+                    R(1)
+                );
+
+                if (!boot_have_down_lpf_) {
+                    boot_down_lpf_b_ = down_meas_b;
+                    boot_have_down_lpf_ = true;
+                } else {
+                    const Vec3 blended =
+                        (R(1) - alpha) * boot_down_lpf_b_ +
+                        alpha * down_meas_b;
+
+                    const R bn = blended.norm();
+                    if (bn > R(1e-9) && isFinite_(bn)) {
+                        boot_down_lpf_b_ = blended / bn;
+                    }
+                }
+
+                const Mat3 R_nb = boot_q_nb_.toRotationMatrix();
+                const Vec3 down_hat_b =
+                    (R_nb.transpose() * nedDown_()).normalized();
+
+                /*
+                  q_new = q * dq(delta_b)
+                  err direction chosen to rotate predicted down toward measured down.
+                */
+                Vec3 err_b = boot_down_lpf_b_.cross(down_hat_b);
+
+                if constexpr (Mag == NloMagType::None) {
+                    err_b.z() = R(0);
+                }
+
+                correction_b = cfg_.mahony_twoKp * R(0.5) * err_b;
+
+                if (cfg_.mahony_twoKi > R(0)) {
+                    boot_bias_b_ +=
+                        (-cfg_.mahony_twoKi * R(0.5) * dt) * err_b;
+
+                    if constexpr (Mag == NloMagType::None) {
+                        boot_bias_b_.z() = R(0);
+                    }
+
+                    boot_bias_b_ =
+                        clampNorm_(boot_bias_b_, cfg_.mahony_bias_limit_rad_s);
+                }
+
+                boot_good_time_s_ += dt;
+                init_good_time_s_ = boot_good_time_s_;
+            }
+        }
+
+        Vec3 omega_b = gyro_b_rad_s - boot_bias_b_ + correction_b;
+
+        if constexpr (Mag == NloMagType::None) {
+            boot_bias_b_.z() = R(0);
+        }
+
+        integrateBootQuatRight_(dt, omega_b);
+
+        const bool enough_good =
+            boot_good_time_s_ >= cfg_.mahony_bootstrap_min_time_s;
+
+        const bool forced =
+            boot_time_s_ >= cfg_.mahony_bootstrap_max_time_s;
+
+        if (enough_good || forced) {
+            filter_ = Filter(cfg_.filter);
+            filter_.reset();
+
+            filter_.setQuaternionBodyToNED(boot_q_nb_);
+
+            Vec3 b0 = boot_bias_b_;
+            if constexpr (Mag == NloMagType::None) {
+                b0.z() = R(0);
+            }
+
+            filter_.setGyroBiasBody(b0);
+            tilt_bias_b_ = b0;
+
+            initialized_ = true;
+            time_since_init_s_ = R(0);
+            have_down_lpf_ = false;
+        }
+    }
+
+    void integrateBootQuatRight_(R dt, const Vec3& omega_b)
+    {
+        const R omega_norm = omega_b.norm();
+        const R angle = omega_norm * dt;
+
+        Quat dq;
+        if (angle < R(1e-8) || omega_norm < R(1e-12)) {
+            const Vec3 half = R(0.5) * dt * omega_b;
+            dq = Quat(R(1), half.x(), half.y(), half.z());
+        } else {
+            const Vec3 axis = omega_b / omega_norm;
+            const R half_angle = R(0.5) * angle;
+            const R s = std::sin(half_angle);
+
+            dq = Quat(std::cos(half_angle),
+                      s * axis.x(),
+                      s * axis.y(),
+                      s * axis.z());
+        }
+
+        boot_q_nb_ = boot_q_nb_ * dq;
+        boot_q_nb_.normalize();
     }
 
     void applyOptionalTiltTrim_(R dt,
