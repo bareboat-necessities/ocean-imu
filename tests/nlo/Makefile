@@ -1,11 +1,17 @@
-.PHONY: all build test ensure-sim-data
+.PHONY: all build test ensure-sim-data clean
 
-CC = g++
+CXX = g++
+
 TEST_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 REPO_ROOT := $(abspath $(TEST_DIR)/../..)
+
 EIGEN_DIR ?= $(REPO_ROOT)/third_party/eigen
 EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-I$(EIGEN_DIR),-I/usr/include/eigen3)
-BASEFLAGS = -O3 -std=c++20 -funroll-loops -fno-finite-math-only -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) $(CPPFLAGS)
+
+BASEFLAGS = -O3 -std=c++20 -funroll-loops -fno-finite-math-only \
+            -I$(REPO_ROOT)/src \
+            $(EIGEN_CPPFLAGS) \
+            $(CPPFLAGS)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -16,12 +22,12 @@ else
     CXXFLAGS = $(BASEFLAGS)
 endif
 
-LDFLAGS  =
+LDFLAGS =
 
-# Tell make to look for source files in src/util
+# Look for W3dSimCommon.cpp in src/util.
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = pii_observer-adaptive
+TARGETS = nlo-sim
 
 all: build test
 
@@ -33,11 +39,11 @@ test: ensure-sim-data $(TARGETS)
 ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 
-pii_observer-adaptive: pii_observer-adaptive.o W3dSimCommon.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+nlo-sim: nlo-sim.o W3dSimCommon.o
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f *.o $(TARGETS) *.exe *.csv
