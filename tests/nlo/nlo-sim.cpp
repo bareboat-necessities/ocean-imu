@@ -49,7 +49,6 @@ public:
 
     void updateMag(const Vector3f& mag_body_ned) override {
         (void)mag_body_ned;
-        // Mag=None: no-op.
     }
 
     void update(float dt,
@@ -58,16 +57,6 @@ public:
                 float temperature_c) override
     {
         (void)temperature_c;
-
-        /*
-          Runner-facing convention:
-            gyr_meas_ned: body-frame NED axes, rad/s
-            acc_meas_ned: body-frame NED specific force, m/s^2
-
-          Core expects the same body-NED convention.
-          At rest, level:
-            acc_meas_ned ≈ [0, 0, -g]
-        */
         core_.update(dt, gyr_meas_ned, acc_meas_ned);
     }
 
@@ -81,12 +70,8 @@ public:
         s.acc_est_zu  = cs.acc_zu.template cast<float>();
 
         /*
-          Mag=None: yaw is unobservable.
-          Keep yaw forced to zero for the harness.
-
-          Keep the current roll/pitch mapping used by this simulator path.
-          If you later confirm TimeVaryingGainNLO::eulerRad() matches
-          quat_wb_zu_to_euler_nautical() directly, change this back to x,y.
+          Existing harness comparison convention for this NLO path.
+          Mag=None: yaw is unobservable, so force yaw to zero.
         */
         s.euler_nautical_deg = Vector3f(
             rad_to_deg(float(cs.euler_rad.y())),
@@ -140,32 +125,31 @@ private:
         cfg.gravity_mps2 = g_std;
         cfg.filter.gravity_mps2 = g_std;
 
-        /*
-          Device-realistic startup:
-            - short guarded startup
-            - force init after a few seconds
-            - slow roll/pitch trim to reduce startup tilt bias
-        */
         cfg.init_required_good_time_s = 2.0f;
         cfg.init_max_wait_s = 4.0f;
         cfg.init_gyro_max_rad_s = 0.08f;
         cfg.init_acc_norm_tol_frac = 0.18f;
         cfg.yaw_seed_rad = 0.0f;
 
-        cfg.tilt_trim_enabled = true;
-        cfg.tilt_trim_duration_s = 30.0f;
+        /*
+          Critical for this no-GNSS/no-mag wave sim:
+          do not run accelerometer tilt trim during waves.
+          It chases horizontal wave acceleration and worsens roll/pitch.
+        */
+        cfg.tilt_trim_enabled = false;
+        cfg.tilt_trim_duration_s = 0.0f;
         cfg.tilt_trim_tau_s = 12.0f;
+        cfg.tilt_trim_acc_lpf_tau_s = 0.75f;
         cfg.tilt_trim_max_rate_rad_s = 0.025f;
-        cfg.tilt_trim_gyro_max_rad_s = 0.12f;
-        cfg.tilt_trim_acc_norm_tol_frac = 0.15f;
+        cfg.tilt_trim_gyro_max_rad_s = 0.08f;
+        cfg.tilt_trim_acc_norm_tol_frac = 0.10f;
+
+        cfg.tilt_bias_enabled = false;
+        cfg.tilt_bias_ki = 0.0f;
+        cfg.tilt_bias_limit_rad_s = 0.0f;
 
         cfg.run_filter_before_initialized = false;
 
-        /*
-          Explicit no-GNSS/no-mag tuning.
-          These mirror the default adapter values but are kept here so the
-          simulator configuration is visible and easy to tune.
-        */
         cfg.filter.gyro_bias_limit_rad_s = 0.10f;
         cfg.filter.max_specific_force_mps2 = 30.0f;
 
@@ -371,8 +355,6 @@ static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunRes
                   << " m. Failing.\n";
         std::exit(EXIT_FAILURE);
     }
-
-    // Mag=None: yaw is unobservable, so no yaw gate.
 }
 
 static std::optional<TvgNloSimulationRunResult>
