@@ -106,8 +106,8 @@ public:
           Keep this weak. Too much attitude leak improves roll/pitch but
           damages heave in steep waves.
         */        
-        R no_gnss_attitude_sigma_scale = R(0.04);
-        R no_gnss_attitude_sigma_limit_rad_s = R(0.0030);
+        R no_gnss_attitude_sigma_scale = R(0.03);
+        R no_gnss_attitude_sigma_limit_rad_s = R(0.0020);
 
         bool use_time_varying_attitude_gains = true;
         R attitude_gain_tau_s = R(25);
