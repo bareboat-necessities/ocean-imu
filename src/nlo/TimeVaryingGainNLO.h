@@ -97,6 +97,18 @@ public:
         R gyro_bias_limit_rad_s = R(0.20);
         R max_specific_force_mps2 = R(30.0);
 
+        /*
+          No-GNSS roll/pitch attitude leak.
+
+          This is used only for quaternion / gyro-bias correction when
+          WithGNSS=false. It is not used for xi_dot / VVR dynamics.
+
+          Keep this weak. Too much attitude leak improves roll/pitch but
+          damages heave in steep waves.
+        */
+        R no_gnss_attitude_sigma_scale = R(0.10);
+        R no_gnss_attitude_sigma_limit_rad_s = R(0.0075);
+
         bool use_time_varying_attitude_gains = true;
         R attitude_gain_tau_s = R(25);
         R attitude_gain_switch_s = R(100);
@@ -823,12 +835,16 @@ private:
         }
 
         /*
-          This is deliberately a weak leak path. It is not allowed to drive
-          the vertical TMO/VVR dynamics. It only nudges roll/pitch attitude
-          out of the no-GNSS self-cancellation condition.
+          Deliberately weak leak path:
+            - improves no-GNSS roll/pitch self-cancellation
+            - does not drive xi_dot / vertical TMO/VVR
+            - must stay small enough not to corrupt heave in steep waves
         */
-        sigma_force *= R(0.20);
-        sigma_force = clampNorm(sigma_force, R(0.015));
+        sigma_force *= cfg_.no_gnss_attitude_sigma_scale;
+        sigma_force = clampNorm(
+            sigma_force,
+            cfg_.no_gnss_attitude_sigma_limit_rad_s
+        );
 
         if constexpr (Mag == NloMagType::None) {
             sigma_force.z() = R(0);
