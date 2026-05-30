@@ -810,8 +810,32 @@ private:
                           const Vec3& fhat_n,
                           const Aux& aux,
                           const Mat3& R_nb) const {
+        /*
+          Important for WithGNSS=false:
+
+          Full fhat_n is partly self-generated from the current attitude:
+
+              fhat_n = R_nb * f_b + xi_n
+
+          With no GNSS, xi_x/y are locked to zero, so using full fhat_n in
+          attitude feedback gives:
+
+              R_nb^T fhat_n ≈ f_b
+              sigma ≈ f_b × f_b ≈ 0
+
+          In no-GNSS mode, use only the VVR-observed vertical component as the
+          force reference for attitude feedback. This avoids horizontal
+          self-cancellation.
+        */
+        Vec3 fhat_att_n = fhat_n;
+
+        if constexpr (!WithGNSS) {
+            fhat_att_n.x() = R(0);
+            fhat_att_n.y() = R(0);
+        }
+
         const Vec3 fhat_sat_n =
-            clampNorm(fhat_n, cfg_.max_specific_force_mps2);
+            clampNorm(fhat_att_n, cfg_.max_specific_force_mps2);
 
         if (!cfg_.use_triad_style_force_injection) {
             Vec3 sigma = k1_ * f_b.cross(R_nb.transpose() * fhat_sat_n);
@@ -840,8 +864,6 @@ private:
             return sigma;
         }
 
-        // Secondary vector pair. This follows the same idea as v2 = f x c,
-        // but also works for magnetometer-horizontal yaw reference.
         Vec3 b2 = f_b_u.cross(c_b);
         Vec3 n2 = f_n_u.cross(c_n);
 
