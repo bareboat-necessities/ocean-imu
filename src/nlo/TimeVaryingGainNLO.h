@@ -100,14 +100,17 @@ public:
         /*
           No-GNSS roll/pitch attitude leak.
 
-          This is used only for quaternion / gyro-bias correction when
-          WithGNSS=false. It is not used for xi_dot / VVR dynamics.
+          Used only for quaternion / gyro-bias correction when WithGNSS=false.
+          It is not used for xi_dot / VVR dynamics.
 
-          Keep this weak. Too much attitude leak improves roll/pitch but
-          damages heave in steep waves.
-        */        
+          The leak is deliberately weak and is reduced further when vertical
+          inertial acceleration is high, because that means the accelerometer
+          is contaminated by wave motion and should not be trusted as a clean
+          tilt reference.
+        */
         R no_gnss_attitude_sigma_scale = R(0.03);
         R no_gnss_attitude_sigma_limit_rad_s = R(0.0020);
+        R no_gnss_attitude_acc_gate_mps2 = R(0.50);
 
         bool use_time_varying_attitude_gains = true;
         R attitude_gain_tau_s = R(25);
@@ -835,15 +838,29 @@ private:
         }
 
         /*
-          Deliberately weak leak path:
-            - improves no-GNSS roll/pitch self-cancellation
-            - does not drive xi_dot / vertical TMO/VVR
-            - must stay small enough not to corrupt heave in steep waves
+          Wave-safe no-GNSS attitude leak.
+
+          a_z_inertial = fhat_z + g
+
+          If vertical inertial acceleration is large, the accelerometer is not
+          a clean tilt reference. Reduce both the leak gain and leak clamp.
         */
-        sigma_force *= cfg_.no_gnss_attitude_sigma_scale;
+        const R a_z_inertial =
+            fhat_n.z() + cfg_.gravity_mps2;
+
+        R acc_gate = cfg_.no_gnss_attitude_acc_gate_mps2;
+        if (!(acc_gate > R(1e-6))) {
+            acc_gate = R(1e-6);
+        }
+
+        const R gate =
+            (acc_gate * acc_gate) /
+            (acc_gate * acc_gate + a_z_inertial * a_z_inertial);
+
+        sigma_force *= cfg_.no_gnss_attitude_sigma_scale * gate;
         sigma_force = clampNorm(
             sigma_force,
-            cfg_.no_gnss_attitude_sigma_limit_rad_s
+            cfg_.no_gnss_attitude_sigma_limit_rad_s * gate
         );
 
         if constexpr (Mag == NloMagType::None) {
