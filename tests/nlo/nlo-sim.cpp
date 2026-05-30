@@ -27,8 +27,8 @@ bool add_noise = true;
 
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 22.0f,
-    .err_limit_percent_z_pmstokes  = 25.0f,
-    .err_limit_yaw_deg             = 15.0f,
+    .err_limit_percent_z_pmstokes  = 22.0f,
+    .err_limit_yaw_deg             = 8.0f,
     .err_limit_percent_3d_jonswap  = 9999.0f,
     .err_limit_percent_3d_pmstokes = 9999.0f,
     .acc_z_bias_percent            = 9999.0f,
