@@ -82,29 +82,21 @@ public:
     };
 
     struct Aux {
-        // Used only when Mag == Compass.
         R compass_heading_rad = R(0);
         bool compass_valid = true;
 
-        // Used only when Mag == Magnetometer.
-        // Must be calibrated for hard/soft iron and body-axis alignment.
         Vec3 mag_b = Vec3::Zero();
         bool mag_valid = false;
 
-        // Used only when WithGNSS == true.
         GnssXY gnss;
     };
 
     struct Config {
         R gravity_mps2 = R(9.80665);
 
-        // Optional constant bias compensation.
         R gyro_bias_limit_rad_s = R(0.20);
-
-        // Saturation on estimated NED specific force before normalization.
         R max_specific_force_mps2 = R(30.0);
 
-        // Paper-like attitude gain schedule.
         bool use_time_varying_attitude_gains = true;
         R attitude_gain_tau_s = R(25);
         R attitude_gain_switch_s = R(100);
@@ -117,20 +109,17 @@ public:
         R k2_nominal = R(1.0);
         R kI_nominal = R(0.01);
 
-        // Vertical / integrated-heave observer gains.
         R K_p0z_p0z = R(5.4295);
         R K_pz_p0z  = R(2.2396);
         R K_vz_p0z  = R(0.4454);
         R K_xiz_p0z = R(0.0354);
 
-        // Horizontal GNSS-position observer gains.
         R K_pp_scalar  = R(0.9513);
         R K_vp_scalar  = R(0.3275);
         R K_xip_scalar = R(0.0354);
 
         R theta = R(1);
 
-        // Time-varying TMO scalar gain.
         bool use_time_varying_tmo_gain = true;
         R vartheta0 = R(0.5);
         R vartheta1_a = R(2.0);
@@ -141,17 +130,12 @@ public:
         R vartheta2_tau_s = R(25);
         R vartheta2_switch_s = R(100);
 
-        // High-pass on integrated vertical innovation.
         R p0z_highpass_tau_s = R(600);
 
-        // Use normalized force and secondary vector pair instead of raw compact form.
         bool use_triad_style_force_injection = true;
 
-        // Magnetometer mode.
-        // East-positive magnetic declination. 0 means yaw is magnetic-north referenced.
         R magnetic_declination_rad = R(0);
 
-        // Optional magnetometer norm gate. Set <=0 to disable.
         R expected_mag_norm = R(0);
         R max_mag_relative_norm_error = R(0.35);
     };
@@ -298,22 +282,36 @@ public:
         fhat_n_ = R_nb_before * f_b + xi_n_;
 
         if constexpr (!WithGNSS) {
-            // Horizontal xi is unobservable without PosRef/GNSS. Keep the
-            // dynamic force estimate from getting horizontal observer drift.
             xi_n_.x() = R(0);
             xi_n_.y() = R(0);
             fhat_n_ = R_nb_before * f_b + xi_n_;
         }
 
-        sigma_b_ = computeSigmaBody(f_b, fhat_n_, aux, R_nb_before);
-
         /*
-          Bias observer sign:
-            q_dot uses omega - b_g + sigma
-            b_g_dot = Proj(b_g, -kI * sigma)
+          Split the two sigma roles:
 
-          With no yaw reference, z gyro bias is unobservable, so freeze it.
+            sigma_tmo_b:
+              Original paper-style force feedback. This is used for xi_dot /
+              TMO/VVR correction dynamics. It must remain the full-force
+              version, otherwise the vertical heave loop can run away.
+
+            sigma_b_:
+              Public/attitude sigma used for quaternion correction and gyro
+              bias learning. In no-GNSS mode, the original full-force feedback
+              self-cancels because fhat_n ~= R*f_b. Use a small vertical-only
+              force-reference leak for roll/pitch, but do not feed that into
+              xi_dot.
         */
+        const Vec3 sigma_tmo_b =
+            computeSigmaBody(f_b, fhat_n_, aux, R_nb_before);
+
+        sigma_b_ = sigma_tmo_b;
+
+        if constexpr (!WithGNSS) {
+            sigma_b_ =
+                computeNoGnssAttitudeSigmaBody(f_b, fhat_n_, aux, R_nb_before);
+        }
+
         Vec3 bias_dot =
             projectBallDerivative(
                 gyro_bias_b_,
@@ -381,13 +379,12 @@ public:
         v_dot.z() += s3 * cfg_.K_vz_p0z * p0z_err;
 
         /*
-          Correction-state dynamics sign:
-            xi_dot = -R(q) S(sigma) f_b + injection terms
+          Use sigma_tmo_b here, not sigma_b_.
 
-          This is important. Positive sign makes the correction state run away
-          in the no-GNSS vertical-only case.
+          sigma_b_ may be a small no-GNSS vertical-reference attitude leak.
+          Feeding that into xi_dot destabilizes the VVR/heave loop.
         */
-        Vec3 xi_dot = -R_nb * (skew(sigma_b_) * f_b);
+        Vec3 xi_dot = -R_nb * (skew(sigma_tmo_b) * f_b);
 
         if (have_gnss) {
             xi_dot.template head<2>() += s4 * (Kxip * pxy_err);
@@ -395,11 +392,6 @@ public:
         xi_dot.z() += s4 * cfg_.K_xiz_p0z * p0z_err;
 
         if constexpr (!WithGNSS) {
-            /*
-              Without horizontal PosRef/GNSS, horizontal translational states
-              are unobservable. Do not integrate p_x/p_y, v_x/v_y, or xi_x/xi_y.
-              Otherwise xi_x/y drift contaminates fhat_n and destroys attitude.
-            */
             p_dot.x() = R(0);
             p_dot.y() = R(0);
 
@@ -772,10 +764,8 @@ private:
 
             Vec3 m_b = aux.mag_b / mn;
 
-            // Current estimated NED down expressed in BODY.
             const Vec3 down_b = R_nb.transpose() * nedDown();
 
-            // Yaw-only magnetic vector: remove vertical/dip component.
             Vec3 mh_b = m_b - down_b * down_b.dot(m_b);
             if (mh_b.norm() < R(1e-6)) {
                 return false;
@@ -806,36 +796,77 @@ private:
         }
     }
 
+    Vec3 computeNoGnssAttitudeSigmaBody(const Vec3& f_b,
+                                        const Vec3& fhat_n,
+                                        const Aux& aux,
+                                        const Mat3& R_nb) const {
+        Vec3 fhat_att_n = fhat_n;
+        fhat_att_n.x() = R(0);
+        fhat_att_n.y() = R(0);
+
+        const Vec3 fhat_sat_n =
+            clampNorm(fhat_att_n, cfg_.max_specific_force_mps2);
+
+        Vec3 sigma_force = Vec3::Zero();
+
+        if (!cfg_.use_triad_style_force_injection) {
+            sigma_force = k1_ * f_b.cross(R_nb.transpose() * fhat_sat_n);
+        } else {
+            const Vec3 f_b_u =
+                normalizeSafe(f_b, Vec3(R(0), R(0), R(-1)));
+
+            const Vec3 f_n_u =
+                normalizeSafe(fhat_sat_n, Vec3(R(0), R(0), R(-1)));
+
+            sigma_force =
+                k1_ * f_b_u.cross(R_nb.transpose() * f_n_u);
+        }
+
+        /*
+          This is deliberately a weak leak path. It is not allowed to drive
+          the vertical TMO/VVR dynamics. It only nudges roll/pitch attitude
+          out of the no-GNSS self-cancellation condition.
+        */
+        sigma_force *= R(0.20);
+        sigma_force = clampNorm(sigma_force, R(0.015));
+
+        if constexpr (Mag == NloMagType::None) {
+            sigma_force.z() = R(0);
+        }
+
+        Vec3 sigma_yaw = Vec3::Zero();
+
+        Vec3 c_b;
+        Vec3 c_n;
+        if (makeYawReference(aux, R_nb, c_b, c_n)) {
+            if (!cfg_.use_triad_style_force_injection) {
+                sigma_yaw = k2_ * c_b.cross(R_nb.transpose() * c_n);
+            } else {
+                const Vec3 f_b_u =
+                    normalizeSafe(f_b, Vec3(R(0), R(0), R(-1)));
+
+                const Vec3 f_n_u =
+                    normalizeSafe(fhat_sat_n, Vec3(R(0), R(0), R(-1)));
+
+                Vec3 b2 = f_b_u.cross(c_b);
+                Vec3 n2 = f_n_u.cross(c_n);
+
+                b2 = normalizeSafe(b2, Vec3(R(0), R(1), R(0)));
+                n2 = normalizeSafe(n2, Vec3(R(0), R(1), R(0)));
+
+                sigma_yaw = k2_ * b2.cross(R_nb.transpose() * n2);
+            }
+        }
+
+        return sigma_force + sigma_yaw;
+    }
+
     Vec3 computeSigmaBody(const Vec3& f_b,
                           const Vec3& fhat_n,
                           const Aux& aux,
                           const Mat3& R_nb) const {
-        /*
-          Important for WithGNSS=false:
-
-          Full fhat_n is partly self-generated from the current attitude:
-
-              fhat_n = R_nb * f_b + xi_n
-
-          With no GNSS, xi_x/y are locked to zero, so using full fhat_n in
-          attitude feedback gives:
-
-              R_nb^T fhat_n ≈ f_b
-              sigma ≈ f_b × f_b ≈ 0
-
-          In no-GNSS mode, use only the VVR-observed vertical component as the
-          force reference for attitude feedback. This avoids horizontal
-          self-cancellation.
-        */
-        Vec3 fhat_att_n = fhat_n;
-
-        if constexpr (!WithGNSS) {
-            fhat_att_n.x() = R(0);
-            fhat_att_n.y() = R(0);
-        }
-
         const Vec3 fhat_sat_n =
-            clampNorm(fhat_att_n, cfg_.max_specific_force_mps2);
+            clampNorm(fhat_n, cfg_.max_specific_force_mps2);
 
         if (!cfg_.use_triad_style_force_injection) {
             Vec3 sigma = k1_ * f_b.cross(R_nb.transpose() * fhat_sat_n);
