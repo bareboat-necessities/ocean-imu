@@ -109,6 +109,8 @@ static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LO
 static constexpr uint32_t UI_REFRESH_MS = 100;
 static constexpr uint32_t DEBUG_SERIAL_MS = 100;
 static constexpr uint32_t NMEA_SERIAL_MS = 80;
+static constexpr uint32_t NMEA_STATUS_MS = 5000;
+static constexpr uint32_t NMEA_TEMP_MS = 500;
 
 static constexpr float ROT_BIAS_TAU_S = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
@@ -253,6 +255,8 @@ class FusionApp {
 
   uint32_t last_ui_ms_ = 0;
   uint32_t last_serial_ms_ = 0;
+  uint32_t last_status_nmea_ms_ = 0;
+  uint32_t last_temp_nmea_ms_ = 0;
 
   Fusion fusion_{};
 
@@ -276,6 +280,7 @@ class FusionApp {
   bool heading_valid_ = false;
 
   float heave_m_ = 0.0f;
+  float heave_speed_mps_ = 0.0f;
   float wave_envelope_m_ = 0.0f;
   float wave_hz_ = APP_FREQ_GUESS;
 
@@ -289,6 +294,7 @@ class FusionApp {
   bool mag_fresh_ = false;
   bool mag_used_ = false;
   float mag_norm_uT_ = NAN;
+  float imu_temp_c_ = NAN;
 
   uint16_t stale_frame_count_ = 0;
   bool have_last_sample_us_ = false;
@@ -297,7 +303,14 @@ class FusionApp {
   bool rot_inited_ = false;
   float rot_dpm_filt_ = 0.0f;
   bool gyro_bias_ok_ = false;
+  bool gyro_bias_learning_ = false;
   Vector3f gyro_bias_ema_ = Vector3f::Zero();
+
+  uint32_t rate_window_ms_ = 0;
+  uint32_t imu_sample_count_ = 0;
+  uint32_t mag_sample_count_ = 0;
+  float imu_sample_hz_ = 0.0f;
+  float mag_sample_hz_ = 0.0f;
 
   bool mahony_seeded_ = false;
 
@@ -454,6 +467,11 @@ class FusionApp {
 
     mag_gate_last_ms_ = 0;
     last_mag_correction_ms_ = 0;
+    rate_window_ms_ = millis();
+    imu_sample_count_ = 0;
+    mag_sample_count_ = 0;
+    imu_sample_hz_ = 0.0f;
+    mag_sample_hz_ = 0.0f;
 
     have_last_sample_us_ = false;
     last_sample_us_ = 0;
@@ -489,6 +507,7 @@ class FusionApp {
     rot_inited_ = false;
     rot_dpm_filt_ = 0.0f;
     gyro_bias_ok_ = false;
+    gyro_bias_learning_ = false;
     gyro_bias_ema_.setZero();
     mahony_seeded_ = false;
 
@@ -508,12 +527,14 @@ class FusionApp {
     mag_fresh_ = false;
     mag_used_ = false;
     mag_norm_uT_ = NAN;
+    imu_temp_c_ = NAN;
 
     stale_frame_count_ = 0;
     have_last_sample_us_ = false;
     last_sample_us_ = 0;
 
     heave_m_ = 0.0f;
+    heave_speed_mps_ = 0.0f;
     wave_envelope_m_ = 0.0f;
     wave_hz_ = APP_FREQ_GUESS;
 
@@ -600,6 +621,8 @@ class FusionApp {
 
     dt_ = computeFusionDtFromSampleTimestamp_(s);
     const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
+    imu_temp_c_ = tempC;
+    ++imu_sample_count_;
 
     a_raw_norm_ = s.a.norm();
 
@@ -620,6 +643,7 @@ class FusionApp {
         mag_norm_uT_ <= MAG_FIELD_MAX_UT;
 
     mag_fresh_ = updateMagFreshGate_(mag_present_, now_ms);
+    if (mag_fresh_) ++mag_sample_count_;
 
 #if SEA_STATE_USE_STRICT_MAG_FIELD_GATE
     const bool mag_usable = mag_present_ && mag_field_sane_;
@@ -675,6 +699,8 @@ class FusionApp {
         (fabsf(a_cal_.norm() - APP_G_STD) < ROT_STILL_G_TOL_FRAC * APP_G_STD) &&
         (w_cal_.norm() < ROT_STILL_GYRO_RAD_S);
 
+    gyro_bias_learning_ = still;
+
     if (still) {
       const float alpha_b = 1.0f - expf(-dt_ / ROT_BIAS_TAU_S);
 
@@ -705,6 +731,7 @@ class FusionApp {
     const auto hs = fusion_.snapshot();
 
     heave_m_ = fusion_.displacement();
+    heave_speed_mps_ = fusion_.velocity();
     heave_raw_m_ = heave_m_;
 
     /*
@@ -734,6 +761,17 @@ class FusionApp {
     heave_baseline_m_ = z_det.baseline_slow;
     heave_wave_raw_m_ = z_det.wave_raw;
     heave_wave_clean_m_ = z_det.wave_clean;
+
+    if (rate_window_ms_ == 0) rate_window_ms_ = now_ms;
+    const uint32_t rate_elapsed_ms = now_ms - rate_window_ms_;
+    if (rate_elapsed_ms >= 1000u) {
+      const float scale = 1000.0f / static_cast<float>(rate_elapsed_ms);
+      imu_sample_hz_ = static_cast<float>(imu_sample_count_) * scale;
+      mag_sample_hz_ = static_cast<float>(mag_sample_count_) * scale;
+      imu_sample_count_ = 0;
+      mag_sample_count_ = 0;
+      rate_window_ms_ = now_ms;
+    }
   }
 
   void drawHomeStatic_() {
@@ -852,6 +890,25 @@ class FusionApp {
 
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
+    nmea_xdr_heave_speed(SEA_STATE_NMEA_TALKER, heave_speed_mps_);
+
+    if (now_ms - last_temp_nmea_ms_ >= NMEA_TEMP_MS) {
+      last_temp_nmea_ms_ = now_ms;
+      nmea_xdr_imu_temp(SEA_STATE_NMEA_TALKER, imu_temp_c_);
+    }
+
+    if (now_ms - last_status_nmea_ms_ >= NMEA_STATUS_MS) {
+      last_status_nmea_ms_ = now_ms;
+      nmea_txt_ins_status(SEA_STATE_NMEA_TALKER,
+                          heading_valid_,
+                          fusion_.envelopeReady() && std::isfinite(heave_wave_clean_m_),
+                          heading_valid_ && mag_used_,
+                          gyro_bias_learning_,
+                          false,
+                          imu_sample_hz_,
+                          mag_sample_hz_);
+    }
+
     //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, heading_valid_);
 

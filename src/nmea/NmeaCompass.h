@@ -58,6 +58,23 @@ static inline void nmea_xdr_freq(const char* talker2, float freq_hz) {
   nmea_send(s);
 }
 
+// $--XDR,V,x.xxx,M,VHSPD*hh  (vertical heave speed, meters/second, up-positive)
+static inline void nmea_xdr_heave_speed(const char* talker2, float heave_speed_mps) {
+  char s[82];
+  snprintf(s, sizeof(s), "$%sXDR,V,%.3f,M,VHSPD", talker2, (double)heave_speed_mps);
+  nmea_send(s);
+}
+
+// $--XDR,C,x.x,C,IMUT*hh  (IMU chip temperature, degrees C)
+static inline void nmea_xdr_imu_temp(const char* talker2, float temp_c) {
+  if (!std::isfinite(temp_c)) {
+    return;
+  }
+  char s[82];
+  snprintf(s, sizeof(s), "$%sXDR,C,%.1f,C,IMUT", talker2, (double)temp_c);
+  nmea_send(s);
+}
+
 static inline uint8_t nmeaChecksumBody_(const char* body) {
   uint8_t cs = 0;
   while (*body) {
@@ -98,5 +115,40 @@ static inline void nmea_txt_wave_direction_sign(const char* talker, int raw_sign
   }
   char body[96];
   snprintf(body, sizeof(body), "%.2sTXT,01,01,00,WAVSGN=%d POL=%d", talker, raw_sign, polarity);
+  nmeaPrintBody_(body);
+}
+
+static inline void nmea_txt_wave_direction_confidence(const char* talker, float confidence_pct, bool valid)
+{
+  if (!valid || !std::isfinite(confidence_pct)) {
+    return;
+  }
+  char body[96];
+  if (confidence_pct < 0.0f) confidence_pct = 0.0f;
+  if (confidence_pct > 100.0f) confidence_pct = 100.0f;
+  snprintf(body, sizeof(body), "%.2sTXT,01,01,00,WAVCONF=%.0f", talker, static_cast<double>(confidence_pct));
+  nmeaPrintBody_(body);
+}
+
+static inline void nmea_txt_ins_status(const char* talker,
+                                       bool attitude_good,
+                                       bool heave_good,
+                                       bool mag_locked,
+                                       bool gyro_bias_learning,
+                                       bool acc_bias_estimating,
+                                       float imu_hz,
+                                       float mag_hz)
+{
+  char body[96];
+  snprintf(body, sizeof(body),
+           "%.2sTXT,01,01,00,ATT=%c HEV=%c MAG=%c GB=%c AB=%c IHz=%.1f MHz=%.1f",
+           talker,
+           attitude_good ? 'Y' : 'N',
+           heave_good ? 'Y' : 'N',
+           mag_locked ? 'Y' : 'N',
+           gyro_bias_learning ? 'Y' : 'N',
+           acc_bias_estimating ? 'Y' : 'N',
+           static_cast<double>(imu_hz),
+           static_cast<double>(mag_hz));
   nmeaPrintBody_(body);
 }

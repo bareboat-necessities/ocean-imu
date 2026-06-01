@@ -68,6 +68,9 @@ static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LO
 static constexpr uint32_t UI_REFRESH_MS   = 100;
 static constexpr uint32_t DEBUG_SERIAL_MS = 100;
 static constexpr uint32_t NMEA_SERIAL_MS  = 80;
+static constexpr uint32_t NMEA_WAVE_MS    = 2000;
+static constexpr uint32_t NMEA_STATUS_MS  = 5000;
+static constexpr uint32_t NMEA_TEMP_MS    = 500;
 
 static constexpr float ROT_BIAS_TAU_S       = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
@@ -302,8 +305,11 @@ private:
   uint32_t tap_deadline_ms_ = 0;
 #endif
 
-  uint32_t last_ui_ms_     = 0;
-  uint32_t last_serial_ms_ = 0;
+  uint32_t last_ui_ms_          = 0;
+  uint32_t last_serial_ms_      = 0;
+  uint32_t last_wave_nmea_ms_   = 0;
+  uint32_t last_status_nmea_ms_ = 0;
+  uint32_t last_temp_nmea_ms_   = 0;
 
   Fusion fusion_{};
 
@@ -320,6 +326,7 @@ private:
   float heading_deg_      = 0.0f;
   bool  heading_valid_    = false;
   float heave_m_          = 0.0f;
+  float heave_speed_mps_  = 0.0f;
   float wave_envelope_m_  = 0.0f;
   float wave_hz_          = FREQ_GUESS;
 
@@ -331,6 +338,7 @@ private:
   bool  wave_sign_ok_        = false;
   float wave_dir_deg_        = NAN;
   bool  wave_dir_ok_         = false;
+  float wave_dir_conf_pct_   = 0.0f;
 
   float heave_raw_m_        = 0.0f;
   float heave_baseline_m_   = 0.0f;
@@ -341,6 +349,7 @@ private:
   bool  mag_fresh_       = false;
   float mag_norm_uT_     = NAN;
   float heading_mag_deg_ = NAN;
+  float imu_temp_c_      = NAN;
   bool  heading_mag_ok_  = false;
 
   uint16_t stale_frame_count_ = 0;
@@ -350,8 +359,16 @@ private:
 
   bool     rot_inited_    = false;
   float    rot_dpm_filt_  = 0.0f;
-  bool     gyro_bias_ok_  = false;
-  Vector3f gyro_bias_ema_ = Vector3f::Zero();
+  bool     gyro_bias_ok_       = false;
+  bool     gyro_bias_learning_ = false;
+  bool     acc_bias_estimating_ = false;
+  Vector3f gyro_bias_ema_      = Vector3f::Zero();
+
+  uint32_t rate_window_ms_   = 0;
+  uint32_t imu_sample_count_ = 0;
+  uint32_t mag_sample_count_ = 0;
+  float    imu_sample_hz_    = 0.0f;
+  float    mag_sample_hz_    = 0.0f;
 
 private:
   static void waitForNextLoopTick_(uint32_t loop_start_us) {
@@ -451,6 +468,11 @@ private:
     mag_gate_last_ms_ = 0;
 
     last_skipped_total_ = 0;
+    rate_window_ms_ = millis();
+    imu_sample_count_ = 0;
+    mag_sample_count_ = 0;
+    imu_sample_hz_ = 0.0f;
+    mag_sample_hz_ = 0.0f;
     have_last_sample_us_ = false;
     last_sample_us_      = 0;
   }
@@ -512,6 +534,8 @@ private:
     rot_inited_   = false;
     rot_dpm_filt_ = 0.0f;
     gyro_bias_ok_ = false;
+    gyro_bias_learning_ = false;
+    acc_bias_estimating_ = false;
     gyro_bias_ema_.setZero();
 
     heading_deg_   = 0.0f;
@@ -522,11 +546,13 @@ private:
     mag_fresh_        = false;
     mag_norm_uT_      = NAN;
     heading_mag_deg_  = NAN;
+    imu_temp_c_       = NAN;
     heading_mag_ok_   = false;
 
     stale_frame_count_ = 0;
     have_last_sample_us_ = false;
     last_sample_us_      = 0;
+    heave_speed_mps_     = 0.0f;
     heave_raw_m_         = 0.0f;
     heave_baseline_m_    = 0.0f;
     heave_wave_raw_m_    = 0.0f;
@@ -540,6 +566,7 @@ private:
     wave_sign_ok_       = false;
     wave_dir_deg_       = NAN;
     wave_dir_ok_        = false;
+    wave_dir_conf_pct_  = 0.0f;
   }
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -587,6 +614,8 @@ private:
   void updateFilter_(const ImuSample& s) {
     dt_ = computeFusionDtFromSampleTimestamp_(s);
     const float tempC = std::isfinite(s.tempC) ? s.tempC : 35.0f;
+    imu_temp_c_ = tempC;
+    ++imu_sample_count_;
 
     const Vector3f a_raw = s.a;
     const Vector3f w_raw = s.w;
@@ -600,6 +629,7 @@ private:
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
     mag_fresh_ = updateMagFreshGate_(mag_ok_, millis());
+    if (mag_fresh_) ++mag_sample_count_;
 
     const bool still =
         (fabsf(a_cal_.norm() - g_std) < ROT_STILL_G_TOL_FRAC * g_std) &&
@@ -641,6 +671,8 @@ private:
       }
     }
 
+    gyro_bias_learning_ = still;
+
     if (still) {
       const float alpha_b = 1.0f - expf(-dt_ / ROT_BIAS_TAU_S);
       if (!gyro_bias_ok_) {
@@ -667,6 +699,9 @@ private:
       rot_dpm_filt_ += alpha_r * (rot_dpm_meas - rot_dpm_filt_);
     }
 
+    const Vector3f velocity_ned_mps = fusion_.raw().mekf().get_velocity();
+    heave_speed_mps_ = -velocity_ned_mps.z();
+
     const Vector3f displacement_raw_up_m = fusion_.displacementUpMeters();
     const auto& displacement_det_out = fusion_.displacementDetrend();
 
@@ -688,6 +723,20 @@ private:
         wave_dir_deg_);
 
     wave_dir_ok_ = wave_dir_ok_ && fusion_.isLive();
+    wave_dir_conf_pct_ = wave_dir_ok_ ? 100.0f : (wave_axis_ok_ ? 50.0f : 0.0f);
+    acc_bias_estimating_ = fusion_.isLive();
+
+    const uint32_t now_ms = millis();
+    if (rate_window_ms_ == 0) rate_window_ms_ = now_ms;
+    const uint32_t rate_elapsed_ms = now_ms - rate_window_ms_;
+    if (rate_elapsed_ms >= 1000u) {
+      const float scale = 1000.0f / static_cast<float>(rate_elapsed_ms);
+      imu_sample_hz_ = static_cast<float>(imu_sample_count_) * scale;
+      mag_sample_hz_ = static_cast<float>(mag_sample_count_) * scale;
+      imu_sample_count_ = 0;
+      mag_sample_count_ = 0;
+      rate_window_ms_ = now_ms;
+    }
 
     heave_raw_m_        = heave_m_;
     heave_baseline_m_   = displacement_det_out.baseline_slow.z();
@@ -778,9 +827,33 @@ private:
     }
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
-    nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_axis_deg_, wave_axis_ok_);
-    nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_dir_deg_, wave_dir_ok_);
-    nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER, wave_sign_raw_, wave_sign_polarity_, wave_sign_ok_);
+    nmea_xdr_heave_speed(SEA_STATE_NMEA_TALKER, heave_speed_mps_);
+
+    if (now_ms - last_wave_nmea_ms_ >= NMEA_WAVE_MS) {
+      last_wave_nmea_ms_ = now_ms;
+      nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_axis_deg_, wave_axis_ok_);
+      nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_dir_deg_, wave_dir_ok_);
+      nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER, wave_sign_raw_, wave_sign_polarity_, wave_sign_ok_);
+      nmea_txt_wave_direction_confidence(SEA_STATE_NMEA_TALKER, wave_dir_conf_pct_, fusion_.isLive());
+    }
+
+    if (now_ms - last_temp_nmea_ms_ >= NMEA_TEMP_MS) {
+      last_temp_nmea_ms_ = now_ms;
+      nmea_xdr_imu_temp(SEA_STATE_NMEA_TALKER, imu_temp_c_);
+    }
+
+    if (now_ms - last_status_nmea_ms_ >= NMEA_STATUS_MS) {
+      last_status_nmea_ms_ = now_ms;
+      nmea_txt_ins_status(SEA_STATE_NMEA_TALKER,
+                          valid,
+                          fusion_.isLive() && std::isfinite(heave_wave_clean_m_),
+                          fusion_.hasMagNorthLock(),
+                          gyro_bias_learning_,
+                          acc_bias_estimating_,
+                          imu_sample_hz_,
+                          mag_sample_hz_);
+    }
+
     //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
     nmea_rot(SEA_STATE_NMEA_TALKER, rot_dpm_filt_, valid);
 #else
