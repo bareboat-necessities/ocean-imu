@@ -183,7 +183,7 @@ jobs:
   release:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, build-MCU]
 
     steps:
       - name: Download all workflow artifacts
@@ -228,6 +228,15 @@ jobs:
           overwrite: true
           file_glob: true
 
+      - name: Upload MCU binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: release-assets/mcu-binaries-*/*.zip
+          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
+          overwrite: true
+          file_glob: true
+
   build-MCU:
     runs-on: ubuntu-latest
     strategy:
@@ -255,4 +264,54 @@ jobs:
             --library ${{ github.workspace }}
             --build-property compiler.libraries.ldflags=-Wl,--allow-multiple-definition
           set-build-path: true
+
+      - name: Make merged MCU binaries (${{ matrix.ino_dir }})
+        shell: bash
+        run: |
+          set -euo pipefail
+          ESPTOOL="$(find "$HOME/.arduino15/packages/esp32/tools/esptool_py" -type f -name esptool | sort -V | tail -n 1)"
+          BOOT_APP0="$(find "$HOME/.arduino15/packages/esp32/hardware/esp32" -path '*/tools/partitions/boot_app0.bin' | sort -V | tail -n 1)"
+          if [ -z "$ESPTOOL" ] || [ -z "$BOOT_APP0" ]; then
+            echo "Unable to find esptool or boot_app0.bin."
+            exit 1
+          fi
+          for sketch in sensors/${{ matrix.ino_dir }}/*/*.ino; do
+            sketch_dir="$(dirname "$sketch")"
+            sketch_name="$(basename "$sketch" .ino)"
+            build_dir="$sketch_dir/build"
+            if [ ! -d "$build_dir" ]; then
+              echo "Missing build directory: $build_dir"
+              exit 1
+            fi
+            "$ESPTOOL" --chip esp32s3 merge_bin -o "$build_dir/${sketch_name}_firmware.bin" \
+              --flash_mode dio --flash_freq 80m --flash_size 8MB \
+              0x0 "$build_dir/${sketch_name}.ino.bootloader.bin" \
+              0x8000 "$build_dir/${sketch_name}.ino.partitions.bin" \
+              0xe000 "$BOOT_APP0" \
+              0x10000 "$build_dir/${sketch_name}.ino.bin"
+          done
+
+      - name: Package MCU binaries (${{ matrix.ino_dir }})
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p mcu-binaries
+          shopt -s nullglob
+          for build_dir in sensors/${{ matrix.ino_dir }}/*/build; do
+            sketch_name="$(basename "$(dirname "$build_dir")")"
+            files=("$build_dir"/*.bin "$build_dir"/*.csv)
+            if [ ${#files[@]} -eq 0 ]; then
+              echo "No binary files found in $build_dir"
+              exit 1
+            fi
+            zip -j "mcu-binaries/${sketch_name}_bin-$(date +%Y-%m-%d).zip" "${files[@]}"
+          done
+          ls -la mcu-binaries
+
+      - name: Upload MCU binary artifacts (${{ matrix.ino_dir }})
+        uses: actions/upload-artifact@v6
+        with:
+          name: mcu-binaries-${{ matrix.ino_dir }}
+          path: mcu-binaries/*.zip
+          if-no-files-found: error
 
