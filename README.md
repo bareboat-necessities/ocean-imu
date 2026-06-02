@@ -73,6 +73,12 @@ Arduino .ino schetches for esp32s3 (on atomS3R):
 
 `ocean-imu` collects reusable components for marine motion estimation and wave analytics. The codebase is organized so individual modules can be built and exercised from `tests/*` without requiring a monolithic build system.
 
+## UI
+
+GUI client (Windows and Linux):
+
+https://github.com/bareboat-necessities/ins-dashboard-gtk
+
 ### Main capabilities
 
 - Attitude and heading workflows (yaw/roll/pitch, AHRS-oriented utilities)
