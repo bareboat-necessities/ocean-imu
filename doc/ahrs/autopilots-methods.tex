@@ -1,0 +1,3390 @@
+\documentclass[10pt,twocolumn]{article}
+
+% ------------------------------------------------------------
+% Page layout: compact two-column proceedings-style layout
+% ------------------------------------------------------------
+\usepackage[
+  letterpaper,
+  top=0.75in,
+  bottom=1.0in,
+  left=0.625in,
+  right=0.625in
+]{geometry}
+
+\usepackage{placeins}
+
+\setlength{\columnsep}{0.25in}
+
+\usepackage{microtype}
+\usepackage{xurl}
+\usepackage{seqsplit}
+\setlength{\emergencystretch}{2em}
+\hbadness=10000
+\vbadness=10000
+\hfuzz=20pt
+\vfuzz=20pt
+\frenchspacing
+
+% Compact paragraph style: no blank paragraph gaps.
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
+
+% Slightly tighter line spacing.
+\linespread{0.97}
+
+% ------------------------------------------------------------
+% Core math
+% Load amsmath/mathtools before unicode-math.
+% ------------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{mathtools}
+
+% ------------------------------------------------------------
+% Fonts: LuaLaTeX or XeLaTeX
+% ------------------------------------------------------------
+\usepackage{fontspec}
+\usepackage[warnings-off={mathtools-colon,mathtools-overbracket}]{unicode-math}
+
+% Use Times-like fonts if available; otherwise fall back to DejaVu.
+\IfFontExistsTF{Times New Roman}
+  {\setmainfont{Times New Roman}}
+  {%
+    \IfFontExistsTF{TeX Gyre Termes}
+      {\setmainfont{TeX Gyre Termes}}
+      {\setmainfont{DejaVu Serif}}%
+  }
+  
+\IfFontExistsTF{TeX Gyre Termes}
+  {\setmainfont{TeX Gyre Termes}}
+  {\setmainfont{DejaVu Serif}}
+
+\IfFontExistsTF{TeX Gyre Heros}
+  {\setsansfont{TeX Gyre Heros}}
+  {\setsansfont{DejaVu Sans}}
+
+\setmonofont{DejaVu Sans Mono}[Scale=0.78]
+
+\IfFontExistsTF{TeX Gyre Termes Math}
+  {\setmathfont{TeX Gyre Termes Math}}
+  {\setmathfont{Latin Modern Math}}
+
+% Do NOT load amssymb, amsfonts, or bm with unicode-math.
+% amssymb/amfonts can conflict with symbols such as \eth.
+% bm can break Greek bold symbols under unicode-math.
+
+% ------------------------------------------------------------
+% Extra math utilities
+% ------------------------------------------------------------
+\usepackage{tensor}
+\usepackage{cancel}
+
+% ------------------------------------------------------------
+% Formal compact section headings
+% ------------------------------------------------------------
+\usepackage{titlesec}
+
+% Section numbering:
+% I. Section
+% A. Subsection
+% 1) Subsubsection
+\renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\thesubsection}{\Alph{subsection}}
+\renewcommand{\thesubsubsection}{\arabic{subsubsection}}
+
+\titleformat{\section}
+  [block]
+  {\normalfont\normalsize\scshape\centering}
+  {\thesection.}
+  {0.5em}
+  {}
+
+\titleformat{\subsection}
+  [block]
+  {\normalfont\normalsize\itshape}
+  {\thesubsection.}
+  {0.5em}
+  {}
+
+\titleformat{\subsubsection}
+  [runin]
+  {\normalfont\normalsize\itshape}
+  {\thesubsubsection)}
+  {0.5em}
+  {}
+  [. ]
+
+\titlespacing*{\section}
+  {0pt}
+  {1.4ex plus 0.4ex minus 0.2ex}
+  {0.7ex}
+
+\titlespacing*{\subsection}
+  {0pt}
+  {1.0ex plus 0.3ex minus 0.2ex}
+  {0.5ex}
+
+\titlespacing*{\subsubsection}
+  {\parindent}
+  {0.8ex plus 0.2ex minus 0.2ex}
+  {0.5em}
+
+% ------------------------------------------------------------
+% Compact lists
+% ------------------------------------------------------------
+\usepackage{enumitem}
+
+\setlist{
+  nosep,
+  leftmargin=1.2em
+}
+
+% ------------------------------------------------------------
+% Tables
+% ------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{siunitx}
+\usepackage{ragged2e}
+\usepackage{etoolbox}
+
+\sisetup{
+  detect-all,
+  per-mode=symbol,
+  exponent-product=\cdot
+}
+
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.03}
+
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash\hspace{0pt}}X}
+\newcolumntype{Z}[1]{>{\RaggedRight\arraybackslash\hspace{0pt}}p{#1}}
+
+% Default table text size. Use {\scriptsize ...} locally for very wide tables.
+\AtBeginEnvironment{tabular}{\footnotesize}
+\AtBeginEnvironment{tabularx}{\footnotesize}
+
+% ------------------------------------------------------------
+% Figures, SVG, PGF/TikZ plots
+% ------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{svg}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{stfloats}
+
+\pgfplotsset{compat=1.18}
+
+\usetikzlibrary{
+  arrows.meta,
+  calc,
+  positioning,
+  decorations.pathmorphing,
+  matrix
+}
+
+% ------------------------------------------------------------
+% Compact floats and equations
+% ------------------------------------------------------------
+
+% Allow LaTeX to place more floats before deferring them to the end.
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.90}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.80}
+
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\dblfloatpagefraction}{0.80}
+
+\setcounter{topnumber}{5}
+\setcounter{bottomnumber}{5}
+\setcounter{totalnumber}{10}
+\setcounter{dbltopnumber}{5}
+
+% Normal float spacing.
+\setlength{\floatsep}{7pt plus 1pt minus 1pt}
+\setlength{\textfloatsep}{8pt plus 1pt minus 1pt}
+\setlength{\intextsep}{7pt plus 1pt minus 1pt}
+
+% Double-column float spacing.
+\setlength{\dblfloatsep}{7pt plus 1pt minus 1pt}
+\setlength{\dbltextfloatsep}{8pt plus 1pt minus 1pt}
+
+% Prevent float-only pages from spreading tables vertically.
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{7pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+
+\setlength{\@dblfptop}{0pt}
+\setlength{\@dblfpsep}{7pt}
+\setlength{\@dblfpbot}{0pt plus 1fil}
+\makeatother
+
+\AtBeginDocument{%
+  \setlength{\abovedisplayskip}{6pt plus 2pt minus 2pt}%
+  \setlength{\belowdisplayskip}{6pt plus 2pt minus 2pt}%
+  \setlength{\abovedisplayshortskip}{4pt plus 2pt minus 2pt}%
+  \setlength{\belowdisplayshortskip}{4pt plus 2pt minus 2pt}%
+}
+
+% ------------------------------------------------------------
+% Captions and references
+% ------------------------------------------------------------
+\usepackage{caption}
+\usepackage{subcaption}
+
+\captionsetup{
+  font=footnotesize,
+  labelfont=bf,
+  skip=3pt
+}
+
+\captionsetup[table]{
+  position=top,
+  font=footnotesize,
+  labelfont=bf,
+  skip=3pt
+}
+
+\captionsetup[figure]{
+  font=footnotesize,
+  labelfont=bf,
+  skip=3pt
+}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+
+% ------------------------------------------------------------
+% Compact title block
+% ------------------------------------------------------------
+\makeatletter
+\renewcommand{\maketitle}{%
+  \twocolumn[{%
+    \vspace*{-0.35in}
+    \begin{center}
+      {\normalfont\rmfamily\bfseries\fontsize{24}{28}\selectfont\@title\par}
+      \vspace{0.9em}
+      {\normalfont\normalsize\rmfamily\@author\par}
+      \ifx\@date\@empty
+        \vspace{0.7em}
+      \else
+        \vspace{0.4em}
+        {\normalfont\normalsize\rmfamily\@date\par}
+        \vspace{0.7em}
+      \fi
+    \end{center}
+  }]%
+}
+\makeatother
+
+% ------------------------------------------------------------
+% Abstract and keywords style
+% ------------------------------------------------------------
+\renewenvironment{abstract}
+  {%
+    \par
+    \small
+    \bfseries
+    \noindent
+    \textit{Abstract---}%
+    \ignorespaces
+  }
+  {%
+    \par
+    \vspace{0.7em}
+  }
+
+\newenvironment{keywords}
+  {%
+    \par
+    \small
+    \noindent
+    \textbf{\textit{Keywords---}}%
+    \ignorespaces
+  }
+  {%
+    \par
+    \vspace{1.0em}
+  }
+
+% ------------------------------------------------------------
+% Common math macros
+% ------------------------------------------------------------
+
+% Sets and spaces
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+
+\newcommand{\Ltwo}{L^2}
+\newcommand{\Lp}[1]{L^{#1}}
+\newcommand{\Hsob}[1]{H^{#1}}
+\newcommand{\Cinfty}{C^\infty}
+
+% Scalars, vectors, matrices, tensors
+\newcommand{\scal}[1]{#1}
+\newcommand{\vct}[1]{\symbfit{#1}}   % bold italic vector, works for Greek
+\newcommand{\mat}[1]{\symbf{#1}}     % bold upright matrix
+\newcommand{\ten}[1]{\symbfsf{#1}}   % bold sans-serif tensor
+
+% Unit vectors
+\newcommand{\ihat}{\hat{\vct{i}}}
+\newcommand{\jhat}{\hat{\vct{j}}}
+\newcommand{\khat}{\hat{\vct{k}}}
+
+% Transpose, inverse, trace, determinant
+\newcommand{\T}{^{\mathsf{T}}}
+\newcommand{\inv}{^{-1}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\nullspace}{\operatorname{null}}
+\newcommand{\range}{\operatorname{range}}
+\newcommand{\determinant}{\operatorname{det}}
+
+% Norms, inner products
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\inner}[2]{\left\langle #1, #2 \right\rangle}
+
+% Differential operators
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\pd}{\partial}
+\newcommand{\grad}{\nabla}
+\newcommand{\divg}{\nabla \cdot}
+\newcommand{\curlop}{\nabla \times}
+\newcommand{\rot}{\nabla \times}
+\newcommand{\laplace}{\Delta}
+
+% Derivatives
+\newcommand{\dv}[2]{\frac{\mathrm{d} #1}{\mathrm{d} #2}}
+\newcommand{\dvtwo}[2]{\frac{\mathrm{d}^2 #1}{\mathrm{d} #2^2}}
+\newcommand{\pdv}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\pdvtwo}[2]{\frac{\partial^2 #1}{\partial #2^2}}
+
+% Matrix exponential
+\newcommand{\expm}{\operatorname{expm}}
+
+% Complex / imaginary numbers
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\Real}{\operatorname{Re}}
+\newcommand{\Imag}{\operatorname{Im}}
+
+% Fourier transform
+\newcommand{\FT}{\mathcal{F}}
+\newcommand{\IFT}{\mathcal{F}^{-1}}
+\newcommand{\fourier}[1]{\widehat{#1}}
+
+% Probability and statistics
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Normal}{\mathcal{N}}
+
+% Quaternions
+\newcommand{\quat}[1]{\mathbf{#1}}
+\newcommand{\qconj}[1]{#1^{*}}
+\newcommand{\qinv}[1]{#1^{-1}}
+\newcommand{\qmul}{\otimes}
+
+% Stochastic calculus
+\newcommand{\Wiener}{W_t}
+\newcommand{\ito}{\mathrm{d}}
+
+% Numerical methods
+\newcommand{\bigO}{\mathcal{O}}
+
+% ------------------------------------------------------------
+% Article-specific macros
+% ------------------------------------------------------------
+\newcommand{\sat}{\operatorname{sat}}
+\newcommand{\wrap}{\operatorname{wrap}_{180}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\clip}{\operatorname{clip}}
+\newcommand{\heading}{\psi}
+\newcommand{\cmd}{\mathrm{cmd}}
+\newcommand{\xte}{\mathrm{xte}}
+\newcommand{\TWA}{\mathrm{TWA}}
+\newcommand{\AWA}{\mathrm{AWA}}
+\newcommand{\COG}{\mathrm{COG}}
+\newcommand{\SOG}{\mathrm{SOG}}
+
+% ------------------------------------------------------------
+% Document metadata
+% ------------------------------------------------------------
+\title{Algorithmic Methods in Open Source Marine Autopilots}
+\author{
+Mikhail S. Grushinskiy\\
+Independent Researcher, USA, New Jersey\\
+Bareboat Necessities GitHub Project
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\suppressfloats[t]
+
+\begin{abstract}
+This article summarizes the main algorithms found in the uploaded
+\texttt{pypilot-master} source tree and compares them with Fenix Autopilot and common
+marine and robotics autopilot architectures.  \texttt{pypilot}, written by
+Sean D'Epagnier as an open-source marine autopilot, Fenix Autopilot, introduced by
+Sergio Pascual as an Arduino-based DIY tiller pilot, and ArduPilot, which grew from
+Jordi Mu\~noz and Chris Anderson's late-2000s DIY Drones work into a broad community
+autopilot stack, are treated as credited reference designs.  The active
+\texttt{pypilot} control path is best understood as a practical marine stack: quaternion attitude estimation and low-pass heading
+signals, mode-dependent heading generation, a saturated heading-error controller,
+a tack override, and a motor-oriented servo layer.  The default working pilot is not
+an advanced nonlinear path follower; it is an explicit extended proportional--derivative
+heading controller with gyro-rate, rate-of-rate, square-root heading-error, and
+heading-command feed-forward terms.  Compared with ArduPilot/PX4-style stacks, its
+path-following layer is much simpler; compared with Fenix Autopilot, it is more
+distributed and less tied to one embedded actuator package, but both projects make
+motor, rudder, and low-cost drive handling central to the design.
+\end{abstract}
+
+\section{Scope and Reading Method}
+
+The analysis is based on the uploaded source archive \texttt{pypilot-master.zip},
+with primary attention to the files listed in \cref{tab:source-files}; project designed
+by Sean D'Epagnier's \cite{pypilot-author}.
+The public pypilot user manual and workbook wiki are used as the main external
+pypilot references for operating modes, commissioning, calibration, and user-facing
+configuration \cite{pypilot-user-manual,pypilot-workbook-wiki}.  Other external
+references are used only to position the design relative to other autopilot families:
+ArduPilot Rover navigation and steering-rate control, PX4 fixed-wing position control,
+Fenix Autopilot's public repository and documentation, and B\&G descriptions of
+commercial sailing autopilot operation.
+
+\begin{table}[!tbp]
+\centering
+\caption{Important source files inspected in the uploaded tree.}
+\label{tab:source-files}
+\begin{tabularx}{\columnwidth}{@{}Z{0.34\columnwidth}Y@{}}
+\toprule
+File & Algorithmic role \\
+\midrule
+\texttt{autopilot.py} & Main loop, mode selection, heading error, feed-forward command rate. \\
+\texttt{pilots/pilot.py} & Base gain accumulation and mode-to-heading conversion. \\
+\texttt{pilots/basic.py} & Default extended heading controller. \\
+\texttt{pilots/wind.py} & Wind-relative heading generation and wind-gust term. \\
+\texttt{pilots/absolute.py} & Rudder-position command experiment. \\
+\texttt{tacking.py} & Tack/jibe state machine and override command. \\
+\texttt{boatimu.py} & RTIMU-based quaternion attitude, heading/rate filters, alignment. \\
+\texttt{gps\_filter.py} & Optional GPS--inertial Kalman filter for position, speed, track. \\
+\texttt{sensors.py} & APB/NAV cross-track-to-heading command. \\
+\texttt{servo.py} & Motor command shaping, rudder feedback, current/fault protection. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{High-Level Architecture}
+
+The control stack has five layers:
+\begin{enumerate}
+\item inertial and heading estimation;
+\item mode-specific definition of the controlled heading variable;
+\item heading-command and heading-error calculation;
+\item pilot-specific control law;
+\item servo/motor command shaping and protection.
+\end{enumerate}
+
+A useful abstraction is shown in \cref{fig:pypilot-stack}.  The important point is that
+the servo layer is not merely an actuator output.  In this code base it is a significant
+part of the closed-loop behavior because the usual command is closer to a rudder-drive
+speed request than to an absolute rudder angle.
+
+\begin{figure*}[t]
+\centering
+\begin{adjustbox}{max width=\textwidth}
+\begin{tikzpicture}[
+  node distance=0.45cm and 0.65cm,
+  block/.style={draw, rounded corners, align=center, minimum height=0.82cm, text width=2.75cm},
+  wide/.style={draw, rounded corners, align=center, minimum height=0.82cm, text width=3.2cm},
+  arrow/.style={-Latex, thick}
+]
+\node[block] (imu) {IMU / RTIMU\\quaternion attitude};
+\node[block, right=of imu] (signals) {Heading, rate,\\rate-of-rate filters};
+\node[block, right=of signals] (mode) {Mode mapping\\compass/GPS/NAV\\wind};
+\node[block, right=of mode] (error) {Heading command\\and saturated error};
+\node[block, right=of error] (pilot) {Pilot law\\basic/wind/absolute};
+\node[wide, right=of pilot] (servo) {Servo layer\\pulse, current, fault, rudder};
+\node[block, right=of servo] (boat) {Boat, drive,\\rudder, waves};
+
+\draw[arrow] (imu) -- (signals);
+\draw[arrow] (signals) -- (mode);
+\draw[arrow] (mode) -- (error);
+\draw[arrow] (error) -- (pilot);
+\draw[arrow] (pilot) -- (servo);
+\draw[arrow] (servo) -- (boat);
+\draw[arrow]
+  ([yshift=-0.06cm]boat.south)
+  to[out=-65,in=-115,looseness=0.55]
+  node[below, midway, font=\scriptsize] {motion feedback}
+  ([yshift=-0.06cm]imu.south);
+
+\node[block, below=1.0cm of error] (tack) {Tack/jibe state\\machine override};
+\draw[arrow] (tack) -- (pilot.south);
+
+\node[block, above=0.9cm of mode] (nmea) {GPS, APB, wind,\\water speed};
+\draw[arrow] (nmea) -- (mode);
+\end{tikzpicture}
+\end{adjustbox}
+\caption{Conceptual \texttt{pypilot} control stack in the uploaded source.}
+\label{fig:pypilot-stack}
+\end{figure*}
+
+\section{Pilot Loading and Active Algorithms}
+
+Pilot modules are discovered dynamically from \texttt{pypilot/pilots}.  A module is
+skipped when it declares \texttt{disabled = True}; otherwise a module-level symbol
+\texttt{pilot} is appended to the list of available pilot classes.  In the uploaded tree,
+the practical active pilots are \texttt{basic}, \texttt{wind}, and \texttt{absolute}; most
+adaptive or experimental pilots are disabled or incomplete.  The default selected pilot
+is \texttt{basic}.
+
+\begin{table}[!tbp]
+\centering
+\caption{Pilot modules and operational status in the inspected archive.}
+\label{tab:pilots}
+\begin{tabularx}{\columnwidth}{@{}Z{0.19\columnwidth}cZ{0.24\columnwidth}Y@{}}
+\toprule
+Pilot & Active & Class & Main idea \\
+\midrule
+\texttt{basic} & yes & \texttt{BasicPilot} & Extended heading PD with feed-forward. \\
+\texttt{wind} & yes & \texttt{WindPilot} & Wind-relative heading plus gust term. \\
+\texttt{absolute} & yes & \texttt{AbsolutePilot} & Rudder-position command, requires rudder feedback. \\
+\texttt{simple} & no & \texttt{SimplePilot} & Classic PID, disabled. \\
+\texttt{rate} & no & \texttt{RatePilot} & Turn-rate target loop, disabled. \\
+\texttt{gps} & no & \texttt{GPSPilot} & GPS-heading pilot, disabled. \\
+\texttt{deadzone} & no & \texttt{DeadZonePilot} & Deadband experiment, disabled. \\
+\texttt{fuzzy} & no & \texttt{FuzzyPilot} & Online lookup-table learning, disabled. \\
+\texttt{vmg} & no & \texttt{VMGPilot} & VMG table idea, incomplete and disabled. \\
+\texttt{learning} & no & \texttt{LearningPilot} & TFLite predictive idea, disabled. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+This distinction matters.  The repository contains sketches of learning and VMG control,
+but the real steering path in this archive remains deterministic and comparatively simple.
+
+\section{Heading Representation and Error Calculation}
+
+Let \(\heading\) denote the current controlled heading variable and
+\(\heading_{\cmd}\) the commanded value.  Depending on mode, \(\heading\) is not always
+magnetic compass heading.  The base pilot maps sensor data into a mode-dependent heading:
+\begin{align}
+\heading_{\mathrm{compass}} &= \heading_c, \\
+\heading_{\mathrm{gps}} &= \wrap(\heading_c + \Delta_{g/c}), \\
+\heading_{\mathrm{wind}} &= \wrap(\Delta_{w/c} - \heading_c), \\
+\heading_{\mathrm{true\ wind}} &= \wrap(\Delta_{tw/c} - \heading_c),
+\end{align}
+where \(\Delta_{g/c}\), \(\Delta_{w/c}\), and \(\Delta_{tw/c}\) are slowly updated offsets
+between compass, GPS course, apparent wind, and true wind references.
+
+The signed angular wrapping operation is represented by
+\begin{equation}
+  \wrap(a; b) \in (b-180^{\circ}, b+180^{\circ}],
+\end{equation}
+matching the source function \texttt{resolv(angle, offset)}.  The heading error is then
+clipped:
+\begin{equation}
+  e = \clip\!\left(\wrap(\heading - \heading_{\cmd}), -30^{\circ}, 30^{\circ}\right).
+  \label{eq:error-clip}
+\end{equation}
+For wind modes the sign is reversed, because apparent wind direction is defined as where
+the wind is coming from, not where the vessel is traveling.
+
+This saturation is a practical marine choice.  It prevents the inner controller from
+seeing very large error after a sensor jump, tack, gybe, compass recalibration, or command
+change.  It also means \texttt{pypilot} prefers bounded correction over aggressively
+trying to unwind a large angular error.
+
+\section{The Default Basic Pilot}
+
+The default basic pilot computes heading rate \(\dot{\heading}\) and heading-rate-rate
+\(\ddot{\heading}\) from the IMU-derived signals
+\texttt{headingrate\_lowpass} and \texttt{headingraterate\_lowpass}.  The active control
+law can be written as
+\begin{equation}
+\begin{split}
+  u_b ={}& K_P e
+        + K_D \dot{\heading}
+        + K_{DD} \ddot{\heading}
+        + K_{PR}\,\sgn(e)\sqrt{\abs{e}} \\
+        &+ K_{FF}\dot{\heading}_{\cmd} .
+\end{split}
+\label{eq:basic}
+\end{equation}
+
+Here \(u_b\) is the requested servo command before the lower servo layer reshapes it.  The
+square-root term is computed explicitly from heading error:
+\begin{equation}
+  e_{PR} = \sgn(e)\sqrt{\abs{e}}.
+  \label{eq:pr}
+\end{equation}
+
+The terms in \cref{eq:basic} have intuitive roles:
+\begin{itemize}
+\item \(K_P e\): proportional correction from course error;
+\item \(K_D\dot{\heading}\): gyro counter-rudder or yaw-rate damping;
+\item \(K_{DD}\ddot{\heading}\): damping against rapidly changing yaw rate;
+\item \(K_{PR}e_{PR}\): nonlinear low-error authority without a purely high linear gain;
+\item \(K_{FF}\dot{\heading}_{\cmd}\): feed-forward during commanded course changes.
+\end{itemize}
+
+The interesting part is the combination of \(D\), \(DD\), and \(PR\).  A commercial pilot
+might expose related concepts as \emph{gain}, \emph{counter rudder}, \emph{response}, or
+\emph{sea state}; \texttt{pypilot} exposes the actual additive terms.
+
+\section{Integral Action and Bias Handling}
+
+The main autopilot maintains an integrated heading error,
+\begin{equation}
+  I_{k+1} = \clip\!\left(I_k + \frac{e_k}{50}\Delta t, -10, 10\right),
+  \label{eq:integral}
+\end{equation}
+but the default basic and wind pilots comment out the \(I\) term.  The code also reduces
+or resets this integral around mode changes and command changes.  This is conservative:
+it avoids integral windup in waves and maneuvers, but persistent biases such as weather
+helm, current, or asymmetric drive behavior are not estimated as an explicit disturbance
+state in the active pilot.
+
+A more model-based heading controller would estimate a slowly varying yaw bias,
+\begin{equation}
+  b_{k+1} = b_k + \eta_k,
+\end{equation}
+and subtract it from the required control.  In this archive, comparable behavior is
+handled indirectly through offsets, manual gain tuning, servo calibration, and the lower
+servo windup/pulse mechanism.
+
+\section{Heading-Command Feed-Forward}
+
+When the autopilot is enabled, the main loop computes a filtered heading-command-rate
+signal from the difference between the current and previous commands:
+\begin{equation}
+\begin{split}
+  \dot{\heading}_{\cmd,k} ={}&
+  (1-\alpha)\dot{\heading}_{\cmd,k-1} \\
+  &+ \alpha\,\wrap(\heading_{\cmd,k}-\heading_{\cmd,k-1}), \\
+  &\alpha \approx 0.1.
+\end{split}
+\end{equation}
+For non-wind modes the sign is reversed before filtering.  This gives the controller a
+feed-forward term during user-initiated course changes or tack state transitions.  It is
+not a reference-model trajectory generator; it is a first-order filtered command-difference
+signal.
+
+\section{Wind Pilot}
+
+The wind pilot preserves the same general heading-control structure, but it changes how
+the controlled heading is defined.  In apparent wind mode,
+\begin{equation}
+  \heading = \AWA,
+\end{equation}
+while in GPS or compass modes it can synthesize a GPS- or compass-like heading from wind
+offsets.  It also computes a wind-gust signal
+\begin{equation}
+  g_w(k) = V_w(k)-V_w(k-1),
+\end{equation}
+with a sign adjustment depending on wind direction.  The wind-pilot command is therefore
+approximately
+\begin{equation}
+  u_w = K_P e + K_D\dot{\heading} + K_{DD}\ddot{\heading} + K_{WG}g_w.
+  \label{eq:wind}
+\end{equation}
+
+This is a useful sailing-specific heuristic, but it is not a full aerodynamic model.  It
+does not estimate sail force, rudder lift, polar performance, or wave phase.  It is a
+simple, inspectable wind-aware heading controller.
+
+\section{NAV/APB Mode}
+
+The APB sensor handler implements a very compact route-following law.  If an APB sentence
+provides route track \(\chi_r\) and cross-track error \(x_{te}\), then the heading command
+is
+\begin{equation}
+  \heading_{\cmd} = \chi_r + K_{xte} x_{te}.
+  \label{eq:apb}
+\end{equation}
+The source default is \(K_{xte}=300\), documented in a comment as roughly
+\(30^{\circ}\) for \(0.1\) nautical mile.
+
+This design is much simpler than modern path-following controllers.  It has no explicit
+look-ahead distance, no velocity-dependent lateral-acceleration target, no curvature
+planning, and no inner yaw-rate target.  The advantage is simplicity and compatibility
+with common NMEA/APB navigation data.  The disadvantage is weaker behavior in current,
+tight routes, variable speed, and overshoot-prone waypoint transitions.
+
+\section{Tack and Gybe State Machine}
+
+The tack module is a supervisory override.  Its states are
+\begin{equation}
+  \mathcal{S}=\{\texttt{none},\texttt{begin},\texttt{waiting},\texttt{tacking}\}.
+\end{equation}
+The tack direction is inferred from wind direction when possible, or from heel if enabled.
+During \texttt{tacking}, the normal pilot is bypassed and the servo receives
+\begin{equation}
+  u_t = \clip\!\left(1 + \frac{\dot{\heading}+\ddot{\heading}/2}{r_t}, -1, 1\right)
+\end{equation}
+up to a direction sign, where \(r_t\) is the configured tack rate.  Completion is detected
+when a normalized progress variable exceeds a configured threshold.  The command heading
+is then switched to the new tack heading.
+
+This is intentionally simple: it is a maneuver state machine, not an optimal tack planner.
+It does not time the tack using waves or boat speed, and it does not evaluate alternative
+tacking strategies.  Adaptive tack-strategy selection is a separate research topic in
+robotic sailing literature and is not implemented in the active \texttt{pypilot} code path.
+
+\section{Servo and Motor Command Layer}
+
+The servo layer is one of the most distinctive parts of the project.  A pilot output
+\(u\) is not simply sent to a rudder.  The normal command path treats \(u\) as a desired
+motor-drive speed-like request, then reshapes it using minimum speed, maximum speed,
+periodic pulse behavior, current limits, voltage compensation, overcurrent end-stop
+protection, and rudder feedback when available.
+
+Let \(v_c\) be the desired drive speed after pilot gain.  The layer applies
+\begin{equation}
+  v_c \leftarrow \clip(v_c, -v_{\max}, v_{\max}),
+\end{equation}
+and a minimum-motion pulse mechanism.  The source maintains a windup-like accumulator
+\begin{equation}
+  W_{k+1} = W_k + (v_c - v_k)\Delta t,
+\end{equation}
+and only emits a nonzero command when the accumulated request is large enough to overcome
+the configured minimum drive speed over the configured period.  This is a practical answer
+to real marine actuators: friction, deadband, clutch delay, slow hydraulic response, and
+cheap H-bridge motor control.
+
+When rudder feedback is available, the \texttt{absolute} pilot and servo position command
+path can use a rudder-position PID-like loop:
+\begin{equation}
+  u_r = K_{rp}(r_{\cmd}-r) + K_{ri}\bar e_r + K_{rd}\dot r.
+\end{equation}
+However, the default \texttt{basic} pilot does not require rudder feedback.
+
+\section{IMU and Heading Estimation}
+
+The IMU layer uses RTIMU quaternion fusion, applies alignment calibration, and computes
+Euler roll, pitch, and heading from the aligned quaternion.  Quaternion rotation can be
+written as
+\begin{equation}
+  \vct{v}' = \quat{q}\qmul \vct{v}\qmul \qconj{\quat{q}}.
+\end{equation}
+The source then derives heading rate from the rotated gyro vector and computes low-pass
+signals:
+\begin{align}
+  \heading_{lp,k} &= \alpha_h \heading_k + (1-\alpha_h)\heading_{lp,k-1}, \\
+  \dot{\heading}_{lp,k} &= \alpha_r \dot{\heading}_k
+     + (1-\alpha_r)\dot{\heading}_{lp,k-1}, \\
+  \ddot{\heading}_{lp,k} &= \alpha_a \ddot{\heading}_k
+     + (1-\alpha_a)\ddot{\heading}_{lp,k-1}.
+\end{align}
+Angular wrap is handled specially for heading low-pass filtering so that filtering across
+\(0^{\circ}/360^{\circ}\) does not introduce a false large jump.
+
+The heading estimator is not a full vessel INS.  It is primarily an AHRS with marine
+alignment and calibration behavior, feeding the heading-control loop.
+
+\section{Optional GPS--Inertial Filter}
+
+The optional GPS filter estimates position and velocity at a higher output rate by
+combining GPS updates with acceleration-derived prediction.  In two dimensions the state
+can be written as
+\begin{equation}
+  \vct{x} = \begin{bmatrix} x & y & v_x & v_y \end{bmatrix}\T .
+\end{equation}
+The prediction model is the constant-acceleration kinematic model
+\begin{equation}
+  \vct{x}_{k+1} =
+  \begin{bmatrix}
+  \mat{I} & \Delta t\mat{I} \\
+  \mat{0} & \mat{I}
+  \end{bmatrix}\vct{x}_k
+  +
+  \begin{bmatrix}
+  \frac{1}{2}\Delta t^2\mat{I} \\
+  \Delta t\mat{I}
+  \end{bmatrix}\vct{a}_k.
+  \label{eq:gps-predict}
+\end{equation}
+The GPS update uses a standard linear Kalman correction
+\begin{align}
+  \vct{y}_k &= \vct{z}_k - \mat{H}\vct{x}_k, \\
+  \mat{S}_k &= \mat{H}\mat{P}_k\mat{H}\T + \mat{R}, \\
+  \mat{K}_k &= \mat{P}_k\mat{H}\T\mat{S}_k\inv, \\
+  \vct{x}_k^+ &= \vct{x}_k^- + \mat{K}_k\vct{y}_k, \\
+  \mat{P}_k^+ &= (\mat{I}-\mat{K}_k\mat{H})\mat{P}_k^-.
+\end{align}
+The implementation also keeps a history so that delayed GPS measurements can be applied
+at the approximate measurement time and then fast-forwarded through later inertial
+predictions.
+
+This is useful, but it is not the core steering controller.  It mostly improves filtered
+speed, track, and position availability.
+
+\section{Comparison with ArduPilot Rover}
+
+ArduPilot began in the DIY Drones community around Jordi Mu\~noz and Chris Anderson's
+Arduino-era autopilot work and later evolved, through the ArduPilot development team and
+contributors such as Andrew ``Tridge'' Tridgell, Pat Hickey, Randy Mackay, and many
+others, into a multi-vehicle open-source autopilot project \cite{ardupilot-history}.
+ArduPilot Rover separates high-level path following from low-level steering-rate control.
+Its older navigation documentation describes the L1 controller as the highest-level
+steering controller: it accepts position targets and current speed and outputs a desired
+lateral acceleration, which then feeds lower-level controllers \cite{ardupilot-l1}.  Its
+steering-rate documentation describes a turn-rate PID controller with feed-forward,
+proportional, integral, and derivative gains \cite{ardupilot-rate}.
+
+A compact comparison is
+\begin{align}
+\texttt{pypilot:}\quad
+& \chi_r + K_{xte}x_{te} \to \heading_{\cmd} \to u_b, \\
+\text{ArduPilot-style:}\quad
+& \text{path} \to a_y^{\cmd}, \\
+& a_y^{\cmd} \to \dot{\heading}^{\cmd} \to u.
+\end{align}
+
+Thus \texttt{pypilot} is heading-hold centered, whereas ArduPilot Rover is path-following
+centered in autonomous modes.  The \texttt{pypilot} approach is lighter and easier to tune
+on a sailboat with limited sensors, but it is less rigorous for route tracking.
+
+\section{Comparison with PX4}
+
+PX4 fixed-wing control is even more layered.  PX4 documentation describes TECS for
+altitude and airspeed control and NPFG for horizontal heading/position control
+\cite{px4-fw}.  That architecture is built for aircraft energy and trajectory control,
+with separate inner attitude and rate loops.  A direct comparison to \texttt{pypilot} is
+therefore imperfect, but the contrast is useful:
+\begin{itemize}
+\item PX4 treats the vehicle as a dynamic aircraft with explicit position, attitude,
+energy, and actuator layers.
+\item \texttt{pypilot} treats the sailboat autopilot mainly as a heading servo plus
+marine-specific modes and motor protection.
+\end{itemize}
+
+The difference is not just sophistication.  The vehicles are different.  A small sailboat
+autopilot often needs low power, reliable clutch/motor handling, wind modes, and tolerance
+of slow response more than it needs aggressive trajectory tracking.
+
+\section{Comparison with Commercial Marine Pilots}
+
+The pypilot user manual and workbook present \texttt{pypilot} as a modular
+open-source marine autopilot supporting compass, GPS/NAV, wind, and true-wind
+operation, with IMU calibration, optional GPS/wind inputs, network clients, and
+motor-controller commissioning \cite{pypilot-user-manual,pypilot-workbook-wiki}.
+B\&G pilot materials similarly describe wind and navigation modes and manual course
+adjustments from pilot controls \cite{bg-pilot}.  B\&G sailing guidance also
+describes true-wind-angle use for gybing \cite{bg-setup}.
+
+The practical difference is visibility.  Commercial pilots may provide polished
+commissioning, proprietary sea-state adaptation, and integrated displays, but the actual
+control laws are hidden.  \texttt{pypilot} exposes the terms, gains, and source code.
+That is a major advantage for experimentation, but it also means incomplete experimental
+code is visible in the tree.
+
+\section{Experimental and Incomplete Algorithms}
+
+The repository contains several ideas that are not part of the active default control path.
+
+\subsection{VMG Table Pilot}
+
+The VMG pilot attempts to collect measurements of speed and track versus heading on each
+tack, storing them in heading-indexed tables.  Conceptually, one would estimate
+\begin{equation}
+  \mathrm{VMG}(\heading) = \vct{v}(\heading)\cdot \hat{\vct{d}},
+\end{equation}
+where \(\hat{\vct{d}}\) is the desired progress direction.  The command would then move
+toward
+\begin{equation}
+  \heading^* = \arg\max_{\heading} \mathrm{VMG}(\heading).
+\end{equation}
+In the uploaded file this optimizer is not implemented; the relevant block contains a
+\texttt{pass}.  The module is also disabled.
+
+\subsection{Fuzzy Pilot}
+
+The fuzzy pilot defines a multi-dimensional interpolation table over ground speed, wind
+speed, wind direction, rudder angle, heel, sea state, heading error, and heading rate.
+It recursively interpolates the table to compute a command and updates old table entries
+from a delayed error signal.  The learning update is approximately
+\begin{equation}
+  c_{new} = \clip(c_{old} + \lambda\epsilon, -1, 1),
+\end{equation}
+where \(\epsilon\) is a delayed heading/rate error proxy.  This pilot is disabled.
+
+\subsection{Learning Pilot}
+
+The learning pilot sketches a TensorFlow Lite model-predictive idea: feed a history of
+sensor values and candidate future actions to a learned model, predict future outputs, and
+choose the action sequence with lowest loss,
+\begin{equation}
+  J = \sum_i
+  \left(K_P \hat e_i + K_D\widehat{\dot{\heading}}_i\right)^2
+  + K_W u_i^2.
+\end{equation}
+This is promising in principle, but in the uploaded tree it is disabled and incomplete.
+
+\section{Code-Level Observations}
+
+The following issues are important if these experimental paths are to be revived:
+\begin{itemize}
+\item \texttt{pilots/vmg.py} contains a misspelling, \texttt{heading\_comand}, where
+\texttt{heading\_command} is intended.
+\item \texttt{pilots/vmg.py} leaves the core optimum-direction calculation unimplemented.
+\item \texttt{pilots/autotune.py} references \texttt{cost} in places where
+\texttt{self.cost} appears intended.
+\item \texttt{pilots/gps.py} calls \texttt{resolve(...)} although the resolver function
+in the uploaded tree is named \texttt{resolv(...)}.
+\item The active \texttt{wind.py} true-wind branch references \texttt{ap.true\_wind\_sensor};
+this property was not found elsewhere in the inspected source tree.
+\end{itemize}
+
+These observations do not invalidate the active \texttt{basic} pilot, but they show that
+the repository contains research sketches as well as production code.
+
+\section{Strengths of the Design}
+
+The main strengths are:
+\begin{enumerate}
+\item \textbf{Explicit control law.}  The default controller is mathematically simple and
+visible in the source.
+\item \textbf{Excellent practical actuator attention.}  The servo layer handles motor and
+rudder realities that many abstract autopilot algorithms ignore.
+\item \textbf{Marine-specific heading modes.}  Compass, GPS/NAV, wind, and true-wind
+concepts are built into the architecture.
+\item \textbf{Low computational burden.}  The core controller is suitable for Raspberry Pi
+class hardware and modest update rates.
+\item \textbf{Hackability.}  Gains, modes, and experimental pilots can be inspected and
+changed without reverse engineering a proprietary pilot.
+\end{enumerate}
+
+\section{Weaknesses and Upgrade Direction}
+
+The main weakness is not the basic heading loop; it is the lack of a stronger guidance
+layer above it.  NAV mode should be upgraded before any machine-learning approach is
+attempted.  A natural deterministic roadmap is:
+\begin{enumerate}
+\item keep the existing servo protection and calibration layer;
+\item keep the AHRS and heading-mode architecture;
+\item replace \cref{eq:apb} with an L1, pure-pursuit, or Stanley-style path follower;
+\item add a speed-aware yaw-rate target layer;
+\item use rudder-angle feedback when available;
+\item add a slow weather-helm/current bias estimator;
+\item only then revive VMG/polar optimization.
+\end{enumerate}
+
+A possible marine guidance layer would compute a desired lateral acceleration
+\begin{equation}
+  a_y^{\cmd} = f(\text{path}, \vct{p}, \vct{v}, L_1),
+\end{equation}
+convert it to a desired turn rate
+\begin{equation}
+  \dot{\heading}^{\cmd} \approx \frac{a_y^{\cmd}}{\max(V, V_{min})},
+\end{equation}
+and then use a rate loop or extended heading loop to command the existing servo layer.
+This keeps the best part of \texttt{pypilot}---its actuator realism---while improving
+route tracking.
+
+\section{Low-Level Servo Control Protocol}
+\label{sec:servo-protocol}
+The pypilot software does not command the motor controller through a
+textual marine protocol such as NMEA~0183 or Signal~K.  The normal
+Arduino motor-controller path uses a compact binary serial protocol.
+This protocol is implemented by the host-side Arduino servo driver and
+the microcontroller firmware.  It is deliberately small: every message is
+a fixed-length packet carrying one command code, one 16-bit value, and a
+CRC byte.
+\subsection{Transport and Packet Format}
+The physical transport is UART serial.  The pypilot host probes the
+Arduino servo controller at approximately \(38400\) baud.  The Arduino
+firmware uses the usual serial byte framing, effectively \(8\)-data-bit,
+no-parity, one-stop-bit framing.  The application protocol itself is not
+stream-delimited by a start byte.  Instead, synchronization is obtained
+statistically by requiring valid CRC-protected packets.
+Each packet has exactly four bytes:
+\[
+\begin{array}{c|c|c|c}
+b_0 & b_1 & b_2 & b_3 \\
+\hline
+\text{code} & \text{value}_{\mathrm{lo}} &
+\text{value}_{\mathrm{hi}} & \operatorname{crc8}(b_0,b_1,b_2)
+\end{array}.
+\]
+The 16-bit payload is little-endian:
+\[
+v = b_1 + 256 b_2.
+\]
+The CRC is computed over the first three bytes only:
+\[
+c_0 = \mathtt{0xff},
+\qquad
+c_{k+1} =
+\operatorname{table}\!\left[c_k \oplus b_k\right],
+\qquad
+b_3 = c_3 .
+\]
+The table used in the source corresponds to a CRC-8 polynomial
+\(\mathtt{0x31}\) with initial value \(\mathtt{0xff}\).  There is no
+length field, sequence number, escaping, or acknowledgement byte.  On bad
+CRC, the firmware clears synchronization and stops the motor.  The
+controller requires multiple valid packets before accepting the stream as
+synchronized.
+\subsection{Main Motor Command}
+The most important host-to-controller packet is
+\texttt{COMMAND\_CODE}, whose command byte is
+\[
+b_0 = \mathtt{0xC7}.
+\]
+The pypilot command is a normalized scalar
+\[
+u \in [-1,1],
+\]
+where the sign selects the motor direction and the magnitude selects the
+drive effort.  The value placed into the packet is
+\[
+v = 1000(u+1).
+\]
+Therefore,
+\[
+\begin{array}{lll}
+u=-1 &\Rightarrow& v=0,\\
+u=0 &\Rightarrow& v=1000,\\
+u=1 &\Rightarrow& v=2000.
+\end{array}
+\]
+The neutral command is thus not zero, but \(v=1000\).  The firmware
+rejects command values above \(2000\).  A compatible host can therefore
+send a motor command by constructing
+\[
+\begin{aligned}
+b_0 &= \mathtt{0xC7},\\
+b_1 &= v \bmod 256,\\
+b_2 &= \left\lfloor v/256 \right\rfloor,\\
+b_3 &= \operatorname{crc8}(b_0,b_1,b_2).
+\end{aligned}
+\]
+For example, the neutral command has
+\[
+v = 1000 = \mathtt{0x03E8},
+\]
+so the first three bytes are
+\[
+\mathtt{0xC7},\quad \mathtt{0xE8},\quad \mathtt{0x03}.
+\]
+\subsection{Host-to-Controller Commands}
+\begin{table*}[!tbp]
+\centering
+\caption{Host-to-servo packet codes used by the pypilot Arduino motor-controller protocol.}
+\label{tab:pypilot-servo-host-codes}
+\begin{tabularx}{\textwidth}{Z{0.24\textwidth}Z{0.10\textwidth}Z{0.20\textwidth}Y}
+\toprule
+Name & Code & Payload & Purpose \\
+\midrule
+\texttt{COMMAND\_CODE} &
+\(\mathtt{0xC7}\) &
+\(0\ldots 2000\) &
+Main motor command, with \(1000\) as neutral. \\
+\texttt{RESET\_CODE} &
+\(\mathtt{0xE7}\) &
+ignored &
+Clear overcurrent fault state. \\
+\texttt{MAX\_CURRENT\_CODE} &
+\(\mathtt{0x1E}\) &
+current limit &
+Set motor current limit, approximately in \(10\,\mathrm{mA}\) units. \\
+\texttt{MAX\_CONTROLLER\_TEMP\_CODE} &
+\(\mathtt{0xA4}\) &
+\(100T\) &
+Set controller over-temperature threshold in centi-degrees Celsius. \\
+\texttt{MAX\_MOTOR\_TEMP\_CODE} &
+\(\mathtt{0x5A}\) &
+\(100T\) &
+Set motor over-temperature threshold in centi-degrees Celsius. \\
+\texttt{RUDDER\_MIN\_CODE} &
+\(\mathtt{0x2B}\) &
+encoded rudder position &
+Set the minimum rudder stop. \\
+\texttt{RUDDER\_MAX\_CODE} &
+\(\mathtt{0x4D}\) &
+encoded rudder position &
+Set the maximum rudder stop. \\
+\texttt{REPROGRAM\_CODE} &
+\(\mathtt{0x19}\) &
+ignored &
+Enter bootloader/reprogramming mode. \\
+\texttt{DISENGAGE\_CODE} &
+\(\mathtt{0x68}\) &
+ignored &
+Stop and disengage the motor output. \\
+\texttt{MAX\_SLEW\_CODE} &
+\(\mathtt{0x71}\) &
+two 8-bit fields &
+Set fast and slow slew-rate limits. \\
+\texttt{EEPROM\_READ\_CODE} &
+\(\mathtt{0x91}\) &
+start/end address &
+Request EEPROM bytes from the controller. \\
+\texttt{EEPROM\_WRITE\_CODE} &
+\(\mathtt{0x53}\) &
+address/value byte &
+Write one byte to EEPROM. \\
+\texttt{CLUTCH\_PWM\_AND\_BRAKE\_CODE} &
+\(\mathtt{0x36}\) &
+PWM/brake byte pair &
+Set clutch PWM and brake-enable flag. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+The \texttt{DISENGAGE\_CODE} is important because the protocol is
+designed around continuous command streaming.  A command is not treated as
+a permanent latched actuator state.  If the command stream becomes invalid
+or stale, the controller is expected to stop or disengage the motor.
+\subsection{Rudder Encoding}
+Rudder feedback and rudder limits use a normalized position coordinate
+approximately in the interval
+\[
+r \in [-0.5,0.5].
+\]
+When pypilot sends a rudder stop to the controller, it encodes the
+position as
+\[
+v = 65472(r+0.5).
+\]
+The inverse decoding used for telemetry is
+\[
+r = \frac{v}{65472} - 0.5.
+\]
+The special value
+\[
+v = 65535
+\]
+indicates invalid or unavailable rudder feedback.
+\subsection{Controller-to-Host Telemetry}
+The motor controller returns telemetry using the same four-byte packet
+format.  The first byte is a status code, the next two bytes form a
+little-endian value, and the fourth byte is the CRC.
+\begin{table}[!t]
+\centering
+\caption{Servo telemetry packet codes.}
+\label{tab:pypilot-servo-telemetry}
+\begin{tabularx}{\columnwidth}{Z{0.42\columnwidth}Z{0.17\columnwidth}Y}
+\toprule
+Name & Code & Decoding \\
+\midrule
+\texttt{CURRENT\_CODE} &
+\(\mathtt{0x1C}\) &
+\(I = v/100\) amperes. \\
+\texttt{VOLTAGE\_CODE} &
+\(\mathtt{0xB3}\) &
+\(V = v/100\) volts. \\
+\texttt{CONTROLLER\_TEMP\_CODE} &
+\(\mathtt{0xF9}\) &
+Signed \(v/100\) degrees Celsius. \\
+\texttt{MOTOR\_TEMP\_CODE} &
+\(\mathtt{0x48}\) &
+Signed \(v/100\) degrees Celsius. \\
+\texttt{RUDDER\_SENSE\_CODE} &
+\(\mathtt{0xA7}\) &
+\(r = v/65472 - 0.5\), except \(65535\) means invalid. \\
+\texttt{FLAGS\_CODE} &
+\(\mathtt{0x8F}\) &
+Raw 16-bit controller flag word. \\
+\texttt{EEPROM\_VALUE\_CODE} &
+\(\mathtt{0x9A}\) &
+EEPROM address/value byte pair. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+The telemetry schedule is asymmetric: current and rudder position are
+reported more often than temperature.  Flags are also emitted regularly
+so that the host can detect synchronization, engagement, faults, and
+controller reboot state.
+\subsection{Controller Flags}
+The \texttt{FLAGS\_CODE} packet carries a 16-bit hardware-controller
+status word.  The important bits are listed in
+\cref{tab:pypilot-servo-flags}.
+\begin{table}[!t]
+\centering
+\caption{Servo-controller hardware flags.}
+\label{tab:pypilot-servo-flags}
+\begin{tabularx}{\columnwidth}{Z{0.16\columnwidth}Y}
+\toprule
+Value & Meaning \\
+\midrule
+\(1\) & Serial stream synchronized. \\
+\(2\) & Over-temperature fault. \\
+\(4\) & Over-current fault. \\
+\(8\) & Motor output engaged. \\
+\(16\) & Invalid packet or CRC error observed. \\
+\(32\) & Port-side output pin fault. \\
+\(64\) & Starboard-side output pin fault. \\
+\(128\) & Bad supply-voltage fault. \\
+\(256\) & Minimum rudder limit reached. \\
+\(512\) & Maximum rudder limit reached. \\
+\(1024\) & Current-range indicator. \\
+\(2048\) & Fuse fault. \\
+\(32768\) & Controller rebooted. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+Additional flags used inside pypilot, such as driver timeout or saturated
+output, are host-side software flags.  They are not transmitted as part of
+the 16-bit Arduino status word.
+\subsection{Design Consequences}
+The protocol is intentionally minimal, but it strongly shapes the
+autopilot architecture.  The higher-level pilot computes a normalized
+actuator command, while the servo layer is responsible for protecting the
+drive electronics and motor.  This separation is important: pypilot does
+not assume an ideal rudder actuator.  Instead, it treats the motor
+controller as a guarded device with current limits, voltage checks,
+temperature limits, rudder stops, end-stop detection, and synchronization
+loss behavior.
+This makes the pypilot servo protocol closer to a robust embedded motor
+link than to a general navigation protocol.  It carries no waypoints,
+routes, wind data, or heading commands.  It carries only low-level actuator
+commands, configuration values, and motor-controller telemetry.  The
+result is a simple binary link that is easy to implement on a small
+microcontroller while still being safe enough for a continuously running
+marine autopilot actuator.
+
+\section{TCP Command and Value Protocol}
+\label{sec:pypilot-tcp-protocol}
+In addition to the low-level Arduino servo protocol described in
+\cref{sec:servo-protocol}, pypilot exposes a higher-level TCP protocol for
+autopilot control, monitoring, configuration, and client synchronization.
+This TCP protocol is the normal interface used by pypilot clients, web
+controls, remote buttons, display panels, and external software that wants
+to command the autopilot.  It is not a binary actuator protocol.  Instead,
+it is a newline-delimited textual value protocol.
+The low-level servo protocol carries motor-drive commands such as
+``drive port'', ``drive starboard'', current limits, voltage, and rudder
+feedback.  The TCP protocol carries semantic autopilot values such as
+\texttt{ap.enabled}, \texttt{ap.mode}, \texttt{ap.heading\_command},
+\texttt{ap.heading}, and \texttt{ap.pilot}.  In other words, the TCP
+protocol talks to the autopilot state machine, while the servo protocol
+talks to the motor controller.
+\subsection{Transport}
+The pypilot server opens a TCP listener on all interfaces:
+\[
+\texttt{0.0.0.0:23322}.
+\]
+The default port is
+\[
+p_{\mathrm{tcp}} = 23322,
+\]
+although the server source allows the port to be overridden with the
+environment variable \texttt{PYPILOT\_PORT}.  The normal pypilot clients
+use port \texttt{23322}.  The server also advertises itself by Zeroconf
+using the service type
+\[
+\texttt{\_pypilot.\_tcp.local.}
+\]
+so that clients can discover the active pypilot host on a local network.
+The transport characteristics are summarized in
+\cref{tab:pypilot-tcp-transport}.
+\begin{table}[!t]
+\centering
+\caption{pypilot TCP value protocol transport.}
+\label{tab:pypilot-tcp-transport}
+\begin{tabularx}{\columnwidth}{Z{0.36\columnwidth}Y}
+\toprule
+Field & Value \\
+\midrule
+Transport & TCP stream \\
+Default port & \texttt{23322} \\
+Bind address & \texttt{0.0.0.0} \\
+Discovery & Zeroconf, \texttt{\_pypilot.\_tcp.local.} \\
+Encoding & UTF-8/ASCII-compatible text \\
+Framing & newline-delimited records \\
+Record form & \texttt{name=json-value\textbackslash n} \\
+Security & no authentication or TLS in the protocol itself \\
+\bottomrule
+\end{tabularx}
+\end{table}
+Because the protocol has no authentication or encryption layer, it should
+be treated as a trusted-LAN interface.  Any host able to connect to the
+TCP port can attempt to modify writable autopilot values.
+\subsection{Line Grammar}
+Each protocol record is a single assignment line:
+\[
+\texttt{name=json-value\textbackslash n}.
+\]
+The left side is a pypilot value name.  The right side is a JSON value.
+The whole line is not JSON; only the right-hand side is JSON.
+A compact grammar is
+{\scriptsize
+\[
+\begin{aligned}
+\text{record} &::= \text{name}\; \texttt{=}\; \text{json-value}\; \texttt{\textbackslash n},\\
+\text{name} &::= \text{dotted pypilot value name},\\
+\text{json-value} &::= \text{number} \mid \text{string} \mid \text{boolean}
+                   \mid \text{array} \mid \text{object}.
+\end{aligned}
+\]
+}
+Thus a valid command line is
+\[
+\texttt{ap.enabled=true\textbackslash n},
+\]
+not
+\[
+\texttt{\{"ap.enabled":true\}\textbackslash n}.
+\]
+The right-hand side follows JSON conventions.  Booleans are
+\texttt{true} and \texttt{false}, strings must be quoted, and objects use
+normal JSON syntax.  Several examples are shown in
+\cref{tab:pypilot-tcp-examples}.
+\begin{table}[!t]
+\centering
+\caption{Examples of valid pypilot TCP protocol records.}
+\label{tab:pypilot-tcp-examples}
+\begin{tabularx}{\columnwidth}{Z{0.36\columnwidth}Y}
+\toprule
+Purpose & Record \\
+\midrule
+Engage autopilot &
+\texttt{ap.enabled=true} \\
+Disengage autopilot &
+\texttt{ap.enabled=false} \\
+Set compass mode &
+\texttt{ap.mode="compass"} \\
+Set wind mode &
+\texttt{ap.mode="wind"} \\
+Set true-wind mode &
+\texttt{ap.mode="true wind"} \\
+Set heading command &
+\texttt{ap.heading\_command=123.4} \\
+Select pilot &
+\texttt{ap.pilot="basic"} \\
+Watch values &
+{\ttfamily\seqsplit{watch=\{"ap.heading":0.25,"ap.enabled":true\}}} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\subsection{Value Model}
+The TCP protocol is organized around named values.  Each value has a name,
+a current value, and metadata describing its type, writability,
+persistence, range, units, or choices.  Values are arranged in dotted
+namespaces.  For example,
+\[
+\texttt{ap.heading}
+\]
+is the current autopilot heading value, while
+\[
+\texttt{ap.heading\_command}
+\]
+is the commanded heading value.
+The distinction between read-only values and writable properties is
+central.  Sensor-like values, such as \texttt{ap.heading} or
+\texttt{servo.current}, are normally read-only to remote TCP clients.
+Control values, such as \texttt{ap.enabled}, \texttt{ap.mode}, and
+\texttt{ap.heading\_command}, are writable properties.  When a remote
+client sends a record for a writable value, the server validates the JSON
+syntax and forwards the assignment to the owner of that value.  The owner
+then applies value-specific validation such as range checking, enum-choice
+checking, or boolean coercion.
+The main value classes are summarized in
+\cref{tab:pypilot-value-types}.
+\begin{table}[!t]
+\centering
+\caption{Common pypilot value types exposed through the TCP protocol.}
+\label{tab:pypilot-value-types}
+\begin{tabularx}{\columnwidth}{Z{0.36\columnwidth}Y}
+\toprule
+Type & Meaning \\
+\midrule
+\texttt{Value} &
+Generic value.  Not necessarily writable. \\
+\texttt{SensorValue} &
+Read-only or owner-updated measured value, often rounded for output. \\
+\texttt{StringValue} &
+String-valued state or diagnostic value. \\
+{\ttfamily\seqsplit{BooleanProperty}} &
+Writable boolean property. \\
+\texttt{RangeProperty} &
+Writable numeric property with minimum and maximum limits. \\
+\texttt{RangeSetting} &
+Writable range property with units and persistence. \\
+\texttt{EnumProperty} &
+Writable value constrained to a finite set of choices. \\
+\texttt{ResettableValue} &
+Writable resettable value, often reset by writing zero or false. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\subsection{Value Discovery}
+A client can discover the available values by watching the special value
+\texttt{values}.  The request is
+\[
+\texttt{watch=\{"values":true\}\textbackslash n}.
+\]
+The server replies with a line of the form
+\[
+\texttt{values=\{...\}\textbackslash n},
+\]
+where the right-hand side is a JSON object mapping value names to metadata
+objects.  A representative fragment is
+{\scriptsize
+\[
+\begin{aligned}
+\texttt{values=\{}&
+\texttt{"ap.enabled":\{"type":"BooleanProperty","writable":true\},}\\
+&
+\texttt{"ap.mode":\{"type":"EnumProperty","writable":true,}\\
+&\quad
+\texttt{"choices":["compass","gps","nav","wind","true wind"]\},}\\
+&
+\texttt{"ap.heading\_command":\{"type":"RangeProperty",}\\
+&\quad
+\texttt{"writable":true,"min":-180,"max":360\}\}}
+\end{aligned}
+\]
+}
+with the actual server response containing many more values.  This
+metadata mechanism allows user interfaces to construct controls
+automatically: check boxes for boolean properties, sliders for range
+properties, selectors for enum properties, and read-only displays for
+sensor values.
+\subsection{Watch Mechanism}
+The protocol is not purely request-response.  It is also a subscription
+protocol.  A client subscribes to values by writing the special
+\texttt{watch} value:
+\[
+\texttt{watch=\{"name":period\}\textbackslash n}.
+\]
+The watch period controls how the server sends updates.  A period of
+\texttt{true} means continuous or change-driven watching.  A numeric
+period means periodic updates with that period in seconds.  A value of
+\texttt{false} removes the watch.
+\begin{table}[!t]
+\centering
+\caption{Watch-period meanings.}
+\label{tab:pypilot-watch-periods}
+\begin{tabularx}{\columnwidth}{Z{0.36\columnwidth}Y}
+\toprule
+Period & Meaning \\
+\midrule
+\texttt{true} &
+Watch continuously, equivalent internally to period \(0\). \\
+\texttt{false} &
+Unwatch the named value. \\
+\texttt{0} &
+Continuous watch. \\
+positive number &
+Periodic watch in seconds.  For example, \(0.25\) requests up to four
+updates per second. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+For example, a display that wants heading updates four times per second,
+but only wants engagement and mode updates when they change, can send
+\[
+\begin{split}
+\texttt{watch=\{}&
+\texttt{"ap.heading":0.25,}\\
+&
+\texttt{"ap.heading\_command":true,}\\
+&
+\texttt{"ap.enabled":true,}\\
+&
+\texttt{"ap.mode":true\}\textbackslash n}.
+\end{split}
+\]
+The server then emits records using the same assignment-line format:
+\[
+\begin{aligned}
+&\texttt{ap.heading=277.3000}\\
+&\texttt{ap.heading\_command=275.0}\\
+&\texttt{ap.enabled=true}\\
+&\texttt{ap.mode="compass"}.
+\end{aligned}
+\]
+Therefore, after the watch is established, the same parser can be used for
+both command responses and asynchronous updates.
+\subsection{Autopilot Control Values}
+The most important writable autopilot values are listed in
+\cref{tab:pypilot-autopilot-values}.  These are the values an external
+controller normally uses to engage the pilot, choose a steering mode, and
+change the commanded heading.
+\begin{table*}[!tbp]
+\centering
+\caption{Primary autopilot control values in the TCP protocol.}
+\label{tab:pypilot-autopilot-values}
+\begin{tabularx}{\textwidth}{Z{0.24\textwidth}Z{0.10\textwidth}Z{0.20\textwidth}Y}
+\toprule
+Value & Type & Example & Meaning \\
+\midrule
+\texttt{ap.enabled} &
+{\ttfamily\seqsplit{BooleanProperty}} &
+\texttt{ap.enabled=true} &
+Engage or disengage the autopilot.  \texttt{false} is standby. \\
+\texttt{ap.mode} &
+\texttt{EnumProperty} &
+\texttt{ap.mode="compass"} &
+Select heading-reference mode.  Typical choices are
+\texttt{"compass"}, \texttt{"gps"}, \texttt{"nav"},
+\texttt{"wind"}, and \texttt{"true wind"}. \\
+\texttt{ap.heading\_command} &
+\texttt{RangeProperty} &
+\texttt{ap.heading\_command=123.4} &
+Set the commanded heading or wind-relative angle.  The value is resolved
+according to the active mode and rounded internally to tenths of a degree. \\
+\texttt{ap.pilot} &
+\texttt{EnumProperty} &
+\texttt{ap.pilot="basic"} &
+Select the active pilot algorithm.  Available choices depend on the
+loaded pilot modules. \\
+\texttt{profile} &
+\texttt{Value/Property} &
+\texttt{profile="default"} &
+Select the persistent pypilot profile.  Profiled gains and settings are
+loaded from the selected profile. \\
+\texttt{profiles} &
+\texttt{Value/Property} &
+\texttt{profiles=["default","heavy"]} &
+Set or report the list of known profiles. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+A typical external controller sequence is:
+\[
+\begin{array}{ll}
+1. & \text{connect to TCP port }23322,\\
+2. & \text{watch } \texttt{values} \text{ or known status values},\\
+3. & \text{set } \texttt{ap.mode},\\
+4. & \text{set } \texttt{ap.heading\_command},\\
+5. & \text{set } \texttt{ap.enabled=true},\\
+6. & \text{adjust } \texttt{ap.heading\_command} \text{ as needed},\\
+7. & \text{set } \texttt{ap.enabled=false} \text{ to stand by.}
+\end{array}
+\]
+\subsection{Heading Command Semantics}
+The meaning of \texttt{ap.heading\_command} depends on the active mode.
+In compass, GPS, and navigation modes, it behaves as an absolute heading
+command.  In wind modes, it behaves as a wind-relative command.  The
+heading property class resolves values differently depending on whether
+the active mode contains the word \texttt{wind}.  Conceptually,
+\[
+\begin{aligned}
+\psi_c &=
+\operatorname{resolv}(\psi_{\mathrm{input}},180^\circ)
+&& \text{for compass/GPS/NAV},\\
+\psi_c &=
+\operatorname{resolv}(\psi_{\mathrm{input}},0^\circ)
+&& \text{for wind modes}.
+\end{aligned}
+\]
+The result is rounded to one decimal degree:
+\[
+\psi_c \leftarrow \frac{1}{10}
+\operatorname{round}(10\psi_c).
+\]
+This means a client can send normal floating-point heading commands, but
+the server-side autopilot state will use tenth-degree resolution.
+\subsection{Errors and Invalid Requests}
+Errors are also returned as assignment-style lines using the special name
+\texttt{error}.  For example, if a client tries to write an unknown value,
+the server can reply
+\[
+\texttt{error=invalid unknown value: some.name}.
+\]
+If a client tries to modify a value that exists but is not writable, the
+server can reply
+\[
+\texttt{error=some.name is not writable}.
+\]
+If a line is syntactically malformed, lacks an equals sign, or contains an
+invalid JSON right-hand side, the server reports an invalid request.  Empty
+lines are ignored.  pypilot clients use this fact as a lightweight
+keep-alive mechanism: after a quiet period, a client may send a blank
+newline to make a broken TCP connection fail promptly.
+\subsection{Optional UDP Output Stream}
+The TCP protocol contains one special value for enabling UDP delivery of
+watched output:
+\[
+\texttt{udp\_port=<port>}.
+\]
+After a TCP client sets \texttt{udp\_port} to a valid UDP port, the server
+may deliver watched value updates to that UDP port on the same client IP
+address.  The UDP datagram payload is still the same newline-delimited
+text format:
+\[
+\begin{aligned}
+&\texttt{ap.heading=123.4000}\\
+&\texttt{ap.enabled=true}.
+\end{aligned}
+\]
+The TCP connection remains the control channel.  UDP is an optimization
+for watched output streams, especially small displays or remotes that want
+fresh sensor values without accumulating TCP latency.  The watch
+subscription itself is still configured with TCP records.
+\subsection{Example Session}
+The following example shows a complete minimal interaction.  The client
+first subscribes to value metadata and a few status values, then commands
+the pilot into compass mode at \(90^\circ\), and finally engages it.
+\begin{quote}
+\scriptsize\ttfamily
+watch=\{"values":true\}\\
+watch=\{"ap.enabled":true,"ap.mode":true,\allowbreak"ap.heading":0.5,\allowbreak"ap.heading\_command":true\}\\
+ap.mode="compass"\\
+ap.heading\_command=90.0\\
+ap.enabled=true
+\end{quote}
+The server may respond with records such as
+\begin{quote}
+\scriptsize\ttfamily
+values=\{"ap.enabled":\{"type":"BooleanProperty",\allowbreak"writable":true\},...\}\\
+ap.mode="compass"\\
+ap.heading\_command=90.0\\
+ap.enabled=true\\
+ap.heading=88.7000\\
+ap.heading=88.9000
+\end{quote}
+To stand by, the client sends
+\begin{quote}
+\ttfamily
+ap.enabled=false
+\end{quote}
+\subsection{Comparison with the NMEA TCP Server}
+pypilot also contains a separate NMEA TCP interface, normally on port
+\[
+p_{\mathrm{nmea}} = 20220.
+\]
+That port carries ordinary NMEA sentences such as GPS, wind, rudder, and
+APB/navigation data:
+\[
+\texttt{\$...*hh\textbackslash r\textbackslash n}.
+\]
+The NMEA TCP server is therefore a marine-data interface.  It can
+influence the autopilot indirectly by supplying GPS, wind, or APB
+cross-track-error data, especially in GPS and NAV modes.  It is not the
+native pypilot command/value protocol.
+The distinction is summarized in
+\cref{tab:pypilot-tcp-vs-nmea}.
+\begin{table}[!t]
+\centering
+\caption{pypilot command TCP versus NMEA TCP.}
+\label{tab:pypilot-tcp-vs-nmea}
+\begin{tabularx}{\columnwidth}{Z{0.20\columnwidth}YY}
+\toprule
+Field & pypilot TCP & NMEA TCP \\
+\midrule
+Default port & \texttt{23322} & \texttt{20220} \\
+Record type & \texttt{name=json} & NMEA sentence \\
+Primary use & Control/status/config & Marine sensor/navigation data \\
+Command example & \texttt{ap.enabled=true} & APB/RMC/MWV sentence \\
+Framing & \texttt{\textbackslash n} & \texttt{\textbackslash r\textbackslash n} \\
+Self-description & \texttt{values} metadata & none \\
+Subscriptions & \texttt{watch=\{...\}} & not native \\
+\bottomrule
+\end{tabularx}
+\end{table}
+For direct autopilot control, clients should use the pypilot TCP value
+protocol on port \texttt{23322}.  For navigation and sensor sentences,
+clients should use the NMEA TCP server on port \texttt{20220}.
+\subsection{Implementation Notes for External Clients}
+An external client implementation only needs a line-oriented TCP parser.
+The minimum algorithm is:
+\begin{enumerate}
+\setlength{\itemsep}{0pt}
+\setlength{\parskip}{0pt}
+\item Open a TCP connection to \texttt{host:23322}.
+\item Send newline-terminated assignment records.
+\item Split incoming lines at the first \texttt{=}.
+\item Decode the right side as JSON.
+\item Handle \texttt{error} records separately.
+\item Use \texttt{watch} for asynchronous updates.
+\end{enumerate}
+
+A minimal parser can be written around the following rule:
+\[
+(\text{name},\text{payload})
+=
+\operatorname{split}_{1}(\text{line},\texttt{=}).
+\]
+Then
+\[
+\text{value} = \operatorname{JSONDecode}(\text{payload}).
+\]
+If \(\text{name}=\texttt{error}\), the payload should be treated as a
+diagnostic string rather than a normal value update.
+Because updates are asynchronous, a client should not assume that the next
+line received is a direct response to the last command sent.  After watches
+are installed, any watched value can be emitted whenever its watch policy
+allows it.  The protocol is therefore best understood as a shared
+publish/subscribe value bus with writable properties, rather than as a
+strict request-response API.
+
+\section{Control Parameters, Gates, and Filters}
+\label{sec:pypilot-parameters}
+The pypilot control stack contains many explicit gains, filters, clamps,
+timeouts, and gating rules.  These are not incidental constants; they are
+part of the practical behavior of the autopilot.  The main active
+subsystems are the pilot controller, the heading and inertial filters, the
+wind and navigation filters, the tacking state machine, and the servo
+driver.  This section summarizes the important parameters found in the
+source code, their defaults, their code-enforced ranges where applicable,
+and reasonable practical tuning ranges.
+Throughout the code, many filters are first-order exponential moving
+averages of the form
+\[
+x_f[k]
+=
+(1-\alpha)x_f[k-1] + \alpha x[k],
+\]
+where \(\alpha\) is the filter constant.  For small \(\alpha\), the
+approximate time constant is
+\[
+\tau \approx \frac{\Delta t}{\alpha}.
+\]
+Thus, at the default IMU/control rate of \SI{20}{Hz}, where
+\(\Delta t = \SI{0.05}{s}\), a filter constant of \(\alpha=0.2\)
+corresponds to a fast time constant of roughly \(\SI{0.25}{s}\), while
+\(\alpha=0.01\) corresponds to a much slower filter.
+The tables below distinguish between two different notions of range:
+\emph{code range} is the range accepted by the pypilot value system, while
+\emph{practical range} is a conservative operating range for real tuning.
+The practical ranges are intentionally narrower than the code ranges.
+\subsection{Active Pilot Gains}
+In the inspected source tree, the normally active pilot modules are
+\texttt{basic}, \texttt{wind}, and \texttt{absolute}.  Several other
+pilots exist in the source tree, but are marked disabled and should be
+treated as experimental unless explicitly enabled.
+\subsubsection{Basic Pilot}
+The basic pilot is the normal compass/GPS/NAV heading-hold controller.  It
+uses an extended proportional--derivative form:
+\[
+u
+=
+K_P e
++
+K_D \dot{\psi}
++
+K_{DD} \ddot{\psi}
++
+K_{PR}\operatorname{sgn}(e)\sqrt{\abs{e}}
++
+K_{FF}\dot{\psi}_c ,
+\]
+where \(u\) is the normalized servo command, \(e\) is the heading error,
+\(\dot{\psi}\) is measured heading rate, \(\ddot{\psi}\) is heading
+rate-of-rate, and \(\dot{\psi}_c\) is the filtered change in commanded
+heading.  The square-root term is unusual compared with a conventional PID
+controller.  It gives useful authority near small and moderate heading
+errors without requiring a large linear proportional gain.
+\begin{table*}[!tbp]
+\centering
+\caption{Active pilot gains for the basic, wind, and absolute pilots.}
+\label{tab:pypilot-active-pilot-gains}
+\label{tab:pypilot-basic-gains}
+\label{tab:pypilot-wind-gains}
+\label{tab:pypilot-absolute-gains}
+\begin{tabularx}{\textwidth}{Z{0.13\textwidth}Z{0.20\textwidth}c c Z{0.13\textwidth}Y}
+\toprule
+Pilot & Value & Default & Code range & Practical range & Meaning \\
+\midrule
+\multirow{5}{*}{\texttt{basic}} & \texttt{ap.pilot.basic.P} &
+\num{0.003} & \(\num{0}\ldots\num{0.03}\) & \(\num{0.001}\ldots\num{0.010}\) &
+Linear heading-error gain.  Higher values turn harder toward the commanded heading; excessive values cause hunting. \\
+& \texttt{ap.pilot.basic.D} &
+\num{0.09} & \(\num{0}\ldots\num{0.24}\) & \(\num{0.04}\ldots\num{0.16}\) &
+Heading-rate damping from the gyro.  Higher values suppress oscillation but can make the response sluggish. \\
+& \texttt{ap.pilot.basic.DD} &
+\num{0.075} & \(\num{0}\ldots\num{0.24}\) & \(\num{0}\ldots\num{0.14}\) &
+Heading-acceleration damping.  Useful for suppressing sharp yaw-rate changes; too much can amplify noise. \\
+& \texttt{ap.pilot.basic.PR} &
+\num{0.005} & \(\num{0}\ldots\num{0.02}\) & \(\num{0.002}\ldots\num{0.010}\) &
+Square-root heading-error gain.  Adds authority without requiring a large linear \(P\) gain. \\
+& \texttt{ap.pilot.basic.FF} &
+\num{0.6} & \(\num{0}\ldots\num{2.4}\) & \(\num{0.2}\ldots\num{1.2}\) &
+Feed-forward from commanded heading changes.  Improves response to button pushes or external course changes. \\
+\midrule
+\multirow{4}{*}{\texttt{wind}} & \texttt{ap.pilot.wind.P} &
+\num{0.003} & \(\num{0}\ldots\num{0.02}\) & \(\num{0.001}\ldots\num{0.008}\) &
+Wind-angle or wind-referenced heading-error gain. \\
+& \texttt{ap.pilot.wind.D} &
+\num{0.1} & \(\num{0}\ldots\num{1.0}\) & \(\num{0.04}\ldots\num{0.25}\) &
+Heading-rate damping. \\
+& \texttt{ap.pilot.wind.DD} &
+\num{0.05} & \(\num{0}\ldots\num{1.0}\) & \(\num{0}\ldots\num{0.15}\) &
+Heading-acceleration damping. \\
+& \texttt{ap.pilot.wind.WG} &
+\num{0} & \(\num{-0.1}\ldots\num{0.1}\) & \(\num{-0.03}\ldots\num{0.03}\) &
+Wind-gust compensation.  Should normally remain near zero unless wind data are clean and well-filtered. \\
+\midrule
+\multirow{4}{*}{\texttt{absolute}} & \texttt{ap.pilot.absolute.P} &
+\num{0.05} & \(\num{0}\ldots\num{0.3}\) & \(\num{0.02}\ldots\num{0.12}\) &
+Converts heading error into rudder-position command. \\
+& \texttt{ap.pilot.absolute.I} &
+\num{0} & \(\num{0}\ldots\num{0.8}\) & \(\num{0}\ldots\num{0.05}\) &
+Integral correction.  Can wind up if used aggressively. \\
+& \texttt{ap.pilot.absolute.D} &
+\num{0.05} & \(\num{0}\ldots\num{0.5}\) & \(\num{0.02}\ldots\num{0.15}\) &
+Heading-rate damping. \\
+& \texttt{ap.pilot.absolute.FF} &
+\num{0} & \(\num{0}\ldots\num{1.0}\) & \(\num{0}\ldots\num{0.5}\) &
+Feed-forward from heading-command changes. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+Practical symptoms and adjustments are summarized in
+\cref{tab:pypilot-basic-tuning}.
+\begin{table}[!t]
+\centering
+\caption{Basic pilot tuning symptoms.}
+\label{tab:pypilot-basic-tuning}
+\begin{tabularx}{\columnwidth}{Z{0.36\columnwidth}Y}
+\toprule
+Observed behavior & Likely adjustment \\
+\midrule
+Slowly wanders off course &
+Increase \texttt{P} or \texttt{PR}. \\
+Oscillates around course &
+Decrease \texttt{P}/\texttt{PR}, or increase \texttt{D}. \\
+Rudder chatters or reacts to noisy yaw acceleration &
+Decrease \texttt{DD}. \\
+Course changes feel delayed &
+Increase \texttt{FF}. \\
+Course changes overshoot badly &
+Decrease \texttt{FF} or \texttt{P}; increase \texttt{D}. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\subsubsection{Wind Pilot}
+The wind pilot has a similar structure but adds a wind-gust term:
+\[
+u
+=
+K_P e
++
+K_D \dot{\psi}
++
+K_{DD} \ddot{\psi}
++
+K_{WG} g_w ,
+\]
+where \(g_w\) is the apparent wind-speed change used as a gust signal.
+The \texttt{WG} gain should be treated carefully.  A noisy wind sensor will
+inject noise directly into the rudder command if \texttt{WG} is increased.
+\subsubsection{Absolute Pilot}
+The absolute pilot attempts to command a rudder position rather than a
+relative motor speed.  It requires valid rudder feedback.  In the inspected
+source, it is present and active, but should be regarded as experimental
+because its behavior depends strongly on rudder calibration.
+\subsection{Heading Error, Command Rate, and Integral Gates}
+The autopilot does not feed unbounded heading error into the pilot.  The
+heading error is explicitly clamped:
+\[
+e
+=
+\operatorname{clamp}
+\left(
+\operatorname{resolv}(\psi-\psi_c),
+-30^\circ,
++30^\circ
+\right).
+\]
+Therefore, even if the vessel is far off course, the control law sees at
+most \(30^\circ\) of error.  This is a practical marine safety measure:
+it prevents extreme actuator commands after a sensor jump, a large
+disturbance, a tack, or a mode transition.
+\begin{table}[!t]
+\centering
+\caption{Heading-error and command-rate gates.}
+\label{tab:pypilot-heading-gates}
+\begin{tabularx}{\columnwidth}{Z{0.26\columnwidth}cZ{0.14\columnwidth}Y}
+\toprule
+Gate/filter & Value & Tunable & Meaning \\
+\midrule
+Heading-error clamp &
+\(\pm 30^\circ\) &
+No &
+Maximum error seen by the pilot controller. \\
+Heading-command resolution &
+\(\num{0.1}^\circ\) &
+No &
+Commanded heading is rounded to tenths of a degree. \\
+Integral \(dt\) cap &
+\(\SI{1}{s}\) &
+No &
+Prevents a scheduler stall from producing a large integral jump. \\
+Integral clamp &
+\(\pm 10\) &
+No &
+Limits stored heading-error integral. \\
+Feed-forward EMA alpha &
+\num{0.1} &
+No &
+Smooths heading-command changes before use by \texttt{FF}. \\
+Feed-forward reset timeout &
+\(\SI{1}{s}\) &
+No &
+If the last command is older than this, the feed-forward reference resets. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+The heading-error integral is computed as
+\[
+I_e[k]
+=
+\operatorname{clamp}
+\left(
+I_e[k-1]
++
+\frac{e[k]}{50}\Delta t,
+-10,
+10
+\right).
+\]
+The active \texttt{basic} and \texttt{wind} pilots do not use this
+integral term in their default equations.  It is more relevant to the
+\texttt{absolute} pilot and to experimental or future pilots.
+The feed-forward command-rate signal is updated with
+\[
+\dot{\psi}_{c,f}[k]
+=
+0.9\,\dot{\psi}_{c,f}[k-1]
++
+0.1\,\Delta\psi_c[k].
+\]
+In non-wind modes, the sign is inverted before filtering; wind modes use
+the opposite sign convention because apparent wind direction is a
+``direction from'' measurement.
+\subsection{IMU and Heading Filters}
+The default IMU/control loop rate is \(\SI{20}{Hz}\).  The allowed rate
+choices are \(\SI{10}{Hz}\) and \(\SI{20}{Hz}\).
+\begin{table*}[!tbp]
+\centering
+\caption{IMU and heading filter parameters.}
+\label{tab:pypilot-imu-filters}
+\begin{tabularx}{\textwidth}{Z{0.23\textwidth}c c Z{0.16\textwidth}Y}
+\toprule
+Value & Default & Code range & Practical range & Meaning \\
+\midrule
+\texttt{imu.rate} &
+\(\SI{20}{Hz}\) &
+\(\SI{10}{Hz}\) or \(\SI{20}{Hz}\) &
+\(\SI{20}{Hz}\) &
+Main IMU and autopilot loop rate. \\
+\texttt{imu.heading\_offset} &
+\(90^\circ\) &
+\(-180^\circ\ldots180^\circ\) &
+installation-dependent &
+Compass/IMU heading offset.  Default reflects the expected display-facing mounting orientation. \\
+\texttt{imu.heading\_lowpass\_constant} &
+\num{0.2} &
+\(\num{0.05}\ldots\num{0.3}\) &
+\(\num{0.1}\ldots\num{0.25}\) &
+EMA alpha for heading. \\
+\texttt{imu.headingrate\_lowpass\_constant} &
+\num{0.2} &
+\(\num{0.05}\ldots\num{0.3}\) &
+\(\num{0.1}\ldots\num{0.25}\) &
+EMA alpha for gyro-derived heading rate. \\
+{\ttfamily\seqsplit{imu.headingraterate\_lowpass\_constant}} &
+\num{0.1} &
+\(\num{0.05}\ldots\num{0.3}\) &
+\(\num{0.05}\ldots\num{0.15}\) &
+EMA alpha for heading acceleration. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+At \(\SI{20}{Hz}\), the approximate time constants are shown in
+\cref{tab:pypilot-alpha-timeconstants}.
+\begin{table}[!t]
+\centering
+\caption{Approximate EMA time constants at \(\SI{20}{Hz}\).}
+\label{tab:pypilot-alpha-timeconstants}
+\begin{tabular}{cc}
+\toprule
+\(\alpha\) & Approximate time constant \\
+\midrule
+\num{0.05} & \(\SI{1.0}{s}\) \\
+\num{0.10} & \(\SI{0.5}{s}\) \\
+\num{0.20} & \(\SI{0.25}{s}\) \\
+\num{0.30} & \(\SI{0.17}{s}\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+The heading rate-of-rate estimate is guarded by an IMU timing gate:
+\[
+\ddot{\psi}
+=
+\begin{cases}
+\dfrac{\dot{\psi}[k]-\dot{\psi}[k-1]}{\Delta t},
+& \num{0.01} < \Delta t < \num{0.2},\\[8pt]
+0, & \text{otherwise}.
+\end{cases}
+\]
+This prevents malformed timing intervals from producing large
+\(\ddot{\psi}\) spikes.
+The heel estimate is another fixed EMA:
+\[
+\phi_{\mathrm{heel}}[k]
+=
+0.97\,\phi_{\mathrm{heel}}[k-1]
++
+0.03\,\phi_{\mathrm{roll}}[k].
+\]
+At \(\SI{20}{Hz}\), this is a slow filter with a time constant of roughly
+\(\SI{1.5}{s}\) to \(\SI{1.7}{s}\).
+The IMU warning logic also includes a simple alignment gate:
+\[
+\abs{\theta_{\mathrm{pitch}}} > 35^\circ
+\quad\text{or}\quad
+\abs{\theta_{\mathrm{roll}}} > 35^\circ .
+\]
+If either condition is true, pypilot appends an alignment warning.
+\subsection{Compass, GPS, and Wind Offset Filters}
+pypilot maintains long-term offsets between compass heading, GPS track,
+apparent wind, and true wind.  These offsets are not direct steering
+commands; they are slowly adapted references used to preserve continuity
+between modes.
+The GPS speed used for offset weighting is filtered by
+\[
+V_{g,f}[k]
+=
+0.998\,V_{g,f}[k-1]
++
+0.002\,V_g[k].
+\]
+The GPS-to-compass offset is only updated above a speed gate:
+\[
+V_g > \SI{1}{kn}.
+\]
+When this gate is satisfied, the update factor is
+\[
+\alpha_g
+=
+0.005\log(V_{g,f}+1).
+\]
+This gives GPS track more authority at higher speed and avoids using GPS
+course-over-ground when the vessel is nearly stationary.
+\begin{table*}[!tbp]
+\centering
+\caption{Compass, GPS, and wind offset filters.}
+\label{tab:pypilot-offset-filters}
+\begin{tabularx}{\textwidth}{Z{0.23\textwidth}c c Z{0.16\textwidth}Y}
+\toprule
+Quantity & Default/fixed value & Code range & Practical range & Meaning \\
+\midrule
+GPS speed EMA alpha &
+\num{0.002} &
+fixed &
+fixed &
+Very slow smoothing of GPS speed before GPS/compass offset updates. \\
+GPS offset speed gate &
+\(\SI{1}{kn}\) &
+fixed &
+\(\SI{1}{kn}\ldots\SI{3}{kn}\) if editing source &
+Avoids trusting GPS track at very low speed. \\
+GPS offset update alpha &
+\(0.005\log(V_{g,f}+1)\) &
+fixed &
+fixed &
+Weights GPS/compass offset update more heavily at higher speed. \\
+\texttt{ap.wind\_offset\_filter} &
+\num{0.1} &
+\(\num{0.01}\ldots\num{0.5}\) &
+\(\num{0.03}\ldots\num{0.2}\) &
+EMA alpha for apparent-wind and true-wind compass offsets. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+The wind offset update has the form
+\[
+\beta_f[k]
+=
+(1-\alpha_w)\beta_f[k-1]
++
+\alpha_w \beta[k],
+\]
+where the user-facing parameter is
+\[
+\alpha_w = \texttt{ap.wind\_offset\_filter}.
+\]
+Large values adapt quickly to wind shifts but can chase wind sensor noise.
+Small values preserve a stable long-term wind/compass offset.
+\subsection{Wind Sensor Filters}
+The apparent-wind and true-wind sensor paths use both fixed and tunable
+filters.  The base wind sensor rate defaults to \(\SI{4}{Hz}\), and the
+wind speed filter is deliberately slow:
+\[
+V_{w,f}[k]
+=
+0.99\,V_{w,f}[k-1]
++
+0.01\,V_w[k].
+\]
+At \(\SI{4}{Hz}\), the approximate time constant is about
+\(\SI{25}{s}\).  This slow speed estimate is then used to weight the
+direction filter.
+\begin{table*}[!tbp]
+\centering
+\caption{Wind and true-wind filtering parameters.}
+\label{tab:pypilot-wind-filters}
+\begin{tabularx}{\textwidth}{Z{0.23\textwidth}c c Z{0.16\textwidth}Y}
+\toprule
+Value & Default & Code range & Practical range & Meaning \\
+\midrule
+\texttt{wind.rate} &
+\(\SI{4}{Hz}\) &
+\(\SI{0}{Hz}\ldots\SI{50}{Hz}\) &
+\(\SI{2}{Hz}\ldots\SI{10}{Hz}\) &
+Requested/input apparent-wind data rate. \\
+\texttt{truewind.rate} &
+\(\SI{4}{Hz}\) &
+\(\SI{0}{Hz}\ldots\SI{50}{Hz}\) &
+\(\SI{2}{Hz}\ldots\SI{10}{Hz}\) &
+Requested/input true-wind data rate. \\
+\texttt{wind.offset} &
+\(0^\circ\) &
+\(-180^\circ\ldots180^\circ\) &
+calibrated value &
+Apparent-wind angle offset. \\
+\texttt{truewind.offset} &
+\(0^\circ\) &
+\(-180^\circ\ldots180^\circ\) &
+calibrated value &
+True-wind angle offset if true wind is externally supplied. \\
+\texttt{wind.sensors\_height} &
+\(\SI{0}{m}\) &
+\(\SI{0}{m}\ldots\SI{100}{m}\) &
+actual sensor height &
+Height used for mast-motion apparent-wind compensation. \\
+\texttt{wind.filter\_constant} &
+\num{0.1} &
+\(\num{0.01}\ldots\num{1.0}\) &
+\(\num{0.03}\ldots\num{0.25}\) &
+Base coefficient for speed-weighted wind-direction filtering. \\
+\texttt{truewind.filter\_constant} &
+\num{0.1} &
+\(\num{0.01}\ldots\num{1.0}\) &
+\(\num{0.03}\ldots\num{0.25}\) &
+Same as above for the true-wind path. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+The wind-direction filter coefficient is not constant.  It is computed as
+\[
+\alpha_{\mathrm{wind}}
+=
+c_w
+\log\left(\frac{V_{w,f}}{5}+1.1\right),
+\]
+where
+\[
+c_w = \texttt{wind.filter\_constant}.
+\]
+The filtered wind direction is then updated by
+\[
+\theta_{w,f}[k]
+=
+(1-\alpha_{\mathrm{wind}})\theta_{w,f}[k-1]
++
+\alpha_{\mathrm{wind}}\theta_w[k],
+\]
+with directional wrap handled by the angle-resolution function.
+With the default \(c_w=0.1\), the effective alpha is approximately
+\cref{tab:pypilot-wind-alpha}.
+\begin{table}[!t]
+\centering
+\caption{Approximate wind-direction alpha for default \texttt{filter\_constant}.}
+\label{tab:pypilot-wind-alpha}
+\begin{tabular}{cc}
+\toprule
+Filtered wind speed & Effective \(\alpha\) \\
+\midrule
+\(\SI{0}{kn}\)  & \(\num{0.0095}\) \\
+\(\SI{5}{kn}\)  & \(\num{0.074}\) \\
+\(\SI{10}{kn}\) & \(\num{0.113}\) \\
+\(\SI{20}{kn}\) & \(\num{0.163}\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+Since the code does not clamp this computed alpha, large
+\texttt{filter\_constant} values can produce \(\alpha>1\) at high wind
+speed.  For robust behavior, \texttt{filter\_constant} should normally be
+kept well below \(1\).
+If \texttt{wind.sensors\_height} is nonzero, apparent-wind measurements
+are compensated using pitch and roll rates.  The source computes a mast
+motion correction approximately proportional to
+\[
+\kappa
+=
+\frac{\pi}{180}
+\cdot
+1.94
+\cdot
+h,
+\]
+where \(h\) is the sensor height in meters and the factor \(1.94\)
+converts meters per second to knots.  The apparent wind vector is adjusted
+by roll-rate and pitch-rate terms.  This should only be enabled when IMU
+alignment and sensor geometry are trusted.
+\subsection{GPS, APB, and Navigation Parameters}
+The GPS sensor defaults to \(\SI{1}{Hz}\), while the APB navigation
+interface contains the main cross-track-error gain used in NAV mode.
+\begin{table*}[!tbp]
+\centering
+\caption{GPS, APB navigation, and user-visible GPS filter values.}
+\label{tab:pypilot-gps-apb-filter-parameters}
+\begin{tabularx}{\textwidth}{Z{0.23\textwidth}c c Z{0.16\textwidth}Y}
+\toprule
+Value/gate & Default & Code range & Practical range & Meaning \\
+\midrule
+\multicolumn{5}{l}{\textit{GPS and APB navigation parameters}} \\
+\addlinespace[0.25ex]
+\texttt{gps.rate} &
+\(\SI{1}{Hz}\) &
+\(\SI{0}{Hz}\ldots\SI{50}{Hz}\) &
+\(\SI{1}{Hz}\ldots\SI{10}{Hz}\) &
+Requested/input GPS update rate. \\
+\texttt{apb.xte.gain} &
+\num{300} &
+\(\num{0}\ldots\num{3000}\) &
+\(\num{50}\ldots\num{600}\) &
+Cross-track-error gain used in NAV mode. \\
+APB accept interval &
+\(\SI{0.5}{s}\) &
+fixed &
+fixed &
+APB updates faster than \(\SI{2}{Hz}\) are ignored. \\
+Heading-command update threshold &
+\(0.1^\circ\) &
+fixed &
+fixed &
+NAV mode only writes a new command if it differs by more than this. \\
+\addlinespace[0.6ex]
+\multicolumn{5}{l}{\textit{User-visible GPS filter values}} \\
+\addlinespace[0.25ex]
+\texttt{gps.filtered.enabled} &
+\texttt{false} &
+boolean &
+usually \texttt{false} &
+Enables the GPS/IMU filter process. \\
+\texttt{gps.filtered.output} &
+\texttt{false} &
+boolean &
+usually \texttt{false} &
+Controls whether filtered GPS output is used/exported. \\
+\texttt{gps.filtered.time\_offset} &
+\(\SI{0.7}{s}\) &
+not range-limited &
+\(\SI{0.3}{s}\ldots\SI{1.5}{s}\) &
+Assumed GPS latency. \\
+\addlinespace[0.6ex]
+\multicolumn{5}{l}{\textit{Fixed GPS filter constants}} \\
+\addlinespace[0.25ex]
+Position measurement sigma & \(\SI{10}{m}\) & fixed & fixed & GPS position noise assumption. \\
+Velocity measurement sigma & \(\SI{0.25}{m/s}\) & fixed & fixed & GPS velocity noise assumption. \\
+Initial position deviation & \(\SI{30}{m}\) & fixed & fixed & Initial/process covariance scale. \\
+Initial velocity deviation & \(\SI{3}{m/s}\) & fixed & fixed & Initial/process covariance scale. \\
+3D mode & \texttt{false} & fixed & fixed & The filter runs in 2D by default. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+The NAV-mode command is very simple:
+\[
+\psi_c
+=
+\psi_{\mathrm{track}}
++
+K_{\mathrm{xte}}\,e_{\mathrm{xte}},
+\]
+where
+\[
+K_{\mathrm{xte}} = \texttt{apb.xte.gain}.
+\]
+The source comment states that the default value \(K_{\mathrm{xte}}=300\)
+corresponds to a \(30^\circ\) correction for \(0.1\) mile of cross-track
+error.  This is a proportional cross-track correction, not an L1 or
+pure-pursuit path-following law.
+The APB update only affects the heading command when
+\[
+\texttt{ap.mode}=\texttt{"nav"},
+\qquad
+\texttt{ap.enabled}=\texttt{true},
+\]
+and the APB data mode is accepted as GPS-derived navigation data.
+The optional filtered GPS process is disabled by default.  It estimates
+position and velocity with a simple Kalman structure using GPS fixes and
+IMU acceleration.  It is not the normal steering loop in the inspected
+configuration.
+The GPS filter also contains several timing gates:
+\[
+\Delta t_{\mathrm{predict}} < 0
+\quad\text{or}\quad
+\Delta t_{\mathrm{predict}} > \SI{0.5}{s}
+\quad\Longrightarrow\quad
+\text{reset}.
+\]
+For normal predictions, the applied step is clamped:
+\[
+\Delta t
+\leftarrow
+\operatorname{clamp}(\Delta t,\SI{0.02}{s},\SI{0.1}{s}).
+\]
+GPS fixes older than \(\SI{5}{s}\) are considered stale; after more than
+five stale fixes, the system time offset and filter are reset.  Magnetic
+declination is refreshed from the magnetic model no more often than once
+every four hours.
+\subsection{Tacking Parameters and Gates}
+The tacking subsystem is a small state machine with states
+\[
+\texttt{none},\quad
+\texttt{begin},\quad
+\texttt{waiting},\quad
+\texttt{tacking}.
+\]
+External clients initiate a tack by setting the state to
+\texttt{begin}.  The state machine then waits for the configured delay,
+commands a turn, and finishes the tack when the configured threshold is
+crossed.
+\begin{table*}[!tbp]
+\centering
+\caption{Tacking parameters.}
+\label{tab:pypilot-tacking-parameters}
+\begin{tabularx}{\textwidth}{Z{0.23\textwidth}c c Z{0.16\textwidth}Y}
+\toprule
+Value & Default & Code range & Practical range & Meaning \\
+\midrule
+\multicolumn{5}{l}{\textit{Configurable tacking parameters}} \\
+\addlinespace[0.25ex]
+\texttt{ap.tack.delay} &
+\(\SI{0}{s}\) &
+\(\SI{0}{s}\ldots\SI{60}{s}\) &
+\(\SI{0}{s}\ldots\SI{10}{s}\) &
+Delay between tack request and start of tack. \\
+\texttt{ap.tack.angle} &
+\(100^\circ\) &
+\(10^\circ\ldots180^\circ\) &
+\(70^\circ\ldots120^\circ\) &
+Nominal tack angle in compass mode. \\
+\texttt{ap.tack.rate} &
+\(\SI{15}{deg/s}\) &
+\(\SI{1}{deg/s}\ldots\SI{100}{deg/s}\) &
+\(\SI{5}{deg/s}\ldots\SI{25}{deg/s}\) &
+Turn-rate scaling during the tack. \\
+\texttt{ap.tack.threshold} &
+\(\SI{50}{\percent}\) &
+\(\SI{10}{\percent}\ldots\SI{100}{\percent}\) &
+\(\SI{40}{\percent}\ldots\SI{70}{\percent}\) &
+Percent completion at which the tack is considered complete. \\
+\texttt{ap.tack.use\_heel} &
+\texttt{false} &
+boolean &
+usually \texttt{false} &
+Infer tack side from heel. \\
+\texttt{ap.tack.use\_wind\_direction} &
+\texttt{true} &
+boolean &
+usually \texttt{true} &
+Infer tack side from apparent wind direction. \\
+\addlinespace[0.6ex]
+\multicolumn{5}{l}{\textit{Fixed tacking detector gates}} \\
+\addlinespace[0.25ex]
+Direction-log update interval & \(\SI{0.25}{s}\) & fixed & fixed & Tack-direction logs are updated at most this often. \\
+Direction-log clear interval & \(\SI{1}{s}\) & fixed & fixed & Longer update gaps clear the tack-direction log. \\
+Apparent-wind detector threshold & \(20^\circ\) & fixed & fixed & Apparent-wind side-change detector threshold. \\
+Heel detector threshold & \(7^\circ\) & fixed & fixed & Heel side-change detector threshold. \\
+Heel detector warmup & \(\SI{30}{s}\) & fixed & fixed & Heel is ignored until this delay has elapsed. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+The tack direction detector maintains logs that are updated at most every
+\(\SI{0.25}{s}\).  If the update interval exceeds \(\SI{1}{s}\), the log
+is cleared.  The apparent-wind tack detector uses a threshold of
+\(20^\circ\), and the heel detector uses a threshold of \(7^\circ\).  Heel
+is not used immediately; the code waits more than \(\SI{30}{s}\) before
+using heel as a tack-side detector.
+During the tacking state, the command is computed from turn-rate terms:
+\[
+u_{\mathrm{tack}}
+=
+\frac{\dot{\psi}+\ddot{\psi}/2}
+{\texttt{ap.tack.rate}}
++
+d,
+\]
+where \(d\in\{-1,+1\}\) is the tack direction.  The result is clamped:
+\[
+u_{\mathrm{tack}}
+\leftarrow
+\operatorname{clamp}(u_{\mathrm{tack}},-1,+1).
+\]
+This prevents excessive command values during the tack.
+\subsection{Servo and Actuator Parameters}
+The servo layer converts the pilot's normalized command into motor drive,
+protects the actuator, handles current and temperature limits, and shapes
+small commands into practical pulses.  This layer is especially important
+because pypilot is designed to work with real DC actuators and motor
+controllers rather than idealized rudder servos.
+\subsubsection{Safety Limits}
+\begin{table*}[!tbp]
+\centering
+\caption{Servo safety limits.}
+\label{tab:pypilot-servo-safety}
+\begin{tabularx}{\textwidth}{Z{0.23\textwidth}c c Z{0.16\textwidth}Y}
+\toprule
+Value & Default & Code range & Practical range & Meaning \\
+\midrule
+\texttt{servo.max\_current} &
+\(\SI{4.5}{A}\) &
+\(\SI{0}{A}\ldots\SI{50}{A}\) &
+drive-dependent &
+Motor current trip limit sent to the controller. \\
+\texttt{servo.max\_controller\_temp} &
+\(\SI{60}{\celsius}\) &
+\(\SI{45}{\celsius}\ldots\SI{80}{\celsius}\) &
+\(\SI{55}{\celsius}\ldots\SI{70}{\celsius}\) &
+Controller over-temperature limit. \\
+\texttt{servo.max\_motor\_temp} &
+\(\SI{60}{\celsius}\) &
+\(\SI{30}{\celsius}\ldots\SI{80}{\celsius}\) &
+\(\SI{50}{\celsius}\ldots\SI{70}{\celsius}\) &
+Motor over-temperature limit. \\
+\texttt{servo.faults} &
+\num{0} &
+resettable &
+diagnostic &
+Persistent fault counter. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+The practical current limit depends on the actuator.  Small tiller pilots
+may use only a few amperes, while larger hydraulic or wheel drives can
+require much higher limits.  The Arduino controller also reports its
+current range, and the pypilot host adjusts the allowed maximum
+accordingly.
+\subsubsection{Servo Output Scaling}
+\begin{table*}[!tbp]
+\centering
+\caption{Servo output scaling and pulse-shaping parameters.}
+\label{tab:pypilot-servo-scaling}
+\begin{tabularx}{\textwidth}{Z{0.23\textwidth}c c Z{0.16\textwidth}Y}
+\toprule
+Value & Default & Code range & Practical range & Meaning \\
+\midrule
+\texttt{servo.gain} &
+\num{1} &
+\(\num{-10}\ldots\num{10}\) &
+\(\num{0.5}\ldots\num{2}\), or \(-1\) if reversed &
+Multiplies final speed command.  Negative values reverse the drive direction. \\
+\texttt{servo.speed.min} &
+\(\SI{100}{\percent}\) &
+\(\SI{0}{\percent}\ldots\SI{100}{\percent}\) &
+\(\SI{20}{\percent}\ldots\SI{60}{\percent}\) after calibration &
+Minimum motor speed once a pulse is emitted. \\
+\texttt{servo.speed.max} &
+\(\SI{100}{\percent}\) &
+\(\SI{0}{\percent}\ldots\SI{100}{\percent}\) &
+\(\SI{70}{\percent}\ldots\SI{100}{\percent}\) &
+Maximum motor speed. \\
+\texttt{servo.speed\_gain} &
+\num{0} &
+\(\num{0}\ldots\num{1}\) &
+\(\num{0}\ldots\num{0.3}\) &
+Raises minimum speed as duty cycle increases. \\
+\texttt{servo.period} &
+\(\SI{0.4}{s}\) &
+\(\SI{0.1}{s}\ldots\SI{1.0}{s}\) &
+\(\SI{0.25}{s}\ldots\SI{0.6}{s}\) &
+Pulse/windup period used to avoid tiny actuator movements. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+The source enforces
+\[
+\texttt{servo.speed.max}
+\ge
+\texttt{servo.speed.min}.
+\]
+The default \(\SI{100}{\percent}\) minimum and maximum produce a
+full-speed pulsed actuator.  After calibration, lowering the minimum speed
+can give smoother steering, but it must remain high enough to reliably
+move the actuator.
+\subsubsection{Servo Windup and Pulse Logic}
+Normal autopilot commands are not always sent directly to the motor.  The
+servo layer integrates a windup term:
+\[
+w[k]
+=
+w[k-1]
++
+\left(u[k]-u_{\mathrm{actual}}[k]\right)\Delta t .
+\]
+A motor pulse is emitted only when
+\[
+\abs{w}
+>
+\frac{T_s u_{\min}}{1.5},
+\]
+where
+\[
+T_s = \texttt{servo.period}
+\]
+and \(u_{\min}\) is the configured minimum speed.  The windup is bounded:
+\[
+\abs{w}
+\le
+1.5T_s .
+\]
+If the windup saturates, pypilot sets an internal saturation flag.
+The servo also suppresses rapid direction changes.  If the requested
+direction changes within one \texttt{servo.period}, the previous direction
+or a zero command may be retained briefly.  This protects the actuator
+from rapid reversals and prevents tiny alternating commands from wearing
+the drive.
+\subsubsection{Manual Override and Command Timeout}
+Manual commands and autopilot-generated commands are treated differently.
+External/manual writes to \texttt{servo.command} are immediate, while
+autopilot-generated calls use the period/windup logic.
+\begin{table}[!t]
+\centering
+\caption{Servo command timing gates.}
+\label{tab:pypilot-servo-command-gates}
+\begin{tabularx}{\columnwidth}{Z{0.33\columnwidth}cY}
+\toprule
+Gate & Value & Meaning \\
+\midrule
+Manual override block &
+\(\SI{0.8}{s}\) &
+After an external command, pilot-generated commands are ignored for this long. \\
+Command timeout &
+\(\SI{1}{s}\) &
+A stale nonzero command is reset to zero. \\
+Zero-command resend interval &
+\(\SI{0.2}{s}\) after \(\SI{1}{s}\) &
+Avoids spamming zero commands while still keeping the link alive. \\
+Driver timeout &
+\(\SI{1}{s}\) &
+If command is nonzero but measured current remains zero, a driver-timeout flag is set. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\subsubsection{Current, Voltage, Position, and Rudder Calibration}
+The electrical, position-control, and rudder-calibration values are grouped
+in \cref{tab:pypilot-servo-electrical-position-rudder} because they are all
+low-level actuator calibration parameters rather than steering-loop gains.
+\begin{table*}[!tbp]
+\centering
+\caption{Servo electrical calibration, filtering, position control, and rudder calibration.}
+\label{tab:pypilot-servo-electrical-position-rudder}
+\begin{tabularx}{\textwidth}{Z{0.23\textwidth}c c Z{0.16\textwidth}Y}
+\toprule
+Value/filter & Default & Code range & Practical range & Meaning \\
+\midrule
+\multicolumn{5}{l}{\textit{Servo electrical calibration and filtering}} \\
+\addlinespace[0.25ex]
+\texttt{servo.current.factor} & \num{1} & \(\num{0.8}\ldots\num{1.2}\) & near calibrated value & Current calibration multiplier. \\
+\texttt{servo.current.offset} & \num{0} & \(\num{-1.2}\ldots\num{1.2}\) & near calibrated value & Current calibration offset. \\
+\texttt{servo.voltage.factor} & \num{1} & \(\num{0.8}\ldots\num{1.2}\) & near calibrated value & Voltage calibration multiplier. \\
+\texttt{servo.voltage.offset} & \num{0} & \(\num{-1.2}\ldots\num{1.2}\) & near calibrated value & Voltage calibration offset. \\
+\texttt{servo.compensate\_voltage} & \texttt{false} & boolean & drive-dependent & If enabled, scales command approximately by \(12/V\). \\
+\texttt{servo.compensate\_current} & \texttt{false} & boolean & drive-dependent & Uses current compensation when sending controller parameters. \\
+Duty EMA alpha & \num{0.001} & fixed & fixed & Very slow estimate of actuator duty cycle. \\
+Wattage EMA coefficient & \(0.003\Delta t\) & fixed & fixed & Slow average power estimate, roughly several minutes. \\
+\addlinespace[0.6ex]
+\multicolumn{5}{l}{\textit{Clutch, brake, and position-control parameters}} \\
+\addlinespace[0.25ex]
+\texttt{servo.clutch\_pwm} & \(\SI{100}{\percent}\) & \(\SI{10}{\percent}\ldots\SI{100}{\percent}\) & \(\SI{70}{\percent}\ldots\SI{100}{\percent}\) & Clutch PWM command. \\
+\texttt{servo.use\_brake} & \texttt{true} & boolean & drive-dependent & Applies brake behavior when idle. \\
+\texttt{servo.position.p} & \num{0.1} & \(\num{0.01}\ldots\num{1.0}\) & \(\num{0.05}\ldots\num{0.3}\) & Rudder-position proportional gain. \\
+\texttt{servo.position.i} & \num{0} & \(\num{0}\ldots\num{0.1}\) & \(\num{0}\ldots\num{0.02}\) & Rudder-position integral gain. \\
+\texttt{servo.position.d} & \num{0.01} & \(\num{0}\ldots\num{0.1}\) & \(\num{0}\ldots\num{0.03}\) & Rudder-position derivative/speed damping. \\
+\addlinespace[0.6ex]
+\multicolumn{5}{l}{\textit{Rudder calibration values}} \\
+\addlinespace[0.25ex]
+\texttt{rudder.range} & \(45^\circ\) & \(10^\circ\ldots100^\circ\) & actual hardover angle & Maximum absolute rudder angle. \\
+\texttt{rudder.offset} & \num{0} & not range-limited & calibration result & Rudder zero offset. \\
+\texttt{rudder.scale} & \num{100} & not range-limited & calibration result & Raw-to-degree scale. \\
+\texttt{rudder.nonlinearity} & \num{0} & not range-limited & calibration result & Quadratic correction term. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+Small measured currents are suppressed using the learned noise floor:
+\[
+I < 1.2 I_{\mathrm{noise}}
+\quad\Longrightarrow\quad
+I=0.
+\]
+The current noise estimate is updated only when the command has been idle
+for more than \(\SI{3}{s}\), so that motor current is not mistaken for
+sensor noise.
+The position-command path filters the position error as
+\[
+e_f[k]
+=
+0.98\,e_f[k-1]
++
+0.02\,\operatorname{clamp}(e[k],-30,30).
+\]
+At the default control rate, this is a slow filter with an approximate
+time constant of \(\SI{2.5}{s}\).  Rudder calibration maps the raw reading
+\(r\) to an angle using scale \(s\), offset \(o\), and nonlinearity \(n\):
+\[
+\delta_r
+=
+s r
++
+o
++
+n(r_{\min}-r)(r_{\max}-r).
+\]
+The rudder-speed estimate is filtered by
+\[
+\dot{\delta}_{r,f}[k]
+=
+0.9\,\dot{\delta}_{r,f}[k-1]
++
+0.1\,\dot{\delta}_{r}[k].
+\]
+If the rudder update interval exceeds \(\SI{1}{s}\), the derivative
+calculation caps the interval at \(\SI{1}{s}\), preventing a long update
+gap from corrupting the speed estimate.
+\subsection{Sensor Source Selection and Timeout Gates}
+pypilot can receive the same logical sensor from multiple sources.  It
+uses a priority table where lower numbers have higher priority.
+\begin{table}[!t]
+\centering
+\caption{Sensor source priorities.}
+\label{tab:pypilot-source-priority}
+\begin{tabular}{lc}
+\toprule
+Source & Priority \\
+\midrule
+\texttt{gpsd} & 1 \\
+\texttt{servo} & 1 \\
+\texttt{serial} & 2 \\
+\texttt{tcp} & 3 \\
+\texttt{signalk} & 4 \\
+\texttt{water+wind} & 5 \\
+\texttt{gps+wind} & 6 \\
+\texttt{none} & 7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+If a higher-priority source is already active, lower-priority data are
+ignored.  If two devices of the same priority provide the same sensor,
+pypilot stays with the current device rather than switching randomly.
+This prevents source flapping.
+A sensor source is dropped if no update has been received for more than
+\[
+\SI{8}{s}.
+\]
+The same \(\SI{8}{s}\) stale-value policy is used for servo temperature
+sensor values.  A reasonable source-edit range for this timeout is
+approximately \(\SI{5}{s}\) to \(\SI{15}{s}\): shorter timeouts react
+faster to failures, while longer timeouts tolerate slow or bursty sensors.
+\subsection{Mode Availability and Fallback Gates}
+The autopilot does not expose all modes at all times.  Available modes are
+constructed from the currently available sensors:
+\[
+\begin{array}{ll}
+\text{always available:} & \texttt{compass},\\
+\text{if GPS exists:} & \texttt{gps},\\
+\text{if APB/navigation exists:} & \texttt{nav},\\
+\text{if apparent wind exists:} & \texttt{wind},\\
+\text{if true wind exists:} & \texttt{true wind}.
+\end{array}
+\]
+The value
+\[
+\texttt{ap.gps\_and\_nav\_modes}
+\]
+defaults to \texttt{true} and controls whether GPS/NAV modes are exposed
+when the corresponding sensors exist.
+Fallback behavior is summarized in
+\cref{tab:pypilot-mode-fallbacks}.
+\begin{table}[!t]
+\centering
+\caption{Mode fallback behavior.}
+\label{tab:pypilot-mode-fallbacks}
+\begin{tabularx}{\columnwidth}{Z{0.36\columnwidth}Y}
+\toprule
+Requested mode unavailable & Fallback behavior \\
+\midrule
+\texttt{nav} &
+Falls back toward \texttt{gps}, then \texttt{compass}. \\
+\texttt{gps} &
+Falls back to \texttt{compass}. \\
+\texttt{wind} &
+Falls back to \texttt{compass}. \\
+\texttt{true wind} &
+Falls back to \texttt{wind}. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+The wind pilot also performs its own safety fallback: if wind input is
+lost, it switches back to the basic pilot.
+\subsection{Loop Timing Gates}
+The main control period is
+\[
+T = \frac{1}{\texttt{imu.rate}}.
+\]
+At the default \(\SI{20}{Hz}\), \(T=\SI{0.05}{s}\).  The main loop
+contains diagnostic timing gates, summarized in
+\cref{tab:pypilot-loop-timing}.
+\begin{table*}[!tbp]
+\centering
+\caption{Main-loop timing gates.}
+\label{tab:pypilot-loop-timing}
+\begin{tabularx}{\textwidth}{Z{0.25\textwidth}cZ{0.12\textwidth}Y}
+\toprule
+Gate & Value & Tunable & Meaning \\
+\midrule
+Main loop period &
+\(1/\texttt{imu.rate}\) &
+Yes &
+Default control period is \(\SI{0.05}{s}\). \\
+IMU read attempts &
+14 &
+No &
+The loop tries multiple times to obtain an IMU reading. \\
+Sleep per failed IMU read &
+\(T/10\) &
+No &
+Small retry delay between IMU read attempts. \\
+Slow server/client warning &
+\(>T/2\) plus standby wait &
+No &
+Warns if server/client processing is slow. \\
+Slow sensor warning &
+\(>T/2\) &
+No &
+Warns if sensor polling is slow. \\
+Slow IMU warning &
+\(>2T/3\), after startup &
+No &
+Warns if IMU reading is slow. \\
+Slow autopilot warning &
+\(>T/2\) &
+No &
+Warns if control computation is slow. \\
+Slow servo warning &
+\(>T/2\), when driver exists &
+No &
+Warns if servo polling is slow. \\
+Full iteration warning &
+\(>T\), after startup and when enabled &
+No &
+Warns if the complete loop misses its control period. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+These timing gates are diagnostic rather than control gains.  They are
+useful when assessing whether a platform is fast enough to run pypilot
+reliably.
+\subsection{Disabled or Experimental Pilot Parameters}
+The source tree contains additional pilot modules that are disabled by
+default.  These include \texttt{simple}, \texttt{rate}, \texttt{gps},
+\texttt{deadzone}, \texttt{autotune}, \texttt{fuzzy}, \texttt{vmg}, and
+\texttt{learning}.  They define additional gains and parameters, but they
+should not be presented as ordinary production tuning parameters unless
+the corresponding module is explicitly enabled and tested.
+
+\begin{table*}[!tbp]
+\centering
+\caption{Disabled or experimental pilot parameters.}
+\label{tab:pypilot-disabled-pilots}
+\begin{tabularx}{\textwidth}{Z{0.16\textwidth}Z{0.56\textwidth}Z{0.24\textwidth}}
+\toprule
+Pilot & Representative parameters & Status \\
+\midrule
+\texttt{simple} &
+\texttt{P=0.005}, \texttt{I=0}, \texttt{D=0.15} &
+Disabled \\
+\texttt{gps} &
+\texttt{P=0.003}, \texttt{D=0.1}, \texttt{DD=0.05}, \texttt{FF=0.6} &
+Disabled \\
+\texttt{rate} &
+\texttt{D=0.075}, \texttt{DD=0.075}, \texttt{FF=0.6},
+\texttt{maxturnrate=2}, \texttt{turnraterate=0.5} &
+Disabled \\
+\texttt{deadzone} &
+\texttt{deadzone=5}, plus \texttt{P}, \texttt{D}, \texttt{DD}, and
+\texttt{FF} gains &
+Disabled \\
+\texttt{vmg} &
+Heading-control gains plus VMG tables &
+Disabled/incomplete \\
+\texttt{autotune} &
+Pilot gains plus cost logic &
+Disabled/experimental \\
+\texttt{fuzzy} &
+\texttt{learningP}, \texttt{learningD}, \texttt{seastate} &
+Disabled/experimental \\
+\texttt{learning} &
+\texttt{P}, \texttt{D}, \texttt{W}, and TensorFlow Lite prediction concept &
+Disabled/experimental \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\subsection{Practical Starting Values}
+For a typical small sailboat with a tiller or wheel drive, a conservative
+starting configuration is
+\[
+\begin{array}{ll}
+\texttt{ap.pilot} &= \texttt{"basic"},\\
+\texttt{ap.pilot.basic.P} &= \num{0.003},\\
+\texttt{ap.pilot.basic.D} &= \num{0.09},\\
+\texttt{ap.pilot.basic.DD} &= \num{0.05}\ldots\num{0.075},\\
+\texttt{ap.pilot.basic.PR} &= \num{0.005},\\
+\texttt{ap.pilot.basic.FF} &= \num{0.4}\ldots\num{0.8},\\
+\texttt{servo.period} &= \SI{0.4}{s},\\
+\texttt{servo.gain} &= \num{1},\\
+\texttt{servo.speed.min} &= \SI{40}{\percent}\ldots\SI{70}{\percent},\\
+\texttt{servo.speed.max} &= \SI{80}{\percent}\ldots\SI{100}{\percent}.
+\end{array}
+\]
+The current limit must be chosen for the actual actuator:
+\[
+\texttt{servo.max\_current}
+=
+\text{safe current limit of the drive}.
+\]
+For wind steering, a conservative starting configuration is
+\[
+\begin{array}{ll}
+\texttt{ap.pilot} &= \texttt{"wind"},\\
+\texttt{ap.pilot.wind.P} &= \num{0.003},\\
+\texttt{ap.pilot.wind.D} &= \num{0.1},\\
+\texttt{ap.pilot.wind.DD} &= \num{0.05},\\
+\texttt{ap.pilot.wind.WG} &= \num{0},\\
+\texttt{wind.filter\_constant} &= \num{0.05}\ldots\num{0.15},\\
+\texttt{ap.wind\_offset\_filter} &= \num{0.05}\ldots\num{0.15}.
+\end{array}
+\]
+For NAV/APB steering, the default cross-track gain is aggressive enough
+for many applications:
+\[
+\texttt{apb.xte.gain}
+=
+\num{100}\ldots\num{300}
+\]
+is a reasonable initial range.  Increase it only if the boat returns to
+the route line too slowly.  Decrease it if the boat snakes across the
+route.
+The most safety-critical parameters are
+\begin{quote}
+\scriptsize\ttfamily
+servo.max\_current, servo.max\_controller\_temp, servo.max\_motor\_temp,
+rudder.range, servo.speed.max, servo.use\_brake.
+\end{quote}
+The most important steering-feel parameters are
+\begin{quote}
+\scriptsize\ttfamily
+ap.pilot.basic.P, ap.pilot.basic.D, ap.pilot.basic.PR, ap.pilot.basic.FF,
+servo.period, servo.speed.min, servo.speed.max.
+\end{quote}
+
+\section{Comparison with Fenix Autopilot}
+\label{sec:fenix-comparison}
+Fenix Autopilot is an open-source marine tiller-pilot project by Sergio Pascual
+(\texttt{spascual90}), first published publicly as an Arduino-based DIY autopilot for
+small and medium boats and documented as a self-contained tiller pilot
+\cite{fenix-repo,fenix-overview}.  Its architecture and control philosophy differ
+substantially from pypilot.  The most important
+difference is that pypilot is organized as a distributed autopilot system,
+where a Linux/Python process computes pilot commands and communicates with
+a separate servo controller, while Fenix is primarily a monolithic Arduino
+firmware that performs sensing, state management, control, calibration,
+communication, and actuator drive inside the same embedded program.
+This distinction affects almost every method in the two systems.  pypilot
+is designed around a networked value model, multiple clients, sensor
+services, and a separate protected servo layer.  Fenix is designed around a
+specific embedded tiller-pilot architecture: an Arduino, an ICM-20948 IMU
+or external heading input, a potentiometer-feedback linear actuator, and a
+serial/Bluetooth NMEA-style command interface.
+\subsection{Architectural Difference}
+The pypilot architecture separates the high-level pilot from the actuator
+controller.  The Python process computes a normalized servo command, and
+the Arduino servo controller converts that command into protected motor
+drive.  The servo controller reports current, voltage, temperature, rudder
+feedback, and fault flags through a compact binary serial protocol.
+Fenix instead combines the autopilot state machine and actuator control in
+one firmware image.  Its main control loop parses incoming NMEA and
+proprietary Fenix messages, updates heading and sensor state, computes the
+pilot command, reads rudder feedback, checks current limits, and directly
+drives the linear actuator through PWM and a direction pin.
+\begin{table*}[!tbp]
+\centering
+\caption{Comparison between pypilot and Fenix.}
+\label{tab:pypilot-fenix-comparison}
+\label{tab:pypilot-fenix-architecture}
+\label{tab:pypilot-fenix-control}
+\label{tab:pypilot-fenix-actuator}
+\label{tab:pypilot-fenix-track}
+\label{tab:pypilot-fenix-protocol}
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{2.4pt}
+\renewcommand{\arraystretch}{0.96}
+\begin{tabularx}{\textwidth}{Z{0.18\textwidth}YY}
+\toprule
+Aspect & pypilot & Fenix \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{System-level architecture}} \\
+\midrule
+Primary platform &
+Linux/Python autopilot process, commonly on Raspberry Pi, with optional
+Arduino servo controller. &
+Arduino firmware running the complete autopilot and actuator logic. \\
+Control distribution &
+High-level pilot and low-level servo controller are separate components. &
+Heading control, rudder feedback, current protection, calibration, and
+actuator drive are integrated in one firmware. \\
+Main external interface &
+TCP value protocol, web clients, NMEA, Signal K, and serial servo link. &
+Serial/Bluetooth NMEA plus proprietary \texttt{\$PEMC} messages. \\
+Actuator assumption &
+Can drive generic motors through a servo controller; rudder feedback is
+optional for the common basic pilot. &
+Assumes a linear actuator with potentiometer feedback as a central design
+element. \\
+Configuration model &
+Network-exposed named values, profiles, and runtime-writable properties. &
+EEPROM-stored installation parameters, PID gains, and calibration values
+set through app/NMEA commissioning messages. \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Control-method philosophy}} \\
+\midrule
+Primary controller output &
+Normalized servo/motor command. &
+Desired rudder or tiller position. \\
+Main active heading law &
+Extended PD with heading-rate, heading-acceleration, square-root error,
+and feed-forward terms. &
+PID heading controller with deadband, derivative filtering, speed-adaptive
+gain scaling, integral limiting, and anti-windup. \\
+Integral action &
+Mostly avoided in active basic and wind pilots. &
+Present in the main PID loop, but guarded by anti-windup and actuator
+state checks. \\
+Derivative action &
+Uses measured heading rate and heading rate-of-rate. &
+Uses filtered derivative of the heading-error/input signal. \\
+Small-error behavior &
+Handled by controller gains plus servo pulse/windup logic. &
+Handled by explicit heading deadband and rudder feedback deadband. \\
+Large-error behavior &
+Heading error is clamped before entering the pilot. &
+PID output is limited by maximum rudder range. \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Actuator control}} \\
+\midrule
+Actuator command &
+Normalized motor effort sent to a servo controller. &
+Target rudder position converted to direct PWM/direction drive. \\
+Rudder feedback &
+Optional in the common basic pilot, but supported by the servo layer. &
+Central to normal operation. \\
+Low-level motor interface &
+Binary serial protocol to an Arduino servo controller. &
+Direct Arduino PWM and direction pin. \\
+Small movement handling &
+Servo-period windup, minimum speed, and pulse shaping. &
+Rudder-position deadband, restart threshold, and speed ramping. \\
+Direction reversal &
+Handled in the servo driver with motor protection logic. &
+Explicit stop/delay state before reversing actuator direction. \\
+Electrical protection &
+Current, voltage, temperature, rudder faults, driver timeout, and
+controller flags. &
+INA260 overcurrent/blockage detection plus feedback-limit protection. \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Track mode}} \\
+\midrule
+Route input &
+APB/GPS data. &
+APB data. \\
+Internal correction &
+Track plus proportional XTE correction. &
+Uses external APB course-to-steer. \\
+Waypoint management &
+Less waypoint-state logic in the pilot. &
+Tracks active and next waypoint identifiers and requests confirmation for
+new waypoint changes. \\
+Main limitation &
+XTE law is simple. &
+Relies on external navigator for CTS quality. \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Commissioning and protocol}} \\
+\midrule
+High-level control protocol &
+TCP value protocol using \texttt{name=json} records. &
+NMEA and proprietary \texttt{\$PEMC} sentences over serial/Bluetooth. \\
+Low-level actuator protocol &
+Separate binary serial protocol to servo controller. &
+No separate servo protocol; actuator is driven directly by firmware. \\
+Parameter discovery &
+Clients can watch the \texttt{values} metadata object. &
+Parameters are requested through specific \texttt{\$PEMC} message types. \\
+Persistence &
+Profiles and persistent values in pypilot configuration. &
+EEPROM save commands for installation, PID, and calibration data. \\
+Commissioning style &
+Networked and service-oriented. &
+Embedded marine-instrument style, app/NMEA driven. \\
+\bottomrule
+\end{tabularx}
+\endgroup
+\end{table*}
+\subsection{Control-Law Philosophy}
+The active pypilot basic pilot is an extended proportional--derivative
+controller.  Its output is a normalized servo command:
+\[
+u
+=
+K_P e
++
+K_D \dot{\psi}
++
+K_{DD}\ddot{\psi}
++
+K_{PR}\operatorname{sgn}(e)\sqrt{\abs{e}}
++
+K_{FF}\dot{\psi}_c .
+\]
+Here \(e\) is heading error, \(\dot{\psi}\) is heading rate,
+\(\ddot{\psi}\) is heading acceleration, and \(\dot{\psi}_c\) is command
+rate.  The active pypilot basic controller does not rely on an integral
+term.  Instead, it uses damping, command feed-forward, a square-root error
+term, and motor-side pulse shaping.
+Fenix uses a more conventional heading-error PID loop, but with important
+extensions.  It computes a target-relative heading error,
+\[
+e_\psi
+=
+\operatorname{wrap}_{[-180^\circ,180^\circ)}
+\left(
+\psi_c-\psi
+\right),
+\]
+then applies an enhanced PID controller.  The PID output is not a raw
+motor command.  It is interpreted as a target rudder position:
+\[
+e_\psi
+\longrightarrow
+\delta_{r,c}.
+\]
+A second layer then moves the linear actuator until the measured rudder
+position approaches \(\delta_{r,c}\).  This makes Fenix more explicitly a
+rudder-position autopilot, while pypilot's basic pilot is more directly a
+servo-command autopilot.
+\subsection{Speed Adaptation and Deadband}
+Fenix contains a speed-adaptive PID scaling method.  A speed factor is
+computed from the ratio between a reference speed and the current boat
+speed.  The effective gains are then adjusted approximately as
+\[
+\begin{aligned}
+K_{P,\mathrm{eff}} &= K_P f_v,\\
+K_{I,\mathrm{eff}} &= K_I f_v,\\
+K_{D,\mathrm{eff}} &= \frac{K_D}{f_v}.
+\end{aligned}
+\]
+Thus, when the boat is slower than its nominal reference speed, the
+controller increases proportional and integral authority.  When the boat
+is faster, proportional and integral gains are reduced and derivative
+damping becomes relatively stronger.  This is a practical attempt to keep
+rudder response more consistent across different speeds.
+Fenix also has an adaptive deadband.  In automatic deadband mode, it
+estimates the short-term variation of heading error and chooses a
+deadband between a minimum and maximum value:
+\[
+d_b
+=
+\operatorname{clamp}
+\left(
+2 \hat{\sigma}_e,
+d_{\min},
+d_{\max}
+\right).
+\]
+The default limits are approximately
+\[
+d_{\min}=0.5^\circ,
+\qquad
+d_{\max}=5^\circ .
+\]
+This deadband suppresses unnecessary PID updates near the commanded
+heading and reduces actuator hunting.
+pypilot does not use this same heading-deadband concept in its active
+basic pilot.  Instead, pypilot combines heading-error clamping with the
+servo layer's pulse accumulation, minimum movement, and direction-change
+logic.  In pypilot, much of the small-command suppression is deliberately
+pushed down into the servo driver.
+\subsection{Actuator Method}
+The actuator strategy is one of the clearest differences.  Fenix assumes a
+linear actuator with potentiometer feedback.  The control chain is
+\[
+\begin{aligned}
+e_\psi
+&\longrightarrow \delta_{r,c}\\
+&\longrightarrow \text{actuator position loop}\\
+&\longrightarrow \text{PWM/DIR drive}.
+\end{aligned}
+\]
+The rudder feedback signal is mapped into rudder angle using calibrated
+minimum and maximum feedback values, a center offset, and a maximum rudder
+range.  Fenix then drives the actuator until the measured rudder position
+is close enough to the target position.
+Fenix also adds practical actuator logic: it stops at calibrated feedback
+limits, uses a rudder-position deadband, delays direction reversals,
+ramps motor speed, and reduces speed near the target.  It can detect an
+actuator blockage using an INA260 current monitor and stop the drive when
+current exceeds the configured limit.
+pypilot's common active pilot does not require that the actuator position
+be known.  Its servo layer converts normalized motor commands into motor
+pulses and protects the drive using current, voltage, temperature, rudder
+feedback when available, driver timeout, and fault flags from the Arduino
+servo controller.  This makes pypilot more tolerant of different actuator
+types, while Fenix is more focused on a known feedback linear actuator.
+\subsection{Heading and Sensor Handling}
+Fenix uses an ICM-20948 IMU with a Mahony AHRS implementation for internal
+heading.  It can also accept external heading through NMEA heading
+messages.  When external heading is active, Fenix extrapolates heading
+between received messages using the most recent heading slope.  This helps
+keep heading continuous when external heading messages arrive at a lower
+rate than the control loop.
+pypilot is more sensor-service oriented.  Its internal IMU path, external
+sensor paths, and networked values are integrated into a larger runtime
+environment.  pypilot is therefore better suited to systems where heading,
+wind, GPS, rudder, and other values may come from multiple network or
+serial sources.
+Fenix includes validity timeouts for external heading, speed, wind, and
+APB/navigation data.  If external heading is lost while operating from
+that source, it can return to standby and raise an alarm.  pypilot has
+similar safety behavior at the system level, but the implementation is
+distributed across the sensor/value framework and autopilot mode logic.
+\subsection{Navigation and Track Mode}
+Both systems support route following, but neither implements a full modern
+path-following controller such as L1, pure pursuit, or Stanley control in
+the inspected active code.
+pypilot's NAV mode computes a heading command using a simple cross-track
+correction:
+\[
+\psi_c
+=
+\psi_{\mathrm{track}}
++
+K_{\mathrm{xte}} e_{\mathrm{xte}} .
+\]
+Thus pypilot performs its own proportional cross-track-error correction.
+Fenix instead receives APB navigation data and uses the externally
+supplied course-to-steer value:
+\[
+\psi_c = \psi_{\mathrm{CTS}} .
+\]
+The APB sentence also contains cross-track error, bearings, alarms, and
+waypoint identifiers, but the active Fenix track-mode steering path uses
+the APB course-to-steer field as the target bearing.  In practice, this
+delegates more of the navigation calculation to the plotter or navigation
+source.
+\subsection{Wind Mode}
+pypilot has an active wind pilot with its own gains.  It uses heading
+error, heading-rate damping, heading-acceleration damping, and optionally
+a wind-gust term.  The wind pilot therefore has a separate steering law
+from the basic compass pilot.
+Fenix implements wind steering by continuously converting wind-angle hold
+into a target bearing.  It supports both apparent-wind and true-wind
+inputs.  If \(\theta_w\) is the current wind-relative direction and
+\(\theta_{w,c}\) is the target wind-relative direction, Fenix updates the
+course target approximately as
+\[
+\psi_c
+=
+\psi
++
+\theta_w
+-
+\theta_{w,c}.
+\]
+After this target bearing is computed, the same main heading PID loop
+drives the rudder.  This makes the wind mode simpler and more unified, but
+less specialized than pypilot's wind-specific controller.
+\subsection{Commissioning and Configuration}
+Fenix has a strong embedded commissioning model.  Installation parameters,
+PID gains, feedback calibration, IMU calibration, and EEPROM saving are
+all handled through the app and through proprietary NMEA-style
+\texttt{\$PEMC} messages.  These messages can set installation parameters,
+set PID gains, enter or exit feedback calibration, load external
+ICM-20948 calibration matrices, and save results to EEPROM.
+pypilot's commissioning is more dynamic.  Most parameters are exposed as
+named values over the TCP value protocol and can be watched or changed by
+clients.  Persistent profiles and runtime values are part of the pypilot
+server model.  The servo controller also has its own binary protocol for
+low-level motor parameters.
+\subsection{Safety and Alarms}
+Fenix contains explicit marine-style alarms.  It raises alarms for
+out-of-course operation, lost external heading, wind changes, and actuator
+blockage.  Off-course and wind-change alarms are delayed so that large
+deliberate turns do not immediately trigger an alarm.  Fenix also refuses
+some parameter changes unless the autopilot is in standby, which is a
+useful commissioning safety rule.
+pypilot's safety model is more distributed.  The autopilot logic handles
+mode fallbacks and sensor availability, while the servo layer handles
+motor and electrical protection.  The Arduino servo controller reports
+faults such as overcurrent, overtemperature, bad voltage, rudder limits,
+and driver status.  pypilot is therefore stronger at low-level electrical
+and motor-controller supervision, while Fenix is stronger at integrating
+linear-actuator position, calibration, and user-facing commissioning into
+one firmware.
+\subsection{Practical Interpretation}
+Fenix and pypilot represent two different design philosophies.
+Fenix is best understood as a self-contained embedded tiller pilot:
+{\small
+\[
+\begin{gathered}
+\text{Arduino}+\text{ICM-20948}+{}\\
+\text{feedback linear actuator}+\text{NMEA/Bluetooth app}.
+\end{gathered}
+\]
+}
+Its methods are well aligned with that hardware model.  It uses a
+position-feedback actuator, a PID heading controller, speed-adaptive gain
+scaling, explicit deadband, EEPROM commissioning, and direct PWM actuator
+drive.  If the actuator feedback is reliable and the boat matches the
+intended installation, Fenix's rudder-position approach is mechanically
+clear and practical.
+pypilot is best understood as an open marine autopilot system:
+{\small
+\[
+\begin{gathered}
+\text{Linux process}+\text{network value server}+{}\\
+\text{sensor services}+\text{servo controller}.
+\end{gathered}
+\]
+}
+Its methods are more extensible and more network-oriented.  It can support
+multiple clients, remote displays, web interfaces, Signal K integration,
+NMEA bridges, and different pilot algorithms.  Its basic active pilot is
+less conventional than Fenix's PID, but its servo controller is more
+general-purpose and more richly supervised.
+The central method difference can be summarized as
+
+{\small
+\[
+\begin{array}{ll}
+\text{pypilot:} &
+\begin{gathered}[t]
+\text{heading error}\to\text{motor command}\to{}\\
+\text{protected servo layer},
+\end{gathered}
+\\[6pt]
+\text{Fenix:} &
+\begin{gathered}[t]
+\text{heading error}\to\text{rudder angle}\to{}\\
+\text{linear-actuator loop}.
+\end{gathered}
+\end{array}
+\]
+}
+
+For a small Arduino-only autopilot with a known potentiometer-feedback
+linear actuator, Fenix is a coherent and practical design.  For a larger
+open navigation system with network clients, mixed sensors, remote
+interfaces, and replaceable pilot algorithms, pypilot has the stronger
+system architecture.
+
+\section{Conclusion}
+
+The uploaded \texttt{pypilot} source is best characterized as Sean D'Epagnier's
+practical, open, marine heading autopilot rather than a full modern autonomous-navigation
+stack \cite{pypilot-author}.  Its default
+method is an extended PD heading controller with gyro damping, yaw-acceleration damping,
+square-root heading-error shaping, and heading-command feed-forward.  Its strongest
+engineering feature is the servo/motor layer, which treats real rudder drives as nonlinear,
+limited, fault-prone devices rather than ideal actuators.
+
+Compared with ArduPilot, the community project rooted in Jordi Mu\~noz and Chris
+Anderson's early DIY Drones work, or PX4, \texttt{pypilot} has a much simpler guidance
+layer and a less formal state-estimation/control hierarchy.  Compared with Fenix
+Autopilot, Sergio Pascual's self-contained Arduino tiller-pilot design, \texttt{pypilot}
+is more networked and modular, while Fenix gives useful credit to the opposite embedded
+philosophy: integrating heading, actuator, calibration, and alarms in one compact unit.
+Compared with commercial sailing pilots,
+it is less polished and contains incomplete experimental code, but it is transparent,
+modifiable, and deeply oriented toward real DIY marine drives.  The most valuable next step
+is not to replace it with machine learning, but to add a stronger deterministic guidance
+layer above the existing heading and servo architecture.
+
+\FloatBarrier
+
+\section*{Acknowledgments}
+This work was prepared with the assistance of artificial intelligence tools, including ChatGPT, Codex.
+
+\begin{thebibliography}{9}
+
+\bibitem{pypilot-author}
+pypilot.org,
+\emph{Author}.  Credits Sean D'Epagnier as author and open-source marine software contributor.
+\url{https://pypilot.org/author/}
+
+\bibitem{fenix-repo}
+Sergio Pascual (\texttt{spascual90}),
+\emph{Fenix Autopilot}.  Public GitHub repository for the open-source Arduino-based DIY tiller pilot.
+\url{https://github.com/spascual90/Fenix}
+
+\bibitem{fenix-overview}
+Fenix Autopilot Documentation,
+\emph{Overview}.  Describes Fenix as a self-contained tiller pilot for tiller-steered sailboats.
+\url{https://spascual90.gitbook.io/fenix-autopilot/introduction/overview}
+
+\bibitem{ardupilot-history}
+ArduPilot Documentation,
+\emph{History of ArduPilot}.  Summarizes the project's DIY Drones origins and later community development.
+\url{https://ardupilot.org/copter/docs/common-history-of-ardupilot.html}
+
+\bibitem{ardupilot-l1}
+ArduPilot Dev Team,
+\emph{Rover: Tuning Navigation}.  Describes Rover navigation tuning and the L1 controller.
+\url{https://ardupilot.org/rover/docs/rover-tuning-navigation-420.html}
+
+\bibitem{ardupilot-rate}
+ArduPilot Dev Team,
+\emph{Rover: Tuning Turn Rate}.  Describes the steering-rate PID controller and FF/P/I/D tuning.
+\url{https://ardupilot.org/rover/docs/rover-tuning-steering-rate.html}
+
+\bibitem{px4-fw}
+PX4 Autopilot,
+\emph{Fixed-wing Altitude/Position Controller Tuning}.  Describes TECS and NPFG in PX4 fixed-wing control.
+\url{https://docs.px4.io/main/en/config_fw/position_tuning_guide_fixedwing}
+
+\bibitem{pypilot-user-manual}
+pypilot.org,
+\emph{pypilot User Manual}.  User-facing reference for pypilot setup, operation, calibration,
+clients, and autopilot modes.
+\url{https://pypilot.org/doc/pypilot_user_manual/pdf/pypilot_user_manual.pdf}
+
+\bibitem{pypilot-workbook-wiki}
+pypilot project,
+\emph{Workbook Wiki}.  Community-maintained operational and commissioning notes for pypilot
+hardware, software, calibration, and integration.
+\url{https://github.com/pypilot/workbook/tree/main/wiki}
+
+\bibitem{bg-pilot}
+B\&G Sailing,
+\emph{Autopilot Displays/Controllers}.  Describes Wind and Navigation auto-steering modes and pilot controls.
+\url{https://www.bandg.com/en-sg/bg/type/autopilots/autopilot-displays-controllers/}
+
+\bibitem{bg-setup}
+B\&G Sailing,
+\emph{Autopilots: Setting up your Autopilot}.  Discusses true-wind-angle use in shorthanded gybing practice.
+\url{https://www.bandg.com/en-sg/blog/autopilots-setting-up-your-autopilot/}
+
+\end{thebibliography}
+
+\end{document}
