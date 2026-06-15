@@ -52,6 +52,9 @@ Wave Models:
 
 - [Vessel RAO](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-vessel-RAO.pdf)
 
+Autopilot Use Cases:
+
+- [Algorithmic Methods in Open Source Marine Autopilots](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/autopilots-methods.pdf)
 
 There are two versions of Kalman INS filters and one filter (PII observer) based on control theory:
 
