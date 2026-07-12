@@ -1,9 +1,9 @@
 name: Diagnose OU common compile
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/refactor-ou-shared-core-math
+      - main
 
 permissions:
   contents: read
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   compile:
-    if: github.event.head_commit.message == 'Diagnose OU common compile'
+    if: github.event.pull_request.number == 186
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
