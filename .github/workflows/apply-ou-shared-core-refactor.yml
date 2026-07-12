@@ -1,5 +1,6 @@
 name: Apply OU shared core refactor
 
+# Temporary branch installer; removed by the job.
 on:
   push:
     branches:
