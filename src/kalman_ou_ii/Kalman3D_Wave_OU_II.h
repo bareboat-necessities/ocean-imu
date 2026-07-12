@@ -32,157 +32,7 @@
 
 using Eigen::Matrix;
 
-template<typename T>
-inline T safe_inv_tau(T tau) {
-    // Prevent division by ~0 while preserving sign
-    return T(1) / ((std::abs(tau) >= T(1e-8)) ? tau : std::copysign(T(1e-8), tau));
-}
-
-template<typename T>
-struct OUPrims {
-    T alpha;    // e^{-x}
-    T em1;      // expm1(-x) = e^{-x} - 1  (negative)
-};
-
-template<typename T>
-inline OUPrims<T> make_prims(T h, T tau) {
-    const T inv_tau = safe_inv_tau(tau);
-    const T x = h * inv_tau;
-    const T alpha  = std::exp(-x);
-    const T em1    = std::expm1(-x);    // high-accuracy for small x
-    return {alpha, em1};
-}
-
-// Quaternion from a rotation vector δθ.
-// Accurate for both small and large |δθ|.
-// This helper is convention-agnostic by itself; the filter convention depends
-// on how the returned quaternion is multiplied into qref.
-// Uses a small-angle series to avoid loss of precision near |δθ| = 0.
-template<typename T>
-inline Eigen::Quaternion<T> quat_from_delta_theta(const Eigen::Matrix<T,3,1>& dtheta) {
-    const T theta = dtheta.norm();
-    const T half_theta = T(0.5) * theta;
-
-    T w, k; // scalar part, vector scale = sin(|δθ|/2)/|δθ|
-    if (theta < T(1e-2)) {
-        // Maclaurin expansion (FMA-friendly)
-        const T t2 = theta * theta;
-        const T t4 = t2 * t2;
-
-        // w = cos(theta/2) ≈ 1 - θ²/8 + θ⁴/384
-        w = T(1);
-        w = std::fma(-t2, T(1)/T(8), w);
-        w = std::fma( t4, T(1)/T(384), w);
-
-        // k = sin(theta/2)/θ ≈ 1/2 - θ²/48 + θ⁴/3840
-        k = T(0.5);
-        k = std::fma(-t2, T(1)/T(48), k);
-        k = std::fma( t4, T(1)/T(3840), k);
-    } else {
-        w = std::cos(half_theta);
-        k = std::sin(half_theta) / theta;
-    }
-
-    const Eigen::Matrix<T,3,1> v = k * dtheta;
-    Eigen::Quaternion<T> q(w, v.x(), v.y(), v.z());
-
-    // (Unit by construction, but normalize for safety)
-    q.normalize();
-    return q;
-}
-
-// Safe expansions for OU discrete coefficients.
-// Provides phi_pa with series fallback for small x = h/tau.
-template<typename T>
-struct OUDiscreteCoeffs {
-    T phi_pa; // coefficient for position vs. accel
-};
-
-template<typename T>
-inline OUDiscreteCoeffs<T> safe_phi_A_coeffs(T h, T tau) {
-    OUDiscreteCoeffs<T> c;
-    const T inv_tau = safe_inv_tau(tau);
-    const T x = h * inv_tau;
-    const T tau2 = tau*tau;
-
-    if (std::abs(x) < T(1e-2)) {
-        // Maclaurin expansions
-        const T x2 = x*x;
-        const T x3 = x2*x;
-        const T x4 = x3*x;
-
-        // phi_pa ≈ τ² (x²/2 - x³/6 + x⁴/24)
-        c.phi_pa = tau2 * (T(0.5)*x2 - T(1.0/6.0)*x3 + T(1.0/24.0)*x4);
-
-    } else {
-        // General closed-form branch
-        const T em1    = std::expm1(-x);
-        // reuse for stability
-        const T phi_pa = tau2 * (x + em1);
-        c.phi_pa = phi_pa;
-    }
-    return c;
-}
-
-// Helper: symmetrize and regularize an approximately symmetric matrix.
-// For N <= 4 this performs eigenvalue clamping to PSD.
-// For larger N this is only a numerical regularization path, not a true PSD projection.
-template<typename T, int N>
-static inline void project_psd(Eigen::Matrix<T,N,N>& S, T eps = T(1e-12)) {
-    // Always symmetrize first (we assume S is "almost" symmetric)
-    S = T(0.5) * (S + S.transpose());
-    // Scrub NaNs / infinities, keep symmetry
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j) {
-            if (!std::isfinite(S(i,j))) {
-                S(i,j) = (i == j) ? eps : T(0);
-            }
-        }
-    }
-    if constexpr (N <= 4) {
-        // Small matrices: use exact eigen projection (stack cost is tiny here).
-        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<T,N,N>> es(S);
-        if (es.info() != Eigen::Success) {
-            // Fallback: light diagonal bump & re-symmetrize
-            S.diagonal().array() += eps;
-            S = T(0.5) * (S + S.transpose());
-            return;
-        }
-        Eigen::Matrix<T,N,1> lam = es.eigenvalues();
-        for (int i = 0; i < N; ++i) {
-            if (!(lam(i) > T(0))) lam(i) = eps;  // clamp negatives / NaNs
-        }
-        S = es.eigenvectors() * lam.asDiagonal() * es.eigenvectors().transpose();
-    } else {
-        // Try LDLT first; if it fails, apply a Gershgorin diagonal bump and retry.
-        Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt;
-        ldlt.compute(S);
-        if (ldlt.info() != Eigen::Success) {
-            // Gershgorin bump
-            T min_lb = std::numeric_limits<T>::infinity();
-            for (int i = 0; i < N; ++i) {
-                T row_sum = T(0);
-                for (int j = 0; j < N; ++j) {
-                    if (j == i) continue;
-                    row_sum += std::abs(S(i,j));
-                }
-                const T lb = S(i,i) - row_sum;
-                if (lb < min_lb) min_lb = lb;
-            }
-            if (!(min_lb > eps)) {
-                const T bump = (eps - min_lb);
-                S.diagonal().array() += bump;
-            }
-            // retry
-            ldlt.compute(S);
-            if (ldlt.info() != Eigen::Success) {
-                // last resort: slightly bigger uniform bump
-                S.diagonal().array() += (T(10) * eps);
-            }
-        }
-    }
-    S = T(0.5) * (S + S.transpose()); // clean float noise
-}
+#include "kalman_ou_common/KalmanOUCoreMath.h"
 
 template <typename T = float, bool with_gyro_bias = true, bool with_accel_bias = true>
 class Kalman3D_Wave_OU_II {
@@ -436,7 +286,7 @@ class Kalman3D_Wave_OU_II {
 
         // Symmetrize & project to SPD for robustness
         S = T(0.5) * (S + S.transpose());
-        project_psd<T,3>(S, T(1e-12));
+        ocean_imu::kalman::ou_detail::project_psd_ou_ii<T,3>(S, T(1e-12));
         Sigma_aw_stat = S;
 
         // Reseed Pext a_w block with new stationary covariance
@@ -462,7 +312,7 @@ class Kalman3D_Wave_OU_II {
 
     void set_Rp0_noise_matrix(const Matrix3& R) {
         Matrix3 S = T(0.5) * (R + R.transpose());
-        project_psd<T,3>(S, T(1e-8));
+        ocean_imu::kalman::ou_detail::project_psd_ou_ii<T,3>(S, T(1e-8));
 
         if (param_rw_enabled_) {
             Vector3 sig;
@@ -484,7 +334,7 @@ class Kalman3D_Wave_OU_II {
 
     void set_Rv0_noise_matrix(const Matrix3& R) {
         Matrix3 S = T(0.5) * (R + R.transpose());
-        project_psd<T,3>(S, T(1e-8));
+        ocean_imu::kalman::ou_detail::project_psd_ou_ii<T,3>(S, T(1e-8));
 
         if (param_rw_enabled_) {
             Vector3 sig;
@@ -768,60 +618,12 @@ class Kalman3D_Wave_OU_II {
     // so the exact discrete cross-term is positive:
     //   Φ_{θb}(t) = +B(t)
     EIGEN_STRONG_INLINE void rot_and_B_from_wt_(const Vector3& w, T t, Matrix3& R, Matrix3& B) const {
-        const T wnorm = w.norm();
-        const Matrix3 W = skew_symmetric_matrix(w);
-
-        if (wnorm < T(1e-7)) {
-            // Series (stable as ω→0)
-            const T t2 = t*t, t3 = t2*t;
-            R = Matrix3::Identity() - W * t + T(0.5) * (W*W) * t2;
-            // B = t I - 1/2 W t^2 + 1/6 W^2 t^3
-            B = ( Matrix3::Identity()*t - T(0.5)*W*t2 + (W*W)*(t3/T(6)) );
-            return;
-        }
-
-        const T theta = wnorm * t;
-        const T s = std::sin(theta), c = std::cos(theta);
-        const T invw = T(1) / wnorm;
-        const Matrix3 K = W * invw; // [u]×
-
-        // exp(-[ω]× t) = I - sinθ K + (1 - cosθ) K^2
-        R = Matrix3::Identity() - s*K + (T(1)-c)*(K*K);
-
-        // B(t) = ∫_0^t R(τ) dτ = t I - (1 - cosθ)/ω^2 W + (t - sinθ/ω)/ω^2 W^2
-        const T invw2 = invw * invw;
-
-        const Matrix3 term1 = Matrix3::Identity() * t;
-        const Matrix3 term2 = ((T(1)-c) * invw2) * W;
-        const Matrix3 term3 = ((t - s*invw) * invw2) * (W*W);
-        B = term1 - term2 + term3;
+        ocean_imu::kalman::ou_detail::rot_and_B_from_wt(w, t, R, B);
     }
 
     // ∫_0^T B(s) ds  (closed form; used for Q_{θb})
-    EIGEN_STRONG_INLINE void integral_B_ds_(const Vector3& w, T Tstep, Matrix3& IB) const {
-        const T wnorm = w.norm();
-        const Matrix3 W = skew_symmetric_matrix(w);
-
-        if (wnorm < T(1e-7)) {
-            // ∫ B ≈ 1/2 T^2 I - 1/6 W T^3 + 1/24 W^2 T^4
-            const T T2 = Tstep*Tstep, T3 = T2*Tstep, T4 = T3*Tstep;
-            IB = ( Matrix3::Identity()*(T(0.5)*T2)
-                 - W*(T(1.0/6.0)*T3)
-                 + (W*W)*(T(1.0/24.0)*T4) );
-            return;
-        }
-
-        const T theta = wnorm * Tstep;
-        const T s = std::sin(theta), c = std::cos(theta);
-        const T invw  = T(1) / wnorm;
-        const T invw2 = invw * invw;
-
-        // IB = ∫_0^T B(s) ds = 1/2 T^2 I - ((T - sinθ/ω)/ω^2) W + ((1/2 T^2) + (cosθ - 1)/ω^2)/ω^2 W^2
-        const Matrix3 termI  = Matrix3::Identity() * (T(0.5) * Tstep*Tstep);
-        const Matrix3 termW  = ((Tstep - s*invw) * invw2) * W;
-        const Matrix3 termW2 = ( (T(0.5)*Tstep*Tstep) + ((c - T(1)) * invw2) ) * invw2 * (W*W);
-
-        IB = termI - termW + termW2;
+    EIGEN_STRONG_INLINE void integral_B_ds_(const Vector3& w, T step, Matrix3& IB) const {
+        ocean_imu::kalman::ou_detail::integral_B_ds(w, step, IB);
     }
 
     // d/dω of (ω×(ω×r)) = (ω·r) I + ω rᵀ - 2 r ωᵀ
@@ -831,42 +633,17 @@ class Kalman3D_Wave_OU_II {
     }
 
     // Simpson’s rule for ∫_0^T R(s) Q R(s)^T ds (fast, excellent for anisotropic Q)
-    EIGEN_STRONG_INLINE Matrix3 simpson_R_Q_RT_(const Vector3& w, T Tstep, const Matrix3& Q) const {
-        Matrix3 R0, Btmp, Rm, R1;
-        rot_and_B_from_wt_(w, T(0),   R0, Btmp);
-        rot_and_B_from_wt_(w, T(0.5)*Tstep, Rm, Btmp);
-        rot_and_B_from_wt_(w, Tstep, R1, Btmp);
-
-        const Matrix3 f0 = R0 * Q * R0.transpose(); // = Q
-        const Matrix3 f1 = Rm * Q * Rm.transpose();
-        const Matrix3 f2 = R1 * Q * R1.transpose();
-        return (Tstep / T(6)) * (f0 + T(4)*f1 + f2);
+    EIGEN_STRONG_INLINE Matrix3 simpson_R_Q_RT_(const Vector3& w, T step, const Matrix3& Q) const {
+        return ocean_imu::kalman::ou_detail::simpson_R_Q_RT(w, step, Q);
     }
 
     // Simpson’s rule for ∫_0^T B(s) Q B(s)^T ds
-    EIGEN_STRONG_INLINE Matrix3 simpson_B_Q_BT_(const Vector3& w, T Tstep, const Matrix3& Q) const {
-        Matrix3 Rtmp, B0, Bm, B1;
-        rot_and_B_from_wt_(w, T(0),   Rtmp, B0);           // B(0) = 0
-        rot_and_B_from_wt_(w, T(0.5)*Tstep, Rtmp, Bm);
-        rot_and_B_from_wt_(w, Tstep, Rtmp, B1);
-
-        const Matrix3 g0 = B0 * Q * B0.transpose(); // = 0
-        const Matrix3 g1 = Bm * Q * Bm.transpose();
-        const Matrix3 g2 = B1 * Q * B1.transpose();
-        return (Tstep / T(6)) * (g0 + T(4)*g1 + g2);
+    EIGEN_STRONG_INLINE Matrix3 simpson_B_Q_BT_(const Vector3& w, T step, const Matrix3& Q) const {
+        return ocean_imu::kalman::ou_detail::simpson_B_Q_BT(w, step, Q);
     }
 
     EIGEN_STRONG_INLINE bool is_isotropic3_(const Matrix3& S, T tol = T(1e-9)) const {
-        const T a = S(0,0), b = S(1,1), c = S(2,2);
-
-        // Sum of absolute values of off-diagonal entries (1-norm of off-diagonal part)
-        Matrix3 Off = S;
-        Off.diagonal().setZero();
-        const T off = Off.cwiseAbs().sum();
-
-        const T mean = (a + b + c) / T(3);
-        return (std::abs(a-mean) + std::abs(b-mean) + std::abs(c-mean) + off)
-               <= tol * (T(1) + std::abs(mean));
+        return ocean_imu::kalman::ou_detail::is_isotropic3(S, tol);
     }
 
     // convenience getters
@@ -1687,7 +1464,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     // qref stores WORLD->BODY'.
     // With body-frame angular rate omega^{B'}, propagate as:
     //   q_wb(k+1) = dq(-omega*dt) * q_wb(k)
-    const Eigen::Quaternion<T> dq_wb = quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
+    const Eigen::Quaternion<T> dq_wb = ocean_imu::kalman::ou_detail::quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
     qref = dq_wb * qref;
     qref.normalize();
 
@@ -1778,9 +1555,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
         // Hygiene
         Q_AA = T(0.5) * (Q_AA + Q_AA.transpose());
         if constexpr (with_gyro_bias) {
-            project_psd<T,6>(Q_AA, T(1e-12));
+            ocean_imu::kalman::ou_detail::project_psd_ou_ii<T,6>(Q_AA, T(1e-12));
         } else {
-            project_psd<T,3>(Q_AA, T(1e-12));
+            ocean_imu::kalman::ou_detail::project_psd_ou_ii<T,3>(Q_AA, T(1e-12));
         }
     }
 
@@ -1832,7 +1609,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
                 }
             }
             Q_LL = T(0.5) * (Q_LL + Q_LL.transpose());
-            project_psd<T,9>(Q_LL, T(1e-12));
+            ocean_imu::kalman::ou_detail::project_psd_ou_ii<T,9>(Q_LL, T(1e-12));
         } else {
             // Independent axes (no cross-correlation) — per-axis Qd on the diagonal
             const int idx[3] = {0,3,6};
@@ -2287,41 +2064,7 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::apply_error_state_reset_jacobian_(
     const Vector3& dtheta_injected)
 {
-    if (!dtheta_injected.allFinite()) return;
-
-    const T n2 = dtheta_injected.squaredNorm();
-    if (!(n2 > T(0))) return;
-
-    // Left-multiplicative reset:
-    //
-    //   q_new = Exp(dtheta_hat) * q_old
-    //
-    // If the pre-reset attitude error is δθ, then after injection the new local
-    // attitude error is, to first order:
-    //
-    //   δθ_new ≈ (I + 1/2 [dtheta_hat]×) (δθ - dtheta_hat)
-    //
-    // So the covariance reset Jacobian is:
-    //
-    //   G = I + 1/2 [dtheta_hat]×
-    //
-    const Matrix3 G =
-        Matrix3::Identity() + T(0.5) * skew_symmetric_matrix(dtheta_injected);
-
-    // Structured similarity update for Tm = diag(G, I):
-    //   Paa' = G * Paa * Gᵀ
-    //   Pax' = G * Pax
-    //   Pxa' = Pax'ᵀ  (enforce symmetry)
-    //   Pxx' = Pxx    (unchanged)
-    const Matrix3 Paa_old = Pext.template block<3,3>(0, 0);
-    const Matrix<T, 3, NX - 3> Pax_old = Pext.template block<3, NX - 3>(0, 3);
-
-    Pext.template block<3,3>(0, 0).noalias() = G * Paa_old * G.transpose();
-    Pext.template block<3, NX - 3>(0, 3).noalias() = G * Pax_old;
-    Pext.template block<NX - 3, 3>(3, 0) = Pext.template block<3, NX - 3>(0, 3).transpose();
-
-    // Keep covariance exactly symmetric against floating-point noise.
-    Pext = T(0.5) * (Pext + Pext.transpose());
+    ocean_imu::kalman::ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta_injected);
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
@@ -2334,7 +2077,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::applyQuaternionCor
         return;
     }
 
-    const Eigen::Quaternion<T> corr = quat_from_delta_theta(dtheta);
+    const Eigen::Quaternion<T> corr = ocean_imu::kalman::ou_detail::quat_from_delta_theta(dtheta);
 
     // qref stores WORLD->BODY'.
     // Measurement Jacobians use the left-multiplicative convention:
@@ -2495,23 +2238,7 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::PhiAxis3x1_analytic(
     T tau, T h, Eigen::Matrix<T,3,3>& Phi_axis)
 {
-    const auto P = make_prims<T>(h, tau);
-    const T phi_va_c = -tau * P.em1;
-    auto coeffs = safe_phi_A_coeffs<T>(h, tau);
-    const T phi_pa_c = coeffs.phi_pa;
-
-    Phi_axis.setZero();
-    // v_{k+1}
-    Phi_axis(0,0) = T(1);
-    Phi_axis(0,2) = phi_va_c;
-
-    // p_{k+1}
-    Phi_axis(1,0) = h;
-    Phi_axis(1,1) = T(1);
-    Phi_axis(1,2) = phi_pa_c;
-
-    // a_{k+1}
-    Phi_axis(2,2) = std::min(P.alpha, T(1));
+    ocean_imu::kalman::ou_detail::IntegratedOUChain<T, 2>::transition(tau, h, Phi_axis);
 }
 
 // Discrete OU covariance for [v, p, a] axis subsystem.
@@ -2519,69 +2246,6 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::QdAxis3x1_analytic(
     T tau, T h, T sigma2, Eigen::Matrix<T,3,3>& Qd_axis)
 {
-    const T tau_eff = std::max(tau, T(1e-7));
-    const T inv_tau = T(1) / tau_eff;
-    const T x       = h * inv_tau;
-
-    if (std::abs(x) < T(1e-2)) {
-        const T inv_tau2 = inv_tau * inv_tau;
-        const T inv_tau3 = inv_tau2 * inv_tau;
-        const T inv_tau4 = inv_tau3 * inv_tau;
-
-        const T h2 = h * h;
-        const T h3 = h2 * h;
-        const T h4 = h3 * h;
-        const T h5 = h4 * h;
-
-        const T s = sigma2;
-        Qd_axis.setZero();
-        Qd_axis(0,0) = s * ((T(2)/T(3))*h3*inv_tau - (T(1)/T(2))*h4*inv_tau2 + (T(7)/T(30))*h5*inv_tau3);
-        Qd_axis(0,1) = s * ((T(1)/T(4))*h4*inv_tau - (T(1)/T(6))*h5*inv_tau2);
-        Qd_axis(0,2) = s * (h2*inv_tau - h3*inv_tau2 + (T(7)/T(12))*h4*inv_tau3 - (T(1)/T(4))*h5*inv_tau4);
-        Qd_axis(1,0) = Qd_axis(0,1);
-        Qd_axis(1,1) = s * ((T(1)/T(10))*h5*inv_tau);
-        Qd_axis(1,2) = s * ((T(1)/T(3))*h3*inv_tau - (T(1)/T(3))*h4*inv_tau2 + (T(11)/T(60))*h5*inv_tau3);
-        Qd_axis(2,0) = Qd_axis(0,2);
-        Qd_axis(2,1) = Qd_axis(1,2);
-        Qd_axis(2,2) = s * (T(2)*h*inv_tau - T(2)*h2*inv_tau2 + (T(4)/T(3))*h3*inv_tau3 - (T(2)/T(3))*h4*inv_tau4);
-
-        project_psd<T,3>(Qd_axis, T(1e-12));
-        Qd_axis = T(0.5) * (Qd_axis + Qd_axis.transpose());
-        return;
-    }
-
-    const T alpha  = std::exp(-x);
-    const T alpha2 = alpha * alpha;
-    const T q_c    = (T(2) * sigma2) * inv_tau;
-
-    const T tau2 = tau_eff * tau_eff;
-    const T tau3 = tau2 * tau_eff;
-    const T tau4 = tau3 * tau_eff;
-    const T tau5 = tau4 * tau_eff;
-
-    const T x2 = x * x;
-    const T x3 = x2 * x;
-
-    const T K00 = tau3 * (-alpha2 + T(4)*alpha + T(2)*x - T(3)) / T(2);
-    const T K01 = tau4 * (alpha2 + T(2)*alpha*(x - T(1)) + x2 - T(2)*x + T(1)) / T(2);
-    const T K02 = tau2 * (alpha2 - T(2)*alpha + T(1)) / T(2);
-
-    const T K11 = tau5 * (-alpha2/T(2) - T(2)*alpha*x + x3/T(3) - x2 + x + T(1)/T(2));
-    const T K12 = tau3 * (-alpha2 - T(2)*alpha*x + T(1)) / T(2);
-
-    const T K22 = tau_eff * (T(1) - alpha2) / T(2);
-
-    Qd_axis.setZero();
-    Qd_axis(0,0) = q_c * K00;
-    Qd_axis(0,1) = q_c * K01;
-    Qd_axis(0,2) = q_c * K02;
-    Qd_axis(1,0) = Qd_axis(0,1);
-    Qd_axis(1,1) = q_c * K11;
-    Qd_axis(1,2) = q_c * K12;
-    Qd_axis(2,0) = Qd_axis(0,2);
-    Qd_axis(2,1) = Qd_axis(1,2);
-    Qd_axis(2,2) = q_c * K22;
-
-    project_psd<T,3>(Qd_axis, T(1e-12));
-    Qd_axis = T(0.5) * (Qd_axis + Qd_axis.transpose());
+    ocean_imu::kalman::ou_detail::IntegratedOUChain<T, 2>::process_covariance(
+        tau, h, sigma2, Qd_axis);
 }
