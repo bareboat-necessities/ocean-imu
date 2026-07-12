@@ -1,3 +1,5 @@
+#define EIGEN_NON_ARDUINO
+
 #include "kalman_ou_common/KalmanOUCoreMath.h"
 #include "kalman_ou_ii/Kalman3D_Wave_OU_II.h"
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
