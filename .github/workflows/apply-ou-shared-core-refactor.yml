@@ -4,17 +4,24 @@ on:
   push:
     branches:
       - agent/ou-shared-core-math-pr1
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: github.event.head_commit.message == 'Stage OU shared core refactor'
+    if: >-
+      (github.event_name == 'push' && github.event.head_commit.message == 'Stage OU shared core refactor') ||
+      (github.event_name == 'pull_request' && github.head_ref == 'agent/ou-shared-core-math-pr1')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Verify and apply reviewed patch
         shell: bash
@@ -55,4 +62,4 @@ jobs:
           git add CMakeLists.txt src tests .github
           git diff --cached --check
           git commit -m 'Refactor OU filters onto shared core math'
-          git push
+          git push origin HEAD:agent/ou-shared-core-math-pr1
