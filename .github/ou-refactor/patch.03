@@ -1,0 +1,300 @@
+-    return q;
+-}
+-
+-// Safe expansions for OU discrete coefficients.
+-// Provides phi_pa, phi_Sa with series fallback for small x = h/tau.
+-template<typename T>
+-struct OUDiscreteCoeffs {
+-    T phi_pa; // coefficient for position vs. accel
+-    T phi_Sa; // coefficient for S vs. accel
+-};
+-
+-template<typename T>
+-inline OUDiscreteCoeffs<T> safe_phi_A_coeffs(T h, T tau) {
+-    OUDiscreteCoeffs<T> c;
+-    const T inv_tau = safe_inv_tau(tau);
+-    const T x = h * inv_tau;
+-    const T tau2 = tau*tau;
+-    const T tau3 = tau2*tau;
+-
+-    if (std::abs(x) < T(1e-2)) {
+-        // Maclaurin expansions
+-        const T x2 = x*x;
+-        const T x3 = x2*x;
+-        const T x4 = x3*x;
+-        const T x5 = x4*x;
+-
+-        // phi_pa ≈ τ² (x²/2 - x³/6 + x⁴/24)
+-        c.phi_pa = tau2 * (T(0.5)*x2 - T(1.0/6.0)*x3 + T(1.0/24.0)*x4);
+-
+-        // phi_Sa ≈ τ³ (x³/6 - x⁴/24 + x⁵/120)
+-        c.phi_Sa = tau3 * (T(1.0/6.0)*x3 - T(1.0/24.0)*x4 + T(1.0/120.0)*x5);
+-    } else {
+-        // General closed-form branch
+-        const T em1    = std::expm1(-x);
+-        // reuse for stability
+-        const T phi_pa = tau2 * (x + em1);
+-        const T phi_Sa = tau3 * (T(0.5)*x*x - x - em1);
+-
+-        c.phi_pa = phi_pa;
+-        c.phi_Sa = phi_Sa;
+-    }
+-    return c;
+-}
++#include "kalman_ou_common/KalmanOUCoreMath.h"
+ 
+-// Helper: project a symmetric NxN to PSD
+-template<typename T, int N>
+-static inline void project_psd(Eigen::Matrix<T,N,N>& S, T eps = T(1e-12)) {
+-    // Always symmetrize first (we assume S is "almost" symmetric)
+-    S = T(0.5) * (S + S.transpose());
+-    // Scrub NaNs / infinities, keep symmetry
+-    for (int i = 0; i < N; ++i) {
+-        for (int j = 0; j < N; ++j) {
+-            if (!std::isfinite(S(i,j))) {
+-                S(i,j) = (i == j) ? eps : T(0);
+-            }
+-        }
+-    }
+-    if constexpr (N <= 4) {
+-        // Small matrices: use exact eigen projection (stack cost is tiny here).
+-        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<T,N,N>> es(S);
+-        if (es.info() != Eigen::Success) {
+-            // Fallback: light diagonal bump & re-symmetrize
+-            S.diagonal().array() += eps;
+-            S = T(0.5) * (S + S.transpose());
+-            return;
+-        }
+-        Eigen::Matrix<T,N,1> lam = es.eigenvalues();
+-        for (int i = 0; i < N; ++i) {
+-            if (!(lam(i) > T(0))) lam(i) = eps;  // clamp negatives / NaNs
+-        }
+-        S = es.eigenvectors() * lam.asDiagonal() * es.eigenvectors().transpose();
+-    } else if constexpr (N <= 6) {
+-        // Try LDLT first; if it fails, apply a Gershgorin diagonal bump and retry.
+-        Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt;
+-        ldlt.compute(S);
+-        if (ldlt.info() != Eigen::Success) {
+-            T min_lb = std::numeric_limits<T>::infinity();
+-            for (int i = 0; i < N; ++i) {
+-                T row_sum = T(0);
+-                for (int j = 0; j < N; ++j) {
+-                    if (j == i) continue;
+-                    row_sum += std::abs(S(i,j));
+-                }
+-                const T lb = S(i,i) - row_sum;
+-                if (lb < min_lb) min_lb = lb;
+-            }
+-            if (!(min_lb > eps)) {
+-                S.diagonal().array() += (eps - min_lb);
+-            }
+-            ldlt.compute(S);
+-            if (ldlt.info() != Eigen::Success) {
+-                S.diagonal().array() += (T(10) * eps);
+-            }
+-        }
+-    } else {
+-        // Avoid instantiating large fixed-size LDLT (e.g. 12x12) in Arduino
+-        // builds; callers use this path only as light numerical hygiene.
+-    }
+-    S = T(0.5) * (S + S.transpose()); // clean float noise
+-}
++using Eigen::Matrix;
+ 
+ template <typename T = float, bool with_gyro_bias = true, bool with_accel_bias = true>
+ class Kalman3D_Wave_OU_III {
+@@ -451,7 +296,7 @@ class Kalman3D_Wave_OU_III {
+ 
+         // Symmetrize & project to SPD for robustness
+         S = T(0.5) * (S + S.transpose());
+-        project_psd<T,3>(S, T(1e-12));
++        ocean_imu::kalman::ou_detail::project_psd<T,3>(S, T(1e-12));
+         Sigma_aw_stat = S;
+ 
+         // Reseed Pext a_w block with new stationary covariance
+@@ -477,7 +322,7 @@ class Kalman3D_Wave_OU_III {
+ 
+ 	void set_RS_noise_matrix(const Matrix3& R) {
+ 	    Matrix3 S = T(0.5) * (R + R.transpose());
+-	    project_psd<T,3>(S, T(1e-8));
++	    ocean_imu::kalman::ou_detail::project_psd<T,3>(S, T(1e-8));
+ 
+ 	    if (param_rw_enabled_) {
+ 	        Vector3 sig;
+@@ -717,106 +562,31 @@ class Kalman3D_Wave_OU_III {
+     // so the exact discrete cross-term is positive:
+     //   Φ_{θb}(t) = +B(t)
+     EIGEN_STRONG_INLINE void rot_and_B_from_wt_(const Vector3& w, T t, Matrix3& R, Matrix3& B) const {
+-        const T wnorm = w.norm();
+-        const Matrix3 W = skew_symmetric_matrix(w);
+-
+-        if (wnorm < T(1e-7)) {
+-            // Series (stable as ω→0)
+-            const T t2 = t*t, t3 = t2*t;
+-            R = Matrix3::Identity() - W * t + T(0.5) * (W*W) * t2;
+-            // B(t) = ∫_0^t exp(-[ω]× s) ds
+-            //      ≈ t I - 1/2 W t^2 + 1/6 W^2 t^3
+-            B = ( Matrix3::Identity()*t - T(0.5)*W*t2 + (W*W)*(t3/T(6)) );
+-            return;
+-        }
+-
+-        const T theta = wnorm * t;
+-        const T s = std::sin(theta), c = std::cos(theta);
+-        const T invw = T(1) / wnorm;
+-        const Matrix3 K = W * invw; // [u]×
+-
+-        // exp(-[ω]× t) = I - sinθ K + (1 - cosθ) K^2
+-        R = Matrix3::Identity() - s*K + (T(1)-c)*(K*K);
+-
+-        // B(t) = ∫_0^t R(τ) dτ = t I - (1 - cosθ)/ω^2 W + (t - sinθ/ω)/ω^2 W^2
+-        const T invw2 = invw * invw;
+-
+-        const Matrix3 term1 = Matrix3::Identity() * t;
+-        const Matrix3 term2 = ((T(1)-c) * invw2) * W;
+-        const Matrix3 term3 = ((t - s*invw) * invw2) * (W*W);
+-        B = term1 - term2 + term3;
++        ocean_imu::kalman::ou_detail::rot_and_B_from_wt(w, t, R, B);
+     }
+ 
+     // ∫_0^T B(s) ds  (closed form; used for Q_{θb})
+-    EIGEN_STRONG_INLINE void integral_B_ds_(const Vector3& w, T Tstep, Matrix3& IB) const {
+-        const T wnorm = w.norm();
+-        const Matrix3 W = skew_symmetric_matrix(w);
+-
+-        if (wnorm < T(1e-7)) {
+-            // ∫ B ≈ 1/2 T^2 I - 1/6 W T^3 + 1/24 W^2 T^4
+-            const T T2 = Tstep*Tstep, T3 = T2*Tstep, T4 = T3*Tstep;
+-            IB = ( Matrix3::Identity()*(T(0.5)*T2)
+-                  - W*(T(1.0/6.0)*T3)
+-                  + (W*W)*(T(1.0/24.0)*T4) );
+-            return;
+-        }
+-
+-        const T theta = wnorm * Tstep;
+-        const T s = std::sin(theta), c = std::cos(theta);
+-        const T invw  = T(1) / wnorm;
+-        const T invw2 = invw * invw;
+-
+-        // IB = ∫_0^T B(s) ds = 1/2 T^2 I - ((T - sinθ/ω)/ω^2) W + ((1/2 T^2) + (cosθ - 1)/ω^2)/ω^2 W^2
+-        const Matrix3 termI = Matrix3::Identity() * (T(0.5) * Tstep*Tstep);
+-        const Matrix3 termW = ((Tstep - s*invw) * invw2) * W;
+-        const Matrix3 termW2 = ( (T(0.5)*Tstep*Tstep) + ((c - T(1)) * invw2) ) * invw2 * (W*W);
+-
+-        IB = termI - termW + termW2;
++    EIGEN_STRONG_INLINE void integral_B_ds_(const Vector3& w, T step, Matrix3& IB) const {
++        ocean_imu::kalman::ou_detail::integral_B_ds(w, step, IB);
+     }
+ 
+     // d/dω of (ω×(ω×r)) = (ω·r) I + ω rᵀ - 2 r ωᵀ
+     EIGEN_STRONG_INLINE Matrix3 d_omega_x_omega_x_r_domega_(const Vector3& w, const Vector3& r) const {
+-        const T s = w.dot(r);
+-        return Matrix3::Identity() * s + (w * r.transpose()) - T(2) * (r * w.transpose());
++        return ocean_imu::kalman::ou_detail::d_omega_x_omega_x_r_domega(w, r);
+     }
+ 
+     // Simpson’s rule for ∫_0^T R(s) Q R(s)^T ds (fast, excellent for anisotropic Q)
+-    inline Matrix3 simpson_R_Q_RT_(const Vector3& w, T Tstep, const Matrix3& Q) const {
+-        Matrix3 R0, Btmp, Rm, R1;
+-        rot_and_B_from_wt_(w, T(0),   R0, Btmp);
+-        rot_and_B_from_wt_(w, T(0.5)*Tstep, Rm, Btmp);
+-        rot_and_B_from_wt_(w, Tstep, R1, Btmp);
+-
+-        const Matrix3 f0 = R0 * Q * R0.transpose(); // = Q
+-        const Matrix3 f1 = Rm * Q * Rm.transpose();
+-        const Matrix3 f2 = R1 * Q * R1.transpose();
+-        return (Tstep / T(6)) * (f0 + T(4)*f1 + f2);
++    inline Matrix3 simpson_R_Q_RT_(const Vector3& w, T step, const Matrix3& Q) const {
++        return ocean_imu::kalman::ou_detail::simpson_R_Q_RT(w, step, Q);
+     }
+ 
+     // Simpson’s rule for ∫_0^T B(s) Q B(s)^T ds
+-    inline Matrix3 simpson_B_Q_BT_(const Vector3& w, T Tstep, const Matrix3& Q) const {
+-        Matrix3 Rtmp, B0, Bm, B1;
+-        rot_and_B_from_wt_(w, T(0),   Rtmp, B0);           // B(0) = 0
+-        rot_and_B_from_wt_(w, T(0.5)*Tstep, Rtmp, Bm);
+-        rot_and_B_from_wt_(w, Tstep, Rtmp, B1);
+-
+-        const Matrix3 g0 = B0 * Q * B0.transpose(); // = 0
+-        const Matrix3 g1 = Bm * Q * Bm.transpose();
+-        const Matrix3 g2 = B1 * Q * B1.transpose();
+-        return (Tstep / T(6)) * (g0 + T(4)*g1 + g2);
++    inline Matrix3 simpson_B_Q_BT_(const Vector3& w, T step, const Matrix3& Q) const {
++        return ocean_imu::kalman::ou_detail::simpson_B_Q_BT(w, step, Q);
+     }
+ 
+     EIGEN_STRONG_INLINE bool is_isotropic3_(const Matrix3& S, T tol = T(1e-9)) const {
+-        const T a = S(0,0), b = S(1,1), c = S(2,2);
+-
+-        // Sum of absolute values of off-diagonal entries (1-norm of off-diagonal part)
+-        Matrix3 Off = S;
+-        Off.diagonal().setZero();
+-        const T off = Off.cwiseAbs().sum();
+-
+-        const T mean = (a + b + c) / T(3);
+-        return (std::abs(a-mean) + std::abs(b-mean) + std::abs(c-mean) + off)
+-               <= tol * (T(1) + std::abs(mean));
++        return ocean_imu::kalman::ou_detail::is_isotropic3(S, tol);
+     }
+ 
+     // convenience getters
+@@ -872,25 +642,12 @@ class Kalman3D_Wave_OU_III {
+     // Factor S with LDLT and a diagonal safety boost if needed.
+     // The `noise_scale` argument should be something like R.norm() or S.norm() from the branch.
+     inline bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, T noise_scale) const {
+-        ldlt.compute(S);
+-        if (ldlt.info() == Eigen::Success) return true;
+-
+-        // Minimum positive bump
+-        const T bump = std::max(std::numeric_limits<T>::epsilon(), T(1e-6) * (noise_scale + T(1)));
+-        S.diagonal().array() += bump;
+-
+-        ldlt.compute(S);
+-        return (ldlt.info() == Eigen::Success);
++        return ocean_imu::kalman::ou_detail::safe_ldlt3(S, ldlt, noise_scale);
+     }
+ 
+     inline T nis3_from_ldlt_(const Eigen::LDLT<Matrix3>& ldlt,
+-                                          const Vector3& r) const
+-    {
+-        // Solve S x = r, nis = r^T x
+-        Vector3 x = ldlt.solve(r);
+-        if (!x.allFinite()) return std::numeric_limits<T>::quiet_NaN();
+-        const T v = r.dot(x);
+-        return std::isfinite(v) ? v : std::numeric_limits<T>::quiet_NaN();
++                                 const Vector3& residual) const {
++        return ocean_imu::kalman::ou_detail::nis3_from_ldlt(ldlt, residual);
+     }
+ 
+     // Compute K = PCt * S^-1 using vector solves instead of forming S^-1.
+@@ -898,15 +655,8 @@ class Kalman3D_Wave_OU_III {
+     // PCt * ldlt.solve(I), which can make cc1plus exhaust memory on Windows.
+     inline void gain_from_ldlt3_(const Eigen::Matrix<T,NX,3>& PCt,
+                                  const Eigen::LDLT<Matrix3>& ldlt,
+-                                 Eigen::Matrix<T,NX,3>& K) const
+-    {
+-        for (int i = 0; i < NX; ++i) {
+-            const Vector3 rhs(PCt(i,0), PCt(i,1), PCt(i,2));
+-            const Vector3 sol = ldlt.solve(rhs);
+-            K(i,0) = sol(0);
+-            K(i,1) = sol(1);
+-            K(i,2) = sol(2);
+-        }
++                                 Eigen::Matrix<T,NX,3>& K) const {
++        ocean_imu::kalman::ou_detail::gain_from_ldlt3(PCt, ldlt, K);
+     }
+ 
+     // Joseph covariance update: P ← P - KCP - (KCP)ᵀ + K S Kᵀ.
+@@ -914,59 +664,8 @@ class Kalman3D_Wave_OU_III {
+     // Assumes Pext is symmetric on entry.
+     inline void joseph_update3_(const Eigen::Matrix<T,NX,3>& K,
+                                 const Matrix3& S,
+-                                const Eigen::Matrix<T,NX,3>& PCt)
+-    {
+-        // We use that:
+-        //  • PCt = P Cᵀ  (N×3)
+-        //  • CP ≈ (PCt)ᵀ since P ≈ Pᵀ
+-        //
+-        // So:
+-        //   KCP(i,j) = Σ_l K(i,l) * CP(l,j) ≈ Σ_l K(i,l) * PCt(j,l)
+-        //   (KCP)ᵀ(j,i) = KCP(j,i)
+-        //

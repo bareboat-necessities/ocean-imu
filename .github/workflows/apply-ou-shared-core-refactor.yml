@@ -1,0 +1,58 @@
+name: Apply OU shared core refactor
+
+on:
+  push:
+    branches:
+      - agent/ou-shared-core-math-pr1
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message == 'Stage OU shared core refactor'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+
+      - name: Verify and apply reviewed patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/ou-refactor/patch.* > /tmp/ou-shared-core.patch
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('/tmp/ou-shared-core.patch')
+          text = path.read_text()
+          text = text.replace('Qd_axis(2,0) = qd(0,2);', 'Qd_axis(2,0) = q_c * K02;')
+          text = text.replace('Qd_axis(2,1) = qd(1,2);', 'Qd_axis(2,1) = q_c * K12;')
+          path.write_text(text)
+          PY
+          echo '42d20af3bc698ddfb8490eb48f9d57fe2b6597a5b93e363d8f30cb388bc5d664  /tmp/ou-shared-core.patch' | sha256sum --check --strict
+          git apply --check /tmp/ou-shared-core.patch
+          git apply /tmp/ou-shared-core.patch
+
+      - name: Install shared files and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -D -m 0644 .github/ou-refactor/payload/KalmanOUCoreMath.h src/kalman_ou_common/KalmanOUCoreMath.h
+          install -m 0644 .github/ou-refactor/payload/CMakeLists.txt CMakeLists.txt
+          install -m 0644 .github/ou-refactor/payload/Makefile tests/kalman_ou_iii/Makefile
+          install -m 0644 .github/ou-refactor/payload/run_tests.sh tests/kalman_ou_iii/run_tests.sh
+          install -m 0644 .github/ou-refactor/payload/ou-core-parity-test.cpp tests/kalman_ou_iii/ou-core-parity-test.cpp
+          rm -rf .github/ou-refactor
+          rm .github/workflows/apply-ou-shared-core-refactor.yml
+
+      - name: Commit refactor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add CMakeLists.txt src tests .github
+          git diff --cached --check
+          git commit -m 'Refactor OU filters onto shared core math'
+          git push

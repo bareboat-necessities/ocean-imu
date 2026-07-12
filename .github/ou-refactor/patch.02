@@ -1,0 +1,300 @@
+-
+-        const T mean = (a + b + c) / T(3);
+-        return (std::abs(a-mean) + std::abs(b-mean) + std::abs(c-mean) + off)
+-               <= tol * (T(1) + std::abs(mean));
++        return ocean_imu::kalman::ou_detail::is_isotropic3(S, tol);
+     }
+ 
+     // convenience getters
+@@ -922,25 +698,12 @@ class Kalman3D_Wave_OU_II {
+     // Factor S with LDLT and a diagonal safety boost if needed.
+     // The `noise_scale` argument should be something like R.norm() or S.norm() from the branch.
+     EIGEN_STRONG_INLINE bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, T noise_scale) const {
+-        ldlt.compute(S);
+-        if (ldlt.info() == Eigen::Success) return true;
+-
+-        // Minimum positive bump
+-        const T bump = std::max(std::numeric_limits<T>::epsilon(), T(1e-6) * (noise_scale + T(1)));
+-        S.diagonal().array() += bump;
+-
+-        ldlt.compute(S);
+-        return (ldlt.info() == Eigen::Success);
++        return ocean_imu::kalman::ou_detail::safe_ldlt3(S, ldlt, noise_scale);
+     }
+ 
+     EIGEN_STRONG_INLINE T nis3_from_ldlt_(const Eigen::LDLT<Matrix3>& ldlt,
+-                                          const Vector3& r) const
+-    {
+-        // Solve S x = r, nis = r^T x
+-        Vector3 x = ldlt.solve(r);
+-        if (!x.allFinite()) return std::numeric_limits<T>::quiet_NaN();
+-        const T v = r.dot(x);
+-        return std::isfinite(v) ? v : std::numeric_limits<T>::quiet_NaN();
++                                          const Vector3& residual) const {
++        return ocean_imu::kalman::ou_detail::nis3_from_ldlt(ldlt, residual);
+     }
+ 
+     // Joseph covariance update: P ← P - KCP - (KCP)ᵀ + K S Kᵀ.
+@@ -948,59 +711,8 @@ class Kalman3D_Wave_OU_II {
+     // Assumes Pext is symmetric on entry.
+     EIGEN_STRONG_INLINE void joseph_update3_(const Eigen::Matrix<T,NX,3>& K,
+                                              const Matrix3& S,
+-                                             const Eigen::Matrix<T,NX,3>& PCt)
+-    {
+-        // We use that:
+-        //  • PCt = P Cᵀ  (N×3)
+-        //  • CP ≈ (PCt)ᵀ since P ≈ Pᵀ
+-        //
+-        // So:
+-        //   KCP(i,j) = Σ_l K(i,l) * CP(l,j) ≈ Σ_l K(i,l) * PCt(j,l)
+-        //   (KCP)ᵀ(j,i) = KCP(j,i)
+-        //
+-        // And K S Kᵀ is symmetric because S is symmetric.
+-
+-        for (int i = 0; i < NX; ++i) {
+-            for (int j = i; j < NX; ++j) {
+-
+-                // KCP_ij = (K C P)(i,j)
+-                T KCP_ij = T(0);
+-                T KCP_ji = T(0);
+-                for (int l = 0; l < 3; ++l) {
+-                    const T Ki_l = K(i,l);
+-                    const T Kj_l = K(j,l);
+-                    const T Pj_l = PCt(j,l); // CP(l,j) ≈ PCt(j,l)
+-                    const T Pi_l = PCt(i,l); // CP(l,i) ≈ PCt(i,l)
+-
+-                    KCP_ij += Ki_l * Pj_l;
+-                    if (j != i) {
+-                        KCP_ji += Kj_l * Pi_l;
+-                    }
+-                }
+-                if (j == i) {
+-                    KCP_ji = KCP_ij;
+-                }
+-
+-                // K S Kᵀ (i,j)
+-                T KSK_ij = T(0);
+-                for (int a = 0; a < 3; ++a) {
+-                    const T Kia = K(i,a);
+-                    for (int b = 0; b < 3; ++b) {
+-                        const T Kjb = K(j,b);
+-                        KSK_ij += Kia * S(a,b) * Kjb;
+-                    }
+-                }
+-                const T delta = - (KCP_ij + KCP_ji) + KSK_ij;
+-
+-                // Apply symmetric update
+-                Pext(i,j) += delta;
+-                if (j != i) {
+-                    Pext(j,i) = Pext(i,j);
+-                }
+-            }
+-        }
+-        // Final symmetry clean-up (cheap but good hygiene)
+-        symmetrize_Pext_();
++                                             const Eigen::Matrix<T,NX,3>& PCt) {
++        ocean_imu::kalman::ou_detail::joseph_update3(Pext, K, S, PCt);
+     }
+ 
+     void zero_AL_cross_cov_once_() {
+@@ -1687,7 +1399,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
+     // qref stores WORLD->BODY'.
+     // With body-frame angular rate omega^{B'}, propagate as:
+     //   q_wb(k+1) = dq(-omega*dt) * q_wb(k)
+-    const Eigen::Quaternion<T> dq_wb = quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
++    const Eigen::Quaternion<T> dq_wb = ocean_imu::kalman::ou_detail::quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
+     qref = dq_wb * qref;
+     qref.normalize();
+ 
+@@ -1778,9 +1490,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
+         // Hygiene
+         Q_AA = T(0.5) * (Q_AA + Q_AA.transpose());
+         if constexpr (with_gyro_bias) {
+-            project_psd<T,6>(Q_AA, T(1e-12));
++            ocean_imu::kalman::ou_detail::project_psd<T,6,true>(Q_AA, T(1e-12));
+         } else {
+-            project_psd<T,3>(Q_AA, T(1e-12));
++            ocean_imu::kalman::ou_detail::project_psd<T,3,true>(Q_AA, T(1e-12));
+         }
+     }
+ 
+@@ -1832,7 +1544,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
+                 }
+             }
+             Q_LL = T(0.5) * (Q_LL + Q_LL.transpose());
+-            project_psd<T,9>(Q_LL, T(1e-12));
++            ocean_imu::kalman::ou_detail::project_psd<T,9,true>(Q_LL, T(1e-12));
+         } else {
+             // Independent axes (no cross-correlation) — per-axis Qd on the diagonal
+             const int idx[3] = {0,3,6};
+@@ -2334,7 +2046,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::applyQuaternionCor
+         return;
+     }
+ 
+-    const Eigen::Quaternion<T> corr = quat_from_delta_theta(dtheta);
++    const Eigen::Quaternion<T> corr = ocean_imu::kalman::ou_detail::quat_from_delta_theta(dtheta);
+ 
+     // qref stores WORLD->BODY'.
+     // Measurement Jacobians use the left-multiplicative convention:
+@@ -2495,23 +2207,7 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
+ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::PhiAxis3x1_analytic(
+     T tau, T h, Eigen::Matrix<T,3,3>& Phi_axis)
+ {
+-    const auto P = make_prims<T>(h, tau);
+-    const T phi_va_c = -tau * P.em1;
+-    auto coeffs = safe_phi_A_coeffs<T>(h, tau);
+-    const T phi_pa_c = coeffs.phi_pa;
+-
+-    Phi_axis.setZero();
+-    // v_{k+1}
+-    Phi_axis(0,0) = T(1);
+-    Phi_axis(0,2) = phi_va_c;
+-
+-    // p_{k+1}
+-    Phi_axis(1,0) = h;
+-    Phi_axis(1,1) = T(1);
+-    Phi_axis(1,2) = phi_pa_c;
+-
+-    // a_{k+1}
+-    Phi_axis(2,2) = std::min(P.alpha, T(1));
++    ocean_imu::kalman::ou_detail::IntegratedOUChain<T,2>::transition(tau, h, Phi_axis);
+ }
+ 
+ // Discrete OU covariance for [v, p, a] axis subsystem.
+@@ -2519,69 +2215,5 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
+ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::QdAxis3x1_analytic(
+     T tau, T h, T sigma2, Eigen::Matrix<T,3,3>& Qd_axis)
+ {
+-    const T tau_eff = std::max(tau, T(1e-7));
+-    const T inv_tau = T(1) / tau_eff;
+-    const T x       = h * inv_tau;
+-
+-    if (std::abs(x) < T(1e-2)) {
+-        const T inv_tau2 = inv_tau * inv_tau;
+-        const T inv_tau3 = inv_tau2 * inv_tau;
+-        const T inv_tau4 = inv_tau3 * inv_tau;
+-
+-        const T h2 = h * h;
+-        const T h3 = h2 * h;
+-        const T h4 = h3 * h;
+-        const T h5 = h4 * h;
+-
+-        const T s = sigma2;
+-        Qd_axis.setZero();
+-        Qd_axis(0,0) = s * ((T(2)/T(3))*h3*inv_tau - (T(1)/T(2))*h4*inv_tau2 + (T(7)/T(30))*h5*inv_tau3);
+-        Qd_axis(0,1) = s * ((T(1)/T(4))*h4*inv_tau - (T(1)/T(6))*h5*inv_tau2);
+-        Qd_axis(0,2) = s * (h2*inv_tau - h3*inv_tau2 + (T(7)/T(12))*h4*inv_tau3 - (T(1)/T(4))*h5*inv_tau4);
+-        Qd_axis(1,0) = Qd_axis(0,1);
+-        Qd_axis(1,1) = s * ((T(1)/T(10))*h5*inv_tau);
+-        Qd_axis(1,2) = s * ((T(1)/T(3))*h3*inv_tau - (T(1)/T(3))*h4*inv_tau2 + (T(11)/T(60))*h5*inv_tau3);
+-        Qd_axis(2,0) = Qd_axis(0,2);
+-        Qd_axis(2,1) = Qd_axis(1,2);
+-        Qd_axis(2,2) = s * (T(2)*h*inv_tau - T(2)*h2*inv_tau2 + (T(4)/T(3))*h3*inv_tau3 - (T(2)/T(3))*h4*inv_tau4);
+-
+-        project_psd<T,3>(Qd_axis, T(1e-12));
+-        Qd_axis = T(0.5) * (Qd_axis + Qd_axis.transpose());
+-        return;
+-    }
+-
+-    const T alpha  = std::exp(-x);
+-    const T alpha2 = alpha * alpha;
+-    const T q_c    = (T(2) * sigma2) * inv_tau;
+-
+-    const T tau2 = tau_eff * tau_eff;
+-    const T tau3 = tau2 * tau_eff;
+-    const T tau4 = tau3 * tau_eff;
+-    const T tau5 = tau4 * tau_eff;
+-
+-    const T x2 = x * x;
+-    const T x3 = x2 * x;
+-
+-    const T K00 = tau3 * (-alpha2 + T(4)*alpha + T(2)*x - T(3)) / T(2);
+-    const T K01 = tau4 * (alpha2 + T(2)*alpha*(x - T(1)) + x2 - T(2)*x + T(1)) / T(2);
+-    const T K02 = tau2 * (alpha2 - T(2)*alpha + T(1)) / T(2);
+-
+-    const T K11 = tau5 * (-alpha2/T(2) - T(2)*alpha*x + x3/T(3) - x2 + x + T(1)/T(2));
+-    const T K12 = tau3 * (-alpha2 - T(2)*alpha*x + T(1)) / T(2);
+-
+-    const T K22 = tau_eff * (T(1) - alpha2) / T(2);
+-
+-    Qd_axis.setZero();
+-    Qd_axis(0,0) = q_c * K00;
+-    Qd_axis(0,1) = q_c * K01;
+-    Qd_axis(0,2) = q_c * K02;
+-    Qd_axis(1,0) = Qd_axis(0,1);
+-    Qd_axis(1,1) = q_c * K11;
+-    Qd_axis(1,2) = q_c * K12;
+-    Qd_axis(2,0) = qd(0,2);
+-    Qd_axis(2,1) = qd(1,2);
+-    Qd_axis(2,2) = q_c * K22;
+-
+-    project_psd<T,3>(Qd_axis, T(1e-12));
+-    Qd_axis = T(0.5) * (Qd_axis + Qd_axis.transpose());
++    ocean_imu::kalman::ou_detail::IntegratedOUChain<T,2>::process_covariance(tau, h, sigma2, Qd_axis);
+ }
+diff --git a/src/kalman_ou_iii/Kalman3D_Wave_OU_III.h b/src/kalman_ou_iii/Kalman3D_Wave_OU_III.h
+index 74ee5f7..e257a8c 100644
+--- a/src/kalman_ou_iii/Kalman3D_Wave_OU_III.h
++++ b/src/kalman_ou_iii/Kalman3D_Wave_OU_III.h
+@@ -30,164 +30,9 @@
+ #include <algorithm>
+ #include <stdexcept>
+ 
+-using Eigen::Matrix;
+-
+-template<typename T>
+-inline T safe_inv_tau(T tau) {
+-    // Prevent division by ~0 while preserving sign
+-    return T(1) / ((std::abs(tau) >= T(1e-8)) ? tau : std::copysign(T(1e-8), tau));
+-}
+-
+-template<typename T>
+-struct OUPrims {
+-    T alpha;    // e^{-x}
+-    T em1;      // expm1(-x) = e^{-x} - 1  (negative)
+-};
+-
+-template<typename T>
+-inline OUPrims<T> make_prims(T h, T tau) {
+-    const T inv_tau = safe_inv_tau(tau);
+-    const T x = h * inv_tau;
+-    const T alpha  = std::exp(-x);
+-    const T em1    = std::expm1(-x);    // high-accuracy for small x
+-    return {alpha, em1};
+-}
+-
+-// Quaternion from a rotation vector delta_theta.
+-// Accurate for both small and large |delta_theta|.
+-// This helper is convention-agnostic by itself; the filter convention depends
+-// on how the returned quaternion is multiplied into qref.
+-// Uses a small-angle series to avoid loss of precision near |delta_theta| = 0.
+-template<typename T>
+-inline Eigen::Quaternion<T> quat_from_delta_theta(const Eigen::Matrix<T,3,1>& dtheta) {
+-    const T theta = dtheta.norm();
+-    const T half_theta = T(0.5) * theta;
+-
+-    T w, k; // scalar part, vector scale = sin(|δθ|/2)/|δθ|
+-    if (theta < T(1e-2)) {
+-        // Maclaurin expansion (FMA-friendly)
+-        const T t2 = theta * theta;
+-        const T t4 = t2 * t2;
+-
+-        // w = cos(theta/2) ≈ 1 - θ²/8 + θ⁴/384
+-        w = T(1);
+-        w = std::fma(-t2, T(1)/T(8), w);
+-        w = std::fma( t4, T(1)/T(384), w);
+-
+-        // k = sin(theta/2)/θ ≈ 1/2 - θ²/48 + θ⁴/3840
+-        k = T(0.5);
+-        k = std::fma(-t2, T(1)/T(48), k);
+-        k = std::fma( t4, T(1)/T(3840), k);
+-    } else {
+-        w = std::cos(half_theta);
+-        k = std::sin(half_theta) / theta;
+-    }
+-
+-    const Eigen::Matrix<T,3,1> v = k * dtheta;
+-    Eigen::Quaternion<T> q(w, v.x(), v.y(), v.z());
+-
+-    // (Unit by construction, but normalize for safety)
+-    q.normalize();
