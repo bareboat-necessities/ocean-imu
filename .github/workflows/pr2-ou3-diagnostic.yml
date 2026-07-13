@@ -1,4 +1,4 @@
-name: PR2 OU-III diagnostic
+name: PR2 OU-III gyro-density diagnostic
 
 on:
   push:
@@ -18,36 +18,58 @@ jobs:
         with:
           ref: d4ba82002fe389e92a9df0a7878a0e7f0eb1c72f
 
-      - name: Run unchanged OU-III gate and publish exact failure
+      - name: Run exact failing case at four gyro-density scales
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/kalman_ou_iii/kalman_ou_iii-sim.cpp')
+          text = path.read_text()
+          needle = '        if (env_float("SF_MAG_DELAY_SEC", vf)) cfg_.mag_delay_sec = vf;'
+          replacement = '        if (env_float("OU_GYRO_SCALE", vf)) cfg_.sigma_g *= vf;\n' + needle
+          if text.count(needle) != 1:
+              raise RuntimeError('unexpected OU-III override location')
+          path.write_text(text.replace(needle, replacement))
+          PY
+
           gh release download v1.1.3 \
             --repo bareboat-necessities/oceanography-waves-lib \
             --pattern 'sim-data-files.zip' \
             --clobber >/dev/null
-          unzip -oq sim-data-files.zip -d "${{ github.workspace }}/plots/kalman_ou_iii"
+          rm -f tests/kalman_ou_iii/wave_data_*.csv
+          unzip -jq -o sim-data-files.zip \
+            'wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv' \
+            -d tests/kalman_ou_iii
           sudo apt-get update -qq >/dev/null
           sudo apt-get install -y -qq g++ make libeigen3-dev >/dev/null
-          cd tests/kalman_ou_iii
-          make build >/tmp/ou3-build.log 2>&1
-          cp "${{ github.workspace }}"/plots/kalman_ou_iii/*.csv .
-          set +e
-          bash ./run_tests.sh >/tmp/ou3-test.log 2>&1
-          status=$?
-          set -e
+          make -C tests/kalman_ou_iii build >/tmp/ou3-build.log 2>&1
+
+          mkdir -p /tmp/ou3-sweep
+          for scale in 1.0 0.3 0.1 0.070710678; do
+            log="/tmp/ou3-sweep/${scale}.log"
+            set +e
+            (
+              cd tests/kalman_ou_iii
+              OU_GYRO_SCALE="$scale" ./kalman_ou_iii-sim
+            ) >"$log" 2>&1
+            status=$?
+            set -e
+            echo "$status" >"/tmp/ou3-sweep/${scale}.status"
+          done
+
           {
-            echo '### Exact OU-III diagnostic on PR head `d4ba82002fe389e92a9df0a7878a0e7f0eb1c72f`'
+            echo '### OU-III exact-case gyro-density sweep on PR head `d4ba82002fe389e92a9df0a7878a0e7f0eb1c72f`'
             echo
-            echo 'The repository files, test launcher, simulation data release, and thresholds were not modified.'
-            echo
-            echo "Exit code: \`$status\`"
+            echo 'Only a runtime diagnostic override was injected on a separate branch. PR #188, its tests, thresholds, data, and workflow were not modified.'
             echo
             echo '```text'
-            tail -n 220 /tmp/ou3-test.log
+            for scale in 1.0 0.3 0.1 0.070710678; do
+              echo "===== gyro scale $scale; exit $(cat /tmp/ou3-sweep/${scale}.status) ====="
+              grep -E 'XYZ RMS \(%Hs\)|Angles RMS|Bias error RMS \(gyro|tau_applied|^ERROR:' "/tmp/ou3-sweep/${scale}.log" || true
+            done
             echo '```'
           } >/tmp/ou3-comment.md
           gh pr comment 188 --repo bareboat-necessities/ocean-imu --body-file /tmp/ou3-comment.md
-          exit "$status"
