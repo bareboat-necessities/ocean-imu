@@ -517,7 +517,9 @@ private:
         const float sigma_floor = std::max(0.05f, acc_noise_floor_sigma_);
         const float sZ = std::max(sigma_floor, tune_.sigma_applied);
         const float sH = sZ * S_factor_;
-        mekf_->set_aw_stationary_std(Eigen::Vector3f(sH, sH, sZ));
+        const Eigen::Vector3f aw_std(sH, sH, sZ);
+        mekf_->set_aw_stationary_std(aw_std);
+        mekf_->synchronize_aw_covariance_to_stationary();
     }
 
     void apply_RS_tune_(float rs_scale = 1.0f) {
@@ -673,6 +675,7 @@ private:
         startup_stage_t_ = 0.0f;
 
         if (!mekf_) return;
+        apply_ou_tune_();
         mekf_->set_linear_block_enabled(enable_linear_block_);
 
         if (freeze_acc_bias_until_live_) {
@@ -688,7 +691,6 @@ private:
             warmup_Racc_active_ = false;
         }
 
-        apply_ou_tune_();
         if (enable_linear_block_) apply_RS_tune_();
     }
 

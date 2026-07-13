@@ -273,6 +273,48 @@ inline void apply_left_error_reset(Eigen::Matrix<T,NX,NX>& covariance,
     }
 }
 
+template<typename T, int N>
+inline void regularize_psd_if_needed(Eigen::Matrix<T,N,N>& S) {
+    S = T(0.5) * (S + S.transpose());
+    T scale = std::max(T(1), S.cwiseAbs().maxCoeff());
+    const T tol = T(64) * std::numeric_limits<T>::epsilon() * scale;
+
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            if (!std::isfinite(S(i,j))) S(i,j) = (i == j) ? tol : T(0);
+        }
+    }
+
+    Eigen::LDLT<Eigen::Matrix<T,N,N>> ldlt(S);
+    if (ldlt.info() == Eigen::Success && ldlt.vectorD().minCoeff() >= -tol) return;
+
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<T,N,N>> es(S);
+    if (es.info() != Eigen::Success) {
+        S.diagonal().array() += tol;
+        S = T(0.5) * (S + S.transpose());
+        return;
+    }
+
+    Eigen::Matrix<T,N,1> eigenvalues = es.eigenvalues();
+    for (int i = 0; i < N; ++i) eigenvalues(i) = std::max(T(0), eigenvalues(i));
+    S = es.eigenvectors() * eigenvalues.asDiagonal() * es.eigenvectors().transpose();
+    S = T(0.5) * (S + S.transpose());
+}
+
+template<typename T>
+inline bool periodic_update_due(T dt, T period, T& elapsed) {
+    if (!(dt > T(0)) || !std::isfinite(dt) || !(period > T(0)) || !std::isfinite(period)) return false;
+    const T total = elapsed + dt;
+    const T tol = T(16) * std::numeric_limits<T>::epsilon() * std::max(T(1), period);
+    if (total + tol < period) {
+        elapsed = total;
+        return false;
+    }
+    elapsed = (total >= period) ? std::fmod(total, period) : T(0);
+    if (!(elapsed >= T(0)) || !std::isfinite(elapsed) || elapsed >= period) elapsed = T(0);
+    return true;
+}
+
 template<typename T, int Integrations>
 struct IntegratedOUChain;
 
@@ -292,25 +334,27 @@ struct IntegratedOUChain<T,2> {
 
     static void process_covariance(T tau, T h, T sigma2, MatrixAxis& Qd) {
         const T tau_eff = std::max(tau, T(1e-7));
-        const T inv_tau = T(1)/tau_eff;
-        const T x = h*inv_tau;
+        const T inv = T(1) / tau_eff;
+        const T x = h * inv;
         if (std::abs(x) < T(1e-2)) {
-            const T i2=inv_tau*inv_tau, i3=i2*inv_tau, i4=i3*inv_tau;
+            const T i2=inv*inv, i3=i2*inv, i4=i3*inv, i5=i4*inv;
+            const T i6=i5*inv, i7=i6*inv, i8=i7*inv, i9=i8*inv;
             const T h2=h*h, h3=h2*h, h4=h3*h, h5=h4*h;
+            const T h6=h5*h, h7=h6*h, h8=h7*h, h9=h8*h;
             Qd.setZero();
-            Qd(0,0)=sigma2*((T(2)/T(3))*h3*inv_tau-(T(1)/T(2))*h4*i2+(T(7)/T(30))*h5*i3);
-            Qd(0,1)=sigma2*((T(1)/T(4))*h4*inv_tau-(T(1)/T(6))*h5*i2);
-            Qd(0,2)=sigma2*(h2*inv_tau-h3*i2+(T(7)/T(12))*h4*i3-(T(1)/T(4))*h5*i4);
+            Qd(0,0)=sigma2*(T(2)/T(3)*h3*inv-T(1)/T(2)*h4*i2+T(7)/T(30)*h5*i3-T(1)/T(12)*h6*i4+T(31)/T(1260)*h7*i5-T(1)/T(160)*h8*i6+T(127)/T(90720)*h9*i7);
+            Qd(0,1)=sigma2*(T(1)/T(4)*h4*inv-T(1)/T(6)*h5*i2+T(5)/T(72)*h6*i3-T(1)/T(45)*h7*i4+T(17)/T(2880)*h8*i5-T(41)/T(30240)*h9*i6);
+            Qd(0,2)=sigma2*(h2*inv-h3*i2+T(7)/T(12)*h4*i3-T(1)/T(4)*h5*i4+T(31)/T(360)*h6*i5-T(1)/T(40)*h7*i6+T(127)/T(20160)*h8*i7-T(17)/T(12096)*h9*i8);
             Qd(1,0)=Qd(0,1);
-            Qd(1,1)=sigma2*((T(1)/T(10))*h5*inv_tau);
-            Qd(1,2)=sigma2*((T(1)/T(3))*h3*inv_tau-(T(1)/T(3))*h4*i2+(T(11)/T(60))*h5*i3);
+            Qd(1,1)=sigma2*(T(1)/T(10)*h5*inv-T(1)/T(18)*h6*i2+T(5)/T(252)*h7*i3-T(1)/T(180)*h8*i4+T(17)/T(12960)*h9*i5);
+            Qd(1,2)=sigma2*(T(1)/T(3)*h3*inv-T(1)/T(3)*h4*i2+T(11)/T(60)*h5*i3-T(13)/T(180)*h6*i4+T(19)/T(840)*h7*i5-T(1)/T(168)*h8*i6+T(247)/T(181440)*h9*i7);
             Qd(2,0)=Qd(0,2); Qd(2,1)=Qd(1,2);
-            Qd(2,2)=sigma2*(T(2)*h*inv_tau-T(2)*h2*i2+(T(4)/T(3))*h3*i3-(T(2)/T(3))*h4*i4);
-            project_psd_ou_ii<T,3>(Qd, T(1e-12));
-            Qd=T(0.5)*(Qd+Qd.transpose());
+            Qd(2,2)=sigma2*(T(2)*h*inv-T(2)*h2*i2+T(4)/T(3)*h3*i3-T(2)/T(3)*h4*i4+T(4)/T(15)*h5*i5-T(4)/T(45)*h6*i6+T(8)/T(315)*h7*i7-T(2)/T(315)*h8*i8+T(4)/T(2835)*h9*i9);
+            regularize_psd_if_needed<T,3>(Qd);
             return;
         }
-        const T a=std::exp(-x), a2=a*a, qc=T(2)*sigma2*inv_tau;
+
+        const T a=std::exp(-x), a2=a*a, qc=T(2)*sigma2*inv;
         const T t2=tau_eff*tau_eff, t3=t2*tau_eff, t4=t3*tau_eff, t5=t4*tau_eff;
         const T x2=x*x, x3=x2*x;
         const T K00=t3*(-a2+T(4)*a+T(2)*x-T(3))/T(2);
@@ -322,8 +366,7 @@ struct IntegratedOUChain<T,2> {
         Qd << qc*K00,qc*K01,qc*K02,
               qc*K01,qc*K11,qc*K12,
               qc*K02,qc*K12,qc*K22;
-        project_psd_ou_ii<T,3>(Qd, T(1e-12));
-        Qd=T(0.5)*(Qd+Qd.transpose());
+        regularize_psd_if_needed<T,3>(Qd);
     }
 };
 
@@ -343,48 +386,47 @@ struct IntegratedOUChain<T,3> {
     }
 
     static void process_covariance(T tau, T h, T sigma2, MatrixAxis& Qd) {
-        const T tau_eff=std::max(tau,T(1e-7));
-        const T inv=T(1)/tau_eff;
-        const T x=h*inv;
-        if (std::abs(x)<T(1e-2)) {
-            const T i2=inv*inv,i3=i2*inv,i4=i3*inv,i5=i4*inv;
-            const T h2=h*h,h3=h2*h,h4=h3*h,h5=h4*h;
-            Qd.setZero();
-            Qd(0,0)=sigma2*((T(2)/T(3))*h3*inv-T(1)/T(2)*h4*i2+T(7)/T(30)*h5*i3);
-            Qd(0,1)=sigma2*(T(1)/T(4)*h4*inv-T(1)/T(6)*h5*i2);
-            Qd(0,2)=sigma2*(T(1)/T(15)*h5*inv);
-            Qd(0,3)=sigma2*(h2*inv-h3*i2+T(7)/T(12)*h4*i3-T(1)/T(4)*h5*i4);
-            Qd(1,0)=Qd(0,1); Qd(1,1)=sigma2*(T(1)/T(10)*h5*inv); Qd(1,2)=T(0);
-            Qd(1,3)=sigma2*(T(1)/T(3)*h3*inv-T(1)/T(3)*h4*i2+T(11)/T(60)*h5*i3);
-            Qd(2,0)=Qd(0,2); Qd(2,1)=T(0); Qd(2,2)=T(0);
-            Qd(2,3)=sigma2*(T(1)/T(12)*h4*inv-T(1)/T(12)*h5*i2);
-            Qd(3,0)=Qd(0,3); Qd(3,1)=Qd(1,3); Qd(3,2)=Qd(2,3);
-            Qd(3,3)=sigma2*(T(2)*h*inv-T(2)*h2*i2+T(4)/T(3)*h3*i3-T(2)/T(3)*h4*i4+T(4)/T(15)*h5*i5);
-            for (int i=0;i<4;++i) for (int j=0;j<4;++j) if (!std::isfinite(Qd(i,j))) Qd(i,j)=(i==j)?T(1e-18):T(0);
-            project_psd_ou_iii<T,4>(Qd,T(1e-12));
-            Qd=T(0.5)*(Qd+Qd.transpose());
-            return;
+        const T tau_eff = std::max(tau, T(1e-7));
+        const T inv = T(1) / tau_eff;
+        const T x = h * inv;
+
+        Eigen::Matrix<T,3,3> marginal;
+        IntegratedOUChain<T,2>::process_covariance(tau_eff, h, sigma2, marginal);
+        Qd.setZero();
+        const int idx[3] = {0,1,3};
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) Qd(idx[i],idx[j]) = marginal(i,j);
         }
-        const T a=std::exp(-x),a2=a*a,qc=T(2)*sigma2*inv;
-        const T t2=tau_eff*tau_eff,t3=t2*tau_eff,t4=t3*tau_eff,t5=t4*tau_eff,t6=t5*tau_eff,t7=t6*tau_eff;
-        const T x2=x*x,x3=x2*x,x4=x3*x,x5=x4*x;
-        const T K00=t3*(-a2+T(4)*a+T(2)*x-T(3))/T(2);
-        const T K01=t4*(a2+T(2)*a*(x-T(1))+x2-T(2)*x+T(1))/T(2);
-        const T K02=t5*(-T(3)*a2+T(3)*a*(x2+T(4))+x3-T(3)*x2+T(6)*x-T(9))/T(6);
-        const T K03=t2*(a2-T(2)*a+T(1))/T(2);
-        const T K11=t5*(-a2/T(2)-T(2)*a*x+x3/T(3)-x2+x+T(1)/T(2));
-        const T K12=t6*(a2/T(2)+a*(-x2+T(2)*x-T(2))/T(2)+x4/T(8)-x3/T(2)+x2-x+T(1)/T(2));
-        const T K13=t3*(-a2-T(2)*a*x+T(1))/T(2);
-        const T K22=t7*(-a2/T(2)+a*x2+T(2)*a+x5/T(20)-x4/T(4)+T(2)*x3/T(3)-x2+x-T(3)/T(2));
-        const T K23=t4*(a2-a*(x2+T(2))+T(1))/T(2);
-        const T K33=tau_eff*(T(1)-a2)/T(2);
-        Qd << qc*K00,qc*K01,qc*K02,qc*K03,
-              qc*K01,qc*K11,qc*K12,qc*K13,
-              qc*K02,qc*K12,qc*K22,qc*K23,
-              qc*K03,qc*K13,qc*K23,qc*K33;
-        for (int i=0;i<4;++i) for (int j=0;j<4;++j) if (!std::isfinite(Qd(i,j))) Qd(i,j)=(i==j)?T(1e-18):T(0);
-        project_psd_ou_iii<T,4>(Qd,T(1e-12));
-        Qd=T(0.5)*(Qd+Qd.transpose());
+
+        T qvS, qpS, qSS, qSa;
+        if (std::abs(x) < T(1e-2)) {
+            const T i2=inv*inv, i3=i2*inv, i4=i3*inv, i5=i4*inv, i6=i5*inv;
+            const T h2=h*h, h3=h2*h, h4=h3*h, h5=h4*h;
+            const T h6=h5*h, h7=h6*h, h8=h7*h, h9=h8*h;
+            qvS=sigma2*(T(1)/T(15)*h5*inv-T(1)/T(24)*h6*i2+T(41)/T(2520)*h7*i3-T(7)/T(1440)*h8*i4+T(109)/T(90720)*h9*i5);
+            qpS=sigma2*(T(1)/T(36)*h6*inv-T(1)/T(72)*h7*i2+T(13)/T(2880)*h8*i3-T(1)/T(864)*h9*i4);
+            qSS=sigma2*(T(1)/T(126)*h7*inv-T(1)/T(288)*h8*i2+T(13)/T(12960)*h9*i3);
+            qSa=sigma2*(T(1)/T(12)*h4*inv-T(1)/T(12)*h5*i2+T(2)/T(45)*h6*i3-T(1)/T(60)*h7*i4+T(11)/T(2240)*h8*i5-T(73)/T(60480)*h9*i6);
+        } else {
+            const T a=std::exp(-x), a2=a*a, qc=T(2)*sigma2*inv;
+            const T t4=tau_eff*tau_eff*tau_eff*tau_eff;
+            const T t5=t4*tau_eff, t6=t5*tau_eff, t7=t6*tau_eff;
+            const T x2=x*x, x3=x2*x, x4=x3*x, x5=x4*x;
+            const T K02=t5*(-T(3)*a2+T(3)*a*(x2+T(4))+x3-T(3)*x2+T(6)*x-T(9))/T(6);
+            const T K12=t6*(a2/T(2)+a*(-x2+T(2)*x-T(2))/T(2)+x4/T(8)-x3/T(2)+x2-x+T(1)/T(2));
+            const T K22=t7*(-a2/T(2)+a*x2+T(2)*a+x5/T(20)-x4/T(4)+T(2)*x3/T(3)-x2+x-T(3)/T(2));
+            const T K23=t4*(a2-a*(x2+T(2))+T(1))/T(2);
+            qvS=qc*K02;
+            qpS=qc*K12;
+            qSS=qc*K22;
+            qSa=qc*K23;
+        }
+
+        Qd(0,2)=qvS; Qd(2,0)=qvS;
+        Qd(1,2)=qpS; Qd(2,1)=qpS;
+        Qd(2,2)=qSS;
+        Qd(2,3)=qSa; Qd(3,2)=qSa;
+        regularize_psd_if_needed<T,4>(Qd);
     }
 };
 
