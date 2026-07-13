@@ -15,7 +15,7 @@ env:
 
 jobs:
   gyro-scale:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -92,13 +92,14 @@ jobs:
           unzip -o sim-data-files.zip -d "plots/${{ matrix.subdir }}"
           cp "plots/${{ matrix.subdir }}"/*.csv "tests/${{ matrix.subdir }}/"
 
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ make libeigen3-dev
+      - name: Install Eigen
+        run: brew install eigen
 
       - name: Build ${{ matrix.family }}
-        run: make -C "tests/${{ matrix.subdir }}" build
+        shell: bash
+        run: |
+          make -C "tests/${{ matrix.subdir }}" \
+            EIGEN_DIR="$(brew --prefix eigen)/include/eigen3" build
 
       - name: Run unchanged quality gate
         shell: bash
