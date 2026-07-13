@@ -694,6 +694,7 @@ private:
         startup_stage_t_ = 0.0f;
 
         if (!mekf_) return;
+        apply_ou_tune_();
         mekf_->set_linear_block_enabled(enable_linear_block_);
 
         if (freeze_acc_bias_until_live_) {
@@ -713,7 +714,6 @@ private:
             }
         }
 
-        apply_ou_tune_();
         if (enable_linear_block_) {
             apply_R_p0_tune_();
             apply_R_v0_tune_();
