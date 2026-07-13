@@ -1,317 +1,127 @@
-name: build
+name: PR2 OU gyro-scale sweep
+
 on:
   push:
-  pull_request:
+    branches: [agent/pr2-retune-experiments]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+env:
+  DATA_RELEASE: v1.1.3
+
 jobs:
-  build:
+  gyro-scale:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, imu_calibrate, detrend, nlo]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Download sim data from oceanography-waves-lib GitHub repo release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern "sim-data-files.zip" --clobber
-
-      - name: Unpack simulation data (${{ matrix.dir }})
-        run: |
-          unzip -o sim-data-files.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
-
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ make libeigen3-dev \
-            texlive-xetex texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra texlive-fonts-extra dvipng \
-            inkscape graphviz python3-pip python3-matplotlib python3-numpy python3-pandas
-
-      - name: Compile tests (${{ matrix.dir }})
-        run: |
-          cd tests/${{ matrix.dir }}
-          make build
-
-      - name: Copy test data (${{ matrix.dir }})
-        run: |
-          cp ${{ github.workspace }}/plots/${{ matrix.dir }}/*.csv tests/${{ matrix.dir }}
-
-      - name: Run tests (${{ matrix.dir }})
-        run: |
-          cd tests/${{ matrix.dir }}
-          chmod +x *.sh
-          ./run_tests.sh
-          cp *.csv ../../plots/${{ matrix.dir }}
-          make clean
-
-      - name: Generate PGF plots (${{ matrix.dir }})
-        shell: bash
-        run: |
-          cd plots/${{ matrix.dir }}
-          chmod +x *.sh
-          ./draw_plots.sh
-          mv -v *.pgf ../../doc/${{ matrix.dir }}/ || true
-          mv -v *.svg ../../doc/${{ matrix.dir }}/ || true
-          mv -v *.png ../../doc/${{ matrix.dir }}/ || true
-
-      - name: Compile LaTeX document (${{ matrix.dir }})
-        uses: xu-cheng/latex-action@v4
-        with:
-          root_file: "*.tex"
-          pre_compile: |
-            echo "openout_any = a" | tee -a $(kpsewhich texmf.cnf)
-            curl -L https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml.jar -o plantuml.jar
-            export PLANTUML_JAR=$(pwd)/plantuml.jar
-            curl -L https://mirrors.ctan.org/macros/luatex/latex/plantuml/plantuml.sty -o plantuml.sty
-            echo ">> Debug: TeX config patched, now checking PlantUML installation"
-            plantuml -version || true
-            java -version || true
-            if [ "${{ matrix.dir }}" = "kalman_ou_iii" ]; then
-              cp -v ${{ github.workspace }}/img/devices/AtomS3R_device.svg ${{ github.workspace }}/doc/${{ matrix.dir }}/AtomS3R_device.svg
-            fi
-          work_in_root_file_dir: true
-          working_directory: doc/${{ matrix.dir }}
-          latexmk_use_lualatex: true
-          latexmk_shell_escape: true
-          args: "-shell-escape"
-          extra_system_packages: "inkscape ghostscript graphviz ncurses openjdk11-jre"
-        env:
-          PLANTUML_JAR: ${{ github.workspace }}/doc/${{ matrix.dir }}/plantuml.jar
-
-      - name: Upload PDF artifacts (${{ matrix.dir }})
-        uses: actions/upload-artifact@v6
-        with:
-          name: latex-pdfs-${{ matrix.dir }}
-          path: doc/${{ matrix.dir }}/**/*.pdf
-          if-no-files-found: error
-
-      - name: Find SVGs (${{ matrix.dir }})
-        id: find_svgs
-        shell: bash
-        run: |
-          shopt -s nullglob globstar
-          files=(
-            doc/${{ matrix.dir }}/**/*pmstokes*H1.5*.svg
-            doc/${{ matrix.dir }}/**/*pmstokes*medium*.svg
-          )
-
-          if [ ${#files[@]} -gt 0 ]; then
-            mkdir -p release-svg/${{ matrix.dir }}
-            for f in "${files[@]}"; do
-              cp -v "$f" release-svg/${{ matrix.dir }}/
-            done
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Upload SVG artifacts (${{ matrix.dir }})
-        if: steps.find_svgs.outputs.found == 'true'
-        uses: actions/upload-artifact@v6
-        with:
-          name: release-svgs-${{ matrix.dir }}
-          path: release-svg/${{ matrix.dir }}/**/*.svg
-          if-no-files-found: error
-
-  ou-tuning:
-    if: ${{ (false && github.event_name == 'push') }}
-    runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
         include:
           - family: OU_II
             subdir: kalman_ou_ii
-            report_name: ou_ii
+            label: scale_1p0
+            gyro_scale: "1.0"
+          - family: OU_II
+            subdir: kalman_ou_ii
+            label: scale_0p3
+            gyro_scale: "0.3"
+          - family: OU_II
+            subdir: kalman_ou_ii
+            label: scale_0p1
+            gyro_scale: "0.1"
+          - family: OU_II
+            subdir: kalman_ou_ii
+            label: scale_density
+            gyro_scale: "0.070710678"
           - family: OU_III
             subdir: kalman_ou_iii
-            report_name: ou_iii
+            label: scale_1p0
+            gyro_scale: "1.0"
+          - family: OU_III
+            subdir: kalman_ou_iii
+            label: scale_0p3
+            gyro_scale: "0.3"
+          - family: OU_III
+            subdir: kalman_ou_iii
+            label: scale_0p1
+            gyro_scale: "0.1"
+          - family: OU_III
+            subdir: kalman_ou_iii
+            label: scale_density
+            gyro_scale: "0.070710678"
 
     steps:
-      - name: Checkout
+      - name: Checkout experiment branch
         uses: actions/checkout@v6
 
-      - name: Download sim data from oceanography-waves-lib GitHub repo release
+      - name: Add experimental gyro-scale override
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+
+          subdir = os.environ["SUBDIR"]
+          path = Path("tests") / subdir / f"{subdir}-sim.cpp"
+          text = path.read_text()
+          needle = '        if (env_float("SF_MAG_DELAY_SEC", vf)) cfg_.mag_delay_sec = vf;'
+          replacement = (
+              '        if (env_float("OU_GYRO_SCALE", vf)) cfg_.sigma_g *= vf;\n'
+              + needle
+          )
+          if text.count(needle) != 1:
+              raise RuntimeError(f"unexpected override location in {path}")
+          path.write_text(text.replace(needle, replacement))
+          PY
+        env:
+          SUBDIR: ${{ matrix.subdir }}
+
+      - name: Download simulation data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download v1.1.3 \
+          gh release download "$DATA_RELEASE" \
             --repo bareboat-necessities/oceanography-waves-lib \
             --pattern "sim-data-files.zip" \
             --clobber
+          mkdir -p "plots/${{ matrix.subdir }}"
+          unzip -o sim-data-files.zip -d "plots/${{ matrix.subdir }}"
+          cp "plots/${{ matrix.subdir }}"/*.csv "tests/${{ matrix.subdir }}/"
 
-      - name: Install tuning dependencies
+      - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ make libeigen3-dev unzip python3
+          sudo apt-get install -y g++ make libeigen3-dev
 
-      - name: Unpack simulation data for ${{ matrix.family }}
-        run: |
-          unzip -o sim-data-files.zip -d "${{ github.workspace }}/tests/${{ matrix.subdir }}"
+      - name: Build ${{ matrix.family }}
+        run: make -C "tests/${{ matrix.subdir }}" build
 
-      - name: Run ${{ matrix.family }} tuning sweep
+      - name: Run unchanged quality gate
         shell: bash
+        env:
+          OU_GYRO_SCALE: ${{ matrix.gyro_scale }}
+          W3D_COLLECT_ALL_GATES: "1"
         run: |
-          set -o pipefail
-          mkdir -p reports/results
+          set +e
+          log="/tmp/${{ matrix.family }}_${{ matrix.label }}.log"
+          (
+            cd "tests/${{ matrix.subdir }}"
+            chmod +x run_tests.sh
+            ./run_tests.sh
+          ) >"$log" 2>&1
+          status=$?
+          cat "$log"
+          printf '%s\n' "$status" > "/tmp/${{ matrix.family }}_${{ matrix.label }}.status"
+          exit "$status"
 
-          python3 -u tools/ou_tuning_sweep.py \
-            --family ${{ matrix.family }} \
-            --mode full \
-            --samples 52 \
-            --seed 77 \
-            --tier all \
-            --top-k 8 \
-            --out-csv reports/results/ou_tuning_${{ matrix.report_name }}.csv \
-            2>&1 | tee reports/results/ou_tuning_${{ matrix.report_name }}.log
-
-      - name: Upload ${{ matrix.family }} tuning reports
+      - name: Upload sweep result
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou-tuning-reports-${{ matrix.report_name }}
-          path: reports/results/*
+          name: gyro-sweep-${{ matrix.family }}-${{ matrix.label }}
+          path: |
+            /tmp/${{ matrix.family }}_${{ matrix.label }}.log
+            /tmp/${{ matrix.family }}_${{ matrix.label }}.status
           if-no-files-found: warn
-          
-  release:
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    needs: [build, build-MCU]
-
-    steps:
-      - name: Download all workflow artifacts
-        uses: actions/download-artifact@v8
-        with:
-          path: release-assets
-          merge-multiple: false
-
-      - name: Show downloaded files
-        shell: bash
-        run: |
-          find release-assets -type f | sort
-
-      - name: Upload PDFs to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: release-assets/latex-pdfs-*/*.pdf
-          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
-          overwrite: true
-          file_glob: true
-
-      - name: Upload SVGs to release
-        shell: bash
-        run: |
-          shopt -s nullglob globstar
-          files=(release-assets/release-svgs-*/*.svg)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No matching SVG files to upload."
-            exit 0
-          fi
-          printf '%s\n' "${files[@]}" > svg_files.txt
-          cat svg_files.txt
-
-      - name: Upload SVGs to release (serialized)
-        if: hashFiles('release-assets/release-svgs-*/*.svg') != ''
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: release-assets/release-svgs-*/*.svg
-          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
-          overwrite: true
-          file_glob: true
-
-      - name: Upload MCU binaries to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: release-assets/mcu-binaries-*/*.zip
-          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
-          overwrite: true
-          file_glob: true
-
-  build-MCU:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        ino_dir: [ "full_marine_ins", "compass_ahrs", "imu_basic" ]
-  
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-  
-      - name: Compile sketch
-        uses: ArminJo/arduino-test-compile@v3
-        with:
-          arduino-board-fqbn: esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc
-          arduino-platform: esp32:esp32@3.3.7
-          platform-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-          required-libraries: M5Unified@0.2.13,M5GFX@0.2.19,Eigen@0.3.2
-          sketch-names: "*.ino"
-          sketch-names-find-start: sensors/${{ matrix.ino_dir }}/*
-          build-properties: >-
-            { "All": "-funroll-loops -fno-finite-math-only" }
-          extra-arduino-cli-args: >-
-            --warnings default
-            --library ${{ github.workspace }}
-            --build-property compiler.libraries.ldflags=-Wl,--allow-multiple-definition
-          set-build-path: true
-
-      - name: Make merged MCU binaries (${{ matrix.ino_dir }})
-        shell: bash
-        run: |
-          set -euo pipefail
-          ESPTOOL="$(find "$HOME/.arduino15/packages/esp32/tools/esptool_py" -type f -name esptool | sort -V | tail -n 1)"
-          BOOT_APP0="$(find "$HOME/.arduino15/packages/esp32/hardware/esp32" -path '*/tools/partitions/boot_app0.bin' | sort -V | tail -n 1)"
-          if [ -z "$ESPTOOL" ] || [ -z "$BOOT_APP0" ]; then
-            echo "Unable to find esptool or boot_app0.bin."
-            exit 1
-          fi
-          for sketch in sensors/${{ matrix.ino_dir }}/*/*.ino; do
-            sketch_dir="$(dirname "$sketch")"
-            sketch_name="$(basename "$sketch" .ino)"
-            build_dir="$sketch_dir/build"
-            if [ ! -d "$build_dir" ]; then
-              echo "Missing build directory: $build_dir"
-              exit 1
-            fi
-            "$ESPTOOL" --chip esp32s3 merge_bin -o "$build_dir/${sketch_name}_firmware.bin" \
-              --flash_mode dio --flash_freq 80m --flash_size 8MB \
-              0x0 "$build_dir/${sketch_name}.ino.bootloader.bin" \
-              0x8000 "$build_dir/${sketch_name}.ino.partitions.bin" \
-              0xe000 "$BOOT_APP0" \
-              0x10000 "$build_dir/${sketch_name}.ino.bin"
-          done
-
-      - name: Package MCU binaries (${{ matrix.ino_dir }})
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p mcu-binaries
-          shopt -s nullglob
-          for build_dir in sensors/${{ matrix.ino_dir }}/*/build; do
-            sketch_name="$(basename "$(dirname "$build_dir")")"
-            files=("$build_dir"/*.bin "$build_dir"/*.csv)
-            if [ ${#files[@]} -eq 0 ]; then
-              echo "No binary files found in $build_dir"
-              exit 1
-            fi
-            zip -j "mcu-binaries/${sketch_name}_bin-$(date +%Y-%m-%d).zip" "${files[@]}"
-          done
-          ls -la mcu-binaries
-
-      - name: Upload MCU binary artifacts (${{ matrix.ino_dir }})
-        uses: actions/upload-artifact@v6
-        with:
-          name: mcu-binaries-${{ matrix.ino_dir }}
-          path: mcu-binaries/*.zip
-          if-no-files-found: error
-
