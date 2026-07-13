@@ -1,6 +1,8 @@
 name: PR2 safe finalization
 
 on:
+  push:
+    branches: [agent/pr2-ou-core-covariance-semantics]
   pull_request:
     branches: [main]
 
@@ -9,7 +11,7 @@ permissions:
 
 jobs:
   finalize:
-    if: github.head_ref == 'agent/pr2-ou-core-covariance-semantics'
+    if: github.event_name == 'push' || github.head_ref == 'agent/pr2-ou-core-covariance-semantics'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout immutable clean PR2 snapshot
