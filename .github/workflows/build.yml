@@ -1,101 +1,77 @@
-name: PR2 final validation
+name: OU-III gyro-density diagnostic
 
 on:
   push:
-    branches: [agent/pr2-ou-core-covariance-semantics]
+    branches: [agent/pr2-ou3-diagnostic]
   pull_request:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
-  finalize:
-    if: github.event_name == 'push' || github.head_ref == 'agent/pr2-ou-core-covariance-semantics'
+  diagnose:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout immutable clean PR2 snapshot
+      - name: Checkout exact PR head
         uses: actions/checkout@v6
         with:
-          ref: 5423d6357fca7ca7a4419bd72257f778bf43aebd
-          fetch-depth: 0
+          ref: d4ba82002fe389e92a9df0a7878a0e7f0eb1c72f
 
-      - name: Apply proven OU-II covariance synchronization
+      - name: Run exact failing case at four gyro-density scales
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
-          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgpjb3JlID0gUGF0aCgnc3JjL2thbG1hbl9vdV9paS9LYWxtYW4zRF9XYXZlX09VX0lJLmgnKQp0ZXh0ID0gY29yZS5yZWFkX3RleHQoKQpvbGQgPSAnJycgICAgdm9pZCByZXNldF9hd19jb3ZhcmlhbmNlX3RvX3N0YXRpb25hcnkoKSB7CiAgICAgICAgZm9yIChpbnQgaSA9IDA7IGkgPCBOWDsgKytpKSB7CiAgICAgICAgICAgIGlmIChpIDwgT0ZGX0FXIHx8IGkgPj0gT0ZGX0FXICsgMykgewogICAgICAgICAgICAgICAgUGV4dC50ZW1wbGF0ZSBibG9jazwzLDE+KE9GRl9BVywgaSkuc2V0WmVybygpOwogICAgICAgICAgICAgICAgUGV4dC50ZW1wbGF0ZSBibG9jazwxLDM+KGksIE9GRl9BVykuc2V0WmVybygpOwogICAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIFBleHQudGVtcGxhdGUgYmxvY2s8MywzPihPRkZfQVcsIE9GRl9BVykgPSBTaWdtYV9hd19zdGF0OwogICAgICAgIHN5bW1ldHJpemVfUGV4dF8oKTsKICAgIH0KJycnCm5ldyA9ICcnJyAgICB2b2lkIHJlc2V0X2F3X2NvdmFyaWFuY2VfdG9fc3RhdGlvbmFyeSgpIHsKICAgICAgICAvLyBIYXJkIHJlc2V0OiBkaXNjYXJkIGNyb3NzLWNvdmFyaWFuY2VzIGludm9sdmluZyB0aGUgT1UgYWNjZWxlcmF0aW9uLgogICAgICAgIGZvciAoaW50IGkgPSAwOyBpIDwgTlg7ICsraSkgewogICAgICAgICAgICBpZiAoaSA8IE9GRl9BVyB8fCBpID49IE9GRl9BVyArIDMpIHsKICAgICAgICAgICAgICAgIFBleHQudGVtcGxhdGUgYmxvY2s8MywxPihPRkZfQVcsIGkpLnNldFplcm8oKTsKICAgICAgICAgICAgICAgIFBleHQudGVtcGxhdGUgYmxvY2s8MSwzPihpLCBPRkZfQVcpLnNldFplcm8oKTsKICAgICAgICAgICAgfQogICAgICAgIH0KICAgICAgICBQZXh0LnRlbXBsYXRlIGJsb2NrPDMsMz4oT0ZGX0FXLCBPRkZfQVcpID0gU2lnbWFfYXdfc3RhdDsKICAgICAgICBzeW1tZXRyaXplX1BleHRfKCk7CiAgICB9CgogICAgLy8gU3luY2hyb25pemUgb25seSB0aGUgYV93IG1hcmdpbmFsIHdpdGggdGhlIHN0YXRpb25hcnkgcHJvY2VzcyBtb2RlbCB3aGlsZQogICAgLy8gcHJlc2VydmluZyBjcm9zcy1jb3ZhcmlhbmNlcyBsZWFybmVkIGJ5IHRoZSBydW5uaW5nIGZpbHRlci4KICAgIHZvaWQgc3luY2hyb25pemVfYXdfY292YXJpYW5jZV90b19zdGF0aW9uYXJ5KCkgewogICAgICAgIFBleHQudGVtcGxhdGUgYmxvY2s8MywzPihPRkZfQVcsIE9GRl9BVykgPSBTaWdtYV9hd19zdGF0OwogICAgICAgIHN5bW1ldHJpemVfUGV4dF8oKTsKICAgIH0KJycnCmlmIHRleHQuY291bnQob2xkKSAhPSAxOgogICAgcmFpc2UgUnVudGltZUVycm9yKGYndW5leHBlY3RlZCBPVS1JSSBjb3ZhcmlhbmNlIHJlc2V0IG1ldGhvZCBjb3VudD17dGV4dC5jb3VudChvbGQpfScpCmNvcmUud3JpdGVfdGV4dCh0ZXh0LnJlcGxhY2Uob2xkLCBuZXcpKQoKd3JhcHBlciA9IFBhdGgoJ3NyYy9rYWxtYW5fb3VfaWkvU2VhU3RhdGVGdXNpb25GaWx0ZXJfT1VfSUkuaCcpCnRleHQgPSB3cmFwcGVyLnJlYWRfdGV4dCgpCm9sZCA9ICcgICAgICAgIG1la2ZfLT5zZXRfYXdfc3RhdGlvbmFyeV9zdGQoRWlnZW46OlZlY3RvcjNmKHNILCBzSCwgc1opKTtcbicKbmV3ID0gJycnICAgICAgICBjb25zdCBFaWdlbjo6VmVjdG9yM2YgYXdfc3RkKHNILCBzSCwgc1opOwogICAgICAgIG1la2ZfLT5zZXRfYXdfc3RhdGlvbmFyeV9zdGQoYXdfc3RkKTsKICAgICAgICBtZWtmXy0+c3luY2hyb25pemVfYXdfY292YXJpYW5jZV90b19zdGF0aW9uYXJ5KCk7CicnJwppZiB0ZXh0LmNvdW50KG9sZCkgIT0gMToKICAgIHJhaXNlIFJ1bnRpbWVFcnJvcihmJ3VuZXhwZWN0ZWQgT1UtSUkgdHVuaW5nIGNhbGwgY291bnQ9e3RleHQuY291bnQob2xkKX0nKQp3cmFwcGVyLndyaXRlX3RleHQodGV4dC5yZXBsYWNlKG9sZCwgbmV3KSkK' | base64 -d > /tmp/apply_pr2_fix.py
-          python3 /tmp/apply_pr2_fix.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/kalman_ou_iii/kalman_ou_iii-sim.cpp')
+          text = path.read_text()
+          needle = '        if (env_float("SF_MAG_DELAY_SEC", vf)) cfg_.mag_delay_sec = vf;'
+          replacement = '        if (env_float("OU_GYRO_SCALE", vf)) cfg_.sigma_g *= vf;\n' + needle
+          if text.count(needle) != 1:
+              raise RuntimeError('unexpected OU-III override location')
+          path.write_text(text.replace(needle, replacement))
+          PY
 
-          git diff --check
-          git fetch origin main --depth=1
-          git diff --exit-code origin/main -- \
-            tests/kalman_ou_ii/run_tests.sh \
-            tests/kalman_ou_iii/run_tests.sh
-
-          actual="$(git diff --name-only | sort)"
-          expected="$(printf '%s\n' \
-            src/kalman_ou_ii/Kalman3D_Wave_OU_II.h \
-            src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h | sort)"
-          test "$actual" = "$expected"
-
-      - name: Download unchanged-gate simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
           gh release download v1.1.3 \
             --repo bareboat-necessities/oceanography-waves-lib \
             --pattern 'sim-data-files.zip' \
-            --clobber
-          unzip -o sim-data-files.zip -d "${{ github.workspace }}/plots/kalman_ou_ii"
-          unzip -o sim-data-files.zip -d "${{ github.workspace }}/plots/kalman_ou_iii"
+            --clobber >/dev/null
+          rm -f tests/kalman_ou_iii/wave_data_*.csv
+          unzip -jq -o sim-data-files.zip \
+            'wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv' \
+            -d tests/kalman_ou_iii
+          sudo apt-get update -qq >/dev/null
+          sudo apt-get install -y -qq g++ make libeigen3-dev >/dev/null
+          make -C tests/kalman_ou_iii build >/tmp/ou3-build.log 2>&1
 
-      - name: Install focused validation dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ make libeigen3-dev
+          mkdir -p /tmp/ou3-sweep
+          for scale in 1.0 0.3 0.1 0.070710678; do
+            log="/tmp/ou3-sweep/${scale}.log"
+            set +e
+            (
+              cd tests/kalman_ou_iii
+              OU_GYRO_SCALE="$scale" ./kalman_ou_iii-sim
+            ) >"$log" 2>&1
+            status=$?
+            set -e
+            echo "$status" >"/tmp/ou3-sweep/${scale}.status"
+          done
 
-      - name: Run unchanged OU-II quality gate
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd tests/kalman_ou_ii
-          make build
-          cp "${{ github.workspace }}"/plots/kalman_ou_ii/*.csv .
-          bash ./run_tests.sh
-
-      - name: Run unchanged OU-III quality gate
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd tests/kalman_ou_iii
-          make build
-          cp "${{ github.workspace }}"/plots/kalman_ou_iii/*.csv .
-          bash ./run_tests.sh
-
-      - name: Publish one clean PR2 commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          git clean -fdx
-          git diff --check
-          git fetch origin main --depth=1
-          git config user.name 'OpenAI'
-          git config user.email 'noreply@openai.com'
-          git reset --soft origin/main
-          git add -A
-
-          actual="$(git diff --cached --name-only | sort)"
-          expected="$(printf '%s\n' \
-            src/kalman_common/SeaStateFusionFilterCommon.h \
-            src/kalman_ou_common/KalmanOUCoreMath.h \
-            src/kalman_ou_ii/Kalman3D_Wave_OU_II.h \
-            src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h \
-            src/kalman_ou_iii/Kalman3D_Wave_OU_III.h \
-            src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h \
-            tests/kalman_ou_iii/kalman_ou_common-test.cpp | sort)"
-          test "$actual" = "$expected"
-
-          git commit -m 'Fix OU covariance semantics and sample-rate invariance'
-          git push origin HEAD:agent/pr2-finalized-clean
+          {
+            echo '### OU-III exact-case gyro-density sweep on PR head `d4ba82002fe389e92a9df0a7878a0e7f0eb1c72f`'
+            echo
+            echo 'Only a runtime diagnostic override was injected on temporary PR #193. PR #188, its tests, thresholds, data, and workflow were not modified.'
+            echo
+            echo '```text'
+            for scale in 1.0 0.3 0.1 0.070710678; do
+              echo "===== gyro scale $scale; exit $(cat /tmp/ou3-sweep/${scale}.status) ====="
+              grep -E 'XYZ RMS \(%Hs\)|Angles RMS|Bias error RMS \(gyro|tau_applied|^ERROR:' "/tmp/ou3-sweep/${scale}.log" || true
+            done
+            echo '```'
+          } >/tmp/ou3-comment.md
+          gh pr comment 188 --repo bareboat-necessities/ocean-imu --body-file /tmp/ou3-comment.md
