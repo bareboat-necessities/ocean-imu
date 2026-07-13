@@ -3,6 +3,8 @@ name: PR2 OU gyro-scale sweep
 on:
   push:
     branches: [agent/pr2-retune-experiments]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
