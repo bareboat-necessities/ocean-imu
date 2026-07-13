@@ -1,0 +1,66 @@
+name: PR2 corrected source generator
+
+on:
+  pull_request:
+    branches: [agent/pr2-ou-core-covariance-semantics]
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Generate corrected OU-II source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          filter_path = Path('src/kalman_ou_ii/Kalman3D_Wave_OU_II.h')
+          filter_text = filter_path.read_text()
+          old = '''    void reset_aw_covariance_to_stationary() {
+              for (int i = 0; i < NX; ++i) {
+                  if (i < OFF_AW || i >= OFF_AW + 3) {
+                      Pext.template block<3,1>(OFF_AW, i).setZero();
+                      Pext.template block<1,3>(i, OFF_AW).setZero();
+                  }
+              }
+              Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
+              symmetrize_Pext_();
+          }
+'''
+          new = old + '''
+    // Synchronize the a_w marginal with the current stationary model while
+    // preserving learned cross-covariances with the rest of the state.
+    void synchronize_aw_covariance_to_stationary() {
+        Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
+        symmetrize_Pext_();
+    }
+'''
+          if filter_text.count(old) != 1:
+              raise RuntimeError('unexpected OU-II reset method pattern')
+          filter_path.write_text(filter_text.replace(old, new))
+
+          wrapper_path = Path('src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h')
+          wrapper_text = wrapper_path.read_text()
+          old = '        mekf_->set_aw_stationary_std(Eigen::Vector3f(sH, sH, sZ));\n'
+          new = old + '        mekf_->synchronize_aw_covariance_to_stationary();\n'
+          if wrapper_text.count(old) != 1:
+              raise RuntimeError('unexpected OU-II tuning call pattern')
+          wrapper_path.write_text(wrapper_text.replace(old, new))
+          PY
+          git diff --check
+
+      - name: Upload corrected source files
+        uses: actions/upload-artifact@v6
+        with:
+          name: pr2-corrected-ou-ii-sources
+          path: |
+            src/kalman_ou_ii/Kalman3D_Wave_OU_II.h
+            src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h
+          if-no-files-found: error
