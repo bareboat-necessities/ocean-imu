@@ -1,8 +1,9 @@
 name: OU-III covariance-sync diagnostic
+# Temporary validation workflow for PR #188; never merge this branch.
 
 on:
   push:
-    branches: [agent/pr2-ou3-diagnostic]
+    branches: [agent/pr2-ou3-sync-diagnostic]
   pull_request:
     branches: [main]
 
@@ -89,7 +90,7 @@ jobs:
           {
             echo '### OU-III posterior-marginal synchronization diagnostic'
             echo
-            echo 'The patch changes only OU-III production code on temporary PR #193. PR #188 tests, thresholds, simulation sources, data, and workflow remain unchanged.'
+            echo 'The patch changes only OU-III production code on temporary PR #194. PR #188 tests, thresholds, simulation sources, data, and workflow remain unchanged.'
             echo
             echo "Complete unchanged OU-III gate exit code: \`$status\`"
             echo
