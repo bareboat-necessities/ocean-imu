@@ -1,4 +1,4 @@
-name: PR2 targeted gyro-scale sweep
+name: PR2 full gyro-scale sweep
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
   DATA_RELEASE: v1.1.3
 
 jobs:
-  targeted-gyro-scale:
+  full-gyro-scale:
     runs-on: ubuntu-24.04-arm
     strategy:
       fail-fast: false
@@ -22,10 +22,8 @@ jobs:
         include:
           - family: OU_II
             subdir: kalman_ou_ii
-            target_glob: "*jonswap_H4.000*.csv"
           - family: OU_III
             subdir: kalman_ou_iii
-            target_glob: "*jonswap_H0.270*.csv"
 
     steps:
       - name: Checkout experiment branch
@@ -54,12 +52,11 @@ jobs:
           path.write_text(text.replace(needle, replacement))
           PY
 
-      - name: Download only the targeted regression dataset
+      - name: Download complete simulation dataset
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SUBDIR: ${{ matrix.subdir }}
-          TARGET_GLOB: ${{ matrix.target_glob }}
         run: |
           set -euo pipefail
           gh release download "$DATA_RELEASE" \
@@ -67,12 +64,8 @@ jobs:
             --pattern "sim-data-files.zip" \
             --clobber
           rm -f "tests/$SUBDIR"/wave_data_*.csv
-          mkdir -p /tmp/sim-data
-          unzip -o sim-data-files.zip -d /tmp/sim-data
-          mapfile -t matches < <(find /tmp/sim-data -type f -name "$TARGET_GLOB" | sort)
-          test "${#matches[@]}" -eq 1
-          cp "${matches[0]}" "tests/$SUBDIR/"
-          ls -l "tests/$SUBDIR"/wave_data_*.csv
+          unzip -j -o sim-data-files.zip 'wave_data_*.csv' -d "tests/$SUBDIR"
+          test "$(find "tests/$SUBDIR" -maxdepth 1 -name 'wave_data_*.csv' | wc -l)" -eq 20
 
       - name: Install build dependencies
         run: |
@@ -82,7 +75,7 @@ jobs:
       - name: Build ${{ matrix.family }} once
         run: make -C "tests/${{ matrix.subdir }}" build
 
-      - name: Run targeted unchanged gate at four gyro scales
+      - name: Run unchanged full gate at four gyro scales
         shell: bash
         env:
           SUBDIR: ${{ matrix.subdir }}
@@ -91,7 +84,6 @@ jobs:
         run: |
           set -u
           mkdir -p "/tmp/results/$FAMILY"
-          overall=0
           for scale in 1.0 0.3 0.1 0.070710678; do
             label="${scale//./p}"
             log="/tmp/results/$FAMILY/gyro_scale_${label}.log"
@@ -102,15 +94,13 @@ jobs:
             status=$?
             printf '%s\n' "$status" > "/tmp/results/$FAMILY/gyro_scale_${label}.status"
             echo "===== $FAMILY gyro_scale=$scale status=$status ====="
-            grep -E 'Processing|XYZ RMS|Angles RMS|Bias error RMS \(acc|Bias error RMS \(% of max TRUE bias\) \(acc\)|QUALITY_GATE' "$log" || true
-            if [ "$status" -eq 0 ]; then overall=1; fi
+            grep -E 'Processing|XYZ RMS|3D RMS|Angles RMS|Bias error RMS \(% of max TRUE bias\) \(acc\)|tau_applied|QUALITY_GATE|^ERROR:' "$log" || true
           done
-          echo "ANY_CANDIDATE_PASSED=$overall"
           exit 0
 
-      - name: Upload targeted sweep results
+      - name: Upload full sweep results
         uses: actions/upload-artifact@v6
         with:
-          name: targeted-gyro-sweep-${{ matrix.family }}
+          name: full-gyro-sweep-${{ matrix.family }}
           path: /tmp/results/${{ matrix.family }}/*
           if-no-files-found: error
