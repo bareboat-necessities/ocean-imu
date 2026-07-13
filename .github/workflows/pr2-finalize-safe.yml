@@ -126,4 +126,4 @@ jobs:
           git reset --soft origin/main
           git add -A
           git commit -m 'Fix OU covariance semantics and sample-rate invariance'
-          git push --force origin HEAD:agent/pr2-ou-core-covariance-semantics
+          git push origin HEAD:agent/pr2-finalized-clean
