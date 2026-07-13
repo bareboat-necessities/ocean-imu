@@ -1,0 +1,127 @@
+name: PR2 safe finalization
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.head_ref == 'agent/pr2-ou-core-covariance-semantics'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout immutable clean PR2 snapshot
+        uses: actions/checkout@v6
+        with:
+          ref: 5423d6357fca7ca7a4419bd72257f778bf43aebd
+          fetch-depth: 0
+
+      - name: Apply evidence-backed OU-II covariance synchronization
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          core = Path('src/kalman_ou_ii/Kalman3D_Wave_OU_II.h')
+          text = core.read_text()
+          old = '''    void reset_aw_covariance_to_stationary() {
+              for (int i = 0; i < NX; ++i) {
+                  if (i < OFF_AW || i >= OFF_AW + 3) {
+                      Pext.template block<3,1>(OFF_AW, i).setZero();
+                      Pext.template block<1,3>(i, OFF_AW).setZero();
+                  }
+              }
+              Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
+              symmetrize_Pext_();
+          }
+          '''
+          new = '''    void reset_aw_covariance_to_stationary() {
+        // Hard reset: discard cross-covariances involving the OU acceleration.
+        for (int i = 0; i < NX; ++i) {
+            if (i < OFF_AW || i >= OFF_AW + 3) {
+                Pext.template block<3,1>(OFF_AW, i).setZero();
+                Pext.template block<1,3>(i, OFF_AW).setZero();
+            }
+        }
+        Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
+        symmetrize_Pext_();
+    }
+
+    // Synchronize only the a_w marginal with the stationary process model while
+    // preserving cross-covariances learned by the running filter.
+    void synchronize_aw_covariance_to_stationary() {
+        Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
+        symmetrize_Pext_();
+    }
+'''
+          if text.count(old) != 1:
+              raise RuntimeError('unexpected OU-II covariance reset method')
+          core.write_text(text.replace(old, new))
+
+          wrapper = Path('src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h')
+          text = wrapper.read_text()
+          old = '        mekf_->set_aw_stationary_std(Eigen::Vector3f(sH, sH, sZ));\n'
+          new = '''        const Eigen::Vector3f aw_std(sH, sH, sZ);
+        mekf_->set_aw_stationary_std(aw_std);
+        mekf_->synchronize_aw_covariance_to_stationary();
+'''
+          if text.count(old) != 1:
+              raise RuntimeError('unexpected OU-II tuning call')
+          wrapper.write_text(text.replace(old, new))
+          PY
+
+          git diff --check
+          git fetch origin main --depth=1
+          git diff --exit-code origin/main -- \
+            tests/kalman_ou_ii/run_tests.sh \
+            tests/kalman_ou_iii/run_tests.sh
+
+      - name: Download unchanged-gate simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern 'sim-data-files.zip' \
+            --clobber
+          unzip -o sim-data-files.zip -d "${{ github.workspace }}/plots/kalman_ou_ii"
+          unzip -o sim-data-files.zip -d "${{ github.workspace }}/plots/kalman_ou_iii"
+
+      - name: Install focused validation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make libeigen3-dev
+
+      - name: Run unchanged OU-II quality gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd tests/kalman_ou_ii
+          make build
+          cp "${{ github.workspace }}"/plots/kalman_ou_ii/*.csv .
+          bash ./run_tests.sh
+
+      - name: Run unchanged OU-III quality gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd tests/kalman_ou_iii
+          make build
+          cp "${{ github.workspace }}"/plots/kalman_ou_iii/*.csv .
+          bash ./run_tests.sh
+
+      - name: Publish one clean PR2 commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          git config user.name 'OpenAI'
+          git config user.email 'noreply@openai.com'
+          git reset --soft origin/main
+          git add -A
+          git commit -m 'Fix OU covariance semantics and sample-rate invariance'
+          git push --force origin HEAD:agent/pr2-ou-core-covariance-semantics
