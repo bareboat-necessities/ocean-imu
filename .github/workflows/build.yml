@@ -1,4 +1,4 @@
-name: PR2 OU gyro-scale sweep
+name: PR2 targeted gyro-scale sweep
 
 on:
   push:
@@ -14,44 +14,18 @@ env:
   DATA_RELEASE: v1.1.3
 
 jobs:
-  gyro-scale:
-    runs-on: macos-latest
+  targeted-gyro-scale:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
           - family: OU_II
             subdir: kalman_ou_ii
-            label: scale_1p0
-            gyro_scale: "1.0"
-          - family: OU_II
-            subdir: kalman_ou_ii
-            label: scale_0p3
-            gyro_scale: "0.3"
-          - family: OU_II
-            subdir: kalman_ou_ii
-            label: scale_0p1
-            gyro_scale: "0.1"
-          - family: OU_II
-            subdir: kalman_ou_ii
-            label: scale_density
-            gyro_scale: "0.070710678"
+            target_glob: "*jonswap_H4.000*.csv"
           - family: OU_III
             subdir: kalman_ou_iii
-            label: scale_1p0
-            gyro_scale: "1.0"
-          - family: OU_III
-            subdir: kalman_ou_iii
-            label: scale_0p3
-            gyro_scale: "0.3"
-          - family: OU_III
-            subdir: kalman_ou_iii
-            label: scale_0p1
-            gyro_scale: "0.1"
-          - family: OU_III
-            subdir: kalman_ou_iii
-            label: scale_density
-            gyro_scale: "0.070710678"
+            target_glob: "*jonswap_H0.270*.csv"
 
     steps:
       - name: Checkout experiment branch
@@ -59,6 +33,8 @@ jobs:
 
       - name: Add experimental gyro-scale override
         shell: bash
+        env:
+          SUBDIR: ${{ matrix.subdir }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -77,54 +53,64 @@ jobs:
               raise RuntimeError(f"unexpected override location in {path}")
           path.write_text(text.replace(needle, replacement))
           PY
-        env:
-          SUBDIR: ${{ matrix.subdir }}
 
-      - name: Download simulation data
+      - name: Download only the targeted regression dataset
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUBDIR: ${{ matrix.subdir }}
+          TARGET_GLOB: ${{ matrix.target_glob }}
         run: |
+          set -euo pipefail
           gh release download "$DATA_RELEASE" \
             --repo bareboat-necessities/oceanography-waves-lib \
             --pattern "sim-data-files.zip" \
             --clobber
-          mkdir -p "plots/${{ matrix.subdir }}"
-          unzip -o sim-data-files.zip -d "plots/${{ matrix.subdir }}"
-          cp "plots/${{ matrix.subdir }}"/*.csv "tests/${{ matrix.subdir }}/"
+          rm -f "tests/$SUBDIR"/wave_data_*.csv
+          mkdir -p /tmp/sim-data
+          unzip -o sim-data-files.zip -d /tmp/sim-data
+          mapfile -t matches < <(find /tmp/sim-data -type f -name "$TARGET_GLOB" | sort)
+          test "${#matches[@]}" -eq 1
+          cp "${matches[0]}" "tests/$SUBDIR/"
+          ls -l "tests/$SUBDIR"/wave_data_*.csv
 
-      - name: Install Eigen
-        run: brew install eigen
-
-      - name: Build ${{ matrix.family }}
-        shell: bash
+      - name: Install build dependencies
         run: |
-          make -C "tests/${{ matrix.subdir }}" \
-            EIGEN_DIR="$(brew --prefix eigen)/include/eigen3" build
+          sudo apt-get update
+          sudo apt-get install -y g++ make libeigen3-dev
 
-      - name: Run unchanged quality gate
+      - name: Build ${{ matrix.family }} once
+        run: make -C "tests/${{ matrix.subdir }}" build
+
+      - name: Run targeted unchanged gate at four gyro scales
         shell: bash
         env:
-          OU_GYRO_SCALE: ${{ matrix.gyro_scale }}
+          SUBDIR: ${{ matrix.subdir }}
+          FAMILY: ${{ matrix.family }}
           W3D_COLLECT_ALL_GATES: "1"
         run: |
-          set +e
-          log="/tmp/${{ matrix.family }}_${{ matrix.label }}.log"
-          (
-            cd "tests/${{ matrix.subdir }}"
-            chmod +x run_tests.sh
-            ./run_tests.sh
-          ) >"$log" 2>&1
-          status=$?
-          cat "$log"
-          printf '%s\n' "$status" > "/tmp/${{ matrix.family }}_${{ matrix.label }}.status"
-          exit "$status"
+          set -u
+          mkdir -p "/tmp/results/$FAMILY"
+          overall=0
+          for scale in 1.0 0.3 0.1 0.070710678; do
+            label="${scale//./p}"
+            log="/tmp/results/$FAMILY/gyro_scale_${label}.log"
+            (
+              cd "tests/$SUBDIR"
+              OU_GYRO_SCALE="$scale" ./run_tests.sh
+            ) >"$log" 2>&1
+            status=$?
+            printf '%s\n' "$status" > "/tmp/results/$FAMILY/gyro_scale_${label}.status"
+            echo "===== $FAMILY gyro_scale=$scale status=$status ====="
+            grep -E 'Processing|XYZ RMS|Angles RMS|Bias error RMS \(acc|Bias error RMS \(% of max TRUE bias\) \(acc\)|QUALITY_GATE' "$log" || true
+            if [ "$status" -eq 0 ]; then overall=1; fi
+          done
+          echo "ANY_CANDIDATE_PASSED=$overall"
+          exit 0
 
-      - name: Upload sweep result
-        if: always()
+      - name: Upload targeted sweep results
         uses: actions/upload-artifact@v6
         with:
-          name: gyro-sweep-${{ matrix.family }}-${{ matrix.label }}
-          path: |
-            /tmp/${{ matrix.family }}_${{ matrix.label }}.log
-            /tmp/${{ matrix.family }}_${{ matrix.label }}.status
-          if-no-files-found: warn
+          name: targeted-gyro-sweep-${{ matrix.family }}
+          path: /tmp/results/${{ matrix.family }}/*
+          if-no-files-found: error
