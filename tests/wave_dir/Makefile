@@ -17,7 +17,7 @@ else
     CXXFLAGS = $(BASEFLAGS)
 endif
 
-TARGETS = wave-direction-test wave-direction-iq-test
+TARGETS = wave-direction-test wave-direction-iq-test wave-encounter-test
 
 all: build test
 build: $(TARGETS)
@@ -28,6 +28,9 @@ wave-direction-test: wave-direction-test.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 wave-direction-iq-test: wave-direction-iq-test.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+wave-encounter-test: wave-encounter-test.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
