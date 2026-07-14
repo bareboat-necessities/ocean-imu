@@ -80,7 +80,7 @@ AxisRun run_axis(float angle_deg,
 
   return {
       filter.getAxisDegrees(),
-      filter.getLastStableConfidence(),
+      filter.getConfidence(),
       filter.getAxisUncertaintyDegrees(),
       filter.getLastStableLinearity(),
       filter.getAmplitude()
@@ -161,8 +161,10 @@ void test_circular_motion_has_no_axis() {
           "circular horizontal motion was misreported as an axis");
   require(filter.getConfidence() < 20.0f,
           "circular horizontal motion retained axis confidence");
-  require(filter.getLastStableConfidence() < 20.0f,
-          "circular horizontal motion produced a stable axis");
+  require(filter.getAxis().isZero(1e-7f),
+          "circular horizontal motion exposed a usable axis");
+  require(filter.getHistoricalStableConfidence() < 20.0f,
+          "circular horizontal motion created a stable axis history");
 }
 
 void test_current_confidence_withdraws_stale_axis() {
@@ -184,12 +186,14 @@ void test_current_confidence_withdraws_stale_axis() {
   sense_config.min_horizontal_rms = 0.03f;
   sense_config.min_vertical_slope_rms = 0.03f;
   sense_config.min_axis_confidence = 20.0f;
+  sense_config.convention_sign = -1.0f;
   WaveDirectionDetector<float> sense_filter(sense_config);
 
   const int line_samples = int(35.0f / dt);
   for (int i = 0; i < line_samples; ++i) {
     const float phase = omega * float(i) * dt;
-    const float along = 0.65f * std::cos(phase);
+    // Linear deep-water phase relation for positive-axis propagation.
+    const float along = -0.65f * std::cos(phase);
     const float vertical_up = 0.50f * std::sin(phase);
     const float ax = physical_axis.x() * along;
     const float ay = physical_axis.y() * along;
@@ -203,12 +207,13 @@ void test_current_confidence_withdraws_stale_axis() {
 
   require(axis_filter.getConfidence() > 100.0f,
           "linear wave did not establish current axis confidence");
-  require(axis_filter.getLastStableConfidence() > 100.0f,
-          "linear wave did not establish stable axis confidence");
+  require(axis_filter.getHistoricalStableConfidence() > 100.0f,
+          "linear wave did not establish stable axis history");
   require(sense_filter.getState() == FORWARD,
           "linear wave sense did not converge before transition");
 
-  const float historical_confidence = axis_filter.getLastStableConfidence();
+  const float historical_confidence =
+      axis_filter.getHistoricalStableConfidence();
   const int circular_samples = int(25.0f / dt);
   for (int i = 0; i < circular_samples; ++i) {
     const float phase = omega * float(i + line_samples) * dt;
@@ -225,10 +230,13 @@ void test_current_confidence_withdraws_stale_axis() {
 
   require(axis_filter.getConfidence() < 20.0f,
           "current confidence did not reject non-axial motion");
-  require(axis_filter.getLastStableConfidence() >= historical_confidence * 0.95f,
-          "test did not preserve a deliberately stale stable confidence");
+  require(axis_filter.getAxis().isZero(1e-7f),
+          "invalid current motion still exposed a usable axis");
+  require(axis_filter.getHistoricalStableConfidence() >=
+              historical_confidence * 0.95f,
+          "test did not preserve deliberately stale axis history");
   require(sense_filter.getState() == UNCERTAIN,
-          "sense detector was not withdrawn by current axis confidence");
+          "sense detector was not withdrawn with current axis validity");
 }
 
 }  // namespace
