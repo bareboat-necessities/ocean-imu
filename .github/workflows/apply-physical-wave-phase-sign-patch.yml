@@ -1,0 +1,39 @@
+name: apply-physical-wave-phase-sign-patch
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' && github.head_ref == 'agent/apparent-wave-propagation-direction' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/apparent-wave-propagation-direction
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Apply physical phase-sign convention
+        run: python3 tools/apply_physical_wave_phase_sign_patch.py
+
+      - name: Commit source and tests only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            src/wave_dir/WaveDirectionDetector.h \
+            tests/wave_dir/wave-direction-test.cpp \
+            tests/wave_dir/wave-direction-iq-test.cpp
+          git diff --cached --check
+          git commit -m "Correct physical wave orbital phase sign [skip ci]"
+          git push origin HEAD:refs/heads/agent/apparent-wave-propagation-direction
