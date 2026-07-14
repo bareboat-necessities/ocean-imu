@@ -241,6 +241,9 @@ template<typename MekfPtr, typename EnterColdFn, typename ApplyTuneFn>
 inline void finalizeInitialization(MekfPtr& mekf, EnterColdFn&& enterCold, ApplyTuneFn&& applyTune) {
     enterCold();
     applyTune();
+    // Initial tuning changes the stationary OU model before the linear block is
+    // activated. Seed the matching posterior covariance once at initialization.
+    mekf->reset_aw_covariance_to_stationary();
     mekf->set_exact_att_bias_Qd(true);
 }
 

@@ -81,7 +81,7 @@ class Kalman3D_Wave_OU_II {
     const MeasDiag3& lastAccDiag() const noexcept { return last_acc_diag_; }
     const MeasDiag3& lastMagDiag() const noexcept { return last_mag_diag_; }
 
-    Kalman3D_Wave_OU_II(Vector3 const& sigma_a, Vector3 const& sigma_g, Vector3 const& sigma_m,
+    Kalman3D_Wave_OU_II(Vector3 const& sigma_a, Vector3 const& gyro_noise_density_rad_sqrt_s, Vector3 const& sigma_m,
                   T Pq0 = T(5e-4), T Pb0 = T(1e-6), T b0 = T(1e-11), T R_p0_noise_var = T(1.5), T R_v0_noise_var = T(0.3),
                   T gravity_magnitude = T(STD_GRAVITY));
 
@@ -188,7 +188,10 @@ class Kalman3D_Wave_OU_II {
                 Pext.template block<3,9>(OFF_BA, OFF_V).setZero();
             }
             // keep cadence sane
-            pseudo_update_counter_ = 0;
+            pseudo_update_elapsed_s_ = T(0);
+        } else if (!linear_block_enabled_ && on) {
+            reset_aw_covariance_to_stationary();
+            pseudo_update_elapsed_s_ = T(0);
         }
         linear_block_enabled_ = on;
     }
@@ -243,12 +246,19 @@ class Kalman3D_Wave_OU_II {
         tau_aw = std::max(T(1e-3), tau_seconds);
     }
 
+    void set_pseudo_update_period_s(T period_s) {
+        if (!(period_s > T(0)) || !std::isfinite(period_s)) return;
+        pseudo_update_period_s_ = std::max(T(1e-4), period_s);
+        pseudo_update_elapsed_s_ = std::fmod(pseudo_update_elapsed_s_, pseudo_update_period_s_);
+    }
+
+    [[nodiscard]] T get_pseudo_update_period_s() const { return pseudo_update_period_s_; }
+
     // OU stationary std [m/s²] for a_w (per axis)
     void set_aw_stationary_std(const Vector3& std_aw) {
-        Sigma_aw_stat = std_aw.array().square().matrix().asDiagonal();
-        has_cross_cov_a_xy = false;
-        Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;  // keep consistent
-        symmetrize_Pext_();
+        const Vector3 s = std_aw.cwiseAbs();
+        Sigma_aw_stat = s.array().square().matrix().asDiagonal();
+        aw_process_correlated_ = false;
     }
 
     // Accept a full 3×3 SPD stationary covariance for a_w.
@@ -267,40 +277,42 @@ class Kalman3D_Wave_OU_II {
     //     surface moves upward (negative az), horizontal acceleration is forward.
     //   • Positive rho_corr fits ENU (z up).
     //   • The resulting covariance is projected to SPD for numerical stability.
-    //   • Also reseeds Pext(OFF_AW, OFF_AW) to keep filter covariance consistent.
     void set_aw_stationary_corr_std(const Vector3& std_aw, T rho_xz_corr = T(-0.65), T rho_yz_corr = T(-0.65)) {
-        // Clamp correlation for numerical safety
         rho_xz_corr = std::max(T(-0.999), std::min(rho_xz_corr, T(0.999)));
         rho_yz_corr = std::max(T(-0.999), std::min(rho_yz_corr, T(0.999)));
 
-        const T sx = std::max(T(1e-9), std_aw.x());
-        const T sy = std::max(T(1e-9), std_aw.y());
-        const T sz = std::max(T(1e-9), std_aw.z());
+        const T sx = std::max(T(1e-9), std::abs(std_aw.x()));
+        const T sy = std::max(T(1e-9), std::abs(std_aw.y()));
+        const T sz = std::max(T(1e-9), std::abs(std_aw.z()));
 
-        // Construct correlated covariance (symmetric)
         Matrix3 S;
         S <<
-            sx*sx,  T(0),             rho_xz_corr*sx*sz,
-            T(0),   sy*sy,            rho_yz_corr*sy*sz,
+            sx*sx, T(0), rho_xz_corr*sx*sz,
+            T(0), sy*sy, rho_yz_corr*sy*sz,
             rho_xz_corr*sx*sz, rho_yz_corr*sy*sz, sz*sz;
-
-        // Symmetrize & project to SPD for robustness
         S = T(0.5) * (S + S.transpose());
-        ocean_imu::kalman::ou_detail::project_psd_ou_ii<T,3>(S, T(1e-12));
+        ocean_imu::kalman::ou_detail::regularize_psd_if_needed<T,3>(S);
         Sigma_aw_stat = S;
+        aw_process_correlated_ = true;
+    }
 
-        // Reseed Pext a_w block with new stationary covariance
-        if (!has_cross_cov_a_xy) {
-            Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
-        } else {
-            // Otherwise, softly merge (blend) to avoid discontinuity
-            Pext.template block<3,3>(OFF_AW, OFF_AW) =
-                T(0.8) * Pext.template block<3,3>(OFF_AW, OFF_AW)
-              + T(0.2) * Sigma_aw_stat;
+    void reset_aw_covariance_to_stationary() {
+        // Hard reset: discard cross-covariances involving the OU acceleration.
+        for (int i = 0; i < NX; ++i) {
+            if (i < OFF_AW || i >= OFF_AW + 3) {
+                Pext.template block<3,1>(OFF_AW, i).setZero();
+                Pext.template block<1,3>(i, OFF_AW).setZero();
+            }
         }
-        // keep global symmetry
+        Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
         symmetrize_Pext_();
-        has_cross_cov_a_xy = true;
+    }
+
+    // Synchronize only the a_w marginal with the stationary process model while
+    // preserving cross-covariances learned by the running filter.
+    void synchronize_aw_covariance_to_stationary() {
+        Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
+        symmetrize_Pext_();
     }
 
     // Covariances for periodic position-zero pseudo-measurement from std dev
@@ -383,6 +395,17 @@ class Kalman3D_Wave_OU_II {
     // Set accelerometer bias temperature coefficient k_a  [m/s^2 per °C] per axis.
     // Model: b_a(tempC) = b_a0 + k_a * (tempC - tempC_ref)
     void set_accel_bias_temp_coeff(const Vector3& ka_per_degC) { k_a_ = ka_per_degC; }
+
+    void set_gyro_noise_density_rad_sqrt_s(const Vector3& density) {
+        const Vector3 d = density.cwiseAbs();
+        Qbase.template topLeftCorner<3,3>() = d.array().square().matrix().asDiagonal();
+    }
+
+    [[nodiscard]] static Vector3 gyro_noise_density_from_sample_std(
+        const Vector3& sample_std_rad_s, T sample_period_s) {
+        if (!(sample_period_s > T(0)) || !std::isfinite(sample_period_s)) return Vector3::Zero();
+        return (sample_std_rad_s.cwiseAbs() * std::sqrt(sample_period_s)).eval();
+    }
 
     // Toggle exact/structured Qd for the attitude+gyro-bias block.
     void set_exact_att_bias_Qd(bool on) { use_exact_att_bias_Qd_ = on; }
@@ -551,13 +574,13 @@ class Kalman3D_Wave_OU_II {
     T tau_aw = T(2.1);            // correlation time [s], tune 1–3.5 s for sea states
     Matrix3 Sigma_aw_stat = Matrix3::Identity() * T(2.2*2.2); // stationary covariance of a_w [ (m/s^2)^2 ]
 
-    int pseudo_update_counter_ = 0;   // counts time_update calls
-    static constexpr int PSEUDO_UPDATE_PERIOD = 3; // every N-th update
+    T pseudo_update_elapsed_s_ = T(0);
+    T pseudo_update_period_s_ = T(0.015);
 
     bool linear_block_enabled_ = true;
     bool acc_bias_updates_enabled_ = true;
 
-    bool has_cross_cov_a_xy = false;
+    bool aw_process_correlated_ = false;
     bool use_exact_att_bias_Qd_ = true;
 
     // IMU lever-arm (off-CoG) support
@@ -685,7 +708,7 @@ class Kalman3D_Wave_OU_II {
     Matrix3 skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const;
     Vector3 accelerometer_measurement_func(T tempC) const;
 
-    static MatrixBaseN initialize_Q(Vector3 sigma_g, T b0);
+    static MatrixBaseN initialize_Q(Vector3 gyro_noise_density_rad_sqrt_s, T b0);
 
     // Inject the current local attitude-error state into qref, then clear the attitude-error slot in xext.
     void applyQuaternionCorrectionFromErrorState();
@@ -1040,12 +1063,12 @@ class Kalman3D_Wave_OU_II {
 template <typename T, bool with_gyro_bias, bool with_accel_bias>
 Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::Kalman3D_Wave_OU_II(
     Vector3 const& sigma_a,
-    Vector3 const& sigma_g,
+    Vector3 const& gyro_noise_density_rad_sqrt_s,
     Vector3 const& sigma_m,
     T Pq0, T Pb0, T b0, T R_p0_noise_var, T R_v0_noise_var, T gravity_magnitude)
   : gravity_magnitude_(gravity_magnitude),
     Rmag(sigma_m.array().square().matrix().asDiagonal()),
-    Qbase(initialize_Q(sigma_g, b0)),
+    Qbase(initialize_Q(gyro_noise_density_rad_sqrt_s, b0)),
     Racc(sigma_a.array().square().matrix().asDiagonal())
 {
     qref.setIdentity();  // quaternion init
@@ -1133,13 +1156,13 @@ Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::Kalman3D_Wave_OU_II(
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
 typename Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::MatrixBaseN
 Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_Q(
-              typename Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::Vector3 sigma_g, T b0) {
+              typename Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::Vector3 gyro_noise_density_rad_sqrt_s, T b0) {
     MatrixBaseN Q; Q.setZero();
     if constexpr (with_gyro_bias) {
-        Q.template topLeftCorner<3,3>() = sigma_g.array().square().matrix().asDiagonal(); // gyro noise covariance driving attitude error
+        Q.template topLeftCorner<3,3>() = gyro_noise_density_rad_sqrt_s.array().square().matrix().asDiagonal(); // gyro noise covariance driving attitude error
         Q.template bottomRightCorner<3,3>() = Matrix3::Identity() * b0;                   // bias RW
     } else {
-        Q = sigma_g.array().square().matrix().asDiagonal();
+        Q = gyro_noise_density_rad_sqrt_s.array().square().matrix().asDiagonal();
     }
     return Q;
 }
@@ -1147,23 +1170,15 @@ Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_Q(
 template <typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::set_aw_stationary_cov_full(const Matrix3& Sigma_in)
 {
-    // Symmetrize + very light SPD projection
     Matrix3 S = T(0.5) * (Sigma_in + Sigma_in.transpose());
-    Eigen::SelfAdjointEigenSolver<Matrix3> es(S);
-    if (es.info() == Eigen::Success) {
-        auto d = es.eigenvalues().cwiseMax(T(1e-12));
-        Sigma_aw_stat = es.eigenvectors() * d.asDiagonal() * es.eigenvectors().transpose();
-    } else {
-        // Fallback: keep only diagonal, clamp to tiny+
-        Matrix3 D = S.diagonal().cwiseMax(T(1e-12)).asDiagonal();
-        Sigma_aw_stat = D;
-    }
-    // Reseed/merge Pext a_w block
-    Pext.template block<3,3>(OFF_AW, OFF_AW) =
-          T(0.2) * Pext.template block<3,3>(OFF_AW, OFF_AW)
-        + T(0.8) * Sigma_aw_stat;
-    symmetrize_Pext_();
-    has_cross_cov_a_xy = true;
+    ocean_imu::kalman::ou_detail::regularize_psd_if_needed<T,3>(S);
+    Sigma_aw_stat = S;
+
+    Matrix3 off = S;
+    off.diagonal().setZero();
+    const T scale = std::max(T(1), S.cwiseAbs().maxCoeff());
+    aw_process_correlated_ = off.cwiseAbs().maxCoeff()
+        > T(64) * std::numeric_limits<T>::epsilon() * scale;
 }
 
 // Initialization from accelerometer + magnetometer
@@ -1589,7 +1604,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
         }
 
         // Build Q_LL
-        if (has_cross_cov_a_xy) {
+        if (aw_process_correlated_) {
             // Correlated vector-OU with shared tau: Q_LL = (Σ ⊗ Qaxis_unit)
             // written directly in group-first order: [v(3), p(3), a(3)].
             Eigen::Matrix<T,3,3> Qaxis_unit;
@@ -1609,7 +1624,6 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
                 }
             }
             Q_LL = T(0.5) * (Q_LL + Q_LL.transpose());
-            ocean_imu::kalman::ou_detail::project_psd_ou_ii<T,9>(Q_LL, T(1e-12));
         } else {
             // Independent axes (no cross-correlation) — per-axis Qd on the diagonal
             const int idx[3] = {0,3,6};
@@ -1680,25 +1694,22 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
 
     symmetrize_Pext_();   // Symmetry hygiene
 
-    // Periodic position-zero + velocity-zero pseudo-measurement drift correction
-    if (linear_block_enabled_) {
-        if (++pseudo_update_counter_ >= PSEUDO_UPDATE_PERIOD) {
-            Vector3 sigma_p0;
-            sigma_p0.x() = std::sqrt(std::max(T(0), R_p0(0,0)));
-            sigma_p0.y() = std::sqrt(std::max(T(0), R_p0(1,1)));
-            sigma_p0.z() = std::sqrt(std::max(T(0), R_p0(2,2)));
+    if (linear_block_enabled_ &&
+        ocean_imu::kalman::ou_detail::periodic_update_due(Ts, pseudo_update_period_s_, pseudo_update_elapsed_s_)) {
+        Vector3 sigma_p0;
+        sigma_p0.x() = std::sqrt(std::max(T(0), R_p0(0,0)));
+        sigma_p0.y() = std::sqrt(std::max(T(0), R_p0(1,1)));
+        sigma_p0.z() = std::sqrt(std::max(T(0), R_p0(2,2)));
 
-            Vector3 sigma_v0;
-            sigma_v0.x() = std::sqrt(std::max(T(0), R_v0(0,0)));
-            sigma_v0.y() = std::sqrt(std::max(T(0), R_v0(1,1)));
-            sigma_v0.z() = std::sqrt(std::max(T(0), R_v0(2,2)));
+        Vector3 sigma_v0;
+        sigma_v0.x() = std::sqrt(std::max(T(0), R_v0(0,0)));
+        sigma_v0.y() = std::sqrt(std::max(T(0), R_v0(1,1)));
+        sigma_v0.z() = std::sqrt(std::max(T(0), R_v0(2,2)));
 
-            measurement_update_position_pseudo(Vector3::Zero(), sigma_p0);
-            measurement_update_velocity_pseudo(Vector3::Zero(), sigma_v0);
-            pseudo_update_counter_ = 0;
-        }
-    } else {
-        pseudo_update_counter_ = 0;
+        measurement_update_position_pseudo(Vector3::Zero(), sigma_p0);
+        measurement_update_velocity_pseudo(Vector3::Zero(), sigma_v0);
+    } else if (!linear_block_enabled_) {
+        pseudo_update_elapsed_s_ = T(0);
     }
 }
 
