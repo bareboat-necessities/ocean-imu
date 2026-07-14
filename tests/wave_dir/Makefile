@@ -17,15 +17,18 @@ else
     CXXFLAGS = $(BASEFLAGS)
 endif
 
-TARGET = wave-direction-test
+TARGETS = wave-direction-test wave-direction-iq-test
 
 all: build test
-build: $(TARGET)
-test: $(TARGET)
+build: $(TARGETS)
+test: $(TARGETS)
 	./run_tests.sh
 
-$(TARGET): wave-direction-test.cpp
+wave-direction-test: wave-direction-test.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+wave-direction-iq-test: wave-direction-iq-test.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
-	rm -f $(TARGET) $(TARGET).exe *.o
+	rm -f $(TARGETS) $(addsuffix .exe,$(TARGETS)) *.o
