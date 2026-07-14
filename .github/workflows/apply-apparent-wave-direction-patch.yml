@@ -1,9 +1,9 @@
 name: apply-apparent-wave-direction-patch
 
 on:
-  push:
-    branches:
-      - agent/apparent-wave-propagation-direction
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   apply:
-    if: ${{ github.actor != 'github-actions[bot]' }}
+    if: ${{ github.actor != 'github-actions[bot]' && github.head_ref == 'agent/apparent-wave-propagation-direction' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout branch
+      - name: Checkout feature branch
         uses: actions/checkout@v6
         with:
           ref: agent/apparent-wave-propagation-direction
