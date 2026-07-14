@@ -8,7 +8,7 @@
     +Y: starboard
     +Z: up
 
-  The input quaternion maps BODY to WORLD/NED.  The returned acceleration is
+  The input quaternion maps BODY to WORLD/NED. The returned acceleration is
   inertial acceleration, not specific force; gravity is restored in NED before
   resolving the vector in the leveled heading frame.
 */
@@ -20,14 +20,15 @@
 #endif
 
 #include <cmath>
+#include <limits>
 
 namespace wave_direction {
 
 template <typename Real>
 struct HeadingFrameAcceleration {
-  Real forward_ms2 = Real(0);
-  Real starboard_ms2 = Real(0);
-  Real up_ms2 = Real(0);
+  Real forward_ms2 = std::numeric_limits<Real>::quiet_NaN();
+  Real starboard_ms2 = std::numeric_limits<Real>::quiet_NaN();
+  Real up_ms2 = std::numeric_limits<Real>::quiet_NaN();
   bool heading_valid = false;
 };
 
@@ -40,12 +41,10 @@ inline HeadingFrameAcceleration<Real> heading_frame_acceleration(
 
   Eigen::Quaternion<Real> q = q_body_to_world_ned;
   const Real q_norm = q.norm();
-  if (!(q_norm > Real(1e-8)) || !std::isfinite(static_cast<double>(q_norm)) ||
+  if (!(q_norm > Real(1e-8)) ||
+      !std::isfinite(static_cast<double>(q_norm)) ||
       !specific_force_body.allFinite() ||
       !std::isfinite(static_cast<double>(gravity_ms2))) {
-    result.forward_ms2 = specific_force_body.x();
-    result.starboard_ms2 = specific_force_body.y();
-    result.up_ms2 = -(specific_force_body.z() + gravity_ms2);
     return result;
   }
   q.normalize();
@@ -55,16 +54,13 @@ inline HeadingFrameAcceleration<Real> heading_frame_acceleration(
   const Eigen::Matrix<Real, 3, 1> acceleration_world_ned =
       q * specific_force_body + gravity_world_ned;
 
-  // Project the physical bow axis into the NED horizontal plane.  This keeps
+  // Project the physical bow axis into the NED horizontal plane. This keeps
   // the output aligned with heading while removing roll and pitch.
   const Eigen::Matrix<Real, 3, 1> bow_world =
       q * Eigen::Matrix<Real, 3, 1>(Real(1), Real(0), Real(0));
   const Real heading_norm = std::hypot(bow_world.x(), bow_world.y());
   if (!(heading_norm > Real(1e-6)) ||
       !std::isfinite(static_cast<double>(heading_norm))) {
-    result.forward_ms2 = specific_force_body.x();
-    result.starboard_ms2 = specific_force_body.y();
-    result.up_ms2 = -(specific_force_body.z() + gravity_ms2);
     return result;
   }
 
