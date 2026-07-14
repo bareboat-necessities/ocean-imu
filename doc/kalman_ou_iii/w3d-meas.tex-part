@@ -1,223 +1,99 @@
 \section{Measurement Model}
 \label{sec:measurement_model}
 
-The filter employs three complementary measurement channels:
-the accelerometer, the magnetometer, and a zero-valued
-pseudo-measurement on the integral displacement~$\vct{S}$.
-The gyroscope is treated as a propagation input for the attitude dynamics.
-Each measurement channel provides an independent correction pathway for attitude
-and translational drift.
+The filter uses accelerometer and magnetometer corrections together with a
+zero-valued pseudo-measurement on the integral displacement $\vct{S}$.  The
+gyroscope is a propagation input.
 
-\subsection{Accelerometer Model}
-
-The specific force measured in the body frame is modeled as
+\subsection{Accelerometer model}
+The body-frame specific-force measurement is
 \begin{equation}
+\vct{f}_b=\Rot_{wb}(\vct{a}_w-\vct{g}_w)+\vct{b}_a(T)+\vct{n}_a,
 \label{eq:acc-meas}
-\vct{f}_b
-= \Rot_{wb}\,(\vct{a}_w - \vct{g}_w)
-  + \vct{b}_a(T)
-  + \vct{n}_a,
 \end{equation}
-where
-\begin{itemize}
-  \item $\Rot_{wb}$ is the world-to-body rotation matrix
-        corresponding to quaternion~$q$,
-  \item $\vct{g}_w = [0,\,0,\,g]^\top$ is the gravity vector
-        in world coordinates ($g=9.80665~\mathrm{m/s^2}$),
-  \item $\vct{a}_w$ is the latent OU world acceleration,
-  \item $\vct{b}_a(T) = \vct{b}_{a0}
-        + \vct{k}_a\,(T - T_\mathrm{ref})$
-        represents the temperature-dependent accelerometer bias with measured IMU chip temperature $T$,
-  \item $\vct{n}_a \sim \mathcal{N}(\vct{0},\,\mat{R}_a)$
-        is white measurement noise.
-\end{itemize}
-
-The corresponding Jacobians, consistent with the
-left-multiplicative attitude convention, are
+where $\vct{g}_w=[0,0,g]^{\top}$ in NED,
+$\vct{n}_a\sim\mathcal{N}(0,\mat{R}_a)$, and
+\[
+\vct{b}_a(T)=\vct{b}_{a0}+\vct{k}_a(T-T_{\mathrm{ref}}).
+\]
+For the left-multiplicative convention,
 \begin{align}
-\frac{\partial \vct{f}_b}{\partial \vct{\theta}}
-  &= -\Skew{\hat{\vct{f}}_{\mathrm{cog},b}}, &
-\frac{\partial \vct{f}_b}{\partial \vct{a}_w}
-  &= \Rot_{wb}, &
-\frac{\partial \vct{f}_b}{\partial \vct{b}_a}
-  &= \mat{I}_3,
+\frac{\partial\vct{f}_b}{\partial\delta\vct{\theta}}
+&=-\Skew{\hat{\vct{f}}_{\mathrm{cog},b}},&
+\frac{\partial\vct{f}_b}{\partial\vct{a}_w}&=\Rot_{wb},&
+\frac{\partial\vct{f}_b}{\partial\vct{b}_a}&=\Id,
 \end{align}
 where
-\(
-\hat{\vct{f}}_{\mathrm{cog},b}
-=\Rot_{wb}\,(\hat{\vct{a}}_w-\vct{g}_w)
-\)
-is the predicted center-of-gravity specific force
-(excluding the lever-arm term).
+$\hat{\vct{f}}_{\mathrm{cog},b}=\Rot_{wb}(\hat{\vct{a}}_w-\vct{g}_w)$.
+Thus the accelerometer update couples attitude, latent world acceleration, and
+accelerometer bias through one rank--3 correction.
 
-The accelerometer update corrects both attitude and the OU acceleration
-state, maintaining the physical coupling between tilt, gravity alignment,
-and translational excitation.
-
-\iffalse
-\paragraph{Attitude-only / marginalized-acceleration mode.}
-When the linear navigation block is disabled (i.e., \(\vct{a}_w\) is not explicitly
-propagated as a state), the filter treats the latent excitation as an
-\emph{unmodeled input} and inflates the accelerometer innovation covariance
-by the stationary OU acceleration covariance:
+\subsection{Magnetometer model}
+With calibrated world reference $\vct{B}_w$,
 \begin{equation}
-\label{eq:acc-marginal-aw}
-\mat{S}_a
-\;\leftarrow\;
-\mat{S}_a
-+
-\Rot_{wb}\,\Sigma_{a_w}^{\mathrm{stat}}\,\Rot_{wb}^{\top},
-\end{equation}
-which is equivalent to marginalizing \(\vct{a}_w\) in the measurement update.
-\fi
-
-\subsection{Magnetometer Model}
-
-The predicted magnetic field in the body frame is
-\begin{equation}
+\vct{m}_b=\Rot_{wb}\vct{B}_w+\vct{n}_m,
+\qquad
+\vct{n}_m\sim\mathcal{N}(0,\mat{R}_m),
 \label{eq:mag-meas}
-\vct{m}_b = \Rot_{wb}\,\vct{B}_w + \vct{n}_m,
 \end{equation}
-where $\vct{B}_w$ is the calibrated magnetic reference vector
-expressed in world coordinates (usually defined by local
-declination~$D$ and inclination~$I$), and
-$\vct{n}_m \sim \mathcal{N}(\vct{0},\,\mat{R}_m)$
-is magnetometer noise.
-
-Linearization yields the attitude Jacobian using matrix skew operator
+and
 \begin{equation}
-\frac{\partial \vct{m}_b}{\partial \vct{\theta}}
-  = -\Skew{m_b}.
+\frac{\partial\vct{m}_b}{\partial\delta\vct{\theta}}
+=-\Skew{\hat{\vct{m}}_b}.
 \end{equation}
 
-\iffalse
-The predicted magnetic field in the body frame is
+\subsection{Integral pseudo-measurement}
+The drift-control channel is
 \begin{equation}
-\label{eq:mag-meas}
-\vct{m}_b
-=
-\Rot_{wb}\,\vct{B}_w
-+ \vct{b}_m
-+ \vct{n}_m,
-\end{equation}
-where $\vct{B}_w$ is the calibrated magnetic reference vector
-expressed in world coordinates (usually defined by local
-declination~$D$ and inclination~$I$), \(\vct{b}_m\) is an optional
-(estimated) magnetometer bias, and
-$\vct{n}_m \sim \mathcal{N}(\vct{0},\,\mat{R}_m)$
-is magnetometer noise.
-
-Linearization yields the attitude Jacobian using matrix skew operator
-\begin{equation}
-\frac{\partial \vct{m}_b}{\partial \vct{\theta}}
-  = -\Skew{\hat{\vct{m}}_b},
-\end{equation}
-and, when \(\vct{b}_m\) is estimated,
-\(
-\frac{\partial \vct{m}_b}{\partial \vct{b}_m}=\mat{I}_3.
-\)
-
-\paragraph{Implementation note.}
-For robustness when the reference polarity may be ambiguous, the implementation
-applies a dot-product sign check and flips the predicted vector if needed so that
-\(\hat{\vct{m}}_b^{\top}\vct{m}_b \ge 0\) prior to forming the innovation.
-\fi
-
-\subsection{Integral Pseudo-Measurement}
-
-To constrain long-term drift of the triple-integrated position
-state~$\vct{S}$, the filter applies a zero-valued
-pseudo-measurement:
-\begin{equation}
+\vct{z}_S=0=\vct{S}+\vct{n}_S,
+\qquad
+\vct{n}_S\sim\mathcal{N}(0,\mat{R}_S),
 \label{eq:zero-pseudo}
-\vct{z}_S = \vct{0}
-= \vct{S} + \vct{n}_S,
 \end{equation}
-with covariance $\mat{R}_S = \mathrm{diag}(\sigma_{Sx}^2,
-\sigma_{Sy}^2, \sigma_{Sz}^2)$.
-The corresponding measurement Jacobian is simply
+with
 \begin{equation}
-\frac{\partial \vct{z}_S}{\partial \vct{S}} = \mat{I}_3.
+\mat{R}_S=\diag(\sigma_{Sx}^2,\sigma_{Sy}^2,\sigma_{Sz}^2),
+\qquad
+\mat{H}_S=\begin{bmatrix}0&\cdots&\Id_{S}&\cdots&0\end{bmatrix}.
 \end{equation}
+The implementation API is parameterized by the standard-deviation vector
+$\vct{\sigma}_S$ and squares it internally to form $\mat{R}_S$.  Consequently,
+scalar adaptation laws denoted by $R_S$ elsewhere in the paper refer to a
+standard-deviation scale; the Kalman update always uses its squared covariance.
 
-This channel is not tied to a physical sensor: it provides a soft
-regularization that prevents uncontrolled growth of $\vct{S}$ while still
-allowing slow wave-induced motion. In the discrete-time implementation,
-repeated application of~\eqref{eq:zero-pseudo} turns the pure triple integral
-into a \emph{leaky} integral. In linear systems terms, the $S$-mode acquires a
-real negative eigenvalue whose magnitude depends on~$\mat{R}_S$: very
-low-frequency components of the integrated displacement are attenuated, so the
-pseudo-measurement acts as an \emph{effective high-pass} on the $S$-channel.
+This pseudo-measurement is a regularizer, not a physical observation.  Repeated
+application creates a soft leak in the augmented integration chain: smaller
+$\vct{\sigma}_S$ gives stronger low-frequency drift suppression, while larger
+values preserve slower motion at the cost of more drift.
 
-The choice of $\mat{R}_S$ is therefore critical:
-\begin{itemize}
-\item A small $\mat{R}_S$ yields a strong leak (large Kalman gain),
-      effectively pinning $\vct{S}\approx\vct{0}$ and pushing the
-      high-pass corner upward. This aggressively damps double-integral drift
-      but risks over-regularizing very long swell components.
-\item A large $\mat{R}_S$ yields a weak leak (small Kalman gain), so
-      $\vct{S}$ behaves closer to an ideal triple integral. Very slow drift
-      is less suppressed, but the filter exerts less artificial feedback on
-      long-period motion.
-\end{itemize}
-
-In this sense, $\mat{R}_S$ is a \emph{tuning parameter} rather than a
-physical noise level: it sets how strongly the filter treats the auxiliary
-state $\vct{S}$ as ``should be near zero'' versus ``free to wander''. Proper
-choice of $\mat{R}_S$ makes the augmented system effectively detectable:
-although $\vct{S}$ is not directly observable from real sensors, the
-pseudo-measurement provides an artificial observation that stabilizes the
-covariance and prevents drift of integrated displacement.
-
-\subsection{IMU Lever-Arm Model}
-
-In many installations the IMU is not located at the vessel's center of gravity
-but at a fixed lever arm $\vct{r}_b \in \mathbb{R}^3$ expressed in the
-body frame. The accelerometer then measures the specific force at the IMU
-location, which differs from the specific force at the center of gravity
-(CoG) by contributions due to angular motion.
-
-Let $\vct{\omega}_b$ denote the body-frame angular velocity from the
-gyroscope after bias correction, and let $\vct{\alpha}_b$ be an
-estimate of the angular acceleration, obtained by finite differences and
-optionally low-pass filtered. The specific force at the CoG in the body
-frame is
+\paragraph{Time-based cadence.}
+Let $T_S>0$ be the configured pseudo-update period and let $e_k$ be elapsed time
+since the previous application.  At each variable-duration IMU step $h_k$,
 \[
-\vct{f}_{\mathrm{cog},b}
-  = \Rot_{wb}\,(\vct{a}_w - \vct{g}_w),
+\tilde e_{k+1}=e_k+h_k.
 \]
-and the specific force at the IMU becomes
+If $\tilde e_{k+1}<T_S$, no pseudo-update is performed and
+$e_{k+1}=\tilde e_{k+1}$.  Otherwise the update is applied and
 \begin{equation}
+e_{k+1}=\tilde e_{k+1}\bmod T_S.
+\label{eq:pseudo-elapsed-scheduler}
+\end{equation}
+A floating-point tolerance is used at the boundary.  Defining cadence in
+seconds rather than as every $N$ samples makes the regularization rate invariant
+to the IMU sample rate; the same $T_S$ produces the same number of updates per
+unit time at 100, 200, or 400~Hz.
+
+\subsection{IMU lever-arm model}
+If the IMU is displaced from the center of gravity by known body-frame vector
+$\vct{r}_b$, the predicted specific force includes
+\begin{equation}
+\vct{f}_b=\vct{f}_{\mathrm{cog},b}
++\vct{\alpha}_b\times\vct{r}_b
++\vct{\omega}_b\times(\vct{\omega}_b\times\vct{r}_b)
++\vct{b}_a(T)+\vct{n}_a.
 \label{eq:acc-meas-lever}
-\vct{f}_b
-  = \vct{f}_{\mathrm{cog},b}
-    + \vct{\alpha}_b \times \vct{r}_b
-    + \vct{\omega}_b \times
-      \bigl(\vct{\omega}_b \times \vct{r}_b\bigr)
-    + \vct{b}_a(T)
-    + \vct{n}_a.
 \end{equation}
-
-The lever-arm term is purely kinematic and depends only on
-\((\vct{\omega}_b,\vct{\alpha}_b,\vct{r}_b)\), which are treated as known inputs
-rather than estimated states. In the implemented filter, this term is applied
-to the predicted measurement but is not included in the attitude Jacobian
-(i.e., second-order coupling of the lever-arm term through attitude uncertainty
-is neglected). Consequently, the measurement Jacobians with respect to the
-filter state remain identical to those in~\eqref{eq:acc-meas}, with
-\(\Skew{\hat{\vct{f}}_{\mathrm{cog},b}}\) computed from the CoG prediction:
-\begin{align}
-\frac{\partial \vct{f}_b}{\partial \vct{\theta}}
-  &= -\Skew{\hat{\vct{f}}_{\mathrm{cog},b}}, &
-\frac{\partial \vct{f}_b}{\partial \vct{a}_w}
-  &= \Rot_{wb}, &
-\frac{\partial \vct{f}_b}{\partial \vct{b}_a}
-  &= \mat{I}_3,
-\end{align}
-while
-\[
-\frac{\partial \vct{f}_b}{\partial \vct{x}_\text{other}} = \mat{0}
-\]
-for all remaining state components. Setting $\vct{r}_b = \vct{0}$
-recovers the CoG model~\eqref{eq:acc-meas} and disables the lever-arm
-correction.
+The angular-rate and angular-acceleration terms are treated as known inputs.
+The implementation does not include their second-order coupling through
+attitude uncertainty, so the state Jacobians remain those of
+\eqref{eq:acc-meas}.  Setting $\vct{r}_b=0$ disables the correction.

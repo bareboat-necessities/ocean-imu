@@ -1,57 +1,69 @@
 \section{State Definition}
 \label{sec:state}
 
-The extended state vector of our filter combines
-rotational attitude, linear kinematics, and stochastic acceleration subsystems within a
-single nonlinear estimator. It is defined as
+The estimator maintains a nominal quaternion separately from the additive
+navigation and bias states.  With the quaternion written as $q\in\Sph^3$, the
+nominal state is
+\begin{equation}
+\label{eq:nominal-state-vector}
+\vct{x}_{\mathrm{nom}} =
+\begin{bmatrix}
+q &
+\vct{b}_g^{\top} &
+\vct{v}^{\top} &
+\vct{p}^{\top} &
+\vct{S}^{\top} &
+\vct{a}_w^{\top} &
+\vct{b}_a^{\top}
+\end{bmatrix}^{\!\top}.
+\end{equation}
+The quaternion is propagated and corrected on $\Sph^3$; it is not updated by
+ordinary vector addition.
+
+The covariance is defined for the local error state
 \begin{equation}
 \label{eq:state-vector}
-\vct{x} =
+\delta\vct{x} =
 \begin{bmatrix}
-\delta\vct{\theta} &
-\vct{b}_g &
-\vct{v} &
-\vct{p} &
-\vct{S} &
-\vct{a}_w &
-\vct{b}_a
+\delta\vct{\theta}^{\top} &
+\delta\vct{b}_g^{\top} &
+\delta\vct{v}^{\top} &
+\delta\vct{p}^{\top} &
+\delta\vct{S}^{\top} &
+\delta\vct{a}_w^{\top} &
+\delta\vct{b}_a^{\top}
 \end{bmatrix}^{\!\top},
 \end{equation}
-where each subvector has the following physical meaning:
+where
 \begin{itemize}
-  \item $\delta\vct{\theta}\in\mathbb{R}^3$ --- small attitude-error
-        vector used in the multiplicative EKF formulation \cite{Shuster1993_AttitudeRepresentations,MarkleyCrassidis2014_Attitude}
-        (left-multiplicative quaternion correction).
-  \item $\vct{b}_g\in\mathbb{R}^3$ --- gyroscope bias, modeled as a
-        random-walk process.
-  \item $\vct{v}\in\mathbb{R}^3$ --- velocity in the world (NED) frame.
-  \item $\vct{p}\in\mathbb{R}^3$ --- position or displacement in the world frame.
-  \item $\vct{S}\in\mathbb{R}^3$ --- integral of displacement,
-        $\vct{S}(t)=\int_0^t\vct{p}(\tau)\,d\tau$, used to constrain
-        long-term drift by a zero pseudo-measurement.
-  \item $\vct{a}_w\in\mathbb{R}^3$ --- latent world-frame acceleration
-        following an Ornstein--Uhlenbeck (OU) process \cite{UhlenbeckOrnstein1930_OU},
-        \(
-           \dot{\vct{a}}_w = -\tfrac{1}{\tau_{a_w}}\vct{a}_w
-           + \vct{\eta}_{w}(t)
-        \),
-        representing correlated ocean-wave forcing.
-  \item $\vct{b}_a\in\mathbb{R}^3$ --- random-walk accelerometer bias with optional
-        temperature-dependent drift.
+  \item $\delta\vct{\theta}\in\mathbb{R}^3$ is the small
+        left-multiplicative attitude error used by the MEKF
+        \cite{Shuster1993_AttitudeRepresentations,MarkleyCrassidis2014_Attitude};
+  \item $\vct{b}_g\in\mathbb{R}^3$ is gyroscope bias, modeled as a random walk;
+  \item $\vct{v}\in\mathbb{R}^3$ is velocity in the world NED frame;
+  \item $\vct{p}\in\mathbb{R}^3$ is position or displacement in the world frame;
+  \item $\vct{S}\in\mathbb{R}^3$ is the integral of displacement,
+        $\vct{S}(t)=\int_0^t\vct{p}(s)\,ds$, used by the drift-control
+        pseudo-measurement;
+  \item $\vct{a}_w\in\mathbb{R}^3$ is latent world-frame acceleration with an
+        OU process prior;
+  \item $\vct{b}_a\in\mathbb{R}^3$ is accelerometer bias, modeled as a random
+        walk with an optional deterministic temperature correction.
 \end{itemize}
 
-The complete state dimension is
+With both bias states enabled, the additive error-state dimension is
 \[
-\fitcol{
-N_X =
-\underbrace{3}_{\delta\vct{\theta}} +
-\underbrace{3}_{\vct{b}_g} +
-\underbrace{3}_{\vct{v}} +
-\underbrace{3}_{\vct{p}} +
-\underbrace{3}_{\vct{S}} +
-\underbrace{3}_{\vct{a}_w} +
-\underbrace{3}_{\vct{b}_a}
-= 21,
-}
+N_X = 3+3+3+3+3+3+3=21.
 \]
-with both gyro and accelerometer bias.
+The stored covariance is
+$\mat{P}=\E[\delta\vct{x}\,\delta\vct{x}^{\top}]$.
+
+Two distinct acceleration covariances are used throughout the paper.  The
+matrix $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ is a \emph{process-model
+parameter}: it is the stationary covariance of the OU prior and determines the
+discrete process covariance $\matg{Q}_d$.  In contrast,
+$\mat{P}_{a_wa_w}$ is the current posterior uncertainty of the estimated
+acceleration state.  Changing $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ does not, by
+itself, overwrite $\mat{P}_{a_wa_w}$.  Hard initialization may reset the
+posterior block and its cross-covariances, whereas online retuning may replace
+only the $a_w$ marginal while preserving learned cross-covariances.
