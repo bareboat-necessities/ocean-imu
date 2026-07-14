@@ -2,11 +2,11 @@
 #define KALMAN_WAVE_DIRECTION_H
 
 /*
-  Copyright 2025, Mikhail Grushinskiy
+  Copyright 2025-2026, Mikhail Grushinskiy
 
-  Kalman filter for estimating the horizontal wave-propagation axis from
-  IMU horizontal x/y accelerations.  The result is axial (modulo 180
-  degrees); propagation sense is resolved separately.
+  Phase-invariant estimator for the horizontal wave-propagation axis from IMU
+  horizontal acceleration. The result is axial (modulo 180 degrees);
+  propagation sense is resolved separately by WaveDirectionDetector.
 */
 
 #ifdef EIGEN_NON_ARDUINO
@@ -15,15 +15,14 @@
 #include <ArduinoEigenDense.h>
 #endif
 
-#include <cmath>
-#include <numbers>
 #include <algorithm>
-
-#include "avg/AngleAveraging.h"
+#include <cmath>
+#include <limits>
+#include <numbers>
 
 #ifdef KALMAN_WAVE_DIRECTION_TEST
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <random>
 #endif
 
@@ -33,301 +32,373 @@ public:
 
     KalmanWaveDirection(float initialOmega, float directionReportAlpha = 0.0025f)
         : omega(initialOmega),
-          phase(0.0f),
-          direction_report_alpha(directionReportAlpha),
-          direction_report_avg(directionReportAlpha)
+          direction_report_tau_sec(alphaToTau(directionReportAlpha, REFERENCE_DT_SEC))
     {
         reset();
     }
 
     void reset() {
-        A_est.setZero();
-        P = Eigen::Matrix2f::Identity() * 1.0f;
+        coefficient_estimate.setZero();
+        P = Eigen::Matrix4f::Identity();
         phase = 0.0f;
         confidence = 0.0f;
+        current_linearity = 0.0f;
+
         lastStableAmplitude = 0.0f;
         lastStableConfidence = 0.0f;
-        lastStableCovariance = Eigen::Matrix2f::Identity();
+        lastStableLinearity = 0.0f;
+        lastStableCovariance = Eigen::Matrix4f::Identity();
         lastStableDir = Eigen::Vector2f(1.0f, 0.0f);
-        direction_report_avg = AngleAverager(direction_report_alpha);
+
+        have_report_axis = false;
+        report_cos_2theta = 1.0f;
+        report_sin_2theta = 0.0f;
         direction_deg_raw = 0.0f;
         direction_deg_smoothed = 0.0f;
     }
 
     void update(float ax, float ay, float currentOmega, float deltaT) {
-        if (std::fabs(currentOmega - omega) > 0.01f * omega) {
-            omega = currentOmega;
-        }
-
-        // Advance phase
-        updatePhase(deltaT);
-
-        float c = std::cos(phase);
-        if (std::fabs(c) < 0.001f) {
-            P += Q;
-            P = 0.5f * (P + P.transpose());
-            // Update confidence conservatively
-            confidence = 1.0f / (P.trace() + 1e-6f);
-            confidence *= 0.98f; // Decay to avoid stale confidence holding steady
+        if (!(deltaT > 0.0f) || !std::isfinite(deltaT) ||
+            !std::isfinite(ax) || !std::isfinite(ay)) {
             return;
         }
-        Eigen::Matrix2f H = c * Eigen::Matrix2f::Identity();
 
-        // Predict
-        Eigen::Vector2f A_pred = A_est;
-        Eigen::Matrix2f P_pred = P + Q;
+        if (std::isfinite(currentOmega) && currentOmega > 0.0f) {
+            const float scale = std::max(std::fabs(omega), 1e-6f);
+            if (!(omega > 0.0f) || std::fabs(currentOmega - omega) > 0.01f * scale) {
+                omega = currentOmega;
+            }
+        }
+        if (!(omega > 0.0f) || !std::isfinite(omega)) {
+            return;
+        }
 
-        // Regularize
+        updatePhase(deltaT);
+
+        const float c = std::cos(phase);
+        const float s = std::sin(phase);
+
+        // z = C cos(phi) + S sin(phi), where C and S are two-dimensional
+        // horizontal coefficient vectors. Estimating both quadratures removes
+        // the carrier-phase singularity of the previous cosine-only model.
+        Eigen::Matrix<float, 2, 4> H;
+        H << c, 0.0f, s, 0.0f,
+             0.0f, c, 0.0f, s;
+
+        const float q_scale = deltaT / REFERENCE_DT_SEC;
+        Eigen::Matrix4f P_pred = P + std::max(0.0f, q_scale) * Q_reference_sample;
         P_pred = 0.5f * (P_pred + P_pred.transpose());
-        P_pred += Eigen::Matrix2f::Identity() * 1e-10f;
+        P_pred += Eigen::Matrix4f::Identity() * 1e-10f;
 
-        // Kalman gain
-        Eigen::Matrix2f S = H * P_pred * H.transpose() + R;
-        Eigen::Matrix2f K = P_pred * H.transpose() * S.ldlt().solve(Eigen::Matrix2f::Identity());
+        const Eigen::Vector2f z(ax, ay);
+        const Eigen::Matrix2f innovation_covariance =
+            H * P_pred * H.transpose() + R;
+        const Eigen::Matrix<float, 4, 2> K =
+            P_pred * H.transpose() *
+            innovation_covariance.ldlt().solve(Eigen::Matrix2f::Identity());
 
-        // Measurement
-        Eigen::Vector2f z(ax, ay);
+        coefficient_estimate += K * (z - H * coefficient_estimate);
 
-        // Update state
-        A_est = A_pred + K * (z - H * A_pred);
-
-        // Joseph-form covariance update
-        Eigen::Matrix2f I = Eigen::Matrix2f::Identity();
-        Eigen::Matrix2f KH = K * H;
+        const Eigen::Matrix4f I = Eigen::Matrix4f::Identity();
+        const Eigen::Matrix4f KH = K * H;
         P = (I - KH) * P_pred * (I - KH).transpose() + K * R * K.transpose();
+        P = 0.5f * (P + P.transpose());
 
-        confidence = 1.0f / (P.trace() + 1e-6f);
-
-        updateStableDirection();
+        updateStableAxis(deltaT);
     }
 
     // Continuity-stabilized representative of the propagation axis.
     // Both d and -d describe the same vertical propagation plane.
-    Eigen::Vector2f getAxis() const {
-        return lastStableDir;
-    }
+    Eigen::Vector2f getAxis() const { return lastStableDir; }
+    float getAxisDegrees() const { return direction_deg_smoothed; }
+    float getAxisDegreesRaw() const { return direction_deg_raw; }
 
-    float getAxisDegrees() const {
-        return direction_deg_smoothed;
-    }
-
-    float getAxisDegreesRaw() const {
-        return direction_deg_raw;
-    }
-
-    // Backward-compatible aliases.  These return an axis modulo 180 degrees,
+    // Backward-compatible aliases. These return an axis modulo 180 degrees,
     // not a fully directed apparent propagation angle.
     Eigen::Vector2f getDirection() const { return getAxis(); }
     float getDirectionDegrees() const { return getAxisDegrees(); }
     float getDirectionDegreesRaw() const { return getAxisDegreesRaw(); }
 
-    // Returns angular uncertainty in degrees at 95% confidence (~2σ)
-    // This estimates the maximum deviation of the wave direction, assuming a Gaussian distribution
-    // of the amplitude vector's components and projecting the error covariance onto the direction tangent.
+    // Axial uncertainty at approximately 95% confidence (2 sigma).
     float getAxisUncertaintyDegrees() const {
-        // Compute amplitude (magnitude of the estimated direction vector)
-        float amp = lastStableAmplitude;
+        if (!(lastStableAmplitude > 1e-6f)) return 90.0f;
 
-        // If amplitude is too small, direction is meaningless — return full uncertainty
-        if (amp < 1e-6f) return 180.0f;
+        const Eigen::Vector2f tangent(-lastStableDir.y(), lastStableDir.x());
+        const Eigen::Matrix2f P_cos = lastStableCovariance.block<2, 2>(0, 0);
+        const Eigen::Matrix2f P_sin = lastStableCovariance.block<2, 2>(2, 2);
+        float tangent_variance = tangent.dot((P_cos + P_sin) * tangent);
+        tangent_variance = std::max(0.0f, tangent_variance);
 
-        // Unit direction vector (last stable direction)
-        Eigen::Vector2f dir = lastStableDir;
-
-        // Tangent direction (perpendicular to dir) is where angular deviations occur
-        Eigen::Vector2f tangent(-dir.y(), dir.x());
-
-        // Project covariance matrix onto the tangent vector
-        // This gives the variance of noise in the angular direction
-        float angular_var = tangent.transpose() * lastStableCovariance * tangent;
-        angular_var = std::max(angular_var, 0.0f);  // numeric safety
-
-        // Angular standard deviation in radians (scaled by amplitude)
-        float angular_std_rad = std::sqrt(angular_var) / amp;
-
-        // Convert to 2σ uncertainty in degrees (95% confidence)
-        float angle_rad = 2.0f * angular_std_rad;
-        float angle_deg = angle_rad * (180.0f / std::numbers::pi_v<float>);
-
-        // Clamp to [0, 180] degrees for safety
-        return std::max(0.0f, std::min(angle_deg, 180.0f));
+        const float angular_std_rad =
+            std::sqrt(tangent_variance) / lastStableAmplitude;
+        const float uncertainty_deg =
+            2.0f * angular_std_rad *
+            (180.0f / std::numbers::pi_v<float>);
+        return std::clamp(uncertainty_deg, 0.0f, 90.0f);
     }
 
-    // Backward-compatible uncertainty alias.
     float getDirectionUncertaintyDegrees() const {
         return getAxisUncertaintyDegrees();
     }
 
-    float getLastStableConfidence() const {
-        return lastStableConfidence;
-    }
+    float getLastStableConfidence() const { return lastStableConfidence; }
+    float getAxisLinearity() const { return current_linearity; }
+    float getLastStableLinearity() const { return lastStableLinearity; }
 
     Eigen::Vector2f getFilteredSignal() const {
-        return A_est * std::cos(phase);
+        return cosineCoefficients() * std::cos(phase) +
+               sineCoefficients() * std::sin(phase);
     }
 
     Eigen::Vector2f getAmplitudeVector() const {
-        return A_est;
+        return getAxis() * getAmplitude();
     }
 
     float getAmplitude() const {
-        return A_est.norm();
+        return computeAxisMetrics().amplitude;
     }
 
-    float getPhase() const {
-        return phase;
+    Eigen::Vector2f getCosineCoefficients() const {
+        return cosineCoefficients();
     }
 
-    float getConfidence() const {
-        return confidence;
+    Eigen::Vector2f getSineCoefficients() const {
+        return sineCoefficients();
     }
+
+    float getPhase() const { return phase; }
+    float getConfidence() const { return confidence; }
 
     void setProcessNoise(float q) {
-        Q = Eigen::Matrix2f::Identity() * q;
+        if (!std::isfinite(q) || q < 0.0f) return;
+        Q_reference_sample = Eigen::Matrix4f::Identity() * q;
     }
 
     void setMeasurementNoise(float r) {
+        if (!std::isfinite(r) || !(r > 0.0f)) return;
         R = Eigen::Matrix2f::Identity() * r;
     }
 
 private:
-    void updatePhase(float deltaT) {
-        phase = std::remainder(phase + omega * deltaT, 2.0f * std::numbers::pi_v<float>);
+    struct AxisMetrics {
+        Eigen::Vector2f representative = Eigen::Vector2f(1.0f, 0.0f);
+        float amplitude = 0.0f;
+        float linearity = 0.0f;
+    };
+
+    static constexpr float REFERENCE_DT_SEC = 1.0f / 200.0f;
+
+    static float alphaToTau(float alpha, float reference_dt) {
+        if (!(alpha > 0.0f) || alpha >= 1.0f || !std::isfinite(alpha)) {
+            return 2.0f;
+        }
+        return -reference_dt / std::log(1.0f - alpha);
     }
 
-    void updateStableDirection() {
-        const float AMP_THRESHOLD        = 0.08f;
-        const float CONFIDENCE_THRESHOLD = 20.0f;
+    static float emaAlpha(float dt, float tau) {
+        if (!(tau > 0.0f)) return 1.0f;
+        return 1.0f - std::exp(-dt / tau);
+    }
 
-        float norm = A_est.norm();
-        if (norm <= AMP_THRESHOLD || confidence <= CONFIDENCE_THRESHOLD) {
-            return; // not reliable enough yet
+    static float wrapAxisDegrees(float deg) {
+        deg = std::fmod(deg, 180.0f);
+        if (deg < 0.0f) deg += 180.0f;
+        return deg;
+    }
+
+    Eigen::Vector2f cosineCoefficients() const {
+        return coefficient_estimate.segment<2>(0);
+    }
+
+    Eigen::Vector2f sineCoefficients() const {
+        return coefficient_estimate.segment<2>(2);
+    }
+
+    AxisMetrics computeAxisMetrics() const {
+        const Eigen::Vector2f c = cosineCoefficients();
+        const Eigen::Vector2f s = sineCoefficients();
+        const Eigen::Matrix2f moment =
+            c * c.transpose() + s * s.transpose();
+
+        const float trace = moment.trace();
+        const float discriminant = std::hypot(
+            moment(0, 0) - moment(1, 1),
+            2.0f * moment(0, 1));
+        const float lambda_max =
+            std::max(0.0f, 0.5f * (trace + discriminant));
+        const float lambda_min =
+            std::max(0.0f, 0.5f * (trace - discriminant));
+
+        const float theta = 0.5f * std::atan2(
+            2.0f * moment(0, 1),
+            moment(0, 0) - moment(1, 1));
+
+        AxisMetrics metrics;
+        metrics.representative =
+            Eigen::Vector2f(std::cos(theta), std::sin(theta));
+        metrics.amplitude = std::sqrt(lambda_max);
+        const float total = lambda_max + lambda_min;
+        metrics.linearity = (total > 1e-12f)
+            ? std::clamp((lambda_max - lambda_min) / total, 0.0f, 1.0f)
+            : 0.0f;
+        return metrics;
+    }
+
+    void updatePhase(float deltaT) {
+        phase = std::remainder(
+            phase + omega * deltaT,
+            2.0f * std::numbers::pi_v<float>);
+    }
+
+    void updateStableAxis(float deltaT) {
+        constexpr float AMP_THRESHOLD = 0.08f;
+        constexpr float CONFIDENCE_THRESHOLD = 20.0f;
+        constexpr float LINEARITY_THRESHOLD = 0.25f;
+
+        const AxisMetrics metrics = computeAxisMetrics();
+        current_linearity = metrics.linearity;
+
+        const float covariance_confidence =
+            1.0f / (P.trace() + 1e-6f);
+        confidence = covariance_confidence * current_linearity;
+
+        Eigen::Vector2f new_axis = metrics.representative;
+        if (lastStableDir.dot(new_axis) < 0.0f) {
+            new_axis = -new_axis;
+        }
+        direction_deg_raw = wrapAxisDegrees(
+            std::atan2(new_axis.y(), new_axis.x()) *
+            (180.0f / std::numbers::pi_v<float>));
+
+        if (!(metrics.amplitude > AMP_THRESHOLD) ||
+            !(confidence > CONFIDENCE_THRESHOLD) ||
+            !(metrics.linearity > LINEARITY_THRESHOLD)) {
+            return;
         }
 
-        Eigen::Vector2f newDir = A_est / norm;
+        const float theta = std::atan2(new_axis.y(), new_axis.x());
+        const float target_cos_2theta = std::cos(2.0f * theta);
+        const float target_sin_2theta = std::sin(2.0f * theta);
 
-        // Enforce 180° ambiguity consistency
-        if (lastStableDir.dot(newDir) < 0.0f) {
-            newDir = -newDir;
+        if (!have_report_axis) {
+            report_cos_2theta = target_cos_2theta;
+            report_sin_2theta = target_sin_2theta;
+            have_report_axis = true;
+        } else {
+            const float alpha = emaAlpha(deltaT, direction_report_tau_sec);
+            report_cos_2theta +=
+                alpha * (target_cos_2theta - report_cos_2theta);
+            report_sin_2theta +=
+                alpha * (target_sin_2theta - report_sin_2theta);
+            const float norm =
+                std::hypot(report_cos_2theta, report_sin_2theta);
+            if (norm > 1e-12f) {
+                report_cos_2theta /= norm;
+                report_sin_2theta /= norm;
+            }
         }
 
-        // EWMA smoothing of direction
-        const float alpha = 0.015f;
-        lastStableDir = ((1.0f - alpha) * lastStableDir + alpha * newDir).normalized();
+        const float smoothed_theta = 0.5f * std::atan2(
+            report_sin_2theta, report_cos_2theta);
+        Eigen::Vector2f smoothed_axis(
+            std::cos(smoothed_theta), std::sin(smoothed_theta));
+        if (lastStableDir.dot(smoothed_axis) < 0.0f) {
+            smoothed_axis = -smoothed_axis;
+        }
 
-        direction_deg_raw = std::atan2(lastStableDir.y(), lastStableDir.x()) * (180.0f / std::numbers::pi_v<float>);
-        if (direction_deg_raw < 0.0f) direction_deg_raw += 180.0f;
-        if (direction_deg_raw >= 180.0f) direction_deg_raw -= 180.0f;
-        direction_deg_smoothed = direction_report_avg.average180(direction_deg_raw).angle;
+        lastStableDir = smoothed_axis;
+        direction_deg_smoothed = wrapAxisDegrees(
+            std::atan2(lastStableDir.y(), lastStableDir.x()) *
+            (180.0f / std::numbers::pi_v<float>));
 
-        // Snapshot of "stable" state
-        lastStableAmplitude  = norm;
+        lastStableAmplitude = metrics.amplitude;
         lastStableConfidence = confidence;
+        lastStableLinearity = metrics.linearity;
         lastStableCovariance = P;
     }
 
-    // State
-    Eigen::Vector2f A_est = Eigen::Vector2f::Zero();
-    Eigen::Matrix2f P = Eigen::Matrix2f::Identity();
-    Eigen::Matrix2f Q = Eigen::Matrix2f::Identity() * 1e-6f;
+    // State ordering: [C_x, C_y, S_x, S_y].
+    Eigen::Vector4f coefficient_estimate = Eigen::Vector4f::Zero();
+    Eigen::Matrix4f P = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f Q_reference_sample =
+        Eigen::Matrix4f::Identity() * 1e-6f;
     Eigen::Matrix2f R = Eigen::Matrix2f::Identity() * 0.01f;
 
-    float omega;
-    float phase;
-    float confidence;
+    float omega = 0.0f;
+    float phase = 0.0f;
+    float confidence = 0.0f;
+    float current_linearity = 0.0f;
 
     Eigen::Vector2f lastStableDir = Eigen::Vector2f(1.0f, 0.0f);
     float lastStableAmplitude = 0.0f;
     float lastStableConfidence = 0.0f;
-    Eigen::Matrix2f lastStableCovariance = Eigen::Matrix2f::Identity();
+    float lastStableLinearity = 0.0f;
+    Eigen::Matrix4f lastStableCovariance =
+        Eigen::Matrix4f::Identity();
 
-    float direction_report_alpha = 0.01f;
-    AngleAverager direction_report_avg{direction_report_alpha};
+    float direction_report_tau_sec = 2.0f;
+    bool have_report_axis = false;
+    float report_cos_2theta = 1.0f;
+    float report_sin_2theta = 0.0f;
     float direction_deg_raw = 0.0f;
     float direction_deg_smoothed = 0.0f;
 };
 
 #ifdef KALMAN_WAVE_DIRECTION_TEST
 
-// Generate a test signal: horizontal acceleration from a wave
-// with slowly varying amplitude and fixed propagation direction.
-// freq_hz is in cycles per second (Hz).
-void KalmanWaveDirection_test_signal(float t,
-                                     float freq_hz,
-                                     float& ax,
-                                     float& ay,
-                                     std::normal_distribution<float>& noise,
-                                     std::default_random_engine& generator) {
-  float amp = 0.8f + 0.4f * std::sin(0.005f * t);
+void KalmanWaveDirection_test_signal(
+    float t,
+    float freq_hz,
+    float& ax,
+    float& ay,
+    std::normal_distribution<float>& noise,
+    std::default_random_engine& generator) {
+  const float amp = 0.8f + 0.4f * std::sin(0.005f * t);
+  const float omega =
+      2.0f * std::numbers::pi_v<float> * freq_hz;
+  const float carrier = amp * std::cos(omega * t);
 
-  // Convert frequency in Hz to angular frequency in rad/s
-  float omega = 2.0f * std::numbers::pi_v<float> * freq_hz;
-  float phase = omega * t;
-
-  Eigen::Vector2f dir(1.0f, 1.5f);
-  dir.normalize();
-
-  float signal = amp * std::cos(phase);
-
-  float w1 = noise(generator);
-  float w2 = noise(generator);
-
-  ax = signal * dir.x() + w1;
-  ay = signal * dir.y() + w2;
+  Eigen::Vector2f axis(1.0f, 1.5f);
+  axis.normalize();
+  ax = carrier * axis.x() + noise(generator);
+  ay = carrier * axis.y() + noise(generator);
 }
 
 void KalmanWaveDirection_test_1() {
   const float delta_t = 0.02f;
-
-  // Frequency of the test wave in Hz
   const float freq_hz = 0.5f;
-  // Convert to angular frequency in rad/s for the filter
-  const float omega = 2.0f * std::numbers::pi_v<float> * freq_hz;
-
+  const float omega =
+      2.0f * std::numbers::pi_v<float> * freq_hz;
   const int num_steps = 2000;
 
-  const double mean   = 0.0;
-  const double stddev = 0.08;
   std::default_random_engine generator;
   generator.seed(42u);
-  std::normal_distribution<float> dist(mean, stddev);
+  std::normal_distribution<float> dist(0.0f, 0.08f);
 
-  // The KalmanWaveDirection class expects omega in rad/s
   KalmanWaveDirection filter(omega);
   filter.setMeasurementNoise(0.01f);
   filter.setProcessNoise(1e-6f);
 
   std::ofstream out("wave_dir.csv");
-  out << "t,ax,ay,filtered_ax,filtered_ay,freq_hz,amplitude,phase,confidence,"
-         "deg,uncertaintyDeg\n";
+  out << "t,ax,ay,filtered_ax,filtered_ay,freq_hz,amplitude,phase,"
+         "confidence,deg,uncertaintyDeg\n";
 
   for (int i = 0; i < num_steps; ++i) {
-    float t = i * delta_t;
-    float ax, ay;
-
-    // Generate noisy test signal at freq_hz
-    KalmanWaveDirection_test_signal(t, freq_hz, ax, ay, dist, generator);
-
-    // Update filter with angular frequency
+    const float t = i * delta_t;
+    float ax = 0.0f;
+    float ay = 0.0f;
+    KalmanWaveDirection_test_signal(
+        t, freq_hz, ax, ay, dist, generator);
     filter.update(ax, ay, omega, delta_t);
 
-    Eigen::Vector2f filtered = filter.getFilteredSignal();
-    float filtered_ax = filtered.x();
-    float filtered_ay = filtered.y();
-
-    float amplitude      = filter.getAmplitude();
-    float phase          = filter.getPhase();
-    float confidence     = filter.getConfidence();
-    float deg            = filter.getDirectionDegrees();
-    float uncertaintyDeg = filter.getDirectionUncertaintyDegrees();
-
+    const Eigen::Vector2f filtered = filter.getFilteredSignal();
     out << t << "," << ax << "," << ay << ","
-        << filtered_ax << "," << filtered_ay << ","
-        << freq_hz << "," << amplitude << "," << phase << ","
-        << confidence << "," << deg << "," << uncertaintyDeg << "\n";
+        << filtered.x() << "," << filtered.y() << ","
+        << freq_hz << "," << filter.getAmplitude() << ","
+        << filter.getPhase() << "," << filter.getConfidence() << ","
+        << filter.getDirectionDegrees() << ","
+        << filter.getDirectionUncertaintyDegrees() << "\n";
   }
-
-  out.close();
 }
 
 #endif  // KALMAN_WAVE_DIRECTION_TEST
