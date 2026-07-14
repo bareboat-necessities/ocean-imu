@@ -59,6 +59,7 @@
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
+#include "wave_dir/WaveDirectionFrame.h"
 #include "detrend/AdaptiveWaveDetrender3D.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 
@@ -274,14 +275,25 @@ public:
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
 
+        // Resolve direction in a leveled frame aligned with boat heading.
+        // This removes roll/pitch mixing while preserving 0 deg = bow and
+        // positive angles toward starboard.  The existing body-Z proxy remains
+        // the tuner/tracker input; direction uses coherent leveled components.
+        const auto direction_accel = wave_direction::heading_frame_acceleration<float>(
+            mekf_->quaternion_boat(), acc, g_std);
+
         // Stage 1 estimates the apparent propagation plane as an unsigned axis
-        // relative to boat +X.  Stage 2 resolves propagation sense along that
-        // same axis from horizontal/vertical orbital phase.
-        dir_filter_.update(a_x_body, a_y_body, omega, dt);
-        const Eigen::Vector2f propagation_axis_body = dir_filter_.getAxis();
+        // relative to boat heading.  Stage 2 resolves propagation sense along
+        // that same axis from horizontal/vertical orbital phase.
+        dir_filter_.update(direction_accel.forward_ms2,
+                           direction_accel.starboard_ms2,
+                           omega, dt);
+        const Eigen::Vector2f propagation_axis_boat = dir_filter_.getAxis();
         dir_sign_state_ = dir_sign_.update(
-            a_x_body, a_y_body, a_body_z_up_proxy_,
-            propagation_axis_body.x(), propagation_axis_body.y(),
+            direction_accel.forward_ms2,
+            direction_accel.starboard_ms2,
+            direction_accel.up_ms2,
+            propagation_axis_boat.x(), propagation_axis_boat.y(),
             dt, dir_filter_.getLastStableConfidence());
     }
 

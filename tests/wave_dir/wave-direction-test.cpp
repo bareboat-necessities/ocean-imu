@@ -10,6 +10,7 @@
 #define EIGEN_NON_ARDUINO
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
+#include "wave_dir/WaveDirectionFrame.h"
 #include "wave_dir/WaveEncounter.h"
 
 namespace {
@@ -244,6 +245,56 @@ void test_combined_axis_and_sense() {
   }
 }
 
+
+void test_heading_frame_roll_pitch_yaw_invariance() {
+  constexpr float g = 9.80665f;
+  constexpr float deg = kPi / 180.0f;
+
+  const std::vector<Eigen::Vector3f> attitudes_deg{
+      {0.0f, 0.0f, 0.0f},
+      {25.0f, -18.0f, 37.0f},
+      {-42.0f, 31.0f, -123.0f},
+      {65.0f, -35.0f, 178.0f},
+  };
+  const std::vector<Eigen::Vector3f> heading_accels{
+      {0.55f, -0.21f, 0.37f},
+      {-0.44f, 0.62f, -0.19f},
+      {0.08f, 0.91f, 0.12f},
+  };
+
+  for (const auto& euler : attitudes_deg) {
+    const Eigen::AngleAxisf yaw(euler.z() * deg, Eigen::Vector3f::UnitZ());
+    const Eigen::AngleAxisf pitch(euler.y() * deg, Eigen::Vector3f::UnitY());
+    const Eigen::AngleAxisf roll(euler.x() * deg, Eigen::Vector3f::UnitX());
+    const Eigen::Quaternionf q_body_to_world = yaw * pitch * roll;
+
+    const Eigen::Vector3f bow_world = q_body_to_world * Eigen::Vector3f::UnitX();
+    const Eigen::Vector2f heading =
+        Eigen::Vector2f(bow_world.x(), bow_world.y()).normalized();
+    const Eigen::Vector2f starboard(-heading.y(), heading.x());
+
+    for (const auto& expected : heading_accels) {
+      const Eigen::Vector3f acceleration_world(
+          heading.x() * expected.x() + starboard.x() * expected.y(),
+          heading.y() * expected.x() + starboard.y() * expected.y(),
+          -expected.z());
+      const Eigen::Vector3f specific_force_body =
+          q_body_to_world.conjugate() *
+          (acceleration_world - Eigen::Vector3f(0.0f, 0.0f, g));
+
+      const auto recovered = wave_direction::heading_frame_acceleration<float>(
+          q_body_to_world, specific_force_body, g);
+      require(recovered.heading_valid, "heading-frame conversion rejected valid attitude");
+      require(std::abs(recovered.forward_ms2 - expected.x()) < 2e-5f,
+              "heading-frame forward acceleration mismatch");
+      require(std::abs(recovered.starboard_ms2 - expected.y()) < 2e-5f,
+              "heading-frame starboard acceleration mismatch");
+      require(std::abs(recovered.up_ms2 - expected.z()) < 2e-5f,
+              "heading-frame vertical acceleration mismatch");
+    }
+  }
+}
+
 void test_encounter_forward_model_and_inverse() {
   using namespace wave_encounter;
   constexpr double g = 9.80665;
@@ -290,6 +341,7 @@ int main() {
   test_sample_rate_invariance();
   test_axis_representative_flip_invariance();
   test_combined_axis_and_sense();
+  test_heading_frame_roll_pitch_yaw_invariance();
   test_encounter_forward_model_and_inverse();
   std::cout << "All wave propagation direction tests passed.\n";
   return 0;
