@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
 #include <numbers>
 
 #ifdef KALMAN_WAVE_DIRECTION_TEST
@@ -41,8 +40,7 @@ public:
         coefficient_estimate.setZero();
         P = Eigen::Matrix4f::Identity();
         phase = 0.0f;
-        confidence = 0.0f;
-        current_linearity = 0.0f;
+        invalidateCurrentAxis();
 
         lastStableAmplitude = 0.0f;
         lastStableConfidence = 0.0f;
@@ -60,16 +58,19 @@ public:
     void update(float ax, float ay, float currentOmega, float deltaT) {
         if (!(deltaT > 0.0f) || !std::isfinite(deltaT) ||
             !std::isfinite(ax) || !std::isfinite(ay)) {
+            invalidateCurrentAxis();
             return;
         }
 
         if (std::isfinite(currentOmega) && currentOmega > 0.0f) {
             const float scale = std::max(std::fabs(omega), 1e-6f);
-            if (!(omega > 0.0f) || std::fabs(currentOmega - omega) > 0.01f * scale) {
+            if (!(omega > 0.0f) ||
+                std::fabs(currentOmega - omega) > 0.01f * scale) {
                 omega = currentOmega;
             }
         }
         if (!(omega > 0.0f) || !std::isfinite(omega)) {
+            invalidateCurrentAxis();
             return;
         }
 
@@ -86,7 +87,8 @@ public:
              0.0f, c, 0.0f, s;
 
         const float q_scale = deltaT / REFERENCE_DT_SEC;
-        Eigen::Matrix4f P_pred = P + std::max(0.0f, q_scale) * Q_reference_sample;
+        Eigen::Matrix4f P_pred =
+            P + std::max(0.0f, q_scale) * Q_reference_sample;
         P_pred = 0.5f * (P_pred + P_pred.transpose());
         P_pred += Eigen::Matrix4f::Identity() * 1e-10f;
 
@@ -101,15 +103,29 @@ public:
 
         const Eigen::Matrix4f I = Eigen::Matrix4f::Identity();
         const Eigen::Matrix4f KH = K * H;
-        P = (I - KH) * P_pred * (I - KH).transpose() + K * R * K.transpose();
+        P = (I - KH) * P_pred * (I - KH).transpose() +
+            K * R * K.transpose();
         P = 0.5f * (P + P.transpose());
 
         updateStableAxis(deltaT);
     }
 
-    // Continuity-stabilized representative of the propagation axis.
-    // Both d and -d describe the same vertical propagation plane.
-    Eigen::Vector2f getAxis() const { return lastStableDir; }
+    bool isAxisReliable() const {
+        return current_amplitude > AMP_THRESHOLD &&
+               confidence > CONFIDENCE_THRESHOLD &&
+               current_linearity > LINEARITY_THRESHOLD;
+    }
+
+    // Current usable axis. A zero vector explicitly means that the latest
+    // motion is not sufficiently axial/confident for propagation-sense use.
+    Eigen::Vector2f getAxis() const {
+        return isAxisReliable() ? lastStableDir : Eigen::Vector2f::Zero();
+    }
+
+    // Historical representative retained for plots/diagnostics even while the
+    // current validity gate is closed.
+    Eigen::Vector2f getLastStableAxis() const { return lastStableDir; }
+
     float getAxisDegrees() const { return direction_deg_smoothed; }
     float getAxisDegreesRaw() const { return direction_deg_raw; }
 
@@ -121,12 +137,17 @@ public:
 
     // Axial uncertainty at approximately 95% confidence (2 sigma).
     float getAxisUncertaintyDegrees() const {
-        if (!(lastStableAmplitude > 1e-6f)) return 90.0f;
+        if (!isAxisReliable() || !(lastStableAmplitude > 1e-6f)) {
+            return 90.0f;
+        }
 
         const Eigen::Vector2f tangent(-lastStableDir.y(), lastStableDir.x());
-        const Eigen::Matrix2f P_cos = lastStableCovariance.block<2, 2>(0, 0);
-        const Eigen::Matrix2f P_sin = lastStableCovariance.block<2, 2>(2, 2);
-        float tangent_variance = tangent.dot((P_cos + P_sin) * tangent);
+        const Eigen::Matrix2f P_cos =
+            lastStableCovariance.block<2, 2>(0, 0);
+        const Eigen::Matrix2f P_sin =
+            lastStableCovariance.block<2, 2>(2, 2);
+        float tangent_variance =
+            tangent.dot((P_cos + P_sin) * tangent);
         tangent_variance = std::max(0.0f, tangent_variance);
 
         const float angular_std_rad =
@@ -141,7 +162,13 @@ public:
         return getAxisUncertaintyDegrees();
     }
 
-    float getLastStableConfidence() const { return lastStableConfidence; }
+    // Kept under the original API name, but reports whether the retained axis
+    // is valid for the current sample rather than holding stale confidence.
+    float getLastStableConfidence() const { return confidence; }
+    float getHistoricalStableConfidence() const {
+        return lastStableConfidence;
+    }
+
     float getAxisLinearity() const { return current_linearity; }
     float getLastStableLinearity() const { return lastStableLinearity; }
 
@@ -151,12 +178,10 @@ public:
     }
 
     Eigen::Vector2f getAmplitudeVector() const {
-        return getAxis() * getAmplitude();
+        return getAxis() * current_amplitude;
     }
 
-    float getAmplitude() const {
-        return computeAxisMetrics().amplitude;
-    }
+    float getAmplitude() const { return current_amplitude; }
 
     Eigen::Vector2f getCosineCoefficients() const {
         return cosineCoefficients();
@@ -187,6 +212,9 @@ private:
     };
 
     static constexpr float REFERENCE_DT_SEC = 1.0f / 200.0f;
+    static constexpr float AMP_THRESHOLD = 0.08f;
+    static constexpr float CONFIDENCE_THRESHOLD = 20.0f;
+    static constexpr float LINEARITY_THRESHOLD = 0.25f;
 
     static float alphaToTau(float alpha, float reference_dt) {
         if (!(alpha > 0.0f) || alpha >= 1.0f || !std::isfinite(alpha)) {
@@ -204,6 +232,12 @@ private:
         deg = std::fmod(deg, 180.0f);
         if (deg < 0.0f) deg += 180.0f;
         return deg;
+    }
+
+    void invalidateCurrentAxis() {
+        confidence = 0.0f;
+        current_amplitude = 0.0f;
+        current_linearity = 0.0f;
     }
 
     Eigen::Vector2f cosineCoefficients() const {
@@ -251,11 +285,8 @@ private:
     }
 
     void updateStableAxis(float deltaT) {
-        constexpr float AMP_THRESHOLD = 0.08f;
-        constexpr float CONFIDENCE_THRESHOLD = 20.0f;
-        constexpr float LINEARITY_THRESHOLD = 0.25f;
-
         const AxisMetrics metrics = computeAxisMetrics();
+        current_amplitude = metrics.amplitude;
         current_linearity = metrics.linearity;
 
         const float covariance_confidence =
@@ -270,9 +301,7 @@ private:
             std::atan2(new_axis.y(), new_axis.x()) *
             (180.0f / std::numbers::pi_v<float>));
 
-        if (!(metrics.amplitude > AMP_THRESHOLD) ||
-            !(confidence > CONFIDENCE_THRESHOLD) ||
-            !(metrics.linearity > LINEARITY_THRESHOLD)) {
+        if (!isAxisReliable()) {
             return;
         }
 
@@ -311,9 +340,9 @@ private:
             std::atan2(lastStableDir.y(), lastStableDir.x()) *
             (180.0f / std::numbers::pi_v<float>));
 
-        lastStableAmplitude = metrics.amplitude;
+        lastStableAmplitude = current_amplitude;
         lastStableConfidence = confidence;
-        lastStableLinearity = metrics.linearity;
+        lastStableLinearity = current_linearity;
         lastStableCovariance = P;
     }
 
@@ -327,6 +356,7 @@ private:
     float omega = 0.0f;
     float phase = 0.0f;
     float confidence = 0.0f;
+    float current_amplitude = 0.0f;
     float current_linearity = 0.0f;
 
     Eigen::Vector2f lastStableDir = Eigen::Vector2f(1.0f, 0.0f);
