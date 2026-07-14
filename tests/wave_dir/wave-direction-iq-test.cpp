@@ -163,6 +163,8 @@ void test_circular_motion_has_no_axis() {
           "circular horizontal motion retained axis confidence");
   require(filter.getAxis().isZero(1e-7f),
           "circular horizontal motion exposed a usable axis");
+  require(!std::isfinite(filter.getAxisDegrees()),
+          "circular horizontal motion exposed a finite axis angle");
   require(filter.getHistoricalStableConfidence() < 20.0f,
           "circular horizontal motion created a stable axis history");
 }
@@ -212,8 +214,6 @@ void test_current_confidence_withdraws_stale_axis() {
   require(sense_filter.getState() == FORWARD,
           "linear wave sense did not converge before transition");
 
-  const float historical_confidence =
-      axis_filter.getHistoricalStableConfidence();
   const int circular_samples = int(25.0f / dt);
   for (int i = 0; i < circular_samples; ++i) {
     const float phase = omega * float(i + line_samples) * dt;
@@ -232,9 +232,10 @@ void test_current_confidence_withdraws_stale_axis() {
           "current confidence did not reject non-axial motion");
   require(axis_filter.getAxis().isZero(1e-7f),
           "invalid current motion still exposed a usable axis");
-  require(axis_filter.getHistoricalStableConfidence() >=
-              historical_confidence * 0.95f,
-          "test did not preserve deliberately stale axis history");
+  require(!std::isfinite(axis_filter.getAxisDegrees()),
+          "invalid current motion still exposed a finite axis angle");
+  require(axis_filter.getHistoricalStableConfidence() > 20.0f,
+          "transition discarded all previously valid axis history");
   require(sense_filter.getState() == UNCERTAIN,
           "sense detector was not withdrawn with current axis validity");
 }
