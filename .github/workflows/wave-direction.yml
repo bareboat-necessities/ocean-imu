@@ -1,0 +1,38 @@
+name: wave-direction
+
+on:
+  push:
+    paths:
+      - "src/wave_dir/**"
+      - "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/util/W3dSimCommon.*"
+      - "tests/wave_dir/**"
+      - ".github/workflows/wave-direction.yml"
+  pull_request:
+    paths:
+      - "src/wave_dir/**"
+      - "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/util/W3dSimCommon.*"
+      - "tests/wave_dir/**"
+      - ".github/workflows/wave-direction.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make libeigen3-dev
+
+      - name: Build with strict warnings
+        run: make -C tests/wave_dir build
+
+      - name: Run direction tests
+        run: make -C tests/wave_dir test
