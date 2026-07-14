@@ -20,6 +20,31 @@ jobs:
           ref: agent/apparent-wave-propagation-direction
           fetch-depth: 0
 
+      - name: Normalize harmless reset alignment for exact patching
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source_paths = [
+              Path('src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h'),
+              Path('src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'),
+          ]
+          for path in source_paths:
+              text = path.read_text()
+              text = text.replace('        dir_filter_      = KalmanWaveDirection',
+                                  '        dir_filter_ = KalmanWaveDirection')
+              text = text.replace('        dir_sign_state_  = UNCERTAIN;',
+                                  '        dir_sign_state_ = UNCERTAIN;')
+              path.write_text(text)
+
+          patch = Path('tools/apply_apparent_wave_direction_patch.py')
+          text = patch.read_text()
+          text = text.replace('        dir_filter_      = KalmanWaveDirection',
+                              '        dir_filter_ = KalmanWaveDirection')
+          text = text.replace('        dir_sign_state_  = UNCERTAIN;',
+                              '        dir_sign_state_ = UNCERTAIN;')
+          patch.write_text(text)
+          PY
+
       - name: Apply code and test changes
         id: patch
         shell: bash
