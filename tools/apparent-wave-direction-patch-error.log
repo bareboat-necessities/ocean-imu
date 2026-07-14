@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/runner/work/ocean-imu/ocean-imu/tools/apply_apparent_wave_direction_patch.py", line 874, in <module>
+    replace_once(
+  File "/home/runner/work/ocean-imu/ocean-imu/tools/apply_apparent_wave_direction_patch.py", line 18, in replace_once
+    raise RuntimeError(f"{path}: expected one occurrence, found {count}: {old[:100]!r}")
+RuntimeError: src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h: expected one occurrence, found 0: '        dir_filter_      = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);\n      '
