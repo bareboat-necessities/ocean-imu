@@ -191,7 +191,10 @@ inline Vector3f get_mag_bias_est_uT(const MekfT& mekf)
 
 struct DirectionTelemetry {
     float phase = NAN;
-    float direction_deg = NAN;
+    float direction_deg = NAN;              // propagation axis, modulo 180 deg
+    float apparent_to_deg = NAN;             // directed encounter propagation
+    float apparent_from_deg = NAN;           // opposite marine "waves from" angle
+    float sense_coherence = NAN;
     float direction_deg_generator_signed = NAN;
     float uncertainty_deg = NAN;
     float confidence = NAN;

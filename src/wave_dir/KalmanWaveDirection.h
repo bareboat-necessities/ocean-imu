@@ -4,7 +4,9 @@
 /*
   Copyright 2025, Mikhail Grushinskiy
 
-  Kalman filter for estimating direction of an ocean wave from IMU horizontal x, y accelerations.
+  Kalman filter for estimating the horizontal wave-propagation axis from
+  IMU horizontal x/y accelerations.  The result is axial (modulo 180
+  degrees); propagation sense is resolved separately.
 */
 
 #ifdef EIGEN_NON_ARDUINO
@@ -99,23 +101,30 @@ public:
         updateStableDirection();
     }
 
-    // Estimated wave propagation direction (unit vector)
-    Eigen::Vector2f getDirection() const {
+    // Continuity-stabilized representative of the propagation axis.
+    // Both d and -d describe the same vertical propagation plane.
+    Eigen::Vector2f getAxis() const {
         return lastStableDir;
     }
 
-    float getDirectionDegrees() const {
+    float getAxisDegrees() const {
         return direction_deg_smoothed;
     }
 
-    float getDirectionDegreesRaw() const {
+    float getAxisDegreesRaw() const {
         return direction_deg_raw;
     }
+
+    // Backward-compatible aliases.  These return an axis modulo 180 degrees,
+    // not a fully directed apparent propagation angle.
+    Eigen::Vector2f getDirection() const { return getAxis(); }
+    float getDirectionDegrees() const { return getAxisDegrees(); }
+    float getDirectionDegreesRaw() const { return getAxisDegreesRaw(); }
 
     // Returns angular uncertainty in degrees at 95% confidence (~2σ)
     // This estimates the maximum deviation of the wave direction, assuming a Gaussian distribution
     // of the amplitude vector's components and projecting the error covariance onto the direction tangent.
-    float getDirectionUncertaintyDegrees() const {
+    float getAxisUncertaintyDegrees() const {
         // Compute amplitude (magnitude of the estimated direction vector)
         float amp = lastStableAmplitude;
 
@@ -142,6 +151,11 @@ public:
 
         // Clamp to [0, 180] degrees for safety
         return std::max(0.0f, std::min(angle_deg, 180.0f));
+    }
+
+    // Backward-compatible uncertainty alias.
+    float getDirectionUncertaintyDegrees() const {
+        return getAxisUncertaintyDegrees();
     }
 
     float getLastStableConfidence() const {

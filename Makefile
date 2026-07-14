@@ -11,6 +11,7 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/kalman_ou_iii \
 	$(REPO_ROOT)/tests/pii_observer \
 	$(REPO_ROOT)/tests/spectrum \
+	$(REPO_ROOT)/tests/wave_dir \
 	$(REPO_ROOT)/tests/wave_sim
 
 SIM_DATA_VERSION ?= v1.1.3

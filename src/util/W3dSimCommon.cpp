@@ -281,7 +281,8 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         << "freq_tracker_hz,Tp_tuner_s,accel_var_tuner,"
         << "disp_scale_m,vel_scale_mps,"
         << "dir_phase,"
-        << "dir_deg,dir_uncert_deg,dir_conf,dir_amp,"
+        << "dir_axis_deg,dir_apparent_to_deg,dir_apparent_from_deg,"
+        << "dir_sense_coherence,dir_uncert_deg,dir_conf,dir_amp,"
         << "dir_sign,dir_sign_num,"
         << "dir_vec_x,dir_vec_y,"
         << "dfilt_ax,dfilt_ay\n";
@@ -465,9 +466,11 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
             << snap.accel_variance << ","
             << snap.displacement_scale_m << ","
             << snap.velocity_scale_mps << ","
-            << snap.direction.phase << "," << snap.direction.direction_deg << "," << snap.direction.uncertainty_deg << ","
+            << snap.direction.phase << "," << snap.direction.direction_deg << ","
+            << snap.direction.apparent_to_deg << "," << snap.direction.apparent_from_deg << ","
+            << snap.direction.sense_coherence << "," << snap.direction.uncertainty_deg << ","
             << snap.direction.confidence << "," << snap.direction.amplitude << ","
-            << (snap.direction.sign == FORWARD ? "TOWARD" : snap.direction.sign == BACKWARD ? "AWAY" : "UNCERTAIN") << ","
+            << (snap.direction.sign == FORWARD ? "POSITIVE_AXIS" : snap.direction.sign == BACKWARD ? "NEGATIVE_AXIS" : "UNCERTAIN") << ","
             << snap.direction.sign_num << ","
             << snap.direction.direction_vec.x() << "," << snap.direction.direction_vec.y() << ","
             << snap.direction.filtered_signal.x() << "," << snap.direction.filtered_signal.y() << "\n";
@@ -525,7 +528,8 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         << "mag_bias_est_x,mag_bias_est_y,mag_bias_est_z,"
         << "mag_bias_err_x,mag_bias_err_y,mag_bias_err_z,"
         << "dir_phase,"
-        << "dir_deg,dir_uncert_deg,dir_conf,dir_amp,"
+        << "dir_axis_deg,dir_apparent_to_deg,dir_apparent_from_deg,"
+        << "dir_sense_coherence,dir_uncert_deg,dir_conf,dir_amp,"
         << "dir_sign,dir_sign_num,"
         << "dir_vec_x,dir_vec_y,"
         << "dfilt_ax,dfilt_ay";
@@ -707,9 +711,11 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
             << mag_bias_true_ned.x() << "," << mag_bias_true_ned.y() << "," << mag_bias_true_ned.z() << ","
             << snap.mag_bias_est_ned_uT.x() << "," << snap.mag_bias_est_ned_uT.y() << "," << snap.mag_bias_est_ned_uT.z() << ","
             << mag_bias_err.x() << "," << mag_bias_err.y() << "," << mag_bias_err.z() << ","
-            << snap.direction.phase << "," << snap.direction.direction_deg << "," << snap.direction.uncertainty_deg << ","
+            << snap.direction.phase << "," << snap.direction.direction_deg << ","
+            << snap.direction.apparent_to_deg << "," << snap.direction.apparent_from_deg << ","
+            << snap.direction.sense_coherence << "," << snap.direction.uncertainty_deg << ","
             << snap.direction.confidence << "," << snap.direction.amplitude << ","
-            << (snap.direction.sign == FORWARD ? "TOWARD" : snap.direction.sign == BACKWARD ? "AWAY" : "UNCERTAIN") << ","
+            << (snap.direction.sign == FORWARD ? "POSITIVE_AXIS" : snap.direction.sign == BACKWARD ? "NEGATIVE_AXIS" : "UNCERTAIN") << ","
             << snap.direction.sign_num << ","
             << snap.direction.direction_vec.x() << "," << snap.direction.direction_vec.y() << ","
             << snap.direction.filtered_signal.x() << "," << snap.direction.filtered_signal.y();
@@ -918,8 +924,8 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
         std::cout << "confidence: mean=" << mean_vec(vc)
                   << " >" << CONF_THRESH << " count=" << good
                   << " (" << (100.0 * double(good) / double(i1 - i0)) << "%)\n";
-        std::cout << "sign: TOWARD=" << nToward << " (" << pct(nToward) << "%)"
-                  << " AWAY=" << nAway << " (" << pct(nAway) << "%)"
+        std::cout << "sense: +AXIS=" << nToward << " (" << pct(nToward) << "%)"
+                  << " -AXIS=" << nAway << " (" << pct(nAway) << "%)"
                   << " UNCERTAIN=" << nUnc << " (" << pct(nUnc) << "%)\n";
         std::cout << "=============================================\n\n";
     }

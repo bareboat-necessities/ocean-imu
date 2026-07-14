@@ -274,9 +274,15 @@ public:
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
 
-        // Direction filters run on BODY accel; sign uses the same BODY-Z proxy.
+        // Stage 1 estimates the apparent propagation plane as an unsigned axis
+        // relative to boat +X.  Stage 2 resolves propagation sense along that
+        // same axis from horizontal/vertical orbital phase.
         dir_filter_.update(a_x_body, a_y_body, omega, dt);
-        dir_sign_state_ = dir_sign_.update(a_x_body, a_y_body, a_body_z_up_proxy_, dt);
+        const Eigen::Vector2f propagation_axis_body = dir_filter_.getAxis();
+        dir_sign_state_ = dir_sign_.update(
+            a_x_body, a_y_body, a_body_z_up_proxy_,
+            propagation_axis_body.x(), propagation_axis_body.y(),
+            dt, dir_filter_.getLastStableConfidence());
     }
 
     //  Magnetometer correction
@@ -493,7 +499,23 @@ public:
     }
 
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
-    inline float getWaveDirectionDeg() const noexcept { return dir_filter_.getDirectionDegrees(); }
+
+    // Propagation-plane angle relative to boat +X, modulo 180 degrees.
+    inline float getWaveAxisDeg() const noexcept { return dir_filter_.getAxisDegrees(); }
+    inline float getWaveDirectionDeg() const noexcept { return getWaveAxisDeg(); }
+
+    // Fully directed apparent propagation angles observed by the moving boat.
+    // These are encounter/apparent directions unless vessel-motion correction
+    // is applied externally (see wave_dir/WaveEncounter.h).
+    inline float getApparentWaveDirectionToDeg() const noexcept {
+        return dir_sign_.getDirectedAngleDegrees();
+    }
+    inline float getApparentWaveDirectionFromDeg() const noexcept {
+        return dir_sign_.getWaveFromAngleDegrees();
+    }
+    inline float getDirSenseCoherence() const noexcept {
+        return dir_sign_.getCoherence();
+    }
 
     inline auto& mekf() noexcept { return *mekf_; }
     inline const auto& mekf() const noexcept { return *mekf_; }
@@ -646,8 +668,9 @@ private:
         freq_hz_slow_ = FREQ_GUESS;
         f_raw         = FREQ_GUESS;
 
-        dir_filter_      = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);
-        dir_sign_state_  = UNCERTAIN;
+        dir_filter_ = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);
+        dir_sign_.reset();
+        dir_sign_state_ = UNCERTAIN;
 
         last_adapt_time_sec_ = time_;
     }
