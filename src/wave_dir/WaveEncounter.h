@@ -171,7 +171,7 @@ inline std::vector<DeepWaterSolution<Real>> solve_deep_water(
     if (discriminant < -discriminant_tolerance) {
       continue;
     }
-    if (discriminant < Real(0)) {
+    if (std::abs(discriminant) <= discriminant_tolerance) {
       discriminant = Real(0);
     }
 
