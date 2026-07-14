@@ -76,14 +76,9 @@ public:
     have_axis_ = false;
     previous_vertical_ = Real(0);
     filtered_vertical_slope_ = Real(0);
-    filtered_cross_power_ = Real(0);
-    filtered_horizontal_energy_ = Real(0);
-    filtered_vertical_slope_energy_ = Real(0);
-    coherence_ = Real(0);
-    along_axis_acceleration_ = Real(0);
     axis_x_ = Real(1);
     axis_y_ = Real(0);
-    state_ = UNCERTAIN;
+    clear_phase_evidence();
   }
 
   // Update using an independently estimated propagation-axis representative.
@@ -102,7 +97,7 @@ public:
         !finite(axisX) || !finite(axisY)) {
       have_vertical_ = false;
       filtered_vertical_slope_ = Real(0);
-      state_ = UNCERTAIN;
+      clear_phase_evidence();
       return state_;
     }
 
@@ -110,7 +105,7 @@ public:
     if (!(axis_norm > Real(1e-8))) {
       previous_vertical_ = accelVertical;
       have_vertical_ = true;
-      state_ = UNCERTAIN;
+      clear_phase_evidence();
       return state_;
     }
 
@@ -146,12 +141,15 @@ public:
     filtered_vertical_slope_ +=
         slope_alpha * (raw_vertical_slope - filtered_vertical_slope_);
 
-    // Do not accumulate a phase decision against an axis which has not yet
-    // reached the confidence required by the independent angle estimator.
-    if (std::isnan(static_cast<double>(axisConfidence)) ||
-        (finite(axisConfidence) &&
+    // +infinity is the legacy overload's explicit "no confidence gate" value.
+    // NaN, -infinity, and finite values below the configured threshold fail
+    // closed and discard old phase evidence.
+    const Real positive_infinity =
+        std::numeric_limits<Real>::infinity();
+    if (axisConfidence != positive_infinity &&
+        (!finite(axisConfidence) ||
          axisConfidence < config_.min_axis_confidence)) {
-      state_ = UNCERTAIN;
+      clear_phase_evidence();
       return state_;
     }
 
@@ -289,6 +287,15 @@ private:
   static Real alpha_to_tau(Real alpha, Real reference_dt) noexcept {
     if (!(alpha > Real(0)) || alpha >= Real(1)) return Real(2.5);
     return -reference_dt / std::log(Real(1) - alpha);
+  }
+
+  void clear_phase_evidence() noexcept {
+    filtered_cross_power_ = Real(0);
+    filtered_horizontal_energy_ = Real(0);
+    filtered_vertical_slope_energy_ = Real(0);
+    coherence_ = Real(0);
+    along_axis_acceleration_ = Real(0);
+    state_ = UNCERTAIN;
   }
 
   void sanitize_config() noexcept {
