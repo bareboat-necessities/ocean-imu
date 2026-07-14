@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <numbers>
 
 #ifdef KALMAN_WAVE_DIRECTION_TEST
@@ -129,8 +130,23 @@ public:
     // current validity gate is closed.
     Eigen::Vector2f getLastStableAxis() const { return lastStableDir; }
 
-    float getAxisDegrees() const { return direction_deg_smoothed; }
-    float getAxisDegreesRaw() const { return direction_deg_raw; }
+    // Current usable angle. NaN explicitly marks an invalid current axis so
+    // callers that only consume the scalar angle still fail closed.
+    float getAxisDegrees() const {
+        return isAxisReliable()
+            ? direction_deg_smoothed
+            : std::numeric_limits<float>::quiet_NaN();
+    }
+
+    float getAxisDegreesRaw() const {
+        return isAxisReliable()
+            ? direction_deg_raw
+            : std::numeric_limits<float>::quiet_NaN();
+    }
+
+    float getLastStableAxisDegrees() const {
+        return direction_deg_smoothed;
+    }
 
     // Backward-compatible aliases. These return an axis modulo 180 degrees,
     // not a fully directed apparent propagation angle.
