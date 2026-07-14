@@ -119,7 +119,10 @@ public:
     // Current usable axis. A zero vector explicitly means that the latest
     // motion is not sufficiently axial/confident for propagation-sense use.
     Eigen::Vector2f getAxis() const {
-        return isAxisReliable() ? lastStableDir : Eigen::Vector2f::Zero();
+        if (isAxisReliable()) {
+            return lastStableDir;
+        }
+        return Eigen::Vector2f::Zero();
     }
 
     // Historical representative retained for plots/diagnostics even while the
