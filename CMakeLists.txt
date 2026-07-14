@@ -31,6 +31,7 @@ add_executable(ahrs-qmekf-sim "${OCEAN_IMU_TESTS_DIR}/ahrs/ahrs-qmekf-sim.cpp" $
 add_executable(detrend-basic-test "${OCEAN_IMU_TESTS_DIR}/detrend/detrend-basic-test.cpp")
 add_executable(freq-track "${OCEAN_IMU_TESTS_DIR}/freq/freq-track.cpp")
 add_executable(wave-direction-test "${OCEAN_IMU_TESTS_DIR}/wave_dir/wave-direction-test.cpp")
+add_executable(wave-direction-iq-test "${OCEAN_IMU_TESTS_DIR}/wave_dir/wave-direction-iq-test.cpp")
 add_executable(imu_calibrate-test "${OCEAN_IMU_TESTS_DIR}/imu_calibrate/imu_calibrate-test.cpp")
 add_executable(kalman_ou_ii-sim "${OCEAN_IMU_TESTS_DIR}/kalman_ou_ii/kalman_ou_ii-sim.cpp" ${W3D_SIM_COMMON})
 add_executable(kalman_ou_iii-sim "${OCEAN_IMU_TESTS_DIR}/kalman_ou_iii/kalman_ou_iii-sim.cpp" ${W3D_SIM_COMMON})
