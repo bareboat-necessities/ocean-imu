@@ -19,6 +19,10 @@ on:
       - ".github/workflows/wave-direction.yml"
   workflow_dispatch:
 
+concurrency:
+  group: wave-direction-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
