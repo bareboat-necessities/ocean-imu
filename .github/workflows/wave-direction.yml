@@ -2,12 +2,15 @@ name: wave-direction
 
 on:
   push:
+    branches: [main]
     paths:
       - "src/wave_dir/**"
       - "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
       - "src/util/W3dSimCommon.*"
       - "tests/wave_dir/**"
+      - "CMakeLists.txt"
+      - "Makefile"
       - ".github/workflows/wave-direction.yml"
   pull_request:
     paths:
@@ -16,6 +19,8 @@ on:
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
       - "src/util/W3dSimCommon.*"
       - "tests/wave_dir/**"
+      - "CMakeLists.txt"
+      - "Makefile"
       - ".github/workflows/wave-direction.yml"
   workflow_dispatch:
 
