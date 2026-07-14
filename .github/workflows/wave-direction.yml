@@ -40,3 +40,9 @@ jobs:
 
       - name: Run direction tests
         run: make -C tests/wave_dir test
+
+      - name: Compile OU-II integration
+        run: make -C tests/kalman_ou_ii build
+
+      - name: Compile OU-III integration
+        run: make -C tests/kalman_ou_iii build
