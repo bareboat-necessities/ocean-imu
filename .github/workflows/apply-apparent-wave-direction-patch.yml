@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - agent/apparent-wave-propagation-direction
+  workflow_dispatch:
 
 permissions:
   contents: write
