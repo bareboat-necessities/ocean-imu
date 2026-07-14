@@ -36,4 +36,18 @@ for relative in [
 
     path.write_text(text, encoding="utf-8")
 
-print("Applied valid-heading and current axis-confidence gating to OU-II and OU-III.")
+for relative in [
+    "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp",
+]:
+    path = ROOT / relative
+    text = path.read_text(encoding="utf-8")
+    old = "        s.direction.confidence = d.getLastStableConfidence();\n"
+    new = "        s.direction.confidence = d.getConfidence();\n"
+    count = text.count(old)
+    if count != 1:
+        raise RuntimeError(
+            f"{relative}: expected one telemetry confidence field, found {count}")
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+print("Applied valid-heading and current axis-confidence gating and telemetry.")
