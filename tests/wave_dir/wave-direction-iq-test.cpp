@@ -8,6 +8,7 @@
 
 #define EIGEN_NON_ARDUINO
 #include "wave_dir/KalmanWaveDirection.h"
+#include "wave_dir/WaveDirectionDetector.h"
 
 namespace {
 
@@ -164,12 +165,79 @@ void test_circular_motion_has_no_axis() {
           "circular horizontal motion produced a stable axis");
 }
 
+void test_current_confidence_withdraws_stale_axis() {
+  constexpr float dt = 1.0f / 200.0f;
+  constexpr float frequency_hz = 0.45f;
+  constexpr float omega = 2.0f * kPi * frequency_hz;
+  const Eigen::Vector2f physical_axis = axis_from_deg(35.0f);
+
+  KalmanWaveDirection axis_filter(omega, 0.01f);
+  axis_filter.setMeasurementNoise(0.001f);
+  axis_filter.setProcessNoise(1e-7f);
+
+  WaveDirectionDetector<float>::Config sense_config;
+  sense_config.smoothing_time_constant_sec = 0.8f;
+  sense_config.vertical_slope_time_constant_sec = 0.025f;
+  sense_config.coherence_threshold_on = 0.35f;
+  sense_config.coherence_threshold_off = 0.25f;
+  sense_config.absolute_product_floor = 1e-4f;
+  sense_config.min_horizontal_rms = 0.03f;
+  sense_config.min_vertical_slope_rms = 0.03f;
+  sense_config.min_axis_confidence = 20.0f;
+  WaveDirectionDetector<float> sense_filter(sense_config);
+
+  const int line_samples = int(35.0f / dt);
+  for (int i = 0; i < line_samples; ++i) {
+    const float phase = omega * float(i) * dt;
+    const float along = 0.65f * std::cos(phase);
+    const float vertical_up = 0.50f * std::sin(phase);
+    const float ax = physical_axis.x() * along;
+    const float ay = physical_axis.y() * along;
+
+    axis_filter.update(ax, ay, omega, dt);
+    const Eigen::Vector2f representative = axis_filter.getAxis();
+    sense_filter.update(ax, ay, vertical_up,
+                        representative.x(), representative.y(), dt,
+                        axis_filter.getConfidence());
+  }
+
+  require(axis_filter.getConfidence() > 100.0f,
+          "linear wave did not establish current axis confidence");
+  require(axis_filter.getLastStableConfidence() > 100.0f,
+          "linear wave did not establish stable axis confidence");
+  require(sense_filter.getState() == FORWARD,
+          "linear wave sense did not converge before transition");
+
+  const float historical_confidence = axis_filter.getLastStableConfidence();
+  const int circular_samples = int(25.0f / dt);
+  for (int i = 0; i < circular_samples; ++i) {
+    const float phase = omega * float(i + line_samples) * dt;
+    const float ax = 0.65f * std::cos(phase);
+    const float ay = 0.65f * std::sin(phase);
+    const float vertical_up = 0.50f * std::sin(phase);
+
+    axis_filter.update(ax, ay, omega, dt);
+    const Eigen::Vector2f representative = axis_filter.getAxis();
+    sense_filter.update(ax, ay, vertical_up,
+                        representative.x(), representative.y(), dt,
+                        axis_filter.getConfidence());
+  }
+
+  require(axis_filter.getConfidence() < 20.0f,
+          "current confidence did not reject non-axial motion");
+  require(axis_filter.getLastStableConfidence() >= historical_confidence * 0.95f,
+          "test did not preserve a deliberately stale stable confidence");
+  require(sense_filter.getState() == UNCERTAIN,
+          "sense detector was not withdrawn by current axis confidence");
+}
+
 }  // namespace
 
 int main() {
   test_all_axes_and_carrier_phases();
   test_axis_sample_rate_invariance();
   test_circular_motion_has_no_axis();
+  test_current_confidence_withdraws_stale_axis();
   std::cout << "All I/Q wave-axis tests passed.\n";
   return 0;
 }
