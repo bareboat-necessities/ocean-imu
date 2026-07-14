@@ -189,11 +189,8 @@ public:
         time_ += dt;
         startup_stage_t_ += dt;
 
-        // Keep BODY components around for direction/sign.
-        const float a_x_body = acc.x();
-        const float a_y_body = acc.y();
 
-        // BODY-Z-based proxy used by the tracker/sign logic.
+        // BODY-Z-based proxy used by the tracker/tuner logic.
         // This is NOT true world/inertial vertical acceleration; it is only a
         // body-Z residual that behaves like up-positive vertical motion when the
         // platform is near-level:
@@ -246,7 +243,7 @@ public:
             }
         }
 
-        // Up-positive BODY-Z proxy used by tracker/tuner/sign logic.
+        // Up-positive BODY-Z proxy used by tracker/tuner logic.
         // Not true world vertical unless the platform is close to level.
         a_body_z_up_proxy_ = -a_z_body_proxy;
 
