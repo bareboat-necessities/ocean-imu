@@ -74,18 +74,19 @@ jobs:
           git push origin HEAD:agent/apparent-wave-propagation-direction
           exit 1
 
-      - name: Remove temporary patch machinery
+      - name: Keep workflow files out of generated source commit
         if: steps.patch.outputs.status == '0'
         run: |
+          git checkout HEAD -- .github/workflows/build.yml
           rm -f tools/apply_apparent_wave_direction_patch.py
           rm -f tools/apparent-wave-direction-patch-error.log
-          rm -f .github/workflows/apply-apparent-wave-direction-patch.yml
 
-      - name: Commit patched tree
+      - name: Commit patched source tree
         if: steps.patch.outputs.status == '0'
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
+          git reset .github/workflows/apply-apparent-wave-direction-patch.yml
           git commit -m "Correct apparent wave propagation direction [skip ci]"
           git push origin HEAD:agent/apparent-wave-propagation-direction
