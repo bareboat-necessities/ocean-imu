@@ -1,0 +1,38 @@
+name: apply-current-axis-confidence-patch
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' && github.head_ref == 'agent/apparent-wave-propagation-direction' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/apparent-wave-propagation-direction
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Apply current axis confidence gate
+        run: python3 tools/apply_current_axis_confidence_patch.py
+
+      - name: Commit source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h \
+            src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h
+          git diff --cached --check
+          git commit -m "Gate wave sense on current axis confidence [skip ci]"
+          git push origin HEAD:refs/heads/agent/apparent-wave-propagation-direction
