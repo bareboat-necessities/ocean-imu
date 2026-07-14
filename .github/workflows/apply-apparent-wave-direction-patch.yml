@@ -1,0 +1,36 @@
+name: apply-apparent-wave-direction-patch
+
+on:
+  push:
+    branches:
+      - agent/apparent-wave-propagation-direction
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/apparent-wave-propagation-direction
+          fetch-depth: 0
+
+      - name: Apply code and test changes
+        run: python3 tools/apply_apparent_wave_direction_patch.py
+
+      - name: Remove temporary patch machinery
+        run: |
+          rm -f tools/apply_apparent_wave_direction_patch.py
+          rm -f .github/workflows/apply-apparent-wave-direction-patch.yml
+
+      - name: Commit patched tree
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Correct apparent wave propagation direction [skip ci]"
+          git push origin HEAD:agent/apparent-wave-propagation-direction
