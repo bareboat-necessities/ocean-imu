@@ -125,46 +125,41 @@ K_{aa}&=\tfrac12\tau(1-\alpha^2).
 \end{align}
 
 \subsection{Complete small-step branch}
-For $|x|\le10^{-2}$, let $\lambda=1/\tau$.  To avoid cancellation, the
-implementation evaluates the complete symmetric covariance through ninth
-order where required:
-\begin{align}
-Q_{vv}/\sigma^2={}&\tfrac23h^3\lambda-\tfrac12h^4\lambda^2
-+\tfrac7{30}h^5\lambda^3-\tfrac1{12}h^6\lambda^4
-+\tfrac{31}{1260}h^7\lambda^5-\tfrac1{160}h^8\lambda^6
-+\tfrac{127}{90720}h^9\lambda^7,\\
-Q_{vp}/\sigma^2={}&\tfrac14h^4\lambda-\tfrac16h^5\lambda^2
-+\tfrac5{72}h^6\lambda^3-\tfrac1{45}h^7\lambda^4
-+\tfrac{17}{2880}h^8\lambda^5-\tfrac{41}{30240}h^9\lambda^6,\\
-Q_{vS}/\sigma^2={}&\tfrac1{15}h^5\lambda-\tfrac1{24}h^6\lambda^2
-+\tfrac{41}{2520}h^7\lambda^3-\tfrac7{1440}h^8\lambda^4
-+\tfrac{109}{90720}h^9\lambda^5,\\
-Q_{va}/\sigma^2={}&h^2\lambda-h^3\lambda^2+\tfrac7{12}h^4\lambda^3
--\tfrac14h^5\lambda^4+\tfrac{31}{360}h^6\lambda^5
--\tfrac1{40}h^7\lambda^6+\tfrac{127}{20160}h^8\lambda^7
--\tfrac{17}{12096}h^9\lambda^8,\\
-Q_{pp}/\sigma^2={}&\tfrac1{10}h^5\lambda-\tfrac1{18}h^6\lambda^2
-+\tfrac5{252}h^7\lambda^3-\tfrac1{180}h^8\lambda^4
-+\tfrac{17}{12960}h^9\lambda^5,\\
-Q_{pS}/\sigma^2={}&\tfrac1{36}h^6\lambda-\tfrac1{72}h^7\lambda^2
-+\tfrac{13}{2880}h^8\lambda^3-\tfrac1{864}h^9\lambda^4,\\
-Q_{pa}/\sigma^2={}&\tfrac13h^3\lambda-\tfrac13h^4\lambda^2
-+\tfrac{11}{60}h^5\lambda^3-\tfrac{13}{180}h^6\lambda^4
-+\tfrac{19}{840}h^7\lambda^5-\tfrac1{168}h^8\lambda^6
-+\tfrac{247}{181440}h^9\lambda^7,\\
-Q_{SS}/\sigma^2={}&\tfrac1{126}h^7\lambda-\tfrac1{288}h^8\lambda^2
-+\tfrac{13}{12960}h^9\lambda^3,\\
-Q_{Sa}/\sigma^2={}&\tfrac1{12}h^4\lambda-\tfrac1{12}h^5\lambda^2
-+\tfrac2{45}h^6\lambda^3-\tfrac1{60}h^7\lambda^4
-+\tfrac{11}{2240}h^8\lambda^5-\tfrac{73}{60480}h^9\lambda^6,\\
-Q_{aa}/\sigma^2={}&2h\lambda-2h^2\lambda^2+\tfrac43h^3\lambda^3
--\tfrac23h^4\lambda^4+\tfrac4{15}h^5\lambda^5
--\tfrac4{45}h^6\lambda^6+\tfrac8{315}h^7\lambda^7
--\tfrac2{315}h^8\lambda^8+\tfrac4{2835}h^9\lambda^9.
-\end{align}
-All remaining entries follow by symmetry.  The $[v,p,a]$ principal marginal is
-computed by the same OU-II routine and embedded into the OU-III matrix, making
-that common marginal identical by construction.
+For $|x|\le10^{-2}$, let $\lambda=1/\tau$ and associate the state order
+$[v,p,S,a]$ with integration indices
+\[
+(m_v,m_p,m_S,m_a)=(1,2,3,0).
+\]
+The impulse response from the scalar OU driving noise to state $i$ has the
+small-step expansion
+\begin{equation}
+g_i(t)=\sum_{r=0}^{\infty}
+\frac{(-\lambda)^r t^{r+m_i}}{(r+m_i)!}.
+\label{eq:ou-impulse-series}
+\end{equation}
+Substitution into
+$Q_{ij}=2\sigma^2\lambda\int_0^h g_i(t)g_j(t)\,dt$
+gives every covariance entry through ninth order in one expression:
+\begin{equation}
+\begin{aligned}
+Q_{ij}^{(9)}
+ &=2\sigma^2\lambda
+ \sum_{\substack{r,s\ge0\\d_{ijrs}\le9}}
+ \frac{(-\lambda)^{r+s}h^{d_{ijrs}}}
+ {(r+m_i)!(s+m_j)!\,d_{ijrs}},\\
+d_{ijrs}&=r+s+m_i+m_j+1,
+\qquad i,j\in\{v,p,S,a\}.
+\end{aligned}
+\label{eq:ou-small-step-compact}
+\end{equation}
+The matrix is completed by symmetry.  Equation~\eqref{eq:ou-small-step-compact}
+contains all terms retained by the implementation; for example, it produces the
+leading orders $Q_{aa}=2\sigma^2\lambda h+O(h^2)$,
+$Q_{va}=\sigma^2\lambda h^2+O(h^3)$, and
+$Q_{SS}=\sigma^2\lambda h^7/126+O(h^8)$.
+The $[v,p,a]$ principal marginal is computed by the same OU-II routine and
+embedded into the OU-III matrix, making that common marginal identical by
+construction.
 
 After evaluation, the covariance is symmetrized.  A scale-aware PSD check uses
 $\epsilon_Q=64\epsilon_{\mathrm{mach}}\max(1,\|Q\|_{\max})$.  If an LDL$^\top$
