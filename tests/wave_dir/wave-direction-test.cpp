@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <numbers>
 #include <random>
 #include <string>
@@ -33,18 +34,18 @@ float wrap360(float deg) {
 }
 
 float directed_error_deg(float estimate, float reference) {
-  float d = wrap360(estimate - reference + 180.0f) - 180.0f;
+  const float d = wrap360(estimate - reference + 180.0f) - 180.0f;
   return std::abs(d);
 }
 
 float axial_error_deg(float estimate, float reference) {
-  float d = directed_error_deg(estimate, reference);
+  const float d = directed_error_deg(estimate, reference);
   return std::min(d, 180.0f - d);
 }
 
 Eigen::Vector2f axis_from_deg(float deg) {
-  const float r = deg * kPi / 180.0f;
-  return Eigen::Vector2f(std::cos(r), std::sin(r));
+  const float rad = deg * kPi / 180.0f;
+  return Eigen::Vector2f(std::cos(rad), std::sin(rad));
 }
 
 WaveDirectionDetector<float>::Config strict_sense_config() {
@@ -57,7 +58,7 @@ WaveDirectionDetector<float>::Config strict_sense_config() {
   cfg.min_horizontal_rms = 0.03f;
   cfg.min_vertical_slope_rms = 0.03f;
   cfg.min_axis_confidence = 0.0f;
-  cfg.convention_sign = 1.0f;
+  cfg.convention_sign = -1.0f;
   return cfg;
 }
 
@@ -75,6 +76,7 @@ AxisRun run_axis(float angle_deg,
   constexpr float frequency_hz = 0.45f;
   const float omega = 2.0f * kPi * frequency_hz;
   const Eigen::Vector2f axis = axis_from_deg(angle_deg);
+
   KalmanWaveDirection filter(omega, 0.01f);
   filter.setMeasurementNoise(0.0025f);
   filter.setProcessNoise(1e-7f);
@@ -96,7 +98,7 @@ AxisRun run_axis(float angle_deg,
 
   return {
       filter.getAxisDegrees(),
-      filter.getLastStableConfidence(),
+      filter.getConfidence(),
       filter.getAxisUncertaintyDegrees(),
       filter.getLastStableLinearity()
   };
@@ -156,6 +158,7 @@ void test_axis_estimator_rejects_circular_motion() {
   constexpr float dt = 1.0f / 200.0f;
   constexpr float frequency_hz = 0.45f;
   constexpr float omega = 2.0f * kPi * frequency_hz;
+
   KalmanWaveDirection filter(omega, 0.01f);
   filter.setMeasurementNoise(0.001f);
   filter.setProcessNoise(1e-7f);
@@ -172,8 +175,8 @@ void test_axis_estimator_rejects_circular_motion() {
           "circular horizontal motion was misreported as an axis");
   require(filter.getConfidence() < 20.0f,
           "circular horizontal motion retained axis confidence");
-  require(filter.getLastStableConfidence() < 20.0f,
-          "circular horizontal motion produced a stable axis");
+  require(filter.getAxis().isZero(1e-7f),
+          "circular horizontal motion exposed a usable axis");
 }
 
 struct SenseRun {
@@ -194,7 +197,8 @@ SenseRun run_sense(float angle_deg,
   const Eigen::Vector2f axis = axis_from_deg(angle_deg);
   WaveDirectionDetector<float> detector(strict_sense_config());
 
-  std::mt19937 rng(unsigned(2000 + int(angle_deg) * 11 + (true_sense + 1) * 31));
+  std::mt19937 rng(
+      unsigned(2000 + int(angle_deg) * 11 + (true_sense + 1) * 31));
   std::normal_distribution<float> noise(0.0f, noise_sigma);
 
   const int samples = int(32.0f / dt);
@@ -205,11 +209,16 @@ SenseRun run_sense(float angle_deg,
   for (int i = 0; i < samples; ++i) {
     const float t = float(i) * dt;
     const float phase = omega * t + phase_offset;
-    const float horizontal = float(true_sense) * 0.65f * std::cos(phase);
+
+    // Linear deep-water orbital acceleration at a fixed observer. Positive-axis
+    // propagation has negative correlation between a_parallel and d(a_up)/dt.
+    const float horizontal =
+        -float(true_sense) * 0.65f * std::cos(phase);
     const float vertical_up = 0.50f * std::sin(phase);
 
     Eigen::Vector2f representative = axis;
-    if (flip_axis_representative && ((i / std::max(1, int(0.73f / dt))) % 2)) {
+    if (flip_axis_representative &&
+        ((i / std::max(1, int(0.73f / dt))) % 2)) {
       representative = -representative;
     }
 
@@ -232,7 +241,8 @@ SenseRun run_sense(float angle_deg,
   result.state = detector.getState();
   result.coherence = detector.getCoherence();
   result.apparent_to_deg = detector.getDirectedAngleDegrees();
-  result.classified_fraction = scored ? float(correct) / float(scored) : 0.0f;
+  result.classified_fraction =
+      scored ? float(correct) / float(scored) : 0.0f;
   return result;
 }
 
@@ -241,13 +251,15 @@ void test_sense_detector_all_angles_and_phases() {
   for (int angle = 0; angle < 180; angle += 5) {
     for (int sense : {-1, 1}) {
       for (float phase : phases) {
-        const SenseRun result = run_sense(float(angle), sense, 1.0f / 200.0f,
-                                          phase, false);
-        const float expected = wrap360(float(angle) + (sense < 0 ? 180.0f : 0.0f));
+        const SenseRun result = run_sense(
+            float(angle), sense, 1.0f / 200.0f, phase, false);
+        const float expected =
+            wrap360(float(angle) + (sense < 0 ? 180.0f : 0.0f));
         require(result.state == (sense > 0 ? FORWARD : BACKWARD),
                 "wrong sense at axis " + std::to_string(angle));
         require(result.classified_fraction > 0.995f,
-                "sense classification below 99.5% at axis " + std::to_string(angle));
+                "sense classification below 99.5% at axis " +
+                std::to_string(angle));
         require(std::abs(result.coherence) > 0.90f,
                 "weak phase coherence at axis " + std::to_string(angle));
         require(directed_error_deg(result.apparent_to_deg, expected) < 0.05f,
@@ -260,9 +272,12 @@ void test_sense_detector_all_angles_and_phases() {
 void test_sample_rate_invariance() {
   for (float angle : {0.0f, 37.0f, 89.0f, 143.0f, 175.0f}) {
     for (int sense : {-1, 1}) {
-      const SenseRun r100 = run_sense(angle, sense, 1.0f / 100.0f, 0.83f, false, 0.006f);
-      const SenseRun r200 = run_sense(angle, sense, 1.0f / 200.0f, 0.83f, false, 0.006f);
-      const SenseRun r400 = run_sense(angle, sense, 1.0f / 400.0f, 0.83f, false, 0.006f);
+      const SenseRun r100 = run_sense(
+          angle, sense, 1.0f / 100.0f, 0.83f, false, 0.006f);
+      const SenseRun r200 = run_sense(
+          angle, sense, 1.0f / 200.0f, 0.83f, false, 0.006f);
+      const SenseRun r400 = run_sense(
+          angle, sense, 1.0f / 400.0f, 0.83f, false, 0.006f);
       require(r100.state == r200.state && r200.state == r400.state,
               "sample-rate-dependent sense decision");
       require(std::abs(r100.coherence - r200.coherence) < 0.025f,
@@ -276,14 +291,38 @@ void test_sample_rate_invariance() {
 void test_axis_representative_flip_invariance() {
   for (float angle : {3.0f, 44.0f, 91.0f, 136.0f, 178.0f}) {
     for (int sense : {-1, 1}) {
-      const SenseRun stable = run_sense(angle, sense, 1.0f / 200.0f, 0.41f, false);
-      const SenseRun flipped = run_sense(angle, sense, 1.0f / 200.0f, 0.41f, true);
+      const SenseRun stable = run_sense(
+          angle, sense, 1.0f / 200.0f, 0.41f, false);
+      const SenseRun flipped = run_sense(
+          angle, sense, 1.0f / 200.0f, 0.41f, true);
       require(flipped.classified_fraction > 0.995f,
               "axis representative flips caused decision loss");
-      require(directed_error_deg(stable.apparent_to_deg, flipped.apparent_to_deg) < 0.05f,
+      require(directed_error_deg(
+                  stable.apparent_to_deg, flipped.apparent_to_deg) < 0.05f,
               "axis representative flip changed directed angle");
     }
   }
+}
+
+void test_nonfinite_sample_reinitializes_vertical_slope() {
+  auto cfg = strict_sense_config();
+  WaveDirectionDetector<float> detector(cfg);
+  constexpr float dt = 1.0f / 200.0f;
+
+  detector.update(0.2f, 0.0f, 0.1f, 1.0f, 0.0f, dt, 1000.0f);
+  detector.update(0.2f, 0.0f, 0.2f, 1.0f, 0.0f, dt, 1000.0f);
+  const WaveDirection invalid = detector.update(
+      0.2f, 0.0f, std::numeric_limits<float>::quiet_NaN(),
+      1.0f, 0.0f, dt, 1000.0f);
+  require(invalid == UNCERTAIN,
+          "non-finite sample did not invalidate sense");
+
+  const WaveDirection first_recovered = detector.update(
+      0.2f, 0.0f, 10.0f, 1.0f, 0.0f, dt, 1000.0f);
+  require(first_recovered == UNCERTAIN,
+          "first sample after a gap reused a stale vertical derivative");
+  require(std::abs(detector.getVerticalSlope()) < 1e-7f,
+          "vertical slope was not reinitialized after a gap");
 }
 
 void test_combined_axis_and_sense() {
@@ -305,27 +344,31 @@ void test_combined_axis_and_sense() {
 
       for (int i = 0; i < samples; ++i) {
         const float phase = omega * float(i) * dt + 0.22f;
-        const float horizontal = float(sense) * 0.70f * std::cos(phase);
+        const float horizontal =
+            -float(sense) * 0.70f * std::cos(phase);
         const float vertical_up = 0.52f * std::sin(phase);
         const float ax = physical_axis.x() * horizontal + noise(rng);
         const float ay = physical_axis.y() * horizontal + noise(rng);
+
         axis_filter.update(ax, ay, omega, dt);
         const Eigen::Vector2f representative = axis_filter.getAxis();
         sense_filter.update(ax, ay, vertical_up + noise(rng),
                             representative.x(), representative.y(), dt,
-                            axis_filter.getLastStableConfidence());
+                            axis_filter.getConfidence());
       }
 
-      const float expected = wrap360(float(angle) + (sense < 0 ? 180.0f : 0.0f));
+      const float expected =
+          wrap360(float(angle) + (sense < 0 ? 180.0f : 0.0f));
       const float estimate = sense_filter.getDirectedAngleDegrees();
-      require(std::isfinite(estimate), "combined estimator remained uncertain");
+      require(std::isfinite(estimate),
+              "combined estimator remained uncertain");
       require(directed_error_deg(estimate, expected) < 0.80f,
-              "combined directed error at axis " + std::to_string(angle) +
-              " was " + std::to_string(directed_error_deg(estimate, expected)));
+              "combined directed error at axis " +
+              std::to_string(angle) + " was " +
+              std::to_string(directed_error_deg(estimate, expected)));
     }
   }
 }
-
 
 void test_heading_frame_roll_pitch_yaw_invariance() {
   constexpr float g = 9.80665f;
@@ -344,12 +387,16 @@ void test_heading_frame_roll_pitch_yaw_invariance() {
   };
 
   for (const auto& euler : attitudes_deg) {
-    const Eigen::AngleAxisf yaw(euler.z() * deg, Eigen::Vector3f::UnitZ());
-    const Eigen::AngleAxisf pitch(euler.y() * deg, Eigen::Vector3f::UnitY());
-    const Eigen::AngleAxisf roll(euler.x() * deg, Eigen::Vector3f::UnitX());
+    const Eigen::AngleAxisf yaw(
+        euler.z() * deg, Eigen::Vector3f::UnitZ());
+    const Eigen::AngleAxisf pitch(
+        euler.y() * deg, Eigen::Vector3f::UnitY());
+    const Eigen::AngleAxisf roll(
+        euler.x() * deg, Eigen::Vector3f::UnitX());
     const Eigen::Quaternionf q_body_to_world = yaw * pitch * roll;
 
-    const Eigen::Vector3f bow_world = q_body_to_world * Eigen::Vector3f::UnitX();
+    const Eigen::Vector3f bow_world =
+        q_body_to_world * Eigen::Vector3f::UnitX();
     const Eigen::Vector2f heading =
         Eigen::Vector2f(bow_world.x(), bow_world.y()).normalized();
     const Eigen::Vector2f starboard(-heading.y(), heading.x());
@@ -363,9 +410,11 @@ void test_heading_frame_roll_pitch_yaw_invariance() {
           q_body_to_world.conjugate() *
           (acceleration_world - Eigen::Vector3f(0.0f, 0.0f, g));
 
-      const auto recovered = wave_direction::heading_frame_acceleration<float>(
-          q_body_to_world, specific_force_body, g);
-      require(recovered.heading_valid, "heading-frame conversion rejected valid attitude");
+      const auto recovered =
+          wave_direction::heading_frame_acceleration<float>(
+              q_body_to_world, specific_force_body, g);
+      require(recovered.heading_valid,
+              "heading-frame conversion rejected valid attitude");
       require(std::abs(recovered.forward_ms2 - expected.x()) < 2e-5f,
               "heading-frame forward acceleration mismatch");
       require(std::abs(recovered.starboard_ms2 - expected.y()) < 2e-5f,
@@ -374,6 +423,33 @@ void test_heading_frame_roll_pitch_yaw_invariance() {
               "heading-frame vertical acceleration mismatch");
     }
   }
+}
+
+void test_heading_frame_fails_closed() {
+  constexpr float g = 9.80665f;
+  const Eigen::Vector3f specific_force(0.2f, -0.1f, -g);
+
+  const Eigen::Quaternionf invalid_quaternion(0.0f, 0.0f, 0.0f, 0.0f);
+  const auto invalid = wave_direction::heading_frame_acceleration<float>(
+      invalid_quaternion, specific_force, g);
+  require(!invalid.heading_valid,
+          "zero quaternion was accepted as a heading frame");
+  require(!std::isfinite(invalid.forward_ms2) &&
+          !std::isfinite(invalid.starboard_ms2) &&
+          !std::isfinite(invalid.up_ms2),
+          "invalid quaternion did not fail closed with NaN components");
+
+  const Eigen::Quaternionf bow_vertical(
+      Eigen::AngleAxisf(0.5f * kPi, Eigen::Vector3f::UnitY()));
+  const auto undefined_heading =
+      wave_direction::heading_frame_acceleration<float>(
+          bow_vertical, specific_force, g);
+  require(!undefined_heading.heading_valid,
+          "vertical bow produced a defined horizontal heading");
+  require(!std::isfinite(undefined_heading.forward_ms2) &&
+          !std::isfinite(undefined_heading.starboard_ms2) &&
+          !std::isfinite(undefined_heading.up_ms2),
+          "undefined heading did not fail closed with NaN components");
 }
 
 void test_encounter_forward_model_and_inverse() {
@@ -386,16 +462,19 @@ void test_encounter_forward_model_and_inverse() {
     for (double vessel_speed : {-4.0, 0.0, 3.0, 8.0, 14.0}) {
       const double omega_e = signed_encounter_omega(
           intrinsic_omega, k, intrinsic_sense, vessel_speed);
-      const int measured_sense = apparent_sense(intrinsic_sense, omega_e);
-      require(measured_sense != 0, "test selected a zero encounter frequency");
+      const int measured_sense =
+          apparent_sense(intrinsic_sense, omega_e);
+      require(measured_sense != 0,
+              "test selected a zero encounter frequency");
 
       const auto solutions = solve_deep_water(
           std::abs(omega_e), vessel_speed, measured_sense,
-          g, 0.1, 12.0, 12000);
+          g, 0.1, 12.0);
       bool found_truth = false;
       for (const auto& solution : solutions) {
         if (solution.intrinsic_sense == intrinsic_sense &&
-            std::abs(solution.intrinsic_omega_rad_s - intrinsic_omega) < 1e-5) {
+            std::abs(solution.intrinsic_omega_rad_s -
+                     intrinsic_omega) < 1e-10) {
           found_truth = true;
         }
       }
@@ -407,10 +486,12 @@ void test_encounter_forward_model_and_inverse() {
   const Velocity2<double> current{0.7, -0.2};
   const auto velocity = phase_velocity_over_ground(
       intrinsic_omega, k, 0.6, 0.8, current);
-  const double cp = intrinsic_omega / k;
-  require(std::abs(velocity.x - (0.6 * cp + current.x)) < 1e-12,
+  const double phase_speed = intrinsic_omega / k;
+  require(std::abs(velocity.x -
+                   (0.6 * phase_speed + current.x)) < 1e-12,
           "ground phase velocity X mismatch");
-  require(std::abs(velocity.y - (0.8 * cp + current.y)) < 1e-12,
+  require(std::abs(velocity.y -
+                   (0.8 * phase_speed + current.y)) < 1e-12,
           "ground phase velocity Y mismatch");
 }
 
@@ -423,8 +504,10 @@ int main() {
   test_sense_detector_all_angles_and_phases();
   test_sample_rate_invariance();
   test_axis_representative_flip_invariance();
+  test_nonfinite_sample_reinitializes_vertical_slope();
   test_combined_axis_and_sense();
   test_heading_frame_roll_pitch_yaw_invariance();
+  test_heading_frame_fails_closed();
   test_encounter_forward_model_and_inverse();
   std::cout << "All wave propagation direction tests passed.\n";
   return 0;
