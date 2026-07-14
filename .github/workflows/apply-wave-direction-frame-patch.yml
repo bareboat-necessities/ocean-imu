@@ -18,19 +18,23 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: agent/apparent-wave-propagation-direction
-          fetch-depth: 0
+          fetch-depth: 1
+          show-progress: false
 
       - name: Apply leveled heading-frame changes
         run: python3 tools/apply_wave_direction_frame_patch.py
 
-      - name: Keep temporary workflow out of generated source commit
-        run: rm -f tools/apply_wave_direction_frame_patch.py
-
-      - name: Commit source and tests
+      - name: Commit source and tests only
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
-          git reset .github/workflows/apply-wave-direction-frame-patch.yml
+          git add \
+            src/wave_dir/WaveDirectionFrame.h \
+            src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h \
+            src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h \
+            tests/wave_dir/wave-direction-test.cpp
+          git diff --cached --check
           git commit -m "Use leveled boat-heading frame for wave direction [skip ci]"
-          git push origin HEAD:agent/apparent-wave-propagation-direction
+          git push origin HEAD:refs/heads/agent/apparent-wave-propagation-direction
