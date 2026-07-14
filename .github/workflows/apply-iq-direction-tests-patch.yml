@@ -1,0 +1,39 @@
+name: apply-iq-direction-tests-patch
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' && github.head_ref == 'agent/apparent-wave-propagation-direction' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/apparent-wave-propagation-direction
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Apply I/Q tests and cleanup
+        run: python3 tools/apply_iq_direction_tests_patch.py
+
+      - name: Commit source and tests only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h \
+            src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h \
+            tests/wave_dir/wave-direction-test.cpp
+          git diff --cached --check
+          git commit -m "Tighten phase-invariant wave direction tests [skip ci]"
+          git push origin HEAD:refs/heads/agent/apparent-wave-propagation-direction
