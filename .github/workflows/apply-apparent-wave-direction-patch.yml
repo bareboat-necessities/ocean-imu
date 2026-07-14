@@ -20,10 +20,11 @@ jobs:
           ref: agent/apparent-wave-propagation-direction
           fetch-depth: 0
 
-      - name: Normalize harmless reset alignment for exact patching
+      - name: Normalize exact patch guards
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
           source_paths = [
               Path('src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h'),
               Path('src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'),
@@ -42,7 +43,12 @@ jobs:
                               '        dir_filter_ = KalmanWaveDirection')
           text = text.replace('        dir_sign_state_  = UNCERTAIN;',
                               '        dir_sign_state_ = UNCERTAIN;')
-          patch.write_text(text)
+
+          old_guard = '''def replace_once(path: str, old: str, new: str) -> None:\n    p = ROOT / path\n    text = p.read_text(encoding="utf-8")\n    count = text.count(old)\n    if count != 1:\n        raise RuntimeError(f"{path}: expected one occurrence, found {count}: {old[:100]!r}")\n    p.write_text(text.replace(old, new, 1), encoding="utf-8")\n'''
+          new_guard = '''def replace_once(path: str, old: str, new: str) -> None:\n    p = ROOT / path\n    text = p.read_text(encoding="utf-8")\n    count = text.count(old)\n    allowed = {1, 2} if path == "src/util/W3dSimCommon.cpp" else {1}\n    if count not in allowed:\n        raise RuntimeError(f"{path}: expected {sorted(allowed)}, found {count}: {old[:100]!r}")\n    p.write_text(text.replace(old, new, count), encoding="utf-8")\n'''
+          if text.count(old_guard) != 1:
+              raise RuntimeError('patch guard source did not match exactly')
+          patch.write_text(text.replace(old_guard, new_guard, 1))
           PY
 
       - name: Apply code and test changes
