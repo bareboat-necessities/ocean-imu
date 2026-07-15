@@ -21,6 +21,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           path=doc/kalman_ou_iii/w3d-fus-methods.tex-part
+          git diff --quiet -- "${path}" && exit 0
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/${path}?ref=${GITHUB_HEAD_REF}" --jq .sha)
           content=$(base64 -w0 "${path}")
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/${path}" \
