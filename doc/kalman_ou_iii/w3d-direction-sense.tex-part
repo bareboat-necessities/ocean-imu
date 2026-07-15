@@ -1,0 +1,9 @@
+\subsection{Propagation sense along the estimated axis}
+
+The second stage does not use a fixed body axis or an unsigned horizontal
+magnitude. It projects the leveled horizontal acceleration onto the separately
+estimated propagation axis and compares that signed component with the vertical
+orbital quadrature.
+
+\input{w3d-direction-sense-phase.tex-part}
+\input{w3d-direction-sense-output.tex-part}
