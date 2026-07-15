@@ -1,0 +1,16 @@
+% =======================================================
+\section{Horizontal Wave Propagation Plane and Apparent Travel Sense}
+\label{sec:direction}
+
+The direction pipeline first estimates the orientation of the vertical
+propagation plane as an unsigned horizontal axis modulo $180^\circ$. It then
+uses horizontal--vertical orbital phase to choose one of the two directions
+along that axis. The combined result is an apparent, or encounter, propagation
+direction relative to boat heading, not automatically an intrinsic
+water-relative or earth-fixed ground direction.
+
+\input{w3d-direction-frame.tex-part}
+\input{w3d-direction-frame-equations.tex-part}
+\input{w3d-direction-axis.tex-part}
+\input{w3d-direction-sense.tex-part}
+\input{w3d-direction-encounter.tex-part}
