@@ -1,8 +1,0 @@
-\subsection{Leveled heading-frame acceleration}
-
-The direction estimator uses inertial acceleration in a leveled frame aligned
-with boat heading: $+X$ forward, $+Y$ starboard, and $+Z$ up. The body-frame
-specific force is rotated to NED, gravity is restored, and the horizontal
-components are projected onto the bow heading and starboard axes. Invalid
-attitude or an undefined projected bow heading produces no direction output
-rather than a body-frame fallback.
