@@ -1,0 +1,8 @@
+Velocity through water may be used directly for intrinsic correction. Velocity
+over ground can be converted to water-relative velocity when current is known;
+using zero current is an explicit approximation. A cross-current can rotate the
+ground phase-velocity direction away from the intrinsic wavevector. Conversion
+from a boat-relative angle to a true NED angle also requires boat heading in the
+same earth-fixed reference.
+
+\input{w3d-direction-ground-equations.tex-part}
