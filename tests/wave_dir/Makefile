@@ -22,7 +22,7 @@ TARGETS = wave-direction-test wave-direction-iq-test wave-encounter-test
 all: build test
 build: $(TARGETS)
 test: $(TARGETS)
-	./run_tests.sh
+	bash ./run_tests.sh
 
 wave-direction-test: wave-direction-test.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
