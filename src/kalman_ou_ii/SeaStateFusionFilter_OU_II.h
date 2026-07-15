@@ -61,6 +61,7 @@
 #include "kalman_ou_ii/Kalman3D_Wave_OU_II.h"
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
+#include "wave_dir/WaveDirectionFrame.h"
 #include "detrend/AdaptiveWaveDetrender3D.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 
@@ -188,11 +189,8 @@ public:
         time_ += dt;
         startup_stage_t_ += dt;
 
-        // Keep BODY components around for direction/sign.
-        const float a_x_body = acc.x();
-        const float a_y_body = acc.y();
 
-        // BODY-Z-based proxy used by the tracker/sign logic.
+        // BODY-Z-based proxy used by the tracker/tuner logic.
         // This is NOT true world/inertial vertical acceleration; it is only a
         // body-Z residual that behaves like up-positive vertical motion when the
         // platform is near-level:
@@ -245,7 +243,7 @@ public:
             }
         }
 
-        // Up-positive BODY-Z proxy used by tracker/tuner/sign logic.
+        // Up-positive BODY-Z proxy used by tracker/tuner logic.
         // Not true world vertical unless the platform is close to level.
         a_body_z_up_proxy_ = -a_z_body_proxy;
 
@@ -282,9 +280,26 @@ public:
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
 
-        // Direction filters run on BODY accel; sign uses the same BODY-Z proxy.
-        dir_filter_.update(a_x_body, a_y_body, omega, dt);
-        dir_sign_state_ = dir_sign_.update(a_x_body, a_y_body, a_body_z_up_proxy_, dt);
+        // Resolve direction in a leveled frame aligned with boat heading.
+        // This removes roll/pitch mixing while preserving 0 deg = bow and
+        // positive angles toward starboard.  The existing body-Z proxy remains
+        // the tuner/tracker input; direction uses coherent leveled components.
+        const auto direction_accel = wave_direction::heading_frame_acceleration<float>(
+            mekf_->quaternion_boat(), acc, g_std);
+
+        // Stage 1 estimates the apparent propagation plane as an unsigned axis
+        // relative to boat heading.  Stage 2 resolves propagation sense along
+        // that same axis from horizontal/vertical orbital phase.
+        dir_filter_.update(direction_accel.forward_ms2,
+                           direction_accel.starboard_ms2,
+                           omega, dt);
+        const Eigen::Vector2f propagation_axis_boat = dir_filter_.getAxis();
+        dir_sign_state_ = dir_sign_.update(
+            direction_accel.forward_ms2,
+            direction_accel.starboard_ms2,
+            direction_accel.up_ms2,
+            propagation_axis_boat.x(), propagation_axis_boat.y(),
+            dt, dir_filter_.getLastStableConfidence());
     }
 
     // Magnetometer correction
@@ -511,7 +526,23 @@ public:
     }
 
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
-    inline float getWaveDirectionDeg() const noexcept { return dir_filter_.getDirectionDegrees(); }
+
+    // Propagation-plane angle relative to boat +X, modulo 180 degrees.
+    inline float getWaveAxisDeg() const noexcept { return dir_filter_.getAxisDegrees(); }
+    inline float getWaveDirectionDeg() const noexcept { return getWaveAxisDeg(); }
+
+    // Fully directed apparent propagation angles observed by the moving boat.
+    // These are encounter/apparent directions unless vessel-motion correction
+    // is applied externally (see wave_dir/WaveEncounter.h).
+    inline float getApparentWaveDirectionToDeg() const noexcept {
+        return dir_sign_.getDirectedAngleDegrees();
+    }
+    inline float getApparentWaveDirectionFromDeg() const noexcept {
+        return dir_sign_.getWaveFromAngleDegrees();
+    }
+    inline float getDirSenseCoherence() const noexcept {
+        return dir_sign_.getCoherence();
+    }
 
     inline auto& mekf() noexcept { return *mekf_; }
     inline const auto& mekf() const noexcept { return *mekf_; }
@@ -668,6 +699,7 @@ private:
         f_raw         = FREQ_GUESS;
 
         dir_filter_ = KalmanWaveDirection(2.0f * static_cast<float>(M_PI) * FREQ_GUESS);
+        dir_sign_.reset();
         dir_sign_state_ = UNCERTAIN;
 
         last_adapt_time_sec_ = time_;

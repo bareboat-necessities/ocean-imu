@@ -238,12 +238,15 @@ public:
         s.velocity_scale_mps   = filter.getVerticalSpeedEnvelopeMps(true);
 
         s.direction.phase = d.getPhase();
-        s.direction.direction_deg = d.getDirectionDegrees();
-        s.direction.direction_deg_generator_signed = dirDegGeneratorSignedFromVec(d.getDirection());
-        s.direction.uncertainty_deg = d.getDirectionUncertaintyDegrees();
+        s.direction.direction_deg = d.getAxisDegrees();
+        s.direction.apparent_to_deg = filter.getApparentWaveDirectionToDeg();
+        s.direction.apparent_from_deg = filter.getApparentWaveDirectionFromDeg();
+        s.direction.sense_coherence = filter.getDirSenseCoherence();
+        s.direction.direction_deg_generator_signed = dirDegGeneratorSignedFromVec(d.getAxis());
+        s.direction.uncertainty_deg = d.getAxisUncertaintyDegrees();
         s.direction.confidence = d.getLastStableConfidence();
         s.direction.amplitude = d.getAmplitude();
-        s.direction.direction_vec = d.getDirection();
+        s.direction.direction_vec = d.getAxis();
         s.direction.filtered_signal = d.getFilteredSignal();
 
         constexpr float CONF_THRESH = 20.0f;
