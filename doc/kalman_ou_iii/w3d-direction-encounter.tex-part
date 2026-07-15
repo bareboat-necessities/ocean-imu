@@ -1,9 +1,0 @@
-\subsection{Moving observer and intrinsic correction}
-
-The direct IMU output is an apparent, or encounter, direction. Recovering an
-intrinsic water-relative direction requires vessel velocity relative to the
-water and a dispersion model. Ground-referenced propagation additionally
-requires current and boat heading in a common earth-fixed frame.
-
-\input{w3d-direction-encounter-equations.tex-part}
-\input{w3d-direction-ground-reference.tex-part}
