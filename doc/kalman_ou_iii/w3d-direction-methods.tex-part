@@ -9,8 +9,234 @@ along that axis. The combined result is an apparent, or encounter, propagation
 direction relative to boat heading, not automatically an intrinsic
 water-relative or earth-fixed ground direction.
 
-\input{w3d-direction-frame.tex-part}
-\input{w3d-direction-frame-equations.tex-part}
-\input{w3d-direction-axis.tex-part}
-\input{w3d-direction-sense.tex-part}
-\input{w3d-direction-encounter.tex-part}
+\subsection{Leveled heading-frame acceleration}
+
+The direction estimator uses inertial acceleration in a leveled frame aligned
+with boat heading: $+X$ forward, $+Y$ starboard, and $+Z$ up. Body-frame
+specific force is rotated to NED, gravity is restored, and horizontal
+acceleration is projected onto the bow and starboard axes. This removes
+roll--pitch gravity mixing while retaining boat-relative azimuth. Invalid
+attitude or an undefined projected bow heading produces no direction output
+rather than a raw body-frame fallback.
+Let $\mat{R}_{NB}(\vct{q}_k)$ map body vectors into NED. Then
+\begin{equation}
+\vct{a}^{N}_k=\mat{R}_{NB}(\vct{q}_k)\vct{f}^{B}_k+[0,0,g]^\top.
+\label{eq:dir-world-acceleration}
+\end{equation}
+If $\vct{h}_k$ is the normalized horizontal bow projection and
+$\vct{s}_k=[-h_{E,k},h_{N,k}]^\top$, the estimator inputs are
+\begin{equation}
+\vct{z}_k=[\vct{h}_k^\top\vct{a}^{N}_{h,k},\ \vct{s}_k^\top\vct{a}^{N}_{h,k}]^\top,
+\qquad a_{\uparrow,k}=-a^N_{D,k}.
+\label{eq:dir-heading-signals}
+\end{equation}
+\subsection{Quadrature estimator for the propagation axis}
+
+The tracked phase is advanced from the dominant frequency, but its absolute
+offset relative to horizontal motion is not assumed known. The estimator
+therefore fits both sine and cosine quadratures instead of relying on a single
+cosine regressor.
+
+Let
+\begin{equation}
+\phi_{k+1}=\wrap_{(-\pi,\pi]}\!\left(\phi_k+\omega_k\Delta t_k\right),
+\qquad \omega_k=2\pi\bar f_k.
+\label{eq:dir-phase-update}
+\end{equation}
+The leveled horizontal acceleration is modeled as
+\begin{equation}
+\vct{z}_k=\vct{C}_k\cos\phi_k+\vct{S}_k\sin\phi_k+\vct{\eta}_k,
+\qquad \vct{\eta}_k\sim\mathcal{N}(\vct{0},\matg{R}),
+\label{eq:dir-iq-model}
+\end{equation}
+with state
+\begin{equation}
+\vct{x}_k=[C_{F,k},C_{S,k},S_{F,k},S_{S,k}]^\top,
+\qquad \vct{x}_{k+1}=\vct{x}_k+\vct{w}_k.
+\label{eq:dir-iq-state}
+\end{equation}
+The observation matrix is
+\begin{equation}
+\mat{H}_k=
+\begin{bmatrix}
+\cos\phi_k&0&\sin\phi_k&0\\
+0&\cos\phi_k&0&\sin\phi_k
+\end{bmatrix}.
+\label{eq:dir-iq-H}
+\end{equation}
+Process covariance is scaled by $\Delta t_k/\Delta t_{\rm ref}$ and the state
+uses the standard Kalman correction with Joseph-form covariance update. For
+$\vct{z}=A\vct{d}\cos(\phi+\phi_0)$, the ideal coefficients are
+$\vct{C}=A\cos\phi_0\vct{d}$ and
+$\vct{S}=-A\sin\phi_0\vct{d}$. Thus the axis and amplitude remain observable
+when the arbitrary carrier offset approaches $90^\circ$, where the former
+cosine-only coefficient vanishes.
+Form the phase-independent horizontal moment
+\begin{equation}
+\mat{M}_k=\vct{C}_k\vct{C}_k^\top+\vct{S}_k\vct{S}_k^\top.
+\label{eq:dir-moment}
+\end{equation}
+Let $\lambda_{1,k}\geq\lambda_{2,k}\geq0$ be its eigenvalues. The principal
+eigenvector $\widehat{\vct{d}}_k$ is the horizontal trace of the propagation
+plane and is axial, so $\widehat{\vct{d}}_k\equiv-\widehat{\vct{d}}_k$. Its
+angle is
+\begin{equation}
+\theta_k=\frac{1}{2}\operatorname{atan2}\!\left(2M_{12,k},M_{11,k}-M_{22,k}\right),
+\qquad \theta_k\in[0,\pi).
+\label{eq:dir-axis-angle}
+\end{equation}
+The phase-invariant amplitude and axial linearity are
+\begin{equation}
+A_k=\sqrt{\lambda_{1,k}},
+\qquad
+L_k=\frac{\lambda_{1,k}-\lambda_{2,k}}
+          {\lambda_{1,k}+\lambda_{2,k}+\epsilon}.
+\label{eq:dir-amplitude-linearity}
+\end{equation}
+Linearly polarized motion has $L_k\simeq1$; circular or equally spread motion
+has $L_k\simeq0$ and is rejected. The implementation combines covariance and
+linearity as
+\begin{equation}
+c_k=\frac{L_k}{\operatorname{tr}(\mat{P}_k)+\epsilon_P},
+\label{eq:dir-confidence}
+\end{equation}
+and requires amplitude, confidence, and linearity gates before exposing a
+current axis. Axial smoothing is performed on
+$[\cos 2\theta_k,\sin 2\theta_k]^\top$, avoiding artificial $180^\circ$ jumps.
+Let $\mat{P}_{C,k}$ and $\mat{P}_{S,k}$ be the cosine- and sine-quadrature
+$2\times2$ covariance blocks and let
+$\vct{t}_k=[-\widehat d_{S,k},\widehat d_{F,k}]^\top$ be tangent to the axis.
+The implemented first-order angular uncertainty is
+\begin{equation}
+\sigma_{\theta,k}^2
+\approx
+\frac{\vct{t}_k^\top(\mat{P}_{C,k}+\mat{P}_{S,k})\vct{t}_k}{A_k^2},
+\qquad
+\theta_{95,k}=2\sigma_{\theta,k}\frac{180}{\pi}.
+\label{eq:dir-axis-uncertainty}
+\end{equation}
+It is reported modulo $180^\circ$ and is explicitly approximate because
+frequency-estimation error, nonstationarity, and model mismatch are not included.
+\subsection{Propagation sense along the estimated axis}
+
+The second stage does not use a fixed body axis or an unsigned horizontal
+magnitude. It projects the leveled horizontal acceleration onto the separately
+estimated propagation axis and compares that signed component with the vertical
+orbital quadrature.
+
+The signed horizontal channel is
+\begin{equation}
+a_{\parallel,k}=\widehat{\vct{d}}_k^\top\vct{z}_k.
+\label{eq:dir-axis-projection}
+\end{equation}
+The up-positive vertical derivative is differenced and low-pass filtered,
+\begin{align}
+\dot a_{\uparrow,k}^{\rm raw}
+&=\frac{a_{\uparrow,k}-a_{\uparrow,k-1}}{\Delta t_k},\\
+\dot a_{\uparrow,k}
+&\leftarrow\dot a_{\uparrow,k-1}
++\alpha_d(\dot a_{\uparrow,k}^{\rm raw}-\dot a_{\uparrow,k-1}),
+\qquad \alpha_d=1-e^{-\Delta t_k/\tau_d}.
+\label{eq:dir-vertical-slope}
+\end{align}
+With $\alpha_s=1-e^{-\Delta t_k/\tau_s}$, maintain
+\begin{align}
+P_k&\leftarrow P_{k-1}+\alpha_s(a_{\parallel,k}\dot a_{\uparrow,k}-P_{k-1}),\\
+E_{h,k}&\leftarrow E_{h,k-1}+\alpha_s(a_{\parallel,k}^2-E_{h,k-1}),\\
+E_{v,k}&\leftarrow E_{v,k-1}+\alpha_s(\dot a_{\uparrow,k}^2-E_{v,k-1}).
+\label{eq:dir-phase-moments}
+\end{align}
+The normalized signed coherence is
+\begin{equation}
+\rho_k=\frac{P_k}{\sqrt{E_{h,k}E_{v,k}+\epsilon}}.
+\label{eq:dir-coherence}
+\end{equation}
+For the up-positive convention, ideal linear deep-water motion gives
+$a_\parallel\dot a_\uparrow<0$ for propagation along the positive representative
+axis, so the physical decision score is $\chi_k=-\rho_k$.
+The decision is enabled only when the current axis is valid, both RMS levels
+are sufficient, and $|P_k|$ exceeds an absolute floor. With
+$\gamma_{\rm on}>\gamma_{\rm off}\geq0$,
+\begin{equation}
+s_{\rm app,k}=
+\begin{cases}
++1,&\chi_k>\gamma_{\rm on},\\
+-1,&\chi_k<-\gamma_{\rm on},\\
+0,&|\chi_k|<\gamma_{\rm off},\\
+s_{\rm app,k-1},&\text{otherwise}.
+\end{cases}
+\label{eq:dir-sense-hysteresis}
+\end{equation}
+Loss of axis validity or non-finite input clears accumulated phase evidence.
+The apparent propagation-to vector and angle are
+\begin{equation}
+\widehat{\vct{k}}_{\rm app,k}^{B}
+=s_{\rm app,k}\widehat{\vct{d}}_k,
+\qquad
+\Theta_{\rm app,to,k}^{B}
+=\wrap_{[0,2\pi)}\operatorname{atan2}
+(\widehat k_{S,k}^{B},\widehat k_{F,k}^{B}).
+\label{eq:dir-apparent-angle}
+\end{equation}
+The marine waves-from angle is
+\begin{equation}
+\Theta_{\rm app,from,k}^{B}
+=\wrap_{[0,2\pi)}(\Theta_{\rm app,to,k}^{B}+\pi).
+\label{eq:dir-from-angle}
+\end{equation}
+Changing the arbitrary representative from $\widehat{\vct{d}}$ to
+$-\widehat{\vct{d}}$ also reverses the projection and resolved sign, leaving
+the final directed vector unchanged.
+\subsection{Moving observer and intrinsic correction}
+
+The direct IMU output is an apparent, or encounter, direction. Recovering an
+intrinsic water-relative direction requires vessel velocity relative to the
+water and a dispersion model. Ground-referenced propagation additionally
+requires current and boat heading in a common earth-fixed frame.
+
+For intrinsic water-relative angular frequency $\sigma$, wavenumber $\kappa$,
+and intrinsic sense $s\in\{-1,+1\}$ along the supplied axis, a boat moving
+with velocity $\vct{V}_{\rm rel}$ relative to the water observes
+\begin{equation}
+\Omega_e=\sigma-\kappa s\,\widehat{\vct{d}}^\top\vct{V}_{\rm rel}.
+\label{eq:dir-encounter-frequency}
+\end{equation}
+The phase discriminator measures
+\begin{equation}
+s_{\rm app}=s\,\operatorname{sgn}(\Omega_e).
+\label{eq:dir-apparent-intrinsic-sense}
+\end{equation}
+Normally $\Omega_e>0$ and apparent and intrinsic senses agree. If a following
+boat overtakes the phase progression, $\Omega_e<0$ and apparent sense reverses.
+For deep water,
+\begin{equation}
+\kappa=\frac{\sigma^2}{g}.
+\label{eq:dir-deep-water-dispersion}
+\end{equation}
+Given measured $|\Omega_e|$ and $s_{\rm app}$, test both candidate intrinsic
+senses. With $q=s_{\rm app}s=\operatorname{sgn}(\Omega_e)$ and
+$V_\parallel=\widehat{\vct{d}}^\top\vct{V}_{\rm rel}$,
+\begin{equation}
+-\frac{sV_\parallel}{g}\sigma^2+\sigma-q|\Omega_e|=0.
+\label{eq:dir-encounter-quadratic}
+\end{equation}
+All positive roots consistent with the measured encounter magnitude and sense
+are retained. Following seas can yield two valid roots, with a tangent double
+root at the boundary.
+Velocity through water may be used directly for intrinsic correction. Velocity
+over ground can be converted to water-relative velocity when current is known;
+using zero current is an explicit approximation. A cross-current can rotate the
+ground phase-velocity direction away from the intrinsic wavevector. Conversion
+from a boat-relative angle to a true NED angle also requires boat heading in the
+same earth-fixed reference.
+
+With velocity over ground $\vct{V}_g$ and current $\vct{U}$,
+\begin{equation}
+\vct{V}_{\rm rel}=\vct{V}_g-\vct{U}.
+\label{eq:dir-relative-velocity}
+\end{equation}
+The corresponding ground phase-velocity vector is
+\begin{equation}
+\vct{c}_{p,g}=\frac{\sigma}{\kappa}s\widehat{\vct{d}}+\vct{U}.
+\label{eq:dir-ground-phase-velocity}
+\end{equation}
