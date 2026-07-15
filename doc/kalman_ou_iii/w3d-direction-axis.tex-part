@@ -1,0 +1,10 @@
+\subsection{Quadrature estimator for the propagation axis}
+
+The tracked phase is advanced from the dominant frequency, but its absolute
+offset relative to horizontal motion is not assumed known. The estimator
+therefore fits both sine and cosine quadratures instead of relying on a single
+cosine regressor.
+
+\input{w3d-direction-iq-model.tex-part}
+\input{w3d-direction-axis-extraction.tex-part}
+\input{w3d-direction-axis-uncertainty.tex-part}

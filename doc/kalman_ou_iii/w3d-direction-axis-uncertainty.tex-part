@@ -1,0 +1,14 @@
+Let $\mat{P}_{C,k}$ and $\mat{P}_{S,k}$ be the cosine- and sine-quadrature
+$2\times2$ covariance blocks and let
+$\vct{t}_k=[-\widehat d_{S,k},\widehat d_{F,k}]^\top$ be tangent to the axis.
+The implemented first-order angular uncertainty is
+\begin{equation}
+\sigma_{\theta,k}^2
+\approx
+\frac{\vct{t}_k^\top(\mat{P}_{C,k}+\mat{P}_{S,k})\vct{t}_k}{A_k^2},
+\qquad
+\theta_{95,k}=2\sigma_{\theta,k}\frac{180}{\pi}.
+\label{eq:dir-axis-uncertainty}
+\end{equation}
+It is reported modulo $180^\circ$ and is explicitly approximate because
+frequency-estimation error, nonstationarity, and model mismatch are not included.

@@ -1,0 +1,29 @@
+For intrinsic water-relative angular frequency $\sigma$, wavenumber $\kappa$,
+and intrinsic sense $s\in\{-1,+1\}$ along the supplied axis, a boat moving
+with velocity $\vct{V}_{\rm rel}$ relative to the water observes
+\begin{equation}
+\Omega_e=\sigma-\kappa s\,\widehat{\vct{d}}^\top\vct{V}_{\rm rel}.
+\label{eq:dir-encounter-frequency}
+\end{equation}
+The phase discriminator measures
+\begin{equation}
+s_{\rm app}=s\,\operatorname{sgn}(\Omega_e).
+\label{eq:dir-apparent-intrinsic-sense}
+\end{equation}
+Normally $\Omega_e>0$ and apparent and intrinsic senses agree. If a following
+boat overtakes the phase progression, $\Omega_e<0$ and apparent sense reverses.
+For deep water,
+\begin{equation}
+\kappa=\frac{\sigma^2}{g}.
+\label{eq:dir-deep-water-dispersion}
+\end{equation}
+Given measured $|\Omega_e|$ and $s_{\rm app}$, test both candidate intrinsic
+senses. With $q=s_{\rm app}s=\operatorname{sgn}(\Omega_e)$ and
+$V_\parallel=\widehat{\vct{d}}^\top\vct{V}_{\rm rel}$,
+\begin{equation}
+-\frac{sV_\parallel}{g}\sigma^2+\sigma-q|\Omega_e|=0.
+\label{eq:dir-encounter-quadratic}
+\end{equation}
+All positive roots consistent with the measured encounter magnitude and sense
+are retained. Following seas can yield two valid roots, with a tangent double
+root at the boundary.
