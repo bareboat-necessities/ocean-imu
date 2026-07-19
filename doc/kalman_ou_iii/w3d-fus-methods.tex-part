@@ -119,8 +119,8 @@ standard-deviation scale $r_S$,
 \[
 y_S=0=S+n_S,\qquad n_S\sim\mathcal{N}(0,r_S^2).
 \]
-For the three-axis implementation, the corresponding vector $\vct{r}_S$ is
-squared componentwise to form the covariance $\mat{R}_S$, as defined in
+For three-axis operation, the corresponding vector $\vct{r}_S$ is squared
+componentwise to form the covariance $\mat{R}_S$, as defined in
 \eqref{eq:RS-from-rS}.  The channel is a regularizer, not a physical sensor.
 The purpose of the scaling argument below is to choose $r_S$ on the same
 physical scale as the natural fluctuations of $S$ within a stated family of
@@ -225,8 +225,8 @@ r_S(\sigma_a,\tau)
 =k_i c_{\mathrm{spec}}(u_{\min})\sigma_a\tau^3,
 \label{eq:Rs-from-sigmaS}
 \end{equation}
-where $k_i>0$ is dimensionless.  The implementation absorbs the selected
-spectral-shape and cutoff calibration into a single coefficient $c_R$ and uses
+where $k_i>0$ is dimensionless.  The selected spectral-shape and cutoff
+calibration are represented by a single coefficient $c_R$, giving
 \begin{equation}
 r_{S,\star}=c_R\sigma_{a,\star}\tau_\star^3.
 \label{eq:Rs-sigmaa-tau3}
@@ -238,10 +238,10 @@ scales as wave amplitude and period change.  Changing $T_S$, spectral bandwidth,
 or low-frequency contamination changes the effective regularization and may
 require retuning $c_R$.
 
-\subsection{Online Adaptation Implementation}
+\subsection{Online Adaptation}
 \label{sec:adapt-impl}
 
-The implementation adapts the OU time constant $\tau$, the OU stationary
+The adaptation law updates the OU time constant $\tau$, the OU stationary
 acceleration scale $\sigma_a$, and the integral pseudo-measurement
 standard-deviation scale $r_S$.
 
@@ -271,7 +271,7 @@ $\widehat\sigma_{\mathrm{tot}}^2\approx\Var[a_{\uparrow}]$.
 \]
 
 \subsubsection{Targets}
-The code uses
+The adaptation targets are
 \begin{equation}
 \begin{aligned}
 \tau_\star&=c_\tau\frac{1}{2f_{\mathrm{tune}}},\\
@@ -305,13 +305,13 @@ r_{S,\mathrm{appl}}&\leftarrow r_{S,\mathrm{appl}}
 \label{eq:adapt-RS}
 \end{equation}
 
-\subsubsection{Anisotropy and implementation API}
+\subsubsection{Anisotropic parameterization}
 The OU stationary standard deviation is applied anisotropically,
 \[
 \Sigma_{a_w}^{1/2}=\diag(S_\sigma\sigma_{a,\mathrm{appl}},
 S_\sigma\sigma_{a,\mathrm{appl}},\sigma_{a,\mathrm{appl}}),
 \]
-and the vector passed to \texttt{set\_RS\_noise()} is
+and the integral pseudo-measurement standard-deviation vector is
 \[
 \vct{r}_S=\begin{bmatrix}
 \rho_{xy}r_{S,\mathrm{appl}}&
@@ -319,8 +319,11 @@ and the vector passed to \texttt{set\_RS\_noise()} is
 r_{S,\mathrm{appl}}
 \end{bmatrix}^{\top}.
 \]
-The setter squares these entries to obtain $\mat{R}_S$, exactly matching the
-measurement model in Sec.~\ref{sec:measurement_model}.
+Its componentwise square defines the covariance,
+\begin{equation}
+\mat{R}_S=\diag\!\left(\vct{r}_S\odot\vct{r}_S\right),
+\end{equation}
+consistent with the measurement model in Sec.~\ref{sec:measurement_model}.
 
 % =======================================================
 \input{w3d-direction-methods.tex-part}

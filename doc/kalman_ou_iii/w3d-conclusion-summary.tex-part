@@ -4,10 +4,9 @@ under the simulation protocol of Sec.~\ref{sec:sim-and-eval}. Across the tested
 JONSWAP and PM--Stokes cases, the reported vertical-displacement RMS errors
 remain within the ranges listed in Table~\ref{tab:sim_results_rms_dir_basic},
 while the attitude and direction pipelines remain operational under the stated
-multi-rate sensor and error models. The exact OU-chain transition, small-step
-covariance branch, full MEKF reset, and adaptive pseudo-measurement scaling are
-implemented in the same C++ code exercised by the simulations and embedded
-builds.
+multi-rate sensor and error models. The simulations and embedded builds exercise
+the same estimator recursion, including the exact OU-chain transition, small-step
+covariance branch, full MEKF reset, and adaptive pseudo-measurement scaling.
 
 The results support embedded feasibility and drift-controlled wave-state
 reconstruction for the tested conditions, but they do not by themselves imply
