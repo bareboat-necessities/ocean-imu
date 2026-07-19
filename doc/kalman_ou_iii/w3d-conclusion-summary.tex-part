@@ -1,0 +1,20 @@
+
+The present study establishes the complete estimator recursion and verifies it
+under the simulation protocol of Sec.~\ref{sec:sim-and-eval}. Across the tested
+JONSWAP and PM--Stokes cases, the reported vertical-displacement RMS errors
+remain within the ranges listed in Table~\ref{tab:sim_results_rms_dir_basic},
+while the attitude and direction pipelines remain operational under the stated
+multi-rate sensor and error models. The exact OU-chain transition, small-step
+covariance branch, full MEKF reset, and adaptive pseudo-measurement scaling are
+implemented in the same C++ code exercised by the simulations and embedded
+builds.
+
+The results support embedded feasibility and drift-controlled wave-state
+reconstruction for the tested conditions, but they do not by themselves imply
+universal performance across spectra, update cadences, vessel speeds, or sensor
+installations. Future work should therefore add Monte Carlo ensembles, direct
+baseline and ablation comparisons, controlled sea-state transitions, and
+quantitative timing and external-reference measurements on hardware. Optional
+absolute-navigation fusion is kept separate in Appendix~\ref{sec:gps_fusion}
+so that the oscillatory displacement state $\vct{p}$ is not conflated with a
+local or global navigation position.
