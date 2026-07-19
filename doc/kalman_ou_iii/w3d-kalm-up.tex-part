@@ -61,10 +61,9 @@ with columns placed according to \eqref{eq:state-vector}.  For the integral
 pseudo-measurement, $\mat{C}_S$ selects the $\vct{S}$ block.
 
 \subsection{Nominal-state injection and quaternion reset}
-After an accepted correction, the implementation first adds the complete
-Kalman correction to the stored additive state vector.  Equivalently, writing
-$\delta\hat{\vct{x}}^+$ in the ordering of \eqref{eq:state-vector}, the nominal
-additive states are injected as
+After an accepted correction, the complete Kalman correction is first added to
+the nominal additive state vector.  Writing $\delta\hat{\vct{x}}^+$ in the
+ordering of \eqref{eq:state-vector}, the nominal additive states are injected as
 \begin{align}
 \hat{\vct{b}}_g &\leftarrow \hat{\vct{b}}_g+\delta\hat{\vct{b}}_g,&
 \hat{\vct{v}} &\leftarrow \hat{\vct{v}}+\delta\hat{\vct{v}},\\
@@ -75,8 +74,7 @@ additive states are injected as
 \label{eq:additive-state-injection}
 \end{align}
 The optional bias terms are omitted when the corresponding state is disabled.
-This matches the C++ implementation, where the full vector update is applied
-before the quaternion correction.
+The full additive-state injection precedes the quaternion correction.
 
 Let $\delta\hat{\vct{\theta}}$ be the first three components of the corrected
 error state.  The left-multiplicative quaternion injection is
