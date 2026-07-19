@@ -33,7 +33,7 @@ Let $\matg{Q}_d(h)$ denote the process noise accrued over $[t,t{+}h]$.
 From the stochastic variation-of-constants formula,
 \begin{equation}
 \matg{Q}_d(h)
-\;=\;
+  \;=\;
 \int_{0}^{h}
   e^{\mat{F} \tau}\,\mat{L}\,\matg{Q}_c\,\mat{L}^\top\,
   e^{\mat{F}^\top \tau}\,d\tau.
@@ -47,8 +47,8 @@ Given $(\hat{\vct{x}}_k,\mat{P}_k)$ at $t_k$, the prediction to $t_{k+1}=t_k{+}h
 \mat{P}_{k+1|k} &= \matg{\Phi}(h)\,\mat{P}_k\,\matg{\Phi}(h)^\top \;+\; \matg{Q}_d(h).
 \end{align}
 These equations are the discrete counterparts of the continuous covariance
-flow for the local-error SDE defined in Sec.~\ref{sec:process_model}.  In the
-implementation, the OU-driven kinematic transition and process covariance are
+flow for the local-error SDE defined in Sec.~\ref{sec:proc}.  For the proposed
+estimator, the OU-driven kinematic transition and process covariance are
 computed analytically, including the small-step series branch.  The
 attitude/gyro-bias transition is structured and exact for constant angular
 rate, while anisotropic attitude-noise and bias-driven covariance integrals use
