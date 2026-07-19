@@ -1,7 +1,7 @@
 \subsection{Discretization of a generic LTI SDE over step \texorpdfstring{$h$}{h}}
 \label{sec:lti-disc}
 
-Consider a linear time–invariant SDE
+Consider a linear time--invariant SDE
 \begin{equation}
 \fitcol{
 \dot{\delta\vct{x}}(t)
@@ -11,7 +11,7 @@ Consider a linear time–invariant SDE
   = \matg{Q}_c\,\delta(t{-}s),
 }
 \end{equation}
-with Jacobian (linearized) dynamics matrix $\mat{F}$, noise–input matrix $\mat{L}$,
+with Jacobian (linearized) dynamics matrix $\mat{F}$, noise--input matrix $\mat{L}$,
 and continuous spectral density $\matg{Q}_c$.
 
 \paragraph{State transition via the matrix exponential}
@@ -46,7 +46,10 @@ Given $(\hat{\vct{x}}_k,\mat{P}_k)$ at $t_k$, the prediction to $t_{k+1}=t_k{+}h
 \hat{\vct{x}}_{k+1|k} &= \matg{\Phi}(h)\,\hat{\vct{x}}_k,\\
 \mat{P}_{k+1|k} &= \matg{\Phi}(h)\,\mat{P}_k\,\matg{\Phi}(h)^\top \;+\; \matg{Q}_d(h).
 \end{align}
-These equations are the discrete counterparts of the continuous Lyapunov/Riccati
-flow with $\mat{F}$ and $\mat{L}$ the Jacobian dynamics and noise–input matrices
-defined in \S\ref{sec:lti-sde}. In our implementation, $\matg{\Phi}$ and $\matg{Q}_d$
-are computed analytically for the OU–driven kinematic blocks.
+These equations are the discrete counterparts of the continuous covariance
+flow for the local-error SDE defined in Sec.~\ref{sec:process_model}.  In the
+implementation, the OU-driven kinematic transition and process covariance are
+computed analytically, including the small-step series branch.  The
+attitude/gyro-bias transition is structured and exact for constant angular
+rate, while anisotropic attitude-noise and bias-driven covariance integrals use
+Simpson quadrature as described in Sec.~\ref{sec:discrete_model}.
