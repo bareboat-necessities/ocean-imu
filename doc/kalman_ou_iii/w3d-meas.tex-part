@@ -51,15 +51,17 @@ The drift-control channel is
 \label{eq:zero-pseudo}
 \end{equation}
 with
-\begin{equation}
-\vct{r}_S:=
-\begin{bmatrix}r_{Sx}&r_{Sy}&r_{Sz}\end{bmatrix}^{\top},
-\qquad
-\mat{R}_S=\diag(r_{Sx}^2,r_{Sy}^2,r_{Sz}^2),
-\qquad
-\mat{H}_S=\begin{bmatrix}0&\cdots&\Id_{S}&\cdots&0\end{bmatrix}.
-\label{eq:RS-from-rS}
-\end{equation}
+\begin{align}
+\vct{r}_S
+&:=\begin{bmatrix}r_{Sx}&r_{Sy}&r_{Sz}\end{bmatrix}^{\top},
+\label{eq:rS-vector}\\
+\mat{R}_S
+&:=\diag\!\left(r_{Sx}^2,r_{Sy}^2,r_{Sz}^2\right),
+\label{eq:RS-from-rS}\\
+\mat{H}_S
+&:=\begin{bmatrix}0&\cdots&\Id_S&\cdots&0\end{bmatrix}.
+\label{eq:HS-selector}
+\end{align}
 Here $\vct{r}_S$ is the per-axis pseudo-measurement standard-deviation
 vector, in units of $\mathrm{m\,s}$, whereas $\mat{R}_S$ is the covariance
 used by the Kalman update.  This notation matches the implementation:
