@@ -94,19 +94,19 @@ L_k=\frac{\lambda_{1,k}-\lambda_{2,k}}
 \label{eq:dir-amplitude-linearity}
 \end{equation}
 Linearly polarized motion has $L_k\simeq1$; circular or equally spread motion
-has $L_k\simeq0$ and is rejected. The implementation combines covariance and
+has $L_k\simeq0$ and is rejected. Confidence combines covariance and
 linearity as
 \begin{equation}
 c_k=\frac{L_k}{\operatorname{tr}(\mat{P}_k)+\epsilon_P},
 \label{eq:dir-confidence}
 \end{equation}
-and requires amplitude, confidence, and linearity gates before exposing a
-current axis. Axial smoothing is performed on
+and amplitude, confidence, and linearity gates must all be satisfied before a
+current axis is reported. Axial smoothing is performed on
 $[\cos 2\theta_k,\sin 2\theta_k]^\top$, avoiding artificial $180^\circ$ jumps.
 Let $\mat{P}_{C,k}$ and $\mat{P}_{S,k}$ be the cosine- and sine-quadrature
 $2\times2$ covariance blocks and let
 $\vct{t}_k=[-\widehat d_{S,k},\widehat d_{F,k}]^\top$ be tangent to the axis.
-The implemented first-order angular uncertainty is
+A first-order angular-uncertainty approximation is
 \begin{equation}
 \sigma_{\theta,k}^2
 \approx
