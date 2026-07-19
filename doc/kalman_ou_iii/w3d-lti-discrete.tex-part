@@ -52,4 +52,4 @@ implementation, the OU-driven kinematic transition and process covariance are
 computed analytically, including the small-step series branch.  The
 attitude/gyro-bias transition is structured and exact for constant angular
 rate, while anisotropic attitude-noise and bias-driven covariance integrals use
-Simpson quadrature as described in Sec.~\ref{sec:discrete_model}.
+Simpson quadrature, as stated in the following attitude-block derivation.
