@@ -21,8 +21,7 @@ with
 \vct{\omega}&-\Skew{\vct{\omega}}
 \end{bmatrix}.
 \]
-The implementation renormalizes the quaternion after propagation and
-correction.
+The quaternion is renormalized after propagation and correction.
 
 Gyroscope bias follows
 \begin{equation}

@@ -6,10 +6,10 @@ The core wave estimator uses $\vct{p}\in\R^3$ for the oscillatory displacement
 of the tracked vessel or buoy reference point.  This is not an unbounded global
 position state.  When GNSS is fused, introduce a separate local-tangent-plane
 position state $\vct{r}_{\mathrm{nav}}^{\mathcal W}\in\R^3$ for absolute
-navigation relative to a chosen geodetic origin.  The implementation currently
-provides generic position and velocity pseudo-update functions; an application
-that combines wave displacement with absolute navigation should keep these two
-quantities separate and define the measured reference point explicitly.
+navigation relative to a chosen geodetic origin.  Generic position and
+velocity pseudo-updates support this extension; a system that combines wave
+displacement with absolute navigation should keep these quantities separate
+and define the measured reference point explicitly.
 
 \subsection{Local frame and measurement preprocessing}
 \label{sec:gps_ned_short}
@@ -83,6 +83,6 @@ During aggressive maneuvers, the antenna also experiences
  (\vct{\omega}^{\mathcal B}\times\vct{r}_{\mathrm{gps}}^{\mathcal B})
 \Bigr).
 \end{equation}
-GNSS updates are asynchronous, typically at 1--10~Hz.  A production fusion
-implementation should timestamp-align or delay-compensate the measurements;
+GNSS updates are asynchronous, typically at 1--10~Hz.  Measurement fusion
+should therefore timestamp-align or delay-compensate the GNSS observations;
 simply inflating $\mat{R}_{r}$ and $\mat{R}_{v}$ is only an approximation.

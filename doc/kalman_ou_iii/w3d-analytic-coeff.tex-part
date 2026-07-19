@@ -1,14 +1,13 @@
 \section{Discrete Transition and Process Covariance}
 \label{sec:block-Phi-Qd}
 
-Let $h>0$ be the sample interval.  The implementation preserves the group-first
-state ordering
+Let $h>0$ be the sample interval.  The state uses the group-first ordering
 \[
 [\delta\vct{\theta},\vct{b}_g,\vct{v},\vct{p},\vct{S},\vct{a}_w,\vct{b}_a]
 \]
-used in Sec.~\ref{sec:state}.  Axis-wise formulas are derived in the compact
+defined in Sec.~\ref{sec:state}.  Axis-wise formulas are derived in the compact
 ordering $[v,p,S,a]$, then assembled into the group-first three-dimensional
-blocks without permuting the public state.
+blocks without changing the state ordering.
 
 \subsection{Attitude and gyroscope-bias block}
 For constant $\hat{\vct{\omega}}$ over the step, define
@@ -50,8 +49,8 @@ The structured process covariance is
  &=\left(\int_0^h\mat{B}(s)\,ds\right)\matg{Q}_{bg},\\
 \matg{Q}_{bb}&=h\matg{Q}_{bg}.
 \end{align}
-The first integral is exact for isotropic $\matg{Q}_g$; the implementation uses
-Simpson quadrature for anisotropic matrices and for the bias-driven integral.
+The first integral is exact for isotropic $\matg{Q}_g$; Simpson quadrature is
+used for anisotropic matrices and for the bias-driven integral.
 
 \subsection{OU-driven linear transition}
 For one axis, let
@@ -153,11 +152,11 @@ d_{ijrs}&=r+s+m_i+m_j+1,
 \label{eq:ou-small-step-compact}
 \end{equation}
 The matrix is completed by symmetry.  Equation~\eqref{eq:ou-small-step-compact}
-contains all terms retained by the implementation; for example, it produces the
-leading orders $Q_{aa}=2\sigma^2\lambda h+O(h^2)$,
+contains all terms retained in the ninth-order expansion; for example, it
+produces the leading orders $Q_{aa}=2\sigma^2\lambda h+O(h^2)$,
 $Q_{va}=\sigma^2\lambda h^2+O(h^3)$, and
 $Q_{SS}=\sigma^2\lambda h^7/126+O(h^8)$.
-The $[v,p,a]$ principal marginal is computed by the same OU-II routine and
+The $[v,p,a]$ principal marginal is computed from the same OU-II formulas and
 embedded into the OU-III matrix, making that common marginal identical by
 construction.
 
