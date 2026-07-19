@@ -49,15 +49,12 @@ The input is first passed through a first-order filter
 \]
 The nonlinear observer forms
 \[
-\varphi
-=
-\dot x_1(bu+a x_1)+x_1^2\theta ,
+\varphi=\dot x_1(bu+a x_1)+x_1^2\theta ,
 \]
 and adapts an auxiliary state
 \[
-\dot\sigma=-k\varphi
-\].
-
+\dot\sigma=-k\varphi .
+\]
 The frequency-related parameter is updated algebraically:
 \[
 \theta = k b x_1 u+\sigma .
@@ -81,7 +78,6 @@ The phase detector is
 \[
 e_{\phi,k}=\operatorname{atan2}(Q_k,I_k).
 \]
-
 A type-II PLL-style loop updates oscillator frequency and phase:
 \[
 \omega_{k+1}
@@ -105,314 +101,226 @@ K_p=2\zeta\omega_n,\qquad
 K_i=\omega_n^2,\qquad
 \omega_n=2\pi B_L .
 \]
-Here $B_L$ is the configured loop bandwidth, $\zeta$ is the loop damping, and $G_k$ reduces adaptation when confidence is poor.
-
-The reported frequency is
+Here $B_L$ is the configured loop bandwidth, $\zeta$ is the loop damping, and $G_k$ reduces adaptation when confidence is poor. The reported frequency is
 \[
-\hat f_k=\frac{\omega_k}{2\pi},
-\]. 
-
-\iffalse
-\subsection{Zero-crossing baseline with hysteresis}
-
-Use debounced threshold crossings to estimate period directly; smooth to reduce jitter.
-
-\paragraph{Method}
-Times of upcrossings of $u$ through band $[-h,+h]$ (debounced by $T_{\mathrm{deb}}$). Period estimate
-\(
-\hat T_k=(1-\alpha_T)\hat T_{k-1}+\alpha_T (t_k-t_{k-1}), \quad \hat f_k=1/\hat T_k.
-\)
-
-Clamp $\hat f_k \in [f_{\min}, f_{\max}]$, then apply a short EMA:
-\(
-\bar f_k=(1-\alpha_s)\bar f_{k-1}+\alpha_s \hat f_k.
-\)
-\fi
+\hat f_k=\frac{\omega_k}{2\pi}.
+\]
 
 % =======================================================
 \section{Variance-Informed Online Adaptation}
 \label{sec:adaptation}
 
-
 \subsection{Spectral scaling and pseudo-measurement on $S$}
 \label{sec:spectral-Rs}
 \label{app:rs-scaling}
 
-The pseudo-measurement on the triple-integral state
+The pseudo-measurement on the triple-integral state is written using a scalar
+standard-deviation scale $r_S$,
 \[
-y_S = 0 = S + n_S,\qquad n_S \sim \mathcal{N}(0,R_S^2)
+y_S=0=S+n_S,\qquad n_S\sim\mathcal{N}(0,r_S^2).
 \]
-is not a physical sensor but a regularizer. Its design should reflect the
-\emph{natural} fluctuations of $S$ under a given sea state, so that $R_S$
-scales with the sea state in a physically consistent and, ideally,
-sea-state–invariant way.
-
-The key steps are:
-\begin{enumerate}\itemsep2pt
-\item Express the variance of $S$ in terms of the vertical-acceleration
-spectrum.
-\item Show that, for a broad class of spectra, the standard deviation
-$\sigma_S$ of $S$ scales as
-\[
-\sigma_S \sim c_{\text{spec}}\;\sigma_a\,\tau^3,
-\]
-where $c_{\text{spec}}$ is a dimensionless \emph{spectral shape factor}.
-\item Choose the pseudo-measurement noise $R_S$ proportional to this physical
-scale $\sigma_S$. This makes the pseudo-measurement effectively
-\emph{sea-state invariant}.
-\end{enumerate}
+For the three-axis implementation, the corresponding vector $\vct{r}_S$ is
+squared componentwise to form the covariance $\mat{R}_S$, as defined in
+\eqref{eq:RS-from-rS}.  The channel is a regularizer, not a physical sensor.
+The purpose of the scaling argument below is to choose $r_S$ on the same
+physical scale as the natural fluctuations of $S$ within a stated family of
+wave spectra and a fixed pseudo-update cadence.
 
 \subsection{Variance of $S$ from the acceleration spectrum}
 
 Let $a(t)$ denote vertical acceleration and let
 \[
-\dot v = a,\qquad \dot p = v,\qquad \dot S = p,
+\dot v=a,\qquad \dot p=v,\qquad \dot S=p,
 \]
-so that $S$ is the triple time-integral of $a$. In the frequency domain, the
-transfer function from $a$ to $S$ is
+so that $S$ is the triple time-integral of $a$.  In the frequency domain,
 \[
-H_S(j\omega) = \frac{1}{(j\omega)^3},\qquad
-\big|H_S(j\omega)\big|^2 = \frac{1}{\omega^6}.
+H_S(j\omega)=\frac{1}{(j\omega)^3},\qquad
+|H_S(j\omega)|^2=\frac{1}{\omega^6}.
 \]
-If $a(t)$ is stationary with one-sided PSD $S_a(\omega)$, standard linear
-systems theory gives
+We use a two-sided angular-frequency PSD $S_a^{(2)}(\omega)$ with convention
 \[
-\mathrm{Var}[S]
-= \frac{1}{2\pi}\int_{-\infty}^{\infty}
- S_a(\omega)\,\big|H_S(j\omega)\big|^2\,d\omega
-= \frac{1}{\pi}\int_0^\infty \frac{S_a(\omega)}{\omega^6}\,d\omega.
+\Var[a]=\frac{1}{2\pi}\int_{-\infty}^{\infty}S_a^{(2)}(\omega)\,d\omega .
 \]
+For a real process the PSD is even, and therefore
+\begin{equation}
+\Var[S]
+=\frac{1}{2\pi}\int_{-\infty}^{\infty}
+\frac{S_a^{(2)}(\omega)}{\omega^6}\,d\omega
+=\frac{1}{\pi}\int_0^{\infty}
+\frac{S_a^{(2)}(\omega)}{\omega^6}\,d\omega .
+\label{eq:varS-two-sided}
+\end{equation}
+Equivalently, with the one-sided PSD $S_a^{(1)}(\omega)=2S_a^{(2)}(\omega)$ for
+$\omega>0$,
+\[
+\Var[S]=\frac{1}{2\pi}\int_0^{\infty}
+\frac{S_a^{(1)}(\omega)}{\omega^6}\,d\omega .
+\]
+This explicit convention removes the previous factor-of-two ambiguity.
 
-For linear deep-water waves, displacement $\eta$ and acceleration $a$ are
-related by $a(\omega)=-(j\omega)^2\eta(\omega)$, so
-$S_a(\omega)=\omega^4 S_\eta(\omega)$ and
+For linear deep-water waves, displacement $\eta$ and acceleration satisfy
+$a(\omega)=-(j\omega)^2\eta(\omega)$, so
+$S_a^{(2)}(\omega)=\omega^4S_\eta^{(2)}(\omega)$ and
 \[
-\mathrm{Var}[S]
-= \frac{1}{\pi}\int_0^\infty \frac{\omega^4 S_\eta(\omega)}{\omega^6}\,d\omega
-= \frac{1}{\pi}\int_0^\infty \frac{S_\eta(\omega)}{\omega^2}\,d\omega.
+\Var[S]=\frac{1}{\pi}\int_0^{\infty}
+\frac{S_\eta^{(2)}(\omega)}{\omega^2}\,d\omega .
 \]
-Either representation (in terms of $S_a$ or $S_\eta$) leads to the same scaling
-law once the spectrum is parameterized.
 
 \subsection{Normalization and spectral shape factor}
 
-We now separate \emph{scale} from \emph{shape}. Let $\sigma_a^2$ denote the
-variance of vertical acceleration and let $\tau$ be a characteristic time
-scale of the sea state (e.g.\ the OU correlation time or a quantity
-proportional to the peak period). We write the acceleration spectrum in the
-normalized form
+Let $\sigma_a^2=\Var[a]$ and let $\tau$ be a characteristic time scale.  Write
+the two-sided PSD for positive frequency as
 \begin{equation}
+S_a^{(2)}(\omega)=\sigma_a^2\tau\Phi(\omega\tau),
 \label{eq:Sa-normalized}
-S_a(\omega)
-= \sigma_a^2\,\tau\,\Phi(\omega\tau),
 \end{equation}
-where $\Phi(u)$ is a dimensionless shape function and the prefactor is chosen
-so that
+with
 \[
-\frac{1}{\pi}\int_0^\infty \Phi(u)\,du = 1
-\quad\Longleftrightarrow\quad
-\frac{1}{\pi}\int_0^\infty S_a(\omega)\,d\omega = \sigma_a^2.
+\frac{1}{\pi}\int_0^\infty\Phi(u)\,du=1.
 \]
-
-In practice, any realistic spectrum has negligible energy below some
-effective nonzero frequency $\omega_{\min}>0$. We model this by
-\[
-\mathrm{Var}[S]
-= \frac{1}{\pi}\int_{\omega_{\min}}^\infty \frac{S_a(\omega)}{\omega^6}\,d\omega.
-\]
-Substituting \eqref{eq:Sa-normalized} and changing variables $u=\omega\tau$,
-$d\omega=du/\tau$, we obtain
+The triple integral is not stationary for a model with nonzero spectral density
+at zero frequency.  We therefore make the low-frequency assumption explicit:
+the scaling applies after the physical spectrum, preprocessing, or finite
+observation interval supplies an effective cutoff $\omega_{\min}>0$.  Then
 \begin{equation}
+\Var[S]
+=\sigma_a^2\tau^6
+\left[\frac{1}{\pi}\int_{u_{\min}}^\infty
+\frac{\Phi(u)}{u^6}\,du\right],
+\qquad u_{\min}=\omega_{\min}\tau .
 \label{eq:varS-shape}
-\fitcol{
-\mathrm{Var}[S]
-= \sigma_a^2\tau^6\,
-\Bigg[\frac{1}{\pi}\int_{u_{\min}}^\infty \frac{\Phi(u)}{u^6}\,du\Bigg],
-}
 \end{equation}
-where $u_{\min}:=\omega_{\min}\tau$ is a (dimensionless) low-frequency cutoff
-in normalized coordinates.
-
-This motivates the definition
+Define
 \begin{equation}
+c_{\mathrm{spec}}^2(u_{\min})
+:=\frac{1}{\pi}\int_{u_{\min}}^\infty
+\frac{\Phi(u)}{u^6}\,du,
 \label{eq:c-spec-def}
-c_{\mathrm{spec}}^{2}(u_{\min})
-:= \frac{1}{\pi}\int_{u_{\min}}^\infty \frac{\Phi(u)}{u^6}\,du,
 \end{equation}
 so that
 \begin{equation}
+\sigma_S=\sqrt{\Var[S]}
+=c_{\mathrm{spec}}(u_{\min})\sigma_a\tau^3.
 \label{eq:sigmaS-scaling}
-\sigma_S(\sigma_a,\tau)
-:= \sqrt{\mathrm{Var}[S]}
-= c_{\text{spec}}(u_{\min})\,\sigma_a\,\tau^3.
 \end{equation}
-The factor $c_{\text{spec}}$ is \emph{dimensionless} and encodes only the
-spectral shape (and the choice of effective low-frequency cutoff), while
-$\sigma_a$ and $\tau$ carry the physical scale.
+The units are correct because $\sigma_a\tau^3$ has units $\mathrm{m\,s}$.
+The coefficient depends strongly on spectral shape and on the effective
+low-frequency cutoff; it is not universal.
 
-\begin{remark}[Dimensional consistency]
-$\sigma_a$ has units $\mathrm{m/s^2}$ and $\tau$ has units $\mathrm{s}$, so
-$\sigma_a\tau^3$ has units $\mathrm{m\cdot s}$, the same units as the
-triple-integral state $S$ (since $S$ integrates displacement $p$ once more in
-time). Thus \eqref{eq:sigmaS-scaling} is dimensionally correct, and
-$c_{\text{spec}}$ is a pure number.
-\end{remark}
-
-\paragraph{Narrowband vs.\ broadband spectra}
-For a given $(\sigma_a,\tau)$, the value of $c_{\text{spec}}$ depends mainly on
-how much spectral mass lies near the low frequencies emphasized by the
-$1/u^6$ weight in \eqref{eq:c-spec-def}:
-\begin{itemize}[itemsep=1pt,topsep=1pt,leftmargin=*]
-\item A \emph{narrowband} spectrum (e.g.\ an idealized very sharp JONSWAP)
-concentrates variance near a single normalized frequency $u\approx 1$ and
-yields a relatively large $c_{\text{spec}}$.
-\item A more \emph{broadband} spectrum (e.g.\ Pierson--Moskowitz or a
-low-$\gamma$ JONSWAP) spreads energy across higher normalized frequencies.
-Because of the $1/u^6$ factor, this reduces $c_{\text{spec}}$ even though
-$\sigma_a$ and $\tau$ are kept fixed.
-\end{itemize}
-In particular, $c_{\text{spec}}$ is much more sensitive to spectral
-\emph{shape} (narrowness, bandwidth, tail behavior) than to overall energy
-($\sigma_a^2$) or peak period ($\tau$), which have already been factored out
-in \eqref{eq:sigmaS-scaling}.
-
-As a concrete example, for an OU surrogate with
-$\Phi_{\mathrm{OU}}(u)=2/(1+u^2)$ and a modest cutoff $u_{\min}\approx 1$, the
-integral \eqref{eq:c-spec-def} gives $c_{\text{spec}}\approx 0.16$.
-
-\subsection{From physical $\sigma_S$ to pseudo-measurement $R_S$}
-
-The pseudo-measurement
+For the two-sided OU surrogate
 \[
-y_S = 0 = S + n_S,\qquad n_S \sim \mathcal{N}(0,R_S^2)
+\Phi_{\mathrm{OU}}(u)=\frac{2}{1+u^2}
 \]
-encodes a prior belief that $S$ fluctuates around zero with some expected
-spread. The spectral result \eqref{eq:sigmaS-scaling} provides exactly that
-spread: the \emph{physical} standard deviation $\sigma_S(\sigma_a,\tau)$
-generated by the sea state described by $(\sigma_a,\tau)$ and by the chosen
-spectral shape.
+and $u_{\min}=1$, Eqs.~\eqref{eq:c-spec-def}--\eqref{eq:sigmaS-scaling} give
+$c_{\mathrm{spec}}\approx0.227$.  Under the equivalent one-sided convention,
+the PSD and normalization both change consistently and produce the same
+physical variance.
 
-A natural Gaussian design is therefore
+\subsection{Practical pseudo-measurement scale}
+
+A physically scaled Gaussian design is
 \begin{equation}
+r_S(\sigma_a,\tau)
+=k_i\sigma_S
+=k_i c_{\mathrm{spec}}(u_{\min})\sigma_a\tau^3,
 \label{eq:Rs-from-sigmaS}
-R_S(\sigma_a,\tau)
-= k_i\,\sigma_S(\sigma_a,\tau)
-= k_i\,c_{\text{spec}}(u_{\min})\,\sigma_a\,\tau^3,
 \end{equation}
-with $k_i>0$ a dimensionless “comfort factor.” Values $k_i\approx 1$ make the
-pseudo-measurement noise comparable to the natural spread of $S$, $k_i>1$ are
-more conservative, and $k_i<1$ are more aggressive.
-
-Absorbing the (unknown but bounded) shape factor $c_{\text{spec}}$ into
-$k_i$ leads to the practical adaptation law used in the filter:
+where $k_i>0$ is dimensionless.  The implementation absorbs the selected
+spectral-shape and cutoff calibration into a single coefficient $c_R$ and uses
 \begin{equation}
+r_{S,\star}=c_R\sigma_{a,\star}\tau_\star^3.
 \label{eq:Rs-sigmaa-tau3}
-R_S(\sigma_a,\tau)
-= k_i\,\sigma_a\,\tau^3,
 \end{equation}
-where $k_i$ is now understood as a \emph{spectral design coefficient}. It is
-chosen large enough to cover the expected range of realistic spectra (OU,
-Pierson--Moskowitz, JONSWAP with typical $\gamma$) and reasonable effective
-low-frequency cutoffs $u_{\min}$.
-
-\begin{remark}[Sea-state invariance]
-Under \eqref{eq:sigmaS-scaling} and \eqref{eq:Rs-from-sigmaS}, the ratio
-\[
-\frac{\sigma_S^2(\sigma_a,\tau)}{R_S^2(\sigma_a,\tau)}
-= \Big(\frac{c_{\text{spec}}(u_{\min})}{k_i}\Big)^2
-\]
-is a pure number independent of $(\sigma_a,\tau)$. In other words, $S$ is
-always measured in units of its physically expected spread for that sea
-state. This makes the pseudo-measurement \emph{sea-state invariant}: a calm
-sea and a steep sea produce innovation statistics of the same order once
-normalized by $R_S$, and the qualitative effect of the pseudo-measurement on
-the filter does not depend on wave height or period, only on the choice of
-$k_i$ and on spectral shape.
-\end{remark}
+This is an engineering normalization, not an exact sea-state invariance result.
+For a fixed pseudo-update period $T_S$ and a bounded family of spectral shapes
+and cutoffs, it keeps the regularizer on approximately comparable physical
+scales as wave amplitude and period change.  Changing $T_S$, spectral bandwidth,
+or low-frequency contamination changes the effective regularization and may
+require retuning $c_R$.
 
 \subsection{Online Adaptation Implementation}
 \label{sec:adapt-impl}
 
-The implementation adapts three MEKF parameters online:
-the OU time constant $\tau$, the OU stationary acceleration scale $\sigma_a$,
-and the integral pseudo-measurement level $R_S$.
+The implementation adapts the OU time constant $\tau$, the OU stationary
+acceleration scale $\sigma_a$, and the integral pseudo-measurement
+standard-deviation scale $r_S$.
 
 \subsubsection{Vertical signal}
-Let $a_{z,\text{inert}}=a_z+g$ denote vertical inertial acceleration in the body/NED convention.
-We use the up-positive signal
+Let $a_{z,\mathrm{inert}}=a_z+g$ denote vertical inertial acceleration in the body/NED convention. We use the up-positive signal
 \[
-a_{\uparrow}:=-a_{z,\text{inert}}.
+a_{\uparrow}:=-a_{z,\mathrm{inert}}.
 \]
 
 \subsubsection{Frequency and period-tied variance horizon}
-A dominant frequency estimate $f$ is tracked from $a_{\uparrow}$ (by a frequency tracker),
-then clamped and smoothed to an internal tuning frequency $f_{\text{tune}}\in[f_{\min},f_{\max}]$.
-To make the acceleration scale adapt with comparable responsiveness across chop and swell,
-the variance of $a_{\uparrow}$ is estimated over a \emph{fixed number of periods}:
+A dominant frequency estimate $f$ is tracked from $a_{\uparrow}$, then clamped and smoothed to $f_{\mathrm{tune}}\in[f_{\min},f_{\max}]$.  The variance is estimated over a fixed number of periods:
 \begin{equation}
 \begin{aligned}
-T_{\text{eff}} = \frac{1}{f_{\text{tune}}}, \qquad
-\tau_{\text{var}} &=
-\clip\!\Big(
-K_{\text{periods}}\,T_{\text{eff}},
-\ \tau_{\text{var,min}},
-\ \tau_{\text{var,max}}
-\Big),\\
-\alpha_{\text{var}} &= 1 - e^{-\Delta t/\tau_{\text{var}}}.
+T_{\mathrm{eff}}&=\frac{1}{f_{\mathrm{tune}}},\\
+\tau_{\mathrm{var}}&=\clip\!\left(K_{\mathrm{periods}}T_{\mathrm{eff}},
+\tau_{\mathrm{var,min}},\tau_{\mathrm{var,max}}\right),\\
+\alpha_{\mathrm{var}}&=1-e^{-\Delta t/\tau_{\mathrm{var}}}.
 \end{aligned}
 \end{equation}
-Using $\alpha_{\text{var}}$, the tuner maintains an online estimate $\widehat{\sigma}^2_{\text{tot}}\approx\mathrm{Var}[a_{\uparrow}]$.
+Using $\alpha_{\mathrm{var}}$, the tuner maintains
+$\widehat\sigma_{\mathrm{tot}}^2\approx\Var[a_{\uparrow}]$.
 
 \subsubsection{Noise-floor subtraction}
-A configured acceleration noise floor $\sigma_{\text{nf}}$ is subtracted in variance:
 \[
-\widehat{\sigma}^2_{\text{wave}}
-=\max\{0,\ \widehat{\sigma}^2_{\text{tot}}-\sigma_{\text{nf}}^2\}.
+\widehat\sigma_{\mathrm{wave}}^2
+=\max\{0,\widehat\sigma_{\mathrm{tot}}^2-\sigma_{\mathrm{nf}}^2\}.
 \]
 
-\subsubsection{Targets (half-period scaling)}
-Targets follow the half-period rule and the cubic $R_S$ scaling:
-\begin{equation}\label{eq:tuner-targets}
+\subsubsection{Targets}
+The code uses
+\begin{equation}
 \begin{aligned}
-\tau_\star &= c_{\tau}\,\frac{1}{2f_{\text{tune}}},\qquad
-\sigma_{a,\star} = c_{\sigma}\,\sqrt{\max\!\bigl(\widehat{\sigma}^2_{\text{wave}},\epsilon\bigr)},\\
-R_{S,\star} &= c_R\,\sigma_{a,\star}\,\tau_\star^3.
+\tau_\star&=c_\tau\frac{1}{2f_{\mathrm{tune}}},\\
+\sigma_{a,\star}&=c_\sigma
+\sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
+r_{S,\star}&=c_R\sigma_{a,\star}\tau_\star^3.
 \end{aligned}
+\label{eq:tuner-targets}
 \end{equation}
 
 \subsubsection{Smoothing}
-Applied $(\tau,\sigma_a)$ are EMA filtered toward their targets with a fixed adaptation time constant
-$\tau_{\text{adapt}}$:
-\begin{equation}\label{eq:adapt-ewma}
+Applied $(\tau,\sigma_a)$ are EMA filtered with time constant $\tau_{\mathrm{adapt}}$:
+\begin{equation}
 \begin{aligned}
-\alpha &= 1 - e^{-\Delta t/\tau_{\text{adapt}}},\qquad
-\tau_{\text{appl}} \leftarrow \tau_{\text{appl}} + \alpha\bigl(\tau_\star - \tau_{\text{appl}}\bigr),\\
-\sigma_{a,\text{appl}} &\leftarrow \sigma_{a,\text{appl}}
-  + \alpha\bigl(\sigma_{a,\star} - \sigma_{a,\text{appl}}\bigr).
+\alpha&=1-e^{-\Delta t/\tau_{\mathrm{adapt}}},\\
+\tau_{\mathrm{appl}}&\leftarrow\tau_{\mathrm{appl}}
++\alpha(\tau_\star-\tau_{\mathrm{appl}}),\\
+\sigma_{a,\mathrm{appl}}&\leftarrow\sigma_{a,\mathrm{appl}}
++\alpha(\sigma_{a,\star}-\sigma_{a,\mathrm{appl}}).
 \end{aligned}
+\label{eq:adapt-ewma}
+\end{equation}
+The pseudo-measurement standard-deviation scale uses
+\begin{equation}
+\begin{aligned}
+\tau_{r_S}&=m_{r_S}\tau_\star,\qquad
+\alpha_{r_S}=1-e^{-\Delta t/\tau_{r_S}},\\
+r_{S,\mathrm{appl}}&\leftarrow r_{S,\mathrm{appl}}
++\alpha_{r_S}(r_{S,\star}-r_{S,\mathrm{appl}}).
+\end{aligned}
+\label{eq:adapt-RS}
 \end{equation}
 
-In contrast, $R_S$ is EMA-smoothed with a time constant proportional to the current wave time scale:
-\begin{equation}\label{eq:adapt-RS}
-\begin{aligned}
-\tau_{R_S} &= m_{R_S}\,\tau_\star,\qquad
-\alpha_{R_S} = 1 - e^{-\Delta t/\tau_{R_S}},\\
-R_{S,\text{appl}} &\leftarrow R_{S,\text{appl}}
- + \alpha_{R_S}\bigl(R_{S,\star} - R_{S,\text{appl}}\bigr).
-\end{aligned}
-\end{equation}
-
-Thus $R_S$ responds faster for short-period seas and more slowly for long-period swell.
-
-\subsubsection{Anisotropy}
-When applied to the MEKF, the OU stationary standard deviation is set anisotropically,
+\subsubsection{Anisotropy and implementation API}
+The OU stationary standard deviation is applied anisotropically,
 \[
-\Sigma_{a_w}^{1/2}=\diag(S_{\sigma}\sigma_{a,\text{appl}},\ S_{\sigma}\sigma_{a,\text{appl}},\ \sigma_{a,\text{appl}}),
+\Sigma_{a_w}^{1/2}=\diag(S_\sigma\sigma_{a,\mathrm{appl}},
+S_\sigma\sigma_{a,\mathrm{appl}},\sigma_{a,\mathrm{appl}}),
 \]
-and the $S$ pseudo-measurement uses anisotropic noise
+and the vector passed to \texttt{set\_RS\_noise()} is
 \[
-\mat{R}_S=\diag(\rho_{xy}R_{S,\text{appl}},\ \rho_{xy}R_{S,\text{appl}},\ R_{S,\text{appl}}).
+\vct{r}_S=\begin{bmatrix}
+\rho_{xy}r_{S,\mathrm{appl}}&
+\rho_{xy}r_{S,\mathrm{appl}}&
+r_{S,\mathrm{appl}}
+\end{bmatrix}^{\top}.
 \]
+The setter squares these entries to obtain $\mat{R}_S$, exactly matching the
+measurement model in Sec.~\ref{sec:measurement_model}.
 
 % =======================================================
 \input{w3d-direction-methods.tex-part}

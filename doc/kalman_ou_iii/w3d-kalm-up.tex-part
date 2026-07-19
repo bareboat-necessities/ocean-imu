@@ -17,7 +17,7 @@ define
 \matg{\Lambda}&=\mat{C}\mat{P}^-\mat{C}^{\top}+\mat{R},\\
 \mat{K}&=\mat{P}^-\mat{C}^{\top}\matg{\Lambda}^{-1}.
 \end{align}
-The additive state correction is
+The additive error-state correction is
 \begin{equation}
 \delta\hat{\vct{x}}^+=\delta\hat{\vct{x}}^-+\mat{K}\vct{r},
 \end{equation}
@@ -60,10 +60,26 @@ For the accelerometer,
 with columns placed according to \eqref{eq:state-vector}.  For the integral
 pseudo-measurement, $\mat{C}_S$ selects the $\vct{S}$ block.
 
-\subsection{Quaternion injection}
-After an accepted correction, let
-$\delta\hat{\vct{\theta}}$ be the first three components of the additive error
-state.  The left-multiplicative injection is
+\subsection{Nominal-state injection and quaternion reset}
+After an accepted correction, the implementation first adds the complete
+Kalman correction to the stored additive state vector.  Equivalently, writing
+$\delta\hat{\vct{x}}^+$ in the ordering of \eqref{eq:state-vector}, the nominal
+additive states are injected as
+\begin{align}
+\hat{\vct{b}}_g &\leftarrow \hat{\vct{b}}_g+\delta\hat{\vct{b}}_g,&
+\hat{\vct{v}} &\leftarrow \hat{\vct{v}}+\delta\hat{\vct{v}},\\
+\hat{\vct{p}} &\leftarrow \hat{\vct{p}}+\delta\hat{\vct{p}},&
+\hat{\vct{S}} &\leftarrow \hat{\vct{S}}+\delta\hat{\vct{S}},\\
+\hat{\vct{a}}_w &\leftarrow \hat{\vct{a}}_w+\delta\hat{\vct{a}}_w,&
+\hat{\vct{b}}_a &\leftarrow \hat{\vct{b}}_a+\delta\hat{\vct{b}}_a.
+\label{eq:additive-state-injection}
+\end{align}
+The optional bias terms are omitted when the corresponding state is disabled.
+This matches the C++ implementation, where the full vector update is applied
+before the quaternion correction.
+
+Let $\delta\hat{\vct{\theta}}$ be the first three components of the corrected
+error state.  The left-multiplicative quaternion injection is
 \begin{equation}
 q\leftarrow\exp_q\!\left(\tfrac12\delta\hat{\vct{\theta}}\right)\otimes q.
 \label{eq:quat-error-injection}
@@ -81,7 +97,7 @@ To first order, the reset Jacobian for the convention used here is
 =\blkdiag(\mat{G}_{\theta},\Id_{N_X-3}).
 \label{eq:left-reset-jacobian}
 \end{equation}
-The covariance is transformed before clearing the local error:
+The covariance is transformed before clearing the local attitude coordinates:
 \begin{equation}
 \mat{P}^+
 \leftarrow
@@ -91,6 +107,11 @@ The covariance is transformed before clearing the local error:
 \delta\hat{\vct{\theta}}\leftarrow0.
 \label{eq:mekf-reset-covariance}
 \end{equation}
+The non-attitude entries of the stored vector now contain the injected nominal
+additive states, while the first three entries are reset to zero.  Thus the
+post-update representation is a nominal quaternion plus additive navigation
+and bias states, with a zero-mean local attitude error.
+
 The transformation applies to both the attitude marginal and every attitude
 cross-covariance.  It is required after accelerometer, magnetometer, position,
 velocity, and $S=0$ updates whenever those updates induce a nonzero attitude

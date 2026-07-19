@@ -1,88 +1,88 @@
-\subsection{GPS Fusion}
+\appendices
+\section{Optional GNSS Fusion Extension}
 \label{sec:gps_fusion}
 
-The filter already maintains world-frame navigation states
-$\bm v\in\R^3$ and $\bm p\in\R^3$, so GNSS/GPS can be fused as a
-low-rate absolute reference to control long-term drift, a common strategy in integrated navigation filters \cite{Jazwinski1970_Filtering,Maybeck1979_StochasticModels}.
+The core wave estimator uses $\vct{p}\in\R^3$ for the oscillatory displacement
+of the tracked vessel or buoy reference point.  This is not an unbounded global
+position state.  When GNSS is fused, introduce a separate local-tangent-plane
+position state $\vct{r}_{\mathrm{nav}}^{\mathcal W}\in\R^3$ for absolute
+navigation relative to a chosen geodetic origin.  The implementation currently
+provides generic position and velocity pseudo-update functions; an application
+that combines wave displacement with absolute navigation should keep these two
+quantities separate and define the measured reference point explicitly.
 
-\subsubsection{Local frame and measurement preprocessing}
+\subsection{Local frame and measurement preprocessing}
 \label{sec:gps_ned_short}
 
-Assume a local-level world frame $\mathcal{W}$ with NED axes. A GNSS fix is typically given in
-geodetic coordinates (latitude, longitude, altitude). Convert to a local tangent-plane
-displacement about an origin $\mathrm{LLA}_0$ (e.g., the first accepted fix):
+Assume a local-level world frame $\mathcal{W}$ with NED axes. A GNSS fix is
+typically given in geodetic coordinates. Convert it to a local tangent-plane
+position about an origin $\mathrm{LLA}_0$:
 \begin{equation}
-\bm z_p^{\mathcal{W}} = \mathrm{LLAtoNED}(\mathrm{LLA}_{\text{gps}};\ \mathrm{LLA}_0),
+\vct{z}_{r}^{\mathcal{W}}
+= \mathrm{LLAtoNED}(\mathrm{LLA}_{\mathrm{gps}};\ \mathrm{LLA}_0),
 \qquad
-\bm n_p \sim \mathcal{N}(\bm 0,\bm R_p).
+\vct{n}_{r}\sim\mathcal{N}(\vct{0},\mat{R}_{r}).
 \end{equation}
-If GNSS velocity is available (Doppler or receiver solution), treat it as
+If GNSS velocity is available, treat it as
 \begin{equation}
-\bm z_v^{\mathcal{W}} = \bm v_{\text{gps}}^{\mathcal{W}},
+\vct{z}_{v}^{\mathcal{W}}=\vct{v}_{\mathrm{gps}}^{\mathcal{W}},
 \qquad
-\bm n_v \sim \mathcal{N}(\bm 0,\bm R_v).
+\vct{n}_{v}\sim\mathcal{N}(\vct{0},\mat{R}_{v}).
 \end{equation}
-A convenient parameterization is $\bm R_p=\diag(\sigma_N^2,\sigma_E^2,\sigma_D^2)$ and
-$\bm R_v=\diag(\sigma_{vN}^2,\sigma_{vE}^2,\sigma_{vD}^2)$, typically with
+A convenient parameterization is
+$\mat{R}_{r}=\diag(\sigma_N^2,\sigma_E^2,\sigma_D^2)$ and
+$\mat{R}_{v}=\diag(\sigma_{vN}^2,\sigma_{vE}^2,\sigma_{vD}^2)$, typically with
 $\sigma_D>\sigma_N\approx\sigma_E$.
 
-\subsubsection{Lever-arm model (antenna not at the reference point)}
+\subsection{Lever-arm model}
 \label{sec:gps_leverarm_short}
 
-Let the GNSS antenna be displaced from the filter reference point by a known lever arm
-$\bm r_{\text{gps}}^{\mathcal{B}}$ expressed in the body frame. With $\Rot_{bw}$ mapping body to
-world, the generic kinematics are
+Let the GNSS antenna be displaced from the navigation reference point by a
+known body-frame lever arm $\vct{r}_{\mathrm{gps}}^{\mathcal B}$. With
+$\Rot_{bw}$ mapping body to world, the antenna kinematics are
 \begin{align}
-\bm p_{\text{gps}}^{\mathcal{W}}
-&= \bm p^{\mathcal{W}} + \Rot_{bw}\,\bm r_{\text{gps}}^{\mathcal{B}},
-\label{eq:gps_p_lever_short}
-\\
-\bm v_{\text{gps}}^{\mathcal{W}}
-&= \bm v^{\mathcal{W}} + \Rot_{bw}\big(\bm\omega^{\mathcal{B}}\times \bm r_{\text{gps}}^{\mathcal{B}}\big),
-\label{eq:gps_v_lever_short}
+\vct{r}_{\mathrm{gps}}^{\mathcal W}
+&=\vct{r}_{\mathrm{nav}}^{\mathcal W}
+ +\Rot_{bw}\vct{r}_{\mathrm{gps}}^{\mathcal B},\\
+\vct{v}_{\mathrm{gps}}^{\mathcal W}
+&=\vct{v}_{\mathrm{nav}}^{\mathcal W}
+ +\Rot_{bw}\bigl(\vct{\omega}^{\mathcal B}\times
+ \vct{r}_{\mathrm{gps}}^{\mathcal B}\bigr),
 \end{align}
-where $\bm\omega^{\mathcal{B}}$ is the body angular rate (ideally bias-corrected).
-
-These models are used as measurement predictions for position and velocity updates:
-\begin{equation}
-\bm z_p = \hat{\bm p} + \hat{\Rot}_{bw}\bm r_{\text{gps}}^{\mathcal{B}} + \bm n_p,
+where $\vct{\omega}^{\mathcal B}$ is ideally bias-corrected.
+The corresponding measurement predictions are
+\begin{align}
+\vct{z}_{r}
+&=\hat{\vct{r}}_{\mathrm{nav}}
+ +\hat{\Rot}_{bw}\vct{r}_{\mathrm{gps}}^{\mathcal B}+\vct{n}_{r},\\
+\vct{z}_{v}
+&=\hat{\vct{v}}_{\mathrm{nav}}
+ +\hat{\Rot}_{bw}(\vct{\omega}^{\mathcal B}\times
+ \vct{r}_{\mathrm{gps}}^{\mathcal B})+\vct{n}_{v}.
+\end{align}
+For the paper's left-multiplicative world-to-body convention,
+\begin{align}
+\frac{\partial}{\partial\delta\vct{\theta}}
+\left(\hat{\Rot}_{bw}\vct{r}_{\mathrm{gps}}^{\mathcal B}\right)
+&\approx \hat{\Rot}_{bw}\Skew{\vct{r}_{\mathrm{gps}}^{\mathcal B}},\\
+\frac{\partial}{\partial\delta\vct{\theta}}
+\left(\hat{\Rot}_{bw}\vct{u}\right)
+&\approx \hat{\Rot}_{bw}\Skew{\vct{u}},
 \qquad
-\bm z_v = \hat{\bm v} + \hat{\Rot}_{bw}(\bm\omega^{\mathcal{B}}\times \bm r_{\text{gps}}^{\mathcal{B}}) + \bm n_v.
-\end{equation}
-For the left-multiplicative world-to-body attitude convention used in this paper,
-linearizing the lever-arm term gives the attitude Jacobians
-\begin{align}
-\frac{\partial}{\partial\,\delta\bm\theta}\!\left(\hat{\Rot}_{bw}\bm r_{\text{gps}}^{\mathcal{B}}\right)
-&\approx \hat{\Rot}_{bw}\Skew{\bm r_{\text{gps}}^{\mathcal{B}}}, \label{eq:dRr_dth}\\
-\frac{\partial}{\partial\,\delta\bm\theta}\!\left(\hat{\Rot}_{bw}\bm u\right)
-&\approx \hat{\Rot}_{bw}\Skew{\bm u}, \qquad
-\bm u \triangleq \bm\omega^{\mathcal{B}}\times\bm r_{\text{gps}}^{\mathcal{B}}.
-\label{eq:dRu_dth}
+\vct{u}:=\vct{\omega}^{\mathcal B}\times\vct{r}_{\mathrm{gps}}^{\mathcal B}.
 \end{align}
 
-\subsubsection{Centripetal acceleration during maneuvers}
-\label{sec:gps_centripetal_short}
-
-During aggressive boat maneuvers or with a long lever arm, the antenna experiences additional
-\emph{relative} acceleration due to rotation:
+\subsection{Rotational acceleration and timestamp alignment}
+During aggressive maneuvers, the antenna also experiences
 \begin{equation}
-\bm a_{\text{gps}}^{\mathcal{W}}
-=
-\bm a^{\mathcal{W}}
-+
-\Rot_{bw}\Big(
-\bm\alpha^{\mathcal{B}}\times \bm r_{\text{gps}}^{\mathcal{B}}
-+
-\bm\omega^{\mathcal{B}}\times(\bm\omega^{\mathcal{B}}\times \bm r_{\text{gps}}^{\mathcal{B}})
-\Big),
+\vct{a}_{\mathrm{gps}}^{\mathcal W}
+=\vct{a}_{\mathrm{nav}}^{\mathcal W}
++\Rot_{bw}\Bigl(
+\vct{\alpha}^{\mathcal B}\times\vct{r}_{\mathrm{gps}}^{\mathcal B}
++\vct{\omega}^{\mathcal B}\times
+ (\vct{\omega}^{\mathcal B}\times\vct{r}_{\mathrm{gps}}^{\mathcal B})
+\Bigr).
 \end{equation}
-where $\bm\omega\times(\bm\omega\times\bm r)$ is the centripetal term and
-$\bm\alpha^{\mathcal{B}}$ is the angular acceleration. Even when only position/velocity are fused,
-these terms explain why lever-arm compensation matters most under high $\|\bm\omega\|$ and large
-$\|\bm r_{\text{gps}}\|$.
-
-\subsubsection{Timestamp alignment}
-\label{sec:gps_time_short}
-
-GNSS updates are asynchronous (typically 1--10~Hz) relative to the IMU.
-The exact timestamp alignment is usually unavailable, for best results inflate $\bm R_p,\bm R_v$ to absorb timing uncertainty.
+GNSS updates are asynchronous, typically at 1--10~Hz.  A production fusion
+implementation should timestamp-align or delay-compensate the measurements;
+simply inflating $\mat{R}_{r}$ and $\mat{R}_{v}$ is only an approximation.
