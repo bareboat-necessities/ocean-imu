@@ -52,18 +52,23 @@ The drift-control channel is
 \end{equation}
 with
 \begin{equation}
-\mat{R}_S=\diag(\sigma_{Sx}^2,\sigma_{Sy}^2,\sigma_{Sz}^2),
+\vct{r}_S:=
+\begin{bmatrix}r_{Sx}&r_{Sy}&r_{Sz}\end{bmatrix}^{\top},
+\qquad
+\mat{R}_S=\diag(r_{Sx}^2,r_{Sy}^2,r_{Sz}^2),
 \qquad
 \mat{H}_S=\begin{bmatrix}0&\cdots&\Id_{S}&\cdots&0\end{bmatrix}.
+\label{eq:RS-from-rS}
 \end{equation}
-The implementation API is parameterized by the standard-deviation vector
-$\vct{\sigma}_S$ and squares it internally to form $\mat{R}_S$.  Consequently,
-scalar adaptation laws denoted by $R_S$ elsewhere in the paper refer to a
-standard-deviation scale; the Kalman update always uses its squared covariance.
+Here $\vct{r}_S$ is the per-axis pseudo-measurement standard-deviation
+vector, in units of $\mathrm{m\,s}$, whereas $\mat{R}_S$ is the covariance
+used by the Kalman update.  This notation matches the implementation:
+\texttt{set\_RS\_noise()} accepts $\vct{r}_S$ and squares its components,
+while \texttt{set\_RS\_noise\_matrix()} accepts a covariance matrix directly.
 
 This pseudo-measurement is a regularizer, not a physical observation.  Repeated
 application creates a soft leak in the augmented integration chain: smaller
-$\vct{\sigma}_S$ gives stronger low-frequency drift suppression, while larger
+$\vct{r}_S$ gives stronger low-frequency drift suppression, while larger
 values preserve slower motion at the cost of more drift.
 
 \paragraph{Time-based cadence.}
@@ -81,7 +86,9 @@ e_{k+1}=\tilde e_{k+1}\bmod T_S.
 A floating-point tolerance is used at the boundary.  Defining cadence in
 seconds rather than as every $N$ samples makes the regularization rate invariant
 to the IMU sample rate; the same $T_S$ produces the same number of updates per
-unit time at 100, 200, or 400~Hz.
+unit time at 100, 200, or 400~Hz.  The effective regularization strength still
+depends on both $\vct{r}_S$ and $T_S$, so comparisons of tuning laws assume a
+fixed pseudo-update cadence unless stated otherwise.
 
 \subsection{IMU lever-arm model}
 If the IMU is displaced from the center of gravity by known body-frame vector
