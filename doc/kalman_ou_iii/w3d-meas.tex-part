@@ -64,9 +64,7 @@ with
 \end{align}
 Here $\vct{r}_S$ is the per-axis pseudo-measurement standard-deviation
 vector, in units of $\mathrm{m\,s}$, whereas $\mat{R}_S$ is the covariance
-used by the Kalman update.  This notation matches the implementation:
-\texttt{set\_RS\_noise()} accepts $\vct{r}_S$ and squares its components,
-while \texttt{set\_RS\_noise\_matrix()} accepts a covariance matrix directly.
+used by the Kalman update.
 
 This pseudo-measurement is a regularizer, not a physical observation.  Repeated
 application creates a soft leak in the augmented integration chain: smaller
@@ -103,6 +101,6 @@ $\vct{r}_b$, the predicted specific force includes
 \label{eq:acc-meas-lever}
 \end{equation}
 The angular-rate and angular-acceleration terms are treated as known inputs.
-The implementation does not include their second-order coupling through
-attitude uncertainty, so the state Jacobians remain those of
-\eqref{eq:acc-meas}.  Setting $\vct{r}_b=0$ disables the correction.
+Their second-order coupling through attitude uncertainty is neglected, so the
+state Jacobians remain those of \eqref{eq:acc-meas}.  Setting $\vct{r}_b=0$
+disables the correction.
