@@ -8,15 +8,18 @@ acceleration. The filter is designed for marine inertial sensing and
 wave-kinematics reconstruction. The proposed framework unifies
 attitude estimation, 3D kinematics, and stochastic excitation
 modeling into a single, analytically tractable structure suitable for
-real-time implementation.
+real-time embedded estimation.
 
 Most wave measurement systems derive parameters by chaining separate motion estimation
 and spectral analysis stages, a process prone to bias and delay.
 Our approach instead uses a unified 21-state Kalman filter that
-directly incorporates wave kinematics. By modeling wave acceleration
-with an Ornstein--Uhlenbeck prior and combining it with adaptive drift control
-and a real-time directional estimator, we address colored excitation and MEMS
-errors in an efficient, embedded-friendly framework.
+directly incorporates wave kinematics. Two central novelties are the integration
+of an OU prior for latent world acceleration into the quaternion MEKF and an
+adaptive tuning law that jointly adjusts the OU time scale, stationary
+acceleration scale, and integral-state regularization from observed sea-state
+statistics. Together with a real-time directional estimator, these elements
+address colored excitation and MEMS errors in an efficient, embedded-friendly
+framework.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
@@ -36,9 +39,11 @@ Ornstein--Uhlenbeck (OU) prior \cite{UhlenbeckOrnstein1930_OU} characterized by 
 \(\Sigma_{aw}\) and a correlation time constant \(\tau_{aw}\), referred to hereafter as \(\tau\).
 The OU prior is a low-order Gauss--Markov model for broadband, temporally
 correlated excitation with bounded variance; it is not asserted to be the
-physical ocean-wave spectrum. For Lagrangian sensors following surface motion,
-this prior improves low-frequency stability without sacrificing responsiveness
-to swell-band motion.
+physical ocean-wave spectrum. The novel contribution is its integration as the
+latent acceleration prior within the coupled quaternion and translational
+estimator, enabling analytically tractable colored-excitation modeling. For
+Lagrangian sensors following surface motion, this prior improves low-frequency
+stability without sacrificing responsiveness to swell-band motion.
 
 \subsection*{Continuous-Time Model Formulation}
 
@@ -65,8 +70,8 @@ discrete process-noise matrix \(Q_d(h,\tau)\). For small \(x=h/\tau\),
 high-order Maclaurin series prevent floating-point cancellation and preserve
 stability. The attitude/gyro-bias transition is also structured analytically;
 some anisotropic attitude covariance integrals are evaluated by Simpson
-quadrature, matching the implementation. The pseudo-measurement weighting can
-be anisotropic to reflect different vertical and lateral dynamics.
+quadrature. The pseudo-measurement weighting can be anisotropic to reflect
+different vertical and lateral dynamics.
 
 \subsection*{Adaptive Parameter Estimation}
 
@@ -74,44 +79,47 @@ A fixed-parameter Kalman filter performs optimally only under a
 particular sea-state regime, determined by its assumed correlation time
 \(\tau\) and stationary acceleration variance \(\Sigma_{aw}\).
 Different wave spectra exhibit distinct dominant frequencies and energy
-levels. To maintain performance across conditions, we introduce an online
-adaptation mechanism that continuously estimates and tunes these parameters.
-Three alternative embedded frequency trackers are supported: the
-\textit{KalmANF adaptive notch filter}, \textit{PLL (Phase-Locked Loop)} filter,
-and the \textit{Aranovskiy frequency estimator}. The dominant frequency
-provides an updated correlation time \(\tau\), while the stationary acceleration
-scale \(\sigma_{aw}\) is estimated in the time domain. The pseudo-measurement
-standard-deviation scale is adapted through the spectrally motivated law
+levels. To maintain performance across conditions, we introduce a novel online
+adaptation law that continuously estimates and tunes these parameters together
+with the integral-state regularization scale. Three alternative embedded
+frequency trackers are supported: the \textit{KalmANF adaptive notch filter},
+\textit{PLL (Phase-Locked Loop)} filter, and the \textit{Aranovskiy frequency
+estimator}. The dominant frequency provides an updated correlation time
+\(\tau\), while the stationary acceleration scale \(\sigma_{aw}\) is estimated
+in the time domain. The pseudo-measurement standard-deviation scale is adapted
+through the spectrally motivated law
 \[
 r_S \propto \sigma_{aw}\tau^3,
 \]
-which links displacement drift suppression to stochastic excitation strength.
-The normalization is approximate and assumes a fixed pseudo-update cadence and
-a bounded family of spectral shapes and effective low-frequency cutoffs.
+which couples displacement drift suppression to the estimated strength and
+time scale of stochastic excitation. This joint adaptation of the OU prior and
+integral-state constraint is a principal novelty of the proposed method. The
+normalization is approximate and assumes a fixed pseudo-update cadence and a
+bounded family of spectral shapes and effective low-frequency cutoffs.
 
 \subsection*{Validation}
 
 The complete filter is validated using synthetic data generated from
-directional JONSWAP spectra and Pierson--Moskowitz seas augmented by the
-nonlinear Stokes harmonics implemented by the repository wave generator. The
-simulated IMU represents a surface-following (Lagrangian) buoy subject to
-realistic measurement noise. Performance is assessed via RMS displacement
-errors relative to the true wave elevation. The OU-based Q-MEKF achieves
-drift-suppressed reconstruction of three-dimensional surface motion.
+directional JONSWAP spectra and Pierson--Moskowitz seas augmented by nonlinear
+Stokes harmonics. The simulated IMU represents a surface-following
+(Lagrangian) buoy subject to realistic measurement noise. Performance is
+assessed via RMS displacement errors relative to the true wave elevation. The
+OU-based Q-MEKF achieves drift-suppressed reconstruction of three-dimensional
+surface motion.
 
 \subsection{Main Contributions}
 
 The main contributions of this work are:
 \begin{itemize}
-  \item A full analytic formulation of a 21-state Q-MEKF incorporating
-        latent OU-driven acceleration, integral drift suppression, and
-        left-multiplicative quaternion error dynamics.
+  \item A novel integration of an OU-driven latent world-acceleration prior into
+        a 21-state quaternion MEKF for coupled marine attitude and wave-motion
+        estimation.
   \item Closed-form discrete-time transition and covariance matrices for
         the OU process and linear kinematic chain, with numerically stable
         small-step series expansions.
-  \item A unified parameter-adaptive mechanism that continuously tunes
-        \(\tau\), \(\sigma_{aw}\), and the pseudo-measurement standard-deviation
-        scale based on frequency tracking and time-domain variance estimation.
+  \item A novel adaptive tuning law that jointly updates \(\tau\),
+        \(\sigma_{aw}\), and the integral pseudo-measurement scale from dominant
+        frequency and time-domain variance estimates.
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
   \item Empirical validation on simulated directional sea spectra,
