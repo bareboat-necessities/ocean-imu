@@ -156,7 +156,6 @@ $\omega>0$,
 \Var[S]=\frac{1}{2\pi}\int_0^{\infty}
 \frac{S_a^{(1)}(\omega)}{\omega^6}\,d\omega .
 \]
-This explicit convention removes the previous factor-of-two ambiguity.
 
 For linear deep-water waves, displacement $\eta$ and acceleration satisfy
 $a(\omega)=-(j\omega)^2\eta(\omega)$, so
