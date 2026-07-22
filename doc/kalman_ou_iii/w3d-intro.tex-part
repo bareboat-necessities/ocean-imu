@@ -107,6 +107,11 @@ assessed via RMS displacement errors relative to the true wave elevation. The
 OU-based Q-MEKF achieves drift-suppressed reconstruction of three-dimensional
 surface motion.
 
+Not all numerical coefficient values are reproduced in this article; for
+reproducibility, the complete coefficient set, tuning constants, and simulation
+configuration are freely accessible in the source code published in the
+Bareboat Necessities GitHub project.
+
 \subsection{Main Contributions}
 
 The main contributions of this work are:
