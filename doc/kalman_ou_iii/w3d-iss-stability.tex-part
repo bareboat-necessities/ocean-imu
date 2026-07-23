@@ -23,14 +23,12 @@ work. The certified performance-error coordinate is therefore
 \widetilde{\vct p}_k^\top &
 \widetilde{\vct S}_k^\top &
 \widetilde{\vct a}_{w,k}^\top
-\end{bmatrix}^{\!\top},
+\end{bmatrix}^{\!\top}.
 \label{eq:iss-error-vector}
 \end{equation}
-where $\delta\vct\theta_k$ is the left-multiplicative small-angle attitude
-error and tildes denote true-minus-estimated additive-state errors. The
-accelerometer-bias error $\widetilde{\vct b}_{a,k}$ is retained as a bounded
-nuisance input because it enters the accelerometer innovation but is not a
-quantity for which convergence is claimed.
+The accelerometer-bias error $\widetilde{\vct b}_{a,k}$ is retained as a
+bounded nuisance input because it affects the accelerometer innovation but is
+not a quantity for which convergence is claimed.
 
 Collect the applied adaptive parameters into
 \begin{equation}
@@ -40,9 +38,6 @@ Collect the applied adaptive parameters into
 \end{bmatrix}^{\!\top}.
 \label{eq:iss-adaptive-vector}
 \end{equation}
-The anisotropic scale factors are fixed, so they do not add independent
-adaptive coordinates.
-
 For one complete predict--correct cycle, the local performance-error recursion
 can be written as
 \begin{equation}
@@ -56,87 +51,72 @@ can be written as
 \end{equation}
 where $\vct d_k$ collects bounded sensor errors, bias-driving terms,
 linearization mismatch, and process-model mismatch, and
-$\Delta\vct\vartheta_k=\vct\vartheta_{k+1}-\vct\vartheta_k$. The matrix
-$\mat F_k$ is the performance-state block of the closed-loop Jacobian of the
-implemented EKF cycle, including the OU-chain prediction, accelerometer and
-magnetometer corrections, and the integral-state pseudo-measurement. The matrix
-$\mat B_{a,k}$ is the Jacobian channel from the internal accelerometer-bias
-error into the performance error. Higher-order parameter and bias-coupling
-terms can be absorbed into $\vct\phi_k$ on a sufficiently small compact
-neighborhood.
+$\Delta\vct\vartheta_k=\vct\vartheta_{k+1}-\vct\vartheta_k$.
 
 \subsection{Assumptions}
 \label{app:iss-assumptions}
 
-The following assumptions are sufficient and are stated explicitly so that the
-scope of the result is not confused with an unconditional EKF convergence
-claim.
-
 \begin{description}
 \item[A1 (bounded admissible tuning set).]
 The projection, clipping, and positive covariance construction in
-Sec.~\ref{sec:adaptation} keep
-$\vct\vartheta_k\in\Theta$, where $\Theta$ is compact,
-$0<\tau_{\min}\le\tau_k\le\tau_{\max}$,
-$0<\sigma_{a,\min}\le\sigma_{a,k}\le\sigma_{a,\max}$, and
-$0<r_{S,\min}\le r_{S,k}\le r_{S,\max}$.
+Sec.~\ref{sec:adaptation} keep $\vct\vartheta_k$ in a compact set $\Theta$.
 
 \item[A2 (uniform covariance bounds).]
 The filter covariance and all applied measurement covariances remain uniformly
-positive definite and bounded on the operating set. Thus there exist positive
-constants $\underline p$ and $\overline p$ such that
-$\underline p\mat I\preceq\mat P_k\preceq\overline p\mat I$.
+positive definite and bounded on the operating set.
 
-\item[A3 (uniform local contraction of the performance state).]
-For every admissible trajectory and every $\vct\vartheta\in\Theta$, the
-linearized performance-error system admits one common quadratic Lyapunov matrix
-$\mat L=\mat L^\top\succ0$ and a constant $q>0$ satisfying
+\item[A3 (parameter-dependent quadratic contraction).]
+For every admissible frozen operating point $\xi$ and
+$\vct\vartheta\in\Theta$, the 18-dimensional performance-state Jacobian
+$\mat F(\xi,\vct\vartheta)$ is Schur stable. Consequently, there is a positive
+definite matrix $\mat L(\xi,\vct\vartheta)$ satisfying
 \begin{equation}
-\mat F_k(\vct\vartheta)^\top\mat L
-\mat F_k(\vct\vartheta)-\mat L
-\preceq-q\mat I.
-\label{eq:iss-common-L}
+\mat F^\top\mat L\mat F-\mat L=-\mat I.
+\label{eq:iss-parameter-L}
 \end{equation}
-This condition concerns the attitude, gyro-bias, OU, kinematic-chain, and
-pseudo-measurement performance coordinates. It does not require convergence of
-the auxiliary accelerometer-bias estimate. The condition is checked
-computationally on the declared implementation-generated operating envelope.
-
-\item[A4 (local nonlinear remainder bound).]
-There exist $r_e>0$ and $c_\phi>0$ such that, for
-$\|\vct e\|\le r_e$ and $\vct\vartheta\in\Theta$,
+On the compact admissible set, this Lyapunov family has uniform bounds
 \begin{equation}
-\|\vct\phi_k(\vct e,\vct\vartheta)\|
-\le c_\phi\|\vct e\|^2.
-\label{eq:iss-remainder}
+0<\underline\ell\mat I\preceq
+\mat L(\xi,\vct\vartheta)
+\preceq\overline\ell\mat I.
+\label{eq:iss-L-bounds}
 \end{equation}
 
-\item[A5 (bounded input channels).]
+\item[A4 (bounded metric variation).]
+The operating point and adaptive parameters vary slowly enough that consecutive
+Lyapunov matrices satisfy
+\begin{equation}
+\mat L_{k+1}\preceq(1+\delta_L)\mat L_k,
+\label{eq:iss-L-variation}
+\end{equation}
+with $\delta_L$ smaller than the frozen-point contraction margin. This is the
+standard slowly varying condition; it replaces the unnecessarily stronger
+assumption that one common quadratic matrix must work under arbitrary switching
+across the entire operating envelope.
+
+\item[A5 (local nonlinear remainder bound).]
+There exist $r_e>0$ and $c_\phi>0$ such that
+$\|\vct\phi_k(\vct e,\vct\vartheta)\|\le c_\phi\|\vct e\|^2$
+for $\|\vct e\|\le r_e$.
+
+\item[A6 (bounded input channels).]
 There are finite constants $g_d$, $g_a$, and $g_\vartheta$ such that
 $\|\mat G_k\|\le g_d$, $\|\mat B_{a,k}\|\le g_a$, and
-$\|\mat D_k\|\le g_\vartheta$ throughout the operating set. The residual
-accelerometer-bias error is bounded,
-$\|\widetilde{\vct b}_{a,k}\|\le\bar b_a$.
+$\|\mat D_k\|\le g_\vartheta$. The residual accelerometer-bias error is
+bounded by $\|\widetilde{\vct b}_{a,k}\|\le\bar b_a$.
 \end{description}
 
-The EMA updates in Eqs.~\eqref{eq:adapt-ewma} and \eqref{eq:adapt-RS} make the
-adaptation increment bounded. In particular, clipping the targets to the
-compact set $\Theta$ gives
+The EMA adaptation law gives a bounded increment
 \begin{equation}
-\|\Delta\vct\vartheta_k\|
-\le \bar\delta_\vartheta,
+\|\Delta\vct\vartheta_k\|\le\bar\delta_\vartheta.
 \label{eq:iss-adaptation-rate}
 \end{equation}
-where $\bar\delta_\vartheta$ decreases with increasing adaptation time
-constants. The frequency tracker and variance estimator need not converge to a
-unique physical parameter for the following proof; only bounded values and
-bounded increments are required.
 
 \subsection{Uniform local ISS result}
 
-\begin{theorem}[Uniform local ISS of the adaptive performance state]
+\begin{theorem}[Local ISS of the adaptive performance state]
 \label{thm:adaptive-local-iss}
-Under A1--A5, there exist a radius $0<r\le r_e$, constants
+Under A1--A6, there exist a radius $0<r\le r_e$, constants
 $c_1,c_2>0$, $0<\rho<1$, and $c_d,c_a,c_\vartheta>0$ such that every
 trajectory remaining in $\|\vct e_k\|\le r$ satisfies
 \begin{equation}
@@ -150,20 +130,19 @@ trajectory remaining in $\|\vct e_k\|\le r$ satisfies
 \right).
 \label{eq:iss-final-bound}
 \end{equation}
-Consequently, the adaptive estimator's performance error is uniformly locally
-input-to-state stable with respect to physical/model disturbances, residual
-accelerometer-bias error, and the per-step adaptation increment. No convergence
-claim is made for the internal accelerometer-bias estimate itself.
+Thus the estimator variables relevant to attitude and wave reconstruction are
+locally ISS with respect to physical/model disturbances, residual
+accelerometer-bias error, and bounded-rate adaptation. No convergence claim is
+made for the internal accelerometer-bias estimate itself.
 \end{theorem}
 
 \begin{proof}
-Choose the quadratic function
+Let
 \begin{equation}
-V_k=\vct e_k^\top\mat L\vct e_k,
+V_k=\vct e_k^\top\mat L_k\vct e_k,
 \qquad
-\lambda_{\min}(\mat L)\|\vct e_k\|^2
-\le V_k\le
-\lambda_{\max}(\mat L)\|\vct e_k\|^2.
+\underline\ell\|\vct e_k\|^2
+\le V_k\le\overline\ell\|\vct e_k\|^2.
 \label{eq:iss-lyapunov}
 \end{equation}
 Define
@@ -171,94 +150,44 @@ Define
 \vct u_k=
 \mat G_k\vct d_k
 +\mat B_{a,k}\widetilde{\vct b}_{a,k}
-+\mat D_k\Delta\vct\vartheta_k,
++\mat D_k\Delta\vct\vartheta_k.
 \end{equation}
-and $\vct z_k=\vct\phi_k+\vct u_k$. Substitution of
-Eq.~\eqref{eq:iss-error-recursion} into $V_{k+1}-V_k$ yields
-\begin{align}
-V_{k+1}-V_k
-={}&\vct e_k^\top
-(\mat F_k^\top\mat L\mat F_k-\mat L)\vct e_k\nonumber\\
-&+2\vct e_k^\top\mat F_k^\top\mat L\vct z_k
-+\vct z_k^\top\mat L\vct z_k.
-\label{eq:iss-deltaV-expanded}
-\end{align}
-By A3, the first term is at most $-q\|\vct e_k\|^2$. Compactness of the
-operating set implies a finite bound $\|\mat F_k\|\le\bar f$. Applying
-Cauchy--Schwarz and Young inequalities, for any sufficiently small fixed
-$\epsilon>0$,
+For the frozen metric $\mat L_k$, Eq.~\eqref{eq:iss-parameter-L} gives a
+strict quadratic decrease. The metric variation in
+Eq.~\eqref{eq:iss-L-variation} multiplies this frozen decrease by at most
+$1+\delta_L$. By A4, the resulting coefficient remains strictly below one.
+Applying Cauchy--Schwarz and Young inequalities to the terms containing
+$\vct u_k$ and the nonlinear remainder, and then choosing $r$ sufficiently
+small, yields constants $0<\eta<1$ and $\sigma>0$ such that
 \begin{equation}
-2\vct e_k^\top\mat F_k^\top\mat L\vct z_k
-\le\epsilon\|\vct e_k\|^2+c_\epsilon\|\vct z_k\|^2.
-\label{eq:iss-young}
-\end{equation}
-A4 gives
-$\|\vct\phi_k\|^2\le c_\phi^2\|\vct e_k\|^4$. Hence, after choosing
-$\epsilon<q/2$ and then selecting $r$ sufficiently small that all quartic
-terms are bounded by $(q/4)\|\vct e_k\|^2$, there are constants
-$\alpha>0$ and $\sigma>0$ for which
-\begin{equation}
-V_{k+1}-V_k
-\le-\alpha\|\vct e_k\|^2
-+\sigma\|\vct u_k\|^2.
-\label{eq:iss-deltaV}
-\end{equation}
-Using Eq.~\eqref{eq:iss-lyapunov}, this becomes
-\begin{equation}
-V_{k+1}\le\eta V_k
+V_{k+1}
+\le\eta V_k
 +\sigma\left(
  g_d\|\vct d_k\|
 +g_a\|\widetilde{\vct b}_{a,k}\|
 +g_\vartheta\|\Delta\vct\vartheta_k\|
-\right)^2,
-\qquad 0<\eta<1.
+\right)^2.
 \label{eq:iss-V-recursion}
 \end{equation}
-Iterating the scalar recursion and using
-$\sum_{j=0}^{k-1}\eta^{k-1-j}\le(1-\eta)^{-1}$ gives
-\begin{align}
-V_k
-\le{}&\eta^kV_0
-+\frac{\sigma}{1-\eta}
-\sup_{0\le j<k}
-\left(
- g_d\|\vct d_j\|
-+g_a\|\widetilde{\vct b}_{a,j}\|
-+g_\vartheta\|\Delta\vct\vartheta_j\|
-\right)^2.
-\label{eq:iss-V-bound}
-\end{align}
-Taking square roots and applying the quadratic bounds in
-Eq.~\eqref{eq:iss-lyapunov} proves Eq.~\eqref{eq:iss-final-bound}, with
-$\rho=\sqrt{\eta}$. The radius is local because it is chosen to dominate the
-quadratic EKF remainder and preserve the multiplicative attitude-error chart.
+Iteration of this scalar recursion, followed by the uniform quadratic bounds
+in Eq.~\eqref{eq:iss-lyapunov}, proves Eq.~\eqref{eq:iss-final-bound}.
 \end{proof}
 
 \begin{remark}[Role of the accelerometer-bias state]
 The implementation continues to estimate accelerometer bias because doing so
 reduces slow sensor drift in practice. Excluding its estimation error from
 Eq.~\eqref{eq:iss-error-vector} does not remove the state from the filter or
-assume that it is zero. Its residual influence is retained explicitly through
-$\mat B_{a,k}\widetilde{\vct b}_{a,k}$ and therefore contributes to the ISS
-ultimate bound.
-\end{remark}
-
-\begin{remark}[Meaning of the adaptation term]
-The theorem does not require the target parameters in
-Eq.~\eqref{eq:tuner-targets} to equal a unique true sea-state parameter. It
-requires that the applied parameters stay in a stability-preserving compact
-set and move at a bounded rate. Slower EMA adaptation decreases
-$\sup_k\|\Delta\vct\vartheta_k\|$ and therefore tightens the ultimate error
-bound, while excessively rapid tuning can enlarge that bound or violate the
-common-contraction condition.
+assume it is zero. Its residual influence remains explicitly in the ISS bound
+through $\mat B_{a,k}\widetilde{\vct b}_{a,k}$.
 \end{remark}
 
 \begin{remark}[Certificate scope]
 The accompanying CI verifier computes finite-difference Jacobians from the
 actual OU--III implementation, extracts the 18-dimensional performance-state
-block, solves for a common quadratic witness on a deterministic design subset,
-and independently checks the witness on every generated operating point. It
-also reports the maximum norm of the excluded accelerometer-bias input channel.
-This is a reproducible certificate for the declared finite envelope, not an
-interval proof over every point of a continuous parameter box.
+block, checks strict Schur stability at every generated operating point, solves
+the corresponding discrete Lyapunov equation, verifies each residual, and
+reports the maximum norm of the excluded accelerometer-bias input channel. The
+certificate covers the declared finite envelope; the bounded metric-variation
+condition for the continuous adaptive trajectory remains an explicit theorem
+assumption rather than an arbitrary-switching claim.
 \end{remark}
