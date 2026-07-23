@@ -18,8 +18,6 @@ from typing import Any
 import cvxpy as cp
 import numpy as np
 
-# Full implementation state:
-# [dtheta(3), bg(3), v(3), p(3), S(3), aw(3), ba(3)]
 PERFORMANCE_IDX = np.arange(18, dtype=int)
 ACCEL_BIAS_IDX = np.arange(18, 21, dtype=int)
 
@@ -65,7 +63,10 @@ def design_indices(count: int, limit: int) -> np.ndarray:
 def solve_common_p(matrices: list[np.ndarray], indices: np.ndarray, rho: float) -> np.ndarray | None:
     n = matrices[0].shape[0]
     P = cp.Variable((n, n), symmetric=True)
-    eps = 2.0e-7
+    # The one-step contraction margin at 200--240 Hz is around 1e-6. Keep the
+    # solver regularization well below that physical margin; acceptance is based
+    # on the independent post-solve eigenvalue check, not this epsilon.
+    eps = 1.0e-10
     constraints: list[Any] = [P >> eps * np.eye(n), cp.trace(P) == float(n)]
     r2 = rho * rho
     for i in indices:
@@ -73,8 +74,8 @@ def solve_common_p(matrices: list[np.ndarray], indices: np.ndarray, rho: float) 
         constraints.append(F.T @ P @ F - r2 * P << -eps * np.eye(n))
     problem = cp.Problem(cp.Minimize(cp.norm(P, "fro")), constraints)
     try:
-        problem.solve(solver="CLARABEL", tol_gap_abs=1e-8, tol_feas=1e-8,
-                      tol_gap_rel=1e-8, max_iter=500, verbose=False)
+        problem.solve(solver="CLARABEL", tol_gap_abs=1e-9, tol_feas=1e-9,
+                      tol_gap_rel=1e-9, max_iter=700, verbose=False)
     except Exception:
         return None
     if problem.status not in {cp.OPTIMAL, cp.OPTIMAL_INACCURATE} or P.value is None:
@@ -84,7 +85,7 @@ def solve_common_p(matrices: list[np.ndarray], indices: np.ndarray, rho: float) 
 
 
 def find_witness(matrices: list[np.ndarray], indices: np.ndarray) -> tuple[np.ndarray, float]:
-    lo, hi = 0.90, 0.999999999
+    lo, hi = 0.90, 0.9999999999
     best: tuple[np.ndarray, float] | None = None
     for _ in range(24):
         mid = 0.5 * (lo + hi)
@@ -142,6 +143,15 @@ def main() -> int:
     performance_matrices = [F[np.ix_(PERFORMANCE_IDX, PERFORMANCE_IDX)] for F in full_matrices]
     bias_channels = [F[np.ix_(PERFORMANCE_IDX, ACCEL_BIAS_IDX)] for F in full_matrices]
 
+    spectral_radii = np.asarray([
+        float(np.max(np.abs(np.linalg.eigvals(F)))) for F in performance_matrices
+    ])
+    if float(np.max(spectral_radii)) >= 1.0:
+        raise RuntimeError(
+            "at least one performance-state Jacobian is not Schur stable: "
+            f"max_rho={float(np.max(spectral_radii)):.12g}"
+        )
+
     indices = design_indices(len(performance_matrices), args.design_count)
     P, rho_design = find_witness(performance_matrices, indices)
 
@@ -171,6 +181,8 @@ def main() -> int:
         "excluded_state_dimension": 3,
         "matrix_count": len(performance_matrices),
         "design_count": int(len(indices)),
+        "spectral_radius_min": float(np.min(spectral_radii)),
+        "spectral_radius_max": float(np.max(spectral_radii)),
         "rho_design": rho_design,
         "rho_verified": math.sqrt(worst_value),
         "lambda_verified": worst_value,
@@ -191,8 +203,9 @@ def main() -> int:
     args.json.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     write_tex(args.tex, result)
     print(json.dumps({k: result[k] for k in (
-        "matrix_count", "design_count", "state_dimension", "rho_verified", "margin",
-        "max_bias_coupling_2norm", "p_eigen_min", "p_eigen_max", "worst_index")}, indent=2))
+        "matrix_count", "design_count", "state_dimension", "spectral_radius_max",
+        "rho_verified", "margin", "max_bias_coupling_2norm",
+        "p_eigen_min", "p_eigen_max", "worst_index")}, indent=2))
     return 0
 
 
