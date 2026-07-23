@@ -9,9 +9,11 @@ in a neighborhood in which their first-order error coordinates are valid. The
 notion of input-to-state stability (ISS) follows the standard nonlinear-systems
 formulation \cite{Sontag1989_ISS,Khalil2002_NonlinearSystems}.
 
-\subsection{Error system and adaptive parameters}
+\subsection{Performance error and adaptive parameters}
 
-Let the local error coordinate be
+The estimator contains an accelerometer-bias state to compensate slowly varying
+sensor offset. Estimating that bias is not itself an output objective of this
+work. The certified performance-error coordinate is therefore
 \begin{equation}
 \vct e_k=
 \begin{bmatrix}
@@ -20,14 +22,17 @@ Let the local error coordinate be
 \widetilde{\vct v}_k^\top &
 \widetilde{\vct p}_k^\top &
 \widetilde{\vct S}_k^\top &
-\widetilde{\vct a}_{w,k}^\top &
-\widetilde{\vct b}_{a,k}^\top
+\widetilde{\vct a}_{w,k}^\top
 \end{bmatrix}^{\!\top},
 \label{eq:iss-error-vector}
 \end{equation}
 where $\delta\vct\theta_k$ is the left-multiplicative small-angle attitude
-error and tildes denote true-minus-estimated additive-state errors. Collect the
-applied adaptive parameters into
+error and tildes denote true-minus-estimated additive-state errors. The
+accelerometer-bias error $\widetilde{\vct b}_{a,k}$ is retained as a bounded
+nuisance input because it enters the accelerometer innovation but is not a
+quantity for which convergence is claimed.
+
+Collect the applied adaptive parameters into
 \begin{equation}
 \vct\vartheta_k=
 \begin{bmatrix}
@@ -38,25 +43,27 @@ applied adaptive parameters into
 The anisotropic scale factors are fixed, so they do not add independent
 adaptive coordinates.
 
-For one complete predict--correct cycle, the exact local error recursion can be
-written as
+For one complete predict--correct cycle, the local performance-error recursion
+can be written as
 \begin{equation}
 \vct e_{k+1}
 =\mat F_k(\vct\vartheta_k)\vct e_k
  +\vct\phi_k(\vct e_k,\vct\vartheta_k)
  +\mat G_k\vct d_k
+ +\mat B_{a,k}\widetilde{\vct b}_{a,k}
  +\mat D_k\Delta\vct\vartheta_k,
 \label{eq:iss-error-recursion}
 \end{equation}
 where $\vct d_k$ collects bounded sensor errors, bias-driving terms,
 linearization mismatch, and process-model mismatch, and
 $\Delta\vct\vartheta_k=\vct\vartheta_{k+1}-\vct\vartheta_k$. The matrix
-$\mat F_k$ is the closed-loop Jacobian of the implemented EKF cycle, including
-the OU-chain prediction, accelerometer and magnetometer corrections, and the
-integral-state pseudo-measurement. The last term represents the first-order
-change caused by moving the model and covariance parameters between adjacent
-cycles. Higher-order parameter-coupling terms can be absorbed into
-$\vct\phi_k$ on a sufficiently small compact neighborhood.
+$\mat F_k$ is the performance-state block of the closed-loop Jacobian of the
+implemented EKF cycle, including the OU-chain prediction, accelerometer and
+magnetometer corrections, and the integral-state pseudo-measurement. The matrix
+$\mat B_{a,k}$ is the Jacobian channel from the internal accelerometer-bias
+error into the performance error. Higher-order parameter and bias-coupling
+terms can be absorbed into $\vct\phi_k$ on a sufficiently small compact
+neighborhood.
 
 \subsection{Assumptions}
 \label{app:iss-assumptions}
@@ -80,9 +87,9 @@ positive definite and bounded on the operating set. Thus there exist positive
 constants $\underline p$ and $\overline p$ such that
 $\underline p\mat I\preceq\mat P_k\preceq\overline p\mat I$.
 
-\item[A3 (uniform local detectability and contraction).]
+\item[A3 (uniform local contraction of the performance state).]
 For every admissible trajectory and every $\vct\vartheta\in\Theta$, the
-linearized closed-loop error system admits one common quadratic Lyapunov matrix
+linearized performance-error system admits one common quadratic Lyapunov matrix
 $\mat L=\mat L^\top\succ0$ and a constant $q>0$ satisfying
 \begin{equation}
 \mat F_k(\vct\vartheta)^\top\mat L
@@ -90,11 +97,10 @@ $\mat L=\mat L^\top\succ0$ and a constant $q>0$ satisfying
 \preceq-q\mat I.
 \label{eq:iss-common-L}
 \end{equation}
-This condition is a uniform detectability/contraction requirement for the
-combined attitude, bias, OU, kinematic-chain, and pseudo-measurement dynamics.
-It is the principal condition that must be checked for the chosen operating
-set; it can be tested conservatively by an LMI over a grid or polytopic
-outer-approximation of $\Theta$ and the bounded motion envelope.
+This condition concerns the attitude, gyro-bias, OU, kinematic-chain, and
+pseudo-measurement performance coordinates. It does not require convergence of
+the auxiliary accelerometer-bias estimate. The condition is checked
+computationally on the declared implementation-generated operating envelope.
 
 \item[A4 (local nonlinear remainder bound).]
 There exist $r_e>0$ and $c_\phi>0$ such that, for
@@ -106,9 +112,11 @@ $\|\vct e\|\le r_e$ and $\vct\vartheta\in\Theta$,
 \end{equation}
 
 \item[A5 (bounded input channels).]
-There are finite constants $g_d$ and $g_\vartheta$ such that
-$\|\mat G_k\|\le g_d$ and $\|\mat D_k\|\le g_\vartheta$ throughout the
-operating set.
+There are finite constants $g_d$, $g_a$, and $g_\vartheta$ such that
+$\|\mat G_k\|\le g_d$, $\|\mat B_{a,k}\|\le g_a$, and
+$\|\mat D_k\|\le g_\vartheta$ throughout the operating set. The residual
+accelerometer-bias error is bounded,
+$\|\widetilde{\vct b}_{a,k}\|\le\bar b_a$.
 \end{description}
 
 The EMA updates in Eqs.~\eqref{eq:adapt-ewma} and \eqref{eq:adapt-RS} make the
@@ -126,26 +134,26 @@ bounded increments are required.
 
 \subsection{Uniform local ISS result}
 
-\begin{theorem}[Uniform local ISS of the adaptive estimator]
+\begin{theorem}[Uniform local ISS of the adaptive performance state]
 \label{thm:adaptive-local-iss}
 Under A1--A5, there exist a radius $0<r\le r_e$, constants
-$c_1,c_2>0$, $0<\rho<1$, and $c_d,c_\vartheta>0$ such that every trajectory
-remaining in $\|\vct e_k\|\le r$ satisfies
+$c_1,c_2>0$, $0<\rho<1$, and $c_d,c_a,c_\vartheta>0$ such that every
+trajectory remaining in $\|\vct e_k\|\le r$ satisfies
 \begin{equation}
 \|\vct e_k\|
 \le c_1\rho^k\|\vct e_0\|
 +c_2\sup_{0\le j<k}
 \left(
  c_d\|\vct d_j\|
++c_a\|\widetilde{\vct b}_{a,j}\|
 +c_\vartheta\|\Delta\vct\vartheta_j\|
 \right).
 \label{eq:iss-final-bound}
 \end{equation}
-Consequently, the core adaptive estimator is uniformly locally
-input-to-state stable with respect to physical/model disturbances and the
-per-step adaptation increment. If both inputs vanish, the local estimation
-error converges exponentially to zero. For bounded nonzero inputs, it converges
-to a bounded neighborhood whose radius is proportional to their supremum.
+Consequently, the adaptive estimator's performance error is uniformly locally
+input-to-state stable with respect to physical/model disturbances, residual
+accelerometer-bias error, and the per-step adaptation increment. No convergence
+claim is made for the internal accelerometer-bias estimate itself.
 \end{theorem}
 
 \begin{proof}
@@ -159,8 +167,13 @@ V_k=\vct e_k^\top\mat L\vct e_k,
 \label{eq:iss-lyapunov}
 \end{equation}
 Define
-$\vct u_k=\mat G_k\vct d_k+\mat D_k\Delta\vct\vartheta_k$ and
-$\vct z_k=\vct\phi_k+\vct u_k$. Substitution of
+\begin{equation}
+\vct u_k=
+\mat G_k\vct d_k
++\mat B_{a,k}\widetilde{\vct b}_{a,k}
++\mat D_k\Delta\vct\vartheta_k,
+\end{equation}
+and $\vct z_k=\vct\phi_k+\vct u_k$. Substitution of
 Eq.~\eqref{eq:iss-error-recursion} into $V_{k+1}-V_k$ yields
 \begin{align}
 V_{k+1}-V_k
@@ -195,6 +208,7 @@ Using Eq.~\eqref{eq:iss-lyapunov}, this becomes
 V_{k+1}\le\eta V_k
 +\sigma\left(
  g_d\|\vct d_k\|
++g_a\|\widetilde{\vct b}_{a,k}\|
 +g_\vartheta\|\Delta\vct\vartheta_k\|
 \right)^2,
 \qquad 0<\eta<1.
@@ -209,6 +223,7 @@ V_k
 \sup_{0\le j<k}
 \left(
  g_d\|\vct d_j\|
++g_a\|\widetilde{\vct b}_{a,j}\|
 +g_\vartheta\|\Delta\vct\vartheta_j\|
 \right)^2.
 \label{eq:iss-V-bound}
@@ -216,9 +231,17 @@ V_k
 Taking square roots and applying the quadratic bounds in
 Eq.~\eqref{eq:iss-lyapunov} proves Eq.~\eqref{eq:iss-final-bound}, with
 $\rho=\sqrt{\eta}$. The radius is local because it is chosen to dominate the
-quadratic EKF remainder and to preserve the multiplicative attitude error
-chart.
+quadratic EKF remainder and preserve the multiplicative attitude-error chart.
 \end{proof}
+
+\begin{remark}[Role of the accelerometer-bias state]
+The implementation continues to estimate accelerometer bias because doing so
+reduces slow sensor drift in practice. Excluding its estimation error from
+Eq.~\eqref{eq:iss-error-vector} does not remove the state from the filter or
+assume that it is zero. Its residual influence is retained explicitly through
+$\mat B_{a,k}\widetilde{\vct b}_{a,k}$ and therefore contributes to the ISS
+ultimate bound.
+\end{remark}
 
 \begin{remark}[Meaning of the adaptation term]
 The theorem does not require the target parameters in
@@ -230,13 +253,12 @@ bound, while excessively rapid tuning can enlarge that bound or violate the
 common-contraction condition.
 \end{remark}
 
-\begin{remark}[What is and is not proved]
-Equation~\eqref{eq:iss-common-L} is a sufficient condition, not an identity
-that follows automatically from the Riccati recursion. The appendix therefore
-provides a rigorous proof conditional on a verifiable uniform contraction
-certificate. Simulation results establish performance on the tested cases but
-do not replace that certificate. The theorem also concerns the local
-observable error coordinates of the core wave estimator; it does not assert
-global convergence from arbitrary attitude errors or stability of an
-unobservable absolute navigation position.
+\begin{remark}[Certificate scope]
+The accompanying CI verifier computes finite-difference Jacobians from the
+actual OU--III implementation, extracts the 18-dimensional performance-state
+block, solves for a common quadratic witness on a deterministic design subset,
+and independently checks the witness on every generated operating point. It
+also reports the maximum norm of the excluded accelerometer-bias input channel.
+This is a reproducible certificate for the declared finite envelope, not an
+interval proof over every point of a continuous parameter box.
 \end{remark}
