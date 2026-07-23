@@ -62,7 +62,7 @@ Filter make_filter(const Point& p) {
 
 Vec3 predicted_acc(const Filter& f) {
     const Vec3 gravity_world(0.0, 0.0, 9.80665);
-    return f.qref * (gravity_world + f.xext.segment<3>(kAw))
+    return f.qref * (f.xext.segment<3>(kAw) - gravity_world)
          + f.xext.segment<3>(kBa);
 }
 
