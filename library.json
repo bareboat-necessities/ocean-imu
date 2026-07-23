@@ -1,6 +1,6 @@
 {
   "name": "ocean_imu",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Marine IMU, AHRS, and wave-processing algorithms with AtomS3R integrations for M5Stack AtomS3R.",
   "keywords": [
     "imu",
