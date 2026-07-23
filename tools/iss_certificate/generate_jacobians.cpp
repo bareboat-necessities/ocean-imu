@@ -70,17 +70,24 @@ Vec3 predicted_mag(const Filter& f) {
     return f.qref * f.v2ref;
 }
 
-void one_cycle(Filter& f, const Point& p) {
-    const Vec3 acc = predicted_acc(f);
-    const Vec3 mag = predicted_mag(f);
+void apply_cycle_with_measurements(Filter& f, const Point& p,
+                                   const Vec3& acc, const Vec3& mag) {
     f.time_update(p.omega, p.dt);
     f.measurement_update_acc_only(acc, 35.0);
     f.measurement_update_mag_only(mag);
     f.applyIntegralZeroPseudoMeas();
 }
 
+void one_nominal_cycle(Filter& f, const Point& p) {
+    Filter truth = f;
+    truth.time_update(p.omega, p.dt);
+    const Vec3 acc = predicted_acc(truth);
+    const Vec3 mag = predicted_mag(truth);
+    apply_cycle_with_measurements(f, p, acc, mag);
+}
+
 void settle_covariance(Filter& f, const Point& p) {
-    for (int i = 0; i < 240; ++i) one_cycle(f, p);
+    for (int i = 0; i < 240; ++i) one_nominal_cycle(f, p);
     f.xext.setZero();
 }
 
@@ -115,8 +122,14 @@ Eigen::Matrix<double, kNx, 1> error_between(const Filter& pert, const Filter& no
 Eigen::Matrix<double, kNx, kNx> jacobian(const Point& p) {
     Filter base = make_filter(p);
     settle_covariance(base, p);
+
+    Filter truth = base;
+    truth.time_update(p.omega, p.dt);
+    const Vec3 acc = predicted_acc(truth);
+    const Vec3 mag = predicted_mag(truth);
+
     Filter nominal = base;
-    one_cycle(nominal, p);
+    apply_cycle_with_measurements(nominal, p, acc, mag);
 
     Eigen::Matrix<double, kNx, kNx> F;
     const double h_att = 2.0e-6;
@@ -127,8 +140,8 @@ Eigen::Matrix<double, kNx, kNx> jacobian(const Point& p) {
         Filter minus = base;
         inject(plus, j, h);
         inject(minus, j, -h);
-        one_cycle(plus, p);
-        one_cycle(minus, p);
+        apply_cycle_with_measurements(plus, p, acc, mag);
+        apply_cycle_with_measurements(minus, p, acc, mag);
         F.col(j) = (error_between(plus, nominal) - error_between(minus, nominal)) / (2.0*h);
     }
     return F;
