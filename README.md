@@ -48,7 +48,7 @@ Wave Models:
 
 - [Spectral Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-spectral.pdf)
 
-- [Sea Metrics](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/spectrum-sea_merics.pdf)
+- [Sea Metrics](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/spectrum-sea_metrics.pdf)
 
 - [Vessel RAO](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/wave_sim-vessel-RAO.pdf)
 
@@ -192,4 +192,3 @@ make all
 ```
 
 For module-level validation, run `make all` inside the relevant folder under `tests/`.
-
