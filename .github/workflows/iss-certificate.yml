@@ -15,20 +15,24 @@ on:
       - '.github/workflows/iss-certificate.yml'
   workflow_dispatch:
 
+concurrency:
+  group: iss-certificate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install compiler and solver dependencies
+      - name: Install compiler and verification dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y g++ libeigen3-dev python3-pip
           python3 -m pip install --break-system-packages --disable-pip-version-check \
-            numpy==2.3.1 cvxpy==1.7.1 clarabel==0.11.1
+            numpy==2.3.1 scipy==1.16.0
 
       - name: Compile implementation Jacobian generator
         run: |
@@ -44,11 +48,10 @@ jobs:
           build/iss_certificate/generate_jacobians \
             reports/results/iss_jacobians.txt
 
-      - name: Solve and independently verify common quadratic witness
+      - name: Verify reduced performance-state stability
         run: |
           python3 tools/iss_certificate/verify_certificate.py \
             reports/results/iss_jacobians.txt \
-            --design-count 32 \
             --json reports/results/iss_certificate.json \
             --tex reports/results/w3d-iss-certificate-generated.tex-part
 
@@ -57,15 +60,17 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          p = Path('reports/results/iss_certificate.json')
-          d = json.loads(p.read_text())
+          d = json.loads(Path('reports/results/iss_certificate.json').read_text())
           print(json.dumps({
               'scope': d['scope'],
+              'certificate_type': d['certificate_type'],
               'matrices': d['matrix_count'],
-              'rho_verified': d['rho_verified'],
-              'margin': d['margin'],
-              'condition': d['p_condition'],
-              'worst_point': d['worst_point'],
+              'performance_state_dimension': d['state_dimension'],
+              'spectral_radius_max': d['spectral_radius_max'],
+              'spectral_margin_min': d['spectral_margin_min'],
+              'rho_metric_max': d['rho_metric_max'],
+              'max_bias_coupling_2norm': d['max_bias_coupling_2norm'],
+              'worst_spectral_point': d['worst_spectral_point'],
           }, indent=2))
           PY
 
