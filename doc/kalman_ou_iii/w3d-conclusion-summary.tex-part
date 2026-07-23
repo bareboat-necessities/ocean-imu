@@ -8,6 +8,13 @@ multi-rate sensor and error models. The simulations and embedded builds exercise
 the same estimator recursion, including the exact OU-chain transition, small-step
 covariance branch, full MEKF reset, and adaptive pseudo-measurement scaling.
 
+Appendix~\ref{app:iss-stability} complements the empirical results with a
+sufficient-condition proof of uniform local input-to-state stability for the
+core predict--correct recursion and its bounded-rate adaptation. The proof is
+conditional on a common contraction certificate over the admissible tuning and
+motion set; it does not treat startup or reset logic and does not convert the
+simulation study into an unconditional EKF convergence claim.
+
 The results support embedded feasibility and drift-controlled wave-state
 reconstruction for the tested conditions, but they do not by themselves imply
 universal performance across spectra, update cadences, vessel speeds, or sensor

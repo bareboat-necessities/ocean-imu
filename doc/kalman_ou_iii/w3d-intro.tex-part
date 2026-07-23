@@ -19,7 +19,9 @@ adaptive tuning law that jointly adjusts the OU time scale, stationary
 acceleration scale, and integral-state regularization from observed sea-state
 statistics. Together with a real-time directional estimator, these elements
 address colored excitation and MEMS errors in an efficient, embedded-friendly
-framework.
+framework. Appendix~\ref{app:iss-stability} supplies a sufficient-condition
+uniform local input-to-state stability analysis for the core estimator and its
+continuous adaptation, excluding startup and reset logic.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
@@ -34,9 +36,9 @@ cumulative wave kinematics in the world frame.
 
 \subsection*{Stochastic Forcing and the OU Acceleration Model}
 
-The latent world acceleration \(\bm{a}_w\) is modeled with an
+The latent world acceleration $\bm{a}_w$ is modeled with an
 Ornstein--Uhlenbeck (OU) prior \cite{UhlenbeckOrnstein1930_OU} characterized by a stationary variance
-\(\Sigma_{aw}\) and a correlation time constant \(\tau_{aw}\), referred to hereafter as \(\tau\).
+$\Sigma_{aw}$ and a correlation time constant $\tau_{aw}$, referred to hereafter as $\tau$.
 The OU prior is a low-order Gauss--Markov model for broadband, temporally
 correlated excitation with bounded variance; it is not asserted to be the
 physical ocean-wave spectrum. The novel contribution is its integration as the
@@ -54,8 +56,8 @@ quaternion attitude subsystem through the standard small-angle error
 kinematics of the Q-MEKF. IMU measurements provide specific force and
 angular rate observations, while a pseudo-measurement of the integral of
 displacement serves as a long-term constraint to suppress drift. The
-pseudo-measurement standard-deviation scale \(r_S\), whose square forms the
-covariance \(R_S\), is a crucial design parameter: smaller values tighten the
+pseudo-measurement standard-deviation scale $r_S$, whose square forms the
+covariance $R_S$, is a crucial design parameter: smaller values tighten the
 constraint but risk biasing slow wave components, while larger values relax
 drift control.
 
@@ -65,8 +67,8 @@ Having established the continuous-time system, we derive the discrete
 transition and process-noise covariance matrices required for Kalman
 recursion. The OU-driven linear subsystem is discretized analytically by
 integrating the exponential kernel of the OU correlation function, yielding
-closed-form expressions for its transition matrix \(\Phi(h,\tau)\) and
-discrete process-noise matrix \(Q_d(h,\tau)\). For small \(x=h/\tau\),
+closed-form expressions for its transition matrix $\Phi(h,\tau)$ and
+discrete process-noise matrix $Q_d(h,\tau)$. For small $x=h/\tau$,
 high-order Maclaurin series prevent floating-point cancellation and preserve
 stability. The attitude/gyro-bias transition is also structured analytically;
 some anisotropic attitude covariance integrals are evaluated by Simpson
@@ -77,7 +79,7 @@ different vertical and lateral dynamics.
 
 A fixed-parameter Kalman filter performs optimally only under a
 particular sea-state regime, determined by its assumed correlation time
-\(\tau\) and stationary acceleration variance \(\Sigma_{aw}\).
+$\tau$ and stationary acceleration variance $\Sigma_{aw}$.
 Different wave spectra exhibit distinct dominant frequencies and energy
 levels. To maintain performance across conditions, we introduce a novel online
 adaptation law that continuously estimates and tunes these parameters together
@@ -85,7 +87,7 @@ with the integral-state regularization scale. Three alternative embedded
 frequency trackers are supported: the \textit{KalmANF adaptive notch filter},
 \textit{PLL (Phase-Locked Loop)} filter, and the \textit{Aranovskiy frequency
 estimator}. The dominant frequency provides an updated correlation time
-\(\tau\), while the stationary acceleration scale \(\sigma_{aw}\) is estimated
+$\tau$, while the stationary acceleration scale $\sigma_{aw}$ is estimated
 in the time domain. The pseudo-measurement standard-deviation scale is adapted
 through the spectrally motivated law
 \[
@@ -122,9 +124,11 @@ The main contributions of this work are:
   \item Closed-form discrete-time transition and covariance matrices for
         the OU process and linear kinematic chain, with numerically stable
         small-step series expansions.
-  \item A novel adaptive tuning law that jointly updates \(\tau\),
-        \(\sigma_{aw}\), and the integral pseudo-measurement scale from dominant
+  \item A novel adaptive tuning law that jointly updates $\tau$,
+        $\sigma_{aw}$, and the integral pseudo-measurement scale from dominant
         frequency and time-domain variance estimates.
+  \item A sufficient-condition proof of uniform local ISS for the adaptive core,
+        with bounded parameter increments treated explicitly as an input.
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
   \item Empirical validation on simulated directional sea spectra,
