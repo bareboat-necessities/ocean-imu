@@ -48,6 +48,7 @@ jobs:
         run: |
           python3 tools/iss_certificate/verify_certificate.py \
             reports/results/iss_jacobians.txt \
+            --design-count 32 \
             --json reports/results/iss_certificate.json \
             --tex reports/results/w3d-iss-certificate-generated.tex-part
 
