@@ -180,7 +180,7 @@ through $\mat B_{a,k}\widetilde{\vct b}_{a,k}$.
 \end{remark}
 
 \begin{remark}[Certificate scope]
-The accompanying CI verifier computes finite-difference Jacobians from the
+The accompanying verifier computes finite-difference Jacobians from the
 actual OU--III implementation, extracts the 18-dimensional performance-state
 block, checks strict Schur stability at every generated operating point, solves
 the corresponding discrete Lyapunov equation, verifies each residual, and
