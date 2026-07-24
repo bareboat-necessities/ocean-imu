@@ -19,7 +19,7 @@ PY
 python3 ../spectrum/spectrum-plots.py  # .tex needs some spectrum .pgf later
 
 # Run the existing VVR-only time-varying-gain NLO on the same source records
-# used by this OU-III job.  Keeping both runners in one CI workspace guarantees
+# used by this OU-III job. Keeping both runners in one CI workspace guarantees
 # paired timestamps, wave realization, and sensor-error realization.
 NLO_TEST_DIR="../../tests/nlo"
 find . -maxdepth 1 -type f -name '*.csv' ! -name '*_fusion_ou3.csv' ! -name '*_tvg_nlo_nomag_nognss.csv' \
@@ -35,7 +35,7 @@ find . -maxdepth 1 -type f -name '*.csv' ! -name '*_fusion_ou3.csv' ! -name '*_t
 
 python3 baseline-comparison.py
 
-# The table is generated from CSVs rather than transcribed by hand.  Copy the
+# The table is generated from CSVs rather than transcribed by hand. Copy the
 # generated include next to the article and insert the stable section include
 # immediately before the hardware-validation section in the CI workspace.
 DOC_DIR="../../doc/kalman_ou_iii"
@@ -46,13 +46,22 @@ cp -f w3d_ou3_vs_tvg_nlo_jonswap_medium.svg "${DOC_DIR}/"
 python3 - <<'PY'
 from pathlib import Path
 
-path = Path("../../doc/kalman_ou_iii/w3d-sim-charts.tex-part")
-source = path.read_text(encoding="utf-8")
+sim_path = Path("../../doc/kalman_ou_iii/w3d-sim-charts.tex-part")
+source = sim_path.read_text(encoding="utf-8")
 include = r"\input{w3d-baseline-comparison.tex-part}"
 anchor = r"\section{Real-Hardware Validation Platform}"
 if include not in source:
     if source.count(anchor) != 1:
         raise RuntimeError("hardware-section insertion anchor not found exactly once")
     source = source.replace(anchor, include + "\n\n" + anchor, 1)
-    path.write_text(source, encoding="utf-8")
+    sim_path.write_text(source, encoding="utf-8")
+
+main_path = Path("../../doc/kalman_ou_iii/kalman_ou-w3d.tex")
+main = main_path.read_text(encoding="utf-8")
+old_bib = r"\bibliography{w3d,w3d-iss}"
+new_bib = r"\bibliography{w3d,w3d-iss,w3d-baselines}"
+if new_bib not in main:
+    if main.count(old_bib) != 1:
+        raise RuntimeError("article bibliography anchor not found exactly once")
+    main_path.write_text(main.replace(old_bib, new_bib, 1), encoding="utf-8")
 PY
