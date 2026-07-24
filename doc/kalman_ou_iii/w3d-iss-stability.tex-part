@@ -130,8 +130,7 @@ trajectory remaining in $\|\vct e_k\|\le r$ satisfies
 \end{equation}
 Thus the estimator variables relevant to attitude and wave reconstruction are
 locally ISS with respect to physical/model disturbances, residual
-accelerometer-bias error, and bounded-rate adaptation. No convergence claim is
-made for the internal accelerometer-bias estimate itself.
+accelerometer-bias error, and bounded-rate adaptation.
 \end{theorem}
 
 \begin{proof}
