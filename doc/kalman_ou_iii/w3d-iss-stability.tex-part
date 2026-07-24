@@ -90,9 +90,7 @@ Lyapunov matrices satisfy
 \label{eq:iss-L-variation}
 \end{equation}
 with $\delta_L$ smaller than the frozen-point contraction margin. This is the
-standard slowly varying condition; it replaces the unnecessarily stronger
-assumption that one common quadratic matrix must work under arbitrary switching
-across the entire operating envelope.
+standard slowly varying condition.
 
 \item[A5 (local nonlinear remainder bound).]
 There exist $r_e>0$ and $c_\phi>0$ such that
@@ -132,8 +130,7 @@ trajectory remaining in $\|\vct e_k\|\le r$ satisfies
 \end{equation}
 Thus the estimator variables relevant to attitude and wave reconstruction are
 locally ISS with respect to physical/model disturbances, residual
-accelerometer-bias error, and bounded-rate adaptation. No convergence claim is
-made for the internal accelerometer-bias estimate itself.
+accelerometer-bias error, and bounded-rate adaptation.
 \end{theorem}
 
 \begin{proof}
@@ -182,7 +179,7 @@ through $\mat B_{a,k}\widetilde{\vct b}_{a,k}$.
 \end{remark}
 
 \begin{remark}[Certificate scope]
-The accompanying CI verifier computes finite-difference Jacobians from the
+The accompanying verifier computes finite-difference Jacobians from the
 actual OU--III implementation, extracts the 18-dimensional performance-state
 block, checks strict Schur stability at every generated operating point, solves
 the corresponding discrete Lyapunov equation, verifies each residual, and
