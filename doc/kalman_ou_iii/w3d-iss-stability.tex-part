@@ -90,9 +90,7 @@ Lyapunov matrices satisfy
 \label{eq:iss-L-variation}
 \end{equation}
 with $\delta_L$ smaller than the frozen-point contraction margin. This is the
-standard slowly varying condition; it replaces the unnecessarily stronger
-assumption that one common quadratic matrix must work under arbitrary switching
-across the entire operating envelope.
+standard slowly varying condition.
 
 \item[A5 (local nonlinear remainder bound).]
 There exist $r_e>0$ and $c_\phi>0$ such that
