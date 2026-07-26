@@ -16,32 +16,39 @@ namespace = {"__name__": "__main__", "__file__": str(path)}
 exec(compile(source.replace(old, new, 1), str(path), "exec"), namespace)
 PY
 
-python3 ../spectrum/spectrum-plots.py  # .tex needs some spectrum .pgf later
+python3 ../spectrum/spectrum-plots.py
 
-# Run the existing VVR-only time-varying-gain NLO on the same source records
-# used by this OU-III job. Keeping both runners in one CI workspace guarantees
-# paired timestamps, wave realization, and sensor-error realization.
-NLO_TEST_DIR="../../tests/nlo"
-find . -maxdepth 1 -type f -name '*.csv' ! -name '*_fusion_ou3.csv' ! -name '*_tvg_nlo_nomag_nognss.csv' \
-  -exec cp -f {} "${NLO_TEST_DIR}/" \;
-(
-  cd "${NLO_TEST_DIR}"
-  make build
-  chmod +x ./*.sh
-  ./run_tests.sh
-  cp -f ./*_tvg_nlo_nomag_nognss.csv ../../plots/kalman_ou_iii/
-  make clean
-)
+# Re-run all comparison observers in this workspace from the same source records.
+# This guarantees identical timestamps, wave realization, and sensor-error realization.
+run_comparison() {
+  local test_dir="$1"
+  local output_glob="$2"
+  find . -maxdepth 1 -type f -name '*.csv' \
+    ! -name '*_fusion_ou3.csv' \
+    ! -name '*_fusion_ou2.csv' \
+    ! -name '*_nonkalman_fusion.csv' \
+    ! -name '*_tvg_nlo_nomag_nognss.csv' \
+    -exec cp -f {} "${test_dir}/" \;
+  (
+    cd "${test_dir}"
+    make build
+    chmod +x ./*.sh
+    ./run_tests.sh
+    cp -f ${output_glob} ../../plots/kalman_ou_iii/
+    make clean
+  )
+}
+
+run_comparison "../../tests/nlo" "*_tvg_nlo_nomag_nognss.csv"
+run_comparison "../../tests/kalman_ou_ii" "*_fusion_ou2.csv"
+run_comparison "../../tests/pii_observer" "*_nonkalman_fusion.csv"
 
 python3 baseline-comparison.py
 
-# The table is generated from CSVs rather than transcribed by hand. Copy the
-# generated include next to the article and insert the stable section include
-# immediately before the hardware-validation section in the CI workspace.
 DOC_DIR="../../doc/kalman_ou_iii"
 cp -f w3d-baseline-results-generated.tex-part "${DOC_DIR}/"
-cp -f w3d_ou3_vs_tvg_nlo_jonswap_medium.pgf "${DOC_DIR}/"
-cp -f w3d_ou3_vs_tvg_nlo_jonswap_medium.svg "${DOC_DIR}/"
+cp -f w3d_multi_observer_jonswap_medium.pgf "${DOC_DIR}/"
+cp -f w3d_multi_observer_jonswap_medium.svg "${DOC_DIR}/"
 
 python3 - <<'PY'
 from pathlib import Path

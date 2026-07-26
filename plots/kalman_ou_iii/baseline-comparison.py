@@ -26,8 +26,13 @@ plt.rcParams.update({
     ]),
 })
 
-OU_RE = re.compile(r".*?_(?P<wave>jonswap|pmstokes)_H(?P<height>[0-9.]+).*?_fusion_ou3\.csv$")
-NLO_RE = re.compile(r".*?_(?P<wave>jonswap|pmstokes)_H(?P<height>[0-9.]+).*?_tvg_nlo_nomag_nognss\.csv$")
+PATTERNS = {
+    "ou3": (re.compile(r".*?_(?P<wave>jonswap|pmstokes)_H(?P<height>[0-9.]+).*?_fusion_ou3\.csv$"), "*_fusion_ou3.csv"),
+    "ou2": (re.compile(r".*?_(?P<wave>jonswap|pmstokes)_H(?P<height>[0-9.]+).*?_fusion_ou2\.csv$"), "*_fusion_ou2.csv"),
+    "pii": (re.compile(r".*?_(?P<wave>jonswap|pmstokes)_H(?P<height>[0-9.]+).*?_nonkalman_fusion\.csv$"), "*_nonkalman_fusion.csv"),
+    "nlo": (re.compile(r".*?_(?P<wave>jonswap|pmstokes)_H(?P<height>[0-9.]+).*?_tvg_nlo_nomag_nognss\.csv$"), "*_tvg_nlo_nomag_nognss.csv"),
+}
+LABELS = {"ou3": "OU--III", "ou2": "OU--II", "pii": "Adaptive PII", "nlo": "TVG--NLO"}
 HEIGHTS = (0.27, 1.50, 4.00, 8.50)
 WINDOW_S = 60.0
 
@@ -36,10 +41,8 @@ def index_files(pattern, regex):
     out = {}
     for name in glob.glob(pattern):
         match = regex.match(os.path.basename(name))
-        if not match:
-            continue
-        key = (match.group("wave"), round(float(match.group("height")), 2))
-        out[key] = name
+        if match:
+            out[(match.group("wave"), round(float(match.group("height")), 2))] = name
     return out
 
 
@@ -53,19 +56,14 @@ def tail(df):
 def rms(series):
     values = np.asarray(series, dtype=float)
     values = values[np.isfinite(values)]
-    if values.size == 0:
-        return math.nan
-    return float(np.sqrt(np.mean(values * values)))
+    return math.nan if values.size == 0 else float(np.sqrt(np.mean(values * values)))
 
 
 def metrics(path, hs):
     df = tail(pd.read_csv(path))
     err_z = df["disp_est_z"] - df["disp_ref_z"]
-    mean_z = float(np.nanmean(err_z))
     result = {
         "z_rms": rms(err_z),
-        "z_demeaned_rms": rms(err_z - mean_z),
-        "z_mean": mean_z,
         "roll_rms": rms(df["roll_est"] - df["roll_ref"]),
         "pitch_rms": rms(df["pitch_est"] - df["pitch_ref"]),
     }
@@ -73,73 +71,93 @@ def metrics(path, hs):
     return result, df
 
 
-def tex_num(x, digits=3):
+def tex_num(x, digits=2):
     return "--" if not math.isfinite(x) else f"{x:.{digits}f}"
 
 
-def write_table(rows, output):
+def write_tables(rows, output):
+    methods = ("pii", "nlo", "ou2", "ou3")
     lines = [
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Baseline comparison against the adapted time-varying-gain nonlinear observer (TVG--NLO), using the same reference records and final \SI{60}{s} scoring window.}",
-        r"  \label{tab:nlo_baseline_comparison}",
+        r"  \caption{Paired vertical-displacement RMS error for the proposed OU--III estimator, its OU--II predecessor, the adaptive PII observer, and the published TVG--NLO baseline. All values use the same reference records and final \SI{60}{s} scoring window.}",
+        r"  \label{tab:multi_observer_scenario_comparison}",
         r"  \footnotesize",
-        r"  \setlength{\tabcolsep}{3.0pt}",
+        r"  \setlength{\tabcolsep}{4.0pt}",
         r"  \begin{tabular}{@{}llrrrrrrrr@{}}",
         r"    \toprule",
-        r"    Spectrum & $H_s$ & \multicolumn{2}{c}{Z RMS [m]} & \multicolumn{2}{c}{Z RMS [$\%H_s$]} & \multicolumn{2}{c}{Roll RMS [$^\circ$]} & \multicolumn{2}{c}{Pitch RMS [$^\circ$]} \\",
-        r"    \cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}",
-        r"    & & OU--III & TVG--NLO & OU--III & TVG--NLO & OU--III & TVG--NLO & OU--III & TVG--NLO \\",
+        r"    Spectrum & $H_s$ & \multicolumn{4}{c}{Z RMS [m]} & \multicolumn{4}{c}{Z RMS [$\%H_s$]} \\",
+        r"    \cmidrule(lr){3-6}\cmidrule(lr){7-10}",
+        r"    & & Adaptive PII & TVG--NLO & OU--II & OU--III & Adaptive PII & TVG--NLO & OU--II & OU--III \\",
         r"    \midrule",
     ]
     for row in rows:
         spectrum = "JONSWAP" if row["wave"] == "jonswap" else "PM--Stokes"
-        ou, nlo = row["ou"], row["nlo"]
         lines.append(
-            f"    {spectrum} & {row['hs']:.2f} & "
-            f"{tex_num(ou['z_rms'])} & {tex_num(nlo['z_rms'])} & "
-            f"{tex_num(ou['z_pct'], 1)} & {tex_num(nlo['z_pct'], 1)} & "
-            f"{tex_num(ou['roll_rms'], 2)} & {tex_num(nlo['roll_rms'], 2)} & "
-            f"{tex_num(ou['pitch_rms'], 2)} & {tex_num(nlo['pitch_rms'], 2)} \\\\" 
+            f"    {spectrum} & {row['hs']:.2f} & " +
+            " & ".join(tex_num(row[m]["z_rms"], 3) for m in methods) + " & " +
+            " & ".join(tex_num(row[m]["z_pct"], 1) for m in methods) + r" \\"
         )
+    lines += [r"    \bottomrule", r"  \end{tabular}", r"\end{table*}", ""]
+
+    aggregates = {}
+    for method in methods:
+        vals = [r[method] for r in rows]
+        aggregates[method] = {
+            "mean_z_pct": float(np.mean([v["z_pct"] for v in vals])),
+            "best_z_pct": float(np.min([v["z_pct"] for v in vals])),
+            "worst_z_pct": float(np.max([v["z_pct"] for v in vals])),
+            "mean_roll": float(np.mean([v["roll_rms"] for v in vals])),
+            "mean_pitch": float(np.mean([v["pitch_rms"] for v in vals])),
+        }
+
     lines += [
-        r"    \bottomrule",
-        r"  \end{tabular}",
-        r"\end{table*}",
+        r"\begin{table}[t]",
+        r"  \centering",
+        r"  \caption{Aggregate comparison over all eight paired wave cases.}",
+        r"  \label{tab:multi_observer_aggregate_comparison}",
+        r"  \footnotesize",
+        r"  \setlength{\tabcolsep}{3.0pt}",
+        r"  \begin{tabular}{@{}lrrrrr@{}}",
+        r"    \toprule",
+        r"    Method & Mean Z\%$H_s$ & Best & Worst & Mean roll & Mean pitch \\",
+        r"    \midrule",
     ]
+    for method in methods:
+        a = aggregates[method]
+        label = r"\textbf{OU--III}" if method == "ou3" else LABELS[method]
+        lines.append(
+            f"    {label} & {tex_num(a['mean_z_pct'],1)} & {tex_num(a['best_z_pct'],1)} & "
+            f"{tex_num(a['worst_z_pct'],1)} & {tex_num(a['mean_roll'],2)} & {tex_num(a['mean_pitch'],2)} \\\\"
+        )
+    lines += [r"    \bottomrule", r"  \end{tabular}", r"\end{table}"]
     Path(output).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def write_plot(ou_df, nlo_df, output_base):
-    ou = tail(ou_df)
-    nlo = tail(nlo_df)
-    common_start = max(float(ou["time"].min()), float(nlo["time"].min()))
-    common_end = min(float(ou["time"].max()), float(nlo["time"].max()))
-    ou = ou[(ou["time"] >= common_start) & (ou["time"] <= common_end)]
-    nlo = nlo[(nlo["time"] >= common_start) & (nlo["time"] <= common_end)]
+def write_plot(dfs, output_base):
+    trimmed = {name: tail(df) for name, df in dfs.items()}
+    start = max(float(df["time"].min()) for df in trimmed.values())
+    end = min(float(df["time"].max()) for df in trimmed.values())
+    base = trimmed["ou3"]
+    base = base[(base["time"] >= start) & (base["time"] <= end)]
+    t = base["time"].to_numpy()
+    ref = base["disp_ref_z"].to_numpy()
 
-    # Both runners use the same 200 Hz reference record, so nearest-time interpolation
-    # is only a safeguard against a one-sample output offset.
-    t = ou["time"].to_numpy()
-    ref = ou["disp_ref_z"].to_numpy()
-    ou_est = ou["disp_est_z"].to_numpy()
-    nlo_est = np.interp(t, nlo["time"], nlo["disp_est_z"])
-
-    fig, axes = plt.subplots(2, 1, figsize=(7.0, 4.8), sharex=True)
+    fig, axes = plt.subplots(2, 1, figsize=(7.2, 5.0), sharex=True)
     axes[0].plot(t, ref, label="Reference", linewidth=1.3)
-    axes[0].plot(t, ou_est, label="OU--III", linewidth=1.0)
-    axes[0].plot(t, nlo_est, label="TVG--NLO", linewidth=1.0, linestyle="--")
+    styles = {"ou3": "-", "ou2": "-.", "pii": ":", "nlo": "--"}
+    for method in ("ou3", "ou2", "pii", "nlo"):
+        df = trimmed[method]
+        est = np.interp(t, df["time"], df["disp_est_z"])
+        axes[0].plot(t, est, label=LABELS[method], linewidth=1.0, linestyle=styles[method])
+        axes[1].plot(t, est - ref, label=f"{LABELS[method]} error", linewidth=0.9, linestyle=styles[method])
     axes[0].set_ylabel("Vertical displacement [m]")
     axes[0].grid(True)
-    axes[0].legend(loc="upper right", fontsize=8)
-
-    axes[1].plot(t, ou_est - ref, label="OU--III error", linewidth=1.0)
-    axes[1].plot(t, nlo_est - ref, label="TVG--NLO error", linewidth=1.0, linestyle="--")
+    axes[0].legend(loc="upper right", fontsize=7, ncol=2)
     axes[1].set_ylabel("Error [m]")
     axes[1].set_xlabel("Time [s]")
     axes[1].grid(True)
-    axes[1].legend(loc="upper right", fontsize=8)
-
+    axes[1].legend(loc="upper right", fontsize=7, ncol=2)
     fig.tight_layout()
     for ext in ("pgf", "svg"):
         fig.savefig(f"{output_base}.{ext}", format=ext, bbox_inches="tight")
@@ -147,28 +165,28 @@ def write_plot(ou_df, nlo_df, output_base):
 
 
 def main():
-    ou_files = index_files("*_fusion_ou3.csv", OU_RE)
-    nlo_files = index_files("*_tvg_nlo_nomag_nognss.csv", NLO_RE)
+    files = {name: index_files(pattern, regex) for name, (regex, pattern) in PATTERNS.items()}
     expected = {(wave, round(hs, 2)) for wave in ("jonswap", "pmstokes") for hs in HEIGHTS}
-    missing = sorted(expected - set(ou_files) | expected - set(nlo_files))
+    missing = {name: sorted(expected - set(index)) for name, index in files.items() if expected - set(index)}
     if missing:
-        raise RuntimeError(f"missing OU/NLO comparison cases: {missing}")
+        raise RuntimeError(f"missing comparison cases: {missing}")
 
     rows = []
-    representative = None
+    representative = {}
     for wave in ("jonswap", "pmstokes"):
         for hs in HEIGHTS:
             key = (wave, round(hs, 2))
-            ou_metrics, ou_df = metrics(ou_files[key], hs)
-            nlo_metrics, nlo_df = metrics(nlo_files[key], hs)
-            rows.append({"wave": wave, "hs": hs, "ou": ou_metrics, "nlo": nlo_metrics})
-            if key == ("jonswap", 1.50):
-                representative = (ou_df, nlo_df)
+            row = {"wave": wave, "hs": hs}
+            for method in ("ou3", "ou2", "pii", "nlo"):
+                row[method], df = metrics(files[method][key], hs)
+                if key == ("jonswap", 1.50):
+                    representative[method] = df
+            rows.append(row)
 
-    write_table(rows, "w3d-baseline-results-generated.tex-part")
-    if representative is None:
-        raise RuntimeError("representative JONSWAP Hs=1.50 case not found")
-    write_plot(*representative, "w3d_ou3_vs_tvg_nlo_jonswap_medium")
+    write_tables(rows, "w3d-baseline-results-generated.tex-part")
+    if len(representative) != 4:
+        raise RuntimeError("representative JONSWAP Hs=1.50 cases not found")
+    write_plot(representative, "w3d_multi_observer_jonswap_medium")
 
 
 if __name__ == "__main__":
