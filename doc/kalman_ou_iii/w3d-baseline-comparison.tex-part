@@ -64,6 +64,18 @@ than complete navigation capability or the respective theoretical guarantees.
   \end{table}
 }
 
+Across the eight paired cases, OU--III attains the lowest mean normalized
+vertical-displacement RMS error: 6.6\% of $H_s$, compared with 8.2\% for
+OU--II, 12.3\% for the adaptive PII observer, and 15.0\% for the adapted
+TVG--NLO. OU--III gives the lowest error in seven cases; in the remaining
+smallest JONSWAP case, its 9.7\% result is within 0.1 percentage point of
+OU--II. The reduction from OU--II to OU--III is most visible in the moderate
+and large sea states, supporting the additional integral-displacement state as
+the principal source of the improved vertical reconstruction. By contrast,
+the mean roll and pitch errors of OU--II and OU--III differ by only
+\SI{0.01}{\degree} in each axis, so the measured benefit is primarily
+translational rather than an improvement in attitude estimation.
+
 \IfFileExists{w3d_multi_observer_jonswap_medium.pgf}{%
   \begin{figure}[!t]
     \centering

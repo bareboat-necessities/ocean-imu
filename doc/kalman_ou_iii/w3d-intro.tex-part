@@ -131,6 +131,10 @@ The main contributions of this work are:
         with bounded parameter increments treated explicitly as an input.
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
+  \item A reproducible paired comparison against a published nonlinear observer
+        and two earlier author-developed observer architectures, including an
+        OU--II ablation that isolates the incremental effect of the OU--III
+        translational state structure.
   \item Empirical validation on simulated directional sea spectra,
         demonstrating drift suppression and physical fidelity.
 \end{itemize}

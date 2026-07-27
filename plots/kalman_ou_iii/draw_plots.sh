@@ -55,13 +55,15 @@ from pathlib import Path
 
 sim_path = Path("../../doc/kalman_ou_iii/w3d-sim-charts.tex-part")
 source = sim_path.read_text(encoding="utf-8")
+# Use one manuscript name for the nonlinear Pierson--Moskowitz cases.
+source = source.replace("PM+Stokes", "PM--Stokes")
 include = r"\input{w3d-baseline-comparison.tex-part}"
 anchor = r"\section{Real-Hardware Validation Platform}"
 if include not in source:
     if source.count(anchor) != 1:
         raise RuntimeError("hardware-section insertion anchor not found exactly once")
     source = source.replace(anchor, include + "\n\n" + anchor, 1)
-    sim_path.write_text(source, encoding="utf-8")
+sim_path.write_text(source, encoding="utf-8")
 
 main_path = Path("../../doc/kalman_ou_iii/kalman_ou-w3d.tex")
 main = main_path.read_text(encoding="utf-8")
