@@ -5,12 +5,18 @@ JONSWAP and PM--Stokes cases, the reported vertical-displacement RMS errors
 remain within the ranges listed in Table~\ref{tab:sim_results_rms_dir_basic},
 while the attitude and direction pipelines remain operational under the stated
 multi-rate sensor and error models. The paired comparison in
-Sec.~\ref{sec:nlo-baseline-comparison} additionally evaluates vertical
-reconstruction against an adapted time-varying-gain nonlinear observer using
-the same reference and inertial records. The simulations and embedded builds
-exercise the same estimator recursion, including the exact OU-chain transition,
-small-step covariance branch, full MEKF reset, and adaptive
-pseudo-measurement scaling.
+Sec.~\ref{sec:observer-comparison} evaluates OU--III against the OU--II
+predecessor, the adaptive PII observer, and an adapted published TVG--NLO using
+the same reference and inertial records. Across all eight paired cases, the
+mean normalized vertical-displacement RMS error is 6.6\% of $H_s$ for OU--III,
+compared with 8.2\% for OU--II, 12.3\% for adaptive PII, and 15.0\% for
+TVG--NLO. OU--III gives the lowest error in seven cases and is within 0.1
+percentage point of OU--II in the remaining smallest JONSWAP case. The nearly
+identical mean roll and pitch errors of OU--II and OU--III indicate that the
+observed improvement is primarily in vertical reconstruction rather than
+attitude estimation. The simulations and embedded builds exercise the same
+estimator recursion, including the exact OU-chain transition, small-step
+covariance branch, full MEKF reset, and adaptive pseudo-measurement scaling.
 
 Appendix~\ref{app:iss-stability} complements the empirical results with a
 sufficient-condition proof of uniform local input-to-state stability for the
