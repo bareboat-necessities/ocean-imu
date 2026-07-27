@@ -73,8 +73,8 @@ OU--II. The reduction from OU--II to OU--III is most visible in the moderate
 and large sea states, supporting the additional integral-displacement state as
 the principal source of the improved vertical reconstruction. By contrast,
 the mean roll and pitch errors of OU--II and OU--III differ by only
-0.01\,degree in each axis, so the measured benefit is primarily translational
-rather than an improvement in attitude estimation.
+\SI{0.01}{\degree} in each axis, so the measured benefit is primarily
+translational rather than an improvement in attitude estimation.
 
 \IfFileExists{w3d_multi_observer_jonswap_medium.pgf}{%
   \begin{figure}[!t]
