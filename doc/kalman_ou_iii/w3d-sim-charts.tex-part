@@ -84,7 +84,7 @@ in physical units (e.g.\ $\mu$T). This provides both estimator inputs and ground
     Misalignment bound & $\le \SI{1}{\degree}$ & rotation in $\mat{M}_{\mathrm{mis}}$ \\
     \midrule
     \multicolumn{3}{@{}l}{\emph{Filter initialization (measurement noise std)}} \\
-    $\sigma_a$ init & $2.8\,\sigma_{a,\mathrm{white}}$ & per-axis \\
+    $\sigma_{a,\mathrm{meas}}$ init & $2.8\,\sigma_{a,\mathrm{white}}$ & per-axis \\
     $\sigma_g$ init & $2.0\,\sigma_{g,\mathrm{white}}$ & per-axis \\
     $\sigma_m$ init & $1.2\,\sigma_{m,\mathrm{white}}$ & per-axis \\
     \bottomrule
@@ -179,7 +179,7 @@ validation protocol instead uses the final \SI{900}{s} of each \SI{1200}{s}
 run as its primary score, thereby excluding startup while retaining a long
 steady-state record.  The runner reports per-axis and 3D displacement RMS,
 roll/pitch/yaw RMS, bias errors, and diagnostic tuning variables
-$(f,\tau,\sigma_a,R_S)$.
+$(f,\tau,\sigma_{aw},r_S)$.
 
 \paragraph{Paired Monte Carlo and adaptation ablations}
 Ten predeclared repetitions independently vary wave phase, IMU noise and random
@@ -240,10 +240,10 @@ summaries, paired effects, and manifest are retained with the source tree.
     JONSWAP   & 4.00 & 0.297 & 7.4 & 0.60 & 1.36 & 1.59 & 26.1  & 96.8/0.5/2.7 \\
     JONSWAP   & 8.50 & 0.453 & 5.3 & 1.37 & 0.54 & 1.06 & -22.1 & 94.8/0.9/4.3 \\
     \addlinespace
-    PM+Stokes & 0.27 & 0.020 & 7.6 & 0.37 & 0.12 & 1.94 & 30.4  & 99.6/0.0/0.4 \\
-    PM+Stokes & 1.50 & 0.063 & 4.2 & 0.18 & 0.17 & 2.10 & -26.9 & 94.0/1.2/4.7 \\
-    PM+Stokes & 4.00 & 0.262 & 6.6 & 0.19 & 0.39 & 2.10 & 29.6  & 98.6/0.1/1.3 \\
-    PM+Stokes & 8.50 & 0.537 & 6.3 & 1.00 & 0.56 & 2.21 & -24.1 & 96.5/1.2/2.3 \\
+    PM--Stokes & 0.27 & 0.020 & 7.6 & 0.37 & 0.12 & 1.94 & 30.4  & 99.6/0.0/0.4 \\
+    PM--Stokes & 1.50 & 0.063 & 4.2 & 0.18 & 0.17 & 2.10 & -26.9 & 94.0/1.2/4.7 \\
+    PM--Stokes & 4.00 & 0.262 & 6.6 & 0.19 & 0.39 & 2.10 & 29.6  & 98.6/0.1/1.3 \\
+    PM--Stokes & 8.50 & 0.537 & 6.3 & 1.00 & 0.56 & 2.21 & -24.1 & 96.5/1.2/2.3 \\
     \bottomrule
   \end{tabular}
   \vspace{1pt}
@@ -262,22 +262,22 @@ implemented in modern idiomatic C++ with the embedded-friendly Eigen linear alge
 
 \input{w3d-baseline-comparison.tex-part}
 
-\section{Real-Hardware Validation Platform}
+\section{Embedded Implementation Platform}
 \label{sec:real-hardware-platform}
 
-To verify that the proposed estimator is suitable for embedded marine
-deployment, the implementation was also run on real hardware using an
+As a functional portability exercise, the implementation was run on an
 M5Stack AtomS3R development module based on the ESP32-S3 microcontroller.
 This platform provides a compact, low-power target representative of the
 resource-constrained devices for which the filter is intended.
 
-The purpose of the hardware validation is not to replace the controlled
+The purpose of this exercise is not to replace the controlled
 simulation study of Sec.~\ref{sec:sim-and-eval}, where ground-truth wave
-kinematics are available, but to confirm the practical real-time properties
-of the implementation: stable execution on an MCU-class processor, fixed-rate
-IMU sampling, bounded memory use, sensor calibration handling, and end-to-end
-operation of the attitude, acceleration, frequency-tracking, and wave-state
-estimation pipeline.
+kinematics are available. It confirms that the source builds for the target and
+that calibrated MEMS samples can traverse the initialization, attitude,
+acceleration, frequency-tracking, and wave-state pipeline. This study did not
+instrument update latency, worst-case execution time, processor utilization,
+RAM, flash, or sustained deadline margin; it therefore does not establish a
+quantitative real-time-performance claim.
 
 \begin{figure}[!t]\centering
   \includesvg[
@@ -285,7 +285,7 @@ estimation pipeline.
     inkscapelatex=false
   ]{AtomS3R_device}
   \caption{M5Stack AtomS3R device based on the ESP32-S3 MCU, used as the
-  embedded real-hardware validation target.}
+  embedded implementation target.}
   \label{fig:atoms3r_device}
 \end{figure}
 
@@ -304,13 +304,13 @@ bias, axis alignment, and magnetometer hard-/soft-iron effects. The calibrated
 sensor triads are transformed into the body-frame convention used by the
 filter. 
 
-The real-hardware tests therefore validate three implementation-level claims:
-(i) the proposed OU-driven Q-MEKF can execute in real time on an ESP32-S3-class
-microcontroller, (ii) the staged initialization and calibration pipeline is
-compatible with real MEMS IMU data, and (iii) the adaptive tuning logic remains
-numerically stable outside the idealized simulation environment. Quantitative
-wave-kinematics accuracy is evaluated separately in simulation, where exact
-reference displacement, velocity, acceleration, and attitude are available.
+This exercise supports source-level portability and end-to-end functional
+integration with real MEMS input. It does not quantify embedded resource use or
+wave-reconstruction accuracy on hardware. Those require the timing, memory,
+power, sustained-rate, and external-reference measurements reserved for the
+embedded-performance phase. Quantitative wave-kinematics accuracy in the
+present paper is evaluated only in simulation, where exact reference
+displacement, velocity, acceleration, and attitude are available.
 
 \section{Conclusion and Future Work}
 \label{sec:future-work}

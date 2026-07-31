@@ -12,11 +12,11 @@ blocks without changing the state ordering.
 \subsection{Attitude and gyroscope-bias block}
 For constant $\hat{\vct{\omega}}$ over the step, define
 \[
-\mat{W}=\Skew{\hat{\vct{\omega}}},
-\qquad
-\mat{R}(t)=\exp(-\mat{W}t),
-\qquad
-\mat{B}(t)=\int_0^t\mat{R}(s)\,ds.
+\begin{aligned}
+\mat{W}&=\Skew{\hat{\vct{\omega}}},\\
+\mat{R}(t)&=\exp(-\mat{W}t),\\
+\mat{B}(t)&=\int_0^t\mat{R}(s)\,ds.
+\end{aligned}
 \]
 Then
 \begin{equation}
@@ -79,6 +79,11 @@ For $|x|<10^{-2}$, cancellation-sensitive coefficients are evaluated as
 \phi_{pa}&=\tau^2\left(\tfrac12x^2-\tfrac16x^3+\tfrac1{24}x^4\right),\\
 \phi_{Sa}&=\tau^3\left(\tfrac16x^3-\tfrac1{24}x^4+\tfrac1{120}x^5\right).
 \end{align}
+The reported simulations use $h=\SI{0.005}{s}$. Across the applied and fixed
+operating points recorded for the scored windows, the minimum correlation time
+is $\SI{0.944}{s}$, so $x\le 5.30\times10^{-3}$ and these recorded operating
+points use the small-step branch. The exact closed form remains necessary when
+the update cadence or admissible correlation-time range is changed.
 
 In group-first three-dimensional ordering
 $[\vct{v},\vct{p},\vct{S},\vct{a}_w]$, the transition is
@@ -106,21 +111,31 @@ q_c
 \label{eq:q-axis-integral}
 \end{equation}
 For $|x|>10^{-2}$, write
-$\matg{Q}_{d,\mathrm{axis}}=q_c\,\sym(\mat{K})$, where the upper-triangular
-coefficients in $[v,p,S,a]$ ordering are
+$\matg{Q}_{d,\mathrm{axis}}=q_c\,\scomp(\mat{U})$, where $\mat{U}$ stores the
+following upper-triangular coefficients in $[v,p,S,a]$ ordering:
+\begin{equation}
+[\scomp(\mat{U})]_{ij}=
+\begin{cases}
+U_{ij},&i\le j,\\
+U_{ji},&i>j.
+\end{cases}
+\label{eq:symmetric-completion}
+\end{equation}
+Thus $\scomp$ copies the upper triangle to the lower triangle; it is not the
+averaging operator $(\mat{U}+\mat{U}^{\top})/2$. The coefficients are
 \begin{align}
-K_{vv}&=\tfrac12\tau^3(-\alpha^2+4\alpha+2x-3),\\
-K_{vp}&=\tfrac12\tau^4(\alpha^2+2\alpha(x-1)+x^2-2x+1),\\
-K_{vS}&=\tfrac16\tau^5[-3\alpha^2+3\alpha(x^2+4)+x^3-3x^2+6x-9],\\
-K_{va}&=\tfrac12\tau^2(\alpha^2-2\alpha+1),\\
-K_{pp}&=\tau^5[-\tfrac12\alpha^2-2\alpha x+\tfrac13x^3-x^2+x+\tfrac12],\\
-K_{pS}&=\tau^6[\tfrac12\alpha^2+\tfrac12\alpha(-x^2+2x-2)
+U_{vv}&=\tfrac12\tau^3(-\alpha^2+4\alpha+2x-3),\\
+U_{vp}&=\tfrac12\tau^4(\alpha^2+2\alpha(x-1)+x^2-2x+1),\\
+U_{vS}&=\tfrac16\tau^5[-3\alpha^2+3\alpha(x^2+4)+x^3-3x^2+6x-9],\\
+U_{va}&=\tfrac12\tau^2(\alpha^2-2\alpha+1),\\
+U_{pp}&=\tau^5[-\tfrac12\alpha^2-2\alpha x+\tfrac13x^3-x^2+x+\tfrac12],\\
+U_{pS}&=\tau^6[\tfrac12\alpha^2+\tfrac12\alpha(-x^2+2x-2)
 +\tfrac18x^4-\tfrac12x^3+x^2-x+\tfrac12],\\
-K_{pa}&=\tfrac12\tau^3(-\alpha^2-2\alpha x+1),\\
-K_{SS}&=\tau^7[-\tfrac12\alpha^2+\alpha(x^2+2)+\tfrac1{20}x^5
+U_{pa}&=\tfrac12\tau^3(-\alpha^2-2\alpha x+1),\\
+U_{SS}&=\tau^7[-\tfrac12\alpha^2+\alpha(x^2+2)+\tfrac1{20}x^5
 -\tfrac14x^4+\tfrac23x^3-x^2+x-\tfrac32],\\
-K_{Sa}&=\tfrac12\tau^4[\alpha^2-\alpha(x^2+2)+1],\\
-K_{aa}&=\tfrac12\tau(1-\alpha^2).
+U_{Sa}&=\tfrac12\tau^4[\alpha^2-\alpha(x^2+2)+1],\\
+U_{aa}&=\tfrac12\tau(1-\alpha^2).
 \end{align}
 
 \subsection{Complete small-step branch}

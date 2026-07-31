@@ -2,108 +2,47 @@
 \section{Frequency Tracking from Vertical Specific Force}
 \label{sec:freq-tracking}
 
-To estimate parameters adaptively we need a stable, real-time estimate of the dominant frequency of acceleration from the IMU. Using the vertical specific force or vertical inertial acceleration, we form a scalar input $u(t)$ that drives one of three trackers. Each tracker outputs a raw frequency, which is then clamped and smoothed to produce a reliable $\bar f_k$ for downstream adaptation and direction estimation.
+Online tuning requires a stable estimate of the dominant acceleration
+frequency. All OU--III experiments in this paper use KalmANF
+\cite{Ali2023DAFx}; the implementation also compiles two alternative policies,
+documented separately in Appendix~\ref{app:tracker-alternatives}. Using the
+vertical specific force or vertical inertial acceleration, the selected tracker
+produces a raw frequency that is clamped and smoothed to give $\bar f_k$ for
+adaptation and direction estimation.
 
-\paragraph{Signal}
-Track frequency from a vertical acceleration-like signal. For normalized operation we use
+For normalized operation the scalar tracker input is
 \[
-u(t)=\frac{a_z(t)}{g}.
-\]
-Some trackers may instead use the up-positive inertial acceleration directly, with their RMS thresholds interpreted in physical acceleration units. Let
-\[
+u(t)=\frac{a_z(t)}{g},\qquad
 \omega=2\pi f,\qquad
-\phi(t)=\int_0^t \omega(\tau)\,d\tau .
+\phi(t)=\int_0^t \omega(s)\,ds .
 \]
 
 \subsection{\textsc{KalmANF}: Kalman-updated adaptive notch}
 
-KalmANF filter \cite{Ali2023DAFx} models the signal with a second-order notch parameterized by $a=2\cos\omega$. It treats $a$ as a slowly varying state and updates it via a scalar Kalman step driven by the instantaneous prediction error.
+KalmANF models the signal with a second-order notch parameterized by
+$\chi=2\cos\omega$. It treats $\chi$ as a slowly varying scalar state and
+updates it from the instantaneous prediction error.
 
-\paragraph{Method}
-Embed the notch with parameter $a\in(-2,2)$:
+Embed the notch with $\chi\in(-2,2)$:
 \begin{align}
-x_{k+1} &= \begin{bmatrix} 0 & 1 \\ -1 & a_k \end{bmatrix} x_k + \begin{bmatrix} 0 \\ 1 \end{bmatrix} u_k, \qquad
-y_k = \begin{bmatrix} 1 & 0 \end{bmatrix} x_k,\\
-a_{k+1} &= a_k + w_k, \quad w_k\sim\mathcal{N}(0,q_a).
+\vct{x}_{k+1} &= \begin{bmatrix}0&1\\-1&\chi_k\end{bmatrix}\vct{x}_k
+ + \begin{bmatrix}0\\1\end{bmatrix}u_k,
+&y_k&=\begin{bmatrix}1&0\end{bmatrix}\vct{x}_k,\\
+\chi_{k+1}&=\chi_k+w_k,
+&w_k&\sim\mathcal{N}(0,q_\chi).
 \end{align}
-Treat $a$ as a scalar state; run a Kalman correction on $a$ using the instantaneous prediction error $\varepsilon_k=u_k-y_k$:
+For $\varepsilon_k=u_k-y_k$, the scalar correction is
 \begin{align}
-\tilde a_k &= a_k, \quad P_k^- = P_{k-1}+q_a, \\
-K_k &= \frac{P_k^-\,\partial \varepsilon_k/\partial a}{(\partial \varepsilon_k/\partial a)^2 P_k^- + r}, \\
-a_k &\leftarrow \tilde a_k + K_k\,\varepsilon_k,\qquad
-P_k=(1-K_k\,\partial \varepsilon_k/\partial a)P_k^-,
+\widetilde\chi_k&=\chi_k,&p_{\chi,k}^-&=p_{\chi,k-1}+q_\chi,\\
+\kappa_k&=\frac{p_{\chi,k}^-\,\partial\varepsilon_k/\partial\chi}
+{(\partial\varepsilon_k/\partial\chi)^2p_{\chi,k}^-+r},\\
+\chi_k&\leftarrow\widetilde\chi_k+\kappa_k\varepsilon_k,&
+p_{\chi,k}&=(1-\kappa_k\,\partial\varepsilon_k/\partial\chi)p_{\chi,k}^-.
 \end{align}
-with $\partial \varepsilon_k/\partial a$ obtained from the standard state-sensitivity recursion. Frequency readout:
+The derivative follows the standard state-sensitivity recursion, and
 \[
-\hat\omega_k=\arccos\!\left(\tfrac{1}{2}\,\clip(a_k,-2,2)\right), \quad \hat f_k=\hat\omega_k/(2\pi).
-\]
-
-\subsection{Aranovskiy Frequency Tracker: nonlinear adaptive observer}
-
-Aranovskiy filter is based on the nonlinear sinusoidal frequency observer of Bobtsov--Nikolaev--Slita--Borgul--Aranovskiy \cite{Bobtsov2013182}. It uses a filtered copy of the input, an adaptive auxiliary state, and an algebraic frequency parameter.
-
-\paragraph{Method}
-The input is first passed through a first-order filter
-\[
-\dot x_1=-a x_1+b u .
-\]
-The nonlinear observer forms
-\[
-\varphi=\dot x_1(bu+a x_1)+x_1^2\theta ,
-\]
-and adapts an auxiliary state
-\[
-\dot\sigma=-k\varphi .
-\]
-The frequency-related parameter is updated algebraically:
-\[
-\theta = k b x_1 u+\sigma .
-\]
-The internal angular-frequency estimate is proportional to
-\[
-\Omega=\sqrt{|\theta|}.
-\]
-
-\subsection{PLL Frequency Tracker: prefiltered I/Q phase-locked loop}
-
-PLL filter is a control-style narrowband tracker. It removes slow drift and high-frequency noise, demodulates the signal against an internal oscillator, and adjusts oscillator frequency with a bounded PI loop.
-
-\paragraph{Method}
-The input is converted to a broad band-passed signal $b_k$ using a high-pass stage followed by a low-pass stage. The tracker then demodulates against the internal phase $\phi_k$:
-\[
-I_k \leftarrow \operatorname{LPF}\!\left\{b_k\cos\phi_k\right\},\qquad
-Q_k \leftarrow \operatorname{LPF}\!\left\{-b_k\sin\phi_k\right\}.
-\]
-The phase detector is
-\[
-e_{\phi,k}=\operatorname{atan2}(Q_k,I_k).
-\]
-A type-II PLL-style loop updates oscillator frequency and phase:
-\[
-\omega_{k+1}
-=
-\clip_{[\omega_{\min},\omega_{\max}]}
-\left(
-\omega_k + K_iG_ke_{\phi,k}\Delta t
-\right),
-\]
-\[
-\phi_{k+1}
-=
-\wrap_{(-\pi,\pi]}
-\left(
-\phi_k + (\omega_{k+1}+K_pG_ke_{\phi,k})\Delta t
-\right),
-\]
-where
-\[
-K_p=2\zeta\omega_n,\qquad
-K_i=\omega_n^2,\qquad
-\omega_n=2\pi B_L .
-\]
-Here $B_L$ is the configured loop bandwidth, $\zeta$ is the loop damping, and $G_k$ reduces adaptation when confidence is poor. The reported frequency is
-\[
-\hat f_k=\frac{\omega_k}{2\pi}.
+\hat\omega_k=\arccos\!\left(\tfrac12\clip(\chi_k,-2,2)\right),
+\qquad \hat f_k=\hat\omega_k/(2\pi).
 \]
 
 % =======================================================
@@ -167,15 +106,15 @@ $S_a^{(2)}(\omega)=\omega^4S_\eta^{(2)}(\omega)$ and
 
 \subsection{Normalization and spectral shape factor}
 
-Let $\sigma_a^2=\Var[a]$ and let $\tau$ be a characteristic time scale.  Write
+Let $\sigma_{aw}^2=\Var[a]$ and let $\tau$ be a characteristic time scale. Write
 the two-sided PSD for positive frequency as
 \begin{equation}
-S_a^{(2)}(\omega)=\sigma_a^2\tau\Phi(\omega\tau),
+S_a^{(2)}(\omega)=\sigma_{aw}^2\tau\psi_a(\omega\tau),
 \label{eq:Sa-normalized}
 \end{equation}
 with
 \[
-\frac{1}{\pi}\int_0^\infty\Phi(u)\,du=1.
+\frac{1}{\pi}\int_0^\infty\psi_a(u)\,du=1.
 \]
 The triple integral is not stationary for a model with nonzero spectral density
 at zero frequency.  We therefore make the low-frequency assumption explicit:
@@ -183,9 +122,9 @@ the scaling applies after the physical spectrum, preprocessing, or finite
 observation interval supplies an effective cutoff $\omega_{\min}>0$.  Then
 \begin{equation}
 \Var[S]
-=\sigma_a^2\tau^6
+=\sigma_{aw}^2\tau^6
 \left[\frac{1}{\pi}\int_{u_{\min}}^\infty
-\frac{\Phi(u)}{u^6}\,du\right],
+\frac{\psi_a(u)}{u^6}\,du\right],
 \qquad u_{\min}=\omega_{\min}\tau .
 \label{eq:varS-shape}
 \end{equation}
@@ -193,22 +132,22 @@ Define
 \begin{equation}
 c_{\mathrm{spec}}^2(u_{\min})
 :=\frac{1}{\pi}\int_{u_{\min}}^\infty
-\frac{\Phi(u)}{u^6}\,du,
+\frac{\psi_a(u)}{u^6}\,du,
 \label{eq:c-spec-def}
 \end{equation}
 so that
 \begin{equation}
 \sigma_S=\sqrt{\Var[S]}
-=c_{\mathrm{spec}}(u_{\min})\sigma_a\tau^3.
+=c_{\mathrm{spec}}(u_{\min})\sigma_{aw}\tau^3.
 \label{eq:sigmaS-scaling}
 \end{equation}
-The units are correct because $\sigma_a\tau^3$ has units $\mathrm{m\,s}$.
+The units are correct because $\sigma_{aw}\tau^3$ has units $\mathrm{m\,s}$.
 The coefficient depends strongly on spectral shape and on the effective
 low-frequency cutoff; it is not universal.
 
 For the two-sided OU surrogate
 \[
-\Phi_{\mathrm{OU}}(u)=\frac{2}{1+u^2}
+\psi_{a,\mathrm{OU}}(u)=\frac{2}{1+u^2}
 \]
 and $u_{\min}=1$, Eqs.~\eqref{eq:c-spec-def}--\eqref{eq:sigmaS-scaling} give
 $c_{\mathrm{spec}}\approx0.227$.  Under the equivalent one-sided convention,
@@ -219,15 +158,15 @@ physical variance.
 
 A physically scaled Gaussian design is
 \begin{equation}
-r_S(\sigma_a,\tau)
+r_S(\sigma_{aw},\tau)
 =k_i\sigma_S
-=k_i c_{\mathrm{spec}}(u_{\min})\sigma_a\tau^3,
+=k_i c_{\mathrm{spec}}(u_{\min})\sigma_{aw}\tau^3,
 \label{eq:Rs-from-sigmaS}
 \end{equation}
 where $k_i>0$ is dimensionless.  The selected spectral-shape and cutoff
 calibration are represented by a single coefficient $c_R$, giving
 \begin{equation}
-r_{S,\star}=c_R\sigma_{a,\star}\tau_\star^3.
+r_{S,\star}=c_R\sigma_{aw,\star}\tau_\star^3.
 \label{eq:Rs-sigmaa-tau3}
 \end{equation}
 This is an engineering normalization, not an exact sea-state invariance result.
@@ -241,7 +180,7 @@ require retuning $c_R$.
 \label{sec:adapt-impl}
 
 The adaptation law updates the OU time constant $\tau$, the OU stationary
-acceleration scale $\sigma_a$, and the integral pseudo-measurement
+acceleration scale $\sigma_{aw}$, and the integral pseudo-measurement
 standard-deviation scale $r_S$.
 
 \subsubsection{Vertical signal}
@@ -274,22 +213,22 @@ The adaptation targets are
 \begin{equation}
 \begin{aligned}
 \tau_\star&=c_\tau\frac{1}{2f_{\mathrm{tune}}},\\
-\sigma_{a,\star}&=c_\sigma
+\sigma_{aw,\star}&=c_\sigma
 \sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
-r_{S,\star}&=c_R\sigma_{a,\star}\tau_\star^3.
+r_{S,\star}&=c_R\sigma_{aw,\star}\tau_\star^3.
 \end{aligned}
 \label{eq:tuner-targets}
 \end{equation}
 
 \subsubsection{Smoothing}
-Applied $(\tau,\sigma_a)$ are EMA filtered with time constant $\tau_{\mathrm{adapt}}$:
+Applied $(\tau,\sigma_{aw})$ are EMA filtered with time constant $\tau_{\mathrm{adapt}}$:
 \begin{equation}
 \begin{aligned}
 \alpha&=1-e^{-\Delta t/\tau_{\mathrm{adapt}}},\\
 \tau_{\mathrm{appl}}&\leftarrow\tau_{\mathrm{appl}}
 +\alpha(\tau_\star-\tau_{\mathrm{appl}}),\\
-\sigma_{a,\mathrm{appl}}&\leftarrow\sigma_{a,\mathrm{appl}}
-+\alpha(\sigma_{a,\star}-\sigma_{a,\mathrm{appl}}).
+\sigma_{aw,\mathrm{appl}}&\leftarrow\sigma_{aw,\mathrm{appl}}
++\alpha(\sigma_{aw,\star}-\sigma_{aw,\mathrm{appl}}).
 \end{aligned}
 \label{eq:adapt-ewma}
 \end{equation}
@@ -307,8 +246,9 @@ r_{S,\mathrm{appl}}&\leftarrow r_{S,\mathrm{appl}}
 \subsubsection{Anisotropic parameterization}
 The OU stationary standard deviation is applied anisotropically,
 \[
-\Sigma_{a_w}^{1/2}=\diag(S_\sigma\sigma_{a,\mathrm{appl}},
-S_\sigma\sigma_{a,\mathrm{appl}},\sigma_{a,\mathrm{appl}}),
+(\matg{\Sigma}_{aw}^{\mathrm{stat}})^{1/2}
+=\diag(S_\sigma\sigma_{aw,\mathrm{appl}},
+S_\sigma\sigma_{aw,\mathrm{appl}},\sigma_{aw,\mathrm{appl}}),
 \]
 and the integral pseudo-measurement standard-deviation vector is
 \[
@@ -323,6 +263,53 @@ Its componentwise square defines the covariance,
 \mat{R}_S=\diag\!\left(\vct{r}_S\odot\vct{r}_S\right),
 \end{equation}
 consistent with the measurement model in Sec.~\ref{sec:measurement_model}.
+
+\subsection{Implementation bounds and validity gates}
+
+Table~\ref{tab:implementation-gates} records the defaults used by the reported
+OU--III implementation. They are saturation and validity safeguards rather
+than quantities estimated from the reference trajectory; public configuration
+setters can override the tunable bounds. The $r_S$ limits apply to the
+standard-deviation scale, not to the covariance $\mat{R}_S$.
+
+\begin{table*}[t]
+\caption{Principal implementation defaults used in the reported experiments.}
+\label{tab:implementation-gates}
+\centering
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.28\textwidth}
+                    >{\raggedright\arraybackslash}p{0.18\textwidth}
+                    >{\raggedright\arraybackslash}p{0.28\textwidth}
+                    >{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
+\toprule
+Bound or gate & Default & Bound or gate & Default \\
+\midrule
+IMU period $h$ & \SI{0.005}{s}
+& tracker band $[f_{\min},f_{\max}]$ & $[0.2,6.0]$ Hz \\
+OU time scale $[\tau_{\min},\tau_{\max}]$
+& $[0.02,3.0]$ s
+& stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{\meter\per\second\squared} \\
+acceleration noise floor $\sigma_{\mathrm{nf}}$
+& \SI{0.12}{m.s^{-2}}
+& integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.4,35]$ m\,s \\
+adaptation cadence / time constant
+& $0.1/1.8$ s
+& $r_S$ smoothing time & $5\tau_\star$ \\
+online-tuning warmup / magnetometer delay
+& $5/7$ s
+& frequency smoothing (fast/slow) & $3.5/10$ s \\
+horizontal OU / $r_S$ scale
+& $S_\sigma=1.87$, $\rho_{xy}=0.36$
+& tilt reset (threshold/hold/cooldown) & $70^\circ/0.35/3$ s \\
+direction-axis validity (amplitude/confidence/linearity)
+& $0.08/20/0.25$
+& sense coherence on/off & $0.20/0.12$ \\
+sense absolute RMS gates (horizontal/vertical slope)
+& $0.01\,\mathrm{m\,s^{-2}}/0.01\,\mathrm{m\,s^{-3}}$
+& KalmANF policy for reported OU results & enabled \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 % =======================================================
 \input{w3d-direction-methods.tex-part}

@@ -7,17 +7,17 @@ augmented with an Ornstein--Uhlenbeck (OU) process model for latent
 acceleration. The filter is designed for marine inertial sensing and
 wave-kinematics reconstruction. The proposed framework unifies
 attitude estimation, 3D kinematics, and stochastic excitation
-modeling into a single, analytically tractable structure suitable for
-real-time embedded estimation.
+modeling into a single, analytically tractable structure intended for
+resource-constrained embedded estimation.
 
 Most wave measurement systems derive parameters by chaining separate motion estimation
 and spectral analysis stages, a process prone to bias and delay.
 Our approach instead uses a unified 21-state Kalman filter that
-directly incorporates wave kinematics. Two central novelties are the integration
-of an OU prior for latent world acceleration into the quaternion MEKF and an
-adaptive tuning law that jointly adjusts the OU time scale, stationary
-acceleration scale, and integral-state regularization from observed sea-state
-statistics. Together with a real-time directional estimator, these elements
+directly incorporates wave kinematics. The architectural contributions are the
+integration of a first-order Gauss--Markov acceleration prior into the
+quaternion MEKF and an adaptive tuning law that jointly adjusts the prior time
+scale, stationary acceleration scale, and integral-state regularization from
+observed sea-state statistics. Together with an online directional estimator, these elements
 address colored excitation and MEMS errors in an efficient, embedded-friendly
 framework. Appendix~\ref{app:iss-stability} supplies a sufficient-condition
 uniform local input-to-state stability analysis for the core estimator and its
@@ -37,13 +37,20 @@ cumulative wave kinematics in the world frame.
 \subsection*{Stochastic Forcing and the OU Acceleration Model}
 
 The latent world acceleration $\bm{a}_w$ is modeled with an
-Ornstein--Uhlenbeck (OU) prior \cite{UhlenbeckOrnstein1930_OU} characterized by a stationary variance
-$\Sigma_{aw}$ and a correlation time constant $\tau_{aw}$, referred to hereafter as $\tau$.
+Ornstein--Uhlenbeck (OU) prior
+\cite{UhlenbeckOrnstein1930_OU,Singer1970_ManeuverModel} characterized by a stationary variance
+$\matg{\Sigma}_{aw}^{\mathrm{stat}}$ and a correlation time constant
+$\tau_{aw}$, referred to hereafter as $\tau$.
 The OU prior is a low-order Gauss--Markov model for broadband, temporally
 correlated excitation with bounded variance; it is not asserted to be the
-physical ocean-wave spectrum. The novel contribution is its integration as the
-latent acceleration prior within the coupled quaternion and translational
-estimator, enabling analytically tractable colored-excitation modeling. For
+physical ocean-wave spectrum. In each scalar axis this is the continuous
+first-order Gauss--Markov acceleration model used in the Singer tracking
+family, with $\alpha=1/\tau$ and the diffusion chosen to give the prescribed
+stationary covariance \cite{Singer1970_ManeuverModel}. We do not claim the OU
+or Singer process itself as new. The contribution is its use as a latent 3D
+world-acceleration prior inside a coupled left-MEKF, $v$--$p$--$S$ chain,
+analytic discretization, adaptive pseudo-constraint, and embedded
+implementation. For
 Lagrangian sensors following surface motion, this prior improves low-frequency
 stability without sacrificing responsiveness to swell-band motion.
 
@@ -57,7 +64,7 @@ kinematics of the Q-MEKF. IMU measurements provide specific force and
 angular rate observations, while a pseudo-measurement of the integral of
 displacement serves as a long-term constraint to suppress drift. The
 pseudo-measurement standard-deviation scale $r_S$, whose square forms the
-covariance $R_S$, is a crucial design parameter: smaller values tighten the
+covariance $\mat{R}_S$, is a crucial design parameter: smaller values tighten the
 constraint but risk biasing slow wave components, while larger values relax
 drift control.
 
@@ -79,14 +86,16 @@ different vertical and lateral dynamics.
 
 A fixed-parameter Kalman filter performs optimally only under a
 particular sea-state regime, determined by its assumed correlation time
-$\tau$ and stationary acceleration variance $\Sigma_{aw}$.
+$\tau$ and stationary acceleration variance
+$\matg{\Sigma}_{aw}^{\mathrm{stat}}$.
 Different wave spectra exhibit distinct dominant frequencies and energy
-levels. To maintain performance across conditions, we introduce a novel online
+levels. To maintain performance across conditions, we use an online
 adaptation law that continuously estimates and tunes these parameters together
-with the integral-state regularization scale. Three alternative embedded
-frequency trackers are supported: the \textit{KalmANF adaptive notch filter},
-\textit{PLL (Phase-Locked Loop)} filter, and the \textit{Aranovskiy frequency
-estimator}. The dominant frequency provides an updated correlation time
+with the integral-state regularization scale. All OU--III results reported in
+this paper use the \textit{KalmANF adaptive notch filter}; two compiled
+alternative tracker policies are documented in
+Appendix~\ref{app:tracker-alternatives} but are not evaluated as OU--III
+ablations. The dominant frequency provides an updated correlation time
 $\tau$, while the stationary acceleration scale $\sigma_{aw}$ is estimated
 in the time domain. The pseudo-measurement standard-deviation scale is adapted
 through the spectrally motivated law
@@ -95,7 +104,7 @@ r_S \propto \sigma_{aw}\tau^3,
 \]
 which couples displacement drift suppression to the estimated strength and
 time scale of stochastic excitation. This joint adaptation of the OU prior and
-integral-state constraint is a principal novelty of the proposed method. The
+integral-state constraint is a principal architectural contribution. The
 normalization is approximate and assumes a fixed pseudo-update cadence and a
 bounded family of spectral shapes and effective low-frequency cutoffs.
 
@@ -109,22 +118,22 @@ assessed via RMS displacement errors relative to the true wave elevation. The
 OU-based Q-MEKF achieves drift-suppressed reconstruction of three-dimensional
 surface motion.
 
-Not all numerical coefficient values are reproduced in this article; for
-reproducibility, the complete coefficient set, tuning constants, and simulation
-configuration are freely accessible in the source code published in the
-Bareboat Necessities GitHub project.
+The principal runtime bounds, gates, and time constants are tabulated in
+Sec.~\ref{sec:adapt-impl}. The complete coefficient set, fixed baseline
+configurations, seed manifest, and simulation configuration are versioned with
+the source and result bundle in the Bareboat Necessities GitHub project.
 
 \subsection{Main Contributions}
 
 The main contributions of this work are:
 \begin{itemize}
-  \item A novel integration of an OU-driven latent world-acceleration prior into
-        a 21-state quaternion MEKF for coupled marine attitude and wave-motion
+  \item A 21-state quaternion MEKF architecture that couples an OU-driven
+        latent world-acceleration prior to marine attitude and wave-motion
         estimation.
   \item Closed-form discrete-time transition and covariance matrices for
         the OU process and linear kinematic chain, with numerically stable
         small-step series expansions.
-  \item A novel adaptive tuning law that jointly updates $\tau$,
+  \item An adaptive tuning law that jointly updates $\tau$,
         $\sigma_{aw}$, and the integral pseudo-measurement scale from dominant
         frequency and time-domain variance estimates.
   \item A sufficient-condition proof of uniform local ISS for the adaptive core,
@@ -135,6 +144,7 @@ The main contributions of this work are:
         and two earlier author-developed observer architectures, including an
         OU--II ablation that isolates the incremental effect of the OU--III
         translational state structure.
-  \item Empirical validation on simulated directional sea spectra,
-        demonstrating drift suppression and physical fidelity.
+  \item A versioned ten-seed paired validation on stationary and transitioning
+        directional sea spectra, including confidence intervals, negative
+        results, and the limits of the observed OU--III advantage.
 \end{itemize}

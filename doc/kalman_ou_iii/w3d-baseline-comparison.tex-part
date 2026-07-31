@@ -46,6 +46,41 @@ outputs of every method under the evaluated configuration. The comparison
 therefore addresses vertical wave reconstruction and tilt estimation rather
 than complete navigation capability or the respective theoretical guarantees.
 
+All baseline parameter files are committed and frozen before the comparison
+script is run. The script rebuilds the four executables, replays the records,
+and computes the table; it performs no parameter search and never uses
+reference errors to choose gains. No method is retuned per scenario. OU--II
+and OU--III use KalmANF and may adapt only from their sensor streams; PII uses
+its own committed PLL-based scheduler. The TVG--NLO gains belong to the stated
+no-GNSS/no-magnetometer adaptation of the published observer. Thus the protocol
+provides common records and a common scored-output intersection, but not
+identical aiding: the three author-developed methods may consume magnetometer
+updates, whereas yaw and horizontal outputs are excluded from the comparison.
+
+\begin{table}[t]
+\centering
+\caption{Frozen parameter and aiding policy for the deterministic baselines.}
+\label{tab:baseline-tuning-policy}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.25cm}
+                    >{\raggedright\arraybackslash}p{2.55cm}
+                    >{\raggedright\arraybackslash}p{3.55cm}@{}}
+\toprule
+Method & Parameter policy & Aiding and scored-output policy \\
+\midrule
+OU--III & committed KalmANF/adaptation configuration; no scenario retuning
+& IMU and magnetometer available; common vertical and tilt outputs scored \\
+OU--II & committed predecessor configuration; no scenario retuning
+& same record and available aiding as OU--III; common outputs scored \\
+PII & committed PLL scheduler and fixed ranges
+& same record; only outputs shared by all methods scored \\
+TVG--NLO & fixed gains for the documented vertical-only adaptation
+& IMU only; no GNSS or magnetic aiding; yaw and horizontal motion unscored \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \IfFileExists{w3d-baseline-results-generated.tex-part}{%
   \input{w3d-baseline-results-generated.tex-part}%
 }{%
