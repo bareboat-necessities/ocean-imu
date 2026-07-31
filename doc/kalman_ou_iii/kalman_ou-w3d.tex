@@ -169,12 +169,15 @@ acceleration. Online adaptation tunes the OU time scale, stationary acceleration
 scale, and the standard-deviation scale whose square forms the integral
 pseudo-measurement covariance. The cubic scaling with correlation time is a
 physically motivated engineering normalization for fixed update cadence and a
-bounded family of spectra. Across eight paired JONSWAP and PM--Stokes cases,
-the proposed OU--III estimator achieved a mean vertical-displacement RMS error
-of 6.6\% of significant wave height, compared with 8.2\% for OU--II, 12.3\%
-for an adaptive PII observer, and 15.0\% for an adapted published nonlinear
-observer. The method is suitable for real-time deployment with low-cost
-embedded IMUs.
+bounded family of spectra. A ten-seed paired study scores the final
+\SI{900}{s} of four stationary JONSWAP seas and a controlled transition.  Over
+the stationary seas, the seed-wise mean normalized vertical-displacement RMS
+error is $8.73\pm0.23\%$ of $H_s$ for OU--III and $8.98\pm0.24\%$ for OU--II;
+the paired difference is $-0.248$ percentage point (bootstrap 95\% interval
+$[-0.407,-0.116]$).  The sign changes by sea state, OU--III has larger 3D
+displacement error in all five scenarios, and online adaptation does not
+dominate fixed tuning during the transition.  The implementation remains
+suitable for real-time deployment with low-cost embedded IMUs.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -204,6 +207,6 @@ The author declares no conflicts of interest and received no funding for this re
 
 \nocite{Kalman1960_Filtering,Jazwinski1970_Filtering,Maybeck1979_StochasticModels,Markley2003AttitudeError,UhlenbeckOrnstein1930_OU}
 \bibliographystyle{IEEEtran}
-\bibliography{w3d,w3d-iss}
+\bibliography{w3d,w3d-iss,w3d-baselines}
 \balance
 \end{document}

@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <iostream>
 #include <cstdlib>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -63,6 +64,7 @@ public:
         cfg_.Racc_warmup_std = 0.5f;
 
         apply_env_overrides();
+        load_fixed_tuning();
 
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
@@ -191,6 +193,15 @@ public:
                 float temperature_c) override
     {
         fusion_.update(dt, gyr_meas_ned, acc_meas_ned, temperature_c);
+        auto& filter = fusion_.raw();
+        if (fixed_tuning_ && !fixed_tuning_applied_ && filter.isAdaptiveLive()) {
+            if (!filter.setFixedTuning(
+                    fixed_tau_s_, fixed_sigma_a_, fixed_RS_))
+            {
+                throw std::runtime_error("invalid fixed OU-III tuning point");
+            }
+            fixed_tuning_applied_ = true;
+        }
     }
 
     FilterSnapshot snapshot() const override {
@@ -263,7 +274,37 @@ public:
     }
 
 private:
+    void load_fixed_tuning()
+    {
+        const char* raw_mode = std::getenv("W3D_TUNING_MODE");
+        const std::string mode = raw_mode ? raw_mode : "adaptive";
+        if (mode == "adaptive") return;
+        if (!mode.starts_with("fixed")) {
+            throw std::runtime_error(
+                "W3D_TUNING_MODE must be adaptive or start with fixed");
+        }
+
+        fixed_tuning_ =
+            env_float("W3D_FIXED_TAU_S", fixed_tau_s_) &&
+            env_float("W3D_FIXED_SIGMA_A", fixed_sigma_a_) &&
+            env_float("W3D_FIXED_RS", fixed_RS_);
+        if (!fixed_tuning_ ||
+            !(std::isfinite(fixed_tau_s_) && fixed_tau_s_ > 0.0f &&
+              std::isfinite(fixed_sigma_a_) && fixed_sigma_a_ > 0.0f &&
+              std::isfinite(fixed_RS_) && fixed_RS_ > 0.0f))
+        {
+            throw std::runtime_error(
+                "fixed OU-III mode requires positive W3D_FIXED_TAU_S, "
+                "W3D_FIXED_SIGMA_A, and W3D_FIXED_RS");
+        }
+    }
+
     bool with_mag_ = true;
+    bool fixed_tuning_ = false;
+    bool fixed_tuning_applied_ = false;
+    float fixed_tau_s_ = NAN;
+    float fixed_sigma_a_ = NAN;
+    float fixed_RS_ = NAN;
     using Fusion = SeaStateFusion_OU_III<TrackerType::KALMANF>;
     mutable Fusion fusion_;
     Fusion::Config cfg_{};
@@ -284,7 +325,12 @@ static constexpr W3dSummaryLabels SUMMARY_LABELS{
     .applied = "RS_applied",
 };
 
-static void process_wave_file_for_tracker(const std::string& filename, float dt, bool with_mag)
+static void process_wave_file_for_tracker(const std::string& filename,
+                                          float dt,
+                                          bool with_mag,
+                                          const W3dRandomSeeds& seeds,
+                                          bool write_timeseries,
+                                          float validation_window_sec)
 {
     constexpr float MAG_ODR_HZ = 25.0f;
 
@@ -295,10 +341,15 @@ static void process_wave_file_for_tracker(const std::string& filename, float dt,
         add_noise,
         MAG_ODR_HZ,
         "_fusion_ou3",
-        "_fusion_ou3_nomag");
+        "_fusion_ou3_nomag",
+        seeds,
+        write_timeseries);
 
     if (!result) return;
 
+    if (validation_window_sec > 0.0f) {
+        print_validation_metrics(*result, dt, validation_window_sec, "OU_III");
+    }
     print_summary_and_fail_if_needed(*result, dt, FAIL_LIMITS, SUMMARY_LABELS);
 }
 
@@ -306,6 +357,7 @@ int main(int argc, char* argv[]) {
     const float dt = 1.0f / 200.0f;
     bool with_mag = true;
     add_noise = true;
+    std::vector<std::string> requested_files;
 
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
@@ -314,18 +366,61 @@ int main(int argc, char* argv[]) {
             with_mag = false;
         } else if (arg == "--no-noise") {
             add_noise = false;
+        } else if (arg == "--input") {
+            if (++i >= argc) {
+                std::cerr << "ERROR: --input requires a CSV path\n";
+                return 2;
+            }
+            requested_files.emplace_back(argv[i]);
+        } else if (arg == "--help") {
+            std::cout << "Usage: " << argv[0]
+                      << " [--nomag] [--no-noise] [--input PATH]...\n";
+            return 0;
+        } else {
+            std::cerr << "ERROR: unknown argument: " << arg << "\n";
+            return 2;
         }
     }
+
+    W3dRandomSeeds seeds;
+    try {
+        seeds = w3d_random_seeds_from_env();
+    } catch (const std::exception& e) {
+        std::cerr << "ERROR: " << e.what() << "\n";
+        return 2;
+    }
+
+    bool write_timeseries = true;
+    if (const char* value = std::getenv("W3D_WRITE_TIMESERIES")) {
+        write_timeseries = std::string(value) != "0";
+    }
+    float validation_window_sec = 0.0f;
+    env_float("W3D_VALIDATION_WINDOW_SEC", validation_window_sec);
 
     std::cout << "Simulation starting with_mag=" << (with_mag ? "true" : "false")
               << ", mag_delay=" << MAG_DELAY_SEC
               << " sec, noise=" << (add_noise ? "true" : "false")
               << "\n";
+    std::cout << "RANDOM_SEEDS accel_noise=" << seeds.accel_noise
+              << " gyro_noise=" << seeds.gyro_noise
+              << " mag_noise=" << seeds.mag_noise
+              << " accel_initialization=" << seeds.accel_initialization
+              << " gyro_initialization=" << seeds.gyro_initialization
+              << " mag_initialization=" << seeds.mag_initialization << "\n";
 
-    const auto files = collect_wave_data_files(".");
+    const auto files = requested_files.empty()
+        ? collect_wave_data_files(".")
+        : requested_files;
 
-    for (const auto& fname : files) {
-        process_wave_file_for_tracker(fname, dt, with_mag);
+    try {
+        for (const auto& fname : files) {
+            process_wave_file_for_tracker(
+                fname, dt, with_mag, seeds, write_timeseries,
+                validation_window_sec);
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "ERROR: " << e.what() << "\n";
+        return 2;
     }
 
     if (std::getenv("W3D_COLLECT_ALL_GATES") && w3d_any_quality_gate_failed()) {

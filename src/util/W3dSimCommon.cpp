@@ -9,10 +9,13 @@ extern const float g_std = 9.80665f;
 
 #include "util/W3dSimCommon.h"
 
+#include <cerrno>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <numbers>
+#include <stdexcept>
 
 static bool g_w3d_any_gate_failed = false;
 
@@ -31,6 +34,32 @@ ImuNoiseModel make_imu_noise_model(float sigma_white,
 
     std::uniform_real_distribution<float> ub(-bias_half_range, bias_half_range);
     m.bias0 = Vector3f(ub(m.rng), ub(m.rng), ub(m.rng));
+    return m;
+}
+
+ImuNoiseModel make_imu_noise_model(float sigma_white,
+                                   float bias_half_range,
+                                   float sigma_bias_rw,
+                                   unsigned noise_seed,
+                                   unsigned initialization_seed)
+{
+    // Preserve the original draw order for the historical single-seed path.
+    if (noise_seed == initialization_seed) {
+        return make_imu_noise_model(
+            sigma_white, bias_half_range, sigma_bias_rw, noise_seed);
+    }
+
+    ImuNoiseModel m;
+    m.rng = std::mt19937(noise_seed);
+    m.w = std::normal_distribution<float>(0.0f, sigma_white);
+    m.n01 = std::normal_distribution<float>(0.0f, 1.0f);
+    m.bias_rw.setZero();
+    m.sigma_bias_rw = sigma_bias_rw;
+
+    std::mt19937 initialization_rng(initialization_seed);
+    std::uniform_real_distribution<float> ub(-bias_half_range, bias_half_range);
+    m.bias0 = Vector3f(
+        ub(initialization_rng), ub(initialization_rng), ub(initialization_rng));
     return m;
 }
 
@@ -109,6 +138,161 @@ MagNoiseModel make_mag_noise_model(float sigma_white_uT,
     Eigen::Matrix3f R = Rz(rz) * Ry(ry) * Rx(rx);
     m.Mis = R * A;
     return m;
+}
+
+MagNoiseModel make_mag_noise_model(float sigma_white_uT,
+                                   float bias_residual_range_uT,
+                                   float sigma_bias_rw_uT_sqrt_s,
+                                   float scale_err_max,
+                                   float cross_axis_max,
+                                   float misalign_deg_max,
+                                   unsigned noise_seed,
+                                   unsigned initialization_seed)
+{
+    // Preserve the original draw order for the historical single-seed path.
+    if (noise_seed == initialization_seed) {
+        return make_mag_noise_model(
+            sigma_white_uT,
+            bias_residual_range_uT,
+            sigma_bias_rw_uT_sqrt_s,
+            scale_err_max,
+            cross_axis_max,
+            misalign_deg_max,
+            noise_seed);
+    }
+
+    MagNoiseModel m;
+    m.rng = std::mt19937(noise_seed);
+    m.w_uT = std::normal_distribution<float>(0.0f, sigma_white_uT);
+    m.n01 = std::normal_distribution<float>(0.0f, 1.0f);
+    m.bias_rw_uT.setZero();
+    m.sigma_bias_rw_uT_sqrt_s = sigma_bias_rw_uT_sqrt_s;
+
+    std::mt19937 initialization_rng(initialization_seed);
+    std::uniform_real_distribution<float> ub(
+        -bias_residual_range_uT, bias_residual_range_uT);
+    m.bias0_uT = Vector3f(
+        ub(initialization_rng), ub(initialization_rng), ub(initialization_rng));
+
+    std::uniform_real_distribution<float> us(
+        1.0f - scale_err_max, 1.0f + scale_err_max);
+    std::uniform_real_distribution<float> uc(-cross_axis_max, cross_axis_max);
+
+    Eigen::Matrix3f A = Eigen::Matrix3f::Identity();
+    A(0, 0) = us(initialization_rng);
+    A(1, 1) = us(initialization_rng);
+    A(2, 2) = us(initialization_rng);
+
+    const float a01 = uc(initialization_rng);
+    const float a02 = uc(initialization_rng);
+    const float a12 = uc(initialization_rng);
+    A(0, 1) = A(1, 0) = a01;
+    A(0, 2) = A(2, 0) = a02;
+    A(1, 2) = A(2, 1) = a12;
+
+    auto deg2rad = [](float d) {
+        return d * float(std::numbers::pi_v<float> / 180.0);
+    };
+    std::uniform_real_distribution<float> ua(
+        -misalign_deg_max, misalign_deg_max);
+    const float rx = deg2rad(ua(initialization_rng));
+    const float ry = deg2rad(ua(initialization_rng));
+    const float rz = deg2rad(ua(initialization_rng));
+
+    auto Rx = [](float a) {
+        Eigen::Matrix3f R;
+        const float c = std::cos(a), s = std::sin(a);
+        R << 1, 0, 0,
+             0, c, -s,
+             0, s, c;
+        return R;
+    };
+    auto Ry = [](float a) {
+        Eigen::Matrix3f R;
+        const float c = std::cos(a), s = std::sin(a);
+        R << c, 0, s,
+             0, 1, 0,
+            -s, 0, c;
+        return R;
+    };
+    auto Rz = [](float a) {
+        Eigen::Matrix3f R;
+        const float c = std::cos(a), s = std::sin(a);
+        R << c, -s, 0,
+             s, c, 0,
+             0, 0, 1;
+        return R;
+    };
+
+    m.Mis = Rz(rz) * Ry(ry) * Rx(rx) * A;
+    return m;
+}
+
+unsigned w3d_expand_seed(unsigned base_seed, unsigned stream_id)
+{
+    // SplitMix32 finalizer. Stream IDs make the expanded streams independent
+    // while keeping the mapping stable across platforms and runs.
+    std::uint32_t z = static_cast<std::uint32_t>(base_seed) +
+        0x9e3779b9u * (static_cast<std::uint32_t>(stream_id) + 1u);
+    z = (z ^ (z >> 16u)) * 0x85ebca6bu;
+    z = (z ^ (z >> 13u)) * 0xc2b2ae35u;
+    z ^= z >> 16u;
+    return static_cast<unsigned>(z);
+}
+
+namespace {
+
+std::optional<unsigned> w3d_seed_from_env(const char* name)
+{
+    const char* text = std::getenv(name);
+    if (!text) return std::nullopt;
+    if (*text == '\0' || *text == '-') {
+        throw std::invalid_argument(std::string(name) + " must be an unsigned integer");
+    }
+
+    errno = 0;
+    char* end = nullptr;
+    const unsigned long value = std::strtoul(text, &end, 10);
+    if (errno == ERANGE || end == text || *end != '\0' ||
+        value > std::numeric_limits<unsigned>::max())
+    {
+        throw std::invalid_argument(std::string(name) + " must be an unsigned integer");
+    }
+    return static_cast<unsigned>(value);
+}
+
+} // namespace
+
+W3dRandomSeeds w3d_random_seeds_from_env()
+{
+    W3dRandomSeeds seeds;
+    const auto combined = w3d_seed_from_env("W3D_SEED");
+    const auto imu = w3d_seed_from_env("W3D_IMU_SEED");
+    const auto initialization = w3d_seed_from_env("W3D_INIT_SEED");
+
+    if (!combined && !imu && !initialization) {
+        return seeds;
+    }
+
+    if (combined) {
+        seeds.accel_noise = w3d_expand_seed(*combined, 0u);
+        seeds.gyro_noise = w3d_expand_seed(*combined, 1u);
+        seeds.mag_noise = w3d_expand_seed(*combined, 2u);
+        seeds.accel_initialization = w3d_expand_seed(*combined, 3u);
+        seeds.gyro_initialization = w3d_expand_seed(*combined, 4u);
+        seeds.mag_initialization = w3d_expand_seed(*combined, 5u);
+    }
+    if (imu) {
+        seeds.accel_noise = w3d_expand_seed(*imu, 0u);
+        seeds.gyro_noise = w3d_expand_seed(*imu, 1u);
+        seeds.mag_noise = w3d_expand_seed(*imu, 2u);
+    }
+    if (initialization) {
+        seeds.accel_initialization = w3d_expand_seed(*initialization, 3u);
+        seeds.gyro_initialization = w3d_expand_seed(*initialization, 4u);
+        seeds.mag_initialization = w3d_expand_seed(*initialization, 5u);
+    }
+    return seeds;
 }
 
 Vector3f apply_mag_noise(const Vector3f& ideal_mag_uT_body, MagNoiseModel& m, float dt_mag)
@@ -261,8 +445,10 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
               << EnumTraits<WaveType>::to_string(type)
               << ")\n";
 
-    std::ofstream ofs(result.output_name);
-    ofs << "time,roll_ref,pitch_ref,yaw_ref,"
+    std::ofstream ofs;
+    if (options_.write_timeseries) {
+        ofs.open(result.output_name);
+        ofs << "time,roll_ref,pitch_ref,yaw_ref,"
         << "disp_ref_x,disp_ref_y,disp_ref_z,"
         << "vel_ref_x,vel_ref_y,vel_ref_z,"
         << "acc_ref_x,acc_ref_y,acc_ref_z,"
@@ -285,7 +471,8 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         << "dir_sense_coherence,dir_uncert_deg,dir_conf,dir_amp,"
         << "dir_sign,dir_sign_num,"
         << "dir_vec_x,dir_vec_y,"
-        << "dfilt_ax,dfilt_ay\n";
+            << "dfilt_ax,dfilt_ay\n";
+    }
 
     const Vector3f mag_world_zu = MagSim_WMM::mag_world_nautical();
 
@@ -442,38 +629,40 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         result.dir_amp_hist.push_back(snap.direction.amplitude);
         result.dir_sign_num_hist.push_back(snap.direction.sign_num);
 
-        ofs << rec.time << ","
-            << r_ref_out << "," << p_ref_out << "," << y_ref_out << ","
-            << disp_ref.x() << "," << disp_ref.y() << "," << disp_ref.z() << ","
-            << vel_ref.x() << "," << vel_ref.y() << "," << vel_ref.z() << ","
-            << acc_ref.x() << "," << acc_ref.y() << "," << acc_ref.z() << ","
-            << snap.euler_nautical_deg.x() << "," << snap.euler_nautical_deg.y() << "," << snap.euler_nautical_deg.z() << ","
-            << snap.disp_est_zu.x() << "," << snap.disp_est_zu.y() << "," << snap.disp_est_zu.z() << ","
-            << snap.vel_est_zu.x() << "," << snap.vel_est_zu.y() << "," << snap.vel_est_zu.z() << ","
-            << snap.acc_est_zu.x() << "," << snap.acc_est_zu.y() << "," << snap.acc_est_zu.z() << ","
-            << acc_bias_true_ned.x() << "," << acc_bias_true_ned.y() << "," << acc_bias_true_ned.z() << ","
-            << gyro_bias_true_ned.x() << "," << gyro_bias_true_ned.y() << "," << gyro_bias_true_ned.z() << ","
-            << snap.acc_bias_est_ned.x() << "," << snap.acc_bias_est_ned.y() << "," << snap.acc_bias_est_ned.z() << ","
-            << snap.gyro_bias_est_ned.x() << "," << snap.gyro_bias_est_ned.y() << "," << snap.gyro_bias_est_ned.z() << ","
-            << mag_bias_true_ned.x() << "," << mag_bias_true_ned.y() << "," << mag_bias_true_ned.z() << ","
-            << snap.mag_bias_est_ned_uT.x() << "," << snap.mag_bias_est_ned_uT.y() << "," << snap.mag_bias_est_ned_uT.z() << ","
-            << mag_bias_err.x() << "," << mag_bias_err.y() << "," << mag_bias_err.z() << ","
-            << snap.tau_applied << ","
-            << snap.sigma_applied << ","
-            << snap.tuning_applied << ","
-            << snap.freq_hz << ","
-            << snap.period_sec << ","
-            << snap.accel_variance << ","
-            << snap.displacement_scale_m << ","
-            << snap.velocity_scale_mps << ","
-            << snap.direction.phase << "," << snap.direction.direction_deg << ","
-            << snap.direction.apparent_to_deg << "," << snap.direction.apparent_from_deg << ","
-            << snap.direction.sense_coherence << "," << snap.direction.uncertainty_deg << ","
-            << snap.direction.confidence << "," << snap.direction.amplitude << ","
-            << (snap.direction.sign == FORWARD ? "POSITIVE_AXIS" : snap.direction.sign == BACKWARD ? "NEGATIVE_AXIS" : "UNCERTAIN") << ","
-            << snap.direction.sign_num << ","
-            << snap.direction.direction_vec.x() << "," << snap.direction.direction_vec.y() << ","
-            << snap.direction.filtered_signal.x() << "," << snap.direction.filtered_signal.y() << "\n";
+        if (options_.write_timeseries) {
+            ofs << rec.time << ","
+                << r_ref_out << "," << p_ref_out << "," << y_ref_out << ","
+                << disp_ref.x() << "," << disp_ref.y() << "," << disp_ref.z() << ","
+                << vel_ref.x() << "," << vel_ref.y() << "," << vel_ref.z() << ","
+                << acc_ref.x() << "," << acc_ref.y() << "," << acc_ref.z() << ","
+                << snap.euler_nautical_deg.x() << "," << snap.euler_nautical_deg.y() << "," << snap.euler_nautical_deg.z() << ","
+                << snap.disp_est_zu.x() << "," << snap.disp_est_zu.y() << "," << snap.disp_est_zu.z() << ","
+                << snap.vel_est_zu.x() << "," << snap.vel_est_zu.y() << "," << snap.vel_est_zu.z() << ","
+                << snap.acc_est_zu.x() << "," << snap.acc_est_zu.y() << "," << snap.acc_est_zu.z() << ","
+                << acc_bias_true_ned.x() << "," << acc_bias_true_ned.y() << "," << acc_bias_true_ned.z() << ","
+                << gyro_bias_true_ned.x() << "," << gyro_bias_true_ned.y() << "," << gyro_bias_true_ned.z() << ","
+                << snap.acc_bias_est_ned.x() << "," << snap.acc_bias_est_ned.y() << "," << snap.acc_bias_est_ned.z() << ","
+                << snap.gyro_bias_est_ned.x() << "," << snap.gyro_bias_est_ned.y() << "," << snap.gyro_bias_est_ned.z() << ","
+                << mag_bias_true_ned.x() << "," << mag_bias_true_ned.y() << "," << mag_bias_true_ned.z() << ","
+                << snap.mag_bias_est_ned_uT.x() << "," << snap.mag_bias_est_ned_uT.y() << "," << snap.mag_bias_est_ned_uT.z() << ","
+                << mag_bias_err.x() << "," << mag_bias_err.y() << "," << mag_bias_err.z() << ","
+                << snap.tau_applied << ","
+                << snap.sigma_applied << ","
+                << snap.tuning_applied << ","
+                << snap.freq_hz << ","
+                << snap.period_sec << ","
+                << snap.accel_variance << ","
+                << snap.displacement_scale_m << ","
+                << snap.velocity_scale_mps << ","
+                << snap.direction.phase << "," << snap.direction.direction_deg << ","
+                << snap.direction.apparent_to_deg << "," << snap.direction.apparent_from_deg << ","
+                << snap.direction.sense_coherence << "," << snap.direction.uncertainty_deg << ","
+                << snap.direction.confidence << "," << snap.direction.amplitude << ","
+                << (snap.direction.sign == FORWARD ? "POSITIVE_AXIS" : snap.direction.sign == BACKWARD ? "NEGATIVE_AXIS" : "UNCERTAIN") << ","
+                << snap.direction.sign_num << ","
+                << snap.direction.direction_vec.x() << "," << snap.direction.direction_vec.y() << ","
+                << snap.direction.filtered_signal.x() << "," << snap.direction.filtered_signal.y() << "\n";
+        }
 
         result.final_tau_target = snap.tau_target;
         result.final_sigma_target = snap.sigma_target;
@@ -486,8 +675,10 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         result.final_accel_variance = snap.accel_variance;
     });
 
-    ofs.close();
-    std::cout << "Wrote " << result.output_name << "\n";
+    if (options_.write_timeseries) {
+        ofs.close();
+        std::cout << "Wrote " << result.output_name << "\n";
+    }
     return result;
 }
 
@@ -752,6 +943,91 @@ std::vector<std::string> collect_wave_data_files(const std::filesystem::path& di
     }
     std::sort(files.begin(), files.end());
     return files;
+}
+
+void print_validation_metrics(const W3dSimulationRunResult& result,
+                              float dt,
+                              float window_seconds,
+                              const char* family)
+{
+    if (!(dt > 0.0f) || !(window_seconds > 0.0f) || result.errs_z.empty()) return;
+
+    const size_t requested = static_cast<size_t>(window_seconds / dt);
+    const size_t count = std::min(result.errs_z.size(), std::max<size_t>(requested, 1u));
+    const size_t start = result.errs_z.size() - count;
+
+    RMSReport x, y, z, roll, pitch, yaw;
+    RMSReport acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z;
+    float ref_max_3d = 0.0f;
+    for (size_t i = start; i < result.errs_z.size(); ++i) {
+        x.add(result.errs_x[i]);
+        y.add(result.errs_y[i]);
+        z.add(result.errs_z[i]);
+        roll.add(result.errs_roll[i]);
+        pitch.add(result.errs_pitch[i]);
+        yaw.add(result.errs_yaw[i]);
+        acc_x.add(result.accb_err_x[i]);
+        acc_y.add(result.accb_err_y[i]);
+        acc_z.add(result.accb_err_z[i]);
+        gyro_x.add(result.gyrb_err_x[i]);
+        gyro_y.add(result.gyrb_err_y[i]);
+        gyro_z.add(result.gyrb_err_z[i]);
+        const float rx = result.ref_x[i];
+        const float ry = result.ref_y[i];
+        const float rz = result.ref_z[i];
+        ref_max_3d = std::max(ref_max_3d, std::sqrt(rx * rx + ry * ry + rz * rz));
+    }
+
+    const float x_rms = x.rms();
+    const float y_rms = y.rms();
+    const float z_rms = z.rms();
+    const float disp_3d = std::sqrt(
+        x_rms * x_rms + y_rms * y_rms + z_rms * z_rms);
+    const float acc_3d = std::sqrt(
+        acc_x.rms() * acc_x.rms() +
+        acc_y.rms() * acc_y.rms() +
+        acc_z.rms() * acc_z.rms());
+    const float gyro_3d = std::sqrt(
+        gyro_x.rms() * gyro_x.rms() +
+        gyro_y.rms() * gyro_y.rms() +
+        gyro_z.rms() * gyro_z.rms());
+    const float hs = result.wave_params.height;
+    const float pct_hs = (hs > 0.0f) ? 100.0f / hs : NAN;
+    const float disp_3d_pct_refmax = (ref_max_3d > 1e-12f)
+        ? 100.0f * disp_3d / ref_max_3d
+        : NAN;
+    const char* mode = std::getenv("W3D_TUNING_MODE");
+    if (!mode || *mode == '\0') mode = "adaptive";
+
+    const auto old_precision = std::cout.precision();
+    std::cout << std::setprecision(9)
+              << "VALIDATION_METRICS"
+              << " family=" << family
+              << " tuning_mode=" << mode
+              << " input=" << std::filesystem::path(result.input_name).filename().string()
+              << " window_s=" << (static_cast<float>(count) * dt)
+              << " samples=" << count
+              << " disp_x_rms_m=" << x_rms
+              << " disp_y_rms_m=" << y_rms
+              << " disp_z_rms_m=" << z_rms
+              << " disp_3d_rms_m=" << disp_3d
+              << " disp_x_pct_hs=" << x_rms * pct_hs
+              << " disp_y_pct_hs=" << y_rms * pct_hs
+              << " disp_z_pct_hs=" << z_rms * pct_hs
+              << " disp_3d_pct_refmax=" << disp_3d_pct_refmax
+              << " roll_rms_deg=" << roll.rms()
+              << " pitch_rms_deg=" << pitch.rms()
+              << " yaw_rms_deg=" << yaw.rms()
+              << " accel_bias_3d_rms_mps2=" << acc_3d
+              << " gyro_bias_3d_rms_radps=" << gyro_3d
+              << " tau_applied_s=" << result.final_tau_applied
+              << " sigma_applied_mps2=" << result.final_sigma_applied
+              << " tuning_applied=" << result.final_tuning_applied
+              << " frequency_hz=" << result.final_freq_hz
+              << " period_s=" << result.final_period_sec
+              << " accel_variance_m2ps4=" << result.final_accel_variance
+              << "\n";
+    std::cout.precision(old_precision);
 }
 
 void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,

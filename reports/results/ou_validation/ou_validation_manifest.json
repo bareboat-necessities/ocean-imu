@@ -1,0 +1,249 @@
+{
+  "command": [
+    "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+    "tools/ou_validation.py",
+    "--mode",
+    "full",
+    "--bootstrap-resamples",
+    "10000",
+    "--eigen-dir",
+    "/tmp/ocean-imu-deps/eigen",
+    "--output-dir",
+    "reports/results/ou_validation"
+  ],
+  "fixed_tuning_points": {
+    "OU_II": {
+      "nonstationary_endpoint_H4_0_Tp11_4": {
+        "RS_ms": null,
+        "R_p0_std_m": 6.250008340709691,
+        "R_v0_std_mps": 2.707753686150092,
+        "sigma_a_mps2": 0.957638562,
+        "tau_s": 2.01966572
+      },
+      "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 0.9488259155473496,
+        "R_v0_std_mps": 0.7080051794544817,
+        "sigma_a_mps2": 0.431270987,
+        "tau_s": 1.17262232
+      },
+      "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 5.512329399010594,
+        "R_v0_std_mps": 2.835350997849453,
+        "sigma_a_mps2": 1.19053566,
+        "tau_s": 1.70112562
+      },
+      "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 15.512894076329253,
+        "R_v0_std_mps": 5.413272740391517,
+        "sigma_a_mps2": 1.54202318,
+        "tau_s": 2.50750017
+      },
+      "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 18.0,
+        "R_v0_std_mps": 6.0,
+        "sigma_a_mps2": 2.15453649,
+        "tau_s": 2.4872942
+      }
+    },
+    "OU_III": {
+      "nonstationary_endpoint_H4_0_Tp11_4": {
+        "RS_ms": 7.975814850331822,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 1.01619637,
+        "tau_s": 1.87013113
+      },
+      "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
+        "RS_ms": 0.6939293119644531,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.458200663,
+        "tau_s": 1.08066916
+      },
+      "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
+        "RS_ms": 5.814890311263675,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 1.26339269,
+        "tau_s": 1.56533504
+      },
+      "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
+        "RS_ms": 25.443821183743303,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 1.63471925,
+        "tau_s": 2.34955692
+      },
+      "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
+        "RS_ms": 34.6574189679142,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 2.2832818,
+        "tau_s": 2.32997799
+      }
+    }
+  },
+  "git_branch": "feature/validation-montecarlo-and-adaptation",
+  "git_commit": "d8aa4e020c4ddc92dc93c96948dd65ad3820ea22",
+  "git_tree": "a05b41ad58afd67057ceaa3bcb01719be90ef218",
+  "git_diff_stat": "",
+  "numpy": "2.3.5",
+  "platform": "Linux-6.12.13-x86_64-with-glibc2.39",
+  "protocol": {
+    "adaptation_modes": [
+      "Adaptive",
+      "FixedNominal",
+      "FixedOracle"
+    ],
+    "bootstrap_resamples": 10000,
+    "duration_sec": 1200.0,
+    "fixed_nominal_definition": "noise-free full-trace operating point from Hs=1.5 m, L=50.710 m",
+    "fixed_oracle_definition": "noise-free full-trace operating point for the stationary sea; known final Hs=4.0 m/Tp=11.4 s point for the transition",
+    "historical_gate_window_sec": 60.0,
+    "mode": "full",
+    "pairing": "identical wave, IMU-noise, and initialization seeds",
+    "score_window_sec": 900.0,
+    "seed_triplets": [
+      {
+        "imu_noise_seed": 101,
+        "initialization_seed": 1009,
+        "wave_phase_seed": 11
+      },
+      {
+        "imu_noise_seed": 211,
+        "initialization_seed": 1103,
+        "wave_phase_seed": 29
+      },
+      {
+        "imu_noise_seed": 307,
+        "initialization_seed": 1201,
+        "wave_phase_seed": 47
+      },
+      {
+        "imu_noise_seed": 401,
+        "initialization_seed": 1301,
+        "wave_phase_seed": 71
+      },
+      {
+        "imu_noise_seed": 503,
+        "initialization_seed": 1409,
+        "wave_phase_seed": 97
+      },
+      {
+        "imu_noise_seed": 601,
+        "initialization_seed": 1511,
+        "wave_phase_seed": 131
+      },
+      {
+        "imu_noise_seed": 701,
+        "initialization_seed": 1601,
+        "wave_phase_seed": 173
+      },
+      {
+        "imu_noise_seed": 809,
+        "initialization_seed": 1709,
+        "wave_phase_seed": 211
+      },
+      {
+        "imu_noise_seed": 907,
+        "initialization_seed": 1801,
+        "wave_phase_seed": 257
+      },
+      {
+        "imu_noise_seed": 1009,
+        "initialization_seed": 1901,
+        "wave_phase_seed": 307
+      }
+    ],
+    "stats_seed": 20260317,
+    "transition_end_sec": 780.0,
+    "transition_start_sec": 420.0,
+    "wave_phase_method": "common random Fourier phase across world motion and Euler channels; body IMU and quaternion reconstructed"
+  },
+  "python": "3.12.13 (main, Mar  3 2026, 14:59:34) [Clang 21.1.4 ]",
+  "result_files": {
+    "ou_validation.json": {
+      "bytes": 710531,
+      "sha256": "a1589d84bcd6d14e13059fb5f1127cf4d36cbe9387cf897a03cbe3ff593ae456"
+    },
+    "ou_validation_attitude.svg": {
+      "bytes": 64811,
+      "sha256": "9fdace54e2042b95f89e735597fd7f088502af67851d8b5598b222274aa3cdfa"
+    },
+    "ou_validation_displacement.svg": {
+      "bytes": 66594,
+      "sha256": "6dd0921ad7b76ab0284fc0a21b5dde149f1d5c4e5a00af5fd555b58045e20101"
+    },
+    "ou_validation_paired_effects.csv": {
+      "bytes": 79015,
+      "sha256": "d568f83b64ec7d287a418a6eb6ff03fb8a2fdd280aadb77c234c3a5c7a8c8b84"
+    },
+    "ou_validation_publication.tex": {
+      "bytes": 3328,
+      "sha256": "792750da5803b11978c39c93795031fb85af8c5eba050d3afb03c562511c7a05"
+    },
+    "ou_validation_raw.csv": {
+      "bytes": 121409,
+      "sha256": "09ef7ea8f1c168d4dbf51c523a100143222278f7adfbf8a3c636d2d42b542e87"
+    },
+    "ou_validation_summary.csv": {
+      "bytes": 75436,
+      "sha256": "3bb2df8f52eef6f7d9d38223b754503fd6cc1899544009f993cef0c9ab6aec97"
+    },
+    "ou_validation_table.tex": {
+      "bytes": 5575,
+      "sha256": "fdb7efebb8c50cb6e6da69bcc14a25686fc8b6e13fa32ba0d1cd39273df9d502"
+    },
+    "ou_validation_vertical.svg": {
+      "bytes": 66703,
+      "sha256": "dd13814d72370e3a6e2e59b20b59a59bf1d22138a64007becd22253af57d9d35"
+    }
+  },
+  "source_files": {
+    "plots/kalman_ou_ii/wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": {
+      "bytes": 52541812,
+      "sha256": "fa724aaea217b953cfcdde89b346d18218a970b79c277068ed3e7a8ef3f8981b"
+    },
+    "plots/kalman_ou_ii/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": {
+      "bytes": 50706074,
+      "sha256": "2fa6c06d80d61e76f00dea60cc5f4330007c4192536bee46c52e8fd639bc30ae"
+    },
+    "plots/kalman_ou_ii/wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": {
+      "bytes": 49837318,
+      "sha256": "5258a757b11c0aa5ce2fee37bb061031d4229025d3381ca4f524451deab7e18a"
+    },
+    "plots/kalman_ou_ii/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
+      "bytes": 49106162,
+      "sha256": "f0be2c41464e4a5a0924bab652549d38ffc6bec55406156b7b4a0ef72ce490d4"
+    }
+  },
+  "stationary_normalized_aggregate": {
+    "OU_II": {
+      "bootstrap_ci95_high": 9.12040956941875,
+      "bootstrap_ci95_low": 8.831093742975,
+      "mean": 8.975560260750001,
+      "n": 10,
+      "std": 0.24329005839456205
+    },
+    "OU_III": {
+      "bootstrap_ci95_high": 8.861303923218749,
+      "bootstrap_ci95_low": 8.588852116593749,
+      "mean": 8.727631002250002,
+      "n": 10,
+      "std": 0.23371135873914936
+    },
+    "OU_III_minus_OU_II": {
+      "bootstrap_ci95_high": -0.11594282036874973,
+      "bootstrap_ci95_low": -0.4074772309499996,
+      "cohen_dz": -0.984265741231597,
+      "hedges_gz": -0.8994957477631418,
+      "mean_paired_difference": -0.24792925849999978,
+      "n_pairs": 10,
+      "std_paired_difference": 0.2518926018798232
+    }
+  }
+}

@@ -44,3 +44,7 @@
 
 # Generated spectrum report fragments
 doc/spectrum/spectrum-sea_metrics.tex-part
+
+# Python bytecode (the completed full-study validation evidence is versioned)
+__pycache__/
+*.pyc

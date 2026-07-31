@@ -1,0 +1,278 @@
+import csv
+import hashlib
+import json
+import math
+import sys
+import unittest
+from collections import Counter
+from pathlib import Path
+
+import numpy as np
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+
+import ou_validation as validation  # noqa: E402
+
+
+class WaveSurrogateTests(unittest.TestCase):
+    def setUp(self):
+        self.columns = [
+            "time",
+            "disp_x", "disp_y", "disp_z",
+            "vel_x", "vel_y", "vel_z",
+            "acc_x", "acc_y", "acc_z",
+            "acc_bx", "acc_by", "acc_bz",
+            "gyro_x", "gyro_y", "gyro_z",
+            "roll_deg", "pitch_deg", "yaw_deg",
+            "q_wb_zu_w", "q_wb_zu_x", "q_wb_zu_y", "q_wb_zu_z",
+        ]
+        count = 4096
+        time = np.arange(count) * validation.DT_SECONDS
+        self.data = np.zeros((count, len(self.columns)), dtype=np.float64)
+        self.data[:, 0] = time
+        frequencies = (0.25, 0.45, 0.75)
+        for offset, name in enumerate(("disp_x", "disp_y", "disp_z")):
+            self.data[:, self.columns.index(name)] = np.sin(
+                2.0 * np.pi * frequencies[offset] * time + 0.2 * offset
+            )
+        for group, derivative in (("vel", 1.0), ("acc", 2.0)):
+            for offset, axis in enumerate("xyz"):
+                self.data[:, self.columns.index(f"{group}_{axis}")] = (
+                    derivative
+                    * np.cos(2.0 * np.pi * frequencies[offset] * time + 0.2 * offset)
+                )
+        self.data[:, self.columns.index("roll_deg")] = 3.0 * np.sin(0.7 * time)
+        self.data[:, self.columns.index("pitch_deg")] = 2.0 * np.cos(0.9 * time)
+        self.data[:, self.columns.index("yaw_deg")] = 5.0
+        self.data = validation.rebuild_body_imu(self.columns, self.data)
+
+    def test_common_phase_preserves_auto_and_cross_spectra(self):
+        randomized = validation.phase_randomize_wave(self.columns, self.data, seed=73)
+        names = (
+            "disp_x", "disp_y", "disp_z",
+            "vel_x", "vel_y", "vel_z",
+            "acc_x", "acc_y", "acc_z",
+            "roll_deg", "pitch_deg", "yaw_deg",
+        )
+        indices = validation._column_indices(self.columns, names)
+        original_fft = np.fft.rfft(self.data[:, indices], axis=0)
+        randomized_fft = np.fft.rfft(randomized[:, indices], axis=0)
+        np.testing.assert_allclose(
+            np.abs(randomized_fft), np.abs(original_fft), rtol=2e-11, atol=2e-9
+        )
+        np.testing.assert_allclose(
+            randomized_fft[:, 0] * np.conj(randomized_fft[:, 1]),
+            original_fft[:, 0] * np.conj(original_fft[:, 1]),
+            rtol=2e-11,
+            atol=2e-8,
+        )
+        quaternion_indices = validation._column_indices(
+            self.columns,
+            ("q_wb_zu_w", "q_wb_zu_x", "q_wb_zu_y", "q_wb_zu_z"),
+        )
+        norms = np.linalg.norm(randomized[:, quaternion_indices], axis=1)
+        np.testing.assert_allclose(norms, 1.0, atol=2e-12)
+
+    def test_phase_seed_changes_realization(self):
+        first = validation.phase_randomize_wave(self.columns, self.data, seed=1)
+        second = validation.phase_randomize_wave(self.columns, self.data, seed=2)
+        index = self.columns.index("disp_z")
+        self.assertGreater(np.max(np.abs(first[:, index] - second[:, index])), 0.1)
+
+    def test_smoothstep_has_exact_endpoints(self):
+        values = validation.smoothstep_weight(np.array([0.0, 2.0, 3.0, 4.0, 8.0]), 2.0, 4.0)
+        np.testing.assert_allclose(values, (0.0, 0.0, 0.5, 1.0, 1.0))
+
+
+class StatisticsTests(unittest.TestCase):
+    @staticmethod
+    def row(family, mode, repetition, value):
+        row = {
+            "scenario": "sea",
+            "family": family,
+            "mode": mode,
+            "repetition": repetition,
+            "wave_phase_seed": repetition,
+            "imu_noise_seed": 10 + repetition,
+            "initialization_seed": 20 + repetition,
+        }
+        row.update({metric: value for metric in validation.METRIC_NAMES})
+        return row
+
+    def test_seed_broadcasting_is_paired(self):
+        seeds = validation.broadcast_seed_triplets([1, 2], [10], [20, 21])
+        self.assertEqual(
+            seeds,
+            [
+                validation.SeedTriplet(1, 10, 20),
+                validation.SeedTriplet(2, 10, 21),
+            ],
+        )
+
+    def test_summary_and_paired_effect_use_all_repetitions(self):
+        rows = []
+        for repetition, ou2, ou3 in ((1, 3.0, 2.0), (2, 5.0, 3.0), (3, 7.0, 4.0)):
+            rows.append(self.row("OU_II", "Adaptive", repetition, ou2))
+            rows.append(self.row("OU_III", "Adaptive", repetition, ou3))
+        summary = validation.summarize_rows(rows, bootstrap_resamples=500, stats_seed=7)
+        selected = next(
+            row for row in summary
+            if row["family"] == "OU_II"
+            and row["mode"] == "Adaptive"
+            and row["metric"] == "disp_3d_rms_m"
+        )
+        self.assertEqual(selected["n"], 3)
+        self.assertAlmostEqual(selected["mean"], 5.0)
+        self.assertAlmostEqual(selected["std"], 2.0)
+
+        effects = validation.paired_effect_rows(rows, 500, 7)
+        selected_effect = next(
+            row for row in effects
+            if row["comparison"] == "OU_III_minus_OU_II"
+            and row["metric"] == "disp_3d_rms_m"
+        )
+        self.assertEqual(selected_effect["n_pairs"], 3)
+        self.assertAlmostEqual(selected_effect["mean_paired_difference"], -2.0)
+        self.assertTrue(math.isfinite(selected_effect["cohen_dz"]))
+        self.assertTrue(math.isfinite(selected_effect["hedges_gz"]))
+
+    def test_machine_readable_metric_parser(self):
+        parsed = validation.parse_validation_metrics(
+            "VALIDATION_METRICS family=OU_II tuning_mode=adaptive "
+            "input=wave.csv window_s=900 samples=180000 disp_z_rms_m=0.25"
+        )
+        self.assertEqual(parsed["family"], "OU_II")
+        self.assertEqual(parsed["samples"], 180000)
+        self.assertEqual(parsed["disp_z_rms_m"], 0.25)
+
+    def test_publication_labels_and_stationary_aggregate(self):
+        small = "stationary_jonswap_H0_270_L14_047_A30_00_P60_00"
+        large = "stationary_jonswap_H4_000_L112_766_A30_00_P30_00"
+        transition = "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4"
+        self.assertEqual(validation.scenario_display_label(small), "$H_s=0.27$ m")
+        self.assertEqual(validation.scenario_display_label(transition), "Transition")
+        self.assertLess(
+            validation.scenario_sort_key(small),
+            validation.scenario_sort_key(large),
+        )
+        self.assertLess(
+            validation.scenario_sort_key(large),
+            validation.scenario_sort_key(transition),
+        )
+
+        rows = []
+        for repetition in (1, 2, 3):
+            for family, offset in (("OU_II", 0.0), ("OU_III", -1.0)):
+                for scenario, value in (
+                    (small, 8.0 + repetition),
+                    (large, 10.0 + repetition),
+                ):
+                    row = self.row(family, "Adaptive", repetition, value)
+                    row["scenario"] = scenario
+                    row["disp_z_pct_hs"] = value + offset
+                    rows.append(row)
+
+        aggregate = validation.stationary_normalized_aggregate(rows, 500, 7)
+        self.assertEqual(aggregate["OU_III_minus_OU_II"]["n_pairs"], 3)
+        self.assertAlmostEqual(
+            aggregate["OU_III_minus_OU_II"]["mean_paired_difference"],
+            -1.0,
+        )
+
+
+class CommittedFullResultsTests(unittest.TestCase):
+    RESULTS = REPO_ROOT / "reports" / "results" / "ou_validation"
+
+    @staticmethod
+    def read_csv(path):
+        with path.open(newline="", encoding="utf-8") as stream:
+            return list(csv.DictReader(stream))
+
+    def test_full_result_bundle_is_complete_and_self_consistent(self):
+        manifest_path = self.RESULTS / "ou_validation_manifest.json"
+        with manifest_path.open(encoding="utf-8") as stream:
+            manifest = json.load(stream)
+        self.assertEqual(manifest["protocol"]["mode"], "full")
+        self.assertEqual(len(manifest["protocol"]["seed_triplets"]), 10)
+        self.assertEqual(manifest["protocol"]["score_window_sec"], 900.0)
+
+        raw = self.read_csv(self.RESULTS / "ou_validation_raw.csv")
+        summary = self.read_csv(self.RESULTS / "ou_validation_summary.csv")
+        effects = self.read_csv(
+            self.RESULTS / "ou_validation_paired_effects.csv"
+        )
+        self.assertEqual(len(raw), 300)
+        self.assertEqual(len(summary), 390)
+        self.assertEqual(len(effects), 325)
+        groups = Counter(
+            (row["scenario"], row["family"], row["mode"])
+            for row in raw
+        )
+        self.assertEqual(len(groups), 30)
+        self.assertEqual(set(groups.values()), {10})
+        self.assertEqual({int(row["n"]) for row in summary}, {10})
+        self.assertEqual({int(row["n_pairs"]) for row in effects}, {10})
+        self.assertTrue(
+            all(
+                int(row["simulator_return_code"])
+                == 1 - int(row["historical_60s_gate_pass"])
+                for row in raw
+            )
+        )
+
+        for name, metadata in manifest["result_files"].items():
+            path = self.RESULTS / name
+            self.assertTrue(path.is_file(), name)
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            self.assertEqual(digest, metadata["sha256"], name)
+            self.assertEqual(path.stat().st_size, metadata["bytes"], name)
+
+        self.assertEqual(
+            (self.RESULTS / "ou_validation_publication.tex").read_bytes(),
+            (
+                REPO_ROOT
+                / "doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part"
+            ).read_bytes(),
+        )
+        self.assertEqual(
+            (self.RESULTS / "ou_validation_vertical.svg").read_bytes(),
+            (
+                REPO_ROOT / "doc/kalman_ou_iii/ou_validation_vertical.svg"
+            ).read_bytes(),
+        )
+
+    def test_abstract_reports_committed_stationary_aggregate(self):
+        with (self.RESULTS / "ou_validation_manifest.json").open(
+            encoding="utf-8"
+        ) as stream:
+            aggregate = json.load(stream)["stationary_normalized_aggregate"]
+
+        manuscript = (
+            REPO_ROOT / "doc/kalman_ou_iii/kalman_ou-w3d.tex"
+        ).read_text(encoding="utf-8")
+        abstract = manuscript.split("\\begin{abstract}", 1)[1].split(
+            "\\end{abstract}", 1
+        )[0]
+        ou2 = aggregate["OU_II"]
+        ou3 = aggregate["OU_III"]
+        difference = aggregate["OU_III_minus_OU_II"]
+
+        self.assertIn(f"${ou3['mean']:.2f}\\pm{ou3['std']:.2f}\\%$", abstract)
+        self.assertIn(f"${ou2['mean']:.2f}\\pm{ou2['std']:.2f}\\%$", abstract)
+        self.assertIn(
+            f"${difference['mean_paired_difference']:.3f}$ percentage point",
+            abstract,
+        )
+        self.assertIn(
+            "$["
+            f"{difference['bootstrap_ci95_low']:.3f},"
+            f"{difference['bootstrap_ci95_high']:.3f}"
+            "]$",
+            abstract,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

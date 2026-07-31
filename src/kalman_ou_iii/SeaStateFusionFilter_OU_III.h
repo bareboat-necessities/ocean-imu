@@ -402,6 +402,39 @@ public:
         enable_tuner_ = flag;
     }
 
+    // Freeze the online tuner at an externally supplied operating point. This
+    // is primarily useful for controlled ablations (fixed-nominal and
+    // fixed-oracle) after the normal startup sequence has reached Live.
+    bool setFixedTuning(float tau_s, float sigma_a, float RS)
+    {
+        if (!(std::isfinite(tau_s) && tau_s > 0.0f &&
+              std::isfinite(sigma_a) && sigma_a > 0.0f &&
+              std::isfinite(RS) && RS > 0.0f))
+        {
+            return false;
+        }
+
+        enable_tuner_ = false;
+        tau_target_ = enable_clamp_
+            ? std::min(std::max(tau_s, min_tau_s_), max_tau_s_)
+            : tau_s;
+        sigma_target_ = enable_clamp_
+            ? std::min(sigma_a, max_sigma_a_)
+            : sigma_a;
+        RS_target_ = enable_clamp_
+            ? std::min(std::max(RS, min_R_S_), max_R_S_)
+            : RS;
+
+        tune_.tau_applied = tau_target_;
+        tune_.sigma_applied = sigma_target_;
+        tune_.RS_applied = RS_target_;
+        apply_ou_tune_();
+        if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            apply_RS_tune_();
+        }
+        return true;
+    }
+
     // Enable/disable use of the extended linear block [v,p,S,a_w] in Kalman3D_Wave_OU_III.
     void enableLinearBlock(bool flag = true) {
         enable_linear_block_ = flag;
