@@ -243,6 +243,36 @@ class CommittedFullResultsTests(unittest.TestCase):
             ).read_bytes(),
         )
 
+    def test_abstract_reports_committed_stationary_aggregate(self):
+        with (self.RESULTS / "ou_validation_manifest.json").open(
+            encoding="utf-8"
+        ) as stream:
+            aggregate = json.load(stream)["stationary_normalized_aggregate"]
+
+        manuscript = (
+            REPO_ROOT / "doc/kalman_ou_iii/kalman_ou-w3d.tex"
+        ).read_text(encoding="utf-8")
+        abstract = manuscript.split("\\begin{abstract}", 1)[1].split(
+            "\\end{abstract}", 1
+        )[0]
+        ou2 = aggregate["OU_II"]
+        ou3 = aggregate["OU_III"]
+        difference = aggregate["OU_III_minus_OU_II"]
+
+        self.assertIn(f"${ou3['mean']:.2f}\\pm{ou3['std']:.2f}\\%$", abstract)
+        self.assertIn(f"${ou2['mean']:.2f}\\pm{ou2['std']:.2f}\\%$", abstract)
+        self.assertIn(
+            f"${difference['mean_paired_difference']:.3f}$ percentage point",
+            abstract,
+        )
+        self.assertIn(
+            "$["
+            f"{difference['bootstrap_ci95_low']:.3f},"
+            f"{difference['bootstrap_ci95_high']:.3f}"
+            "]$",
+            abstract,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
