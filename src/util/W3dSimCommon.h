@@ -8,6 +8,7 @@
 #else
 
 #include <algorithm>
+#include <cstdint>
 #include <cmath>
 #include <numbers>
 #include <filesystem>
@@ -149,6 +150,12 @@ ImuNoiseModel make_imu_noise_model(float sigma_white,
                                    float sigma_bias_rw,
                                    unsigned seed);
 
+ImuNoiseModel make_imu_noise_model(float sigma_white,
+                                   float bias_half_range,
+                                   float sigma_bias_rw,
+                                   unsigned noise_seed,
+                                   unsigned initialization_seed);
+
 Vector3f apply_imu_noise(const Vector3f& truth, ImuNoiseModel& m, float dt);
 
 struct MagNoiseModel {
@@ -170,6 +177,15 @@ MagNoiseModel make_mag_noise_model(float sigma_white_uT,
                                    float cross_axis_max,
                                    float misalign_deg_max,
                                    unsigned seed);
+
+MagNoiseModel make_mag_noise_model(float sigma_white_uT,
+                                   float bias_residual_range_uT,
+                                   float sigma_bias_rw_uT_sqrt_s,
+                                   float scale_err_max,
+                                   float cross_axis_max,
+                                   float misalign_deg_max,
+                                   unsigned noise_seed,
+                                   unsigned initialization_seed);
 
 Vector3f apply_mag_noise(const Vector3f& ideal_mag_uT_body, MagNoiseModel& m, float dt_mag);
 
@@ -308,12 +324,28 @@ struct SimulationNoiseModels {
     std::vector<MagNoiseInjector> extra_mag_noise_models;
 };
 
+// Default values preserve the historical deterministic validation realization.
+// When W3D_SEED, W3D_IMU_SEED, or W3D_INIT_SEED is supplied, the simulator
+// expands the corresponding base seed into independent sensor streams.
+struct W3dRandomSeeds {
+    unsigned accel_noise = 1234u;
+    unsigned gyro_noise = 5678u;
+    unsigned mag_noise = 9012u;
+    unsigned accel_initialization = 1234u;
+    unsigned gyro_initialization = 5678u;
+    unsigned mag_initialization = 9012u;
+};
+
+unsigned w3d_expand_seed(unsigned base_seed, unsigned stream_id);
+W3dRandomSeeds w3d_random_seeds_from_env();
+
 struct W3dSimulationOptions {
     float dt = 0.005f;
     bool with_mag = true;
     bool add_noise = true;
     float mag_odr_hz = 25.0f;
     float temperature_c = 35.0f;
+    bool write_timeseries = true;
     std::string output_suffix_with_mag = "_fusion";
     std::string output_suffix_no_mag = "_fusion_nomag";
 };
@@ -412,6 +444,11 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
                                       const W3dFailureLimits& limits,
                                       const W3dSummaryLabels& labels = {});
 
+void print_validation_metrics(const W3dSimulationRunResult& result,
+                              float dt,
+                              float window_seconds,
+                              const char* family);
+
 std::vector<std::string> collect_wave_data_files(const std::filesystem::path& directory);
 bool w3d_any_quality_gate_failed();
 
@@ -422,7 +459,9 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
                                                                            bool add_noise,
                                                                            float mag_odr_hz,
                                                                            std::string output_suffix_with_mag = "_fusion",
-                                                                           std::string output_suffix_no_mag = "_fusion_nomag")
+                                                                           std::string output_suffix_no_mag = "_fusion_nomag",
+                                                                           W3dRandomSeeds seeds = {},
+                                                                           bool write_timeseries = true)
 {
     const float acc_sigma = 1.51e-3f * g_std;
     const float gyr_sigma = 0.00157f;
@@ -433,9 +472,15 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
     const float mag_sigma_uT = (mag_odr_hz <= 20.0f) ? 0.40f : 0.80f;
 
     SimulationNoiseModels noise_models;
-    noise_models.accel_noise = make_imu_noise_model(acc_sigma, acc_bias_range, acc_bias_rw, 1234);
-    noise_models.gyro_noise = make_imu_noise_model(gyr_sigma, gyr_bias_range, gyr_bias_rw, 5678);
-    noise_models.mag_noise = make_mag_noise_model(mag_sigma_uT, 2.0f, 0.01f, 0.015f, 0.010f, 1.0f, 9012);
+    noise_models.accel_noise = make_imu_noise_model(
+        acc_sigma, acc_bias_range, acc_bias_rw,
+        seeds.accel_noise, seeds.accel_initialization);
+    noise_models.gyro_noise = make_imu_noise_model(
+        gyr_sigma, gyr_bias_range, gyr_bias_rw,
+        seeds.gyro_noise, seeds.gyro_initialization);
+    noise_models.mag_noise = make_mag_noise_model(
+        mag_sigma_uT, 2.0f, 0.01f, 0.015f, 0.010f, 1.0f,
+        seeds.mag_noise, seeds.mag_initialization);
 
     const Vector3f sigma_a_init(2.8f * acc_sigma, 2.8f * acc_sigma, 2.8f * acc_sigma);
     const Vector3f sigma_g(2.0f * gyr_sigma, 2.0f * gyr_sigma, 2.0f * gyr_sigma);
@@ -449,6 +494,7 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
     options.add_noise = add_noise;
     options.mag_odr_hz = mag_odr_hz;
     options.temperature_c = 35.0f;
+    options.write_timeseries = write_timeseries;
     options.output_suffix_with_mag = std::move(output_suffix_with_mag);
     options.output_suffix_no_mag = std::move(output_suffix_no_mag);
 

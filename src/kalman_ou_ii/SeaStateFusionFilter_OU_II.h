@@ -414,6 +414,48 @@ public:
     void enableClamp(bool flag = true) { enable_clamp_ = flag; }
     void enableTuner(bool flag = true) { enable_tuner_ = flag; }
 
+    // Freeze the online tuner at an externally supplied operating point. This
+    // is primarily useful for controlled ablations (fixed-nominal and
+    // fixed-oracle) after the normal startup sequence has reached Live.
+    bool setFixedTuning(float tau_s,
+                        float sigma_a,
+                        float R_p0_std,
+                        float R_v0_std)
+    {
+        if (!(std::isfinite(tau_s) && tau_s > 0.0f &&
+              std::isfinite(sigma_a) && sigma_a > 0.0f &&
+              std::isfinite(R_p0_std) && R_p0_std > 0.0f &&
+              std::isfinite(R_v0_std) && R_v0_std > 0.0f))
+        {
+            return false;
+        }
+
+        enable_tuner_ = false;
+        tau_target_ = enable_clamp_
+            ? std::min(std::max(tau_s, min_tau_s_), max_tau_s_)
+            : tau_s;
+        sigma_target_ = enable_clamp_
+            ? std::min(sigma_a, max_sigma_a_)
+            : sigma_a;
+        R_p0_std_target_ = enable_clamp_
+            ? std::min(std::max(R_p0_std, MIN_R_p0_std_), MAX_R_p0_std_)
+            : R_p0_std;
+        R_v0_std_target_ = enable_clamp_
+            ? std::min(std::max(R_v0_std, MIN_R_v0_std_), MAX_R_v0_std_)
+            : R_v0_std;
+
+        tune_.tau_applied = tau_target_;
+        tune_.sigma_applied = sigma_target_;
+        tune_.R_p0_std_applied = R_p0_std_target_;
+        tune_.R_v0_std_applied = R_v0_std_target_;
+        apply_ou_tune_();
+        if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            apply_R_p0_tune_();
+            apply_R_v0_tune_();
+        }
+        return true;
+    }
+
     // Enable/disable use of the extended linear block [v,p,a_w] in Kalman3D_Wave_OU_II.
     void enableLinearBlock(bool flag = true) {
         enable_linear_block_ = flag;

@@ -44,3 +44,8 @@
 
 # Generated spectrum report fragments
 doc/spectrum/spectrum-sea_metrics.tex-part
+
+# Generated validation artifacts and Python bytecode
+/reports/results/ou_validation/
+__pycache__/
+*.pyc

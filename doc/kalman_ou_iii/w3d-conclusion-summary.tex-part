@@ -30,9 +30,12 @@ unconditional EKF convergence claim.
 The results support embedded feasibility and drift-controlled wave-state
 reconstruction for the tested conditions, but they do not by themselves imply
 universal performance across spectra, update cadences, vessel speeds, or sensor
-installations. Future work should therefore add Monte Carlo ensembles,
-additional baselines and component ablations, controlled sea-state transitions,
-and quantitative timing and external-reference measurements on hardware.
+installations. The accompanying validation infrastructure now adds paired
+Monte Carlo ensembles, fixed-tuning component ablations, and a controlled
+sea-state transition while retaining the historical deterministic regression
+gates. Future work should extend those ensembles to additional spectra and
+update cadences and add quantitative timing and external-reference measurements
+on hardware.
 Optional absolute-navigation fusion is kept separate in
 Appendix~\ref{sec:gps_fusion} so that the oscillatory displacement state
 $\vct{p}$ is not conflated with a local or global navigation position.
