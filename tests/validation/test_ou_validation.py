@@ -1,6 +1,10 @@
+import csv
+import hashlib
+import json
 import math
 import sys
 import unittest
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -142,6 +146,102 @@ class StatisticsTests(unittest.TestCase):
         self.assertEqual(parsed["family"], "OU_II")
         self.assertEqual(parsed["samples"], 180000)
         self.assertEqual(parsed["disp_z_rms_m"], 0.25)
+
+    def test_publication_labels_and_stationary_aggregate(self):
+        small = "stationary_jonswap_H0_270_L14_047_A30_00_P60_00"
+        large = "stationary_jonswap_H4_000_L112_766_A30_00_P30_00"
+        transition = "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4"
+        self.assertEqual(validation.scenario_display_label(small), "$H_s=0.27$ m")
+        self.assertEqual(validation.scenario_display_label(transition), "Transition")
+        self.assertLess(
+            validation.scenario_sort_key(small),
+            validation.scenario_sort_key(large),
+        )
+        self.assertLess(
+            validation.scenario_sort_key(large),
+            validation.scenario_sort_key(transition),
+        )
+
+        rows = []
+        for repetition in (1, 2, 3):
+            for family, offset in (("OU_II", 0.0), ("OU_III", -1.0)):
+                for scenario, value in (
+                    (small, 8.0 + repetition),
+                    (large, 10.0 + repetition),
+                ):
+                    row = self.row(family, "Adaptive", repetition, value)
+                    row["scenario"] = scenario
+                    row["disp_z_pct_hs"] = value + offset
+                    rows.append(row)
+
+        aggregate = validation.stationary_normalized_aggregate(rows, 500, 7)
+        self.assertEqual(aggregate["OU_III_minus_OU_II"]["n_pairs"], 3)
+        self.assertAlmostEqual(
+            aggregate["OU_III_minus_OU_II"]["mean_paired_difference"],
+            -1.0,
+        )
+
+
+class CommittedFullResultsTests(unittest.TestCase):
+    RESULTS = REPO_ROOT / "reports" / "results" / "ou_validation"
+
+    @staticmethod
+    def read_csv(path):
+        with path.open(newline="", encoding="utf-8") as stream:
+            return list(csv.DictReader(stream))
+
+    def test_full_result_bundle_is_complete_and_self_consistent(self):
+        manifest_path = self.RESULTS / "ou_validation_manifest.json"
+        with manifest_path.open(encoding="utf-8") as stream:
+            manifest = json.load(stream)
+        self.assertEqual(manifest["protocol"]["mode"], "full")
+        self.assertEqual(len(manifest["protocol"]["seed_triplets"]), 10)
+        self.assertEqual(manifest["protocol"]["score_window_sec"], 900.0)
+
+        raw = self.read_csv(self.RESULTS / "ou_validation_raw.csv")
+        summary = self.read_csv(self.RESULTS / "ou_validation_summary.csv")
+        effects = self.read_csv(
+            self.RESULTS / "ou_validation_paired_effects.csv"
+        )
+        self.assertEqual(len(raw), 300)
+        self.assertEqual(len(summary), 390)
+        self.assertEqual(len(effects), 325)
+        groups = Counter(
+            (row["scenario"], row["family"], row["mode"])
+            for row in raw
+        )
+        self.assertEqual(len(groups), 30)
+        self.assertEqual(set(groups.values()), {10})
+        self.assertEqual({int(row["n"]) for row in summary}, {10})
+        self.assertEqual({int(row["n_pairs"]) for row in effects}, {10})
+        self.assertTrue(
+            all(
+                int(row["simulator_return_code"])
+                == 1 - int(row["historical_60s_gate_pass"])
+                for row in raw
+            )
+        )
+
+        for name, metadata in manifest["result_files"].items():
+            path = self.RESULTS / name
+            self.assertTrue(path.is_file(), name)
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            self.assertEqual(digest, metadata["sha256"], name)
+            self.assertEqual(path.stat().st_size, metadata["bytes"], name)
+
+        self.assertEqual(
+            (self.RESULTS / "ou_validation_publication.tex").read_bytes(),
+            (
+                REPO_ROOT
+                / "doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part"
+            ).read_bytes(),
+        )
+        self.assertEqual(
+            (self.RESULTS / "ou_validation_vertical.svg").read_bytes(),
+            (
+                REPO_ROOT / "doc/kalman_ou_iii/ou_validation_vertical.svg"
+            ).read_bytes(),
+        )
 
 
 if __name__ == "__main__":

@@ -36,9 +36,9 @@ second-order translational chain. Its comparison with OU--III is therefore an
 internal ablation of the additional integral-displacement state and associated
 covariance structure rather than an independent external benchmark.
 
-All four methods are evaluated from the same timestamped synthetic reference
-records, inertial sample stream, sensor-error realizations, \SI{20}{min}
-duration, and final \SI{60}{s} scoring window. Raw vertical-displacement RMS
+The legacy deterministic comparison evaluates all four methods from the same
+timestamped synthetic reference records, inertial sample stream, sensor-error
+realizations, \SI{20}{min} duration, and final \SI{60}{s} scoring window. Raw vertical-displacement RMS
 error is the primary metric; normalized vertical error, roll RMS, and pitch RMS
 are secondary metrics. Direction, travel sense, horizontal displacement, and
 yaw are excluded from the common comparison because they are not observable
@@ -64,17 +64,11 @@ than complete navigation capability or the respective theoretical guarantees.
   \end{table}
 }
 
-Across the eight paired cases, OU--III attains the lowest mean normalized
+In that single-realization comparison, OU--III has the lowest mean normalized
 vertical-displacement RMS error: 6.6\% of $H_s$, compared with 8.2\% for
 OU--II, 12.3\% for the adaptive PII observer, and 15.0\% for the adapted
-TVG--NLO. OU--III gives the lowest error in seven cases; in the remaining
-smallest JONSWAP case, its 9.7\% result is within 0.1 percentage point of
-OU--II. The reduction from OU--II to OU--III is most visible in the moderate
-and large sea states, supporting the additional integral-displacement state as
-the principal source of the improved vertical reconstruction. By contrast,
-the mean roll and pitch errors of OU--II and OU--III differ by only
-\SI{0.01}{\degree} in each axis, so the measured benefit is primarily
-translational rather than an improvement in attitude estimation.
+TVG--NLO. These values establish a reproducible four-method reference but are
+not ensemble estimates and are not used to claim statistical superiority.
 
 \IfFileExists{w3d_multi_observer_jonswap_medium.pgf}{%
   \begin{figure}[!t]
@@ -90,7 +84,68 @@ translational rather than an improvement in attitude estimation.
 }
 
 The paired result records, generated tables, and comparison plots are produced
-by the automated evaluation. Consequently, the values in
+by the automated deterministic evaluation. Consequently, the values in
 Tables~\ref{tab:multi_observer_scenario_comparison}
 and~\ref{tab:multi_observer_aggregate_comparison} are calculated directly from
 the observer outputs rather than transcribed into the manuscript.
+
+\subsubsection{Ten-seed OU-family and adaptation study}
+
+\input{w3d-ou-validation-results-generated.tex-part}
+
+\IfFileExists{ou_validation_vertical.svg}{%
+  \begin{figure*}[t]
+    \centering
+    \includesvg[
+      width=0.92\textwidth,
+      inkscapelatex=false
+    ]{ou_validation_vertical}
+    \caption{Ten-seed vertical-displacement RMS means and bootstrap 95\%
+    intervals for the adaptive and fixed-tuning variants.  The transition is
+    scored over the same final \SI{900}{s} window as the stationary cases.}
+    \label{fig:ou_mc_vertical}
+  \end{figure*}
+}{}
+
+Across the four stationary JONSWAP seas, the mean normalized vertical error
+formed by first averaging the four seas within each seed triplet is
+$\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
+$H_s$ for OU--III and
+$\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
+OU--II.  The paired OU--III-minus-OU--II difference is
+$\OUValidationNormalizedDifference$ percentage point, with bootstrap 95\%
+interval
+$[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$,
+Cohen's $d_z=\OUValidationNormalizedDz$, and Hedges' corrected
+$g_z=\OUValidationNormalizedGz$ ($n=\OUValidationStationaryPairs$ paired
+seed-level aggregates).
+
+That aggregate does not imply uniform dominance.  Table~\ref{tab:ou_mc_family}
+shows resolved OU--III vertical improvements at $H_s=0.27$ and \SI{4.0}{m}, no
+resolved difference at \SI{1.5}{m}, and higher OU--III vertical error at
+\SI{8.5}{m} and during the transition.  Moreover, the paired 3D-displacement
+difference is positive in every row, with all five bootstrap intervals above
+zero.  The additional OU state therefore provides a modest aggregate vertical
+benefit for these stationary seas but cannot be described as uniformly better
+in either vertical or full three-dimensional reconstruction.  Roll and pitch
+effects likewise change sign or have intervals spanning zero in most cases.
+
+The adaptation ablation in Table~\ref{tab:ou_mc_adaptation} is also mixed.
+Relative to FixedNominal, Adaptive reduces normalized vertical error at both
+off-nominal extremes: by 13.330 and 0.748 percentage points for OU--II and by
+9.783 and 1.967 points for OU--III at $H_s=0.27$ and \SI{8.5}{m}, respectively;
+all four paired bootstrap intervals exclude zero.  During the controlled
+transition, however, Adaptive is worse than FixedNominal by 1.080 points
+(95\% interval $[0.880,1.303]$) for OU--II and 1.038 points
+($[0.693,1.414]$) for OU--III.  It is also worse than the clairvoyant endpoint
+FixedOracle by 1.345 and 2.020 points, respectively.  Online tuning therefore
+improves robustness to large stationary mismatch but exhibits transition lag
+and does not dominate either fixed reference over the evaluated ramp.
+
+Only \OUValidationLegacyGatePasses{} of the 300 phase-surrogate runs satisfy
+all legacy final-\SI{60}{s} thresholds; the remaining
+\OUValidationLegacyGateFailures{} trigger at least one.  Those thresholds were
+constructed as regression sentinels for the original deterministic realization,
+not as population-level acceptance criteria.  The ensemble conclusions are
+therefore based on the versioned raw metrics, paired differences, and intervals
+rather than on the legacy pass/fail indicator.

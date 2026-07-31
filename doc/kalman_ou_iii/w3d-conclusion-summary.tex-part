@@ -1,22 +1,23 @@
 
 The present study establishes the complete estimator recursion and verifies it
-under the simulation protocol of Sec.~\ref{sec:sim-and-eval}. Across the tested
-JONSWAP and PM--Stokes cases, the reported vertical-displacement RMS errors
-remain within the ranges listed in Table~\ref{tab:sim_results_rms_dir_basic},
-while the attitude and direction pipelines remain operational under the stated
-multi-rate sensor and error models. The paired comparison in
-Sec.~\ref{sec:observer-comparison} evaluates OU--III against the OU--II
-predecessor, the adaptive PII observer, and an adapted published TVG--NLO using
-the same reference and inertial records. Across all eight paired cases, the
-mean normalized vertical-displacement RMS error is 6.6\% of $H_s$ for OU--III,
-compared with 8.2\% for OU--II, 12.3\% for adaptive PII, and 15.0\% for
-TVG--NLO. OU--III gives the lowest error in seven cases and is within 0.1
-percentage point of OU--II in the remaining smallest JONSWAP case. The nearly
-identical mean roll and pitch errors of OU--II and OU--III indicate that the
-observed improvement is primarily in vertical reconstruction rather than
-attitude estimation. The simulations and embedded builds exercise the same
-estimator recursion, including the exact OU-chain transition, small-step
-covariance branch, full MEKF reset, and adaptive pseudo-measurement scaling.
+under the simulation protocol of Sec.~\ref{sec:sim-and-eval}.  The legacy
+eight-case comparison retains the adaptive PII and TVG--NLO reference results,
+while the completed ten-seed study provides the inferential OU-family and
+adaptation evidence.  Across the four stationary JONSWAP seas, OU--III has a
+seed-wise mean normalized vertical error of
+$\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
+$H_s$, versus
+$\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
+OU--II.  Their paired difference is $\OUValidationNormalizedDifference$
+percentage point (bootstrap 95\% interval
+$[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$).
+The scenario-level sign changes and the consistently higher OU--III 3D error
+preclude a claim of uniform OU--III superiority.  Adaptive tuning improves on
+FixedNominal at the smallest and largest stationary seas, but both families
+lag FixedNominal and the clairvoyant endpoint reference during the controlled
+transition.  The simulations and embedded builds exercise the same estimator
+recursion, including the exact OU-chain transition, small-step covariance
+branch, full MEKF reset, and adaptive pseudo-measurement scaling.
 
 Appendix~\ref{app:iss-stability} complements the empirical results with a
 sufficient-condition proof of uniform local input-to-state stability for the
@@ -30,12 +31,12 @@ unconditional EKF convergence claim.
 The results support embedded feasibility and drift-controlled wave-state
 reconstruction for the tested conditions, but they do not by themselves imply
 universal performance across spectra, update cadences, vessel speeds, or sensor
-installations. The accompanying validation infrastructure now adds paired
-Monte Carlo ensembles, fixed-tuning component ablations, and a controlled
-sea-state transition while retaining the historical deterministic regression
-gates. Future work should extend those ensembles to additional spectra and
-update cadences and add quantitative timing and external-reference measurements
-on hardware.
+installations.  Future work should extend the paired ensembles and tuning
+ablations to additional spectra and update cadences, reduce the observed
+adaptation lag, and add quantitative timing and external-reference measurements
+on hardware.  The high trigger rate of the realization-specific historical
+gates also motivates replacing them with separately calibrated ensemble
+acceptance criteria while retaining them as deterministic regression sentinels.
 Optional absolute-navigation fusion is kept separate in
 Appendix~\ref{sec:gps_fusion} so that the oscillatory displacement state
 $\vct{p}$ is not conflated with a local or global navigation position.

@@ -709,6 +709,239 @@ def write_latex_table(path: Path, summary: Sequence[Mapping[str, Any]]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def scenario_display_label(scenario: str) -> str:
+    if scenario.startswith("nonstationary_"):
+        return "Transition"
+    height = re.search(r"_H([0-9]+)_([0-9]{3})_", scenario)
+    if height:
+        value = float(f"{height.group(1)}.{height.group(2)}")
+        return rf"$H_s={value:.2f}$ m"
+    return scenario.replace("_", " ")
+
+
+def scenario_sort_key(scenario: str) -> tuple[int, float, str]:
+    if scenario.startswith("nonstationary_"):
+        return 1, math.inf, scenario
+    height = re.search(r"_H([0-9]+)_([0-9]{3})_", scenario)
+    value = (
+        float(f"{height.group(1)}.{height.group(2)}")
+        if height else math.inf
+    )
+    return 0, value, scenario
+
+
+def stationary_normalized_aggregate(
+    rows: Sequence[Mapping[str, Any]],
+    bootstrap_resamples: int,
+    stats_seed: int,
+) -> dict[str, dict[str, Any]]:
+    by_seed_family: dict[
+        tuple[Any, Any, Any, str], list[float]
+    ] = defaultdict(list)
+    for row in rows:
+        if (
+            not str(row["scenario"]).startswith("stationary_")
+            or row["mode"] != "Adaptive"
+        ):
+            continue
+        key = (
+            row["wave_phase_seed"],
+            row["imu_noise_seed"],
+            row["initialization_seed"],
+            str(row["family"]),
+        )
+        value = float(row["disp_z_pct_hs"])
+        if math.isfinite(value):
+            by_seed_family[key].append(value)
+
+    seed_keys = sorted({key[:3] for key in by_seed_family})
+    family_values: dict[str, np.ndarray] = {}
+    for family in ("OU_II", "OU_III"):
+        values = [
+            float(np.mean(by_seed_family[(*key, family)]))
+            for key in seed_keys
+            if by_seed_family.get((*key, family))
+        ]
+        family_values[family] = np.asarray(values, dtype=np.float64)
+
+    if family_values["OU_II"].size != family_values["OU_III"].size:
+        raise ValueError("stationary normalized aggregate is not paired")
+    if family_values["OU_II"].size == 0:
+        raise ValueError("stationary normalized aggregate has no observations")
+
+    rng = np.random.default_rng(stats_seed + 2)
+    result: dict[str, dict[str, Any]] = {}
+    for family, values in family_values.items():
+        bootstrap_low, bootstrap_high = _bootstrap_mean_ci(
+            values, bootstrap_resamples, rng
+        )
+        result[family] = {
+            "n": int(values.size),
+            "mean": float(np.mean(values)),
+            "std": float(np.std(values, ddof=1)) if values.size > 1 else 0.0,
+            "bootstrap_ci95_low": bootstrap_low,
+            "bootstrap_ci95_high": bootstrap_high,
+        }
+
+    differences = family_values["OU_III"] - family_values["OU_II"]
+    difference_std = (
+        float(np.std(differences, ddof=1)) if differences.size > 1 else 0.0
+    )
+    cohen_dz = (
+        float(np.mean(differences)) / difference_std
+        if difference_std > 0.0 else math.nan
+    )
+    degrees_of_freedom = differences.size - 1
+    correction = (
+        math.gamma(degrees_of_freedom / 2.0)
+        / (
+            math.sqrt(degrees_of_freedom / 2.0)
+            * math.gamma((degrees_of_freedom - 1.0) / 2.0)
+        )
+        if degrees_of_freedom > 1 else math.nan
+    )
+    bootstrap_low, bootstrap_high = _bootstrap_mean_ci(
+        differences, bootstrap_resamples, rng
+    )
+    result["OU_III_minus_OU_II"] = {
+        "n_pairs": int(differences.size),
+        "mean_paired_difference": float(np.mean(differences)),
+        "std_paired_difference": difference_std,
+        "bootstrap_ci95_low": bootstrap_low,
+        "bootstrap_ci95_high": bootstrap_high,
+        "cohen_dz": cohen_dz,
+        "hedges_gz": correction * cohen_dz,
+    }
+    return result
+
+
+def write_publication_table(
+    path: Path,
+    rows: Sequence[Mapping[str, Any]],
+    summary: Sequence[Mapping[str, Any]],
+    effects: Sequence[Mapping[str, Any]],
+    bootstrap_resamples: int,
+    stats_seed: int,
+) -> None:
+    indexed_summary = {
+        (
+            str(row["scenario"]),
+            str(row["family"]),
+            str(row["mode"]),
+            str(row["metric"]),
+        ): row
+        for row in summary
+    }
+    indexed_effects = {
+        (str(row["scenario"]), str(row["comparison"]), str(row["metric"])): row
+        for row in effects
+    }
+    scenarios = sorted(
+        {
+            str(row["scenario"])
+            for row in summary
+            if row["mode"] == "Adaptive" and row["metric"] == "disp_z_pct_hs"
+        },
+        key=scenario_sort_key,
+    )
+    aggregate = stationary_normalized_aggregate(
+        rows, bootstrap_resamples, stats_seed
+    )
+    difference = aggregate["OU_III_minus_OU_II"]
+    gate_passes = sum(int(row["historical_60s_gate_pass"]) for row in rows)
+
+    def mean_std(scenario: str, family: str, mode: str) -> str:
+        row = indexed_summary[(scenario, family, mode, "disp_z_pct_hs")]
+        return f"{float(row['mean']):.2f} $\\pm$ {float(row['std']):.2f}"
+
+    def paired_ci(scenario: str, metric: str, digits: int) -> str:
+        row = indexed_effects[(scenario, "OU_III_minus_OU_II", metric)]
+        return (
+            f"{float(row['mean_paired_difference']):+.{digits}f} "
+            f"[{float(row['bootstrap_ci95_low']):+.{digits}f}, "
+            f"{float(row['bootstrap_ci95_high']):+.{digits}f}]"
+        )
+
+    lines = [
+        r"% Generated by tools/ou_validation.py from the committed full-study rows.",
+        rf"\providecommand{{\OUValidationStationaryPairs}}{{{difference['n_pairs']}}}",
+        rf"\providecommand{{\OUValidationOUIINormalizedMean}}{{{aggregate['OU_II']['mean']:.2f}}}",
+        rf"\providecommand{{\OUValidationOUIINormalizedStd}}{{{aggregate['OU_II']['std']:.2f}}}",
+        rf"\providecommand{{\OUValidationOUIIINormalizedMean}}{{{aggregate['OU_III']['mean']:.2f}}}",
+        rf"\providecommand{{\OUValidationOUIIINormalizedStd}}{{{aggregate['OU_III']['std']:.2f}}}",
+        rf"\providecommand{{\OUValidationNormalizedDifference}}{{{difference['mean_paired_difference']:+.3f}}}",
+        rf"\providecommand{{\OUValidationNormalizedDifferenceLow}}{{{difference['bootstrap_ci95_low']:+.3f}}}",
+        rf"\providecommand{{\OUValidationNormalizedDifferenceHigh}}{{{difference['bootstrap_ci95_high']:+.3f}}}",
+        rf"\providecommand{{\OUValidationNormalizedDz}}{{{difference['cohen_dz']:+.2f}}}",
+        rf"\providecommand{{\OUValidationNormalizedGz}}{{{difference['hedges_gz']:+.2f}}}",
+        rf"\providecommand{{\OUValidationLegacyGatePasses}}{{{gate_passes}}}",
+        rf"\providecommand{{\OUValidationLegacyGateFailures}}{{{len(rows) - gate_passes}}}",
+        r"",
+        r"\begin{table*}[t]",
+        r"  \centering",
+        r"  \caption{Ten-seed paired OU-family comparison over the final \SI{900}{s}. Values are mean $\pm$ sample standard deviation. $\Delta$ is OU--III Adaptive minus OU--II Adaptive; brackets give the paired bootstrap 95\% interval. Negative $\Delta$Z favors OU--III, whereas positive $\Delta$3D indicates larger OU--III three-dimensional displacement error.}",
+        r"  \label{tab:ou_mc_family}",
+        r"  \footnotesize",
+        r"  \setlength{\tabcolsep}{4.0pt}",
+        r"  \begin{tabular}{@{}lrrrr@{}}",
+        r"    \toprule",
+        r"    Scenario & OU--II Z [\%$H_s$] & OU--III Z [\%$H_s$] & $\Delta$Z [percentage points] & $\Delta$3D [m] \\",
+        r"    \midrule",
+    ]
+    for scenario in scenarios:
+        lines.append(
+            "    "
+            + " & ".join(
+                (
+                    scenario_display_label(scenario),
+                    mean_std(scenario, "OU_II", "Adaptive"),
+                    mean_std(scenario, "OU_III", "Adaptive"),
+                    paired_ci(scenario, "disp_z_pct_hs", 3),
+                    paired_ci(scenario, "disp_3d_rms_m", 3),
+                )
+            )
+            + r" \\"
+        )
+    lines.extend(
+        (
+            r"    \bottomrule",
+            r"  \end{tabular}",
+            r"\end{table*}",
+            r"",
+            r"\begin{table*}[t]",
+            r"  \centering",
+            r"  \caption{Adaptation ablation for vertical-displacement RMS error over the final \SI{900}{s}; entries are mean $\pm$ sample standard deviation in percent of $H_s$ ($n=10$ paired seed triplets). FixedOracle is a noise-free, sea-specific or known-endpoint reference and is not deployable online.}",
+            r"  \label{tab:ou_mc_adaptation}",
+            r"  \footnotesize",
+            r"  \setlength{\tabcolsep}{3.6pt}",
+            r"  \begin{tabular}{@{}lrrrrrr@{}}",
+            r"    \toprule",
+            r"    & \multicolumn{3}{c}{OU--II Z [\%$H_s$]} & \multicolumn{3}{c}{OU--III Z [\%$H_s$]} \\",
+            r"    \cmidrule(lr){2-4}\cmidrule(lr){5-7}",
+            r"    Scenario & Adaptive & FixedNominal & FixedOracle & Adaptive & FixedNominal & FixedOracle \\",
+            r"    \midrule",
+        )
+    )
+    for scenario in scenarios:
+        lines.append(
+            "    "
+            + " & ".join(
+                (
+                    scenario_display_label(scenario),
+                    mean_std(scenario, "OU_II", "Adaptive"),
+                    mean_std(scenario, "OU_II", "FixedNominal"),
+                    mean_std(scenario, "OU_II", "FixedOracle"),
+                    mean_std(scenario, "OU_III", "Adaptive"),
+                    mean_std(scenario, "OU_III", "FixedNominal"),
+                    mean_std(scenario, "OU_III", "FixedOracle"),
+                )
+            )
+            + r" \\"
+        )
+    lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}"))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def write_metric_plot(
     path: Path,
     summary: Sequence[Mapping[str, Any]],
@@ -724,7 +957,9 @@ def write_metric_plot(
     import matplotlib.pyplot as plt
 
     rows = [row for row in summary if row["metric"] == metric]
-    scenarios = sorted({str(row["scenario"]) for row in rows})
+    scenarios = sorted(
+        {str(row["scenario"]) for row in rows}, key=scenario_sort_key
+    )
     groups = sorted({(str(row["family"]), str(row["mode"])) for row in rows})
     figure, axis = plt.subplots(figsize=(max(7.0, 1.7 * len(scenarios)), 4.8))
     x = np.arange(len(scenarios), dtype=float)
@@ -756,9 +991,13 @@ def write_metric_plot(
             marker="o",
             capsize=3,
             linewidth=1.2,
-            label=f"{family} {mode}",
+            label=(
+                f"{family.replace('OU_II', 'OU–II').replace('OU_III', 'OU–III')} "
+                f"{mode.replace('Fixed', 'Fixed ')}"
+            ),
         )
-    axis.set_xticks(x, scenarios, rotation=18, ha="right")
+    axis.set_xticks(x, [scenario_display_label(scenario) for scenario in scenarios])
+    axis.set_xlabel("Scenario")
     axis.set_ylabel(ylabel)
     axis.grid(axis="y", alpha=0.3)
     axis.legend(fontsize=8, ncol=2)
@@ -1095,16 +1334,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     effects_path = args.output_dir / "ou_validation_paired_effects.csv"
     json_path = args.output_dir / "ou_validation.json"
     tex_path = args.output_dir / "ou_validation_table.tex"
+    publication_tex_path = args.output_dir / "ou_validation_publication.tex"
     manifest_path = args.output_dir / "ou_validation_manifest.json"
     write_csv(raw_path, raw_rows)
     write_csv(summary_path, summary)
     write_csv(effects_path, effects)
     write_latex_table(tex_path, summary)
+    write_publication_table(
+        publication_tex_path,
+        raw_rows,
+        summary,
+        effects,
+        args.bootstrap_resamples,
+        args.stats_seed,
+    )
 
     calibration_json = {
         family: {name: asdict(point) for name, point in points.items()}
         for family, points in tuning_points.items()
     }
+    normalized_aggregate = stationary_normalized_aggregate(
+        raw_rows, args.bootstrap_resamples, args.stats_seed
+    )
     protocol = {
         "mode": args.mode,
         "duration_sec": duration_sec,
@@ -1137,12 +1388,48 @@ def main(argv: Sequence[str] | None = None) -> int:
             "raw_runs": raw_rows,
             "summary": summary,
             "paired_effects": effects,
+            "stationary_normalized_aggregate": normalized_aggregate,
         },
     )
+
+    plot_paths: list[Path] = []
+    if not args.no_plots:
+        plot_paths = [
+            args.output_dir / "ou_validation_displacement.svg",
+            args.output_dir / "ou_validation_vertical.svg",
+            args.output_dir / "ou_validation_attitude.svg",
+        ]
+        write_metric_plot(
+            plot_paths[0],
+            summary,
+            "disp_3d_rms_m",
+            "3D displacement RMS (m)",
+        )
+        write_metric_plot(
+            plot_paths[1],
+            summary,
+            "disp_z_pct_hs",
+            r"Vertical displacement RMS (% $H_s$)",
+        )
+        write_metric_plot(
+            plot_paths[2],
+            summary,
+            "pitch_rms_deg",
+            "Pitch RMS (deg)",
+        )
 
     source_paths = sorted({scenario.start_input for scenario in scenarios}.union(
         {scenario.end_input for scenario in scenarios if scenario.end_input is not None}
     ))
+    result_paths = [
+        raw_path,
+        summary_path,
+        effects_path,
+        json_path,
+        tex_path,
+        publication_tex_path,
+        *plot_paths,
+    ]
     manifest = {
         "git_commit": git_output("rev-parse", "HEAD"),
         "git_branch": git_output("branch", "--show-current"),
@@ -1153,32 +1440,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         "command": [sys.executable, *sys.argv],
         "protocol": protocol,
         "source_files": {
-            str(path): {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+            str(
+                path.relative_to(REPO_ROOT)
+                if path.is_relative_to(REPO_ROOT)
+                else path
+            ): {
+                "sha256": sha256_file(path),
+                "bytes": path.stat().st_size,
+            }
             for path in source_paths
         },
+        "result_files": {
+            path.name: {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+            for path in result_paths
+        },
         "fixed_tuning_points": calibration_json,
+        "stationary_normalized_aggregate": normalized_aggregate,
     }
     write_json(manifest_path, manifest)
-
-    if not args.no_plots:
-        write_metric_plot(
-            args.output_dir / "ou_validation_displacement.svg",
-            summary,
-            "disp_3d_rms_m",
-            "3D displacement RMS (m)",
-        )
-        write_metric_plot(
-            args.output_dir / "ou_validation_attitude.svg",
-            summary,
-            "pitch_rms_deg",
-            "Pitch RMS (deg)",
-        )
 
     print(f"Wrote {raw_path}")
     print(f"Wrote {summary_path}")
     print(f"Wrote {effects_path}")
     print(f"Wrote {json_path}")
     print(f"Wrote {tex_path}")
+    print(f"Wrote {publication_tex_path}")
     print(f"Wrote {manifest_path}")
     return 0
 

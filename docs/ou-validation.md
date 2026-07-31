@@ -6,6 +6,10 @@ the simulators still calculate and enforce their historical trailing 60-second
 thresholds. The full experiment separately scores the trailing 900 seconds of each
 20-minute realization.
 
+The repository versions the completed ten-seed study used by the manuscript in
+`reports/results/ou_validation/`. It contains 300 simulator rows: five scenarios,
+two filter families, three tuning modes, and ten paired seed triplets.
+
 ## Experiment design
 
 - Each repetition has three independent seeds: wave phase, IMU noise/random walk,
@@ -71,13 +75,28 @@ The output directory contains:
 - `ou_validation.json`: protocol, calibration points, raw observations, and all
   statistics;
 - `ou_validation_manifest.json`: command, versions, Git state, source-file hashes,
-  and seed triplets;
-- `ou_validation_table.tex` and two SVG figures for publication workflows.
+  result-file hashes, seed triplets, and the stationary normalized aggregate;
+- `ou_validation_table.tex`, `ou_validation_publication.tex`, and three SVG
+  figures for publication workflows.
 
 Differences are always `left - right`. Thus negative displacement or attitude
 error differences favor the left-hand estimator. A confidence interval spanning
 zero is inconclusive at that interval level. Effect sizes should be interpreted
 with their paired sample count and interval, not in isolation.
+
+The completed study does not show uniform dominance. Averaged within each seed
+across the four stationary JONSWAP seas, normalized vertical RMS is 8.73% of
+$H_s$ for OU-III and 8.98% for OU-II, but the scenario-level difference changes
+sign and OU-III has higher 3D displacement RMS in every evaluated scenario.
+Adaptive tuning improves on FixedNominal at the smallest and largest stationary
+seas, but it is worse than FixedNominal during the controlled transition. The
+manuscript tables report the paired bootstrap intervals and effect sizes.
+
+The historical final-60-second pass/fail thresholds are intentionally retained
+as deterministic regression sentinels. They were calibrated to the original
+realization: only 53 of the 300 phase-surrogate runs satisfy all of them. They
+must not be interpreted as ensemble acceptance criteria; the statistical study
+uses the raw long-window metrics and paired intervals instead.
 
 ## Direct simulator controls
 

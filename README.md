@@ -206,6 +206,9 @@ python3 tools/ou_validation.py --mode full
 ```
 
 Full mode produces raw and summary CSV, JSON, LaTeX, paired-effect, manifest,
-and SVG plot artifacts under `reports/results/ou_validation/`. See
+and SVG plot artifacts under `reports/results/ou_validation/`. The completed
+ten-seed, 300-run evidence used by the article is versioned in that directory;
+it shows a modest aggregate OU-III vertical benefit but mixed scenario-level
+and adaptation outcomes rather than uniform superiority. See
 [`docs/ou-validation.md`](docs/ou-validation.md) for the protocol, seed controls,
 and interpretation.
