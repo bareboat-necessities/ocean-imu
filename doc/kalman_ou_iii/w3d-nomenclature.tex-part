@@ -1,0 +1,41 @@
+\section{Nomenclature and Conventions}
+\label{sec:nomenclature}
+
+Table~\ref{tab:nomenclature} collects the symbols that recur across the
+attitude, translational, and adaptation models. Bold lower- and upper-case
+symbols denote vectors and matrices, respectively; a hat denotes an estimate.
+
+\begin{table*}[t]
+\caption{Principal notation and disambiguation of similarly named quantities.}
+\label{tab:nomenclature}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.15\textwidth}
+                    >{\raggedright\arraybackslash}p{0.33\textwidth}
+                    >{\raggedright\arraybackslash}p{0.15\textwidth}
+                    >{\raggedright\arraybackslash}p{0.31\textwidth}@{}}
+\toprule
+Symbol & Meaning & Symbol & Meaning \\
+\midrule
+$q,\ \mat{R}_{wb}$ & world-to-body quaternion and rotation matrix
+& $\delta\vct{\theta}$ & left-multiplicative local attitude error \\
+$h,\ \tau$ & sample interval and OU correlation time
+& $\vct{v},\vct{p},\vct{S}$ & velocity, oscillatory displacement, and its integral \\
+$\vct{a}_w$ & latent world-frame acceleration
+& $\vct{b}_g,\vct{b}_a$ & gyroscope and accelerometer biases \\
+$\matg{\Sigma}_{aw}^{\mathrm{stat}}$ & prescribed stationary covariance of the OU acceleration prior
+& $\mat{P}_{a_wa_w}$ & posterior covariance block for the estimated acceleration state \\
+$\sigma_{aw}$ & scalar stationary standard-deviation scale used for the OU prior
+& $\sigma_{a,\mathrm{white}}$ & accelerometer white-noise standard deviation \\
+$r_S,\ \mat{R}_S$ & integral-channel standard-deviation scale and covariance, with $\mat{R}_S=\diag(\vct r_S\odot\vct r_S)$
+& $\matg{Q}_c,\ \matg{Q}_d$ & continuous spectral-density and discrete process-covariance matrices \\
+$\matg{\Phi}$ & discrete state-transition matrix
+& $\mat{C},\ \mat{K}$ & measurement Jacobian and Kalman gain \\
+$\scomp(\mat{U})$ & symmetric completion of an upper-triangular coefficient array; defined in Sec.~\ref{sec:block-Phi-Qd}
+& $f_{\mathrm{tune}},\ \tau_{\mathrm{adapt}}$ & smoothed tracker frequency and adaptation time constant \\
+$(\cdot)_\star,\ (\cdot)_{\mathrm{appl}}$ & target and applied adaptive values
+& $\clip(\cdot),\ \wrap(\cdot)$ & saturation and phase-wrapping operators \\
+\bottomrule
+\end{tabular}
+\end{table*}

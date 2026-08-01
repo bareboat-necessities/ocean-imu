@@ -274,5 +274,78 @@ class CommittedFullResultsTests(unittest.TestCase):
         )
 
 
+class ManuscriptMethodologyTests(unittest.TestCase):
+    DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
+
+    @classmethod
+    def read(cls, name):
+        return (cls.DOC / name).read_text(encoding="utf-8")
+
+    def test_singer_relationship_and_contribution_wording(self):
+        intro = self.read("w3d-intro.tex-part")
+        bibliography = self.read("w3d.bib")
+        self.assertIn("Singer1970_ManeuverModel", intro)
+        self.assertIn("We do not claim the OU", intro)
+        self.assertIn("doi     = {10.1109/TAES.1970.310128}", bibliography)
+        self.assertNotIn("novel", intro.lower())
+
+    def test_nomenclature_is_included_and_disambiguates_covariances(self):
+        manuscript = self.read("kalman_ou-w3d.tex")
+        nomenclature = self.read("w3d-nomenclature.tex-part")
+        self.assertIn("\\input{w3d-nomenclature.tex-part}", manuscript)
+        self.assertIn("\\Sigma}_{aw}^{\\mathrm{stat}}", nomenclature)
+        self.assertIn("\\mat{P}_{a_wa_w}", nomenclature)
+        self.assertIn("Kalman gain", nomenclature)
+
+    def test_analytic_completion_and_small_step_regime_are_explicit(self):
+        analytic = self.read("w3d-analytic-coeff.tex-part")
+        lti = self.read("w3d-lti-discrete.tex-part")
+        manuscript = self.read("kalman_ou-w3d.tex")
+        self.assertIn("\\scomp(\\mat{U})", analytic)
+        self.assertIn("it is not the\naveraging operator", analytic)
+        self.assertNotIn("\\sym", manuscript + analytic)
+        self.assertIn("5.30\\times10^{-3}", analytic)
+        self.assertIn("h-s", lti)
+        self.assertNotIn("h-\\tau", lti)
+
+    def test_tracker_and_heel_material_are_scoped_as_unevaluated_appendices(self):
+        manuscript = self.read("kalman_ou-w3d.tex")
+        fusion = self.read("w3d-fus-methods.tex-part")
+        trackers = self.read("w3d-tracker-alternatives.tex-part")
+        heel = self.read("w3d-wind-heel.tex-part")
+        appendix_sources = "".join(
+            self.read(name)
+            for name in (
+                "w3d-tracker-alternatives.tex-part",
+                "w3d-wind-heel.tex-part",
+                "w3d-gps-fusion.tex-part",
+                "w3d-iss-stability.tex-part",
+            )
+        )
+        self.assertLess(
+            manuscript.index("\\appendices"),
+            manuscript.index("\\input{w3d-tracker-alternatives.tex-part}"),
+        )
+        self.assertEqual(manuscript.count("\\appendices"), 1)
+        self.assertNotIn("\\appendices", appendix_sources)
+        self.assertNotIn("Aranovskiy Frequency Tracker", fusion)
+        self.assertIn("not evaluated as OU--III tracker ablations", trackers)
+        self.assertIn("disabled in every deterministic simulation", heel)
+
+    def test_baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
+        baseline = self.read("w3d-baseline-comparison.tex-part")
+        fusion = self.read("w3d-fus-methods.tex-part")
+        simulation = self.read("w3d-sim-charts.tex-part")
+        self.assertIn("frozen before the comparison", baseline)
+        self.assertIn("performs no parameter search", baseline)
+        self.assertIn("never uses\nreference errors to choose gains", baseline)
+        self.assertIn("tab:baseline-tuning-policy", baseline)
+        self.assertIn("tab:implementation-gates", fusion)
+        for value in ("[0.2,6.0]", "[0.02,3.0]", "[0.4,35]", "70^\\circ"):
+            self.assertIn(value, fusion)
+        self.assertIn("did not\ninstrument update latency", simulation)
+        self.assertIn("does not establish a\nquantitative real-time-performance claim", simulation)
+
+
 if __name__ == "__main__":
     unittest.main()

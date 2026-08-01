@@ -124,7 +124,7 @@
 \DeclareMathOperator{\sgn}{sgn}
 \DeclareMathOperator{\blkdiag}{blkdiag}
 \DeclareMathOperator{\diag}{diag}
-\DeclareMathOperator{\sym}{sym}
+\DeclareMathOperator{\scomp}{scomp}
 \newcommand{\set}[1]{\mathcal{#1}}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\C}{\mathbb{C}}
@@ -176,17 +176,19 @@ error is $8.73\pm0.23\%$ of $H_s$ for OU--III and $8.98\pm0.24\%$ for OU--II;
 the paired difference is $-0.248$ percentage point (bootstrap 95\% interval
 $[-0.407,-0.116]$).  The sign changes by sea state, OU--III has larger 3D
 displacement error in all five scenarios, and online adaptation does not
-dominate fixed tuning during the transition.  The implementation remains
-suitable for real-time deployment with low-cost embedded IMUs.
+dominate fixed tuning during the transition.  The same source builds for an
+ESP32--S3 target and has been exercised with MEMS IMU input; quantitative
+timing, processor-load, and memory measurements are reserved for a separate
+embedded-performance study.
 \end{abstract}
 
 \begin{IEEEkeywords}
 extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, MRU, Ornstein--Uhlenbeck process, Heave Reference System, HRS, heave sensor, wave height estimation, wave measurement buoy\end{IEEEkeywords}
 
 \input{w3d-intro.tex-part}
+\input{w3d-nomenclature.tex-part}
 \input{w3d-state.tex-part}
 \input{w3d-meas.tex-part}
-\input{w3d-wind-heel.tex-part}
 \input{w3d-proc-cont.tex-part}
 \input{w3d-lti-discrete.tex-part}
 \input{w3d-analytic-coeff.tex-part}
@@ -195,6 +197,10 @@ extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, 
 \input{w3d-fus-methods.tex-part}
 \input{w3d-sim-charts.tex-part}
 \input{w3d-conclusion-summary.tex-part}
+
+\appendices
+\input{w3d-tracker-alternatives.tex-part}
+\input{w3d-wind-heel.tex-part}
 \input{w3d-gps-fusion.tex-part}
 \input{w3d-iss-stability.tex-part}
 

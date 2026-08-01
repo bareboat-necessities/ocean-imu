@@ -34,7 +34,7 @@ Collect the applied adaptive parameters into
 \begin{equation}
 \vct\vartheta_k=
 \begin{bmatrix}
-\tau_k & \sigma_{a,k} & r_{S,k}
+\tau_k & \sigma_{aw,k} & r_{S,k}
 \end{bmatrix}^{\!\top}.
 \label{eq:iss-adaptive-vector}
 \end{equation}

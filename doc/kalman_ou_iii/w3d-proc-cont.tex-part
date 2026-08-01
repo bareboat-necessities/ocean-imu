@@ -83,13 +83,17 @@ Here $\tau>0$ is the correlation time and
 $\matg{\Sigma}_{aw}^{\mathrm{stat}}\succeq0$ is the stationary acceleration
 covariance.
 
-Ocean-wave acceleration is not asserted to be an OU process.  Equation
+Ocean-wave acceleration is not asserted to be an OU process. Equation
 \eqref{eq:ou-ct} is a low-order stationary Gauss--Markov prior
-\cite{Maybeck1979_StochasticModels,Jazwinski1970_Filtering}.  It is useful
-because it is Markov, mean-reverting, bounded in variance, and analytically
-discretizable.  For a scalar component with stationary variance $\sigma_a^2$,
+\cite{Maybeck1979_StochasticModels,Jazwinski1970_Filtering}. For each scalar
+axis it belongs to the Singer first-order acceleration-model family under the
+identification $\alpha=1/\tau$; here the diffusion is parameterized directly by
+the desired stationary covariance
+\cite{Singer1970_ManeuverModel}. It is useful because it is Markov,
+mean-reverting, bounded in variance, and analytically discretizable. For a
+scalar component with stationary variance $\sigma_{aw}^2$,
 \[
-S_a(\omega)=\frac{2\sigma_a^2\tau}{1+\omega^2\tau^2}.
+S_{a_w}(\omega)=\frac{2\sigma_{aw}^2\tau}{1+\omega^2\tau^2}.
 \]
 This is a zero-centered first-order low-pass spectrum.  The empirical relation
 between $\tau$ and a tracked wave period is therefore a tuning rule for the

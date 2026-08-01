@@ -1,5 +1,11 @@
-\subsection{Steady Wind-Heel Correction}
+\section{Optional Steady Wind-Heel Transform}
 \label{sec:heel}
+
+This transform is an implementation option, not an evaluated contribution.
+It was disabled in every deterministic simulation, ten-seed Monte Carlo run,
+and hardware exercise reported here. Consequently, the present evidence makes
+no performance claim for heel correction; the derivation is retained only to
+document the frame convention used when the option is enabled.
 
 For a sailing vessel the hull experiences a slowly varying \emph{steady wind heel},
 well-approximated as a rotation about the physical body $x$-axis. If unmodeled, this

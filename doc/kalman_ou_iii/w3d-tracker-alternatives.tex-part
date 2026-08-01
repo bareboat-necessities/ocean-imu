@@ -1,0 +1,53 @@
+\section{Alternative Compiled Frequency-Tracker Policies}
+\label{app:tracker-alternatives}
+
+The OU--III results and adaptation claims in this paper use KalmANF exclusively.
+The following policies are maintained as selectable implementation options but
+were not evaluated as OU--III tracker ablations, so no relative-performance
+claim is made. The PII baseline in Sec.~\ref{sec:observer-comparison} uses its
+own committed PLL configuration and is not evidence for substituting that PLL
+inside OU--III.
+
+\subsection{Aranovskiy nonlinear adaptive observer}
+
+The observer follows the sinusoidal frequency estimator of
+Bobtsov--Nikolaev--Slita--Borgul--Aranovskiy \cite{Bobtsov2013182}. A filtered
+copy of input $u$ obeys
+\[
+\dot x_f=-c_fx_f+b_fu.
+\]
+It forms
+\[
+\varphi_f=\dot x_f(b_fu+c_fx_f)+x_f^2\theta_f,
+\qquad \dot\varsigma=-k_f\varphi_f,
+\]
+and updates the algebraic frequency parameter as
+\[
+\theta_f=k_fb_fx_fu+\varsigma,
+\qquad \widehat\Omega_f\propto\sqrt{|\theta_f|}.
+\]
+The subscripts distinguish these tracker states and gains from acceleration,
+attitude, and Kalman-gain symbols in the main estimator.
+
+\subsection{Prefiltered I/Q phase-locked loop}
+
+The PLL policy band-passes the input to $b_k$, demodulates it against internal
+phase $\phi_k$, and low-pass filters the in-phase and quadrature components:
+\[
+\begin{aligned}
+I_k&\leftarrow\operatorname{LPF}\{b_k\cos\phi_k\},\\
+Q_k&\leftarrow\operatorname{LPF}\{-b_k\sin\phi_k\},\\
+e_{\phi,k}&=\operatorname{atan2}(Q_k,I_k).
+\end{aligned}
+\]
+A bounded type-II loop then applies
+\begin{align}
+\omega_{k+1}&=\clip_{[\omega_{\min},\omega_{\max}]}
+\left(\omega_k+k_i^{\mathrm{PLL}}G_ke_{\phi,k}\Delta t\right),\\
+\phi_{k+1}&=\wrap_{(-\pi,\pi]}
+\left(\phi_k+[\omega_{k+1}+k_p^{\mathrm{PLL}}G_ke_{\phi,k}]\Delta t\right),
+\end{align}
+where $k_p^{\mathrm{PLL}}=2\zeta\omega_n$,
+$k_i^{\mathrm{PLL}}=\omega_n^2$, and $\omega_n=2\pi B_L$. The confidence
+factor $G_k$ reduces adaptation when the input is weak, and the readout is
+$\hat f_k=\omega_k/(2\pi)$.

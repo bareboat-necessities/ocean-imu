@@ -28,10 +28,12 @@ operating point and adaptive parameters over the admissible set; it does not
 treat startup or reset logic and does not convert the simulation study into an
 unconditional EKF convergence claim.
 
-The results support embedded feasibility and drift-controlled wave-state
-reconstruction for the tested conditions, but they do not by themselves imply
+The results support drift-controlled wave-state reconstruction for the tested
+conditions, while the MCU exercise establishes only functional source
+portability. They do not by themselves imply
 universal performance across spectra, update cadences, vessel speeds, or sensor
-installations.  Future work should extend the paired ensembles and tuning
+installations, nor do they establish an embedded timing or memory margin.
+Future work should extend the paired ensembles and tuning
 ablations to additional spectra and update cadences, reduce the observed
 adaptation lag, and add quantitative timing and external-reference measurements
 on hardware.  The high trigger rate of the realization-specific historical

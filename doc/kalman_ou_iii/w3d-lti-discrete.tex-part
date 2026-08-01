@@ -21,7 +21,7 @@ Over a small step $h>0$, the exact discrete transition of the mean is
   \;=\;
   \underbrace{e^{\mat{F} h}}_{\displaystyle \matg{\Phi}(h)}\,\delta\vct{x}(t)
   \;+\;
-  \int_{0}^{h} e^{\mat{F} (h-\tau)}\,\mat{L}\,\vct{w}_c(t{+}\tau)\,d\tau.
+  \int_{0}^{h} e^{\mat{F} (h-s)}\,\mat{L}\,\vct{w}_c(t{+}s)\,ds.
 \end{equation}
 The matrix exponential is defined by the absolutely convergent series
 $e^{\mat{F} h}=\sum_{k=0}^{\infty}\frac{(\mat{F} h)^k}{k!}$.
@@ -35,8 +35,8 @@ From the stochastic variation-of-constants formula,
 \matg{Q}_d(h)
 \;=\;
 \int_{0}^{h}
-  e^{\mat{F} \tau}\,\mat{L}\,\matg{Q}_c\,\mat{L}^\top\,
-  e^{\mat{F}^\top \tau}\,d\tau.
+  e^{\mat{F} s}\,\mat{L}\,\matg{Q}_c\,\mat{L}^\top\,
+  e^{\mat{F}^\top s}\,ds.
 \label{eq:Qd-integral}
 \end{equation}
 
