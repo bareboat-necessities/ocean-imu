@@ -37,7 +37,8 @@ Fetch the versioned input bundle and run the CI-sized integration profile:
 
 ```bash
 make fetch-sim-data
-python3 tools/ou_robustness.py --mode smoke
+python3 tools/ou_robustness.py --mode smoke \
+  --sensitivity-scales 0.5,1.0,1.5
 ```
 
 Run the completed publication profile:
