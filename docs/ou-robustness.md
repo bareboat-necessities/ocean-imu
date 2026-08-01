@@ -48,8 +48,9 @@ python3 tools/ou_robustness.py --mode full
 
 Useful controls include `--sensitivity-scales`, the three independent seed
 lists, `--duration-sec`, `--window-sec`, `--bootstrap-resamples`, and
-`--output-dir`. Smoke mode is an integration check and is not inferential
-evidence.
+`--output-dir`. Custom sensitivity lists must retain the publication anchors
+`0.5`, `1.0`, and `1.5`; intermediate scales may be added or removed.
+Smoke mode is an integration check and is not inferential evidence.
 
 ## Outputs
 
