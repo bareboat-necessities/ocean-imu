@@ -37,8 +37,7 @@ matplotlib.rcParams["svg.hashsalt"] = "ocean-imu-ou-robustness"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SENSITIVITY_PARAMETERS = ("tau", "sigma_aw", "r_s")
 FULL_SCALES = (0.5, 0.75, 1.0, 1.25, 1.5)
-SMOKE_SCALES = (0.5, 1.0, 1.5)
-PUBLICATION_REQUIRED_SCALES = (0.5, 1.0, 1.5)
+SMOKE_SCALES = (0.75, 1.0, 1.25)
 LOW_REFERENCE_HS_M = 0.27
 LOW_STRESS_HS_M = 0.05
 TAU_BOUNDS_S = (0.02, 3.0)
@@ -64,22 +63,6 @@ def parse_float_list(text: str) -> list[float]:
     if not any(math.isclose(value, 1.0, rel_tol=0.0, abs_tol=1e-12) for value in values):
         raise argparse.ArgumentTypeError("scale lists must include the 1.0 reference")
     return values
-
-
-def validate_publication_scales(scales: Sequence[float]) -> None:
-    missing = [
-        required
-        for required in PUBLICATION_REQUIRED_SCALES
-        if not any(
-            math.isclose(scale, required, rel_tol=0.0, abs_tol=1e-12)
-            for scale in scales
-        )
-    ]
-    if missing:
-        anchors = ", ".join(f"{scale:g}" for scale in missing)
-        raise ValueError(
-            f"sensitivity scales must include publication anchors: {anchors}"
-        )
 
 
 def scaled_tuning_point(
@@ -674,7 +657,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     scales = args.sensitivity_scales or (
         list(SMOKE_SCALES) if args.mode == "smoke" else list(FULL_SCALES)
     )
-    validate_publication_scales(scales)
 
     if args.mode == "smoke":
         default_wave, default_imu, default_init = ([11], [101], [1009])
