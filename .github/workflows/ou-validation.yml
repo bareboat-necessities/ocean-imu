@@ -95,11 +95,14 @@ jobs:
           mode="${{ github.event.inputs.validation_mode || 'smoke' }}"
           if [ "${mode}" = "full" ]; then
             resamples=10000
+            scales="0.5,0.75,1.0,1.25,1.5"
           else
             resamples=1000
+            scales="0.5,1.0,1.5"
           fi
           python3 -u tools/ou_robustness.py \
             --mode "${mode}" \
+            --sensitivity-scales "${scales}" \
             --bootstrap-resamples "${resamples}" \
             --output-dir reports/results/ou_robustness
 
