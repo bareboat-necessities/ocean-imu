@@ -56,12 +56,12 @@ class RobustnessDesignTests(unittest.TestCase):
         with self.assertRaisesRegex(Exception, "include the 1.0 reference"):
             robustness.parse_float_list("0.5,2")
 
-    def test_smoke_scales_cover_publication_anchors(self):
-        robustness.validate_publication_scales(robustness.SMOKE_SCALES)
-        with self.assertRaisesRegex(
-            ValueError, "publication anchors: 0.5, 1.5"
-        ):
-            robustness.validate_publication_scales((0.75, 1.0, 1.25))
+    def test_ci_smoke_scales_cover_publication_anchors(self):
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "ou-validation.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn('scales="0.5,1.0,1.5"', workflow)
+        self.assertIn('--sensitivity-scales "${scales}"', workflow)
 
     def test_summary_and_sensitivity_effect_are_paired(self):
         rows = []
