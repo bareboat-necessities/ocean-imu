@@ -56,6 +56,13 @@ class RobustnessDesignTests(unittest.TestCase):
         with self.assertRaisesRegex(Exception, "include the 1.0 reference"):
             robustness.parse_float_list("0.5,2")
 
+    def test_smoke_scales_cover_publication_anchors(self):
+        robustness.validate_publication_scales(robustness.SMOKE_SCALES)
+        with self.assertRaisesRegex(
+            ValueError, "publication anchors: 0.5, 1.5"
+        ):
+            robustness.validate_publication_scales((0.75, 1.0, 1.25))
+
     def test_summary_and_sensitivity_effect_are_paired(self):
         rows = []
         for repetition, reference, doubled in ((1, 8.0, 9.0), (2, 10.0, 13.0)):
