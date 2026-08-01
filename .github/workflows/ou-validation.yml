@@ -10,6 +10,8 @@ on:
       - "tests/kalman_ou_iii/**"
       - "tests/validation/**"
       - "tools/ou_validation.py"
+      - "tools/ou_robustness.py"
+      - "reports/results/ou_robustness/**"
       - "Makefile"
       - ".github/workflows/ou-validation.yml"
   push:
@@ -22,6 +24,8 @@ on:
       - "tests/kalman_ou_iii/**"
       - "tests/validation/**"
       - "tools/ou_validation.py"
+      - "tools/ou_robustness.py"
+      - "reports/results/ou_robustness/**"
       - "Makefile"
       - ".github/workflows/ou-validation.yml"
   workflow_dispatch:
@@ -57,9 +61,6 @@ jobs:
             g++ make libeigen3-dev unzip \
             python3-numpy python3-matplotlib
 
-      - name: Run validation unit tests
-        run: make -C tests/validation test
-
       - name: Download versioned simulation data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,6 +71,9 @@ jobs:
             --clobber
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Run validation unit tests
+        run: make -C tests/validation test
 
       - name: Run paired validation
         shell: bash
@@ -85,10 +89,29 @@ jobs:
             --bootstrap-resamples "${resamples}" \
             --output-dir reports/results/ou_validation
 
+      - name: Run robustness validation
+        shell: bash
+        run: |
+          mode="${{ github.event.inputs.validation_mode || 'smoke' }}"
+          if [ "${mode}" = "full" ]; then
+            resamples=10000
+            scales="0.5,0.75,1.0,1.25,1.5"
+          else
+            resamples=1000
+            scales="0.5,1.0,1.5"
+          fi
+          python3 -u tools/ou_robustness.py \
+            --mode "${mode}" \
+            --sensitivity-scales "${scales}" \
+            --bootstrap-resamples "${resamples}" \
+            --output-dir reports/results/ou_robustness
+
       - name: Upload validation artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: ou-validation-${{ github.event.inputs.validation_mode || 'smoke' }}
-          path: reports/results/ou_validation/**
+          path: |
+            reports/results/ou_validation/**
+            reports/results/ou_robustness/**
           if-no-files-found: warn

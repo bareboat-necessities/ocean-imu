@@ -92,6 +92,11 @@ Adaptive tuning improves on FixedNominal at the smallest and largest stationary
 seas, but it is worse than FixedNominal during the controlled transition. The
 manuscript tables report the paired bootstrap intervals and effect sizes.
 
+The follow-on OU-III parameter-sensitivity and degradation-case protocol is
+documented separately in [`ou-robustness.md`](ou-robustness.md). It reuses the
+same paired seed triplets but does not alter the confirmatory comparison or
+select a new reported operating point from reference errors.
+
 The historical final-60-second pass/fail thresholds are intentionally retained
 as deterministic regression sentinels. They were calibrated to the original
 realization: only 53 of the 300 phase-surrogate runs satisfy all of them. They

@@ -53,6 +53,12 @@ cp -f ../../reports/results/ou_validation/ou_validation_publication.tex \
   "${DOC_DIR}/w3d-ou-validation-results-generated.tex-part"
 cp -f ../../reports/results/ou_validation/ou_validation_vertical.svg \
   "${DOC_DIR}/ou_validation_vertical.svg"
+cp -f ../../reports/results/ou_robustness/ou_robustness_publication.tex \
+  "${DOC_DIR}/w3d-ou-robustness-results-generated.tex-part"
+cp -f ../../reports/results/ou_robustness/ou_robustness_sensitivity.svg \
+  "${DOC_DIR}/ou_robustness_sensitivity.svg"
+cp -f ../../reports/results/ou_robustness/ou_robustness_stress.svg \
+  "${DOC_DIR}/ou_robustness_stress.svg"
 
 python3 - <<'PY'
 from pathlib import Path
