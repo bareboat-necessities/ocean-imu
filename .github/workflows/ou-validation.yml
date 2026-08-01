@@ -61,9 +61,6 @@ jobs:
             g++ make libeigen3-dev unzip \
             python3-numpy python3-matplotlib
 
-      - name: Run validation unit tests
-        run: make -C tests/validation test
-
       - name: Download versioned simulation data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,6 +71,9 @@ jobs:
             --clobber
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Run validation unit tests
+        run: make -C tests/validation test
 
       - name: Run paired validation
         shell: bash
