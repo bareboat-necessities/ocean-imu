@@ -1,0 +1,128 @@
+\subsubsection{Sensitivity and degradation-case study}
+\label{sec:ou-robustness}
+
+The confirmatory comparison above is complemented by a prespecified
+OU--III robustness study using the same ten paired wave-phase, IMU-noise, and
+initialization seed triplets.  At the nominal $H_s=\SI{1.5}{m}$ sea, one fixed
+parameter at a time is multiplied by $0.5$, $0.75$, $1.0$, $1.25$, or $1.5$:
+the OU correlation time $\tau$, stationary acceleration scale $\sigma_{aw}$,
+and pseudo-measurement standard deviation $r_S$.  The remaining two parameters
+stay at the single noise-free nominal operating point.  Thus this is a local
+one-factor-at-a-time sensitivity analysis, not a global interaction study.
+Because $\mat{R}_S=\operatorname{diag}(r_S^2)$, multiplying $r_S$ by $c$
+multiplies the corresponding covariance by $c^2$.
+
+Two deliberately difficult inputs delimit the demonstrated operating envelope.
+The first scales the smallest JONSWAP record from $H_s=\SI{0.27}{m}$ to
+$H_s=\SI{0.05}{m}$ without changing its spectral shape, placing wave motion
+closer to the fixed IMU-noise floor.  The second compresses the controlled
+$H_s=\SI{1.5}{m}$, $T_p=\SI{5.7}{s}$ to $H_s=\SI{4.0}{m}$,
+$T_p=\SI{11.4}{s}$ ramp from \SI{360}{s} to \SI{30}{s}, while keeping the
+transition midpoint, endpoint, long scoring window, and paired realizations
+fixed.  These are degradation probes rather than additional population claims
+about arbitrary ocean spectra.
+
+\IfFileExists{w3d-ou-robustness-results-generated.tex-part}{%
+  \input{w3d-ou-robustness-results-generated.tex-part}%
+}{%
+  \providecommand{\OURobustnessPairs}{0}
+  \providecommand{\OURobustnessNominalMean}{--}
+  \providecommand{\OURobustnessWorstParameter}{pending}
+  \providecommand{\OURobustnessWorstScale}{--}
+  \providecommand{\OURobustnessWorstMean}{--}
+  \providecommand{\OURobustnessWorstDifference}{--}
+  \providecommand{\OURobustnessWorstDifferenceLow}{--}
+  \providecommand{\OURobustnessWorstDifferenceHigh}{--}
+  \providecommand{\OURobustnessRSHalfThreeDDifference}{--}
+  \providecommand{\OURobustnessRSHalfThreeDLow}{--}
+  \providecommand{\OURobustnessRSHalfThreeDHigh}{--}
+  \providecommand{\OURobustnessSigmaHalfPitchDifference}{--}
+  \providecommand{\OURobustnessSigmaHalfPitchLow}{--}
+  \providecommand{\OURobustnessSigmaHalfPitchHigh}{--}
+  \providecommand{\OURobustnessLowReferenceMean}{--}
+  \providecommand{\OURobustnessLowStressMean}{--}
+  \providecommand{\OURobustnessLowStressAbsolute}{0}
+  \providecommand{\OURobustnessLowDifference}{--}
+  \providecommand{\OURobustnessLowDifferenceLow}{--}
+  \providecommand{\OURobustnessLowDifferenceHigh}{--}
+  \providecommand{\OURobustnessControlledAdaptiveMean}{--}
+  \providecommand{\OURobustnessRapidAdaptiveMean}{--}
+  \providecommand{\OURobustnessRapidDifference}{--}
+  \providecommand{\OURobustnessRapidDifferenceLow}{--}
+  \providecommand{\OURobustnessRapidDifferenceHigh}{--}
+  \providecommand{\OURobustnessRapidAdaptationDifference}{--}
+  \providecommand{\OURobustnessRapidAdaptationLow}{--}
+  \providecommand{\OURobustnessRapidAdaptationHigh}{--}
+}
+
+\IfFileExists{ou_robustness_sensitivity.svg}{%
+  \begin{figure*}[t]
+    \centering
+    \includesvg[
+      width=0.82\textwidth,
+      inkscapelatex=false
+    ]{ou_robustness_sensitivity}
+    \caption{Ten-seed one-factor-at-a-time OU--III sensitivity at the nominal
+    sea for vertical, full 3D-displacement, and pitch errors. Error bars are
+    paired-bootstrap 95\% intervals for the mean. The dashed line marks the
+    frozen nominal operating point.}
+    \label{fig:ou_robustness_sensitivity}
+  \end{figure*}
+}{}
+
+\IfFileExists{ou_robustness_stress.svg}{%
+  \begin{figure*}[t]
+    \centering
+    \includesvg[
+      width=0.90\textwidth,
+      inkscapelatex=false
+    ]{ou_robustness_stress}
+    \caption{OU--III degradation cases. Left: the low-motion record approaches
+    the fixed sensor-noise floor. Right: the same sea-state endpoints are
+    connected by the controlled and rapid ramps. Error bars are
+    paired-bootstrap 95\% intervals for the mean.}
+    \label{fig:ou_robustness_stress}
+  \end{figure*}
+}{}
+
+The three nominal sweep columns reproduce a mean normalized vertical error of
+\OURobustnessNominalMean\% of $H_s$.  Across the declared multiplier range,
+the largest mean is \OURobustnessWorstMean\% for
+\texttt{\OURobustnessWorstParameter} at
+$\times\OURobustnessWorstScale$; its paired difference from the nominal point
+is \OURobustnessWorstDifference{} percentage points (bootstrap 95\% interval
+$[\OURobustnessWorstDifferenceLow,\OURobustnessWorstDifferenceHigh]$).
+Table~\ref{tab:ou_robustness_sensitivity} and
+Fig.~\ref{fig:ou_robustness_sensitivity} report the complete sweep, so
+robustness is assessed from the shape and intervals rather than from the most
+favorable setting.
+
+The sweep also exposes competing objectives.  Halving $r_S$ changes the 3D
+displacement RMS by \OURobustnessRSHalfThreeDDifference{} m
+($[\OURobustnessRSHalfThreeDLow,\OURobustnessRSHalfThreeDHigh]$) even though
+it lowers the vertical-only score.  Halving $\sigma_{aw}$ changes pitch RMS by
+\OURobustnessSigmaHalfPitchDifference{} degrees
+($[\OURobustnessSigmaHalfPitchLow,\OURobustnessSigmaHalfPitchHigh]$).
+Consequently, no sweep point is adopted as a replacement tuning: choosing one
+from reference errors would violate the frozen, sensor-only tuning protocol and
+would optimize one metric at the expense of another.
+
+At $H_s=\SI{0.05}{m}$, the mean absolute vertical RMS error is
+\SI{\OURobustnessLowStressAbsolute}{m}, corresponding to
+\OURobustnessLowStressMean\% of $H_s$, compared with
+\OURobustnessLowReferenceMean\% at $H_s=\SI{0.27}{m}$.  The paired normalized
+difference is \OURobustnessLowDifference{} points
+($[\OURobustnessLowDifferenceLow,\OURobustnessLowDifferenceHigh]$), explicitly
+showing the limit imposed by a nearly fixed absolute sensor-error floor.
+
+Compressing the transition changes the Adaptive mean from
+\OURobustnessControlledAdaptiveMean\% to
+\OURobustnessRapidAdaptiveMean\% of final $H_s$; the rapid-minus-controlled
+paired difference is \OURobustnessRapidDifference{} points
+($[\OURobustnessRapidDifferenceLow,\OURobustnessRapidDifferenceHigh]$).
+Within the rapid case, Adaptive-minus-FixedNominal is
+\OURobustnessRapidAdaptationDifference{} points
+($[\OURobustnessRapidAdaptationLow,\OURobustnessRapidAdaptationHigh]$).
+Positive differences denote higher Adaptive error.  These results quantify,
+rather than conceal, the response limit when the environmental time scale
+changes much faster than the configured adaptation smoothing.

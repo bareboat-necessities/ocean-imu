@@ -184,3 +184,5 @@ constructed as regression sentinels for the original deterministic realization,
 not as population-level acceptance criteria.  The ensemble conclusions are
 therefore based on the versioned raw metrics, paired differences, and intervals
 rather than on the legacy pass/fail indicator.
+
+\input{w3d-ou-robustness.tex-part}

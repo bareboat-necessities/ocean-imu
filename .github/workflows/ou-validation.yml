@@ -10,6 +10,8 @@ on:
       - "tests/kalman_ou_iii/**"
       - "tests/validation/**"
       - "tools/ou_validation.py"
+      - "tools/ou_robustness.py"
+      - "reports/results/ou_robustness/**"
       - "Makefile"
       - ".github/workflows/ou-validation.yml"
   push:
@@ -22,6 +24,8 @@ on:
       - "tests/kalman_ou_iii/**"
       - "tests/validation/**"
       - "tools/ou_validation.py"
+      - "tools/ou_robustness.py"
+      - "reports/results/ou_robustness/**"
       - "Makefile"
       - ".github/workflows/ou-validation.yml"
   workflow_dispatch:
@@ -85,10 +89,26 @@ jobs:
             --bootstrap-resamples "${resamples}" \
             --output-dir reports/results/ou_validation
 
+      - name: Run robustness validation
+        shell: bash
+        run: |
+          mode="${{ github.event.inputs.validation_mode || 'smoke' }}"
+          if [ "${mode}" = "full" ]; then
+            resamples=10000
+          else
+            resamples=1000
+          fi
+          python3 -u tools/ou_robustness.py \
+            --mode "${mode}" \
+            --bootstrap-resamples "${resamples}" \
+            --output-dir reports/results/ou_robustness
+
       - name: Upload validation artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: ou-validation-${{ github.event.inputs.validation_mode || 'smoke' }}
-          path: reports/results/ou_validation/**
+          path: |
+            reports/results/ou_validation/**
+            reports/results/ou_robustness/**
           if-no-files-found: warn

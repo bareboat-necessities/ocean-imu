@@ -19,6 +19,16 @@ transition.  The simulations and embedded builds exercise the same estimator
 recursion, including the exact OU-chain transition, small-step covariance
 branch, full MEKF reset, and adaptive pseudo-measurement scaling.
 
+The separate ten-seed robustness study in
+Sec.~\ref{sec:ou-robustness} maps one-factor sensitivity to $\tau$,
+$\sigma_{aw}$, and $r_S$, and reports rather than excludes low-motion and rapid
+transition degradation cases.  Over the declared multiplier range the largest
+mean normalized vertical error is \OURobustnessWorstMean\% of $H_s$, while the
+$H_s=\SI{0.05}{m}$ case reaches \OURobustnessLowStressMean\% and the
+\SI{30}{s} transition reaches \OURobustnessRapidAdaptiveMean\%.  These results
+bound the empirical claim to the tested parameter neighborhood, motion
+amplitudes, and transition rates.
+
 Appendix~\ref{app:iss-stability} complements the empirical results with a
 sufficient-condition proof of uniform local input-to-state stability for the
 core predict--correct recursion and its bounded-rate adaptation. The proof is
@@ -33,9 +43,9 @@ conditions, while the MCU exercise establishes only functional source
 portability. They do not by themselves imply
 universal performance across spectra, update cadences, vessel speeds, or sensor
 installations, nor do they establish an embedded timing or memory margin.
-Future work should extend the paired ensembles and tuning
-ablations to additional spectra and update cadences, reduce the observed
-adaptation lag, and add quantitative timing and external-reference measurements
+Future work should extend the paired ensembles to parameter interactions,
+additional spectra, and update cadences, reduce the observed adaptation lag,
+and add quantitative timing and external-reference measurements
 on hardware.  The high trigger rate of the realization-specific historical
 gates also motivates replacing them with separately calibrated ensemble
 acceptance criteria while retaining them as deterministic regression sentinels.
