@@ -149,7 +149,7 @@ public:
         seastate::common::finalizeInitialization(
             mekf_,
             [this]() { enterCold_(); },
-            [this]() { apply_ou_tune_(); });
+            [this]() { apply_ou_tune_(true); });
     }
 
     void initialize_ext(const Eigen::Vector3f& sigma_a,
@@ -163,7 +163,7 @@ public:
         seastate::common::finalizeInitialization(
             mekf_,
             [this]() { enterCold_(); },
-            [this]() { apply_ou_tune_(); });
+            [this]() { apply_ou_tune_(true); });
     }
 
     void initialize_from_acc(const Eigen::Vector3f& acc_body_ned) {
@@ -269,6 +269,9 @@ public:
         if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
             apply_RS_tune_();
         }
+
+        // Bounded covariance inflation of the a_w marginal.
+        periodic_aw_cov_sync_tick_();
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
 
@@ -402,6 +405,32 @@ public:
         enable_tuner_ = flag;
     }
 
+    // Policy for the latent-acceleration marginal P_{a_w a_w}.
+    //
+    // Default (true): once per adaptation period the marginal is re-aligned
+    // with the stationary OU covariance, keeping the cross-covariances the
+    // filter has learned.  This is a deliberate bounded covariance inflation.
+    // It stops the a_w marginal from settling far below the level the process
+    // model considers stationary, which keeps the accelerometer gain
+    // responsive when the sea state changes.  It is not free -- it discards
+    // posterior information at the adaptation cadence -- so the alternative
+    // is available and measured rather than assumed.
+    //
+    // With false, the marginal is aligned only at discrete reconfiguration
+    // events (construction, the transition to Live, setFixedTuning()) and a
+    // changed stationary scale reaches the filter solely through the discrete
+    // OU process covariance.
+    //
+    // The policy is applied independently of the tuner so that fixed-tuning
+    // modes run it too.  Otherwise an adaptive-versus-fixed comparison would
+    // confound whether the parameters adapt with whether part of the
+    // covariance is periodically re-aligned.
+    void setPeriodicAwCovarianceSync(bool flag) {
+        periodic_aw_cov_sync_ = flag;
+        last_aw_cov_sync_sec_ = time_;
+    }
+    bool periodicAwCovarianceSync() const noexcept { return periodic_aw_cov_sync_; }
+
     // Freeze the online tuner at an externally supplied operating point. This
     // is primarily useful for controlled ablations (fixed-nominal and
     // fixed-oracle) after the normal startup sequence has reached Live.
@@ -428,7 +457,7 @@ public:
         tune_.tau_applied = tau_target_;
         tune_.sigma_applied = sigma_target_;
         tune_.RS_applied = RS_target_;
-        apply_ou_tune_();
+        apply_ou_tune_(true);
         if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
             apply_RS_tune_();
         }
@@ -574,7 +603,11 @@ private:
     using FreqInputLPF = seastate::common::FreqInputLPF;
     using StillnessAdapter = seastate::common::StillnessAdapter;
 
-    void apply_ou_tune_() {
+    // sync_covariance is set only by discrete reconfiguration events. The
+    // periodic adaptation path leaves the posterior a_w marginal alone; the
+    // new stationary scale reaches the filter through the OU process
+    // covariance instead.
+    void apply_ou_tune_(bool sync_covariance) {
         if (!mekf_) return;
         mekf_->set_aw_time_constant(tune_.tau_applied);
 
@@ -583,7 +616,21 @@ private:
         const float sH = sZ * S_factor_;
         const Eigen::Vector3f aw_std(sH, sH, sZ);
         mekf_->set_aw_stationary_std(aw_std);
+        if (sync_covariance) {
+            mekf_->synchronize_aw_covariance_to_stationary();
+            last_aw_cov_sync_sec_ = time_;
+        }
+    }
+
+    // Re-align the posterior a_w marginal with the stationary prior at the
+    // adaptation cadence. Runs independently of the tuner so that
+    // fixed-tuning modes apply the same policy and remain matched controls.
+    void periodic_aw_cov_sync_tick_() {
+        if (!periodic_aw_cov_sync_ || !mekf_) return;
+        if (startup_stage_ != StartupStage::Live) return;
+        if (time_ - last_aw_cov_sync_sec_ <= adapt_every_secs_) return;
         mekf_->synchronize_aw_covariance_to_stationary();
+        last_aw_cov_sync_sec_ = time_;
     }
 
     void apply_RS_tune_(float rs_scale = 1.0f) {
@@ -685,7 +732,7 @@ private:
 
         if (time_ - last_adapt_time_sec_ > adapt_every_secs_) {
             if (tuner_.isFreqReady()) {
-                apply_ou_tune_();
+                apply_ou_tune_(false);
             }
             if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
                 apply_RS_tune_();
@@ -715,6 +762,7 @@ private:
         dir_sign_state_ = UNCERTAIN;
 
         last_adapt_time_sec_ = time_;
+        last_aw_cov_sync_sec_ = time_;
     }
 
     void enterCold_() {
@@ -740,7 +788,7 @@ private:
         startup_stage_t_ = 0.0f;
 
         if (!mekf_) return;
-        apply_ou_tune_();
+        apply_ou_tune_(true);
         mekf_->set_linear_block_enabled(enable_linear_block_);
 
         if (freeze_acc_bias_until_live_) {
@@ -791,6 +839,10 @@ private:
     bool enable_tuner_ = true;
 
     bool enable_linear_block_ = true;
+
+    // Covariance-inflation policy; see setPeriodicAwCovarianceSync.
+    bool   periodic_aw_cov_sync_ = true;
+    double last_aw_cov_sync_sec_ = 0.0;
 
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;

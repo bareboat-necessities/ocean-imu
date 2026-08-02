@@ -3,14 +3,25 @@
 
 The confirmatory comparison above is complemented by a prespecified
 OU--III robustness study using the same ten paired wave-realization, IMU-noise, and
-initialization seed triplets.  At the nominal $H_s=\SI{1.5}{m}$ sea, one fixed
-parameter at a time is multiplied by $0.5$, $0.75$, $1.0$, $1.25$, or $1.5$:
-the OU correlation time $\tau$, stationary acceleration scale $\sigma_{aw}$,
-and pseudo-measurement standard deviation $r_S$.  The remaining two parameters
-stay at the single noise-free nominal operating point.  Thus this is a local
-one-factor-at-a-time sensitivity analysis, not a global interaction study.
-Because $\mat{R}_S=\operatorname{diag}(r_S^2)$, multiplying $r_S$ by $c$
-multiplies the corresponding covariance by $c^2$.
+initialization seed triplets.  At the nominal $H_s=\SI{1.5}{m}$ sea, the
+frozen operating point is perturbed by the multipliers $0.5$, $0.75$, $1.0$,
+$1.25$, and $1.5$ along five directions.  Three are one-factor-at-a-time:
+the OU correlation time $\tau$, the stationary acceleration scale
+$\sigma_{aw}$, and the pseudo-measurement standard deviation $r_S$, each
+varied with the other two held at the nominal point.  Because
+$\mat{R}_S=\diag(r_S^2)$, multiplying $r_S$ by $c$ multiplies the
+corresponding covariance by $c^2$.
+
+The remaining two directions are \emph{coupled}, because the one-factor sweeps
+answer a narrower question than they appear to.  The deployed law ties the
+regularization scale to the other two parameters through
+$r_S=\clip(1.2\,\sigma_{aw}\tau^{3},\,0.4,\,35)$, so freezing $r_S$ while
+sweeping $\sigma_{aw}$ or $\tau$ measures only the \emph{direct} effect of the
+OU process covariance and never reproduces a state the online tuner can
+occupy.  The coupled sweeps therefore move $\sigma_{aw}\to c\,\sigma_{aw}$
+with $r_S\to c\,r_S$, and $\tau\to c\,\tau$ with $r_S\to c^{3}r_S$.  All five
+directions remain local perturbations about one point; none is a global
+interaction study.
 
 Two deliberately difficult inputs delimit the demonstrated operating envelope.
 The first scales the smallest JONSWAP record from $H_s=\SI{0.27}{m}$ to
@@ -108,6 +119,36 @@ it lowers the vertical-only score.  Halving $\sigma_{aw}$ changes pitch RMS by
 Consequently, no sweep point is adopted as a replacement tuning: choosing one
 from reference errors would violate the frozen, sensor-only tuning protocol and
 would optimize one metric at the expense of another.
+
+\paragraph{What the flat $\tau$ and $\sigma_{aw}$ columns do and do not mean}
+With their companions frozen, the $\tau$ and $\sigma_{aw}$ columns move mean
+vertical error by only \OURobustnessTauSpan{} and \OURobustnessSigmaSpan{}
+points of $H_s$ across the full $\times0.5$ to $\times1.5$ range, whereas the
+$r_S$ column moves it by \OURobustnessRSSpan{} points and the coupled sweeps
+by \OURobustnessCoupledSigmaSpan{} and \OURobustnessCoupledTauSpan{} points.
+The flatness is not a code path that fails to apply the parameter: $\sigma_{aw}^2$
+enters the discrete OU process covariance, the raw records confirm that the
+applied values match the requested values, and halving $\sigma_{aw}$ visibly
+degrades pitch, as reported above.  It is a structural property of the
+measurement geometry.  The accelerometer supplies a direct \SI{200}{Hz}
+observation of the latent $\vct{a}_w$ with measurement noise several orders of
+magnitude below the stationary OU variance, so the corresponding gain is
+already near saturation and rescaling the prior by a factor of three barely
+changes the latent-acceleration estimate that the kinematic chain integrates.
+Over the same interval $\Delta t/\tau\lesssim10^{-2}$, so the OU mean reversion
+between updates is negligible.  Displacement error is instead set by the
+integral pseudo-measurement scale $r_S$, which is the only one of the three
+that is not overwhelmed by a direct high-rate observation.  Attitude behaves
+differently because $\mat{P}_{a_w a_w}$ enters the accelerometer innovation
+covariance and therefore governs how the residual is apportioned between tilt
+error and wave acceleration.
+
+The correct statement is thus narrow: with $\tau$ and $r_S$ frozen at the
+nominal point, displacement is locally insensitive to the direct OU
+process-covariance effect of $\sigma_{aw}$, while attitude is not.  It is not
+that the filter is insensitive to its OU tuning; the coupled columns, which
+move $r_S$ the way the deployed law does, show the sensitivity the online
+tuner actually experiences.
 
 At $H_s=\SI{0.05}{m}$, the mean absolute vertical RMS error is
 \SI{\OURobustnessLowStressAbsolute}{m}, corresponding to

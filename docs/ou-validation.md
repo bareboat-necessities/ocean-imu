@@ -7,8 +7,8 @@ thresholds. The full experiment separately scores the trailing 900 seconds of ea
 20-minute realization.
 
 The repository versions the completed ten-seed study used by the manuscript in
-`reports/results/ou_validation/`. It contains 300 simulator rows: five scenarios,
-two filter families, three tuning modes, and ten paired seed triplets.
+`reports/results/ou_validation/`. It contains 500 simulator rows: five scenarios,
+two filter families, five adaptation modes, and ten paired seed triplets.
 
 ## Experiment design
 
@@ -29,15 +29,66 @@ two filter families, three tuning modes, and ten paired seed triplets.
   $H_s=1.5$ m, $T_p=5.7$ s to $H_s=4.0$ m, $T_p=11.4$ s between 420 and 780 seconds.
   Velocity and acceleration include the exact first- and second-derivative
   terms introduced by the time-varying blend.
+- That transition is a **crossfade between two independently phase-randomized
+  stationary records**, not a continuously evolving spectrum. During the blend
+  both spectra coexist, so there is no single intermediate $T_p$ and the sea can
+  be bimodal. Because the records are independent their variances add, so the
+  midpoint effective height is $\sqrt{0.5^2(1.5)^2+0.5^2(4.0)^2}\approx 2.14$ m
+  rather than the 2.75 m of a linear $H_s$ ramp.
+- The 900 s score therefore covers 300--420 s of the pure start sea, 420--780 s
+  of blend, and 780--1200 s of the pure endpoint sea. 47% of the scored record
+  is the endpoint sea alone, which favours the endpoint-calibrated fixed
+  reference. `transition_window_composition_sec` in the manifest records the
+  split for whatever window is configured.
 
 The adaptation ablations are:
 
 - `Adaptive`: the online tuner remains enabled.
 - `FixedNominal`: parameters are held at the noise-free full-trace operating point
-  for the nominal $H_s=1.5$ m, $T_p=5.7$ s sea.
-- `FixedOracle`: parameters are held at the known stationary-sea operating point;
-  for the transition it uses the known final-sea operating point. This is a
-  clairvoyant fixed endpoint baseline, not a deployable online estimator.
+  for the nominal $H_s=1.5$ m, $T_p=5.7$ s sea, in every scenario.
+- `FixedOracle`: parameters are held at the operating point calibrated from the
+  stationary sea being scored; for the transition it uses the known final-sea
+  point. This is a **scenario-calibrated fixed reference**, not a deployable
+  online estimator and not an optimum.
+- `AdaptiveHeldCovariance` and `FixedNominalHeldCovariance`: matched controls
+  that repeat their partner mode with the periodic covariance re-alignment
+  switched off (see below).
+
+There is no separate "oracle" solver. All three of the first modes run the same
+filter; the fixed modes simply freeze `(tau, sigma_aw, r_S)` after the normal
+startup/Live transition. Each fixed triple is obtained by running the adaptive
+filter once on a noise-free, unrandomized 1200 s record, reading its final
+`tau` and `sigma_aw`, and computing
+`r_S = clip(1.2 * sigma_aw * tau**3, 0.4, 35)` (OU-III) or the corresponding
+OU-II law. No fixed point is optimized against displacement error. The exact
+frozen values for the committed study are in `fixed_tuning_points` in the
+manifest and are typeset by `ou_validation_tuning_points.tex`.
+
+Those values are the vertical/base parameters. The filter derives the applied
+anisotropic values internally: OU-III uses
+`(1.87*sigma_aw, 1.87*sigma_aw, sigma_aw)` for the stationary acceleration
+standard deviation and `diag(0.36*r_S, 0.36*r_S, r_S)**2` for the integral
+pseudo-measurement covariance; OU-II uses `1.5*sigma_aw` horizontally and
+`0.31*r_p0` for the horizontal pseudo-measurement scale.
+
+### Covariance policy and its control
+
+The filter re-aligns the posterior marginal `P_aw_aw` with the stationary OU
+covariance once per adaptation period, keeping the cross-covariances it has
+learned. That is a deliberate bounded covariance inflation: it stops the
+marginal settling far below the level the process model considers stationary,
+which keeps the accelerometer gain responsive when the sea state changes. It
+also discards posterior information at the adaptation cadence, so it is
+measured rather than assumed.
+
+Earlier revisions applied the re-alignment inside the adaptation path only.
+That made it run in `Adaptive` and never in a fixed mode that stops re-tuning,
+so comparing the two confounded *whether parameters adapt* with *whether part
+of the covariance is periodically re-aligned*. The re-alignment is now driven
+independently of the tuner, so all three primary modes apply it identically.
+The `*HeldCovariance` modes switch it off at matched tuning settings so the
+policy can be priced on its own. Use `W3D_AW_COV_SYNC=reconfigure` to run that
+policy directly; `periodic` is the default.
 
 ## Running
 
@@ -82,7 +133,13 @@ The output directory contains:
   statistics;
 - `ou_validation_manifest.json`: command, versions, Git state, source-file hashes,
   result-file hashes, seed triplets, and the stationary normalized aggregate;
-- `ou_validation_table.tex`, `ou_validation_publication.tex`, and three SVG
+- `ou_validation_tuning_points.tex`: the exact frozen operating points used by
+  the fixed modes;
+- `ou_validation_transition.csv` and `ou_validation_transition.svg`: a decimated
+  time series of one transition realization -- blend weight, reference rolling
+  $H_s$, reference and estimated vertical displacement, error, and the applied
+  `tau`/`sigma_aw`/`r_S` against the two fixed levels;
+- `ou_validation_table.tex`, `ou_validation_publication.tex`, and the SVG
   figures for publication workflows.
 
 Differences are always `left - right`. Thus negative displacement or attitude
@@ -106,8 +163,9 @@ select a new reported operating point from reference errors.
 
 The historical final-60-second pass/fail thresholds are intentionally retained
 as deterministic regression sentinels. They were calibrated to the original
-realization: 61 of the 300 kinematically projected surrogate runs satisfy all
-of them. They
+realization: only a minority of the kinematically projected surrogate runs
+satisfy all of them, and the exact count is regenerated into
+`\OUValidationLegacyGatePasses`. They
 must not be interpreted as ensemble acceptance criteria; the statistical study
 uses the raw long-window metrics and paired intervals instead.
 
@@ -120,7 +178,9 @@ environment variables are:
 - `W3D_VALIDATION_WINDOW_SEC` for the machine-readable `VALIDATION_METRICS` line;
 - `W3D_WRITE_TIMESERIES=0` to suppress large diagnostic CSVs;
 - `W3D_TUNING_MODE=adaptive`, `fixed_nominal`, or `fixed_oracle`, plus the
-  family-specific `W3D_FIXED_*` values.
+  family-specific `W3D_FIXED_*` values;
+- `W3D_AW_COV_SYNC=periodic` (default) or `reconfigure` for the a_w
+  covariance-alignment policy.
 
 If no seed variable is present, the original deterministic 1234/5678/9012
 realization and its historical random-number draw order are retained.

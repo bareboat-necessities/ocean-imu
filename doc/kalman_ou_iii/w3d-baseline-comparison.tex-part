@@ -128,6 +128,10 @@ the observer outputs rather than transcribed into the manuscript.
 
 \input{w3d-ou-validation-results-generated.tex-part}
 
+\IfFileExists{w3d-ou-validation-tuning-points-generated.tex-part}{%
+  \input{w3d-ou-validation-tuning-points-generated.tex-part}%
+}{}
+
 \IfFileExists{ou_validation_vertical.svg}{%
   \begin{figure*}[t]
     \centering
@@ -167,18 +171,83 @@ time-varying conditions.  Roll and pitch effects likewise change sign or have
 intervals spanning zero in most cases.
 
 The adaptation ablation in Table~\ref{tab:ou_mc_adaptation} is also mixed.
-Relative to FixedNominal, Adaptive reduces normalized vertical error at both
-off-nominal extremes: by 13.102 and 1.041 percentage points for OU--II and by
-9.289 and 2.612 points for OU--III at $H_s=0.27$ and \SI{8.5}{m}, respectively;
-all four paired bootstrap intervals exclude zero.  During the controlled
-transition, however, Adaptive is worse than FixedNominal by 1.190 points
-(95\% interval $[1.006,1.389]$) for OU--II and 0.944 points
-($[0.575,1.332]$) for OU--III.  It is also worse than the clairvoyant endpoint
-FixedOracle by 1.503 and 2.272 points, respectively.  Online tuning therefore
-improves robustness to large stationary mismatch but exhibits transition lag
-and does not dominate either fixed reference over the evaluated ramp.
+Every fixed operating point it uses is listed in
+Table~\ref{tab:ou_fixed_points}, so each entry is reproducible from a single
+frozen triple.  Relative to FixedNominal, Adaptive reduces normalized vertical
+error at both off-nominal extremes: by
+$\OUValidationIIHs027NominalDifference$ and
+$\OUValidationIIHs85NominalDifference$ percentage points for OU--II and by
+$\OUValidationIIIHs027NominalDifference$ and
+$\OUValidationIIIHs85NominalDifference$ points for OU--III at $H_s=0.27$ and
+\SI{8.5}{m}, respectively; all four paired bootstrap intervals exclude zero.
+That is the intended behavior: a single frozen point calibrated at
+$H_s=\SI{1.5}{m}$ is badly mismatched two orders of magnitude away in wave
+energy, and the online tuner removes most of that mismatch.
 
-Only \OUValidationLegacyGatePasses{} of the 300 kinematically projected
+Adaptive does not, however, beat either fixed reference at the nominal sea or
+over the transition.  At the nominal $H_s=\SI{1.5}{m}$ sea, FixedNominal and
+FixedOracle coincide by construction, and Adaptive is worse than that shared
+point by $\OUValidationIIIHs15NominalDifference$ points
+($[\OUValidationIIIHs15NominalLow,\OUValidationIIIHs15NominalHigh]$) for
+OU--III.  Since both configurations use the same nominal parameter values on
+average, the residual gap is the cost of estimating those parameters from
+noisy IMU-derived signals rather than reading them from a noise-free
+calibration: the online $\tau$, $\sigma_{aw}$, and $r_S$ jitter about the
+frozen point, and Sec.~\ref{sec:ou-robustness} shows that displacement error
+responds to $r_S$.  During the controlled transition Adaptive is worse than
+FixedNominal by $\OUValidationIITransitionNominalDifference$ points
+($[\OUValidationIITransitionNominalLow,\OUValidationIITransitionNominalHigh]$)
+for OU--II and $\OUValidationIIITransitionNominalDifference$ points
+($[\OUValidationIIITransitionNominalLow,\OUValidationIIITransitionNominalHigh]$)
+for OU--III, and worse than the endpoint-calibrated FixedOracle by
+$\OUValidationIITransitionOracleDifference$ and
+$\OUValidationIIITransitionOracleDifference$ points respectively.
+
+Two properties of the protocol limit what that transition result can be said
+to show, and both are quantified rather than assumed.  The endpoint-calibrated
+reference is favored by the composition of the scoring window, \pct{47} of
+which is the pure endpoint sea
+(Sec.~\ref{sec:sim-and-eval}).  And the aggregate cannot separate estimation
+jitter from a genuine lag in following the sea.  The covariance-policy control
+of Table~\ref{tab:ou_mc_covsync} rules out one specific alternative
+explanation.  All three primary modes re-align the posterior
+$\mat{P}_{a_w a_w}$ marginal at the adaptation cadence, so the ablation is
+already matched on that factor; switching the re-alignment off changes
+normalized vertical error by at most
+$\OUValidationCovSyncWorstDifference$ points
+($[\OUValidationCovSyncWorstLow,\OUValidationCovSyncWorstHigh]$, worst case
+across scenarios, families, and both matched pairs), which is far smaller than
+the adaptation gaps above.  The covariance policy is therefore neither a
+confound in the ablation nor the source of the Adaptive disadvantage.
+Fig.~\ref{fig:ou_transition} shows one
+realization directly.  The conclusion supported by this evidence is that
+online tuning improves robustness to large stationary mismatch and costs
+accuracy where a well-matched frozen point is already available; attributing
+the transition gap specifically to adaptation lag would require a protocol
+that holds the scored sea-state composition fixed while varying only the
+adaptation rate.
+
+\IfFileExists{ou_validation_transition.svg}{%
+  \begin{figure*}[t]
+    \centering
+    \includesvg[
+      width=0.92\textwidth,
+      inkscapelatex=false
+    ]{ou_validation_transition}
+    \caption{One OU--III Adaptive realization of the controlled transition
+    (first seed triplet).  Shaded band: the $420$--$780$~s crossfade;
+    dash-dotted line: the start of the \SI{900}{s} scoring window.  Top: the
+    reference rolling $H_s$ tracks the independent-mixture prediction, which
+    stays below the linear $H_s$ ramp the same endpoints would suggest.
+    Middle panels: reference and estimated vertical displacement, and their
+    difference.  Bottom: the applied $\tau$, $\sigma_{aw}$, and $r_S$ against
+    the frozen FixedNominal (dotted) and endpoint FixedOracle (dashed)
+    levels.}
+    \label{fig:ou_transition}
+  \end{figure*}
+}{}
+
+Only \OUValidationLegacyGatePasses{} of the kinematically projected
 surrogate runs satisfy
 all legacy final-\SI{60}{s} thresholds; the remaining
 \OUValidationLegacyGateFailures{} trigger at least one.  Those thresholds were
