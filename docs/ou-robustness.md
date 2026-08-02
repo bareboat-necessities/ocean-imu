@@ -6,7 +6,7 @@ OU-II/OU-III experiment in `tools/ou_validation.py`.
 
 ## Design
 
-The full profile uses the same ten predeclared wave-phase, IMU-noise, and
+The full profile uses the same ten predeclared wave-realization, IMU-noise, and
 initialization seed triplets as the primary validation. Every comparison is
 paired by all three seeds.
 

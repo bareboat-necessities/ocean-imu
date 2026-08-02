@@ -12,17 +12,23 @@ two filter families, three tuning modes, and ten paired seed triplets.
 
 ## Experiment design
 
-- Each repetition has three independent seeds: wave phase, IMU noise/random walk,
+- Each repetition has three independent seeds: wave realization, IMU noise/random walk,
   and sensor-error initialization.
 - A repetition uses the identical seed triplet for OU-II and OU-III and for every
   adaptation ablation, enabling paired inference.
-- Wave realizations use one random Fourier phase per frequency, shared by all
-  world-motion and Euler channels. This preserves auto-spectra and cross-spectra.
-  Quaternion, body specific force, and body angular rate are then reconstructed.
+- Wave realizations use one random Fourier phase per retained frequency,
+  shared by world velocity and Euler channels over the JONSWAP model's
+  0.02--1.60 Hz fundamental-plus-bound-harmonic band. Displacement and
+  acceleration are analytically derived from the same randomized velocity
+  spectrum, eliminating finite-record boundary leakage while preserving the
+  retained primitive auto- and cross-spectra. Quaternion, body specific force,
+  and body angular rate are then reconstructed.
 - Full mode defaults to ten predeclared seed triplets. Seeds can be supplied as
   one value (broadcast) or equally sized comma-separated lists.
-- The non-stationary case transitions smoothly from
+- The non-stationary case uses a C2 quintic transition from
   $H_s=1.5$ m, $T_p=5.7$ s to $H_s=4.0$ m, $T_p=11.4$ s between 420 and 780 seconds.
+  Velocity and acceleration include the exact first- and second-derivative
+  terms introduced by the time-varying blend.
 
 The adaptation ablations are:
 
@@ -84,13 +90,14 @@ error differences favor the left-hand estimator. A confidence interval spanning
 zero is inconclusive at that interval level. Effect sizes should be interpreted
 with their paired sample count and interval, not in isolation.
 
-The completed study does not show uniform dominance. Averaged within each seed
-across the four stationary JONSWAP seas, normalized vertical RMS is 8.73% of
-$H_s$ for OU-III and 8.98% for OU-II, but the scenario-level difference changes
-sign and OU-III has higher 3D displacement RMS in every evaluated scenario.
-Adaptive tuning improves on FixedNominal at the smallest and largest stationary
-seas, but it is worse than FixedNominal during the controlled transition. The
-manuscript tables report the paired bootstrap intervals and effect sizes.
+Across the four stationary JONSWAP seas, the within-seed mean normalized
+vertical RMS is 7.22% of $H_s$ for OU-III and 8.31% for OU-II. The paired
+difference is -1.086 percentage points with a bootstrap 95% interval of
+[-1.208, -0.970]. OU-III is lower vertically in every stationary sea, but is
+higher during the transition and has higher 3D displacement RMS in four of the
+five scenarios; the nominal-sea 3D interval spans zero. Conclusions should
+therefore remain conditional on the evaluated JONSWAP family rather than be
+read as uniform estimator dominance.
 
 The follow-on OU-III parameter-sensitivity and degradation-case protocol is
 documented separately in [`ou-robustness.md`](ou-robustness.md). It reuses the
@@ -99,7 +106,8 @@ select a new reported operating point from reference errors.
 
 The historical final-60-second pass/fail thresholds are intentionally retained
 as deterministic regression sentinels. They were calibrated to the original
-realization: only 53 of the 300 phase-surrogate runs satisfy all of them. They
+realization: 61 of the 300 kinematically projected surrogate runs satisfy all
+of them. They
 must not be interpreted as ensemble acceptance criteria; the statistical study
 uses the raw long-window metrics and paired intervals instead.
 

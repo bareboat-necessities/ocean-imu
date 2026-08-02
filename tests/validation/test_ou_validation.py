@@ -34,40 +34,72 @@ class WaveSurrogateTests(unittest.TestCase):
         self.data[:, 0] = time
         frequencies = (0.25, 0.45, 0.75)
         for offset, name in enumerate(("disp_x", "disp_y", "disp_z")):
-            self.data[:, self.columns.index(name)] = np.sin(
-                2.0 * np.pi * frequencies[offset] * time + 0.2 * offset
+            angular_frequency = 2.0 * np.pi * frequencies[offset]
+            angle = angular_frequency * time + 0.2 * offset
+            self.data[:, self.columns.index(name)] = np.sin(angle)
+            axis = "xyz"[offset]
+            self.data[:, self.columns.index(f"vel_{axis}")] = (
+                angular_frequency * np.cos(angle)
             )
-        for group, derivative in (("vel", 1.0), ("acc", 2.0)):
-            for offset, axis in enumerate("xyz"):
-                self.data[:, self.columns.index(f"{group}_{axis}")] = (
-                    derivative
-                    * np.cos(2.0 * np.pi * frequencies[offset] * time + 0.2 * offset)
-                )
+            self.data[:, self.columns.index(f"acc_{axis}")] = (
+                -angular_frequency**2 * np.sin(angle)
+            )
         self.data[:, self.columns.index("roll_deg")] = 3.0 * np.sin(0.7 * time)
         self.data[:, self.columns.index("pitch_deg")] = 2.0 * np.cos(0.9 * time)
         self.data[:, self.columns.index("yaw_deg")] = 5.0
         self.data = validation.rebuild_body_imu(self.columns, self.data)
 
-    def test_common_phase_preserves_auto_and_cross_spectra(self):
+    def test_common_phase_preserves_primitive_spectra_and_kinematics(self):
         randomized = validation.phase_randomize_wave(self.columns, self.data, seed=73)
         names = (
-            "disp_x", "disp_y", "disp_z",
             "vel_x", "vel_y", "vel_z",
-            "acc_x", "acc_y", "acc_z",
             "roll_deg", "pitch_deg", "yaw_deg",
         )
         indices = validation._column_indices(self.columns, names)
         original_fft = np.fft.rfft(self.data[:, indices], axis=0)
         randomized_fft = np.fft.rfft(randomized[:, indices], axis=0)
-        np.testing.assert_allclose(
-            np.abs(randomized_fft), np.abs(original_fft), rtol=2e-11, atol=2e-9
+        frequencies = np.fft.rfftfreq(len(self.data), validation.DT_SECONDS)
+        retained = (
+            (frequencies >= validation.SURROGATE_MIN_FREQ_HZ)
+            & (frequencies <= validation.SURROGATE_MAX_FREQ_HZ)
         )
         np.testing.assert_allclose(
-            randomized_fft[:, 0] * np.conj(randomized_fft[:, 1]),
-            original_fft[:, 0] * np.conj(original_fft[:, 1]),
+            np.abs(randomized_fft[retained]),
+            np.abs(original_fft[retained]),
+            rtol=2e-11,
+            atol=2e-9,
+        )
+        np.testing.assert_allclose(
+            randomized_fft[retained, 0] * np.conj(randomized_fft[retained, 1]),
+            original_fft[retained, 0] * np.conj(original_fft[retained, 1]),
             rtol=2e-11,
             atol=2e-8,
         )
+
+        omega = 2.0 * np.pi * frequencies
+        for axis in "xyz":
+            displacement = np.fft.rfft(
+                randomized[:, self.columns.index(f"disp_{axis}")]
+            )
+            velocity = np.fft.rfft(
+                randomized[:, self.columns.index(f"vel_{axis}")]
+            )
+            acceleration = np.fft.rfft(
+                randomized[:, self.columns.index(f"acc_{axis}")]
+            )
+            np.testing.assert_allclose(
+                displacement[retained],
+                velocity[retained] / (1j * omega[retained]),
+                rtol=2e-11,
+                atol=2e-8,
+            )
+            np.testing.assert_allclose(
+                acceleration[retained],
+                1j * omega[retained] * velocity[retained],
+                rtol=2e-11,
+                atol=2e-8,
+            )
+
         quaternion_indices = validation._column_indices(
             self.columns,
             ("q_wb_zu_w", "q_wb_zu_x", "q_wb_zu_y", "q_wb_zu_z"),
@@ -84,6 +116,50 @@ class WaveSurrogateTests(unittest.TestCase):
     def test_smoothstep_has_exact_endpoints(self):
         values = validation.smoothstep_weight(np.array([0.0, 2.0, 3.0, 4.0, 8.0]), 2.0, 4.0)
         np.testing.assert_allclose(values, (0.0, 0.0, 0.5, 1.0, 1.0))
+
+        _, first, second = validation.smoothstep_profile(
+            np.array([0.0, 2.0, 3.0, 4.0, 8.0]), 2.0, 4.0
+        )
+        np.testing.assert_allclose(first[[0, 1, 3, 4]], 0.0)
+        np.testing.assert_allclose(second[[0, 1, 3, 4]], 0.0)
+
+    def test_nonstationary_blend_includes_kinematic_cross_terms(self):
+        generated = validation.make_nonstationary_wave(
+            self.columns,
+            self.data,
+            self.data,
+            seed=19,
+            end_scale=1.4,
+            transition_start_sec=5.0,
+            transition_end_sec=15.0,
+        )
+        interior = slice(4, -4)
+        for axis in "xyz":
+            displacement = generated[:, self.columns.index(f"disp_{axis}")]
+            velocity = generated[:, self.columns.index(f"vel_{axis}")]
+            acceleration = generated[:, self.columns.index(f"acc_{axis}")]
+            numerical_velocity = np.gradient(
+                displacement, validation.DT_SECONDS, edge_order=2
+            )
+            numerical_acceleration = np.gradient(
+                velocity, validation.DT_SECONDS, edge_order=2
+            )
+            velocity_scale = np.sqrt(np.mean(velocity[interior] ** 2))
+            acceleration_scale = np.sqrt(np.mean(acceleration[interior] ** 2))
+            self.assertLess(
+                np.sqrt(np.mean((numerical_velocity[interior] - velocity[interior]) ** 2))
+                / velocity_scale,
+                2e-3,
+            )
+            self.assertLess(
+                np.sqrt(
+                    np.mean(
+                        (numerical_acceleration[interior] - acceleration[interior]) ** 2
+                    )
+                )
+                / acceleration_scale,
+                2e-3,
+            )
 
 
 class StatisticsTests(unittest.TestCase):
@@ -197,6 +273,13 @@ class CommittedFullResultsTests(unittest.TestCase):
         self.assertEqual(manifest["protocol"]["mode"], "full")
         self.assertEqual(len(manifest["protocol"]["seed_triplets"]), 10)
         self.assertEqual(manifest["protocol"]["score_window_sec"], 900.0)
+        self.assertIn(
+            "analytically derived", manifest["protocol"]["wave_phase_method"]
+        )
+        self.assertIn(
+            "first- and second-derivative",
+            manifest["protocol"]["transition_method"],
+        )
 
         raw = self.read_csv(self.RESULTS / "ou_validation_raw.csv")
         summary = self.read_csv(self.RESULTS / "ou_validation_summary.csv")
@@ -214,6 +297,8 @@ class CommittedFullResultsTests(unittest.TestCase):
         self.assertEqual(set(groups.values()), {10})
         self.assertEqual({int(row["n"]) for row in summary}, {10})
         self.assertEqual({int(row["n_pairs"]) for row in effects}, {10})
+        self.assertEqual({int(row["samples"]) for row in raw}, {180000})
+        self.assertEqual({float(row["window_s"]) for row in raw}, {900.0})
         self.assertTrue(
             all(
                 int(row["simulator_return_code"])

@@ -5,7 +5,7 @@ The study complements ``ou_validation.py`` without changing its confirmatory
 OU-II/OU-III comparison.  It varies one fixed OU-III parameter at a time around
 the nominal noise-free operating point and separately evaluates a low-motion
 noise-floor case and a rapid sea-state transition.  Every comparison is paired
-by wave-phase, IMU-noise, and initialization seed.
+by wave-realization, IMU-noise, and initialization seed.
 """
 
 from __future__ import annotations
@@ -842,9 +842,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
         "low_motion_heights_m": [LOW_REFERENCE_HS_M, LOW_STRESS_HS_M],
         "transition_cases": [asdict(case) for case in transition_cases],
+        "wave_phase_method": core.WAVE_PHASE_METHOD,
+        "transition_method": core.TRANSITION_METHOD,
         "bootstrap_resamples": args.bootstrap_resamples,
         "stats_seed": args.stats_seed,
-        "pairing": "identical wave-phase, IMU-noise, and initialization seeds",
+        "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
     }
     core.write_json(
         json_path,

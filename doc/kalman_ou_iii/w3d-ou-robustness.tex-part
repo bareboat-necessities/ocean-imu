@@ -2,7 +2,7 @@
 \label{sec:ou-robustness}
 
 The confirmatory comparison above is complemented by a prespecified
-OU--III robustness study using the same ten paired wave-phase, IMU-noise, and
+OU--III robustness study using the same ten paired wave-realization, IMU-noise, and
 initialization seed triplets.  At the nominal $H_s=\SI{1.5}{m}$ sea, one fixed
 parameter at a time is multiplied by $0.5$, $0.75$, $1.0$, $1.25$, or $1.5$:
 the OU correlation time $\tau$, stationary acceleration scale $\sigma_{aw}$,
@@ -21,6 +21,8 @@ $T_p=\SI{11.4}{s}$ ramp from \SI{360}{s} to \SI{30}{s}, while keeping the
 transition midpoint, endpoint, long scoring window, and paired realizations
 fixed.  These are degradation probes rather than additional population claims
 about arbitrary ocean spectra.
+Both ramps use a $C^2$ quintic weight, and their stored velocity and
+acceleration include the exact first- and second-derivative blend terms.
 
 \IfFileExists{w3d-ou-robustness-results-generated.tex-part}{%
   \input{w3d-ou-robustness-results-generated.tex-part}%

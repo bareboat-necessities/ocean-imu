@@ -131,6 +131,10 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
             [case["end_sec"] - case["start_sec"] for case in protocol["transition_cases"]],
             [360.0, 30.0],
         )
+        self.assertIn("analytically derived", protocol["wave_phase_method"])
+        self.assertIn(
+            "first- and second-derivative", protocol["transition_method"]
+        )
 
         raw = self.read_csv(self.RESULTS / "ou_robustness_raw.csv")
         summary = self.read_csv(self.RESULTS / "ou_robustness_summary.csv")
@@ -151,6 +155,8 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         self.assertEqual(set(groups.values()), {10})
         self.assertEqual({int(row["n"]) for row in summary}, {10})
         self.assertEqual({int(row["n_pairs"]) for row in effects}, {10})
+        self.assertEqual({int(row["samples"]) for row in raw}, {180000})
+        self.assertEqual({float(row["window_s"]) for row in raw}, {900.0})
         self.assertTrue(
             all(
                 int(row["simulator_return_code"])

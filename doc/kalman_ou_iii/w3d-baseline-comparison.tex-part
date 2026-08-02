@@ -156,28 +156,30 @@ $g_z=\OUValidationNormalizedGz$ ($n=\OUValidationStationaryPairs$ paired
 seed-level aggregates).
 
 That aggregate does not imply uniform dominance.  Table~\ref{tab:ou_mc_family}
-shows resolved OU--III vertical improvements at $H_s=0.27$ and \SI{4.0}{m}, no
-resolved difference at \SI{1.5}{m}, and higher OU--III vertical error at
-\SI{8.5}{m} and during the transition.  Moreover, the paired 3D-displacement
-difference is positive in every row, with all five bootstrap intervals above
-zero.  The additional OU state therefore provides a modest aggregate vertical
-benefit for these stationary seas but cannot be described as uniformly better
-in either vertical or full three-dimensional reconstruction.  Roll and pitch
-effects likewise change sign or have intervals spanning zero in most cases.
+shows resolved OU--III vertical improvements in all four stationary seas, while
+OU--III has higher vertical error during the transition.  The paired
+3D-displacement difference is above zero at $H_s=0.27$, \SI{4.0}{m},
+\SI{8.5}{m}, and during the transition; at the nominal \SI{1.5}{m} sea its
+interval spans zero.  The additional OU state therefore provides a clear
+aggregate vertical benefit for this stationary JONSWAP family, but cannot be
+described as uniformly better in full three-dimensional reconstruction or under
+time-varying conditions.  Roll and pitch effects likewise change sign or have
+intervals spanning zero in most cases.
 
 The adaptation ablation in Table~\ref{tab:ou_mc_adaptation} is also mixed.
 Relative to FixedNominal, Adaptive reduces normalized vertical error at both
-off-nominal extremes: by 13.330 and 0.748 percentage points for OU--II and by
-9.783 and 1.967 points for OU--III at $H_s=0.27$ and \SI{8.5}{m}, respectively;
+off-nominal extremes: by 13.102 and 1.041 percentage points for OU--II and by
+9.289 and 2.612 points for OU--III at $H_s=0.27$ and \SI{8.5}{m}, respectively;
 all four paired bootstrap intervals exclude zero.  During the controlled
-transition, however, Adaptive is worse than FixedNominal by 1.080 points
-(95\% interval $[0.880,1.303]$) for OU--II and 1.038 points
-($[0.693,1.414]$) for OU--III.  It is also worse than the clairvoyant endpoint
-FixedOracle by 1.345 and 2.020 points, respectively.  Online tuning therefore
+transition, however, Adaptive is worse than FixedNominal by 1.190 points
+(95\% interval $[1.006,1.389]$) for OU--II and 0.944 points
+($[0.575,1.332]$) for OU--III.  It is also worse than the clairvoyant endpoint
+FixedOracle by 1.503 and 2.272 points, respectively.  Online tuning therefore
 improves robustness to large stationary mismatch but exhibits transition lag
 and does not dominate either fixed reference over the evaluated ramp.
 
-Only \OUValidationLegacyGatePasses{} of the 300 phase-surrogate runs satisfy
+Only \OUValidationLegacyGatePasses{} of the 300 kinematically projected
+surrogate runs satisfy
 all legacy final-\SI{60}{s} thresholds; the remaining
 \OUValidationLegacyGateFailures{} trigger at least one.  Those thresholds were
 constructed as regression sentinels for the original deterministic realization,
