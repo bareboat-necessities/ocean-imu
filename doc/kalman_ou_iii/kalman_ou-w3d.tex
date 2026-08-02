@@ -172,11 +172,13 @@ physically motivated engineering normalization for fixed update cadence and a
 bounded family of spectra. A ten-seed paired study scores the final
 \SI{900}{s} of four stationary JONSWAP seas and a controlled transition.  Over
 the stationary seas, the seed-wise mean normalized vertical-displacement RMS
-error is $8.73\pm0.23\%$ of $H_s$ for OU--III and $8.98\pm0.24\%$ for OU--II;
-the paired difference is $-0.248$ percentage point (bootstrap 95\% interval
-$[-0.407,-0.116]$).  The sign changes by sea state, OU--III has larger 3D
-displacement error in all five scenarios, and online adaptation does not
-dominate fixed tuning during the transition.  The same source builds for an
+error is $7.22\pm0.34\%$ of $H_s$ for OU--III and $8.31\pm0.26\%$ for OU--II;
+the paired difference is $-1.086$ percentage point (bootstrap 95\% interval
+$[-1.208,-0.970]$).  OU--III has lower vertical error in all four stationary
+seas, but higher vertical error during the transition and higher 3D error in
+four of the five scenarios; the nominal-sea 3D difference is unresolved.
+Online adaptation does not dominate fixed tuning during the transition.  The
+same source builds for an
 ESP32--S3 target and has been exercised with MEMS IMU input; quantitative
 timing, processor-load, and memory measurements are reserved for a separate
 embedded-performance study.

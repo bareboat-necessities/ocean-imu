@@ -3,8 +3,8 @@
 
 The runner deliberately keeps the historical final-60-second executable gates
 separate from its inferential score.  Validation uses a configurable long
-window (900 seconds in full mode), independent wave-phase, IMU-noise, and
-initialization seeds, and paired realizations across filters and ablations.
+window (900 seconds in full mode), independent wave-realization, IMU-noise,
+and initialization seeds, and paired realizations across filters and ablations.
 """
 
 from __future__ import annotations
@@ -31,6 +31,16 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DT_SECONDS = 1.0 / 200.0
 GRAVITY_MPS2 = 9.80665
+SURROGATE_MIN_FREQ_HZ = 0.02
+SURROGATE_MAX_FREQ_HZ = 1.60
+WAVE_PHASE_METHOD = (
+    "common random phase on the 0.02-1.60 Hz world-velocity and Euler "
+    "spectra; displacement and acceleration analytically derived from "
+    "velocity; body IMU and quaternion reconstructed"
+)
+TRANSITION_METHOD = (
+    "C2 quintic blend with exact first- and second-derivative cross terms"
+)
 
 METRIC_NAMES = (
     "disp_x_rms_m",
@@ -258,32 +268,85 @@ def rebuild_body_imu(columns: Sequence[str], data: np.ndarray) -> np.ndarray:
 def phase_randomize_wave(
     columns: Sequence[str], data: np.ndarray, seed: int
 ) -> np.ndarray:
-    """Apply one common random Fourier phase to all physical wave channels.
+    """Build a band-limited, kinematically closed phase surrogate.
 
-    A common phase at each frequency preserves every auto-spectrum and
-    cross-spectrum among displacement, velocity, acceleration, and attitude.
-    Body-frame accelerometer, gyroscope, and quaternion fields are then rebuilt
-    so the resulting CSV remains kinematically consistent.
+    The released JONSWAP traces contain components from 0.02 to 0.8 Hz and
+    second-order sum harmonics up to 1.6 Hz.  Their finite record boundaries
+    are not periodic, so independently rotating the DFTs of displacement,
+    velocity, and acceleration redistributes boundary leakage and breaks
+    ``v = d/dt(p)`` and ``a = d/dt(v)``.
+
+    Instead, this routine treats world velocity as the translational primitive.
+    It applies one common phase rotation to the retained velocity and Euler
+    bins, derives displacement and acceleration analytically from that same
+    velocity spectrum, and finally rebuilds body-frame IMU fields.  Retained
+    velocity/attitude auto- and cross-spectra are preserved while the complete
+    translational realization is kinematically consistent by construction.
     """
 
-    names = (
-        "disp_x", "disp_y", "disp_z",
-        "vel_x", "vel_y", "vel_z",
-        "acc_x", "acc_y", "acc_z",
-        "roll_deg", "pitch_deg", "yaw_deg",
+    velocity_indices = _column_indices(columns, ("vel_x", "vel_y", "vel_z"))
+    displacement_indices = _column_indices(
+        columns, ("disp_x", "disp_y", "disp_z")
     )
-    indices = _column_indices(columns, names)
-    signals = data[:, indices]
-    spectrum = np.fft.rfft(signals, axis=0)
+    acceleration_indices = _column_indices(columns, ("acc_x", "acc_y", "acc_z"))
+    attitude_indices = _column_indices(
+        columns, ("roll_deg", "pitch_deg", "yaw_deg")
+    )
+
+    count = data.shape[0]
+    frequencies = np.fft.rfftfreq(count, DT_SECONDS)
+    omega = 2.0 * np.pi * frequencies
+    retained = (
+        (frequencies >= SURROGATE_MIN_FREQ_HZ)
+        & (frequencies <= SURROGATE_MAX_FREQ_HZ)
+    )
+
     rng = np.random.default_rng(seed)
-    phase = rng.uniform(-np.pi, np.pi, spectrum.shape[0])
+    phase = rng.uniform(-np.pi, np.pi, frequencies.size)
     phase[0] = 0.0
-    if data.shape[0] % 2 == 0:
+    if count % 2 == 0:
         phase[-1] = 0.0
-    spectrum *= np.exp(1j * phase)[:, None]
+    rotation = np.exp(1j * phase)
+
+    source_velocity = np.fft.rfft(data[:, velocity_indices], axis=0)
+    velocity_spectrum = np.zeros_like(source_velocity)
+    # The state represents oscillatory displacement, so exclude the source
+    # model's separate mean Stokes-drift velocity from this closed chain.
+    velocity_spectrum[retained] = (
+        source_velocity[retained] * rotation[retained, None]
+    )
+
+    displacement_spectrum = np.zeros_like(velocity_spectrum)
+    source_displacement = np.fft.rfft(data[:, displacement_indices], axis=0)
+    displacement_spectrum[0] = source_displacement[0]
+    displacement_spectrum[retained] = (
+        velocity_spectrum[retained] / (1j * omega[retained, None])
+    )
+    acceleration_spectrum = np.zeros_like(velocity_spectrum)
+    acceleration_spectrum[retained] = (
+        1j * omega[retained, None] * velocity_spectrum[retained]
+    )
+
+    source_attitude = np.fft.rfft(data[:, attitude_indices], axis=0)
+    attitude_spectrum = np.zeros_like(source_attitude)
+    attitude_spectrum[0] = source_attitude[0]
+    attitude_spectrum[retained] = (
+        source_attitude[retained] * rotation[retained, None]
+    )
 
     result = data.copy()
-    result[:, indices] = np.fft.irfft(spectrum, n=data.shape[0], axis=0)
+    result[:, displacement_indices] = np.fft.irfft(
+        displacement_spectrum, n=count, axis=0
+    )
+    result[:, velocity_indices] = np.fft.irfft(
+        velocity_spectrum, n=count, axis=0
+    )
+    result[:, acceleration_indices] = np.fft.irfft(
+        acceleration_spectrum, n=count, axis=0
+    )
+    result[:, attitude_indices] = np.fft.irfft(
+        attitude_spectrum, n=count, axis=0
+    )
     return rebuild_body_imu(columns, result)
 
 
@@ -307,11 +370,25 @@ def scale_wave_motion(
     return rebuild_body_imu(columns, result)
 
 
-def smoothstep_weight(times: np.ndarray, start_sec: float, end_sec: float) -> np.ndarray:
+def smoothstep_profile(
+    times: np.ndarray, start_sec: float, end_sec: float
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return a C2 quintic blend and its first two time derivatives."""
+
     if not end_sec > start_sec:
         raise ValueError("transition end must be later than transition start")
-    x = np.clip((times - start_sec) / (end_sec - start_sec), 0.0, 1.0)
-    return x * x * (3.0 - 2.0 * x)
+    duration = end_sec - start_sec
+    x = np.clip((times - start_sec) / duration, 0.0, 1.0)
+    weight = x**3 * (10.0 + x * (-15.0 + 6.0 * x))
+    first = 30.0 * x**2 * (1.0 - x) ** 2 / duration
+    second = 60.0 * x * (2.0 * x**2 - 3.0 * x + 1.0) / duration**2
+    return weight, first, second
+
+
+def smoothstep_weight(
+    times: np.ndarray, start_sec: float, end_sec: float
+) -> np.ndarray:
+    return smoothstep_profile(times, start_sec, end_sec)[0]
 
 
 def make_nonstationary_wave(
@@ -328,19 +405,39 @@ def make_nonstationary_wave(
     end = phase_randomize_wave(columns, end_data[:count], seed * 2 + 2)
     end = scale_wave_motion(columns, end, end_scale)
     times = start[:, columns.index("time")]
-    weight = smoothstep_weight(times, transition_start_sec, transition_end_sec)
-
-    blend_names = (
-        "disp_x", "disp_y", "disp_z",
-        "vel_x", "vel_y", "vel_z",
-        "acc_x", "acc_y", "acc_z",
-        "roll_deg", "pitch_deg", "yaw_deg",
+    weight, weight_rate, weight_acceleration = smoothstep_profile(
+        times, transition_start_sec, transition_end_sec
     )
-    indices = _column_indices(columns, blend_names)
+
+    displacement = _column_indices(columns, ("disp_x", "disp_y", "disp_z"))
+    velocity = _column_indices(columns, ("vel_x", "vel_y", "vel_z"))
+    acceleration = _column_indices(columns, ("acc_x", "acc_y", "acc_z"))
+    attitude = _column_indices(columns, ("roll_deg", "pitch_deg", "yaw_deg"))
     result = start.copy()
-    result[:, indices] = (
-        (1.0 - weight[:, None]) * start[:, indices]
-        + weight[:, None] * end[:, indices]
+    weight_column = weight[:, None]
+    weight_rate_column = weight_rate[:, None]
+    weight_acceleration_column = weight_acceleration[:, None]
+    displacement_delta = end[:, displacement] - start[:, displacement]
+    velocity_delta = end[:, velocity] - start[:, velocity]
+
+    result[:, displacement] = (
+        (1.0 - weight_column) * start[:, displacement]
+        + weight_column * end[:, displacement]
+    )
+    result[:, velocity] = (
+        (1.0 - weight_column) * start[:, velocity]
+        + weight_column * end[:, velocity]
+        + weight_rate_column * displacement_delta
+    )
+    result[:, acceleration] = (
+        (1.0 - weight_column) * start[:, acceleration]
+        + weight_column * end[:, acceleration]
+        + 2.0 * weight_rate_column * velocity_delta
+        + weight_acceleration_column * displacement_delta
+    )
+    result[:, attitude] = (
+        (1.0 - weight_column) * start[:, attitude]
+        + weight_column * end[:, attitude]
     )
     return rebuild_body_imu(columns, result)
 
@@ -1363,10 +1460,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "historical_gate_window_sec": 60.0,
         "transition_start_sec": transition_start,
         "transition_end_sec": transition_end,
-        "wave_phase_method": (
-            "common random Fourier phase across world motion and Euler channels; "
-            "body IMU and quaternion reconstructed"
-        ),
+        "wave_phase_method": WAVE_PHASE_METHOD,
+        "transition_method": TRANSITION_METHOD,
         "pairing": "identical wave, IMU-noise, and initialization seeds",
         "seed_triplets": [asdict(seed) for seed in seeds],
         "adaptation_modes": list(adaptation_modes),

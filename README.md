@@ -197,7 +197,7 @@ For module-level validation, run `make all` inside the relevant folder under `te
 
 The OU-II/OU-III statistical validation runner keeps the historical final-60-second
 regression gates, but scores the primary full experiment over the final 15 minutes
-of each 20-minute run. It pairs wave phase, IMU noise, and initialization across
+of each 20-minute run. It pairs wave realization, IMU noise, and initialization across
 both filters and the Adaptive, FixedNominal, and FixedOracle ablations.
 
 ```bash
@@ -208,7 +208,7 @@ python3 tools/ou_validation.py --mode full
 Full mode produces raw and summary CSV, JSON, LaTeX, paired-effect, manifest,
 and SVG plot artifacts under `reports/results/ou_validation/`. The completed
 ten-seed, 300-run evidence used by the article is versioned in that directory;
-it shows a modest aggregate OU-III vertical benefit but mixed scenario-level
-and adaptation outcomes rather than uniform superiority. See
+it shows a consistent stationary vertical OU-III benefit but mixed 3D,
+transition, and adaptation outcomes rather than uniform superiority. See
 [`docs/ou-validation.md`](docs/ou-validation.md) for the protocol, seed controls,
 and interpretation.

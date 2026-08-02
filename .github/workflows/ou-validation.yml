@@ -11,7 +11,11 @@ on:
       - "tests/validation/**"
       - "tools/ou_validation.py"
       - "tools/ou_robustness.py"
+      - "reports/results/ou_validation/**"
       - "reports/results/ou_robustness/**"
+      - "docs/ou-validation.md"
+      - "docs/ou-robustness.md"
+      - "doc/kalman_ou_iii/**"
       - "Makefile"
       - ".github/workflows/ou-validation.yml"
   push:
@@ -25,7 +29,11 @@ on:
       - "tests/validation/**"
       - "tools/ou_validation.py"
       - "tools/ou_robustness.py"
+      - "reports/results/ou_validation/**"
       - "reports/results/ou_robustness/**"
+      - "docs/ou-validation.md"
+      - "docs/ou-robustness.md"
+      - "doc/kalman_ou_iii/**"
       - "Makefile"
       - ".github/workflows/ou-validation.yml"
   workflow_dispatch:
