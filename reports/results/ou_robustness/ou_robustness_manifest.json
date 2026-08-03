@@ -10,9 +10,9 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/ocean-imu-kalman-analysis-h31e3q",
-  "git_commit": "7ba39eb4b83a0ef8f1116c0dd02fb196c21a6a4c",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 27124 ++++++++++++-------\n .../ou_robustness/ou_robustness_paired_effects.csv |   234 +-\n .../ou_robustness/ou_robustness_publication.tex    |    61 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   522 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  2708 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   809 +-\n .../ou_robustness/ou_robustness_summary.csv        |   546 +-\n 7 files changed, 20365 insertions(+), 11639 deletions(-)",
+  "git_branch": "claude/paper-revision-plan-rgzwbu",
+  "git_commit": "8374208a81311601c774f879b646a626eeafb4a2",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 14628 +++++++++++++++++--\n .../ou_robustness/ou_robustness_paired_effects.csv |   884 +-\n .../ou_robustness/ou_robustness_publication.tex    |    14 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   622 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1012 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   100 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1100 +-\n 7 files changed, 15210 insertions(+), 3150 deletions(-)",
   "matplotlib": "3.11.1",
   "nominal_tuning_point": {
     "RS_ms": 5.814890311263675,
@@ -120,32 +120,32 @@
   "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 780912,
-      "sha256": "7ec3c06176bf41b0939fac184f081b7118b5c35db60098a558a2b3387635125a"
+      "bytes": 1179819,
+      "sha256": "3ae8d0b59dbf900f72315f0eea5dfb3ae4aa5e93734e309dda572e53b44a4b4c"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 63837,
-      "sha256": "8a428a050736f65776335c529ae2f55b65594e20ac28211fa0c638f3bd7679ca"
+      "bytes": 112111,
+      "sha256": "17bd1c786d30e980545799bc36b3560ec3231803bf50ad0dfd8883f93fa41788"
     },
     "ou_robustness_publication.tex": {
       "bytes": 4510,
-      "sha256": "c9b712e4e178c8ff18fa4768ae072b01b3bf0b7ffd76196a1938167a2fdb3040"
+      "sha256": "4870b5ed7916004f14a808c553910b0d4f77e2b78ea8a1bc699fd7f6e1070c59"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 130700,
-      "sha256": "8899a3d01a553fe779a2d2f20624ae43d5f3963aad41568f223387a1030310d1"
+      "bytes": 171040,
+      "sha256": "d2a9fdcec2f7aece01c985bfb022787fef2d4371ca5f30ec114b30e2209875e3"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 118683,
-      "sha256": "b9af8f8464cb6d3364da15fe4cd652357142e0c134cfd6c6d71a88008cb1f041"
+      "bytes": 118662,
+      "sha256": "b4c69bade552fe48a04832183241552e446be4088fb5cfbef4489a840dd4b81c"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 47103,
-      "sha256": "58da2acbe275979e258323892507678d74b00cd2a2b3fa6e7059cd2266a8bae1"
+      "bytes": 47102,
+      "sha256": "12d191a0f4e21e5258c9f9aabcc7df0268aed9c142c0165e74a84c6d6bbc79a2"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 55832,
-      "sha256": "a538a3bd49aaa53698cd9bc8557d3bb7464dbae6d70a3057e429d4f787102b35"
+      "bytes": 99946,
+      "sha256": "fdafb3175169c51dfcfbb9bce6b66bd01b796da5ef278c0a493fcb51fd487845"
     }
   },
   "source_files": {
@@ -162,20 +162,20 @@
       "sha256": "f0be2c41464e4a5a0924bab652549d38ffc6bec55406156b7b4a0ef72ce490d4"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 55649,
-      "sha256": "c3e9e29a8c8c52317b75243570f4912f325a731b878c4e1de9de17384d9fa35f"
+      "bytes": 62228,
+      "sha256": "740111a1365fe5669d50b0e8df306ffd7c470b81aada509b07cc386ebe81b37c"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 16160,
-      "sha256": "2a527ce12117ebbea01622ea0db6ef53d0a5b726b71c236db9506c4a8a743f3d"
+      "bytes": 17478,
+      "sha256": "edc45bcccb8527117672c7238fab6a56b50808bac75f73b0fabcf683f49cf635"
     },
     "tools/ou_robustness.py": {
-      "bytes": 39374,
-      "sha256": "88afb2170ab1e00e738886bf4a4925ef889a2359f8f3cb0df6dfd3ffc7e2de4c"
+      "bytes": 39439,
+      "sha256": "2505b3de2111ed3add5912d24618980d8e3e8c8d541d9dc8619c6c7f66221ae6"
     },
     "tools/ou_validation.py": {
-      "bytes": 84920,
-      "sha256": "0b21afd5e954cb641fb5cd8be8ecba5ab46cf9c06f1aeb0ad28078518673681b"
+      "bytes": 123158,
+      "sha256": "8fa3bf744981ee4b6ebfbb69141d7293cdc05b793b9ab64f2f6218ae7e8dc568"
     }
   }
 }

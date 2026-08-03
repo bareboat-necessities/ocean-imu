@@ -25,10 +25,11 @@ scored on the same seeds.  Adaptive tuning improves on
 FixedNominal at the smallest and largest stationary seas, but both families
 score worse than FixedNominal and the endpoint-calibrated fixed reference at
 the nominal sea and over the controlled transition.  The channel ablation
-locates that benefit: freezing $\tau$ and $\sigma_{aw}$ while $r_S$ keeps
-adapting recovers nearly all of it, whereas freezing $r_S$ recovers almost
-none, so what the vertical evidence establishes is the value of adaptive
-integral-state regularization rather than the necessity of full
+locates that benefit entirely in one parameter: freezing $\tau$ and
+$\sigma_{aw}$ while $r_S$ keeps adapting reproduces it, and at the two largest
+seas and the transition improves on adapting all three, whereas freezing $r_S$
+recovers none of it.  What the vertical evidence establishes is therefore the
+value of adaptive integral-state regularization, not the necessity of joint
 three-parameter OU adaptation.  A matched control shows
 that the periodic covariance re-alignment accounts for at most
 $\OUValidationCovSyncWorstDifference$ points of that gap, so the gap is the

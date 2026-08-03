@@ -268,27 +268,42 @@ $H_s=\SI{0.27}{m}$, letting $r_S$ adapt while $\tau$ and $\sigma_{aw}$ stay
 frozen improves on FixedNominal by
 $\OUValidationChannelHsZeroTwoSevenRSOnlyDifference$ percentage points
 ($[\OUValidationChannelHsZeroTwoSevenRSOnlyLow,\OUValidationChannelHsZeroTwoSevenRSOnlyHigh]$),
-recovering nearly all of what full adaptation achieves, whereas letting $\tau$
-and $\sigma_{aw}$ adapt with $r_S$ frozen changes it by only
-$\OUValidationChannelHsZeroTwoSevenOUOnlyDifference$ points
+whereas letting $\tau$ and $\sigma_{aw}$ adapt with $r_S$ frozen changes it by
+only $\OUValidationChannelHsZeroTwoSevenOUOnlyDifference$ points
 ($[\OUValidationChannelHsZeroTwoSevenOUOnlyLow,\OUValidationChannelHsZeroTwoSevenOUOnlyHigh]$).
 The same ordering holds at \SI{8.5}{m}
 ($\OUValidationChannelHsEightFiveRSOnlyDifference$ against
-$\OUValidationChannelHsEightFiveOUOnlyDifference$ points).
+$\OUValidationChannelHsEightFiveOUOnlyDifference$ points) and at
+\SI{4.0}{m}.  The $r_S$ channel accounts for the entire adaptation benefit;
+the OU channel accounts for none of it.
+
+The factorial says something further that the Adaptive-versus-Fixed comparison
+could not.  Reading the first two columns of
+Table~\ref{tab:ou_mc_channels} against each other, adapting $r_S$ alone is not
+merely most of full adaptation but is \emph{better} than it at
+$H_s=\SI{4.0}{m}$, at \SI{8.5}{m}, and over the transition, and is worse only
+at the two smallest seas.  Since the two configurations differ solely in
+whether $\tau$ and $\sigma_{aw}$ track the sea, the estimation jitter those two
+channels inject is a net cost wherever the frozen values are not badly
+mismatched -- the same jitter identified below as the reason Adaptive loses to
+a well-matched frozen point.  We report this as an observation on the tested
+scenarios rather than a tuning recommendation: the study computes no interval
+for that particular contrast, and choosing a configuration from these scored
+errors would break the frozen, sensor-only protocol of
+Sec.~\ref{sec:sim-and-eval}.
 
 This narrows the contribution in a way the earlier framing did not.  What the
 vertical result demonstrates is the value of \emph{adaptive integral-state
-regularization}: the $r_S$ channel carries essentially the whole benefit, and
-adapting the OU time constant and stationary variance contributes little to
-vertical displacement once $r_S$ is free.  It is consistent with the mechanism
-identified in Sec.~\ref{sec:ou-robustness}, where the accelerometer's direct
-\SI{200}{Hz} observation of $\vct{a}_w$ leaves that gain near saturation while
-$r_S$ governs the unobserved low-frequency channel.  Joint adaptation is not
-thereby useless -- $\tau$ and $\sigma_{aw}$ still set the prior the estimator
+regularization}, not of joint OU adaptation.  It is consistent with the
+mechanism identified in Sec.~\ref{sec:ou-robustness}, where the accelerometer's
+direct \SI{200}{Hz} observation of $\vct{a}_w$ leaves that gain near saturation
+while $r_S$ governs the unobserved low-frequency channel.  $\tau$ and
+$\sigma_{aw}$ are not thereby idle -- they set the prior the estimator
 integrates, they drive $r_S$ through the deployed law, and
 Sec.~\ref{sec:ou-robustness} shows $\sigma_{aw}$ matters for attitude -- but
 the evidence does not support claiming that full three-parameter adaptation is
-necessary for the vertical improvement.
+necessary for the vertical improvement, and at the larger seas it is not even
+preferable.
 
 Adaptive does not, however, beat either fixed reference at the nominal sea or
 over the transition.  At the nominal $H_s=\SI{1.5}{m}$ sea, FixedNominal and
