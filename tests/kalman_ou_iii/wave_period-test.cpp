@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <numbers>
 #include <random>
 #include <vector>
@@ -152,6 +153,66 @@ bool test_rate_invariance() {
     return true;
 }
 
+// The property that decides the design: a strapdown vertical channel carries
+// white noise and a bias random walk, both outside the wave band, and double
+// integration weights a spectrum by 1/omega^4.  Without the shared high-pass
+// stages the estimate collapses toward the leak corner and loses the ordering
+// entirely - on the reference records a leak-only estimator reads 33, 14, 9.8
+// and 9.7 s for true periods of 2.5, 4.5, 6.6 and 8.6 s.
+bool test_survives_instrument_disturbances() {
+    std::mt19937 rng(12345);
+    std::normal_distribution<float> white(0.0f, 0.35f);
+    std::normal_distribution<float> walk(0.0f, 1e-3f * std::sqrt(kDt));
+
+    float previous = 0.0f;
+    for (float period : {5.0f, 8.5f, 12.0f}) {
+        WavePeriodEstimator estimator;
+        const float omega = kTwoPi / period;
+        const float amplitude = 1.2f;
+        float bias = 0.0f;
+        const int steps = static_cast<int>(1200.0f / kDt);
+        for (int i = 0; i < steps; ++i) {
+            const float t = static_cast<float>(i) * kDt;
+            bias += walk(rng);
+            estimator.update(kDt,
+                             -amplitude * omega * omega * std::sin(omega * t)
+                                 + bias + white(rng));
+        }
+        if (!check(estimator.isReady(), "disturbed estimate never became ready")) return false;
+        const float relative = std::abs(estimator.getPeriodSec() - period) / period;
+        if (!check(relative < 0.15f, "instrument disturbances moved the period by more than 15 percent")) {
+            std::fprintf(stderr, "  period %.1f estimated %.3f\n", period, estimator.getPeriodSec());
+            return false;
+        }
+        if (!check(estimator.getPeriodSec() > previous, "disturbed estimate lost the ordering")) return false;
+        previous = estimator.getPeriodSec();
+    }
+    return true;
+}
+
+// Malformed samples must not corrupt the state, and reset must clear it.
+bool test_rejects_bad_samples_and_resets() {
+    WavePeriodEstimator estimator;
+    const float omega = kTwoPi / 7.0f;
+    for (int i = 0; i < static_cast<int>(900.0f / kDt); ++i) {
+        const float t = static_cast<float>(i) * kDt;
+        estimator.update(kDt, -omega * omega * std::sin(omega * t));
+    }
+    if (!check(estimator.isReady(), "clean run never became ready")) return false;
+    const float before = estimator.getPeriodSec();
+
+    estimator.update(-kDt, 1.0f);
+    estimator.update(0.0f, 1.0f);
+    estimator.update(kDt, std::numeric_limits<float>::quiet_NaN());
+    estimator.update(std::numeric_limits<float>::infinity(), 1.0f);
+    if (!check(estimator.getPeriodSec() == before, "a malformed sample changed the estimate")) return false;
+
+    estimator.reset();
+    if (!check(!estimator.isReady() && !std::isfinite(estimator.getPeriodSec()),
+               "reset left the estimator ready")) return false;
+    return true;
+}
+
 bool test_no_signal_stays_unready() {
     WavePeriodEstimator estimator;
     for (int i = 0; i < static_cast<int>(300.0f / kDt); ++i) {
@@ -168,6 +229,8 @@ int main() {
     if (!test_broadband_tracks_sea_state()) return 1;
     if (!test_offset_rejection()) return 1;
     if (!test_rate_invariance()) return 1;
+    if (!test_survives_instrument_disturbances()) return 1;
+    if (!test_rejects_bad_samples_and_resets()) return 1;
     if (!test_no_signal_stays_unready()) return 1;
     std::printf("wave_period-test: OK\n");
     return 0;
