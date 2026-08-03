@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_iii-sim kalman_ou_common-test
+TARGETS = kalman_ou_iii-sim kalman_ou_common-test channel_freeze-test
 
 all: build test
 
@@ -37,6 +37,9 @@ kalman_ou_iii-sim: kalman_ou_iii-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 kalman_ou_common-test: kalman_ou_common-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+channel_freeze-test: channel_freeze-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp

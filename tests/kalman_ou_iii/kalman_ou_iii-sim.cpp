@@ -196,14 +196,19 @@ public:
     {
         fusion_.update(dt, gyr_meas_ned, acc_meas_ned, temperature_c);
         auto& filter = fusion_.raw();
-        if (fixed_tuning_ && !fixed_tuning_applied_ && filter.isAdaptiveLive()) {
-            if (!filter.setFixedTuning(
-                    fixed_tau_s_, fixed_sigma_a_, fixed_RS_))
-            {
-                throw std::runtime_error("invalid fixed OU-III tuning point");
-            }
-            fixed_tuning_applied_ = true;
-        }
+        if (tuning_ == TuningMode::Adaptive) return;
+        if (fixed_tuning_applied_ || !filter.isAdaptiveLive()) return;
+
+        const bool ok = (tuning_ == TuningMode::Fixed)
+            ? filter.setFixedTuning(fixed_tau_s_, fixed_sigma_a_, fixed_RS_)
+            : filter.setChannelFreeze(
+                  tuning_ == TuningMode::AdaptiveRSOnly,
+                  fixed_tau_s_,
+                  fixed_sigma_a_,
+                  tuning_ == TuningMode::AdaptiveOUOnly,
+                  fixed_RS_);
+        if (!ok) throw std::runtime_error("invalid OU-III tuning point");
+        fixed_tuning_applied_ = true;
     }
 
     FilterSnapshot snapshot() const override {
@@ -291,33 +296,56 @@ private:
             "W3D_AW_COV_SYNC must be reconfigure or periodic");
     }
 
+    // W3D_TUNING_MODE selects how much of the operating point is estimated
+    // online:
+    //   adaptive          all three channels track the sea (deployed filter)
+    //   fixed*            all three frozen at the supplied triple
+    //   adaptive_rs_only  tau and sigma_aw frozen, r_S keeps adapting
+    //   adaptive_ou_only  r_S frozen, tau and sigma_aw keep adapting
+    // The last two isolate which channel carries the adaptation benefit; the
+    // deployed law r_S = clip(c*sigma_aw*tau^3) ties them together, so a
+    // fixed-versus-adaptive comparison alone cannot separate them.
     void load_fixed_tuning()
     {
         const char* raw_mode = std::getenv("W3D_TUNING_MODE");
         const std::string mode = raw_mode ? raw_mode : "adaptive";
         if (mode == "adaptive") return;
-        if (!mode.starts_with("fixed")) {
+        if (mode == "adaptive_rs_only") {
+            tuning_ = TuningMode::AdaptiveRSOnly;
+        } else if (mode == "adaptive_ou_only") {
+            tuning_ = TuningMode::AdaptiveOUOnly;
+        } else if (mode.starts_with("fixed")) {
+            tuning_ = TuningMode::Fixed;
+        } else {
             throw std::runtime_error(
-                "W3D_TUNING_MODE must be adaptive or start with fixed");
+                "W3D_TUNING_MODE must be adaptive, adaptive_rs_only, "
+                "adaptive_ou_only, or start with fixed");
         }
 
-        fixed_tuning_ =
+        const bool have_all =
             env_float("W3D_FIXED_TAU_S", fixed_tau_s_) &&
             env_float("W3D_FIXED_SIGMA_A", fixed_sigma_a_) &&
             env_float("W3D_FIXED_RS", fixed_RS_);
-        if (!fixed_tuning_ ||
+        if (!have_all ||
             !(std::isfinite(fixed_tau_s_) && fixed_tau_s_ > 0.0f &&
               std::isfinite(fixed_sigma_a_) && fixed_sigma_a_ > 0.0f &&
               std::isfinite(fixed_RS_) && fixed_RS_ > 0.0f))
         {
             throw std::runtime_error(
-                "fixed OU-III mode requires positive W3D_FIXED_TAU_S, "
+                mode + " OU-III mode requires positive W3D_FIXED_TAU_S, "
                 "W3D_FIXED_SIGMA_A, and W3D_FIXED_RS");
         }
     }
 
+    enum class TuningMode {
+        Adaptive,
+        Fixed,
+        AdaptiveRSOnly,
+        AdaptiveOUOnly,
+    };
+
     bool with_mag_ = true;
-    bool fixed_tuning_ = false;
+    TuningMode tuning_ = TuningMode::Adaptive;
     bool fixed_tuning_applied_ = false;
     float fixed_tau_s_ = NAN;
     float fixed_sigma_a_ = NAN;

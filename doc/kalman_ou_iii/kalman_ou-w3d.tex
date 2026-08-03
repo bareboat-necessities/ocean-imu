@@ -152,6 +152,27 @@
 \pgfplotsset{compat=1.18}
 
 \begin{document}
+
+% Generated result macros are defined before any section so that the protocol
+% description can quote the same values as the results tables.  The fallbacks
+% keep the document compilable before the studies have been regenerated.
+\IfFileExists{w3d-ou-validation-macros-generated.tex-part}{%
+  \input{w3d-ou-validation-macros-generated.tex-part}%
+}{}
+\providecommand{\OUValidationBootstrapMethod}{a nonparametric percentile bootstrap of the paired mean}
+\providecommand{\OUValidationBootstrapResamples}{10{,}000}
+\providecommand{\OUValidationBootstrapRNG}{NumPy PCG64}
+\providecommand{\OUValidationStatsSeed}{--}
+\providecommand{\OUValidationPairedComparisons}{--}
+\providecommand{\OUValidationThreeDScenarios}{--}
+\providecommand{\OUValidationThreeDHigherCount}{--}
+\providecommand{\OUValidationThreeDUnresolvedCount}{--}
+\providecommand{\OUValidationDirectionAbsError}{--}
+\providecommand{\OUValidationDirectionRMSE}{--}
+\providecommand{\OUValidationDirectionForward}{--}
+\providecommand{\OUValidationDirectionReverse}{--}
+\providecommand{\OUValidationDirectionUncertain}{--}
+
 \maketitle
 
 \begin{abstract}
@@ -170,17 +191,25 @@ scale, and the standard-deviation scale whose square forms the integral
 pseudo-measurement covariance. The cubic scaling with correlation time is a
 physically motivated engineering normalization for fixed update cadence and a
 bounded family of spectra. A ten-seed paired study scores the final
-\SI{900}{s} of four stationary JONSWAP seas and a controlled transition.  Over
-the stationary seas, the seed-wise mean normalized vertical-displacement RMS
-error is $7.22\pm0.34\%$ of $H_s$ for OU--III and $8.31\pm0.26\%$ for OU--II;
-the paired difference is $-1.086$ percentage point (bootstrap 95\% interval
-$[-1.208,-0.970]$).  OU--III has lower vertical error in all four stationary
-seas, but higher vertical error during the transition and higher 3D error in
-four of the five scenarios; the nominal-sea 3D difference is unresolved.
-Online adaptation removes most of the error of a badly mismatched frozen
-operating point but does not dominate a well-matched one, and a matched
-covariance-reset control shows that this gap is not an artifact of the
-adaptation bookkeeping.  The
+\SI{900}{s} of four stationary JONSWAP seas, four PM--Stokes seas, and a
+controlled transition.  Over the stationary JONSWAP seas, the prespecified
+primary endpoint, the seed-wise mean normalized vertical-displacement RMS
+error is $7.22\pm0.34\%$ of $H_s$ for OU--III and $8.31\pm0.26\%$ for OU--II
+(mean $\pm$ sample standard deviation over the ten seed triplets); the paired
+difference is $-1.086$ percentage point (percentile-bootstrap 95\% interval
+$[-1.208,-0.970]$).  The PM--Stokes ensemble, reported separately rather than
+pooled, reproduces the vertical advantage.  The result does not generalize
+beyond the vertical channel: OU--III has lower vertical error in every
+stationary sea, but higher vertical error during the transition and higher
+full-3D displacement error in four of the five JONSWAP scenarios, with the
+nominal sea unresolved, and the horizontal penalty grows with sea state.  A
+channel ablation locates the adaptation benefit in a single parameter: freezing
+the OU time scale and stationary acceleration scale while the integral
+regularization scale keeps adapting recovers nearly all of it, whereas freezing
+that scale recovers almost none.  Online adaptation therefore buys tolerance to
+a badly mismatched frozen operating point rather than optimal accuracy; it does
+not beat a well-matched frozen point, and a matched covariance-reset control
+shows that this gap is not an artifact of the adaptation bookkeeping.  The
 same source builds for an
 ESP32--S3 target and has been exercised with MEMS IMU input; quantitative
 timing, processor-load, and memory measurements are reserved for a separate

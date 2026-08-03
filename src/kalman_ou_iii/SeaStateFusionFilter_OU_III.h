@@ -404,6 +404,7 @@ public:
     void enableTuner(bool flag = true) {
         enable_tuner_ = flag;
     }
+    bool tunerEnabled() const noexcept { return enable_tuner_; }
 
     // Policy for the latent-acceleration marginal P_{a_w a_w}.
     //
@@ -457,12 +458,77 @@ public:
         tune_.tau_applied = tau_target_;
         tune_.sigma_applied = sigma_target_;
         tune_.RS_applied = RS_target_;
+        freeze_ou_channel_ = false;
+        freeze_RS_channel_ = false;
         apply_ou_tune_(true);
         if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
             apply_RS_tune_();
         }
         return true;
     }
+
+    // Freeze one adaptation channel while the other keeps tracking the sea.
+    //
+    // The deployed law couples the two: r_S = clip(c * sigma_a * tau^3), so
+    // simply freezing tau and sigma_a with setFixedTuning() freezes r_S as
+    // well, and an ablation built that way cannot say which channel carries
+    // the benefit.  Here the tuner keeps running and keeps deriving r_S from
+    // its *live* tau and sigma_a estimates; only the channels named below are
+    // held at the supplied operating point on the way to the filter.
+    //
+    // freeze_ou   holds the OU process parameters (tau, sigma_a) at
+    //             (tau_s, sigma_a) while r_S continues to adapt.
+    // freeze_RS   holds the integral pseudo-measurement scale at RS while
+    //             tau and sigma_a continue to adapt.
+    //
+    // Freezing both is equivalent to setFixedTuning() and is rejected here so
+    // that the two entry points do not silently overlap.
+    bool setChannelFreeze(bool freeze_ou,
+                          float tau_s,
+                          float sigma_a,
+                          bool freeze_RS,
+                          float RS)
+    {
+        if (freeze_ou == freeze_RS) return false;
+        if (freeze_ou && !(std::isfinite(tau_s) && tau_s > 0.0f &&
+                           std::isfinite(sigma_a) && sigma_a > 0.0f))
+        {
+            return false;
+        }
+        if (freeze_RS && !(std::isfinite(RS) && RS > 0.0f)) return false;
+
+        enable_tuner_ = true;
+        freeze_ou_channel_ = freeze_ou;
+        freeze_RS_channel_ = freeze_RS;
+
+        if (freeze_ou) {
+            frozen_tau_s_ = enable_clamp_
+                ? std::min(std::max(tau_s, min_tau_s_), max_tau_s_)
+                : tau_s;
+            frozen_sigma_a_ = enable_clamp_
+                ? std::min(sigma_a, max_sigma_a_)
+                : sigma_a;
+            tau_target_ = frozen_tau_s_;
+            sigma_target_ = frozen_sigma_a_;
+            tune_.tau_applied = tau_target_;
+            tune_.sigma_applied = sigma_target_;
+            apply_ou_tune_(true);
+        }
+        if (freeze_RS) {
+            frozen_RS_ = enable_clamp_
+                ? std::min(std::max(RS, min_R_S_), max_R_S_)
+                : RS;
+            RS_target_ = frozen_RS_;
+            tune_.RS_applied = RS_target_;
+            if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+                apply_RS_tune_();
+            }
+        }
+        return true;
+    }
+
+    bool frozenOUChannel() const noexcept { return freeze_ou_channel_; }
+    bool frozenRSChannel() const noexcept { return freeze_RS_channel_; }
 
     // Enable/disable use of the extended linear block [v,p,S,a_w] in Kalman3D_Wave_OU_III.
     void enableLinearBlock(bool flag = true) {
@@ -709,6 +775,11 @@ private:
             sigma_target_ = std::max(sigma_target_, std::max(0.05f, acc_noise_floor_sigma_));
         }
 
+        // r_S is derived from the *live* tau and sigma_a estimates, before any
+        // channel freeze is applied below.  Deriving it from frozen values
+        // instead would make "freeze the OU channel" silently freeze r_S too,
+        // which is precisely the confound the channel ablation exists to
+        // remove.
         float RS_raw = R_S_coeff_ * sigma_target_
                        * tau_target_ * tau_target_ * tau_target_;
 
@@ -716,6 +787,14 @@ private:
             RS_target_ = std::min(std::max(RS_raw, min_R_S_), max_R_S_);
         } else {
             RS_target_ = RS_raw;
+        }
+
+        if (freeze_ou_channel_) {
+            tau_target_   = frozen_tau_s_;
+            sigma_target_ = frozen_sigma_a_;
+        }
+        if (freeze_RS_channel_) {
+            RS_target_ = frozen_RS_;
         }
         adapt_mekf(dt, tau_target_, sigma_target_, RS_target_);
     }
@@ -837,6 +916,14 @@ private:
 
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;
+
+    // Per-channel freezes for the partial-adaptation ablation; see
+    // setChannelFreeze().  Both false is the deployed fully adaptive filter.
+    bool freeze_ou_channel_ = false;
+    bool freeze_RS_channel_ = false;
+    float frozen_tau_s_ = NAN;
+    float frozen_sigma_a_ = NAN;
+    float frozen_RS_ = NAN;
 
     bool enable_linear_block_ = true;
 

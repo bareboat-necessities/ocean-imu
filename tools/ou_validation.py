@@ -21,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -57,14 +58,58 @@ MODE_SETTINGS: dict[str, tuple[str, str]] = {
     "FixedOracle": ("fixed_oracle", "periodic"),
     "AdaptiveHeldCovariance": ("adaptive", "reconfigure"),
     "FixedNominalHeldCovariance": ("fixed_nominal", "reconfigure"),
+    # Partial-adaptation channels.  The deployed law couples the integral
+    # regularization scale to the OU parameters through
+    # r_S = clip(1.2 sigma_aw tau^3), so Adaptive-versus-FixedNominal cannot
+    # say which channel earns the benefit.  These two modes freeze one channel
+    # at the FixedNominal point while the other keeps adapting, completing a
+    # 2x2 factorial with Adaptive and FixedNominal.  Only OU-III exposes an
+    # explicit r_S channel, so they are OU-III only.
+    "AdaptiveRSOnly": ("adaptive_rs_only", "periodic"),
+    "AdaptiveOUOnly": ("adaptive_ou_only", "periodic"),
 }
 
 PRIMARY_MODES = ("Adaptive", "FixedNominal", "FixedOracle")
+
+# Modes that freeze one adaptation channel at the nominal point.
+PARTIAL_MODES = ("AdaptiveRSOnly", "AdaptiveOUOnly")
+
+# Modes each family can run.  OU-II regularizes the second-order chain with
+# (R_p0, R_v0) rather than a single integral scale, so the channel ablation is
+# not defined for it.
+FAMILY_MODES: dict[str, tuple[str, ...]] = {
+    "OU_II": tuple(m for m in MODE_SETTINGS if m not in PARTIAL_MODES),
+    "OU_III": tuple(MODE_SETTINGS),
+}
 
 # Ablation pairs compared at matched tuning mode: (left, right).
 COVARIANCE_SYNC_PAIRS = (
     ("Adaptive", "AdaptiveHeldCovariance"),
     ("FixedNominal", "FixedNominalHeldCovariance"),
+)
+
+# Scoring segments for the non-stationary record, in seconds from the start of
+# the run.  A single trailing window mixes the pure start sea, the crossfade,
+# and the pure endpoint sea; these split the same window so that each interval
+# can be read on its own.
+TRANSITION_SEGMENTS = ("start", "blend", "end")
+
+SEGMENT_METRIC_NAMES = (
+    "disp_z_rms_m",
+    "disp_z_pct_hs",
+    "disp_z_ref_rms_m",
+    "disp_z_pct_refrms",
+    "disp_3d_rms_m",
+)
+
+DIRECTION_METRIC_NAMES = (
+    "dir_axis_error_deg",
+    "dir_axis_abs_error_deg",
+    "dir_axis_rmse_deg",
+    "dir_axis_circ_std_deg",
+    "dir_sense_forward_pct",
+    "dir_sense_reverse_pct",
+    "dir_sense_uncertain_pct",
 )
 
 METRIC_NAMES = (
@@ -76,11 +121,26 @@ METRIC_NAMES = (
     "disp_y_pct_hs",
     "disp_z_pct_hs",
     "disp_3d_pct_refmax",
+    "disp_z_ref_rms_m",
+    "disp_z_pct_refrms",
     "roll_rms_deg",
     "pitch_rms_deg",
     "yaw_rms_deg",
+    *DIRECTION_METRIC_NAMES,
     "accel_bias_3d_rms_mps2",
     "gyro_bias_3d_rms_radps",
+    *(
+        f"seg_{segment}_{metric}"
+        for segment in TRANSITION_SEGMENTS
+        for metric in SEGMENT_METRIC_NAMES
+    ),
+)
+
+# Metrics defined for every run.  The segment metrics exist only where extra
+# scoring intervals were requested, so studies that do not request them use
+# this list instead of carrying empty columns.
+NON_SEGMENT_METRIC_NAMES = tuple(
+    metric for metric in METRIC_NAMES if not metric.startswith("seg_")
 )
 
 DISPLAY_METRICS = (
@@ -474,19 +534,49 @@ def make_nonstationary_wave(
     return rebuild_body_imu(columns, result)
 
 
+TEXT_METRIC_KEYS = ("family", "tuning_mode", "aw_cov_sync", "input", "segment")
+
+
+def _parse_metric_line(line: str) -> dict[str, Any]:
+    metrics: dict[str, Any] = {}
+    for token in line.split()[1:]:
+        key, value = token.split("=", 1)
+        if key == "samples":
+            metrics[key] = int(value)
+        elif key in TEXT_METRIC_KEYS:
+            metrics[key] = value
+        else:
+            metrics[key] = float(value)
+    return metrics
+
+
 def parse_validation_metrics(output: str) -> dict[str, Any]:
     lines = [line for line in output.splitlines() if line.startswith("VALIDATION_METRICS ")]
     if not lines:
         raise ValueError("simulator did not emit VALIDATION_METRICS")
-    metrics: dict[str, Any] = {}
-    for token in lines[-1].split()[1:]:
-        key, value = token.split("=", 1)
-        if key == "samples":
-            metrics[key] = int(value)
-        elif key in ("family", "tuning_mode", "aw_cov_sync", "input"):
-            metrics[key] = value
-        else:
-            metrics[key] = float(value)
+    metrics = _parse_metric_line(lines[-1])
+    metrics.pop("segment", None)
+    metrics.pop("start_s", None)
+
+    # The axis is defined mod 180 deg, so the signed error averages toward zero
+    # across scenarios of opposite nominal heading.  The magnitude is what the
+    # accuracy claim needs, so it is carried alongside the signed value.
+    signed = metrics.get("dir_axis_error_deg")
+    if isinstance(signed, float):
+        metrics["dir_axis_abs_error_deg"] = abs(signed)
+
+    # Flatten any extra scoring segments into the same row so the existing
+    # summary and paired-effect machinery covers them unchanged.
+    for line in output.splitlines():
+        if not line.startswith("VALIDATION_SEGMENT "):
+            continue
+        segment = _parse_metric_line(line)
+        name = str(segment.get("segment", "")).strip()
+        if not name:
+            continue
+        for metric in SEGMENT_METRIC_NAMES:
+            if metric in segment:
+                metrics[f"seg_{name}_{metric}"] = segment[metric]
     return metrics
 
 
@@ -518,6 +608,7 @@ def run_simulator(
     no_noise: bool = False,
     aw_cov_sync: str = "reconfigure",
     write_timeseries: bool = False,
+    segments: Sequence[tuple[str, float, float]] = (),
 ) -> tuple[dict[str, Any], bool, int]:
     binary = FAMILY_BINARY[family]
     if not binary.exists():
@@ -536,6 +627,9 @@ def run_simulator(
             "W3D_COLLECT_ALL_GATES": "1",
             "W3D_TUNING_MODE": tuning_mode,
             "W3D_AW_COV_SYNC": aw_cov_sync,
+            "W3D_VALIDATION_SEGMENTS": ",".join(
+                f"{name}:{start:.9g}:{stop:.9g}" for name, start, stop in segments
+            ),
         }
     )
     if tuning_point is not None:
@@ -600,7 +694,11 @@ def calibrate_tuning_point(
 
 
 def _finite_values(rows: Sequence[Mapping[str, Any]], metric: str) -> np.ndarray:
-    values = np.asarray([float(row[metric]) for row in rows], dtype=np.float64)
+    # Segment metrics only exist for the non-stationary scenario, so a missing
+    # key is an expected absence rather than a defect.
+    values = np.asarray(
+        [float(row.get(metric, math.nan)) for row in rows], dtype=np.float64
+    )
     return values[np.isfinite(values)]
 
 
@@ -669,7 +767,7 @@ def _paired_effect(
         return {
             tuple(row[key] for key in pair_keys): float(row[metric])
             for row in rows
-            if math.isfinite(float(row[metric]))
+            if math.isfinite(float(row.get(metric, math.nan)))
         }
 
     left = indexed(left_rows)
@@ -773,6 +871,30 @@ def paired_effect_rows(
                             }
                         )
 
+            # Channel ablation: each partially adapting mode against the
+            # fully frozen point, so the benefit can be attributed to the
+            # channel that was left free rather than to adaptation at large.
+            for partial in PARTIAL_MODES:
+                partial_rows = mode_rows(partial)
+                baseline_rows = mode_rows("FixedNominal")
+                for metric in METRIC_NAMES:
+                    effect = _paired_effect(
+                        partial_rows, baseline_rows, metric, pair_keys,
+                        bootstrap_resamples, rng,
+                    )
+                    if effect:
+                        effects.append(
+                            {
+                                "scenario": scenario,
+                                "family": family,
+                                "comparison": f"{partial}_minus_FixedNominal",
+                                "metric": metric,
+                                "left": f"{family}/{partial}",
+                                "right": f"{family}/FixedNominal",
+                                **effect,
+                            }
+                        )
+
             # Covariance-reset ablation at matched tuning mode: isolates the
             # effect of repeatedly overwriting the posterior a_w marginal from
             # the effect of letting the operating point adapt.
@@ -810,7 +932,7 @@ def write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
             if key not in fieldnames:
                 fieldnames.append(key)
     with path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer = csv.DictWriter(stream, fieldnames=fieldnames, restval="")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -871,6 +993,14 @@ def write_latex_table(path: Path, summary: Sequence[Mapping[str, Any]]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def scenario_spectrum(scenario: str) -> str:
+    if scenario.startswith("nonstationary_"):
+        return "jonswap"
+    if "pmstokes" in scenario:
+        return "pmstokes"
+    return "jonswap"
+
+
 def scenario_display_label(scenario: str) -> str:
     if scenario.startswith("nonstationary_"):
         return "Transition"
@@ -881,22 +1011,93 @@ def scenario_display_label(scenario: str) -> str:
     return scenario.replace("_", " ")
 
 
-def scenario_sort_key(scenario: str) -> tuple[int, float, str]:
+def scenario_sort_key(scenario: str) -> tuple[int, int, float, str]:
+    spectrum_rank = 1 if scenario_spectrum(scenario) == "pmstokes" else 0
     if scenario.startswith("nonstationary_"):
-        return 1, math.inf, scenario
+        return spectrum_rank, 1, math.inf, scenario
     height = re.search(r"_H([0-9]+)_([0-9]{3})_", scenario)
     value = (
         float(f"{height.group(1)}.{height.group(2)}")
         if height else math.inf
     )
-    return 0, value, scenario
+    return spectrum_rank, 0, value, scenario
+
+
+# TeX control-sequence names are made of category-11 characters, i.e. letters
+# only.  A generated name that contains a digit does not fail: TeX ends the
+# name at the digit and typesets the remainder as ordinary text beside the
+# value, so `\OUValidationIIHs027NominalDifference` renders as the literal
+# "27NominalDifference-13.118".  Every generated name is therefore mapped into
+# [A-Za-z] here, and checked again before the file is written.
+_DIGIT_WORDS = {
+    "0": "Zero",
+    "1": "One",
+    "2": "Two",
+    "3": "Three",
+    "4": "Four",
+    "5": "Five",
+    "6": "Six",
+    "7": "Seven",
+    "8": "Eight",
+    "9": "Nine",
+}
+
+_PROVIDED_MACRO_RE = re.compile(r"\\(?:provide|new|renew)command\s*\{\\([^}]*)\}")
+
+
+def latex_letter_token(text: str) -> str:
+    """Return ``text`` as a legal TeX control-sequence fragment."""
+
+    return "".join(
+        character if character.isalpha() else _DIGIT_WORDS.get(character, "")
+        for character in text
+    )
+
+
+def scenario_macro_token(scenario: str) -> str:
+    """Letters-only macro fragment identifying a scenario."""
+
+    if scenario.startswith("nonstationary_"):
+        return "Transition"
+    prefix = "PMStokes" if scenario_spectrum(scenario) == "pmstokes" else ""
+    height = re.search(r"_H([0-9]+)_([0-9]{3})_", scenario)
+    if not height:
+        return prefix + latex_letter_token(scenario.title())
+    value = f"{height.group(1)}.{height.group(2)}".rstrip("0").rstrip(".")
+    return f"{prefix}Hs{latex_letter_token(value)}"
+
+
+def assert_latex_macro_names(lines: Iterable[str]) -> None:
+    """Fail generation rather than emit a macro TeX cannot name."""
+
+    illegal = sorted(
+        {
+            name
+            for line in lines
+            for name in _PROVIDED_MACRO_RE.findall(line)
+            if not name.isalpha()
+        }
+    )
+    if illegal:
+        raise ValueError(
+            "generated LaTeX macro names must contain letters only; "
+            f"offending names: {', '.join(illegal)}"
+        )
 
 
 def stationary_normalized_aggregate(
     rows: Sequence[Mapping[str, Any]],
     bootstrap_resamples: int,
     stats_seed: int,
+    spectrum: str = "jonswap",
 ) -> dict[str, dict[str, Any]]:
+    """Seed-level mean normalized vertical error over one stationary family.
+
+    The primary endpoint is the JONSWAP ensemble the study was declared on.
+    PM-Stokes is aggregated separately rather than pooled, so that adding it
+    does not silently redefine the confirmatory comparison.
+    """
+
     by_seed_family: dict[
         tuple[Any, Any, Any, str], list[float]
     ] = defaultdict(list)
@@ -904,6 +1105,7 @@ def stationary_normalized_aggregate(
         if (
             not str(row["scenario"]).startswith("stationary_")
             or row["mode"] != "Adaptive"
+            or scenario_spectrum(str(row["scenario"])) != spectrum
         ):
             continue
         key = (
@@ -984,6 +1186,7 @@ def write_publication_table(
     effects: Sequence[Mapping[str, Any]],
     bootstrap_resamples: int,
     stats_seed: int,
+    macros_path: Path | None = None,
 ) -> None:
     indexed_summary = {
         (
@@ -1003,7 +1206,7 @@ def write_publication_table(
         ): row
         for row in effects
     }
-    scenarios = sorted(
+    all_scenarios = sorted(
         {
             str(row["scenario"])
             for row in summary
@@ -1011,25 +1214,59 @@ def write_publication_table(
         },
         key=scenario_sort_key,
     )
+    # The confirmatory comparison is the declared JONSWAP ensemble plus the
+    # controlled transition; PM-Stokes is reported separately below.
+    scenarios = [s for s in all_scenarios if scenario_spectrum(s) == "jonswap"]
+    pmstokes_scenarios = [
+        s for s in all_scenarios if scenario_spectrum(s) == "pmstokes"
+    ]
+    transition_scenarios = [
+        s for s in scenarios if s.startswith("nonstationary_")
+    ]
     aggregate = stationary_normalized_aggregate(
         rows, bootstrap_resamples, stats_seed
     )
     difference = aggregate["OU_III_minus_OU_II"]
+    pmstokes_aggregate = (
+        stationary_normalized_aggregate(
+            rows, bootstrap_resamples, stats_seed, spectrum="pmstokes"
+        )
+        if pmstokes_scenarios
+        else None
+    )
     gate_passes = sum(int(row["historical_60s_gate_pass"]) for row in rows)
 
-    def mean_std(scenario: str, family: str, mode: str) -> str:
-        row = indexed_summary[(scenario, family, mode, "disp_z_pct_hs")]
-        return f"{float(row['mean']):.2f} $\\pm$ {float(row['std']):.2f}"
+    def mean_std(
+        scenario: str, family: str, mode: str, metric: str = "disp_z_pct_hs",
+        digits: int = 2,
+    ) -> str:
+        row = indexed_summary.get((scenario, family, mode, metric))
+        if row is None or not math.isfinite(float(row["mean"])):
+            return "--"
+        return (
+            f"{float(row['mean']):.{digits}f} $\\pm$ "
+            f"{float(row['std']):.{digits}f}"
+        )
 
     def paired_ci(scenario: str, metric: str, digits: int) -> str:
-        row = indexed_effects[
+        row = indexed_effects.get(
             (scenario, "OU_III_vs_OU_II", "OU_III_minus_OU_II", metric)
-        ]
+        )
+        if row is None:
+            return "--"
         return (
             f"{float(row['mean_paired_difference']):+.{digits}f} "
             f"[{float(row['bootstrap_ci95_low']):+.{digits}f}, "
             f"{float(row['bootstrap_ci95_high']):+.{digits}f}]"
         )
+
+    def value_of(
+        scenario: str, family: str, mode: str, metric: str, digits: int = 3
+    ) -> str:
+        row = indexed_summary.get((scenario, family, mode, metric))
+        if row is None or not math.isfinite(float(row["mean"])):
+            return "--"
+        return f"{float(row['mean']):.{digits}f}"
 
     def ablation_effect(
         scenario: str, family: str, baseline: str, metric: str = "disp_z_pct_hs"
@@ -1041,15 +1278,9 @@ def write_publication_table(
     def signed(value: float, digits: int = 3) -> str:
         return f"{value:+.{digits}f}"
 
-    scenario_macro = {}
-    for scenario in scenarios:
-        if scenario.startswith("nonstationary_"):
-            scenario_macro[scenario] = "Transition"
-            continue
-        height = re.search(r"_H([0-9]+)_([0-9]{3})_", scenario)
-        if height:
-            token = f"{height.group(1)}{height.group(2)}".rstrip("0") or "0"
-            scenario_macro[scenario] = f"Hs{token}"
+    scenario_macro = {
+        scenario: scenario_macro_token(scenario) for scenario in scenarios
+    }
 
     # Every adaptation-ablation number quoted in the manuscript is emitted
     # here, so the prose cannot drift away from the regenerated rows.
@@ -1077,6 +1308,30 @@ def write_publication_table(
                     )
                 )
 
+        # Share of the FixedNominal-to-FixedOracle mismatch that online tuning
+        # actually recovers.  "Adaptation removes most of the mismatch" is only
+        # an aggregate statement, and this is what makes the spread visible
+        # instead of leaving the reader to infer it from three means.
+        for family in ("OU_II", "OU_III"):
+            short = "II" if family == "OU_II" else "III"
+            means = {}
+            for mode in ("Adaptive", "FixedNominal", "FixedOracle"):
+                row = indexed_summary.get(
+                    (scenario, family, mode, "disp_z_pct_hs")
+                )
+                if row is not None and math.isfinite(float(row["mean"])):
+                    means[mode] = float(row["mean"])
+            if len(means) != 3:
+                continue
+            mismatch = means["FixedNominal"] - means["FixedOracle"]
+            if abs(mismatch) < 1e-9:
+                continue
+            recovered = 100.0 * (means["FixedNominal"] - means["Adaptive"]) / mismatch
+            ablation_macros.append(
+                rf"\providecommand{{\OUValidation{short}{macro_name}Recovered}}"
+                rf"{{{recovered:.0f}}}"
+            )
+
     lines = [
         r"% Generated by tools/ou_validation.py from the committed full-study rows.",
         *ablation_macros,
@@ -1092,6 +1347,17 @@ def write_publication_table(
         rf"\providecommand{{\OUValidationNormalizedGz}}{{{difference['hedges_gz']:+.2f}}}",
         rf"\providecommand{{\OUValidationLegacyGatePasses}}{{{gate_passes}}}",
         rf"\providecommand{{\OUValidationLegacyGateFailures}}{{{len(rows) - gate_passes}}}",
+        # Interval construction, so the manuscript states the method rather
+        # than leaving "bootstrap 95% interval" unqualified.
+        rf"\providecommand{{\OUValidationBootstrapResamples}}{{{bootstrap_resamples:,}}}".replace(",", r"{,}"),
+        rf"\providecommand{{\OUValidationStatsSeed}}{{{stats_seed}}}",
+        r"\providecommand{\OUValidationBootstrapMethod}{nonparametric percentile bootstrap of the paired mean, resampling seed triplets with replacement}",
+        r"\providecommand{\OUValidationBootstrapRNG}{NumPy PCG64}",
+        # Number of distinct paired comparisons, for the multiplicity
+        # statement.  Counting effect rows instead would count one comparison
+        # once per metric and overstate the family of tests.
+        rf"\providecommand{{\OUValidationPairedComparisons}}"
+        rf"{{{len({(str(row['scenario']), str(row['family']), str(row['comparison'])) for row in effects})}}}",
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
@@ -1242,7 +1508,441 @@ def write_publication_table(
                 rf"\providecommand{{\OUValidationCovSyncTransitionHigh}}{{{float(worst_transition['bootstrap_ci95_high']):+.3f}}}",
             )
         )
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    lines.extend(
+        _three_dimensional_table(scenarios, mean_std, paired_ci, indexed_effects)
+    )
+    lines.extend(
+        _channel_ablation_table(
+            scenarios, summary, mean_std, indexed_effects, scenario_macro
+        )
+    )
+    if transition_scenarios:
+        lines.extend(
+            _transition_segment_table(
+                transition_scenarios[0], mean_std, value_of, indexed_effects
+            )
+        )
+    if pmstokes_scenarios and pmstokes_aggregate is not None:
+        lines.extend(
+            _pmstokes_table(
+                pmstokes_scenarios, mean_std, paired_ci, pmstokes_aggregate
+            )
+        )
+    lines.extend(_direction_table(all_scenarios, indexed_summary, mean_std))
+
+    assert_latex_macro_names(lines)
+    header = (
+        r"% Generated by tools/ou_validation.py from the committed full-study rows."
+    )
+    if macros_path is None:
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return
+
+    # The manuscript quotes these values in the protocol section, which is
+    # typeset before the results tables are input, so the definitions are
+    # emitted separately and included early.  Splitting them here keeps a
+    # single source of truth for both files.
+    definitions = [
+        line for line in lines if line.lstrip().startswith(r"\providecommand")
+    ]
+    tables = [
+        line
+        for line in lines
+        if not line.lstrip().startswith(r"\providecommand")
+        and not line.startswith("%")
+    ]
+    macros_path.write_text(
+        "\n".join([header, *definitions]) + "\n", encoding="utf-8"
+    )
+    path.write_text("\n".join([header, *tables]) + "\n", encoding="utf-8")
+
+
+def _three_dimensional_table(
+    scenarios: Sequence[str],
+    mean_std: Any,
+    paired_ci: Any,
+    indexed_effects: Mapping[tuple[str, str, str, str], Mapping[str, Any]],
+) -> list[str]:
+    """Absolute per-axis and 3D displacement RMS for both families.
+
+    The paired 3D difference alone does not say whether a positive value is a
+    small fraction of a large error or the whole of a small one, and it hides
+    which horizontal axis moves.  Both filters are therefore reported in
+    absolute metres beside the difference.
+    """
+
+    lines = [
+        r"",
+        r"\begin{table*}[t]",
+        r"  \centering",
+        r"  \caption{Absolute per-axis and three-dimensional displacement RMS error over the final \SI{900}{s} (Adaptive mode, mean in metres, $n=10$ paired seed triplets). $\Delta$ is OU--III minus OU--II with its paired bootstrap 95\% interval; positive $\Delta$ favors OU--II. The vertical gain of OU--III is paid for in the horizontal channels.}",
+        r"  \label{tab:ou_mc_axes}",
+        r"  \footnotesize",
+        r"  \setlength{\tabcolsep}{3.0pt}",
+        r"  \begin{tabular}{@{}lrrrrrrrrr@{}}",
+        r"    \toprule",
+        r"    & \multicolumn{4}{c}{OU--II RMS [m]} & \multicolumn{4}{c}{OU--III RMS [m]} & \\",
+        r"    \cmidrule(lr){2-5}\cmidrule(lr){6-9}",
+        r"    Scenario & X & Y & Z & 3D & X & Y & Z & 3D & $\Delta$3D [m] \\",
+        r"    \midrule",
+    ]
+    for scenario in scenarios:
+        lines.append(
+            "    "
+            + " & ".join(
+                (
+                    scenario_display_label(scenario),
+                    *(
+                        mean_std(scenario, family, "Adaptive", metric, 3)
+                        for family in ("OU_II", "OU_III")
+                        for metric in (
+                            "disp_x_rms_m",
+                            "disp_y_rms_m",
+                            "disp_z_rms_m",
+                            "disp_3d_rms_m",
+                        )
+                    ),
+                    paired_ci(scenario, "disp_3d_rms_m", 3),
+                )
+            )
+            + r" \\"
+        )
+    lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}"))
+
+    # Sign of the 3D effect per scenario, so the prose can say "four of five"
+    # without a hand count that can drift from the table.
+    resolved_higher = 0
+    unresolved = 0
+    for scenario in scenarios:
+        row = indexed_effects.get(
+            (scenario, "OU_III_vs_OU_II", "OU_III_minus_OU_II", "disp_3d_rms_m")
+        )
+        if row is None:
+            continue
+        low = float(row["bootstrap_ci95_low"])
+        high = float(row["bootstrap_ci95_high"])
+        if low > 0.0:
+            resolved_higher += 1
+        elif low <= 0.0 <= high:
+            unresolved += 1
+    lines.extend(
+        (
+            r"",
+            rf"\providecommand{{\OUValidationThreeDScenarios}}{{{len(scenarios)}}}",
+            rf"\providecommand{{\OUValidationThreeDHigherCount}}{{{resolved_higher}}}",
+            rf"\providecommand{{\OUValidationThreeDUnresolvedCount}}{{{unresolved}}}",
+        )
+    )
+    return lines
+
+
+def _channel_ablation_table(
+    scenarios: Sequence[str],
+    summary: Sequence[Mapping[str, Any]],
+    mean_std: Any,
+    indexed_effects: Mapping[tuple[str, str, str, str], Mapping[str, Any]],
+    scenario_macro: Mapping[str, str],
+) -> list[str]:
+    """Which adaptation channel earns the benefit.
+
+    Adaptive versus FixedNominal moves three parameters at once.  Because the
+    deployed law sets r_S from tau and sigma_aw, that comparison cannot say
+    whether the vertical benefit comes from adapting the OU process or from
+    adapting the integral regularization.  These two extra modes complete the
+    2x2 factorial by freezing one channel at a time.
+    """
+
+    if not any(row["mode"] in PARTIAL_MODES for row in summary):
+        return []
+
+    lines = [
+        r"",
+        r"\begin{table*}[t]",
+        r"  \centering",
+        r"  \caption{OU--III adaptation-channel ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). The four columns are a $2\times2$ factorial: each channel is either adapted online or frozen at the FixedNominal operating point. \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ while the integral pseudo-measurement scale keeps adapting; \emph{OU only} does the reverse. Because the deployed law sets $r_S=\clip(1.2\,\sigma_{aw}\tau^{3},0.4,35)$, $r_S$ is derived from the live $\tau$ and $\sigma_{aw}$ estimates even when those are frozen on the way to the filter.}",
+        r"  \label{tab:ou_mc_channels}",
+        r"  \footnotesize",
+        r"  \setlength{\tabcolsep}{4.0pt}",
+        r"  \begin{tabular}{@{}lrrrr@{}}",
+        r"    \toprule",
+        r"    & \multicolumn{2}{c}{$r_S$ adapted} & \multicolumn{2}{c}{$r_S$ frozen} \\",
+        r"    \cmidrule(lr){2-3}\cmidrule(lr){4-5}",
+        r"    Scenario & $\tau,\sigma_{aw}$ adapted & $\tau,\sigma_{aw}$ frozen"
+        r" & $\tau,\sigma_{aw}$ adapted & $\tau,\sigma_{aw}$ frozen \\",
+        r"    & (Adaptive) & ($r_S$ only) & (OU only) & (FixedNominal) \\",
+        r"    \midrule",
+    ]
+    for scenario in scenarios:
+        lines.append(
+            "    "
+            + " & ".join(
+                (
+                    scenario_display_label(scenario),
+                    mean_std(scenario, "OU_III", "Adaptive"),
+                    mean_std(scenario, "OU_III", "AdaptiveRSOnly"),
+                    mean_std(scenario, "OU_III", "AdaptiveOUOnly"),
+                    mean_std(scenario, "OU_III", "FixedNominal"),
+                )
+            )
+            + r" \\"
+        )
+    lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}", r""))
+
+    for scenario in scenarios:
+        stem = f"OUValidationChannel{scenario_macro.get(scenario, '')}"
+        for mode, tag in (
+            ("AdaptiveRSOnly", "RSOnly"),
+            ("AdaptiveOUOnly", "OUOnly"),
+        ):
+            row = indexed_effects.get(
+                (
+                    scenario,
+                    "OU_III",
+                    f"{mode}_minus_FixedNominal",
+                    "disp_z_pct_hs",
+                )
+            )
+            if row is None:
+                continue
+            lines.extend(
+                (
+                    rf"\providecommand{{\{stem}{tag}Difference}}"
+                    rf"{{{float(row['mean_paired_difference']):+.3f}}}",
+                    rf"\providecommand{{\{stem}{tag}Low}}"
+                    rf"{{{float(row['bootstrap_ci95_low']):+.3f}}}",
+                    rf"\providecommand{{\{stem}{tag}High}}"
+                    rf"{{{float(row['bootstrap_ci95_high']):+.3f}}}",
+                )
+            )
+    return lines
+
+
+def _transition_segment_table(
+    scenario: str,
+    mean_std: Any,
+    value_of: Any,
+    indexed_effects: Mapping[tuple[str, str, str, str], Mapping[str, Any]],
+) -> list[str]:
+    """Split the transition score into its three sea-state intervals.
+
+    The aggregate normalizes by the final H_s although the window opens in the
+    start sea, so its percentage is not comparable with a stationary score.
+    Absolute RMS and a reference-RMS normalization are reported per interval.
+    """
+
+    segments = (
+        ("start", "Pure start sea"),
+        ("blend", "Crossfade"),
+        ("end", "Pure endpoint sea"),
+        ("", "Whole window"),
+    )
+    lines = [
+        r"",
+        r"\begin{table*}[t]",
+        r"  \centering",
+        r"  \caption{Controlled transition scored by interval rather than as one window (Adaptive mode, mean over $n=10$ seed triplets). $Z_{\mathrm{ref}}$ is the RMS of the reference vertical displacement in the same interval, so $Z/Z_{\mathrm{ref}}$ is a scale-free normalization that remains meaningful while the sea state changes; $Z/H_s^{\mathrm{end}}$ is the whole-window convention normalized by the final $H_s=\SI{4.0}{m}$ and is reported for continuity only. The window opens in the \SI{1.5}{m} start sea, so the two normalizations disagree by construction.}",
+        r"  \label{tab:ou_transition_segments}",
+        r"  \footnotesize",
+        r"  \setlength{\tabcolsep}{3.4pt}",
+        r"  \begin{tabular}{@{}lrrrrrrrr@{}}",
+        r"    \toprule",
+        r"    & \multicolumn{4}{c}{OU--II} & \multicolumn{4}{c}{OU--III} \\",
+        r"    \cmidrule(lr){2-5}\cmidrule(lr){6-9}",
+        r"    Interval & $Z$ [m] & $Z_{\mathrm{ref}}$ [m] & $Z/Z_{\mathrm{ref}}$ [\%] & $Z/H_s^{\mathrm{end}}$ [\%]"
+        r" & $Z$ [m] & $Z_{\mathrm{ref}}$ [m] & $Z/Z_{\mathrm{ref}}$ [\%] & $Z/H_s^{\mathrm{end}}$ [\%] \\",
+        r"    \midrule",
+    ]
+    for key, label in segments:
+        prefix = f"seg_{key}_" if key else ""
+        lines.append(
+            "    "
+            + " & ".join(
+                (
+                    label,
+                    *(
+                        value_of(
+                            scenario,
+                            family,
+                            "Adaptive",
+                            f"{prefix}{metric}",
+                            digits,
+                        )
+                        for family in ("OU_II", "OU_III")
+                        for metric, digits in (
+                            ("disp_z_rms_m", 3),
+                            ("disp_z_ref_rms_m", 3),
+                            ("disp_z_pct_refrms", 2),
+                            ("disp_z_pct_hs", 2),
+                        )
+                    ),
+                )
+            )
+            + r" \\"
+        )
+    lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}", r""))
+
+    for key, tag in (("start", "Start"), ("blend", "Blend"), ("end", "End")):
+        for family, short in (("OU_II", "II"), ("OU_III", "III")):
+            row = indexed_effects.get(
+                (
+                    scenario,
+                    family,
+                    "Adaptive_minus_FixedNominal",
+                    f"seg_{key}_disp_z_pct_refrms",
+                )
+            )
+            if row is None:
+                continue
+            stem = f"OUValidationSegment{short}{tag}Nominal"
+            lines.extend(
+                (
+                    rf"\providecommand{{\{stem}Difference}}"
+                    rf"{{{float(row['mean_paired_difference']):+.3f}}}",
+                    rf"\providecommand{{\{stem}Low}}"
+                    rf"{{{float(row['bootstrap_ci95_low']):+.3f}}}",
+                    rf"\providecommand{{\{stem}High}}"
+                    rf"{{{float(row['bootstrap_ci95_high']):+.3f}}}",
+                )
+            )
+    return lines
+
+
+def _pmstokes_table(
+    scenarios: Sequence[str],
+    mean_std: Any,
+    paired_ci: Any,
+    aggregate: Mapping[str, Mapping[str, Any]],
+) -> list[str]:
+    """Ten-seed PM-Stokes ensemble, kept out of the primary aggregate."""
+
+    difference = aggregate["OU_III_minus_OU_II"]
+    lines = [
+        r"",
+        r"\begin{table*}[t]",
+        r"  \centering",
+        r"  \caption{Ten-seed paired OU-family comparison on the PM--Stokes seas, scored over the same final \SI{900}{s} window and the same seed triplets as the JONSWAP ensemble. PM--Stokes carries third-order bound harmonics that JONSWAP does not, so it is reported as a separate prespecified ensemble and is not pooled into the primary aggregate.}",
+        r"  \label{tab:ou_mc_pmstokes}",
+        r"  \footnotesize",
+        r"  \setlength{\tabcolsep}{4.0pt}",
+        r"  \begin{tabular}{@{}lrrrr@{}}",
+        r"    \toprule",
+        r"    Scenario & OU--II Z [\%$H_s$] & OU--III Z [\%$H_s$] & $\Delta$Z [percentage points] & $\Delta$3D [m] \\",
+        r"    \midrule",
+    ]
+    for scenario in scenarios:
+        lines.append(
+            "    "
+            + " & ".join(
+                (
+                    scenario_display_label(scenario),
+                    mean_std(scenario, "OU_II", "Adaptive"),
+                    mean_std(scenario, "OU_III", "Adaptive"),
+                    paired_ci(scenario, "disp_z_pct_hs", 3),
+                    paired_ci(scenario, "disp_3d_rms_m", 3),
+                )
+            )
+            + r" \\"
+        )
+    lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}", r""))
+    lines.extend(
+        (
+            rf"\providecommand{{\OUValidationPMStokesOUIINormalizedMean}}{{{aggregate['OU_II']['mean']:.2f}}}",
+            rf"\providecommand{{\OUValidationPMStokesOUIINormalizedStd}}{{{aggregate['OU_II']['std']:.2f}}}",
+            rf"\providecommand{{\OUValidationPMStokesOUIIINormalizedMean}}{{{aggregate['OU_III']['mean']:.2f}}}",
+            rf"\providecommand{{\OUValidationPMStokesOUIIINormalizedStd}}{{{aggregate['OU_III']['std']:.2f}}}",
+            rf"\providecommand{{\OUValidationPMStokesDifference}}{{{difference['mean_paired_difference']:+.3f}}}",
+            rf"\providecommand{{\OUValidationPMStokesDifferenceLow}}{{{difference['bootstrap_ci95_low']:+.3f}}}",
+            rf"\providecommand{{\OUValidationPMStokesDifferenceHigh}}{{{difference['bootstrap_ci95_high']:+.3f}}}",
+            rf"\providecommand{{\OUValidationPMStokesPairs}}{{{difference['n_pairs']}}}",
+        )
+    )
+    return lines
+
+
+def _direction_table(
+    scenarios: Sequence[str],
+    indexed_summary: Mapping[tuple[str, str, str, str], Mapping[str, Any]],
+    mean_std: Any,
+) -> list[str]:
+    """Ten-seed direction accuracy against the generator azimuth.
+
+    The historical direction report gives an estimated heading and a
+    Toward/Away/Uncertain split for one deterministic window, but no error
+    against truth and no seed-to-seed spread.  Both are scored here over the
+    same \\SI{900}{s} window as the displacement metrics.
+    """
+
+    stationary = [s for s in scenarios if not s.startswith("nonstationary_")]
+    if not stationary:
+        return []
+    if not any(
+        (s, "OU_III", "Adaptive", "dir_axis_abs_error_deg") in indexed_summary
+        for s in stationary
+    ):
+        return []
+
+    lines = [
+        r"",
+        r"\begin{table*}[t]",
+        r"  \centering",
+        r"  \caption{Ten-seed OU--III wave-direction accuracy over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error. Travel sense is scored as the share of samples classified along the generating direction (Forward), against it (Reverse), or below the confidence and amplitude thresholds (Uncertain). Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
+        r"  \label{tab:ou_mc_direction}",
+        r"  \footnotesize",
+        r"  \setlength{\tabcolsep}{3.6pt}",
+        r"  \begin{tabular}{@{}llrrrrrr@{}}",
+        r"    \toprule",
+        r"    Spectrum & Scenario & $|\Delta\theta|$ [\si{\degree}] & $\theta_{\mathrm{RMSE}}$ [\si{\degree}]"
+        r" & Axial SD [\si{\degree}] & Forward [\%] & Reverse [\%] & Uncertain [\%] \\",
+        r"    \midrule",
+    ]
+    for scenario in stationary:
+        spectrum = (
+            "PM--Stokes"
+            if scenario_spectrum(scenario) == "pmstokes"
+            else "JONSWAP"
+        )
+        lines.append(
+            "    "
+            + " & ".join(
+                (
+                    spectrum,
+                    scenario_display_label(scenario),
+                    *(
+                        mean_std(scenario, "OU_III", "Adaptive", metric, 2)
+                        for metric in (
+                            "dir_axis_abs_error_deg",
+                            "dir_axis_rmse_deg",
+                            "dir_axis_circ_std_deg",
+                            "dir_sense_forward_pct",
+                            "dir_sense_reverse_pct",
+                            "dir_sense_uncertain_pct",
+                        )
+                    ),
+                )
+            )
+            + r" \\"
+        )
+    lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}", r""))
+
+    def pooled(metric: str) -> float:
+        values = [
+            float(indexed_summary[(s, "OU_III", "Adaptive", metric)]["mean"])
+            for s in stationary
+            if (s, "OU_III", "Adaptive", metric) in indexed_summary
+        ]
+        return float(np.mean(values)) if values else math.nan
+
+    lines.extend(
+        (
+            rf"\providecommand{{\OUValidationDirectionAbsError}}{{{pooled('dir_axis_abs_error_deg'):.2f}}}",
+            rf"\providecommand{{\OUValidationDirectionRMSE}}{{{pooled('dir_axis_rmse_deg'):.2f}}}",
+            rf"\providecommand{{\OUValidationDirectionForward}}{{{pooled('dir_sense_forward_pct'):.1f}}}",
+            rf"\providecommand{{\OUValidationDirectionReverse}}{{{pooled('dir_sense_reverse_pct'):.1f}}}",
+            rf"\providecommand{{\OUValidationDirectionUncertain}}{{{pooled('dir_sense_uncertain_pct'):.1f}}}",
+        )
+    )
+    return lines
 
 
 def write_tuning_points_table(
@@ -1375,7 +2075,17 @@ def write_metric_plot(
                 f"{mode.replace('HeldCovariance', ' held-cov').replace('Fixed', 'Fixed ')}"
             ),
         )
-    axis.set_xticks(x, [scenario_display_label(scenario) for scenario in scenarios])
+    # The two spectral families reuse the same nominal heights, so the tick
+    # labels must carry the spectrum whenever both are plotted.
+    spectra = {scenario_spectrum(scenario) for scenario in scenarios}
+    def tick_label(scenario: str) -> str:
+        label = scenario_display_label(scenario)
+        if len(spectra) > 1 and not scenario.startswith("nonstationary_"):
+            suffix = "PM" if scenario_spectrum(scenario) == "pmstokes" else "JS"
+            return f"{label}\n{suffix}"
+        return label
+
+    axis.set_xticks(x, [tick_label(scenario) for scenario in scenarios])
     axis.set_xlabel("Scenario")
     axis.set_ylabel(ylabel)
     axis.grid(axis="y", alpha=0.3)
@@ -1711,8 +2421,21 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=",".join(MODE_SETTINGS),
         help="comma-separated subset of " + ",".join(MODE_SETTINGS),
     )
+    parser.add_argument("--skip-pmstokes", action="store_true")
+    parser.add_argument(
+        "--pmstokes-modes",
+        default=",".join(PRIMARY_MODES),
+        help="adaptation modes scored on the PM-Stokes seas",
+    )
     parser.add_argument("--bootstrap-resamples", type=int, default=10_000)
     parser.add_argument("--stats-seed", type=int, default=20260317)
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=max(1, min(8, (os.cpu_count() or 1))),
+        help="parallel (scenario, seed) work units; results are seed-determined "
+        "and independent, so this changes runtime only",
+    )
     parser.add_argument("--eigen-dir")
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--no-plots", action="store_true")
@@ -1735,6 +2458,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         raise ValueError(f"unknown adaptation mode(s): {', '.join(unknown_modes)}")
     if not adaptation_modes:
         raise ValueError("at least one adaptation mode is required")
+    pmstokes_modes = tuple(
+        token.strip() for token in args.pmstokes_modes.split(",") if token.strip()
+    )
+    unknown_pmstokes = sorted(set(pmstokes_modes) - set(allowed_modes))
+    if unknown_pmstokes:
+        raise ValueError(
+            f"unknown PM-Stokes adaptation mode(s): {', '.join(unknown_pmstokes)}"
+        )
 
     duration_sec = args.duration_sec or (180.0 if args.mode == "smoke" else 1200.0)
     window_sec = args.window_sec or (60.0 if args.mode == "smoke" else 900.0)
@@ -1774,6 +2505,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         stationary_inputs = [nominal_input]
     else:
         stationary_inputs = sorted(args.data_dir.glob("wave_data_jonswap_*.csv"))
+        if not args.skip_pmstokes:
+            # PM-Stokes carries third-order bound harmonics that JONSWAP does
+            # not, so it is a genuinely different input family rather than
+            # another draw from the confirmatory ensemble.  It is scored with
+            # the same seeds but kept out of the primary aggregate.
+            stationary_inputs += sorted(
+                args.data_dir.glob("wave_data_pmstokes_*.csv")
+            )
     if not stationary_inputs:
         raise FileNotFoundError(f"no stationary inputs found in {args.data_dir}")
 
@@ -1859,71 +2598,81 @@ def main(argv: Sequence[str] | None = None) -> int:
             family: tuning_points[family][nominal_name] for family in families
         }
 
-        for scenario in scenarios:
-            print(f"Scenario: {scenario.name}", flush=True)
-            start_columns, start_data = read_wave_csv(scenario.start_input, duration_sec)
-            if scenario.kind == "nonstationary":
-                assert scenario.end_input is not None
-                end_columns, end_data = read_wave_csv(scenario.end_input, duration_sec)
-                if end_columns != start_columns:
-                    raise ValueError("non-stationary source columns do not match")
-                height_match = re.search(r"_H([0-9.]+)_", scenario.end_input.name)
-                if not height_match or scenario.end_height_m is None:
-                    raise ValueError("non-stationary endpoint height is unavailable")
-                end_scale = scenario.end_height_m / float(height_match.group(1))
-                oracle_name = endpoint_name
-                generated_name = "wave_data_jonswap_H4.000_L202.839_A-30.00_P120.00.csv"
+        # Segments are only meaningful where the sea state changes inside the
+        # scored window.  They are keyed to the same window the aggregate uses.
+        window_start = duration_sec - window_sec
+        transition_segments = tuple(
+            (name, lower, upper)
+            for name, lower, upper in (
+                (
+                    name,
+                    max(start, window_start),
+                    min(stop, duration_sec),
+                )
+                for name, start, stop in (
+                    ("start", window_start, transition_start),
+                    ("blend", transition_start, transition_end),
+                    ("end", transition_end, duration_sec),
+                )
+            )
+            if upper > lower
+        )
+
+        def modes_for(scenario: Scenario, family: str) -> tuple[str, ...]:
+            allowed = set(FAMILY_MODES[family])
+            if scenario_spectrum(scenario.name) == "pmstokes":
+                allowed &= set(pmstokes_modes)
+            return tuple(m for m in adaptation_modes if m in allowed)
+
+        def run_unit(
+            scenario: Scenario,
+            repetition: int,
+            seed: SeedTriplet,
+            start_columns: Sequence[str],
+            start_data: np.ndarray,
+            end_data: np.ndarray | None,
+            end_scale: float,
+            generated_path: Path,
+            oracle_name: str,
+        ) -> list[dict[str, Any]]:
+            # The surrogate is built inside the work unit so that only the
+            # in-flight realizations are resident; queueing them all up front
+            # would hold one full-length record per pending unit.
+            if scenario.kind == "stationary":
+                generated = phase_randomize_wave(
+                    start_columns, start_data, seed.wave_phase_seed
+                )
             else:
-                end_data = None
-                end_scale = 1.0
-                oracle_name = scenario.name
-                generated_name = scenario.start_input.name
-
-            for repetition, seed in enumerate(seeds, start=1):
-                generated_path = work_dir / "runs" / scenario.name / (
-                    f"wave_{seed.wave_phase_seed}"
-                ) / generated_name
-                if scenario.kind == "stationary":
-                    generated = phase_randomize_wave(
-                        start_columns, start_data, seed.wave_phase_seed
-                    )
-                else:
-                    assert end_data is not None
-                    generated = make_nonstationary_wave(
-                        start_columns,
-                        start_data,
-                        end_data,
-                        seed.wave_phase_seed,
-                        end_scale,
-                        transition_start,
-                        transition_end,
-                    )
-                write_wave_csv(generated_path, start_columns, generated)
-                if scenario.kind == "nonstationary" and repetition == 1:
-                    diagnostic_path = generated_path
-                    diagnostic_columns = list(start_columns)
-                    diagnostic_data = generated
-                    height_source = re.search(
-                        r"_H([0-9.]+)_", scenario.start_input.name
-                    )
-                    diagnostic_start_height = (
-                        float(height_source.group(1)) if height_source else 0.0
-                    )
-
+                assert end_data is not None
+                generated = make_nonstationary_wave(
+                    start_columns,
+                    start_data,
+                    end_data,
+                    seed.wave_phase_seed,
+                    end_scale,
+                    transition_start,
+                    transition_end,
+                )
+            write_wave_csv(generated_path, start_columns, generated)
+            del generated
+            segments = (
+                transition_segments if scenario.kind == "nonstationary" else ()
+            )
+            rows: list[dict[str, Any]] = []
+            try:
                 for family in families:
-                    for mode in adaptation_modes:
+                    for mode in modes_for(scenario, family):
                         tuning_mode, aw_cov_sync = MODE_SETTINGS[mode]
                         if tuning_mode == "adaptive":
                             point = None
-                        elif tuning_mode == "fixed_nominal":
-                            point = nominal_points[family]
-                        else:
+                        elif tuning_mode == "fixed_oracle":
                             point = tuning_points[family][oracle_name]
+                        else:
+                            # fixed_nominal and both partial-adaptation modes
+                            # freeze their channel at the same nominal point,
+                            # which is what makes them a clean factorial.
+                            point = nominal_points[family]
 
-                        print(
-                            f"  rep={repetition}/{len(seeds)} {family} {mode}",
-                            flush=True,
-                        )
                         metrics, gate_pass, return_code = run_simulator(
                             family,
                             generated_path,
@@ -1933,14 +2682,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                             tuning_mode=tuning_mode,
                             tuning_point=point,
                             aw_cov_sync=aw_cov_sync,
+                            segments=segments,
                         )
-                        raw_rows.append(
+                        rows.append(
                             {
                                 "run_id": (
                                     f"{scenario.name}:{repetition}:{family}:{mode}"
                                 ),
                                 "scenario": scenario.name,
                                 "scenario_kind": scenario.kind,
+                                "spectrum": scenario_spectrum(scenario.name),
                                 "family": family,
                                 "mode": mode,
                                 "repetition": repetition,
@@ -1959,9 +2710,116 @@ def main(argv: Sequence[str] | None = None) -> int:
                                 },
                             }
                         )
-                if generated_path == diagnostic_path:
-                    continue
-                generated_path.unlink()
+            finally:
+                generated_path.unlink(missing_ok=True)
+            return rows
+
+        # Simulator runs are independent given their seeds, so (scenario, seed)
+        # work units are dispatched to a small pool.  One scenario is in flight
+        # at a time: its source records stay resident for the whole scenario,
+        # and only the running units hold a generated surrogate.  Rows are
+        # re-sorted afterwards so the committed artifacts do not depend on
+        # completion order.
+        diagnostic_recipe: tuple[Any, ...] | None = None
+        for scenario in scenarios:
+            print(f"Scenario: {scenario.name}", flush=True)
+            start_columns, start_data = read_wave_csv(
+                scenario.start_input, duration_sec
+            )
+            if scenario.kind == "nonstationary":
+                assert scenario.end_input is not None
+                end_columns, end_data = read_wave_csv(
+                    scenario.end_input, duration_sec
+                )
+                if end_columns != start_columns:
+                    raise ValueError("non-stationary source columns do not match")
+                height_match = re.search(r"_H([0-9.]+)_", scenario.end_input.name)
+                if not height_match or scenario.end_height_m is None:
+                    raise ValueError("non-stationary endpoint height is unavailable")
+                end_scale = scenario.end_height_m / float(height_match.group(1))
+                oracle_name = endpoint_name
+                generated_name = (
+                    "wave_data_jonswap_H4.000_L202.839_A-30.00_P120.00.csv"
+                )
+            else:
+                end_data = None
+                end_scale = 1.0
+                oracle_name = scenario.name
+                generated_name = scenario.start_input.name
+
+            if scenario.kind == "nonstationary":
+                # Rebuilt after the loop rather than retained, so the diagnostic
+                # does not pin a full record in memory for the whole study.  It
+                # is seed-determined, so the rebuild is the scored realization.
+                diagnostic_path = work_dir / "runs" / scenario.name / (
+                    f"wave_{seeds[0].wave_phase_seed}"
+                ) / generated_name
+                height_source = re.search(
+                    r"_H([0-9.]+)_", scenario.start_input.name
+                )
+                diagnostic_start_height = (
+                    float(height_source.group(1)) if height_source else 0.0
+                )
+                diagnostic_recipe = (
+                    list(start_columns),
+                    scenario.start_input,
+                    scenario.end_input,
+                    end_scale,
+                )
+
+            pending = []
+            with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
+                for repetition, seed in enumerate(seeds, start=1):
+                    generated_path = work_dir / "runs" / scenario.name / (
+                        f"wave_{seed.wave_phase_seed}"
+                    ) / generated_name
+                    pending.append(
+                        pool.submit(
+                            run_unit,
+                            scenario,
+                            repetition,
+                            seed,
+                            list(start_columns),
+                            start_data,
+                            end_data,
+                            end_scale,
+                            generated_path,
+                            oracle_name,
+                        )
+                    )
+                for index, future in enumerate(pending, start=1):
+                    raw_rows.extend(future.result())
+                    print(
+                        f"  {scenario.name}: {index}/{len(pending)} seeds",
+                        flush=True,
+                    )
+            del start_data, end_data
+
+        if diagnostic_path is not None and diagnostic_recipe is not None:
+            diagnostic_columns, start_path, end_path, end_scale = diagnostic_recipe
+            _, start_data = read_wave_csv(start_path, duration_sec)
+            assert end_path is not None
+            _, end_data = read_wave_csv(end_path, duration_sec)
+            diagnostic_data = make_nonstationary_wave(
+                diagnostic_columns,
+                start_data,
+                end_data,
+                seeds[0].wave_phase_seed,
+                end_scale,
+                transition_start,
+                transition_end,
+            )
+            write_wave_csv(diagnostic_path, diagnostic_columns, diagnostic_data)
+            del start_data, end_data
+
+        raw_rows.sort(
+            key=lambda row: (
+                scenario_sort_key(str(row["scenario"])),
+                int(row["repetition"]),
+                str(row["family"]),
+                str(row["mode"]),
+            )
+        )
 
         if diagnostic_path is not None and not args.no_plots:
             print("Transition diagnostic run", flush=True)
@@ -1995,6 +2853,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     json_path = args.output_dir / "ou_validation.json"
     tex_path = args.output_dir / "ou_validation_table.tex"
     publication_tex_path = args.output_dir / "ou_validation_publication.tex"
+    publication_macros_path = args.output_dir / "ou_validation_macros.tex"
     tuning_tex_path = args.output_dir / "ou_validation_tuning_points.tex"
     manifest_path = args.output_dir / "ou_validation_manifest.json"
     write_csv(raw_path, raw_rows)
@@ -2008,6 +2867,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         effects,
         args.bootstrap_resamples,
         args.stats_seed,
+        macros_path=publication_macros_path,
     )
     write_tuning_points_table(
         tuning_tex_path, tuning_points, nominal_name, endpoint_name
@@ -2054,8 +2914,39 @@ def main(argv: Sequence[str] | None = None) -> int:
         "transition_midpoint_linear_hs_m": 0.5 * (
             1.5 + args.nonstationary_end_height
         ),
+        "partial_adaptation_definition": (
+            "AdaptiveRSOnly freezes tau and sigma_aw at the FixedNominal point "
+            "while r_S keeps adapting; AdaptiveOUOnly freezes r_S at the "
+            "FixedNominal point while tau and sigma_aw keep adapting.  r_S is "
+            "derived from the live tau and sigma_aw estimates in both cases, so "
+            "freezing the OU channel does not implicitly freeze r_S through the "
+            "coupled law.  OU-III only"
+        ),
+        "primary_endpoint": (
+            "seed-level mean normalized vertical displacement RMS error over "
+            "the four stationary JONSWAP seas, OU-III Adaptive minus OU-II "
+            "Adaptive"
+        ),
+        "pmstokes_modes": list(pmstokes_modes),
+        "pmstokes_pooling": (
+            "PM-Stokes is a separate prespecified ensemble and is not pooled "
+            "into the primary JONSWAP aggregate"
+        ),
+        "transition_segments_sec": {
+            name: [start, stop] for name, start, stop in transition_segments
+        },
+        "bootstrap_method": (
+            "nonparametric percentile bootstrap of the mean; paired "
+            "comparisons resample the seed-level differences with replacement"
+        ),
+        "bootstrap_rng": "numpy.random.default_rng (PCG64)",
         "bootstrap_resamples": args.bootstrap_resamples,
         "stats_seed": args.stats_seed,
+        "multiplicity": (
+            "intervals are per-comparison and are not adjusted for "
+            "multiplicity; only the primary endpoint is confirmatory and every "
+            "other interval is descriptive"
+        ),
     }
     write_json(
         json_path,
@@ -2121,6 +3012,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         json_path,
         tex_path,
         publication_tex_path,
+        publication_macros_path,
         tuning_tex_path,
         *plot_paths,
     ]
@@ -2162,6 +3054,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(f"Wrote {json_path}")
     print(f"Wrote {tex_path}")
     print(f"Wrote {publication_tex_path}")
+    print(f"Wrote {publication_macros_path}")
     print(f"Wrote {tuning_tex_path}")
     print(f"Wrote {manifest_path}")
     return 0

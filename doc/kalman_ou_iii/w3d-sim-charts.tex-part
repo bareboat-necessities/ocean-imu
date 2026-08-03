@@ -174,12 +174,14 @@ hard-iron bias and slow drift, and $\vct{w}_m$ is per-sample white noise.
 
 \paragraph{Scoring window}
 The historical deterministic regression gates and Table~\ref{tab:sim_results_rms_dir_basic}
-use a trailing window $T_{\mathrm{RMS}}=60$~s.  The statistically powered
+use a trailing window $T_{\mathrm{RMS}}=60$~s.  The ensemble
 validation protocol instead uses the final \SI{900}{s} of each \SI{1200}{s}
 run as its primary score, thereby excluding startup while retaining a long
 steady-state record.  The runner reports per-axis and 3D displacement RMS,
-roll/pitch/yaw RMS, bias errors, and diagnostic tuning variables
-$(f,\tau,\sigma_{aw},r_S)$.
+roll/pitch/yaw RMS, bias errors, wave-direction accuracy against the generator
+azimuth, and diagnostic tuning variables $(f,\tau,\sigma_{aw},r_S)$.  For the
+non-stationary case it additionally scores three disjoint intervals inside the
+same window, for the reason given below.
 
 \paragraph{Paired Monte Carlo and adaptation ablations}
 Ten predeclared repetitions independently vary wave realization, IMU noise and random
@@ -191,9 +193,69 @@ and acceleration are analytically derived from the same velocity spectrum;
 body-frame specific force, angular rate, and quaternion are then reconstructed.
 This preserves the retained primitive auto- and cross-spectra without
 redistributing finite-record boundary leakage between incompatible derivative
-channels.  Results are summarized by the sample mean and standard deviation,
-normal and bootstrap 95\% confidence intervals, and paired mean differences
-with Cohen's $d_z$ and Hedges' $g_z$.
+channels.
+
+\paragraph{Inference, and what it does and does not license}
+The prespecified primary endpoint is the seed-level mean normalized
+vertical-displacement RMS error over the four stationary JONSWAP seas, compared
+between OU--III and OU--II at matched seeds.  Everything else reported here --
+per-scenario contrasts, the adaptation and channel ablations, the covariance
+control, the PM--Stokes ensemble, the transition intervals, and the direction
+metrics -- is descriptive.
+
+Scenario summaries give the sample mean with the sample standard deviation
+across the ten seed triplets; a quoted $a\pm b$ is therefore a spread, not an
+interval estimate for the mean.  Intervals are
+\OUValidationBootstrapMethod{} with $B=\OUValidationBootstrapResamples$
+resamples drawn from a \OUValidationBootstrapRNG{} generator seeded at
+$\OUValidationStatsSeed$, so every interval in this paper is reproducible from
+the committed rows.  Paired comparisons resample the seed-level differences
+rather than the two arms independently, which is what preserves the pairing.
+No correction for multiplicity is applied across the
+\OUValidationPairedComparisons{} paired comparisons this study computes: each
+interval is a per-comparison statement, and the confirmatory claim rests on the
+single primary endpoint.  Descriptive intervals should be read accordingly, and an
+isolated interval that just excludes zero is weak evidence on its own.
+
+Standardized paired effect sizes (Cohen's $d_z$, Hedges' $g_z$) are reported
+for completeness but are deliberately secondary.  With strong pairing and
+$n=10$ the denominator is a small-sample standard deviation of differences, so
+$d_z$ is both large and imprecisely estimated; the raw paired difference in
+percentage points and its bootstrap interval are the primary statement of
+effect magnitude throughout.
+
+\paragraph{Adaptation-channel ablation}
+\label{par:channel-ablation}%
+Comparing Adaptive with FixedNominal moves three parameters at once, and the
+deployed law $r_S=\clip(1.2\,\sigma_{aw}\tau^{3},0.4,35)$ ties the third to the
+first two.  That comparison therefore cannot say whether the vertical benefit
+comes from adapting the OU process itself or from adapting the integral
+regularization.  Two additional OU--III modes complete the $2\times2$
+factorial.  \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ at the
+FixedNominal point while $r_S$ continues to adapt; \emph{OU only} freezes $r_S$
+there while $\tau$ and $\sigma_{aw}$ continue to adapt.  In both, the tuner
+keeps running and keeps deriving $r_S$ from its \emph{live} $\tau$ and
+$\sigma_{aw}$ estimates, so freezing the OU channel on the way to the filter
+does not implicitly freeze $r_S$ through the coupled law -- which is precisely
+the confound the ablation exists to remove.  All four modes share the deployed
+covariance policy.  OU--II regularizes its second-order chain with
+$(r_{p0},r_{v0})$ rather than a single integral scale, so the channel ablation
+is defined for OU--III only.
+
+\paragraph{Second spectral family and direction scoring}
+The four PM--Stokes seas of Table~\ref{tab:scenarios} are scored over the same
+window, seed triplets, and primary modes as the JONSWAP ensemble.  PM--Stokes
+carries third-order bound harmonics that JONSWAP does not, so it is reported as
+a separate prespecified ensemble and is \emph{not} pooled into the primary
+aggregate; pooling would silently redefine the confirmatory comparison.
+Direction is scored against the generator azimuth carried by each record.
+Because the propagation axis is defined modulo \SI{180}{\degree}, the reported
+axial error is the magnitude of the difference between the circular-mean
+estimate and that azimuth, alongside the sample-wise axial RMS error and the
+axial dispersion.  Travel sense is scored as the share of samples classified
+along the generating direction, against it, or below the confidence and
+amplitude thresholds, which converts the historical Toward/Away/Uncertain split
+into a correctness rate.
 
 \paragraph{Definition of the fixed operating points}
 \label{par:fixed-points}
@@ -266,7 +328,7 @@ so the record remains kinematically closed throughout the blend.  The
 controlled case uses $t_0,t_1=420,780$~s; the rapid degradation case of
 Sec.~\ref{sec:ou-robustness} uses $585,615$~s about the same midpoint.
 
-This is a crossfade, not a physically evolving JONSWAP spectrum, and three
+This is a crossfade, not a physically evolving JONSWAP spectrum, and four
 consequences must be stated rather than assumed away.  First, both spectra
 coexist during the blend, so the sea can be bimodal and the frequency tracker
 may switch between components; there is no single intermediate $T_p$.  Second,
@@ -278,8 +340,19 @@ not the \SI{2.75}{m} a linear $H_s$ ramp would give.  Third, the
 of blend, and $780$--$1200$~s of the pure endpoint sea, so \pct{47} of the
 scored record is the endpoint sea alone.  The endpoint-calibrated FixedOracle
 is favored by that composition, and the controlled and rapid cases contain
-different amounts of pure-start, mixture, and pure-end data.  The transition
-comparison therefore measures behavior over a specified non-stationary
+different amounts of pure-start, mixture, and pure-end data.
+
+Fourth, and consequently, a single number normalized by the final
+$H_s=\SI{4.0}{m}$ is not comparable with a stationary $Z/H_s$ score: for
+\pct{13} of the window the sea is \SI{1.5}{m} and for the blend it is a
+lower-energy mixture, so the same absolute error is divided by a height the
+record does not yet have.  The transition is therefore also scored on the three
+disjoint intervals above and reported in absolute metres, together with the
+scale-free ratio $Z/Z_{\mathrm{ref}}$ in which $Z_{\mathrm{ref}}$ is the RMS of
+the reference vertical displacement over the same interval
+(Table~\ref{tab:ou_transition_segments}).  The whole-window $Z/H_s$ figure is
+retained only for continuity with earlier reporting.  Taken together, the
+transition comparison measures behavior over a specified non-stationary
 excursion; it does not isolate adaptation rate, and
 Sec.~\ref{sec:observer-comparison} reports a single-realization time series
 rather than resting on the aggregate alone.

@@ -176,12 +176,14 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         transition_cells = len(protocol["transition_cases"]) * 2
         cells = sensitivity_cells + low_motion_cells + transition_cells
         self.assertEqual(len(raw), cells * 10)
-        self.assertEqual(len(summary), cells * len(validation.METRIC_NAMES))
+        self.assertEqual(
+            len(summary), cells * len(validation.NON_SEGMENT_METRIC_NAMES)
+        )
         # Sensitivity: every off-reference scale against x1, per direction.
         # Degradation: one low-motion pair, plus rate and adaptation pairs.
         comparisons = len(parameters) * (len(scales) - 1) + 1 + 4
         self.assertEqual(
-            len(effects), comparisons * len(validation.METRIC_NAMES)
+            len(effects), comparisons * len(validation.NON_SEGMENT_METRIC_NAMES)
         )
         self.assertEqual(
             Counter(row["experiment"] for row in raw),

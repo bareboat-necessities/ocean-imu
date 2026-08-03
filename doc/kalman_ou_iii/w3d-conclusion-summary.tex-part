@@ -11,11 +11,25 @@ $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
 OU--II.  Their paired difference is $\OUValidationNormalizedDifference$
 percentage point (bootstrap 95\% interval
 $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$).
-The scenario-level sign changes and the consistently higher OU--III 3D error
-preclude a claim of uniform OU--III superiority.  Adaptive tuning improves on
+OU--III 3D displacement error is higher in
+\OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
+scenarios and unresolved at the nominal sea; together with the scenario-level
+sign changes elsewhere, that precludes any claim of uniform OU--III
+superiority.  The supported claim is narrower and should be read as such:
+OU--III improves stationary vertical reconstruction, and does so at a
+horizontal cost that grows with sea state.  The result extends to a second
+spectral family, with a paired PM--Stokes difference of
+$\OUValidationPMStokesDifference$ percentage point
+($[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$)
+scored on the same seeds.  Adaptive tuning improves on
 FixedNominal at the smallest and largest stationary seas, but both families
 score worse than FixedNominal and the endpoint-calibrated fixed reference at
-the nominal sea and over the controlled transition.  A matched control shows
+the nominal sea and over the controlled transition.  The channel ablation
+locates that benefit: freezing $\tau$ and $\sigma_{aw}$ while $r_S$ keeps
+adapting recovers nearly all of it, whereas freezing $r_S$ recovers almost
+none, so what the vertical evidence establishes is the value of adaptive
+integral-state regularization rather than the necessity of full
+three-parameter OU adaptation.  A matched control shows
 that the periodic covariance re-alignment accounts for at most
 $\OUValidationCovSyncWorstDifference$ points of that gap, so the gap is the
 cost of estimating the operating point online and, for the transition, of a
