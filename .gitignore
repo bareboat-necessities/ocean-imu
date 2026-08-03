@@ -48,3 +48,15 @@ doc/spectrum/spectrum-sea_metrics.tex-part
 # Python bytecode (the completed full-study validation evidence is versioned)
 __pycache__/
 *.pyc
+
+# Simulation data fetched from the oceanography-waves-lib release
+# (`make fetch-sim-data`), unpacked into plots/ and tests/
+sim-data-files.zip
+wave_data_*.csv
+
+# Compiled test executables (extensionless, so not covered by the rules above)
+tests/*/*-sim
+tests/*/*-test
+tests/freq/freq-track
+tests/pii_observer/pii_observer-adaptive
+tests/wave_sim/wave-convention-check

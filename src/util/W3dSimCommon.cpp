@@ -998,12 +998,15 @@ void print_validation_metrics(const W3dSimulationRunResult& result,
         : NAN;
     const char* mode = std::getenv("W3D_TUNING_MODE");
     if (!mode || *mode == '\0') mode = "adaptive";
+    const char* aw_cov_sync = std::getenv("W3D_AW_COV_SYNC");
+    if (!aw_cov_sync || *aw_cov_sync == '\0') aw_cov_sync = "periodic";
 
     const auto old_precision = std::cout.precision();
     std::cout << std::setprecision(9)
               << "VALIDATION_METRICS"
               << " family=" << family
               << " tuning_mode=" << mode
+              << " aw_cov_sync=" << aw_cov_sync
               << " input=" << std::filesystem::path(result.input_name).filename().string()
               << " window_s=" << (static_cast<float>(count) * dt)
               << " samples=" << count

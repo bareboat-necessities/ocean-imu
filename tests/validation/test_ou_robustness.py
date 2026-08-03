@@ -51,6 +51,31 @@ class RobustnessDesignTests(unittest.TestCase):
                 validation.TuningPoint(3.1, 0.8, RS_ms=3.5)
             )
 
+    def test_coupled_sweeps_follow_the_deployed_regularization_law(self):
+        # r_S = clip(1.2 sigma_aw tau^3, ...), so the coupled sweeps must move
+        # r_S linearly with sigma_aw and cubically with tau. A frozen r_S
+        # measures only the direct OU process-covariance effect, which the
+        # online tuner never produces.
+        baseline = validation.TuningPoint(
+            tau_s=1.2,
+            sigma_a_mps2=0.8,
+            RS_ms=3.5,
+        )
+        coupled_sigma = robustness.scaled_tuning_point(
+            baseline, "sigma_aw_rs", 0.5
+        )
+        coupled_tau = robustness.scaled_tuning_point(baseline, "tau_rs", 1.5)
+        self.assertEqual(
+            coupled_sigma, validation.TuningPoint(1.2, 0.4, RS_ms=1.75)
+        )
+        self.assertAlmostEqual(coupled_tau.tau_s, 1.8)
+        self.assertAlmostEqual(coupled_tau.sigma_a_mps2, 0.8)
+        self.assertAlmostEqual(coupled_tau.RS_ms, 3.5 * 1.5**3)
+        self.assertEqual(
+            robustness.SENSITIVITY_PARAMETERS,
+            robustness.OFAT_PARAMETERS + robustness.COUPLED_PARAMETERS,
+        )
+
     def test_scale_parser_requires_reference(self):
         self.assertEqual(robustness.parse_float_list("0.5,1,2"), [0.5, 1.0, 2.0])
         with self.assertRaisesRegex(Exception, "include the 1.0 reference"):
@@ -141,17 +166,35 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         effects = self.read_csv(
             self.RESULTS / "ou_robustness_paired_effects.csv"
         )
-        self.assertEqual(len(raw), 210)
-        self.assertEqual(len(summary), 273)
-        self.assertEqual(len(effects), 221)
+        scales = protocol["sensitivity_scales"]
+        parameters = robustness.SENSITIVITY_PARAMETERS
+        self.assertEqual(
+            protocol["sensitivity_parameters"], list(parameters)
+        )
+        sensitivity_cells = len(parameters) * len(scales)
+        low_motion_cells = 2
+        transition_cells = len(protocol["transition_cases"]) * 2
+        cells = sensitivity_cells + low_motion_cells + transition_cells
+        self.assertEqual(len(raw), cells * 10)
+        self.assertEqual(len(summary), cells * len(validation.METRIC_NAMES))
+        # Sensitivity: every off-reference scale against x1, per direction.
+        # Degradation: one low-motion pair, plus rate and adaptation pairs.
+        comparisons = len(parameters) * (len(scales) - 1) + 1 + 4
+        self.assertEqual(
+            len(effects), comparisons * len(validation.METRIC_NAMES)
+        )
         self.assertEqual(
             Counter(row["experiment"] for row in raw),
-            {"sensitivity": 150, "low_motion": 20, "transition_rate": 40},
+            {
+                "sensitivity": sensitivity_cells * 10,
+                "low_motion": low_motion_cells * 10,
+                "transition_rate": transition_cells * 10,
+            },
         )
         groups = Counter(
             (row["experiment"], row["case"], row["mode"]) for row in raw
         )
-        self.assertEqual(len(groups), 21)
+        self.assertEqual(len(groups), cells)
         self.assertEqual(set(groups.values()), {10})
         self.assertEqual({int(row["n"]) for row in summary}, {10})
         self.assertEqual({int(row["n_pairs"]) for row in effects}, {10})
@@ -206,9 +249,14 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         source = (self.DOC / "w3d-ou-robustness.tex-part").read_text(
             encoding="utf-8"
         )
-        self.assertIn("local\none-factor-at-a-time sensitivity analysis", source)
         self.assertIn("no sweep point is adopted as a replacement tuning", source)
         self.assertIn("w3d-ou-robustness-results-generated.tex-part", source)
+        # The coupled directions and the reason the frozen-companion columns
+        # look flat must both be stated, or the sweep invites the wrong
+        # conclusion that the filter ignores its OU tuning.
+        self.assertIn("coupled", source)
+        self.assertIn(r"r_S\to c^{3}r_S", source)
+        self.assertIn("near saturation", source)
 
     def test_generated_primary_claims_match_paired_effects(self):
         effects = self.read_csv(

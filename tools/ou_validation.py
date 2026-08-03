@@ -39,7 +39,32 @@ WAVE_PHASE_METHOD = (
     "velocity; body IMU and quaternion reconstructed"
 )
 TRANSITION_METHOD = (
-    "C2 quintic blend with exact first- and second-derivative cross terms"
+    "C2 quintic crossfade between two independently phase-randomized "
+    "stationary records, with exact first- and second-derivative cross terms; "
+    "not a continuously evolving JONSWAP spectrum"
+)
+
+# Adaptation modes.  The three primary modes all run the deployed covariance
+# policy and vary only whether the OU operating point adapts online.  The two
+# *HeldCovariance* modes repeat their partner mode with the periodic
+# re-alignment of the posterior a_w marginal switched off, so that "parameters
+# adapt" and "part of the covariance is periodically re-aligned" are separated
+# instead of confounded.
+MODE_SETTINGS: dict[str, tuple[str, str]] = {
+    # mode -> (simulator tuning mode, a_w covariance-synchronization policy)
+    "Adaptive": ("adaptive", "periodic"),
+    "FixedNominal": ("fixed_nominal", "periodic"),
+    "FixedOracle": ("fixed_oracle", "periodic"),
+    "AdaptiveHeldCovariance": ("adaptive", "reconfigure"),
+    "FixedNominalHeldCovariance": ("fixed_nominal", "reconfigure"),
+}
+
+PRIMARY_MODES = ("Adaptive", "FixedNominal", "FixedOracle")
+
+# Ablation pairs compared at matched tuning mode: (left, right).
+COVARIANCE_SYNC_PAIRS = (
+    ("Adaptive", "AdaptiveHeldCovariance"),
+    ("FixedNominal", "FixedNominalHeldCovariance"),
 )
 
 METRIC_NAMES = (
@@ -69,6 +94,13 @@ DISPLAY_METRICS = (
 FAMILY_BINARY = {
     "OU_II": REPO_ROOT / "tests" / "kalman_ou_ii" / "kalman_ou_ii-sim",
     "OU_III": REPO_ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim",
+}
+
+# Time-series filename suffix each simulator appends when
+# W3D_WRITE_TIMESERIES is enabled and a magnetometer is present.
+FAMILY_TIMESERIES_SUFFIX = {
+    "OU_II": "_fusion_ou2",
+    "OU_III": "_fusion_ou3",
 }
 
 FAMILY_MAKE_DIR = {
@@ -451,7 +483,7 @@ def parse_validation_metrics(output: str) -> dict[str, Any]:
         key, value = token.split("=", 1)
         if key == "samples":
             metrics[key] = int(value)
-        elif key in ("family", "tuning_mode", "input"):
+        elif key in ("family", "tuning_mode", "aw_cov_sync", "input"):
             metrics[key] = value
         else:
             metrics[key] = float(value)
@@ -484,6 +516,8 @@ def run_simulator(
     tuning_mode: str = "adaptive",
     tuning_point: TuningPoint | None = None,
     no_noise: bool = False,
+    aw_cov_sync: str = "reconfigure",
+    write_timeseries: bool = False,
 ) -> tuple[dict[str, Any], bool, int]:
     binary = FAMILY_BINARY[family]
     if not binary.exists():
@@ -497,10 +531,11 @@ def run_simulator(
         {
             "W3D_IMU_SEED": str(imu_seed),
             "W3D_INIT_SEED": str(initialization_seed),
-            "W3D_WRITE_TIMESERIES": "0",
+            "W3D_WRITE_TIMESERIES": "1" if write_timeseries else "0",
             "W3D_VALIDATION_WINDOW_SEC": f"{window_sec:.9g}",
             "W3D_COLLECT_ALL_GATES": "1",
             "W3D_TUNING_MODE": tuning_mode,
+            "W3D_AW_COV_SYNC": aw_cov_sync,
         }
     )
     if tuning_point is not None:
@@ -698,6 +733,7 @@ def paired_effect_rows(
                 effects.append(
                     {
                         "scenario": scenario,
+                        "family": "OU_III_vs_OU_II",
                         "comparison": "OU_III_minus_OU_II",
                         "metric": metric,
                         "left": "OU_III/Adaptive",
@@ -708,13 +744,17 @@ def paired_effect_rows(
 
         for family in sorted({str(row["family"]) for row in adaptive}):
             family_adaptive = [row for row in adaptive if row["family"] == family]
-            for baseline in ("FixedNominal", "FixedOracle"):
-                baseline_rows = [
+
+            def mode_rows(mode: str, family: str = family) -> list[Mapping[str, Any]]:
+                return [
                     row for row in rows
                     if row["scenario"] == scenario
                     and row["family"] == family
-                    and row["mode"] == baseline
+                    and row["mode"] == mode
                 ]
+
+            for baseline in ("FixedNominal", "FixedOracle"):
+                baseline_rows = mode_rows(baseline)
                 for metric in METRIC_NAMES:
                     effect = _paired_effect(
                         family_adaptive, baseline_rows, metric, pair_keys,
@@ -724,10 +764,35 @@ def paired_effect_rows(
                         effects.append(
                             {
                                 "scenario": scenario,
+                                "family": family,
                                 "comparison": f"Adaptive_minus_{baseline}",
                                 "metric": metric,
                                 "left": f"{family}/Adaptive",
                                 "right": f"{family}/{baseline}",
+                                **effect,
+                            }
+                        )
+
+            # Covariance-reset ablation at matched tuning mode: isolates the
+            # effect of repeatedly overwriting the posterior a_w marginal from
+            # the effect of letting the operating point adapt.
+            for left_mode, right_mode in COVARIANCE_SYNC_PAIRS:
+                left_rows = mode_rows(left_mode)
+                right_rows = mode_rows(right_mode)
+                for metric in METRIC_NAMES:
+                    effect = _paired_effect(
+                        left_rows, right_rows, metric, pair_keys,
+                        bootstrap_resamples, rng,
+                    )
+                    if effect:
+                        effects.append(
+                            {
+                                "scenario": scenario,
+                                "family": family,
+                                "comparison": f"{left_mode}_minus_{right_mode}",
+                                "metric": metric,
+                                "left": f"{family}/{left_mode}",
+                                "right": f"{family}/{right_mode}",
                                 **effect,
                             }
                         )
@@ -930,7 +995,12 @@ def write_publication_table(
         for row in summary
     }
     indexed_effects = {
-        (str(row["scenario"]), str(row["comparison"]), str(row["metric"])): row
+        (
+            str(row["scenario"]),
+            str(row["family"]),
+            str(row["comparison"]),
+            str(row["metric"]),
+        ): row
         for row in effects
     }
     scenarios = sorted(
@@ -952,15 +1022,64 @@ def write_publication_table(
         return f"{float(row['mean']):.2f} $\\pm$ {float(row['std']):.2f}"
 
     def paired_ci(scenario: str, metric: str, digits: int) -> str:
-        row = indexed_effects[(scenario, "OU_III_minus_OU_II", metric)]
+        row = indexed_effects[
+            (scenario, "OU_III_vs_OU_II", "OU_III_minus_OU_II", metric)
+        ]
         return (
             f"{float(row['mean_paired_difference']):+.{digits}f} "
             f"[{float(row['bootstrap_ci95_low']):+.{digits}f}, "
             f"{float(row['bootstrap_ci95_high']):+.{digits}f}]"
         )
 
+    def ablation_effect(
+        scenario: str, family: str, baseline: str, metric: str = "disp_z_pct_hs"
+    ) -> Mapping[str, Any]:
+        return indexed_effects[
+            (scenario, family, f"Adaptive_minus_{baseline}", metric)
+        ]
+
+    def signed(value: float, digits: int = 3) -> str:
+        return f"{value:+.{digits}f}"
+
+    scenario_macro = {}
+    for scenario in scenarios:
+        if scenario.startswith("nonstationary_"):
+            scenario_macro[scenario] = "Transition"
+            continue
+        height = re.search(r"_H([0-9]+)_([0-9]{3})_", scenario)
+        if height:
+            token = f"{height.group(1)}{height.group(2)}".rstrip("0") or "0"
+            scenario_macro[scenario] = f"Hs{token}"
+
+    # Every adaptation-ablation number quoted in the manuscript is emitted
+    # here, so the prose cannot drift away from the regenerated rows.
+    ablation_macros: list[str] = []
+    for scenario, macro_name in scenario_macro.items():
+        for family in ("OU_II", "OU_III"):
+            short = "II" if family == "OU_II" else "III"
+            for baseline, tag in (
+                ("FixedNominal", "Nominal"),
+                ("FixedOracle", "Oracle"),
+            ):
+                try:
+                    effect = ablation_effect(scenario, family, baseline)
+                except KeyError:
+                    continue
+                stem = f"OUValidation{short}{macro_name}{tag}"
+                ablation_macros.extend(
+                    (
+                        rf"\providecommand{{\{stem}Difference}}"
+                        rf"{{{signed(float(effect['mean_paired_difference']))}}}",
+                        rf"\providecommand{{\{stem}Low}}"
+                        rf"{{{signed(float(effect['bootstrap_ci95_low']))}}}",
+                        rf"\providecommand{{\{stem}High}}"
+                        rf"{{{signed(float(effect['bootstrap_ci95_high']))}}}",
+                    )
+                )
+
     lines = [
         r"% Generated by tools/ou_validation.py from the committed full-study rows.",
+        *ablation_macros,
         rf"\providecommand{{\OUValidationStationaryPairs}}{{{difference['n_pairs']}}}",
         rf"\providecommand{{\OUValidationOUIINormalizedMean}}{{{aggregate['OU_II']['mean']:.2f}}}",
         rf"\providecommand{{\OUValidationOUIINormalizedStd}}{{{aggregate['OU_II']['std']:.2f}}}",
@@ -1036,6 +1155,161 @@ def write_publication_table(
             + r" \\"
         )
     lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}"))
+
+    sync_modes = [
+        mode
+        for pair in COVARIANCE_SYNC_PAIRS
+        for mode in pair
+        if any(row["mode"] == mode for row in summary)
+    ]
+    if len(sync_modes) == 4:
+        lines.extend(
+            (
+                r"",
+                r"\begin{table*}[t]",
+                r"  \centering",
+                r"  \caption{Covariance-policy ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). \emph{Held} repeats the paired mode with the periodic re-alignment of the posterior $\mat{P}_{a_w a_w}$ marginal switched off, leaving only the reconfiguration-event alignment. Comparing columns within a tuning mode isolates the covariance policy from online adaptation.}",
+                r"  \label{tab:ou_mc_covsync}",
+                r"  \footnotesize",
+                r"  \setlength{\tabcolsep}{3.2pt}",
+                r"  \begin{tabular}{@{}lrrrrrrrr@{}}",
+                r"    \toprule",
+                r"    & \multicolumn{4}{c}{OU--II Z [\%$H_s$]} & \multicolumn{4}{c}{OU--III Z [\%$H_s$]} \\",
+                r"    \cmidrule(lr){2-5}\cmidrule(lr){6-9}",
+                r"    Scenario & Adapt. & Adapt.\ held & FixedNom. & FixedNom.\ held"
+                r" & Adapt. & Adapt.\ held & FixedNom. & FixedNom.\ held \\",
+                r"    \midrule",
+            )
+        )
+        for scenario in scenarios:
+            lines.append(
+                "    "
+                + " & ".join(
+                    (
+                        scenario_display_label(scenario),
+                        *(
+                            mean_std(scenario, family, mode)
+                            for family in ("OU_II", "OU_III")
+                            for mode in (
+                                "Adaptive",
+                                "AdaptiveHeldCovariance",
+                                "FixedNominal",
+                                "FixedNominalHeldCovariance",
+                            )
+                        ),
+                    )
+                )
+                + r" \\"
+            )
+        lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}"))
+
+        # Largest |mean paired difference| attributable to the covariance reset
+        # alone, across scenarios, families, and both matched pairs.
+        candidates = [
+            row
+            for row in effects
+            if any(
+                str(row["comparison"]) == f"{left}_minus_{right}"
+                for left, right in COVARIANCE_SYNC_PAIRS
+            )
+        ]
+        vertical = [
+            row for row in candidates if row["metric"] == "disp_z_pct_hs"
+        ]
+        worst = max(
+            vertical, key=lambda row: abs(float(row["mean_paired_difference"]))
+        )
+        transition = [
+            row
+            for row in vertical
+            if str(row["scenario"]).startswith("nonstationary_")
+            and str(row["comparison"]).startswith("Adaptive_minus_")
+        ]
+        worst_transition = max(
+            transition, key=lambda row: abs(float(row["mean_paired_difference"]))
+        )
+        lines.extend(
+            (
+                r"",
+                rf"\providecommand{{\OUValidationCovSyncWorstScenario}}{{{scenario_display_label(str(worst['scenario']))}}}",
+                rf"\providecommand{{\OUValidationCovSyncWorstFamily}}{{{str(worst['family']).replace('_', '--')}}}",
+                rf"\providecommand{{\OUValidationCovSyncWorstDifference}}{{{float(worst['mean_paired_difference']):+.3f}}}",
+                rf"\providecommand{{\OUValidationCovSyncWorstLow}}{{{float(worst['bootstrap_ci95_low']):+.3f}}}",
+                rf"\providecommand{{\OUValidationCovSyncWorstHigh}}{{{float(worst['bootstrap_ci95_high']):+.3f}}}",
+                rf"\providecommand{{\OUValidationCovSyncTransitionFamily}}{{{str(worst_transition['family']).replace('_', '--')}}}",
+                rf"\providecommand{{\OUValidationCovSyncTransitionDifference}}{{{float(worst_transition['mean_paired_difference']):+.3f}}}",
+                rf"\providecommand{{\OUValidationCovSyncTransitionLow}}{{{float(worst_transition['bootstrap_ci95_low']):+.3f}}}",
+                rf"\providecommand{{\OUValidationCovSyncTransitionHigh}}{{{float(worst_transition['bootstrap_ci95_high']):+.3f}}}",
+            )
+        )
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_tuning_points_table(
+    path: Path,
+    tuning_points: Mapping[str, Mapping[str, "TuningPoint"]],
+    nominal_name: str,
+    endpoint_name: str,
+) -> None:
+    """Emit the exact frozen operating points used by the fixed modes.
+
+    Every fixed-mode run in the study is fully determined by one row of this
+    table plus the fixed internal anisotropy factors, so the ablation can be
+    reproduced without re-running the calibration pass.
+    """
+
+    def label(name: str) -> str:
+        if name == endpoint_name:
+            return r"transition endpoint $H_s=\SI{4.0}{m}$, $T_p=\SI{11.4}{s}$"
+        text = scenario_display_label(name)
+        if name == nominal_name:
+            return text + r"\,$^{\dagger}$"
+        return text
+
+    names = sorted(
+        {name for points in tuning_points.values() for name in points},
+        key=lambda name: (name == endpoint_name, scenario_sort_key(name)),
+    )
+
+    lines = [
+        r"% Generated by tools/ou_validation.py; do not edit by hand.",
+        r"\begin{table*}[t]",
+        r"  \centering",
+        r"  \caption{Frozen operating points for the fixed-tuning modes, calibrated once from each noise-free \SI{1200}{s} reference record. $\dagger$ marks the single point used by FixedNominal in \emph{every} scenario; FixedOracle uses the row matching its own scenario, and the transition-endpoint row for the non-stationary case. Values are the vertical/base parameters; the filter applies $(1.87\sigma_{aw},1.87\sigma_{aw},\sigma_{aw})$ for OU--III acceleration and $\operatorname{diag}(0.36 r_S,0.36 r_S,r_S)^2$ for the integral pseudo-measurement, and $1.5\sigma_{aw}$ horizontally with $0.31 r_{p0}$ for OU--II.}",
+        r"  \label{tab:ou_fixed_points}",
+        r"  \footnotesize",
+        r"  \setlength{\tabcolsep}{4pt}",
+        r"  \begin{tabular}{@{}lrrrrrr@{}}",
+        r"    \toprule",
+        r"    & \multicolumn{3}{c}{OU--III} & \multicolumn{3}{c}{OU--II} \\",
+        r"    \cmidrule(lr){2-4}\cmidrule(lr){5-7}",
+        r"    Calibration record & $\tau$ [s] & $\sigma_{aw}$ [\si{\meter\per\second\squared}] & $r_S$ [\si{\meter\second}]"
+        r" & $\tau$ [s] & $\sigma_{aw}$ [\si{\meter\per\second\squared}] & $r_{p0}$ [m] \\",
+        r"    \midrule",
+    ]
+    for name in names:
+        third = tuning_points.get("OU_III", {}).get(name)
+        second = tuning_points.get("OU_II", {}).get(name)
+
+        def cell(value: float | None, digits: int = 3) -> str:
+            return "--" if value is None else f"{value:.{digits}f}"
+
+        lines.append(
+            "    "
+            + " & ".join(
+                (
+                    label(name),
+                    cell(third.tau_s if third else None),
+                    cell(third.sigma_a_mps2 if third else None),
+                    cell(third.RS_ms if third else None),
+                    cell(second.tau_s if second else None),
+                    cell(second.sigma_a_mps2 if second else None),
+                    cell(second.R_p0_std_m if second else None),
+                )
+            )
+            + r" \\"
+        )
+    lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}"))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -1044,6 +1318,7 @@ def write_metric_plot(
     summary: Sequence[Mapping[str, Any]],
     metric: str,
     ylabel: str,
+    modes: Sequence[str] = PRIMARY_MODES,
 ) -> None:
     cache_dir = Path(tempfile.gettempdir()) / "ocean-imu-matplotlib-cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -1053,11 +1328,18 @@ def write_metric_plot(
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    rows = [row for row in summary if row["metric"] == metric]
+    rows = [
+        row for row in summary
+        if row["metric"] == metric and str(row["mode"]) in modes
+    ]
     scenarios = sorted(
         {str(row["scenario"]) for row in rows}, key=scenario_sort_key
     )
-    groups = sorted({(str(row["family"]), str(row["mode"])) for row in rows})
+    order = {mode: index for index, mode in enumerate(modes)}
+    groups = sorted(
+        {(str(row["family"]), str(row["mode"])) for row in rows},
+        key=lambda item: (item[0], order[item[1]]),
+    )
     figure, axis = plt.subplots(figsize=(max(7.0, 1.7 * len(scenarios)), 4.8))
     x = np.arange(len(scenarios), dtype=float)
     offsets = np.linspace(-0.28, 0.28, max(1, len(groups)))
@@ -1090,7 +1372,7 @@ def write_metric_plot(
             linewidth=1.2,
             label=(
                 f"{family.replace('OU_II', 'OU–II').replace('OU_III', 'OU–III')} "
-                f"{mode.replace('Fixed', 'Fixed ')}"
+                f"{mode.replace('HeldCovariance', ' held-cov').replace('Fixed', 'Fixed ')}"
             ),
         )
     axis.set_xticks(x, [scenario_display_label(scenario) for scenario in scenarios])
@@ -1101,6 +1383,240 @@ def write_metric_plot(
     figure.tight_layout()
     figure.savefig(path, format="svg")
     plt.close(figure)
+
+
+def transition_window_composition(
+    transition_start_sec: float,
+    transition_end_sec: float,
+    duration_sec: float,
+    window_sec: float,
+) -> dict[str, float]:
+    """Split the scoring window into pure-start, blended, and pure-end time.
+
+    The transition is a crossfade between two independent stationary records,
+    so the score is not a uniform sample of "transitioning" conditions: it
+    contains a run-in at the start sea, the blend itself, and a long tail at
+    the endpoint sea.  Reporting the split keeps that visible.
+    """
+
+    window_start = duration_sec - window_sec
+    start_end = max(window_start, min(transition_start_sec, duration_sec))
+    blend_end = max(start_end, min(transition_end_sec, duration_sec))
+    return {
+        "window_start_sec": window_start,
+        "window_end_sec": duration_sec,
+        "pure_start_sea_sec": start_end - window_start,
+        "blended_sec": blend_end - start_end,
+        "pure_end_sea_sec": duration_sec - blend_end,
+    }
+
+
+def mixture_significant_height_m(
+    start_height_m: float, end_height_m: float, weight: float
+) -> float:
+    """Effective H_s of the crossfade at blend weight ``weight``.
+
+    The two records are independent, so their variances add under the quintic
+    weights.  The blend therefore passes through a lower height than a linear
+    H_s ramp between the same endpoints would.
+    """
+
+    variance = ((1.0 - weight) * start_height_m) ** 2 + (weight * end_height_m) ** 2
+    return math.sqrt(variance)
+
+
+def _read_timeseries_columns(
+    path: Path, names: Sequence[str]
+) -> dict[str, np.ndarray]:
+    with path.open("r", encoding="utf-8") as stream:
+        header = stream.readline().strip().split(",")
+    indices = [header.index(name) for name in names]
+    data = np.loadtxt(
+        path, delimiter=",", skiprows=1, usecols=indices, dtype=np.float64
+    )
+    return {name: data[:, position] for position, name in enumerate(names)}
+
+
+def write_transition_diagnostic(
+    svg_path: Path,
+    csv_path: Path,
+    family: str,
+    surrogate_path: Path,
+    columns: Sequence[str],
+    surrogate: np.ndarray,
+    seed: SeedTriplet,
+    window_sec: float,
+    transition_start_sec: float,
+    transition_end_sec: float,
+    nominal_point: TuningPoint,
+    oracle_point: TuningPoint,
+    start_height_m: float,
+    end_height_m: float,
+    decimation: int = 20,
+) -> dict[str, Any]:
+    """Run one transition realization with time-series output and plot it.
+
+    The aggregate tables cannot separate a genuine adaptation lag from the
+    changing composition of the scoring window, so this figure shows a single
+    realization directly: what the sea does, what the tuner does about it, and
+    what the resulting vertical error looks like.
+    """
+
+    cache_dir = Path(tempfile.gettempdir()) / "ocean-imu-matplotlib-cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    os.environ.setdefault("MPLCONFIGDIR", str(cache_dir))
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    metrics, _, _ = run_simulator(
+        family,
+        surrogate_path,
+        window_sec,
+        seed.imu_noise_seed,
+        seed.initialization_seed,
+        tuning_mode="adaptive",
+        write_timeseries=True,
+    )
+    # The simulator derives its output name from the input path it was given,
+    # so the time series lands next to the surrogate rather than in the cwd.
+    output_name = "w3d_" + surrogate_path.name.removeprefix("wave_data_")
+    suffix = FAMILY_TIMESERIES_SUFFIX[family]
+    output_path = surrogate_path.parent / output_name.replace(
+        ".csv", f"{suffix}.csv"
+    )
+    if not output_path.exists():
+        raise FileNotFoundError(f"simulator did not write {output_path}")
+
+    wanted = (
+        "time",
+        "disp_ref_z",
+        "disp_est_z",
+        "tau_applied",
+        "sigma_a_applied",
+        "R_p0_applied",
+        "freq_tracker_hz",
+    )
+    try:
+        series = _read_timeseries_columns(output_path, wanted)
+    finally:
+        output_path.unlink(missing_ok=True)
+
+    time = series["time"]
+    weight = smoothstep_weight(time, transition_start_sec, transition_end_sec)
+    error = series["disp_est_z"] - series["disp_ref_z"]
+
+    # Rolling significant height of the reference record, as an independent
+    # readout of what the crossfade actually does to the sea state.
+    window_samples = max(2, int(round(60.0 / DT_SECONDS)))
+    kernel = np.ones(window_samples) / window_samples
+    reference = series["disp_ref_z"]
+    rolling_mean = np.convolve(reference, kernel, mode="same")
+    rolling_mean_square = np.convolve(reference**2, kernel, mode="same")
+    rolling_hs = 4.0 * np.sqrt(
+        np.maximum(rolling_mean_square - rolling_mean**2, 0.0)
+    )
+    mixture_hs = np.asarray(
+        [
+            mixture_significant_height_m(start_height_m, end_height_m, value)
+            for value in weight
+        ]
+    )
+
+    step = max(1, int(decimation))
+    write_csv(
+        csv_path,
+        [
+            {
+                "time_s": float(time[index]),
+                "blend_weight": float(weight[index]),
+                "rolling_hs_m": float(rolling_hs[index]),
+                "mixture_hs_m": float(mixture_hs[index]),
+                "disp_ref_z_m": float(reference[index]),
+                "disp_est_z_m": float(series["disp_est_z"][index]),
+                "disp_err_z_m": float(error[index]),
+                "tau_applied_s": float(series["tau_applied"][index]),
+                "sigma_aw_applied_mps2": float(series["sigma_a_applied"][index]),
+                "r_s_applied_ms": float(series["R_p0_applied"][index]),
+                "freq_tracker_hz": float(series["freq_tracker_hz"][index]),
+            }
+            for index in range(0, time.size, step)
+        ],
+    )
+
+    sliced = slice(None, None, step)
+    figure, axes = plt.subplots(4, 1, figsize=(9.0, 10.0), sharex=True)
+
+    axes[0].plot(time[sliced], rolling_hs[sliced], color="#0072B2",
+                 label=r"reference rolling $H_s$ (60 s)")
+    axes[0].plot(time[sliced], mixture_hs[sliced], color="#D55E00",
+                 linestyle="--", label=r"independent-mixture $H_s$")
+    axes[0].plot(
+        time[sliced],
+        (1.0 - weight[sliced]) * start_height_m + weight[sliced] * end_height_m,
+        color="#999999", linestyle=":", label=r"linear $H_s$ ramp (not simulated)",
+    )
+    axes[0].set_ylabel(r"$H_s$ (m)")
+    axes[0].legend(fontsize=7, ncol=2)
+
+    axes[1].plot(time[sliced], reference[sliced], color="#000000",
+                 linewidth=0.7, label="reference $p_z$")
+    axes[1].plot(time[sliced], series["disp_est_z"][sliced], color="#009E73",
+                 linewidth=0.7, label="estimated $p_z$")
+    axes[1].set_ylabel("vertical displacement (m)")
+    axes[1].legend(fontsize=7)
+
+    axes[2].plot(time[sliced], error[sliced], color="#CC79A7", linewidth=0.7)
+    axes[2].set_ylabel("vertical error (m)")
+
+    axes[3].plot(time[sliced], series["tau_applied"][sliced], color="#0072B2",
+                 label=r"applied $\tau$ (s)")
+    axes[3].plot(time[sliced], series["sigma_a_applied"][sliced], color="#D55E00",
+                 label=r"applied $\sigma_{aw}$ (m/s$^2$)")
+    axes[3].plot(time[sliced], series["R_p0_applied"][sliced], color="#009E73",
+                 label=r"applied $r_S$ (m$\cdot$s)")
+    for value, color, name in (
+        (nominal_point.tau_s, "#0072B2", None),
+        (nominal_point.sigma_a_mps2, "#D55E00", None),
+        (nominal_point.RS_ms or nominal_point.R_p0_std_m, "#009E73", "FixedNominal"),
+    ):
+        axes[3].axhline(value, color=color, linestyle=":", linewidth=0.9, label=name)
+    for value, color, name in (
+        (oracle_point.tau_s, "#0072B2", None),
+        (oracle_point.sigma_a_mps2, "#D55E00", None),
+        (oracle_point.RS_ms or oracle_point.R_p0_std_m, "#009E73", "FixedOracle"),
+    ):
+        axes[3].axhline(value, color=color, linestyle="--", linewidth=0.9, label=name)
+    axes[3].set_ylabel("applied tuning")
+    axes[3].set_xlabel("time (s)")
+    axes[3].legend(fontsize=7, ncol=2)
+
+    for axis in axes:
+        axis.grid(alpha=0.3)
+        axis.axvspan(
+            transition_start_sec, transition_end_sec, color="#888888", alpha=0.12
+        )
+        axis.axvline(
+            float(time[-1]) - window_sec, color="#444444", linewidth=0.8,
+            linestyle="-.",
+        )
+    figure.tight_layout()
+    figure.savefig(svg_path, format="svg")
+    plt.close(figure)
+
+    return {
+        "family": family,
+        "wave_phase_seed": seed.wave_phase_seed,
+        "imu_noise_seed": seed.imu_noise_seed,
+        "initialization_seed": seed.initialization_seed,
+        "decimation": step,
+        "disp_z_pct_hs": float(metrics["disp_z_pct_hs"]),
+        "midpoint_mixture_hs_m": mixture_significant_height_m(
+            start_height_m, end_height_m, 0.5
+        ),
+        "midpoint_linear_hs_m": 0.5 * (start_height_m + end_height_m),
+    }
 
 
 def sha256_file(path: Path) -> str:
@@ -1192,8 +1708,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--adaptation-modes",
-        default="Adaptive,FixedNominal,FixedOracle",
-        help="comma-separated subset of Adaptive,FixedNominal,FixedOracle",
+        default=",".join(MODE_SETTINGS),
+        help="comma-separated subset of " + ",".join(MODE_SETTINGS),
     )
     parser.add_argument("--bootstrap-resamples", type=int, default=10_000)
     parser.add_argument("--stats-seed", type=int, default=20260317)
@@ -1210,7 +1726,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     families = ("OU_II", "OU_III") if args.families == "both" else (args.families,)
-    allowed_modes = ("Adaptive", "FixedNominal", "FixedOracle")
+    allowed_modes = tuple(MODE_SETTINGS)
     adaptation_modes = tuple(
         token.strip() for token in args.adaptation_modes.split(",") if token.strip()
     )
@@ -1281,6 +1797,16 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     raw_rows: list[dict[str, Any]] = []
     tuning_points: dict[str, dict[str, TuningPoint]] = defaultdict(dict)
+    # One transition realization is retained after the run loop so the
+    # time-domain diagnostic can be produced from the same surrogate that was
+    # scored, rather than from a separately regenerated record.
+    diagnostic_path: Path | None = None
+    diagnostic_columns: list[str] = []
+    diagnostic_data: np.ndarray | None = None
+    diagnostic_start_height = 0.0
+    transition_diagnostic: dict[str, Any] | None = None
+    transition_svg_path: Path | None = None
+    transition_csv_path: Path | None = None
 
     with tempfile.TemporaryDirectory(prefix="ocean-imu-ou-validation-") as temporary:
         work_dir = Path(temporary)
@@ -1373,17 +1899,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                         transition_end,
                     )
                 write_wave_csv(generated_path, start_columns, generated)
+                if scenario.kind == "nonstationary" and repetition == 1:
+                    diagnostic_path = generated_path
+                    diagnostic_columns = list(start_columns)
+                    diagnostic_data = generated
+                    height_source = re.search(
+                        r"_H([0-9.]+)_", scenario.start_input.name
+                    )
+                    diagnostic_start_height = (
+                        float(height_source.group(1)) if height_source else 0.0
+                    )
 
                 for family in families:
                     for mode in adaptation_modes:
-                        if mode == "Adaptive":
-                            tuning_mode = "adaptive"
+                        tuning_mode, aw_cov_sync = MODE_SETTINGS[mode]
+                        if tuning_mode == "adaptive":
                             point = None
-                        elif mode == "FixedNominal":
-                            tuning_mode = "fixed_nominal"
+                        elif tuning_mode == "fixed_nominal":
                             point = nominal_points[family]
                         else:
-                            tuning_mode = "fixed_oracle"
                             point = tuning_points[family][oracle_name]
 
                         print(
@@ -1398,6 +1932,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                             seed.initialization_seed,
                             tuning_mode=tuning_mode,
                             tuning_point=point,
+                            aw_cov_sync=aw_cov_sync,
                         )
                         raw_rows.append(
                             {
@@ -1417,11 +1952,39 @@ def main(argv: Sequence[str] | None = None) -> int:
                                 "simulator_return_code": return_code,
                                 **{
                                     key: value for key, value in metrics.items()
-                                    if key not in ("family", "tuning_mode", "input")
+                                    if key not in (
+                                        "family", "tuning_mode", "aw_cov_sync",
+                                        "input",
+                                    )
                                 },
                             }
                         )
+                if generated_path == diagnostic_path:
+                    continue
                 generated_path.unlink()
+
+        if diagnostic_path is not None and not args.no_plots:
+            print("Transition diagnostic run", flush=True)
+            transition_svg_path = args.output_dir / "ou_validation_transition.svg"
+            transition_csv_path = args.output_dir / "ou_validation_transition.csv"
+            diagnostic_family = "OU_III" if "OU_III" in families else families[0]
+            transition_diagnostic = write_transition_diagnostic(
+                transition_svg_path,
+                transition_csv_path,
+                diagnostic_family,
+                diagnostic_path,
+                diagnostic_columns,
+                diagnostic_data,
+                seeds[0],
+                window_sec,
+                transition_start,
+                transition_end,
+                nominal_points[diagnostic_family],
+                tuning_points[diagnostic_family][endpoint_name],
+                diagnostic_start_height,
+                args.nonstationary_end_height,
+            )
+            diagnostic_path.unlink(missing_ok=True)
 
     summary = summarize_rows(raw_rows, args.bootstrap_resamples, args.stats_seed)
     effects = paired_effect_rows(raw_rows, args.bootstrap_resamples, args.stats_seed)
@@ -1432,6 +1995,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     json_path = args.output_dir / "ou_validation.json"
     tex_path = args.output_dir / "ou_validation_table.tex"
     publication_tex_path = args.output_dir / "ou_validation_publication.tex"
+    tuning_tex_path = args.output_dir / "ou_validation_tuning_points.tex"
     manifest_path = args.output_dir / "ou_validation_manifest.json"
     write_csv(raw_path, raw_rows)
     write_csv(summary_path, summary)
@@ -1444,6 +2008,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         effects,
         args.bootstrap_resamples,
         args.stats_seed,
+    )
+    write_tuning_points_table(
+        tuning_tex_path, tuning_points, nominal_name, endpoint_name
     )
 
     calibration_json = {
@@ -1469,8 +2036,23 @@ def main(argv: Sequence[str] | None = None) -> int:
             "noise-free full-trace operating point from Hs=1.5 m, L=50.710 m"
         ),
         "fixed_oracle_definition": (
-            "noise-free full-trace operating point for the stationary sea; "
-            "known final Hs=4.0 m/Tp=11.4 s point for the transition"
+            "scenario-calibrated fixed reference: the noise-free full-trace "
+            "operating point of the stationary sea being scored, and the known "
+            "final Hs=4.0 m/Tp=11.4 s point for the transition; it is selected "
+            "from knowledge of the sea, not optimized against displacement error"
+        ),
+        "aw_covariance_sync_policies": {
+            mode: policy for mode, (_, policy) in MODE_SETTINGS.items()
+            if mode in adaptation_modes
+        },
+        "transition_window_composition_sec": transition_window_composition(
+            transition_start, transition_end, duration_sec, window_sec
+        ),
+        "transition_midpoint_mixture_hs_m": mixture_significant_height_m(
+            1.5, args.nonstationary_end_height, 0.5
+        ),
+        "transition_midpoint_linear_hs_m": 0.5 * (
+            1.5 + args.nonstationary_end_height
         ),
         "bootstrap_resamples": args.bootstrap_resamples,
         "stats_seed": args.stats_seed,
@@ -1484,6 +2066,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "summary": summary,
             "paired_effects": effects,
             "stationary_normalized_aggregate": normalized_aggregate,
+            "transition_diagnostic": transition_diagnostic,
         },
     )
 
@@ -1512,6 +2095,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             "pitch_rms_deg",
             "Pitch RMS (deg)",
         )
+        if all(
+            any(row["mode"] == mode for row in summary)
+            for pair in COVARIANCE_SYNC_PAIRS for mode in pair
+        ):
+            covsync_path = args.output_dir / "ou_validation_covsync.svg"
+            write_metric_plot(
+                covsync_path,
+                summary,
+                "disp_z_pct_hs",
+                r"Vertical displacement RMS (% $H_s$)",
+                modes=[mode for pair in COVARIANCE_SYNC_PAIRS for mode in pair],
+            )
+            plot_paths.append(covsync_path)
+        if transition_svg_path is not None and transition_svg_path.exists():
+            plot_paths.append(transition_svg_path)
 
     source_paths = sorted({scenario.start_input for scenario in scenarios}.union(
         {scenario.end_input for scenario in scenarios if scenario.end_input is not None}
@@ -1523,8 +2121,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         json_path,
         tex_path,
         publication_tex_path,
+        tuning_tex_path,
         *plot_paths,
     ]
+    if transition_csv_path is not None and transition_csv_path.exists():
+        result_paths.append(transition_csv_path)
     manifest = {
         "git_commit": git_output("rev-parse", "HEAD"),
         "git_branch": git_output("branch", "--show-current"),
@@ -1551,6 +2152,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         },
         "fixed_tuning_points": calibration_json,
         "stationary_normalized_aggregate": normalized_aggregate,
+        "transition_diagnostic": transition_diagnostic,
     }
     write_json(manifest_path, manifest)
 
@@ -1560,6 +2162,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(f"Wrote {json_path}")
     print(f"Wrote {tex_path}")
     print(f"Wrote {publication_tex_path}")
+    print(f"Wrote {tuning_tex_path}")
     print(f"Wrote {manifest_path}")
     return 0
 

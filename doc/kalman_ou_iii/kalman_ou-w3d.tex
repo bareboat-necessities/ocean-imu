@@ -177,7 +177,10 @@ the paired difference is $-1.086$ percentage point (bootstrap 95\% interval
 $[-1.208,-0.970]$).  OU--III has lower vertical error in all four stationary
 seas, but higher vertical error during the transition and higher 3D error in
 four of the five scenarios; the nominal-sea 3D difference is unresolved.
-Online adaptation does not dominate fixed tuning during the transition.  The
+Online adaptation removes most of the error of a badly mismatched frozen
+operating point but does not dominate a well-matched one, and a matched
+covariance-reset control shows that this gap is not an artifact of the
+adaptation bookkeeping.  The
 same source builds for an
 ESP32--S3 target and has been exercised with MEMS IMU input; quantitative
 timing, processor-load, and memory measurements are reserved for a separate

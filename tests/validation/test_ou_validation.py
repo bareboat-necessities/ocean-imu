@@ -217,11 +217,74 @@ class StatisticsTests(unittest.TestCase):
     def test_machine_readable_metric_parser(self):
         parsed = validation.parse_validation_metrics(
             "VALIDATION_METRICS family=OU_II tuning_mode=adaptive "
+            "aw_cov_sync=periodic "
             "input=wave.csv window_s=900 samples=180000 disp_z_rms_m=0.25"
         )
         self.assertEqual(parsed["family"], "OU_II")
+        self.assertEqual(parsed["aw_cov_sync"], "periodic")
         self.assertEqual(parsed["samples"], 180000)
         self.assertEqual(parsed["disp_z_rms_m"], 0.25)
+
+    def test_covariance_sync_ablation_is_a_matched_pair(self):
+        # Each *PeriodicSync* mode must differ from its partner in exactly one
+        # factor: the covariance-reset policy. Otherwise the ablation cannot
+        # separate that factor from online adaptation.
+        for left, right in validation.COVARIANCE_SYNC_PAIRS:
+            left_tuning, left_sync = validation.MODE_SETTINGS[left]
+            right_tuning, right_sync = validation.MODE_SETTINGS[right]
+            self.assertEqual(left_tuning, right_tuning)
+            self.assertEqual(left_sync, "periodic")
+            self.assertEqual(right_sync, "reconfigure")
+        # All three primary modes must share the deployed covariance policy,
+        # otherwise the adaptation ablation is confounded by it.
+        for mode in validation.PRIMARY_MODES:
+            self.assertEqual(validation.MODE_SETTINGS[mode][1], "periodic")
+
+    def test_paired_effects_separate_the_two_families(self):
+        rows = []
+        for repetition, low, high in ((1, 1.0, 2.0), (2, 1.5, 3.0), (3, 2.0, 4.0)):
+            rows.append(self.row("OU_II", "Adaptive", repetition, low))
+            rows.append(self.row("OU_II", "FixedNominal", repetition, low - 0.25))
+            rows.append(self.row("OU_III", "Adaptive", repetition, high))
+            rows.append(self.row("OU_III", "FixedNominal", repetition, high - 1.0))
+        effects = validation.paired_effect_rows(rows, 200, 7)
+        by_family = {
+            str(row["family"]): row
+            for row in effects
+            if row["comparison"] == "Adaptive_minus_FixedNominal"
+            and row["metric"] == "disp_z_pct_hs"
+        }
+        self.assertAlmostEqual(
+            by_family["OU_II"]["mean_paired_difference"], 0.25
+        )
+        self.assertAlmostEqual(
+            by_family["OU_III"]["mean_paired_difference"], 1.0
+        )
+
+    def test_transition_window_composition_is_reported(self):
+        composition = validation.transition_window_composition(
+            transition_start_sec=420.0,
+            transition_end_sec=780.0,
+            duration_sec=1200.0,
+            window_sec=900.0,
+        )
+        self.assertAlmostEqual(composition["window_start_sec"], 300.0)
+        self.assertAlmostEqual(composition["pure_start_sea_sec"], 120.0)
+        self.assertAlmostEqual(composition["blended_sec"], 360.0)
+        self.assertAlmostEqual(composition["pure_end_sea_sec"], 420.0)
+
+    def test_crossfade_midpoint_is_below_a_linear_height_ramp(self):
+        # The two blended records are independent, so their variances add and
+        # the crossfade never reaches the height a linear H_s ramp would.
+        midpoint = validation.mixture_significant_height_m(1.5, 4.0, 0.5)
+        self.assertAlmostEqual(midpoint, math.hypot(0.75, 2.0), places=6)
+        self.assertLess(midpoint, 0.5 * (1.5 + 4.0))
+        self.assertAlmostEqual(
+            validation.mixture_significant_height_m(1.5, 4.0, 0.0), 1.5
+        )
+        self.assertAlmostEqual(
+            validation.mixture_significant_height_m(1.5, 4.0, 1.0), 4.0
+        )
 
     def test_publication_labels_and_stationary_aggregate(self):
         small = "stationary_jonswap_H0_270_L14_047_A30_00_P60_00"
@@ -286,14 +349,31 @@ class CommittedFullResultsTests(unittest.TestCase):
         effects = self.read_csv(
             self.RESULTS / "ou_validation_paired_effects.csv"
         )
-        self.assertEqual(len(raw), 300)
-        self.assertEqual(len(summary), 390)
-        self.assertEqual(len(effects), 325)
+        scenarios = {row["scenario"] for row in raw}
+        families = {row["family"] for row in raw}
+        modes = {row["mode"] for row in raw}
+        self.assertEqual(len(scenarios), 5)
+        self.assertEqual(families, {"OU_II", "OU_III"})
+        self.assertEqual(modes, set(validation.MODE_SETTINGS))
+        cells = len(scenarios) * len(families) * len(modes)
+        self.assertEqual(len(raw), cells * 10)
+        self.assertEqual(len(summary), cells * len(validation.METRIC_NAMES))
+        # Per scenario: one cross-family comparison, plus, for each family,
+        # two adaptation baselines and two covariance-reset controls.
+        comparisons_per_scenario = 1 + len(families) * (
+            2 + len(validation.COVARIANCE_SYNC_PAIRS)
+        )
+        self.assertEqual(
+            len(effects),
+            len(scenarios)
+            * comparisons_per_scenario
+            * len(validation.METRIC_NAMES),
+        )
         groups = Counter(
             (row["scenario"], row["family"], row["mode"])
             for row in raw
         )
-        self.assertEqual(len(groups), 30)
+        self.assertEqual(len(groups), cells)
         self.assertEqual(set(groups.values()), {10})
         self.assertEqual({int(row["n"]) for row in summary}, {10})
         self.assertEqual({int(row["n_pairs"]) for row in effects}, {10})
@@ -314,19 +394,58 @@ class CommittedFullResultsTests(unittest.TestCase):
             self.assertEqual(digest, metadata["sha256"], name)
             self.assertEqual(path.stat().st_size, metadata["bytes"], name)
 
-        self.assertEqual(
-            (self.RESULTS / "ou_validation_publication.tex").read_bytes(),
+        for result_name, doc_name in (
             (
-                REPO_ROOT
-                / "doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part"
-            ).read_bytes(),
-        )
-        self.assertEqual(
-            (self.RESULTS / "ou_validation_vertical.svg").read_bytes(),
+                "ou_validation_publication.tex",
+                "w3d-ou-validation-results-generated.tex-part",
+            ),
             (
-                REPO_ROOT / "doc/kalman_ou_iii/ou_validation_vertical.svg"
-            ).read_bytes(),
+                "ou_validation_tuning_points.tex",
+                "w3d-ou-validation-tuning-points-generated.tex-part",
+            ),
+            ("ou_validation_vertical.svg", "ou_validation_vertical.svg"),
+            ("ou_validation_transition.svg", "ou_validation_transition.svg"),
+        ):
+            self.assertEqual(
+                (self.RESULTS / result_name).read_bytes(),
+                (REPO_ROOT / "doc" / "kalman_ou_iii" / doc_name).read_bytes(),
+                doc_name,
+            )
+
+    def test_transition_protocol_records_its_own_confounds(self):
+        with (self.RESULTS / "ou_validation_manifest.json").open(
+            encoding="utf-8"
+        ) as stream:
+            manifest = json.load(stream)
+        protocol = manifest["protocol"]
+
+        # The crossfade is not a spectral ramp, and the scoring window is not a
+        # uniform sample of transitioning conditions. Both must stay recorded
+        # with the evidence, not only asserted in prose.
+        self.assertIn("crossfade", protocol["transition_method"])
+        self.assertIn(
+            "not a continuously evolving", protocol["transition_method"]
         )
+        composition = protocol["transition_window_composition_sec"]
+        self.assertGreater(composition["pure_end_sea_sec"], 0.0)
+        self.assertAlmostEqual(
+            composition["pure_start_sea_sec"]
+            + composition["blended_sec"]
+            + composition["pure_end_sea_sec"],
+            protocol["score_window_sec"],
+        )
+        self.assertLess(
+            protocol["transition_midpoint_mixture_hs_m"],
+            protocol["transition_midpoint_linear_hs_m"],
+        )
+
+        # FixedOracle must not be described as an optimum.
+        self.assertIn("not optimized", protocol["fixed_oracle_definition"])
+
+        policies = protocol["aw_covariance_sync_policies"]
+        for left, right in validation.COVARIANCE_SYNC_PAIRS:
+            self.assertEqual(policies[left], "periodic")
+            self.assertEqual(policies[right], "reconfigure")
 
     def test_abstract_reports_committed_stationary_aggregate(self):
         with (self.RESULTS / "ou_validation_manifest.json").open(
@@ -365,6 +484,35 @@ class ManuscriptMethodologyTests(unittest.TestCase):
     @classmethod
     def read(cls, name):
         return (cls.DOC / name).read_text(encoding="utf-8")
+
+    def test_fixed_reference_and_transition_limits_are_stated(self):
+        protocol = self.read("w3d-sim-charts.tex-part")
+        results = self.read("w3d-baseline-comparison.tex-part")
+
+        # "Oracle" must be defined as a scenario-calibrated fixed reference,
+        # not as an optimum, and its exact values must be tabulated.
+        self.assertIn("scenario-calibrated fixed reference", protocol)
+        self.assertIn("searching against reference displacement error", protocol)
+        self.assertIn("tab:ou_fixed_points", protocol)
+        self.assertIn(
+            "w3d-ou-validation-tuning-points-generated.tex-part", results
+        )
+
+        # The crossfade and its consequences must be stated, not implied.
+        self.assertIn("crossfade", protocol)
+        self.assertIn("2.14", protocol)
+        self.assertIn("bimodal", protocol)
+        self.assertIn("does not isolate adaptation rate", protocol)
+
+        # The covariance-reset factor must be described as a controlled
+        # ablation and used to qualify the adaptation result.
+        self.assertIn("AdaptiveHeldCovariance", protocol)
+        self.assertIn("tab:ou_mc_covsync", protocol)
+        self.assertIn("OUValidationCovSyncWorstDifference", results)
+        self.assertIn("fig:ou_transition", results)
+
+        # The unsupported lag attribution must be gone.
+        self.assertNotIn("transition lag", protocol + results)
 
     def test_singer_relationship_and_contribution_wording(self):
         intro = self.read("w3d-intro.tex-part")

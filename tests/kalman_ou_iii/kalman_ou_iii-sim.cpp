@@ -69,6 +69,8 @@ public:
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
 
+        filter.setPeriodicAwCovarianceSync(load_periodic_aw_cov_sync());
+
         if (attitude_only) {
             filter.enableLinearBlock(false);
             filter.mekf().set_initial_acc_bias(Vector3f::Zero());
@@ -274,6 +276,21 @@ public:
     }
 
 private:
+    // Selects the a_w covariance-synchronization policy under test.
+    // "periodic" (default, and the deployed policy) re-aligns the
+    // latent-acceleration marginal with its stationary prior once per
+    // adaptation period; "reconfigure" restricts that to discrete
+    // reconfiguration events and is the matched ablation.
+    static bool load_periodic_aw_cov_sync()
+    {
+        const char* raw = std::getenv("W3D_AW_COV_SYNC");
+        const std::string policy = (raw && *raw) ? raw : "periodic";
+        if (policy == "reconfigure") return false;
+        if (policy == "periodic") return true;
+        throw std::runtime_error(
+            "W3D_AW_COV_SYNC must be reconfigure or periodic");
+    }
+
     void load_fixed_tuning()
     {
         const char* raw_mode = std::getenv("W3D_TUNING_MODE");
