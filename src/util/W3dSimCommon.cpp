@@ -1069,6 +1069,7 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
     float sense_forward_pct = NAN;
     float sense_reverse_pct = NAN;
     float sense_uncertain_pct = NAN;
+    float sense_dominant_pct = NAN;
     if (stop <= result.dir_deg_hist.size() && stop <= result.dir_sign_num_hist.size()) {
         std::vector<float> axis;
         axis.reserve(count);
@@ -1098,6 +1099,16 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
         sense_forward_pct = scale * static_cast<float>(forward);
         sense_reverse_pct = scale * static_cast<float>(reverse);
         sense_uncertain_pct = scale * static_cast<float>(uncertain);
+
+        // FORWARD/BACKWARD are relative to the axis representative the axis
+        // estimator happens to return, and that representative is not tied to
+        // the generator azimuth: records of opposite nominal heading put the
+        // same physical travel sense in opposite classes.  The share of
+        // samples in whichever class dominates therefore measures how
+        // consistently the classifier commits to one sense, which is what the
+        // raw counts above can support; it is not a correctness rate against
+        // the generator, and must not be reported as one.
+        sense_dominant_pct = std::max(sense_forward_pct, sense_reverse_pct);
     }
 
     const char* mode = std::getenv("W3D_TUNING_MODE");
@@ -1137,6 +1148,7 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
               << " dir_sense_forward_pct=" << sense_forward_pct
               << " dir_sense_reverse_pct=" << sense_reverse_pct
               << " dir_sense_uncertain_pct=" << sense_uncertain_pct
+              << " dir_sense_dominant_pct=" << sense_dominant_pct
               << " accel_bias_3d_rms_mps2=" << acc_3d
               << " gyro_bias_3d_rms_radps=" << gyro_3d
               << " tau_applied_s=" << result.final_tau_applied

@@ -110,6 +110,7 @@ DIRECTION_METRIC_NAMES = (
     "dir_sense_forward_pct",
     "dir_sense_reverse_pct",
     "dir_sense_uncertain_pct",
+    "dir_sense_dominant_pct",
 )
 
 METRIC_NAMES = (
@@ -1886,14 +1887,14 @@ def _direction_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Ten-seed OU--III wave-direction accuracy over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error. Travel sense is scored as the share of samples classified along the generating direction (Forward), against it (Reverse), or below the confidence and amplitude thresholds (Uncertain). Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
+        r"  \caption{Ten-seed OU--III wave-direction results over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error; both are genuine errors against truth. The last two columns are \emph{not} correctness rates: the travel-sense classes are defined relative to the axis representative the estimator returns, which is not tied to the generator azimuth, so \emph{Dominant} is the share of samples in whichever sense class the estimator commits to and \emph{Uncertain} the share below the confidence and amplitude thresholds. Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
         r"  \label{tab:ou_mc_direction}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{3.6pt}",
-        r"  \begin{tabular}{@{}llrrrrrr@{}}",
+        r"  \begin{tabular}{@{}llrrrrr@{}}",
         r"    \toprule",
         r"    Spectrum & Scenario & $|\Delta\theta|$ [\si{\degree}] & $\theta_{\mathrm{RMSE}}$ [\si{\degree}]"
-        r" & Axial SD [\si{\degree}] & Forward [\%] & Reverse [\%] & Uncertain [\%] \\",
+        r" & Axial SD [\si{\degree}] & Dominant [\%] & Uncertain [\%] \\",
         r"    \midrule",
     ]
     for scenario in stationary:
@@ -1914,8 +1915,7 @@ def _direction_table(
                             "dir_axis_abs_error_deg",
                             "dir_axis_rmse_deg",
                             "dir_axis_circ_std_deg",
-                            "dir_sense_forward_pct",
-                            "dir_sense_reverse_pct",
+                            "dir_sense_dominant_pct",
                             "dir_sense_uncertain_pct",
                         )
                     ),
@@ -1925,20 +1925,27 @@ def _direction_table(
         )
     lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}", r""))
 
-    def pooled(metric: str) -> float:
-        values = [
+    def scenario_means(metric: str) -> list[float]:
+        return [
             float(indexed_summary[(s, "OU_III", "Adaptive", metric)]["mean"])
             for s in stationary
             if (s, "OU_III", "Adaptive", metric) in indexed_summary
         ]
+
+    def pooled(metric: str) -> float:
+        values = scenario_means(metric)
         return float(np.mean(values)) if values else math.nan
+
+    def worst(metric: str) -> float:
+        values = scenario_means(metric)
+        return float(np.max(values)) if values else math.nan
 
     lines.extend(
         (
             rf"\providecommand{{\OUValidationDirectionAbsError}}{{{pooled('dir_axis_abs_error_deg'):.2f}}}",
+            rf"\providecommand{{\OUValidationDirectionWorstAbsError}}{{{worst('dir_axis_abs_error_deg'):.2f}}}",
             rf"\providecommand{{\OUValidationDirectionRMSE}}{{{pooled('dir_axis_rmse_deg'):.2f}}}",
-            rf"\providecommand{{\OUValidationDirectionForward}}{{{pooled('dir_sense_forward_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationDirectionReverse}}{{{pooled('dir_sense_reverse_pct'):.1f}}}",
+            rf"\providecommand{{\OUValidationDirectionDominant}}{{{pooled('dir_sense_dominant_pct'):.1f}}}",
             rf"\providecommand{{\OUValidationDirectionUncertain}}{{{pooled('dir_sense_uncertain_pct'):.1f}}}",
         )
     )

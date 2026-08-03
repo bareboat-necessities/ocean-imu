@@ -252,10 +252,13 @@ Direction is scored against the generator azimuth carried by each record.
 Because the propagation axis is defined modulo \SI{180}{\degree}, the reported
 axial error is the magnitude of the difference between the circular-mean
 estimate and that azimuth, alongside the sample-wise axial RMS error and the
-axial dispersion.  Travel sense is scored as the share of samples classified
-along the generating direction, against it, or below the confidence and
-amplitude thresholds, which converts the historical Toward/Away/Uncertain split
-into a correctness rate.
+axial dispersion.  Travel sense is reported as the share of samples in
+whichever sense class the estimator commits to, and the share below the
+confidence and amplitude thresholds.  It is deliberately not reported as a
+correctness rate: the sense classes are defined against the axis representative
+the estimator returns, which carries no fixed relation to the generator
+azimuth, so these records cannot say which committed sense is the physical one
+(Sec.~\ref{sec:observer-comparison}).
 
 \paragraph{Definition of the fixed operating points}
 \label{par:fixed-points}

@@ -203,22 +203,37 @@ harmonics, it is a separate prespecified ensemble and is not pooled into the
 primary aggregate; it extends the vertical result to a second spectral family
 rather than enlarging the confirmatory sample.
 
-\paragraph{Wave direction and travel sense}
+\paragraph{Wave direction, and the limit of the travel-sense evidence}
 Table~\ref{tab:ou_mc_direction} replaces the single deterministic window of
-Table~\ref{tab:sim_results_rms_dir_basic} with a ten-seed accuracy statement
-against the generator azimuth of each record.  Pooled over the eight stationary
-seas, the absolute axial error of the circular-mean estimate is
-\OUValidationDirectionAbsError{} degrees, the sample-wise axial RMS error is
-\OUValidationDirectionRMSE{} degrees, and \OUValidationDirectionForward\% of
-samples are classified along the generating direction against
-\OUValidationDirectionReverse\% opposed and
-\OUValidationDirectionUncertain\% below the confidence and amplitude
-thresholds.  This establishes an axis estimate whose mean is accurate to about
-a degree with substantial sample-wise dispersion, and a travel-sense
-classifier that is right far more often than not.  It remains a
-single-direction, unimodal test: the records hold one nominal heading per
-scenario, so direction changes and multimodal seas are outside what these
-numbers cover.
+Table~\ref{tab:sim_results_rms_dir_basic} with a ten-seed statement against the
+generator azimuth of each record.  The axis result is strong: pooled over the
+eight stationary seas the absolute axial error of the circular-mean estimate is
+\OUValidationDirectionAbsError{} degrees and no scenario exceeds
+\OUValidationDirectionWorstAbsError{} degrees, against a sample-wise axial RMS
+error of \OUValidationDirectionRMSE{} degrees.  The propagation \emph{axis} is
+therefore recovered to a degree or two in the mean, with substantial
+sample-to-sample dispersion about it.
+
+Travel sense is a different matter, and the ensemble exposes a limitation that
+the earlier single-window report concealed.  The classifier is decisive --
+\OUValidationDirectionDominant\% of samples fall in one sense class and only
+\OUValidationDirectionUncertain\% are below the confidence and amplitude
+thresholds -- but \emph{which} class that is cannot be checked against the
+generator here.  The FORWARD/BACKWARD labels are defined relative to the axis
+representative the axis estimator returns, and that representative is not tied
+to the generator azimuth: across the eight records the dominant class swaps
+with the sign of the nominal heading, on the original records as well as on the
+surrogates.  The estimator commits to a sense consistently; establishing that
+the committed sense is the physically correct one requires a signed
+ground-truth convention shared between the generator and the direction
+interface, which the present records do not provide.  We therefore report
+sense \emph{stability} and make no correctness claim, and the
+Toward/Away/Uncertain split of
+Table~\ref{tab:sim_results_rms_dir_basic} should be read the same way -- as the
+dominant class, not as a verified correctness rate.  Resolving this is left to
+future work, together with the unimodal limitation of these records: each holds
+one nominal heading, so direction changes and multimodal seas are outside what
+any of these numbers cover.
 
 The adaptation ablation in Table~\ref{tab:ou_mc_adaptation} is also mixed.
 Every fixed operating point it uses is listed in

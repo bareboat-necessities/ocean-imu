@@ -839,7 +839,12 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         self.assertIn("not pooled into the primary", results)
         self.assertIn("tab:ou_mc_direction", results)
         self.assertIn("OUValidationDirectionAbsError", results)
-        self.assertIn("travel-sense", results)
+        # Travel sense is stability, not correctness: the sense classes are
+        # defined against the estimator's own axis representative, so the
+        # manuscript must not present them as a correctness rate.
+        self.assertIn("OUValidationDirectionDominant", results)
+        self.assertIn("make no correctness claim", results)
+        self.assertNotIn("classified along the generating direction", results)
 
     def test_singer_relationship_and_contribution_wording(self):
         intro = self.read("w3d-intro.tex-part")
