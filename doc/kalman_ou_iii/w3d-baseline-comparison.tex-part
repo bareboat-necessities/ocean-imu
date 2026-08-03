@@ -151,44 +151,165 @@ formed by first averaging the four seas within each seed triplet is
 $\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
 $H_s$ for OU--III and
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
-OU--II.  The paired OU--III-minus-OU--II difference is
+OU--II, where the quoted spread is the sample standard deviation across the
+$\OUValidationStationaryPairs$ seed triplets rather than an interval for the
+mean.  The paired OU--III-minus-OU--II difference is
 $\OUValidationNormalizedDifference$ percentage point, with bootstrap 95\%
 interval
-$[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$,
-Cohen's $d_z=\OUValidationNormalizedDz$, and Hedges' corrected
-$g_z=\OUValidationNormalizedGz$ ($n=\OUValidationStationaryPairs$ paired
-seed-level aggregates).
+$[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$.
+This paired difference and its interval are the primary statement of effect
+size.  The standardized companions, Cohen's $d_z=\OUValidationNormalizedDz$ and
+Hedges' corrected $g_z=\OUValidationNormalizedGz$, are reported for
+completeness only; at $n=\OUValidationStationaryPairs$ with strong pairing they
+are large because the standard deviation of the seed-level differences is both
+small and imprecisely estimated, and they should not be read as a further
+strengthening of the claim.
 
-That aggregate does not imply uniform dominance.  Table~\ref{tab:ou_mc_family}
-shows resolved OU--III vertical improvements in all four stationary seas, while
-OU--III has higher vertical error during the transition.  The paired
-3D-displacement difference is above zero at $H_s=0.27$, \SI{4.0}{m},
-\SI{8.5}{m}, and during the transition; at the nominal \SI{1.5}{m} sea its
-interval spans zero.  The additional OU state therefore provides a clear
-aggregate vertical benefit for this stationary JONSWAP family, but cannot be
-described as uniformly better in full three-dimensional reconstruction or under
-time-varying conditions.  Roll and pitch effects likewise change sign or have
-intervals spanning zero in most cases.
+\paragraph{The vertical gain does not extend to three dimensions}
+This is the clearest negative result of the study and it bounds the
+contribution, so it is stated before the ablations.  Table~\ref{tab:ou_mc_axes}
+gives absolute per-axis and 3D displacement RMS for both filters, so the
+magnitude can be read directly rather than inferred from a difference.
+OU--III has \emph{higher} 3D displacement error than OU--II in
+\OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
+scenarios, with resolved intervals; the nominal \SI{1.5}{m} sea is
+unresolved, its interval spanning zero.  The gap grows with sea state, and it
+is horizontal: the vertical column favors OU--III everywhere while the X and Y
+columns move the other way.  The additional integral-displacement state and
+its anisotropic regularization therefore buy vertical accuracy at a horizontal
+cost that the vertical-only score does not show.
+
+Read together with Table~\ref{tab:ou_mc_family}, the evidence supports a
+stationary vertical claim and no more.  OU--III has resolved vertical
+improvements in all four stationary seas, but higher vertical error during the
+transition, and higher full-3D error in most scenarios.  Roll and pitch effects
+likewise change sign or have intervals spanning zero in most cases.  The
+additional OU state provides a clear aggregate \emph{vertical} benefit for this
+stationary JONSWAP family; it is not a better three-dimensional wave-state
+estimator, and nothing here supports describing it as one.
+
+\paragraph{Second spectral family}
+Table~\ref{tab:ou_mc_pmstokes} repeats the paired comparison on the four
+PM--Stokes seas over the same window and the same seed triplets.  The
+seed-level mean normalized vertical error is
+$\OUValidationPMStokesOUIIINormalizedMean\pm\OUValidationPMStokesOUIIINormalizedStd\%$
+of $H_s$ for OU--III against
+$\OUValidationPMStokesOUIINormalizedMean\pm\OUValidationPMStokesOUIINormalizedStd\%$
+for OU--II, a paired difference of $\OUValidationPMStokesDifference$ percentage
+point
+($[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$,
+$n=\OUValidationPMStokesPairs$).  Because PM--Stokes adds third-order bound
+harmonics, it is a separate prespecified ensemble and is not pooled into the
+primary aggregate; it extends the vertical result to a second spectral family
+rather than enlarging the confirmatory sample.
+
+\paragraph{Wave direction, and the limit of the travel-sense evidence}
+Table~\ref{tab:ou_mc_direction} replaces the single deterministic window of
+Table~\ref{tab:sim_results_rms_dir_basic} with a ten-seed statement against the
+generator azimuth of each record.  The axis result is strong: pooled over the
+eight stationary seas the absolute axial error of the circular-mean estimate is
+\OUValidationDirectionAbsError{} degrees and no scenario exceeds
+\OUValidationDirectionWorstAbsError{} degrees, against a sample-wise axial RMS
+error of \OUValidationDirectionRMSE{} degrees.  The propagation \emph{axis} is
+therefore recovered to a degree or two in the mean, with substantial
+sample-to-sample dispersion about it.
+
+Travel sense is a different matter, and the ensemble exposes a limitation that
+the earlier single-window report concealed.  The classifier is decisive --
+\OUValidationDirectionDominant\% of samples fall in one sense class and only
+\OUValidationDirectionUncertain\% are below the confidence and amplitude
+thresholds -- but \emph{which} class that is cannot be checked against the
+generator here.  The FORWARD/BACKWARD labels are defined relative to the axis
+representative the axis estimator returns, and that representative is not tied
+to the generator azimuth: across the eight records the dominant class swaps
+with the sign of the nominal heading, on the original records as well as on the
+surrogates.  The estimator commits to a sense consistently; establishing that
+the committed sense is the physically correct one requires a signed
+ground-truth convention shared between the generator and the direction
+interface, which the present records do not provide.  We therefore report
+sense \emph{stability} and make no correctness claim, and the
+Toward/Away/Uncertain split of
+Table~\ref{tab:sim_results_rms_dir_basic} should be read the same way -- as the
+dominant class, not as a verified correctness rate.  Resolving this is left to
+future work, together with the unimodal limitation of these records: each holds
+one nominal heading, so direction changes and multimodal seas are outside what
+any of these numbers cover.
 
 The adaptation ablation in Table~\ref{tab:ou_mc_adaptation} is also mixed.
 Every fixed operating point it uses is listed in
 Table~\ref{tab:ou_fixed_points}, so each entry is reproducible from a single
 frozen triple.  Relative to FixedNominal, Adaptive reduces normalized vertical
 error at both off-nominal extremes: by
-$\OUValidationIIHs027NominalDifference$ and
-$\OUValidationIIHs85NominalDifference$ percentage points for OU--II and by
-$\OUValidationIIIHs027NominalDifference$ and
-$\OUValidationIIIHs85NominalDifference$ points for OU--III at $H_s=0.27$ and
+$\OUValidationIIHsZeroTwoSevenNominalDifference$ and
+$\OUValidationIIHsEightFiveNominalDifference$ percentage points for OU--II and by
+$\OUValidationIIIHsZeroTwoSevenNominalDifference$ and
+$\OUValidationIIIHsEightFiveNominalDifference$ points for OU--III at $H_s=0.27$ and
 \SI{8.5}{m}, respectively; all four paired bootstrap intervals exclude zero.
-That is the intended behavior: a single frozen point calibrated at
-$H_s=\SI{1.5}{m}$ is badly mismatched two orders of magnitude away in wave
-energy, and the online tuner removes most of that mismatch.
+That is the intended behavior.  A single frozen point calibrated at
+$H_s=\SI{1.5}{m}$ is badly mismatched at either extreme: wave energy scales
+with $H_s^{2}$, so $\SI{0.27}{m}$ and $\SI{8.5}{m}$ each differ from the
+nominal sea by a factor of about $31$, roughly \emph{one and a half} orders of
+magnitude rather than two.  Over that range the online tuner recovers most of
+the mismatch, but not uniformly.  Measuring recovery as the share of the
+FixedNominal-to-FixedOracle gap that adaptation closes, OU--III recovers
+\pct{\OUValidationIIIHsZeroTwoSevenRecovered} of it at $H_s=\SI{0.27}{m}$ but
+only \pct{\OUValidationIIIHsEightFiveRecovered} at \SI{8.5}{m}
+(Table~\ref{tab:ou_mc_adaptation}).  That the tuner ``removes most of the
+mismatch'' is therefore defensible as an aggregate statement over the tested
+range, and not as a claim about either endpoint separately.
+
+\paragraph{Which channel earns the benefit}
+Adaptive-versus-FixedNominal moves $\tau$, $\sigma_{aw}$, and $r_S$ together,
+and the deployed law ties the third to the first two, so on its own it cannot
+establish that joint OU adaptation is what helps.
+Table~\ref{tab:ou_mc_channels} completes the $2\times2$ factorial described in
+Sec.~\ref{sec:sim-and-eval}, and the answer is one-sided.  At
+$H_s=\SI{0.27}{m}$, letting $r_S$ adapt while $\tau$ and $\sigma_{aw}$ stay
+frozen improves on FixedNominal by
+$\OUValidationChannelHsZeroTwoSevenRSOnlyDifference$ percentage points
+($[\OUValidationChannelHsZeroTwoSevenRSOnlyLow,\OUValidationChannelHsZeroTwoSevenRSOnlyHigh]$),
+whereas letting $\tau$ and $\sigma_{aw}$ adapt with $r_S$ frozen changes it by
+only $\OUValidationChannelHsZeroTwoSevenOUOnlyDifference$ points
+($[\OUValidationChannelHsZeroTwoSevenOUOnlyLow,\OUValidationChannelHsZeroTwoSevenOUOnlyHigh]$).
+The same ordering holds at \SI{8.5}{m}
+($\OUValidationChannelHsEightFiveRSOnlyDifference$ against
+$\OUValidationChannelHsEightFiveOUOnlyDifference$ points) and at
+\SI{4.0}{m}.  The $r_S$ channel accounts for the entire adaptation benefit;
+the OU channel accounts for none of it.
+
+The factorial says something further that the Adaptive-versus-Fixed comparison
+could not.  Reading the first two columns of
+Table~\ref{tab:ou_mc_channels} against each other, adapting $r_S$ alone is not
+merely most of full adaptation but is \emph{better} than it at
+$H_s=\SI{4.0}{m}$, at \SI{8.5}{m}, and over the transition, and is worse only
+at the two smallest seas.  Since the two configurations differ solely in
+whether $\tau$ and $\sigma_{aw}$ track the sea, the estimation jitter those two
+channels inject is a net cost wherever the frozen values are not badly
+mismatched -- the same jitter identified below as the reason Adaptive loses to
+a well-matched frozen point.  We report this as an observation on the tested
+scenarios rather than a tuning recommendation: the study computes no interval
+for that particular contrast, and choosing a configuration from these scored
+errors would break the frozen, sensor-only protocol of
+Sec.~\ref{sec:sim-and-eval}.
+
+This narrows the contribution in a way the earlier framing did not.  What the
+vertical result demonstrates is the value of \emph{adaptive integral-state
+regularization}, not of joint OU adaptation.  It is consistent with the
+mechanism identified in Sec.~\ref{sec:ou-robustness}, where the accelerometer's
+direct \SI{200}{Hz} observation of $\vct{a}_w$ leaves that gain near saturation
+while $r_S$ governs the unobserved low-frequency channel.  $\tau$ and
+$\sigma_{aw}$ are not thereby idle -- they set the prior the estimator
+integrates, they drive $r_S$ through the deployed law, and
+Sec.~\ref{sec:ou-robustness} shows $\sigma_{aw}$ matters for attitude -- but
+the evidence does not support claiming that full three-parameter adaptation is
+necessary for the vertical improvement, and at the larger seas it is not even
+preferable.
 
 Adaptive does not, however, beat either fixed reference at the nominal sea or
 over the transition.  At the nominal $H_s=\SI{1.5}{m}$ sea, FixedNominal and
 FixedOracle coincide by construction, and Adaptive is worse than that shared
-point by $\OUValidationIIIHs15NominalDifference$ points
-($[\OUValidationIIIHs15NominalLow,\OUValidationIIIHs15NominalHigh]$) for
+point by $\OUValidationIIIHsOneFiveNominalDifference$ points
+($[\OUValidationIIIHsOneFiveNominalLow,\OUValidationIIIHsOneFiveNominalHigh]$) for
 OU--III.  Since both configurations use the same nominal parameter values on
 average, the residual gap is the cost of estimating those parameters from
 noisy IMU-derived signals rather than reading them from a noise-free
@@ -202,6 +323,25 @@ for OU--II and $\OUValidationIIITransitionNominalDifference$ points
 for OU--III, and worse than the endpoint-calibrated FixedOracle by
 $\OUValidationIITransitionOracleDifference$ and
 $\OUValidationIIITransitionOracleDifference$ points respectively.
+
+Those transition percentages are normalized by the final $H_s=\SI{4.0}{m}$,
+which the sea does not reach until $780$~s, so they are not comparable with the
+stationary $Z/H_s$ entries above.  Table~\ref{tab:ou_transition_segments}
+therefore rescores the same runs on the three disjoint intervals of the window,
+in absolute metres and against the reference displacement RMS of each interval.
+Read that way, the Adaptive penalty is not spread evenly: relative to
+FixedNominal it is
+$\OUValidationSegmentIIIStartNominalDifference$ points of $Z/Z_{\mathrm{ref}}$
+over the pure start sea
+($[\OUValidationSegmentIIIStartNominalLow,\OUValidationSegmentIIIStartNominalHigh]$),
+$\OUValidationSegmentIIIBlendNominalDifference$ points across the crossfade
+($[\OUValidationSegmentIIIBlendNominalLow,\OUValidationSegmentIIIBlendNominalHigh]$),
+and $\OUValidationSegmentIIIEndNominalDifference$ points over the pure endpoint
+sea
+($[\OUValidationSegmentIIIEndNominalLow,\OUValidationSegmentIIIEndNominalHigh]$)
+for OU--III.  Comparing the endpoint interval against the stationary
+$H_s=\SI{4.0}{m}$ row is the closest like-for-like reading the protocol
+supports.
 
 Two properties of the protocol limit what that transition result can be said
 to show, and both are quantified rather than assumed.  The endpoint-calibrated

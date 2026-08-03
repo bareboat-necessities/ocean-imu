@@ -136,7 +136,7 @@ def summarize_rows(
     summary: list[dict[str, Any]] = []
     for key, group in sorted(grouped.items()):
         experiment, case, parameter, scale_label, mode = key
-        for metric in core.METRIC_NAMES:
+        for metric in core.NON_SEGMENT_METRIC_NAMES:
             values = core._finite_values(group, metric)
             n = int(values.size)
             mean = float(np.mean(values)) if n else math.nan
@@ -187,7 +187,7 @@ def paired_effect_rows(
         right: Sequence[Mapping[str, Any]],
         context: Mapping[str, Any],
     ) -> None:
-        for metric in core.METRIC_NAMES:
+        for metric in core.NON_SEGMENT_METRIC_NAMES:
             effect = core._paired_effect(
                 left,
                 right,
@@ -616,6 +616,7 @@ def write_publication_table(
         ]
         lines.append(f"    {label} & {mode} & " + " & ".join(values) + r" \\")
     lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}"))
+    core.assert_latex_macro_names(lines)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

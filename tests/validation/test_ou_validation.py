@@ -2,6 +2,7 @@ import csv
 import hashlib
 import json
 import math
+import re
 import sys
 import unittest
 from collections import Counter
@@ -225,6 +226,118 @@ class StatisticsTests(unittest.TestCase):
         self.assertEqual(parsed["samples"], 180000)
         self.assertEqual(parsed["disp_z_rms_m"], 0.25)
 
+    def test_metric_parser_folds_in_segments_and_axial_magnitude(self):
+        parsed = validation.parse_validation_metrics(
+            "VALIDATION_METRICS family=OU_III tuning_mode=adaptive "
+            "aw_cov_sync=periodic input=wave.csv segment=window start_s=300 "
+            "window_s=900 samples=180000 disp_z_rms_m=0.25 "
+            "disp_z_pct_refrms=12.5 dir_axis_error_deg=-1.5\n"
+            "VALIDATION_SEGMENT family=OU_III tuning_mode=adaptive "
+            "aw_cov_sync=periodic input=wave.csv segment=blend start_s=420 "
+            "window_s=360 samples=72000 disp_z_rms_m=0.31 "
+            "disp_z_pct_refrms=17.25\n"
+        )
+        # The axis is defined mod 180 deg, so signed errors from records of
+        # opposite heading cancel; the magnitude is what the claim needs.
+        self.assertEqual(parsed["dir_axis_error_deg"], -1.5)
+        self.assertEqual(parsed["dir_axis_abs_error_deg"], 1.5)
+        self.assertEqual(parsed["seg_blend_disp_z_rms_m"], 0.31)
+        self.assertEqual(parsed["seg_blend_disp_z_pct_refrms"], 17.25)
+        # The trailing-window row keeps its own values, not the segment's.
+        self.assertEqual(parsed["disp_z_pct_refrms"], 12.5)
+        self.assertNotIn("segment", parsed)
+
+    def test_generated_macro_names_contain_letters_only(self):
+        # TeX ends a control-sequence name at the first non-letter, so a
+        # generated name with a digit in it does not fail loudly: the tail of
+        # the name is typeset as ordinary text next to the value.  This is what
+        # put "27NominalDifference-13.118" into the rendered manuscript, so
+        # generation must refuse to emit such a name.
+        with self.assertRaises(ValueError) as caught:
+            validation.assert_latex_macro_names(
+                [r"\providecommand{\OUValidationIIHs027NominalDifference}{-13.1}"]
+            )
+        self.assertIn("letters only", str(caught.exception))
+        validation.assert_latex_macro_names(
+            [r"\providecommand{\OUValidationIIHsZeroTwoSevenNominalDifference}{-13.1}"]
+        )
+
+    def test_scenario_macro_tokens_are_legal_and_distinct(self):
+        scenarios = (
+            "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+            "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+            "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+            "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+            "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+            "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+        )
+        tokens = [validation.scenario_macro_token(name) for name in scenarios]
+        for token in tokens:
+            self.assertTrue(token.isalpha(), token)
+        self.assertEqual(len(set(tokens)), len(tokens))
+
+    def test_partial_adaptation_modes_form_a_factorial(self):
+        # AdaptiveRSOnly and AdaptiveOUOnly complete a 2x2 with Adaptive and
+        # FixedNominal: each freezes exactly one channel, and all four share
+        # the deployed covariance policy so the only factor that moves is
+        # which parameters are estimated online.
+        self.assertEqual(
+            validation.MODE_SETTINGS["AdaptiveRSOnly"],
+            ("adaptive_rs_only", "periodic"),
+        )
+        self.assertEqual(
+            validation.MODE_SETTINGS["AdaptiveOUOnly"],
+            ("adaptive_ou_only", "periodic"),
+        )
+        for mode in validation.PARTIAL_MODES:
+            self.assertEqual(validation.MODE_SETTINGS[mode][1], "periodic")
+            # OU-II regularizes with (R_p0, R_v0) rather than a single
+            # integral scale, so the channel ablation is not defined for it.
+            self.assertNotIn(mode, validation.FAMILY_MODES["OU_II"])
+            self.assertIn(mode, validation.FAMILY_MODES["OU_III"])
+
+    def test_pmstokes_is_not_pooled_into_the_primary_aggregate(self):
+        jonswap = "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00"
+        pmstokes = "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00"
+        self.assertEqual(validation.scenario_spectrum(jonswap), "jonswap")
+        self.assertEqual(validation.scenario_spectrum(pmstokes), "pmstokes")
+
+        rows = []
+        for repetition in (1, 2, 3):
+            for family, offset in (("OU_II", 0.0), ("OU_III", -1.0)):
+                for scenario, value in ((jonswap, 8.0), (pmstokes, 40.0)):
+                    row = self.row(family, "Adaptive", repetition, value)
+                    row["scenario"] = scenario
+                    row["disp_z_pct_hs"] = value + repetition + offset
+                    rows.append(row)
+
+        primary = validation.stationary_normalized_aggregate(rows, 200, 7)
+        secondary = validation.stationary_normalized_aggregate(
+            rows, 200, 7, spectrum="pmstokes"
+        )
+        # Pooling would drag the primary mean toward the PM-Stokes level.
+        self.assertAlmostEqual(primary["OU_II"]["mean"], 10.0)
+        self.assertAlmostEqual(secondary["OU_II"]["mean"], 42.0)
+
+    def test_segment_metrics_are_optional(self):
+        # Segment columns exist only for the non-stationary scenario, so the
+        # summary must treat a missing key as an absence rather than fail.
+        rows = [self.row("OU_III", "Adaptive", repetition, 1.0) for repetition in (1, 2)]
+        for row in rows:
+            for metric in list(row):
+                if metric.startswith("seg_"):
+                    del row[metric]
+        summary = validation.summarize_rows(rows, 100, 3)
+        segment = [
+            row for row in summary
+            if row["metric"] == "seg_blend_disp_z_pct_refrms"
+        ]
+        self.assertTrue(segment)
+        self.assertEqual(segment[0]["n"], 0)
+        self.assertNotIn(
+            "seg_blend_disp_z_pct_refrms", validation.NON_SEGMENT_METRIC_NAMES
+        )
+
     def test_covariance_sync_ablation_is_a_matched_pair(self):
         # Each *PeriodicSync* mode must differ from its partner in exactly one
         # factor: the covariance-reset policy. Otherwise the ablation cannot
@@ -349,33 +462,93 @@ class CommittedFullResultsTests(unittest.TestCase):
         effects = self.read_csv(
             self.RESULTS / "ou_validation_paired_effects.csv"
         )
+        protocol = manifest["protocol"]
+        run_modes = set(protocol["adaptation_modes"])
+        pmstokes_modes = set(protocol["pmstokes_modes"])
         scenarios = {row["scenario"] for row in raw}
         families = {row["family"] for row in raw}
-        modes = {row["mode"] for row in raw}
-        self.assertEqual(len(scenarios), 5)
         self.assertEqual(families, {"OU_II", "OU_III"})
-        self.assertEqual(modes, set(validation.MODE_SETTINGS))
-        cells = len(scenarios) * len(families) * len(modes)
+        # Four JONSWAP seas, four PM-Stokes seas, one controlled transition.
+        self.assertEqual(
+            Counter(validation.scenario_spectrum(s) for s in scenarios),
+            Counter({"jonswap": 5, "pmstokes": 4}),
+        )
+
+        def expected_modes(scenario, family):
+            allowed = set(validation.FAMILY_MODES[family]) & run_modes
+            if validation.scenario_spectrum(scenario) == "pmstokes":
+                allowed &= pmstokes_modes
+            return allowed
+
+        # The mode grid is family- and spectrum-dependent by design: the
+        # channel ablation exists only for OU-III, and PM-Stokes is a
+        # secondary ensemble scored on the primary modes only.
+        cells = 0
+        for scenario in sorted(scenarios):
+            for family in sorted(families):
+                expected = expected_modes(scenario, family)
+                observed = {
+                    row["mode"] for row in raw
+                    if row["scenario"] == scenario and row["family"] == family
+                }
+                self.assertEqual(observed, expected, (scenario, family))
+                cells += len(expected)
+        self.assertGreater(cells, 0)
         self.assertEqual(len(raw), cells * 10)
         self.assertEqual(len(summary), cells * len(validation.METRIC_NAMES))
-        # Per scenario: one cross-family comparison, plus, for each family,
-        # two adaptation baselines and two covariance-reset controls.
-        comparisons_per_scenario = 1 + len(families) * (
-            2 + len(validation.COVARIANCE_SYNC_PAIRS)
-        )
+
+        # Comparisons are emitted only where both arms were actually run.
+        expected_comparisons = set()
+        for scenario in scenarios:
+            for family in families:
+                modes = expected_modes(scenario, family)
+                if "Adaptive" in modes:
+                    for baseline in ("FixedNominal", "FixedOracle"):
+                        if baseline in modes:
+                            expected_comparisons.add(
+                                (scenario, family, f"Adaptive_minus_{baseline}")
+                            )
+                if "FixedNominal" in modes:
+                    for partial in validation.PARTIAL_MODES:
+                        if partial in modes:
+                            expected_comparisons.add(
+                                (
+                                    scenario,
+                                    family,
+                                    f"{partial}_minus_FixedNominal",
+                                )
+                            )
+                for left, right in validation.COVARIANCE_SYNC_PAIRS:
+                    if left in modes and right in modes:
+                        expected_comparisons.add(
+                            (scenario, family, f"{left}_minus_{right}")
+                        )
+            expected_comparisons.add(
+                (scenario, "OU_III_vs_OU_II", "OU_III_minus_OU_II")
+            )
         self.assertEqual(
-            len(effects),
-            len(scenarios)
-            * comparisons_per_scenario
-            * len(validation.METRIC_NAMES),
+            {
+                (row["scenario"], row["family"], row["comparison"])
+                for row in effects
+            },
+            expected_comparisons,
         )
+
         groups = Counter(
             (row["scenario"], row["family"], row["mode"])
             for row in raw
         )
         self.assertEqual(len(groups), cells)
         self.assertEqual(set(groups.values()), {10})
-        self.assertEqual({int(row["n"]) for row in summary}, {10})
+        # Segment metrics exist only where extra scoring intervals were
+        # requested, which is the non-stationary scenario.
+        for row in summary:
+            segmented = row["metric"].startswith("seg_")
+            transition = row["scenario"].startswith("nonstationary_")
+            self.assertEqual(
+                int(row["n"]), 0 if segmented and not transition else 10,
+                (row["scenario"], row["metric"]),
+            )
         self.assertEqual({int(row["n_pairs"]) for row in effects}, {10})
         self.assertEqual({int(row["samples"]) for row in raw}, {180000})
         self.assertEqual({float(row["window_s"]) for row in raw}, {900.0})
@@ -400,6 +573,10 @@ class CommittedFullResultsTests(unittest.TestCase):
                 "w3d-ou-validation-results-generated.tex-part",
             ),
             (
+                "ou_validation_macros.tex",
+                "w3d-ou-validation-macros-generated.tex-part",
+            ),
+            (
                 "ou_validation_tuning_points.tex",
                 "w3d-ou-validation-tuning-points-generated.tex-part",
             ),
@@ -410,6 +587,35 @@ class CommittedFullResultsTests(unittest.TestCase):
                 (self.RESULTS / result_name).read_bytes(),
                 (REPO_ROOT / "doc" / "kalman_ou_iii" / doc_name).read_bytes(),
                 doc_name,
+            )
+
+    def test_every_generated_macro_used_in_the_manuscript_resolves(self):
+        # A generated macro that is quoted but never defined does not stop the
+        # build; it renders as an undefined-control-sequence artifact or, if
+        # its name contains a digit, as the value with a stray text tail.  That
+        # is how "27NominalDifference-13.118" reached the rendered paper, so
+        # the reference and definition sets are checked against each other.
+        doc_dir = REPO_ROOT / "doc" / "kalman_ou_iii"
+        sources = sorted(doc_dir.glob("*.tex-part")) + [
+            doc_dir / "kalman_ou-w3d.tex"
+        ]
+        defined = set()
+        referenced = set()
+        definition = re.compile(
+            r"\\(?:provide|new|renew)command\s*\{\\([A-Za-z]+)\}"
+        )
+        reference = re.compile(r"\\((?:OUValidation|OURobustness)[A-Za-z]*)")
+        for source in sources:
+            text = source.read_text(encoding="utf-8")
+            defined.update(definition.findall(text))
+            for name in reference.findall(text):
+                referenced.add(name)
+        # Names quoted in prose but defined nowhere.
+        self.assertEqual(sorted(referenced - defined), [])
+        # And no definition may carry a character TeX cannot put in a name.
+        for source in sources:
+            validation.assert_latex_macro_names(
+                source.read_text(encoding="utf-8").splitlines()
             )
 
     def test_transition_protocol_records_its_own_confounds(self):
@@ -441,6 +647,32 @@ class CommittedFullResultsTests(unittest.TestCase):
 
         # FixedOracle must not be described as an optimum.
         self.assertIn("not optimized", protocol["fixed_oracle_definition"])
+
+        # The transition is also scored per interval, because one number
+        # normalized by the final Hs is not comparable with a stationary score.
+        self.assertEqual(
+            set(protocol["transition_segments_sec"]),
+            set(validation.TRANSITION_SEGMENTS),
+        )
+        bounds = protocol["transition_segments_sec"]
+        self.assertEqual(bounds["blend"][0], protocol["transition_start_sec"])
+        self.assertEqual(bounds["blend"][1], protocol["transition_end_sec"])
+        self.assertEqual(bounds["start"][1], bounds["blend"][0])
+        self.assertEqual(bounds["end"][0], bounds["blend"][1])
+
+        # Interval construction and the multiplicity position must travel with
+        # the evidence, not only with the prose.
+        self.assertIn("percentile bootstrap", protocol["bootstrap_method"])
+        self.assertIn("resample", protocol["bootstrap_method"])
+        self.assertIn("PCG64", protocol["bootstrap_rng"])
+        self.assertGreaterEqual(protocol["bootstrap_resamples"], 10_000)
+        self.assertIn("not adjusted", protocol["multiplicity"])
+        self.assertIn("JONSWAP", protocol["primary_endpoint"])
+        self.assertIn("not pooled", protocol["pmstokes_pooling"])
+
+        # The channel ablation is only meaningful if r_S keeps tracking the
+        # live estimates while the OU channel is frozen.
+        self.assertIn("live tau", protocol["partial_adaptation_definition"])
 
         policies = protocol["aw_covariance_sync_policies"]
         for left, right in validation.COVARIANCE_SYNC_PAIRS:
@@ -477,6 +709,16 @@ class CommittedFullResultsTests(unittest.TestCase):
             abstract,
         )
 
+        # A reader must not be able to mistake the quoted spread for a
+        # confidence interval, and the interval must name its construction.
+        self.assertIn("sample standard deviation", abstract)
+        self.assertIn("percentile-bootstrap", abstract)
+        # The negative three-dimensional result and the channel ablation both
+        # bound the contribution, so neither may be left to the body text.
+        self.assertIn("full-3D displacement error", abstract)
+        self.assertIn("channel ablation", abstract)
+        self.assertIn("tolerance", abstract)
+
 
 class ManuscriptMethodologyTests(unittest.TestCase):
     DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
@@ -484,6 +726,12 @@ class ManuscriptMethodologyTests(unittest.TestCase):
     @classmethod
     def read(cls, name):
         return (cls.DOC / name).read_text(encoding="utf-8")
+
+    @classmethod
+    def read_flat(cls, name):
+        """Source with line wrapping collapsed, for phrase assertions."""
+
+        return " ".join(cls.read(name).split())
 
     def test_fixed_reference_and_transition_limits_are_stated(self):
         protocol = self.read("w3d-sim-charts.tex-part")
@@ -513,6 +761,90 @@ class ManuscriptMethodologyTests(unittest.TestCase):
 
         # The unsupported lag attribution must be gone.
         self.assertNotIn("transition lag", protocol + results)
+
+    def test_inference_is_qualified_rather_than_asserted(self):
+        protocol = self.read_flat("w3d-sim-charts.tex-part")
+        results = self.read_flat("w3d-baseline-comparison.tex-part")
+        robustness = self.read_flat("w3d-ou-robustness.tex-part")
+
+        # No power or precision calculation is supplied, so the protocol may
+        # not describe itself as powered.
+        self.assertNotIn("statistically powered", protocol + results)
+
+        # Interval construction, the pairing level, and the multiplicity
+        # position must all be stated.  The method string, resample count, and
+        # RNG seed come from the generated macros so they cannot drift from
+        # the settings that actually produced the intervals.
+        self.assertIn("OUValidationBootstrapMethod", protocol)
+        self.assertIn("OUValidationBootstrapRNG", protocol)
+        self.assertIn("OUValidationBootstrapResamples", protocol)
+        self.assertIn("OUValidationStatsSeed", protocol)
+        self.assertIn("resample the seed-level differences", protocol)
+        self.assertIn("multiplicity", protocol)
+        self.assertIn("primary endpoint", protocol)
+
+        # A quoted a +- b is a spread, and the standardized effect size must
+        # stay subordinate to the raw paired difference at n = 10.
+        self.assertIn("not an interval estimate for the mean", protocol)
+        self.assertIn("deliberately secondary", protocol)
+        self.assertIn("primary statement of effect size", results)
+
+        # Wave energy scales with Hs^2, so 1.5 m against 0.27 m or 8.5 m is a
+        # factor of about 31, not two orders of magnitude.
+        self.assertNotIn("two orders of magnitude", results)
+        self.assertIn("factor of about $31$", results)
+
+        # Compressing the ramp changes what is scored as well as how fast the
+        # sea moves, so it cannot be read as a pure response-limit measurement.
+        self.assertIn("confounds the two", robustness)
+        self.assertNotIn(
+            "These results quantify, rather than conceal, the response limit",
+            robustness,
+        )
+
+    def test_three_dimensional_and_channel_results_are_reported(self):
+        protocol = self.read_flat("w3d-sim-charts.tex-part")
+        results = self.read_flat("w3d-baseline-comparison.tex-part")
+        conclusion = self.read_flat("w3d-conclusion-summary.tex-part")
+
+        # Absolute per-axis and 3D error for both filters, not only the
+        # difference, so the magnitude of the negative result is readable.
+        self.assertIn("tab:ou_mc_axes", results)
+        self.assertIn("higher", results)
+        # The negative 3D result must not be overstated as uniform: the
+        # nominal sea is unresolved.
+        self.assertNotIn("consistently higher OU--III 3D error", conclusion)
+        self.assertIn("OUValidationThreeDHigherCount", conclusion)
+        self.assertIn("unresolved at the nominal sea", conclusion)
+
+        # The channel ablation and its no-implicit-freeze construction.
+        self.assertIn("tab:ou_mc_channels", results)
+        self.assertIn("par:channel-ablation", protocol)
+        self.assertIn("live", protocol)
+        self.assertIn("integral-state regularization", results)
+
+    def test_transition_and_secondary_ensembles_are_rescored(self):
+        protocol = self.read_flat("w3d-sim-charts.tex-part")
+        results = self.read_flat("w3d-baseline-comparison.tex-part")
+
+        # Normalizing the whole transition window by the final Hs is not
+        # comparable with a stationary score; the interval breakdown and the
+        # scale-free normalization must both be present.
+        self.assertIn("tab:ou_transition_segments", protocol)
+        self.assertIn("Z_{\\mathrm{ref}}", results)
+        self.assertIn("not comparable with the stationary", results)
+
+        # PM-Stokes and direction must be ensemble results, not single runs.
+        self.assertIn("tab:ou_mc_pmstokes", results)
+        self.assertIn("not pooled into the primary", results)
+        self.assertIn("tab:ou_mc_direction", results)
+        self.assertIn("OUValidationDirectionAbsError", results)
+        # Travel sense is stability, not correctness: the sense classes are
+        # defined against the estimator's own axis representative, so the
+        # manuscript must not present them as a correctness rate.
+        self.assertIn("OUValidationDirectionDominant", results)
+        self.assertIn("make no correctness claim", results)
+        self.assertNotIn("classified along the generating direction", results)
 
     def test_singer_relationship_and_contribution_wording(self):
         intro = self.read("w3d-intro.tex-part")

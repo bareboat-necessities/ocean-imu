@@ -167,6 +167,16 @@ paired difference is \OURobustnessRapidDifference{} points
 Within the rapid case, Adaptive-minus-FixedNominal is
 \OURobustnessRapidAdaptationDifference{} points
 ($[\OURobustnessRapidAdaptationLow,\OURobustnessRapidAdaptationHigh]$).
-Positive differences denote higher Adaptive error.  These results quantify,
-rather than conceal, the response limit when the environmental time scale
-changes much faster than the configured adaptation smoothing.
+Positive differences denote higher Adaptive error.
+
+That degradation must not be read as a pure measure of adaptation rate.
+Compressing the ramp from \SI{360}{s} to \SI{30}{s} about a fixed midpoint
+changes the composition of the fixed \SI{900}{s} window as well as its speed:
+the rapid case contains far more pure-endpoint data and almost no crossfade,
+whereas the controlled case spends \SI{360}{s} in the blend.  The two cases
+therefore differ in what is scored, not only in how fast the sea moves, and the
+reported difference confounds the two.  What these results establish is that
+the filter degrades by a bounded, measured amount over a much faster specified
+excursion; isolating the response limit of the adaptation smoothing would
+require holding the scored sea-state composition fixed while varying only the
+ramp rate, which the crossfade construction cannot do.

@@ -15,6 +15,7 @@ extern const float g_std = 9.80665f;
 #include <iostream>
 #include <limits>
 #include <numbers>
+#include <sstream>
 #include <stdexcept>
 
 static bool g_w3d_any_gate_failed = false;
@@ -945,21 +946,74 @@ std::vector<std::string> collect_wave_data_files(const std::filesystem::path& di
     return files;
 }
 
-void print_validation_metrics(const W3dSimulationRunResult& result,
-                              float dt,
-                              float window_seconds,
-                              const char* family)
-{
-    if (!(dt > 0.0f) || !(window_seconds > 0.0f) || result.errs_z.empty()) return;
+namespace {
 
-    const size_t requested = static_cast<size_t>(window_seconds / dt);
-    const size_t count = std::min(result.errs_z.size(), std::max<size_t>(requested, 1u));
-    const size_t start = result.errs_z.size() - count;
+// Absolute-time segments requested through W3D_VALIDATION_SEGMENTS, given as
+// "name:t0:t1,name:t0:t1,..." with t0/t1 in seconds from the start of the
+// record.  The transition case needs these because a single trailing window
+// mixes the pure start sea, the crossfade, and the pure endpoint sea, and one
+// normalized number over that mixture is not comparable with a stationary
+// score.
+struct NamedSegment {
+    std::string name;
+    float start_sec = 0.0f;
+    float end_sec = 0.0f;
+};
+
+std::vector<NamedSegment> parse_validation_segments()
+{
+    std::vector<NamedSegment> segments;
+    const char* raw = std::getenv("W3D_VALIDATION_SEGMENTS");
+    if (!raw || *raw == '\0') return segments;
+
+    std::stringstream spec(raw);
+    std::string item;
+    while (std::getline(spec, item, ',')) {
+        if (item.empty()) continue;
+        const size_t first = item.find(':');
+        const size_t second = (first == std::string::npos)
+            ? std::string::npos
+            : item.find(':', first + 1);
+        if (second == std::string::npos) {
+            throw std::runtime_error(
+                "W3D_VALIDATION_SEGMENTS entries must be name:t0:t1");
+        }
+        NamedSegment segment;
+        segment.name = item.substr(0, first);
+        segment.start_sec = std::stof(item.substr(first + 1, second - first - 1));
+        segment.end_sec = std::stof(item.substr(second + 1));
+        if (!(segment.end_sec > segment.start_sec) || segment.start_sec < 0.0f) {
+            throw std::runtime_error(
+                "W3D_VALIDATION_SEGMENTS requires 0 <= t0 < t1");
+        }
+        segments.push_back(std::move(segment));
+    }
+    return segments;
+}
+
+// Axial (mod 180 deg) difference, reduced to [-90, 90].
+float axial_difference_deg(float estimated_deg, float truth_deg)
+{
+    return wrapAxialDeg90(estimated_deg - truth_deg);
+}
+
+void emit_window_metrics(const W3dSimulationRunResult& result,
+                         float dt,
+                         size_t start,
+                         size_t stop,
+                         const char* family,
+                         const char* record_tag,
+                         const std::string& segment_name)
+{
+    if (stop <= start || stop > result.errs_z.size()) return;
+    const size_t count = stop - start;
 
     RMSReport x, y, z, roll, pitch, yaw;
     RMSReport acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z;
+    RMSReport ref_z_rms;
     float ref_max_3d = 0.0f;
-    for (size_t i = start; i < result.errs_z.size(); ++i) {
+    for (size_t i = start; i < stop; ++i) {
+        ref_z_rms.add(result.ref_z[i]);
         x.add(result.errs_x[i]);
         y.add(result.errs_y[i]);
         z.add(result.errs_z[i]);
@@ -996,6 +1050,67 @@ void print_validation_metrics(const W3dSimulationRunResult& result,
     const float disp_3d_pct_refmax = (ref_max_3d > 1e-12f)
         ? 100.0f * disp_3d / ref_max_3d
         : NAN;
+
+    // Reference-RMS normalization.  Unlike %H_s it uses the motion actually
+    // present in the scored interval, so it stays meaningful when the sea
+    // state changes inside the window and is comparable between segments of
+    // the transition record.
+    const float ref_z = ref_z_rms.rms();
+    const float disp_z_pct_refrms = (ref_z > 1e-9f) ? 100.0f * z_rms / ref_z : NAN;
+
+    // Direction accuracy over the same window, against the generator azimuth
+    // recovered from the record.  dir_deg_hist is already expressed in the
+    // generator convention, and the axis is defined mod 180 deg.
+    const float truth_deg = result.wave_params.direction;
+    float dir_axis_mean_deg = NAN;
+    float dir_axis_error_deg = NAN;
+    float dir_axis_rmse_deg = NAN;
+    float dir_axis_circ_std_deg = NAN;
+    float sense_forward_pct = NAN;
+    float sense_reverse_pct = NAN;
+    float sense_uncertain_pct = NAN;
+    float sense_dominant_pct = NAN;
+    if (stop <= result.dir_deg_hist.size() && stop <= result.dir_sign_num_hist.size()) {
+        std::vector<float> axis;
+        axis.reserve(count);
+        RMSReport axis_error;
+        for (size_t i = start; i < stop; ++i) {
+            const float d = result.dir_deg_hist[i];
+            if (!std::isfinite(d)) continue;
+            axis.push_back(d);
+            axis_error.add(axial_difference_deg(d, truth_deg));
+        }
+        if (!axis.empty()) {
+            const auto stats = circular_stats_180(axis);
+            dir_axis_mean_deg = stats.mean_deg;
+            dir_axis_circ_std_deg = stats.std_deg;
+            dir_axis_error_deg = axial_difference_deg(stats.mean_deg, truth_deg);
+            dir_axis_rmse_deg = axis_error.rms();
+        }
+
+        size_t forward = 0, reverse = 0, uncertain = 0;
+        for (size_t i = start; i < stop; ++i) {
+            const int sign = result.dir_sign_num_hist[i];
+            if (sign > 0) ++forward;
+            else if (sign < 0) ++reverse;
+            else ++uncertain;
+        }
+        const float scale = 100.0f / static_cast<float>(count);
+        sense_forward_pct = scale * static_cast<float>(forward);
+        sense_reverse_pct = scale * static_cast<float>(reverse);
+        sense_uncertain_pct = scale * static_cast<float>(uncertain);
+
+        // FORWARD/BACKWARD are relative to the axis representative the axis
+        // estimator happens to return, and that representative is not tied to
+        // the generator azimuth: records of opposite nominal heading put the
+        // same physical travel sense in opposite classes.  The share of
+        // samples in whichever class dominates therefore measures how
+        // consistently the classifier commits to one sense, which is what the
+        // raw counts above can support; it is not a correctness rate against
+        // the generator, and must not be reported as one.
+        sense_dominant_pct = std::max(sense_forward_pct, sense_reverse_pct);
+    }
+
     const char* mode = std::getenv("W3D_TUNING_MODE");
     if (!mode || *mode == '\0') mode = "adaptive";
     const char* aw_cov_sync = std::getenv("W3D_AW_COV_SYNC");
@@ -1003,11 +1118,13 @@ void print_validation_metrics(const W3dSimulationRunResult& result,
 
     const auto old_precision = std::cout.precision();
     std::cout << std::setprecision(9)
-              << "VALIDATION_METRICS"
+              << record_tag
               << " family=" << family
               << " tuning_mode=" << mode
               << " aw_cov_sync=" << aw_cov_sync
               << " input=" << std::filesystem::path(result.input_name).filename().string()
+              << " segment=" << (segment_name.empty() ? "window" : segment_name)
+              << " start_s=" << (static_cast<float>(start) * dt)
               << " window_s=" << (static_cast<float>(count) * dt)
               << " samples=" << count
               << " disp_x_rms_m=" << x_rms
@@ -1018,9 +1135,20 @@ void print_validation_metrics(const W3dSimulationRunResult& result,
               << " disp_y_pct_hs=" << y_rms * pct_hs
               << " disp_z_pct_hs=" << z_rms * pct_hs
               << " disp_3d_pct_refmax=" << disp_3d_pct_refmax
+              << " disp_z_ref_rms_m=" << ref_z
+              << " disp_z_pct_refrms=" << disp_z_pct_refrms
               << " roll_rms_deg=" << roll.rms()
               << " pitch_rms_deg=" << pitch.rms()
               << " yaw_rms_deg=" << yaw.rms()
+              << " dir_axis_mean_deg=" << dir_axis_mean_deg
+              << " dir_axis_truth_deg=" << truth_deg
+              << " dir_axis_error_deg=" << dir_axis_error_deg
+              << " dir_axis_rmse_deg=" << dir_axis_rmse_deg
+              << " dir_axis_circ_std_deg=" << dir_axis_circ_std_deg
+              << " dir_sense_forward_pct=" << sense_forward_pct
+              << " dir_sense_reverse_pct=" << sense_reverse_pct
+              << " dir_sense_uncertain_pct=" << sense_uncertain_pct
+              << " dir_sense_dominant_pct=" << sense_dominant_pct
               << " accel_bias_3d_rms_mps2=" << acc_3d
               << " gyro_bias_3d_rms_radps=" << gyro_3d
               << " tau_applied_s=" << result.final_tau_applied
@@ -1031,6 +1159,31 @@ void print_validation_metrics(const W3dSimulationRunResult& result,
               << " accel_variance_m2ps4=" << result.final_accel_variance
               << "\n";
     std::cout.precision(old_precision);
+}
+
+}  // namespace
+
+void print_validation_metrics(const W3dSimulationRunResult& result,
+                              float dt,
+                              float window_seconds,
+                              const char* family)
+{
+    if (!(dt > 0.0f) || !(window_seconds > 0.0f) || result.errs_z.empty()) return;
+
+    const size_t total = result.errs_z.size();
+    const size_t requested = static_cast<size_t>(window_seconds / dt);
+    const size_t count = std::min(total, std::max<size_t>(requested, 1u));
+    emit_window_metrics(
+        result, dt, total - count, total, family, "VALIDATION_METRICS", "");
+
+    for (const auto& segment : parse_validation_segments()) {
+        const size_t i0 = std::min(
+            total, static_cast<size_t>(segment.start_sec / dt));
+        const size_t i1 = std::min(
+            total, static_cast<size_t>(segment.end_sec / dt));
+        emit_window_metrics(
+            result, dt, i0, i1, family, "VALIDATION_SEGMENT", segment.name);
+    }
 }
 
 void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,

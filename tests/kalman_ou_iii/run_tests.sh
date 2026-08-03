@@ -2,3 +2,4 @@
 
 ./kalman_ou_iii-sim
 ./kalman_ou_common-test
+./channel_freeze-test

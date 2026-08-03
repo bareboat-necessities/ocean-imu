@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +28,7 @@ jobs:
           unzip -o sim-data-files.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
 
       - name: Install build dependencies
+        timeout-minutes: 20
         run: |
           sudo apt-get update
           sudo apt-get install -y g++ make libeigen3-dev \
@@ -122,6 +124,7 @@ jobs:
   ou-tuning:
     if: ${{ (false && github.event_name == 'push') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     strategy:
       fail-fast: false
@@ -148,6 +151,7 @@ jobs:
             --clobber
 
       - name: Install tuning dependencies
+        timeout-minutes: 20
         run: |
           sudo apt-get update
           sudo apt-get install -y g++ make libeigen3-dev unzip python3
@@ -183,6 +187,7 @@ jobs:
   release:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs: [build, build-MCU]
 
     steps:
@@ -239,6 +244,7 @@ jobs:
 
   build-MCU:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:

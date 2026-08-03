@@ -31,11 +31,13 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Install dependencies
+        timeout-minutes: 20
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq g++ make libeigen3-dev

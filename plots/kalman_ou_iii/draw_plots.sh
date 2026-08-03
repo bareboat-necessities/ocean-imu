@@ -51,6 +51,8 @@ cp -f w3d_multi_observer_jonswap_medium.pgf "${DOC_DIR}/"
 cp -f w3d_multi_observer_jonswap_medium.svg "${DOC_DIR}/"
 cp -f ../../reports/results/ou_validation/ou_validation_publication.tex \
   "${DOC_DIR}/w3d-ou-validation-results-generated.tex-part"
+cp -f ../../reports/results/ou_validation/ou_validation_macros.tex \
+  "${DOC_DIR}/w3d-ou-validation-macros-generated.tex-part"
 cp -f ../../reports/results/ou_validation/ou_validation_vertical.svg \
   "${DOC_DIR}/ou_validation_vertical.svg"
 cp -f ../../reports/results/ou_robustness/ou_robustness_publication.tex \
