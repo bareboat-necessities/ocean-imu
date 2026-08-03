@@ -98,10 +98,11 @@ acceleration include the exact first- and second-derivative blend terms.
   \end{figure*}
 }{}
 
-The three nominal sweep columns reproduce a mean normalized vertical error of
-\OURobustnessNominalMean\% of $H_s$.  Across the declared multiplier range,
-the largest mean is \OURobustnessWorstMean\% for
-\texttt{\OURobustnessWorstParameter} at
+All five sweep directions share the $\times1.0$ reference and reproduce a mean
+normalized vertical error of
+\OURobustnessNominalMean\% of $H_s$ there.  Across the declared multiplier
+range, the largest mean is \OURobustnessWorstMean\% for
+the \OURobustnessWorstParameter{} direction at
 $\times\OURobustnessWorstScale$; its paired difference from the nominal point
 is \OURobustnessWorstDifference{} percentage points (bootstrap 95\% interval
 $[\OURobustnessWorstDifferenceLow,\OURobustnessWorstDifferenceHigh]$).
