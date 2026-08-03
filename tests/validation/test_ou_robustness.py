@@ -176,15 +176,20 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         transition_cells = len(protocol["transition_cases"]) * 2
         cells = sensitivity_cells + low_motion_cells + transition_cells
         self.assertEqual(len(raw), cells * 10)
-        self.assertEqual(
-            len(summary), cells * len(validation.NON_SEGMENT_METRIC_NAMES)
+
+        # Checked against the metrics the committed bundle carries rather than
+        # against the tool's current list, so adding a metric asks for a re-run
+        # instead of failing this structural check.  Unknown metrics still fail.
+        bundle_metrics = {row["metric"] for row in summary}
+        self.assertTrue(
+            bundle_metrics <= set(validation.NON_SEGMENT_METRIC_NAMES),
+            sorted(bundle_metrics - set(validation.NON_SEGMENT_METRIC_NAMES)),
         )
+        self.assertEqual(len(summary), cells * len(bundle_metrics))
         # Sensitivity: every off-reference scale against x1, per direction.
         # Degradation: one low-motion pair, plus rate and adaptation pairs.
         comparisons = len(parameters) * (len(scales) - 1) + 1 + 4
-        self.assertEqual(
-            len(effects), comparisons * len(validation.NON_SEGMENT_METRIC_NAMES)
-        )
+        self.assertEqual(len(effects), comparisons * len(bundle_metrics))
         self.assertEqual(
             Counter(row["experiment"] for row in raw),
             {

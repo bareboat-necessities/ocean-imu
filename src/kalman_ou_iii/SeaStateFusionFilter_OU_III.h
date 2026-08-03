@@ -432,6 +432,19 @@ public:
     }
     bool periodicAwCovarianceSync() const noexcept { return periodic_aw_cov_sync_; }
 
+    // Select how the a_w marginal is re-aligned when a sync happens.
+    //
+    // false (default, deployed): overwrite the marginal and keep the raw
+    // cross-covariances, which rescales the implied correlations by the square
+    // root of the marginal change.
+    // true: congruence re-alignment, which reaches the same marginal while
+    // leaving the whitened cross-covariance untouched and staying PSD by
+    // construction.  This is the consistent operation, so running it isolates
+    // "is the re-alignment inconsistent?" from "is re-aligning at all a good
+    // idea?".
+    void setAwCovarianceSyncCongruent(bool flag) { congruent_aw_cov_sync_ = flag; }
+    bool awCovarianceSyncCongruent() const noexcept { return congruent_aw_cov_sync_; }
+
     // Freeze the online tuner at an externally supplied operating point. This
     // is primarily useful for controlled ablations (fixed-nominal and
     // fixed-oracle) after the normal startup sequence has reached Live.
@@ -683,7 +696,7 @@ private:
         const Eigen::Vector3f aw_std(sH, sH, sZ);
         mekf_->set_aw_stationary_std(aw_std);
         if (sync_covariance) {
-            mekf_->synchronize_aw_covariance_to_stationary();
+            apply_aw_cov_sync_();
             last_aw_cov_sync_sec_ = time_;
         }
     }
@@ -695,8 +708,16 @@ private:
         if (!periodic_aw_cov_sync_ || !mekf_) return;
         if (startup_stage_ != StartupStage::Live) return;
         if (time_ - last_aw_cov_sync_sec_ <= adapt_every_secs_) return;
-        mekf_->synchronize_aw_covariance_to_stationary();
+        apply_aw_cov_sync_();
         last_aw_cov_sync_sec_ = time_;
+    }
+
+    void apply_aw_cov_sync_() {
+        if (congruent_aw_cov_sync_) {
+            mekf_->synchronize_aw_covariance_to_stationary_congruent();
+        } else {
+            mekf_->synchronize_aw_covariance_to_stationary();
+        }
     }
 
     void apply_RS_tune_(float rs_scale = 1.0f) {
@@ -929,6 +950,7 @@ private:
 
     // Covariance-inflation policy; see setPeriodicAwCovarianceSync.
     bool   periodic_aw_cov_sync_ = true;
+    bool   congruent_aw_cov_sync_ = false;
     double last_aw_cov_sync_sec_ = 0.0;
 
     float min_freq_hz_            = MIN_FREQ_HZ;

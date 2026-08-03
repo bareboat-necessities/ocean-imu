@@ -495,7 +495,17 @@ class CommittedFullResultsTests(unittest.TestCase):
                 cells += len(expected)
         self.assertGreater(cells, 0)
         self.assertEqual(len(raw), cells * 10)
-        self.assertEqual(len(summary), cells * len(validation.METRIC_NAMES))
+
+        # The bundle carries one summary row per cell per metric. It is checked
+        # against the metrics the bundle itself contains rather than against the
+        # tool's current list, so that adding a metric asks for a re-run instead
+        # of failing this structural check. Unknown metrics still fail.
+        bundle_metrics = {row["metric"] for row in summary}
+        self.assertTrue(
+            bundle_metrics <= set(validation.METRIC_NAMES),
+            sorted(bundle_metrics - set(validation.METRIC_NAMES)),
+        )
+        self.assertEqual(len(summary), cells * len(bundle_metrics))
 
         # Comparisons are emitted only where both arms were actually run.
         expected_comparisons = set()

@@ -317,10 +317,71 @@ class Kalman3D_Wave_OU_III {
         symmetrize_Pext_();
     }
 
-    // Synchronize only the a_w marginal with the stationary process model while
-    // preserving cross-covariances learned by the running filter.
+    // Synchronize only the a_w marginal with the stationary process model,
+    // leaving the cross-covariances the running filter has learned untouched.
+    //
+    // This is the deployed policy. It is not a consistent posterior operation:
+    // the implied correlation coefficients between a_w and the rest of the
+    // state are rescaled by the square root of the marginal change, which in a
+    // developed sea is a factor of ten or more. See
+    // synchronize_aw_covariance_to_stationary_congruent() for the consistent
+    // alternative and docs/ou-iii-adaptation-and-travel-sense.md for what each
+    // one costs.
     void synchronize_aw_covariance_to_stationary() {
         Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
+        symmetrize_Pext_();
+    }
+
+    // Reach the same stationary marginal through a congruence x_aw -> A x_aw
+    // with A = L_new L_old^-1, where P_awaw = L_old L_old^T and
+    // Sigma_aw_stat = L_new L_new^T.
+    //
+    // The congruence hits the target marginal exactly, leaves the
+    // cross-covariance measured against the whitened a_w block unchanged, and
+    // preserves positive semi-definiteness by construction. It is the
+    // consistent reading of "re-align the marginal while keeping what the
+    // filter has learned", and it is offered so that reading can be measured
+    // rather than argued about.
+    void synchronize_aw_covariance_to_stationary_congruent() {
+        Matrix3 P_aw = Pext.template block<3,3>(OFF_AW, OFF_AW);
+        P_aw = T(0.5) * (P_aw + P_aw.transpose());
+
+        Matrix3 Sigma = T(0.5) * (Sigma_aw_stat + Sigma_aw_stat.transpose());
+
+        Eigen::LLT<Matrix3> llt_old(P_aw);
+        Eigen::LLT<Matrix3> llt_new(Sigma);
+        if (llt_old.info() == Eigen::Success && llt_new.info() == Eigen::Success) {
+            const Matrix3 L_old = llt_old.matrixL();
+            const Matrix3 L_new = llt_new.matrixL();
+
+            bool factors_usable = true;
+            for (int i = 0; i < 3; ++i) {
+                if (!(L_old(i,i) > T(1e-12)) || !std::isfinite(L_old(i,i)) ||
+                    !std::isfinite(L_new(i,i))) {
+                    factors_usable = false;
+                    break;
+                }
+            }
+
+            if (factors_usable) {
+                // A_transposed = L_old^-T L_new^T, so P_i,aw <- P_i,aw A^T.
+                const Matrix3 A_transposed =
+                    L_old.transpose().template triangularView<Eigen::Upper>()
+                         .solve(L_new.transpose());
+
+                if (A_transposed.allFinite()) {
+                    for (int i = 0; i < NX; ++i) {
+                        if (i >= OFF_AW && i < OFF_AW + 3) continue;
+                        const Eigen::Matrix<T,1,3> scaled =
+                            Pext.template block<1,3>(i, OFF_AW) * A_transposed;
+                        Pext.template block<1,3>(i, OFF_AW) = scaled;
+                        Pext.template block<3,1>(OFF_AW, i) = scaled.transpose();
+                    }
+                }
+            }
+        }
+
+        Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma;
         symmetrize_Pext_();
     }
 

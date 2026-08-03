@@ -69,7 +69,9 @@ public:
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
 
-        filter.setPeriodicAwCovarianceSync(load_periodic_aw_cov_sync());
+        const std::string aw_cov_sync = load_aw_cov_sync_policy();
+        filter.setPeriodicAwCovarianceSync(aw_cov_sync != "reconfigure");
+        filter.setAwCovarianceSyncCongruent(aw_cov_sync == "congruent");
 
         if (attitude_only) {
             filter.enableLinearBlock(false);
@@ -275,6 +277,14 @@ public:
             s.direction.sign_num =
                 (s.direction.sign == FORWARD) ? 1 :
                 (s.direction.sign == BACKWARD ? -1 : 0);
+
+            // Physical directed propagation vector.  The class above is
+            // relative to the estimator's own axis representative; this is not.
+            const float travel_x = filter.dir_sign().getDirectedX();
+            const float travel_y = filter.dir_sign().getDirectedY();
+            if (std::isfinite(travel_x) && std::isfinite(travel_y)) {
+                s.direction.travel_vec_boat = Eigen::Vector2f(travel_x, travel_y);
+            }
         }
 
         return s;
@@ -285,15 +295,19 @@ private:
     // "periodic" (default, and the deployed policy) re-aligns the
     // latent-acceleration marginal with its stationary prior once per
     // adaptation period; "reconfigure" restricts that to discrete
-    // reconfiguration events and is the matched ablation.
-    static bool load_periodic_aw_cov_sync()
+    // reconfiguration events and is the matched ablation; "congruent" keeps the
+    // periodic cadence but performs the re-alignment as a congruence, which is
+    // the posterior-consistent version of the same operation.
+    static std::string load_aw_cov_sync_policy()
     {
         const char* raw = std::getenv("W3D_AW_COV_SYNC");
         const std::string policy = (raw && *raw) ? raw : "periodic";
-        if (policy == "reconfigure") return false;
-        if (policy == "periodic") return true;
+        if (policy == "reconfigure" || policy == "periodic" ||
+            policy == "congruent") {
+            return policy;
+        }
         throw std::runtime_error(
-            "W3D_AW_COV_SYNC must be reconfigure or periodic");
+            "W3D_AW_COV_SYNC must be reconfigure, periodic, or congruent");
     }
 
     // W3D_TUNING_MODE selects how much of the operating point is estimated

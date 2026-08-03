@@ -111,6 +111,16 @@ DIRECTION_METRIC_NAMES = (
     "dir_sense_reverse_pct",
     "dir_sense_uncertain_pct",
     "dir_sense_dominant_pct",
+    # Travel-sense correctness against the record's physical propagation
+    # direction.  The dir_sense_* shares above are relative to the estimator's
+    # own axis representative and are stability, not accuracy; these are the
+    # accuracy metrics.
+    "dir_travel_error_deg",
+    "dir_travel_abs_error_deg",
+    "dir_travel_rmse_deg",
+    "dir_travel_correct_pct",
+    "dir_travel_wrong_pct",
+    "dir_travel_unresolved_pct",
 )
 
 METRIC_NAMES = (
@@ -565,6 +575,12 @@ def parse_validation_metrics(output: str) -> dict[str, Any]:
     signed = metrics.get("dir_axis_error_deg")
     if isinstance(signed, float):
         metrics["dir_axis_abs_error_deg"] = abs(signed)
+
+    # Same argument for the directed travel angle: scenarios of opposite
+    # nominal heading would cancel in the signed mean.
+    signed_travel = metrics.get("dir_travel_error_deg")
+    if isinstance(signed_travel, float):
+        metrics["dir_travel_abs_error_deg"] = abs(signed_travel)
 
     # Flatten any extra scoring segments into the same row so the existing
     # summary and paired-effect machinery covers them unchanged.

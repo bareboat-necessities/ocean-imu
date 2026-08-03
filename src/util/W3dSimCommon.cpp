@@ -538,6 +538,12 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
 
         reference_euler_from_csv(rec.imu, q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
 
+        // Vessel heading in the record's own convention, before the magnetic
+        // declination offset below moves the yaw reference into the frame the
+        // filter actually learns.  Travel-sense scoring needs the physical
+        // heading so the boat frame can be removed from the directed estimate.
+        const float heading_ref_deg = y_ref_out;
+
         if (options_.with_mag) {
             y_ref_out = wrapDeg(y_ref_out + MagSim_WMM::default_declination_deg);
         }
@@ -624,11 +630,18 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
 
         result.freq_hist.push_back(snap.freq_hz);
         result.dir_phase_hist.push_back(snap.direction.phase);
-        result.dir_deg_hist.push_back(snap.direction.direction_deg_generator_signed);
+        // The axis arrives in the boat frame; adding the vessel heading puts it
+        // in the generator frame the record azimuth lives in.  Every shipped
+        // record has heading 0, which is why this was invisible until a
+        // heading-rotated record was scored.
+        result.dir_deg_hist.push_back(wrapAxialDeg90(
+            snap.direction.direction_deg_generator_signed + heading_ref_deg));
         result.dir_unc_hist.push_back(snap.direction.uncertainty_deg);
         result.dir_conf_hist.push_back(snap.direction.confidence);
         result.dir_amp_hist.push_back(snap.direction.amplitude);
         result.dir_sign_num_hist.push_back(snap.direction.sign_num);
+        result.dir_travel_deg_hist.push_back(
+            travelDegGeneratorFromVec(snap.direction.travel_vec_boat, heading_ref_deg));
 
         if (options_.write_timeseries) {
             ofs << rec.time << ","
@@ -792,6 +805,12 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
 
         reference_euler_from_csv(rec.imu, q_ref_wb_zu, r_ref_out, p_ref_out, y_ref_out);
 
+        // Vessel heading in the record's own convention, before the magnetic
+        // declination offset below moves the yaw reference into the frame the
+        // filter actually learns.  Travel-sense scoring needs the physical
+        // heading so the boat frame can be removed from the directed estimate.
+        const float heading_ref_deg = y_ref_out;
+
         if (options_.with_mag) {
             y_ref_out = wrapDeg(y_ref_out + MagSim_WMM::default_declination_deg);
         }
@@ -881,11 +900,18 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
 
         result.freq_hist.push_back(NAN);
         result.dir_phase_hist.push_back(snap.direction.phase);
-        result.dir_deg_hist.push_back(snap.direction.direction_deg_generator_signed);
+        // The axis arrives in the boat frame; adding the vessel heading puts it
+        // in the generator frame the record azimuth lives in.  Every shipped
+        // record has heading 0, which is why this was invisible until a
+        // heading-rotated record was scored.
+        result.dir_deg_hist.push_back(wrapAxialDeg90(
+            snap.direction.direction_deg_generator_signed + heading_ref_deg));
         result.dir_unc_hist.push_back(snap.direction.uncertainty_deg);
         result.dir_conf_hist.push_back(snap.direction.confidence);
         result.dir_amp_hist.push_back(snap.direction.amplitude);
         result.dir_sign_num_hist.push_back(snap.direction.sign_num);
+        result.dir_travel_deg_hist.push_back(
+            travelDegGeneratorFromVec(snap.direction.travel_vec_boat, heading_ref_deg));
 
         ofs << rec.time << ","
             << r_ref_out << "," << p_ref_out << "," << y_ref_out << ","
@@ -1111,6 +1137,43 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
         sense_dominant_pct = std::max(sense_forward_pct, sense_reverse_pct);
     }
 
+    // Travel-sense correctness. Unlike the class shares above this scores the
+    // directed propagation vector, with the vessel heading removed, against the
+    // physical propagation direction of the record, so it is a genuine error
+    // rate and is invariant to which end of the axis the estimator returns.
+    float travel_error_deg = NAN;
+    float travel_rmse_deg = NAN;
+    float travel_correct_pct = NAN;
+    float travel_wrong_pct = NAN;
+    float travel_unresolved_pct = NAN;
+    if (stop <= result.dir_travel_deg_hist.size()) {
+        const float travel_truth_deg =
+            travelTruthDegFromGeneratorAzimuth(truth_deg);
+        double sum_sin = 0.0;
+        double sum_cos = 0.0;
+        RMSReport travel_error;
+        size_t resolved = 0;
+        size_t correct = 0;
+        for (size_t i = start; i < stop; ++i) {
+            const float estimate = result.dir_travel_deg_hist[i];
+            if (!std::isfinite(estimate)) continue;
+            ++resolved;
+            const float error = wrapDeg(estimate - travel_truth_deg);
+            sum_sin += std::sin(static_cast<double>(deg_to_rad(error)));
+            sum_cos += std::cos(static_cast<double>(deg_to_rad(error)));
+            travel_error.add(error);
+            if (std::abs(error) < 90.0f) ++correct;
+        }
+        const float scale = 100.0f / static_cast<float>(count);
+        travel_correct_pct = scale * static_cast<float>(correct);
+        travel_wrong_pct = scale * static_cast<float>(resolved - correct);
+        travel_unresolved_pct = scale * static_cast<float>(count - resolved);
+        if (resolved > 0) {
+            travel_error_deg = rad_to_deg(std::atan2(sum_sin, sum_cos));
+            travel_rmse_deg = travel_error.rms();
+        }
+    }
+
     const char* mode = std::getenv("W3D_TUNING_MODE");
     if (!mode || *mode == '\0') mode = "adaptive";
     const char* aw_cov_sync = std::getenv("W3D_AW_COV_SYNC");
@@ -1140,6 +1203,11 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
               << " roll_rms_deg=" << roll.rms()
               << " pitch_rms_deg=" << pitch.rms()
               << " yaw_rms_deg=" << yaw.rms()
+              << " dir_travel_error_deg=" << travel_error_deg
+              << " dir_travel_rmse_deg=" << travel_rmse_deg
+              << " dir_travel_correct_pct=" << travel_correct_pct
+              << " dir_travel_wrong_pct=" << travel_wrong_pct
+              << " dir_travel_unresolved_pct=" << travel_unresolved_pct
               << " dir_axis_mean_deg=" << dir_axis_mean_deg
               << " dir_axis_truth_deg=" << truth_deg
               << " dir_axis_error_deg=" << dir_axis_error_deg

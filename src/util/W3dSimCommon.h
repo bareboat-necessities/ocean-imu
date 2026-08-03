@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <limits>
 #include <optional>
 #include <random>
 #include <string>
@@ -54,6 +55,32 @@ inline float wrapAxialDeg90(float a) {
 inline float dirDegGeneratorSignedFromVec(const Vector2f& v) {
     float deg = rad_to_deg(std::atan2(v.x(), v.y()));
     return wrapAxialDeg90(deg);
+}
+
+// Directed counterpart of dirDegGeneratorSignedFromVec, in [0, 360).
+//
+// heading_deg is the vessel heading in the record's own convention, which is 0
+// for every shipped record; adding it removes the boat frame so the result is
+// directly comparable with the record azimuth.  A zero vector means the travel
+// sense was not resolved for this sample and yields NaN.
+inline float travelDegGeneratorFromVec(const Vector2f& v, float heading_deg) {
+    if (!(v.squaredNorm() > 1e-12f) || !std::isfinite(heading_deg)) {
+        return std::numeric_limits<float>::quiet_NaN();
+    }
+    float deg = rad_to_deg(std::atan2(v.x(), v.y())) + heading_deg;
+    deg = std::fmod(deg, 360.0f);
+    if (deg < 0.0f) deg += 360.0f;
+    return deg;
+}
+
+// The generator azimuth in a record name is the direction the waves come from:
+// the propagation-to vector recovered from the truth channels lies at
+// azimuth + 180 in every shipped record.  Travel-sense scoring compares against
+// this, not against the raw azimuth.
+inline float travelTruthDegFromGeneratorAzimuth(float azimuth_deg) {
+    float deg = std::fmod(azimuth_deg + 180.0f, 360.0f);
+    if (deg < 0.0f) deg += 360.0f;
+    return deg;
 }
 
 inline float p0_s_from_sigma_tau(float sigma_a, float tau) {
@@ -216,6 +243,11 @@ struct DirectionTelemetry {
     float confidence = NAN;
     float amplitude = NAN;
     Vector2f direction_vec = Vector2f::Zero();
+    // Directed propagation unit vector in the boat frame (forward, starboard).
+    // Zero means the travel sense is not resolved for this sample.  Unlike the
+    // FORWARD/BACKWARD class this is a physical quantity: it is invariant to
+    // the 180-degree representative the axis estimator happens to return.
+    Vector2f travel_vec_boat = Vector2f::Zero();
     Vector2f filtered_signal = Vector2f::Zero();
     WaveDirection sign = UNCERTAIN;
     int sign_num = 0;
@@ -367,6 +399,10 @@ struct W3dSimulationRunResult {
     std::vector<float> magb_true_x, magb_true_y, magb_true_z;
     std::vector<float> freq_hist;
     std::vector<float> dir_deg_hist, dir_unc_hist, dir_conf_hist, dir_amp_hist, dir_phase_hist;
+    // Directed propagation angle in the generator convention, with the vessel
+    // heading removed, so it is directly comparable with the record azimuth.
+    // NaN where the travel sense is unresolved.
+    std::vector<float> dir_travel_deg_hist;
     std::vector<int> dir_sign_num_hist;
 
     float final_tau_target = NAN;
