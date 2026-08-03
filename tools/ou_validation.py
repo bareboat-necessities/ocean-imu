@@ -60,7 +60,7 @@ MODE_SETTINGS: dict[str, tuple[str, str]] = {
     "FixedNominalHeldCovariance": ("fixed_nominal", "reconfigure"),
     # Partial-adaptation channels.  The deployed law couples the integral
     # regularization scale to the OU parameters through
-    # r_S = clip(1.2 sigma_aw tau^3), so Adaptive-versus-FixedNominal cannot
+    # r_S = clip(0.35 sigma_aw tau^3), so Adaptive-versus-FixedNominal cannot
     # say which channel earns the benefit.  These two modes freeze one channel
     # at the FixedNominal point while the other keeps adapting, completing a
     # 2x2 factorial with Adaptive and FixedNominal.  Only OU-III exposes an
@@ -1677,7 +1677,7 @@ def _channel_ablation_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{OU--III adaptation-channel ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). The four columns are a $2\times2$ factorial: each channel is either adapted online or frozen at the FixedNominal operating point. \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ while the integral pseudo-measurement scale keeps adapting; \emph{OU only} does the reverse. Because the deployed law sets $r_S=\clip(1.2\,\sigma_{aw}\tau^{3},0.4,35)$, $r_S$ is derived from the live $\tau$ and $\sigma_{aw}$ estimates even when those are frozen on the way to the filter.}",
+        r"  \caption{OU--III adaptation-channel ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). The four columns are a $2\times2$ factorial: each channel is either adapted online or frozen at the FixedNominal operating point. \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ while the integral pseudo-measurement scale keeps adapting; \emph{OU only} does the reverse. Because the deployed law sets $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.4,400)$, $r_S$ is derived from the live $\tau$ and $\sigma_{aw}$ estimates even when those are frozen on the way to the filter.}",
         r"  \label{tab:ou_mc_channels}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4.0pt}",
@@ -1903,14 +1903,14 @@ def _direction_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Ten-seed OU--III wave-direction results over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error; both are genuine errors against truth. The last two columns are \emph{not} correctness rates: the travel-sense classes are defined relative to the axis representative the estimator returns, which is not tied to the generator azimuth, so \emph{Dominant} is the share of samples in whichever sense class the estimator commits to and \emph{Uncertain} the share below the confidence and amplitude thresholds. Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
+        r"  \caption{Ten-seed OU--III wave-direction results over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error. \emph{Sense} is a genuine correctness rate: the estimator's directed propagation vector, with the vessel heading removed, scored against the physical propagation direction of the record, which is the generator azimuth plus \SI{180}{\degree}. \emph{Unresolved} is the share below the confidence and amplitude thresholds. The FORWARD/BACKWARD classes the estimator exports are relative to the axis representative it happens to return and invert under a \SI{180}{\degree} heading change, so they are not scored here. Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
         r"  \label{tab:ou_mc_direction}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{3.6pt}",
         r"  \begin{tabular}{@{}llrrrrr@{}}",
         r"    \toprule",
         r"    Spectrum & Scenario & $|\Delta\theta|$ [\si{\degree}] & $\theta_{\mathrm{RMSE}}$ [\si{\degree}]"
-        r" & Axial SD [\si{\degree}] & Dominant [\%] & Uncertain [\%] \\",
+        r" & Axial SD [\si{\degree}] & Sense [\%] & Unresolved [\%] \\",
         r"    \midrule",
     ]
     for scenario in stationary:
@@ -1931,8 +1931,8 @@ def _direction_table(
                             "dir_axis_abs_error_deg",
                             "dir_axis_rmse_deg",
                             "dir_axis_circ_std_deg",
-                            "dir_sense_dominant_pct",
-                            "dir_sense_uncertain_pct",
+                            "dir_travel_correct_pct",
+                            "dir_travel_unresolved_pct",
                         )
                     ),
                 )
@@ -1963,6 +1963,10 @@ def _direction_table(
             rf"\providecommand{{\OUValidationDirectionRMSE}}{{{pooled('dir_axis_rmse_deg'):.2f}}}",
             rf"\providecommand{{\OUValidationDirectionDominant}}{{{pooled('dir_sense_dominant_pct'):.1f}}}",
             rf"\providecommand{{\OUValidationDirectionUncertain}}{{{pooled('dir_sense_uncertain_pct'):.1f}}}",
+            rf"\providecommand{{\OUValidationTravelCorrect}}{{{pooled('dir_travel_correct_pct'):.1f}}}",
+            rf"\providecommand{{\OUValidationTravelWrong}}{{{pooled('dir_travel_wrong_pct'):.1f}}}",
+            rf"\providecommand{{\OUValidationTravelUnresolved}}{{{pooled('dir_travel_unresolved_pct'):.1f}}}",
+            rf"\providecommand{{\OUValidationTravelAbsError}}{{{pooled('dir_travel_abs_error_deg'):.2f}}}",
         )
     )
     return lines
@@ -1998,7 +2002,7 @@ def write_tuning_points_table(
         r"% Generated by tools/ou_validation.py; do not edit by hand.",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Frozen operating points for the fixed-tuning modes, calibrated once from each noise-free \SI{1200}{s} reference record. $\dagger$ marks the single point used by FixedNominal in \emph{every} scenario; FixedOracle uses the row matching its own scenario, and the transition-endpoint row for the non-stationary case. Values are the vertical/base parameters; the filter applies $(1.87\sigma_{aw},1.87\sigma_{aw},\sigma_{aw})$ for OU--III acceleration and $\operatorname{diag}(0.36 r_S,0.36 r_S,r_S)^2$ for the integral pseudo-measurement, and $1.5\sigma_{aw}$ horizontally with $0.31 r_{p0}$ for OU--II.}",
+        r"  \caption{Frozen operating points for the fixed-tuning modes, calibrated once from each noise-free \SI{1200}{s} reference record. $\dagger$ marks the single point used by FixedNominal in \emph{every} scenario; FixedOracle uses the row matching its own scenario, and the transition-endpoint row for the non-stationary case. Values are the vertical/base parameters; the filter applies $(1.87\sigma_{aw},1.87\sigma_{aw},\sigma_{aw})$ for OU--III acceleration and $\operatorname{diag}(r_S,r_S,r_S)^2$ for the integral pseudo-measurement, and $1.5\sigma_{aw}$ horizontally with $0.31 r_{p0}$ for OU--II.}",
         r"  \label{tab:ou_fixed_points}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4pt}",

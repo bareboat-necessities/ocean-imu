@@ -153,6 +153,14 @@ public:
 
             // Scalar accel-bias initialization uncertainty only.
             // Bias vector X/Y/Z env overrides intentionally removed.
+            // Accelerometer-bias random walk.  The bias competes with the OU
+            // acceleration for the low-frequency content, and the wave-band
+            // operating point moves the OU corner down toward it, so this is
+            // the knob that prices that competition.
+            if (env_float("OU_III_ACC_BIAS_RW", v)) {
+                filter.mekf().set_Q_bacc_rw(Eigen::Vector3f::Constant(v));
+            }
+
             if (env_float("OU_ACC_BIAS_INIT_STD", v)) {
                 filter.mekf().set_initial_acc_bias_std(v);
             }
@@ -251,6 +259,7 @@ public:
         s.tuning_applied  = filter.getRSApplied();
 
         s.freq_hz         = filter.getFreqHz();
+        s.wave_period_sec = filter.getWavePeriodSec();
         s.period_sec      = filter.getPeriodSec();
         s.accel_variance  = filter.getAccelVariance();
 

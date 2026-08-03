@@ -37,7 +37,7 @@ matplotlib.rcParams["svg.hashsalt"] = "ocean-imu-ou-robustness"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 # One-factor-at-a-time parameters, followed by the two coupled sweeps that
 # move r_S the way the deployed adaptation law does
-# (r_S = clip(1.2 sigma_aw tau^3, 0.4, 35)).  Freezing r_S while sweeping
+# (r_S = clip(0.35 sigma_aw tau^3, 0.4, 400)).  Freezing r_S while sweeping
 # tau or sigma_aw measures only the direct OU process-covariance effect, which
 # is not what the online tuner ever does.
 OFAT_PARAMETERS = ("tau", "sigma_aw", "r_s")
@@ -47,9 +47,12 @@ FULL_SCALES = (0.5, 0.75, 1.0, 1.25, 1.5)
 SMOKE_SCALES = (0.75, 1.0, 1.25)
 LOW_REFERENCE_HS_M = 0.27
 LOW_STRESS_HS_M = 0.05
-TAU_BOUNDS_S = (0.02, 3.0)
+# Mirrors the implementation bounds in SeaStateFusionFilter_OU_III.h.  tau is
+# now tied to the zero-crossing wave period rather than to an acceleration-band
+# frequency, so both it and the r_S it cubes reach much further.
+TAU_BOUNDS_S = (0.02, 12.0)
 SIGMA_AW_BOUNDS_MPS2 = (1e-9, 6.0)
-R_S_BOUNDS_MS = (0.4, 35.0)
+R_S_BOUNDS_MS = (0.4, 400.0)
 
 
 @dataclass(frozen=True)
@@ -556,7 +559,7 @@ def write_publication_table(
         "",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{OU--III tuning sensitivity at the nominal $H_s=1.5$ m sea. Each entry is vertical-displacement RMS error in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). The first three columns hold the other two parameters frozen; the last two move $r_S$ as the deployed law $r_S=\operatorname{clip}(1.2\,\sigma_{aw}\tau^3,0.4,35)$ does. The $r_S$ multiplier acts on the pseudo-measurement standard deviation, so the corresponding covariance scales quadratically.}",
+        r"  \caption{OU--III tuning sensitivity at the nominal $H_s=1.5$ m sea. Each entry is vertical-displacement RMS error in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). The first three columns hold the other two parameters frozen; the last two move $r_S$ as the deployed law $r_S=\operatorname{clip}(0.35\,\sigma_{aw}\tau^3,0.4,400)$ does. The $r_S$ multiplier acts on the pseudo-measurement standard deviation, so the corresponding covariance scales quadratically.}",
         r"  \label{tab:ou_robustness_sensitivity}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{7pt}",

@@ -189,8 +189,59 @@ Let $a_{z,\mathrm{inert}}=a_z+g$ denote vertical inertial acceleration in the bo
 a_{\uparrow}:=-a_{z,\mathrm{inert}}.
 \]
 
-\subsubsection{Frequency and period-tied variance horizon}
-A dominant frequency estimate $f$ is tracked from $a_{\uparrow}$, then clamped and smoothed to $f_{\mathrm{tune}}\in[f_{\min},f_{\max}]$.  The variance is estimated over a fixed number of periods:
+\subsubsection{Wave-band period}
+\label{sec:wave-band-period}
+Both $\tau$ and $r_S$ are properties of the wave band, so the frequency that
+sets them has to follow the sea state.  A dominant-frequency estimate tracked
+from $a_{\uparrow}$ does not.  An ocean acceleration spectrum is the elevation
+spectrum weighted by $\omega^4$, and that weighting opposes the spectral
+roll-off, so the acceleration-band estimate sits well above the spectral peak
+and barely moves as the sea grows: over the JONSWAP family used here the
+elevation peak moves from \SI{0.335}{\hertz} to \SI{0.085}{\hertz} while the
+acceleration-band estimate stays between \SI{0.42}{\hertz} and
+\SI{0.55}{\hertz}.  Driving $\tau$ from it leaves the OU time scale nearly
+independent of the sea, and because $r_S\propto\tau^3$ that error is cubed.
+
+The tuner therefore estimates the zero-crossing period
+$T_z=2\pi\sqrt{m_0/m_2}$ of the elevation, where $m_n$ are elevation spectral
+moments.  Leveled vertical acceleration $a^{W}_{\uparrow}$, from
+(\ref{eq:dir-heading-signals}), is passed through two first-order high-pass
+stages and two leaky integrators, all sharing the corner $\lambda$, giving
+band-limited velocity and elevation proxies $v_p$ and $\eta_p$.  The proxies
+differ by exactly one integrator $1/(s+\lambda)$, so for a narrow band at
+$\omega$
+\begin{equation}
+\frac{\sigma_{v_p}}{\sigma_{\eta_p}}=\sqrt{\omega^{2}+\lambda^{2}},
+\qquad
+\widehat{\omega}^{2}
+=\frac{\sigma_{v_p}^{2}}{\sigma_{\eta_p}^{2}}-\lambda^{2},
+\qquad
+\widehat{T}_z=\frac{2\pi}{\widehat{\omega}},
+\label{eq:wave-band-period}
+\end{equation}
+and a broadband input returns the same relation averaged over whatever the
+shared response passes.  The relation is invariant to any filtering the two
+proxies have in common, which is what the high-pass stages exploit: double
+integration weights a spectrum by $\omega^{-4}$, so without them the sub-band
+energy of a real strapdown signal dominates $\eta_p$.  Two stages at the same
+corner make the shared response $s^{2}/(s+\lambda)^{2}$, removing that growth at
+a cost below \SI{6}{\percent} of gain at the lowest wave frequency of interest,
+and leaving (\ref{eq:wave-band-period}) unchanged.
+
+The estimator reads the accelerometer and the attitude solution only.  It does
+not read the filter's own displacement, which would close a positive feedback
+loop: the integral pseudo-measurement high-passes displacement, which raises the
+apparent frequency, which shortens $\tau$, which strengthens the
+pseudo-measurement.
+
+The tuning frequency is
+$f_{\mathrm{tune}}=\clip(1/\widehat{T}_z,f_{\mathrm{tune,min}},f_{\max})$, with a
+floor an order of magnitude below the tracker band $f_{\min}$ because a
+developed sea has $T_z\approx\SI{8.6}{s}$.  Until the estimator settles the
+tracker frequency is used instead.
+
+\subsubsection{Period-tied variance horizon}
+The variance is estimated over a fixed number of periods:
 \begin{equation}
 \begin{aligned}
 T_{\mathrm{eff}}&=\frac{1}{f_{\mathrm{tune}}},\\
@@ -212,7 +263,8 @@ $\widehat\sigma_{\mathrm{tot}}^2\approx\Var[a_{\uparrow}]$.
 The adaptation targets are
 \begin{equation}
 \begin{aligned}
-\tau_\star&=c_\tau\frac{1}{2f_{\mathrm{tune}}},\\
+\tau_\star&=c_\tau\frac{1}{2f_{\mathrm{tune}}}
+=c_\tau\frac{\widehat{T}_z}{2},\\
 \sigma_{aw,\star}&=c_\sigma
 \sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
 r_{S,\star}&=c_R\sigma_{aw,\star}\tau_\star^3.
@@ -256,8 +308,15 @@ and the integral pseudo-measurement standard-deviation vector is
 \rho_{xy}r_{S,\mathrm{appl}}&
 \rho_{xy}r_{S,\mathrm{appl}}&
 r_{S,\mathrm{appl}}
-\end{bmatrix}^{\top}.
+\end{bmatrix}^{\top},
+\qquad \rho_{xy}=1 .
 \]
+The horizontal weight was previously $\rho_{xy}=0.36$, which made the
+horizontal high-pass $2.8\times$ stronger than the vertical one.  That was a
+small-sea optimum applied to every sea state, and with the operating point tied
+to the wave band every stationary record scores better with the two equal.  The
+parameter is retained because the bound is real, but the deployed value no
+longer imposes an anisotropy.
 Its componentwise square defines the covariance,
 \begin{equation}
 \mat{R}_S=\diag\!\left(\vct{r}_S\odot\vct{r}_S\right),
@@ -286,20 +345,25 @@ Bound or gate & Default & Bound or gate & Default \\
 \midrule
 IMU period $h$ & \SI{0.005}{s}
 & tracker band $[f_{\min},f_{\max}]$ & $[0.2,6.0]$ Hz \\
+wave-band period corner $\lambda/2\pi$ & \SI{0.02}{Hz}
+& tuning-frequency floor $f_{\mathrm{tune,min}}$ & \SI{0.03}{Hz} \\
 OU time scale $[\tau_{\min},\tau_{\max}]$
-& $[0.02,3.0]$ s
+& $[0.02,12.0]$ s
 & stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{\meter\per\second\squared} \\
 acceleration noise floor $\sigma_{\mathrm{nf}}$
 & \SI{0.12}{m.s^{-2}}
-& integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.4,35]$ m\,s \\
-adaptation cadence / time constant
-& $0.1/1.8$ s
+& integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.4,400]$ m\,s \\
+accelerometer-bias random walk
+& \SI{5e-4}{m.s^{-2}.s^{-0.5}}
+& adaptation cadence / time constant & $0.1/1.8$ s \\
+tuner coefficients $(c_\tau,c_\sigma,c_R)$
+& $(1.0,0.9,0.35)$
 & $r_S$ smoothing time & $5\tau_\star$ \\
 online-tuning warmup / magnetometer delay
 & $5/7$ s
 & frequency smoothing (fast/slow) & $3.5/10$ s \\
 horizontal OU / $r_S$ scale
-& $S_\sigma=1.87$, $\rho_{xy}=0.36$
+& $S_\sigma=1.87$, $\rho_{xy}=1$
 & tilt reset (threshold/hold/cooldown) & $70^\circ/0.35/3$ s \\
 direction-axis validity (amplitude/confidence/linearity)
 & $0.08/20/0.25$

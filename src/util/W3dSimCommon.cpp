@@ -684,6 +684,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
         result.final_tau_applied = snap.tau_applied;
         result.final_sigma_applied = snap.sigma_applied;
         result.final_tuning_applied = snap.tuning_applied;
+        result.final_wave_period_sec = snap.wave_period_sec;
         result.final_freq_hz = snap.freq_hz;
         result.final_period_sec = snap.period_sec;
         result.final_accel_variance = snap.accel_variance;
@@ -947,6 +948,7 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         result.final_tau_applied = NAN;
         result.final_sigma_applied = NAN;
         result.final_tuning_applied = NAN;
+        result.final_wave_period_sec = NAN;
         result.final_freq_hz = NAN;
         result.final_period_sec = NAN;
         result.final_accel_variance = NAN;
@@ -1222,6 +1224,7 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
               << " tau_applied_s=" << result.final_tau_applied
               << " sigma_applied_mps2=" << result.final_sigma_applied
               << " tuning_applied=" << result.final_tuning_applied
+              << " wave_period_s=" << result.final_wave_period_sec
               << " frequency_hz=" << result.final_freq_hz
               << " period_s=" << result.final_period_sec
               << " accel_variance_m2ps4=" << result.final_accel_variance

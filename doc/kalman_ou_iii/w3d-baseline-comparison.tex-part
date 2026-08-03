@@ -214,24 +214,29 @@ error of \OUValidationDirectionRMSE{} degrees.  The propagation \emph{axis} is
 therefore recovered to a degree or two in the mean, with substantial
 sample-to-sample dispersion about it.
 
-Travel sense is a different matter, and the ensemble exposes a limitation that
-the earlier single-window report concealed.  The classifier is decisive --
-\OUValidationDirectionDominant\% of samples fall in one sense class and only
-\OUValidationDirectionUncertain\% are below the confidence and amplitude
-thresholds -- but \emph{which} class that is cannot be checked against the
-generator here.  The FORWARD/BACKWARD labels are defined relative to the axis
-representative the axis estimator returns, and that representative is not tied
-to the generator azimuth: across the eight records the dominant class swaps
-with the sign of the nominal heading, on the original records as well as on the
-surrogates.  The estimator commits to a sense consistently; establishing that
-the committed sense is the physically correct one requires a signed
-ground-truth convention shared between the generator and the direction
-interface, which the present records do not provide.  We therefore report
-sense \emph{stability} and make no correctness claim, and the
-Toward/Away/Uncertain split of
-Table~\ref{tab:sim_results_rms_dir_basic} should be read the same way -- as the
-dominant class, not as a verified correctness rate.  Resolving this is left to
-future work, together with the unimodal limitation of these records: each holds
+Travel sense is now scored against truth rather than against the estimator's
+own axis representative.  The directed propagation vector, with the vessel
+heading removed, is compared with the physical propagation direction of the
+record, which is the generator azimuth plus \SI{180}{\degree}: the earlier
+reports could not make that comparison because the sign convention of the
+generator was never asserted anywhere, and it is now pinned by a test.  Pooled
+over the eight stationary seas the estimator resolves the travel sense
+correctly in \OUValidationTravelCorrect\% of samples, incorrectly in
+\OUValidationTravelWrong\%, and leaves \OUValidationTravelUnresolved\% below the
+confidence and amplitude thresholds, with a pooled directed angular error of
+\OUValidationTravelAbsError{} degrees.
+
+The FORWARD/BACKWARD labels the estimator exports remain a gauge quantity and
+are not scored.  Running the same sea with the vessel heading rotated by
+\SI{180}{\degree} -- identical waves, identical seeds, only the platform turned
+around -- leaves heave, three-dimensional displacement and the propagation axis
+unchanged while the class shares invert completely, from \SI{95.5}{\percent}
+FORWARD to \SI{94.6}{\percent} BACKWARD, because the axis estimator seeds its
+representative from the bow.  The same experiment leaves the truth-referenced
+correctness rate flat at headings of \num{0}, \num{45} and
+\SI{180}{\degree}, which is what establishes that the directed output is
+physical while the class label is not.  What remains for
+future work is the unimodal limitation of these records: each holds
 one nominal heading, so direction changes and multimodal seas are outside what
 any of these numbers cover.
 

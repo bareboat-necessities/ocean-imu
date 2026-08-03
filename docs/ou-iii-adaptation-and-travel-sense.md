@@ -133,6 +133,68 @@ Freezing `tau`/`sigma_aw` at the nominal point (`AdaptiveRSOnly`) helps because
 it stops the OU model from following a frequency signal that carries no
 information, while `r_S` keeps tracking `sigma`.
 
+## 1.6 The fix
+
+`src/tuner/WavePeriodEstimator.h` estimates the zero-crossing period
+`T_z = 2*pi*sqrt(m0/m2)` of the elevation from leveled vertical acceleration.
+Two first-order high-pass stages and two leaky integrators, all at the same
+corner `lambda`, give band-limited velocity and elevation proxies. They differ
+by exactly one integrator, so
+
+    sigma_v / sigma_eta = sqrt(omega^2 + lambda^2)
+
+holds for a narrow band and inverts exactly; a broadband input returns the same
+relation averaged over whatever the shared response passes. The relation is
+invariant to any filtering the two proxies have in common, which is what makes
+the high-pass stages free: double integration weights a spectrum by
+`omega^-4`, so without them the sub-band energy of a real strapdown signal
+dominates the elevation proxy. Measured against the record truth:
+
+| record | `T_z` truth | `T_z` estimated | error |
+| --- | --- | --- | --- |
+| jonswap H0.270 | 2.51 s | 2.60 s | +3.8% |
+| jonswap H1.500 | 4.48 s | 4.37 s | -2.4% |
+| jonswap H4.000 | 6.60 s | 7.09 s | +7.4% |
+| jonswap H8.500 | 8.55 s | 8.43 s | -1.5% |
+
+Two implementation details mattered more than expected.
+
+The input is the *leveled* vertical acceleration the direction stage already
+forms, not the body-Z proxy. Fed the body-Z proxy the estimator reported
+6.8-10.0 s across a family whose true `T_z` runs 2.5-8.6 s: the sub-band
+gravity leakage of a tilting platform swamps a doubly integrated signal. The
+leveled signal depends on attitude but not on the linear block, so it does not
+close a loop through the quantity being tuned. Reading the filter's own
+displacement would: the integral pseudo-measurement high-passes displacement,
+which raises the apparent frequency, which shortens `tau`, which strengthens the
+pseudo-measurement.
+
+The estimator settles in about a minute, so the tracker frequency is used until
+it is ready.
+
+With `f_tune = 1/T_z` the existing law `tau = c_tau/(2 f_tune)` becomes
+`tau = c_tau * T_z / 2`, and the same substitution fixes the tuner's variance
+horizon, which is a fixed number of periods and had been shorter than one wave
+period. The coefficients were re-fitted on the four stationary JONSWAP records
+over a 180-point grid:
+
+| parameter | was | now | why |
+| --- | --- | --- | --- |
+| `tau_coeff` | 1.38 | 1.0 | `tau = T_z/2`, the documented intent |
+| `R_S_coeff` | 1.2 | 0.35 | re-fitted against the per-record optimum |
+| `R_S_xy_factor` | 0.36 | 1.0 | the anisotropy was a small-sea optimum |
+| `MAX_TAU_S` | 3.0 s | 12.0 s | 3.0 s bound at `H_s = 8.5` m |
+| `MAX_R_S` | 35 m*s | 400 m*s | 35 clipped the operating point the sea needs |
+| accel-bias RW | 1e-3 | 5e-4 | see below |
+
+The accelerometer-bias random walk had to come down. Lengthening `tau` moves the
+OU corner toward the bias band, and the two states compete for the same
+low-frequency content: at the old value the accelerometer-bias error grew by a
+factor of 1.6 in the two largest seas, enough to break the historical bias gate.
+`5e-4` clears every gate and costs about 2% of 3D RMS relative to leaving it
+alone. This is the one place where the change is a genuine trade rather than a
+free improvement, and it is a trade against a nuisance state.
+
 ## 2. Finding 2: the travel-sense classes are a gauge label
 
 ### 2.1 Controlled experiment
@@ -231,37 +293,25 @@ falsifiable. Stages A and B change no filter behaviour.
   algebra. That decision belongs with the Stage E re-run, because
   `AdaptiveHeldCovariance` is already the mode that measures it.
 
-### Stage C - estimate the wave period in the wave band
+### Stage C - estimate the wave period in the wave band (done)
 
-- C1. New estimator: band-limited double integration of the vertical
-  acceleration proxy (fixed 0.02 Hz high-pass, well below every sea state of
-  interest) into velocity and elevation proxies, long-horizon EWMA variances,
-  and `omega_z = sigma_v / sigma_eta`, i.e. the standard zero-crossing period
-  `T_z = 2*pi/omega_z`. No dependence on the filter's own states, so no new
-  feedback loop.
-- C2. `tau_target = tau_coeff * T_z / 2`, restoring the documented intent
-  ("tau ~ half the dominant period"). Re-fit `tau_coeff` and raise
-  `MAX_TAU_S` (currently 3.0 s, binding for `T_z ~ 8.5` s).
-- C3. Re-fit `R_S_coeff` and the `r_S` clamps against the re-based `tau`.
-  The `r_S ~ sigma * tau^3` form is physically right (`sigma_S ~ sigma_p/omega`
-  and `sigma_p ~ sigma_a/omega^2`); only its frequency input and its clamps are
-  wrong. Section 1.3 shows `MAX_R_S = 35` binding at `H_s = 8.5` m.
-- C4. Validate `T_z` against the record truth (`sqrt(m0/m2)` of the reference
-  elevation) across all four sea states and the transition record before any
-  re-tuning is attempted.
+Implemented as described in section 1.6: `WavePeriodEstimator`, wired into the
+tuner path, with the clamps and coefficients re-fitted.  `setWaveBandTuning(false)`
+restores the acceleration-band behaviour so the change can be ablated.
+`tests/kalman_ou_iii/wave_period-test.cpp` pins the estimator against
+monochromatic and broadband signals with known `T_z`, against a constant
+acceleration offset, and against sample-rate changes.
 
 ### Stage D - per-axis regularisation instead of scalar anisotropy constants
 
-- D1. Estimate world-horizontal acceleration variances from the world
-  acceleration the direction stage already forms, with the same noise-floor
-  subtraction as the vertical channel.
-- D2. Derive `sigma_aw` and `r_S` per axis from those estimates, retiring
-  `S_factor` and `R_S_xy_factor` as fallbacks used only until the per-axis
-  estimator is ready. Anisotropy then follows the sea rather than a constant
-  fitted on the smallest record.
-- D3. Optional follow-up: feed the full 3x3 stationary covariance
-  (`set_aw_stationary_cov_full` already exists) so the OU process is aligned
-  with the estimated propagation axis.
+Superseded in part.  `R_S_xy_factor` is now 1, so the integral regularisation is
+isotropic and no constant imposes an anisotropy; the remaining
+`S_factor = 1.87` on the stationary acceleration is still mis-specified relative
+to the records (per-axis 0.81 and 0.55 of vertical) but moves 3D RMS by under
+2%, so it is left alone rather than changed without an effect to justify it.
+Estimating the horizontal stationary covariance per axis, and feeding the full
+3x3 through the existing `set_aw_stationary_cov_full`, remains the natural next
+step and would make the OU process direction-aware.
 
 ### Stage E - re-validation and manuscript
 

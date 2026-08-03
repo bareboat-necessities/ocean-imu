@@ -270,6 +270,9 @@ struct FilterSnapshot {
     float sigma_applied = NAN;
     float tuning_applied = NAN;
     float freq_hz = NAN;
+    // Zero-crossing wave period from the accelerometer-only estimator, NaN when
+    // the filter family does not provide one.
+    float wave_period_sec = NAN;
     float period_sec = NAN;
     float accel_variance = NAN;
     float displacement_scale_m = NAN;
@@ -412,6 +415,7 @@ struct W3dSimulationRunResult {
     float final_sigma_applied = NAN;
     float final_tuning_applied = NAN;
     float final_freq_hz = NAN;
+    float final_wave_period_sec = NAN;
     float final_period_sec = NAN;
     float final_accel_variance = NAN;
 };
