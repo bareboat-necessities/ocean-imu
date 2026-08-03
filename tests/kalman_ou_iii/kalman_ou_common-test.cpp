@@ -171,11 +171,10 @@ bool test_noise_units_and_period() {
     return true;
 }
 
-// The periodic a_w re-alignment must reach the stationary marginal without
+// The congruent a_w re-alignment must reach the stationary marginal without
 // changing how a_w correlates with the rest of the state, and without pushing
 // the joint covariance out of the positive semi-definite cone. Overwriting the
-// marginal alone fails the correlation requirement by a factor of
-// sqrt(marginal change), which is large in developed seas.
+// marginal alone intentionally does not preserve this invariant.
 bool test_aw_covariance_sync() {
     const Vector3 sigma_a = Vector3::Constant(T(0.35));
     const Vector3 gyro_density = Vector3::Constant(T(0.0015));
@@ -204,7 +203,7 @@ bool test_aw_covariance_sync() {
         const Vector3 target_std(T(2.36)*scale, T(2.36)*scale, T(1.26)*scale);
         Kalman3D_Wave_OU_III<T> probe = ou3;
         probe.set_aw_stationary_std(target_std);
-        probe.synchronize_aw_covariance_to_stationary();
+        probe.synchronize_aw_covariance_to_stationary_congruent();
         const auto after = probe.covariance_full();
 
         const Matrix3 target = target_std.array().square().matrix().asDiagonal();
@@ -213,9 +212,7 @@ bool test_aw_covariance_sync() {
                    "a_w sync did not reach the stationary marginal")) return false;
 
         // The quantity a congruence preserves is the cross-covariance measured
-        // against the whitened a_w block, P_x,aw L^-T. That is the scale-free
-        // statement of "the rest of the state stays as informative about a_w as
-        // it was", and it is what the plain marginal overwrite destroys.
+        // against the whitened a_w block, P_x,aw L^-T.
         const Eigen::LLT<Matrix3> chol_before(marginal_before);
         const Eigen::LLT<Matrix3> chol_after(marginal_after);
         if (!check(chol_before.info() == Eigen::Success &&
