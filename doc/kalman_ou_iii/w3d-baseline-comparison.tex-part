@@ -207,27 +207,35 @@ gives absolute per-axis and 3D displacement RMS for both filters, so the
 magnitude can be read directly rather than inferred from a difference.
 OU--III has \emph{higher} 3D displacement error than OU--II in
 \OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
-scenarios, with the remaining case, $H_s=\SI{8.5}{m}$, spanning zero.  There is
-now no scenario in which OU--III is resolvably better in three dimensions.
+scenarios.  In the remaining case, the $H_s=\SI{8.5}{m}$ sea, it is
+\emph{lower}, and that interval excludes zero;
+\OUValidationThreeDUnresolvedCount{} of the five are unresolved.
 
-An earlier revision reported this count as \num{1} of \num{5} and read it as
-evidence that the horizontal cost had been a tuning artifact rather than a
-property of the additional integral state.  That reading does not survive
+That single reversal is reported as a scenario-specific exception and not as a
+weakening of the negative result, which is what \num{4} of \num{5} still says.
+In particular it does not revive the reading an earlier revision put on a count
+of \num{1} of \num{5}, that the horizontal cost was a tuning artifact rather
+than a property of the additional integral state.  That reading did not survive
 tuning both filters in the same band: the horizontal cost was largely
 \emph{shared}, and correcting it in OU--III alone made the extra state look
-horizontally free when it is not.  Table~\ref{tab:ou_mc_axes} locates the
-remaining cost in the $Y$ channel, where OU--III is worse in every one of the
-five scenarios, while in $X$ it is better in two of them and level in the
-transition.
+horizontally free when it is not.  The exception is confined to the largest sea
+in the set, and this study does not isolate why.
+
+Table~\ref{tab:ou_mc_axes} locates the remaining cost in the $Y$ channel, where
+OU--III is worse in every one of the five scenarios, while in $X$ it is better
+in two of them and level in the transition.
 
 Read together with Table~\ref{tab:ou_mc_family}, the evidence supports a
-vertical claim throughout and no three-dimensional claim at all.  OU--III
-improves vertical reconstruction in all four stationary seas and during the
-transition, by between
-\num{1.5} and \num{1.7} percentage points of $H_s$, and pays for it in the
-horizontal channels in every scenario.  Whether that trade is worth making is
-an application question about which axis the user needs, not a question this
-study settles.
+vertical claim throughout and a three-dimensional one in one sea of five.
+OU--III improves vertical reconstruction in all four stationary seas and during
+the transition, by between
+\num{1.5} and \num{1.7} percentage points of $H_s$, and in four of the five it
+pays for that in the horizontal channels.  The exception is the
+$H_s=\SI{8.5}{m}$ sea, where $Y$ is still worse but $X$ improves by more, so the
+3D total comes out ahead; the horizontal cost is a $Y$ cost in every scenario,
+and only its net effect on the 3D total varies.  Whether that trade is worth
+making is an application question about which axis the user needs, not a
+question this study settles.
 
 \paragraph{Second spectral family}
 Table~\ref{tab:ou_mc_pmstokes} repeats the paired comparison on the four
