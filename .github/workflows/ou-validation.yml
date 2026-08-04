@@ -56,7 +56,7 @@ concurrency:
 
 env:
   # Must match the length of the regenerate matrix's shard list.
-  SHARD_COUNT: 5
+  SHARD_COUNT: 3
 
 jobs:
   # Fast gate. Runs on every pull request and push, and on a smoke dispatch.
@@ -139,7 +139,7 @@ jobs:
       fail-fast: false
       matrix:
         study: [validation, robustness]
-        shard: [0, 1, 2, 3, 4]
+        shard: [0, 1, 2]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
