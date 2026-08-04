@@ -217,10 +217,44 @@ raised clamps in both arms):
 
 The bias prior alone moves 3D RMS by under 1% and in both directions. The wave
 band alone carries the entire improvement, and the new prior costs a little of
-it back. So the bias change buys gate compliance and correct specification, not
-accuracy, and the headline result does not rest on it.
+it back.
 
-One further attribution: the two raised clamps are worth about 13% of 3D RMS at
+### What the accelerometer-bias gate actually measures
+
+The gate the prior was swept against is not measuring bias observability
+against the latent OU acceleration. At `H_s = 8.5` m:
+
+| quantity | value |
+| --- | --- |
+| mean roll error | -1.114 deg |
+| apparent specific force from that tilt | -0.1906 m/s^2 |
+| mean accelerometer-bias error (x) | +0.1847 m/s^2 |
+
+A 3% match, and 0.5% on a second run of the same record. The bias state is
+absorbing a persistent tilt error, which is what a bias state is for, and the
+same tilt error is present in the pre-change build (mean roll error -1.136 deg,
+roll RMS 1.139 deg new against 1.165 deg old, so the error is almost entirely a
+constant offset in both). The DC hypothesis it replaces -- that a longer `tau`
+lets the OU process, whose spectrum peaks at DC, steal the bias -- is refuted by
+the same measurement: the `a_w` DC offset is 0.028 m/s^2 against a bias error of
+0.185, and the two add rather than trade.
+
+So every choice of this prior only decides which state absorbs a tilt error
+neither of them causes. Three configurations were measured and none dominates:
+
+| configuration | gates | trade |
+| --- | --- | --- |
+| `Q_bacc` 5e-4 (shipped) | all 8 pass | yaw +0.4 to +0.5 deg in the small seas |
+| `Q_bacc` 1e-3 (historical) | 4 fail | better small-sea yaw and 2% better 3D, but the 60 s yaw gate fails at `H_s` 4.0 and 8.5 and the vertical-bias gate fails at 8.5 |
+| both bias priors matched to the simulator | 1 fails | best small-sea yaw, vertical-bias gate fails at 8.5 |
+
+The shipped choice is the only one that clears every historical gate, and it is
+now justified by the noise model rather than by the sweep that found it. The
+1.1-degree static roll bias in steep seas is the real finding here: it is
+pre-existing, it is what the bias gate has always been scoring, and it is out of
+scope for this change.
+
+One further attribution:One further attribution: the two raised clamps are worth about 13% of 3D RMS at
 `H_s = 8.5` m on their own, because `MAX_TAU_S = 3` and `MAX_R_S = 35` were
 binding under the old operating point too. They are raised as part of the
 wave-band change, since a wave-band `tau` needs the headroom, but the deployed

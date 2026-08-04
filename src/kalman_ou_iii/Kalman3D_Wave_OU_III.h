@@ -560,19 +560,22 @@ class Kalman3D_Wave_OU_III {
     Vector3 last_gyr_bias_corrected{};  // Last gyro
 
     T sigma_bacc0_ = T(0.004);          // initial accel bias std
-    // Accelerometer-bias random walk, as a variance per second.
+    // Accelerometer-bias random walk, as a variance per second: (5e-4)^2, i.e.
+    // 5e-4 m/s^2 per sqrt(s), which is exactly what the reference simulation
+    // generates (acc_bias_rw in util/W3dSimCommon.h, applied as sigma*sqrt(dt)).
+    // The previous 1e-6 was twice the true process noise with nothing
+    // justifying the excess.
     //
-    // This is (5e-4)^2, i.e. 5e-4 m/s^2 per sqrt(s), which is exactly the bias
-    // random walk the reference simulation generates (acc_bias_rw in
-    // util/W3dSimCommon.h, applied as sigma*sqrt(dt)).  The previous 1e-6, i.e.
-    // 1e-3 per sqrt(s), was twice the true process noise and nothing justified
-    // it.  A correctly specified prior is the right default on its own terms;
-    // it is not what produces the displacement improvement, and on the two
-    // smallest seas it costs a little vertical accuracy.
-    //
-    // On hardware this should come from the instrument's Allan variance rather
-    // than from the simulator, so treat it as a default to override through
-    // set_Q_bacc_rw() rather than as a constant of nature.
+    // What this does *not* fix is worth recording, because it was investigated
+    // and it changes how the accelerometer-bias regression gate should be read.
+    // That gate is not measuring bias observability against the latent OU
+    // acceleration: at H_s = 8.5 m the mean roll error of -1.14 deg accounts for
+    // -0.1945 m/s^2 of apparent specific force against a mean bias error of
+    // +0.1954 m/s^2, a 0.5 percent match, and the same tilt error is present in
+    // the pre-change build.  The bias state is absorbing a persistent tilt
+    // error, which is what a bias state is for.  Any choice of this prior only
+    // moves that absorbed constant between states; the 1.1 deg static roll bias
+    // in steep seas is a separate, pre-existing problem.
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
 
     // Accelerometer bias temperature coefficient (per-axis), units: m/s^2 per °C.
