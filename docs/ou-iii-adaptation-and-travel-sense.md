@@ -187,13 +187,44 @@ over a 180-point grid:
 | `MAX_R_S` | 35 m*s | 400 m*s | 35 clipped the operating point the sea needs |
 | accel-bias RW | 1e-3 | 5e-4 | see below |
 
-The accelerometer-bias random walk had to come down. Lengthening `tau` moves the
-OU corner toward the bias band, and the two states compete for the same
-low-frequency content: at the old value the accelerometer-bias error grew by a
-factor of 1.6 in the two largest seas, enough to break the historical bias gate.
-`5e-4` clears every gate and costs about 2% of 3D RMS relative to leaving it
-alone. This is the one place where the change is a genuine trade rather than a
-free improvement, and it is a trade against a nuisance state.
+### The accelerometer-bias prior, and how not to justify it
+
+The bias random walk came down from `1e-3` to `5e-4` per sqrt(s). It is worth
+being precise about why, because the way it was found is not the way it is
+justified.
+
+It was found by sweeping until the historical accelerometer-bias gate went
+green, which is fitting to the test. The justification is that
+`5e-4` is exactly the bias random walk the reference simulation generates
+(`acc_bias_rw` in `src/util/W3dSimCommon.h`, applied as `sigma*sqrt(dt)`), so
+the filter's prior was previously twice the true process noise with nothing
+justifying the excess. A correctly specified prior is the right default on its
+own terms. On hardware it should come from the instrument's Allan variance
+rather than from the simulator, so it is a default to override, not a constant.
+
+The claim that has to survive scrutiny is that the displacement improvement
+comes from the wave band and not from this. Decomposed on the four stationary
+JONSWAP records (3D RMS in metres; "old band" is the acceleration-band
+operating point restored through `W3D_TUNING_BAND=acceleration`, with the
+raised clamps in both arms):
+
+| record | old band, old prior | old band, new prior | wave band, old prior | wave band, new prior |
+| --- | --- | --- | --- | --- |
+| H0.270 | 0.0689 | 0.0734 | 0.0619 | 0.0638 |
+| H1.500 | 0.2884 | 0.2957 | 0.2634 | 0.2711 |
+| H4.000 | 1.1509 | 1.1436 | 0.7821 | 0.7847 |
+| H8.500 | 2.3993 | 2.3731 | 1.4613 | 1.4880 |
+
+The bias prior alone moves 3D RMS by under 1% and in both directions. The wave
+band alone carries the entire improvement, and the new prior costs a little of
+it back. So the bias change buys gate compliance and correct specification, not
+accuracy, and the headline result does not rest on it.
+
+One further attribution: the two raised clamps are worth about 13% of 3D RMS at
+`H_s = 8.5` m on their own, because `MAX_TAU_S = 3` and `MAX_R_S = 35` were
+binding under the old operating point too. They are raised as part of the
+wave-band change, since a wave-band `tau` needs the headroom, but the deployed
+baseline they are compared against had them binding.
 
 ## 2. Finding 2: the travel-sense classes are a gauge label
 

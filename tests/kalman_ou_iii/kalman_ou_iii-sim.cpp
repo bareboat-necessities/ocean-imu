@@ -161,6 +161,18 @@ public:
                 filter.mekf().set_Q_bacc_rw(Eigen::Vector3f::Constant(v));
             }
 
+            // Ablate the wave-band operating point back to the
+            // acceleration-band frequency the filter used before.
+            if (const char* band = std::getenv("W3D_TUNING_BAND")) {
+                const std::string value = band;
+                if (value == "acceleration") {
+                    filter.setWaveBandTuning(false);
+                } else if (value != "wave") {
+                    throw std::runtime_error(
+                        "W3D_TUNING_BAND must be wave or acceleration");
+                }
+            }
+
             if (env_float("OU_ACC_BIAS_INIT_STD", v)) {
                 filter.mekf().set_initial_acc_bias_std(v);
             }
