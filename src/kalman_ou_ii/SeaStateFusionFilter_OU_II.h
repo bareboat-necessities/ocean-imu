@@ -1077,6 +1077,15 @@ public:
         float mag_sample_dt_sec  = 1.0f / 200.0f;
         
         // Keep off in waves. Accel/gyro weighting can phase-select wave motion.
+        // Body-frame hard-iron offset, learned during startup alongside the
+        // reference and then subtracted from every magnetometer sample.
+        //
+        // Off by default.  The MEKF has no mag-bias state, so an offset left in
+        // the stream is heading error one-for-one against the horizontal field;
+        // but the offset is only weakly separable from the reference at a fixed
+        // heading, and a wrong one subtracted everywhere is worse than none.
+        // Turn it on where the platform changes heading during startup.
+        bool  mag_estimate_hard_iron = false;
         bool  mag_enable_quality_weighting = false;
         float mag_min_effective_weight     = 0.0f;
         float mag_acc_norm_rel_soft        = 0.22f;
@@ -1117,6 +1126,7 @@ public:
         mag_cfg.sample_dt_sec = cfg_.mag_sample_dt_sec;
         mag_cfg.gravity_ref = g_std;
         mag_cfg.enable_quality_weighting = cfg_.mag_enable_quality_weighting;
+        mag_cfg.estimate_hard_iron       = cfg_.mag_estimate_hard_iron;
         mag_cfg.min_effective_weight = cfg_.mag_min_effective_weight;
         mag_cfg.acc_norm_rel_soft = cfg_.mag_acc_norm_rel_soft;
         mag_cfg.gyro_soft_dps = cfg_.mag_gyro_soft_dps;
@@ -1346,8 +1356,14 @@ public:
                         impl_.mekf().set_quaternion_boat(q_new);
                     }
     
+                    Eigen::Vector3f hard_iron_uT;
+                    mag_hard_iron_body_uT_ =
+                        mag_auto_tuner_.getHardIronBodyUT(hard_iron_uT)
+                            ? hard_iron_uT
+                            : Eigen::Vector3f::Zero();
+
                     mag_ref_set_ = true;
-                
+
                     // Initial mag yaw-gauge correction is now done, so it is safe to allow
                     // v/p/a_w to become active in the current yaw-fixed world frame.
                     syncLinearBlockGate_();
@@ -1356,11 +1372,19 @@ public:
         }
     
         if (mag_ref_set_) {
-            impl_.updateMag(mag_body_ned);
+            impl_.updateMag(mag_body_ned - mag_hard_iron_body_uT_);
         }
     }
 
     bool hasMagNorthLock() const noexcept { return mag_ref_set_; }
+
+    // Body-frame hard-iron offset removed from the magnetometer stream.  Zero
+    // unless Config::mag_estimate_hard_iron asked for it and the startup window
+    // constrained it well enough to use.
+    const Eigen::Vector3f& magHardIronBodyUT() const noexcept {
+        return mag_hard_iron_body_uT_;
+    }
+
 
     bool  isLive() const { return stage_ == Stage::Live; }
     float freqHz() const { return impl_.getFreqHz(); }
@@ -1553,6 +1577,7 @@ private:
 
     // Mag-init state.
     bool mag_ref_set_ = false;
+    Eigen::Vector3f mag_hard_iron_body_uT_ = Eigen::Vector3f::Zero();
     MagAutoTuner mag_auto_tuner_{};
     
     float last_mag_sample_t_ = NAN;

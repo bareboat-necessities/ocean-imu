@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_iii-sim kalman_ou_common-test channel_freeze-test wave_period-test
+TARGETS = kalman_ou_iii-sim kalman_ou_common-test channel_freeze-test wave_period-test mag_hard_iron-test
 
 all: build test
 
@@ -43,6 +43,9 @@ channel_freeze-test: channel_freeze-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 wave_period-test: wave_period-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+mag_hard_iron-test: mag_hard_iron-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # -MMD -MP records the headers each object depends on, so editing a filter

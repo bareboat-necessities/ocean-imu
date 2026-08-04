@@ -79,6 +79,32 @@ public:
 
     float acc_norm_rel_soft = 0.22f;
     float gyro_soft_dps     = 45.0f;
+
+    // Joint hard-iron estimation.  Off by default, and deliberately so.
+    //
+    // A body-fixed offset is not separable from the world reference at a single
+    // attitude: rotating north and biasing the sensor produce the same reading.
+    // Only the tilt a hull takes through a wave breaks that tie, and it breaks
+    // it weakly.  When the accepted samples do not span enough attitude the
+    // solve is skipped, but "enough" is a threshold, and a fit that clears it
+    // on a poorly conditioned window can still be dominated by whatever
+    // unmodelled sensor error is correlated with tilt -- soft iron above all,
+    // which this model has no term for.  A wrong offset subtracted from every
+    // later sample is worse than no offset at all, so a caller has to ask.
+    //
+    // Ask for it when the platform actually changes heading during startup, or
+    // when the field error is known to be dominated by hard iron.  See
+    // getHardIronBodyUT() for what the caller does with the result.
+    bool  estimate_hard_iron = false;
+
+    // Fisher information the solve must clear, as weight_sum * lambda_min of
+    // the normal matrix below.  The offset's error scales as
+    // sigma / sqrt(weight_sum * lambda_min), so this is the knob that says how
+    // precise the fit has to be before it is allowed to matter.
+    float min_hard_iron_information = 25.0f;
+
+    // Reject an implausible fit as a fraction of the measured field norm.
+    float max_hard_iron_fraction = 0.35f;
   };
 
   MagAutoTuner() : cfg_(Config{}) {
@@ -114,6 +140,13 @@ public:
 
     last_sample_weight_ = 0.0f;
     last_mag_world_sample_.setZero();
+
+    rot_sum_.setZero();
+    mag_body_sum_.setZero();
+
+    hard_iron_body_.setZero();
+    hard_iron_valid_ = false;
+    hard_iron_information_ = 0.0f;
   }
 
   // Preferred real-device API.
@@ -158,6 +191,8 @@ public:
 
     return addWorldSample_(dt,
                            mag_world_i,
+                           q_bw,
+                           mag_body_ned,
                            acc_body_ned,
                            gyro_body_ned);
   }
@@ -211,6 +246,8 @@ public:
 
     return addWorldSample_(dt,
                            mag_world_i,
+                           q,
+                           mag_body_ned,
                            acc_body_ned,
                            gyro_body_ned);
   }
@@ -259,6 +296,8 @@ public:
 
     return addWorldSample_(dt,
                            mag_level_i,
+                           q_level_bw,
+                           mag_body_ned,
                            acc_body_ned,
                            gyro_body_ned);
   }
@@ -291,6 +330,31 @@ public:
     if (!last_mag_world_sample_.allFinite()) return false;
     mag_world_sample = last_mag_world_sample_;
     return true;
+  }
+
+  // Body-frame hard-iron offset estimated alongside the reference, when
+  // Config::estimate_hard_iron asked for it and the window supported it.
+  //
+  // The caller subtracts this from every later magnetometer sample.  The MEKF
+  // carries no mag-bias state, so an offset left in the stream shows up
+  // directly as heading: on a field with horizontal component B_h, an offset
+  // component b_h perpendicular to north is atan(b_h / B_h) of yaw error.
+  //
+  // False means no usable estimate, and the caller must then subtract nothing.
+  bool getHardIronBodyUT(Eigen::Vector3f& hard_iron_body_uT) const {
+    if (!ready_ || !hard_iron_valid_) return false;
+    hard_iron_body_uT = hard_iron_body_;
+    return hard_iron_body_uT.allFinite();
+  }
+
+  bool hasHardIron() const {
+    return ready_ && hard_iron_valid_;
+  }
+
+  // weight_sum * lambda_min at the last solve: how much the window actually
+  // constrained the offset.  Zero when the hull held one attitude throughout.
+  float hardIronInformation() const {
+    return hard_iron_information_;
   }
 
   bool getMagWorldRef(Eigen::Vector3f& mag_world_ref) const {
@@ -393,6 +457,8 @@ private:
 
   bool addWorldSample_(float dt,
                        const Eigen::Vector3f& mag_world_i,
+                       const Eigen::Quaternionf& q_bw,
+                       const Eigen::Vector3f& mag_body_ned,
                        const Eigen::Vector3f& acc_body_ned,
                        const Eigen::Vector3f& gyro_body_ned)
   {
@@ -452,6 +518,15 @@ private:
 
     mag_world_sum_ += w * mag_world_i;
     mag_world_norm_sum_ += w * mag_world_n;
+
+    // Sufficient statistics for the joint solve.  Every accepted sample obeys
+    //   mag_world_i = B_world + A_i * b_body
+    // with A_i the accumulation-frame BODY->WORLD rotation, and the normal
+    // equations close over these two running sums plus the world sum above.
+    // Accumulated unconditionally: they cost 12 floats and no branch, and
+    // whether the solve runs is decided once, at finalize.
+    rot_sum_.noalias() += w * q_bw.toRotationMatrix();
+    mag_body_sum_ += w * mag_body_ned;
 
     weight_sum_ += w;
     accepted_window_sec_ += dt_use;
@@ -527,7 +602,16 @@ private:
       return false;
     }
 
-    const Eigen::Vector3f mean = mag_world_sum_ / weight_sum_;
+    // Split the body-fixed offset out of the world field before the reference
+    // is gauge-fixed.  Left in, it is baked into the reference at one attitude
+    // and read back as heading error at every other.
+    solveHardIron_();
+
+    const Eigen::Vector3f mean =
+        hard_iron_valid_
+            ? Eigen::Vector3f(
+                  (mag_world_sum_ - rot_sum_ * hard_iron_body_) / weight_sum_)
+            : Eigen::Vector3f(mag_world_sum_ / weight_sum_);
 
     if (!mean.allFinite()) {
       ready_ = false;
@@ -571,6 +655,81 @@ private:
     return ready_;
   }
 
+  // Least squares over the accepted window for
+  //
+  //     mag_world_i = B_world + A_i * b_body
+  //
+  // Writing S = sum(w), Sa = sum(w A_i), Sw = sum(w mag_world_i) and
+  // Sm = sum(w mag_body_i), and using A_i^T A_i = I, the normal equations are
+  //
+  //     S B + Sa b   = Sw
+  //     Sa^T B + S b = Sm
+  //
+  // Eliminating B leaves one 3x3 system in b.  With Abar = Sa/S that is
+  //
+  //     (I - Abar^T Abar) b = mbar - Abar^T wbar.
+  //
+  // The left matrix is symmetric positive semidefinite and exactly singular
+  // when the hull holds one attitude for the whole window, which is the case
+  // where a body-fixed offset genuinely cannot be told apart from the world
+  // field.  Its smallest eigenvalue times the accumulated weight is therefore
+  // the information the fit is allowed to rely on.
+  //
+  // Note what this model does not contain: scale, cross-axis and misalignment
+  // error.  Those are also modulated by attitude, so on a window that barely
+  // clears the information floor they can dominate the very signal the offset
+  // is being read from.  That is why the estimate is opt-in.
+  void solveHardIron_() {
+    hard_iron_body_.setZero();
+    hard_iron_valid_ = false;
+    hard_iron_information_ = 0.0f;
+
+    if (!cfg_.estimate_hard_iron) return;
+    if (!(weight_sum_ > 1.0e-6f) || !std::isfinite(weight_sum_)) return;
+    if (!rot_sum_.allFinite() || !mag_body_sum_.allFinite()) return;
+    if (!mag_world_sum_.allFinite()) return;
+
+    const Eigen::Matrix3f Abar = rot_sum_ / weight_sum_;
+    const Eigen::Vector3f wbar = mag_world_sum_ / weight_sum_;
+    const Eigen::Vector3f mbar = mag_body_sum_ / weight_sum_;
+
+    Eigen::Matrix3f M =
+        Eigen::Matrix3f::Identity() - Abar.transpose() * Abar;
+    if (!M.allFinite()) return;
+    M = 0.5f * (M + M.transpose());
+
+    const Eigen::Vector3f rhs = mbar - Abar.transpose() * wbar;
+    if (!rhs.allFinite()) return;
+
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> es;
+    es.compute(M);
+    if (es.info() != Eigen::Success) return;
+
+    const Eigen::Vector3f evals = es.eigenvalues();
+    if (!evals.allFinite()) return;
+
+    hard_iron_information_ = evals.minCoeff() * weight_sum_;
+
+    Eigen::Vector3f inv_evals;
+    for (int i = 0; i < 3; ++i) {
+      if (!(evals(i) * weight_sum_ > cfg_.min_hard_iron_information)) return;
+      inv_evals(i) = 1.0f / evals(i);
+    }
+
+    const Eigen::Vector3f b =
+        es.eigenvectors() *
+        (inv_evals.asDiagonal() *
+         (es.eigenvectors().transpose() * rhs));
+    if (!b.allFinite()) return;
+
+    const float field_norm = mag_world_norm_sum_ / weight_sum_;
+    if (!(field_norm > cfg_.mag_norm_min) || !std::isfinite(field_norm)) return;
+    if (!(b.norm() <= cfg_.max_hard_iron_fraction * field_norm)) return;
+
+    hard_iron_body_ = b;
+    hard_iron_valid_ = true;
+  }
+
 private:
   Config cfg_;
 
@@ -587,6 +746,13 @@ private:
 
   Eigen::Vector3f mag_world_mean_ = Eigen::Vector3f::Zero();
   Eigen::Vector3f mag_world_ref_ = Eigen::Vector3f::Zero();
+
+  Eigen::Matrix3f rot_sum_ = Eigen::Matrix3f::Zero();
+  Eigen::Vector3f mag_body_sum_ = Eigen::Vector3f::Zero();
+
+  Eigen::Vector3f hard_iron_body_ = Eigen::Vector3f::Zero();
+  bool  hard_iron_valid_ = false;
+  float hard_iron_information_ = 0.0f;
 
   float last_sample_weight_ = 0.0f;
   Eigen::Vector3f last_mag_world_sample_ = Eigen::Vector3f::Zero();
