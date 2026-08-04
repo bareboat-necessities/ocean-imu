@@ -50,7 +50,21 @@ jobs:
           chmod +x *.sh
           ./run_tests.sh
           cp *.csv ../../plots/${{ matrix.dir }}
-          make clean
+
+      # Regenerated while the simulator still exists and before the document is
+      # built, so the deterministic 60 s table in the PDF is the one this code
+      # produces rather than whatever was last typed by hand.
+      - name: Regenerate the deterministic 60 s table (kalman_ou_iii)
+        if: matrix.dir == 'kalman_ou_iii'
+        run: |
+          python3 -u tools/ou_sim_table.py \
+            --binary tests/kalman_ou_iii/kalman_ou_iii-sim \
+            --data-dir plots/kalman_ou_iii \
+            --output doc/kalman_ou_iii/w3d-sim-results-generated.tex-part
+          git --no-pager diff --stat -- doc/kalman_ou_iii/w3d-sim-results-generated.tex-part
+
+      - name: Clean test build (${{ matrix.dir }})
+        run: make -C tests/${{ matrix.dir }} clean
 
       - name: Generate PGF plots (${{ matrix.dir }})
         shell: bash
