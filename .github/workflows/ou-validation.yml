@@ -169,10 +169,9 @@ jobs:
             --mode full \
             --sensitivity-scales "0.5,0.75,1.0,1.25,1.5" \
             --bootstrap-resamples 10000 \
+            --jobs "$(nproc)" \
             --output-dir reports/results/ou_robustness
 
-      # Uploaded rather than committed: the regenerated bundle has to be
-      # reviewed against the manuscript before it replaces the committed one.
       - name: Upload regenerated bundle
         if: always()
         uses: actions/upload-artifact@v6
@@ -180,3 +179,93 @@ jobs:
           name: ou-${{ matrix.study }}-full
           path: reports/results/ou_${{ matrix.study }}/**
           if-no-files-found: warn
+
+  # Lands the regenerated evidence on the dispatched ref. Both bundles are
+  # committed together so reports/results/ is never half one study's run and
+  # half another's.
+  #
+  # The commit is not gated on the manuscript still agreeing with the numbers.
+  # Gating it would put the bundle back behind a human, which is what this job
+  # exists to avoid; instead the consistency tests run first, the bundle lands
+  # either way, and a disagreement fails this job with the numbers that moved.
+  # That is a prose edit, and it is the only part of regeneration a person
+  # actually has to do.
+  commit:
+    needs: regenerate
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.validation_mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Install dependencies
+        timeout-minutes: 20
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-numpy python3-matplotlib
+
+      - name: Download regenerated bundles
+        uses: actions/download-artifact@v8
+        with:
+          pattern: ou-*-full
+          path: regenerated
+
+      - name: Place bundles and mirror the manuscript copies
+        run: |
+          set -euo pipefail
+          rm -rf reports/results/ou_validation reports/results/ou_robustness
+          mkdir -p reports/results/ou_validation reports/results/ou_robustness
+          cp -a regenerated/ou-validation-full/. reports/results/ou_validation/
+          cp -a regenerated/ou-robustness-full/. reports/results/ou_robustness/
+          rm -rf regenerated
+
+          # The tests require these to be byte-identical to the generated
+          # bundle, so the copy is mechanical and belongs here rather than in
+          # someone's working tree.
+          cp reports/results/ou_robustness/ou_robustness_publication.tex \
+             doc/kalman_ou_iii/w3d-ou-robustness-results-generated.tex-part
+          cp reports/results/ou_robustness/ou_robustness_sensitivity.svg \
+             doc/kalman_ou_iii/ou_robustness_sensitivity.svg
+          cp reports/results/ou_robustness/ou_robustness_stress.svg \
+             doc/kalman_ou_iii/ou_robustness_stress.svg
+
+      - name: Check the manuscript against the regenerated numbers
+        id: consistency
+        continue-on-error: true
+        run: make -C tests/validation test
+
+      - name: Commit the regenerated evidence
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/results/ou_validation reports/results/ou_robustness \
+                  doc/kalman_ou_iii
+          if git diff --cached --quiet; then
+            echo "Regenerated bundle is identical to the committed one."
+            exit 0
+          fi
+          git commit \
+            -m "Regenerate the full OU validation and robustness evidence" \
+            -m "Produced by ou-validation run ${{ github.run_id }} from ${{ github.sha }}."
+          for attempt in 1 2 3 4; do
+            git push origin HEAD:${{ github.ref_name }} && exit 0
+            sleep $((2 ** attempt))
+            git pull --rebase origin ${{ github.ref_name }}
+          done
+          exit 1
+
+      - name: Fail if the manuscript no longer matches
+        if: steps.consistency.outcome == 'failure'
+        run: |
+          echo "The regenerated bundle is committed, but the manuscript still"
+          echo "quotes the previous numbers. Update the prose in"
+          echo "doc/kalman_ou_iii/ to match, then re-run the validate gate."
+          exit 1

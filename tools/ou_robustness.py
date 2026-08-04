@@ -17,6 +17,7 @@ import platform
 import re
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -623,8 +624,7 @@ def write_publication_table(
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _record_run(
-    rows: list[dict[str, Any]],
+def _run_unit(
     *,
     experiment: str,
     case: str,
@@ -640,7 +640,7 @@ def _record_run(
     window_sec: float,
     tuning_mode: str,
     tuning_point: core.TuningPoint | None,
-) -> None:
+) -> dict[str, Any]:
     metrics, gate_pass, return_code = core.run_simulator(
         "OU_III",
         input_path,
@@ -650,7 +650,7 @@ def _record_run(
         tuning_mode=tuning_mode,
         tuning_point=tuning_point,
     )
-    rows.append(
+    return (
         {
             "run_id": f"{experiment}:{case}:{mode}:{repetition}",
             "experiment": experiment,
@@ -703,6 +703,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--initialization-seeds", type=core.parse_int_list)
     parser.add_argument("--bootstrap-resamples", type=int, default=10_000)
     parser.add_argument("--stats-seed", type=int, default=20260329)
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=max(1, min(8, (os.cpu_count() or 1))),
+        help="parallel simulator replays within a repetition; every run is "
+        "fixed by its seed triplet and tuning point, so this changes runtime "
+        "only",
+    )
     parser.add_argument("--eigen-dir")
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--no-plots", action="store_true")
@@ -768,18 +776,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         for repetition, seed in enumerate(seeds, start=1):
             print(f"Repetition {repetition}/{len(seeds)}", flush=True)
 
+            # Every unit in a repetition is an independent simulator replay
+            # whose result is fixed by its seed triplet and tuning point, so
+            # they are submitted together and drained in submission order.
+            # Order is preserved because the raw CSV is hashed in the manifest;
+            # concurrency must not reorder it.
+            pending: list[Any] = []
+            scratch: list[Path] = []
+            pool = ThreadPoolExecutor(max_workers=max(1, args.jobs))
+
             sensitivity_path = work_dir / "sensitivity" / str(repetition) / nominal_input.name
             core.write_wave_csv(
                 sensitivity_path,
                 nominal_columns,
                 core.phase_randomize_wave(nominal_columns, nominal_data, seed.wave_phase_seed),
             )
+            scratch.append(sensitivity_path)
             for parameter in SENSITIVITY_PARAMETERS:
                 for scale in scales:
                     point = scaled_tuning_point(baseline, parameter, scale)
-                    print(f"  sensitivity {parameter} x{scale:g}", flush=True)
-                    _record_run(
-                        rows,
+                    pending.append(pool.submit(
+                        _run_unit,
                         experiment="sensitivity",
                         case=f"{parameter}_x{scale:g}",
                         parameter=parameter,
@@ -794,8 +811,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         window_sec=window_sec,
                         tuning_mode="fixed_sensitivity",
                         tuning_point=point,
-                    )
-            sensitivity_path.unlink()
+                    ))
 
             low_randomized = core.phase_randomize_wave(
                 low_columns, low_data, seed.wave_phase_seed
@@ -811,10 +827,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                         low_columns, low_randomized, scale
                     ),
                 )
+                scratch.append(low_path)
                 case = f"Hs{height:.2f}"
-                print(f"  low motion {case}", flush=True)
-                _record_run(
-                    rows,
+                pending.append(pool.submit(
+                    _run_unit,
                     experiment="low_motion",
                     case=case,
                     parameter="",
@@ -829,8 +845,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     window_sec=window_sec,
                     tuning_mode="adaptive",
                     tuning_point=None,
-                )
-                low_path.unlink()
+                ))
 
             for transition in transition_cases:
                 transition_path = (
@@ -850,13 +865,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                     transition.end_sec,
                 )
                 core.write_wave_csv(transition_path, nominal_columns, generated)
+                scratch.append(transition_path)
                 for mode, tuning_mode, point in (
                     ("Adaptive", "adaptive", None),
                     ("FixedNominal", "fixed_nominal", baseline),
                 ):
-                    print(f"  {transition.name} transition {mode}", flush=True)
-                    _record_run(
-                        rows,
+                    pending.append(pool.submit(
+                        _run_unit,
                         experiment="transition_rate",
                         case=transition.name,
                         parameter="",
@@ -871,8 +886,19 @@ def main(argv: Sequence[str] | None = None) -> int:
                         window_sec=window_sec,
                         tuning_mode=tuning_mode,
                         tuning_point=point,
+                    ))
+
+            try:
+                for index, future in enumerate(pending, start=1):
+                    rows.append(future.result())
+                    print(
+                        f"  repetition {repetition}: {index}/{len(pending)} runs",
+                        flush=True,
                     )
-                transition_path.unlink()
+            finally:
+                pool.shutdown()
+                for path in scratch:
+                    path.unlink(missing_ok=True)
 
     summary = summarize_rows(rows, args.bootstrap_resamples, args.stats_seed)
     effects = paired_effect_rows(rows, args.bootstrap_resamples, args.stats_seed)
