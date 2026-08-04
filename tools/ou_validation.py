@@ -955,6 +955,69 @@ def paired_effect_rows(
     return effects
 
 
+# Shard files are the only intermediate between a sharded regeneration and the
+# bundle it has to reproduce byte for byte, so they are written with plain json
+# rather than write_json: the latter maps non-finite floats to null, and several
+# metrics are legitimately NaN.  json's repr-based float formatting and its
+# NaN/Infinity literals both round-trip exactly, and CSV would not round-trip
+# types at all -- every value would come back a string and land in the published
+# JSON as one.
+SHARD_ORDER_KEY = "_order"
+SHARD_PREFIX = "ou_validation_shard"
+
+
+def shard_path(shard_dir: Path, prefix: str, index: int) -> Path:
+    return shard_dir / f"{prefix}_{index:02d}.json"
+
+
+def write_shard(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as stream:
+        json.dump(list(rows), stream, allow_nan=True)
+
+
+def read_shards(
+    shard_dir: Path, prefix: str, *, ordered: bool
+) -> list[dict[str, Any]]:
+    """Merge shard files back into the rows a single process would have held.
+
+    A study whose rows are already sorted into a canonical order downstream
+    passes ordered=False and is merged by concatenation.  One that relies on
+    append order passes ordered=True, and every row then carries the position it
+    would have had, so the merge is a sort that does not depend on which shard
+    produced what.
+
+    Either way a missing or duplicated shard is a hard error.  The bundle is
+    published evidence, and a short one still looks perfectly well formed.
+    """
+    paths = sorted(shard_dir.glob(f"{prefix}_*.json"))
+    if not paths:
+        raise FileNotFoundError(f"no shard files under {shard_dir}")
+
+    rows: list[dict[str, Any]] = []
+    for path in paths:
+        with path.open(encoding="utf-8") as stream:
+            rows.extend(json.load(stream))
+
+    if not ordered:
+        return rows
+
+    positions = [row[SHARD_ORDER_KEY] for row in rows]
+    if len(set(positions)) != len(positions):
+        raise ValueError(f"duplicate rows across shards in {shard_dir}")
+    if sorted(positions) != list(range(len(positions))):
+        missing = sorted(set(range(max(positions) + 1)) - set(positions))
+        raise ValueError(
+            f"shards in {shard_dir} are not a complete set; "
+            f"missing positions {missing[:10]}"
+        )
+
+    rows.sort(key=lambda row: row[SHARD_ORDER_KEY])
+    for row in rows:
+        del row[SHARD_ORDER_KEY]
+    return rows
+
+
 def write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if not rows:
@@ -2070,6 +2133,10 @@ def write_metric_plot(
     import matplotlib
 
     matplotlib.use("Agg")
+    # Without these the bundle cannot be reproduced: matplotlib derives svg
+    # element ids from a per-process salt and stamps a creation date, so two
+    # identical runs disagree on bytes the manifest hashes.
+    matplotlib.rcParams["svg.hashsalt"] = "ocean-imu-ou-validation"
     import matplotlib.pyplot as plt
 
     rows = [
@@ -2135,7 +2202,7 @@ def write_metric_plot(
     axis.grid(axis="y", alpha=0.3)
     axis.legend(fontsize=8, ncol=2)
     figure.tight_layout()
-    figure.savefig(path, format="svg")
+    figure.savefig(path, format="svg", metadata={"Date": None})
     plt.close(figure)
 
 
@@ -2222,6 +2289,10 @@ def write_transition_diagnostic(
     import matplotlib
 
     matplotlib.use("Agg")
+    # Without these the bundle cannot be reproduced: matplotlib derives svg
+    # element ids from a per-process salt and stamps a creation date, so two
+    # identical runs disagree on bytes the manifest hashes.
+    matplotlib.rcParams["svg.hashsalt"] = "ocean-imu-ou-validation"
     import matplotlib.pyplot as plt
 
     metrics, _, _ = run_simulator(
@@ -2356,7 +2427,7 @@ def write_transition_diagnostic(
             linestyle="-.",
         )
     figure.tight_layout()
-    figure.savefig(svg_path, format="svg")
+    figure.savefig(svg_path, format="svg", metadata={"Date": None})
     plt.close(figure)
 
     return {
@@ -2480,6 +2551,31 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="parallel (scenario, seed) work units; results are seed-determined "
         "and independent, so this changes runtime only",
     )
+    parser.add_argument(
+        "--shard-count",
+        type=int,
+        default=1,
+        help="split the seed repetitions across this many independent runs",
+    )
+    parser.add_argument(
+        "--shard-index",
+        type=int,
+        default=0,
+        help="0-based index of this shard; runs its repetitions and writes a "
+        "shard file instead of a bundle",
+    )
+    parser.add_argument(
+        "--shard-dir",
+        type=Path,
+        help="where shard files are written and read back from "
+        "(default: <output-dir>/shards)",
+    )
+    parser.add_argument(
+        "--combine-shards",
+        action="store_true",
+        help="skip simulation, read every shard file, and write the bundle "
+        "the unsharded run would have written",
+    )
     parser.add_argument("--eigen-dir")
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--no-plots", action="store_true")
@@ -2577,6 +2673,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if not args.skip_build:
         build_simulators(families, args.eigen_dir)
+
+    shard_dir = args.shard_dir or (args.output_dir / "shards")
+    shard_count = max(1, args.shard_count)
+    if not 0 <= args.shard_index < shard_count:
+        raise SystemExit(
+            f"--shard-index must be in [0, {shard_count}), got {args.shard_index}"
+        )
 
     raw_rows: list[dict[str, Any]] = []
     tuning_points: dict[str, dict[str, TuningPoint]] = defaultdict(dict)
@@ -2766,6 +2869,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         # completion order.
         diagnostic_recipe: tuple[Any, ...] | None = None
         for scenario in scenarios:
+            # In combine mode the loop still runs, but only to rebuild the
+            # transition diagnostic's recipe and the scenario bookkeeping the
+            # bundle needs.  No simulator work is dispatched.
             print(f"Scenario: {scenario.name}", flush=True)
             start_columns, start_data = read_wave_csv(
                 scenario.start_input, duration_sec
@@ -2814,6 +2920,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             pending = []
             with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
                 for repetition, seed in enumerate(seeds, start=1):
+                    # `repetition` stays the global index so pairing, sorting
+                    # and the committed row all read the same whether or not
+                    # the study was sharded.
+                    if args.combine_shards:
+                        continue
+                    if (repetition - 1) % shard_count != args.shard_index:
+                        continue
                     generated_path = work_dir / "runs" / scenario.name / (
                         f"wave_{seed.wave_phase_seed}"
                     ) / generated_name
@@ -2856,6 +2969,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             write_wave_csv(diagnostic_path, diagnostic_columns, diagnostic_data)
             del start_data, end_data
 
+        if args.combine_shards:
+            raw_rows = read_shards(shard_dir, SHARD_PREFIX, ordered=False)
+            print(f"Combined {len(raw_rows)} runs from {shard_dir}", flush=True)
+        elif shard_count > 1:
+            path = shard_path(shard_dir, SHARD_PREFIX, args.shard_index)
+            write_shard(path, raw_rows)
+            print(f"Wrote {path} ({len(raw_rows)} runs)", flush=True)
+            return 0
+
+        # This study already sorts its rows into an order that does not depend
+        # on completion order, so a sharded merge needs no position bookkeeping
+        # -- the same sort puts the merged rows exactly where one process would
+        # have left them.
         raw_rows.sort(
             key=lambda row: (
                 scenario_sort_key(str(row["scenario"])),

@@ -17,10 +17,10 @@ rather than the spectral band the two were tuned from; in earlier revisions
 only OU--III did, and about \pct{51} of the vertical advantage reported then
 was the band rather than the architecture.  OU--III 3D displacement error is
 higher in \OUValidationThreeDHigherCount{} of the
-\OUValidationThreeDScenarios{} scenarios and inconclusive in the fifth, so the
-supported claim is a vertical one throughout and a three-dimensional one
-nowhere: the vertical gain is paid for in the horizontal channels, and most
-visibly in $Y$.  The result extends to a second
+\OUValidationThreeDScenarios{} scenarios and lower in the largest sea, so the
+supported claim is a vertical one throughout and a three-dimensional one only
+in that one sea: the vertical gain is otherwise paid for in the horizontal
+channels, and most visibly in $Y$.  The result extends to a second
 spectral family, with a paired PM--Stokes difference of
 $\OUValidationPMStokesDifference$ percentage point
 ($[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$)

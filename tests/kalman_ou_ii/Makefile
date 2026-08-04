@@ -36,8 +36,12 @@ ensure-sim-data:
 kalman_ou_ii-sim: kalman_ou_ii-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+# -MMD -MP records the headers each object depends on, so editing a filter
+# header rebuilds the simulator instead of silently reusing a stale object.
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+-include $(wildcard *.d)
 
 clean:
-	rm -f *.o $(TARGETS) *.exe *.csv
+	rm -f *.o *.d $(TARGETS) *.exe *.csv

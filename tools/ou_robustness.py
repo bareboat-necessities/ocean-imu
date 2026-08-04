@@ -11,12 +11,14 @@ by wave-realization, IMU-noise, and initialization seed.
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import os
 import platform
 import re
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -623,8 +625,7 @@ def write_publication_table(
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _record_run(
-    rows: list[dict[str, Any]],
+def _run_unit(
     *,
     experiment: str,
     case: str,
@@ -640,7 +641,7 @@ def _record_run(
     window_sec: float,
     tuning_mode: str,
     tuning_point: core.TuningPoint | None,
-) -> None:
+) -> dict[str, Any]:
     metrics, gate_pass, return_code = core.run_simulator(
         "OU_III",
         input_path,
@@ -650,7 +651,7 @@ def _record_run(
         tuning_mode=tuning_mode,
         tuning_point=tuning_point,
     )
-    rows.append(
+    return (
         {
             "run_id": f"{experiment}:{case}:{mode}:{repetition}",
             "experiment": experiment,
@@ -682,6 +683,22 @@ def _record_run(
     )
 
 
+SHARD_ORDER_KEY = core.SHARD_ORDER_KEY
+SHARD_PREFIX = "ou_robustness_shard"
+
+
+def shard_path(shard_dir: Path, index: int) -> Path:
+    return core.shard_path(shard_dir, SHARD_PREFIX, index)
+
+
+def write_shard(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    core.write_shard(path, rows)
+
+
+def read_shards(shard_dir: Path) -> list[dict[str, Any]]:
+    return core.read_shards(shard_dir, SHARD_PREFIX, ordered=True)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("smoke", "full"), default="smoke")
@@ -703,10 +720,209 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--initialization-seeds", type=core.parse_int_list)
     parser.add_argument("--bootstrap-resamples", type=int, default=10_000)
     parser.add_argument("--stats-seed", type=int, default=20260329)
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=max(1, min(8, (os.cpu_count() or 1))),
+        help="parallel simulator replays within a repetition; every run is "
+        "fixed by its seed triplet and tuning point, so this changes runtime "
+        "only",
+    )
+    parser.add_argument(
+        "--shard-count",
+        type=int,
+        default=1,
+        help="split the repetitions across this many independent runs",
+    )
+    parser.add_argument(
+        "--shard-index",
+        type=int,
+        default=0,
+        help="0-based index of this shard; runs its repetitions and writes a "
+        "shard file instead of a bundle",
+    )
+    parser.add_argument(
+        "--shard-dir",
+        type=Path,
+        help="where shard files are written and read back from "
+        "(default: <output-dir>/shards)",
+    )
+    parser.add_argument(
+        "--combine-shards",
+        action="store_true",
+        help="skip simulation, read every shard file, and write the bundle "
+        "the unsharded run would have written",
+    )
     parser.add_argument("--eigen-dir")
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--no-plots", action="store_true")
     return parser
+
+
+def run_repetitions(
+    args: argparse.Namespace,
+    seeds: Sequence[core.SeedTriplet],
+    scales: Sequence[float],
+    transition_cases: Sequence[TransitionCase],
+    baseline: core.TuningPoint,
+    shard_count: int,
+    units_per_repetition: int,
+    *,
+    nominal_input: Path,
+    nominal_columns: Sequence[str],
+    nominal_data: Any,
+    low_input: Path,
+    low_columns: Sequence[str],
+    low_data: Any,
+    endpoint_data: Any,
+    window_sec: float,
+) -> list[dict[str, Any]]:
+    """Replay this shard's repetitions and label each row with its global position."""
+    rows: list[dict[str, Any]] = []
+    with tempfile.TemporaryDirectory(prefix="ocean-imu-ou-robustness-") as temporary:
+        work_dir = Path(temporary)
+        for repetition, seed in enumerate(seeds, start=1):
+            if (repetition - 1) % shard_count != args.shard_index:
+                continue
+            print(f"Repetition {repetition}/{len(seeds)}", flush=True)
+
+
+            # Every unit in a repetition is an independent simulator replay
+            # whose result is fixed by its seed triplet and tuning point, so
+            # they are submitted together and drained in submission order.
+            # Order is preserved because the raw CSV is hashed in the manifest;
+            # concurrency must not reorder it.
+            pending: list[Any] = []
+            scratch: list[Path] = []
+            pool = ThreadPoolExecutor(max_workers=max(1, args.jobs))
+
+            sensitivity_path = work_dir / "sensitivity" / str(repetition) / nominal_input.name
+            core.write_wave_csv(
+                sensitivity_path,
+                nominal_columns,
+                core.phase_randomize_wave(nominal_columns, nominal_data, seed.wave_phase_seed),
+            )
+            scratch.append(sensitivity_path)
+            for parameter in SENSITIVITY_PARAMETERS:
+                for scale in scales:
+                    point = scaled_tuning_point(baseline, parameter, scale)
+                    pending.append(pool.submit(
+                        _run_unit,
+                        experiment="sensitivity",
+                        case=f"{parameter}_x{scale:g}",
+                        parameter=parameter,
+                        scale_label=f"{scale:g}",
+                        scale_multiplier=float(scale),
+                        mode="FixedSensitivity",
+                        repetition=repetition,
+                        seed=seed,
+                        true_hs_m=1.5,
+                        transition_duration_sec="",
+                        input_path=sensitivity_path,
+                        window_sec=window_sec,
+                        tuning_mode="fixed_sensitivity",
+                        tuning_point=point,
+                    ))
+
+            low_randomized = core.phase_randomize_wave(
+                low_columns, low_data, seed.wave_phase_seed
+            )
+            for height in (LOW_REFERENCE_HS_M, LOW_STRESS_HS_M):
+                scale = height / LOW_REFERENCE_HS_M
+                filename = re.sub(r"_H0\.270_", f"_H{height:.3f}_", low_input.name)
+                low_path = work_dir / "low_motion" / str(repetition) / filename
+                core.write_wave_csv(
+                    low_path,
+                    low_columns,
+                    low_randomized if math.isclose(scale, 1.0) else core.scale_wave_motion(
+                        low_columns, low_randomized, scale
+                    ),
+                )
+                scratch.append(low_path)
+                case = f"Hs{height:.2f}"
+                pending.append(pool.submit(
+                    _run_unit,
+                    experiment="low_motion",
+                    case=case,
+                    parameter="",
+                    scale_label="",
+                    scale_multiplier="",
+                    mode="Adaptive",
+                    repetition=repetition,
+                    seed=seed,
+                    true_hs_m=height,
+                    transition_duration_sec="",
+                    input_path=low_path,
+                    window_sec=window_sec,
+                    tuning_mode="adaptive",
+                    tuning_point=None,
+                ))
+
+            for transition in transition_cases:
+                transition_path = (
+                    work_dir
+                    / "transition"
+                    / transition.name
+                    / str(repetition)
+                    / "wave_data_jonswap_H4.000_L202.839_A-30.00_P120.00.csv"
+                )
+                generated = core.make_nonstationary_wave(
+                    nominal_columns,
+                    nominal_data,
+                    endpoint_data,
+                    seed.wave_phase_seed,
+                    4.0 / 8.5,
+                    transition.start_sec,
+                    transition.end_sec,
+                )
+                core.write_wave_csv(transition_path, nominal_columns, generated)
+                scratch.append(transition_path)
+                for mode, tuning_mode, point in (
+                    ("Adaptive", "adaptive", None),
+                    ("FixedNominal", "fixed_nominal", baseline),
+                ):
+                    pending.append(pool.submit(
+                        _run_unit,
+                        experiment="transition_rate",
+                        case=transition.name,
+                        parameter="",
+                        scale_label="",
+                        scale_multiplier="",
+                        mode=mode,
+                        repetition=repetition,
+                        seed=seed,
+                        true_hs_m=4.0,
+                        transition_duration_sec=transition.duration_sec,
+                        input_path=transition_path,
+                        window_sec=window_sec,
+                        tuning_mode=tuning_mode,
+                        tuning_point=point,
+                    ))
+
+            if len(pending) != units_per_repetition:
+                raise AssertionError(
+                    f"repetition {repetition} produced {len(pending)} runs, "
+                    f"expected {units_per_repetition}; the shard ordering "
+                    "assumes every repetition contributes the same block"
+                )
+            base_order = (repetition - 1) * units_per_repetition
+
+            try:
+                for index, future in enumerate(pending, start=1):
+                    row = future.result()
+                    row[SHARD_ORDER_KEY] = base_order + index - 1
+                    rows.append(row)
+                    print(
+                        f"  repetition {repetition}: {index}/{len(pending)} runs",
+                        flush=True,
+                    )
+            finally:
+                pool.shutdown()
+                for path in scratch:
+                    path.unlink(missing_ok=True)
+
+    return rows
+
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -762,117 +978,54 @@ def main(argv: Sequence[str] | None = None) -> int:
     if nominal_columns != endpoint_columns:
         raise ValueError("transition source columns do not match")
 
-    rows: list[dict[str, Any]] = []
-    with tempfile.TemporaryDirectory(prefix="ocean-imu-ou-robustness-") as temporary:
-        work_dir = Path(temporary)
-        for repetition, seed in enumerate(seeds, start=1):
-            print(f"Repetition {repetition}/{len(seeds)}", flush=True)
+    shard_dir = args.shard_dir or (args.output_dir / "shards")
+    shard_count = max(1, args.shard_count)
+    if not 0 <= args.shard_index < shard_count:
+        raise SystemExit(
+            f"--shard-index must be in [0, {shard_count}), got {args.shard_index}"
+        )
 
-            sensitivity_path = work_dir / "sensitivity" / str(repetition) / nominal_input.name
-            core.write_wave_csv(
-                sensitivity_path,
-                nominal_columns,
-                core.phase_randomize_wave(nominal_columns, nominal_data, seed.wave_phase_seed),
-            )
-            for parameter in SENSITIVITY_PARAMETERS:
-                for scale in scales:
-                    point = scaled_tuning_point(baseline, parameter, scale)
-                    print(f"  sensitivity {parameter} x{scale:g}", flush=True)
-                    _record_run(
-                        rows,
-                        experiment="sensitivity",
-                        case=f"{parameter}_x{scale:g}",
-                        parameter=parameter,
-                        scale_label=f"{scale:g}",
-                        scale_multiplier=float(scale),
-                        mode="FixedSensitivity",
-                        repetition=repetition,
-                        seed=seed,
-                        true_hs_m=1.5,
-                        transition_duration_sec="",
-                        input_path=sensitivity_path,
-                        window_sec=window_sec,
-                        tuning_mode="fixed_sensitivity",
-                        tuning_point=point,
-                    )
-            sensitivity_path.unlink()
+    # Repetitions are the shard unit. Every repetition contributes the same
+    # number of runs in the same order, so a repetition's rows occupy a known
+    # block of the unsharded ordering and a shard can label its own rows
+    # without knowing anything about the other shards.
+    units_per_repetition = (
+        len(SENSITIVITY_PARAMETERS) * len(scales)
+        + 2
+        + 2 * len(transition_cases)
+    )
 
-            low_randomized = core.phase_randomize_wave(
-                low_columns, low_data, seed.wave_phase_seed
-            )
-            for height in (LOW_REFERENCE_HS_M, LOW_STRESS_HS_M):
-                scale = height / LOW_REFERENCE_HS_M
-                filename = re.sub(r"_H0\.270_", f"_H{height:.3f}_", low_input.name)
-                low_path = work_dir / "low_motion" / str(repetition) / filename
-                core.write_wave_csv(
-                    low_path,
-                    low_columns,
-                    low_randomized if math.isclose(scale, 1.0) else core.scale_wave_motion(
-                        low_columns, low_randomized, scale
-                    ),
-                )
-                case = f"Hs{height:.2f}"
-                print(f"  low motion {case}", flush=True)
-                _record_run(
-                    rows,
-                    experiment="low_motion",
-                    case=case,
-                    parameter="",
-                    scale_label="",
-                    scale_multiplier="",
-                    mode="Adaptive",
-                    repetition=repetition,
-                    seed=seed,
-                    true_hs_m=height,
-                    transition_duration_sec="",
-                    input_path=low_path,
-                    window_sec=window_sec,
-                    tuning_mode="adaptive",
-                    tuning_point=None,
-                )
-                low_path.unlink()
+    if args.combine_shards:
+        rows = read_shards(shard_dir)
+        print(f"Combined {len(rows)} runs from {shard_dir}", flush=True)
+    else:
+        rows = run_repetitions(
+            args,
+            seeds,
+            scales,
+            transition_cases,
+            baseline,
+            shard_count,
+            units_per_repetition,
+            nominal_input=nominal_input,
+            nominal_columns=nominal_columns,
+            nominal_data=nominal_data,
+            low_input=low_input,
+            low_columns=low_columns,
+            low_data=low_data,
+            endpoint_data=endpoint_data,
+            window_sec=window_sec,
+        )
+        if shard_count > 1:
+            path = shard_path(shard_dir, args.shard_index)
+            write_shard(path, rows)
+            print(f"Wrote {path} ({len(rows)} runs)", flush=True)
+            return 0
 
-            for transition in transition_cases:
-                transition_path = (
-                    work_dir
-                    / "transition"
-                    / transition.name
-                    / str(repetition)
-                    / "wave_data_jonswap_H4.000_L202.839_A-30.00_P120.00.csv"
-                )
-                generated = core.make_nonstationary_wave(
-                    nominal_columns,
-                    nominal_data,
-                    endpoint_data,
-                    seed.wave_phase_seed,
-                    4.0 / 8.5,
-                    transition.start_sec,
-                    transition.end_sec,
-                )
-                core.write_wave_csv(transition_path, nominal_columns, generated)
-                for mode, tuning_mode, point in (
-                    ("Adaptive", "adaptive", None),
-                    ("FixedNominal", "fixed_nominal", baseline),
-                ):
-                    print(f"  {transition.name} transition {mode}", flush=True)
-                    _record_run(
-                        rows,
-                        experiment="transition_rate",
-                        case=transition.name,
-                        parameter="",
-                        scale_label="",
-                        scale_multiplier="",
-                        mode=mode,
-                        repetition=repetition,
-                        seed=seed,
-                        true_hs_m=4.0,
-                        transition_duration_sec=transition.duration_sec,
-                        input_path=transition_path,
-                        window_sec=window_sec,
-                        tuning_mode=tuning_mode,
-                        tuning_point=point,
-                    )
-                transition_path.unlink()
+    # The shard position is scaffolding for the merge, not evidence; from here
+    # the rows must look exactly like a single-process run's.
+    for row in rows:
+        row.pop(SHARD_ORDER_KEY, None)
 
     summary = summarize_rows(rows, args.bootstrap_resamples, args.stats_seed)
     effects = paired_effect_rows(rows, args.bootstrap_resamples, args.stats_seed)

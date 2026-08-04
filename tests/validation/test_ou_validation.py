@@ -743,6 +743,49 @@ class ManuscriptMethodologyTests(unittest.TestCase):
 
         return " ".join(cls.read(name).split())
 
+    @staticmethod
+    def paragraph(flat_source, opening):
+        """One \\paragraph block of a flattened source, by its opening words."""
+
+        start = flat_source.index(opening)
+        rest = flat_source[start:]
+        end = rest.find("\\paragraph{", 1)
+        return rest if end < 0 else rest[:end]
+
+    @staticmethod
+    def three_d_verdict_counts():
+        """Per-scenario 3D verdicts over the primary set, from the bundle.
+
+        The primary set is the four stationary JONSWAP seas plus the
+        transition; PM--Stokes is reported separately and is not pooled into
+        it.  A scenario counts as decided only when its bootstrap interval
+        excludes zero.
+        """
+        path = (
+            REPO_ROOT / "reports" / "results" / "ou_validation"
+            / "ou_validation_paired_effects.csv"
+        )
+        with path.open(newline="", encoding="utf-8") as stream:
+            rows = list(csv.DictReader(stream))
+
+        higher = lower = unresolved = 0
+        for row in rows:
+            if row["comparison"] != "OU_III_minus_OU_II":
+                continue
+            if row["metric"] != "disp_3d_pct_refmax":
+                continue
+            if "pmstokes" in row["scenario"]:
+                continue
+            low = float(row["bootstrap_ci95_low"])
+            high = float(row["bootstrap_ci95_high"])
+            if low > 0.0:
+                higher += 1
+            elif high < 0.0:
+                lower += 1
+            else:
+                unresolved += 1
+        return higher, lower, unresolved
+
     def test_fixed_reference_and_transition_limits_are_stated(self):
         protocol = self.read("w3d-sim-charts.tex-part")
         results = self.read("w3d-baseline-comparison.tex-part")
@@ -821,16 +864,43 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         # difference, so the magnitude of the negative result is readable.
         self.assertIn("tab:ou_mc_axes", results)
         self.assertIn("higher", results)
+
         # The 3D result must be stated with its remaining exception named, in
-        # either direction, and must not be rounded up into a claim.  With both
-        # families tuned in the same band OU--III is higher in four of five and
-        # inconclusive in the fifth, so the guard is against silently promoting
-        # "not resolvably worse" into "better".
+        # whichever direction the evidence puts it, and must not be rounded up
+        # into a claim in either direction.
+        #
+        # The direction is read from the committed bundle rather than pinned as
+        # a phrase.  It has already flipped once -- the fifth scenario was
+        # unresolved and is now resolvably in OU--III's favour -- and while it
+        # was pinned the assertion kept passing against prose that said the
+        # opposite of the evidence beside it.
+        higher, lower, unresolved = self.three_d_verdict_counts()
+        self.assertEqual(higher + lower + unresolved, 5)
+
         self.assertNotIn("consistently higher OU--III 3D error", conclusion)
         self.assertNotIn("uniformly better in three dimensions", conclusion)
         self.assertIn("OUValidationThreeDHigherCount", conclusion)
-        self.assertIn("inconclusive in the fifth", conclusion)
-        self.assertIn("spanning zero", results)
+
+        # Scoped to the 3D paragraph: "spanning zero" is a correct description
+        # of other intervals elsewhere in the same section.
+        three_d = self.paragraph(results, "The vertical gain does not extend")
+
+        if unresolved:
+            self.assertIn("spanning zero", three_d)
+        else:
+            # Nothing may be described as straddling zero when nothing does.
+            self.assertNotIn("spanning zero", three_d)
+            self.assertNotIn("inconclusive in the fifth", conclusion)
+
+        if lower:
+            # A scenario where OU--III wins in 3D has to be admitted as such,
+            # not left implied by a count.
+            self.assertIn("lower", conclusion)
+            self.assertNotIn(
+                "no scenario in which OU--III is resolvably better in three "
+                "dimensions",
+                three_d,
+            )
 
         # The channel ablation and its no-implicit-freeze construction.
         self.assertIn("tab:ou_mc_channels", results)
