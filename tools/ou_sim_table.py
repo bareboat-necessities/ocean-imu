@@ -64,6 +64,12 @@ PATTERNS = {
 
 def run_record(binary: Path, record: Path) -> dict[str, Any]:
     """Replay one record and pull the last-60 s block out of the output."""
+    # The child runs with cwd=binary.parent, so a relative binary path -- what
+    # the CI step passes -- would be resolved against that directory instead of
+    # ours and fail to exec.  Resolve both ends before crossing the boundary.
+    binary = binary.resolve()
+    record = record.resolve()
+
     env = dict(os.environ)
     env["W3D_WRITE_TIMESERIES"] = "0"
     # Every record has to be scored, including any that trip a historical gate;
