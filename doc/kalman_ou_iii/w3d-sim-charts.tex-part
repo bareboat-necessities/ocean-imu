@@ -368,60 +368,22 @@ full-protocol results are reported in Sec.~\ref{sec:observer-comparison}; the
 versioned raw rows, summaries, paired effects, and manifest are retained with
 the source tree.
 
-% Requires: \usepackage{booktabs,siunitx}
-\begin{table}[t]
-  \centering
-  \caption{Simulation results (last \SI{60}{s} RMS window).}
-  \label{tab:sim_results_rms_dir_basic}
-  \setlength{\tabcolsep}{2.2pt}
-  \renewcommand{\arraystretch}{1.08}
-  \footnotesize
-  \sisetup{detect-all}
-  \begin{tabular}{@{}l
-                  S[table-format=1.6]
-                  S[table-format=1.3]
-                  S[table-format=2.1]
-                  S[table-format=1.2]
-                  S[table-format=1.2]
-                  S[table-format=1.2]
-                  S[table-format=-2.1]
-                  l
-                  @{}}
-    \toprule
-    {Case} &
-    {$H_s$} &
-    {Z RMS} &
-    {Z\%$H_s$} &
-    {R} &
-    {P} &
-    {Y} &
-    {$\bar\theta$} &
-    {T/A/U} \\
-    \midrule
-    JONSWAP   & 0.27 & 0.026 & 9.7 & 0.42 & 0.30 & 1.11 & 29.5  & 97.0/0.2/2.8 \\
-    JONSWAP   & 1.50 & 0.085 & 5.7 & 0.45 & 0.65 & 0.34 & -27.5 & 94.8/1.8/3.4 \\
-    JONSWAP   & 4.00 & 0.297 & 7.4 & 0.60 & 1.36 & 1.59 & 26.1  & 96.8/0.5/2.7 \\
-    JONSWAP   & 8.50 & 0.453 & 5.3 & 1.37 & 0.54 & 1.06 & -22.1 & 94.8/0.9/4.3 \\
-    \addlinespace
-    PM--Stokes & 0.27 & 0.020 & 7.6 & 0.37 & 0.12 & 1.94 & 30.4  & 99.6/0.0/0.4 \\
-    PM--Stokes & 1.50 & 0.063 & 4.2 & 0.18 & 0.17 & 2.10 & -26.9 & 94.0/1.2/4.7 \\
-    PM--Stokes & 4.00 & 0.262 & 6.6 & 0.19 & 0.39 & 2.10 & 29.6  & 98.6/0.1/1.3 \\
-    PM--Stokes & 8.50 & 0.537 & 6.3 & 1.00 & 0.56 & 2.21 & -24.1 & 96.5/1.2/2.3 \\
-    \bottomrule
-  \end{tabular}
-  \vspace{1pt}
-  \footnotesize
-  Z RMS is vertical-displacement RMS error in metres; Z\%$H_s$ is the
-  corresponding error normalized by significant wave height.
-  R/P/Y are roll/pitch/yaw RMS errors in degrees.
-  Direction $\bar{\theta}\in[-90^\circ,90^\circ]$ is the circular-mean
-  estimated wave direction over the scoring window;
-  T/A/U = Toward/Away/Uncertain (\% of samples).  These are the estimator's
-  own FORWARD/BACKWARD/UNCERTAIN classes, which are defined against the axis
-  representative it returns and are therefore a commitment rate rather than a
-  correctness rate; the truth-referenced travel-sense correctness rate is in
-  Table~\ref{tab:ou_mc_direction}.
-\end{table}
+\IfFileExists{w3d-sim-results-generated.tex-part}{%
+  \input{w3d-sim-results-generated.tex-part}%
+}{%
+  \begin{table}[t]
+    \centering
+    \caption{Simulation results (last \SI{60}{s} RMS window).}
+    \label{tab:sim_results_rms_dir_basic}
+    \begin{tabular}{ll}
+      \toprule
+      Result & Status \\
+      \midrule
+      Deterministic \SI{60}{s} metrics & generated during document evaluation \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+}
 
 \medskip
 The full filter and simulation source code is available on GitHub in the Bareboat Necessities project, 

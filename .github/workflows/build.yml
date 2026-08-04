@@ -50,7 +50,21 @@ jobs:
           chmod +x *.sh
           ./run_tests.sh
           cp *.csv ../../plots/${{ matrix.dir }}
-          make clean
+
+      # Regenerated while the simulator still exists and before the document is
+      # built, so the deterministic 60 s table in the PDF is the one this code
+      # produces rather than whatever was last typed by hand.
+      - name: Regenerate the deterministic 60 s table (kalman_ou_iii)
+        if: matrix.dir == 'kalman_ou_iii'
+        run: |
+          python3 -u tools/ou_sim_table.py \
+            --binary tests/kalman_ou_iii/kalman_ou_iii-sim \
+            --data-dir plots/kalman_ou_iii \
+            --output doc/kalman_ou_iii/w3d-sim-results-generated.tex-part
+          git --no-pager diff --stat -- doc/kalman_ou_iii/w3d-sim-results-generated.tex-part
+
+      - name: Clean test build (${{ matrix.dir }})
+        run: make -C tests/${{ matrix.dir }} clean
 
       - name: Generate PGF plots (${{ matrix.dir }})
         shell: bash
@@ -62,7 +76,39 @@ jobs:
           mv -v *.svg ../../doc/${{ matrix.dir }}/ || true
           mv -v *.png ../../doc/${{ matrix.dir }}/ || true
 
+      # The LaTeX build pulls plantuml.jar and plantuml.sty over the network
+      # and installs extra TeX Live packages, so it fails transiently often
+      # enough to be worth one retry. Actions has no native step retry and no
+      # YAML anchors, so the attempt is spelled twice; keep the two `with:`
+      # blocks identical.
       - name: Compile LaTeX document (${{ matrix.dir }})
+        id: latex
+        continue-on-error: true
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: "*.tex"
+          pre_compile: |
+            echo "openout_any = a" | tee -a $(kpsewhich texmf.cnf)
+            curl -L https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml.jar -o plantuml.jar
+            export PLANTUML_JAR=$(pwd)/plantuml.jar
+            curl -L https://mirrors.ctan.org/macros/luatex/latex/plantuml/plantuml.sty -o plantuml.sty
+            echo ">> Debug: TeX config patched, now checking PlantUML installation"
+            plantuml -version || true
+            java -version || true
+            if [ "${{ matrix.dir }}" = "kalman_ou_iii" ]; then
+              cp -v ${{ github.workspace }}/img/devices/AtomS3R_device.svg ${{ github.workspace }}/doc/${{ matrix.dir }}/AtomS3R_device.svg
+            fi
+          work_in_root_file_dir: true
+          working_directory: doc/${{ matrix.dir }}
+          latexmk_use_lualatex: true
+          latexmk_shell_escape: true
+          args: "-shell-escape"
+          extra_system_packages: "inkscape ghostscript graphviz ncurses openjdk11-jre"
+        env:
+          PLANTUML_JAR: ${{ github.workspace }}/doc/${{ matrix.dir }}/plantuml.jar
+
+      - name: Compile LaTeX document, retry (${{ matrix.dir }})
+        if: steps.latex.outcome == 'failure'
         uses: xu-cheng/latex-action@v4
         with:
           root_file: "*.tex"
