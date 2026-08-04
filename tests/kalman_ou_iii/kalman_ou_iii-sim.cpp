@@ -69,6 +69,7 @@ public:
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
 
+
         const std::string aw_cov_sync = load_aw_cov_sync_policy();
         filter.setPeriodicAwCovarianceSync(aw_cov_sync != "reconfigure");
         filter.setAwCovarianceSyncCongruent(aw_cov_sync == "congruent");
@@ -194,6 +195,7 @@ public:
         if (env_float("SF_MAG_EXTREME_GYRO_DPS", vf)) cfg_.mag_extreme_gyro_dps = vf;
         if (env_float("SF_MAG_INIT_MIN_MAG_NORM", vf)) cfg_.mag_init_min_mag_norm = vf;
         if (env_int("SF_MAG_MIN_SAMPLES", vi)) cfg_.mag_min_samples = vi;
+        if (env_float("SF_MAG_MIN_WINDOW_SEC", vf)) cfg_.mag_min_window_sec = vf;
 
         if (env_float("SF_RACC_WARMUP_STD", vf)) cfg_.Racc_warmup_std = vf;
         if (env_float("SF_ONLINE_TUNE_WARMUP_SEC", vf)) cfg_.online_tune_warmup_sec = vf;

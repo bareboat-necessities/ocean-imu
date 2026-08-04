@@ -170,8 +170,8 @@
       "sha256": "7d19401359b0ef1d0e1b857c633a238e82e1efce89be7b480108f1ea46539e64"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 19966,
-      "sha256": "e449cd01d57d8a09f0961ad778daee9d013a4e0bd7f24a3dc1e6392ff2b31044"
+      "bytes": 20049,
+      "sha256": "794d9a41eb4b25aee130812263d951edce8e5cc47739212f312bd91b16235f7e"
     },
     "tools/ou_robustness.py": {
       "bytes": 44950,
