@@ -683,6 +683,15 @@ def run_simulator(
     return metrics, quality_gate_pass, completed.returncode
 
 
+# The integral-regularization law and its clamps, mirroring
+# SeaStateFusionFilter_OU_III.h.  The fixed-tuning modes derive their frozen
+# operating point here rather than reading it out of the filter, so a mismatch
+# silently scores every fixed mode at a point the deployed filter would never
+# choose.  Keep these three in step with the C++ defaults.
+OU_III_RS_COEFF = 0.35
+OU_III_RS_BOUNDS_MS = (0.4, 400.0)
+
+
 def tuning_point_from_pilot(family: str, metrics: Mapping[str, Any]) -> TuningPoint:
     tau = float(metrics["tau_applied_s"])
     sigma = float(metrics["sigma_applied_mps2"])
@@ -690,7 +699,8 @@ def tuning_point_from_pilot(family: str, metrics: Mapping[str, Any]) -> TuningPo
         R_p0 = min(max(1.6 * sigma * tau * tau, 0.05), 18.0)
         R_v0 = min(max(1.4 * sigma * tau, 0.01), 6.0)
         return TuningPoint(tau, sigma, R_p0_std_m=R_p0, R_v0_std_mps=R_v0)
-    RS = min(max(1.2 * sigma * tau * tau * tau, 0.4), 35.0)
+    RS = min(max(OU_III_RS_COEFF * sigma * tau * tau * tau,
+                 OU_III_RS_BOUNDS_MS[0]), OU_III_RS_BOUNDS_MS[1])
     return TuningPoint(tau, sigma, RS_ms=RS)
 
 

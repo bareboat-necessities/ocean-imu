@@ -148,5 +148,62 @@ class HeadingRotationTests(unittest.TestCase):
         )
 
 
+class DeployedLawMirrorTests(unittest.TestCase):
+    """The fixed-tuning modes derive their frozen operating point in Python.
+
+    That derivation mirrors the C++ adaptation law.  When the two drift apart
+    every fixed mode is scored at a point the deployed filter would never
+    choose, silently: nothing fails, the numbers are just wrong.  This pins the
+    mirror to the header.
+    """
+
+    HEADER = REPO_ROOT / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
+
+    def _header_value(self, pattern: str) -> float:
+        import re
+
+        text = self.HEADER.read_text(encoding="utf-8")
+        match = re.search(pattern, text)
+        self.assertIsNotNone(match, f"{pattern} not found in {self.HEADER.name}")
+        return float(match.group(1))
+
+    def test_rs_coefficient_matches_the_filter_default(self):
+        import ou_validation as validation
+
+        self.assertAlmostEqual(
+            validation.OU_III_RS_COEFF,
+            self._header_value(r"float\s+R_S_coeff_\s*=\s*([0-9.]+)f"),
+            places=6,
+        )
+
+    def test_rs_bounds_match_the_filter_clamps(self):
+        import ou_validation as validation
+
+        self.assertAlmostEqual(
+            validation.OU_III_RS_BOUNDS_MS[0],
+            self._header_value(r"MIN_R_S\s*=\s*([0-9.]+)f"),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            validation.OU_III_RS_BOUNDS_MS[1],
+            self._header_value(r"MAX_R_S\s*=\s*([0-9.]+)f"),
+            places=6,
+        )
+
+    def test_robustness_bounds_match_the_filter_clamps(self):
+        import ou_robustness as robustness
+
+        self.assertAlmostEqual(
+            robustness.TAU_BOUNDS_S[1],
+            self._header_value(r"MAX_TAU_S\s*=\s*([0-9.]+)f"),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            robustness.R_S_BOUNDS_MS[1],
+            self._header_value(r"MAX_R_S\s*=\s*([0-9.]+)f"),
+            places=6,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
