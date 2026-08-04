@@ -1110,12 +1110,15 @@ public:
         //
         // The reference is an average of the field in that tilt frame, so
         // whatever tilt error survives the window survives in the reference.
-        // In waves the error is periodic, which makes window length the thing
-        // that matters: a few seconds locks in one wave phase, several periods
-        // average it out.  Held in seconds rather than samples so it does not
-        // silently shorten at a higher mag ODR.
+        // In waves the error is periodic, so what the window has to buy is
+        // whole wave periods, not samples: 128 samples is 5.1 s at a 25 Hz mag
+        // ODR, short enough to lock in the phase it started on rather than
+        // cancel it.  15 s covers a couple of periods across the band these
+        // filters work in and captures most of what a much longer window would,
+        // at a startup cost of 15 s rather than 40 s.  Held in seconds so it
+        // does not silently shorten at a higher ODR.
         int   mag_min_samples              = 128;
-        float mag_min_window_sec           = 40.0f;
+        float mag_min_window_sec           = 15.0f;
         float mag_max_window_sec           = 0.0f;
         float mag_sample_dt_sec            = 1.0f / 200.0f;
 
