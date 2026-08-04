@@ -2,8 +2,10 @@ import csv
 import hashlib
 import json
 import math
+import os
 import re
 import sys
+import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
@@ -14,6 +16,7 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
+import ou_sim_table as sim_table  # noqa: E402
 import ou_validation as validation  # noqa: E402
 
 
@@ -1055,6 +1058,46 @@ class ManuscriptMethodologyTests(unittest.TestCase):
             self.assertIn(value, fusion)
         self.assertIn("did not\ninstrument update latency", simulation)
         self.assertIn("does not establish a\nquantitative real-time-performance claim", simulation)
+
+
+STUB_SIMULATOR = """#!/bin/sh
+echo "XYZ RMS (m): X=0.0372370929 Y=0.0284884889 Z=0.0186269842"
+echo "XYZ RMS (%Hs): X=13.7915154% Y=10.5512915% Z=6.89888287% (Hs=0.27)"
+echo "Angles RMS (deg): Roll=0.562675 Pitch=0.157529 Yaw=1.60768"
+echo "dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=-28.275 circ_std 9.21715 deg"
+echo "sense: +AXIS=11199 (93.325%) -AXIS=251 (2.09167%) UNCERTAIN=550 (4.58333%)"
+"""
+
+
+class SixtySecondTableToolTests(unittest.TestCase):
+    def test_a_relative_binary_path_survives_the_child_directory_change(self):
+        """The table generator has to accept the path the workflow passes.
+
+        `build.yml` calls it from the repository root with
+        `--binary tests/kalman_ou_iii/kalman_ou_iii-sim`, and the child is run
+        from the simulator's own directory.  An unresolved relative path is then
+        looked up under that directory instead, one level too deep, and the run
+        dies reporting a missing simulator that is sitting exactly where the
+        argument said it was.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            relative_binary = Path("tests") / "kalman_ou_iii" / "kalman_ou_iii-sim"
+            binary = root / relative_binary
+            binary.parent.mkdir(parents=True)
+            binary.write_text(STUB_SIMULATOR, encoding="utf-8")
+            binary.chmod(0o755)
+            (root / "record.csv").write_text("", encoding="utf-8")
+
+            previous = os.getcwd()
+            os.chdir(root)
+            try:
+                row = sim_table.run_record(relative_binary, Path("record.csv"))
+            finally:
+                os.chdir(previous)
+
+        self.assertEqual(row["z_rms_m"], (0.0186269842,))
+        self.assertEqual(row["angles"], (0.562675, 0.157529, 1.60768))
 
 
 if __name__ == "__main__":

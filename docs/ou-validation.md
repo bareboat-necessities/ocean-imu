@@ -178,8 +178,10 @@ vertical RMS is 5.08% of $H_s$ for OU-III and 6.66% for OU-II. The paired
 difference is -1.581 percentage points with a bootstrap 95% interval of
 [-1.695, -1.451]. OU-III is lower vertically in every stationary sea and during
 the transition, and has higher 3D displacement RMS in four of the five
-scenarios with the fifth spanning zero, so there is no scenario in which it is
-resolvably better in three dimensions.
+scenarios. In the fifth, the $H_s=8.5$ m sea, it is lower with an interval
+excluding zero; that is a scenario-specific exception, not a general
+three-dimensional advantage. Which band and which axis produce that pattern is
+attributed in [`ou-3d-error-attribution.md`](ou-3d-error-attribution.md).
 
 Both families now take the operating point from the same wave-band
 zero-crossing period. Earlier bundles tuned only OU-III that way, which made
