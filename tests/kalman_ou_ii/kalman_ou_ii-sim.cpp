@@ -397,12 +397,21 @@ private:
     Fusion::Config cfg_{};
 };
 
+// Regression sentinels for the deterministic single-realization protocol, not
+// targets.  Each is the worst value the current filter produces across the
+// scored records plus about half a percent, rounded up to the next tenth.
+//
+// That margin is deliberately small because the metrics are deterministic: the
+// same records and seeds under -march=native, x86-64 and x86-64-v2 agree to
+// within 6e-6 relative, so a limit this close only trips when the filter
+// actually gets worse.  Setting one below what the filter currently achieves
+// makes it fail every run rather than catching a regression.
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 8.95f,
     .err_limit_percent_z_pmstokes  = 7.65f,
     .err_limit_yaw_deg             = 2.2f,
     .err_limit_percent_3d_jonswap  = 26.0f,
-    .err_limit_percent_3d_pmstokes = 25.0f,
+    .err_limit_percent_3d_pmstokes = 24.6f,   // worst 24.39 (pmstokes H4.0)
     .acc_z_bias_percent            = 8.9f,
     .bias_3d_percent               = 130.0f,
 };
