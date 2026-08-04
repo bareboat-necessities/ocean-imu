@@ -3,6 +3,7 @@ import hashlib
 import json
 import math
 import sys
+import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
@@ -135,6 +136,101 @@ class RobustnessDesignTests(unittest.TestCase):
         self.assertEqual(selected_effect["n_pairs"], 2)
         self.assertAlmostEqual(selected_effect["mean_paired_difference"], 2.0)
         self.assertTrue(math.isfinite(selected_effect["cohen_dz"]))
+
+
+
+class ShardMergeTests(unittest.TestCase):
+    """The merge is what lets regeneration run on several runners at once.
+
+    It has to put the rows back in exactly the order one process would have
+    produced, because the raw CSV is hashed in the manifest and the bundle is
+    the published evidence.  A merge that silently dropped or reordered rows
+    would still write a plausible-looking bundle, so the failure modes are
+    checked here rather than left to a reviewer noticing.
+    """
+
+    @staticmethod
+    def shard_rows(count, per_shard):
+        """Rows as the shards would emit them: interleaved by repetition."""
+        shards = [[] for _ in range(count)]
+        order = 0
+        for repetition in range(count * 2):
+            for _ in range(per_shard):
+                shards[repetition % count].append(
+                    {"run_id": f"r{repetition}", robustness.SHARD_ORDER_KEY: order}
+                )
+                order += 1
+        return shards
+
+    def write_shards(self, directory, shards):
+        for index, rows in enumerate(shards):
+            robustness.write_shard(
+                robustness.shard_path(Path(directory), index), rows
+            )
+
+    def test_merge_restores_single_process_order(self):
+        shards = self.shard_rows(3, 4)
+        with tempfile.TemporaryDirectory() as directory:
+            self.write_shards(directory, shards)
+            merged = robustness.read_shards(Path(directory))
+
+        # Position is scaffolding and must not reach the bundle.
+        self.assertNotIn(robustness.SHARD_ORDER_KEY, merged[0])
+        expected = [
+            row["run_id"]
+            for row in sorted(
+                (row for shard in shards for row in shard),
+                key=lambda row: row[robustness.SHARD_ORDER_KEY],
+            )
+        ]
+        self.assertEqual([row["run_id"] for row in merged], expected)
+
+    def test_a_missing_shard_is_an_error_rather_than_a_short_bundle(self):
+        shards = self.shard_rows(3, 4)
+        with tempfile.TemporaryDirectory() as directory:
+            self.write_shards(directory, shards[:-1])
+            with self.assertRaisesRegex(ValueError, "not a complete set"):
+                robustness.read_shards(Path(directory))
+
+    def test_a_repeated_shard_is_an_error(self):
+        shards = self.shard_rows(2, 3)
+        with tempfile.TemporaryDirectory() as directory:
+            self.write_shards(directory, shards)
+            robustness.write_shard(
+                robustness.shard_path(Path(directory), 7), shards[0]
+            )
+            with self.assertRaisesRegex(ValueError, "duplicate rows"):
+                robustness.read_shards(Path(directory))
+
+    def test_no_shards_at_all_is_an_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(FileNotFoundError):
+                robustness.read_shards(Path(directory))
+
+    def test_shard_round_trip_preserves_non_finite_metrics(self):
+        # Several metrics are legitimately NaN, and the JSON writer used for
+        # the bundle maps those to null.  If shard files went through it, a
+        # sharded run would disagree with an unsharded one on exactly the rows
+        # a degenerate case produces.
+        rows = [
+            {
+                "disp_3d_pct_refmax": float("nan"),
+                "dir_axis_error_deg": float("inf"),
+                "disp_z_pct_hs": 4.25,
+                "mode": "Adaptive",
+                robustness.SHARD_ORDER_KEY: 0,
+            }
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            robustness.write_shard(
+                robustness.shard_path(Path(directory), 0), rows
+            )
+            merged = robustness.read_shards(Path(directory))
+
+        self.assertTrue(math.isnan(merged[0]["disp_3d_pct_refmax"]))
+        self.assertEqual(merged[0]["dir_axis_error_deg"], float("inf"))
+        self.assertEqual(merged[0]["disp_z_pct_hs"], 4.25)
+        self.assertEqual(merged[0]["mode"], "Adaptive")
 
 
 class CommittedRobustnessResultsTests(unittest.TestCase):

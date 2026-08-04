@@ -54,6 +54,10 @@ concurrency:
   group: ou-validation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  # Must match the length of the regenerate matrix's shard list.
+  SHARD_COUNT: 5
+
 jobs:
   # Fast gate. Runs on every pull request and push, and on a smoke dispatch.
   # Smoke mode exists to catch breakage in the runner and the committed
@@ -115,11 +119,16 @@ jobs:
             reports/results/ou_robustness/**
           if-no-files-found: warn
 
-  # Evidence regeneration. Dispatch-only, and one job per bundle rather than
-  # one job for both: the full validation study is roughly 840 twenty-minute
-  # simulator replays and the robustness study another 310, which together do
-  # not fit in a single runner lifetime with any margin. Splitting them also
-  # means a failure in one bundle does not throw away the other's hours.
+  # Evidence regeneration. Dispatch-only, and sharded: the full validation
+  # study is roughly 840 twenty-minute simulator replays and the robustness
+  # study another 310, and a single four-core runner gets through those at
+  # about the rate that made this a multi-hour job.
+  #
+  # Every replay is fixed by its seed triplet, so the seed repetitions split
+  # across runners with no coordination. Each shard writes its rows to a file;
+  # the combine job merges them and produces the bundle a single process would
+  # have produced, byte for byte. Sharding by study as well as by seed keeps a
+  # failure in one bundle from throwing away the other's hours.
   regenerate:
     if: >-
       github.event_name == 'workflow_dispatch' &&
@@ -130,6 +139,7 @@ jobs:
       fail-fast: false
       matrix:
         study: [validation, robustness]
+        shard: [0, 1, 2, 3, 4]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -153,16 +163,19 @@ jobs:
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
-      - name: Run paired validation
+      - name: Run paired validation shard
         if: matrix.study == 'validation'
         run: |
           python3 -u tools/ou_validation.py \
             --mode full \
             --bootstrap-resamples 10000 \
             --jobs "$(nproc)" \
+            --shard-count ${{ env.SHARD_COUNT }} \
+            --shard-index ${{ matrix.shard }} \
+            --shard-dir shards \
             --output-dir reports/results/ou_validation
 
-      - name: Run robustness validation
+      - name: Run robustness validation shard
         if: matrix.study == 'robustness'
         run: |
           python3 -u tools/ou_robustness.py \
@@ -170,6 +183,88 @@ jobs:
             --sensitivity-scales "0.5,0.75,1.0,1.25,1.5" \
             --bootstrap-resamples 10000 \
             --jobs "$(nproc)" \
+            --shard-count ${{ env.SHARD_COUNT }} \
+            --shard-index ${{ matrix.shard }} \
+            --shard-dir shards \
+            --output-dir reports/results/ou_robustness
+
+      - name: Upload shard
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou-${{ matrix.study }}-shard-${{ matrix.shard }}
+          path: shards/**
+          if-no-files-found: error
+
+  # Merges the shards and writes the bundle. Kept separate from the shards
+  # because the statistics are computed over all ten repetitions at once --
+  # bootstrap intervals and paired effects are not something a shard can hold
+  # a piece of.
+  combine:
+    needs: regenerate
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.validation_mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        study: [validation, robustness]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        timeout-minutes: 20
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            g++ make libeigen3-dev unzip \
+            python3-numpy python3-matplotlib
+
+      # The combine step re-derives the calibrated tuning points and the
+      # transition diagnostic, which are simulator work, so it needs the same
+      # records and toolchain the shards had.
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip \
+            --clobber
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Download this study's shards
+        uses: actions/download-artifact@v8
+        with:
+          pattern: ou-${{ matrix.study }}-shard-*
+          merge-multiple: true
+          path: shards
+
+      # Spelled out per study rather than templated, so the flags that shape
+      # the protocol recorded in the manifest are the same ones the shards ran
+      # under and cannot drift apart silently.
+      - name: Combine paired validation shards
+        if: matrix.study == 'validation'
+        run: |
+          python3 -u tools/ou_validation.py \
+            --mode full \
+            --bootstrap-resamples 10000 \
+            --combine-shards \
+            --shard-dir shards \
+            --output-dir reports/results/ou_validation
+
+      - name: Combine robustness shards
+        if: matrix.study == 'robustness'
+        run: |
+          python3 -u tools/ou_robustness.py \
+            --mode full \
+            --sensitivity-scales "0.5,0.75,1.0,1.25,1.5" \
+            --bootstrap-resamples 10000 \
+            --combine-shards \
+            --shard-dir shards \
             --output-dir reports/results/ou_robustness
 
       - name: Upload regenerated bundle
@@ -191,7 +286,7 @@ jobs:
   # That is a prose edit, and it is the only part of regeneration a person
   # actually has to do.
   commit:
-    needs: regenerate
+    needs: combine
     if: >-
       github.event_name == 'workflow_dispatch' &&
       github.event.inputs.validation_mode == 'full'

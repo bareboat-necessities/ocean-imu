@@ -11,6 +11,7 @@ by wave-realization, IMU-noise, and initialization seed.
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import os
 import platform
@@ -682,6 +683,22 @@ def _run_unit(
     )
 
 
+SHARD_ORDER_KEY = core.SHARD_ORDER_KEY
+SHARD_PREFIX = "ou_robustness_shard"
+
+
+def shard_path(shard_dir: Path, index: int) -> Path:
+    return core.shard_path(shard_dir, SHARD_PREFIX, index)
+
+
+def write_shard(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    core.write_shard(path, rows)
+
+
+def read_shards(shard_dir: Path) -> list[dict[str, Any]]:
+    return core.read_shards(shard_dir, SHARD_PREFIX, ordered=True)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("smoke", "full"), default="smoke")
@@ -711,70 +728,64 @@ def build_parser() -> argparse.ArgumentParser:
         "fixed by its seed triplet and tuning point, so this changes runtime "
         "only",
     )
+    parser.add_argument(
+        "--shard-count",
+        type=int,
+        default=1,
+        help="split the repetitions across this many independent runs",
+    )
+    parser.add_argument(
+        "--shard-index",
+        type=int,
+        default=0,
+        help="0-based index of this shard; runs its repetitions and writes a "
+        "shard file instead of a bundle",
+    )
+    parser.add_argument(
+        "--shard-dir",
+        type=Path,
+        help="where shard files are written and read back from "
+        "(default: <output-dir>/shards)",
+    )
+    parser.add_argument(
+        "--combine-shards",
+        action="store_true",
+        help="skip simulation, read every shard file, and write the bundle "
+        "the unsharded run would have written",
+    )
     parser.add_argument("--eigen-dir")
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--no-plots", action="store_true")
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
-    args.data_dir = args.data_dir.resolve()
-    args.output_dir = args.output_dir.resolve()
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-
-    duration_sec = args.duration_sec or (180.0 if args.mode == "smoke" else 1200.0)
-    window_sec = args.window_sec or (120.0 if args.mode == "smoke" else 900.0)
-    if not duration_sec > window_sec > 0.0:
-        raise ValueError("duration must be greater than the positive scoring window")
-    scales = args.sensitivity_scales or (
-        list(SMOKE_SCALES) if args.mode == "smoke" else list(FULL_SCALES)
-    )
-
-    if args.mode == "smoke":
-        default_wave, default_imu, default_init = ([11], [101], [1009])
-        transition_cases = (
-            TransitionCase("controlled", 60.0, 120.0),
-            TransitionCase("rapid", 85.0, 95.0),
-        )
-    else:
-        default_wave = list(core.DEFAULT_FULL_WAVE_SEEDS)
-        default_imu = list(core.DEFAULT_FULL_IMU_SEEDS)
-        default_init = list(core.DEFAULT_FULL_INIT_SEEDS)
-        transition_cases = (
-            TransitionCase("controlled", 420.0, 780.0),
-            TransitionCase("rapid", 585.0, 615.0),
-        )
-    if duration_sec < max(case.end_sec for case in transition_cases):
-        raise ValueError("duration does not contain the configured transition cases")
-    seeds = core.broadcast_seed_triplets(
-        args.wave_seeds or default_wave,
-        args.imu_seeds or default_imu,
-        args.initialization_seeds or default_init,
-    )
-
-    nominal_input = core.find_default_input(args.data_dir, "1.500", "50.710").resolve()
-    low_input = core.find_default_input(args.data_dir, "0.270", "14.047").resolve()
-    endpoint_input = core.find_default_input(args.data_dir, "8.500", "202.839").resolve()
-    if not args.skip_build:
-        core.build_simulators(("OU_III",), args.eigen_dir)
-
-    baseline = core.calibrate_tuning_point("OU_III", nominal_input, window_sec)
-    validate_tuning_point(baseline)
-    for parameter in SENSITIVITY_PARAMETERS:
-        for scale in scales:
-            validate_tuning_point(scaled_tuning_point(baseline, parameter, scale))
-    nominal_columns, nominal_data = core.read_wave_csv(nominal_input, duration_sec)
-    low_columns, low_data = core.read_wave_csv(low_input, duration_sec)
-    endpoint_columns, endpoint_data = core.read_wave_csv(endpoint_input, duration_sec)
-    if nominal_columns != endpoint_columns:
-        raise ValueError("transition source columns do not match")
-
+def run_repetitions(
+    args: argparse.Namespace,
+    seeds: Sequence[core.SeedTriplet],
+    scales: Sequence[float],
+    transition_cases: Sequence[TransitionCase],
+    baseline: core.TuningPoint,
+    shard_count: int,
+    units_per_repetition: int,
+    *,
+    nominal_input: Path,
+    nominal_columns: Sequence[str],
+    nominal_data: Any,
+    low_input: Path,
+    low_columns: Sequence[str],
+    low_data: Any,
+    endpoint_data: Any,
+    window_sec: float,
+) -> list[dict[str, Any]]:
+    """Replay this shard's repetitions and label each row with its global position."""
     rows: list[dict[str, Any]] = []
     with tempfile.TemporaryDirectory(prefix="ocean-imu-ou-robustness-") as temporary:
         work_dir = Path(temporary)
         for repetition, seed in enumerate(seeds, start=1):
+            if (repetition - 1) % shard_count != args.shard_index:
+                continue
             print(f"Repetition {repetition}/{len(seeds)}", flush=True)
+
 
             # Every unit in a repetition is an independent simulator replay
             # whose result is fixed by its seed triplet and tuning point, so
@@ -888,9 +899,19 @@ def main(argv: Sequence[str] | None = None) -> int:
                         tuning_point=point,
                     ))
 
+            if len(pending) != units_per_repetition:
+                raise AssertionError(
+                    f"repetition {repetition} produced {len(pending)} runs, "
+                    f"expected {units_per_repetition}; the shard ordering "
+                    "assumes every repetition contributes the same block"
+                )
+            base_order = (repetition - 1) * units_per_repetition
+
             try:
                 for index, future in enumerate(pending, start=1):
-                    rows.append(future.result())
+                    row = future.result()
+                    row[SHARD_ORDER_KEY] = base_order + index - 1
+                    rows.append(row)
                     print(
                         f"  repetition {repetition}: {index}/{len(pending)} runs",
                         flush=True,
@@ -899,6 +920,112 @@ def main(argv: Sequence[str] | None = None) -> int:
                 pool.shutdown()
                 for path in scratch:
                     path.unlink(missing_ok=True)
+
+    return rows
+
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    args.data_dir = args.data_dir.resolve()
+    args.output_dir = args.output_dir.resolve()
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    duration_sec = args.duration_sec or (180.0 if args.mode == "smoke" else 1200.0)
+    window_sec = args.window_sec or (120.0 if args.mode == "smoke" else 900.0)
+    if not duration_sec > window_sec > 0.0:
+        raise ValueError("duration must be greater than the positive scoring window")
+    scales = args.sensitivity_scales or (
+        list(SMOKE_SCALES) if args.mode == "smoke" else list(FULL_SCALES)
+    )
+
+    if args.mode == "smoke":
+        default_wave, default_imu, default_init = ([11], [101], [1009])
+        transition_cases = (
+            TransitionCase("controlled", 60.0, 120.0),
+            TransitionCase("rapid", 85.0, 95.0),
+        )
+    else:
+        default_wave = list(core.DEFAULT_FULL_WAVE_SEEDS)
+        default_imu = list(core.DEFAULT_FULL_IMU_SEEDS)
+        default_init = list(core.DEFAULT_FULL_INIT_SEEDS)
+        transition_cases = (
+            TransitionCase("controlled", 420.0, 780.0),
+            TransitionCase("rapid", 585.0, 615.0),
+        )
+    if duration_sec < max(case.end_sec for case in transition_cases):
+        raise ValueError("duration does not contain the configured transition cases")
+    seeds = core.broadcast_seed_triplets(
+        args.wave_seeds or default_wave,
+        args.imu_seeds or default_imu,
+        args.initialization_seeds or default_init,
+    )
+
+    nominal_input = core.find_default_input(args.data_dir, "1.500", "50.710").resolve()
+    low_input = core.find_default_input(args.data_dir, "0.270", "14.047").resolve()
+    endpoint_input = core.find_default_input(args.data_dir, "8.500", "202.839").resolve()
+    if not args.skip_build:
+        core.build_simulators(("OU_III",), args.eigen_dir)
+
+    baseline = core.calibrate_tuning_point("OU_III", nominal_input, window_sec)
+    validate_tuning_point(baseline)
+    for parameter in SENSITIVITY_PARAMETERS:
+        for scale in scales:
+            validate_tuning_point(scaled_tuning_point(baseline, parameter, scale))
+    nominal_columns, nominal_data = core.read_wave_csv(nominal_input, duration_sec)
+    low_columns, low_data = core.read_wave_csv(low_input, duration_sec)
+    endpoint_columns, endpoint_data = core.read_wave_csv(endpoint_input, duration_sec)
+    if nominal_columns != endpoint_columns:
+        raise ValueError("transition source columns do not match")
+
+    shard_dir = args.shard_dir or (args.output_dir / "shards")
+    shard_count = max(1, args.shard_count)
+    if not 0 <= args.shard_index < shard_count:
+        raise SystemExit(
+            f"--shard-index must be in [0, {shard_count}), got {args.shard_index}"
+        )
+
+    # Repetitions are the shard unit. Every repetition contributes the same
+    # number of runs in the same order, so a repetition's rows occupy a known
+    # block of the unsharded ordering and a shard can label its own rows
+    # without knowing anything about the other shards.
+    units_per_repetition = (
+        len(SENSITIVITY_PARAMETERS) * len(scales)
+        + 2
+        + 2 * len(transition_cases)
+    )
+
+    if args.combine_shards:
+        rows = read_shards(shard_dir)
+        print(f"Combined {len(rows)} runs from {shard_dir}", flush=True)
+    else:
+        rows = run_repetitions(
+            args,
+            seeds,
+            scales,
+            transition_cases,
+            baseline,
+            shard_count,
+            units_per_repetition,
+            nominal_input=nominal_input,
+            nominal_columns=nominal_columns,
+            nominal_data=nominal_data,
+            low_input=low_input,
+            low_columns=low_columns,
+            low_data=low_data,
+            endpoint_data=endpoint_data,
+            window_sec=window_sec,
+        )
+        if shard_count > 1:
+            path = shard_path(shard_dir, args.shard_index)
+            write_shard(path, rows)
+            print(f"Wrote {path} ({len(rows)} runs)", flush=True)
+            return 0
+
+    # The shard position is scaffolding for the merge, not evidence; from here
+    # the rows must look exactly like a single-process run's.
+    for row in rows:
+        row.pop(SHARD_ORDER_KEY, None)
 
     summary = summarize_rows(rows, args.bootstrap_resamples, args.stats_seed)
     effects = paired_effect_rows(rows, args.bootstrap_resamples, args.stats_seed)
