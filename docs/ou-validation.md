@@ -59,7 +59,7 @@ filter; the fixed modes simply freeze `(tau, sigma_aw, r_S)` after the normal
 startup/Live transition. Each fixed triple is obtained by running the adaptive
 filter once on a noise-free, unrandomized 1200 s record, reading its final
 `tau` and `sigma_aw`, and computing
-`r_S = clip(1.2 * sigma_aw * tau**3, 0.4, 35)` (OU-III) or the corresponding
+`r_S = clip(0.35 * sigma_aw * tau**3, 0.4, 400)` (OU-III) or the corresponding
 OU-II law. No fixed point is optimized against displacement error. The exact
 frozen values for the committed study are in `fixed_tuning_points` in the
 manifest and are typeset by `ou_validation_tuning_points.tex`.
@@ -67,7 +67,7 @@ manifest and are typeset by `ou_validation_tuning_points.tex`.
 Those values are the vertical/base parameters. The filter derives the applied
 anisotropic values internally: OU-III uses
 `(1.87*sigma_aw, 1.87*sigma_aw, sigma_aw)` for the stationary acceleration
-standard deviation and `diag(0.36*r_S, 0.36*r_S, r_S)**2` for the integral
+standard deviation and `diag(r_S, r_S, r_S)**2` for the integral
 pseudo-measurement covariance; OU-II uses `1.5*sigma_aw` horizontally and
 `0.31*r_p0` for the horizontal pseudo-measurement scale.
 
@@ -75,11 +75,20 @@ pseudo-measurement covariance; OU-II uses `1.5*sigma_aw` horizontally and
 
 The filter re-aligns the posterior marginal `P_aw_aw` with the stationary OU
 covariance once per adaptation period, keeping the cross-covariances it has
-learned. That is a deliberate bounded covariance inflation: it stops the
-marginal settling far below the level the process model considers stationary,
-which keeps the accelerometer gain responsive when the sea state changes. It
-also discards posterior information at the adaptation cadence, so it is
-measured rather than assumed.
+learned. It stops the marginal settling far below the level the process model
+considers stationary, which keeps the accelerometer gain responsive when the sea
+state changes. The inflation is not small -- typically a factor of 40 to 100 --
+and the operation is not a consistent posterior update: keeping the raw
+cross-covariances while replacing the marginal rescales the implied correlation
+coefficients by the square root of the marginal change.
+
+`W3D_AW_COV_SYNC=congruent` performs the same re-alignment as a congruence,
+which reaches the same marginal, leaves the whitened cross-covariance untouched
+and stays positive semi-definite by construction. It is measurably *worse* than
+the deployed overwrite, because consistency propagates the inflation into the
+cross-covariances and the filter cannot absorb it. The conclusion is that the
+periodic re-alignment should be retired or bounded rather than made
+self-consistent; the `*HeldCovariance` modes are what price that.
 
 Earlier revisions applied the re-alignment inside the adaptation path only.
 That made it run in `Adaptive` and never in a fixed mode that stops re-tuning,

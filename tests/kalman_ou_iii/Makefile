@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_iii-sim kalman_ou_common-test channel_freeze-test
+TARGETS = kalman_ou_iii-sim kalman_ou_common-test channel_freeze-test wave_period-test
 
 all: build test
 
@@ -42,8 +42,15 @@ kalman_ou_common-test: kalman_ou_common-test.o
 channel_freeze-test: channel_freeze-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+wave_period-test: wave_period-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# -MMD -MP records the headers each object depends on, so editing a filter
+# header rebuilds the simulator instead of silently reusing a stale object.
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+-include $(wildcard *.d)
 
 clean:
-	rm -f *.o $(TARGETS) *.exe *.csv
+	rm -f *.o *.d $(TARGETS) *.exe *.csv

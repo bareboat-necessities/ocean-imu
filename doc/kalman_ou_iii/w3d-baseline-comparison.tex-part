@@ -172,21 +172,27 @@ gives absolute per-axis and 3D displacement RMS for both filters, so the
 magnitude can be read directly rather than inferred from a difference.
 OU--III has \emph{higher} 3D displacement error than OU--II in
 \OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
-scenarios, with resolved intervals; the nominal \SI{1.5}{m} sea is
-unresolved, its interval spanning zero.  The gap grows with sea state, and it
-is horizontal: the vertical column favors OU--III everywhere while the X and Y
-columns move the other way.  The additional integral-displacement state and
-its anisotropic regularization therefore buy vertical accuracy at a horizontal
-cost that the vertical-only score does not show.
+scenarios.  That count was \num{4} of \num{5} before the operating point was
+tied to the wave band, and the remaining case is the smallest sea,
+$H_s=\SI{0.27}{m}$, where the absolute error is \SI{6}{cm} and the wave band
+sits close to the estimator's own resolution.  In the two largest seas OU--III
+is now substantially \emph{better} in three dimensions as well as vertically.
 
-Read together with Table~\ref{tab:ou_mc_family}, the evidence supports a
-stationary vertical claim and no more.  OU--III has resolved vertical
-improvements in all four stationary seas, but higher vertical error during the
-transition, and higher full-3D error in most scenarios.  Roll and pitch effects
-likewise change sign or have intervals spanning zero in most cases.  The
-additional OU state provides a clear aggregate \emph{vertical} benefit for this
-stationary JONSWAP family; it is not a better three-dimensional wave-state
-estimator, and nothing here supports describing it as one.
+The earlier horizontal cost was not a property of the additional
+integral-displacement state.  It came from the integral regularization scale
+being derived from an acceleration-band frequency that does not follow the sea
+state (Sec.~\ref{sec:wave-band-period}), and from a horizontal weight
+$\rho_{xy}=0.36$ fitted at the smallest sea, which together placed the
+regularizer's corner inside the wave band and placed the horizontal axes
+$2.8\times$ further inside it.
+
+Read together with Table~\ref{tab:ou_mc_family}, the evidence now supports a
+three-dimensional claim for the developed seas and a vertical claim throughout.
+OU--III improves vertically in all four stationary seas and during the
+transition, and improves in three dimensions everywhere except the smallest
+sea.  The claim that remains bounded is the small-sea one: at
+$H_s=\SI{0.27}{m}$ OU--II is still ahead in three dimensions, and the roll and
+pitch effects continue to change sign or span zero in several cases.
 
 \paragraph{Second spectral family}
 Table~\ref{tab:ou_mc_pmstokes} repeats the paired comparison on the four
@@ -214,24 +220,29 @@ error of \OUValidationDirectionRMSE{} degrees.  The propagation \emph{axis} is
 therefore recovered to a degree or two in the mean, with substantial
 sample-to-sample dispersion about it.
 
-Travel sense is a different matter, and the ensemble exposes a limitation that
-the earlier single-window report concealed.  The classifier is decisive --
-\OUValidationDirectionDominant\% of samples fall in one sense class and only
-\OUValidationDirectionUncertain\% are below the confidence and amplitude
-thresholds -- but \emph{which} class that is cannot be checked against the
-generator here.  The FORWARD/BACKWARD labels are defined relative to the axis
-representative the axis estimator returns, and that representative is not tied
-to the generator azimuth: across the eight records the dominant class swaps
-with the sign of the nominal heading, on the original records as well as on the
-surrogates.  The estimator commits to a sense consistently; establishing that
-the committed sense is the physically correct one requires a signed
-ground-truth convention shared between the generator and the direction
-interface, which the present records do not provide.  We therefore report
-sense \emph{stability} and make no correctness claim, and the
-Toward/Away/Uncertain split of
-Table~\ref{tab:sim_results_rms_dir_basic} should be read the same way -- as the
-dominant class, not as a verified correctness rate.  Resolving this is left to
-future work, together with the unimodal limitation of these records: each holds
+Travel sense is now scored against truth rather than against the estimator's
+own axis representative.  The directed propagation vector, with the vessel
+heading removed, is compared with the physical propagation direction of the
+record, which is the generator azimuth plus \SI{180}{\degree}: the earlier
+reports could not make that comparison because the sign convention of the
+generator was never asserted anywhere, and it is now pinned by a test.  Pooled
+over the eight stationary seas the estimator resolves the travel sense
+correctly in \OUValidationTravelCorrect\% of samples, incorrectly in
+\OUValidationTravelWrong\%, and leaves \OUValidationTravelUnresolved\% below the
+confidence and amplitude thresholds, with a pooled directed angular error of
+\OUValidationTravelAbsError{} degrees.
+
+The FORWARD/BACKWARD labels the estimator exports remain a gauge quantity and
+are not scored.  Running the same sea with the vessel heading rotated by
+\SI{180}{\degree} -- identical waves, identical seeds, only the platform turned
+around -- leaves heave, three-dimensional displacement and the propagation axis
+unchanged while the class shares invert completely, from \SI{95.5}{\percent}
+FORWARD to \SI{94.6}{\percent} BACKWARD, because the axis estimator seeds its
+representative from the bow.  The same experiment leaves the truth-referenced
+correctness rate flat at headings of \num{0}, \num{45} and
+\SI{180}{\degree}, which is what establishes that the directed output is
+physical while the class label is not.  What remains for
+future work is the unimodal limitation of these records: each holds
 one nominal heading, so direction changes and multimodal seas are outside what
 any of these numbers cover.
 

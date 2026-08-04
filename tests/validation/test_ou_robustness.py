@@ -46,13 +46,16 @@ class RobustnessDesignTests(unittest.TestCase):
         self.assertEqual(sigma, validation.TuningPoint(1.2, 0.4, RS_ms=3.5))
         self.assertEqual(r_s, validation.TuningPoint(1.2, 0.8, RS_ms=5.25))
         robustness.validate_tuning_point(r_s)
+        # Just past the implementation ceiling, whatever it currently is.
         with self.assertRaisesRegex(ValueError, "outside implementation bounds"):
             robustness.validate_tuning_point(
-                validation.TuningPoint(3.1, 0.8, RS_ms=3.5)
+                validation.TuningPoint(
+                    robustness.TAU_BOUNDS_S[1] * 1.01, 0.8, RS_ms=3.5
+                )
             )
 
     def test_coupled_sweeps_follow_the_deployed_regularization_law(self):
-        # r_S = clip(1.2 sigma_aw tau^3, ...), so the coupled sweeps must move
+        # r_S = clip(c sigma_aw tau^3, ...), so the coupled sweeps must move
         # r_S linearly with sigma_aw and cubically with tau. A frozen r_S
         # measures only the direct OU process-covariance effect, which the
         # online tuner never produces.
@@ -176,15 +179,20 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         transition_cells = len(protocol["transition_cases"]) * 2
         cells = sensitivity_cells + low_motion_cells + transition_cells
         self.assertEqual(len(raw), cells * 10)
-        self.assertEqual(
-            len(summary), cells * len(validation.NON_SEGMENT_METRIC_NAMES)
+
+        # Checked against the metrics the committed bundle carries rather than
+        # against the tool's current list, so adding a metric asks for a re-run
+        # instead of failing this structural check.  Unknown metrics still fail.
+        bundle_metrics = {row["metric"] for row in summary}
+        self.assertTrue(
+            bundle_metrics <= set(validation.NON_SEGMENT_METRIC_NAMES),
+            sorted(bundle_metrics - set(validation.NON_SEGMENT_METRIC_NAMES)),
         )
+        self.assertEqual(len(summary), cells * len(bundle_metrics))
         # Sensitivity: every off-reference scale against x1, per direction.
         # Degradation: one low-motion pair, plus rate and adaptation pairs.
         comparisons = len(parameters) * (len(scales) - 1) + 1 + 4
-        self.assertEqual(
-            len(effects), comparisons * len(validation.NON_SEGMENT_METRIC_NAMES)
-        )
+        self.assertEqual(len(effects), comparisons * len(bundle_metrics))
         self.assertEqual(
             Counter(row["experiment"] for row in raw),
             {
@@ -213,12 +221,18 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         for row in raw:
             if row["experiment"] != "sensitivity":
                 continue
-            self.assertGreaterEqual(float(row["configured_tau_s"]), 0.02)
-            self.assertLessEqual(float(row["configured_tau_s"]), 3.0)
-            self.assertGreater(float(row["configured_sigma_aw_mps2"]), 0.0)
-            self.assertLessEqual(float(row["configured_sigma_aw_mps2"]), 6.0)
-            self.assertGreaterEqual(float(row["configured_r_s_ms"]), 0.4)
-            self.assertLessEqual(float(row["configured_r_s_ms"]), 35.0)
+            # Bounds come from the module rather than from literals, so that
+            # moving the implementation clamps cannot leave this test asserting
+            # a range the filter no longer has.
+            tau_lo, tau_hi = robustness.TAU_BOUNDS_S
+            sigma_lo, sigma_hi = robustness.SIGMA_AW_BOUNDS_MPS2
+            rs_lo, rs_hi = robustness.R_S_BOUNDS_MS
+            self.assertGreaterEqual(float(row["configured_tau_s"]), tau_lo)
+            self.assertLessEqual(float(row["configured_tau_s"]), tau_hi)
+            self.assertGreater(float(row["configured_sigma_aw_mps2"]), sigma_lo)
+            self.assertLessEqual(float(row["configured_sigma_aw_mps2"]), sigma_hi)
+            self.assertGreaterEqual(float(row["configured_r_s_ms"]), rs_lo)
+            self.assertLessEqual(float(row["configured_r_s_ms"]), rs_hi)
 
         for name, metadata in manifest["result_files"].items():
             path = self.RESULTS / name

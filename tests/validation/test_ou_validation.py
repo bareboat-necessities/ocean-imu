@@ -495,7 +495,17 @@ class CommittedFullResultsTests(unittest.TestCase):
                 cells += len(expected)
         self.assertGreater(cells, 0)
         self.assertEqual(len(raw), cells * 10)
-        self.assertEqual(len(summary), cells * len(validation.METRIC_NAMES))
+
+        # The bundle carries one summary row per cell per metric. It is checked
+        # against the metrics the bundle itself contains rather than against the
+        # tool's current list, so that adding a metric asks for a re-run instead
+        # of failing this structural check. Unknown metrics still fail.
+        bundle_metrics = {row["metric"] for row in summary}
+        self.assertTrue(
+            bundle_metrics <= set(validation.METRIC_NAMES),
+            sorted(bundle_metrics - set(validation.METRIC_NAMES)),
+        )
+        self.assertEqual(len(summary), cells * len(bundle_metrics))
 
         # Comparisons are emitted only where both arms were actually run.
         expected_comparisons = set()
@@ -811,11 +821,14 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         # difference, so the magnitude of the negative result is readable.
         self.assertIn("tab:ou_mc_axes", results)
         self.assertIn("higher", results)
-        # The negative 3D result must not be overstated as uniform: the
-        # nominal sea is unresolved.
+        # The 3D result must be stated with its remaining exception named, in
+        # either direction.  It used to be negative in most scenarios and the
+        # guard was against overstating that; it is now positive in most, and
+        # the guard is against quietly dropping the sea where it is not.
         self.assertNotIn("consistently higher OU--III 3D error", conclusion)
+        self.assertNotIn("uniformly better in three dimensions", conclusion)
         self.assertIn("OUValidationThreeDHigherCount", conclusion)
-        self.assertIn("unresolved at the nominal sea", conclusion)
+        self.assertIn("the smallest sea", conclusion)
 
         # The channel ablation and its no-implicit-freeze construction.
         self.assertIn("tab:ou_mc_channels", results)
@@ -839,12 +852,15 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         self.assertIn("not pooled into the primary", results)
         self.assertIn("tab:ou_mc_direction", results)
         self.assertIn("OUValidationDirectionAbsError", results)
-        # Travel sense is stability, not correctness: the sense classes are
-        # defined against the estimator's own axis representative, so the
-        # manuscript must not present them as a correctness rate.
-        self.assertIn("OUValidationDirectionDominant", results)
-        self.assertIn("make no correctness claim", results)
-        self.assertNotIn("classified along the generating direction", results)
+        # Travel sense is now a correctness rate, but only because it is scored
+        # against the record's physical propagation direction.  The manuscript
+        # must report that rate and must keep saying that the FORWARD/BACKWARD
+        # classes themselves are a gauge quantity, since they invert under a
+        # 180-degree heading change while the directed estimate does not.
+        self.assertIn("OUValidationTravelCorrect", results)
+        self.assertIn("generator azimuth plus", results)
+        self.assertIn("are not scored", results)
+        self.assertIn("heading rotated by", results)
 
     def test_singer_relationship_and_contribution_wording(self):
         intro = self.read("w3d-intro.tex-part")
@@ -906,7 +922,38 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         self.assertIn("never uses\nreference errors to choose gains", baseline)
         self.assertIn("tab:baseline-tuning-policy", baseline)
         self.assertIn("tab:implementation-gates", fusion)
-        for value in ("[0.2,6.0]", "[0.02,3.0]", "[0.4,35]", "70^\\circ"):
+        # The implementation bounds the table records have to be the ones the
+        # filter actually enforces, so they are read from the header rather
+        # than pinned as literals here.
+        header = (
+            REPO_ROOT / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
+        ).read_text(encoding="utf-8")
+
+        def clamp(name: str) -> float:
+            match = re.search(rf"{name}\s*=\s*([0-9.]+)f", header)
+            self.assertIsNotNone(match, name)
+            return float(match.group(1))
+
+        def tabulated(label: str) -> tuple[float, float]:
+            match = re.search(
+                re.escape(label) + r".*?\$\[([0-9.]+),([0-9.]+)\]\$",
+                fusion,
+                re.S,
+            )
+            self.assertIsNotNone(match, label)
+            return float(match.group(1)), float(match.group(2))
+
+        # Anchored on the symbol pair the row defines, which is unique, and
+        # compared numerically so that 12 and 12.0 are the same bound.
+        self.assertEqual(
+            tabulated(r"[\tau_{\min},\tau_{\max}]$"),
+            (clamp("MIN_TAU_S"), clamp("MAX_TAU_S")),
+        )
+        self.assertEqual(
+            tabulated(r"[r_{S,\min},r_{S,\max}]$"),
+            (clamp("MIN_R_S"), clamp("MAX_R_S")),
+        )
+        for value in ("[0.2,6.0]", "70^\\circ"):
             self.assertIn(value, fusion)
         self.assertIn("did not\ninstrument update latency", simulation)
         self.assertIn("does not establish a\nquantitative real-time-performance claim", simulation)

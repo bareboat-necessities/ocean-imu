@@ -307,6 +307,14 @@ s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
             s.direction.sign_num =
                 (s.direction.sign == FORWARD) ? 1 :
                 (s.direction.sign == BACKWARD ? -1 : 0);
+
+            // Physical directed propagation vector.  The class above is
+            // relative to the estimator's own axis representative; this is not.
+            const float travel_x = filter.dir_sign().getDirectedX();
+            const float travel_y = filter.dir_sign().getDirectedY();
+            if (std::isfinite(travel_x) && std::isfinite(travel_y)) {
+                s.direction.travel_vec_boat = Eigen::Vector2f(travel_x, travel_y);
+            }
         }
 
         return s;

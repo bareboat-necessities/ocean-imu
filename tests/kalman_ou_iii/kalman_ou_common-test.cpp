@@ -171,6 +171,81 @@ bool test_noise_units_and_period() {
     return true;
 }
 
+// The congruent a_w re-alignment must reach the stationary marginal without
+// changing how a_w correlates with the rest of the state, and without pushing
+// the joint covariance out of the positive semi-definite cone. Overwriting the
+// marginal alone intentionally does not preserve this invariant.
+bool test_aw_covariance_sync() {
+    const Vector3 sigma_a = Vector3::Constant(T(0.35));
+    const Vector3 gyro_density = Vector3::Constant(T(0.0015));
+    const Vector3 sigma_m = Vector3::Constant(T(0.8));
+    constexpr int aw = 15;
+
+    Kalman3D_Wave_OU_III<T> ou3(sigma_a, gyro_density, sigma_m);
+    ou3.set_aw_stationary_std(Vector3(T(2.36), T(2.36), T(1.26)));
+    ou3.reset_aw_covariance_to_stationary();
+
+    // Let the filter learn cross-covariances between a_w and [v, p, S].
+    for (int i = 0; i < 4000; ++i) {
+        const T t = T(i) * T(0.005);
+        ou3.time_update(Vector3(T(0.02)*std::sin(T(0.7)*t), T(0.03)*std::cos(T(0.5)*t), T(0.01)), T(0.005));
+        ou3.measurement_update_acc_only(Vector3(T(0.6)*std::sin(T(0.55)*t),
+                                                T(0.4)*std::cos(T(0.61)*t),
+                                                T(-9.80665) + T(1.4)*std::sin(T(0.57)*t)));
+    }
+
+    const auto before = ou3.covariance_full();
+    const Matrix3 marginal_before = before.template block<3,3>(aw, aw);
+
+    // Drive the stationary scale well away from the posterior in both
+    // directions, which is what the adaptation cadence does in practice.
+    for (T scale : {T(4.0), T(0.25)}) {
+        const Vector3 target_std(T(2.36)*scale, T(2.36)*scale, T(1.26)*scale);
+        Kalman3D_Wave_OU_III<T> probe = ou3;
+        probe.set_aw_stationary_std(target_std);
+        probe.synchronize_aw_covariance_to_stationary_congruent();
+        const auto after = probe.covariance_full();
+
+        const Matrix3 target = target_std.array().square().matrix().asDiagonal();
+        const Matrix3 marginal_after = after.template block<3,3>(aw, aw);
+        if (!check((marginal_after - target).cwiseAbs().maxCoeff() < T(1e-10),
+                   "a_w sync did not reach the stationary marginal")) return false;
+
+        // The quantity a congruence preserves is the cross-covariance measured
+        // against the whitened a_w block, P_x,aw L^-T.
+        const Eigen::LLT<Matrix3> chol_before(marginal_before);
+        const Eigen::LLT<Matrix3> chol_after(marginal_after);
+        if (!check(chol_before.info() == Eigen::Success &&
+                   chol_after.info() == Eigen::Success,
+                   "a_w marginal is not positive definite")) return false;
+        const Matrix3 factor_before = chol_before.matrixL();
+        const Matrix3 factor_after = chol_after.matrixL();
+
+        for (int i = 0; i < after.rows(); ++i) {
+            if (i >= aw && i < aw + 3) continue;
+            if (!check(std::abs(after(i,i) - before(i,i)) < T(1e-10),
+                       "a_w sync changed a non-a_w marginal")) return false;
+
+            const Eigen::Matrix<T,1,3> whitened_before =
+                factor_before.template triangularView<Eigen::Lower>()
+                    .solve(before.template block<1,3>(i, aw).transpose()).transpose();
+            const Eigen::Matrix<T,1,3> whitened_after =
+                factor_after.template triangularView<Eigen::Lower>()
+                    .solve(after.template block<1,3>(i, aw).transpose()).transpose();
+            if (!check((whitened_after - whitened_before).cwiseAbs().maxCoeff() < T(1e-8),
+                       "a_w sync changed the whitened cross-covariance")) return false;
+        }
+
+        const Eigen::Matrix<T,Eigen::Dynamic,Eigen::Dynamic> joint = after;
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<T,Eigen::Dynamic,Eigen::Dynamic>>
+            solver(joint);
+        const T smallest = solver.eigenvalues().minCoeff();
+        if (!check(smallest > -T(1e-9),
+                   "a_w sync produced an indefinite covariance")) return false;
+    }
+    return true;
+}
+
 bool test_attitude_helpers() {
     Vector3 rotation_vector;
     rotation_vector << T(0.01), T(-0.02), T(0.03);
@@ -188,6 +263,7 @@ int main() {
     if (!test_ou_covariance()) return 1;
     if (!test_stationary_setters()) return 1;
     if (!test_noise_units_and_period()) return 1;
+    if (!test_aw_covariance_sync()) return 1;
     if (!test_attitude_helpers()) return 1;
     return 0;
 }

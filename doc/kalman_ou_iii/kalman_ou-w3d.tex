@@ -172,6 +172,10 @@
 \providecommand{\OUValidationDirectionWorstAbsError}{--}
 \providecommand{\OUValidationDirectionDominant}{--}
 \providecommand{\OUValidationDirectionUncertain}{--}
+\providecommand{\OUValidationTravelCorrect}{--}
+\providecommand{\OUValidationTravelWrong}{--}
+\providecommand{\OUValidationTravelUnresolved}{--}
+\providecommand{\OUValidationTravelAbsError}{--}
 
 \maketitle
 
@@ -194,15 +198,15 @@ bounded family of spectra. A ten-seed paired study scores the final
 \SI{900}{s} of four stationary JONSWAP seas, four PM--Stokes seas, and a
 controlled transition.  Over the stationary JONSWAP seas, the prespecified
 primary endpoint, the seed-wise mean normalized vertical-displacement RMS
-error is $7.22\pm0.34\%$ of $H_s$ for OU--III and $8.31\pm0.26\%$ for OU--II
+error is $5.08\pm0.29\%$ of $H_s$ for OU--III and $8.31\pm0.26\%$ for OU--II
 (mean $\pm$ sample standard deviation over the ten seed triplets); the paired
-difference is $-1.086$ percentage point (percentile-bootstrap 95\% interval
-$[-1.208,-0.970]$).  The PM--Stokes ensemble, reported separately rather than
-pooled, reproduces the vertical advantage.  The result does not generalize
-beyond the vertical channel: OU--III has lower vertical error in every
-stationary sea, but higher vertical error during the transition and higher
-full-3D displacement error in four of the five JONSWAP scenarios, with the
-nominal sea unresolved, and the horizontal penalty grows with sea state.  A
+difference is $-3.233$ percentage point (percentile-bootstrap 95\% interval
+$[-3.410,-3.039]$).  The PM--Stokes ensemble, reported separately rather than
+pooled, reproduces the vertical advantage.  The operating point is estimated in
+the wave band rather than from a frequency tracked on acceleration, whose
+apparent frequency barely moves as the sea grows; with that correction OU--III
+has lower vertical error in every stationary sea and during the transition, and
+lower full-3D displacement error in every scenario except the smallest sea.  A
 channel ablation locates the adaptation benefit in a single parameter: freezing
 the OU time scale and stationary acceleration scale while the integral
 regularization scale keeps adapting recovers nearly all of it, whereas freezing

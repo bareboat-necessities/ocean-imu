@@ -55,6 +55,7 @@
 #include "freq/FirstOrderIIRSmoother.h"
 #include "freq/FrequencyTrackerPolicy.h"
 #include "tuner/SeaStateAutoTuner.h"
+#include "tuner/WavePeriodEstimator.h"
 #include "tuner/MagAutoTuner.h"
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
 #include "wave_dir/KalmanWaveDirection.h"
@@ -89,11 +90,24 @@ constexpr float ACC_NOISE_FLOOR_SIGMA_DEFAULT = 0.12f;
 constexpr float MIN_FREQ_HZ = 0.2f;
 constexpr float MAX_FREQ_HZ = 6.0f;
 
+// Floor for the wave-band tuning frequency.  MIN_FREQ_HZ bounds the
+// acceleration-band tracker and is far too high for a zero-crossing period:
+// 0.03 Hz admits a 33 s swell.
+constexpr float MIN_TUNE_FREQ_HZ = 0.03f;
+
 constexpr float MIN_TAU_S   = 0.02f;
-constexpr float MAX_TAU_S   = 3.0f;
+// tau now scales with the zero-crossing wave period rather than with an
+// acceleration-band frequency, so the ceiling has to admit a developed sea:
+// T_z reaches 8.6 s at H_s = 8.5 m and a long swell goes further.  The old
+// 3.0 s ceiling was reached at H_s = 8.5 m, which clipped the operating point
+// exactly where the filter was losing.
+constexpr float MAX_TAU_S   = 12.0f;
 constexpr float MAX_SIGMA_A = 6.0f;
 constexpr float MIN_R_S     = 0.4f;
-constexpr float MAX_R_S     = 35.0f;
+// r_S ~ sigma_aw * tau^3 inherits that range.  The old 35 m*s ceiling was the
+// binding constraint at H_s = 8.5 m: the calibrated fixed-oracle point sat at
+// 34.66 and the error was still falling monotonically against it.
+constexpr float MAX_R_S     = 400.0f;
 
 constexpr float ADAPT_TAU_SEC              = 1.8f;
 constexpr float ADAPT_EVERY_SECS           = 0.1f;
@@ -259,9 +273,14 @@ public:
         freq_hz_      = f_fast;   // demod / direction
         freq_hz_slow_ = f_slow;   // tuner / moments
 
-        // Tuner gets vertical accel
+        // Tuner gets vertical accel, and the wave-band frequency when the
+        // period estimator has settled.  That single substitution fixes both
+        // halves of the old operating point: tau stops being derived from an
+        // acceleration-band frequency that barely moves with the sea state, and
+        // the tuner's variance horizon (a few periods) stops being shorter than
+        // one wave period, which was biasing sigma_aw low.
         if (enable_tuner_) {
-            update_tuner(dt, a_body_z_up_proxy_, f_after_still);
+            update_tuner(dt, a_body_z_up_proxy_, tuner_frequency_hz_(f_after_still));
         }
 
         // Keep linear-block R_S tuning responsive in Live mode instead of
@@ -285,6 +304,24 @@ public:
         // Stage 1 estimates the apparent propagation plane as an unsigned axis
         // relative to boat heading.  Stage 2 resolves propagation sense along
         // that same axis from horizontal/vertical orbital phase.
+        // Zero-crossing wave period.  This runs beside the frequency tracker
+        // rather than replacing it: the tracker supplies the acceleration-band
+        // carrier the direction demodulator needs, while the OU operating point
+        // needs the wave band.
+        //
+        // It is fed the leveled vertical acceleration rather than the body-Z
+        // proxy.  Double integration weights a spectrum by 1/omega^4, so the
+        // sub-band gravity leakage a tilting platform puts into the body-Z
+        // proxy dominates the elevation proxy: on the reference records the
+        // body-Z input reported 6.8-10.0 s against a true 2.5-8.6 s, while the
+        // leveled input tracks the sea state.  The leveled signal depends on
+        // attitude but not on the linear block, so it does not close a loop
+        // through the quantity being tuned.
+        wave_period_.update(dt,
+                            direction_accel.heading_valid
+                                ? direction_accel.up_ms2
+                                : a_body_z_up_proxy_);
+
         dir_filter_.update(direction_accel.forward_ms2,
                            direction_accel.starboard_ms2,
                            omega, dt);
@@ -431,6 +468,19 @@ public:
         last_aw_cov_sync_sec_ = time_;
     }
     bool periodicAwCovarianceSync() const noexcept { return periodic_aw_cov_sync_; }
+
+    // Select how the a_w marginal is re-aligned when a sync happens.
+    //
+    // false (default, deployed): overwrite the marginal and keep the raw
+    // cross-covariances, which rescales the implied correlations by the square
+    // root of the marginal change.
+    // true: congruence re-alignment, which reaches the same marginal while
+    // leaving the whitened cross-covariance untouched and staying PSD by
+    // construction.  This is the consistent operation, so running it isolates
+    // "is the re-alignment inconsistent?" from "is re-aligning at all a good
+    // idea?".
+    void setAwCovarianceSyncCongruent(bool flag) { congruent_aw_cov_sync_ = flag; }
+    bool awCovarianceSyncCongruent() const noexcept { return congruent_aw_cov_sync_; }
 
     // Freeze the online tuner at an externally supplied operating point. This
     // is primarily useful for controlled ablations (fixed-nominal and
@@ -635,6 +685,17 @@ public:
         return std::isfinite(v_env) ? v_env : NAN;
     }
 
+    // Zero-crossing wave period [s] from the independent accelerometer-only
+    // estimator; NaN until it settles.
+    inline float getWavePeriodSec() const noexcept { return wave_period_.getPeriodSec(); }
+    inline bool wavePeriodReady() const noexcept { return wave_period_.isReady(); }
+
+    // Drive the operating point from the wave band (default) or from the
+    // acceleration-band tracker, which is what the filter did before and is
+    // kept so the change can be ablated rather than assumed.
+    void setWaveBandTuning(bool flag) { wave_band_tuning_ = flag; }
+    bool waveBandTuning() const noexcept { return wave_band_tuning_; }
+
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
 
     // Propagation-plane angle relative to boat +X, modulo 180 degrees.
@@ -683,7 +744,7 @@ private:
         const Eigen::Vector3f aw_std(sH, sH, sZ);
         mekf_->set_aw_stationary_std(aw_std);
         if (sync_covariance) {
-            mekf_->synchronize_aw_covariance_to_stationary();
+            apply_aw_cov_sync_();
             last_aw_cov_sync_sec_ = time_;
         }
     }
@@ -695,8 +756,16 @@ private:
         if (!periodic_aw_cov_sync_ || !mekf_) return;
         if (startup_stage_ != StartupStage::Live) return;
         if (time_ - last_aw_cov_sync_sec_ <= adapt_every_secs_) return;
-        mekf_->synchronize_aw_covariance_to_stationary();
+        apply_aw_cov_sync_();
         last_aw_cov_sync_sec_ = time_;
+    }
+
+    void apply_aw_cov_sync_() {
+        if (congruent_aw_cov_sync_) {
+            mekf_->synchronize_aw_covariance_to_stationary_congruent();
+        } else {
+            mekf_->synchronize_aw_covariance_to_stationary();
+        }
     }
 
     void apply_RS_tune_(float rs_scale = 1.0f) {
@@ -736,9 +805,13 @@ private:
                break;
         }
 
+        // The tuning frequency is a wave-band quantity and has to be allowed
+        // below the tracker's floor: a developed sea has T_z = 8.6 s, i.e.
+        // 0.12 Hz, well under the 0.2 Hz the tracker is bounded to.
+        const float f_tune_floor = wave_band_tuning_ ? min_tune_freq_hz_ : min_freq_hz_;
         float f_tune = tuner_.getFrequencyHz();
-        if (!std::isfinite(f_tune) || f_tune < min_freq_hz_) {
-            f_tune = min_freq_hz_;
+        if (!std::isfinite(f_tune) || f_tune < f_tune_floor) {
+            f_tune = f_tune_floor;
         }
         if (f_tune > max_freq_hz_) {
             f_tune = max_freq_hz_;
@@ -820,8 +893,17 @@ private:
         }
     }
 
+    float tuner_frequency_hz_(float tracker_hz) const {
+        if (wave_band_tuning_ && wave_period_.isReady()) {
+            const float wave_hz = wave_period_.getFrequencyHz();
+            if (std::isfinite(wave_hz) && wave_hz > 0.0f) return wave_hz;
+        }
+        return tracker_hz;
+    }
+
     void resetTrackingState_() {
         tracker_policy_       = TrackingPolicy{};
+        wave_period_          = WavePeriodEstimator{};
         freq_input_lpf_       = FreqInputLPF{};
         freq_stillness_       = StillnessAdapter(g_std, min_freq_hz_, FREQ_GUESS);
         freq_input_lpf_.setCutoff(max_freq_hz_);
@@ -929,8 +1011,11 @@ private:
 
     // Covariance-inflation policy; see setPeriodicAwCovarianceSync.
     bool   periodic_aw_cov_sync_ = true;
+    bool   congruent_aw_cov_sync_ = false;
     double last_aw_cov_sync_sec_ = 0.0;
 
+    bool  wave_band_tuning_       = true;
+    float min_tune_freq_hz_       = MIN_TUNE_FREQ_HZ;
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;
     float min_tau_s_              = MIN_TAU_S;
@@ -943,13 +1028,20 @@ private:
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
     float mag_delay_sec_          = MAG_DELAY_SEC;
 
-    float R_S_xy_factor_ = 0.36f;
+    // Horizontal integral-regularization scale relative to the vertical one.
+    // 0.36 made the horizontal high-pass 2.8x stronger than the vertical one,
+    // which was a small-sea optimum applied to every sea state: with the
+    // operating point now tied to the wave band, every stationary record scores
+    // better with the two equal, by 7 to 27 percent of 3D RMS in the two
+    // largest seas.  Retained as a setter because the bound is a real one.
+    float R_S_xy_factor_ = 1.0f;
     float S_factor_      = 1.87f;
 
     TrackingPolicy                  tracker_policy_{};
     FirstOrderIIRSmoother<float>    freq_fast_smoother_{FREQ_SMOOTHER_DT, 3.5f};
     FirstOrderIIRSmoother<float>    freq_slow_smoother_{FREQ_SMOOTHER_DT, 10.0f};
     SeaStateAutoTuner               tuner_;
+    WavePeriodEstimator             wave_period_;
     TuneState                       tune_;
 
     float tau_target_   = NAN;
@@ -958,8 +1050,13 @@ private:
 
     float acc_noise_floor_sigma_ = ACC_NOISE_FLOOR_SIGMA_DEFAULT;
 
-    float R_S_coeff_    = 1.2f;
-    float tau_coeff_    = 1.38f;
+    // r_S = R_S_coeff * sigma_aw * tau^3 and tau = tau_coeff * T_z / 2.  Both
+    // coefficients are re-fitted for the wave-band period: tau_coeff = 1 is the
+    // documented intent, tau equal to half the zero-crossing period, and
+    // R_S_coeff was fitted on the four stationary JONSWAP records against the
+    // per-record optimum located by a fixed-r_S scan.
+    float R_S_coeff_    = 0.35f;
+    float tau_coeff_    = 1.0f;
     float sigma_coeff_  = 0.9f;
 
     std::unique_ptr<Kalman3D_Wave_OU_III<float>>  mekf_;
