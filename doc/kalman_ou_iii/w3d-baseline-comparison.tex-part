@@ -172,21 +172,27 @@ gives absolute per-axis and 3D displacement RMS for both filters, so the
 magnitude can be read directly rather than inferred from a difference.
 OU--III has \emph{higher} 3D displacement error than OU--II in
 \OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
-scenarios, with resolved intervals; the nominal \SI{1.5}{m} sea is
-unresolved, its interval spanning zero.  The gap grows with sea state, and it
-is horizontal: the vertical column favors OU--III everywhere while the X and Y
-columns move the other way.  The additional integral-displacement state and
-its anisotropic regularization therefore buy vertical accuracy at a horizontal
-cost that the vertical-only score does not show.
+scenarios.  That count was \num{4} of \num{5} before the operating point was
+tied to the wave band, and the remaining case is the smallest sea,
+$H_s=\SI{0.27}{m}$, where the absolute error is \SI{6}{cm} and the wave band
+sits close to the estimator's own resolution.  In the two largest seas OU--III
+is now substantially \emph{better} in three dimensions as well as vertically.
 
-Read together with Table~\ref{tab:ou_mc_family}, the evidence supports a
-stationary vertical claim and no more.  OU--III has resolved vertical
-improvements in all four stationary seas, but higher vertical error during the
-transition, and higher full-3D error in most scenarios.  Roll and pitch effects
-likewise change sign or have intervals spanning zero in most cases.  The
-additional OU state provides a clear aggregate \emph{vertical} benefit for this
-stationary JONSWAP family; it is not a better three-dimensional wave-state
-estimator, and nothing here supports describing it as one.
+The earlier horizontal cost was not a property of the additional
+integral-displacement state.  It came from the integral regularization scale
+being derived from an acceleration-band frequency that does not follow the sea
+state (Sec.~\ref{sec:wave-band-period}), and from a horizontal weight
+$\rho_{xy}=0.36$ fitted at the smallest sea, which together placed the
+regularizer's corner inside the wave band and placed the horizontal axes
+$2.8\times$ further inside it.
+
+Read together with Table~\ref{tab:ou_mc_family}, the evidence now supports a
+three-dimensional claim for the developed seas and a vertical claim throughout.
+OU--III improves vertically in all four stationary seas and during the
+transition, and improves in three dimensions everywhere except the smallest
+sea.  The claim that remains bounded is the small-sea one: at
+$H_s=\SI{0.27}{m}$ OU--II is still ahead in three dimensions, and the roll and
+pitch effects continue to change sign or span zero in several cases.
 
 \paragraph{Second spectral family}
 Table~\ref{tab:ou_mc_pmstokes} repeats the paired comparison on the four
