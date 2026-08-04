@@ -1061,8 +1061,15 @@ public:
         //   q_new = Rz(-yaw_gauge) * q_old
         //
         // Then normal 3D mag EKF updates run.
+        //
+        // That average is taken in the estimator's own tilt frame, so whatever
+        // tilt error survives the window survives in the reference.  In waves
+        // the error is periodic, which makes window length the thing that
+        // matters: a few seconds locks in one wave phase, several periods
+        // average it out.  Held in seconds rather than samples so it does not
+        // silently shorten at a higher mag ODR.
         int   mag_min_samples    = 128;
-        float mag_min_window_sec = 0.0f;
+        float mag_min_window_sec = 40.0f;
         float mag_max_window_sec = 0.0f;          // no forced timeout
         float mag_sample_dt_sec  = 1.0f / 200.0f;
         
