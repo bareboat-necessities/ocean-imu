@@ -6,8 +6,9 @@
     "full",
     "--bootstrap-resamples",
     "10000",
-    "--jobs",
-    "4",
+    "--combine-shards",
+    "--shard-dir",
+    "shards",
     "--output-dir",
     "reports/results/ou_validation"
   ],
@@ -22,10 +23,10 @@
       },
       "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
         "RS_ms": null,
-        "R_p0_std_m": 0.35249039239274926,
-        "R_v0_std_mps": 0.5179440224131197,
-        "sigma_a_mps2": 0.377384663,
-        "tau_s": 1.2476877
+        "R_p0_std_m": 0.3524907221963105,
+        "R_v0_std_mps": 0.517944162469167,
+        "sigma_a_mps2": 0.377384514,
+        "tau_s": 1.24768853
       },
       "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
         "RS_ms": null,
@@ -64,9 +65,9 @@
       },
       "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
         "RS_ms": null,
-        "R_p0_std_m": 9.139305811944828,
-        "R_v0_std_mps": 5.0922843490141725,
-        "sigma_a_mps2": 1.40694773,
+        "R_p0_std_m": 9.139301979399871,
+        "R_v0_std_mps": 5.092282213577509,
+        "sigma_a_mps2": 1.40694714,
         "tau_s": 3.29034925
       },
       "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
@@ -144,8 +145,8 @@
     }
   },
   "git_branch": "claude/github-actions-attitude-errors-yddwr7",
-  "git_commit": "8e59f56bf9cc2e02a01fa944322f00d7505d4e62",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 115024 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |   1834 +-\n .../ou_validation/ou_validation_covsync.svg        |   1974 +-\n .../ou_validation/ou_validation_displacement.svg   |   1712 +-\n .../results/ou_validation/ou_validation_macros.tex |    276 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4464 +-\n .../ou_validation/ou_validation_publication.tex    |     80 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   4992 +-\n .../results/ou_validation/ou_validation_table.tex  |    168 +-\n .../ou_validation/ou_validation_transition.csv     |  23962 ++--\n .../ou_validation/ou_validation_transition.svg     |  19885 +--\n .../ou_validation/ou_validation_tuning_points.tex  |     16 +-\n .../ou_validation/ou_validation_vertical.svg       |   1720 +-\n 14 files changed, 88868 insertions(+), 88919 deletions(-)",
+  "git_commit": "8dc66110f8ea5bfece1a093789c09446816aea0f",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 1524 ++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |  603 ++++---\n .../ou_validation/ou_validation_covsync.svg        |  679 ++++----\n .../ou_validation/ou_validation_displacement.svg   |  605 ++++---\n .../ou_validation/ou_validation_paired_effects.csv |  112 +-\n .../results/ou_validation/ou_validation_raw.csv    |   10 +-\n .../ou_validation/ou_validation_summary.csv        |  112 +-\n .../ou_validation/ou_validation_transition.csv     | 1772 ++++++++++----------\n .../ou_validation/ou_validation_transition.svg     |  239 ++-\n .../ou_validation/ou_validation_vertical.svg       |  605 ++++---\n 10 files changed, 3128 insertions(+), 3133 deletions(-)",
   "numpy": "1.26.4",
   "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
   "protocol": {
@@ -270,60 +271,60 @@
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4662878,
-      "sha256": "69f6cdbac1d2916a045fd3ad60043ad3db7beadfa4187c8cbefbeb85c03b87a7"
+      "bytes": 4662858,
+      "sha256": "8fb2cadaeca952fbdb8d310e6d994378027790e8f62de4ac3742ca41ec78bc38"
     },
     "ou_validation_attitude.svg": {
-      "bytes": 81569,
-      "sha256": "b355beafc9b05b8ae517c138eb9626e15a672388d5f73f0260d218c2a2dc3061"
+      "bytes": 81519,
+      "sha256": "bc8354f85be19debb3828b713df2a70bde262dc44e39723b515d83d7c3d8f844"
     },
     "ou_validation_covsync.svg": {
-      "bytes": 93081,
-      "sha256": "2340f718fbb159df3ef5f9c3d6325dcc03c5e88c2e1f4bf4d71cbd625e3d8127"
+      "bytes": 93031,
+      "sha256": "468cb49891ed4f042a1ece8d6bc9dec650017d3eed1de9a5d2ec39d92bcb4b3c"
     },
     "ou_validation_displacement.svg": {
-      "bytes": 81352,
-      "sha256": "28bd02ed297d88904e2103eee07e9c063cb822d1c738034aecf693021a7aea85"
+      "bytes": 81300,
+      "sha256": "9a76d42fda076eff5ad9a7fb5e1937bb81464e861a5fbed26cda09ef9194b577"
     },
     "ou_validation_macros.tex": {
       "bytes": 10250,
       "sha256": "931d51c35d6d466ac11afe709a38acb15cd3ec07be8da95bdddd19cd7083815d"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 621804,
-      "sha256": "430895a0258e68a85e8d28e88595b5f96d02bf87b9232bbd72012ad07d815323"
+      "bytes": 621768,
+      "sha256": "c9f9ee4d0e8bd2f71edac07750aa35663150732acea62d902aafaf924fa54956"
     },
     "ou_validation_publication.tex": {
       "bytes": 12655,
       "sha256": "24d1aeba551d0aad6732ed1ae801fa47057e39c71db2f25f7ec5368319af58fe"
     },
     "ou_validation_raw.csv": {
-      "bytes": 559536,
-      "sha256": "b89568ddbe5d73b85a4bf7c988388c8280c6940ee03e70921267e4a866129f19"
+      "bytes": 559547,
+      "sha256": "cfc4042a76e1cf8fe99e7fe1730f0f8d8fd0fd83ed1d26b53ec9320cc0e5ec28"
     },
     "ou_validation_summary.csv": {
-      "bytes": 653862,
-      "sha256": "0cd8af50566f8070c31ccb765ce34a83e8890c658ff7ea8ff9acbff4fbcf88a7"
+      "bytes": 653869,
+      "sha256": "cab4bbbf280b099de856e5dfe8008d5b698d48020d436a4427f030bb6e4d25d8"
     },
     "ou_validation_table.tex": {
       "bytes": 15588,
       "sha256": "30b5cc335c01378247b4c6d4ab5e73034bb0f7d00576ba668de6173879ad5cfc"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1343583,
-      "sha256": "e7eb8ee7e3077c1a65b88984c19ba429ee1ba1fb8151de1cbbd19778eec4842c"
+      "bytes": 1343646,
+      "sha256": "bdfc7dc7bc24d21bfc3f7b169f180c24e9495b649bca4b16c68560580df5f26c"
     },
     "ou_validation_transition.svg": {
-      "bytes": 303453,
-      "sha256": "a5979f701491c679cafbf9bf209e430a8663df13d5965c6e78688daa255b350a"
+      "bytes": 303403,
+      "sha256": "b1165e1ae39c6a6c2ac8b329bf189bb09600f8f4cdddbf59eefbcfa928b704a1"
     },
     "ou_validation_tuning_points.tex": {
       "bytes": 1857,
       "sha256": "f73e513bda8171f4e8e7b31bba841815fd83b7fd379e3c67bfc90b441f73f781"
     },
     "ou_validation_vertical.svg": {
-      "bytes": 82438,
-      "sha256": "d74ce223c4d5b65fb4318146fa950510973c9caae5611940d36eb9b5e9cea6b2"
+      "bytes": 82388,
+      "sha256": "a6fbac512941da79f5be48f35e3fb090c47aa0eae31dee27b5bcc9f693fa05a8"
     }
   },
   "source_files": {
