@@ -95,7 +95,8 @@ with the integral-state regularization scale. All OU--III results reported in
 this paper use the \textit{KalmANF adaptive notch filter}; two compiled
 alternative tracker policies are documented in
 Appendix~\ref{app:tracker-alternatives} but are not evaluated as OU--III
-ablations. The dominant frequency provides an updated correlation time
+ablations. The wave-band zero-crossing period, estimated separately from that
+tracker (Sec.~\ref{sec:wave-band-period}), provides the correlation time
 $\tau$, while the stationary acceleration scale $\sigma_{aw}$ is estimated
 in the time domain. The pseudo-measurement standard-deviation scale is adapted
 through the spectrally motivated law
@@ -143,7 +144,8 @@ The main contributions of this work are:
   \item A reproducible paired comparison against a published nonlinear observer
         and two earlier author-developed observer architectures, including an
         OU--II ablation that isolates the incremental effect of the OU--III
-        translational state structure.
+        translational state structure by tuning both filters from the same
+        wave-band period.
   \item A versioned ten-seed paired validation on stationary and transitioning
         directional sea spectra, including confidence intervals, negative
         results, and the limits of the observed OU--III advantage.

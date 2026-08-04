@@ -254,11 +254,86 @@ now justified by the noise model rather than by the sweep that found it. The
 pre-existing, it is what the bias gate has always been scoring, and it is out of
 scope for this change.
 
-One further attribution:One further attribution: the two raised clamps are worth about 13% of 3D RMS at
+One further attribution: the two raised clamps are worth about 13% of 3D RMS at
 `H_s = 8.5` m on their own, because `MAX_TAU_S = 3` and `MAX_R_S = 35` were
 binding under the old operating point too. They are raised as part of the
 wave-band change, since a wave-band `tau` needs the headroom, but the deployed
 baseline they are compared against had them binding.
+
+## 1.7 The same defect, and the same fix, in OU-II
+
+OU-II was left on the acceleration-band tracker when OU-III moved off it. That
+made the family comparison unfair in a way that flattered neither filter: the
+two differ by the extra integral-displacement state, but they were also being
+tuned from two different spectral bands, so every OU-III-minus-OU-II difference
+mixed the architecture change with the band change.
+
+The defect is the same one described in section 1.2. OU-II's laws are
+`tau = c_tau/(2 f_tune)`, `r_p0 = c_p0 sigma_aw tau^2` and
+`r_v0 = c_v0 sigma_aw tau`; only the exponent differs from OU-III's `tau^3`, so
+an uninformative `f_tune` is squared rather than cubed on the way into the
+regularizer. It is the same failure with a smaller multiplier.
+
+`WavePeriodEstimator` is now wired into `SeaStateFusionFilter_OU_II` exactly as
+it is in OU-III: fed the leveled vertical acceleration the direction stage
+already forms, consulted only once it reports ready, and ablatable back to the
+old behaviour with `setWaveBandTuning(false)` / `W3D_TUNING_BAND=acceleration`.
+The estimator itself is unchanged and shared, so the `T_z` accuracy table in
+section 1.6 applies unaltered.
+
+Coefficients were re-fitted the same way, one factor at a time over the four
+stationary JONSWAP records with three seed triplets each, scored on the mean
+normalized vertical error with 3D RMS as the secondary check:
+
+| parameter | was | now | why |
+| --- | --- | --- | --- |
+| `tau_coeff` | 1.5 | 1.0 | `tau = T_z/2`, and the optimum of the scan |
+| `R_p0_coeff` | 1.6 | 0.6 | the same law now sees a 2-3x longer `tau` |
+| `R_v0_coeff` | 1.4 | 1.1 | shallow optimum; moved with `R_p0_coeff` |
+| `R_p0_xy_factor` | 0.31 | 1.0 | the anisotropy was an acceleration-band optimum |
+| `sigma_coeff` | 0.85 | 0.85 | scan optimum, unchanged |
+| `P_factor` | 1.5 | 1.5 | moves the score by under 1%; left alone |
+| accel-bias RW | 1e-3 | 5e-4 | see below |
+| `MAX_TAU_S` | 3.0 s | 12.0 s | 3.0 s bound at `H_s = 8.5` m |
+| `MAX_R_p0_std` | 18 m | 150 m | 18 bound exactly at `H_s = 8.5` m |
+| `MAX_R_v0_std` | 6 m/s | 40 m/s | raised with `r_p0` for the same reason |
+
+Two of these are worth stating separately.
+
+`tau_coeff` and `R_p0_coeff` cannot be fitted one at a time. Along the good
+ridge the conserved quantity is `R_p0_coeff * tau_coeff^2`, at about 0.57, which
+is what the law says it should be: `r_p0 = c * sigma_aw * tau^2`. The scan was
+therefore run as a small 2D grid, and `tau_coeff = 1` was chosen from the ridge
+because it is the documented intent, `tau = T_z/2`, and OU-III's value.
+
+The accelerometer-bias random walk had to move with the operating point, and
+this was not anticipated. OU-II assumed `1e-3` per sqrt(s) where the reference
+simulation generates `5e-4`; OU-III had already been corrected. Left alone it
+was not merely inconsistent but actively harmful, because tying `tau` to the
+wave band moves the OU corner down toward the bias band and the two states then
+compete for the same low-frequency content. With the loose prior the bias state
+won that competition and absorbed the persistent tilt-induced specific force.
+Across the ten-seed ensemble that showed up as:
+
+| metric, `H_s = 8.5` m | acceleration band | wave band, `1e-3` | wave band, `5e-4` |
+| --- | --- | --- | --- |
+| pitch RMS [deg] | 0.726 | 0.988 | see study |
+| yaw RMS [deg] | 2.93 | 3.63 | see study |
+| accel-bias 3D RMS [m/s^2] | 0.151 | 0.232 | see study |
+
+and on the deterministic sentinel the accel-bias gate failed outright at
+`H_s = 4.0` and `8.5` m (336% and 325% against a 242% limit, from 241% before).
+That gate had 0.6 percentage points of margin in the old build, so it is exactly
+the realization-specific sentinel this document argues should eventually be
+replaced -- but the underlying regression was real and visible in the ensemble,
+not an artifact of where the threshold sits, so the fix is the prior and not the
+threshold. The tighter prior costs about 1.3 percentage points of mean
+normalized vertical error across the four reference seas. It is chosen because
+it is the true process noise and because OU-III uses it, so the family
+comparison does not confound the translational state structure with two
+different bias priors.
+
+The ten-seed statement is in `reports/results/ou_validation/`.
 
 ## 2. Finding 2: the travel-sense classes are a gauge label
 
@@ -378,7 +453,7 @@ Estimating the horizontal stationary covariance per axis, and feeding the full
 3x3 through the existing `set_aw_stationary_cov_full`, remains the natural next
 step and would make the OU process direction-aware.
 
-### Stage E - re-validation and manuscript
+### Stage E - re-validation and manuscript (done)
 
 Both committed evidence bundles pin a SHA-256 of the simulator sources they
 were produced from, so *any* change under `src/util/` or `tests/*-sim.cpp` -
@@ -391,17 +466,45 @@ python3 tools/ou_robustness.py --mode full --bootstrap-resamples 10000 \
 python3 tools/ou_validation.py --mode full
 ```
 
-That is roughly 310 and 500 twenty-minute simulator runs respectively, so it is
-a CI job, not a workstation job.
+That is roughly 310 and 840 twenty-minute simulator replays respectively, so it
+is a CI job, not a workstation job. Both live in the `regenerate` job of
+`.github/workflows/ou-validation.yml`, which is dispatch-only and runs one job
+per bundle: together they do not fit in a single runner lifetime with any
+margin, and splitting them means a failure in one does not throw away the
+other's hours. The `validate` job that runs on every pull request stays in
+smoke mode and never produces numbers anyone cites.
 
-- E1. Re-fit coefficients with `tools/ou_tuning_sweep.py` on the stationary
-  records, then re-run both bundles above and regenerate the generated `.tex`
-  parts.
+- E1. Re-fit coefficients on the stationary records, then re-run both bundles
+  above and regenerate the generated `.tex` parts. (done for OU-III; repeated
+  for OU-II with the section 1.7 change)
 - E2. Update `doc/kalman_ou_iii/w3d-direction-methods.tex-part` and the results
   caption: report the travel-sense correctness rate and the heading-invariance
-  experiment instead of the "not a correctness rate" caveat.
+  experiment instead of the "not a correctness rate" caveat. (done)
 - E3. Update `docs/ou-validation.md` and the covariance-policy discussion to
-  match the measured picture in section 1.1.
+  match the measured picture in section 1.1. (done)
+
+### Stage F - port the wave-band operating point to OU-II (done)
+
+Section 1.7. Without it the family comparison confounds the extra
+integral-displacement state with the spectral band the two filters are tuned
+from. `W3D_TUNING_BAND=acceleration` restores the old OU-II behaviour so the
+change stays ablatable on both sides of the comparison.
+
+### Still open
+
+- The periodic `P_aw_aw` re-alignment is still the deployed default. Section 1.1
+  establishes that it did not cause the loss and that the congruent alternative
+  is worse; retiring or bounding it is a separate change with its own evidence.
+- The Stage A5 adaptation telemetry (`W3D_WRITE_ADAPT_LOG`: NIS, covariance
+  traces, operating-point history, regularizer corner, band-separated
+  displacement error) is unimplemented.
+- Stage D's per-axis stationary acceleration covariance is unimplemented.
+- The ~1.1 degree static roll offset absorbed by the accelerometer-bias state
+  predates all of this and is unfixed.
+- The historical final-60-second gates remain calibrated to one realization and
+  in at least one case had under one percentage point of margin. They should be
+  replaced by separately calibrated ensemble acceptance criteria and kept only
+  as deterministic sentinels.
 
 ## 4. What this changes about the manuscript's claims
 

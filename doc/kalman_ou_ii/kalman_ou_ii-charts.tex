@@ -67,41 +67,47 @@
 
 % === Kalman 3D Filter: Frequency / Tuner Charts ===
 
+The frequency panel of these figures is the acceleration-band tracker, which
+drives demodulation for the direction stage. It is \emph{not} what sets the
+operating point: $\tau=\widehat{T}_z/2$ is derived from the zero-crossing wave
+period estimated in the wave band, and $r_{p0}$ and $r_{v0}$ follow from it. The
+two need not agree, and in a developed sea they do not.
+
 % PM Stokes
     \begin{figure}[H]\centering
     \resizebox{\textwidth}{!}{\input{w3d_ou2_pmstokes_low_tuner.pgf}}
-    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — PM Stokes, low $H_s$.}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f_{\mathrm{tracker}}$, $T_p$, acceleration variance, $\tau$, $\sigma_{aw}$, $r_{p0}$ ) — PM Stokes, low $H_s$.}
     \label{fig:w3d_ou2_pmstokes_low_tuner}
     \end{figure}
 
     \begin{figure}[H]\centering
     \resizebox{\textwidth}{!}{\input{w3d_ou2_pmstokes_medium_tuner.pgf}}
-    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — PM Stokes, medium $H_s$.}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f_{\mathrm{tracker}}$, $T_p$, acceleration variance, $\tau$, $\sigma_{aw}$, $r_{p0}$ ) — PM Stokes, medium $H_s$.}
     \label{fig:w3d_ou2_pmstokes_medium_tuner}
     \end{figure}
 
     \begin{figure}[H]\centering
     \resizebox{\textwidth}{!}{\input{w3d_ou2_pmstokes_high_tuner.pgf}}
-    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — PM Stokes, high $H_s$.}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f_{\mathrm{tracker}}$, $T_p$, acceleration variance, $\tau$, $\sigma_{aw}$, $r_{p0}$ ) — PM Stokes, high $H_s$.}
     \label{fig:w3d_ou2_pmstokes_high_tuner}
     \end{figure}
 
 % JONSWAP
     \begin{figure}[H]\centering
     \resizebox{\textwidth}{!}{\input{w3d_ou2_jonswap_low_tuner.pgf}}
-    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — JONSWAP, low $H_s$.}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f_{\mathrm{tracker}}$, $T_p$, acceleration variance, $\tau$, $\sigma_{aw}$, $r_{p0}$ ) — JONSWAP, low $H_s$.}
     \label{fig:w3d_ou2_jonswap_low_tuner}
     \end{figure}
 
     \begin{figure}[H]\centering
     \resizebox{\textwidth}{!}{\input{w3d_ou2_jonswap_medium_tuner.pgf}}
-    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — JONSWAP, medium $H_s$.}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f_{\mathrm{tracker}}$, $T_p$, acceleration variance, $\tau$, $\sigma_{aw}$, $r_{p0}$ ) — JONSWAP, medium $H_s$.}
     \label{fig:w3d_ou2_jonswap_medium_tuner}
     \end{figure}
 
     \begin{figure}[H]\centering
     \resizebox{\textwidth}{!}{\input{w3d_ou2_jonswap_high_tuner.pgf}}
-    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f$, $T_p$, accel variance, $\tau$, $\sigma_a$, $R_S$ ) — JONSWAP, high $H_s$.}
+    \caption{Kalman 3D filter frequency and auto-tuner traces ( $f_{\mathrm{tracker}}$, $T_p$, acceleration variance, $\tau$, $\sigma_{aw}$, $r_{p0}$ ) — JONSWAP, high $H_s$.}
     \label{fig:w3d_ou2_jonswap_high_tuner}
     \end{figure}
 

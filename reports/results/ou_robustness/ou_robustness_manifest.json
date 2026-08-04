@@ -4,15 +4,17 @@
     "tools/ou_robustness.py",
     "--mode",
     "full",
-    "--skip-build",
+    "--sensitivity-scales",
+    "0.5,0.75,1.0,1.25,1.5",
     "--bootstrap-resamples",
     "10000",
+    "--skip-build",
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/ou-iii-direction-sign-fixes-ma5g5n",
-  "git_commit": "b3822a8eabb47f0c37ce077eaf9749b853bf9f8b",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 37634 +++++++++++--------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1256 +-\n .../ou_robustness/ou_robustness_publication.tex    |    84 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   622 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1326 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   533 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1610 +-\n 7 files changed, 25097 insertions(+), 17968 deletions(-)",
+  "git_branch": "claude/ou-ii-adaptation-logic-ctojf3",
+  "git_commit": "5769eaa0f80762ccfda5597c3a39473716edb0f9",
+  "git_diff_stat": "doc/kalman_ou_iii/kalman_ou-w3d.tex                |     6 +-\n doc/kalman_ou_iii/ou_validation_transition.svg     |   244 +-\n doc/kalman_ou_iii/ou_validation_vertical.svg       |  1221 +-\n doc/kalman_ou_iii/w3d-baseline-comparison.tex-part |     7 +-\n doc/kalman_ou_iii/w3d-conclusion-summary.tex-part  |     2 +-\n .../w3d-ou-validation-macros-generated.tex-part    |   126 +-\n .../w3d-ou-validation-results-generated.tex-part   |    56 +-\n ...-ou-validation-tuning-points-generated.tex-part |    20 +-\n docs/ou-validation.md                              |     6 +-\n reports/results/ou_validation/ou_validation.json   | 52512 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |  1276 +-\n .../ou_validation/ou_validation_covsync.svg        |  1349 +-\n .../ou_validation/ou_validation_displacement.svg   |   966 +-\n .../results/ou_validation/ou_validation_macros.tex |   126 +-\n .../ou_validation/ou_validation_manifest.json      |   144 +-\n .../ou_validation/ou_validation_paired_effects.csv |  2192 +-\n .../ou_validation/ou_validation_publication.tex    |    56 +-\n .../results/ou_validation/ou_validation_raw.csv    |   740 +-\n .../ou_validation/ou_validation_summary.csv        |  2192 +-\n .../results/ou_validation/ou_validation_table.tex  |    74 +-\n .../ou_validation/ou_validation_transition.svg     |   244 +-\n .../ou_validation/ou_validation_tuning_points.tex  |    20 +-\n .../ou_validation/ou_validation_vertical.svg       |  1221 +-\n src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h      |     6 +-\n 24 files changed, 32374 insertions(+), 32432 deletions(-)",
   "matplotlib": "3.11.1",
   "nominal_tuning_point": {
     "RS_ms": 3.412286900388625,
@@ -22,7 +24,7 @@
     "tau_s": 2.17941117
   },
   "numpy": "2.4.6",
-  "platform": "Linux-6.18.5-x86_64-with-glibc2.39",
+  "platform": "Linux-6.18.5-fc-v18-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -174,8 +176,8 @@
       "sha256": "d6ba5806dfed9a45072eb8b9a83d9400c988af9598a45dc46bb9b3bc7b1f2ff6"
     },
     "tools/ou_validation.py": {
-      "bytes": 124886,
-      "sha256": "40426c48ca48d82b225169a8a1d6127eb36ebf84ac7628065aa9c43963fd45cd"
+      "bytes": 125172,
+      "sha256": "e6e36879b77dc06338caf93e834ce5d30f68207564017ba64d32efc5d1ea884c"
     }
   }
 }

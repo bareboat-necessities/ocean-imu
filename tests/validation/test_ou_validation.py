@@ -822,13 +822,15 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         self.assertIn("tab:ou_mc_axes", results)
         self.assertIn("higher", results)
         # The 3D result must be stated with its remaining exception named, in
-        # either direction.  It used to be negative in most scenarios and the
-        # guard was against overstating that; it is now positive in most, and
-        # the guard is against quietly dropping the sea where it is not.
+        # either direction, and must not be rounded up into a claim.  With both
+        # families tuned in the same band OU--III is higher in four of five and
+        # inconclusive in the fifth, so the guard is against silently promoting
+        # "not resolvably worse" into "better".
         self.assertNotIn("consistently higher OU--III 3D error", conclusion)
         self.assertNotIn("uniformly better in three dimensions", conclusion)
         self.assertIn("OUValidationThreeDHigherCount", conclusion)
-        self.assertIn("the smallest sea", conclusion)
+        self.assertIn("inconclusive in the fifth", conclusion)
+        self.assertIn("spanning zero", results)
 
         # The channel ablation and its no-implicit-freeze construction.
         self.assertIn("tab:ou_mc_channels", results)

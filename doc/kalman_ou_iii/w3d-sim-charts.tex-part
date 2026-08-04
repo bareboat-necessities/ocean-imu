@@ -227,7 +227,7 @@ effect magnitude throughout.
 \paragraph{Adaptation-channel ablation}
 \label{par:channel-ablation}%
 Comparing Adaptive with FixedNominal moves three parameters at once, and the
-deployed law $r_S=\clip(1.2\,\sigma_{aw}\tau^{3},0.4,35)$ ties the third to the
+deployed law $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.4,400)$ ties the third to the
 first two.  That comparison therefore cannot say whether the vertical benefit
 comes from adapting the OU process itself or from adapting the integral
 regularization.  Two additional OU--III modes complete the $2\times2$
@@ -267,8 +267,10 @@ frozen-parameter references.  Both are produced by the same procedure: the
 adaptive filter is run once on a noise-free, unrandomized \SI{1200}{s} record;
 its final $\tau$ and $\sigma_{aw}$ are read out; the regularization scale is
 computed algebraically from
-$r_S=\clip(1.2\,\sigma_{aw}\tau^{3},\,0.4,\,35)$ for OU--III and from the
-corresponding OU--II law; and the resulting triple is frozen once the filter
+$r_S=\clip(0.35\,\sigma_{aw}\tau^{3},\,0.4,\,400)$ for OU--III and from
+$r_{p0}=\clip(0.6\,\sigma_{aw}\tau^{2},\,0.05,\,150)$ together with
+$r_{v0}=\clip(1.1\,\sigma_{aw}\tau,\,0.01,\,40)$ for OU--II; and the resulting
+triple is frozen once the filter
 reaches its normal Live stage.  The modes differ only in \emph{which} record
 supplies that triple.  \emph{FixedNominal} uses the $H_s=\SI{1.5}{m}$,
 $T_p=\SI{5.7}{s}$ record for every scenario.  \emph{FixedOracle} uses the
@@ -285,8 +287,8 @@ Internally the filter derives the applied anisotropic values from the listed
 vertical/base parameters: OU--III uses
 $(1.87\sigma_{aw},1.87\sigma_{aw},\sigma_{aw})$ for the stationary
 acceleration standard deviation and
-$\mat{R}_S=\diag(0.36r_S,0.36r_S,r_S)^2$; OU--II uses $1.5\sigma_{aw}$
-horizontally and $0.31r_{p0}$ for the horizontal pseudo-measurement scale.
+$\mat{R}_S=\diag(r_S,r_S,r_S)^2$; OU--II uses $1.5\sigma_{aw}$
+horizontally and an isotropic $r_{p0}$.
 
 \paragraph{Covariance policy and its control}
 The filter re-aligns the latent-acceleration marginal $\mat{P}_{a_w a_w}$ with
