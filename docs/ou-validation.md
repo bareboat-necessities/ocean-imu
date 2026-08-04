@@ -7,8 +7,12 @@ thresholds. The full experiment separately scores the trailing 900 seconds of ea
 20-minute realization.
 
 The repository versions the completed ten-seed study used by the manuscript in
-`reports/results/ou_validation/`. It contains 500 simulator rows: five scenarios,
-two filter families, five adaptation modes, and ten paired seed triplets.
+`reports/results/ou_validation/`. It contains 840 simulator rows over ten
+paired seed triplets: nine scenarios (four JONSWAP seas, four PM-Stokes seas,
+one controlled transition) and two filter families. The three primary modes run
+on all nine scenarios; the two covariance-policy controls and the two
+OU-III-only channel-freeze modes run on the five JONSWAP-plus-transition
+scenarios.
 
 ## Experiment design
 
@@ -60,8 +64,8 @@ startup/Live transition. Each fixed triple is obtained by running the adaptive
 filter once on a noise-free, unrandomized 1200 s record, reading its final
 `tau` and `sigma_aw`, and computing
 `r_S = clip(0.35 * sigma_aw * tau**3, 0.4, 400)` (OU-III), or, for OU-II,
-`r_p0 = clip(1.1 * sigma_aw * tau**2, 0.05, 150)` together with
-`r_v0 = clip(1.4 * sigma_aw * tau, 0.01, 40)`. Both families derive `tau` from
+`r_p0 = clip(0.6 * sigma_aw * tau**2, 0.05, 150)` together with
+`r_v0 = clip(1.1 * sigma_aw * tau, 0.01, 40)`. Both families derive `tau` from
 the same wave-band zero-crossing period, `tau = T_z / 2`; neither reads the
 acceleration-band frequency tracker for tuning.
 No fixed point is optimized against displacement error. The exact
@@ -72,8 +76,8 @@ Those values are the vertical/base parameters. The filter derives the applied
 anisotropic values internally: OU-III uses
 `(1.87*sigma_aw, 1.87*sigma_aw, sigma_aw)` for the stationary acceleration
 standard deviation and `diag(r_S, r_S, r_S)**2` for the integral
-pseudo-measurement covariance; OU-II uses `1.5*sigma_aw` horizontally and
-`0.6*r_p0` for the horizontal pseudo-measurement scale.
+pseudo-measurement covariance; OU-II uses `1.5*sigma_aw` horizontally and, since
+the operating point moved to the wave band, an isotropic `r_p0`.
 
 ### Covariance policy and its control
 
@@ -170,13 +174,19 @@ zero is inconclusive at that interval level. Effect sizes should be interpreted
 with their paired sample count and interval, not in isolation.
 
 Across the four stationary JONSWAP seas, the within-seed mean normalized
-vertical RMS is 7.22% of $H_s$ for OU-III and 8.31% for OU-II. The paired
-difference is -1.086 percentage points with a bootstrap 95% interval of
-[-1.208, -0.970]. OU-III is lower vertically in every stationary sea, but is
-higher during the transition and has higher 3D displacement RMS in four of the
-five scenarios; the nominal-sea 3D interval spans zero. Conclusions should
-therefore remain conditional on the evaluated JONSWAP family rather than be
-read as uniform estimator dominance.
+vertical RMS is 5.08% of $H_s$ for OU-III and 6.50% for OU-II. The paired
+difference is -1.426 percentage points with a bootstrap 95% interval of
+[-1.525, -1.310]. OU-III is lower vertically in every stationary sea and during
+the transition, and has higher 3D displacement RMS in four of the five
+scenarios with the fifth spanning zero, so there is no scenario in which it is
+resolvably better in three dimensions.
+
+Both families now take the operating point from the same wave-band
+zero-crossing period. Earlier bundles tuned only OU-III that way, which made
+the reported vertical difference (-3.233 points) roughly twice what the
+architecture alone accounts for, and made the 3D count look like 1 of 5 rather
+than 4 of 5. Conclusions should remain conditional on the evaluated JONSWAP
+family rather than be read as uniform estimator dominance.
 
 The follow-on OU-III parameter-sensitivity and degradation-case protocol is
 documented separately in [`ou-robustness.md`](ou-robustness.md). It reuses the

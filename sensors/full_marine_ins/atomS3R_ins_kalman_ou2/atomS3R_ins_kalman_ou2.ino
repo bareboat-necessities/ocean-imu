@@ -522,12 +522,13 @@ private:
     ff.enableLinearBlock(WANT_LINEAR_BLOCK);
     ff.enableTuner(true);
     ff.setWithMag(true);
-    ff.setPFactor(1.4f);
-    ff.setTauCoeff(1.5f);
-    ff.setSigmaCoeff(0.85f);
-    ff.setR_v0_Coeff(0.45f);
-    ff.setR_p0_Coeff(0.3f);
-    ff.setR_p0_XYFactor(0.23f);
+    // The tuner coefficients (P_factor, tau, sigma, r_p0, r_v0, r_p0 XY) are
+    // deliberately not overridden here.  The header defaults are the operating
+    // point the committed ten-seed study was run at, and they were re-fitted
+    // when tau moved to the wave-band zero-crossing period.  The values that
+    // used to sit here were fitted against the old acceleration-band tau, so
+    // re-applying them would put the device at an operating point no evidence
+    // covers.  Override only alongside a study re-run.
     ff.setAccNoiseFloorSigma(ACC_NOISE_FLOOR_SIGMA_DEFAULT);
     ff.enableClamp(true);
     ff.setFreqInputCutoffHz(6.0f);

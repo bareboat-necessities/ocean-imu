@@ -88,8 +88,11 @@ class RobustnessDesignTests(unittest.TestCase):
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "ou-validation.yml"
         ).read_text(encoding="utf-8")
-        self.assertIn('scales="0.5,1.0,1.5"', workflow)
-        self.assertIn('--sensitivity-scales "${scales}"', workflow)
+        # The pull-request gate runs smoke mode and must still exercise the
+        # three anchors the publication tables are read at; the dispatch-only
+        # regeneration leg runs the full five.
+        self.assertIn('--sensitivity-scales "0.5,1.0,1.5"', workflow)
+        self.assertIn('--sensitivity-scales "0.5,0.75,1.0,1.25,1.5"', workflow)
 
     def test_summary_and_sensitivity_effect_are_paired(self):
         rows = []

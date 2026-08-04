@@ -972,11 +972,14 @@ private:
 
     // Horizontal p-regularization scale relative to the vertical one.  0.31 was
     // fitted against the acceleration-band operating point, where it made the
-    // horizontal high-pass 3.2x stronger than the vertical one.  With tau tied
-    // to the wave band the horizontal axes no longer need that much extra
-    // suppression: 0.6 leaves the vertical error unchanged and takes about
-    // 7 percent off the mean 3D RMS across the four stationary records.
-    float R_p0_xy_factor_ = 0.6f;
+    // horizontal high-pass 3.2x stronger than the vertical one.  That was a
+    // small-sea optimum applied to every sea state; with tau tied to the wave
+    // band the horizontal axes no longer need any extra suppression at all.
+    // Sweeping it leaves normalized vertical error flat to within 0.03
+    // percentage points while 1.0 takes about 10 percent off the mean 3D RMS
+    // across the four stationary records.  OU-III reached the same conclusion
+    // for its own rho_xy.  Retained as a setter because the bound is a real one.
+    float R_p0_xy_factor_ = 1.0f;
     float P_factor_       = 1.5f;
 
     TrackingPolicy               tracker_policy_{};
@@ -994,13 +997,16 @@ private:
     float acc_noise_floor_sigma_ = ACC_NOISE_FLOOR_SIGMA_DEFAULT;
 
     // r_p0 = R_p0_coeff * sigma_aw * tau^2, r_v0 = R_v0_coeff * sigma_aw * tau,
-    // and tau = tau_coeff * T_z / 2.  All three are re-fitted for the wave-band
-    // period on the four stationary JONSWAP records: tau_coeff = 1 is both the
-    // documented intent, tau equal to half the zero-crossing period, and the
-    // joint optimum of the one-factor-at-a-time scan, and R_p0_coeff moves from
-    // 1.6 to 1.1 because the same law now sees a tau two to three times longer.
-    float R_p0_coeff_  = 1.1f;
-    float R_v0_coeff_  = 1.4f;
+    // and tau = tau_coeff * T_z / 2.  All are re-fitted for the wave-band period
+    // on the four stationary JONSWAP records, jointly with the corrected
+    // accelerometer-bias prior in Kalman3D_Wave_OU_II.h: tau_coeff = 1 is both
+    // the documented intent, tau equal to half the zero-crossing period, and the
+    // optimum of the scan, while R_p0_coeff falls from 1.6 to 0.6 because the
+    // same law now sees a tau two to three times longer.  Along the good ridge
+    // the conserved quantity is R_p0_coeff * tau_coeff^2, so the two must be
+    // re-fitted together rather than one at a time.
+    float R_p0_coeff_  = 0.6f;
+    float R_v0_coeff_  = 1.1f;
     float tau_coeff_   = 1.0f;
     float sigma_coeff_ = 0.85f;
 

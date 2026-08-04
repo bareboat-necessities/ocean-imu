@@ -15,7 +15,7 @@ corresponding covariance by $c^2$.
 The remaining two directions are \emph{coupled}, because the one-factor sweeps
 answer a narrower question than they appear to.  The deployed law ties the
 regularization scale to the other two parameters through
-$r_S=\clip(1.2\,\sigma_{aw}\tau^{3},\,0.4,\,35)$, so freezing $r_S$ while
+$r_S=\clip(0.35\,\sigma_{aw}\tau^{3},\,0.4,\,400)$, so freezing $r_S$ while
 sweeping $\sigma_{aw}$ or $\tau$ measures only the \emph{direct} effect of the
 OU process covariance and never reproduces a state the online tuner can
 occupy.  The coupled sweeps therefore move $\sigma_{aw}\to c\,\sigma_{aw}$

@@ -11,20 +11,24 @@ $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
 OU--II.  Their paired difference is $\OUValidationNormalizedDifference$
 percentage point (bootstrap 95\% interval
 $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$).
-OU--III 3D displacement error is higher in
-\OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
-scenarios, the smallest sea, down from \num{4} of \num{5} before the operating
-point was tied to the wave band.  The supported claim is correspondingly wider
-than in earlier revisions: OU--III improves stationary vertical reconstruction
-throughout, and improves three-dimensional reconstruction in every sea except
-the smallest.  The result extends to a second
+Both filters take that operating point from the same wave-band zero-crossing
+period, so the comparison isolates the additional integral-displacement state
+rather than the spectral band the two were tuned from; in earlier revisions
+only OU--III did, and about \pct{56} of the vertical advantage reported then
+was the band rather than the architecture.  OU--III 3D displacement error is
+higher in \OUValidationThreeDHigherCount{} of the
+\OUValidationThreeDScenarios{} scenarios and inconclusive in the fifth, so the
+supported claim is a vertical one throughout and a three-dimensional one
+nowhere: the vertical gain is paid for in the horizontal channels, and most
+visibly in $Y$.  The result extends to a second
 spectral family, with a paired PM--Stokes difference of
 $\OUValidationPMStokesDifference$ percentage point
 ($[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$)
-scored on the same seeds.  Adaptive tuning improves on
-FixedNominal at the smallest and largest stationary seas, but both families
-score worse than FixedNominal and the endpoint-calibrated fixed reference at
-the nominal sea and over the controlled transition.  The channel ablation locates that benefit in one parameter, and the location is
+scored on the same seeds.  Adaptive tuning improves on FixedNominal at the
+smallest and largest stationary seas and over the controlled transition, where
+it also beats the endpoint-calibrated fixed reference; it costs a few
+hundredths of a point only at the nominal sea the frozen point was calibrated
+at.  The channel ablation locates that benefit in one parameter, and the location is
 now unambiguous: freezing $\tau$ and $\sigma_{aw}$ while $r_S$ keeps adapting
 reproduces the adaptive result to within a few tenths of a millimetre in every
 scenario, whereas freezing $r_S$ recovers none of it.  In earlier revisions
@@ -38,9 +42,9 @@ evidence therefore establishes the value of adaptive integral-state
 regularization driven by a wave-band period, not the necessity of joint
 three-parameter OU adaptation.  A matched control shows
 that the periodic covariance re-alignment accounts for at most
-$\OUValidationCovSyncWorstDifference$ points of that gap, so the gap is the
-cost of estimating the operating point online and, for the transition, of a
-scoring window \pct{47} of which is the pure endpoint sea.  The simulations and embedded builds exercise the same estimator
+$\OUValidationCovSyncWorstDifference$ points of any of these differences, so
+the residual nominal-sea cost is the cost of estimating the operating point
+online rather than an artifact of the adaptation bookkeeping.  The simulations and embedded builds exercise the same estimator
 recursion, including the exact OU-chain transition, small-step covariance
 branch, full MEKF reset, and adaptive pseudo-measurement scaling.
 

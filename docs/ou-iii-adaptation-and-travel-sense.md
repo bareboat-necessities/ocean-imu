@@ -287,26 +287,53 @@ normalized vertical error with 3D RMS as the secondary check:
 
 | parameter | was | now | why |
 | --- | --- | --- | --- |
-| `tau_coeff` | 1.5 | 1.0 | `tau = T_z/2`, and the joint optimum of the scan |
-| `R_p0_coeff` | 1.6 | 1.1 | the same law now sees a 2-3x longer `tau` |
-| `R_v0_coeff` | 1.4 | 1.4 | flat between 1.4 and 3.0; left alone |
-| `R_p0_xy_factor` | 0.31 | 0.6 | the anisotropy was an acceleration-band optimum |
+| `tau_coeff` | 1.5 | 1.0 | `tau = T_z/2`, and the optimum of the scan |
+| `R_p0_coeff` | 1.6 | 0.6 | the same law now sees a 2-3x longer `tau` |
+| `R_v0_coeff` | 1.4 | 1.1 | shallow optimum; moved with `R_p0_coeff` |
+| `R_p0_xy_factor` | 0.31 | 1.0 | the anisotropy was an acceleration-band optimum |
 | `sigma_coeff` | 0.85 | 0.85 | scan optimum, unchanged |
 | `P_factor` | 1.5 | 1.5 | moves the score by under 1%; left alone |
+| accel-bias RW | 1e-3 | 5e-4 | see below |
 | `MAX_TAU_S` | 3.0 s | 12.0 s | 3.0 s bound at `H_s = 8.5` m |
 | `MAX_R_p0_std` | 18 m | 150 m | 18 bound exactly at `H_s = 8.5` m |
 | `MAX_R_v0_std` | 6 m/s | 40 m/s | raised with `r_p0` for the same reason |
 
-`tau_coeff = 1` is worth stating separately: unlike OU-III, where it was chosen
-on documented-intent grounds and the scan merely did not contradict it, for
-OU-II the scan puts the joint vertical/3D optimum at 1.0 directly.
+Two of these are worth stating separately.
 
-On the deterministic noise-free pilot the change moves every stationary record
-in the same direction. Normalized vertical RMS goes 8.41 -> 6.85, 6.88 -> 6.58,
-7.46 -> 6.22 and 7.85 -> 6.13 percent of `H_s` across `H_s` = 0.27, 1.5, 4.0 and
-8.5 m, and 3D RMS goes 0.052 -> 0.050, 0.291 -> 0.261, 0.896 -> 0.684 and
-1.978 -> 1.423 m. The ten-seed statement is in
-`reports/results/ou_validation/`.
+`tau_coeff` and `R_p0_coeff` cannot be fitted one at a time. Along the good
+ridge the conserved quantity is `R_p0_coeff * tau_coeff^2`, at about 0.57, which
+is what the law says it should be: `r_p0 = c * sigma_aw * tau^2`. The scan was
+therefore run as a small 2D grid, and `tau_coeff = 1` was chosen from the ridge
+because it is the documented intent, `tau = T_z/2`, and OU-III's value.
+
+The accelerometer-bias random walk had to move with the operating point, and
+this was not anticipated. OU-II assumed `1e-3` per sqrt(s) where the reference
+simulation generates `5e-4`; OU-III had already been corrected. Left alone it
+was not merely inconsistent but actively harmful, because tying `tau` to the
+wave band moves the OU corner down toward the bias band and the two states then
+compete for the same low-frequency content. With the loose prior the bias state
+won that competition and absorbed the persistent tilt-induced specific force.
+Across the ten-seed ensemble that showed up as:
+
+| metric, `H_s = 8.5` m | acceleration band | wave band, `1e-3` | wave band, `5e-4` |
+| --- | --- | --- | --- |
+| pitch RMS [deg] | 0.726 | 0.988 | see study |
+| yaw RMS [deg] | 2.93 | 3.63 | see study |
+| accel-bias 3D RMS [m/s^2] | 0.151 | 0.232 | see study |
+
+and on the deterministic sentinel the accel-bias gate failed outright at
+`H_s = 4.0` and `8.5` m (336% and 325% against a 242% limit, from 241% before).
+That gate had 0.6 percentage points of margin in the old build, so it is exactly
+the realization-specific sentinel this document argues should eventually be
+replaced -- but the underlying regression was real and visible in the ensemble,
+not an artifact of where the threshold sits, so the fix is the prior and not the
+threshold. The tighter prior costs about 1.3 percentage points of mean
+normalized vertical error across the four reference seas. It is chosen because
+it is the true process noise and because OU-III uses it, so the family
+comparison does not confound the translational state structure with two
+different bias priors.
+
+The ten-seed statement is in `reports/results/ou_validation/`.
 
 ## 2. Finding 2: the travel-sense classes are a gauge label
 
@@ -474,13 +501,10 @@ change stays ablatable on both sides of the comparison.
 - Stage D's per-axis stationary acceleration covariance is unimplemented.
 - The ~1.1 degree static roll offset absorbed by the accelerometer-bias state
   predates all of this and is unfixed.
-- OU-II still carries the historical accelerometer-bias random walk of `1e-3`
-  per sqrt(s); OU-III uses `5e-4`, the value the reference simulation actually
-  generates. The argument for `5e-4` is filter-independent, so OU-II should
-  probably follow, but it is a process-noise prior rather than adaptation logic
-  and moving it invalidates the committed evidence bundles, so it is left for a
-  change that can carry its own re-run. `OU_II_ACC_BIAS_RW` is plumbed through
-  the simulator so the question can be measured without editing the header.
+- The historical final-60-second gates remain calibrated to one realization and
+  in at least one case had under one percentage point of margin. They should be
+  replaced by separately calibrated ensemble acceptance criteria and kept only
+  as deterministic sentinels.
 
 ## 4. What this changes about the manuscript's claims
 
