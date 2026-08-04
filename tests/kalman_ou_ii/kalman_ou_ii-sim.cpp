@@ -156,6 +156,26 @@ public:
                 filter.setFreqInputCutoffHz(v);
             }
 
+            // Accelerometer-bias random walk.  The bias competes with the OU
+            // acceleration for the low-frequency content, and the wave-band
+            // operating point moves the OU corner down toward it, so this is
+            // the knob that prices that competition.
+            if (env_float("OU_II_ACC_BIAS_RW", v)) {
+                filter.mekf().set_Q_bacc_rw(Eigen::Vector3f::Constant(v));
+            }
+
+            // Ablate the wave-band operating point back to the
+            // acceleration-band frequency the filter used before.
+            if (const char* band = std::getenv("W3D_TUNING_BAND")) {
+                const std::string value = band;
+                if (value == "acceleration") {
+                    filter.setWaveBandTuning(false);
+                } else if (value != "wave") {
+                    throw std::runtime_error(
+                        "W3D_TUNING_BAND must be wave or acceleration");
+                }
+            }
+
             if (env_float("OU_ACC_BIAS_INIT_STD", v)) {
                 filter.mekf().set_initial_acc_bias_std(v);
             }
@@ -283,6 +303,7 @@ s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
         s.tuning_applied = p0_s_from_sigma_tau(s.sigma_applied, s.tau_applied);
 
         s.freq_hz             = filter.getFreqHz();
+        s.wave_period_sec     = filter.getWavePeriodSec();
         s.period_sec          = filter.getPeriodSec();
         s.accel_variance      = filter.getAccelVariance();
         s.displacement_scale_m = filter.getDisplacementScale();

@@ -234,17 +234,28 @@ loop: the integral pseudo-measurement high-passes displacement, which raises the
 apparent frequency, which shortens $\tau$, which strengthens the
 pseudo-measurement.
 
-The tuning frequency is
-$f_{\mathrm{tune}}=\clip(1/\widehat{T}_z,f_{\mathrm{tune,min}},f_{\max})$, with a
-floor an order of magnitude below the tracker band $f_{\min}$ because a
-developed sea has $T_z\approx\SI{8.6}{s}$.  Until the estimator settles the
-tracker frequency is used instead.
+The tuner input frequency is $1/\widehat{T}_z$, or the tracker frequency until
+the period estimator settles.  It is smoothed by a fixed-horizon EMA with time
+constant $\tau_f$ inside the tuner, and the tuning frequency is the clipped
+result,
+\begin{equation}
+f_{\mathrm{tune}}
+=\clip\!\left(\overline{1/\widehat{T}_z},
+f_{\mathrm{tune,min}},f_{\max}\right),
+\label{eq:tuning-frequency}
+\end{equation}
+with a floor an order of magnitude below the tracker band $f_{\min}$ because a
+developed sea has $T_z\approx\SI{8.6}{s}$.
 
 \subsubsection{Period-tied variance horizon}
-The variance is estimated over a fixed number of periods:
+The variance is estimated over a fixed number of periods.  It uses the same
+smoothed frequency as (\ref{eq:tuning-frequency}) but its own clip, which is
+wider at the top and narrower at the bottom because its purpose is to keep the
+horizon finite rather than to bound the operating point:
 \begin{equation}
 \begin{aligned}
-T_{\mathrm{eff}}&=\frac{1}{f_{\mathrm{tune}}},\\
+T_{\mathrm{eff}}&=\frac{1}
+{\clip(\overline{1/\widehat{T}_z},f_{\mathrm{var,min}},f_{\mathrm{var,max}})},\\
 \tau_{\mathrm{var}}&=\clip\!\left(K_{\mathrm{periods}}T_{\mathrm{eff}},
 \tau_{\mathrm{var,min}},\tau_{\mathrm{var,max}}\right),\\
 \alpha_{\mathrm{var}}&=1-e^{-\Delta t/\tau_{\mathrm{var}}}.
@@ -359,6 +370,10 @@ accelerometer-bias random walk
 tuner coefficients $(c_\tau,c_\sigma,c_R)$
 & $(1.0,0.9,0.35)$
 & $r_S$ smoothing time & $5\tau_\star$ \\
+tuner frequency horizon $\tau_f$ / variance horizon
+& \SI{1.0}{s} / $2T_{\mathrm{eff}}$, clipped to $[0.3,60]$ s
+& variance-horizon clip $[f_{\mathrm{var,min}},f_{\mathrm{var,max}}]$
+& $[0.05,5.0]$ Hz \\
 online-tuning warmup / magnetometer delay
 & $5/7$ s
 & frequency smoothing (fast/slow) & $3.5/10$ s \\

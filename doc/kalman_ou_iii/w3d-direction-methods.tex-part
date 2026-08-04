@@ -155,13 +155,25 @@ For the up-positive convention, ideal linear deep-water motion gives
 $a_\parallel\dot a_\uparrow<0$ for propagation along the positive representative
 axis, so the physical decision score is $\chi_k=-\rho_k$.
 The decision is enabled only when the current axis is valid, both RMS levels
-are sufficient, and $|P_k|$ exceeds an absolute floor. With
-$\gamma_{\rm on}>\gamma_{\rm off}\geq0$,
+are sufficient, and $|P_k|$ exceeds an absolute floor. The hysteresis is
+applied through the threshold rather than through the branch: with
+$\gamma_{\rm on}>\gamma_{\rm off}\geq0$, an undecided estimator must clear
+$\gamma_{\rm on}$ to commit, while a decided one is held to $\gamma_{\rm off}$,
+so acquiring a sense is harder than keeping or reversing one. Writing
+\begin{equation}
+\gamma_k=
+\begin{cases}
+\gamma_{\rm on},&s_{\rm app,k-1}=0,\\
+\gamma_{\rm off},&\text{otherwise},
+\end{cases}
+\label{eq:dir-sense-threshold}
+\end{equation}
+the update is
 \begin{equation}
 s_{\rm app,k}=
 \begin{cases}
-+1,&\chi_k>\gamma_{\rm on},\\
--1,&\chi_k<-\gamma_{\rm on},\\
++1,&\chi_k>\gamma_k,\\
+-1,&\chi_k<-\gamma_k,\\
 0,&|\chi_k|<\gamma_{\rm off},\\
 s_{\rm app,k-1},&\text{otherwise}.
 \end{cases}

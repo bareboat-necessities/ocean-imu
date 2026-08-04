@@ -48,11 +48,14 @@ BOOT_SPECS = {
     "SF_BOOT_GRAV_NORM_FRAC": (0.18, 0.65, "linear"),
 }
 
-# OU_II common ranges kept close to the original productive OU_II sweep.
+# OU_II ranges.  OU_TAU_COEFF is re-centred on the wave-band operating point:
+# tau is now tau_coeff * T_z / 2 against a zero-crossing period, not against an
+# acceleration-band frequency, so the productive range moved down by about a
+# third and the old (1.15, 1.50) window no longer contains the deployed value.
 # Env names are generic OU_*.
 OU_COMMON_SPECS = {
-    "OU_SIGMA_COEFF": (1.20, 1.80, "log"),
-    "OU_TAU_COEFF": (1.15, 1.50, "log"),
+    "OU_SIGMA_COEFF": (0.60, 1.40, "log"),
+    "OU_TAU_COEFF": (0.75, 1.30, "log"),
     "OU_ADAPT_TAU_SEC": (1.0, 2.2, "log"),
     "OU_ADAPT_EVERY_SECS": (0.025, 0.15, "log"),
     "OU_ACC_BIAS_INIT_STD": (0.02, 0.85, "log"),
@@ -67,12 +70,14 @@ OU_III_COMMON_SPECS = {
     "OU_ACC_BIAS_INIT_STD": (0.02, 0.85, "log"),
 }
 
-# OU_II was already fine. Keep its existing family-specific knobs.
+# OU_II family-specific knobs, re-centred for the same reason: the (r_p0, r_v0)
+# laws are built on the wave-band tau, so their productive coefficient ranges
+# moved with it.
 OU_II_EXTRA_SPECS = {
-    "OU_R_P0_COEFF": (1.20, 2.50, "log"),
-    "OU_R_P0_XY_FACTOR": (0.20, 0.45, "log"),
+    "OU_R_P0_COEFF": (0.70, 1.80, "log"),
+    "OU_R_P0_XY_FACTOR": (0.30, 1.00, "log"),
     "OU_P_FACTOR": (1.20, 1.80, "log"),
-    "OU_R_V0_COEFF": (1.20, 2.50, "log"),
+    "OU_R_V0_COEFF": (0.90, 2.50, "log"),
 }
 
 # OU_III-specific analogues missing from the sweep.
