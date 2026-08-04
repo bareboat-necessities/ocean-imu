@@ -114,10 +114,14 @@ TVG--NLO & fixed gains for the documented vertical-only adaptation
 }
 
 In that single-realization comparison, OU--III has the lowest mean normalized
-vertical-displacement RMS error: 6.6\% of $H_s$, compared with 8.2\% for
+vertical-displacement RMS error: 5.3\% of $H_s$, compared with 7.1\% for
 OU--II, 12.3\% for the adaptive PII observer, and 15.0\% for the adapted
 TVG--NLO. These values establish a reproducible four-method reference but are
-not ensemble estimates and are not used to claim statistical superiority.
+not ensemble estimates and are not used to claim statistical superiority. They
+are a single \SI{60}{s} window on one realization, so they are reported for
+continuity with the earlier deterministic protocol; the inferential statement
+about the two OU filters is the ten-seed \SI{900}{s} study below, and the two
+should not be quoted interchangeably.
 
 \IfFileExists{w3d_multi_observer_jonswap_medium.pgf}{%
   \begin{figure}[!t]
@@ -191,7 +195,7 @@ the same way, its seed-wise mean normalized vertical error falls from
 \pct{\OUValidationOUIINormalizedMean}, OU--III is unchanged, and the paired
 difference contracts from $-3.233$ to
 $\OUValidationNormalizedDifference$ percentage point.  Roughly
-\pct{56} of the previously reported vertical advantage was the band and not the
+\pct{51} of the previously reported vertical advantage was the band and not the
 architecture.  What survives is still a consistent vertical advantage: OU--III
 is lower in all four stationary seas and during the transition, and every
 paired interval excludes zero.
@@ -213,13 +217,14 @@ tuning both filters in the same band: the horizontal cost was largely
 \emph{shared}, and correcting it in OU--III alone made the extra state look
 horizontally free when it is not.  Table~\ref{tab:ou_mc_axes} locates the
 remaining cost in the $Y$ channel, where OU--III is worse in every one of the
-five scenarios, while in $X$ it is better in two of them.
+five scenarios, while in $X$ it is better in two of them and level in the
+transition.
 
 Read together with Table~\ref{tab:ou_mc_family}, the evidence supports a
 vertical claim throughout and no three-dimensional claim at all.  OU--III
 improves vertical reconstruction in all four stationary seas and during the
 transition, by between
-\num{1.3} and \num{1.6} percentage points of $H_s$, and pays for it in the
+\num{1.5} and \num{1.7} percentage points of $H_s$, and pays for it in the
 horizontal channels in every scenario.  Whether that trade is worth making is
 an application question about which axis the user needs, not a question this
 study settles.

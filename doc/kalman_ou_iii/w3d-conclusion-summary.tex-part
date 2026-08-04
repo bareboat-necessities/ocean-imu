@@ -14,7 +14,7 @@ $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$).
 Both filters take that operating point from the same wave-band zero-crossing
 period, so the comparison isolates the additional integral-displacement state
 rather than the spectral band the two were tuned from; in earlier revisions
-only OU--III did, and about \pct{56} of the vertical advantage reported then
+only OU--III did, and about \pct{51} of the vertical advantage reported then
 was the band rather than the architecture.  OU--III 3D displacement error is
 higher in \OUValidationThreeDHigherCount{} of the
 \OUValidationThreeDScenarios{} scenarios and inconclusive in the fifth, so the

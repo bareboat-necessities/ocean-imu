@@ -117,9 +117,9 @@ constexpr float MAX_SIGMA_A   = 6.0f;
 // r_p0 ~ sigma_aw * tau^2 and r_v0 ~ sigma_aw * tau inherit that range.  The
 // old 18 m ceiling on r_p0 was the binding constraint at H_s = 8.5 m: the
 // calibrated point sat exactly on it.  At the wave-band operating point the
-// largest deployed values on the reference records are r_p0 = 36 m and
-// r_v0 = 11 m/s at H_s = 8.5 m, so these ceilings sit roughly 4x above the
-// working range and act as saturation safeguards rather than as tuning.
+// largest deployed values on the reference records are r_p0 = 20 m and
+// r_v0 = 8.6 m/s at H_s = 8.5 m, so these ceilings sit five to seven times
+// above the working range and act as saturation safeguards, not as tuning.
 constexpr float MIN_R_p0_std  = 0.05f;
 constexpr float MAX_R_p0_std  = 150.0f;
 constexpr float MIN_R_v0_std  = 0.01f;

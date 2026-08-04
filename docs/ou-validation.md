@@ -174,9 +174,9 @@ zero is inconclusive at that interval level. Effect sizes should be interpreted
 with their paired sample count and interval, not in isolation.
 
 Across the four stationary JONSWAP seas, the within-seed mean normalized
-vertical RMS is 5.08% of $H_s$ for OU-III and 6.50% for OU-II. The paired
-difference is -1.426 percentage points with a bootstrap 95% interval of
-[-1.525, -1.310]. OU-III is lower vertically in every stationary sea and during
+vertical RMS is 5.08% of $H_s$ for OU-III and 6.66% for OU-II. The paired
+difference is -1.581 percentage points with a bootstrap 95% interval of
+[-1.695, -1.451]. OU-III is lower vertically in every stationary sea and during
 the transition, and has higher 3D displacement RMS in four of the five
 scenarios with the fifth spanning zero, so there is no scenario in which it is
 resolvably better in three dimensions.
