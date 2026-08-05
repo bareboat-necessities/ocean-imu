@@ -63,6 +63,16 @@ w3d_*.csv
 wave_spectrum_*.csv
 wave_tracker_data.csv
 
+# Same category, written by the rest of the suite that `make all` runs.
+# Together these are about two gigabytes per run and are regenerated from the
+# fetched records every time, so they are build output rather than evidence.
+qmekf_*.csv
+freq_track_*.csv
+adaptive_wave_detrender*_output.csv
+adaptive_wave_detrender*_summary.csv
+calibrate_imu_test_*.csv
+vertical_accel_drift_*.csv
+
 # Compiled test executables (extensionless, so not covered by the rules above)
 tests/*/*-sim
 tests/*/*-test
