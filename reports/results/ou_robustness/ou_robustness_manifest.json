@@ -1,27 +1,32 @@
 {
   "command": [
-    "/usr/local/bin/python3",
+    "/usr/bin/python3",
     "tools/ou_robustness.py",
-    "--restat-from",
-    "reports/results/ou_robustness/ou_robustness.json",
+    "--mode",
+    "full",
+    "--sensitivity-scales",
+    "0.5,0.75,1.0,1.25,1.5",
     "--bootstrap-resamples",
     "10000",
+    "--combine-shards",
+    "--shard-dir",
+    "shards",
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/github-action-ou-validation-3ee785",
-  "git_commit": "7a31e622c5bc0adf2ad077fc0609aa7df96443b4",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 1 +\n 1 file changed, 1 insertion(+)",
+  "git_branch": "claude/report-rebuild-stale-s1vclz",
+  "git_commit": "a75a7790a4b09cd6d340f6e892b15beb27e75a4f",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 30797 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1200 +-\n .../ou_robustness/ou_robustness_publication.tex    |    28 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1012 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   144 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1456 +-\n 7 files changed, 17628 insertions(+), 17629 deletions(-)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
-    "RS_ms": 3.408071216442874,
+    "RS_ms": 3.4078937025827996,
     "R_p0_std_m": null,
     "R_v0_std_mps": null,
-    "sigma_a_mps2": 0.941857219,
-    "tau_s": 2.17847133
+    "sigma_a_mps2": 0.941859186,
+    "tau_s": 2.17843199
   },
-  "numpy": "2.4.6",
-  "platform": "Linux-6.18.5-fc-v18-x86_64-with-glibc2.39",
+  "numpy": "1.26.4",
+  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -32,7 +37,6 @@
     "mode": "full",
     "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
     "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
-    "restated_from": "reports/results/ou_robustness/ou_robustness.json",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {
@@ -117,36 +121,35 @@
     "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
-  "restated_from": "reports/results/ou_robustness/ou_robustness.json",
+  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1419455,
-      "sha256": "48ee55ddbdaf34cd43b6db40a1cd93652b0004baba2e0679fef31383f7cd73d3"
+      "bytes": 1419256,
+      "sha256": "989e0911ac0dcb5ae49e16f7027ac56716b8c62f0d780733666d5f6e2ce8f776"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 142493,
-      "sha256": "219d2c05d617983262881efc92914834dc1cfc8d51a45feb8d99d1aaff2b6398"
+      "bytes": 142555,
+      "sha256": "bda1488e7c0087f0521e97a17ea82a61b46b287604b4ad2e09b510df5c8a0bc4"
     },
     "ou_robustness_publication.tex": {
       "bytes": 4512,
-      "sha256": "dbff6771dac7cdf8b7e008533b34f3e2650118f812f751af55f98a02b02c8ba5"
+      "sha256": "78bb5f6e3d9afafa89a6b0b307411bd93c8db4036bbeb2fbb0cedbc15399335a"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 196039,
-      "sha256": "cf4596121adac22474416a5550224b3b38b8686f5b42a7592064bcbcd1b4a39a"
+      "bytes": 195744,
+      "sha256": "6bf23ef0c262aa51b147d153af2869b057a0b3e1cf93fade9ce6ee1be5a7d23c"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 116060,
-      "sha256": "13c66520f7ae717792fc73e552ebd3d218264e02745b11388017bf33d7f0184f"
+      "bytes": 116036,
+      "sha256": "87ec64d5680b4f2d78ffaa5679656c59b21e9319fea431199fe30e4f684417fa"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 42000,
-      "sha256": "3e1ae0a4d58f01a04b10ae2e105ca78d240c126596c095e079934f9ad6eba810"
+      "bytes": 41992,
+      "sha256": "7c8a8262f2c7adccc5a70d20dd0283aafd9082f8c77d06f4755e94802ef48b84"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126302,
-      "sha256": "ace94f952c7644c39ba5e2b03cd7fd158d5f188042103c0ee931ce1089f5c577"
+      "bytes": 126408,
+      "sha256": "1d6320fbd1b8d07e1c9573a0d248399280581acffdbcde401a775d9051ec7ad8"
     }
   },
   "source_files": {
@@ -163,30 +166,20 @@
       "sha256": "f0be2c41464e4a5a0924bab652549d38ffc6bec55406156b7b4a0ef72ce490d4"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 66115,
-      "sha256": "7d19401359b0ef1d0e1b857c633a238e82e1efce89be7b480108f1ea46539e64"
+      "bytes": 67057,
+      "sha256": "92d47917aa84c7d12577cd25f6fea113ad678ff8746b2c94a1932e0408699f86"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 20049,
-      "sha256": "794d9a41eb4b25aee130812263d951edce8e5cc47739212f312bd91b16235f7e"
+      "bytes": 21595,
+      "sha256": "0e168306731fd4d3b9a145526b2e90b7d526ad34ef9066ab1a9c642414890e92"
     },
     "tools/ou_robustness.py": {
-      "bytes": 53362,
-      "sha256": "fda56a95e66ee2ff11126bfa919c4571c2c2327089d6d122bd68bb8277cf4a70"
+      "bytes": 53355,
+      "sha256": "0c162882b0b13c3dd9405365610683d3edcc06f0553e994c134ce9ad92fc6ebb"
     },
     "tools/ou_validation.py": {
-      "bytes": 147900,
-      "sha256": "30119e19c80ee0c51cbb95299a21cf0e41f79b6a64b90b4c5fc49bd0df65cbdd"
-    }
-  },
-  "sources_moved_since_rows": {
-    "tools/ou_robustness.py": {
-      "bytes": 44950,
-      "sha256": "86429f492fe0f5dc1bd5165d9c06c64b09d28fa08df8015768d8731a35b21e2f"
-    },
-    "tools/ou_validation.py": {
-      "bytes": 130613,
-      "sha256": "edb7ed5af82c0747938a07bb2e3ab68a576a1c61be8055b4b6738b14f5daa660"
+      "bytes": 150163,
+      "sha256": "91a5d04d12b52bbda01a023a16c330eb056b258ffe4ea35cd5b7fb631fddd773"
     }
   }
 }
