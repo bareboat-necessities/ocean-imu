@@ -77,6 +77,14 @@
 \providecommand{\OUValidationNormalizedDifferenceHigh}{-1.623}
 \providecommand{\OUValidationNormalizedDz}{-12.58}
 \providecommand{\OUValidationNormalizedGz}{-11.50}
+\providecommand{\OUValidationNormalizedTLow}{-1.794}
+\providecommand{\OUValidationNormalizedTHigh}{-1.601}
+\providecommand{\OUValidationNormalizedTStatistic}{-39.78}
+\providecommand{\OUValidationNormalizedTP}{<\!10^{-4}}
+\providecommand{\OUValidationNormalizedSignNegative}{10}
+\providecommand{\OUValidationNormalizedSignP}{0.002}
+\providecommand{\OUValidationNormalizedRandomizationP}{0.002}
+\providecommand{\OUValidationNormalizedRandomizationPatterns}{1{,}024}
 \providecommand{\OUValidationLegacyGatePasses}{148}
 \providecommand{\OUValidationLegacyGateFailures}{692}
 \providecommand{\OUValidationBootstrapResamples}{10{,}000}

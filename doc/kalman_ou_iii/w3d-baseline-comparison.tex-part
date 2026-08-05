@@ -123,6 +123,26 @@ continuity with the earlier deterministic protocol; the inferential statement
 about the two OU filters is the ten-seed \SI{900}{s} study below, and the two
 should not be quoted interchangeably.
 
+\paragraph{What the benchmark set does not contain}
+It is worth being direct about the shape of that gap, because it bounds how
+the paper's strongest number should be read. The only comparison carried out
+under the inferential protocol -- ten paired seeds, \SI{900}{s} windows,
+matched tuning band -- is against OU--II, an architecture developed by the same
+author. That is a legitimate and, done this way, a fairly demanding ablation:
+it isolates the additional integral-displacement state and its regularization
+while holding the tuning band, the seeds, and the covariance policy fixed. It
+is not an independent state-of-the-art benchmark, and no amount of pairing
+makes it one. The external observer here is evaluated outside that protocol
+and stripped of the GNSS and heading aiding it was designed around, and the
+comparison set contains no conventional frequency-domain double-integration
+heave estimator of the kind used in operational buoy processing, which would
+be the natural non-model-based reference. Establishing where this filter sits
+against published practice, rather than against its own predecessor, requires
+at least one current published heave estimator and one spectral-domain
+baseline re-implemented under the same ten-seed protocol. That work is not in
+this paper, and the vertical result should be read as an architectural
+comparison until it is.
+
 \IfFileExists{w3d_multi_observer_jonswap_medium.pgf}{%
   \begin{figure}[!t]
     \centering
@@ -248,7 +268,7 @@ for OU--II, a paired difference of $\OUValidationPMStokesDifference$ percentage
 point
 ($[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$,
 $n=\OUValidationPMStokesPairs$).  Because PM--Stokes adds third-order bound
-harmonics, it is a separate prespecified ensemble and is not pooled into the
+harmonics, it is a separate declared ensemble and is not pooled into the
 primary aggregate; it extends the vertical result to a second spectral family
 rather than enlarging the confirmatory sample.
 

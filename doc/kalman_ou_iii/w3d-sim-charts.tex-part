@@ -196,9 +196,13 @@ redistributing finite-record boundary leakage between incompatible derivative
 channels.
 
 \paragraph{Inference, and what it does and does not license}
-The prespecified primary endpoint is the seed-level mean normalized
+The declared primary endpoint is the seed-level mean normalized
 vertical-displacement RMS error over the four stationary JONSWAP seas, compared
-between OU--III and OU--II at matched seeds.  Everything else reported here --
+between OU--III and OU--II at matched seeds.  It is recorded as
+\texttt{primary\_endpoint} in the versioned protocol block of the result
+bundle, which is what makes the declaration checkable rather than asserted;
+the word \emph{declared} is used in preference to \emph{preregistered}, since
+the study carries no external timestamp.  Everything else reported here --
 per-scenario contrasts, the adaptation and channel ablations, the covariance
 control, the PM--Stokes ensemble, the transition intervals, and the direction
 metrics -- is descriptive.
@@ -224,6 +228,43 @@ $d_z$ is both large and imprecisely estimated; the raw paired difference in
 percentage points and its bootstrap interval are the primary statement of
 effect magnitude throughout.
 
+\paragraph{Four constructions on the primary endpoint}
+\label{par:companion-inference}%
+A percentile bootstrap at $n=10$ resamples ten numbers, and its interval is
+narrow because the pairing is strong rather than because the ensemble is large.
+The confirmatory endpoint is therefore reported under four constructions on the
+same ten paired differences: the percentile bootstrap of the paired mean, a
+Student-$t$ interval on those differences, an exact sign test, and an exact
+paired randomization (sign-flip) test enumerated over all
+$\OUValidationNormalizedRandomizationPatterns$ sign patterns.  The Student-$t$
+interval is $[\OUValidationNormalizedTLow,\OUValidationNormalizedTHigh]$
+percentage points ($t=\OUValidationNormalizedTStatistic$,
+$p=\OUValidationNormalizedTP$), slightly wider than the bootstrap interval, as
+a small-sample $t$ interval should be.
+$\OUValidationNormalizedSignNegative$ of the
+$\OUValidationStationaryPairs$ seed-level differences favour OU--III, giving
+$p=\OUValidationNormalizedSignP$ by the sign test and
+$p=\OUValidationNormalizedRandomizationP$ by the randomization test.  Both
+exact p-values sit at the floor $2^{-(n-1)}$ that $n=10$ imposes: with ten
+pairs no exact paired test can report anything smaller, whichever direction the
+data take, and that floor is a property of the design rather than a measure of
+the evidence.  These are four readings of one ensemble, not four
+experiments, and they agree only about repeatability inside this simulator.
+
+What none of them contains is uncertainty from the simulation model itself,
+sensor-model misspecification, the choice of spectral family, the coefficient
+values, vessel geometry, update cadence, real hardware vibration, or
+environmental disturbance.  Those enter the result as fixed choices, not as
+sampled variation, so an interval this narrow should be read as \emph{the
+algorithmic difference is stable across realizations of this simulator}, and
+not as a bound on the difference a field deployment would see.  Thirty to fifty
+seed triplets would estimate the seed-level variance itself more stably; ten
+establishes the sign and the approximate magnitude, which is what the primary
+claim rests on.  The statistics are recomputed from the archived rows by
+\texttt{tools/ou\_validation.py -{}-restat-from}, so a reader can reproduce every
+interval in this section, or substitute a different construction, without
+re-running a single simulator replay.
+
 \paragraph{Adaptation-channel ablation}
 \label{par:channel-ablation}%
 Comparing Adaptive with FixedNominal moves three parameters at once, and the
@@ -246,7 +287,7 @@ is defined for OU--III only.
 The four PM--Stokes seas of Table~\ref{tab:scenarios} are scored over the same
 window, seed triplets, and primary modes as the JONSWAP ensemble.  PM--Stokes
 carries third-order bound harmonics that JONSWAP does not, so it is reported as
-a separate prespecified ensemble and is \emph{not} pooled into the primary
+a separate declared ensemble and is \emph{not} pooled into the primary
 aggregate; pooling would silently redefine the confirmatory comparison.
 Direction is scored against the generator azimuth carried by each record.
 Because the propagation axis is defined modulo \SI{180}{\degree}, the reported

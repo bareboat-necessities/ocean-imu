@@ -15,13 +15,22 @@ and spectral analysis stages, a process prone to bias and delay.
 Our approach instead uses a unified 21-state Kalman filter that
 directly incorporates wave kinematics. The architectural contributions are the
 integration of a first-order Gauss--Markov acceleration prior into the
-quaternion MEKF and an adaptive tuning law that jointly adjusts the prior time
-scale, stationary acceleration scale, and integral-state regularization from
-observed sea-state statistics. Together with an online directional estimator, these elements
+quaternion MEKF, an explicit integral-of-displacement state, and a
+wave-band-driven adaptive law for the regularization scale $r_S$ that
+constrains it. The tuning law is written to adjust the prior time scale, the
+stationary acceleration scale, and $r_S$ together, but the demonstrated
+vertical benefit is attributable to the $r_S$ channel: a $2\times2$ channel
+ablation (Sec.~\ref{par:channel-ablation}) shows that letting $r_S$ adapt while
+$\tau$ and $\sigma_{aw}$ stay frozen reproduces essentially the whole adaptive
+result, whereas the converse recovers none of it. The supported claim is
+therefore about adaptive integral-state regularization, not about the necessity
+of joint three-parameter OU adaptation, and the paper is written around that
+narrower claim. Together with an online directional estimator, these elements
 address colored excitation and MEMS errors in an efficient, embedded-friendly
-framework. Appendix~\ref{app:iss-stability} supplies a sufficient-condition
-uniform local input-to-state stability analysis for the core estimator and its
-continuous adaptation, excluding startup and reset logic.
+framework. Appendix~\ref{app:iss-stability} supplies a conditional
+sufficient-condition uniform local input-to-state stability analysis for the
+core estimator and its continuous adaptation, excluding startup and reset
+logic; it is not an unconditional convergence result for the filter.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
@@ -104,8 +113,13 @@ through the spectrally motivated law
 r_S \propto \sigma_{aw}\tau^3,
 \]
 which couples displacement drift suppression to the estimated strength and
-time scale of stochastic excitation. This joint adaptation of the OU prior and
-integral-state constraint is a principal architectural contribution. The
+time scale of stochastic excitation. This law, driven by a period estimated in
+the wave band, is the principal architectural contribution, and the channel
+ablation of Sec.~\ref{par:channel-ablation} is what locates the measured
+benefit in it rather than in the OU parameters it is derived from. The two
+readings are consistent: $\tau$'s material role in this filter is setting
+$r_S\propto\tau^{3}$ rather than shaping the OU process covariance, which the
+accelerometer already observes closely. The
 normalization is approximate and assumes a fixed pseudo-update cadence and a
 bounded family of spectral shapes and effective low-frequency cutoffs.
 
@@ -134,11 +148,19 @@ The main contributions of this work are:
   \item Closed-form discrete-time transition and covariance matrices for
         the OU process and linear kinematic chain, with numerically stable
         small-step series expansions.
-  \item An adaptive tuning law that jointly updates $\tau$,
-        $\sigma_{aw}$, and the integral pseudo-measurement scale from dominant
-        frequency and time-domain variance estimates.
-  \item A sufficient-condition proof of uniform local ISS for the adaptive core,
-        with bounded parameter increments treated explicitly as an input.
+  \item An adaptive law for the integral pseudo-measurement scale,
+        $r_S\propto\sigma_{aw}\tau^{3}$, driven by a period estimated in the
+        wave band, together with the $2\times2$ ablation that isolates it as
+        the channel carrying the measured vertical benefit. The same law
+        updates $\tau$ and $\sigma_{aw}$ online, but the evidence here supports
+        adaptive integral-state regularization rather than joint
+        three-parameter OU adaptation, which costs a little accuracy where a
+        well-matched frozen operating point already exists.
+  \item A conditional sufficient-condition proof of uniform \emph{local} ISS for
+        the adaptive core, with bounded parameter increments treated explicitly
+        as an input. It certifies a declared finite envelope under frozen-point
+        Schur stability, uniform Lyapunov bounds, and slow metric variation;
+        it is not an unconditional EKF convergence claim.
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
   \item A reproducible paired comparison against a published nonlinear observer
@@ -147,6 +169,20 @@ The main contributions of this work are:
         translational state structure by tuning both filters from the same
         wave-band period.
   \item A versioned ten-seed paired validation on stationary and transitioning
-        directional sea spectra, including confidence intervals, negative
-        results, and the limits of the observed OU--III advantage.
+        directional sea spectra, including intervals from four separate
+        constructions on the declared primary endpoint, negative results, and
+        the limits of the observed OU--III advantage.
 \end{itemize}
+
+The scope of the claim deserves stating once, plainly, at the outset. The
+displacement state $\vct{p}$ is oscillatory wave-induced motion, not a global
+navigation position; absolute positioning is an optional extension kept in
+Appendix~\ref{sec:gps_fusion}. The measured advantage over the matched OU--II
+architecture is a \emph{vertical} one: OU--III has higher total 3D displacement
+error in \OUValidationThreeDHigherCount{} of the
+\OUValidationThreeDScenarios{} principal scenarios, because the vertical gain
+is largely paid for in the horizontal channels
+(Sec.~\ref{sec:observer-comparison}). And every quantitative result below comes
+from simulation. The embedded exercise establishes source portability, not a
+timing or memory margin, and no result here is validated against an external
+physical displacement reference.

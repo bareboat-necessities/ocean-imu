@@ -1,14 +1,9 @@
 {
   "command": [
-    "/usr/bin/python3",
+    "/tmp/claude-0/-home-user-ocean-imu/bdfdb9f1-a6cc-5b65-9e2e-f8d5d296bfb3/scratchpad/venv/bin/python",
     "tools/ou_validation.py",
-    "--mode",
-    "full",
-    "--bootstrap-resamples",
-    "10000",
-    "--combine-shards",
-    "--shard-dir",
-    "shards",
+    "--restat-from",
+    "reports/results/ou_validation/ou_validation.json",
     "--output-dir",
     "reports/results/ou_validation"
   ],
@@ -144,11 +139,11 @@
       }
     }
   },
-  "git_branch": "claude/github-actions-attitude-errors-yddwr7",
-  "git_commit": "8dc66110f8ea5bfece1a093789c09446816aea0f",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 1524 ++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |  603 ++++---\n .../ou_validation/ou_validation_covsync.svg        |  679 ++++----\n .../ou_validation/ou_validation_displacement.svg   |  605 ++++---\n .../ou_validation/ou_validation_paired_effects.csv |  112 +-\n .../results/ou_validation/ou_validation_raw.csv    |   10 +-\n .../ou_validation/ou_validation_summary.csv        |  112 +-\n .../ou_validation/ou_validation_transition.csv     | 1772 ++++++++++----------\n .../ou_validation/ou_validation_transition.svg     |  239 ++-\n .../ou_validation/ou_validation_vertical.svg       |  605 ++++---\n 10 files changed, 3128 insertions(+), 3133 deletions(-)",
-  "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
+  "git_branch": "claude/paper-review-improvements-ka43fy",
+  "git_commit": "6f4f1495f08d7588dfe0b52a8066b33d6a3b824f",
+  "git_diff_stat": "doc/kalman_ou_iii/kalman_ou-w3d.tex                |  25 +-\n doc/kalman_ou_iii/w3d-baseline-comparison.tex-part |  22 +-\n doc/kalman_ou_iii/w3d-conclusion-summary.tex-part  |  25 +-\n doc/kalman_ou_iii/w3d-intro.tex-part               |  65 ++-\n doc/kalman_ou_iii/w3d-ou-robustness.tex-part       |   2 +-\n .../w3d-ou-validation-macros-generated.tex-part    |   8 +\n .../w3d-ou-validation-results-generated.tex-part   |   2 +-\n doc/kalman_ou_iii/w3d-sim-charts.tex-part          |  47 ++-\n docs/ou-validation.md                              |  47 ++-\n reports/results/ou_validation/ou_validation.json   |  19 +-\n .../results/ou_validation/ou_validation_macros.tex |   8 +\n .../ou_validation/ou_validation_publication.tex    |   2 +-\n tests/validation/test_ou_validation.py             | 258 ++++++++++++\n tools/ou_validation.py                             | 447 ++++++++++++++++++++-\n 14 files changed, 936 insertions(+), 41 deletions(-)",
+  "numpy": "2.4.6",
+  "platform": "Linux-6.18.5-fc-v18-x86_64-with-glibc2.39",
   "protocol": {
     "adaptation_modes": [
       "Adaptive",
@@ -184,8 +179,10 @@
       "FixedNominal",
       "FixedOracle"
     ],
-    "pmstokes_pooling": "PM-Stokes is a separate prespecified ensemble and is not pooled into the primary JONSWAP aggregate",
+    "pmstokes_pooling": "PM-Stokes is a separate declared ensemble and is not pooled into the primary JONSWAP aggregate",
     "primary_endpoint": "seed-level mean normalized vertical displacement RMS error over the four stationary JONSWAP seas, OU-III Adaptive minus OU-II Adaptive",
+    "primary_endpoint_inference": "the confirmatory endpoint carries four companion statements on the same paired seed-level differences: the percentile bootstrap interval, a Student-t interval, an exact sign test, and an exact paired randomization (sign-flip) test enumerated over all 2^n sign patterns.  They are companions, not independent confirmations: all four read the same n paired differences, and none of them widens the ensemble.",
+    "restated_from": "reports/results/ou_validation/ou_validation.json",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {
@@ -268,11 +265,12 @@
     },
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
+  "restated_from": "reports/results/ou_validation/ou_validation.json",
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4662858,
-      "sha256": "8fb2cadaeca952fbdb8d310e6d994378027790e8f62de4ac3742ca41ec78bc38"
+      "bytes": 4663856,
+      "sha256": "786998b4e8d2d619bbe3c7f8ba7cff4466a813c06982eb2fd2439568932c3f80"
     },
     "ou_validation_attitude.svg": {
       "bytes": 81519,
@@ -287,16 +285,16 @@
       "sha256": "9a76d42fda076eff5ad9a7fb5e1937bb81464e861a5fbed26cda09ef9194b577"
     },
     "ou_validation_macros.tex": {
-      "bytes": 10250,
-      "sha256": "931d51c35d6d466ac11afe709a38acb15cd3ec07be8da95bdddd19cd7083815d"
+      "bytes": 10714,
+      "sha256": "76eb8db8fbc744e5f8d121f3ba8e18566bbd8af69cba35292a0195aa03b69372"
     },
     "ou_validation_paired_effects.csv": {
       "bytes": 621768,
       "sha256": "c9f9ee4d0e8bd2f71edac07750aa35663150732acea62d902aafaf924fa54956"
     },
     "ou_validation_publication.tex": {
-      "bytes": 12655,
-      "sha256": "24d1aeba551d0aad6732ed1ae801fa47057e39c71db2f25f7ec5368319af58fe"
+      "bytes": 12651,
+      "sha256": "834f86d58a800b1d162cfdb270669e6ba166cf8d755f3603fb95751c2f50faa1"
     },
     "ou_validation_raw.csv": {
       "bytes": 559547,
@@ -383,7 +381,20 @@
       "hedges_gz": -11.495508292945399,
       "mean_paired_difference": -1.69746297025,
       "n_pairs": 10,
-      "std_paired_difference": 0.13494564561456326
+      "randomization_exact": true,
+      "randomization_p_value": 0.001953125,
+      "randomization_patterns": 1024,
+      "sign_negative": 10,
+      "sign_p_value": 0.001953125,
+      "sign_positive": 0,
+      "sign_zero": 0,
+      "standard_error": 0.04267356004639324,
+      "std_paired_difference": 0.13494564561456326,
+      "t_ci95_high": -1.6009286707289523,
+      "t_ci95_low": -1.7939972697710476,
+      "t_critical_value": 2.2621571627982036,
+      "t_p_value": 1.9953566001015164e-11,
+      "t_statistic": -39.777861711199535
     }
   },
   "transition_diagnostic": {

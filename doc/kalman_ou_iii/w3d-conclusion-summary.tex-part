@@ -10,7 +10,14 @@ $H_s$, versus
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
 OU--II.  Their paired difference is $\OUValidationNormalizedDifference$
 percentage point (bootstrap 95\% interval
-$[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$).
+$[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$,
+Student-$t$ interval
+$[\OUValidationNormalizedTLow,\OUValidationNormalizedTHigh]$, with all
+$\OUValidationNormalizedSignNegative$ seed-level differences in the same
+direction).  Those are four constructions on ten paired numbers, and they
+establish that the difference is stable across realizations of this simulator
+rather than that it would survive a change of simulator, sensor model, or
+sea (Sec.~\ref{par:companion-inference}).
 Both filters take that operating point from the same wave-band zero-crossing
 period, so the comparison isolates the additional integral-displacement state
 rather than the spectral band the two were tuned from; in earlier revisions
@@ -76,8 +83,22 @@ conditions, while the MCU exercise establishes only functional source
 portability. They do not by themselves imply
 universal performance across spectra, update cadences, vessel speeds, or sensor
 installations, nor do they establish an embedded timing or memory margin.
+Two gaps bound the work most sharply, and neither is closed here. The only
+comparison run under the inferential protocol is against the author's own
+predecessor architecture, so the paper establishes an architectural increment
+and not a position against published practice; closing that needs a current
+published heave estimator and a conventional frequency-domain
+double-integration baseline re-implemented under the same ten-seed protocol.
+And no result is validated against an external physical displacement
+reference, so this remains a simulation and implementation study rather than a
+characterized measurement instrument; closing that needs a motion platform,
+wave tank, or instrumented deployment scored against optical, GNSS, or
+commercial-MRU truth.
 Future work should extend the paired ensembles to parameter interactions,
-additional spectra, and update cadences; reduce the estimation jitter that
+additional spectra, and update cadences; independently vary wave height,
+period, directional spreading, heading, sensor grade, and update rate rather
+than moving them in the four linked pairs used here, and hold out sea states
+not used to fit the coefficients; reduce the estimation jitter that
 costs accuracy where a well-matched frozen point exists; replace the
 crossfade with a continuously evolving spectrum so that adaptation rate can be
 isolated from the composition of the scoring window; and add quantitative
