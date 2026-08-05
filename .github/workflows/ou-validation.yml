@@ -46,12 +46,25 @@ on:
         options:
           - smoke
           - full
+  # Called by the build workflow so a main build regenerates the evidence
+  # before the article is typeset. The caller's ref is what the commit job
+  # pushes to, and the caller has to grant contents: write for it.
+  workflow_call:
+    inputs:
+      validation_mode:
+        description: Experiment size
+        required: true
+        type: string
 
 permissions:
   contents: read
 
+# Keyed on the mode as well as the ref. The fast gate and a full regeneration
+# are different pieces of work with different runtimes, and on a push to main
+# both are in flight at once -- a shared group would have them cancelling each
+# other rather than the stale copy of themselves.
 concurrency:
-  group: ou-validation-${{ github.event.pull_request.number || github.ref }}
+  group: ou-validation-${{ inputs.validation_mode || 'gate' }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -62,10 +75,12 @@ jobs:
   # Fast gate. Runs on every pull request and push, and on a smoke dispatch.
   # Smoke mode exists to catch breakage in the runner and the committed
   # bundles, not to produce evidence: it never writes numbers anyone cites.
+  # Gated on the mode rather than the event: in a called workflow
+  # github.event_name is the caller's event, so an event test here would read
+  # "push" and run the wrong half. `inputs` covers dispatch and workflow_call
+  # alike, and is empty -- so not 'full' -- for a plain push or pull request.
   validate:
-    if: >-
-      github.event_name != 'workflow_dispatch' ||
-      github.event.inputs.validation_mode == 'smoke'
+    if: inputs.validation_mode != 'full'
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
@@ -130,9 +145,7 @@ jobs:
   # have produced, byte for byte. Sharding by study as well as by seed keeps a
   # failure in one bundle from throwing away the other's hours.
   regenerate:
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.validation_mode == 'full'
+    if: inputs.validation_mode == 'full'
     runs-on: ubuntu-24.04
     timeout-minutes: 350
     strategy:
@@ -201,9 +214,7 @@ jobs:
   # a piece of.
   combine:
     needs: regenerate
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.validation_mode == 'full'
+    if: inputs.validation_mode == 'full'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
@@ -287,9 +298,7 @@ jobs:
   # actually has to do.
   commit:
     needs: combine
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.validation_mode == 'full'
+    if: inputs.validation_mode == 'full'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:

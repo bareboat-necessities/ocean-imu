@@ -5,7 +5,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  # A PDF cut from main has to quote numbers this code actually produces, so
+  # the full study runs and lands its bundle on main before the article is
+  # typeset. Off main this is skipped and the article builds against the
+  # committed evidence: regeneration is most of an hour of runners, and it
+  # belongs on the branch the releases come from.
+  ou-evidence:
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/ou-validation.yml
+    with:
+      validation_mode: full
+
   build:
+    needs: [ou-evidence]
+    # Off main ou-evidence is skipped, and on main it fails when the
+    # regenerated numbers no longer match the prose. Neither is a reason to
+    # stop typesetting -- by the time that check runs the bundle has already
+    # landed, and the run is red on its own without withholding the article.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -16,6 +35,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # On main the evidence job has just committed the regenerated bundle
+          # and its mirrored manuscript copies. Build from that tree rather
+          # than from the commit that started the run, or the article is
+          # typeset against the evidence the regeneration just replaced.
+          ref: ${{ github.ref == 'refs/heads/main' && 'refs/heads/main' || '' }}
 
       - name: Download sim data from oceanography-waves-lib GitHub repo release
         env:
