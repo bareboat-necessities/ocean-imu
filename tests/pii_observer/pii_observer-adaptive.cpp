@@ -43,9 +43,14 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 // Re-derived for the 900 s scoring window: a sentinel fitted to the previous
 // 60 s window is not a sentinel for this one, it is just a number the observer
 // passes by a wide margin.
+//
+// Re-derived again for the sea-state-scheduled tuning below.  The worst record
+// moved from the calmest sea to the roughest one, because scheduling the PII
+// pole rate off accel sigma is what removed the calm-sea error; leaving the old
+// numbers in place would have retired the gate rather than kept it.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap = 15.8f,   // worst 15.71 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes = 16.6f,  // worst 16.42 (pmstokes H0.27)
+    .err_limit_percent_z_jonswap = 9.0f,    // worst 8.87 (jonswap H8.5)
+    .err_limit_percent_z_pmstokes = 9.5f,   // worst 9.36 (pmstokes H8.5)
     .err_limit_yaw_deg = 10.9f,             // worst 10.78 (pmstokes H8.5)
 };
 
@@ -263,8 +268,8 @@ private:
         HeaveFilter::Config cfg{};
 
         // Base observer
-        cfg.core.observer.r          = 0.150f;
-        cfg.core.observer.tau_a      = 0.68f;
+        cfg.core.observer.r          = 0.125f;
+        cfg.core.observer.tau_a      = 0.40f;
         cfg.core.observer.tau_d      = 49.0f;
         cfg.core.observer.kb         = 2.5e-5f;
         cfg.core.observer.lambda_b   = 3.0e-3f;
@@ -281,15 +286,15 @@ private:
         cfg.core.adaptation.min_confidence = 0.22f;
 
         cfg.core.adaptation.f_disp_ref_hz    = 0.12f;
-        cfg.core.adaptation.sigma_a_ref      = 0.95f;
-        cfg.core.adaptation.input_smooth_tau = 4.5f;
-        cfg.core.adaptation.param_smooth_tau = 7.5f;
+        cfg.core.adaptation.sigma_a_ref      = 1.10f;
+        cfg.core.adaptation.input_smooth_tau = 55.0f;
+        cfg.core.adaptation.param_smooth_tau = 50.0f;
 
-        cfg.core.adaptation.r_freq_exp   = 0.28f;
-        cfg.core.adaptation.r_sigma_exp  = 0.02f;
+        cfg.core.adaptation.r_freq_exp   = 0.23f;
+        cfg.core.adaptation.r_sigma_exp  = 0.65f;
 
-        cfg.core.adaptation.tau_a_freq_exp   = -0.40f;
-        cfg.core.adaptation.tau_a_sigma_exp  = -0.03f;
+        cfg.core.adaptation.tau_a_freq_exp   = -0.25f;
+        cfg.core.adaptation.tau_a_sigma_exp  = -1.20f;
 
         cfg.core.adaptation.tau_d_freq_exp   = -0.03f;
         cfg.core.adaptation.tau_d_sigma_exp  = -0.01f;
@@ -297,10 +302,10 @@ private:
         cfg.core.adaptation.kb_freq_exp   = 0.02f;
         cfg.core.adaptation.kb_sigma_exp  = 0.08f;
 
-        cfg.core.adaptation.r_min = 0.145f;
-        cfg.core.adaptation.r_max = 0.225f;
+        cfg.core.adaptation.r_min = 0.06f;
+        cfg.core.adaptation.r_max = 0.26f;
 
-        cfg.core.adaptation.tau_a_min = 0.50f;
+        cfg.core.adaptation.tau_a_min = 0.15f;
         cfg.core.adaptation.tau_a_max = 0.90f;
 
         cfg.core.adaptation.tau_d_min = 44.0f;

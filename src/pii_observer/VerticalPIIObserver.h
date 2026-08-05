@@ -98,8 +98,8 @@ class VerticalPIIObserver {
 public:
     struct Config {
         // Base (reference) observer parameters
-        T r      = T(0.150); // repeated real pole rate for PII core [1/s]
-        T tau_a  = T(0.68);  // acceleration LPF time constant [s]
+        T r      = T(0.125); // repeated real pole rate for PII core [1/s]
+        T tau_a  = T(0.40);  // acceleration LPF time constant [s]
 
         // Optional bias-trend channel
         T tau_d    = T(49.0);   // slow trend extractor time constant [s]
@@ -132,11 +132,17 @@ public:
         // These should reflect a "typical" sea state for which Config::r and
         // Config::tau_a are already reasonable.
         T f_disp_ref_hz = T(0.12);
-        T sigma_a_ref   = T(0.95);
+        T sigma_a_ref   = T(1.10);
 
         // Smoothing of tracker inputs and scheduled parameters.
-        T input_smooth_tau = T(4.5);  // [s] smoothing for f_disp and sigma_a
-        T param_smooth_tau = T(7.5);   // [s] smoothing for scheduled params
+        //
+        // These are deliberately on the order of a minute rather than a few
+        // seconds.  What the schedule is tracking is the sea state, which moves
+        // over tens of minutes; anything faster only lets per-wave jitter in the
+        // frequency and sigma estimates modulate the observer gains, and that
+        // modulation shows up directly as heave error.
+        T input_smooth_tau = T(55.0);  // [s] smoothing for f_disp and sigma_a
+        T param_smooth_tau = T(50.0);   // [s] smoothing for scheduled params
 
         // Frequency and sigma influence on the PII pole rate:
         //
@@ -147,8 +153,16 @@ public:
         // Recommended interpretation:
         //   r_freq_exp  > 0 : faster displacement waves allow a somewhat faster PII core
         //   r_sigma_exp > 0 : higher accel sigma reduces restoring aggressiveness
-        T r_freq_exp  = T(0.28);
-        T r_sigma_exp = T(0.02);
+        //
+        // Sigma carries most of the scheduling here, and not because frequency
+        // matters less physically.  The two are competing estimates of the same
+        // sea state, and the accel-derived frequency proxy is compressed: the
+        // acceleration spectrum is weighted by omega^4, so its dominant
+        // frequency sits well above the wave peak and barely separates a 3 s sea
+        // from an 11 s one.  Accel sigma separates the same sea states by a
+        // factor of five, so it is the better-conditioned regressor of the two.
+        T r_freq_exp  = T(0.23);
+        T r_sigma_exp = T(0.65);
 
         // Frequency and sigma influence on acceleration LPF time constant:
         //
@@ -159,8 +173,8 @@ public:
         // With defaults:
         //   faster displacement waves -> smaller tau_a (faster LPF)
         //   larger sigma              -> larger tau_a (more smoothing)
-        T tau_a_freq_exp  = T(-0.40);
-        T tau_a_sigma_exp = T(-0.03);
+        T tau_a_freq_exp  = T(-0.25);
+        T tau_a_sigma_exp = T(-1.20);
 
         // Optional scheduling of bias-trend channel.
         // Conservative defaults:
@@ -173,10 +187,10 @@ public:
         T kb_sigma_exp    = T(0.08);
 
         // Hard bounds on scheduled parameters.
-        T r_min     = T(0.145);
-        T r_max     = T(0.225);
+        T r_min     = T(0.06);
+        T r_max     = T(0.26);
 
-        T tau_a_min = T(0.50);
+        T tau_a_min = T(0.15);
         T tau_a_max = T(0.90);
 
         T tau_d_min = T(44.0);

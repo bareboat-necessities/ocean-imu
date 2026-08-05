@@ -36,8 +36,8 @@ public:
     struct Config {
         CoreConfig core = [] {
             CoreConfig cfg{};
-            cfg.observer.r = T(0.150);
-            cfg.observer.tau_a = T(0.68);
+            cfg.observer.r = T(0.125);
+            cfg.observer.tau_a = T(0.40);
             cfg.observer.tau_d = T(49.0);
             cfg.observer.kb = T(2.5e-5);
             cfg.observer.lambda_b = T(3.0e-3);
@@ -50,20 +50,20 @@ public:
             cfg.adaptation.enabled = true;
             cfg.adaptation.min_confidence = T(0.22);
             cfg.adaptation.f_disp_ref_hz = T(0.12);
-            cfg.adaptation.sigma_a_ref = T(0.95);
-            cfg.adaptation.input_smooth_tau = T(4.5);
-            cfg.adaptation.param_smooth_tau = T(7.5);
-            cfg.adaptation.r_freq_exp = T(0.28);
-            cfg.adaptation.r_sigma_exp = T(0.02);
-            cfg.adaptation.tau_a_freq_exp = T(-0.40);
-            cfg.adaptation.tau_a_sigma_exp = T(-0.03);
+            cfg.adaptation.sigma_a_ref = T(1.10);
+            cfg.adaptation.input_smooth_tau = T(55.0);
+            cfg.adaptation.param_smooth_tau = T(50.0);
+            cfg.adaptation.r_freq_exp = T(0.23);
+            cfg.adaptation.r_sigma_exp = T(0.65);
+            cfg.adaptation.tau_a_freq_exp = T(-0.25);
+            cfg.adaptation.tau_a_sigma_exp = T(-1.20);
             cfg.adaptation.tau_d_freq_exp = T(-0.03);
             cfg.adaptation.tau_d_sigma_exp = T(-0.01);
             cfg.adaptation.kb_freq_exp = T(0.02);
             cfg.adaptation.kb_sigma_exp = T(0.08);
-            cfg.adaptation.r_min = T(0.145);
-            cfg.adaptation.r_max = T(0.225);
-            cfg.adaptation.tau_a_min = T(0.50);
+            cfg.adaptation.r_min = T(0.06);
+            cfg.adaptation.r_max = T(0.26);
+            cfg.adaptation.tau_a_min = T(0.15);
             cfg.adaptation.tau_a_max = T(0.90);
             cfg.adaptation.tau_d_min = T(44.0);
             cfg.adaptation.tau_d_max = T(58.0);
