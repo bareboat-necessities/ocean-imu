@@ -1,7 +1,7 @@
 \subsubsection{Sensitivity and degradation-case study}
 \label{sec:ou-robustness}
 
-The confirmatory comparison above is complemented by a prespecified
+The confirmatory comparison above is complemented by a declared
 OU--III robustness study using the same ten paired wave-realization, IMU-noise, and
 initialization seed triplets.  At the nominal $H_s=\SI{1.5}{m}$ sea, the
 frozen operating point is perturbed by the multipliers $0.5$, $0.75$, $1.0$,

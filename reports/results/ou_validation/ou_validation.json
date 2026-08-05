@@ -35268,8 +35268,10 @@
       "FixedNominal",
       "FixedOracle"
     ],
-    "pmstokes_pooling": "PM-Stokes is a separate prespecified ensemble and is not pooled into the primary JONSWAP aggregate",
+    "pmstokes_pooling": "PM-Stokes is a separate declared ensemble and is not pooled into the primary JONSWAP aggregate",
     "primary_endpoint": "seed-level mean normalized vertical displacement RMS error over the four stationary JONSWAP seas, OU-III Adaptive minus OU-II Adaptive",
+    "primary_endpoint_inference": "the confirmatory endpoint carries four companion statements on the same paired seed-level differences: the percentile bootstrap interval, a Student-t interval, an exact sign test, and an exact paired randomization (sign-flip) test enumerated over all 2^n sign patterns.  They are companions, not independent confirmations: all four read the same n paired differences, and none of them widens the ensemble.",
+    "restated_from": "reports/results/ou_validation/ou_validation.json",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {
@@ -83376,7 +83378,20 @@
       "hedges_gz": -11.495508292945399,
       "mean_paired_difference": -1.69746297025,
       "n_pairs": 10,
-      "std_paired_difference": 0.13494564561456326
+      "randomization_exact": true,
+      "randomization_p_value": 0.001953125,
+      "randomization_patterns": 1024,
+      "sign_negative": 10,
+      "sign_p_value": 0.001953125,
+      "sign_positive": 0,
+      "sign_zero": 0,
+      "standard_error": 0.04267356004639324,
+      "std_paired_difference": 0.13494564561456326,
+      "t_ci95_high": -1.6009286707289523,
+      "t_ci95_low": -1.7939972697710476,
+      "t_critical_value": 2.2621571627982036,
+      "t_p_value": 1.9953566001015164e-11,
+      "t_statistic": -39.777861711199535
     }
   },
   "summary": [

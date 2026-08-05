@@ -44,6 +44,18 @@ TRANSITION_METHOD = (
     "stationary records, with exact first- and second-derivative cross terms; "
     "not a continuously evolving JONSWAP spectrum"
 )
+PMSTOKES_POOLING = (
+    "PM-Stokes is a separate declared ensemble and is not pooled into the "
+    "primary JONSWAP aggregate"
+)
+PRIMARY_ENDPOINT_INFERENCE = (
+    "the confirmatory endpoint carries four companion statements on the same "
+    "paired seed-level differences: the percentile bootstrap interval, a "
+    "Student-t interval, an exact sign test, and an exact paired "
+    "randomization (sign-flip) test enumerated over all 2^n sign patterns.  "
+    "They are companions, not independent confirmations: all four read the "
+    "same n paired differences, and none of them widens the ensemble."
+)
 
 # Adaptation modes.  The three primary modes all run the deployed covariance
 # policy and vary only whether the OU operating point adapts online.  The two
@@ -736,6 +748,229 @@ def _finite_values(rows: Sequence[Mapping[str, Any]], metric: str) -> np.ndarray
     return values[np.isfinite(values)]
 
 
+def _regularized_incomplete_beta(a: float, b: float, x: float) -> float:
+    """I_x(a,b) by the Lentz continued fraction, to double precision.
+
+    Written out rather than imported so that the inference the manuscript
+    quotes depends only on NumPy, which is what the validation workflow
+    installs.  Only the Student-t tail needs it.
+    """
+
+    if not 0.0 <= x <= 1.0:
+        raise ValueError("regularized incomplete beta requires 0 <= x <= 1")
+    if x in (0.0, 1.0):
+        return x
+    # The continued fraction converges rapidly only on one side of the
+    # symmetry point; reflect onto that side when necessary.
+    if x > (a + 1.0) / (a + b + 2.0):
+        return 1.0 - _regularized_incomplete_beta(b, a, 1.0 - x)
+
+    log_front = (
+        math.lgamma(a + b)
+        - math.lgamma(a)
+        - math.lgamma(b)
+        + a * math.log(x)
+        + b * math.log1p(-x)
+    )
+
+    tiny = 1e-300
+    c = 1.0
+    d = 1.0 - (a + b) * x / (a + 1.0)
+    if abs(d) < tiny:
+        d = tiny
+    d = 1.0 / d
+    fraction = d
+    for iteration in range(1, 300):
+        even = 2 * iteration
+        numerator = (
+            iteration * (b - iteration) * x / ((a + even - 1.0) * (a + even))
+        )
+        d = 1.0 + numerator * d
+        if abs(d) < tiny:
+            d = tiny
+        c = 1.0 + numerator / c
+        if abs(c) < tiny:
+            c = tiny
+        d = 1.0 / d
+        fraction *= d * c
+
+        numerator = (
+            -(a + iteration) * (a + b + iteration) * x
+            / ((a + even) * (a + even + 1.0))
+        )
+        d = 1.0 + numerator * d
+        if abs(d) < tiny:
+            d = tiny
+        c = 1.0 + numerator / c
+        if abs(c) < tiny:
+            c = tiny
+        d = 1.0 / d
+        delta = d * c
+        fraction *= delta
+        if abs(delta - 1.0) < 1e-15:
+            break
+    return math.exp(log_front) * fraction / a
+
+
+def student_t_two_sided_p(t_statistic: float, degrees_of_freedom: int) -> float:
+    """Two-sided Student-t tail probability."""
+
+    if degrees_of_freedom < 1 or not math.isfinite(t_statistic):
+        return math.nan
+    if t_statistic == 0.0:
+        return 1.0
+    x = degrees_of_freedom / (degrees_of_freedom + t_statistic * t_statistic)
+    return float(
+        min(1.0, _regularized_incomplete_beta(0.5 * degrees_of_freedom, 0.5, x))
+    )
+
+
+def student_t_quantile(probability: float, degrees_of_freedom: int) -> float:
+    """Inverse Student-t CDF by bisection on the two-sided tail."""
+
+    if degrees_of_freedom < 1 or not 0.0 < probability < 1.0:
+        return math.nan
+    if probability == 0.5:
+        return 0.0
+    upper_tail = 1.0 - probability if probability > 0.5 else probability
+    target = 2.0 * upper_tail
+    low, high = 0.0, 1.0
+    while student_t_two_sided_p(high, degrees_of_freedom) > target:
+        high *= 2.0
+        if high > 1e12:
+            break
+    for _ in range(200):
+        middle = 0.5 * (low + high)
+        if student_t_two_sided_p(middle, degrees_of_freedom) > target:
+            low = middle
+        else:
+            high = middle
+    quantile = 0.5 * (low + high)
+    return quantile if probability > 0.5 else -quantile
+
+
+# The exhaustive sign-flip enumeration materializes a 2^n x n sign matrix, so
+# its cost doubles with every added pair: n = 18 is about 37 MB and n = 22 is
+# about 740 MB.  Past the bound the test is taken by Monte Carlo instead.  The
+# study runs at n = 10, well under it, so its randomization p-value is exact.
+MAX_EXACT_SIGN_FLIP_PAIRS = 18
+SIGN_FLIP_RESAMPLES = 200_000
+
+
+def paired_inference(
+    differences: np.ndarray, rng: np.random.Generator
+) -> dict[str, Any]:
+    """Complementary inference for one paired contrast.
+
+    The percentile bootstrap of the paired mean is the study's interval, but
+    with ten pairs it is a small-sample interval whose coverage is not
+    guaranteed.  Three companions are reported alongside it:
+
+      * a Student-t interval on the paired differences, which is exact under
+        normality and is the conventional small-sample choice; and
+      * two assumption-light exact tests -- the sign test, which uses only the
+        direction of each difference, and the paired randomization
+        (sign-flip) test, which is exact under the sharp null of exchangeable
+        signs and is enumerated in full at this sample size.
+
+    Agreement across the four is the actual claim: no single one of them turns
+    ten seeds into a large sample.
+    """
+
+    finite = np.asarray(differences, dtype=np.float64)
+    finite = finite[np.isfinite(finite)]
+    n = int(finite.size)
+    result: dict[str, Any] = {"n_pairs": n}
+    if n < 2:
+        return result
+
+    mean = float(np.mean(finite))
+    std = float(np.std(finite, ddof=1))
+    standard_error = std / math.sqrt(n)
+    degrees_of_freedom = n - 1
+    critical = student_t_quantile(0.975, degrees_of_freedom)
+    t_statistic = mean / standard_error if standard_error > 0.0 else math.inf
+    result.update(
+        {
+            "t_ci95_low": mean - critical * standard_error,
+            "t_ci95_high": mean + critical * standard_error,
+            "t_statistic": t_statistic,
+            "t_p_value": student_t_two_sided_p(t_statistic, degrees_of_freedom),
+            "t_critical_value": critical,
+            "standard_error": standard_error,
+        }
+    )
+
+    # Exact sign test.  Ties are conservatively counted against the observed
+    # direction rather than discarded.
+    negative = int(np.sum(finite < 0.0))
+    positive = int(np.sum(finite > 0.0))
+    zero = n - negative - positive
+    extreme = min(negative, positive) + zero
+    sign_p = min(
+        1.0,
+        2.0
+        * sum(math.comb(n, k) for k in range(0, extreme + 1))
+        / float(2**n),
+    )
+    result.update(
+        {
+            "sign_negative": negative,
+            "sign_positive": positive,
+            "sign_zero": zero,
+            "sign_p_value": sign_p,
+        }
+    )
+
+    # Paired randomization test on the mean, under the sharp null that each
+    # difference is equally likely to have carried either sign.
+    observed = abs(mean)
+    if n <= MAX_EXACT_SIGN_FLIP_PAIRS:
+        signs = 1.0 - 2.0 * (
+            (np.arange(2**n, dtype=np.int64)[:, None] >> np.arange(n)) & 1
+        ).astype(np.float64)
+        means = np.abs(signs @ finite) / n
+        count = int(np.sum(means >= observed - 1e-15))
+        result.update(
+            {
+                "randomization_p_value": count / float(2**n),
+                "randomization_exact": True,
+                "randomization_patterns": int(2**n),
+            }
+        )
+    else:
+        draws = rng.integers(0, 2, size=(SIGN_FLIP_RESAMPLES, n)) * 2.0 - 1.0
+        means = np.abs(draws @ finite) / n
+        count = int(np.sum(means >= observed - 1e-15))
+        result.update(
+            {
+                # +1/+1 keeps the Monte Carlo p-value strictly positive, which
+                # is the standard correction for an estimated permutation tail.
+                "randomization_p_value": (count + 1) / float(SIGN_FLIP_RESAMPLES + 1),
+                "randomization_exact": False,
+                "randomization_patterns": int(SIGN_FLIP_RESAMPLES),
+            }
+        )
+    return result
+
+
+def _latex_p_value(value: float) -> str:
+    """Format a p-value as math-mode *content*, without delimiters.
+
+    The manuscript quotes these inside expressions such as `$p=\\macro$`, so a
+    macro carrying its own `$` would close that expression and typeset the
+    rest as text.  `<` is likewise emitted bare, which is correct in math mode
+    and wrong in text mode -- these macros are only ever used in math mode.
+    """
+
+    if not math.isfinite(value):
+        return r"\text{--}"
+    if value < 1e-4:
+        return r"<\!10^{-4}"
+    digits = f"{value:.5f}" if value < 1e-3 else f"{value:.4f}"
+    return digits.rstrip("0").rstrip(".")
+
+
 def _bootstrap_mean_ci(
     values: np.ndarray, resamples: int, rng: np.random.Generator
 ) -> tuple[float, float]:
@@ -1272,6 +1507,11 @@ def stationary_normalized_aggregate(
         "bootstrap_ci95_high": bootstrap_high,
         "cohen_dz": cohen_dz,
         "hedges_gz": correction * cohen_dz,
+        # Companions to the percentile bootstrap on the confirmatory endpoint
+        # only.  Every other contrast in the study is descriptive, and giving
+        # each of those four p-values as well would enlarge the family of
+        # tests without adding evidence.
+        **paired_inference(differences, rng),
     }
     return result
 
@@ -1442,6 +1682,18 @@ def write_publication_table(
         rf"\providecommand{{\OUValidationNormalizedDifferenceHigh}}{{{difference['bootstrap_ci95_high']:+.3f}}}",
         rf"\providecommand{{\OUValidationNormalizedDz}}{{{difference['cohen_dz']:+.2f}}}",
         rf"\providecommand{{\OUValidationNormalizedGz}}{{{difference['hedges_gz']:+.2f}}}",
+        # Companion inference on the confirmatory endpoint, so the primary
+        # claim does not rest on a single small-sample interval method.
+        rf"\providecommand{{\OUValidationNormalizedTLow}}{{{difference['t_ci95_low']:+.3f}}}",
+        rf"\providecommand{{\OUValidationNormalizedTHigh}}{{{difference['t_ci95_high']:+.3f}}}",
+        rf"\providecommand{{\OUValidationNormalizedTStatistic}}{{{difference['t_statistic']:+.2f}}}",
+        rf"\providecommand{{\OUValidationNormalizedTP}}{{{_latex_p_value(difference['t_p_value'])}}}",
+        rf"\providecommand{{\OUValidationNormalizedSignNegative}}{{{difference['sign_negative']}}}",
+        rf"\providecommand{{\OUValidationNormalizedSignP}}{{{_latex_p_value(difference['sign_p_value'])}}}",
+        rf"\providecommand{{\OUValidationNormalizedRandomizationP}}"
+        rf"{{{_latex_p_value(difference['randomization_p_value'])}}}",
+        rf"\providecommand{{\OUValidationNormalizedRandomizationPatterns}}"
+        rf"{{{difference['randomization_patterns']:,}}}".replace(",", r"{,}"),
         rf"\providecommand{{\OUValidationLegacyGatePasses}}{{{gate_passes}}}",
         rf"\providecommand{{\OUValidationLegacyGateFailures}}{{{len(rows) - gate_passes}}}",
         # Interval construction, so the manuscript states the method rather
@@ -1918,7 +2170,7 @@ def _pmstokes_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Ten-seed paired OU-family comparison on the PM--Stokes seas, scored over the same final \SI{900}{s} window and the same seed triplets as the JONSWAP ensemble. PM--Stokes carries third-order bound harmonics that JONSWAP does not, so it is reported as a separate prespecified ensemble and is not pooled into the primary aggregate.}",
+        r"  \caption{Ten-seed paired OU-family comparison on the PM--Stokes seas, scored over the same final \SI{900}{s} window and the same seed triplets as the JONSWAP ensemble. PM--Stokes carries third-order bound harmonics that JONSWAP does not, so it is reported as a separate declared ensemble and is not pooled into the primary aggregate.}",
         r"  \label{tab:ou_mc_pmstokes}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4.0pt}",
@@ -2495,6 +2747,179 @@ def _copy_duration(path: Path, destination: Path, duration_sec: float) -> tuple[
     return columns, data
 
 
+NONSTATIONARY_ENDPOINT_NAME = "nonstationary_endpoint_H4_0_Tp11_4"
+
+
+def restat_bundle(
+    source: Path,
+    output_dir: Path,
+    bootstrap_resamples: int,
+    stats_seed: int,
+) -> int:
+    """Recompute every statistic and table from an archived bundle's rows.
+
+    The simulator replays are the expensive half of this study and are fully
+    determined by their seed triplets, so a change to how the rows are
+    *summarized* should not require re-running them.  This path reads
+    `raw_runs` back out of a committed bundle and rewrites the derived files
+    exactly as the run that produced it would have, with the statistics of the
+    current source.  It cannot invent rows: whatever ensemble the source
+    bundle scored is the ensemble the restated bundle reports.
+    """
+
+    with source.open(encoding="utf-8") as stream:
+        bundle = json.load(stream)
+    raw_rows = [dict(row) for row in bundle["raw_runs"]]
+    if not raw_rows:
+        raise ValueError(f"{source} carries no raw runs to restate")
+
+    # The bundle JSON is written with sorted keys, so the rows come back
+    # alphabetical.  Column order is not information, but a restated bundle
+    # that reshuffles 66 columns is impossible to diff against the run it
+    # restates, so the archived CSV header is used to put them back.
+    archived_csv = source.parent / "ou_validation_raw.csv"
+    if archived_csv.exists():
+        with archived_csv.open(encoding="utf-8", newline="") as stream:
+            header = next(csv.reader(stream), [])
+        if header:
+            raw_rows = [
+                {
+                    **{key: row[key] for key in header if key in row},
+                    **{key: value for key, value in row.items() if key not in header},
+                }
+                for row in raw_rows
+            ]
+
+    tuning_points: dict[str, dict[str, TuningPoint]] = {
+        family: {
+            name: TuningPoint(**{key: point.get(key) for key in (
+                "tau_s", "sigma_a_mps2", "R_p0_std_m", "R_v0_std_mps", "RS_ms"
+            )})
+            for name, point in points.items()
+        }
+        for family, points in bundle.get("fixed_tuning_points", {}).items()
+    }
+    calibrated_names = {
+        name for points in tuning_points.values() for name in points
+    }
+    scored_scenarios = {str(row["scenario"]) for row in raw_rows}
+    # FixedNominal is calibrated from one record that is also scored as a
+    # stationary scenario; the endpoint is calibrated but never scored.
+    nominal_candidates = sorted(
+        name for name in calibrated_names
+        if name in scored_scenarios and "H1_500" in name
+    )
+    nominal_name = nominal_candidates[0] if nominal_candidates else ""
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary = summarize_rows(raw_rows, bootstrap_resamples, stats_seed)
+    effects = paired_effect_rows(raw_rows, bootstrap_resamples, stats_seed)
+    normalized_aggregate = stationary_normalized_aggregate(
+        raw_rows, bootstrap_resamples, stats_seed
+    )
+
+    raw_path = output_dir / "ou_validation_raw.csv"
+    summary_path = output_dir / "ou_validation_summary.csv"
+    effects_path = output_dir / "ou_validation_paired_effects.csv"
+    json_path = output_dir / "ou_validation.json"
+    tex_path = output_dir / "ou_validation_table.tex"
+    publication_tex_path = output_dir / "ou_validation_publication.tex"
+    publication_macros_path = output_dir / "ou_validation_macros.tex"
+    tuning_tex_path = output_dir / "ou_validation_tuning_points.tex"
+    manifest_path = output_dir / "ou_validation_manifest.json"
+
+    write_csv(raw_path, raw_rows)
+    write_csv(summary_path, summary)
+    write_csv(effects_path, effects)
+    write_latex_table(tex_path, summary)
+    write_publication_table(
+        publication_tex_path,
+        raw_rows,
+        summary,
+        effects,
+        bootstrap_resamples,
+        stats_seed,
+        macros_path=publication_macros_path,
+    )
+    if tuning_points:
+        write_tuning_points_table(
+            tuning_tex_path, tuning_points, nominal_name, NONSTATIONARY_ENDPOINT_NAME
+        )
+
+    # Fields that describe what was *run* are carried over untouched -- the
+    # restated bundle scored exactly the ensemble the source did.  Fields that
+    # describe how the rows are summarized or how the study words its own
+    # design come from this file, so that a restated bundle cannot disagree
+    # with the manuscript generated beside it.
+    protocol = dict(bundle.get("protocol", {}))
+    protocol["bootstrap_resamples"] = bootstrap_resamples
+    protocol["stats_seed"] = stats_seed
+    protocol["primary_endpoint_inference"] = PRIMARY_ENDPOINT_INFERENCE
+    protocol["pmstokes_pooling"] = PMSTOKES_POOLING
+    protocol["restated_from"] = str(
+        source.relative_to(REPO_ROOT) if source.is_relative_to(REPO_ROOT) else source
+    )
+    write_json(
+        json_path,
+        {
+            "protocol": protocol,
+            "fixed_tuning_points": bundle.get("fixed_tuning_points", {}),
+            "raw_runs": raw_rows,
+            "summary": summary,
+            "paired_effects": effects,
+            "stationary_normalized_aggregate": normalized_aggregate,
+            "transition_diagnostic": bundle.get("transition_diagnostic"),
+        },
+    )
+
+    result_paths = [
+        raw_path, summary_path, effects_path, json_path, tex_path,
+        publication_tex_path, publication_macros_path,
+    ]
+    if tuning_points:
+        result_paths.append(tuning_tex_path)
+    manifest = dict(json.loads(manifest_path.read_text(encoding="utf-8")))    \
+        if manifest_path.exists() else {}
+    # A restat rewrites some of the bundle's files and leaves others (the
+    # figures, the transition series) exactly as the run produced them.  The
+    # manifest has to keep covering all of them, so the carried entries are
+    # re-hashed from disk rather than trusted or dropped.
+    result_files = {
+        name: {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+        for name, path in (
+            (name, output_dir / name)
+            for name in manifest.get("result_files", {})
+        )
+        if path.is_file()
+    }
+    result_files.update(
+        {
+            path.name: {"sha256": sha256_file(path), "bytes": path.stat().st_size}
+            for path in result_paths
+        }
+    )
+    manifest.update(
+        {
+            "git_commit": git_output("rev-parse", "HEAD"),
+            "git_branch": git_output("branch", "--show-current"),
+            "git_diff_stat": git_output("diff", "--stat"),
+            "python": sys.version,
+            "platform": platform.platform(),
+            "numpy": np.__version__,
+            "command": [sys.executable, *sys.argv],
+            "protocol": protocol,
+            "restated_from": protocol["restated_from"],
+            "result_files": result_files,
+            "stationary_normalized_aggregate": normalized_aggregate,
+        }
+    )
+    write_json(manifest_path, manifest)
+
+    for path in (*result_paths, manifest_path):
+        print(f"Wrote {path}")
+    return 0
+
+
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("smoke", "full"), default="smoke")
@@ -2576,6 +3001,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="skip simulation, read every shard file, and write the bundle "
         "the unsharded run would have written",
     )
+    parser.add_argument(
+        "--restat-from",
+        type=Path,
+        help="skip simulation entirely and recompute the summaries, paired "
+        "effects, tables, macros, and bundle from the raw runs archived in an "
+        "existing ou_validation.json",
+    )
     parser.add_argument("--eigen-dir")
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--no-plots", action="store_true")
@@ -2587,6 +3019,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     args.data_dir = args.data_dir.resolve()
     args.output_dir = args.output_dir.resolve()
     args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.restat_from is not None:
+        return restat_bundle(
+            args.restat_from.resolve(),
+            args.output_dir,
+            args.bootstrap_resamples,
+            args.stats_seed,
+        )
 
     families = ("OU_II", "OU_III") if args.families == "both" else (args.families,)
     allowed_modes = tuple(MODE_SETTINGS)
@@ -3097,11 +3537,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "the four stationary JONSWAP seas, OU-III Adaptive minus OU-II "
             "Adaptive"
         ),
+        "primary_endpoint_inference": PRIMARY_ENDPOINT_INFERENCE,
         "pmstokes_modes": list(pmstokes_modes),
-        "pmstokes_pooling": (
-            "PM-Stokes is a separate prespecified ensemble and is not pooled "
-            "into the primary JONSWAP aggregate"
-        ),
+        "pmstokes_pooling": PMSTOKES_POOLING,
         "transition_segments_sec": {
             name: [start, stop] for name, start, stop in transition_segments
         },

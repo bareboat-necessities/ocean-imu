@@ -1,5 +1,7 @@
+import contextlib
 import csv
 import hashlib
+import io
 import json
 import math
 import os
@@ -726,11 +728,227 @@ class CommittedFullResultsTests(unittest.TestCase):
         # confidence interval, and the interval must name its construction.
         self.assertIn("sample standard deviation", abstract)
         self.assertIn("percentile-bootstrap", abstract)
+
+        # The bootstrap interval is one construction on ten paired numbers.
+        # The abstract has to carry its companions and the honest reading of
+        # what ten seeds buy, or the narrow interval reads as generality.
+        self.assertIn(
+            "$["
+            f"{difference['t_ci95_low']:.3f},"
+            f"{difference['t_ci95_high']:.3f}"
+            "]$",
+            abstract,
+        )
+        flat = " ".join(abstract.split())
+        self.assertIn("Student-$t$ interval", flat)
+        self.assertIn("sign-flip", flat)
+        self.assertIn(
+            "establish repeatability within the simulator, not "
+            "generalization beyond it",
+            flat,
+        )
+
+        # The evaluated R_S is isotropic, so the abstract may not describe the
+        # applied pseudo-measurement as anisotropic without that qualifier.
+        self.assertNotIn("an anisotropic zero pseudo-measurement", flat)
+        self.assertIn("may be made anisotropic", flat)
+
+        # "Prespecified" claims a timestamp this study does not carry.
+        self.assertNotIn("prespecified", flat)
+        self.assertIn("declared primary endpoint", flat)
         # The negative three-dimensional result and the channel ablation both
         # bound the contribution, so neither may be left to the body text.
         self.assertIn("full-3D displacement error", abstract)
         self.assertIn("channel ablation", abstract)
         self.assertIn("tolerance", abstract)
+
+
+class PairedInferenceTests(unittest.TestCase):
+    """The companion inference on the confirmatory endpoint.
+
+    The Student-t machinery is written out in the tool rather than imported,
+    because the validation workflow installs NumPy and nothing else, so it is
+    checked against published table values here.
+    """
+
+    def test_student_t_quantiles_match_published_tables(self):
+        for degrees_of_freedom, expected in (
+            (1, 12.7062), (5, 2.570582), (9, 2.262157),
+            (29, 2.045230), (100, 1.983972),
+        ):
+            self.assertAlmostEqual(
+                validation.student_t_quantile(0.975, degrees_of_freedom),
+                expected,
+                places=5,
+                msg=f"df={degrees_of_freedom}",
+            )
+        # Symmetry, and the degenerate arguments the caller can produce.
+        self.assertAlmostEqual(
+            validation.student_t_quantile(0.025, 9),
+            -validation.student_t_quantile(0.975, 9),
+        )
+        self.assertEqual(validation.student_t_quantile(0.5, 9), 0.0)
+        self.assertTrue(math.isnan(validation.student_t_quantile(0.975, 0)))
+
+    def test_student_t_tail_probabilities_match_published_tables(self):
+        self.assertAlmostEqual(
+            validation.student_t_two_sided_p(2.262157, 9), 0.05, places=6
+        )
+        self.assertAlmostEqual(
+            validation.student_t_two_sided_p(3.0, 10), 0.013343655, places=8
+        )
+        self.assertEqual(validation.student_t_two_sided_p(0.0, 9), 1.0)
+        # Monotone decreasing in |t|, which is what makes the bisection above
+        # a valid inverse.
+        tails = [
+            validation.student_t_two_sided_p(t, 9)
+            for t in (0.5, 1.0, 2.0, 4.0, 8.0)
+        ]
+        self.assertEqual(tails, sorted(tails, reverse=True))
+
+    def test_exact_tests_are_exact_and_bottom_out_where_n_says_they_must(self):
+        rng = np.random.default_rng(7)
+        # Ten differences that all favour one arm: both exact tests must land
+        # on 2^-(n-1), the smallest two-sided p-value ten pairs can produce.
+        one_sided = np.array([-1.0, -1.1, -0.9, -1.4, -0.7,
+                              -1.2, -0.8, -1.3, -1.0, -0.95])
+        result = validation.paired_inference(one_sided, rng)
+        self.assertEqual(result["sign_negative"], 10)
+        self.assertEqual(result["sign_positive"], 0)
+        self.assertTrue(result["randomization_exact"])
+        self.assertEqual(result["randomization_patterns"], 1024)
+        floor = 2.0 ** -(one_sided.size - 1)
+        self.assertAlmostEqual(result["sign_p_value"], floor)
+        self.assertAlmostEqual(result["randomization_p_value"], floor)
+
+        # A balanced sample must not be called significant by either test.
+        balanced = np.array([1.0, -1.0, 0.9, -0.9, 1.1,
+                             -1.1, 0.8, -0.8, 1.2, -1.2])
+        neutral = validation.paired_inference(balanced, rng)
+        self.assertEqual(neutral["sign_negative"], 5)
+        self.assertGreater(neutral["sign_p_value"], 0.5)
+        self.assertGreater(neutral["randomization_p_value"], 0.5)
+
+        # The t interval must be centred on the paired mean and must contain
+        # the bootstrap interval's centre.
+        self.assertAlmostEqual(
+            0.5 * (result["t_ci95_low"] + result["t_ci95_high"]),
+            float(np.mean(one_sided)),
+        )
+
+        # Too few pairs to say anything: no interval, no test, no crash.
+        self.assertEqual(
+            validation.paired_inference(np.array([1.0]), rng), {"n_pairs": 1}
+        )
+
+    def test_the_committed_primary_endpoint_agrees_across_constructions(self):
+        with (
+            REPO_ROOT / "reports" / "results" / "ou_validation"
+            / "ou_validation_manifest.json"
+        ).open(encoding="utf-8") as stream:
+            difference = json.load(stream)[
+                "stationary_normalized_aggregate"
+            ]["OU_III_minus_OU_II"]
+
+        # Every construction has to point the same way, and the t interval --
+        # which makes a distributional assumption the bootstrap does not --
+        # has to be the wider of the two.  If these ever disagree, the
+        # confirmatory claim is resting on the choice of interval method.
+        self.assertLess(difference["mean_paired_difference"], 0.0)
+        self.assertLess(difference["bootstrap_ci95_high"], 0.0)
+        self.assertLess(difference["t_ci95_high"], 0.0)
+        self.assertLessEqual(
+            difference["t_ci95_low"], difference["bootstrap_ci95_low"]
+        )
+        self.assertGreaterEqual(
+            difference["t_ci95_high"], difference["bootstrap_ci95_high"]
+        )
+        self.assertLess(difference["sign_p_value"], 0.05)
+        self.assertLess(difference["randomization_p_value"], 0.05)
+        self.assertTrue(difference["randomization_exact"])
+        self.assertEqual(
+            difference["sign_negative"] + difference["sign_positive"]
+            + difference["sign_zero"],
+            difference["n_pairs"],
+        )
+
+
+class RestatTests(unittest.TestCase):
+    """`--restat-from` has to restate a bundle, not quietly rewrite it.
+
+    The simulator replays are the expensive half of this study, so the tables
+    and intervals are recomputed from the archived rows.  That is only sound
+    if a restat of the committed bundle reproduces the committed derived files
+    byte for byte, which is what this checks.
+    """
+
+    RESULTS = REPO_ROOT / "reports" / "results" / "ou_validation"
+
+    def test_restating_the_committed_bundle_reproduces_its_derived_files(self):
+        source = self.RESULTS / "ou_validation.json"
+        if not source.exists():  # pragma: no cover - smoke checkouts
+            self.skipTest("no committed validation bundle")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            with contextlib.redirect_stdout(io.StringIO()):
+                validation.restat_bundle(
+                    source,
+                    output,
+                    bootstrap_resamples=10_000,
+                    stats_seed=20260317,
+                )
+            for name in (
+                "ou_validation_raw.csv",
+                "ou_validation_summary.csv",
+                "ou_validation_paired_effects.csv",
+                "ou_validation_table.tex",
+                "ou_validation_publication.tex",
+                "ou_validation_macros.tex",
+                "ou_validation_tuning_points.tex",
+            ):
+                self.assertEqual(
+                    (output / name).read_bytes(),
+                    (self.RESULTS / name).read_bytes(),
+                    name,
+                )
+
+            restated = json.loads(
+                (output / "ou_validation.json").read_text(encoding="utf-8")
+            )
+            committed = json.loads(source.read_text(encoding="utf-8"))
+            # Same rows, and the restat must say what it restated.
+            self.assertEqual(restated["raw_runs"], committed["raw_runs"])
+            self.assertIn("restated_from", restated["protocol"])
+
+    def test_a_restat_keeps_covering_the_files_it_did_not_rewrite(self):
+        """A restat rewrites the tables; the figures stay as the run left them.
+
+        The manifest is the bundle's inventory, so dropping the files a restat
+        happens not to touch would quietly shrink what the hash check covers.
+        """
+        manifest = json.loads(
+            (self.RESULTS / "ou_validation_manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        covered = set(manifest["result_files"])
+        for name in (
+            "ou_validation_vertical.svg",
+            "ou_validation_transition.svg",
+            "ou_validation_transition.csv",
+            "ou_validation_displacement.svg",
+        ):
+            self.assertIn(name, covered, name)
+        self.assertIn("source_files", manifest)
+
+    def test_a_restat_cannot_manufacture_an_ensemble(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            empty = Path(tmp) / "empty.json"
+            empty.write_text(json.dumps({"raw_runs": []}), encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()):
+                with self.assertRaises(ValueError):
+                    validation.restat_bundle(empty, Path(tmp), 100, 1)
 
 
 class ManuscriptMethodologyTests(unittest.TestCase):
@@ -844,6 +1062,38 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         self.assertIn("not an interval estimate for the mean", protocol)
         self.assertIn("deliberately secondary", protocol)
         self.assertIn("primary statement of effect size", results)
+
+        # The confirmatory endpoint may not rest on one small-sample interval
+        # construction, and the narrowness of that interval may not be left to
+        # read as generality.  Both the companion constructions and the list of
+        # what the ensemble does not sample have to be present.
+        companion = self.paragraph(protocol, "Four constructions on the")
+        for macro in (
+            "OUValidationNormalizedTLow",
+            "OUValidationNormalizedTHigh",
+            "OUValidationNormalizedSignP",
+            "OUValidationNormalizedRandomizationP",
+            "OUValidationNormalizedRandomizationPatterns",
+        ):
+            self.assertIn(macro, companion)
+        self.assertIn("floor", companion)
+        self.assertIn("property of the design", companion)
+        self.assertIn("sensor-model misspecification", companion)
+        self.assertIn("update cadence", companion)
+        self.assertIn("restat-from", companion.replace("\\_", "_"))
+
+        # "Prespecified" is only defensible with an external timestamp, which
+        # this study does not have.
+        self.assertNotIn("prespecified", protocol + results + robustness)
+
+        # The only comparison run under the inferential protocol is against
+        # the author's own predecessor.  That has to be named as the limit it
+        # is, in the section that reports the number, rather than left for a
+        # reader to infer from the authorship of the baseline.
+        gap = self.paragraph(results, "What the benchmark set does not contain")
+        self.assertIn("not an independent state-of-the-art benchmark", gap)
+        self.assertIn("frequency-domain double-integration", gap)
+        self.assertIn("same ten-seed protocol", gap)
 
         # Wave energy scales with Hs^2, so 1.5 m against 0.27 m or 8.5 m is a
         # factor of about 31, not two orders of magnitude.
@@ -970,6 +1220,39 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         self.assertIn("We do not claim the OU", intro)
         self.assertIn("doi     = {10.1109/TAES.1970.310128}", bibliography)
         self.assertNotIn("novel", intro.lower())
+
+    def test_the_contribution_is_framed_at_the_width_of_the_evidence(self):
+        """The introduction has to claim what the ablation actually supports.
+
+        The channel ablation attributes the vertical benefit to the adaptive
+        integral regularization, not to joint three-parameter OU adaptation,
+        and OU--III is worse in total 3D displacement in four of five
+        scenarios.  An introduction that leads with "jointly adjusts tau,
+        sigma_aw and r_S" and a title promising an INS therefore both claim
+        more than the results section delivers.
+        """
+        intro = self.read_flat("w3d-intro.tex-part")
+        manuscript = self.read("kalman_ou-w3d.tex")
+        title = re.search(r"\\title\{(.+?)\}", manuscript).group(1)
+
+        self.assertIn("Adaptive Integral Regularization", title)
+        self.assertIn("Wave-State Estimation", title)
+        # p is oscillatory displacement, and absolute navigation is an
+        # optional appendix, so the title may not promise an INS.
+        self.assertNotIn("INS", title)
+
+        self.assertIn("not about the necessity of joint three-parameter", intro)
+        self.assertIn("par:channel-ablation", intro)
+        # The 3D negative result and the absence of physical validation belong
+        # in the introduction, not only in the results and the conclusion.
+        self.assertIn("higher total 3D displacement error", intro)
+        self.assertIn("not a global navigation position", intro)
+        self.assertIn("comes from simulation", intro)
+
+        # The ISS appendix is a conditional local result and has to be
+        # described that way where it is claimed as a contribution.
+        self.assertIn("conditional sufficient-condition", intro)
+        self.assertIn("not an unconditional EKF convergence claim", intro)
 
     def test_nomenclature_is_included_and_disambiguates_covariances(self):
         manuscript = self.read("kalman_ou-w3d.tex")

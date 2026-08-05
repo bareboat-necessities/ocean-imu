@@ -1,6 +1,6 @@
 # Paired OU-II/OU-III validation
 
-`tools/ou_validation.py` implements the statistically powered validation path for
+`tools/ou_validation.py` implements the paired inferential validation path for
 the two OU filter families. It does not replace the executable regression gates:
 the simulators still calculate and enforce their historical trailing 60-second
 thresholds. The full experiment separately scores the trailing 900 seconds of each
@@ -116,7 +116,7 @@ make fetch-sim-data
 python3 tools/ou_validation.py --mode smoke
 ```
 
-Run the preregistered full defaults:
+Run the declared full defaults:
 
 ```bash
 python3 tools/ou_validation.py --mode full
@@ -145,6 +145,32 @@ lifetime. It uploads the result as an artifact rather than committing it: a
 regenerated bundle has to be read against the manuscript before it replaces the
 committed one.
 
+### Restating a bundle without re-simulating
+
+The replays are the expensive half of this study and are fully determined by
+their seed triplets, so a change to how the rows are *summarized* does not
+require re-running them:
+
+```bash
+python3 tools/ou_validation.py \
+  --restat-from reports/results/ou_validation/ou_validation.json \
+  --output-dir reports/results/ou_validation
+```
+
+This reads `raw_runs` back out of the bundle and rewrites every derived file --
+summaries, paired effects, LaTeX tables, generated macros, bundle, and manifest
+-- with the statistics of the current source. Restating the committed bundle
+unchanged reproduces its derived files byte for byte, which
+`tests/validation/test_ou_validation.py` asserts; that is what makes it safe to
+use for adding or changing an interval construction. It cannot invent rows:
+whatever ensemble the source bundle scored is the ensemble the restated bundle
+reports, so widening the seed set still requires a `--mode full` run.
+
+Protocol fields that describe what was *run* (seeds, durations, transition
+bounds) are carried over untouched. Fields that describe how the rows are
+summarized are taken from the current source, so a restated bundle cannot
+disagree with the manuscript generated beside it.
+
 ## Outputs and interpretation
 
 The output directory contains:
@@ -155,6 +181,14 @@ The output directory contains:
   interval, and bootstrap 95% interval;
 - `ou_validation_paired_effects.csv`: paired mean differences, bootstrap intervals,
   Cohen's $d_z$, and small-sample-corrected Hedges' $g_z$;
+- the `stationary_normalized_aggregate` block of the bundle and manifest, which
+  carries the declared primary endpoint under four constructions on the same
+  paired differences: the percentile bootstrap, a Student-t interval, an exact
+  sign test, and an exact paired randomization (sign-flip) test enumerated over
+  all $2^n$ sign patterns. Descriptive contrasts keep the bootstrap alone; four
+  p-values on every one of them would enlarge the family of tests without
+  adding evidence. At $n=10$ both exact tests bottom out at $2^{-9}=0.002$
+  regardless of the data, so that floor is a property of the design;
 - `ou_validation.json`: protocol, calibration points, raw observations, and all
   statistics;
 - `ou_validation_manifest.json`: command, versions, Git state, source-file hashes,
@@ -174,9 +208,12 @@ zero is inconclusive at that interval level. Effect sizes should be interpreted
 with their paired sample count and interval, not in isolation.
 
 Across the four stationary JONSWAP seas, the within-seed mean normalized
-vertical RMS is 5.08% of $H_s$ for OU-III and 6.66% for OU-II. The paired
-difference is -1.581 percentage points with a bootstrap 95% interval of
-[-1.695, -1.451]. OU-III is lower vertically in every stationary sea and during
+vertical RMS is 4.98% of $H_s$ for OU-III and 6.68% for OU-II. The paired
+difference is -1.697 percentage points with a bootstrap 95% interval of
+[-1.781, -1.623], a Student-t interval of [-1.794, -1.601], and all ten
+seed-level differences negative (exact sign and paired sign-flip tests both at
+$p=0.002$, the smallest two-sided p-value ten pairs can produce). OU-III is
+lower vertically in every stationary sea and during
 the transition, and has higher 3D displacement RMS in four of the five
 scenarios. In the fifth, the $H_s=8.5$ m sea, it is lower with an interval
 excluding zero; that is a scenario-specific exception, not a general
