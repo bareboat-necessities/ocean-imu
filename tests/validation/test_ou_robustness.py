@@ -1,5 +1,7 @@
+import contextlib
 import csv
 import hashlib
+import io
 import json
 import math
 import sys
@@ -231,6 +233,111 @@ class ShardMergeTests(unittest.TestCase):
         self.assertEqual(merged[0]["dir_axis_error_deg"], float("inf"))
         self.assertEqual(merged[0]["disp_z_pct_hs"], 4.25)
         self.assertEqual(merged[0]["mode"], "Adaptive")
+
+
+class RestatTests(unittest.TestCase):
+    """`--restat-from` has to restate a bundle, not quietly rewrite it.
+
+    The replays are the expensive half of this study, and this study borrows
+    its statistics from ``ou_validation.py``, so an edit over there strands the
+    bundle's source pin without changing a single number.  Recomputing the
+    tables from the archived rows is the honest way out of that, but only if a
+    restat of the committed bundle reproduces the committed derived files byte
+    for byte, which is what this checks.
+    """
+
+    RESULTS = REPO_ROOT / "reports" / "results" / "ou_robustness"
+
+    def test_restating_the_committed_bundle_reproduces_its_derived_files(self):
+        source = self.RESULTS / "ou_robustness.json"
+        if not source.exists():  # pragma: no cover - smoke checkouts
+            self.skipTest("no committed robustness bundle")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            with contextlib.redirect_stdout(io.StringIO()):
+                robustness.restat_bundle(
+                    source,
+                    output,
+                    bootstrap_resamples=10_000,
+                    stats_seed=20260329,
+                )
+            for name in (
+                "ou_robustness_raw.csv",
+                "ou_robustness_summary.csv",
+                "ou_robustness_paired_effects.csv",
+                "ou_robustness_publication.tex",
+            ):
+                self.assertEqual(
+                    (output / name).read_bytes(),
+                    (self.RESULTS / name).read_bytes(),
+                    name,
+                )
+
+            restated = json.loads(
+                (output / "ou_robustness.json").read_text(encoding="utf-8")
+            )
+            committed = json.loads(source.read_text(encoding="utf-8"))
+            # Same rows, same operating point, and the restat must say what it
+            # restated.
+            self.assertEqual(restated["raw_runs"], committed["raw_runs"])
+            self.assertEqual(
+                restated["nominal_tuning_point"], committed["nominal_tuning_point"]
+            )
+            self.assertIn("restated_from", restated["protocol"])
+
+    def test_a_restat_keeps_covering_the_files_it_did_not_rewrite(self):
+        """A restat rewrites the tables; the figures stay as the run left them.
+
+        Matplotlib's SVG output is not a function of the rows alone, so the
+        figures are carried rather than redrawn.  The manifest is the bundle's
+        inventory, and dropping the files a restat happens not to touch would
+        quietly shrink what the hash check covers.
+        """
+        manifest = json.loads(
+            (self.RESULTS / "ou_robustness_manifest.json").read_text(encoding="utf-8")
+        )
+        covered = set(manifest["result_files"])
+        for name in (
+            "ou_robustness_sensitivity.svg",
+            "ou_robustness_stress.svg",
+        ):
+            self.assertIn(name, covered, name)
+        # The code sources are pinned by whichever path wrote the manifest, so
+        # a restat must not be a way to lose them.
+        pinned = set(manifest["source_files"])
+        for path in robustness.CODE_SOURCE_PATHS:
+            self.assertIn(str(path.relative_to(REPO_ROOT)), pinned)
+
+    def test_a_restat_records_the_sources_that_moved_under_it(self):
+        """The rows come from the earlier run; the tables come from this tree.
+
+        When those two disagree about a source file the manifest has to say so,
+        because a moved simulator source means the replays are stale and no
+        amount of restating fixes that.
+        """
+        previous = {
+            "tools/ou_validation.py": {"sha256": "0" * 64, "bytes": 1},
+            "plots/kalman_ou_ii/absent.csv": {"sha256": "1" * 64, "bytes": 2},
+        }
+        restated, moved = robustness._restated_source_files(previous)
+        # Present and changed: re-pinned, and reported as moved.
+        self.assertEqual(set(moved), {"tools/ou_validation.py"})
+        self.assertEqual(moved["tools/ou_validation.py"], previous["tools/ou_validation.py"])
+        self.assertNotEqual(restated["tools/ou_validation.py"]["sha256"], "0" * 64)
+        # Absent from the checkout: carried across, never dropped.
+        self.assertEqual(
+            restated["plots/kalman_ou_ii/absent.csv"],
+            previous["plots/kalman_ou_ii/absent.csv"],
+        )
+
+    def test_a_restat_cannot_manufacture_an_ensemble(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            empty = Path(tmp) / "empty.json"
+            empty.write_text(json.dumps({"raw_runs": []}), encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()):
+                with self.assertRaises(ValueError):
+                    robustness.restat_bundle(empty, Path(tmp), 100, 1)
 
 
 class CommittedRobustnessResultsTests(unittest.TestCase):

@@ -1,22 +1,17 @@
 {
   "command": [
-    "/usr/bin/python3",
+    "/usr/local/bin/python3",
     "tools/ou_robustness.py",
-    "--mode",
-    "full",
-    "--sensitivity-scales",
-    "0.5,0.75,1.0,1.25,1.5",
+    "--restat-from",
+    "reports/results/ou_robustness/ou_robustness.json",
     "--bootstrap-resamples",
     "10000",
-    "--combine-shards",
-    "--shard-dir",
-    "shards",
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/github-actions-attitude-errors-yddwr7",
-  "git_commit": "8dc66110f8ea5bfece1a093789c09446816aea0f",
-  "git_diff_stat": "",
+  "git_branch": "claude/github-action-ou-validation-3ee785",
+  "git_commit": "7a31e622c5bc0adf2ad077fc0609aa7df96443b4",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 1 +\n 1 file changed, 1 insertion(+)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 3.408071216442874,
@@ -25,8 +20,8 @@
     "sigma_a_mps2": 0.941857219,
     "tau_s": 2.17847133
   },
-  "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
+  "numpy": "2.4.6",
+  "platform": "Linux-6.18.5-fc-v18-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -37,6 +32,7 @@
     "mode": "full",
     "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
     "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
+    "restated_from": "reports/results/ou_robustness/ou_robustness.json",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {
@@ -121,11 +117,12 @@
     "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
+  "restated_from": "reports/results/ou_robustness/ou_robustness.json",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1421552,
-      "sha256": "18d6f5d68fe8adbcc3a0ed14ce7f299687c5384976fde788b134a947b1a74513"
+      "bytes": 1421625,
+      "sha256": "7e73032b63133afc16876d3f7b351b221fe405e5b6ec0fbea908b4a9daa71fe6"
     },
     "ou_robustness_paired_effects.csv": {
       "bytes": 142493,
@@ -173,6 +170,16 @@
       "bytes": 20049,
       "sha256": "794d9a41eb4b25aee130812263d951edce8e5cc47739212f312bd91b16235f7e"
     },
+    "tools/ou_robustness.py": {
+      "bytes": 53362,
+      "sha256": "fda56a95e66ee2ff11126bfa919c4571c2c2327089d6d122bd68bb8277cf4a70"
+    },
+    "tools/ou_validation.py": {
+      "bytes": 147900,
+      "sha256": "30119e19c80ee0c51cbb95299a21cf0e41f79b6a64b90b4c5fc49bd0df65cbdd"
+    }
+  },
+  "sources_moved_since_rows": {
     "tools/ou_robustness.py": {
       "bytes": 44950,
       "sha256": "86429f492fe0f5dc1bd5165d9c06c64b09d28fa08df8015768d8731a35b21e2f"

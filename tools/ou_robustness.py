@@ -11,6 +11,7 @@ by wave-realization, IMU-noise, and initialization seed.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import math
 import os
@@ -55,6 +56,19 @@ LOW_STRESS_HS_M = 0.05
 TAU_BOUNDS_S = (0.02, 12.0)
 SIGMA_AW_BOUNDS_MPS2 = (1e-9, 6.0)
 R_S_BOUNDS_MS = (0.4, 400.0)
+# The code that decides what this study measures: the two tools, and the
+# simulator sources the replays go through.  ``ou_validation.py`` is in the
+# list because this module imports it -- the seed broadcasting, the simulator
+# invocation, and the bootstrap and paired-effect machinery all live there.
+# The manifest pins them by hash, so a run and its bundle cannot drift apart
+# silently.  Declared once because the restat path has to pin the same set the
+# run does.
+CODE_SOURCE_PATHS = (
+    Path(__file__).resolve(),
+    REPO_ROOT / "tools" / "ou_validation.py",
+    REPO_ROOT / "src" / "util" / "W3dSimCommon.cpp",
+    REPO_ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim.cpp",
+)
 
 
 @dataclass(frozen=True)
@@ -699,6 +713,184 @@ def read_shards(shard_dir: Path) -> list[dict[str, Any]]:
     return core.read_shards(shard_dir, SHARD_PREFIX, ordered=True)
 
 
+def _restated_source_files(
+    previous: Mapping[str, Mapping[str, Any]],
+) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    """Re-pin the sources a restat runs under, and report what moved.
+
+    The wave records are versioned release inputs and are not in the checkout,
+    so an entry whose file is absent is carried across unchanged rather than
+    dropped -- a restat must not shrink what the manifest covers.  Everything
+    present is hashed from disk, including the code sources, which is the point:
+    the restat's derived files really were produced by the tree as it stands.
+
+    The rows, though, were produced by the tree as it stood *then*.  Any source
+    whose hash moved between the two is returned separately so the manifest can
+    say so, because a moved simulator source means the replays are stale and a
+    restat cannot fix that.
+    """
+
+    restated: dict[str, dict[str, Any]] = {}
+    moved: dict[str, dict[str, Any]] = {}
+    names = {
+        *previous,
+        *(str(path.relative_to(REPO_ROOT)) for path in CODE_SOURCE_PATHS),
+    }
+    for name in sorted(names):
+        path = REPO_ROOT / name
+        recorded = dict(previous.get(name, {}))
+        if not path.is_file():
+            if recorded:
+                restated[name] = recorded
+            continue
+        entry = {"sha256": core.sha256_file(path), "bytes": path.stat().st_size}
+        restated[name] = entry
+        if recorded and recorded.get("sha256") != entry["sha256"]:
+            moved[name] = recorded
+    return restated, moved
+
+
+def restat_bundle(
+    source: Path,
+    output_dir: Path,
+    bootstrap_resamples: int,
+    stats_seed: int,
+) -> int:
+    """Recompute the summaries, effects, and table from an archived bundle's rows.
+
+    The simulator replays are the expensive half of this study -- the full run
+    is some 310 twenty-minute replays -- and each one is fixed by its seed
+    triplet and tuning point.  A change to how the rows are *summarized*, or to
+    a part of ``ou_validation.py`` this study only borrows helpers from, should
+    therefore not cost a regeneration.  This path reads ``raw_runs`` back out of
+    a committed bundle and rewrites the derived files with the statistics of the
+    current source.  It cannot invent rows: whatever ensemble the source bundle
+    scored is the ensemble the restated bundle reports.
+
+    The figures are deliberately not rewritten.  They are not a function of the
+    rows alone -- Matplotlib's SVG output moves between versions -- so they stay
+    as the run left them and the manifest keeps covering them by re-hashing what
+    is on disk.
+    """
+
+    with source.open(encoding="utf-8") as stream:
+        bundle = json.load(stream)
+    rows = [dict(row) for row in bundle["raw_runs"]]
+    if not rows:
+        raise ValueError(f"{source} carries no raw runs to restate")
+
+    # The bundle JSON is written with sorted keys, so the rows come back
+    # alphabetical.  Column order is not information, but a restated bundle
+    # that reshuffles the columns is impossible to diff against the run it
+    # restates, so the archived CSV header is used to put them back.
+    archived_csv = source.parent / "ou_robustness_raw.csv"
+    if archived_csv.exists():
+        with archived_csv.open(encoding="utf-8", newline="") as stream:
+            header = next(csv.reader(stream), [])
+        if header:
+            rows = [
+                {
+                    **{key: row[key] for key in header if key in row},
+                    **{key: value for key, value in row.items() if key not in header},
+                }
+                for row in rows
+            ]
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary = summarize_rows(rows, bootstrap_resamples, stats_seed)
+    effects = paired_effect_rows(rows, bootstrap_resamples, stats_seed)
+
+    raw_path = output_dir / "ou_robustness_raw.csv"
+    summary_path = output_dir / "ou_robustness_summary.csv"
+    effects_path = output_dir / "ou_robustness_paired_effects.csv"
+    json_path = output_dir / "ou_robustness.json"
+    publication_path = output_dir / "ou_robustness_publication.tex"
+    manifest_path = output_dir / "ou_robustness_manifest.json"
+
+    core.write_csv(raw_path, rows)
+    core.write_csv(summary_path, summary)
+    core.write_csv(effects_path, effects)
+    write_publication_table(publication_path, summary, effects)
+
+    # Fields that describe what was *run* are carried over untouched -- the
+    # restated bundle scored exactly the ensemble the source did.  Fields that
+    # describe how the rows are summarized come from this run.
+    protocol = dict(bundle.get("protocol", {}))
+    protocol["bootstrap_resamples"] = bootstrap_resamples
+    protocol["stats_seed"] = stats_seed
+    protocol["restated_from"] = str(
+        source.relative_to(REPO_ROOT) if source.is_relative_to(REPO_ROOT) else source
+    )
+    core.write_json(
+        json_path,
+        {
+            "protocol": protocol,
+            "nominal_tuning_point": bundle.get("nominal_tuning_point"),
+            "raw_runs": rows,
+            "summary": summary,
+            "paired_effects": effects,
+        },
+    )
+
+    result_paths = [raw_path, summary_path, effects_path, json_path, publication_path]
+    manifest = (
+        json.loads(manifest_path.read_text(encoding="utf-8"))
+        if manifest_path.exists()
+        else {}
+    )
+    # The manifest is the bundle's inventory. The files a restat does not
+    # rewrite -- the two figures -- have to stay covered, so the carried
+    # entries are re-hashed from disk rather than trusted or dropped.
+    result_files = {
+        name: {"sha256": core.sha256_file(path), "bytes": path.stat().st_size}
+        for name, path in (
+            (name, output_dir / name) for name in manifest.get("result_files", {})
+        )
+        if path.is_file()
+    }
+    result_files.update(
+        {
+            path.name: {"sha256": core.sha256_file(path), "bytes": path.stat().st_size}
+            for path in result_paths
+        }
+    )
+    source_files, moved = _restated_source_files(manifest.get("source_files", {}))
+    manifest.update(
+        {
+            "git_commit": core.git_output("rev-parse", "HEAD"),
+            "git_branch": core.git_output("branch", "--show-current"),
+            "git_diff_stat": core.git_output("diff", "--stat"),
+            "python": sys.version,
+            "platform": platform.platform(),
+            "numpy": np.__version__,
+            "command": [sys.executable, *sys.argv],
+            "protocol": protocol,
+            "restated_from": protocol["restated_from"],
+            "source_files": source_files,
+            "result_files": result_files,
+        }
+    )
+    # Only ever present after a restat, and only for sources that actually
+    # moved: the pin above is what the tables were computed under, and this is
+    # what the replays were run under.
+    if moved:
+        manifest["sources_moved_since_rows"] = moved
+    else:
+        manifest.pop("sources_moved_since_rows", None)
+
+    core.write_json(manifest_path, manifest)
+
+    for name in moved:
+        print(
+            f"Note: {name} has changed since the archived rows were produced. "
+            "The rows are carried, not re-run; regenerate the study if that "
+            "file decides what the simulator does."
+        )
+    for path in (*result_paths, manifest_path):
+        print(f"Wrote {path}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("smoke", "full"), default="smoke")
@@ -752,6 +944,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="skip simulation, read every shard file, and write the bundle "
         "the unsharded run would have written",
+    )
+    parser.add_argument(
+        "--restat-from",
+        type=Path,
+        help="skip simulation entirely and recompute the summaries, paired "
+        "effects, table, and bundle from the raw runs archived in an existing "
+        "ou_robustness.json",
     )
     parser.add_argument("--eigen-dir")
     parser.add_argument("--skip-build", action="store_true")
@@ -931,6 +1130,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     args.output_dir = args.output_dir.resolve()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
+    if args.restat_from is not None:
+        return restat_bundle(
+            args.restat_from.resolve(),
+            args.output_dir,
+            args.bootstrap_resamples,
+            args.stats_seed,
+        )
+
     duration_sec = args.duration_sec or (180.0 if args.mode == "smoke" else 1200.0)
     window_sec = args.window_sec or (120.0 if args.mode == "smoke" else 900.0)
     if not duration_sec > window_sec > 0.0:
@@ -1089,10 +1296,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         nominal_input,
         low_input,
         endpoint_input,
-        Path(__file__).resolve(),
-        REPO_ROOT / "tools" / "ou_validation.py",
-        REPO_ROOT / "src" / "util" / "W3dSimCommon.cpp",
-        REPO_ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim.cpp",
+        *CODE_SOURCE_PATHS,
     ]
     manifest = {
         "git_commit": core.git_output("rev-parse", "HEAD"),

@@ -83,6 +83,36 @@ lists, `--duration-sec`, `--window-sec`, `--bootstrap-resamples`, and
 `0.5`, `1.0`, and `1.5`; intermediate scales may be added or removed.
 Smoke mode is an integration check and is not inferential evidence.
 
+### Restating a committed bundle
+
+The manifest pins `tools/ou_validation.py` because this study imports it: the
+seed broadcasting, the simulator invocation, and the bootstrap and paired-effect
+machinery all live there. An edit over there therefore strands the bundle's
+source pin even when it changes nothing this study measures, and the replays are
+far too expensive to re-run for that. Recompute the derived files from the
+archived rows instead:
+
+```bash
+python3 tools/ou_robustness.py \
+  --restat-from reports/results/ou_robustness/ou_robustness.json \
+  --bootstrap-resamples 10000 \
+  --output-dir reports/results/ou_robustness
+```
+
+This reads `raw_runs` back out of the bundle and rewrites the summaries, paired
+effects, publication table, bundle, and manifest with the statistics of the
+current source. Restating the committed bundle unchanged reproduces those files
+byte for byte, which `tests/validation/test_ou_robustness.py` asserts. It cannot
+invent rows: whatever ensemble the source bundle scored is the ensemble the
+restated bundle reports.
+
+The two SVG figures are carried rather than redrawn -- Matplotlib's SVG output
+is not a function of the rows alone -- and the manifest keeps covering them by
+re-hashing what is on disk. Any source whose hash moved between the archived run
+and the restat is recorded under `sources_moved_since_rows`, since the rows are
+carried and not re-run: if a moved file is one the simulator goes through, the
+study needs a `--mode full` regeneration and no restat will substitute for it.
+
 ## Outputs
 
 The versioned full result bundle under `reports/results/ou_robustness/` contains:
