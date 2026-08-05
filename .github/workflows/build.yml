@@ -52,13 +52,32 @@ jobs:
         run: |
           unzip -o sim-data-files.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
 
+      # This is the step that times out. TeX Live is not optional -- every
+      # draw_plots.sh runs matplotlib with the pgf backend and text.usetex, so
+      # the host needs a real xelatex -- but the recommends around it are, and
+      # they are two thirds of the package count. Retries and per-connection
+      # timeouts cover the archive stalling, which is what actually burns the
+      # twenty minutes when this fails.
       - name: Install build dependencies
-        timeout-minutes: 20
+        timeout-minutes: 25
         run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ make libeigen3-dev \
-            texlive-xetex texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra texlive-fonts-extra dvipng \
-            inkscape graphviz python3-pip python3-matplotlib python3-numpy python3-pandas
+          set -euo pipefail
+          apt_get() {
+            sudo env DEBIAN_FRONTEND=noninteractive apt-get \
+              -o Acquire::Retries=5 \
+              -o Acquire::http::Timeout=30 \
+              -o Acquire::https::Timeout=30 \
+              -o Dpkg::Use-Pty=0 \
+              "$@"
+          }
+          apt_get update
+          apt_get install -y --no-install-recommends \
+            g++ make libeigen3-dev \
+            texlive-xetex texlive-latex-recommended texlive-fonts-recommended \
+            texlive-latex-extra texlive-fonts-extra dvipng \
+            inkscape graphviz python3-pip \
+            python3-matplotlib python3-numpy python3-pandas python3-scipy \
+            fonts-dejavu-core
 
       - name: Compile tests (${{ matrix.dir }})
         run: |
