@@ -52,9 +52,9 @@ jobs:
           cp *.csv ../../plots/${{ matrix.dir }}
 
       # Regenerated while the simulator still exists and before the document is
-      # built, so the deterministic 60 s table in the PDF is the one this code
+      # built, so the deterministic 900 s table in the PDF is the one this code
       # produces rather than whatever was last typed by hand.
-      - name: Regenerate the deterministic 60 s table (kalman_ou_iii)
+      - name: Regenerate the deterministic 900 s table (kalman_ou_iii)
         if: matrix.dir == 'kalman_ou_iii'
         run: |
           python3 -u tools/ou_sim_table.py \

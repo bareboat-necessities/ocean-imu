@@ -1262,9 +1262,23 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
                                       const W3dFailureLimits& limits,
                                       const W3dSummaryLabels& labels)
 {
-    constexpr float RMS_WINDOW_SEC = 60.0f;
+    // The scored trailing window for the OU-II/OU-III simulators.  It matches
+    // the window the statistical validation runner scores, so the executable
+    // gates and the ensemble study describe the same stretch of a 20-minute
+    // replay instead of two windows an order of magnitude apart.
+    constexpr float RMS_WINDOW_SEC = 900.0f;
+    constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
     const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
-    if (result.errs_z.size() <= static_cast<size_t>(N_last)) return;
+    // A partial window is not the scored window, so a record shorter than it is
+    // left ungated rather than scored against sentinels fitted to the full one.
+    // Said out loud, because a caller that scrapes QUALITY_GATE otherwise reads
+    // the silence as a failure.
+    if (result.errs_z.size() <= static_cast<size_t>(N_last)) {
+        std::cout << "QUALITY_GATE: SKIPPED REASON=record_shorter_than_"
+                  << RMS_WINDOW_SEC_LABEL << "s_window RECORD="
+                  << result.output_name << "\n";
+        return;
+    }
 
     const size_t start = result.errs_z.size() - N_last;
     RMSReport rms_x, rms_y, rms_z, rms_roll, rms_pitch, rms_yaw;
@@ -1327,7 +1341,8 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
         ? 100.f * rms_3d_err / disp_true_max_3d
         : NAN;
 
-    std::cout << "=== Last 60 s RMS summary for " << result.output_name << " ===\n";
+    std::cout << "=== Last " << RMS_WINDOW_SEC_LABEL << " s RMS summary for "
+              << result.output_name << " ===\n";
     std::cout << "XYZ RMS (m): X=" << x_rms << " Y=" << y_rms << " Z=" << z_rms << "\n";
     std::cout << "XYZ RMS (%Hs): X=" << x_pct << "% Y=" << y_pct << "% Z=" << z_pct
               << "% (Hs=" << result.wave_params.height << ")\n";
@@ -1413,7 +1428,8 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
         const int nWin = int(i1 - i0);
         auto pct = [&](int n){ return (nWin > 0) ? (100.0 * double(n) / double(nWin)) : 0.0; };
 
-        std::cout << "=== Direction Report (last 60 s only) for " << result.output_name << " ===\n";
+        std::cout << "=== Direction Report (last " << RMS_WINDOW_SEC_LABEL
+                  << " s only) for " << result.output_name << " ===\n";
         std::cout << "window_s: " << (float(i1 - i0) * dt) << " samples: " << (i1 - i0) << "\n";
         std::cout << "freq_hz: mean=" << mean_vec(vf)
                   << " median=" << median_vec(vf)

@@ -570,7 +570,7 @@ class CommittedFullResultsTests(unittest.TestCase):
         self.assertTrue(
             all(
                 int(row["simulator_return_code"])
-                == 1 - int(row["historical_60s_gate_pass"])
+                == 1 - int(row["quality_gate_pass"])
                 for row in raw
             )
         )
@@ -998,7 +998,7 @@ class SmokeEnsembleTests(unittest.TestCase):
                             "wave_phase_seed": repetition,
                             "imu_noise_seed": 100 + repetition,
                             "initialization_seed": 1000 + repetition,
-                            "historical_60s_gate_pass": 1,
+                            "quality_gate_pass": 1,
                         }
                         row.update(
                             {metric: value for metric in validation.METRIC_NAMES}
@@ -1220,8 +1220,8 @@ class ManuscriptMethodologyTests(unittest.TestCase):
             robustness,
         )
 
-    def test_the_sixty_second_table_is_generated_not_typed(self):
-        """The deterministic 60 s table has to come from the simulator.
+    def test_the_deterministic_table_is_generated_not_typed(self):
+        """The deterministic scoring-window table has to come from the simulator.
 
         It was hand-typed for a long time, and hand-typed numbers do not follow
         the code: its roll column still reported values from before the startup

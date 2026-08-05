@@ -169,7 +169,7 @@
     "duration_sec": 1200.0,
     "fixed_nominal_definition": "noise-free full-trace operating point from Hs=1.5 m, L=50.710 m",
     "fixed_oracle_definition": "scenario-calibrated fixed reference: the noise-free full-trace operating point of the stationary sea being scored, and the known final Hs=4.0 m/Tp=11.4 s point for the transition; it is selected from knowledge of the sea, not optimized against displacement error",
-    "historical_gate_window_sec": 60.0,
+    "quality_gate_window_sec": 60.0,
     "mode": "full",
     "multiplicity": "intervals are per-comparison and are not adjusted for multiplicity; only the primary endpoint is confirmatory and every other interval is descriptive",
     "pairing": "identical wave, IMU-noise, and initialization seeds",
@@ -269,8 +269,8 @@
   "restated_from": "reports/results/ou_validation/ou_validation.json",
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4663856,
-      "sha256": "786998b4e8d2d619bbe3c7f8ba7cff4466a813c06982eb2fd2439568932c3f80"
+      "bytes": 4657973,
+      "sha256": "75f93d52f924f5646809868df7c18ad199d960458b805aedeb17117167907bff"
     },
     "ou_validation_attitude.svg": {
       "bytes": 81519,
@@ -285,8 +285,8 @@
       "sha256": "9a76d42fda076eff5ad9a7fb5e1937bb81464e861a5fbed26cda09ef9194b577"
     },
     "ou_validation_macros.tex": {
-      "bytes": 10714,
-      "sha256": "76eb8db8fbc744e5f8d121f3ba8e18566bbd8af69cba35292a0195aa03b69372"
+      "bytes": 10702,
+      "sha256": "c10c16a7421d10ea8a787b95735a0ae773108116a39f7aa02e7f8141d1e208cd"
     },
     "ou_validation_paired_effects.csv": {
       "bytes": 621768,
@@ -297,8 +297,8 @@
       "sha256": "834f86d58a800b1d162cfdb270669e6ba166cf8d755f3603fb95751c2f50faa1"
     },
     "ou_validation_raw.csv": {
-      "bytes": 559547,
-      "sha256": "cfc4042a76e1cf8fe99e7fe1730f0f8d8fd0fd83ed1d26b53ec9320cc0e5ec28"
+      "bytes": 559540,
+      "sha256": "1145c21a28867f28fc9cfa2987aafe1dd55e9b0360be98008d1ec73527ae39a4"
     },
     "ou_validation_summary.csv": {
       "bytes": 653869,

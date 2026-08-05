@@ -419,7 +419,7 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         self.assertTrue(
             all(
                 int(row["simulator_return_code"])
-                == 1 - int(row["historical_60s_gate_pass"])
+                == 1 - int(row["quality_gate_pass"])
                 for row in raw
             )
         )

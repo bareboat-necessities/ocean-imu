@@ -401,14 +401,18 @@ private:
 // within 6e-6 relative, so a limit this close only trips when the filter
 // actually gets worse.  Setting one below what the filter currently achieves
 // makes it fail every run rather than catching a regression.
+//
+// Re-derived for the 900 s scoring window: a sentinel fitted to the
+// previous 60 s window is not a sentinel for this one, it is just a number the
+// filter passes by a wide margin.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.6f,
-    .err_limit_percent_z_pmstokes  = 6.6f,
-    .err_limit_yaw_deg             = 2.2f,
-    .err_limit_percent_3d_jonswap  = 32.0f,
-    .err_limit_percent_3d_pmstokes = 26.0f,   // worst 25.74 (pmstokes H0.27)
-    .acc_z_bias_percent            = 8.2f,
-    .bias_3d_percent               = 150.0f,
+    .err_limit_percent_z_jonswap   = 5.4f,    // worst 5.34 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 5.3f,    // worst 5.25 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 2.2f,    // worst 2.16 (pmstokes H8.5)
+    .err_limit_percent_3d_jonswap  = 21.4f,   // worst 21.22 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 22.0f,   // worst 21.85 (pmstokes H0.27)
+    .acc_z_bias_percent            = 5.9f,    // worst 5.85 (pmstokes H8.5)
+    .bias_3d_percent               = 106.8f,  // worst 106.25 (jonswap H1.5, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

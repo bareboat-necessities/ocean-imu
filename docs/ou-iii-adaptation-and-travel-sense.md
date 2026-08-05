@@ -245,7 +245,7 @@ neither of them causes. Three configurations were measured and none dominates:
 | configuration | gates | trade |
 | --- | --- | --- |
 | `Q_bacc` 5e-4 (shipped) | all 8 pass | yaw +0.4 to +0.5 deg in the small seas |
-| `Q_bacc` 1e-3 (historical) | 4 fail | better small-sea yaw and 2% better 3D, but the 60 s yaw gate fails at `H_s` 4.0 and 8.5 and the vertical-bias gate fails at 8.5 |
+| `Q_bacc` 1e-3 (historical) | 4 fail | better small-sea yaw and 2% better 3D, but the yaw gate fails at `H_s` 4.0 and 8.5 and the vertical-bias gate fails at 8.5 |
 | both bias priors matched to the simulator | 1 fails | best small-sea yaw, vertical-bias gate fails at 8.5 |
 
 The shipped choice is the only one that clears every historical gate, and it is
@@ -501,7 +501,7 @@ change stays ablatable on both sides of the comparison.
 - Stage D's per-axis stationary acceleration covariance is unimplemented.
 - The ~1.1 degree static roll offset absorbed by the accelerometer-bias state
   predates all of this and is unfixed.
-- The historical final-60-second gates remain calibrated to one realization and
+- The executable gates remain calibrated to one realization and
   in at least one case had under one percentage point of margin. They should be
   replaced by separately calibrated ensemble acceptance criteria and kept only
   as deterministic sentinels.
