@@ -195,10 +195,11 @@ For module-level validation, run `make all` inside the relevant folder under `te
 
 ### Paired OU validation
 
-The OU-II/OU-III statistical validation runner keeps the historical final-60-second
-regression gates, but scores the primary full experiment over the final 15 minutes
-of each 20-minute run. It pairs wave realization, IMU noise, and initialization across
-both filters and the Adaptive, FixedNominal, and FixedOracle ablations.
+The OU-II/OU-III statistical validation runner keeps the executable regression
+gates, and scores both them and the primary full experiment over the final
+15 minutes of each 20-minute run. It pairs wave realization, IMU noise, and
+initialization across both filters and the Adaptive, FixedNominal, and
+FixedOracle ablations.
 
 ```bash
 python3 tools/ou_validation.py --mode smoke

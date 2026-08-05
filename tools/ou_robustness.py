@@ -687,7 +687,7 @@ def _run_unit(
                 tuning_point.sigma_a_mps2 if tuning_point else "adaptive"
             ),
             "configured_r_s_ms": tuning_point.RS_ms if tuning_point else "adaptive",
-            "historical_60s_gate_pass": int(gate_pass),
+            "quality_gate_pass": int(gate_pass),
             "simulator_return_code": return_code,
             **{
                 key: value for key, value in metrics.items()

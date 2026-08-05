@@ -34,7 +34,12 @@ PATTERNS = {
 }
 LABELS = {"ou3": "OU--III", "ou2": "OU--II", "pii": "Adaptive PII", "nlo": "TVG--NLO"}
 HEIGHTS = (0.27, 1.50, 4.00, 8.50)
-WINDOW_S = 60.0
+# Scoring window for the tables: the same trailing window the simulators gate
+# on and the ten-seed study scores.
+WINDOW_S = 900.0
+# The time-series figure stays at a minute.  Fifteen minutes of wave traces in
+# a two-panel figure is a solid band, not a reconstruction anyone can read.
+PLOT_WINDOW_S = 60.0
 
 
 def index_files(pattern, regex):
@@ -46,11 +51,11 @@ def index_files(pattern, regex):
     return out
 
 
-def tail(df):
+def tail(df, window_s=WINDOW_S):
     if "time" not in df.columns or df.empty:
         raise ValueError("comparison CSV must contain a non-empty time column")
     end = float(df["time"].max())
-    return df[df["time"] >= end - WINDOW_S].copy()
+    return df[df["time"] >= end - window_s].copy()
 
 
 def rms(series):
@@ -80,7 +85,7 @@ def write_tables(rows, output):
     lines = [
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Paired vertical-displacement RMS error for the proposed OU--III estimator, its OU--II predecessor, the adaptive PII observer, and the published TVG--NLO baseline. All values use the same reference records and final \SI{60}{s} scoring window.}",
+        r"  \caption{Paired vertical-displacement RMS error for the proposed OU--III estimator, its OU--II predecessor, the adaptive PII observer, and the published TVG--NLO baseline. All values use the same reference records and final \SI{900}{s} scoring window.}",
         r"  \label{tab:multi_observer_scenario_comparison}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4.0pt}",
@@ -135,7 +140,7 @@ def write_tables(rows, output):
 
 
 def write_plot(dfs, output_base):
-    trimmed = {name: tail(df) for name, df in dfs.items()}
+    trimmed = {name: tail(df, PLOT_WINDOW_S) for name, df in dfs.items()}
     start = max(float(df["time"].min()) for df in trimmed.values())
     end = min(float(df["time"].max()) for df in trimmed.values())
     base = trimmed["ou3"]

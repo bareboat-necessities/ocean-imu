@@ -173,10 +173,10 @@ hard-iron bias and slow drift, and $\vct{w}_m$ is per-sample white noise.
 \fi
 
 \paragraph{Scoring window}
-The historical deterministic regression gates and Table~\ref{tab:sim_results_rms_dir_basic}
-use a trailing window $T_{\mathrm{RMS}}=60$~s.  The ensemble
-validation protocol instead uses the final \SI{900}{s} of each \SI{1200}{s}
-run as its primary score, thereby excluding startup while retaining a long
+The deterministic regression gates, Table~\ref{tab:sim_results_rms_dir_basic},
+and the ensemble validation protocol all score the same trailing window
+$T_{\mathrm{RMS}}=900$~s, the final \SI{900}{s} of each \SI{1200}{s}
+run, thereby excluding startup while retaining a long
 steady-state record.  The runner reports per-axis and 3D displacement RMS,
 roll/pitch/yaw RMS, bias errors, wave-direction accuracy against the generator
 azimuth, and diagnostic tuning variables $(f,\tau,\sigma_{aw},r_S)$.  For the
@@ -414,13 +414,13 @@ the source tree.
 }{%
   \begin{table}[t]
     \centering
-    \caption{Simulation results (last \SI{60}{s} RMS window).}
+    \caption{Simulation results (last \SI{900}{s} RMS window).}
     \label{tab:sim_results_rms_dir_basic}
     \begin{tabular}{ll}
       \toprule
       Result & Status \\
       \midrule
-      Deterministic \SI{60}{s} metrics & generated during document evaluation \\
+      Deterministic \SI{900}{s} metrics & generated during document evaluation \\
       \bottomrule
     \end{tabular}
   \end{table}

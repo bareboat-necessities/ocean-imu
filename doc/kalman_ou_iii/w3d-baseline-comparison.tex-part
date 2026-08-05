@@ -50,9 +50,9 @@ OU--III took its period from the wave band, so every reported difference
 between the families mixed the extra integral state with the spectral band the
 two were tuned from.
 
-The legacy deterministic comparison evaluates all four methods from the same
+The deterministic comparison evaluates all four methods from the same
 timestamped synthetic reference records, inertial sample stream, sensor-error
-realizations, \SI{20}{min} duration, and final \SI{60}{s} scoring window. Raw vertical-displacement RMS
+realizations, \SI{20}{min} duration, and final \SI{900}{s} scoring window. Raw vertical-displacement RMS
 error is the primary metric; normalized vertical error, roll RMS, and pitch RMS
 are secondary metrics. Direction, travel sense, horizontal displacement, and
 yaw are excluded from the common comparison because they are not observable
@@ -114,14 +114,15 @@ TVG--NLO & fixed gains for the documented vertical-only adaptation
 }
 
 In that single-realization comparison, OU--III has the lowest mean normalized
-vertical-displacement RMS error: 5.3\% of $H_s$, compared with 7.1\% for
-OU--II, 12.3\% for the adaptive PII observer, and 15.0\% for the adapted
+vertical-displacement RMS error: 4.5\% of $H_s$, compared with 6.5\% for
+OU--II, 11.9\% for the adaptive PII observer, and 14.5\% for the adapted
 TVG--NLO. These values establish a reproducible four-method reference but are
 not ensemble estimates and are not used to claim statistical superiority. They
-are a single \SI{60}{s} window on one realization, so they are reported for
+are a single \SI{900}{s} window on one realization, so they are reported for
 continuity with the earlier deterministic protocol; the inferential statement
-about the two OU filters is the ten-seed \SI{900}{s} study below, and the two
-should not be quoted interchangeably.
+about the two OU filters is the ten-seed study below, which scores the same
+\SI{900}{s} window over ten paired seed triplets, and the two should not be
+quoted interchangeably.
 
 \paragraph{What the benchmark set does not contain}
 It is worth being direct about the shape of that gap, because it bounds how
@@ -486,13 +487,12 @@ rate.
   \end{figure*}
 }{}
 
-Only \OUValidationLegacyGatePasses{} of the kinematically projected
-surrogate runs satisfy
-all legacy final-\SI{60}{s} thresholds; the remaining
-\OUValidationLegacyGateFailures{} trigger at least one.  Those thresholds were
-constructed as regression sentinels for the original deterministic realization,
+Only \OUValidationGatePasses{} of the kinematically projected
+surrogate runs satisfy every simulator regression threshold; the remaining
+\OUValidationGateFailures{} trigger at least one.  Those thresholds were
+constructed as regression sentinels for the deterministic realization,
 not as population-level acceptance criteria.  The ensemble conclusions are
 therefore based on the versioned raw metrics, paired differences, and intervals
-rather than on the legacy pass/fail indicator.
+rather than on the pass/fail indicator.
 
 \input{w3d-ou-robustness.tex-part}

@@ -1,6 +1,6 @@
 
 The present study establishes the complete estimator recursion and verifies it
-under the simulation protocol of Sec.~\ref{sec:sim-and-eval}.  The legacy
+under the simulation protocol of Sec.~\ref{sec:sim-and-eval}.  The deterministic
 eight-case comparison retains the adaptive PII and TVG--NLO reference results,
 while the completed ten-seed study provides the inferential OU-family and
 adaptation evidence.  Across the four stationary JONSWAP seas, OU--III has a

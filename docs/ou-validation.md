@@ -2,9 +2,9 @@
 
 `tools/ou_validation.py` implements the paired inferential validation path for
 the two OU filter families. It does not replace the executable regression gates:
-the simulators still calculate and enforce their historical trailing 60-second
-thresholds. The full experiment separately scores the trailing 900 seconds of each
-20-minute realization.
+the simulators still calculate and enforce their own thresholds over the
+trailing 900 seconds of each 20-minute realization, which is the same window
+the full experiment scores.
 
 The repository versions the completed ten-seed study used by the manuscript in
 `reports/results/ou_validation/`. It contains 840 simulator rows over ten
@@ -232,11 +232,11 @@ documented separately in [`ou-robustness.md`](ou-robustness.md). It reuses the
 same paired seed triplets but does not alter the confirmatory comparison or
 select a new reported operating point from reference errors.
 
-The historical final-60-second pass/fail thresholds are intentionally retained
-as deterministic regression sentinels. They were calibrated to the original
+The simulator pass/fail thresholds are intentionally retained as
+deterministic regression sentinels. They are calibrated to the deterministic
 realization: only a minority of the kinematically projected surrogate runs
 satisfy all of them, and the exact count is regenerated into
-`\OUValidationLegacyGatePasses`. They
+`\OUValidationGatePasses`. They
 must not be interpreted as ensemble acceptance criteria; the statistical study
 uses the raw long-window metrics and paired intervals instead.
 

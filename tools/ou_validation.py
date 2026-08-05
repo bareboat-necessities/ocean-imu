@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Paired Monte Carlo validation for the OU-II and OU-III filters.
 
-The runner deliberately keeps the historical final-60-second executable gates
-separate from its inferential score.  Validation uses a configurable long
-window (900 seconds in full mode), independent wave-realization, IMU-noise,
-and initialization seeds, and paired realizations across filters and ablations.
+The runner reports the simulator's own executable quality gates alongside, but
+separately from, its inferential score.  Validation uses a configurable long
+window (900 seconds in full mode, matching the window the simulators gate on),
+independent wave-realization, IMU-noise, and initialization seeds, and paired
+realizations across filters and ablations.
 """
 
 from __future__ import annotations
@@ -34,6 +35,10 @@ DT_SECONDS = 1.0 / 200.0
 GRAVITY_MPS2 = 9.80665
 SURROGATE_MIN_FREQ_HZ = 0.02
 SURROGATE_MAX_FREQ_HZ = 1.60
+# Trailing window the OU-II/OU-III simulators score their own quality gates
+# over; see RMS_WINDOW_SEC in src/util/W3dSimCommon.cpp.  Recorded in the
+# protocol block so a raw row's gate flag can be read without the source.
+SIMULATOR_GATE_WINDOW_SEC = 900.0
 WAVE_PHASE_METHOD = (
     "common random phase on the 0.02-1.60 Hz world-velocity and Euler "
     "spectra; displacement and acceleration analytically derived from "
@@ -1599,7 +1604,7 @@ def write_publication_table(
         if pmstokes_scenarios
         else None
     )
-    gate_passes = sum(int(row["historical_60s_gate_pass"]) for row in rows)
+    gate_passes = sum(int(row["quality_gate_pass"]) for row in rows)
 
     def mean_std(
         scenario: str, family: str, mode: str, metric: str = "disp_z_pct_hs",
@@ -1739,8 +1744,8 @@ def write_publication_table(
         rf"{{{_latex_p_value(difference.get('randomization_p_value'))}}}",
         rf"\providecommand{{\OUValidationNormalizedRandomizationPatterns}}"
         rf"{{{randomization_patterns}}}",
-        rf"\providecommand{{\OUValidationLegacyGatePasses}}{{{gate_passes}}}",
-        rf"\providecommand{{\OUValidationLegacyGateFailures}}{{{len(rows) - gate_passes}}}",
+        rf"\providecommand{{\OUValidationGatePasses}}{{{gate_passes}}}",
+        rf"\providecommand{{\OUValidationGateFailures}}{{{len(rows) - gate_passes}}}",
         # Interval construction, so the manuscript states the method rather
         # than leaving "bootstrap 95% interval" unqualified.
         rf"\providecommand{{\OUValidationBootstrapResamples}}{{{bootstrap_resamples:,}}}".replace(",", r"{,}"),
@@ -3331,7 +3336,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                                 "imu_noise_seed": seed.imu_noise_seed,
                                 "initialization_seed": seed.initialization_seed,
                                 "score_window_sec": window_sec,
-                                "historical_60s_gate_pass": int(gate_pass),
+                                "quality_gate_pass": int(gate_pass),
                                 "simulator_return_code": return_code,
                                 **{
                                     key: value for key, value in metrics.items()
@@ -3539,7 +3544,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "mode": args.mode,
         "duration_sec": duration_sec,
         "score_window_sec": window_sec,
-        "historical_gate_window_sec": 60.0,
+        "quality_gate_window_sec": SIMULATOR_GATE_WINDOW_SEC,
         "transition_start_sec": transition_start,
         "transition_end_sec": transition_end,
         "wave_phase_method": WAVE_PHASE_METHOD,
