@@ -52,12 +52,18 @@ jobs:
         run: |
           unzip -o sim-data-files.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
 
-      # This is the step that times out. TeX Live is not optional -- every
-      # draw_plots.sh runs matplotlib with the pgf backend and text.usetex, so
-      # the host needs a real xelatex -- but the recommends around it are, and
-      # they are two thirds of the package count. Retries and per-connection
-      # timeouts cover the archive stalling, which is what actually burns the
-      # twenty minutes when this fails.
+      # Retries and per-connection timeouts, because the archive stalling is
+      # what actually burns the twenty minutes when this step fails.
+      #
+      # Installed *with* recommends, deliberately. Cutting them takes the
+      # package count from 339 to 136, and it also silently removed cm-super
+      # and texlive-plain-generic, which matplotlib's text.usetex path needs.
+      # Every draw_plots.sh then failed identically with "No pages of output"
+      # from the texcache -- nine of ten dirs in run 31048810866. The set is
+      # recoverable by naming those two explicitly, but the saving is not
+      # worth another round of finding out which package the plots need next
+      # by breaking main, and the timeout this was meant to help is a slow
+      # mirror rather than package volume.
       - name: Install build dependencies
         timeout-minutes: 25
         run: |
@@ -71,10 +77,11 @@ jobs:
               "$@"
           }
           apt_get update
-          apt_get install -y --no-install-recommends \
+          apt_get install -y \
             g++ make libeigen3-dev \
             texlive-xetex texlive-latex-recommended texlive-fonts-recommended \
-            texlive-latex-extra texlive-fonts-extra dvipng \
+            texlive-latex-extra texlive-fonts-extra dvipng cm-super \
+            texlive-plain-generic \
             inkscape graphviz python3-pip \
             python3-matplotlib python3-numpy python3-pandas python3-scipy \
             fonts-dejavu-core
