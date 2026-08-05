@@ -160,8 +160,8 @@ public:
     struct Config {
         ObserverConfig observer = [] {
             ObserverConfig cfg{};
-            cfg.r = T(0.150);
-            cfg.tau_a = T(0.68);
+            cfg.r = T(0.125);
+            cfg.tau_a = T(0.40);
             cfg.tau_d = T(49.0);
             cfg.kb = T(2.5e-5);
             cfg.lambda_b = T(3.0e-3);
@@ -179,20 +179,20 @@ public:
             cfg.enabled = true;
             cfg.min_confidence = T(0.22);
             cfg.f_disp_ref_hz = T(0.12);
-            cfg.sigma_a_ref = T(0.95);
-            cfg.input_smooth_tau = T(4.5);
-            cfg.param_smooth_tau = T(7.5);
-            cfg.r_freq_exp = T(0.28);
-            cfg.r_sigma_exp = T(0.02);
-            cfg.tau_a_freq_exp = T(-0.40);
-            cfg.tau_a_sigma_exp = T(-0.03);
+            cfg.sigma_a_ref = T(1.10);
+            cfg.input_smooth_tau = T(55.0);
+            cfg.param_smooth_tau = T(50.0);
+            cfg.r_freq_exp = T(0.23);
+            cfg.r_sigma_exp = T(0.65);
+            cfg.tau_a_freq_exp = T(-0.25);
+            cfg.tau_a_sigma_exp = T(-1.20);
             cfg.tau_d_freq_exp = T(-0.03);
             cfg.tau_d_sigma_exp = T(-0.01);
             cfg.kb_freq_exp = T(0.02);
             cfg.kb_sigma_exp = T(0.08);
-            cfg.r_min = T(0.145);
-            cfg.r_max = T(0.225);
-            cfg.tau_a_min = T(0.50);
+            cfg.r_min = T(0.06);
+            cfg.r_max = T(0.26);
+            cfg.tau_a_min = T(0.15);
             cfg.tau_a_max = T(0.90);
             cfg.tau_d_min = T(44.0);
             cfg.tau_d_max = T(58.0);
