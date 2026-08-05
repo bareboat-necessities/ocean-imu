@@ -25,10 +25,25 @@ using Eigen::Vector3f;
 
 bool add_noise = true;
 
+// The scored trailing window.  It is the window the OU-II and OU-III
+// simulators gate on and the one the four-method deterministic comparison
+// scores, so every method that comparison reports describes the same stretch
+// of the 20-minute replay rather than windows an order of magnitude apart.
+static constexpr float RMS_WINDOW_SEC = 900.0f;
+static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
+
+// Regression sentinels for the deterministic single-realization protocol, not
+// targets.  Each is the worst value the current observer produces across the
+// scored records plus about half a percent, rounded up to the next tenth, the
+// same rule the OU simulators use.
+//
+// Re-derived for the 900 s scoring window: a sentinel fitted to the previous
+// 60 s window is not a sentinel for this one, it is just a number the observer
+// passes by a wide margin.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 21.5f,
-    .err_limit_percent_z_pmstokes  = 22.0f,
-    .err_limit_yaw_deg             = 8.0f,
+    .err_limit_percent_z_jonswap   = 19.8f,   // worst 19.61 (jonswap H8.5)
+    .err_limit_percent_z_pmstokes  = 22.7f,   // worst 22.54 (pmstokes H8.5)
+    .err_limit_yaw_deg             = 8.0f,    // yaw is free here and is not gated
     .err_limit_percent_3d_jonswap  = 9999.0f,
     .err_limit_percent_3d_pmstokes = 9999.0f,
     .acc_z_bias_percent            = 9999.0f,
@@ -215,7 +230,6 @@ static std::vector<float> finite_tail_values(const std::vector<float>& v,
 static void print_tvg_nlo_vertical_summary(const TvgNloSimulationRunResult& result,
                                            float dt)
 {
-    constexpr float RMS_WINDOW_SEC = 60.0f;
     const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
     if (result.errs_z.size() <= static_cast<size_t>(N_last)) return;
 
@@ -256,7 +270,8 @@ static void print_tvg_nlo_vertical_summary(const TvgNloSimulationRunResult& resu
 
     const auto& d = result.final_snapshot.tvg;
 
-    std::cout << "=== Last 60 s TimeVarGain NLO VVR-only summary for "
+    std::cout << "=== Last " << RMS_WINDOW_SEC_LABEL
+              << " s TimeVarGain NLO VVR-only summary for "
               << result.output_name << " ===\n";
 
     std::cout << "Z RMS raw (m): " << z_rms << "\n";
@@ -315,9 +330,16 @@ static void print_tvg_nlo_vertical_summary(const TvgNloSimulationRunResult& resu
 static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunResult& result,
                                                     float dt)
 {
-    constexpr float RMS_WINDOW_SEC = 60.0f;
     const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
-    if (result.errs_z.size() <= static_cast<size_t>(N_last)) return;
+    // A partial window is not the scored window, so a record shorter than it is
+    // left ungated rather than scored against sentinels fitted to the full one.
+    // Said out loud, because the silence otherwise reads as a pass.
+    if (result.errs_z.size() <= static_cast<size_t>(N_last)) {
+        std::cout << "QUALITY_GATE: SKIPPED REASON=record_shorter_than_"
+                  << RMS_WINDOW_SEC_LABEL << "s_window RECORD="
+                  << result.output_name << "\n";
+        return;
+    }
 
     const size_t start = result.errs_z.size() - N_last;
 

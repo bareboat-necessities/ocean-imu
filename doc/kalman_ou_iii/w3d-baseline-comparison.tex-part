@@ -52,7 +52,11 @@ two were tuned from.
 
 The deterministic comparison evaluates all four methods from the same
 timestamped synthetic reference records, inertial sample stream, sensor-error
-realizations, \SI{20}{min} duration, and final \SI{900}{s} scoring window. Raw vertical-displacement RMS
+realizations, \SI{20}{min} duration, and final \SI{900}{s} scoring window. That
+window is also the one each of the four simulators applies to its own
+executable regression gate, so the thresholds committed alongside the code
+describe the same stretch of the replay as the table below rather than a
+shorter one. Raw vertical-displacement RMS
 error is the primary metric; normalized vertical error, roll RMS, and pitch RMS
 are secondary metrics. Direction, travel sense, horizontal displacement, and
 yaw are excluded from the common comparison because they are not observable

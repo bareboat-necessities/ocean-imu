@@ -174,10 +174,14 @@ hard-iron bias and slow drift, and $\vct{w}_m$ is per-sample white noise.
 
 \paragraph{Scoring window}
 The deterministic regression gates, Table~\ref{tab:sim_results_rms_dir_basic},
-and the ensemble validation protocol all score the same trailing window
+the four-method comparison of Sec.~\ref{sec:observer-comparison}, and the
+ensemble validation protocol all score the same trailing window
 $T_{\mathrm{RMS}}=900$~s, the final \SI{900}{s} of each \SI{1200}{s}
 run, thereby excluding startup while retaining a long
-steady-state record.  The runner reports per-axis and 3D displacement RMS,
+steady-state record.  This holds for the regression gates of all four
+simulators in the comparison, not only the two OU families, so no reported
+number rests on a shorter window than any other.  The runner reports per-axis
+and 3D displacement RMS,
 roll/pitch/yaw RMS, bias errors, wave-direction accuracy against the generator
 azimuth, and diagnostic tuning variables $(f,\tau,\sigma_{aw},r_S)$.  For the
 non-stationary case it additionally scores three disjoint intervals inside the
