@@ -16,38 +16,38 @@
     "OU_II": {
       "nonstationary_endpoint_H4_0_Tp11_4": {
         "RS_ms": null,
-        "R_p0_std_m": 9.029173349678464,
-        "R_v0_std_mps": 3.919375307983082,
-        "sigma_a_mps2": 0.843629181,
-        "tau_s": 4.22350073
+        "R_p0_std_m": 9.029168613560623,
+        "R_v0_std_mps": 3.919374143005532,
+        "sigma_a_mps2": 0.843629122,
+        "tau_s": 4.22349977
       },
       "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
         "RS_ms": null,
-        "R_p0_std_m": 0.352517706504303,
-        "R_v0_std_mps": 0.5179565426952076,
-        "sigma_a_mps2": 0.377373666,
-        "tau_s": 1.24775422
+        "R_p0_std_m": 0.352517486821816,
+        "R_v0_std_mps": 0.5179563195409157,
+        "sigma_a_mps2": 0.377373576,
+        "tau_s": 1.24775398
       },
       "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
         "RS_ms": null,
-        "R_p0_std_m": 2.5347795858110027,
-        "R_v0_std_mps": 2.1303190571820396,
-        "sigma_a_mps2": 0.88779968,
-        "tau_s": 2.18140841
+        "R_p0_std_m": 2.534789169264837,
+        "R_v0_std_mps": 2.1303231563028366,
+        "sigma_a_mps2": 0.88779974,
+        "tau_s": 2.18141246
       },
       "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
         "RS_ms": null,
-        "R_p0_std_m": 10.85010527992609,
-        "R_v0_std_mps": 5.540784116025445,
-        "sigma_a_mps2": 1.403054,
-        "tau_s": 3.59008026
+        "R_p0_std_m": 10.85011311296571,
+        "R_v0_std_mps": 5.540785168278513,
+        "sigma_a_mps2": 1.40305352,
+        "tau_s": 3.59008217
       },
       "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
         "RS_ms": null,
-        "R_p0_std_m": 19.90824232117578,
-        "R_v0_std_mps": 8.641835527080374,
-        "sigma_a_mps2": 1.8601371,
-        "tau_s": 4.22345972
+        "R_p0_std_m": 19.908298309854008,
+        "R_v0_std_mps": 8.641847144678518,
+        "sigma_a_mps2": 1.86013687,
+        "tau_s": 4.22346592
       },
       "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
         "RS_ms": null,
@@ -58,24 +58,24 @@
       },
       "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
         "RS_ms": null,
-        "R_p0_std_m": 2.3061112445940086,
-        "R_v0_std_mps": 2.06766010264702,
+        "R_p0_std_m": 2.306122003957856,
+        "R_v0_std_mps": 2.067664926065981,
         "sigma_a_mps2": 0.919271767,
-        "tau_s": 2.04476094
+        "tau_s": 2.04476571
       },
       "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
         "RS_ms": null,
-        "R_p0_std_m": 9.139330130196381,
-        "R_v0_std_mps": 5.092288318865242,
-        "sigma_a_mps2": 1.40694618,
-        "tau_s": 3.29035544
+        "R_p0_std_m": 9.139362085173296,
+        "R_v0_std_mps": 5.092298741404682,
+        "sigma_a_mps2": 1.40694702,
+        "tau_s": 3.29036021
       },
       "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
         "RS_ms": null,
-        "R_p0_std_m": 18.57529192031064,
-        "R_v0_std_mps": 8.30492585765336,
-        "sigma_a_mps2": 1.84120333,
-        "tau_s": 4.10054255
+        "R_p0_std_m": 18.57529375719163,
+        "R_v0_std_mps": 8.304925727012126,
+        "sigma_a_mps2": 1.84120309,
+        "tau_s": 4.10054302
       }
     },
     "OU_III": {
@@ -144,9 +144,9 @@
       }
     }
   },
-  "git_branch": "claude/report-rebuild-stale-s1vclz",
-  "git_commit": "a75a7790a4b09cd6d340f6e892b15beb27e75a4f",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 104495 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |    696 +-\n .../ou_validation/ou_validation_covsync.svg        |    720 +-\n .../ou_validation/ou_validation_displacement.svg   |    704 +-\n .../results/ou_validation/ou_validation_macros.tex |    210 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4364 +-\n .../ou_validation/ou_validation_publication.tex    |     76 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   4482 +-\n .../results/ou_validation/ou_validation_table.tex  |     64 +-\n .../ou_validation/ou_validation_transition.csv     |  23500 ++--\n .../ou_validation/ou_validation_transition.svg     |  15590 +--\n .../ou_validation/ou_validation_tuning_points.tex  |      8 +-\n .../ou_validation/ou_validation_vertical.svg       |    696 +-\n 14 files changed, 78739 insertions(+), 78546 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "b99ed755a1e1f3d9fef21efd1a90e428e67b7d6c",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 29760 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   324 +-\n .../ou_validation/ou_validation_covsync.svg        |   716 +-\n .../ou_validation/ou_validation_displacement.svg   |   334 +-\n .../ou_validation/ou_validation_paired_effects.csv |  1640 +-\n .../results/ou_validation/ou_validation_raw.csv    |   446 +-\n .../ou_validation/ou_validation_summary.csv        |  1612 +-\n .../ou_validation/ou_validation_transition.csv     |  1772 +-\n .../ou_validation/ou_validation_tuning_points.tex  |     2 +-\n .../ou_validation/ou_validation_vertical.svg       |   692 +-\n 10 files changed, 18649 insertions(+), 18649 deletions(-)",
   "numpy": "1.26.4",
   "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
   "protocol": {
@@ -272,48 +272,48 @@
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4658038,
-      "sha256": "fdbe616f7e856147cf9f665a7dea0218993a6f69a939344b329447763991ec99"
+      "bytes": 4658384,
+      "sha256": "9da663b9eba45feaf85af8df4446f252f61fc512a3d186942d34cbc45e8563c0"
     },
     "ou_validation_attitude.svg": {
-      "bytes": 81533,
-      "sha256": "53099d42498766ab2ff8769f3b3aca58422abd1aceebb22d6412e10443b4cf7d"
+      "bytes": 81515,
+      "sha256": "a63779cdb4fb1937ffce5782801c3e23380af3eabc7afccf4efdb982734ba9b8"
     },
     "ou_validation_covsync.svg": {
-      "bytes": 93038,
-      "sha256": "1c9f0e4af8f73c7e41068cf86a9f715077cc1b5df880fa25398ffe2e8c74006d"
+      "bytes": 93023,
+      "sha256": "bfa929d1a2418350af56780a2612215b24c7ea94279375db97e7e394cb0d0b3c"
     },
     "ou_validation_displacement.svg": {
-      "bytes": 81302,
-      "sha256": "08c19e6f4c310fddf1c898b285c3e1185b320723989917a9e148cb783a1b296b"
+      "bytes": 81295,
+      "sha256": "d41789a85657186716f792423893687ebc3ed190016ea01b757f29586fb17374"
     },
     "ou_validation_macros.tex": {
       "bytes": 10703,
       "sha256": "d80fa8e41b0d42c683cfec231e7b8409b83da23c6c6d075c6b20c0b0f1da3e60"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 621865,
-      "sha256": "ffdd4b73ae8fafd8d5ac6becf900141327811f5b448d904222078b43a548040f"
+      "bytes": 621755,
+      "sha256": "17ecdfe711eb79ecf2caa97e414ff136ba48fae5995fe9810d8b6904698ffac8"
     },
     "ou_validation_publication.tex": {
       "bytes": 12651,
       "sha256": "bd4a555124e19cbcceca03eddea64d5a809607694ecef009322bd564009d029c"
     },
     "ou_validation_raw.csv": {
-      "bytes": 559881,
-      "sha256": "df6aaa5b25a09cf27c0c223a178957f3a2af77012337f96fd5d4c6f3c6cf3b4b"
+      "bytes": 559868,
+      "sha256": "13b5be18c701fe89a06b606c492e784f978449ef931f06c28a8173748b4f77cf"
     },
     "ou_validation_summary.csv": {
-      "bytes": 653577,
-      "sha256": "f575dc45b230ac2cc64bc3be9e6932c9ecbd799495686efb8c9dc59fc4927b96"
+      "bytes": 654040,
+      "sha256": "fce3d17408d8a050ea8e8a6c0cd3575042c25f4f44ca8678f5f5b78b351e1cc7"
     },
     "ou_validation_table.tex": {
       "bytes": 15599,
       "sha256": "1544b1f0a51886a9fc6c877700e2594f96b0c4d97b0786bdd91be967271b63b7"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1344405,
-      "sha256": "2c24baaf93433ed28f50fe015c4dacc47c339b2c738ac1b7bd932e5a68df33c4"
+      "bytes": 1344468,
+      "sha256": "406c48499faf9aba504b66268b41fa1568caf8cc6029fd0073cfc20583cae89e"
     },
     "ou_validation_transition.svg": {
       "bytes": 308321,
@@ -321,11 +321,11 @@
     },
     "ou_validation_tuning_points.tex": {
       "bytes": 1857,
-      "sha256": "faa7e9f07f17b319ce422743b387963f1a526bdfd324b55bae57c5e092c78c13"
+      "sha256": "e123f2c5fae74a6db4c6a7d4a8ef27b375a33eca61218e7be9325501cf991a0a"
     },
     "ou_validation_vertical.svg": {
-      "bytes": 82391,
-      "sha256": "fc4698f54d5c526d3b6f195326605e421b71766c73d02fc575961920385949c0"
+      "bytes": 82398,
+      "sha256": "4353c89d95c1c641cf1746d43bbb22c4a61d7b838afa6128eb5dcfd09a7f1b0f"
     }
   },
   "source_files": {
@@ -364,11 +364,11 @@
   },
   "stationary_normalized_aggregate": {
     "OU_II": {
-      "bootstrap_ci95_high": 6.836017888712499,
-      "bootstrap_ci95_low": 6.4854253792875,
-      "mean": 6.66806652575,
+      "bootstrap_ci95_high": 6.836015821312499,
+      "bootstrap_ci95_low": 6.4854245210874994,
+      "mean": 6.668065726749999,
       "n": 10,
-      "std": 0.29340192029209944
+      "std": 0.2934013529853123
     },
     "OU_III": {
       "bootstrap_ci95_high": 5.11550217168125,
@@ -378,11 +378,11 @@
       "std": 0.24635804353099547
     },
     "OU_III_minus_OU_II": {
-      "bootstrap_ci95_high": -1.6228190338124997,
-      "bootstrap_ci95_low": -1.77351247175,
-      "cohen_dz": -13.29207562211428,
-      "hedges_gz": -12.147294170858109,
-      "mean_paired_difference": -1.6944800145000003,
+      "bootstrap_ci95_high": -1.62281782126875,
+      "bootstrap_ci95_low": -1.7735115892499997,
+      "cohen_dz": -13.292043222677934,
+      "hedges_gz": -12.147264561826724,
+      "mean_paired_difference": -1.6944792155,
       "n_pairs": 10,
       "randomization_exact": true,
       "randomization_p_value": 0.001953125,
@@ -391,13 +391,13 @@
       "sign_p_value": 0.001953125,
       "sign_positive": 0,
       "sign_zero": 0,
-      "standard_error": 0.04031286345181668,
-      "std_paired_difference": 0.12748046751109823,
-      "t_ci95_high": -1.6032859816895673,
-      "t_ci95_low": -1.7856740473104333,
+      "standard_error": 0.04031294270585238,
+      "std_paired_difference": 0.12748071813436482,
+      "t_ci95_high": -1.6032850034044823,
+      "t_ci95_low": -1.7856734275955175,
       "t_critical_value": 2.2621571627982036,
-      "t_p_value": 1.2176094013128234e-11,
-      "t_statistic": -42.033233797080705
+      "t_p_value": 1.217635989864235e-11,
+      "t_statistic": -42.03313134106695
     }
   },
   "transition_diagnostic": {

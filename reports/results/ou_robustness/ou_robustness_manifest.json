@@ -14,9 +14,9 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/report-rebuild-stale-s1vclz",
-  "git_commit": "a75a7790a4b09cd6d340f6e892b15beb27e75a4f",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 30797 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1200 +-\n .../ou_robustness/ou_robustness_publication.tex    |    28 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1012 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   144 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1456 +-\n 7 files changed, 17628 insertions(+), 17629 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "b99ed755a1e1f3d9fef21efd1a90e428e67b7d6c",
+  "git_diff_stat": "",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 3.4078937025827996,
