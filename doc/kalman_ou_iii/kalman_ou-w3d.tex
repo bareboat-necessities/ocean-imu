@@ -188,56 +188,19 @@
 \maketitle
 
 \begin{abstract}
-We present a quaternion multiplicative EKF for ocean-wave motion that couples
-attitude to a linear kinematic chain for velocity, oscillatory displacement,
-and the integral of displacement. World-frame acceleration is assigned an
-Ornstein--Uhlenbeck prior with stationary variance and finite temporal
-correlation. Gyroscope and accelerometer biases are modeled explicitly. To
-suppress integration drift, a zero pseudo-measurement is applied
-to the integral state; its covariance may be made anisotropic, although every
-configuration evaluated here is isotropic. We derive the continuous model, analytic OU-chain
-discretization, numerically stable small-step covariance formulas, and explicit
-accelerometer and magnetometer Jacobians. A lightweight estimator obtains the
-horizontal wave-propagation axis and apparent travel sense from leveled
-acceleration. Online adaptation tunes the OU time scale, stationary acceleration
-scale, and the standard-deviation scale whose square forms the integral
-pseudo-measurement covariance. The cubic scaling with correlation time is a
-physically motivated engineering normalization for fixed update cadence and a
-bounded family of spectra. A ten-seed paired study scores the final
-\SI{900}{s} of four stationary JONSWAP seas, four PM--Stokes seas, and a
-controlled transition.  Over the stationary JONSWAP seas, the declared
-primary endpoint, the seed-wise mean normalized vertical-displacement RMS
-error is $4.98\pm0.25\%$ of $H_s$ for OU--III and $6.68\pm0.29\%$ for OU--II
-(mean $\pm$ sample standard deviation over the ten seed triplets); the paired
-difference is $-1.697$ percentage point (percentile-bootstrap 95\% interval
-$[-1.781,-1.623]$, Student-$t$ interval $[-1.794,-1.601]$, all ten seed-level
-differences negative, exact sign and paired sign-flip tests both at their
-$n=10$ floor of $p=0.002$).  These are four readings of the same ten paired
-differences and establish repeatability within the simulator, not
-generalization beyond it: they carry no uncertainty for the simulation model,
-sensor-model misspecification, spectral family, vessel geometry, or update
-cadence.  The PM--Stokes ensemble, reported separately rather than
-pooled, reproduces the vertical advantage.  Both filters estimate the operating
-point in the wave band rather than from a frequency tracked on acceleration,
-whose apparent frequency barely moves as the sea grows; tuning only the
-proposed filter that way, as earlier revisions did, overstated its vertical
-advantage by roughly a factor of two.  OU--III
-has lower vertical error in every stationary sea and during the transition, and
-higher full-3D displacement error in four of the five scenarios and lower in
-the fifth, so the vertical gain is largely paid for in the horizontal channels.  A
-channel ablation locates the adaptation benefit in a single parameter: freezing
-the OU time scale and stationary acceleration scale while the integral
-regularization scale keeps adapting recovers nearly all of it, whereas freezing
-that scale recovers almost none.  Online adaptation buys tolerance to a badly
-mismatched frozen operating point and to a changing sea, where it beats both a
-single frozen point and an endpoint-calibrated one; against a well-matched
-frozen point at the sea it was calibrated for it costs a few hundredths of a
-percentage point, and a matched covariance-reset control shows that this
-residual is not an artifact of the adaptation bookkeeping.  The
-same source builds for an
-ESP32--S3 target and has been exercised with MEMS IMU input; quantitative
-timing, processor-load, and memory measurements are reserved for a separate
-embedded-performance study.
+We present an adaptive quaternion multiplicative EKF for marine wave-motion
+estimation. The filter couples attitude with velocity, oscillatory displacement,
+sensor biases, and an Ornstein--Uhlenbeck acceleration model; a zero
+pseudo-measurement on integrated displacement limits drift. In ten-seed paired
+simulations spanning stationary JONSWAP, PM--Stokes, and a sea-state transition,
+OU--III reduced the primary endpoint---normalized vertical-displacement RMS
+error in stationary JONSWAP seas---from $6.68\pm0.29\%$ of $H_s$ for OU--II to
+$4.98\pm0.25\%$ for OU--III, with all ten paired differences negative. The
+PM--Stokes and transition tests showed the same vertical advantage. However,
+OU--III increased full-3D displacement error in four of five scenarios, showing
+that the vertical gain was largely traded against horizontal accuracy. Ablation
+results attributed nearly all adaptation benefit to the integral-regularization
+scale. All quantitative evidence is simulation-based.
 \end{abstract}
 
 \begin{IEEEkeywords}
