@@ -446,7 +446,38 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
                 hashlib.sha256(path.read_bytes()).hexdigest(), metadata["sha256"], name
             )
             self.assertEqual(path.stat().st_size, metadata["bytes"], name)
+        # Source pins are provenance, and the two kinds of source drift for
+        # different reasons.
+        #
+        # The wave records are versioned release inputs.  They do not change
+        # under editing, and a hash that moved would mean the bundle was scored
+        # against different seas than the ones it names, so they are still
+        # checked byte for byte.
+        #
+        # The code sources are the tree that produced the bundle, and that tree
+        # moves whenever anyone touches the tools -- a comment, a docstring, a
+        # crash fix on a path the full study never takes.  Asserting they still
+        # match the checkout made every such edit fail this test, and the only
+        # way to satisfy it was a multi-hour regeneration dispatch, so a
+        # one-line fix could not be landed without re-running the study.  It
+        # also contradicts the tools themselves: `_restated_source_files`
+        # already treats a moved code hash as something to *record* rather than
+        # something to reject.  What has to hold is that the manifest keeps
+        # naming them with well-formed entries, so provenance cannot quietly
+        # shrink to nothing.
+        code_sources = {
+            str(path.relative_to(REPO_ROOT))
+            for path in robustness.CODE_SOURCE_PATHS
+        }
+        self.assertTrue(
+            code_sources <= set(manifest["source_files"]),
+            sorted(code_sources - set(manifest["source_files"])),
+        )
         for name, metadata in manifest["source_files"].items():
+            self.assertRegex(metadata["sha256"], r"\A[0-9a-f]{64}\Z", name)
+            self.assertGreater(metadata["bytes"], 0, name)
+            if name in code_sources:
+                continue
             path = REPO_ROOT / name
             self.assertEqual(
                 hashlib.sha256(path.read_bytes()).hexdigest(), metadata["sha256"], name

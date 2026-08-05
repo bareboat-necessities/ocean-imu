@@ -951,6 +951,118 @@ class RestatTests(unittest.TestCase):
                     validation.restat_bundle(empty, Path(tmp), 100, 1)
 
 
+class SmokeEnsembleTests(unittest.TestCase):
+    """The writers have to survive the ensemble the smoke gate actually scores.
+
+    The gate on every pull request runs one seed triplet.  One pair supports a
+    mean and nothing else: no sample standard deviation, so no Student-t
+    interval, no effect size, and no sign or randomization test.  The full
+    study runs ten and has all of them, so a statistic added to the macro
+    block is naturally written against the ten-seed shape and breaks the gate
+    the first time it runs -- which is what `t_ci95_low` did.
+
+    These tests reach the writers directly, without the simulator, so that
+    failure surfaces in the unit-test step and in a local `make test` rather
+    than several minutes into the replay step.
+    """
+
+    SCENARIOS = (
+        ("stationary_jonswap_H1_500_L50_710_A_30_00_P120_00", 8.0),
+        ("nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4", 12.0),
+    )
+    MODE_OFFSETS = (("Adaptive", 0.0), ("FixedNominal", 1.5), ("FixedOracle", 0.5))
+    DEFINITION = re.compile(r"\\providecommand\s*\{\\([A-Za-z]+)\}\{(.*)\}$")
+
+    @classmethod
+    def ensemble(cls, repetitions):
+        """Rows shaped like a run of `repetitions` seed triplets.
+
+        Everything except the repetition count is held fixed, so a macro that
+        appears at ten seeds and not at one is evidence about the sample size
+        rather than about which scenarios or modes happened to be scored.
+        """
+
+        rows = []
+        for repetition in range(1, repetitions + 1):
+            for scenario, base in cls.SCENARIOS:
+                for family, family_offset in (("OU_II", 0.0), ("OU_III", -1.0)):
+                    for mode, mode_offset in cls.MODE_OFFSETS:
+                        value = (
+                            base + family_offset + mode_offset + 0.1 * repetition
+                        )
+                        row = {
+                            "scenario": scenario,
+                            "family": family,
+                            "mode": mode,
+                            "repetition": repetition,
+                            "wave_phase_seed": repetition,
+                            "imu_noise_seed": 100 + repetition,
+                            "initialization_seed": 1000 + repetition,
+                            "historical_60s_gate_pass": 1,
+                        }
+                        row.update(
+                            {metric: value for metric in validation.METRIC_NAMES}
+                        )
+                        rows.append(row)
+        return rows
+
+    @classmethod
+    def macros(cls, repetitions):
+        rows = cls.ensemble(repetitions)
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            macros_path = output / "macros.tex"
+            validation.write_publication_table(
+                output / "publication.tex",
+                rows,
+                validation.summarize_rows(rows, 200, 7),
+                validation.paired_effect_rows(rows, 200, 7),
+                200,
+                7,
+                macros_path=macros_path,
+            )
+            text = macros_path.read_text(encoding="utf-8")
+        return dict(
+            match.groups()
+            for match in map(cls.DEFINITION.match, text.splitlines())
+            if match is not None
+        )
+
+    def test_a_single_seed_run_defines_every_macro_the_full_shape_defines(self):
+        one_seed = self.macros(1)
+        ten_seeds = self.macros(10)
+        self.assertEqual(
+            sorted(set(ten_seeds) - set(one_seed)),
+            [],
+            "macros the smoke gate cannot write",
+        )
+        self.assertEqual(sorted(set(one_seed) - set(ten_seeds)), [])
+
+    def test_statistics_one_pair_cannot_support_are_marked_undefined(self):
+        one_seed = self.macros(1)
+        ten_seeds = self.macros(10)
+        self.assertEqual(one_seed["OUValidationStationaryPairs"], "1")
+        self.assertEqual(ten_seeds["OUValidationStationaryPairs"], "10")
+        for name in (
+            "OUValidationNormalizedTLow",
+            "OUValidationNormalizedTHigh",
+            "OUValidationNormalizedTStatistic",
+            "OUValidationNormalizedTP",
+            "OUValidationNormalizedDz",
+            "OUValidationNormalizedGz",
+            "OUValidationNormalizedSignNegative",
+            "OUValidationNormalizedSignP",
+            "OUValidationNormalizedRandomizationP",
+            "OUValidationNormalizedRandomizationPatterns",
+        ):
+            # The marker, rather than a plausible-looking number standing in
+            # for a statistic that has no value at one pair.
+            self.assertEqual(one_seed[name], validation.UNDEFINED_STATISTIC, name)
+            self.assertNotEqual(
+                ten_seeds[name], validation.UNDEFINED_STATISTIC, name
+            )
+
+
 class ManuscriptMethodologyTests(unittest.TestCase):
     DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
 
