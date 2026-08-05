@@ -213,3 +213,9 @@ it shows a consistent stationary vertical OU-III benefit but mixed 3D,
 transition, and adaptation outcomes rather than uniform superiority. See
 [`docs/ou-validation.md`](docs/ou-validation.md) for the protocol, seed controls,
 and interpretation.
+
+The adaptation channels themselves smooth their targets with an EMA whose time
+constant scales with the OU operating point. `tools/ou_ema_adapt_study.py`
+sweeps those horizons against synthesized sea-state transitions, which is the
+only instrument that can see them; see
+[`docs/ou-ema-adaptation-tuning.md`](docs/ou-ema-adaptation-tuning.md).

@@ -111,7 +111,18 @@ constexpr float MAX_R_S     = 400.0f;
 
 constexpr float ADAPT_TAU_SEC              = 1.8f;
 constexpr float ADAPT_EVERY_SECS           = 0.1f;
-constexpr float ADAPT_RS_MULT              = 5.0f;   // dimensionless
+// Smoothing horizon of the r_S channel, in units of tau_target.  Measured on
+// the versioned records against synthesized sea-state transitions: the error
+// during a transition falls monotonically as this shortens, the stationary
+// worst-record vertical error rises monotonically, and 3.0 is where the two
+// cross at an acceptable cost.  r_S ~ sigma_aw tau^3 amplifies tau noise by
+// the third power, which is why this sits above OU-II's tau^2 and tau^1
+// channels.  See docs/ou-ema-adaptation-tuning.md.
+constexpr float ADAPT_RS_MULT              = 3.0f;   // dimensionless
+// Discrepancy, in natural-log units of the r_S target-to-applied ratio, above
+// which the smoothing horizon shortens.  Zero keeps the plain proportional
+// horizon; see docs/ou-ema-adaptation-tuning.md.
+constexpr float ADAPT_RS_SLEW_LOG          = 0.0f;   // ln units
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
 constexpr float MAG_DELAY_SEC              = 7.0f;
 
@@ -620,6 +631,27 @@ public:
         if (std::isfinite(tau_sec) && tau_sec > 0.0f)   adapt_tau_sec_   = tau_sec;
      }
 
+    // Smoothing-horizon multiplier for the r_S channel.  The EMA time
+    // constant is mult * tau_target, so the horizon follows the sea state
+    // instead of being pinned to one second count.  r_S ~ sigma_aw * tau^3
+    // amplifies a tau error by the third power, which is what sets the
+    // multiplier apart from the tau/sigma one; see
+    // docs/ou-ema-adaptation-tuning.md.
+    void setRSAdaptMult(float m) {
+        if (std::isfinite(m) && m > 0.0f) adapt_RS_mult_ = m;
+    }
+
+    // Size, in natural-log units of the r_S target-to-applied ratio, of a
+    // discrepancy the smoother should treat as a real sea-state move rather
+    // than tuner jitter.  Zero or negative leaves the plain proportional
+    // horizon.  See seastate::common::adaptiveSmoothingHorizonSec.
+    void setRSAdaptSlewLog(float d) {
+        if (std::isfinite(d)) adapt_RS_slew_log_ = d;
+    }
+
+    float getRSAdaptMult() const noexcept { return adapt_RS_mult_; }
+    float getRSAdaptSlewLog() const noexcept { return adapt_RS_slew_log_; }
+
     void setAdaptationUpdatePeriod(float every_sec) {
         if (std::isfinite(every_sec) && every_sec > 0.0f) {
             adapt_every_secs_ = every_sec;
@@ -875,7 +907,8 @@ private:
     void adapt_mekf(float dt, float tau_t, float sigma_t, float RS_t) {
         const float alpha = 1.0f - std::exp(-dt / adapt_tau_sec_);
 
-        const float RS_sec   = ADAPT_RS_MULT * tau_t;
+        const float RS_sec = seastate::common::adaptiveSmoothingHorizonSec(
+            adapt_RS_mult_, tau_t, RS_t, tune_.RS_applied, adapt_RS_slew_log_, dt);
         const float alpha_RS = 1.0f - std::exp(-dt / RS_sec);
 
         tune_.tau_applied   += alpha    * (tau_t   - tune_.tau_applied);
@@ -1024,6 +1057,8 @@ private:
     float min_R_S_                = MIN_R_S;
     float max_R_S_                = MAX_R_S;
     float adapt_tau_sec_          = ADAPT_TAU_SEC;
+    float adapt_RS_mult_          = ADAPT_RS_MULT;
+    float adapt_RS_slew_log_      = ADAPT_RS_SLEW_LOG;
     float adapt_every_secs_       = ADAPT_EVERY_SECS;
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
     float mag_delay_sec_          = MAG_DELAY_SEC;

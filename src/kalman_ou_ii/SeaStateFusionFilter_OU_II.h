@@ -127,8 +127,19 @@ constexpr float MAX_R_v0_std  = 40.0f;
 
 constexpr float ADAPT_TAU_SEC              = 1.8f;
 constexpr float ADAPT_EVERY_SECS           = 0.1f;
-constexpr float ADAPT_R_p0_MULT            = 5.0f;   // dimensionless
-constexpr float ADAPT_R_v0_MULT            = 5.0f;   // dimensionless
+// Smoothing horizons of the two drift-correction channels, in units of
+// tau_target.  Measured on the versioned records against synthesized sea-state
+// transitions: the error during a transition falls monotonically as these
+// shorten, the stationary worst-record vertical error rises monotonically, and
+// 3.0 is where the two cross at an acceptable cost for both channels.  See
+// docs/ou-ema-adaptation-tuning.md.
+constexpr float ADAPT_R_p0_MULT            = 3.0f;   // dimensionless
+constexpr float ADAPT_R_v0_MULT            = 3.0f;   // dimensionless
+// Discrepancy, in natural-log units of the target-to-applied ratio, above
+// which the smoothing horizon of either drift-correction channel shortens.
+// Zero keeps the plain proportional horizon; see
+// docs/ou-ema-adaptation-tuning.md.
+constexpr float ADAPT_R_SLEW_LOG           = 0.0f;   // ln units
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
 constexpr float MAG_DELAY_SEC              = 7.0f;
 
@@ -582,6 +593,34 @@ public:
         if (std::isfinite(tau_sec) && tau_sec > 0.0f) adapt_tau_sec_ = tau_sec;
     }
 
+    // Smoothing-horizon multipliers for the two drift-correction channels.
+    // The EMA time constant of each channel is mult * tau_target, so the
+    // horizon follows the sea state instead of being pinned to one second
+    // count.  r_p0 ~ sigma_aw * tau^2 and r_v0 ~ sigma_aw * tau amplify a tau
+    // error by different powers, so the two channels need not share a
+    // multiplier; see docs/ou-ema-adaptation-tuning.md.
+    void setR_p0_AdaptMult(float m) {
+        if (std::isfinite(m) && m > 0.0f) adapt_R_p0_mult_ = m;
+    }
+
+    void setR_v0_AdaptMult(float m) {
+        if (std::isfinite(m) && m > 0.0f) adapt_R_v0_mult_ = m;
+    }
+
+    // Size, in natural-log units of the target-to-applied ratio, of a
+    // discrepancy the smoothers should treat as a real sea-state move rather
+    // than tuner jitter.  Both channels are driven by the same tau and sigma
+    // estimates, so their discrepancies move together and share one threshold.
+    // Zero or negative leaves the plain proportional horizon.  See
+    // seastate::common::adaptiveSmoothingHorizonSec.
+    void setR_AdaptSlewLog(float d) {
+        if (std::isfinite(d)) adapt_R_slew_log_ = d;
+    }
+
+    float getR_p0_AdaptMult() const noexcept { return adapt_R_p0_mult_; }
+    float getR_v0_AdaptMult() const noexcept { return adapt_R_v0_mult_; }
+    float getR_AdaptSlewLog() const noexcept { return adapt_R_slew_log_; }
+
     void setAdaptationUpdatePeriod(float every_sec) {
         if (std::isfinite(every_sec) && every_sec > 0.0f) adapt_every_secs_ = every_sec;
     }
@@ -814,8 +853,12 @@ private:
     void adapt_mekf(float dt, float tau_t, float sigma_t, float R_p0_t, float R_v0_t) {
         const float alpha = 1.0f - std::exp(-dt / adapt_tau_sec_);
 
-        const float R_p0_sec   = ADAPT_R_p0_MULT * tau_t;
-        const float R_v0_sec   = ADAPT_R_v0_MULT * tau_t;
+        const float R_p0_sec = seastate::common::adaptiveSmoothingHorizonSec(
+            adapt_R_p0_mult_, tau_t, R_p0_t, tune_.R_p0_std_applied,
+            adapt_R_slew_log_, dt);
+        const float R_v0_sec = seastate::common::adaptiveSmoothingHorizonSec(
+            adapt_R_v0_mult_, tau_t, R_v0_t, tune_.R_v0_std_applied,
+            adapt_R_slew_log_, dt);
         const float alpha_R_p0 = 1.0f - std::exp(-dt / R_p0_sec);
         const float alpha_R_v0 = 1.0f - std::exp(-dt / R_v0_sec);
 
@@ -966,6 +1009,9 @@ private:
     float MIN_R_v0_std_           = MIN_R_v0_std;
     float MAX_R_v0_std_           = MAX_R_v0_std;
     float adapt_tau_sec_          = ADAPT_TAU_SEC;
+    float adapt_R_p0_mult_        = ADAPT_R_p0_MULT;
+    float adapt_R_v0_mult_        = ADAPT_R_v0_MULT;
+    float adapt_R_slew_log_       = ADAPT_R_SLEW_LOG;
     float adapt_every_secs_       = ADAPT_EVERY_SECS;
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
     float mag_delay_sec_          = MAG_DELAY_SEC;
