@@ -90,9 +90,22 @@ jobs:
       - name: Install dependencies
         timeout-minutes: 20
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
-            g++ make libeigen3-dev unzip \
+          set -euo pipefail
+          # Retries and per-connection timeouts, because the archive stalls
+          # often enough that one slow fetch decides whether a job finishes.
+          # No -qq: a stall has to be legible in the log as a slow download
+          # rather than as a step that appears to hang.
+          apt_get() {
+            sudo env DEBIAN_FRONTEND=noninteractive apt-get \
+              -o Acquire::Retries=5 \
+              -o Acquire::http::Timeout=30 \
+              -o Acquire::https::Timeout=30 \
+              -o Dpkg::Use-Pty=0 \
+              "$@"
+          }
+          apt_get update
+          apt_get install -y --no-install-recommends \
+            g++ make libeigen3-dev \
             python3-numpy python3-matplotlib
 
       - name: Download versioned simulation data
@@ -160,9 +173,22 @@ jobs:
       - name: Install dependencies
         timeout-minutes: 20
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
-            g++ make libeigen3-dev unzip \
+          set -euo pipefail
+          # Retries and per-connection timeouts, because the archive stalls
+          # often enough that one slow fetch decides whether a job finishes.
+          # No -qq: a stall has to be legible in the log as a slow download
+          # rather than as a step that appears to hang.
+          apt_get() {
+            sudo env DEBIAN_FRONTEND=noninteractive apt-get \
+              -o Acquire::Retries=5 \
+              -o Acquire::http::Timeout=30 \
+              -o Acquire::https::Timeout=30 \
+              -o Dpkg::Use-Pty=0 \
+              "$@"
+          }
+          apt_get update
+          apt_get install -y --no-install-recommends \
+            g++ make libeigen3-dev \
             python3-numpy python3-matplotlib
 
       - name: Download versioned simulation data
@@ -228,9 +254,22 @@ jobs:
       - name: Install dependencies
         timeout-minutes: 20
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
-            g++ make libeigen3-dev unzip \
+          set -euo pipefail
+          # Retries and per-connection timeouts, because the archive stalls
+          # often enough that one slow fetch decides whether a job finishes.
+          # No -qq: a stall has to be legible in the log as a slow download
+          # rather than as a step that appears to hang.
+          apt_get() {
+            sudo env DEBIAN_FRONTEND=noninteractive apt-get \
+              -o Acquire::Retries=5 \
+              -o Acquire::http::Timeout=30 \
+              -o Acquire::https::Timeout=30 \
+              -o Dpkg::Use-Pty=0 \
+              "$@"
+          }
+          apt_get update
+          apt_get install -y --no-install-recommends \
+            g++ make libeigen3-dev \
             python3-numpy python3-matplotlib
 
       # The combine step re-derives the calibrated tuning points and the
@@ -312,8 +351,22 @@ jobs:
       - name: Install dependencies
         timeout-minutes: 20
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq unzip python3-numpy python3-matplotlib
+          set -euo pipefail
+          # Retries and per-connection timeouts, because the archive stalls
+          # often enough that one slow fetch decides whether a job finishes.
+          # No -qq: a stall has to be legible in the log as a slow download
+          # rather than as a step that appears to hang.
+          apt_get() {
+            sudo env DEBIAN_FRONTEND=noninteractive apt-get \
+              -o Acquire::Retries=5 \
+              -o Acquire::http::Timeout=30 \
+              -o Acquire::https::Timeout=30 \
+              -o Dpkg::Use-Pty=0 \
+              "$@"
+          }
+          apt_get update
+          apt_get install -y --no-install-recommends \
+            python3-numpy python3-matplotlib
 
       # The consistency step hashes every non-code source the manifest names,
       # and those include the simulation records. Without them the check errors
