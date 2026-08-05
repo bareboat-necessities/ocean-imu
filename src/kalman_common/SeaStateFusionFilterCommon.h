@@ -237,6 +237,50 @@ inline DetrenderConfig defaultDisplacementDetrenderConfig(float freq_guess_hz) {
     return seastate::tuner::common::defaultDisplacementDetrenderConfig<DetrenderConfig>(freq_guess_hz);
 }
 
+// Smoothing horizon for a drift-correction channel whose target is a power law
+// in the OU operating point (r_S ~ sigma_aw tau^3, r_p0 ~ sigma_aw tau^2,
+// r_v0 ~ sigma_aw tau).  Those targets are rebuilt every step from the raw
+// tuner estimates, so the channel needs an exponential smoother that its
+// inputs do not already provide.
+//
+// The horizon is `mult * tau`, i.e. a fixed number of wave periods rather than
+// a fixed number of seconds, so it follows the sea state.  A single horizon has
+// to serve two regimes that want opposite things: while the sea is stationary
+// the target only jitters and a long horizon rejects that jitter, but while the
+// sea state moves the same long horizon lags the target and the filter runs on
+// a stale operating point.
+//
+// `slew_log` resolves that.  It is the size, in natural-log units of the
+// target-to-applied ratio, of a discrepancy considered "real" rather than
+// jitter.  The horizon is divided by 1 + (discrepancy / slew_log)^2, so jitter
+// well inside the threshold leaves the long horizon intact while a sustained
+// move shortens it quadratically.  slew_log <= 0 disables the term and leaves
+// the plain proportional horizon.
+inline float adaptiveSmoothingHorizonSec(float mult,
+                                         float tau_sec,
+                                         float target,
+                                         float applied,
+                                         float slew_log,
+                                         float dt)
+{
+    float horizon = mult * tau_sec;
+
+    if (slew_log > 0.0f && target > 0.0f && applied > 0.0f &&
+        std::isfinite(target) && std::isfinite(applied))
+    {
+        const float discrepancy = std::fabs(std::log(target / applied));
+        if (std::isfinite(discrepancy)) {
+            const float k = discrepancy / slew_log;
+            horizon /= (1.0f + k * k);
+        }
+    }
+
+    // The horizon is proportional to the operating point, so a degenerate tau
+    // must not collapse it to zero and turn the EMA into a pass-through.  One
+    // step is the shortest meaningful horizon.
+    return std::max(horizon, dt);
+}
+
 template<typename MekfPtr, typename EnterColdFn, typename ApplyTuneFn>
 inline void finalizeInitialization(MekfPtr& mekf, EnterColdFn&& enterCold, ApplyTuneFn&& applyTune) {
     enterCold();

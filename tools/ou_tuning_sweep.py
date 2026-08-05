@@ -78,12 +78,18 @@ OU_II_EXTRA_SPECS = {
     "OU_R_P0_XY_FACTOR": (0.30, 1.00, "log"),
     "OU_P_FACTOR": (1.20, 1.80, "log"),
     "OU_R_V0_COEFF": (0.90, 2.50, "log"),
+    # Smoothing horizons of the two drift-correction channels, in units of
+    # tau_target.  Ranges bracket the deployed 3.0 on both sides; the
+    # productive region is characterized in docs/ou-ema-adaptation-tuning.md.
+    "OU_ADAPT_R_P0_MULT": (0.80, 8.00, "log"),
+    "OU_ADAPT_R_V0_MULT": (0.80, 8.00, "log"),
 }
 
 # OU_III-specific analogues missing from the sweep.
 OU_III_EXTRA_SPECS = {
     "OU_III_R_S_COEFF": (0.70, 3.20, "log"),
     "OU_III_R_S_XY_FACTOR": (0.20, 0.65, "log"),
+    "OU_ADAPT_RS_MULT": (0.80, 8.00, "log"),
 }
 
 # tuning mag behavior.
