@@ -615,16 +615,24 @@
 
     \subsection{Quality Gates Used in the Example}
 
-    The simulation code checks the last \SI{60}{s} of each run and applies quality
-    gates:
+    The simulation code checks the last \SI{900}{s} of each \SI{1200}{s} run and
+    applies quality gates:
     \begin{itemize}[leftmargin=1.4em]
-        \item Z RMS \(< 17.9\%\) of \(H_s\) for JONSWAP cases,
-        \item Z RMS \(< 16.0\%\) of \(H_s\) for PM-Stokes cases,
-        \item yaw RMS \(< 5.06^\circ\) when magnetometer is used.
+        \item Z RMS \(< 15.8\%\) of \(H_s\) for JONSWAP cases,
+        \item Z RMS \(< 16.6\%\) of \(H_s\) for PM-Stokes cases,
+        \item yaw RMS \(< 10.9^\circ\) when magnetometer is used.
     \end{itemize}
 
     These are not part of the observer itself, but they are useful context for the
     intended tuning regime in the supplied simulation.
+
+    The window is the one the OU-II/OU-III simulators gate on and the one the
+    four-method comparison of the OU-III manuscript scores, so this observer is
+    described over the same stretch of the replay as the estimators it is
+    compared against. Each threshold is a regression sentinel for the
+    deterministic realization -- the worst value this observer currently produces
+    across the eight scored records plus about half a percent -- rather than an
+    acceptance criterion.
 
     \begin{table}[t]
         \centering

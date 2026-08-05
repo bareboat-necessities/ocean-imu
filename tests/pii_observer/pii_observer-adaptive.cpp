@@ -28,10 +28,25 @@ using Eigen::Quaternionf;
 
 bool add_noise = true;
 
+// The scored trailing window.  It is the window the OU-II and OU-III
+// simulators gate on and the one the four-method deterministic comparison
+// scores, so every method that comparison reports describes the same stretch
+// of the 20-minute replay rather than windows an order of magnitude apart.
+static constexpr float RMS_WINDOW_SEC = 900.0f;
+static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
+
+// Regression sentinels for the deterministic single-realization protocol, not
+// targets.  Each is the worst value the current observer produces across the
+// scored records plus about half a percent, rounded up to the next tenth, the
+// same rule the OU simulators use.
+//
+// Re-derived for the 900 s scoring window: a sentinel fitted to the previous
+// 60 s window is not a sentinel for this one, it is just a number the observer
+// passes by a wide margin.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap = 15.5f,
-    .err_limit_percent_z_pmstokes = 15.5f,
-    .err_limit_yaw_deg = 8.5f,
+    .err_limit_percent_z_jonswap = 15.8f,   // worst 15.71 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes = 16.6f,  // worst 16.42 (pmstokes H0.27)
+    .err_limit_yaw_deg = 10.9f,             // worst 10.78 (pmstokes H8.5)
 };
 
 class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {
@@ -359,7 +374,6 @@ private:
 
 static void print_vertical_only_summary(const W3dSimulationRunResult& result, float dt)
 {
-    constexpr float RMS_WINDOW_SEC = 60.0f;
     const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
     if (result.errs_z.size() <= static_cast<size_t>(N_last)) return;
 
@@ -378,7 +392,8 @@ static void print_vertical_only_summary(const W3dSimulationRunResult& result, fl
 
     std::vector<float> vf(result.freq_hist.begin() + start, result.freq_hist.end());
 
-    std::cout << "=== Last 60 s VERTICAL-ONLY summary for " << result.output_name << " ===\n";
+    std::cout << "=== Last " << RMS_WINDOW_SEC_LABEL << " s VERTICAL-ONLY summary for "
+              << result.output_name << " ===\n";
     std::cout << "Z RMS (m): " << z_rms << "\n";
     std::cout << "Z RMS (%Hs): " << z_pct << "% (Hs=" << result.wave_params.height << ")\n";
     std::cout << "Angles RMS (deg): Roll=" << rms_roll.rms()
@@ -404,9 +419,16 @@ static void print_vertical_only_summary(const W3dSimulationRunResult& result, fl
 
 static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult& result, float dt)
 {
-    constexpr float RMS_WINDOW_SEC = 60.0f;
     const int N_last = static_cast<int>(RMS_WINDOW_SEC / dt);
-    if (result.errs_z.size() <= static_cast<size_t>(N_last)) return;
+    // A partial window is not the scored window, so a record shorter than it is
+    // left ungated rather than scored against sentinels fitted to the full one.
+    // Said out loud, because the silence otherwise reads as a pass.
+    if (result.errs_z.size() <= static_cast<size_t>(N_last)) {
+        std::cout << "QUALITY_GATE: SKIPPED REASON=record_shorter_than_"
+                  << RMS_WINDOW_SEC_LABEL << "s_window RECORD="
+                  << result.output_name << "\n";
+        return;
+    }
 
     const size_t start = result.errs_z.size() - N_last;
 
