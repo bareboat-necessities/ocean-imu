@@ -65,26 +65,42 @@ jobs:
       # by breaking main, and the timeout this was meant to help is a slow
       # mirror rather than package volume.
       - name: Install build dependencies
-        timeout-minutes: 25
+        timeout-minutes: 27
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          # Each attempt is capped at 8 minutes and there are two retries.
+          # A stalled mirror is then abandoned and retried against whatever
+          # the load balancer hands out next, instead of holding the step
+          # until its own timeout kills the job with nothing installed.
           apt_get() {
-            sudo env DEBIAN_FRONTEND=noninteractive apt-get \
-              -o Acquire::Retries=5 \
-              -o Acquire::http::Timeout=30 \
-              -o Acquire::https::Timeout=30 \
+            sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
+              -o Acquire::Retries=2 \
+              -o Acquire::http::Timeout=15 \
+              -o Acquire::https::Timeout=15 \
               -o Dpkg::Use-Pty=0 \
               "$@"
           }
-          apt_get update
-          apt_get install -y \
-            g++ make libeigen3-dev \
-            texlive-xetex texlive-latex-recommended texlive-fonts-recommended \
-            texlive-latex-extra texlive-fonts-extra dvipng cm-super \
-            texlive-plain-generic \
-            inkscape graphviz python3-pip \
-            python3-matplotlib python3-numpy python3-pandas python3-scipy \
-            fonts-dejavu-core
+          install_deps() {
+            apt_get update && apt_get install -y \
+              g++ make libeigen3-dev \
+              texlive-xetex texlive-latex-recommended texlive-fonts-recommended \
+              texlive-latex-extra texlive-fonts-extra dvipng cm-super \
+              texlive-plain-generic \
+              inkscape graphviz python3-pip \
+              python3-matplotlib python3-numpy python3-pandas python3-scipy \
+              fonts-dejavu-core
+          }
+          for attempt in 1 2 3; do
+            if install_deps; then
+              echo "dependencies installed on attempt ${attempt}"
+              exit 0
+            fi
+            echo "attempt ${attempt} failed; clearing any half-configured state"
+            sudo dpkg --configure -a || true
+            sleep $((attempt * 15))
+          done
+          echo "apt-get did not succeed after 3 attempts"
+          exit 1
 
       - name: Compile tests (${{ matrix.dir }})
         run: |
