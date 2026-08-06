@@ -30,10 +30,10 @@
       },
       "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
         "RS_ms": null,
-        "R_p0_std_m": 2.5347795858110027,
-        "R_v0_std_mps": 2.1303190571820396,
-        "sigma_a_mps2": 0.88779968,
-        "tau_s": 2.18140841
+        "R_p0_std_m": 2.5347848989007256,
+        "R_v0_std_mps": 2.130321432609127,
+        "sigma_a_mps2": 0.887799799,
+        "tau_s": 2.18141055
       },
       "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
         "RS_ms": null,
@@ -145,8 +145,8 @@
     }
   },
   "git_branch": "main",
-  "git_commit": "e1f10b5d6d03502933fd76507bb404450a8d0c3d",
-  "git_diff_stat": "",
+  "git_commit": "82554eabbad518e915d7b6c10667d6fe6868038f",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 10520 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   128 +-\n .../ou_validation/ou_validation_covsync.svg        |   708 +-\n .../ou_validation/ou_validation_displacement.svg   |    96 +-\n .../ou_validation/ou_validation_paired_effects.csv |   738 +-\n .../results/ou_validation/ou_validation_raw.csv    |    92 +-\n .../ou_validation/ou_validation_summary.csv        |   670 +-\n .../ou_validation/ou_validation_transition.csv     |  1772 ++--\n .../ou_validation/ou_validation_vertical.svg       |   684 +-\n 9 files changed, 7704 insertions(+), 7704 deletions(-)",
   "numpy": "1.26.4",
   "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
   "protocol": {
@@ -273,7 +273,7 @@
   "result_files": {
     "ou_validation.json": {
       "bytes": 4658422,
-      "sha256": "2a9b0a2f16396020dc54d9a79ef0e085abb0c37f2894d9d4024d088141e662d5"
+      "sha256": "4e11fc442712c21e0f738badf2a72b4ca5c2756b994a5505107405c9115c3fbc"
     },
     "ou_validation_attitude.svg": {
       "bytes": 81535,
@@ -312,8 +312,8 @@
       "sha256": "1544b1f0a51886a9fc6c877700e2594f96b0c4d97b0786bdd91be967271b63b7"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1344405,
-      "sha256": "2c24baaf93433ed28f50fe015c4dacc47c339b2c738ac1b7bd932e5a68df33c4"
+      "bytes": 1344468,
+      "sha256": "406c48499faf9aba504b66268b41fa1568caf8cc6029fd0073cfc20583cae89e"
     },
     "ou_validation_transition.svg": {
       "bytes": 308321,
