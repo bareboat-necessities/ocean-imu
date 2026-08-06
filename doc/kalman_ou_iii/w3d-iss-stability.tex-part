@@ -488,13 +488,50 @@ than the $274$~s of the best frozen point at the same tuning. Motion removes
 the near-marginal $1.6$~h mode, which is the important part, but it does not
 make the estimator fast.
 
+\paragraph{Over the whole tuning grid and three sea states.}
+Repeating the construction for every combination of
+$\tau\in\{0.55,1.8,4.0\}$, $\sigma_{aw}\in\{0.12,0.9,2.8\}$,
+$r_S\in\{0.35,1.5,6.0\}$ and wave period $\{6,10,16\}$~s gives $81$
+trajectories. Running the settling phase without building Jacobians costs one
+filter cycle per step instead of $43$, which makes the sweep take seconds per
+cell rather than minutes.
+
+Every cell contracts, and by nearly the same amount:
+\begin{equation}
+\rho(\mat\Phi)\in[0.952,\;0.981],
+\qquad
+\text{spectral time constant }322\text{--}522~\mathrm{s},
+\end{equation}
+with no cell reaching $\rho\ge1$. The insensitivity is itself informative:
+the certified rate is set by the drift-control loop, which is what the tuning
+knobs in $\vct\vartheta$ barely touch.
+
+A single quadratic Lyapunov function serves all $81$ windows at once:
+\begin{equation}
+\gamma=0.963\ \text{per window},\qquad
+c_1=2.1\cdot10^{3}.
+\end{equation}
+Because the windows are one wave period long and the periods differ, the
+per-second rate implied by $\gamma$ depends on which sea state it is read
+against; the conservative figure is the one from the $16$~s windows, an
+$e$-folding of $841$~s, against $315$~s from the $6$~s windows. The
+single-cell metric of Sec.~\ref{app:iss-trajectory} is naturally tighter,
+$c_1=1.96\cdot10^{2}$ and $363$~s, since it has only one sea state to cover.
+
+So A4 is discharged not just at one operating condition but uniformly over the
+declared tuning envelope and across the wave-period range, which is what the
+original assumption was reaching for and could not deliver.
+
 \begin{remark}[Remaining scope]
-The trajectory is synthetic and single-tuning: one quasi-periodic attitude
-path at one point of the $(\tau,\sigma_{aw},r_S)$ grid, with measurements
-generated from the filter's own prediction so the linearization is exercised
-without injecting noise. Extending it to recorded sea states and to the full
-tuning grid is mechanical and is the obvious next increment. The adaptation
-loop is also still open: $\vct\vartheta_k$ is held fixed along the
-trajectory, so what is certified is the estimator at a fixed tuning under a
-moving operating point, not the estimator and its tuner as one closed loop.
+Two things are still open. The attitude paths are synthetic sums of sinusoids
+rather than recorded sea states, and measurements are generated from the
+filter's own prediction, so the linearization is exercised without injected
+noise. More importantly, $\vct\vartheta_k$ is held fixed along each
+trajectory. What is certified is therefore the estimator at a fixed tuning
+under a moving operating point, not the estimator and its tuner as one closed
+loop. Closing that loop means letting the adaptation run along the trajectory
+and either including its states in the certified coordinate or bounding its
+effect explicitly, which is the same interconnection problem that
+observer designs with a separate attitude and translation stage have to solve
+with a composite Lyapunov function.
 \end{remark}

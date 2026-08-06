@@ -99,28 +99,48 @@ def common_metric(mats, cp, bisection_steps: int = 18):
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("trajectory", type=Path)
+    ap.add_argument("trajectory", type=Path, nargs="+",
+                    help="one or more trajectory files; a single common metric is\n"
+                         "sought across every window of every file")
     ap.add_argument("--skip", type=int, default=0,
                     help="discard this many leading windows as covariance settling")
     ap.add_argument("--json", type=Path)
     args = ap.parse_args()
 
-    data = read_windows(args.trajectory)
-    period, dt = data["period"], data["dt"]
     scale = np.diag(STATE_SCALE)
     scale_inv = np.diag(1.0 / STATE_SCALE)
 
-    mats = [scale_inv @ P @ scale for P in data["matrices"]][args.skip:]
-    times = data["times"][args.skip:]
-    peaks = data["peaks"][args.skip:]
+    mats, times, peaks, periods, steps_list = [], [], [], [], []
+    skipped_files = []
+    for path in args.trajectory:
+        try:
+            data = read_windows(path)
+        except (ValueError, IndexError) as exc:
+            # A generator still writing, or an aborted run.
+            skipped_files.append((str(path), str(exc)))
+            continue
+        mats += [scale_inv @ P @ scale for P in data["matrices"]][args.skip:]
+        times += data["times"][args.skip:]
+        peaks += data["peaks"][args.skip:]
+        periods += [data["period"]] * (len(data["matrices"]) - args.skip)
+        steps_list += [data["steps"]] * (len(data["matrices"]) - args.skip)
+    if skipped_files:
+        print(f"skipped {len(skipped_files)} unreadable trajectory file(s): "
+              + ", ".join(f for f, _ in skipped_files[:3])
+              + (" ..." if len(skipped_files) > 3 else ""))
     if not mats:
         print("no windows left after --skip")
         return 1
+    period, dt = periods[0], data["dt"]
+    # A window is one wave period, so cells with different periods are
+    # normalized to a per-second rate when reporting.
+    steps = steps_list[0]
 
     rho = [float(abs(np.linalg.eigvals(P)).max()) for P in mats]
     norms = [float(np.linalg.norm(P, 2)) for P in mats]
 
-    print(f"{len(mats)} windows of {period:g} s at dt={dt:g}, t = {times[0]:g}..{times[-1]:g} s")
+    print(f"{len(mats)} windows from {len(args.trajectory)} trajectories "
+          f"(periods {sorted(set(periods))}) at dt={dt:g}")
     print(f"  rho(Phi) per window : first {rho[0]:.4f}  last {rho[-1]:.4f}  "
           f"max {max(rho):.4f}")
     print(f"  ||Phi||_2 per window: max {max(norms):.4f}")
@@ -134,7 +154,8 @@ def main() -> int:
     result: dict[str, Any] = {
         "schema": "ocean-imu-trajectory-certificate-v1",
         "scope": "LTV: per-step Jacobians along a continuous wave trajectory",
-        "period_s": period,
+        "period_s": sorted(set(periods)),
+        "trajectory_files": [str(p) for p in args.trajectory],
         "dt": dt,
         "windows": len(mats),
         "windows_skipped": args.skip,
@@ -159,17 +180,28 @@ def main() -> int:
         else:
             ev = np.linalg.eigvalsh(L)
             c1 = float(np.sqrt(ev[-1] / ev[0]))
-            per_step = float(gamma ** (1.0 / data["steps"])) ** 0.5
+            # A window is one wave period, so windows from different sea
+            # states have different durations. gamma bounds all of them per
+            # window; the slowest per-second rate it implies is the one from
+            # the longest window, so that is what gets reported.
+            worst_period = max(periods)
+            rate = -np.log(gamma) / worst_period          # of V, per second
+            efold = 2.0 / rate                            # of ||e||
             print(f"\ncommon metric over every window (so delta_L = 0):")
-            print(f"  V decays by gamma = {gamma:.5f} per {period:g} s window")
+            print(f"  V decays by gamma = {gamma:.5f} per window")
             print(f"  ||e|| decays by {np.sqrt(gamma):.4f} per window")
             print(f"  c1 = sqrt(cond L) = {c1:.1f}")
-            print(f"  equivalent e-folding = {dt / (1.0 - per_step):.2f} s")
+            print(f"  worst-case e-folding = {efold:.0f} s "
+                  f"(from the {worst_period:g} s windows)")
+            if len(set(periods)) > 1:
+                print(f"  for reference, {2.0 / (-np.log(gamma) / min(periods)):.0f} s "
+                      f"from the {min(periods):g} s windows")
             result.update({
                 "common_metric_found": True,
                 "common_metric_gamma_per_window": gamma,
                 "common_metric_c1": c1,
-                "efold_seconds": dt / (1.0 - per_step),
+                "efold_seconds_worst": efold,
+                "efold_from_period_s": worst_period,
             })
 
     if args.json:

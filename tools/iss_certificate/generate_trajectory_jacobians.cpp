@@ -198,18 +198,32 @@ Eigen::Matrix<double, kNx, kNx> step_jacobian(const Filter& base, const Vec3& om
 }  // namespace
 
 int main(int argc, char** argv) {
+    /*
+      usage: gen_traj OUT [period_s] [instrumented_windows]
+                          [warmup_s] [tau] [sigma_aw] [sigma_s]
+
+      The covariance takes a few hundred seconds to settle onto the trajectory,
+      and rho(Phi) drifts the whole time it is settling. Running the warmup
+      without building Jacobians costs one filter cycle per step instead of
+      43, so the settled window is reached about seven times faster and a
+      sweep over tuning cells becomes affordable.
+    */
     const std::string path = argc > 1 ? argv[1] : "iss_trajectory.txt";
     const double period = argc > 2 ? std::atof(argv[2]) : 10.0;
-    const double duration = argc > 3 ? std::atof(argv[3]) : 240.0;
+    const int windows = argc > 3 ? std::atoi(argv[3]) : 5;
+    const double warmup_s = argc > 4 ? std::atof(argv[4]) : 340.0;
 
     Tuning tuning;
+    if (argc > 5) tuning.tau = std::atof(argv[5]);
+    if (argc > 6) tuning.sigma_aw = std::atof(argv[6]);
+    if (argc > 7) tuning.sigma_s = std::atof(argv[7]);
+
     WaveTrajectory wave;
     wave.period = period;
 
     const double dt = tuning.dt;
     const int steps_per_window = static_cast<int>(std::lround(period / dt));
-    const int windows = static_cast<int>(duration / period);
-    const int warmup = steps_per_window * 3;   // let the covariance settle on the path
+    const int warmup = static_cast<int>(std::lround(warmup_s / dt));
 
     Filter f = make_filter(tuning, wave);
 
@@ -233,6 +247,9 @@ int main(int argc, char** argv) {
     os << std::setprecision(17);
     os << "OCEAN_IMU_ISS_TRAJECTORY_V1 " << kNe << " " << windows << " "
        << period << " " << dt << " " << steps_per_window << "\n";
+    std::cout << "tau=" << tuning.tau << " sigma_aw=" << tuning.sigma_aw
+              << " sigma_s=" << tuning.sigma_s
+              << "  warmup=" << warmup_s << "s  period=" << period << "s\n";
 
     for (int w = 0; w < windows; ++w) {
         Eigen::Matrix<double, kNe, kNe> Phi = Eigen::Matrix<double, kNe, kNe>::Identity();
