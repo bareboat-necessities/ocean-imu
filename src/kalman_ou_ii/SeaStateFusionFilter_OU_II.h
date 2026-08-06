@@ -293,8 +293,13 @@ public:
         a_body_z_up_proxy_ = -a_z_body_proxy;
 
         // Vertical acceleration the tracker runs on.  Both choices are
-        // measurement-only; see FreqTrackerInputSource for why levelling is
-        // not the obvious win here that it is for the period estimator.
+        // measurement-only, and they are RMS-equivalent: levelling buys here
+        // none of what it buys the period estimator, because the tracker is
+        // not integrated and so never sees the 1/omega^4 weighting that makes
+        // sub-band gravity leakage matter downstream.  The levelled signal is
+        // the default anyway, so that one vertical acceleration serves every
+        // consumer in the filter.  Falls back to the raw proxy until the
+        // observer has settled.
         const float a_vert_for_tracker =
             (freq_tracker_input_ == FreqTrackerInputSource::Complementary &&
              vertical_accel_comp_.isReady())
@@ -369,7 +374,7 @@ public:
         //
         // Exogenous, because levelling with the filter's own attitude closes a
         // loop: a 0.25 rad attitude displacement moved the reported period
-        // 8.05 -> 10.3 s and tau by 1.28x, and it reached the linear block too,
+        // 8.05 -> 10.1 s and tau by 1.25x, and it reached the linear block too,
         // since displacing v, p, S or a_w perturbs attitude through the
         // filter's cross-covariances.  The stability appendix carried that as
         // its open interconnection.
@@ -740,8 +745,11 @@ public:
     }
 
     // Select which vertical acceleration the frequency tracker runs on.
-    // BodyZ (default) is the raw proxy; Complementary is the levelled signal
-    // from the private Mahony observer.  Both are measurement-only.
+    // Complementary (default) is the levelled signal from the private Mahony
+    // observer; BodyZ is the raw proxy, kept for ablation.  Both are
+    // measurement-only, and the two are RMS-equivalent on the reference
+    // records; the default is the levelled one so that every consumer of a
+    // vertical acceleration in this filter reads the same signal.
     void setFreqTrackerInput(FreqTrackerInputSource source) {
         freq_tracker_input_ = source;
     }
@@ -1081,7 +1089,7 @@ private:
 
     bool  wave_band_tuning_       = true;
     WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;
-    FreqTrackerInputSource freq_tracker_input_ = FreqTrackerInputSource::BodyZ;
+    FreqTrackerInputSource freq_tracker_input_ = FreqTrackerInputSource::Complementary;
     float min_tune_freq_hz_       = MIN_TUNE_FREQ_HZ;
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;

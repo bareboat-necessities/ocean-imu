@@ -228,12 +228,11 @@ horizontal acceleration.
 
 ### The same signal in the frequency tracker
 
-The tracker still runs on the raw body-Z proxy. Feeding it the complementary
-observer's levelled signal instead (`W3D_FREQ_TRACKER_INPUT=complementary`,
-`setFreqTrackerInput()`) is a fair question, since the tracker frequency is also
-the direction demodulator's carrier, and both signals are measurement-only so
-neither choice touches the loop. Six seeds per record, paired on the
-realization:
+The tracker has the same two signals available (`W3D_FREQ_TRACKER_INPUT`,
+`setFreqTrackerInput()`), and the question is worth asking on its own terms
+because the tracker frequency is also the direction demodulator's carrier.
+Both signals are measurement-only, so neither choice touches the loop. Six
+seeds per record, paired on the realization:
 
 | filter | vertical RMS | 3D RMS | travel-sense RMSE | axis RMSE |
 | --- | --- | --- | --- | --- |
@@ -255,15 +254,42 @@ that levelling the tracker input changes nothing measurable.
 That is also what the mechanism predicts. Gravity leakage from tilt hurts the
 period estimator because double integration weights it by `omega^-4`; the
 tracker is not integrated, so the same leakage lands as a modest low-frequency
-term that the input low-pass and the tracker's own band already handle. The
-switch is kept for ablation and the default stays `body_z`.
+term that the input low-pass and the tracker's own band already handle.
+
+The levelled signal is the default here regardless. Nothing in the measurement
+argues for it and nothing argues against it, so the tie is broken on structure:
+one vertical acceleration then serves every consumer in the filter - period
+estimator, frequency tracker, stillness detector - instead of two signals whose
+difference has to be justified at each call site. `body_z` remains selectable,
+and the ablation is what the table above reports. Note that the numbers quoted
+elsewhere for the `Leveled` wave-period ablation shifted slightly with this
+change (`tau` ratio 1.28 -> 1.25), because that ablation now runs against a
+levelled tracker input too.
+
+One regression sentinel had to be re-derived, and it is worth being explicit
+about which and why, because raising a sentinel to admit one's own change is
+how they stop meaning anything. OU-II's `bias_3d_percent` moved 82.3 -> 85.4,
+following the rule its neighbours already use (worst observed value plus half a
+percent, rounded up to the next tenth). The binding record is jonswap H1.5,
+where the observed value moved 81.75% -> 84.97%.
+
+That is a realization shift, not a degradation. Replaying that record under six
+seeds gives 74.2% on the old input and 74.1% on the new one, with a per-seed
+spread reaching 89% either way: the distribution is unchanged and the sentinel
+samples one point of it. The record is also the one where the horizontal
+accelerometer bias is unobservable to begin with - the error exceeds the true
+bias under every configuration tried - so a 3 pp move in it is not measuring
+estimation quality, and indeed costs no accuracy: 3D RMS 20.77% -> 20.78%,
+vertical unchanged to four figures. Every other sentinel in both filters is
+unmoved, including OU-III's equivalent gate, which stays inside its limit at
+109.19 against 109.4.
 
 `tests/kalman_ou_iii/tuner_coupling-test.cpp` asserts the exogeneity
 bit-for-bit rather than by tolerance, and does so on the default path with
 nothing selected: displacing *every* estimator state - attitude and all linear
 states - leaves the reported period and `tau_target` numerically identical.
 The `Leveled` ablation, which must now be selected explicitly, moves them
-8.05 -> 10.32 s and 1.28x under the same displacement.
+8.05 -> 10.08 s and 1.25x under the same displacement.
 
 This closes the item `app:iss-tuner` in the stability appendix was written
 around. Both tuner channels are now exogenous, so the estimator and the tuner

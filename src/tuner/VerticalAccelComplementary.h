@@ -77,12 +77,14 @@ enum class WavePeriodInputSource {
 // Which vertical acceleration the frequency tracker - and the stillness
 // detector that shares its input - is driven by.  Both choices are
 // measurement-only, so neither closes a loop; they differ in whether the
-// platform's tilt is removed first.  Leveling is not obviously right here the
-// way it is for the period estimator: the tracker is not integrated, so it
-// does not suffer the 1/omega^4 weighting that makes sub-band gravity leakage
-// fatal downstream, and its output drives the direction demodulator.
+// platform's tilt is removed first, and on the reference records they are
+// RMS-equivalent.  Levelling does not buy here what it buys the period
+// estimator: the tracker is not integrated, so it never sees the 1/omega^4
+// weighting that makes sub-band gravity leakage fatal downstream.  The
+// levelled signal is nevertheless the default, so that a single vertical
+// acceleration serves every consumer in the filter.
 enum class FreqTrackerInputSource {
-    BodyZ,          // raw -(acc.z + g) proxy
+    BodyZ,          // raw -(acc.z + g) proxy, kept for ablation
     Complementary,  // private Mahony observer; levelled
 };
 

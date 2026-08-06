@@ -555,7 +555,7 @@ $r_S=c_R\sigma_a\tau^3$, the path
 \vct\vartheta\;\longrightarrow\;\text{gains}\;\longrightarrow\;\delta\vct\theta
 \end{equation}
 was a genuine feedback loop: a $0.25$~rad attitude displacement moved the
-estimated wave period from $8.05$ to $10.3$~s and $\tau$ by a factor $1.28$.
+estimated wave period from $8.05$ to $10.1$~s and $\tau$ by a factor $1.25$.
 It reached the linear states indirectly as well, since displacing $\vct v$,
 $\vct p$, $\vct S$ or $\vct a_w$ perturbs attitude through the filter's
 cross-covariances: a displacement of $0.02$ in each linear state shifted

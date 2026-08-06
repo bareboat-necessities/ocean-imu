@@ -191,12 +191,11 @@ public:
                 }
             }
 
-            // Ablate the wave-period estimator's input away from the leveled
-            // vertical acceleration (default), which passes through the
-            // attitude solution.  Both alternatives are measurement-only and
-            // open the tuner coupling: "body_z" is the raw proxy the frequency
-            // tracker already runs on, "complementary" levels it with a
-            // private Mahony observer.
+            // Ablate the wave-period estimator's input away from the
+            // complementary-levelled default.  "leveled" restores the older
+            // behaviour, which levels with the attitude solution and so closes
+            // the tuner coupling; "body_z" is the raw proxy, measurement-only
+            // like the default but unlevelled.
             if (const char* src = std::getenv("W3D_WAVE_PERIOD_INPUT")) {
                 const std::string value = src;
                 if (value == "body_z") {
