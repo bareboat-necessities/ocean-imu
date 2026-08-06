@@ -298,7 +298,18 @@ jobs:
           if-no-files-found: warn
           
   release:
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    # ou-evidence only runs on main, and a skipped job propagates through the
+    # graph: build survives it with !cancelled(), but release inherited the skip
+    # from build's ancestor and never ran off main. That is why v1.1.2 and
+    # v1.1.3 shipped with source code only while v1.1.1, tagged before the
+    # evidence job existed, got its assets. Naming a status function here stops
+    # the automatic skip, so the results of the two jobs that actually produce
+    # the assets are what decides.
+    if: >-
+      ${{ !cancelled()
+          && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+          && needs.build.result == 'success'
+          && needs['build-MCU'].result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [build, build-MCU]
