@@ -285,7 +285,7 @@ void test_process_noise_is_psd() {
     for (T h : {T(0.001), T(0.005), T(0.05)}) {
         Filter f = make_filter();
         MatrixNX Qd;
-        f.build_process_noise(h, Qd);
+        f.build_process_noise(h, Vector3(T(0.1), T(-0.2), T(0.05)), Qd);
         check(Qd.allFinite(), "Qd non-finite");
         check((Qd - Qd.transpose()).cwiseAbs().maxCoeff() <= T(1e-15) * std::max(T(1), Qd.cwiseAbs().maxCoeff()),
               "Qd is not symmetric");

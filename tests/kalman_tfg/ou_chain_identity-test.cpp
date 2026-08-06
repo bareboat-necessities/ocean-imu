@@ -132,7 +132,7 @@ void test_process_noise_block_is_identical() {
             f.set_Q_bacc_rw(Vector3::Zero());
 
             Filter::MatrixNX Qd;
-            f.build_process_noise(h, Qd);
+            f.build_process_noise(h, Vector3(T(0.1), T(-0.2), T(0.05)), Qd);
 
             const std::string at =
                 " (tau=" + std::to_string(tau) + ", h/tau=" + std::to_string(ratio) + ")";
@@ -183,7 +183,7 @@ void test_correlated_axis_assembly() {
         f.set_Q_bacc_rw(Vector3::Zero());
 
         Filter::MatrixNX Qd;
-        f.build_process_noise(h, Qd);
+        f.build_process_noise(h, Vector3(T(0.1), T(-0.2), T(0.05)), Qd);
 
         Eigen::Matrix<T,4,4> Q_unit;
         detail::IntegratedOUChain<T,3>::process_covariance(tau, h, T(1), Q_unit);

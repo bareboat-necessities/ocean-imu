@@ -331,7 +331,82 @@ exactly `I`, so it reports about `1e-16` of "error" between two bitwise
 identical states. For inertness checks that is noise; compare `R`, `X` and `B`
 directly.
 
-## 5. What this does not claim
+## 5. The two bias geometries
+
+`two_frame_bias` selects how the bias error is parameterized. Level 2 is the
+default; Level 1 is kept as a build flag because it isolates group-retraction
+defects from bias-geometry defects, and because it is the ablation that
+answers whether the bias geometry earns its keep.
+
+| | Level 1 | Level 2 |
+|---|---|---|
+| error | `delta_b = bhat - b`, body frame | `beta = R(bhat - b)`, world frame |
+| injection | `Bhat + delta_b` | `Bhat + R_pre^T J_l(-phi) beta` |
+| `Phi_bias,bias` | `I` | `Exp(w_world h)` |
+| `Phi_phi,bias` | `-Rbar h` | `-J_l(w_world h) h` |
+| `H_a` bias column | `-Rhat` | `-I` |
+
+### They are the same filter in different coordinates
+
+Related by the exact linear map `beta = Rhat delta_b`:
+
+```
+T     = blkdiag(I, Rhat, I, I, I, I, Rhat)
+xi_L2 = T xi_L1,   P_L2 = T P_L1 T^T,   H_L1 = H_L2 T
+```
+
+Under **pure propagation this is exact**, and that is the strongest test in
+the suite. Level 1 was already verified against finite differences, so
+asserting the relation holds validates the entire Level-2 derivation -- `Phi`,
+`Q`, and the bias self-dynamics -- against an independently checked reference.
+Finite-differencing Level 2 against itself could never do that; it would only
+confirm the code computes its own formula.
+
+Under measurement updates the two agree only to first order, because the
+Level-2 injection carries a `J_l(-phi)` the Level-1 one does not.
+
+### The conjugation is time-varying
+
+`Phi_L2 = T(h) Phi_L1 T(0)^-1`, with `T` evaluated at *different* times on
+each side. That is precisely why `Phi_beta,beta = Exp(w_world h)` where
+Level 1 has `I`: the bias error is carried along by the vehicle's rotation
+instead of sitting still. Derived directly,
+
+```
+betadot = Rdot delta_b + R delta_bdot = [R w]x beta - R w_b
+```
+
+This term has no Level-1 analogue and is the substantive new content of the
+two-frame geometry.
+
+### Where the noise lands
+
+The bias random walk is body-frame, and `beta` carries it to the end of the
+step:
+
+```
+Q_beta = int_0^h Exp(w_world (h-s)) Rhat(s) Q_b Rhat(s)^T Exp(w_world (h-s))^T ds
+```
+
+Because `Exp(w_world (h-s)) Rhat(s) = Rhat(h)` identically, the integrand is
+the constant `Rhat(h) Q_b Rhat(h)^T`. So the Level-2 bias blocks of `Q` use
+the rotation at the **end** of the step, not its start. Using `Rhat(0)` is
+wrong at order `|w| h` -- the same order, and for the same reason, as using
+`Rhat` rather than `Rbar` in `Phi`. This was caught by the equivalence test,
+not by inspection.
+
+### A note on making a test discriminate
+
+The equivalence test originally used a physical gyro-bias random walk of
+`1e-10`, three orders below the accelerometer's. An error in the *gyro* bias
+block's frame convention then landed just under tolerance, and mutation
+testing showed the test passing on a deliberately broken build. The
+equivalence under test is algebraic, not physical, so the fix is to inflate
+the input until both blocks are exercised equally. Worth remembering
+generally: a tolerance calibrated against the largest term in a matrix says
+nothing about the smallest.
+
+## 6. What this does not claim
 
 The bias-free, frozen-parameter skeleton is group-affine. The complete
 estimator is **not** shown to be, and must not be described as an InEKF or as
