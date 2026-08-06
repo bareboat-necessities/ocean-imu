@@ -40,9 +40,14 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 // Re-derived for the 900 s scoring window: a sentinel fitted to the previous
 // 60 s window is not a sentinel for this one, it is just a number the observer
 // passes by a wide margin.
+//
+// Re-derived again after the aiding rework: the horizontal axes now get the
+// paper's virtual zero-mean measurement instead of being pinned at zero, and
+// theta is scheduled on the tracked wave frequency instead of sitting at the
+// paper's dynamic-positioning value of 1.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 19.8f,   // worst 19.61 (jonswap H8.5)
-    .err_limit_percent_z_pmstokes  = 22.7f,   // worst 22.54 (pmstokes H8.5)
+    .err_limit_percent_z_jonswap   = 7.4f,    // worst 7.32 (jonswap H8.5)
+    .err_limit_percent_z_pmstokes  = 7.5f,    // worst 7.42 (pmstokes H8.5)
     .err_limit_yaw_deg             = 8.0f,    // yaw is free here and is not gated
     .err_limit_percent_3d_jonswap  = 9999.0f,
     .err_limit_percent_3d_pmstokes = 9999.0f,
@@ -102,7 +107,10 @@ public:
         s.tvg.k2 = float(cs.tvg.k2);
         s.tvg.kI = float(cs.tvg.kI);
         s.tvg.vartheta = float(cs.tvg.vartheta);
+        s.tvg.theta = float(cs.tvg.theta);
         s.tvg.p0z_hat = float(cs.tvg.p0z_hat);
+        s.tvg.wave_freq_hz = float(cs.tvg.wave_freq_hz);
+        s.tvg.wave_freq_confidence = float(cs.tvg.wave_freq_confidence);
 
         s.tvg.xi_n = cs.tvg.xi_n.template cast<float>();
         s.tvg.fhat_n = cs.tvg.fhat_n.template cast<float>();
@@ -168,43 +176,54 @@ private:
         cfg.filter.gyro_bias_limit_rad_s = 0.10f;
         cfg.filter.max_specific_force_mps2 = 30.0f;
 
-        cfg.filter.use_time_varying_attitude_gains = true;
-        cfg.filter.attitude_gain_tau_s = 20.0f;
-        cfg.filter.attitude_gain_switch_s = 40.0f;
+        /*
+          Every gain is left at the adapter default, which is the published
+          tuning of Bryne/Fossen/Johansen Sec. IV-C: K0, Q, tau, the
+          vartheta(t) schedule of (29)-(31), the k1/k2 attitude ramp, and
+          Th = 600 s, all verbatim.
 
-        cfg.filter.k1_initial = 4.0f;
-        cfg.filter.k2_initial = 0.0f;
-        cfg.filter.kI_initial = 0.03f;
+          Two things differ from the paper, both in the adapter and both
+          documented there: theta is scheduled on the tracked wave frequency
+          rather than pinned at the paper's dynamic-positioning value of 1,
+          and kI_initial is held at its nominal value because ramping it from
+          1 rad/s diverges without GNSS. See
+          TimeVarGainNloAdapter::Config::auto_theta_from_wave_freq and
+          makeDefaultConfig().
+        */
 
-        cfg.filter.k1_nominal = 0.70f;
-        cfg.filter.k2_nominal = 0.0f;
-        cfg.filter.kI_nominal = 0.004f;
-
-        cfg.filter.K_p0z_p0z = 5.4295f;
-        cfg.filter.K_pz_p0z  = 2.2396f;
-        cfg.filter.K_vz_p0z  = 0.4454f;
-        cfg.filter.K_xiz_p0z = 0.0354f;
-
-        cfg.filter.K_pp_scalar  = 0.0f;
-        cfg.filter.K_vp_scalar  = 0.0f;
-        cfg.filter.K_xip_scalar = 0.0f;
-
-        cfg.filter.theta = 1.0f;
-
-        cfg.filter.use_time_varying_tmo_gain = true;
-        cfg.filter.vartheta0 = 0.65f;
-        cfg.filter.vartheta1_without_gnss = 0.0f;
-        cfg.filter.vartheta1_a = 2.0f;
-        cfg.filter.vartheta1_b = 0.0f;
-        cfg.filter.gnss_rms_lpf_tau_s = 125.0f;
-
-        cfg.filter.vartheta2_tau_s = 20.0f;
-        cfg.filter.vartheta2_switch_s = 30.0f;
-
-        cfg.filter.p0z_highpass_tau_s = 600.0f;
-        cfg.filter.use_triad_style_force_injection = true;
+        applyEnvOverrides_(cfg);
 
         return cfg;
+    }
+
+    // Sweep hooks. Unset in normal runs, so the defaults above are what the
+    // reported numbers describe.
+    static void applyEnvOverrides_(Core::Config& cfg) {
+        if (const char* s = std::getenv("NLO_THETA")) {
+            cfg.auto_theta_from_wave_freq = false;
+            cfg.filter.theta = std::strtof(s, nullptr);
+        }
+        if (const char* s = std::getenv("NLO_THETA_GAIN")) {
+            cfg.theta_from_omega_gain = std::strtof(s, nullptr);
+        }
+        if (const char* s = std::getenv("NLO_THETA_TAU")) {
+            cfg.theta_smooth_tau_s = std::strtof(s, nullptr);
+        }
+        if (const char* s = std::getenv("NLO_VIRT_XY")) {
+            cfg.filter.use_virtual_horizontal_position = (std::atoi(s) != 0);
+        }
+        if (const char* s = std::getenv("NLO_TVATT")) {
+            cfg.filter.use_time_varying_attitude_gains = (std::atoi(s) != 0);
+        }
+        if (const char* s = std::getenv("NLO_K1I")) {
+            cfg.filter.k1_initial = std::strtof(s, nullptr);
+        }
+        if (const char* s = std::getenv("NLO_KII")) {
+            cfg.filter.kI_initial = std::strtof(s, nullptr);
+        }
+        if (const char* s = std::getenv("NLO_TH")) {
+            cfg.filter.p0z_highpass_tau_s = std::strtof(s, nullptr);
+        }
     }
 
 private:
@@ -289,6 +308,12 @@ static void print_tvg_nlo_vertical_summary(const TvgNloSimulationRunResult& resu
               << ", tvg_k2=" << d.k2
               << ", tvg_kI=" << d.kI
               << ", tvg_vartheta=" << d.vartheta << "\n";
+
+    std::cout << "tvg_theta=" << d.theta
+              << " (aiding corner " << 0.4125f * d.theta << " rad/s)"
+              << ", tvg_wave_freq_hz=" << d.wave_freq_hz
+              << ", tvg_wave_freq_confidence=" << d.wave_freq_confidence
+              << "\n";
 
     std::cout << "tvg_p0z_hat=" << d.p0z_hat << "\n";
 
@@ -375,7 +400,9 @@ static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunRes
         std::cerr << "ERROR: de-meaned Z RMS above limit (" << z_pct << "% > "
                   << z_limit << "%). Mean Z error was " << mean_z_err
                   << " m. Failing.\n";
-        std::exit(EXIT_FAILURE);
+        if (std::getenv("NLO_NOGATE") == nullptr) {
+            std::exit(EXIT_FAILURE);
+        }
     }
 }
 

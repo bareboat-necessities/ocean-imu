@@ -13,9 +13,52 @@
     WithGNSS = true:
       horizontal GNSS/PosRef correction p_xy - p_hat_xy is used.
     WithGNSS = false:
-      horizontal GNSS correction is compiled out logically.
-      Horizontal TMO states are held at zero because they are unobservable.
-      Vertical VVR still works.
+      no horizontal position reference exists. The horizontal axes are then
+      aided the same way the paper aids the vertical axis: by the virtual
+      zero-mean measurement of integrated position (see below). Set
+      Config::use_virtual_horizontal_position = false to instead hold the
+      horizontal TMO states at zero, which leaves them unobservable.
+
+  Virtual zero-mean position measurement:
+    Paper Sec. II-A.2 replaces the low-precision GNSS height by the virtual
+    measurement p0n_z = integral(pn_z dt) = 0, justified by Godhavn [16]:
+    wave-induced motion oscillates about the mean sea surface, so the mean
+    vertical position is zero over time.
+
+    The same argument holds for surge and sway of a free-floating body: wave
+    orbital motion is zero-mean in the horizontal plane too, and the paper's
+    high-pass of the innovation (eq. (27)-(28)) removes the slowly varying
+    part, i.e. current-driven drift, exactly as it removes tide in heave.
+
+    So with WithGNSS = false the observer carries the augmented state
+    p0n = integral(pn dt) on all three axes and drives all three innovations
+    from the same virtual measurement p0n = 0.
+
+    The gain column for such an axis is the paper's own vertical column
+    (K_p0z_p0z, K_pz_p0z, K_vz_p0z, K_xiz_p0z). That is not an analogy: the
+    paper's Q = blkdiag{50, 0.5*I3, 0.08*I3, 0.0025*I3} weights p, v and f
+    identically on all three axes, so the algebraic Riccati equation (12) for
+    a horizontal axis augmented with its integrated position is the very same
+    scalar problem the vertical axis solves. Both of the paper's published
+    columns are reproduced exactly by (12) with that Q and R = 1/tau, tau=1/2:
+
+      4-state chain (p0, p, v, f): 5.4295, 2.2396, 0.4454, 0.0354
+      3-state chain (p, v, f)    : 0.9513, 0.3275, 0.0354
+
+    Keeping the horizontal axes aided also keeps xi observable on all three
+    axes, so f_hat_n in (9e) is a fully estimated specific force and can be
+    used as the attitude reference vector of (8) as the paper intends.
+
+    Caveat on what the horizontal states are for. They exist so that xi, and
+    therefore f_hat_n, is a genuine estimate; that is what makes the attitude
+    loop work. They are not a calibrated surge/sway product. A virtual
+    zero-mean constraint is much weaker aiding than a position fix, and with
+    Mag = None there is no yaw reference at all, so the horizontal NED frame
+    the observer settles on is arbitrary. Measured against the simulator's
+    reference, horizontal displacement carries roughly two to three times the
+    true RMS and correlates only weakly. Use positionNED().z() for heave;
+    treat the x and y components as internal unless a yaw reference and a real
+    horizontal position aid are present.
 
     Mag = None:
       no yaw reference. Yaw and z-gyro bias are unobservable.
@@ -98,15 +141,29 @@ public:
         R max_specific_force_mps2 = R(30.0);
 
         /*
-          No-GNSS roll/pitch attitude leak.
+          Aid the horizontal axes with the paper's virtual zero-mean
+          integrated-position measurement whenever no horizontal position
+          reference is available. See the header comment.
 
-          Used only for quaternion / gyro-bias correction when WithGNSS=false.
-          It is not used for xi_dot / VVR dynamics.
+          When false, the horizontal TMO states are held at zero instead and
+          the degraded attitude leak below is used.
+        */
+        bool use_virtual_horizontal_position = true;
 
-          The leak is deliberately weak and is reduced further when vertical
-          inertial acceleration is high, because that means the accelerometer
-          is contaminated by wave motion and should not be trusted as a clean
-          tilt reference.
+        /*
+          Fallback roll/pitch attitude leak.
+
+          Used only for quaternion / gyro-bias correction when the horizontal
+          axes are unaided, i.e. WithGNSS=false and
+          use_virtual_horizontal_position=false. It is not used for
+          xi_dot / VVR dynamics.
+
+          With the horizontal axes unaided, xi_xy is pinned to zero, so
+          f_hat_n == R*f_b in the horizontal plane and the paper's injection
+          term (8) self-cancels. This leak substitutes a plain accelerometer
+          tilt reference for it, which chases wave acceleration, so it is
+          deliberately weak and is reduced further when vertical inertial
+          acceleration is high.
         */
         R no_gnss_attitude_sigma_scale = R(0.03);
         R no_gnss_attitude_sigma_limit_rad_s = R(0.0020);
@@ -173,8 +230,8 @@ public:
         xi_n_.setZero();
         fhat_n_.setZero();
 
-        p0z_hat_ = R(0);
-        p0z_hp_state_ = R(0);
+        p0_n_.setZero();
+        p0_hp_state_.setZero();
 
         k1_ = cfg_.use_time_varying_attitude_gains ? cfg_.k1_initial : cfg_.k1_nominal;
         k2_ = cfg_.use_time_varying_attitude_gains ? cfg_.k2_initial : cfg_.k2_nominal;
@@ -248,18 +305,12 @@ public:
 
     void setPositionNED(const Vec3& p_n_m) {
         p_n_ = p_n_m;
-        if constexpr (!WithGNSS) {
-            p_n_.x() = R(0);
-            p_n_.y() = R(0);
-        }
+        lockUnobservableStates_();
     }
 
     void setVelocityNED(const Vec3& v_n_mps) {
         v_n_ = v_n_mps;
-        if constexpr (!WithGNSS) {
-            v_n_.x() = R(0);
-            v_n_.y() = R(0);
-        }
+        lockUnobservableStates_();
     }
 
     void setGyroBiasBody(const Vec3& bias_rad_s) {
@@ -275,6 +326,34 @@ public:
 
     void setMagneticDeclinationRad(R declination_rad) {
         cfg_.magnetic_declination_rad = declination_rad;
+    }
+
+    /*
+      Change theta without bumping the output.
+
+      Row (9a) has loop gain vartheta*theta*K_p0z_p0z, so inside the wave band
+      the augmented state settles at p0_hat ~= p_hat/(vartheta*theta*K_p0z_p0z),
+      i.e. proportional to 1/theta. Writing a new theta straight into the
+      config leaves p0_hat at the old scale, which is a step in the innovation
+      and gets integrated into position and velocity before the state
+      re-equilibrates. Rescaling p0_hat, and the innovation high-pass state
+      with it, keeps the innovation continuous across the change.
+
+      Always change theta through here rather than through config().theta.
+    */
+    void setTheta(R theta_new) {
+        if (!isFinite(theta_new) || !(theta_new > R(0))) {
+            return;
+        }
+
+        const R theta_old = cfg_.theta;
+        cfg_.theta = theta_new;
+
+        if (theta_old > R(0)) {
+            const R scale = theta_old / theta_new;
+            p0_n_ *= scale;
+            p0_hp_state_ *= scale;
+        }
     }
 
     void update(R dt,
@@ -293,36 +372,35 @@ public:
 
         updateGainSchedules(dt, aux);
 
+        const bool have_gnss = hasUsableGNSS(aux);
+        const bool virtual_xy = usesVirtualHorizontal_(have_gnss);
+        const bool horizontal_unaided = !have_gnss && !virtual_xy;
+
         const Mat3 R_nb_before = q_nb_.toRotationMatrix();
         fhat_n_ = R_nb_before * f_b + xi_n_;
-
-        if constexpr (!WithGNSS) {
-            xi_n_.x() = R(0);
-            xi_n_.y() = R(0);
-            fhat_n_ = R_nb_before * f_b + xi_n_;
-        }
 
         /*
           Split the two sigma roles:
 
             sigma_tmo_b:
-              Original paper-style force feedback. This is used for xi_dot /
-              TMO/VVR correction dynamics. It must remain the full-force
-              version, otherwise the vertical heave loop can run away.
+              Paper-style force feedback, eq. (8). This is used for xi_dot /
+              TMO correction dynamics. It must remain the full-force version,
+              otherwise the vertical heave loop can run away.
 
             sigma_b_:
               Public/attitude sigma used for quaternion correction and gyro
-              bias learning. In no-GNSS mode, the original full-force feedback
-              self-cancels because fhat_n ~= R*f_b. Use a small vertical-only
-              force-reference leak for roll/pitch, but do not feed that into
-              xi_dot.
+              bias learning. Identical to sigma_tmo_b whenever the horizontal
+              axes are aided, because then xi is observable on all three axes
+              and f_hat_n is a genuine estimate. Only when the horizontal axes
+              are unaided does (8) self-cancel, and then the degraded
+              vertical-only leak is substituted for the attitude path alone.
         */
         const Vec3 sigma_tmo_b =
             computeSigmaBody(f_b, fhat_n_, aux, R_nb_before);
 
         sigma_b_ = sigma_tmo_b;
 
-        if constexpr (!WithGNSS) {
+        if (horizontal_unaided) {
             sigma_b_ =
                 computeNoGnssAttitudeSigmaBody(f_b, fhat_n_, aux, R_nb_before);
         }
@@ -352,11 +430,18 @@ public:
         const Mat3 R_nb = q_nb_.toRotationMatrix();
         fhat_n_ = R_nb * f_b + xi_n_;
 
-        const R raw_p0z_err = R(0) - p0z_hat_;
-        const R p0z_err = highpassP0zInnovation(dt, raw_p0z_err);
+        /*
+          Virtual measurement p0n = 0 (paper Sec. II-A.2), high-pass filtered
+          per eq. (27)-(28). Applied on the vertical axis always, and on the
+          horizontal axes when they have no position reference of their own.
+        */
+        Vec3 p0_err = highpassP0Innovation(dt, -p0_n_);
+        if (!virtual_xy) {
+            p0_err.x() = R(0);
+            p0_err.y() = R(0);
+        }
 
         Vec2 pxy_err = Vec2::Zero();
-        const bool have_gnss = hasUsableGNSS(aux);
         if (have_gnss) {
             pxy_err = aux.gnss.position_n_m - p_n_.template head<2>();
         }
@@ -375,38 +460,43 @@ public:
         const Mat2 Kvp  = cfg_.K_vp_scalar  * Mat2::Identity();
         const Mat2 Kxip = cfg_.K_xip_scalar * Mat2::Identity();
 
-        const R p0z_dot =
-            p_n_.z() + s1 * cfg_.K_p0z_p0z * p0z_err;
+        // (9a)
+        Vec3 p0_dot = p_n_ + s1 * cfg_.K_p0z_p0z * p0_err;
+        if (!virtual_xy) {
+            p0_dot.x() = R(0);
+            p0_dot.y() = R(0);
+        }
 
-        Vec3 p_dot = v_n_;
+        // (9b)
+        Vec3 p_dot = v_n_ + s2 * cfg_.K_pz_p0z * p0_err;
         if (have_gnss) {
             p_dot.template head<2>() += s2 * (Kpp * pxy_err);
         }
-        p_dot.z() += s2 * cfg_.K_pz_p0z * p0z_err;
 
         Vec3 gravity_n;
         gravity_n << R(0), R(0), cfg_.gravity_mps2;
 
-        Vec3 v_dot = fhat_n_ + gravity_n;
+        // (9c)
+        Vec3 v_dot = fhat_n_ + gravity_n + s3 * cfg_.K_vz_p0z * p0_err;
         if (have_gnss) {
             v_dot.template head<2>() += s3 * (Kvp * pxy_err);
         }
-        v_dot.z() += s3 * cfg_.K_vz_p0z * p0z_err;
 
         /*
-          Use sigma_tmo_b here, not sigma_b_.
+          (9d). Use sigma_tmo_b here, not sigma_b_.
 
-          sigma_b_ may be a small no-GNSS vertical-reference attitude leak.
-          Feeding that into xi_dot destabilizes the VVR/heave loop.
+          sigma_b_ may be the degraded vertical-reference attitude leak used
+          when the horizontal axes are unaided. Feeding that into xi_dot
+          destabilizes the vertical loop.
         */
-        Vec3 xi_dot = -R_nb * (skew(sigma_tmo_b) * f_b);
+        Vec3 xi_dot = -R_nb * (skew(sigma_tmo_b) * f_b)
+                      + s4 * cfg_.K_xiz_p0z * p0_err;
 
         if (have_gnss) {
             xi_dot.template head<2>() += s4 * (Kxip * pxy_err);
         }
-        xi_dot.z() += s4 * cfg_.K_xiz_p0z * p0z_err;
 
-        if constexpr (!WithGNSS) {
+        if (horizontal_unaided) {
             p_dot.x() = R(0);
             p_dot.y() = R(0);
 
@@ -424,10 +514,10 @@ public:
             xi_n_.y() = R(0);
         }
 
-        p0z_hat_ += dt * p0z_dot;
-        p_n_     += dt * p_dot;
-        v_n_     += dt * v_dot;
-        xi_n_    += dt * xi_dot;
+        p0_n_ += dt * p0_dot;
+        p_n_  += dt * p_dot;
+        v_n_  += dt * v_dot;
+        xi_n_ += dt * xi_dot;
 
         lockUnobservableStates_();
 
@@ -448,7 +538,8 @@ public:
     const Vec3& gyroBiasBody() const { return gyro_bias_b_; }
     const Vec3& sigmaBody() const { return sigma_b_; }
 
-    R integratedVerticalPositionState() const { return p0z_hat_; }
+    R integratedVerticalPositionState() const { return p0_n_.z(); }
+    const Vec3& integratedPositionNED() const { return p0_n_; }
 
     R gainK1() const { return k1_; }
     R gainK2() const { return k2_; }
@@ -481,8 +572,8 @@ private:
     Vec3 xi_n_ = Vec3::Zero();
     Vec3 fhat_n_ = Vec3::Zero();
 
-    R p0z_hat_ = R(0);
-    R p0z_hp_state_ = R(0);
+    Vec3 p0_n_ = Vec3::Zero();
+    Vec3 p0_hp_state_ = Vec3::Zero();
 
     R k1_ = R(0.55);
     R k2_ = R(1.0);
@@ -494,14 +585,26 @@ private:
 
     Vec3 sigma_b_ = Vec3::Zero();
 
+    /*
+      True when the horizontal axes are aided by the virtual zero-mean
+      integrated-position measurement rather than by a position reference.
+    */
+    bool usesVirtualHorizontal_(bool have_gnss) const {
+        return !have_gnss && cfg_.use_virtual_horizontal_position;
+    }
+
     void lockUnobservableStates_() {
         if constexpr (!WithGNSS) {
-            p_n_.x() = R(0);
-            p_n_.y() = R(0);
-            v_n_.x() = R(0);
-            v_n_.y() = R(0);
-            xi_n_.x() = R(0);
-            xi_n_.y() = R(0);
+            if (!cfg_.use_virtual_horizontal_position) {
+                p_n_.x() = R(0);
+                p_n_.y() = R(0);
+                v_n_.x() = R(0);
+                v_n_.y() = R(0);
+                xi_n_.x() = R(0);
+                xi_n_.y() = R(0);
+                p0_n_.x() = R(0);
+                p0_n_.y() = R(0);
+            }
         }
 
         if constexpr (Mag == NloMagType::None) {
@@ -716,14 +819,19 @@ private:
         }
     }
 
-    R highpassP0zInnovation(R dt, R raw) {
+    /*
+      Paper eq. (27)-(28). x_f is the low-pass filtered innovation, and the
+      high-pass filtered innovation is p0_h = -x_f/Th + p0, which realizes
+      Th*s/(Th*s + 1).
+    */
+    Vec3 highpassP0Innovation(R dt, const Vec3& raw) {
         const R T = cfg_.p0z_highpass_tau_s;
         if (!(T > R(0))) {
             return raw;
         }
 
-        p0z_hp_state_ += dt * (raw - p0z_hp_state_ / T);
-        return raw - p0z_hp_state_ / T;
+        p0_hp_state_ += dt * (raw - p0_hp_state_ / T);
+        return raw - p0_hp_state_ / T;
     }
 
     bool makeCompassReference(const Aux& aux,

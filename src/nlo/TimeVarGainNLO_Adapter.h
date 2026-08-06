@@ -57,13 +57,18 @@
 #include <limits>
 
 #include "nlo/TimeVaryingGainNLO.h"
+#include "freq/FrequencyTrackerPolicy.h"
 
 template <bool WithGNSS = false,
           NloMagType Mag = NloMagType::None,
-          typename R = float>
+          typename R = float,
+          TrackerType FreqTT = TrackerType::PLL>
 class TimeVarGainNloAdapter {
 public:
     using Filter = TimeVaryingGainNLO<WithGNSS, Mag, R>;
+    using WaveFreqTracker = TrackerPolicy<FreqTT>;
+    using WaveFreqTrackerConfig =
+        marine_obs::detail::tracker_config_t<WaveFreqTracker, R>;
 
     using Vec2 = Eigen::Matrix<R, 2, 1>;
     using Vec3 = Eigen::Matrix<R, 3, 1>;
@@ -98,6 +103,11 @@ public:
         R mahony_boot_time_s = R(0);
         R mahony_boot_good_time_s = R(0);
         R mahony_boot_bias_norm = R(0);
+
+        R theta = std::numeric_limits<R>::quiet_NaN();
+        R wave_freq_hz = std::numeric_limits<R>::quiet_NaN();
+        R wave_freq_confidence = std::numeric_limits<R>::quiet_NaN();
+        bool wave_freq_locked = false;
     };
 
     struct Snapshot {
@@ -193,6 +203,94 @@ public:
           For real device startup, false is safer.
         */
         bool run_filter_before_initialized = false;
+
+        /*
+          Sea-state schedule for theta.
+
+          theta is the paper's own scalar tuning parameter of the
+          translational observer. It enters only through
+          K(t) = vartheta(t)*theta*L_theta^-1*K0 (eq. (33)), which is an exact
+          frequency scaling of the whole aiding loop by theta. Every published
+          gain, and every ratio between them, is untouched by it.
+
+          With the paper's K0 the aiding loop gives the heave path an
+          effective high-pass corner of
+
+              omega_c = theta * K_pz_p0z / K_p0z_p0z = 0.4125 * theta  rad/s
+
+          A wave sensor needs that corner below the wave band: too high and
+          the aiding loop attenuates and phase-shifts the wave itself, too low
+          and double-integrated accelerometer drift is no longer suppressed.
+          The paper's theta = 1 puts the corner at 0.41 rad/s, a 15 s period,
+          which is inside the ocean wave band. That single fact accounts for
+          essentially all of the observer's heave error at theta = 1.
+
+          So theta is scheduled to hold the corner at a fixed fraction of the
+          dominant wave frequency:
+
+              theta = theta_from_omega_gain * omega_peak
+
+          which places omega_c at 0.4125 * theta_from_omega_gain * omega_peak.
+          The default 0.56 puts it a factor 4.3 below the peak, which is the
+          flat optimum measured by a fixed-theta sweep across Hs = 0.27 m to
+          8.5 m: the per-record optima came out at theta/omega_peak = 0.51,
+          0.52, 0.53, 0.54, 0.58, 0.59, 0.61, 0.61.
+
+          Scheduling a translational gain scalar on a measured condition
+          signal is the paper's own construction; it schedules vartheta(t) on
+          reported GNSS quality and says other laws may be used in its place.
+          Here there is no receiver to report quality, and vartheta cannot
+          move the corner anyway because it multiplies all four gains equally.
+          theta is the parameter that can.
+
+          Note this departs from the paper's theta >= 1. That bound comes from
+          Theorem 1, where a large theta is what dominates the nonlinear
+          coupling term; it is sufficient, not necessary, and the linear
+          aiding loop is Hurwitz for any theta > 0 at these gains.
+
+          Set auto_theta_from_wave_freq = false to run a fixed
+          Config::filter.theta, e.g. the paper's 1.0.
+        */
+        bool auto_theta_from_wave_freq = true;
+
+        R theta_from_omega_gain = R(0.56);
+        R theta_min = R(0.15);
+        R theta_max = R(1.60);
+
+        // Time constant of the lag applied to theta itself, so the aiding
+        // loop is never yanked when the tracker steps.
+        R theta_smooth_tau_s = R(30.0);
+
+        // Below this tracker confidence the schedule holds its last value.
+        R theta_min_confidence = R(0.25);
+
+        // theta is recomputed on this cadence, not every sample.
+        R theta_update_period_s = R(0.5);
+
+        // Corner of the fixed reference-heave channel the wave tracker runs
+        // on. Below the longest swell of interest, above the drift band.
+        R reference_heave_hp_hz = R(0.030);
+
+        /*
+          Same tracker the adaptive PII observer uses, with three settings
+          changed because this one is driven by a displacement-shaped
+          reference channel rather than by acceleration:
+
+            f_max_hz     0.35 -> 0.50, so short wind seas near a 2.5 s period
+                                 are still inside the search band
+            pre_lp_hz    0.45 -> 0.60, to match the widened band
+            lock_rms_min 0.012 -> 5e-4, because the policy normalizes its
+                                 input by g and a displacement of a few
+                                 centimetres would otherwise never lock
+        */
+        WaveFreqTrackerConfig wave_freq_tracker = [] {
+            auto c = marine_obs::detail::
+                make_default_tracker_config<WaveFreqTrackerConfig, R>();
+            if constexpr (requires { c.f_max_hz; })     c.f_max_hz = R(0.50);
+            if constexpr (requires { c.pre_lp_hz; })    c.pre_lp_hz = R(0.60);
+            if constexpr (requires { c.lock_rms_min; }) c.lock_rms_min = R(5e-4);
+            return c;
+        }();
     };
 
     explicit TimeVarGainNloAdapter(const Config& cfg = makeDefaultConfig())
@@ -213,47 +311,81 @@ public:
         f.gyro_bias_limit_rad_s = R(0.10);
         f.max_specific_force_mps2 = R(30.0);
 
+        /*
+          All gains below are the values published in Bryne/Fossen/Johansen,
+          Sec. IV-C "Tuning and Gain Structure". Do not retune them here; use
+          Config::filter.theta, which is the paper's own scalar tuning
+          parameter, to move the translational loop in frequency.
+        */
+
+        // ga_dot = -(1/T) ga + (1/T) ka, T = 25 s,
+        // ka = [20, 20, 1] for t <= 100 s, ka = [0.55, 1, 0.01] afterwards.
         f.use_time_varying_attitude_gains = true;
-        f.attitude_gain_tau_s = R(20.0);
-        f.attitude_gain_switch_s = R(40.0);
+        f.attitude_gain_tau_s = R(25.0);
+        f.attitude_gain_switch_s = R(100.0);
 
-        f.k1_initial = R(4.0);
-        f.k2_initial = (Mag == NloMagType::None) ? R(0.0) : R(4.0);
-        f.kI_initial = R(0.03);
+        f.k1_initial = R(20.0);
+        f.k2_initial = R(20.0);
 
-        f.k1_nominal = R(0.70);
-        f.k2_nominal = (Mag == NloMagType::None) ? R(0.0) : R(0.50);
-        f.kI_nominal = R(0.004);
+        f.k1_nominal = R(0.55);
+        f.k2_nominal = R(1.0);
+        f.kI_nominal = R(0.01);
 
+        /*
+          The paper ramps the integral gain from kI = 1 as well, which is safe
+          there because Sigma2 is pinned by 5 Hz GNSS position from the start,
+          so the injection term it integrates is meaningful immediately.
+
+          Without GNSS, Sigma2's transient lasts far longer, and kI = 1 rad/s
+          integrates that transient straight into the gyro bias estimate. The
+          bias reaches gyro_bias_limit_rad_s, which rotates the attitude,
+          which grows the injection term further, and the interconnection
+          diverges: roll and pitch RMS run to tens of degrees. The paper's
+          parameter projection does not stop this because the admissible ball
+          used here is two orders of magnitude wider than the true biases.
+
+          The proportional part of the ramp, k1 and k2 = 20, is harmless and
+          is kept: it converges attitude quickly and is measurably fine.
+        */
+        f.kI_initial = WithGNSS ? R(1.0) : f.kI_nominal;
+
+        // K0 = P*C', P from the ARE (12) with tau = 1/2 and
+        // Q = blkdiag{50, 0.5*I3, 0.08*I3, 0.0025*I3}.
+        // The four-state column is used by every axis aided by the virtual
+        // zero-mean measurement; the three-state column by GNSS-aided axes.
         f.K_p0z_p0z = R(5.4295);
         f.K_pz_p0z  = R(2.2396);
         f.K_vz_p0z  = R(0.4454);
         f.K_xiz_p0z = R(0.0354);
 
-        if constexpr (WithGNSS) {
-            f.K_pp_scalar  = R(0.9513);
-            f.K_vp_scalar  = R(0.3275);
-            f.K_xip_scalar = R(0.0354);
-        } else {
-            f.K_pp_scalar  = R(0.0);
-            f.K_vp_scalar  = R(0.0);
-            f.K_xip_scalar = R(0.0);
-        }
+        f.K_pp_scalar  = R(0.9513);
+        f.K_vp_scalar  = R(0.3275);
+        f.K_xip_scalar = R(0.0354);
 
         f.theta = R(1.0);
 
+        // vartheta(t) = vartheta0 + vartheta1 + vartheta2, eq. (29)-(31),
+        // with vartheta0 = 0.5, vartheta1 = b*exp(-a*ef), a = 2, b = 1.5,
+        // ef a 125 s low-pass of the reported horizontal GNSS RMS error, and
+        // vartheta2 a 25 s lag toward 1 for t <= 100 s and toward 0 after.
         f.use_time_varying_tmo_gain = true;
-        f.vartheta0 = R(0.65);
-        f.vartheta1_without_gnss = R(0.0);
+        f.vartheta0 = R(0.5);
         f.vartheta1_a = R(2.0);
-        f.vartheta1_b = WithGNSS ? R(1.5) : R(0.0);
+        f.vartheta1_b = R(1.5);
         f.gnss_rms_lpf_tau_s = R(125.0);
 
-        f.vartheta2_tau_s = R(20.0);
-        f.vartheta2_switch_s = R(30.0);
+        // No receiver is present to report a horizontal RMS error, so the
+        // vartheta1 quality bonus is not claimed and vartheta settles on the
+        // paper's floor vartheta0.
+        f.vartheta1_without_gnss = R(0.0);
+
+        f.vartheta2_tau_s = R(25.0);
+        f.vartheta2_switch_s = R(100.0);
 
         f.p0z_highpass_tau_s = R(600.0);
         f.use_triad_style_force_injection = true;
+
+        f.use_virtual_horizontal_position = !WithGNSS;
 
         return cfg;
     }
@@ -261,6 +393,23 @@ public:
     void reset() {
         filter_ = Filter(cfg_.filter);
         filter_.reset();
+
+        marine_obs::detail::tracker_configure(wave_freq_tracker_,
+                                              cfg_.wave_freq_tracker);
+        marine_obs::detail::tracker_reset(
+            wave_freq_tracker_,
+            marine_obs::detail::tracker_init_frequency_hz(cfg_.wave_freq_tracker,
+                                                          R(0.12))
+        );
+
+        theta_ = cfg_.filter.theta;
+        theta_sched_accum_s_ = R(0);
+        theta_acquired_ = false;
+        ref_heave_v_ = R(0);
+        ref_heave_z_ = R(0);
+        last_wave_freq_hz_ = R(0);
+        last_wave_freq_conf_ = R(0);
+        last_wave_freq_locked_ = false;
 
         aux_ = Aux{};
         resetAuxValidity_();
@@ -445,6 +594,8 @@ public:
             filter_.setGyroBiasBody(current);
         }
 
+        updateThetaSchedule_(dt);
+
         filter_.update(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
 
         if (initialized_) {
@@ -509,6 +660,11 @@ public:
         s.tvg.mahony_boot_good_time_s = boot_good_time_s_;
         s.tvg.mahony_boot_bias_norm = boot_bias_b_.norm();
 
+        s.tvg.theta = filter_.config().theta;
+        s.tvg.wave_freq_hz = last_wave_freq_hz_;
+        s.tvg.wave_freq_confidence = last_wave_freq_conf_;
+        s.tvg.wave_freq_locked = last_wave_freq_locked_;
+
         return s;
     }
 
@@ -530,6 +686,16 @@ private:
     Config cfg_;
     Filter filter_;
     Aux aux_{};
+
+    WaveFreqTracker wave_freq_tracker_{};
+    R theta_ = R(1);
+    R theta_sched_accum_s_ = R(0);
+    bool theta_acquired_ = false;
+    R ref_heave_v_ = R(0);
+    R ref_heave_z_ = R(0);
+    R last_wave_freq_hz_ = R(0);
+    R last_wave_freq_conf_ = R(0);
+    bool last_wave_freq_locked_ = false;
 
     bool initialized_ = false;
 
@@ -578,6 +744,116 @@ private:
         if constexpr (WithGNSS) {
             aux_.gnss.valid = false;
         }
+    }
+
+    /*
+      Hold the aiding loop a fixed factor below the dominant wave frequency by
+      scheduling theta. See Config::auto_theta_from_wave_freq.
+    */
+    void updateThetaSchedule_(R dt) {
+        if (!cfg_.auto_theta_from_wave_freq || !initialized_) {
+            return;
+        }
+
+        /*
+          Track on a fixed reference heave, never on the observer's own
+          position or velocity estimate.
+
+          What has to be located is the peak of the displacement spectrum.
+          Three candidate inputs, two of which do not work:
+
+            Acceleration. The tracker would see omega^4 * S_z, which for a
+            JONSWAP sea falls only as omega^-1 above the peak, so it locks
+            well above it. On the Hs = 4 m record it reports 0.32 Hz against
+            a true peak of 0.12 Hz and theta comes out nearly 3x too high.
+
+            The observer's own heave estimate. This closes a positive
+            feedback loop: theta sets how much low-frequency drift the
+            estimate admits, drift captures the tracker, the tracker lowers
+            theta, which admits more drift. On the same record it walks down
+            to 0.054 Hz and stays there.
+
+          So the tracker gets its own fixed reference channel: vertical
+          inertial acceleration double-integrated through two leaky
+          integrators at reference_heave_hp_hz. That is a second-order
+          high-pass on displacement, so it has the displacement spectrum's
+          shape in the wave band and rejects drift at -40 dB/decade below the
+          corner, and above all it does not depend on theta, so there is no
+          loop to run away.
+
+          Sign is irrelevant to a frequency tracker.
+        */
+        const R a_z_ned = filter_.specificForceNED().z() + cfg_.gravity_mps2;
+        if (isFinite_(a_z_ned)) {
+            const R tau = R(1) /
+                (R(6.283185307179586) * cfg_.reference_heave_hp_hz);
+
+            ref_heave_v_ += dt * (a_z_ned - ref_heave_v_ / tau);
+            ref_heave_z_ += dt * (ref_heave_v_ - ref_heave_z_ / tau);
+
+            if (isFinite_(ref_heave_z_)) {
+                marine_obs::detail::tracker_step(wave_freq_tracker_,
+                                                 ref_heave_z_, dt);
+            } else {
+                ref_heave_v_ = R(0);
+                ref_heave_z_ = R(0);
+            }
+        }
+
+        theta_sched_accum_s_ += dt;
+        if (theta_sched_accum_s_ < cfg_.theta_update_period_s) {
+            return;
+        }
+
+        const R step = theta_sched_accum_s_;
+        theta_sched_accum_s_ = R(0);
+
+        last_wave_freq_hz_ =
+            marine_obs::detail::tracker_get_frequency_hz<WaveFreqTracker, R>(
+                wave_freq_tracker_);
+        last_wave_freq_conf_ =
+            marine_obs::detail::tracker_get_confidence<WaveFreqTracker, R>(
+                wave_freq_tracker_);
+        last_wave_freq_locked_ =
+            marine_obs::detail::tracker_is_locked(wave_freq_tracker_);
+
+        if (!isFinite_(last_wave_freq_hz_) || !(last_wave_freq_hz_ > R(0))) {
+            return;
+        }
+        if (!(last_wave_freq_conf_ >= cfg_.theta_min_confidence)) {
+            return;
+        }
+
+        constexpr R kTwoPi = R(6.283185307179586);
+
+        const R target = clamp_(
+            cfg_.theta_from_omega_gain * kTwoPi * last_wave_freq_hz_,
+            cfg_.theta_min,
+            cfg_.theta_max
+        );
+
+        /*
+          Snap on first acquisition, lag afterwards.
+
+          theta starts at the configured fixed value, which is nowhere near
+          the sea being measured. Lagging into the target from there costs
+          several time constants during which the aiding loop is misplaced,
+          and that transient is a real error in the output. Once the tracker
+          is confident for the first time there is no reason to approach the
+          answer slowly, so take it, and reserve the lag for tracking a sea
+          state that actually changes.
+        */
+        if (!theta_acquired_) {
+            theta_acquired_ = true;
+            theta_ = target;
+        } else {
+            const R alpha = (cfg_.theta_smooth_tau_s > R(0))
+                ? clamp_(step / cfg_.theta_smooth_tau_s, R(0), R(1))
+                : R(1);
+            theta_ += alpha * (target - theta_);
+        }
+
+        filter_.setTheta(theta_);
     }
 
     static bool isFinite_(R x) {

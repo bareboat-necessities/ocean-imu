@@ -312,7 +312,10 @@ static void write_tvg_nlo_csv_header(std::ofstream& ofs)
         << ",tvg_k2"
         << ",tvg_kI"
         << ",tvg_vartheta"
+        << ",tvg_theta"
         << ",tvg_p0z_hat"
+        << ",tvg_wave_freq_hz"
+        << ",tvg_wave_freq_confidence"
 
         << ",tvg_xi_n_x"
         << ",tvg_xi_n_y"
@@ -343,7 +346,10 @@ static void write_tvg_nlo_csv_row(std::ofstream& ofs, const TvgNloFilterSnapshot
         << "," << d.k2
         << "," << d.kI
         << "," << d.vartheta
+        << "," << d.theta
         << "," << d.p0z_hat
+        << "," << d.wave_freq_hz
+        << "," << d.wave_freq_confidence
 
         << "," << d.xi_n.x()
         << "," << d.xi_n.y()
