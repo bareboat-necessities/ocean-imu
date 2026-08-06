@@ -104,6 +104,13 @@ def main() -> int:
                          "sought across every window of every file")
     ap.add_argument("--skip", type=int, default=0,
                     help="discard this many leading windows as covariance settling")
+    ap.add_argument("--group", type=int, default=1,
+                    help="multiply this many consecutive windows before testing.\n"
+                         "Per-window contraction is sufficient but not necessary: a\n"
+                         "single window can have rho > 1 at a resonant phase alignment\n"
+                         "between the parameter schedule and the wave and still sit\n"
+                         "inside a contracting product. Group at least up to the beat\n"
+                         "period of the two when theta is being swept.")
     ap.add_argument("--json", type=Path)
     args = ap.parse_args()
 
@@ -119,11 +126,21 @@ def main() -> int:
             # A generator still writing, or an aborted run.
             skipped_files.append((str(path), str(exc)))
             continue
-        mats += [scale_inv @ P @ scale for P in data["matrices"]][args.skip:]
-        times += data["times"][args.skip:]
-        peaks += data["peaks"][args.skip:]
-        periods += [data["period"]] * (len(data["matrices"]) - args.skip)
-        steps_list += [data["steps"]] * (len(data["matrices"]) - args.skip)
+
+        # Group within a trajectory only. Multiplying windows from different
+        # trajectories would be meaningless, and the group duration depends on
+        # that trajectory's own wave period.
+        w = [scale_inv @ P @ scale for P in data["matrices"]][args.skip:]
+        g = max(1, args.group)
+        for i in range(0, len(w) - g + 1, g):
+            P = np.eye(w[0].shape[0])
+            for k in range(i, i + g):
+                P = w[k] @ P
+            mats.append(P)
+            times.append(data["times"][args.skip:][i + g - 1])
+            peaks.append(max(data["peaks"][args.skip:][i:i + g]))
+            periods.append(data["period"] * g)
+            steps_list.append(data["steps"] * g)
     if skipped_files:
         print(f"skipped {len(skipped_files)} unreadable trajectory file(s): "
               + ", ".join(f for f, _ in skipped_files[:3])
@@ -135,6 +152,9 @@ def main() -> int:
     # A window is one wave period, so cells with different periods are
     # normalized to a per-second rate when reporting.
     steps = steps_list[0]
+
+    if args.group > 1:
+        print(f"grouping {args.group} windows per trajectory -> {len(mats)} products")
 
     rho = [float(abs(np.linalg.eigvals(P)).max()) for P in mats]
     norms = [float(np.linalg.norm(P, 2)) for P in mats]

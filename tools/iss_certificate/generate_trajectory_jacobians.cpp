@@ -55,6 +55,35 @@ struct Tuning {
     double tau = 4.0;
     double sigma_aw = 2.8;
     double sigma_s = 6.0;
+
+    /*
+      Exogenous schedule for the adaptive parameters.
+
+      The tuner in SeaStateFusionFilter_OU_III is driven by
+      a_body_z_up_proxy = -(acc.z() + g) and by a frequency tracker running on
+      the same signal, i.e. by the raw accelerometer only. Nothing in the
+      estimator state feeds it, apart from a tilt gate that re-locks attitude
+      above 70 degrees, which is outside the certified envelope (worst
+      combined tilt there is 47 degrees, and 54 degrees on this trajectory).
+
+      So on the envelope theta is a causal functional of the measurements and
+      not of the state: there is no estimator-to-tuner feedback, and any
+      bounded schedule in Theta is admissible. Rather than replay one tuner
+      trace, sweep the whole box, out of phase per axis and faster than the
+      real tuner slews, which is the conservative choice.
+    */
+    double sweep_period = 0.0;   // 0 disables the sweep
+
+    void apply_sweep(double t) {
+        if (!(sweep_period > 0.0)) return;
+        const double w = 2.0 * M_PI / sweep_period;
+        auto lerp_log = [](double lo, double hi, double u) {
+            return std::exp(std::log(lo) + (std::log(hi) - std::log(lo)) * u);
+        };
+        tau      = lerp_log(0.55, 4.0,  0.5 * (1.0 + std::sin(w * t)));
+        sigma_aw = lerp_log(0.12, 2.8,  0.5 * (1.0 + std::sin(w * t + 2.1)));
+        sigma_s  = lerp_log(0.35, 6.0,  0.5 * (1.0 + std::sin(w * t + 4.2)));
+    }
 };
 
 /*
@@ -130,6 +159,12 @@ Vec3 predicted_acc(const Filter& f) {
 
 Vec3 predicted_mag(const Filter& f) {
     return f.qref * f.v2ref;
+}
+
+void retune(Filter& f, const Tuning& g) {
+    f.set_aw_time_constant(g.tau);
+    f.set_aw_stationary_std(Vec3::Constant(g.sigma_aw));
+    f.set_RS_noise(Vec3::Constant(g.sigma_s));
 }
 
 void apply_cycle(Filter& f, const Vec3& omega, double dt,
@@ -217,6 +252,7 @@ int main(int argc, char** argv) {
     if (argc > 5) tuning.tau = std::atof(argv[5]);
     if (argc > 6) tuning.sigma_aw = std::atof(argv[6]);
     if (argc > 7) tuning.sigma_s = std::atof(argv[7]);
+    if (argc > 8) tuning.sweep_period = std::atof(argv[8]);
 
     WaveTrajectory wave;
     wave.period = period;
@@ -229,6 +265,8 @@ int main(int argc, char** argv) {
 
     double t = 0.0;
     auto advance_nominal = [&](Filter& g, double time) {
+        tuning.apply_sweep(time);
+        retune(g, tuning);
         const Vec3 omega = body_rate(wave, time, 1e-4);
         Filter truth = g;
         truth.time_update(omega, dt);
@@ -249,13 +287,16 @@ int main(int argc, char** argv) {
        << period << " " << dt << " " << steps_per_window << "\n";
     std::cout << "tau=" << tuning.tau << " sigma_aw=" << tuning.sigma_aw
               << " sigma_s=" << tuning.sigma_s
-              << "  warmup=" << warmup_s << "s  period=" << period << "s\n";
+              << "  warmup=" << warmup_s << "s  period=" << period << "s"
+              << "  theta_sweep=" << tuning.sweep_period << "s\n";
 
     for (int w = 0; w < windows; ++w) {
         Eigen::Matrix<double, kNe, kNe> Phi = Eigen::Matrix<double, kNe, kNe>::Identity();
         double peak = 1.0;
 
         for (int i = 0; i < steps_per_window; ++i, t += dt) {
+            tuning.apply_sweep(t);
+            retune(f, tuning);
             const Vec3 omega = body_rate(wave, t, 1e-4);
             Filter truth = f;
             truth.time_update(omega, dt);
