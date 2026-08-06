@@ -56,6 +56,7 @@
 #include "freq/FrequencyTrackerPolicy.h"
 #include "tuner/SeaStateAutoTuner.h"
 #include "tuner/WavePeriodEstimator.h"
+#include "tuner/VerticalAccelComplementary.h"
 #include "tuner/MagAutoTuner.h"
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
 #include "wave_dir/KalmanWaveDirection.h"
@@ -214,6 +215,13 @@ public:
         //   acc.z() ~ -g at rest  => proxy ~ 0
         const float a_z_body_proxy = acc.z() + g_std;
 
+        // Private Mahony observer for the wave-period estimator.  It is fed the
+        // raw gyro and accelerometer, before the MEKF sees them, so that the
+        // levelling it provides stays a pure function of the measurements.
+        // Stepping it unconditionally keeps its transient off the critical path
+        // when the input source is switched at runtime.
+        vertical_accel_comp_.update(dt, gyro, acc, g_std);
+
         // MEKF updates first (attitude + latent a_w)
         mekf_->time_update(gyro, dt);
         mekf_->measurement_update_acc_only(acc, tempC);
@@ -342,16 +350,14 @@ public:
         // cannot grow unnoticed.  Feeding the period estimator a
         // measurement-only leveled signal would remove it.
         //
-        // setWavePeriodInputBodyZ(true) is that measurement-only ablation: the
-        // estimator is then driven by the same body-Z proxy the frequency
-        // tracker sees, which owes nothing to the attitude solution and so
-        // opens the interconnection entirely.  It is off by default because it
-        // trades the coupling for the sub-band gravity leakage described above.
-        const bool use_leveled =
-            !wave_period_input_body_z_ && direction_accel.heading_valid;
-        wave_period_.update(dt,
-                            use_leveled ? direction_accel.up_ms2
-                                        : a_body_z_up_proxy_);
+        // setWavePeriodInput() selects what opens it.  BodyZ feeds the same
+        // raw proxy the frequency tracker sees, which owes nothing to the
+        // attitude solution but trades the coupling for the sub-band gravity
+        // leakage described above.  Complementary levels with a private Mahony
+        // observer instead: also a pure function of the measurements, so the
+        // interconnection is equally open, but levelled, so the leakage is
+        // removed rather than accepted.
+        wave_period_.update(dt, wave_period_input_ms2_(direction_accel));
 
         dir_filter_.update(direction_accel.forward_ms2,
                            direction_accel.starboard_ms2,
@@ -748,14 +754,22 @@ public:
     void setWaveBandTuning(bool flag) { wave_band_tuning_ = flag; }
     bool waveBandTuning() const noexcept { return wave_band_tuning_; }
 
-    // Drive the wave-period estimator from the raw body-Z proxy - the same
-    // signal the frequency tracker gets - instead of the leveled vertical
-    // acceleration.  The body-Z proxy does not pass through the attitude
-    // solution, so this opens the tuner coupling documented at the call site;
-    // the cost is the sub-band gravity leakage a tilting platform puts into
-    // body Z.  Default false, i.e. leveled.
-    void setWavePeriodInputBodyZ(bool flag) { wave_period_input_body_z_ = flag; }
-    bool wavePeriodInputBodyZ() const noexcept { return wave_period_input_body_z_; }
+    // Select which vertical acceleration drives the wave-period estimator.
+    // Leveled (default) uses the main filter's attitude and so keeps the tuner
+    // inside a loop; BodyZ and Complementary are both measurement-only and
+    // open it.  See the call site in updateTime for what each one costs.
+    void setWavePeriodInput(WavePeriodInputSource source) {
+        wave_period_input_ = source;
+    }
+    WavePeriodInputSource wavePeriodInput() const noexcept {
+        return wave_period_input_;
+    }
+
+    // Gains of the private Mahony observer; only meaningful under
+    // WavePeriodInputSource::Complementary.
+    void setWavePeriodComplementaryGains(float two_kp, float two_ki) {
+        vertical_accel_comp_.setGains(two_kp, two_ki);
+    }
 
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
 
@@ -955,6 +969,27 @@ private:
         }
     }
 
+    // Vertical acceleration the wave-period estimator is driven by.  Each
+    // measurement-only source falls back to the body-Z proxy while it is
+    // unusable, which is what the leveled source already does when heading is
+    // not yet resolved.
+    float wave_period_input_ms2_(
+        const wave_direction::HeadingFrameAcceleration<float>& leveled) const
+    {
+        switch (wave_period_input_) {
+            case WavePeriodInputSource::BodyZ:
+                return a_body_z_up_proxy_;
+            case WavePeriodInputSource::Complementary:
+                return vertical_accel_comp_.isReady()
+                           ? vertical_accel_comp_.verticalAccelUpMs2()
+                           : a_body_z_up_proxy_;
+            case WavePeriodInputSource::Leveled:
+            default:
+                return leveled.heading_valid ? leveled.up_ms2
+                                             : a_body_z_up_proxy_;
+        }
+    }
+
     float tuner_frequency_hz_(float tracker_hz) const {
         if (wave_band_tuning_ && wave_period_.isReady()) {
             const float wave_hz = wave_period_.getFrequencyHz();
@@ -966,6 +1001,7 @@ private:
     void resetTrackingState_() {
         tracker_policy_       = TrackingPolicy{};
         wave_period_          = WavePeriodEstimator{};
+        vertical_accel_comp_.reset();
         freq_input_lpf_       = FreqInputLPF{};
         freq_stillness_       = StillnessAdapter(g_std, min_freq_hz_, FREQ_GUESS);
         freq_input_lpf_.setCutoff(max_freq_hz_);
@@ -1077,7 +1113,7 @@ private:
     double last_aw_cov_sync_sec_ = 0.0;
 
     bool  wave_band_tuning_       = true;
-    bool  wave_period_input_body_z_ = false;
+    WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Leveled;
     float min_tune_freq_hz_       = MIN_TUNE_FREQ_HZ;
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;
@@ -1107,6 +1143,7 @@ private:
     FirstOrderIIRSmoother<float>    freq_slow_smoother_{FREQ_SMOOTHER_DT, 10.0f};
     SeaStateAutoTuner               tuner_;
     WavePeriodEstimator             wave_period_;
+    VerticalAccelComplementary      vertical_accel_comp_{};
     TuneState                       tune_;
 
     float tau_target_   = NAN;

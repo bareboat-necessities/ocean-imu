@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare the two possible inputs to the OU-II / OU-III wave-period estimator.
+"""Compare the possible inputs to the OU-II / OU-III wave-period estimator.
 
 The adaptation tuner takes its operating point from the zero-crossing wave
 period, and that period is estimated by ``WavePeriodEstimator`` from a vertical
@@ -18,7 +18,13 @@ stability consequence:
                          band, where double integration weights the spectrum by
                          1/omega^4.
 
-This tool replays the eight reference records under both inputs, for both
+  ``complementary``      levelled with a private Mahony observer running on the
+                         raw gyro and accelerometer.  Also a pure function of
+                         the measurements, so the loop is equally open, but
+                         levelled, so the leakage is removed rather than
+                         accepted.
+
+This tool replays the eight reference records under every input, for both
 filters, and reports the RMS errors side by side.  The protocol is the
 deterministic one of ``tools/ou_sim_table.py``: one realization per record,
 default seeds, the final 900 s of a 20-minute replay.  It is not the ten-seed
@@ -33,6 +39,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 import os
 import subprocess
 import sys
@@ -61,7 +68,10 @@ RECORDS = (
     ("PM-Stokes", 8.50, "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv"),
 )
 
-INPUTS = ("leveled", "body_z")
+INPUTS = ("leveled", "body_z", "complementary")
+
+# The shipped configuration, and the baseline every ratio is taken against.
+BASELINE = "leveled"
 
 # Fields pulled out of the VALIDATION_METRICS line.
 FIELDS = (
@@ -156,26 +166,52 @@ def main() -> int:
         }
         results = {key: future.result() for key, future in futures.items()}
 
+    others = [s for s in INPUTS if s != BASELINE]
+
     rows = []
     for family in families:
+        for metric, label in (("disp_z_rms_m", "vertical"), ("disp_3d_rms_m", "3D")):
+            print()
+            print(f"=== {family}: last {int(WINDOW_SEC)} s {label} RMS vs {BASELINE} ===")
+            head = f"{'record':<12}{'Hs':>6}{BASELINE:>12}"
+            for source in others:
+                head += f"{source:>14}{'delta':>8}"
+            print(head)
+            for family_label, hs, record in RECORDS:
+                base = results[(family, record, BASELINE)][metric]
+                line = f"{family_label:<12}{hs:>6.2f}{base:>12.4f}"
+                for source in others:
+                    value = results[(family, record, source)][metric]
+                    line += f"{value:>14.4f}{pct(value, base):>8}"
+                print(line)
+            # Geometric mean of the per-record ratio, a scale-free pooling of
+            # relative change across sea states that differ by 30x in Hs.
+            tail = f"{'geometric mean':<18}{'':>12}"
+            for source in others:
+                logs = [
+                    math.log(results[(family, r, source)][metric]
+                             / results[(family, r, BASELINE)][metric])
+                    for _, _, r in RECORDS
+                    if results[(family, r, BASELINE)][metric] > 0.0
+                ]
+                ratio = math.exp(sum(logs) / len(logs)) if logs else float("nan")
+                tail += f"{ratio:>13.3f}x{'':>8}"
+            print(tail)
+
         print()
-        print(f"=== {family}: last {int(WINDOW_SEC)} s RMS, wave-period input ablation ===")
-        print(
-            f"{'record':<20}{'Hs':>6} | {'Z RMS leveled':>14}{'Z RMS body_z':>14}"
-            f"{'dZ':>8} | {'3D leveled':>12}{'3D body_z':>12}{'d3D':>8} | "
-            f"{'Tz lvl':>8}{'Tz bz':>8}"
-        )
+        print(f"=== {family}: reported zero-crossing period T_z [s] ===")
+        head = f"{'record':<12}{'Hs':>6}{BASELINE:>12}"
+        for source in others:
+            head += f"{source:>14}"
+        print(head)
         for family_label, hs, record in RECORDS:
-            lvl = results[(family, record, "leveled")]
-            bz = results[(family, record, "body_z")]
-            print(
-                f"{family_label:<20}{hs:>6.2f} | "
-                f"{lvl['disp_z_rms_m']:>14.4f}{bz['disp_z_rms_m']:>14.4f}"
-                f"{pct(bz['disp_z_rms_m'], lvl['disp_z_rms_m']):>8} | "
-                f"{lvl['disp_3d_rms_m']:>12.4f}{bz['disp_3d_rms_m']:>12.4f}"
-                f"{pct(bz['disp_3d_rms_m'], lvl['disp_3d_rms_m']):>8} | "
-                f"{lvl['wave_period_s']:>8.2f}{bz['wave_period_s']:>8.2f}"
-            )
+            line = (f"{family_label:<12}{hs:>6.2f}"
+                    f"{results[(family, record, BASELINE)]['wave_period_s']:>12.2f}")
+            for source in others:
+                line += f"{results[(family, record, source)]['wave_period_s']:>14.2f}"
+            print(line)
+
+        for family_label, hs, record in RECORDS:
             for source in INPUTS:
                 row = dict(results[(family, record, source)])
                 row.update(

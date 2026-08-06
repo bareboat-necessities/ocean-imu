@@ -26,6 +26,11 @@
 //    block, so it does not close a loop through the quantity being tuned".
 //    That holds for the signal in isolation, not for the closed filter.
 //
+//    WavePeriodInputSource::Complementary removes this loop rather than
+//    bounding it, by levelling with a private Mahony observer that reads only
+//    the raw gyro and accelerometer. That is asserted separately, bit-for-bit,
+//    since a pure function of the measurements admits no tolerance.
+//
 // 3. One gate reads the attitude estimate directly and re-locks the filter
 //    above 70 degrees of tilt. It is kept out of the certified envelope only
 //    by margin, so the margin is pinned.
@@ -188,6 +193,54 @@ bool test_frequency_channel_coupling_stays_bounded() {
     return ok;
 }
 
+// The counterpart to the test above: under WavePeriodInputSource::Complementary
+// the frequency channel joins the variance channel in being exogenous, so the
+// interconnection the certificate has to argue about is not merely small, it is
+// absent.  Asserted bit-for-bit against a displacement of *every* state, because
+// "a pure function of the measurements" admits no tolerance.
+bool test_complementary_frequency_channel_is_exogenous() {
+    bool ok = true;
+
+    Filter nominal, displaced;
+    bring_up(nominal);
+    bring_up(displaced);
+    nominal.setWavePeriodInput(WavePeriodInputSource::Complementary);
+    displaced.setWavePeriodInput(WavePeriodInputSource::Complementary);
+    run(nominal, 0, SETTLE);
+    run(displaced, 0, SETTLE);
+
+    ok &= check(nominal.isAdaptiveLive(),
+                "the tuner must reach its live stage, or this test proves nothing");
+    ok &= check(nominal.wavePeriodReady(),
+                "the complementary period must have settled, or the fallback is "
+                "what is being measured");
+
+    displace_state(displaced, /*attitude=*/true, /*linear=*/true);
+    run(nominal, SETTLE, AFTER);
+    run(displaced, SETTLE, AFTER);
+
+    ok &= check(nominal.getWavePeriodSec() == displaced.getWavePeriodSec(),
+                "the complementary wave period must be a function of the "
+                "measurement alone");
+
+    // With both tuner inputs exogenous the whole operating point must be, too.
+    ok &= check(nominal.getTauTarget() == displaced.getTauTarget(),
+                "the complementary operating point must be a function of the "
+                "measurement alone");
+
+    std::cout << "  complementary: attitude+linear displacement -> wave period "
+              << nominal.getWavePeriodSec() << " s vs "
+              << displaced.getWavePeriodSec() << " s (must be identical)\n";
+
+    if (!ok) {
+        std::cerr << "  The private Mahony observer has acquired a dependence on\n"
+                     "  estimator state. It exists precisely so the tuner has an\n"
+                     "  input that cannot; feeding it anything the filter computed\n"
+                     "  defeats the point.\n";
+    }
+    return ok;
+}
+
 bool test_tilt_gate_stays_outside_the_certified_envelope() {
     bool ok = true;
 
@@ -221,6 +274,7 @@ int main() {
     bool ok = true;
     ok &= test_variance_channel_input_is_exogenous();
     ok &= test_frequency_channel_coupling_stays_bounded();
+    ok &= test_complementary_frequency_channel_is_exogenous();
     ok &= test_tilt_gate_stays_outside_the_certified_envelope();
 
     if (!ok) {

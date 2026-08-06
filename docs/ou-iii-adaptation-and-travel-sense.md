@@ -169,14 +169,16 @@ displacement would: the integral pseudo-measurement high-passes displacement,
 which raises the apparent frequency, which shortens `tau`, which strengthens the
 pseudo-measurement.
 
-The leveled input is what puts attitude inside the tuning loop, so the body-Z
-proxy is worth pricing rather than dismissing: it is the one input that opens
-that loop completely, being the same signal the frequency tracker already
-runs on and owing nothing to the attitude solution. `W3D_WAVE_PERIOD_INPUT=body_z`
-(`setWavePeriodInputBodyZ(true)`) selects it, and
-`tools/ou_wave_period_input_study.py` replays all eight reference records both
-ways under the deterministic single-seed protocol of `tools/ou_sim_table.py`.
-Opening the loop costs more than the loop does:
+### Opening the loop
+
+The leveled input is what puts attitude inside the tuning loop. Two inputs open
+it, both pure functions of the measurements, and
+`tools/ou_wave_period_input_study.py` replays all eight reference records under
+each of them (`W3D_WAVE_PERIOD_INPUT`, `setWavePeriodInput()`) on the
+deterministic single-seed protocol of `tools/ou_sim_table.py`.
+
+**`body_z`** is the raw proxy the frequency tracker already runs on. It opens
+the loop and is not usable:
 
 | filter | vertical RMS | 3D RMS | worst record |
 | --- | --- | --- | --- |
@@ -184,15 +186,49 @@ Opening the loop costs more than the loop does:
 | OU-III | 2.51x | 2.24x | +625% vertical, PM-Stokes `H_s = 0.27` m |
 
 The first two columns are geometric means of the per-record ratio
-body-Z / leveled over the eight records. Degradation is monotone in sea state
-and worst in the calmest records, which is the reported-period error read
-straight through: the body-Z estimate is pinned near 6.8-10.0 s whatever the
-sea does, so it is 2.5-3.5x too long at `H_s = 0.27` m and only 15-21% too long
-at `H_s = 8.5` m. `tau` is a fixed multiple of `T_z`, so a period that never
-moves is the uninformative operating point of section 1.2 with extra steps.
-Attitude RMS is essentially unmoved either way (roll within 0.03 deg, yaw
-slightly better under body-Z), confirming the loss is the operating point and
-not the attitude solution.
+body-Z / leveled. Degradation is monotone in sea state and worst in the calmest
+records, which is the reported-period error read straight through: the body-Z
+estimate is pinned near 6.8-10.0 s whatever the sea does, so it is 2.5-3.5x too
+long at `H_s = 0.27` m and only 15-21% too long at `H_s = 8.5` m. `tau` is a
+fixed multiple of `T_z`, so a period that never moves is the uninformative
+operating point of section 1.2 with extra steps. Attitude RMS is essentially
+unmoved either way, confirming the loss is the operating point and not the
+attitude solution.
+
+**`complementary`** is the measurement-only *leveled* signal the paragraph above
+asks for. `src/tuner/VerticalAccelComplementary.h` runs a private Mahony
+observer on the raw gyro and accelerometer - never the calibrated values, never
+any filter state - and reports `-((R f)_z + g)` from its own quaternion. It
+costs nothing:
+
+| filter | vertical RMS | 3D RMS | largest per-record deviation |
+| --- | --- | --- | --- |
+| OU-II | 1.000x | 1.000x | 0.2% |
+| OU-III | 1.000x | 1.000x | 0.1% |
+
+Across all sixteen record-filter pairs the reported `T_z` matches the leveled
+value to 0.01 s and the RMS to within 0.2%, which is replay noise. The loop is
+gone for free.
+
+The gain matters and the direction of the sensitivity confirms why. `two_kp`
+sets the rate at which the accelerometer corrects the gyro, roughly a corner at
+`two_kp/2` rad/s, and it must sit *below* the wave band: a fast observer chases
+horizontal orbital acceleration into tilt, which is the body-Z leakage failure
+by another route. The default 0.2 puts the corner near 0.016 Hz against a
+0.11-0.42 Hz band. Sweeping it on the `H_s = 8.5` m JONSWAP record moves
+reported `T_z` 8.42 -> 8.63 s and vertical RMS 0.3337 -> 0.3399 m as `two_kp`
+goes 0.05 -> 2.0, i.e. monotonically worse as the corner climbs into the band,
+and flat below 0.5. Bias is deliberately not estimated (`two_ki = 0`): at the
+reference bias range a constant gyro bias leaves a static tilt error near
+0.5 deg, which the estimator's two high-pass stages reject anyway, while an
+integral term is another slow state that can wind up against a sustained
+horizontal acceleration.
+
+`tests/kalman_ou_iii/tuner_coupling-test.cpp` asserts the exogeneity
+bit-for-bit rather than by tolerance: with `Complementary` selected, displacing
+*every* estimator state - attitude and all linear states - leaves the reported
+period and `tau_target` numerically identical. Under `Leveled` the same
+displacement moves the period 8.05 -> 10.32 s and `tau` by 1.28x.
 
 The estimator settles in about a minute, so the tracker frequency is used until
 it is ready.
@@ -304,7 +340,9 @@ it is in OU-III: fed the leveled vertical acceleration the direction stage
 already forms, consulted only once it reports ready, and ablatable back to the
 old behaviour with `setWaveBandTuning(false)` / `W3D_TUNING_BAND=acceleration`.
 The estimator itself is unchanged and shared, so the `T_z` accuracy table in
-section 1.6 applies unaltered.
+section 1.6 applies unaltered, as does the input study beside it -
+`setWavePeriodInput()` exists on both filters and the eight-record numbers for
+both are in section 1.6.
 
 Coefficients were re-fitted the same way, one factor at a time over the four
 stationary JONSWAP records with three seed triplets each, scored on the mean

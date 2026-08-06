@@ -201,17 +201,34 @@ public:
                 }
             }
 
-            // Ablate the wave-period estimator's input from the leveled
-            // vertical acceleration (default) to the body-Z proxy the
-            // frequency tracker already runs on, which does not pass through
-            // the attitude solution and so opens the tuner coupling.
+            // Ablate the wave-period estimator's input away from the leveled
+            // vertical acceleration (default), which passes through the
+            // attitude solution.  Both alternatives are measurement-only and
+            // open the tuner coupling: "body_z" is the raw proxy the frequency
+            // tracker already runs on, "complementary" levels it with a
+            // private Mahony observer.
             if (const char* src = std::getenv("W3D_WAVE_PERIOD_INPUT")) {
                 const std::string value = src;
                 if (value == "body_z") {
-                    filter.setWavePeriodInputBodyZ(true);
+                    filter.setWavePeriodInput(WavePeriodInputSource::BodyZ);
+                } else if (value == "complementary") {
+                    filter.setWavePeriodInput(
+                        WavePeriodInputSource::Complementary);
                 } else if (value != "leveled") {
                     throw std::runtime_error(
-                        "W3D_WAVE_PERIOD_INPUT must be leveled or body_z");
+                        "W3D_WAVE_PERIOD_INPUT must be leveled, body_z or "
+                        "complementary");
+                }
+            }
+
+            // Gains of that private observer, so the correction corner can be
+            // swept against the wave band it must stay below.
+            {
+                float two_kp = 0.2f, two_ki = 0.0f;
+                const bool kp = env_float("W3D_WAVE_PERIOD_MAHONY_KP", two_kp);
+                const bool ki = env_float("W3D_WAVE_PERIOD_MAHONY_KI", two_ki);
+                if (kp || ki) {
+                    filter.setWavePeriodComplementaryGains(two_kp, two_ki);
                 }
             }
 
