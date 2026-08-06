@@ -16,139 +16,139 @@
     "OU_II": {
       "nonstationary_endpoint_H4_0_Tp11_4": {
         "RS_ms": null,
-        "R_p0_std_m": 9.030443450729381,
-        "R_v0_std_mps": 3.9196332375565013,
-        "sigma_a_mps2": 0.843621552,
+        "R_p0_std_m": 9.052036320761715,
+        "R_v0_std_mps": 3.9290055492856815,
+        "sigma_a_mps2": 0.845638752,
         "tau_s": 4.22381687
       },
       "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
         "RS_ms": null,
-        "R_p0_std_m": 0.35185799555370717,
-        "R_v0_std_mps": 0.5175411654791858,
-        "sigma_a_mps2": 0.377475053,
+        "R_p0_std_m": 0.35218232473444633,
+        "R_v0_std_mps": 0.5180182150398601,
+        "sigma_a_mps2": 0.377822995,
         "tau_s": 1.24641871
       },
       "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
         "RS_ms": null,
-        "R_p0_std_m": 2.52977934540487,
-        "R_v0_std_mps": 2.128196611928237,
-        "sigma_a_mps2": 0.887782812,
+        "R_p0_std_m": 2.534601959588432,
+        "R_v0_std_mps": 2.1322536737367055,
+        "sigma_a_mps2": 0.889475226,
         "tau_s": 2.17927647
       },
       "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
         "RS_ms": null,
-        "R_p0_std_m": 10.853689389911631,
-        "R_v0_std_mps": 5.54107032860705,
-        "sigma_a_mps2": 1.40273559,
+        "R_p0_std_m": 10.85390433811242,
+        "R_v0_std_mps": 5.541180064850164,
+        "sigma_a_mps2": 1.40276337,
         "tau_s": 3.59108067
       },
       "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
         "RS_ms": null,
-        "R_p0_std_m": 19.912716710359753,
-        "R_v0_std_mps": 8.642788341245351,
-        "sigma_a_mps2": 1.86012924,
+        "R_p0_std_m": 19.912723026320286,
+        "R_v0_std_mps": 8.642791082584507,
+        "sigma_a_mps2": 1.86012983,
         "tau_s": 4.22394323
       },
       "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
         "RS_ms": null,
-        "R_p0_std_m": 0.32826786387169193,
-        "R_v0_std_mps": 0.5279733617260898,
-        "sigma_a_mps2": 0.421077013,
+        "R_p0_std_m": 0.3259602541422939,
+        "R_v0_std_mps": 0.5242618913067424,
+        "sigma_a_mps2": 0.418116987,
         "tau_s": 1.13987648
       },
       "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
         "RS_ms": null,
-        "R_p0_std_m": 2.300368072747658,
-        "R_v0_std_mps": 2.0648015568391127,
-        "sigma_a_mps2": 0.919020474,
+        "R_p0_std_m": 2.299934216474234,
+        "R_v0_std_mps": 2.0644121291125574,
+        "sigma_a_mps2": 0.918847144,
         "tau_s": 2.04249239
       },
       "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
         "RS_ms": null,
-        "R_p0_std_m": 9.139486362665423,
-        "R_v0_std_mps": 5.091769173570373,
-        "sigma_a_mps2": 1.40663528,
+        "R_p0_std_m": 9.120073790427657,
+        "R_v0_std_mps": 5.080954086925708,
+        "sigma_a_mps2": 1.40364754,
         "tau_s": 3.29074717
       },
       "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
         "RS_ms": null,
-        "R_p0_std_m": 18.602424445099405,
-        "R_v0_std_mps": 8.310850230783451,
-        "sigma_a_mps2": 1.84114182,
+        "R_p0_std_m": 18.76518918325231,
+        "R_v0_std_mps": 8.383567277189616,
+        "sigma_a_mps2": 1.85725117,
         "tau_s": 4.10360479
       }
     },
     "OU_III": {
       "nonstationary_endpoint_H4_0_Tp11_4": {
-        "RS_ms": 23.570174120050034,
+        "RS_ms": 23.624636447974733,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 0.893871248,
+        "sigma_a_mps2": 0.895936668,
         "tau_s": 4.2235074
       },
       "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
         "RS_ms": 0.4,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 0.401488096,
+        "sigma_a_mps2": 0.401843578,
         "tau_s": 1.24693906
       },
       "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
-        "RS_ms": 3.4087104838396587,
+        "RS_ms": 3.4150214179563227,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 0.94180721,
+        "sigma_a_mps2": 0.943550885,
         "tau_s": 2.17864609
       },
       "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
-        "RS_ms": 24.064050618293365,
+        "RS_ms": 24.064517807832825,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 1.486009,
+        "sigma_a_mps2": 1.48603785,
         "tau_s": 3.58998871
       },
       "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
-        "RS_ms": 51.96543902625203,
+        "RS_ms": 51.96545458591872,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 1.9704541,
+        "sigma_a_mps2": 1.97045469,
         "tau_s": 4.22370338
       },
       "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
         "RS_ms": 0.4,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 0.445942789,
+        "sigma_a_mps2": 0.442825884,
         "tau_s": 1.13980126
       },
       "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
-        "RS_ms": 2.9005173314934836,
+        "RS_ms": 2.899985179173224,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 0.973003089,
+        "sigma_a_mps2": 0.972824574,
         "tau_s": 2.04219747
       },
       "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
-        "RS_ms": 18.579219376583513,
+        "RS_ms": 18.54082433728589,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 1.48936522,
+        "sigma_a_mps2": 1.48628736,
         "tau_s": 3.29093575
       },
       "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
-        "RS_ms": 47.18861534625399,
+        "RS_ms": 47.59015903559427,
         "R_p0_std_m": null,
         "R_v0_std_mps": null,
-        "sigma_a_mps2": 1.94963789,
+        "sigma_a_mps2": 1.96622801,
         "tau_s": 4.10460854
       }
     }
   },
   "git_branch": "main",
-  "git_commit": "7c77780b1205042a5e91016bc11783c70b17e305",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 107986 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |    696 +-\n .../ou_validation/ou_validation_covsync.svg        |    720 +-\n .../ou_validation/ou_validation_displacement.svg   |    704 +-\n .../results/ou_validation/ou_validation_macros.tex |    158 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4454 +-\n .../ou_validation/ou_validation_publication.tex    |     52 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   4886 +-\n .../results/ou_validation/ou_validation_table.tex  |     80 +-\n .../ou_validation/ou_validation_transition.csv     |  22758 ++--\n .../ou_validation/ou_validation_transition.svg     |  15369 +--\n .../ou_validation/ou_validation_tuning_points.tex  |     18 +-\n .../ou_validation/ou_validation_vertical.svg       |    696 +-\n 14 files changed, 80129 insertions(+), 80128 deletions(-)",
+  "git_commit": "7d00e06355d13b8c2e46869768856bdd1cb43324",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 115742 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |    696 +-\n .../ou_validation/ou_validation_covsync.svg        |    720 +-\n .../ou_validation/ou_validation_displacement.svg   |    704 +-\n .../results/ou_validation/ou_validation_macros.tex |    234 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4464 +-\n .../ou_validation/ou_validation_publication.tex    |     78 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   4992 +-\n .../results/ou_validation/ou_validation_table.tex  |    130 +-\n .../ou_validation/ou_validation_transition.csv     |  23300 ++--\n .../ou_validation/ou_validation_transition.svg     |  15518 +--\n .../ou_validation/ou_validation_tuning_points.tex  |     16 +-\n .../ou_validation/ou_validation_vertical.svg       |    696 +-\n 14 files changed, 84505 insertions(+), 84465 deletions(-)",
   "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-6.17.0-1021-azure-x86_64-with-glibc2.39",
   "protocol": {
     "adaptation_modes": [
       "Adaptive",
@@ -272,60 +272,60 @@
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4657429,
-      "sha256": "e4056a58a8d9fb518542ba987adac1c35973de2b5edfdd954dd3ce0a90e7e46a"
+      "bytes": 4657391,
+      "sha256": "26d34da19420ce7aa68514e74e8ea5dd235a1507c83f6f0f9ae1d4d9088da80e"
     },
     "ou_validation_attitude.svg": {
-      "bytes": 81516,
-      "sha256": "35ee39eed9746e76f8e713897a439230b95ce202b4c188095735f2d8c846841f"
+      "bytes": 81518,
+      "sha256": "8589f52ed316ed92c76be0a344b23ccaa791607c0b282c2f22b2c3f94a124ef2"
     },
     "ou_validation_covsync.svg": {
-      "bytes": 93031,
-      "sha256": "be001b39a1e1418aff2af83190badae3f061e45333f999cfcaa2238495d644b7"
+      "bytes": 93009,
+      "sha256": "71276f2cf760213f68fcd9151007792ab6cb32fced6dbb27dbbd7b1d20e41689"
     },
     "ou_validation_displacement.svg": {
-      "bytes": 81310,
-      "sha256": "c6a15c604177d77b4c6d8a7facb5c10b44b8905696786bcde7b5028645e4da21"
+      "bytes": 81305,
+      "sha256": "001c10f58c4a141b5335281a67130fdb3716d1fbb8d09e012b27c8e17a4b4d01"
     },
     "ou_validation_macros.tex": {
       "bytes": 10703,
-      "sha256": "22e86476abbe57bc5a4847107f249e2874ed1625f59059953eecdc1d1f7805fb"
+      "sha256": "a0ab3ccf6afdc295a53c89cd51e27ae233a0eabf502a3a9aab88ce865b85cef3"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 621731,
-      "sha256": "043c22579bfbe1a13b0ecba16bcb23bf63508435946fdf66c1d0ad5d9d8956de"
+      "bytes": 621835,
+      "sha256": "1457f608280e6727d5e711983c008cddaf6a6384a651a306e15a6a64da783f24"
     },
     "ou_validation_publication.tex": {
       "bytes": 12651,
-      "sha256": "943d5522ebfcc5e324436f2c96c0f1205b0ae45b21678b5eb24c37c26c2f1dda"
+      "sha256": "c577bad0907706fecf4f404bdf2cc1a6a8a33e46b15c1897e83dd0f42a027192"
     },
     "ou_validation_raw.csv": {
-      "bytes": 559682,
-      "sha256": "9cfb32a22421abe1f1f996939bd7b98a7a27d0a0aa1a28ef1c7f326fa0c89ce5"
+      "bytes": 559816,
+      "sha256": "df3387add9193181df717a4cc27b4e377c140e62c544cc452de756e23828381b"
     },
     "ou_validation_summary.csv": {
-      "bytes": 653282,
-      "sha256": "5cd5e42e934215242ef892811556f5452fc027d914bc1fc1a823c970fcd9442b"
+      "bytes": 653026,
+      "sha256": "b1ea54b7ec547f77bf5683a817e9469e16e9be1f99375f1d3e8e3d72fdd68356"
     },
     "ou_validation_table.tex": {
-      "bytes": 15598,
-      "sha256": "d443c0def1a352fe0de4673f5bd148ccebb662590bfe94a3cb90d2b30c44a4ec"
+      "bytes": 15589,
+      "sha256": "bd8bb67b845e64ba9a3f971171939f2635a940bed4fc93031e926075ca929f31"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1343094,
-      "sha256": "3c790d4c56ecbc95b7bcdd21ff57aa088bb08019f11c558b1fe025687e8f7a67"
+      "bytes": 1343229,
+      "sha256": "74f70f369fbc31676b10668a793161180c5f5085a8d04c142490a7b7f280f99c"
     },
     "ou_validation_transition.svg": {
-      "bytes": 308299,
-      "sha256": "311a36d7e1308dd32d5dbaecb4a9ba8ab6405e011b6731f432e25d8139842a3c"
+      "bytes": 309416,
+      "sha256": "1cca14916b52079d4e3c812da5a6f2bdb7e7a2bbccfae59e9d559c9cac424193"
     },
     "ou_validation_tuning_points.tex": {
       "bytes": 1857,
-      "sha256": "d91a857c3bda5cc70b7eb0451df7faebd3148223b92d079e8019243eba899d75"
+      "sha256": "c9dae1b641341be37f798f967500e07859d112f62479d92ee7db5cc5bc3eeccc"
     },
     "ou_validation_vertical.svg": {
       "bytes": 82384,
-      "sha256": "195398af2f30f1679bdf032dfa1920e9600854b99703eb6ce662739843f943c1"
+      "sha256": "575626119b1362efaa475378afa24790b3c16595f6dfa5e613e3e0a52eee98d9"
     }
   },
   "source_files": {
@@ -364,25 +364,25 @@
   },
   "stationary_normalized_aggregate": {
     "OU_II": {
-      "bootstrap_ci95_high": 6.835205729387499,
-      "bootstrap_ci95_low": 6.485447839993751,
-      "mean": 6.6676201827499995,
+      "bootstrap_ci95_high": 6.8384370700625,
+      "bootstrap_ci95_low": 6.4901450935875,
+      "mean": 6.6709098335000006,
       "n": 10,
-      "std": 0.29284451846407256
+      "std": 0.29176434860466643
     },
     "OU_III": {
-      "bootstrap_ci95_high": 5.1146855772499995,
-      "bootstrap_ci95_low": 4.82993970725625,
-      "mean": 4.973355292500001,
+      "bootstrap_ci95_high": 5.11602816458125,
+      "bootstrap_ci95_low": 4.8309236534,
+      "mean": 4.974667190750001,
       "n": 10,
-      "std": 0.2458938700133106
+      "std": 0.24638263670469307
     },
     "OU_III_minus_OU_II": {
-      "bootstrap_ci95_high": -1.6233748733062496,
-      "bootstrap_ci95_low": -1.7725733648999997,
-      "cohen_dz": -13.41541087722097,
-      "hedges_gz": -12.26000716377294,
-      "mean_paired_difference": -1.6942648902500004,
+      "bootstrap_ci95_high": -1.62524624875,
+      "bootstrap_ci95_low": -1.7739137491,
+      "cohen_dz": -13.367682211165896,
+      "hedges_gz": -12.216389134246457,
+      "mean_paired_difference": -1.69624264275,
       "n_pairs": 10,
       "randomization_exact": true,
       "randomization_p_value": 0.001953125,
@@ -391,18 +391,18 @@
       "sign_p_value": 0.001953125,
       "sign_positive": 0,
       "sign_zero": 0,
-      "standard_error": 0.0399371742086745,
-      "std_paired_difference": 0.12629243381034416,
-      "t_ci95_high": -1.6039207255519277,
-      "t_ci95_low": -1.784609054948073,
+      "standard_error": 0.040126553957968936,
+      "std_paired_difference": 0.12689130516082622,
+      "t_ci95_high": -1.6054700712955718,
+      "t_ci95_low": -1.787015214204428,
       "t_critical_value": 2.2621571627982036,
-      "t_p_value": 1.1209138626994118e-11,
-      "t_statistic": -42.42325411901576
+      "t_p_value": 1.157283573660382e-11,
+      "t_statistic": -42.27232282460015
     }
   },
   "transition_diagnostic": {
     "decimation": 20,
-    "disp_z_pct_hs": 4.55522108,
+    "disp_z_pct_hs": 4.55068254,
     "family": "OU_III",
     "imu_noise_seed": 101,
     "initialization_seed": 1009,
