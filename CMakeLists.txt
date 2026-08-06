@@ -47,3 +47,5 @@ add_executable(lie_group-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/lie_group-test.
 add_executable(convention-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/convention-test.cpp")
 target_include_directories(lie_group-test SYSTEM PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/third_party/Lie-plusplus/include")
+add_executable(ou_chain_identity-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/ou_chain_identity-test.cpp")
+add_executable(tfg_propagation-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_propagation-test.cpp")
