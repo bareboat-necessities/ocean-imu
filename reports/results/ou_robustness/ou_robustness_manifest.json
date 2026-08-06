@@ -15,7 +15,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "e20c7bfe83084413c236b93078bf68e94fd9f8cc",
+  "git_commit": "cf62880adf8ca703beb2c52750d74a0dfdde064f",
   "git_diff_stat": "",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
@@ -166,8 +166,8 @@
       "sha256": "f0be2c41464e4a5a0924bab652549d38ffc6bec55406156b7b4a0ef72ce490d4"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 67057,
-      "sha256": "92d47917aa84c7d12577cd25f6fea113ad678ff8746b2c94a1932e0408699f86"
+      "bytes": 67251,
+      "sha256": "3ad5804d1f77b1df656d6ccef2851c35f5cab4be8ee7e82bdc144a26d2e8b41e"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
       "bytes": 21595,
