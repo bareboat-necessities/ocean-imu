@@ -71,12 +71,25 @@ amplitudes, and transition rates.
 
 Appendix~\ref{app:iss-stability} complements the empirical results with a
 sufficient-condition proof of uniform local input-to-state stability for the
-core predict--correct recursion and its bounded-rate adaptation. The proof is
-conditional on frozen-point Schur stability, uniform bounds on the
-parameter-dependent Lyapunov family, and sufficiently slow variation of the
-operating point and adaptive parameters over the admissible set; it does not
-treat startup or reset logic and does not convert the simulation study into an
-unconditional EKF convergence claim.
+core predict--correct recursion. The theorem is conditional on frozen-point
+Schur stability and uniform bounds on the Lyapunov family, both checked by
+sampling rather than proved.
+
+Its slow-variation assumption is not satisfied by the running system, and
+Sec.~\ref{app:iss-switched} and Sec.~\ref{app:iss-trajectory} show why it is
+also the wrong condition to impose: roll and pitch sweep the envelope in
+seconds while the frozen mode is hours, so the governing object is the
+transition matrix over a wave period rather than any frozen Jacobian. Taken
+along a continuous trajectory, one common Lyapunov metric serves the whole
+tuning envelope across three sea states, which removes that assumption
+altogether.
+
+The interconnection with the tuner remains open. Its variance channel is
+exogenous, but the tuning frequency is derived from the leveled vertical
+acceleration and so reads the attitude estimate; the resulting loop is bounded
+by test, not analysed. The appendix therefore does not treat startup or reset
+logic, does not certify the adaptive filter as a closed loop, and does not
+convert the simulation study into an unconditional EKF convergence claim.
 
 The results support drift-controlled wave-state reconstruction for the tested
 conditions, while the MCU exercise establishes only functional source

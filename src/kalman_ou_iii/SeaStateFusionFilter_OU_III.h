@@ -325,9 +325,22 @@ public:
         // sub-band gravity leakage a tilting platform puts into the body-Z
         // proxy dominates the elevation proxy: on the reference records the
         // body-Z input reported 6.8-10.0 s against a true 2.5-8.6 s, while the
-        // leveled input tracks the sea state.  The leveled signal depends on
-        // attitude but not on the linear block, so it does not close a loop
-        // through the quantity being tuned.
+        // leveled input tracks the sea state.
+        //
+        // The leveled signal depends on attitude.  That is a real coupling
+        // from the estimator back into the tuning, and it is weaker than the
+        // displacement loop this avoids but not absent: a 0.25 rad attitude
+        // displacement moves the reported period 8.05 -> 10.3 s and tau by
+        // 1.28x.  It reaches the linear block too, indirectly, because
+        // displacing v, p, S or a_w perturbs attitude through the filter's
+        // cross-covariances -- so the earlier claim here, that this "does not
+        // close a loop through the quantity being tuned", holds for the signal
+        // in isolation and not for the closed filter.
+        //
+        // The stability appendix treats this as its open interconnection, and
+        // tests/kalman_ou_iii/tuner_coupling-test.cpp bounds the gain so it
+        // cannot grow unnoticed.  Feeding the period estimator a
+        // measurement-only leveled signal would remove it.
         wave_period_.update(dt,
                             direction_accel.heading_valid
                                 ? direction_accel.up_ms2

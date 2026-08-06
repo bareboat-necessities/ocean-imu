@@ -29,8 +29,10 @@ narrower claim. Together with an online directional estimator, these elements
 address colored excitation and MEMS errors in an efficient, embedded-friendly
 framework. Appendix~\ref{app:iss-stability} supplies a conditional
 sufficient-condition uniform local input-to-state stability analysis for the
-core estimator and its continuous adaptation, excluding startup and reset
-logic; it is not an unconditional convergence result for the filter.
+core estimator, excluding startup and reset logic. Its assumptions are checked
+numerically rather than proved, and the coupling between the estimator and its
+tuner is bounded rather than analysed, so it is not an unconditional
+convergence result for the filter.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
@@ -157,10 +159,18 @@ The main contributions of this work are:
         three-parameter OU adaptation, which costs a little accuracy where a
         well-matched frozen operating point already exists.
   \item A conditional sufficient-condition proof of uniform \emph{local} ISS for
-        the adaptive core, with bounded parameter increments treated explicitly
-        as an input. It certifies a declared finite envelope under frozen-point
-        Schur stability, uniform Lyapunov bounds, and slow metric variation;
-        it is not an unconditional EKF convergence claim.
+        the adaptive core, together with three numerical certificates of its
+        assumptions at increasing fidelity: pointwise at frozen operating
+        points, switched along an attitude orbit, and linear-time-varying along
+        a continuous trajectory. The frozen-point view turns out to understate
+        the estimator badly, because it describes a platform that never moves;
+        the trajectory certificate supplies a single common Lyapunov metric
+        over the tuning envelope and three sea states, which discharges the
+        slow-metric-variation assumption the frozen route needs. What remains
+        open is the tuner: its variance channel is exogenous but its frequency
+        channel reads the attitude estimate, so the deployed adaptive filter is
+        not certified as a closed loop. This is not an unconditional EKF
+        convergence claim.
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
   \item A reproducible paired comparison against a published nonlinear observer
