@@ -1,0 +1,17 @@
+{
+  "common_metric_c1": 196.11156894178066,
+  "common_metric_found": true,
+  "common_metric_gamma_per_window": 0.9464302062988281,
+  "dt": 0.004166666666666667,
+  "efold_seconds": 363.2550514664316,
+  "period_s": 10.0,
+  "phi_norm_max": 42.61297139880004,
+  "rho_first": 0.9674132574924336,
+  "rho_last": 0.972439014870031,
+  "rho_max": 0.9726222656605777,
+  "schema": "ocean-imu-trajectory-certificate-v1",
+  "scope": "LTV: per-step Jacobians along a continuous wave trajectory",
+  "windows": 10,
+  "windows_skipped": 30,
+  "within_window_peak_max": 274.32962349165103
+}
