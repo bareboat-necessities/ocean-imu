@@ -191,12 +191,11 @@ public:
                 }
             }
 
-            // Ablate the wave-period estimator's input away from the leveled
-            // vertical acceleration (default), which passes through the
-            // attitude solution.  Both alternatives are measurement-only and
-            // open the tuner coupling: "body_z" is the raw proxy the frequency
-            // tracker already runs on, "complementary" levels it with a
-            // private Mahony observer.
+            // Ablate the wave-period estimator's input away from the
+            // complementary-levelled default.  "leveled" restores the older
+            // behaviour, which levels with the attitude solution and so closes
+            // the tuner coupling; "body_z" is the raw proxy, measurement-only
+            // like the default but unlevelled.
             if (const char* src = std::getenv("W3D_WAVE_PERIOD_INPUT")) {
                 const std::string value = src;
                 if (value == "body_z") {
@@ -210,6 +209,23 @@ public:
                     throw std::runtime_error(
                         "W3D_WAVE_PERIOD_INPUT must be leveled, body_z or "
                         "complementary");
+                }
+            }
+
+            // Ablate the frequency tracker's input from the raw body-Z proxy
+            // (default) to the levelled signal from the private Mahony
+            // observer.  Both are measurement-only; this changes the tracker
+            // frequency and so the direction demodulator's carrier.
+            if (const char* src = std::getenv("W3D_FREQ_TRACKER_INPUT")) {
+                const std::string value = src;
+                if (value == "complementary") {
+                    filter.setFreqTrackerInput(
+                        FreqTrackerInputSource::Complementary);
+                } else if (value == "body_z") {
+                    filter.setFreqTrackerInput(FreqTrackerInputSource::BodyZ);
+                } else {
+                    throw std::runtime_error(
+                        "W3D_FREQ_TRACKER_INPUT must be body_z or complementary");
                 }
             }
 

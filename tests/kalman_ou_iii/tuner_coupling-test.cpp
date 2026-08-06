@@ -180,7 +180,7 @@ bool test_leveled_ablation_coupling_stays_bounded() {
 
     const float ratio = displaced.getTauTarget() / nominal.getTauTarget();
 
-    // Measured 1.28 for a 0.25 rad displacement. The bound is a small-gain
+    // Measured 1.25 for a 0.25 rad displacement. The bound is a small-gain
     // guard, not a fit: it fails if the attitude-to-tuning path ever becomes
     // strong enough that this ablation stops being a mild perturbation of the
     // default. It is no longer load-bearing for the shipped filter, whose

@@ -292,14 +292,28 @@ public:
         // Not true world vertical unless the platform is close to level.
         a_body_z_up_proxy_ = -a_z_body_proxy;
 
-        // LPF on BODY-Z proxy for tracker input
-        const float a_body_z_up_lp = freq_input_lpf_.step(a_body_z_up_proxy_, dt);
+        // Vertical acceleration the tracker runs on.  Both choices are
+        // measurement-only, and they are RMS-equivalent: levelling buys here
+        // none of what it buys the period estimator, because the tracker is
+        // not integrated and so never sees the 1/omega^4 weighting that makes
+        // sub-band gravity leakage matter downstream.  The levelled signal is
+        // the default anyway, so that one vertical acceleration serves every
+        // consumer in the filter.  Falls back to the raw proxy until the
+        // observer has settled.
+        const float a_vert_for_tracker =
+            (freq_tracker_input_ == FreqTrackerInputSource::Complementary &&
+             vertical_accel_comp_.isReady())
+                ? vertical_accel_comp_.verticalAccelUpMs2()
+                : a_body_z_up_proxy_;
+
+        // LPF on the tracker input
+        const float a_body_z_up_lp = freq_input_lpf_.step(a_vert_for_tracker, dt);
 
         // Raw freq from tracker
         const float f_tracker = static_cast<float>(tracker_policy_.run(a_body_z_up_lp, dt));
         f_raw = f_tracker;
 
-        // Stillness detector also sees the same BODY-Z proxy.
+        // Stillness detector shares the tracker's input, as it always has.
         const float f_after_still = freq_stillness_.step(a_body_z_up_lp, dt, f_tracker);
 
         // Fast & slow smoothed frequencies
@@ -360,7 +374,7 @@ public:
         //
         // Exogenous, because levelling with the filter's own attitude closes a
         // loop: a 0.25 rad attitude displacement moved the reported period
-        // 8.05 -> 10.3 s and tau by 1.28x, and it reached the linear block too,
+        // 8.05 -> 10.1 s and tau by 1.25x, and it reached the linear block too,
         // since displacing v, p, S or a_w perturbs attitude through the
         // filter's cross-covariances.  The stability appendix carried that as
         // its open interconnection.
@@ -730,6 +744,19 @@ public:
         return wave_period_input_;
     }
 
+    // Select which vertical acceleration the frequency tracker runs on.
+    // Complementary (default) is the levelled signal from the private Mahony
+    // observer; BodyZ is the raw proxy, kept for ablation.  Both are
+    // measurement-only, and the two are RMS-equivalent on the reference
+    // records; the default is the levelled one so that every consumer of a
+    // vertical acceleration in this filter reads the same signal.
+    void setFreqTrackerInput(FreqTrackerInputSource source) {
+        freq_tracker_input_ = source;
+    }
+    FreqTrackerInputSource freqTrackerInput() const noexcept {
+        return freq_tracker_input_;
+    }
+
     // Gains of the private Mahony observer that levels the default input.
     // two_kp sets the accelerometer-to-gyro correction corner, which must stay
     // below the wave band; see VerticalAccelComplementary.h.
@@ -1062,6 +1089,7 @@ private:
 
     bool  wave_band_tuning_       = true;
     WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;
+    FreqTrackerInputSource freq_tracker_input_ = FreqTrackerInputSource::Complementary;
     float min_tune_freq_hz_       = MIN_TUNE_FREQ_HZ;
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;
