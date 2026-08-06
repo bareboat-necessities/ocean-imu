@@ -522,39 +522,73 @@ So A4 is discharged not just at one operating condition but uniformly over the
 declared tuning envelope and across the wave-period range, which is what the
 original assumption was reaching for and could not deliver.
 
-\subsection{The tuner is exogenous, and what that does and does not buy}
+\subsection{How the tuner couples to the estimator}
 \label{app:iss-tuner}
 
 The remaining worry was the adaptation: if $\vct\vartheta_k$ were computed
 from the estimator's own output, estimator and tuner would form a feedback
-interconnection, and a composite Lyapunov function with a small-gain condition
-would be needed, as in observer designs that carry separate attitude and
-translation stages.
+interconnection needing a composite Lyapunov function with a small-gain
+condition, as in observer designs that carry separate attitude and translation
+stages.
 
-It is not. In \texttt{SeaStateFusionFilter\_OU\_III} the tuner is driven by
+The answer is split. The tuner has two input channels and only one of them is
+exogenous.
+
+\paragraph{The variance channel is exogenous.}
+\texttt{update\_tuner} is handed
 \begin{equation}
 a_{\text{proxy}}=-\bigl(a_{z,\text{body}}^{\text{meas}}+g\bigr),
 \end{equation}
-the raw accelerometer body-$z$ channel, and by a frequency tracker running on
-a low-pass of that same signal. Neither the variance estimate nor the
-frequency estimate reads the filter state. The targets
-$\tau=c_\tau/2f$, $\sigma_a=c_\sigma\sqrt{\operatorname{var}_{\text{wave}}}$
-and $r_S=c_R\sigma_a\tau^3$ are functions of those two quantities alone.
+the raw accelerometer body-$z$ channel. Displacing every estimator state,
+attitude and linear block alike, leaves it bit-for-bit unchanged; this is
+asserted in \texttt{tests/kalman\_ou\_iii/tuner\_coupling-test.cpp}.
 
-One state-dependent path does exist: a gate reads the attitude estimate and
-re-locks the filter when tilt exceeds $70^\circ$. It cannot fire on the
-certified envelope, whose worst combined tilt is
-$\arccos(\cos 0.70\cos 0.45)=47^\circ$, or on the trajectories used here,
-which peak at $54^\circ$. Startup and fault-recovery logic is outside the
-scope of this appendix in any case.
+\paragraph{The frequency channel is not.}
+The tuning frequency does not come from the raw tracker. It comes from
+\texttt{wave\_period\_}, which is fed \texttt{direction\_accel.up\_ms2}, the
+\emph{leveled} vertical acceleration, and levelling uses the attitude
+estimate. Since $\tau=c_\tau/2f$ and $r_S=c_R\sigma_a\tau^3$, the path
+\begin{equation}
+\delta\vct\theta\;\longrightarrow\;f\;\longrightarrow\;
+\vct\vartheta\;\longrightarrow\;\text{gains}\;\longrightarrow\;\delta\vct\theta
+\end{equation}
+is a genuine feedback loop. Measured: a $0.25$~rad attitude displacement moves
+the estimated wave period from $8.05$ to $10.3$~s and $\tau$ by a factor
+$1.28$.
 
-So on the envelope $\vct\vartheta_k$ is a causal functional of the
-measurement sequence and not of the state. There is no loop to close, and no
-composite Lyapunov argument is required: the estimator is linear
-time-varying, driven by an exogenous parameter schedule.
+The loop also reaches the linear states, indirectly. Displacing $\vct v$,
+$\vct p$, $\vct S$ or $\vct a_w$ perturbs attitude through the filter's
+cross-covariances, which moves the tuner: even a displacement of $0.02$ in
+each linear state shifts $\tau$ from $4.07$ to $4.53$. The source comment at
+the \texttt{wave\_period\_} call states that the leveled signal ``depends on
+attitude but not on the linear block, so it does not close a loop through the
+quantity being tuned''. That is true of the signal in isolation and false of
+the closed filter.
 
-\paragraph{Exogenous is not the same as harmless.}
-That structural fact removes the interconnection but not the rate question. A
+\paragraph{One further state-dependent branch.}
+A gate reads the attitude estimate and re-locks the filter above $70^\circ$
+of tilt. It cannot fire on the certified envelope, whose worst combined tilt
+is $\arccos(\cos 0.70\cos 0.45)=46.5^\circ$, or on the trajectories used
+here, which peak at $54^\circ$. The margin is pinned by the same test.
+
+\paragraph{What this means for the certificate.}
+The interconnection is real, so it is \emph{not} discharged, and the honest
+statement of scope is narrower than the rest of this appendix might suggest:
+Secs.~\ref{app:iss-trajectory} and the sweep certify the estimator under an
+\emph{externally supplied} $\vct\vartheta$ schedule, whereas the deployed
+schedule is partly a function of $\delta\vct\theta$. Closing it needs either
+$\vct\vartheta$'s generator included in the certified coordinate, or a
+small-gain argument bounding the $\delta\vct\theta\to\vct\vartheta$ gain
+against the estimator's own contraction. The measured factor of $1.28$ for a
+$0.25$~rad displacement is the quantity such an argument would consume, and
+the test bounds it at $2$ so the premise cannot rot unnoticed.
+
+What the exogenous-schedule results below do establish is that the estimator
+tolerates $\vct\vartheta$ moving anywhere in $\Theta$, arbitrarily fast,
+which is the part a small-gain argument would still need.
+
+\paragraph{An exogenous schedule is not automatically harmless either.}
+Set the coupling aside and ask what an arbitrary bounded schedule can do. A
 schedule that moves fast enough can destabilize a system every frozen version
 of which is stable, and this one is no exception. Sweeping $\vct\vartheta$
 over the whole box $\tau\in[0.55,4.0]$, $\sigma_{aw}\in[0.12,2.8]$,
@@ -577,7 +611,7 @@ and the sea beat against each other, and the window has to be at least the
 beat period. The verifier takes a \texttt{-{}-group} argument for exactly this,
 and groups within a trajectory rather than across them.
 
-\paragraph{With that, the schedule is discharged too.}
+\paragraph{With that, the schedule itself is discharged.}
 Across sweeps of $20$, $60$ and $200$~s against seas of $6$, $10$ and $16$~s,
 grouped to four windows, every product contracts and one common metric serves
 all of them:
@@ -586,21 +620,19 @@ all of them:
 c_1=3.9\cdot10^{1},
 \end{equation}
 a worst-case $e$-folding of $910$~s read against the $64$~s groups, $341$~s
-against the $24$~s groups. The rate is unchanged from the fixed-tuning case,
-which is the expected answer once the schedule is exogenous and bounded: the
-adaptation moves the gains around inside a set on which the estimator
-contracts anyway.
+against the $24$~s groups. The rate is unchanged from the fixed-tuning case: the schedule
+moves the gains around inside a set on which the estimator contracts anyway.
+This covers any exogenous schedule in $\Theta$; it does not by itself cover
+the state-dependent part of the deployed one.
 
 \begin{remark}[Remaining scope]
 What is left is smaller than what has been closed. The attitude paths are
 synthetic sums of sinusoids rather than recorded sea states, and measurements
 are generated from the filter's own prediction, so the linearization runs
-without injected noise. The exogenous-tuner argument is established by
-inspection of the implementation rather than mechanically, so it needs
-rechecking if the tuner ever gains a state-dependent input -- the tilt gate is
-the one to watch, since it already reads the estimate and is only kept out by
-a margin of $16^\circ$. And the whole construction remains a numerical
-certificate over sampled trajectories, not a proof: A3 is checked on a grid,
-the metrics come from an LMI solved at floating-point tolerance, and A2 is
-still assumed outright.
+without injected noise. The
+$\delta\vct\theta\to\vct\vartheta$ loop above is bounded by test but not
+analysed, so the deployed adaptive filter is still not certified as a closed
+loop. And the whole construction remains a numerical certificate over sampled
+trajectories, not a proof: A3 is checked on a grid, the metrics come from an
+LMI solved at floating-point tolerance, and A2 is still assumed outright.
 \end{remark}

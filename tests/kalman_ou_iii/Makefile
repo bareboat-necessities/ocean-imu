@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_iii-sim kalman_ou_common-test channel_freeze-test wave_period-test mag_hard_iron-test
+TARGETS = kalman_ou_iii-sim kalman_ou_common-test channel_freeze-test wave_period-test mag_hard_iron-test tuner_coupling-test
 
 all: build test
 
@@ -43,6 +43,10 @@ channel_freeze-test: channel_freeze-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 wave_period-test: wave_period-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# Needs W3dSimCommon for g_std, like the simulator target.
+tuner_coupling-test: tuner_coupling-test.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 mag_hard_iron-test: mag_hard_iron-test.o
