@@ -201,6 +201,20 @@ public:
                 }
             }
 
+            // Ablate the wave-period estimator's input from the leveled
+            // vertical acceleration (default) to the body-Z proxy the
+            // frequency tracker already runs on, which does not pass through
+            // the attitude solution and so opens the tuner coupling.
+            if (const char* src = std::getenv("W3D_WAVE_PERIOD_INPUT")) {
+                const std::string value = src;
+                if (value == "body_z") {
+                    filter.setWavePeriodInputBodyZ(true);
+                } else if (value != "leveled") {
+                    throw std::runtime_error(
+                        "W3D_WAVE_PERIOD_INPUT must be leveled or body_z");
+                }
+            }
+
             if (env_float("OU_ACC_BIAS_INIT_STD", v)) {
                 filter.mekf().set_initial_acc_bias_std(v);
             }

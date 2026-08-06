@@ -169,6 +169,31 @@ displacement would: the integral pseudo-measurement high-passes displacement,
 which raises the apparent frequency, which shortens `tau`, which strengthens the
 pseudo-measurement.
 
+The leveled input is what puts attitude inside the tuning loop, so the body-Z
+proxy is worth pricing rather than dismissing: it is the one input that opens
+that loop completely, being the same signal the frequency tracker already
+runs on and owing nothing to the attitude solution. `W3D_WAVE_PERIOD_INPUT=body_z`
+(`setWavePeriodInputBodyZ(true)`) selects it, and
+`tools/ou_wave_period_input_study.py` replays all eight reference records both
+ways under the deterministic single-seed protocol of `tools/ou_sim_table.py`.
+Opening the loop costs more than the loop does:
+
+| filter | vertical RMS | 3D RMS | worst record |
+| --- | --- | --- | --- |
+| OU-II | 1.88x | 1.63x | +350% vertical, PM-Stokes `H_s = 0.27` m |
+| OU-III | 2.51x | 2.24x | +625% vertical, PM-Stokes `H_s = 0.27` m |
+
+The first two columns are geometric means of the per-record ratio
+body-Z / leveled over the eight records. Degradation is monotone in sea state
+and worst in the calmest records, which is the reported-period error read
+straight through: the body-Z estimate is pinned near 6.8-10.0 s whatever the
+sea does, so it is 2.5-3.5x too long at `H_s = 0.27` m and only 15-21% too long
+at `H_s = 8.5` m. `tau` is a fixed multiple of `T_z`, so a period that never
+moves is the uninformative operating point of section 1.2 with extra steps.
+Attitude RMS is essentially unmoved either way (roll within 0.03 deg, yaw
+slightly better under body-Z), confirming the loss is the operating point and
+not the attitude solution.
+
 The estimator settles in about a minute, so the tracker frequency is used until
 it is ready.
 

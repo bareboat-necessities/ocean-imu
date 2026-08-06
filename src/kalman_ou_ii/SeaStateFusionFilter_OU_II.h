@@ -349,10 +349,17 @@ public:
         // leveled input tracks the sea state.  The leveled signal depends on
         // attitude but not on the linear block, so it does not close a loop
         // through the quantity being tuned.
+        //
+        // setWavePeriodInputBodyZ(true) is the measurement-only ablation: the
+        // estimator is then driven by the same body-Z proxy the frequency
+        // tracker sees, which owes nothing to the attitude solution and so
+        // opens the remaining coupling entirely, at the cost of the sub-band
+        // gravity leakage described above.
+        const bool use_leveled =
+            !wave_period_input_body_z_ && direction_accel.heading_valid;
         wave_period_.update(dt,
-                            direction_accel.heading_valid
-                                ? direction_accel.up_ms2
-                                : a_body_z_up_proxy_);
+                            use_leveled ? direction_accel.up_ms2
+                                        : a_body_z_up_proxy_);
 
         dir_filter_.update(direction_accel.forward_ms2,
                            direction_accel.starboard_ms2,
@@ -696,6 +703,15 @@ public:
     void setWaveBandTuning(bool flag) { wave_band_tuning_ = flag; }
     bool waveBandTuning() const noexcept { return wave_band_tuning_; }
 
+    // Drive the wave-period estimator from the raw body-Z proxy - the same
+    // signal the frequency tracker gets - instead of the leveled vertical
+    // acceleration.  The body-Z proxy does not pass through the attitude
+    // solution, so this opens the tuner coupling documented at the call site;
+    // the cost is the sub-band gravity leakage a tilting platform puts into
+    // body Z.  Default false, i.e. leveled.
+    void setWavePeriodInputBodyZ(bool flag) { wave_period_input_body_z_ = flag; }
+    bool wavePeriodInputBodyZ() const noexcept { return wave_period_input_body_z_; }
+
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
 
     // Propagation-plane angle relative to boat +X, modulo 180 degrees.
@@ -998,6 +1014,7 @@ private:
     double last_aw_cov_sync_sec_ = 0.0;
 
     bool  wave_band_tuning_       = true;
+    bool  wave_period_input_body_z_ = false;
     float min_tune_freq_hz_       = MIN_TUNE_FREQ_HZ;
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;
