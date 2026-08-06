@@ -56,14 +56,16 @@
         rotates body-frame specific force into a \(Z\)-up world frame,
         subtracts gravity to obtain vertical inertial acceleration,
         and drives an adaptive vertical displacement observer whose gains are
-        scheduled from a frequency proxy and an acceleration-variance estimate.
+        scheduled from a frequency proxy and a sea-state amplitude estimate.
 
         The implementation is layered.
         First, a repeated-real-pole vertical PII observer estimates
         displacement and velocity from world-frame vertical inertial acceleration.
-        Second, a Mahony wrapper supplies that vertical acceleration from raw IMU data.
-        Third, an adaptive wrapper schedules observer parameters from a policy-selected
-        frequency tracker and a running acceleration sigma estimate.
+        Second, an adaptive wrapper adds an acceleration-sigma estimator, an
+        OU-style sea-state envelope estimator, and a policy-selected frequency
+        tracker, and schedules the observer parameters from them.
+        Third, a Mahony wrapper supplies the vertical acceleration from raw IMU
+        data and schedules its own attitude gains from accelerometer trust.
         The emphasis here is on the actual implemented equations and signal flow.
     \end{abstract}
 
@@ -78,38 +80,50 @@
     The implementation is organized as a small stack:
     \begin{enumerate}[leftmargin=1.5em]
         \item \texttt{VerticalPIIObserver}: core vertical-motion observer,
-        \item \texttt{AdaptiveVerticalPII}: wrapper adding sigma estimation,
-        frequency-proxy scheduling, and tracker-policy abstraction,
+        \item \texttt{AdaptiveVerticalPII}: wrapper adding sigma estimation, an
+        OU-style sea-state envelope estimator, frequency-proxy scheduling, and
+        tracker-policy abstraction,
         \item \texttt{AdaptiveVerticalPIIMahony}: wrapper that uses Mahony AHRS
         to convert raw IMU data into vertical inertial acceleration.
     \end{enumerate}
 
     The simulation entry point instantiates
-    \texttt{AdaptiveVerticalPIIMahony}
+    \texttt{AdaptiveVerticalPIIMahony<float,\ true,\ TrackerType::PLL>}
     in the supplied driver, but the adaptive wrapper itself is generic and can
     use several tracker backends through \texttt{FrequencyTrackerPolicy}.
 
     At sample time \(k\) with period \(\Delta t_k\), the implemented cascade is
     \begin{align}
-        \vct{\omega}_{b,k} &\xrightarrow{\text{Mahony}} \hat{q}_{wb,k}, \\
-        \vct{f}_{b,k} &\xrightarrow{\hat{q}_{bw,k}} \hat{\vct{f}}_{w,k}, \\
+        \vct{\omega}_{b,k} &\xrightarrow{\text{Mahony}} \hat{q}_k, \\
+        \vct{f}_{b,k} &\xrightarrow{\hat{q}_k} \hat{\vct{f}}_{w,k}, \\
         \hat{a}_{z,k} &= \hat{f}_{w,z,k} - g, \\
         \hat{a}_{z,k} &\xrightarrow{\text{Adaptive Vertical PII}}
         (\hat{p}_k,\hat{v}_k,\hat{S}_k,\hat{b}_k).
     \end{align}
     Here:
     \begin{itemize}[leftmargin=1.4em]
-        \item \(\hat{q}_{wb}\) is the Mahony world-to-body quaternion,
-        \item \(\hat{q}_{bw}=\hat{q}_{wb}^{\ast}\) is its conjugate,
+        \item \(\hat{q}\) is the stored Mahony quaternion, exposed as
+        \texttt{quaternionWorldToBody()},
         \item \(\hat{p}\) is vertical displacement,
         \item \(\hat{v}\) is vertical velocity,
         \item \(\hat{S}\) is the integral of displacement,
         \item \(\hat{b}\) is the optional slow acceleration-bias estimate.
     \end{itemize}
 
-    The rest of this note follows the code structure requested here:
-    first the vertical PII observer, then the Mahony wrapper,
-    then the adaptive scheduling layer.
+    Inside \texttt{AdaptiveVerticalPII::update()} the per-sample order is fixed:
+    \begin{enumerate}[leftmargin=1.5em]
+        \item update the running acceleration mean / variance / sigma,
+        \item step the frequency tracker with \(\hat{a}_z/g\),
+        \item update the sea-state envelope estimator,
+        \item accumulate \(dt\) and, once
+        \(\sum dt \ge\) \texttt{auto\_schedule\_period\_s}, run one scheduling
+        update,
+        \item run the core observer for this sample.
+    \end{enumerate}
+
+    The rest of this note follows the code structure:
+    first the vertical PII observer, then the adaptive scheduling layer and its
+    envelope estimator, then the frequency proxy, then the Mahony wrapper.
 
 % ---------------------------------------------------------------
     \section{Vertical PII Observer}\label{sec:pii}
@@ -133,6 +147,10 @@
         d &: \text{very slow displacement trend},\\
         b &: \text{estimated acceleration bias}.
     \end{align}
+
+    The bias channel is a compile-time option (\texttt{WithBias}); with
+    \texttt{WithBias=false} the two extra states are not even instantiated and
+    the accessors return zero.
 
     \subsection{Continuous-Time Model}
 
@@ -175,6 +193,10 @@
     \((k_v,k_p,k_s)\) from the currently active \(r\) every time the active
     motion-pole rate changes.
 
+    There is also a manual escape hatch, \texttt{set\_active\_pii\_gains()},
+    which writes \((k_v,k_p,k_s)\) directly. Because that breaks the
+    repeated-pole relation, it disables adaptation as a side effect.
+
     \subsection{Discrete Update Used by the Code}
 
     The implementation uses the embedded-friendly one-pole coefficient
@@ -187,6 +209,8 @@
     \begin{equation}
         a_f^{+} = a_f + \alpha(dt,\tau_a)(a_{\mathrm{meas}}-a_f).
     \end{equation}
+    A non-finite \(a_{\mathrm{meas}}\) is replaced by the current \(a_f\), which
+    makes the sample a hold rather than a fault.
 
     If the bias channel is enabled, the slow trend update is
     \begin{equation}
@@ -242,6 +266,298 @@
     \end{table}
 
 % ---------------------------------------------------------------
+    \section{Adaptive Scheduling Wrapper}\label{sec:adaptive}
+
+    \subsection{Role of \texttt{AdaptiveVerticalPII}}
+
+    \texttt{AdaptiveVerticalPII} wraps the core observer and adds:
+    \begin{itemize}[leftmargin=1.4em]
+        \item a running estimate of vertical-acceleration mean, variance, and sigma,
+        \item an OU-style sea-state envelope estimator producing a correlation
+        time \(\tau_{\mathrm{env}}\) and an amplitude \(\sigma_{\mathrm{env}}\),
+        \item a policy-selected acceleration-frequency tracker,
+        \item automatic or external scheduling calls into
+        \texttt{VerticalPIIObserver::update\_adaptation()}.
+    \end{itemize}
+
+    It therefore sits between the raw vertical acceleration signal and the
+    observer's scheduling interface.
+
+    \subsection{Acceleration Variance Estimate}
+
+    At IMU rate, the wrapper updates a slow mean and a shorter-time variance
+    using the same one-pole coefficient \(\alpha(dt,\tau)\):
+    \begin{align}
+        \mu_a^{+} &= \mu_a + \alpha(dt,\tau_\mu)(a_z-\mu_a),\\
+        e_a &= a_z - \mu_a^{+},\\
+        \nu_a^{+} &= \nu_a + \alpha(dt,\tau_\nu)(e_a^2 - \nu_a),\\
+        \sigma_a^{+} &= \sqrt{\max(\nu_a^{+},0)},
+    \end{align}
+    with \(\tau_\mu = \SI{20}{s}\) and \(\tau_\nu = \SI{6}{s}\) by default.
+
+    A configured floor is then enforced:
+    \begin{equation}
+        \sigma_a^{+} \leftarrow \max(\sigma_a^{+}, \sigma_{\min}),
+        \qquad \sigma_{\min} = 10^{-4}.
+    \end{equation}
+
+    This \(\sigma_a\) is the fallback roughness indicator for observer
+    scheduling, and it is also the one used by the Mahony trust adaptation of
+    \cref{sec:mahony}.
+
+    \subsection{OU-Style Sea-State Envelope}\label{sec:envelope}
+
+    The wrapper additionally runs an envelope estimator aligned with the
+    \texttt{SeaStateAutoTuner} / OU parameterization used elsewhere in this code
+    base. It is the preferred source of the scheduling amplitude, and its
+    outputs are what the plots label as \(\tau\) and \(\sigma\).
+
+    All four internal averages are debiased exponential moving averages: each
+    keeps a value and an accumulated weight and reports value/weight, so the
+    estimate is unbiased from the first sample instead of ramping up from zero.
+    Unlike the rest of the stack, the envelope uses the exponential coefficient
+    \begin{equation}
+        \alpha_{\exp}(dt,\tau) = 1 - e^{-dt/\tau}.
+    \end{equation}
+
+    The frequency input is the scheduled tracker frequency of
+    \cref{sec:freq_proxy}, clamped to \([0.05,5.0]~\si{Hz}\) and smoothed with
+    \(\tau_f = \SI{1}{s}\):
+    \begin{equation}
+        f_{\mathrm{env}} = \mathrm{EMA}\bigl(\clamp(f_{\mathrm{sched}},0.05,5.0),
+        \alpha_{\exp}(dt,\tau_f)\bigr).
+    \end{equation}
+
+    The variance horizon is then rebuilt from that frequency every sample,
+    \begin{equation}
+        \tau_{\mathrm{var}} =
+        \clamp\!\left(\frac{K_{\mathrm{per}}}{f_{\mathrm{env}}},\,0.30,\,60\right)~\si{s},
+        \qquad K_{\mathrm{per}} = 2,
+    \end{equation}
+    so the averaging window is a fixed number of wave periods rather than a
+    fixed number of seconds. With \(\alpha_v=\alpha_{\exp}(dt,\tau_{\mathrm{var}})\),
+    \begin{align}
+        \mu &= \mathrm{EMA}(a_z,\alpha_v),\\
+        \overline{a^2} &= \mathrm{EMA}(a_z^2,\alpha_v),\\
+        \nu_{\mathrm{inst}} &= \max\bigl(\overline{a^2}-\mu^2,\,0\bigr),\\
+        \nu_{\mathrm{env}} &= \mathrm{EMA}(\nu_{\mathrm{inst}},\alpha_v).
+    \end{align}
+
+    The sensor noise floor is removed in variance, and the remainder is mapped
+    to the OU amplitude and correlation time:
+    \begin{align}
+        \sigma_{\mathrm{env}} &=
+        \clamp\!\Bigl(c_\sigma\sqrt{\max(\nu_{\mathrm{env}}-\sigma_n^2,0)},\,
+        0,\,\sigma_{\max}\Bigr),\\
+        \tau_{\mathrm{env}} &=
+        \clamp\!\left(\frac{c_\tau}{2 f_{\mathrm{env}}},\,
+        \tau_{\min},\,\tau_{\max}\right),
+    \end{align}
+    with \(\sigma_n=\SI{0.12}{m/s^2}\), \(c_\sigma=0.90\), \(c_\tau=1.38\),
+    \(\sigma_{\max}=6\), and \(\tau\in[0.02,3.00]~\si{s}\).
+    Both targets are then smoothed toward the applied values with
+    \(\alpha_{\exp}(dt,\SI{1.8}{s})\), which is what
+    \texttt{envelopeTauApplied()} and \texttt{envelopeSigmaApplied()} return.
+
+    The \(\tau_{\max}\) clamp is active over most of the wave band: since
+    \(\tau_{\mathrm{env}}=0.69/f_{\mathrm{env}}\), it saturates at \SI{3}{s} for
+    every \(f_{\mathrm{env}}\) below about \SI{0.23}{Hz}, so in typical seas
+    \(\tau_{\mathrm{env}}\) is a constant and \(\sigma_{\mathrm{env}}\) carries
+    the sea-state information.
+
+    From the same pair the wrapper reports two derived scales,
+    \begin{align}
+        \text{displacement scale} &= \tfrac12 C_{H_s}\,
+        \sigma_{\mathrm{env}}\,\tau_{\mathrm{env}}^2,
+        \qquad C_{H_s} = \frac{2\sqrt{2}}{\pi^2},\\
+        \text{vertical speed envelope} &= \frac{\sqrt{2}}{\pi}\,
+        \sigma_{\mathrm{env}}\,\tau_{\mathrm{env}},
+    \end{align}
+    both of which return NaN rather than a number when the envelope inputs are
+    not valid. The envelope is reported ready only once the frequency and
+    variance averages carry weight and all outputs are finite; until then the
+    scheduler falls back to \(\sigma_a\).
+
+    \subsection{Three Ways to Drive Adaptation}
+
+    The wrapper exposes three entry points, which differ only in where the
+    frequency and sigma come from:
+    \begin{itemize}[leftmargin=1.4em]
+        \item \texttt{updateAdaptationFromDisplacementFrequency(f,dt,c)}:
+        the caller supplies the displacement frequency; sigma is taken from the
+        envelope when ready and from \(\sigma_a\) otherwise.
+        \item \texttt{updateAdaptationExternal(f,sigma,dt,c)}:
+        the caller supplies both. A finite external sigma inside
+        \([\sigma_{a,\min},\sigma_{a,\max}]\) wins; otherwise the same
+        envelope/\(\sigma_a\) fallback applies.
+        \item \texttt{updateAdaptationFromAccelFrequencyProxy(dt)}:
+        fully internal. Frequency is the envelope frequency when the envelope is
+        ready and the scheduled tracker frequency otherwise; sigma follows the
+        same preference.
+    \end{itemize}
+    A non-finite confidence argument on the two external paths is replaced by
+    \texttt{default\_external\_confidence} (\(1.0\)). The internal path computes
+    its own confidence as described in \cref{sec:freq_proxy}. Frequencies and
+    sigmas taken from the internal sources are clamped into the observer's
+    configured validity ranges before being passed down.
+
+    When \texttt{auto\_schedule\_from\_accel\_freq} is enabled, the third entry
+    point is called from \texttt{update()} once per
+    \texttt{auto\_schedule\_period\_s} (\SI{0.50}{s}), using the accumulated
+    time as the scheduling \(dt\).
+
+    \subsection{Scheduling Hook Inside \texttt{VerticalPIIObserver}}
+
+    Whenever adaptation is enabled and a scheduling update is triggered,
+    \texttt{VerticalPIIObserver::update\_adaptation()} receives:
+    \begin{equation}
+    (f_{\mathrm{disp}},\sigma_a,c,dt_{\mathrm{sched}}).
+    \end{equation}
+
+    The active parameters are held unchanged, and nothing is smoothed, if
+    \(c < c_{\min} = 0.22\), or if \(f_{\mathrm{disp}}\) falls outside
+    \([0.02,1.50]~\si{Hz}\), or if \(\sigma_a\) falls outside
+    \([10^{-4},50]\), or if \(dt_{\mathrm{sched}}\) is not positive and finite.
+
+    Otherwise the observer first smooths the tracker inputs:
+    \begin{align}
+        f_f^{+} &= f_f + \alpha_{\mathrm{in}}(f_{\mathrm{disp}}-f_f),\\
+        \sigma_f^{+} &= \sigma_f + \alpha_{\mathrm{in}}(\sigma_a-\sigma_f).
+    \end{align}
+
+    Then it forms normalized scheduling ratios
+    \begin{equation}
+        \rho_f = \clamp\!\left(\frac{f_f}{f_{\mathrm{ref}}},0.25,4\right),
+        \qquad
+        \rho_\sigma = \clamp\!\left(\frac{\sigma_{\mathrm{ref}}}{\sigma_f},0.25,4\right).
+    \end{equation}
+    Note the inversion: \(\rho_\sigma\) is large in calm water and small in rough
+    water.
+
+    The commanded observer parameters are conservative power-law schedules:
+    \begin{align}
+        r_{\mathrm{cmd}} &=
+        r_0\,\rho_f^{\eta_r}\,\rho_\sigma^{\zeta_r},\\
+        \tau_{a,\mathrm{cmd}} &=
+        \tau_{a,0}\,\rho_f^{\eta_a}\,\rho_\sigma^{\zeta_a},\\
+        \tau_{d,\mathrm{cmd}} &=
+        \tau_{d,0}\,\rho_f^{\eta_d}\,\rho_\sigma^{\zeta_d},\\
+        k_{b,\mathrm{cmd}} &=
+        k_{b,0}\,\rho_f^{\eta_b}\,\rho_\sigma^{\zeta_b},
+    \end{align}
+    where the base values \((r_0,\tau_{a,0},\tau_{d,0},k_{b,0})\) are the
+    configured reference parameters, not the currently active ones, so the
+    schedule cannot ratchet. Each commanded parameter is clamped to configured
+    bounds, then the active parameters move toward the commands via one-pole
+    smoothing:
+    \begin{equation}
+        \theta^{+}
+        =
+        \theta + \alpha_p(\theta_{\mathrm{cmd}}-\theta),
+    \end{equation}
+    for each scheduled parameter \(\theta\), after which \(k_v,k_p,k_s\) are
+    rebuilt from the new active \(r\). The two bias-channel schedules exist only
+    when \texttt{WithBias=true}.
+
+    \subsection{Interpretation of the Scheduling Signs}
+
+    With the exponents of \cref{tab:exponents}, the intended control effect is:
+    \begin{itemize}[leftmargin=1.4em]
+        \item higher dominant displacement frequency allows a somewhat faster
+        observer core (\(\eta_r>0\)) and less acceleration smoothing
+        (\(\eta_a<0\)),
+        \item larger acceleration sigma reduces restoring authority
+        (\(\zeta_r>0\) acting on the inverted ratio) and increases smoothing
+        (\(\zeta_a<0\)),
+        \item larger sigma also lengthens \(\tau_d\) slightly and shrinks
+        \(k_b\), i.e.\ rough water slows bias learning.
+    \end{itemize}
+
+    Sigma carries most of the scheduling weight, and not because frequency
+    matters less physically. The two are competing estimates of the same sea
+    state, and the accel-derived frequency proxy is compressed: the acceleration
+    spectrum is weighted by \(\omega^4\), so its dominant frequency sits well
+    above the wave peak and barely separates a \SI{3}{s} sea from an \SI{11}{s}
+    one. Accel sigma separates the same sea states by a factor of five, so it is
+    the better-conditioned regressor of the two.
+
+    The input and parameter smoothing time constants are on the order of a
+    minute rather than a few seconds, deliberately. What the schedule tracks is
+    the sea state, which moves over tens of minutes; anything faster only lets
+    per-wave jitter in the frequency and sigma estimates modulate the observer
+    gains, and that modulation shows up directly as heave error.
+
+% ---------------------------------------------------------------
+    \section{Frequency Proxy Used for Scheduling}\label{sec:freq_proxy}
+
+    \subsection{Generic Policy Interface}
+
+    \texttt{AdaptiveVerticalPII} does not hard-code one tracker algorithm.
+    Instead it uses a policy-selected backend
+    \begin{equation}
+        \texttt{AccelFreqTracker = TrackerPolicy<TT>},
+    \end{equation}
+    where \texttt{TT} is a template parameter such as PLL, Aranovskiy, KalmANF,
+    or ZeroCross. Convenience aliases
+    \texttt{AdaptiveVerticalPII\_PLL} and friends bind each choice.
+
+    Every tracker is fed the same signal the observer sees, scaled to
+    dimensionless \(g\) units:
+    \begin{equation}
+        u_k = \hat{a}_{z,k}/g.
+    \end{equation}
+
+    Through the policy helpers, the wrapper queries:
+    \begin{itemize}[leftmargin=1.4em]
+        \item main frequency estimate,
+        \item raw frequency estimate,
+        \item tracker confidence,
+        \item lock status,
+        \item optional coarse estimate.
+    \end{itemize}
+    The helpers are all \texttt{if constexpr} shims, so a tracker that has no
+    \texttt{Config}, no \texttt{reset(f)}, or no coarse channel still compiles.
+
+    \subsection{Scheduled Frequency}
+
+    The scheduled frequency is built by:
+    \begin{enumerate}[leftmargin=1.5em]
+        \item preferring the tracker's main frequency estimate,
+        \item falling back to its raw frequency estimate if that is not positive
+        and finite,
+        \item blending toward a coarse estimate when the tracker exposes one,
+        \begin{equation}
+            f_{\mathrm{sched}} \leftarrow
+            f_{\mathrm{sched}} + \beta\,(f_{\mathrm{coarse}}-f_{\mathrm{sched}}),
+        \end{equation}
+        with \(\beta = 0.48\) nominally,
+        \item raising that blend to \(\beta \ge 0.75\) whenever the tracker is
+        not locked, so an unlocked tracker is mostly overridden by the coarse
+        estimate.
+    \end{enumerate}
+
+    So the scheduling frequency is intentionally more conservative than just the
+    raw tracker output. The same quantity is the frequency input of the envelope
+    estimator of \cref{sec:envelope}.
+
+    \subsection{Confidence Passed to the Scheduler}
+
+    The confidence passed to the observer scheduler begins with the tracker's own
+    confidence, then is floored upward:
+    \begin{align}
+        c &\leftarrow \max\bigl(c,\;\max(0.52,\,0.62)\bigr)
+        && \text{if a coarse estimate exists},\\
+        c &\leftarrow \max(c,\,0.82)
+        && \text{if the tracker reports locked},
+    \end{align}
+    and finally clamped to \([0,1]\).
+
+    This lets the observer continue adapting moderately even when the internal
+    frequency proxy is only coarse-valid rather than fully locked. Both floors
+    sit above the \(c_{\min}=0.22\) gate, so a coarse-valid proxy is always
+    enough to keep the schedule moving.
+
+% ---------------------------------------------------------------
     \section{Mahony Attitude Wrapper}\label{sec:mahony}
 
     \subsection{World-Frame Convention}
@@ -254,28 +570,28 @@
     \begin{equation}
         a_{z,\mathrm{world,up}}
         =
-        \bigl(R_{bw} a_b\bigr)_z - g,
+        \bigl(R(\hat{q})\, a_b\bigr)_z - g,
     \end{equation}
     where:
     \begin{itemize}[leftmargin=1.4em]
         \item \(a_b\) is body-frame specific force in \si{m/s^2},
-        \item \(R_{bw}\) is the body-to-world rotation from Mahony,
+        \item \(R(\hat{q})\) is the rotation built from the stored Mahony
+        quaternion,
         \item \(g\) is the configured gravity magnitude.
     \end{itemize}
 
     This vertical inertial acceleration is exactly the signal fed into the
-    adaptive vertical observer.
+    adaptive vertical observer; a non-finite result is replaced by zero.
 
     \subsection{Mahony Innovation Structure}
 
-    The Mahony state stores the world-to-body quaternion
+    The Mahony state stores the quaternion
     \begin{equation}
-        \hat{q}_{wb} = [q_0\;q_1\;q_2\;q_3]^\top.
+        \hat{q} = [q_0\;q_1\;q_2\;q_3]^\top .
     \end{equation}
 
     In the IMU-only branch, the accelerometer is normalized and the predicted
-    body-frame direction of world \(+Z\) is extracted from the current quaternion
-    as
+    body-frame direction of world \(+Z\) is
     \begin{equation}
         \hat{\vct{g}}_b =
         \begin{bmatrix}
@@ -285,49 +601,59 @@
         \end{bmatrix}.
     \end{equation}
 
-    If \(\hat{\vct{a}}_b\) is the normalized measured accelerometer direction, the
-    gravity innovation is
+    The Mahony routines carry this as a half-vector,
+    \(\vct{v}_{1/2}=\hat{\vct{g}}_b/2\), and form the half-innovation
     \begin{equation}
-        \vct{e} = \hat{\vct{a}}_b \times \hat{\vct{g}}_b.
+        \vct{e}_{1/2} = \hat{\vct{a}}_b \times \vct{v}_{1/2},
     \end{equation}
+    where \(\hat{\vct{a}}_b\) is the normalized measured accelerometer
+    direction. The same \(\hat{\vct{g}}_b\) expression, in full-vector form, is
+    what the wrapper uses for its trust metric below.
 
-    With magnetometer aiding, the same gravity correction is supplemented by a
-    magnetic innovation term inside the Mahony update routine.
+    With magnetometer aiding, the reference field \(\vct{b}=[b_x\;0\;b_z]^\top\)
+    is recomputed each sample from the measured field, its predicted body
+    direction \(\vct{w}_{1/2}\) is formed the same way, and the innovation
+    becomes
+    \begin{equation}
+        \vct{e}_{1/2}
+        = \hat{\vct{a}}_b \times \vct{v}_{1/2}
+        + \hat{\vct{m}}_b \times \vct{w}_{1/2}.
+    \end{equation}
+    An all-zero magnetometer sample falls back to the IMU-only branch.
 
     \subsection{Mahony Kinematics}
 
-    The continuous-time idea is the standard Mahony structure:
-    \begin{equation}
-        \vct{\omega}_c = \vct{\omega}_m + \vct{i}_{\omega} + 2K_p\,\vct{e},
-    \end{equation}
-    with integral feedback
-    \begin{equation}
-        \dot{\vct{i}}_{\omega} = 2K_i\,\vct{e},
-    \end{equation}
-    and quaternion kinematics
-    \begin{equation}
-        \dot{\hat{q}}_{wb}
-        =
-        \frac12\,\hat{q}_{wb}\otimes [0\;\vct{\omega}_c].
-    \end{equation}
+    The corrected rate and its integral term are
+    \begin{align}
+        \vct{\omega}_c &= \vct{\omega}_m + \vct{i}_{\omega} + 2K_p\,\vct{e}_{1/2},\\
+        \dot{\vct{i}}_{\omega} &= 2K_i\,\vct{e}_{1/2},
+    \end{align}
+    i.e.\ in terms of the full cross product
+    \(\vct{e}=\hat{\vct{a}}_b\times\hat{\vct{g}}_b\) the applied proportional
+    correction is \(K_p\vct{e}\). When \(2K_i \le 0\) the integral accumulators
+    are zeroed rather than frozen, so a temporarily zero integral gain does not
+    leave a stale bias in the loop.
 
-    In code, this is implemented by the supplied Mahony functions using
-    per-sample quaternion updates and renormalization.
+    The quaternion kinematics are
+    \begin{equation}
+        \dot{\hat{q}}
+        =
+        \frac12\,\hat{q}\otimes [0\;\vct{\omega}_c],
+    \end{equation}
+    integrated per sample with a first-order step and followed by
+    renormalization using a fast inverse square root.
 
     \subsection{Body-to-World Rotation}
 
-    The wrapper needs world-frame acceleration, so it conjugates the quaternion:
-    \begin{equation}
-        \hat{q}_{bw} = \hat{q}_{wb}^{\ast}.
-    \end{equation}
-
-    The code then rotates a body-frame vector into the Mahony world frame using
-    the efficient quaternion-vector formula
+    The code rotates a body-frame vector into the Mahony world frame using the
+    efficient quaternion-vector formula
     \begin{align}
         \vct{t} &= 2\,\vct{q}_v \times \vct{f}_b,\\
-        \hat{\vct{f}}_w &= \vct{f}_b + q_w\vct{t} + \vct{q}_v \times \vct{t},
+        \hat{\vct{f}}_w &= \vct{f}_b + q_0\vct{t} + \vct{q}_v \times \vct{t},
     \end{align}
-    where \(\hat{q}_{bw}=[q_w\;\vct{q}_v]\).
+    with \(\vct{q}_v=[q_1\;q_2\;q_3]^\top\) taken from the stored quaternion
+    directly. The conjugate is exposed for callers as
+    \texttt{quaternionBodyToWorld()} but is not used in the acceleration path.
 
     The resulting world-frame specific force is
     \begin{equation}
@@ -343,14 +669,20 @@
     \subsection{Mahony Gain Adaptation}
 
     The wrapper can also adapt Mahony gains according to how trustworthy the
-    accelerometer looks as a gravity cue. It computes:
+    accelerometer looks as a gravity cue. The adaptation runs at the top of
+    every \texttt{updateIMU()} / \texttt{updateIMUMag()} call, on the raw body
+    acceleration and against the pre-update quaternion, so the gains used by a
+    sample are computed from that same sample. It computes:
     \begin{align}
         \varepsilon_{\mathrm{norm}} &=
         \frac{\left|\|\vct{a}_b\| - g\right|}{g},\\
         \varepsilon_{\mathrm{innov}} &=
         \left\|\hat{\vct{a}}_b \times \hat{\vct{g}}_b\right\|,\\
-        \sigma_a &= \text{vertical acceleration sigma from the adaptive core}.
+        \sigma_a &= \text{running accel sigma from the adaptive core}.
     \end{align}
+    The sigma used here is the \(\sigma_a\) EMA, not the envelope amplitude of
+    \cref{sec:envelope}; a non-positive or non-finite value is replaced by the
+    configured reference.
 
     Those are normalized by configured reference scales and converted into trust
     factors
@@ -381,172 +713,24 @@
 
     So the proportional term fades linearly with trust, while the integral term
     collapses even faster in rough motion. The commanded gains are then smoothed
-    with the same one-pole coefficient form before being written back into the
-    Mahony state.
-
-% ---------------------------------------------------------------
-    \section{Adaptive Scheduling Wrapper}\label{sec:adaptive}
-
-    \subsection{Role of \texttt{AdaptiveVerticalPII}}
-
-    \texttt{AdaptiveVerticalPII} wraps the core observer and adds:
-    \begin{itemize}[leftmargin=1.4em]
-        \item a running estimate of vertical-acceleration mean, variance, and sigma,
-        \item a policy-selected acceleration-frequency tracker,
-        \item automatic or external scheduling calls into
-        \texttt{VerticalPIIObserver::update\_adaptation()}.
-    \end{itemize}
-
-    It therefore sits between the raw vertical acceleration signal and the
-    observer’s scheduling interface.
-
-    \subsection{Acceleration Variance Estimate}
-
-    At IMU rate, the wrapper updates a slow mean and a shorter-time variance:
-    \begin{align}
-        \mu_a^{+} &= \mu_a + \alpha_\mu(a_z-\mu_a),\\
-        e_a &= a_z - \mu_a^{+},\\
-        \nu_a^{+} &= \nu_a + \alpha_\nu(e_a^2 - \nu_a),\\
-        \sigma_a^{+} &= \sqrt{\max(\nu_a^{+},0)}.
-    \end{align}
-
-    A configured floor is then enforced:
-    \begin{equation}
-        \sigma_a^{+} \leftarrow \max(\sigma_a^{+}, \sigma_{\min}).
-    \end{equation}
-
-    This \(\sigma_a\) is the roughness indicator used in observer scheduling and
-    also in Mahony trust adaptation.
-
-    \subsection{Scheduling Hook Inside \texttt{VerticalPIIObserver}}
-
-    Whenever adaptation is enabled and a scheduling update is triggered,
-    \texttt{VerticalPIIObserver::update\_adaptation()} receives:
-    \begin{equation}
-    (f_{\mathrm{disp}},\sigma_a,c,dt_{\mathrm{sched}}).
-    \end{equation}
-
-    If confidence is below the configured minimum, or if the inputs are invalid,
-    the active parameters are held.
-
-    Otherwise the observer first smooths the tracker inputs:
-    \begin{align}
-        f_f^{+} &= f_f + \alpha_{\mathrm{in}}(f_{\mathrm{disp}}-f_f),\\
-        \sigma_f^{+} &= \sigma_f + \alpha_{\mathrm{in}}(\sigma_a-\sigma_f).
-    \end{align}
-
-    Then it forms normalized scheduling ratios
-    \begin{equation}
-        \rho_f = \clamp\!\left(\frac{f_f}{f_{\mathrm{ref}}},0.25,4\right),
-        \qquad
-        \rho_\sigma = \clamp\!\left(\frac{\sigma_{\mathrm{ref}}}{\sigma_f},0.25,4\right).
-    \end{equation}
-
-    The commanded observer parameters are conservative power-law schedules:
-    \begin{align}
-        r_{\mathrm{cmd}} &=
-        r_0\,\rho_f^{\eta_r}\,\rho_\sigma^{\zeta_r},\\
-        \tau_{a,\mathrm{cmd}} &=
-        \tau_{a,0}\,\rho_f^{\eta_a}\,\rho_\sigma^{\zeta_a},\\
-        \tau_{d,\mathrm{cmd}} &=
-        \tau_{d,0}\,\rho_f^{\eta_d}\,\rho_\sigma^{\zeta_d},\\
-        k_{b,\mathrm{cmd}} &=
-        k_{b,0}\,\rho_f^{\eta_b}\,\rho_\sigma^{\zeta_b}.
-    \end{align}
-
-    Each commanded parameter is clamped to configured bounds, then the active
-    parameters move toward the commands via one-pole smoothing:
-    \begin{equation}
-        \theta^{+}
-        =
-        \theta + \alpha_p(\theta_{\mathrm{cmd}}-\theta),
-    \end{equation}
-    for each scheduled parameter \(\theta\).
-
-    \subsection{Interpretation of the Scheduling Signs}
-
-    The exponent signs encode the intended control effect:
-    \begin{itemize}[leftmargin=1.4em]
-        \item higher dominant displacement frequency generally allows a somewhat
-        faster observer core,
-        \item larger acceleration sigma tends to reduce aggressiveness and slow bias
-        learning,
-        \item lower sigma permits more restoring authority.
-    \end{itemize}
-
-    So the scheduler is meant to adapt slowly to sea-state changes, not to chase
-    sample-by-sample motion.
-
-% ---------------------------------------------------------------
-    \section{Frequency Proxy Used for Scheduling}\label{sec:freq_proxy}
-
-    \subsection{Generic Policy Interface}
-
-    \texttt{AdaptiveVerticalPII} does not hard-code one tracker algorithm.
-    Instead it uses a policy-selected backend
-    \begin{equation}
-        \texttt{AccelFreqTracker = TrackerPolicy<TT>},
-    \end{equation}
-    where \texttt{TT} is a template parameter such as PLL, Aranovskiy, KalmANF,
-    or ZeroCross.
-
-    Through the policy helpers, the wrapper queries:
-    \begin{itemize}[leftmargin=1.4em]
-        \item main frequency estimate,
-        \item raw frequency estimate,
-        \item tracker confidence,
-        \item lock status,
-        \item optional coarse estimate.
-    \end{itemize}
-
-    \subsection{Automatic Scheduling from the Frequency Proxy}
-
-    When \texttt{auto\_schedule\_from\_accel\_freq} is enabled, the wrapper
-    accumulates time and periodically triggers an observer scheduling update.
-
-    The scheduled frequency is built by:
-    \begin{enumerate}[leftmargin=1.5em]
-        \item preferring the tracker’s main frequency estimate,
-        \item falling back to its raw frequency estimate if needed,
-        \item blending toward a coarse estimate when one exists,
-        \item blending more strongly toward the coarse estimate when the tracker is
-        not locked.
-    \end{enumerate}
-
-    So the scheduling frequency is intentionally more conservative than just the
-    raw tracker output.
-
-    \subsection{Confidence Passed to the Scheduler}
-
-    The confidence passed to the observer scheduler begins with the tracker’s own
-    confidence. It is then floored upward when:
-    \begin{itemize}[leftmargin=1.4em]
-        \item a coarse estimate exists,
-        \item the tracker reports locked.
-    \end{itemize}
-
-    This lets the observer continue adapting moderately even when the internal
-    frequency proxy is only coarse-valid rather than fully locked.
-
-    \subsection{Simulation-Specific Note}
-
-    In the supplied simulation driver,
-    \texttt{FusionAdapterAdaptivePIIMahony} instantiates
-    \begin{equation}
-        \texttt{AdaptiveVerticalPIIMahony}.
-    \end{equation}
-
-    So that file uses the Aranovskiy tracker as the internal acceleration-frequency
-    proxy, even though the adaptive wrapper itself remains generic.
+    with the same one-pole coefficient form and written back into the Mahony
+    state through \texttt{Mahony\_AHRS::init()}, which sets gains only and leaves
+    the quaternion and the integral accumulators untouched. With
+    \texttt{adapt\_mahony\_gains=false} the currently active gains are simply
+    re-applied each sample.
 
 % ---------------------------------------------------------------
     \section{Simulation-Backed Tuning Example}\label{sec:tuning}
 
-    The simulation wrapper sets the following representative values for the core
-    observer:
+    The simulation driver \texttt{tests/pii\_observer/pii\_observer-adaptive.cpp}
+    defines \texttt{FusionAdapterAdaptivePIIMahony} around
+    \texttt{AdaptiveVerticalPIIMahony<float,\ true,\ TrackerType::PLL>}, so the
+    internal acceleration-frequency proxy there is the PLL tracker with the
+    shared default tracker configuration, even though the adaptive wrapper
+    itself remains generic. It sets the following values for the core observer:
     \begin{align}
-        r &= 0.150,\\
-        \tau_a &= 0.68~\si{s},\\
+        r &= 0.125,\\
+        \tau_a &= 0.40~\si{s},\\
         \tau_d &= 49.0~\si{s},\\
         k_b &= 2.5\times10^{-5},\\
         \lambda_b &= 3.0\times10^{-3}.
@@ -564,64 +748,127 @@
     The adaptation layer uses
     \begin{align}
         f_{\mathrm{ref}} &= 0.12~\si{Hz},\\
-        \sigma_{\mathrm{ref}} &= 0.95,\\
-        \tau_{\mathrm{in}} &= 4.5~\si{s},\\
-        \tau_{\mathrm{param}} &= 7.5~\si{s},
+        \sigma_{\mathrm{ref}} &= 1.10,\\
+        \tau_{\mathrm{in}} &= 55~\si{s},\\
+        \tau_{\mathrm{param}} &= 50~\si{s},\\
+        c_{\min} &= 0.22,
     \end{align}
-    together with the conservative exponent set shown directly in the configuration
-    code.
+    together with the exponent set and bounds of \cref{tab:exponents}, and it is
+    auto-scheduled from the accel-frequency proxy every \SI{0.5}{s}. The
+    fallback confidences are \(0.52\) with a coarse estimate, \(0.62\) from the
+    coarse-schedule floor, and \(0.82\) when locked, with a coarse blend of
+    \(0.48\).
+
+    \begin{table}[t]
+        \centering
+        \caption{Scheduling exponents and bounds used in the simulation}
+        \label{tab:exponents}
+        \small
+        \begin{tabular}{@{}lrrl@{}}
+            \toprule
+            Parameter & \(\rho_f\) exp. & \(\rho_\sigma\) exp. & Bounds \\
+            \midrule
+            \(r\)       & \(0.23\)  & \(0.65\)  & \([0.06,\,0.26]\) \\
+            \(\tau_a\)  & \(-0.25\) & \(-1.20\) & \([0.15,\,0.90]~\si{s}\) \\
+            \(\tau_d\)  & \(-0.03\) & \(-0.01\) & \([44,\,58]~\si{s}\) \\
+            \(k_b\)     & \(0.02\)  & \(0.08\)  & \([5\times10^{-6},\,6\times10^{-5}]\) \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+
+    The envelope estimator is enabled with the OU-aligned values of
+    \cref{sec:envelope}: \(\sigma_n=\SI{0.12}{m/s^2}\), \(K_{\mathrm{per}}=2.0\),
+    \(\tau_f=\SI{1.0}{s}\), \(c_\tau=1.38\), \(c_\sigma=0.90\), an adaptation
+    time constant of \SI{1.8}{s}, \(\tau\in[0.02,3.00]~\si{s}\), and
+    \(\sigma_{\max}=6.0\).
 
     The simulation-backed Mahony tuning uses
     \begin{align}
-    (2K_p)_{\mathrm{base}} &= 0.45,\\
-    (2K_i)_{\mathrm{base}} &= 0.015,\\
-    (2K_p)_{\mathrm{calm}} &= 0.90,\\
-    (2K_p)_{\mathrm{rough}} &= 0.35,\\
-    (2K_i)_{\mathrm{calm}} &= 0.025,\\
-    (2K_i)_{\mathrm{rough}} &= 0.010.
+    (2K_p)_{\mathrm{base}} &= 1.70,\\
+    (2K_i)_{\mathrm{base}} &= 0.090,\\
+    (2K_p)_{\mathrm{calm}} &= 1.50,\\
+    (2K_p)_{\mathrm{rough}} &= 1.20,\\
+    (2K_i)_{\mathrm{calm}} &= 0.100,\\
+    (2K_i)_{\mathrm{rough}} &= 0.070.
     \end{align}
 
     The trust references are
     \begin{align}
-        \sigma_{\mathrm{ref}}^{\mathrm{Mahony}} &= 0.18~\si{m/s^2},\\
-        \varepsilon_{\mathrm{norm,ref}} &= 0.08,\\
-        \varepsilon_{\mathrm{innov,ref}} &= 0.12,
+        \sigma_{\mathrm{ref}}^{\mathrm{Mahony}} &= 0.45~\si{m/s^2},\\
+        \varepsilon_{\mathrm{norm,ref}} &= 0.12,\\
+        \varepsilon_{\mathrm{innov,ref}} &= 0.18,
     \end{align}
     with Mahony gain-schedule smoothing time constant
     \begin{equation}
-        \tau_g = 2.0~\si{s},
+        \tau_g = 1.0~\si{s},
     \end{equation}
     and minimum accelerometer trust
     \begin{equation}
-        \gamma_{\min} = 0.05.
+        \gamma_{\min} = 0.65.
     \end{equation}
+
+    The high trust floor is what keeps this tuning band narrow: with
+    \(\gamma\in[0.65,1]\) the scheduled \(2K_p\) only ever moves between
+    \(1.40\) and \(1.50\), so the Mahony gain schedule trims the attitude loop
+    rather than reshaping it.
 
     \subsection{Frame Mapping in the Simulation Adapter}
 
-    The simulation runner provides body NED data. The adapter converts that to the
-    Mahony body convention by
+    The simulation runner provides body NED data, and the adapter converts it to
+    the Mahony body convention. Inertial and magnetic channels use
+    \emph{different} mappings, and the code says so explicitly, because sharing
+    one of them causes a large yaw error. For gyro and accelerometer,
     \begin{equation}
     (x,y,z)_{\mathrm{NED}}
     \mapsto
-    (x,-y,-z)_{\mathrm{Mahony}}.
+    (-y,-x,-z)_{\mathrm{Mahony}},
     \end{equation}
+    which is the \(Z\)-up conversion \((x,y,z)\mapsto(y,x,-z)\) followed by
+    negation of the two horizontal axes. At rest and level the runner's
+    accelerometer reads \((0,0,-g)_{\mathrm{NED}}\), which maps to
+    \((0,0,+g)_{\mathrm{Mahony}}\) as the Mahony convention requires.
 
-    So north stays \(+X\), east becomes \(-Y\), and down becomes \(-Z\),
-    making gravity \(+Z\) in Mahony’s frame.
+    For the magnetometer,
+    \begin{equation}
+    (x,y,z)_{\mathrm{NED}}
+    \mapsto
+    (x,-y,-z)_{\mathrm{Mahony}},
+    \end{equation}
+    so magnetic north stays on \(+X\), which is what this Mahony mag path
+    expects. The latest magnetometer sample is cached and reused at every IMU
+    step until a new one arrives, since the mag ODR (\SI{20}{Hz} in the runs
+    below) is well under the \SI{200}{Hz} IMU rate.
 
-    For RMS reporting back in the simulator convention, the adapter maps Mahony
-    Euler outputs back to the nautical convention before comparing against
-    reference attitude traces.
+    For RMS reporting back in the simulator convention, the adapter decodes the
+    Mahony quaternion to nautical Euler angles. Yaw needs one further
+    correction: the reference trace is reported in the magnetic frame as
+    \(\psi_{\mathrm{ref}}+\delta\) while the decoded Mahony yaw lands on
+    \(\psi_{\mathrm{ref}}-\delta\), so the adapter reports
+    \begin{equation}
+        \psi_{\mathrm{sim}} = \mathrm{wrap}\bigl(\psi_{\mathrm{Mahony}}
+        + 2\delta\bigr),
+    \end{equation}
+    with \(\delta\) the simulated declination. Without magnetometer aiding the
+    reported yaw is forced to zero rather than scored.
+
+    The adapter also republishes observer telemetry for the plots: the active
+    \(r\) and \(k_b\) as the tuning traces, and \emph{envelope}
+    \(\tau,\sigma,f\), and variance as the envelope traces. The older
+    \(\sigma_{a}\) filter states, \(f_{\mathrm{disp}}\) filter state, core
+    \texttt{accel\_var}, and \(\tau_a\) are deliberately no longer used for the
+    wave-height envelope.
 
     \subsection{Quality Gates Used in the Example}
 
     The simulation code checks the last \SI{900}{s} of each \SI{1200}{s} run and
     applies quality gates:
     \begin{itemize}[leftmargin=1.4em]
-        \item Z RMS \(< 15.8\%\) of \(H_s\) for JONSWAP cases,
-        \item Z RMS \(< 16.6\%\) of \(H_s\) for PM-Stokes cases,
+        \item Z RMS \(< 9.0\%\) of \(H_s\) for JONSWAP cases,
+        \item Z RMS \(< 9.5\%\) of \(H_s\) for PM-Stokes cases,
         \item yaw RMS \(< 10.9^\circ\) when magnetometer is used.
     \end{itemize}
+    A record shorter than the scoring window is reported as skipped rather than
+    scored, so the silence of a short record cannot read as a pass.
 
     These are not part of the observer itself, but they are useful context for the
     intended tuning regime in the supplied simulation.
@@ -632,26 +879,31 @@
     compared against. Each threshold is a regression sentinel for the
     deterministic realization -- the worst value this observer currently produces
     across the eight scored records plus about half a percent -- rather than an
-    acceptance criterion.
+    acceptance criterion. The worst record for the Z gates is the roughest sea
+    (\(H_s=\SI{8.5}{m}\)) under both spectra, which is where the sentinels moved
+    once scheduling the PII pole rate off accel sigma removed the calm-sea error.
 
     \begin{table}[t]
         \centering
-        \caption{Representative tuning from the simulation wrapper}
+        \caption{Representative tuning from the simulation adapter}
         \label{tab:tuning}
         \small
         \begin{tabular}{@{}lll@{}}
             \toprule
             Parameter & Value & Role \\
             \midrule
-            \(r\) & 0.150 & base repeated pole rate \\
-            \(\tau_a\) & \SI{0.68}{s} & accel LPF time constant \\
+            \(r\) & 0.125 & base repeated pole rate \\
+            \(\tau_a\) & \SI{0.40}{s} & accel LPF time constant \\
             \(\tau_d\) & \SI{49}{s} & slow trend time constant \\
             \(k_b\) & \(2.5\times10^{-5}\) & bias learning gain \\
             \(\lambda_b\) & \(3.0\times10^{-3}\) & bias leak \\
             \(f_{\mathrm{ref}}\) & \SI{0.12}{Hz} & reference scheduling frequency \\
-            \(\sigma_{\mathrm{ref}}\) & 0.95 & reference accel sigma \\
-            \((2K_p)_{\mathrm{base}}\) & 0.45 & Mahony base proportional gain \\
-            \((2K_i)_{\mathrm{base}}\) & 0.015 & Mahony base integral gain \\
+            \(\sigma_{\mathrm{ref}}\) & 1.10 & reference accel sigma \\
+            \(\tau_{\mathrm{in}}\) & \SI{55}{s} & scheduling input smoothing \\
+            \(\tau_{\mathrm{param}}\) & \SI{50}{s} & scheduled parameter smoothing \\
+            \((2K_p)_{\mathrm{base}}\) & 1.70 & Mahony base proportional gain \\
+            \((2K_i)_{\mathrm{base}}\) & 0.090 & Mahony base integral gain \\
+            \(\gamma_{\min}\) & 0.65 & minimum accelerometer trust \\
             \(g\) & \SI{9.80665}{m/s^2} & gravity magnitude \\
             \bottomrule
         \end{tabular}
@@ -667,13 +919,18 @@
         \item Body-frame specific force is rotated into a \(Z\)-up world frame and
         converted to vertical inertial acceleration by subtracting gravity.
         \item A policy-selected frequency tracker provides a dominant motion-frequency
-        proxy and confidence information.
+        proxy and confidence information, blended toward a coarse estimate when
+        the tracker is not locked.
+        \item An OU-style envelope estimator turns that frequency and a
+        period-scaled acceleration variance into a sea-state amplitude and
+        correlation time, which are the preferred scheduling inputs and the
+        source of the reported wave-height and vertical-speed scales.
         \item A vertical PII observer integrates the vertical acceleration to
         displacement while using repeated-pole damping, displacement-integral
         feedback, and an optional very-slow bias channel to prevent unbounded
         drift.
         \item The observer bandwidth and bias-learning rates are scheduled from the
-        estimated motion frequency and acceleration sigma, so calmer conditions
+        estimated motion frequency and sea-state amplitude, so calmer conditions
         permit tighter tracking while rougher conditions slow the loop and reduce
         sensitivity to spurious bias inference.
         \item The Mahony gains are also reduced when accelerometer trust is poor, so
@@ -700,7 +957,7 @@
     \end{figure}
     \begin{figure}[!t]\centering
     \IncludePGF{w3d_nonkalman_pmstokes_medium_tuner.pgf}
-    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces ($f$, accel std / $\sigma_a$, $\tau$, scheduling gain) --- PM Stokes, medium $H_s$.}
+    \caption{Adaptive PII/Mahony frequency and auto-scheduling traces (envelope $f$, $\sigma$, $\tau$, and active PII $r$) --- PM Stokes, medium $H_s$.}
     \label{fig:w3d_nonkalman_pmstokes_medium_tuner}
     \end{figure}
 
@@ -713,10 +970,11 @@
     optional very-slow bias estimation. It is intentionally conservative,
     non-oscillatory, and inexpensive to run.
 
-    Second, \texttt{AdaptiveVerticalPII} adds acceleration sigma estimation, a
-    policy-selected frequency tracker, and runtime scheduling of the observer
-    parameters. External displacement-frequency scheduling is preferred, while the
-    internal frequency proxy provides fallback scheduling.
+    Second, \texttt{AdaptiveVerticalPII} adds acceleration sigma estimation, an
+    OU-style sea-state envelope estimator, a policy-selected frequency tracker,
+    and runtime scheduling of the observer parameters. External scheduling
+    inputs are honored when supplied, the envelope is the preferred internal
+    source, and the plain sigma EMA is the fallback until the envelope is ready.
 
     Third, \texttt{AdaptiveVerticalPIIMahony} uses Mahony AHRS to supply the
     required vertical inertial acceleration and can also adapt Mahony gains from
