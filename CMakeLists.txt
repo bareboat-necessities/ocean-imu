@@ -50,3 +50,4 @@ target_include_directories(lie_group-test SYSTEM PRIVATE
 add_executable(ou_chain_identity-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/ou_chain_identity-test.cpp")
 add_executable(tfg_propagation-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_propagation-test.cpp")
 add_executable(tfg_jacobians-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_jacobians-test.cpp")
+add_executable(covariance_transport-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/covariance_transport-test.cpp")

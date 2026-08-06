@@ -203,23 +203,36 @@ inline void integral_transition_axis(T tau, T h, Eigen::Matrix<T,4,4>& Psi) {
 /*
     two_frame_bias selects the bias geometry:
 
+      true  (Level 2) -- full two-frame group, beta_b = R (bhat - b). Default.
       false (Level 1) -- world vectors on SE_4(3), bias errors additive in the
-                         body frame. Implemented and tested here.
-      true  (Level 2) -- full two-frame group, beta_b = R (bhat - b).
-                         Lands in Phase D; static_asserted until then so no
-                         unverified path can be instantiated by accident.
+                         body frame. Kept as a build flag: it isolates
+                         group-retraction defects from bias-geometry defects,
+                         and it is the ablation that answers whether the bias
+                         geometry earns its keep.
+
+    THE TWO LEVELS ARE THE SAME FILTER IN DIFFERENT COORDINATES, related by
+    the exact linear map beta = Rhat delta_b:
+
+        T     = blkdiag(I, Rhat, I, I, I, I, Rhat)
+        xi_L2 = T xi_L1,   P_L2 = T P_L1 T^T,   H_L1 = H_L2 T
+
+    Under pure propagation that relation is exact rather than approximate, and
+    covariance_transport-test asserts it -- which cross-checks the whole
+    Level-2 derivation against the already-verified Level-1 one. Note the
+    conjugation is time-varying: Phi_L2 = T(h) Phi_L1 T(0)^-1, which is
+    precisely why Phi_beta,beta is Exp(w_world h) here where Level 1 has I.
+
+    Under measurement updates the two agree only to first order, because the
+    Level-2 injection carries a J_l(-phi) that the Level-1 injection does not.
 */
 template <typename T = float,
           bool with_gyro_bias = true,
           bool with_accel_bias = true,
-          bool two_frame_bias = false>
+          bool two_frame_bias = true>
 class Kalman3D_Wave_TFG {
     static_assert(with_gyro_bias,
                   "the two-frame tangent layout pins the gyro bias at offset 3; "
                   "a no-gyro-bias variant would need its own layout");
-    static_assert(!two_frame_bias,
-                  "Level 2 (two-frame bias geometry) is not implemented yet; "
-                  "instantiate with two_frame_bias = false");
 
   public:
     using Group   = ocean_imu::lie::TwoFrameGroup<T, 4, with_accel_bias ? 2 : 1>;
@@ -378,15 +391,56 @@ class Kalman3D_Wave_TFG {
     void build_transition(T Ts, const Vector3& gyro_meas, MatrixNX& Phi) const {
         Phi.setIdentity();
 
-        // Step-averaged body-to-world rotation: (1/h) int_0^h Rhat Exp(w s) ds
-        // = Rhat J_l(w h). See the header note -- using Rhat alone is wrong at
-        // order |w| h.
+        /*
+            Step-averaged body-to-world rotation:
+
+                (1/h) int_0^h Rhat Exp(w s) ds = Rhat J_l(w h) =: Rbar
+
+            Using Rhat alone is wrong at order |w| h -- see the header note.
+
+            Bmap is the map from a bias error onto phidot, integrated over the
+            step. The two levels differ by exactly one transpose of Rhat,
+            which is the whole content of the coordinate change beta = Rhat
+            delta_b:
+
+                Level 1:  phidot = -Rhat delta_b   ->  Bmap = Rbar
+                Level 2:  phidot = -beta           ->  Bmap = Rbar Rhat^T
+                                                            = J_l(w_world h)
+
+            using the equivariance J_l(R u) = R J_l(u) R^T.
+        */
         const Vector3 omega = gyro_meas - X_.B.col(0);
         const Matrix3 Rbar =
             X_.R * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts));
+        const Matrix3 Bmap = two_frame_bias ? Matrix3(Rbar * X_.R.transpose()) : Rbar;
 
-        // Attitude <- gyro bias. Exact: A_phi,phi = 0 and A_bg,bg = 0.
-        Phi.template block<3,3>(OFF_PHI, OFF_BG) = -Rbar * Ts;
+        // Attitude <- bias. Exact: A_phi,phi = 0, and the bias block's own
+        // dynamics are a pure rotation, handled below.
+        Phi.template block<3,3>(OFF_PHI, OFF_BG) = -Bmap * Ts;
+
+        /*
+            Bias self-dynamics.
+
+            Level 1: delta_b is a random walk in the body frame, so Phi = I.
+
+            Level 2: beta = R delta_b inherits the frame's rotation --
+
+                betadot = Rdot delta_b + R delta_bdot
+                        = R [w]x delta_b - R w_b
+                        = [R w]x beta - R w_b
+
+            so Phi_beta,beta = Exp(w_world h), a rotation rather than the
+            identity. This term has no Level-1 analogue and is the substantive
+            new content of the two-frame geometry: the bias error is carried
+            along by the vehicle's rotation instead of sitting still.
+        */
+        if constexpr (two_frame_bias) {
+            const Matrix3 Rw_step = ocean_imu::lie::Exp<T>(Vector3(X_.R * omega * Ts));
+            Phi.template block<3,3>(OFF_BG, OFF_BG) = Rw_step;
+            if constexpr (with_accel_bias) {
+                Phi.template block<3,3>(OFF_BA, OFF_BA) = Rw_step;
+            }
+        }
 
         // World block: the OU chain, exact, per axis.
         Eigen::Matrix<T,4,4> Phi_axis;
@@ -408,7 +462,7 @@ class Kalman3D_Wave_TFG {
         tfg_detail::integral_transition_axis<T>(tau_aw_, Ts, Psi);
         Matrix3 Gx[4];
         for (int c = 0; c < 4; ++c) {
-            Gx[c] = -ocean_imu::lie::skew<T>(Vector3(X_.X.col(c))) * Rbar;
+            Gx[c] = -ocean_imu::lie::skew<T>(Vector3(X_.X.col(c))) * Bmap;
         }
         for (int i = 0; i < 4; ++i) {
             Matrix3 acc = Matrix3::Zero();
@@ -439,23 +493,62 @@ class Kalman3D_Wave_TFG {
         Gyro white noise leaking into the world vectors is first order in h.
         See the header note on why that truncation is deliberate.
     */
-    void build_process_noise(T Ts, MatrixNX& Qd) const {
+    void build_process_noise(T Ts, const Vector3& gyro_meas, MatrixNX& Qd) const {
         Qd.setZero();
         if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
 
         const Matrix3 Rhat = X_.R;
+        /*
+            At Level 2 the bias noise lands in the world frame of the END of
+            the step, not its start.
+
+            The bias random walk is body-frame, and beta carries it forward
+            through the frame's rotation:
+
+                Q_beta = int_0^h Exp(w_world (h-s)) Rhat(s) Q_b Rhat(s)^T
+                                 Exp(w_world (h-s))^T ds
+
+            and because Exp(w_world (h-s)) Rhat(s) = Rhat(h) identically, the
+            integrand is the constant Rhat(h) Q_b Rhat(h)^T. Using Rhat(0)
+            instead is wrong at order |w| h -- the same order, and for the same
+            reason, as using Rhat rather than Rbar in Phi.
+        */
+        const Matrix3 R_end =
+            two_frame_bias
+                ? Matrix3(Rhat * ocean_imu::lie::Exp<T>(
+                      Vector3((gyro_meas - X_.B.col(0)) * Ts)))
+                : Rhat;
         const Matrix3 W  = Rhat * Q_gyro_ * Rhat.transpose();   // world-frame gyro noise
         const Matrix3 Wb = Rhat * Q_bg_   * Rhat.transpose();
 
         const T h2 = Ts * Ts;
         const T h3 = h2 * Ts;
 
-        // Attitude / gyro-bias.
+        /*
+            Attitude and gyro-bias.
+
+            The bias random walk drives phi through Phi_phi,bg(s), which is
+            exactly integrable, giving the h^3/3 and h^2/2 terms.
+
+            The bias blocks themselves are expressed in whichever frame the
+            error lives in: body at Level 1, world at Level 2. That is the
+            T-conjugation again -- Q_L2 = T Q_L1 T^T -- and it is why the
+            Level-2 forms carry Rhat on both sides where Level 1 carries it on
+            one or neither.
+        */
+        // phi's own block is frame-independent (T's phi block is the
+        // identity), so it uses Rhat at the start of the step in both levels.
+        // The bias blocks land at R_end.
+        const Matrix3 Q_bias_own   = two_frame_bias
+            ? Matrix3(R_end * Q_bg_ * R_end.transpose()) : Q_bg_;
+        const Matrix3 Q_bias_cross = two_frame_bias
+            ? Matrix3(Rhat * Q_bg_ * R_end.transpose()) : Matrix3(Rhat * Q_bg_);
+
         Qd.template block<3,3>(OFF_PHI, OFF_PHI) = W * Ts + Wb * (h3 / T(3));
-        Qd.template block<3,3>(OFF_PHI, OFF_BG)  = -(Rhat * Q_bg_) * (h2 / T(2));
+        Qd.template block<3,3>(OFF_PHI, OFF_BG)  = -Q_bias_cross * (h2 / T(2));
         Qd.template block<3,3>(OFF_BG, OFF_PHI)  =
             Qd.template block<3,3>(OFF_PHI, OFF_BG).transpose();
-        Qd.template block<3,3>(OFF_BG, OFF_BG)   = Q_bg_ * Ts;
+        Qd.template block<3,3>(OFF_BG, OFF_BG)   = Q_bias_own * Ts;
 
         // Gyro white noise into the world vectors, via rho_xdot = ... + [x]x phidot.
         Matrix3 Sx[4];
@@ -474,7 +567,8 @@ class Kalman3D_Wave_TFG {
         add_ou_process_noise_(Ts, Qd);
 
         if constexpr (with_accel_bias) {
-            Qd.template block<3,3>(OFF_BA, OFF_BA) = Q_ba_ * Ts;
+            Qd.template block<3,3>(OFF_BA, OFF_BA) =
+                (two_frame_bias ? Matrix3(R_end * Q_ba_ * R_end.transpose()) : Q_ba_) * Ts;
         }
 
         Qd = T(0.5) * (Qd + Qd.transpose()).eval();
@@ -520,9 +614,28 @@ class Kalman3D_Wave_TFG {
             xi.template segment<3>(OFF_V + 3*c) =
                 Jli * (X_.X.col(c) - dR * reference.X_.X.col(c));
         }
-        xi.template segment<3>(OFF_BG) = X_.B.col(0) - reference.X_.B.col(0);
-        if constexpr (with_accel_bias) {
-            xi.template segment<3>(OFF_BA) = X_.B.col(1) - reference.X_.B.col(1);
+        if constexpr (two_frame_bias) {
+            /*
+                The group element's bias part is eta_B = R_ref (Bhat - B_ref),
+                and its tangent coordinates apply J_l(-phi)^-1, mirroring the
+                J_l(-phi) that Exp_G puts there.
+
+                R_ref, not Rhat: eta = Xhat o X^-1 evaluates the composition's
+                R2^T B1 term with R2 = X^-1's rotation, i.e. the reference's.
+                The two differ by Exp(phi), so using the estimate's rotation
+                would again be right only at zero error.
+            */
+            const Matrix3 Jri = ocean_imu::lie::inv_left_jacobian<T>(Vector3(-phi));
+            const Matrix3 JriR = Jri * reference.X_.R;
+            xi.template segment<3>(OFF_BG) = JriR * (X_.B.col(0) - reference.X_.B.col(0));
+            if constexpr (with_accel_bias) {
+                xi.template segment<3>(OFF_BA) = JriR * (X_.B.col(1) - reference.X_.B.col(1));
+            }
+        } else {
+            xi.template segment<3>(OFF_BG) = X_.B.col(0) - reference.X_.B.col(0);
+            if constexpr (with_accel_bias) {
+                xi.template segment<3>(OFF_BA) = X_.B.col(1) - reference.X_.B.col(1);
+            }
         }
         return xi;
     }
@@ -532,7 +645,7 @@ class Kalman3D_Wave_TFG {
 
         MatrixNX Phi, Qd;
         build_transition(Ts, gyro_meas, Phi);
-        build_process_noise(Ts, Qd);
+        build_process_noise(Ts, gyro_meas, Qd);
 
         propagate_mean(gyro_meas, Ts);
 
@@ -546,10 +659,19 @@ class Kalman3D_Wave_TFG {
     /*
         State injection, Xhat+ = Exp_G(xi) o Xhat-.
 
-        At Level 1 the world part is the group retraction and the bias part is
-        additive in the body frame. Level 2 replaces the bias line with the
-        two-frame transport in Phase D; the split is here rather than in
-        TwoFrameGroup so the group stays a pure Level-2 object.
+        The world part is the group retraction at both levels. The bias line
+        is what differs:
+
+            Level 1:  Bhat+ = Bhat + delta_b                 additive, body frame
+            Level 2:  Bhat+ = Bhat + Rhat^- ^T J_l(-phi) beta
+
+        Level 2 is the two-frame group law, B_result = B2 + R2^T B1, with the
+        PRE-update Rhat -- which is why R_pre is captured before the attitude
+        is touched. Using the post-update rotation would be wrong by exactly
+        Exp(phi), i.e. right only when the correction is zero.
+
+        The split lives here rather than in TwoFrameGroup so that the group
+        stays a pure Level-2 object with no filter-level switch in it.
 
         Note what is deliberately absent: there is no MEKF-style covariance
         reset (ou_detail::apply_left_error_reset). The invariant update already
@@ -560,6 +682,7 @@ class Kalman3D_Wave_TFG {
         const Vector3 phi = xi.template segment<3>(OFF_PHI);
         const Matrix3 E_R = ocean_imu::lie::Exp<T>(phi);
         const Matrix3 Jl  = ocean_imu::lie::left_jacobian<T>(phi);
+        const Matrix3 R_pre = X_.R;
 
         Eigen::Matrix<T,3,4> rho;
         for (int c = 0; c < 4; ++c) rho.col(c) = xi.template segment<3>(OFF_V + 3*c);
@@ -568,7 +691,15 @@ class Kalman3D_Wave_TFG {
         X_.R = (E_R * X_.R).eval();
         reorthonormalize_();
 
-        if constexpr (!two_frame_bias) {
+        if constexpr (two_frame_bias) {
+            // E_B = J_l(-phi) beta, transported into the body frame by R_pre^T.
+            const Matrix3 Jr = ocean_imu::lie::left_jacobian<T>(Vector3(-phi));
+            const Matrix3 RtJr = R_pre.transpose() * Jr;
+            X_.B.col(0) += RtJr * xi.template segment<3>(OFF_BG);
+            if constexpr (with_accel_bias) {
+                X_.B.col(1) += RtJr * xi.template segment<3>(OFF_BA);
+            }
+        } else {
             X_.B.col(0) += xi.template segment<3>(OFF_BG);
             if constexpr (with_accel_bias) X_.B.col(1) += xi.template segment<3>(OFF_BA);
         }
