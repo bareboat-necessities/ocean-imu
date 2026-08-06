@@ -11,10 +11,11 @@ formulation \cite{Sontag1989_ISS,Khalil2002_NonlinearSystems}.
 
 Section~\ref{app:iss-limits} reports what the pointwise numerical certificate
 actually establishes and where it falls short of the theorem's hypotheses;
-Sec.~\ref{app:iss-switched} then shows that the shortfall is an artifact of
-freezing the operating point, and supplies a switched certificate under which
-the offending assumption is not needed at all. Both sections are part of the
-result.
+Secs.~\ref{app:iss-switched} and \ref{app:iss-trajectory} then show that the
+shortfall is an artifact of freezing the operating point, and supply
+certificates -- a switched one and, less approximately, one taken along a
+continuous trajectory -- under which the offending assumption is not needed at
+all. All three sections are part of the result.
 
 \subsection{Performance error and adaptive parameters}
 
@@ -410,19 +411,127 @@ goes through with $\mat L_k\equiv\mat L$ and the per-period contraction
 $\gamma$ in place of the per-step one. The constants improve by three orders
 of magnitude in $c_1$ and seven in the rate.
 
-\begin{remark}[What this model does and does not cover]
-Each factor of $\mat\Phi$ is a frozen-point Jacobian whose covariance was
-settled at that operating point and which is then held for a dwell interval,
-whereas the real filter's covariance evolves continuously along the
-trajectory. This is a switched-system model: strictly better than freezing,
-and it captures the mechanism the frozen analysis misses, but it is still a
-model. The rigorous version takes Jacobians along an actual simulated
-trajectory and bounds the product directly; that is the natural next step. The
-numbers above should be read as evidence about the mechanism and its size, not
-as a closed-loop proof.
+\begin{remark}[This model overstates the rate]
+Each factor of $\mat\Phi$ above is a frozen-point Jacobian whose covariance
+was settled at that operating point and which is then held for a dwell
+interval, whereas the real filter's covariance evolves continuously along the
+trajectory. Holding an extreme attitude for a quarter of a wave period is also
+far more exciting than a smooth oscillation that merely passes through it.
 
-The practical implication stands regardless: any stability claim for this
-estimator that is evaluated with the vessel held still will understate its
-convergence by orders of magnitude, and any claim that depends on A4 is
-answering the wrong question.
+Section~\ref{app:iss-trajectory} redoes the calculation without either
+approximation and finds a contraction some $26$ times weaker. The switched
+numbers are kept here because they isolate the mechanism cleanly, but the
+trajectory result is the one to quote.
+\end{remark}
+
+\subsection{Trajectory certificate}
+\label{app:iss-trajectory}
+
+The least approximate version drops both idealizations. The filter is flown
+along a continuous quasi-periodic wave trajectory -- roll and pitch sweeping
+the same envelope, plus a second harmonic and a slow yaw so the motion is not
+a single tone -- and the one-step Jacobian is taken at every step against the
+filter's own running covariance. No operating point is frozen and no
+covariance is settled anywhere. The per-step Jacobians are accumulated into
+transition matrices $\mat\Phi(k+N,k)$ over windows of one wave period, which
+is the object a linear-time-varying argument needs.
+
+After the covariance settles on the path, the windows converge to
+\begin{equation}
+\rho\bigl(\mat\Phi\bigr)=0.973
+\end{equation}
+per $10$~s window, a spectral time constant of $360$~s. A single quadratic
+Lyapunov function serves every window,
+\begin{equation}
+\gamma=0.946,\qquad
+c_1=1.96\cdot10^{2},
+\end{equation}
+an $e$-folding of $363$~s. Because one metric works for all of them,
+$\delta_L=0$ and A4 is discharged for the real trajectory, not only for the
+switched caricature: Theorem~\ref{thm:adaptive-local-iss} holds with
+$\mat L_k\equiv\mat L$ and the per-window contraction $\gamma$.
+
+The within-window transient is $\sup_k\|\mat\Phi\|_2\approx2.7\cdot10^{2}$,
+consistent with the $2.6\cdot10^{2}$ measured pointwise, so that amplification
+is a real property of the estimator rather than slack in either bound.
+
+\begin{table}[t]
+\centering
+\caption{The three certificates, in increasing order of fidelity.}
+\label{tab:iss-three-certificates}
+\begin{tabular}{lccc}
+\toprule
+& rate & $c_1$ & needs A4? \\
+\midrule
+Frozen, worst envelope point & $5.7\cdot10^{3}$~s spectral & $2.8\cdot10^{5}$ & yes, violated $10^{14}\times$ \\
+Switched, dwell model        & $14$~s                      & $3.2\cdot10^{2}$ & no \\
+Trajectory, LTV              & $363$~s                     & $2.0\cdot10^{2}$ & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:iss-three-certificates} summarizes. Two conclusions survive all
+three, and one does not.
+
+What survives is the structural result. A common metric exists along the real
+trajectory, so the slowly varying assumption is not needed at all, and the
+constants become usable: $c_1$ falls from $2.8\cdot10^{5}$ to
+$2.0\cdot10^{2}$, a factor of $1.4\cdot10^{3}$, and the certified rate
+improves from the frozen worst point by a factor of $16$ spectrally and by
+six orders of magnitude against the frozen ISS bound.
+
+What does not survive is the size of the benefit from motion. The switched
+model suggested that moving through the envelope buys two orders of magnitude
+in rate; along a real trajectory it buys about $16\times$ against the worst
+frozen point, and the converged rate of $363$~s is in fact slightly slower
+than the $274$~s of the best frozen point at the same tuning. Motion removes
+the near-marginal $1.6$~h mode, which is the important part, but it does not
+make the estimator fast.
+
+\paragraph{Over the whole tuning grid and three sea states.}
+Repeating the construction for every combination of
+$\tau\in\{0.55,1.8,4.0\}$, $\sigma_{aw}\in\{0.12,0.9,2.8\}$,
+$r_S\in\{0.35,1.5,6.0\}$ and wave period $\{6,10,16\}$~s gives $81$
+trajectories. Running the settling phase without building Jacobians costs one
+filter cycle per step instead of $43$, which makes the sweep take seconds per
+cell rather than minutes.
+
+Every cell contracts, and by nearly the same amount:
+\begin{equation}
+\rho(\mat\Phi)\in[0.952,\;0.981],
+\qquad
+\text{spectral time constant }322\text{--}522~\mathrm{s},
+\end{equation}
+with no cell reaching $\rho\ge1$. The insensitivity is itself informative:
+the certified rate is set by the drift-control loop, which is what the tuning
+knobs in $\vct\vartheta$ barely touch.
+
+A single quadratic Lyapunov function serves all $81$ windows at once:
+\begin{equation}
+\gamma=0.963\ \text{per window},\qquad
+c_1=2.1\cdot10^{3}.
+\end{equation}
+Because the windows are one wave period long and the periods differ, the
+per-second rate implied by $\gamma$ depends on which sea state it is read
+against; the conservative figure is the one from the $16$~s windows, an
+$e$-folding of $841$~s, against $315$~s from the $6$~s windows. The
+single-cell metric of Sec.~\ref{app:iss-trajectory} is naturally tighter,
+$c_1=1.96\cdot10^{2}$ and $363$~s, since it has only one sea state to cover.
+
+So A4 is discharged not just at one operating condition but uniformly over the
+declared tuning envelope and across the wave-period range, which is what the
+original assumption was reaching for and could not deliver.
+
+\begin{remark}[Remaining scope]
+Two things are still open. The attitude paths are synthetic sums of sinusoids
+rather than recorded sea states, and measurements are generated from the
+filter's own prediction, so the linearization is exercised without injected
+noise. More importantly, $\vct\vartheta_k$ is held fixed along each
+trajectory. What is certified is therefore the estimator at a fixed tuning
+under a moving operating point, not the estimator and its tuner as one closed
+loop. Closing that loop means letting the adaptation run along the trajectory
+and either including its states in the certified coordinate or bounding its
+effect explicitly, which is the same interconnection problem that
+observer designs with a separate attitude and translation stage have to solve
+with a composite Lyapunov function.
 \end{remark}
