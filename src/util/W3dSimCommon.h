@@ -290,7 +290,11 @@ struct TvgNloTelemetry {
     float k2 = NAN;
     float kI = NAN;
     float vartheta = NAN;
+    float theta = NAN;
     float p0z_hat = NAN;
+
+    float wave_freq_hz = NAN;
+    float wave_freq_confidence = NAN;
 
     Vector3f xi_n = Vector3f::Constant(NAN);
     Vector3f fhat_n = Vector3f::Constant(NAN);

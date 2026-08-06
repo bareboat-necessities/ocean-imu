@@ -9,6 +9,7 @@ EIGEN_DIR ?= $(REPO_ROOT)/third_party/eigen
 EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-I$(EIGEN_DIR),-I/usr/include/eigen3)
 
 BASEFLAGS = -O3 -std=c++20 -funroll-loops -fno-finite-math-only \
+            -MMD -MP \
             -I$(REPO_ROOT)/src \
             $(EIGEN_CPPFLAGS) \
             $(CPPFLAGS)
@@ -45,5 +46,7 @@ nlo-sim: nlo-sim.o W3dSimCommon.o
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+-include $(wildcard *.d)
+
 clean:
-	rm -f *.o $(TARGETS) *.exe *.csv
+	rm -f *.o *.d $(TARGETS) *.exe *.csv
