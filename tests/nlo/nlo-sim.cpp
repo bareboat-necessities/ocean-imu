@@ -45,9 +45,13 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 // paper's virtual zero-mean measurement instead of being pinned at zero, and
 // theta is scheduled on the tracked wave frequency instead of sitting at the
 // paper's dynamic-positioning value of 1.
+//
+// These gate RAW Z RMS. Earlier revisions gated the de-meaned value, which
+// could not see the standing heave offset at all; the observer now removes
+// that offset on the reporting path, so the raw number is the one to hold.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 7.4f,    // worst 7.32 (jonswap H8.5)
-    .err_limit_percent_z_pmstokes  = 7.5f,    // worst 7.42 (pmstokes H8.5)
+    .err_limit_percent_z_jonswap   = 7.3f,    // worst 7.21 (jonswap H8.5)
+    .err_limit_percent_z_pmstokes  = 7.2f,    // worst 7.09 (pmstokes H8.5)
     .err_limit_yaw_deg             = 8.0f,    // yaw is free here and is not gated
     .err_limit_percent_3d_jonswap  = 9999.0f,
     .err_limit_percent_3d_pmstokes = 9999.0f,
@@ -221,6 +225,12 @@ private:
         if (const char* s = std::getenv("NLO_KII")) {
             cfg.filter.kI_initial = std::strtof(s, nullptr);
         }
+        if (const char* s = std::getenv("NLO_RHP")) {
+            cfg.report_highpass_enabled = (std::atoi(s) != 0);
+        }
+        if (const char* s = std::getenv("NLO_RHP_TAU")) {
+            cfg.report_highpass_tau_s = std::strtof(s, nullptr);
+        }
         if (const char* s = std::getenv("NLO_TH")) {
             cfg.filter.p0z_highpass_tau_s = std::strtof(s, nullptr);
         }
@@ -382,22 +392,28 @@ static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunRes
 
     mean_z_err /= static_cast<float>(n_z);
 
-    RMSReport rms_z_demeaned;
+    RMSReport rms_z_raw;
     for (size_t i = start; i < result.errs_z.size(); ++i) {
         if (std::isfinite(result.errs_z[i])) {
-            rms_z_demeaned.add(result.errs_z[i] - mean_z_err);
+            rms_z_raw.add(result.errs_z[i]);
         }
     }
 
+    // Scored raw, not de-meaned.
+    //
+    // The observer now reports position with the unobservable DC removed
+    // (TimeVarGainNloAdapter::Config::report_highpass_enabled), so raw RMS is
+    // the honest number and de-meaning here would only hide a regression in
+    // the very offset that reporting path exists to remove.
     const float z_pct =
-        100.0f * rms_z_demeaned.rms() / result.wave_params.height;
+        100.0f * rms_z_raw.rms() / result.wave_params.height;
 
     const float z_limit = (result.wave_type == WaveType::JONSWAP)
         ? FAIL_LIMITS.err_limit_percent_z_jonswap
         : FAIL_LIMITS.err_limit_percent_z_pmstokes;
 
     if (z_pct > z_limit) {
-        std::cerr << "ERROR: de-meaned Z RMS above limit (" << z_pct << "% > "
+        std::cerr << "ERROR: raw Z RMS above limit (" << z_pct << "% > "
                   << z_limit << "%). Mean Z error was " << mean_z_err
                   << " m. Failing.\n";
         if (std::getenv("NLO_NOGATE") == nullptr) {

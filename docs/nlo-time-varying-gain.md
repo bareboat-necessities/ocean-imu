@@ -183,22 +183,72 @@ Isolated: ramping `k1`/`k2` alone gives 6.94 % and roll 0.21°; ramping `kI`
 alone gives 143468 % and roll 56°. So `kI_initial` is held at its nominal 0.01
 when `WithGNSS = false`.
 
-## 6. Results
+## 6. Reporting: the DC of position is not observable
 
-Deterministic single-realization protocol, 900 s trailing window, de-meaned
-Z RMS as a percentage of Hs. Lower is better.
+The aiding is a virtual measurement whose innovation is high-passed, and a
+high-pass has exactly zero gain at DC for any `Th`. So the observer can pin
+wave-band motion and cannot pin the constant it sits on. Sweeping `Th` from
+600 s to 25 s moves the resulting offset by under 4 %, which confirms it.
 
-| record | NLO before | NLO after | PII |
-|---|---|---|---|
-| jonswap Hs 0.27 | 7.68 | **6.94** | 4.85 |
-| jonswap Hs 1.5 | 9.37 | **6.53** | 6.09 |
-| jonswap Hs 4.0 | 14.84 | **6.55** | 7.79 |
-| jonswap Hs 8.5 | 19.61 | **7.32** | 8.87 |
-| pmstokes Hs 0.27 | 7.73 | **6.62** | 5.40 |
-| pmstokes Hs 1.5 | 10.47 | **6.43** | 6.71 |
-| pmstokes Hs 4.0 | 14.78 | **6.58** | 7.91 |
-| pmstokes Hs 8.5 | 22.54 | **7.42** | 9.36 |
-| mean | 13.38 | **6.80** | 7.12 |
+Left alone that constant was not small. Reported heave carried a standing
+-1.21 m offset on the Hs = 8.5 m record. Its source is a rectification: the
+bias appears in all three channels at once and in the ratios the loop's own
+time constants predict.
+
+| channel | bias, jonswap Hs 8.5 | ratio |
+|---|---|---|
+| `acc_z` | -0.0119 m/s^2 | |
+| `vel_z` | -0.1722 m/s | 14.5 s |
+| `disp_z` | -1.2111 m | 7.0 s |
+
+So a constant vertical acceleration bias is being mapped into velocity and
+position by the aiding loop. It scales with sea state (-0.0004, -0.0031,
+-0.0072, -0.0119 m/s^2 at Hs = 0.27, 1.5, 4.0, 8.5), which makes it a
+rectification rather than a sensor bias — `xi_dot = -R*S(sigma)*f_b` in (9d)
+has a nonzero mean over the wave cycle. Because the loop maps acceleration to
+position through its time constants, the position offset grows as
+`1/theta^2`, which is why it went from 0.21 m to 1.21 m when theta was moved
+below the wave band.
+
+Removing that acceleration bias at source would be the better fix and is
+**not** done here; it remains open, and the reported `acc_z` still shows it.
+What is done is to report position and velocity through a first-order
+high-pass, `report_highpass_tau_s = 50 s`, so the output is the wave-band
+motion the observer can actually claim. That is what the zero-mean aiding
+assumption already asserts, so it is consistent with the observer rather than
+a cosmetic trim. `filter().positionNED()` still returns the raw state.
+
+50 s is a measured optimum: mean raw Z RMS is 7.18 % at 20 s, 6.88 % at 35 s,
+6.83 % at 50 s, 6.97 % at 70 s, 7.51 % at 100 s, 9.97 % at 400 s. Too short
+costs wave-band fidelity, too long leaves the observer's own wander in the
+output. At 50 s a 20 s swell sees 0.2 % amplitude loss and 3.6 degrees of
+phase.
+
+The vertical is always high-passed, because the virtual measurement always
+aids it through the innovation high-pass. The horizontal axes are high-passed
+only when no position reference is present; with GNSS their DC is observable
+and is reported as estimated.
+
+## 7. Results
+
+Deterministic single-realization protocol, 900 s trailing window, **raw**
+Z RMS as a percentage of Hs — no de-meaning anywhere, on either observer.
+Lower is better.
+
+| record | NLO before | NLO after | offset | PII |
+|---|---|---|---|---|
+| jonswap Hs 0.27 | 8.21 | **7.01** | -0.000 m | 4.85 |
+| jonswap Hs 1.5 | 9.70 | **6.70** | +0.004 m | 6.09 |
+| jonswap Hs 4.0 | 15.78 | **6.76** | +0.010 m | 7.79 |
+| jonswap Hs 8.5 | 19.77 | **7.21** | +0.006 m | 8.87 |
+| pmstokes Hs 0.27 | 8.60 | **6.77** | +0.001 m | 5.40 |
+| pmstokes Hs 1.5 | 11.67 | **6.60** | +0.001 m | 6.71 |
+| pmstokes Hs 4.0 | 15.62 | **6.49** | +0.005 m | 7.91 |
+| pmstokes Hs 8.5 | 27.02 | **7.09** | +0.040 m | 9.36 |
+| mean | 14.55 | **6.83** | | 7.12 |
+
+The simulator's quality gate scores this raw number. Earlier revisions gated
+the de-meaned value, which by construction could not see the offset at all.
 
 Attitude RMS, degrees:
 
@@ -213,18 +263,18 @@ Attitude RMS, degrees:
 | pmstokes Hs 4.0 | 2.25 / 4.80 | 0.29 / 0.16 | 1.96 / 3.27 |
 | pmstokes Hs 8.5 | 10.17 / 6.65 | 0.39 / 0.22 | 4.28 / 5.26 |
 
-Heave: the NLO now beats the PII observer on five of eight records and on the
-mean, and it is decisively better in the seas that matter — every record with
-Hs >= 4 m improves by 1.2 to 2.0 percentage points. It remains worse on the two
-Hs = 0.27 m records, where both observers are near their noise floor
-(0.019 m against 0.013 m in absolute terms) and a fixed-`theta` sweep confirms
-the schedule is already sitting at that record's optimum, so the gap is the
-observer's noise floor rather than the schedule.
+Heave: the NLO beats the PII observer on five of eight records and on the mean
+(6.83 % against 7.12 %), and it is decisively better in the seas that matter —
+every record with Hs >= 4 m improves by 1.0 to 2.3 percentage points. It is
+still worse on the two Hs = 0.27 m records, where both observers are near
+their noise floor (0.019 m against 0.013 m in absolute terms) and a
+fixed-`theta` sweep confirms the schedule is already sitting at that record's
+optimum, so the gap is the observer's noise floor rather than the schedule.
 
 Attitude: better than both the previous NLO and the PII observer on every
 record, by roughly an order of magnitude in the larger seas.
 
-## 7. Reproducing
+## 8. Reproducing
 
 ```
 make -C tests/nlo test
@@ -243,4 +293,6 @@ defaults.
 | `NLO_TVATT` | `0` disables the attitude gain ramp |
 | `NLO_K1I`, `NLO_KII` | override `k1_initial` / `kI_initial` |
 | `NLO_TH` | override the innovation high-pass `Th` |
+| `NLO_RHP` | `0` disables the reporting high-pass, exposing the raw DC offset |
+| `NLO_RHP_TAU` | override `report_highpass_tau_s` |
 | `NLO_NOGATE` | report gate breaches without failing, for sweeps |
