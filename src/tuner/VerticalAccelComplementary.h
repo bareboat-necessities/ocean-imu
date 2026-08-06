@@ -22,16 +22,18 @@
   the body-Z proxy the estimator reports 6.8-10.0 s whatever the sea does,
   against a truth of 2.4-8.7 s.
 
-  This class is the third option: level with an attitude solution that is also
-  a pure function of the measurements.  It runs its own Mahony observer on the
-  raw gyro and accelerometer - never the calibrated or bias-corrected values,
-  never any filter state - and reports
+  This class is the third option, and the deployed one: level with an attitude
+  solution that is also a pure function of the measurements.  It runs its own
+  Mahony observer on the raw gyro and accelerometer - never the calibrated or
+  bias-corrected values, never any filter state - and reports
 
       up = -( (R f)_z + g ),   R = body -> NED from the private quaternion.
 
   Nothing it produces depends on the linear block or on the MEKF, so the
   interconnection is open by construction and stays open however the main
-  filter is retuned.
+  filter is retuned.  Over the eight reference records it reproduces the
+  attitude-levelled input to within 0.2% of vertical RMS, so the loop is
+  removed at no cost, which is why it is the default rather than an option.
 
   Gain
   ----
@@ -65,10 +67,11 @@
 #include "ahrs/Mahony_AHRS.h"
 
 // Which vertical acceleration the wave-period estimator is driven by.
+// Complementary is the default; the other two are kept for ablation.
 enum class WavePeriodInputSource {
     Leveled,        // heading-frame up from the main filter's attitude
     BodyZ,          // raw -(acc.z + g) proxy, the frequency tracker's input
-    Complementary,  // private Mahony observer; measurement-only
+    Complementary,  // private Mahony observer; levelled and measurement-only
 };
 
 class VerticalAccelComplementary {

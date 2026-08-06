@@ -543,27 +543,48 @@ the raw accelerometer body-$z$ channel. Displacing every estimator state,
 attitude and linear block alike, leaves it bit-for-bit unchanged; this is
 asserted in \texttt{tests/kalman\_ou\_iii/tuner\_coupling-test.cpp}.
 
-\paragraph{The frequency channel is not.}
+\paragraph{The frequency channel was not, and now is.}
 The tuning frequency does not come from the raw tracker. It comes from
-\texttt{wave\_period\_}, which is fed \texttt{direction\_accel.up\_ms2}, the
-\emph{leveled} vertical acceleration, and levelling uses the attitude
-estimate. Since $\tau=c_\tau/2f$ and $r_S=c_R\sigma_a\tau^3$, the path
+\texttt{wave\_period\_}, and what that estimator is fed decides the question.
+
+Fed \texttt{direction\_accel.up\_ms2}, the vertical acceleration levelled with
+the \emph{attitude estimate}, it closed a loop. Since $\tau=c_\tau/2f$ and
+$r_S=c_R\sigma_a\tau^3$, the path
 \begin{equation}
 \delta\vct\theta\;\longrightarrow\;f\;\longrightarrow\;
 \vct\vartheta\;\longrightarrow\;\text{gains}\;\longrightarrow\;\delta\vct\theta
 \end{equation}
-is a genuine feedback loop. Measured: a $0.25$~rad attitude displacement moves
-the estimated wave period from $8.05$ to $10.3$~s and $\tau$ by a factor
-$1.28$.
-
-The loop also reaches the linear states, indirectly. Displacing $\vct v$,
+was a genuine feedback loop: a $0.25$~rad attitude displacement moved the
+estimated wave period from $8.05$ to $10.3$~s and $\tau$ by a factor $1.28$.
+It reached the linear states indirectly as well, since displacing $\vct v$,
 $\vct p$, $\vct S$ or $\vct a_w$ perturbs attitude through the filter's
-cross-covariances, which moves the tuner: even a displacement of $0.02$ in
-each linear state shifts $\tau$ from $4.07$ to $4.53$. The source comment at
-the \texttt{wave\_period\_} call states that the leveled signal ``depends on
-attitude but not on the linear block, so it does not close a loop through the
-quantity being tuned''. That is true of the signal in isolation and false of
-the closed filter.
+cross-covariances: a displacement of $0.02$ in each linear state shifted
+$\tau$ from $4.07$ to $4.53$.
+
+Levelling is not what caused this; levelling \emph{with an estimator state}
+was. The estimator needs a levelled input, because double integration weights
+a spectrum by $\omega^{-4}$ and the sub-band gravity a tilting platform leaks
+into the raw body-$z$ proxy then dominates the elevation proxy --- fed that
+proxy the estimator reports $6.8$--$10.0$~s whatever the sea does, against a
+truth of $2.4$--$8.7$~s, and vertical RMS degrades by a factor $2.5$. Both
+requirements are met at once by levelling with a \emph{private} attitude
+solution: \texttt{src/tuner/VerticalAccelComplementary.h} runs a Mahony
+observer on the raw gyro and accelerometer, reading no calibrated value and no
+filter state, and reports $-\bigl((\mat R\vct f)_z+g\bigr)$ from its own
+quaternion. Its correction corner is placed an order of magnitude below the
+wave band ($\approx0.016$~Hz against $0.11$--$0.42$~Hz) so that the gyro
+carries attitude through the band and the accelerometer only trims drift; a
+faster corner chases horizontal orbital acceleration into tilt and reproduces
+the body-$z$ failure.
+
+This is the deployed default, and it costs nothing: over the eight reference
+records it reproduces the attitude-levelled input to within $0.2\%$ of vertical
+RMS and $0.1\%$ of 3D RMS, geometric-mean ratio $1.000$ on both OU-II and
+OU-III, with the reported $T_z$ matching to $0.01$~s. Displacing every
+estimator state now leaves the reported period \emph{and} $\vct\vartheta$
+bit-for-bit unchanged, asserted alongside the variance channel in the same
+test. The older attitude-levelled input remains selectable for ablation, and
+the test still bounds its gain at $2$ so the comparison stays interpretable.
 
 \paragraph{One further state-dependent branch.}
 A gate reads the attitude estimate and re-locks the filter above $70^\circ$
@@ -572,20 +593,28 @@ is $\arccos(\cos 0.70\cos 0.45)=46.5^\circ$, or on the trajectories used
 here, which peak at $54^\circ$. The margin is pinned by the same test.
 
 \paragraph{What this means for the certificate.}
-The interconnection is real, so it is \emph{not} discharged, and the honest
-statement of scope is narrower than the rest of this appendix might suggest:
-Secs.~\ref{app:iss-trajectory} and the sweep certify the estimator under an
-\emph{externally supplied} $\vct\vartheta$ schedule, whereas the deployed
-schedule is partly a function of $\delta\vct\theta$. Closing it needs either
-$\vct\vartheta$'s generator included in the certified coordinate, or a
-small-gain argument bounding the $\delta\vct\theta\to\vct\vartheta$ gain
-against the estimator's own contraction. The measured factor of $1.28$ for a
-$0.25$~rad displacement is the quantity such an argument would consume, and
-the test bounds it at $2$ so the premise cannot rot unnoticed.
+With both channels exogenous, $\vct\vartheta$ is a function of the measured
+signals alone and the deployed schedule is an externally supplied one. That is
+exactly the hypothesis Secs.~\ref{app:iss-trajectory} and the sweep assume, so
+the gap between what is certified and what is deployed closes: no composite
+Lyapunov function and no small-gain condition is needed, because there is no
+interconnection to bound.
 
-What the exogenous-schedule results below do establish is that the estimator
-tolerates $\vct\vartheta$ moving anywhere in $\Theta$, arbitrarily fast,
-which is the part a small-gain argument would still need.
+This is a change of configuration, not a change of proof. The earlier text
+recorded the loop as this appendix's open item and offered two routes to close
+it --- include $\vct\vartheta$'s generator in the certified coordinate, or
+bound the $\delta\vct\theta\to\vct\vartheta$ gain against the estimator's own
+contraction. Removing the dependence is the third, and the bit-for-bit
+assertion is what makes it checkable rather than argued. Two caveats survive.
+The claim is conditional on the input source: selecting the attitude-levelled
+ablation reinstates the loop and with it the earlier, narrower scope. And the
+private observer's corner is fixed while the wave band moves down as the sea
+grows, so the order-of-magnitude margin quoted above is a property of the
+reference records, not a theorem.
+
+The exogenous-schedule results below therefore now speak directly to the
+deployed filter: the estimator tolerates $\vct\vartheta$ moving anywhere in
+$\Theta$, arbitrarily fast.
 
 \paragraph{An exogenous schedule is not automatically harmless either.}
 Set the coupling aside and ask what an arbitrary bounded schedule can do. A

@@ -214,7 +214,9 @@ public:
                 } else if (value == "complementary") {
                     filter.setWavePeriodInput(
                         WavePeriodInputSource::Complementary);
-                } else if (value != "leveled") {
+                } else if (value == "leveled") {
+                    filter.setWavePeriodInput(WavePeriodInputSource::Leveled);
+                } else {
                     throw std::runtime_error(
                         "W3D_WAVE_PERIOD_INPUT must be leveled, body_z or "
                         "complementary");

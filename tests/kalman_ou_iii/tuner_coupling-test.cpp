@@ -11,25 +11,23 @@
 //    world vertical acceleration instead, which would couple the variance
 //    estimate to the very states being tuned. Asserted bit-for-bit.
 //
-// 2. The frequency channel is NOT exogenous, and that is the loop the
-//    certificate still has to account for. wave_period_ is fed
-//    direction_accel.up_ms2, the leveled vertical acceleration, which uses
-//    the attitude estimate. So delta_theta -> wave period -> tau, sigma_a,
-//    r_S -> filter gains -> delta_theta is a real feedback path. It cannot be
-//    asserted away; what is asserted is that its gain stays modest, so the
-//    small-gain reading of the interconnection keeps its premise.
+// 2. The frequency channel is exogenous too, under the default
+//    WavePeriodInputSource::Complementary. wave_period_ is fed a vertical
+//    acceleration levelled by a private Mahony observer that reads only the
+//    raw gyro and accelerometer, so displacing every estimator state leaves
+//    the reported period and the whole operating point bit-for-bit unchanged.
+//    A pure function of the measurements admits no tolerance, so that is how
+//    it is asserted. With both channels exogenous the interconnection
+//    app:iss-tuner was written around is absent, not merely small.
 //
-//    Note this reaches the linear states indirectly too: displacing v, p, S
-//    or a_w perturbs attitude through the filter's cross-covariances and so
-//    moves the tuner as well. The source comment at the wave_period_.update
-//    call says the leveled signal "depends on attitude but not on the linear
-//    block, so it does not close a loop through the quantity being tuned".
-//    That holds for the signal in isolation, not for the closed filter.
-//
-//    WavePeriodInputSource::Complementary removes this loop rather than
-//    bounding it, by levelling with a private Mahony observer that reads only
-//    the raw gyro and accelerometer. That is asserted separately, bit-for-bit,
-//    since a pure function of the measurements admits no tolerance.
+//    WavePeriodInputSource::Leveled is the older behaviour, kept for ablation,
+//    and it does close the loop: it feeds direction_accel.up_ms2, which uses
+//    the attitude estimate, so delta_theta -> wave period -> tau, sigma_a,
+//    r_S -> filter gains -> delta_theta is a real feedback path. It reaches
+//    the linear states indirectly as well, since displacing v, p, S or a_w
+//    perturbs attitude through the filter's cross-covariances. Its gain is
+//    still bounded here, because the ablation has to stay interpretable and
+//    because the bound is what any small-gain argument about it would consume.
 //
 // 3. One gate reads the attitude estimate directly and re-locks the filter
 //    above 70 degrees of tilt. It is kept out of the certified envelope only
@@ -160,12 +158,16 @@ bool test_variance_channel_input_is_exogenous() {
     return ok;
 }
 
-bool test_frequency_channel_coupling_stays_bounded() {
+bool test_leveled_ablation_coupling_stays_bounded() {
     bool ok = true;
 
     Filter nominal, displaced;
     bring_up(nominal);
     bring_up(displaced);
+    // Not the default any more, so it has to be selected: without this the
+    // test would measure the exogenous path and pass while proving nothing.
+    nominal.setWavePeriodInput(WavePeriodInputSource::Leveled);
+    displaced.setWavePeriodInput(WavePeriodInputSource::Leveled);
     run(nominal, 0, SETTLE);
     run(displaced, 0, SETTLE);
 
@@ -178,11 +180,11 @@ bool test_frequency_channel_coupling_stays_bounded() {
 
     const float ratio = displaced.getTauTarget() / nominal.getTauTarget();
 
-    // Measured 1.34 for a 0.25 rad displacement. The bound is a small-gain
+    // Measured 1.28 for a 0.25 rad displacement. The bound is a small-gain
     // guard, not a fit: it fails if the attitude-to-tuning path ever becomes
-    // strong enough that the interconnection stops being a mild perturbation.
-    // It also passes trivially if someone makes the frequency channel
-    // exogenous, which would be an improvement.
+    // strong enough that this ablation stops being a mild perturbation of the
+    // default. It is no longer load-bearing for the shipped filter, whose
+    // frequency channel is exogenous, but it keeps the comparison honest.
     constexpr float MAX_RATIO = 2.0f;
     ok &= check(ratio > 1.0f / MAX_RATIO && ratio < MAX_RATIO,
                 "attitude-to-tuning loop gain must stay modest");
@@ -193,42 +195,44 @@ bool test_frequency_channel_coupling_stays_bounded() {
     return ok;
 }
 
-// The counterpart to the test above: under WavePeriodInputSource::Complementary
-// the frequency channel joins the variance channel in being exogenous, so the
-// interconnection the certificate has to argue about is not merely small, it is
-// absent.  Asserted bit-for-bit against a displacement of *every* state, because
-// "a pure function of the measurements" admits no tolerance.
-bool test_complementary_frequency_channel_is_exogenous() {
+// The frequency channel under the *default* input source. It joins the variance
+// channel in being exogenous, so the interconnection the certificate has to
+// argue about is not merely small, it is absent. Asserted bit-for-bit against a
+// displacement of *every* state, because "a pure function of the measurements"
+// admits no tolerance. Nothing is selected here on purpose: the point is that
+// this is what the filter does out of the box.
+bool test_default_frequency_channel_is_exogenous() {
     bool ok = true;
 
     Filter nominal, displaced;
     bring_up(nominal);
     bring_up(displaced);
-    nominal.setWavePeriodInput(WavePeriodInputSource::Complementary);
-    displaced.setWavePeriodInput(WavePeriodInputSource::Complementary);
+    ok &= check(nominal.wavePeriodInput() == WavePeriodInputSource::Complementary,
+                "the default wave-period input must be the exogenous one");
     run(nominal, 0, SETTLE);
     run(displaced, 0, SETTLE);
 
     ok &= check(nominal.isAdaptiveLive(),
                 "the tuner must reach its live stage, or this test proves nothing");
     ok &= check(nominal.wavePeriodReady(),
-                "the complementary period must have settled, or the fallback is "
-                "what is being measured");
+                "the period must have settled, or the body-Z fallback is what "
+                "is being measured");
 
     displace_state(displaced, /*attitude=*/true, /*linear=*/true);
     run(nominal, SETTLE, AFTER);
     run(displaced, SETTLE, AFTER);
 
     ok &= check(nominal.getWavePeriodSec() == displaced.getWavePeriodSec(),
-                "the complementary wave period must be a function of the "
+                "the default wave period must be a function of the "
                 "measurement alone");
 
     // With both tuner inputs exogenous the whole operating point must be, too.
     ok &= check(nominal.getTauTarget() == displaced.getTauTarget(),
-                "the complementary operating point must be a function of the "
+                "the default operating point must be a function of the "
                 "measurement alone");
 
-    std::cout << "  complementary: attitude+linear displacement -> wave period "
+    std::cout << "  default (complementary): attitude+linear displacement -> "
+                 "wave period "
               << nominal.getWavePeriodSec() << " s vs "
               << displaced.getWavePeriodSec() << " s (must be identical)\n";
 
@@ -273,8 +277,8 @@ bool test_tilt_gate_stays_outside_the_certified_envelope() {
 int main() {
     bool ok = true;
     ok &= test_variance_channel_input_is_exogenous();
-    ok &= test_frequency_channel_coupling_stays_bounded();
-    ok &= test_complementary_frequency_channel_is_exogenous();
+    ok &= test_default_frequency_channel_is_exogenous();
+    ok &= test_leveled_ablation_coupling_stays_bounded();
     ok &= test_tilt_gate_stays_outside_the_certified_envelope();
 
     if (!ok) {

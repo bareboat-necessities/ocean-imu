@@ -6,10 +6,11 @@ period, and that period is estimated by ``WavePeriodEstimator`` from a vertical
 acceleration.  Which vertical acceleration it gets is a design choice with a
 stability consequence:
 
-  ``leveled`` (shipped)  the heading-frame up component, i.e. the accelerometer
+  ``leveled``            the heading-frame up component, i.e. the accelerometer
                          rotated by the filter's own attitude solution.  It
                          tracks the sea state well, but attitude is a filter
-                         state, so the tuner is inside a loop.
+                         state, so the tuner is inside a loop.  This is what
+                         the filter shipped before ``complementary``.
 
   ``body_z``             the raw body-Z proxy ``-(acc.z + g)`` that the
                          frequency tracker already runs on.  It never touches
@@ -18,11 +19,11 @@ stability consequence:
                          band, where double integration weights the spectrum by
                          1/omega^4.
 
-  ``complementary``      levelled with a private Mahony observer running on the
-                         raw gyro and accelerometer.  Also a pure function of
-                         the measurements, so the loop is equally open, but
-                         levelled, so the leakage is removed rather than
-                         accepted.
+  ``complementary``      (shipped) levelled with a private Mahony observer
+                         running on the raw gyro and accelerometer.  Also a
+                         pure function of the measurements, so the loop is
+                         equally open, but levelled, so the leakage is removed
+                         rather than accepted.
 
 This tool replays the eight reference records under every input, for both
 filters, and reports the RMS errors side by side.  The protocol is the
@@ -70,7 +71,10 @@ RECORDS = (
 
 INPUTS = ("leveled", "body_z", "complementary")
 
-# The shipped configuration, and the baseline every ratio is taken against.
+# The baseline every ratio is taken against.  This is deliberately not the
+# shipped input, which is "complementary": the question the tool exists to
+# answer is what the shipped input changed relative to attitude levelling, so
+# the old behaviour stays the denominator.
 BASELINE = "leveled"
 
 # Fields pulled out of the VALIDATION_METRICS line.

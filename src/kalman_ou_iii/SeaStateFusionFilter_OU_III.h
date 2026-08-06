@@ -328,35 +328,30 @@ public:
         // carrier the direction demodulator needs, while the OU operating point
         // needs the wave band.
         //
-        // It is fed the leveled vertical acceleration rather than the body-Z
-        // proxy.  Double integration weights a spectrum by 1/omega^4, so the
-        // sub-band gravity leakage a tilting platform puts into the body-Z
-        // proxy dominates the elevation proxy: on the reference records the
-        // body-Z input reported 6.8-10.0 s against a true 2.5-8.6 s, while the
-        // leveled input tracks the sea state.
+        // The input must be levelled and must not read estimator state, and
+        // those two requirements pulled against each other for a while.
         //
-        // The leveled signal depends on attitude.  That is a real coupling
-        // from the estimator back into the tuning, and it is weaker than the
-        // displacement loop this avoids but not absent: a 0.25 rad attitude
-        // displacement moves the reported period 8.05 -> 10.3 s and tau by
-        // 1.28x.  It reaches the linear block too, indirectly, because
-        // displacing v, p, S or a_w perturbs attitude through the filter's
-        // cross-covariances -- so the earlier claim here, that this "does not
-        // close a loop through the quantity being tuned", holds for the signal
-        // in isolation and not for the closed filter.
+        // Levelled, because double integration weights a spectrum by
+        // 1/omega^4, so the sub-band gravity leakage a tilting platform puts
+        // into the body-Z proxy dominates the elevation proxy.  Fed the raw
+        // body-Z proxy the estimator reports 6.8-10.0 s whatever the sea does,
+        // against a truth of 2.4-8.7 s, and vertical RMS degrades 2.5x.
         //
-        // The stability appendix treats this as its open interconnection, and
-        // tests/kalman_ou_iii/tuner_coupling-test.cpp bounds the gain so it
-        // cannot grow unnoticed.  Feeding the period estimator a
-        // measurement-only leveled signal would remove it.
+        // Exogenous, because levelling with the filter's own attitude closes a
+        // loop: a 0.25 rad attitude displacement moved the reported period
+        // 8.05 -> 10.3 s and tau by 1.28x, and it reached the linear block too,
+        // since displacing v, p, S or a_w perturbs attitude through the
+        // filter's cross-covariances.  The stability appendix carried that as
+        // its open interconnection.
         //
-        // setWavePeriodInput() selects what opens it.  BodyZ feeds the same
-        // raw proxy the frequency tracker sees, which owes nothing to the
-        // attitude solution but trades the coupling for the sub-band gravity
-        // leakage described above.  Complementary levels with a private Mahony
-        // observer instead: also a pure function of the measurements, so the
-        // interconnection is equally open, but levelled, so the leakage is
-        // removed rather than accepted.
+        // VerticalAccelComplementary satisfies both: it levels, but with a
+        // private Mahony observer reading only the raw gyro and accelerometer,
+        // so it is a pure function of the measurements.  It costs nothing --
+        // over the eight reference records it matches the old attitude-levelled
+        // input to within 0.2% of vertical RMS -- and it is the default.
+        // setWavePeriodInput() still reaches the other two for ablation;
+        // tests/kalman_ou_iii/tuner_coupling-test.cpp asserts the default is
+        // exogenous bit-for-bit and bounds the Leveled path's gain.
         wave_period_.update(dt, wave_period_input_ms2_(direction_accel));
 
         dir_filter_.update(direction_accel.forward_ms2,
@@ -755,9 +750,11 @@ public:
     bool waveBandTuning() const noexcept { return wave_band_tuning_; }
 
     // Select which vertical acceleration drives the wave-period estimator.
-    // Leveled (default) uses the main filter's attitude and so keeps the tuner
-    // inside a loop; BodyZ and Complementary are both measurement-only and
-    // open it.  See the call site in updateTime for what each one costs.
+    // Complementary (default) levels with the private Mahony observer and is
+    // measurement-only, so the tuner is outside the estimator's loop.  Leveled
+    // is the older behaviour, which levels with the main filter's attitude and
+    // closes that loop; BodyZ is measurement-only but unlevelled.  See the call
+    // site in updateTime for what each one costs.
     void setWavePeriodInput(WavePeriodInputSource source) {
         wave_period_input_ = source;
     }
@@ -765,8 +762,9 @@ public:
         return wave_period_input_;
     }
 
-    // Gains of the private Mahony observer; only meaningful under
-    // WavePeriodInputSource::Complementary.
+    // Gains of the private Mahony observer that levels the default input.
+    // two_kp sets the accelerometer-to-gyro correction corner, which must stay
+    // below the wave band; see VerticalAccelComplementary.h.
     void setWavePeriodComplementaryGains(float two_kp, float two_ki) {
         vertical_accel_comp_.setGains(two_kp, two_ki);
     }
@@ -1113,7 +1111,7 @@ private:
     double last_aw_cov_sync_sec_ = 0.0;
 
     bool  wave_band_tuning_       = true;
-    WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Leveled;
+    WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;
     float min_tune_freq_hz_       = MIN_TUNE_FREQ_HZ;
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;

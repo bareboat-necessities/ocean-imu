@@ -237,13 +237,15 @@ pseudo-measurement.
 Reading the attitude solution is itself a weaker coupling, and it is worth
 stating plainly because the stability appendix has to account for it.  Levelling
 uses the attitude estimate, so $\delta\vct\theta$ reaches $f$, hence $\tau$
-and $r_S$, hence the gains.  Measured on a settled filter, a \SI{0.25}{rad}
-attitude displacement moves the estimated period from \SI{8.05}{s} to
-\SI{10.3}{s} and $\tau$ by a factor $1.28$.  The coupling also reaches the
-linear block indirectly, since displacing $\vct v$, $\vct p$, $\vct S$ or
-$\vct a_w$ perturbs attitude through the filter's cross-covariances.  What the
-displacement construction rules out is the strong direct loop above, not all
-coupling; see Sec.~\ref{app:iss-tuner}.
+and $r_S$, hence the gains.  That is why the deployed input is not levelled
+with the filter's attitude at all: it is levelled with a private Mahony
+observer reading only the raw gyro and accelerometer, so $\vct\vartheta$ is a
+function of the measurements alone.  Selecting the older attitude-levelled
+input instead reinstates the loop --- a \SI{0.25}{rad} attitude displacement
+then moves the estimated period from \SI{8.05}{s} to \SI{10.3}{s} and $\tau$
+by a factor $1.28$, and reaches the linear block indirectly besides, since
+displacing $\vct v$, $\vct p$, $\vct S$ or $\vct a_w$ perturbs attitude
+through the filter's cross-covariances; see Sec.~\ref{app:iss-tuner}.
 
 The tuner input frequency is $1/\widehat{T}_z$, or the tracker frequency until
 the period estimator settles.  It is smoothed by a fixed-horizon EMA with time

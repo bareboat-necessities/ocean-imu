@@ -171,11 +171,13 @@ pseudo-measurement.
 
 ### Opening the loop
 
-The leveled input is what puts attitude inside the tuning loop. Two inputs open
-it, both pure functions of the measurements, and
+Levelling with the filter's own attitude is what puts the tuner inside a loop.
+Two inputs open it, both pure functions of the measurements, and
 `tools/ou_wave_period_input_study.py` replays all eight reference records under
 each of them (`W3D_WAVE_PERIOD_INPUT`, `setWavePeriodInput()`) on the
-deterministic single-seed protocol of `tools/ou_sim_table.py`.
+deterministic single-seed protocol of `tools/ou_sim_table.py`. The second one
+is now the default; ratios below are still taken against attitude levelling,
+since the question is what changed relative to it.
 
 **`body_z`** is the raw proxy the frequency tracker already runs on. It opens
 the loop and is not usable:
@@ -196,10 +198,10 @@ unmoved either way, confirming the loss is the operating point and not the
 attitude solution.
 
 **`complementary`** is the measurement-only *leveled* signal the paragraph above
-asks for. `src/tuner/VerticalAccelComplementary.h` runs a private Mahony
-observer on the raw gyro and accelerometer - never the calibrated values, never
-any filter state - and reports `-((R f)_z + g)` from its own quaternion. It
-costs nothing:
+asks for, and is what the filter now ships.
+`src/tuner/VerticalAccelComplementary.h` runs a private Mahony observer on the
+raw gyro and accelerometer - never the calibrated values, never any filter
+state - and reports `-((R f)_z + g)` from its own quaternion. It costs nothing:
 
 | filter | vertical RMS | 3D RMS | largest per-record deviation |
 | --- | --- | --- | --- |
@@ -225,10 +227,17 @@ integral term is another slow state that can wind up against a sustained
 horizontal acceleration.
 
 `tests/kalman_ou_iii/tuner_coupling-test.cpp` asserts the exogeneity
-bit-for-bit rather than by tolerance: with `Complementary` selected, displacing
-*every* estimator state - attitude and all linear states - leaves the reported
-period and `tau_target` numerically identical. Under `Leveled` the same
-displacement moves the period 8.05 -> 10.32 s and `tau` by 1.28x.
+bit-for-bit rather than by tolerance, and does so on the default path with
+nothing selected: displacing *every* estimator state - attitude and all linear
+states - leaves the reported period and `tau_target` numerically identical.
+The `Leveled` ablation, which must now be selected explicitly, moves them
+8.05 -> 10.32 s and 1.28x under the same displacement.
+
+This closes the item `app:iss-tuner` in the stability appendix was written
+around. Both tuner channels are now exogenous, so the estimator and the tuner
+do not form a feedback interconnection and no composite Lyapunov function or
+small-gain condition is needed to describe the deployed schedule. The appendix
+records the loop as it stood, and what removing it changed.
 
 The estimator settles in about a minute, so the tracker frequency is used until
 it is ready.
