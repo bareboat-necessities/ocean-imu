@@ -4,3 +4,4 @@
 ./convention-test
 ./ou_chain_identity-test
 ./tfg_propagation-test
+./tfg_jacobians-test

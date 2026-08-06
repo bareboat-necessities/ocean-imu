@@ -574,7 +574,278 @@ class Kalman3D_Wave_TFG {
         }
     }
 
+    // ------------------------------------------------------- measurements
+    /*
+        SIGN CONVENTION, fixed here once and used everywhere.
+
+            xi     is the error OF THE ESTIMATE:  eta = Xhat X^-1 = Exp_G(xi),
+                   and P = E[xi xi^T].
+            r      is the innovation, measured minus predicted.
+            r      ~ H xi + noise                       (note: +, not -)
+            K      = P H^T (H P H^T + R)^-1
+            xihat  = K r                                 estimated error
+            Xhat+  = Exp_G(-xihat) o Xhat                remove it
+
+        The correction is injected NEGATED, because xi is the error rather
+        than the correction. Half the sign bugs in filters like this come from
+        mixing the two conventions -- deriving H against "r ~ -H xi" and then
+        injecting +K r, which cancels out only if both mistakes are made
+        together. Here H is exactly d r / d xi, which is what
+        tfg_jacobians-test measures by finite differences, so there is nothing
+        left to get backwards.
+    */
+
+    struct MeasDiag3 {
+        Vector3 r{Vector3::Zero()};
+        Matrix3 S{Matrix3::Zero()};
+        T nis{T(0)};
+        bool accepted{false};
+    };
+
+    [[nodiscard]] const MeasDiag3& lastAccDiag() const { return last_acc_diag_; }
+    [[nodiscard]] const MeasDiag3& lastMagDiag() const { return last_mag_diag_; }
+    [[nodiscard]] const MeasDiag3& lastIntegralDiag() const { return last_S_diag_; }
+
+    void set_Racc_std(const Vector3& std_body) { Racc_ = std_body.cwiseAbs2().asDiagonal(); }
+    void set_Racc_matrix(const Matrix3& R_body) { Racc_ = T(0.5) * (R_body + R_body.transpose()); }
+    void set_Rmag_std(const Vector3& std_body)  { Rmag_ = std_body.cwiseAbs2().asDiagonal(); }
+    void set_Rmag(T variance) { Rmag_ = Matrix3::Identity() * std::abs(variance); }
+    void set_RS_noise(T variance) { R_S_ = Matrix3::Identity() * std::abs(variance); }
+    void set_RS_noise_vector(const Vector3& variances) { R_S_ = variances.cwiseAbs().asDiagonal(); }
+    void set_RS_noise_matrix(const Matrix3& R_S) { R_S_ = T(0.5) * (R_S + R_S.transpose()); }
+
+    // World-frame magnetic reference, NED. Stored as the fixed vector the
+    // magnetometer Jacobian is built from -- not as a body-frame prediction.
+    void set_magnetic_reference_world(const Vector3& B_w) {
+        if (B_w.allFinite() && B_w.norm() > T(1e-9)) {
+            B_w_ = B_w;
+            have_mag_reference_ = true;
+        }
+    }
+    [[nodiscard]] const Vector3& magnetic_reference_world() const { return B_w_; }
+    [[nodiscard]] bool has_magnetic_reference() const { return have_mag_reference_; }
+
+    void set_accel_bias_temp_coeff(const Vector3& k_a) { k_a_ = k_a; }
+    void set_accel_bias_limit(T limit) { acc_bias_limit_ = std::abs(limit); }
+    void set_acc_bias_updates_enabled(bool on) { acc_bias_updates_enabled_ = on; }
+
+    // Chi-square gate on the 3-DoF NIS. Zero disables it, which is the
+    // default and matches OU-III's behaviour of accepting every update.
+    void set_meas_gate_nis(T threshold) { nis_gate_ = std::max(T(0), threshold); }
+
+    [[nodiscard]] Vector3 gravity_world() const { return Vector3(T(0), T(0), gravity_magnitude_); }
+
+    /*
+        Accelerometer, as a world-frame invariant residual.
+
+            f_m = R^T (a_w - g) + b_a + n_a
+            r_a = Rhat (f_m - bhat_a) - (ahat_w - g)
+
+        which is zero at the true state. Linearizing with Rhat = Exp(phi) R
+        and ahat_w = rho_a + Exp(phi) a_w:
+
+            r_a ~ [g]x phi - rho_a - Rhat delta_ba + Rhat n_a
+
+        The Jacobian contains the FIXED gravity vector and nothing else --
+        no estimated attitude, no estimated wave acceleration. That is the
+        structural gain over OU-III, whose J_att = -[f_cog_b]x is rebuilt from
+        the current specific-force estimate every step.
+
+        WHAT IS APPROXIMATED, precisely. Differentiating the residual exactly
+        gives
+
+            d r_a / d phi = -[Rhat (f_m - bhat_a)]x + [ahat_w]x
+                          = [g]x - [r_a]x
+
+        because Rhat(f_m - bhat_a) = ahat_w - g + r_a by definition of r_a. So
+        [g]x is the exact derivative only where the residual vanishes, and the
+        neglected term is exactly -[r_a]x: first order in the innovation,
+        vanishing as the filter converges.
+
+        That term is dropped on purpose. Keeping it would put the measurement
+        and the estimated attitude back into the Jacobian and forfeit the one
+        property this formulation exists for. It is the standard invariant-EKF
+        choice, and tfg_jacobians-test pins its exact size and structure --
+        finite differences at a consistent state must match to 1e-8, and the
+        discrepancy at an inconsistent state must equal -[r_a]x rather than
+        merely being "small".
+
+        Note the accelerometer-bias column: -Rhat, not -I. At Level 1
+        delta_ba is an additive BODY-frame error, so it has to be rotated into
+        the world frame the residual lives in. It collapses to -I only at
+        Level 2, where beta_a = R(bhat_a - b_a) is already world-referred.
+        That difference is exactly what the two-frame bias geometry buys, and
+        tfg_jacobians-test pins both the value and the reason.
+    */
+    void accel_residual(const Vector3& acc_meas_body, T tempC,
+                        Vector3& r, Eigen::Matrix<T,3,NX>& H, Matrix3& Rw) const {
+        const Vector3 ba = accel_bias_at_(tempC);
+        r = X_.R * (acc_meas_body - ba) - (X_.X.col(3) - gravity_world());
+
+        H.setZero();
+        H.template block<3,3>(0, OFF_PHI) = ocean_imu::lie::skew<T>(gravity_world());
+        H.template block<3,3>(0, OFF_AW)  = -Matrix3::Identity();
+        if constexpr (with_accel_bias) {
+            if (acc_bias_updates_enabled_) {
+                H.template block<3,3>(0, OFF_BA) =
+                    two_frame_bias ? Matrix3(-Matrix3::Identity()) : Matrix3(-X_.R);
+            }
+        }
+        // Body-frame sensor noise, expressed in the world frame the residual
+        // lives in. For isotropic Racc this is a no-op, which is worth knowing
+        // when reading the anisotropic case.
+        Rw = X_.R * Racc_ * X_.R.transpose();
+    }
+
+    /*
+        Magnetometer.
+
+            m_m = R^T B_w + n_m
+            r_m = Rhat m_m - B_w        ~  -[B_w]x phi + Rhat n_m
+
+        Again the Jacobian is built from the fixed world reference rather than
+        from the current predicted body-frame vector.
+
+        Same approximation as the accelerometer, same structure: the exact
+        derivative is -[Rhat m_m]x = -[B_w]x - [r_m]x, so the neglected term is
+        -[r_m]x, first order in the innovation.
+    */
+    void mag_residual(const Vector3& mag_meas_body,
+                      Vector3& r, Eigen::Matrix<T,3,NX>& H, Matrix3& Rw) const {
+        r = X_.R * mag_meas_body - B_w_;
+        H.setZero();
+        H.template block<3,3>(0, OFF_PHI) = -ocean_imu::lie::skew<T>(B_w_);
+        Rw = X_.R * Rmag_ * X_.R.transpose();
+    }
+
+    /*
+        Integral pseudo-measurement, z_S = 0 = S + n_S.
+
+            r_S = 0 - Shat = -Shat       ~  [Shat]x phi - rho_S + n_S
+
+        The [Shat]x term is O(S) and vanishes at the regularization target, so
+        it is routinely dropped. It is kept because it costs one cross product
+        and makes the finite-difference check exact rather than approximate --
+        a test that has to be loosened to accommodate a term you chose not to
+        write stops discriminating against the terms you got wrong.
+
+        R_S stays in world/NED coordinates. A NED-anisotropic R_S is a
+        deliberate physical choice (heave regularized differently from surge
+        and sway), and the right-invariant error is what preserves its meaning
+        -- but it does break rotational symmetry, so the filter must not then
+        be described as invariant under arbitrary world rotations.
+    */
+    void integral_residual(Vector3& r, Eigen::Matrix<T,3,NX>& H, Matrix3& Rw) const {
+        r = -X_.X.col(2);
+        H.setZero();
+        H.template block<3,3>(0, OFF_PHI) = ocean_imu::lie::skew<T>(Vector3(X_.X.col(2)));
+        H.template block<3,3>(0, OFF_S)   = -Matrix3::Identity();
+        Rw = R_S_;
+    }
+
+    bool measurement_update_acc_only(const Vector3& acc_meas_body, T tempC = T(35)) {
+        if (!acc_meas_body.allFinite()) { last_acc_diag_ = MeasDiag3{}; return false; }
+        Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
+        accel_residual(acc_meas_body, tempC, r, H, Rw);
+        const bool ok = apply_update3_(r, H, Rw, last_acc_diag_);
+        if (ok) project_acc_bias_();
+        return ok;
+    }
+
+    bool measurement_update_mag_only(const Vector3& mag_meas_body) {
+        if (!have_mag_reference_ || !mag_meas_body.allFinite() ||
+            !(mag_meas_body.norm() > T(1e-9))) {
+            last_mag_diag_ = MeasDiag3{};
+            return false;
+        }
+        Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
+        mag_residual(mag_meas_body, r, H, Rw);
+        return apply_update3_(r, H, Rw, last_mag_diag_);
+    }
+
+    bool applyIntegralZeroPseudoMeas() {
+        Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
+        integral_residual(r, H, Rw);
+        return apply_update3_(r, H, Rw, last_S_diag_);
+    }
+
+    // Exposed so the covariance-transport test can drive one update in
+    // isolation and inspect what it did.
+    bool apply_update3(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
+                       const Matrix3& Rw, MeasDiag3& diag) {
+        return apply_update3_(r, H, Rw, diag);
+    }
+
   private:
+    [[nodiscard]] Vector3 accel_bias_at_(T tempC) const {
+        if constexpr (with_accel_bias) {
+            return X_.B.col(1) + k_a_ * (tempC - kTempRefC);
+        } else {
+            (void)tempC;
+            return Vector3::Zero();
+        }
+    }
+
+    /*
+        Rank-3 Joseph update in the invariant tangent frame.
+
+        There is deliberately NO MEKF-style covariance reset afterwards.
+        ou_detail::apply_left_error_reset's G = I + 0.5 [dtheta]x exists because
+        OU-III's error state is zeroed after injection and its covariance has
+        to be transported into the new linearization point. Here the update is
+        already formulated in the post-update tangent frame, so applying that
+        transport on top would double-correct the covariance. The
+        no-double-reset assertion lives in covariance_transport-test.
+    */
+    bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
+                        const Matrix3& Rw, MeasDiag3& diag) {
+        diag = MeasDiag3{};
+        diag.r = r;
+        if (!r.allFinite() || !H.allFinite() || !Rw.allFinite()) return false;
+
+        const Eigen::Matrix<T,NX,3> PHt = P_ * H.transpose();
+        Matrix3 S = H * PHt + Rw;
+        S = T(0.5) * (S + S.transpose()).eval();
+        diag.S = S;
+
+        Eigen::LDLT<Matrix3> ldlt(S);
+        if (ldlt.info() != Eigen::Success) return false;
+        const Vector3 Sinv_r = ldlt.solve(r);
+        if (!Sinv_r.allFinite()) return false;
+
+        diag.nis = r.dot(Sinv_r);
+        if (nis_gate_ > T(0) && !(diag.nis <= nis_gate_)) return false;
+
+        const Eigen::Matrix<T,NX,3> K = ldlt.solve(PHt.transpose()).transpose();
+        if (!K.allFinite()) return false;
+
+        const MatrixNX IKH = MatrixNX::Identity() - K * H;
+        P_ = (IKH * P_ * IKH.transpose() + K * Rw * K.transpose()).eval();
+        P_ = T(0.5) * (P_ + P_.transpose()).eval();
+
+        // xi = K r is the estimated error; remove it.
+        inject(Tangent(-(K * r)));
+
+        diag.accepted = true;
+        return true;
+    }
+
+    /*
+        Confine b_a to a ball, as OU-III does. The rationale there is the ISS
+        argument in doc/kalman_ou_iii/w3d-iss-stability.tex-part: tilt,
+        horizontal acceleration and accelerometer bias are only weakly
+        separable, so an unbounded bias state will absorb a persistent tilt
+        error and walk away. A Lie-group formulation does not change that --
+        it is a physical observability limit, not a coordinate artifact.
+    */
+    void project_acc_bias_() {
+        if constexpr (with_accel_bias) {
+            if (!(acc_bias_limit_ > T(0))) return;
+            const T n = X_.B.col(1).norm();
+            if (n > acc_bias_limit_) X_.B.col(1) *= (acc_bias_limit_ / n);
+        }
+    }
+
     void reorthonormalize_() {
         // Cheaper and better conditioned than a QR: round-trip through the
         // quaternion, which is what the surrounding filters store anyway.
@@ -630,6 +901,26 @@ class Kalman3D_Wave_TFG {
     Matrix3 Q_gyro_{Matrix3::Identity() * T(2.5e-5)};
     Matrix3 Q_bg_{Matrix3::Identity() * T(1e-10)};
     Matrix3 Q_ba_{Matrix3::Identity() * T(2.5e-7)};
+
+    // Measurement noise. Racc_ and Rmag_ are BODY frame and get rotated into
+    // the world frame per update; R_S_ is already world/NED.
+    Matrix3 Racc_{Matrix3::Identity() * T(0.16)};
+    Matrix3 Rmag_{Matrix3::Identity() * T(0.01)};
+    Matrix3 R_S_{Matrix3::Identity() * T(1.5)};
+
+    Vector3 B_w_{Vector3::UnitX()};
+    bool    have_mag_reference_{false};
+
+    Vector3 k_a_{Vector3::Zero()};
+    T       acc_bias_limit_{T(0.5)};
+    bool    acc_bias_updates_enabled_{true};
+    T       nis_gate_{T(0)};
+
+    static constexpr T kTempRefC = T(35);
+
+    MeasDiag3 last_acc_diag_{};
+    MeasDiag3 last_mag_diag_{};
+    MeasDiag3 last_S_diag_{};
 
     Vector3 last_omega_{Vector3::Zero()};
 };
