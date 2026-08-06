@@ -39,3 +39,11 @@ add_executable(kalman_ou_iii-sim "${OCEAN_IMU_TESTS_DIR}/kalman_ou_iii/kalman_ou
 add_executable(kalman_ou_common-test "${OCEAN_IMU_TESTS_DIR}/kalman_ou_iii/kalman_ou_common-test.cpp")
 add_executable(phi_coeff_boundary-test "${OCEAN_IMU_TESTS_DIR}/kalman_ou_iii/phi_coeff_boundary-test.cpp")
 add_executable(pii_observer-adaptive "${OCEAN_IMU_TESTS_DIR}/pii_observer/pii_observer-adaptive.cpp" ${W3D_SIM_COMMON})
+
+# Two-frame Lie-group filter. lie_group-test cross-checks the world block of
+# the group against Lie++ (third_party/Lie-plusplus), which is test-only and
+# never reaches the Arduino build.
+add_executable(lie_group-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/lie_group-test.cpp")
+add_executable(convention-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/convention-test.cpp")
+target_include_directories(lie_group-test SYSTEM PRIVATE
+  "${CMAKE_CURRENT_SOURCE_DIR}/third_party/Lie-plusplus/include")
