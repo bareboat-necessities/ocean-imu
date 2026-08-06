@@ -1,0 +1,15 @@
+{
+  "common_metric_c1": 324.05263769704914,
+  "common_metric_gamma_per_period": 0.24618148803710938,
+  "delta_l_required": 0.0,
+  "frozen_efold_seconds_still": 273.666839728312,
+  "frozen_rho_per_step_still": 0.9999847746746708,
+  "monodromy_count": 54,
+  "monodromy_rho_max": 0.4961680569914076,
+  "monodromy_rho_min": 0.18318094065156745,
+  "period_s": 10.0,
+  "schema": "ocean-imu-switched-certificate-v1",
+  "scope": "switched model: products of frozen-point Jacobians over an attitude orbit",
+  "steps_per_period": 2400,
+  "switched_efold_seconds": 14.270611697955939
+}

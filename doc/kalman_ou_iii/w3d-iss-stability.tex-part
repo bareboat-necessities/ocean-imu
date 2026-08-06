@@ -9,11 +9,12 @@ in a neighborhood in which their first-order error coordinates are valid. The
 notion of input-to-state stability (ISS) follows the standard nonlinear-systems
 formulation \cite{Sontag1989_ISS,Khalil2002_NonlinearSystems}.
 
-Section~\ref{app:iss-limits} reports what the accompanying numerical
-certificate actually establishes, and where it falls short of the theorem's
-hypotheses. That section is part of the result: the theorem below is correct
-mathematics, but one of its assumptions is not met by the running system, and
-the certificate should be read accordingly.
+Section~\ref{app:iss-limits} reports what the pointwise numerical certificate
+actually establishes and where it falls short of the theorem's hypotheses;
+Sec.~\ref{app:iss-switched} then shows that the shortfall is an artifact of
+freezing the operating point, and supplies a switched certificate under which
+the offending assumption is not needed at all. Both sections are part of the
+result.
 
 \subsection{Performance error and adaptive parameters}
 
@@ -140,7 +141,8 @@ free: as shown in the proof, contraction requires
 \label{eq:iss-delta-budget}
 \end{equation}
 Section~\ref{app:iss-limits} reports the measured value of $\delta_L$ against
-this budget. It is not met.
+this budget. It is not met -- and Sec.~\ref{app:iss-switched} argues it is the
+wrong condition to impose here, and discharges it.
 
 \item[A5 (local nonlinear remainder bound).]
 There exist $r_e>0$ and $c_\phi>0$ such that
@@ -353,13 +355,74 @@ gain $c_2$ from a persistent bias error is correspondingly large. The
 projection added under A6 bounds that input, which is what makes the bound
 meaningful at all, but it does not make the channel weak.
 
-\paragraph{Status.}
+\paragraph{Status of the pointwise certificate.}
 Taken together: Theorem~\ref{thm:adaptive-local-iss} is correct under its
 hypotheses, and the certificate verifies A3 on a sampled envelope, but A4 is
-not met by the running system. The certificate should therefore be read as a
-necessary-condition screen on the frozen dynamics -- it would catch a design
-in which some operating point is outright unstable -- and not as a proof of
-closed-loop stability for the adaptive filter. Closing that gap needs either a
-faster drift-control mode, which trades against wave-band fidelity, or an
-analysis that does not rely on frozen-point contraction, such as an averaging
-or explicitly linear-time-varying argument.
+not met. Read on its own, the pointwise certificate is a necessary-condition
+screen on the frozen dynamics -- it would catch a design in which some
+operating point is outright unstable -- and not a proof of closed-loop
+stability. Section~\ref{app:iss-switched} supplies the missing argument.
+
+\subsection{The motion is what stabilizes it: a switched certificate}
+\label{app:iss-switched}
+
+A4 is the wrong assumption for this system, and not merely an unmet one. It
+asks the operating point to move \emph{slowly} relative to the estimator
+dynamics. On a vessel the opposite holds by an enormous margin: roll and pitch
+sweep the envelope in seconds while the frozen mode is hours. That is the
+fast-variation regime, in which the object governing stability is the
+transition matrix over a cycle rather than any frozen Jacobian.
+
+Computing that object changes the conclusion completely. Multiplying
+implementation Jacobians along a closed orbit in attitude -- the envelope
+corners $(\phi,\theta)=(-0.70,0)\to(0,0.45)\to(0.70,0)\to(0,-0.45)$,
+traversed once per wave period -- gives the monodromy $\mat\Phi$ over that
+period. Over the shipped envelope,
+\begin{equation}
+\rho(\mat\Phi)\in[0.18,\;0.50]
+\end{equation}
+for a $10$~s period: the error contracts by a factor of two to five
+\emph{per wave}. Held still at the same tuning, the same estimator has
+$\rho=1-1.5\cdot10^{-5}$ per step, an $e$-folding of $274$~s. The frozen
+analysis is not conservative, it is describing a different system, one that
+never moves.
+
+The effect is not an artifact of the particular orbit. Sweeping roll alone,
+pitch alone, a two-point alternation, and twenty randomly ordered four-point
+orbits all give $\rho(\mat\Phi)\in[0.40,0.60]$ over $10$~s, against
+$0.994$ for the static control. What is happening is ordinary: rotation makes
+directions observable that are unobservable at any fixed attitude, and the
+near-marginal drift mode of Sec.~\ref{app:iss-limits} is exactly such a
+direction.
+
+Because the monodromies sit well inside the unit circle, the common-metric
+route that failed in Sec.~\ref{app:iss-limits} now succeeds. Bisecting for the
+least $\gamma$ admitting a single $\mat L\succeq\mat I$ with
+$\mat\Phi^\top\mat L\mat\Phi\preceq\gamma\mat L$ for every monodromy in
+the envelope gives
+\begin{equation}
+\gamma=0.246,\qquad
+c_1=\sqrt{\overline\ell/\underline\ell}=3.2\cdot10^{2},
+\end{equation}
+an $e$-folding of about $14$~s. Since one metric serves every cell,
+$\delta_L=0$ identically and A4 is not needed: Theorem~\ref{thm:adaptive-local-iss}
+goes through with $\mat L_k\equiv\mat L$ and the per-period contraction
+$\gamma$ in place of the per-step one. The constants improve by three orders
+of magnitude in $c_1$ and seven in the rate.
+
+\begin{remark}[What this model does and does not cover]
+Each factor of $\mat\Phi$ is a frozen-point Jacobian whose covariance was
+settled at that operating point and which is then held for a dwell interval,
+whereas the real filter's covariance evolves continuously along the
+trajectory. This is a switched-system model: strictly better than freezing,
+and it captures the mechanism the frozen analysis misses, but it is still a
+model. The rigorous version takes Jacobians along an actual simulated
+trajectory and bounds the product directly; that is the natural next step. The
+numbers above should be read as evidence about the mechanism and its size, not
+as a closed-loop proof.
+
+The practical implication stands regardless: any stability claim for this
+estimator that is evaluated with the vessel held still will understate its
+convergence by orders of magnitude, and any claim that depends on A4 is
+answering the wrong question.
+\end{remark}
