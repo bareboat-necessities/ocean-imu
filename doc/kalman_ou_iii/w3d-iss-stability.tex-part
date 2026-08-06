@@ -522,16 +522,85 @@ So A4 is discharged not just at one operating condition but uniformly over the
 declared tuning envelope and across the wave-period range, which is what the
 original assumption was reaching for and could not deliver.
 
+\subsection{The tuner is exogenous, and what that does and does not buy}
+\label{app:iss-tuner}
+
+The remaining worry was the adaptation: if $\vct\vartheta_k$ were computed
+from the estimator's own output, estimator and tuner would form a feedback
+interconnection, and a composite Lyapunov function with a small-gain condition
+would be needed, as in observer designs that carry separate attitude and
+translation stages.
+
+It is not. In \texttt{SeaStateFusionFilter\_OU\_III} the tuner is driven by
+\begin{equation}
+a_{\text{proxy}}=-\bigl(a_{z,\text{body}}^{\text{meas}}+g\bigr),
+\end{equation}
+the raw accelerometer body-$z$ channel, and by a frequency tracker running on
+a low-pass of that same signal. Neither the variance estimate nor the
+frequency estimate reads the filter state. The targets
+$\tau=c_\tau/2f$, $\sigma_a=c_\sigma\sqrt{\operatorname{var}_{\text{wave}}}$
+and $r_S=c_R\sigma_a\tau^3$ are functions of those two quantities alone.
+
+One state-dependent path does exist: a gate reads the attitude estimate and
+re-locks the filter when tilt exceeds $70^\circ$. It cannot fire on the
+certified envelope, whose worst combined tilt is
+$\arccos(\cos 0.70\cos 0.45)=47^\circ$, or on the trajectories used here,
+which peak at $54^\circ$. Startup and fault-recovery logic is outside the
+scope of this appendix in any case.
+
+So on the envelope $\vct\vartheta_k$ is a causal functional of the
+measurement sequence and not of the state. There is no loop to close, and no
+composite Lyapunov argument is required: the estimator is linear
+time-varying, driven by an exogenous parameter schedule.
+
+\paragraph{Exogenous is not the same as harmless.}
+That structural fact removes the interconnection but not the rate question. A
+schedule that moves fast enough can destabilize a system every frozen version
+of which is stable, and this one is no exception. Sweeping $\vct\vartheta$
+over the whole box $\tau\in[0.55,4.0]$, $\sigma_{aw}\in[0.12,2.8]$,
+$r_S\in[0.35,6.0]$, log-spaced and out of phase per axis, and far faster than
+the real tuner slews, one window of a $6$~s sea against a $20$~s sweep gives
+\begin{equation}
+\rho(\mat\Phi)=1.099>1 .
+\end{equation}
+It is a genuine resonance, not noise: it recurs exactly every $60$~s, the beat
+period of the $20$~s schedule against the $6$~s wave.
+
+It does not imply instability, and the reason is worth stating because it is a
+trap in the method. Per-window contraction is sufficient but not necessary.
+Taking the product over the full beat period, $10$ windows, gives
+$\rho=0.83$ and a time constant of $325$~s -- the same rate as everywhere
+else. The bad window is a transient amplification at one phase alignment,
+absorbed within the repeat period. A certificate that demands every single
+window contract will therefore report a false failure whenever the schedule
+and the sea beat against each other, and the window has to be at least the
+beat period. The verifier takes a \texttt{-{}-group} argument for exactly this,
+and groups within a trajectory rather than across them.
+
+\paragraph{With that, the schedule is discharged too.}
+Across sweeps of $20$, $60$ and $200$~s against seas of $6$, $10$ and $16$~s,
+grouped to four windows, every product contracts and one common metric serves
+all of them:
+\begin{equation}
+\gamma=0.869\ \text{per group},\qquad
+c_1=3.9\cdot10^{1},
+\end{equation}
+a worst-case $e$-folding of $910$~s read against the $64$~s groups, $341$~s
+against the $24$~s groups. The rate is unchanged from the fixed-tuning case,
+which is the expected answer once the schedule is exogenous and bounded: the
+adaptation moves the gains around inside a set on which the estimator
+contracts anyway.
+
 \begin{remark}[Remaining scope]
-Two things are still open. The attitude paths are synthetic sums of sinusoids
-rather than recorded sea states, and measurements are generated from the
-filter's own prediction, so the linearization is exercised without injected
-noise. More importantly, $\vct\vartheta_k$ is held fixed along each
-trajectory. What is certified is therefore the estimator at a fixed tuning
-under a moving operating point, not the estimator and its tuner as one closed
-loop. Closing that loop means letting the adaptation run along the trajectory
-and either including its states in the certified coordinate or bounding its
-effect explicitly, which is the same interconnection problem that
-observer designs with a separate attitude and translation stage have to solve
-with a composite Lyapunov function.
+What is left is smaller than what has been closed. The attitude paths are
+synthetic sums of sinusoids rather than recorded sea states, and measurements
+are generated from the filter's own prediction, so the linearization runs
+without injected noise. The exogenous-tuner argument is established by
+inspection of the implementation rather than mechanically, so it needs
+rechecking if the tuner ever gains a state-dependent input -- the tilt gate is
+the one to watch, since it already reads the estimate and is only kept out by
+a margin of $16^\circ$. And the whole construction remains a numerical
+certificate over sampled trajectories, not a proof: A3 is checked on a grid,
+the metrics come from an LMI solved at floating-point tolerance, and A2 is
+still assumed outright.
 \end{remark}
