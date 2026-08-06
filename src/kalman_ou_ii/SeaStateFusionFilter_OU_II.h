@@ -292,14 +292,23 @@ public:
         // Not true world vertical unless the platform is close to level.
         a_body_z_up_proxy_ = -a_z_body_proxy;
 
-        // LPF on BODY-Z proxy for tracker input
-        const float a_body_z_up_lp = freq_input_lpf_.step(a_body_z_up_proxy_, dt);
+        // Vertical acceleration the tracker runs on.  Both choices are
+        // measurement-only; see FreqTrackerInputSource for why levelling is
+        // not the obvious win here that it is for the period estimator.
+        const float a_vert_for_tracker =
+            (freq_tracker_input_ == FreqTrackerInputSource::Complementary &&
+             vertical_accel_comp_.isReady())
+                ? vertical_accel_comp_.verticalAccelUpMs2()
+                : a_body_z_up_proxy_;
+
+        // LPF on the tracker input
+        const float a_body_z_up_lp = freq_input_lpf_.step(a_vert_for_tracker, dt);
 
         // Raw freq from tracker
         const float f_tracker = static_cast<float>(tracker_policy_.run(a_body_z_up_lp, dt));
         f_raw = f_tracker;
 
-        // Stillness detector also sees the same BODY-Z proxy.
+        // Stillness detector shares the tracker's input, as it always has.
         const float f_after_still = freq_stillness_.step(a_body_z_up_lp, dt, f_tracker);
 
         // Fast & slow smoothed frequencies
@@ -730,6 +739,16 @@ public:
         return wave_period_input_;
     }
 
+    // Select which vertical acceleration the frequency tracker runs on.
+    // BodyZ (default) is the raw proxy; Complementary is the levelled signal
+    // from the private Mahony observer.  Both are measurement-only.
+    void setFreqTrackerInput(FreqTrackerInputSource source) {
+        freq_tracker_input_ = source;
+    }
+    FreqTrackerInputSource freqTrackerInput() const noexcept {
+        return freq_tracker_input_;
+    }
+
     // Gains of the private Mahony observer that levels the default input.
     // two_kp sets the accelerometer-to-gyro correction corner, which must stay
     // below the wave band; see VerticalAccelComplementary.h.
@@ -1062,6 +1081,7 @@ private:
 
     bool  wave_band_tuning_       = true;
     WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;
+    FreqTrackerInputSource freq_tracker_input_ = FreqTrackerInputSource::BodyZ;
     float min_tune_freq_hz_       = MIN_TUNE_FREQ_HZ;
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;

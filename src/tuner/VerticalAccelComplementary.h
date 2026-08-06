@@ -74,6 +74,18 @@ enum class WavePeriodInputSource {
     Complementary,  // private Mahony observer; levelled and measurement-only
 };
 
+// Which vertical acceleration the frequency tracker - and the stillness
+// detector that shares its input - is driven by.  Both choices are
+// measurement-only, so neither closes a loop; they differ in whether the
+// platform's tilt is removed first.  Leveling is not obviously right here the
+// way it is for the period estimator: the tracker is not integrated, so it
+// does not suffer the 1/omega^4 weighting that makes sub-band gravity leakage
+// fatal downstream, and its output drives the direction demodulator.
+enum class FreqTrackerInputSource {
+    BodyZ,          // raw -(acc.z + g) proxy
+    Complementary,  // private Mahony observer; levelled
+};
+
 class VerticalAccelComplementary {
 public:
     // two_kp     : accelerometer-to-gyro correction gain; corner ~ two_kp/2 rad/s.

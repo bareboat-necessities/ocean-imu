@@ -226,6 +226,38 @@ reference bias range a constant gyro bias leaves a static tilt error near
 integral term is another slow state that can wind up against a sustained
 horizontal acceleration.
 
+### The same signal in the frequency tracker
+
+The tracker still runs on the raw body-Z proxy. Feeding it the complementary
+observer's levelled signal instead (`W3D_FREQ_TRACKER_INPUT=complementary`,
+`setFreqTrackerInput()`) is a fair question, since the tracker frequency is also
+the direction demodulator's carrier, and both signals are measurement-only so
+neither choice touches the loop. Six seeds per record, paired on the
+realization:
+
+| filter | vertical RMS | 3D RMS | travel-sense RMSE | axis RMSE |
+| --- | --- | --- | --- | --- |
+| OU-II | 1.000x [1.000, 1.000] | 1.000x [1.000, 1.000] | 0.983x [0.967, 0.999] | 0.996x [0.992, 1.001] |
+| OU-III | 1.000x [0.999, 1.001] | 1.000x [1.000, 1.000] | 0.981x [0.964, 0.998] | 0.996x [0.991, 1.000] |
+
+Displacement RMS does not move at all, which is the expected answer: the
+tracker output reaches the operating point only as a fallback before the period
+estimator settles, and the direction stage does its own levelling regardless.
+
+The apparent 2% gain in travel-sense RMSE should not be believed. The interval
+barely excludes 1.0, and it is a normal approximation over paired log ratios
+pooled across records *and* seeds, so it treats record-to-record variation as
+sampling noise and is optimistic for that reason. Per record the effect swings
+from -8.8% to +6.4%, and only 6 of 8 records improve for OU-II and 5 of 8 for
+OU-III - two-sided sign tests of p = 0.29 and p = 0.73. The honest reading is
+that levelling the tracker input changes nothing measurable.
+
+That is also what the mechanism predicts. Gravity leakage from tilt hurts the
+period estimator because double integration weights it by `omega^-4`; the
+tracker is not integrated, so the same leakage lands as a modest low-frequency
+term that the input low-pass and the tracker's own band already handle. The
+switch is kept for ablation and the default stays `body_z`.
+
 `tests/kalman_ou_iii/tuner_coupling-test.cpp` asserts the exogeneity
 bit-for-bit rather than by tolerance, and does so on the default path with
 nothing selected: displacing *every* estimator state - attitude and all linear

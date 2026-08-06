@@ -223,6 +223,23 @@ public:
                 }
             }
 
+            // Ablate the frequency tracker's input from the raw body-Z proxy
+            // (default) to the levelled signal from the private Mahony
+            // observer.  Both are measurement-only; this changes the tracker
+            // frequency and so the direction demodulator's carrier.
+            if (const char* src = std::getenv("W3D_FREQ_TRACKER_INPUT")) {
+                const std::string value = src;
+                if (value == "complementary") {
+                    filter.setFreqTrackerInput(
+                        FreqTrackerInputSource::Complementary);
+                } else if (value == "body_z") {
+                    filter.setFreqTrackerInput(FreqTrackerInputSource::BodyZ);
+                } else {
+                    throw std::runtime_error(
+                        "W3D_FREQ_TRACKER_INPUT must be body_z or complementary");
+                }
+            }
+
             // Gains of that private observer, so the correction corner can be
             // swept against the wave band it must stay below.
             {
