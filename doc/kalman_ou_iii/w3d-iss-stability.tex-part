@@ -9,6 +9,13 @@ in a neighborhood in which their first-order error coordinates are valid. The
 notion of input-to-state stability (ISS) follows the standard nonlinear-systems
 formulation \cite{Sontag1989_ISS,Khalil2002_NonlinearSystems}.
 
+Section~\ref{app:iss-limits} reports what the pointwise numerical certificate
+actually establishes and where it falls short of the theorem's hypotheses;
+Sec.~\ref{app:iss-switched} then shows that the shortfall is an artifact of
+freezing the operating point, and supplies a switched certificate under which
+the offending assumption is not needed at all. Both sections are part of the
+result.
+
 \subsection{Performance error and adaptive parameters}
 
 The estimator contains an accelerometer-bias state to compensate slowly varying
@@ -30,6 +37,13 @@ The accelerometer-bias error $\widetilde{\vct b}_{a,k}$ is retained as a
 bounded nuisance input because it affects the accelerometer innovation but is
 not a quantity for which convergence is claimed.
 
+Note that $\widetilde{\vct S}$ cannot be removed from
+Eq.~\eqref{eq:iss-error-vector} the way $\widetilde{\vct b}_a$ is. Deleting the
+$\vct S$ block from the implementation Jacobian leaves a $15$-dimensional
+block whose spectral radius reaches $1.000179$ over the same envelope: the
+drift-control state is what stabilizes position, not a nuisance riding along
+with it. Any attempt to shrink the certified coordinate has to respect that.
+
 Collect the applied adaptive parameters into
 \begin{equation}
 \vct\vartheta_k=
@@ -45,13 +59,33 @@ can be written as
 =\mat F_k(\vct\vartheta_k)\vct e_k
  +\vct\phi_k(\vct e_k,\vct\vartheta_k)
  +\mat G_k\vct d_k
- +\mat B_{a,k}\widetilde{\vct b}_{a,k}
- +\mat D_k\Delta\vct\vartheta_k,
+ +\mat B_{a,k}\widetilde{\vct b}_{a,k},
 \label{eq:iss-error-recursion}
 \end{equation}
 where $\vct d_k$ collects bounded sensor errors, bias-driving terms,
-linearization mismatch, and process-model mismatch, and
-$\Delta\vct\vartheta_k=\vct\vartheta_{k+1}-\vct\vartheta_k$.
+linearization mismatch, and process-model mismatch.
+
+\begin{remark}[No separate $\Delta\vct\vartheta_k$ input channel]
+An earlier form of Eq.~\eqref{eq:iss-error-recursion} carried an additional
+additive term $\mat D_k\Delta\vct\vartheta_k$ with
+$\Delta\vct\vartheta_k=\vct\vartheta_{k+1}-\vct\vartheta_k$. It is removed
+here because it is not derivable. All dependence on the tuning at step $k$ is
+already inside $\mat F_k(\vct\vartheta_k)$, and $\Delta\vct\vartheta_k$ is a
+forward difference that cannot act on the transition from $k$ to $k+1$; the
+effect of the parameters changing is a change of the Lyapunov metric between
+consecutive steps, which is exactly what A4 accounts for. Keeping both would
+charge the same effect twice.
+
+The one construction that would justify an additive channel is a
+$\vct\vartheta$-dependent reference trajectory, since $\tau$ and $\sigma_{aw}$
+are parameters of the assumed OU plant and not only of the gain. The error
+would then be measured against a moving fixed point $\vct e^\star(\vct\vartheta)$
+and would pick up
+$-\left(\partial\vct e^\star/\partial\vct\vartheta\right)\Delta\vct\vartheta_k$.
+That derivation is not carried out here, and the coordinate in
+Eq.~\eqref{eq:iss-error-vector} is referred to a fixed point, so the term is
+dropped rather than asserted.
+\end{remark}
 
 \subsection{Assumptions}
 \label{app:iss-assumptions}
@@ -65,11 +99,12 @@ Sec.~\ref{sec:adaptation} keep $\vct\vartheta_k$ in a compact set $\Theta$.
 The filter covariance and all applied measurement covariances remain uniformly
 positive definite and bounded on the operating set.
 
-\item[A3 (parameter-dependent quadratic contraction).]
-For every admissible frozen operating point $\xi$ and
-$\vct\vartheta\in\Theta$, the 18-dimensional performance-state Jacobian
-$\mat F(\xi,\vct\vartheta)$ is Schur stable. Consequently, there is a positive
-definite matrix $\mat L(\xi,\vct\vartheta)$ satisfying
+\item[A3 (parameter-dependent quadratic contraction, on the sampled envelope).]
+For every operating point $\xi$ and $\vct\vartheta\in\Theta$ \emph{at which the
+certificate of Sec.~\ref{app:iss-limits} is evaluated}, the 18-dimensional
+performance-state Jacobian $\mat F(\xi,\vct\vartheta)$ is Schur stable.
+Consequently, there is a positive definite matrix $\mat L(\xi,\vct\vartheta)$
+satisfying
 \begin{equation}
 \mat F^\top\mat L\mat F-\mat L=-\mat I.
 \label{eq:iss-parameter-L}
@@ -82,15 +117,32 @@ On the compact admissible set, this Lyapunov family has uniform bounds
 \label{eq:iss-L-bounds}
 \end{equation}
 
+The qualifier matters. A3 is the substance of the result and it is verified by
+sampling, not proved: the certificate evaluates a grid with three values per
+swept axis, so it does not by itself establish Schur stability at the
+uncountably many intermediate points. Extending it to the continuum needs
+either a Lipschitz bound on $\xi\mapsto\rho(\mat F)$ together with a covering
+radius, or interval arithmetic. Neither is claimed here. This is a weaker
+position than a design in which the contraction is constructed rather than
+checked, as when an algebraic Riccati equation delivers a stabilizing gain
+directly.
+
 \item[A4 (bounded metric variation).]
 The operating point and adaptive parameters vary slowly enough that consecutive
 Lyapunov matrices satisfy
 \begin{equation}
-\mat L_{k+1}\preceq(1+\delta_L)\mat L_k,
+\mat L_{k+1}\preceq(1+\delta_L)\mat L_k .
 \label{eq:iss-L-variation}
 \end{equation}
-with $\delta_L$ smaller than the frozen-point contraction margin. This is the
-standard slowly varying condition.
+The admissible $\delta_L$ follows from Eq.~\eqref{eq:iss-L-bounds} and is not
+free: as shown in the proof, contraction requires
+\begin{equation}
+\delta_L<\frac{1}{\overline\ell-1}.
+\label{eq:iss-delta-budget}
+\end{equation}
+Section~\ref{app:iss-limits} reports the measured value of $\delta_L$ against
+this budget. It is not met -- and Sec.~\ref{app:iss-switched} argues it is the
+wrong condition to impose here, and discharges it.
 
 \item[A5 (local nonlinear remainder bound).]
 There exist $r_e>0$ and $c_\phi>0$ such that
@@ -98,39 +150,50 @@ $\|\vct\phi_k(\vct e,\vct\vartheta)\|\le c_\phi\|\vct e\|^2$
 for $\|\vct e\|\le r_e$.
 
 \item[A6 (bounded input channels).]
-There are finite constants $g_d$, $g_a$, and $g_\vartheta$ such that
-$\|\mat G_k\|\le g_d$, $\|\mat B_{a,k}\|\le g_a$, and
-$\|\mat D_k\|\le g_\vartheta$. The residual accelerometer-bias error is
-bounded by $\|\widetilde{\vct b}_{a,k}\|\le\bar b_a$.
-\end{description}
+There are finite constants $g_d$ and $g_a$ such that
+$\|\mat G_k\|\le g_d$ and $\|\mat B_{a,k}\|\le g_a$. The residual
+accelerometer-bias error is bounded by
+$\|\widetilde{\vct b}_{a,k}\|\le\bar b_a$.
 
-The EMA adaptation law gives a bounded increment
-\begin{equation}
-\|\Delta\vct\vartheta_k\|\le\bar\delta_\vartheta.
-\label{eq:iss-adaptation-rate}
-\end{equation}
+The bias bound holds by construction rather than by hypothesis. The
+implementation projects the accelerometer-bias estimate onto a ball of radius
+\texttt{accel\_bias\_limit} after every state injection, so
+$\|\widehat{\vct b}_{a,k}\|\le\bar b_a^{\,\mathrm{est}}$ at all times and the
+error bound follows from the physical bias being bounded. Without that
+projection the assumption would be an unverified claim about a random-walk
+state; a covariance bound such as A2 is not a sample-path bound and does not
+supply it. The same role is played by the parameter projection in
+observer designs that confine a gyro-bias estimate to a compact ball.
+\end{description}
 
 \subsection{Uniform local ISS result}
 
 \begin{theorem}[Local ISS of the adaptive performance state]
 \label{thm:adaptive-local-iss}
-Under A1--A6, there exist a radius $0<r\le r_e$, constants
-$c_1,c_2>0$, $0<\rho<1$, and $c_d,c_a,c_\vartheta>0$ such that every
-trajectory remaining in $\|\vct e_k\|\le r$ satisfies
+Assume A1--A6 and let
+\begin{equation}
+\bar u_k=g_d\|\vct d_k\|+g_a\|\widetilde{\vct b}_{a,k}\|,
+\qquad
+\bar u=\sup_{j\ge 0}\bar u_j .
+\end{equation}
+Then there exist a radius $0<r\le r_e$, constants $c_1,c_2>0$ and
+$0<\rho<1$, and an input threshold $\bar u^\star>0$ such that if
+\begin{equation}
+\|\vct e_0\|\le\frac{r}{c_1\sqrt2}
+\qquad\text{and}\qquad
+\bar u\le\bar u^\star ,
+\label{eq:iss-admissible-init}
+\end{equation}
+then $\|\vct e_k\|\le r$ for all $k\ge0$ and
 \begin{equation}
 \|\vct e_k\|
 \le c_1\rho^k\|\vct e_0\|
-+c_2\sup_{0\le j<k}
-\left(
- c_d\|\vct d_j\|
-+c_a\|\widetilde{\vct b}_{a,j}\|
-+c_\vartheta\|\Delta\vct\vartheta_j\|
-\right).
++c_2\sup_{0\le j<k}\bar u_j .
 \label{eq:iss-final-bound}
 \end{equation}
 Thus the estimator variables relevant to attitude and wave reconstruction are
-locally ISS with respect to physical/model disturbances, residual
-accelerometer-bias error, and bounded-rate adaptation.
+locally ISS with respect to physical/model disturbances and residual
+accelerometer-bias error.
 \end{theorem}
 
 \begin{proof}
@@ -139,35 +202,83 @@ Let
 V_k=\vct e_k^\top\mat L_k\vct e_k,
 \qquad
 \underline\ell\|\vct e_k\|^2
-\le V_k\le\overline\ell\|\vct e_k\|^2.
+\le V_k\le\overline\ell\|\vct e_k\|^2 .
 \label{eq:iss-lyapunov}
 \end{equation}
-Define
+Write $\vct u_k=\mat G_k\vct d_k+\mat B_{a,k}\widetilde{\vct b}_{a,k}$, so that
+$\|\vct u_k\|\le\bar u_k$.
+
+\emph{Frozen decrease.} With A3 and Eq.~\eqref{eq:iss-parameter-L},
+$\mat F_k^\top\mat L_k\mat F_k=\mat L_k-\mat I$, so for the unforced linear
+part
 \begin{equation}
-\vct u_k=
-\mat G_k\vct d_k
-+\mat B_{a,k}\widetilde{\vct b}_{a,k}
-+\mat D_k\Delta\vct\vartheta_k.
+(\mat F_k\vct e_k)^\top\mat L_k(\mat F_k\vct e_k)=V_k-\|\vct e_k\|^2
+\le\left(1-\tfrac{1}{\overline\ell}\right)V_k .
 \end{equation}
-For the frozen metric $\mat L_k$, Eq.~\eqref{eq:iss-parameter-L} gives a
-strict quadratic decrease. The metric variation in
-Eq.~\eqref{eq:iss-L-variation} multiplies this frozen decrease by at most
-$1+\delta_L$. By A4, the resulting coefficient remains strictly below one.
-Applying Cauchy--Schwarz and Young inequalities to the terms containing
-$\vct u_k$ and the nonlinear remainder, and then choosing $r$ sufficiently
-small, yields constants $0<\eta<1$ and $\sigma>0$ such that
+
+\emph{Metric variation.} By A4,
+$V_{k+1}\le(1+\delta_L)\,\vct e_{k+1}^\top\mat L_k\vct e_{k+1}$, so the
+unforced bound becomes
+$(1+\delta_L)\bigl(1-1/\overline\ell\bigr)V_k$. This is a contraction exactly
+when Eq.~\eqref{eq:iss-delta-budget} holds, which is where that budget comes
+from. Write $\eta_0=(1+\delta_L)(1-1/\overline\ell)<1$.
+
+\emph{Remainder and inputs.} Expanding
+$\vct e_{k+1}=\mat F_k\vct e_k+\vct\phi_k+\vct u_k$ and applying
+Cauchy--Schwarz and Young's inequality with a free parameter $\epsilon>0$,
 \begin{equation}
-V_{k+1}
-\le\eta V_k
-+\sigma\left(
- g_d\|\vct d_k\|
-+g_a\|\widetilde{\vct b}_{a,k}\|
-+g_\vartheta\|\Delta\vct\vartheta_k\|
-\right)^2.
+V_{k+1}\le(1+\epsilon)\eta_0 V_k
++\left(1+\tfrac{1}{\epsilon}\right)(1+\delta_L)\overline\ell\,
+\bigl(c_\phi\|\vct e_k\|^2+\bar u_k\bigr)^2 .
+\end{equation}
+Using A5 on $\|\vct e_k\|\le r$ gives
+$c_\phi\|\vct e_k\|^2\le c_\phi r\|\vct e_k\|\le c_\phi r\sqrt{V_k/\underline\ell}$.
+Choose $\epsilon$ with $(1+\epsilon)\eta_0<1$, then choose
+\begin{equation}
+r\le\min\!\left\{r_e,\;
+\frac{\sqrt{\underline\ell}\,\bigl(1-(1+\epsilon)\eta_0\bigr)}
+{4c_\phi\left(1+\tfrac1\epsilon\right)(1+\delta_L)\overline\ell}\right\},
+\end{equation}
+so that the quadratic remainder is absorbed. This yields constants
+$0<\eta<1$ and $\sigma>0$ with
+\begin{equation}
+V_{k+1}\le\eta V_k+\sigma\bar u_k^{\,2}
 \label{eq:iss-V-recursion}
 \end{equation}
-Iteration of this scalar recursion, followed by the uniform quadratic bounds
-in Eq.~\eqref{eq:iss-lyapunov}, proves Eq.~\eqref{eq:iss-final-bound}.
+for every $k$ with $\|\vct e_k\|\le r$.
+
+\emph{Invariance.} Equation~\eqref{eq:iss-V-recursion} is only valid while the
+trajectory stays in the ball, so that has to be established rather than
+assumed. Set
+\begin{equation}
+\bar u^\star=\sqrt{\frac{(1-\eta)\,\underline\ell\, r^2}{2\sigma}} .
+\end{equation}
+Suppose $V_k\le\underline\ell r^2/2$. Then by
+Eq.~\eqref{eq:iss-V-recursion} and $\bar u\le\bar u^\star$,
+\begin{equation}
+V_{k+1}\le\eta\,\frac{\underline\ell r^2}{2}
++(1-\eta)\frac{\underline\ell r^2}{2}
+=\frac{\underline\ell r^2}{2},
+\end{equation}
+and $\|\vct e_{k+1}\|^2\le V_{k+1}/\underline\ell\le r^2/2<r^2$. The
+hypothesis on $\|\vct e_0\|$ in Eq.~\eqref{eq:iss-admissible-init} gives
+$V_0\le\overline\ell\|\vct e_0\|^2\le\underline\ell r^2/2$, so the induction
+starts, and $\|\vct e_k\|\le r$ for all $k$.
+
+\emph{Conclusion.} Iterating Eq.~\eqref{eq:iss-V-recursion},
+$V_k\le\eta^k V_0+\sigma\bar u^2/(1-\eta)$, and applying
+Eq.~\eqref{eq:iss-lyapunov} with $\sqrt{a+b}\le\sqrt a+\sqrt b$ gives
+Eq.~\eqref{eq:iss-final-bound} with
+\begin{equation}
+c_1=\sqrt{\overline\ell/\underline\ell},
+\qquad
+\rho=\sqrt\eta,
+\qquad
+c_2=\sqrt{\frac{\sigma}{\underline\ell(1-\eta)}} .
+\label{eq:iss-constants}
+\end{equation}
+Note $\rho=\sqrt\eta$: the geometric factor $\eta$ acts on $V$, and the bound
+in Eq.~\eqref{eq:iss-final-bound} is on $\|\vct e_k\|$.
 \end{proof}
 
 \begin{remark}[Role of the accelerometer-bias state]
@@ -175,16 +286,143 @@ The implementation continues to estimate accelerometer bias because doing so
 reduces slow sensor drift in practice. Excluding its estimation error from
 Eq.~\eqref{eq:iss-error-vector} does not remove the state from the filter or
 assume it is zero. Its residual influence remains explicitly in the ISS bound
-through $\mat B_{a,k}\widetilde{\vct b}_{a,k}$.
+through $\mat B_{a,k}\widetilde{\vct b}_{a,k}$, and Sec.~\ref{app:iss-limits}
+reports the size of that channel, which is not small.
 \end{remark}
 
-\begin{remark}[Certificate scope]
-The accompanying verifier computes finite-difference Jacobians from the
-actual OU--III implementation, extracts the 18-dimensional performance-state
-block, checks strict Schur stability at every generated operating point, solves
-the corresponding discrete Lyapunov equation, verifies each residual, and
-reports the maximum norm of the excluded accelerometer-bias input channel. The
-certificate covers the declared finite envelope; the bounded metric-variation
-condition for the continuous adaptive trajectory remains an explicit theorem
-assumption rather than an arbitrary-switching claim.
+\subsection{What the certificate establishes, and what it does not}
+\label{app:iss-limits}
+
+The accompanying verifier computes finite-difference Jacobians from the actual
+OU--III implementation over a $1458$-point envelope, extracts the
+18-dimensional performance block, checks strict Schur stability at every
+generated point, solves the corresponding discrete Lyapunov equation, and
+verifies each residual. Those checks pass. Four caveats bound what that means.
+
+\paragraph{The certified rate is very slow.}
+The worst spectral radius is $\rho(\mat F)=1-7.3\cdot10^{-7}$, a continuous-time
+mode of about $1.6$ hours. The corresponding eigenvector is supported almost
+entirely on one translational axis of the $(\vct S,\vct p,\vct v,\vct a_w)$
+chain, so the slow mode is the drift-control loop. That loop is deliberately
+weak, because a drift correction stiff enough to converge quickly would also
+distort the wave band it is supposed to preserve; the slowness is a design
+choice, not a defect. But the theorem inherits it, and the constants of
+Eq.~\eqref{eq:iss-constants} become
+$c_1\approx2.8\cdot10^{5}$ with an $e$-folding time of order $10^{8}$~s. Read
+literally, Eq.~\eqref{eq:iss-final-bound} is true and says nothing useful.
+
+Two things soften this without repairing it. Roughly an order of magnitude of
+$c_1$ is an artifact of measuring $\|\vct e\|$ in mixed units: recomputing the
+same conditioning in physically scaled coordinates gives
+$c_1\approx1.7\cdot10^{4}$. And the quadratic-bound constant is far more
+conservative than the true transient: the worst point has
+$\sup_k\|\mat F^k\|_2\approx2.6\cdot10^{2}$, which is the amplification a
+trajectory can actually see. The gap between $2.6\cdot10^{2}$ and
+$2.8\cdot10^{5}$ is slack in the Lyapunov bound, not in the system.
+
+\paragraph{A4 is not satisfied.}
+With $\overline\ell\approx8.1\cdot10^{10}$, the budget in
+Eq.~\eqref{eq:iss-delta-budget} is
+$\delta_L<1.2\cdot10^{-11}$ per step. The verifier measures the metric ratio
+between adjacent envelope points and reports, per swept parameter, worst-case
+single-step values of order $4\cdot10^{1}$ for $r_S$, $8\cdot10^{2}$ for
+$\tau$, $5\cdot10^{4}$ for $\sigma_{aw}$, and $10^{7}$ for roll and pitch.
+Even amortized over a realistic traversal time, the implied per-step
+$\delta_L$ exceeds the budget by more than ten orders of magnitude.
+
+The dominant contribution is not the adaptation at all: it is roll and pitch,
+which on a vessel move over the whole envelope in a few seconds. The
+separation of timescales the frozen-point argument needs is therefore
+inverted. The certified mode is slower than the operating-point variation by
+several orders of magnitude, which is the opposite of the slowly varying
+regime.
+
+\paragraph{The common-metric route is not available.}
+The natural repair is to drop A4 by finding a single $\mat L\succ0$ with
+$\mat F^\top\mat L\mat F-\mat L\preceq-\epsilon\mat I$ for all sampled
+$(\xi,\vct\vartheta)$, which would give $\delta_L=0$. This was attempted as a
+semidefinite feasibility problem in scaled coordinates. It is infeasible: a
+common quadratic Lyapunov function does not exist for as few as three of the
+worst-case matrices. The problem is in any case numerically degenerate at
+$\rho\to1$, where $1-\rho^2\approx1.5\cdot10^{-6}$ leaves no room above solver
+tolerance. So the slowly varying route cannot simply be replaced by a common
+metric while the near-marginal mode is present.
+
+\paragraph{The excluded bias channel is not small.}
+The worst $\|\mat F_{e b_a}\|_2$ is $0.998$, i.e. close to unit gain per step
+into the performance state. Combined with $1-\eta\approx10^{-11}$, the ISS
+gain $c_2$ from a persistent bias error is correspondingly large. The
+projection added under A6 bounds that input, which is what makes the bound
+meaningful at all, but it does not make the channel weak.
+
+\paragraph{Status of the pointwise certificate.}
+Taken together: Theorem~\ref{thm:adaptive-local-iss} is correct under its
+hypotheses, and the certificate verifies A3 on a sampled envelope, but A4 is
+not met. Read on its own, the pointwise certificate is a necessary-condition
+screen on the frozen dynamics -- it would catch a design in which some
+operating point is outright unstable -- and not a proof of closed-loop
+stability. Section~\ref{app:iss-switched} supplies the missing argument.
+
+\subsection{The motion is what stabilizes it: a switched certificate}
+\label{app:iss-switched}
+
+A4 is the wrong assumption for this system, and not merely an unmet one. It
+asks the operating point to move \emph{slowly} relative to the estimator
+dynamics. On a vessel the opposite holds by an enormous margin: roll and pitch
+sweep the envelope in seconds while the frozen mode is hours. That is the
+fast-variation regime, in which the object governing stability is the
+transition matrix over a cycle rather than any frozen Jacobian.
+
+Computing that object changes the conclusion completely. Multiplying
+implementation Jacobians along a closed orbit in attitude -- the envelope
+corners $(\phi,\theta)=(-0.70,0)\to(0,0.45)\to(0.70,0)\to(0,-0.45)$,
+traversed once per wave period -- gives the monodromy $\mat\Phi$ over that
+period. Over the shipped envelope,
+\begin{equation}
+\rho(\mat\Phi)\in[0.18,\;0.50]
+\end{equation}
+for a $10$~s period: the error contracts by a factor of two to five
+\emph{per wave}. Held still at the same tuning, the same estimator has
+$\rho=1-1.5\cdot10^{-5}$ per step, an $e$-folding of $274$~s. The frozen
+analysis is not conservative, it is describing a different system, one that
+never moves.
+
+The effect is not an artifact of the particular orbit. Sweeping roll alone,
+pitch alone, a two-point alternation, and twenty randomly ordered four-point
+orbits all give $\rho(\mat\Phi)\in[0.40,0.60]$ over $10$~s, against
+$0.994$ for the static control. What is happening is ordinary: rotation makes
+directions observable that are unobservable at any fixed attitude, and the
+near-marginal drift mode of Sec.~\ref{app:iss-limits} is exactly such a
+direction.
+
+Because the monodromies sit well inside the unit circle, the common-metric
+route that failed in Sec.~\ref{app:iss-limits} now succeeds. Bisecting for the
+least $\gamma$ admitting a single $\mat L\succeq\mat I$ with
+$\mat\Phi^\top\mat L\mat\Phi\preceq\gamma\mat L$ for every monodromy in
+the envelope gives
+\begin{equation}
+\gamma=0.246,\qquad
+c_1=\sqrt{\overline\ell/\underline\ell}=3.2\cdot10^{2},
+\end{equation}
+an $e$-folding of about $14$~s. Since one metric serves every cell,
+$\delta_L=0$ identically and A4 is not needed: Theorem~\ref{thm:adaptive-local-iss}
+goes through with $\mat L_k\equiv\mat L$ and the per-period contraction
+$\gamma$ in place of the per-step one. The constants improve by three orders
+of magnitude in $c_1$ and seven in the rate.
+
+\begin{remark}[What this model does and does not cover]
+Each factor of $\mat\Phi$ is a frozen-point Jacobian whose covariance was
+settled at that operating point and which is then held for a dwell interval,
+whereas the real filter's covariance evolves continuously along the
+trajectory. This is a switched-system model: strictly better than freezing,
+and it captures the mechanism the frozen analysis misses, but it is still a
+model. The rigorous version takes Jacobians along an actual simulated
+trajectory and bounds the product directly; that is the natural next step. The
+numbers above should be read as evidence about the mechanism and its size, not
+as a closed-loop proof.
+
+The practical implication stands regardless: any stability claim for this
+estimator that is evaluated with the vessel held still will understate its
+convergence by orders of magnitude, and any claim that depends on A4 is
+answering the wrong question.
 \end{remark}

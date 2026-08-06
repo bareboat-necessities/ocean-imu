@@ -1,0 +1,81 @@
+{
+  "a4_adjacent_pairs": 5589,
+  "a4_delta_l_budget_per_step": 1.2326219816956015e-11,
+  "a4_delta_l_by_parameter": {
+    "dt": 425771.005519519,
+    "pitch": 9946131.75297245,
+    "roll": 16422491.208346725,
+    "sigma_aw": 50146.78763135682,
+    "sigma_s": 42.7362444841332,
+    "tau": 770.7896738395089
+  },
+  "a4_delta_l_worst_adjacent_step": 16422491.208346725,
+  "a4_satisfied_by_envelope": false,
+  "certificate_type": "pointwise discrete Lyapunov family",
+  "excluded_nuisance_state": [
+    "ba"
+  ],
+  "excluded_state_dimension": 3,
+  "iss_c1": 284829.22551345685,
+  "iss_c1_scaled_coordinates": 17469.360824797164,
+  "iss_efold_seconds": 676057804.3837323,
+  "iss_rho_per_step": 0.9999999999938368,
+  "lyapunov_residual_relative_max": 5.520648438026414e-15,
+  "matrix_count": 1458,
+  "max_bias_coupling_2norm": 0.9984315907580648,
+  "max_bias_coupling_index": 892,
+  "max_bias_coupling_point": {
+    "dt": 0.005,
+    "pitch": -0.45,
+    "roll": -0.7,
+    "sigma_aw": 2.8,
+    "sigma_s": 0.35,
+    "tau": 0.55,
+    "wx": 0.0,
+    "wy": 0.0,
+    "wz": 0.0
+  },
+  "p_condition_max": 81114529815.02777,
+  "p_eigen_max_global": 81127873335.23947,
+  "p_eigen_min_global": 1.0000022881047033,
+  "rho_metric_max": 0.9999999999938368,
+  "schema": "ocean-imu-iss-certificate-v3",
+  "scope": "finite implementation-generated reduced performance-state envelope",
+  "spectral_margin_min": 7.291315559099232e-07,
+  "spectral_radius_max": 0.9999992708684441,
+  "spectral_radius_min": 0.999959472736976,
+  "state_definition": [
+    "dtheta",
+    "bg",
+    "v",
+    "p",
+    "S",
+    "aw"
+  ],
+  "state_dimension": 18,
+  "transient_amplification_worst_point": 264.15040005211074,
+  "worst_metric_index": 703,
+  "worst_metric_point": {
+    "dt": 0.004166666666666667,
+    "pitch": -0.45,
+    "roll": -0.7,
+    "sigma_aw": 2.8,
+    "sigma_s": 6.0,
+    "tau": 4.0,
+    "wx": 0.0,
+    "wy": 0.0,
+    "wz": 0.0
+  },
+  "worst_spectral_index": 708,
+  "worst_spectral_point": {
+    "dt": 0.004166666666666667,
+    "pitch": 0.45,
+    "roll": -0.7,
+    "sigma_aw": 2.8,
+    "sigma_s": 6.0,
+    "tau": 4.0,
+    "wx": -0.55,
+    "wy": -0.55,
+    "wz": -0.3
+  }
+}
