@@ -445,6 +445,30 @@ class Kalman3D_Wave_OU_III {
     // Model: b_a(tempC) = b_a0 + k_a * (tempC - tempC_ref)
     void set_accel_bias_temp_coeff(const Vector3& ka_per_degC) { k_a_ = ka_per_degC; }
 
+    /*
+      Radius of the ball the accelerometer-bias estimate is confined to
+      [m/s^2]. Set <= 0 to disable the projection.
+
+      This exists so that the stability analysis in
+      doc/kalman_ou_iii/w3d-iss-stability.tex-part can assume a bounded
+      residual accelerometer-bias error by construction rather than by
+      hypothesis. The bias is excluded from the certified performance
+      coordinate and enters the ISS bound only as an input, so that input has
+      to be bounded for the bound to say anything; nothing else in the filter
+      bounds it, because b_a is a random-walk state.
+
+      The same role is played by the parameter projection Proj() in
+      Bryne/Fossen/Johansen, which confines the gyro-bias estimate to
+      ||b_g|| <= M_b and whose properties that proof uses explicitly.
+
+      The default is deliberately loose enough never to bind on a healthy
+      MEMS unit (0.5 m/s^2 is about 51 mg, against tens of mg of turn-on bias
+      plus temperature drift), so it acts as a guarantee rather than as a
+      tuning parameter.
+    */
+    void set_accel_bias_limit(T limit_mps2) { acc_bias_limit_ = limit_mps2; }
+    [[nodiscard]] T accel_bias_limit() const { return acc_bias_limit_; }
+
     void set_gyro_noise_density_rad_sqrt_s(const Vector3& density) {
         const Vector3 d = density.cwiseAbs();
         Qbase.template topLeftCorner<3,3>() = d.array().square().matrix().asDiagonal();
@@ -581,6 +605,7 @@ class Kalman3D_Wave_OU_III {
     // Accelerometer bias temperature coefficient (per-axis), units: m/s^2 per °C.
     // Default here reflects BMI270 typical accel drift (~0.002 m/s^2/°C).
     Vector3 k_a_ = Vector3::Constant(T(0.002));
+    T acc_bias_limit_ = T(0.5);   // see set_accel_bias_limit()
 
 
     // Constant matrices
@@ -732,6 +757,7 @@ class Kalman3D_Wave_OU_III {
 
     // Quaternion & small-angle helpers (kept)
     void applyQuaternionCorrectionFromErrorState(); // apply correction to qref using xext(0..2)
+    void project_acc_bias_();                       // confine b_a to a ball; see set_accel_bias_limit()
     void apply_error_state_reset_jacobian_(const Vector3& dtheta_injected);
 
     static void PhiAxis4x1_analytic(T tau, T h, Eigen::Matrix<T,4,4>& Phi_axis);
@@ -2169,6 +2195,29 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyQuaternionCo
 
     // Clear the local attitude-error state after injection.
     xext.template head<3>().setZero();
+
+    project_acc_bias_();
+}
+
+/*
+  Project the accelerometer-bias estimate onto the ball of radius
+  acc_bias_limit_. Called after every state injection, so the bound holds at
+  all times. See set_accel_bias_limit().
+*/
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::project_acc_bias_()
+{
+    if constexpr (with_accel_bias) {
+        if (!(acc_bias_limit_ > T(0))) return;
+
+        auto b = xext.template segment<3>(OFF_BA);
+        if (!b.allFinite()) { b.setZero(); return; }
+
+        const T n = b.norm();
+        if (n > acc_bias_limit_) {
+            b *= (acc_bias_limit_ / n);
+        }
+    }
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>

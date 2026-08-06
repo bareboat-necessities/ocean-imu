@@ -72,7 +72,19 @@ jobs:
               'rho_metric_max': d['rho_metric_max'],
               'max_bias_coupling_2norm': d['max_bias_coupling_2norm'],
               'worst_spectral_point': d['worst_spectral_point'],
+              'iss_c1': d['iss_c1'],
+              'iss_efold_seconds': d['iss_efold_seconds'],
+              'transient_amplification_worst_point': d['transient_amplification_worst_point'],
+              'a4_delta_l_budget_per_step': d['a4_delta_l_budget_per_step'],
+              'a4_delta_l_worst_adjacent_step': d['a4_delta_l_worst_adjacent_step'],
+              'a4_satisfied_by_envelope': d['a4_satisfied_by_envelope'],
           }, indent=2))
+          if not d['a4_satisfied_by_envelope']:
+              print(
+                  '\nNOTE: assumption A4 of the ISS theorem is not met on this envelope.\n'
+                  'The certificate is a necessary-condition screen on the frozen dynamics,\n'
+                  'not a closed-loop stability proof. See app:iss-limits.'
+              )
           PY
 
       - name: Upload certificate artifacts
