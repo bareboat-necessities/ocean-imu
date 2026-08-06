@@ -232,7 +232,106 @@ deliberately broken. A test that cannot fail is not evidence.
 | `Exp` handedness flipped | 253 fail | 516 fail |
 | `J_l` 0.1% coefficient error | 228 fail | 50 fail |
 
-## 4. What this does not claim
+## 4. Measurement updates
+
+### Sign convention
+
+One convention, stated once, used everywhere:
+
+```
+xi     is the error OF THE ESTIMATE:  eta = Xhat X^-1 = Exp_G(xi),  P = E[xi xi^T]
+r      is the innovation, measured minus predicted
+r      ~ H xi + noise                      (plus, not minus)
+K      = P H^T (H P H^T + R)^-1
+xihat  = K r                               the estimated error
+Xhat+  = Exp_G(-xihat) o Xhat              remove it
+```
+
+The correction is injected **negated**, because `xi` is the error rather than
+the correction. Half the sign bugs in filters of this shape come from mixing
+the two conventions -- deriving `H` against `r ~ -H xi` and then injecting
+`+K r`, which cancels out only if both mistakes are made together, and leaves
+a filter that works until someone fixes one of them. Here `H` is literally
+`d r / d xi`, which is what `tfg_jacobians-test` measures by finite
+differences, so there is nothing left to get backwards.
+
+### The three residuals
+
+| Update | Innovation | `H` (phi, db_g, rho_v, rho_p, rho_S, rho_a, db_a) | Noise |
+|---|---|---|---|
+| Accel | `r_a = Rhat(f_m - bhat_a) - (ahat_w - g)` | `[ [g]x, 0, 0, 0, 0, -I, -Rhat ]` | `Rhat R_a^body Rhat^T` |
+| Mag | `r_m = Rhat m_m - B_w` | `[ -[B_w]x, 0 ... ]` | `Rhat R_m^body Rhat^T` |
+| Integral | `r_S = -Shat` | `[ [Shat]x, 0, 0, 0, -I, 0, 0 ]` | `R_S`, world frame |
+
+Neither `H_a` nor `H_m` contains the estimated attitude or the estimated wave
+acceleration. They are built from **fixed** references -- gravity and the world
+magnetic vector. That is the structural gain over OU-III, whose
+`J_att = -[f_cog_b]x` is rebuilt from the current specific-force estimate on
+every step. `tfg_jacobians-test` asserts it directly: rotate the estimate by a
+large angle, move `a_w`, and the Jacobians must not change at all.
+
+### The accelerometer-bias column is `-Rhat` at Level 1
+
+Not `-I`. At Level 1 `delta_ba` is an additive **body-frame** error, so it has
+to be rotated into the world frame the residual lives in. It collapses to `-I`
+only at Level 2, where `beta_a = R(bhat_a - b_a)` is already world-referred.
+
+This is a concrete statement of what the two-frame bias geometry buys, and it
+is a trap: writing `-I` at Level 1 is wrong by a full rotation and still looks
+right at zero attitude. The test pins the value *and* asserts the test
+attitude is far enough from identity for the two to be distinguishable.
+
+### What is approximated, exactly
+
+Differentiating the accelerometer residual exactly gives
+
+```
+d r_a / d phi = -[Rhat (f_m - bhat_a)]x + [ahat_w]x = [g]x - [r_a]x
+```
+
+because `Rhat(f_m - bhat_a) = ahat_w - g + r_a` by definition. So `[g]x` is the
+exact derivative **only where the residual vanishes**, and the neglected term
+is exactly `-[r_a]x` -- first order in the innovation, vanishing as the filter
+converges. The magnetometer has the same structure: `-[B_w]x - [r_m]x`.
+
+The term is dropped deliberately. Keeping it would put the measurement and the
+estimated attitude back into the Jacobian and forfeit the one property this
+formulation exists for. It is the standard invariant-EKF choice.
+
+The tests treat it accordingly, and this is worth copying elsewhere: finite
+differences are checked at a **consistent state** where the identity is exact,
+and a **separate** test asserts that the gap at an inconsistent state equals
+`-[r]x` to `2e-8`. Asserting only that the gap is "small" would pass equally
+well if the gap were some other small thing, and would stop discriminating the
+moment a genuine error of similar size appeared. Pinning its exact structure
+means any additional error shows up immediately, however small.
+
+### Covariance
+
+Rank-3 Joseph form, `P+ = (I-KH)P(I-KH)^T + K R K^T`, in the invariant tangent
+frame. There is deliberately **no** MEKF-style covariance reset afterwards:
+`ou_detail::apply_left_error_reset`'s `G = I + 0.5[dtheta]x` exists because
+OU-III zeroes its error state after injection and has to transport `P` into the
+new linearization point. Here the update is already expressed in the
+post-update tangent frame, so applying that transport on top would
+double-correct.
+
+### Two testing notes
+
+**Finite-difference step size.** Central differences have error
+`~ h^2 f''' + eps_machine |f| / h`. Reaching for a smaller `h` past the optimum
+makes things worse, not better: at `h = 1e-9` the rounding term is
+`2.2e-16/1e-9 = 2.2e-7`, which swamps the quantity being measured. `1e-6` is
+the right order here.
+
+**Asserting that something did not happen.** Use raw state comparison, not
+`error_from`. `error_from` computes `Log(Rhat R_ref^T)`, and the floating-point
+product of a rotation with its own transpose is `I +- 1e-17` rather than
+exactly `I`, so it reports about `1e-16` of "error" between two bitwise
+identical states. For inertness checks that is noise; compare `R`, `X` and `B`
+directly.
+
+## 5. What this does not claim
 
 The bias-free, frozen-parameter skeleton is group-affine. The complete
 estimator is **not** shown to be, and must not be described as an InEKF or as

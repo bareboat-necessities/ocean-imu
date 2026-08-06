@@ -24,7 +24,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = lie_group-test convention-test ou_chain_identity-test tfg_propagation-test
+TARGETS = lie_group-test convention-test ou_chain_identity-test tfg_propagation-test tfg_jacobians-test
 
 all: build test
 
@@ -46,6 +46,9 @@ ou_chain_identity-test: ou_chain_identity-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 tfg_propagation-test: tfg_propagation-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+tfg_jacobians-test: tfg_jacobians-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # -MMD -MP records the headers each object depends on, so editing a group or
