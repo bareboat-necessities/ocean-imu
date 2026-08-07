@@ -27,12 +27,20 @@ therefore about adaptive integral-state regularization, not about the necessity
 of joint three-parameter OU adaptation, and the paper is written around that
 narrower claim. Together with an online directional estimator, these elements
 address colored excitation and MEMS errors in an efficient, embedded-friendly
-framework. Appendix~\ref{app:iss-stability} supplies a conditional
-sufficient-condition uniform local input-to-state stability analysis for the
-core estimator, excluding startup and reset logic. Its assumptions are checked
-numerically rather than proved, and the coupling between the estimator and its
-tuner is bounded rather than analysed, so it is not an unconditional
-convergence result for the filter.
+framework. Appendix~\ref{app:iss-stability} gives an analytic stability
+analysis of the Live estimator core. Because the tuner is driven by raw IMU
+data and a private Mahony attitude solution, its schedule is exogenous with
+respect to the MEKF state. The appendix proves a uniform finite-horizon
+observability bound for each OU--III translational chain under arbitrary
+bounded variation of $\tau$, and shows how
+$r_S\propto\sigma_{aw}\tau^3$ preserves the dimensionless strength of the
+integral pseudo-measurement. The nonlinear local-ISS step is then proved once
+uniform exponential stability of the complete Live linearization is available.
+The remaining obligations for a complete 21-state proof are stated explicitly:
+a coupled attitude--bias--translation Gramian bound, a uniform scheduled
+controllability/stabilizability result, treatment of covariance re-alignment,
+the stochastic interpretation of the $S=0$ regularizer, and the excluded
+hybrid reset logic.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
@@ -158,19 +166,16 @@ The main contributions of this work are:
         adaptive integral-state regularization rather than joint
         three-parameter OU adaptation, which costs a little accuracy where a
         well-matched frozen operating point already exists.
-  \item A conditional sufficient-condition proof of uniform \emph{local} ISS for
-        the adaptive core, together with three numerical certificates of its
-        assumptions at increasing fidelity: pointwise at frozen operating
-        points, switched along an attitude orbit, and linear-time-varying along
-        a continuous trajectory. The frozen-point view turns out to understate
-        the estimator badly, because it describes a platform that never moves;
-        the trajectory certificate supplies a single common Lyapunov metric
-        over the tuning envelope and three sea states, which discharges the
-        slow-metric-variation assumption the frozen route needs. What remains
-        open is the tuner: its variance channel is exogenous but its frequency
-        channel reads the attitude estimate, so the deployed adaptive filter is
-        not certified as a closed loop. This is not an unconditional EKF
-        convergence claim.
+  \item An analytic stability treatment of the Live estimator core. For each
+        translational axis, four consecutive $S$ pseudo-measurements give a
+        uniform observability determinant bounded away from zero for every
+        bounded measurable $\tau(t)$ schedule; the
+        $r_S\propto\sigma_{aw}\tau^3$ law gives a uniform dimensionless
+        information scale. A separate local theorem shows that uniform
+        exponential stability of the complete scheduled linearization implies
+        local ISS of the nonlinear error recursion. The remaining conditions
+        needed for an unconditional 21-state result are identified explicitly
+        rather than replaced by a numerical certificate.
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
   \item A reproducible paired comparison against a published nonlinear observer

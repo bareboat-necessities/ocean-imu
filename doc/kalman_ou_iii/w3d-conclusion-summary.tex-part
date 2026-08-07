@@ -1,123 +1,124 @@
 
 The present study establishes the complete estimator recursion and verifies it
-under the simulation protocol of Sec.~\ref{sec:sim-and-eval}.  The deterministic
+under the simulation protocol of Sec.~\ref{sec:sim-and-eval}. The deterministic
 eight-case comparison retains the adaptive PII and TVG--NLO reference results,
 while the completed ten-seed study provides the inferential OU-family and
-adaptation evidence.  Across the four stationary JONSWAP seas, OU--III has a
+adaptation evidence. Across the four stationary JONSWAP seas, OU--III has a
 seed-wise mean normalized vertical error of
 $\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
 $H_s$, versus
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
-OU--II.  Their paired difference is $\OUValidationNormalizedDifference$
+OU--II. Their paired difference is $\OUValidationNormalizedDifference$
 percentage point (bootstrap 95\% interval
 $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$,
 Student-$t$ interval
 $[\OUValidationNormalizedTLow,\OUValidationNormalizedTHigh]$, with all
 $\OUValidationNormalizedSignNegative$ seed-level differences in the same
-direction).  Those are four constructions on ten paired numbers, and they
+direction). Those are four constructions on ten paired numbers, and they
 establish that the difference is stable across realizations of this simulator
-rather than that it would survive a change of simulator, sensor model, or
-sea (Sec.~\ref{par:companion-inference}).
+rather than that it would survive a change of simulator, sensor model, or sea
+(Sec.~\ref{par:companion-inference}).
 Both filters take that operating point from the same wave-band zero-crossing
 period, so the comparison isolates the additional integral-displacement state
-rather than the spectral band the two were tuned from; in earlier revisions
-only OU--III did, and about \pct{51} of the vertical advantage reported then
-was the band rather than the architecture.  OU--III 3D displacement error is
-higher in \OUValidationThreeDHigherCount{} of the
+rather than the spectral band the two were tuned from. Tuning only OU--III from
+the wave band would inflate the apparent vertical advantage by about \pct{51},
+so the matched tuning used here is necessary for an architectural comparison.
+OU--III 3D displacement error is higher in
+\OUValidationThreeDHigherCount{} of the
 \OUValidationThreeDScenarios{} scenarios and lower in the largest sea, so the
 supported claim is a vertical one throughout and a three-dimensional one only
 in that one sea: the vertical gain is otherwise paid for in the horizontal
-channels, and most visibly in $Y$.  The result extends to a second
-spectral family, with a paired PM--Stokes difference of
+channels, and most visibly in $Y$. The result extends to a second spectral
+family, with a paired PM--Stokes difference of
 $\OUValidationPMStokesDifference$ percentage point
 ($[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$)
-scored on the same seeds.  Adaptive tuning improves on FixedNominal at the
+scored on the same seeds. Adaptive tuning improves on FixedNominal at the
 smallest and largest stationary seas and over the controlled transition, where
 it also beats the endpoint-calibrated fixed reference; it costs a few
 hundredths of a point only at the nominal sea the frozen point was calibrated
-at.  The channel ablation locates that benefit in one parameter, and the location is
-now unambiguous: freezing $\tau$ and $\sigma_{aw}$ while $r_S$ keeps adapting
+at. The channel ablation locates that benefit in one parameter, and the location
+is unambiguous: freezing $\tau$ and $\sigma_{aw}$ while $r_S$ keeps adapting
 reproduces the adaptive result to within a few tenths of a millimetre in every
-scenario, whereas freezing $r_S$ recovers none of it.  In earlier revisions
-freezing the OU channel was \emph{better} than adapting all three, which is
-what motivated re-examining the operating point; with $\tau$ estimated in the
-wave band that gap closes.  The two readings are consistent, because $\tau$'s
-material role is setting $r_S\propto\tau^3$ rather than shaping the OU process
-covariance: what the earlier ablation measured was a $\tau$ carrying no
-sea-state information, not a $\tau$ that does not matter.  The vertical
+scenario, whereas freezing $r_S$ recovers none of it. With $\tau$ estimated in
+the wave band, there is no material accuracy gain from adapting the OU process
+parameters independently of the regularization channel. The two readings are
+consistent, because $\tau$'s material role is setting
+$r_S\propto\tau^3$ rather than shaping the OU process covariance. The vertical
 evidence therefore establishes the value of adaptive integral-state
 regularization driven by a wave-band period, not the necessity of joint
-three-parameter OU adaptation.  A matched control shows
-that the periodic covariance re-alignment accounts for at most
+three-parameter OU adaptation. A matched control shows that the periodic
+covariance re-alignment accounts for at most
 $\OUValidationCovSyncWorstDifference$ points of any of these differences, so
 the residual nominal-sea cost is the cost of estimating the operating point
-online rather than an artifact of the adaptation bookkeeping.  The simulations and embedded builds exercise the same estimator
-recursion, including the exact OU-chain transition, small-step covariance
-branch, full MEKF reset, and adaptive pseudo-measurement scaling.
+online rather than an artifact of the adaptation bookkeeping. The simulations
+and embedded builds exercise the same estimator recursion, including the exact
+OU-chain transition, small-step covariance branch, full MEKF reset, and
+adaptive pseudo-measurement scaling.
 
 The separate ten-seed robustness study in
 Sec.~\ref{sec:ou-robustness} maps both one-factor sensitivity to $\tau$,
 $\sigma_{aw}$, and $r_S$ and the coupled directions along which the deployed
 regularization law actually moves, and reports rather than excludes low-motion
-and rapid transition degradation cases.  Displacement error is dominated by
+and rapid transition degradation cases. Displacement error is dominated by
 $r_S$; the near-flat frozen-companion $\tau$ and $\sigma_{aw}$ columns reflect
 the near-saturated accelerometer observation of the latent acceleration rather
-than an unused parameter.  Over the declared multiplier range the largest
+than an unused parameter. Over the declared multiplier range the largest
 mean normalized vertical error is \OURobustnessWorstMean\% of $H_s$, while the
 $H_s=\SI{0.05}{m}$ case reaches \OURobustnessLowStressMean\% and the
-\SI{30}{s} transition reaches \OURobustnessRapidAdaptiveMean\%.  These results
+\SI{30}{s} transition reaches \OURobustnessRapidAdaptiveMean\%. These results
 bound the empirical claim to the tested parameter neighborhood, motion
 amplitudes, and transition rates.
 
-Appendix~\ref{app:iss-stability} complements the empirical results with a
-sufficient-condition proof of uniform local input-to-state stability for the
-core predict--correct recursion. The theorem is conditional on frozen-point
-Schur stability and uniform bounds on the Lyapunov family, both checked by
-sampling rather than proved.
+Appendix~\ref{app:iss-stability} gives an analytic stability treatment of the
+Live estimator core. The tuner schedule is exogenous with respect to the MEKF
+state, so no estimator--tuner small-gain loop is part of the stability problem.
+For each translational axis, the appendix derives an explicit uniform
+finite-horizon observability bound from four consecutive $S$ pseudo-measurements
+for every bounded measurable $\tau(t)$ schedule. It also shows that the
+$r_S\propto\sigma_{aw}\tau^3$ law keeps the pseudo-measurement on the natural
+stochastic scale of the triple-integral state. Once the complete scheduled
+linearization is uniformly exponentially stable, a separate perturbation
+argument gives local ISS of the nonlinear Live-state error recursion.
 
-Its slow-variation assumption is not satisfied by the running system, and
-Sec.~\ref{app:iss-switched} and Sec.~\ref{app:iss-trajectory} show why it is
-also the wrong condition to impose: roll and pitch sweep the envelope in
-seconds while the frozen mode is hours, so the governing object is the
-transition matrix over a wave period rather than any frozen Jacobian. Taken
-along a continuous trajectory, one common Lyapunov metric serves the whole
-tuning envelope across three sea states, which removes that assumption
-altogether.
-
-The interconnection with the tuner remains open. Its variance channel is
-exogenous, but the tuning frequency is derived from the leveled vertical
-acceleration and so reads the attitude estimate; the resulting loop is bounded
-by test, not analysed. The appendix therefore does not treat startup or reset
-logic, does not certify the adaptive filter as a closed loop, and does not
-convert the simulation study into an unconditional EKF convergence claim.
+The appendix does not claim that the remaining full-filter step is already
+closed. A complete 21-state proof still needs a finite-horizon Gramian bound for
+the coupled attitude--gyro-bias--translation system, a uniform
+controllability/stabilizability result for the scheduled process model, and a
+Riccati treatment compatible with the periodic acceleration-covariance
+re-alignment. The $S=0$ channel is a regularizer rather than a physical
+measurement, so an infinite-horizon stochastic result is more naturally stated
+in mean-square or finite-horizon high-probability form than as a deterministic
+sample-path bound. Startup and hard reset logic also remain outside the local
+Live-state theorem. Appendix~\ref{app:iss-recommendations} lists small
+implementation changes that make these remaining obligations substantially
+cleaner without changing the estimator architecture.
 
 The results support drift-controlled wave-state reconstruction for the tested
 conditions, while the MCU exercise establishes only functional source
-portability. They do not by themselves imply
-universal performance across spectra, update cadences, vessel speeds, or sensor
-installations, nor do they establish an embedded timing or memory margin.
-Two gaps bound the work most sharply, and neither is closed here. The only
-comparison run under the inferential protocol is against the author's own
-predecessor architecture, so the paper establishes an architectural increment
-and not a position against published practice; closing that needs a current
-published heave estimator and a conventional frequency-domain
-double-integration baseline re-implemented under the same ten-seed protocol.
-And no result is validated against an external physical displacement
-reference, so this remains a simulation and implementation study rather than a
-characterized measurement instrument; closing that needs a motion platform,
-wave tank, or instrumented deployment scored against optical, GNSS, or
-commercial-MRU truth.
+portability. They do not by themselves imply universal performance across
+spectra, update cadences, vessel speeds, or sensor installations, nor do they
+establish an embedded timing or memory margin. Two gaps bound the work most
+sharply, and neither is closed here. The only comparison run under the
+inferential protocol is against the author's own predecessor architecture, so
+the paper establishes an architectural increment and not a position against
+published practice; closing that needs a current published heave estimator and
+a conventional frequency-domain double-integration baseline re-implemented
+under the same ten-seed protocol. And no result is validated against an
+external physical displacement reference, so this remains a simulation and
+implementation study rather than a characterized measurement instrument;
+closing that needs a motion platform, wave tank, or instrumented deployment
+scored against optical, GNSS, or commercial-MRU truth.
 Future work should extend the paired ensembles to parameter interactions,
 additional spectra, and update cadences; independently vary wave height,
 period, directional spreading, heading, sensor grade, and update rate rather
 than moving them in the four linked pairs used here, and hold out sea states
-not used to fit the coefficients; reduce the estimation jitter that
-costs accuracy where a well-matched frozen point exists; replace the
-crossfade with a continuously evolving spectrum so that adaptation rate can be
-isolated from the composition of the scoring window; and add quantitative
-timing and external-reference measurements on hardware.  The high trigger rate of the realization-specific historical
-gates also motivates replacing them with separately calibrated ensemble
-acceptance criteria while retaining them as deterministic regression sentinels.
-Optional absolute-navigation fusion is kept separate in
+not used to fit the coefficients; reduce the estimation jitter that costs
+accuracy where a well-matched frozen point exists; replace the crossfade with a
+continuously evolving spectrum so that adaptation rate can be isolated from the
+composition of the scoring window; and add quantitative timing and
+external-reference measurements on hardware. The high trigger rate of the
+realization-specific gates also motivates replacing them with separately
+calibrated ensemble acceptance criteria while retaining them as deterministic
+regression sentinels. Optional absolute-navigation fusion is kept separate in
 Appendix~\ref{sec:gps_fusion} so that the oscillatory displacement state
 $\vct{p}$ is not conflated with a local or global navigation position.
