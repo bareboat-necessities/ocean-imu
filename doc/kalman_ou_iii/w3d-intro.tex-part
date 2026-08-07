@@ -40,7 +40,9 @@ The remaining obligations for a complete 21-state proof are stated explicitly:
 a coupled attitude--bias--translation Gramian bound, a uniform scheduled
 controllability/stabilizability result, treatment of covariance re-alignment,
 the stochastic interpretation of the $S=0$ regularizer, and the excluded
-hybrid reset logic.
+hybrid reset logic. Accordingly, the full 21-state statement remains a
+conditional sufficient-condition result, not an unconditional EKF convergence
+claim.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
