@@ -1,9 +1,10 @@
-// Pins how much of the OU-III adaptation is exogenous, and how much is not.
+// Pins the implementation assumptions used by the analytic Live-state stability
+// discussion.
 //
-// doc/kalman_ou_iii/w3d-iss-stability.tex-part treats the tuner's coupling to
-// the estimator as the open item in the stability argument. This test fixes
-// the three facts that argument depends on, so none of them can drift
-// silently.
+// doc/kalman_ou_iii/w3d-iss-stability.tex-part treats the default tuning
+// schedule as exogenous with respect to the MEKF state. This test fixes the
+// three implementation facts that statement depends on, so none of them can
+// drift silently.
 //
 // 1. The variance channel is exogenous. update_tuner is handed
 //    a_body_z_up_proxy_ = -(acc.z() + g), a pure function of the raw
@@ -17,8 +18,9 @@
 //    raw gyro and accelerometer, so displacing every estimator state leaves
 //    the reported period and the whole operating point bit-for-bit unchanged.
 //    A pure function of the measurements admits no tolerance, so that is how
-//    it is asserted. With both channels exogenous the interconnection
-//    app:iss-tuner was written around is absent, not merely small.
+//    it is asserted. With both default tuner channels exogenous, state
+//    perturbations cannot feed back into the applied tuning schedule through
+//    the MEKF.
 //
 //    WavePeriodInputSource::Leveled is the older behaviour, kept for ablation,
 //    and it does close the loop: it feeds direction_accel.up_ms2, which uses
@@ -26,12 +28,11 @@
 //    r_S -> filter gains -> delta_theta is a real feedback path. It reaches
 //    the linear states indirectly as well, since displacing v, p, S or a_w
 //    perturbs attitude through the filter's cross-covariances. Its gain is
-//    still bounded here, because the ablation has to stay interpretable and
-//    because the bound is what any small-gain argument about it would consume.
+//    still bounded here because the ablation has to stay interpretable.
 //
 // 3. One gate reads the attitude estimate directly and re-locks the filter
-//    above 70 degrees of tilt. It is kept out of the certified envelope only
-//    by margin, so the margin is pinned.
+//    above 70 degrees of tilt. The analytic result is scoped to the normal
+//    Live region, so the margin to this hybrid re-lock gate is pinned.
 #define EIGEN_NON_ARDUINO
 
 // Standard headers first: the access override below must not be in force when
@@ -43,9 +44,8 @@
 #include <Eigen/Geometry>
 
 // White-box on purpose. The point is to displace *every* estimator state,
-// including ones with no public setter, so that no coupling can hide in the
-// states the public API happens not to expose. tools/iss_certificate uses the
-// same access for the same reason.
+// including ones with no public setter, so that no dependence can hide in the
+// states the public API happens not to expose.
 #define private public
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #undef private
@@ -151,9 +151,10 @@ bool test_variance_channel_input_is_exogenous() {
     if (!ok) {
         std::cerr << "  nominal proxy " << nominal.a_body_z_up_proxy_
                   << ", displaced " << displaced.a_body_z_up_proxy_ << '\n'
-                  << "  The tuner now reads the estimator state on its variance\n"
-                     "  channel too. Sec. app:iss-tuner assumes only the frequency\n"
-                     "  channel is coupled; that section needs redoing.\n";
+                  << "  The tuner now reads estimator state on its variance\n"
+                     "  channel. The analytic stability discussion assumes the\n"
+                     "  applied default schedule is exogenous and must be revised\n"
+                     "  if this changes.\n";
     }
     return ok;
 }
@@ -180,7 +181,7 @@ bool test_leveled_ablation_coupling_stays_bounded() {
 
     const float ratio = displaced.getTauTarget() / nominal.getTauTarget();
 
-    // Measured 1.25 for a 0.25 rad displacement. The bound is a small-gain
+    // Measured 1.25 for a 0.25 rad displacement. The bound is a regression
     // guard, not a fit: it fails if the attitude-to-tuning path ever becomes
     // strong enough that this ablation stops being a mild perturbation of the
     // default. It is no longer load-bearing for the shipped filter, whose
@@ -196,11 +197,11 @@ bool test_leveled_ablation_coupling_stays_bounded() {
 }
 
 // The frequency channel under the *default* input source. It joins the variance
-// channel in being exogenous, so the interconnection the certificate has to
-// argue about is not merely small, it is absent. Asserted bit-for-bit against a
-// displacement of *every* state, because "a pure function of the measurements"
-// admits no tolerance. Nothing is selected here on purpose: the point is that
-// this is what the filter does out of the box.
+// channel in being exogenous, so the applied schedule remains exogenous with
+// respect to estimator state. Asserted bit-for-bit against a displacement of
+// *every* state, because "a pure function of the measurements" admits no
+// tolerance. Nothing is selected here on purpose: the point is that this is
+// what the filter does out of the box.
 bool test_default_frequency_channel_is_exogenous() {
     bool ok = true;
 
@@ -245,30 +246,31 @@ bool test_default_frequency_channel_is_exogenous() {
     return ok;
 }
 
-bool test_tilt_gate_stays_outside_the_certified_envelope() {
+bool test_tilt_gate_stays_outside_the_live_analysis_region() {
     bool ok = true;
 
-    // The envelope the ISS certificate samples.
-    constexpr float ENVELOPE_ROLL = 0.70f;
-    constexpr float ENVELOPE_PITCH = 0.45f;
+    // Representative interior bounds for the Live-state attitude region used
+    // to keep this regression check away from the hybrid re-lock boundary.
+    constexpr float REGION_ROLL = 0.70f;
+    constexpr float REGION_PITCH = 0.45f;
 
     // The re-lock threshold in SeaStateFusionFilter_OU_III::updateTime.
     constexpr float TILT_RESET_DEG = 70.0f;
 
     const float worst_deg =
-        std::acos(std::cos(ENVELOPE_ROLL) * std::cos(ENVELOPE_PITCH)) * 57.295779513f;
+        std::acos(std::cos(REGION_ROLL) * std::cos(REGION_PITCH)) * 57.295779513f;
 
     ok &= check(worst_deg < TILT_RESET_DEG,
-                "the tilt re-lock gate must be unreachable on the certified envelope");
+                "the tilt re-lock gate must be unreachable in the Live analysis region");
 
-    // The gate is a discrete state-dependent branch, so the margin is
-    // load-bearing. Fail well before it closes.
+    // The gate is a discrete state-dependent branch, so retain a useful margin
+    // before this regression region reaches it.
     constexpr float REQUIRED_MARGIN_DEG = 10.0f;
     ok &= check(TILT_RESET_DEG - worst_deg > REQUIRED_MARGIN_DEG,
-                "tilt margin between the envelope and the re-lock gate is too small");
+                "tilt margin between the Live analysis region and re-lock gate is too small");
 
-    std::cout << "  tilt margin: envelope " << worst_deg << " deg vs gate "
-              << TILT_RESET_DEG << " deg\n";
+    std::cout << "  tilt margin: Live analysis region " << worst_deg
+              << " deg vs gate " << TILT_RESET_DEG << " deg\n";
     return ok;
 }
 
@@ -279,7 +281,7 @@ int main() {
     ok &= test_variance_channel_input_is_exogenous();
     ok &= test_default_frequency_channel_is_exogenous();
     ok &= test_leveled_ablation_coupling_stays_bounded();
-    ok &= test_tilt_gate_stays_outside_the_certified_envelope();
+    ok &= test_tilt_gate_stays_outside_the_live_analysis_region();
 
     if (!ok) {
         std::cerr << "tuner coupling checks FAILED\n";
