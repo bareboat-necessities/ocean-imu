@@ -6,3 +6,4 @@
 ./tfg_propagation-test
 ./tfg_jacobians-test
 ./covariance_transport-test
+./tfg_orchestrator-test
