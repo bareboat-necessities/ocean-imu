@@ -15,7 +15,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "a1e8fceea572e7e9bd70ce760ff7043e03634885",
+  "git_commit": "9fdb9d66adf3647be6301afea67e31542aa8fe58",
   "git_diff_stat": "",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
@@ -26,7 +26,7 @@
     "tau_s": 2.17864609
   },
   "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1021-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
