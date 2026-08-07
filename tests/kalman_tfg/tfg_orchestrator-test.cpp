@@ -190,6 +190,34 @@ void test_tuning_laws() {
     }
 }
 
+/*
+    r_S is a STANDARD DEVIATION, and MekfT::set_RS_noise takes a standard
+    deviation. This test exists because getting that wrong cost a factor of
+    ten in regularizer strength and did not look like a units error: it
+    surfaced as a 46% heave RMS error that read like a modelling problem.
+
+    The S = 0 constraint is a high-pass, and over-tightening it overshoots
+    rather than attenuates, so the symptom was gain > 1 at the wave frequency.
+    Assert the applied covariance is the square of the applied scale.
+*/
+void test_rs_units_are_a_standard_deviation() {
+    Fusion f;
+    f.begin(default_config());
+    check(f.setFixedTuning(2.0f, 0.5f, 7.0f), "setFixedTuning was rejected");
+
+    Vector3f r; Eigen::Matrix<float,3,Fusion::Mekf::NX> H; Matrix3f Rw;
+    f.mekf().integral_residual(r, H, Rw);
+
+    const float want = 7.0f * 7.0f;
+    if (!check(std::fabs(Rw(2,2) - want) <= 1e-4f * want,
+               "R_S must be the square of the applied r_S scale")) {
+        std::cerr << "  R_S(2,2) = " << Rw(2,2) << " want " << want << '\n';
+    }
+    // And emphatically not the scale itself, which is the bug being guarded.
+    check(std::fabs(Rw(2,2) - 7.0f) > 1.0f,
+          "R_S was set to the r_S scale rather than its square");
+}
+
 // The coefficients must actually be the knobs the study will turn.
 void test_tuning_coefficients_are_live() {
     Fusion a, b;
@@ -323,8 +351,28 @@ void test_tracks_heave() {
     const double rms_ref = std::sqrt(sq_ref / n);
     std::cout << "  heave RMS error " << rms << " m against " << rms_ref
               << " m of signal (" << (100.0 * rms / rms_ref) << "%)\n";
-    check(rms < rms_ref,
-          "heave error exceeds the signal itself -- the filter is not tracking");
+
+    /*
+        About 21% on this case, and it is almost entirely amplitude gain
+        rather than noise or drift: fitting p_z to a sinusoid at the known
+        frequency leaves a residual of 0.002 m, while the fitted amplitude is
+        19% high.
+
+        That overshoot is the S = 0 regularizer's high-pass response, it is
+        monotonic in both sea frequency and r_S, and OU-III shows MORE of it
+        than this filter does at every operating point measured (1.23 vs 1.19
+        at 0.15 Hz; 1.62 vs 1.54 at 0.08 Hz). So it is a property of the
+        shared model on a monochromatic sea, not a defect here -- the r_S law
+        was calibrated against broadband JONSWAP and PM spectra, and a pure
+        sinusoid puts all its energy at one frequency.
+
+        The gate is therefore deliberately loose. A tight threshold here would
+        be a number fitted to a sea state the filter was never tuned for, and
+        the real measurement belongs in the paired study against recorded
+        waves.
+    */
+    check(rms < 0.45 * rms_ref,
+          "heave error is far worse than the regularizer overshoot explains");
     check(f.get_position().allFinite() && f.mekf().covariance_full().allFinite(),
           "the filter went non-finite");
 }
@@ -440,6 +488,7 @@ int main() {
     test_staging();
     test_warmup_gates();
     test_tuning_laws();
+    test_rs_units_are_a_standard_deviation();
     test_tuning_coefficients_are_live();
     test_ablation_hooks();
     test_magnetic_reference_timing();

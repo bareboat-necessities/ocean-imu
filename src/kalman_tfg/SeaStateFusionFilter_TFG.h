@@ -379,9 +379,10 @@ private:
         // a following sea puts more energy into heave than into surge/sway.
         const float sZ = tune_.sigma_applied;
         mekf_.set_aw_stationary_std(Vector3f(sZ * S_factor_, sZ * S_factor_, sZ));
+        // r_S is a standard-deviation scale, and set_RS_noise takes a
+        // standard deviation. Both halves of that sentence matter.
         const float rs = tune_.RS_applied;
-        mekf_.set_RS_noise_vector(
-            Vector3f(rs * R_S_xy_factor_, rs * R_S_xy_factor_, rs));
+        mekf_.set_RS_noise(Vector3f(rs * R_S_xy_factor_, rs * R_S_xy_factor_, rs));
     }
 
     /*

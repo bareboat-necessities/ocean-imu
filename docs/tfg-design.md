@@ -406,7 +406,56 @@ the input until both blocks are exercised equally. Worth remembering
 generally: a tolerance calibrated against the largest term in a matrix says
 nothing about the smallest.
 
-## 6. What this does not claim
+## 6. r_S is a standard deviation
+
+`Kalman3D_Wave_TFG::set_RS_noise` takes a **standard deviation** and squares it
+internally, matching `Kalman3D_Wave_OU_III::set_RS_noise` exactly. The tuning
+law produces `r_S` in those units — the article calls it "the standard-deviation
+scale whose square forms the integral pseudo-measurement covariance".
+
+This is recorded because getting it wrong was expensive to diagnose. An earlier
+version of the orchestrator passed `r_S` into a setter that took a variance, so
+the applied covariance was `r_S` rather than `r_S^2` — roughly a factor of ten
+of over-tight regularization at a typical operating point.
+
+**It did not look like a units error.** The `S = 0` constraint is a high-pass,
+and over-tightening a high-pass *overshoots* rather than attenuates, so the
+symptom was a heave amplitude 37% too large and a 46% RMS error that read like a
+modelling problem. Two things made it findable:
+
+1. **Decomposing the error instead of staring at the total.** Fitting `p_z` to a
+   sinusoid at the known frequency split the 46% into gain, phase, DC and
+   residual. The residual was 0.002 m — so it was not noise, not drift, and not
+   the missing detrender. Almost all of it was gain, which points at the
+   regularizer rather than at the integration chain.
+2. **Comparing against OU-III on identical input.** That is also where the first
+   comparison misled: the harness passed `r_S^2` to OU-III, which squared it
+   again, making OU-III's regularizer far too weak and its gain look better
+   (1.05) than it is. Once both filters were given a standard deviation, OU-III
+   measured *worse* than this filter (1.23 vs 1.19).
+
+`tfg_orchestrator-test::test_rs_units_are_a_standard_deviation` guards it now.
+
+### What remains after the fix
+
+About 21% RMS on a 0.15 Hz monochromatic sea, and it is the regularizer's
+high-pass overshoot, shared with OU-III:
+
+| | 0.08 Hz | 0.10 Hz | 0.15 Hz | 0.20 Hz | 0.30 Hz |
+|---|---|---|---|---|---|
+| TFG gain | 1.54 | 1.39 | 1.19 | 1.11 | 1.04 |
+| OU-III gain | 1.62 | 1.46 | 1.23 | 1.13 | 1.05 |
+
+Monotonic in frequency, and equally monotonic in `r_S` (1.39 at `r_S = 3` down
+to 1.05 at `r_S = 100`). TFG is better than OU-III at every point measured.
+
+None of that is a performance claim. The `R_S_coeff = 0.35` law was calibrated
+against broadband JONSWAP and PM spectra, and a pure sinusoid concentrates all
+its energy at one frequency, so this synthetic case is harsher than what the
+tuning was designed for. The real measurement belongs in the paired study
+against recorded waves, not here.
+
+## 7. What this does not claim
 
 The bias-free, frozen-parameter skeleton is group-affine. The complete
 estimator is **not** shown to be, and must not be described as an InEKF or as

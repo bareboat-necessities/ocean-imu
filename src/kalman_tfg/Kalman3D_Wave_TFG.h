@@ -864,8 +864,26 @@ class Kalman3D_Wave_TFG {
     void set_Racc_matrix(const Matrix3& R_body) { Racc_ = T(0.5) * (R_body + R_body.transpose()); }
     void set_Rmag_std(const Vector3& std_body)  { Rmag_ = std_body.cwiseAbs2().asDiagonal(); }
     void set_Rmag(T variance) { Rmag_ = Matrix3::Identity() * std::abs(variance); }
-    void set_RS_noise(T variance) { R_S_ = Matrix3::Identity() * std::abs(variance); }
-    void set_RS_noise_vector(const Vector3& variances) { R_S_ = variances.cwiseAbs().asDiagonal(); }
+    /*
+        Integral pseudo-measurement noise, as a STANDARD DEVIATION, matching
+        Kalman3D_Wave_OU_III::set_RS_noise exactly.
+
+        The units here are a trap worth spelling out. The tuning law produces
+        r_S as a standard-deviation scale -- the article calls it "the
+        standard-deviation scale whose square forms the integral
+        pseudo-measurement covariance" -- so a setter that took a variance
+        would silently receive r_S and apply r_S instead of r_S^2. At a typical
+        operating point that is an order of magnitude of over-tight
+        regularization, and it shows up as resonant gain rather than as
+        anything that looks like a units error.
+
+        set_RS_noise_matrix takes a covariance directly, for the anisotropic
+        case where a standard deviation per axis is not enough.
+    */
+    void set_RS_noise(const Vector3& sigma_S) {
+        R_S_ = sigma_S.array().square().matrix().asDiagonal();
+    }
+    void set_RS_noise(T sigma_S) { set_RS_noise(Vector3::Constant(std::abs(sigma_S))); }
     void set_RS_noise_matrix(const Matrix3& R_S) { R_S_ = T(0.5) * (R_S + R_S.transpose()); }
 
     // World-frame magnetic reference, NED. Stored as the fixed vector the
