@@ -1,8 +1,8 @@
 \section{Analytic Stability Structure and Local ISS of the Adaptive Core}
 \label{app:iss-stability}
 
-This appendix replaces a pointwise stability check by an analytic argument that
-uses the structure of the OU--III model. The analysis concerns the estimator
+This appendix analyzes the stability structure of the OU--III estimator without
+using a sampled grid of frozen Jacobians. The analysis concerns the estimator
 after entry to its normal Live state. Startup, warmup, hard attitude
 initialization, tilt re-lock, and fault-recovery logic are hybrid operations and
 are outside the theorem below.
@@ -10,7 +10,7 @@ are outside the theorem below.
 The tuning variables are treated as exogenous signals. The wave-period and
 variance estimators are driven by raw IMU measurements and by a private Mahony
 attitude solution that does not read the OU--III state or covariance.
-Consequently, for this analysis the applied schedule
+Consequently, the applied schedule
 \begin{equation}
 \vartheta(t)=\bigl(\tau(t),\sigma_{aw}(t),r_S(t)\bigr)
 \label{eq:iss-schedule}
@@ -20,12 +20,12 @@ state of the MEKF. No small-gain condition between the tuner and the estimator
 is therefore required.
 
 The key observation is that the translational subsystem is not a generic
-time-varying Kalman filter. It is a chain of three integrators driven by a
+parameter-varying filter. It is a chain of three integrators driven by a
 strictly mean-reverting OU acceleration and observed through the integral state
-$S$. That structure permits a uniform observability bound for arbitrary
-bounded variation of $\tau(t)$. The scaling
-$r_S\propto\sigma_{aw}\tau^3$ then keeps the $S$ pseudo-measurement on the
-natural stochastic scale of the triple integral.
+$S$. That structure permits a uniform observability bound for arbitrary bounded
+variation of $\tau(t)$. The scaling $r_S\propto\sigma_{aw}\tau^3$ then keeps
+the $S$ pseudo-measurement on the natural stochastic scale of the triple
+integral.
 
 \subsection{Error model and standing bounds}
 \label{app:iss-error-model}
@@ -58,7 +58,7 @@ $\vct\phi_k$ is the nonlinear Taylor remainder, and $\vct u_k$ collects
 measurement error, process/model mismatch, residual accelerometer-bias error,
 and the mismatch introduced by treating $S=0$ as a pseudo-measurement.
 
-The structural analysis assumes finite positive constants
+Assume finite positive constants
 \begin{equation}
 0<\underline\tau\le\tau(t)\le\overline\tau,\qquad
 0<\underline\sigma\le\sigma_{aw}(t)\le\overline\sigma,
@@ -69,14 +69,21 @@ and a fixed pseudo-update period $T_S>0$. Define
 \kappa(t):=\frac{r_S(t)}{\sigma_{aw}(t)\tau^3(t)}.
 \label{eq:iss-kappa-def}
 \end{equation}
-The exact cubic law gives $\kappa(t)=c_R$ away from saturation. For the
-stability result it is sufficient that
+The exact cubic law gives $\kappa(t)=c_R$ away from saturation. For stability
+it is sufficient that
 \begin{equation}
 0<\underline\kappa\le\kappa(t)\le\overline\kappa<\infty .
 \label{eq:iss-kappa-bounds}
 \end{equation}
-These bounds imply finite positive bounds on $r_S(t)$ and therefore on the
-pseudo-measurement covariance.
+Thus
+\begin{equation}
+0<\underline r_S
+:=\underline\kappa\,\underline\sigma\,\underline\tau^3
+\le r_S(t)\le
+\overline\kappa\,\overline\sigma\,\overline\tau^3
+=: \overline r_S<\infty .
+\label{eq:iss-rS-bounds}
+\end{equation}
 
 \subsection{Uniform observability of the OU--III translational chain}
 \label{app:iss-trans-observability}
@@ -90,9 +97,7 @@ $\lambda(t)=1/\tau(t)$,
 \dot a=-\lambda(t)a .
 \label{eq:iss-scalar-chain}
 \end{equation}
-The only assumption on the schedule in this subsection is
-$0<\underline\tau\le\tau(t)\le\overline\tau$; no bound on
-$\dot\tau$ is required.
+No bound on $\dot\tau$ is required.
 
 For an initial time chosen as zero, define
 \begin{equation}
@@ -104,15 +109,13 @@ A_3(t)=\frac12\int_0^t(t-s)^2E(s)\,ds .
 \end{equation}
 The homogeneous solution satisfies
 \begin{equation}
-S(t)
- =S_0+t\,p_0+\frac{t^2}{2}v_0+A_3(t)a_0 .
+S(t)=S_0+t\,p_0+\frac{t^2}{2}v_0+A_3(t)a_0 .
 \label{eq:iss-S-solution}
 \end{equation}
 
-At four consecutive pseudo-measurement times
-$t_j=jT_S$, $j=0,1,2,3$, the observation of $S$ produces the
-finite-horizon observability matrix for
-$\vct z_0=[v_0,p_0,S_0,a_0]^\top$,
+At four consecutive pseudo-measurement times $t_j=jT_S$,
+$j=0,1,2,3$, observation of $S$ gives the finite-horizon observability matrix
+for $\vct z_0=[v_0,p_0,S_0,a_0]^\top$,
 \begin{equation}
 \mat O_S=
 \begin{bmatrix}
@@ -126,33 +129,29 @@ T_S^2/2 & T_S & 1 & A_3(T_S)\\
 
 \begin{proposition}[Uniform observability of one OU--III axis]
 \label{prop:iss-ouiii-uco}
-For every measurable schedule satisfying
-Eq.~\eqref{eq:iss-tau-sigma-bounds}, the matrix
-$\mat O_S$ is nonsingular and obeys
+For every measurable $\tau(t)$ satisfying
+$0<\underline\tau\le\tau(t)\le\overline\tau$, the matrix $\mat O_S$ is
+nonsingular and obeys
 \begin{equation}
 \left|\det\mat O_S\right|
 \ge
 T_S^6\exp\!\left(-\frac{3T_S}{\underline\tau}\right)>0 .
 \label{eq:iss-det-lower}
 \end{equation}
-Hence the state $(v,p,S,a)$ is uniformly observable from four consecutive
-$S$ pseudo-measurements, independently of how rapidly $\tau(t)$ moves inside
-its admissible interval.
+Hence $(v,p,S,a)$ is uniformly observable from four consecutive $S$
+pseudo-measurements, independently of how rapidly $\tau(t)$ moves inside its
+admissible interval.
 \end{proposition}
 
 \begin{proof}
 Direct expansion of Eq.~\eqref{eq:iss-OS} gives
 \begin{equation}
-\det\mat O_S
-=-T_S^3\Delta_{T_S}^3 A_3(0),
+\det\mat O_S=-T_S^3\Delta_{T_S}^3 A_3(0),
 \label{eq:iss-det-difference}
 \end{equation}
 where $\Delta_T^3$ is the third forward difference. From
-Eq.~\eqref{eq:iss-E-A3},
-\begin{equation}
-A_3'''(t)=E(t).
-\end{equation}
-The integral representation of a third forward difference therefore gives
+Eq.~\eqref{eq:iss-E-A3}, $A_3'''(t)=E(t)$. The integral representation of a
+third forward difference therefore gives
 \begin{equation}
 \Delta_T^3 A_3(0)
 =
@@ -162,50 +161,58 @@ E(u+v+w)\,du\,dv\,dw .
 \end{equation}
 Because $\lambda(t)\le1/\underline\tau$,
 \begin{equation}
-E(t)
-=\exp\!\left[-\int_0^t\lambda(s)\,ds\right]
+E(t)=\exp\!\left[-\int_0^t\lambda(s)\,ds\right]
 \ge \exp(-t/\underline\tau).
 \end{equation}
-For $u,v,w\in[0,T_S]$ this yields
+For $u,v,w\in[0,T_S]$,
 \begin{equation}
 \Delta_{T_S}^3 A_3(0)
 \ge T_S^3\exp(-3T_S/\underline\tau),
 \end{equation}
-which substituted into Eq.~\eqref{eq:iss-det-difference} proves
-Eq.~\eqref{eq:iss-det-lower}.
+and Eq.~\eqref{eq:iss-det-lower} follows.
 
-The entries of $\mat O_S$ are also uniformly bounded because
-$0<E(t)\le1$ and therefore $0\le A_3(t)\le t^3/6$. Let
+The entries of $\mat O_S$ are uniformly bounded because $0<E(t)\le1$ and
+$0\le A_3(t)\le t^3/6$. Let
 \begin{equation}
 C_O^2(T_S)=
 \sum_{j=0}^{3}
 \left[
-\frac{(jT_S)^4}{4}
-+(jT_S)^2+1+\frac{(jT_S)^6}{36}
+\frac{(jT_S)^4}{4}+(jT_S)^2+1+\frac{(jT_S)^6}{36}
 \right].
 \label{eq:iss-CO}
 \end{equation}
-Then $\|\mat O_S\|_2\le C_O(T_S)$. Since the product of the four
-singular values equals $|\det\mat O_S|$,
+Then $\|\mat O_S\|_2\le C_O(T_S)$. Since the product of the four singular
+values equals $|\det\mat O_S|$,
 \begin{equation}
 \sigma_{\min}(\mat O_S)
 \ge
-\frac{T_S^6e^{-3T_S/\underline\tau}}
-     {C_O^3(T_S)}
->0 .
+\frac{T_S^6e^{-3T_S/\underline\tau}}{C_O^3(T_S)}
+=:s_O>0 .
 \label{eq:iss-smin-OS}
 \end{equation}
-This is a uniform finite-horizon observability bound.
+Thus $\mat O_S^\top\mat O_S\succeq s_O^2\mat I_4$ uniformly.
 \end{proof}
 
-For the three-dimensional translational subsystem, the $S$ measurement is
-applied componentwise. With isotropic $r_S$ its observability matrix is the
-Kronecker product of Eq.~\eqref{eq:iss-OS} with $\mat I_3$; with bounded
-anisotropic weights the same lower bound holds after multiplication by the
-corresponding positive measurement-information bounds. Thus the translational
-observability result is three-dimensional without requiring vessel rotation.
+Let $\mat R_{S,4}$ be the block-diagonal covariance of the four scalar
+pseudo-measurements. Equation~\eqref{eq:iss-rS-bounds} gives
+$\mat R_{S,4}\preceq\overline r_S^2\mat I_4$, so the weighted information
+matrix satisfies
+\begin{equation}
+\mat O_S^\top\mat R_{S,4}^{-1}\mat O_S
+\succeq
+\frac{s_O^2}{\overline r_S^2}\mat I_4 .
+\label{eq:iss-weighted-uco}
+\end{equation}
+This is an explicit uniform complete-observability bound over four
+pseudo-update intervals.
 
-\subsection{Why the cubic law is the natural stability scaling}
+For the three-dimensional translational subsystem, the $S$ measurement is
+applied componentwise. With isotropic weighting the observability matrix is the
+Kronecker product of Eq.~\eqref{eq:iss-OS} with $\mat I_3$; bounded positive
+anisotropic weights preserve a corresponding information lower bound. Thus the
+translational result is three-dimensional without requiring vessel rotation.
+
+\subsection{OU variance and the cubic regularization law}
 \label{app:iss-cubic-scaling}
 
 The OU diffusion used by the filter is
@@ -222,10 +229,10 @@ Under Eq.~\eqref{eq:iss-tau-sigma-bounds},
 <\infty .
 \label{eq:iss-qc-bounds}
 \end{equation}
-The stochastic forcing of the latent acceleration therefore cannot vanish or
-become unbounded within the admissible tuning set.
+The latent-acceleration forcing therefore cannot vanish or become unbounded
+inside the admissible tuning set.
 
-For fixed $\tau$ and $\sigma_{aw}$, introduce the physical scales
+For fixed $\tau$ and $\sigma_{aw}$, introduce
 \begin{equation}
 \bar a=\frac{a}{\sigma_{aw}},\qquad
 \bar v=\frac{v}{\sigma_{aw}\tau},\qquad
@@ -243,42 +250,64 @@ d\bar a=-\bar a\,ds+\sqrt2\,dW_s,\qquad
 \end{equation}
 Thus $\sigma_{aw}\tau^3$ is the intrinsic scale of the triple-integral state.
 
-The spectral calculation of Sec.~\ref{sec:adaptation} gives, for an effective
+The spectral calculation of Sec.~\ref{sec:adaptation} gives, after an effective
 nonzero low-frequency cutoff,
 \begin{equation}
 \operatorname{Var}[S]
 =c_{\mathrm{spec}}^2\,\sigma_{aw}^2\tau^6 .
 \label{eq:iss-S-variance}
 \end{equation}
-If
+With
 \begin{equation}
 r_S=\kappa\,\sigma_{aw}\tau^3,
 \label{eq:iss-rS-cubic}
 \end{equation}
-then
+we obtain
 \begin{equation}
 \frac{R_S}{\operatorname{Var}[S]}
-=
-\frac{\kappa^2}{c_{\mathrm{spec}}^2}.
+=\frac{\kappa^2}{c_{\mathrm{spec}}^2}.
 \label{eq:iss-information-ratio}
 \end{equation}
-The pseudo-measurement therefore has constant dimensionless strength when
-$\kappa$ is constant, and uniformly bounded strength under
+Hence the pseudo-measurement has constant dimensionless strength when
+$\kappa$ is constant and uniformly bounded strength under
 Eq.~\eqref{eq:iss-kappa-bounds}. This is the stability-relevant role of the
-cubic law: it prevents the drift-control information from collapsing merely
-because the wave amplitude or time scale changes.
+cubic law: the drift-control information does not collapse merely because wave
+amplitude or time scale changes.
 
-The normalization in Eq.~\eqref{eq:iss-normalized-coordinates} is used here to
-identify physical scales. It is not used as a time-varying state
-transformation when $\tau(t)$ and $\sigma_{aw}(t)$ vary, because such a
-transformation would introduce derivatives of the tuning signals. Uniform
-observability for the time-varying schedule instead follows directly from
-Proposition~\ref{prop:iss-ouiii-uco}.
+The normalization in Eq.~\eqref{eq:iss-normalized-coordinates} identifies
+physical scales; it is not used as a time-varying coordinate transformation.
+Such a transformation would introduce $\dot\tau$ and $\dot\sigma_{aw}$ terms.
+Uniform observability for arbitrary bounded $\tau(t)$ instead follows directly
+from Proposition~\ref{prop:iss-ouiii-uco}.
+
+For a frozen $\tau$, the one-axis pair is also controllable from the OU driving
+noise. With state order $[v,p,S,a]$, input $\vct B=[0,0,0,1]^\top$, and
+\begin{equation}
+\mat A(\lambda)=
+\begin{bmatrix}
+0&0&0&1\\
+1&0&0&0\\
+0&1&0&0\\
+0&0&0&-\lambda
+\end{bmatrix},
+\end{equation}
+the controllability matrix satisfies
+\begin{equation}
+\det\begin{bmatrix}
+\vct B&\mat A\vct B&\mat A^2\vct B&\mat A^3\vct B
+\end{bmatrix}=-1,
+\label{eq:iss-frozen-controllability}
+\end{equation}
+independently of $\lambda>0$. Together with Eq.~\eqref{eq:iss-qc-bounds}, this
+shows that loss of OU excitation is not a frozen-parameter singularity. A
+finite-horizon uniform controllability/stabilizability bound for an arbitrary
+measurable time-varying schedule is still required for the most direct
+application of standard Riccati theorems and is listed explicitly below.
 
 \subsection{Attitude information and the remaining linear condition}
 \label{app:iss-attitude}
 
-The accelerometer and magnetometer attitude Jacobians have the form
+The accelerometer and magnetometer attitude Jacobians are
 \begin{equation}
 \mat H_{\theta,a}=-[\widehat{\vct f}_{\mathrm{cog},b}]_\times,
 \qquad
@@ -290,11 +319,11 @@ $\vct u_f=\widehat{\vct f}_{\mathrm{cog},b}/
 \|\widehat{\vct f}_{\mathrm{cog},b}\|$
 and
 $\vct u_m=\widehat{\vct m}_b/\|\widehat{\vct m}_b\|$.
-If there are constants $f_0,m_0,\delta>0$ such that
+If constants $f_0,m_0,\delta>0$ satisfy
 \begin{equation}
 \|\widehat{\vct f}_{\mathrm{cog},b}\|\ge f_0,\qquad
 \|\widehat{\vct m}_b\|\ge m_0,\qquad
-|\vct u_f^\top\vct u_m|\le1-\delta ,
+|\vct u_f^\top\vct u_m|\le1-\delta,
 \label{eq:iss-vector-geometry}
 \end{equation}
 then, with $c_0=\min(f_0^2,m_0^2)$,
@@ -306,44 +335,38 @@ then, with $c_0=\min(f_0^2,m_0^2)$,
 \end{equation}
 Indeed,
 $[\vct x]_\times^\top[\vct x]_\times
-=\|\vct x\|^2\mat I-\vct x\vct x^\top$ and the smallest eigenvalue
-of
+=\|\vct x\|^2\mat I-\vct x\vct x^\top$, and the smallest eigenvalue of
 $2\mat I-\vct u_f\vct u_f^\top-\vct u_m\vct u_m^\top$
 is $1-|\vct u_f^\top\vct u_m|$.
 
-Equation~\eqref{eq:iss-attitude-info} supplies a simple analytic sufficient
-condition against an instantaneous attitude singularity. Gyroscope bias enters
-the attitude-error dynamics through
+Equation~\eqref{eq:iss-attitude-info} rules out the basic two-vector attitude
+singularity. Gyroscope bias enters the attitude-error dynamics through
 $\dot{\delta\vct\theta}=-[\widehat{\vct\omega}]_\times\delta\vct\theta
 +\widetilde{\vct b}_g+\cdots$, so finite-horizon attitude information also
-observes $\widetilde{\vct b}_g$ provided the reference-vector geometry remains
+observes $\widetilde{\vct b}_g$ when the reference-vector geometry remains
 nondegenerate over the observation horizon.
 
-The complete 18-state performance Jacobian is nevertheless coupled: the
-accelerometer simultaneously observes attitude and $\vct a_w$, and covariance
-cross terms couple all corrected states. Proposition~\ref{prop:iss-ouiii-uco}
-and Eq.~\eqref{eq:iss-attitude-info} establish the two principal structural
-pieces, but a formal proof of uniform complete observability of the entire
-coupled performance state still requires combining them into one finite-horizon
-Gramian bound. This is one of the remaining items in
-Sec.~\ref{app:iss-remaining}; it is not replaced here by a sampled Jacobian
-test.
+The complete performance Jacobian is nevertheless coupled: the accelerometer
+simultaneously observes attitude and $\vct a_w$, and covariance cross terms
+couple all corrected states. Proposition~\ref{prop:iss-ouiii-uco} and
+Eq.~\eqref{eq:iss-attitude-info} establish the two principal structural pieces,
+but a formal proof of uniform complete observability of the entire coupled
+performance state still requires combining them into one finite-horizon
+Gramian bound. No sampled Jacobian test is used as a substitute for that step.
 
-\subsection{From linear exponential stability to local ISS}
+\subsection{From uniform exponential stability to local ISS}
 \label{app:iss-local-theorem}
 
 Standard time-varying Kalman-filter results
-\cite{Jazwinski1970_Filtering,Maybeck1979_StochasticModels} imply uniform
-boundedness of the Riccati recursion and uniform exponential stability of the
-homogeneous estimation error when the relevant linearized pair is uniformly
-completely observable and uniformly stabilizable/controllable, with uniformly
-bounded positive measurement covariances. The OU diffusion bound
-Eq.~\eqref{eq:iss-qc-bounds}, Proposition~\ref{prop:iss-ouiii-uco}, and the
-reference-vector condition Eq.~\eqref{eq:iss-vector-geometry} are the
-structure needed to discharge those hypotheses; the remaining implementation
-qualifications are listed in Sec.~\ref{app:iss-remaining}.
+\cite{Jazwinski1970_Filtering,Maybeck1979_StochasticModels} give bounded
+Riccati solutions and uniform exponential stability under suitable uniform
+complete-observability and controllability/stabilizability conditions, with
+bounded positive measurement covariances. The results above supply analytic
+parts of those hypotheses. The remaining implementation qualifications are
+listed in Sec.~\ref{app:iss-remaining}.
 
-Accordingly, assume that the Live-state homogeneous transition satisfies
+Assume that the complete Live-state homogeneous transition has the uniform
+bound
 \begin{equation}
 \|\mat\Psi(k,j)\|
 \le M\rho^{k-j},
@@ -351,8 +374,8 @@ Accordingly, assume that the Live-state homogeneous transition satisfies
 M\ge1,\quad 0<\rho<1,
 \label{eq:iss-ues}
 \end{equation}
-uniformly for every admissible exogenous tuning schedule. This is the only
-linear stability property needed by the nonlinear ISS step.
+for every admissible exogenous tuning schedule. This is the only linear
+stability property needed by the nonlinear ISS step.
 
 \begin{theorem}[Local ISS once the Live linearization is uniformly exponentially stable]
 \label{thm:adaptive-local-iss}
@@ -365,16 +388,15 @@ $g_u>0$ such that, uniformly in $k$,
 \|\vct u_k\|\le g_u\bar d_k .
 \label{eq:iss-remainder-input}
 \end{equation}
-Then there exist $0<r\le r_e$, $C_1,C_2>0$, $0<\rho_1<1$, and
-$\bar d^\star>0$ such that, if $\|\vct e_0\|$ and
-$\sup_k\bar d_k$ are sufficiently small to keep the trajectory in the
-$r$-ball, then
+Then there exist $0<r\le r_e$, constants $C_1,C_2>0$ and
+$0<\rho_1<1$, and a disturbance threshold $\bar d^\star>0$ such that
+sufficiently small $\vct e_0$ and
+$\sup_k\bar d_k\le\bar d^\star$ imply positive invariance of the $r$-ball and
 \begin{equation}
 \|\vct e_k\|
 \le
 C_1\rho_1^k\|\vct e_0\|
-+
-C_2\sup_{0\le j<k}\bar d_j .
++C_2\sup_{0\le j<k}\bar d_j .
 \label{eq:iss-final-bound}
 \end{equation}
 Hence the Live performance state is locally input-to-state stable with respect
@@ -382,51 +404,64 @@ to the bounded disturbance channels.
 \end{theorem}
 
 \begin{proof}
-Variation of constants applied to Eq.~\eqref{eq:iss-error-recursion} and
-Eq.~\eqref{eq:iss-ues} gives
+Inside a ball of radius $r\le r_e$, write, for $\vct e_k\ne0$,
 \begin{equation}
+\mat\Delta_k
+:=\frac{\vct\phi_k(\vct e_k)\vct e_k^\top}
+        {\|\vct e_k\|^2},
+\end{equation}
+and set $\mat\Delta_k=0$ at $\vct e_k=0$. Then
+$\vct\phi_k(\vct e_k)=\mat\Delta_k\vct e_k$ and
+\begin{equation}
+\|\mat\Delta_k\|\le c_\phi r .
+\label{eq:iss-delta-bound}
+\end{equation}
+Thus, while the trajectory remains in the ball,
+\begin{equation}
+\vct e_{k+1}=(\mat A_k+\mat\Delta_k)\vct e_k+\vct u_k .
+\end{equation}
+
+Let $\widetilde{\mat\Psi}(k,j)$ denote the homogeneous transition of
+$\mat A_k+\mat\Delta_k$. Variation of constants relative to $\mat A_k$ and
+Eq.~\eqref{eq:iss-ues} give
+\begin{equation}
+\|\widetilde{\mat\Psi}(k,j)\|
+\le
+M\rho^{k-j}
++M c_\phi r
+\sum_{\ell=j}^{k-1}
+\rho^{k-1-\ell}
+\|\widetilde{\mat\Psi}(\ell,j)\| .
+\label{eq:iss-transition-perturb}
+\end{equation}
+Induction in $k-j$ yields
+\begin{equation}
+\|\widetilde{\mat\Psi}(k,j)\|
+\le M\rho_1^{k-j},
+\qquad
+\rho_1:=\rho+M c_\phi r .
+\label{eq:iss-perturbed-ues}
+\end{equation}
+Choose
+\begin{equation}
+0<r\le\min\!\left\{r_e,\frac{1-\rho}{2M c_\phi}\right\},
+\end{equation}
+so that $\rho_1<1$. A second variation-of-constants step then gives
+\begin{align}
 \|\vct e_k\|
-\le
-M\rho^k\|\vct e_0\|
-+
-M\sum_{j=0}^{k-1}
-\rho^{k-1-j}
-\left(c_\phi\|\vct e_j\|^2+g_u\bar d_j\right).
-\label{eq:iss-voc}
-\end{equation}
-Choose $r\le r_e$ such that
-\begin{equation}
-\frac{M c_\phi r}{1-\rho}\le\frac14 .
-\label{eq:iss-local-radius}
-\end{equation}
-On any interval for which $\|\vct e_j\|\le r$,
-$c_\phi\|\vct e_j\|^2\le c_\phi r\|\vct e_j\|$.
-For any fixed $\rho<\rho_1<1$, multiply Eq.~\eqref{eq:iss-voc} by
-$\rho_1^{-k}$ and take the supremum over the finite prefix $0\le k\le N$.
-The geometric convolution has gain
-\begin{equation}
-M c_\phi r
-\sum_{n=0}^{\infty}\rho^n\rho_1^{-(n+1)}
-=
-\frac{M c_\phi r}{\rho_1-\rho}.
-\end{equation}
-Reducing $r$ further so that this gain is at most $1/2$ yields
-\begin{equation}
-\sup_{0\le k\le N}\rho_1^{-k}\|\vct e_k\|
-\le
-2M\|\vct e_0\|
-+
-\frac{2Mg_u}{1-\rho}
-\sup_{0\le j<N}\bar d_j\,ho_1^{-N}.
-\end{equation}
-Returning to the unweighted norm gives constants $C_1,C_2$ for which
-Eq.~\eqref{eq:iss-final-bound} holds on the local interval. Choosing
-$\|\vct e_0\|$ and
-$\bar d=\sup_j\bar d_j$ so that the right-hand side remains strictly below
-$r$ closes the estimate by induction and proves positive invariance of the
-local ball. This is the standard local-ISS extension of a uniformly
-exponentially stable linear time-varying system with a quadratic nonlinear
-remainder.
+&\le
+M\rho_1^k\|\vct e_0\|
++M\sum_{j=0}^{k-1}\rho_1^{k-1-j}\|\vct u_j\|\\
+&\le
+M\rho_1^k\|\vct e_0\|
++\frac{M g_u}{1-\rho_1}
+\sup_{0\le j<k}\bar d_j .
+\end{align}
+Thus Eq.~\eqref{eq:iss-final-bound} holds with
+$C_1=M$ and $C_2=M g_u/(1-\rho_1)$ while the state stays in the ball.
+Choosing $\vct e_0$ and $\bar d^\star$ so that
+$M\|\vct e_0\|+C_2\bar d^\star<r$ closes the bound by induction and proves
+positive invariance. Therefore the same estimate holds for all $k\ge0$.
 \end{proof}
 
 \subsection{What remains before claiming a complete filter proof}
@@ -436,33 +471,41 @@ The analysis above proves a nontrivial part of the stability problem
 analytically: the OU--III translational chain is uniformly observable through
 the $S$ channel for every bounded exogenous $\tau(t)$ schedule, and the cubic
 law keeps that observation on a uniformly comparable stochastic scale.
-Theorem~\ref{thm:adaptive-local-iss} then gives local ISS once uniform
-exponential stability of the complete Live linearization has been established.
-The following items still prevent an unconditional proof of the complete
+Theorem~\ref{thm:adaptive-local-iss} gives local ISS once uniform exponential
+stability of the complete Live linearization has been established. The
+following items still prevent an unconditional proof of the complete
 implemented filter.
 
 \paragraph{Full augmented observability.}
 Equation~\eqref{eq:iss-attitude-info} rules out the basic two-vector attitude
 singularity and Proposition~\ref{prop:iss-ouiii-uco} proves translational
-observability, but the complete coupled attitude--gyro-bias--translation Gramian
-has not yet been bounded analytically. A complete proof should combine these
-two bounds over one finite observation horizon, including the actual
+observability, but the complete coupled attitude--gyro-bias--translation
+Gramian has not yet been bounded analytically. A complete proof should combine
+these bounds over one finite observation horizon, including the actual
 magnetometer cadence.
+
+\paragraph{Uniform controllability or stabilizability for the varying schedule.}
+Equation~\eqref{eq:iss-frozen-controllability} and the positive diffusion bound
+Eq.~\eqref{eq:iss-qc-bounds} remove the frozen-parameter degeneracy. The most
+direct time-varying Riccati theorem still requires a finite-horizon uniform
+controllability/stabilizability bound for the complete scheduled system. That
+bound should be proved from the same OU-chain structure rather than inferred
+from isolated operating points.
 
 \paragraph{Accelerometer-bias convergence.}
 The theorem treats residual accelerometer-bias error as an input. To claim
 convergence of all 21 error coordinates, $\widetilde{\vct b}_a$ must be placed
 inside the certified state and the augmented observability calculation must
-separate the slowly varying bias from the mean-reverting $\vct a_w$ state.
-The existing estimate projection is useful for bounded-input ISS, but by itself
-is not a convergence proof.
+separate the slowly varying bias from the mean-reverting $\vct a_w$ state. The
+existing estimate projection is useful for bounded-input ISS, but by itself is
+not a convergence proof.
 
 \paragraph{Pseudo-measurement model error.}
 $S=0$ is a regularizer rather than a physical measurement, so the physical
 $S_{\mathrm{true}}$ appears in the error system as a disturbance. The spectral
 model gives the natural second-moment scale
 $\operatorname{sd}(S_{\mathrm{true}})
-=c_{\mathrm{spec}}\sigma_{aw}\tau^3$, which is compatible with
+=c_{\mathrm{spec}}\sigma_{aw}\tau^3$, consistent with
 Eq.~\eqref{eq:iss-rS-cubic}. A deterministic infinite-horizon ISS theorem,
 however, requires a deterministic bound on this disturbance. For Gaussian
 noise and an OU prior, an infinite-horizon sample-path supremum is not
@@ -496,8 +539,8 @@ or enforced by a one-sample scheduling delay.
 \label{app:iss-recommendations}
 
 The remaining gaps do not require redesigning the estimator. The following
-small changes would make the mathematical model align much more closely with
-standard time-varying Kalman stability theory.
+small changes make the mathematical model align much more closely with standard
+time-varying Kalman stability theory.
 
 \begin{enumerate}
 \item \textbf{Compute the applied $r_S$ from the applied OU scales.}
@@ -518,8 +561,8 @@ $\sigma_{aw}$ makes this property explicit instead of leaving it implicit in a
 numerical safeguard.
 
 \item \textbf{Replace covariance overwrite by positive-semidefinite inflation.}
-If the purpose of covariance re-alignment is to prevent the
-$\vct a_w$ marginal from becoming overconfident, use an update of the form
+If covariance re-alignment is intended to prevent the $\vct a_w$ marginal from
+becoming overconfident, use an update of the form
 \begin{equation}
 \mat P^+=\mat P^-+\mat E_a\mat\Delta\mat E_a^\top,
 \qquad \mat\Delta\succeq0,
@@ -537,13 +580,13 @@ otherwise unnecessary technical issue in a stochastic proof.
 \item \textbf{State the invariant Live region explicitly.}
 Specify bounds on attitude, reference-vector noncollinearity, measurement
 availability, and validity gates under which no hard reset is invoked. The
-local theorem can then be stated on that region without relying on empirical
-trajectory coverage.
+local theorem can then be stated on that region without relying on trajectory
+coverage.
 \end{enumerate}
 
 With the first three changes, the translational part of the proof is already
 fully analytic and the remaining mathematical task is sharply defined:
-establish one finite-horizon uniform Gramian bound for the coupled
-attitude--bias--translation linearization. Once that yields
-Eq.~\eqref{eq:iss-ues}, the nonlinear ISS conclusion follows directly from
-Theorem~\ref{thm:adaptive-local-iss}.
+establish finite-horizon uniform Gramian bounds for the coupled
+attitude--bias--translation linearization and its scheduled process input.
+Once those results imply Eq.~\eqref{eq:iss-ues}, the nonlinear ISS conclusion
+follows directly from Theorem~\ref{thm:adaptive-local-iss}.
