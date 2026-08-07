@@ -7,3 +7,4 @@
 ./tfg_jacobians-test
 ./covariance_transport-test
 ./tfg_orchestrator-test
+./kalman_tfg-sim
