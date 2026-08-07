@@ -59,6 +59,15 @@
 
 namespace ocean_imu::tfg {
 
+/*
+    Yaw is held for this long before the magnetic reference is captured.
+    Deliberately the same 7 s OU-III uses (SeaStateFusionFilter_OU_III.h:128):
+    a different mag-lock time would show up in a paired study as an attitude
+    difference between the two filters that has nothing to do with either
+    estimator.
+*/
+constexpr float MAG_DELAY_SEC = 7.0f;
+
 struct TfgTuneState {
     float tau_applied   = 1.1f;    // s
     float sigma_applied = 1e-2f;   // m/s^2
@@ -92,7 +101,7 @@ public:
         float    gyro_noise_density = 0.005f;          // rad/sqrt(s)
         Vector3f sigma_m{Vector3f::Constant(0.1f)};    // mag noise std, body
         bool     with_mag = true;
-        float    mag_delay_sec = 30.0f;                // hold yaw until settled
+        float    mag_delay_sec = MAG_DELAY_SEC;         // hold yaw until settled
         bool     freeze_acc_bias_until_live = true;
         float    Racc_warmup_std = 0.5f;               // inflated while warming
         float    gravity_magnitude = 9.80665f;
@@ -204,7 +213,31 @@ public:
         if (elapsed_sec_ < cfg_.mag_delay_sec) return;
 
         if (!mekf_.has_magnetic_reference()) {
-            mekf_.set_magnetic_reference_world(mekf_.R_bw() * mag_body);
+            /*
+                Anchor yaw to magnetic north before capturing the reference.
+
+                initialize_from_acc levels the filter but leaves yaw at zero,
+                because gravity says nothing about heading. Storing
+                B_w = Rhat m at that point would bake the arbitrary yaw into
+                the reference, and the filter would then hold yaw consistent
+                with its own starting frame rather than with the field --
+                a constant gauge offset that scores as a large yaw error while
+                every other channel looks fine.
+
+                So rotate about world z until the measured field's horizontal
+                component points north, then capture. B_w comes out canonical,
+                (B_north, 0, B_down), which is also what makes H_m a genuinely
+                fixed reference rather than a frame-dependent one.
+            */
+            const Vector3f b_world = mekf_.R_bw() * mag_body;
+            const float horiz = std::hypot(b_world.x(), b_world.y());
+            if (horiz > 1e-9f) {
+                const float psi = std::atan2(b_world.y(), b_world.x());
+                const Eigen::Matrix3f Rz =
+                    Eigen::AngleAxisf(-psi, Vector3f::UnitZ()).toRotationMatrix();
+                mekf_.state().R = (Rz * mekf_.state().R).eval();
+            }
+            mekf_.set_magnetic_reference_world(Vector3f(horiz, 0.0f, b_world.z()));
             return;
         }
         mekf_.measurement_update_mag_only(mag_body);

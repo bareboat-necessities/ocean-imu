@@ -455,7 +455,35 @@ its energy at one frequency, so this synthetic case is harsher than what the
 tuning was designed for. The real measurement belongs in the paired study
 against recorded waves, not here.
 
-## 7. What this does not claim
+## 7. Yaw must be anchored at magnetic lock, not merely referenced
+
+`initialize_from_acc` levels the filter but leaves yaw at zero, because gravity
+says nothing about heading. The magnetic reference is captured later, once the
+attitude has settled.
+
+Capturing it as `B_w = Rhat m` at that moment is wrong, and wrong in a way that
+is easy to miss. It bakes the arbitrary startup yaw into the reference, and the
+filter then holds yaw consistent with *its own starting frame* rather than with
+the field — a constant gauge offset. Every other channel looks healthy while
+yaw carries a fixed error.
+
+Measured on a JONSWAP H1.5 record: **12.2 degrees RMS yaw**, against roll 0.58
+and pitch 0.17. Anchoring first — rotate about world z until the measured
+field's horizontal component points north, *then* capture — gives **2.37
+degrees**, in line with OU-III's 2.2 degree gate, with every other channel
+unchanged.
+
+Capturing the canonical `(B_north, 0, B_down)` is also what makes `H_m` a
+genuinely fixed reference rather than a frame-dependent one, which is the
+property section 4 relies on.
+
+This is worth stating because the symptom points away from the cause. A large
+yaw error with clean roll and pitch reads as a magnetometer or observability
+problem; it was neither. The diagnostic that separates them is whether the
+error is a constant offset or a wander — a gauge offset is constant, and a real
+heading problem is not.
+
+## 8. What this does not claim
 
 The bias-free, frozen-parameter skeleton is group-affine. The complete
 estimator is **not** shown to be, and must not be described as an InEKF or as

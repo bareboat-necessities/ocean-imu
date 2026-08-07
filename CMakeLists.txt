@@ -52,3 +52,4 @@ add_executable(tfg_propagation-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_propa
 add_executable(tfg_jacobians-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_jacobians-test.cpp")
 add_executable(covariance_transport-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/covariance_transport-test.cpp")
 add_executable(tfg_orchestrator-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_orchestrator-test.cpp")
+add_executable(kalman_tfg-sim "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/kalman_tfg-sim.cpp" ${W3D_SIM_COMMON})
