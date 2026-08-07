@@ -89,7 +89,7 @@ void configure(F& f) {
     f.set_Q_bacc_rw(Vector3(T(2.5e-7), T(3e-7), T(2e-7)));
     f.set_Racc_std(Vector3(T(0.4), T(0.35), T(0.5)));
     f.set_Rmag_std(Vector3(T(0.1), T(0.12), T(0.09)));
-    f.set_RS_noise_vector(Vector3(T(1.5), T(1.5), T(0.8)));
+    f.set_RS_noise(Vector3(T(1.5), T(1.5), T(0.8)));
     f.set_magnetic_reference_world(Vector3(T(0.21), T(0.02), T(0.43)));
     f.initialize_from_truth(
         Eigen::Quaternion<T>(Eigen::AngleAxis<T>(

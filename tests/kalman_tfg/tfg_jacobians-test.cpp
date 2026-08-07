@@ -67,7 +67,7 @@ Filter make_filter() {
     f.set_aw_stationary_std(Vector3(T(0.6), T(0.6), T(0.32)));
     f.set_Racc_std(Vector3(T(0.4), T(0.35), T(0.5)));
     f.set_Rmag_std(Vector3(T(0.1), T(0.12), T(0.09)));
-    f.set_RS_noise_vector(Vector3(T(1.5), T(1.5), T(0.8)));
+    f.set_RS_noise(Vector3(T(1.5), T(1.5), T(0.8)));
     f.set_magnetic_reference_world(Vector3(T(0.21), T(0.02), T(0.43)));
     // A genuinely rotated attitude and non-zero everything, so a term that is
     // wrong cannot pass by being multiplied into zero.
@@ -473,10 +473,14 @@ void test_measurement_noise_is_rotated_into_the_world() {
           "isotropic accelerometer noise must be unchanged by the world rotation");
 
     // R_S is already world frame and must NOT be rotated.
-    f.set_RS_noise_vector(Vector3(T(1.5), T(1.5), T(0.8)));
+    f.set_RS_noise(Vector3(T(1.5), T(1.5), T(0.8)));
     f.integral_residual(r, H, Rw);
     Matrix3 want; want.setZero();
-    want.diagonal() << T(1.5), T(1.5), T(0.8);
+    // set_RS_noise takes standard deviations, so R_S is their square. Write
+    // the squares as products rather than as literals: 0.8*0.8 is
+    // 0.6400000000000001 in double, so a literal 0.64 would fail the exact
+    // comparison below for a reason that has nothing to do with frames.
+    want.diagonal() << T(1.5)*T(1.5), T(1.5)*T(1.5), T(0.8)*T(0.8);
     check((Rw - want).cwiseAbs().maxCoeff() == T(0),
           "R_S must stay in world/NED coordinates, not be rotated by the estimate");
 }

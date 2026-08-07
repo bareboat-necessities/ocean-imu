@@ -318,6 +318,123 @@ class Kalman3D_Wave_TFG {
     [[nodiscard]] const Group& state() const { return X_; }
     [[nodiscard]] Group& state() { return X_; }
 
+    /*
+        Tilt-only initialization from a gravity reading.
+
+        At rest the accelerometer reports -g in body coordinates, so the
+        measured direction fixes roll and pitch and says nothing about yaw.
+        Yaw is left at zero here; the magnetometer sets it later, once a world
+        reference exists.
+    */
+    bool initialize_from_acc(const Vector3& acc_body) {
+        if (!acc_body.allFinite()) return false;
+        const T n = acc_body.norm();
+        if (!(n > T(1e-6))) return false;
+
+        // Body-frame "up" is the direction the specific force points at rest.
+        const Vector3 up_body = acc_body / n;
+        const Vector3 up_world(T(0), T(0), T(-1));   // NED: up is -z
+
+        // Smallest rotation carrying up_body onto up_world, as R_bw.
+        const Vector3 v = up_body.cross(up_world);
+        const T c = up_body.dot(up_world);
+        const T s2 = v.squaredNorm();
+        Matrix3 R;
+        if (s2 < T(1e-18)) {
+            // Parallel or antiparallel. Antiparallel needs a half turn about
+            // any axis orthogonal to up_body; parallel is the identity.
+            if (c > T(0)) {
+                R = Matrix3::Identity();
+            } else {
+                Vector3 axis = up_body.cross(Vector3::UnitX());
+                if (axis.norm() < T(1e-6)) axis = up_body.cross(Vector3::UnitY());
+                axis.normalize();
+                R = ocean_imu::lie::Exp<T>(Vector3(axis * T(M_PI)));
+            }
+        } else {
+            const Matrix3 V = ocean_imu::lie::skew<T>(v);
+            R = Matrix3::Identity() + V + V * V * ((T(1) - c) / s2);
+        }
+        X_.R = R;
+        reorthonormalize_();
+        return true;
+    }
+
+    /*
+        Linear-block gate.
+
+        Until the tuner has an operating point worth trusting, the world chain
+        is not propagated or corrected and the filter behaves as an
+        attitude-and-bias estimator. The accelerometer update still runs -- it
+        is what levels the filter -- but with a_w marginalized into the
+        measurement noise rather than estimated, exactly as OU-III does when
+        its linear block is off.
+    */
+    void set_linear_block_enabled(bool on) { linear_block_enabled_ = on; }
+    [[nodiscard]] bool linear_block_enabled() const { return linear_block_enabled_; }
+
+    /*
+        Re-seed the a_w covariance from the stationary OU covariance.
+
+        reset_* zeroes the cross-covariances: use it when the operating point
+        has moved so far that the old correlations are meaningless.
+
+        synchronize_*_congruent rescales instead, preserving every correlation
+        coefficient. P_aa is replaced by Sigma while each cross-covariance is
+        carried through the same congruence, so the joint stays consistent.
+        That is the gentler of the two and the one the orchestrator uses on its
+        periodic tick.
+
+        Both work on the INVARIANT tangent block, not on a_w as a free-standing
+        Euclidean state -- P's rho_a rows are expressed in the same right-
+        invariant coordinates as everything else, and treating them otherwise
+        would silently mix frames.
+    */
+    void reset_aw_covariance_to_stationary() {
+        P_.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_;
+        for (int i = 0; i < NX; ++i) {
+            if (i >= OFF_AW && i < OFF_AW + 3) continue;
+            for (int k = 0; k < 3; ++k) {
+                P_(i, OFF_AW + k) = T(0);
+                P_(OFF_AW + k, i) = T(0);
+            }
+        }
+    }
+
+    bool synchronize_aw_covariance_to_stationary_congruent() {
+        Matrix3 P_aa = P_.template block<3,3>(OFF_AW, OFF_AW);
+        P_aa = T(0.5) * (P_aa + P_aa.transpose()).eval();
+
+        Eigen::LLT<Matrix3> llt_old(P_aa);
+        Eigen::LLT<Matrix3> llt_new(Matrix3(T(0.5) * (Sigma_aw_ + Sigma_aw_.transpose())));
+        if (llt_old.info() != Eigen::Success || llt_new.info() != Eigen::Success) {
+            reset_aw_covariance_to_stationary();
+            return false;
+        }
+        // M carries the old marginal onto the new one; applying it to the
+        // cross-covariances keeps every correlation coefficient intact.
+        const Matrix3 M = llt_new.matrixL() *
+                          Matrix3(llt_old.matrixL()).inverse();
+        if (!M.allFinite()) {
+            reset_aw_covariance_to_stationary();
+            return false;
+        }
+
+        for (int i = 0; i < NX; ++i) {
+            if (i >= OFF_AW && i < OFF_AW + 3) continue;
+            Vector3 col;
+            for (int k = 0; k < 3; ++k) col(k) = P_(OFF_AW + k, i);
+            const Vector3 scaled = M * col;
+            for (int k = 0; k < 3; ++k) {
+                P_(OFF_AW + k, i) = scaled(k);
+                P_(i, OFF_AW + k) = scaled(k);
+            }
+        }
+        P_.template block<3,3>(OFF_AW, OFF_AW) = M * P_aa * M.transpose();
+        P_ = T(0.5) * (P_ + P_.transpose()).eval();
+        return true;
+    }
+
     // ------------------------------------------------------------- tuning
 
     void set_aw_time_constant(T tau) { tau_aw_ = std::max(T(1e-3), tau); }
@@ -375,11 +492,13 @@ class Kalman3D_Wave_TFG {
         X_.R = X_.R * ocean_imu::lie::Exp<T>(Vector3(omega * Ts));
         reorthonormalize_();
 
-        Eigen::Matrix<T,4,4> Phi_axis;
-        ou_detail::IntegratedOUChain<T,3>::transition(tau_aw_, Ts, Phi_axis);
-        // Row i of X is [v_i p_i S_i a_i], so applying the per-axis 4x4 to
-        // every row at once is a right multiplication by its transpose.
-        X_.X = (X_.X * Phi_axis.transpose()).eval();
+        if (linear_block_enabled_) {
+            Eigen::Matrix<T,4,4> Phi_axis;
+            ou_detail::IntegratedOUChain<T,3>::transition(tau_aw_, Ts, Phi_axis);
+            // Row i of X is [v_i p_i S_i a_i], so applying the per-axis 4x4 to
+            // every row at once is a right multiplication by its transpose.
+            X_.X = (X_.X * Phi_axis.transpose()).eval();
+        }
     }
 
     /*
@@ -442,7 +561,11 @@ class Kalman3D_Wave_TFG {
             }
         }
 
-        // World block: the OU chain, exact, per axis.
+        // World block: the OU chain, exact, per axis. When the linear block is
+        // gated off the world states are frozen, so Phi stays the identity
+        // there and the bias coupling below is skipped with it.
+        if (!linear_block_enabled_) return;
+
         Eigen::Matrix<T,4,4> Phi_axis;
         ou_detail::IntegratedOUChain<T,3>::transition(tau_aw_, Ts, Phi_axis);
         Phi.template block<12,12>(OFF_V, OFF_V).setZero();
@@ -564,7 +687,7 @@ class Kalman3D_Wave_TFG {
         }
 
         // World block: the exact OU contribution, added on top.
-        add_ou_process_noise_(Ts, Qd);
+        if (linear_block_enabled_) add_ou_process_noise_(Ts, Qd);
 
         if constexpr (with_accel_bias) {
             Qd.template block<3,3>(OFF_BA, OFF_BA) =
@@ -741,8 +864,26 @@ class Kalman3D_Wave_TFG {
     void set_Racc_matrix(const Matrix3& R_body) { Racc_ = T(0.5) * (R_body + R_body.transpose()); }
     void set_Rmag_std(const Vector3& std_body)  { Rmag_ = std_body.cwiseAbs2().asDiagonal(); }
     void set_Rmag(T variance) { Rmag_ = Matrix3::Identity() * std::abs(variance); }
-    void set_RS_noise(T variance) { R_S_ = Matrix3::Identity() * std::abs(variance); }
-    void set_RS_noise_vector(const Vector3& variances) { R_S_ = variances.cwiseAbs().asDiagonal(); }
+    /*
+        Integral pseudo-measurement noise, as a STANDARD DEVIATION, matching
+        Kalman3D_Wave_OU_III::set_RS_noise exactly.
+
+        The units here are a trap worth spelling out. The tuning law produces
+        r_S as a standard-deviation scale -- the article calls it "the
+        standard-deviation scale whose square forms the integral
+        pseudo-measurement covariance" -- so a setter that took a variance
+        would silently receive r_S and apply r_S instead of r_S^2. At a typical
+        operating point that is an order of magnitude of over-tight
+        regularization, and it shows up as resonant gain rather than as
+        anything that looks like a units error.
+
+        set_RS_noise_matrix takes a covariance directly, for the anisotropic
+        case where a standard deviation per axis is not enough.
+    */
+    void set_RS_noise(const Vector3& sigma_S) {
+        R_S_ = sigma_S.array().square().matrix().asDiagonal();
+    }
+    void set_RS_noise(T sigma_S) { set_RS_noise(Vector3::Constant(std::abs(sigma_S))); }
     void set_RS_noise_matrix(const Matrix3& R_S) { R_S_ = T(0.5) * (R_S + R_S.transpose()); }
 
     // World-frame magnetic reference, NED. Stored as the fixed vector the
@@ -815,7 +956,9 @@ class Kalman3D_Wave_TFG {
 
         H.setZero();
         H.template block<3,3>(0, OFF_PHI) = ocean_imu::lie::skew<T>(gravity_world());
-        H.template block<3,3>(0, OFF_AW)  = -Matrix3::Identity();
+        if (linear_block_enabled_) {
+            H.template block<3,3>(0, OFF_AW) = -Matrix3::Identity();
+        }
         if constexpr (with_accel_bias) {
             if (acc_bias_updates_enabled_) {
                 H.template block<3,3>(0, OFF_BA) =
@@ -826,6 +969,13 @@ class Kalman3D_Wave_TFG {
         // lives in. For isotropic Racc this is a no-op, which is worth knowing
         // when reading the anisotropic case.
         Rw = X_.R * Racc_ * X_.R.transpose();
+
+        // With the linear block frozen, a_w is not estimated -- but it is
+        // still physically present in the measurement. Marginalize it in as
+        // extra measurement noise rather than pretending it is zero, which is
+        // what OU-III does in the same situation. Sigma_aw is already a world-
+        // frame covariance, so it adds directly.
+        if (!linear_block_enabled_) Rw += Sigma_aw_;
     }
 
     /*
@@ -895,6 +1045,7 @@ class Kalman3D_Wave_TFG {
     }
 
     bool applyIntegralZeroPseudoMeas() {
+        if (!linear_block_enabled_) { last_S_diag_ = MeasDiag3{}; return false; }
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
         integral_residual(r, H, Rw);
         return apply_update3_(r, H, Rw, last_S_diag_);
@@ -1046,6 +1197,7 @@ class Kalman3D_Wave_TFG {
     T       acc_bias_limit_{T(0.5)};
     bool    acc_bias_updates_enabled_{true};
     T       nis_gate_{T(0)};
+    bool    linear_block_enabled_{true};
 
     static constexpr T kTempRefC = T(35);
 
