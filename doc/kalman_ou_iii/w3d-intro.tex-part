@@ -177,7 +177,7 @@ The main contributions of this work are:
         exponential stability of the complete scheduled linearization implies
         local ISS of the nonlinear error recursion. The remaining conditions
         needed for an unconditional 21-state result are identified explicitly
-        rather than replaced by a numerical certificate.
+        and retained as open proof obligations.
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
   \item A reproducible paired comparison against a published nonlinear observer
