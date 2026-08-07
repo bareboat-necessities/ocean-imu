@@ -127,8 +127,8 @@ T_S^2/2 & T_S & 1 & A_3(T_S)\\
 \label{eq:iss-OS}
 \end{equation}
 
-\begin{proposition}[Uniform observability of one OU--III axis]
-\label{prop:iss-ouiii-uco}
+\begin{lemma}[Uniform observability of one OU--III axis]
+\label{lem:iss-ouiii-uco}
 For every measurable $\tau(t)$ satisfying
 $0<\underline\tau\le\tau(t)\le\overline\tau$, the matrix $\mat O_S$ is
 nonsingular and obeys
@@ -141,7 +141,7 @@ T_S^6\exp\!\left(-\frac{3T_S}{\underline\tau}\right)>0 .
 Hence $(v,p,S,a)$ is uniformly observable from four consecutive $S$
 pseudo-measurements, independently of how rapidly $\tau(t)$ moves inside its
 admissible interval.
-\end{proposition}
+\end{lemma}
 
 \begin{proof}
 Direct expansion of Eq.~\eqref{eq:iss-OS} gives
@@ -278,7 +278,7 @@ The normalization in Eq.~\eqref{eq:iss-normalized-coordinates} identifies
 physical scales; it is not used as a time-varying coordinate transformation.
 Such a transformation would introduce $\dot\tau$ and $\dot\sigma_{aw}$ terms.
 Uniform observability for arbitrary bounded $\tau(t)$ instead follows directly
-from Proposition~\ref{prop:iss-ouiii-uco}.
+from Lemma~\ref{lem:iss-ouiii-uco}.
 
 For a frozen $\tau$, the one-axis pair is also controllable from the OU driving
 noise. With state order $[v,p,S,a]$, input $\vct B=[0,0,0,1]^\top$, and
@@ -348,7 +348,7 @@ nondegenerate over the observation horizon.
 
 The complete performance Jacobian is nevertheless coupled: the accelerometer
 simultaneously observes attitude and $\vct a_w$, and covariance cross terms
-couple all corrected states. Proposition~\ref{prop:iss-ouiii-uco} and
+couple all corrected states. Lemma~\ref{lem:iss-ouiii-uco} and
 Eq.~\eqref{eq:iss-attitude-info} establish the two principal structural pieces,
 but a formal proof of uniform complete observability of the entire coupled
 performance state still requires combining them into one finite-horizon
@@ -478,7 +478,7 @@ implemented filter.
 
 \paragraph{Full augmented observability.}
 Equation~\eqref{eq:iss-attitude-info} rules out the basic two-vector attitude
-singularity and Proposition~\ref{prop:iss-ouiii-uco} proves translational
+singularity and Lemma~\ref{lem:iss-ouiii-uco} proves translational
 observability, but the complete coupled attitude--gyro-bias--translation
 Gramian has not yet been bounded analytically. A complete proof should combine
 these bounds over one finite observation horizon, including the actual
