@@ -1,0 +1,143 @@
+name: agent-mean-reverting-ba-patch
+on:
+  push:
+    branches: [agent/mean-reverting-accel-bias]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/mean-reverting-accel-bias
+      - name: Patch OU-II and OU-III accelerometer bias propagation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          paths = [
+              Path('src/kalman_ou_ii/Kalman3D_Wave_OU_II.h'),
+              Path('src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'),
+          ]
+
+          api_old = '''    void set_Q_bacc_rw(const Vector3& rw_std_per_sqrt_s) {
+                  if constexpr (with_accel_bias)
+                      Q_bacc_ = rw_std_per_sqrt_s.array().square().matrix().asDiagonal();
+              }
+          '''
+          api_new = '''    // Backward-compatible name: the supplied quantity is now interpreted as
+              // the continuous driving-noise density of the residual accelerometer-bias
+              // OU process. For h << tau_b this preserves the former random-walk
+              // covariance increment Q_bacc_ * h.
+              void set_Q_bacc_rw(const Vector3& driving_std_per_sqrt_s) {
+                  if constexpr (with_accel_bias)
+                      Q_bacc_ = driving_std_per_sqrt_s.array().square().matrix().asDiagonal();
+              }
+
+              // Slow first-order Gauss--Markov model for the residual bias beta_a in
+              //   b_a(T) = k_a (T - tempC_ref) + beta_a.
+              // The temperature-calibrated mean is deterministic; only beta_a is an
+              // estimated stochastic state and mean-reverts toward zero.
+              void set_acc_bias_time_constant(T tau_seconds) {
+                  if constexpr (with_accel_bias)
+                      tau_bacc_ = std::max(T(1e-3), tau_seconds);
+              }
+              [[nodiscard]] T get_acc_bias_time_constant() const noexcept { return tau_bacc_; }
+
+              void set_acc_bias_ou_stationary_std(const Vector3& stationary_std, T tau_seconds) {
+                  if constexpr (with_accel_bias) {
+                      set_acc_bias_time_constant(tau_seconds);
+                      const Vector3 s = stationary_std.cwiseAbs();
+                      Q_bacc_ = (T(2) / tau_bacc_) * s.array().square().matrix().asDiagonal();
+                  }
+              }
+
+              [[nodiscard]] Vector3 get_acc_bias_at_temperature(T tempC) const {
+                  if constexpr (with_accel_bias) {
+                      return xext.template segment<3>(OFF_BA) + k_a_ * (tempC - tempC_ref);
+                  }
+                  return Vector3::Zero();
+              }
+          '''
+
+          cov_old = '''        auto P_BB = Pext.template block<NB,NB>(OFF_BA,OFF_BA);
+                  if (acc_bias_updates_enabled_) {
+                      P_BB.noalias() += Q_bacc_ * Ts;     // only diffuse if we intend to estimate it
+                  }
+                  Pext.template block<NB,NB>(OFF_BA,OFF_BA) = P_BB;
+          '''
+          cov_new = '''        auto P_BB = Pext.template block<NB,NB>(OFF_BA,OFF_BA);
+                  const T tau_b = std::max(T(1e-3), tau_bacc_);
+                  const T phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / tau_b) : T(1);
+                  if (acc_bias_updates_enabled_) {
+                      // beta_a is the residual about the deterministic temperature mean.
+                      xext.template segment<3>(OFF_BA) *= phi_b;
+                      P_BB *= phi_b * phi_b;
+                      // Exact first-order Gauss--Markov covariance. Q_bacc_ is the
+                      // continuous driving spectral density, so this tends to
+                      // Q_bacc_*Ts as Ts/tau_b -> 0 and preserves the former
+                      // random-walk short-time diffusion calibration.
+                      const T qd_scale = -T(0.5) * tau_b * std::expm1(-T(2) * Ts / tau_b);
+                      P_BB.noalias() += Q_bacc_ * qd_scale;
+                  }
+                  Pext.template block<NB,NB>(OFF_BA,OFF_BA) = P_BB;
+          '''
+
+          for path in paths:
+              text = path.read_text()
+              if api_old not in text:
+                  raise SystemExit(f'API anchor missing in {path}')
+              text = text.replace(api_old, api_new, 1)
+
+              if 'Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);' not in text:
+                  raise SystemExit(f'Q anchor missing in {path}')
+              text = text.replace(
+                  'Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);',
+                  'Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);\n    T tau_bacc_ = T(1000.0);             // residual accel-bias OU correlation time [s]',
+                  1)
+
+              old_comment = '// Optional accel bias RW and cross terms (F_BB = I)'
+              if old_comment not in text:
+                  raise SystemExit(f'propagation comment missing in {path}')
+              text = text.replace(old_comment,
+                  '// Optional residual accel-bias OU and cross terms (F_BB = phi_b I)', 1)
+
+              if cov_old not in text:
+                  raise SystemExit(f'covariance anchor missing in {path}')
+              text = text.replace(cov_old, cov_new, 1)
+
+              ab_assign = '        Pext.template block<NA,NB>(0,OFF_BA) = tmpAB;'
+              if text.count(ab_assign) != 1:
+                  raise SystemExit(f'AB assignment count {text.count(ab_assign)} in {path}')
+              text = text.replace(ab_assign, '        tmpAB *= phi_b;\n' + ab_assign, 1)
+
+              if 'OU_II' in path.name:
+                  lb_assign = '            Pext.template block<NL,NB>(OFF_V,OFF_BA) = tmpLB;'
+              else:
+                  lb_assign = '            Pext.template block<NL,NB>(OFF_V,OFF_BA) = tmpLB;'
+              if text.count(lb_assign) != 1:
+                  raise SystemExit(f'LB assignment count {text.count(lb_assign)} in {path}')
+              text = text.replace(lb_assign, '            tmpLB *= phi_b;\n' + lb_assign, 1)
+
+              # State semantics: stored b_a is residual about the deterministic
+              # temperature model rather than a random-walk intercept.
+              text = text.replace(
+                  '// Model: b_a(tempC) = b_a0 + k_a * (tempC - tempC_ref)',
+                  '// Model: b_a(tempC) = beta_a + k_a * (tempC - tempC_ref), with beta_a a slow OU residual',
+                  1)
+              path.write_text(text)
+
+          # Remove this one-shot workflow from the resulting commit.
+          Path('.github/workflows/agent-mean-reverting-ba-patch.yml').unlink()
+          PY
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/kalman_ou_ii/Kalman3D_Wave_OU_II.h src/kalman_ou_iii/Kalman3D_Wave_OU_III.h .github/workflows/agent-mean-reverting-ba-patch.yml
+          git commit -m "Model accelerometer bias as slow OU residual"
+          git push origin HEAD:refs/heads/agent/mean-reverting-accel-bias
