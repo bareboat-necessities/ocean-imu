@@ -579,13 +579,31 @@ Therefore the reduced process is uniformly completely controllable in one step;
 Eq.~\eqref{eq:iss-Q18-bounds} is stronger than the stabilizability condition
 needed by the standard time-varying Kalman theorems.
 
-\begin{theorem}[UES of the standard-Riccati 18-state Live proof configuration]
+\begin{theorem}[UES of the 18-state Live configuration with PSD covariance inflation]
 \label{thm:iss-18-ues}
 Consider the reduced Live filter with accelerometer-bias estimation disabled,
-periodic $\vct a_w$ covariance re-alignment disabled, no hard reset inside the
-analysis interval, and the standard Kalman predict/update Riccati recursion.
-Under the standing measurement, geometry, process-noise, and cadence assumptions
-above, there exist finite constants
+no hard reset inside the analysis interval, and the normal Kalman
+predict/update Riccati recursion. At an optional covariance-maintenance event,
+let the implemented default policy augment the predicted covariance by
+\begin{equation}
+\mat P_k^-\leftarrow \mat P_k^-
++\mat E_a\mat\Delta_k\mat E_a^\top,
+\qquad
+\mat\Delta_k
+=\Pi_+\!\left(
+\mat\Sigma_{aw,k}^{\mathrm{stat}}-\mat P_{aa,k}^-
+\right),
+\label{eq:iss-psd-inflation}
+\end{equation}
+where $\mat E_a$ selects the three $\vct a_w$ coordinates and $\Pi_+$ replaces
+negative eigenvalues of a symmetric matrix by zero. Assume in addition to the
+standing conditions that
+\begin{equation}
+\mat 0\preceq\mat\Sigma_{aw,k}^{\mathrm{stat}}
+\preceq \bar\sigma_P\mat I_3<\infty
+\label{eq:iss-Sigma-bound}
+\end{equation}
+uniformly. Then there exist finite constants
 $0<p_-\le p_+<\infty$, $M\ge1$, and $0<\rho<1$ such that
 \begin{equation}
 p_-\mat I_{18}\preceq\mat P_k\preceq p_+\mat I_{18}
@@ -598,29 +616,57 @@ and the homogeneous closed-loop estimation-error transition satisfies
 \qquad k\ge j.
 \label{eq:iss-ues}
 \end{equation}
-Thus the nominal linearized 18-state Live proof configuration is uniformly
-exponentially stable.
+Thus the nominal linearized 18-state Live configuration using the default PSD
+inflation policy is uniformly exponentially stable.
 \end{theorem}
 
 \begin{proof}
-Lemma~\ref{lem:iss-18-uco} establishes uniform complete observability.
-Equation~\eqref{eq:iss-Q18-bounds} establishes uniform complete
-controllability, while Eq.~\eqref{eq:iss-R-bounds} supplies bounded positive
-measurement covariances. The process and observation matrices are uniformly
-bounded by the standing time-step, angular-rate, vector-magnitude, and OU
-parameter bounds. Standard discrete time-varying Kalman-filter results then give
-uniform upper and lower Riccati bounds and uniform exponential stability of the
-homogeneous filter error dynamics
-\cite{Jazwinski1970_Filtering,Maybeck1979_StochasticModels}.
+Lemma~\ref{lem:iss-18-uco} establishes uniform complete observability and
+Eq.~\eqref{eq:iss-Q18-bounds} gives the positive bounded process covariance of
+the ordinary IMU prediction. The new maintenance operation is not a covariance
+replacement. It is exactly an additional process-covariance term
+\begin{equation}
+\mat Q_{\mathrm{infl},k}
+=\mat E_a\mat\Delta_k\mat E_a^\top\succeq\mat0.
+\label{eq:iss-Qinfl}
+\end{equation}
+Because $\mat P_{aa,k}^-\succeq\mat0$ and
+Eq.~\eqref{eq:iss-Sigma-bound} holds, the positive part obeys
+\begin{equation}
+\mat0\preceq\mat\Delta_k\preceq
+\bar\sigma_P\mat I_3 .
+\label{eq:iss-Delta-bound}
+\end{equation}
+Consequently the effective prediction covariance satisfies
+\begin{equation}
+q_-\mat I_{18}
+\preceq
+\mat Q_k^{\mathrm{eff}}
+=\mat Q_k+\mat Q_{\mathrm{infl},k}
+\preceq
+(q_++\bar\sigma_P)\mat I_{18}.
+\label{eq:iss-Qeff-bounds}
+\end{equation}
+The inflation therefore preserves the uniform positive lower process-noise
+bound and only changes its finite upper bound. It does not alter the state
+transition or any observation matrix, so the UCO result is unchanged.
+Standard discrete time-varying Kalman-filter results then give uniform upper and
+lower Riccati bounds and UES of the homogeneous filter error dynamics
+\cite{Jazwinski1970_Filtering,Maybeck1979_StochasticModels}. The argument is
+uniform over every realized sequence of bounded PSD increments satisfying
+Eq.~\eqref{eq:iss-Delta-bound}; the fact that the implementation computes the
+increment from the current predicted marginal therefore does not weaken the
+bound.
 
 The MEKF covariance reset after a small quaternion correction does not alter
 this first-order conclusion: its reset Jacobian equals the identity at zero
 attitude error, so the linearized homogeneous map is the same map used above.
 \end{proof}
 
-This theorem proves the hard UES premise only for a deliberately standard
-Riccati configuration that the implementation can realize. It does not claim
-UES of the default 21-state adaptive filter.
+The theorem covers both the new default PSD-inflation maintenance and the case
+where periodic maintenance is disabled entirely. It does not cover the optional
+legacy raw block-replacement mode, and it does not claim UES of the unrestricted
+21-state estimator with active random-walk accelerometer-bias estimation.
 
 \subsection{Why unconditional 21-state UES is false}
 \label{app:iss-21-counterexample}
@@ -746,16 +792,35 @@ $S_{\mathrm{true}}$ mismatch is not available for an unbounded Gaussian sample
 path. Mean-square or finite-horizon high-probability formulations are more
 natural for that stochastic term.
 
-\subsection{Periodic covariance re-alignment remains outside the theorem}
+\subsection{Default PSD covariance inflation and the optional legacy replacement}
 \label{app:iss-cov-sync}
 
-The default wrapper periodically replaces the posterior $\vct a_w$ covariance
-marginal with the current stationary OU covariance while retaining the learned
-cross-covariances. This is not a Riccati prediction or measurement update, so
-Theorem~\ref{thm:iss-18-ues} explicitly disables it.
+The covariance-maintenance purpose is to prevent the latent-acceleration
+marginal from becoming unrealistically overconfident when the stationary OU
+scale changes. The previous implementation achieved that by replacing the
+posterior $\vct a_w$ block while retaining learned cross-covariances. The new
+default instead requests the floor at the same adaptation cadence and applies
+it during the next Kalman prediction through
+Eq.~\eqref{eq:iss-psd-inflation}. Only covariance is added: directions in which
+$\mat P_{aa}^-$ already exceeds the stationary target receive zero increment.
+This is why the change was made. It preserves positive semidefiniteness by
+construction, retains the learned cross-covariances, and keeps the operation
+inside the bounded process-covariance class used by
+Theorem~\ref{thm:iss-18-ues}.
 
-There is also a basic positive-semidefiniteness issue with raw block replacement.
-Partition the covariance around the $\vct a_w$ block as
+The old behavior remains available through the optional runtime flag
+\texttt{set\_legacy\_aw\_covariance\_replacement(true)}. Its default is
+\texttt{false}. With the flag enabled, synchronization again performs the
+historical immediate replacement
+\begin{equation}
+\mat P^+=
+\begin{bmatrix}
+\mat A&\mat C\\
+\mat C^\top&\mat\Sigma_{aw}^{\mathrm{stat}}
+\end{bmatrix}
+\label{eq:iss-P-raw-sync}
+\end{equation}
+from a pre-sync partition
 \begin{equation}
 \mat P=
 \begin{bmatrix}
@@ -765,37 +830,25 @@ Partition the covariance around the $\vct a_w$ block as
 \qquad \mat A\succ0.
 \label{eq:iss-P-partition}
 \end{equation}
-After raw synchronization,
+The Schur complement requires
 \begin{equation}
-\mat P^+=
-\begin{bmatrix}
-\mat A&\mat C\\
-\mat C^\top&\mat\Sigma_{aw}^{\mathrm{stat}}
-\end{bmatrix}.
-\label{eq:iss-P-raw-sync}
-\end{equation}
-The Schur complement gives
-\begin{equation}
-\mat P^+\succeq0
-\quad\Longleftrightarrow\quad
 \mat\Sigma_{aw}^{\mathrm{stat}}
--\mat C^\top\mat A^{-1}\mat C\succeq0.
+-\mat C^\top\mat A^{-1}\mat C\succeq0
 \label{eq:iss-sync-schur}
 \end{equation}
-The pre-sync covariance only guarantees
-$\mat D-\mat C^\top\mat A^{-1}\mat C\succeq0$. Hence
-$\mat\Sigma_{aw}^{\mathrm{stat}}\succeq\mat D$ is a simple sufficient
-condition for a safe raw replacement, but a sea-state decrease can violate that
-ordering. Positive semidefiniteness is therefore not guaranteed by raw block
-replacement alone.
+for the replacement to preserve PSD. The pre-sync covariance only guarantees
+$\mat D-\mat C^\top\mat A^{-1}\mat C\succeq0$, so a downward change in the
+stationary target need not satisfy Eq.~\eqref{eq:iss-sync-schur}. The article
+therefore makes no UES claim for this legacy mode; it is retained so previous
+results can be reproduced exactly and the policy can be rolled back with one
+flag.
 
-The implementation also provides a congruence-style re-alignment that preserves
-positive semidefiniteness by construction. That removes the immediate Schur-
-complement defect, but it is still an extra periodic covariance map and requires
-a separate bounded-map/Riccati analysis before it can be included in a UES
-theorem. The clean proof configuration is therefore to disable periodic
-re-alignment and let changes in $\mat\Sigma_{aw}^{\mathrm{stat}}$ enter through
-the ordinary process covariance.
+OU--III also retains the separate congruence re-alignment experiment. That map
+preserves PSD, but it is an additional covariance coordinate transformation and
+is not the default policy or part of the theorem above. Setting periodic
+covariance synchronization off altogether removes both maintenance policies and
+returns to the ordinary Riccati recursion, which is also covered by the theorem
+when its other conditions hold.
 
 \subsection{Scope, remaining conditions, and proof-oriented implementation choices}
 \label{app:iss-remaining}
@@ -808,9 +861,9 @@ The OU--III translational block has an explicit uniform four-update
 observability bound for arbitrary bounded measurable $\tau(t)$. Under bounded
 noncollinear accelerometer/magnetometer geometry and bounded update gaps, the
 attitude--gyro-bias block has a uniform finite-horizon observability bound. In
-the reduced 18-state standard-Riccati configuration, these combine with
-uniformly positive process covariance to give UCO, bounded Riccati solutions,
-and UES by standard time-varying Kalman theory.
+the reduced 18-state Live configuration these combine with uniformly positive
+process covariance and the bounded default PSD $\vct a_w$ inflation to give UCO,
+bounded Riccati solutions, and UES by standard time-varying Kalman theory.
 
 \paragraph{What is disproved.}
 Unconditional 21-state UES over a motion class containing static trajectories is
@@ -818,7 +871,7 @@ false for the present random-walk accelerometer-bias augmentation. The mode in
 Lemma~\ref{lem:iss-21-counterexample} is unobservable and nondecaying.
 
 \paragraph{What remains outside the theorem.}
-The default periodic $\vct a_w$ covariance synchronization, active
+The optional legacy raw $\vct a_w$ covariance replacement, active
 accelerometer-bias estimation, hard initialization, tilt re-lock, gating and
 fault recovery, and arbitrary loss of magnetometer updates are not covered by
 Theorem~\ref{thm:iss-18-ues}. The physical $S=0$ pseudo-measurement is a
@@ -837,11 +890,14 @@ marginalized into the accelerometer covariance and residual bias is treated as a
 bounded input. A 21-state theorem instead requires an explicit persistent-
 excitation condition or a different bias model.
 
-\item \textbf{Disable periodic raw $\vct a_w$ covariance synchronization.}
-This restores the standard Riccati recursion used by
-Theorem~\ref{thm:iss-18-ues}. If synchronization is retained, prefer the
-positive-semidefinite congruence form and prove uniform bounds for the resulting
-periodic covariance map.
+\item \textbf{Use the default PSD $\vct a_w$ covariance inflation.}
+The periodic maintenance call now queues
+$\mat\Delta=\Pi_+(\mat\Sigma_{aw}^{\mathrm{stat}}-\mat P_{aa}^-)$ and adds it
+inside the next prediction. This is the default and is covered by
+Theorem~\ref{thm:iss-18-ues}. Set
+\texttt{set\_legacy\_aw\_covariance\_replacement(true)} only to reproduce the
+previous immediate block replacement; UES is not proved here for that optional
+legacy behavior.
 
 \item \textbf{Retain explicit positive process-noise and measurement-noise floors.}
 The lower bounds in Eqs.~\eqref{eq:iss-Q18-bounds} and
@@ -863,9 +919,12 @@ invariant Live region in which those branches do not fire.
 \end{enumerate}
 
 The resulting hierarchy is therefore precise: the translational and
-attitude--gyro-bias observability pieces can be closed analytically; a genuine
-18-state UES theorem follows for the standard-Riccati reduced Live
-configuration; the corresponding local ISS-type perturbation bound then follows
-for bounded residual bias and model mismatch; but unconditional 21-state UES is
-ruled out by the static attitude--accelerometer-bias ambiguity rather than left
-as an unspecified future proof obligation.
+attitude--gyro-bias observability pieces can be closed analytically; the new
+default bounded PSD covariance inflation remains inside the process-covariance
+class used by the Riccati argument; and a genuine 18-state UES theorem follows
+for the reduced Live configuration under the stated geometry, cadence, noise,
+and no-reset conditions. The corresponding local ISS-type perturbation bound
+then follows for bounded residual bias and model mismatch. The optional legacy
+raw covariance replacement is deliberately retained but is not covered by that
+proof, while unconditional 21-state UES is ruled out by the static
+attitude--accelerometer-bias ambiguity.

@@ -305,14 +305,42 @@ class Kalman3D_Wave_OU_II {
             }
         }
         Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
+        aw_covariance_floor_pending_ = false;
         symmetrize_Pext_();
     }
 
-    // Synchronize only the a_w marginal with the stationary process model while
-    // preserving cross-covariances learned by the running filter.
+    // Select the pre-PSD-inflation covariance policy. false (default) keeps
+    // synchronization inside the next Kalman prediction as a positive-
+    // semidefinite process-covariance increment. true restores the historical
+    // immediate P_awaw block replacement exactly.
+    void set_legacy_aw_covariance_replacement(bool on) {
+        legacy_aw_covariance_replacement_ = on;
+        if (on) aw_covariance_floor_pending_ = false;
+    }
+    [[nodiscard]] bool legacy_aw_covariance_replacement() const noexcept {
+        return legacy_aw_covariance_replacement_;
+    }
+
+    // Request an a_w covariance floor at the current stationary OU covariance.
+    //
+    // Default policy: queue the request and apply it inside the next prediction
+    // as
+    //   Delta = Pi_+(Sigma_aw_stat - P_awaw^-),
+    //   P^-   <- P^- + E_a Delta E_a^T.
+    // This can only add covariance, preserves PSD, leaves cross-covariances
+    // untouched, and is algebraically an additional bounded process-noise term.
+    //
+    // Legacy policy: replace P_awaw immediately while retaining the old cross-
+    // covariances. This is kept only for regression/rollback comparisons.
     void synchronize_aw_covariance_to_stationary() {
-        Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
-        symmetrize_Pext_();
+        if (legacy_aw_covariance_replacement_) {
+            aw_covariance_floor_pending_ = false;
+            Pext.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_stat;
+            symmetrize_Pext_();
+            return;
+        }
+        aw_covariance_floor_target_ = T(0.5) * (Sigma_aw_stat + Sigma_aw_stat.transpose());
+        aw_covariance_floor_pending_ = true;
     }
 
     // Covariances for periodic position-zero pseudo-measurement from std dev
@@ -600,6 +628,12 @@ class Kalman3D_Wave_OU_II {
     bool linear_block_enabled_ = true;
     bool acc_bias_updates_enabled_ = true;
 
+    // false is the default/proof-compatible policy. true restores the old
+    // immediate marginal replacement for exact regression comparisons.
+    bool legacy_aw_covariance_replacement_ = false;
+    bool aw_covariance_floor_pending_ = false;
+    Matrix3 aw_covariance_floor_target_ = Matrix3::Zero();
+
     bool aw_process_correlated_ = false;
     bool use_exact_att_bias_Qd_ = true;
 
@@ -647,6 +681,30 @@ class Kalman3D_Wave_OU_II {
                 Pext(j,i) = v;
             }
         }
+    }
+
+
+    // Apply a queued covariance floor as part of the prediction covariance.
+    // The positive spectral projection is the Frobenius-nearest PSD matrix to
+    // Sigma_aw_stat - P_awaw^-. Negative directions are deliberately ignored:
+    // uncertainty may be added here, never deleted.
+    EIGEN_STRONG_INLINE void apply_pending_aw_covariance_inflation_() {
+        if (!aw_covariance_floor_pending_ || !linear_block_enabled_) return;
+        aw_covariance_floor_pending_ = false;
+
+        Matrix3 P_aw = Pext.template block<3,3>(OFF_AW, OFF_AW);
+        P_aw = T(0.5) * (P_aw + P_aw.transpose());
+        Matrix3 Delta = aw_covariance_floor_target_ - P_aw;
+        Delta = T(0.5) * (Delta + Delta.transpose());
+
+        Eigen::SelfAdjointEigenSolver<Matrix3> es(Delta);
+        if (es.info() != Eigen::Success) return;
+        Vector3 evals = es.eigenvalues();
+        for (int i = 0; i < 3; ++i) evals(i) = std::max(T(0), evals(i));
+        Delta = es.eigenvectors() * evals.asDiagonal() * es.eigenvectors().transpose();
+        Delta = T(0.5) * (Delta + Delta.transpose());
+
+        Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;
     }
 
     // Closed-form helpers for rotation & integrals (constant ω over [0, t])
@@ -1712,6 +1770,9 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
         }
     }
 
+    if (linear_block_enabled_) {
+        apply_pending_aw_covariance_inflation_();
+    }
     symmetrize_Pext_();   // Symmetry hygiene
 
     if (linear_block_enabled_ &&

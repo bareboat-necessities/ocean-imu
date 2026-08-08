@@ -69,35 +69,42 @@ $H_s=\SI{0.05}{m}$ case reaches \OURobustnessLowStressMean\% and the
 bound the empirical claim to the tested parameter neighborhood, motion
 amplitudes, and transition rates.
 
-Appendix~\ref{app:iss-stability} provides a partial analytical observability and
-stability-conditions analysis, not an ISS proof of the implemented estimator.
-For each translational axis it derives an explicit uniform finite-horizon
-observability bound from four consecutive $S$ pseudo-measurements for every
-bounded measurable $\tau(t)$ schedule. It also shows that the
-$r_S\propto\sigma_{aw}\tau^3$ law keeps the pseudo-measurement on the natural
-stochastic scale of the triple-integral state, and gives a separate
-noncollinearity condition that prevents the basic instantaneous two-vector
-attitude singularity.
+Appendix~\ref{app:iss-stability} now closes the nominal reduced-state stability
+chain more tightly than the empirical results alone. It derives an explicit
+uniform finite-horizon observability bound for every OU--III translational axis,
+proves finite-horizon attitude--gyro-bias observability under bounded
+noncollinear accelerometer/magnetometer geometry and bounded magnetic-update
+gaps, and combines those pieces with positive bounded process and measurement
+covariances to obtain UES of the 18-state Live performance filter. The default
+periodic $\vct a_w$ covariance maintenance is part of that theorem: instead of
+replacing the posterior marginal, the implementation now adds the PSD positive
+part of the stationary-covariance deficit inside the next prediction. This
+preserves PSD and can be absorbed into a uniformly bounded effective process
+covariance.
 
-Those results do not establish stability of the complete 21-state EKF. In
-particular, the appendix does not prove the uniform exponential stability of the
-complete scheduled linearization, bounded stabilizing behavior of the actual
-Riccati recursion, or a full finite-horizon observability/detectability and
-stabilizability result for the coupled attitude--gyro-bias--translation--
-accelerometer-bias system. A short conditional lemma records the standard fact
-that a sufficiently small nonlinear perturbation of an \emph{independently
-established} uniformly exponentially stable linear recursion admits a local
-ISS-type bound. Because that UES premise is exactly one of the unresolved
-full-filter properties, the lemma is not evidence that the implemented filter
-is ISS.
+The theorem has explicit boundaries. Accelerometer-bias estimation is frozen
+and its residual error is treated as an input; no hard reset occurs inside the
+analysis interval; the reference vectors remain bounded and uniformly
+noncollinear; accepted magnetometer updates have a bounded gap; and process and
+measurement covariances retain positive finite bounds. With the present
+random-walk accelerometer-bias augmentation, unconditional 21-state UES over a
+motion class that contains static trajectories is not merely unproved but
+false: a static attitude--accelerometer-bias ambiguity gives a nondecaying
+unobservable mode. The $S=0$ channel also remains a stochastic model
+regularizer rather than a physical observation, so the UES theorem is a nominal
+linearized result rather than an infinite-horizon deterministic bound on ocean
+model mismatch.
 
-The remaining mathematical gaps are material. The periodic acceleration-
-covariance re-alignment is not a standard Riccati prediction or measurement
-update; the $S=0$ channel is a regularizer rather than a physical measurement;
-and startup, re-lock, gating, and recovery are hybrid operations outside the
-normal Live recursion. Appendix~\ref{app:iss-recommendations} lists changes that
-would simplify a future proof, but this paper makes no full-filter ISS or
-convergence claim.
+For reproducibility the prior covariance policy remains available as an
+optional rollback. Setting
+\texttt{set\_legacy\_aw\_covariance\_replacement(true)} restores the previous
+immediate $P_{a_wa_w}\leftarrow\Sigma_{aw}^{\mathrm{stat}}$ block replacement
+while retaining cross-covariances. The default is the new PSD inflation policy;
+UES is proved for that default under the conditions above, but is not claimed in
+this article for the optional legacy replacement. Disabling periodic
+maintenance entirely also returns to the ordinary Riccati case covered by the
+same reduced-state theorem when its other assumptions hold. Hybrid startup,
+re-lock, gating, and recovery remain outside the local Live result.
 
 The results support drift-controlled wave-state reconstruction for the tested
 conditions, while the MCU exercise establishes only functional source
