@@ -15,8 +15,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "de6bde3f98eacccd536c18357c8c18edc0b2e0db",
-  "git_diff_stat": "",
+  "git_commit": "ddf573e4490de705bc5c6aac103b3aa1bfca2136",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 33862 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1400 +-\n .../ou_robustness/ou_robustness_publication.tex    |    70 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1114 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   144 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1736 +-\n 7 files changed, 19463 insertions(+), 19483 deletions(-)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 3.4150214179563227,
@@ -124,32 +124,32 @@
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1420071,
-      "sha256": "61f540b3c6aaf89ef9342816c96a4e8b9dbc9244e847a03f97dff200e02d4497"
+      "bytes": 1419727,
+      "sha256": "0fce76379dea0fc86fab168767932ac5f2f11a5b8dfa132f2ca8a92cf8b5b4ec"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 142606,
-      "sha256": "da9c28857b81adab08eccbfd19a95e5e1fd0bba3587c9201c94db9749f6be801"
+      "bytes": 142664,
+      "sha256": "5f5e5096d16e0d5e3a76a42a1466493ae893943a023023666a983ee187c0dc7d"
     },
     "ou_robustness_publication.tex": {
       "bytes": 4512,
-      "sha256": "4af68dffbfd1ec1edaa91af1db7abf520b4b7886ca398ff1dfca789ae8e478ed"
+      "sha256": "ec7ee4183409626948506082c87f42596e4408ef355af3b1049488b0f00262f2"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 196185,
-      "sha256": "a8ee96f3932631528b0464b1bee8355a67109c230bc221d4b7b6aa17d1568387"
+      "bytes": 196235,
+      "sha256": "e181a2247d7e080e28317a672d0f3951ca8277b5cdc44b64299ad5b42cb43fb9"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 116051,
-      "sha256": "65969697f5665317549cfe869038cb79f3d9e599d9dbdc049e8a3b34d01cba8e"
+      "bytes": 115335,
+      "sha256": "e5e5a23d1771bda600fe4dc47276b2ae8a5eb35e4946ffd3b2cad7f6175fe757"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 41998,
-      "sha256": "ea49f6e77e3688c875ba4151d2ae107d7a28e532e777390b72672bcd04cb4414"
+      "bytes": 42005,
+      "sha256": "49be168d525f5f3bb0cfba5f4563559f5ba99a297148a869c95bc3de959a9cc9"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126731,
-      "sha256": "aedaf4c494e77ff0bfa189be3c740e1326e6b228838a3ece0c488946603cf4e1"
+      "bytes": 126279,
+      "sha256": "9a4fd46f82d2d9ddafbf30d548b943f1aec09ec075bb5eeb94b7f823b336cb65"
     }
   },
   "source_files": {
