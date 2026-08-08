@@ -1,55 +1,160 @@
-\section{Analytical Observability and Stability Conditions of the Adaptive OU--III Estimator}
+\section{Analytical Observability, a Reduced-State UES Result, and a 21-State Limitation}
 \label{app:iss-stability}
 
-This appendix is deliberately narrower than a stability proof of the complete
-implemented filter. It does \emph{not} prove input-to-state stability (ISS),
-uniform exponential stability, or convergence of the 21-state EKF. Instead, it
-establishes analytical results for the OU--III translational subsystem, records
-a useful attitude-information condition, and states explicitly the additional
-properties that would have to be proved before a full-filter stability claim
-would be justified.
+This appendix analyzes the normal Live-state linearization of the implemented
+OU--III estimator. The analysis is deliberately split into two statements that
+must not be conflated. First, after freezing accelerometer-bias estimation and
+using the ordinary Kalman Riccati recursion, the remaining 18-state performance
+filter admits a uniform-complete-observability argument and, under explicit
+boundedness and measurement-availability assumptions, a standard route to
+uniform exponential stability (UES). Second, the unrestricted 21-state model
+with random-walk accelerometer bias does \emph{not} admit an unconditional UES
+claim over a motion class that includes static operation: an explicit
+attitude--accelerometer-bias unobservable mode is constructed below.
 
-The tuning variables are treated as exogenous signals. The wave-period and
-variance estimators are driven by raw IMU measurements and by a private Mahony
-attitude solution that does not read the OU--III state or covariance.
-Consequently, the applied schedule
+Thus the stability question is not a generic unsolved 21-state matrix problem.
+The translational block has a special analytically observable structure; the
+attitude--gyro-bias block can also be handled over a finite horizon; and the
+remaining limitation is partly structural rather than merely technical. The
+result below still does not constitute a global proof for the default deployed
+filter, because periodic covariance re-alignment, accelerometer-bias adaptation,
+and hybrid startup/re-lock logic lie outside the standard Riccati recursion used
+by the theorem.
+
+The adaptive tuning variables are treated as exogenous signals. The wave-period
+and variance estimators are driven by raw IMU measurements and by a private
+Mahony attitude solution that does not read the OU--III state or covariance.
+Consequently,
 \begin{equation}
 \vartheta(t)=\bigl(\tau(t),\sigma_{aw}(t),r_S(t)\bigr)
 \label{eq:iss-schedule}
 \end{equation}
-is an externally supplied, bounded, measurable signal rather than a feedback
-state of the MEKF. This removes one possible estimator--tuner feedback loop,
-but it does not by itself establish stability of the scheduled EKF.
+is an externally supplied schedule for the MEKF. This removes one estimator--
+tuner feedback loop, but it does not by itself establish stability.
 
-The strongest result below concerns the translational chain. Its special
-integrator--OU structure permits a uniform finite-horizon observability bound
-for arbitrary bounded variation of $\tau(t)$. The scaling
-$r_S\propto\sigma_{aw}\tau^3$ then keeps the $S$ pseudo-measurement on the
-natural scale of the triple-integral state. These results are useful structural
-properties, but they are only parts of the hypotheses needed by standard
-time-varying Kalman stability theorems.
+\subsection{Exact Live-state linearized structure}
+\label{app:iss-exact-structure}
 
-\subsection{Standing bounds}
+With gyro bias and accelerometer bias enabled, the local error coordinates are
+ordered as
+\begin{equation}
+\vct e_{21}=
+\begin{bmatrix}
+\delta\vct\theta^\top &
+\widetilde{\vct b}_g^\top &
+\widetilde{\vct v}^\top &
+\widetilde{\vct p}^\top &
+\widetilde{\vct S}^\top &
+\widetilde{\vct a}_w^\top &
+\widetilde{\vct b}_a^\top
+\end{bmatrix}^{\!\top}.
+\label{eq:iss-error-vector}
+\end{equation}
+The implemented prediction is block diagonal in these coordinates. For the
+18-state performance vector
+\begin{equation}
+\vct e_{18}=
+\begin{bmatrix}
+\delta\vct\theta^\top &
+\widetilde{\vct b}_g^\top &
+\widetilde{\vct v}^\top &
+\widetilde{\vct p}^\top &
+\widetilde{\vct S}^\top &
+\widetilde{\vct a}_w^\top
+\end{bmatrix}^{\!\top},
+\label{eq:iss-performance-state}
+\end{equation}
+write
+\begin{equation}
+\mat F_k=
+\operatorname{blkdiag}(\mat F_{A,k},\mat F_{L,k}).
+\label{eq:iss-block-F}
+\end{equation}
+For one IMU step of duration $h_k$, with bias-corrected angular rate held
+constant over that step as in the implementation,
+\begin{equation}
+\mat F_{A,k}=
+\begin{bmatrix}
+\mat R_k & \mat B_k\\
+\mat 0   & \mat I_3
+\end{bmatrix},
+\qquad
+\mat R_k=e^{-[\widehat{\vct\omega}_k]_\times h_k},
+\qquad
+\mat B_k=\int_0^{h_k}e^{-[\widehat{\vct\omega}_k]_\times s}\,ds .
+\label{eq:iss-att-bg-transition}
+\end{equation}
+The sign of the $\mat B_k$ block follows from the implemented left-
+multiplicative error equation
+$\dot{\delta\vct\theta}=-[\widehat{\vct\omega}]_\times
+\delta\vct\theta+\widetilde{\vct b}_g+\cdots$.
+
+The 12-state translational block is three copies of the exact OU--III chain.
+For one axis and state order $[v,p,S,a]^\top$,
+\begin{equation}
+\mat\Phi_L(h,\tau)=
+\begin{bmatrix}
+1 & 0 & 0 & \phi_{va}\\
+h & 1 & 0 & \phi_{pa}\\
+h^2/2 & h & 1 & \phi_{Sa}\\
+0 & 0 & 0 & e^{-h/\tau}
+\end{bmatrix},
+\label{eq:iss-implemented-phi}
+\end{equation}
+with the analytic coefficients derived in Sec.~\ref{sec:discretization}.
+
+With the IMU lever arm disabled, the accelerometer and magnetometer
+linearizations are
+\begin{align}
+\delta\vct y_a
+&=
+-[\widehat{\vct f}_b]_\times\delta\vct\theta
++\mat R_{wb}\widetilde{\vct a}_w
++\widetilde{\vct b}_a,
+\label{eq:iss-acc-full-H}\\
+\delta\vct y_m
+&=
+-[\widehat{\vct m}_b]_\times\delta\vct\theta,
+\label{eq:iss-mag-full-H}\\
+\delta\vct y_S&=\widetilde{\vct S}.
+\label{eq:iss-S-H}
+\end{align}
+The optional lever-arm model adds a bounded gyro-bias Jacobian to
+Eq.~\eqref{eq:iss-acc-full-H}; it is omitted from the proof configuration below
+because it is not needed for observability.
+
+The code already exposes the reduced-state configuration required by the
+analysis: when accelerometer-bias updates are disabled, the bias rows of the
+Kalman gain are frozen and their cross-covariances are cleared, while the
+retained $\mat P_{b_ab_a}$ uncertainty is marginalized into the accelerometer
+innovation covariance. In that mode $\widetilde{\vct b}_a$ is naturally treated
+as an external bounded disturbance rather than as a convergent coordinate.
+
+\subsection{Standing bounds for the Live proof configuration}
 \label{app:iss-error-model}
 
-Assume finite positive constants
+Assume finite constants satisfying
 \begin{equation}
-0<\underline\tau\le\tau(t)\le\overline\tau,\qquad
-0<\underline\sigma\le\sigma_{aw}(t)\le\overline\sigma,
+0<h_{\min}\le h_k\le h_{\max}<\infty,
+\qquad
+0<\underline\tau\le\tau(t)\le\overline\tau<\infty,
+\label{eq:iss-step-tau-bounds}
+\end{equation}
+\begin{equation}
+0<\underline\sigma\le\sigma_{aw}(t)\le\overline\sigma<\infty,
 \label{eq:iss-tau-sigma-bounds}
 \end{equation}
-and a fixed pseudo-update period $T_S>0$. Define
+and a fixed $S$ pseudo-update period $T_S>0$. Define
 \begin{equation}
 \kappa(t):=\frac{r_S(t)}{\sigma_{aw}(t)\tau^3(t)}.
 \label{eq:iss-kappa-def}
 \end{equation}
-The exact cubic law gives $\kappa(t)=c_R$ away from saturation. For the
-weighted observability bound below it is sufficient that
+For the scaling result it is sufficient that
 \begin{equation}
-0<\underline\kappa\le\kappa(t)\le\overline\kappa<\infty .
+0<\underline\kappa\le\kappa(t)\le\overline\kappa<\infty,
 \label{eq:iss-kappa-bounds}
 \end{equation}
-Hence
+which implies
 \begin{equation}
 0<\underline r_S
 :=\underline\kappa\,\underline\sigma\,\underline\tau^3
@@ -58,6 +163,48 @@ Hence
 =: \overline r_S<\infty .
 \label{eq:iss-rS-bounds}
 \end{equation}
+For UES itself, the exact cubic relation is not required; bounded positive
+measurement covariance is sufficient.
+
+Assume also that the accelerometer, magnetometer, and pseudo-measurement
+covariances satisfy uniform bounds
+\begin{equation}
+\underline r\,\mat I
+\preceq \mat R_{a,k},\mat R_{m,k},\mat R_{S,k}
+\preceq \overline r\,\mat I
+\label{eq:iss-R-bounds}
+\end{equation}
+for some $0<\underline r\le\overline r<\infty$. When accelerometer-bias
+estimation is frozen, the bounded retained $\mat P_{b_ab_a}$ term is included in
+the effective accelerometer covariance in Eq.~\eqref{eq:iss-R-bounds}.
+
+Finally, assume a Live interval in which no hard attitude reset occurs, the
+required measurements are accepted, and there are constants
+$0<f_0\le f_1$, $0<m_0\le m_1$, $\delta>0$, and $\overline\omega<\infty$
+such that
+\begin{equation}
+f_0\le\|\widehat{\vct f}_b\|\le f_1,
+\qquad
+m_0\le\|\widehat{\vct m}_b\|\le m_1,
+\label{eq:iss-vector-magnitude-bounds}
+\end{equation}
+\begin{equation}
+\left|\vct u_f^\top\vct u_m\right|\le1-\delta,
+\qquad
+\|\widehat{\vct\omega}(t)\|\le\overline\omega,
+\label{eq:iss-vector-geometry}
+\end{equation}
+where $\vct u_f$ and $\vct u_m$ are the corresponding unit vectors. Each
+finite observation horizon must contain four consecutive $S$ pseudo-updates and
+two accepted accelerometer--magnetometer vector-update instants separated by
+$\Delta\in[\Delta_{\min},\Delta_{\max}]$, with
+\begin{equation}
+\overline\omega\,\Delta_{\max}<\frac{\pi}{2}.
+\label{eq:iss-vector-gap}
+\end{equation}
+This last inequality is extremely weak at IMU/magnetometer update rates; its
+role is simply to give a uniform lower bound on how gyro bias maps into attitude
+between two vector observations.
 
 \subsection{Uniform observability of the OU--III translational chain}
 \label{app:iss-trans-observability}
@@ -81,15 +228,13 @@ E(t)=
 A_3(t)=\frac12\int_0^t(t-s)^2E(s)\,ds .
 \label{eq:iss-E-A3}
 \end{equation}
-The homogeneous solution satisfies
+Then
 \begin{equation}
 S(t)=S_0+t\,p_0+\frac{t^2}{2}v_0+A_3(t)a_0 .
 \label{eq:iss-S-solution}
 \end{equation}
-
 At four consecutive pseudo-measurement times $t_j=jT_S$,
-$j=0,1,2,3$, observation of $S$ gives the finite-horizon observability matrix
-for $\vct z_0=[v_0,p_0,S_0,a_0]^\top$,
+$j=0,1,2,3$, observation of $S$ gives
 \begin{equation}
 \mat O_S=
 \begin{bmatrix}
@@ -113,7 +258,7 @@ T_S^6\exp\!\left(-\frac{3T_S}{\underline\tau}\right)>0 .
 \label{eq:iss-det-lower}
 \end{equation}
 Hence $(v,p,S,a)$ is uniformly observable from four consecutive $S$
-pseudo-measurements, independently of how rapidly $\tau(t)$ moves inside its
+pseudo-measurements, independently of how rapidly $\tau(t)$ varies inside its
 admissible interval.
 \end{lemma}
 
@@ -123,9 +268,8 @@ Direct expansion of Eq.~\eqref{eq:iss-OS} gives
 \det\mat O_S=-T_S^3\Delta_{T_S}^3 A_3(0),
 \label{eq:iss-det-difference}
 \end{equation}
-where $\Delta_T^3$ is the third forward difference. From
-Eq.~\eqref{eq:iss-E-A3}, $A_3'''(t)=E(t)$. The integral representation of a
-third forward difference therefore gives
+where $\Delta_T^3$ is the third forward difference. Since
+$A_3'''(t)=E(t)$,
 \begin{equation}
 \Delta_T^3 A_3(0)
 =
@@ -134,19 +278,14 @@ E(u+v+w)\,du\,dv\,dw .
 \label{eq:iss-forward-integral}
 \end{equation}
 Because $\lambda(t)\le1/\underline\tau$,
-\begin{equation}
-E(t)=\exp\!\left[-\int_0^t\lambda(s)\,ds\right]
-\ge \exp(-t/\underline\tau).
-\end{equation}
-For $u,v,w\in[0,T_S]$,
+$E(t)\ge e^{-t/\underline\tau}$, and therefore
 \begin{equation}
 \Delta_{T_S}^3 A_3(0)
-\ge T_S^3\exp(-3T_S/\underline\tau),
+\ge T_S^3e^{-3T_S/\underline\tau},
 \end{equation}
-and Eq.~\eqref{eq:iss-det-lower} follows.
+which proves Eq.~\eqref{eq:iss-det-lower}.
 
-The entries of $\mat O_S$ are uniformly bounded because $0<E(t)\le1$ and
-$0\le A_3(t)\le t^3/6$. Let
+Moreover, $0<E(t)\le1$ and $0\le A_3(t)\le t^3/6$. Let
 \begin{equation}
 C_O^2(T_S)=
 \sum_{j=0}^{3}
@@ -155,8 +294,7 @@ C_O^2(T_S)=
 \right].
 \label{eq:iss-CO}
 \end{equation}
-Then $\|\mat O_S\|_2\le C_O(T_S)$. Since the product of the four singular
-values equals $|\det\mat O_S|$,
+Then $\|\mat O_S\|_2\le C_O(T_S)$ and
 \begin{equation}
 \sigma_{\min}(\mat O_S)
 \ge
@@ -164,37 +302,28 @@ values equals $|\det\mat O_S|$,
 =:s_O>0 .
 \label{eq:iss-smin-OS}
 \end{equation}
-Thus $\mat O_S^\top\mat O_S\succeq s_O^2\mat I_4$ uniformly.
 \end{proof}
 
-Let $\mat R_{S,4}$ be the block-diagonal covariance of the four scalar
-pseudo-measurements. Equation~\eqref{eq:iss-rS-bounds} gives
-$\mat R_{S,4}\preceq\overline r_S^2\mat I_4$, so the weighted information
-matrix satisfies
+With four bounded positive pseudo-measurement covariances,
 \begin{equation}
 \mat O_S^\top\mat R_{S,4}^{-1}\mat O_S
 \succeq
 \frac{s_O^2}{\overline r_S^2}\mat I_4 .
 \label{eq:iss-weighted-uco}
 \end{equation}
-This is an explicit uniform complete-observability bound over four
-pseudo-update intervals for the scalar translational chain. The
-three-dimensional result follows componentwise; bounded positive anisotropic
-weights preserve a corresponding information lower bound.
+The three-dimensional 12-state result follows componentwise. Thus the complete
+$[\vct v,\vct p,\vct S,\vct a_w]$ block has a uniform finite-horizon
+observability lower bound without requiring vessel rotation.
 
-This result is not a proof of observability of the complete EKF. In particular,
-it does not include the coupled attitude, gyro-bias, accelerometer-bias, and
-translation error coordinates in one finite-horizon Gramian.
-
-\subsection{OU variance and the cubic regularization law}
+\subsection{OU forcing and the cubic regularization scale}
 \label{app:iss-cubic-scaling}
 
-The OU diffusion used by the filter is
+The OU diffusion is
 \begin{equation}
-q_c(t)=\frac{2\sigma_{aw}^2(t)}{\tau(t)}.
+q_c(t)=\frac{2\sigma_{aw}^2(t)}{\tau(t)},
 \label{eq:iss-qc}
 \end{equation}
-Under Eq.~\eqref{eq:iss-tau-sigma-bounds},
+so
 \begin{equation}
 0<
 \frac{2\underline\sigma^2}{\overline\tau}
@@ -203,9 +332,8 @@ Under Eq.~\eqref{eq:iss-tau-sigma-bounds},
 <\infty .
 \label{eq:iss-qc-bounds}
 \end{equation}
-For a frozen $\tau$, the one-axis process pair is controllable from the OU
-forcing. With state order $[v,p,S,a]$, input
-$\vct B=[0,0,0,1]^\top$, and
+For frozen $\tau$, with state order $[v,p,S,a]$ and input
+$\vct B=[0,0,0,1]^\top$,
 \begin{equation}
 \mat A(\lambda)=
 \begin{bmatrix}
@@ -213,20 +341,20 @@ $\vct B=[0,0,0,1]^\top$, and
 1&0&0&0\\
 0&1&0&0\\
 0&0&0&-\lambda
-\end{bmatrix},
+\end{bmatrix}
 \end{equation}
-the controllability matrix satisfies
+has
 \begin{equation}
 \det\begin{bmatrix}
 \vct B&\mat A\vct B&\mat A^2\vct B&\mat A^3\vct B
-\end{bmatrix}=-1,
+\end{bmatrix}=-1.
 \label{eq:iss-frozen-controllability}
 \end{equation}
-independently of $\lambda>0$. This frozen-parameter calculation does
-\emph{not} establish uniform controllability or stabilizability of the complete
-time-varying scheduled model.
+Therefore the continuous pair is controllable for every $\lambda>0$, and its
+finite-step process covariance is positive definite for every $h>0$ when
+$q_c>0$.
 
-For fixed $\tau$ and $\sigma_{aw}$, introduce
+For fixed $\tau$ and $\sigma_{aw}$ define
 \begin{equation}
 \bar a=\frac{a}{\sigma_{aw}},\qquad
 \bar v=\frac{v}{\sigma_{aw}\tau},\qquad
@@ -234,7 +362,7 @@ For fixed $\tau$ and $\sigma_{aw}$, introduce
 \bar S=\frac{S}{\sigma_{aw}\tau^3},
 \label{eq:iss-normalized-coordinates}
 \end{equation}
-and dimensionless time $s=t/\tau$. Then
+with $s=t/\tau$. Then
 \begin{equation}
 d\bar a=-\bar a\,ds+\sqrt2\,dW_s,\qquad
 \frac{d\bar v}{ds}=\bar a,\qquad
@@ -243,95 +371,337 @@ d\bar a=-\bar a\,ds+\sqrt2\,dW_s,\qquad
 \label{eq:iss-normalized-chain}
 \end{equation}
 Thus $\sigma_{aw}\tau^3$ is the intrinsic scale of the triple-integral state.
-For the bounded spectral family used in Sec.~\ref{sec:adaptation}, with an
-effective nonzero low-frequency cutoff, write
+For the bounded spectral family used in Sec.~\ref{sec:adaptation}, write
 \begin{equation}
 \operatorname{Var}[S]
-=c_{\mathrm{spec}}^2\,\sigma_{aw}^2\tau^6 .
+=c_{\mathrm{spec}}^2\sigma_{aw}^2\tau^6 .
 \label{eq:iss-S-variance}
 \end{equation}
 With
 \begin{equation}
-r_S=\kappa\,\sigma_{aw}\tau^3,
+r_S=\kappa\sigma_{aw}\tau^3,
 \label{eq:iss-rS-cubic}
 \end{equation}
-we obtain
+one obtains
 \begin{equation}
 \frac{R_S}{\operatorname{Var}[S]}
 =\frac{\kappa^2}{c_{\mathrm{spec}}^2}.
 \label{eq:iss-information-ratio}
 \end{equation}
-The cubic law therefore preserves a dimensionless pseudo-measurement strength
-within the stated spectral class. It is a scaling result, not a stability
-proof.
+The cubic law therefore preserves a dimensionless regularization strength. This
+is a scaling/performance result; the UES proof below needs only bounded positive
+$R_S$.
 
-\subsection{Attitude information is a separate structural condition}
+\subsection{Uniform observability of attitude and gyro bias}
 \label{app:iss-attitude}
 
-The accelerometer and magnetometer attitude Jacobians are
+After removing the already observable translational contribution from the
+accelerometer row, define the stacked two-vector attitude Jacobian
 \begin{equation}
-\mat H_{\theta,a}=-[\widehat{\vct f}_{\mathrm{cog},b}]_\times,
+\mat G_k=
+\begin{bmatrix}
+-[\widehat{\vct f}_{b,k}]_\times\\
+-[\widehat{\vct m}_{b,k}]_\times
+\end{bmatrix}.
+\label{eq:iss-Gk}
+\end{equation}
+Using
+$[\vct x]_\times^\top[\vct x]_\times
+=\|\vct x\|^2\mat I-\vct x\vct x^\top$, the standing vector-geometry bounds
+give
+\begin{equation}
+\mat G_k^\top\mat G_k
+\succeq
+c_0\delta\,\mat I_3,
 \qquad
-\mat H_{\theta,m}=-[\widehat{\vct m}_b]_\times .
-\label{eq:iss-attitude-H}
-\end{equation}
-Let
-$\vct u_f=\widehat{\vct f}_{\mathrm{cog},b}/
-\|\widehat{\vct f}_{\mathrm{cog},b}\|$
-and
-$\vct u_m=\widehat{\vct m}_b/\|\widehat{\vct m}_b\|$.
-If constants $f_0,m_0,\delta>0$ satisfy
-\begin{equation}
-\|\widehat{\vct f}_{\mathrm{cog},b}\|\ge f_0,\qquad
-\|\widehat{\vct m}_b\|\ge m_0,\qquad
-|\vct u_f^\top\vct u_m|\le1-\delta,
-\label{eq:iss-vector-geometry}
-\end{equation}
-then, with $c_0=\min(f_0^2,m_0^2)$,
-\begin{equation}
-\mat H_{\theta,a}^\top\mat H_{\theta,a}
-+\mat H_{\theta,m}^\top\mat H_{\theta,m}
-\succeq c_0\delta\,\mat I_3 .
+c_0:=\min(f_0^2,m_0^2),
 \label{eq:iss-attitude-info}
 \end{equation}
-This rules out the instantaneous two-vector attitude singularity when both
-references are available and noncollinear. It does not prove uniform complete
-observability of the augmented attitude--bias subsystem. Gyro bias enters the
-attitude dynamics, accelerometer bias and latent acceleration both enter the
-specific-force channel, and the complete EKF correction couples these blocks
-through the covariance. Those interactions must be handled in a single
-finite-horizon analysis rather than inferred from separate rank statements.
-
-\subsection{Conditional robustness implication under an assumed UES bound}
-\label{app:iss-local-theorem}
-
-For clarity, the standard perturbation implication is recorded here only as a
-conditional lemma. It is \emph{not} used as evidence that the implemented
-filter is stable.
-
-Let a local error recursion be written as
+so
 \begin{equation}
-\vct e_{k+1}=\mat A_k\vct e_k+\vct\phi_k(\vct e_k)+\vct u_k,
-\label{eq:iss-error-recursion}
+\sigma_{\min}(\mat G_k)\ge g_0:=\sqrt{c_0\delta}>0.
+\label{eq:iss-G-lower}
 \end{equation}
-where $\vct\phi_k$ is a quadratic-order remainder and $\vct u_k$ collects
-bounded disturbances and model mismatch. Suppose, independently, that the
-complete Live-state homogeneous linearization already satisfies
+
+Let $t_1<t_2$ be two accepted vector-update instants and
+$\Delta=t_2-t_1$. The homogeneous attitude--gyro-bias transition can be written
 \begin{equation}
-\|\mat\Psi(k,j)\|
+\delta\vct\theta(t_2)
+=\mat R_{21}\delta\vct\theta(t_1)
++\mat{\mathcal B}_{21}\widetilde{\vct b}_g,
+\label{eq:iss-att-bg-horizon}
+\end{equation}
+where $\mat R_{21}$ is orthogonal and
+\begin{equation}
+\mat{\mathcal B}_{21}
+=\int_{t_1}^{t_2}\mat\Phi_\theta(t_2,s)\,ds
+\label{eq:iss-B-horizon}
+\end{equation}
+for the attitude-error rotation transition $\mat\Phi_\theta$.
+
+\begin{lemma}[Finite-horizon observability of attitude and gyro bias]
+\label{lem:iss-att-bg-uco}
+Under Eqs.~\eqref{eq:iss-vector-magnitude-bounds}--\eqref{eq:iss-vector-gap},
+there exists $b_0>0$ such that
+\begin{equation}
+\sigma_{\min}(\mat{\mathcal B}_{21})\ge b_0,
+\qquad
+b_0:=\Delta_{\min}\cos(\overline\omega\Delta_{\max})>0.
+\label{eq:iss-B-lower}
+\end{equation}
+Consequently the two-instant observability matrix
+\begin{equation}
+\mat O_A=
+\begin{bmatrix}
+\mat G_1 & \mat 0\\
+\mat G_2\mat R_{21} & \mat G_2\mat{\mathcal B}_{21}
+\end{bmatrix}
+\label{eq:iss-OA}
+\end{equation}
+has full column rank six and a uniform positive smallest singular value.
+\end{lemma}
+
+\begin{proof}
+For any unit vector $\vct x$, the rotation angle of
+$\mat\Phi_\theta(t_2,s)$ is no larger than
+$\overline\omega(t_2-s)\le\overline\omega\Delta_{\max}<\pi/2$. Hence
+\begin{equation}
+\vct x^\top\mat\Phi_\theta(t_2,s)\vct x
+\ge\cos(\overline\omega\Delta_{\max}).
+\end{equation}
+Integrating over $[t_1,t_2]$ gives
+\begin{equation}
+\vct x^\top\mat{\mathcal B}_{21}\vct x
+\ge\Delta_{\min}\cos(\overline\omega\Delta_{\max}),
+\end{equation}
+which implies Eq.~\eqref{eq:iss-B-lower}.
+
+If $\mat O_A[\delta\vct\theta^\top,\widetilde{\vct b}_g^\top]^\top=0$,
+the first block row and Eq.~\eqref{eq:iss-G-lower} give
+$\delta\vct\theta=0$. The second block row then gives
+$\mat G_2\mat{\mathcal B}_{21}\widetilde{\vct b}_g=0$. Both factors have
+uniform positive smallest singular value, hence
+$\widetilde{\vct b}_g=0$. The upper bounds in
+Eq.~\eqref{eq:iss-vector-magnitude-bounds}, orthogonality of
+$\mat R_{21}$, and the lower bounds above yield a uniformly bounded left
+inverse for $\mat O_A$, and therefore a uniform positive lower bound on
+$\sigma_{\min}(\mat O_A)$.
+\end{proof}
+
+This argument also makes the magnetometer requirement explicit. If accepted
+magnetometer updates can disappear for an unbounded interval, yaw and the
+corresponding gyro-bias component lose the uniform information needed for UES.
+
+\subsection{Uniform complete observability of the 18-state performance filter}
+\label{app:iss-18-uco}
+
+Order the reduced state as
+$\vct e_{18}=[\vct e_L^\top,\vct e_A^\top]^\top$, where
+$\vct e_L=[\widetilde{\vct v},\widetilde{\vct p},
+\widetilde{\vct S},\widetilde{\vct a}_w]$ and
+$\vct e_A=[\delta\vct\theta,\widetilde{\vct b}_g]$. Over a horizon containing
+four $S$ updates and the two vector-information instants of
+Lemma~\ref{lem:iss-att-bg-uco}, select the corresponding measurement rows. The
+resulting observability matrix has the block form
+\begin{equation}
+\mat O_{18}=
+\begin{bmatrix}
+\mat O_L & \mat 0\\
+\mat D   & \mat O_A
+\end{bmatrix}.
+\label{eq:iss-O18}
+\end{equation}
+Here $\mat O_L$ is the three-axis extension of Eq.~\eqref{eq:iss-OS};
+$\mat D$ contains the known dependence of the accelerometer rows on the
+translational state. Its norm is uniformly bounded on the finite horizon by the
+standing state, time-step, and parameter bounds.
+
+\begin{lemma}[Uniform complete observability of the reduced Live state]
+\label{lem:iss-18-uco}
+Under the standing assumptions, the 18-state process/measurement pair is
+uniformly completely observable. In particular there exists
+$\alpha_o>0$ such that the finite-horizon weighted observability Gramian obeys
+\begin{equation}
+\mat W_o(k,N)\succeq\alpha_o\mat I_{18}
+\label{eq:iss-Wo18}
+\end{equation}
+for every admissible horizon start $k$.
+\end{lemma}
+
+\begin{proof}
+Let $\ell_0>0$ and $a_0>0$ denote uniform lower bounds on
+$\sigma_{\min}(\mat O_L)$ and $\sigma_{\min}(\mat O_A)$, respectively, and let
+$d_0$ bound $\|\mat D\|$. If
+$\mat O_{18}[\vct x^\top,\vct y^\top]^\top=
+[\vct z_1^\top,\vct z_2^\top]^\top$, then
+\begin{equation}
+\|\vct x\|\le\ell_0^{-1}\|\vct z_1\|,
+\end{equation}
+and
+\begin{equation}
+\|\vct y\|
+\le a_0^{-1}
+\left(\|\vct z_2\|+d_0\ell_0^{-1}\|\vct z_1\|\right).
+\end{equation}
+Thus $\mat O_{18}$ has a uniformly bounded left inverse, hence a uniform
+positive smallest singular value. Equation~\eqref{eq:iss-R-bounds} converts
+this unweighted lower bound into Eq.~\eqref{eq:iss-Wo18}.
+\end{proof}
+
+The important point is that the accelerometer coupling does not destroy the
+argument. The $S$ rows first identify the translational initial condition; the
+remaining vector rows then identify attitude and gyro bias. The full matrix is
+block lower triangular in that ordering.
+
+\subsection{Uniform process excitation and the Riccati step}
+\label{app:iss-riccati}
+
+For the reduced 18-state proof configuration, the discrete process covariance
+has the same block structure as Eq.~\eqref{eq:iss-block-F}. The attitude block
+is driven by positive gyro noise and positive gyro-bias random-walk noise. The
+translational block is driven by OU acceleration diffusion. Because the scalar
+OU--III continuous pair is controllable by
+Eq.~\eqref{eq:iss-frozen-controllability}, its exact finite-step covariance is
+positive definite for every $h>0$ and $q_c>0$.
+
+Assume explicit positive lower and finite upper bounds on the gyro, gyro-bias,
+and OU process-noise intensities. Together with
+Eqs.~\eqref{eq:iss-step-tau-bounds} and \eqref{eq:iss-qc-bounds}, continuity of
+the exact finite-step covariance on the compact parameter set gives constants
+$0<q_-\le q_+<\infty$ such that
+\begin{equation}
+q_-\mat I_{18}
+\preceq \mat Q_k
+\preceq q_+\mat I_{18}.
+\label{eq:iss-Q18-bounds}
+\end{equation}
+Therefore the reduced process is uniformly completely controllable in one step;
+Eq.~\eqref{eq:iss-Q18-bounds} is stronger than the stabilizability condition
+needed by the standard time-varying Kalman theorems.
+
+\begin{theorem}[UES of the standard-Riccati 18-state Live proof configuration]
+\label{thm:iss-18-ues}
+Consider the reduced Live filter with accelerometer-bias estimation disabled,
+periodic $\vct a_w$ covariance re-alignment disabled, no hard reset inside the
+analysis interval, and the standard Kalman predict/update Riccati recursion.
+Under the standing measurement, geometry, process-noise, and cadence assumptions
+above, there exist finite constants
+$0<p_-\le p_+<\infty$, $M\ge1$, and $0<\rho<1$ such that
+\begin{equation}
+p_-\mat I_{18}\preceq\mat P_k\preceq p_+\mat I_{18}
+\label{eq:iss-P-bounds}
+\end{equation}
+and the homogeneous closed-loop estimation-error transition satisfies
+\begin{equation}
+\|\mat\Psi_{18}(k,j)\|
 \le M\rho^{k-j},
-\qquad k\ge j,\qquad
-M\ge1,\quad 0<\rho<1.
+\qquad k\ge j.
 \label{eq:iss-ues}
 \end{equation}
-Equation~\eqref{eq:iss-ues} is the uniform exponential stability property that
-a full filter proof would need to establish. It is an assumption here; the
-preceding translational observability result does not prove it.
+Thus the nominal linearized 18-state Live proof configuration is uniformly
+exponentially stable.
+\end{theorem}
 
-\begin{lemma}[Conditional local robustness under an independently established UES bound]
+\begin{proof}
+Lemma~\ref{lem:iss-18-uco} establishes uniform complete observability.
+Equation~\eqref{eq:iss-Q18-bounds} establishes uniform complete
+controllability, while Eq.~\eqref{eq:iss-R-bounds} supplies bounded positive
+measurement covariances. The process and observation matrices are uniformly
+bounded by the standing time-step, angular-rate, vector-magnitude, and OU
+parameter bounds. Standard discrete time-varying Kalman-filter results then give
+uniform upper and lower Riccati bounds and uniform exponential stability of the
+homogeneous filter error dynamics
+\cite{Jazwinski1970_Filtering,Maybeck1979_StochasticModels}.
+
+The MEKF covariance reset after a small quaternion correction does not alter
+this first-order conclusion: its reset Jacobian equals the identity at zero
+attitude error, so the linearized homogeneous map is the same map used above.
+\end{proof}
+
+This theorem proves the hard UES premise only for a deliberately standard
+Riccati configuration that the implementation can realize. It does not claim
+UES of the default 21-state adaptive filter.
+
+\subsection{Why unconditional 21-state UES is false}
+\label{app:iss-21-counterexample}
+
+The accelerometer-bias coordinate is not merely an unfinished proof obligation.
+For the present random-walk model there is an admissible static trajectory on
+which the 21-state linearization has a nondecaying unobservable mode.
+
+\begin{lemma}[Static attitude--accelerometer-bias ambiguity]
+\label{lem:iss-21-counterexample}
+Consider static motion with constant attitude, zero angular rate, zero
+translational error, valid noncollinear gravity/specific-force and magnetic
+reference vectors, and a local accelerometer-bias estimate away from the bias
+projection boundary. Let $\vct f_b$ and $\vct m_b$ denote the constant predicted
+specific-force and magnetic vectors in body coordinates. For any sufficiently
+small scalar $c\ne0$, define
+\begin{equation}
+\delta\vct\theta=c\,\vct m_b,
+\qquad
+\widetilde{\vct b}_g=\vct0,
+\qquad
+\widetilde{\vct b}_a=[\vct f_b]_\times\delta\vct\theta,
+\label{eq:iss-21-mode}
+\end{equation}
+with
+$\widetilde{\vct v}=\widetilde{\vct p}=\widetilde{\vct S}
+=\widetilde{\vct a}_w=\vct0$. This nonzero error produces zero linearized
+accelerometer, magnetometer, and $S$ innovations for all time and is invariant
+under the homogeneous prediction. Hence the unrestricted 21-state
+linearization is not detectable over any admissible trajectory class that
+contains this static motion, and unconditional 21-state UES is impossible.
+\end{lemma}
+
+\begin{proof}
+The magnetometer row gives
+\begin{equation}
+-[\vct m_b]_\times\delta\vct\theta
+=-[\vct m_b]_\times(c\vct m_b)=\vct0.
+\end{equation}
+The accelerometer row gives
+\begin{equation}
+-[\vct f_b]_\times\delta\vct\theta
++\widetilde{\vct b}_a
+=\vct0
+\end{equation}
+by construction, and the $S$ row is zero because the translational error is
+zero. At zero angular rate with zero gyro-bias error,
+$\delta\dot{\vct\theta}=\vct0$. The accelerometer-bias homogeneous model is a
+random walk, so $\dot{\widetilde{\vct b}}_a=\vct0$ when process noise is removed.
+Thus Eq.~\eqref{eq:iss-21-mode} is a nonzero unobservable mode with discrete
+homogeneous eigenvalue one. Choosing $|c|$ sufficiently small keeps
+$\widetilde{\vct b}_a$ strictly inside the implemented bias-projection ball, so
+the projection does not remove the local mode.
+\end{proof}
+
+This counterexample remains valid even though $\vct f_b$ and $\vct m_b$ are
+noncollinear. Two-vector attitude information alone is insufficient when a free
+three-axis additive accelerometer bias can exactly cancel the accelerometer
+attitude residual. To obtain a 21-state convergence theorem one must add a
+persistent-excitation condition strong enough to separate attitude from
+accelerometer bias over a finite horizon, or change the bias model by adding a
+restoring prior or an independent bias-sensitive measurement.
+
+\subsection{Local robustness once the reduced-state UES conditions hold}
+\label{app:iss-local-theorem}
+
+For the reduced proof configuration, write the nonlinear performance-error
+recursion as
+\begin{equation}
+\vct e_{k+1}
+=\mat A_k\vct e_k+\vct\phi_k(\vct e_k)+\vct u_k,
+\label{eq:iss-error-recursion}
+\end{equation}
+where $\vct u_k$ includes residual accelerometer-bias error, physical mismatch
+from the $S=0$ regularizer, sensor/model disturbances, and neglected higher-
+order terms not placed in $\vct\phi_k$.
+
+\begin{lemma}[Local ISS-type bound for the reduced performance state]
 \label{lem:conditional-local-iss}
-Assume Eq.~\eqref{eq:iss-ues}. If there are $r_e>0$, $c_\phi>0$ and $g_u>0$
-such that, uniformly in $k$,
+Assume the conditions of Theorem~\ref{thm:iss-18-ues}. If there are
+$r_e>0$, $c_\phi>0$, and $g_u>0$ such that
 \begin{equation}
 \|\vct\phi_k(\vct e)\|\le c_\phi\|\vct e\|^2
 \quad\text{for }\|\vct e\|\le r_e,
@@ -347,16 +717,16 @@ then there is a sufficiently small invariant neighborhood in which
 \qquad 0<\rho_1<1,
 \label{eq:iss-final-bound}
 \end{equation}
-for suitable positive constants $C_1$ and $C_2$.
+for suitable constants $C_1,C_2>0$.
 \end{lemma}
 
 \begin{proof}
 Inside a ball of radius $r\le r_e$, write
 $\vct\phi_k(\vct e_k)=\mat\Delta_k\vct e_k$ with
-$\|\mat\Delta_k\|\le c_\phi r$. Standard variation-of-constants bounds for a
-uniformly exponentially stable time-varying system show that the perturbed
-transition remains exponentially bounded when $r$ is small enough that
-$\rho_1:=\rho+Mc_\phi r<1$. A second variation-of-constants step gives
+$\|\mat\Delta_k\|\le c_\phi r$. By Theorem~\ref{thm:iss-18-ues}, the
+unperturbed transition obeys Eq.~\eqref{eq:iss-ues}. Standard variation of
+constants therefore gives a perturbed exponential rate
+$\rho_1=\rho+Mc_\phi r<1$ for sufficiently small $r$, followed by
 \begin{equation}
 \|\vct e_k\|
 \le
@@ -364,108 +734,138 @@ M\rho_1^k\|\vct e_0\|
 +\frac{Mg_u}{1-\rho_1}
 \sup_{0\le j<k}\bar d_j .
 \end{equation}
-Choosing the initial error and disturbance bound so that the right-hand side
-remains inside the chosen ball closes the local invariant-set argument.
+Choosing the initial error and disturbance level so that this bound remains
+inside the selected ball closes the local invariant-set argument.
 \end{proof}
 
-This lemma is mathematically standard and intentionally secondary. Because
-Eq.~\eqref{eq:iss-ues} is not established for the coupled scheduled EKF, the
-lemma does not constitute an ISS proof of the implemented estimator.
+Unlike the previous purely conditional statement, the UES premise of this lemma
+is supplied by Theorem~\ref{thm:iss-18-ues} for the stated reduced proof
+configuration. It is still not an ISS theorem for the default 21-state deployed
+filter, and a deterministic infinite-horizon bound on the physical
+$S_{\mathrm{true}}$ mismatch is not available for an unbounded Gaussian sample
+path. Mean-square or finite-horizon high-probability formulations are more
+natural for that stochastic term.
 
-\subsection{What remains before any full-filter stability claim}
+\subsection{Periodic covariance re-alignment remains outside the theorem}
+\label{app:iss-cov-sync}
+
+The default wrapper periodically replaces the posterior $\vct a_w$ covariance
+marginal with the current stationary OU covariance while retaining the learned
+cross-covariances. This is not a Riccati prediction or measurement update, so
+Theorem~\ref{thm:iss-18-ues} explicitly disables it.
+
+There is also a basic positive-semidefiniteness issue with raw block replacement.
+Partition the covariance around the $\vct a_w$ block as
+\begin{equation}
+\mat P=
+\begin{bmatrix}
+\mat A&\mat C\\
+\mat C^\top&\mat D
+\end{bmatrix}\succeq0,
+\qquad \mat A\succ0.
+\label{eq:iss-P-partition}
+\end{equation}
+After raw synchronization,
+\begin{equation}
+\mat P^+=
+\begin{bmatrix}
+\mat A&\mat C\\
+\mat C^\top&\mat\Sigma_{aw}^{\mathrm{stat}}
+\end{bmatrix}.
+\label{eq:iss-P-raw-sync}
+\end{equation}
+The Schur complement gives
+\begin{equation}
+\mat P^+\succeq0
+\quad\Longleftrightarrow\quad
+\mat\Sigma_{aw}^{\mathrm{stat}}
+-\mat C^\top\mat A^{-1}\mat C\succeq0.
+\label{eq:iss-sync-schur}
+\end{equation}
+The pre-sync covariance only guarantees
+$\mat D-\mat C^\top\mat A^{-1}\mat C\succeq0$. Hence
+$\mat\Sigma_{aw}^{\mathrm{stat}}\succeq\mat D$ is a simple sufficient
+condition for a safe raw replacement, but a sea-state decrease can violate that
+ordering. Positive semidefiniteness is therefore not guaranteed by raw block
+replacement alone.
+
+The implementation also provides a congruence-style re-alignment that preserves
+positive semidefiniteness by construction. That removes the immediate Schur-
+complement defect, but it is still an extra periodic covariance map and requires
+a separate bounded-map/Riccati analysis before it can be included in a UES
+theorem. The clean proof configuration is therefore to disable periodic
+re-alignment and let changes in $\mat\Sigma_{aw}^{\mathrm{stat}}$ enter through
+the ordinary process covariance.
+
+\subsection{Scope, remaining conditions, and proof-oriented implementation choices}
 \label{app:iss-remaining}
 
-The complete 21-state result remains open. At minimum, a rigorous proof would
-need all of the following.
+The results above separate what is proved from what is structurally impossible
+without extra assumptions.
 
-\paragraph{Full augmented finite-horizon observability or detectability.}
-Lemma~\ref{lem:iss-ouiii-uco} proves the translational block and
-Eq.~\eqref{eq:iss-attitude-info} gives an instantaneous attitude information
-bound, but the complete coupled attitude--gyro-bias--translation--accelerometer-
-bias Gramian has not been bounded analytically. The actual magnetometer cadence
-and measurement gating must be included.
+\paragraph{What is established.}
+The OU--III translational block has an explicit uniform four-update
+observability bound for arbitrary bounded measurable $\tau(t)$. Under bounded
+noncollinear accelerometer/magnetometer geometry and bounded update gaps, the
+attitude--gyro-bias block has a uniform finite-horizon observability bound. In
+the reduced 18-state standard-Riccati configuration, these combine with
+uniformly positive process covariance to give UCO, bounded Riccati solutions,
+and UES by standard time-varying Kalman theory.
 
-\paragraph{Uniform controllability or stabilizability for the scheduled model.}
-Equation~\eqref{eq:iss-frozen-controllability} is a frozen-parameter rank
-calculation. A time-varying Riccati theorem needs the corresponding uniform
-finite-horizon property, together with uniform process- and measurement-noise
-bounds, for the complete scheduled system.
+\paragraph{What is disproved.}
+Unconditional 21-state UES over a motion class containing static trajectories is
+false for the present random-walk accelerometer-bias augmentation. The mode in
+Lemma~\ref{lem:iss-21-counterexample} is unobservable and nondecaying.
 
-\paragraph{Bounded and stabilizing Riccati recursion.}
-Even full-state observability alone is not enough. The proof must connect the
-uniform detectability/observability and stabilizability conditions to bounded
-positive covariance solutions and then to contraction of the actual
-predict--update error transition. This is precisely the missing step behind
-Eq.~\eqref{eq:iss-ues}.
+\paragraph{What remains outside the theorem.}
+The default periodic $\vct a_w$ covariance synchronization, active
+accelerometer-bias estimation, hard initialization, tilt re-lock, gating and
+fault recovery, and arbitrary loss of magnetometer updates are not covered by
+Theorem~\ref{thm:iss-18-ues}. The physical $S=0$ pseudo-measurement is a
+regularizer rather than a true observation, so stochastic physical mismatch
+must be handled separately from nominal filter UES.
 
-\paragraph{Accelerometer-bias separation.}
-A complete augmented-state proof must distinguish slowly varying
-$\vct b_a$ from the mean-reverting $\vct a_w$ state through the actual
-measurement and process models. Treating residual accelerometer-bias error as a
-bounded disturbance does not establish convergence of all 21 states.
-
-\paragraph{Pseudo-measurement model error.}
-$S=0$ is a regularizer rather than a physical measurement, so the physical
-$S_{\mathrm{true}}$ is model mismatch. For Gaussian forcing, an
-infinite-horizon sample-path supremum is not deterministically bounded. A
-mean-square statement or a finite-horizon high-probability result is therefore
-more natural than a deterministic infinite-horizon ISS claim.
-
-\paragraph{Periodic covariance re-alignment.}
-The implementation periodically re-aligns the posterior $\vct a_w$ covariance
-marginal while retaining learned cross-covariances. That operation is outside a
-standard Riccati prediction/measurement recursion. Its positivity and effect on
-covariance bounds must be proved explicitly, or the operation must be replaced
-by a form compatible with the chosen stability theorem.
-
-\paragraph{Hybrid startup, re-lock, and recovery logic.}
-Hard initialization, tilt re-lock, gating, and fault recovery are discrete
-state resets. A result for the normal Live recursion does not cover those
-branches; a global statement would require a hybrid argument or suitable reset
-bounds.
-
-\subsection{Implementation changes that would simplify a future proof}
+\subsection{Implementation choices that align the filter with the proof}
 \label{app:iss-recommendations}
 
-The following changes are not required by the empirical results, but would make
-a future full-filter analysis closer to standard time-varying Kalman theory.
-
+A proof-oriented Live configuration is available without changing the OU--III
+kinematics:
 \begin{enumerate}
-\item \textbf{Compute applied $r_S$ from the applied OU scales.}
-After smoothing and clipping the applied $\tau$ and $\sigma_{aw}$, set
-\begin{equation}
-r_S=\operatorname{clip}
-\!\left(c_R\sigma_{aw}\tau^3,\,
-r_{S,\min},r_{S,\max}\right)
-\end{equation}
-rather than smoothing $r_S$ as an independent state. This makes
-Eq.~\eqref{eq:iss-kappa-def} algebraic and keeps the information ratio explicit.
+\item \textbf{Freeze accelerometer-bias estimation for the certified mode.}
+Use the existing bias-update disable path so that $\vct b_a$ uncertainty is
+marginalized into the accelerometer covariance and residual bias is treated as a
+bounded input. A 21-state theorem instead requires an explicit persistent-
+excitation condition or a different bias model.
 
-\item \textbf{Expose an explicit positive $\sigma_{aw,\min}$.}
-A named positive floor on applied $\sigma_{aw}$ makes the lower diffusion bound
-in Eq.~\eqref{eq:iss-qc-bounds} explicit.
+\item \textbf{Disable periodic raw $\vct a_w$ covariance synchronization.}
+This restores the standard Riccati recursion used by
+Theorem~\ref{thm:iss-18-ues}. If synchronization is retained, prefer the
+positive-semidefinite congruence form and prove uniform bounds for the resulting
+periodic covariance map.
 
-\item \textbf{Replace covariance block replacement by positive-semidefinite inflation.}
-If covariance re-alignment is intended to prevent the $\vct a_w$ marginal from
-becoming overconfident, an additive update
-\begin{equation}
-\mat P^+=\mat P^-+\mat E_a\mat\Delta\mat E_a^\top,
-\qquad \mat\Delta\succeq0,
-\end{equation}
-is much easier to incorporate into covariance-ordering arguments than
-replacement of a principal block while retaining arbitrary cross-covariances.
+\item \textbf{Retain explicit positive process-noise and measurement-noise floors.}
+The lower bounds in Eqs.~\eqref{eq:iss-Q18-bounds} and
+\eqref{eq:iss-R-bounds} are mathematical assumptions, not numerical hygiene.
+The deployed OU adapter already enforces a positive acceleration-scale floor;
+the gyro and gyro-bias channels should likewise retain named positive floors in
+a certified configuration.
 
-\item \textbf{Optionally delay applied tuning by one IMU step.}
-Using $\vartheta_{k-1}$ for the update at step $k$ makes the schedule predictable
-with respect to the current innovation, which simplifies a strict stochastic
-analysis.
+\item \textbf{State magnetometer availability as a theorem condition.}
+Require at least two accepted nondegenerate accel/mag vector-information instants
+per chosen finite horizon, with a bounded gap satisfying
+Eq.~\eqref{eq:iss-vector-gap}. Without bounded magnetic-reference availability,
+yaw UES cannot be uniform.
 
-\item \textbf{State the Live analysis region explicitly.}
-Specify bounds on attitude, reference-vector geometry, measurement availability,
-and validity gates under which no hard reset is invoked.
+\item \textbf{Keep hybrid resets outside the local Live theorem.}
+A global claim including tilt re-lock or hard initialization requires a hybrid
+Lyapunov/reset-map analysis. The local UES result should be stated only on the
+invariant Live region in which those branches do not fire.
 \end{enumerate}
 
-The analytical contribution of this appendix is therefore the translational
-observability result and the associated scaling/structural analysis. A proof of
-Eq.~\eqref{eq:iss-ues} for the complete implemented EKF remains future work; no
-ISS or full-filter convergence result is claimed here.
+The resulting hierarchy is therefore precise: the translational and
+attitude--gyro-bias observability pieces can be closed analytically; a genuine
+18-state UES theorem follows for the standard-Riccati reduced Live
+configuration; the corresponding local ISS-type perturbation bound then follows
+for bounded residual bias and model mismatch; but unconditional 21-state UES is
+ruled out by the static attitude--accelerometer-bias ambiguity rather than left
+as an unspecified future proof obligation.
