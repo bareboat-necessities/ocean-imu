@@ -40,6 +40,23 @@ From the stochastic variation-of-constants formula,
 \label{eq:Qd-integral}
 \end{equation}
 
+For the temperature-centered residual accelerometer-bias OU state, the scalar
+block is particularly simple. With continuous driving spectral density
+$\matg Q_{ba}$ and correlation time $\tau_b$,
+\begin{align}
+\mat\Phi_b(h)
+&=e^{-h/\tau_b}\mat I_3,\label{eq:ba-ou-phi}\\
+\matg Q_{d,b}(h)
+&=\frac{\tau_b}{2}\left(1-e^{-2h/\tau_b}\right)\matg Q_{ba}.
+\label{eq:ba-ou-Qd}
+\end{align}
+The implementation evaluates the scalar covariance factor as
+$-\frac{\tau_b}{2}\operatorname{expm1}(-2h/\tau_b)$ to avoid cancellation for
+$h/\tau_b\ll1$. Consequently
+$\matg Q_{d,b}=h\matg Q_{ba}+O(h^2/\tau_b)$, so retaining the historical
+continuous driving density preserves the former random-walk process covariance
+to first order on short IMU steps.
+
 \paragraph{Discrete Kalman prediction (time update)}
 Given $(\hat{\vct{x}}_k,\mat{P}_k)$ at $t_k$, the prediction to $t_{k+1}=t_k{+}h$ is
 \begin{align}
@@ -49,7 +66,8 @@ Given $(\hat{\vct{x}}_k,\mat{P}_k)$ at $t_k$, the prediction to $t_{k+1}=t_k{+}h
 These equations are the discrete counterparts of the continuous covariance
 flow for the local-error SDE defined in Sec.~\ref{sec:proc}.  The OU-driven
 kinematic transition and process covariance are evaluated analytically,
-including the small-step series branch.  The attitude/gyro-bias transition is
-structured and exact for constant angular rate, while anisotropic
+including the small-step series branch. The residual accelerometer-bias block
+uses Eqs.~\eqref{eq:ba-ou-phi}--\eqref{eq:ba-ou-Qd}. The attitude/gyro-bias
+transition is structured and exact for constant angular rate, while anisotropic
 attitude-noise and bias-driven covariance integrals use Simpson quadrature, as
 stated in the following attitude-block derivation.
