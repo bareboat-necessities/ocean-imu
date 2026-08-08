@@ -1361,10 +1361,13 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         self.assertIn("not a global navigation position", intro)
         self.assertIn("comes from simulation", intro)
 
-        # The ISS appendix is a conditional local result and has to be
-        # described that way where it is claimed as a contribution.
-        self.assertIn("conditional sufficient-condition", intro)
-        self.assertIn("not an unconditional EKF convergence claim", intro)
+        # The stability appendix now closes UES only for the reduced Live
+        # performance state under explicit conditions.  The introduction must
+        # state that stronger result without broadening it to the unrestricted
+        # 21-state estimator or to the optional legacy covariance replacement.
+        self.assertIn("18-state Live performance filter", intro)
+        self.assertIn("not an ISS or convergence proof of the unrestricted 21-state estimator", intro)
+        self.assertIn("UES is not proved for that legacy mode", intro)
 
     def test_nomenclature_is_included_and_disambiguates_covariances(self):
         manuscript = self.read("kalman_ou-w3d.tex")
