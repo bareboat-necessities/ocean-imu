@@ -111,7 +111,7 @@ where $\vct{w}$ is per-sample white noise (RMS set to sensor-like levels), $\vct
 a specified half-range (imperfect calibration), and $\vct{b}_{\mathrm{rw}}$ is a slowly drifting random-walk bias whose
 increments scale with $\sqrt{\Delta t}$.  The accelerometer truth generator deliberately
 retains this random walk. OU--II and OU--III instead estimate the residual about
-the temperature-calibration curve with the fixed slow prior $\tau_b=\SI{3000}{s}$
+the temperature-calibration curve with the fixed slow prior $\tau_b=\SI{5000}{s}$
 and the same continuous driving-noise scale. The validation therefore includes
 accelerometer-bias process-model mismatch rather than making the simulated truth
 identical to the stabilizing filter prior.

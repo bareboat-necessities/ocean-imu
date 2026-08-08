@@ -646,7 +646,7 @@ class Kalman3D_Wave_OU_III {
     // moves that absorbed constant between states; the 1.1 deg static roll bias
     // in steep seas is a separate, pre-existing problem.
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
-    T tau_bacc_ = T(3000.0);             // residual accel-bias OU correlation time [s]
+    T tau_bacc_ = T(5000.0);             // residual accel-bias OU correlation time [s]
 
     // Accelerometer bias temperature coefficient (per-axis), units: m/s^2 per °C.
     // Default here reflects BMI270 typical accel drift (~0.002 m/s^2/°C).

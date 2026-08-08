@@ -124,14 +124,14 @@ with finite correlation time $\tau_b>0$.  Its stationary covariance is
 \matg\Sigma_b^{\mathrm{stat}}=\frac{\tau_b}{2}\matg Q_{ba}.
 \label{eq:ba-ou-stationary}
 \end{equation}
-The implementation uses $\tau_b=\SI{3000}{s}$ by default.  For source
+The implementation uses $\tau_b=\SI{5000}{s}$ by default.  For source
 compatibility the existing \texttt{set\_Q\_bacc\_rw} setter remains available;
 its argument now specifies the square root of the continuous driving spectral
 density $\matg Q_{ba}$.  At the historical value
 $5\times10^{-4}\,\mathrm{m\,s^{-2}/\sqrt{s}}$, the short-step covariance is
 unchanged to first order and Eq.~\eqref{eq:ba-ou-stationary} gives an implied
-stationary standard deviation of approximately \SI{0.01936}{m\,s^{-2}} for
-$\tau_b=\SI{3000}{s}$.
+stationary standard deviation of approximately \SI{0.02500}{m\,s^{-2}} for
+$\tau_b=\SI{5000}{s}$.
 
 The temperature curve is not itself made stochastic inside the Kalman state.
 Temperature-sensor error, imperfect coefficients, thermal lag, and hysteresis

@@ -53,7 +53,7 @@ and the accelerometer-bias OU correlation time obeys
 0<\underline\tau_b\le\tau_b\le\overline\tau_b<\infty.
 \label{eq:iss-bias-tau-bounds}
 \end{equation}
-The implementation uses the fixed default $\tau_b=\SI{3000}{s}$; the interval
+The implementation uses the fixed default $\tau_b=\SI{5000}{s}$; the interval
 form is stated so the theorem also covers a bounded configurable value.
 
 Assume uniformly bounded positive measurement covariances,
