@@ -18,7 +18,6 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          # Clean stale implementation comments in both OU filters.
           for rel in [
               'src/kalman_ou_ii/Kalman3D_Wave_OU_II.h',
               'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h',
@@ -40,7 +39,6 @@ jobs:
                   raise SystemExit(f'stale bias comment anchor missing in {rel}')
               p.write_text(s.replace(old, new, 1))
 
-          # Implementation constants table: distinguish filter prior from simulation truth.
           p = Path('doc/kalman_ou_iii/w3d-fus-methods.tex-part')
           s = p.read_text()
           old = '''accelerometer-bias random walk
@@ -48,14 +46,13 @@ jobs:
           & adaptation cadence / time constant & $0.1/1.8$ s \\\\
           '''
           new = '''accelerometer-bias residual OU
-          & $\\tau_b=\\SI{1000}{s}$; drive $\\SI{5e-4}{m.s^{-2}.s^{-0.5}}$
+          & $\\tau_b=\\SI{3000}{s}$; drive $\\SI{5e-4}{m.s^{-2}.s^{-0.5}}$
           & adaptation cadence / time constant & $0.1/1.8$ s \\\\
           '''
           if old not in s:
               raise SystemExit('fusion-methods table anchor missing')
           p.write_text(s.replace(old, new, 1))
 
-          # Simulation truth remains a random walk; label the deliberate model mismatch.
           p = Path('doc/kalman_ou_iii/w3d-sim-charts.tex-part')
           s = p.read_text()
           old = '''    Bias random-walk & \\SI{5e-4}{\\meter\\per\\second\\squared\\per\\second\\tothe{0.5}} & increment std $\\propto \\sqrt{\\Delta t}$ \\\\
@@ -69,7 +66,7 @@ jobs:
           '''
           addition = '''increments scale with $\\sqrt{\\Delta t}$.  The accelerometer truth generator deliberately
           retains this random walk. OU--II and OU--III instead estimate the residual about
-          the temperature-calibration curve with the fixed slow prior $\\tau_b=\\SI{1000}{s}$
+          the temperature-calibration curve with the fixed slow prior $\\tau_b=\\SI{3000}{s}$
           and the same continuous driving-noise scale. The validation therefore includes
           accelerometer-bias process-model mismatch rather than making the simulated truth
           identical to the stabilizing filter prior.
@@ -78,7 +75,6 @@ jobs:
               raise SystemExit('simulation bias paragraph anchor missing')
           p.write_text(s.replace(marker, addition, 1))
 
-          # Abstract: describe the actual bias model without touching result numbers.
           p = Path('doc/kalman_ou_iii/kalman_ou-w3d.tex')
           s = p.read_text()
           old = 'correlation. Gyroscope and accelerometer biases are modeled explicitly. To\n'
@@ -89,7 +85,6 @@ jobs:
               raise SystemExit('abstract bias sentence anchor missing')
           p.write_text(s.replace(old, new, 1))
 
-          # Remove an accidental Unicode multiplication sign from the proof source.
           p = Path('doc/kalman_ou_iii/w3d-iss-stability.tex-part')
           s = p.read_text()
           if '×' in s:
