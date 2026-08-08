@@ -29,24 +29,26 @@ narrower claim. Together with an online directional estimator, these elements
 address colored excitation and MEMS errors in an efficient, embedded-friendly
 framework.
 
-Appendix~\ref{app:iss-stability} is intentionally limited to analytical
-observability and stability conditions; it is not presented as an ISS proof of
-the implemented 21-state estimator. Because the tuner is driven by raw IMU data
-and a private Mahony attitude solution, its schedule is exogenous with respect
-to the MEKF state. The appendix proves a uniform finite-horizon observability
-bound for each OU--III translational chain under arbitrary bounded variation of
-$\tau$, and shows how $r_S\propto\sigma_{aw}\tau^3$ preserves the dimensionless
-strength of the integral pseudo-measurement. It also records a standard
-conditional perturbation lemma: if uniform exponential stability of the
-complete Live linearization is established independently, then sufficiently
-small nonlinear remainder and bounded disturbances give a local ISS-type
-bound. The appendix does \emph{not} establish that required full-system UES
-property. A coupled attitude--gyro-bias--translation--accelerometer-bias
-finite-horizon bound, uniform scheduled stabilizability, bounded stabilizing
-Riccati behavior, treatment of covariance re-alignment, the stochastic meaning
-of the $S=0$ regularizer, and hybrid reset logic all remain open. Consequently,
-this is not a conditional sufficient-condition result for the implemented
-filter and not an unconditional EKF convergence claim.
+Appendix~\ref{app:iss-stability} gives an analytical stability result with a
+carefully delimited state and operating region; it is not an ISS or convergence
+proof of the unrestricted 21-state estimator. Because the tuner is driven by
+raw IMU data and a private Mahony attitude solution, its schedule is exogenous
+with respect to the MEKF state. The appendix proves uniform finite-horizon
+observability of the OU--III translational block, finite-horizon observability
+of attitude and gyro bias under bounded noncollinear accel/mag geometry, and
+uniform exponential stability of the resulting 18-state Live performance
+filter when accelerometer-bias estimation is frozen, process and measurement
+covariances have positive finite bounds, magnetic updates have bounded gaps, and
+no hard reset occurs in the analysis interval. The default periodic
+$\vct a_w$ covariance maintenance is changed to prediction-time PSD inflation,
+so it is an additional bounded process-covariance term and is included in that
+UES proof. A single optional legacy flag restores the previous raw marginal
+replacement for reproducibility, but UES is not proved for that legacy mode.
+Unconditional 21-state UES is in fact impossible over a motion class containing
+static trajectories with the present random-walk accelerometer-bias state,
+because the appendix constructs a nondecaying attitude--bias ambiguity. The
+$S=0$ regularizer's physical model mismatch and hybrid reset/recovery logic also
+remain outside the local nominal theorem.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
