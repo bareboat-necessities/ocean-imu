@@ -68,7 +68,7 @@ in physical units (e.g.\ $\mu$T). This provides both estimator inputs and ground
     \multicolumn{3}{@{}l}{\emph{Accelerometer noise/bias model (per axis)}} \\
     White noise (RMS) & $1.51\times10^{-3}g$ & $\approx \SI{0.0148}{\meter\per\second\squared}$ \\
     Residual bias half-range & $5\times10^{-3}g$ & $\approx \SI{0.049}{\meter\per\second\squared}$ \\
-    Bias random-walk & \SI{5e-4}{\meter\per\second\squared\per\second\tothe{0.5}} & increment std $\propto \sqrt{\Delta t}$ \\
+    Bias random-walk & \SI{5e-4}{\meter\per\second\squared\per\second\tothe{0.5}} & simulation truth; estimator uses slow OU residual \\
     \midrule
     \multicolumn{3}{@{}l}{\emph{Gyroscope noise/bias model (per axis)}} \\
     White noise (RMS) & \SI{0.00157}{\radian\per\second} & $\approx \SI{0.09}{\degree\per\second}$ \\
@@ -109,7 +109,12 @@ Optionally, each sensor channel is corrupted by a composite error model
 \]
 where $\vct{w}$ is per-sample white noise (RMS set to sensor-like levels), $\vct{b}_0$ is a fixed residual bias drawn from
 a specified half-range (imperfect calibration), and $\vct{b}_{\mathrm{rw}}$ is a slowly drifting random-walk bias whose
-increments scale with $\sqrt{\Delta t}$.
+increments scale with $\sqrt{\Delta t}$.  The accelerometer truth generator deliberately
+retains this random walk. OU--II and OU--III instead estimate the residual about
+the temperature-calibration curve with the fixed slow prior $\tau_b=\SI{3000}{s}$
+and the same continuous driving-noise scale. The validation therefore includes
+accelerometer-bias process-model mismatch rather than making the simulated truth
+identical to the stabilizing filter prior.
 
 \paragraph{Magnetometer distortion realism (condition under test: non-ideal compass)}
 The magnetometer model includes both additive and multiplicative effects:

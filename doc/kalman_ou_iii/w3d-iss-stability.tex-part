@@ -257,7 +257,7 @@ attitude/gyro-bias observability matrix contains
 \end{bmatrix}.
 \end{equation}
 The transverse singular values of
-$\mat B_\Delta=\int_0^\Delta e^{-[\omega]_×s}ds$ are
+$\mat B_\Delta=\int_0^\Delta e^{-[\omega]_\\times s}ds$ are
 $2|\sin(\theta/2)|/\|\omega\|$ with $\theta=\|\omega\|\Delta$, while the
 rotation-axis singular value is $\Delta$. Condition
 Eq.~\eqref{eq:iss-vector-gap} therefore gives

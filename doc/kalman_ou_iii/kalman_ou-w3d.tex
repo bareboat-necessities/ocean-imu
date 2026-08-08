@@ -192,7 +192,9 @@ We present a quaternion multiplicative EKF for ocean-wave motion that couples
 attitude to a linear kinematic chain for velocity, oscillatory displacement,
 and the integral of displacement. World-frame acceleration is assigned an
 Ornstein--Uhlenbeck prior with stationary variance and finite temporal
-correlation. Gyroscope and accelerometer biases are modeled explicitly. To
+correlation. Gyroscope bias is modeled explicitly, while accelerometer bias is a
+slow first-order Gauss--Markov residual about a deterministic temperature-calibration
+curve. To
 suppress integration drift, a zero pseudo-measurement is applied
 to the integral state; its covariance may be made anisotropic, although every
 configuration evaluated here is isotropic. We derive the continuous model, analytic OU-chain
