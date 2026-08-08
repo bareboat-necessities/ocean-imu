@@ -52,8 +52,9 @@ $\OUValidationCovSyncWorstDifference$ points of any of these differences, so
 the residual nominal-sea cost is the cost of estimating the operating point
 online rather than an artifact of the adaptation bookkeeping. The simulations
 and embedded builds exercise the same estimator recursion, including the exact
-OU-chain transition, small-step covariance branch, full MEKF reset, and
-adaptive pseudo-measurement scaling.
+OU-chain transition, the slow residual accelerometer-bias OU transition,
+small-step covariance branch, full MEKF reset, and adaptive
+pseudo-measurement scaling.
 
 The separate ten-seed robustness study in
 Sec.~\ref{sec:ou-robustness} maps both one-factor sensitivity to $\tau$,
@@ -69,69 +70,84 @@ $H_s=\SI{0.05}{m}$ case reaches \OURobustnessLowStressMean\% and the
 bound the empirical claim to the tested parameter neighborhood, motion
 amplitudes, and transition rates.
 
-Appendix~\ref{app:iss-stability} now closes the nominal reduced-state stability
-chain more tightly than the empirical results alone. It derives an explicit
-uniform finite-horizon observability bound for every OU--III translational axis,
-proves finite-horizon attitude--gyro-bias observability under bounded
-noncollinear accelerometer/magnetometer geometry and bounded magnetic-update
-gaps, and combines those pieces with positive bounded process and measurement
-covariances to obtain UES of the 18-state Live performance filter. The default
-periodic $\vct a_w$ covariance maintenance is part of that theorem: instead of
-replacing the posterior marginal, the implementation now adds the PSD positive
-part of the stationary-covariance deficit inside the next prediction. This
-preserves PSD and can be absorbed into a uniformly bounded effective process
-covariance.
+Appendix~\ref{app:iss-stability} now closes the nominal Live stability chain for
+all 21 local error coordinates. It derives an explicit uniform finite-horizon
+observability bound for every OU--III translational axis, proves finite-horizon
+attitude--gyro-bias observability under bounded noncollinear
+accelerometer/magnetometer geometry and bounded magnetic-update gaps, and then
+uses the slow temperature-centered residual accelerometer-bias OU block to
+obtain uniform detectability of the full augmentation. The crucial change is
+that the residual bias transition is
+$e^{-h/\tau_b}\mat I_3$ with finite $\tau_b$, rather than the neutral
+random-walk transition $\mat I_3$; any temporarily unobserved bias direction is
+therefore itself exponentially stable. The default
+$\tau_b=\SI{5000}{s}$ is fixed independently of the wave tuner. The historical
+continuous bias driving-noise density is retained, so the short-step process
+covariance agrees with the previous random-walk calibration to first order.
 
-The theorem has explicit boundaries. Accelerometer-bias estimation is frozen
-and its residual error is treated as an input; no hard reset occurs inside the
-analysis interval; the reference vectors remain bounded and uniformly
-noncollinear; accepted magnetometer updates have a bounded gap; and process and
-measurement covariances retain positive finite bounds. With the present
-random-walk accelerometer-bias augmentation, unconditional 21-state UES over a
-motion class that contains static trajectories is not merely unproved but
-false: a static attitude--accelerometer-bias ambiguity gives a nondecaying
-unobservable mode. The $S=0$ channel also remains a stochastic model
-regularizer rather than a physical observation, so the UES theorem is a nominal
-linearized result rather than an infinite-horizon deterministic bound on ocean
-model mismatch.
+With uniformly positive finite process and measurement covariance, the default
+prediction-time PSD $\vct a_w$ covariance inflation, bounded measurement gaps,
+and the stated vector-geometry and no-reset conditions, uniform detectability
+and stabilizability give bounded time-varying Riccati solutions and UES of the
+homogeneous 21-state Live error dynamics. The nonlinear EKF remainder is
+quadratic locally, so the UES result yields a local ISS bound for bounded
+sensor/model inputs. Temperature-coefficient error, thermal lag, hysteresis,
+and mismatch between the simulator's injected accelerometer random walk and the
+filter's slow residual OU prior enter that bound as exogenous disturbances; the
+theorem does not hide them by redefining the simulation truth model.
 
-For reproducibility the prior covariance policy remains available as an
+The theorem has explicit boundaries. No hard reset occurs inside the analysis
+interval; the reference vectors remain bounded and uniformly noncollinear;
+accepted magnetometer updates have a bounded gap; process and measurement
+covariances retain positive finite bounds; and the residual-bias correlation
+time has a finite upper bound. The random-walk limit $\tau_b\to\infty$ is not
+covered, because its bias contraction margin tends to one and recreates the
+static attitude--bias obstruction. The $S=0$ channel also remains a stochastic
+model regularizer rather than a physical observation, so the UES theorem is a
+nominal linearized result rather than an infinite-horizon deterministic bound
+on ocean model mismatch. For Gaussian sensor and process noise, mean-square or
+finite-horizon high-probability statements are more natural than a pathwise
+infinite-horizon bounded-input claim.
+
+For reproducibility the prior $a_w$ covariance policy remains available as an
 optional rollback. Setting
 \texttt{set\_legacy\_aw\_covariance\_replacement(true)} restores the previous
 immediate $P_{a_wa_w}\leftarrow\Sigma_{aw}^{\mathrm{stat}}$ block replacement
-while retaining cross-covariances. The default is the new PSD inflation policy;
-UES is proved for that default under the conditions above, but is not claimed in
-this article for the optional legacy replacement. Disabling periodic
+while retaining cross-covariances. The default is the PSD inflation policy;
+21-state UES is proved for that default under the conditions above, but is not
+claimed in this article for the optional legacy replacement. Disabling periodic
 maintenance entirely also returns to the ordinary Riccati case covered by the
-same reduced-state theorem when its other assumptions hold. Hybrid startup,
-re-lock, gating, and recovery remain outside the local Live result.
+same theorem when its other assumptions hold. Hybrid startup, re-lock, gating,
+and recovery remain outside the local Live result.
 
 The results support drift-controlled wave-state reconstruction for the tested
 conditions, while the MCU exercise establishes only functional source
 portability. They do not by themselves imply universal performance across
 spectra, update cadences, vessel speeds, or sensor installations, nor do they
-establish an embedded timing or memory margin. Two gaps bound the work most
-sharply, and neither is closed here. The only comparison run under the
-inferential protocol is against the author's own predecessor architecture, so
-the paper establishes an architectural increment and not a position against
-published practice; closing that needs a current published heave estimator and
-a conventional frequency-domain double-integration baseline re-implemented
-under the same ten-seed protocol. And no result is validated against an
-external physical displacement reference, so this remains a simulation and
-implementation study rather than a characterized measurement instrument;
-closing that needs a motion platform, wave tank, or instrumented deployment
-scored against optical, GNSS, or commercial-MRU truth.
-Future work should extend the paired ensembles to parameter interactions,
-additional spectra, and update cadences; independently vary wave height,
-period, directional spreading, heading, sensor grade, and update rate rather
-than moving them in the four linked pairs used here, and hold out sea states
-not used to fit the coefficients; reduce the estimation jitter that costs
-accuracy where a well-matched frozen point exists; replace the crossfade with a
-continuously evolving spectrum so that adaptation rate can be isolated from the
-composition of the scoring window; and add quantitative timing and
-external-reference measurements on hardware. The high trigger rate of the
-realization-specific gates also motivates replacing them with separately
-calibrated ensemble acceptance criteria while retaining them as deterministic
-regression sentinels. Optional absolute-navigation fusion is kept separate in
+establish an embedded timing or memory margin. Two empirical gaps bound the work
+most sharply. The only comparison run under the inferential protocol is against
+the author's own predecessor architecture, so the paper establishes an
+architectural increment and not a position against published practice; closing
+that needs a current published heave estimator and a conventional
+frequency-domain double-integration baseline re-implemented under the same
+ten-seed protocol. And no result is validated against an external physical
+displacement reference, so this remains a simulation and implementation study
+rather than a characterized measurement instrument; closing that needs a motion
+platform, wave tank, or instrumented deployment scored against optical, GNSS,
+or commercial-MRU truth.
+Future work should characterize the slow residual-bias correlation time and
+stationary covariance from long stationary/temperature-swept MEMS records;
+extend the paired ensembles to parameter interactions, additional spectra, and
+update cadences; independently vary wave height, period, directional spreading,
+heading, sensor grade, and update rate rather than moving them in the four
+linked pairs used here, and hold out sea states not used to fit the
+coefficients; reduce the estimation jitter that costs accuracy where a
+well-matched frozen point exists; replace the crossfade with a continuously
+evolving spectrum so that adaptation rate can be isolated from the composition
+of the scoring window; and add quantitative timing and external-reference
+measurements on hardware. The high trigger rate of the realization-specific
+gates also motivates replacing them with separately calibrated ensemble
+acceptance criteria while retaining them as deterministic regression sentinels.
+Optional absolute-navigation fusion is kept separate in
 Appendix~\ref{sec:gps_fusion} so that the oscillatory displacement state
 $\vct{p}$ is not conflated with a local or global navigation position.

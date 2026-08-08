@@ -447,9 +447,38 @@ class Kalman3D_Wave_OU_III {
         }
     }
 
-    void set_Q_bacc_rw(const Vector3& rw_std_per_sqrt_s) {
+    // Backward-compatible name: the supplied quantity is now interpreted as
+    // the continuous driving-noise density of the residual accelerometer-bias
+    // OU process. For h << tau_b this preserves the former random-walk
+    // covariance increment Q_bacc_ * h.
+    void set_Q_bacc_rw(const Vector3& driving_std_per_sqrt_s) {
         if constexpr (with_accel_bias)
-            Q_bacc_ = rw_std_per_sqrt_s.array().square().matrix().asDiagonal();
+            Q_bacc_ = driving_std_per_sqrt_s.array().square().matrix().asDiagonal();
+    }
+
+    // Slow first-order Gauss--Markov model for the residual bias beta_a in
+    //   b_a(T) = k_a (T - tempC_ref) + beta_a.
+    // The temperature-calibrated mean is deterministic; only beta_a is an
+    // estimated stochastic state and mean-reverts toward zero.
+    void set_acc_bias_time_constant(T tau_seconds) {
+        if constexpr (with_accel_bias)
+            tau_bacc_ = std::max(T(1e-3), tau_seconds);
+    }
+    [[nodiscard]] T get_acc_bias_time_constant() const noexcept { return tau_bacc_; }
+
+    void set_acc_bias_ou_stationary_std(const Vector3& stationary_std, T tau_seconds) {
+        if constexpr (with_accel_bias) {
+            set_acc_bias_time_constant(tau_seconds);
+            const Vector3 s = stationary_std.cwiseAbs();
+            Q_bacc_ = (T(2) / tau_bacc_) * s.array().square().matrix().asDiagonal();
+        }
+    }
+
+    [[nodiscard]] Vector3 get_acc_bias_at_temperature(T tempC) const {
+        if constexpr (with_accel_bias) {
+            return xext.template segment<3>(OFF_BA) + k_a_ * (tempC - tempC_ref);
+        }
+        return Vector3::Zero();
     }
 
     void set_initial_acc_bias(const Vector3& b0) {
@@ -458,7 +487,7 @@ class Kalman3D_Wave_OU_III {
     }
 
     // Set accelerometer bias temperature coefficient k_a  [m/s^2 per °C] per axis.
-    // Model: b_a(tempC) = b_a0 + k_a * (tempC - tempC_ref)
+    // Model: b_a(tempC) = beta_a + k_a * (tempC - tempC_ref), with beta_a a slow OU residual
     void set_accel_bias_temp_coeff(const Vector3& ka_per_degC) { k_a_ = ka_per_degC; }
 
     /*
@@ -617,6 +646,7 @@ class Kalman3D_Wave_OU_III {
     // moves that absorbed constant between states; the 1.1 deg static roll bias
     // in steep seas is a separate, pre-existing problem.
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
+    T tau_bacc_ = T(5000.0);             // residual accel-bias OU correlation time [s]
 
     // Accelerometer bias temperature coefficient (per-axis), units: m/s^2 per °C.
     // Default here reflects BMI270 typical accel drift (~0.002 m/s^2/°C).
@@ -1797,12 +1827,22 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
         }
     }
 
-    // Optional accel bias RW and cross terms (F_BB = I)
+    // Optional residual accel-bias OU and cross terms (F_BB = phi_b I)
     if constexpr (with_accel_bias) {
         constexpr int NB = 3;
         auto P_BB = Pext.template block<NB,NB>(OFF_BA,OFF_BA);
+        const T tau_b = std::max(T(1e-3), tau_bacc_);
+        const T phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / tau_b) : T(1);
         if (acc_bias_updates_enabled_) {
-            P_BB.noalias() += Q_bacc_ * Ts;     // only diffuse if we intend to estimate it
+            // beta_a is the residual about the deterministic temperature mean.
+            xext.template segment<3>(OFF_BA) *= phi_b;
+            P_BB *= phi_b * phi_b;
+            // Exact first-order Gauss--Markov covariance. Q_bacc_ is the
+            // continuous driving spectral density, so this tends to
+            // Q_bacc_*Ts as Ts/tau_b -> 0 and preserves the former
+            // random-walk short-time diffusion calibration.
+            const T qd_scale = -T(0.5) * tau_b * std::expm1(-T(2) * Ts / tau_b);
+            P_BB.noalias() += Q_bacc_ * qd_scale;
         }
         Pext.template block<NB,NB>(OFF_BA,OFF_BA) = P_BB;
 
@@ -1817,6 +1857,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
                 tmpAB(i,j) = sum;
             }
         }
+        tmpAB *= phi_b;
         Pext.template block<NA,NB>(0,OFF_BA) = tmpAB;
         Pext.template block<NB,NA>(OFF_BA,0) = tmpAB.transpose();
 
@@ -1832,6 +1873,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
                     tmpLB(i,j) = sum;
                 }
             }
+            tmpLB *= phi_b;
             Pext.template block<NL,NB>(OFF_V,OFF_BA) = tmpLB;
             Pext.template block<NB,NL>(OFF_BA,OFF_V) = tmpLB.transpose();
         }

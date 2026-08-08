@@ -20,12 +20,18 @@ Symbol & Meaning & Symbol & Meaning \\
 \midrule
 $q,\ \mat{R}_{wb}$ & world-to-body quaternion and rotation matrix
 & $\delta\vct{\theta}$ & left-multiplicative local attitude error \\
-$h,\ \tau$ & sample interval and OU correlation time
-& $\vct{v},\vct{p},\vct{S}$ & velocity, oscillatory displacement, and its integral \\
-$\vct{a}_w$ & latent world-frame acceleration
-& $\vct{b}_g,\vct{b}_a$ & gyroscope and accelerometer biases \\
+$h,\ \tau$ & sample interval and latent-acceleration OU correlation time
+& $\tau_b$ & slow residual accelerometer-bias OU correlation time \\
+$\vct{v},\vct{p},\vct{S}$ & velocity, oscillatory displacement, and its integral
+& $\vct{a}_w$ & latent world-frame acceleration \\
+$\vct{b}_g$ & gyroscope bias
+& $\vct{b}_a$ & residual accelerometer bias about the deterministic temperature-calibration mean \\
+$\bar{\vct b}_a(T)$ & deterministic calibrated temperature mean $\vct k_a(T-T_{\mathrm{ref}})$
+& $\vct b_a^{\mathrm{tot}}(T)$ & total accelerometer bias $\bar{\vct b}_a(T)+\vct b_a$ \\
 $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ & prescribed stationary covariance of the OU acceleration prior
 & $\mat{P}_{a_wa_w}$ & posterior covariance block for the estimated acceleration state \\
+$\matg Q_{ba}$ & continuous driving spectral density of the residual bias OU process
+& $\matg\Sigma_b^{\mathrm{stat}}$ & stationary residual-bias covariance, $\tau_b\matg Q_{ba}/2$ \\
 $\sigma_{aw}$ & scalar stationary standard-deviation scale used for the OU prior
 & $\sigma_{a,\mathrm{white}}$ & accelerometer white-noise standard deviation \\
 $r_S,\ \mat{R}_S$ & integral-channel standard-deviation scale and covariance, with $\mat{R}_S=\diag(\vct r_S\odot\vct r_S)$

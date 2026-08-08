@@ -377,8 +377,8 @@ OU time scale $[\tau_{\min},\tau_{\max}]$
 acceleration noise floor $\sigma_{\mathrm{nf}}$
 & \SI{0.12}{m.s^{-2}}
 & integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.4,400]$ m\,s \\
-accelerometer-bias random walk
-& \SI{5e-4}{m.s^{-2}.s^{-0.5}}
+accelerometer-bias residual OU
+& $\tau_b=\SI{5000}{s}$; drive $\SI{5e-4}{m.s^{-2}.s^{-0.5}}$
 & adaptation cadence / time constant & $0.1/1.8$ s \\
 tuner coefficients $(c_\tau,c_\sigma,c_R)$
 & $(1.0,0.9,0.35)$

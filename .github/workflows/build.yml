@@ -143,11 +143,10 @@ jobs:
           mv -v *.svg ../../doc/${{ matrix.dir }}/ || true
           mv -v *.png ../../doc/${{ matrix.dir }}/ || true
 
-      # The LaTeX build pulls plantuml.jar and plantuml.sty over the network
-      # and installs extra TeX Live packages, so it fails transiently often
-      # enough to be worth one retry. Actions has no native step retry and no
-      # YAML anchors, so the attempt is spelled twice; keep the two `with:`
-      # blocks identical.
+      # Keep one retry for transient TeX/package failures. PlantUML is not used
+      # by any document in this repository, so the build deliberately has no
+      # runtime PlantUML/CTAN download dependency. Keep the two `with:` blocks
+      # identical.
       - name: Compile LaTeX document (${{ matrix.dir }})
         id: latex
         continue-on-error: true
@@ -156,12 +155,6 @@ jobs:
           root_file: "*.tex"
           pre_compile: |
             echo "openout_any = a" | tee -a $(kpsewhich texmf.cnf)
-            curl -L https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml.jar -o plantuml.jar
-            export PLANTUML_JAR=$(pwd)/plantuml.jar
-            curl -L https://mirrors.ctan.org/macros/luatex/latex/plantuml/plantuml.sty -o plantuml.sty
-            echo ">> Debug: TeX config patched, now checking PlantUML installation"
-            plantuml -version || true
-            java -version || true
             if [ "${{ matrix.dir }}" = "kalman_ou_iii" ]; then
               cp -v ${{ github.workspace }}/img/devices/AtomS3R_device.svg ${{ github.workspace }}/doc/${{ matrix.dir }}/AtomS3R_device.svg
             fi
@@ -170,9 +163,7 @@ jobs:
           latexmk_use_lualatex: true
           latexmk_shell_escape: true
           args: "-shell-escape"
-          extra_system_packages: "inkscape ghostscript graphviz ncurses openjdk11-jre"
-        env:
-          PLANTUML_JAR: ${{ github.workspace }}/doc/${{ matrix.dir }}/plantuml.jar
+          extra_system_packages: "inkscape ghostscript graphviz ncurses"
 
       - name: Compile LaTeX document, retry (${{ matrix.dir }})
         if: steps.latex.outcome == 'failure'
@@ -181,12 +172,6 @@ jobs:
           root_file: "*.tex"
           pre_compile: |
             echo "openout_any = a" | tee -a $(kpsewhich texmf.cnf)
-            curl -L https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml.jar -o plantuml.jar
-            export PLANTUML_JAR=$(pwd)/plantuml.jar
-            curl -L https://mirrors.ctan.org/macros/luatex/latex/plantuml/plantuml.sty -o plantuml.sty
-            echo ">> Debug: TeX config patched, now checking PlantUML installation"
-            plantuml -version || true
-            java -version || true
             if [ "${{ matrix.dir }}" = "kalman_ou_iii" ]; then
               cp -v ${{ github.workspace }}/img/devices/AtomS3R_device.svg ${{ github.workspace }}/doc/${{ matrix.dir }}/AtomS3R_device.svg
             fi
@@ -195,9 +180,7 @@ jobs:
           latexmk_use_lualatex: true
           latexmk_shell_escape: true
           args: "-shell-escape"
-          extra_system_packages: "inkscape ghostscript graphviz ncurses openjdk11-jre"
-        env:
-          PLANTUML_JAR: ${{ github.workspace }}/doc/${{ matrix.dir }}/plantuml.jar
+          extra_system_packages: "inkscape ghostscript graphviz ncurses"
 
       - name: Upload PDF artifacts (${{ matrix.dir }})
         uses: actions/upload-artifact@v6
@@ -444,4 +427,3 @@ jobs:
           name: mcu-binaries-${{ matrix.ino_dir }}
           path: mcu-binaries/*.zip
           if-no-files-found: error
-

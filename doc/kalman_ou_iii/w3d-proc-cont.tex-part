@@ -100,15 +100,45 @@ between $\tau$ and a tracked wave period is therefore a tuning rule for the
 prior, not a claim that the OU spectrum has a resonant peak at the wave
 frequency.
 
-Accelerometer bias follows
+\subsection{Temperature-centered accelerometer-bias OU process}
+The physical accelerometer bias is decomposed into a deterministic calibrated
+temperature mean and a stochastic residual,
 \begin{equation}
-\dot{\vct{b}}_a=\vct{w}_{ba},
-\qquad
-\E[\vct{w}_{ba}(t)\vct{w}_{ba}^{\top}(s)]
-=\matg{Q}_{ba}\,\delta(t-s),
-\label{eq:ba-rw}
+\vct b_a^{\mathrm{tot}}(T)
+=\underbrace{\vct k_a(T-T_{\mathrm{ref}})}_{\bar{\vct b}_a(T)}
++\vct b_a .
+\label{eq:ba-temperature-decomposition}
 \end{equation}
-while the deterministic temperature term enters the measurement model.
+The stored state $\vct b_a$ is the residual about that curve.  It follows a
+slow first-order Gauss--Markov process
+\begin{equation}
+ d\vct b_a
+ =-\frac{1}{\tau_b}\vct b_a\,dt+d\vct\eta_b,
+\qquad
+\E[d\vct\eta_b\,d\vct\eta_b^{\top}]
+=\matg Q_{ba}\,dt,
+\label{eq:ba-ou}
+\end{equation}
+with finite correlation time $\tau_b>0$.  Its stationary covariance is
+\begin{equation}
+\matg\Sigma_b^{\mathrm{stat}}=\frac{\tau_b}{2}\matg Q_{ba}.
+\label{eq:ba-ou-stationary}
+\end{equation}
+The implementation uses $\tau_b=\SI{5000}{s}$ by default.  For source
+compatibility the existing \texttt{set\_Q\_bacc\_rw} setter remains available;
+its argument now specifies the square root of the continuous driving spectral
+density $\matg Q_{ba}$.  At the historical value
+$5\times10^{-4}\,\mathrm{m\,s^{-2}/\sqrt{s}}$, the short-step covariance is
+unchanged to first order and Eq.~\eqref{eq:ba-ou-stationary} gives an implied
+stationary standard deviation of approximately \SI{0.02500}{m\,s^{-2}} for
+$\tau_b=\SI{5000}{s}$.
+
+The temperature curve is not itself made stochastic inside the Kalman state.
+Temperature-sensor error, imperfect coefficients, thermal lag, and hysteresis
+therefore enter as model mismatch; in the local stability result they are
+bounded exogenous inputs.  During the explicit warmup/frozen-bias mode the
+implementation retains its historical semantics and freezes the residual bias
+state and covariance rather than applying the OU transition.
 
 \subsection{Unified local-error SDE}
 Over one sample interval, $\hat{\vct{\omega}}$ is treated as constant.  With
@@ -130,7 +160,7 @@ where
 0&0&\Id&0&0&0&0\\
 0&0&0&\Id&0&0&0\\
 0&0&0&0&0&-\tau^{-1}\Id&0\\
-0&0&0&0&0&0&0
+0&0&0&0&0&0&-\tau_b^{-1}\Id
 \end{bmatrix}.
 }
 \]

@@ -38,6 +38,7 @@ add_executable(kalman_ou_ii-sim "${OCEAN_IMU_TESTS_DIR}/kalman_ou_ii/kalman_ou_i
 add_executable(kalman_ou_iii-sim "${OCEAN_IMU_TESTS_DIR}/kalman_ou_iii/kalman_ou_iii-sim.cpp" ${W3D_SIM_COMMON})
 add_executable(kalman_ou_common-test "${OCEAN_IMU_TESTS_DIR}/kalman_ou_iii/kalman_ou_common-test.cpp")
 add_executable(aw_covariance_policy-test "${OCEAN_IMU_TESTS_DIR}/kalman_ou_iii/aw_covariance_policy-test.cpp")
+add_executable(acc_bias_ou-test "${OCEAN_IMU_TESTS_DIR}/kalman_ou_iii/acc_bias_ou-test.cpp")
 add_executable(phi_coeff_boundary-test "${OCEAN_IMU_TESTS_DIR}/kalman_ou_iii/phi_coeff_boundary-test.cpp")
 add_executable(pii_observer-adaptive "${OCEAN_IMU_TESTS_DIR}/pii_observer/pii_observer-adaptive.cpp" ${W3D_SIM_COMMON})
 
