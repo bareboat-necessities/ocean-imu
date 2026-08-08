@@ -47,8 +47,11 @@ where
         pseudo-measurement;
   \item $\vct{a}_w\in\mathbb{R}^3$ is latent world-frame acceleration with an
         OU process prior;
-  \item $\vct{b}_a\in\mathbb{R}^3$ is accelerometer bias, modeled as a random
-        walk with an optional deterministic temperature correction.
+  \item $\vct{b}_a\in\mathbb{R}^3$ is the \emph{residual} accelerometer bias
+        about the deterministic temperature-calibration curve.  It is modeled
+        as a slow first-order Gauss--Markov/OU process rather than a random walk.
+        The physical bias entering the accelerometer model is
+        $\vct b_a^{\mathrm{tot}}(T)=\vct k_a(T-T_{\mathrm{ref}})+\vct b_a$.
 \end{itemize}
 
 With both bias states enabled, the additive error-state dimension is
@@ -58,6 +61,17 @@ N_X = 3+3+3+3+3+3+3=21.
 The stored covariance is
 $\mat{P}=\E[\delta\vct{x}\,\delta\vct{x}^{\top}]$.
 
+The residual accelerometer-bias correlation time is denoted $\tau_b$.  The
+implementation default is $\tau_b=\SI{1000}{s}$.  The existing
+\texttt{set\_Q\_bacc\_rw} API name is retained for source compatibility, but
+its argument is interpreted as the continuous driving-noise density of this
+OU state.  With the historical density
+$(5\times10^{-4}\,\mathrm{m\,s^{-2}/\sqrt{s}})^2$ and
+$\tau_b=\SI{1000}{s}$, the implied stationary standard deviation is
+approximately $\SI{0.01118}{m\,s^{-2}}$.  Thus the short-time process-noise
+calibration is unchanged while the formerly neutral bias mode acquires a finite
+restoring time scale.
+
 Two distinct acceleration covariances are used throughout the paper.  The
 matrix $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ is a \emph{process-model
 parameter}: it is the stationary covariance of the OU prior and determines the
@@ -65,5 +79,7 @@ discrete process covariance $\matg{Q}_d$.  In contrast,
 $\mat{P}_{a_wa_w}$ is the current posterior uncertainty of the estimated
 acceleration state.  Changing $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ does not, by
 itself, overwrite $\mat{P}_{a_wa_w}$.  Hard initialization may reset the
-posterior block and its cross-covariances, whereas online retuning may replace
-only the $a_w$ marginal while preserving learned cross-covariances.
+posterior block and its cross-covariances, whereas the default online
+maintenance can only add the positive-semidefinite covariance needed to reach
+the current stationary floor; the optional legacy mode restores the historical
+raw marginal replacement.
