@@ -4,10 +4,12 @@
 This paper presents a complete mathematical and algorithmic formulation of a
 \emph{quaternion left-multiplicative extended Kalman filter} (Q-MEKF)
 augmented with an Ornstein--Uhlenbeck (OU) process model for latent
-acceleration. The filter is designed for marine inertial sensing and
-wave-kinematics reconstruction. The proposed framework unifies
-attitude estimation, 3D kinematics, and stochastic excitation
-modeling into a single, analytically tractable structure intended for
+acceleration and a much slower first-order Gauss--Markov residual model for
+accelerometer bias about a deterministic temperature-calibration curve. The
+filter is designed for marine inertial sensing and wave-kinematics
+reconstruction. The proposed framework unifies attitude estimation, 3D
+kinematics, stochastic excitation modeling, and temperature-aware MEMS bias
+tracking into a single, analytically tractable structure intended for
 resource-constrained embedded estimation.
 
 Most wave measurement systems derive parameters by chaining separate motion estimation
@@ -15,10 +17,11 @@ and spectral analysis stages, a process prone to bias and delay.
 Our approach instead uses a unified 21-state Kalman filter that
 directly incorporates wave kinematics. The architectural contributions are the
 integration of a first-order Gauss--Markov acceleration prior into the
-quaternion MEKF, an explicit integral-of-displacement state, and a
-wave-band-driven adaptive law for the regularization scale $r_S$ that
-constrains it. The tuning law is written to adjust the prior time scale, the
-stationary acceleration scale, and $r_S$ together, but the demonstrated
+quaternion MEKF, an explicit integral-of-displacement state, a slow
+mean-reverting accelerometer-bias residual about the calibrated temperature
+mean, and a wave-band-driven adaptive law for the regularization scale $r_S$
+that constrains it. The tuning law is written to adjust the prior time scale,
+the stationary acceleration scale, and $r_S$ together, but the demonstrated
 vertical benefit is attributable to the $r_S$ channel: a $2\times2$ channel
 ablation (Sec.~\ref{par:channel-ablation}) shows that letting $r_S$ adapt while
 $\tau$ and $\sigma_{aw}$ stay frozen reproduces essentially the whole adaptive
@@ -29,26 +32,26 @@ narrower claim. Together with an online directional estimator, these elements
 address colored excitation and MEMS errors in an efficient, embedded-friendly
 framework.
 
-Appendix~\ref{app:iss-stability} gives an analytical stability result with a
-carefully delimited state and operating region; it is not an ISS or convergence
-proof of the unrestricted 21-state estimator. Because the tuner is driven by
-raw IMU data and a private Mahony attitude solution, its schedule is exogenous
-with respect to the MEKF state. The appendix proves uniform finite-horizon
-observability of the OU--III translational block, finite-horizon observability
-of attitude and gyro bias under bounded noncollinear accel/mag geometry, and
-uniform exponential stability of the resulting 18-state Live performance
-filter when accelerometer-bias estimation is frozen, process and measurement
-covariances have positive finite bounds, magnetic updates have bounded gaps, and
-no hard reset occurs in the analysis interval. The default periodic
-$\vct a_w$ covariance maintenance is changed to prediction-time PSD inflation,
-so it is an additional bounded process-covariance term and is included in that
-UES proof. A single optional legacy flag restores the previous raw marginal
-replacement for reproducibility, but UES is not proved for that legacy mode.
-Unconditional 21-state UES is in fact impossible over a motion class containing
-static trajectories with the present random-walk accelerometer-bias state,
-because the appendix constructs a nondecaying attitude--bias ambiguity. The
-$S=0$ regularizer's physical model mismatch and hybrid reset/recovery logic also
-remain outside the local nominal theorem.
+Appendix~\ref{app:iss-stability} gives a local 21-state stability result for the
+normal Live recursion under explicit operating conditions. Because the tuner is
+driven by raw IMU data and a private Mahony attitude solution, its schedule is
+exogenous with respect to the MEKF state. The appendix proves uniform
+finite-horizon observability of the OU--III translational block and of the
+attitude--gyro-bias block under bounded noncollinear accel/mag geometry. The
+formerly problematic accelerometer-bias coordinates are now residuals about the
+temperature model and obey a slow OU transition
+$e^{-h/\tau_b}\mat I_3$; with finite $\tau_b$ they are intrinsically uniformly
+exponentially stable, so augmenting the observable 18-state subsystem gives a
+uniformly detectable 21-state system. With uniformly bounded positive process
+and measurement covariances, bounded magnetic-update gaps, the default
+prediction-time PSD $\vct a_w$ covariance inflation, and no hard reset in the
+analysis interval, standard time-varying Kalman theory then gives bounded
+Riccati solutions and UES of the homogeneous 21-state Live error dynamics. A
+quadratic-remainder argument yields local ISS for bounded temperature-model,
+sensor, pseudo-measurement, and modeling disturbances. The optional legacy raw
+$\vct a_w$ covariance replacement remains available for reproducibility but is
+outside that theorem, as are startup/re-lock resets and deterministic
+infinite-horizon claims for unbounded Gaussian sample paths.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
@@ -57,9 +60,10 @@ gyroscope bias using a left-multiplicative quaternion error
 representation. To enable full wave motion estimation, the state vector
 is augmented to include additional translational quantities:
 world-frame acceleration, velocity, oscillatory displacement, and the integral of
-oscillatory displacement in three dimensions, together with accelerometer bias.
-This augmentation allows the estimator to reconstruct instantaneous and
-cumulative wave kinematics in the world frame.
+oscillatory displacement in three dimensions, together with a slow residual
+accelerometer-bias state. This augmentation allows the estimator to reconstruct
+instantaneous and cumulative wave kinematics in the world frame while tracking
+MEMS bias around its calibrated temperature-dependent mean.
 
 \subsection*{Stochastic Forcing and the OU Acceleration Model}
 
@@ -80,6 +84,13 @@ analytic discretization, adaptive pseudo-constraint, and embedded
 implementation. For
 Lagrangian sensors following surface motion, this prior improves low-frequency
 stability without sacrificing responsiveness to swell-band motion.
+
+The accelerometer-bias state uses the same first-order Gauss--Markov family but
+on a deliberately much slower fixed time scale. It represents only the residual
+about the deterministic temperature correction, not the total physical bias.
+The default $\tau_b=\SI{1000}{s}$ is independent of the wave tuner, and the
+continuous driving-noise density retains the historical short-time bias
+process-noise calibration.
 
 \subsection*{Continuous-Time Model Formulation}
 
@@ -102,12 +113,15 @@ transition and process-noise covariance matrices required for Kalman
 recursion. The OU-driven linear subsystem is discretized analytically by
 integrating the exponential kernel of the OU correlation function, yielding
 closed-form expressions for its transition matrix $\Phi(h,\tau)$ and
-discrete process-noise matrix $Q_d(h,\tau)$. For small $x=h/\tau$,
-high-order Maclaurin series prevent floating-point cancellation and preserve
-stability. The attitude/gyro-bias transition is also structured analytically;
-some anisotropic attitude covariance integrals are evaluated by Simpson
-quadrature. The pseudo-measurement weighting can be anisotropic to reflect
-different vertical and lateral dynamics.
+discrete process-noise matrix $Q_d(h,\tau)$. The slow accelerometer-bias OU
+state has the exact scalar block
+$\phi_b=e^{-h/\tau_b}$ and
+$\mat Q_{d,b}=\frac{\tau_b}{2}\mat Q_{ba}(1-e^{-2h/\tau_b})$.
+For small $x=h/\tau$, high-order Maclaurin series prevent floating-point
+cancellation and preserve stability. The attitude/gyro-bias transition is also
+structured analytically; some anisotropic attitude covariance integrals are
+evaluated by Simpson quadrature. The pseudo-measurement weighting can be
+anisotropic to reflect different vertical and lateral dynamics.
 
 \subsection*{Adaptive Parameter Estimation}
 
@@ -137,9 +151,11 @@ ablation of Sec.~\ref{par:channel-ablation} is what locates the measured
 benefit in it rather than in the OU parameters it is derived from. The two
 readings are consistent: $\tau$'s material role in this filter is setting
 $r_S\propto\tau^{3}$ rather than shaping the OU process covariance, which the
-accelerometer already observes closely. The
-normalization is approximate and assumes a fixed pseudo-update cadence and a
-bounded family of spectral shapes and effective low-frequency cutoffs.
+accelerometer already observes closely. The accelerometer-bias correlation time
+$\tau_b$ is a fixed sensor-model parameter and is never driven by the wave
+tuner. The normalization is approximate and assumes a fixed pseudo-update
+cadence and a bounded family of spectral shapes and effective low-frequency
+cutoffs.
 
 \subsection*{Validation}
 
@@ -149,7 +165,11 @@ Stokes harmonics. The simulated IMU represents a surface-following
 (Lagrangian) buoy subject to realistic measurement noise. Performance is
 assessed via RMS displacement errors relative to the true wave elevation. The
 OU-based Q-MEKF achieves drift-suppressed reconstruction of three-dimensional
-surface motion.
+surface motion. The simulation continues to inject the documented accelerometer
+bias random walk, so the slow-OU residual used by the estimator is also tested
+under deliberate bias-process mismatch; that mismatch is treated as an
+exogenous disturbance by the local ISS statement rather than silently removed
+from the evidence protocol.
 
 The principal runtime bounds, gates, and time constants are tabulated in
 Sec.~\ref{sec:adapt-impl}. The complete coefficient set, fixed baseline
@@ -162,10 +182,12 @@ The main contributions of this work are:
 \begin{itemize}
   \item A 21-state quaternion MEKF architecture that couples an OU-driven
         latent world-acceleration prior to marine attitude and wave-motion
-        estimation.
+        estimation and models the residual accelerometer bias as a much slower
+        temperature-centered first-order Gauss--Markov process.
   \item Closed-form discrete-time transition and covariance matrices for
         the OU process and linear kinematic chain, with numerically stable
-        small-step series expansions.
+        small-step series expansions, together with the exact scalar
+        discretization of the residual bias OU block.
   \item An adaptive law for the integral pseudo-measurement scale,
         $r_S\propto\sigma_{aw}\tau^{3}$, driven by a period estimated in the
         wave band, together with the $2\times2$ ablation that isolates it as
@@ -174,15 +196,16 @@ The main contributions of this work are:
         adaptive integral-state regularization rather than joint
         three-parameter OU adaptation, which costs a little accuracy where a
         well-matched frozen operating point already exists.
-  \item An analytical observability treatment of the OU--III translational
-        subsystem. Four consecutive $S$ pseudo-measurements give a uniform
-        observability determinant bounded away from zero for every bounded
-        measurable $\tau(t)$ schedule, while
-        $r_S\propto\sigma_{aw}\tau^3$ gives a bounded dimensionless information
-        scale. The appendix also identifies the additional coupled
-        observability, stabilizability, Riccati, stochastic-model, and hybrid
-        conditions required before stability of the complete estimator could
-        be claimed; no ISS result is claimed for the implemented 21-state EKF.
+  \item An analytical stability treatment of the complete 21-state Live error
+        system. The translational and attitude--gyro-bias blocks supply the
+        finite-horizon observability result; the temperature-centered residual
+        bias OU block is intrinsically exponentially stable, which upgrades the
+        augmentation to uniform detectability. Under the stated cadence,
+        geometry, covariance, bounded-schedule, and no-reset conditions, this
+        yields bounded Riccati solutions and 21-state UES, followed by a local
+        ISS bound for bounded modeling and temperature-calibration disturbances.
+        The optional legacy raw $\vct a_w$ covariance-replacement mode is
+        explicitly outside that proof.
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
   \item A reproducible paired comparison against a published nonlinear observer
