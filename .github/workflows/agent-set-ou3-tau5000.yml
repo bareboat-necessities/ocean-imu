@@ -1,0 +1,29 @@
+name: agent-set-ou3-tau5000
+
+on:
+  push:
+    branches:
+      - agent/mean-reverting-accel-bias
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/mean-reverting-accel-bias
+      - name: Set OU-III residual accel-bias time constant to 5000 s
+        run: |
+          set -euo pipefail
+          f=src/kalman_ou_iii/Kalman3D_Wave_OU_III.h
+          grep -q 'T tau_bacc_ = T(3000.0);' "$f"
+          sed -i 's/T tau_bacc_ = T(3000.0);/T tau_bacc_ = T(5000.0);/' "$f"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add "$f"
+          git commit -m 'Use 5000 s OU-III residual bias default'
+          git push origin HEAD:agent/mean-reverting-accel-bias
