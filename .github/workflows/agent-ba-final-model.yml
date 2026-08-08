@@ -12,15 +12,12 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: agent/mean-reverting-accel-bias
-      - name: Apply final model and validation updates
+      - name: Apply 3000 s residual bias OU default
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
-          # Use the conservative 50-minute nominal correlation time. It remains
-          # strictly finite for the UES argument while reducing mismatch against
-          # the historical RW truth generator over a 900-s scoring window.
           for rel in [
               'src/kalman_ou_ii/Kalman3D_Wave_OU_II.h',
               'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h',
@@ -30,47 +27,31 @@ jobs:
               old = 'T tau_bacc_ = T(1000.0);             // residual accel-bias OU correlation time [s]'
               new = 'T tau_bacc_ = T(3000.0);             // residual accel-bias OU correlation time [s]'
               if old not in s:
+                  if new in s:
+                      continue
                   raise SystemExit(f'tau_b default anchor missing in {rel}')
               p.write_text(s.replace(old, new, 1))
 
-          # Keep all manuscript references to the default synchronized.
           for rel in [
               'doc/kalman_ou_iii/w3d-state.tex-part',
               'doc/kalman_ou_iii/w3d-proc-cont.tex-part',
               'doc/kalman_ou_iii/w3d-intro.tex-part',
               'doc/kalman_ou_iii/w3d-iss-stability.tex-part',
               'doc/kalman_ou_iii/w3d-conclusion-summary.tex-part',
+              'doc/kalman_ou_iii/w3d-fus-methods.tex-part',
+              'doc/kalman_ou_iii/w3d-sim-charts.tex-part',
           ]:
               p = Path(rel)
-              s = p.read_text().replace('\\tau_b=\\SI{1000}{s}', '\\tau_b=\\SI{3000}{s}')
+              s = p.read_text()
+              s = s.replace('\\tau_b=\\SI{1000}{s}', '\\tau_b=\\SI{3000}{s}')
               s = s.replace('$\\tau_b=\\SI{1000}{s}$', '$\\tau_b=\\SI{3000}{s}$')
               s = s.replace('approximately $\\SI{0.01118}{m\\,s^{-2}}$', 'approximately $\\SI{0.01936}{m\\,s^{-2}}$')
               s = s.replace('approximately \\SI{0.01118}{m\\,s^{-2}}', 'approximately \\SI{0.01936}{m\\,s^{-2}}')
               p.write_text(s)
 
-          # Update the methodology guard to enforce the new theorem boundary
-          # instead of the superseded 18-state/random-walk limitation.
-          p = Path('tests/validation/test_ou_validation.py')
-          s = p.read_text()
-          replacements = {
-              'self.assertIn("18-state live error transition", stability)':
-                  'self.assertIn("21-state live error transition", stability)',
-              'self.assertIn("active accelerometer-bias estimation is not covered", intro)':
-                  'self.assertIn("uniform detectability", intro)',
-              'self.assertIn("unconditional 21-state ues is false", stability)':
-                  'self.assertIn("slow ou bias removes the 21-state obstruction", stability)',
-              'self.assertIn("the unrestricted 21-state estimator with active random-walk", intro)':
-                  'self.assertIn("21-state ues", intro)',
-          }
-          for old, new in replacements.items():
-              if old not in s:
-                  raise SystemExit(f'validation guard anchor missing: {old}')
-              s = s.replace(old, new, 1)
-          p.write_text(s)
-
           Path('.github/workflows/agent-ba-final-model.yml').unlink()
           PY
-      - name: Commit final model patch
+      - name: Commit 3000 s default
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -82,7 +63,8 @@ jobs:
                   doc/kalman_ou_iii/w3d-intro.tex-part \
                   doc/kalman_ou_iii/w3d-iss-stability.tex-part \
                   doc/kalman_ou_iii/w3d-conclusion-summary.tex-part \
-                  tests/validation/test_ou_validation.py \
+                  doc/kalman_ou_iii/w3d-fus-methods.tex-part \
+                  doc/kalman_ou_iii/w3d-sim-charts.tex-part \
                   .github/workflows/agent-ba-final-model.yml
-          git commit -m "Use conservative residual bias OU time scale"
+          git commit -m "Use 3000 s residual bias OU default"
           git push origin HEAD:refs/heads/agent/mean-reverting-accel-bias
