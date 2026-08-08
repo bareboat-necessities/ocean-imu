@@ -8,14 +8,21 @@ gyroscope is a propagation input.
 \subsection{Accelerometer model}
 The body-frame specific-force measurement is
 \begin{equation}
-\vct{f}_b=\Rot_{wb}(\vct{a}_w-\vct{g}_w)+\vct{b}_a(T)+\vct{n}_a,
+\vct{f}_b=\Rot_{wb}(\vct{a}_w-\vct{g}_w)+\vct{b}_a^{\mathrm{tot}}(T)+\vct{n}_a,
 \label{eq:acc-meas}
 \end{equation}
 where $\vct{g}_w=[0,0,g]^{\top}$ in NED,
 $\vct{n}_a\sim\mathcal{N}(0,\mat{R}_a)$, and
-\[
-\vct{b}_a(T)=\vct{b}_{a0}+\vct{k}_a(T-T_{\mathrm{ref}}).
-\]
+\begin{equation}
+\vct{b}_a^{\mathrm{tot}}(T)
+=\vct{k}_a(T-T_{\mathrm{ref}})+\vct b_a.
+\label{eq:acc-bias-temperature-model}
+\end{equation}
+Here $\vct b_a$ is the estimated slow OU residual about the deterministic
+temperature-calibration curve, not the total physical bias.  The model is
+therefore mean-reverting around the temperature-dependent calibrated mean rather
+than around zero total bias.
+
 For the left-multiplicative convention,
 \begin{align}
 \frac{\partial\vct{f}_b}{\partial\delta\vct{\theta}}
@@ -26,7 +33,9 @@ For the left-multiplicative convention,
 where
 $\hat{\vct{f}}_{\mathrm{cog},b}=\Rot_{wb}(\hat{\vct{a}}_w-\vct{g}_w)$.
 Thus the accelerometer update couples attitude, latent world acceleration, and
-accelerometer bias through one rank--3 correction.
+the slow residual accelerometer bias through one rank--3 correction.  The
+Jacobian is unchanged by the switch from random-walk to OU residual dynamics;
+only the bias-state prediction and process covariance change.
 
 \subsection{Magnetometer model}
 With calibrated world reference $\vct{B}_w$,
@@ -97,7 +106,7 @@ $\vct{r}_b$, the predicted specific force includes
 \vct{f}_b=\vct{f}_{\mathrm{cog},b}
 +\vct{\alpha}_b\times\vct{r}_b
 +\vct{\omega}_b\times(\vct{\omega}_b\times\vct{r}_b)
-+\vct{b}_a(T)+\vct{n}_a.
++\vct{b}_a^{\mathrm{tot}}(T)+\vct{n}_a.
 \label{eq:acc-meas-lever}
 \end{equation}
 The angular-rate and angular-acceleration terms are treated as known inputs.
