@@ -18,27 +18,6 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          for rel in [
-              'src/kalman_ou_ii/Kalman3D_Wave_OU_II.h',
-              'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h',
-          ]:
-              p = Path(rel)
-              s = p.read_text()
-              old = '''    // Accelerometer-bias random walk, as a variance per second: (5e-4)^2, i.e.
-              // 5e-4 m/s^2 per sqrt(s), which is exactly what the reference simulation
-              // generates (acc_bias_rw in util/W3dSimCommon.h, applied as sigma*sqrt(dt)).
-              // The previous 1e-6 was twice the true process noise with nothing
-              // justifying the excess.
-          '''
-              new = '''    // Continuous driving spectral density for the slow residual
-              // accelerometer-bias OU process. The historical (5e-4)^2 value is
-              // retained so its short-step covariance matches the previous random-walk
-              // calibration and the reference simulator's acc_bias_rw driving scale.
-          '''
-              if old not in s:
-                  raise SystemExit(f'stale bias comment anchor missing in {rel}')
-              p.write_text(s.replace(old, new, 1))
-
           p = Path('doc/kalman_ou_iii/w3d-fus-methods.tex-part')
           s = p.read_text()
           old = '''accelerometer-bias random walk
@@ -86,9 +65,7 @@ jobs:
           p.write_text(s.replace(old, new, 1))
 
           p = Path('doc/kalman_ou_iii/w3d-iss-stability.tex-part')
-          s = p.read_text()
-          if '×' in s:
-              s = s.replace('×', r'\\times ')
+          s = p.read_text().replace('×', r'\\times ')
           p.write_text(s)
 
           Path('.github/workflows/agent-ba-doc-cleanup.yml').unlink()
@@ -98,12 +75,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/kalman_ou_ii/Kalman3D_Wave_OU_II.h \
-                  src/kalman_ou_iii/Kalman3D_Wave_OU_III.h \
-                  doc/kalman_ou_iii/w3d-fus-methods.tex-part \
+          git add doc/kalman_ou_iii/w3d-fus-methods.tex-part \
                   doc/kalman_ou_iii/w3d-sim-charts.tex-part \
                   doc/kalman_ou_iii/kalman_ou-w3d.tex \
                   doc/kalman_ou_iii/w3d-iss-stability.tex-part \
                   .github/workflows/agent-ba-doc-cleanup.yml
-          git commit -m "Align article and code with residual bias OU model"
+          git commit -m "Align article with residual bias OU model"
           git push origin HEAD:refs/heads/agent/mean-reverting-accel-bias
