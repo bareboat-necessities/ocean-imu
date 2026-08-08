@@ -81,7 +81,7 @@ that the residual bias transition is
 $e^{-h/\tau_b}\mat I_3$ with finite $\tau_b$, rather than the neutral
 random-walk transition $\mat I_3$; any temporarily unobserved bias direction is
 therefore itself exponentially stable. The default
-$\tau_b=\SI{1000}{s}$ is fixed independently of the wave tuner. The historical
+$\tau_b=\SI{3000}{s}$ is fixed independently of the wave tuner. The historical
 continuous bias driving-noise density is retained, so the short-step process
 covariance agrees with the previous random-walk calibration to first order.
 

@@ -88,7 +88,7 @@ stability without sacrificing responsiveness to swell-band motion.
 The accelerometer-bias state uses the same first-order Gauss--Markov family but
 on a deliberately much slower fixed time scale. It represents only the residual
 about the deterministic temperature correction, not the total physical bias.
-The default $\tau_b=\SI{1000}{s}$ is independent of the wave tuner, and the
+The default $\tau_b=\SI{3000}{s}$ is independent of the wave tuner, and the
 continuous driving-noise density retains the historical short-time bias
 process-noise calibration.
 
