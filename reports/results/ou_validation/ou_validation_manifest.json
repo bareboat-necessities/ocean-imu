@@ -145,8 +145,8 @@
     }
   },
   "git_branch": "main",
-  "git_commit": "adde3237c502a73269fb7741626dd0251b5e6c8f",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 95886 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   696 +-\n .../ou_validation/ou_validation_covsync.svg        |   724 +-\n .../ou_validation/ou_validation_displacement.svg   |   704 +-\n .../results/ou_validation/ou_validation_macros.tex |   216 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4464 +-\n .../ou_validation/ou_validation_publication.tex    |    76 +-\n .../results/ou_validation/ou_validation_raw.csv    |  1538 +-\n .../ou_validation/ou_validation_summary.csv        |  4638 +-\n .../results/ou_validation/ou_validation_table.tex  |   112 +-\n .../ou_validation/ou_validation_vertical.svg       |   696 +-\n 11 files changed, 54875 insertions(+), 54875 deletions(-)",
+  "git_commit": "de6bde3f98eacccd536c18357c8c18edc0b2e0db",
+  "git_diff_stat": "",
   "numpy": "1.26.4",
   "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
   "protocol": {
