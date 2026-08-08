@@ -1,0 +1,76 @@
+name: agent-fix-latex-network
+
+on:
+  push:
+    branches:
+      - agent/mean-reverting-accel-bias
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/mean-reverting-accel-bias
+      - name: Remove unused PlantUML network dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('.github/workflows/build.yml')
+          text = p.read_text()
+
+          old_comment = '''      # The LaTeX build pulls plantuml.jar and plantuml.sty over the network
+      # and installs extra TeX Live packages, so it fails transiently often
+      # enough to be worth one retry. Actions has no native step retry and no
+      # YAML anchors, so the attempt is spelled twice; keep the two `with:`
+      # blocks identical.
+'''
+          new_comment = '''      # Keep one retry for transient TeX/package failures. PlantUML is not used
+      # by any document in this repository, so the build deliberately has no
+      # runtime PlantUML/CTAN download dependency. Keep the two `with:` blocks
+      # identical.
+'''
+          if old_comment not in text:
+              raise SystemExit('LaTeX comment anchor not found')
+          text = text.replace(old_comment, new_comment, 1)
+
+          drop_substrings = (
+              'plantuml/plantuml/releases/download/',
+              'export PLANTUML_JAR=',
+              'mirrors.ctan.org/macros/luatex/latex/plantuml/',
+              'Debug: TeX config patched, now checking PlantUML installation',
+              'plantuml -version',
+              'java -version',
+              'PLANTUML_JAR:',
+          )
+          lines = []
+          for line in text.splitlines():
+              if any(s in line for s in drop_substrings):
+                  continue
+              line = line.replace('inkscape ghostscript graphviz ncurses openjdk11-jre',
+                                  'inkscape ghostscript graphviz ncurses')
+              lines.append(line)
+          text = '\n'.join(lines) + '\n'
+
+          if 'plantuml' in text.lower():
+              # Only the explanatory comment above is allowed to remain.
+              occurrences = [ln for ln in text.splitlines() if 'plantuml' in ln.lower()]
+              if any('not used' not in ln.lower() and 'runtime plantuml' not in ln.lower() for ln in occurrences):
+                  raise SystemExit('Unexpected PlantUML reference remains: ' + repr(occurrences))
+
+          p.write_text(text)
+          PY
+          git diff --check
+          git diff -- .github/workflows/build.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/build.yml
+          git commit -m 'Remove unused PlantUML CI download dependency'
+          git push origin HEAD:agent/mean-reverting-accel-bias
