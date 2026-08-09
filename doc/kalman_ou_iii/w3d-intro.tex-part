@@ -8,9 +8,22 @@ acceleration and a much slower first-order Gauss--Markov residual model for
 accelerometer bias about a deterministic temperature-calibration curve. The
 filter is designed for marine inertial sensing and wave-kinematics
 reconstruction. The proposed framework unifies attitude estimation, 3D
-kinematics, stochastic excitation modeling, and temperature-aware MEMS bias
-tracking into a single, analytically tractable structure intended for
-resource-constrained embedded estimation.
+kinematics, stochastic excitation modeling, and a finite-correlation-time
+residual bias state in an analytically tractable structure intended for
+resource-constrained embedded estimation. The temperature-centered bias model
+is used structurally by the estimator and stability analysis; the present
+experiments do not constitute a thermal-calibration validation.
+
+Recent marine heave work spans discrete-time Kalman reconstruction
+\cite{Reis2023_DiscreteKalmanHeave}, adaptive delay-free IMU filtering
+\cite{Lu2023_AdaptiveDelayFreeHeave}, and nonlinear/frequency-assisted Kalman
+approaches \cite{Li2025_HeaveCKF}.  Practical buoy studies likewise emphasize
+the error mechanisms and phase fidelity of inertial wave measurements
+\cite{YurovskyKudinov2025_IMUwaves,Hope2025_SFY}.  The contribution here is not
+a claim to replace those method classes.  It is the isolation of an adaptive
+integral-regularization mechanism inside a fully specified 21-state MEKF,
+together with exact discretization, matched OU-family ablations, and a local
+stability result at the scope stated below.
 
 Most wave measurement systems derive parameters by chaining separate motion estimation
 and spectral analysis stages, a process prone to bias and delay.
@@ -43,15 +56,17 @@ temperature model and obey a slow OU transition
 $e^{-h/\tau_b}\mat I_3$; with finite $\tau_b$ they are intrinsically uniformly
 exponentially stable, so augmenting the observable 18-state subsystem gives a
 uniformly detectable 21-state system. With uniformly bounded positive process
-and measurement covariances, bounded magnetic-update gaps, the default
-prediction-time PSD $\vct a_w$ covariance inflation, and no hard reset in the
-analysis interval, standard time-varying Kalman theory then gives bounded
+and measurement covariances, bounded magnetic-update gaps, exact $T_S$ spacing
+of the four $S$ pseudo-updates used on each translational proof horizon, the
+default prediction-time PSD $\vct a_w$ covariance inflation, and no hard reset
+in the analysis interval, standard time-varying Kalman theory then gives bounded
 Riccati solutions and UES of the homogeneous 21-state Live error dynamics. A
 quadratic-remainder argument yields local ISS for bounded temperature-model,
 sensor, pseudo-measurement, and modeling disturbances. The optional legacy raw
 $\vct a_w$ covariance replacement remains available for reproducibility but is
-outside that theorem, as are startup/re-lock resets and deterministic
-infinite-horizon claims for unbounded Gaussian sample paths.
+outside that theorem, as are startup/re-lock resets, sample-time jitter of the
+nominal $S$-update deadlines, and deterministic infinite-horizon claims for
+unbounded Gaussian sample paths.
 
 \subsection*{From Standard Q-MEKF to Extended Kinematics}
 
@@ -63,7 +78,7 @@ world-frame acceleration, velocity, oscillatory displacement, and the integral o
 oscillatory displacement in three dimensions, together with a slow residual
 accelerometer-bias state. This augmentation allows the estimator to reconstruct
 instantaneous and cumulative wave kinematics in the world frame while tracking
-MEMS bias around its calibrated temperature-dependent mean.
+a residual bias around a supplied temperature-dependent calibration mean.
 
 \subsection*{Stochastic Forcing and the OU Acceleration Model}
 
@@ -90,7 +105,9 @@ on a deliberately much slower fixed time scale. It represents only the residual
 about the deterministic temperature correction, not the total physical bias.
 The default $\tau_b=\SI{5000}{s}$ is independent of the wave tuner, and the
 continuous driving-noise density retains the historical short-time bias
-process-noise calibration.
+process-noise calibration.  In this paper that choice is chiefly a sensor-model
+and detectability assumption; a varying-temperature compensation experiment is
+left for physical validation.
 
 \subsection*{Continuous-Time Model Formulation}
 
@@ -169,7 +186,9 @@ surface motion. The simulation continues to inject the documented accelerometer
 bias random walk, so the slow-OU residual used by the estimator is also tested
 under deliberate bias-process mismatch; that mismatch is treated as an
 exogenous disturbance by the local ISS statement rather than silently removed
-from the evidence protocol.
+from the evidence protocol. Temperature itself is not swept, and calibration
+error, thermal lag, and hysteresis are not independently scored, so the
+simulation does not validate temperature compensation as a performance claim.
 
 The principal runtime bounds, gates, and time constants are tabulated in
 Sec.~\ref{sec:adapt-impl}. The complete coefficient set, fixed baseline
@@ -183,7 +202,9 @@ The main contributions of this work are:
   \item A 21-state quaternion MEKF architecture that couples an OU-driven
         latent world-acceleration prior to marine attitude and wave-motion
         estimation and models the residual accelerometer bias as a much slower
-        temperature-centered first-order Gauss--Markov process.
+        temperature-centered first-order Gauss--Markov process.  The finite
+        residual correlation time is used in the stability result; empirical
+        thermal-compensation performance is not claimed.
   \item Closed-form discrete-time transition and covariance matrices for
         the OU process and linear kinematic chain, with numerically stable
         small-step series expansions, together with the exact scalar
@@ -200,34 +221,35 @@ The main contributions of this work are:
         system. The translational and attitude--gyro-bias blocks supply the
         finite-horizon observability result; the temperature-centered residual
         bias OU block is intrinsically exponentially stable, which upgrades the
-        augmentation to uniform detectability. Under the stated cadence,
-        geometry, covariance, bounded-schedule, and no-reset conditions, this
-        yields bounded Riccati solutions and 21-state UES, followed by a local
-        ISS bound for bounded modeling and temperature-calibration disturbances.
-        The optional legacy raw $\vct a_w$ covariance-replacement mode is
-        explicitly outside that proof.
+        augmentation to uniform detectability. Under the stated exact
+        $S$-pseudo-update spacing, geometry, covariance, bounded-schedule, and
+        no-reset conditions, this yields bounded Riccati solutions and 21-state
+        UES, followed by a local ISS bound for bounded modeling and
+        temperature-calibration disturbances. The optional legacy raw
+        $\vct a_w$ covariance-replacement mode and general sample-time jitter
+        of the nominal $S$ deadlines are explicitly outside that proof.
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
-  \item A reproducible paired comparison against a published nonlinear observer
-        and two earlier author-developed observer architectures, including an
-        OU--II ablation that isolates the incremental effect of the OU--III
-        translational state structure by tuning both filters from the same
-        wave-band period.
+  \item A common-record deterministic comparison against a published nonlinear
+        observer and two earlier author-developed observer architectures,
+        together with a separate ten-seed paired OU--III/OU--II study that
+        isolates the incremental effect of the OU--III translational structure
+        while using the same wave-band period input for both filters.
   \item A versioned ten-seed paired validation on stationary and transitioning
-        directional sea spectra, including intervals from four separate
-        constructions on the declared primary endpoint, negative results, and
-        the limits of the observed OU--III advantage.
+        directional sea spectra, including a paired bootstrap interval and an
+        exact paired sign-flip check on the declared primary endpoint, negative
+        results, and the limits of the observed OU--III advantage.
 \end{itemize}
 
 The scope of the claim deserves stating once, plainly, at the outset. The
 displacement state $\vct{p}$ is oscillatory wave-induced motion, not a global
-navigation position; absolute positioning is an optional extension kept in
-Appendix~\ref{sec:gps_fusion}. The measured advantage over the matched OU--II
-architecture is a \emph{vertical} one: OU--III has higher total 3D displacement
-error in \OUValidationThreeDHigherCount{} of the
-\OUValidationThreeDScenarios{} principal scenarios, because the vertical gain
-is largely paid for in the horizontal channels
-(Sec.~\ref{sec:observer-comparison}). And every quantitative result below comes
-from simulation. The embedded exercise establishes source portability, not a
-timing or memory margin, and no result here is validated against an external
-physical displacement reference.
+navigation position; an optional absolute-position/GNSS extension is retained
+as repository companion material but is not part of the evaluated publication
+configuration. The measured advantage over the matched OU--II architecture is
+a \emph{vertical} one: OU--III has higher total 3D displacement error in
+\OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
+principal scenarios, because the vertical gain is largely paid for in the
+horizontal channels (Sec.~\ref{sec:observer-comparison}). And every quantitative
+result below comes from simulation. The embedded exercise establishes source
+portability, not a timing or memory margin, and no result here is validated
+against an external physical displacement reference.
