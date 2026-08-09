@@ -1,0 +1,44 @@
+name: tfg-validation
+
+on:
+  push:
+    paths:
+      - 'src/kalman_tfg/**'
+      - 'src/lie/**'
+      - 'tests/kalman_tfg/**'
+      - '.github/workflows/tfg-validation.yml'
+  pull_request:
+    paths:
+      - 'src/kalman_tfg/**'
+      - 'src/lie/**'
+      - 'tests/kalman_tfg/**'
+      - '.github/workflows/tfg-validation.yml'
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install compiler dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq g++ make libeigen3-dev
+
+      - name: Build TFG tests
+        run: make -C tests/kalman_tfg build
+
+      - name: Run TFG mathematical unit tests
+        working-directory: tests/kalman_tfg
+        run: |
+          set -euo pipefail
+          ./lie_group-test
+          ./convention-test
+          ./ou_chain_identity-test
+          ./tfg_propagation-test
+          ./tfg_jacobians-test
+          ./covariance_transport-test
+          ./tfg_orchestrator-test
