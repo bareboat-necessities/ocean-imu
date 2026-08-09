@@ -64,7 +64,9 @@ Filter make_filter(T tau = T(1.7)) {
     f.set_aw_stationary_std(Vector3(T(0.6), T(0.6), T(0.32)));
     f.set_gyro_noise_density_rad_sqrt_s(T(0.004));
     f.set_Q_bgyro_rw(Vector3::Constant(T(1e-10)));
-    f.set_Q_bacc_rw(Vector3::Constant(T(2.5e-7)));
+    // set_Q_bacc_rw follows current OU-III semantics: continuous driving
+    // standard deviation in m/s^2/sqrt(s), not variance per second.
+    f.set_Q_bacc_rw(Vector3::Constant(T(5e-4)));
     f.initialize_from_truth(
         Eigen::Quaternion<T>(Eigen::AngleAxis<T>(
             T(0.63), Vector3(T(0.2), T(-0.7), T(0.68)).normalized())),
