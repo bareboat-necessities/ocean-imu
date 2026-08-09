@@ -79,13 +79,13 @@ include a conventional frequency-domain double-integration heave estimator.
 }
 
 \IfFileExists{ou_validation_vertical.svg}{%
-  \begin{figure*}[t]
+  \begin{figure}[t]
     \centering
-    \includesvg[width=0.90\textwidth,inkscapelatex=false]{ou_validation_vertical}
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_vertical}
     \caption{Ten-seed normalized vertical-displacement RMS for the adaptive and
     fixed-tuning variants. Error bars are paired-bootstrap 95\% intervals.}
     \label{fig:ou_mc_vertical}
-  \end{figure*}
+  \end{figure}
 }{}
 
 Across the four stationary JONSWAP seas, the seed-wise mean normalized vertical
@@ -128,7 +128,7 @@ travel sense is correct for \OUValidationTravelCorrect\% of samples, wrong for
 vessel-frame labels and are not themselves treated as physical truth.
 
 \paragraph{Adaptation mechanism}
-Table~\ref{tab:ou_mc_adaptation} shows that online tuning strongly reduces the
+Figure~\ref{fig:ou_mc_vertical} shows that online tuning strongly reduces the
 penalty of applying the single FixedNominal operating point to off-nominal seas.
 At the nominal $H_s=\SI{1.5}{m}$ sea, where FixedNominal and FixedOracle
 coincide by construction, OU--III Adaptive is slightly worse than the matched
@@ -165,15 +165,15 @@ full covariance-control table is retained with the archived validation study
 rather than repeated in the publication view.
 
 \IfFileExists{ou_validation_transition.svg}{%
-  \begin{figure*}[t]
+  \begin{figure}[t]
     \centering
-    \includesvg[width=0.90\textwidth,inkscapelatex=false]{ou_validation_transition}
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_transition}
     \caption{One OU--III Adaptive realization of the controlled transition.
     The shaded interval is the $420$--$780$~s crossfade; the lower traces show
     the applied $\tau$, $\sigma_{aw}$, and $r_S$ relative to the two fixed
     references.}
     \label{fig:ou_transition}
-  \end{figure*}
+  \end{figure}
 }{}
 
 \input{w3d-ou-robustness.tex-part}

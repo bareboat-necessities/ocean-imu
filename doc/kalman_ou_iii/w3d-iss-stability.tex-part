@@ -1,7 +1,7 @@
 \section{Analytical Observability, 21-State UES, and Local ISS}
 \label{app:iss-stability}
 
-This appendix analyzes the normal Live-state linearization of the implemented
+This section analyzes the normal Live-state linearization of the implemented
 OU--III estimator after replacing the accelerometer-bias random walk by a slow
 first-order Gauss--Markov residual about the deterministic temperature model.
 The change removes the neutral, nondecaying bias mode that prevented a

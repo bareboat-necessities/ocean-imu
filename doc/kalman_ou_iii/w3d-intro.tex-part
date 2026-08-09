@@ -45,10 +45,10 @@ narrower claim. Together with an online directional estimator, these elements
 address colored excitation and MEMS errors in an efficient, embedded-friendly
 framework.
 
-Appendix~\ref{app:iss-stability} gives a local 21-state stability result for the
+Section~\ref{app:iss-stability} gives a local 21-state stability result for the
 normal Live recursion under explicit operating conditions. Because the tuner is
 driven by raw IMU data and a private Mahony attitude solution, its schedule is
-exogenous with respect to the MEKF state. The appendix proves uniform
+exogenous with respect to the MEKF state. The section proves uniform
 finite-horizon observability of the OU--III translational block and of the
 attitude--gyro-bias block under bounded noncollinear accel/mag geometry. The
 formerly problematic accelerometer-bias coordinates are now residuals about the
