@@ -97,10 +97,11 @@ OU--II.  The paired OU--III-minus-OU--II difference is
 $\OUValidationNormalizedDifference$ percentage point with bootstrap 95\%
 interval
 $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$.
-This paired difference is the primary effect-size statement; the ten paired
-realizations establish repeatability within the stated simulator and sensor
-model, not uncertainty over alternative simulators, vessels, spectra, or update
-cadences.
+The secondary exact paired sign-flip/randomization check gives
+$p=\OUValidationNormalizedRandomizationP$.  This paired difference is the
+primary effect-size statement; the ten paired realizations establish
+repeatability within the stated simulator and sensor model, not uncertainty
+over alternative simulators, vessels, spectra, or update cadences.
 
 \paragraph{Vertical versus three-dimensional displacement}
 OU--III has lower vertical error in every stationary JONSWAP sea and in the

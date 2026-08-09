@@ -9,9 +9,10 @@ A ten-seed robustness study perturbs the nominal OU--III operating point by
 multipliers $0.5$, $0.75$, $1.0$, $1.25$, and $1.5$.  One-factor sweeps vary
 $\tau$, $\sigma_{aw}$, or $r_S$ with the other parameters fixed; coupled sweeps
 also move $r_S$ according to the deployed relation
-$r_S=\clip(0.35\,\sigma_{aw}\tau^3,0.4,400)$.  Two additional degradation
-cases test a low-motion $H_s=\SI{0.05}{m}$ record and a rapid \SI{30}{s}
-transition between the same endpoints used in the controlled case.
+$r_S=\clip(0.35\,\sigma_{aw}\tau^3,0.4,400)$.  Before clipping, a coupled scale
+change therefore gives $r_S\to c^{3}r_S$.  Two additional degradation cases
+test a low-motion $H_s=\SI{0.05}{m}$ record and a rapid \SI{30}{s} transition
+between the same endpoints used in the controlled case.
 
 \IfFileExists{w3d-ou-robustness-results-generated.tex-part}{%
   \input{w3d-ou-robustness-results-generated.tex-part}%
@@ -45,9 +46,8 @@ $\times\OURobustnessWorstScale$, differing from nominal by
 ($[\OURobustnessWorstDifferenceLow,\OURobustnessWorstDifferenceHigh]$).
 The sweeps also show competing objectives: changing $r_S$ can improve the
 vertical score while changing 3D displacement, and changing $\sigma_{aw}$ can
-alter pitch even when vertical displacement changes little.  The sweep is
-therefore interpreted as local sensitivity, not as an offline search for a new
-operating point.
+alter pitch even when vertical displacement changes little.  Accordingly, no sweep point is adopted as a replacement tuning; the sweep is interpreted as
+local sensitivity rather than an offline search for a new operating point.
 
 \paragraph{Why the direct $\tau$ and $\sigma_{aw}$ effects are weak}
 With their companion parameters frozen, the $\tau$ and $\sigma_{aw}$ sweeps

@@ -360,16 +360,9 @@ jobs:
           path: reports/results/ou_${{ matrix.study }}/**
           if-no-files-found: warn
 
-  # Lands the regenerated evidence on the dispatched ref. Both bundles are
-  # committed together so reports/results/ is never half one study's run and
-  # half another's.
-  #
-  # The commit is not gated on the manuscript still agreeing with the numbers.
-  # Gating it would put the bundle back behind a human, which is what this job
-  # exists to avoid; instead the consistency tests run first, the bundle lands
-  # either way, and a disagreement fails this job with the numbers that moved.
-  # That is a prose edit, and it is the only part of regeneration a person
-  # actually has to do.
+  # Lands both regenerated bundles together, but only after the manuscript and
+  # committed-evidence contract passes against the regenerated working tree.
+  # A failed consistency check must never mutate the target branch.
   commit:
     needs: combine
     if: inputs.validation_mode == 'full'
@@ -416,8 +409,7 @@ jobs:
           exit 1
       # The consistency step hashes every non-code source the manifest names,
       # and those include the simulation records. Without them the check errors
-      # out on a missing file instead of reporting whether the numbers moved,
-      # which is the one thing this job is here to tell us.
+      # out on a missing file instead of reporting whether the numbers moved.
       - name: Download versioned simulation data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -444,10 +436,9 @@ jobs:
           cp -a regenerated/ou-robustness-full/. reports/results/ou_robustness/
           rm -rf regenerated
 
-          # The tests require every one of these to be byte-identical to the
-          # generated bundle, so the copy is mechanical and belongs here rather
-          # than in someone's working tree. The consistency step below is what
-          # keeps this list honest: miss a pair and it fails before the push.
+          # These publication inputs are mechanical mirrors of the regenerated
+          # evidence. The validation step below verifies the complete contract
+          # before any commit can be created or pushed.
           mirror() {
             cp "reports/results/$1" "doc/kalman_ou_iii/$2"
           }
@@ -468,9 +459,7 @@ jobs:
           mirror ou_robustness/ou_robustness_stress.svg \
                  ou_robustness_stress.svg
 
-      - name: Check the manuscript against the regenerated numbers
-        id: consistency
-        continue-on-error: true
+      - name: Check the manuscript against the regenerated evidence
         run: make -C tests/validation test
 
       - name: Commit the regenerated evidence
@@ -490,19 +479,10 @@ jobs:
           # Fully qualified on both sides. A short name here is ambiguous the
           # moment a tag shares the branch's name -- git refuses the push with
           # "dst refspec matches more than one", and the rebase in the retry
-          # silently fetches the tag instead of the branch, so all four
-          # attempts fail against a ref nobody meant to publish to.
+          # silently fetches the tag instead of the branch.
           for attempt in 1 2 3 4; do
             git push origin HEAD:refs/heads/${{ github.ref_name }} && exit 0
             sleep $((2 ** attempt))
             git pull --rebase origin refs/heads/${{ github.ref_name }}
           done
-          exit 1
-
-      - name: Fail if the manuscript no longer matches
-        if: steps.consistency.outcome == 'failure'
-        run: |
-          echo "The regenerated bundle is committed, but the manuscript still"
-          echo "quotes the previous numbers. Update the prose in"
-          echo "doc/kalman_ou_iii/ to match, then re-run the validate gate."
           exit 1
