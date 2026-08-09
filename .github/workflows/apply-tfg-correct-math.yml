@@ -6,6 +6,7 @@ on:
       - agent/tfg-math-hardening
     paths:
       - 'tests/kalman_tfg/apply_correct_math.py'
+      - 'tests/kalman_tfg/apply_correct_math_fix.py'
 
 permissions:
   contents: write
@@ -22,7 +23,9 @@ jobs:
           fetch-depth: 0
 
       - name: Apply mathematically consistent TFG covariance changes
-        run: python3 tests/kalman_tfg/apply_correct_math.py
+        run: |
+          python3 tests/kalman_tfg/apply_correct_math.py
+          python3 tests/kalman_tfg/apply_correct_math_fix.py
 
       - name: Install compiler dependencies
         run: |
