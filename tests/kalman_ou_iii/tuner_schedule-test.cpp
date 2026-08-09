@@ -2,12 +2,17 @@
 #include <cmath>
 #include <iostream>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 #define private public
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #undef private
 
 const float g_std = 9.80665f;
 using Filter = SeaStateFusionFilter_OU_III<TrackerType::KALMANF>;
+
+static bool near(float a, float b, float eps = 1e-6f) {
+    return std::fabs(a - b) <= eps * std::max(1.0f, std::max(std::fabs(a), std::fabs(b)));
+}
 
 int main() {
     Filter f(false);
@@ -23,25 +28,35 @@ int main() {
     f.last_adapt_time_sec_ = 0.0;
     f.adapt_every_secs_ = 0.05f;
 
-    const float before = f.getTauApplied();
+    const float active_tau_before = f.mekf_->tau_aw;
+    const float active_rs_before = f.mekf_->R_S(2, 2);
+
     f.adapt_mekf(0.1f, 3.0f, 0.8f, 1.2f);
-    const float staged = f.tune_.tau_applied;
+    const float staged_tau = f.tune_.tau_applied;
+    const float staged_rs = std::min(std::max(f.tune_.RS_applied, f.min_R_S_), f.max_R_S_);
+    const float staged_rs_var = staged_rs * staged_rs;
+
     if (!f.online_tune_apply_pending_) {
         std::cerr << "FAIL: adaptation was not staged\n";
         return 1;
     }
-    if (std::fabs(f.getTauApplied() - before) > 1e-6f) {
+    if (!near(f.mekf_->tau_aw, active_tau_before) ||
+        !near(f.mekf_->R_S(2, 2), active_rs_before)) {
         std::cerr << "FAIL: current-sample tuner output changed the active OU-III schedule\n";
         return 1;
     }
-    if (std::fabs(staged - before) < 1e-5f) {
+    if (near(staged_tau, active_tau_before)) {
         std::cerr << "FAIL: test did not create a distinct staged candidate\n";
         return 1;
     }
 
+    // Keep the check isolated from a second tuner update without invoking the
+    // public disable setter, which intentionally cancels a pending candidate.
     f.enable_tuner_ = false;
     f.updateTime(0.005f, gyro, acc);
-    if (std::fabs(f.getTauApplied() - staged) > 1e-6f) {
+
+    if (!near(f.mekf_->tau_aw, staged_tau) ||
+        !near(f.mekf_->R_S(2, 2), staged_rs_var)) {
         std::cerr << "FAIL: staged OU-III schedule was not committed at next sample\n";
         return 1;
     }
