@@ -42,3 +42,32 @@ jobs:
           ./tfg_jacobians-test
           ./covariance_transport-test
           ./tfg_orchestrator-test
+
+  wave-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install simulation dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq g++ make libeigen3-dev unzip curl
+
+      - name: Download paired wave records
+        run: |
+          curl -fL --retry 3 --connect-timeout 20 \
+            https://github.com/bareboat-necessities/oceanography-waves-lib/releases/download/v1.1.3/sim-data-files.zip \
+            -o sim-data-files.zip
+          unzip -o sim-data-files.zip -d tests/kalman_tfg >/dev/null
+
+      - name: Build TFG simulator
+        run: make -C tests/kalman_tfg kalman_tfg-sim
+
+      - name: Run corrected TFG regression set
+        working-directory: tests/kalman_tfg
+        env:
+          W3D_WRITE_TIMESERIES: '0'
+          W3D_COLLECT_ALL_GATES: '1'
+        run: ./kalman_tfg-sim
