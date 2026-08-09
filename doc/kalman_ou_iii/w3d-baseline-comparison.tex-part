@@ -1,6 +1,6 @@
 \ifdefined\OUStandaloneDetailedResults
   \input{w3d-baseline-comparison-study.tex-part}
-  \endinput
+  \expandafter\endinput
 \fi
 
 \subsection{Comparative evaluation}
