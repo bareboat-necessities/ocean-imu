@@ -405,15 +405,15 @@ void test_initialize_from_acc() {
     check(!m.initialize_from_acc(Vector3f::Zero()), "a zero sample was accepted");
 }
 
-// The congruent sync must replace the a_w marginal while preserving every
-// correlation coefficient -- that is the whole point of it over a reset.
-void test_aw_covariance_sync_preserves_correlations() {
+// Sigma_aw parameterizes the OU process noise; it is not the posterior
+// covariance of rho_aw. Changing the process model must therefore leave P
+// untouched. An explicit reset is kept only as a deliberate prior
+// initialization operation for the inactive/newly-enabled world block.
+void test_aw_stationary_covariance_is_model_only() {
     using Mekf = ocean_imu::kalman::Kalman3D_Wave_TFG<float>;
     Mekf m;
     m.initialize_identity();
-    m.set_aw_stationary_std(Vector3f(0.4f, 0.4f, 0.25f));
 
-    // Seed a covariance with real cross-correlation between a_w and phi.
     auto& P = m.covariance_full();
     P.setIdentity();
     P *= 0.05f;
@@ -422,25 +422,22 @@ void test_aw_covariance_sync_preserves_correlations() {
         P(Mekf::OFF_AW + k, k) = 0.06f;
         P(k, Mekf::OFF_AW + k) = 0.06f;
     }
+    const auto P_before = P;
 
-    auto corr = [&](int i, int j) {
-        return P(i, j) / std::sqrt(P(i, i) * P(j, j));
-    };
-    const float c_before = corr(Mekf::OFF_AW, 0);
+    m.set_aw_stationary_std(Vector3f(0.4f, 0.4f, 0.25f));
+    m.set_aw_time_constant(2.3f);
+    check((P - P_before).cwiseAbs().maxCoeff() == 0.0f,
+          "changing OU process parameters rewrote the posterior covariance");
 
-    check(m.synchronize_aw_covariance_to_stationary_congruent(),
-          "the congruent sync failed");
-
-    const float c_after = corr(Mekf::OFF_AW, 0);
-    check(std::fabs(c_after - c_before) < 1e-4f,
-          "the congruent sync did not preserve the correlation coefficient");
-    check(std::fabs(P(Mekf::OFF_AW, Mekf::OFF_AW) - 0.4f * 0.4f) < 1e-5f,
-          "the congruent sync did not install the stationary marginal");
-
-    // A plain reset must instead zero the cross terms.
+    // Explicit prior initialization is intentionally different: it installs
+    // the configured stationary a_w marginal and clears its old correlations.
     m.reset_aw_covariance_to_stationary();
+    check(std::fabs(P(Mekf::OFF_AW, Mekf::OFF_AW) - 0.4f * 0.4f) < 1e-6f,
+          "explicit a_w prior reset did not install Sigma_aw");
+    check(std::fabs(P(Mekf::OFF_AW + 2, Mekf::OFF_AW + 2) - 0.25f * 0.25f) < 1e-6f,
+          "explicit a_w prior reset did not install anisotropic Sigma_aw");
     check(std::fabs(P(Mekf::OFF_AW, 0)) == 0.0f,
-          "reset must clear the a_w cross-covariances");
+          "explicit a_w prior reset did not clear stale cross-covariance");
 }
 
 // With the linear block gated off, a_w is not estimated but is still present
@@ -483,7 +480,7 @@ void test_linear_block_gate() {
 
 int main() {
     test_initialize_from_acc();
-    test_aw_covariance_sync_preserves_correlations();
+    test_aw_stationary_covariance_is_model_only();
     test_linear_block_gate();
     test_staging();
     test_warmup_gates();

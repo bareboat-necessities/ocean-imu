@@ -118,9 +118,6 @@ public:
         if (env_float("TFG_ADAPT_RS_SLEW_LOG", v)) fusion_.setRSAdaptSlewLog(v);
         if (env_float("TFG_ACC_NOISE_FLOOR", v))   fusion_.setAccNoiseFloorSigma(v);
 
-        if (const char* s = std::getenv("TFG_AW_COV_SYNC")) {
-            fusion_.setPeriodicAwCovarianceSync(std::string(s) != "off");
-        }
     }
 
     void updateMag(const Vector3f& mag_body_ned) override {

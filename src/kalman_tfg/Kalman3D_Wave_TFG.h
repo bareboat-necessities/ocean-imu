@@ -5,113 +5,37 @@
 
     Right-invariant two-frame Lie-group error-state EKF for marine wave state.
 
-    Same physics as Kalman3D_Wave_OU_III -- Ornstein-Uhlenbeck world
-    acceleration, the v -> p -> S integral chain, random-walk biases -- but
-    carried on the two-frame group in src/lie/TwoFrameGroup.h instead of a
-    quaternion MEKF with additive translational states.
+    R = R_bw (body -> world), eta = Xhat o X^-1, and corrections are applied
+    on the left. The world state is [v p S a_w]; gyro bias is a body-frame
+    random walk and the residual accelerometer bias is the same slow OU process
+    used by current OU-III.
 
-    CONVENTION CONTRACT (see docs/tfg-design.md; three parts, always together):
+    This is intentionally described as a right-invariant Lie-group error-state
+    EKF with invariant-style measurements. The complete marine process is not
+    claimed to be a group-affine/log-linear InEKF: the world/bias couplings
+    below still depend on the estimated world state.
 
-        1. rotation direction : R = R_bw, body to world
-        2. error definition   : right-invariant, eta = Xhat o X^-1
-        3. correction side    : left, Xhat+ = Exp_G(dxi) o Xhat-
+    Tangent layout matches OU-III:
 
-    The public accessors keep OU-III's API. quaternion() returns body-to-world,
-    exactly as Kalman3D_Wave_OU_III::quaternion() does (it conjugates its
-    world-to-body qref to get there; this filter already stores that
-    direction). So IW3dFusionAdapter, FilterSnapshot, the plots and the
-    sketches see no change.
+        xi = [ phi | beta_g | rho_v rho_p rho_S rho_a | beta_a ]
+               0      3        6     9     12    15      18
 
-    STATE, in OU-III's ordering so the world block stays contiguous and the
-    block structure lines up index-for-index:
+    Level 2 (the default) uses beta_b = R (bhat-b). Level 1 keeps additive
+    body-frame bias errors as an ablation. The two are related during
+    propagation by the time-varying coordinate map beta = R delta_b.
 
-        xi = [ phi | delta_bg | rho_v rho_p rho_S rho_a | delta_ba ]
-               0     3          6     9     12    15      18
+    The world OU chain is discretized with IntegratedOUChain. The deterministic
+    gyro-bias/world coupling and the gyro/gyro-bias process covariance use a
+    full structured Gauss--Legendre discretization of the invariant error
+    dynamics. This transports each noise source through attitude and every
+    world column instead of applying zero-rate or first-order leakage formulas.
 
-    ------------------------------------------------------------------------
-    ERROR DYNAMICS (Level 1: world vectors on the group, additive bias errors)
-    ------------------------------------------------------------------------
+    After every finite measurement correction a=K r, covariance is transported
+    into the post-injection tangent coordinates by the full retraction Jacobian
 
-    Attitude. With Rdot = R [w_m - b_g - n_g]x and Rhatdot = Rhat [w_m - bhat_g]x,
-    and delta_bg = bhat_g - b_g in the body frame,
+        J_reset = d/d(delta) Log_G( Exp_G(-a) Exp_G(a+delta) ) | delta=0,
 
-        d(dR)/dt = Rhat ( [w_m - bhat_g]x - [w_m - b_g - n_g]x ) R^T
-                 = Rhat [ -delta_bg + n_g ]x R^T
-
-    and since Rhat [u]x Rhat^T = [Rhat u]x, to first order
-
-        phidot = -Rhat delta_bg + Rhat n_g                                 (1)
-
-    Note what is NOT there: no [w]x phi term. The attitude error is driftless
-    in this parameterization, which is the structural gain over the MEKF -- it
-    is why Phi_phi,phi = I here where OU-III needs an exact Rstep.
-
-    World vectors. With rho_x = xhat - dR x and d(dR)/dt = [phidot]x dR,
-
-        rho_xdot = xhatdot - [phidot]x x - dR xdot
-                 = (chain term) + [x]x phidot                              (2)
-
-    using -[u]x x = [x]x u. Substituting (1), every world vector picks up the
-    gyro bias through -[x]x Rhat. The chain terms are the OU chain itself:
-
-        rho_vdot = rho_a,  rho_pdot = rho_v,  rho_Sdot = rho_p,
-        rho_adot = -lambda rho_a
-
-    which is exactly what ou_detail::IntegratedOUChain<T,3> already
-    discretizes. That is the reuse this design is built around: the world
-    block of Phi and Qd is the OU-III code, unmodified, and
-    ou_chain_identity-test asserts it bit for bit.
-
-    ------------------------------------------------------------------------
-    DISCRETIZATION
-    ------------------------------------------------------------------------
-
-    The continuous generator is block lower triangular in (phi, delta_bg,
-    world), with A_phi,phi = 0 and A_bg,bg = 0. That makes several blocks
-    exactly integrable rather than truncated:
-
-        Phi_phi,phi   = I
-        Phi_phi,bg    = -Rbar h                        exact
-        Phi_bg,bg     = I
-        Phi_world     = Phi_OU(h, tau)                 exact, IntegratedOUChain
-        Phi_world,bg  = -Psi(h, tau) [x]x Rbar
-        Phi_world,phi = 0
-
-    where Psi(h,tau) = int_0^h Phi_OU(u) du, in closed form with Taylor
-    branches (integral_transition_axis below).
-
-    Rbar is the *average* body-to-world rotation over the step, not Rhat at
-    its start. This matters and is easy to get wrong. The attitude propagates
-    as Rhat(s) = Rhat Exp(w s) while (1) says phidot = -Rhat(s) delta_bg, so
-
-        phi(h) = phi(0) - ( int_0^h Rhat Exp(w s) ds ) delta_bg
-               = phi(0) - Rhat h J_l(w h) delta_bg
-
-    using J_l(theta) = int_0^1 Exp(u theta) du. So Rbar = Rhat J_l(w h). Using
-    Rhat alone costs a relative error of order |w| h -- 0.25% at 1 rad/s and a
-    5 ms step, small but well above the tolerance a finite-difference check
-    should be run at, and it grows with turn rate exactly when attitude and
-    bias are hardest to separate.
-
-    Doing Phi exactly rather than truncating at h^2 is what lets
-    tfg_propagation-test run at a tight tolerance and at large h, instead of
-    being loosened until it stops discriminating. Phi_world,bg keeps one
-    documented approximation: it uses the step-averaged Rbar rather than
-    correlating Rhat(s)'s variation with the Phi_OU weighting and with the
-    drift of x(s) across the step. Both neglected effects are O((|w| h)^2) and
-    O(h) on a term that is already a product of two small quantities.
-
-    Qd is assembled blockwise. The world block carries the exact OU
-    contribution from IntegratedOUChain; the attitude and bias blocks carry
-    the exactly integrated bias random-walk terms (h^2/2 and h^3/3); the gyro
-    white-noise leakage into the world vectors is first order in h. That last
-    truncation is deliberate and matches the surrounding code's standard --
-    Kalman3D_Wave_OU_III.h:1560 does the same, and Qd magnitudes are tuned
-    quantities, unlike Phi which has to match the propagation it linearizes.
-
-    ------------------------------------------------------------------------
-
-    Scalar-templated: firmware runs float, tests run double.
+    rather than by OU-III's attitude-only MEKF reset.
 */
 
 #ifdef EIGEN_NON_ARDUINO
@@ -122,6 +46,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
 #include "lie/SO3Jacobians.h"
@@ -133,25 +58,6 @@ namespace tfg_detail {
 
 using ocean_imu::kalman::ou_detail::safe_inv_tau;
 
-/*
-    Psi(h, tau) = int_0^h Phi_OU(u) du for one axis, where Phi_OU is the 4x4
-    [v p S a] transition of IntegratedOUChain<T,3>.
-
-    Closed forms, with x = h/tau:
-
-        Psi_00 = h            Psi_10 = h^2/2        Psi_20 = h^3/6
-        Psi_11 = h            Psi_21 = h^2/2        Psi_22 = h
-        Psi_33 = -tau expm1(-x)
-        Psi_03 = tau^2 ( expm1(-x) + x )
-        Psi_13 = tau^3 ( x^2/2 - expm1(-x) - x )
-        Psi_23 = tau^4 ( x^3/6 - x^2/2 + expm1(-x) + x )
-
-    The last three cancel to O(x^2), O(x^3), O(x^4) respectively, so the
-    direct forms lose all significance for small steps -- at h/tau = 1e-3,
-    Psi_23's leading term is 1e-12 of the quantities being subtracted. Hence
-    the Taylor branch, on the same 1e-2 threshold the rest of the codebase
-    uses.
-*/
 template<typename T>
 inline void integral_transition_axis(T tau, T h, Eigen::Matrix<T,4,4>& Psi) {
     const T inv_tau = safe_inv_tau(tau);
@@ -169,28 +75,18 @@ inline void integral_transition_axis(T tau, T h, Eigen::Matrix<T,4,4>& Psi) {
     Psi(2,2) = h;
 
     if (std::abs(x) < T(1e-2)) {
-        const T x2 = x * x, x3 = x2 * x, x4 = x3 * x, x5 = x4 * x;
-        const T x6 = x5 * x, x7 = x6 * x, x8 = x7 * x;
-        // Each series starts one power later than the one above it, so the
-        // number of terms needed to reach a given relative accuracy is the
-        // same in every case but the absolute order climbs. Psi_23's leading
-        // term is x^4/24, and its first dropped term sets the error: stopping
-        // at x^6 leaves x^3/210 relative, which is 4.6e-9 right at the 1e-2
-        // seam -- measurable, so it is carried to x^8.
-        // -tau expm1(-x) = tau (x - x^2/2 + x^3/6 - ...)
+        const T x2 = x*x, x3 = x2*x, x4 = x3*x, x5 = x4*x;
+        const T x6 = x5*x, x7 = x6*x, x8 = x7*x;
         Psi(3,3) = tau  * (x - x2/T(2) + x3/T(6) - x4/T(24) + x5/T(120) - x6/T(720));
-        // expm1(-x) + x = x^2/2 - x^3/6 + x^4/24 - ...
         Psi(0,3) = tau2 * (x2/T(2) - x3/T(6) + x4/T(24) - x5/T(120) + x6/T(720)
                            - x7/T(5040));
-        // x^2/2 - expm1(-x) - x = x^3/6 - x^4/24 + ...
         Psi(1,3) = tau3 * (x3/T(6) - x4/T(24) + x5/T(120) - x6/T(720)
                            + x7/T(5040) - x8/T(40320));
-        // x^3/6 - x^2/2 + expm1(-x) + x = x^4/24 - x^5/120 + ...
         Psi(2,3) = tau4 * (x4/T(24) - x5/T(120) + x6/T(720) - x7/T(5040)
                            + x8/T(40320));
     } else {
         const T em1 = std::expm1(-x);
-        const T x2 = x * x, x3 = x2 * x;
+        const T x2 = x*x, x3 = x2*x;
         Psi(3,3) = -tau  * em1;
         Psi(0,3) =  tau2 * (em1 + x);
         Psi(1,3) =  tau3 * (x2/T(2) - em1 - x);
@@ -200,39 +96,13 @@ inline void integral_transition_axis(T tau, T h, Eigen::Matrix<T,4,4>& Psi) {
 
 } // namespace tfg_detail
 
-/*
-    two_frame_bias selects the bias geometry:
-
-      true  (Level 2) -- full two-frame group, beta_b = R (bhat - b). Default.
-      false (Level 1) -- world vectors on SE_4(3), bias errors additive in the
-                         body frame. Kept as a build flag: it isolates
-                         group-retraction defects from bias-geometry defects,
-                         and it is the ablation that answers whether the bias
-                         geometry earns its keep.
-
-    THE TWO LEVELS ARE THE SAME FILTER IN DIFFERENT COORDINATES, related by
-    the exact linear map beta = Rhat delta_b:
-
-        T     = blkdiag(I, Rhat, I, I, I, I, Rhat)
-        xi_L2 = T xi_L1,   P_L2 = T P_L1 T^T,   H_L1 = H_L2 T
-
-    Under pure propagation that relation is exact rather than approximate, and
-    covariance_transport-test asserts it -- which cross-checks the whole
-    Level-2 derivation against the already-verified Level-1 one. Note the
-    conjugation is time-varying: Phi_L2 = T(h) Phi_L1 T(0)^-1, which is
-    precisely why Phi_beta,beta is Exp(w_world h) here where Level 1 has I.
-
-    Under measurement updates the two agree only to first order, because the
-    Level-2 injection carries a J_l(-phi) that the Level-1 injection does not.
-*/
 template <typename T = float,
           bool with_gyro_bias = true,
           bool with_accel_bias = true,
           bool two_frame_bias = true>
 class Kalman3D_Wave_TFG {
     static_assert(with_gyro_bias,
-                  "the two-frame tangent layout pins the gyro bias at offset 3; "
-                  "a no-gyro-bias variant would need its own layout");
+                  "the two-frame tangent layout pins the gyro bias at offset 3");
 
   public:
     using Group   = ocean_imu::lie::TwoFrameGroup<T, 4, with_accel_bias ? 2 : 1>;
@@ -240,15 +110,14 @@ class Kalman3D_Wave_TFG {
     using Vector3 = Eigen::Matrix<T,3,1>;
     using Matrix3 = Eigen::Matrix<T,3,3>;
 
-    static constexpr int NX = Group::NX;               // 21, or 18 without b_a
-
-    static constexpr int OFF_PHI = Group::OFF_PHI;     // 0
-    static constexpr int OFF_BG  = Group::OFF_BG;      // 3
-    static constexpr int OFF_V   = Group::world_offset(0);   // 6
-    static constexpr int OFF_P   = Group::world_offset(1);   // 9
-    static constexpr int OFF_S   = Group::world_offset(2);   // 12
-    static constexpr int OFF_AW  = Group::world_offset(3);   // 15
-    static constexpr int OFF_BA  = with_accel_bias ? Group::OFF_BA : -1;  // 18
+    static constexpr int NX = Group::NX;
+    static constexpr int OFF_PHI = Group::OFF_PHI;
+    static constexpr int OFF_BG  = Group::OFF_BG;
+    static constexpr int OFF_V   = Group::world_offset(0);
+    static constexpr int OFF_P   = Group::world_offset(1);
+    static constexpr int OFF_S   = Group::world_offset(2);
+    static constexpr int OFF_AW  = Group::world_offset(3);
+    static constexpr int OFF_BA  = with_accel_bias ? Group::OFF_BA : -1;
 
     using MatrixNX = Eigen::Matrix<T,NX,NX>;
     using Tangent  = Eigen::Matrix<T,NX,1>;
@@ -265,15 +134,12 @@ class Kalman3D_Wave_TFG {
         P_ *= T(1e-4);
     }
 
-    // ---------------------------------------------------------------- state
-
     void initialize_identity() {
         X_ = Group::Identity();
         P_.setIdentity();
         P_ *= T(1e-4);
     }
 
-    // Truth injection, for tests and for the paired simulator.
     void initialize_from_truth(const Eigen::Quaternion<T>& q_bw,
                                const Vector3& v, const Vector3& p,
                                const Vector3& S, const Vector3& a_w,
@@ -290,11 +156,6 @@ class Kalman3D_Wave_TFG {
         if constexpr (with_accel_bias) X_.B.col(1) = b_a;
     }
 
-    // --------------------------------------------------------- accessors
-    // Deliberately the same shapes and frames as Kalman3D_Wave_OU_III, so the
-    // two filters are drop-in comparable in the simulator and the plots.
-
-    // BODY -> WORLD, matching Kalman3D_Wave_OU_III::quaternion().
     [[nodiscard]] Eigen::Quaternion<T> quaternion() const {
         Eigen::Quaternion<T> q(X_.R);
         q.normalize();
@@ -302,47 +163,32 @@ class Kalman3D_Wave_TFG {
     }
     [[nodiscard]] Matrix3 R_bw() const { return X_.R; }
     [[nodiscard]] Matrix3 R_wb() const { return X_.R.transpose(); }
-
-    [[nodiscard]] Vector3 get_velocity() const             { return X_.X.col(0); }
-    [[nodiscard]] Vector3 get_position() const             { return X_.X.col(1); }
-    [[nodiscard]] Vector3 get_integral_displacement() const{ return X_.X.col(2); }
-    [[nodiscard]] Vector3 get_world_accel() const          { return X_.X.col(3); }
-    [[nodiscard]] Vector3 gyroscope_bias() const           { return X_.B.col(0); }
+    [[nodiscard]] Vector3 get_velocity() const              { return X_.X.col(0); }
+    [[nodiscard]] Vector3 get_position() const              { return X_.X.col(1); }
+    [[nodiscard]] Vector3 get_integral_displacement() const { return X_.X.col(2); }
+    [[nodiscard]] Vector3 get_world_accel() const           { return X_.X.col(3); }
+    [[nodiscard]] Vector3 gyroscope_bias() const            { return X_.B.col(0); }
     [[nodiscard]] Vector3 get_acc_bias() const {
         if constexpr (with_accel_bias) return X_.B.col(1);
-        else return Vector3::Zero();
+        return Vector3::Zero();
     }
-
     [[nodiscard]] const MatrixNX& covariance_full() const { return P_; }
     [[nodiscard]] MatrixNX& covariance_full() { return P_; }
     [[nodiscard]] const Group& state() const { return X_; }
     [[nodiscard]] Group& state() { return X_; }
 
-    /*
-        Tilt-only initialization from a gravity reading.
-
-        At rest the accelerometer reports -g in body coordinates, so the
-        measured direction fixes roll and pitch and says nothing about yaw.
-        Yaw is left at zero here; the magnetometer sets it later, once a world
-        reference exists.
-    */
     bool initialize_from_acc(const Vector3& acc_body) {
         if (!acc_body.allFinite()) return false;
         const T n = acc_body.norm();
         if (!(n > T(1e-6))) return false;
 
-        // Body-frame "up" is the direction the specific force points at rest.
         const Vector3 up_body = acc_body / n;
-        const Vector3 up_world(T(0), T(0), T(-1));   // NED: up is -z
-
-        // Smallest rotation carrying up_body onto up_world, as R_bw.
+        const Vector3 up_world(T(0), T(0), T(-1));
         const Vector3 v = up_body.cross(up_world);
         const T c = up_body.dot(up_world);
         const T s2 = v.squaredNorm();
         Matrix3 R;
         if (s2 < T(1e-18)) {
-            // Parallel or antiparallel. Antiparallel needs a half turn about
-            // any axis orthogonal to up_body; parallel is the identity.
             if (c > T(0)) {
                 R = Matrix3::Identity();
             } else {
@@ -353,89 +199,26 @@ class Kalman3D_Wave_TFG {
             }
         } else {
             const Matrix3 V = ocean_imu::lie::skew<T>(v);
-            R = Matrix3::Identity() + V + V * V * ((T(1) - c) / s2);
+            R = Matrix3::Identity() + V + V*V*((T(1)-c)/s2);
         }
         X_.R = R;
         reorthonormalize_();
         return true;
     }
 
-    /*
-        Linear-block gate.
-
-        Until the tuner has an operating point worth trusting, the world chain
-        is not propagated or corrected and the filter behaves as an
-        attitude-and-bias estimator. The accelerometer update still runs -- it
-        is what levels the filter -- but with a_w marginalized into the
-        measurement noise rather than estimated, exactly as OU-III does when
-        its linear block is off.
-    */
     void set_linear_block_enabled(bool on) { linear_block_enabled_ = on; }
     [[nodiscard]] bool linear_block_enabled() const { return linear_block_enabled_; }
 
-    /*
-        Re-seed the a_w covariance from the stationary OU covariance.
-
-        reset_* zeroes the cross-covariances: use it when the operating point
-        has moved so far that the old correlations are meaningless.
-
-        synchronize_*_congruent rescales instead, preserving every correlation
-        coefficient. P_aa is replaced by Sigma while each cross-covariance is
-        carried through the same congruence, so the joint stays consistent.
-        That is the gentler of the two and the one the orchestrator uses on its
-        periodic tick.
-
-        Both work on the INVARIANT tangent block, not on a_w as a free-standing
-        Euclidean state -- P's rho_a rows are expressed in the same right-
-        invariant coordinates as everything else, and treating them otherwise
-        would silently mix frames.
-    */
     void reset_aw_covariance_to_stationary() {
         P_.template block<3,3>(OFF_AW, OFF_AW) = Sigma_aw_;
         for (int i = 0; i < NX; ++i) {
             if (i >= OFF_AW && i < OFF_AW + 3) continue;
             for (int k = 0; k < 3; ++k) {
-                P_(i, OFF_AW + k) = T(0);
-                P_(OFF_AW + k, i) = T(0);
+                P_(i, OFF_AW+k) = T(0);
+                P_(OFF_AW+k, i) = T(0);
             }
         }
     }
-
-    bool synchronize_aw_covariance_to_stationary_congruent() {
-        Matrix3 P_aa = P_.template block<3,3>(OFF_AW, OFF_AW);
-        P_aa = T(0.5) * (P_aa + P_aa.transpose()).eval();
-
-        Eigen::LLT<Matrix3> llt_old(P_aa);
-        Eigen::LLT<Matrix3> llt_new(Matrix3(T(0.5) * (Sigma_aw_ + Sigma_aw_.transpose())));
-        if (llt_old.info() != Eigen::Success || llt_new.info() != Eigen::Success) {
-            reset_aw_covariance_to_stationary();
-            return false;
-        }
-        // M carries the old marginal onto the new one; applying it to the
-        // cross-covariances keeps every correlation coefficient intact.
-        const Matrix3 M = llt_new.matrixL() *
-                          Matrix3(llt_old.matrixL()).inverse();
-        if (!M.allFinite()) {
-            reset_aw_covariance_to_stationary();
-            return false;
-        }
-
-        for (int i = 0; i < NX; ++i) {
-            if (i >= OFF_AW && i < OFF_AW + 3) continue;
-            Vector3 col;
-            for (int k = 0; k < 3; ++k) col(k) = P_(OFF_AW + k, i);
-            const Vector3 scaled = M * col;
-            for (int k = 0; k < 3; ++k) {
-                P_(OFF_AW + k, i) = scaled(k);
-                P_(i, OFF_AW + k) = scaled(k);
-            }
-        }
-        P_.template block<3,3>(OFF_AW, OFF_AW) = M * P_aa * M.transpose();
-        P_ = T(0.5) * (P_ + P_.transpose()).eval();
-        return true;
-    }
-
-    // ------------------------------------------------------------- tuning
 
     void set_aw_time_constant(T tau) { tau_aw_ = std::max(T(1e-3), tau); }
     [[nodiscard]] T aw_time_constant() const { return tau_aw_; }
@@ -450,42 +233,52 @@ class Kalman3D_Wave_TFG {
 
     void set_gyro_noise_density_rad_sqrt_s(T density) {
         const T d = std::max(T(0), density);
-        Q_gyro_ = Matrix3::Identity() * (d * d);
+        Q_gyro_ = Matrix3::Identity() * (d*d);
     }
     void set_Q_bgyro_rw(const Vector3& var_per_s) {
         Q_bg_ = var_per_s.cwiseAbs().asDiagonal();
     }
-    void set_Q_bacc_rw(const Vector3& var_per_s) {
-        Q_ba_ = var_per_s.cwiseAbs().asDiagonal();
+
+    // Same API and semantics as current OU-III: the argument is a continuous
+    // driving-noise standard deviation, despite the historical method name.
+    void set_Q_bacc_rw(const Vector3& driving_std_per_sqrt_s) {
+        if constexpr (with_accel_bias)
+            Q_ba_ = driving_std_per_sqrt_s.array().square().matrix().asDiagonal();
+    }
+    void set_acc_bias_time_constant(T tau_seconds) {
+        if constexpr (with_accel_bias) tau_ba_ = std::max(T(1e-3), tau_seconds);
+    }
+    [[nodiscard]] T get_acc_bias_time_constant() const noexcept { return tau_ba_; }
+    void set_acc_bias_ou_stationary_std(const Vector3& stationary_std, T tau_seconds) {
+        if constexpr (with_accel_bias) {
+            set_acc_bias_time_constant(tau_seconds);
+            const Vector3 s = stationary_std.cwiseAbs();
+            Q_ba_ = (T(2)/tau_ba_) * s.array().square().matrix().asDiagonal();
+        }
+    }
+    void set_initial_acc_bias_std(T s) {
+        if constexpr (with_accel_bias) {
+            sigma_ba0_ = std::max(T(0), s);
+            P_.template block<3,3>(OFF_BA, OFF_BA) =
+                Matrix3::Identity() * sigma_ba0_ * sigma_ba0_;
+        }
+    }
+    void set_initial_acc_bias(const Vector3& b0) {
+        if constexpr (with_accel_bias) X_.B.col(1) = b0;
+    }
+    [[nodiscard]] Vector3 get_acc_bias_at_temperature(T tempC) const {
+        return accel_bias_at_(tempC);
     }
 
     void set_initial_linear_uncertainty(T std_v, T std_p, T std_S, T std_aw) {
         P_.template block<12,12>(OFF_V, OFF_V).setZero();
         const T d[4] = {std_v*std_v, std_p*std_p, std_S*std_S, std_aw*std_aw};
-        for (int c = 0; c < 4; ++c) {
+        for (int c = 0; c < 4; ++c)
             for (int k = 0; k < 3; ++k) P_(OFF_V + 3*c + k, OFF_V + 3*c + k) = d[c];
-        }
     }
 
-    // --------------------------------------------------------- propagation
-
-    /*
-        Nominal (mean) propagation.
-
-            Rhat+   = Rhat Exp((w_m - bhat_g) h)
-            [v p S a_w]+ = Phi_OU applied per axis
-            biases held constant
-
-        R is body-to-world and the rate is body-frame, so the rotation
-        increment multiplies on the RIGHT here. That is not in tension with
-        the left-multiplicative *correction*: propagation moves the nominal
-        state along the trajectory, while a correction acts on the error,
-        which lives in the world frame. Mixing the two up is the single
-        easiest way to get this filter subtly wrong.
-    */
     void propagate_mean(const Vector3& gyro_meas, T Ts) {
         if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
-
         const Vector3 omega = gyro_meas - X_.B.col(0);
         last_omega_ = omega;
 
@@ -495,312 +288,188 @@ class Kalman3D_Wave_TFG {
         if (linear_block_enabled_) {
             Eigen::Matrix<T,4,4> Phi_axis;
             ou_detail::IntegratedOUChain<T,3>::transition(tau_aw_, Ts, Phi_axis);
-            // Row i of X is [v_i p_i S_i a_i], so applying the per-axis 4x4 to
-            // every row at once is a right multiplication by its transpose.
             X_.X = (X_.X * Phi_axis.transpose()).eval();
+        }
+
+        if constexpr (with_accel_bias) {
+            if (acc_bias_updates_enabled_) {
+                X_.B.col(1) *= std::exp(-Ts / tau_ba_);
+            }
         }
     }
 
-    /*
-        Discrete transition of the right-invariant error, assembled blockwise.
-        Exposed so tfg_propagation-test can check it against finite
-        differences of the nonlinear propagation, and ou_chain_identity-test
-        can check the world block against IntegratedOUChain directly.
-    */
     void build_transition(T Ts, const Vector3& gyro_meas, MatrixNX& Phi) const {
         Phi.setIdentity();
+        if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
 
-        /*
-            Step-averaged body-to-world rotation:
-
-                (1/h) int_0^h Rhat Exp(w s) ds = Rhat J_l(w h) =: Rbar
-
-            Using Rhat alone is wrong at order |w| h -- see the header note.
-
-            Bmap is the map from a bias error onto phidot, integrated over the
-            step. The two levels differ by exactly one transpose of Rhat,
-            which is the whole content of the coordinate change beta = Rhat
-            delta_b:
-
-                Level 1:  phidot = -Rhat delta_b   ->  Bmap = Rbar
-                Level 2:  phidot = -beta           ->  Bmap = Rbar Rhat^T
-                                                            = J_l(w_world h)
-
-            using the equivariance J_l(R u) = R J_l(u) R^T.
-        */
+        const Matrix3 R0 = X_.R;
         const Vector3 omega = gyro_meas - X_.B.col(0);
-        const Matrix3 Rbar =
-            X_.R * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts));
-        const Matrix3 Bmap = two_frame_bias ? Matrix3(Rbar * X_.R.transpose()) : Rbar;
+        const Matrix3 R_end = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * Ts));
 
-        // Attitude <- bias. Exact: A_phi,phi = 0, and the bias block's own
-        // dynamics are a pure rotation, handled below.
-        Phi.template block<3,3>(OFF_PHI, OFF_BG) = -Bmap * Ts;
+        // beta_g is world-referred at Level 2 and additive body-referred at
+        // Level 1.  Fh = int_0^h R(t) dt maps a physical body-bias error into
+        // the right-invariant attitude error exactly for constant measured
+        // angular rate over the sample.
+        const Matrix3 Fh =
+            R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts)));
+        const Matrix3 bg0_to_body =
+            two_frame_bias ? Matrix3(R0.transpose()) : Matrix3::Identity();
+        Phi.template block<3,3>(OFF_PHI, OFF_BG) = -Fh * bg0_to_body;
+        if constexpr (two_frame_bias)
+            Phi.template block<3,3>(OFF_BG, OFF_BG) = R_end * R0.transpose();
 
-        /*
-            Bias self-dynamics.
-
-            Level 1: delta_b is a random walk in the body frame, so Phi = I.
-
-            Level 2: beta = R delta_b inherits the frame's rotation --
-
-                betadot = Rdot delta_b + R delta_bdot
-                        = R [w]x delta_b - R w_b
-                        = [R w]x beta - R w_b
-
-            so Phi_beta,beta = Exp(w_world h), a rotation rather than the
-            identity. This term has no Level-1 analogue and is the substantive
-            new content of the two-frame geometry: the bias error is carried
-            along by the vehicle's rotation instead of sitting still.
-        */
-        if constexpr (two_frame_bias) {
-            const Matrix3 Rw_step = ocean_imu::lie::Exp<T>(Vector3(X_.R * omega * Ts));
-            Phi.template block<3,3>(OFF_BG, OFF_BG) = Rw_step;
-            if constexpr (with_accel_bias) {
-                Phi.template block<3,3>(OFF_BA, OFF_BA) = Rw_step;
-            }
+        if constexpr (with_accel_bias) {
+            const T alpha_ba = acc_bias_updates_enabled_ ? std::exp(-Ts/tau_ba_) : T(1);
+            if constexpr (two_frame_bias)
+                Phi.template block<3,3>(OFF_BA, OFF_BA) =
+                    alpha_ba * R_end * R0.transpose();
+            else
+                Phi.template block<3,3>(OFF_BA, OFF_BA) =
+                    alpha_ba * Matrix3::Identity();
         }
 
-        // World block: the OU chain, exact, per axis. When the linear block is
-        // gated off the world states are frozen, so Phi stays the identity
-        // there and the bias coupling below is skipped with it.
-        if (!linear_block_enabled_) return;
-
+        // Exact OU-chain state transition for the active linear block; when
+        // it is gated off the physical world columns are frozen and the world
+        // transition is identity.
         Eigen::Matrix<T,4,4> Phi_axis;
-        ou_detail::IntegratedOUChain<T,3>::transition(tau_aw_, Ts, Phi_axis);
+        world_transition_(Ts, Phi_axis);
         Phi.template block<12,12>(OFF_V, OFF_V).setZero();
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 4; ++j) {
                 if (Phi_axis(i,j) == T(0)) continue;
-                for (int k = 0; k < 3; ++k) {
+                for (int k = 0; k < 3; ++k)
                     Phi(OFF_V + 3*i + k, OFF_V + 3*j + k) = Phi_axis(i,j);
-                }
             }
         }
 
-        // World <- gyro bias:  Phi_world,bg = -Psi(h) [x]x Rbar, stacked over
-        // the world columns x in {v, p, S, a_w}. This is where rho_xdot picks
-        // up +[x]x phidot from (2).
-        Eigen::Matrix<T,4,4> Psi;
-        tfg_detail::integral_transition_axis<T>(tau_aw_, Ts, Psi);
-        Matrix3 Gx[4];
-        for (int c = 0; c < 4; ++c) {
-            Gx[c] = -ocean_imu::lie::skew<T>(Vector3(X_.X.col(c))) * Bmap;
-        }
-        for (int i = 0; i < 4; ++i) {
-            Matrix3 acc = Matrix3::Zero();
-            for (int j = 0; j < 4; ++j) {
-                if (Psi(i,j) != T(0)) acc.noalias() += Psi(i,j) * Gx[j];
-            }
-            Phi.template block<3,3>(OFF_V + 3*i, OFF_BG) = acc;
-        }
-
-        // Accelerometer bias is a pure random walk and does not enter the
-        // propagation of anything else -- it only shows up in the
-        // accelerometer measurement, which is Phase C.
+        // rho_dot = A rho - [x(t)]x R(t) delta_b_g.  Integrate the actual
+        // time-varying nominal x(t) and R(t), rather than replacing them by
+        // their start-of-step values.  D maps a physical body bias to the
+        // final world-error columns; Level 2 converts beta_g(0) back to that
+        // physical body-bias coordinate with R0^T.
+        Eigen::Matrix<T,12,3> D;
+        integrate_world_bias_impulse_(T(0), Ts, omega, D);
+        Phi.template block<12,3>(OFF_V, OFF_BG) = -D * bg0_to_body;
     }
 
-    /*
-        Discrete process noise.
-
-        World block: exact, from IntegratedOUChain, including the correlated
-        vector-OU assembly when Sigma_aw is not diagonal.
-
-        Attitude and gyro-bias blocks: exactly integrated, since
-        Phi_phi,bg(s) = -Rhat (h - s) is exact --
-
-            Q_phi,phi += W h + Rhat Q_bg Rhat^T h^3/3
-            Q_phi,bg   = -Rhat Q_bg h^2/2
-            Q_bg,bg    = Q_bg h                with W = Rhat Q_gyro Rhat^T
-
-        Gyro white noise leaking into the world vectors is first order in h.
-        See the header note on why that truncation is deliberate.
-    */
     void build_process_noise(T Ts, const Vector3& gyro_meas, MatrixNX& Qd) const {
         Qd.setZero();
         if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
 
-        const Matrix3 Rhat = X_.R;
-        /*
-            At Level 2 the bias noise lands in the world frame of the END of
-            the step, not its start.
+        const Matrix3 R0 = X_.R;
+        const Vector3 omega = gyro_meas - X_.B.col(0);
+        const Matrix3 R_end = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * Ts));
+        const Matrix3 Fh =
+            R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts)));
 
-            The bias random walk is body-frame, and beta carries it forward
-            through the frame's rotation:
+        // Five-point Gauss--Legendre quadrature of the *complete structured
+        // impulse response* of the stated continuous invariant error model.
+        // For gyro white noise an impulse at s enters phi through R(s) and all
+        // world columns through [x(s)]x R(s), followed by the remaining OU
+        // chain.  A gyro-bias RW impulse persists from s to h, therefore also
+        // drives phi and every world column for the rest of the sample.
+        static constexpr double nodes[5] = {
+            -0.9061798459386640, -0.5384693101056831, 0.0,
+             0.5384693101056831,  0.9061798459386640
+        };
+        static constexpr double weights[5] = {
+            0.2369268850561891, 0.4786286704993665, 0.5688888888888889,
+            0.4786286704993665, 0.2369268850561891
+        };
 
-                Q_beta = int_0^h Exp(w_world (h-s)) Rhat(s) Q_b Rhat(s)^T
-                                 Exp(w_world (h-s))^T ds
+        for (int q = 0; q < 5; ++q) {
+            const T s = T(0.5) * Ts * (T(1) + T(nodes[q]));
+            const T wq = T(0.5) * Ts * T(weights[q]);
+            const Matrix3 R_s = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * s));
 
-            and because Exp(w_world (h-s)) Rhat(s) = Rhat(h) identically, the
-            integrand is the constant Rhat(h) Q_b Rhat(h)^T. Using Rhat(0)
-            instead is wrong at order |w| h -- the same order, and for the same
-            reason, as using Rhat rather than Rbar in Phi.
-        */
-        const Matrix3 R_end =
-            two_frame_bias
-                ? Matrix3(Rhat * ocean_imu::lie::Exp<T>(
-                      Vector3((gyro_meas - X_.B.col(0)) * Ts)))
-                : Rhat;
-        const Matrix3 W  = Rhat * Q_gyro_ * Rhat.transpose();   // world-frame gyro noise
-        const Matrix3 Wb = Rhat * Q_bg_   * Rhat.transpose();
+            Eigen::Matrix<T,4,4> Phi_s, Phi_rem;
+            world_transition_(s, Phi_s);
+            world_transition_(Ts - s, Phi_rem);
+            const Eigen::Matrix<T,3,4> X_s = X_.X * Phi_s.transpose();
 
-        const T h2 = Ts * Ts;
-        const T h3 = h2 * Ts;
-
-        /*
-            Attitude and gyro-bias.
-
-            The bias random walk drives phi through Phi_phi,bg(s), which is
-            exactly integrable, giving the h^3/3 and h^2/2 terms.
-
-            The bias blocks themselves are expressed in whichever frame the
-            error lives in: body at Level 1, world at Level 2. That is the
-            T-conjugation again -- Q_L2 = T Q_L1 T^T -- and it is why the
-            Level-2 forms carry Rhat on both sides where Level 1 carries it on
-            one or neither.
-        */
-        // phi's own block is frame-independent (T's phi block is the
-        // identity), so it uses Rhat at the start of the step in both levels.
-        // The bias blocks land at R_end.
-        const Matrix3 Q_bias_own   = two_frame_bias
-            ? Matrix3(R_end * Q_bg_ * R_end.transpose()) : Q_bg_;
-        const Matrix3 Q_bias_cross = two_frame_bias
-            ? Matrix3(Rhat * Q_bg_ * R_end.transpose()) : Matrix3(Rhat * Q_bg_);
-
-        Qd.template block<3,3>(OFF_PHI, OFF_PHI) = W * Ts + Wb * (h3 / T(3));
-        Qd.template block<3,3>(OFF_PHI, OFF_BG)  = -Q_bias_cross * (h2 / T(2));
-        Qd.template block<3,3>(OFF_BG, OFF_PHI)  =
-            Qd.template block<3,3>(OFF_PHI, OFF_BG).transpose();
-        Qd.template block<3,3>(OFF_BG, OFF_BG)   = Q_bias_own * Ts;
-
-        // Gyro white noise into the world vectors, via rho_xdot = ... + [x]x phidot.
-        Matrix3 Sx[4];
-        for (int c = 0; c < 4; ++c) Sx[c] = ocean_imu::lie::skew<T>(Vector3(X_.X.col(c)));
-        for (int i = 0; i < 4; ++i) {
-            const Matrix3 SiW = Sx[i] * W;
-            Qd.template block<3,3>(OFF_PHI, OFF_V + 3*i) += (W * Sx[i].transpose()) * Ts;
-            Qd.template block<3,3>(OFF_V + 3*i, OFF_PHI) += (SiW) * Ts;
-            for (int j = 0; j < 4; ++j) {
-                Qd.template block<3,3>(OFF_V + 3*i, OFF_V + 3*j) +=
-                    (SiW * Sx[j].transpose()) * Ts;
+            Eigen::Matrix<T,NX,3> Lg = Eigen::Matrix<T,NX,3>::Zero();
+            Lg.template block<3,3>(OFF_PHI, 0) = R_s;
+            for (int i = 0; i < 4; ++i) {
+                Matrix3 M = Matrix3::Zero();
+                for (int j = 0; j < 4; ++j) {
+                    if (Phi_rem(i,j) == T(0)) continue;
+                    M.noalias() += Phi_rem(i,j) *
+                        (ocean_imu::lie::skew<T>(Vector3(X_s.col(j))) * R_s);
+                }
+                Lg.template block<3,3>(OFF_V + 3*i, 0) = M;
             }
+            Qd.noalias() += wq * (Lg * Q_gyro_ * Lg.transpose());
+
+            Eigen::Matrix<T,NX,3> Lb = Eigen::Matrix<T,NX,3>::Zero();
+            const Matrix3 Fs =
+                R0 * (s * ocean_imu::lie::left_jacobian<T>(Vector3(omega * s)));
+            const Matrix3 C = Fh - Fs;  // int_s^h R(t) dt
+            Lb.template block<3,3>(OFF_PHI, 0) = -C;
+            Lb.template block<3,3>(OFF_BG, 0) =
+                two_frame_bias ? R_end : Matrix3::Identity();
+
+            Eigen::Matrix<T,12,3> D;
+            integrate_world_bias_impulse_(s, Ts, omega, D);
+            Lb.template block<12,3>(OFF_V, 0) = -D;
+            Qd.noalias() += wq * (Lb * Q_bg_ * Lb.transpose());
         }
 
-        // World block: the exact OU contribution, added on top.
+        // The OU acceleration driving noise is already available in exact
+        // discrete form for the linear chain and is independent of gyro and
+        // gyro-bias driving noise.
         if (linear_block_enabled_) add_ou_process_noise_(Ts, Qd);
 
         if constexpr (with_accel_bias) {
-            Qd.template block<3,3>(OFF_BA, OFF_BA) =
-                (two_frame_bias ? Matrix3(R_end * Q_ba_ * R_end.transpose()) : Q_ba_) * Ts;
+            if (acc_bias_updates_enabled_) {
+                // A body-frame OU noise impulse decays in body coordinates;
+                // its final Level-2 coordinate is simply R_end times that
+                // decayed body increment, so the scalar OU integral is exact.
+                const T qint = T(0.5) * tau_ba_ * (-std::expm1(T(-2)*Ts/tau_ba_));
+                Qd.template block<3,3>(OFF_BA, OFF_BA) +=
+                    (two_frame_bias ? Matrix3(R_end * Q_ba_ * R_end.transpose()) : Q_ba_) * qint;
+            }
         }
 
         Qd = T(0.5) * (Qd + Qd.transpose()).eval();
         ou_detail::project_psd_ou_iii<T,NX>(Qd);
     }
 
-    /*
-        Right-invariant error of this state relative to a reference, in the
-        same TANGENT coordinates that inject() consumes and that P is
-        expressed in. Exact inverse of inject().
-
-            phi        = Log(Rhat R^T)
-            rho_group  = xhat - Exp(phi) x
-            xi_rho     = J_l(phi)^-1 rho_group
-            xi_db      = bhat - b               (additive, body frame)
-
-        The J_l inverse is the part that is easy to drop, and dropping it is
-        not harmless. There are two different objects here:
-
-          - the group element eta = Xhat o X^-1, whose world components are
-            rho_group = xhat - dR x;
-          - its tangent coordinates xi = Log_G(eta), whose world components
-            are J_l(phi)^-1 rho_group.
-
-        The covariance lives on the tangent, and the retraction is Exp_G, so
-        the injection multiplies by J_l. Returning rho_group here instead
-        would make error_from and inject differ by exactly J_l -- agreeing to
-        first order, so every small-perturbation check would still pass, while
-        finite-difference Jacobians at usable step sizes and NEES at realistic
-        error magnitudes would both be quietly wrong.
-    */
     [[nodiscard]] Tangent error_from(const Kalman3D_Wave_TFG& reference) const {
         Tangent xi;
         xi.setZero();
-
-        const Vector3 phi = ocean_imu::lie::Log<T>(
-            Matrix3(X_.R * reference.X_.R.transpose()));
+        const Vector3 phi = ocean_imu::lie::Log<T>(Matrix3(X_.R * reference.X_.R.transpose()));
         const Matrix3 dR  = ocean_imu::lie::Exp<T>(phi);
         const Matrix3 Jli = ocean_imu::lie::inv_left_jacobian<T>(phi);
         xi.template segment<3>(OFF_PHI) = phi;
-
-        for (int c = 0; c < 4; ++c) {
+        for (int c = 0; c < 4; ++c)
             xi.template segment<3>(OFF_V + 3*c) =
                 Jli * (X_.X.col(c) - dR * reference.X_.X.col(c));
-        }
-        if constexpr (two_frame_bias) {
-            /*
-                The group element's bias part is eta_B = R_ref (Bhat - B_ref),
-                and its tangent coordinates apply J_l(-phi)^-1, mirroring the
-                J_l(-phi) that Exp_G puts there.
 
-                R_ref, not Rhat: eta = Xhat o X^-1 evaluates the composition's
-                R2^T B1 term with R2 = X^-1's rotation, i.e. the reference's.
-                The two differ by Exp(phi), so using the estimate's rotation
-                would again be right only at zero error.
-            */
+        if constexpr (two_frame_bias) {
             const Matrix3 Jri = ocean_imu::lie::inv_left_jacobian<T>(Vector3(-phi));
             const Matrix3 JriR = Jri * reference.X_.R;
             xi.template segment<3>(OFF_BG) = JriR * (X_.B.col(0) - reference.X_.B.col(0));
-            if constexpr (with_accel_bias) {
+            if constexpr (with_accel_bias)
                 xi.template segment<3>(OFF_BA) = JriR * (X_.B.col(1) - reference.X_.B.col(1));
-            }
         } else {
             xi.template segment<3>(OFF_BG) = X_.B.col(0) - reference.X_.B.col(0);
-            if constexpr (with_accel_bias) {
+            if constexpr (with_accel_bias)
                 xi.template segment<3>(OFF_BA) = X_.B.col(1) - reference.X_.B.col(1);
-            }
         }
         return xi;
     }
 
     void time_update(const Vector3& gyro_meas, T Ts) {
         if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
-
         MatrixNX Phi, Qd;
         build_transition(Ts, gyro_meas, Phi);
         build_process_noise(Ts, gyro_meas, Qd);
-
         propagate_mean(gyro_meas, Ts);
-
         P_ = (Phi * P_ * Phi.transpose()).eval();
         P_ += Qd;
         P_ = T(0.5) * (P_ + P_.transpose()).eval();
     }
 
-    // ---------------------------------------------------------- correction
-
-    /*
-        State injection, Xhat+ = Exp_G(xi) o Xhat-.
-
-        The world part is the group retraction at both levels. The bias line
-        is what differs:
-
-            Level 1:  Bhat+ = Bhat + delta_b                 additive, body frame
-            Level 2:  Bhat+ = Bhat + Rhat^- ^T J_l(-phi) beta
-
-        Level 2 is the two-frame group law, B_result = B2 + R2^T B1, with the
-        PRE-update Rhat -- which is why R_pre is captured before the attitude
-        is touched. Using the post-update rotation would be wrong by exactly
-        Exp(phi), i.e. right only when the correction is zero.
-
-        The split lives here rather than in TwoFrameGroup so that the group
-        stays a pure Level-2 object with no filter-level switch in it.
-
-        Note what is deliberately absent: there is no MEKF-style covariance
-        reset (ou_detail::apply_left_error_reset). The invariant update already
-        leaves P in the post-update tangent frame, and applying
-        G = I + 0.5 [dtheta]x on top would double-correct it.
-    */
     void inject(const Tangent& xi) {
         const Vector3 phi = xi.template segment<3>(OFF_PHI);
         const Matrix3 E_R = ocean_imu::lie::Exp<T>(phi);
@@ -809,45 +478,68 @@ class Kalman3D_Wave_TFG {
 
         Eigen::Matrix<T,3,4> rho;
         for (int c = 0; c < 4; ++c) rho.col(c) = xi.template segment<3>(OFF_V + 3*c);
-
         X_.X = (E_R * X_.X + Jl * rho).eval();
         X_.R = (E_R * X_.R).eval();
         reorthonormalize_();
 
         if constexpr (two_frame_bias) {
-            // E_B = J_l(-phi) beta, transported into the body frame by R_pre^T.
             const Matrix3 Jr = ocean_imu::lie::left_jacobian<T>(Vector3(-phi));
             const Matrix3 RtJr = R_pre.transpose() * Jr;
             X_.B.col(0) += RtJr * xi.template segment<3>(OFF_BG);
-            if constexpr (with_accel_bias) {
+            if constexpr (with_accel_bias)
                 X_.B.col(1) += RtJr * xi.template segment<3>(OFF_BA);
-            }
         } else {
             X_.B.col(0) += xi.template segment<3>(OFF_BG);
             if constexpr (with_accel_bias) X_.B.col(1) += xi.template segment<3>(OFF_BA);
         }
     }
 
-    // ------------------------------------------------------- measurements
-    /*
-        SIGN CONVENTION, fixed here once and used everywhere.
+    // Full finite-retraction reset Jacobian. For Level 2 this is the right
+    // Jacobian of the complete TwoFrameGroup. Level-1 additive bias blocks stay
+    // identity while attitude/world blocks retain the group retraction map.
+    void build_reset_jacobian(const Tangent& correction, MatrixNX& J) const {
+        J.setIdentity();
+        const Vector3 phi = correction.template segment<3>(OFF_PHI);
+        const Matrix3 Jr = ocean_imu::lie::left_jacobian<T>(Vector3(-phi));
+        J.template block<3,3>(OFF_PHI, OFF_PHI) = Jr;
+        for (int c = 0; c < 4; ++c)
+            set_reset_vector_block_(J, OFF_V + 3*c, phi,
+                                    correction.template segment<3>(OFF_V + 3*c), Jr);
+        if constexpr (two_frame_bias) {
+            set_reset_vector_block_(J, OFF_BG, phi,
+                                    correction.template segment<3>(OFF_BG), Jr);
+            if constexpr (with_accel_bias)
+                set_reset_vector_block_(J, OFF_BA, phi,
+                                        correction.template segment<3>(OFF_BA), Jr);
+        }
+    }
 
-            xi     is the error OF THE ESTIMATE:  eta = Xhat X^-1 = Exp_G(xi),
-                   and P = E[xi xi^T].
-            r      is the innovation, measured minus predicted.
-            r      ~ H xi + noise                       (note: +, not -)
-            K      = P H^T (H P H^T + R)^-1
-            xihat  = K r                                 estimated error
-            Xhat+  = Exp_G(-xihat) o Xhat                remove it
+    // A magnetic first lock is a world-frame gauge choice, not a heading
+    // measurement update. Rotate every world-referred nominal quantity and the
+    // complete tangent covariance coherently. Body biases remain body-frame
+    // states; their Level-2 tangent coordinates rotate because beta=R delta_b.
+    void apply_world_yaw_gauge(T yaw_delta) {
+        if (!std::isfinite(yaw_delta)) return;
+        const Matrix3 Q = ocean_imu::lie::Exp<T>(Vector3(T(0), T(0), yaw_delta));
+        X_.R = (Q * X_.R).eval();
+        X_.X = (Q * X_.X).eval();
+        reorthonormalize_();
 
-        The correction is injected NEGATED, because xi is the error rather
-        than the correction. Half the sign bugs in filters like this come from
-        mixing the two conventions -- deriving H against "r ~ -H xi" and then
-        injecting +K r, which cancels out only if both mistakes are made
-        together. Here H is exactly d r / d xi, which is what
-        tfg_jacobians-test measures by finite differences, so there is nothing
-        left to get backwards.
-    */
+        MatrixNX G = MatrixNX::Identity();
+        G.template block<3,3>(OFF_PHI, OFF_PHI) = Q;
+        for (int c = 0; c < 4; ++c)
+            G.template block<3,3>(OFF_V + 3*c, OFF_V + 3*c) = Q;
+        if constexpr (two_frame_bias) {
+            G.template block<3,3>(OFF_BG, OFF_BG) = Q;
+            if constexpr (with_accel_bias) G.template block<3,3>(OFF_BA, OFF_BA) = Q;
+        }
+        P_ = (G * P_ * G.transpose()).eval();
+        P_ = T(0.5) * (P_ + P_.transpose()).eval();
+
+        Sigma_aw_ = (Q * Sigma_aw_ * Q.transpose()).eval();
+        R_S_ = (Q * R_S_ * Q.transpose()).eval();
+        if (have_mag_reference_) B_w_ = Q * B_w_;
+    }
 
     struct MeasDiag3 {
         Vector3 r{Vector3::Zero()};
@@ -861,33 +553,15 @@ class Kalman3D_Wave_TFG {
     [[nodiscard]] const MeasDiag3& lastIntegralDiag() const { return last_S_diag_; }
 
     void set_Racc_std(const Vector3& std_body) { Racc_ = std_body.cwiseAbs2().asDiagonal(); }
-    void set_Racc_matrix(const Matrix3& R_body) { Racc_ = T(0.5) * (R_body + R_body.transpose()); }
+    void set_Racc_matrix(const Matrix3& R_body) { Racc_ = T(0.5)*(R_body + R_body.transpose()); }
     void set_Rmag_std(const Vector3& std_body)  { Rmag_ = std_body.cwiseAbs2().asDiagonal(); }
     void set_Rmag(T variance) { Rmag_ = Matrix3::Identity() * std::abs(variance); }
-    /*
-        Integral pseudo-measurement noise, as a STANDARD DEVIATION, matching
-        Kalman3D_Wave_OU_III::set_RS_noise exactly.
-
-        The units here are a trap worth spelling out. The tuning law produces
-        r_S as a standard-deviation scale -- the article calls it "the
-        standard-deviation scale whose square forms the integral
-        pseudo-measurement covariance" -- so a setter that took a variance
-        would silently receive r_S and apply r_S instead of r_S^2. At a typical
-        operating point that is an order of magnitude of over-tight
-        regularization, and it shows up as resonant gain rather than as
-        anything that looks like a units error.
-
-        set_RS_noise_matrix takes a covariance directly, for the anisotropic
-        case where a standard deviation per axis is not enough.
-    */
     void set_RS_noise(const Vector3& sigma_S) {
         R_S_ = sigma_S.array().square().matrix().asDiagonal();
     }
     void set_RS_noise(T sigma_S) { set_RS_noise(Vector3::Constant(std::abs(sigma_S))); }
-    void set_RS_noise_matrix(const Matrix3& R_S) { R_S_ = T(0.5) * (R_S + R_S.transpose()); }
+    void set_RS_noise_matrix(const Matrix3& R_S) { R_S_ = T(0.5)*(R_S + R_S.transpose()); }
 
-    // World-frame magnetic reference, NED. Stored as the fixed vector the
-    // magnetometer Jacobian is built from -- not as a body-frame prediction.
     void set_magnetic_reference_world(const Vector3& B_w) {
         if (B_w.allFinite() && B_w.norm() > T(1e-9)) {
             B_w_ = B_w;
@@ -898,99 +572,51 @@ class Kalman3D_Wave_TFG {
     [[nodiscard]] bool has_magnetic_reference() const { return have_mag_reference_; }
 
     void set_accel_bias_temp_coeff(const Vector3& k_a) { k_a_ = k_a; }
-    void set_accel_bias_limit(T limit) { acc_bias_limit_ = std::abs(limit); }
-    void set_acc_bias_updates_enabled(bool on) { acc_bias_updates_enabled_ = on; }
+    void set_acc_bias_updates_enabled(bool on) {
+        if (acc_bias_updates_enabled_ == on) return;
+        if constexpr (with_accel_bias) {
+            if (!on) {
+                // A frozen bias must not be changed indirectly by another
+                // measurement through stale cross-covariance.
+                for (int i = 0; i < NX; ++i) {
+                    if (i >= OFF_BA && i < OFF_BA+3) continue;
+                    for (int k = 0; k < 3; ++k) {
+                        P_(i, OFF_BA+k) = T(0);
+                        P_(OFF_BA+k, i) = T(0);
+                    }
+                }
+            } else {
+                Matrix3 Pba = T(0.5) *
+                    (P_.template block<3,3>(OFF_BA, OFF_BA) +
+                     P_.template block<3,3>(OFF_BA, OFF_BA).transpose()).eval();
+                const T floor = sigma_ba0_ * sigma_ba0_;
+                for (int i = 0; i < 3; ++i) Pba(i,i) = std::max(Pba(i,i), floor);
+                P_.template block<3,3>(OFF_BA, OFF_BA) = Pba;
+            }
+        }
+        acc_bias_updates_enabled_ = on;
+    }
+    [[nodiscard]] bool acc_bias_updates_enabled() const { return acc_bias_updates_enabled_; }
 
-    // Chi-square gate on the 3-DoF NIS. Zero disables it, which is the
-    // default and matches OU-III's behaviour of accepting every update.
     void set_meas_gate_nis(T threshold) { nis_gate_ = std::max(T(0), threshold); }
-
     [[nodiscard]] Vector3 gravity_world() const { return Vector3(T(0), T(0), gravity_magnitude_); }
 
-    /*
-        Accelerometer, as a world-frame invariant residual.
-
-            f_m = R^T (a_w - g) + b_a + n_a
-            r_a = Rhat (f_m - bhat_a) - (ahat_w - g)
-
-        which is zero at the true state. Linearizing with Rhat = Exp(phi) R
-        and ahat_w = rho_a + Exp(phi) a_w:
-
-            r_a ~ [g]x phi - rho_a - Rhat delta_ba + Rhat n_a
-
-        The Jacobian contains the FIXED gravity vector and nothing else --
-        no estimated attitude, no estimated wave acceleration. That is the
-        structural gain over OU-III, whose J_att = -[f_cog_b]x is rebuilt from
-        the current specific-force estimate every step.
-
-        WHAT IS APPROXIMATED, precisely. Differentiating the residual exactly
-        gives
-
-            d r_a / d phi = -[Rhat (f_m - bhat_a)]x + [ahat_w]x
-                          = [g]x - [r_a]x
-
-        because Rhat(f_m - bhat_a) = ahat_w - g + r_a by definition of r_a. So
-        [g]x is the exact derivative only where the residual vanishes, and the
-        neglected term is exactly -[r_a]x: first order in the innovation,
-        vanishing as the filter converges.
-
-        That term is dropped on purpose. Keeping it would put the measurement
-        and the estimated attitude back into the Jacobian and forfeit the one
-        property this formulation exists for. It is the standard invariant-EKF
-        choice, and tfg_jacobians-test pins its exact size and structure --
-        finite differences at a consistent state must match to 1e-8, and the
-        discrepancy at an inconsistent state must equal -[r_a]x rather than
-        merely being "small".
-
-        Note the accelerometer-bias column: -Rhat, not -I. At Level 1
-        delta_ba is an additive BODY-frame error, so it has to be rotated into
-        the world frame the residual lives in. It collapses to -I only at
-        Level 2, where beta_a = R(bhat_a - b_a) is already world-referred.
-        That difference is exactly what the two-frame bias geometry buys, and
-        tfg_jacobians-test pins both the value and the reason.
-    */
     void accel_residual(const Vector3& acc_meas_body, T tempC,
                         Vector3& r, Eigen::Matrix<T,3,NX>& H, Matrix3& Rw) const {
         const Vector3 ba = accel_bias_at_(tempC);
         r = X_.R * (acc_meas_body - ba) - (X_.X.col(3) - gravity_world());
-
         H.setZero();
         H.template block<3,3>(0, OFF_PHI) = ocean_imu::lie::skew<T>(gravity_world());
-        if (linear_block_enabled_) {
-            H.template block<3,3>(0, OFF_AW) = -Matrix3::Identity();
-        }
+        if (linear_block_enabled_) H.template block<3,3>(0, OFF_AW) = -Matrix3::Identity();
         if constexpr (with_accel_bias) {
-            if (acc_bias_updates_enabled_) {
+            if (acc_bias_updates_enabled_)
                 H.template block<3,3>(0, OFF_BA) =
                     two_frame_bias ? Matrix3(-Matrix3::Identity()) : Matrix3(-X_.R);
-            }
         }
-        // Body-frame sensor noise, expressed in the world frame the residual
-        // lives in. For isotropic Racc this is a no-op, which is worth knowing
-        // when reading the anisotropic case.
         Rw = X_.R * Racc_ * X_.R.transpose();
-
-        // With the linear block frozen, a_w is not estimated -- but it is
-        // still physically present in the measurement. Marginalize it in as
-        // extra measurement noise rather than pretending it is zero, which is
-        // what OU-III does in the same situation. Sigma_aw is already a world-
-        // frame covariance, so it adds directly.
         if (!linear_block_enabled_) Rw += Sigma_aw_;
     }
 
-    /*
-        Magnetometer.
-
-            m_m = R^T B_w + n_m
-            r_m = Rhat m_m - B_w        ~  -[B_w]x phi + Rhat n_m
-
-        Again the Jacobian is built from the fixed world reference rather than
-        from the current predicted body-frame vector.
-
-        Same approximation as the accelerometer, same structure: the exact
-        derivative is -[Rhat m_m]x = -[B_w]x - [r_m]x, so the neglected term is
-        -[r_m]x, first order in the innovation.
-    */
     void mag_residual(const Vector3& mag_meas_body,
                       Vector3& r, Eigen::Matrix<T,3,NX>& H, Matrix3& Rw) const {
         r = X_.R * mag_meas_body - B_w_;
@@ -999,28 +625,11 @@ class Kalman3D_Wave_TFG {
         Rw = X_.R * Rmag_ * X_.R.transpose();
     }
 
-    /*
-        Integral pseudo-measurement, z_S = 0 = S + n_S.
-
-            r_S = 0 - Shat = -Shat       ~  [Shat]x phi - rho_S + n_S
-
-        The [Shat]x term is O(S) and vanishes at the regularization target, so
-        it is routinely dropped. It is kept because it costs one cross product
-        and makes the finite-difference check exact rather than approximate --
-        a test that has to be loosened to accommodate a term you chose not to
-        write stops discriminating against the terms you got wrong.
-
-        R_S stays in world/NED coordinates. A NED-anisotropic R_S is a
-        deliberate physical choice (heave regularized differently from surge
-        and sway), and the right-invariant error is what preserves its meaning
-        -- but it does break rotational symmetry, so the filter must not then
-        be described as invariant under arbitrary world rotations.
-    */
     void integral_residual(Vector3& r, Eigen::Matrix<T,3,NX>& H, Matrix3& Rw) const {
         r = -X_.X.col(2);
         H.setZero();
         H.template block<3,3>(0, OFF_PHI) = ocean_imu::lie::skew<T>(Vector3(X_.X.col(2)));
-        H.template block<3,3>(0, OFF_S)   = -Matrix3::Identity();
+        H.template block<3,3>(0, OFF_S) = -Matrix3::Identity();
         Rw = R_S_;
     }
 
@@ -1028,9 +637,7 @@ class Kalman3D_Wave_TFG {
         if (!acc_meas_body.allFinite()) { last_acc_diag_ = MeasDiag3{}; return false; }
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
         accel_residual(acc_meas_body, tempC, r, H, Rw);
-        const bool ok = apply_update3_(r, H, Rw, last_acc_diag_);
-        if (ok) project_acc_bias_();
-        return ok;
+        return apply_update3_(r, H, Rw, last_acc_diag_);
     }
 
     bool measurement_update_mag_only(const Vector3& mag_meas_body) {
@@ -1051,34 +658,95 @@ class Kalman3D_Wave_TFG {
         return apply_update3_(r, H, Rw, last_S_diag_);
     }
 
-    // Exposed so the covariance-transport test can drive one update in
-    // isolation and inspect what it did.
     bool apply_update3(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
                        const Matrix3& Rw, MeasDiag3& diag) {
         return apply_update3_(r, H, Rw, diag);
     }
 
   private:
-    [[nodiscard]] Vector3 accel_bias_at_(T tempC) const {
-        if constexpr (with_accel_bias) {
-            return X_.B.col(1) + k_a_ * (tempC - kTempRefC);
-        } else {
-            (void)tempC;
-            return Vector3::Zero();
+    void world_transition_(T dt, Eigen::Matrix<T,4,4>& Phi) const {
+        Phi.setIdentity();
+        if (linear_block_enabled_)
+            ou_detail::IntegratedOUChain<T,3>::transition(tau_aw_, dt, Phi);
+    }
+
+    // D(s,h) = int_s^h Phi_A(h-t) [x(t)]x R(t) dt.  It is the physical
+    // body-gyro-bias impulse map into [rho_v rho_p rho_S rho_a] at h.  Keeping
+    // it in body-bias coordinates makes the same function valid for Level 1
+    // and Level 2; only the endpoint bias coordinate differs.
+    void integrate_world_bias_impulse_(T s, T h, const Vector3& omega,
+                                       Eigen::Matrix<T,12,3>& D) const {
+        D.setZero();
+        if (!(h > s)) return;
+        static constexpr double nodes[5] = {
+            -0.9061798459386640, -0.5384693101056831, 0.0,
+             0.5384693101056831,  0.9061798459386640
+        };
+        static constexpr double weights[5] = {
+            0.2369268850561891, 0.4786286704993665, 0.5688888888888889,
+            0.4786286704993665, 0.2369268850561891
+        };
+
+        const T span = h - s;
+        for (int q = 0; q < 5; ++q) {
+            const T t = s + T(0.5) * span * (T(1) + T(nodes[q]));
+            const T wq = T(0.5) * span * T(weights[q]);
+            Eigen::Matrix<T,4,4> Phi_t, Phi_rem;
+            world_transition_(t, Phi_t);
+            world_transition_(h - t, Phi_rem);
+            const Eigen::Matrix<T,3,4> X_t = X_.X * Phi_t.transpose();
+            const Matrix3 R_t = X_.R * ocean_imu::lie::Exp<T>(Vector3(omega * t));
+
+            for (int i = 0; i < 4; ++i) {
+                Matrix3 M = Matrix3::Zero();
+                for (int j = 0; j < 4; ++j) {
+                    if (Phi_rem(i,j) == T(0)) continue;
+                    M.noalias() += Phi_rem(i,j) *
+                        (ocean_imu::lie::skew<T>(Vector3(X_t.col(j))) * R_t);
+                }
+                D.template block<3,3>(3*i, 0).noalias() += wq * M;
+            }
         }
     }
 
-    /*
-        Rank-3 Joseph update in the invariant tangent frame.
+    [[nodiscard]] Vector3 accel_bias_at_(T tempC) const {
+        if constexpr (with_accel_bias)
+            return X_.B.col(1) + k_a_ * (tempC-kTempRefC);
+        (void)tempC;
+        return Vector3::Zero();
+    }
 
-        There is deliberately NO MEKF-style covariance reset afterwards.
-        ou_detail::apply_left_error_reset's G = I + 0.5 [dtheta]x exists because
-        OU-III's error state is zeroed after injection and its covariance has
-        to be transported into the new linearization point. Here the update is
-        already formulated in the post-update tangent frame, so applying that
-        transport on top would double-correct the covariance. The
-        no-double-reset assertion lives in covariance_transport-test.
-    */
+    // Off-diagonal vector/attitude block of the full group right Jacobian.
+    // For ad_xi = [Omega 0; Z Omega], J_r = sum (-ad)^n/(n+1)!.
+    static Matrix3 reset_cross_block_(const Vector3& phi, const Vector3& z) {
+        const Matrix3 Omega = ocean_imu::lie::skew<T>(phi);
+        const Matrix3 Z = ocean_imu::lie::skew<T>(z);
+        Matrix3 D = Matrix3::Identity();
+        Matrix3 L = Matrix3::Zero();
+        Matrix3 Q = Matrix3::Zero();
+        T coeff = T(1);
+        const T tol = T(8) * std::numeric_limits<T>::epsilon();
+        for (int n = 1; n <= 32; ++n) {
+            const Matrix3 Lnext = L * Omega + D * Z;
+            const Matrix3 Dnext = D * Omega;
+            L = Lnext;
+            D = Dnext;
+            coeff *= -T(1) / T(n+1);
+            const Matrix3 term = coeff * L;
+            Q += term;
+            if (n >= 5 && term.cwiseAbs().maxCoeff() <=
+                              tol * (T(1) + Q.cwiseAbs().maxCoeff())) break;
+        }
+        return Q;
+    }
+
+    static void set_reset_vector_block_(MatrixNX& J, int off,
+                                        const Vector3& phi, const Vector3& z,
+                                        const Matrix3& Jr) {
+        J.template block<3,3>(off, off) = Jr;
+        J.template block<3,3>(off, OFF_PHI) = reset_cross_block_(phi, z);
+    }
+
     bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
                         const Matrix3& Rw, MeasDiag3& diag) {
         diag = MeasDiag3{};
@@ -1094,75 +762,53 @@ class Kalman3D_Wave_TFG {
         if (ldlt.info() != Eigen::Success) return false;
         const Vector3 Sinv_r = ldlt.solve(r);
         if (!Sinv_r.allFinite()) return false;
-
         diag.nis = r.dot(Sinv_r);
         if (nis_gate_ > T(0) && !(diag.nis <= nis_gate_)) return false;
 
         const Eigen::Matrix<T,NX,3> K = ldlt.solve(PHt.transpose()).transpose();
         if (!K.allFinite()) return false;
 
+        const Tangent correction = K * r;
         const MatrixNX IKH = MatrixNX::Identity() - K * H;
-        P_ = (IKH * P_ * IKH.transpose() + K * Rw * K.transpose()).eval();
-        P_ = T(0.5) * (P_ + P_.transpose()).eval();
+        const MatrixNX Pj =
+            (IKH * P_ * IKH.transpose() + K * Rw * K.transpose()).eval();
 
-        // xi = K r is the estimated error; remove it.
-        inject(Tangent(-(K * r)));
+        MatrixNX Jreset;
+        build_reset_jacobian(correction, Jreset);
+        inject(Tangent(-correction));
+        P_ = (Jreset * Pj * Jreset.transpose()).eval();
+        P_ = T(0.5) * (P_ + P_.transpose()).eval();
 
         diag.accepted = true;
         return true;
     }
 
-    /*
-        Confine b_a to a ball, as OU-III does. The rationale there is the ISS
-        argument in doc/kalman_ou_iii/w3d-iss-stability.tex-part: tilt,
-        horizontal acceleration and accelerometer bias are only weakly
-        separable, so an unbounded bias state will absorb a persistent tilt
-        error and walk away. A Lie-group formulation does not change that --
-        it is a physical observability limit, not a coordinate artifact.
-    */
-    void project_acc_bias_() {
-        if constexpr (with_accel_bias) {
-            if (!(acc_bias_limit_ > T(0))) return;
-            const T n = X_.B.col(1).norm();
-            if (n > acc_bias_limit_) X_.B.col(1) *= (acc_bias_limit_ / n);
-        }
-    }
-
     void reorthonormalize_() {
-        // Cheaper and better conditioned than a QR: round-trip through the
-        // quaternion, which is what the surrounding filters store anyway.
         Eigen::Quaternion<T> q(X_.R);
         q.normalize();
         X_.R = q.toRotationMatrix();
     }
 
-    // Exact OU process noise for [v p S a_w], reusing OU-III's assembly
-    // including the correlated-axis Kronecker path.
     void add_ou_process_noise_(T Ts, MatrixNX& Qd) const {
         const bool correlated = !ou_detail::is_isotropic3<T>(Sigma_aw_) &&
                                 !is_diagonal_(Sigma_aw_);
-
         if (correlated) {
             Eigen::Matrix<T,4,4> Q_unit;
             ou_detail::IntegratedOUChain<T,3>::process_covariance(tau_aw_, Ts, T(1), Q_unit);
             Q_unit = T(0.5) * (Q_unit + Q_unit.transpose()).eval();
             const Matrix3 Sig = T(0.5) * (Sigma_aw_ + Sigma_aw_.transpose());
-            for (int i = 0; i < 4; ++i) {
-                for (int j = 0; j < 4; ++j) {
+            for (int i = 0; i < 4; ++i)
+                for (int j = 0; j < 4; ++j)
                     Qd.template block<3,3>(OFF_V + 3*i, OFF_V + 3*j).noalias()
                         += Sig * Q_unit(i,j);
-                }
-            }
         } else {
             for (int axis = 0; axis < 3; ++axis) {
                 Eigen::Matrix<T,4,4> Q_axis;
                 ou_detail::IntegratedOUChain<T,3>::process_covariance(
                     tau_aw_, Ts, Sigma_aw_(axis,axis), Q_axis);
-                for (int i = 0; i < 4; ++i) {
-                    for (int j = 0; j < 4; ++j) {
+                for (int i = 0; i < 4; ++i)
+                    for (int j = 0; j < 4; ++j)
                         Qd(OFF_V + 3*i + axis, OFF_V + 3*j + axis) += Q_axis(i,j);
-                    }
-                }
             }
         }
     }
@@ -1170,41 +816,39 @@ class Kalman3D_Wave_TFG {
     static bool is_diagonal_(const Matrix3& M) {
         Matrix3 off = M;
         off.diagonal().setZero();
-        return off.cwiseAbs().maxCoeff() <= T(1e-12) * std::max(T(1), M.cwiseAbs().maxCoeff());
+        return off.cwiseAbs().maxCoeff() <=
+               T(1e-12) * std::max(T(1), M.cwiseAbs().maxCoeff());
     }
 
     T gravity_magnitude_;
-
-    Group   X_{};
+    Group X_{};
     MatrixNX P_{MatrixNX::Identity()};
 
-    T       tau_aw_{T(1.0)};
+    T tau_aw_{T(1.0)};
     Matrix3 Sigma_aw_{Matrix3::Identity()};
     Matrix3 Q_gyro_{Matrix3::Identity() * T(2.5e-5)};
     Matrix3 Q_bg_{Matrix3::Identity() * T(1e-10)};
     Matrix3 Q_ba_{Matrix3::Identity() * T(2.5e-7)};
+    T tau_ba_{T(5000.0)};
+    T sigma_ba0_{T(0.004)};
 
-    // Measurement noise. Racc_ and Rmag_ are BODY frame and get rotated into
-    // the world frame per update; R_S_ is already world/NED.
     Matrix3 Racc_{Matrix3::Identity() * T(0.16)};
     Matrix3 Rmag_{Matrix3::Identity() * T(0.01)};
     Matrix3 R_S_{Matrix3::Identity() * T(1.5)};
 
     Vector3 B_w_{Vector3::UnitX()};
-    bool    have_mag_reference_{false};
+    bool have_mag_reference_{false};
 
-    Vector3 k_a_{Vector3::Zero()};
-    T       acc_bias_limit_{T(0.5)};
-    bool    acc_bias_updates_enabled_{true};
-    T       nis_gate_{T(0)};
-    bool    linear_block_enabled_{true};
+    Vector3 k_a_{Vector3::Constant(T(0.002))};
+    bool acc_bias_updates_enabled_{true};
+    T nis_gate_{T(0)};
+    bool linear_block_enabled_{true};
 
     static constexpr T kTempRefC = T(35);
 
     MeasDiag3 last_acc_diag_{};
     MeasDiag3 last_mag_diag_{};
     MeasDiag3 last_S_diag_{};
-
     Vector3 last_omega_{Vector3::Zero()};
 };
 

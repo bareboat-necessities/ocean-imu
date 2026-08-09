@@ -64,7 +64,9 @@ Filter make_filter(T tau = T(1.7)) {
     f.set_aw_stationary_std(Vector3(T(0.6), T(0.6), T(0.32)));
     f.set_gyro_noise_density_rad_sqrt_s(T(0.004));
     f.set_Q_bgyro_rw(Vector3::Constant(T(1e-10)));
-    f.set_Q_bacc_rw(Vector3::Constant(T(2.5e-7)));
+    // set_Q_bacc_rw follows current OU-III semantics: continuous driving
+    // standard deviation in m/s^2/sqrt(s), not variance per second.
+    f.set_Q_bacc_rw(Vector3::Constant(T(5e-4)));
     f.initialize_from_truth(
         Eigen::Quaternion<T>(Eigen::AngleAxis<T>(
             T(0.63), Vector3(T(0.2), T(-0.7), T(0.68)).normalized())),
@@ -180,11 +182,10 @@ void test_transition_matches_finite_differences() {
             Filter f = make_filter();
             const std::string tag =
                 "|w|=" + std::to_string(g.norm()) + " h=" + std::to_string(h);
-            // The one documented approximation is in Phi_world,bg, which
-            // neglects the correlation of Rhat(s) with the Phi_OU weighting
-            // and the drift of x(s) across the step. Both are O(h) on a term
-            // already of size |x| |w| h, so the tolerance scales with h^2.
-            const T tol = T(2e-8) + T(4.0) * h * h * (T(1) + g.norm());
+            // Phi_world,bg is now the quadrature of the actual
+            // time-varying invariant dynamics. A fixed tight tolerance catches
+            // frame/sign mistakes instead of granting an O(h^2) modelling gap.
+            const T tol = T(5e-7) * (T(1) + g.norm());
             compare_transition(f, g, h, tol, tag);
         }
     }
