@@ -1,3 +1,8 @@
+\ifdefined\OUStandaloneDetailedResults
+  \input{w3d-ou-robustness-study.tex-part}
+  \endinput
+\fi
+
 \subsubsection{Sensitivity and degradation cases}
 \label{sec:ou-robustness}
 A ten-seed robustness study perturbs the nominal OU--III operating point by
