@@ -1,0 +1,207 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsthm}
+\usepackage{amsmath, bm}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\interdisplaylinepenalty=2500
+\usepackage{pgf}
+\usepackage{pgfplots}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{mathrsfs}
+\usepackage{graphicx}
+\usepackage{svg}
+\usepackage{placeins}
+\usepackage{array, booktabs, makecell, adjustbox}
+\usepackage{mathtools}
+\usepackage{nccmath, relsize}
+\usepackage{enumitem}
+\usepackage{balance}
+\usepackage{flafter}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{etoolbox}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\DeclareRobustCommand{\matg}[1]{\bm{#1}}
+\newcommand{\Quat}{\mathbb{H}}
+\newcommand{\Sph}{\mathbb{S}}
+\newcommand{\SO}{\mathrm{SO}}
+\newcommand{\SE}{\mathrm{SE}}
+\newcommand{\quat}[1]{\vct{#1}}
+\newcommand{\Rot}{\bm{\mathcal{R}}}
+\newcommand{\qconj}[1]{\overline{#1}}
+\newcommand{\qreal}[1]{\operatorname{Re}\! \left(#1\right)}
+\newcommand{\qimag}[1]{\operatorname{Im}\! \left(#1\right)}
+
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\setlist[description]{font=\footnotesize\bfseries,labelsep=0.6em,leftmargin=1.8em}
+
+\pdfstringdefDisableCommands{%
+    \def\SI#1#2{#1 #2}%
+    \def\bm#1{#1}%
+    \def\Skew#1{[#1]_\text{x}}%
+    \def\Id{I}%
+    \def\pct#1{#1\%}%
+    \def\circ{deg}%
+    \def\degree{deg}%
+    \def\propto{proportional to}%
+    \def\sigma{sigma}%
+    \def\tau{tau}%
+    \def\Phi{Phi}%
+    \def\omega{omega}%
+    \def\_{}%
+    \def\cdot{}%
+    \def\;{ }%
+    \def\I{I}%
+    \def\quat#1{#1}%
+    \def\SO{SO}%
+    \def\SE{SE}%
+    \def\Quat{H}%
+    \def\Sph{S}%
+}
+
+\AtBeginEnvironment{equation}{\small}
+\AtBeginEnvironment{align}{\small}
+\providecommand{\mathdefault}[1]{#1}
+
+\setcounter{topnumber}{5}
+\setcounter{dbltopnumber}{5}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.9}
+\newcommand{\IncludePGF}[1]{\resizebox{\linewidth}{!}{\input{#1}}}
+
+\ifPDFTeX
+\DeclareUnicodeCharacter{2013}{\textendash}
+\DeclareUnicodeCharacter{2014}{\textemdash}
+\DeclareUnicodeCharacter{2018}{\textquoteleft}
+\DeclareUnicodeCharacter{2019}{\textquoteright}
+\DeclareUnicodeCharacter{201C}{\textquotedblleft}
+\DeclareUnicodeCharacter{201D}{\textquotedblright}
+\DeclareUnicodeCharacter{2212}{\textminus}
+\fi
+
+\pdfstringdefDisableCommands{%
+    \def\vct#1{#1}%
+    \def\mat#1{#1}%
+    \def\matg#1{#1}%
+    \def\I{I}%
+}
+
+\newtheoremstyle{bodysmall}{3pt}{3pt}{\normalfont\small}{0pt}{\bfseries\small}{.}{0.5em}{}
+\theoremstyle{bodysmall}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem*{theorem*}{Theorem}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\Skew}[1]{\left[#1\right]_\times}
+\newcommand{\Id}{\mat{I}}
+\newcommand{\pct}[1]{#1\%}
+\newcommand{\meanstd}[2]{#1 \pm #2}
+\newcommand{\ci}[2]{#1\,(\,#2\,\text{CI}\,)}
+\newcommand{\Ito}{\mathrm{It\hat{o}}}
+\newcommand{\ItoInt}[2]{\int_0^{#1} #2\, dW_s^{\Ito}}
+\DeclareMathOperator{\proj}{\mathcal{P}}
+\DeclareMathOperator{\clip}{clip}
+\DeclareMathOperator{\wrap}{wrap}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\blkdiag}{blkdiag}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\scomp}{scomp}
+\newcommand{\set}[1]{\mathcal{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\newcommand{\ts}[1]{\text{#1}}
+\newcommand{\fitcol}[1]{\adjustbox{max width=\columnwidth}{\ensuremath{\displaystyle #1}}}
+
+\makeatletter
+\@ifpackageloaded{cite}{\renewcommand{\citepunct}{,\penalty\citepunctpenalty\,}\renewcommand{\citedash}{--}}{}
+\makeatother
+\emergencystretch=2em
+\allowdisplaybreaks
+
+\title{OU-Driven Quaternion MEKF for Marine Wave-State Estimation: Simulation and Evaluation Results}
+\author{%
+    \IEEEauthorblockN{Mikhail S. Grushinskiy}
+    \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+    Bareboat Necessities GitHub Project\\
+    Email: mgrouch@users.github.com}%
+}
+\pgfplotsset{compat=1.18}
+
+\begin{document}
+
+% Keep the standalone results PDF tied to the same generated evidence used by
+% the full OU--III manuscript.  The source of the results text remains
+% w3d-sim-charts.tex-part so the two documents cannot silently diverge.
+\IfFileExists{w3d-ou-validation-macros-generated.tex-part}{%
+  \input{w3d-ou-validation-macros-generated.tex-part}%
+}{}
+\providecommand{\OUValidationBootstrapMethod}{a nonparametric percentile bootstrap of the paired mean}
+\providecommand{\OUValidationBootstrapResamples}{10{,}000}
+\providecommand{\OUValidationBootstrapRNG}{NumPy PCG64}
+\providecommand{\OUValidationStatsSeed}{--}
+\providecommand{\OUValidationPairedComparisons}{--}
+\providecommand{\OUValidationThreeDScenarios}{--}
+\providecommand{\OUValidationThreeDHigherCount}{--}
+\providecommand{\OUValidationThreeDUnresolvedCount}{--}
+\providecommand{\OUValidationDirectionAbsError}{--}
+\providecommand{\OUValidationDirectionRMSE}{--}
+\providecommand{\OUValidationDirectionWorstAbsError}{--}
+\providecommand{\OUValidationDirectionDominant}{--}
+\providecommand{\OUValidationDirectionUncertain}{--}
+\providecommand{\OUValidationTravelCorrect}{--}
+\providecommand{\OUValidationTravelWrong}{--}
+\providecommand{\OUValidationTravelUnresolved}{--}
+\providecommand{\OUValidationTravelAbsError}{--}
+\providecommand{\OUValidationNormalizedTLow}{--}
+\providecommand{\OUValidationNormalizedTHigh}{--}
+\providecommand{\OUValidationNormalizedTStatistic}{--}
+\providecommand{\OUValidationNormalizedTP}{--}
+\providecommand{\OUValidationNormalizedSignNegative}{--}
+\providecommand{\OUValidationNormalizedSignP}{--}
+\providecommand{\OUValidationNormalizedRandomizationP}{--}
+\providecommand{\OUValidationNormalizedRandomizationPatterns}{--}
+
+\maketitle
+
+\begin{abstract}
+This companion document collects the simulation protocol, comparative evaluation,
+Monte Carlo validation, adaptation ablations, transition study, and embedded
+implementation observations from the OU--III marine wave-state estimator paper.
+It is built from the same maintained results source and generated evidence as the
+full manuscript so that the standalone PDF and the article remain synchronized.
+\end{abstract}
+
+\begin{IEEEkeywords}
+extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, MRU, Ornstein--Uhlenbeck process, heave estimation, wave-state estimation, validation\end{IEEEkeywords}
+
+\input{w3d-sim-charts.tex-part}
+
+\FloatBarrier
+\bibliographystyle{IEEEtran}
+\bibliography{w3d,w3d-iss,w3d-baselines}
+\balance
+\end{document}
