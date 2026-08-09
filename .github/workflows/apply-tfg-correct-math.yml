@@ -52,7 +52,7 @@ jobs:
       - name: Check patch hygiene
         run: git diff --check
 
-      - name: Commit corrected implementation
+      - name: Commit corrected source and tests
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
@@ -65,13 +65,7 @@ jobs:
             tests/kalman_tfg/tfg_process_covariance-test.cpp \
             tests/kalman_tfg/tfg_orchestrator-test.cpp \
             tests/kalman_tfg/Makefile \
-            .github/workflows/tfg-validation.yml \
             docs/tfg-math-hardening.md
-          # Remove the one-shot patch machinery in the same validated commit.
-          git rm -f \
-            .github/workflows/apply-tfg-correct-math.yml \
-            tests/kalman_tfg/apply_correct_math.py \
-            tests/kalman_tfg/apply_correct_math_fix.py
           git diff --cached --quiet && exit 0
           git commit -m 'Make TFG covariance propagation mathematically consistent'
           git push origin HEAD:refs/heads/agent/tfg-math-hardening
