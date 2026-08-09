@@ -41,6 +41,7 @@ jobs:
           ./tfg_propagation-test
           ./tfg_jacobians-test
           ./covariance_transport-test
+          ./tfg_process_covariance-test
           ./tfg_orchestrator-test
 
   wave-regression:

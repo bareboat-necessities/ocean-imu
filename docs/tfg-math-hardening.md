@@ -73,7 +73,7 @@ The implementation now evaluates
 
 with five-point Gauss--Legendre quadrature. The final gyro-bias block is still analytic. A separate high-rate midpoint integration in `covariance_transport-test.cpp` is the stochastic oracle, so the production quadrature is not tested against itself.
 
-The gyro-white-noise leakage into world-vector blocks remains the documented first-order approximation inherited from the surrounding estimator; this hardening does not claim that the entire `Q_d` is a closed-form exact discretization.
+The gyro-white and gyro-bias driving noises are now discretized from their complete structured impulse responses. Each quadrature point transports gyro noise through attitude and the remaining OU world-chain transition, while gyro-bias random-walk noise is integrated through its persistent effects on attitude and every world-error column. This removes the former first-order gyro/world leakage approximation and the missing gyro-bias/world process-covariance blocks. The five-point Gauss--Legendre rule is a high-order numerical discretization of the stated continuous model rather than a claim of a symbolic closed form.
 
 ## Validation scope
 
@@ -86,3 +86,9 @@ The branch adds `.github/workflows/tfg-validation.yml`, which builds and runs th
 5. complete world-yaw gauge congruence.
 
 These changes remove the four mathematical/implementation gaps identified in review. They do **not** by themselves establish that TFG supersedes OU-III empirically. The paired wave simulations should be rerun after the corrected dynamics before changing performance or replacement claims.
+
+## 5. Posterior covariance is no longer forced to the OU stationary covariance
+
+`Sigma_aw` is a process-model parameter used to construct the OU driving covariance. It is not the posterior covariance of the invariant error `rho_aw`, which also contains attitude coupling and measurement information. The TFG orchestrator therefore no longer periodically rescales `P_aw,aw` and its cross-covariances to `Sigma_aw`. `P` now evolves only through the Riccati propagation, measurement updates, mathematically required reset-coordinate transport, and explicit initialization.
+
+The accelerometer-bias norm projection was also removed from the EKF update because changing the nominal random variable without conditioning or transforming `P` breaks the posterior covariance interpretation.

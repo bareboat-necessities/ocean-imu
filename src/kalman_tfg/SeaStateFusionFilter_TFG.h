@@ -161,12 +161,11 @@ public:
                 enterLive_();
             }
         } else {
+            // Adapt the process model (tau and Sigma_aw), not the posterior
+            // covariance. P remains the Riccati covariance of the invariant
+            // error and is changed only by propagation, measurements, reset
+            // coordinate transport, or explicit initialization.
             adaptMekf_(dt);
-            aw_sync_elapsed_ += dt;
-            if (periodic_aw_cov_sync_ && aw_sync_elapsed_ >= aw_sync_period_sec_) {
-                aw_sync_elapsed_ = 0.0f;
-                mekf_.synchronize_aw_covariance_to_stationary_congruent();
-            }
         }
     }
 
@@ -232,7 +231,6 @@ public:
 
     void enableTuner(bool on) { enable_tuner_ = on; }
     void enableLinearBlock(bool on) { mekf_.set_linear_block_enabled(on); }
-    void setPeriodicAwCovarianceSync(bool on) { periodic_aw_cov_sync_ = on; }
 
     void setTauCoeff(float c)      { if (c > 0.0f && std::isfinite(c)) tau_coeff_ = c; }
     void setSigmaCoeff(float c)    { if (c > 0.0f && std::isfinite(c)) sigma_coeff_ = c; }
@@ -391,7 +389,6 @@ private:
     bool fixed_tuning_ = false;
     bool freeze_ou_channel_ = false;
     bool freeze_RS_channel_ = false;
-    bool periodic_aw_cov_sync_ = true;
 
     Vector3f Racc_nominal_{Vector3f::Constant(0.5f)};
 
@@ -400,8 +397,6 @@ private:
     float mag_elapsed_sec_ = 0.0f;
     float pseudo_elapsed_ = 0.0f;
     float pseudo_period_sec_ = 0.015f;
-    float aw_sync_elapsed_ = 0.0f;
-    float aw_sync_period_sec_ = 1.0f;
 };
 
 }  // namespace ocean_imu::tfg

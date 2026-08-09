@@ -182,11 +182,10 @@ void test_transition_matches_finite_differences() {
             Filter f = make_filter();
             const std::string tag =
                 "|w|=" + std::to_string(g.norm()) + " h=" + std::to_string(h);
-            // The one documented approximation is in Phi_world,bg, which
-            // neglects the correlation of Rhat(s) with the Phi_OU weighting
-            // and the drift of x(s) across the step. Both are O(h) on a term
-            // already of size |x| |w| h, so the tolerance scales with h^2.
-            const T tol = T(2e-8) + T(4.0) * h * h * (T(1) + g.norm());
+            // Phi_world,bg is now the quadrature of the actual
+            // time-varying invariant dynamics. A fixed tight tolerance catches
+            // frame/sign mistakes instead of granting an O(h^2) modelling gap.
+            const T tol = T(5e-7) * (T(1) + g.norm());
             compare_transition(f, g, h, tol, tag);
         }
     }

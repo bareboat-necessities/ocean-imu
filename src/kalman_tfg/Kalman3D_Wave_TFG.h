@@ -24,10 +24,11 @@
     body-frame bias errors as an ablation. The two are related during
     propagation by the time-varying coordinate map beta = R delta_b.
 
-    The world OU chain is discretized with IntegratedOUChain. Gyro-bias process
-    noise during finite rotation is integrated with Gauss-Legendre quadrature
-    over C(s)=int_s^h R(t)dt; the old h^2/2 and h^3/3 expressions are only the
-    zero-rotation special case and are no longer labelled exact.
+    The world OU chain is discretized with IntegratedOUChain. The deterministic
+    gyro-bias/world coupling and the gyro/gyro-bias process covariance use a
+    full structured Gauss--Legendre discretization of the invariant error
+    dynamics. This transports each noise source through attitude and every
+    world column instead of applying zero-rate or first-order leakage formulas.
 
     After every finite measurement correction a=K r, covariance is transported
     into the post-injection tangent coordinates by the full retraction Jacobian
@@ -219,35 +220,6 @@ class Kalman3D_Wave_TFG {
         }
     }
 
-    bool synchronize_aw_covariance_to_stationary_congruent() {
-        Matrix3 P_aa = P_.template block<3,3>(OFF_AW, OFF_AW);
-        P_aa = T(0.5) * (P_aa + P_aa.transpose()).eval();
-        Eigen::LLT<Matrix3> llt_old(P_aa);
-        Eigen::LLT<Matrix3> llt_new(Matrix3(T(0.5)*(Sigma_aw_ + Sigma_aw_.transpose())));
-        if (llt_old.info() != Eigen::Success || llt_new.info() != Eigen::Success) {
-            reset_aw_covariance_to_stationary();
-            return false;
-        }
-        const Matrix3 M = llt_new.matrixL() * Matrix3(llt_old.matrixL()).inverse();
-        if (!M.allFinite()) {
-            reset_aw_covariance_to_stationary();
-            return false;
-        }
-        for (int i = 0; i < NX; ++i) {
-            if (i >= OFF_AW && i < OFF_AW + 3) continue;
-            Vector3 col;
-            for (int k = 0; k < 3; ++k) col(k) = P_(OFF_AW+k, i);
-            const Vector3 scaled = M * col;
-            for (int k = 0; k < 3; ++k) {
-                P_(OFF_AW+k, i) = scaled(k);
-                P_(i, OFF_AW+k) = scaled(k);
-            }
-        }
-        P_.template block<3,3>(OFF_AW, OFF_AW) = M * P_aa * M.transpose();
-        P_ = T(0.5) * (P_ + P_.transpose()).eval();
-        return true;
-    }
-
     void set_aw_time_constant(T tau) { tau_aw_ = std::max(T(1e-3), tau); }
     [[nodiscard]] T aw_time_constant() const { return tau_aw_; }
 
@@ -328,28 +300,39 @@ class Kalman3D_Wave_TFG {
 
     void build_transition(T Ts, const Vector3& gyro_meas, MatrixNX& Phi) const {
         Phi.setIdentity();
-        const Vector3 omega = gyro_meas - X_.B.col(0);
-        const Matrix3 Rbar =
-            X_.R * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts));
-        const Matrix3 Bmap = two_frame_bias ? Matrix3(Rbar * X_.R.transpose()) : Rbar;
-        Phi.template block<3,3>(OFF_PHI, OFF_BG) = -Bmap * Ts;
+        if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
 
-        const Matrix3 Rw_step = ocean_imu::lie::Exp<T>(Vector3(X_.R * omega * Ts));
-        if constexpr (two_frame_bias) {
-            Phi.template block<3,3>(OFF_BG, OFF_BG) = Rw_step;
-        }
+        const Matrix3 R0 = X_.R;
+        const Vector3 omega = gyro_meas - X_.B.col(0);
+        const Matrix3 R_end = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * Ts));
+
+        // beta_g is world-referred at Level 2 and additive body-referred at
+        // Level 1.  Fh = int_0^h R(t) dt maps a physical body-bias error into
+        // the right-invariant attitude error exactly for constant measured
+        // angular rate over the sample.
+        const Matrix3 Fh =
+            R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts)));
+        const Matrix3 bg0_to_body =
+            two_frame_bias ? Matrix3(R0.transpose()) : Matrix3::Identity();
+        Phi.template block<3,3>(OFF_PHI, OFF_BG) = -Fh * bg0_to_body;
+        if constexpr (two_frame_bias)
+            Phi.template block<3,3>(OFF_BG, OFF_BG) = R_end * R0.transpose();
+
         if constexpr (with_accel_bias) {
             const T alpha_ba = acc_bias_updates_enabled_ ? std::exp(-Ts/tau_ba_) : T(1);
             if constexpr (two_frame_bias)
-                Phi.template block<3,3>(OFF_BA, OFF_BA) = alpha_ba * Rw_step;
+                Phi.template block<3,3>(OFF_BA, OFF_BA) =
+                    alpha_ba * R_end * R0.transpose();
             else
-                Phi.template block<3,3>(OFF_BA, OFF_BA) = alpha_ba * Matrix3::Identity();
+                Phi.template block<3,3>(OFF_BA, OFF_BA) =
+                    alpha_ba * Matrix3::Identity();
         }
 
-        if (!linear_block_enabled_) return;
-
+        // Exact OU-chain state transition for the active linear block; when
+        // it is gated off the physical world columns are frozen and the world
+        // transition is identity.
         Eigen::Matrix<T,4,4> Phi_axis;
-        ou_detail::IntegratedOUChain<T,3>::transition(tau_aw_, Ts, Phi_axis);
+        world_transition_(Ts, Phi_axis);
         Phi.template block<12,12>(OFF_V, OFF_V).setZero();
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 4; ++j) {
@@ -359,17 +342,14 @@ class Kalman3D_Wave_TFG {
             }
         }
 
-        Eigen::Matrix<T,4,4> Psi;
-        tfg_detail::integral_transition_axis<T>(tau_aw_, Ts, Psi);
-        Matrix3 Gx[4];
-        for (int c = 0; c < 4; ++c)
-            Gx[c] = -ocean_imu::lie::skew<T>(Vector3(X_.X.col(c))) * Bmap;
-        for (int i = 0; i < 4; ++i) {
-            Matrix3 acc = Matrix3::Zero();
-            for (int j = 0; j < 4; ++j)
-                if (Psi(i,j) != T(0)) acc.noalias() += Psi(i,j) * Gx[j];
-            Phi.template block<3,3>(OFF_V + 3*i, OFF_BG) = acc;
-        }
+        // rho_dot = A rho - [x(t)]x R(t) delta_b_g.  Integrate the actual
+        // time-varying nominal x(t) and R(t), rather than replacing them by
+        // their start-of-step values.  D maps a physical body bias to the
+        // final world-error columns; Level 2 converts beta_g(0) back to that
+        // physical body-bias coordinate with R0^T.
+        Eigen::Matrix<T,12,3> D;
+        integrate_world_bias_impulse_(T(0), Ts, omega, D);
+        Phi.template block<12,3>(OFF_V, OFF_BG) = -D * bg0_to_body;
     }
 
     void build_process_noise(T Ts, const Vector3& gyro_meas, MatrixNX& Qd) const {
@@ -379,16 +359,15 @@ class Kalman3D_Wave_TFG {
         const Matrix3 R0 = X_.R;
         const Vector3 omega = gyro_meas - X_.B.col(0);
         const Matrix3 R_end = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * Ts));
-        const Matrix3 W = R0 * Q_gyro_ * R0.transpose();
+        const Matrix3 Fh =
+            R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts)));
 
-        // Gyro white noise is isotropic under the public setter, so W*h is
-        // invariant to the within-step rotation.
-        Qd.template block<3,3>(OFF_PHI, OFF_PHI) = W * Ts;
-
-        // Gyro-bias random walk under finite rotation. For an impulse at s,
-        // C(s)=int_s^h R(t)dt maps it into attitude. Five-point Gauss-Legendre
-        // quadrature makes this a high-order numerical discretization without
-        // pretending the zero-rate h^2/2,h^3/3 formulas are exact at w != 0.
+        // Five-point Gauss--Legendre quadrature of the *complete structured
+        // impulse response* of the stated continuous invariant error model.
+        // For gyro white noise an impulse at s enters phi through R(s) and all
+        // world columns through [x(s)]x R(s), followed by the remaining OU
+        // chain.  A gyro-bias RW impulse persists from s to h, therefore also
+        // drives phi and every world column for the rest of the sample.
         static constexpr double nodes[5] = {
             -0.9061798459386640, -0.5384693101056831, 0.0,
              0.5384693101056831,  0.9061798459386640
@@ -398,44 +377,55 @@ class Kalman3D_Wave_TFG {
             0.4786286704993665, 0.2369268850561891
         };
 
-        const Matrix3 Fh = R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega*Ts)));
-        const Matrix3 Bfinal = two_frame_bias ? R_end : Matrix3::Identity();
-        Matrix3 Qpp_bias = Matrix3::Zero();
-        Matrix3 Qpb = Matrix3::Zero();
-        for (int i = 0; i < 5; ++i) {
-            const T s = T(0.5) * Ts * (T(1) + T(nodes[i]));
-            const T wq = T(0.5) * Ts * T(weights[i]);
-            const Matrix3 Fs = R0 * (s * ocean_imu::lie::left_jacobian<T>(Vector3(omega*s)));
-            const Matrix3 C = Fh - Fs;
-            Qpp_bias.noalias() += wq * (C * Q_bg_ * C.transpose());
-            Qpb.noalias()      -= wq * (C * Q_bg_ * Bfinal.transpose());
-        }
-        Qd.template block<3,3>(OFF_PHI, OFF_PHI) += Qpp_bias;
-        Qd.template block<3,3>(OFF_PHI, OFF_BG) = Qpb;
-        Qd.template block<3,3>(OFF_BG, OFF_PHI) = Qpb.transpose();
-        Qd.template block<3,3>(OFF_BG, OFF_BG) = Bfinal * Q_bg_ * Bfinal.transpose() * Ts;
+        for (int q = 0; q < 5; ++q) {
+            const T s = T(0.5) * Ts * (T(1) + T(nodes[q]));
+            const T wq = T(0.5) * Ts * T(weights[q]);
+            const Matrix3 R_s = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * s));
 
-        // First-order gyro-white-noise leakage into the world vectors, retained
-        // from OU-III. This is a documented approximation distinct from the
-        // gyro-bias stochastic integral above.
-        Matrix3 Sx[4];
-        for (int c = 0; c < 4; ++c)
-            Sx[c] = ocean_imu::lie::skew<T>(Vector3(X_.X.col(c)));
-        for (int i = 0; i < 4; ++i) {
-            const Matrix3 SiW = Sx[i] * W;
-            Qd.template block<3,3>(OFF_PHI, OFF_V + 3*i) += (W * Sx[i].transpose()) * Ts;
-            Qd.template block<3,3>(OFF_V + 3*i, OFF_PHI) += SiW * Ts;
-            for (int j = 0; j < 4; ++j)
-                Qd.template block<3,3>(OFF_V + 3*i, OFF_V + 3*j) +=
-                    (SiW * Sx[j].transpose()) * Ts;
+            Eigen::Matrix<T,4,4> Phi_s, Phi_rem;
+            world_transition_(s, Phi_s);
+            world_transition_(Ts - s, Phi_rem);
+            const Eigen::Matrix<T,3,4> X_s = X_.X * Phi_s.transpose();
+
+            Eigen::Matrix<T,NX,3> Lg = Eigen::Matrix<T,NX,3>::Zero();
+            Lg.template block<3,3>(OFF_PHI, 0) = R_s;
+            for (int i = 0; i < 4; ++i) {
+                Matrix3 M = Matrix3::Zero();
+                for (int j = 0; j < 4; ++j) {
+                    if (Phi_rem(i,j) == T(0)) continue;
+                    M.noalias() += Phi_rem(i,j) *
+                        (ocean_imu::lie::skew<T>(Vector3(X_s.col(j))) * R_s);
+                }
+                Lg.template block<3,3>(OFF_V + 3*i, 0) = M;
+            }
+            Qd.noalias() += wq * (Lg * Q_gyro_ * Lg.transpose());
+
+            Eigen::Matrix<T,NX,3> Lb = Eigen::Matrix<T,NX,3>::Zero();
+            const Matrix3 Fs =
+                R0 * (s * ocean_imu::lie::left_jacobian<T>(Vector3(omega * s)));
+            const Matrix3 C = Fh - Fs;  // int_s^h R(t) dt
+            Lb.template block<3,3>(OFF_PHI, 0) = -C;
+            Lb.template block<3,3>(OFF_BG, 0) =
+                two_frame_bias ? R_end : Matrix3::Identity();
+
+            Eigen::Matrix<T,12,3> D;
+            integrate_world_bias_impulse_(s, Ts, omega, D);
+            Lb.template block<12,3>(OFF_V, 0) = -D;
+            Qd.noalias() += wq * (Lb * Q_bg_ * Lb.transpose());
         }
 
+        // The OU acceleration driving noise is already available in exact
+        // discrete form for the linear chain and is independent of gyro and
+        // gyro-bias driving noise.
         if (linear_block_enabled_) add_ou_process_noise_(Ts, Qd);
 
         if constexpr (with_accel_bias) {
             if (acc_bias_updates_enabled_) {
+                // A body-frame OU noise impulse decays in body coordinates;
+                // its final Level-2 coordinate is simply R_end times that
+                // decayed body increment, so the scalar OU integral is exact.
                 const T qint = T(0.5) * tau_ba_ * (-std::expm1(T(-2)*Ts/tau_ba_));
-                Qd.template block<3,3>(OFF_BA, OFF_BA) =
+                Qd.template block<3,3>(OFF_BA, OFF_BA) +=
                     (two_frame_bias ? Matrix3(R_end * Q_ba_ * R_end.transpose()) : Q_ba_) * qint;
             }
         }
@@ -582,7 +572,6 @@ class Kalman3D_Wave_TFG {
     [[nodiscard]] bool has_magnetic_reference() const { return have_mag_reference_; }
 
     void set_accel_bias_temp_coeff(const Vector3& k_a) { k_a_ = k_a; }
-    void set_accel_bias_limit(T limit) { acc_bias_limit_ = std::abs(limit); }
     void set_acc_bias_updates_enabled(bool on) {
         if (acc_bias_updates_enabled_ == on) return;
         if constexpr (with_accel_bias) {
@@ -648,9 +637,7 @@ class Kalman3D_Wave_TFG {
         if (!acc_meas_body.allFinite()) { last_acc_diag_ = MeasDiag3{}; return false; }
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
         accel_residual(acc_meas_body, tempC, r, H, Rw);
-        const bool ok = apply_update3_(r, H, Rw, last_acc_diag_);
-        if (ok) project_acc_bias_();
-        return ok;
+        return apply_update3_(r, H, Rw, last_acc_diag_);
     }
 
     bool measurement_update_mag_only(const Vector3& mag_meas_body) {
@@ -677,6 +664,51 @@ class Kalman3D_Wave_TFG {
     }
 
   private:
+    void world_transition_(T dt, Eigen::Matrix<T,4,4>& Phi) const {
+        Phi.setIdentity();
+        if (linear_block_enabled_)
+            ou_detail::IntegratedOUChain<T,3>::transition(tau_aw_, dt, Phi);
+    }
+
+    // D(s,h) = int_s^h Phi_A(h-t) [x(t)]x R(t) dt.  It is the physical
+    // body-gyro-bias impulse map into [rho_v rho_p rho_S rho_a] at h.  Keeping
+    // it in body-bias coordinates makes the same function valid for Level 1
+    // and Level 2; only the endpoint bias coordinate differs.
+    void integrate_world_bias_impulse_(T s, T h, const Vector3& omega,
+                                       Eigen::Matrix<T,12,3>& D) const {
+        D.setZero();
+        if (!(h > s)) return;
+        static constexpr double nodes[5] = {
+            -0.9061798459386640, -0.5384693101056831, 0.0,
+             0.5384693101056831,  0.9061798459386640
+        };
+        static constexpr double weights[5] = {
+            0.2369268850561891, 0.4786286704993665, 0.5688888888888889,
+            0.4786286704993665, 0.2369268850561891
+        };
+
+        const T span = h - s;
+        for (int q = 0; q < 5; ++q) {
+            const T t = s + T(0.5) * span * (T(1) + T(nodes[q]));
+            const T wq = T(0.5) * span * T(weights[q]);
+            Eigen::Matrix<T,4,4> Phi_t, Phi_rem;
+            world_transition_(t, Phi_t);
+            world_transition_(h - t, Phi_rem);
+            const Eigen::Matrix<T,3,4> X_t = X_.X * Phi_t.transpose();
+            const Matrix3 R_t = X_.R * ocean_imu::lie::Exp<T>(Vector3(omega * t));
+
+            for (int i = 0; i < 4; ++i) {
+                Matrix3 M = Matrix3::Zero();
+                for (int j = 0; j < 4; ++j) {
+                    if (Phi_rem(i,j) == T(0)) continue;
+                    M.noalias() += Phi_rem(i,j) *
+                        (ocean_imu::lie::skew<T>(Vector3(X_t.col(j))) * R_t);
+                }
+                D.template block<3,3>(3*i, 0).noalias() += wq * M;
+            }
+        }
+    }
+
     [[nodiscard]] Vector3 accel_bias_at_(T tempC) const {
         if constexpr (with_accel_bias)
             return X_.B.col(1) + k_a_ * (tempC-kTempRefC);
@@ -751,14 +783,6 @@ class Kalman3D_Wave_TFG {
         return true;
     }
 
-    void project_acc_bias_() {
-        if constexpr (with_accel_bias) {
-            if (!(acc_bias_limit_ > T(0))) return;
-            const T n = X_.B.col(1).norm();
-            if (n > acc_bias_limit_) X_.B.col(1) *= (acc_bias_limit_/n);
-        }
-    }
-
     void reorthonormalize_() {
         Eigen::Quaternion<T> q(X_.R);
         q.normalize();
@@ -816,7 +840,6 @@ class Kalman3D_Wave_TFG {
     bool have_mag_reference_{false};
 
     Vector3 k_a_{Vector3::Constant(T(0.002))};
-    T acc_bias_limit_{T(0.5)};
     bool acc_bias_updates_enabled_{true};
     T nis_gate_{T(0)};
     bool linear_block_enabled_{true};
