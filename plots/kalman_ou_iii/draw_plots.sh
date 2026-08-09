@@ -62,6 +62,30 @@ cp -f ../../reports/results/ou_robustness/ou_robustness_sensitivity.svg \
 cp -f ../../reports/results/ou_robustness/ou_robustness_stress.svg \
   "${DOC_DIR}/ou_robustness_stress.svg"
 
+# Keep the complete machine-generated validation tables as evidence, but make a
+# compact publication view.  Detailed covariance-control and per-scenario
+# direction tables remain in the full generated study; the main article reports
+# their load-bearing aggregate findings in prose.
+python3 - <<'PY'
+from pathlib import Path
+
+src = Path("../../doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part")
+dst = Path("../../doc/kalman_ou_iii/w3d-ou-validation-results-publication.tex-part")
+text = src.read_text(encoding="utf-8")
+for label in (r"\label{tab:ou_mc_covsync}", r"\label{tab:ou_mc_direction}"):
+    pos = text.find(label)
+    if pos < 0:
+        raise RuntimeError(f"supplemental table label not found: {label}")
+    start = text.rfind(r"\begin{table*}", 0, pos)
+    end_token = r"\end{table*}"
+    end = text.find(end_token, pos)
+    if start < 0 or end < 0:
+        raise RuntimeError(f"could not delimit supplemental table: {label}")
+    end += len(end_token)
+    text = text[:start].rstrip() + "\n\n" + text[end:].lstrip()
+dst.write_text(text, encoding="utf-8")
+PY
+
 python3 - <<'PY'
 from pathlib import Path
 

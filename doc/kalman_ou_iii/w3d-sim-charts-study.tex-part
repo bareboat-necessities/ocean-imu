@@ -1,0 +1,508 @@
+\section{Simulation Dataset and Evaluation Protocol}
+\label{sec:sim-and-eval}
+
+\subsection{Synthetic Wave Scenarios}
+We evaluate the proposed Kalman filter against several canonical wave models and against marine heave-estimation practice reported in the literature \cite{Reis2023_DiscreteKalmanHeave,Sharkh2014MEF,Collins2014_AccelerometerBuoys,YurovskyKudinov2025_IMUwaves}.
+
+\begin{itemize}
+    \item \textbf{JONSWAP directional seas}: Realistic broadband spectra with randomized directional spreading that mimics North Sea conditions, testing the filter's ability to handle \textit{multicomponent interference} and \textit{cross-coupling} in attitude estimation
+    \item \textbf{Pierson–Moskowitz (PM) Stokes seas}: Fully-developed sea state with third-order bound harmonics that introduce \textit{nonlinear wave–wave interactions} and subtle phase coupling effects
+\end{itemize}
+
+\begin{table}[t]
+  \centering
+  \caption{Wave scenarios. Runs: \SI{20}{min} at \SI{200}{Hz} capturing $\sim$240{,}000 samples.}
+  \label{tab:scenarios}
+  \sisetup{table-number-alignment = center}
+  \setlength{\tabcolsep}{2pt}%
+  \begin{tabular}{@{}l p{3.1cm} p{0.9cm} p{0.9cm} p{2.1cm}@{}}
+    \toprule
+    Scenario & Model & $H_s$ [m] & $T_p$ [s] & Dir.\ spread \\
+    \midrule
+    W1 & \{JONSWAP, PM-Stokes\} & 0.27 & 3.0  & +30° / cos-spread \\
+    W2 & \{JONSWAP, PM-Stokes\} & 1.50 & 5.7  & -30° / cos-spread \\
+    W3 & \{JONSWAP, PM-Stokes\} & 4.00 & 8.5  & +30° / cos-spread \\
+    W4 & \{JONSWAP, PM-Stokes\} & 8.50 & 11.4 & -30° / cos-spread \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Each scenario undergoes \SI{20}{min} simulation at \SI{200}{Hz}, producing time series of world-frame displacement, velocity, and 
+acceleration alongside body-frame IMU measurements (specific force and angular rate). Directional seas employ a randomized $\cos^{2s}$ spread 
+about a nominal direction, with each spectral component receiving independent phase randomization while maintaining ensemble energy consistency.
+
+\begin{figure}[!t]\centering
+  \begin{minipage}{0.49\columnwidth}\centering
+    \IncludePGF{spectrum_jonswap_medium_polar.pgf}
+  \end{minipage}\hfill
+  \begin{minipage}{0.49\columnwidth}\centering
+    \IncludePGF{spectrum_jonswap_medium_3d.pgf}
+  \end{minipage}
+  \caption{JONSWAP: Directional spectrum (medium $H_s$). Left: polar heatmap $E(f,\theta)$; right: 3D surface.}
+  \label{fig:jonswap_spec_medium}
+\end{figure}
+
+\subsection{Reference and Measurements}
+For each time $t_k$, the simulator outputs world-frame reference kinematics
+$\big(\mathbf{p}_{\mathrm{ref}},\mathbf{v}_{\mathrm{ref}},\mathbf{a}_{\mathrm{ref}}\big)$ for the surface particle (buoy),
+and ideal body-frame IMU triads $\big(\vct{f}_b,\boldsymbol{\omega}_b\big)$.
+Magnetometer readings are synthesized from the ground-truth attitude and a world magnetic field $\vct{B}_w$
+in physical units (e.g.\ $\mu$T). This provides both estimator inputs and ground-truth for scoring.
+
+% Requires: \usepackage{booktabs,siunitx,array}
+\begin{table}[t]
+  \centering
+  \caption{Simulation parameters, timing, sensor error models.}
+  \label{tab:sim_constants}
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.15}
+  \sisetup{detect-all}
+  \begin{tabular}{@{}p{3.25cm} p{2.25cm} >{\raggedright\arraybackslash}p{2.45cm}@{}}
+    \toprule
+    \textbf{Quantity} & \textbf{Value} & \textbf{Notes} \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Timing / protocol}} \\
+    IMU sample rate & \SI{200}{\hertz} & $\Delta t = 1/200$ \\
+    Magnetometer ODR & \SI{25}{\hertz} & hold-last-sample \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Accelerometer noise/bias model (per axis)}} \\
+    White noise (RMS) & $1.51\times10^{-3}g$ & $\approx \SI{0.0148}{\meter\per\second\squared}$ \\
+    Residual bias half-range & $5\times10^{-3}g$ & $\approx \SI{0.049}{\meter\per\second\squared}$ \\
+    Bias random-walk & \SI{5e-4}{\meter\per\second\squared\per\second\tothe{0.5}} & simulation truth; estimator uses slow OU residual \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Gyroscope noise/bias model (per axis)}} \\
+    White noise (RMS) & \SI{0.00157}{\radian\per\second} & $\approx \SI{0.09}{\degree\per\second}$ \\
+    Residual bias half-range & \SI{8.73e-4}{\radian\per\second} & \SI{0.05}{\degree\per\second} \\
+    Bias random-walk & \SI{1e-5}{\radian\per\second\per\second\tothe{0.5}} & increment std $\propto \sqrt{\Delta t}$ \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Magnetometer model (per mag sample)}} \\
+    White noise (RMS) & \SI{0.80}{\micro\tesla} & at \SI{25}{\hertz} \\
+    Hard-iron residual half-range & \SI{2.0}{\micro\tesla} & uniform \\
+    Bias random-walk & \SI{0.01}{\micro\tesla\per\second\tothe{0.5}} & additive drift \\
+    Scale error bound & $\le 1.5\%$ & diag scale in $\mat{M}_{\mathrm{mis}}$ \\
+    Cross-axis bound & $\le 1.0\%$ & sym coupling ($\mat{M}_{\mathrm{mis}}$) \\
+    Misalignment bound & $\le \SI{1}{\degree}$ & rotation in $\mat{M}_{\mathrm{mis}}$ \\
+    \midrule
+    \multicolumn{3}{@{}l}{\emph{Filter initialization (measurement noise std)}} \\
+    $\sigma_{a,\mathrm{meas}}$ init & $2.8\,\sigma_{a,\mathrm{white}}$ & per-axis \\
+    $\sigma_g$ init & $2.0\,\sigma_{g,\mathrm{white}}$ & per-axis \\
+    $\sigma_m$ init & $1.2\,\sigma_{m,\mathrm{white}}$ & per-axis \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Multi-rate timing and update schedule (condition under test: asynchrony)}
+The inertial channels $\vct{f}_b$ and $\boldsymbol{\omega}_b$ are streamed at $200$~Hz.
+Magnetometer samples are produced at an independent ODR of $25$~Hz and delivered with hold-last-sample
+between magnetometer ticks. The filter is stepped once per IMU sample: each step performs a time update
+driven by $\vct{\omega}_{\text{meas}}$ and a rank--3 accelerometer update driven by $\vct{f}_{\text{meas}}$,
+while magnetometer updates are injected only on magnetometer ticks.
+For all simulation results reported in Table~\ref{tab:sim_results_rms_dir_basic} and
+Figs.~\ref{fig:w3d_jonswap_medium}--\ref{fig:w3d_jonswap_medium_dir}, the KalmANF adaptive-notch tracker
+was used as the frequency-tracking module.
+
+\paragraph{Noise, residual bias, and drifting bias (condition under test: realistic IMU errors)}
+Optionally, each sensor channel is corrupted by a composite error model
+\[
+\vct{y}_{\text{meas}}(t_k)
+= \vct{y}_{\text{true}}(t_k) + \vct{b}_0 + \vct{b}_{\mathrm{rw}}(t_k) + \vct{w}(t_k),
+\]
+where $\vct{w}$ is per-sample white noise (RMS set to sensor-like levels), $\vct{b}_0$ is a fixed residual bias drawn from
+a specified half-range (imperfect calibration), and $\vct{b}_{\mathrm{rw}}$ is a slowly drifting random-walk bias whose
+increments scale with $\sqrt{\Delta t}$.  The accelerometer truth generator deliberately
+retains this random walk. OU--II and OU--III instead estimate the residual about
+the temperature-calibration curve with the fixed slow prior $\tau_b=\SI{5000}{s}$
+and the same continuous driving-noise scale. The validation therefore includes
+accelerometer-bias process-model mismatch rather than making the simulated truth
+identical to the stabilizing filter prior.
+
+\paragraph{Magnetometer distortion realism (condition under test: non-ideal compass)}
+The magnetometer model includes both additive and multiplicative effects:
+\[
+\vct{m}_{\text{meas}} = \mat{M}_{\mathrm{mis}}\,\vct{m}_{\text{true}} + \vct{b}_{m,0} + \vct{b}_{m,\mathrm{rw}} + \vct{w}_m.
+\]
+Here $\mat{M}_{\mathrm{mis}}\approx \mat{I}$ is a near-identity distortion matrix capturing residual soft-iron/scale error,
+cross-axis coupling, and a small misalignment rotation; $\vct{b}_{m,0}$ and $\vct{b}_{m,\mathrm{rw}}$ represent residual
+hard-iron bias and slow drift, and $\vct{w}_m$ is per-sample white noise.
+
+% JONSWAP - medium
+
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_ou3_jonswap_medium.pgf}
+  \caption{Euler angle comparison -- JONSWAP, medium $H_s$.}
+  \label{fig:w3d_jonswap_medium}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_ou3_jonswap_medium_zkin.pgf}
+  \caption{Vertical kinematics (displacement, velocity, acceleration) -- JONSWAP, medium $H_s$.}
+  \label{fig:w3d_jonswap_medium_zkin}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_ou3_jonswap_medium_tuner.pgf}
+  \caption{Frequency tracker and auto-tuner traces -- JONSWAP, medium $H_s$.}
+  \label{fig:w3d_jonswap_medium_tuner}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_ou3_jonswap_medium_dir.pgf}
+  \caption{Wave direction -- JONSWAP, medium $H_s$.}
+  \label{fig:w3d_jonswap_medium_dir}
+\end{figure}
+
+\iffalse
+% PM Stokes - medium
+\begin{figure}[!t]\centering
+  \begin{minipage}{0.49\columnwidth}\centering
+    \IncludePGF{spectrum_pmstokes_medium_polar.pgf}
+  \end{minipage}\hfill
+  \begin{minipage}{0.49\columnwidth}\centering
+    \IncludePGF{spectrum_pmstokes_medium_3d.pgf}
+  \end{minipage}
+  \caption{PM Stokes: Directional spectrum (medium $H_s$). Left: polar heatmap $E(f,\theta)$; right: 3D surface.}
+  \label{fig:pmstokes_spec_medium}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{freqtrack_pmstokes_H1.500.pgf}
+  \caption{Frequency tracking comparison for PM Stokes wave, $H_s = 1.500$ m.}
+  \label{fig:freqtrack_pmstokes_medium}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_pmstokes_medium_zkin.pgf}
+  \caption{Kalman 3D filter vertical kinematics (displacement, velocity, acceleration) -- PM Stokes, medium $H_s$.}
+  \label{fig:w3d_pmstokes_medium_zkin}
+\end{figure}
+\begin{figure}[!t]\centering
+  \IncludePGF{w3d_pmstokes_medium.pgf}
+  \caption{Kalman 3D filter Euler angle comparison -- PM Stokes, medium $H_s$.}
+  \label{fig:w3d_pmstokes_medium}
+\end{figure}
+\fi
+
+\paragraph{Scoring window}
+The deterministic regression gates, Table~\ref{tab:sim_results_rms_dir_basic},
+the four-method comparison of Sec.~\ref{sec:observer-comparison}, and the
+ensemble validation protocol all score the same trailing window
+$T_{\mathrm{RMS}}=900$~s, the final \SI{900}{s} of each \SI{1200}{s}
+run, thereby excluding startup while retaining a long
+steady-state record.  This holds for the regression gates of all four
+simulators in the comparison, not only the two OU families, so no reported
+number rests on a shorter window than any other.  The runner reports per-axis
+and 3D displacement RMS,
+roll/pitch/yaw RMS, bias errors, wave-direction accuracy against the generator
+azimuth, and diagnostic tuning variables $(f,\tau,\sigma_{aw},r_S)$.  For the
+non-stationary case it additionally scores three disjoint intervals inside the
+same window, for the reason given below.
+
+\paragraph{Paired Monte Carlo and adaptation ablations}
+Ten predeclared repetitions independently vary wave realization, IMU noise and random
+walk, and residual-error initialization.  Each seed triplet is shared by OU--II
+and OU--III and by all ablations.  Kinematically projected surrogates apply a
+common random Fourier phase to world velocity and attitude over the
+\SIrange{0.02}{1.60}{Hz} fundamental-plus-bound-harmonic band.  Displacement
+and acceleration are analytically derived from the same velocity spectrum;
+body-frame specific force, angular rate, and quaternion are then reconstructed.
+This preserves the retained primitive auto- and cross-spectra without
+redistributing finite-record boundary leakage between incompatible derivative
+channels.
+
+\paragraph{Inference, and what it does and does not license}
+The declared primary endpoint is the seed-level mean normalized
+vertical-displacement RMS error over the four stationary JONSWAP seas, compared
+between OU--III and OU--II at matched seeds.  It is recorded as
+\texttt{primary\_endpoint} in the versioned protocol block of the result
+bundle, which is what makes the declaration checkable rather than asserted;
+the word \emph{declared} is used in preference to \emph{preregistered}, since
+the study carries no external timestamp.  Everything else reported here --
+per-scenario contrasts, the adaptation and channel ablations, the covariance
+control, the PM--Stokes ensemble, the transition intervals, and the direction
+metrics -- is descriptive.
+
+Scenario summaries give the sample mean with the sample standard deviation
+across the ten seed triplets; a quoted $a\pm b$ is therefore a spread, not an
+interval estimate for the mean.  Intervals are
+\OUValidationBootstrapMethod{} with $B=\OUValidationBootstrapResamples$
+resamples drawn from a \OUValidationBootstrapRNG{} generator seeded at
+$\OUValidationStatsSeed$, so every interval in this paper is reproducible from
+the committed rows.  Paired comparisons resample the seed-level differences
+rather than the two arms independently, which is what preserves the pairing.
+No correction for multiplicity is applied across the
+\OUValidationPairedComparisons{} paired comparisons this study computes: each
+interval is a per-comparison statement, and the confirmatory claim rests on the
+single primary endpoint.  Descriptive intervals should be read accordingly, and an
+isolated interval that just excludes zero is weak evidence on its own.
+
+Standardized paired effect sizes (Cohen's $d_z$, Hedges' $g_z$) are reported
+for completeness but are deliberately secondary.  With strong pairing and
+$n=10$ the denominator is a small-sample standard deviation of differences, so
+$d_z$ is both large and imprecisely estimated; the raw paired difference in
+percentage points and its bootstrap interval are the primary statement of
+effect magnitude throughout.
+
+\paragraph{Four constructions on the primary endpoint}
+\label{par:companion-inference}%
+A percentile bootstrap at $n=10$ resamples ten numbers, and its interval is
+narrow because the pairing is strong rather than because the ensemble is large.
+The confirmatory endpoint is therefore reported under four constructions on the
+same ten paired differences: the percentile bootstrap of the paired mean, a
+Student-$t$ interval on those differences, an exact sign test, and an exact
+paired randomization (sign-flip) test enumerated over all
+$\OUValidationNormalizedRandomizationPatterns$ sign patterns.  The Student-$t$
+interval is $[\OUValidationNormalizedTLow,\OUValidationNormalizedTHigh]$
+percentage points ($t=\OUValidationNormalizedTStatistic$,
+$p=\OUValidationNormalizedTP$), slightly wider than the bootstrap interval, as
+a small-sample $t$ interval should be.
+$\OUValidationNormalizedSignNegative$ of the
+$\OUValidationStationaryPairs$ seed-level differences favour OU--III, giving
+$p=\OUValidationNormalizedSignP$ by the sign test and
+$p=\OUValidationNormalizedRandomizationP$ by the randomization test.  Both
+exact p-values sit at the floor $2^{-(n-1)}$ that $n=10$ imposes: with ten
+pairs no exact paired test can report anything smaller, whichever direction the
+data take, and that floor is a property of the design rather than a measure of
+the evidence.  These are four readings of one ensemble, not four
+experiments, and they agree only about repeatability inside this simulator.
+
+What none of them contains is uncertainty from the simulation model itself,
+sensor-model misspecification, the choice of spectral family, the coefficient
+values, vessel geometry, update cadence, real hardware vibration, or
+environmental disturbance.  Those enter the result as fixed choices, not as
+sampled variation, so an interval this narrow should be read as \emph{the
+algorithmic difference is stable across realizations of this simulator}, and
+not as a bound on the difference a field deployment would see.  Thirty to fifty
+seed triplets would estimate the seed-level variance itself more stably; ten
+establishes the sign and the approximate magnitude, which is what the primary
+claim rests on.  The statistics are recomputed from the archived rows by
+\texttt{tools/ou\_validation.py -{}-restat-from}, so a reader can reproduce every
+interval in this section, or substitute a different construction, without
+re-running a single simulator replay.
+
+\paragraph{Adaptation-channel ablation}
+\label{par:channel-ablation}%
+Comparing Adaptive with FixedNominal moves three parameters at once, and the
+deployed law $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.4,400)$ ties the third to the
+first two.  That comparison therefore cannot say whether the vertical benefit
+comes from adapting the OU process itself or from adapting the integral
+regularization.  Two additional OU--III modes complete the $2\times2$
+factorial.  \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ at the
+FixedNominal point while $r_S$ continues to adapt; \emph{OU only} freezes $r_S$
+there while $\tau$ and $\sigma_{aw}$ continue to adapt.  In both, the tuner
+keeps running and keeps deriving $r_S$ from its \emph{live} $\tau$ and
+$\sigma_{aw}$ estimates, so freezing the OU channel on the way to the filter
+does not implicitly freeze $r_S$ through the coupled law -- which is precisely
+the confound the ablation exists to remove.  All four modes share the deployed
+covariance policy.  OU--II regularizes its second-order chain with
+$(r_{p0},r_{v0})$ rather than a single integral scale, so the channel ablation
+is defined for OU--III only.
+
+\paragraph{Second spectral family and direction scoring}
+The four PM--Stokes seas of Table~\ref{tab:scenarios} are scored over the same
+window, seed triplets, and primary modes as the JONSWAP ensemble.  PM--Stokes
+carries third-order bound harmonics that JONSWAP does not, so it is reported as
+a separate declared ensemble and is \emph{not} pooled into the primary
+aggregate; pooling would silently redefine the confirmatory comparison.
+Direction is scored against the generator azimuth carried by each record.
+Because the propagation axis is defined modulo \SI{180}{\degree}, the reported
+axial error is the magnitude of the difference between the circular-mean
+estimate and that azimuth, alongside the sample-wise axial RMS error and the
+axial dispersion.  Travel sense is reported as the share of samples in
+whichever sense class the estimator commits to, and the share below the
+confidence and amplitude thresholds.  It is deliberately not reported as a
+correctness rate: the sense classes are defined against the axis representative
+the estimator returns, which carries no fixed relation to the generator
+azimuth, so these records cannot say which committed sense is the physical one
+(Sec.~\ref{sec:observer-comparison}).
+
+\paragraph{Definition of the fixed operating points}
+\label{par:fixed-points}
+The adaptation study compares the online \emph{Adaptive} filter against two
+frozen-parameter references.  Both are produced by the same procedure: the
+adaptive filter is run once on a noise-free, unrandomized \SI{1200}{s} record;
+its final $\tau$ and $\sigma_{aw}$ are read out; the regularization scale is
+computed algebraically from
+$r_S=\clip(0.35\,\sigma_{aw}\tau^{3},\,0.4,\,400)$ for OU--III and from
+$r_{p0}=\clip(0.6\,\sigma_{aw}\tau^{2},\,0.05,\,150)$ together with
+$r_{v0}=\clip(1.1\,\sigma_{aw}\tau,\,0.01,\,40)$ for OU--II; and the resulting
+triple is frozen once the filter
+reaches its normal Live stage.  The modes differ only in \emph{which} record
+supplies that triple.  \emph{FixedNominal} uses the $H_s=\SI{1.5}{m}$,
+$T_p=\SI{5.7}{s}$ record for every scenario.  \emph{FixedOracle} uses the
+record of the sea actually being scored, and the known final-sea record for
+the transition.
+
+FixedOracle is therefore a \emph{scenario-calibrated fixed reference}, not an
+optimum: it is selected from prior knowledge of the sea state, never by
+searching against reference displacement error, so it is a lower bound on
+mismatch rather than on achievable error.  It is not deployable, because it
+requires both the sea state and a noise-free calibration record in advance.
+Table~\ref{tab:ou_fixed_points} lists every frozen triple used in the study.
+Internally the filter derives the applied anisotropic values from the listed
+vertical/base parameters: OU--III uses
+$(1.87\sigma_{aw},1.87\sigma_{aw},\sigma_{aw})$ for the stationary
+acceleration standard deviation and
+$\mat{R}_S=\diag(r_S,r_S,r_S)^2$; OU--II uses $1.5\sigma_{aw}$
+horizontally and an isotropic $r_{p0}$.
+
+\paragraph{Covariance policy and its control}
+The filter re-aligns the latent-acceleration marginal $\mat{P}_{a_w a_w}$ with
+its stationary covariance $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ once per
+adaptation period, preserving the cross-covariances already learned.  This is
+a deliberate bounded covariance inflation: it prevents the marginal from
+settling far below the level the process model treats as stationary, which
+keeps the accelerometer gain responsive when the sea state changes.  It is not
+free, because it discards posterior information at the adaptation cadence.
+
+That policy interacts with the ablation.  Applied only inside the adaptation
+path, it would run in Adaptive and never in a fixed mode that stops re-tuning,
+so an Adaptive-versus-Fixed comparison would confound \emph{whether the
+parameters adapt} with \emph{whether part of the covariance is periodically
+re-aligned}.  The re-alignment is therefore driven independently of the tuner,
+so all three primary modes apply it identically and differ only in whether the
+operating point adapts.  To price the policy itself, the study additionally
+runs \emph{AdaptiveHeldCovariance} and \emph{FixedNominalHeldCovariance},
+which repeat their partner modes with the periodic re-alignment switched off
+so that $\mat{P}_{a_w a_w}$ is aligned only at discrete reconfiguration events
+-- construction, entry to Live, and an explicit fixed-tuning command.  Each
+pair differs in exactly one factor
+(Table~\ref{tab:ou_mc_covsync}).
+
+\paragraph{Construction and limits of the non-stationary case}
+The non-stationary realization is a $C^2$ quintic crossfade between two
+\emph{independently} phase-randomized stationary records: the
+$(H_s,T_p)=(\SI{1.5}{m},\SI{5.7}{s})$ record and the long-period
+$H_s=\SI{8.5}{m}$ record scaled to an $H_s=\SI{4.0}{m}$,
+$T_p=\SI{11.4}{s}$ endpoint.  With
+$x=\clip\!\big((t-t_0)/(t_1-t_0),0,1\big)$ and
+$w(x)=10x^{3}-15x^{4}+6x^{5}$, displacement is blended directly while velocity
+and acceleration carry the exact derivative cross terms,
+\begin{align}
+  \vct{p} &= (1-w)\vct{p}_0 + w\vct{p}_1, \\
+  \vct{v} &= (1-w)\vct{v}_0 + w\vct{v}_1 + \dot{w}\,(\vct{p}_1-\vct{p}_0), \\
+  \vct{a} &= (1-w)\vct{a}_0 + w\vct{a}_1
+             + 2\dot{w}\,(\vct{v}_1-\vct{v}_0)
+             + \ddot{w}\,(\vct{p}_1-\vct{p}_0),
+\end{align}
+so the record remains kinematically closed throughout the blend.  The
+controlled case uses $t_0,t_1=420,780$~s; the rapid degradation case of
+Sec.~\ref{sec:ou-robustness} uses $585,615$~s about the same midpoint.
+
+This is a crossfade, not a physically evolving JONSWAP spectrum, and four
+consequences must be stated rather than assumed away.  First, both spectra
+coexist during the blend, so the sea can be bimodal and the frequency tracker
+may switch between components; there is no single intermediate $T_p$.  Second,
+because the two records are independent their variances add, so the midpoint
+height is
+$H_s\approx\sqrt{0.5^{2}(1.5)^{2}+0.5^{2}(4.0)^{2}}\approx\SI{2.14}{m}$,
+not the \SI{2.75}{m} a linear $H_s$ ramp would give.  Third, the
+\SI{900}{s} score covers $300$--$420$~s of the pure start sea, $420$--$780$~s
+of blend, and $780$--$1200$~s of the pure endpoint sea, so \pct{47} of the
+scored record is the endpoint sea alone.  The endpoint-calibrated FixedOracle
+is favored by that composition, and the controlled and rapid cases contain
+different amounts of pure-start, mixture, and pure-end data.
+
+Fourth, and consequently, a single number normalized by the final
+$H_s=\SI{4.0}{m}$ is not comparable with a stationary $Z/H_s$ score: for
+\pct{13} of the window the sea is \SI{1.5}{m} and for the blend it is a
+lower-energy mixture, so the same absolute error is divided by a height the
+record does not yet have.  The transition is therefore also scored on the three
+disjoint intervals above and reported in absolute metres, together with the
+scale-free ratio $Z/Z_{\mathrm{ref}}$ in which $Z_{\mathrm{ref}}$ is the RMS of
+the reference vertical displacement over the same interval
+(Table~\ref{tab:ou_transition_segments}).  The whole-window $Z/H_s$ figure is
+retained only for continuity with earlier reporting.  Taken together, the
+transition comparison measures behavior over a specified non-stationary
+excursion; it does not isolate adaptation rate, and
+Sec.~\ref{sec:observer-comparison} reports a single-realization time series
+rather than resting on the aggregate alone.
+
+Machine-readable raw data, statistics, seed manifests, LaTeX tables, and plots
+are generated by \texttt{tools/ou\_validation.py}.  The completed
+full-protocol results are reported in Sec.~\ref{sec:observer-comparison}; the
+versioned raw rows, summaries, paired effects, and manifest are retained with
+the source tree.
+
+\IfFileExists{w3d-sim-results-generated.tex-part}{%
+  \input{w3d-sim-results-generated.tex-part}%
+}{%
+  \begin{table}[t]
+    \centering
+    \caption{Simulation results (last \SI{900}{s} RMS window).}
+    \label{tab:sim_results_rms_dir_basic}
+    \begin{tabular}{ll}
+      \toprule
+      Result & Status \\
+      \midrule
+      Deterministic \SI{900}{s} metrics & generated during document evaluation \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+}
+
+\medskip
+The full filter and simulation source code is available on GitHub in the Bareboat Necessities project, 
+implemented in modern idiomatic C++ with the embedded-friendly Eigen linear algebra library.
+
+\input{w3d-baseline-comparison.tex-part}
+
+\section{Embedded Implementation Platform}
+\label{sec:real-hardware-platform}
+
+As a functional portability exercise, the implementation was run on an
+M5Stack AtomS3R development module based on the ESP32-S3 microcontroller.
+This platform provides a compact, low-power target representative of the
+resource-constrained devices for which the filter is intended.
+
+The purpose of this exercise is not to replace the controlled
+simulation study of Sec.~\ref{sec:sim-and-eval}, where ground-truth wave
+kinematics are available. It confirms that the source builds for the target and
+that calibrated MEMS samples can traverse the initialization, attitude,
+acceleration, frequency-tracking, and wave-state pipeline. This study did not
+instrument update latency, worst-case execution time, processor utilization,
+RAM, flash, or sustained deadline margin; it therefore does not establish a
+quantitative real-time-performance claim.
+
+\begin{figure}[!t]\centering
+  \includesvg[
+    width=0.25\columnwidth,
+    inkscapelatex=false
+  ]{AtomS3R_device}
+  \caption{M5Stack AtomS3R device based on the ESP32-S3 MCU, used as the
+  embedded implementation target.}
+  \label{fig:atoms3r_device}
+\end{figure}
+
+The firmware executes the full prediction and correction loop on-device.
+At each IMU sample the gyroscope is used for quaternion propagation, the
+accelerometer update is applied as a rank--3 EKF correction, and the adaptive
+frequency and sea-state tuning logic is updated from the vertical
+acceleration-like signal. When magnetometer data are available, yaw correction
+is applied using the delayed magnetic-reference alignment procedure described
+in Sec.~\ref{sec:init_alignment}. The same left-multiplicative quaternion
+convention and measurement Jacobians used in the mathematical derivation are
+therefore exercised on the embedded target.
+
+Before testing, the device is calibrated for accelerometer bias, gyroscope
+bias, axis alignment, and magnetometer hard-/soft-iron effects. The calibrated
+sensor triads are transformed into the body-frame convention used by the
+filter. 
+
+This exercise supports source-level portability and end-to-end functional
+integration with real MEMS input. It does not quantify embedded resource use or
+wave-reconstruction accuracy on hardware. Those require the timing, memory,
+power, sustained-rate, and external-reference measurements reserved for the
+embedded-performance phase. Quantitative wave-kinematics accuracy in the
+present paper is evaluated only in simulation, where exact reference
+displacement, velocity, acceleration, and attitude are available.
+
+\section{Conclusion and Future Work}
+\label{sec:future-work}
+
+The paired Monte Carlo and ablation framework used here provides a reproducible
+starting point for broader benchmarking.  Future work should extend it to
+additional spectra, update cadences, vessel-motion records, and external
+hardware references.  Two protocol refinements are needed before the
+non-stationary result can be sharpened into a statement about adaptation rate:
+replacing the two-record crossfade with a continuously evolving spectrum, so
+that no single intermediate $T_p$ is missing and the effective $H_s$ follows
+the intended ramp, and scoring windows whose sea-state composition is held
+fixed while only the adaptation rate varies.  The online law itself should
+target the estimation jitter identified in
+Sec.~\ref{sec:observer-comparison}, since that is what costs accuracy where a
+well-matched frozen operating point already exists.

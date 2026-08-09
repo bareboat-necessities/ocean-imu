@@ -1,84 +1,29 @@
-\subsubsection{Sensitivity and degradation-case study}
+\ifdefined\OUStandaloneDetailedResults
+  \input{w3d-ou-robustness-study.tex-part}
+  \expandafter\endinput
+\fi
+
+\subsubsection{Sensitivity and degradation cases}
 \label{sec:ou-robustness}
-
-The confirmatory comparison above is complemented by a declared
-OU--III robustness study using the same ten paired wave-realization, IMU-noise, and
-initialization seed triplets.  At the nominal $H_s=\SI{1.5}{m}$ sea, the
-frozen operating point is perturbed by the multipliers $0.5$, $0.75$, $1.0$,
-$1.25$, and $1.5$ along five directions.  Three are one-factor-at-a-time:
-the OU correlation time $\tau$, the stationary acceleration scale
-$\sigma_{aw}$, and the pseudo-measurement standard deviation $r_S$, each
-varied with the other two held at the nominal point.  Because
-$\mat{R}_S=\diag(r_S^2)$, multiplying $r_S$ by $c$ multiplies the
-corresponding covariance by $c^2$.
-
-The remaining two directions are \emph{coupled}, because the one-factor sweeps
-answer a narrower question than they appear to.  The deployed law ties the
-regularization scale to the other two parameters through
-$r_S=\clip(0.35\,\sigma_{aw}\tau^{3},\,0.4,\,400)$, so freezing $r_S$ while
-sweeping $\sigma_{aw}$ or $\tau$ measures only the \emph{direct} effect of the
-OU process covariance and never reproduces a state the online tuner can
-occupy.  The coupled sweeps therefore move $\sigma_{aw}\to c\,\sigma_{aw}$
-with $r_S\to c\,r_S$, and $\tau\to c\,\tau$ with $r_S\to c^{3}r_S$.  All five
-directions remain local perturbations about one point; none is a global
-interaction study.
-
-Two deliberately difficult inputs delimit the demonstrated operating envelope.
-The first scales the smallest JONSWAP record from $H_s=\SI{0.27}{m}$ to
-$H_s=\SI{0.05}{m}$ without changing its spectral shape, placing wave motion
-closer to the fixed IMU-noise floor.  The second compresses the controlled
-$H_s=\SI{1.5}{m}$, $T_p=\SI{5.7}{s}$ to $H_s=\SI{4.0}{m}$,
-$T_p=\SI{11.4}{s}$ ramp from \SI{360}{s} to \SI{30}{s}, while keeping the
-transition midpoint, endpoint, long scoring window, and paired realizations
-fixed.  These are degradation probes rather than additional population claims
-about arbitrary ocean spectra.
-Both ramps use a $C^2$ quintic weight, and their stored velocity and
-acceleration include the exact first- and second-derivative blend terms.
+A ten-seed robustness study perturbs the nominal OU--III operating point by
+multipliers $0.5$, $0.75$, $1.0$, $1.25$, and $1.5$.  One-factor sweeps vary
+$\tau$, $\sigma_{aw}$, or $r_S$ with the other parameters fixed; coupled sweeps
+also move $r_S$ according to the deployed relation
+$r_S=\clip(0.35\,\sigma_{aw}\tau^3,0.4,400)$.  Two additional degradation
+cases test a low-motion $H_s=\SI{0.05}{m}$ record and a rapid \SI{30}{s}
+transition between the same endpoints used in the controlled case.
 
 \IfFileExists{w3d-ou-robustness-results-generated.tex-part}{%
   \input{w3d-ou-robustness-results-generated.tex-part}%
-}{%
-  \providecommand{\OURobustnessPairs}{0}
-  \providecommand{\OURobustnessNominalMean}{--}
-  \providecommand{\OURobustnessWorstParameter}{pending}
-  \providecommand{\OURobustnessWorstScale}{--}
-  \providecommand{\OURobustnessWorstMean}{--}
-  \providecommand{\OURobustnessWorstDifference}{--}
-  \providecommand{\OURobustnessWorstDifferenceLow}{--}
-  \providecommand{\OURobustnessWorstDifferenceHigh}{--}
-  \providecommand{\OURobustnessRSHalfThreeDDifference}{--}
-  \providecommand{\OURobustnessRSHalfThreeDLow}{--}
-  \providecommand{\OURobustnessRSHalfThreeDHigh}{--}
-  \providecommand{\OURobustnessSigmaHalfPitchDifference}{--}
-  \providecommand{\OURobustnessSigmaHalfPitchLow}{--}
-  \providecommand{\OURobustnessSigmaHalfPitchHigh}{--}
-  \providecommand{\OURobustnessLowReferenceMean}{--}
-  \providecommand{\OURobustnessLowStressMean}{--}
-  \providecommand{\OURobustnessLowStressAbsolute}{0}
-  \providecommand{\OURobustnessLowDifference}{--}
-  \providecommand{\OURobustnessLowDifferenceLow}{--}
-  \providecommand{\OURobustnessLowDifferenceHigh}{--}
-  \providecommand{\OURobustnessControlledAdaptiveMean}{--}
-  \providecommand{\OURobustnessRapidAdaptiveMean}{--}
-  \providecommand{\OURobustnessRapidDifference}{--}
-  \providecommand{\OURobustnessRapidDifferenceLow}{--}
-  \providecommand{\OURobustnessRapidDifferenceHigh}{--}
-  \providecommand{\OURobustnessRapidAdaptationDifference}{--}
-  \providecommand{\OURobustnessRapidAdaptationLow}{--}
-  \providecommand{\OURobustnessRapidAdaptationHigh}{--}
-}
+}{}
 
 \IfFileExists{ou_robustness_sensitivity.svg}{%
   \begin{figure*}[t]
     \centering
-    \includesvg[
-      width=0.82\textwidth,
-      inkscapelatex=false
-    ]{ou_robustness_sensitivity}
-    \caption{Ten-seed one-factor-at-a-time OU--III sensitivity at the nominal
-    sea for vertical, full 3D-displacement, and pitch errors. Error bars are
-    paired-bootstrap 95\% intervals for the mean. The dashed line marks the
-    frozen nominal operating point.}
+    \includesvg[width=0.82\textwidth,inkscapelatex=false]{ou_robustness_sensitivity}
+    \caption{Ten-seed OU--III sensitivity around the nominal operating point.
+    Error bars are paired-bootstrap 95\% intervals; the dashed line marks the
+    frozen nominal point.}
     \label{fig:ou_robustness_sensitivity}
   \end{figure*}
 }{}
@@ -86,97 +31,48 @@ acceleration include the exact first- and second-derivative blend terms.
 \IfFileExists{ou_robustness_stress.svg}{%
   \begin{figure*}[t]
     \centering
-    \includesvg[
-      width=0.90\textwidth,
-      inkscapelatex=false
-    ]{ou_robustness_stress}
-    \caption{OU--III degradation cases. Left: the low-motion record approaches
-    the fixed sensor-noise floor. Right: the same sea-state endpoints are
-    connected by the controlled and rapid ramps. Error bars are
-    paired-bootstrap 95\% intervals for the mean.}
+    \includesvg[width=0.88\textwidth,inkscapelatex=false]{ou_robustness_stress}
+    \caption{Low-motion and rapid-transition degradation cases.}
     \label{fig:ou_robustness_stress}
   \end{figure*}
 }{}
 
-All five sweep directions share the $\times1.0$ reference and reproduce a mean
-normalized vertical error of
-\OURobustnessNominalMean\% of $H_s$ there.  Across the declared multiplier
-range, the largest mean is \OURobustnessWorstMean\% for
-the \OURobustnessWorstParameter{} direction at
-$\times\OURobustnessWorstScale$; its paired difference from the nominal point
-is \OURobustnessWorstDifference{} percentage points (bootstrap 95\% interval
-$[\OURobustnessWorstDifferenceLow,\OURobustnessWorstDifferenceHigh]$).
-Table~\ref{tab:ou_robustness_sensitivity} and
-Fig.~\ref{fig:ou_robustness_sensitivity} report the complete sweep, so
-robustness is assessed from the shape and intervals rather than from the most
-favorable setting.
+Across the declared multiplier range, the largest mean normalized vertical
+error is \OURobustnessWorstMean\% of $H_s$ in the
+\OURobustnessWorstParameter{} direction at
+$\times\OURobustnessWorstScale$, differing from nominal by
+\OURobustnessWorstDifference{} percentage points
+($[\OURobustnessWorstDifferenceLow,\OURobustnessWorstDifferenceHigh]$).
+The sweeps also show competing objectives: changing $r_S$ can improve the
+vertical score while changing 3D displacement, and changing $\sigma_{aw}$ can
+alter pitch even when vertical displacement changes little.  The sweep is
+therefore interpreted as local sensitivity, not as an offline search for a new
+operating point.
 
-The sweep also exposes competing objectives.  Halving $r_S$ changes the 3D
-displacement RMS by \OURobustnessRSHalfThreeDDifference{} m
-($[\OURobustnessRSHalfThreeDLow,\OURobustnessRSHalfThreeDHigh]$) even though
-it lowers the vertical-only score.  Halving $\sigma_{aw}$ changes pitch RMS by
-\OURobustnessSigmaHalfPitchDifference{} degrees
-($[\OURobustnessSigmaHalfPitchLow,\OURobustnessSigmaHalfPitchHigh]$).
-Consequently, no sweep point is adopted as a replacement tuning: choosing one
-from reference errors would violate the frozen, sensor-only tuning protocol and
-would optimize one metric at the expense of another.
-
-\paragraph{What the flat $\tau$ and $\sigma_{aw}$ columns do and do not mean}
-With their companions frozen, the $\tau$ and $\sigma_{aw}$ columns move mean
-vertical error by only \OURobustnessTauSpan{} and \OURobustnessSigmaSpan{}
-points of $H_s$ across the full $\times0.5$ to $\times1.5$ range, whereas the
-$r_S$ column moves it by \OURobustnessRSSpan{} points and the coupled sweeps
-by \OURobustnessCoupledSigmaSpan{} and \OURobustnessCoupledTauSpan{} points.
-The flatness is not a code path that fails to apply the parameter: $\sigma_{aw}^2$
-enters the discrete OU process covariance, the raw records confirm that the
-applied values match the requested values, and halving $\sigma_{aw}$ visibly
-degrades pitch, as reported above.  It is a structural property of the
-measurement geometry.  The accelerometer supplies a direct \SI{200}{Hz}
-observation of the latent $\vct{a}_w$ with measurement noise several orders of
-magnitude below the stationary OU variance, so the corresponding gain is
-already near saturation and rescaling the prior by a factor of three barely
-changes the latent-acceleration estimate that the kinematic chain integrates.
-Over the same interval $\Delta t/\tau\lesssim10^{-2}$, so the OU mean reversion
-between updates is negligible.  Displacement error is instead set by the
-integral pseudo-measurement scale $r_S$, which is the only one of the three
-that is not overwhelmed by a direct high-rate observation.  Attitude behaves
-differently because $\mat{P}_{a_w a_w}$ enters the accelerometer innovation
-covariance and therefore governs how the residual is apportioned between tilt
-error and wave acceleration.
-
-The correct statement is thus narrow: with $\tau$ and $r_S$ frozen at the
-nominal point, displacement is locally insensitive to the direct OU
-process-covariance effect of $\sigma_{aw}$, while attitude is not.  It is not
-that the filter is insensitive to its OU tuning; the coupled columns, which
-move $r_S$ the way the deployed law does, show the sensitivity the online
-tuner actually experiences.
+\paragraph{Why the direct $\tau$ and $\sigma_{aw}$ effects are weak}
+With their companion parameters frozen, the $\tau$ and $\sigma_{aw}$ sweeps
+change mean vertical error by only \OURobustnessTauSpan{} and
+\OURobustnessSigmaSpan{} percentage points over the full multiplier range,
+whereas $r_S$ changes it by \OURobustnessRSSpan{} points and the coupled sweeps
+show the sensitivity of the deployed tuning law.  This does not indicate an
+unused OU parameter.  The accelerometer directly observes the latent
+acceleration at \SI{200}{Hz} with measurement noise small relative to its
+stationary variance, so the latent-acceleration gain is already close to
+saturation and moderate prior rescaling has little effect on integrated
+vertical displacement.  The unobserved low-frequency drift channel remains
+sensitive to $r_S$.  Attitude is different because the latent-acceleration
+covariance also enters the accelerometer innovation covariance, explaining the
+measurable pitch sensitivity to $\sigma_{aw}$.
 
 At $H_s=\SI{0.05}{m}$, the mean absolute vertical RMS error is
 \SI{\OURobustnessLowStressAbsolute}{m}, corresponding to
-\OURobustnessLowStressMean\% of $H_s$, compared with
-\OURobustnessLowReferenceMean\% at $H_s=\SI{0.27}{m}$.  The paired normalized
-difference is \OURobustnessLowDifference{} points
-($[\OURobustnessLowDifferenceLow,\OURobustnessLowDifferenceHigh]$), explicitly
-showing the limit imposed by a nearly fixed absolute sensor-error floor.
-
-Compressing the transition changes the Adaptive mean from
+\OURobustnessLowStressMean\% of $H_s$; the increase in normalized error exposes
+the approximately fixed absolute sensor-error floor.  Compressing the
+transition from \SI{360}{s} to \SI{30}{s} changes the Adaptive mean from
 \OURobustnessControlledAdaptiveMean\% to
-\OURobustnessRapidAdaptiveMean\% of final $H_s$; the rapid-minus-controlled
-paired difference is \OURobustnessRapidDifference{} points
-($[\OURobustnessRapidDifferenceLow,\OURobustnessRapidDifferenceHigh]$).
-Within the rapid case, Adaptive-minus-FixedNominal is
-\OURobustnessRapidAdaptationDifference{} points
-($[\OURobustnessRapidAdaptationLow,\OURobustnessRapidAdaptationHigh]$).
-Positive differences denote higher Adaptive error.
-
-That degradation must not be read as a pure measure of adaptation rate.
-Compressing the ramp from \SI{360}{s} to \SI{30}{s} about a fixed midpoint
-changes the composition of the fixed \SI{900}{s} window as well as its speed:
-the rapid case contains far more pure-endpoint data and almost no crossfade,
-whereas the controlled case spends \SI{360}{s} in the blend.  The two cases
-therefore differ in what is scored, not only in how fast the sea moves, and the
-reported difference confounds the two.  What these results establish is that
-the filter degrades by a bounded, measured amount over a much faster specified
-excursion; isolating the response limit of the adaptation smoothing would
-require holding the scored sea-state composition fixed while varying only the
-ramp rate, which the crossfade construction cannot do.
+\OURobustnessRapidAdaptiveMean\% of the final $H_s$.  This rapid-case difference
+is a degradation result rather than a pure adaptation-rate measurement because
+compressing the crossfade also changes the composition of the fixed
+\SI{900}{s} scoring window.  Isolating adaptation bandwidth would require a
+protocol that holds the scored sea-state composition fixed while varying only
+the transition rate.

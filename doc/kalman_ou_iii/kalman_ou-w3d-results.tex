@@ -153,9 +153,9 @@
 
 \begin{document}
 
-% Keep the standalone results PDF tied to the same generated evidence used by
-% the full OU--III manuscript.  The source of the results text remains
-% w3d-sim-charts.tex-part so the two documents cannot silently diverge.
+% The standalone study intentionally keeps the exhaustive protocol, diagnostic,
+% ablation, and limitation text that is condensed in the publication article.
+% Both views continue to use the same generated numerical evidence.
 \IfFileExists{w3d-ou-validation-macros-generated.tex-part}{%
   \input{w3d-ou-validation-macros-generated.tex-part}%
 }{}
@@ -188,17 +188,18 @@
 \maketitle
 
 \begin{abstract}
-This companion document collects the simulation protocol, comparative evaluation,
-Monte Carlo validation, adaptation ablations, transition study, and embedded
-implementation observations from the OU--III marine wave-state estimator paper.
-It is built from the same maintained results source and generated evidence as the
-full manuscript so that the standalone PDF and the article remain synchronized.
+This companion document collects the full simulation protocol, comparative
+evaluation, Monte Carlo validation, adaptation ablations, transition study,
+robustness analysis, and implementation observations supporting the OU--III
+marine wave-state estimator paper.  It retains details intentionally condensed
+from the publication article while using the same generated numerical evidence.
 \end{abstract}
 
 \begin{IEEEkeywords}
 extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, MRU, Ornstein--Uhlenbeck process, heave estimation, wave-state estimation, validation\end{IEEEkeywords}
 
-\input{w3d-sim-charts.tex-part}
+\def\OUStandaloneDetailedResults{1}
+\input{w3d-sim-charts-study.tex-part}
 
 \FloatBarrier
 \bibliographystyle{IEEEtran}
