@@ -7,6 +7,7 @@ on:
     paths:
       - 'tests/kalman_tfg/apply_correct_math.py'
       - 'tests/kalman_tfg/apply_correct_math_fix.py'
+      - '.github/workflows/apply-tfg-correct-math.yml'
 
 permissions:
   contents: write
@@ -19,7 +20,7 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v6
         with:
-          ref: agent/tfg-math-hardening
+          ref: refs/heads/agent/tfg-math-hardening
           fetch-depth: 0
 
       - name: Apply mathematically consistent TFG covariance changes
@@ -62,9 +63,15 @@ jobs:
             tests/kalman_tfg/kalman_tfg-sim.cpp \
             tests/kalman_tfg/tfg_propagation-test.cpp \
             tests/kalman_tfg/tfg_process_covariance-test.cpp \
+            tests/kalman_tfg/tfg_orchestrator-test.cpp \
             tests/kalman_tfg/Makefile \
             .github/workflows/tfg-validation.yml \
             docs/tfg-math-hardening.md
+          # Remove the one-shot patch machinery in the same validated commit.
+          git rm -f \
+            .github/workflows/apply-tfg-correct-math.yml \
+            tests/kalman_tfg/apply_correct_math.py \
+            tests/kalman_tfg/apply_correct_math_fix.py
           git diff --cached --quiet && exit 0
           git commit -m 'Make TFG covariance propagation mathematically consistent'
-          git push origin HEAD:agent/tfg-math-hardening
+          git push origin HEAD:refs/heads/agent/tfg-math-hardening
