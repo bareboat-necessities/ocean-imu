@@ -29,7 +29,7 @@ at high rate, while $r_S$ governs the weakly observed low-frequency drift
 channel.  Low-motion and rapid-transition cases bound the empirical claim to
 the tested signal-to-noise levels and transition construction.
 
-Appendix~\ref{app:iss-stability} establishes nominal local stability of the
+Section~\ref{app:iss-stability} establishes nominal local stability of the
 21-state Live error dynamics under bounded noncollinear reference geometry,
 bounded measurement gaps, exact $T_S$ spacing for the four integral-state
 pseudo-updates used on each translational proof horizon, finite positive
