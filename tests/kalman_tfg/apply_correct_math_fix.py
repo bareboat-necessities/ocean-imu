@@ -2,6 +2,7 @@
 from pathlib import Path
 import re
 
+# One-shot helper: removed after the validated source commit is published.
 ROOT = Path(__file__).resolve().parents[2]
 
 # The hard accelerometer-bias projection was removed because changing the
