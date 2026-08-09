@@ -14,7 +14,9 @@ jobs:
         with:
           ref: agent/predictable-ou-adaptation
       - name: Apply predictable adaptation patch
-        run: python3 .github/agent_predictable_adaptation_patch.py
+        run: |
+          python3 .github/agent_predictable_adaptation_prepatch.py
+          python3 .github/agent_predictable_adaptation_patch.py
       - name: Commit patch
         run: |
           git config user.name github-actions[bot]
