@@ -31,10 +31,12 @@ the tested signal-to-noise levels and transition construction.
 
 Appendix~\ref{app:iss-stability} establishes nominal local stability of the
 21-state Live error dynamics under bounded noncollinear reference geometry,
-bounded measurement gaps, finite positive covariance bounds, and finite
-accelerometer-bias correlation time.  The result is local and applies between
-hard resets; startup, re-lock, gating, and arbitrary ocean-model mismatch are
-outside its scope.
+bounded measurement gaps, exact $T_S$ spacing for the four integral-state
+pseudo-updates used on each translational proof horizon, finite positive
+covariance bounds, and finite accelerometer-bias correlation time.  The result
+is local and applies between hard resets; startup, re-lock, gating, general
+sample-time jitter of the nominal $S$ deadlines, and arbitrary ocean-model
+mismatch are outside its scope.
 
 The present evidence remains primarily simulation based.  The only method run
 under the full paired inferential protocol is OU--II, so the paper establishes
@@ -44,6 +46,7 @@ baseline and a current published heave estimator should be evaluated under the
 same paired protocol.  The ESP32--S3 exercise establishes source portability,
 not timing, memory, power, or measurement accuracy.  Future validation should
 therefore add independent sea states and update rates, a continuously evolving
-non-stationary spectrum, quantitative embedded-resource measurements, and an
-external physical displacement reference from a motion platform, wave tank,
-GNSS/optical system, or commercial MRU.
+non-stationary spectrum, quantitative embedded-resource measurements, a
+varying-temperature calibration/lag experiment, and an external physical
+displacement reference from a motion platform, wave tank, GNSS/optical system,
+or commercial MRU.

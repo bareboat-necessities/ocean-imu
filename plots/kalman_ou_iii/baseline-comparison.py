@@ -85,7 +85,7 @@ def write_tables(rows, output):
     lines = [
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Paired vertical-displacement RMS error for the proposed OU--III estimator, its OU--II predecessor, the adaptive PII observer, and the published TVG--NLO baseline. All values use the same reference records and final \SI{900}{s} scoring window.}",
+        r"  \caption{Common-record deterministic vertical-displacement RMS error for the proposed OU--III estimator, its OU--II predecessor, the adaptive PII observer, and the adapted TVG--NLO baseline. All values use the same reference records and final \SI{900}{s} scoring window; this is not the ten-seed paired inferential comparison.}",
         r"  \label{tab:multi_observer_scenario_comparison}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4.0pt}",
@@ -119,7 +119,7 @@ def write_tables(rows, output):
     lines += [
         r"\begin{table}[t]",
         r"  \centering",
-        r"  \caption{Aggregate comparison over all eight paired wave cases.}",
+        r"  \caption{Aggregate deterministic comparison over all eight common-record wave cases.}",
         r"  \label{tab:multi_observer_aggregate_comparison}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{3.0pt}",

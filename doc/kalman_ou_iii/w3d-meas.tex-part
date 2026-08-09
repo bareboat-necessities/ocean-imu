@@ -42,7 +42,7 @@ With calibrated world reference $\vct{B}_w$,
 \begin{equation}
 \vct{m}_b=\Rot_{wb}\vct{B}_w+\vct{n}_m,
 \qquad
-\vct{n}_m\sim\mathcal{N}(0,\mat{R}_m),
+\vct{n}_m\sim\mathcal{N}(0,\mat{R}_m)$,
 \label{eq:mag-meas}
 \end{equation}
 and
@@ -97,7 +97,10 @@ seconds rather than as every $N$ samples makes the regularization rate invariant
 to the IMU sample rate; the same $T_S$ produces the same number of updates per
 unit time at 100, 200, or 400~Hz.  The effective regularization strength still
 depends on both $\vct{r}_S$ and $T_S$, so comparisons of tuning laws assume a
-fixed pseudo-update cadence unless stated otherwise.
+fixed pseudo-update cadence unless stated otherwise.  Appendix~\ref{app:iss-stability}
+uses the narrower exact-$T_S$ spacing assumption for its translational
+observability lemma; general sample-time quantization of these deadlines under
+variable $h_k$ is not part of that theorem.
 
 \subsection{IMU lever-arm model}
 If the IMU is displaced from the center of gravity by known body-frame vector
@@ -114,6 +117,6 @@ Their second-order coupling through attitude uncertainty is neglected, so the
 state Jacobians remain those of \eqref{eq:acc-meas}.  Setting $\vct{r}_b=0$
 disables the correction.
 
-The optional steady-heel frame transform is documented in
-Appendix~\ref{sec:heel}. It is outside the evaluated configuration and is
-disabled for all results in this paper.
+The optional steady-heel frame transform is retained in the repository as
+companion material. It is outside the evaluated configuration and is disabled
+for all results in this paper.

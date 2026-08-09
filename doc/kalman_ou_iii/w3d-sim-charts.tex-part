@@ -46,6 +46,7 @@ Gauss--Markov process, so the validation includes process-model mismatch.
     \midrule
     IMU rate & \SI{200}{\hertz} & prediction and accel update \\
     Magnetometer rate & \SI{25}{\hertz} & asynchronous update \\
+    $S$ pseudo-update period & \SI{15}{\milli\second} & three IMU samples \\
     Accel white noise & \SI{0.0148}{\meter\per\second\squared} & RMS per sample \\
     Accel bias RW & \SI{5e-4}{\meter\per\second\squared\per\second\tothe{0.5}} & truth model \\
     Gyro white noise & \SI{0.00157}{\radian\per\second} & RMS per sample \\
@@ -55,6 +56,14 @@ Gauss--Markov process, so the validation includes process-model mismatch.
     \bottomrule
   \end{tabular}
 \end{table}
+
+Temperature is not varied in the scored simulations, and no separate thermal
+calibration-error, lag, or hysteresis experiment is included.  The
+finite-$\tau_b$ temperature-centered residual is therefore a structural sensor
+model used by the estimator and stability analysis, not a demonstrated
+temperature-compensation performance contribution.  Empirically, the relevant
+result here is robustness to the deliberate mismatch between that residual
+model and the random-walk accelerometer-bias truth process.
 
 All deterministic and ensemble comparisons use the final \SI{900}{s} of each
 record, excluding startup while retaining a long common scoring interval.

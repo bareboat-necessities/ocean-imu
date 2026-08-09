@@ -2,8 +2,8 @@
 
 The numerical/statistical tests remain in ``test_ou_validation``.  The paper
 cleanup intentionally changed wording and moved some detailed tables into the
-standalone study, so six historical tests that pinned exact prose are replaced
-here with semantic assertions against the current publication structure.
+standalone study, so historical tests that pinned exact prose are replaced here
+with semantic assertions against the current publication structure.
 
 The filename is intentionally sorted after ``test_ou_validation.py``.  Unittest
 discovers the original TestCase classes first; these replacements are installed
@@ -124,6 +124,7 @@ def _inference_is_qualified_rather_than_asserted(self):
     self.assertIn("not uncertainty over alternative simulators", results)
     self.assertIn("Only OU--II is evaluated under the full paired inferential protocol", results)
     self.assertIn("frequency-domain double-integration", results)
+    self.assertIn("OUValidationNormalizedRandomizationP", results)
 
     self.assertIn("degradation result rather than a pure adaptation-rate measurement", robustness)
     self.assertIn("holds the scored sea-state composition fixed", robustness)
@@ -249,6 +250,8 @@ core.ManuscriptMethodologyTests.test_baseline_fairness_thresholds_and_hardware_l
 
 
 class PublicationContractOverrideTests(unittest.TestCase):
+    DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
+
     def test_overrides_are_installed(self):
         self.assertIs(
             core.CommittedFullResultsTests.test_abstract_reports_committed_stationary_aggregate,
@@ -258,6 +261,56 @@ class PublicationContractOverrideTests(unittest.TestCase):
             core.ManuscriptMethodologyTests.test_inference_is_qualified_rather_than_asserted,
             _inference_is_qualified_rather_than_asserted,
         )
+
+    def test_bias_discretization_matches_the_stability_model(self):
+        analytic = (self.DOC / "w3d-analytic-coeff.tex-part").read_text(
+            encoding="utf-8"
+        )
+        stability = (self.DOC / "w3d-iss-stability.tex-part").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(r"e^{-h/\tau_b}\Id", analytic)
+        self.assertIn(r"1-e^{-2h/\tau_b}", analytic)
+        self.assertNotIn(r"\Phi_{b_ab_a}=\Id", analytic)
+        self.assertIn(r"\phi_{b,k}=e^{-h_k/\tau_b}", stability)
+        self.assertIn(r"1-e^{-2h_k/\tau_b}", stability)
+
+    def test_stability_cadence_scope_matches_the_proof_matrix(self):
+        stability = (self.DOC / "w3d-iss-stability.tex-part").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("relative\ntimes $0,T_S,2T_S,3T_S$", stability)
+        self.assertIn("exact $S$-update spacing is an explicit theorem assumption", stability)
+        self.assertIn("sample-time jitter", stability)
+        self.assertIn(r"Sec.~\ref{sec:block-Phi-Qd}", stability)
+        self.assertNotIn("sec:discretization", stability)
+
+    def test_publication_does_not_reference_stripped_direction_table(self):
+        generated = (self.DOC / "w3d-sim-results-generated.tex-part").read_text(
+            encoding="utf-8"
+        )
+        generator = (REPO_ROOT / "tools" / "ou_sim_table.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn(r"\ref{tab:ou_mc_direction}", generated)
+        self.assertNotIn("Table~\\ref{tab:ou_mc_direction}", generator)
+
+    def test_external_baseline_captions_are_not_called_paired(self):
+        generator = (
+            REPO_ROOT / "plots" / "kalman_ou_iii" / "baseline-comparison.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Common-record deterministic vertical-displacement", generator)
+        self.assertIn("Aggregate deterministic comparison", generator)
+        self.assertNotIn("Paired vertical-displacement RMS error", generator)
+        self.assertNotIn("all eight paired wave cases", generator)
+
+    def test_unevaluated_extensions_are_not_typeset_as_main_appendices(self):
+        manuscript = (self.DOC / "kalman_ou-w3d.tex").read_text(encoding="utf-8")
+        self.assertNotIn(r"\input{w3d-wind-heel.tex-part}", manuscript)
+        self.assertNotIn(r"\input{w3d-gps-fusion.tex-part}", manuscript)
+        self.assertIn(r"\input{w3d-iss-stability.tex-part}", manuscript)
+        self.assertTrue((self.DOC / "w3d-wind-heel.tex-part").is_file())
+        self.assertTrue((self.DOC / "w3d-gps-fusion.tex-part").is_file())
 
 
 if __name__ == "__main__":
