@@ -509,7 +509,8 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         # conclusion that the filter ignores its OU tuning.
         self.assertIn("coupled", source)
         self.assertIn(r"r_S\to c^{3}r_S", source)
-        self.assertIn("near saturation", source)
+        self.assertIn("latent-acceleration gain", source)
+        self.assertIn("saturation", source)
 
     def test_generated_primary_claims_match_paired_effects(self):
         effects = self.read_csv(
