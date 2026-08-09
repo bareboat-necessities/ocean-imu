@@ -224,6 +224,12 @@ public:
         if (!mekf_) return;
         if (!(dt > 0.0f) || !std::isfinite(dt)) return;
 
+        // Predictable online schedule: commit only coefficients staged
+        // after the previous IMU sample. The current sample can update
+        // the tuner later in this function, but it cannot choose the
+        // model/gain schedule used by its own Kalman innovation.
+        apply_pending_online_tune_();
+
         time_ += dt;
         startup_stage_t_ += dt;
 
@@ -336,12 +342,8 @@ public:
             update_tuner(dt, a_body_z_up_proxy_, tuner_frequency_hz_(f_after_still));
         }
 
-        // Keep linear-block R_p0 / R_v0 tuning responsive in Live mode instead of
-        // waiting for slow adaptation cadence.
-        if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
-            apply_R_p0_tune_();
-            apply_R_v0_tune_();
-        }
+        // R_p0/R_v0 are committed with the rest of the staged online
+        // schedule at the beginning of the next IMU sample.
 
         // Bounded covariance inflation of the a_w marginal.
         periodic_aw_cov_sync_tick_();
@@ -511,7 +513,10 @@ public:
     void setFreqInputCutoffHz(float fc) { freq_input_lpf_.setCutoff(fc); }
 
     void enableClamp(bool flag = true) { enable_clamp_ = flag; }
-    void enableTuner(bool flag = true) { enable_tuner_ = flag; }
+    void enableTuner(bool flag = true) {
+        enable_tuner_ = flag;
+        if (!flag) online_tune_apply_pending_ = false;
+    }
 
     // Policy for the latent-acceleration marginal P_{a_w a_w}.
     //
@@ -556,6 +561,7 @@ public:
         }
 
         enable_tuner_ = false;
+        online_tune_apply_pending_ = false;
         tau_target_ = enable_clamp_
             ? std::min(std::max(tau_s, min_tau_s_), max_tau_s_)
             : tau_s;
@@ -797,6 +803,20 @@ private:
     using FreqInputLPF = seastate::common::FreqInputLPF;
     using StillnessAdapter = seastate::common::StillnessAdapter;
 
+    // Apply the online tuner output only at the next IMU-sample boundary.
+    // adapt_mekf() may consume y_k and smooth its candidate during step k,
+    // but this function runs before y_{k+1} reaches the MEKF. Therefore the
+    // active schedule at step k+1 is measurable with respect to data through k.
+    void apply_pending_online_tune_() {
+        if (!online_tune_apply_pending_ || !mekf_) return;
+        apply_ou_tune_(false);
+        if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            apply_R_p0_tune_();
+            apply_R_v0_tune_();
+        }
+        online_tune_apply_pending_ = false;
+    }
+
     // sync_covariance is set only by discrete reconfiguration events. The
     // periodic adaptation path leaves the posterior a_w marginal alone; the
     // new stationary scale reaches the filter through the OU process
@@ -936,13 +956,10 @@ private:
         tune_.R_v0_std_applied += alpha_R_v0 * (R_v0_t  - tune_.R_v0_std_applied);
 
         if (time_ - last_adapt_time_sec_ > adapt_every_secs_) {
-            if (tuner_.isFreqReady()) {
-                apply_ou_tune_(false);
-            }
-            if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
-                apply_R_p0_tune_();
-                apply_R_v0_tune_();
-            }
+            // y_k may change the smoothed candidate here, but the MEKF keeps
+            // the schedule that was active before y_k arrived. Commit this
+            // candidate at the beginning of updateTime(k+1).
+            online_tune_apply_pending_ = true;
             last_adapt_time_sec_ = time_;
         }
     }
@@ -1000,6 +1017,7 @@ private:
 
         last_adapt_time_sec_ = time_;
         last_aw_cov_sync_sec_ = time_;
+        online_tune_apply_pending_ = false;
     }
 
     void enterCold_() {
@@ -1080,6 +1098,7 @@ private:
 
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;
+    bool online_tune_apply_pending_ = false;
 
     bool enable_linear_block_ = true;
 

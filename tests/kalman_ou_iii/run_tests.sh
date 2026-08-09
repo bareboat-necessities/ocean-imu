@@ -8,3 +8,4 @@
 ./wave_period-test
 ./mag_hard_iron-test
 ./tuner_coupling-test
+./tuner_schedule-test
