@@ -62,6 +62,30 @@ cp -f ../../reports/results/ou_robustness/ou_robustness_sensitivity.svg \
 cp -f ../../reports/results/ou_robustness/ou_robustness_stress.svg \
   "${DOC_DIR}/ou_robustness_stress.svg"
 
+# Keep the complete machine-generated validation tables as evidence, but make a
+# compact publication view that omits the covariance-control table.  The main
+# text reports the control's worst paired difference; the detailed table remains
+# in w3d-ou-validation-results-generated.tex-part and in the archived study.
+python3 - <<'PY'
+from pathlib import Path
+
+src = Path("../../doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part")
+dst = Path("../../doc/kalman_ou_iii/w3d-ou-validation-results-publication.tex-part")
+text = src.read_text(encoding="utf-8")
+label = r"\label{tab:ou_mc_covsync}"
+pos = text.find(label)
+if pos < 0:
+    raise RuntimeError("covariance-control table label not found in generated validation TeX")
+start = text.rfind(r"\begin{table*}", 0, pos)
+end_token = r"\end{table*}"
+end = text.find(end_token, pos)
+if start < 0 or end < 0:
+    raise RuntimeError("could not delimit covariance-control table")
+end += len(end_token)
+compact = text[:start].rstrip() + "\n\n" + text[end:].lstrip()
+dst.write_text(compact, encoding="utf-8")
+PY
+
 python3 - <<'PY'
 from pathlib import Path
 
