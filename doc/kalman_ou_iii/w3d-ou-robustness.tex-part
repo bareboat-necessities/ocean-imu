@@ -14,28 +14,32 @@ change therefore gives $r_S\to c^{3}r_S$.  Two additional degradation cases
 test a low-motion $H_s=\SI{0.05}{m}$ record and a rapid \SI{30}{s} transition
 between the same endpoints used in the controlled case.
 
-\IfFileExists{w3d-ou-robustness-results-generated.tex-part}{%
-  \input{w3d-ou-robustness-results-generated.tex-part}%
-}{}
+\IfFileExists{w3d-ou-robustness-results-publication.tex-part}{%
+  \input{w3d-ou-robustness-results-publication.tex-part}%
+}{%
+  \IfFileExists{w3d-ou-robustness-results-generated.tex-part}{%
+    \input{w3d-ou-robustness-results-generated.tex-part}%
+  }{}
+}
 
 \IfFileExists{ou_robustness_sensitivity.svg}{%
-  \begin{figure*}[t]
+  \begin{figure}[t]
     \centering
-    \includesvg[width=0.82\textwidth,inkscapelatex=false]{ou_robustness_sensitivity}
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_robustness_sensitivity}
     \caption{Ten-seed OU--III sensitivity around the nominal operating point.
     Error bars are paired-bootstrap 95\% intervals; the dashed line marks the
     frozen nominal point.}
     \label{fig:ou_robustness_sensitivity}
-  \end{figure*}
+  \end{figure}
 }{}
 
 \IfFileExists{ou_robustness_stress.svg}{%
-  \begin{figure*}[t]
+  \begin{figure}[t]
     \centering
-    \includesvg[width=0.88\textwidth,inkscapelatex=false]{ou_robustness_stress}
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_robustness_stress}
     \caption{Low-motion and rapid-transition degradation cases.}
     \label{fig:ou_robustness_stress}
-  \end{figure*}
+  \end{figure}
 }{}
 
 Across the declared multiplier range, the largest mean normalized vertical
