@@ -1,3 +1,8 @@
+\ifdefined\OUStandaloneDetailedResults
+  \input{w3d-baseline-comparison-study.tex-part}
+  \endinput
+\fi
+
 \subsection{Comparative evaluation}
 \label{sec:observer-comparison}
 
