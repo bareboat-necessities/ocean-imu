@@ -1,6 +1,6 @@
 \ifdefined\OUStandaloneDetailedResults
   \input{w3d-ou-robustness-study.tex-part}
-  \endinput
+  \expandafter\endinput
 \fi
 
 \subsubsection{Sensitivity and degradation cases}
