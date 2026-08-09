@@ -82,9 +82,10 @@ class PublicationReferenceTests(unittest.TestCase):
         }
         missing: list[tuple[str, str]] = []
         for path, text in sources.items():
-            for target in REF_RE.findall(text):
-                if target not in labels:
-                    missing.append((path.name, target))
+            for group in REF_RE.findall(text):
+                for target in (item.strip() for item in group.split(",")):
+                    if target and target not in labels:
+                        missing.append((path.name, target))
         self.assertEqual(missing, [], f"unresolved publication references: {missing}")
 
     def test_every_reachable_citation_has_a_bibliography_entry(self):
