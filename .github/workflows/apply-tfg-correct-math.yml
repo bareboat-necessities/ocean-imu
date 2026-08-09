@@ -1,0 +1,67 @@
+name: Apply TFG correct math
+
+on:
+  push:
+    branches:
+      - agent/tfg-math-hardening
+    paths:
+      - 'tests/kalman_tfg/apply_correct_math.py'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/tfg-math-hardening
+          fetch-depth: 0
+
+      - name: Apply mathematically consistent TFG covariance changes
+        run: python3 tests/kalman_tfg/apply_correct_math.py
+
+      - name: Install compiler dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq g++ make libeigen3-dev
+
+      - name: Build TFG tests
+        run: make -C tests/kalman_tfg build
+
+      - name: Run mathematical tests
+        working-directory: tests/kalman_tfg
+        run: |
+          set -euo pipefail
+          ./lie_group-test
+          ./convention-test
+          ./ou_chain_identity-test
+          ./tfg_propagation-test
+          ./tfg_jacobians-test
+          ./covariance_transport-test
+          ./tfg_process_covariance-test
+          ./tfg_orchestrator-test
+
+      - name: Check patch hygiene
+        run: git diff --check
+
+      - name: Commit corrected implementation
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            src/kalman_tfg/Kalman3D_Wave_TFG.h \
+            src/kalman_tfg/SeaStateFusionFilter_TFG.h \
+            tests/kalman_tfg/kalman_tfg-sim.cpp \
+            tests/kalman_tfg/tfg_propagation-test.cpp \
+            tests/kalman_tfg/tfg_process_covariance-test.cpp \
+            tests/kalman_tfg/Makefile \
+            .github/workflows/tfg-validation.yml \
+            docs/tfg-math-hardening.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'Make TFG covariance propagation mathematically consistent'
+          git push origin HEAD:agent/tfg-math-hardening
