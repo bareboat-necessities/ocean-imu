@@ -46,8 +46,7 @@ $\times\OURobustnessWorstScale$, differing from nominal by
 ($[\OURobustnessWorstDifferenceLow,\OURobustnessWorstDifferenceHigh]$).
 The sweeps also show competing objectives: changing $r_S$ can improve the
 vertical score while changing 3D displacement, and changing $\sigma_{aw}$ can
-alter pitch even when vertical displacement changes little.  Accordingly, no
-sweep point is adopted as a replacement tuning; the sweep is interpreted as
+alter pitch even when vertical displacement changes little.  Accordingly, no sweep point is adopted as a replacement tuning; the sweep is interpreted as
 local sensitivity rather than an offline search for a new operating point.
 
 \paragraph{Why the direct $\tau$ and $\sigma_{aw}$ effects are weak}
