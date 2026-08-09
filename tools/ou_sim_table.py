@@ -167,8 +167,8 @@ def format_table(rows: list[tuple[str, float, dict[str, Any]]]) -> str:
         "  T/A/U = Toward/Away/Uncertain (\\% of samples).  These are the estimator's",
         "  own FORWARD/BACKWARD/UNCERTAIN classes, which are defined against the axis",
         "  representative it returns and are therefore a commitment rate rather than a",
-        "  correctness rate; the truth-referenced travel-sense correctness rate is in",
-        "  Table~\\ref{tab:ou_mc_direction}.",
+        "  correctness rate; truth-referenced travel-sense correctness is reported",
+        "  separately in the ten-seed direction analysis.",
         "\\end{table}",
     ])
     return "\n".join(lines) + "\n"
