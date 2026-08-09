@@ -44,12 +44,12 @@ Gauss--Markov process, so the validation includes process-model mismatch.
     \toprule
     Quantity & Value & Notes \\
     \midrule
-    IMU rate & \SI{200}{Hz} & prediction and accel update \\
-    Magnetometer rate & \SI{25}{Hz} & asynchronous update \\
-    Accel white noise & \SI{0.0148}{m.s^{-2}} & RMS per sample \\
-    Accel bias RW & \SI{5e-4}{m.s^{-2}.s^{-0.5}} & truth model \\
-    Gyro white noise & \SI{0.00157}{rad.s^{-1}} & RMS per sample \\
-    Gyro bias RW & \SI{1e-5}{rad.s^{-1}.s^{-0.5}} & truth model \\
+    IMU rate & \SI{200}{\hertz} & prediction and accel update \\
+    Magnetometer rate & \SI{25}{\hertz} & asynchronous update \\
+    Accel white noise & \SI{0.0148}{\meter\per\second\squared} & RMS per sample \\
+    Accel bias RW & \SI{5e-4}{\meter\per\second\squared\per\second\tothe{0.5}} & truth model \\
+    Gyro white noise & \SI{0.00157}{\radian\per\second} & RMS per sample \\
+    Gyro bias RW & \SI{1e-5}{\radian\per\second\per\second\tothe{0.5}} & truth model \\
     Mag white noise & \SI{0.80}{\micro\tesla} & RMS per mag sample \\
     Mag hard-iron residual & \SI{2.0}{\micro\tesla} & half-range \\
     \bottomrule
