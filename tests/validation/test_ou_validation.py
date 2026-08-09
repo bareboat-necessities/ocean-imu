@@ -1361,13 +1361,15 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         self.assertIn("not a global navigation position", intro)
         self.assertIn("comes from simulation", intro)
 
-        # The stability appendix now closes UES only for the reduced Live
-        # performance state under explicit conditions.  The introduction must
-        # state that stronger result without broadening it to the unrestricted
-        # 21-state estimator or to the optional legacy covariance replacement.
-        self.assertIn("18-state Live performance filter", intro)
-        self.assertIn("not an ISS or convergence proof of the unrestricted 21-state estimator", intro)
-        self.assertIn("UES is not proved for that legacy mode", intro)
+        # The stability appendix now gives a conditional local result for the
+        # complete 21-state Live recursion.  The introduction must state that
+        # result at exactly that scope and keep the optional legacy raw
+        # covariance-replacement mode outside the theorem.
+        self.assertIn("local 21-state stability result", intro)
+        self.assertIn("uniformly detectable 21-state system", intro)
+        self.assertIn("UES of the homogeneous 21-state Live error dynamics", intro)
+        self.assertIn("optional legacy raw", intro)
+        self.assertIn("outside that theorem", intro)
 
     def test_nomenclature_is_included_and_disambiguates_covariances(self):
         manuscript = self.read("kalman_ou-w3d.tex")
