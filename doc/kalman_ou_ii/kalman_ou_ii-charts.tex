@@ -12,6 +12,7 @@
 \usepackage{bm}
 \usepackage{float}
 \usepackage{microtype}
+\usepackage{siunitx}
 \usepackage{array,booktabs,makecell,adjustbox}
 
 % Keep this — needed by PGF outputs that reference \mathdefault
@@ -72,6 +73,15 @@ drives demodulation for the direction stage. It is \emph{not} what sets the
 operating point: $\tau=\widehat{T}_z/2$ is derived from the zero-crossing wave
 period estimated in the wave band, and $r_{p0}$ and $r_{v0}$ follow from it. The
 two need not agree, and in a developed sea they do not.
+
+The online operating point is applied with a one-IMU-sample scheduling delay.
+At step $k$ the OU--II Kalman recursion uses only the coefficients committed
+before the current innovation. The tuner may consume the current IMU sample
+and update its smoothed candidate afterward, but that candidate becomes active
+only at step $k+1$. Thus, for the measurement filtration $\mathcal F_k$,
+the active schedule obeys $\vartheta_k\in\mathcal F_{k-1}$. At the nominal
+\SI{200}{Hz} IMU rate the added delay is about \SI{5}{ms}, negligible beside
+the adaptation horizons.
 
 % PM Stokes
     \begin{figure}[H]\centering

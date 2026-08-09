@@ -3,8 +3,9 @@
 //
 // doc/kalman_ou_iii/w3d-iss-stability.tex-part treats the default tuning
 // schedule as exogenous with respect to the MEKF state. This test fixes the
-// three implementation facts that statement depends on, so none of them can
-// drift silently.
+// implementation facts that statement depends on, so none of them can
+// drift silently. State exogeneity is checked here; the separate
+// tuner_schedule-test pins the one-sample predictability boundary.
 //
 // 1. The variance channel is exogenous. update_tuner is handed
 //    a_body_z_up_proxy_ = -(acc.z() + g), a pure function of the raw
