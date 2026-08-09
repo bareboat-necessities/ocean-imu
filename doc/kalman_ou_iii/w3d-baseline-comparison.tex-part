@@ -67,7 +67,11 @@ include a conventional frequency-domain double-integration heave estimator.
 }{}
 
 \subsubsection{Ten-seed OU-family and adaptation study}
-\input{w3d-ou-validation-results-generated.tex-part}
+\IfFileExists{w3d-ou-validation-results-publication.tex-part}{%
+  \input{w3d-ou-validation-results-publication.tex-part}%
+}{%
+  \input{w3d-ou-validation-results-generated.tex-part}%
+}
 
 \IfFileExists{ou_validation_vertical.svg}{%
   \begin{figure*}[t]
@@ -150,7 +154,9 @@ The matched covariance-maintenance control changes normalized vertical error by
 at most $\OUValidationCovSyncWorstDifference$ percentage point
 ($[\OUValidationCovSyncWorstLow,\OUValidationCovSyncWorstHigh]$) across the
 reported matched comparisons.  Periodic re-alignment of the latent-acceleration
-covariance is therefore not the source of the adaptation differences.
+covariance is therefore not the source of the adaptation differences.  The
+full covariance-control table is retained with the archived validation study
+rather than repeated in the publication view.
 
 \IfFileExists{ou_validation_transition.svg}{%
   \begin{figure*}[t]
