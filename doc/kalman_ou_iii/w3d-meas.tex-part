@@ -42,7 +42,7 @@ With calibrated world reference $\vct{B}_w$,
 \begin{equation}
 \vct{m}_b=\Rot_{wb}\vct{B}_w+\vct{n}_m,
 \qquad
-\vct{n}_m\sim\mathcal{N}(0,\mat{R}_m)$,
+\vct{n}_m\sim\mathcal{N}(0,\mat{R}_m),
 \label{eq:mag-meas}
 \end{equation}
 and
