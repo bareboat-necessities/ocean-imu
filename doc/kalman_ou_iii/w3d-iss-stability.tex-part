@@ -99,14 +99,24 @@ m_0\le\|\widehat{\vct m}_b\|\le m_1,
 \label{eq:iss-vector-geometry}
 \end{equation}
 where $\vct u_f$ and $\vct u_m$ are the corresponding unit vectors. Every
-finite proof horizon contains four consecutive $S$ pseudo-updates and two
-accepted accelerometer--magnetometer vector-update instants separated by
+finite proof horizon contains four consecutive $S$ pseudo-updates at relative
+times $0,T_S,2T_S,3T_S$ and two accepted accelerometer--magnetometer
+vector-update instants separated by
 $\Delta\in[\Delta_{\min},\Delta_{\max}]$, with
 \begin{equation}
 \overline\omega\Delta_{\max}<\frac{\pi}{2}.
 \label{eq:iss-vector-gap}
 \end{equation}
 No hard reset occurs inside the horizon.
+
+The exact $S$-update spacing is an explicit theorem assumption.  The production
+scheduler in Sec.~\ref{sec:measurement_model} is time based and, for general
+variable $h_k$, may apply an intended deadline on the first IMU sample after
+that deadline.  The fixed-rate validation uses $h=\SI{5}{ms}$ and the default
+$T_S=\SI{15}{ms}$, so its pseudo-updates occur every three IMU samples and
+satisfy the exact-spacing assumption.  Extending the determinant argument to
+bounded sample-time jitter would require an explicit perturbation margin for
+the finite-horizon Gramian; that extension is not claimed here.
 
 \subsection{Exact Live-state linearized structure}
 
@@ -161,7 +171,7 @@ h^2/2&h&1&\phi_{Sa}\\
 \end{bmatrix},
 \label{eq:iss-implemented-phi}
 \end{equation}
-with the coefficients derived in Sec.~\ref{sec:discretization}.
+with the coefficients derived in Sec.~\ref{sec:block-Phi-Qd}.
 
 The vector-measurement Jacobians are
 \begin{align}
@@ -213,14 +223,15 @@ T_S^2/2&T_S&1&A_3(T_S)\\
 
 \begin{lemma}[Uniform observability of one OU--III axis]
 For every measurable $\tau(t)$ satisfying
-$\underline\tau\le\tau(t)\le\overline\tau$,
+$\underline\tau\le\tau(t)\le\overline\tau$ and four consecutive $S$
+pseudo-measurements separated exactly by $T_S$,
 \begin{equation}
 |\det\mat O_S|
 \ge T_S^6\exp\!\left(-\frac{3T_S}{\underline\tau}\right)>0.
 \label{eq:iss-det-lower}
 \end{equation}
-Hence the scalar $[v,p,S,a]$ chain is uniformly observable from four
-consecutive $S$ pseudo-measurements.
+Hence the scalar $[v,p,S,a]$ chain is uniformly observable over that
+exact-cadence four-update horizon.
 \end{lemma}
 
 \begin{proof}
@@ -446,14 +457,15 @@ is not covered by the theorem.
 
 \begin{theorem}[21-state Live UES]
 \label{thm:iss-21-ues}
-Under Eqs.~\eqref{eq:iss-step-tau-bounds}--\eqref{eq:iss-vector-gap}, the
-positive process-density assumptions above, the default PSD $a_w$ covariance
-inflation (or no periodic covariance maintenance), active slow-OU residual
-accelerometer-bias estimation with finite $\overline\tau_b$, and no hard reset
-inside the analyzed Live interval, the homogeneous 21-state linearized Kalman
-estimation-error transition is uniformly exponentially stable. There exist
-constants $M\ge1$ and $0<\rho<1$, independent of the admissible exogenous tuning
-schedule, such that
+Under Eqs.~\eqref{eq:iss-step-tau-bounds}--\eqref{eq:iss-vector-gap}, including
+the exact $T_S$ spacing of the four $S$ pseudo-updates on each translational
+proof horizon, the positive process-density assumptions above, the default PSD
+$a_w$ covariance inflation (or no periodic covariance maintenance), active
+slow-OU residual accelerometer-bias estimation with finite
+$\overline\tau_b$, and no hard reset inside the analyzed Live interval, the
+homogeneous 21-state linearized Kalman estimation-error transition is uniformly
+exponentially stable. There exist constants $M\ge1$ and $0<\rho<1$,
+independent of the admissible exogenous tuning schedule, such that
 \begin{equation}
 \boxed{
 \|\Psi_{21}(k,j)\|\le M\rho^{k-j},\qquad k\ge j .}
@@ -557,5 +569,6 @@ The proof covers the default prediction-time PSD $a_w$ covariance inflation and
 the case in which periodic covariance maintenance is disabled. It does not
 cover the optional legacy raw covariance replacement, startup/re-lock/hard-reset
 maps, arbitrarily long measurement outages, collinear gravity/magnetic reference
-geometry, or the random-walk limit $\tau_b=\infty$. In particular, the finite
-upper bound on $\tau_b$ is essential for a uniform 21-state stability margin.
+geometry, sample-time jitter of the nominal $S$ pseudo-update deadlines, or the
+random-walk limit $\tau_b=\infty$. In particular, the finite upper bound on
+$\tau_b$ is essential for a uniform 21-state stability margin.
