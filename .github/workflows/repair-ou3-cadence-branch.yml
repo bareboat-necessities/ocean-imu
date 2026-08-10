@@ -1,0 +1,25 @@
+name: repair-ou3-cadence-branch
+on:
+  pull_request:
+    types: [synchronize]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.head_ref == 'agent/ou3-tau-scaled-pseudo-cadence'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - run: |
+          git fetch origin main
+          git checkout origin/main -- src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h
+          python3 .github/repair-ou3-cadence.py
+          git rm .github/workflows/repair-ou3-cadence-branch.yml .github/repair-ou3-cadence.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h tests/kalman_ou_iii/tuner_schedule-test.cpp
+          git commit -m 'Apply minimal tau-scaled OU-III pseudo cadence'
+          git push origin HEAD:${{ github.head_ref }}
