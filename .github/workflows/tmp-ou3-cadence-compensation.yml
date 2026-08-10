@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: agent/ou3-tau-scaled-pseudo-cadence
+          ref: refs/heads/agent/ou3-tau-scaled-pseudo-cadence
           fetch-depth: 0
 
       - name: Apply compensation patch
@@ -32,4 +32,4 @@ jobs:
           git add src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h \
                   tests/kalman_ou_iii/tuner_schedule-test.cpp
           git commit -m "Compensate OU-III pseudo information rate"
-          git push origin HEAD:agent/ou3-tau-scaled-pseudo-cadence
+          git push origin HEAD:refs/heads/agent/ou3-tau-scaled-pseudo-cadence
