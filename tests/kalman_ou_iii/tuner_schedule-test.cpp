@@ -28,20 +28,35 @@ int main() {
     f.last_adapt_time_sec_ = 0.0;
     f.adapt_every_secs_ = 0.05f;
 
+    // The deployed wrapper starts at tau=1.1 s and historically used a 15 ms
+    // pseudo-update period.  The new self-similar cadence must preserve that
+    // operating point exactly while scaling subsequent periods with tau.
+    if (!near(f.getPseudoUpdateTauRatio(), 0.015f / 1.1f) ||
+        !near(f.getPseudoUpdatePeriodSec(), 0.015f)) {
+        std::cerr << "FAIL: OU-III tau-scaled pseudo cadence did not preserve the nominal point\n";
+        return 1;
+    }
+
     const float active_tau_before = f.mekf_->tau_aw;
     const float active_rs_before = f.mekf_->R_S(2, 2);
+    const float active_pseudo_before = f.getPseudoUpdatePeriodSec();
 
     f.adapt_mekf(0.1f, 3.0f, 0.8f, 1.2f);
     const float staged_tau = f.tune_.tau_applied;
     const float staged_rs = std::min(std::max(f.tune_.RS_applied, f.min_R_S_), f.max_R_S_);
     const float staged_rs_var = staged_rs * staged_rs;
+    const float staged_pseudo = std::min(
+        std::max(f.pseudo_update_tau_ratio_ * staged_tau,
+                 f.pseudo_update_period_min_s_),
+        f.pseudo_update_period_max_s_);
 
     if (!f.online_tune_apply_pending_) {
         std::cerr << "FAIL: adaptation was not staged\n";
         return 1;
     }
     if (!near(f.mekf_->tau_aw, active_tau_before) ||
-        !near(f.mekf_->R_S(2, 2), active_rs_before)) {
+        !near(f.mekf_->R_S(2, 2), active_rs_before) ||
+        !near(f.getPseudoUpdatePeriodSec(), active_pseudo_before)) {
         std::cerr << "FAIL: current-sample tuner output changed the active OU-III schedule\n";
         return 1;
     }
@@ -56,14 +71,37 @@ int main() {
     f.updateTime(0.005f, gyro, acc);
 
     if (!near(f.mekf_->tau_aw, staged_tau) ||
-        !near(f.mekf_->R_S(2, 2), staged_rs_var)) {
-        std::cerr << "FAIL: staged OU-III schedule was not committed at next sample\n";
+        !near(f.mekf_->R_S(2, 2), staged_rs_var) ||
+        !near(f.getPseudoUpdatePeriodSec(), staged_pseudo)) {
+        std::cerr << "FAIL: staged OU-III schedule/cadence was not committed at next sample\n";
+        return 1;
+    }
+    if (!near(f.getPseudoUpdatePeriodSec() / f.getTauApplied(),
+              f.getPseudoUpdateTauRatio(), 1e-5f)) {
+        std::cerr << "FAIL: T_S/tau is not invariant after the staged update\n";
         return 1;
     }
     if (f.online_tune_apply_pending_) {
         std::cerr << "FAIL: pending flag survived the commit\n";
         return 1;
     }
-    std::cout << "OU-III predictable tuner scheduling passed\n";
+
+    // Explicit ablation: disabling self-similar cadence restores the historical
+    // fixed 15 ms period and leaves tau free to change independently.
+    f.setTauScaledPseudoUpdateCadence(false);
+    if (!near(f.getPseudoUpdatePeriodSec(), 0.015f)) {
+        std::cerr << "FAIL: fixed-cadence ablation did not restore 15 ms\n";
+        return 1;
+    }
+    f.setTauScaledPseudoUpdateCadence(true);
+    if (!near(f.getPseudoUpdatePeriodSec(),
+              std::min(std::max(f.getPseudoUpdateTauRatio() * f.getTauApplied(),
+                                f.pseudo_update_period_min_s_),
+                       f.pseudo_update_period_max_s_))) {
+        std::cerr << "FAIL: re-enabling tau-scaled cadence did not reapply T_S=c_T*tau\n";
+        return 1;
+    }
+
+    std::cout << "OU-III predictable tuner scheduling and tau-scaled pseudo cadence passed\n";
     return 0;
 }
