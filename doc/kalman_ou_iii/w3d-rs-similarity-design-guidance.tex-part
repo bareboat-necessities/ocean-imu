@@ -1,0 +1,151 @@
+\subsubsection{Which similarity groups should be controlled?}
+\label{sec:riccati-similarity-design-guidance}
+
+Equation~\eqref{eq:riccati-four-groups} identifies four dimensionless groups,
+\[
+ \delta=\frac{\Delta t}{\tau},\qquad
+ \rho=\frac{T_S}{\tau},\qquad
+ \beta=\frac{R_a}{\sigma_a^2},\qquad
+ r=\frac{R_S}{\sigma_a^2\tau^6}.
+\]
+Exact invariance of the isolated discrete periodic Riccati map would require all
+four to remain fixed.  This mathematical statement should not, however, be
+interpreted as a recommendation to force all four ratios to be constant in the
+deployed estimator.  They have different physical roles.  A useful design
+separates two controlled regularization parameters, one small discretization
+parameter, and one physical signal-to-noise parameter.
+
+\paragraph{Self-similar pseudo-measurement cadence.}
+The pseudo-update ratio can be made exactly constant by scheduling
+\begin{equation}
+ \boxed{T_S=c_T\tau_{\mathrm{applied}}},
+ \label{eq:riccati-scaled-pseudo-period}
+\end{equation}
+where $c_T>0$ is dimensionless and $\tau_{\mathrm{applied}}$ is the smoothed,
+rate-limited OU time constant actually used by the filter.  Then
+\begin{equation}
+ \rho=\frac{T_S}{\tau_{\mathrm{applied}}}=c_T.
+\end{equation}
+Equivalently, the pseudo-update rate is
+\begin{equation}
+ f_S=\frac{1}{c_T\tau_{\mathrm{applied}}}.
+\end{equation}
+Using the applied rather than instantaneous target $\tau$ avoids cadence jitter
+from tuner noise.  In an implementation the period may be bounded,
+\begin{equation}
+ T_S=\operatorname{clip}
+ \!\left(c_T\tau_{\mathrm{applied}},T_{S,\min},T_{S,\max}\right),
+ \label{eq:riccati-scaled-pseudo-period-clipped}
+\end{equation}
+so exact similarity is retained away from the safety bounds.  This change is
+conceptually attractive because the regularizer then acts a fixed number
+$1/c_T$ of times per OU correlation time instead of a fixed number of times per
+second.  It also removes the fixed-$T_S$ inconsistency identified in the
+short-cadence argument above.
+
+\paragraph{The IMU interval need not be scaled with $\tau$.}
+Exact constancy of the first group would require
+\begin{equation}
+ \Delta t=c_\Delta\tau,
+\end{equation}
+which could only be achieved with a variable-rate Kalman update, for example by
+processing every $N\simeq c_\Delta\tau/\Delta t_{\mathrm{IMU}}$ samples.  Such a
+construction would discard or batch useful high-rate acceleration observations
+and introduce integer-rate quantization.  It is not required for propagation
+accuracy here because the OU block uses its analytic discrete transition and
+exact process covariance at the actual sample interval.
+
+The appropriate practical requirement is instead the singularly perturbed,
+high-rate condition
+\begin{equation}
+ \boxed{\delta=\frac{\Delta t}{\tau}\ll1.}
+ \label{eq:riccati-small-delta-design}
+\end{equation}
+Then variation of $\delta$ contributes only a small discrete-time perturbation
+to the continuous similarity family.  If desired, this condition can be made
+explicit by enforcing
+\begin{equation}
+ \tau\ge\frac{\Delta t}{\delta_{\max}},
+ \label{eq:riccati-tau-floor-from-delta}
+\end{equation}
+for a chosen small $\delta_{\max}$.  Thus the design should keep the physical
+IMU rate fixed and sufficiently fast rather than varying the estimator rate to
+make $\delta$ exactly constant.
+
+\paragraph{The acceleration-noise ratio is a physical SNR parameter.}
+Pure mathematical similarity could be forced by setting
+\begin{equation}
+ R_a=\beta\sigma_a^2,
+ \label{eq:riccati-force-beta}
+\end{equation}
+which makes $R_a/\sigma_a^2=\beta$ constant.  In general this is not physically
+appropriate.  $R_a$ contains a genuine accelerometer-noise floor; that sensor
+noise does not increase merely because the estimated sea-state acceleration
+variance increases.  Forcing~\eqref{eq:riccati-force-beta} solely to obtain
+similarity would deliberately reduce accelerometer authority in energetic seas
+and would therefore constitute a different filter design rather than a change
+of units.
+
+If independent evidence supports a sea-state-dependent model-mismatch term, a
+physically interpretable decomposition is
+\begin{equation}
+ \boxed{R_a=R_{a,\mathrm{sensor}}+\beta_m\sigma_a^2.}
+ \label{eq:riccati-Ra-floor-plus-model}
+\end{equation}
+Then
+\begin{equation}
+ \frac{R_a}{\sigma_a^2}
+ =\frac{R_{a,\mathrm{sensor}}}{\sigma_a^2}+\beta_m,
+\end{equation}
+and the normalized ratio approaches the constant $\beta_m$ only when the
+model-mismatch term dominates.  The floor remains correct near still water.
+Such a term should be introduced only from a measurement/model-error argument,
+not merely to satisfy similarity.
+
+More generally, $\beta=R_a/\sigma_a^2$ should be retained as a real physical
+signal-to-noise coordinate of the Riccati family.  With a fixed sensor floor,
+\begin{equation}
+ \sigma_a\uparrow\quad\Longrightarrow\quad
+ \beta\downarrow,
+\end{equation}
+so the accelerometer becomes relatively more informative with respect to the OU
+prior.  This is a genuine statistical effect.  It is also consistent with the
+posterior-error parameter
+$\zeta=2\sigma_a^2\tau/r_a$ in
+Sec.~\ref{sec:riccati-accel-reduction}: changing sea state can move the filter
+between prior-limited and sensor-limited acceleration regimes.  Artificially
+holding $\beta$ fixed would suppress that transition.
+
+\paragraph{Recommended interpretation of the four groups.}
+The four-group theorem is therefore best read as a classification, not as a
+requirement to manipulate every physical quantity until exact similarity is
+obtained.  A coherent adaptive design is
+\begin{equation}
+ \boxed{
+ \underbrace{\frac{T_S}{\tau}=c_T}_{\text{controlled exactly}},\qquad
+ \underbrace{\frac{R_S}{\sigma_a^2\tau^6}=c_R^2}_{\text{regularizer design}},\qquad
+ \underbrace{\frac{\Delta t}{\tau}\ll1}_{\text{high-rate perturbation}},\qquad
+ \underbrace{\frac{R_a}{\sigma_a^2}=\beta}_{\text{physical SNR}}.}
+ \label{eq:riccati-recommended-four-group-interpretation}
+\end{equation}
+The first and second quantities are under regularizer design control.  The third
+should be kept small rather than exactly constant.  The fourth should normally
+be allowed to vary according to the real sensor-to-process signal-to-noise
+ratio.  Consequently, the deployed filter should not claim exact Riccati
+invariance across sea states.  The more defensible statement is that scaling
+$T_S$ with $\tau$ restores the most important missing time-scale similarity,
+while high-rate exact OU discretization makes variation in $\delta$ small and
+the remaining variation in $\beta$ represents real measurement physics.
+
+This distinction also sharpens the status of the cubic law.  With
+$T_S=c_T\tau$, the pair
+\begin{equation}
+ T_S=c_T\tau,\qquad
+ r_S=c_R\sigma_a\tau^3
+ \label{eq:riccati-two-parameter-similar-regularizer}
+\end{equation}
+defines a simple two-parameter self-similar \emph{regularizer schedule}.  It
+holds the cadence ratio and normalized pseudo-measurement covariance fixed,
+but it does not erase the physical dependence of the posterior Riccati solution
+on accelerometer SNR.  The pole-based analysis above remains the stronger guide
+when that SNR dependence is significant.
