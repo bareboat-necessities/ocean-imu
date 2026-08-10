@@ -23,12 +23,13 @@
           – Slow 1st-order IIR (≈ longer s, ~90% step) for auto-tuning / moments
 
     • Online auto-tuning of Kalman filter parameters (τ, σₐ, Rₛ) through
-      SeaStateAutoTuner, which estimates acceleration variance and applies the
-      σₐ·τ³ regularization law to stabilize displacement drift correction.
+      SeaStateAutoTuner.  The default OU-III variance channel first applies a
+      period-scaled measurement-only wave band, then estimates acceleration
+      variance and applies the σₐ·τ³ regularization law.
 
   Where
-  – τ (tau):  OU process time constant ≈ ½ · T  (half the dominant period of acceleration)
-  – σₐ:       Stationary acceleration standard deviation, EWMA-tracked online
+  – τ (tau):  OU process time constant ≈ ½ · T  (half the wave zero-crossing period)
+  – σₐ:       Stationary acceleration scale from period-scaled wave-band RMS
   – Rₛ:       Pseudo-measurement noise controlling integral drift suppression
   – Rₛ_xy:    Reduced in X/Y (anisotropic weighting for vertical-dominant seas)
 
@@ -54,6 +55,7 @@
 
 #include "freq/FirstOrderIIRSmoother.h"
 #include "freq/FrequencyTrackerPolicy.h"
+#include "tuner/AdaptiveWaveBandPass.h"
 #include "tuner/SeaStateAutoTuner.h"
 #include "tuner/WavePeriodEstimator.h"
 #include "tuner/VerticalAccelComplementary.h"
@@ -84,8 +86,9 @@ extern const float g_std;
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 #endif
 
-// Estimated vertical accel noise floor (1σ), m/s².
-// Tweak from bench data with IMU sitting still.
+// Estimated pre-band vertical accel noise floor (1σ), m/s².
+// The adaptive sigma band propagates this white-noise variance through its
+// actual time-varying coefficients before subtraction.
 constexpr float ACC_NOISE_FLOOR_SIGMA_DEFAULT = 0.12f;
 
 constexpr float MIN_FREQ_HZ = 0.2f;
@@ -95,6 +98,13 @@ constexpr float MAX_FREQ_HZ = 6.0f;
 // acceleration-band tracker and is far too high for a zero-crossing period:
 // 0.03 Hz admits a 33 s swell.
 constexpr float MIN_TUNE_FREQ_HZ = 0.03f;
+
+// JONSWAP-similar acceleration-variance band.  Away from the absolute safety
+// clamps, its transfer shape is fixed in f/f_tune.
+constexpr float SIGMA_BAND_LOW_RATIO_DEFAULT  = 0.5f;
+constexpr float SIGMA_BAND_HIGH_RATIO_DEFAULT = 4.0f;
+constexpr float SIGMA_BAND_MIN_HZ_DEFAULT     = 0.01f;
+constexpr float SIGMA_BAND_MAX_HZ_DEFAULT     = 6.0f;
 
 constexpr float MIN_TAU_S   = 0.02f;
 // tau now scales with the zero-crossing wave period rather than with an
@@ -213,19 +223,17 @@ public:
         time_ += dt;
         startup_stage_t_ += dt;
 
-
-        // BODY-Z-based proxy used by the tracker/tuner logic.
+        // BODY-Z-based proxy used as a measurement-only fallback.
         // This is NOT a true vertical acceleration estimate; it is only a
         // body-Z residual that behaves like up-positive vertical motion when the
         // platform is near-level:
         //   acc.z() ~ -g at rest  => proxy ~ 0
         const float a_z_body_proxy = acc.z() + g_std;
 
-        // Private Mahony observer for the wave-period estimator.  It is fed the
-        // raw gyro and accelerometer, before the MEKF sees them, so that the
-        // levelling it provides stays a pure function of the measurements.
-        // Stepping it unconditionally keeps its transient off the critical path
-        // when the input source is switched at runtime.
+        // Private Mahony observer for the wave-period estimator and default
+        // sigma channel. It is fed raw gyro and accelerometer before the MEKF
+        // sees them, so its levelled vertical acceleration remains a pure
+        // function of the measurements.
         vertical_accel_comp_.update(dt, gyro, acc, g_std);
 
         // MEKF updates first (attitude + latent a_w)
@@ -274,22 +282,21 @@ public:
             }
         }
 
-        // Up-positive BODY-Z proxy used by tracker/tuner logic.
+        // Up-positive BODY-Z proxy used as fallback by measurement-only paths.
         // Not true world vertical unless the platform is close to level.
         a_body_z_up_proxy_ = -a_z_body_proxy;
 
-        // Vertical acceleration the tracker runs on.  Both choices are
-        // measurement-only, and they are RMS-equivalent: levelling buys here
-        // none of what it buys the period estimator, because the tracker is
-        // not integrated and so never sees the 1/omega^4 weighting that makes
-        // sub-band gravity leakage matter downstream.  The levelled signal is
-        // the default anyway, so that one vertical acceleration serves every
-        // consumer in the filter.  Falls back to the raw proxy until the
-        // observer has settled.
+        // Default levelled vertical measurement shared by the frequency
+        // tracker, the wave-period estimator, and the sigma channel.  It comes
+        // from a private complementary observer and therefore does not read
+        // any MEKF state.  Until that observer is ready, use the body-Z proxy.
+        const float a_vert_measurement = vertical_accel_comp_.isReady()
+            ? vertical_accel_comp_.verticalAccelUpMs2()
+            : a_body_z_up_proxy_;
+
         const float a_vert_for_tracker =
-            (freq_tracker_input_ == FreqTrackerInputSource::Complementary &&
-             vertical_accel_comp_.isReady())
-                ? vertical_accel_comp_.verticalAccelUpMs2()
+            (freq_tracker_input_ == FreqTrackerInputSource::Complementary)
+                ? a_vert_measurement
                 : a_body_z_up_proxy_;
 
         // LPF on the tracker input
@@ -312,14 +319,14 @@ public:
         freq_hz_      = f_fast;   // demod / direction
         freq_hz_slow_ = f_slow;   // tuner / moments
 
-        // Tuner gets vertical accel, and the wave-band frequency when the
-        // period estimator has settled.  That single substitution fixes both
-        // halves of the old operating point: tau stops being derived from an
-        // acceleration-band frequency that barely moves with the sea state, and
-        // the tuner's variance horizon (a few periods) stops being shorter than
-        // one wave period, which was biasing sigma_aw low.
+        // The default sigma channel now sees the same exogenous levelled
+        // acceleration used by the wave-period estimator, but only after a
+        // period-scaled band-pass.  The band is inside update_tuner because its
+        // corners use the tuner's own lagged/smoothed wave frequency.  Turning
+        // wave-band tuning off deliberately bypasses that band so the old
+        // broadband variance path remains available as a clean ablation.
         if (enable_tuner_) {
-            update_tuner(dt, a_body_z_up_proxy_, tuner_frequency_hz_(f_after_still));
+            update_tuner(dt, a_vert_measurement, tuner_frequency_hz_(f_after_still));
         }
 
         // R_S is committed with the rest of the staged online schedule at
@@ -332,8 +339,8 @@ public:
 
         // Resolve direction in a leveled frame aligned with boat heading.
         // This removes roll/pitch mixing while preserving 0 deg = bow and
-        // positive angles toward starboard.  The existing body-Z proxy remains
-        // the tuner/tracker input; direction uses coherent leveled components.
+        // positive angles toward starboard.  Direction may use the MEKF frame;
+        // the default tuner channels do not.
         const auto direction_accel = wave_direction::heading_frame_acceleration<float>(
             mekf_->quaternion_boat(), acc, g_std);
 
@@ -478,6 +485,22 @@ public:
     float getAccNoiseFloorSigma() const noexcept {
         return acc_noise_floor_sigma_;
     }
+
+    // Dimensionless sigma-band shape.  Defaults correspond to the theorem's
+    // measurement-only soft band [0.5,4] in units of f_tune.  Changing these
+    // ratios preserves the similarity structure as long as they remain fixed
+    // across sea states; absolute limits below are safety clamps only.
+    void setSigmaWaveBandRatios(float low_ratio, float high_ratio) {
+        sigma_wave_band_.setRatios(low_ratio, high_ratio);
+    }
+    void setSigmaWaveBandLimitsHz(float min_hz, float max_hz) {
+        sigma_wave_band_.setLimitsHz(min_hz, max_hz);
+    }
+    float getSigmaWaveBandLowHz() const noexcept { return sigma_wave_band_.lowHz(); }
+    float getSigmaWaveBandHighHz() const noexcept { return sigma_wave_band_.highHz(); }
+    float getSigmaWaveBandLowRatio() const noexcept { return sigma_wave_band_.lowRatio(); }
+    float getSigmaWaveBandHighRatio() const noexcept { return sigma_wave_band_.highRatio(); }
+    float getSigmaBandNoiseStd() const noexcept { return band_noise_floor_sigma_(); }
 
     // Configure LPF on BODY-Z proxy for tracker input
     void setFreqInputCutoffHz(float fc) {
@@ -732,10 +755,11 @@ public:
         return (freq_hz_slow_ > 1e-6f) ? 1.0f / freq_hz_slow_ : NAN;
     }
 
+    // Variance after the period-scaled sigma band in the default mode; the
+    // legacy broadband variance when setWaveBandTuning(false).
     inline float getAccelVariance() const noexcept { return tuner_.getAccelVariance(); }
 
-    // Returns the BODY-Z-based up-positive proxy used by tracker/tuner logic.
-    // This is not a true vertical acceleration estimate.
+    // Returns the BODY-Z-based up-positive fallback proxy.
     inline float getAccelVertical() const noexcept { return a_body_z_up_proxy_; }
 
     inline float getHeaveAbs() const noexcept { if (!mekf_) return NAN; return std::fabs(mekf_->get_position().z()); }
@@ -764,8 +788,13 @@ public:
 
     // Drive the operating point from the wave band (default) or from the
     // acceleration-band tracker, which is what the filter did before and is
-    // kept so the change can be ablated rather than assumed.
-    void setWaveBandTuning(bool flag) { wave_band_tuning_ = flag; }
+    // kept so the change can be ablated rather than assumed.  The legacy mode
+    // also bypasses the period-scaled sigma band so this remains a coherent
+    // old-versus-new tuning-path comparison.
+    void setWaveBandTuning(bool flag) {
+        if (wave_band_tuning_ != flag) sigma_wave_band_.reset();
+        wave_band_tuning_ = flag;
+    }
     bool waveBandTuning() const noexcept { return wave_band_tuning_; }
 
     // Select which vertical acceleration drives the wave-period estimator.
@@ -784,9 +813,7 @@ public:
     // Select which vertical acceleration the frequency tracker runs on.
     // Complementary (default) is the levelled signal from the private Mahony
     // observer; BodyZ is the raw proxy, kept for ablation.  Both are
-    // measurement-only, and the two are RMS-equivalent on the reference
-    // records; the default is the levelled one so that every consumer of a
-    // vertical acceleration in this filter reads the same signal.
+    // measurement-only.
     void setFreqTrackerInput(FreqTrackerInputSource source) {
         freq_tracker_input_ = source;
     }
@@ -835,6 +862,15 @@ private:
     using FreqInputLPF = seastate::common::FreqInputLPF;
     using StillnessAdapter = seastate::common::StillnessAdapter;
 
+    float band_noise_floor_sigma_() const noexcept {
+        if (!wave_band_tuning_ || !sigma_wave_band_.isReady()) {
+            return acc_noise_floor_sigma_;
+        }
+        const float gain = sigma_wave_band_.whiteNoiseVarianceGain();
+        if (!(std::isfinite(gain) && gain >= 0.0f)) return acc_noise_floor_sigma_;
+        return acc_noise_floor_sigma_ * std::sqrt(gain);
+    }
+
     // Apply the online tuner output only at the next IMU-sample boundary.
     // adapt_mekf() may consume y_k and smooth its candidate during step k,
     // but this function runs before y_{k+1} reaches the MEKF. Therefore the
@@ -856,7 +892,7 @@ private:
         if (!mekf_) return;
         mekf_->set_aw_time_constant(tune_.tau_applied);
 
-        const float sigma_floor = std::max(0.05f, acc_noise_floor_sigma_);
+        const float sigma_floor = std::max(0.05f, band_noise_floor_sigma_());
         const float sZ = std::max(sigma_floor, tune_.sigma_applied);
         const float sH = sZ * S_factor_;
         const Eigen::Vector3f aw_std(sH, sH, sZ);
@@ -900,8 +936,25 @@ private:
         ));
     }
 
-    void update_tuner(float dt, float a_body_z_up_proxy, float freq_hz_for_tuner) {
-        tuner_.update(dt, a_body_z_up_proxy, freq_hz_for_tuner);
+    void update_tuner(float dt, float a_vertical_measurement, float freq_hz_for_tuner) {
+        // Use the previous smoothed tuner frequency for the current sample's
+        // band corners.  This keeps the band motion smooth and one-sample
+        // predictable while remaining measurement-only.  Until the frequency
+        // EMA is ready, fall back to the current external frequency estimate.
+        float f_for_sigma_band = tuner_.isFreqReady()
+            ? tuner_.getFrequencyHz()
+            : freq_hz_for_tuner;
+        const float f_tune_floor = wave_band_tuning_ ? min_tune_freq_hz_ : min_freq_hz_;
+        if (!std::isfinite(f_for_sigma_band) || f_for_sigma_band < f_tune_floor) {
+            f_for_sigma_band = f_tune_floor;
+        }
+        f_for_sigma_band = std::min(f_for_sigma_band, max_freq_hz_);
+
+        const float a_for_variance = wave_band_tuning_
+            ? sigma_wave_band_.step(a_vertical_measurement, dt, f_for_sigma_band)
+            : a_vertical_measurement;
+
+        tuner_.update(dt, a_for_variance, freq_hz_for_tuner);
 
         // Startup stage logic
         switch (startup_stage_) {
@@ -926,7 +979,6 @@ private:
         // The tuning frequency is a wave-band quantity and has to be allowed
         // below the tracker's floor: a developed sea has T_z = 8.6 s, i.e.
         // 0.12 Hz, well under the 0.2 Hz the tracker is bounded to.
-        const float f_tune_floor = wave_band_tuning_ ? min_tune_freq_hz_ : min_freq_hz_;
         float f_tune = tuner_.getFrequencyHz();
         if (!std::isfinite(f_tune) || f_tune < f_tune_floor) {
             f_tune = f_tune_floor;
@@ -935,11 +987,12 @@ private:
             f_tune = max_freq_hz_;
         }
 
-        float var_total = acc_noise_floor_sigma_ * acc_noise_floor_sigma_;
+        const float band_noise_sigma = band_noise_floor_sigma_();
+        const float var_noise = band_noise_sigma * band_noise_sigma;
+        float var_total = var_noise;
         if (tuner_.isVarReady()) {
             var_total = std::max(0.0f, tuner_.getAccelVariance());
         }
-        const float var_noise = acc_noise_floor_sigma_ * acc_noise_floor_sigma_;
         float var_wave = var_total - var_noise;
         if (var_wave < 0.0f) var_wave = 0.0f;
 
@@ -963,7 +1016,7 @@ private:
             sigma_target_ = sigma_wave;
         }
         if (!tuner_.isVarReady()) {
-            sigma_target_ = std::max(sigma_target_, std::max(0.05f, acc_noise_floor_sigma_));
+            sigma_target_ = std::max(sigma_target_, std::max(0.05f, band_noise_sigma));
         }
 
         // r_S is derived from the *live* tau and sigma_a estimates, before any
@@ -1043,6 +1096,7 @@ private:
         tracker_policy_       = TrackingPolicy{};
         wave_period_          = WavePeriodEstimator{};
         vertical_accel_comp_.reset();
+        sigma_wave_band_.reset();
         freq_input_lpf_       = FreqInputLPF{};
         freq_stillness_       = StillnessAdapter(g_std, min_freq_hz_, FREQ_GUESS);
         freq_input_lpf_.setCutoff(max_freq_hz_);
@@ -1188,6 +1242,11 @@ private:
     SeaStateAutoTuner               tuner_;
     WavePeriodEstimator             wave_period_;
     VerticalAccelComplementary      vertical_accel_comp_{};
+    AdaptiveWaveBandPass            sigma_wave_band_{
+        SIGMA_BAND_LOW_RATIO_DEFAULT,
+        SIGMA_BAND_HIGH_RATIO_DEFAULT,
+        SIGMA_BAND_MIN_HZ_DEFAULT,
+        SIGMA_BAND_MAX_HZ_DEFAULT};
     TuneState                       tune_;
 
     float tau_target_   = NAN;
@@ -1235,6 +1294,14 @@ public:
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
+
+        // Period-scaled sigma-band shape.  These are dimensionless wave-band
+        // ratios except for the absolute safety clamps.  Keeping the ratios
+        // fixed is what gives the JONSWAP sigma channel its similarity law.
+        float sigma_band_low_ratio  = SIGMA_BAND_LOW_RATIO_DEFAULT;
+        float sigma_band_high_ratio = SIGMA_BAND_HIGH_RATIO_DEFAULT;
+        float sigma_band_min_hz     = SIGMA_BAND_MIN_HZ_DEFAULT;
+        float sigma_band_max_hz     = SIGMA_BAND_MAX_HZ_DEFAULT;
 
         // Mag-start gate: gravity-direction agreement using current tilt.
         float mag_gravity_align_max_sin   = 0.075f; // sin(deg)
@@ -1317,7 +1384,6 @@ public:
         MagAutoTuner::Config mag_cfg;
         mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
         mag_cfg.min_samples  = cfg_.mag_min_samples;
-
         mag_cfg.min_window_sec = cfg_.mag_min_window_sec;
         mag_cfg.max_window_sec = cfg_.mag_max_window_sec;
         mag_cfg.sample_dt_sec  = cfg_.mag_sample_dt_sec;
@@ -1342,6 +1408,10 @@ public:
         impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
         impl_.setMagDelaySec(0.0f); // outer wrapper owns mag delay
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
+        impl_.setSigmaWaveBandRatios(cfg_.sigma_band_low_ratio,
+                                     cfg_.sigma_band_high_ratio);
+        impl_.setSigmaWaveBandLimitsHz(cfg_.sigma_band_min_hz,
+                                       cfg_.sigma_band_max_hz);
 
         impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
         last_impl_startup_stage_ = impl_.getStartupStage();
