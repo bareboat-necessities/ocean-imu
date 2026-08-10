@@ -7,21 +7,18 @@
 // drift silently. State exogeneity is checked here; the separate
 // tuner_schedule-test pins the one-sample predictability boundary.
 //
-// 1. The variance channel is exogenous. update_tuner is handed
-//    a_body_z_up_proxy_ = -(acc.z() + g), a pure function of the raw
-//    accelerometer. The obvious "improvement" is to feed it the estimated
-//    world vertical acceleration instead, which would couple the variance
-//    estimate to the very states being tuned. Asserted bit-for-bit.
+// 1. The sigma channel is exogenous.  Its default input is the vertical
+//    acceleration levelled by a private Mahony observer that reads only raw
+//    gyro and accelerometer.  The sample then passes through the period-scaled
+//    AdaptiveWaveBandPass; both its sample and its corner frequency remain
+//    functions of measurements only.  Displacing the MEKF state must therefore
+//    leave the band output, sigma target and r_S target bit-for-bit unchanged.
 //
 // 2. The frequency channel is exogenous too, under the default
 //    WavePeriodInputSource::Complementary. wave_period_ is fed a vertical
-//    acceleration levelled by a private Mahony observer that reads only the
-//    raw gyro and accelerometer, so displacing every estimator state leaves
-//    the reported period and the whole operating point bit-for-bit unchanged.
-//    A pure function of the measurements admits no tolerance, so that is how
-//    it is asserted. With both default tuner channels exogenous, state
-//    perturbations cannot feed back into the applied tuning schedule through
-//    the MEKF.
+//    acceleration levelled by the same private Mahony observer, so displacing
+//    every estimator state leaves the reported period and operating point
+//    bit-for-bit unchanged.
 //
 //    WavePeriodInputSource::Leveled is the older behaviour, kept for ablation,
 //    and it does close the loop: it feeds direction_accel.up_ms2, which uses
@@ -129,7 +126,7 @@ void displace_state(Filter& f, bool attitude, bool linear) {
 constexpr int SETTLE = 240 * 120;
 constexpr int AFTER = SETTLE + 240 * 60;
 
-bool test_variance_channel_input_is_exogenous() {
+bool test_sigma_channel_input_is_exogenous() {
     bool ok = true;
 
     Filter nominal, displaced;
@@ -140,22 +137,31 @@ bool test_variance_channel_input_is_exogenous() {
 
     ok &= check(nominal.isAdaptiveLive(),
                 "the tuner must reach its live stage, or this test proves nothing");
+    ok &= check(nominal.wavePeriodReady(),
+                "the wave period must be ready, or the sigma band is not on its default reference");
 
     displace_state(displaced, /*attitude=*/true, /*linear=*/true);
     run(nominal, SETTLE, AFTER);
     run(displaced, SETTLE, AFTER);
 
-    // The signal handed to update_tuner as its variance input.
-    ok &= check(nominal.a_body_z_up_proxy_ == displaced.a_body_z_up_proxy_,
-                "the tuner's variance input must be a function of the measurement alone");
+    ok &= check(nominal.sigma_wave_band_.output() == displaced.sigma_wave_band_.output(),
+                "the sigma-band sample must be a function of measurements alone");
+    ok &= check(nominal.sigma_wave_band_.lowHz() == displaced.sigma_wave_band_.lowHz() &&
+                nominal.sigma_wave_band_.highHz() == displaced.sigma_wave_band_.highHz(),
+                "sigma-band corners must be a function of measurements alone");
+    ok &= check(nominal.getSigmaTarget() == displaced.getSigmaTarget(),
+                "sigma target must be exogenous to estimator state");
+    ok &= check(nominal.getRSTarget() == displaced.getRSTarget(),
+                "r_S target must remain exogenous when sigma is wave-band estimated");
 
     if (!ok) {
-        std::cerr << "  nominal proxy " << nominal.a_body_z_up_proxy_
-                  << ", displaced " << displaced.a_body_z_up_proxy_ << '\n'
-                  << "  The tuner now reads estimator state on its variance\n"
-                     "  channel. The analytic stability discussion assumes the\n"
-                     "  applied default schedule is exogenous and must be revised\n"
-                     "  if this changes.\n";
+        std::cerr << "  nominal band " << nominal.sigma_wave_band_.output()
+                  << ", displaced " << displaced.sigma_wave_band_.output() << '\n'
+                  << "  sigma target " << nominal.getSigmaTarget()
+                  << " vs " << displaced.getSigmaTarget() << '\n'
+                  << "  The default sigma channel has acquired a dependence on\n"
+                     "  estimator state. The analytic stability discussion assumes\n"
+                     "  the applied default schedule is exogenous.\n";
     }
     return ok;
 }
@@ -197,7 +203,7 @@ bool test_leveled_ablation_coupling_stays_bounded() {
     return ok;
 }
 
-// The frequency channel under the *default* input source. It joins the variance
+// The frequency channel under the *default* input source. It joins the sigma
 // channel in being exogenous, so the applied schedule remains exogenous with
 // respect to estimator state. Asserted bit-for-bit against a displacement of
 // *every* state, because "a pure function of the measurements" admits no
@@ -228,10 +234,12 @@ bool test_default_frequency_channel_is_exogenous() {
                 "the default wave period must be a function of the "
                 "measurement alone");
 
-    // With both tuner inputs exogenous the whole operating point must be, too.
     ok &= check(nominal.getTauTarget() == displaced.getTauTarget(),
-                "the default operating point must be a function of the "
-                "measurement alone");
+                "tau target must be a function of the measurement alone");
+    ok &= check(nominal.getSigmaTarget() == displaced.getSigmaTarget(),
+                "sigma target must be a function of the measurement alone");
+    ok &= check(nominal.getRSTarget() == displaced.getRSTarget(),
+                "the whole default operating point must be measurement-only");
 
     std::cout << "  default (complementary): attitude+linear displacement -> "
                  "wave period "
@@ -239,10 +247,9 @@ bool test_default_frequency_channel_is_exogenous() {
               << displaced.getWavePeriodSec() << " s (must be identical)\n";
 
     if (!ok) {
-        std::cerr << "  The private Mahony observer has acquired a dependence on\n"
-                     "  estimator state. It exists precisely so the tuner has an\n"
-                     "  input that cannot; feeding it anything the filter computed\n"
-                     "  defeats the point.\n";
+        std::cerr << "  The private Mahony observer or sigma band has acquired a\n"
+                     "  dependence on estimator state. The default tuner exists\n"
+                     "  precisely so its schedule cannot close that loop.\n";
     }
     return ok;
 }
@@ -279,7 +286,7 @@ bool test_tilt_gate_stays_outside_the_live_analysis_region() {
 
 int main() {
     bool ok = true;
-    ok &= test_variance_channel_input_is_exogenous();
+    ok &= test_sigma_channel_input_is_exogenous();
     ok &= test_default_frequency_channel_is_exogenous();
     ok &= test_leveled_ablation_coupling_stays_bounded();
     ok &= test_tilt_gate_stays_outside_the_live_analysis_region();
