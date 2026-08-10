@@ -92,3 +92,4 @@ $r_S\propto\sigma_{aw}\tau^3$ adaptation law.
 % The following subsection closes the adaptation argument at the Kalman/Riccati
 % level.  It is kept in a separate part because the derivation is substantial.
 \input{w3d-rs-riccati-analysis.tex-part}
+\input{w3d-rs-similarity-design-guidance.tex-part}
