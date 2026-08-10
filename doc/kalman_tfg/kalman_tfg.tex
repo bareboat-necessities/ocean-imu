@@ -1,0 +1,311 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsthm}
+\usepackage{amsmath,bm}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\interdisplaylinepenalty=2500
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{array,booktabs,makecell,adjustbox}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{balance}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\newcommand{\SO}{\mathrm{SO}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Id}{\mat{I}}
+\newcommand{\Skew}[1]{\left[#1\right]_\times}
+\DeclareMathOperator{\Exp}{Exp}
+\DeclareMathOperator{\Log}{Log}
+\DeclareMathOperator{\Ad}{Ad}
+\DeclareMathOperator{\blkdiag}{blkdiag}
+\newcommand{\fitcol}[1]{\adjustbox{max width=\columnwidth}{\ensuremath{\displaystyle #1}}}
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\emergencystretch=2em
+\allowdisplaybreaks
+\AtBeginEnvironment{equation}{\small}
+\AtBeginEnvironment{align}{\small}
+
+\newtheoremstyle{bodysmall}{3pt}{3pt}{\normalfont\small}{0pt}{\bfseries\small}{.}{0.5em}{}
+\theoremstyle{bodysmall}
+\newtheorem{remark}{Remark}
+
+\title{A Right-Invariant Two-Frame Lie-Group Error-State EKF for Embedded Marine Wave-State Estimation (Early Draft)}
+\author{%
+  \IEEEauthorblockN{Mikhail S. Grushinskiy}
+  \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+  Bareboat Necessities GitHub Project\\
+  Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This early implementation paper describes a right-invariant two-frame Lie-group error-state extended Kalman filter (EKF) for marine inertial wave-state estimation. The estimator was developed as a geometric reformulation of an existing quaternion multiplicative EKF with an Ornstein--Uhlenbeck (OU) wave-acceleration model. The state combines body-to-world attitude, four world-frame translational columns (velocity, position, integral displacement, and wave acceleration), and body-frame inertial-sensor biases. The resulting two-frame group lets a single finite correction rotate the attitude and world-vector states coherently while retaining the natural body-frame interpretation of biases. The implemented error is right-invariant, $\eta=\hat X X^{-1}$, while corrections are applied by left multiplication. Accelerometer and magnetometer updates use invariant-style Jacobians built from fixed world references, and covariance is transported after finite injection with the full group retraction Jacobian. The complete marine process is not claimed to be group-affine or log-linear; estimated-state-dependent couplings remain in the propagation model. The present paper focuses on conventions, group construction, implemented propagation and measurement equations, numerical safeguards, and verification architecture. Performance claims are intentionally preliminary pending a publication-scale paired simulation campaign.
+\end{abstract}
+
+\begin{IEEEkeywords}
+invariant EKF, Lie group, inertial navigation, marine heave, wave estimation, two-frame group, embedded estimation, Ornstein--Uhlenbeck process
+\end{IEEEkeywords}
+
+\section{Introduction}
+Low-cost marine inertial estimation is difficult because attitude error, accelerometer bias, and low-frequency translational drift couple strongly while the desired wave motion is itself broadband and stochastic. A conventional error-state EKF can represent these quantities, but its additive translational error coordinates do not encode the geometric relationship between attitude and world-frame vectors. This paper documents an implementation that moves the estimator state onto a two-frame Lie group while preserving the OU-driven translational model and embedded constraints of the earlier OU-III filter.
+
+The implementation has four design objectives. First, the state convention must be explicit enough that left/right and body/world ambiguities can be mechanically tested. Second, finite corrections must act coherently on attitude and world vectors. Third, body-frame gyro and accelerometer biases must remain natural members of the state rather than being disguised as world vectors. Fourth, the implementation must remain practical for fixed-size Eigen matrices and single-precision embedded builds.
+
+The contribution is therefore primarily an implementation architecture rather than a claim of a new general invariant-filter theorem. In particular, the complete marine process used here is \emph{not} asserted to satisfy the group-affine condition required for a fully log-linear invariant EKF. The implementation is more precisely a right-invariant Lie-group error-state EKF with invariant-style measurement linearizations.
+
+\section{Conventions and State}
+\subsection{Convention contract}
+The implementation fixes three independent choices:
+\begin{equation}
+R=R_{bw},\qquad \eta=\hat X\circ X^{-1},\qquad
+\hat X^+=\Exp_G(\delta\xi)\circ\hat X^-.
+\end{equation}
+Thus $R$ maps body coordinates to world coordinates, the estimation error is right-invariant, and group retraction is performed on the left. ``Right-invariant'' describes the error, not the correction side. If $\hat X=\Exp_G(\xi)\circ X$, then $\hat X X^{-1}=\Exp_G(\xi)$ exactly.
+
+The world frame is the same navigation frame used by the marine estimator. The group state is
+\begin{equation}
+X=(R,X_w,B_b),\quad R\in\SO(3),
+\end{equation}
+with
+\begin{equation}
+X_w=\begin{bmatrix}v&p&S&a_w\end{bmatrix}\in\R^{3\times4},\quad
+B_b=\begin{bmatrix}b_g&b_a\end{bmatrix}\in\R^{3\times2}.
+\end{equation}
+Here $v$ is velocity, $p$ position, $S$ integral displacement, $a_w$ wave acceleration, $b_g$ gyro bias, and $b_a$ residual accelerometer bias. The implementation can omit $b_a$, reducing the tangent dimension from 21 to 18.
+
+\subsection{Tangent layout}
+The tangent ordering deliberately matches the existing OU-III estimator:
+\begin{equation}
+\xi=\begin{bmatrix}
+\phi&\beta_g&\rho_v&\rho_p&\rho_S&\rho_a&\beta_a
+\end{bmatrix}^{T},
+\end{equation}
+with offsets $0,3,6,9,12,15,18$. This compatibility permits reuse of the fixed-size block structure for the integrated OU chain and Joseph covariance updates.
+
+\section{Two-Frame Lie Group}
+\subsection{Composition and inverse}
+The group law is
+\begin{align}
+&(R_1,X_1,B_1)\circ(R_2,X_2,B_2) \nonumber\\
+&\qquad=\left(R_1R_2,\;X_1+R_1X_2,\;B_2+R_2^TB_1\right),
+\end{align}
+with identity $(I,0,0)$ and inverse
+\begin{equation}
+(R,X,B)^{-1}=\left(R^T,-R^TX,-RB\right).
+\end{equation}
+The asymmetric bias slot is essential: world vectors transform through $R$, while body-frame bias vectors transform through the opposite action. A direct product of an extended pose group and $\R^6$ does not express this coupling.
+
+For the right-invariant error, the local coordinates satisfy
+\begin{align}
+\delta R &= \hat R R^T=\Exp(\phi),\\
+\rho_x &= \hat x-\delta R\,x,\\
+\beta_b &= R(\hat b-b).
+\end{align}
+Consequently, translational error is not simply $\hat x-x$; attitude and world-vector errors share a common geometric frame.
+
+\subsection{Exponential map}
+Let $J_l(\phi)$ denote the left Jacobian of $\SO(3)$. The implemented group exponential is
+\begin{align}
+E_R &= \Exp(\phi),\\
+E_X &= J_l(\phi)\begin{bmatrix}\rho_v&\rho_p&\rho_S&\rho_a\end{bmatrix},\\
+E_B &= J_l(-\phi)\begin{bmatrix}\beta_g&\beta_a\end{bmatrix}.
+\end{align}
+The negative argument in the bias block follows from the two-frame group law rather than from a sign convention. The induced one-parameter bias equation is $b'(s)=\beta-\Skew{\phi}b(s)$, whose unit-time solution yields $J_l(-\phi)\beta$.
+
+The finite retraction becomes
+\begin{align}
+\hat R^+ &= E_R\hat R^-,\\
+\hat X_w^+ &= E_R\hat X_w^-+E_X,\\
+\hat B_b^+ &= \hat B_b^-+(\hat R^-)^TE_B.
+\end{align}
+This is a key difference from correcting a quaternion while independently adding Euclidean increments to velocity and position.
+
+\subsection{Adjoint}
+The implementation uses the adjoint defined by
+\begin{equation}
+X\Exp_G(\xi)X^{-1}=\Exp_G(\Ad_X\xi).
+\end{equation}
+Its block action is
+\begin{align}
+\phi &\mapsto R\phi,\\
+\rho_i &\mapsto R\rho_i+\Skew{x_i}R\phi,\\
+\beta_j &\mapsto R\beta_j+R\Skew{b_j}\phi.
+\end{align}
+These identities are directly exercised in the mathematical unit tests.
+
+\section{Relation to the OU-III MEKF}
+The geometric implementation retains the physical OU-III state chain but changes the attitude convention. OU-III stores a world-to-body rotation $C=R_{wb}$ and injects its small rotation on the left, $C^+=\Exp(\delta\theta)C^-$. Since $R=C^T$,
+\begin{equation}
+R^+=R^-\Exp(-\delta\theta).
+\end{equation}
+Expressed as a left correction in the present coordinates,
+\begin{equation}
+R^+=\Exp(-R^-\delta\theta)R^-,\qquad
+\phi=-R^-\delta\theta.
+\end{equation}
+Therefore the correspondence is neither $\phi=\delta\theta$ nor simply $\phi=-\delta\theta$ except in special attitudes. This bridge is explicitly tested because near the identity the incorrect forms can appear deceptively similar.
+
+\section{Process Model}
+\subsection{Nominal state}
+Gyroscope measurements are modeled as
+\begin{equation}
+\omega_m=\omega+b_g+n_g,
+\end{equation}
+and attitude propagates using the bias-corrected angular rate. The translational world state retains the marine chain
+\begin{align}
+\dot p &= v,\\
+\dot S &= p,\\
+\dot a_w &= -\tau_a^{-1}a_w+w_a,
+\end{align}
+with velocity driven by the estimated world acceleration. The OU acceleration has stationary covariance $\Sigma_a$ and continuous driving covariance chosen consistently with the OU stationary law.
+
+The implementation uses the same exact integrated-OU primitives as the OU-III filter. For each axis, the deterministic four-state chain $[v,p,S,a_w]^T$ is integrated analytically, including small-$h/\tau_a$ series branches to avoid cancellation. This preserves the useful $\tau^3$ scaling of integral-displacement response that motivated the earlier regularization design.
+
+\subsection{Invariant error propagation}
+The propagation Jacobian is derived in the right-invariant tangent coordinates. The resulting marine model is not completely autonomous: gyro-bias/world-vector couplings depend on the estimated world state. For this reason this paper does not label the implementation a fully group-affine InEKF.
+
+The implementation uses structured Gauss--Legendre integration for deterministic gyro-bias/world coupling and for the gyro/gyro-bias process covariance. This transports rotational noise through the current attitude and all world columns rather than relying on a zero-rate or first-order leakage approximation. The integrated OU block remains analytic.
+
+\section{Invariant-Style Measurements}
+The estimator follows one sign convention throughout. The tangent variable $\xi$ is the error \emph{of the estimate}; the innovation is measured minus predicted:
+\begin{equation}
+r\simeq H\xi+n,\qquad
+K=PH^T(HPH^T+R)^{-1}.
+\end{equation}
+If $\hat\xi=Kr$, the estimated error is removed by
+\begin{equation}
+\hat X^+=\Exp_G(-\hat\xi)\circ\hat X^-.
+\end{equation}
+
+\subsection{Accelerometer update}
+For specific-force measurement $f_m$, the world-frame residual is
+\begin{equation}
+r_a=\hat R(f_m-\hat b_a)-(\hat a_w-g).
+\end{equation}
+At a consistent state the invariant-style Jacobian is
+\begin{equation}
+H_a=\begin{bmatrix}
+\Skew{g}&0&0&0&0&-I&-\hat R
+\end{bmatrix}.
+\end{equation}
+The body-frame accelerometer covariance is rotated into the residual frame:
+\begin{equation}
+R_a^w=\hat R R_a^b\hat R^T.
+\end{equation}
+For the full two-frame bias geometry the bias error is already world-referred; the implementation also retains an additive body-bias ablation mode for comparison.
+
+Differentiation away from consistency reveals the approximation explicitly:
+\begin{equation}
+\frac{\partial r_a}{\partial\phi}=\Skew{g}-\Skew{r_a}.
+\end{equation}
+Dropping the innovation-dependent term makes the attitude column depend only on the fixed gravity reference and is the intended invariant-EKF linearization.
+
+\subsection{Magnetometer update}
+With fixed world magnetic reference $B_w$,
+\begin{equation}
+r_m=\hat Rm_m-B_w,
+\end{equation}
+and the invariant-style attitude Jacobian is
+\begin{equation}
+H_m=\begin{bmatrix}-\Skew{B_w}&0&\cdots&0\end{bmatrix}.
+\end{equation}
+As with gravity, the estimate-dependent residual term is omitted at linearization. Measurement covariance is rotated from body to world coordinates.
+
+\subsection{Integral-displacement regularization}
+The drift regularizer retains the physical constraint $S\simeq0$:
+\begin{equation}
+r_S=-\hat S,
+\end{equation}
+with
+\begin{equation}
+H_S=\begin{bmatrix}\Skew{\hat S}&0&0&0&-I&0&0\end{bmatrix}.
+\end{equation}
+The covariance $R_S$ is defined directly in the world/navigation frame. This is one motivation for choosing a right-invariant error: the NED-anisotropic regularization does not need to rotate with the attitude estimate.
+
+\section{Covariance Update and Retraction Transport}
+Each rank-three measurement uses the Joseph update
+\begin{equation}
+P^+=(I-KH)P^-(I-KH)^T+KRK^T.
+\end{equation}
+A finite Lie-group injection changes tangent coordinates. The implementation therefore transports covariance with the full retraction Jacobian
+\begin{equation}
+J_{\mathrm{reset}}=
+\left.\frac{\partial}{\partial\delta}
+\Log_G\!\left(\Exp_G(-a)\Exp_G(a+\delta)\right)
+\right|_{\delta=0},
+\end{equation}
+where $a=Kr$. This replaces the attitude-only MEKF reset used in the quaternion formulation and transports all world and bias cross-covariances consistently with the group retraction.
+
+\section{Numerical Implementation}
+The implementation is header-based C++ and uses fixed-size Eigen matrices. The production template supports \texttt{float} and \texttt{double}; the intended firmware instantiation is single precision. The $\SO(3)$ exponential, logarithm, and Jacobians include explicit small-angle series. Branch seams are tested against higher-precision closed forms rather than by comparing function values at two different nearby arguments.
+
+Rotation matrices are periodically re-orthonormalized. Covariance operations retain the existing fixed-size structure and Joseph form. The OU transition uses \texttt{expm1} and Maclaurin expansions for small normalized time step, avoiding subtractive cancellation in terms such as $1-e^{-h/\tau}$ and its repeated integrals.
+
+\section{Verification Architecture}
+The implementation is accompanied by mathematical and estimator-level tests rather than only end-to-end wave simulations. The current test suite includes:
+\begin{itemize}[leftmargin=*]
+\item group composition, inverse, exponential/logarithm round trips, adjoint identities, and one-parameter subgroup checks;
+\item convention tests that distinguish right-invariant from left-invariant errors and left from right retraction;
+\item an independent Lie++ reference for the four-column world block;
+\item exact integrated-OU chain identity tests;
+\item propagation and measurement-Jacobian finite-difference checks;
+\item covariance transport and process-covariance tests;
+\item orchestrator tests for the complete marine fusion wrapper; and
+\item wave-regression simulation using the same paired synthetic records used by the existing estimator family.
+\end{itemize}
+
+The convention tests intentionally include negative assertions. For example, a right-invariant error must survive common right multiplication but must not generically survive common left multiplication. Likewise, the OU-III-to-two-frame attitude bridge is tested at rotations sufficiently far from identity that naive sign-only mappings are distinguishable.
+
+Mutation testing has also been used during development: changing the bias Jacobian sign, correction side, body-block transpose, exponential handedness, or $J_l$ coefficients causes the relevant mathematical suites to fail. This is important because a large collection of passing identities is weak evidence if the tests also pass when the implementation is deliberately broken.
+
+\section{Preliminary Evaluation Plan}
+The existing repository contains a TFG wave-regression simulator and dedicated validation workflows. A publication-scale results section should use paired wave records and identical sensor-noise realizations when comparing the geometric filter with OU-III. At minimum, the study should report 3-D position RMS, vertical RMS normalized by significant wave height, attitude RMS, bias convergence, innovation consistency, and computational cost. Separate ablations should isolate (i) additive versus two-frame bias geometry and (ii) full retraction covariance transport versus reduced reset approximations.
+
+This early draft deliberately does not copy numerical claims from the OU-III paper. Although both filters share the physical wave model, results belong to the implementation and revision actually tested. The final manuscript should import generated result macros or tables from the TFG validation workflow so that reported values cannot silently diverge from the code.
+
+\section{Discussion}
+The principal structural benefit is not merely replacing a quaternion by a rotation matrix. The group law changes what a translational error means. A finite attitude correction carries $v$, $p$, $S$, and $a_w$ through the same geometry, while the two-frame bias slot respects the body-frame nature of inertial biases. The right-invariant choice also aligns the dominant measurement references with the world frame: gravity, magnetic north, and the $S=0$ regularizer admit simple Jacobian structure.
+
+There are corresponding costs. Process propagation is more involved than in a simple additive error-state EKF, especially because the full marine dynamics are not group-affine. Bias/world coupling requires structured discretization, and covariance must be transported after finite retraction. The method therefore trades algebraic and implementation complexity for stronger geometric consistency in the state correction and measurement structure.
+
+A second limitation is evidential. Mathematical identity tests establish that the implemented group operations and local Jacobians match their stated conventions, but they do not establish superior wave-estimation accuracy. That question requires paired multi-seed simulation and hardware data. The present manuscript should therefore be read as an implementation and methods draft.
+
+\section{Conclusion}
+A right-invariant two-frame Lie-group error-state EKF has been implemented for embedded marine wave-state estimation. The estimator combines $\SO(3)$ attitude, world-frame velocity/position/integral/wave-acceleration states, and body-frame inertial biases in one group, while retaining the exact integrated OU wave model of the earlier estimator. Its convention contract, group exponential, adjoint, invariant-style measurements, and full retraction covariance transport are all directly testable. The next stage is to attach generated paired simulation evidence and hardware results to determine where the geometric formulation materially improves accuracy, consistency, or robustness over the OU-III MEKF.
+
+\section*{Reproducibility Note}
+The source implementation is maintained in the Bareboat Necessities \texttt{ocean-imu} repository. The primary implementation files are \texttt{src/lie/TwoFrameGroup.h}, \texttt{src/lie/SO3Jacobians.h}, and \texttt{src/kalman\_tfg/Kalman3D\_Wave\_TFG.h}; the mathematical tests are under \texttt{tests/kalman\_tfg}. This paper is intended to be built by the repository's GitHub Actions workflow so that a PDF artifact is produced on pull requests and pushes affecting the TFG implementation or manuscript.
+
+\begin{thebibliography}{9}
+\bibitem{BarrauBonnabel2017}
+A. Barrau and S. Bonnabel, ``The invariant extended Kalman filter as a stable observer,'' \emph{IEEE Transactions on Automatic Control}, vol. 62, no. 4, pp. 1797--1812, 2017.
+
+\bibitem{BarrauBonnabel2018}
+A. Barrau and S. Bonnabel, ``Invariant Kalman filtering,'' \emph{Annual Review of Control, Robotics, and Autonomous Systems}, vol. 1, pp. 237--257, 2018.
+
+\bibitem{Solà2018}
+J. Sol\`a, J. Deray, and D. Atchuthan, ``A micro Lie theory for state estimation in robotics,'' arXiv:1812.01537, 2018.
+
+\bibitem{Hartley2020}
+R. Hartley, M. Ghaffari, R. M. Eustice, and J. W. Grizzle, ``Contact-aided invariant extended Kalman filtering for robot state estimation,'' \emph{The International Journal of Robotics Research}, vol. 39, no. 4, pp. 402--430, 2020.
+\end{thebibliography}
+
+\balance
+\end{document}
