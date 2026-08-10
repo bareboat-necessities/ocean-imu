@@ -1,6 +1,7 @@
 \documentclass[11pt,letterpaper]{article}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{amsthm}
 \usepackage{fullpage}
 \usepackage{mathrsfs}
 \usepackage{graphicx}
@@ -14,6 +15,9 @@
 \usepackage{microtype}
 \usepackage{siunitx}
 \usepackage{array,booktabs,makecell,adjustbox}
+
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
 
 % Keep this — needed by PGF outputs that reference \mathdefault
 \providecommand{\mathdefault}[1]{#1}
@@ -82,6 +86,8 @@ only at step $k+1$. Thus, for the measurement filtration $\mathcal F_k$,
 the active schedule obeys $\vartheta_k\in\mathcal F_{k-1}$. At the nominal
 \SI{200}{Hz} IMU rate the added delay is about \SI{5}{ms}, negligible beside
 the adaptation horizons.
+
+\input{ou2-iss-stability.tex-part}
 
 % PM Stokes
     \begin{figure}[H]\centering
@@ -317,5 +323,8 @@ the adaptation horizons.
     \caption{Kalman 3D filter gyroscope bias convergence — JONSWAP, high $H_s$.}
     \label{fig:w3d_ou2_jonswap_high_gyro_bias}
     \end{figure}
+
+\bibliographystyle{IEEEtran}
+\bibliography{ou2-iss}
 
 \end{document}
