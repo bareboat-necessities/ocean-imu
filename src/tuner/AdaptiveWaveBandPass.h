@@ -81,9 +81,8 @@ public:
 
         if (!(high_hz > low_hz)) return band_;
 
-        constexpr float TWO_PI = 6.28318530717958647692f;
-        const float alpha_low = 1.0f - std::exp(-TWO_PI * low_hz * dt);
-        const float alpha_high = 1.0f - std::exp(-TWO_PI * high_hz * dt);
+        const float alpha_low = 1.0f - std::exp(-(2.0f * 3.14159265358979323846f) * low_hz * dt);
+        const float alpha_high = 1.0f - std::exp(-(2.0f * 3.14159265358979323846f) * high_hz * dt);
         const float q_low = 1.0f - alpha_low;
         const float q_high = 1.0f - alpha_high;
 
