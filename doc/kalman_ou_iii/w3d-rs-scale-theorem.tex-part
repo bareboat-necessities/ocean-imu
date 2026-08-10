@@ -161,6 +161,28 @@ Multiplying by the dimensionless regularization factor $k_i$ gives
 \eqref{eq:Rs-sigmaa-tau3}.
 \end{proof}
 
+\begin{remark}[Self-similar soft bands]
+\label{rem:jonswap-soft-band}
+A brick-wall band is not required.  Let the acceleration variance be formed
+after a linear filter whose magnitude response can be written
+\begin{equation}
+ |H_B(\omega;f_t)|^2
+ =\mathcal H^2\!\left(\frac{\omega}{2\pi f_t}\right),
+\label{eq:self-similar-soft-band}
+\end{equation}
+where the dimensionless shape $\mathcal H$ is fixed and, for fixed $\gamma$,
+$f_t\propto\omega_p$.  Substitution of $x=\omega/\omega_p$ then gives
+\begin{equation}
+ \sigma_{a,B}^2
+ =H_s^2\omega_p^4\,C_{4,H}(\gamma),
+\label{eq:jonswap-soft-band-scale}
+\end{equation}
+where $C_{4,H}$ is a finite dimensionless weighted shape integral.  Hence
+$\sigma_{a,B}\propto H_s\omega_p^2$ and the theorem is unchanged, with
+$C_4(\gamma;\lambda_-,\lambda_+)$ replaced by $C_{4,H}(\gamma)$.  This is the
+form used by the implementation below.
+\end{remark}
+
 \begin{remark}[Why the powers one and three are not arbitrary]
 \label{rem:jonswap-power-uniqueness}
 The theorem gives a direct uniqueness argument for the monomial exponents.
@@ -233,56 +255,83 @@ deviation, the corresponding scalar covariance scaling is
 The implementation in this work uses $r_S$ as a standard-deviation scale and
 squares it componentwise when constructing $\mat R_S$.
 
-\subsubsection{Implication for the current tuner and recommended change}
+\subsubsection{Implemented period-scaled acceleration variance}
 \label{sec:jonswap-tuner-recommendation}
 
-The exact theorem requires $\sigma_{a,B}$ to be measured over a band whose
-edges remain fixed relative to the characteristic JONSWAP frequency.  The
-current tuner does \emph{not} yet enforce that condition: it changes the EWMA
-variance horizon with the estimated period, but it forms the variance from the
-vertical acceleration stream without an explicit period-scaled band-pass.
-Consequently the deployed law should presently be interpreted as a
-JONSWAP-motivated approximation, because its effective upper acceleration
-bandwidth is set by the IMU and preprocessing rather than by a fixed
-$\omega/\omega_p$ interval.
-
-A theoretically matched revision is to form the variance from a
-measurement-only adaptive wave-band signal
+The OU--III tuner implements the self-similar soft-band form of
+Remark~\ref{rem:jonswap-soft-band}.  Before the acceleration sample reaches the
+existing variance EWMA, it passes through a measurement-only one-pole
+high-pass followed by a one-pole low-pass.  Their nominal corner frequencies
+are
 \begin{equation}
- f_L=\beta_L f_{\mathrm{tune}},
+ f_L=0.5f_{\mathrm{tune}},
  \qquad
- f_H=\beta_H f_{\mathrm{tune}},
- \qquad 0\le\beta_L<\beta_H<\infty,
-\label{eq:recommended-scaled-band}
+ f_H=4f_{\mathrm{tune}},
+\label{eq:implemented-scaled-band}
 \end{equation}
-with practical absolute clamps below Nyquist and below the sensor anti-alias
-limit.  Since $f_{\mathrm{tune}}=1/T_z\propto\omega_p$ for fixed JONSWAP
-shape, fixed $(\beta_L,\beta_H)$ implement the fixed dimensionless band
-required by the theorem.  The band edges should be changed smoothly using the
-same measurement-only period estimate so that no estimator-state feedback is
-introduced and filter-coefficient transients are controlled.
+with absolute safety clamps of \SI{0.01}{Hz} and \SI{6}{Hz}, and an additional
+Nyquist guard.  Away from those clamps the complete response depends on
+frequency only through $f/f_{\mathrm{tune}}$; because
+$f_{\mathrm{tune}}=1/T_z\propto\omega_p$ for fixed JONSWAP shape, the
+acceleration scale therefore obeys the $H_s\omega_p^2$ similarity required by
+Theorem~\ref{thm:jonswap-rs-similarity}.
 
-The variance and noise-floor subtraction should then be performed in the same
-band,
+The band is driven by the vertical acceleration from the private complementary
+observer.  That observer reads only gyro and accelerometer measurements and no
+OU--III estimator state, so the new sigma channel preserves the exogenous tuner
+schedule used by the stability analysis.  The band corners use the previous
+smoothed tuning-frequency value; the current measurement can update the
+candidate statistics but cannot retroactively choose the band applied to its
+own sample.
+
+The variance horizon remains period scaled,
+$\tau_{\mathrm{var}}\approx K_{\mathrm{periods}}/f_{\mathrm{tune}}$, but it now
+has only its intended statistical role: it controls averaging time after the
+spectral band has been selected.  It is no longer being relied on as a
+surrogate for spectral selection.
+
+Noise-floor subtraction is performed in the same band.  The configured bench
+floor is interpreted as the pre-band standard deviation of the sigma-channel
+input.  For the two-state time-varying band filter, the implementation
+propagates the covariance driven by unit-variance discrete white input,
+\begin{equation}
+ \mat P_{B,k}
+ =\mat A_{B,k}\mat P_{B,k-1}\mat A_{B,k}^{\top}
+  +\vct b_{B,k}\vct b_{B,k}^{\top},
+\label{eq:sigma-band-noise-covariance}
+\end{equation}
+so the band-referred floor used at sample $k$ is
+\begin{equation}
+ \sigma_{\mathrm{nf},B,k}^2
+ =\sigma_{\mathrm{nf}}^2[\mat P_{B,k}]_{22}.
+\label{eq:sigma-band-noise-floor}
+\end{equation}
+The wave variance target is therefore
 \begin{equation}
  \widehat\sigma_{\mathrm{wave},B}^2
  =\max\!\left\{0,
  \widehat\Var[a_B]-\sigma_{\mathrm{nf},B}^2\right\},
  \qquad
  \sigma_{aw,\star}
- =c_\sigma\sqrt{\widehat\sigma_{\mathrm{wave},B}^2},
-\label{eq:recommended-band-variance}
+ =c_\sigma\sqrt{\widehat\sigma_{\mathrm{wave},B}^2}.
+\label{eq:implemented-band-variance}
 \end{equation}
-where $\sigma_{\mathrm{nf},B}$ is the bench noise floor after the same adaptive
-band-pass (or its analytically propagated equivalent).  Merely shortening or
-lengthening the EWMA horizon in proportion to the period does not impose the
-spectral similarity required by Theorem~\ref{thm:jonswap-rs-similarity}.
+This covariance recursion also remains valid while the two corners move because
+$\mat A_{B,k}$ and $\vct b_{B,k}$ are updated from the actual coefficients used
+at each sample.
 
-If $\gamma$ is allowed to vary substantially, the moment ratio in
-\eqref{eq:jonswap-KJ} also varies.  The simplest rigorous scope is therefore a
-fixed-$\gamma$ JONSWAP family.  A broader tuner could later replace the
-constant $c_R$ by a dimensionless shape correction based on an estimated
-spectral peakedness or bandwidth.  Likewise, hard clamps on $\tau$,
-$\sigma_{aw}$, or $r_S$ deliberately break the similarity law at the operating
-boundaries and should be treated as saturation safeguards rather than part of
-the theorem.
+Disabling wave-band tuning bypasses this period-scaled variance band and keeps
+the older broadband path available for ablation.  Hard frequency clamps,
+parameter clamps, and the fixed physical dynamics of the upstream
+complementary levelling observer introduce additional time scales and therefore
+break exact JONSWAP similarity at the boundaries; the theorem describes the
+interior wave-band scaling, not those safeguards.
+
+Finally, this structural code change does not by itself re-establish the
+numerical calibration of $c_\sigma$ or $c_R$.  The reported values
+$c_\sigma=0.9$ and $c_R=0.35$ were calibrated before this sigma-band revision.
+They are retained unchanged here so the effect of satisfying the theorem's
+band condition is measured separately from coefficient retuning; regenerated
+validation evidence is required before either coefficient can be called optimal
+for the revised measurement chain.  If $\gamma$ is later allowed to vary
+substantially, a dimensionless shape correction may likewise be required.
