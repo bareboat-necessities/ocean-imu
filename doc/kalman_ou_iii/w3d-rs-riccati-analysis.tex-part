@@ -1,0 +1,479 @@
+\subsection{Riccati interpretation of the $S=0$ regularizer}
+\label{sec:rs-riccati-analysis}
+
+The scale $\sigma_{aw}\tau^3$ is the natural coordinate scale of the third-integral
+state $S$, but that fact alone does \emph{not} determine the pseudo-measurement
+covariance $R_S$.  The deployed constraint is a Kalman measurement,
+\[
+ y_S=0=S+n_S,\qquad n_S\sim\mathcal N(0,R_S),
+\]
+and therefore its strength is determined by the Riccati covariance and Kalman
+gain.  This section makes that distinction explicit and derives the relevant
+closed-loop scaling.
+
+\subsubsection{Scalar four-state periodic Riccati problem}
+
+For one translational axis, neglecting attitude and bias cross-couplings for the
+moment, the implemented linear block is
+\begin{equation}
+ x=\begin{bmatrix}v&p&S&a\end{bmatrix}^{\!T},\qquad
+ \dot v=a,\quad \dot p=v,\quad \dot S=p,
+\label{eq:riccati-four-state-chain}
+\end{equation}
+with OU acceleration
+\begin{equation}
+ da=-\frac{1}{\tau}a\,dt
+ +\sqrt{\frac{2\sigma_a^2}{\tau}}\,dW_t .
+\label{eq:riccati-ou-accel}
+\end{equation}
+The code propagates this block with the analytic $4\times4$ transition and exact
+OU process covariance.  The accelerometer update directly observes the latent
+$a$ state in this reduced model, while the periodic integral pseudo-update
+observes only $S$.
+
+Define the similarity transformation
+\begin{equation}
+ D=\operatorname{diag}(\sigma_a\tau,\,\sigma_a\tau^2,\,
+                       \sigma_a\tau^3,\,\sigma_a),
+ \qquad x=D\bar x,
+\label{eq:riccati-D}
+\end{equation}
+and dimensionless time $u=t/\tau$.  Then
+\begin{equation}
+ \frac{d\bar x}{du}=\bar A\bar x+\bar G\dot W_u,
+ \qquad
+ \bar A=
+ \begin{bmatrix}
+ 0&0&0&1\\
+ 1&0&0&0\\
+ 0&1&0&0\\
+ 0&0&0&-1
+ \end{bmatrix},
+\label{eq:riccati-Abar}
+\end{equation}
+with normalized OU driving intensity $2$.  For
+$\delta=\Delta t/\tau$, the exact normalized transition is
+\begin{equation}
+\bar\Phi(\delta)=
+\begin{bmatrix}
+1&0&0&1-e^{-\delta}\\
+\delta&1&0&\delta-1+e^{-\delta}\\
+\frac12\delta^2&\delta&1&\frac12\delta^2-\delta+1-e^{-\delta}\\
+0&0&0&e^{-\delta}
+\end{bmatrix},
+\label{eq:riccati-phibar}
+\end{equation}
+so $\Phi=D\bar\Phi D^{-1}$ and $Q_d=D\bar Q(\delta)D$.
+Consequently, if $P=D\bar P D$, prediction is exactly
+\begin{equation}
+ \bar P^-=
+ \bar\Phi(\delta)\bar P^+\bar\Phi(\delta)^T+\bar Q(\delta).
+\label{eq:riccati-normalized-predict}
+\end{equation}
+
+Let the scalar acceleration measurement variance be $R_a$.  Its normalized
+noise is
+\begin{equation}
+ \beta:=\frac{R_a}{\sigma_a^2},
+\label{eq:riccati-beta}
+\end{equation}
+and with $e_a=[0,0,0,1]^T$ the acceleration covariance update is
+\begin{equation}
+ \bar P_a^+=\bar P^-
+ -\frac{\bar P^-e_ae_a^T\bar P^-}{\bar P^-_{aa}+\beta}.
+\label{eq:riccati-acc-update}
+\end{equation}
+For the $S=0$ pseudo-measurement define
+\begin{equation}
+ \rho:=\frac{T_S}{\tau},\qquad
+ r:=\frac{R_S}{\sigma_a^2\tau^6},
+\label{eq:riccati-rho-r}
+\end{equation}
+where $T_S$ is the pseudo-update period.  With
+$e_S=[0,0,1,0]^T$,
+\begin{equation}
+ \bar P_S^+=\bar P^-
+ -\frac{\bar P^-e_Se_S^T\bar P^-}{\bar P^-_{SS}+r}.
+\label{eq:riccati-S-update}
+\end{equation}
+Thus the periodic steady Riccati solution has the exact similarity form
+\begin{equation}
+ \boxed{
+ P_\star=D\,
+ \mathcal F\!\left(
+ \frac{\Delta t}{\tau},
+ \frac{T_S}{\tau},
+ \frac{R_a}{\sigma_a^2},
+ \frac{R_S}{\sigma_a^2\tau^6}
+ \right)D .}
+\label{eq:riccati-four-groups}
+\end{equation}
+For $N\simeq T_S/\Delta t$ IMU updates per pseudo-update, the normalized fixed
+point may be written schematically as
+\begin{equation}
+ \bar P_\star=
+ \mathcal S_r\circ
+ (\mathcal A_\beta\circ\mathcal P_\delta)^N(\bar P_\star),
+\label{eq:riccati-periodic-map}
+\end{equation}
+with the precise ordering set by the implementation schedule.
+
+Equation~\eqref{eq:riccati-four-groups} is the central similarity result.  The
+monomial choice $R_S\propto\sigma_a^2\tau^6$ holds only the last dimensionless
+group fixed.  With a fixed IMU period, fixed pseudo-update period, and fixed
+physical accelerometer noise, the other three groups change as $\tau$ and
+$\sigma_a$ adapt.  Therefore the cubic standard-deviation law does not, by
+itself, preserve the periodic Riccati solution.
+
+\subsubsection{Kalman-gain scaling}
+
+Immediately before a scalar $S=0$ update,
+\begin{equation}
+ K_S=\frac{P^-e_S}{P^-_{SS}+R_S}.
+\label{eq:riccati-full-S-gain}
+\end{equation}
+The direct contraction of $S$ is
+\begin{equation}
+ K_{SS}=\frac{P^-_{SS}}{P^-_{SS}+R_S}
+       =\frac{\bar P^-_{SS}}{\bar P^-_{SS}+r}.
+\label{eq:riccati-KSS}
+\end{equation}
+Thus the correction strength depends on $R_S/P^-_{SS}$, not on $R_S$ alone.
+The useful displacement correction is
+\begin{equation}
+ \Delta p=-\frac{P^-_{pS}}{P^-_{SS}+R_S}S^-,
+\label{eq:riccati-deltap}
+\end{equation}
+and because
+$P_{pS}=\sigma_a^2\tau^5\bar P_{pS}$,
+\begin{equation}
+ K_{pS}=\frac{1}{\tau}
+ \frac{\bar P^-_{pS}}{\bar P^-_{SS}+r}.
+\label{eq:riccati-KpS}
+\end{equation}
+Multiplication by $S=\sigma_a\tau^3\bar S$ produces a displacement correction
+on its natural scale $\sigma_a\tau^2$.  Analogous cancellations hold for the
+$v$ and $a$ corrections.  Hence $R_S=\sigma_a^2\tau^6 r$ preserves the entire
+\emph{normalized} pseudo-measurement correction only when the normalized
+Riccati covariance is itself invariant.
+
+A gain-targeted alternative follows directly from
+\eqref{eq:riccati-KSS}.  If a scalar pseudo-update is required to contract $S$
+by a prescribed fraction $\gamma_S=K_{SS}$, then
+\begin{equation}
+ \boxed{
+ R_S=\frac{1-\gamma_S}{\gamma_S}P^-_{SS}.}
+\label{eq:riccati-gain-target}
+\end{equation}
+This is an exact gain statement, although using it directly would make the
+regularizer covariance depend on the filter's own predicted covariance and is
+therefore a different design from the exogenous sea-state schedule used here.
+
+\subsubsection{Closed-loop periodic poles}
+
+Let $H_a=e_a^T$ and $H_S=e_S^T$.  For the estimation-error mean, one
+acceleration-corrected sample has transition
+\begin{equation}
+ E_a=(I-K_aH_a)\Phi,
+\end{equation}
+and the $S$ correction has
+\begin{equation}
+ E_S=I-K_SH_S.
+\end{equation}
+Over one pseudo-update cycle the monodromy matrix is, up to the exact sample
+phase,
+\begin{equation}
+ M=E_SE_a^N.
+\label{eq:riccati-monodromy}
+\end{equation}
+Under \eqref{eq:riccati-D},
+$M=D\bar M D^{-1}$, so its eigenvalues are dimensionless and depend only on the
+four groups in \eqref{eq:riccati-four-groups}.  A physically meaningful design
+objective is therefore not to match an open-loop variance of $S$, but to place
+the slow regularization pole at a fixed fraction of the OU/wave frequency,
+\begin{equation}
+ \omega_R\tau=\kappa.
+\label{eq:riccati-pole-objective}
+\end{equation}
+In the exact periodic problem this implies a generalized law
+\begin{equation}
+ \boxed{
+ R_S=\sigma_a^2\tau^6
+ F\!\left(
+ \frac{\Delta t}{\tau},
+ \frac{T_S}{\tau},
+ \frac{R_a}{\sigma_a^2};\kappa
+ \right),}
+\label{eq:riccati-general-law}
+\end{equation}
+where $F$ is determined by the periodic Riccati fixed point and the selected
+closed-loop eigenvalue.  The deployed cubic law corresponds to approximating
+$F$ by a constant.
+
+\subsubsection{Short-cadence asymptotics}
+
+The reason a fixed $T_S$ is important can be seen without solving the full
+periodic equation.  For $T_S\ll\tau$, acceleration is nearly constant during
+one pseudo interval.  Initial acceleration uncertainty gives, to leading order,
+\begin{equation}
+ S(T_S)\simeq\frac{a(0)T_S^3}{6},\qquad
+ P_{SS}^{(a_0)}\simeq\frac{P_{aa}T_S^6}{36}.
+\label{eq:riccati-short-initial}
+\end{equation}
+New OU process noise has intensity $q_a=2\sigma_a^2/\tau$ and contributes
+\begin{equation}
+ P_{SS}^{(Q)}
+ \simeq q_a\int_0^{T_S}\frac{u^6}{36}\,du
+ =\frac{\sigma_a^2T_S^7}{126\tau}.
+\label{eq:riccati-short-Q}
+\end{equation}
+Neither term scales as $\sigma_a^2\tau^6$ for a fixed physical $T_S$.  Thus the
+sixth power in $R_S$ is not covariance matching to the uncertainty accumulated
+between successive pseudo-updates.  Instead, it changes the relative authority
+of the $S=0$ constraint strongly with sea-state time scale.
+
+\subsubsection{Acceleration Riccati reduction and posterior low-frequency noise}
+\label{sec:riccati-accel-reduction}
+
+A further analytical reduction identifies the acceleration uncertainty that
+actually drives long-term drift.  Write
+\begin{equation}
+ \dot a=-\lambda a+w,\qquad
+ \lambda=\frac1\tau,\qquad
+ q=\frac{2\sigma_a^2}{\tau}.
+\label{eq:riccati-accel-ct}
+\end{equation}
+Approximate the high-rate sampled accelerometer by the continuous measurement
+\begin{equation}
+ y_a=a+n_a,
+\end{equation}
+with white measurement-noise spectral density $r_a$; for discrete measurement
+variance $R_a$ and sample interval $\Delta t$, the corresponding high-rate
+approximation is $r_a\simeq R_a\Delta t$.  The scalar continuous algebraic
+Riccati equation is
+\begin{equation}
+ 0=-2\lambda P_a+q-\frac{P_a^2}{r_a}.
+\label{eq:riccati-accel-care}
+\end{equation}
+Its stabilizing solution is
+\begin{equation}
+ \boxed{
+ P_a=r_a(\mu-\lambda),\qquad
+ \mu=\sqrt{\lambda^2+\frac{q}{r_a}}
+ =\sqrt{\frac1{\tau^2}+\frac{2\sigma_a^2}{\tau r_a}}.}
+\label{eq:riccati-accel-solution}
+\end{equation}
+The posterior acceleration estimation error is therefore OU-like with
+correlation rate $\mu$ and covariance
+$P_ae^{-\mu|s|}$.  Its PSD is
+\begin{equation}
+ S_{e_a}(\omega)=\frac{2P_a\mu}{\mu^2+\omega^2}.
+\label{eq:riccati-ea-psd}
+\end{equation}
+At drift frequencies $\omega\ll\mu$, this is approximately white with
+zero-frequency intensity
+\begin{equation}
+ \boxed{
+ q_{\mathrm{eff}}:=S_{e_a}(0)
+ =\frac{2P_a}{\mu}
+ =2r_a\left(1-\frac{1}{\mu\tau}\right).}
+\label{eq:riccati-qeff}
+\end{equation}
+This quantity, rather than the unconditional physical OU variance alone, is the
+noise intensity passed by the acceleration estimator into the low-frequency
+integrator chain.
+
+\subsubsection{Closed-form drift-band Riccati solution}
+\label{sec:riccati-drift-band}
+
+At frequencies well below $\mu$, replace the residual acceleration error by
+white noise of intensity $q_{\mathrm{eff}}$ and retain the three integrated
+states.  Reorder them as $x_d=[S,p,v]^T$:
+\begin{equation}
+ A_d=\begin{bmatrix}0&1&0\\0&0&1\\0&0&0\end{bmatrix},\qquad
+ G_d=\begin{bmatrix}0\\0\\1\end{bmatrix},\qquad
+ H_d=\begin{bmatrix}1&0&0\end{bmatrix}.
+\label{eq:riccati-triple-integrator}
+\end{equation}
+A periodic pseudo-measurement of variance $R_S$ every $T_S$ has, in the
+high-rate information-equivalent approximation, continuous measurement-noise
+spectral density
+\begin{equation}
+ r_{S,c}=R_ST_S.
+\label{eq:riccati-rsc}
+\end{equation}
+The continuous algebraic Riccati equation
+\begin{equation}
+ A_dP+PA_d^T+q_{\mathrm{eff}}G_dG_d^T
+ -PH_d^T r_{S,c}^{-1}H_dP=0
+\label{eq:riccati-drift-care}
+\end{equation}
+has the closed-form gain
+\begin{equation}
+ \boxed{
+ K_d=\begin{bmatrix}2\omega_R&2\omega_R^2&\omega_R^3\end{bmatrix}^{T},
+ \qquad
+ \omega_R=\left(\frac{q_{\mathrm{eff}}}{R_ST_S}\right)^{1/6}.}
+\label{eq:riccati-omegaR}
+\end{equation}
+Indeed, the estimator error characteristic polynomial is
+\begin{equation}
+ s^3+2\omega_Rs^2+2\omega_R^2s+\omega_R^3
+ =(s+\omega_R)(s^2+\omega_Rs+\omega_R^2),
+\label{eq:riccati-pole-poly}
+\end{equation}
+with poles
+\begin{equation}
+ s_1=-\omega_R,\qquad
+ s_{2,3}=-\frac{\omega_R}{2}
+ \pm j\frac{\sqrt3}{2}\omega_R.
+\label{eq:riccati-poles}
+\end{equation}
+Thus $R_S$ has a direct control interpretation: it sets the low-frequency
+drift-regularization bandwidth through a sixth-root law.
+
+Solving \eqref{eq:riccati-omegaR} for a desired
+$\omega_R=\kappa/\tau$ gives
+\begin{equation}
+ \boxed{
+ R_S=\frac{q_{\mathrm{eff}}\tau^6}{T_S\kappa^6}.}
+\label{eq:riccati-pole-target-RS}
+\end{equation}
+Substituting \eqref{eq:riccati-qeff} yields
+\begin{equation}
+ \boxed{
+ R_S=
+ \frac{2r_a\tau^6}{T_S\kappa^6}
+ \left[
+ 1-\frac{1}{\sqrt{1+2\sigma_a^2\tau/r_a}}
+ \right].}
+\label{eq:riccati-pole-target-full}
+\end{equation}
+Equivalently,
+\begin{equation}
+ \boxed{
+ r_S=
+ \frac{\sqrt{2r_a}\,\tau^3}{\sqrt{T_S}\,\kappa^3}
+ \sqrt{1-\frac{1}{\sqrt{1+2\sigma_a^2\tau/r_a}}}.}
+\label{eq:riccati-pole-target-rs}
+\end{equation}
+These formulas are asymptotic reductions of the sampled periodic filter, not
+claims that the full attitude-coupled MEKF is a continuous scalar filter.
+
+\subsubsection{Weak- and strong-acceleration-observation limits}
+
+Introduce the dimensionless acceleration-information ratio
+\begin{equation}
+ \zeta:=\frac{2\sigma_a^2\tau}{r_a}.
+\label{eq:riccati-zeta}
+\end{equation}
+For $\zeta\ll1$, the accelerometer is weak relative to the OU prior and
+\begin{equation}
+ q_{\mathrm{eff}}\simeq2\sigma_a^2\tau.
+\end{equation}
+With fixed $T_S$ and fixed $\kappa$,
+\begin{equation}
+ R_S\propto\sigma_a^2\tau^7,
+ \qquad r_S\propto\sigma_a\tau^{7/2}.
+\label{eq:riccati-weak-fixed-cadence}
+\end{equation}
+For $\zeta\gg1$, the acceleration posterior is sensor-noise limited and
+\begin{equation}
+ q_{\mathrm{eff}}\simeq2r_a,
+\end{equation}
+so with fixed cadence
+\begin{equation}
+ \boxed{R_S\propto\tau^6,\qquad r_S\propto\tau^3,}
+\label{eq:riccati-strong-fixed-cadence}
+\end{equation}
+with little leading-order dependence on $\sigma_a$.  This provides an
+analytical mechanism for weak sensitivity of the filter performance to the OU
+stationary acceleration scale when the accelerometer strongly observes $a_w$.
+It also shows why multiplying the regularizer indefinitely by $\sigma_a$ is not
+required by the posterior Riccati dynamics in that regime.
+
+\subsubsection{Similarity-scaled pseudo-update cadence}
+\label{sec:riccati-scaled-cadence}
+
+A cleaner periodic design is obtained by scaling the pseudo-update period with
+the adapted OU time constant,
+\begin{equation}
+ \boxed{T_S=c_T\tau,}
+\label{eq:riccati-scaled-TS}
+\end{equation}
+with dimensionless cadence $c_T$ and practical minimum/maximum clamps.  This
+holds $T_S/\tau$ fixed and removes one changing parameter from the exact
+periodic Riccati map \eqref{eq:riccati-four-groups}.  The pole-targeted law
+becomes
+\begin{equation}
+ \boxed{
+ R_S=\frac{q_{\mathrm{eff}}\tau^5}{c_T\kappa^6}.}
+\label{eq:riccati-scaled-cadence-law}
+\end{equation}
+In the weak-acceleration-observation limit,
+$q_{\mathrm{eff}}\simeq2\sigma_a^2\tau$, hence
+\begin{equation}
+ \boxed{
+ R_S\simeq\frac{2\sigma_a^2\tau^6}{c_T\kappa^6},
+ \qquad
+ r_S\propto\sigma_a\tau^3.}
+\label{eq:riccati-scaled-cadence-weak}
+\end{equation}
+Thus the deployed cubic law has a genuine Riccati/pole interpretation when the
+pseudo-update cadence is self-similar and the posterior low-frequency
+acceleration uncertainty retains the OU scaling.  In the strong-accelerometer
+limit, however,
+\begin{equation}
+ \boxed{
+ R_S\propto\tau^5,
+ \qquad r_S\propto\tau^{5/2},}
+\label{eq:riccati-scaled-cadence-strong}
+\end{equation}
+so the pure cubic law is not universal.
+
+Conversely, if one insists on the existing
+$R_S=c_R^2\sigma_a^2\tau^6$ while demanding the same normalized pole
+$\kappa$, the cadence required by \eqref{eq:riccati-pole-target-RS} is
+\begin{equation}
+ \boxed{
+ T_S=
+ \frac{q_{\mathrm{eff}}}{c_R^2\kappa^6\sigma_a^2}.}
+\label{eq:riccati-cadence-for-cubic}
+\end{equation}
+In the weak-measurement limit this reduces to $T_S\propto\tau$; in the
+strong-measurement limit it approaches $T_S\propto1/\sigma_a^2$.  The latter is
+less attractive operationally because it makes update timing strongly
+amplitude dependent.  A bounded $T_S=c_T\tau$ schedule is therefore the
+simpler self-similar candidate for future evaluation.
+
+\subsubsection{Interpretation and limits of the adaptation law}
+
+The analysis separates three statements that should not be conflated:
+\begin{enumerate}
+ \item $\sigma_a\tau^3$ is the natural coordinate scale of the OU-driven $S$
+       state.
+ \item $R_S$ controls a Kalman correction; its actual strength depends on the
+       Riccati covariance and, in the drift-band reduction, on the closed-loop
+       pole $\omega_R$.
+ \item The monomial $r_S=c_R\sigma_a\tau^3$ is an approximation to a
+       pole-placement schedule, not a universal covariance identity.
+\end{enumerate}
+The exact four-state sampled problem depends on the dimensionless groups in
+\eqref{eq:riccati-four-groups}; the closed-form
+Eqs.~\eqref{eq:riccati-omegaR}--\eqref{eq:riccati-pole-target-rs} expose the
+leading drift-band mechanism.  The full MEKF additionally contains attitude,
+gyro-bias, accelerometer-bias, three-axis correlation, and nonlinear
+measurement couplings, so the reduced result is a design theorem/asymptotic
+model rather than an exact closed-form solution of the complete estimator.
+Nevertheless it identifies the quantity that should govern regularization:
+the low-frequency posterior acceleration-error intensity
+$q_{\mathrm{eff}}=S_{e_a}(0)$, together with the desired normalized
+regularization bandwidth $\omega_R\tau$.
+
+Accordingly, the current implementation should be described as an empirically
+calibrated approximation to this Riccati/pole law.  A particularly clean future
+variant is to set $T_S=c_T\tau$ and compare (i) the existing cubic target,
+(ii) a $\tau$-only or saturating-amplitude target motivated by the
+strong-accelerometer limit, and (iii) the full posterior-noise expression
+\eqref{eq:riccati-pole-target-rs}.  Such tests distinguish coordinate
+similarity from actual closed-loop regularization invariance.
