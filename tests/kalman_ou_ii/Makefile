@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_ii-sim tuner_schedule-test
+TARGETS = kalman_ou_ii-sim tuner_schedule-test iss_contract-test
 
 all: build test
 
@@ -37,6 +37,9 @@ kalman_ou_ii-sim: kalman_ou_ii-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 tuner_schedule-test: tuner_schedule-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+iss_contract-test: iss_contract-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # -MMD -MP records the headers each object depends on, so editing a filter
