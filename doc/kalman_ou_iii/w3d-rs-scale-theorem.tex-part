@@ -1,0 +1,198 @@
+\subsection{Scale-equivariant cubic law for the $S$ pseudo-measurement}
+\label{sec:rs-scale-theorem}
+
+Equation~\eqref{eq:sigmaS-scaling} shows from the acceleration spectrum that
+$\sigma_{aw}\tau^3$ is the natural physical scale of the triple-integral state.
+The following result is stronger than dimensional consistency: for the
+integrated OU--III similarity family, the same factor is required for the
+normalized Kalman regularization itself to remain unchanged as the acceleration
+and time scales vary.
+
+\begin{theorem}[Scale-equivariant OU--III integral regularization]
+\label{thm:rs-scale-equivariance}
+Consider one translational axis of the OU--III model
+\begin{equation}
+\begin{aligned}
+  dv &= a\,dt, & dp &= v\,dt, & dS &= p\,dt,\\
+  da &= -\frac{1}{\tau}a\,dt
+        +\sqrt{\frac{2\sigma_{aw}^{2}}{\tau}}\,dW,
+\end{aligned}
+\label{eq:rs-scale-ou3-sde}
+\end{equation}
+with $\tau>0$, $\sigma_{aw}>0$, and stationary
+$\Var[a]=\sigma_{aw}^{2}$.  Let the drift regularizer be
+\begin{equation}
+  y_S=0=S+n_S,\qquad n_S\sim\mathcal N(0,r_S^2).
+\label{eq:rs-scale-pseudomeas}
+\end{equation}
+Define the dimensionless measurement strength
+\begin{equation}
+  \kappa_S:=\frac{r_S}{\sigma_{aw}\tau^3}.
+\label{eq:kappaS-def}
+\end{equation}
+Assume that sampling and pseudo-update instants, the initial covariance, and
+all other process/measurement noise terms are held fixed after normalization by
+the natural OU--III state and time scales.  Then the normalized OU--III
+prediction and $S$-update depend on $(\sigma_{aw},\tau,r_S)$ only through
+$\kappa_S$.  Hence two members of this similarity family with the same
+$\kappa_S$ have identical normalized Kalman recursions.  Conversely, any
+positive law $r_S=g(\sigma_{aw},\tau)$ that preserves the same normalized
+$S$-regularization for every $\sigma_{aw},\tau>0$ must have the form
+\begin{equation}
+  g(\sigma_{aw},\tau)=\kappa_S\sigma_{aw}\tau^3
+\label{eq:rs-cubic-necessary}
+\end{equation}
+for a dimensionless constant $\kappa_S$ (or, if additional dimensionless
+parameters are allowed to vary, for a dimensionless function of those
+parameters).
+\end{theorem}
+
+\begin{proof}
+Set the dimensionless time $s=t/\tau$ and normalize the states by successive
+integration of the stationary acceleration scale,
+\begin{equation}
+  a=\sigma_{aw}\bar a,\qquad
+  v=\sigma_{aw}\tau\bar v,\qquad
+  p=\sigma_{aw}\tau^2\bar p,\qquad
+  S=\sigma_{aw}\tau^3\bar S.
+\label{eq:rs-natural-scales}
+\end{equation}
+Brownian scaling gives $dW(t)=\sqrt{\tau}\,d\bar W(s)$.  Substitution into
+\eqref{eq:rs-scale-ou3-sde} yields
+\begin{equation}
+\begin{aligned}
+  d\bar v &= \bar a\,ds, &
+  d\bar p &= \bar v\,ds, &
+  d\bar S &= \bar p\,ds,\\
+  d\bar a &= -\bar a\,ds+\sqrt{2}\,d\bar W.
+\end{aligned}
+\label{eq:rs-normalized-ou3}
+\end{equation}
+Thus $\sigma_{aw}$ and $\tau$ disappear from the normalized process model.
+Equivalently, for
+\[
+  \vct{x}=\begin{bmatrix}v&p&S&a\end{bmatrix}^{\top},\qquad
+  \mat D_{\sigma,\tau}
+  =\diag(\sigma_{aw}\tau,\sigma_{aw}\tau^2,
+         \sigma_{aw}\tau^3,\sigma_{aw}),
+\]
+we have $\vct{x}=\mat D_{\sigma,\tau}\bar{\vct{x}}$ and
+$\mat P=\mat D_{\sigma,\tau}\bar{\mat P}\mat D_{\sigma,\tau}^{\top}$.
+
+Now divide the pseudo-measurement~\eqref{eq:rs-scale-pseudomeas} by the natural
+$S$ scale $d_S=\sigma_{aw}\tau^3$:
+\begin{equation}
+  0=\bar S+\bar n_S,
+  \qquad
+  \bar n_S:=\frac{n_S}{\sigma_{aw}\tau^3},
+  \qquad
+  \Var[\bar n_S]=\kappa_S^2.
+\label{eq:rs-normalized-meas}
+\end{equation}
+With $\mat H_S=\begin{bmatrix}0&0&1&0\end{bmatrix}$, the normalized Kalman
+update is therefore
+\begin{equation}
+\begin{aligned}
+ \bar{\mat K}_S
+ &=\bar{\mat P}^{-}\mat H_S^{\top}
+   \left(\mat H_S\bar{\mat P}^{-}\mat H_S^{\top}
+   +\kappa_S^2\right)^{-1},\\
+ \bar{\vct{x}}^{+}
+ &=\bar{\vct{x}}^{-}
+   +\bar{\mat K}_S\left(0-\mat H_S\bar{\vct{x}}^{-}\right).
+\end{aligned}
+\label{eq:rs-normalized-kalman-update}
+\end{equation}
+The prediction from~\eqref{eq:rs-normalized-ou3}, its normalized process
+covariance, and the update~\eqref{eq:rs-normalized-kalman-update} contain no
+separate dependence on $\sigma_{aw}$, $\tau$, or $r_S$: their only
+pseudo-measurement combination is $\kappa_S$.  This proves sufficiency.
+
+For necessity, suppose $r_S=g(\sigma_{aw},\tau)$ preserves the same normalized
+$S$-regularization for every positive pair $(\sigma_{aw},\tau)$.  The normalized
+measurement variance in~\eqref{eq:rs-normalized-meas} must then be invariant, so
+\[
+  \frac{g(\sigma_{aw},\tau)^2}
+       {\sigma_{aw}^2\tau^6}=\kappa_S^2.
+\]
+Positivity of the standard-deviation scale gives
+$g(\sigma_{aw},\tau)=\kappa_S\sigma_{aw}\tau^3$, proving
+\eqref{eq:rs-cubic-necessary}.
+\end{proof}
+
+\begin{theorem}[Performance-optimal cubic law]
+\label{thm:rs-performance-cubic}
+Under the assumptions of Theorem~\ref{thm:rs-scale-equivariance}, let a
+normalized estimation criterion be
+\begin{equation}
+  \bar J=\mathcal J(\kappa_S;\vct\eta),
+\label{eq:rs-normalized-cost}
+\end{equation}
+where $\vct\eta$ contains only dimensionless quantities such as normalized
+sampling and pseudo-update periods and normalized sensor-noise levels.  If, for
+fixed $\vct\eta$, the criterion has a minimizer
+$\kappa_S^{\star}(\vct\eta)$, then every dimensional minimizer satisfies
+\begin{equation}
+  r_S^{\star}
+  =\sigma_{aw}\tau^3\kappa_S^{\star}(\vct\eta).
+\label{eq:Rs-sigmaa-tau3}
+\end{equation}
+In particular, if $\vct\eta$ is fixed across the similarity family, the
+performance-optimal coefficient is dimensionless and constant, and the
+$\sigma_{aw}\tau^3$ factor is necessary for scale-independent optimal tuning.
+If $\mat R_S$ denotes measurement variance rather than standard deviation, the
+corresponding scalar law is
+\begin{equation}
+  R_S^{\star}
+  =\left(\kappa_S^{\star}\right)^2\sigma_{aw}^2\tau^6.
+\label{eq:RS-variance-sixth-law}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Theorem~\ref{thm:rs-scale-equivariance} reduces every member of the similarity
+family to the same normalized filtering problem, with $r_S$ entering only as
+$\kappa_S=r_S/(\sigma_{aw}\tau^3)$.  Therefore minimizing the dimensional
+criterion is equivalent, after its natural normalization, to minimizing
+$\mathcal J$ over $\kappa_S$.  At a minimizer,
+$\kappa_S=\kappa_S^{\star}(\vct\eta)$; solving the definition of $\kappa_S$
+for $r_S$ gives~\eqref{eq:Rs-sigmaa-tau3}.  Squaring this standard-deviation
+law gives~\eqref{eq:RS-variance-sixth-law}.
+\end{proof}
+
+The spectral argument above and Theorems~\ref{thm:rs-scale-equivariance}--
+\ref{thm:rs-performance-cubic} have complementary roles.  Equation
+\eqref{eq:sigmaS-scaling} relates the natural $S$ fluctuation level to a
+specified acceleration spectrum and low-frequency cutoff; the theorems show
+that, independent of that particular spectral calculation, preserving the same
+normalized OU--III regularization forces the outer $\sigma_{aw}\tau^3$ scale.
+The remaining coefficient is dimensionless and may depend on dimensionless
+sampling, bandwidth, and noise ratios.
+
+A physically scaled Gaussian design can therefore be written
+\begin{equation}
+  r_S(\sigma_{aw},\tau)
+  =k_i\sigma_S
+  =k_i c_{\mathrm{spec}}(u_{\min})\sigma_{aw}\tau^3,
+\label{eq:Rs-from-sigmaS}
+\end{equation}
+or, after absorbing spectral-shape and performance calibration into one
+coefficient,
+\begin{equation}
+  r_{S,\star}=c_R\sigma_{aw,\star}\tau_\star^3.
+\label{eq:rs-practical-cubic-law}
+\end{equation}
+The deployed $c_R$ is therefore a dimensionless calibration; the cubic outer
+scaling is the structural part of the law.  Exact scale equivariance is broken
+when physical-rate sampling, clipping, gating, or other dimensionless ratios
+change with the sea state.  In that more general case the optimum has the form
+$c_R=c_R(\vct\eta)$, while the mandatory outer scale remains
+$\sigma_{aw}\tau^3$.
+
+A fixed dimensional $r_S$ illustrates why the law matters.  If $\tau$ doubles
+while $\sigma_{aw}$ is unchanged, then
+$\kappa_S=r_S/(\sigma_{aw}\tau^3)$ falls by a factor of eight and the normalized
+measurement variance $\kappa_S^2$ falls by a factor of $64$.  Thus a fixed
+$r_S$ makes the same pseudo-measurement dramatically stronger in normalized
+terms as the characteristic period grows; scaling $r_S\propto\sigma_{aw}\tau^3$
+removes that artificial change.
