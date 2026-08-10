@@ -1,17 +1,318 @@
-\subsection{JONSWAP similarity law for the three tuner targets}
+\subsection{OU similarity law for integral regularization}
 \label{sec:rs-scale-theorem}
 
-The preceding generic spectral calculation identifies the dimensions of the
-third-integral state, but it does not by itself justify a universal
-$r_S\propto\sigma_{aw}\tau^3$ law for an integrated OU process.  In particular,
-a stationary OU acceleration has nonzero spectral density at zero frequency,
-so its third integral is not stationary.  The scaling used by the deployed
-tuner is instead justified below for the wave family that motivates the
-estimator: a fixed-shape JONSWAP sea.  The result also exposes the condition
-that the acceleration variance entering the law must be a \emph{wave-band}
-quantity, not an unbounded-band fourth spectral moment.
+The preceding normalized-spectrum calculation identifies the dimensions of the
+third-integral state, but the adaptation law should be justified from the
+stochastic process actually propagated by the estimator.  OU--III does not
+integrate a JONSWAP spectrum.  It propagates the Ornstein--Uhlenbeck prior of
+\eqref{eq:ou-ct} through
+\[
+\dot v=a_w,\qquad \dot p=v,\qquad \dot S=p .
+\]
+JONSWAP therefore enters only later, as a physical similarity model for mapping
+observable wave statistics to the OU targets $\sigma_{aw}$ and $\tau$.  The
+scale of the $S$ regularizer itself is derived first from the OU model.
 
-For $\omega>0$, write a JONSWAP elevation spectrum with fixed peakedness
+\begin{theorem}[Nondimensional similarity of the OU--III chain]
+\label{thm:ou-chain-similarity}
+Consider one scalar component of the stationary OU acceleration prior
+\begin{equation}
+ da_w=-\frac{1}{\tau}a_w\,dt
+ +\sqrt{\frac{2\sigma_{aw}^2}{\tau}}\,dW_t,
+\qquad
+ \Var[a_w]=\sigma_{aw}^2,
+\label{eq:ou-scalar-rs}
+\end{equation}
+together with
+\[
+\dot v=a_w,\qquad \dot p=v,\qquad \dot S=p.
+\]
+Define
+\begin{equation}
+ \bar t=\frac{t}{\tau},\qquad
+ \bar a=\frac{a_w}{\sigma_{aw}},\qquad
+ \bar v=\frac{v}{\sigma_{aw}\tau},\qquad
+ \bar p=\frac{p}{\sigma_{aw}\tau^2},\qquad
+ \bar S=\frac{S}{\sigma_{aw}\tau^3}.
+\label{eq:ou-chain-nondim}
+\end{equation}
+Then the dimensionless dynamics contain neither $\sigma_{aw}$ nor $\tau$:
+\begin{equation}
+ d\bar a=-\bar a\,d\bar t+\sqrt{2}\,d\bar W_{\bar t},
+\qquad
+ \frac{d\bar v}{d\bar t}=\bar a,\quad
+ \frac{d\bar p}{d\bar t}=\bar v,\quad
+ \frac{d\bar S}{d\bar t}=\bar p .
+\label{eq:ou-chain-nondim-dynamics}
+\end{equation}
+Hence the natural similarity scales of $(a_w,v,p,S)$ are respectively
+\[
+ \sigma_{aw},\qquad
+ \sigma_{aw}\tau,\qquad
+ \sigma_{aw}\tau^2,\qquad
+ \boxed{\sigma_{aw}\tau^3}.
+\]
+\end{theorem}
+
+\begin{proof}
+Write $t=\tau\bar t$ and use Brownian scaling
+$dW_t=\sqrt{\tau}\,d\bar W_{\bar t}$.  Substitution into
+\eqref{eq:ou-scalar-rs} gives the first equation of
+\eqref{eq:ou-chain-nondim-dynamics}; the remaining three follow directly from
+the definitions in \eqref{eq:ou-chain-nondim}.  All dimensional dependence has
+therefore been factored into the four state scales above.
+\end{proof}
+
+\begin{remark}[The unregularized third integral is not stationary]
+\label{rem:ou-S-nonstationary}
+Theorem~\ref{thm:ou-chain-similarity} is a similarity statement, not a claim
+that the free-running $S$ state has stationary variance.  The OU acceleration
+PSD,
+\begin{equation}
+ S_{a,\mathrm{OU}}^{(2)}(\omega)
+ =\frac{2\sigma_{aw}^2\tau}{1+\omega^2\tau^2},
+\label{eq:ou-psd-rs}
+\end{equation}
+is nonzero at $\omega=0$, so division by $\omega^6$ makes the variance of an
+unregularized infinite-horizon third integral diverge.  A finite $S$ scale
+therefore requires either an explicit low-frequency regularizer, a finite
+observation horizon, or the repeated pseudo-measurement itself.  The next two
+results make the first two interpretations explicit.
+\end{remark}
+
+\begin{theorem}[Low-frequency-regularized triple integral of OU acceleration]
+\label{thm:ou-regularized-rs}
+Let $a_w$ satisfy \eqref{eq:ou-scalar-rs}.  Let a stable linear
+low-frequency regularizer have dimensionless frequency response
+$g_\kappa(\omega\tau)$ and define the regularized third-integral output by
+\begin{equation}
+ S_\kappa(\omega)
+ =
+ \frac{g_\kappa(\omega\tau)}{(j\omega)^3}\,A_w(\omega).
+\label{eq:ou-reg-third-integral}
+\end{equation}
+Assume
+\begin{equation}
+ C_{\mathrm{OU}}(\kappa)
+ :=
+ \frac{1}{\pi}
+ \int_{-\infty}^{\infty}
+ \frac{|g_\kappa(x)|^2}{x^6(1+x^2)}\,dx
+ <\infty .
+\label{eq:ou-Ck-def}
+\end{equation}
+Then
+\begin{equation}
+ \boxed{
+ \Var[S_\kappa]
+ =
+ C_{\mathrm{OU}}(\kappa)\,
+ \sigma_{aw}^2\tau^6
+ },
+\qquad
+ \boxed{
+ \sigma_{S_\kappa}
+ =
+ \sqrt{C_{\mathrm{OU}}(\kappa)}\,
+ \sigma_{aw}\tau^3
+ }.
+\label{eq:ou-reg-scaling}
+\end{equation}
+Consequently, if the pseudo-measurement standard deviation is chosen as a fixed
+dimensionless multiple $k_i$ of this natural OU-driven scale,
+$r_S=k_i\sigma_{S_\kappa}$, then
+\begin{equation}
+ \boxed{\displaystyle
+ r_S=c_R\sigma_{aw}\tau^3},
+ \qquad
+ c_R=k_i\sqrt{C_{\mathrm{OU}}(\kappa)} ,
+\label{eq:Rs-sigmaa-tau3}
+\end{equation}
+and the corresponding scalar covariance scales as
+\begin{equation}
+ \boxed{\displaystyle
+ R_S=c_R^2\sigma_{aw}^2\tau^6 } .
+\label{eq:ou-RS-variance-law}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Using \eqref{eq:ou-psd-rs} and the two-sided PSD convention,
+\begin{align}
+ \Var[S_\kappa]
+ &=
+ \frac{1}{2\pi}\int_{-\infty}^{\infty}
+ \frac{|g_\kappa(\omega\tau)|^2}{\omega^6}
+ \frac{2\sigma_{aw}^2\tau}
+      {1+\omega^2\tau^2}\,d\omega .
+\end{align}
+Set $x=\omega\tau$, so $d\omega=dx/\tau$ and
+$\omega^{-6}=\tau^6x^{-6}$.  Then
+\[
+ \Var[S_\kappa]
+ =
+ \sigma_{aw}^2\tau^6
+ \frac{1}{\pi}
+ \int_{-\infty}^{\infty}
+ \frac{|g_\kappa(x)|^2}{x^6(1+x^2)}\,dx ,
+\]
+which is \eqref{eq:ou-reg-scaling}.  Equations
+\eqref{eq:Rs-sigmaa-tau3}--\eqref{eq:ou-RS-variance-law} follow by multiplying
+the standard deviation by the dimensionless regularization factor $k_i$.
+\end{proof}
+
+\begin{remark}[Explicit dimensionless cutoff]
+\label{rem:ou-brickwall-cutoff}
+For an ideal symmetric low-frequency cutoff,
+\[
+ g_\kappa(x)=
+ \begin{cases}
+  0, & |x|<\kappa,\\
+  1, & |x|\ge\kappa,
+ \end{cases}
+ \qquad
+ \kappa=\omega_L\tau>0,
+\]
+Theorem~\ref{thm:ou-regularized-rs} gives
+\begin{equation}
+ C_{\mathrm{OU}}^{\mathrm{BW}}(\kappa)
+ =
+ \frac{2}{\pi}\left[
+ \frac{1}{5\kappa^5}
+ -\frac{1}{3\kappa^3}
+ +\frac{1}{\kappa}
+ -\tan^{-1}\!\left(\frac{1}{\kappa}\right)
+ \right].
+\label{eq:ou-brickwall-C}
+\end{equation}
+At $\kappa=1$,
+$\sqrt{C_{\mathrm{OU}}^{\mathrm{BW}}(1)}\approx0.227$, which is the numerical
+value obtained by the generic spectral calculation above.  It is therefore a
+special case of the OU theorem, not a universal constant.
+
+A constant coefficient $c_R$ across changing $\tau$ requires the
+low-frequency regularization to be self-similar, i.e.
+$\kappa=\omega_L\tau$ must remain fixed.  If instead $\omega_L$ is fixed in
+physical units, the exact law is
+\begin{equation}
+ r_S
+ =
+ k_i\sigma_{aw}\tau^3
+ \sqrt{C_{\mathrm{OU}}^{\mathrm{BW}}(\omega_L\tau)},
+\label{eq:ou-fixed-cutoff-law}
+\end{equation}
+so the coefficient varies with the operating point.
+\end{remark}
+
+\begin{remark}[Soft high-pass regularizers]
+\label{rem:ou-soft-cutoff}
+A brick-wall cutoff is not required.  If
+$g_\kappa(x)=O(|x|^m)$ as $x\rightarrow0$, then the integrand in
+\eqref{eq:ou-Ck-def} behaves as $|x|^{2m-6}$.  Thus any regularizer with
+$m>5/2$ makes the third-integral variance finite.  More generally,
+Theorem~\ref{thm:ou-regularized-rs} requires only that the dimensionless
+integral \eqref{eq:ou-Ck-def} exist and that its shape parameters remain fixed
+as $\tau$ changes.
+\end{remark}
+
+\begin{theorem}[Finite-horizon OU third-integral accumulation]
+\label{thm:ou-finite-horizon-rs}
+Let $a_w(t)$ be stationary OU acceleration with covariance
+\[
+ \Cov[a_w(t),a_w(s)]
+ =
+ \sigma_{aw}^2e^{-|t-s|/\tau}.
+\]
+Over a finite horizon $T$, set the integrated increments to zero at the
+beginning of the interval and let
+\[
+ \dot v=a_w,\qquad \dot p=v,\qquad \dot S=p.
+\]
+Then
+\begin{equation}
+ S(T)
+ =
+ \frac12\int_0^T(T-t)^2a_w(t)\,dt
+\label{eq:ou-finite-S-kernel}
+\end{equation}
+and
+\begin{equation}
+ \boxed{
+ \Var[S(T)]
+ =
+ \sigma_{aw}^2\tau^6 F_3(\rho)},
+ \qquad
+ \rho=\frac{T}{\tau},
+\label{eq:ou-finite-horizon-scale}
+\end{equation}
+where the dimensionless function
+\begin{equation}
+ F_3(\rho)
+ =
+ \frac14
+ \int_0^\rho\!\!\int_0^\rho
+ (\rho-x)^2(\rho-y)^2e^{-|x-y|}\,dx\,dy
+\label{eq:ou-F3}
+\end{equation}
+is finite for every finite $\rho\ge0$.
+Thus
+\[
+ \sigma_{S(T)}
+ =
+ \sigma_{aw}\tau^3\sqrt{F_3(T/\tau)}.
+\]
+\end{theorem}
+
+\begin{proof}
+Equation~\eqref{eq:ou-finite-S-kernel} is the convolution kernel of three
+integrations with zero integrated initial conditions.  Substituting it into
+the covariance double integral gives
+\[
+ \Var[S(T)]
+ =
+ \frac{\sigma_{aw}^2}{4}
+ \int_0^T\!\!\int_0^T
+ (T-t)^2(T-s)^2e^{-|t-s|/\tau}\,dt\,ds .
+\]
+Set $t=\tau x$, $s=\tau y$, and $T=\tau\rho$.  The dimensional factor is
+exactly $\sigma_{aw}^2\tau^6$ and the remaining integral is
+\eqref{eq:ou-F3}.
+\end{proof}
+
+\begin{remark}[What a fixed pseudo-update cadence does and does not prove]
+\label{rem:ou-cadence-boundary}
+The finite-horizon theorem gives a second exact OU scaling, but it also shows
+why a fixed pseudo-update period alone cannot justify a universal
+$r_S=c_R\sigma_{aw}\tau^3$ coefficient.  If the relevant horizon $T_S$ obeys
+$T_S/\tau=\mathrm{const}$, then $\sqrt{F_3(T_S/\tau)}$ is constant and the cubic
+law follows immediately.  If $T_S$ is fixed in seconds while $\tau$ varies,
+the coefficient changes with $T_S/\tau$.  In particular,
+\begin{equation}
+ F_3(\rho)=\frac{\rho^6}{36}+O(\rho^7),
+ \qquad \rho\rightarrow0,
+\label{eq:ou-F3-small}
+\end{equation}
+so for $T_S\ll\tau$ the local free-accumulation scale approaches
+$\sigma_{aw}T_S^3/6$.
+
+The deployed $S=0$ update is a Kalman pseudo-measurement rather than a hard
+reset of the integrated states, so Theorem~\ref{thm:ou-finite-horizon-rs}
+should be read as a finite-horizon scaling result, not as an exact closed-loop
+steady-state covariance formula.  The primary justification for the deployed
+monomial law is therefore the OU similarity and dimensionless low-frequency
+regularization of Theorem~\ref{thm:ou-regularized-rs}; $c_R$ remains a
+dimensionless design/calibration coefficient.
+
+\subsection{JONSWAP similarity as a map to the OU tuner targets}
+\label{sec:jonswap-tuner-map}
+
+The OU theorems above establish the scale of the integral regularizer once
+$\sigma_{aw}$ and $\tau$ have been chosen.  They do not say how a marine
+measurement stream should choose those two OU prior parameters.  For that
+separate question, a fixed-shape JONSWAP family provides a useful physical
+similarity model.  No JONSWAP spectrum is propagated inside the Kalman filter.
+
+For $\omega>0$, write the JONSWAP elevation spectrum with fixed peakedness
 parameter $\gamma$ in normalized form
 \begin{equation}
  S_\eta^{(2)}(\omega;H_s,\omega_p,\gamma)
@@ -19,250 +320,177 @@ parameter $\gamma$ in normalized form
    \Phi_\gamma\!\left(\frac{\omega}{\omega_p}\right),
 \label{eq:jonswap-similarity-form}
 \end{equation}
-where $\Phi_\gamma$ is the dimensionless JONSWAP shape
-\cite{Hasselmann1973_JONSWAP}.  With the two-sided PSD convention used above,
-define the dimensionless shape moments
+where $\Phi_\gamma$ is dimensionless
+\cite{Hasselmann1973_JONSWAP}.  Define
 \begin{equation}
  C_n(\gamma;a,b)
- :=\frac{1}{\pi}\int_a^b x^n\Phi_\gamma(x)\,dx,
-\qquad
+ :=
+ \frac{1}{\pi}\int_a^b x^n\Phi_\gamma(x)\,dx,
+ \qquad
  C_n(\gamma):=C_n(\gamma;0,\infty).
 \label{eq:jonswap-shape-moments}
 \end{equation}
-The $H_s$ normalization gives $C_0=1/16$ for the usual linear-Gaussian
-relation $H_s=4\sqrt{m_0}$.
 
-\begin{theorem}[JONSWAP similarity of the OU--III integral scale]
-\label{thm:jonswap-rs-similarity}
-Consider a fixed-$\gamma$ JONSWAP family of the form
-\eqref{eq:jonswap-similarity-form}.  Let
+\begin{theorem}[JONSWAP similarity of the OU tuner inputs]
+\label{thm:jonswap-tuner-similarity}
+Consider the fixed-$\gamma$ JONSWAP family
+\eqref{eq:jonswap-similarity-form} and define
 \begin{equation}
  m_n(a,b)
- :=\frac{1}{\pi}\int_{a\omega_p}^{b\omega_p}
-      \omega^n S_\eta^{(2)}(\omega)\,d\omega.
+ :=
+ \frac{1}{\pi}\int_{a\omega_p}^{b\omega_p}
+ \omega^nS_\eta^{(2)}(\omega)\,d\omega .
 \label{eq:jonswap-band-moment}
 \end{equation}
-Assume linear wave kinematics, so
-$a(\omega)=-\omega^2\eta(\omega)$.  Let the acceleration scale supplied to the
-OU tuner be the RMS acceleration in a fixed dimensionless wave band
-$B=[\lambda_-,\lambda_+]$ with
-$0\le\lambda_-<\lambda_+<\infty$,
+Assume linear wave kinematics,
+$a(\omega)=-\omega^2\eta(\omega)$.  Let the acceleration statistic supplied to
+the OU tuner be the RMS acceleration in a fixed dimensionless wave band
+$B=[\lambda_-,\lambda_+]$,
 \begin{equation}
  \sigma_{a,B}:=\sqrt{m_4(\lambda_-,\lambda_+)},
  \qquad
  \sigma_{aw,\star}=c_\sigma\sigma_{a,B},
 \label{eq:jonswap-band-acc-scale}
 \end{equation}
-and let the OU time-scale target be
+and choose
 \begin{equation}
  \tau_\star=c_\tau\frac{T_z}{2},
  \qquad
  T_z=2\pi\sqrt{\frac{m_0}{m_2}}.
 \label{eq:jonswap-tau-target}
 \end{equation}
-Then the RMS physical scale of the OU--III third-integral state satisfies
+Then
 \begin{equation}
- \sigma_S
- =K_J(\gamma,B,c_\sigma,c_\tau)\,
-  \sigma_{aw,\star}\tau_\star^3,
-\label{eq:jonswap-sigmaS-cubic}
+ \boxed{
+ \sigma_{aw,\star}
+ \propto H_s\omega_p^2},
+ \qquad
+ \boxed{
+ \tau_\star\propto\omega_p^{-1}},
+\label{eq:jonswap-ou-target-scaling}
 \end{equation}
-where $K_J$ is dimensionless and independent of $H_s$ and $\omega_p$.
-Consequently, any pseudo-measurement standard deviation chosen as a fixed
-multiple of the natural $S$ scale,
-$r_{S,\star}=k_i\sigma_S$, has the form
-\begin{equation}
- \boxed{\displaystyle
- r_{S,\star}=c_R\sigma_{aw,\star}\tau_\star^3},
- \qquad c_R=k_iK_J,
-\label{eq:Rs-sigmaa-tau3}
-\end{equation}
-with a dimensionless coefficient $c_R$.
+with proportionality constants depending only on the fixed dimensionless
+spectral shape, the selected band, $c_\sigma$, and $c_\tau$.
 \end{theorem}
 
 \begin{proof}
-Substituting $x=\omega/\omega_p$ into
-\eqref{eq:jonswap-band-moment} gives the similarity identity
+The substitution $x=\omega/\omega_p$ gives
 \begin{equation}
  m_n(a,b)
- =H_s^2\omega_p^n C_n(\gamma;a,b).
+ =
+ H_s^2\omega_p^nC_n(\gamma;a,b).
 \label{eq:jonswap-moment-similarity}
-\end{equation}
-First consider the third-integral state.  Since
-$a(\omega)=-\omega^2\eta(\omega)$ and
-$S(\omega)=a(\omega)/(j\omega)^3$, its variance is
-\begin{equation}
- \sigma_S^2
- =\frac{1}{\pi}\int_0^\infty
-   \frac{S_\eta^{(2)}(\omega)}{\omega^2}\,d\omega
- =m_{-2}.
-\label{eq:jonswap-S-variance}
-\end{equation}
-The JONSWAP low-frequency factor decays exponentially in $\omega^{-4}$, while
-its high-frequency elevation tail is proportional to $\omega^{-5}$; therefore
-$m_{-2}$ is finite.  Equation~\eqref{eq:jonswap-moment-similarity} yields
-\begin{equation}
- \sigma_S
- =\frac{H_s}{\omega_p}\sqrt{C_{-2}(\gamma)}.
-\label{eq:jonswap-S-scale}
-\end{equation}
-Thus the natural third-integral scale varies as $H_s/\omega_p$.
-
-For the acceleration channel, the fixed dimensionless band $B$ gives
-\begin{equation}
- \sigma_{a,B}
- =H_s\omega_p^2
-   \sqrt{C_4(\gamma;\lambda_-,\lambda_+)}.
-\label{eq:jonswap-acc-scale}
-\end{equation}
-The finite upper band edge is essential.  Ideal JONSWAP has an
-$\omega^{-5}$ elevation tail, so its unbounded fourth elevation moment behaves
-as $\int^\infty\omega^{-1}d\omega$ and does not exist.  A physical IMU always
-has finite bandwidth, but a constant coefficient across sea states follows
-from JONSWAP similarity only when that effective wave band is fixed in units
-of $\omega_p$ (or an equivalent characteristic wave frequency).
-
-The zero-crossing period follows from
-\eqref{eq:jonswap-moment-similarity}:
-\begin{equation}
- T_z
- =\frac{2\pi}{\omega_p}
-   \sqrt{\frac{C_0(\gamma)}{C_2(\gamma)}}.
-\label{eq:jonswap-Tz-scaling}
 \end{equation}
 Therefore
 \begin{equation}
- \tau_\star
- =\frac{c_\tau\pi}{\omega_p}
-   \sqrt{\frac{C_0(\gamma)}{C_2(\gamma)}}.
-\label{eq:jonswap-tau-scaling}
+ \sigma_{a,B}
+ =
+ H_s\omega_p^2
+ \sqrt{C_4(\gamma;\lambda_-,\lambda_+)},
+\label{eq:jonswap-acc-scale}
 \end{equation}
-Combining \eqref{eq:jonswap-acc-scale}--\eqref{eq:jonswap-tau-scaling} with
-$\sigma_{aw,\star}=c_\sigma\sigma_{a,B}$ gives
+while
 \begin{equation}
- \sigma_{aw,\star}\tau_\star^3
- =\frac{H_s}{\omega_p}\,
- c_\sigma c_\tau^3\pi^3
- \sqrt{C_4(\gamma;\lambda_-,\lambda_+)}
- \left(\frac{C_0(\gamma)}{C_2(\gamma)}\right)^{3/2}.
-\label{eq:jonswap-sigma-tau3-scale}
+ T_z
+ =
+ \frac{2\pi}{\omega_p}
+ \sqrt{\frac{C_0(\gamma)}{C_2(\gamma)}}.
+\label{eq:jonswap-Tz-scaling}
 \end{equation}
-Comparison with \eqref{eq:jonswap-S-scale} proves
-\eqref{eq:jonswap-sigmaS-cubic}, with
-\begin{equation}
- K_J
- =\frac{\sqrt{C_{-2}(\gamma)}}
- {c_\sigma c_\tau^3\pi^3
-  \sqrt{C_4(\gamma;\lambda_-,\lambda_+)}
-  \left(C_0(\gamma)/C_2(\gamma)\right)^{3/2}}.
-\label{eq:jonswap-KJ}
-\end{equation}
-Multiplying by the dimensionless regularization factor $k_i$ gives
-\eqref{eq:Rs-sigmaa-tau3}.
+Substitution into \eqref{eq:jonswap-band-acc-scale} and
+\eqref{eq:jonswap-tau-target} proves
+\eqref{eq:jonswap-ou-target-scaling}.
 \end{proof}
+
+\begin{remark}[Why the acceleration statistic must be wave-band limited]
+\label{rem:jonswap-band-required}
+Ideal JONSWAP has an $\omega^{-5}$ elevation tail.  The unbounded fourth
+elevation moment therefore behaves as
+$\int^\infty\omega^{-1}\,d\omega$ and does not exist.  A finite-band or
+appropriately filtered acceleration statistic is required.  For similarity
+across sea states, the effective band must also remain fixed in dimensionless
+frequency relative to the characteristic wave frequency, except where explicit
+safety clamps intentionally break similarity.
+\end{remark}
 
 \begin{remark}[Self-similar soft bands]
 \label{rem:jonswap-soft-band}
-A brick-wall band is not required.  Let the acceleration variance be formed
-after a linear filter whose magnitude response can be written
+A brick-wall wave band is not required.  Let the acceleration variance be
+formed after a linear filter whose magnitude response is
 \begin{equation}
  |H_B(\omega;f_t)|^2
- =\mathcal H^2\!\left(\frac{\omega}{2\pi f_t}\right),
+ =
+ \mathcal H^2\!\left(\frac{\omega}{2\pi f_t}\right),
 \label{eq:self-similar-soft-band}
 \end{equation}
 where the dimensionless shape $\mathcal H$ is fixed and, for fixed $\gamma$,
-$f_t\propto\omega_p$.  Substitution of $x=\omega/\omega_p$ then gives
+$f_t\propto\omega_p$.  Then
 \begin{equation}
  \sigma_{a,B}^2
- =H_s^2\omega_p^4\,C_{4,H}(\gamma),
+ =
+ H_s^2\omega_p^4\,C_{4,H}(\gamma),
 \label{eq:jonswap-soft-band-scale}
 \end{equation}
-where $C_{4,H}$ is a finite dimensionless weighted shape integral.  Hence
-$\sigma_{a,B}\propto H_s\omega_p^2$ and the theorem is unchanged, with
-$C_4(\gamma;\lambda_-,\lambda_+)$ replaced by $C_{4,H}(\gamma)$.  This is the
-form used by the implementation below.
+for a finite dimensionless weighted shape integral $C_{4,H}$.  Thus the soft
+band supplies exactly the acceleration-amplitude similarity required by
+Theorem~\ref{thm:jonswap-tuner-similarity}.
 \end{remark}
 
-\begin{remark}[Why the powers one and three are not arbitrary]
-\label{rem:jonswap-power-uniqueness}
-The theorem gives a direct uniqueness argument for the monomial exponents.
-Suppose a scale law were instead
-$r_S=C\sigma_{aw}^{\alpha}\tau^{\beta}$ with a dimensionless constant $C$.
-For the fixed-shape JONSWAP family,
+\begin{remark}[Consistency with the OU regularizer scale]
+\label{rem:jonswap-ou-consistency}
+Combining the two tuner-input similarities gives
 \begin{equation}
- \sigma_{aw}\propto H_s\omega_p^2,
- \qquad
- \tau\propto\omega_p^{-1},
- \qquad
- \sigma_S\propto H_s\omega_p^{-1}.
+ \sigma_{aw,\star}\tau_\star^3
+ \propto
+ \frac{H_s}{\omega_p}.
+\label{eq:jonswap-sigma-tau3-scale}
 \end{equation}
-Hence
-$r_S\propto H_s^{\alpha}\omega_p^{2\alpha-\beta}$.
-Matching the amplitude and period dependence of the physical $S$ scale for all
-$H_s$ and $\omega_p$ requires
-\begin{equation}
- \alpha=1,
- \qquad
- 2\alpha-\beta=-1,
-\end{equation}
-so uniquely
-\begin{equation}
- \boxed{\alpha=1,\qquad\beta=3.}
-\label{eq:jonswap-unique-powers}
-\end{equation}
-Thus the linear dependence on acceleration RMS and the cubic dependence on the
-wave time scale are the unique monomial powers that preserve JONSWAP
-similarity for the third-integral regularizer.
+This is a useful physical consistency check: longer, larger seas produce a
+larger integral-regularization scale.  Equation
+\eqref{eq:jonswap-sigma-tau3-scale} is \emph{not} the derivation of the cubic
+law.  The law follows from the OU chain and
+Theorem~\ref{thm:ou-regularized-rs}; JONSWAP is used only to motivate how the
+measurement-derived targets $\sigma_{aw,\star}$ and $\tau_\star$ should vary
+with sea state.
 \end{remark}
 
 \subsubsection{Physical meaning of the three tuner channels}
 \label{sec:jonswap-tuner-meaning}
 
-The theorem gives a distinct role to each adaptive quantity rather than
-interpreting the three coefficients as unrelated empirical knobs.
+The two model layers now have separate roles.
 
 \begin{description}
  \item[Wave time scale $\tau$.]
- For fixed JONSWAP shape, $T_z\propto\omega_p^{-1}$, hence
- $\tau_\star=c_\tau T_z/2$ tracks the inverse characteristic wave frequency.
- The coefficient $c_\tau$ maps the observable JONSWAP wave time scale to the OU
- surrogate correlation time; it does not assert that a JONSWAP sea is itself
- an OU process.
+ The wave-period estimator supplies a physical time scale.  For the fixed-shape
+ JONSWAP family, $T_z\propto\omega_p^{-1}$, so
+ $\tau_\star=c_\tau T_z/2$ maps an observable wave time scale to the OU
+ correlation time.  This does not assert that a JONSWAP sea is an OU process.
 
  \item[Acceleration scale $\sigma_{aw}$.]
- In a fixed dimensionless wave band,
- $\sigma_{a,B}\propto H_s\omega_p^2$.  Thus
- $\sigma_{aw,\star}=c_\sigma\sigma_{a,B}$ supplies the amplitude scale of the
- latent acceleration prior, while $c_\sigma$ maps the physical band-limited
- wave acceleration RMS to the OU stationary standard deviation.
+ A self-similar wave-band acceleration statistic scales as
+ $H_s\omega_p^2$.  The mapping
+ $\sigma_{aw,\star}=c_\sigma\sigma_{a,B}$ therefore supplies the amplitude of
+ the latent OU acceleration prior.
 
  \item[Integral regularization $r_S$.]
- The natural third-integral scale is
- $\sigma_S\propto H_s/\omega_p$.  Combining the first two channels gives
- $\sigma_{aw}\tau^3\propto H_s/\omega_p$ exactly, so
- $r_S=c_R\sigma_{aw}\tau^3$ keeps the $S=0$ pseudo-measurement on the same
- physical scale as the JONSWAP third-integral fluctuations.  The coefficient
- $c_R$ absorbs the dimensionless JONSWAP moment ratio, $c_\tau$, $c_\sigma$,
- and the chosen regularization multiple $k_i$.
+ Once $\sigma_{aw}$ and $\tau$ are selected, its scale follows from the OU
+ kinematic chain:
+ $r_S=c_R\sigma_{aw}\tau^3$.  Here $c_R$ represents the dimensionless
+ low-frequency regularization/calibration choice described by
+ Theorem~\ref{thm:ou-regularized-rs}; it is not a JONSWAP moment ratio.
 \end{description}
 
-If $\mat R_S$ denotes pseudo-measurement covariance rather than standard
-deviation, the corresponding scalar covariance scaling is
-\begin{equation}
- R_S\propto\sigma_{aw}^2\tau^6.
-\label{eq:jonswap-RS-variance-law}
-\end{equation}
-The implementation in this work uses $r_S$ as a standard-deviation scale and
-squares it componentwise when constructing $\mat R_S$.
+The implementation uses $r_S$ as a standard-deviation scale and squares it
+componentwise when constructing $\mat R_S$.
 
 \subsubsection{Implemented period-scaled acceleration variance}
 \label{sec:jonswap-tuner-recommendation}
 
-The OU--III tuner implements the self-similar soft-band form of
-Remark~\ref{rem:jonswap-soft-band}.  Before the acceleration sample reaches the
-existing variance EWMA, it passes through a measurement-only one-pole
-high-pass followed by a one-pole low-pass.  Their nominal corner frequencies
-are
+The OU--III tuner implements the self-similar soft-band construction of
+Remark~\ref{rem:jonswap-soft-band} to supply the acceleration-amplitude target.
+Before the acceleration sample reaches the existing variance EWMA, it passes
+through a measurement-only one-pole high-pass followed by a one-pole low-pass.
+Their nominal corner frequencies are
 \begin{equation}
  f_L=0.5f_{\mathrm{tune}},
  \qquad
@@ -272,23 +500,23 @@ are
 with absolute safety clamps of \SI{0.01}{Hz} and \SI{6}{Hz}, and an additional
 Nyquist guard.  Away from those clamps the complete response depends on
 frequency only through $f/f_{\mathrm{tune}}$; because
-$f_{\mathrm{tune}}=1/T_z\propto\omega_p$ for fixed JONSWAP shape, the
-acceleration scale therefore obeys the $H_s\omega_p^2$ similarity required by
-Theorem~\ref{thm:jonswap-rs-similarity}.
+$f_{\mathrm{tune}}=1/T_z\propto\omega_p$ for fixed JONSWAP shape, the measured
+acceleration scale obeys the $H_s\omega_p^2$ similarity of
+Theorem~\ref{thm:jonswap-tuner-similarity}.
 
 The band is driven by the vertical acceleration from the private complementary
 observer.  That observer reads only gyro and accelerometer measurements and no
-OU--III estimator state, so the new sigma channel preserves the exogenous tuner
+OU--III estimator state, so the sigma channel preserves the exogenous tuner
 schedule used by the stability analysis.  The band corners use the previous
 smoothed tuning-frequency value; the current measurement can update the
 candidate statistics but cannot retroactively choose the band applied to its
 own sample.
 
 The variance horizon remains period scaled,
-$\tau_{\mathrm{var}}\approx K_{\mathrm{periods}}/f_{\mathrm{tune}}$, but it now
-has only its intended statistical role: it controls averaging time after the
-spectral band has been selected.  It is no longer being relied on as a
-surrogate for spectral selection.
+$\tau_{\mathrm{var}}\approx K_{\mathrm{periods}}/f_{\mathrm{tune}}$, but it has
+only its intended statistical role: it controls averaging time after the
+spectral band has been selected.  It is not used to derive the
+$r_S\propto\sigma_{aw}\tau^3$ law.
 
 Noise-floor subtraction is performed in the same band.  The configured bench
 floor is interpreted as the pre-band standard deviation of the sigma-channel
@@ -296,27 +524,31 @@ input.  For the two-state time-varying band filter, the implementation
 propagates the covariance driven by unit-variance discrete white input,
 \begin{equation}
  \mat P_{B,k}
- =\mat A_{B,k}\mat P_{B,k-1}\mat A_{B,k}^{\top}
-  +\vct b_{B,k}\vct b_{B,k}^{\top},
+ =
+ \mat A_{B,k}\mat P_{B,k-1}\mat A_{B,k}^{\top}
+ +\vct b_{B,k}\vct b_{B,k}^{\top},
 \label{eq:sigma-band-noise-covariance}
 \end{equation}
 so the band-referred floor used at sample $k$ is
 \begin{equation}
  \sigma_{\mathrm{nf},B,k}^2
- =\sigma_{\mathrm{nf}}^2[\mat P_{B,k}]_{22}.
+ =
+ \sigma_{\mathrm{nf}}^2[\mat P_{B,k}]_{22}.
 \label{eq:sigma-band-noise-floor}
 \end{equation}
 The wave variance target is therefore
 \begin{equation}
  \widehat\sigma_{\mathrm{wave},B}^2
- =\max\!\left\{0,
+ =
+ \max\!\left\{0,
  \widehat\Var[a_B]-\sigma_{\mathrm{nf},B}^2\right\},
  \qquad
  \sigma_{aw,\star}
- =c_\sigma\sqrt{\widehat\sigma_{\mathrm{wave},B}^2}.
+ =
+ c_\sigma\sqrt{\widehat\sigma_{\mathrm{wave},B}^2}.
 \label{eq:implemented-band-variance}
 \end{equation}
-This covariance recursion also remains valid while the two corners move because
+This covariance recursion remains valid while the two corners move because
 $\mat A_{B,k}$ and $\vct b_{B,k}$ are updated from the actual coefficients used
 at each sample.
 
@@ -324,14 +556,16 @@ Disabling wave-band tuning bypasses this period-scaled variance band and keeps
 the older broadband path available for ablation.  Hard frequency clamps,
 parameter clamps, and the fixed physical dynamics of the upstream
 complementary levelling observer introduce additional time scales and therefore
-break exact JONSWAP similarity at the boundaries; the theorem describes the
-interior wave-band scaling, not those safeguards.
+break exact JONSWAP similarity at the boundaries.  Likewise, the fixed
+pseudo-update cadence means the finite-horizon coefficient of
+Theorem~\ref{thm:ou-finite-horizon-rs} is not invariant over all $\tau$.
+Neither fact changes the dimensional OU state scale
+$\sigma_{aw}\tau^3$; both limit how literally a single calibrated $c_R$ should
+be interpreted over a very wide operating envelope.
 
-Finally, this structural code change does not by itself re-establish the
-numerical calibration of $c_\sigma$ or $c_R$.  The reported values
-$c_\sigma=0.9$ and $c_R=0.35$ were calibrated before this sigma-band revision.
-They are retained unchanged here so the effect of satisfying the theorem's
-band condition is measured separately from coefficient retuning; regenerated
-validation evidence is required before either coefficient can be called optimal
-for the revised measurement chain.  If $\gamma$ is later allowed to vary
-substantially, a dimensionless shape correction may likewise be required.
+Finally, these structural arguments do not determine the numerical calibration
+of $c_\sigma$ or $c_R$.  The reported values $c_\sigma=0.9$ and $c_R=0.35$ are
+retained as empirical design coefficients.  The theorems establish the
+self-similar powers and expose the dimensionless quantities on which the
+coefficient can depend; they do not prove that either numerical coefficient is
+optimal.
