@@ -88,3 +88,7 @@ scale used by the estimator and the single-integrated-elevation scale implied
 by JONSWAP have the same sea-state similarity.  It is not a statement that the
 filter triple-integrates a JONSWAP process, and it is not the derivation of the
 $r_S\propto\sigma_{aw}\tau^3$ adaptation law.
+
+% The following subsection closes the adaptation argument at the Kalman/Riccati
+% level.  It is kept in a separate part because the derivation is substantial.
+\input{w3d-rs-riccati-analysis.tex-part}
