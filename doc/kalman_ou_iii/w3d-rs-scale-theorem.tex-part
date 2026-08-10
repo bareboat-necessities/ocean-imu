@@ -38,11 +38,12 @@ Define
 \end{equation}
 Then the dimensionless dynamics contain neither $\sigma_{aw}$ nor $\tau$:
 \begin{equation}
- d\bar a=-\bar a\,d\bar t+\sqrt{2}\,d\bar W_{\bar t},
-\qquad
- \frac{d\bar v}{d\bar t}=\bar a,\quad
- \frac{d\bar p}{d\bar t}=\bar v,\quad
- \frac{d\bar S}{d\bar t}=\bar p .
+\begin{aligned}
+ d\bar a&=-\bar a\,d\bar t+\sqrt{2}\,d\bar W_{\bar t},\\
+ \frac{d\bar v}{d\bar t}&=\bar a,\qquad
+ \frac{d\bar p}{d\bar t}&=\bar v,\qquad
+ \frac{d\bar S}{d\bar t}&=\bar p .
+\end{aligned}
 \label{eq:ou-chain-nondim-dynamics}
 \end{equation}
 Hence the natural similarity scales of $(a_w,v,p,S)$ are respectively
@@ -513,9 +514,12 @@ candidate statistics but cannot retroactively choose the band applied to its
 own sample.
 
 The variance horizon remains period scaled,
-$\tau_{\mathrm{var}}\approx K_{\mathrm{periods}}/f_{\mathrm{tune}}$, but it has
-only its intended statistical role: it controls averaging time after the
-spectral band has been selected.  It is not used to derive the
+\begin{equation}
+ \tau_{\mathrm{var}}\approx
+ \frac{K_{\mathrm{periods}}}{f_{\mathrm{tune}}},
+\end{equation}
+but it has only its intended statistical role: it controls averaging time
+after the spectral band has been selected.  It is not used to derive the
 $r_S\propto\sigma_{aw}\tau^3$ law.
 
 Noise-floor subtraction is performed in the same band.  The configured bench
