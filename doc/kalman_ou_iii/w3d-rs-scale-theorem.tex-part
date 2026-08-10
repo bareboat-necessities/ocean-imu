@@ -197,8 +197,7 @@ $\kappa=\omega_L\tau$ must remain fixed.  If instead $\omega_L$ is fixed in
 physical units, the exact law is
 \begin{equation}
  r_S
- =
- k_i\sigma_{aw}\tau^3
+ = k_i\sigma_{aw}\tau^3
  \sqrt{C_{\mathrm{OU}}^{\mathrm{BW}}(\omega_L\tau)},
 \label{eq:ou-fixed-cutoff-law}
 \end{equation}
@@ -303,6 +302,7 @@ steady-state covariance formula.  The primary justification for the deployed
 monomial law is therefore the OU similarity and dimensionless low-frequency
 regularization of Theorem~\ref{thm:ou-regularized-rs}; $c_R$ remains a
 dimensionless design/calibration coefficient.
+\end{remark}
 
 \subsection{JONSWAP similarity as a map to the OU tuner targets}
 \label{sec:jonswap-tuner-map}
