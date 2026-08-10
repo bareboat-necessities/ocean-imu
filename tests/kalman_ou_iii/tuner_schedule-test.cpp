@@ -43,12 +43,15 @@ int main() {
 
     f.adapt_mekf(0.1f, 3.0f, 0.8f, 1.2f);
     const float staged_tau = f.tune_.tau_applied;
-    const float staged_rs = std::min(std::max(f.tune_.RS_applied, f.min_R_S_), f.max_R_S_);
-    const float staged_rs_var = staged_rs * staged_rs;
+    const float staged_rs_base = std::min(std::max(f.tune_.RS_applied, f.min_R_S_), f.max_R_S_);
     const float staged_pseudo = std::min(
         std::max(f.pseudo_update_tau_ratio_ * staged_tau,
                  f.pseudo_update_period_min_s_),
         f.pseudo_update_period_max_s_);
+    const float staged_cadence_scale = std::sqrt(
+        PSEUDO_UPDATE_PERIOD_NOMINAL_S / staged_pseudo);
+    const float staged_rs = staged_rs_base * staged_cadence_scale;
+    const float staged_rs_var = staged_rs * staged_rs;
 
     if (!f.online_tune_apply_pending_) {
         std::cerr << "FAIL: adaptation was not staged\n";
@@ -81,6 +84,13 @@ int main() {
         std::cerr << "FAIL: T_S/tau is not invariant after the staged update\n";
         return 1;
     }
+    const float expected_info_product =
+        staged_rs_base * staged_rs_base * PSEUDO_UPDATE_PERIOD_NOMINAL_S;
+    if (!near(f.mekf_->R_S(2, 2) * f.getPseudoUpdatePeriodSec(),
+              expected_info_product, 1e-5f)) {
+        std::cerr << "FAIL: cadence compensation did not preserve R_S*T_S information rate\n";
+        return 1;
+    }
     if (f.online_tune_apply_pending_) {
         std::cerr << "FAIL: pending flag survived the commit\n";
         return 1;
@@ -89,19 +99,19 @@ int main() {
     // Explicit ablation: disabling self-similar cadence restores the historical
     // fixed 15 ms period and leaves tau free to change independently.
     f.setTauScaledPseudoUpdateCadence(false);
-    if (!near(f.getPseudoUpdatePeriodSec(), 0.015f)) {
-        std::cerr << "FAIL: fixed-cadence ablation did not restore 15 ms\n";
+    const float fixed_rs_var = staged_rs_base * staged_rs_base;
+    if (!near(f.getPseudoUpdatePeriodSec(), PSEUDO_UPDATE_PERIOD_NOMINAL_S) ||
+        !near(f.mekf_->R_S(2, 2), fixed_rs_var)) {
+        std::cerr << "FAIL: fixed-cadence ablation did not restore 15 ms/base R_S\n";
         return 1;
     }
     f.setTauScaledPseudoUpdateCadence(true);
-    if (!near(f.getPseudoUpdatePeriodSec(),
-              std::min(std::max(f.getPseudoUpdateTauRatio() * f.getTauApplied(),
-                                f.pseudo_update_period_min_s_),
-                       f.pseudo_update_period_max_s_))) {
-        std::cerr << "FAIL: re-enabling tau-scaled cadence did not reapply T_S=c_T*tau\n";
+    if (!near(f.getPseudoUpdatePeriodSec(), staged_pseudo) ||
+        !near(f.mekf_->R_S(2, 2), staged_rs_var)) {
+        std::cerr << "FAIL: re-enabling tau-scaled cadence did not restore compensated schedule\n";
         return 1;
     }
 
-    std::cout << "OU-III predictable tuner scheduling and tau-scaled pseudo cadence passed\n";
+    std::cout << "OU-III predictable tuner scheduling, tau-scaled cadence, and information-rate compensation passed\n";
     return 0;
 }
