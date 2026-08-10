@@ -1,0 +1,140 @@
+\subsection{External stability theorem and hypothesis audit}
+\label{sec:iss-theorem-audit}
+
+The preceding argument is intentionally constructive up to the final Riccati
+step, but that step should not be hidden behind the phrase ``standard Kalman
+stability theory.''  The external result used in
+Theorem~\ref{thm:iss-21-ues} is the discrete-time linear time-varying (LTV)
+detectability/stabilizability theory of Anderson and Moore
+\cite{AndersonMoore1981_DetectabilityStabilizability}, together with the
+singular-transition extension of Moore and Anderson
+\cite{MooreAnderson1980_SingularTransitionStability}.  The latter is relevant
+because no nonsingularity assumption on every state-transition matrix is needed.
+For this paper, only the following specialization of those results is used.
+
+\begin{theorem}[LTV Kalman stability implication used here]
+\label{thm:iss-external-kalman}
+Consider a discrete-time LTV estimation model
+\begin{equation}
+\vct x_{k+1}=\mat F_k\vct x_k+\vct w_k,
+\qquad
+\vct y_k=\mat H_k\vct x_k+\vct v_k,
+\end{equation}
+with uniformly bounded $\mat F_k$ and $\mat H_k$.  Suppose that
+$(\mat F_k,\mat H_k)$ is uniformly detectable,
+$(\mat F_k,\mat Q_k^{1/2})$ is uniformly stabilizable, and there are constants
+$0<q_-\le q_+<\infty$ and $0<r_-\le r_+<\infty$ such that
+\begin{equation}
+q_-\mat I\preceq\mat Q_k\preceq q_+\mat I,
+\qquad
+r_-\mat I\preceq\mat R_k\preceq r_+\mat I.
+\label{eq:iss-external-kalman-hyp}
+\end{equation}
+Then the stabilizing Kalman/Riccati recursion has uniform positive lower and
+upper covariance bounds and its homogeneous estimation-error transition is
+uniformly exponentially stable: for some $M\ge1$ and $0<\rho<1$,
+\begin{equation}
+\|\Psi(k,j)\|\le M\rho^{k-j},\qquad k\ge j.
+\label{eq:iss-external-kalman-conclusion}
+\end{equation}
+\end{theorem}
+
+The statement above is the specialization of the cited LTV filtering results
+needed here, not a new independent theorem.  It makes explicit the implication
+invoked in the proof of Theorem~\ref{thm:iss-21-ues}.
+
+For OU--III, the hypotheses of
+Theorem~\ref{thm:iss-external-kalman} are witnessed on every \emph{admissible
+Live interval} as follows:
+\begin{equation}
+\boxed{\begin{aligned}
+\text{uniform detectability:}\quad
+ &\text{Lemma~\ref{lem:iss-21-detectable}},\\
+\text{uniform stabilizability:}\quad
+ &\mat Q_k^{\mathrm{eff}}\succeq q_-\mat I>0,
+   \ \text{Eq.~\eqref{eq:iss-Qeff-bounds}},\\
+\text{measurement covariance:}\quad
+ &\underline r\mat I\preceq\mat R_k\preceq\overline r\mat I,
+   \ \text{Eq.~\eqref{eq:iss-R-bounds}},\\
+\text{bounded }\mat F_k,\mat H_k:\quad
+ &\text{Eqs.~\eqref{eq:iss-step-tau-bounds},
+   \eqref{eq:iss-vector-magnitude-bounds},
+   \eqref{eq:iss-vector-geometry}}.
+\end{aligned}}
+\label{eq:iss-theorem-hypothesis-map}
+\end{equation}
+Because $\mat Q_k^{\mathrm{eff}}$ is uniformly positive definite, the process
+input is full rank at every step; this is stronger than the uniform
+stabilizability condition required by the cited LTV theorem.  Thus
+Eq.~\eqref{eq:iss-theorem-hypothesis-map} is the explicit bridge from the
+OU--III lemmas and covariance bounds to the UES conclusion
+Eq.~\eqref{eq:iss-21-ues}.
+
+\paragraph{Default implementation bounds.}
+For the default adaptive fusion wrapper with its parameter clamps enabled, the
+source code supplies concrete finite bounds for the tuning variables rather
+than merely assuming their existence.  The defaults give
+\begin{equation}
+\begin{gathered}
+\SI{0.02}{s}\le\tau_k\le\SI{12}{s},\\
+\SI{0.12}{m/s^2}\le\sigma_{z,k}\le\SI{6}{m/s^2},
+\qquad
+\sigma_{x,k}=\sigma_{y,k}=1.87\,\sigma_{z,k},\\
+0.4\le r_{S,k}\le400\ \mathrm{m\,s},
+\qquad
+\tau_b=\SI{5000}{s}.
+\end{gathered}
+\label{eq:iss-default-implementation-bounds}
+\end{equation}
+The lower acceleration scale is the default \SI{0.12}{m/s^2} tuning noise
+floor used when the OU stationary covariance is applied.  The underlying MEKF
+also clamps a directly supplied OU time constant away from zero, and the default
+legacy raw $P_{a_wa_w}$ replacement is disabled, leaving the proof-compatible
+positive-semidefinite covariance-inflation path active.
+
+At the fixed-rate validation point quoted in the proof,
+\begin{equation}
+h=\SI{5}{ms},\qquad T_S=\SI{15}{ms}=3h,
+\label{eq:iss-fixed-rate-cadence-check}
+\end{equation}
+so the four required $S$ observations occur on exact sample boundaries.  This
+checks the cadence assumption for that validation configuration; it is not a
+claim that arbitrary variable-step deployment automatically has exact
+$T_S$ spacing.
+
+\begin{table}[t]
+\caption{Audit of the conditions entering the local ISS claim.}
+\label{tab:iss-condition-audit}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.30\columnwidth}p{0.64\columnwidth}@{}}
+\toprule
+Condition & Status in the OU--III argument \\
+\midrule
+21-state uniform detectability & Proved by Lemma~\ref{lem:iss-21-detectable}: the 18-state block is UCO and the residual accelerometer-bias OU block contracts with $\rho_b<1$. \\
+Uniform stabilizability & Proved from the full-rank positive process covariance, Eq.~\eqref{eq:iss-Qeff-bounds}. \\
+Positive bounded $R_k$ & Explicit theorem/configuration assumption, Eq.~\eqref{eq:iss-R-bounds}; callers must retain nonzero finite sensor and pseudo-measurement covariances. \\
+Bounded adaptive schedule & Enforced by the default fusion-wrapper clamps; concrete values are displayed in Eq.~\eqref{eq:iss-default-implementation-bounds}. \\
+Predictable schedule & Enforced by staging the tuner result for the following IMU sample, Eq.~\eqref{eq:iss-predictable-schedule}. \\
+Exact $S$ cadence & Satisfied by the fixed \SI{200}{Hz} validation, Eq.~\eqref{eq:iss-fixed-rate-cadence-check}; otherwise a Live-interval assumption. \\
+Vector excitation & Live-interval assumption: accepted accelerometer/magnetometer pairs must satisfy Eqs.~\eqref{eq:iss-vector-magnitude-bounds}--\eqref{eq:iss-vector-gap}. \\
+No reset/outage & Live-interval assumption; startup, hard reset, re-lock, and arbitrarily long rejection/outage patterns remain outside the theorem. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Consequently, the paper's statement is conditional but explicit: whenever the
+rows marked as Live-interval assumptions hold, the remaining hypotheses are
+proved or supplied by the stated default configuration, so
+Theorem~\ref{thm:iss-external-kalman} yields the UES bound and the subsequent
+local nonlinear argument yields ISS.  A field run that violates a conditional
+row is outside the proved interval rather than a counterexample to the theorem.
+
+Finally, the notion of discrete-time input-to-state stability used in
+Theorem~\ref{thm:iss-21-local} follows the framework of Jiang and Wang
+\cite{JiangWang2001_DiscreteISS}.  That citation supplies the standard
+finite-dimensional discrete-time ISS definition and Lyapunov/small-gain
+framework.  The OU--III paper does not use that result as an unshown black box:
+Eq.~\eqref{eq:iss-local-bound} is obtained directly by variation of constants
+from the UES estimate, followed by the displayed local small-gain condition
+$Mc_\varphi r/(1-\rho)<1$.
