@@ -140,6 +140,18 @@ constexpr float MAG_DELAY_SEC              = 7.0f;
 // Frequency smoother dt (SeaStateFusionFilter_OU_III is designed for 200 Hz)
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
 
+// Self-similar S=0 pseudo-measurement cadence.  The deployed wrapper historically
+// used T_S=15 ms while its initial applied OU time constant is tau=1.1 s, so
+// this ratio preserves that exact operating point and scales cadence thereafter.
+constexpr float PSEUDO_UPDATE_PERIOD_NOMINAL_S = 0.015f;
+constexpr float PSEUDO_UPDATE_TAU_NOMINAL_S = 1.1f;
+constexpr float PSEUDO_UPDATE_TAU_RATIO_DEFAULT =
+    PSEUDO_UPDATE_PERIOD_NOMINAL_S / PSEUDO_UPDATE_TAU_NOMINAL_S;
+// A pseudo update cannot occur more often than the nominal 200 Hz IMU schedule.
+// The upper guard is inactive over the current tau <= 12 s operating envelope.
+constexpr float PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT;
+constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f;
+
 struct TuneState {
     float tau_applied   = 1.1f;    // s
     float sigma_applied = 1e-2f;   // m/s²
@@ -555,6 +567,47 @@ public:
     void setAwCovarianceSyncCongruent(bool flag) { congruent_aw_cov_sync_ = flag; }
     bool awCovarianceSyncCongruent() const noexcept { return congruent_aw_cov_sync_; }
 
+    // Self-similar integral pseudo-measurement cadence T_S = c_T * tau_applied.
+    // Enabled by default; disabling restores the historical fixed 15 ms cadence
+    // for direct old-versus-new ablation. Whenever cadence changes while Live,
+    // reapply R_S so its per-update covariance stays information-rate matched.
+    void setTauScaledPseudoUpdateCadence(bool flag) {
+        tau_scaled_pseudo_cadence_ = flag;
+        if (!mekf_) return;
+        if (flag) apply_pseudo_update_cadence_();
+        else mekf_->set_pseudo_update_period_s(pseudo_update_fixed_period_s_);
+        if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            apply_RS_tune_();
+        }
+    }
+    bool tauScaledPseudoUpdateCadence() const noexcept { return tau_scaled_pseudo_cadence_; }
+    void setPseudoUpdateTauRatio(float ratio) {
+        if (!(std::isfinite(ratio) && ratio > 0.0f)) return;
+        pseudo_update_tau_ratio_ = ratio;
+        if (tau_scaled_pseudo_cadence_) {
+            apply_pseudo_update_cadence_();
+            if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+                apply_RS_tune_();
+            }
+        }
+    }
+    void setPseudoUpdatePeriodBounds(float min_s, float max_s) {
+        if (!(std::isfinite(min_s) && std::isfinite(max_s) &&
+              min_s > 0.0f && max_s >= min_s)) return;
+        pseudo_update_period_min_s_ = min_s;
+        pseudo_update_period_max_s_ = max_s;
+        if (tau_scaled_pseudo_cadence_) {
+            apply_pseudo_update_cadence_();
+            if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+                apply_RS_tune_();
+            }
+        }
+    }
+    float getPseudoUpdateTauRatio() const noexcept { return pseudo_update_tau_ratio_; }
+    float getPseudoUpdatePeriodSec() const noexcept {
+        return mekf_ ? mekf_->get_pseudo_update_period_s() : NAN;
+    }
+
     // Freeze the online tuner at an externally supplied operating point. This
     // is primarily useful for controlled ablations (fixed-nominal and
     // fixed-oracle) after the normal startup sequence has reached Live.
@@ -884,6 +937,17 @@ private:
         online_tune_apply_pending_ = false;
     }
 
+    void apply_pseudo_update_cadence_() {
+        if (!mekf_ || !tau_scaled_pseudo_cadence_) return;
+        const float tau = tune_.tau_applied;
+        if (!(std::isfinite(tau) && tau > 0.0f)) return;
+        const float requested = pseudo_update_tau_ratio_ * tau;
+        const float period = std::min(
+            std::max(requested, pseudo_update_period_min_s_),
+            pseudo_update_period_max_s_);
+        mekf_->set_pseudo_update_period_s(period);
+    }
+
     // sync_covariance is set only by discrete reconfiguration events. The
     // periodic adaptation path leaves the posterior a_w marginal alone; the
     // new stationary scale reaches the filter through the OU process
@@ -891,6 +955,9 @@ private:
     void apply_ou_tune_(bool sync_covariance) {
         if (!mekf_) return;
         mekf_->set_aw_time_constant(tune_.tau_applied);
+        // Commit the S=0 cadence with the same applied tau so T_S/tau remains
+        // constant apart from explicit safety clamps.
+        apply_pseudo_update_cadence_();
 
         const float sigma_floor = std::max(0.05f, band_noise_floor_sigma_());
         const float sZ = std::max(sigma_floor, tune_.sigma_applied);
@@ -922,12 +989,31 @@ private:
         }
     }
 
+    // set_RS_noise() accepts a standard deviation, so one S=0 update has
+    // covariance r_S^2. With updates every T_S seconds, the continuous-equivalent
+    // information rate is proportional to 1/(r_S^2 T_S). Preserve the historical
+    // 15 ms information rate by normalizing the filter-input standard deviation:
+    //     r_S,filter = r_S,base * sqrt(T_0/T_S).
+    // The base tuner value remains clamped to [min_R_S_, max_R_S_]. Do not clamp
+    // again after this normalization: the smallest-sea operating point is already
+    // on the 0.4 base floor and must move below 0.4 when T_S > 15 ms to preserve
+    // r_S^2 T_S. With unclamped T_S proportional to tau this turns the existing
+    // base sigma_aw*tau^3 schedule into an effective sigma_aw*tau^(5/2) schedule
+    // at the filter input.
+    float pseudo_update_information_rate_scale_() const noexcept {
+        if (!tau_scaled_pseudo_cadence_ || !mekf_) return 1.0f;
+        const float period = mekf_->get_pseudo_update_period_s();
+        if (!(std::isfinite(period) && period > 0.0f)) return 1.0f;
+        return std::sqrt(pseudo_update_fixed_period_s_ / period);
+    }
+
     void apply_RS_tune_(float rs_scale = 1.0f) {
         if (!mekf_) return;
         const float s = (std::isfinite(rs_scale) && rs_scale > 0.0f)
                         ? std::min(rs_scale, 1.0f)
                         : 1.0f;
-        const float RSb = std::min(std::max(tune_.RS_applied, min_R_S_), max_R_S_);
+        const float RSbase = std::min(std::max(tune_.RS_applied, min_R_S_), max_R_S_);
+        const float RSb = RSbase * pseudo_update_information_rate_scale_();
         const float rs_xy = RSb * s * R_S_xy_factor_;
         mekf_->set_RS_noise(Eigen::Vector3f(
             rs_xy,
@@ -1208,6 +1294,12 @@ private:
     bool   periodic_aw_cov_sync_ = true;
     bool   congruent_aw_cov_sync_ = false;
     double last_aw_cov_sync_sec_ = 0.0;
+
+    bool  tau_scaled_pseudo_cadence_ = true;
+    float pseudo_update_tau_ratio_ = PSEUDO_UPDATE_TAU_RATIO_DEFAULT;
+    float pseudo_update_period_min_s_ = PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT;
+    float pseudo_update_period_max_s_ = PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT;
+    float pseudo_update_fixed_period_s_ = PSEUDO_UPDATE_PERIOD_NOMINAL_S;
 
     bool  wave_band_tuning_       = true;
     WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;
