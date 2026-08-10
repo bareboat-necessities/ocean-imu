@@ -19,11 +19,11 @@
 \providecommand{\OURobustnessCoupledSigmaSpan}{0.446}
 \providecommand{\OURobustnessCoupledTauSpan}{4.452}
 \providecommand{\OURobustnessLowReferenceMean}{5.58}
-\providecommand{\OURobustnessLowStressMean}{27.00}
+\providecommand{\OURobustnessLowStressMean}{27.01}
 \providecommand{\OURobustnessLowStressAbsolute}{0.0135}
-\providecommand{\OURobustnessLowDifference}{+21.42}
+\providecommand{\OURobustnessLowDifference}{+21.43}
 \providecommand{\OURobustnessLowDifferenceLow}{+19.56}
-\providecommand{\OURobustnessLowDifferenceHigh}{+23.71}
+\providecommand{\OURobustnessLowDifferenceHigh}{+23.72}
 \providecommand{\OURobustnessControlledAdaptiveMean}{4.77}
 \providecommand{\OURobustnessRapidAdaptiveMean}{5.01}
 \providecommand{\OURobustnessRapidDifference}{+0.24}
@@ -65,7 +65,7 @@
     Case & Mode & Z [m] & Z [\%$H_s$] & 3D [m] & Pitch [$^\circ$] \\
     \midrule
     Low motion, $H_s=0.27$ m & Adaptive & 0.015 $\pm$ 0.001 & 5.58 $\pm$ 0.23 & 0.064 $\pm$ 0.004 & 0.30 $\pm$ 0.15 \\
-    Low motion, $H_s=0.05$ m & Adaptive & 0.014 $\pm$ 0.002 & 27.00 $\pm$ 3.68 & 0.058 $\pm$ 0.009 & 0.52 $\pm$ 0.19 \\
+    Low motion, $H_s=0.05$ m & Adaptive & 0.014 $\pm$ 0.002 & 27.01 $\pm$ 3.68 & 0.058 $\pm$ 0.009 & 0.52 $\pm$ 0.19 \\
     Controlled 360 s ramp & Adaptive & 0.191 $\pm$ 0.005 & 4.77 $\pm$ 0.13 & 0.801 $\pm$ 0.050 & 0.51 $\pm$ 0.20 \\
     Controlled 360 s ramp & FixedNominal & 0.383 $\pm$ 0.023 & 9.58 $\pm$ 0.57 & 1.351 $\pm$ 0.081 & 0.45 $\pm$ 0.10 \\
     Rapid 30 s ramp & Adaptive & 0.200 $\pm$ 0.007 & 5.01 $\pm$ 0.17 & 0.831 $\pm$ 0.058 & 0.50 $\pm$ 0.21 \\
