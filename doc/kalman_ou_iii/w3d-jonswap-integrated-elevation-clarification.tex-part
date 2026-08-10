@@ -7,7 +7,7 @@ The JONSWAP spectrum in Sec.~\ref{sec:jonswap-tuner-map} is an \emph{elevation}
 and it is not the stochastic process propagated by the Kalman filter.  Under
 linear wave kinematics,
 \begin{equation}
- A(\omega)=-\omega^2\Eta(\omega).
+ A(\omega)=-\omega^2\widehat{\eta}(\omega).
 \label{eq:jonswap-acc-from-elevation-clarification}
 \end{equation}
 The OU--III state $S$ is the third time integral of acceleration.  Therefore,
@@ -15,7 +15,7 @@ for a physical wave acceleration generated from elevation,
 \begin{equation}
  S(\omega)
  =\frac{A(\omega)}{(j\omega)^3}
- =\frac{-\omega^2}{(j\omega)^3}\Eta(\omega),
+ =\frac{-\omega^2}{(j\omega)^3}\widehat{\eta}(\omega),
 \label{eq:jonswap-S-from-eta-clarification}
 \end{equation}
 which, apart from the sign/phase convention, is one time integration of

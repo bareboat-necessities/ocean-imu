@@ -49,7 +49,7 @@ The derivative follows the standard state-sensitivity recursion, and
 \section{Variance-Informed Online Adaptation}
 \label{sec:adaptation}
 
-\subsection{Spectral scaling and pseudo-measurement on $S$}
+\subsection{Spectral scaling and pseudo-measurement on \texorpdfstring{$S$}{S}}
 \label{sec:spectral-Rs}
 \label{app:rs-scaling}
 
@@ -65,7 +65,7 @@ The purpose of the scaling argument below is to choose $r_S$ on the same
 physical scale as the natural fluctuations of $S$ within a stated family of
 wave spectra and a fixed pseudo-update cadence.
 
-\subsection{Variance of $S$ from the acceleration spectrum}
+\subsection{Variance of \texorpdfstring{$S$}{S} from the acceleration spectrum}
 
 Let $a(t)$ denote vertical acceleration and let
 \[
