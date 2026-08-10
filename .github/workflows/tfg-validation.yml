@@ -6,12 +6,14 @@ on:
       - 'src/kalman_tfg/**'
       - 'src/lie/**'
       - 'tests/kalman_tfg/**'
+      - 'doc/kalman_tfg/**'
       - '.github/workflows/tfg-validation.yml'
   pull_request:
     paths:
       - 'src/kalman_tfg/**'
       - 'src/lie/**'
       - 'tests/kalman_tfg/**'
+      - 'doc/kalman_tfg/**'
       - '.github/workflows/tfg-validation.yml'
   workflow_dispatch:
 
@@ -72,3 +74,25 @@ jobs:
           W3D_WRITE_TIMESERIES: '0'
           W3D_COLLECT_ALL_GATES: '1'
         run: ./kalman_tfg-sim
+
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Compile TFG LaTeX paper
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: kalman_tfg.tex
+          working_directory: doc/kalman_tfg
+          work_in_root_file_dir: true
+          latexmk_use_lualatex: true
+
+      - name: Upload TFG paper PDF
+        uses: actions/upload-artifact@v6
+        with:
+          name: latex-pdfs-kalman-tfg
+          path: doc/kalman_tfg/kalman_tfg.pdf
+          if-no-files-found: error
