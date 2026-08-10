@@ -154,27 +154,7 @@ $c_{\mathrm{spec}}\approx0.227$.  Under the equivalent one-sided convention,
 the PSD and normalization both change consistently and produce the same
 physical variance.
 
-\subsection{Practical pseudo-measurement scale}
-
-A physically scaled Gaussian design is
-\begin{equation}
-r_S(\sigma_{aw},\tau)
-=k_i\sigma_S
-=k_i c_{\mathrm{spec}}(u_{\min})\sigma_{aw}\tau^3,
-\label{eq:Rs-from-sigmaS}
-\end{equation}
-where $k_i>0$ is dimensionless.  The selected spectral-shape and cutoff
-calibration are represented by a single coefficient $c_R$, giving
-\begin{equation}
-r_{S,\star}=c_R\sigma_{aw,\star}\tau_\star^3.
-\label{eq:Rs-sigmaa-tau3}
-\end{equation}
-This is an engineering normalization, not an exact sea-state invariance result.
-For a fixed pseudo-update period $T_S$ and a bounded family of spectral shapes
-and cutoffs, it keeps the regularizer on approximately comparable physical
-scales as wave amplitude and period change.  Changing $T_S$, spectral bandwidth,
-or low-frequency contamination changes the effective regularization and may
-require retuning $c_R$.
+\input{w3d-rs-scale-theorem.tex-part}
 
 \subsection{Online Adaptation}
 \label{sec:adapt-impl}
