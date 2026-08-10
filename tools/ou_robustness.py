@@ -91,6 +91,21 @@ def parse_float_list(text: str) -> list[float]:
     return values
 
 
+def _bound_tuning_point(point: core.TuningPoint) -> core.TuningPoint:
+    """Apply the same hard parameter bounds as the deployed OU-III tuner."""
+    if point.RS_ms is None:
+        raise ValueError("OU-III tuning point lacks r_S")
+    return replace(
+        point,
+        tau_s=min(max(point.tau_s, TAU_BOUNDS_S[0]), TAU_BOUNDS_S[1]),
+        sigma_a_mps2=min(
+            max(point.sigma_a_mps2, SIGMA_AW_BOUNDS_MPS2[0]),
+            SIGMA_AW_BOUNDS_MPS2[1],
+        ),
+        RS_ms=min(max(point.RS_ms, R_S_BOUNDS_MS[0]), R_S_BOUNDS_MS[1]),
+    )
+
+
 def scaled_tuning_point(
     baseline: core.TuningPoint,
     parameter: str,
@@ -103,24 +118,31 @@ def scaled_tuning_point(
     if baseline.RS_ms is None:
         raise ValueError("OU-III sensitivity requires an r_S tuning value")
     if parameter == "tau":
-        return replace(baseline, tau_s=baseline.tau_s * scale)
-    if parameter == "sigma_aw":
-        return replace(baseline, sigma_a_mps2=baseline.sigma_a_mps2 * scale)
-    if parameter == "r_s":
-        return replace(baseline, RS_ms=baseline.RS_ms * scale)
-    if parameter == "sigma_aw_rs":
+        point = replace(baseline, tau_s=baseline.tau_s * scale)
+    elif parameter == "sigma_aw":
+        point = replace(baseline, sigma_a_mps2=baseline.sigma_a_mps2 * scale)
+    elif parameter == "r_s":
+        point = replace(baseline, RS_ms=baseline.RS_ms * scale)
+    elif parameter == "sigma_aw_rs":
         # r_S is linear in sigma_aw under the deployed law.
-        return replace(
+        point = replace(
             baseline,
             sigma_a_mps2=baseline.sigma_a_mps2 * scale,
             RS_ms=baseline.RS_ms * scale,
         )
-    # tau_rs: r_S is cubic in tau under the deployed law.
-    return replace(
-        baseline,
-        tau_s=baseline.tau_s * scale,
-        RS_ms=baseline.RS_ms * scale**3,
-    )
+    else:
+        # tau_rs: r_S is cubic in tau under the deployed law.
+        point = replace(
+            baseline,
+            tau_s=baseline.tau_s * scale,
+            RS_ms=baseline.RS_ms * scale**3,
+        )
+
+    # Sensitivity multipliers are requests. The deployed tuner applies
+    # hard parameter bounds after the law, so a requested perturbation at
+    # a boundary must be evaluated at the realized (clamped) point rather
+    # than rejected before the replay starts.
+    return _bound_tuning_point(point)
 
 
 def validate_tuning_point(point: core.TuningPoint) -> None:
