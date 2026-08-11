@@ -142,6 +142,18 @@ public:
                 filter.setRSSigmaExponent(v);
             }
 
+            // r_S safety clamp, in m*s.  The floor binds in low-motion seas,
+            // where the schedule asks for less than the default 0.4, so it is
+            // a real tuning surface rather than a formality.
+            {
+                float lo = MIN_R_S, hi = MAX_R_S;
+                const bool got_lo = env_float("OU_III_R_S_MIN", lo);
+                const bool got_hi = env_float("OU_III_R_S_MAX", hi);
+                if (got_lo || got_hi) {
+                    filter.setRSBounds(lo, hi);
+                }
+            }
+
             // NOTE:
             // SeaStateFusionFilter_OU_III does not expose a V0/R_v0 coefficient setter.
             // Therefore OU_III_R_V0_COEFF is intentionally not read here.

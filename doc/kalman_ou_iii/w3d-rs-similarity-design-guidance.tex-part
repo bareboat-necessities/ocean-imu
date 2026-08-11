@@ -325,3 +325,92 @@ $\beta_m$, measured from the actual low-frequency acceleration residual of the
 full MEKF rather than from the accelerometer datasheet, is the natural next
 refinement and would make \eqref{eq:riccati-pole-target-rs} usable directly
 instead of through the empirical coefficient $c_R$.
+
+\subsubsection{The multipliers are calibrated; the floor was not}
+\label{sec:riccati-multiplier-retune}
+
+Given that the exponent is right, the remaining question is whether the three
+constant multipliers of the adaptation law --- $c_\tau$ on the applied OU time
+constant, $c_\sigma$ on the acceleration scale, and $c_R$ on the regularizer
+--- are themselves well chosen.  A one-at-a-time sweep about the deployed
+point, scored as the mean vertical error over the eight stationary seas, finds
+that they are: each coordinate is a clean local minimum at its deployed value,
+and every one of the twelve perturbations tested is worse
+(Table~\ref{tab:multiplier-sweep}).
+
+\begin{table}[t]
+\caption{One-at-a-time sweep of the adaptation multipliers about the deployed
+point $(c_\tau,c_\sigma,c_R)=(1.0,0.9,0.35)$.  Entries are the mean vertical
+error over the eight stationary seas, percent of $H_s$, three paired seed
+triplets.  Every perturbation is worse in both the old and the new $r_S$ floor.}
+\label{tab:multiplier-sweep}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Swept & \multicolumn{5}{c}{mean $Z$ error [\%$H_s$]} \\
+\midrule
+$c_R$      & 0.25: 4.847 & 0.30: 4.760 & \textbf{0.35: 4.738} & 0.42: 4.777 & 0.50: 4.893 \\
+$c_\sigma$ & 0.75: 4.762 & \textbf{0.90: 4.738} & 1.05: 4.769 & 1.20: 4.839 & \\
+$c_\tau$   & 0.85: 4.971 & 0.925: 4.791 & \textbf{1.00: 4.738} & 1.075: 4.793 & 1.15: 4.958 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The sweep also exposes why no multiplier could have helped the cases that most
+needed it.  Across all twelve configurations the two low-motion columns are
+frozen: the $H_s=\SI{0.27}{m}$ JONSWAP sea stays at $5.51$ and its PM--Stokes
+counterpart at $5.19$ percent of $H_s$, to three decimals, while every other
+sea responds normally.  The cause is the lower clamp on $r_S$.  At that
+operating point the schedule asks for
+$c_R\sigma_{aw}\tau^3=0.35\times0.353\times1.247^3=\SI{0.24}{m.s}$, below the
+\SI{0.4}{m.s} floor, so the floor --- not the law --- set the regularizer, and
+it set it \emph{weaker} than the law intended.  Lowering the floor to
+\SI{0.15}{m.s}, which is clear of the schedule's demand across the calibrated
+envelope, recovers what the multipliers could not
+(Table~\ref{tab:rs-floor-effect}).  The multiplier optimum is unchanged by the
+floor change: re-running the sweep at the new floor again selects
+$(1.0,0.9,0.35)$, so the two effects are separable.
+
+\begin{table}[t]
+\caption{Effect of the $r_S$ lower clamp.  OU--III Adaptive, ten paired seed
+triplets, \SI{900}{s} scoring window; vertical error in percent of $H_s$.  The
+gain is confined to the low-motion seas, where the floor was binding.}
+\label{tab:rs-floor-effect}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+& $r_{S,\min}=\SI{0.4}{m.s}$ & $r_{S,\min}=\SI{0.15}{m.s}$ & change \\
+\midrule
+JONSWAP $H_s=\SI{0.27}{m}$    & 5.575 & 5.115 & $-8.3\%$ \\
+PM--Stokes $H_s=\SI{0.27}{m}$ & 5.272 & 4.771 & $-9.5\%$ \\
+Other six stationary seas     & \multicolumn{2}{c}{unchanged within $\pm0.2\%$} & \\
+Non-stationary transition     & 4.773 & 4.778 & $+0.1\%$ \\
+\midrule
+Mean over the eight seas      & 4.744 & 4.625 & $\mathbf{-2.5\%}$ \\
+Worst sea                     & 5.575 & 5.115 & $\mathbf{-8.3\%}$ \\
+\midrule
+Stress $H_s=\SI{0.05}{m}$     & 26.5 & 14.8 & $-44\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The near-still-water stress case is the one that most justifies the change.
+The \SI{0.4}{m.s} floor existed to stop the regularizer from becoming
+arbitrarily strong as the sea goes quiet, but its actual effect was the
+opposite: with almost no wave motion to preserve, the floor held $r_S$ too high
+to suppress drift, and the $H_s=\SI{0.05}{m}$ case degraded to
+\SI{26.5}{\percent} of $H_s$.  Removing that obstruction nearly halves it, and
+the absolute vertical error falls from \SI{13.2}{mm} to \SI{7.4}{mm}.  The
+gain saturates below about \SI{0.25}{m.s}, so \SI{0.15}{m.s} retains a real
+guard against $r_S$ collapsing toward zero while staying clear of the
+calibrated envelope.
+
+Two qualifications belong with these numbers.  First, the improvement is in
+relative accuracy in small seas: the pooled absolute three-dimensional RMS is
+statistically unchanged, because the low-motion scenarios contribute little to
+it.  Second, the search was scored on a five-seed training split and confirmed
+on the five held-out seeds, where the same floor change gives $-2.6\%$ against
+$-2.5\%$ on the training split, so the effect is not an artifact of the seeds
+used to find it.

@@ -415,8 +415,8 @@ $\Delta t=\SI{5}{ms}$, giving a sensor-floor density
  \approx\SI{1.10e-6}{m^2/s^3}.
 \label{eq:riccati-ra-sensor}
 \end{equation}
-Evaluating $\zeta=2\sigma_{aw}^2\tau/r_a$ at the calibrated operating points of
-Table~\ref{tab:ou_fixed_points} gives Table~\ref{tab:riccati-operating-zeta}.
+Evaluating $\zeta=2\sigma_{aw}^2\tau/r_a$ at the calibrated OU--III operating
+points of the fixed-tuning modes gives Table~\ref{tab:riccati-operating-zeta}.
 Even a deliberately pessimistic $R_a=(\SI{0.20}{m/s^2})^2$, more than two
 orders of magnitude above the bench figure, leaves
 $\zeta\ge1.5\times10^{3}$.

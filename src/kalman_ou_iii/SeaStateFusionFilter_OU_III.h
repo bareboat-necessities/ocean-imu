@@ -114,7 +114,18 @@ constexpr float MIN_TAU_S   = 0.02f;
 // exactly where the filter was losing.
 constexpr float MAX_TAU_S   = 12.0f;
 constexpr float MAX_SIGMA_A = 6.0f;
-constexpr float MIN_R_S     = 0.4f;
+// The old 0.4 floor was not a safety limit in practice, it was the binding
+// constraint on every low-motion sea.  The schedule asks for 0.24 m*s at the
+// calibrated H_s = 0.27 m point, so the floor clipped it and pinned both
+// low-motion scenarios at an error the tuner multipliers could not move: a
+// full sweep of c_tau, c_sigma and c_R left J0.27 and P0.27 constant to three
+// decimals.  Dropping the floor below the schedule's own demand recovers
+// -8.3 % on the worst sea, -9.5 % on PM-Stokes 0.27 m and -2.5 % on the
+// eight-sea mean, and cuts the near-still H_s = 0.05 m stress case from
+// 26.5 to 14.8 percent of H_s.  The gain saturates below ~0.25; 0.15 keeps a
+// real guard against r_S collapsing toward zero while staying clear of the
+// calibrated envelope.
+constexpr float MIN_R_S     = 0.15f;
 // r_S ~ sigma_aw * tau^3 inherits that range.  The old 35 m*s ceiling was the
 // binding constraint at H_s = 8.5 m: the calibrated fixed-oracle point sat at
 // 34.66 and the error was still falling monotonically against it.
