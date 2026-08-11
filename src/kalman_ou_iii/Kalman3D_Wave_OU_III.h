@@ -203,6 +203,7 @@ class Kalman3D_Wave_OU_III {
         linear_block_enabled_ = on;
     }
     bool linear_block_enabled() const      { return linear_block_enabled_; }
+    bool acc_bias_updates_enabled() const  { return acc_bias_updates_enabled_; }
 
     void set_warmup_mode(bool on) {
         set_linear_block_enabled(!on);                 // off during warmup

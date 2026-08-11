@@ -48,6 +48,7 @@
 namespace {
 
 using Filter = SeaStateFusionFilter_OU_III<TrackerType::KALMANF>;
+using Wrapper = SeaStateFusion_OU_III<TrackerType::KALMANF>;
 using Policy = Filter::StartupInitPolicy;
 using Stage  = Filter::StartupStage;
 
@@ -94,7 +95,7 @@ void bring_up(Filter& f, Policy policy) {
 bool test_defaults_are_split_by_who_can_hand_over() {
     bool ok = true;
 
-    SeaStateFusion_OU_III<TrackerType::KALMANF>::Config cfg;
+    Wrapper::Config cfg;
     ok &= check(cfg.startup_init_policy == Policy::MahonyProxy,
                 "MahonyProxy must be the deployed default");
 
@@ -333,6 +334,46 @@ bool test_startup_proxy_rejects_gyro_bias() {
     return ok;
 }
 
+// The second-stage magnetic acquisition must not read the MEKF's attitude.
+//
+// By refinement time the MEKF looks like the better frame -- it has the linear
+// block, the magnetometer and the bias states. It is unusable precisely
+// because it has the magnetometer: it has been steering to the provisional
+// reference this pass exists to replace, so its tilt carries that reference's
+// error and averaging the field in it re-derives the error. Measured, framing
+// the refinement on the MEKF returns the provisional reference back to within
+// 1e-3 deg and leaves the standing roll bias untouched, while framing it on
+// the observer removes it.
+//
+// This is the same exogeneity requirement the first stage has, and it is
+// easier to violate here, so it is pinned rather than left to the comment.
+bool test_refinement_frame_is_exogenous() {
+    bool ok = true;
+
+    Wrapper::Config cfg;
+    ok &= check(cfg.mag_refine_enabled,
+                "two-stage magnetic acquisition must be on by default");
+    ok &= check(cfg.mag_refine_start_sec > 0.0f,
+                "the refinement must be scheduled after the provisional lock");
+    ok &= check(cfg.proxy_mag_settle_sec < cfg.mag_refine_start_sec,
+                "the provisional lock must come first");
+
+    // The accelerometer-bias hold exists so the bias cannot fit itself to the
+    // provisional reference; with a 5000 s bias correlation time that is not
+    // recoverable once it happens.
+    Filter f;
+    bring_up(f, Policy::MahonyProxy);
+    ok &= check(!f.accBiasHeld(), "no hold until a caller asks for one");
+    f.setAccBiasHold(true);
+    ok &= check(f.accBiasHeld(), "the hold must latch");
+    ok &= check(!f.mekf().acc_bias_updates_enabled(),
+                "holding must actually stop accelerometer-bias learning");
+    f.setAccBiasHold(false);
+    ok &= check(!f.accBiasHeld(), "the hold must release");
+
+    return ok;
+}
+
 }  // namespace
 
 int main() {
@@ -343,6 +384,7 @@ int main() {
     ok &= test_proxy_policy_holds_the_mekf();
     ok &= test_staged_policy_still_warms_the_mekf();
     ok &= test_startup_proxy_rejects_gyro_bias();
+    ok &= test_refinement_frame_is_exogenous();
 
     if (!ok) {
         std::cerr << "startup init checks FAILED\n";

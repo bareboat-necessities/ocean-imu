@@ -298,6 +298,9 @@ public:
         if (env_float("SF_PROXY_START_TIMEOUT_SEC", vf)) cfg_.proxy_startup_timeout_sec = vf;
         if (env_int("SF_ACC_BIAS_UNLOCK_MAG_UPDATES", vi)) cfg_.acc_bias_unlock_mag_updates = vi;
         if (env_float("SF_PROXY_MAG_SETTLE_SEC", vf)) cfg_.proxy_mag_settle_sec = vf;
+        if (env_float("SF_MAG_REFINE_START_SEC", vf)) cfg_.mag_refine_start_sec = vf;
+        if (env_float("SF_MAG_REFINE_WINDOW_SEC", vf)) cfg_.mag_refine_window_sec = vf;
+        if (const char* r = std::getenv("SF_MAG_REFINE")) cfg_.mag_refine_enabled = (std::string(r) != "0");
         if (env_float("SF_PROXY_TILT_SIGMA", vf)) cfg_.proxy_handoff_tilt_sigma_rad = vf;
         if (env_float("SF_PROXY_YAW_SIGMA", vf)) cfg_.proxy_handoff_yaw_sigma_rad = vf;
     }
@@ -312,6 +315,21 @@ public:
                 float temperature_c) override
     {
         fusion_.update(dt, gyr_meas_ned, acc_meas_ned, temperature_c);
+
+        // Startup timing marks, to stderr so stdout parsing is untouched.
+        if (!reported_lock_ && fusion_.hasMagNorthLock()) {
+            reported_lock_ = true;
+            std::cerr << "STARTUP first_heading_s=" << fusion_.magNorthLockTimeSec() << "\n";
+        }
+        if (!reported_live_ && fusion_.isLive()) {
+            reported_live_ = true;
+            std::cerr << "STARTUP live_s=" << fusion_.liveTimeSec() << "\n";
+        }
+        if (!reported_refine_ && fusion_.hasRefinedMagReference()) {
+            reported_refine_ = true;
+            std::cerr << "STARTUP mag_refined_s=" << fusion_.magRefineTimeSec() << "\n";
+        }
+
         auto& filter = fusion_.raw();
         if (tuning_ == TuningMode::Adaptive) return;
         if (fixed_tuning_applied_ || !filter.isAdaptiveLive()) return;
@@ -475,6 +493,9 @@ private:
     };
 
     bool with_mag_ = true;
+    mutable bool reported_lock_ = false;
+    mutable bool reported_live_ = false;
+    mutable bool reported_refine_ = false;
     TuningMode tuning_ = TuningMode::Adaptive;
     bool fixed_tuning_applied_ = false;
     float fixed_tau_s_ = NAN;
