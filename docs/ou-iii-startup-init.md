@@ -214,3 +214,38 @@ Improving yaw further means calibrating the magnetometer, not retuning the
 observer: either estimating the hard iron (`mag_estimate_hard_iron`, which
 needs heading change during startup to be separable) or a soft-iron model,
 neither of which is a startup-initialization question.
+
+## Quality gates
+
+The `kalman_ou_iii-sim` regression sentinels were re-derived once the numbers
+above settled. They had accumulated 5-12% of slack against the filter that now
+ships -- partly from this work, partly from the r_S adaptation-law work that
+landed alongside it -- and slack that wide is somewhere a regression can hide.
+
+Each limit follows the existing convention: the worst value across the eight
+scored records, plus about half a percent, rounded up to the next tenth.
+
+| gate | was | now | worst scored | margin |
+|---|---|---|---|---|
+| Z %Hs, jonswap | 5.4 | 4.8 | 4.69 (H0.27) | 2.3% |
+| Z %Hs, pmstokes | 5.3 | 4.7 | 4.66 (H0.27) | 0.8% |
+| 3D %, jonswap | 21.4 | 21.1 | 20.95 (H1.5) | 0.7% |
+| 3D %, pmstokes | 22.0 | 20.6 | 20.42 (H4.0) | 0.9% |
+| yaw deg | 2.2 | 2.2 | 2.16 (pmstokes H1.5) | 1.8% |
+| acc Z bias % | 5.9 | 5.6 | 5.48 (pmstokes H8.5) | 2.3% |
+| bias 3D % | 109.4 | 95.8 | 95.30 (jonswap H4.0) | 0.5% |
+
+Yaw is unchanged because yaw did not improve; see the section above on why it
+cannot be tuned here. `bias_3d_percent` moved the furthest because holding
+accelerometer-bias learning until the magnetic reference is refined stops the
+bias absorbing the provisional reference's tilt error.
+
+Margins of 0.5-2.3% are small on purpose. The metrics are deterministic to
+6e-6 relative across `-march=native`, `x86-64` and `x86-64-v2`, so these sit
+about three orders of magnitude above the reproducibility floor.
+
+These are fitted to the deployed default. The `W3D_STARTUP_INIT=staged_mekf`
+ablation now exceeds two of them -- 3D on jonswap H1.5 (21.15 against 21.1) and
+the bias aggregate (106.2 against 95.8) -- which is the point: those are the
+numbers the default was changed to improve. Run the ablation under
+`W3D_COLLECT_ALL_GATES=1` to get its metrics instead of an early exit.

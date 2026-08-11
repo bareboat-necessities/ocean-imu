@@ -2193,6 +2193,7 @@ public:
             }
         } else if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
             stage_ = Stage::Live;
+            live_time_sec_ = t_;
         }
 
         // Re-apply gate every update.
