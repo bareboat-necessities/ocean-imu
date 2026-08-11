@@ -95,7 +95,7 @@ int main() {
     // ---- Bounded exogenous schedule -------------------------------------
     if (!near(MIN_TAU_S, 0.02f) || !near(MAX_TAU_S, 12.0f) ||
         !near(MAX_SIGMA_A, 6.0f) ||
-        !near(MIN_R_S, 0.4f) || !near(MAX_R_S, 400.0f) ||
+        !near(MIN_R_S, 0.15f) || !near(MAX_R_S, 400.0f) ||
         !near(ACC_NOISE_FLOOR_SIGMA_DEFAULT, 0.12f)) {
         return fail("proof-relevant OU-III wrapper clamps changed");
     }
@@ -207,14 +207,14 @@ int main() {
     // ---- Effective r_S bounds after cadence renormalization --------------
     // apply_RS_tune_ scales the clamped base by sqrt(T_S0 / T_S) and does not
     // re-clamp, so the audited enclosure is [0.121, 693] m*s rather than the
-    // base interval [0.4, 400].
+    // base interval [0.15, 400].
     const float scale_lo = std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / TS_at_tau_max);
     const float scale_hi = std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / TS_at_tau_min);
     if (!(scale_lo > 0.30f && scale_lo < 0.31f) || !near(scale_hi, std::sqrt(3.0f), 1e-3f))
         return fail("cadence information-rate factor left its audited range");
     const float rs_eff_lo = MIN_R_S * scale_lo;
     const float rs_eff_hi = MAX_R_S * scale_hi;
-    if (!(rs_eff_lo > 0.12f && rs_eff_lo < 0.13f) || !(rs_eff_hi > 690.0f && rs_eff_hi < 694.0f))
+    if (!(rs_eff_lo > 0.044f && rs_eff_lo < 0.046f) || !(rs_eff_hi > 690.0f && rs_eff_hi < 694.0f))
         return fail("effective r_S enclosure no longer matches the ISS audit");
     const float rs_live = std::sqrt(f.mekf_->R_S(2, 2));
     if (!(rs_live >= rs_eff_lo && rs_live <= rs_eff_hi) || !std::isfinite(rs_live))

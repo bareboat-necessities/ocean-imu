@@ -11,3 +11,4 @@
 ./tuner_schedule-test
 ./wave_band_sigma-test
 ./iss_contract-test
+./rs_law-test

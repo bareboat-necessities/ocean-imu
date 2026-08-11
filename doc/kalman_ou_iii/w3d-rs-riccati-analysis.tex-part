@@ -207,8 +207,16 @@ In the exact periodic problem this implies a generalized law
 \label{eq:riccati-general-law}
 \end{equation}
 where $F$ is determined by the periodic Riccati fixed point and the selected
-closed-loop eigenvalue.  The deployed cubic law corresponds to approximating
-$F$ by a constant.
+closed-loop eigenvalue.  The \emph{historical} fixed-cadence cubic law
+corresponded to approximating $F$ by a constant.  That is no longer the
+schedule the Kalman update sees: after the self-similar cadence and its
+information-rate renormalization
+(Sec.~\ref{sec:riccati-deployed-cadence}) the filter input obeys
+$r_S\propto\sigma_a\tau^{5/2}$, i.e.\ $F\propto\tau^{-1}$.
+Section~\ref{sec:riccati-operating-regime} identifies which asymptotic branch
+of $F$ the deployed filter actually occupies, and
+Sec.~\ref{sec:riccati-law-ablation} measures the resulting schedule against
+that branch.
 
 \subsubsection{Short-cadence asymptotics}
 
@@ -391,6 +399,106 @@ analytical mechanism for weak sensitivity of the filter performance to the OU
 stationary acceleration scale when the accelerometer strongly observes $a_w$.
 It also shows why multiplying the regularizer indefinitely by $\sigma_a$ is not
 required by the posterior Riccati dynamics in that regime.
+
+\subsubsection{Which branch does the deployed filter occupy?}
+\label{sec:riccati-operating-regime}
+
+The two limits above are only useful once it is known which one applies.  For
+the validated configuration the answer is unambiguous, and it is the strong
+branch by a wide margin.
+
+The validated accelerometer noise is $\sigma_{n_a}=\SI{0.0148}{m/s^2}$ at
+$\Delta t=\SI{5}{ms}$, giving a sensor-floor density
+\begin{equation}
+ r_a^{\mathrm{sensor}}=R_a\Delta t
+ =\sigma_{n_a}^2\Delta t
+ \approx\SI{1.10e-6}{m^2/s^3}.
+\label{eq:riccati-ra-sensor}
+\end{equation}
+Evaluating $\zeta=2\sigma_{aw}^2\tau/r_a$ at the calibrated OU--III operating
+points of the fixed-tuning modes gives Table~\ref{tab:riccati-operating-zeta}.
+Even a deliberately pessimistic $R_a=(\SI{0.20}{m/s^2})^2$, more than two
+orders of magnitude above the bench figure, leaves
+$\zeta\ge1.5\times10^{3}$.
+
+\begin{table}[t]
+\caption{Acceleration-information ratio $\zeta=2\sigma_{aw}^2\tau/r_a$ at the
+calibrated OU--III operating points, for the bench sensor floor
+\eqref{eq:riccati-ra-sensor} and for a pessimistic
+$R_a=(\SI{0.20}{m/s^2})^2$.}
+\label{tab:riccati-operating-zeta}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Calibration sea & $\tau$ [s] & $\sigma_{aw}$ [\si{\meter\per\second\squared}]
+ & $\zeta$ (bench) & $\zeta$ (pessimistic) \\
+\midrule
+$H_s=0.27$ m & 1.247 & 0.353 & $2.8\times10^{5}$ & $1.6\times10^{3}$ \\
+$H_s=1.50$ m & 2.179 & 0.724 & $2.1\times10^{6}$ & $1.1\times10^{4}$ \\
+$H_s=4.00$ m & 3.590 & 1.124 & $8.3\times10^{6}$ & $4.5\times10^{4}$ \\
+$H_s=8.50$ m & 4.224 & 1.419 & $1.6\times10^{7}$ & $8.5\times10^{4}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Reaching $\zeta\simeq1$ at the \emph{smallest} calibrated sea would require
+$r_a\approx\SI{0.31}{m^2/s^3}$, equivalent to a white acceleration noise of
+about \SI{7.9}{m/s^2} at \SI{200}{Hz}.  Within the reduced model, therefore,
+\begin{equation}
+ \boxed{\zeta\gg1\ \text{throughout the deployed sea-state envelope,}}
+\label{eq:riccati-strong-branch-conclusion}
+\end{equation}
+and the weak-observation branch, which is the one that produces the
+$r_S\propto\sigma_{aw}\tau^3$ reading of
+Theorem~\ref{thm:ou-regularized-rs}, is not the operative one.  Taken at face
+value, \eqref{eq:riccati-strong-fixed-cadence} and
+\eqref{eq:riccati-scaled-cadence-strong} then predict a pole-preserving
+schedule $r_S\propto\tau^{5/2}$ with \emph{no} leading-order $\sigma_{aw}$
+dependence, one factor of $\sigma_{aw}$ away from what is deployed.
+
+This branch also supplies the natural explanation for a measured property of
+the filter.  In the strong limit
+$q_{\mathrm{eff}}\rightarrow2r_a$, so the low-frequency uncertainty entering
+the $v,p,S$ chain is set by acceleration \emph{measurement} quality rather
+than by the unconditional OU variance $\sigma_{aw}^2$.  That is consistent
+with the tuning-sensitivity results of
+Table~\ref{tab:ou_robustness_sensitivity}, where freezing or perturbing
+$\sigma_{aw}$ alone moves vertical-displacement error by
+\OURobustnessSigmaSpan\ percent of $H_s$ against \OURobustnessRSSpan\ for
+$r_S$, and the coupled $(\sigma_{aw},r_S)$ column
+(\OURobustnessCoupledSigmaSpan) is barely distinguishable from moving $r_S$
+alone.  The $\sigma_{aw}$ channel matters almost entirely through $r_S$.
+
+\begin{remark}[The sensor floor is not the operative $r_a$]
+\label{rem:riccati-effective-ra}
+Equation~\eqref{eq:riccati-strong-branch-conclusion} places the filter in the
+strong branch but does \emph{not} by itself license dropping $\sigma_{aw}$.
+The reduction of Sec.~\ref{sec:riccati-accel-reduction} models the
+accelerometer as a direct observation $y_a=a+n_a$ of the latent OU state with
+a sea-state-independent white density $r_a$.  In the full MEKF the
+acceleration residual also carries attitude error through gravity, residual
+accelerometer bias, and their cross-covariances, none of which is
+sea-state independent.  Measured over the validation scenarios the
+corresponding low-frequency error, $g\sin\theta_{\mathrm{rms}}$ plus the
+accelerometer-bias error, is of order \SIrange{0.07}{0.13}{m/s^2} and grows
+with sea state --- an intensity many orders of magnitude above
+\eqref{eq:riccati-ra-sensor}.  The relevant decomposition is therefore the
+model-mismatch form \eqref{eq:riccati-Ra-floor-plus-model},
+$R_a=R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2$.  When the mismatch term
+dominates, $r_a\simeq\beta_m\sigma_{aw}^2\Delta t$, so
+\begin{equation}
+ \zeta\simeq\frac{2\tau}{\beta_m\Delta t}\ \gg1
+ \qquad\text{and yet}\qquad
+ q_{\mathrm{eff}}\simeq2\beta_m\sigma_{aw}^2\Delta t\propto\sigma_{aw}^2 .
+\label{eq:riccati-mismatch-branch}
+\end{equation}
+The filter is then simultaneously in the strong branch \emph{and} governed by
+a $\sigma_{aw}$-proportional noise intensity, for which the pole-preserving
+schedule is $r_S\propto\sigma_{aw}\tau^{5/2}$ --- the deployed law.  Which of
+the two readings is correct is an empirical question, settled in
+Sec.~\ref{sec:riccati-law-ablation}.
+\end{remark}
 
 \subsubsection{Similarity-scaled pseudo-update cadence}
 \label{sec:riccati-scaled-cadence}

@@ -80,7 +80,7 @@ than merely assuming their existence.  The defaults give
 \SI{0.12}{m/s^2}\le\sigma_{z,k}\le\SI{6}{m/s^2},
 \qquad
 \sigma_{x,k}=\sigma_{y,k}=1.87\,\sigma_{z,k},\\
-0.4\le r_{S,k}^{\mathrm{base}}\le400\ \mathrm{m\,s},
+0.15\le r_{S,k}^{\mathrm{base}}\le400\ \mathrm{m\,s},
 \qquad
 \tau_b=\SI{5000}{s}.
 \end{gathered}
@@ -132,7 +132,7 @@ Eq.~\eqref{eq:iss-default-implementation-bounds}.  Since
 $\sqrt{T_{S,0}/T_{S,k}}\in[0.303,1.733]$ over the envelope above, a
 conservative enclosure is
 \begin{equation}
-0.121\le r_{S,k}\le693\ \mathrm{m\,s},
+0.045\le r_{S,k}\le693\ \mathrm{m\,s},
 \label{eq:iss-effective-rs-bounds}
 \end{equation}
 which is all Eq.~\eqref{eq:iss-R-bounds} requires: uniformly positive and

@@ -115,7 +115,7 @@ $r_S$ frozen.
 \label{par:channel-ablation}
 
 The deployed regularization law is
-$r_S=\clip(0.35\,\sigma_{aw}\tau^3,0.4,400)$.  A matched control repeats the
+$r_S=\clip(0.35\,\sigma_{aw}\tau^3,0.15,400)$.  A matched control repeats the
 Adaptive and FixedNominal modes without periodic re-alignment of the latent
 acceleration covariance, allowing the effect of that covariance-maintenance
 policy to be separated from the effect of online tuning.

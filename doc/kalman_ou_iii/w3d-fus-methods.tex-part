@@ -367,7 +367,7 @@ OU time scale $[\tau_{\min},\tau_{\max}]$
 & stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{\meter\per\second\squared} \\
 acceleration noise floor $\sigma_{\mathrm{nf}}$
 & \SI{0.12}{m.s^{-2}}
-& integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.4,400]$ m\,s \\
+& integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s \\
 accelerometer-bias residual OU
 & $\tau_b=\SI{5000}{s}$; drive $\SI{5e-4}{m.s^{-2}.s^{-0.5}}$
 & adaptation cadence / time constant & $0.1/1.8$ s \\

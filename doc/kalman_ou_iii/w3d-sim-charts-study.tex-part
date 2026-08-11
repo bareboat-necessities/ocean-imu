@@ -277,7 +277,7 @@ re-running a single simulator replay.
 \paragraph{Adaptation-channel ablation}
 \label{par:channel-ablation}%
 Comparing Adaptive with FixedNominal moves three parameters at once, and the
-deployed law $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.4,400)$ ties the third to the
+deployed law $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.15,400)$ ties the third to the
 first two.  That comparison therefore cannot say whether the vertical benefit
 comes from adapting the OU process itself or from adapting the integral
 regularization.  Two additional OU--III modes complete the $2\times2$
