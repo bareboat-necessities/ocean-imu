@@ -149,3 +149,88 @@ holds the cadence ratio and normalized pseudo-measurement covariance fixed,
 but it does not erase the physical dependence of the posterior Riccati solution
 on accelerometer SNR.  The pole-based analysis above remains the stronger guide
 when that SNR dependence is significant.
+
+\subsubsection{What the wrapper currently deploys}
+\label{sec:riccati-deployed-cadence}
+
+The deployed adaptive wrapper implements the self-similar cadence
+\eqref{eq:riccati-scaled-pseudo-period-clipped} with
+\begin{equation}
+ c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}}\approx0.0136,
+ \qquad
+ T_{S,\min}=\SI{5}{ms},
+ \qquad
+ T_{S,\max}=\SI{250}{ms},
+ \label{eq:riccati-deployed-cadence-constants}
+\end{equation}
+the ratio being chosen so that the historical fixed \SI{15}{ms} period is
+reproduced exactly at the wrapper's initial $\tau_{\mathrm{applied}}=\SI{1.1}{s}$.
+It does \emph{not}, however, pair that cadence with the invariant normalized
+covariance of
+\eqref{eq:riccati-two-parameter-similar-regularizer}.  The tuner's base value
+$r_S^{\mathrm{base}}=c_R\sigma_{aw}\tau^3$ is renormalized before it reaches the
+filter,
+\begin{equation}
+ \boxed{
+ r_S=r_S^{\mathrm{base}}\sqrt{\frac{T_{S,0}}{T_S}}},
+ \qquad
+ T_{S,0}=\SI{15}{ms},
+ \label{eq:riccati-deployed-information-scale}
+\end{equation}
+so that the per-update information rate $r_S^2T_S$ is invariant to the cadence.
+
+The consequence is worth stating plainly, because it is the opposite of the
+grouping recommended in
+\eqref{eq:riccati-recommended-four-group-interpretation}.  Substituting
+$T_S=c_T\tau$ into \eqref{eq:riccati-deployed-information-scale} gives an
+effective filter-input law
+\begin{equation}
+ r_S=c_R\sqrt{\frac{T_{S,0}}{c_T}}\;\sigma_{aw}\tau^{5/2},
+ \qquad
+ \frac{R_S}{\sigma_{aw}^2\tau^6}
+ =\frac{c_R^2T_{S,0}}{c_T\,\tau}\;\propto\;\frac1\tau .
+ \label{eq:riccati-deployed-effective-law}
+\end{equation}
+The deployed schedule therefore holds $\rho=T_S/\tau$ exactly while letting
+$r=R_S/(\sigma_{aw}^2\tau^6)$ drift as $\tau^{-1}$, whereas the previous
+fixed-cadence schedule held $r$ and let $\rho$ drift.  In the drift-band
+reduction of Sec.~\ref{sec:riccati-drift-band} the quantity that matters is the
+continuous-equivalent density
+\begin{equation}
+ r_{S,c}=R_ST_S=c_R^2T_{S,0}\,\sigma_{aw}^2\tau^6,
+ \label{eq:riccati-deployed-rsc}
+\end{equation}
+which is exactly the value the fixed-cadence design produced.  The closed-loop
+regularization pole is thus unchanged by the cadence schedule, and in the
+weak-acceleration-observation limit
+\begin{equation}
+ \omega_R\tau
+ =\left(\frac{2}{c_R^2T_{S,0}}\right)^{1/6}\tau^{1/6},
+ \label{eq:riccati-deployed-pole}
+\end{equation}
+rather than the constant $\kappa$ targeted by
+\eqref{eq:riccati-pole-objective}.  Dropping the factor in
+\eqref{eq:riccati-deployed-information-scale} — that is, pairing the
+self-similar cadence with the unmodified cubic law as
+\eqref{eq:riccati-two-parameter-similar-regularizer} prescribes — is what
+yields the invariant value $\omega_R\tau=(2/c_R^2c_T)^{1/6}$.
+
+Consistently with \eqref{eq:riccati-deployed-rsc}, regenerating the full
+validation and robustness evidence across the cadence change moved the
+vertical-displacement error metric by at most $1.1\times10^{-4}$ in relative
+terms over all scenarios and modes, i.e. by less than run-to-run reproduction
+noise.  The present cadence schedule should therefore be read as a structural
+change that is deliberately neutral in the drift band, not as an implementation
+of the pole-invariance design; whether to adopt the invariant pairing instead
+is left as the open calibration question identified above.
+
+Two further caveats apply at the clamps.  Below
+$\tau=T_{S,\min}/c_T\approx\SI{0.37}{s}$ the period floor binds, so neither
+$\rho$ nor $r$ is invariant there and the factor in
+\eqref{eq:riccati-deployed-information-scale} saturates at
+$\sqrt{T_{S,0}/T_{S,\min}}=\sqrt3$.  The upper clamp $T_{S,\max}$ is inactive
+over the deployed $\tau\le\SI{12}{s}$ envelope.  The renormalization is also
+applied after the base clamp on $r_S^{\mathrm{base}}$ and is not itself
+re-clamped, so the value reaching the filter can leave the nominal base
+interval; Appendix~\ref{app:iss-stability} records the resulting effective
+bounds.

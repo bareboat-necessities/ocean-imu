@@ -389,9 +389,12 @@ stability.  The current default code supplies several of its bounds directly:
 \end{equation}
 At the nominal \SI{200}{Hz} validation rate,
 $T_{pv}=\SI{15}{ms}=3h$, so successive joint $p/v$ pseudo-updates have a
-strictly positive, finite gap.  Unlike the OU--III four-sample determinant, the
-OU--II translational proof remains valid under bounded timing jitter as long as
-Eq.~\eqref{eq:ou2-iss-pv-gap} remains true.
+strictly positive, finite gap.  OU--II retains the fixed pseudo-update period;
+it does not use the self-similar cadence deployed by the OU--III wrapper.  In
+either case the translational proof remains valid under bounded timing jitter
+as long as Eq.~\eqref{eq:ou2-iss-pv-gap} remains true: the OU--II argument needs
+only one nonzero propagation gap, and the OU--III four-point determinant is
+likewise proved in the unequal-spacing case.
 
 \begin{table}[H]
 \centering

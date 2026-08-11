@@ -95,12 +95,21 @@ e_{k+1}=\tilde e_{k+1}\bmod T_S.
 A floating-point tolerance is used at the boundary.  Defining cadence in
 seconds rather than as every $N$ samples makes the regularization rate invariant
 to the IMU sample rate; the same $T_S$ produces the same number of updates per
-unit time at 100, 200, or 400~Hz.  The effective regularization strength still
-depends on both $\vct{r}_S$ and $T_S$, so comparisons of tuning laws assume a
-fixed pseudo-update cadence unless stated otherwise.  Appendix~\ref{app:iss-stability}
-uses the narrower exact-$T_S$ spacing assumption for its translational
-observability lemma; general sample-time quantization of these deadlines under
-variable $h_k$ is not part of that theorem.
+unit time at 100, 200, or 400~Hz.  Because the deadline is served on the first
+IMU sample at or after it, realized gaps are quantized to the IMU grid and need
+not be integer multiples of $T_S$; they always lie between one IMU step and one
+configured period plus one step.
+
+The period $T_S$ is itself a scheduled quantity.  The default OU--III wrapper
+sets it self-similarly from the applied OU time constant,
+$T_S=\operatorname{clip}(c_T\tau_{\mathrm{applied}},T_{S,\min},T_{S,\max})$;
+Sec.~\ref{sec:riccati-deployed-cadence} gives the deployed coefficients and the
+accompanying renormalization of $\vct r_S$.  The effective regularization
+strength depends on both $\vct{r}_S$ and $T_S$, so comparisons of tuning laws
+hold the cadence policy fixed unless stated otherwise.
+Appendix~\ref{app:iss-stability} assumes only that successive pseudo-update
+gaps are bounded above and below, which the scheduler above guarantees; equal
+spacing is not required by its translational observability lemma.
 
 \subsection{IMU lever-arm model}
 If the IMU is displaced from the center of gravity by known body-frame vector

@@ -10,3 +10,4 @@
 ./tuner_coupling-test
 ./tuner_schedule-test
 ./wave_band_sigma-test
+./iss_contract-test

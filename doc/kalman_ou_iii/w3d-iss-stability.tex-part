@@ -100,7 +100,16 @@ m_0\le\|\widehat{\vct m}_b\|\le m_1,
 \end{equation}
 where $\vct u_f$ and $\vct u_m$ are the corresponding unit vectors. Every
 finite proof horizon contains four consecutive $S$ pseudo-updates at relative
-times $0,T_S,2T_S,3T_S$ and two accepted accelerometer--magnetometer
+times
+\begin{equation}
+0=t_0<t_1<t_2<t_3,
+\qquad
+T_j:=t_j-t_{j-1}\in[T_-,T_+],
+\qquad
+0<T_-\le T_+<\infty,
+\label{eq:iss-S-gap-bounds}
+\end{equation}
+and two accepted accelerometer--magnetometer
 vector-update instants separated by
 $\Delta\in[\Delta_{\min},\Delta_{\max}]$, with
 \begin{equation}
@@ -109,14 +118,24 @@ $\Delta\in[\Delta_{\min},\Delta_{\max}]$, with
 \end{equation}
 No hard reset occurs inside the horizon.
 
-The exact $S$-update spacing is an explicit theorem assumption.  The production
-scheduler in Sec.~\ref{sec:measurement_model} is time based and, for general
-variable $h_k$, may apply an intended deadline on the first IMU sample after
-that deadline.  The fixed-rate validation uses $h=\SI{5}{ms}$ and the default
-$T_S=\SI{15}{ms}$, so its pseudo-updates occur every three IMU samples and
-satisfy the exact-spacing assumption.  Extending the determinant argument to
-bounded sample-time jitter would require an explicit perturbation margin for
-the finite-horizon Gramian; that extension is not claimed here.
+Only the \emph{bounded-gap} condition \eqref{eq:iss-S-gap-bounds} is required;
+the four pseudo-updates need not be equally spaced.  This matters because the
+production scheduler in Sec.~\ref{sec:measurement_model} is time based and
+applies an intended deadline on the first IMU sample at or after that deadline,
+so realized gaps are quantized to the IMU grid and, under the self-similar
+cadence $T_S=c_T\tau_{\mathrm{applied}}$, are generally not integer multiples
+of $h_k$.  Both bounds in \eqref{eq:iss-S-gap-bounds} are nevertheless
+unconditional properties of that scheduler: a gap is never shorter than one IMU
+step and never longer than one configured period plus one step,
+\begin{equation}
+T_-\ge h_{\min},
+\qquad
+T_+\le T_{S,\max}+h_{\max},
+\label{eq:iss-scheduler-gap-witness}
+\end{equation}
+where $T_{S,\max}$ is the largest configured period on the interval.  Lemma
+\ref{lem:iss-axis-uco} below is proved directly in the unequal-spacing case, so
+no separate jitter-perturbation argument is needed.
 
 \subsection{Exact Live-state linearized structure}
 
@@ -210,46 +229,78 @@ Then
 \begin{equation}
 S(t)=S_0+t p_0+\frac{t^2}{2}v_0+A_3(t)a_0.
 \end{equation}
-At $t_j=jT_S$, $j=0,1,2,3$, the observation matrix is
+At the four pseudo-update instants $t_0,\dots,t_3$ of
+Eq.~\eqref{eq:iss-S-gap-bounds}, the observation matrix is
 \begin{equation}
 \mat O_S=
 \begin{bmatrix}
-0&0&1&0\\
-T_S^2/2&T_S&1&A_3(T_S)\\
-(2T_S)^2/2&2T_S&1&A_3(2T_S)\\
-(3T_S)^2/2&3T_S&1&A_3(3T_S)
-\end{bmatrix}.
+t_0^2/2&t_0&1&A_3(t_0)\\
+t_1^2/2&t_1&1&A_3(t_1)\\
+t_2^2/2&t_2&1&A_3(t_2)\\
+t_3^2/2&t_3&1&A_3(t_3)
+\end{bmatrix},
+\qquad t_0=0 .
 \end{equation}
 
 \begin{lemma}[Uniform observability of one OU--III axis]
+\label{lem:iss-axis-uco}
 For every measurable $\tau(t)$ satisfying
-$\underline\tau\le\tau(t)\le\overline\tau$ and four consecutive $S$
-pseudo-measurements separated exactly by $T_S$,
+$\underline\tau\le\tau(t)\le\overline\tau$ and any four consecutive $S$
+pseudo-measurements obeying the bounded-gap condition
+\eqref{eq:iss-S-gap-bounds},
 \begin{equation}
 |\det\mat O_S|
-\ge T_S^6\exp\!\left(-\frac{3T_S}{\underline\tau}\right)>0.
+\ge T_-^6\exp\!\left(-\frac{3T_+}{\underline\tau}\right)>0.
 \label{eq:iss-det-lower}
 \end{equation}
 Hence the scalar $[v,p,S,a]$ chain is uniformly observable over that
-exact-cadence four-update horizon.
+four-update horizon.
 \end{lemma}
 
 \begin{proof}
-Since $A_3'''(t)=E(t)$, direct expansion gives
+Write $f=A_3$ and let $f[t_0,\dots,t_3]$ denote the third divided difference.
+For any $f$, the determinant of the matrix with rows
+$[1,t_j,t_j^2,f(t_j)]$ equals
+$V(t)\,f[t_0,\dots,t_3]$ with the Vandermonde factor
+$V(t)=\prod_{i<j}(t_j-t_i)$: both sides are linear in $f$, both annihilate
+every polynomial of degree $\le2$, and both equal $V(t)$ at $f(t)=t^3$.
+Passing to the column order $[t^2/2,\,t,\,1,\,f]$ transposes the first and
+third columns and scales the first by $\tfrac12$, so
 \begin{equation}
-\det\mat O_S=-T_S^3\Delta_{T_S}^3A_3(0),
+\det\mat O_S=-\tfrac12\,V(t)\,A_3[t_0,t_1,t_2,t_3].
+\label{eq:iss-det-divided-difference}
 \end{equation}
-where
+Since $A_3'''=E$ is continuous, the Hermite--Genocchi formula gives
 \begin{equation}
-\Delta_T^3A_3(0)=
-\int_0^T\!\int_0^T\!\int_0^T E(u+v+w)\,du\,dv\,dw.
+A_3[t_0,t_1,t_2,t_3]
+=\int_{\mathcal T_3}E\!\left(\textstyle\sum_{j}s_jt_j\right)d\mu,
+\qquad
+\mathcal T_3=\Bigl\{s_j\ge0,\ \textstyle\sum_js_j=1\Bigr\},
 \end{equation}
-The lower bound $E(t)\ge e^{-t/\underline\tau}$ gives
+where $\mathcal T_3$ carries total mass $1/3!$. Every argument
+$\sum_js_jt_j$ lies in $[0,t_3]$, and $\tau(t)\ge\underline\tau$ gives
+$E(u)\ge e^{-u/\underline\tau}$, so
+\begin{equation}
+A_3[t_0,t_1,t_2,t_3]\ge\tfrac16\,e^{-t_3/\underline\tau}>0 .
+\end{equation}
+The six pairwise gaps in $V(t)$ are $T_1,T_2,T_3,T_1+T_2,T_2+T_3$ and
+$T_1+T_2+T_3$, hence $V(t)\ge12\,T_-^6$, while $t_3\le3T_+$. Substituting both
+into \eqref{eq:iss-det-divided-difference} yields
 Eq.~\eqref{eq:iss-det-lower}. The entries of $\mat O_S$ are uniformly bounded
 on the compact parameter set, so nonsingularity with the determinant lower
 bound also yields a uniform positive lower bound on
 $\sigma_{\min}(\mat O_S)$.
 \end{proof}
+
+\begin{remark}[Reduction to the equal-spacing case]
+For $T_1=T_2=T_3=T_S$ one has $V=12T_S^6$ and
+$A_3[t_0,\dots,t_3]=\Delta_{T_S}^3A_3(0)/(6T_S^3)$, so
+Eq.~\eqref{eq:iss-det-divided-difference} collapses to the finite-difference
+form $\det\mat O_S=-T_S^3\Delta_{T_S}^3A_3(0)$ and
+Eq.~\eqref{eq:iss-det-lower} to
+$T_S^6\exp(-3T_S/\underline\tau)$. The bounded-gap lemma therefore contains the
+exact-cadence statement as a special case rather than replacing it.
+\end{remark}
 
 The three-axis 12-state result follows componentwise. Bounded positive
 $\mat R_S$ converts this singular-value bound into a uniform finite-horizon
@@ -458,7 +509,8 @@ is not covered by the theorem.
 \begin{theorem}[21-state Live UES]
 \label{thm:iss-21-ues}
 Under Eqs.~\eqref{eq:iss-step-tau-bounds}--\eqref{eq:iss-vector-gap}, including
-the exact $T_S$ spacing of the four $S$ pseudo-updates on each translational
+the bounded-gap spacing \eqref{eq:iss-S-gap-bounds} of the four $S$
+pseudo-updates on each translational
 proof horizon, the positive process-density assumptions above, the default PSD
 $a_w$ covariance inflation (or no periodic covariance maintenance), active
 slow-OU residual accelerometer-bias estimation with finite
@@ -569,6 +621,9 @@ The proof covers the default prediction-time PSD $a_w$ covariance inflation and
 the case in which periodic covariance maintenance is disabled. It does not
 cover the optional legacy raw covariance replacement, startup/re-lock/hard-reset
 maps, arbitrarily long measurement outages, collinear gravity/magnetic reference
-geometry, sample-time jitter of the nominal $S$ pseudo-update deadlines, or the
+geometry, or the
 random-walk limit $\tau_b=\infty$. In particular, the finite upper bound on
-$\tau_b$ is essential for a uniform 21-state stability margin.
+$\tau_b$ is essential for a uniform 21-state stability margin. Sample-time
+quantization and adaptive variation of the $S$ pseudo-update deadlines are
+inside the theorem, because Lemma~\ref{lem:iss-axis-uco} assumes only bounded
+positive gaps.
