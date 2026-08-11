@@ -120,6 +120,28 @@ public:
                 filter.setRSCoeff(v);
             }
 
+            // Integral-regularizer adaptation law ablation.
+            // 0 = Cubic (deployed), 1 = StrongRiccati, 2 = PosteriorRiccati.
+            if (env_float("OU_III_RS_LAW", v)) {
+                const int law = static_cast<int>(v);
+                if (law == 1) {
+                    filter.setRSLaw(RSAdaptationLaw::StrongRiccati);
+                } else if (law == 2) {
+                    filter.setRSLaw(RSAdaptationLaw::PosteriorRiccati);
+                } else {
+                    filter.setRSLaw(RSAdaptationLaw::Cubic);
+                }
+            }
+            if (env_float("OU_III_RS_KAPPA", v)) {
+                filter.setRSPoleKappa(v);
+            }
+            if (env_float("OU_III_RS_RA", v)) {
+                filter.setRSAccelNoiseDensity(v);
+            }
+            if (env_float("OU_III_RS_SIGMA_EXP", v)) {
+                filter.setRSSigmaExponent(v);
+            }
+
             // NOTE:
             // SeaStateFusionFilter_OU_III does not expose a V0/R_v0 coefficient setter.
             // Therefore OU_III_R_V0_COEFF is intentionally not read here.

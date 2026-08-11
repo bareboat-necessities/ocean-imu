@@ -234,3 +234,94 @@ applied after the base clamp on $r_S^{\mathrm{base}}$ and is not itself
 re-clamped, so the value reaching the filter can leave the nominal base
 interval; Appendix~\ref{app:iss-stability} records the resulting effective
 bounds.
+
+\subsubsection{Amplitude-exponent ablation of the regularizer schedule}
+\label{sec:riccati-law-ablation}
+
+Section~\ref{sec:riccati-operating-regime} leaves a sharp, falsifiable
+question.  The deployed filter is in the strong acceleration-observation
+branch by every available measure, and the sensor-floor reading of that branch
+predicts a $\sigma_{aw}$-free schedule $r_S\propto\tau^{5/2}$, while the
+model-mismatch reading of Remark~\ref{rem:riccati-effective-ra} predicts the
+deployed $r_S\propto\sigma_{aw}\tau^{5/2}$.  The two differ only in the
+amplitude exponent, so the implementation exposes exactly that one degree of
+freedom,
+\begin{equation}
+ r_S
+ =\frac{\sqrt{2r_a}\,\tau^3}{\sqrt{T_S}\,\kappa^3}
+ \left(\frac{\sigma_{aw}}{\sigma_{\mathrm{ref}}}\right)^{p},
+ \qquad
+ \sigma_{\mathrm{ref}}
+ =\frac{\sqrt{2r_a}}{\kappa^3c_R\sqrt{T_{S,0}}},
+\label{eq:riccati-exponent-family}
+\end{equation}
+with $\kappa$ chosen so that $\sigma_{\mathrm{ref}}$ is the $\sigma_{aw}$ of
+the $H_s=\SI{1.5}{m}$ nominal calibration sea.  Because the common factor
+$\tau^3/\sqrt{T_S}$ cancels, the family \eqref{eq:riccati-exponent-family}
+passes exactly through the deployed schedule at $p=1$ and through the
+strong-branch asymptote at $p=0$, and every member agrees at
+$\sigma_{\mathrm{ref}}$ for \emph{every} $\tau$.  The ablation therefore
+isolates the amplitude exponent alone: it cannot be confounded by an overall
+change of regularizer gain, which
+Table~\ref{tab:ou_robustness_sensitivity} shows would otherwise dominate.
+
+\begin{table}[t]
+\caption{Amplitude-exponent ablation of the integral regularizer.  OU--III
+Adaptive mode, nine scenarios (four JONSWAP and four PM--Stokes stationary
+seas plus the non-stationary transition) $\times$ ten paired seed triplets,
+$n=90$ paired units, \SI{900}{s} scoring window.  Differences are paired
+against the deployed $p=1$ schedule with 95\% normal-theory intervals.}
+\label{tab:riccati-exponent-ablation}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Schedule & $Z$ [\%$H_s$] & $\Delta Z$ vs $p=1$ & 3D RMS [m] \\
+\midrule
+$p=0$ (strong branch, $\sigma_{aw}$-free) & 5.047 & $+0.300\pm0.071$ & 0.712 \\
+$p=0.5$                                   & 4.823 & $+0.076\pm0.025$ & 0.670 \\
+$\mathbf{p=1}$ \textbf{(deployed)}        & \textbf{4.747} & --- & \textbf{0.651} \\
+$p=1.25$                                  & 4.779 & $+0.032\pm0.012$ & 0.653 \\
+$p=1.5$                                   & 4.817 & $+0.070\pm0.016$ & 0.660 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The outcome, Table~\ref{tab:riccati-exponent-ablation}, is unambiguous and
+negative for the sensor-floor reading.  Vertical error falls monotonically
+from $p=0$ to $p=1$ and rises again through $p=1.25$ and $p=1.5$, a clean
+minimum at the deployed exponent.  Removing the $\sigma_{aw}$
+factor entirely costs $+0.300$ percent of $H_s$ pooled, a
+\SI{6.3}{\percent} relative degradation whose confidence interval excludes
+zero by a wide margin, and the same ordering holds on the three-dimensional
+metric.  The degradation is worst at the ends of the envelope furthest from
+the anchor sea --- $+0.65$ at $H_s=\SI{0.27}{m}$ and $+0.60$ at
+$H_s=\SI{8.5}{m}$ for the JONSWAP family --- which is the signature of a
+missing amplitude dependence rather than of a mis-set gain, since a gain error
+would degrade one end and improve the other.  The full posterior law
+\eqref{eq:riccati-pole-target-rs} is numerically indistinguishable from the
+$p=0$ column, as $\zeta\gg1$ requires; the two differ by less than
+$0.002$ percent of $H_s$ in every scenario.
+
+The conclusion is therefore that the deployed filter occupies the strong
+acceleration-observation branch, but with an effective low-frequency
+acceleration-noise density dominated by the sea-state-proportional
+model-mismatch term of \eqref{eq:riccati-Ra-floor-plus-model} rather than by
+the sensor floor \eqref{eq:riccati-ra-sensor}.  Equation
+\eqref{eq:riccati-mismatch-branch} is then the operative asymptotics, and the
+schedule it prescribes, $r_S\propto\sigma_{aw}\tau^{5/2}$, is what the
+implementation already applies.  The earlier statement that the cubic law is
+``an approximation to a pole-placement schedule'' survives, but its
+justification changes: the coefficient $c_R$ should be read as absorbing
+$\sqrt{\beta_m}$ and the target pole $\kappa$, not as the weak-branch
+coordinate-similarity constant of Theorem~\ref{thm:ou-regularized-rs}.
+
+This also bounds what the reduced scalar model can be asked to do.  It
+correctly predicts the $\tau^{5/2}$ exponent that the self-similar cadence
+produces, and it correctly predicts insensitivity to $\sigma_{aw}$ at fixed
+$r_S$; it does not predict the amplitude dependence of $r_S$ itself, because
+that is controlled by a term the reduction omits.  A physically calibrated
+$\beta_m$, measured from the actual low-frequency acceleration residual of the
+full MEKF rather than from the accelerometer datasheet, is the natural next
+refinement and would make \eqref{eq:riccati-pole-target-rs} usable directly
+instead of through the empirical coefficient $c_R$.
