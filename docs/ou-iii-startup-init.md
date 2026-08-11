@@ -136,6 +136,8 @@ for by 0.560 -> 0.256 on jonswap H1.5 and 0.408 -> 0.267 on pmstokes H0.27.
 The single-stage configuration has its own smaller spread. Both improve the
 mean; neither dominates record by record.
 
+### Yaw
+
 **Yaw is about 2% worse** in every proxy configuration. The residual is a
 property of the learned reference *vector*, not of the one-time gauge: seeding
 the handoff yaw variance anywhere from 5 to 90 degrees moves the scored yaw by
@@ -167,3 +169,40 @@ and there is nothing for the gate to protect against. It still matters at the
 long end -- 2500 and above degrade 3D error badly -- so it stays at 250 rather
 than being removed. The work it used to do is now done by `setAccBiasHold`,
 which is keyed to the refinement rather than to a magnetometer-update count.
+
+## Why the observer gains are not the yaw lever
+
+The obvious next move on the yaw residual is to retune the Mahony observer that
+frames the magnetic reference. It was swept, and it does not work. Recording
+the result so the sweep is not repeated.
+
+A full grid over `two_kp` in 0.05-0.4 and `two_ki` in 0.005-0.05 moves the
+eight-record mean yaw only between 1.825 and 1.856 deg. On the calmest record
+yaw is 2.07 deg in *every* cell of the grid, to three decimals.
+
+The reason shows up immediately with the noise generators disabled: yaw RMS
+falls from 2.071 to 0.153 deg on jonswap H0.27. About 93% of it is
+magnetometer error, not attitude error. Heading is constant in these records,
+so the hard-iron offset is not separable from the reference and is simply
+absorbed into it; what is left is soft-iron distortion modulated by the wave
+motion, which no attitude estimator can undo and no averaging window can
+cancel.
+
+Seed sensitivity says the same thing. The same configuration scores 1.83, 3.70
+and 3.23 deg of yaw on three noise seeds, while the gains move it by less than
+0.01 deg within each. Yaw here is a property of the magnetometer realization.
+
+The sweep did turn up an apparent roll optimum at `two_kp = 0.1`,
+`two_ki = 0.005` -- mean roll 0.340 -> 0.298 deg and bias 0.057 -> 0.053 on the
+default seed. It was not adopted, because it does not replicate: on a second
+seed it wins by a similar margin and on a third it loses by one, which is the
+signature of fitting a single realization rather than a real improvement. The
+optimum is also sharp -- `two_ki = 0.002` jumps roll to 0.560 deg -- which is
+the other sign of the same thing. The gains stay at `two_kp = 0.2`, the
+long-standing deployed corner, and `two_ki = 0.02`, the smallest change the
+attitude seed actually requires.
+
+Improving yaw further means calibrating the magnetometer, not retuning the
+observer: either estimating the hard iron (`mag_estimate_hard_iron`, which
+needs heading change during startup to be separable) or a soft-iron model,
+neither of which is a startup-initialization question.
