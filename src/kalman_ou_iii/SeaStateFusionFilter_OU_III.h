@@ -137,6 +137,20 @@ constexpr float ADAPT_RS_SLEW_LOG          = 0.0f;   // ln units
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
 constexpr float MAG_DELAY_SEC              = 7.0f;
 
+// Gains of the private Mahony observer that solves the startup attitude.
+//
+// two_kp is the accelerometer-to-gyro correction corner and carries the same
+// constraint it does in the vertical channel: it must stay an order of
+// magnitude below the wave band, or the observer levels itself against the
+// orbital specific force instead of gravity.
+//
+// two_ki estimates the gyro bias.  Unlike the vertical channel, which can
+// leave it at zero because everything downstream of it is high-passed, an
+// attitude seed keeps whatever static tilt error the bias leaves; see the
+// member declaration for the measurement.
+constexpr float STARTUP_PROXY_TWO_KP_DEFAULT = 0.2f;
+constexpr float STARTUP_PROXY_TWO_KI_DEFAULT = 0.02f;
+
 // Frequency smoother dt (SeaStateFusionFilter_OU_III is designed for 200 Hz)
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
 
@@ -169,7 +183,41 @@ public:
     enum class StartupStage {
         Cold,        // just booted or just had a big tilt reset
         TunerWarm,   // MEKF + freq running, tuner collecting stats
+        TunerReady,  // tuner trusted, MEKF still held by an external bootstrap
         Live         // tuner is trusted; full adaptation & extras allowed
+    };
+
+    // Who solves the attitude the filter starts from.
+    //
+    // StagedMekf is the original behaviour: the MEKF is fed from the first
+    // sample and learns its own tilt while running degraded -- linear block
+    // off, accelerometer bias frozen, Racc inflated -- and the caller reads
+    // *that* attitude back to gate the magnetometer and to build the frame the
+    // magnetic world reference is averaged in.  Those reads are the problem.
+    // The reference and the yaw gauge are locked once, so whatever tilt error
+    // the warming MEKF has at that moment becomes a standing attitude and
+    // heading bias, and it is exactly the moment the MEKF is least able to
+    // level: the linear block that absorbs orbital acceleration is switched
+    // off, so its accelerometer update is fighting the waves with no state to
+    // put them in.
+    //
+    // MahonyProxy takes those jobs away from the MEKF and gives them to the
+    // private Mahony observer this filter already runs (see
+    // VerticalAccelComplementary).  That observer is a pure function of the raw
+    // gyro and accelerometer, and its correction corner sits an order of
+    // magnitude below the wave band, so it rejects the orbital specific force
+    // by construction rather than chasing it.  The measurement-only front end
+    // -- proxy, frequency tracker, wave-period estimator, sigma band, tuner --
+    // runs from the first sample without the MEKF, so by the time the tilt has
+    // settled and the magnetometer has gauged north, the operating point is
+    // converged too.  The MEKF is then seeded with that attitude and goes Live
+    // directly, never occupying the degraded warmup configuration at all.
+    //
+    // See docs/ou-iii-startup-init.md for the measured comparison, including
+    // the one metric that moves the wrong way.
+    enum class StartupInitPolicy {
+        StagedMekf,   // legacy: MEKF learns its own tilt while warming
+        MahonyProxy,  // default: proxy owns tilt + mag learning, MEKF starts Live
     };
 
     explicit SeaStateFusionFilter_OU_III(bool with_mag = true)
@@ -188,6 +236,22 @@ public:
 
     StartupStage getStartupStage() const noexcept { return startup_stage_; }
     bool isAdaptiveLive() const noexcept { return startup_stage_ == StartupStage::Live; }
+
+    // The operating point is trustworthy.  Under StagedMekf this coincides
+    // with going Live; under MahonyProxy it is reached first, while the MEKF
+    // is still held, and it is one of the conditions the caller waits on
+    // before handing the attitude over.
+    bool isTunerReady() const noexcept {
+        return startup_stage_ == StartupStage::TunerReady ||
+               startup_stage_ == StartupStage::Live;
+    }
+
+    void setStartupInitPolicy(StartupInitPolicy policy) noexcept {
+        startup_init_policy_ = policy;
+    }
+    StartupInitPolicy startupInitPolicy() const noexcept {
+        return startup_init_policy_;
+    }
 
     void initialize(const Eigen::Vector3f& sigma_a,
                     const Eigen::Vector3f& sigma_g,
@@ -224,6 +288,91 @@ public:
     void updateTime(float dt, const Eigen::Vector3f& gyro, const Eigen::Vector3f& acc,
                     float tempC = 35.0f)
     {
+        updateCore_(dt, gyro, acc, tempC, /*drive_mekf=*/true);
+    }
+
+    // Measurement-only front end: the Mahony proxy, the frequency tracker and
+    // its stillness detector, the wave-period estimator, the sigma band, the
+    // auto-tuner and the wave-direction stage all advance, and the MEKF is
+    // left untouched.
+    //
+    // Every one of those consumers is already exogenous by design -- none of
+    // them reads a filter state -- so running them without the MEKF changes
+    // none of their outputs.  The one apparent exception is the wave-direction
+    // stage, which needs a levelled heading frame: it is given the proxy
+    // attitude instead, and heading_frame_acceleration() resolves into the
+    // projected bow axis, which is invariant under q -> Rz(psi) q.  The proxy's
+    // drifting yaw therefore cannot reach it, and the handoff to the MEKF
+    // quaternion later is continuous in everything the stage can see.
+    //
+    // Model parameters staged by the tuner are still written to the MEKF while
+    // this runs.  That is the point: they are parameters, not state, so the
+    // filter reaches its first real sample already on the right operating
+    // point instead of adapting toward it from FREQ_GUESS.
+    void updateFrontEnd(float dt, const Eigen::Vector3f& gyro,
+                        const Eigen::Vector3f& acc)
+    {
+        updateCore_(dt, gyro, acc, /*tempC=*/35.0f, /*drive_mekf=*/false);
+    }
+
+    // Attitude of the startup Mahony observer, BODY -> NED.  Only its tilt is
+    // meaningful; yaw is unobservable to it and drifts.
+    Eigen::Quaternionf startupProxyQuat() const noexcept {
+        return startup_attitude_proxy_.quaternion();
+    }
+
+    // Tilt-only form of the same attitude, safe to use as a magnetometer
+    // accumulation frame because no heading can leak through it.
+    Eigen::Quaternionf startupProxyTiltQuat() const noexcept {
+        return startup_attitude_proxy_.tiltQuaternion();
+    }
+
+    bool startupProxyInitialized() const noexcept {
+        return startup_attitude_proxy_.isInitialized();
+    }
+
+    // Gains of the startup attitude observer.  two_kp must stay below the wave
+    // band; two_ki removes the static tilt error a gyro bias would otherwise
+    // leave in the seed.  See STARTUP_PROXY_TWO_KP_DEFAULT.
+    void setStartupProxyGains(float two_kp, float two_ki) {
+        startup_attitude_proxy_.setGains(two_kp, two_ki);
+    }
+
+    // Hand the attitude over and start the MEKF live.
+    //
+    // q_bw is the bootstrap solution: proxy tilt, carrying the magnetometer's
+    // yaw gauge if one has been acquired.  The sigmas describe how well each
+    // part is known, and they are genuinely different -- tilt has been
+    // integrated through the wave band, yaw is either gauged or arbitrary --
+    // which is why the covariance seed is anisotropic rather than the
+    // accel-only default.
+    //
+    // allow_acc_bias only unlocks the accelerometer-bias gate early.  Left
+    // false, the filter keeps waiting for its usual count of magnetometer
+    // updates after going live, which is the deployed behaviour.
+    void goLive(const Eigen::Quaternionf& q_bw,
+                float tilt_sigma_rad,
+                float yaw_sigma_rad,
+                bool allow_acc_bias = false)
+    {
+        if (!mekf_) return;
+        if (!q_bw.coeffs().allFinite()) return;
+        if (!(q_bw.norm() > 1e-8f)) return;
+
+        mekf_->initialize_from_attitude(q_bw, tilt_sigma_rad, yaw_sigma_rad);
+
+        if (allow_acc_bias) {
+            accel_bias_locked_ = false;
+        }
+
+        enterLive_();
+    }
+
+private:
+    void updateCore_(float dt, const Eigen::Vector3f& gyro,
+                     const Eigen::Vector3f& acc, float tempC,
+                     bool drive_mekf)
+    {
         if (!mekf_) return;
         if (!(dt > 0.0f) || !std::isfinite(dt)) return;
 
@@ -248,11 +397,21 @@ public:
         // function of the measurements.
         vertical_accel_comp_.update(dt, gyro, acc, g_std);
 
-        // MEKF updates first (attitude + latent a_w)
-        mekf_->time_update(gyro, dt);
-        mekf_->measurement_update_acc_only(acc, tempC);
+        // Startup attitude observer.  Kept running after handoff so a
+        // re-bootstrap never has to start from identity, and so its tilt stays
+        // available as an independent check on the filter's own.
+        startup_attitude_proxy_.update(dt, gyro, acc, g_std);
 
-        {
+        // MEKF updates first (attitude + latent a_w)
+        if (drive_mekf) {
+            mekf_->time_update(gyro, dt);
+            mekf_->measurement_update_acc_only(acc, tempC);
+        }
+
+        // The tilt watchdog reads and rewrites MEKF attitude, so it only has
+        // meaning while the MEKF is the one propagating it.  A bootstrap that
+        // has not handed over yet has no attitude here to run away.
+        if (drive_mekf) {
             Eigen::Quaternionf q_bw = mekf_->quaternion_boat();
             q_bw.normalize();
 
@@ -345,7 +504,9 @@ public:
         // the beginning of the next IMU sample.
 
         // Bounded covariance inflation of the a_w marginal.
-        periodic_aw_cov_sync_tick_();
+        if (drive_mekf) {
+            periodic_aw_cov_sync_tick_();
+        }
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
 
@@ -353,8 +514,13 @@ public:
         // This removes roll/pitch mixing while preserving 0 deg = bow and
         // positive angles toward starboard.  Direction may use the MEKF frame;
         // the default tuner channels do not.
+        //
+        // Before handoff the MEKF has no attitude to offer, so the proxy's is
+        // used.  heading_frame_acceleration() resolves into the projected bow
+        // axis and is therefore invariant under q -> Rz(psi) q, so only the
+        // tilt of whichever quaternion is supplied can reach the result.
         const auto direction_accel = wave_direction::heading_frame_acceleration<float>(
-            mekf_->quaternion_boat(), acc, g_std);
+            drive_mekf ? mekf_->quaternion_boat() : startupProxyQuat(), acc, g_std);
 
         // Stage 1 estimates the apparent propagation plane as an unsigned axis
         // relative to boat heading.  Stage 2 resolves propagation sense along
@@ -402,6 +568,7 @@ public:
             dt, dir_filter_.getLastStableConfidence());
     }
 
+public:
     //  Magnetometer correction
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!with_mag_ || !mekf_) return;
@@ -418,7 +585,7 @@ public:
         // enable accel-bias learning or restore Racc unless we're already Live.
         if (accel_bias_locked_ &&
             startup_stage_ == StartupStage::Live &&
-            mag_updates_applied_ >= MAG_UPDATES_TO_UNLOCK &&
+            mag_updates_applied_ >= mag_updates_to_unlock_ &&
             std::isfinite(first_mag_update_time_) &&
             (static_cast<float>(time_) - first_mag_update_time_) > 1.0f) // 1s guard
         {
@@ -787,6 +954,16 @@ public:
     }
 
     void setFreezeAccBiasUntilLive(bool en) { freeze_acc_bias_until_live_ = en; }
+
+    // Magnetometer updates that must land after going live before the
+    // accelerometer-bias gate opens.  The bias is only weakly observable in
+    // waves, so this is a real tuning knob rather than a formality; exposed so
+    // it can be swept without editing the filter.
+    void setMagUpdatesToUnlockAccBias(int n) {
+        if (n >= 0) mag_updates_to_unlock_ = n;
+    }
+    int magUpdatesToUnlockAccBias() const noexcept { return mag_updates_to_unlock_; }
+
     void setWarmupRaccStd(float r) { if (std::isfinite(r) && r > 0.0f) Racc_warmup_std_ = r; }
 
     // For SeaStateFusionFilter_OU_III to restore Racc automatically
@@ -1054,10 +1231,19 @@ private:
           case StartupStage::TunerWarm:
               if (!tuner_.isFreqReady()) return;
               if (tuner_.isReady()) {
-                  enterLive_();
+                  if (startup_init_policy_ == StartupInitPolicy::MahonyProxy) {
+                      // The operating point is trusted, but the attitude is
+                      // not this filter's to decide.  Park here and let the
+                      // bootstrap call goLive() once it has tilt and north.
+                      startup_stage_   = StartupStage::TunerReady;
+                      startup_stage_t_ = 0.0f;
+                  } else {
+                      enterLive_();
+                  }
               }
               break;
 
+           case StartupStage::TunerReady:
            case StartupStage::Live:
                break;
         }
@@ -1182,6 +1368,7 @@ private:
         tracker_policy_       = TrackingPolicy{};
         wave_period_          = WavePeriodEstimator{};
         vertical_accel_comp_.reset();
+        startup_attitude_proxy_.reset();
         sigma_wave_band_.reset();
         freq_input_lpf_       = FreqInputLPF{};
         freq_stillness_       = StillnessAdapter(g_std, min_freq_hz_, FREQ_GUESS);
@@ -1260,6 +1447,16 @@ private:
     bool accel_bias_locked_ = true;
     int  mag_updates_applied_ = 0;
     static constexpr int MAG_UPDATES_TO_UNLOCK = 250;
+    int  mag_updates_to_unlock_ = MAG_UPDATES_TO_UNLOCK;
+
+    // StagedMekf here, MahonyProxy in SeaStateFusion_OU_III::Config, and the
+    // asymmetry is deliberate.  Only something outside this class can perform
+    // the handoff, so a filter driven directly through updateTime() with no
+    // bootstrap above it would park at TunerReady forever if it defaulted to
+    // the proxy policy.  This class's standalone contract -- feed it and it
+    // becomes live on its own -- is therefore left exactly as it was, and the
+    // policy is chosen by the wrapper that is actually able to honour it.
+    StartupInitPolicy startup_init_policy_ = StartupInitPolicy::StagedMekf;
 
     bool   with_mag_;
     double time_;
@@ -1334,6 +1531,26 @@ private:
     SeaStateAutoTuner               tuner_;
     WavePeriodEstimator             wave_period_;
     VerticalAccelComplementary      vertical_accel_comp_{};
+
+    // Second instance of the same private-Mahony observer, tuned for attitude
+    // rather than for the vertical channel, and used only by the startup
+    // bootstrap.
+    //
+    // The correction corner is the same 0.2 and for the same reason -- it has
+    // to stay below the wave band or the observer chases orbital acceleration
+    // into tilt.  The integral term is where they part company.  The vertical
+    // channel deliberately runs with two_ki = 0 and accepts the ~2b/two_kp
+    // static tilt error a gyro bias leaves, because its two high-pass stages
+    // reject anything static.  Nothing downstream of an *attitude* seed
+    // high-passes it: that same error is a standing roll and pitch bias for
+    // the whole run, and it is measurable -- seeding the MEKF from a
+    // zero-integral observer costs 0.17 deg of roll RMS on jonswap H1.5.  So
+    // this instance estimates the bias, and the vertical channel's documented
+    // tuning is left untouched.
+    VerticalAccelComplementary      startup_attitude_proxy_{
+        STARTUP_PROXY_TWO_KP_DEFAULT,
+        STARTUP_PROXY_TWO_KI_DEFAULT,
+        0.0f};
     AdaptiveWaveBandPass            sigma_wave_band_{
         SIGMA_BAND_LOW_RATIO_DEFAULT,
         SIGMA_BAND_HIGH_RATIO_DEFAULT,
@@ -1371,17 +1588,93 @@ class SeaStateFusion_OU_III {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    using StartupInitPolicy =
+        typename SeaStateFusionFilter_OU_III<trackerT>::StartupInitPolicy;
+
     struct Config {
         bool with_mag = true;
 
         bool enable_linear_block = true;
         bool require_mag_lock_for_linear_block = false;
 
+        // Who solves the startup attitude; see StartupInitPolicy.
+        //
+        // MahonyProxy is the default.  The measurement-only front end runs
+        // from the first sample, the private Mahony observer supplies the tilt
+        // that gates the magnetometer and frames the world-reference average,
+        // and the MEKF is seeded with the finished solution and starts live.
+        // StagedMekf restores the previous staged behaviour, in which the MEKF
+        // is fed from the first sample and those same reads come back out of
+        // it while it is still warming.
+        StartupInitPolicy startup_init_policy = StartupInitPolicy::MahonyProxy;
+
+        // Earliest and latest the proxy bootstrap may hand over.
+        //
+        // The normal exit is by quality: proxy tilt holding gravity agreement,
+        // magnetic north gauged, and the tuner ready.  The floor keeps a
+        // record whose first seconds happen to look calm from handing over on
+        // a tilt the observer has barely integrated, and the ceiling
+        // guarantees the filter always starts -- a platform that never satisfies
+        // the gate still gets a live filter, on the best attitude available,
+        // rather than sitting in bootstrap forever.
+        float proxy_startup_min_sec     = 8.0f;
+        float proxy_startup_timeout_sec = 150.0f;
+
+        // How long the startup observer must have been running before the
+        // magnetic world reference may start averaging.
+        //
+        // This is the gate the whole policy is really buying.  The observer's
+        // correction corner sits below the wave band by design, which is what
+        // stops it chasing orbital acceleration -- but the same low corner
+        // means it needs tens of seconds to settle from its accelerometer
+        // seed, and that seed is at its worst in exactly the big seas where
+        // levelling matters most.  Measured against truth on the eight
+        // reference records, mean tilt error over a 23 s averaging window
+        // starting at 7 s runs 0.33 to 2.76 deg; starting at 40 s it is 0.13
+        // to 0.85 deg.
+        //
+        // The reference and the yaw gauge are locked once, so that difference
+        // is not a startup transient -- it is the standing attitude bias for
+        // the rest of the run.  Under the old staged policy this wait was
+        // unaffordable, because the MEKF was live and needed the magnetometer;
+        // here the MEKF has not started and the tuner is converging anyway, so
+        // the only cost is a later go-live, and the scored window is the
+        // trailing 900 s of a 1200 s record either way.
+        //
+        // 90 s was chosen on the end-to-end metrics rather than on the tilt
+        // error alone, because the two do not order the same way.  Against the
+        // staged baseline, 90 s moves mean roll 0.373 -> 0.310 deg, pitch
+        // 0.274 -> 0.259, 3D 20.32 -> 20.24 percent and accelerometer-bias
+        // error 0.063 -> 0.052 m/s^2; settling at 45 or 60 s recovers less of
+        // that.  Yaw moves the other way, 1.795 -> 1.839 deg, at every settle
+        // time tried; see the note in updateMag() on what that residual is.
+        float proxy_mag_settle_sec = 90.0f;
+
+        // Covariance seeded at handoff.  Tilt has been integrated through the
+        // wave band by an observer whose correction corner is below it, so it
+        // is worth about the accel-only default; yaw is either gauged by the
+        // magnetometer or entirely unknown, and those two cases are an order
+        // of magnitude apart, which is the whole reason the seed is split.
+        float proxy_handoff_tilt_sigma_rad      = 0.035f;  // ~2 deg
+        float proxy_handoff_yaw_sigma_rad       = 0.087f;  // ~5 deg, north gauged
+        float proxy_handoff_yaw_sigma_free_rad  = 1.5708f; // ~90 deg, no lock
+
         float mag_delay_sec          = MAG_DELAY_SEC;
         float online_tune_warmup_sec = 10.0f;
 
         bool  freeze_acc_bias_until_live = true;
         float Racc_warmup_std = 0.5f;
+
+        // Magnetometer updates that must land after the filter goes live
+        // before the accelerometer-bias gate opens.
+        //
+        // Accelerometer bias and a tilt error are only weakly separable in
+        // waves -- a roll error tips gravity into body Y and reads as a Y bias
+        // -- so opening this gate while the attitude is still settling lets the
+        // bias absorb the error and hold it.  Under the proxy policy the filter
+        // reaches live far earlier than it used to, which moves this gate
+        // earlier in absolute terms unless it is set to account for that.
+        int acc_bias_unlock_mag_updates = 250;
 
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
@@ -1495,8 +1788,12 @@ public:
         last_gyro_body_ned_.setZero();
         have_last_imu_ = false;
 
+        pending_yaw_abs_rad_ = NAN;
+
         impl_.setWithMag(cfg_.with_mag);
+        impl_.setStartupInitPolicy(cfg_.startup_init_policy);
         impl_.setFreezeAccBiasUntilLive(cfg_.freeze_acc_bias_until_live);
+        impl_.setMagUpdatesToUnlockAccBias(cfg_.acc_bias_unlock_mag_updates);
         impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
         impl_.setMagDelaySec(0.0f); // outer wrapper owns mag delay
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
@@ -1537,7 +1834,12 @@ public:
 
         t_ += dt;
 
-        if (stage_ == Stage::Uninitialized) {
+        const bool proxy_init = usingProxyInit_();
+
+        // Under the proxy policy the gravity-lock bootstrap is the Mahony
+        // observer inside the front end, which runs from the first sample, so
+        // there is no phase in which the wrapper withholds IMU data.
+        if (!proxy_init && stage_ == Stage::Uninitialized) {
             const bool tilt_ready = seastate::common::runStartupGravityInit(
                 gyro_body_ned,
                 acc_body_ned,
@@ -1567,8 +1869,13 @@ public:
         last_gyro_body_ned_ = gyro_body_ned;
         have_last_imu_      = true;
 
-        if (stage_ != Stage::Uninitialized) {
-            impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+        if (proxy_init || stage_ != Stage::Uninitialized) {
+            if (proxy_init && stage_ != Stage::Live) {
+                // Bootstrap: front end only, MEKF held.
+                impl_.updateFrontEnd(dt, gyro_body_ned, acc_body_ned);
+            } else {
+                impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+            }
 
             const Eigen::Vector3f acc_gate_lp =
                 gravity_gate_acc_lpf_.step(
@@ -1576,9 +1883,13 @@ public:
                     dt,
                     cfg_.mag_gravity_align_lpf_tau);
 
+            // Whose tilt the magnetometer gate is judged against.  Under the
+            // proxy policy this is the observer's before handoff, so the gate
+            // measures the attitude that will actually frame the magnetic
+            // reference rather than one the MEKF is still converging toward.
             const float align_sin =
                 seastate::common::gravityAlignResidualSin(
-                    impl_.mekf().quaternion_boat(),
+                    attitudeReferenceQuat_(),
                     acc_gate_lp);
 
             const float gyro_dps =
@@ -1667,7 +1978,11 @@ public:
             last_impl_startup_stage_ = cur_stage;
         }
 
-        if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
+        if (proxy_init) {
+            if (stage_ != Stage::Live) {
+                maybeHandOffToMekf_();
+            }
+        } else if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
             stage_ = Stage::Live;
         }
 
@@ -1678,8 +1993,33 @@ public:
 
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!begun_ || !cfg_.with_mag) return;
-        if (stage_ == Stage::Uninitialized) return;
+        // Under the proxy policy there is no withheld stage to wait out: the
+        // observer has been levelling since the first sample, and learning
+        // north before the MEKF starts is the entire point.  The quality gate
+        // below still decides when accumulation may begin.
+        if (!usingProxyInit_() && stage_ == Stage::Uninitialized) return;
         if (t_ < cfg_.mag_delay_sec) return;
+
+        // Hold the whole magnetometer path off until the startup observer has
+        // settled.  This sits ahead of the eligibility clock deliberately, so
+        // the tilt-fallback timer cannot start running and then wave the
+        // accumulation through on an attitude that is still converging.
+        //
+        // What this window does *not* fix is the standing yaw error, which the
+        // proxy policy leaves about 2 percent worse than the staged one
+        // (1.795 -> 1.839 deg mean over the reference records).  That residual
+        // is a property of the learned reference vector rather than of the
+        // one-time gauge: seeding the handoff with a yaw variance from 5 deg
+        // to 90 deg moves the scored yaw by under 1e-4 deg, so the filter is
+        // not converging to the gauge, it is converging to the reference.
+        // Improving it further means re-learning that reference in the live
+        // MEKF's own tilt frame once it has converged, which is a runtime
+        // re-acquisition rather than an initialization change and is
+        // deliberately not attempted here.
+        if (usingProxyInit_() && !mag_ref_set_ &&
+            t_ < cfg_.proxy_mag_settle_sec) {
+            return;
+        }
 
         if (!std::isfinite(mag_init_eligible_t0_)) {
             mag_init_eligible_t0_ = t_;
@@ -1704,9 +2044,9 @@ public:
 
                 last_mag_sample_t_ = t_;
 
-                // Accumulate in the MEKF's own tilt frame with yaw removed.
+                // Accumulate in a tilt frame with yaw removed.
                 //
-                // Stripping yaw makes the frame invariant to the MEKF's
+                // Stripping yaw makes the frame invariant to the estimator's
                 // arbitrary startup heading, so this leaks no yaw into the
                 // learned reference -- q_bw and Rz(psi) q_bw give the same
                 // tilt.  A gravity-only frame rebuilt from low-passed accel
@@ -1714,8 +2054,18 @@ public:
                 // plus a phase-lagged remnant of the orbital specific force,
                 // so its tilt is wrong by a wave-correlated angle that the
                 // averaging window is too short to cancel.
+                //
+                // Which estimator supplies that tilt is the substance of the
+                // startup policy.  StagedMekf reads it back out of the warming
+                // MEKF, whose accelerometer update is at that moment fighting
+                // the orbital acceleration with its linear block switched off.
+                // MahonyProxy reads the private observer instead, which is
+                // gyro-propagated through the wave band and corrected below it.
+                // The reference and the yaw gauge are locked exactly once, so
+                // whichever tilt error survives this window is a standing bias
+                // for the rest of the run.
                 const Eigen::Quaternionf q_tilt_bw =
-                    tiltOnlyQuatFromBoatQuat_(impl_.mekf().quaternion_boat());
+                    tiltOnlyQuatFromBoatQuat_(attitudeReferenceQuat_());
 
                 if (mag_auto_tuner_.addSampleWithTiltQuatDt(
                         dt_mag,
@@ -1731,7 +2081,10 @@ public:
                         mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
                     {
                         // This reference was learned in a yaw-stripped tilt
-                        // frame, so it carries no MEKF heading.
+                        // frame, so it carries no estimator heading.  It is a
+                        // model parameter, so writing it before the MEKF has
+                        // been handed the attitude is safe and leaves it ready
+                        // to use the magnetometer from its first live sample.
                         impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
 
                         const float mag_tilt_yaw_rad =
@@ -1754,21 +2107,36 @@ public:
                             const float yaw_abs_rad =
                                 wrapPi_(-mag_tilt_yaw_rad);
 
-                            Eigen::Quaternionf q_bw =
-                                impl_.mekf().quaternion_boat();
-                            q_bw.normalize();
-
-                            const Eigen::Quaternionf q_new =
-                                boatQuatWithAbsoluteYaw_(q_bw, yaw_abs_rad);
-
-                            if (q_new.coeffs().allFinite()) {
-                                impl_.mekf().set_quaternion_boat(q_new);
+                            // Before handoff there is no MEKF attitude to
+                            // rewrite; the gauge is carried to the handoff
+                            // instead and composed with the proxy tilt there,
+                            // so the filter's very first attitude already has
+                            // north in it.
+                            if (usingProxyInit_() && stage_ != Stage::Live) {
+                                pending_yaw_abs_rad_ = yaw_abs_rad;
 
                                 last_mag_tilt_frame_yaw_rad_ =
                                     wrapPi_(mag_tilt_yaw_rad);
 
                                 last_mag_startup_yaw_correction_rad_ =
                                     yaw_abs_rad;
+                            } else {
+                                Eigen::Quaternionf q_bw =
+                                    impl_.mekf().quaternion_boat();
+                                q_bw.normalize();
+
+                                const Eigen::Quaternionf q_new =
+                                    boatQuatWithAbsoluteYaw_(q_bw, yaw_abs_rad);
+
+                                if (q_new.coeffs().allFinite()) {
+                                    impl_.mekf().set_quaternion_boat(q_new);
+
+                                    last_mag_tilt_frame_yaw_rad_ =
+                                        wrapPi_(mag_tilt_yaw_rad);
+
+                                    last_mag_startup_yaw_correction_rad_ =
+                                        yaw_abs_rad;
+                                }
                             }
                         }
 
@@ -1785,7 +2153,9 @@ public:
             }
         }
 
-        if (mag_ref_set_) {
+        // Magnetometer corrections go to the MEKF only once it owns the
+        // attitude.  Before handoff its state is not the one being solved.
+        if (mag_ref_set_ && (!usingProxyInit_() || stage_ == Stage::Live)) {
             impl_.updateMag(mag_body_ned - mag_hard_iron_body_uT_);
         }
     }
@@ -1812,6 +2182,21 @@ public:
 
     float waveDirectionDeg() const {
         return impl_.getWaveDirectionDeg();
+    }
+
+    // Best available boat attitude, BODY -> WORLD (NED).
+    //
+    // Under the proxy policy the MEKF holds its initial quaternion until the
+    // handoff, so reading it directly during the bootstrap would report a
+    // level identity attitude rather than the platform's.  The bootstrap
+    // observer's solution is what is actually known at that point, and it is
+    // what this returns; after handoff both policies return the MEKF's.
+    //
+    // Heading is only meaningful once hasMagNorthLock() is true (or the build
+    // has no magnetometer); before that the bootstrap yaw is arbitrary.  The
+    // linear outputs -- displacement, velocity -- stay gated on isLive().
+    Eigen::Quaternionf attitudeQuat() const {
+        return attitudeReferenceQuat_();
     }
 
     Eigen::Vector3f eulerNauticalDeg() const {
@@ -1899,6 +2284,107 @@ private:
     };
 
     using StartupTiltObserver = seastate::common::StartupTiltObserver;
+
+    bool usingProxyInit_() const noexcept {
+        return cfg_.startup_init_policy == StartupInitPolicy::MahonyProxy;
+    }
+
+    // The attitude the startup machinery judges and frames things against.
+    //
+    // Once the MEKF is live it is the answer under either policy -- it has the
+    // magnetometer, the linear block and the bias states, and the proxy has
+    // none of them.  Before that, under the proxy policy, the MEKF has nothing
+    // to say and the observer does.
+    Eigen::Quaternionf attitudeReferenceQuat_() const {
+        if (usingProxyInit_() && stage_ != Stage::Live) {
+            return impl_.startupProxyQuat();
+        }
+        return impl_.mekf().quaternion_boat();
+    }
+
+    // Hand the bootstrap attitude to the MEKF and start it live.
+    //
+    // The quality exit needs three things at once: a tilt that has held
+    // agreement with gravity long enough to be trusted, a magnetic north gauge
+    // (when a magnetometer is fitted), and an operating point the tuner
+    // stands behind.  Waiting for all three is what lets the MEKF skip the
+    // staged warmup entirely -- there is nothing left for it to converge.
+    void maybeHandOffToMekf_() {
+        if (!begun_) return;
+
+        const bool proxy_ready = impl_.startupProxyInitialized();
+
+        const bool tilt_trusted =
+            (mag_gravity_good_sec_ >= cfg_.mag_gravity_align_hold_sec);
+
+        const bool north_ready = !cfg_.with_mag || mag_ref_set_;
+
+        const bool ready_by_quality =
+            proxy_ready &&
+            (t_ >= cfg_.proxy_startup_min_sec) &&
+            tilt_trusted &&
+            north_ready &&
+            impl_.isTunerReady();
+
+        // The timeout still requires an attitude to hand over; without one
+        // there is nothing to seed and waiting costs nothing.
+        //
+        // It is also held clear of the magnetometer acquisition it would
+        // otherwise cut short.  A timeout that fires while the reference is
+        // still averaging hands over with no yaw gauge at all, which is a far
+        // worse start than simply waiting: the gauge is the one chance to put
+        // the filter on north before it goes live.  So the floor is the settle
+        // time plus room for the averaging window to close.
+        const float mag_acquire_deadline =
+            cfg_.with_mag
+                ? cfg_.proxy_mag_settle_sec +
+                      2.0f * std::max(cfg_.mag_min_window_sec, 1.0f) +
+                      cfg_.mag_tilt_fallback_sec
+                : 0.0f;
+
+        const float timeout_sec =
+            std::max(cfg_.proxy_startup_timeout_sec, mag_acquire_deadline);
+
+        const bool ready_by_timeout = proxy_ready && (t_ >= timeout_sec);
+
+        if (!ready_by_quality && !ready_by_timeout) return;
+
+        handOffToMekf_();
+    }
+
+    void handOffToMekf_() {
+        const bool have_yaw_gauge = std::isfinite(pending_yaw_abs_rad_);
+
+        // boatQuatWithAbsoluteYaw_ strips the incoming heading before writing
+        // the new one, so the observer's drifted yaw cannot survive this even
+        // though the quaternion is passed in whole.
+        const Eigen::Quaternionf q_proxy = impl_.startupProxyQuat();
+
+        const Eigen::Quaternionf q_seed =
+            have_yaw_gauge
+                ? boatQuatWithAbsoluteYaw_(q_proxy, pending_yaw_abs_rad_)
+                : q_proxy;
+
+        if (!q_seed.coeffs().allFinite()) return;
+
+        const float yaw_sigma = have_yaw_gauge
+            ? cfg_.proxy_handoff_yaw_sigma_rad
+            : cfg_.proxy_handoff_yaw_sigma_free_rad;
+
+        // The accelerometer-bias gate is deliberately left closed here.  Going
+        // live early does not make that bias any more observable in waves, so
+        // it keeps waiting for its count of magnetometer updates exactly as it
+        // did before; see setMagUpdatesToUnlockAccBias().
+        impl_.goLive(q_seed,
+                     cfg_.proxy_handoff_tilt_sigma_rad,
+                     yaw_sigma,
+                     /*allow_acc_bias=*/false);
+
+        stage_ = Stage::Live;
+        last_impl_startup_stage_ = impl_.getStartupStage();
+
+        syncLinearBlockGate_();
+    }
 
     void resetTiltInit_() {
         bootstrap_tilt_obs_.reset();
@@ -2063,6 +2549,9 @@ private:
 
     float last_mag_tilt_frame_yaw_rad_ = NAN;
     float last_mag_startup_yaw_correction_rad_ = NAN;
+
+    // Yaw gauge acquired while the MEKF was still held, applied at handoff.
+    float pending_yaw_abs_rad_ = NAN;
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};

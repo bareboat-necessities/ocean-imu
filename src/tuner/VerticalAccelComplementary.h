@@ -166,6 +166,51 @@ public:
         return initialized_ && elapsed_sec_ >= settle_sec_;
     }
 
+    // Seeded from the first accelerometer sample, so tilt is usable well
+    // before isReady() -- that gate exists to keep the levelling transient out
+    // of the *period statistics*, which is a stricter requirement than having
+    // a usable attitude.  A startup bootstrap wants the attitude as soon as it
+    // exists and applies its own quality gate, so it reads this instead.
+    bool isInitialized() const noexcept { return initialized_; }
+
+    float elapsedSec() const noexcept { return elapsed_sec_; }
+
+    // BODY -> NED attitude of the private observer.
+    //
+    // Yaw is unobservable without a magnetometer and drifts, so only the tilt
+    // part of this is meaningful; see tiltQuaternion().  Exposed whole because
+    // the levelled heading frame that the wave-direction stage runs in is
+    // invariant under q -> Rz(psi) q, so it can consume this directly.
+    Eigen::Quaternionf quaternion() const noexcept {
+        const Eigen::Quaternionf q(ahrs_.q0, ahrs_.q1, ahrs_.q2, ahrs_.q3);
+        const float n = q.norm();
+        if (!(n > 1e-8f) || !std::isfinite(n)) {
+            return Eigen::Quaternionf::Identity();
+        }
+        return Eigen::Quaternionf(q.coeffs() / n);
+    }
+
+    // Tilt part of the observer attitude, with the drifting heading divided
+    // out.  Invariant under q -> Rz(psi) q, which is what makes it usable as a
+    // magnetometer accumulation frame: no arbitrary yaw can leak into the
+    // learned world reference through it.
+    Eigen::Quaternionf tiltQuaternion() const noexcept {
+        const Eigen::Quaternionf q = quaternion();
+
+        const Eigen::Matrix3f R = q.toRotationMatrix();
+        const float yaw = std::atan2(R(1, 0), R(0, 0));
+        if (!std::isfinite(yaw)) return Eigen::Quaternionf::Identity();
+
+        const Eigen::Quaternionf q_yaw_inv(
+            Eigen::AngleAxisf(-yaw, Eigen::Vector3f::UnitZ()));
+
+        Eigen::Quaternionf q_tilt = q_yaw_inv * q;
+        q_tilt.normalize();
+
+        if (!q_tilt.coeffs().allFinite()) return Eigen::Quaternionf::Identity();
+        return q_tilt;
+    }
+
 private:
     // Point the private world z axis along the measured gravity direction, so
     // the observer starts levelled instead of rotating in from identity.
