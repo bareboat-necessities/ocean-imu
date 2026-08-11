@@ -391,7 +391,7 @@ Non-stationary transition     & 4.773 & 4.778 & $+0.1\%$ \\
 Mean over the eight seas      & 4.744 & 4.625 & $\mathbf{-2.5\%}$ \\
 Worst sea                     & 5.575 & 5.115 & $\mathbf{-8.3\%}$ \\
 \midrule
-Stress $H_s=\SI{0.05}{m}$     & 26.5 & 14.8 & $-44\%$ \\
+Stress $H_s=\SI{0.05}{m}$     & 27.0 & 17.6 & $-35\%$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -401,11 +401,20 @@ The \SI{0.4}{m.s} floor existed to stop the regularizer from becoming
 arbitrarily strong as the sea goes quiet, but its actual effect was the
 opposite: with almost no wave motion to preserve, the floor held $r_S$ too high
 to suppress drift, and the $H_s=\SI{0.05}{m}$ case degraded to
-\SI{26.5}{\percent} of $H_s$.  Removing that obstruction nearly halves it, and
-the absolute vertical error falls from \SI{13.2}{mm} to \SI{7.4}{mm}.  The
+\SI{27.0}{\percent} of $H_s$.  Removing that obstruction cuts it by a third,
+and the absolute vertical error falls from \SI{13.5}{mm} to \SI{8.8}{mm}.  The
 gain saturates below about \SI{0.25}{m.s}, so \SI{0.15}{m.s} retains a real
 guard against $r_S$ collapsing toward zero while staying clear of the
 calibrated envelope.
+
+One cost is worth recording.  With the floor no longer clipping, the coupled
+$(\tau,r_S\propto\tau^3)$ sensitivity span of
+Table~\ref{tab:ou_robustness_sensitivity} widens from
+\num{4.452} to \OURobustnessCoupledTauSpan\ percent of $H_s$: the clamp had
+been masking part of the schedule's true sensitivity to a coupled $\tau$
+mis-scaling.  Performance at the deployed operating point is unchanged
+(\OURobustnessNominalMean\ percent of $H_s$), and the multiplier optimum does
+not move, so this is exposure of an existing sensitivity rather than a new one.
 
 Two qualifications belong with these numbers.  First, the improvement is in
 relative accuracy in small seas: the pooled absolute three-dimensional RMS is

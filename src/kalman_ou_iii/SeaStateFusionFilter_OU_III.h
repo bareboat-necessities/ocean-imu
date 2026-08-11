@@ -122,7 +122,7 @@ constexpr float MAX_SIGMA_A = 6.0f;
 // decimals.  Dropping the floor below the schedule's own demand recovers
 // -8.3 % on the worst sea, -9.5 % on PM-Stokes 0.27 m and -2.5 % on the
 // eight-sea mean, and cuts the near-still H_s = 0.05 m stress case from
-// 26.5 to 14.8 percent of H_s.  The gain saturates below ~0.25; 0.15 keeps a
+// 27.0 to 17.6 percent of H_s (13.5 mm to 8.8 mm absolute).  The gain saturates below ~0.25; 0.15 keeps a
 // real guard against r_S collapsing toward zero while staying clear of the
 // calibrated envelope.
 constexpr float MIN_R_S     = 0.15f;
