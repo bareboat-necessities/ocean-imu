@@ -91,6 +91,9 @@ class Kalman3D_Wave_OU_III {
     void initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag);
     void initialize_from_acc(Vector3 const& acc);
     void initialize_from_acc_preserve_yaw(Vector3 const& acc);
+    void initialize_from_attitude(Eigen::Quaternion<T> const& q_bw,
+                                  T tilt_sigma_rad,
+                                  T yaw_sigma_rad);
     static Eigen::Quaternion<T> quaternion_from_acc(Vector3 const& acc);
 
     // Set the world-frame magnetic reference vector used by the mag measurement model. Pass NED units.
@@ -200,6 +203,7 @@ class Kalman3D_Wave_OU_III {
         linear_block_enabled_ = on;
     }
     bool linear_block_enabled() const      { return linear_block_enabled_; }
+    bool acc_bias_updates_enabled() const  { return acc_bias_updates_enabled_; }
 
     void set_warmup_mode(bool on) {
         set_linear_block_enabled(!on);                 // off during warmup
@@ -1426,6 +1430,66 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_a
     // Accel-only initialization observes gravity direction only.
     // It constrains tilt but leaves yaw around world-down unobservable.
     set_accel_only_attitude_covariance_();
+
+    if constexpr (with_gyro_bias) {
+        Pext.template block<3,3>(0,3).setZero();
+        Pext.template block<3,3>(3,0).setZero();
+    }
+
+    zero_AL_cross_cov_once_();
+
+    if constexpr (with_accel_bias) {
+        Pext.template block<3,3>(0, OFF_BA).setZero();
+        Pext.template block<3,3>(OFF_BA, 0).setZero();
+    }
+
+    symmetrize_Pext_();
+}
+
+// Seed the filter from an attitude solved outside it.
+//
+// This is initialize_from_acc() with the gravity direction replaced by a
+// supplied quaternion and the yaw variance made an argument.  Both differences
+// matter to the caller it exists for.  An accelerometer sample is gravity plus
+// the orbital specific force, so tilt rebuilt from one instant carries a
+// wave-correlated error, while an external observer that has been integrating
+// gyro through the wave band does not; and once a magnetometer has gauged the
+// heading, yaw is no longer the unobservable direction that
+// set_accel_only_attitude_covariance_() assumes by default.
+//
+// Everything else is deliberately identical: the attitude error state is
+// zeroed, the covariance is rebuilt as an anisotropic tilt/yaw split about the
+// world-down axis, and the attitude-to-bias cross-covariances are dropped,
+// since a correlation learned against the discarded attitude does not describe
+// the new one.
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::initialize_from_attitude(
+    Eigen::Quaternion<T> const& q_bw,
+    T tilt_sigma_rad,
+    T yaw_sigma_rad)
+{
+    if (!q_bw.coeffs().allFinite()) {
+        throw std::runtime_error(
+            "Invalid attitude quaternion for initialization: not finite");
+    }
+    if (!(q_bw.norm() > T(1e-8))) {
+        throw std::runtime_error(
+            "Invalid attitude quaternion for initialization: norm too small");
+    }
+
+    // Writes qref through the un-heel composition and zeroes the attitude
+    // error state, which is exactly the head<3>() reset initialize_from_acc()
+    // performs by hand.
+    set_quaternion_boat(q_bw);
+
+    const T tilt_sigma = (std::isfinite(tilt_sigma_rad) && tilt_sigma_rad > T(0))
+                             ? tilt_sigma_rad
+                             : T(0.035);
+    const T yaw_sigma = (std::isfinite(yaw_sigma_rad) && yaw_sigma_rad > T(0))
+                            ? yaw_sigma_rad
+                            : T(1.5708);
+
+    set_accel_only_attitude_covariance_(tilt_sigma, yaw_sigma);
 
     if constexpr (with_gyro_bias) {
         Pext.template block<3,3>(0,3).setZero();
