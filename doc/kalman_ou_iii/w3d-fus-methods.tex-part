@@ -63,7 +63,10 @@ componentwise to form the covariance $\mat{R}_S$, as defined in
 \eqref{eq:RS-from-rS}.  The channel is a regularizer, not a physical sensor.
 The purpose of the scaling argument below is to choose $r_S$ on the same
 physical scale as the natural fluctuations of $S$ within a stated family of
-wave spectra and a fixed pseudo-update cadence.
+wave spectra, at a reference pseudo-update cadence.  Section
+\ref{sec:riccati-similarity-design-guidance} revisits the cadence itself and
+Sec.~\ref{sec:riccati-deployed-cadence} records what the wrapper actually
+schedules.
 
 \subsection{Variance of \texorpdfstring{$S$}{S} from the acceleration spectrum}
 

@@ -444,7 +444,8 @@ In the weak-measurement limit this reduces to $T_S\propto\tau$; in the
 strong-measurement limit it approaches $T_S\propto1/\sigma_a^2$.  The latter is
 less attractive operationally because it makes update timing strongly
 amplitude dependent.  A bounded $T_S=c_T\tau$ schedule is therefore the
-simpler self-similar candidate for future evaluation.
+simpler self-similar choice, and is the cadence the wrapper now deploys
+(Sec.~\ref{sec:riccati-deployed-cadence}).
 
 \subsubsection{Interpretation and limits of the adaptation law}
 
@@ -471,9 +472,12 @@ $q_{\mathrm{eff}}=S_{e_a}(0)$, together with the desired normalized
 regularization bandwidth $\omega_R\tau$.
 
 Accordingly, the current implementation should be described as an empirically
-calibrated approximation to this Riccati/pole law.  A particularly clean future
-variant is to set $T_S=c_T\tau$ and compare (i) the existing cubic target,
-(ii) a $\tau$-only or saturating-amplitude target motivated by the
-strong-accelerometer limit, and (iii) the full posterior-noise expression
+calibrated approximation to this Riccati/pole law.  The self-similar cadence
+$T_S=c_T\tau$ is now deployed; what it is paired with at the filter input, and
+which of the four groups that pairing actually holds fixed, is recorded in
+Sec.~\ref{sec:riccati-deployed-cadence}.  The remaining open comparison is
+between (i) the existing cubic target, (ii) a $\tau$-only or
+saturating-amplitude target motivated by the strong-accelerometer limit, and
+(iii) the full posterior-noise expression
 \eqref{eq:riccati-pole-target-rs}.  Such tests distinguish coordinate
 similarity from actual closed-loop regularization invariance.

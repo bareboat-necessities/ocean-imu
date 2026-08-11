@@ -279,14 +279,16 @@ exactly $\sigma_{aw}^2\tau^6$ and the remaining integral is
 \eqref{eq:ou-F3}.
 \end{proof}
 
-\begin{remark}[What a fixed pseudo-update cadence does and does not prove]
+\begin{remark}[What the pseudo-update cadence does and does not prove]
 \label{rem:ou-cadence-boundary}
 The finite-horizon theorem gives a second exact OU scaling, but it also shows
 why a fixed pseudo-update period alone cannot justify a universal
 $r_S=c_R\sigma_{aw}\tau^3$ coefficient.  If the relevant horizon $T_S$ obeys
 $T_S/\tau=\mathrm{const}$, then $\sqrt{F_3(T_S/\tau)}$ is constant and the cubic
 law follows immediately.  If $T_S$ is fixed in seconds while $\tau$ varies,
-the coefficient changes with $T_S/\tau$.  In particular,
+the coefficient changes with $T_S/\tau$.  The deployed wrapper takes the first
+branch away from its safety clamps
+(Sec.~\ref{sec:riccati-deployed-cadence}).  In particular,
 \begin{equation}
  F_3(\rho)=\frac{\rho^6}{36}+O(\rho^7),
  \qquad \rho\rightarrow0,
@@ -560,9 +562,11 @@ Disabling wave-band tuning bypasses this period-scaled variance band and keeps
 the older broadband path available for ablation.  Hard frequency clamps,
 parameter clamps, and the fixed physical dynamics of the upstream
 complementary levelling observer introduce additional time scales and therefore
-break exact JONSWAP similarity at the boundaries.  Likewise, the fixed
-pseudo-update cadence means the finite-horizon coefficient of
-Theorem~\ref{thm:ou-finite-horizon-rs} is not invariant over all $\tau$.
+break exact JONSWAP similarity at the boundaries.  Likewise, the finite-horizon
+coefficient of Theorem~\ref{thm:ou-finite-horizon-rs} is invariant only while
+$T_S/\tau$ is held fixed; the deployed self-similar cadence does hold it fixed
+between the period clamps, but not on them
+(Sec.~\ref{sec:riccati-deployed-cadence}).
 Neither fact changes the dimensional OU state scale
 $\sigma_{aw}\tau^3$; both limit how literally a single calibrated $c_R$ should
 be interpreted over a very wide operating envelope.

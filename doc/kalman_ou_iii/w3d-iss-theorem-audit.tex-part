@@ -80,7 +80,7 @@ than merely assuming their existence.  The defaults give
 \SI{0.12}{m/s^2}\le\sigma_{z,k}\le\SI{6}{m/s^2},
 \qquad
 \sigma_{x,k}=\sigma_{y,k}=1.87\,\sigma_{z,k},\\
-0.4\le r_{S,k}\le400\ \mathrm{m\,s},
+0.4\le r_{S,k}^{\mathrm{base}}\le400\ \mathrm{m\,s},
 \qquad
 \tau_b=\SI{5000}{s}.
 \end{gathered}
@@ -92,15 +92,53 @@ also clamps a directly supplied OU time constant away from zero, and the default
 legacy raw $P_{a_wa_w}$ replacement is disabled, leaving the proof-compatible
 positive-semidefinite covariance-inflation path active.
 
-At the fixed-rate validation point quoted in the proof,
+\paragraph{Deployed pseudo-update cadence.}
+The default wrapper schedules the $S=0$ regularizer on the self-similar cadence
+of Sec.~\ref{sec:riccati-similarity-design-guidance},
 \begin{equation}
-h=\SI{5}{ms},\qquad T_S=\SI{15}{ms}=3h,
-\label{eq:iss-fixed-rate-cadence-check}
+T_{S,k}=\operatorname{clip}\!\left(
+c_T\tau_{\mathrm{applied},k},\,
+T_{S,\min},\,T_{S,\max}\right),
+\qquad
+c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}}\approx0.0136,
+\label{eq:iss-deployed-cadence}
 \end{equation}
-so the four required $S$ observations occur on exact sample boundaries.  This
-checks the cadence assumption for that validation configuration; it is not a
-claim that arbitrary variable-step deployment automatically has exact
-$T_S$ spacing.
+with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{250}{ms}$.  Over the clamped
+$\tau$ envelope this gives $T_{S,k}\in[\SI{5}{ms},\SI{164}{ms}]$, so at the
+nominal \SI{200}{Hz} rate the realized pseudo-update gaps satisfy
+\begin{equation}
+h=\SI{5}{ms}\le T_j\le T_{S,\max}+h=\SI{169}{ms},
+\label{eq:iss-deployed-cadence-gap-check}
+\end{equation}
+which is exactly the bounded-gap hypothesis
+Eq.~\eqref{eq:iss-S-gap-bounds} discharged through
+Eq.~\eqref{eq:iss-scheduler-gap-witness}.  The gaps are \emph{not} in general
+equally spaced: at a representative $\tau_{\mathrm{applied}}=\SI{3.49}{s}$ the
+configured period is $T_S=\SI{47.6}{ms}=9.53\,h$, and the scheduler alternates
+between nine- and ten-sample gaps.  Lemma~\ref{lem:iss-axis-uco} is stated for
+that case, so no equal-spacing claim is made or needed.
+
+The wrapper additionally renormalizes the pseudo-measurement standard deviation
+so that the per-update information rate $r_S^2T_S$ is cadence invariant,
+\begin{equation}
+r_{S,k}=r_{S,k}^{\mathrm{base}}\sqrt{\frac{T_{S,0}}{T_{S,k}}},
+\qquad
+T_{S,0}=\SI{15}{ms},
+\label{eq:iss-cadence-information-scale}
+\end{equation}
+and does not re-apply the base clamp afterwards.  The value actually reaching
+the MEKF is therefore bounded, but not by the base interval in
+Eq.~\eqref{eq:iss-default-implementation-bounds}.  Since
+$\sqrt{T_{S,0}/T_{S,k}}\in[0.303,1.733]$ over the envelope above, a
+conservative enclosure is
+\begin{equation}
+0.121\le r_{S,k}\le693\ \mathrm{m\,s},
+\label{eq:iss-effective-rs-bounds}
+\end{equation}
+which is all Eq.~\eqref{eq:iss-R-bounds} requires: uniformly positive and
+uniformly finite.  Equation~\eqref{eq:iss-effective-rs-bounds} encloses the
+attainable set rather than describing it tightly, because the base clamp and
+the cadence factor cannot reach their extremes at the same $\tau$.
 
 \begin{table}[t]
 \caption{Audit of the conditions entering the local ISS claim.}
@@ -114,9 +152,9 @@ Condition & Status in the OU--III argument \\
 21-state uniform detectability & Proved by Lemma~\ref{lem:iss-21-detectable}: the 18-state block is UCO and the residual accelerometer-bias OU block contracts with $\rho_b<1$. \\
 Uniform stabilizability & Proved from the full-rank positive process covariance, Eq.~\eqref{eq:iss-Qeff-bounds}. \\
 Positive bounded $R_k$ & Explicit theorem/configuration assumption, Eq.~\eqref{eq:iss-R-bounds}; callers must retain nonzero finite sensor and pseudo-measurement covariances. \\
-Bounded adaptive schedule & Enforced by the default fusion-wrapper clamps; concrete values are displayed in Eq.~\eqref{eq:iss-default-implementation-bounds}. \\
+Bounded adaptive schedule & Enforced by the default fusion-wrapper clamps; concrete values are displayed in Eqs.~\eqref{eq:iss-default-implementation-bounds} and \eqref{eq:iss-effective-rs-bounds}. \\
 Predictable schedule & Enforced by staging the tuner result for the following IMU sample, Eq.~\eqref{eq:iss-predictable-schedule}. \\
-Exact $S$ cadence & Satisfied by the fixed \SI{200}{Hz} validation, Eq.~\eqref{eq:iss-fixed-rate-cadence-check}; otherwise a Live-interval assumption. \\
+Bounded $S$ pseudo-update gaps & Proved for the deployed self-similar cadence, Eq.~\eqref{eq:iss-deployed-cadence-gap-check}; the scheduler bound Eq.~\eqref{eq:iss-scheduler-gap-witness} holds for any configured period. Equal spacing is not required. \\
 Vector excitation & Live-interval assumption: accepted accelerometer/magnetometer pairs must satisfy Eqs.~\eqref{eq:iss-vector-magnitude-bounds}--\eqref{eq:iss-vector-gap}. \\
 No reset/outage & Live-interval assumption; startup, hard reset, re-lock, and arbitrarily long rejection/outage patterns remain outside the theorem. \\
 \bottomrule
