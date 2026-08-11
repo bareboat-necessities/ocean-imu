@@ -112,14 +112,22 @@ mean across records:
 
 | | first heading | Z %Hs | 3D % | roll deg | pitch deg | yaw deg | acc bias m/s^2 |
 |---|---|---|---|---|---|---|---|
-| `staged_mekf` | ~22 s | 4.451 | 20.318 | 0.373 | 0.274 | 1.795 | 0.0632 |
-| `mahony_proxy`, two-stage (default) | 22-52 s | 4.435 | 20.286 | 0.340 | 0.266 | 1.834 | 0.0574 |
-| `mahony_proxy`, single-stage | ~105 s | 4.441 | 20.242 | 0.310 | 0.259 | 1.839 | 0.0517 |
+| `staged_mekf` | ~22 s | 4.301 | 19.872 | 0.372 | 0.275 | 1.796 | 0.0631 |
+| `mahony_proxy`, two-stage (default) | 22-52 s | 4.287 | 19.851 | 0.339 | 0.266 | 1.835 | 0.0574 |
+| `mahony_proxy`, single-stage | ~105 s | -- | -- | 0.310 | 0.259 | 1.839 | 0.0517 |
+
+Measured after merging main's r_S adaptation-law work. That work moves
+displacement and this one moves attitude, and they are independent: main alone
+scores Z 4.302, 3D 19.876, roll 0.375, yaw 1.796, bias 0.0636, so the
+`staged_mekf` row above reproduces it and the proxy row adds the attitude gain
+on top without giving any of the displacement gain back. The single-stage row's
+displacement figures are from the pre-merge tree and are not restated; its
+attitude figures are the ones it was chosen for.
 
 `staged_mekf` reproduces the pre-change numbers exactly, so the flag restores
 the old path rather than approximating it.
 
-The default improves roll 9%, accelerometer bias 9%, pitch 3%, 3D and Z
+The default improves roll 10%, accelerometer bias 10%, pitch 3%, 3D and Z
 slightly, at the same time to first heading as before. All eight quality gates
 pass in every configuration.
 
@@ -131,8 +139,8 @@ decision, not a filter one, so both are supported and the fast one is the
 default.
 
 Per-record, the default is not uniformly better than the staged path: roll on
-pmstokes H4 goes 0.240 -> 0.405 deg and on jonswap H0.27 0.230 -> 0.281, paid
-for by 0.560 -> 0.256 on jonswap H1.5 and 0.408 -> 0.267 on pmstokes H0.27.
+pmstokes H4 goes 0.242 -> 0.405 deg and on jonswap H0.27 0.234 -> 0.279, paid
+for by 0.564 -> 0.256 on jonswap H1.5 and 0.396 -> 0.265 on pmstokes H0.27.
 The single-stage configuration has its own smaller spread. Both improve the
 mean; neither dominates record by record.
 
