@@ -234,3 +234,192 @@ applied after the base clamp on $r_S^{\mathrm{base}}$ and is not itself
 re-clamped, so the value reaching the filter can leave the nominal base
 interval; Appendix~\ref{app:iss-stability} records the resulting effective
 bounds.
+
+\subsubsection{Amplitude-exponent ablation of the regularizer schedule}
+\label{sec:riccati-law-ablation}
+
+Section~\ref{sec:riccati-operating-regime} leaves a sharp, falsifiable
+question.  The deployed filter is in the strong acceleration-observation
+branch by every available measure, and the sensor-floor reading of that branch
+predicts a $\sigma_{aw}$-free schedule $r_S\propto\tau^{5/2}$, while the
+model-mismatch reading of Remark~\ref{rem:riccati-effective-ra} predicts the
+deployed $r_S\propto\sigma_{aw}\tau^{5/2}$.  The two differ only in the
+amplitude exponent, so the implementation exposes exactly that one degree of
+freedom,
+\begin{equation}
+ r_S
+ =\frac{\sqrt{2r_a}\,\tau^3}{\sqrt{T_S}\,\kappa^3}
+ \left(\frac{\sigma_{aw}}{\sigma_{\mathrm{ref}}}\right)^{p},
+ \qquad
+ \sigma_{\mathrm{ref}}
+ =\frac{\sqrt{2r_a}}{\kappa^3c_R\sqrt{T_{S,0}}},
+\label{eq:riccati-exponent-family}
+\end{equation}
+with $\kappa$ chosen so that $\sigma_{\mathrm{ref}}$ is the $\sigma_{aw}$ of
+the $H_s=\SI{1.5}{m}$ nominal calibration sea.  Because the common factor
+$\tau^3/\sqrt{T_S}$ cancels, the family \eqref{eq:riccati-exponent-family}
+passes exactly through the deployed schedule at $p=1$ and through the
+strong-branch asymptote at $p=0$, and every member agrees at
+$\sigma_{\mathrm{ref}}$ for \emph{every} $\tau$.  The ablation therefore
+isolates the amplitude exponent alone: it cannot be confounded by an overall
+change of regularizer gain, which
+Table~\ref{tab:ou_robustness_sensitivity} shows would otherwise dominate.
+
+\begin{table}[t]
+\caption{Amplitude-exponent ablation of the integral regularizer.  OU--III
+Adaptive mode, nine scenarios (four JONSWAP and four PM--Stokes stationary
+seas plus the non-stationary transition) $\times$ ten paired seed triplets,
+$n=90$ paired units, \SI{900}{s} scoring window.  Differences are paired
+against the deployed $p=1$ schedule with 95\% normal-theory intervals.}
+\label{tab:riccati-exponent-ablation}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Schedule & $Z$ [\%$H_s$] & $\Delta Z$ vs $p=1$ & 3D RMS [m] \\
+\midrule
+$p=0$ (strong branch, $\sigma_{aw}$-free) & 5.047 & $+0.300\pm0.071$ & 0.712 \\
+$p=0.5$                                   & 4.823 & $+0.076\pm0.025$ & 0.670 \\
+$\mathbf{p=1}$ \textbf{(deployed)}        & \textbf{4.747} & --- & \textbf{0.651} \\
+$p=1.25$                                  & 4.779 & $+0.032\pm0.012$ & 0.653 \\
+$p=1.5$                                   & 4.817 & $+0.070\pm0.016$ & 0.660 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The outcome, Table~\ref{tab:riccati-exponent-ablation}, is unambiguous and
+negative for the sensor-floor reading.  Vertical error falls monotonically
+from $p=0$ to $p=1$ and rises again through $p=1.25$ and $p=1.5$, a clean
+minimum at the deployed exponent.  Removing the $\sigma_{aw}$
+factor entirely costs $+0.300$ percent of $H_s$ pooled, a
+\SI{6.3}{\percent} relative degradation whose confidence interval excludes
+zero by a wide margin, and the same ordering holds on the three-dimensional
+metric.  The degradation is worst at the ends of the envelope furthest from
+the anchor sea --- $+0.65$ at $H_s=\SI{0.27}{m}$ and $+0.60$ at
+$H_s=\SI{8.5}{m}$ for the JONSWAP family --- which is the signature of a
+missing amplitude dependence rather than of a mis-set gain, since a gain error
+would degrade one end and improve the other.  The full posterior law
+\eqref{eq:riccati-pole-target-rs} is numerically indistinguishable from the
+$p=0$ column, as $\zeta\gg1$ requires; the two differ by less than
+$0.002$ percent of $H_s$ in every scenario.
+
+The conclusion is therefore that the deployed filter occupies the strong
+acceleration-observation branch, but with an effective low-frequency
+acceleration-noise density dominated by the sea-state-proportional
+model-mismatch term of \eqref{eq:riccati-Ra-floor-plus-model} rather than by
+the sensor floor \eqref{eq:riccati-ra-sensor}.  Equation
+\eqref{eq:riccati-mismatch-branch} is then the operative asymptotics, and the
+schedule it prescribes, $r_S\propto\sigma_{aw}\tau^{5/2}$, is what the
+implementation already applies.  The earlier statement that the cubic law is
+``an approximation to a pole-placement schedule'' survives, but its
+justification changes: the coefficient $c_R$ should be read as absorbing
+$\sqrt{\beta_m}$ and the target pole $\kappa$, not as the weak-branch
+coordinate-similarity constant of Theorem~\ref{thm:ou-regularized-rs}.
+
+This also bounds what the reduced scalar model can be asked to do.  It
+correctly predicts the $\tau^{5/2}$ exponent that the self-similar cadence
+produces, and it correctly predicts insensitivity to $\sigma_{aw}$ at fixed
+$r_S$; it does not predict the amplitude dependence of $r_S$ itself, because
+that is controlled by a term the reduction omits.  A physically calibrated
+$\beta_m$, measured from the actual low-frequency acceleration residual of the
+full MEKF rather than from the accelerometer datasheet, is the natural next
+refinement and would make \eqref{eq:riccati-pole-target-rs} usable directly
+instead of through the empirical coefficient $c_R$.
+
+\subsubsection{The multipliers are calibrated; the floor was not}
+\label{sec:riccati-multiplier-retune}
+
+Given that the exponent is right, the remaining question is whether the three
+constant multipliers of the adaptation law --- $c_\tau$ on the applied OU time
+constant, $c_\sigma$ on the acceleration scale, and $c_R$ on the regularizer
+--- are themselves well chosen.  A one-at-a-time sweep about the deployed
+point, scored as the mean vertical error over the eight stationary seas, finds
+that they are: each coordinate is a clean local minimum at its deployed value,
+and every one of the twelve perturbations tested is worse
+(Table~\ref{tab:multiplier-sweep}).
+
+\begin{table}[t]
+\caption{One-at-a-time sweep of the adaptation multipliers about the deployed
+point $(c_\tau,c_\sigma,c_R)=(1.0,0.9,0.35)$.  Entries are the mean vertical
+error over the eight stationary seas, percent of $H_s$, three paired seed
+triplets.  Every perturbation is worse in both the old and the new $r_S$ floor.}
+\label{tab:multiplier-sweep}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Swept & \multicolumn{5}{c}{mean $Z$ error [\%$H_s$]} \\
+\midrule
+$c_R$      & 0.25: 4.847 & 0.30: 4.760 & \textbf{0.35: 4.738} & 0.42: 4.777 & 0.50: 4.893 \\
+$c_\sigma$ & 0.75: 4.762 & \textbf{0.90: 4.738} & 1.05: 4.769 & 1.20: 4.839 & \\
+$c_\tau$   & 0.85: 4.971 & 0.925: 4.791 & \textbf{1.00: 4.738} & 1.075: 4.793 & 1.15: 4.958 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The sweep also exposes why no multiplier could have helped the cases that most
+needed it.  Across all twelve configurations the two low-motion columns are
+frozen: the $H_s=\SI{0.27}{m}$ JONSWAP sea stays at $5.51$ and its PM--Stokes
+counterpart at $5.19$ percent of $H_s$, to three decimals, while every other
+sea responds normally.  The cause is the lower clamp on $r_S$.  At that
+operating point the schedule asks for
+$c_R\sigma_{aw}\tau^3=0.35\times0.353\times1.247^3=\SI{0.24}{m.s}$, below the
+\SI{0.4}{m.s} floor, so the floor --- not the law --- set the regularizer, and
+it set it \emph{weaker} than the law intended.  Lowering the floor to
+\SI{0.15}{m.s}, which is clear of the schedule's demand across the calibrated
+envelope, recovers what the multipliers could not
+(Table~\ref{tab:rs-floor-effect}).  The multiplier optimum is unchanged by the
+floor change: re-running the sweep at the new floor again selects
+$(1.0,0.9,0.35)$, so the two effects are separable.
+
+\begin{table}[t]
+\caption{Effect of the $r_S$ lower clamp.  OU--III Adaptive, ten paired seed
+triplets, \SI{900}{s} scoring window; vertical error in percent of $H_s$.  The
+gain is confined to the low-motion seas, where the floor was binding.}
+\label{tab:rs-floor-effect}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+& $r_{S,\min}=\SI{0.4}{m.s}$ & $r_{S,\min}=\SI{0.15}{m.s}$ & change \\
+\midrule
+JONSWAP $H_s=\SI{0.27}{m}$    & 5.575 & 5.115 & $-8.3\%$ \\
+PM--Stokes $H_s=\SI{0.27}{m}$ & 5.272 & 4.771 & $-9.5\%$ \\
+Other six stationary seas     & \multicolumn{2}{c}{unchanged within $\pm0.2\%$} & \\
+Non-stationary transition     & 4.773 & 4.778 & $+0.1\%$ \\
+\midrule
+Mean over the eight seas      & 4.744 & 4.625 & $\mathbf{-2.5\%}$ \\
+Worst sea                     & 5.575 & 5.115 & $\mathbf{-8.3\%}$ \\
+\midrule
+Stress $H_s=\SI{0.05}{m}$     & 27.0 & 17.6 & $-35\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The near-still-water stress case is the one that most justifies the change.
+The \SI{0.4}{m.s} floor existed to stop the regularizer from becoming
+arbitrarily strong as the sea goes quiet, but its actual effect was the
+opposite: with almost no wave motion to preserve, the floor held $r_S$ too high
+to suppress drift, and the $H_s=\SI{0.05}{m}$ case degraded to
+\SI{27.0}{\percent} of $H_s$.  Removing that obstruction cuts it by a third,
+and the absolute vertical error falls from \SI{13.5}{mm} to \SI{8.8}{mm}.  The
+gain saturates below about \SI{0.25}{m.s}, so \SI{0.15}{m.s} retains a real
+guard against $r_S$ collapsing toward zero while staying clear of the
+calibrated envelope.
+
+One cost is worth recording.  With the floor no longer clipping, the coupled
+$(\tau,r_S\propto\tau^3)$ sensitivity span of
+Table~\ref{tab:ou_robustness_sensitivity} widens from
+\num{4.452} to \OURobustnessCoupledTauSpan\ percent of $H_s$: the clamp had
+been masking part of the schedule's true sensitivity to a coupled $\tau$
+mis-scaling.  Performance at the deployed operating point is unchanged
+(\OURobustnessNominalMean\ percent of $H_s$), and the multiplier optimum does
+not move, so this is exposure of an existing sensitivity rather than a new one.
+
+Two qualifications belong with these numbers.  First, the improvement is in
+relative accuracy in small seas: the pooled absolute three-dimensional RMS is
+statistically unchanged, because the low-motion scenarios contribute little to
+it.  Second, the search was scored on a five-seed training split and confirmed
+on the five held-out seeds, where the same floor change gives $-2.6\%$ against
+$-2.5\%$ on the training split, so the effect is not an artifact of the seeds
+used to find it.

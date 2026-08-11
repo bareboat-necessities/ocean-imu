@@ -3,10 +3,10 @@
 \providecommand{\OURobustnessNominalMean}{4.85}
 \providecommand{\OURobustnessWorstParameter}{coupled tau and r-S}
 \providecommand{\OURobustnessWorstScale}{0.5}
-\providecommand{\OURobustnessWorstMean}{9.31}
-\providecommand{\OURobustnessWorstDifference}{+4.45}
-\providecommand{\OURobustnessWorstDifferenceLow}{+4.31}
-\providecommand{\OURobustnessWorstDifferenceHigh}{+4.60}
+\providecommand{\OURobustnessWorstMean}{10.38}
+\providecommand{\OURobustnessWorstDifference}{+5.53}
+\providecommand{\OURobustnessWorstDifferenceLow}{+5.37}
+\providecommand{\OURobustnessWorstDifferenceHigh}{+5.69}
 \providecommand{\OURobustnessRSHalfThreeDDifference}{+0.045}
 \providecommand{\OURobustnessRSHalfThreeDLow}{+0.040}
 \providecommand{\OURobustnessRSHalfThreeDHigh}{+0.049}
@@ -17,25 +17,25 @@
 \providecommand{\OURobustnessSigmaSpan}{0.051}
 \providecommand{\OURobustnessRSSpan}{0.546}
 \providecommand{\OURobustnessCoupledSigmaSpan}{0.446}
-\providecommand{\OURobustnessCoupledTauSpan}{4.452}
-\providecommand{\OURobustnessLowReferenceMean}{5.58}
-\providecommand{\OURobustnessLowStressMean}{27.01}
-\providecommand{\OURobustnessLowStressAbsolute}{0.0135}
-\providecommand{\OURobustnessLowDifference}{+21.43}
-\providecommand{\OURobustnessLowDifferenceLow}{+19.56}
-\providecommand{\OURobustnessLowDifferenceHigh}{+23.72}
-\providecommand{\OURobustnessControlledAdaptiveMean}{4.77}
-\providecommand{\OURobustnessRapidAdaptiveMean}{5.01}
+\providecommand{\OURobustnessCoupledTauSpan}{5.530}
+\providecommand{\OURobustnessLowReferenceMean}{5.12}
+\providecommand{\OURobustnessLowStressMean}{17.56}
+\providecommand{\OURobustnessLowStressAbsolute}{0.0088}
+\providecommand{\OURobustnessLowDifference}{+12.44}
+\providecommand{\OURobustnessLowDifferenceLow}{+9.57}
+\providecommand{\OURobustnessLowDifferenceHigh}{+15.88}
+\providecommand{\OURobustnessControlledAdaptiveMean}{4.78}
+\providecommand{\OURobustnessRapidAdaptiveMean}{5.02}
 \providecommand{\OURobustnessRapidDifference}{+0.24}
 \providecommand{\OURobustnessRapidDifferenceLow}{+0.14}
 \providecommand{\OURobustnessRapidDifferenceHigh}{+0.35}
-\providecommand{\OURobustnessRapidAdaptationDifference}{-4.99}
+\providecommand{\OURobustnessRapidAdaptationDifference}{-4.98}
 \providecommand{\OURobustnessRapidAdaptationLow}{-5.29}
 \providecommand{\OURobustnessRapidAdaptationHigh}{-4.64}
 
 \begin{table*}[t]
   \centering
-  \caption{OU--III tuning sensitivity at the nominal $H_s=1.5$ m sea. Each entry is vertical-displacement RMS error in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). The first three columns hold the other two parameters frozen; the last two move $r_S$ as the deployed law $r_S=\operatorname{clip}(0.35\,\sigma_{aw}\tau^3,0.4,400)$ does. The $r_S$ multiplier acts on the pseudo-measurement standard deviation, so the corresponding covariance scales quadratically.}
+  \caption{OU--III tuning sensitivity at the nominal $H_s=1.5$ m sea. Each entry is vertical-displacement RMS error in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). The first three columns hold the other two parameters frozen; the last two move $r_S$ as the deployed law $r_S=\operatorname{clip}(0.35\,\sigma_{aw}\tau^3,0.15,400)$ does. The $r_S$ multiplier acts on the pseudo-measurement standard deviation, so the corresponding covariance scales quadratically.}
   \label{tab:ou_robustness_sensitivity}
   \footnotesize
   \setlength{\tabcolsep}{7pt}
@@ -45,7 +45,7 @@
     \cmidrule(lr){2-4}\cmidrule(lr){5-6}
     Multiplier & $\tau$ & $\sigma_{aw}$ & $r_S$ & $\sigma_{aw},r_S$ & $\tau,r_S\propto\tau^3$ \\
     \midrule
-    0.5 & 4.87 $\pm$ 0.14 & 4.82 $\pm$ 0.17 & 5.40 $\pm$ 0.10 & 5.30 $\pm$ 0.10 & 9.31 $\pm$ 0.15 \\
+    0.5 & 4.87 $\pm$ 0.14 & 4.82 $\pm$ 0.17 & 5.40 $\pm$ 0.10 & 5.30 $\pm$ 0.10 & 10.38 $\pm$ 0.18 \\
     0.75 & 4.86 $\pm$ 0.15 & 4.84 $\pm$ 0.16 & 4.94 $\pm$ 0.12 & 4.92 $\pm$ 0.12 & 5.73 $\pm$ 0.10 \\
     1 & 4.85 $\pm$ 0.15 & 4.85 $\pm$ 0.15 & 4.85 $\pm$ 0.15 & 4.85 $\pm$ 0.15 & 4.85 $\pm$ 0.15 \\
     1.25 & 4.85 $\pm$ 0.15 & 4.86 $\pm$ 0.15 & 4.92 $\pm$ 0.18 & 4.92 $\pm$ 0.18 & 5.40 $\pm$ 0.27 \\
@@ -64,11 +64,11 @@
     \toprule
     Case & Mode & Z [m] & Z [\%$H_s$] & 3D [m] & Pitch [$^\circ$] \\
     \midrule
-    Low motion, $H_s=0.27$ m & Adaptive & 0.015 $\pm$ 0.001 & 5.58 $\pm$ 0.23 & 0.064 $\pm$ 0.004 & 0.30 $\pm$ 0.15 \\
-    Low motion, $H_s=0.05$ m & Adaptive & 0.014 $\pm$ 0.002 & 27.01 $\pm$ 3.68 & 0.058 $\pm$ 0.009 & 0.52 $\pm$ 0.19 \\
-    Controlled 360 s ramp & Adaptive & 0.191 $\pm$ 0.005 & 4.77 $\pm$ 0.13 & 0.801 $\pm$ 0.050 & 0.51 $\pm$ 0.20 \\
+    Low motion, $H_s=0.27$ m & Adaptive & 0.014 $\pm$ 0.000 & 5.12 $\pm$ 0.17 & 0.059 $\pm$ 0.003 & 0.30 $\pm$ 0.14 \\
+    Low motion, $H_s=0.05$ m & Adaptive & 0.009 $\pm$ 0.003 & 17.56 $\pm$ 5.38 & 0.038 $\pm$ 0.012 & 0.51 $\pm$ 0.18 \\
+    Controlled 360 s ramp & Adaptive & 0.191 $\pm$ 0.005 & 4.78 $\pm$ 0.13 & 0.801 $\pm$ 0.050 & 0.50 $\pm$ 0.20 \\
     Controlled 360 s ramp & FixedNominal & 0.383 $\pm$ 0.023 & 9.58 $\pm$ 0.57 & 1.351 $\pm$ 0.081 & 0.45 $\pm$ 0.10 \\
-    Rapid 30 s ramp & Adaptive & 0.200 $\pm$ 0.007 & 5.01 $\pm$ 0.17 & 0.831 $\pm$ 0.058 & 0.50 $\pm$ 0.21 \\
+    Rapid 30 s ramp & Adaptive & 0.201 $\pm$ 0.007 & 5.02 $\pm$ 0.17 & 0.830 $\pm$ 0.058 & 0.50 $\pm$ 0.20 \\
     Rapid 30 s ramp & FixedNominal & 0.400 $\pm$ 0.022 & 10.00 $\pm$ 0.56 & 1.401 $\pm$ 0.082 & 0.47 $\pm$ 0.11 \\
     \bottomrule
   \end{tabular}

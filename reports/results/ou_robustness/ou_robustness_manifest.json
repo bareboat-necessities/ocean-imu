@@ -1,23 +1,18 @@
 {
   "command": [
-    "/usr/bin/python3",
+    "/usr/local/bin/python3",
     "tools/ou_robustness.py",
     "--mode",
     "full",
-    "--sensitivity-scales",
-    "0.5,0.75,1.0,1.25,1.5",
-    "--bootstrap-resamples",
-    "10000",
-    "--combine-shards",
-    "--shard-dir",
-    "shards",
+    "--jobs",
+    "4",
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "37e5ed45ae8785a2c1221e419e471b42c7dbcce2",
-  "git_diff_stat": "",
-  "matplotlib": "3.6.3",
+  "git_branch": "claude/iss-stability-adaptation-review-s7mf5h",
+  "git_commit": "352c1a3fee1ddd64f413f4134b95e932abbccec5",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 16930 ++---\n .../ou_robustness/ou_robustness_paired_effects.csv |  1110 +-\n .../ou_robustness/ou_robustness_publication.tex    |    40 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   246 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  2738 +-\n .../results/ou_robustness/ou_robustness_stress.svg |  1017 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1266 +-\n reports/results/ou_validation/ou_validation.json   | 69584 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |  1688 +-\n .../ou_validation/ou_validation_covsync.svg        |  1954 +-\n .../ou_validation/ou_validation_displacement.svg   |  1682 +-\n .../results/ou_validation/ou_validation_macros.tex |   144 +-\n .../ou_validation/ou_validation_manifest.json      |   119 +-\n .../ou_validation/ou_validation_paired_effects.csv |  3976 +-\n .../ou_validation/ou_validation_publication.tex    |    82 +-\n .../results/ou_validation/ou_validation_raw.csv    |   962 +-\n .../ou_validation/ou_validation_summary.csv        |  3870 +-\n .../results/ou_validation/ou_validation_table.tex  |    42 +-\n .../ou_validation/ou_validation_transition.csv     | 23970 +++----\n .../ou_validation/ou_validation_transition.svg     | 20655 +++---\n .../ou_validation/ou_validation_tuning_points.tex  |     4 +-\n .../ou_validation/ou_validation_vertical.svg       |  1718 +-\n 22 files changed, 76927 insertions(+), 76870 deletions(-)",
+  "matplotlib": "3.11.1",
   "nominal_tuning_point": {
     "RS_ms": 2.621722831626892,
     "R_p0_std_m": null,
@@ -25,8 +20,8 @@
     "sigma_a_mps2": 0.724367023,
     "tau_s": 2.17864609
   },
-  "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
+  "numpy": "2.4.6",
+  "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -121,35 +116,35 @@
     "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1418730,
-      "sha256": "35333450938331385fec590ce3e638cf0920932db17ffb2fd2b3da5f009e13b9"
+      "bytes": 1418996,
+      "sha256": "3d65bb347d37112e31d2a93240c7c852c8d38ed247b50a636d46d6ca38f9791e"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 142030,
-      "sha256": "bdc0eee27d6bc530af6f239a742b68f09b8d277ec767ba3c6d53b37bd2ff8bb7"
+      "bytes": 142069,
+      "sha256": "4a693cfc45fc088f1f42e8f6537be016fa9c3bff3c736f3d71e591076ad6d9a0"
     },
     "ou_robustness_publication.tex": {
-      "bytes": 4513,
-      "sha256": "ad76396c95e0da6ba2244b1f838e64dd16106d155fbfcad838bc0600852e087c"
+      "bytes": 4515,
+      "sha256": "b4910098f6b6f56c87bdbb19d698e18c07e7da45c9de9ba496fd41b38d23a2a2"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 195715,
-      "sha256": "8ae07cc2a0c3b751bdd1bb7c5aab705c596bece5cca8081569cf69cf849f42b9"
+      "bytes": 195835,
+      "sha256": "73c592d3a5af1701f8b0eec3154c4e98cecec27ffd6853ebc27cb212d477e2c9"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 114607,
-      "sha256": "4b5d8d0e87ba6b0b0d31ffbca59e7da69d6c42aa13c9c4d95baa8d6076119255"
+      "bytes": 120003,
+      "sha256": "2345dc8445cf854b03c58bd4ec696272969e0790ad6f28ae673a759439a2f83e"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 43341,
-      "sha256": "61ff77d3487857c7884d9c60776060754c9582d3c3dc43382e5b18a8252d8841"
+      "bytes": 47947,
+      "sha256": "ca391921c036b96a0284f4e96d9a526b69936a21ac7f05fb2d6ffd5f1daef4c7"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126437,
-      "sha256": "572e745bf3308663851d7a51ca7a7ec5eb1a16eed6ece7cf761d362feb9bb16a"
+      "bytes": 126544,
+      "sha256": "53407c97cd0fcd7ca3c9ce8c47010c9eea48ad9dfa864b89e913d05e59142a06"
     }
   },
   "source_files": {
@@ -170,16 +165,16 @@
       "sha256": "3ad5804d1f77b1df656d6ccef2851c35f5cab4be8ee7e82bdc144a26d2e8b41e"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 24105,
-      "sha256": "ab5991c2ef360d2ef5d12690c8bd8225d3accd80322060c232da9ebeb2e0367f"
+      "bytes": 25553,
+      "sha256": "3d754d4c4d061d3f8fd85fa28e2be95ab9ed740f18663b867e1114ad698a8ac8"
     },
     "tools/ou_robustness.py": {
-      "bytes": 54260,
-      "sha256": "489f2d74607cb11f5fefc86e27ebc5d401cef49dbe60dfe3c43c10511a5792bb"
+      "bytes": 54262,
+      "sha256": "f58d78d114ac39f78cf77a198afd2530a0d0e24927d4f3de5c1bc17079df445d"
     },
     "tools/ou_validation.py": {
-      "bytes": 150163,
-      "sha256": "91a5d04d12b52bbda01a023a16c330eb056b258ffe4ea35cd5b7fb631fddd773"
+      "bytes": 150165,
+      "sha256": "98bb477f5ead3fc9eae9d24431b367931d43b13faba5d0caafd089fe6a17a386"
     }
   }
 }

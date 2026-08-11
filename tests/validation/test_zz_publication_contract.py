@@ -279,9 +279,16 @@ class PublicationContractOverrideTests(unittest.TestCase):
         stability = (self.DOC / "w3d-iss-stability.tex-part").read_text(
             encoding="utf-8"
         )
-        self.assertIn("relative\ntimes $0,T_S,2T_S,3T_S$", stability)
-        self.assertIn("exact $S$-update spacing is an explicit theorem assumption", stability)
-        self.assertIn("sample-time jitter", stability)
+        # The translational observability lemma is proved for unequally spaced
+        # pseudo-updates, which is what the deployed self-similar cadence
+        # actually produces.  The scope claim must stay bounded-gap: if the
+        # exact-cadence hypothesis ever comes back, the deployed scheduler is
+        # outside the theorem again and this fires.
+        self.assertIn("T_j:=t_j-t_{j-1}\\in[T_-,T_+]", stability)
+        self.assertIn("need not be equally spaced", stability)
+        self.assertIn(r"T_+\le T_{S,\max}+h_{\max}", stability)
+        self.assertNotIn("exact $S$-update spacing is an explicit theorem assumption", stability)
+        self.assertNotIn("sample-time jitter of the nominal", stability)
         self.assertIn(r"Sec.~\ref{sec:block-Phi-Qd}", stability)
         self.assertNotIn("sec:discretization", stability)
 

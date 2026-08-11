@@ -707,7 +707,7 @@ def run_simulator(
 # at a point the deployed filter would never choose.  Keep these in step with
 # the C++ defaults.
 OU_III_RS_COEFF = 0.35
-OU_III_RS_BOUNDS_MS = (0.4, 400.0)
+OU_III_RS_BOUNDS_MS = (0.15, 400.0)
 OU_II_RP0_COEFF = 0.6
 OU_II_RP0_BOUNDS_M = (0.05, 150.0)
 OU_II_RV0_COEFF = 1.1
@@ -2059,7 +2059,7 @@ def _channel_ablation_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{OU--III adaptation-channel ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). The four columns are a $2\times2$ factorial: each channel is either adapted online or frozen at the FixedNominal operating point. \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ while the integral pseudo-measurement scale keeps adapting; \emph{OU only} does the reverse. Because the deployed law sets $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.4,400)$, $r_S$ is derived from the live $\tau$ and $\sigma_{aw}$ estimates even when those are frozen on the way to the filter.}",
+        r"  \caption{OU--III adaptation-channel ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). The four columns are a $2\times2$ factorial: each channel is either adapted online or frozen at the FixedNominal operating point. \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ while the integral pseudo-measurement scale keeps adapting; \emph{OU only} does the reverse. Because the deployed law sets $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.15,400)$, $r_S$ is derived from the live $\tau$ and $\sigma_{aw}$ estimates even when those are frozen on the way to the filter.}",
         r"  \label{tab:ou_mc_channels}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4.0pt}",

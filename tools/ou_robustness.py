@@ -55,7 +55,7 @@ LOW_STRESS_HS_M = 0.05
 # frequency, so both it and the r_S it cubes reach much further.
 TAU_BOUNDS_S = (0.02, 12.0)
 SIGMA_AW_BOUNDS_MPS2 = (1e-9, 6.0)
-R_S_BOUNDS_MS = (0.4, 400.0)
+R_S_BOUNDS_MS = (0.15, 400.0)
 # The code that decides what this study measures: the two tools, and the
 # simulator sources the replays go through.  ``ou_validation.py`` is in the
 # list because this module imports it -- the seed broadcasting, the simulator
@@ -597,7 +597,7 @@ def write_publication_table(
         "",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{OU--III tuning sensitivity at the nominal $H_s=1.5$ m sea. Each entry is vertical-displacement RMS error in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). The first three columns hold the other two parameters frozen; the last two move $r_S$ as the deployed law $r_S=\operatorname{clip}(0.35\,\sigma_{aw}\tau^3,0.4,400)$ does. The $r_S$ multiplier acts on the pseudo-measurement standard deviation, so the corresponding covariance scales quadratically.}",
+        r"  \caption{OU--III tuning sensitivity at the nominal $H_s=1.5$ m sea. Each entry is vertical-displacement RMS error in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). The first three columns hold the other two parameters frozen; the last two move $r_S$ as the deployed law $r_S=\operatorname{clip}(0.35\,\sigma_{aw}\tau^3,0.15,400)$ does. The $r_S$ multiplier acts on the pseudo-measurement standard deviation, so the corresponding covariance scales quadratically.}",
         r"  \label{tab:ou_robustness_sensitivity}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{7pt}",

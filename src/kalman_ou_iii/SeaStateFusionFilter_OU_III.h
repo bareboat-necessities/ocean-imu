@@ -114,7 +114,18 @@ constexpr float MIN_TAU_S   = 0.02f;
 // exactly where the filter was losing.
 constexpr float MAX_TAU_S   = 12.0f;
 constexpr float MAX_SIGMA_A = 6.0f;
-constexpr float MIN_R_S     = 0.4f;
+// The old 0.4 floor was not a safety limit in practice, it was the binding
+// constraint on every low-motion sea.  The schedule asks for 0.24 m*s at the
+// calibrated H_s = 0.27 m point, so the floor clipped it and pinned both
+// low-motion scenarios at an error the tuner multipliers could not move: a
+// full sweep of c_tau, c_sigma and c_R left J0.27 and P0.27 constant to three
+// decimals.  Dropping the floor below the schedule's own demand recovers
+// -8.3 % on the worst sea, -9.5 % on PM-Stokes 0.27 m and -2.5 % on the
+// eight-sea mean, and cuts the near-still H_s = 0.05 m stress case from
+// 27.0 to 17.6 percent of H_s (13.5 mm to 8.8 mm absolute).  The gain saturates below ~0.25; 0.15 keeps a
+// real guard against r_S collapsing toward zero while staying clear of the
+// calibrated envelope.
+constexpr float MIN_R_S     = 0.15f;
 // r_S ~ sigma_aw * tau^3 inherits that range.  The old 35 m*s ceiling was the
 // binding constraint at H_s = 8.5 m: the calibrated fixed-oracle point sat at
 // 34.66 and the error was still falling monotonically against it.
@@ -166,6 +177,57 @@ constexpr float PSEUDO_UPDATE_TAU_RATIO_DEFAULT =
 // The upper guard is inactive over the current tau <= 12 s operating envelope.
 constexpr float PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT;
 constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f;
+
+// Integral-regularizer adaptation laws.  All three place the drift-band
+// regularization pole of the reduced Riccati model; they differ in which
+// asymptotic branch of the posterior acceleration-noise intensity
+//     q_eff = 2 r_a (1 - 1/sqrt(1+zeta)),   zeta = 2 sigma_aw^2 tau / r_a
+// they assume, where r_a ~ R_a*dt is the acceleration measurement noise
+// spectral density seen by the reduced scalar model.
+//
+//   Cubic            r_S,base = c_R sigma_aw tau^3, then renormalized by
+//                    sqrt(T_0/T_S).  With the self-similar cadence
+//                    T_S = c_T tau this is effectively r_S ~ sigma_aw
+//                    tau^(5/2).  DEPLOYED DEFAULT, and the measured optimum.
+//   StrongRiccati    q_eff = 2 r_a: r_S = sqrt(2 r_a) tau^3 / (sqrt(T_S) k^3),
+//                    with no leading-order sigma_aw dependence.
+//   PosteriorRiccati the full transition law, reducing to a sigma_aw tau^3
+//                    schedule as zeta -> 0 and to StrongRiccati as
+//                    zeta -> infinity.
+//
+// The deployed envelope has zeta ~ 1e5..1e7 against the bench sensor floor, so
+// StrongRiccati looks like the applicable branch.  It is not: the amplitude
+// ablation (tools/ou_rs_law_ablation.py) shows dropping the sigma_aw factor
+// costs +0.30 %Hs of vertical error, and a sweep of r_S ~ sigma_aw^p has a
+// clean minimum at p = 1.  The reduction models r_a as a sea-state-independent
+// sensor constant, whereas the real low-frequency acceleration error is
+// dominated by attitude/gravity and bias leakage that scales with sea state,
+// i.e. R_a = R_a,sensor + beta_m sigma_aw^2.  With that term dominant, q_eff ~
+// 2 beta_m sigma_aw^2 dt and the pole-preserving schedule is the deployed
+// sigma_aw tau^(5/2).  The non-Cubic laws exist for that ablation, not as
+// candidate defaults.
+enum class RSAdaptationLaw : uint8_t {
+    Cubic = 0,
+    StrongRiccati = 1,
+    PosteriorRiccati = 2,
+};
+
+// Normalized regularization pole omega_R*tau targeted by the Riccati laws.
+//
+// The ratio between the Riccati and Cubic schedules is independent of tau,
+//     r_S,strong / r_S,cubic = sigma_ref / sigma_aw,
+//     sigma_ref = sqrt(2 r_a) / (kappa^3 c_R sqrt(T_0)),
+// because the tau^3/sqrt(T_S) factor is common to both.  The default kappa is
+// therefore chosen so that sigma_ref equals the sigma_aw of the Hs = 1.5 m
+// nominal calibration sea (tau = 2.179 s, sigma_aw = 0.724 m/s^2, base
+// r_S = 2.622 m*s).  The two laws then agree exactly at that operating point
+// for every tau, and the ablation measures only the sigma_aw dependence of the
+// schedule rather than an overall change of regularizer gain.
+constexpr float R_S_POLE_KAPPA_DEFAULT = 0.3627f;
+// r_a = R_a * dt for the reduced scalar acceleration observation.  The default
+// is the bench accelerometer noise of the validated configuration
+// (0.0148 m/s^2)^2 at the nominal 200 Hz sample interval.
+constexpr float R_S_ACCEL_NOISE_DENSITY_DEFAULT = 0.0148f * 0.0148f * FREQ_SMOOTHER_DT;
 
 struct TuneState {
     float tau_applied   = 1.1f;    // s
@@ -769,6 +831,43 @@ public:
             }
         }
     }
+    // Select which drift-band regularization law generates the r_S target.
+    // Changing it while Live restages the schedule on the next adapt tick; the
+    // active covariance is refreshed here so ablations switch cleanly.
+    void setRSLaw(RSAdaptationLaw law) {
+        rs_law_ = law;
+        if (mekf_ && startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            apply_RS_tune_();
+        }
+    }
+    RSAdaptationLaw getRSLaw() const noexcept { return rs_law_; }
+    void setRSPoleKappa(float kappa) {
+        if (!(std::isfinite(kappa) && kappa > 0.0f)) return;
+        rs_pole_kappa_ = kappa;
+    }
+    float getRSPoleKappa() const noexcept { return rs_pole_kappa_; }
+    // r_a = R_a * dt of the reduced scalar acceleration observation.
+    void setRSAccelNoiseDensity(float r_a) {
+        if (!(std::isfinite(r_a) && r_a > 0.0f)) return;
+        rs_accel_noise_density_ = r_a;
+    }
+    float getRSAccelNoiseDensity() const noexcept { return rs_accel_noise_density_; }
+    // Amplitude tilt exponent p of the Riccati laws: r_S ~ sigma^p tau^(5/2).
+    // p = 0 is the strong-observation asymptote; p = 1 reproduces Cubic.
+    void setRSSigmaExponent(float p) {
+        if (std::isfinite(p)) rs_sigma_exponent_ = p;
+    }
+    float getRSSigmaExponent() const noexcept { return rs_sigma_exponent_; }
+    // Diagnostic: the acceleration-information ratio zeta = 2 sigma^2 tau / r_a
+    // at the current applied operating point.  zeta >> 1 is the strong
+    // acceleration-observation branch.
+    float getAccelInformationRatio() const noexcept {
+        const float r_a = rs_accel_noise_density_;
+        if (!(std::isfinite(r_a) && r_a > 0.0f)) return NAN;
+        return 2.0f * tune_.sigma_applied * tune_.sigma_applied
+               * tune_.tau_applied / r_a;
+    }
+
     float getPseudoUpdateTauRatio() const noexcept { return pseudo_update_tau_ratio_; }
     float getPseudoUpdatePeriodSec() const noexcept {
         return mekf_ ? mekf_->get_pseudo_update_period_s() : NAN;
@@ -1205,10 +1304,70 @@ private:
     // base sigma_aw*tau^3 schedule into an effective sigma_aw*tau^(5/2) schedule
     // at the filter input.
     float pseudo_update_information_rate_scale_() const noexcept {
+        // The Riccati laws already contain the realized T_S, so renormalizing
+        // them again would double-count the cadence.
+        if (rs_law_ != RSAdaptationLaw::Cubic) return 1.0f;
         if (!tau_scaled_pseudo_cadence_ || !mekf_) return 1.0f;
         const float period = mekf_->get_pseudo_update_period_s();
         if (!(std::isfinite(period) && period > 0.0f)) return 1.0f;
         return std::sqrt(pseudo_update_fixed_period_s_ / period);
+    }
+
+    // Pseudo-update period the cadence scheduler would select for a given tau.
+    // Used by the Riccati laws so that the target r_S and the target cadence
+    // refer to the same operating point, including the safety clamps.
+    float pseudo_update_period_for_(float tau) const noexcept {
+        if (!tau_scaled_pseudo_cadence_) return pseudo_update_fixed_period_s_;
+        if (!(std::isfinite(tau) && tau > 0.0f)) return pseudo_update_fixed_period_s_;
+        return std::min(std::max(pseudo_update_tau_ratio_ * tau,
+                                 pseudo_update_period_min_s_),
+                        pseudo_update_period_max_s_);
+    }
+
+    // r_S target in m*s for the selected adaptation law.  For the Riccati laws
+    // this is Eq. (pole-target) of the OU-III paper,
+    //     r_S = sqrt(q_eff) * tau^3 / (sqrt(T_S) * kappa^3),
+    // evaluated at the cadence the scheduler will actually use.
+    float rs_target_from_law_(float tau, float sigma) const noexcept {
+        const float tau3 = tau * tau * tau;
+        if (rs_law_ == RSAdaptationLaw::Cubic) {
+            return R_S_coeff_ * sigma * tau3;
+        }
+        const float r_a = rs_accel_noise_density_;
+        const float kappa = rs_pole_kappa_;
+        if (!(std::isfinite(r_a) && r_a > 0.0f) ||
+            !(std::isfinite(kappa) && kappa > 0.0f)) {
+            return R_S_coeff_ * sigma * tau3;   // degenerate config: stay on Cubic
+        }
+        float q_eff = 2.0f * r_a;
+        if (rs_law_ == RSAdaptationLaw::PosteriorRiccati) {
+            const float zeta = 2.0f * sigma * sigma * tau / r_a;
+            // 1 - 1/sqrt(1+zeta); use the numerically stable small-zeta form so
+            // the weak branch does not vanish into rounding.
+            const float w = (zeta < 1e-3f)
+                            ? 0.5f * zeta * (1.0f - 0.75f * zeta)
+                            : 1.0f - 1.0f / std::sqrt(1.0f + zeta);
+            q_eff *= std::max(0.0f, w);
+        }
+        const float TS = pseudo_update_period_for_(tau);
+        if (!(q_eff > 0.0f) || !(TS > 0.0f)) return R_S_coeff_ * sigma * tau3;
+        const float k3 = kappa * kappa * kappa;
+        float rs = std::sqrt(q_eff) * tau3 / (std::sqrt(TS) * k3);
+        // Optional amplitude tilt (sigma/sigma_ref)^p about the anchor sea.
+        // sigma_ref = sqrt(2 r_a) / (kappa^3 c_R sqrt(T_0)) is the sigma at
+        // which the Riccati and Cubic schedules coincide for every tau, so
+        // p = 0 is the pure strong-observation law and p = 1 reproduces the
+        // deployed Cubic law exactly.  Intermediate p models a low-frequency
+        // acceleration-error density that is itself sea-state dependent.
+        const float p = rs_sigma_exponent_;
+        if (p != 0.0f && sigma > 0.0f) {
+            const float sigma_ref = std::sqrt(2.0f * r_a) /
+                (k3 * R_S_coeff_ * std::sqrt(pseudo_update_fixed_period_s_));
+            if (std::isfinite(sigma_ref) && sigma_ref > 0.0f) {
+                rs *= std::pow(sigma / sigma_ref, p);
+            }
+        }
+        return rs;
     }
 
     void apply_RS_tune_(float rs_scale = 1.0f) {
@@ -1323,8 +1482,7 @@ private:
         // instead would make "freeze the OU channel" silently freeze r_S too,
         // which is precisely the confound the channel ablation exists to
         // remove.
-        float RS_raw = R_S_coeff_ * sigma_target_
-                       * tau_target_ * tau_target_ * tau_target_;
+        float RS_raw = rs_target_from_law_(tau_target_, sigma_target_);
 
         if (enable_clamp_) {
             RS_target_ = std::min(std::max(RS_raw, min_R_S_), max_R_S_);
@@ -1524,6 +1682,11 @@ private:
     float pseudo_update_period_min_s_ = PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT;
     float pseudo_update_period_max_s_ = PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT;
     float pseudo_update_fixed_period_s_ = PSEUDO_UPDATE_PERIOD_NOMINAL_S;
+
+    RSAdaptationLaw rs_law_ = RSAdaptationLaw::Cubic;
+    float rs_pole_kappa_ = R_S_POLE_KAPPA_DEFAULT;
+    float rs_accel_noise_density_ = R_S_ACCEL_NOISE_DENSITY_DEFAULT;
+    float rs_sigma_exponent_ = 0.0f;
 
     bool  wave_band_tuning_       = true;
     WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;
