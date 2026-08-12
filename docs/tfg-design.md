@@ -483,7 +483,125 @@ problem; it was neither. The diagnostic that separates them is whether the
 error is a constant offset or a wander — a gauge offset is constant, and a real
 heading problem is not.
 
-## 8. What this does not claim
+## 8. Adaptation policy, and why each part is not a free parameter
+
+The tuner does not know which filter it is driving, so everything OU-III
+measured about it carries over unchanged. This filter had drifted from that
+policy in four ways; all four are now aligned, and each is guarded by a test in
+`tfg_orchestrator-test`.
+
+### Exogeneity is a timing property, not only a signal choice
+
+Feeding the tuner from the complementary observer keeps its *inputs*
+independent of the filter. Necessary, not sufficient. If the schedule smoothed
+during step `k` were also applied during step `k`, the covariance the MEKF uses
+at `k` would depend on `y_k` — the filter would be weighting a measurement
+against a covariance that measurement had just moved.
+
+So the smoother runs every sample, the cadence tick marks a candidate, and the
+commit happens at the top of the *next* `update()`, before `y_{k+1}` reaches the
+MEKF. `test_schedule_is_exogenous_to_the_current_sample` delivers one violent
+sample and asserts the applied `r_S` does not move within that same update.
+
+### Cadence
+
+Committing every sample is not "more adaptive" — it couples the schedule to the
+measurement stream 200 times a second. The commit runs on a 0.1 s tick
+(OU-III's `ADAPT_EVERY_SECS`). The EMA still sees every sample, so the
+trajectory is unchanged apart from being held piecewise constant between ticks.
+`test_adaptation_is_cadenced` counts distinct committed values over 10 s and
+requires ≤ 120 against 2000 samples.
+
+### The `r_S` floor is 0.15, not 0.4
+
+On OU-III the 0.4 floor was never a safety limit — it was the binding
+constraint on every low-motion sea. The schedule asks for 0.24 m·s at the
+calibrated H_s = 0.27 m point, so the floor clipped it, and a full sweep of
+`c_tau`, `c_sigma` and `c_R` left those scenarios constant to three decimals.
+Dropping it recovered −8.3% on the worst sea, −9.5% on PM-Stokes 0.27 m, −2.5%
+on the eight-sea mean, and cut the near-still H_s = 0.05 m case from 27.0% to
+17.6% of H_s. This filter had inherited the old 0.4 and the same clipping.
+
+### The S=0 cadence is self-similar in tau, and `r_S` must follow it
+
+One pseudo update has covariance `r_S^2`; at one update per `T_S` seconds the
+continuous-equivalent information rate goes as `1/(r_S^2 T_S)`. Scaling `T_S`
+with tau while holding `r_S` fixed therefore changes the regularization
+strength with sea state as a side effect. The cadence is
+`T_S = (0.015/1.1)·tau`, clamped to [5 ms, 250 ms], and the filter input is
+renormalized by `sqrt(T_0/T_S)` to hold the information rate. That turns the
+base `sigma_aw·tau^3` schedule into an effective `sigma_aw·tau^(5/2)` one.
+
+The renormalized value is deliberately **not** re-clamped. The smallest-sea
+point sits on the base floor and must be allowed below it once `T_S > T_0`, or
+the clipping the previous item removes comes straight back.
+
+## 9. Startup policy: MahonyProxy is implemented but not yet at parity
+
+`StartupInitPolicy` selects who solves the attitude the filter starts from.
+**`StagedMekf` is the default.** `MahonyProxy` is implemented and available,
+and is the policy OU-III uses, but on this filter it does not yet match the
+staged path and the reason is understood.
+
+Under `StagedMekf` the MEKF runs from the first sample and levels itself while
+degraded (linear block off, bias frozen, `Racc` inflated), and the magnetic
+reference is captured in that attitude's frame. Under `MahonyProxy` the private
+Mahony observer owns levelling and magnetic acquisition and the MEKF is seeded
+once and goes straight to Live.
+
+### Why the proxy policy is currently worse here
+
+The seeded tilt error is absorbed by the horizontal accelerometer bias, and
+does not come back.
+
+Measured on jonswap H1.5, the accelerometer-bias error reached 744% of the true
+bias on the Y axis — 0.34 m/s², which is `atan(0.34/9.81) = 2.0°` of tilt. The
+scored pitch error on the same record was 2.08°. They are the same quantity.
+Tilt and accelerometer bias are only weakly separable, so a seed that is two
+degrees off is indistinguishable from a bias and gets parked there permanently.
+
+OU-III's own measurements explain where a 2° seed comes from: the observer's
+mean tilt error is 2.76° on the worst record at 7–20 s, 0.85° at 40 s and 0.74°
+at 120 s. Handing off before it converges seeds exactly that error.
+
+### What is fixed, and what is missing
+
+Three genuine defects in the handoff were found and fixed. Each was the same
+mistake — an over-confident prior on something the seed does not actually know:
+
+| defect | effect |
+|---|---|
+| `v, p, S, a_w` seeded to zero with the constructor's `1e-4` prior | asserts position known to 1 cm at a random wave phase |
+| `b_a` seeded to zero with σ = 0.01 m/s² against a true bias up to 0.059 | filter refuses the correction it needs |
+| accelerometer-bias learning unlocked immediately at handoff | the seed transient is absorbed into bias before tilt can settle |
+
+Together these took jonswap H1.5 from **yaw 4.75° to 1.59°** — better than the
+staged path's 2.42° on that record — and pitch from 1.15° to 0.21°. So the
+policy does work when the seed is good.
+
+What is missing is **OU-III's two-stage magnetic acquisition**: a provisional
+lock as soon as the gravity gate allows, then a refinement at 90 s over a 30 s
+window that re-learns the reference and re-gauges heading once the observer has
+converged. This was originally recorded here as a bounded gap. It is not — it
+is load-bearing. Without it the provisional lock is taken on an unconverged
+tilt and nothing ever corrects it.
+
+A gravity-agreement gate on the seed (`proxy_gravity_*`) is implemented, since
+handing off on elapsed time alone is clearly wrong, but its thresholds are not
+yet calibrated and it is not sufficient on its own.
+
+### Evidence
+
+Both simulators, byte-identical records, last 900 s. With `StagedMekf` and the
+adaptation policy of section 8, the TFG simulator passes all eight records.
+Against OU-III on the same records, TFG is behind: vertical +0.31 pp, 3D
++0.87 pp, yaw +0.23° (excluding pmstokes H8.5, where OU-III itself scores a
+10.78° yaw outlier against ~2° everywhere else). That is consistent with the
+design's stated expectation — parity on vertical, with the case for the filter
+resting on large-error robustness and covariance consistency, which these
+stationary records do not test.
+
+## 10. What this does not claim
 
 The bias-free, frozen-parameter skeleton is group-affine. The complete
 estimator is **not** shown to be, and must not be described as an InEKF or as

@@ -102,9 +102,15 @@ void run(Fusion& f, const Sea& sea, float seconds, float dt = 0.005f,
 
 // ---------------------------------------------------------------------------
 
-void test_staging() {
+/*
+    Staged policy: the MEKF levels itself, passes through TunerWarm, then goes
+    Live. Kept as an explicit ablation now that MahonyProxy is the default.
+*/
+void test_staging_staged_mekf() {
     Fusion f;
-    f.begin(default_config());
+    auto cfg = default_config();
+    cfg.startup_init_policy = Fusion::StartupInitPolicy::StagedMekf;
+    f.begin(cfg);
     check(f.stage() == Stage::Cold, "the filter must start Cold");
     check(!f.mekf().linear_block_enabled(),
           "the linear block must be gated off while Cold");
@@ -119,11 +125,68 @@ void test_staging() {
     check(t_live > t_warm, "Live must come after TunerWarm");
     check(f.mekf().linear_block_enabled(),
           "the linear block must be enabled once Live");
-
-    // The Live gate waits on the wave-period estimator as well as the warmup
-    // clock, so it is necessarily later than the clock alone.
     check(t_live >= 10.0f,
           "Live was reached before the configured warmup elapsed");
+}
+
+/*
+    Proxy policy: the MEKF is seeded once and goes straight to Live. It must
+    never occupy TunerWarm -- that is the degraded configuration this policy
+    exists to skip, and observing it would mean the handoff is not doing its
+    job.
+*/
+void test_staging_mahony_proxy() {
+    Fusion f;
+    auto cfg = default_config();
+    cfg.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
+    f.begin(cfg);
+    // StagedMekf is the default until MahonyProxy reaches parity: without
+    // OU-III's two-stage magnetic acquisition the provisional lock is taken on
+    // a tilt that has not converged, and that tilt error ends up parked in the
+    // horizontal accelerometer bias. See docs/tfg-design.md section 9.
+    check(Fusion::Config{}.startup_init_policy == Fusion::StartupInitPolicy::StagedMekf,
+          "StagedMekf must remain the default while MahonyProxy is below parity");
+    check(f.stage() == Stage::Cold, "the filter must start Cold");
+
+    Sea sea;
+    float t_warm = -1.0f, t_live = -1.0f;
+    run(f, sea, 300.0f, 0.005f, &t_warm, &t_live);
+
+    check(f.stage() == Stage::Live, "the filter never reached Live under the proxy policy");
+    check(t_warm < 0.0f,
+          "the proxy policy must go Cold -> Live without entering TunerWarm");
+    check(t_live >= 8.0f, "handoff happened before proxy_startup_min_sec");
+    check(!f.handoffTimedOut(),
+          "the handoff fell back to the timeout instead of a converged front end");
+    check(f.mekf().linear_block_enabled(),
+          "the linear block must be enabled once Live");
+    // The MEKF must never have run degraded: bias updates are on from the
+    // moment it exists.
+    check(f.mekf().acc_bias_updates_enabled(),
+          "accelerometer-bias updates must be enabled when the proxy seeds the MEKF");
+}
+
+/*
+    The front end can legitimately take a long time to declare itself ready --
+    the wave-period channel needs many cycles, and longer in a low sea. Without
+    a timeout the MEKF would never start at all, which is a worse failure than
+    starting from a stale operating point.
+*/
+void test_proxy_handoff_times_out() {
+    Fusion f;
+    auto cfg = default_config();
+    cfg.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
+    cfg.proxy_startup_timeout_sec = 30.0f;
+    cfg.with_mag = false;          // nothing will ever gauge north
+    f.begin(cfg);
+
+    Sea flat;                       // near-still: the period channel stays unready
+    run(f, flat, 25.0f, 0.005f, nullptr, nullptr, /*with_mag=*/false);
+    check(f.stage() == Stage::Cold, "handed off before the timeout with no ready front end");
+
+    run(f, flat, 20.0f, 0.005f, nullptr, nullptr, /*with_mag=*/false);
+    check(f.stage() == Stage::Live, "the handoff timeout never fired");
+    check(f.handoffTimedOut(), "the timeout fired but was not reported");
 }
 
 // While warming, the accelerometer bias must stay frozen and Racc inflated:
@@ -132,6 +195,9 @@ void test_warmup_gates() {
     Fusion f;
     auto cfg = default_config();
     cfg.freeze_acc_bias_until_live = true;
+    // These gates exist only in the staged path: under MahonyProxy the MEKF is
+    // never in the degraded configuration they protect.
+    cfg.startup_init_policy = Fusion::StartupInitPolicy::StagedMekf;
     f.begin(cfg);
 
     Sea sea;
@@ -200,6 +266,16 @@ void test_tuning_laws() {
     rather than attenuates, so the symptom was gain > 1 at the wave frequency.
     Assert the applied covariance is the square of the applied scale.
 */
+/*
+    r_S is a standard deviation, and the filter input additionally carries the
+    cadence renormalization.
+
+    The original guard here asserted R_S == r_S^2 against the *applied* scale.
+    That contract changed when the S=0 cadence became self-similar in tau: the
+    filter input is r_S * sqrt(T_0/T_S), so R_S == (that)^2. Both halves are
+    checked, because collapsing them would lose the units guard that this test
+    exists for -- the bug it caught was R_S being set to the scale itself.
+*/
 void test_rs_units_are_a_standard_deviation() {
     Fusion f;
     f.begin(default_config());
@@ -208,17 +284,30 @@ void test_rs_units_are_a_standard_deviation() {
     Vector3f r; Eigen::Matrix<float,3,Fusion::Mekf::NX> H; Matrix3f Rw;
     f.mekf().integral_residual(r, H, Rw);
 
-    const float want = 7.0f * 7.0f;
+    const float rs_in = f.getRSFilterInput();
+    const float want = rs_in * rs_in;
     if (!check(std::fabs(Rw(2,2) - want) <= 1e-4f * want,
-               "R_S must be the square of the applied r_S scale")) {
+               "R_S must be the square of the r_S the filter was given")) {
         std::cerr << "  R_S(2,2) = " << Rw(2,2) << " want " << want << '\n';
     }
-    // And emphatically not the scale itself, which is the bug being guarded.
-    check(std::fabs(Rw(2,2) - 7.0f) > 1.0f,
+    // Emphatically not the scale itself, which is the bug being guarded.
+    check(std::fabs(Rw(2,2) - rs_in) > 1.0f,
           "R_S was set to the r_S scale rather than its square");
+
+    // And the filter input is the applied scale renormalized for the cadence.
+    const float T_S = f.pseudoUpdatePeriodSec();
+    const float expect = 7.0f * std::sqrt(0.015f / T_S);
+    if (!check(std::fabs(rs_in - expect) <= 1e-4f * expect,
+               "the r_S filter input is not renormalized by sqrt(T_0/T_S)")) {
+        std::cerr << "  rs_in = " << rs_in << " want " << expect
+                  << " (T_S = " << T_S << ")\n";
+    }
+    // With tau = 2 s the cadence is slower than nominal, so the renormalized
+    // value must sit *below* the applied scale. If it did not, the information
+    // rate 1/(r_S^2 T_S) would not be held.
+    check(rs_in < 7.0f, "a slower cadence must lower the r_S filter input");
 }
 
-// The coefficients must actually be the knobs the study will turn.
 void test_tuning_coefficients_are_live() {
     Fusion a, b;
     a.begin(default_config());
@@ -287,28 +376,51 @@ void test_ablation_hooks() {
     after the delay. Capturing early means freezing yaw against an attitude
     that has not settled.
 */
+/*
+    Magnetic reference timing.
+
+    Under MahonyProxy the reference is learned in the proxy's frame as soon as
+    the delay elapses, and reaches the MEKF when the MEKF is seeded. Reading
+    mekf().has_magnetic_reference() before the handoff therefore says nothing;
+    magReferenceLearned() is the observable that matters early.
+*/
 void test_magnetic_reference_timing() {
     Fusion f;
     auto cfg = default_config();
+    cfg.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
     cfg.mag_delay_sec = 20.0f;
+    // The learning path waits on sustained gravity agreement, so give it a
+    // hold short enough to be reached inside this test's horizon.
+    cfg.proxy_gravity_hold_sec = 5.0f;
     f.begin(cfg);
 
     Sea sea;
     run(f, sea, 10.0f);
-    check(!f.mekf().has_magnetic_reference(),
+    check(!f.magReferenceLearned(),
           "the magnetic reference was captured before the delay elapsed");
+    check(!f.mekf().has_magnetic_reference(),
+          "the MEKF holds a reference before the delay elapsed");
 
-    run(f, sea, 60.0f);
+    run(f, sea, 30.0f);
+    check(f.magReferenceLearned(), "the magnetic reference was never learned");
+
+    // Run long enough for the handoff to carry it into the MEKF.
+    run(f, sea, 300.0f);
+    check(f.stage() == Stage::Live, "never went Live, so the reference never transferred");
     check(f.mekf().has_magnetic_reference(),
-          "the magnetic reference was never captured");
+          "the learned reference was not handed to the MEKF");
 
-    // It should point roughly where the true world field does.
     const Vector3f B = f.mekf().magnetic_reference_world();
     const Vector3f want(0.21f, 0.0f, 0.43f);
     check(std::fabs(B.norm() - want.norm()) <= 0.02f * want.norm(),
           "the captured magnetic reference has the wrong magnitude");
     const float cos_ang = B.normalized().dot(want.normalized());
     check(cos_ang > 0.98f, "the captured magnetic reference points the wrong way");
+
+    // The canonical form is what makes H_m a genuinely fixed reference: the
+    // horizontal component must lie entirely on north.
+    check(std::fabs(B.y()) <= 1e-5f,
+          "the reference was not anchored: its horizontal part is off north");
 }
 
 void test_with_mag_disabled() {
@@ -320,6 +432,127 @@ void test_with_mag_disabled() {
     run(f, sea, 60.0f, 0.005f, nullptr, nullptr, /*with_mag=*/true);
     check(!f.mekf().has_magnetic_reference(),
           "a reference was captured with the magnetometer disabled");
+}
+
+
+// ---------------------------------------------------------------------------
+// Adaptation policy
+// ---------------------------------------------------------------------------
+
+// Helper: the r_S the MEKF is actually holding.
+float mekf_rs_z(Fusion& f) {
+    Vector3f r; Eigen::Matrix<float,3,Fusion::Mekf::NX> H; Matrix3f Rw;
+    f.mekf().integral_residual(r, H, Rw);
+    return std::sqrt(std::max(0.0f, Rw(2,2)));
+}
+
+/*
+    The schedule is committed on a cadence, not every sample.
+
+    Committing at 200 Hz is not "more adaptive"; it just couples the covariance
+    the MEKF uses to the measurement stream two hundred times a second. The EMA
+    still sees every sample -- only the commit is held piecewise constant.
+*/
+void test_adaptation_is_cadenced() {
+    Fusion f;
+    f.begin(default_config());
+    Sea sea;
+    run(f, sea, 320.0f);
+    check(f.stage() == Stage::Live, "needed a Live filter to measure cadence");
+
+    const float dt = 0.005f;
+    const float seconds = 10.0f;
+    const int n = static_cast<int>(seconds / dt);
+    int changes = 0;
+    float prev = mekf_rs_z(f);
+    for (int i = 0; i < n; ++i) {
+        const float t = static_cast<float>(i) * dt;
+        f.update(dt, sea.gyro(t), sea.acc_body(t));
+        const float now = mekf_rs_z(f);
+        if (std::fabs(now - prev) > 1e-9f) ++changes;
+        prev = now;
+    }
+    // 0.1 s cadence over 10 s is at most ~100 commits, against 2000 samples.
+    check(changes <= 120,
+          "the schedule is being committed far more often than the cadence allows");
+    check(changes > 0, "the schedule never moved at all, so the test proves nothing");
+}
+
+/*
+    Exogeneity is a timing property.
+
+    The schedule active while y_k is processed must not depend on y_k. The
+    smoother may consume y_k, but its result is committed at the top of the
+    next update. So a single violent sample must leave the MEKF's applied r_S
+    untouched *within that same update*.
+*/
+void test_schedule_is_exogenous_to_the_current_sample() {
+    Fusion f;
+    f.begin(default_config());
+    Sea sea;
+    run(f, sea, 320.0f);
+    check(f.stage() == Stage::Live, "needed a Live filter");
+
+    // Settle onto a commit boundary so a tick is due imminently.
+    for (int i = 0; i < 40; ++i) f.update(0.005f, sea.gyro(0.0f), sea.acc_body(0.0f));
+
+    const float before = mekf_rs_z(f);
+    // A sample far outside anything the tuner has seen.
+    f.update(0.005f, Vector3f(2.0f, -1.5f, 3.0f), Vector3f(0.0f, 0.0f, -40.0f));
+    const float after = mekf_rs_z(f);
+
+    check(std::fabs(after - before) <= 1e-9f,
+          "the schedule moved within the same update that delivered the sample; "
+          "the commit is not deferred and the tuning is not exogenous");
+}
+
+/*
+    The r_S floor is 0.15, not 0.4.
+
+    On OU-III the 0.4 floor was the binding constraint on every low-motion sea
+    rather than a safety limit. A near-still sea must be able to ask for -- and
+    receive -- a target below 0.4.
+*/
+void test_rs_floor_allows_low_motion_seas() {
+    Fusion f;
+    auto cfg = default_config();
+    f.begin(cfg);
+
+    // Very small sea: the cubic schedule asks for a small r_S.
+    Sea tiny;
+    tiny.a_amp = 0.02f;      // near-still vertical acceleration
+    tiny.roll_amp = 0.005f;
+    run(f, tiny, 400.0f);
+
+    const float target = f.getRSTarget();
+    check(target < 0.4f,
+          "a near-still sea did not drive the r_S target below the old 0.4 floor, "
+          "so this test cannot distinguish the floors");
+    check(target >= 0.15f - 1e-6f, "the r_S target fell below the 0.15 floor");
+}
+
+// The proxy doubles as the attitude seed, so its bias integrator must be on.
+// With two_ki = 0 a constant gyro bias leaves a standing tilt that nothing
+// downstream of an attitude seed high-passes away.
+void test_proxy_has_an_integral_term() {
+    Fusion::Config c;
+    check(c.proxy_two_ki > 0.0f,
+          "the startup proxy must estimate gyro bias when it seeds attitude");
+    check(std::fabs(c.proxy_two_kp - 0.2f) < 1e-6f,
+          "the proxy correction corner moved away from the evidenced value");
+}
+
+// Turning the self-similar cadence off must restore the fixed 15 ms schedule
+// and remove the renormalization, so the two can be ablated against each other.
+void test_fixed_cadence_ablation() {
+    Fusion f;
+    f.begin(default_config());
+    f.setTauScaledPseudoCadence(false);
+    check(f.setFixedTuning(2.0f, 0.5f, 7.0f), "setFixedTuning was rejected");
+    check(std::fabs(f.pseudoUpdatePeriodSec() - 0.015f) <= 1e-9f,
+          "disabling the tau-scaled cadence did not restore the fixed period");
+    check(std::fabs(f.getRSFilterInput() - 7.0f) <= 1e-4f,
+          "the renormalization is still being applied with a fixed cadence");
 }
 
 // The estimator must actually track heave, not merely stay finite.
@@ -482,7 +715,9 @@ int main() {
     test_initialize_from_acc();
     test_aw_stationary_covariance_is_model_only();
     test_linear_block_gate();
-    test_staging();
+    test_staging_staged_mekf();
+    test_staging_mahony_proxy();
+    test_proxy_handoff_times_out();
     test_warmup_gates();
     test_tuning_laws();
     test_rs_units_are_a_standard_deviation();
@@ -491,6 +726,11 @@ int main() {
     test_magnetic_reference_timing();
     test_with_mag_disabled();
     test_tracks_heave();
+    test_adaptation_is_cadenced();
+    test_schedule_is_exogenous_to_the_current_sample();
+    test_rs_floor_allows_low_motion_seas();
+    test_proxy_has_an_integral_term();
+    test_fixed_cadence_ablation();
 
     if (failures != 0) {
         std::cerr << failures << " orchestrator check(s) failed\n";
