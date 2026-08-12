@@ -20,6 +20,8 @@ INS Filters:
 
 - [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_ou-w3d.pdf)
 
+- [Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_tfg.pdf)
+
 - [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/pii_observer-model.pdf)
 
 - [Non-Linear Observer NLO](https://torarnj.folk.ntnu.no/TimeVarGain.pdf)
@@ -59,6 +61,7 @@ Autopilot Use Cases:
 There are two versions of Kalman INS filters and one filter (PII observer) based on control theory:
 
 - OU_III is using higher-order integral drift correction. It is 21 dimensional state Kalman filter. It seems works better on high precision IMUs.
+- TFG is a right-invariant two-frame Lie-group error-state EKF. Same 21 dimensional state and the same OU wave model as OU_III, but attitude, the world-frame kinematic states and the body-frame biases live on one group, so an attitude correction rotates velocity, position, integral displacement and wave acceleration coherently instead of leaving them behind.
 - OU_II is using more direct integral drift correction and more responsive to sea state changes. It is 18 dimentional state Kalman filter.
 - PII observer is based on control theory. It is very computationally light-weight with no matrix operations. It's less accurate than Kalman filters.
 - All above filters are adaptive.
@@ -117,6 +120,8 @@ src/                 core algorithms and reusable components
   imu_calibrate/     IMU calibration logic
   kalman_ou_ii/      OU-II Kalman model components
   kalman_ou_iii/     OU-III Kalman model components
+  kalman_tfg/        two-frame Lie-group filter components
+  lie/               Lie group operations the TFG filter is built on
   nmea/              NMEA parsing/helpers
   pii_observer/      observer/filter components
   spectrum/          spectral charts

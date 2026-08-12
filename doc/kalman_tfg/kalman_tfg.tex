@@ -22,6 +22,18 @@
 \usepackage[breaklinks=true,hidelinks]{hyperref}
 \usepackage{bookmark}
 \usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\usepackage{pgf}
+
+% Generated figures live beside this file only after plots/kalman_tfg has run.
+% Wrap every include so the manuscript still compiles from a clean checkout --
+% a paper that cannot be built without first running an hour of simulation is a
+% paper nobody rebuilds.
+\newcommand{\IncludePGF}[1]{%
+  \IfFileExists{#1}{\resizebox{\linewidth}{!}{\input{#1}}}%
+                   {\fbox{\parbox{0.92\linewidth}{\centering\small
+                     Figure \texttt{\detokenize{#1}} not generated.\\
+                     Run \texttt{plots/kalman\_tfg/draw\_plots.sh}.}}}%
+}
 
 \DeclareRobustCommand{\vct}[1]{\bm{#1}}
 \DeclareRobustCommand{\mat}[1]{\bm{#1}}
@@ -275,10 +287,90 @@ The convention tests intentionally include negative assertions. For example, a r
 
 Mutation testing has also been used during development: changing the bias Jacobian sign, correction side, body-block transpose, exponential handedness, or $J_l$ coefficients causes the relevant mathematical suites to fail. This is important because a large collection of passing identities is weak evidence if the tests also pass when the implementation is deliberately broken.
 
-\section{Preliminary Evaluation Plan}
-The existing repository contains a TFG wave-regression simulator and dedicated validation workflows. A publication-scale results section should use paired wave records and identical sensor-noise realizations when comparing the geometric filter with OU-III. At minimum, the study should report 3-D position RMS, vertical RMS normalized by significant wave height, attitude RMS, bias convergence, innovation consistency, and computational cost. Separate ablations should isolate (i) additive versus two-frame bias geometry and (ii) full retraction covariance transport versus reduced reset approximations.
+\section{Simulation Results}
+\label{sec:tfg-sim-results}
+The simulator replays eight reference wave records -- four JONSWAP and four
+PM--Stokes significant wave heights -- through the filter with the deterministic
+default seeds, and scores the final \SI{900}{s} of each twenty-minute replay.
+\Cref{tab:tfg_sim_results} is generated directly from that binary by
+\texttt{tools/tfg\_sim\_table.py} during the build, so the numbers printed here
+cannot drift away from the code that produced them.
 
-This early draft deliberately does not copy numerical claims from the OU-III paper. Although both filters share the physical wave model, results belong to the implementation and revision actually tested. The final manuscript should import generated result macros or tables from the TFG validation workflow so that reported values cannot silently diverge from the code.
+\IfFileExists{tfg-sim-results-generated.tex-part}{%
+  \input{tfg-sim-results-generated.tex-part}%
+}{%
+  \begin{table}[t]\centering\small
+    \fbox{\parbox{0.9\linewidth}{\centering Results table not generated.\\
+      Run \texttt{tools/tfg\_sim\_table.py}.}}
+  \end{table}%
+}
+
+This is a single-realization deterministic protocol, not a multi-seed study,
+and it is reported for continuity with the corresponding OU-III table. The two
+are scored on the same records in the same order -- the record list is imported
+rather than duplicated -- but they remain separate measurements of separate
+implementations and should not be quoted as a controlled comparison. A paired
+study with common wave realizations and common sensor-noise realizations is the
+instrument for that, and is future work.
+
+Two features of the table are worth stating plainly rather than leaving for the
+reader to infer. Vertical error sits in the range expected of this filter
+family and is not obviously better than the quaternion MEKF it derives from;
+the geometric argument of this paper predicts advantages in large-error
+transients and covariance consistency, neither of which a set of stationary
+records exercises. Three-dimensional error is the weaker column, which is
+consistent with the horizontal channels remaining the least observable part of
+the state regardless of how the error is parameterized.
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{tfg_jonswap_H1.500_L50.710_A-30.00_P120.00_heave.pgf}
+  \caption{Vertical channel, JONSWAP $H_s=\SI{1.5}{m}$, over the scored
+    window: estimate against reference, and the error series beneath.}
+  \label{fig:tfg-heave-jonswap-h15}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{tfg_jonswap_H1.500_L50.710_A-30.00_P120.00_att.pgf}
+  \caption{Attitude tracking on the same record. Yaw is differenced on the
+    shortest arc, so a wrap is not scored as an error.}
+  \label{fig:tfg-att-jonswap-h15}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{tfg_jonswap_H1.500_L50.710_A-30.00_P120.00_tuner.pgf}
+  \caption{The adaptation schedule the filter actually ran with: the applied
+    OU time constant, stationary acceleration scale and integral
+    regularization scale, together with the tuner's acceleration variance.
+    The schedule is committed on a fixed cadence and one step behind the
+    measurement stream, so it is exogenous to the sample it weights.}
+  \label{fig:tfg-tuner-jonswap-h15}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{tfg_jonswap_H1.500_L50.710_A-30.00_P120.00_bias.pgf}
+  \caption{Estimated accelerometer bias. This channel is worth watching
+    directly: accelerometer bias and tilt are only weakly separable, so a
+    seeded or standing attitude error is absorbed here and is visible as a
+    bias offset that does not correspond to any real sensor bias.}
+  \label{fig:tfg-bias-jonswap-h15}
+\end{figure}
+
+\section{Evaluation Beyond These Records}
+A publication-scale results section should use paired wave records and
+identical sensor-noise realizations when comparing the geometric filter with
+OU-III, and should report 3-D position RMS, vertical RMS normalized by
+significant wave height, attitude RMS, bias convergence, innovation
+consistency, and computational cost. Separate ablations should isolate
+(i) additive versus two-frame bias geometry and (ii) full retraction covariance
+transport versus reduced reset approximations.
+
+This draft deliberately does not copy numerical claims from the OU-III paper.
+Although both filters share the physical wave model, results belong to the
+implementation and revision actually tested.
 
 \section{Discussion}
 The principal structural benefit is not merely replacing a quaternion by a rotation matrix. The group law changes what a translational error means. A finite attitude correction carries $v$, $p$, $S$, and $a_w$ through the same geometry, while the two-frame bias slot respects the body-frame nature of inertial biases. The right-invariant choice also aligns the dominant measurement references with the world frame: gravity, magnetic north, and the $S=0$ regularizer admit simple Jacobian structure.
