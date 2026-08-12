@@ -75,12 +75,32 @@ def finalize(fig, outbase: str, suffix: str = "", exts=("pgf", "svg")) -> None:
     plt.close(fig)
 
 
-def scored_window(df: pd.DataFrame, seconds: float = 900.0) -> pd.DataFrame:
-    """The last `seconds` of the replay -- the window the tables score."""
+# Charts show the last PLOT_WINDOW_S of the replay, matching the OU-III charts
+# (which fix the window at 1140-1200 s of a 1200 s record). Taken from the
+# record's own end rather than hardcoded, so a record of a different length
+# still plots its tail instead of selecting nothing.
+PLOT_WINDOW_S = 60.0
+
+# The results table scores a longer window. RMS annotations quote that scored
+# figure rather than the RMS of the 60 s on screen, so a chart and the table
+# cannot appear to disagree about the same record.
+SCORED_WINDOW_S = 900.0
+
+
+def tail_window(df: pd.DataFrame, seconds: float) -> pd.DataFrame:
+    """The last `seconds` of the replay."""
     if "time" not in df.columns or df.empty:
         return df
     t_end = float(df["time"].iloc[-1])
     return df[df["time"] >= t_end - seconds]
+
+
+def plot_window(df: pd.DataFrame) -> pd.DataFrame:
+    return tail_window(df, PLOT_WINDOW_S)
+
+
+def scored_window(df: pd.DataFrame) -> pd.DataFrame:
+    return tail_window(df, SCORED_WINDOW_S)
 
 
 def rms(series: pd.Series) -> float:
@@ -90,22 +110,27 @@ def rms(series: pd.Series) -> float:
 
 
 def plot_displacement(df: pd.DataFrame, base: str, label: str) -> None:
-    fig, axes = make_subplots(3, f"{label}: displacement (reference vs estimate)")
+    win = plot_window(df)
+    scored = scored_window(df)
+    fig, axes = make_subplots(3, f"{label}: displacement (last {PLOT_WINDOW_S:.0f} s)")
     for ax, axis in zip(axes, ("x", "y", "z")):
-        ax.plot(df["time"], df[f"disp_ref_{axis}"], lw=0.9, label="reference")
-        ax.plot(df["time"], df[f"disp_est_{axis}"], lw=0.9, label="estimate")
-        err = rms(df[f"disp_est_{axis}"] - df[f"disp_ref_{axis}"])
+        ax.plot(win["time"], win[f"disp_ref_{axis}"], lw=0.9, label="reference")
+        ax.plot(win["time"], win[f"disp_est_{axis}"], lw=0.9, label="estimate")
+        err = rms(scored[f"disp_est_{axis}"] - scored[f"disp_ref_{axis}"])
         ax.set_ylabel(f"{axis.upper()} [m]")
         ax.legend(loc="upper right", fontsize="small",
-                  title=f"RMS err {err:.4f} m", title_fontsize="small")
+                  title=f"RMS err {err:.4f} m ({SCORED_WINDOW_S:.0f} s)",
+                  title_fontsize="small")
     axes[-1].set_xlabel("time [s]")
     finalize(fig, base, "_disp")
 
 
 def plot_heave(df: pd.DataFrame, base: str, label: str) -> None:
     """Vertical channel on its own -- it is the headline number."""
-    win = scored_window(df)
-    fig, axes = make_subplots(2, f"{label}: vertical channel (scored window)", row_height=2.6)
+    win = plot_window(df)
+    scored = scored_window(df)
+    fig, axes = make_subplots(
+        2, f"{label}: vertical channel (last {PLOT_WINDOW_S:.0f} s)", row_height=2.6)
     axes[0].plot(win["time"], win["disp_ref_z"], lw=0.9, label="reference")
     axes[0].plot(win["time"], win["disp_est_z"], lw=0.9, label="estimate")
     axes[0].set_ylabel("heave [m]")
@@ -114,29 +139,38 @@ def plot_heave(df: pd.DataFrame, base: str, label: str) -> None:
     axes[1].plot(win["time"], err, lw=0.8, color="tab:red")
     axes[1].set_ylabel("error [m]")
     axes[1].set_xlabel("time [s]")
-    axes[1].legend([f"RMS {rms(err):.4f} m"], loc="upper right", fontsize="small")
+    scored_err = scored["disp_est_z"] - scored["disp_ref_z"]
+    axes[1].legend([f"RMS {rms(scored_err):.4f} m over {SCORED_WINDOW_S:.0f} s"],
+                   loc="upper right", fontsize="small")
     finalize(fig, base, "_heave")
 
 
 def plot_attitude(df: pd.DataFrame, base: str, label: str) -> None:
-    fig, axes = make_subplots(3, f"{label}: attitude (reference vs estimate)")
+    win = plot_window(df)
+    scored = scored_window(df)
+    fig, axes = make_subplots(3, f"{label}: attitude (last {PLOT_WINDOW_S:.0f} s)")
     for ax, name in zip(axes, ("roll", "pitch", "yaw")):
-        ax.plot(df["time"], df[f"{name}_ref"], lw=0.9, label="reference")
-        ax.plot(df["time"], df[f"{name}_est"], lw=0.9, label="estimate")
+        ax.plot(win["time"], win[f"{name}_ref"], lw=0.9, label="reference")
+        ax.plot(win["time"], win[f"{name}_est"], lw=0.9, label="estimate")
         # Yaw wraps; compare on the shortest arc so the RMS is not dominated by
         # a 360 degree jump that is not an error.
-        d = df[f"{name}_est"] - df[f"{name}_ref"]
+        d = scored[f"{name}_est"] - scored[f"{name}_ref"]
         if name == "yaw":
             d = (d + 180.0) % 360.0 - 180.0
         ax.set_ylabel(f"{name} [deg]")
         ax.legend(loc="upper right", fontsize="small",
-                  title=f"RMS err {rms(d):.3f} deg", title_fontsize="small")
+                  title=f"RMS err {rms(d):.3f} deg ({SCORED_WINDOW_S:.0f} s)",
+                  title_fontsize="small")
     axes[-1].set_xlabel("time [s]")
     finalize(fig, base, "_att")
 
 
 def plot_tuner(df: pd.DataFrame, base: str, label: str) -> None:
-    """The adaptation schedule the filter actually ran with."""
+    """The adaptation schedule the filter actually ran with.
+
+    Full run, not the 60 s tail: this chart is about convergence and the
+    startup transient, neither of which is visible in the last minute.
+    """
     panels = [
         ("tau_applied", r"$\tau$ applied [s]"),
         ("sigma_a_applied", r"$\sigma_{a_w}$ applied [m/s$^2$]"),
@@ -155,7 +189,11 @@ def plot_tuner(df: pd.DataFrame, base: str, label: str) -> None:
 
 
 def plot_bias(df: pd.DataFrame, base: str, label: str) -> None:
-    """Accelerometer bias, which is where a seeded tilt error goes to hide."""
+    """Accelerometer bias, which is where a seeded tilt error goes to hide.
+
+    Full run for the same reason as the tuner chart: a bias that walks away
+    during startup and never comes back is the failure mode worth seeing.
+    """
     cols = [f"acc_bias_{a}" for a in ("x", "y", "z")]
     if not all(c in df.columns for c in cols):
         return
