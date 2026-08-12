@@ -177,6 +177,18 @@ hard-iron bias and slow drift, and $\vct{w}_m$ is per-sample white noise.
 \end{figure}
 \fi
 
+\paragraph{Startup configuration}
+Every OU--III run reported here uses the deployed startup policy: the
+measurement-only front end and its private Mahony observer run from the first
+sample, the magnetometer is gated and its world reference framed on that
+observer's tilt, and the MEKF is seeded with the finished attitude at the
+handoff and goes live directly instead of warming up in a degraded
+configuration.  Two-stage magnetic acquisition is enabled, so the reference is
+re-learned and heading re-gauged at \SI{90}{s}, and accelerometer-bias
+learning is held until that correction lands.  Both events precede the scoring
+window defined next.  The earlier staged-MEKF policy is exercised only as a
+matched ablation.
+
 \paragraph{Scoring window}
 The deterministic regression gates, Table~\ref{tab:sim_results_rms_dir_basic},
 the four-method comparison of Sec.~\ref{sec:observer-comparison}, and the

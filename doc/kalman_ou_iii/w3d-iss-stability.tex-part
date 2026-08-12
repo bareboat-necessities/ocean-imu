@@ -31,9 +31,24 @@ The adaptive wave variables are treated as exogenous signals,
 \label{eq:iss-schedule}
 \end{equation}
 The wave-period and variance estimators are driven by raw IMU measurements and
-a private Mahony attitude solution that does not read the OU--III state or
+a private Mahony attitude solution, Eqs.~\eqref{eq:proxy-mahony}--%
+\eqref{eq:proxy-vertical}, that does not read the OU--III state or
 covariance. Thus no MEKF-state-to-tuner feedback is present in the deployed
 configuration analyzed here.
+
+The same observer also supplies the startup attitude, the magnetometer gate,
+and the frame the magnetic reference is averaged in
+(Sec.~\ref{sec:startup-policy}), and the coupling stays one-way there too: the
+observer never reads a filter state, so the information flow is
+proxy~$\to$~MEKF only. What that policy does change is where the analyzed
+interval begins. Under it the MEKF is not propagated at all before the
+handoff; the handoff seeds attitude and its covariance in one step, which is a
+hard reset and therefore the left endpoint of a Live interval rather than
+something inside one. The second-stage magnetic acquisition is a second such
+event: at $t=\SI{90}{s}$ it replaces the world magnetic reference and steps
+yaw once, so the analyzed interval is the record after that correction. Both
+events are excluded on the same grounds as the startup and re-lock operations
+listed above, and both land well before the \SI{900}{s} scoring window opens.
 
 The implementation also makes the online schedule predictable with respect to
 the current Kalman innovation. Let $\mathcal F_k$ denote the sigma-algebra

@@ -48,7 +48,11 @@ framework.
 Section~\ref{app:iss-stability} gives a local 21-state stability result for the
 normal Live recursion under explicit operating conditions. Because the tuner is
 driven by raw IMU data and a private Mahony attitude solution, its schedule is
-exogenous with respect to the MEKF state. The section proves uniform
+exogenous with respect to the MEKF state. That same observer also owns startup:
+it supplies the tilt that gates the magnetometer and frames the learned
+magnetic reference, and the MEKF is seeded from the finished solution and
+starts live rather than warming up in a degraded configuration
+(Sec.~\ref{sec:startup-policy}). The section proves uniform
 finite-horizon observability of the OU--III translational block and of the
 attitude--gyro-bias block under bounded noncollinear accel/mag geometry. The
 formerly problematic accelerometer-bias coordinates are now residuals about the

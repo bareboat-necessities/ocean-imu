@@ -18,13 +18,73 @@ stale attitude cross-covariances.  In live operation, a large sustained tilt
 error may instead trigger a tilt-only re-lock that preserves the current yaw
 gauge.
 
+\subsection{Which estimator solves the startup attitude}
+\label{sec:startup-policy}
+
+Startup has to deliver two things before the filter can be trusted: an
+operating point $(\tau,\sigma_{aw},r_S)$, and a tilt --- because the tilt is
+what gates the magnetometer and what the magnetic world reference is averaged
+in.  Two policies are implemented and they differ only in which estimator
+supplies the tilt.
+
+\emph{StagedMekf} is the earlier behaviour, retained as the matched ablation.
+The MEKF is driven from the first sample in a deliberately degraded
+configuration --- linear block disabled, accelerometer-bias learning frozen,
+$\mat R_{\mathrm{acc}}$ inflated by $2.5\times$ --- and its own attitude is
+read back out for both jobs.  Those reads happen at the moment the MEKF is
+least able to level, since the linear block that would otherwise absorb the
+orbital specific force is precisely the part that is switched off.  That would
+be a bounded transient if the results were revisable, but they are not: the
+world reference and the yaw gauge are locked exactly once, so whatever tilt
+error survives the averaging window becomes a standing attitude and heading
+bias for the whole run, scored long after any transient has decayed.
+
+\emph{MahonyProxy} is the deployed default.  It gives both jobs to the private
+Mahony observer the filter already runs for the vertical channel
+(Sec.~\ref{sec:vertical-proxy}).  That observer is a pure function of the raw
+gyro and accelerometer, and its correction corner sits an order of magnitude
+below the wave band, so it rejects the orbital specific force by construction
+instead of chasing it.  Under this policy:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item The measurement-only front end --- proxy, frequency tracker and its
+        stillness detector, wave-period estimator, sigma band, tuner, and the
+        wave-direction stage --- runs from the first sample with the MEKF left
+        untouched.  Every one of those consumers is already exogenous by
+        design, so withholding the MEKF changes none of their outputs; the
+        regression suite pins that bit-for-bit.  The one stage that needs an
+        attitude, the direction estimator, is given the proxy quaternion, and
+        it resolves acceleration into the projected bow axis of a levelled
+        heading frame, which is invariant under $q\mapsto R_z(\psi)q$, so the
+        proxy's drifting yaw cannot reach it and the later handoff to the MEKF
+        quaternion is continuous in everything the stage can see.
+  \item The gravity-agreement gate and the magnetic accumulation frame read the
+        proxy tilt, at both acquisition stages
+        (Sec.~\ref{sec:mag-two-stage}).
+  \item When the tilt has held agreement with gravity, north has been gauged,
+        and the tuner is ready, the MEKF is seeded with the finished attitude
+        and goes Live in one step --- linear block on, nominal
+        $\mat R_{\mathrm{acc}}$, operating point already converged.  It never
+        occupies the degraded warmup configuration at all.
+\end{enumerate}
+
+Model parameters staged by the tuner are still written to the MEKF while the
+front end runs alone.  They are parameters, not state, so the filter reaches
+its first live sample already on the right operating point rather than
+adapting toward it from the initial frequency guess.
+
 \subsection{Staged enabling and covariance policy}
-Startup proceeds through Cold, TunerWarm, and Live stages.  During Cold and
-TunerWarm, the attitude MEKF and frequency tracker run, while the
+Startup proceeds through Cold, TunerWarm, TunerReady, and Live stages.  During
+Cold and TunerWarm the tuner collects a dominant-frequency estimate and an
+acceleration-variance estimate, producing targets for
+$(\tau,\matg{\Sigma}_{aw}^{\mathrm{stat}},\mat{R}_S)$, while the
 $[\vct{v},\vct{p},\vct{S},\vct{a}_w]$ block is disabled and accelerometer-bias
-learning may be frozen.  The tuner collects a dominant-frequency estimate and
-an acceleration-variance estimate, producing targets for
-$(\tau,\matg{\Sigma}_{aw}^{\mathrm{stat}},\mat{R}_S)$.
+learning may be frozen.  Under StagedMekf the attitude MEKF and frequency
+tracker both run through these stages and the filter enters Live by itself
+once the tuner is ready.  Under MahonyProxy the same tuner logic runs inside
+the measurement-only front end and parks at TunerReady: the operating point is
+trusted, but the attitude is not the filter's to decide, so it waits for the
+handoff described below.
 
 The transition into Live follows this order:
 \begin{enumerate}
@@ -41,10 +101,175 @@ posterior covariance.  At initial construction, where no useful
 cross-covariances exist, a hard reset may additionally zero the $a_w$
 cross-covariances.
 
+\subsection{Handoff to the MEKF}
+\label{sec:proxy-handoff}
+
+The normal exit from the bootstrap is by quality and requires three conditions
+at once: the proxy tilt has held gravity agreement for \SI{2}{s}, meaning the
+sine of the angle between the observer's own gravity direction and the
+low-passed specific force stayed below \num{0.075} (about \SI{4.3}{\degree}),
+with a veto on gyro rates above \SI{30}{\degree\per\second}; magnetic north
+has been gauged when a magnetometer is fitted; and the tuner is ready.  A floor of \SI{8}{s} keeps a record whose first seconds happen to look
+calm from handing over on a tilt the observer has barely integrated.  A
+timeout of \SI{150}{s} guarantees the filter always starts on the best
+attitude available rather than sitting in bootstrap forever; it is raised
+internally to at least the magnetic settle time plus twice the averaging
+window plus the tilt fallback, because a timeout that fires mid-acquisition
+would hand over with no yaw gauge at all, which is a worse start than waiting.
+
+At handoff the seed is the proxy tilt carrying the magnetometer's yaw gauge if
+one has been acquired, and the attitude covariance is seeded anisotropically,
+$\sigma_{\mathrm{tilt}}=\SI{0.035}{\radian}$ and
+$\sigma_{\mathrm{yaw}}=\SI{0.087}{\radian}$ once north is gauged, against
+$\sigma_{\mathrm{yaw}}=\pi/2$ when it is not.  The split is the point: tilt has
+been integrated through the wave band by an observer whose correction corner
+lies below it, while yaw is either gauged or arbitrary, and those two cases
+are an order of magnitude apart.  Only yaw is written when the gauge lands
+after the MEKF is already live; the MEKF tilt is the gyro-propagated,
+accel-corrected estimate and is strictly better than any instantaneous
+accel-derived level frame, so overwriting the whole quaternion would reinject
+the wave tilt error the filter has already rejected.
+
+\paragraph{The observer needs an integral term}
+The vertical channel ran at $k_I=0$ for years and accepted the $\approx b/k_P$
+static tilt a gyro bias $b$ leaves, because everything downstream of it is
+high-passed.  Nothing high-passes an attitude \emph{seed}: the same error is a
+standing roll and pitch bias.  Measured, a \SI{0.05}{\degree\per\second} bias
+settles at \SI{0.71}{\degree} of tilt with no integral term, and seeding from a
+zero-integral observer cost \SI{0.17}{\degree} of roll RMS on the
+$H_s=\SI{1.5}{m}$ JONSWAP record.  Enabling the integral term is also the
+better answer for the vertical channel on its own terms, since the static tilt
+it tolerated was leaking gravity into the levelled acceleration and being
+high-passed away afterwards, and it leaves the wave-period, sigma and $r_S$
+channels unmoved over the eight reference records.  One observer therefore
+serves both roles, at the gains of Sec.~\ref{sec:vertical-proxy}.
+
 \subsection{Magnetic reference and yaw lock}
+\label{sec:mag-two-stage}
+
 Magnetometer updates are delayed until tilt is sufficiently trustworthy.
-Samples are accumulated in a gravity-only tilt frame to estimate a consistent
-world magnetic reference without using the MEKF's initially arbitrary yaw.
-After the reference is accepted, a one-time yaw-gauge correction is applied and
-normal magnetometer updates begin.  Configuration may optionally require this
-magnetic lock before enabling the linear block.
+Samples are accumulated in a yaw-stripped tilt frame, which is invariant under
+$q_{bw}\mapsto R_z(\psi)q_{bw}$, so no arbitrary estimator heading can leak
+into the learned world reference.  A gravity-only frame rebuilt from
+low-passed accelerometer data would be yaw-free as well, but in waves that
+signal is gravity plus a phase-lagged remnant of the orbital specific force,
+so its tilt is wrong by a wave-correlated angle the averaging window is too
+short to cancel.  Which estimator supplies the tilt is the substance of the
+startup policy of Sec.~\ref{sec:startup-policy}.  The reference is an average
+of the field in that frame, so whatever tilt error survives the window
+survives in the reference; in waves that error is periodic, so the window has
+to buy whole wave periods rather than samples, and it is specified in seconds
+(\SI{15}{s} with a \num{128}-sample floor) so that it cannot silently shorten
+at a higher magnetometer ODR.  After the reference is accepted, a one-time
+yaw-gauge correction puts learned north on the boat's $+X$ axis and normal
+magnetometer updates begin.  Configuration may optionally require this magnetic
+lock before enabling the linear block.
+
+Under the proxy policy acquisition runs in two stages, because the two things
+it has to deliver want opposite schedules.  A usable heading is wanted within
+seconds of power-on, whereas a \emph{good} reference wants the observer to have
+settled first: the same low correction corner that makes it reject waves makes
+it slow to converge from its accelerometer seed, worst in the large seas where
+levelling matters most.  Measured against truth over a \SI{23}{s} averaging
+window, mean tilt error runs \SIrange{0.33}{2.76}{\degree} for a window opening
+at \SI{7}{s} and \SIrange{0.13}{0.85}{\degree} for one opening at \SI{40}{s}.
+Waiting for the good frame before locking anything puts first heading near
+\SI{105}{s}, which is not a usable device.  So a provisional reference is
+locked as soon as the gravity gate allows, giving heading and a live filter in
+\SIrange{22}{52}{s}, and a refinement at \SI{90}{s} re-learns the reference and
+re-gauges heading over a \SI{30}{s} window once the observer has converged.
+Before the handoff there is no MEKF attitude to rewrite, so the provisional
+gauge is carried forward and composed with the proxy tilt at the handoff
+itself, and the filter's very first attitude already has north in it.
+
+Two properties of the refinement are not optional.
+
+\begin{itemize}[leftmargin=1.2em]
+  \item \emph{It is framed on the observer, not on the MEKF.}  By
+        \SI{90}{s} the MEKF looks like the better frame --- it has the linear
+        block, the magnetometer and the bias states --- but it has been
+        steering to the provisional reference that the refinement exists to
+        replace, so its tilt carries that reference's error and averaging the
+        field in it re-derives the error.  Framed that way the refinement is
+        self-confirming: reference and yaw come back within
+        \SI{1e-3}{\degree} of the provisional ones and the standing roll bias
+        is untouched.  The observer never saw the reference, so its tilt is
+        independent of it.
+  \item \emph{Accelerometer-bias learning is held until the refinement
+        lands.}  Bias and tilt error are barely separable in waves and the
+        bias state has a \SI{5000}{s} correlation time, so a value fitted to
+        the provisional reference outlives the record.  Without the hold the
+        early-lock path fails the bias gate outright (\pct{187} against a
+        \pct{109} limit).
+\end{itemize}
+
+Refining later is worse rather than better --- \SI{90}{s} beats \SI{120}{s} and
+\SI{150}{s} --- because damage accumulates for as long as the filter steers to
+the provisional reference.  The refinement is a one-time reconfiguration
+event: it rewrites the world reference and steps yaw once, and it lands well
+before the \SI{900}{s} scoring window opens.  Like any hard reset it is outside
+the Live-interval stability result of Sec.~\ref{app:iss-stability}.
+
+\subsection{Measured effect of the startup policy}
+\label{sec:startup-policy-results}
+
+Table~\ref{tab:startup_policy} compares the two policies over the eight
+reference records (JONSWAP and PM--Stokes, $H_s$ from \SI{0.27}{m} to
+\SI{8.5}{m}), scored on the same trailing \SI{900}{s} window used everywhere
+else in this paper.  The deployed two-stage default improves roll by about
+\pct{10}, accelerometer bias by about \pct{10}, and pitch by about \pct{3}, at
+the same time to first heading as before, with vertical and 3D displacement
+marginally better.  The single-stage variant --- refinement disabled and the
+provisional lock deferred to \SI{90}{s} --- is the accuracy ceiling of the
+approach, roughly doubling the roll and bias gain at the cost of about
+\SI{80}{s} more before the device reports a heading.  Which of those matters is
+an application decision, so both are supported and the fast one is the default.
+
+\begin{table}[t]
+\caption{Startup-policy comparison over the eight reference records, trailing
+\SI{900}{s}, mean across records.  The one-stage column is the same policy
+with the refinement disabled and the provisional lock deferred to \SI{90}{s};
+its displacement figures are omitted because they were measured on an earlier
+tree and are not restated here.}
+\label{tab:startup_policy}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l c c c@{}}
+\toprule
+ & \makecell{Staged\\MEKF} & \makecell{Mahony proxy\\two-stage (default)} &
+   \makecell{Mahony proxy\\one-stage} \\
+\midrule
+Time to first heading (s)      & $\approx22$ & 22--52 & $\approx105$ \\
+Vertical RMS (\% $H_s$)        & 4.301  & 4.287  & --     \\
+3D displacement RMS (\%)       & 19.872 & 19.851 & --     \\
+Roll RMS (\si{\degree})        & 0.372  & 0.339  & 0.310  \\
+Pitch RMS (\si{\degree})       & 0.275  & 0.266  & 0.259  \\
+Yaw RMS (\si{\degree})         & 1.796  & 1.835  & 1.839  \\
+Accel.\ bias error (\si{\meter\per\second\squared})
+                               & 0.0631 & 0.0574 & 0.0517 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The gain is not uniform record by record: roll on PM--Stokes $H_s=\SI{4}{m}$
+moves \SIrange{0.242}{0.405}{\degree} the wrong way and JONSWAP
+$H_s=\SI{0.27}{m}$ \SIrange{0.234}{0.279}{\degree}, paid for by
+\SIrange{0.564}{0.256}{\degree} on JONSWAP $H_s=\SI{1.5}{m}$ and
+\SIrange{0.396}{0.265}{\degree} on PM--Stokes $H_s=\SI{0.27}{m}$.  Both
+configurations improve the mean; neither dominates everywhere.
+
+Yaw is about \pct{2} worse under every proxy configuration, and the residual is
+a property of the learned reference \emph{vector} rather than of the one-time
+gauge: seeding the handoff yaw variance anywhere from \SI{5}{\degree} to
+\SI{90}{\degree} moves the scored yaw by less than \SI{1e-4}{\degree}, so the
+filter is converging to the reference, not to the gauge.  Retuning the observer
+does not recover it either.  A full grid over $k_P$ and $k_I$ moves the
+eight-record mean yaw only between \SI{1.825}{\degree} and
+\SI{1.856}{\degree}, and with the noise generators disabled yaw RMS on the
+calmest record falls from \SI{2.071}{\degree} to \SI{0.153}{\degree}: about
+\pct{93} of it is magnetometer error, not attitude error.  Heading is constant
+in these records, so the hard-iron offset is absorbed into the reference and
+what remains is wave-modulated soft-iron distortion, which no attitude
+estimator can undo and no averaging window can cancel.  Closing that gap is a
+magnetometer-calibration question, not a startup-initialization one.
