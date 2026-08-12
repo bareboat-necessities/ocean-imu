@@ -1,6 +1,8 @@
 #define EIGEN_NON_ARDUINO
+#include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
@@ -38,10 +40,18 @@ int main() {
     }
 
     // Pin proof-relevant default model and scheduler constants.
+    //
+    // A finite tau_b is what makes the residual-bias block UES; the
+    // random-walk limit is explicitly outside the theorem.  The projection
+    // radius is the other half: mean reversion bounds the bias in
+    // distribution, not pathwise, and the bias enters the ISS bound only as an
+    // input, so that input has to be bounded for the bound to say anything.
     if (!near(f.mekf_->get_acc_bias_time_constant(), 5000.0f))
         return fail("default residual accel-bias OU time constant changed");
-    if (!near(f.mekf_->get_pseudo_update_period_s(), 0.015f))
-        return fail("default p/v pseudo-update period changed");
+    if (!(f.mekf_->get_acc_bias_time_constant() < std::numeric_limits<float>::max()))
+        return fail("residual accel-bias block degenerated to a random walk");
+    if (!near(f.mekf_->accel_bias_limit(), 0.5f))
+        return fail("residual accel-bias projection radius changed");
     if (f.mekf_->legacy_aw_covariance_replacement())
         return fail("legacy raw a_w covariance replacement became default");
     if (!f.periodicAwCovarianceSync())
@@ -56,6 +66,44 @@ int main() {
     }
     if (!near(f.P_factor_, 1.5f) || !near(f.R_p0_xy_factor_, 1.0f))
         return fail("default OU-II anisotropy no longer matches proof audit");
+
+    // ---- Pseudo-update cadence contract ---------------------------------
+    // The deployed cadence is no longer a fixed 15 ms; it is
+    // T_S = clip(c_T * tau_applied, T_min, T_max), holding T_S/tau fixed.  Pin
+    // the constants so the bounded-gap hypothesis stays a checked statement
+    // rather than an assumption about a number that has since moved.
+    if (!near(PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT, 0.005f) ||
+        !near(PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT, 0.25f) ||
+        !near(PSEUDO_UPDATE_TAU_RATIO_DEFAULT, 0.015f / 1.1f)) {
+        return fail("deployed OU-II pseudo-update cadence constants changed");
+    }
+    // The initial applied tau is the nominal 1.1 s, so the historical 15 ms
+    // operating point is preserved exactly at startup.
+    if (!near(f.mekf_->get_pseudo_update_period_s(), 0.015f))
+        return fail("nominal p/v pseudo-update period is no longer 15 ms");
+
+    // Over the clamped tau envelope the configured period stays inside the
+    // audited interval.
+    const float TS_at_tau_min =
+        std::min(std::max(PSEUDO_UPDATE_TAU_RATIO_DEFAULT * MIN_TAU_S,
+                          PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT),
+                 PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT);
+    const float TS_at_tau_max =
+        std::min(std::max(PSEUDO_UPDATE_TAU_RATIO_DEFAULT * MAX_TAU_S,
+                          PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT),
+                 PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT);
+    if (!near(TS_at_tau_min, 0.005f) || TS_at_tau_max > 0.165f ||
+        TS_at_tau_max < 0.160f) {
+        return fail("configured pseudo-update period left the audited envelope");
+    }
+
+    // apply_R_p0_tune_/apply_R_v0_tune_ scale the clamped base by
+    // sqrt(T_S0 / T_S) and deliberately do not re-clamp, so the effective
+    // enclosures are the base intervals widened by that factor.
+    const float scale_lo = std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / TS_at_tau_max);
+    const float scale_hi = std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / TS_at_tau_min);
+    if (!(scale_lo > 0.30f && scale_lo < 0.31f) || !near(scale_hi, std::sqrt(3.0f), 1e-3f))
+        return fail("cadence information-rate factor left its audited range");
 
     // The exact source transition used by OU-II must retain a nonzero
     // acceleration-to-velocity coefficient over one pseudo-update gap.  This
