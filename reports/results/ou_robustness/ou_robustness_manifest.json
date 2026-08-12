@@ -15,8 +15,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "6dbf5891cdb9ea42a58a9c90f9cd22feb2a4761a",
-  "git_diff_stat": "",
+  "git_commit": "94f5d8f3d143b81ab57dcde62d7d0ce5d110cd4c",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 33094 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |    30 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1400 +-\n .../ou_robustness/ou_robustness_publication.tex    |    20 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   600 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1341 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   104 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1680 +-\n 8 files changed, 19178 insertions(+), 19091 deletions(-)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 2.6233606119980437,
@@ -124,36 +124,36 @@
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1419947,
-      "sha256": "0d0ca996b62801f134ae22b20d0128ac38852504e6f40b9900f462fd99bce6bc"
+      "bytes": 1419460,
+      "sha256": "3c20f6f53d49632fd6eed9819db7880d6f9045e6841eda4c2ce77d566722bbd5"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1852,
-      "sha256": "3c0692e9aeec19d6de5d6b3e6504a8cebac26a190fe2433524e6ed44a80e4193"
+      "sha256": "bcadc4ff46159356a5062db3b70558913b422e96fec34962135c86ae8fe744b0"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 142215,
-      "sha256": "c9354caa4e7b796f116d0cd77588ac29a6ca136007184f7dc9fd94025d39e724"
+      "bytes": 142121,
+      "sha256": "bb0bfe97ffabbfba7083cca24a4650b819374a02b1166b1a0eb1aa8307f434a9"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2736,
-      "sha256": "9859a1839450e00a18e9e27493038a32e4b41431afb1ead5886ba2625b5ca5ad"
+      "sha256": "d5fa78c55318560e50a8e1c7fae7ca98f3f0189f0be56e328925965482cb2b46"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 196303,
-      "sha256": "9044d18a21797a639338a8235f1d3c0beccd964c2e390e7c9a2b581151751ce7"
+      "bytes": 196224,
+      "sha256": "253661064f93bd0720ad76a8d864c3ba6d66e0450fbf3e2c2138894ce380d1da"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 114825,
-      "sha256": "be323eca6461f17f3cd0e9242f59ab7cbf1fdb14dfc50cabbdafa32971773a3b"
+      "bytes": 118088,
+      "sha256": "77bdfb4b550e0e7e56383e5ce48bc9a9bead769e0872324d3fb67eeb09f2d637"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 45553,
-      "sha256": "ed0f98798492d21542b4dfe0f0b8f311e081e1a0846be01124b2553e53456626"
+      "bytes": 45546,
+      "sha256": "c0ca5ebb41bb741f8859fe682e6b36bf99f82c12ff2a5292012d0fa6cedb9a14"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126880,
-      "sha256": "0113304f24d5bc5ce2a1a07dcf4154db6540c08f42f99be620a20d12d9a69014"
+      "bytes": 126566,
+      "sha256": "ef6ae07cd9804cb8418198bc0e19c1b2551ebcc64727a71d4051f1e2eaa708dc"
     }
   },
   "source_files": {
@@ -174,8 +174,8 @@
       "sha256": "3ad5804d1f77b1df656d6ccef2851c35f5cab4be8ee7e82bdc144a26d2e8b41e"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 29104,
-      "sha256": "ff4246617636c5d57ad8ed9be1f6ca6d3f33743616e936c191c2588d81678a8d"
+      "bytes": 31445,
+      "sha256": "02c821a6c41ebf30cf0b2cf719d570c3a6bdafd13f529bbabe2cb3ebf68b5b77"
     },
     "tools/ou_robustness.py": {
       "bytes": 55378,
