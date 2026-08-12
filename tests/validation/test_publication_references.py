@@ -6,6 +6,14 @@ stripped table, appendix, or bibliography item can silently become ``??``.  This
 test walks the main manuscript's reachable source files and requires every
 source-level cross-reference to have a reachable label and every citation key to
 exist in the manuscript bibliography databases.
+
+Macros are stricter than references.  A cross-reference resolves from the .aux
+file, so a label may be defined anywhere in the document, but a macro has to
+exist when TeX reads the character that uses it: quoting a generated value in a
+section that is typeset before the file defining it is input is a fatal
+undefined-control-sequence error, not a warning.  The last test therefore
+replays the input order of each compiled document and requires every generated
+macro to be defined before it is quoted.
 """
 
 import re
@@ -16,8 +24,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
 MAIN = DOC / "kalman_ou-w3d.tex"
+RESULTS = DOC / "kalman_ou-w3d-results.tex"
 
 INPUT_RE = re.compile(r"\\input\{([^}]+)\}")
+DEFINITION_RE = re.compile(r"\\(?:provide|new|renew)command\s*\{\s*\\([A-Za-z]+)\s*\}")
+MACRO_USE_RE = re.compile(r"\\((?:OUValidation|OURobustness)[A-Za-z]*)")
+STANDALONE_FLAG = r"\def\OUStandaloneDetailedResults"
+STANDALONE_GUARD = r"\ifdefined\OUStandaloneDetailedResults"
 LABEL_RE = re.compile(r"\\label\{([^}]+)\}")
 REF_RE = re.compile(r"\\(?:eqref|ref|cref|Cref|autoref|pageref)\{([^}]+)\}")
 CITE_RE = re.compile(r"\\cite(?:\[[^\]]*\])?\{([^}]+)\}")
@@ -30,10 +43,10 @@ def strip_comments(text: str) -> str:
     return "\n".join(COMMENT_RE.sub("", line) for line in text.splitlines())
 
 
-def resolve_input(name: str) -> Path | None:
+def resolve_input(name: str, standalone: bool = False) -> Path | None:
     # The standalone *-study sources are selected only when
     # OUStandaloneDetailedResults is defined, which the main paper never does.
-    if name.endswith("-study.tex-part"):
+    if name.endswith("-study.tex-part") and not standalone:
         return None
     path = DOC / name
     if path.is_file():
@@ -59,6 +72,47 @@ def reachable_sources() -> dict[Path, str]:
             if child is not None and child not in sources:
                 pending.append(child)
     return sources
+
+
+def typeset_order(root: Path) -> list[tuple[Path, int, str]]:
+    """Flatten a document into the line order TeX actually reads.
+
+    Only the two constructs the manuscript uses to select sources are modelled:
+    ``\\input`` is expanded in place, and the ``\\ifdefined
+    \\OUStandaloneDetailedResults`` header that opens a shared part redirects to
+    its *-study source and ends the file when the standalone results document
+    is being read.  ``\\IfFileExists`` needs no special handling because its
+    guarded input comes before the fallback definitions in the source, which is
+    the order TeX sees when the file is present.
+    """
+
+    def expand(
+        path: Path, standalone: bool, stack: tuple[Path, ...]
+    ) -> list[tuple[Path, int, str]]:
+        if path in stack:
+            return []
+        lines = strip_comments(path.read_text(encoding="utf-8")).splitlines()
+        flattened: list[tuple[Path, int, str]] = []
+        guarded = lines and lines[0].strip().startswith(STANDALONE_GUARD)
+        for number, line in enumerate(lines, start=1):
+            if guarded:
+                if not standalone:
+                    # Skip the redirect block; the shared text follows it.
+                    if line.strip().startswith(r"\fi"):
+                        guarded = False
+                    continue
+                if line.strip().startswith(r"\expandafter\endinput"):
+                    return flattened
+            if line.lstrip().startswith(STANDALONE_FLAG):
+                standalone = True
+            flattened.append((path, number, line))
+            for name in INPUT_RE.findall(line):
+                child = resolve_input(name, standalone)
+                if child is not None:
+                    flattened.extend(expand(child, standalone, (*stack, path)))
+        return flattened
+
+    return expand(root, False, ())
 
 
 def bibliography_keys(main_source: str) -> set[str]:
@@ -98,6 +152,31 @@ class PublicationReferenceTests(unittest.TestCase):
                     if key and key not in available:
                         missing.append((path.name, key))
         self.assertEqual(missing, [], f"undefined publication citations: {missing}")
+
+    def test_generated_macros_are_defined_before_they_are_quoted(self):
+        # A generated macro quoted ahead of its definition is a fatal
+        # undefined-control-sequence error, and it is invisible to a set
+        # comparison of definitions against uses: the name is defined, just too
+        # late.  That is how a Riccati-section sentence quoting the robustness
+        # spans -- defined with the robustness tables, several sections further
+        # down -- took the paper build down on main.
+        for root in (MAIN, RESULTS):
+            with self.subTest(document=root.name):
+                defined: set[str] = set()
+                early: list[str] = []
+                for path, number, line in typeset_order(root):
+                    names = DEFINITION_RE.findall(line)
+                    body = DEFINITION_RE.sub("", line)
+                    for name in MACRO_USE_RE.findall(body):
+                        if name not in defined:
+                            early.append(f"{path.name}:{number}: \\{name}")
+                    defined.update(names)
+                self.assertEqual(
+                    early,
+                    [],
+                    "generated macros quoted before they are defined: "
+                    f"{early}",
+                )
 
     def test_removed_unevaluated_appendices_are_not_referenced(self):
         sources = reachable_sources()
