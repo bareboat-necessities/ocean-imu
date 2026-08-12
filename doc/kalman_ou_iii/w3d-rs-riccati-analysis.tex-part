@@ -455,7 +455,12 @@ Theorem~\ref{thm:ou-regularized-rs}, is not the operative one.  Taken at face
 value, \eqref{eq:riccati-strong-fixed-cadence} and
 \eqref{eq:riccati-scaled-cadence-strong} then predict a pole-preserving
 schedule $r_S\propto\tau^{5/2}$ with \emph{no} leading-order $\sigma_{aw}$
-dependence, one factor of $\sigma_{aw}$ away from what is deployed.
+dependence, one factor of $\sigma_{aw}$ away from what is deployed.  That
+prediction is contradicted by direct measurement
+(Sec.~\ref{sec:riccati-law-ablation}); the two assumptions it rests on, an
+amplitude-free $q_{\mathrm{eff}}$ \emph{and} an amplitude-free target
+$\kappa$, are examined in Sec.~\ref{sec:riccati-mis-specified-pseudo}, where
+the second is shown to be the one that fails.
 
 This branch also supplies the natural explanation for a measured property of
 the filter.  In the strong limit
@@ -497,7 +502,12 @@ The filter is then simultaneously in the strong branch \emph{and} governed by
 a $\sigma_{aw}$-proportional noise intensity, for which the pole-preserving
 schedule is $r_S\propto\sigma_{aw}\tau^{5/2}$ --- the deployed law.  Which of
 the two readings is correct is an empirical question, settled in
-Sec.~\ref{sec:riccati-law-ablation}.
+Sec.~\ref{sec:riccati-law-ablation}.  It is worth recording that neither
+reading is \emph{required} to recover an amplitude-dependent schedule: once
+the cost this covariance analysis omits is restored, the sensor-floor reading
+$\beta_m=0$ already yields $r_S\propto\sigma_{aw}^{6/7}$
+(Sec.~\ref{sec:riccati-mis-specified-pseudo}).  This remark postulates a
+mechanism; that section removes the need to postulate one.
 \end{remark}
 
 \subsubsection{Similarity-scaled pseudo-update cadence}
@@ -567,6 +577,11 @@ The analysis separates three statements that should not be conflated:
  \item The monomial $r_S=c_R\sigma_a\tau^3$ is an approximation to a
        pole-placement schedule, not a universal covariance identity.
 \end{enumerate}
+The first two are not as independent as they look.  Because the $S=0$
+observation is false, the scale in item 1 is also the amplitude of the signal
+the correction of item 2 works against, and that coupling --- invisible to a
+covariance recursion --- is what fixes the amplitude exponent of item 3
+(Sec.~\ref{sec:riccati-mis-specified-pseudo}).
 The exact four-state sampled problem depends on the dimensionless groups in
 \eqref{eq:riccati-four-groups}; the closed-form
 Eqs.~\eqref{eq:riccati-omegaR}--\eqref{eq:riccati-pole-target-rs} expose the
@@ -574,10 +589,15 @@ leading drift-band mechanism.  The full MEKF additionally contains attitude,
 gyro-bias, accelerometer-bias, three-axis correlation, and nonlinear
 measurement couplings, so the reduced result is a design theorem/asymptotic
 model rather than an exact closed-form solution of the complete estimator.
-Nevertheless it identifies the quantity that should govern regularization:
-the low-frequency posterior acceleration-error intensity
+Nevertheless it identifies one of the two quantities that should govern
+regularization: the low-frequency posterior acceleration-error intensity
 $q_{\mathrm{eff}}=S_{e_a}(0)$, together with the desired normalized
-regularization bandwidth $\omega_R\tau$.
+regularization bandwidth $\omega_R\tau$.  The second, which no covariance
+recursion built on \eqref{eq:riccati-false-measurement} can produce, is the
+amplitude of the true $S$ process the constraint contradicts;
+Sec.~\ref{sec:riccati-mis-specified-pseudo} shows that it carries six-sevenths
+of the weight in the optimal schedule and that $\omega_R\tau$ need not be
+prescribed once it is included.
 
 Accordingly, the current implementation should be described as an empirically
 calibrated approximation to this Riccati/pole law.  The self-similar cadence
