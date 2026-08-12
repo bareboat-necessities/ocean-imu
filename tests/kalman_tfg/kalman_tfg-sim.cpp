@@ -238,37 +238,55 @@ void process_one(const std::string& filename,
     }
 
     /*
-        Worst observed over the eight-record set, with a small margin.
+        Worst observed over the eight-record set, with a small margin -- worst
+        observed plus about half a percent, rounded up to the next tenth, the
+        rule the OU simulators state.
 
-          channel            TFG worst   this gate   OU-III gate
-          Z RMS  jonswap        5.39        5.5          5.4
-          Z RMS  pmstokes       5.29        5.4          5.3
-          yaw                   3.19        3.3          2.2
-          3D     jonswap       30.31       30.6         21.4
-          3D     pmstokes      67.63       68.0         22.0
-          acc bias Z            9.30        9.5          5.9
-          acc bias 3D         412.29      415.0        109.4
+          channel            TFG worst   this gate   was    OU-III gate
+          Z RMS  jonswap        5.21        5.3       5.5       4.8
+          Z RMS  pmstokes       5.10        5.2       5.4       4.7
+          yaw                   2.92        3.0       3.3       1.1
+          3D     jonswap       20.99       21.1      30.6      21.1
+          3D     pmstokes      25.78       26.0      68.0      20.9
+          acc bias Z            8.84        8.9       9.5       5.0
+          acc bias 3D         398.22      400.3     415.0      98.4
 
-        Vertical is at parity with OU-III and six of the eight records beat its
-        worst observed value. The horizontal and bias channels are not: 3D
-        error degrades sharply on the large-wave records (H4.0 and H8.5), and
-        accelerometer-bias error is several times OU-III's.
+        Every bar comes down, and none of that is this file's doing: the
+        previous set was fitted before the adaptation-policy work that brought
+        the orchestrator's exogeneity timing, commit cadence, r_S floor and
+        tau-scaled S=0 cadence up to OU-III's, and the gates were not
+        re-derived afterwards. A sentinel carrying ten points of slack on the
+        horizontal channel is not a sentinel, so they are re-derived here
+        against the same eight records the generated results table reports.
 
-        Those last two gates are therefore recording a known deficiency rather
-        than endorsing it. They belong in the article as a finding, and the
-        cause is not yet established -- the pattern points at the horizontal
-        channels under large orbital motion, which is where OU-III's own
-        article already reports paying for its vertical gain, but that is a
-        hypothesis and not a measurement.
+        What that changes about the standing finding. The horizontal channel is
+        no longer the outlier it was: 3D error on JONSWAP now sits exactly at
+        OU-III's own bar and PM--Stokes within five points of it, where it used
+        to be three times worse on the large-wave records. Accelerometer bias
+        still is the outlier -- four times OU-III's, and above 100% of the true
+        bias on six of the eight records, which means the error exceeds the
+        quantity being estimated. That gate records a known deficiency rather
+        than endorsing it, and the cause remains unestablished.
+
+        Yaw stays about three times OU-III's because the continuous magnetic
+        hard-iron correction is an OU-III component and this filter does not
+        carry it; the standing heading error it removes is still here, and its
+        gauge argument is in the OU-III article.
+
+        bias_3d_percent gates the gyro channel too. The accelerometer sets it
+        -- the gyro's worst is 125.60% on pmstokes H4.0 -- so a gyro-bias
+        regression has to more than triple before this bar sees it. Splitting
+        the two is a change to W3dFailureLimits and to every family that uses
+        it, and is deliberately not made here.
     */
     static constexpr W3dFailureLimits kRegressionBars{
-        .err_limit_percent_z_jonswap   = 5.5f,
-        .err_limit_percent_z_pmstokes  = 5.4f,
-        .err_limit_yaw_deg             = 3.3f,
-        .err_limit_percent_3d_jonswap  = 30.6f,
-        .err_limit_percent_3d_pmstokes = 68.0f,
-        .acc_z_bias_percent            = 9.5f,
-        .bias_3d_percent               = 415.0f,
+        .err_limit_percent_z_jonswap   = 5.3f,    // worst 5.21 (jonswap H0.27)
+        .err_limit_percent_z_pmstokes  = 5.2f,    // worst 5.10 (pmstokes H0.27)
+        .err_limit_yaw_deg             = 3.0f,    // worst 2.92 (pmstokes H4.0)
+        .err_limit_percent_3d_jonswap  = 21.1f,   // worst 20.99 (jonswap H1.5)
+        .err_limit_percent_3d_pmstokes = 26.0f,   // worst 25.78 (pmstokes H4.0)
+        .acc_z_bias_percent            = 8.9f,    // worst 8.84 (jonswap H4.0)
+        .bias_3d_percent               = 400.3f,  // worst 398.22 (jonswap H4.0, accel)
     };
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
