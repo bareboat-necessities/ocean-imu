@@ -170,7 +170,7 @@ public:
         // the front end converges on its own schedule and the MEKF is not
         // waiting on itself.
         float    online_tune_warmup_sec = 5.0f;
-        StartupInitPolicy startup_init_policy = StartupInitPolicy::MahonyProxy;
+        StartupInitPolicy startup_init_policy = StartupInitPolicy::StagedMekf;
 
         // Handoff window. The lower bound stops a handoff from a barely-seeded
         // observer; the upper bound is the one that matters for robustness.
@@ -198,6 +198,17 @@ public:
         // is not high-passed by anything.
         float proxy_two_kp = 0.2f;
         float proxy_two_ki = 0.02f;
+
+        // Settling window after going live before accelerometer-bias learning
+        // opens. OU-III counts magnetometer updates (250); seconds are the
+        // same thing here and do not depend on the magnetometer rate.
+        float acc_bias_unlock_sec = 20.0f;
+        float handoff_acc_bias_std = 0.03f;   // m/s^2
+        // Gravity-agreement gate on the proxy attitude before it is trusted
+        // as a seed, or as the frame the magnetic reference is learned in.
+        float proxy_gravity_align_sin = 0.06f;   // ~3.4 deg
+        float proxy_gravity_lpf_sec   = 8.0f;
+        float proxy_gravity_hold_sec  = 20.0f;
     };
 
     void begin(const Config& cfg) {
@@ -239,12 +250,19 @@ public:
         // Measurement-only front end. Runs from the first sample, in every
         // stage and under both policies, and never reads the MEKF.
         vertical_complementary_.update(dt, gyro, acc, cfg_.gravity_magnitude);
+        updateProxyGravityQuality_(dt, acc);
         const float a_up = vertical_complementary_.verticalAccelUpMs2();
         if (vertical_complementary_.isReady()) wave_period_.update(dt, a_up);
         updateTuner_(dt, a_up);
 
         if (stage_ != StartupStage::Live) {
             tuner_warm_sec_ += dt;
+        } else if (!acc_bias_unlocked_) {
+            live_since_sec_ += dt;
+            if (live_since_sec_ >= cfg_.acc_bias_unlock_sec) {
+                acc_bias_unlocked_ = true;
+                mekf_.set_acc_bias_updates_enabled(true);
+            }
         }
 
         if (stage_ == StartupStage::Cold) {
@@ -299,7 +317,8 @@ public:
         // would be baked into a reference that is then locked forever.
         if (cfg_.startup_init_policy == StartupInitPolicy::MahonyProxy) {
             if (!mag_reference_learned_) {
-                if (!vertical_complementary_.isInitialized()) return;
+                if (!vertical_complementary_.isReady()) return;
+                if (!proxyGravityTrusted_()) return;
                 learnMagReferenceFrom_(vertical_complementary_.tiltQuaternion(), mag_body);
                 return;
             }
@@ -425,8 +444,13 @@ private:
 
     void enterLive_() {
         stage_ = StartupStage::Live;
+        live_since_sec_ = 0.0f;
         mekf_.set_linear_block_enabled(true);
-        mekf_.set_acc_bias_updates_enabled(true);
+        // Accelerometer bias stays frozen for a settling window after going
+        // live. It is only weakly separable from tilt, so letting it learn
+        // through the seed transient parks a tilt error in the bias state
+        // permanently. OU-III gates this the same way.
+        mekf_.set_acc_bias_updates_enabled(!cfg_.freeze_acc_bias_until_live);
         mekf_.set_Racc_std(Racc_nominal_);
         commitTune_();
         mekf_.reset_aw_covariance_to_stationary();
@@ -491,6 +515,14 @@ private:
         const bool timed_out = elapsed_sec_ >= cfg_.proxy_startup_timeout_sec;
         if (!timed_out) {
             if (!vertical_complementary_.isReady()) return;
+            // The quality gate, not a timer. OU-III's measured proxy tilt error
+            // is 2.76 deg on the worst record at 7-20 s and only 0.85 deg by
+            // 40 s, so handing off on elapsed time alone seeds an attitude that
+            // is still converging. A 2 deg seed error is 0.34 m/s^2 of apparent
+            // specific force -- seven times the true accelerometer bias -- and
+            // the bias state, being only weakly separable from tilt, absorbs it
+            // and never gives it back.
+            if (!proxyGravityTrusted_()) return;
             if (!isTunerReady()) return;
             if (cfg_.with_mag && !mag_reference_learned_) return;
         }
@@ -510,6 +542,17 @@ private:
                                     Vector3f::Zero(), Vector3f::Zero(),
                                     Vector3f::Zero(), Vector3f::Zero());
         seedHandoffAttitudeCovariance_();
+        // The seed knows nothing about the kinematic chain. Leaving the
+        // constructor's tiny prior here asserts v, p and S are known to a
+        // centimetre at a random phase of a wave, and the resulting transient
+        // is absorbed by the accelerometer bias -- which is observationally
+        // confounded with tilt and does not come back.
+        mekf_.set_initial_linear_uncertainty(1.0f, 2.0f, 5.0f, 1.0f);
+        // Same mistake one slot over: the seed sets b_a = 0, and the
+        // constructor's prior claims that to 0.01 m/s^2 when the real bias
+        // runs several times larger. An over-tight bias prior is not
+        // conservative -- it makes the filter refuse the correction it needs.
+        mekf_.set_initial_acc_bias_std(cfg_.handoff_acc_bias_std);
         if (mag_reference_learned_) {
             mekf_.set_magnetic_reference_world(B_w_learned_);
         }
@@ -539,6 +582,29 @@ private:
         good as the magnetic gauge, and is left wide open when there is no
         magnetometer to gauge with.
     */
+    /*
+        Sustained agreement between the proxy's predicted gravity direction and
+        the measured specific force. Instantaneous agreement means nothing in a
+        seaway -- orbital acceleration alone can line them up for an instant --
+        so the residual is low-passed and then required to stay under
+        threshold for a continuous hold.
+    */
+    void updateProxyGravityQuality_(float dt, const Vector3f& acc) {
+        if (!vertical_complementary_.isInitialized()) { proxy_gravity_good_sec_ = 0.0f; return; }
+        const float sin_res = ::seastate::common::gravityAlignResidualSin(
+            vertical_complementary_.quaternion(), acc);
+        const float a = 1.0f - std::exp(-dt / std::max(1e-3f, cfg_.proxy_gravity_lpf_sec));
+        proxy_gravity_res_lpf_ += a * (sin_res - proxy_gravity_res_lpf_);
+        if (proxy_gravity_res_lpf_ <= cfg_.proxy_gravity_align_sin) {
+            proxy_gravity_good_sec_ += dt;
+        } else {
+            proxy_gravity_good_sec_ = 0.0f;
+        }
+    }
+    [[nodiscard]] bool proxyGravityTrusted_() const {
+        return proxy_gravity_good_sec_ >= cfg_.proxy_gravity_hold_sec;
+    }
+
     void seedHandoffAttitudeCovariance_() {
         auto& P = mekf_.covariance_full();
         const float st = std::max(1e-6f, cfg_.proxy_handoff_tilt_sigma_rad);
@@ -710,6 +776,10 @@ private:
     float tuner_warm_sec_ = 0.0f;
     bool  mag_reference_learned_ = false;
     bool  handoff_timed_out_ = false;
+    bool  acc_bias_unlocked_ = false;
+    float live_since_sec_ = 0.0f;
+    float proxy_gravity_res_lpf_ = 1.0f;
+    float proxy_gravity_good_sec_ = 0.0f;
     float mag_yaw_anchor_rad_ = 0.0f;
     Vector3f B_w_learned_{Vector3f::UnitX()};
 };

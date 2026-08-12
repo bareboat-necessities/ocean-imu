@@ -137,9 +137,15 @@ void test_staging_staged_mekf() {
 */
 void test_staging_mahony_proxy() {
     Fusion f;
-    f.begin(default_config());   // MahonyProxy is the default
-    check(f.startupInitPolicy() == Fusion::StartupInitPolicy::MahonyProxy,
-          "MahonyProxy must be the default startup policy");
+    auto cfg = default_config();
+    cfg.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
+    f.begin(cfg);
+    // StagedMekf is the default until MahonyProxy reaches parity: without
+    // OU-III's two-stage magnetic acquisition the provisional lock is taken on
+    // a tilt that has not converged, and that tilt error ends up parked in the
+    // horizontal accelerometer bias. See docs/tfg-design.md section 9.
+    check(Fusion::Config{}.startup_init_policy == Fusion::StartupInitPolicy::StagedMekf,
+          "StagedMekf must remain the default while MahonyProxy is below parity");
     check(f.stage() == Stage::Cold, "the filter must start Cold");
 
     Sea sea;
@@ -169,6 +175,7 @@ void test_staging_mahony_proxy() {
 void test_proxy_handoff_times_out() {
     Fusion f;
     auto cfg = default_config();
+    cfg.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
     cfg.proxy_startup_timeout_sec = 30.0f;
     cfg.with_mag = false;          // nothing will ever gauge north
     f.begin(cfg);
@@ -380,7 +387,11 @@ void test_ablation_hooks() {
 void test_magnetic_reference_timing() {
     Fusion f;
     auto cfg = default_config();
+    cfg.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
     cfg.mag_delay_sec = 20.0f;
+    // The learning path waits on sustained gravity agreement, so give it a
+    // hold short enough to be reached inside this test's horizon.
+    cfg.proxy_gravity_hold_sec = 5.0f;
     f.begin(cfg);
 
     Sea sea;
