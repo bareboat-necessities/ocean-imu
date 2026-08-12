@@ -58,14 +58,14 @@ Autopilot Use Cases:
 
 There are two versions of Kalman INS filters and one filter (PII observer) based on control theory:
 
-- OU_III is using higher-order integral drift correction. It is 21 dimentional state Kalman filter. It seems works better on high precision IMUs.
+- OU_III is using higher-order integral drift correction. It is 21 dimensional state Kalman filter. It seems works better on high precision IMUs.
 - OU_II is using more direct integral drift correction and more responsive to sea state changes. It is 18 dimentional state Kalman filter.
-- PII observer is based on control theory. It is very computationally light-weight with no matrix operations. It's less accurate than Klaman filters.
+- PII observer is based on control theory. It is very computationally light-weight with no matrix operations. It's less accurate than Kalman filters.
 - All above filters are adaptive.
 - All filters tested to run on esp32s3.
 - All filters tested to run on Windows and Linux as well.
 
-Arduino .ino schetches for esp32s3 (on atomS3R):
+Arduino .ino sketches for esp32s3 (on atomS3R):
 
 - Kalman OU_II: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou2
 - Kalman OU_III: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou3
