@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, imu_calibrate, detrend, nlo]
+        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, kalman_tfg, imu_calibrate, detrend, nlo]
 
     steps:
       - name: Checkout
@@ -129,6 +129,15 @@ jobs:
             --data-dir plots/kalman_ou_iii \
             --output doc/kalman_ou_iii/w3d-sim-results-generated.tex-part
           git --no-pager diff --stat -- doc/kalman_ou_iii/w3d-sim-results-generated.tex-part
+
+      - name: Regenerate the deterministic 900 s table (kalman_tfg)
+        if: matrix.dir == 'kalman_tfg'
+        run: |
+          python3 -u tools/tfg_sim_table.py \
+            --binary tests/kalman_tfg/kalman_tfg-sim \
+            --data-dir plots/kalman_tfg \
+            --output doc/kalman_tfg/tfg-sim-results-generated.tex-part
+          git --no-pager diff --stat -- doc/kalman_tfg/tfg-sim-results-generated.tex-part
 
       - name: Clean test build (${{ matrix.dir }})
         run: make -C tests/${{ matrix.dir }} clean
