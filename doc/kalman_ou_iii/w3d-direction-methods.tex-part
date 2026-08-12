@@ -30,6 +30,13 @@ $\vct{s}_k=[-h_{E,k},h_{N,k}]^\top$, the estimator inputs are
 \qquad a_{\uparrow,k}=-a^N_{D,k}.
 \label{eq:dir-heading-signals}
 \end{equation}
+The quaternion $\vct q_k$ is the MEKF attitude once the filter is live. Before
+the handoff of Sec.~\ref{sec:proxy-handoff} the MEKF has no attitude to offer
+and the private observer's is used instead, which is admissible because
+\eqref{eq:dir-heading-signals} resolves into the projected bow axis and is
+therefore invariant under $\vct q\mapsto R_z(\psi)\vct q$: only tilt reaches
+the result, so the observer's drifting yaw cannot, and the later switch to the
+MEKF quaternion is continuous in everything this stage observes.
 \subsection{Quadrature estimator for the propagation axis}
 
 The tracked phase is advanced from the dominant frequency, but its absolute
