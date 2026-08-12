@@ -219,6 +219,13 @@ transition, and adaptation outcomes rather than uniform superiority. See
 [`docs/ou-validation.md`](docs/ou-validation.md) for the protocol, seed controls,
 and interpretation.
 
+OU-III also keeps a magnetometer hard-iron estimator running for the life of
+the filter, in a gravity-referenced frame that reads no filter state, and moves
+the magnetic reference with it. That halves the standing heading error the
+one-shot startup calibration leaves behind; see
+[`docs/ou-iii-continuous-hard-iron.md`](docs/ou-iii-continuous-hard-iron.md)
+for the mechanism, the results, and the case it cannot fix.
+
 The adaptation channels themselves smooth their targets with an EMA whose time
 constant scales with the OU operating point. `tools/ou_ema_adapt_study.py`
 sweeps those horizons against synthesized sea-state transitions, which is the
