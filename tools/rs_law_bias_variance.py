@@ -257,6 +257,44 @@ def amplitude_sweep(w: np.ndarray, exponents: list[float], span: float,
           "\n  q_eff ~ sigma_aw^2 in the drift band.\n")
 
 
+def low_motion_floor(w: np.ndarray) -> None:
+    """Independent check of the r_S lower clamp against the same criterion.
+
+    The low-motion stress ladder of tools/ou_robustness.py scales the whole
+    Hs = 0.27 m record, so Tp and tau are held and only sigma_aw moves -- the
+    controlled amplitude experiment again, and the regime where the
+    model-mismatch term must die out and the sensor floor dominate q_eff.  The
+    clamp is applied to the base r_S before the cadence renormalization, so
+    both are reported in filter-input units for comparison with r_S*.
+    """
+    _, hs_ref, lam_ref, tau, sigma_ref = SEAS[0]
+    tp = peak_period(lam_ref)
+    q_eff = np.full_like(w, 2.0 * R_A)
+    ts = pseudo_period(tau)
+    renorm = math.sqrt(TS0 / ts)
+    print("Low-motion stress ladder: r_S floor against the MSE optimum")
+    print(f"  Tp = {tp:.2f} s, tau = {tau:.3f} s held; floors shown as the filter"
+          f" sees them\n")
+    print(f"  {'Hs':>6}{'sigma_aw':>10}{'r_S*':>9}{'law':>9}"
+          f"{'floor .40':>11}{'floor .15':>11}"
+          f"{'Z* %Hs':>9}{'Z@.40':>9}{'Z@.15':>9}")
+    for hs in (0.27, 0.15, 0.10, 0.05, 0.03):
+        sigma_a = sigma_ref * hs / hs_ref
+        s_eta = jonswap(w, hs, tp)
+        w_r, mse = optimal_pole(w, s_eta, q_eff)
+        cells = []
+        for floor in (0.40, 0.15):
+            rs = floor * renorm
+            pole = (2.0 * R_A / (rs**2 * ts)) ** (1.0 / 6.0)
+            drift, distortion = mse_terms(pole, w, s_eta, q_eff)
+            cells.append(100.0 * math.sqrt(drift + distortion) / hs)
+        print(f"  {hs:6.2f}{sigma_a:10.4f}{rs_from_pole(w_r, 2 * R_A, tau):9.4f}"
+              f"{C_R * sigma_a * tau**3 * renorm:9.4f}"
+              f"{0.40 * renorm:11.3f}{0.15 * renorm:11.3f}"
+              f"{100.0 * math.sqrt(mse) / hs:9.2f}{cells[0]:9.2f}{cells[1]:9.2f}")
+    print()
+
+
 def time_scale_sweep(w: np.ndarray, span: float, points: int) -> None:
     """Controlled time-scale sweep at fixed sigma_aw: measure the tau exponent.
 
@@ -309,6 +347,7 @@ def main(argv: list[str] | None = None) -> int:
     deployed_balance(w)
     amplitude_sweep(w, exponents, args.sweep_span, args.sweep_points)
     time_scale_sweep(w, 0.3, 13)
+    low_motion_floor(w)
     return 0
 
 

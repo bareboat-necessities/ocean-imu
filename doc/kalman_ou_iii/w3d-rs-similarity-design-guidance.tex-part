@@ -647,3 +647,62 @@ it.  Second, the search was scored on a five-seed training split and confirmed
 on the five held-out seeds, where the same floor change gives $-2.6\%$ against
 $-2.5\%$ on the training split, so the effect is not an artifact of the seeds
 used to find it.
+
+\paragraph{The floor read against the bias--variance criterion.}
+The clamp was found empirically, but
+Sec.~\ref{sec:riccati-mis-specified-pseudo} supplies a criterion it can be
+scored against independently, and the low-motion ladder is the ideal test bed:
+it scales one record, so $T_p$ and $\tau$ are held and only $\sigma_{aw}$
+moves, and it is the regime in which any $\beta_m\sigma_{aw}^2$ mismatch term
+must die out and leave the sensor floor dominating $q_{\mathrm{eff}}$ ---
+$m=0$, the $p=6/7$ branch of \eqref{eq:riccati-exponent-law}.
+Table~\ref{tab:riccati-floor-criterion} evaluates
+\eqref{eq:riccati-bias-variance} along that ladder.
+
+\begin{table}[t]
+\caption{The $r_S$ lower clamp against the MSE optimum of
+\eqref{eq:riccati-bias-variance}, on the low-motion stress ladder
+($T_p=\SI{3.00}{s}$ and $\tau=\SI{1.247}{s}$ held, $\sigma_{aw}$ scaled with
+$H_s$, $q_{\mathrm{eff}}=2r_a$).  The clamp acts on the base $r_S$; all values
+are shown as the filter sees them, after the cadence renormalization
+\eqref{eq:riccati-deployed-information-scale}.}
+\label{tab:riccati-floor-criterion}
+\centering
+\footnotesize
+\begin{tabular}{@{}rrrrrrr@{}}
+\toprule
+$H_s$ [m] & $\sigma_{aw}$ & $r_S^\star$ & law &
+\multicolumn{3}{c}{predicted $Z$ [\%$H_s$]} \\
+\cmidrule(lr){5-7}
+ & [\si{\meter\per\second\squared}] & [\si{\meter\second}] &
+ [\si{\meter\second}] & at $r_S^\star$ & floor \num{0.40} & floor \num{0.15} \\
+\midrule
+0.27 & 0.354 & 0.138 & 0.226 &  3.09 &  4.00 &  3.09 \\
+0.15 & 0.197 & 0.084 & 0.125 &  4.33 &  7.03 &  4.70 \\
+0.10 & 0.131 & 0.059 & 0.084 &  5.46 & 10.48 &  6.69 \\
+0.05 & 0.066 & 0.033 & 0.042 &  8.13 & 20.88 & 12.93 \\
+0.03 & 0.039 & 0.021 & 0.025 & 10.90 & 34.77 & 21.38 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three readings follow, and the first two corroborate the change.  The
+\SI{0.15}{m.s} floor lands almost exactly on the criterion's optimum at
+$H_s=\SI{0.27}{m}$ --- \num{0.141} against $r_S^\star=\num{0.138}$ in
+filter-input units --- which is why the empirical sweep saw the gain saturate
+there: below that value the floor stops binding on any calibrated sea.  And
+the criterion reproduces the stress-case improvement it was not fitted to,
+predicting \SIrange{20.9}{12.9}{\percent} of $H_s$ across the floor change, a
+relative $-38\%$ against the measured $-35\%$ of
+Table~\ref{tab:rs-floor-effect}.
+
+The third reading is a caveat on the new floor rather than the old one.  At
+$H_s=\SI{0.05}{m}$ the clamp still binds, and binds hard: it sits a factor
+$4.3$ above $r_S^\star$, and the criterion says a further $-37\%$ remains
+available there.  An eight-sea mean cannot see this, because \SI{0.15}{m.s} is
+clear of every calibrated sea, so the saturation observed in the sweep is a
+property of the scoring set and not evidence that the clamp has stopped
+costing anything.  Whether to pursue that residue is a design question rather
+than a tuning one --- some guard against $r_S\rightarrow0$ in flat water is
+wanted regardless of what the MSE criterion asks for --- but it should be
+recorded that the guard is not free, and that its price is now quantified.
