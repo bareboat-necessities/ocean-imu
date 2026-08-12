@@ -483,6 +483,103 @@ problem; it was neither. The diagnostic that separates them is whether the
 error is a constant offset or a wander — a gauge offset is constant, and a real
 heading problem is not.
 
+## 8. Adaptation policy, and why each part is not a free parameter
+
+The tuner does not know which filter it is driving, so everything OU-III
+measured about it carries over unchanged. This filter had drifted from that
+policy in four ways; all four are now aligned, and each is guarded by a test in
+`tfg_orchestrator-test`.
+
+### Exogeneity is a timing property, not only a signal choice
+
+Feeding the tuner from the complementary observer keeps its *inputs*
+independent of the filter. Necessary, not sufficient. If the schedule smoothed
+during step `k` were also applied during step `k`, the covariance the MEKF uses
+at `k` would depend on `y_k` — the filter would be weighting a measurement
+against a covariance that measurement had just moved.
+
+So the smoother runs every sample, the cadence tick marks a candidate, and the
+commit happens at the top of the *next* `update()`, before `y_{k+1}` reaches the
+MEKF. `test_schedule_is_exogenous_to_the_current_sample` delivers one violent
+sample and asserts the applied `r_S` does not move within that same update.
+
+### Cadence
+
+Committing every sample is not "more adaptive" — it couples the schedule to the
+measurement stream 200 times a second. The commit runs on a 0.1 s tick
+(OU-III's `ADAPT_EVERY_SECS`). The EMA still sees every sample, so the
+trajectory is unchanged apart from being held piecewise constant between ticks.
+`test_adaptation_is_cadenced` counts distinct committed values over 10 s and
+requires ≤ 120 against 2000 samples.
+
+### The `r_S` floor is 0.15, not 0.4
+
+On OU-III the 0.4 floor was never a safety limit — it was the binding
+constraint on every low-motion sea. The schedule asks for 0.24 m·s at the
+calibrated H_s = 0.27 m point, so the floor clipped it, and a full sweep of
+`c_tau`, `c_sigma` and `c_R` left those scenarios constant to three decimals.
+Dropping it recovered −8.3% on the worst sea, −9.5% on PM-Stokes 0.27 m, −2.5%
+on the eight-sea mean, and cut the near-still H_s = 0.05 m case from 27.0% to
+17.6% of H_s. This filter had inherited the old 0.4 and the same clipping.
+
+### The S=0 cadence is self-similar in tau, and `r_S` must follow it
+
+One pseudo update has covariance `r_S^2`; at one update per `T_S` seconds the
+continuous-equivalent information rate goes as `1/(r_S^2 T_S)`. Scaling `T_S`
+with tau while holding `r_S` fixed therefore changes the regularization
+strength with sea state as a side effect. The cadence is
+`T_S = (0.015/1.1)·tau`, clamped to [5 ms, 250 ms], and the filter input is
+renormalized by `sqrt(T_0/T_S)` to hold the information rate. That turns the
+base `sigma_aw·tau^3` schedule into an effective `sigma_aw·tau^(5/2)` one.
+
+The renormalized value is deliberately **not** re-clamped. The smallest-sea
+point sits on the base floor and must be allowed below it once `T_S > T_0`, or
+the clipping the previous item removes comes straight back.
+
+## 9. Startup: the proxy owns tilt and magnetic learning
+
+`StartupInitPolicy::MahonyProxy` is the default. The private Mahony observer —
+already running for the wave-period channel — owns levelling and magnetic
+acquisition, and the MEKF is seeded once and goes straight to Live.
+
+Under the legacy `StagedMekf` the MEKF learns its own tilt while degraded
+(linear block off, bias frozen, `Racc` inflated) and the magnetic reference is
+captured in *that* attitude's frame. The reference and yaw gauge lock once, so
+whatever tilt error the warming MEKF holds at that instant becomes a standing
+attitude and heading bias — and it is the moment the MEKF is least able to
+level, because the linear block that absorbs orbital acceleration is switched
+off and its accelerometer update is fighting the waves with nowhere to put them.
+
+Three details that are easy to get wrong:
+
+**The proxy needs its integral term on.** `VerticalAccelComplementary` defaults
+to `two_ki = 0`, which leaves a standing tilt of about `2b/two_kp` — 0.71° at a
+0.05 °/s gyro bias. Everything else the observer feeds is high-passed and never
+noticed. *Nothing high-passes an attitude seed.* The seed path therefore runs at
+`two_kp = 0.2, two_ki = 0.02`.
+
+**The handoff needs a timeout.** The wave-period channel legitimately takes tens
+of seconds, longer in a low sea — measured at ~110 s on a clean 0.15 Hz
+sinusoid. Without a timeout a front end that never declares itself ready leaves
+the MEKF unstarted forever, which is a worse failure than starting from a stale
+operating point. Past `proxy_startup_timeout_sec` (150 s) the handoff proceeds
+on proxy tilt alone, and `handoffTimedOut()` reports that it did.
+
+**The seeded attitude covariance matters.** The proxy is good, not exact.
+Seeding an overconfident attitude would make the first accelerometer updates
+fight a covariance asserting there is nothing to correct. Tilt is seeded at
+0.035 rad; yaw at 0.087 rad once north is gauged, and wide open when there is no
+magnetometer to gauge with.
+
+### Not carried over
+
+OU-III's two-stage magnetic acquisition — a provisional lock followed by a
+refinement pass at 90 s over a 30 s window — is **not** implemented here. The
+same low corner that makes the observer reject waves makes it slow to converge
+from its accelerometer seed, so the first lock is taken on a less-converged
+tilt than the refinement would give. That is a known, bounded gap rather than a
+disagreement with the design.
+
 ## 8. What this does not claim
 
 The bias-free, frozen-parameter skeleton is group-affine. The complete

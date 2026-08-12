@@ -68,6 +68,6 @@ run-tests:
 	for d in $(TEST_DIRS); do \
 		if [ -f "$$d/run_tests.sh" ]; then \
 			echo "Running $$d/run_tests.sh"; \
-			( cd "$$d" && bash ./run_tests.sh ); \
+			( cd "$$d" && bash -e ./run_tests.sh ); \
 		fi; \
 	done
