@@ -5,6 +5,8 @@
  * Copyright 2025, Mikhail Grushinskiy
  */
 
+#include <math.h>
+
 class TimeAwareSpikeFilter {
   private:
     struct Sample {
@@ -25,10 +27,10 @@ class TimeAwareSpikeFilter {
   public:
     /**
        @brief Construct a new Spike Filter object
-       @param size Size of the moving window (recommend 3-5)
+       @param size Size of the moving window (recommend 3-5), clamped to at least 2
        @param thr Threshold for spike detection (tune based on your signal)
     */
-    TimeAwareSpikeFilter(int size, float thr) : windowSize(size), threshold(thr), initialized(false) {
+    TimeAwareSpikeFilter(int size, float thr) : windowSize(size < 2 ? 2 : size), threshold(thr), initialized(false) {
       window = new Sample[windowSize];
       values = new float[windowSize];
       derivatives = new float[windowSize];
@@ -42,6 +44,11 @@ class TimeAwareSpikeFilter {
       delete[] values;
       delete[] window;
     }
+
+    // The filter owns raw arrays, so copying it would leave two objects
+    // pointing at the same storage and double-free on destruction.
+    TimeAwareSpikeFilter(const TimeAwareSpikeFilter &) = delete;
+    TimeAwareSpikeFilter &operator=(const TimeAwareSpikeFilter &) = delete;
 
     /**
        @brief Filtering when you already have the delta time
@@ -60,15 +67,22 @@ class TimeAwareSpikeFilter {
         return input;
       }
 
-      // Store the new value and time delta
-      window[currentIndex].value = input;
-      window[currentIndex].deltaTime = deltaT;
+      // Store the new value and time delta, then advance the write cursor.
+      // After the advance currentIndex points at the oldest sample, which is
+      // the slot the next call overwrites.
+      int newestIndex = currentIndex;
+      window[newestIndex].value = input;
+      window[newestIndex].deltaTime = deltaT;
       currentIndex = (currentIndex + 1) % windowSize;
 
-      // Calculate time-weighted derivatives
-      for (int i = 0; i < windowSize; i++) {
-        int currentIdx = (currentIndex + i) % windowSize;
-        int prevIdx = (currentIndex + i - 1 + windowSize) % windowSize;
+      // Calculate time-weighted derivatives over consecutive sample pairs.
+      // The oldest sample has no predecessor left in the buffer (it was
+      // overwritten by the newest one), so a window of N samples yields
+      // N - 1 derivatives.
+      int derivativeCount = windowSize - 1;
+      for (int i = 0; i < derivativeCount; i++) {
+        int currentIdx = (currentIndex + i + 1) % windowSize;
+        int prevIdx = (currentIndex + i) % windowSize;
 
         float dt = window[currentIdx].deltaTime;
 
@@ -76,12 +90,13 @@ class TimeAwareSpikeFilter {
       }
 
       // Find the median derivative (more robust than average)
-      float medianDerivative = computeMedian(derivatives, windowSize);
+      float medianDerivative = computeMedian(derivatives, derivativeCount);
 
-      // Check if current derivative is a spike
-      int prevIdx = (currentIndex - 1 + windowSize) % windowSize;
-      float currentDeltaT = window[currentIndex].deltaTime;
-      float currentDerivative = (window[currentIndex].value - window[prevIdx].value) / currentDeltaT;
+      // Check if current derivative is a spike. The current sample is the one
+      // just stored, not the slot the cursor now points at.
+      int prevIdx = (newestIndex - 1 + windowSize) % windowSize;
+      float currentDeltaT = window[newestIndex].deltaTime;
+      float currentDerivative = (window[newestIndex].value - window[prevIdx].value) / currentDeltaT;
 
       if (fabs(currentDerivative - medianDerivative) > threshold) {
         // Spike detected - replace with median of window values

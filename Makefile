@@ -13,6 +13,7 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/nlo \
 	$(REPO_ROOT)/tests/pii_observer \
 	$(REPO_ROOT)/tests/spectrum \
+	$(REPO_ROOT)/tests/spike_filter \
 	$(REPO_ROOT)/tests/validation \
 	$(REPO_ROOT)/tests/wave_dir \
 	$(REPO_ROOT)/tests/wave_sim
