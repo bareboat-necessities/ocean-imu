@@ -454,6 +454,8 @@ jobs:
                  ou_validation_transition.svg
           mirror ou_robustness/ou_robustness_publication.tex \
                  w3d-ou-robustness-results-generated.tex-part
+          mirror ou_robustness/ou_robustness_macros.tex \
+                 w3d-ou-robustness-macros-generated.tex-part
           mirror ou_robustness/ou_robustness_sensitivity.svg \
                  ou_robustness_sensitivity.svg
           mirror ou_robustness/ou_robustness_stress.svg \

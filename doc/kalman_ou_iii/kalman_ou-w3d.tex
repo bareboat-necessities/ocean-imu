@@ -159,6 +159,14 @@
 \IfFileExists{w3d-ou-validation-macros-generated.tex-part}{%
   \input{w3d-ou-validation-macros-generated.tex-part}%
 }{}
+\IfFileExists{w3d-ou-robustness-macros-generated.tex-part}{%
+  \input{w3d-ou-robustness-macros-generated.tex-part}%
+}{}
+\providecommand{\OURobustnessNominalMean}{--}
+\providecommand{\OURobustnessSigmaSpan}{--}
+\providecommand{\OURobustnessRSSpan}{--}
+\providecommand{\OURobustnessCoupledSigmaSpan}{--}
+\providecommand{\OURobustnessCoupledTauSpan}{--}
 \providecommand{\OUValidationBootstrapMethod}{a nonparametric percentile bootstrap of the paired mean}
 \providecommand{\OUValidationBootstrapResamples}{10{,}000}
 \providecommand{\OUValidationBootstrapRNG}{NumPy PCG64}

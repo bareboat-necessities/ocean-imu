@@ -267,6 +267,7 @@ class RestatTests(unittest.TestCase):
                 "ou_robustness_summary.csv",
                 "ou_robustness_paired_effects.csv",
                 "ou_robustness_publication.tex",
+                "ou_robustness_macros.tex",
             ):
                 self.assertEqual(
                     (output / name).read_bytes(),
@@ -490,6 +491,10 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
                 "ou_robustness_publication.tex",
                 "w3d-ou-robustness-results-generated.tex-part",
             ),
+            (
+                "ou_robustness_macros.tex",
+                "w3d-ou-robustness-macros-generated.tex-part",
+            ),
             ("ou_robustness_sensitivity.svg", "ou_robustness_sensitivity.svg"),
             ("ou_robustness_stress.svg", "ou_robustness_stress.svg"),
         ):
@@ -516,8 +521,11 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         effects = self.read_csv(
             self.RESULTS / "ou_robustness_paired_effects.csv"
         )
+        # The claim values are macro definitions, which are emitted to the
+        # macros part so the manuscript can quote them before the tables are
+        # input.
         generated = (
-            self.DOC / "w3d-ou-robustness-results-generated.tex-part"
+            self.DOC / "w3d-ou-robustness-macros-generated.tex-part"
         ).read_text(encoding="utf-8")
         checks = (
             ("r_s_x0.5_minus_x1", "disp_3d_rms_m", 3),

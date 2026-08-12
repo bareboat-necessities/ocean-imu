@@ -494,6 +494,7 @@ def write_publication_table(
     path: Path,
     summary: Sequence[Mapping[str, Any]],
     effects: Sequence[Mapping[str, Any]],
+    macros_path: Path | None = None,
 ) -> None:
     index = _summary_index(summary)
     effect_index = _effect_index(effects)
@@ -658,7 +659,28 @@ def write_publication_table(
         lines.append(f"    {label} & {mode} & " + " & ".join(values) + r" \\")
     lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table*}"))
     core.assert_latex_macro_names(lines)
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    header = lines[0]
+    if macros_path is None:
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return
+
+    # The manuscript quotes these values in the Riccati analysis, which is
+    # typeset before the robustness tables are input, so the definitions are
+    # emitted separately and included from the preamble.  Splitting them here
+    # keeps a single source of truth for both files.
+    definitions = [
+        line for line in lines if line.lstrip().startswith(r"\providecommand")
+    ]
+    tables = [
+        line
+        for line in lines
+        if not line.lstrip().startswith(r"\providecommand")
+        and not line.startswith("%")
+    ]
+    macros_path.write_text(
+        "\n".join([header, *definitions]) + "\n", encoding="utf-8"
+    )
+    path.write_text("\n".join([header, *tables]) + "\n", encoding="utf-8")
 
 
 def _run_unit(
@@ -827,12 +849,15 @@ def restat_bundle(
     effects_path = output_dir / "ou_robustness_paired_effects.csv"
     json_path = output_dir / "ou_robustness.json"
     publication_path = output_dir / "ou_robustness_publication.tex"
+    macros_path = output_dir / "ou_robustness_macros.tex"
     manifest_path = output_dir / "ou_robustness_manifest.json"
 
     core.write_csv(raw_path, rows)
     core.write_csv(summary_path, summary)
     core.write_csv(effects_path, effects)
-    write_publication_table(publication_path, summary, effects)
+    write_publication_table(
+        publication_path, summary, effects, macros_path=macros_path
+    )
 
     # Fields that describe what was *run* are carried over untouched -- the
     # restated bundle scored exactly the ensemble the source did.  Fields that
@@ -854,7 +879,14 @@ def restat_bundle(
         },
     )
 
-    result_paths = [raw_path, summary_path, effects_path, json_path, publication_path]
+    result_paths = [
+        raw_path,
+        summary_path,
+        effects_path,
+        json_path,
+        publication_path,
+        macros_path,
+    ]
     manifest = (
         json.loads(manifest_path.read_text(encoding="utf-8"))
         if manifest_path.exists()
@@ -1264,6 +1296,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     effects_path = args.output_dir / "ou_robustness_paired_effects.csv"
     json_path = args.output_dir / "ou_robustness.json"
     publication_path = args.output_dir / "ou_robustness_publication.tex"
+    macros_path = args.output_dir / "ou_robustness_macros.tex"
     manifest_path = args.output_dir / "ou_robustness_manifest.json"
     sensitivity_plot = args.output_dir / "ou_robustness_sensitivity.svg"
     stress_plot = args.output_dir / "ou_robustness_stress.svg"
@@ -1271,7 +1304,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     core.write_csv(raw_path, rows)
     core.write_csv(summary_path, summary)
     core.write_csv(effects_path, effects)
-    write_publication_table(publication_path, summary, effects)
+    write_publication_table(
+        publication_path, summary, effects, macros_path=macros_path
+    )
     plot_paths: list[Path] = []
     if not args.no_plots:
         write_sensitivity_plot(sensitivity_plot, summary)
@@ -1312,6 +1347,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         effects_path,
         json_path,
         publication_path,
+        macros_path,
         *plot_paths,
     ]
     source_paths = [

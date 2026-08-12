@@ -57,6 +57,8 @@ cp -f ../../reports/results/ou_validation/ou_validation_vertical.svg \
   "${DOC_DIR}/ou_validation_vertical.svg"
 cp -f ../../reports/results/ou_robustness/ou_robustness_publication.tex \
   "${DOC_DIR}/w3d-ou-robustness-results-generated.tex-part"
+cp -f ../../reports/results/ou_robustness/ou_robustness_macros.tex \
+  "${DOC_DIR}/w3d-ou-robustness-macros-generated.tex-part"
 cp -f ../../reports/results/ou_robustness/ou_robustness_sensitivity.svg \
   "${DOC_DIR}/ou_robustness_sensitivity.svg"
 cp -f ../../reports/results/ou_robustness/ou_robustness_stress.svg \
@@ -95,10 +97,12 @@ for label in (
 dst.write_text(text, encoding="utf-8")
 PY
 
-# The robustness publication keeps the generated scalar macros used by the
-# prose but omits the two full-width tables because both datasets are already
-# shown by the sensitivity and degradation figures. The detailed-results
-# document continues to consume the unfiltered generated file.
+# The robustness publication view omits the two full-width tables because both
+# datasets are already shown by the sensitivity and degradation figures. The
+# detailed-results document continues to consume the unfiltered generated file.
+# The scalar macros quoted by the prose are not in either file: they are
+# mirrored separately above and input from the preamble, because the Riccati
+# analysis quotes them before these tables are read.
 python3 - <<'PY'
 from pathlib import Path
 
