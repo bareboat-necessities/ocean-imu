@@ -335,6 +335,17 @@ public:
         if (env_float("SF_MAG_REFINE_START_SEC", vf)) cfg_.mag_refine_start_sec = vf;
         if (env_float("SF_MAG_REFINE_WINDOW_SEC", vf)) cfg_.mag_refine_window_sec = vf;
         if (const char* r = std::getenv("SF_MAG_REFINE")) cfg_.mag_refine_enabled = (std::string(r) != "0");
+        // Continuous exogenous hard-iron estimation.
+        if (const char* h = std::getenv("SF_MAG_CONT_HI")) cfg_.mag_continuous_hard_iron = (std::string(h) != "0");
+        if (env_float("SF_MAG_HI_MEMORY_SEC", vf)) cfg_.mag_hi_memory_sec = vf;
+        if (env_float("SF_MAG_HI_RIDGE", vf)) cfg_.mag_hi_model_ridge = vf;
+        if (env_float("SF_MAG_HI_RIDGE_REL", vf)) cfg_.mag_hi_model_ridge_relative = vf;
+        if (env_float("SF_MAG_HI_MIN_INFO", vf)) cfg_.mag_hi_min_information = vf;
+        if (env_float("SF_MAG_HI_MIN_WEIGHT", vf)) cfg_.mag_hi_min_effective_weight = vf;
+        if (env_float("SF_MAG_HI_MAX_RESID", vf)) cfg_.mag_hi_max_residual_rms_uT = vf;
+        if (env_float("SF_MAG_HI_FRACTION", vf)) cfg_.mag_hi_apply_fraction = vf;
+        if (env_float("SF_MAG_HI_SLEW_TAU", vf)) cfg_.mag_hi_slew_tau_sec = vf;
+
         if (env_float("SF_PROXY_TILT_SIGMA", vf)) cfg_.proxy_handoff_tilt_sigma_rad = vf;
         if (env_float("SF_PROXY_YAW_SIGMA", vf)) cfg_.proxy_handoff_yaw_sigma_rad = vf;
     }
@@ -362,6 +373,23 @@ public:
         if (!reported_refine_ && fusion_.hasRefinedMagReference()) {
             reported_refine_ = true;
             std::cerr << "STARTUP mag_refined_s=" << fusion_.magRefineTimeSec() << "\n";
+        }
+
+        if (trace_hard_iron_) {
+            trace_elapsed_ += dt;
+            if (trace_elapsed_ >= 60.0f) {
+                trace_elapsed_ = 0.0f;
+                const auto& e = fusion_.magContinuousHardIron().estimate();
+                const Vector3f& a = fusion_.magContinuousHardIronAppliedUT();
+                std::cerr << "MAGHI t=" << int(t_trace_)
+                          << " valid=" << e.valid
+                          << " info=" << e.information
+                          << " w=" << e.effective_weight
+                          << " resid=" << e.residual_rms_uT
+                          << " fit=[" << e.bias_body_uT.transpose() << "]"
+                          << " applied=[" << a.transpose() << "]\n";
+            }
+            t_trace_ += dt;
         }
 
         auto& filter = fusion_.raw();
@@ -527,6 +555,10 @@ private:
     };
 
     bool with_mag_ = true;
+    const bool trace_hard_iron_ = std::getenv("W3D_MAG_HI_TRACE") != nullptr;
+    mutable float trace_elapsed_ = 0.0f;
+    mutable float t_trace_ = 0.0f;
+
     mutable bool reported_lock_ = false;
     mutable bool reported_live_ = false;
     mutable bool reported_refine_ = false;
@@ -561,12 +593,12 @@ private:
 // filter that now ships, which is slack a regression can hide in.
 //
 // These are fitted to the deployed configuration -- the default
-// StartupInitPolicy::MahonyProxy.  The W3D_STARTUP_INIT=staged_mekf ablation
-// deliberately exceeds two of them, 3D on jonswap H1.5 (21.15 against 21.1)
-// and the 3D accelerometer-bias aggregate (106.2 against 95.8), because that
-// is precisely the behaviour the default replaced.  Scoring the ablation means
-// scoring the old filter, so run it with W3D_COLLECT_ALL_GATES if you want the
-// numbers rather than an early exit.
+// StartupInitPolicy::MahonyProxy with the continuous hard-iron correction on.
+// Both matched ablations, W3D_STARTUP_INIT=staged_mekf and SF_MAG_CONT_HI=0,
+// deliberately exceed some of them, because that is precisely the behaviour
+// the defaults replaced.  Scoring an ablation means scoring the old filter, so
+// run it with W3D_COLLECT_ALL_GATES if you want the numbers rather than an
+// early exit.
 //
 // bias_3d_percent remains dominated by the horizontal accelerometer bias,
 // which is close to unobservable on the smaller seas -- the error exceeds the
@@ -574,14 +606,22 @@ private:
 // 95.3 because holding accelerometer-bias learning until the magnetic
 // reference is refined stops the bias absorbing the provisional reference's
 // tilt error; see docs/ou-iii-startup-init.md.
+// Re-derived once more for the continuous hard-iron correction, which moved
+// three of the seven.  Yaw is the point of that change and drops by half, so
+// its limit comes down with it or it stops being a sentinel.  The two that go
+// up are the price: the correction walks the heading onto the corrected field
+// during the run, and the horizontal accelerometer bias -- already the least
+// observable quantity here, with an error that exceeds the true bias under
+// every configuration this filter has ever shipped -- absorbs some of that
+// motion.  See docs/ou-iii-continuous-hard-iron.md.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.8f,    // worst 4.69 (jonswap H0.27)
+    .err_limit_percent_z_jonswap   = 4.8f,    // worst 4.70 (jonswap H0.27)
     .err_limit_percent_z_pmstokes  = 4.7f,    // worst 4.66 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 2.2f,    // worst 2.16 (pmstokes H1.5)
-    .err_limit_percent_3d_jonswap  = 21.1f,   // worst 20.95 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 20.6f,   // worst 20.42 (pmstokes H4.0)
-    .acc_z_bias_percent            = 5.6f,    // worst 5.48 (pmstokes H8.5)
-    .bias_3d_percent               = 95.8f,   // worst 95.30 (jonswap H4.0, accel)
+    .err_limit_yaw_deg             = 1.1f,    // worst 1.06 (jonswap H0.27)
+    .err_limit_percent_3d_jonswap  = 21.1f,   // worst 20.94 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 20.9f,   // worst 20.72 (pmstokes H4.0)
+    .acc_z_bias_percent            = 5.0f,    // worst 4.91 (jonswap H8.5)
+    .bias_3d_percent               = 98.4f,   // worst 97.89 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

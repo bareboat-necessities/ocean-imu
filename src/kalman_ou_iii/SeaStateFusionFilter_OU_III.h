@@ -60,6 +60,7 @@
 #include "tuner/WavePeriodEstimator.h"
 #include "tuner/VerticalAccelComplementary.h"
 #include "tuner/MagAutoTuner.h"
+#include "tuner/ContinuousMagHardIronEstimator.h"
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
@@ -1927,6 +1928,43 @@ public:
         // heading, and a wrong one subtracted everywhere is worse than none.
         // Turn it on where the platform changes heading during startup.
         bool  mag_estimate_hard_iron = false;
+
+        // Continuous hard-iron estimation, and the reference that goes with it.
+        //
+        // The startup estimate above is a single window, and a single window is
+        // where the offset is least identifiable: the excitation is whatever
+        // tilt the hull happened to take in fifteen seconds.  This one never
+        // closes its accumulation, so the question stops being "can the offset
+        // be read out of these fifteen seconds" and becomes "keep watching, and
+        // correct when the data finally say something".
+        //
+        // Two things make that safe to leave running.  The estimator is
+        // exogenous -- gravity-referenced tilt from the private Mahony observer
+        // and the raw magnetometer, never a filter state, so no loop is closed
+        // through the MEKF and the ISS argument is untouched.  And the applied
+        // offset and the magnetic reference move together, out of the same
+        // statistics, so the filter is never subtracting one offset while
+        // steering to a reference that belongs to another.
+        //
+        // Nothing here starts until the two-stage startup acquisition has
+        // finished, so first heading, handoff and refinement are exactly as
+        // they were.
+        bool  mag_continuous_hard_iron        = true;
+        float mag_hi_memory_sec               = 600.0f;
+        float mag_hi_model_ridge              = 4.0e-3f;
+        float mag_hi_model_ridge_relative     = 0.5f;
+        float mag_hi_min_information          = 2.0f;
+        float mag_hi_min_effective_weight     = 500.0f;
+        float mag_hi_max_residual_rms_uT      = 3.0f;
+        float mag_hi_max_bias_fraction        = 0.35f;
+
+        // Fraction of the fitted offset the filter is willing to apply, and the
+        // time constant it moves over.  The ridge already shrinks the fit for
+        // what the model cannot see; this is the separate, blunter statement
+        // that a calibration nobody has checked should not arrive as a step.
+        float mag_hi_apply_fraction           = 1.0f;
+        float mag_hi_slew_tau_sec             = 45.0f;
+
         bool  mag_enable_quality_weighting = false;
         float mag_min_effective_weight     = 0.0f;
         float mag_acc_norm_rel_soft        = 0.22f;
@@ -1978,6 +2016,29 @@ public:
         mag_cfg.gyro_soft_dps            = cfg_.mag_gyro_soft_dps;
 
         mag_auto_tuner_.setConfig(mag_cfg);
+
+        ContinuousMagHardIronEstimator::Config hi_cfg;
+        hi_cfg.memory_sec           = cfg_.mag_hi_memory_sec;
+        hi_cfg.model_ridge          = cfg_.mag_hi_model_ridge;
+        hi_cfg.model_ridge_relative = cfg_.mag_hi_model_ridge_relative;
+        hi_cfg.min_information      = cfg_.mag_hi_min_information;
+        hi_cfg.min_effective_weight = cfg_.mag_hi_min_effective_weight;
+        hi_cfg.max_residual_rms_uT  = cfg_.mag_hi_max_residual_rms_uT;
+        hi_cfg.max_bias_fraction    = cfg_.mag_hi_max_bias_fraction;
+        hi_cfg.min_mag_norm_uT      = cfg_.mag_init_min_mag_norm;
+        mag_hi_estimator_.setConfig(hi_cfg);
+
+        mag_hi_startup_body_uT_.setZero();
+        mag_hi_applied_body_uT_.setZero();
+        mag_hi_anchor_bias_body_uT_.setZero();
+        mag_hi_anchor_world_ref_uT_.setZero();
+        mag_hi_anchored_ = false;
+        last_hi_sample_t_ = NAN;
+        last_hi_apply_t_  = NAN;
+        mag_hard_iron_body_uT_.setZero();
+
+        mag_world_ref_uT_.setZero();
+        mag_world_ref_valid_ = false;
 
         resetTiltInit_();
 
@@ -2210,6 +2271,12 @@ public:
         if (!usingProxyInit_() && stage_ == Stage::Uninitialized) return;
         if (t_ < cfg_.mag_delay_sec) return;
 
+        // Ahead of every gate below, and deliberately.  The continuous
+        // estimator wants the whole magnetometer record, not the part the
+        // startup machinery was willing to average, and it is reading a frame
+        // the startup machinery does not own.
+        accumulateContinuousHardIron_(mag_body_ned);
+
         // Hold the whole magnetometer path off until the startup observer has
         // settled.  This sits ahead of the eligibility clock deliberately, so
         // the tilt-fallback timer cannot start running and then wave the
@@ -2295,7 +2362,7 @@ public:
                         // model parameter, so writing it before the MEKF has
                         // been handed the attitude is safe and leaves it ready
                         // to use the magnetometer from its first live sample.
-                        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+                        setMagWorldRef_(mag_world_ref_uT);
 
                         const float mag_tilt_yaw_rad =
                             mag_auto_tuner_.getYawGaugeCorrectionRad();
@@ -2351,10 +2418,11 @@ public:
                         }
 
                         Eigen::Vector3f hard_iron_uT;
-                        mag_hard_iron_body_uT_ =
+                        mag_hi_startup_body_uT_ =
                             mag_auto_tuner_.getHardIronBodyUT(hard_iron_uT)
                                 ? hard_iron_uT
                                 : Eigen::Vector3f::Zero();
+                        mag_hard_iron_body_uT_ = mag_hi_startup_body_uT_;
 
                         mag_ref_set_ = true;
                         mag_north_lock_time_sec_ = t_;
@@ -2365,6 +2433,7 @@ public:
         }
 
         maybeRefineMagReference_(mag_body_ned);
+        maybeApplyContinuousHardIron_();
 
         // Magnetometer corrections go to the MEKF only once it owns the
         // attitude.  Before handoff its state is not the one being solved.
@@ -2392,6 +2461,19 @@ public:
     // constrained it well enough to use.
     const Eigen::Vector3f& magHardIronBodyUT() const noexcept {
         return mag_hard_iron_body_uT_;
+    }
+
+    // Continuous estimator, for diagnostics and for tests that need to see why
+    // it did or did not act.  estimate().valid is the gate; information() is
+    // how much attitude excitation the memory window has actually collected.
+    const ContinuousMagHardIronEstimator& magContinuousHardIron() const noexcept {
+        return mag_hi_estimator_;
+    }
+
+    // The part of magHardIronBodyUT() the continuous estimator is responsible
+    // for, as opposed to the startup solve.
+    const Eigen::Vector3f& magContinuousHardIronAppliedUT() const noexcept {
+        return mag_hi_applied_body_uT_;
     }
 
 
@@ -2532,6 +2614,127 @@ private:
     // (when a magnetometer is fitted), and an operating point the tuner
     // stands behind.  Waiting for all three is what lets the MEKF skip the
     // staged warmup entirely -- there is nothing left for it to converge.
+    // Every write of the magnetometer's world reference goes through here, so
+    // the wrapper always knows the vector the MEKF is steering to.  The MEKF
+    // does not offer it back, and the continuous correction below moves the
+    // reference by a delta rather than replacing it.
+    void setMagWorldRef_(const Eigen::Vector3f& mag_world_ref_uT) {
+        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+        mag_world_ref_uT_ = mag_world_ref_uT;
+        mag_world_ref_valid_ = true;
+    }
+
+    // Feed the exogenous accumulation.  Raw magnetometer -- not the corrected
+    // stream -- because the estimator is fitting the offset itself and must
+    // not be shown data with its own answer already subtracted.
+    void accumulateContinuousHardIron_(const Eigen::Vector3f& mag_body_ned) {
+        if (!cfg_.mag_continuous_hard_iron) return;
+        if (!usingProxyInit_()) return;
+        if (!impl_.startupProxyInitialized()) return;
+
+        const float dt_mag =
+            (std::isfinite(last_hi_sample_t_) && t_ > last_hi_sample_t_)
+                ? (t_ - last_hi_sample_t_)
+                : cfg_.mag_sample_dt_sec;
+
+        last_hi_sample_t_ = t_;
+
+        mag_hi_estimator_.update(dt_mag,
+                                 impl_.startupProxyTiltQuat(),
+                                 mag_body_ned);
+    }
+
+    // Move the applied offset toward the fit, and re-gauge the reference.
+    //
+    // The reference has to be rebuilt in MagAutoTuner's canonical form --
+    // horizontal magnitude on +X, vertical below it -- and not merely shifted
+    // by the same amount as the measurement.  A shift that tracks the offset
+    // exactly is a no-op: subtracting b from every sample and subtracting the
+    // matching mean(R) b from the reference leaves the innovation identical at
+    // the attitude the filter already holds, so nothing moves and the standing
+    // yaw error survives the correction that was meant to remove it.
+    //
+    // The standing error is a *gauge*: the startup acquisition put the world
+    // frame's north along the average of the uncorrected field, which is
+    // magnetic north rotated by whatever the offset contributes.  Leaving the
+    // canonical reference in place while the offset comes out of the stream
+    // asks the filter for the heading the corrected field implies, and the
+    // magnetometer update walks the yaw there over its own time constant.  No
+    // attitude state is written, so the correction remains a change of
+    // measurement-model parameters.
+    //
+    // Only the horizontal magnitude and the vertical component move with the
+    // offset, and only by the amount the offset changes them.  They are not
+    // recomputed from the estimator's own window: that window is longer and
+    // less selective than the one the startup acquisition gated, and simply
+    // adopting its magnitude and dip costs a fifth of the roll accuracy on the
+    // moderate seas while the offset correction itself costs none of it.
+    void maybeApplyContinuousHardIron_() {
+        if (!cfg_.mag_continuous_hard_iron) return;
+        if (!usingProxyInit_()) return;
+        if (!mag_ref_set_ || stage_ != Stage::Live) return;
+        if (cfg_.mag_refine_enabled && !mag_refine_done_) return;
+        if (!mag_world_ref_valid_) return;
+
+        const auto& est = mag_hi_estimator_.estimate();
+        if (!est.valid) return;
+
+        if (!mag_hi_anchored_) {
+            mag_hi_anchor_bias_body_uT_ = mag_hi_applied_body_uT_;
+            mag_hi_anchor_world_ref_uT_ = mag_world_ref_uT_;
+            mag_hi_anchored_ = true;
+        }
+
+        const Eigen::Vector3f target =
+            cfg_.mag_hi_apply_fraction * est.bias_body_uT;
+        if (!target.allFinite()) return;
+
+        const float dt_apply =
+            (std::isfinite(last_hi_apply_t_) && t_ > last_hi_apply_t_)
+                ? (t_ - last_hi_apply_t_)
+                : cfg_.mag_sample_dt_sec;
+
+        last_hi_apply_t_ = t_;
+
+        const float tau = cfg_.mag_hi_slew_tau_sec;
+        const float alpha = (std::isfinite(tau) && tau > 1.0e-3f)
+                                ? (1.0f - std::exp(-dt_apply / tau))
+                                : 1.0f;
+
+        const Eigen::Vector3f applied =
+            mag_hi_applied_body_uT_ + alpha * (target - mag_hi_applied_body_uT_);
+        if (!applied.allFinite()) return;
+
+        // Both evaluated against the statistics as they stand now, so the
+        // difference is the offset's doing and nothing else.
+        Eigen::Vector3f level_new;
+        Eigen::Vector3f level_anchor;
+        if (!mag_hi_estimator_.levelReferenceForBias(applied, level_new) ||
+            !mag_hi_estimator_.levelReferenceForBias(mag_hi_anchor_bias_body_uT_,
+                                                     level_anchor)) {
+            return;
+        }
+
+        const float h_new = level_new.head<2>().norm();
+        const float h_anchor = level_anchor.head<2>().norm();
+        if (!std::isfinite(h_new) || !std::isfinite(h_anchor)) return;
+
+        const float h = mag_hi_anchor_world_ref_uT_.x() + (h_new - h_anchor);
+        const float z = mag_hi_anchor_world_ref_uT_.z() +
+                        (level_new.z() - level_anchor.z());
+        if (!(h > cfg_.mag_init_min_mag_norm) || !std::isfinite(h) ||
+            !std::isfinite(z)) {
+            return;
+        }
+
+        const Eigen::Vector3f ref(h, 0.0f, z);
+        if (!ref.allFinite()) return;
+
+        mag_hi_applied_body_uT_ = applied;
+        mag_hard_iron_body_uT_ = mag_hi_startup_body_uT_ + applied;
+        setMagWorldRef_(ref);
+    }
+
     // Second-stage magnetic acquisition.
     //
     // The provisional reference was averaged in a tilt frame the startup
@@ -2607,7 +2810,7 @@ private:
             return;
         }
 
-        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+        setMagWorldRef_(mag_world_ref_uT);
 
         const float mag_tilt_yaw_rad = mag_auto_tuner_.getYawGaugeCorrectionRad();
 
@@ -2870,6 +3073,18 @@ private:
     bool mag_ref_set_ = false;
     Eigen::Vector3f mag_hard_iron_body_uT_ = Eigen::Vector3f::Zero();
     MagAutoTuner mag_auto_tuner_{};
+
+    ContinuousMagHardIronEstimator mag_hi_estimator_{};
+    Eigen::Vector3f mag_hi_startup_body_uT_     = Eigen::Vector3f::Zero();
+    Eigen::Vector3f mag_hi_anchor_bias_body_uT_ = Eigen::Vector3f::Zero();
+    Eigen::Vector3f mag_hi_anchor_world_ref_uT_ = Eigen::Vector3f::Zero();
+    bool  mag_hi_anchored_ = false;
+    Eigen::Vector3f mag_hi_applied_body_uT_     = Eigen::Vector3f::Zero();
+    float last_hi_sample_t_ = NAN;
+    float last_hi_apply_t_  = NAN;
+
+    Eigen::Vector3f mag_world_ref_uT_ = Eigen::Vector3f::Zero();
+    bool mag_world_ref_valid_ = false;
 
     float last_mag_sample_t_ = NAN;
 
