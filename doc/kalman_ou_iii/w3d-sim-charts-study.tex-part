@@ -189,6 +189,19 @@ learning is held until that correction lands.  Both events precede the scoring
 window defined next.  The earlier staged-MEKF policy is exercised only as a
 matched ablation.
 
+The continuous magnetic hard-iron correction is likewise enabled, as it is in
+the deployed configuration.  A body-fixed magnetometer offset is estimated for
+the whole life of the record from exponentially weighted statistics of the
+proxy's yaw-stripped tilt and the raw magnetometer, and subtracted from the
+magnetometer stream while the world reference keeps its canonical form and
+moves only by the magnitude and dip delta the applied offset implies.  Nothing
+is applied before the two-stage acquisition has finished, no attitude state is
+written, and the estimator reads no filter state; the main article gives the
+identification argument, the regularization and the failure mode.  It is worth
+naming here because it is what separates the yaw column of these results from
+the yaw figures in the startup-policy comparison, which are necessarily scored
+with the correction disabled.  Disabling it is the matched ablation.
+
 \paragraph{Scoring window}
 The deterministic regression gates, Table~\ref{tab:sim_results_rms_dir_basic},
 the four-method comparison of Sec.~\ref{sec:observer-comparison}, and the
