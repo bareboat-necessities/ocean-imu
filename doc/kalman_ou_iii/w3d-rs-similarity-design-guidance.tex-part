@@ -303,28 +303,252 @@ would degrade one end and improve the other.  The full posterior law
 $p=0$ column, as $\zeta\gg1$ requires; the two differ by less than
 $0.002$ percent of $H_s$ in every scenario.
 
-The conclusion is therefore that the deployed filter occupies the strong
-acceleration-observation branch, but with an effective low-frequency
-acceleration-noise density dominated by the sea-state-proportional
-model-mismatch term of \eqref{eq:riccati-Ra-floor-plus-model} rather than by
-the sensor floor \eqref{eq:riccati-ra-sensor}.  Equation
-\eqref{eq:riccati-mismatch-branch} is then the operative asymptotics, and the
-schedule it prescribes, $r_S\propto\sigma_{aw}\tau^{5/2}$, is what the
-implementation already applies.  The earlier statement that the cubic law is
-``an approximation to a pole-placement schedule'' survives, but its
-justification changes: the coefficient $c_R$ should be read as absorbing
-$\sqrt{\beta_m}$ and the target pole $\kappa$, not as the weak-branch
-coordinate-similarity constant of Theorem~\ref{thm:ou-regularized-rs}.
+Read within the covariance analysis alone, the conclusion would be that the
+deployed filter occupies the strong acceleration-observation branch but with an
+effective low-frequency acceleration-noise density dominated by the
+sea-state-proportional model-mismatch term of
+\eqref{eq:riccati-Ra-floor-plus-model} rather than by the sensor floor
+\eqref{eq:riccati-ra-sensor}, so that \eqref{eq:riccati-mismatch-branch} is the
+operative asymptotics and prescribes exactly the deployed
+$r_S\propto\sigma_{aw}\tau^{5/2}$.  That reading is available, but it rests
+entirely on a postulated $\beta_m$ large enough to bury a sensor floor many
+orders of magnitude below it, and it is not the only explanation.
+Section~\ref{sec:riccati-mis-specified-pseudo} shows that the amplitude
+dependence survives even when $\beta_m=0$, because the covariance analysis is
+missing a term rather than a coefficient.
 
-This also bounds what the reduced scalar model can be asked to do.  It
-correctly predicts the $\tau^{5/2}$ exponent that the self-similar cadence
-produces, and it correctly predicts insensitivity to $\sigma_{aw}$ at fixed
-$r_S$; it does not predict the amplitude dependence of $r_S$ itself, because
-that is controlled by a term the reduction omits.  A physically calibrated
-$\beta_m$, measured from the actual low-frequency acceleration residual of the
-full MEKF rather than from the accelerometer datasheet, is the natural next
-refinement and would make \eqref{eq:riccati-pole-target-rs} usable directly
-instead of through the empirical coefficient $c_R$.
+Either way, the earlier statement that the cubic law is ``an approximation to a
+pole-placement schedule'' survives, but its justification changes: the
+coefficient $c_R$ absorbs the target pole $\kappa$ and the amplitude scale of
+the true third integral, not the weak-branch coordinate-similarity constant of
+Theorem~\ref{thm:ou-regularized-rs}.
+
+\subsubsection{Why the covariance analysis cannot see the amplitude exponent}
+\label{sec:riccati-mis-specified-pseudo}
+
+The ablation contradicts a \emph{prediction}, not the Riccati algebra.  Two
+steps separate \eqref{eq:riccati-omegaR} from the claim that $R_S$ carries no
+$\sigma_{aw}$, and both are assumptions rather than consequences.
+
+The first is the design objective itself.  Equation
+\eqref{eq:riccati-pole-target-RS} gives $R_S=q_{\mathrm{eff}}\tau^6/(T_S\kappa^6)$,
+so $\sigma_{aw}$ disappears only if $q_{\mathrm{eff}}$ is amplitude free
+\emph{and} the target $\kappa$ is.  Constancy of $\omega_R\tau$ was posited in
+\eqref{eq:riccati-pole-objective} as ``physically meaningful''; nothing in the
+Riccati equation selects it.  A covariance recursion computes the error of a
+given filter, it does not choose the filter's bandwidth, so the section never
+optimized anything and could not have predicted how the best $\kappa$ moves
+with sea state.
+
+The second is more serious, and it is visible in the paper's own equations.
+The pseudo-measurement is false.  A Kalman covariance recursion is the error
+covariance of the estimator only if its measurement model is true, and
+\begin{equation}
+ y_S=0=S+n_S,\qquad n_S\sim\mathcal N(0,R_S)
+\label{eq:riccati-false-measurement}
+\end{equation}
+is not: the third integral of a real wave record is a band-limited random
+process whose variance is fixed by the sea, and
+Theorem~\ref{thm:ou-regularized-rs} already computes it as
+$\Var[S]=C_{\mathrm{OU}}\sigma_{aw}^2\tau^6$.  The quantity propagated by
+\eqref{eq:riccati-drift-care} is therefore the covariance the filter
+\emph{believes} it has, not its mean square error.  How much of the belief is
+fictitious is quantified exactly: the closed-form solution of
+\eqref{eq:riccati-drift-care} is
+\begin{equation}
+ P_{pp}=\frac{3q_{\mathrm{eff}}}{\omega_R^3},
+\label{eq:riccati-Ppp}
+\end{equation}
+and splitting it by driving source gives $3q_{\mathrm{eff}}/2\omega_R^3$ from
+the acceleration residual and the other half from the assumed white
+pseudo-measurement noise of density $R_ST_S$.  Half of the nominal
+steady-state position variance is attributed to a noise process that does not
+exist, and the real process standing in its place is the wave signal.
+
+\paragraph{Restoring the missing term.}
+Write the drift-band error $e=\hat x_d-x_d$ with the pseudo-update applied as
+in \eqref{eq:riccati-triple-integrator}.  The innovation is
+$0-H_d\hat x_d=-(S+e_S)$, so the true third integral enters as an exogenous
+input:
+\begin{equation}
+ \dot e=(A_d-K_dH_d)e+G_d\varepsilon_a-K_dH_dx_d,
+\label{eq:riccati-mis-specified-error}
+\end{equation}
+with $\varepsilon_a$ the residual acceleration error of intensity
+$q_{\mathrm{eff}}$.  With
+$D(s)=(s+\omega_R)(s^2+\omega_Rs+\omega_R^2)$, the position row of
+$(sI-A_d+K_dH_d)^{-1}$ gives the two error transfers
+\begin{equation}
+ T_{p\varepsilon}(s)=\frac{s+2\omega_R}{D(s)},
+ \qquad
+ T_{pS}(s)=-\frac{s\left(2\omega_R^2s+\omega_R^3\right)}{D(s)} ,
+\label{eq:riccati-error-transfers}
+\end{equation}
+and hence the mean square vertical error
+\begin{equation}
+ \boxed{
+ \mathrm{MSE}_p(\omega_R)
+ =\underbrace{\frac{q_{\mathrm{eff}}}{\pi}
+   \int_0^\infty\!\left|T_{p\varepsilon}\right|^2\!d\omega}_{\text{drift}}
+ +\underbrace{\int_0^\infty\!\left|T_{pS}\right|^2
+   \frac{S_\eta(\omega)}{\omega^2}\,d\omega}_{\text{signal distortion}} .}
+\label{eq:riccati-bias-variance}
+\end{equation}
+The first term is $\tfrac32q_{\mathrm{eff}}/\omega_R^3$ and is the one the
+Riccati keeps.  The second is what the regularizer costs by insisting on
+something false, it is absent from every equation of
+Sec.~\ref{sec:riccati-drift-band}, and it is the only term that carries the
+sea-state amplitude.  Note $T_{pS}(0)=0$: a constant offset in $S$ is absorbed
+by the $\hat S$ state and never biases position, which is why the constraint is
+usable at all; only the wave-band content of $S$ leaks through.
+
+\paragraph{The optimal schedule, and its amplitude exponent.}
+For $\omega_R\ll\omega_p$ one has $|T_{pS}|\simeq2\omega_R^2/\omega$, so the
+distortion term is $4\omega_R^4m_{-4}$ with
+\begin{equation}
+ m_{-4}:=\int_0^\infty\frac{S_\eta(\omega)}{\omega^4}\,d\omega
+ =\Var\!\left[\textstyle\int S\,dt\right],
+\label{eq:riccati-m4}
+\end{equation}
+the negative fourth moment of the elevation spectrum --- the variance of the
+running integral of $S$, one integration further down the chain than $S$
+itself, because the leakage $2\omega_R^2/\omega$ is itself an integrator.  Both
+are set by the same sea-state scales: under the OU similarity of
+Theorem~\ref{thm:ou-chain-similarity}, $\Var[S]\propto\sigma_{aw}^2\tau^6$ and
+$m_{-4}\propto\sigma_{aw}^2\tau^8$, so the two differ in their $\tau$ exponent
+but carry the sea-state amplitude identically.  With this,
+\eqref{eq:riccati-bias-variance} becomes an explicit bias--variance
+trade-off,
+\begin{equation}
+ \mathrm{MSE}_p\simeq\frac{3q_{\mathrm{eff}}}{2\omega_R^3}
+ +4m_{-4}\omega_R^4,
+ \qquad
+ \omega_R^{\star7}=\frac{9}{32}\,\frac{q_{\mathrm{eff}}}{m_{-4}} .
+\label{eq:riccati-optimal-pole}
+\end{equation}
+Inverting $\omega_R=(q_{\mathrm{eff}}/R_ST_S)^{1/6}$ at the optimum,
+\begin{equation}
+ \boxed{
+ R_S^\star T_S
+ =\left(\tfrac{32}{9}\right)^{6/7}
+ q_{\mathrm{eff}}^{1/7}\,m_{-4}^{6/7} .}
+\label{eq:riccati-optimal-RS}
+\end{equation}
+This is the central result.  The MSE-optimal regularizer is governed
+predominantly by the amplitude of the wave signal it fights --- weight $6/7$
+on $m_{-4}$ against weight $1/7$ on the drift-noise intensity that
+Sec.~\ref{sec:riccati-drift-band} treats as the whole story.  The similarity
+scale of the $S$ chain, which the opening of
+Sec.~\ref{sec:rs-riccati-analysis} set aside as a fact that ``does \emph{not}
+determine the pseudo-measurement covariance $R_S$'', turns out to determine
+almost all of it; what the opening argument correctly identified is only that
+the mechanism is not covariance matching.  Writing
+$q_{\mathrm{eff}}\propto\sigma_{aw}^m$ and
+$m_{-4}\propto\sigma_{aw}^2\tau^8$,
+\begin{equation}
+ \boxed{r_S^\star\propto\sigma_{aw}^{p},\qquad p=\frac{m+12}{14}.}
+\label{eq:riccati-exponent-law}
+\end{equation}
+For $m=0$ --- the sensor-floor reading of the strong branch, taken entirely at
+face value, with $\beta_m=0$ --- this gives $p=6/7\approx0.86$, not $0$.
+Recovering the predicted $p=0$ would require $q_{\mathrm{eff}}\propto
+\sigma_{aw}^{-12}$.  The amplitude dependence the ablation measures is
+therefore not evidence about $\beta_m$ at all in the first instance; it is a
+term the reduction dropped.
+
+\paragraph{Numerical confirmation.}
+Table~\ref{tab:riccati-bias-variance} evaluates
+\eqref{eq:riccati-bias-variance} exactly, with the deployed cadence and the
+JONSWAP spectra of the four calibration seas, using the bench floor
+$q_{\mathrm{eff}}=2r_a$ of \eqref{eq:riccati-ra-sensor} throughout
+(\texttt{tools/rs\_law\_bias\_variance.py}).  Three things follow.
+
+\begin{table}[t]
+\caption{MSE-optimal integral regularizer from \eqref{eq:riccati-bias-variance}
+with the amplitude-free $q_{\mathrm{eff}}=2r_a=\SI{2.19e-6}{m^2/s^3}$, against
+the deployed schedule, for the four JONSWAP calibration seas.  The last column
+is the predicted vertical RMS error at the \emph{deployed} operating point.}
+\label{tab:riccati-bias-variance}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Sea & $\omega_R^\star$ [rad/s] & $\omega_R^\star\tau$ &
+$r_S^\star$ [\si{\meter\second}] & $r_S$ deployed &
+$\omega_R^\star/\omega_R$ & pred.\ $Z$ [\%$H_s$] \\
+\midrule
+$H_s=0.27$ m & 0.435 & 0.543 & 0.138 & 0.226 & 1.18 & 3.33 \\
+$H_s=1.50$ m & 0.185 & 0.403 & 1.359 & 1.863 & 1.11 & 2.07 \\
+$H_s=4.00$ m & 0.111 & 0.399 & 4.865 & 10.068 & 1.27 & 1.87 \\
+$H_s=8.50$ m & 0.076 & 0.320 & 14.150 & 19.092 & 1.11 & 1.39 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+First, the objective assumed in \eqref{eq:riccati-pole-objective} is
+approximately \emph{derived}: the optimal $\omega_R^\star\tau$ is
+$0.32$--$0.54$ across a $31\times$ range of $H_s$, rather than free to drift.
+Constant normalized pole is a good design rule for the reason the covariance
+analysis could not supply, namely that both terms of
+\eqref{eq:riccati-bias-variance} are pinned to the sea scale.
+
+Second, the deployed schedule is close to this optimum without having been
+derived from it: $\omega_R^\star$ exceeds the deployed pole by only
+\SIrange{11}{27}{\percent}, and $r_S^\star$ sits within a factor
+$1.4$--$2.1$ of the deployed value, with the distortion term contributing
+\SIrange{12}{27}{\percent} of the predicted mean square at the deployed point.
+The empirically tuned $c_R$ landed near a genuine minimum of a criterion the
+Riccati section never wrote down.  The predicted vertical error,
+\SIrange{1.4}{3.3}{\percent} of $H_s$ against the \num{4.747} percent
+measured for the full estimator (Table~\ref{tab:riccati-exponent-ablation}),
+is the right order for a reduction that carries neither attitude coupling nor
+bias estimation.
+
+Third, a controlled amplitude sweep --- $H_s$ scaled over two decades at fixed
+$T_p$ and fixed $\tau$, so that only $\sigma_{aw}$ moves, exactly as the
+ablation family \eqref{eq:riccati-exponent-family} does --- reproduces
+\eqref{eq:riccati-exponent-law} to three decimals:
+$p=0.854$ for $m=0$ against $6/7=0.857$, $p=0.927$ for $m=1$ against
+$13/14=0.929$, and $p=1.000$ for $m=2$.
+
+\paragraph{What this changes.}
+The discrepancy is resolved without a postulate.  Any low-frequency
+acceleration-error intensity that does not \emph{decrease} with sea state puts
+the optimal amplitude exponent in $[6/7,\,\infty)$, and the interval
+$[6/7,\,1]$ --- covering everything from a strictly sea-state-independent noise
+floor to a fully $\sigma_{aw}^2$-proportional one --- brackets the deployed
+$p=1$ and excludes $p=0$ by a margin far larger than the ablation's confidence
+interval.  Read in reverse, \eqref{eq:riccati-exponent-law} turns
+Table~\ref{tab:riccati-exponent-ablation} into a measurement rather than a
+calibration: the minimum at $p\simeq1$ implies $m\simeq2$, that is, a drift-band
+acceleration-error intensity proportional to $\sigma_{aw}^2$, which is
+independent corroboration of the model-mismatch form
+\eqref{eq:riccati-Ra-floor-plus-model} obtained without assuming it.
+
+Two limits of the deployed law also become visible.  Equation
+\eqref{eq:riccati-optimal-RS} depends on the sea only through $m_{-4}$, a
+low-frequency moment of the actual wave spectrum, for which the monomial
+$\sigma_{aw}\tau^3$ is an OU surrogate.  The surrogate is exact in amplitude
+and only approximate in time scale.  With $T_S=c_T\tau$ and exact OU
+similarity, $m_{-4}\propto\sigma_{aw}^2\tau^8$ and
+\eqref{eq:riccati-optimal-RS} gives
+$r_S^\star\propto\sigma_{aw}^{6/7}\tau^{41/14}$; a controlled time-scale sweep
+of the JONSWAP family at fixed $\sigma_{aw}$ measures
+$d\log m_{-4}/d\log\tau=7.61$ and hence
+$d\log r_S^\star/d\log\tau=2.76$, against the deployed $5/2$.  The gap is
+$m_{-4}$ weighting the low-frequency tail of the real spectrum more heavily
+than the OU prior does.  Across the four calibration seas the schedules
+nevertheless agree to a factor of two
+(Table~\ref{tab:riccati-bias-variance}) with no systematic trend in $\tau$, so
+the practical consequence is small; a tuner that estimated $m_{-4}$ directly
+would remove the residual spectral-shape dependence.  And with $m=2$ the two
+terms of
+\eqref{eq:riccati-optimal-pole} scale identically, which is precisely why a
+single dimensionless $\kappa$ works across the envelope; if the drift-band
+intensity ever leaves that scaling --- at very low sea states, where the sensor
+floor must eventually dominate --- \eqref{eq:riccati-exponent-law} predicts the
+exponent should fall toward $6/7$.  That is a sharper and more testable
+statement than the $\beta_m$ postulate it replaces.
 
 \subsubsection{The multipliers are calibrated; the floor was not}
 \label{sec:riccati-multiplier-retune}
