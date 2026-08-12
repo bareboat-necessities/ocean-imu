@@ -15,8 +15,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "97c48ceb381c4644722ec7c604e8441cec13ab03",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 40000 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1400 +-\n .../ou_robustness/ou_robustness_publication.tex    |    68 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1353 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   176 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1736 +-\n 7 files changed, 22663 insertions(+), 22690 deletions(-)",
+  "git_commit": "4bbf1a0e18c50c4a9a4a198b016fdaaa144c98b6",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 21252 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1044 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   992 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   176 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1272 +-\n 6 files changed, 12678 insertions(+), 12678 deletions(-)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 2.6233606119980437,
@@ -26,7 +26,7 @@
     "tau_s": 2.17904091
   },
   "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -124,36 +124,36 @@
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1419926,
-      "sha256": "20984112045cf751fefee8aa675ace671f41f7de709a1f630da42d08e6812221"
+      "bytes": 1419418,
+      "sha256": "5772252fb5cdc1305806009284959a9a8a8da0f87d2a99a8769f07b4537900ee"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1852,
       "sha256": "3c0692e9aeec19d6de5d6b3e6504a8cebac26a190fe2433524e6ed44a80e4193"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 142298,
-      "sha256": "20682efe0c5b91286802743e7f1bb9b1d833d58c9f978f378877eae06ebe2e37"
+      "bytes": 142195,
+      "sha256": "c43cbd0df6499ca847c4616b9c517a05b02dcec01455e8d311ec644a5e41167b"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2736,
       "sha256": "9859a1839450e00a18e9e27493038a32e4b41431afb1ead5886ba2625b5ca5ad"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 196301,
-      "sha256": "5321f2cef75e45fd886290071cbe5ea16ef4ce5617e16382c39064814a3c91d7"
+      "bytes": 196343,
+      "sha256": "3e0d7435498723208b226701a387abf9f3efac1473f3f20c4d9bccde2c272abf"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 114848,
-      "sha256": "0182e98c8c9b6739022d2d6ec64c7cdef087682df9d9e221c9e45912ee3c31f4"
+      "bytes": 114823,
+      "sha256": "5907d3b69aeb941a1fe9bf6f2eeb317c6e3f87c1a645ae90f3f2d41f6f67400c"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 45515,
-      "sha256": "04f4c2fe393776c4c9d488e5b725658013bc5c775587344d934ab5c82943b64e"
+      "bytes": 45552,
+      "sha256": "3f8c5b18738b47dfb1d6bc36cc2f8513852d07594f89d3dd9a76eb43b72d96d3"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126778,
-      "sha256": "a67ce4d19c032f6c76f9e31a6ff9ea97e886ebe0f3f15e651c94a63d578c8b7f"
+      "bytes": 126331,
+      "sha256": "8708716432a56db42ebc286d96f73808357c56a03e65c6ae6e1e9f52e6ef9937"
     }
   },
   "source_files": {
@@ -178,8 +178,8 @@
       "sha256": "ff4246617636c5d57ad8ed9be1f6ca6d3f33743616e936c191c2588d81678a8d"
     },
     "tools/ou_robustness.py": {
-      "bytes": 54262,
-      "sha256": "f58d78d114ac39f78cf77a198afd2530a0d0e24927d4f3de5c1bc17079df445d"
+      "bytes": 55378,
+      "sha256": "c62bc0bfcc31812fc99d286f765625dd94b7d8f2d790fd3c907c89ffb2db96a9"
     },
     "tools/ou_validation.py": {
       "bytes": 150165,
