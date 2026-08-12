@@ -28,7 +28,8 @@
       σₐ·τ² and σₐ·τ regularization laws to stabilize displacement drift
       correction.  The time scale those laws are built on comes from
       WavePeriodEstimator, not from the acceleration-band frequency tracker;
-      see "Where" below.
+      see "Where" below.  The variance channel first applies a period-scaled
+      measurement-only wave band.
 
   Where
   – τ (tau):  OU process time constant = ½ · T_z, half the zero-crossing period
@@ -38,12 +39,53 @@
               by (2πf)⁴, so its apparent frequency sits well above the spectral
               peak and barely moves as the sea grows, which pins τ to roughly
               one value across every sea state.
-  – σₐ:       Stationary acceleration standard deviation, EWMA-tracked online
+  – σₐ:       Stationary acceleration scale from period-scaled wave-band RMS
   – R_p0:     Pseudo-measurement noise controlling p drift suppression
   – R_v0:     Pseudo-measurement noise controlling v drift suppression
   – R_p0_xy:  Anisotropic X/Y weight on the p pseudo-measurement
 
   Adaptive update: exponential smoothing toward targets over ADAPT_TAU_SEC
+
+  ------------------------------------------------------------------------
+  ADAPTATION AND STARTUP POLICY, shared with SeaStateFusionFilter_OU_III
+  ------------------------------------------------------------------------
+
+  The tuner and the attitude front end sit outside the estimator and do not
+  know which of the two filters they are driving, so what OU-III measured
+  about them applies here unchanged.  The two filters differ only in the
+  translational state structure -- OU-III carries the extra integral
+  displacement state and regularizes it with a single r_S, this one
+  regularizes p and v separately -- and none of the following depends on that.
+
+  1. EXOGENEITY IS A TIMING PROPERTY, NOT JUST A SIGNAL CHOICE.  Feeding the
+     tuner from the complementary observer keeps its *inputs* independent of
+     the filter.  That is necessary and not sufficient: the schedule smoothed
+     during step k is committed at the top of the next update(), before
+     y_{k+1} reaches the MEKF, so the active schedule at step k+1 is
+     measurable with respect to data through k.
+
+  2. THE VARIANCE CHANNEL RUNS IN A JONSWAP-SIMILAR WAVE BAND.  σₐ is
+     estimated from the same exogenous levelled acceleration the wave-period
+     estimator uses, after a band-pass whose two corners are fixed multiples
+     of the tuner's own wave frequency.  Away from the absolute safety clamps
+     the transfer shape is therefore fixed in f/f_tune, which is the condition
+     the σₐ similarity argument needs.  The bench noise floor is referred
+     through that band's own time-varying coefficients before subtraction.
+     setWaveBandTuning(false) bypasses both the band and the wave-band period,
+     which keeps the old broadband path available as a coherent ablation.
+
+  3. THE PSEUDO-MEASUREMENT CADENCE IS SELF-SIMILAR IN τ, AND THE
+     REGULARIZERS FOLLOW IT.  One pseudo update has covariance r²; at one
+     update per T_S seconds the continuous-equivalent information rate goes as
+     1/(r² T_S).  Scaling T_S with τ while holding r fixed would therefore
+     change the regularization strength with sea state as a side effect.
+     T_S = (0.015/1.1)·τ, clamped to [5, 250] ms, with both filter inputs
+     renormalized by sqrt(T_0/T_S).  That renormalization is deliberately not
+     re-clamped, so the small-sea end may go below the base floor once
+     T_S > T_0.
+
+  4. STARTUP: THE PROXY OWNS TILT AND MAGNETIC LEARNING.  See
+     StartupInitPolicy and docs/ou-iii-startup-init.md.
 
   Features
   • Modular tracker selection via TrackerPolicy template
@@ -65,6 +107,7 @@
 
 #include "freq/FirstOrderIIRSmoother.h"
 #include "freq/FrequencyTrackerPolicy.h"
+#include "tuner/AdaptiveWaveBandPass.h"
 #include "tuner/SeaStateAutoTuner.h"
 #include "tuner/WavePeriodEstimator.h"
 #include "tuner/VerticalAccelComplementary.h"
@@ -95,8 +138,9 @@ extern const float g_std;
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 #endif
 
-// Estimated vertical accel noise floor (1σ), m/s².
-// Tweak from bench data with IMU sitting still.
+// Estimated pre-band vertical accel noise floor (1σ), m/s².
+// The adaptive sigma band propagates this white-noise variance through its
+// actual time-varying coefficients before subtraction.
 constexpr float ACC_NOISE_FLOOR_SIGMA_DEFAULT = 0.12f;
 
 constexpr float MIN_FREQ_HZ = 0.2f;
@@ -106,6 +150,16 @@ constexpr float MAX_FREQ_HZ = 6.0f;
 // acceleration-band tracker and is far too high for a zero-crossing period:
 // 0.03 Hz admits a 33 s swell.
 constexpr float MIN_TUNE_FREQ_HZ = 0.03f;
+
+// JONSWAP-similar acceleration-variance band, matching OU-III's.  Away from
+// the absolute safety clamps, its transfer shape is fixed in f/f_tune, which
+// is the condition the sigma_aw similarity argument needs.  The band is a
+// property of the tuner rather than of the estimator behind it, so nothing in
+// its derivation depends on which of the two filters consumes the result.
+constexpr float SIGMA_BAND_LOW_RATIO_DEFAULT  = 0.5f;
+constexpr float SIGMA_BAND_HIGH_RATIO_DEFAULT = 4.0f;
+constexpr float SIGMA_BAND_MIN_HZ_DEFAULT     = 0.01f;
+constexpr float SIGMA_BAND_MAX_HZ_DEFAULT     = 6.0f;
 
 constexpr float MIN_TAU_S     = 0.02f;  // sec
 // tau now scales with the zero-crossing wave period rather than with an
@@ -144,8 +198,44 @@ constexpr float ADAPT_R_SLEW_LOG           = 0.0f;   // ln units
 constexpr float ONLINE_TUNE_WARMUP_SEC     = 5.0f;
 constexpr float MAG_DELAY_SEC              = 7.0f;
 
+// Gains of the private Mahony observer, which levels the vertical channel and
+// solves the startup attitude.
+//
+// two_kp is the accelerometer-to-gyro correction corner and carries the same
+// constraint it does in the vertical channel: it must stay an order of
+// magnitude below the wave band, or the observer levels itself against the
+// orbital specific force instead of gravity.
+//
+// two_ki estimates the gyro bias.  The vertical channel ran at zero because
+// everything downstream of it is high-passed, but an attitude seed keeps
+// whatever static tilt the bias leaves -- about 2b/two_kp, i.e. 0.71 deg at
+// 0.05 deg/s -- so the observer that serves both has to estimate it.
+constexpr float STARTUP_PROXY_TWO_KP_DEFAULT = 0.2f;
+constexpr float STARTUP_PROXY_TWO_KI_DEFAULT = 0.02f;
+
 // Frequency smoother dt (SeaStateFusionFilter_OU_II is designed for 200 Hz)
 constexpr float FREQ_SMOOTHER_DT = 1.0f / 200.0f;
+
+// Self-similar drift-regularizer pseudo-measurement cadence.
+//
+// The S=0 pseudo updates of OU-III and the p=0/v=0 pseudo updates here share
+// one mechanism and one 15 ms default: a single periodic tick inside the MEKF
+// fires them.  One pseudo update has covariance r^2, so at one update per T_S
+// seconds the continuous-equivalent information rate goes as 1/(r^2 T_S).
+// Scaling T_S with tau while holding r fixed therefore changes the
+// regularization strength with sea state as a side effect, which is not what
+// either schedule is supposed to say.  The deployed wrapper historically used
+// T_S = 15 ms while its initial applied OU time constant is tau = 1.1 s, so
+// this ratio preserves that exact operating point and scales the cadence with
+// tau thereafter.
+constexpr float PSEUDO_UPDATE_PERIOD_NOMINAL_S = 0.015f;
+constexpr float PSEUDO_UPDATE_TAU_NOMINAL_S = 1.1f;
+constexpr float PSEUDO_UPDATE_TAU_RATIO_DEFAULT =
+    PSEUDO_UPDATE_PERIOD_NOMINAL_S / PSEUDO_UPDATE_TAU_NOMINAL_S;
+// A pseudo update cannot occur more often than the nominal 200 Hz IMU schedule.
+// The upper guard is inactive over the current tau <= 12 s operating envelope.
+constexpr float PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT;
+constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f;
 
 struct TuneState {
     float tau_applied      = 1.1f;   // s
@@ -165,7 +255,42 @@ public:
     enum class StartupStage {
         Cold,        // just booted or just had a big tilt reset
         TunerWarm,   // MEKF + freq running, tuner collecting stats
+        TunerReady,  // tuner trusted, MEKF still held by an external bootstrap
         Live         // tuner is trusted; full adaptation & extras allowed
+    };
+
+    // Who solves the attitude the filter starts from.
+    //
+    // StagedMekf is the original behaviour: the MEKF is fed from the first
+    // sample and learns its own tilt while running degraded -- linear block
+    // off, accelerometer bias frozen, Racc inflated -- and the caller reads
+    // *that* attitude back to gate the magnetometer and to build the frame the
+    // magnetic world reference is averaged in.  Those reads are the problem.
+    // The reference and the yaw gauge are locked once, so whatever tilt error
+    // the warming MEKF has at that moment becomes a standing attitude and
+    // heading bias, and it is exactly the moment the MEKF is least able to
+    // level: the linear block that absorbs orbital acceleration is switched
+    // off, so its accelerometer update is fighting the waves with no state to
+    // put them in.
+    //
+    // MahonyProxy takes those jobs away from the MEKF and gives them to the
+    // private Mahony observer this filter already runs (see
+    // VerticalAccelComplementary).  That observer is a pure function of the raw
+    // gyro and accelerometer, and its correction corner sits an order of
+    // magnitude below the wave band, so it rejects the orbital specific force
+    // by construction rather than chasing it.  The measurement-only front end
+    // -- proxy, frequency tracker, wave-period estimator, sigma band, tuner --
+    // runs from the first sample without the MEKF, so by the time the tilt has
+    // settled and the magnetometer has gauged north, the operating point is
+    // converged too.  The MEKF is then seeded with that attitude and goes Live
+    // directly, never occupying the degraded warmup configuration at all.
+    //
+    // Nothing in that argument is specific to the translational state
+    // structure, which is the only thing OU-II and OU-III disagree about, so
+    // OU-III's measured comparison in docs/ou-iii-startup-init.md carries over.
+    enum class StartupInitPolicy {
+        StagedMekf,   // legacy: MEKF learns its own tilt while warming
+        MahonyProxy,  // default: proxy owns tilt + mag learning, MEKF starts Live
     };
 
     explicit SeaStateFusionFilter_OU_II(bool with_mag = true)
@@ -184,6 +309,22 @@ public:
 
     StartupStage getStartupStage() const noexcept { return startup_stage_; }
     bool isAdaptiveLive() const noexcept { return startup_stage_ == StartupStage::Live; }
+
+    // The operating point is trustworthy.  Under StagedMekf this coincides
+    // with going Live; under MahonyProxy it is reached first, while the MEKF
+    // is still held, and it is one of the conditions the caller waits on
+    // before handing the attitude over.
+    bool isTunerReady() const noexcept {
+        return startup_stage_ == StartupStage::TunerReady ||
+               startup_stage_ == StartupStage::Live;
+    }
+
+    void setStartupInitPolicy(StartupInitPolicy policy) noexcept {
+        startup_init_policy_ = policy;
+    }
+    StartupInitPolicy startupInitPolicy() const noexcept {
+        return startup_init_policy_;
+    }
 
     void initialize(const Eigen::Vector3f& sigma_a,
                     const Eigen::Vector3f& sigma_g,
@@ -221,6 +362,91 @@ public:
     void updateTime(float dt, const Eigen::Vector3f& gyro, const Eigen::Vector3f& acc,
                     float tempC = 35.0f)
     {
+        updateCore_(dt, gyro, acc, tempC, /*drive_mekf=*/true);
+    }
+
+    // Measurement-only front end: the Mahony proxy, the frequency tracker and
+    // its stillness detector, the wave-period estimator, the sigma band, the
+    // auto-tuner and the wave-direction stage all advance, and the MEKF is
+    // left untouched.
+    //
+    // Every one of those consumers is already exogenous by design -- none of
+    // them reads a filter state -- so running them without the MEKF changes
+    // none of their outputs.  The one apparent exception is the wave-direction
+    // stage, which needs a levelled heading frame: it is given the proxy
+    // attitude instead, and heading_frame_acceleration() resolves into the
+    // projected bow axis, which is invariant under q -> Rz(psi) q.  The proxy's
+    // drifting yaw therefore cannot reach it, and the handoff to the MEKF
+    // quaternion later is continuous in everything the stage can see.
+    //
+    // Model parameters staged by the tuner are still written to the MEKF while
+    // this runs.  That is the point: they are parameters, not state, so the
+    // filter reaches its first real sample already on the right operating
+    // point instead of adapting toward it from FREQ_GUESS.
+    void updateFrontEnd(float dt, const Eigen::Vector3f& gyro,
+                        const Eigen::Vector3f& acc)
+    {
+        updateCore_(dt, gyro, acc, /*tempC=*/35.0f, /*drive_mekf=*/false);
+    }
+
+    // Attitude of the startup Mahony observer, BODY -> NED.  Only its tilt is
+    // meaningful; yaw is unobservable to it and drifts.
+    Eigen::Quaternionf startupProxyQuat() const noexcept {
+        return vertical_accel_comp_.quaternion();
+    }
+
+    // Tilt-only form of the same attitude, safe to use as a magnetometer
+    // accumulation frame because no heading can leak through it.
+    Eigen::Quaternionf startupProxyTiltQuat() const noexcept {
+        return vertical_accel_comp_.tiltQuaternion();
+    }
+
+    bool startupProxyInitialized() const noexcept {
+        return vertical_accel_comp_.isInitialized();
+    }
+
+    // Gains of the private Mahony observer, which serves both the vertical
+    // channel and the startup attitude.  Same knob as
+    // setWavePeriodComplementaryGains(); kept under this name because the
+    // startup path is the one with an opinion about two_ki.
+    void setStartupProxyGains(float two_kp, float two_ki) {
+        vertical_accel_comp_.setGains(two_kp, two_ki);
+    }
+
+    // Hand the attitude over and start the MEKF live.
+    //
+    // q_bw is the bootstrap solution: proxy tilt, carrying the magnetometer's
+    // yaw gauge if one has been acquired.  The sigmas describe how well each
+    // part is known, and they are genuinely different -- tilt has been
+    // integrated through the wave band, yaw is either gauged or arbitrary --
+    // which is why the covariance seed is anisotropic rather than the
+    // accel-only default.
+    //
+    // allow_acc_bias only unlocks the accelerometer-bias gate early.  Left
+    // false, the filter keeps waiting for its usual count of magnetometer
+    // updates after going live, which is the deployed behaviour.
+    void goLive(const Eigen::Quaternionf& q_bw,
+                float tilt_sigma_rad,
+                float yaw_sigma_rad,
+                bool allow_acc_bias = false)
+    {
+        if (!mekf_) return;
+        if (!q_bw.coeffs().allFinite()) return;
+        if (!(q_bw.norm() > 1e-8f)) return;
+
+        mekf_->initialize_from_attitude(q_bw, tilt_sigma_rad, yaw_sigma_rad);
+
+        if (allow_acc_bias) {
+            accel_bias_locked_ = false;
+        }
+
+        enterLive_();
+    }
+
+private:
+    void updateCore_(float dt, const Eigen::Vector3f& gyro, const Eigen::Vector3f& acc,
+                     float tempC, bool drive_mekf)
+    {
         if (!mekf_) return;
         if (!(dt > 0.0f) || !std::isfinite(dt)) return;
 
@@ -234,25 +460,31 @@ public:
         startup_stage_t_ += dt;
 
 
-        // BODY-Z-based proxy used by the tracker/tuner logic.
+        // BODY-Z-based proxy used as a measurement-only fallback.
         // This is NOT true world/inertial vertical acceleration; it is only a
         // body-Z residual that behaves like up-positive vertical motion when the
         // platform is near-level:
         //   acc.z() ~ -g at rest  => proxy ~ 0
         const float a_z_body_proxy = acc.z() + g_std;
 
-        // Private Mahony observer for the wave-period estimator.  It is fed the
-        // raw gyro and accelerometer, before the MEKF sees them, so that the
-        // levelling it provides stays a pure function of the measurements.
-        // Stepping it unconditionally keeps its transient off the critical path
-        // when the input source is switched at runtime.
+        // Private Mahony observer for the wave-period estimator, the default
+        // sigma channel and the startup attitude.  It is fed the raw gyro and
+        // accelerometer, before the MEKF sees them, so that the levelling it
+        // provides stays a pure function of the measurements.  Stepping it
+        // unconditionally keeps its transient off the critical path when the
+        // input source is switched at runtime.
         vertical_accel_comp_.update(dt, gyro, acc, g_std);
 
         // MEKF updates first (attitude + latent a_w)
-        mekf_->time_update(gyro, dt);
-        mekf_->measurement_update_acc_only(acc, tempC);
+        if (drive_mekf) {
+            mekf_->time_update(gyro, dt);
+            mekf_->measurement_update_acc_only(acc, tempC);
+        }
 
-        {
+        // The tilt watchdog reads and rewrites MEKF attitude, so it only has
+        // meaning while the MEKF is the one propagating it.  A bootstrap that
+        // has not handed over yet has no attitude here to run away.
+        if (drive_mekf) {
             Eigen::Quaternionf q_bw = mekf_->quaternion_boat();
             q_bw.normalize();
 
@@ -294,9 +526,17 @@ public:
             }
         }
 
-        // Up-positive BODY-Z proxy used by tracker/tuner logic.
+        // Up-positive BODY-Z proxy used as fallback by measurement-only paths.
         // Not true world vertical unless the platform is close to level.
         a_body_z_up_proxy_ = -a_z_body_proxy;
+
+        // Default levelled vertical measurement shared by the frequency
+        // tracker, the wave-period estimator, and the sigma channel.  It comes
+        // from a private complementary observer and therefore does not read
+        // any MEKF state.  Until that observer is ready, use the body-Z proxy.
+        const float a_vert_measurement = vertical_accel_comp_.isReady()
+            ? vertical_accel_comp_.verticalAccelUpMs2()
+            : a_body_z_up_proxy_;
 
         // Vertical acceleration the tracker runs on.  Both choices are
         // measurement-only, and they are RMS-equivalent: levelling buys here
@@ -304,12 +544,10 @@ public:
         // not integrated and so never sees the 1/omega^4 weighting that makes
         // sub-band gravity leakage matter downstream.  The levelled signal is
         // the default anyway, so that one vertical acceleration serves every
-        // consumer in the filter.  Falls back to the raw proxy until the
-        // observer has settled.
+        // consumer in the filter.
         const float a_vert_for_tracker =
-            (freq_tracker_input_ == FreqTrackerInputSource::Complementary &&
-             vertical_accel_comp_.isReady())
-                ? vertical_accel_comp_.verticalAccelUpMs2()
+            (freq_tracker_input_ == FreqTrackerInputSource::Complementary)
+                ? a_vert_measurement
                 : a_body_z_up_proxy_;
 
         // LPF on the tracker input
@@ -338,24 +576,38 @@ public:
         // acceleration-band frequency that barely moves with the sea state, and
         // the tuner's variance horizon (a few periods) stops being shorter than
         // one wave period, which was biasing sigma_aw low.
+        //
+        // The variance channel now sees the same exogenous levelled
+        // acceleration the wave-period estimator does, but only after a
+        // period-scaled band-pass.  The band is inside update_tuner because its
+        // corners use the tuner's own lagged/smoothed wave frequency.  Turning
+        // wave-band tuning off deliberately bypasses that band so the old
+        // broadband variance path remains available as a clean ablation.
         if (enable_tuner_) {
-            update_tuner(dt, a_body_z_up_proxy_, tuner_frequency_hz_(f_after_still));
+            update_tuner(dt, a_vert_measurement, tuner_frequency_hz_(f_after_still));
         }
 
         // R_p0/R_v0 are committed with the rest of the staged online
         // schedule at the beginning of the next IMU sample.
 
         // Bounded covariance inflation of the a_w marginal.
-        periodic_aw_cov_sync_tick_();
+        if (drive_mekf) {
+            periodic_aw_cov_sync_tick_();
+        }
 
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
 
         // Resolve direction in a leveled frame aligned with boat heading.
         // This removes roll/pitch mixing while preserving 0 deg = bow and
-        // positive angles toward starboard.  The existing body-Z proxy remains
-        // the tuner/tracker input; direction uses coherent leveled components.
+        // positive angles toward starboard.  Direction may use the MEKF frame;
+        // the default tuner channels do not.
+        //
+        // Before handoff the MEKF has no attitude to offer, so the proxy's is
+        // used.  heading_frame_acceleration() resolves into the projected bow
+        // axis and is therefore invariant under q -> Rz(psi) q, so only the
+        // tilt of whichever quaternion is supplied can reach the result.
         const auto direction_accel = wave_direction::heading_frame_acceleration<float>(
-            mekf_->quaternion_boat(), acc, g_std);
+            drive_mekf ? mekf_->quaternion_boat() : startupProxyQuat(), acc, g_std);
 
         // Stage 1 estimates the apparent propagation plane as an unsigned axis
         // relative to boat heading.  Stage 2 resolves propagation sense along
@@ -403,6 +655,7 @@ public:
             dt, dir_filter_.getLastStableConfidence());
     }
 
+public:
     // Magnetometer correction
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!with_mag_ || !mekf_) return;
@@ -419,13 +672,16 @@ public:
         // enable accel-bias learning or restore Racc unless we're already Live.
         if (accel_bias_locked_ &&
             startup_stage_ == StartupStage::Live &&
-            mag_updates_applied_ >= MAG_UPDATES_TO_UNLOCK &&
+            mag_updates_applied_ >= mag_updates_to_unlock_ &&
             std::isfinite(first_mag_update_time_) &&
             (static_cast<float>(time_) - first_mag_update_time_) > 1.0f)
         {
             accel_bias_locked_ = false;
 
-            if (freeze_acc_bias_until_live_ && startup_stage_ == StartupStage::Live) {
+            // Only allow accel bias to start learning once the system is Live
+            // and no external hold is in force.
+            if (freeze_acc_bias_until_live_ && startup_stage_ == StartupStage::Live &&
+                !acc_bias_hold_) {
                 mekf_->set_acc_bias_updates_enabled(true);
 
                 if (warmup_Racc_active_) {
@@ -509,6 +765,22 @@ public:
 
     float getAccNoiseFloorSigma() const noexcept { return acc_noise_floor_sigma_; }
 
+    // Dimensionless sigma-band shape.  Defaults correspond to the theorem's
+    // measurement-only soft band [0.5,4] in units of f_tune.  Changing these
+    // ratios preserves the similarity structure as long as they remain fixed
+    // across sea states; absolute limits below are safety clamps only.
+    void setSigmaWaveBandRatios(float low_ratio, float high_ratio) {
+        sigma_wave_band_.setRatios(low_ratio, high_ratio);
+    }
+    void setSigmaWaveBandLimitsHz(float min_hz, float max_hz) {
+        sigma_wave_band_.setLimitsHz(min_hz, max_hz);
+    }
+    float getSigmaWaveBandLowHz() const noexcept { return sigma_wave_band_.lowHz(); }
+    float getSigmaWaveBandHighHz() const noexcept { return sigma_wave_band_.highHz(); }
+    float getSigmaWaveBandLowRatio() const noexcept { return sigma_wave_band_.lowRatio(); }
+    float getSigmaWaveBandHighRatio() const noexcept { return sigma_wave_band_.highRatio(); }
+    float getSigmaBandNoiseStd() const noexcept { return band_noise_floor_sigma_(); }
+
     // Configure LPF on BODY-Z proxy for tracker input
     void setFreqInputCutoffHz(float fc) { freq_input_lpf_.setCutoff(fc); }
 
@@ -543,6 +815,51 @@ public:
         last_aw_cov_sync_sec_ = time_;
     }
     bool periodicAwCovarianceSync() const noexcept { return periodic_aw_cov_sync_; }
+
+    // Self-similar drift-regularizer pseudo-measurement cadence
+    // T_S = c_T * tau_applied.  Enabled by default; disabling restores the
+    // historical fixed 15 ms cadence for direct old-versus-new ablation.
+    // Whenever the cadence changes while Live, reapply r_p0 and r_v0 so their
+    // per-update covariances stay information-rate matched.
+    void setTauScaledPseudoUpdateCadence(bool flag) {
+        tau_scaled_pseudo_cadence_ = flag;
+        if (!mekf_) return;
+        if (flag) apply_pseudo_update_cadence_();
+        else mekf_->set_pseudo_update_period_s(pseudo_update_fixed_period_s_);
+        if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            apply_R_p0_tune_();
+            apply_R_v0_tune_();
+        }
+    }
+    bool tauScaledPseudoUpdateCadence() const noexcept { return tau_scaled_pseudo_cadence_; }
+    void setPseudoUpdateTauRatio(float ratio) {
+        if (!(std::isfinite(ratio) && ratio > 0.0f)) return;
+        pseudo_update_tau_ratio_ = ratio;
+        if (tau_scaled_pseudo_cadence_) {
+            apply_pseudo_update_cadence_();
+            if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+                apply_R_p0_tune_();
+                apply_R_v0_tune_();
+            }
+        }
+    }
+    void setPseudoUpdatePeriodBounds(float min_s, float max_s) {
+        if (!(std::isfinite(min_s) && std::isfinite(max_s) &&
+              min_s > 0.0f && max_s >= min_s)) return;
+        pseudo_update_period_min_s_ = min_s;
+        pseudo_update_period_max_s_ = max_s;
+        if (tau_scaled_pseudo_cadence_) {
+            apply_pseudo_update_cadence_();
+            if (startup_stage_ == StartupStage::Live && enable_linear_block_) {
+                apply_R_p0_tune_();
+                apply_R_v0_tune_();
+            }
+        }
+    }
+    float getPseudoUpdateTauRatio() const noexcept { return pseudo_update_tau_ratio_; }
+    float getPseudoUpdatePeriodSec() const noexcept {
+        return mekf_ ? mekf_->get_pseudo_update_period_s() : NAN;
+    }
 
     // Freeze the online tuner at an externally supplied operating point. This
     // is primarily useful for controlled ablations (fixed-nominal and
@@ -676,6 +993,43 @@ public:
 
     void setFreezeAccBiasUntilLive(bool en) { freeze_acc_bias_until_live_ = en; }
 
+    // Magnetometer updates that must land after going live before the
+    // accelerometer-bias gate opens.  The bias is only weakly observable in
+    // waves, so this is a real tuning knob rather than a formality; exposed so
+    // it can be swept without editing the filter.
+    void setMagUpdatesToUnlockAccBias(int n) {
+        if (n >= 0) mag_updates_to_unlock_ = n;
+    }
+    int magUpdatesToUnlockAccBias() const noexcept { return mag_updates_to_unlock_; }
+
+    // External hold on accelerometer-bias learning, over and above the
+    // magnetometer-update count.
+    //
+    // Accelerometer bias and a tilt error are barely separable in waves, and
+    // the bias state has a long correlation time, so a wrong value learned
+    // against a provisional magnetic reference is not a transient -- it
+    // outlives the record.  A caller that intends to replace that reference
+    // later therefore has to keep this shut until it has, or the bias absorbs
+    // an error the reference correction can no longer undo.
+    void setAccBiasHold(bool hold) {
+        if (acc_bias_hold_ == hold) return;
+        acc_bias_hold_ = hold;
+
+        if (!mekf_) return;
+
+        if (hold) {
+            mekf_->set_acc_bias_updates_enabled(false);
+            return;
+        }
+
+        // Releasing does not itself grant learning; the normal gate still
+        // decides, and updateMag() re-evaluates it on the next sample.
+        if (!accel_bias_locked_ && startup_stage_ == StartupStage::Live) {
+            mekf_->set_acc_bias_updates_enabled(true);
+        }
+    }
+    bool accBiasHeld() const noexcept { return acc_bias_hold_; }
+
     void setWarmupRaccStd(float r) {
         if (std::isfinite(r) && r > 0.0f) Racc_warmup_std_ = r;
     }
@@ -698,9 +1052,11 @@ public:
         return (freq_hz_slow_ > 1e-6f) ? 1.0f / freq_hz_slow_ : NAN;
     }
 
+    // Variance after the period-scaled sigma band in the default mode; the
+    // legacy broadband variance when setWaveBandTuning(false).
     inline float getAccelVariance() const noexcept { return tuner_.getAccelVariance(); }
 
-    // Returns the BODY-Z-based up-positive proxy used by tracker/tuner logic.
+    // Returns the BODY-Z-based up-positive fallback proxy.
     // This is not a true world/inertial vertical acceleration estimate.
     inline float getAccelVertical() const noexcept { return a_body_z_up_proxy_; }
 
@@ -733,8 +1089,13 @@ public:
 
     // Drive the operating point from the wave band (default) or from the
     // acceleration-band tracker, which is what the filter did before and is
-    // kept so the change can be ablated rather than assumed.
-    void setWaveBandTuning(bool flag) { wave_band_tuning_ = flag; }
+    // kept so the change can be ablated rather than assumed.  The legacy mode
+    // also bypasses the period-scaled sigma band so this remains a coherent
+    // old-versus-new tuning-path comparison.
+    void setWaveBandTuning(bool flag) {
+        if (wave_band_tuning_ != flag) sigma_wave_band_.reset();
+        wave_band_tuning_ = flag;
+    }
     bool waveBandTuning() const noexcept { return wave_band_tuning_; }
 
     // Select which vertical acceleration drives the wave-period estimator.
@@ -803,6 +1164,18 @@ private:
     using FreqInputLPF = seastate::common::FreqInputLPF;
     using StillnessAdapter = seastate::common::StillnessAdapter;
 
+    // Bench white-noise sigma referred to the current adaptive band.  The band
+    // is time varying, so the gain has to come from the filter's own state
+    // rather than from a closed-form transfer function.
+    float band_noise_floor_sigma_() const noexcept {
+        if (!wave_band_tuning_ || !sigma_wave_band_.isReady()) {
+            return acc_noise_floor_sigma_;
+        }
+        const float gain = sigma_wave_band_.whiteNoiseVarianceGain();
+        if (!(std::isfinite(gain) && gain >= 0.0f)) return acc_noise_floor_sigma_;
+        return acc_noise_floor_sigma_ * std::sqrt(gain);
+    }
+
     // Apply the online tuner output only at the next IMU-sample boundary.
     // adapt_mekf() may consume y_k and smooth its candidate during step k,
     // but this function runs before y_{k+1} reaches the MEKF. Therefore the
@@ -817,6 +1190,17 @@ private:
         online_tune_apply_pending_ = false;
     }
 
+    void apply_pseudo_update_cadence_() {
+        if (!mekf_ || !tau_scaled_pseudo_cadence_) return;
+        const float tau = tune_.tau_applied;
+        if (!(std::isfinite(tau) && tau > 0.0f)) return;
+        const float requested = pseudo_update_tau_ratio_ * tau;
+        const float period = std::min(
+            std::max(requested, pseudo_update_period_min_s_),
+            pseudo_update_period_max_s_);
+        mekf_->set_pseudo_update_period_s(period);
+    }
+
     // sync_covariance is set only by discrete reconfiguration events. The
     // periodic adaptation path leaves the posterior a_w marginal alone; the
     // new stationary scale reaches the filter through the OU process
@@ -824,8 +1208,11 @@ private:
     void apply_ou_tune_(bool sync_covariance) {
         if (!mekf_) return;
         mekf_->set_aw_time_constant(tune_.tau_applied);
+        // Commit the pseudo-update cadence with the same applied tau so
+        // T_S/tau stays constant apart from explicit safety clamps.
+        apply_pseudo_update_cadence_();
 
-        const float sigma_floor = std::max(0.05f, acc_noise_floor_sigma_);
+        const float sigma_floor = std::max(0.05f, band_noise_floor_sigma_());
         const float sZ = std::max(sigma_floor, tune_.sigma_applied);
         const float sH = sZ * P_factor_;
         const Eigen::Vector3f aw_std(sH, sH, sZ);
@@ -847,10 +1234,31 @@ private:
         last_aw_cov_sync_sec_ = time_;
     }
 
+    // set_Rp0_noise_std()/set_Rv0_noise_std() accept standard deviations, so one
+    // pseudo update has covariance r^2.  With updates every T_S seconds, the
+    // continuous-equivalent information rate is proportional to 1/(r^2 T_S).
+    // Preserve the historical 15 ms information rate by normalizing the
+    // filter-input standard deviations:
+    //     r_filter = r_base * sqrt(T_0/T_S).
+    // The base tuner values remain clamped to their configured bounds.  Do not
+    // clamp again after this normalization: the smallest-sea operating point
+    // may already sit on a base floor and must be allowed below it when
+    // T_S > 15 ms, or the clipping the floor exists to avoid comes straight
+    // back.  With unclamped T_S proportional to tau this turns the base
+    // sigma_aw*tau^2 and sigma_aw*tau schedules into effective
+    // sigma_aw*tau^(3/2) and sigma_aw*tau^(1/2) schedules at the filter input.
+    float pseudo_update_information_rate_scale_() const noexcept {
+        if (!tau_scaled_pseudo_cadence_ || !mekf_) return 1.0f;
+        const float period = mekf_->get_pseudo_update_period_s();
+        if (!(std::isfinite(period) && period > 0.0f)) return 1.0f;
+        return std::sqrt(pseudo_update_fixed_period_s_ / period);
+    }
+
     void apply_R_p0_tune_(float rp_scale = 1.0f) {
         if (!mekf_) return;
         const float p = (std::isfinite(rp_scale) && rp_scale > 0.0f) ? std::min(rp_scale, 1.0f) : 1.0f;
-        const float R_p0_b = std::min(std::max(tune_.R_p0_std_applied, MIN_R_p0_std_), MAX_R_p0_std_);
+        const float R_p0_base = std::min(std::max(tune_.R_p0_std_applied, MIN_R_p0_std_), MAX_R_p0_std_);
+        const float R_p0_b = R_p0_base * pseudo_update_information_rate_scale_();
         const float rp_xy = R_p0_b * p * R_p0_xy_factor_;
         mekf_->set_Rp0_noise_std(Eigen::Vector3f(rp_xy, rp_xy, R_p0_b * p));
     }
@@ -858,12 +1266,30 @@ private:
     void apply_R_v0_tune_(float rv_scale = 1.0f) {
         if (!mekf_) return;
         const float p = (std::isfinite(rv_scale) && rv_scale > 0.0f) ? std::min(rv_scale, 1.0f) : 1.0f;
-        const float R_v0_b = std::min(std::max(tune_.R_v0_std_applied, MIN_R_v0_std_), MAX_R_v0_std_);
+        const float R_v0_base = std::min(std::max(tune_.R_v0_std_applied, MIN_R_v0_std_), MAX_R_v0_std_);
+        const float R_v0_b = R_v0_base * pseudo_update_information_rate_scale_();
         mekf_->set_Rv0_noise_std(Eigen::Vector3f::Constant(R_v0_b * p));
     }
 
-    void update_tuner(float dt, float a_body_z_up_proxy, float freq_hz_for_tuner) {
-        tuner_.update(dt, a_body_z_up_proxy, freq_hz_for_tuner);
+    void update_tuner(float dt, float a_vertical_measurement, float freq_hz_for_tuner) {
+        // Use the previous smoothed tuner frequency for the current sample's
+        // band corners.  This keeps the band motion smooth and one-sample
+        // predictable while remaining measurement-only.  Until the frequency
+        // EMA is ready, fall back to the current external frequency estimate.
+        float f_for_sigma_band = tuner_.isFreqReady()
+            ? tuner_.getFrequencyHz()
+            : freq_hz_for_tuner;
+        const float f_tune_floor = wave_band_tuning_ ? min_tune_freq_hz_ : min_freq_hz_;
+        if (!std::isfinite(f_for_sigma_band) || f_for_sigma_band < f_tune_floor) {
+            f_for_sigma_band = f_tune_floor;
+        }
+        f_for_sigma_band = std::min(f_for_sigma_band, max_freq_hz_);
+
+        const float a_for_variance = wave_band_tuning_
+            ? sigma_wave_band_.step(a_vertical_measurement, dt, f_for_sigma_band)
+            : a_vertical_measurement;
+
+        tuner_.update(dt, a_for_variance, freq_hz_for_tuner);
 
         switch (startup_stage_) {
             case StartupStage::Cold:
@@ -876,10 +1302,19 @@ private:
             case StartupStage::TunerWarm:
                 if (!tuner_.isFreqReady()) return;
                 if (tuner_.isReady()) {
-                    enterLive_();
+                    if (startup_init_policy_ == StartupInitPolicy::MahonyProxy) {
+                        // The operating point is trusted, but the attitude is
+                        // not this filter's to decide.  Park here and let the
+                        // bootstrap call goLive() once it has tilt and north.
+                        startup_stage_   = StartupStage::TunerReady;
+                        startup_stage_t_ = 0.0f;
+                    } else {
+                        enterLive_();
+                    }
                 }
                 break;
 
+            case StartupStage::TunerReady:
             case StartupStage::Live:
                 break;
         }
@@ -887,16 +1322,16 @@ private:
         // The tuning frequency is a wave-band quantity and has to be allowed
         // below the tracker's floor: a developed sea has T_z = 8.6 s, i.e.
         // 0.12 Hz, well under the 0.2 Hz the tracker is bounded to.
-        const float f_tune_floor = wave_band_tuning_ ? min_tune_freq_hz_ : min_freq_hz_;
         float f_tune = tuner_.getFrequencyHz();
         if (!std::isfinite(f_tune) || f_tune < f_tune_floor) f_tune = f_tune_floor;
         if (f_tune > max_freq_hz_) f_tune = max_freq_hz_;
 
-        float var_total = acc_noise_floor_sigma_ * acc_noise_floor_sigma_;
+        const float band_noise_sigma = band_noise_floor_sigma_();
+        const float var_noise = band_noise_sigma * band_noise_sigma;
+        float var_total = var_noise;
         if (tuner_.isVarReady()) {
             var_total = std::max(0.0f, tuner_.getAccelVariance());
         }
-        const float var_noise = acc_noise_floor_sigma_ * acc_noise_floor_sigma_;
         float var_wave = var_total - var_noise;
         if (var_wave < 0.0f) var_wave = 0.0f;
 
@@ -921,7 +1356,7 @@ private:
         }
 
         if (!tuner_.isVarReady()) {
-            sigma_target_ = std::max(sigma_target_, std::max(0.05f, acc_noise_floor_sigma_));
+            sigma_target_ = std::max(sigma_target_, std::max(0.05f, band_noise_sigma));
         }
 
         float R_p0_raw = R_p0_coeff_ * sigma_target_ * tau_target_ * tau_target_;
@@ -997,6 +1432,7 @@ private:
         tracker_policy_ = TrackingPolicy{};
         wave_period_    = WavePeriodEstimator{};
         vertical_accel_comp_.reset();
+        sigma_wave_band_.reset();
         freq_input_lpf_ = FreqInputLPF{};
         freq_stillness_ = StillnessAdapter(g_std, min_freq_hz_, FREQ_GUESS);
         freq_input_lpf_.setCutoff(max_freq_hz_);
@@ -1047,7 +1483,7 @@ private:
         mekf_->set_linear_block_enabled(enable_linear_block_);
 
         if (freeze_acc_bias_until_live_) {
-            const bool allow_bias = !accel_bias_locked_;
+            const bool allow_bias = !accel_bias_locked_ && !acc_bias_hold_;
 
             // Keep accel-bias learning gated.
             mekf_->set_acc_bias_updates_enabled(allow_bias);
@@ -1080,6 +1516,17 @@ private:
     bool accel_bias_locked_ = true;
     int  mag_updates_applied_ = 0;
     static constexpr int MAG_UPDATES_TO_UNLOCK = 250;
+    int  mag_updates_to_unlock_ = MAG_UPDATES_TO_UNLOCK;
+    bool acc_bias_hold_ = false;
+
+    // StagedMekf here, MahonyProxy in SeaStateFusion_OU_II::Config, and the
+    // asymmetry is deliberate.  Only something outside this class can perform
+    // the handoff, so a filter driven directly through updateTime() with no
+    // bootstrap above it would park at TunerReady forever if it defaulted to
+    // the proxy policy.  This class's standalone contract -- feed it and it
+    // becomes live on its own -- is therefore left exactly as it was, and the
+    // policy is chosen by the wrapper that is actually able to honour it.
+    StartupInitPolicy startup_init_policy_ = StartupInitPolicy::StagedMekf;
 
     bool   with_mag_;
     double time_;
@@ -1105,6 +1552,12 @@ private:
     // Covariance-inflation policy; see setPeriodicAwCovarianceSync.
     bool   periodic_aw_cov_sync_ = true;
     double last_aw_cov_sync_sec_ = 0.0;
+
+    bool  tau_scaled_pseudo_cadence_ = true;
+    float pseudo_update_tau_ratio_ = PSEUDO_UPDATE_TAU_RATIO_DEFAULT;
+    float pseudo_update_period_min_s_ = PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT;
+    float pseudo_update_period_max_s_ = PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT;
+    float pseudo_update_fixed_period_s_ = PSEUDO_UPDATE_PERIOD_NOMINAL_S;
 
     bool  wave_band_tuning_       = true;
     WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;
@@ -1144,7 +1597,32 @@ private:
     FirstOrderIIRSmoother<float> freq_slow_smoother_{FREQ_SMOOTHER_DT, 10.0f};
     SeaStateAutoTuner            tuner_;
     WavePeriodEstimator          wave_period_;
-    VerticalAccelComplementary   vertical_accel_comp_{};
+    // One private Mahony observer, serving both the vertical channel and the
+    // startup attitude.
+    //
+    // The two jobs disagree about the integral term.  The vertical channel had
+    // always run at two_ki = 0 and accepted the ~2b/two_kp static tilt a gyro
+    // bias leaves, on the grounds that its two high-pass stages reject
+    // anything static.  Nothing high-passes an *attitude seed*: the same error
+    // is a standing roll and pitch bias for the whole run.  Turning the
+    // integral term on for both settles that in the only way that leaves one
+    // observer, and it is also the better answer for the vertical channel on
+    // its own terms -- the static tilt it used to tolerate was leaking gravity
+    // into the levelled acceleration, it was simply being high-passed away
+    // afterwards.
+    //
+    // two_kp stays at 0.2 for the reason it always did: the correction corner
+    // must sit an order of magnitude below the wave band, or the observer
+    // levels itself against the orbital specific force instead of gravity.
+    VerticalAccelComplementary   vertical_accel_comp_{
+        STARTUP_PROXY_TWO_KP_DEFAULT,
+        STARTUP_PROXY_TWO_KI_DEFAULT};
+
+    AdaptiveWaveBandPass         sigma_wave_band_{
+        SIGMA_BAND_LOW_RATIO_DEFAULT,
+        SIGMA_BAND_HIGH_RATIO_DEFAULT,
+        SIGMA_BAND_MIN_HZ_DEFAULT,
+        SIGMA_BAND_MAX_HZ_DEFAULT};
     TuneState                    tune_;
 
     float tau_target_      = NAN;
@@ -1183,11 +1661,72 @@ class SeaStateFusion_OU_II {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    using StartupInitPolicy =
+        typename SeaStateFusionFilter_OU_II<trackerT>::StartupInitPolicy;
+
     struct Config {
         bool with_mag = true;
 
         bool enable_linear_block = true;
         bool require_mag_lock_for_linear_block = false;
+
+        // Who solves the startup attitude; see StartupInitPolicy.
+        //
+        // MahonyProxy is the default.  The measurement-only front end runs
+        // from the first sample, the private Mahony observer supplies the tilt
+        // that gates the magnetometer and frames the world-reference average,
+        // and the MEKF is seeded with the finished solution and starts live.
+        // StagedMekf restores the previous staged behaviour, in which the MEKF
+        // is fed from the first sample and those same reads come back out of
+        // it while it is still warming.
+        StartupInitPolicy startup_init_policy = StartupInitPolicy::MahonyProxy;
+
+        // Earliest and latest the proxy bootstrap may hand over.
+        //
+        // The normal exit is by quality: proxy tilt holding gravity agreement,
+        // magnetic north gauged, and the tuner ready.  The floor keeps a
+        // record whose first seconds happen to look calm from handing over on
+        // a tilt the observer has barely integrated, and the ceiling
+        // guarantees the filter always starts -- a platform that never satisfies
+        // the gate still gets a live filter, on the best attitude available,
+        // rather than sitting in bootstrap forever.
+        float proxy_startup_min_sec     = 8.0f;
+        float proxy_startup_timeout_sec = 150.0f;
+
+        // Magnetic acquisition runs in two stages, because the two things it
+        // has to deliver want opposite schedules.
+        //
+        // A usable heading is wanted within seconds of power-on.  A *good*
+        // reference wants the startup observer to have settled first: its
+        // correction corner sits below the wave band by design, which is what
+        // stops it chasing orbital acceleration, and the same low corner means
+        // it needs tens of seconds to converge from its accelerometer seed.
+        //
+        // Waiting for the good one before reporting anything would put first
+        // heading around 105 s, which is not a usable device.  So the first
+        // stage locks a provisional reference as soon as the gravity gate
+        // allows -- heading and a live filter in roughly 20 s, as before --
+        // and the second stage re-learns the reference once the observer has
+        // actually converged.  The correction lands long before the scored
+        // window opens.
+        //
+        // proxy_mag_settle_sec holds the provisional stage off; 0 means "as
+        // soon as the gravity gate is happy" and is the default, because the
+        // refinement is what carries the accuracy now.
+        float proxy_mag_settle_sec = 0.0f;
+
+        bool  mag_refine_enabled    = true;
+        float mag_refine_start_sec  = 90.0f;
+        float mag_refine_window_sec = 30.0f;
+
+        // Covariance seeded at handoff.  Tilt has been integrated through the
+        // wave band by an observer whose correction corner is below it, so it
+        // is worth about the accel-only default; yaw is either gauged by the
+        // magnetometer or entirely unknown, and those two cases are an order
+        // of magnitude apart, which is the whole reason the seed is split.
+        float proxy_handoff_tilt_sigma_rad      = 0.035f;  // ~2 deg
+        float proxy_handoff_yaw_sigma_rad       = 0.087f;  // ~5 deg, north gauged
+        float proxy_handoff_yaw_sigma_free_rad  = 1.5708f; // ~90 deg, no lock
 
         float mag_delay_sec          = MAG_DELAY_SEC;
         float online_tune_warmup_sec = 10.0f;
@@ -1195,9 +1734,28 @@ public:
         bool  freeze_acc_bias_until_live = true;
         float Racc_warmup_std = 0.5f;
 
+        // Magnetometer updates that must land after the filter goes live
+        // before the accelerometer-bias gate opens.
+        //
+        // Accelerometer bias and a tilt error are only weakly separable in
+        // waves -- a roll error tips gravity into body Y and reads as a Y bias
+        // -- so opening this gate while the attitude is still settling lets the
+        // bias absorb the error and hold it.  Under the proxy policy the filter
+        // reaches live far earlier than it used to, which moves this gate
+        // earlier in absolute terms unless it is set to account for that.
+        int acc_bias_unlock_mag_updates = 250;
+
         Eigen::Vector3f sigma_a = Eigen::Vector3f(0.2f, 0.2f, 0.2f);
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
+
+        // Period-scaled sigma-band shape.  These are dimensionless wave-band
+        // ratios except for the absolute safety clamps.  Keeping the ratios
+        // fixed is what gives the JONSWAP sigma channel its similarity law.
+        float sigma_band_low_ratio  = SIGMA_BAND_LOW_RATIO_DEFAULT;
+        float sigma_band_high_ratio = SIGMA_BAND_HIGH_RATIO_DEFAULT;
+        float sigma_band_min_hz     = SIGMA_BAND_MIN_HZ_DEFAULT;
+        float sigma_band_max_hz     = SIGMA_BAND_MAX_HZ_DEFAULT;
 
         // Mag-start gate: gravity-direction agreement using current tilt.
         float mag_gravity_align_max_sin   = 0.075f; // sin(deg)
@@ -1276,6 +1834,10 @@ public:
         last_mag_sample_t_ = NAN;
       
         mag_ref_set_ = false;
+
+        last_mag_tilt_frame_yaw_rad_ = NAN;
+        last_mag_startup_yaw_correction_rad_ = NAN;
+
         MagAutoTuner::Config mag_cfg;
         mag_cfg.mag_norm_min = cfg_.mag_init_min_mag_norm;
         mag_cfg.min_samples = cfg_.mag_min_samples;
@@ -1296,11 +1858,31 @@ public:
         last_gyro_body_ned_.setZero();
         have_last_imu_ = false;
 
+        pending_yaw_abs_rad_ = NAN;
+
+        mag_refine_started_  = false;
+        mag_refine_done_     = false;
+        mag_refine_time_sec_ = NAN;
+        mag_north_lock_time_sec_ = NAN;
+        live_time_sec_           = NAN;
+
         impl_.setWithMag(cfg_.with_mag);
+        impl_.setStartupInitPolicy(cfg_.startup_init_policy);
         impl_.setFreezeAccBiasUntilLive(cfg_.freeze_acc_bias_until_live);
+        impl_.setMagUpdatesToUnlockAccBias(cfg_.acc_bias_unlock_mag_updates);
+
+        // The provisional reference is deliberately cheap and early, so the
+        // accelerometer bias must not be allowed to fit itself to it; see
+        // SeaStateFusionFilter_OU_II::setAccBiasHold().
+        impl_.setAccBiasHold(usingProxyInit_() && cfg_.with_mag &&
+                             cfg_.mag_refine_enabled);
         impl_.setWarmupRaccStd(cfg_.Racc_warmup_std);
         impl_.setMagDelaySec(0.0f); // outer wrapper owns startup delay
         impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);
+        impl_.setSigmaWaveBandRatios(cfg_.sigma_band_low_ratio,
+                                     cfg_.sigma_band_high_ratio);
+        impl_.setSigmaWaveBandLimitsHz(cfg_.sigma_band_min_hz,
+                                       cfg_.sigma_band_max_hz);
 
         impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
         last_impl_startup_stage_ = impl_.getStartupStage();
@@ -1335,9 +1917,15 @@ public:
 
         t_ += dt;
 
+        const bool proxy_init = usingProxyInit_();
+
         // Stage 1: bootstrap tilt with a gyro-propagated tilt observer that is
         // corrected slowly toward accel.
-        if (stage_ == Stage::Uninitialized) {
+        //
+        // Under the proxy policy the gravity-lock bootstrap is the Mahony
+        // observer inside the front end, which runs from the first sample, so
+        // there is no phase in which the wrapper withholds IMU data.
+        if (!proxy_init && stage_ == Stage::Uninitialized) {
             const bool tilt_ready = seastate::common::runStartupGravityInit(
                 gyro_body_ned,
                 acc_body_ned,
@@ -1364,14 +1952,23 @@ public:
         last_gyro_body_ned_ = gyro_body_ned;
         have_last_imu_      = true;
 
-        if (stage_ != Stage::Uninitialized) {
-            impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+        if (proxy_init || stage_ != Stage::Uninitialized) {
+            if (proxy_init && stage_ != Stage::Live) {
+                // Bootstrap: front end only, MEKF held.
+                impl_.updateFrontEnd(dt, gyro_body_ned, acc_body_ned);
+            } else {
+                impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
+            }
 
             const Eigen::Vector3f acc_gate_lp =
                 gravity_gate_acc_lpf_.step(acc_body_ned, dt, cfg_.mag_gravity_align_lpf_tau);
 
+            // Whose tilt the magnetometer gate is judged against.  Under the
+            // proxy policy this is the observer's before handoff, so the gate
+            // measures the attitude that will actually frame the magnetic
+            // reference rather than one the MEKF is still converging toward.
             const float align_sin =
-                seastate::common::gravityAlignResidualSin(impl_.mekf().quaternion_boat(), acc_gate_lp);
+                seastate::common::gravityAlignResidualSin(attitudeReferenceQuat_(), acc_gate_lp);
 
             const float gyro_dps = gyro_body_ned.norm() * 57.295779513f;
 
@@ -1424,7 +2021,10 @@ public:
                 mag_gravity_good_sec_ = 0.0f;
                 mag_init_eligible_t0_ = NAN;
                 last_mag_sample_t_ = NAN;
-        
+
+                last_mag_tilt_frame_yaw_rad_ = NAN;
+                last_mag_startup_yaw_correction_rad_ = NAN;
+
                 // Since mag lock was lost/reset, force the linear/wave block off again.
                 syncLinearBlockGate_();
         
@@ -1443,11 +2043,17 @@ public:
         
             last_impl_startup_stage_ = cur_stage;
         }
-        
-        if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
+
+        if (proxy_init) {
+            if (stage_ != Stage::Live) {
+                maybeHandOffToMekf_();
+            }
+        } else if (stage_ == Stage::Warming && impl_.isAdaptiveLive()) {
             stage_ = Stage::Live;
+            live_time_sec_ = t_;
         }
-        
+
+
         // Re-apply gate every update.
         // Inner impl only enables the actual MEKF linear block when its own stage is Live.
         syncLinearBlockGate_();
@@ -1455,9 +2061,22 @@ public:
 
     void updateMag(const Eigen::Vector3f& mag_body_ned) {
         if (!begun_ || !cfg_.with_mag) return;
-        if (stage_ == Stage::Uninitialized) return;
+        // Under the proxy policy there is no withheld stage to wait out: the
+        // observer has been levelling since the first sample, and learning
+        // north before the MEKF starts is the entire point.  The quality gate
+        // below still decides when accumulation may begin.
+        if (!usingProxyInit_() && stage_ == Stage::Uninitialized) return;
         if (t_ < cfg_.mag_delay_sec) return;
-    
+
+        // Hold the whole magnetometer path off until the startup observer has
+        // settled.  This sits ahead of the eligibility clock deliberately, so
+        // the tilt-fallback timer cannot start running and then wave the
+        // accumulation through on an attitude that is still converging.
+        if (usingProxyInit_() && !mag_ref_set_ &&
+            t_ < cfg_.proxy_mag_settle_sec) {
+            return;
+        }
+
         if (!std::isfinite(mag_init_eligible_t0_)) {
             mag_init_eligible_t0_ = t_;
         }
@@ -1475,11 +2094,22 @@ public:
                     : cfg_.mag_sample_dt_sec;
     
             last_mag_sample_t_ = t_;
-    
+
+            // Accumulate in a tilt frame with yaw removed.
+            //
+            // Stripping yaw makes the frame invariant to the estimator's
+            // arbitrary startup heading, so this leaks no yaw into the learned
+            // reference -- q_bw and Rz(psi) q_bw give the same tilt.
+            //
+            // Which estimator supplies that tilt is the substance of the
+            // startup policy.  StagedMekf reads it back out of the warming
+            // MEKF, whose accelerometer update is at that moment fighting the
+            // orbital acceleration with its linear block switched off.
+            // MahonyProxy reads the private observer instead, which is
+            // gyro-propagated through the wave band and corrected below it.
             const Eigen::Quaternionf q_tilt_bw =
-                tiltOnlyQuatFromBoatQuat_(
-                    impl_.mekf().quaternion_boat());
-    
+                tiltOnlyQuatFromBoatQuat_(attitudeReferenceQuat_());
+
             if (mag_auto_tuner_.addSampleWithTiltQuatDt(
                     dt_mag,
                     q_tilt_bw,
@@ -1488,32 +2118,53 @@ public:
                     mag_body_ned))
             {
                 Eigen::Vector3f mag_world_ref_uT;
-    
+
                 if (mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) &&
                     mag_world_ref_uT.allFinite() &&
                     mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)
                 {
+                    // This reference was learned in a yaw-stripped tilt frame,
+                    // so it carries no estimator heading.  It is a model
+                    // parameter, so writing it before the MEKF has been handed
+                    // the attitude is safe and leaves it ready to use the
+                    // magnetometer from its first live sample.
                     impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
-    
+
                     const float yaw_gauge_rad =
                         mag_auto_tuner_.getYawGaugeCorrectionRad();
-    
+
                     if (std::isfinite(yaw_gauge_rad)) {
-                        Eigen::Quaternionf q_bw =
-                            impl_.mekf().quaternion_boat();
-                        q_bw.normalize();
-    
                         const float yaw_abs_rad =
                             wrapPi_(-yaw_gauge_rad);
-    
-                        const Eigen::Quaternionf q_new =
-                            boatQuatWithAbsoluteYaw_(
-                                q_bw,
-                                yaw_abs_rad);
-    
-                        impl_.mekf().set_quaternion_boat(q_new);
+
+                        // Before handoff there is no MEKF attitude to rewrite;
+                        // the gauge is carried to the handoff instead and
+                        // composed with the proxy tilt there, so the filter's
+                        // very first attitude already has north in it.
+                        if (usingProxyInit_() && stage_ != Stage::Live) {
+                            pending_yaw_abs_rad_ = yaw_abs_rad;
+
+                            last_mag_tilt_frame_yaw_rad_ = wrapPi_(yaw_gauge_rad);
+                            last_mag_startup_yaw_correction_rad_ = yaw_abs_rad;
+                        } else {
+                            Eigen::Quaternionf q_bw =
+                                impl_.mekf().quaternion_boat();
+                            q_bw.normalize();
+
+                            const Eigen::Quaternionf q_new =
+                                boatQuatWithAbsoluteYaw_(
+                                    q_bw,
+                                    yaw_abs_rad);
+
+                            if (q_new.coeffs().allFinite()) {
+                                impl_.mekf().set_quaternion_boat(q_new);
+
+                                last_mag_tilt_frame_yaw_rad_ = wrapPi_(yaw_gauge_rad);
+                                last_mag_startup_yaw_correction_rad_ = yaw_abs_rad;
+                            }
+                        }
                     }
-    
+
                     Eigen::Vector3f hard_iron_uT;
                     mag_hard_iron_body_uT_ =
                         mag_auto_tuner_.getHardIronBodyUT(hard_iron_uT)
@@ -1521,6 +2172,7 @@ public:
                             : Eigen::Vector3f::Zero();
 
                     mag_ref_set_ = true;
+                    mag_north_lock_time_sec_ = t_;
 
                     // Initial mag yaw-gauge correction is now done, so it is safe to allow
                     // v/p/a_w to become active in the current yaw-fixed world frame.
@@ -1528,13 +2180,39 @@ public:
                 }
             }
         }
-    
-        if (mag_ref_set_) {
+
+        maybeRefineMagReference_(mag_body_ned);
+
+        // Magnetometer corrections go to the MEKF only once it owns the
+        // attitude.  Before handoff its state is not the one being solved.
+        if (mag_ref_set_ && (!usingProxyInit_() || stage_ == Stage::Live)) {
             impl_.updateMag(mag_body_ned - mag_hard_iron_body_uT_);
         }
     }
 
     bool hasMagNorthLock() const noexcept { return mag_ref_set_; }
+
+    // True once the second-stage acquisition has replaced the provisional
+    // reference; see maybeRefineMagReference_().
+    bool hasRefinedMagReference() const noexcept { return mag_refine_done_; }
+    float magRefineTimeSec() const noexcept { return mag_refine_time_sec_; }
+
+    // Wall-clock marks for the startup sequence, for anyone measuring
+    // time-to-first-fix rather than steady-state accuracy.
+    float magNorthLockTimeSec() const noexcept { return mag_north_lock_time_sec_; }
+    float liveTimeSec() const noexcept { return live_time_sec_; }
+
+    float magTiltFrameYawDeg() const noexcept {
+        return std::isfinite(last_mag_tilt_frame_yaw_rad_)
+            ? last_mag_tilt_frame_yaw_rad_ * 57.29577951308232f
+            : NAN;
+    }
+
+    float magStartupYawCorrectionDeg() const noexcept {
+        return std::isfinite(last_mag_startup_yaw_correction_rad_)
+            ? last_mag_startup_yaw_correction_rad_ * 57.29577951308232f
+            : NAN;
+    }
 
     // Body-frame hard-iron offset removed from the magnetometer stream.  Zero
     // unless Config::mag_estimate_hard_iron asked for it and the startup window
@@ -1547,6 +2225,22 @@ public:
     bool  isLive() const { return stage_ == Stage::Live; }
     float freqHz() const { return impl_.getFreqHz(); }
     float waveDirectionDeg() const { return impl_.getWaveDirectionDeg(); }
+
+    // Best available boat attitude, BODY -> WORLD (NED).
+    //
+    // Under the proxy policy the MEKF holds its initial quaternion until the
+    // handoff, so reading it directly during the bootstrap would report a
+    // level identity attitude rather than the platform's.  The bootstrap
+    // observer's solution is what is actually known at that point, and it is
+    // what this returns; after handoff both policies return the MEKF's.
+    //
+    // Heading is only meaningful once hasMagNorthLock() is true (or the build
+    // has no magnetometer); before that the bootstrap yaw is arbitrary.  The
+    // linear outputs -- displacement, velocity -- stay gated on isLive().
+    Eigen::Quaternionf attitudeQuat() const {
+        return attitudeReferenceQuat_();
+    }
+
     const Eigen::Vector3f& displacementUpMeters() const { return displacement_up_m_; }
     const AdaptiveWaveDetrender3D::Output& displacementDetrend() const { return displacement_det_out_; }
 
@@ -1582,6 +2276,205 @@ private:
     };
 
     using StartupTiltObserver = seastate::common::StartupTiltObserver;
+
+    bool usingProxyInit_() const noexcept {
+        return cfg_.startup_init_policy == StartupInitPolicy::MahonyProxy;
+    }
+
+    // The attitude the startup machinery judges and frames things against.
+    //
+    // Once the MEKF is live it is the answer under either policy -- it has the
+    // magnetometer, the linear block and the bias states, and the proxy has
+    // none of them.  Before that, under the proxy policy, the MEKF has nothing
+    // to say and the observer does.
+    Eigen::Quaternionf attitudeReferenceQuat_() const {
+        if (usingProxyInit_() && stage_ != Stage::Live) {
+            return impl_.startupProxyQuat();
+        }
+        return impl_.mekf().quaternion_boat();
+    }
+
+    // Second-stage magnetic acquisition.
+    //
+    // The provisional reference was averaged in a tilt frame the startup
+    // observer had barely converged, and it is what the filter has been
+    // steering to ever since.  This re-runs the same acquisition once the MEKF
+    // is live and settled.
+    //
+    // Both the reference vector and the heading gauge are replaced.  The yaw
+    // write is a step, and deliberately so: it is the coarse-to-fine alignment
+    // correction, it happens once, and it lands well before the scored window
+    // opens.
+    void maybeRefineMagReference_(const Eigen::Vector3f& mag_body_ned) {
+        // Second-stage acquisition belongs to the proxy policy.  StagedMekf is
+        // the ablation against the previous behaviour and has to stay exactly
+        // that, so it keeps its single locked reference.
+        if (!usingProxyInit_()) return;
+        if (!cfg_.mag_refine_enabled) return;
+        if (mag_refine_done_) return;
+        if (!mag_ref_set_) return;
+        if (stage_ != Stage::Live) return;
+        if (t_ < cfg_.mag_refine_start_sec) return;
+        if (!have_last_imu_) return;
+
+        if (!mag_refine_started_) {
+            MagAutoTuner::Config refine_cfg = mag_auto_tuner_.config();
+            refine_cfg.min_window_sec = cfg_.mag_refine_window_sec;
+            refine_cfg.min_samples    = cfg_.mag_min_samples;
+            mag_auto_tuner_.setConfig(refine_cfg);
+            mag_auto_tuner_.reset();
+            mag_refine_started_  = true;
+            last_mag_sample_t_   = NAN;
+        }
+
+        const float dt_mag =
+            (std::isfinite(last_mag_sample_t_) && t_ > last_mag_sample_t_)
+                ? (t_ - last_mag_sample_t_)
+                : cfg_.mag_sample_dt_sec;
+
+        last_mag_sample_t_ = t_;
+
+        // The observer's tilt, not the MEKF's, for the same reason the first
+        // stage used it -- and here the reason has teeth.
+        //
+        // By now the MEKF has the linear block and the bias states, so its
+        // tilt looks like the better frame.  It is not usable: the MEKF has
+        // been steering to the provisional reference this pass exists to
+        // replace, so its tilt carries that reference's error, and averaging
+        // the field in it re-derives the error it was meant to remove.
+        //
+        // The observer never saw the reference, so its tilt is independent of
+        // it, and by refinement time it has long since converged.
+        const Eigen::Quaternionf q_tilt_bw = impl_.startupProxyTiltQuat();
+
+        // Feed the same corrected stream the MEKF sees, so a hard-iron offset
+        // already removed is not re-learned into the new reference.
+        const Eigen::Vector3f mag_corrected = mag_body_ned - mag_hard_iron_body_uT_;
+
+        if (!mag_auto_tuner_.addSampleWithTiltQuatDt(
+                dt_mag, q_tilt_bw, last_acc_body_ned_,
+                last_gyro_body_ned_, mag_corrected)) {
+            return;
+        }
+
+        Eigen::Vector3f mag_world_ref_uT;
+        if (!mag_auto_tuner_.getMagWorldRef(mag_world_ref_uT) ||
+            !mag_world_ref_uT.allFinite() ||
+            !(mag_world_ref_uT.norm() > cfg_.mag_init_min_mag_norm)) {
+            return;
+        }
+
+        impl_.mekf().set_mag_world_ref(mag_world_ref_uT);
+
+        const float mag_tilt_yaw_rad = mag_auto_tuner_.getYawGaugeCorrectionRad();
+
+        if (std::isfinite(mag_tilt_yaw_rad)) {
+            const float yaw_abs_rad = wrapPi_(-mag_tilt_yaw_rad);
+
+            Eigen::Quaternionf q_bw = impl_.mekf().quaternion_boat();
+            q_bw.normalize();
+
+            const Eigen::Quaternionf q_new =
+                boatQuatWithAbsoluteYaw_(q_bw, yaw_abs_rad);
+
+            if (q_new.coeffs().allFinite()) {
+                impl_.mekf().set_quaternion_boat(q_new);
+                last_mag_tilt_frame_yaw_rad_ = wrapPi_(mag_tilt_yaw_rad);
+                last_mag_startup_yaw_correction_rad_ = yaw_abs_rad;
+            }
+        }
+
+        mag_refine_done_    = true;
+        mag_refine_time_sec_ = t_;
+
+        // The reference the bias would have been fitting is now the good one.
+        impl_.setAccBiasHold(false);
+    }
+
+    // Hand the bootstrap attitude to the MEKF and start it live.
+    //
+    // The quality exit needs three things at once: a tilt that has held
+    // agreement with gravity long enough to be trusted, a magnetic north gauge
+    // (when a magnetometer is fitted), and an operating point the tuner
+    // stands behind.  Waiting for all three is what lets the MEKF skip the
+    // staged warmup entirely -- there is nothing left for it to converge.
+    void maybeHandOffToMekf_() {
+        if (!begun_) return;
+
+        const bool proxy_ready = impl_.startupProxyInitialized();
+
+        const bool tilt_trusted =
+            (mag_gravity_good_sec_ >= cfg_.mag_gravity_align_hold_sec);
+
+        const bool north_ready = !cfg_.with_mag || mag_ref_set_;
+
+        const bool ready_by_quality =
+            proxy_ready &&
+            (t_ >= cfg_.proxy_startup_min_sec) &&
+            tilt_trusted &&
+            north_ready &&
+            impl_.isTunerReady();
+
+        // The timeout still requires an attitude to hand over; without one
+        // there is nothing to seed and waiting costs nothing.
+        //
+        // It is also held clear of the magnetometer acquisition it would
+        // otherwise cut short.  A timeout that fires while the reference is
+        // still averaging hands over with no yaw gauge at all, which is a far
+        // worse start than simply waiting: the gauge is the one chance to put
+        // the filter on north before it goes live.  So the floor is the settle
+        // time plus room for the averaging window to close.
+        const float mag_acquire_deadline =
+            cfg_.with_mag
+                ? cfg_.proxy_mag_settle_sec +
+                      2.0f * std::max(cfg_.mag_min_window_sec, 1.0f) +
+                      cfg_.mag_tilt_fallback_sec
+                : 0.0f;
+
+        const float timeout_sec =
+            std::max(cfg_.proxy_startup_timeout_sec, mag_acquire_deadline);
+
+        const bool ready_by_timeout = proxy_ready && (t_ >= timeout_sec);
+
+        if (!ready_by_quality && !ready_by_timeout) return;
+
+        handOffToMekf_();
+    }
+
+    void handOffToMekf_() {
+        const bool have_yaw_gauge = std::isfinite(pending_yaw_abs_rad_);
+
+        // boatQuatWithAbsoluteYaw_ strips the incoming heading before writing
+        // the new one, so the observer's drifted yaw cannot survive this even
+        // though the quaternion is passed in whole.
+        const Eigen::Quaternionf q_proxy = impl_.startupProxyQuat();
+
+        const Eigen::Quaternionf q_seed =
+            have_yaw_gauge
+                ? boatQuatWithAbsoluteYaw_(q_proxy, pending_yaw_abs_rad_)
+                : q_proxy;
+
+        if (!q_seed.coeffs().allFinite()) return;
+
+        const float yaw_sigma = have_yaw_gauge
+            ? cfg_.proxy_handoff_yaw_sigma_rad
+            : cfg_.proxy_handoff_yaw_sigma_free_rad;
+
+        // The accelerometer-bias gate is deliberately left closed here.  Going
+        // live early does not make that bias any more observable in waves, so
+        // it keeps waiting for its count of magnetometer updates exactly as it
+        // did before; see setMagUpdatesToUnlockAccBias().
+        impl_.goLive(q_seed,
+                     cfg_.proxy_handoff_tilt_sigma_rad,
+                     yaw_sigma,
+                     /*allow_acc_bias=*/false);
+
+        stage_ = Stage::Live;
+        live_time_sec_ = t_;
+        last_impl_startup_stage_ = impl_.getStartupStage();
+
+        syncLinearBlockGate_();
+    }
 
     void resetTiltInit_() {
         bootstrap_tilt_obs_.reset();
@@ -1737,8 +2630,21 @@ private:
     bool mag_ref_set_ = false;
     Eigen::Vector3f mag_hard_iron_body_uT_ = Eigen::Vector3f::Zero();
     MagAutoTuner mag_auto_tuner_{};
-    
+
     float last_mag_sample_t_ = NAN;
+
+    float last_mag_tilt_frame_yaw_rad_ = NAN;
+    float last_mag_startup_yaw_correction_rad_ = NAN;
+
+    // Yaw gauge acquired while the MEKF was still held, applied at handoff.
+    float pending_yaw_abs_rad_ = NAN;
+
+    float mag_north_lock_time_sec_ = NAN;
+    float live_time_sec_           = NAN;
+
+    bool  mag_refine_started_  = false;
+    bool  mag_refine_done_     = false;
+    float mag_refine_time_sec_ = NAN;
 
     AdaptiveWaveDetrender3D displacement_detrender_{};
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};

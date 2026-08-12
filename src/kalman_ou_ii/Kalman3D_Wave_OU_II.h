@@ -89,6 +89,9 @@ class Kalman3D_Wave_OU_II {
     void initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag);
     void initialize_from_acc(Vector3 const& acc);
     void initialize_from_acc_preserve_yaw(Vector3 const& acc);
+    void initialize_from_attitude(Eigen::Quaternion<T> const& q_bw,
+                                  T tilt_sigma_rad,
+                                  T yaw_sigma_rad);
     static Eigen::Quaternion<T> quaternion_from_acc(Vector3 const& acc);
 
     // Set the world-frame magnetic reference vector used by the mag measurement model.
@@ -196,6 +199,7 @@ class Kalman3D_Wave_OU_II {
         linear_block_enabled_ = on;
     }
     bool linear_block_enabled() const      { return linear_block_enabled_; }
+    bool acc_bias_updates_enabled() const  { return acc_bias_updates_enabled_; }
 
     void set_warmup_mode(bool on) {
         set_linear_block_enabled(!on);                 // off during warmup
@@ -453,6 +457,27 @@ class Kalman3D_Wave_OU_II {
     // Model: b_a(tempC) = beta_a + k_a * (tempC - tempC_ref), with beta_a a slow OU residual
     void set_accel_bias_temp_coeff(const Vector3& ka_per_degC) { k_a_ = ka_per_degC; }
 
+    /*
+      Radius of the ball the accelerometer-bias estimate is confined to
+      [m/s^2]. Set <= 0 to disable the projection.
+
+      Same role, and the same default, as in Kalman3D_Wave_OU_III. The residual
+      bias mean-reverts with a 5000 s correlation time, which bounds it in
+      distribution but not pathwise, and it is excluded from the certified
+      performance coordinate and enters the ISS bound only as an input -- so
+      that input has to be bounded for the bound to say anything. This is the
+      parameter projection Proj() of Bryne/Fossen/Johansen, which confines the
+      bias estimate to ||b|| <= M_b and whose properties that proof uses
+      explicitly.
+
+      The default is deliberately loose enough never to bind on a healthy
+      MEMS unit (0.5 m/s^2 is about 51 mg, against tens of mg of turn-on bias
+      plus temperature drift), so it acts as a guarantee rather than as a
+      tuning parameter.
+    */
+    void set_accel_bias_limit(T limit_mps2) { acc_bias_limit_ = limit_mps2; }
+    [[nodiscard]] T accel_bias_limit() const { return acc_bias_limit_; }
+
     void set_gyro_noise_density_rad_sqrt_s(const Vector3& density) {
         const Vector3 d = density.cwiseAbs();
         Qbase.template topLeftCorner<3,3>() = d.array().square().matrix().asDiagonal();
@@ -638,6 +663,7 @@ class Kalman3D_Wave_OU_II {
     // Accelerometer bias temperature coefficient (per-axis), units: m/s^2 per °C.
     // Default here reflects BMI270 typical accel drift (~0.002 m/s^2/°C).
     Vector3 k_a_ = Vector3::Constant(T(0.002));
+    T acc_bias_limit_ = T(0.5);   // see set_accel_bias_limit()
 
 
     // Constant matrices
@@ -820,6 +846,7 @@ class Kalman3D_Wave_OU_II {
 
     // Inject the current local attitude-error state into qref, then clear the attitude-error slot in xext.
     void applyQuaternionCorrectionFromErrorState();
+    void project_acc_bias_();                       // confine b_a to a ball; see set_accel_bias_limit()
     void apply_error_state_reset_jacobian_(const Vector3& dtheta_injected);
 
     static void PhiAxis3x1_analytic(T tau, T h, Eigen::Matrix<T,3,3>& Phi_axis);
@@ -1427,6 +1454,66 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_ac
     // Accel-only initialization observes gravity direction only.
     // It constrains tilt but leaves yaw around world-down unobservable.
     set_accel_only_attitude_covariance_();
+
+    if constexpr (with_gyro_bias) {
+        Pext.template block<3,3>(0,3).setZero();
+        Pext.template block<3,3>(3,0).setZero();
+    }
+
+    zero_AL_cross_cov_once_();
+
+    if constexpr (with_accel_bias) {
+        Pext.template block<3,3>(0, OFF_BA).setZero();
+        Pext.template block<3,3>(OFF_BA, 0).setZero();
+    }
+
+    symmetrize_Pext_();
+}
+
+// Seed the filter from an attitude solved outside it.
+//
+// This is initialize_from_acc() with the gravity direction replaced by a
+// supplied quaternion and the yaw variance made an argument.  Both differences
+// matter to the caller it exists for.  An accelerometer sample is gravity plus
+// the orbital specific force, so tilt rebuilt from one instant carries a
+// wave-correlated error, while an external observer that has been integrating
+// gyro through the wave band does not; and once a magnetometer has gauged the
+// heading, yaw is no longer the unobservable direction that
+// set_accel_only_attitude_covariance_() assumes by default.
+//
+// Everything else is deliberately identical: the attitude error state is
+// zeroed, the covariance is rebuilt as an anisotropic tilt/yaw split about the
+// world-down axis, and the attitude-to-bias cross-covariances are dropped,
+// since a correlation learned against the discarded attitude does not describe
+// the new one.
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_attitude(
+    Eigen::Quaternion<T> const& q_bw,
+    T tilt_sigma_rad,
+    T yaw_sigma_rad)
+{
+    if (!q_bw.coeffs().allFinite()) {
+        throw std::runtime_error(
+            "Invalid attitude quaternion for initialization: not finite");
+    }
+    if (!(q_bw.norm() > T(1e-8))) {
+        throw std::runtime_error(
+            "Invalid attitude quaternion for initialization: norm too small");
+    }
+
+    // Writes qref through the un-heel composition and zeroes the attitude
+    // error state, which is exactly the head<3>() reset initialize_from_acc()
+    // performs by hand.
+    set_quaternion_boat(q_bw);
+
+    const T tilt_sigma = (std::isfinite(tilt_sigma_rad) && tilt_sigma_rad > T(0))
+                             ? tilt_sigma_rad
+                             : T(0.035);
+    const T yaw_sigma = (std::isfinite(yaw_sigma_rad) && yaw_sigma_rad > T(0))
+                            ? yaw_sigma_rad
+                            : T(1.5708);
+
+    set_accel_only_attitude_covariance_(tilt_sigma, yaw_sigma);
 
     if constexpr (with_gyro_bias) {
         Pext.template block<3,3>(0,3).setZero();
@@ -2226,6 +2313,29 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::applyQuaternionCor
 
     // Clear the local attitude-error state after injection.
     xext.template head<3>().setZero();
+
+    project_acc_bias_();
+}
+
+/*
+  Project the accelerometer-bias estimate onto the ball of radius
+  acc_bias_limit_. Called after every state injection, so the bound holds at
+  all times. See set_accel_bias_limit().
+*/
+template<typename T, bool with_gyro_bias, bool with_accel_bias>
+void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::project_acc_bias_()
+{
+    if constexpr (with_accel_bias) {
+        if (!(acc_bias_limit_ > T(0))) return;
+
+        auto b = xext.template segment<3>(OFF_BA);
+        if (!b.allFinite()) { b.setZero(); return; }
+
+        const T n = b.norm();
+        if (n > acc_bias_limit_) {
+            b *= (acc_bias_limit_ / n);
+        }
+    }
 }
 
 template<typename T, bool with_gyro_bias, bool with_accel_bias>
