@@ -375,7 +375,13 @@ $(1.0,0.9,0.35)$, so the two effects are separable.
 \begin{table}[t]
 \caption{Effect of the $r_S$ lower clamp.  OU--III Adaptive, ten paired seed
 triplets, \SI{900}{s} scoring window; vertical error in percent of $H_s$.  The
-gain is confined to the low-motion seas, where the floor was binding.}
+gain is confined to the low-motion seas, where the floor was binding.  The
+eight seas are the four stationary JONSWAP and the four stationary PM--Stokes
+scenarios; the non-stationary transition is listed separately and is not
+included in that mean.  This pooled figure is therefore not the declared
+JONSWAP-only primary endpoint quoted in the abstract
+(\OUValidationOUIIINormalizedMean\ percent of $H_s$), which is larger because
+the PM--Stokes family scores better on this metric.}
 \label{tab:rs-floor-effect}
 \centering
 \footnotesize
