@@ -220,6 +220,37 @@ class Kalman3D_Wave_TFG {
         }
     }
 
+    // Re-align the posterior a_w marginal with the stationary prior without
+    // throwing away what the filter has learned. Unlike
+    // reset_aw_covariance_to_stationary() above, which replaces the block and
+    // decorrelates it, this only ever adds the PSD part of the shortfall, and
+    // it does so at the next time update rather than in the middle of a
+    // measurement sequence. OU-III runs exactly this at the adaptation cadence
+    // so that a stationary scale which has moved since the last discrete
+    // reconfiguration still reaches the marginal.
+    void synchronize_aw_covariance_to_stationary() {
+        aw_cov_floor_target_ = T(0.5) * (Sigma_aw_ + Sigma_aw_.transpose());
+        aw_cov_floor_pending_ = true;
+    }
+
+    // Rewrite the heading of the attitude, keeping the estimated tilt, the
+    // world columns and the biases untouched.
+    //
+    // This is a state correction and not a gauge change: the world frame is
+    // already the magnetic one fixed at first lock, and what the second-stage
+    // magnetic acquisition finds is that the *heading in it* was wrong. Turning
+    // this into apply_world_yaw_gauge() would rotate v, p and S along with R
+    // and corrupt the displacement history the correction has nothing to say
+    // about. Covariance is left alone, matching OU-III's set_quaternion_boat().
+    void set_attitude_yaw_absolute(T yaw_abs_rad) {
+        if (!std::isfinite(yaw_abs_rad)) return;
+        const Matrix3 R = X_.R;
+        const T yaw = std::atan2(R(1,0), R(0,0));
+        if (!std::isfinite(yaw)) return;
+        X_.R = (ocean_imu::lie::Exp<T>(Vector3(T(0), T(0), yaw_abs_rad - yaw)) * R).eval();
+        reorthonormalize_();
+    }
+
     void set_aw_time_constant(T tau) { tau_aw_ = std::max(T(1e-3), tau); }
     [[nodiscard]] T aw_time_constant() const { return tau_aw_; }
 
@@ -467,6 +498,7 @@ class Kalman3D_Wave_TFG {
         propagate_mean(gyro_meas, Ts);
         P_ = (Phi * P_ * Phi.transpose()).eval();
         P_ += Qd;
+        apply_pending_aw_covariance_inflation_();
         P_ = T(0.5) * (P_ + P_.transpose()).eval();
     }
 
@@ -789,6 +821,28 @@ class Kalman3D_Wave_TFG {
         X_.R = q.toRotationMatrix();
     }
 
+    // Add only the positive-semidefinite part of the shortfall against the
+    // stationary target, so the sync can never remove information the
+    // measurements put there and can never break the PSD of P.
+    void apply_pending_aw_covariance_inflation_() {
+        if (!aw_cov_floor_pending_ || !linear_block_enabled_) return;
+        aw_cov_floor_pending_ = false;
+
+        Matrix3 P_aw = P_.template block<3,3>(OFF_AW, OFF_AW);
+        P_aw = T(0.5) * (P_aw + P_aw.transpose());
+        Matrix3 Delta = aw_cov_floor_target_ - P_aw;
+        Delta = T(0.5) * (Delta + Delta.transpose());
+
+        Eigen::SelfAdjointEigenSolver<Matrix3> es(Delta);
+        if (es.info() != Eigen::Success) return;
+        Vector3 evals = es.eigenvalues();
+        for (int i = 0; i < 3; ++i) evals(i) = std::max(T(0), evals(i));
+        Delta = es.eigenvectors() * evals.asDiagonal() * es.eigenvectors().transpose();
+        Delta = T(0.5) * (Delta + Delta.transpose());
+
+        P_.template block<3,3>(OFF_AW, OFF_AW) += Delta;
+    }
+
     void add_ou_process_noise_(T Ts, MatrixNX& Qd) const {
         const bool correlated = !ou_detail::is_isotropic3<T>(Sigma_aw_) &&
                                 !is_diagonal_(Sigma_aw_);
@@ -826,6 +880,8 @@ class Kalman3D_Wave_TFG {
 
     T tau_aw_{T(1.0)};
     Matrix3 Sigma_aw_{Matrix3::Identity()};
+    Matrix3 aw_cov_floor_target_{Matrix3::Identity()};
+    bool aw_cov_floor_pending_{false};
     Matrix3 Q_gyro_{Matrix3::Identity() * T(2.5e-5)};
     Matrix3 Q_bg_{Matrix3::Identity() * T(1e-10)};
     Matrix3 Q_ba_{Matrix3::Identity() * T(2.5e-7)};
