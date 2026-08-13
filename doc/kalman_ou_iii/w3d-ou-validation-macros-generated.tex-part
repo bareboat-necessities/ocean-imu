@@ -7,7 +7,7 @@
 \providecommand{\OUValidationIIHsZeroTwoSevenOracleHigh}{+0.018}
 \providecommand{\OUValidationIIIHsZeroTwoSevenNominalDifference}{-10.147}
 \providecommand{\OUValidationIIIHsZeroTwoSevenNominalLow}{-10.559}
-\providecommand{\OUValidationIIIHsZeroTwoSevenNominalHigh}{-9.689}
+\providecommand{\OUValidationIIIHsZeroTwoSevenNominalHigh}{-9.688}
 \providecommand{\OUValidationIIIHsZeroTwoSevenOracleDifference}{+0.061}
 \providecommand{\OUValidationIIIHsZeroTwoSevenOracleLow}{+0.032}
 \providecommand{\OUValidationIIIHsZeroTwoSevenOracleHigh}{+0.088}
@@ -23,7 +23,7 @@
 \providecommand{\OUValidationIIIHsOneFiveNominalLow}{-0.001}
 \providecommand{\OUValidationIIIHsOneFiveNominalHigh}{+0.066}
 \providecommand{\OUValidationIIIHsOneFiveOracleDifference}{+0.033}
-\providecommand{\OUValidationIIIHsOneFiveOracleLow}{-0.002}
+\providecommand{\OUValidationIIIHsOneFiveOracleLow}{-0.001}
 \providecommand{\OUValidationIIIHsOneFiveOracleHigh}{+0.066}
 \providecommand{\OUValidationIIHsFourNominalDifference}{-2.333}
 \providecommand{\OUValidationIIHsFourNominalLow}{-2.424}
@@ -85,8 +85,8 @@
 \providecommand{\OUValidationNormalizedSignP}{0.002}
 \providecommand{\OUValidationNormalizedRandomizationP}{0.002}
 \providecommand{\OUValidationNormalizedRandomizationPatterns}{1{,}024}
-\providecommand{\OUValidationGatePasses}{85}
-\providecommand{\OUValidationGateFailures}{755}
+\providecommand{\OUValidationGatePasses}{41}
+\providecommand{\OUValidationGateFailures}{799}
 \providecommand{\OUValidationBootstrapResamples}{10{,}000}
 \providecommand{\OUValidationStatsSeed}{20260317}
 \providecommand{\OUValidationBootstrapMethod}{nonparametric percentile bootstrap of the paired mean, resampling seed triplets with replacement}

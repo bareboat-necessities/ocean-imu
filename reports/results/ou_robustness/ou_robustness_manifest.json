@@ -15,8 +15,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "fd62e5c744ec2b4c8c430effadbd155a70fad316",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 33890 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |    50 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1400 +-\n .../ou_robustness/ou_robustness_publication.tex    |    22 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1194 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   176 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1736 +-\n 8 files changed, 19504 insertions(+), 19584 deletions(-)",
+  "git_commit": "76b00d315676c1d43a0d35acfc3f90cfac74dfb2",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 24 +++++++++++-----------\n .../results/ou_robustness/ou_robustness_raw.csv    | 12 +++++------\n 2 files changed, 18 insertions(+), 18 deletions(-)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 2.6233606119980437,
@@ -26,7 +26,7 @@
     "tau_s": 2.17904091
   },
   "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -125,7 +125,7 @@
   "result_files": {
     "ou_robustness.json": {
       "bytes": 1420355,
-      "sha256": "23b12fa7910972245afa88b2074fcf44e99c679659d4ca710b17bc1bde1eb0e2"
+      "sha256": "0837683ae0ce85597d2586bae9b3a8e89c42f91f7a0a963976b52dccca5adebf"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1852,
@@ -141,7 +141,7 @@
     },
     "ou_robustness_raw.csv": {
       "bytes": 196392,
-      "sha256": "fe7e2f65fef50d9e0d61b3d86dbc6957de86a44657de64d05ffc091383ff64a2"
+      "sha256": "60f09cc446c27e70716ba891113eb98a47cfa0ca790549cd58d269ac09772f1d"
     },
     "ou_robustness_sensitivity.svg": {
       "bytes": 115236,
@@ -170,12 +170,12 @@
       "sha256": "f0be2c41464e4a5a0924bab652549d38ffc6bec55406156b7b4a0ef72ce490d4"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 67251,
-      "sha256": "3ad5804d1f77b1df656d6ccef2851c35f5cab4be8ee7e82bdc144a26d2e8b41e"
+      "bytes": 68483,
+      "sha256": "2a54cc52874ecb5d5df794b23276046fb3b4c79e72cbd22760ff6cc8bc074814"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 35382,
-      "sha256": "aed75d260df1c18357344cc43c2d17051855c4a4f2a7297f2a317e1086d40413"
+      "bytes": 37672,
+      "sha256": "7eff380aff81fb0217b492516bcaae6f32e0b5b0db0db712e9d43fa8cf5a833e"
     },
     "tools/ou_robustness.py": {
       "bytes": 55378,
