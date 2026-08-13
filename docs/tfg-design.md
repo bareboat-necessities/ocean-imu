@@ -471,9 +471,9 @@ Measured on a JONSWAP H1.5 record: **12.2 degrees RMS yaw**, against roll 0.58
 and pitch 0.17. Anchoring first — rotate about world z until the measured
 field's horizontal component points north, *then* capture — gives **2.37
 degrees**, in line with OU-III's yaw gate as it then stood, with every other
-channel unchanged. OU-III's gate has since come down to 1.068 degrees on
-the strength of its continuous hard-iron correction, which this filter does not
-carry; TFG's own gate is 2.938 (`docs/quality-gate-regauge.md`).
+channel unchanged. OU-III's gate came down to 1.068 degrees on the strength of its continuous
+hard-iron correction; this filter now carries that correction too (section 9),
+and its own gate is 1.536.
 
 Capturing the canonical `(B_north, 0, B_down)` is also what makes `H_m` a
 genuinely fixed reference rather than a frame-dependent one, which is the
@@ -489,7 +489,7 @@ heading problem is not.
 
 The tuner does not know which filter it is driving, so everything OU-III
 measured about it carries over unchanged. This filter had drifted from that
-policy in four ways; all four are now aligned, and each is guarded by a test in
+policy in six ways; all six are now aligned, and each is guarded by a test in
 `tfg_orchestrator-test`.
 
 ### Exogeneity is a timing property, not only a signal choice
@@ -538,38 +538,95 @@ The renormalized value is deliberately **not** re-clamped. The smallest-sea
 point sits on the base floor and must be allowed below it once `T_S > T_0`, or
 the clipping the previous item removes comes straight back.
 
-## 9. Startup policy: MahonyProxy is implemented but not yet at parity
+### The sigma channel is a wave-band quantity
+
+`sigma_aw` is meant to be the acceleration the OU process has to carry. A
+broadband variance is not that: it also holds the sensor floor, the engine band,
+and whatever drifts below the sea. This filter measured it on the raw
+complementary-observer output and subtracted a constant floor.
+
+It now goes through `AdaptiveWaveBandPass`, whose two corners are fixed
+multiples of the tuning frequency (0.5 and 4.0), so away from the absolute
+clamps the transfer shape is fixed in `f/f_tune` — the condition the JONSWAP
+similarity argument for `sigma_aw` needs. The pre-band noise floor is referred
+through that same band's white-noise variance gain rather than subtracted raw,
+because the band rejects part of it and the band moves.
+
+Measured over the eight records, at the deployed coefficients: vertical RMS
+−1.1% mean and −1.9% worst, 3D −0.5% mean and −1.2% worst, yaw −4.0% mean and
+−14.3% worst, accelerometer bias −5.7% mean. `TFG_WAVE_BAND=0` restores the
+broadband channel for ablation.
+
+### The a_w marginal is re-aligned on the adaptation cadence
+
+`commitTune_()` writes a new stationary scale into the OU process covariance,
+which is how the schedule reaches the *increments*. It does not touch the
+marginal the filter is already holding, so after a sea-state change the
+posterior `a_w` variance can sit well under the scale the schedule now claims,
+and the accelerometer update is weighted against a confidence nothing supports.
+
+`Kalman3D_Wave_TFG::synchronize_aw_covariance_to_stationary()` stages a
+correction that is applied inside the next propagation, and adds only the
+positive-semidefinite part of the shortfall — so it can lift a marginal that has
+fallen behind and can never remove what the measurements established. It runs on
+its own clock rather than inside `adaptMekf_`, so the fixed and frozen ablation
+arms get the identical policy and stay matched controls.
+
+This is the smallest of the six by some distance: −0.1% on 3D mean, +0.8% on
+accelerometer bias mean, nothing measurable on vertical. It is here for the
+consistency argument rather than for the number. `TFG_AW_COV_SYNC=0` ablates it.
+
+### The coefficients were re-fitted afterwards
+
+Every item above changes what the tuner coefficients multiply, so leaving them
+at their previous values would have measured the features against a schedule
+fitted for a filter that no longer exists. The sweeps are one-at-a-time over the
+eight records:
+
+| coefficient | was | now | shape of the sweep |
+|---|---|---|---|
+| `tau_coeff` | 1.0 | 1.0 | clean minimum; 0.92 costs +2.4% vertical, 1.10 costs +2.5% |
+| `sigma_coeff` | 1.0 | 1.0 | 0.9 buys 0.4% vertical at 4% on 3D and 4% on bias |
+| `R_S_coeff` | 0.35 | 0.28 | band-passed sigma reads lower, so `r_S ~ sigma tau^3` over-regularized; flat over 0.26–0.30 |
+| `S_factor` | 1.87 | 1.20 | −5% bias, −0.05° pitch, no vertical cost |
+| `R_S_xy_factor` | 1.0 | 1.15 | better on vertical, 3D, yaw and bias at once; stops being free above ~1.2 |
+
+Four more were swept and left at OU-III's values because the eight-record result
+is flat across the range: `adapt_tau_sec` (1.0–3.0 moves vertical RMS by 0.01%),
+`adapt_RS_mult` (2–4, likewise), the pre-band noise floor (0.06–0.20 — the band
+refers it, so the schedule barely notices), and the sigma band ratios themselves
+(0.5/4.0 is at or within noise of the best of five shapes tried). Fitting those
+to eight records would have been fitting noise.
+
+## 9. Startup policy: MahonyProxy, and the magnetic acquisition that makes it work
 
 `StartupInitPolicy` selects who solves the attitude the filter starts from.
-**`StagedMekf` is the default.** `MahonyProxy` is implemented and available,
-and is the policy OU-III uses, but on this filter it does not yet match the
-staged path and the reason is understood.
+**`MahonyProxy` is now the default**, as it is in both OU families. `StagedMekf`
+remains as the ablation against the previous behaviour.
 
 Under `StagedMekf` the MEKF runs from the first sample and levels itself while
 degraded (linear block off, bias frozen, `Racc` inflated), and the magnetic
 reference is captured in that attitude's frame. Under `MahonyProxy` the private
-Mahony observer owns levelling and magnetic acquisition and the MEKF is seeded
+Mahony observer owns levelling and magnetic acquisition, and the MEKF is seeded
 once and goes straight to Live.
 
-### Why the proxy policy is currently worse here
+### Why the proxy policy used to be worse here
 
-The seeded tilt error is absorbed by the horizontal accelerometer bias, and
-does not come back.
+The seeded tilt error was absorbed by the horizontal accelerometer bias, and did
+not come back.
 
-Measured on jonswap H1.5, the accelerometer-bias error reached 744% of the true
-bias on the Y axis — 0.34 m/s², which is `atan(0.34/9.81) = 2.0°` of tilt. The
-scored pitch error on the same record was 2.08°. They are the same quantity.
-Tilt and accelerometer bias are only weakly separable, so a seed that is two
-degrees off is indistinguishable from a bias and gets parked there permanently.
+Measured on jonswap H1.5 at the time, the accelerometer-bias error reached 744%
+of the true bias on the Y axis — 0.34 m/s², which is `atan(0.34/9.81) = 2.0°` of
+tilt. The scored pitch error on the same record was 2.08°. They are the same
+quantity. Tilt and accelerometer bias are only weakly separable, so a seed that
+is two degrees off is indistinguishable from a bias and gets parked there.
 
-OU-III's own measurements explain where a 2° seed comes from: the observer's
-mean tilt error is 2.76° on the worst record at 7–20 s, 0.85° at 40 s and 0.74°
-at 120 s. Handing off before it converges seeds exactly that error.
+OU-III's own measurements say where a 2° seed comes from: the observer's mean
+tilt error is 2.76° on the worst record at 7–20 s, 0.85° at 40 s and 0.74° at
+120 s. Handing off before it converges seeds exactly that error.
 
-### What is fixed, and what is missing
-
-Three genuine defects in the handoff were found and fixed. Each was the same
-mistake — an over-confident prior on something the seed does not actually know:
+Three defects in the handoff itself were fixed earlier — each the same mistake,
+an over-confident prior on something the seed does not know:
 
 | defect | effect |
 |---|---|
@@ -577,31 +634,105 @@ mistake — an over-confident prior on something the seed does not actually know
 | `b_a` seeded to zero with σ = 0.01 m/s² against a true bias up to 0.059 | filter refuses the correction it needs |
 | accelerometer-bias learning unlocked immediately at handoff | the seed transient is absorbed into bias before tilt can settle |
 
-Together these took jonswap H1.5 from **yaw 4.75° to 1.59°** — better than the
-staged path's 2.42° on that record — and pitch from 1.15° to 0.21°. So the
-policy does work when the seed is good.
+What remained missing was the acquisition itself.
 
-What is missing is **OU-III's two-stage magnetic acquisition**: a provisional
-lock as soon as the gravity gate allows, then a refinement at 90 s over a 30 s
-window that re-learns the reference and re-gauges heading once the observer has
-converged. This was originally recorded here as a bounded gap. It is not — it
-is load-bearing. Without it the provisional lock is taken on an unconverged
-tilt and nothing ever corrects it.
+### The magnetic acquisition is windowed and two-stage
 
-A gravity-agreement gate on the seed (`proxy_gravity_*`) is implemented, since
-handing off on elapsed time alone is clearly wrong, but its thresholds are not
-yet calibrated and it is not sufficient on its own.
+The previous version learned the world reference from **one** magnetometer
+sample, in the proxy's tilt frame, the first time the gravity gate was happy —
+one reading of a noisy vector at one phase of one wave, frozen for the run.
+
+`MagAutoTuner` now averages the field in the proxy's yaw-stripped tilt frame
+until a window closes. The window is held in **seconds**, not samples, because
+in waves the tilt error is periodic and what the window has to buy is whole wave
+periods: 128 samples at a 25 Hz mag ODR is 5.1 s, short enough to lock in the
+phase it started on rather than cancel it. Default `mag_min_window_sec = 15`.
+
+That reference is still provisional. It is re-learned at 90 s over a 30 s window
+(`mag_refine_*`), once the observer has converged — a device that reports no
+heading for 105 s is not a device, so the first stage buys availability and the
+second buys accuracy. Both stages average in the **proxy's** tilt frame, never
+the MEKF's: the MEKF has been steering to the reference the refinement exists to
+replace, so its tilt carries that reference's error and the refinement would be
+self-confirming. The refined stage replaces both the reference vector and the
+heading gauge; the yaw write is a one-time step through
+`Kalman3D_Wave_TFG::set_attitude_yaw_absolute`, which rewrites heading only and
+leaves the world columns alone — this is a state correction, not a gauge change,
+so `v`, `p` and `S` must not rotate with it.
+
+Accelerometer-bias learning is held shut until the refinement lands, for the
+same reason it is held through the seed transient.
+
+The refinement's own start time and window length were swept (45/60/90/150 s and
+15/30/60 s) and the eight-record metrics move **non-monotonically** across both
+— `accb` worst goes 134 / 167 / 137 across the three window lengths. That is the
+phase sensitivity of a single one-shot re-acquisition, not a trend, so the
+values stay at OU-III's rather than being fitted to eight records.
+
+### Hard iron is tracked continuously
+
+The MEKF has no magnetometer-bias state. A body-fixed offset is therefore
+heading error one-for-one against the horizontal field: an offset component
+`b_h` perpendicular to north on a field with horizontal component `B_h` is
+`atan(b_h/B_h)` of yaw. **This was most of this filter's standing yaw error.**
+
+`ContinuousMagHardIronEstimator` never closes its accumulation. It is driven by
+the proxy's tilt quaternion and the **raw** magnetometer — never the corrected
+stream, or it would be shown data with its own answer already subtracted — so no
+loop closes through the MEKF and the exogeneity argument of section 8 is
+untouched. The applied offset and the magnetic reference move together, out of
+the same statistics, so the filter is never subtracting one offset while
+steering to a reference that belongs to another. The correction is a change of
+measurement-model parameters only: no attitude state is written, and the
+magnetometer update walks yaw to the corrected heading over its own time
+constant.
+
+Measured over the eight records, ablating it alone: **yaw 2.35° → 1.08° mean and
+3.30° → 1.53° worst**. Nothing else moves by more than 3%, and accelerometer
+bias moves the other way by 2.8% — the offset was buying part of its heading
+error back through the bias state. It is the single
+largest effect in this whole change, and it is what took TFG's yaw gate from
+2.938 to 1.536.
 
 ### Evidence
 
-Both simulators, byte-identical records, last 900 s. With `StagedMekf` and the
-adaptation policy of section 8, the TFG simulator passes all eight records.
-Against OU-III on the same records, TFG is behind: vertical +0.31 pp, 3D
-+0.87 pp, yaw +0.23° (excluding pmstokes H8.5, where OU-III itself scores a
-10.78° yaw outlier against ~2° everywhere else). That is consistent with the
-design's stated expectation — parity on vertical, with the case for the filter
-resting on large-error robustness and covariance consistency, which these
-stationary records do not test.
+Both simulators, byte-identical records, last 900 s, eight JONSWAP and PM-Stokes
+records. Against the previous TFG default (`StagedMekf`, one-sample reference,
+no hard iron, broadband sigma, old coefficients):
+
+| channel | before | after | change |
+|---|---|---|---|
+| vertical RMS %H_s, mean | 4.638 | 4.369 | −5.8% |
+| vertical RMS %H_s, worst | 5.209 | 4.778 | −8.3% |
+| 3D RMS %, mean | 21.04 | 19.74 | −6.2% |
+| 3D RMS %, worst | 25.78 | 21.03 | −18.4% |
+| yaw RMS deg, mean | 2.149 | 1.077 | −49.9% |
+| yaw RMS deg, worst | 2.923 | 1.528 | −47.7% |
+| roll RMS deg, mean | 0.698 | 0.308 | −55.9% |
+| pitch RMS deg, mean | 0.306 | 0.340 | **+11.3%** |
+| acc-bias RMS % of true, mean | 144.1 | 92.7 | −35.7% |
+| acc-bias RMS % of true, worst | 398.2 | 166.7 | −58.1% |
+
+Pitch is the one channel that moves the wrong way, and it should be stated
+rather than averaged away: the loss is concentrated on the two large PM-Stokes
+records (0.55° → 0.73° at H4.0, 0.34° → 0.60° at H8.5) and comes with the
+refinement, which halves roll on the same set. Combined attitude RMS
+`sqrt(roll² + pitch²)` goes 0.762° → 0.459°, so the trade is net favourable, but
+it is a trade.
+
+The result holds off the tuning set. Repeating the whole comparison under two
+further sensor-noise and bias realizations (`W3D_SEED=20260813` and
+`W3D_SEED=777`) improves **every** channel in the table on **both** — worst-case
+vertical −30.7% and −9.9%, worst-case accelerometer bias −68.7% and −71.2% —
+pitch included, at 0.558° → 0.369° and 0.674° → 0.345°. So the pitch regression
+above is a property of the default seed's realization rather than of the change,
+which is also why it is not worth tuning against.
+
+Against OU-III on the same records, TFG's yaw is no longer attributable to a
+missing feature (1.53 worst against OU-III's 1.068 gate), 3D on JONSWAP sits at
+OU-III's own bar and PM-Stokes below it, and accelerometer bias remains the
+outlier at 167% against 98.4 — still above 100% of the true bias on two of the
+eight records, and still unattributed.
 
 ## 10. What this does not claim
 

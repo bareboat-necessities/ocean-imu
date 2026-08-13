@@ -20,8 +20,11 @@ the margin the rule asks for, and the large ones none of it.
 Every gate is now written to whatever precision delivers about half a percent —
 a thousandth where the value is near 1, a hundredth for single digits, a tenth
 where a tenth is already fine enough. **All 23 gates across the five families
-now sit between 0.50% and 0.65% above what the filter produces**, and none of
-that rounding change involved a filter change.
+now sit between 0.50% and 0.69% above what the filter produces**, and none of
+that rounding change involved a filter change. (The band was 0.50–0.65% when
+this was written; OU-III's re-derivation for `S_factor = 1`, below, put its
+PM-Stokes vertical gate at 0.69% because a hundredth is the finest quantum that
+channel is quoted in.)
 
 ## What was measured
 
@@ -42,10 +45,10 @@ instead of exiting at the first one.
 | family | gates | verdict |
 | --- | --- | --- |
 | OU-II | 7 | four re-derived for the continuous hard-iron correction, three cut finer |
-| OU-III | 7 | six cut finer; bias 3D already at the rule |
+| OU-III | 7 | six cut finer; then all seven re-derived for `S_factor = 1` |
 | NLO | 2 gated (Z only) | both cut finer |
 | PII observer | 3 gated (Z, yaw) | all three cut finer |
-| TFG | 7 | all seven re-derived, then five cut finer |
+| TFG | 7 | all seven re-derived, then five cut finer; then re-derived again after the OU parity work |
 
 OU-II's four moves are a filter change, not a rounding change: it now carries
 the continuous hard-iron correction, on OU-III's settings, and pays OU-III's
@@ -183,21 +186,52 @@ exactly on OU-III's own bar of 21.1. The "3D error degrades sharply on the
 large-wave records" note in the simulator was true of the filter it was written
 against and is not true of this one.
 
-Two things did not improve and are still recorded rather than endorsed:
+#### TFG, re-derived again after the OU parity work
 
-- **Accelerometer bias.** 398% of the true bias at worst, against OU-III's 98%,
-  and above 100% on six of the eight records. An error larger than the quantity
-  being estimated is not an estimate. Cause still unestablished.
-- **Yaw.** 2.92 deg against OU-III's 1.06 and OU-II's 1.09. That gap is the
-  continuous magnetic hard-iron correction, which both OU families carry and
-  this one does not; see `docs/continuous-mag-hard-iron.md` for what it removes
-  and why the error it removes is a gauge rather than a tracking error.
+The two items recorded above as "did not improve" were the accelerometer bias
+and yaw, and yaw was attributed to a specific missing feature. That feature —
+along with the rest of the OU families' magnetic acquisition and the band-passed
+sigma channel — is now carried by TFG, and the tuner coefficients were re-fitted
+afterwards. See `docs/tfg-design.md` sections 8 and 9. All seven bars were
+re-derived by the same rule:
 
-`bias_3d_percent` gates the gyro channel as well as the accelerometer, and the
-accelerometer sets it on every family. TFG's worst gyro value is 125.60%
-(pmstokes H4.0) against a bar of 400.3, so a gyro-bias regression has to more
-than triple before that bar sees it. Splitting the two means changing
-`W3dFailureLimits` and re-deriving for every family that uses it; not done here.
+| gate | was | now | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| Z %Hs JONSWAP | 5.24 | **4.803** | 4.7784 (H0.27) | 0.51% |
+| Z %Hs PM-Stokes | 5.13 | **4.709** | 4.6846 (H0.27) | 0.52% |
+| yaw deg | 2.938 | **1.536** | 1.5278 (pmstokes H8.5) | 0.54% |
+| 3D % JONSWAP | 21.1 | **21.14** | 21.0298 (H1.5) | 0.52% |
+| 3D % PM-Stokes | 25.91 | **20.71** | 20.6045 (H4.0) | 0.51% |
+| acc Z bias % | 8.89 | **5.026** | 5.0002 (pmstokes H8.5) | 0.52% |
+| bias 3D % | 400.3 | **167.6** | 166.688 (pmstokes H4.0, accel) | 0.55% |
+
+The JONSWAP 3D bar is the one that moves *up*, by 0.04, and it is worth saying
+why rather than hiding it in the table: worst-case 3D fell from 25.78 to 21.03,
+but the record that now sets the bar (jonswap H1.5) sits 0.19 above where the
+old binding record happened to land, and the old 21.1 was already only 0.5%
+above it. Every other bar comes down, three of them by more than a third.
+
+Where that leaves the two standing findings:
+
+- **Yaw** is no longer attributable to a missing feature. 1.53 deg against
+  OU-III's 1.068 and OU-II's 1.09 — still behind, but by a factor of 1.4 rather
+  than 2.8, and with the same correction now on both sides of the comparison.
+  Ablating the continuous hard-iron correction alone puts it back to 3.30.
+- **Accelerometer bias** is still the outlier and is still recorded rather than
+  endorsed: 167% against OU-III's 98.4, above 100% of the true bias on two of
+  the eight records rather than six. Most of what came out was the standing
+  attitude error the old one-sample magnetic reference left behind, which the
+  bias state was absorbing because the two are only weakly separable in waves.
+  What remains has not been attributed.
+
+`bias_3d_percent` still gates the gyro channel as well. TFG's worst gyro value
+is now 46.58% (jonswap H8.5) against a bar of 167.6, so the accelerometer still
+sets it and a gyro-bias regression still has to more than triple before that bar
+sees it.
+
+Both an `-march=native` and an `-march=x86-64` build pass all seven; the binding
+records move by up to 3.5e-4 relative between them, so the thinnest margin is 14
+times the spread it has to survive.
 
 ## Reproducing
 
@@ -235,7 +269,7 @@ native `cascadelake` and rescoring all eight records:
 | family | worst yaw drift | worst drift, any gated channel |
 | --- | --- | --- |
 | OU-III | **8.3e-4** (jonswap H8.5) | 8.3e-4 — yaw is the worst channel |
-| TFG | 2.6e-4 (pmstokes H8.5) | 8.8e-4 (gyro bias 3D, pmstokes H4.0) |
+| TFG | 3.5e-4 (jonswap H4.0) | 4.6e-4 (gyro bias 3D, jonswap H8.5) |
 | OU-II | 6.0e-4 (jonswap H8.5) | 7.3e-4 (acc Z bias, pmstokes H8.5) |
 | PII observer | 0 — bit-identical | 1.5e-6 (Z, pmstokes H1.5) |
 | NLO | not gated | 1.5e-6 (raw Z, pmstokes H4.0) |
@@ -244,7 +278,9 @@ OU-II's row is measured with the continuous hard-iron correction on, and it
 roughly tripled when the correction landed — 2.4e-4 yaw and 4.4e-4 worst-channel
 before it. That is the same mechanism as OU-III's row and is the strongest
 evidence for the cause given below: the drift follows the solve, not the
-family.
+family. TFG's row was re-measured after it took the same correction; its yaw
+drift is 3.5e-4 against 2.6e-4 before, which is the same mechanism again and a
+smaller step because TFG already carried an `LDLT` per measurement update.
 
 So 6e-6 still describes NLO and the PII observer, and understates the OU and
 TFG families by two orders of magnitude. The likely cause is visible in the
@@ -255,8 +291,10 @@ walks the heading — so yaw is exactly where it should show up, and does.
 
 That is the number every gate in this document is checked against, one by one,
 rather than against the half-percent rule alone. The thinnest margin-to-drift
-ratios in the whole set are OU-III's bias 3D at 15x, TFG's 3D PM-Stokes at 14x
-and TFG's yaw at 25x; everything else is between 40x and several thousand. The
+ratios in the whole set are OU-III's bias 3D at 15x and TFG's yaw at 15x;
+everything else is between 40x and several thousand. TFG's 3D PM-Stokes, at 14x
+when its gates were last cut, is now 90x — the channel improved by 20% while its
+`-march` drift did not move. The
 check that matters is not arithmetic: every family was rescored with an
 `-march=x86-64` build against the tightened gates, and all five pass with at
 least 0.48% of headroom at their tightest point. They are not

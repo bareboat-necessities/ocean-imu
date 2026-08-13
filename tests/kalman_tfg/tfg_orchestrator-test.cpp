@@ -13,6 +13,11 @@
         tau  = tau_coeff * 0.5 / f_tune
         R_S  = R_S_coeff * sigma * tau^3
         sigma^2 = max(0, measured variance - noise floor^2)
+
+    The variance is now measured through the period-scaled band-pass, and the
+    noise floor is referred through that same band, so the sigma law holds in
+    the band's coordinates rather than the raw signal's. On a sinusoid sitting
+    inside the band the two agree to within the tolerances used below.
 */
 
 #define EIGEN_NON_ARDUINO
@@ -31,6 +36,10 @@ using Vector3f = Eigen::Vector3f;
 using Matrix3f = Eigen::Matrix3f;
 
 constexpr float kPi = 3.14159265358979f;
+// Deployed R_S_coeff. Retuned from 0.35 when the sigma channel moved to the
+// band-passed measurement, which reads lower than the broadband one it
+// replaced and left r_S over-regularizing the S = 0 constraint.
+constexpr float kRSCoeff = 0.28f;
 constexpr float kG = 9.80665f;
 
 int failures = 0;
@@ -74,6 +83,39 @@ struct Sea {
     }
     Vector3f mag_body(float t) const {
         return R_bw(t).transpose() * Vector3f(0.21f, 0.0f, 0.43f);
+    }
+};
+
+/*
+    The same sea with pitch as well as roll. A body-fixed magnetometer offset is
+    identified from the attitudes the hull actually visits, so a roll-only sea
+    leaves the normal matrix singular in two directions and no amount of running
+    time fixes it. The field is in real uT, at a plausible mid-latitude
+    magnitude and dip.
+*/
+struct TiltedSea : Sea {
+    float pitch_amp = 0.06f;
+    float pitch_f = 0.19f;
+
+    Matrix3f R_bw(float t) const {
+        return (Eigen::AngleAxisf(roll_amp * std::sin(2.0f * kPi * roll_f * t),
+                                  Vector3f::UnitX()) *
+                Eigen::AngleAxisf(pitch_amp * std::sin(2.0f * kPi * pitch_f * t),
+                                  Vector3f::UnitY())).toRotationMatrix();
+    }
+    Vector3f gyro(float t) const {
+        // Central difference of the body-frame rate, so the observer sees an
+        // angular velocity consistent with the attitude it is shown.
+        const float h = 1e-4f;
+        const Matrix3f R0 = R_bw(t - h), R1 = R_bw(t + h);
+        const Matrix3f W = R0.transpose() * (R1 - R0) / (2.0f * h);
+        return Vector3f(W(2, 1), W(0, 2), W(1, 0));
+    }
+    Vector3f acc_body(float t) const {
+        return R_bw(t).transpose() * (world_accel(t) - Vector3f(0, 0, kG));
+    }
+    Vector3f mag_body(float t) const {
+        return R_bw(t).transpose() * Vector3f(20.0f, 0.0f, 43.0f);
     }
 };
 
@@ -140,12 +182,14 @@ void test_staging_mahony_proxy() {
     auto cfg = default_config();
     cfg.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
     f.begin(cfg);
-    // StagedMekf is the default until MahonyProxy reaches parity: without
-    // OU-III's two-stage magnetic acquisition the provisional lock is taken on
-    // a tilt that has not converged, and that tilt error ends up parked in the
-    // horizontal accelerometer bias. See docs/tfg-design.md section 9.
-    check(Fusion::Config{}.startup_init_policy == Fusion::StartupInitPolicy::StagedMekf,
-          "StagedMekf must remain the default while MahonyProxy is below parity");
+    // MahonyProxy is the default now that the two-stage magnetic acquisition
+    // is here: the provisional lock is re-learned once the observer has
+    // converged, so the tilt error it was taken on no longer ends up parked in
+    // the horizontal accelerometer bias. Measured over the eight reference
+    // records the proxy policy takes worst-case 3D error from 24.6 % to 21.0 %
+    // and worst-case accelerometer-bias error from 399 % to 167 %.
+    check(Fusion::Config{}.startup_init_policy == Fusion::StartupInitPolicy::MahonyProxy,
+          "MahonyProxy must be the default startup policy");
     check(f.stage() == Stage::Cold, "the filter must start Cold");
 
     Sea sea;
@@ -248,7 +292,7 @@ void test_tuning_laws() {
         std::cerr << "  sigma = " << f.getSigmaApplied() << " want " << sigma_want << '\n';
     }
 
-    const float rs_want = 0.35f * f.getSigmaApplied() *
+    const float rs_want = kRSCoeff * f.getSigmaApplied() *
                           std::pow(f.getTauApplied(), 3.0f);
     if (!check(near_rel(f.getRSApplied(), rs_want, 0.05f),
                "R_S is not R_S_coeff * sigma * tau^3")) {
@@ -349,7 +393,7 @@ void test_ablation_hooks() {
               "the frozen OU channel moved");
         check(f.getRSApplied() != 0.5f, "the r_S channel should still have adapted");
         // And with the OU channel pinned, r_S must follow from the pinned values.
-        const float rs_want = 0.35f * 0.5f * 2.0f * 2.0f * 2.0f;
+        const float rs_want = kRSCoeff * 0.5f * 2.0f * 2.0f * 2.0f;
         check(near_rel(f.getRSApplied(), rs_want, 0.2f),
               "with the OU channel frozen, r_S must be built from the frozen tau and sigma");
     }
@@ -611,8 +655,204 @@ void test_tracks_heave() {
 }
 
 // ---------------------------------------------------------------------------
+// Magnetic acquisition and hard iron
+// ---------------------------------------------------------------------------
+
+/*
+    The reference is averaged over a window, not sampled once.
+
+    The failure this guards is the previous behaviour: the first magnetometer
+    reading that cleared the gravity gate became the reference for the whole
+    run. So the lock must not land on the first eligible sample, and it must
+    not land before the configured window has had time to close.
+*/
+void test_mag_reference_is_windowed() {
+    Fusion f;
+    auto cfg = default_config();
+    cfg.mag_delay_sec = 5.0f;
+    cfg.mag_min_window_sec = 20.0f;
+    f.begin(cfg);
+
+    Sea sea;
+    run(f, sea, 60.0f);
+    check(f.magReferenceLearned(), "the reference was never learned");
+    const float lock = f.magNorthLockTimeSec();
+    check(lock >= cfg.mag_delay_sec + cfg.mag_min_window_sec,
+          "the reference locked before the averaging window could close, "
+          "so it is a sample and not an average");
+}
+
+/*
+    Second-stage acquisition replaces the provisional reference, and the
+    accelerometer-bias gate waits for it.
+
+    Opening the bias while the filter is still steering to the provisional
+    reference is what parks that reference's error in the bias state, where it
+    is not separable from tilt and does not come back.
+*/
+void test_mag_reference_is_refined() {
+    Fusion f;
+    auto cfg = default_config();
+    // The proxy reaches Live around 105 s on this sea -- the wave-period
+    // channel needs many cycles at 0.15 Hz -- so the refinement window has to
+    // sit after that or the test measures the handoff instead.
+    cfg.mag_refine_start_sec = 150.0f;
+    cfg.mag_refine_window_sec = 15.0f;
+    cfg.acc_bias_unlock_sec = 5.0f;
+    f.begin(cfg);
+
+    Sea sea;
+    run(f, sea, 140.0f);
+    check(f.isLive(), "the filter must be live before the refinement window opens");
+    check(!f.magReferenceRefined(), "the refinement ran before its start time");
+    check(!f.mekf().acc_bias_updates_enabled(),
+          "the accelerometer bias opened while the provisional reference was "
+          "still the one being steered to");
+
+    run(f, sea, 120.0f);
+    check(f.magReferenceRefined(), "the refinement never completed");
+    check(f.magRefineTimeSec() >= cfg.mag_refine_start_sec,
+          "the refinement completed before its start time");
+    check(f.mekf().acc_bias_updates_enabled(),
+          "the accelerometer bias never opened after the refinement landed");
+}
+
+/*
+    A body-fixed magnetometer offset is heading error one-for-one against the
+    horizontal field, and the MEKF has no state for it. This is the channel
+    that carried most of this filter's standing yaw error.
+
+    The offset is only identifiable from the tilt the hull works through, and
+    only in the directions that tilt actually excites, so this needs a sea with
+    both roll and pitch -- roll alone leaves the estimator with a singular
+    normal matrix and it correctly declines to answer. The field is in real uT
+    so the estimator's absolute gates (residual RMS, bias fraction) mean what
+    they were set to mean.
+
+    The bar is that the correction moves heading substantially back, not that
+    it recovers the offset whole. It should not recover it whole: the ridge
+    prices the soft iron and misalignment this model has no term for, and at
+    the 4.6 deg roll / 3.4 deg pitch this sea works through it returns about a
+    third of the fit. That fraction is a property of the excitation, and
+    asserting a tuned value for it here would be fitting the test to one sea.
+*/
+void test_continuous_hard_iron_recovers_heading() {
+    const Vector3f offset(0.0f, 3.0f, 0.0f);   // uT, against 20 uT of north
+
+    auto yaw_after = [&](bool hard_iron_on, const Vector3f& b) {
+        Fusion f;
+        auto cfg = default_config();
+        cfg.mag_continuous_hard_iron = hard_iron_on;
+        cfg.mag_refine_start_sec = 150.0f;
+        cfg.mag_refine_window_sec = 15.0f;
+        f.begin(cfg);
+
+        TiltedSea sea;
+        const float dt = 0.005f;
+        const int n = static_cast<int>(400.0f / dt);
+        for (int i = 0; i < n; ++i) {
+            const float t = static_cast<float>(i) * dt;
+            f.update(dt, sea.gyro(t), sea.acc_body(t));
+            if (i % 5 == 0) f.updateMag(sea.mag_body(t) + b);
+        }
+        const Matrix3f R = f.quaternion().toRotationMatrix();
+        return std::atan2(R(1, 0), R(0, 0)) * 57.29577951308232f;
+    };
+
+    const float yaw_clean = yaw_after(true, Vector3f::Zero());
+    const float yaw_biased_off = yaw_after(false, offset);
+    const float yaw_biased_on  = yaw_after(true, offset);
+
+    const float err_off = std::fabs(yaw_biased_off - yaw_clean);
+    const float err_on  = std::fabs(yaw_biased_on  - yaw_clean);
+    std::cout << "  hard-iron yaw error: " << err_off << " deg uncorrected, "
+              << err_on << " deg corrected\n";
+
+    check(err_off > 5.0f,
+          "the injected offset did not produce a heading error, so this test "
+          "proves nothing about correcting one");
+    check(err_on < 0.75f * err_off,
+          "the continuous hard-iron correction did not take back a quarter of "
+          "the heading error the offset caused");
+}
+
+// The offset must never be applied where the estimator was not asked to run.
+void test_hard_iron_can_be_disabled() {
+    Fusion f;
+    auto cfg = default_config();
+    cfg.mag_continuous_hard_iron = false;
+    f.begin(cfg);
+    TiltedSea sea;
+    const float dt = 0.005f;
+    for (int i = 0; i < static_cast<int>(400.0f / dt); ++i) {
+        const float t = static_cast<float>(i) * dt;
+        f.update(dt, sea.gyro(t), sea.acc_body(t));
+        if (i % 5 == 0) f.updateMag(sea.mag_body(t) + Vector3f(0.0f, 3.0f, 0.0f));
+    }
+    check(f.magHardIronBodyUT().norm() == 0.0f,
+          "an offset was subtracted with continuous hard-iron estimation off");
+}
+
+// ---------------------------------------------------------------------------
 // The MEKF gates the orchestrator drives
 // ---------------------------------------------------------------------------
+
+/*
+    The periodic a_w covariance sync only ever adds the PSD part of the
+    shortfall against the stationary target: it must lift a marginal that has
+    fallen below the scale the schedule now claims, and must never reduce one
+    the measurements have already tightened. That one-sidedness is what makes
+    it safe to run at the adaptation cadence rather than only at discrete
+    reconfiguration events.
+
+    Measured as a paired comparison against a filter that did not sync, because
+    the propagation itself decays a_w toward its own stationary point and would
+    otherwise be read as the sync removing something.
+*/
+void test_aw_cov_sync_only_inflates() {
+    using Mekf = ocean_imu::kalman::Kalman3D_Wave_TFG<float>;
+    constexpr int AW = Mekf::OFF_AW;
+
+    auto build = [](float start_var, float stationary_std) {
+        Mekf m;
+        m.initialize_identity();
+        m.set_linear_block_enabled(true);
+        m.set_aw_stationary_std(Vector3f::Constant(stationary_std));
+        m.covariance_full().block<3, 3>(AW, AW) = Matrix3f::Identity() * start_var;
+        return m;
+    };
+
+    // A marginal far below the stationary scale must be lifted toward it.
+    {
+        Mekf synced = build(1e-6f, 0.5f);
+        Mekf plain  = build(1e-6f, 0.5f);
+        synced.synchronize_aw_covariance_to_stationary();
+        synced.time_update(Vector3f::Zero(), 0.005f);
+        plain.time_update(Vector3f::Zero(), 0.005f);
+        const float got = synced.covariance_full()(AW + 2, AW + 2);
+        const float ref = plain.covariance_full()(AW + 2, AW + 2);
+        check(got > 10.0f * ref,
+              "the a_w sync did not lift a marginal that had fallen far below "
+              "the stationary scale");
+        check(got >= 0.9f * 0.25f,
+              "the lifted marginal did not reach the stationary variance");
+    }
+
+    // A marginal already above it must be left alone, not pulled down.
+    {
+        Mekf synced = build(4.0f, 0.3f);
+        Mekf plain  = build(4.0f, 0.3f);
+        synced.synchronize_aw_covariance_to_stationary();
+        synced.time_update(Vector3f::Zero(), 0.005f);
+        plain.time_update(Vector3f::Zero(), 0.005f);
+        for (int i = 0; i < 3; ++i) {
+            const float got = synced.covariance_full()(AW + i, AW + i);
+            const float ref = plain.covariance_full()(AW + i, AW + i);
+            check(got >= ref - 1e-6f,
+                  "the a_w sync reduced a marginal it should only ever inflate");
+        }
+    }
+}
 
 void test_initialize_from_acc() {
     using Mekf = ocean_imu::kalman::Kalman3D_Wave_TFG<float>;
@@ -731,6 +971,11 @@ int main() {
     test_rs_floor_allows_low_motion_seas();
     test_proxy_has_an_integral_term();
     test_fixed_cadence_ablation();
+    test_mag_reference_is_windowed();
+    test_mag_reference_is_refined();
+    test_continuous_hard_iron_recovers_heading();
+    test_hard_iron_can_be_disabled();
+    test_aw_cov_sync_only_inflates();
 
     if (failures != 0) {
         std::cerr << failures << " orchestrator check(s) failed\n";
