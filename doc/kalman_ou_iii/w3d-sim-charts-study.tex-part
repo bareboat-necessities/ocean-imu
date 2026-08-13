@@ -358,12 +358,14 @@ searching against reference displacement error, so it is a lower bound on
 mismatch rather than on achievable error.  It is not deployable, because it
 requires both the sea state and a noise-free calibration record in advance.
 Table~\ref{tab:ou_fixed_points} lists every frozen triple used in the study.
-Internally the filter derives the applied anisotropic values from the listed
-vertical/base parameters: OU--III uses
-$(1.87\sigma_{aw},1.87\sigma_{aw},\sigma_{aw})$ for the stationary
-acceleration standard deviation and
-$\mat{R}_S=\diag(r_S,r_S,r_S)^2$; OU--II uses $1.5\sigma_{aw}$
-horizontally and an isotropic $r_{p0}$.
+Internally the filter derives the applied values from the listed vertical/base
+parameters: OU--III now uses an isotropic
+$(\sigma_{aw},\sigma_{aw},\sigma_{aw})$ for the stationary acceleration
+standard deviation, matching its isotropic
+$\mat{R}_S=\diag(r_S,r_S,r_S)^2$; the horizontal scale was
+$1.87\sigma_{aw}$ until the anisotropy sweep of
+Sec.~\ref{sec:rs-scale-theorem} measured it against the records.  OU--II still
+uses $1.5\sigma_{aw}$ horizontally and an isotropic $r_{p0}$.
 
 \paragraph{Covariance policy and its control}
 The filter re-aligns the latent-acceleration marginal $\mat{P}_{a_w a_w}$ with

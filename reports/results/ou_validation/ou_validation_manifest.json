@@ -1,14 +1,9 @@
 {
   "command": [
-    "/usr/bin/python3",
+    "/usr/local/bin/python3",
     "tools/ou_validation.py",
-    "--mode",
-    "full",
-    "--bootstrap-resamples",
-    "10000",
-    "--combine-shards",
-    "--shard-dir",
-    "shards",
+    "--restat-from",
+    "reports/results/ou_validation/ou_validation.json",
     "--output-dir",
     "reports/results/ou_validation"
   ],
@@ -144,11 +139,11 @@
       }
     }
   },
-  "git_branch": "main",
-  "git_commit": "8197581101655214466a64890ff4ddd75ae503db",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 21860 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   324 +-\n .../ou_validation/ou_validation_covsync.svg        |  1100 +-\n .../ou_validation/ou_validation_displacement.svg   |   194 +-\n .../ou_validation/ou_validation_paired_effects.csv |  1546 +-\n .../results/ou_validation/ou_validation_raw.csv    |   232 +-\n .../ou_validation/ou_validation_summary.csv        |  1494 +-\n .../ou_validation/ou_validation_transition.csv     |  1772 +-\n .../ou_validation/ou_validation_vertical.svg       |  1000 +-\n 9 files changed, 14761 insertions(+), 14761 deletions(-)",
-  "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "git_branch": "claude/anisotropic-sigma-aw-check-hoywqf",
+  "git_commit": "691e99ed322da72d4d22b6accee5bcbfcfa26c63",
+  "git_diff_stat": "doc/kalman_ou_iii/w3d-ou-validation-tuning-points-generated.tex-part | 2 +-\n reports/results/ou_validation/ou_validation.json                     | 1 +\n reports/results/ou_validation/ou_validation_tuning_points.tex        | 2 +-\n tools/ou_validation.py                                               | 2 +-\n 4 files changed, 4 insertions(+), 3 deletions(-)",
+  "numpy": "2.4.6",
+  "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
   "protocol": {
     "adaptation_modes": [
       "Adaptive",
@@ -187,6 +182,7 @@
     "primary_endpoint": "seed-level mean normalized vertical displacement RMS error over the four stationary JONSWAP seas, OU-III Adaptive minus OU-II Adaptive",
     "primary_endpoint_inference": "the confirmatory endpoint carries four companion statements on the same paired seed-level differences: the percentile bootstrap interval, a Student-t interval, an exact sign test, and an exact paired randomization (sign-flip) test enumerated over all 2^n sign patterns.  They are companions, not independent confirmations: all four read the same n paired differences, and none of them widens the ensemble.",
     "quality_gate_window_sec": 900.0,
+    "restated_from": "reports/results/ou_validation/ou_validation.json",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {
@@ -269,11 +265,12 @@
     },
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
+  "restated_from": "reports/results/ou_validation/ou_validation.json",
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4659382,
-      "sha256": "4f851520e0167aad64d700d84776c374b35df68595d61063d65f55f9c516d99e"
+      "bytes": 4659455,
+      "sha256": "8e8bbf607b97398854f1f06e16d1829b4f89da648119e17fff62248e4ed4f782"
     },
     "ou_validation_attitude.svg": {
       "bytes": 83578,
@@ -320,8 +317,8 @@
       "sha256": "bdf15a20f21ba40675dd7b58c3b4d3ad8541eba54b82a206e45a16be39ff59f1"
     },
     "ou_validation_tuning_points.tex": {
-      "bytes": 1856,
-      "sha256": "17fb5a84714daf055347ef83e3ffbcd6e8c4a8c429e0cb71cccff8b794f040a5"
+      "bytes": 2127,
+      "sha256": "ff6867fc79faa5845803ff71d41c988e8be11ab55b4f6583ae1b35d0ec7313cf"
     },
     "ou_validation_vertical.svg": {
       "bytes": 83016,

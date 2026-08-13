@@ -73,11 +73,18 @@ frozen values for the committed study are in `fixed_tuning_points` in the
 manifest and are typeset by `ou_validation_tuning_points.tex`.
 
 Those values are the vertical/base parameters. The filter derives the applied
-anisotropic values internally: OU-III uses
-`(1.87*sigma_aw, 1.87*sigma_aw, sigma_aw)` for the stationary acceleration
-standard deviation and `diag(r_S, r_S, r_S)**2` for the integral
-pseudo-measurement covariance; OU-II uses `1.5*sigma_aw` horizontally and, since
-the operating point moved to the wave band, an isotropic `r_p0`.
+values internally: OU-III is now isotropic in both, `(sigma_aw, sigma_aw,
+sigma_aw)` for the stationary acceleration standard deviation and
+`diag(r_S, r_S, r_S)**2` for the integral pseudo-measurement covariance; OU-II
+uses `1.5*sigma_aw` horizontally and, since the operating point moved to the
+wave band, an isotropic `r_p0`.
+
+The committed bundle was produced with OU-III's horizontal acceleration scale
+at `1.87*sigma_aw`, which
+[`ou-iii-anisotropy-consistency.md`](ou-iii-anisotropy-consistency.md) has since
+taken to 1. Its numbers therefore describe the previous operating point until
+the `regenerate` job re-runs; the bundle hashes its input records and simulator
+sources, not the filter header, so `tests/validation` does not catch that.
 
 ### Covariance policy and its control
 

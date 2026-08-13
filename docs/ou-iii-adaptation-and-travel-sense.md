@@ -120,6 +120,12 @@ mis-specified relative to physics — the records give per-axis
 but it is *not* what drives the loss: sweeping it 1.87 -> 0.80 -> 0.60 moves
 3D RMS by under 2%.
 
+(`S_factor` has since been taken to 1 on the strength of a fuller sweep — eight
+records, five seeds, worth 1.28% of pooled 3D RMS. That does not change the
+reading here: the effect is second-order next to the `r_S` mis-scheduling this
+section is about, which is what "not what drives the loss" says. See
+[`ou-iii-anisotropy-consistency.md`](ou-iii-anisotropy-consistency.md).)
+
 ### 1.5 Mechanism, stated once
 
 The tuner learns the sea state through a frequency estimate taken in the wrong
@@ -575,13 +581,28 @@ acceleration offset, and against sample-rate changes.
 ### Stage D - per-axis regularisation instead of scalar anisotropy constants
 
 Superseded in part.  `R_S_xy_factor` is now 1, so the integral regularisation is
-isotropic and no constant imposes an anisotropy; the remaining
-`S_factor = 1.87` on the stationary acceleration is still mis-specified relative
-to the records (per-axis 0.81 and 0.55 of vertical) but moves 3D RMS by under
-2%, so it is left alone rather than changed without an effect to justify it.
+isotropic, and `S_factor` is now 1 as well, so no scalar constant imposes an
+anisotropy anywhere in the filter.  `S_factor` was left at 1.87 here on the
+strength of a four-record sweep that moved 3D RMS by under 2%; the eight-record,
+five-seed sweep that replaced it finds a flat minimum at 1 worth 1.28% pooled
+and 7.7% in the largest JONSWAP sea, which is an effect that justifies the
+change.
 Estimating the horizontal stationary covariance per axis, and feeding the full
 3x3 through the existing `set_aw_stationary_cov_full`, remains the natural next
 step and would make the OU process direction-aware.
+
+Since done, in part. [`ou-iii-anisotropy-consistency.md`](ou-iii-anisotropy-consistency.md)
+measured it: `S_factor = 1.87` with an isotropic `r_S` was not the
+equal-similarity point -- `sigma_S ~ sigma_aw tau^3` puts that at
+`R_S_xy_factor = S_factor` -- and of the two ways to close that gap, raising
+`R_S_xy_factor` costs 13.7% of pooled 3D RMS while lowering `S_factor` gains.
+Swept over the eight scored records and five seeds, 3D RMS has a flat minimum
+exactly at `S_factor = 1`, which **now ships**: -1.28% pooled, -7.7% on JONSWAP
+`H_s = 8.5` m, vertical flat, yaw -3.2%. The quality gates were re-derived with
+it. What remains of Stage D is the per-axis version -- `sigma_ax` and
+`sigma_ay` estimated separately through `set_aw_stationary_cov_full` -- which
+is still the natural next step, since the sweep only establishes that no scalar
+beats 1.
 
 ### Stage E - re-validation and manuscript (done)
 

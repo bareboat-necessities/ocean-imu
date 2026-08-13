@@ -158,7 +158,11 @@ All on the JONSWAP $H_s=1.5$ m record, trailing 900 s, displacement RMS in metre
   functions unchanged to two decimal places. `sigma_aw` enters both the process
   noise and, through `r_S = 0.35 * sigma_aw * tau^3`, the anchor, so the loop
   gain that sets the corner is nearly invariant to it. (It does matter in the
-  largest sea, where `S_FACTOR=1.0` takes $x$ from 1.014 to 0.882 m.)
+  largest sea, where `S_FACTOR=1.0` takes $x$ from 1.014 to 0.882 m.) A
+  five-seed sweep of both anisotropy constants together, in
+  [`ou-iii-anisotropy-consistency.md`](ou-iii-anisotropy-consistency.md), puts
+  that largest-sea effect at 7.7% of 3D RMS on all five seeds, so "not the
+  cause" holds for this record but not for the whole envelope.
 - **Retuning the single anchor cannot recover the axis.** $y$ is already near
   its own optimum at the deployed `R_S_coeff = 0.35`: tightening to 0.1 or
   loosening to 1.0 makes both $y$ and 3D worse, because a tighter anchor buys

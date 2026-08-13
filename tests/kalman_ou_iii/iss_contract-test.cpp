@@ -99,8 +99,29 @@ int main() {
         !near(ACC_NOISE_FLOOR_SIGMA_DEFAULT, 0.12f)) {
         return fail("proof-relevant OU-III wrapper clamps changed");
     }
-    if (!near(f.S_factor_, 1.87f))
+    if (!near(f.S_factor_, 1.0f))
         return fail("default OU-III acceleration anisotropy no longer matches proof audit");
+    if (!near(f.R_S_xy_factor_, 1.0f))
+        return fail("default OU-III integral regularizer is no longer isotropic");
+    // The deployed pair is (S_sigma, rho_xy) = (1, 1), which is both isotropic
+    // and the equal-normalized-pole point of the similarity law sigma_S ~
+    // sigma_aw tau^3.  It was (1.87, 1), which was neither.  The setter must
+    // still be able to express rho_xy > 1, because that is the arm that decides
+    // between the two ways of closing the gap; it was clamped to 1, which
+    // silently turned that configuration back into the deployed one and made
+    // the ablation a no-op.  See docs/ou-iii-anisotropy-consistency.md.
+    {
+        Filter probe;
+        probe.setRSXYFactor(1.87f);
+        if (!near(probe.R_S_xy_factor_, 1.87f))
+            return fail("rho_xy > 1 is not expressible; the similarity-law ablation is a no-op");
+        probe.setRSXYFactor(9.0f);
+        if (!near(probe.R_S_xy_factor_, 4.0f))
+            return fail("rho_xy upper bound changed");
+        probe.setRSXYFactor(-1.0f);
+        if (!near(probe.R_S_xy_factor_, 0.0f))
+            return fail("rho_xy lower bound changed");
+    }
 
     // ---- Pseudo-update cadence contract ---------------------------------
     // The audit quotes T_S = clip(c_T * tau_applied, T_min, T_max).  Pin the
