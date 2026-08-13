@@ -245,12 +245,12 @@ void process_one(const std::string& filename,
         three-degree gate, which is six times the margin the rule asks for.
 
           channel            TFG worst   this gate   was    OU-III gate
-          Z RMS  jonswap        5.21        5.3       5.5      4.8
-          Z RMS  pmstokes       5.10        5.2       5.4      4.7
-          yaw                   2.92        2.94      3.3      1.07
-          3D     jonswap       20.99       21.1      30.6      21.1
-          3D     pmstokes      25.78       26.0      68.0      20.9
-          acc bias Z            8.84        8.9       9.5      5.0
+          Z RMS  jonswap        5.21        5.24      5.5      4.72
+          Z RMS  pmstokes       5.10        5.13      5.4      4.69
+          yaw                   2.92        2.938     3.3      1.068
+          3D     jonswap       20.99       21.1      30.6     21.05
+          3D     pmstokes      25.78       25.91     68.0     20.83
+          acc bias Z            8.84        8.89      9.5      4.93
           acc bias 3D         398.22      400.3     415.0     98.4
 
         Every bar comes down, and none of that is this file's doing: the
@@ -281,14 +281,34 @@ void process_one(const std::string& filename,
         the two is a change to W3dFailureLimits and to every family that uses
         it, and is deliberately not made here.
     */
+    /*
+        Each bar is written to whatever precision delivers about half a percent
+        over the worst observed value, rather than to a tenth regardless of the
+        value: a tenth is 2 percent of a 5.2 and 0.03 percent of a 400, so one
+        quantum for every channel means the small ones carry four times the
+        margin the rule asks for and the large ones carry none of it.
+
+          channel          worst   this bar   at a tenth   margin
+          Z RMS  jonswap    5.21     5.24        5.3        0.60%
+          Z RMS  pmstokes   5.10     5.13        5.2        0.58%
+          yaw               2.92     2.938       3.0        0.51%
+          3D     jonswap   20.99    21.1        21.1        0.52%
+          3D     pmstokes  25.78    25.91       26.0        0.52%
+          acc bias Z        8.84     8.89        8.9        0.61%
+          acc bias 3D     398.22   400.3       400.3        0.52%
+
+        Both an -march=native and an -march=x86-64 build pass all seven; the
+        binding records move by up to 3.7e-4 relative between them, so the
+        thinnest margin here is 14 times the spread it has to survive.
+    */
     static constexpr W3dFailureLimits kRegressionBars{
-        .err_limit_percent_z_jonswap   = 5.3f,    // worst 5.21 (jonswap H0.27)
-        .err_limit_percent_z_pmstokes  = 5.2f,    // worst 5.10 (pmstokes H0.27)
-        .err_limit_yaw_deg             = 2.94f,   // worst 2.9230 (pmstokes H4.0)
-        .err_limit_percent_3d_jonswap  = 21.1f,   // worst 20.99 (jonswap H1.5)
-        .err_limit_percent_3d_pmstokes = 26.0f,   // worst 25.78 (pmstokes H4.0)
-        .acc_z_bias_percent            = 8.9f,    // worst 8.84 (jonswap H4.0)
-        .bias_3d_percent               = 400.3f,  // worst 398.22 (jonswap H4.0, accel)
+        .err_limit_percent_z_jonswap   = 5.24f,   // was 5.3,  worst 5.2090 (jonswap H0.27)
+        .err_limit_percent_z_pmstokes  = 5.13f,   // was 5.2,  worst 5.1004 (pmstokes H0.27)
+        .err_limit_yaw_deg             = 2.938f,  // was 2.94, worst 2.9230 (pmstokes H4.0)
+        .err_limit_percent_3d_jonswap  = 21.1f,   // unchanged, worst 20.9914 (jonswap H1.5)
+        .err_limit_percent_3d_pmstokes = 25.91f,  // was 26.0, worst 25.7764 (pmstokes H4.0)
+        .acc_z_bias_percent            = 8.89f,   // was 8.9,  worst 8.8360 (jonswap H4.0)
+        .bias_3d_percent               = 400.3f,  // unchanged, worst 398.2190 (jonswap H4.0, accel)
     };
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };

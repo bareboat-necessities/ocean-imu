@@ -213,7 +213,7 @@ of worst observed plus about half a percent rounded up to the next tenth:
 
 | gate | was | now | worst observed |
 | --- | --- | --- | --- |
-| yaw deg | 2.2 | **1.07** | 1.0627 (jonswap H0.27) |
+| yaw deg | 2.2 | **1.068** | 1.0627 (jonswap H0.27) |
 | 3D % PM--Stokes | 20.6 | **20.9** | 20.72 (pmstokes H4.0) |
 | acc Z bias % | 5.6 | **5.0** | 4.91 (jonswap H8.5) |
 | acc 3D bias % | 95.8 | **98.4** | 97.89 (jonswap H4.0) |

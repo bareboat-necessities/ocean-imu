@@ -629,19 +629,36 @@ private:
 // every configuration this filter has ever shipped -- absorbs some of that
 // motion.  See docs/continuous-mag-hard-iron.md.
 //
-// Yaw re-cut to hundredths, 1.1 -> 1.07.  Nothing about the filter moved; the
-// tenth was carrying 3.5 percent of slack on a channel whose rule says half a
-// percent, which is the widest gap of any gate in any family here.  The other
-// six are inside a point of the rule at the precision they are quoted in and
-// keep their values; docs/quality-gate-regauge.md lists the slack on each.
+// Then cut to the rule rather than to the quantum.  A tenth is 2 percent of a
+// 4.7 and 2 percent of a 5.0, so rounding a half-percent margin up to the next
+// tenth was handing back four times what the rule asks for on the small-valued
+// channels.  Each gate is now written to whatever precision delivers about half
+// a percent -- a thousandth for yaw, a hundredth for the single-digit
+// percentages, a tenth where a tenth is already fine enough.
+//
+//   Z %Hs JONSWAP    4.8  -> 4.72    worst 4.6952   2.23% -> 0.53%
+//   Z %Hs PM-Stokes  4.7  -> 4.69    worst 4.6600   0.86% -> 0.64%
+//   yaw deg          1.07 -> 1.068   worst 1.0627   0.69% -> 0.50%
+//   3D % JONSWAP     21.1 -> 21.05   worst 20.9361  0.78% -> 0.55%
+//   3D % PM-Stokes   20.9 -> 20.83   worst 20.7197  0.87% -> 0.53%
+//   acc Z bias %     5.0  -> 4.93    worst 4.9054   1.93% -> 0.50%
+//   acc 3D bias %    98.4 -> 98.4    worst 97.8908  0.52%, already there
+//
+// Checked against the spread these have to survive, not against the rule alone.
+// The binding records move by 2.8e-5 (yaw) to 3.6e-4 (3D bias) relative between
+// a native cascadelake build and an -march=x86-64 one, so the thinnest of these
+// margins is 15 times the spread and most are hundreds.  Both builds pass all
+// seven.  docs/quality-gate-regauge.md carries that measurement and the command
+// that redoes it, which is the check to repeat before cutting any of these
+// finer.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.8f,    // worst 4.70 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.7f,    // worst 4.66 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.07f,   // worst 1.0627 (jonswap H0.27)
-    .err_limit_percent_3d_jonswap  = 21.1f,   // worst 20.94 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 20.9f,   // worst 20.72 (pmstokes H4.0)
-    .acc_z_bias_percent            = 5.0f,    // worst 4.91 (jonswap H8.5)
-    .bias_3d_percent               = 98.4f,   // worst 97.89 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 4.72f,   // was 4.8,  worst 4.6952 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.69f,   // was 4.7,  worst 4.6600 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.068f,  // was 1.07, worst 1.0627 (jonswap H0.27)
+    .err_limit_percent_3d_jonswap  = 21.05f,  // was 21.1, worst 20.9361 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 20.83f,  // was 20.9, worst 20.7197 (pmstokes H4.0)
+    .acc_z_bias_percent            = 4.93f,   // was 5.0,  worst 4.9054 (jonswap H8.5)
+    .bias_3d_percent               = 98.4f,   // unchanged, worst 97.8908 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

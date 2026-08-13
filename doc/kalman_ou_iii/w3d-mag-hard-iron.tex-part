@@ -264,7 +264,7 @@ mean roll is \SI{0.339}{\degree} against \SI{0.340}{\degree}, and mean 3D
 displacement RMS \SI{0.6212}{m} against \SI{0.6199}{m}.  The vertical channel
 is unchanged to the precision the deterministic table reports.  The
 regression sentinel on yaw is re-derived accordingly, from \SI{2.2}{\degree} to
-\SI{1.07}{\degree}; the matched ablation is the disabled correction, and it now
+\SI{1.068}{\degree}; the matched ablation is the disabled correction, and it now
 exceeds that sentinel, as a limit fitted to the deployed configuration should.
 
 \subsection{What the estimator cannot do}

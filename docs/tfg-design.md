@@ -471,9 +471,9 @@ Measured on a JONSWAP H1.5 record: **12.2 degrees RMS yaw**, against roll 0.58
 and pitch 0.17. Anchoring first — rotate about world z until the measured
 field's horizontal component points north, *then* capture — gives **2.37
 degrees**, in line with OU-III's yaw gate as it then stood, with every other
-channel unchanged. OU-III's gate has since come down to 1.07 degrees on
+channel unchanged. OU-III's gate has since come down to 1.068 degrees on
 the strength of its continuous hard-iron correction, which this filter does not
-carry; TFG's own gate is 2.94 (`docs/quality-gate-regauge.md`).
+carry; TFG's own gate is 2.938 (`docs/quality-gate-regauge.md`).
 
 Capturing the canonical `(B_north, 0, B_down)` is also what makes `H_m` a
 genuinely fixed reference rather than a frame-dependent one, which is the

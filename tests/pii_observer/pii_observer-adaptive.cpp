@@ -56,9 +56,14 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 // moved from the calmest sea to the roughest one, because scheduling the PII
 // pole rate off accel sigma is what removed the calm-sea error; leaving the old
 // numbers in place would have retired the gate rather than kept it.
+// The two vertical gates are cut to hundredths for the same reason yaw was: a
+// tenth is 1.1 percent of a 9.0, twice the margin the rule asks for.  Yaw is
+// already at a hundredth and stays where it is -- a tenth of a degree is only
+// 0.9 percent of a ten-degree bar, so it was never the outlier the small
+// percentage channels were.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap = 9.0f,    // worst 8.87 (jonswap H8.5)
-    .err_limit_percent_z_pmstokes = 9.5f,   // worst 9.36 (pmstokes H8.5)
+    .err_limit_percent_z_jonswap = 8.91f,   // was 9.0,  worst 8.8651 (jonswap H8.5)
+    .err_limit_percent_z_pmstokes = 9.41f,  // was 9.5,  worst 9.3622 (pmstokes H8.5)
     .err_limit_yaw_deg = 10.84f,            // was 10.9, worst 10.7801 (pmstokes H8.5)
 };
 

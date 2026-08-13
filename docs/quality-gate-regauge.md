@@ -11,12 +11,17 @@ that keeps ten points of slack is not catching anything. This is the record of
 re-applying it to all five families against the tree that produced build run
 3558, and of what had to move.
 
-The rounding used to be "up to the next tenth" for every channel. That is the
-right quantum for the percentage channels, whose values sit between 4 and 400,
-and the wrong one for yaw in degrees, whose values sit between 1 and 11: a
-tenth is 3.5% of OU-III's yaw gate, seven times the margin the rule asks for.
-Yaw is now cut to hundredths in all four families that gate it. Nothing about
-any filter moved with it.
+The rounding used to be "up to the next tenth" for every channel of every
+family. One quantum for values spanning 1 to 400 cannot deliver one margin: a
+tenth is 3.5% of OU-III's yaw gate, 2% of its vertical gate and 0.03% of its
+bias gate. The small-valued channels were therefore carrying two to seven times
+the margin the rule asks for, and the large ones none of it.
+
+Every gate is now written to whatever precision delivers about half a percent —
+a thousandth where the value is near 1, a hundredth for single digits, a tenth
+where a tenth is already fine enough. **All 23 gates across the five families
+now sit between 0.50% and 0.65% above what the filter produces**, and none of
+that rounding change involved a filter change.
 
 ## What was measured
 
@@ -36,11 +41,11 @@ instead of exiting at the first one.
 
 | family | gates | verdict |
 | --- | --- | --- |
-| OU-II | 7 | **four re-derived** for the continuous hard-iron correction, **two cut finer**; all seven now within 0.65% |
-| OU-III | 7 | six at the rule and unchanged; **yaw 1.1 → 1.07** |
-| NLO | 2 gated (Z only) | both already at the rule; unchanged |
-| PII observer | 3 gated (Z, yaw) | Z unchanged; **yaw 10.9 → 10.84** |
-| TFG | 7 | **all seven re-derived**; every one came down |
+| OU-II | 7 | four re-derived for the continuous hard-iron correction, three cut finer |
+| OU-III | 7 | six cut finer; bias 3D already at the rule |
+| NLO | 2 gated (Z only) | both cut finer |
+| PII observer | 3 gated (Z, yaw) | all three cut finer |
+| TFG | 7 | all seven re-derived, then five cut finer |
 
 OU-II's four moves are a filter change, not a rounding change: it now carries
 the continuous hard-iron correction, on OU-III's settings, and pays OU-III's
@@ -59,7 +64,7 @@ percentage of max `|disp_ref|_3D`; bias figures are RMS error as a percentage
 of the maximum true bias in the window. Bracketed record is where the worst
 value occurs.
 
-### OU-II — four re-derived for the continuous hard-iron correction
+### OU-II — four re-derived for the continuous hard-iron correction, three cut finer
 
 Limits below are for the shipped filter, which now runs the correction. The
 "was" column is the same filter without it, which is the `SF_MAG_CONT_HI=0`
@@ -91,46 +96,46 @@ scored, its error already above 90% of the true bias — absorbs part of that
 motion. Displacement does not move (vertical mean 6.454 → 6.461 %Hs, 3D mean
 18.90 → 19.03 %) and pitch improves, 0.289 → 0.255 deg.
 
-### OU-III — yaw re-cut, rest unchanged
+### OU-III — six cut finer
 
-| gate | limit | worst observed |
-| --- | --- | --- |
-| Z %Hs JONSWAP | 4.8 | 4.70 (H0.27) |
-| Z %Hs PM-Stokes | 4.7 | 4.66 (H0.27) |
-| yaw deg | **1.07** | 1.0627 (jonswap H0.27) |
-| 3D % JONSWAP | 21.1 | 20.94 (H1.5) |
-| 3D % PM-Stokes | 20.9 | 20.72 (H4.0) |
-| acc Z bias % | 5.0 | 4.91 (jonswap H8.5) |
-| bias 3D % | 98.4 | 97.89 (jonswap H4.0, accel) |
+| gate | was | now | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| Z %Hs JONSWAP | 4.8 | **4.72** | 4.6952 (H0.27) | 0.53% |
+| Z %Hs PM-Stokes | 4.7 | **4.69** | 4.6600 (H0.27) | 0.64% |
+| yaw deg | 1.1 | **1.068** | 1.0627 (jonswap H0.27) | 0.50% |
+| 3D % JONSWAP | 21.1 | **21.05** | 20.9361 (H1.5) | 0.55% |
+| 3D % PM-Stokes | 20.9 | **20.83** | 20.7197 (H4.0) | 0.53% |
+| acc Z bias % | 5.0 | **4.93** | 4.9054 (jonswap H8.5) | 0.50% |
+| bias 3D % | 98.4 | 98.4 | 97.8908 (jonswap H4.0, accel) | 0.52% |
 
-### NLO — unchanged
+### NLO — both cut finer
 
 Yaw is free and ungated here, and the 3D and bias limits are open by design.
 
-| gate | limit | worst observed |
-| --- | --- | --- |
-| raw Z %Hs JONSWAP | 7.3 | 7.21 (H8.5) |
-| raw Z %Hs PM-Stokes | 7.2 | 7.09 (H8.5) |
+| gate | was | now | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| raw Z %Hs JONSWAP | 7.3 | **7.26** | 7.2143 (H8.5) | 0.63% |
+| raw Z %Hs PM-Stokes | 7.2 | **7.13** | 7.0865 (H8.5) | 0.61% |
 
-### PII observer — yaw re-cut, rest unchanged
+### PII observer — all three cut finer
 
-| gate | limit | worst observed |
-| --- | --- | --- |
-| Z %Hs JONSWAP | 9.0 | 8.87 (H8.5) |
-| Z %Hs PM-Stokes | 9.5 | 9.36 (H8.5) |
-| yaw deg | **10.84** | 10.7801 (pmstokes H8.5) |
+| gate | was | now | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| Z %Hs JONSWAP | 9.0 | **8.91** | 8.8651 (H8.5) | 0.51% |
+| Z %Hs PM-Stokes | 9.5 | **9.41** | 9.3622 (H8.5) | 0.51% |
+| yaw deg | 10.9 | **10.84** | 10.7801 (pmstokes H8.5) | 0.56% |
 
-### TFG — all seven re-derived
+### TFG — all seven re-derived, then five cut finer
 
-| gate | was | now | worst observed |
-| --- | --- | --- | --- |
-| Z %Hs JONSWAP | 5.5 | **5.3** | 5.21 (H0.27) |
-| Z %Hs PM-Stokes | 5.4 | **5.2** | 5.10 (H0.27) |
-| yaw deg | 3.3 | **2.94** | 2.9230 (pmstokes H4.0) |
-| 3D % JONSWAP | 30.6 | **21.1** | 20.99 (H1.5) |
-| 3D % PM-Stokes | 68.0 | **26.0** | 25.78 (H4.0) |
-| acc Z bias % | 9.5 | **8.9** | 8.84 (jonswap H4.0) |
-| bias 3D % | 415.0 | **400.3** | 398.22 (jonswap H4.0, accel) |
+| gate | was | now | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| Z %Hs JONSWAP | 5.5 | **5.24** | 5.2090 (H0.27) | 0.60% |
+| Z %Hs PM-Stokes | 5.4 | **5.13** | 5.1004 (H0.27) | 0.58% |
+| yaw deg | 3.3 | **2.938** | 2.9230 (pmstokes H4.0) | 0.51% |
+| 3D % JONSWAP | 30.6 | **21.1** | 20.9914 (H1.5) | 0.52% |
+| 3D % PM-Stokes | 68.0 | **25.91** | 25.7764 (H4.0) | 0.52% |
+| acc Z bias % | 9.5 | **8.89** | 8.8360 (jonswap H4.0) | 0.61% |
+| bias 3D % | 415.0 | **400.3** | 398.2190 (jonswap H4.0, accel) | 0.52% |
 
 Nothing in the simulator moved these; the filter did, in the adaptation-policy
 commit that fixed the tuner's commit timing, moved the schedule onto the 0.1 s
@@ -200,14 +205,17 @@ matrix of order 1e-3, which multiplies the last bits of a `double` accumulation
 by up to a thousand on the way into the applied offset, and the applied offset
 walks the heading — so yaw is exactly where it should show up, and does.
 
-Half a percent still leaves 6x on the tightest gate in the set (OU-III yaw) and
-better than 10x everywhere else — OU-II's yaw gate, the other one cut against a
-filter carrying the solve, sits 0.96% above its binding record whose own drift
-is 1.7e-4, a factor of 58 — so the re-cut values are safe. They are not
+That is the number every gate in this document is checked against, one by one,
+rather than against the half-percent rule alone. The thinnest margin-to-drift
+ratios in the whole set are OU-III's bias 3D at 15x, TFG's 3D PM-Stokes at 14x
+and TFG's yaw at 25x; everything else is between 40x and several thousand. The
+check that matters is not arithmetic: every family was rescored with an
+`-march=x86-64` build against the tightened gates, and all five pass with at
+least 0.48% of headroom at their tightest point. They are not
 safe by an enormous factor any more, which is the reason this table exists:
-cutting a gate finer than a hundredth of a degree, or below half a percent on
-any channel, needs this measurement redone first rather than the old 6e-6
-quoted at it.
+cutting any of these further, or below half a percent on any channel, needs this
+measurement redone first rather than the old 6e-6 quoted at it. The three
+ratios named above are where that bites first.
 
 Reproduce with:
 
