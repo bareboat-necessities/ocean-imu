@@ -15,8 +15,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "8197581101655214466a64890ff4ddd75ae503db",
-  "git_diff_stat": "",
+  "git_commit": "fd62e5c744ec2b4c8c430effadbd155a70fad316",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 33890 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |    50 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1400 +-\n .../ou_robustness/ou_robustness_publication.tex    |    22 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1194 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   176 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1736 +-\n 8 files changed, 19504 insertions(+), 19584 deletions(-)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 2.6233606119980437,
@@ -26,7 +26,7 @@
     "tau_s": 2.17904091
   },
   "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -124,36 +124,36 @@
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1419460,
-      "sha256": "8e2ac6540dfd21b4cda418f296d6506251484c0578de9bb40a6db782118900d3"
+      "bytes": 1420355,
+      "sha256": "23b12fa7910972245afa88b2074fcf44e99c679659d4ca710b17bc1bde1eb0e2"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1852,
-      "sha256": "bcadc4ff46159356a5062db3b70558913b422e96fec34962135c86ae8fe744b0"
+      "sha256": "6201615bdf69a4407fdea284739e09308680ff3794db9409cbbcfaa35175ac32"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 142121,
-      "sha256": "bb0bfe97ffabbfba7083cca24a4650b819374a02b1166b1a0eb1aa8307f434a9"
+      "bytes": 142890,
+      "sha256": "e7656f73ca6eb64bc9498c99f3bfaf1a87f9b7696ae57664449ff3b408e56b92"
     },
     "ou_robustness_publication.tex": {
-      "bytes": 2736,
-      "sha256": "d5fa78c55318560e50a8e1c7fae7ca98f3f0189f0be56e328925965482cb2b46"
+      "bytes": 2737,
+      "sha256": "c98492fd1cecdb67223fac51eb9ada245c426587203a11fec17dfc31da5a9c97"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 196224,
-      "sha256": "25da317dfd7c80816d5c9252554e5c5b3d8558d7f291f6f457f0219e09301940"
+      "bytes": 196392,
+      "sha256": "fe7e2f65fef50d9e0d61b3d86dbc6957de86a44657de64d05ffc091383ff64a2"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 118088,
-      "sha256": "77bdfb4b550e0e7e56383e5ce48bc9a9bead769e0872324d3fb67eeb09f2d637"
+      "bytes": 115236,
+      "sha256": "88e00f8afe93b0d48b4a21ab9948daf2d0f7efd5ca894668e9d495d4cae2b52e"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 45546,
-      "sha256": "c0ca5ebb41bb741f8859fe682e6b36bf99f82c12ff2a5292012d0fa6cedb9a14"
+      "bytes": 45553,
+      "sha256": "e76e3daf05be1552422f3c2c1afda7a2d86468cb0b130d3c1cf9c54a36dffdaa"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126566,
-      "sha256": "ef6ae07cd9804cb8418198bc0e19c1b2551ebcc64727a71d4051f1e2eaa708dc"
+      "bytes": 126524,
+      "sha256": "0247f9df92a4e049b14faa0fe277d70422546f1132fe5e53da3953d645774fb7"
     }
   },
   "source_files": {
@@ -174,16 +174,16 @@
       "sha256": "3ad5804d1f77b1df656d6ccef2851c35f5cab4be8ee7e82bdc144a26d2e8b41e"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 33907,
-      "sha256": "a345147930b7aa62d2c3e2a2149d6be436071f9b15fec6f70c9c537e3f80a003"
+      "bytes": 35382,
+      "sha256": "aed75d260df1c18357344cc43c2d17051855c4a4f2a7297f2a317e1086d40413"
     },
     "tools/ou_robustness.py": {
       "bytes": 55378,
       "sha256": "c62bc0bfcc31812fc99d286f765625dd94b7d8f2d790fd3c907c89ffb2db96a9"
     },
     "tools/ou_validation.py": {
-      "bytes": 150165,
-      "sha256": "98bb477f5ead3fc9eae9d24431b367931d43b13faba5d0caafd089fe6a17a386"
+      "bytes": 150436,
+      "sha256": "faf0826f203c12d97a6511d9983bbf15262c90f3fc2bd0c8e7a8ccd8956f1b86"
     }
   }
 }
