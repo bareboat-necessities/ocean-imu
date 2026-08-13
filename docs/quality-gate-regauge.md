@@ -26,6 +26,14 @@ this was written; OU-III's re-derivation for `S_factor = 1`, below, put its
 PM-Stokes vertical gate at 0.69% because a hundredth is the finest quantum that
 channel is quoted in.)
 
+That 0.69% is the residue of quoting the quantum in absolute terms at all. The
+two OU families have since gone to a **relative** quantum — four significant
+figures, so the last digit is always a thousandth of the value — which removes
+the choice of decimal from the margin and lands all of their gates between
+0.50% and 0.57%; see "The OU families" below, which also adds the first bars
+this repository has ever put on roll and pitch. The other three families still
+carry the absolute quantum and the 0.50–0.69% band above.
+
 ## What was measured
 
 The deterministic protocol each simulator gates on: default seeds, the final
@@ -44,8 +52,8 @@ instead of exiting at the first one.
 
 | family | gates | verdict |
 | --- | --- | --- |
-| OU-II | 7 | four re-derived for the continuous hard-iron correction, three cut finer |
-| OU-III | 7 | six cut finer; then all seven re-derived for `S_factor = 1` |
+| OU-II | 7 → **9** | four re-derived for the continuous hard-iron correction, three cut finer; then four cut finer again on the relative quantum, and roll and pitch gated for the first time |
+| OU-III | 7 → **9** | six cut finer; then all seven re-derived for `S_factor = 1`; then three cut finer again on the relative quantum, and roll and pitch gated for the first time |
 | NLO | 2 gated (Z only) | both cut finer |
 | PII observer | 3 gated (Z, yaw) | all three cut finer |
 | TFG | 7 | all seven re-derived, then five cut finer; then re-derived again after the OU parity work |
@@ -68,6 +76,9 @@ of the maximum true bias in the window. Bracketed record is where the worst
 value occurs.
 
 ### OU-II — four re-derived for the continuous hard-iron correction, three cut finer
+
+Four of these were cut again, and two bars added, in "The OU families" below;
+this section is the state before that pass.
 
 Limits below are for the shipped filter, which now runs the correction. The
 "was" column is the same filter without it, which is the `SF_MAG_CONT_HI=0`
@@ -100,6 +111,9 @@ motion. Displacement does not move (vertical mean 6.454 → 6.461 %Hs, 3D mean
 18.90 → 19.03 %) and pitch improves, 0.289 → 0.255 deg.
 
 ### OU-III — six cut finer, then all seven re-derived for `S_factor = 1`
+
+Three of these were cut again, and two bars added, in "The OU families" below;
+this section is the state before that pass.
 
 The first pass, at the then-shipped `S_factor = 1.87`:
 
@@ -143,6 +157,83 @@ of five seeds on the binding record itself; the deployed draw is one of the few
 that moves the other way. The rule is applied to the protocol as written, and
 the quality claim rests on the seeds — `reports/results/ou_anisotropy` carries
 both.
+
+### The OU families — a relative quantum, and two new attitude bars
+
+Neither family's filter moved for this pass. Both sets of gates got stricter
+anyway, in two independent ways.
+
+#### The quantum goes relative
+
+"Rounded up in the last digit the channel is quoted in" only delivers one
+margin if that digit is a fixed *fraction* of the value. It was a fixed
+absolute step — a hundredth for both families — which is 0.2% of OU-III's 4.7
+vertical gate and 0.01% of OU-II's 94 bias gate, so the decimal point was
+setting the margin instead of the rule. Quoting every channel to four
+significant figures makes the quantum a thousandth of the value everywhere.
+Seven gates move; the other seven were already on a four-figure value and are
+unchanged:
+
+| family | gate | was | now | worst observed | margin |
+| --- | --- | --- | --- | --- | --- |
+| OU-II | Z %Hs JONSWAP | 6.9 | **6.899** | 6.8644 (H0.27) | 0.52% → 0.50% |
+| OU-II | Z %Hs PM-Stokes | 6.85 | **6.841** | 6.8062 (H0.27) | 0.64% → 0.51% |
+| OU-II | acc Z bias % | 5.44 | **5.435** | 5.4073 (jonswap H8.5) | 0.61% → 0.51% |
+| OU-II | bias 3D % | 94.4 | **94.37** | 93.8979 (jonswap H4.0, accel) | 0.53% → 0.50% |
+| OU-III | Z %Hs JONSWAP | 4.74 | **4.735** | 4.7106 (H0.27) | 0.63% → 0.52% |
+| OU-III | Z %Hs PM-Stokes | 4.69 | **4.682** | 4.6580 (H0.27) | 0.69% → 0.52% |
+| OU-III | acc Z bias % | 4.63 | **4.624** | 4.6004 (jonswap H8.5) | 0.64% → 0.51% |
+
+The 0.69% that this document had to explain away when it was written is gone,
+and the widest margin left in either family is OU-III's yaw at 0.57%.
+
+#### Roll and pitch are gated
+
+Both simulators have printed roll and pitch RMS on every record since they were
+written, and neither had a bar on either. That is the wrong shape for what
+these filters have actually been doing: the Mahony-proxy startup policy, the
+two-stage magnetic reference, the continuous hard-iron correction and OU-III's
+`S_factor = 1` are attitude work, and yaw was the only attitude channel
+carrying a sentinel. Mean pitch improved under both of the changes whose
+ablations are still wired up — OU-II 0.2987 → 0.2545 deg for the startup
+policy and 0.2890 → 0.2545 for the hard-iron correction, OU-III 0.2230 and
+0.2200 → 0.1891 — with nothing watching it.
+
+| family | gate | new bar | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| OU-II | roll deg | **0.4778** | 0.4753 (jonswap H4.0) | 0.52% |
+| OU-II | pitch deg | **0.3639** | 0.3620 (jonswap H8.5) | 0.52% |
+| OU-III | roll deg | **0.42** | 0.4179 (jonswap H4.0) | 0.50% |
+| OU-III | pitch deg | **0.2211** | 0.2200 (pmstokes H4.0) | 0.50% |
+
+Fitted by the same rule on the same protocol, and they discriminate. Both
+matched ablations — `SF_MAG_CONT_HI=0` and `W3D_STARTUP_INIT=staged_mekf`,
+which are the filters these defaults replaced — breach the new pitch bar:
+OU-III on four of the eight records under either ablation, OU-II on two. The
+roll bars are the weaker of the pair, and only OU-III's discriminates at all:
+`staged_mekf` breaches it on two records, `SF_MAG_CONT_HI=0` on one, and
+neither ablation moves OU-II's roll enough to reach its bar.
+
+| family | arm | worst roll | worst pitch | mean pitch |
+| --- | --- | --- | --- | --- |
+| OU-II | deployed | 0.4753 | 0.3620 | 0.2545 |
+| OU-II | `SF_MAG_CONT_HI=0` | 0.4711 | 0.4176 | 0.2890 |
+| OU-II | `staged_mekf` | 0.3998 | 0.4756 | 0.2987 |
+| OU-III | deployed | 0.4179 | 0.2200 | 0.1891 |
+| OU-III | `SF_MAG_CONT_HI=0` | 0.4215 | 0.2656 | 0.2200 |
+| OU-III | `staged_mekf` | 0.5398 | 0.2626 | 0.2230 |
+
+Those breaches are the point, in the same way the yaw breach under
+`SF_MAG_CONT_HI=0` is: a bar fitted to the filter that ships should fail the
+filter it replaced. Score the ablations with `W3D_COLLECT_ALL_GATES=1`.
+
+Both bars are gated on the magnetometer-on protocol only, like yaw, because
+`--nomag` is a different filter and these bars were not fitted to it. OU-II
+loses the most: worst-case roll 0.4753 → 0.5382 and worst-case pitch
+0.3620 → 0.7113 deg, both past its bars. OU-III's worst-case pitch goes
+0.2200 → 0.2595, also past its bar, while its worst-case roll *improves* by
+19% — the magnetic reference is not uniformly good for tilt, which is worth
+knowing and is not something a gate should be deciding.
 
 ### NLO — both cut finer
 
@@ -243,20 +334,22 @@ cd tests/<dir> && W3D_COLLECT_ALL_GATES=1 W3D_WRITE_TIMESERIES=0 ./<sim>
 with the eight `wave_data_{jonswap,pmstokes}_*.csv` records in the working
 directory.
 
-For OU-III the rule itself is mechanised, which removes the arithmetic from the
-hand-application above:
+For both OU families the rule itself is mechanised, which removes the
+arithmetic from the hand-application above:
 
 ```
-python3 tools/ou_iii_regauge_gates.py
+python3 tools/ou_regauge_gates.py --family ou_iii
+python3 tools/ou_regauge_gates.py --family ou_ii
 ```
 
 It runs the eight records under this protocol, reports the worst value and its
 record per gate, applies the half-percent rule at the quantum the channel is
 quoted in, flags any shipped gate the filter no longer clears, and prints a
-`FAIL_LIMITS` body to paste. It reproduces all seven shipped limits from the
-filter that produced them, which is the check that it implements the rule
-rather than a rule. `--env OU_III_S_FACTOR=1.87` and friends re-gauge an
-ablation without rebuilding.
+`FAIL_LIMITS` body to paste. It reproduces all nine shipped limits of each
+family from the filter that produced them, which is the check that it
+implements the rule rather than a rule. `--env OU_III_S_FACTOR=1.87` and
+friends re-gauge an ablation without rebuilding, and `--json` dumps every
+channel of every record for the build-drift comparison below.
 
 ## How tight is safe: the determinism budget, measured
 
@@ -303,6 +396,40 @@ cutting any of these further, or below half a percent on any channel, needs this
 measurement redone first rather than the old 6e-6 quoted at it. The three
 ratios named above are where that bites first.
 
+### Re-measured for the OU families' nine gates
+
+The relative quantum and the two new attitude bars, above, are a cut, so the
+measurement was redone first rather than the paragraph above quoted at them.
+Both simulators were rebuilt at `-march=x86-64` and all eight records rescored,
+and the drift is taken **per binding record** — the record that actually sets
+each bar — rather than as a worst-channel figure, since that is the number the
+bar has to survive:
+
+| family | gate | margin | drift on its binding record | ratio |
+| --- | --- | --- | --- | --- |
+| OU-II | Z %Hs JONSWAP | 0.50% | 2.2e-5 | 227x |
+| OU-II | Z %Hs PM-Stokes | 0.51% | 1.0e-4 | 51x |
+| OU-II | yaw deg | 0.51% | 1.7e-4 | 31x |
+| OU-II | roll deg | 0.52% | 1.2e-4 | 44x |
+| OU-II | pitch deg | 0.52% | 5.6e-4 | **9.3x** |
+| OU-II | 3D % JONSWAP | 0.54% | 8.0e-6 | 675x |
+| OU-II | 3D % PM-Stokes | 0.50% | 1.4e-4 | 37x |
+| OU-II | acc Z bias % | 0.51% | 4.6e-5 | 111x |
+| OU-II | bias 3D % | 0.50% | 2.8e-4 | 18x |
+| OU-III | every gate | 0.51–0.57% | 2.2e-6 – 3.0e-5 | 169x – 2400x |
+
+All eighteen pass on both builds. OU-III is comfortable everywhere: its worst
+binding-record drift is 3.0e-5, on pitch, which is 169x inside that bar.
+
+OU-II's pitch, at 9.3x, is now the thinnest margin-to-drift ratio in the whole
+document — thinner than the two 15x cases named above — and it is thin because
+the channel is drifty rather than because the bar is tight: 5.6e-4 relative
+between builds against 2.2e-5 for the same family's vertical channel. It still
+clears on both builds (0.48% of headroom on the `x86-64` one), and it is the
+first bar to re-measure rather than re-cut if a rebuild ever breaches it. No OU
+gate should be cut below half a percent, and this one should not be cut at all
+without a fresh measurement.
+
 Reproduce with:
 
 ```
@@ -312,4 +439,10 @@ make -C tests/<dir> build CXXFLAGS="-O3 -std=c++20 -Wall -Wextra -Wshadow \
   -isystem /usr/include/eigen3 -march=x86-64"
 ```
 
-and compare the `Angles RMS` and `XYZ RMS` lines against a native build.
+and compare the `Angles RMS` and `XYZ RMS` lines against a native build. Note
+that `make clean` in a test directory deletes `*.csv`, which includes the
+unpacked wave records — re-fetch them with `make ensure-sim-data` afterwards, or
+delete only `*.o *.d` and the binary. For the two OU families,
+`tools/ou_regauge_gates.py --family ou_ii --json before.json` dumps every
+channel of every record, so the two builds can be differenced directly instead
+of by eye.

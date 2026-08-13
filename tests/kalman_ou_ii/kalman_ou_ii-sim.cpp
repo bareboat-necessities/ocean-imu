@@ -712,14 +712,57 @@ private:
 // has to survive.  docs/quality-gate-regauge.md carries that measurement and
 // the command that redoes it, which is the check to repeat before cutting any
 // of these finer.
+//
+// Then tightened twice more, with the filter standing still for both -- the
+// same two passes OU-III took, since the two families are gated by one rule
+// and one script.
+//
+// First the quantum.  Cutting a tenth to a hundredth, above, fixed the two
+// channels where a tenth was worth over a percent, but a fixed absolute step
+// still cannot deliver one margin across values from 1 to 94: a hundredth is
+// 0.15 percent of a 6.8 and 0.01 percent of a 94.  Quoting every channel to
+// four significant figures instead -- so the quantum is a thousandth of the
+// value everywhere -- puts all seven between 0.50 and 0.54 percent:
+//
+//   Z %Hs JONSWAP    6.9  -> 6.899    worst 6.8644   0.52% -> 0.50%
+//   Z %Hs PM-Stokes  6.85 -> 6.841    worst 6.8062   0.64% -> 0.51%
+//   acc Z bias %     5.44 -> 5.435    worst 5.4073   0.61% -> 0.51%
+//   bias 3D %        94.4 -> 94.37    worst 93.8979  0.53% -> 0.50%
+//
+// Then roll and pitch, which this simulator has measured every run and gated
+// never.  What this family has taken on over its last several changes -- the
+// OU-III parity work, the Mahony-proxy startup policy, and the continuous
+// hard-iron correction, which improved pitch from 0.289 to 0.255 deg mean --
+// is largely attitude work, and yaw was the only attitude channel carrying a
+// sentinel.  Roll and pitch run 0.2511 to 0.4753 and 0.1801 to 0.3620 deg
+// across the eight records, well clear of the bars fitted to them.
+//
+// They are gated like yaw, on the magnetometer-on protocol only, and for the
+// same reason: without it worst-case roll goes to 0.5382 and worst-case pitch
+// to 0.7113 deg, both past the bars below.  That is the largest IMU-only
+// attitude penalty of the two OU families -- OU-III loses 18 percent of
+// worst-case pitch and gains on roll -- and it is a fact about the filter, not
+// about the gates, which is why the gates decline to score it.
+//
+// All nine limits are what tools/ou_regauge_gates.py --family ou_ii prints for
+// the filter that ships.  They are checked against this family's own build
+// drift rather than against the rule alone, and this family is the noisier of
+// the two: the binding records move by 8.0e-6 to 5.6e-4 relative between a
+// native and an -march=x86-64 build, and both builds pass all nine.  The
+// thinnest margin-to-drift ratio in the set is pitch at 9.3x -- the tightest
+// anywhere in the five families, and the first bar to re-measure rather than
+// re-cut if a rebuild ever breaches it.  docs/quality-gate-regauge.md carries
+// that measurement and the command that redoes it.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.9f,    // unchanged, worst 6.8638 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.85f,   // was 6.9,   worst 6.8061 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.095f,  // was 2.18,  worst 1.0895 (jonswap H1.5)
-    .err_limit_percent_3d_jonswap  = 21.1f,   // unchanged, worst 20.99 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 21.3f,   // was 21.2,  worst 21.19 (pmstokes H8.5)
-    .acc_z_bias_percent            = 5.44f,   // was 5.4,   worst 5.4059 (jonswap H8.5)
-    .bias_3d_percent               = 94.4f,   // was 92.2,  worst 93.90 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 6.899f,  // was 6.9,   worst 6.8644 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 6.841f,  // was 6.85,  worst 6.8062 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.095f,  // unchanged, worst 1.0895 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.4778f, // new,       worst 0.4753 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.3639f, // new,       worst 0.3620 (jonswap H8.5)
+    .err_limit_percent_3d_jonswap  = 21.1f,   // unchanged, worst 20.9867 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 21.3f,   // unchanged, worst 21.1935 (pmstokes H8.5)
+    .acc_z_bias_percent            = 5.435f,  // was 5.44,  worst 5.4073 (jonswap H8.5)
+    .bias_3d_percent               = 94.37f,  // was 94.4,  worst 93.8979 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

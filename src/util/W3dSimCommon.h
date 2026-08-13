@@ -438,6 +438,13 @@ struct W3dFailureLimits {
     float err_limit_percent_z_jonswap = 0.0f;
     float err_limit_percent_z_pmstokes = 0.0f;
     float err_limit_yaw_deg = 0.0f;
+    // Roll and pitch, like yaw, in degrees RMS over the scored window.  Zero
+    // means the channel is not gated for this family, which is what the
+    // families that have never fitted a bar for it get: a sentinel of zero
+    // would fail every run, and silence is the correct behaviour for a bar
+    // nobody has measured.
+    float err_limit_roll_deg = 0.0f;
+    float err_limit_pitch_deg = 0.0f;
     float err_limit_percent_3d_jonswap = 0.0f;
     float err_limit_percent_3d_pmstokes = 0.0f;
     float acc_z_bias_percent = 0.0f;
