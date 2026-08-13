@@ -1,6 +1,11 @@
 # Is the OU-III anisotropy self-consistent?
 
-OU-III applies its stationary acceleration scale anisotropically,
+**Outcome: `S_factor` is now 1.0, `R_S_xy_factor` stays 1.** The filter is
+isotropic in both, which is the measured optimum and the axis-consistent point.
+The rest of this note is how that was established; it describes the filter as
+it stood at `S_factor = 1.87` unless it says otherwise.
+
+OU-III applied its stationary acceleration scale anisotropically,
 $\sigma_{aw} \to (S_\sigma\sigma_{aw}, S_\sigma\sigma_{aw}, \sigma_{aw})$ with
 `S_factor = 1.87`, and its integral regularizer isotropically,
 $r_S \to (\rho_{xy}r_S, \rho_{xy}r_S, r_S)$ with `R_S_xy_factor = 1`. Both live
@@ -170,22 +175,110 @@ one. Holding $r_S$ isotropic while $\sigma_{aw,H}$ is inflated keeps the
 horizontal corner 23% above the vertical one, and the measurement says the
 horizontal channel wants at least that much extra high-pass.
 
-## What was and was not changed
+## Sweeping $S_\sigma$, and adopting 1
 
-Changed: the `setRSXYFactor()` upper bound, 1 to 4, so the configuration exists;
-and `iss_contract-test`, which now pins the deployed pair and the reachability
-of $\rho_{xy}>1$.
+The two-dimensional study locates the mis-specification in $S_\sigma$, so it
+was swept on its own at the deployed isotropic regularizer, over all eight
+scored records (JONSWAP and PM-Stokes) and five seeds — 320 paired runs. Pooled
+per-seed change against $S_\sigma=1.87$:
 
-Not changed: `S_factor` stays at 1.87 and `R_S_xy_factor` at 1. Taking
-$S_\sigma$ to 1 is a deployed-behaviour change that invalidates both committed
-evidence bundles, the eight-record quality gates, the ISS audit constant, and
-the anisotropy figures in the paper. The measurement above is four records at
-five seeds, not the ten-seed paired bundle, and it is a recommendation for the
-next re-gauge rather than a re-tune. The natural version of that change is not
-a smaller scalar but the per-axis stationary covariance already flagged as
-Stage D in `ou-iii-adaptation-and-travel-sense.md`: $\sigma_{ax},\sigma_{ay}$
-estimated separately and fed through `set_aw_stationary_cov_full`, which would
-make $S_\sigma$ an estimate rather than a constant.
+| $S_\sigma$ | x | y | z | 3D |
+|---|---|---|---|---|
+| 0.60 | +9.59 | -1.42 | +3.45 | +4.62 |
+| 0.80 | -0.42 | -0.88 | +0.79 | -0.64 |
+| 0.90 | -1.75 | -0.69 | +0.37 | -1.19 |
+| **1.00** | **-2.11** | **-0.54** | **+0.16** | **-1.28** |
+| 1.10 | -2.04 | -0.42 | +0.05 | -1.19 |
+| 1.20 | -1.79 | -0.32 | -0.00 | -1.02 |
+| 1.50 | -0.87 | -0.13 | -0.03 | -0.49 |
+
+A flat interior minimum exactly at 1, with 0.9 and 1.1 symmetric about it at
+-1.19% and 0.6 sharply worse. Per record at $S_\sigma=1$:
+
+| record | x | y | z | 3D | yaw |
+|---|---|---|---|---|---|
+| jonswap $H_s$=0.27 | +0.40\* | -0.32\* | +0.21\* | +0.10\* | -0.82 |
+| jonswap $H_s$=1.50 | +0.07 | -0.45\* | +0.43\* | -0.25 | -4.49 |
+| jonswap $H_s$=4.00 | -3.24\* | -1.26\* | +1.08 | **-2.52\*** | -14.05 |
+| jonswap $H_s$=8.50 | -14.13\* | -2.18\* | -1.31 | **-7.69\*** | -9.08 |
+| pmstokes $H_s$=0.27 | +0.40\* | -0.18\* | +0.11 | +0.14\* | +0.56 |
+| pmstokes $H_s$=1.50 | -0.14 | +0.03 | +0.20\* | -0.02 | +0.47 |
+| pmstokes $H_s$=4.00 | -0.01 | +0.02 | +0.24 | +0.01 | +1.00 |
+| pmstokes $H_s$=8.50 | -0.24 | +0.06 | +0.31\* | -0.02 | +0.75 |
+
+The gain is concentrated in the two largest JONSWAP seas and is unanimous
+across seeds there. PM-Stokes is flat. Nothing regresses by more than 0.14% of
+3D RMS, vertical is unchanged pooled (+0.16%), and yaw improves by 3.2% pooled.
+
+**$S_\sigma$ is now 1.** It is simultaneously the measured optimum, the value
+the records support ($0.81$ and $0.55$ per axis, $0.99$ combined), and the
+axis-consistent value — with $\sigma_{aw}$ isotropic, the isotropic $r_S$ the
+filter already used is what the similarity law asks for. The two-dimensional
+study is what says to close the gap this way rather than by raising
+$\rho_{xy}$.
+
+## What changed
+
+- `S_factor` 1.87 → 1.0. `R_S_xy_factor` stays 1.
+- `setRSXYFactor()` upper bound 1 → 4, so $\rho_{xy}>1$ is expressible at all.
+- The seven deterministic quality gates, re-derived by
+  `tools/ou_iii_regauge_gates.py` under the documented rule. Five moved down
+  (3D JONSWAP 21.05 → 20.95, acc Z bias 4.93 → 4.63, acc 3D bias 98.4 → 81.84
+  are real gains); Z %Hs JONSWAP moved 4.72 → 4.74 and PM-Stokes 3D 20.83 →
+  20.86 with the small-sea losses above.
+- The yaw sentinel 1.068 → 1.297 deg. That one needs its own justification,
+  below.
+- `iss_contract-test`, the paper's anisotropic-parameterization section, its
+  ISS audit bounds, and the fixed-point table.
+
+### The yaw gate moved 21% and yaw did not get worse
+
+Yaw RMS on the binding record (jonswap $H_s$=1.5 m) spans 1.05 to 6.57 deg
+across five IMU seeds under the *old* constant, so the default-seed value the
+gate is fitted to is one draw from a wide distribution rather than a measure of
+yaw quality. Paired across those seeds:
+
+| seed | $S_\sigma$=1.87 | $S_\sigma$=1.0 |
+|---|---|---|
+| default | 1.050 | 1.290 |
+| 1 | 3.516 | 3.273 |
+| 2 | 3.014 | 2.818 |
+| 3 | 3.132 | 3.400 |
+| 4 | 1.796 | 1.554 |
+| 5 | 6.567 | 6.300 |
+
+Four of the five seeds improve, the mean improves by 3.8% on this record and
+3.2% pooled over all eight, and the default seed happens to be one of the draws
+that moves the other way. The sentinel follows the deterministic protocol it is
+written against; the quality claim rests on the seeds.
+
+## Still outstanding
+
+The evidence bundles in `reports/results/ou_validation` and
+`reports/results/ou_robustness` were produced at $S_\sigma=1.87$ and now
+describe a filter that no longer ships. They hash their input records and
+simulator sources rather than the filter header, so `tests/validation` still
+passes — that is a gap in what the hash covers, not a statement that the
+numbers are current. Regenerating them is roughly 310 and 840 twenty-minute
+replays, i.e. the `regenerate` CI job:
+
+```bash
+python3 tools/ou_robustness.py --mode full --bootstrap-resamples 10000 \
+    --output-dir reports/results/ou_robustness
+python3 tools/ou_validation.py --mode full
+```
+
+The natural successor to this change is not a different scalar but the
+per-axis stationary covariance flagged as Stage D in
+[`ou-iii-adaptation-and-travel-sense.md`](ou-iii-adaptation-and-travel-sense.md):
+$\sigma_{ax},\sigma_{ay}$ estimated separately and fed through
+`set_aw_stationary_cov_full`, which would make $S_\sigma$ an estimate rather
+than a constant. The sweep says a scalar cannot do better than 1; it does not
+say a per-axis prior cannot do better than a scalar.
+
+OU-II's `P_factor` is still 1.5 and TFG's `S_factor` still 1.87, both
+unmeasured. The OU-III result does not transfer: OU-II anchors position and
+velocity rather than the third integral, so its loop gain responds differently.
 
 ## OU-II has the same gap, unmeasured here
 

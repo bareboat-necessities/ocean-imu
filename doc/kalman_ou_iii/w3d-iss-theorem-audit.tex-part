@@ -79,7 +79,7 @@ than merely assuming their existence.  The defaults give
 \SI{0.02}{s}\le\tau_k\le\SI{12}{s},\\
 \SI{0.12}{m/s^2}\le\sigma_{z,k}\le\SI{6}{m/s^2},
 \qquad
-\sigma_{x,k}=\sigma_{y,k}=1.87\,\sigma_{z,k},\\
+\sigma_{x,k}=\sigma_{y,k}=S_\sigma\,\sigma_{z,k},\quad S_\sigma=1,\\
 0.15\le r_{S,k}^{\mathrm{base}}\le400\ \mathrm{m\,s},
 \qquad
 \tau_b=\SI{5000}{s}.

@@ -99,16 +99,17 @@ int main() {
         !near(ACC_NOISE_FLOOR_SIGMA_DEFAULT, 0.12f)) {
         return fail("proof-relevant OU-III wrapper clamps changed");
     }
-    if (!near(f.S_factor_, 1.87f))
+    if (!near(f.S_factor_, 1.0f))
         return fail("default OU-III acceleration anisotropy no longer matches proof audit");
     if (!near(f.R_S_xy_factor_, 1.0f))
         return fail("default OU-III integral regularizer is no longer isotropic");
-    // The deployed pair is (S_sigma, rho_xy) = (1.87, 1), which is *not* the
-    // equal-normalized-pole point of the similarity law: sigma_S ~ sigma_aw
-    // tau^3 puts that at rho_xy = S_sigma.  docs/ou-iii-anisotropy-consistency.md
-    // measures both and keeps rho_xy = 1, so the setter must be able to express
-    // rho_xy > 1 for the ablation to mean anything.  It was clamped to 1, which
-    // silently turned that configuration back into the deployed one.
+    // The deployed pair is (S_sigma, rho_xy) = (1, 1), which is both isotropic
+    // and the equal-normalized-pole point of the similarity law sigma_S ~
+    // sigma_aw tau^3.  It was (1.87, 1), which was neither.  The setter must
+    // still be able to express rho_xy > 1, because that is the arm that decides
+    // between the two ways of closing the gap; it was clamped to 1, which
+    // silently turned that configuration back into the deployed one and made
+    // the ablation a no-op.  See docs/ou-iii-anisotropy-consistency.md.
     {
         Filter probe;
         probe.setRSXYFactor(1.87f);

@@ -96,9 +96,11 @@ scored, its error already above 90% of the true bias — absorbs part of that
 motion. Displacement does not move (vertical mean 6.454 → 6.461 %Hs, 3D mean
 18.90 → 19.03 %) and pitch improves, 0.289 → 0.255 deg.
 
-### OU-III — six cut finer
+### OU-III — six cut finer, then all seven re-derived for `S_factor = 1`
 
-| gate | was | now | worst observed | margin |
+The first pass, at the then-shipped `S_factor = 1.87`:
+
+| gate | was | then | worst observed | margin |
 | --- | --- | --- | --- | --- |
 | Z %Hs JONSWAP | 4.8 | **4.72** | 4.6952 (H0.27) | 0.53% |
 | Z %Hs PM-Stokes | 4.7 | **4.69** | 4.6600 (H0.27) | 0.64% |
@@ -107,6 +109,37 @@ motion. Displacement does not move (vertical mean 6.454 → 6.461 %Hs, 3D mean
 | 3D % PM-Stokes | 20.9 | **20.83** | 20.7197 (H4.0) | 0.53% |
 | acc Z bias % | 5.0 | **4.93** | 4.9054 (jonswap H8.5) | 0.50% |
 | bias 3D % | 98.4 | 98.4 | 97.8908 (jonswap H4.0, accel) | 0.52% |
+
+Then re-derived once more when the horizontal stationary acceleration scale
+went from 1.87 to the records' own value of 1
+([`ou-iii-anisotropy-consistency.md`](ou-iii-anisotropy-consistency.md)), which
+moved every gated quantity:
+
+| gate | then | now | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| Z %Hs JONSWAP | 4.72 | **4.74** | 4.7106 (H0.27) | 0.63% |
+| Z %Hs PM-Stokes | 4.69 | 4.69 | 4.6580 (H0.27) | 0.69% |
+| yaw deg | 1.068 | **1.297** | 1.2896 (jonswap H1.5) | 0.57% |
+| 3D % JONSWAP | 21.05 | **20.95** | 20.8367 (H1.5) | 0.54% |
+| 3D % PM-Stokes | 20.83 | **20.86** | 20.7483 (H4.0) | 0.54% |
+| acc Z bias % | 4.93 | **4.63** | 4.6004 (jonswap H8.5) | 0.64% |
+| bias 3D % | 98.4 | **81.84** | 81.4268 (pmstokes H4.0, accel) | 0.51% |
+
+Five come down, three of them materially: JONSWAP 3D, accelerometer Z bias, and
+the 3D bias limit, which falls by 17 points because the isotropic prior stops
+the horizontal bias absorbing so much of the sea. Two go up with small-sea
+losses that the sweep priced at 0.1 to 0.2% of 3D RMS.
+
+The yaw sentinel moving up 21% needs its own note, since a loosened sentinel
+that hides a regression is worse than no sentinel. It is not hiding one. Yaw on
+the binding record spans 1.05 to 6.57 deg over five IMU seeds under the *old*
+constant, so the default-seed value this protocol scores is one draw from a wide
+distribution, not a measure of yaw quality. Paired over those seeds and all
+eight records, the new constant lowers yaw RMS by 3.2% pooled and improves four
+of five seeds on the binding record itself; the deployed draw is one of the few
+that moves the other way. The rule is applied to the protocol as written, and
+the quality claim rests on the seeds — `reports/results/ou_anisotropy` carries
+both.
 
 ### NLO — both cut finer
 
@@ -175,6 +208,21 @@ cd tests/<dir> && W3D_COLLECT_ALL_GATES=1 W3D_WRITE_TIMESERIES=0 ./<sim>
 
 with the eight `wave_data_{jonswap,pmstokes}_*.csv` records in the working
 directory.
+
+For OU-III the rule itself is mechanised, which removes the arithmetic from the
+hand-application above:
+
+```
+python3 tools/ou_iii_regauge_gates.py
+```
+
+It runs the eight records under this protocol, reports the worst value and its
+record per gate, applies the half-percent rule at the quantum the channel is
+quoted in, flags any shipped gate the filter no longer clears, and prints a
+`FAIL_LIMITS` body to paste. It reproduces all seven shipped limits from the
+filter that produced them, which is the check that it implements the rule
+rather than a rule. `--env OU_III_S_FACTOR=1.87` and friends re-gauge an
+ablation without rebuilding.
 
 ## How tight is safe: the determinism budget, measured
 

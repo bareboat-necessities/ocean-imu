@@ -1724,7 +1724,25 @@ private:
     // better with the two equal, by 7 to 27 percent of 3D RMS in the two
     // largest seas.  Retained as a setter because the bound is a real one.
     float R_S_xy_factor_ = 1.0f;
-    float S_factor_      = 1.87f;
+    // Horizontal stationary acceleration scale relative to the vertical one.
+    // 1.87 was carried from the acceleration-band operating point and never
+    // re-measured against the records, which put it at 0.81 (x) and 0.55 (y)
+    // of vertical per axis -- 0.99 combined, as deep-water theory requires.
+    // Swept at the deployed isotropic r_S over the eight scored records and
+    // five seeds (tools/ou_anisotropy_ablation.py), 3D displacement RMS has a
+    // flat minimum exactly at 1: -1.28 percent pooled against 1.87, -7.7
+    // percent on JONSWAP Hs = 8.5 m and -2.5 percent on Hs = 4.0 m with every
+    // seed agreeing, PM-Stokes flat to 0.15 percent, vertical unchanged at
+    // +0.16 percent pooled, and no record worse than +0.14 percent.  0.9 and
+    // 1.1 both score -1.19 percent, so the minimum is genuinely here and not a
+    // fitted edge.
+    //
+    // Note that 1 is also the axis-consistent value: with sigma_aw isotropic,
+    // an isotropic r_S is what the similarity law sigma_S ~ sigma_aw tau^3
+    // asks for.  Closing that gap the other way -- keeping 1.87 and setting
+    // R_S_xy_factor to match -- was measured and is 13.7 percent worse; see
+    // docs/ou-iii-anisotropy-consistency.md.
+    float S_factor_      = 1.0f;
 
     TrackingPolicy                  tracker_policy_{};
     FirstOrderIIRSmoother<float>    freq_fast_smoother_{FREQ_SMOOTHER_DT, 3.5f};
