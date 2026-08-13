@@ -23,9 +23,9 @@
     silently assert that a filter with different error characteristics must sit
     inside another one's envelope.
 
-    Two of them record behaviour that is plainly poor, and they are set where
-    they are so that further regression is caught, not because the current
-    value is acceptable. See the table below.
+    One of them -- accelerometer bias -- still records behaviour that is plainly
+    poor, and it is set where it is so that further regression is caught, not
+    because the current value is acceptable. See the table below.
 */
 
 #include <cstdlib>
@@ -54,6 +54,18 @@ namespace {
 bool env_float(const char* name, float& out) {
     if (const char* s = std::getenv(name)) {
         out = static_cast<float>(std::atof(s));
+        return true;
+    }
+    return false;
+}
+
+// Feature ablations. Each names one of the OU-III behaviours this filter took
+// on, so the study can turn exactly one off and price it rather than inferring
+// its contribution from the combined result.
+bool env_bool(const char* name, bool& out) {
+    if (const char* s = std::getenv(name)) {
+        const std::string v(s);
+        out = !(v == "0" || v == "false" || v == "off");
         return true;
     }
     return false;
@@ -100,6 +112,27 @@ public:
         cfg.freeze_acc_bias_until_live = true;
         cfg.Racc_warmup_std = 0.5f;
 
+        if (const char* p = std::getenv("TFG_STARTUP_INIT")) {
+            const std::string policy(p);
+            if (policy == "staged") {
+                cfg.startup_init_policy = Fusion::StartupInitPolicy::StagedMekf;
+            } else if (policy == "proxy") {
+                cfg.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
+            } else {
+                throw std::runtime_error("unknown TFG_STARTUP_INIT: " + policy);
+            }
+        }
+        bool flag = false;
+        if (env_bool("TFG_MAG_REFINE", flag))     cfg.mag_refine_enabled = flag;
+        if (env_bool("TFG_MAG_HARD_IRON", flag))  cfg.mag_continuous_hard_iron = flag;
+        if (env_bool("TFG_WAVE_BAND", flag))      cfg.wave_band_tuning = flag;
+        if (float v = 0.0f; env_float("TFG_MAG_MIN_WINDOW_SEC", v)) cfg.mag_min_window_sec = v;
+        if (float v = 0.0f; env_float("TFG_MAG_REFINE_START_SEC", v)) cfg.mag_refine_start_sec = v;
+        if (float v = 0.0f; env_float("TFG_MAG_REFINE_WINDOW_SEC", v)) cfg.mag_refine_window_sec = v;
+        if (float v = 0.0f; env_float("TFG_MAG_HI_SLEW_TAU_SEC", v)) cfg.mag_hi_slew_tau_sec = v;
+        if (float v = 0.0f; env_float("TFG_MAG_HI_RIDGE_REL", v)) cfg.mag_hi_model_ridge_relative = v;
+        if (float v = 0.0f; env_float("TFG_ACC_BIAS_UNLOCK_SEC", v)) cfg.acc_bias_unlock_sec = v;
+
         tuning_ = load_tuning_mode();
         load_fixed_tuning_();
 
@@ -117,7 +150,13 @@ public:
         if (env_float("TFG_ADAPT_RS_MULT", v))  fusion_.setRSAdaptMult(v);
         if (env_float("TFG_ADAPT_RS_SLEW_LOG", v)) fusion_.setRSAdaptSlewLog(v);
         if (env_float("TFG_ACC_NOISE_FLOOR", v))   fusion_.setAccNoiseFloorSigma(v);
-
+        if (bool on = false; env_bool("TFG_AW_COV_SYNC", on)) fusion_.setPeriodicAwCovSync(on);
+        {
+            float lo = 0.0f, hi = 0.0f;
+            if (env_float("TFG_SIGMA_BAND_LOW", lo) && env_float("TFG_SIGMA_BAND_HIGH", hi)) {
+                fusion_.setSigmaBandRatios(lo, hi);
+            }
+        }
     }
 
     void updateMag(const Vector3f& mag_body_ned) override {
@@ -239,76 +278,68 @@ void process_one(const std::string& filename,
 
     /*
         Worst observed over the eight-record set, with a small margin -- worst
-        observed plus about half a percent, rounded up in the last digit the
-        channel is quoted in, the rule the OU simulators state.  Yaw is quoted
-        to hundredths there and here: a tenth of a degree is 3% of a
-        three-degree gate, which is six times the margin the rule asks for.
+        observed plus about half a percent, at whatever precision delivers that,
+        which is the rule the OU simulators state.  Writing every channel to a
+        tenth regardless of its value would give the small ones four times the
+        margin the rule asks for and the large ones almost none.
 
-          channel            TFG worst   this gate   was    OU-III gate
-          Z RMS  jonswap        5.21        5.24      5.5      4.72
-          Z RMS  pmstokes       5.10        5.13      5.4      4.69
-          yaw                   2.92        2.938     3.3      1.068
-          3D     jonswap       20.99       21.1      30.6     21.05
-          3D     pmstokes      25.78       25.91     68.0     20.83
-          acc bias Z            8.84        8.89      9.5      4.93
-          acc bias 3D         398.22      400.3     415.0     98.4
+          channel          worst    this bar   margin   previous bar
+          Z RMS  jonswap    4.7784   4.803      0.51%    5.24
+          Z RMS  pmstokes   4.6846   4.709      0.52%    5.13
+          yaw               1.5278   1.536      0.54%    2.938
+          3D     jonswap   21.0298  21.14       0.52%   21.1
+          3D     pmstokes  20.6045  20.71       0.51%   25.91
+          acc bias Z        5.0002   5.026      0.52%    8.89
+          acc bias 3D     166.688  167.6        0.55%   400.3
 
-        Every bar comes down, and none of that is this file's doing: the
-        previous set was fitted before the adaptation-policy work that brought
-        the orchestrator's exogeneity timing, commit cadence, r_S floor and
-        tau-scaled S=0 cadence up to OU-III's, and the gates were not
-        re-derived afterwards. A sentinel carrying ten points of slack on the
-        horizontal channel is not a sentinel, so they are re-derived here
-        against the same eight records the generated results table reports.
+        Both an -march=native and an -march=x86-64 build pass all seven; the
+        binding records move by up to 3.5e-4 relative between them, so the
+        thinnest margin here is 14 times the spread it has to survive.
 
-        What that changes about the standing finding. The horizontal channel is
-        no longer the outlier it was: 3D error on JONSWAP now sits exactly at
-        OU-III's own bar and PM--Stokes within five points of it, where it used
-        to be three times worse on the large-wave records. Accelerometer bias
-        still is the outlier -- four times OU-III's, and above 100% of the true
-        bias on six of the eight records, which means the error exceeds the
-        quantity being estimated. That gate records a known deficiency rather
-        than endorsing it, and the cause remains unestablished.
+        WHY EVERY BAR MOVED.  The orchestrator took on the OU families' magnetic
+        acquisition, their continuous hard-iron tracking and their band-passed
+        sigma channel, and the tuner coefficients were re-fitted afterwards
+        because all three change what those coefficients multiply.  Against the
+        previous set, over the same eight records: worst vertical RMS -8.3%,
+        worst 3D -18.4%, worst yaw -47.7%, worst accelerometer-bias -58.1%.  The
+        gates are re-derived here rather than left where they were, because a
+        sentinel carrying a third of its range in slack is not a sentinel.
 
-        Yaw stays about three times OU-III's, and OU-II's, because the
-        continuous magnetic hard-iron correction is carried by both OU families
-        and not by this one; the standing heading error it removes is still
-        here, and its gauge argument is in the OU-III article.
+        What that changes about the standing findings.
 
-        bias_3d_percent gates the gyro channel too. The accelerometer sets it
-        -- the gyro's worst is 125.60% on pmstokes H4.0 -- so a gyro-bias
-        regression has to more than triple before this bar sees it. Splitting
+        Yaw is no longer the outlier.  It ran about three times OU-III's and
+        OU-II's for one reason -- both carried the continuous hard-iron
+        correction and this filter did not -- and with that correction here the
+        worst record is 1.53 deg against OU-III's 1.068 gate.  The remainder is
+        no longer attributable to a missing feature.
+
+        Accelerometer bias is still the outlier, but by far less: 167% against
+        OU-III's 98.4, where it used to be 400%.  It is still above 100% of the
+        true bias on two of the eight records, which means the error exceeds the
+        quantity being estimated, and that gate records a known deficiency
+        rather than endorsing it.  Most of what came out was the standing
+        attitude error the old one-sample magnetic reference left behind, which
+        the bias state was absorbing because the two are only weakly separable
+        in waves; what is left has not been attributed.
+
+        3D on JONSWAP is unchanged at OU-III's own bar, and PM-Stokes now sits
+        below it where it used to be three times worse on the large-wave
+        records.
+
+        bias_3d_percent gates the gyro channel too.  The accelerometer sets it
+        -- the gyro's worst is 46.58% on jonswap H8.5 -- so a gyro-bias
+        regression has to more than triple before this bar sees it.  Splitting
         the two is a change to W3dFailureLimits and to every family that uses
         it, and is deliberately not made here.
     */
-    /*
-        Each bar is written to whatever precision delivers about half a percent
-        over the worst observed value, rather than to a tenth regardless of the
-        value: a tenth is 2 percent of a 5.2 and 0.03 percent of a 400, so one
-        quantum for every channel means the small ones carry four times the
-        margin the rule asks for and the large ones carry none of it.
-
-          channel          worst   this bar   at a tenth   margin
-          Z RMS  jonswap    5.21     5.24        5.3        0.60%
-          Z RMS  pmstokes   5.10     5.13        5.2        0.58%
-          yaw               2.92     2.938       3.0        0.51%
-          3D     jonswap   20.99    21.1        21.1        0.52%
-          3D     pmstokes  25.78    25.91       26.0        0.52%
-          acc bias Z        8.84     8.89        8.9        0.61%
-          acc bias 3D     398.22   400.3       400.3        0.52%
-
-        Both an -march=native and an -march=x86-64 build pass all seven; the
-        binding records move by up to 3.7e-4 relative between them, so the
-        thinnest margin here is 14 times the spread it has to survive.
-    */
     static constexpr W3dFailureLimits kRegressionBars{
-        .err_limit_percent_z_jonswap   = 5.24f,   // was 5.3,  worst 5.2090 (jonswap H0.27)
-        .err_limit_percent_z_pmstokes  = 5.13f,   // was 5.2,  worst 5.1004 (pmstokes H0.27)
-        .err_limit_yaw_deg             = 2.938f,  // was 2.94, worst 2.9230 (pmstokes H4.0)
-        .err_limit_percent_3d_jonswap  = 21.1f,   // unchanged, worst 20.9914 (jonswap H1.5)
-        .err_limit_percent_3d_pmstokes = 25.91f,  // was 26.0, worst 25.7764 (pmstokes H4.0)
-        .acc_z_bias_percent            = 8.89f,   // was 8.9,  worst 8.8360 (jonswap H4.0)
-        .bias_3d_percent               = 400.3f,  // unchanged, worst 398.2190 (jonswap H4.0, accel)
+        .err_limit_percent_z_jonswap   = 4.803f,  // was 5.24,  worst 4.7784 (jonswap H0.27)
+        .err_limit_percent_z_pmstokes  = 4.709f,  // was 5.13,  worst 4.6846 (pmstokes H0.27)
+        .err_limit_yaw_deg             = 1.536f,  // was 2.938, worst 1.5278 (pmstokes H8.5)
+        .err_limit_percent_3d_jonswap  = 21.14f,  // was 21.1,  worst 21.0298 (jonswap H1.5)
+        .err_limit_percent_3d_pmstokes = 20.71f,  // was 25.91, worst 20.6045 (pmstokes H4.0)
+        .acc_z_bias_percent            = 5.026f,  // was 8.89,  worst 5.0002 (pmstokes H8.5)
+        .bias_3d_percent               = 167.6f,  // was 400.3, worst 166.688 (pmstokes H4.0, accel)
     };
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
