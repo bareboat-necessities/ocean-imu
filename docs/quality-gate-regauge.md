@@ -36,7 +36,7 @@ instead of exiting at the first one.
 
 | family | gates | verdict |
 | --- | --- | --- |
-| OU-II | 7 | **four re-derived** for the continuous hard-iron correction |
+| OU-II | 7 | **four re-derived** for the continuous hard-iron correction, **two cut finer**; all seven now within 0.65% |
 | OU-III | 7 | six at the rule and unchanged; **yaw 1.1 → 1.07** |
 | NLO | 2 gated (Z only) | both already at the rule; unchanged |
 | PII observer | 3 gated (Z, yaw) | Z unchanged; **yaw 10.9 → 10.84** |
@@ -65,15 +65,24 @@ Limits below are for the shipped filter, which now runs the correction. The
 "was" column is the same filter without it, which is the `SF_MAG_CONT_HI=0`
 ablation and exceeds the yaw gate by a factor of two, as it should.
 
-| gate | was | now | worst observed |
-| --- | --- | --- | --- |
-| Z %Hs JONSWAP | 6.9 | 6.9 | 6.8638 (H0.27) |
-| Z %Hs PM-Stokes | 6.9 | 6.9 | 6.8061 (H0.27) |
-| yaw deg | 2.18 | **1.10** | 1.0895 (jonswap H1.5) |
-| 3D % JONSWAP | 21.1 | 21.1 | 20.99 (H1.5) |
-| 3D % PM-Stokes | 21.2 | **21.3** | 21.19 (H8.5) |
-| acc Z bias % | 5.4 | **5.5** | 5.41 (jonswap H8.5) |
-| bias 3D % | 92.2 | **94.4** | 93.90 (jonswap H4.0, accel) |
+| gate | was | now | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| Z %Hs JONSWAP | 6.9 | 6.9 | 6.8638 (H0.27) | 0.53% |
+| Z %Hs PM-Stokes | 6.9 | **6.85** | 6.8061 (H0.27) | 0.65% |
+| yaw deg | 2.18 | **1.095** | 1.0895 (jonswap H1.5) | 0.50% |
+| 3D % JONSWAP | 21.1 | 21.1 | 20.9870 (H1.5) | 0.54% |
+| 3D % PM-Stokes | 21.2 | **21.3** | 21.1940 (H8.5) | 0.50% |
+| acc Z bias % | 5.4 | **5.44** | 5.4059 (jonswap H8.5) | 0.63% |
+| bias 3D % | 92.2 | **94.4** | 93.8996 (jonswap H4.0, accel) | 0.53% |
+
+Two of those moves are the filter and two are the quantum. Yaw, 3D PM-Stokes,
+acc Z and bias 3D were re-derived because the correction moved what the filter
+produces. Z PM-Stokes and acc Z were then also cut finer, from a tenth to a
+hundredth, because a tenth is 1.5% of a 6.8 and 1.9% of a 5.4 — rounding a
+half-percent margin up to a tenth was handing back three times the rule. Every
+OU-II gate now sits between 0.50% and 0.65% above what the filter produces, and
+the whole set passes on an `-march=x86-64` rebuild as well as a native one, with
+0.49% of headroom at the tightest point.
 
 Yaw halves and three go up, which is the trade OU-III recorded when it took the
 same change: the correction walks the heading onto the corrected field during

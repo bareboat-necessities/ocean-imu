@@ -693,13 +693,32 @@ private:
 // family produces anyway; see docs/quality-gate-regauge.md.  It exceeds the
 // yaw gate, as it should -- these are fitted to the filter that ships.  Score
 // it with W3D_COLLECT_ALL_GATES.
+// Then cut to the rule, which the tenth-quantum was not delivering on the two
+// single-digit percentage channels.  A tenth is 1.5 percent of a 6.8 and 1.9
+// percent of a 5.4, so rounding a half-percent margin up to one hands back
+// three times what the rule asks for; a hundredth costs nothing to write and
+// gives it back.  Yaw goes to a thousandth for the same reason -- 1.0949
+// rounded to 1.10 is a 0.96 percent bar on a 0.5 percent rule.
+//
+//   Z %Hs PM-Stokes   6.9  -> 6.85    worst 6.8061, margin 1.38% -> 0.65%
+//   yaw deg           1.10 -> 1.095   worst 1.0895, margin 0.96% -> 0.50%
+//   acc Z bias %      5.5  -> 5.44    worst 5.4059, margin 1.74% -> 0.63%
+//
+// The other four were already inside the rule at the precision they are quoted
+// in and are left alone.  These three are checked against the drift measured
+// for this family rather than against the rule alone: the binding records move
+// by 9.4e-5, 1.7e-4 and 3.0e-4 relative between a native and an -march=x86-64
+// build, so the smallest of the three margins is still 21 times the spread it
+// has to survive.  docs/quality-gate-regauge.md carries that measurement and
+// the command that redoes it, which is the check to repeat before cutting any
+// of these finer.
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 6.9f,    // unchanged, worst 6.8638 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.9f,    // unchanged, worst 6.8061 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.10f,   // was 2.18,  worst 1.0895 (jonswap H1.5)
+    .err_limit_percent_z_pmstokes  = 6.85f,   // was 6.9,   worst 6.8061 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.095f,  // was 2.18,  worst 1.0895 (jonswap H1.5)
     .err_limit_percent_3d_jonswap  = 21.1f,   // unchanged, worst 20.99 (jonswap H1.5)
     .err_limit_percent_3d_pmstokes = 21.3f,   // was 21.2,  worst 21.19 (pmstokes H8.5)
-    .acc_z_bias_percent            = 5.5f,    // was 5.4,   worst 5.41 (jonswap H8.5)
+    .acc_z_bias_percent            = 5.44f,   // was 5.4,   worst 5.4059 (jonswap H8.5)
     .bias_3d_percent               = 94.4f,   // was 92.2,  worst 93.90 (jonswap H4.0, accel)
 };
 

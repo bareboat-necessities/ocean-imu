@@ -291,15 +291,19 @@ half a percent, rounded up in the last digit the channel is quoted in. The
 column below marked *parity* is the state after items 1-5; *now* is after the
 continuous hard-iron correction of item 6.
 
-| gate | before | parity | now | worst scored |
-| --- | --- | --- | --- | --- |
-| Z %Hs, jonswap | 7.0 | 6.9 | 6.9 | 6.8638 (H0.27) |
-| Z %Hs, pmstokes | 6.9 | 6.9 | 6.9 | 6.8061 (H0.27) |
-| yaw deg | 2.2 | 2.18 | **1.10** | 1.0895 (jonswap H1.5) |
-| 3D %, jonswap | 20.9 | 21.1 | 21.1 | 20.99 (H1.5) |
-| 3D %, pmstokes | 20.7 | 21.2 | **21.3** | 21.19 (H8.5) |
-| acc Z bias % | 5.9 | 5.4 | **5.5** | 5.41 (jonswap H8.5) |
-| bias 3D % | 85.4 | 92.2 | **94.4** | 93.90 (jonswap H4.0) |
+| gate | before | parity | now | worst scored | margin |
+| --- | --- | --- | --- | --- | --- |
+| Z %Hs, jonswap | 7.0 | 6.9 | 6.9 | 6.8638 (H0.27) | 0.53% |
+| Z %Hs, pmstokes | 6.9 | 6.9 | **6.85** | 6.8061 (H0.27) | 0.65% |
+| yaw deg | 2.2 | 2.18 | **1.095** | 1.0895 (jonswap H1.5) | 0.50% |
+| 3D %, jonswap | 20.9 | 21.1 | 21.1 | 20.9870 (H1.5) | 0.54% |
+| 3D %, pmstokes | 20.7 | 21.2 | **21.3** | 21.1940 (H8.5) | 0.50% |
+| acc Z bias % | 5.9 | 5.4 | **5.44** | 5.4059 (jonswap H8.5) | 0.63% |
+| bias 3D % | 85.4 | 92.2 | **94.4** | 93.8996 (jonswap H4.0) | 0.53% |
+
+The margin column is the point: every one of the seven now sits between 0.50%
+and 0.65% above what the filter produces, which is what the rule asks for, and
+the set passes on an `-march=x86-64` rebuild as well as a native one.
 
 See the comment at `FAIL_LIMITS` for why the gates that loosen are realization
 and gauge moves rather than quality regressions, and for the ensemble figures
