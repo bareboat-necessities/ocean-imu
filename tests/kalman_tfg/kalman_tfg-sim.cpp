@@ -239,17 +239,19 @@ void process_one(const std::string& filename,
 
     /*
         Worst observed over the eight-record set, with a small margin -- worst
-        observed plus about half a percent, rounded up to the next tenth, the
-        rule the OU simulators state.
+        observed plus about half a percent, rounded up in the last digit the
+        channel is quoted in, the rule the OU simulators state.  Yaw is quoted
+        to hundredths there and here: a tenth of a degree is 3% of a
+        three-degree gate, which is six times the margin the rule asks for.
 
           channel            TFG worst   this gate   was    OU-III gate
-          Z RMS  jonswap        5.21        5.3       5.5       4.8
-          Z RMS  pmstokes       5.10        5.2       5.4       4.7
-          yaw                   2.92        3.0       3.3       1.1
+          Z RMS  jonswap        5.21        5.3       5.5      4.8
+          Z RMS  pmstokes       5.10        5.2       5.4      4.7
+          yaw                   2.92        2.94      3.3      1.07
           3D     jonswap       20.99       21.1      30.6      21.1
           3D     pmstokes      25.78       26.0      68.0      20.9
-          acc bias Z            8.84        8.9       9.5       5.0
-          acc bias 3D         398.22      400.3     415.0      98.4
+          acc bias Z            8.84        8.9       9.5      5.0
+          acc bias 3D         398.22      400.3     415.0     98.4
 
         Every bar comes down, and none of that is this file's doing: the
         previous set was fitted before the adaptation-policy work that brought
@@ -282,7 +284,7 @@ void process_one(const std::string& filename,
     static constexpr W3dFailureLimits kRegressionBars{
         .err_limit_percent_z_jonswap   = 5.3f,    // worst 5.21 (jonswap H0.27)
         .err_limit_percent_z_pmstokes  = 5.2f,    // worst 5.10 (pmstokes H0.27)
-        .err_limit_yaw_deg             = 3.0f,    // worst 2.92 (pmstokes H4.0)
+        .err_limit_yaw_deg             = 2.94f,   // worst 2.9230 (pmstokes H4.0)
         .err_limit_percent_3d_jonswap  = 21.1f,   // worst 20.99 (jonswap H1.5)
         .err_limit_percent_3d_pmstokes = 26.0f,   // worst 25.78 (pmstokes H4.0)
         .acc_z_bias_percent            = 8.9f,    // worst 8.84 (jonswap H4.0)

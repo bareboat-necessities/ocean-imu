@@ -37,8 +37,16 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 
 // Regression sentinels for the deterministic single-realization protocol, not
 // targets.  Each is the worst value the current observer produces across the
-// scored records plus about half a percent, rounded up to the next tenth, the
-// same rule the OU simulators use.
+// scored records plus about half a percent, rounded up in the last digit the
+// channel is quoted in -- the same rule the OU simulators use, including their
+// treatment of yaw, which is cut to hundredths because a tenth of a degree is
+// a full percent of a ten-degree gate and the rule asks for half of one.
+//
+// This observer is the most reproducible of the set: rebuilding at
+// -march=x86-64 instead of the host's native cascadelake leaves every yaw
+// figure bit-identical and moves Z by 1.5e-6 relative at worst.  There are no
+// matrix solves here to amplify the last bits, which is why these can sit as
+// close to the observed values as the rule allows.
 //
 // Re-derived for the 900 s scoring window: a sentinel fitted to the previous
 // 60 s window is not a sentinel for this one, it is just a number the observer
@@ -51,7 +59,7 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap = 9.0f,    // worst 8.87 (jonswap H8.5)
     .err_limit_percent_z_pmstokes = 9.5f,   // worst 9.36 (pmstokes H8.5)
-    .err_limit_yaw_deg = 10.9f,             // worst 10.78 (pmstokes H8.5)
+    .err_limit_yaw_deg = 10.84f,            // was 10.9, worst 10.7801 (pmstokes H8.5)
 };
 
 class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {

@@ -573,13 +573,23 @@ private:
 
 // Regression sentinels for the deterministic single-realization protocol, not
 // targets.  Each is the worst value the current filter produces across the
-// scored records plus about half a percent, rounded up to the next tenth.
+// scored records plus about half a percent, rounded up in the last digit the
+// channel is quoted in -- a tenth for the percentage channels, a hundredth for
+// yaw, which at about two degrees would otherwise be handed several times the
+// margin the rule asks for.
 //
-// That margin is deliberately small because the metrics are deterministic: the
-// same records and seeds under -march=native, x86-64 and x86-64-v2 agree to
-// within 6e-6 relative, so a limit this close only trips when the filter
-// actually gets worse.  Setting one below what the filter currently achieves
-// makes it fail every run rather than catching a regression.
+// That margin is deliberately small because the metrics are deterministic, and
+// how deterministic is measured rather than assumed: rebuilding at
+// -march=x86-64 instead of the host's native cascadelake moves the gated
+// numbers here by at most 4.4e-4 relative (accelerometer bias 3D, jonswap
+// H8.5), and yaw by 2.4e-4.  The 6e-6 this comment used to claim still holds
+// for the simpler observers -- NLO and the PII observer are within 1.5e-6 --
+// but not for a filter carrying this many matrix solves.  Half a percent
+// leaves better than a factor of ten on every gate below, which is the check
+// to redo before cutting one finer.
+//
+// Setting one below what the filter currently achieves makes it fail every run
+// rather than catching a regression.
 //
 // Re-derived for the 900 s scoring window: a sentinel fitted to the previous
 // 60 s window is not a sentinel for this one, it is just a number the filter
@@ -631,10 +641,15 @@ private:
 //
 // The three that tighten are where the improvement is deterministic enough to
 // show up in one realization as well as in the ensemble.
+//
+// Yaw re-cut to hundredths, 2.2 -> 2.18.  The filter did not move; the tenth
+// was worth 1.8 percent of slack against a rule that asks for half of one.
+// The six percentage-channel gates are already inside a point of the rule at
+// the precision they are quoted in and keep their values.
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 6.9f,    // was 7.0,  worst 6.86 (jonswap H0.27)
     .err_limit_percent_z_pmstokes  = 6.9f,    // unchanged, worst 6.81 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 2.2f,    // unchanged, worst 2.16 (pmstokes H1.5)
+    .err_limit_yaw_deg             = 2.18f,   // was 2.2,  worst 2.1605 (pmstokes H1.5)
     .err_limit_percent_3d_jonswap  = 21.1f,   // was 20.9, worst 20.91 (jonswap H1.5)
     .err_limit_percent_3d_pmstokes = 21.2f,   // was 20.7, worst 21.02 (pmstokes H8.5)
     .acc_z_bias_percent            = 5.4f,    // was 5.9,  worst 5.33 (pmstokes H8.5)

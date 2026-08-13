@@ -4,12 +4,19 @@ Every simulator that scores the eight reference records — OU-II, OU-III, NLO,
 PII observer, TFG — carries regression sentinels fitted by one rule:
 
 > the worst value the filter currently produces across the scored records, plus
-> about half a percent, rounded up to the next tenth.
+> about half a percent, rounded up in the last digit the channel is quoted in.
 
 The rule only works if it is re-applied after the filter changes. A sentinel
 that keeps ten points of slack is not catching anything. This is the record of
 re-applying it to all five families against the tree that produced build run
 3558, and of what had to move.
+
+The rounding used to be "up to the next tenth" for every channel. That is the
+right quantum for the percentage channels, whose values sit between 4 and 400,
+and the wrong one for yaw in degrees, whose values sit between 1 and 11: a
+tenth is 3.5% of OU-III's yaw gate, seven times the margin the rule asks for.
+Yaw is now cut to hundredths in all four families that gate it. Nothing about
+any filter moved with it.
 
 ## What was measured
 
@@ -25,15 +32,19 @@ instead of exiting at the first one.
     ./kalman_ou_iii-sim --input wave_data_jonswap_H0.270_....csv     # per record
     ./nlo-sim                                                        # whole directory
 
-## Result: four of five were already at the rule
+## Result
 
 | family | gates | verdict |
 | --- | --- | --- |
-| OU-II | 7 | all seven already at the rule; unchanged |
-| OU-III | 7 | all seven already at the rule; unchanged |
+| OU-II | 7 | six at the rule and unchanged; **yaw 2.2 → 2.18** |
+| OU-III | 7 | six at the rule and unchanged; **yaw 1.1 → 1.07** |
 | NLO | 2 gated (Z only) | both already at the rule; unchanged |
-| PII observer | 3 gated (Z, yaw) | all three already at the rule; unchanged |
+| PII observer | 3 gated (Z, yaw) | Z unchanged; **yaw 10.9 → 10.84** |
 | TFG | 7 | **all seven re-derived**; every one came down |
+
+The percentage-channel gates in the four non-TFG families were already within
+about a point of the rule and are left exactly as they stand. The yaw moves are
+purely the change of quantum described above.
 
 OU-III's were re-derived with the continuous hard-iron correction and OU-II's
 with the parity work, both recent; NLO's and PII's have not been disturbed
@@ -48,25 +59,25 @@ percentage of max `|disp_ref|_3D`; bias figures are RMS error as a percentage
 of the maximum true bias in the window. Bracketed record is where the worst
 value occurs.
 
-### OU-II — unchanged
+### OU-II — yaw re-cut, rest unchanged
 
 | gate | limit | worst observed |
 | --- | --- | --- |
 | Z %Hs JONSWAP | 6.9 | 6.86 (H0.27) |
 | Z %Hs PM-Stokes | 6.9 | 6.81 (H0.27) |
-| yaw deg | 2.2 | 2.16 (pmstokes H1.5) |
+| yaw deg | **2.18** | 2.1605 (pmstokes H1.5) |
 | 3D % JONSWAP | 21.1 | 20.91 (H1.5) |
 | 3D % PM-Stokes | 21.2 | 21.02 (H8.5) |
 | acc Z bias % | 5.4 | 5.33 (pmstokes H8.5) |
 | bias 3D % | 92.2 | 91.65 (jonswap H4.0, accel) |
 
-### OU-III — unchanged
+### OU-III — yaw re-cut, rest unchanged
 
 | gate | limit | worst observed |
 | --- | --- | --- |
 | Z %Hs JONSWAP | 4.8 | 4.70 (H0.27) |
 | Z %Hs PM-Stokes | 4.7 | 4.66 (H0.27) |
-| yaw deg | 1.1 | 1.06 (jonswap H0.27) |
+| yaw deg | **1.07** | 1.0627 (jonswap H0.27) |
 | 3D % JONSWAP | 21.1 | 20.94 (H1.5) |
 | 3D % PM-Stokes | 20.9 | 20.72 (H4.0) |
 | acc Z bias % | 5.0 | 4.91 (jonswap H8.5) |
@@ -81,13 +92,13 @@ Yaw is free and ungated here, and the 3D and bias limits are open by design.
 | raw Z %Hs JONSWAP | 7.3 | 7.21 (H8.5) |
 | raw Z %Hs PM-Stokes | 7.2 | 7.09 (H8.5) |
 
-### PII observer — unchanged
+### PII observer — yaw re-cut, rest unchanged
 
 | gate | limit | worst observed |
 | --- | --- | --- |
 | Z %Hs JONSWAP | 9.0 | 8.87 (H8.5) |
 | Z %Hs PM-Stokes | 9.5 | 9.36 (H8.5) |
-| yaw deg | 10.9 | 10.78 (pmstokes H8.5) |
+| yaw deg | **10.84** | 10.7801 (pmstokes H8.5) |
 
 ### TFG — all seven re-derived
 
@@ -95,7 +106,7 @@ Yaw is free and ungated here, and the 3D and bias limits are open by design.
 | --- | --- | --- | --- |
 | Z %Hs JONSWAP | 5.5 | **5.3** | 5.21 (H0.27) |
 | Z %Hs PM-Stokes | 5.4 | **5.2** | 5.10 (H0.27) |
-| yaw deg | 3.3 | **3.0** | 2.92 (pmstokes H4.0) |
+| yaw deg | 3.3 | **2.94** | 2.9230 (pmstokes H4.0) |
 | 3D % JONSWAP | 30.6 | **21.1** | 20.99 (H1.5) |
 | 3D % PM-Stokes | 68.0 | **26.0** | 25.78 (H4.0) |
 | acc Z bias % | 9.5 | **8.9** | 8.84 (jonswap H4.0) |
@@ -138,6 +149,45 @@ cd tests/<dir> && W3D_COLLECT_ALL_GATES=1 W3D_WRITE_TIMESERIES=0 ./<sim>
 ```
 
 with the eight `wave_data_{jonswap,pmstokes}_*.csv` records in the working
-directory. The metrics are deterministic: `-march=native`, `x86-64` and
-`x86-64-v2` agree to within 6e-6 relative, which is why the sentinels can sit
-half a percent above what the filter produces without failing every run.
+directory.
+
+## How tight is safe: the determinism budget, measured
+
+The half-percent margin only works because the metrics are reproducible, and
+the simulator comments used to put that reproducibility at 6e-6 relative across
+`-march` levels. That number is now stale for the two filters that carry matrix
+solves. Rebuilding each simulator at `-march=x86-64` instead of the host's
+native `cascadelake` and rescoring all eight records:
+
+| family | worst yaw drift | worst drift, any gated channel |
+| --- | --- | --- |
+| OU-III | **8.3e-4** (jonswap H8.5) | 8.3e-4 — yaw is the worst channel |
+| TFG | 2.6e-4 (pmstokes H8.5) | 8.8e-4 (gyro bias 3D, pmstokes H4.0) |
+| OU-II | 2.4e-4 (jonswap H4.0) | 4.4e-4 (acc bias 3D, jonswap H8.5) |
+| PII observer | 0 — bit-identical | 1.5e-6 (Z, pmstokes H1.5) |
+| NLO | not gated | 1.5e-6 (raw Z, pmstokes H4.0) |
+
+So 6e-6 still describes NLO and the PII observer, and understates the OU and
+TFG families by two orders of magnitude. The likely cause is visible in the
+code rather than inferred: OU-III's continuous hard-iron solve inverts a normal
+matrix of order 1e-3, which multiplies the last bits of a `double` accumulation
+by up to a thousand on the way into the applied offset, and the applied offset
+walks the heading — so yaw is exactly where it should show up, and does.
+
+Half a percent still leaves 6x on the tightest gate in the set (OU-III yaw) and
+better than 10x everywhere else, so the re-cut values are safe. They are not
+safe by an enormous factor any more, which is the reason this table exists:
+cutting a gate finer than a hundredth of a degree, or below half a percent on
+any channel, needs this measurement redone first rather than the old 6e-6
+quoted at it.
+
+Reproduce with:
+
+```
+make -C tests/<dir> clean
+make -C tests/<dir> build CXXFLAGS="-O3 -std=c++20 -Wall -Wextra -Wshadow \
+  -Wconversion -funroll-loops -fno-finite-math-only -I$PWD/src \
+  -isystem /usr/include/eigen3 -march=x86-64"
+```
+
+and compare the `Angles RMS` and `XYZ RMS` lines against a native build.

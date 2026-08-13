@@ -574,13 +574,27 @@ private:
 
 // Regression sentinels for the deterministic single-realization protocol, not
 // targets.  Each is the worst value the current filter produces across the
-// scored records plus about half a percent, rounded up to the next tenth.
+// scored records plus about half a percent, rounded up in the last digit the
+// channel is quoted in -- a tenth for the percentage channels, a hundredth for
+// yaw.  Yaw is quoted finer on purpose: at about one degree, a tenth is three
+// percent of the value, so rounding it like a percentage channel hands back
+// six times the margin the rule asks for.
 //
-// That margin is deliberately small because the metrics are deterministic: the
-// same records and seeds under -march=native, x86-64 and x86-64-v2 agree to
-// within 6e-6 relative, so a limit this close only trips when the filter
-// actually gets worse.  Setting one below what the filter currently achieves
-// makes it fail every run rather than catching a regression.
+// That margin is deliberately small because the metrics are deterministic, and
+// the size of "deterministic" is measured rather than assumed.  Rebuilding the
+// same records and seeds at -march=x86-64 instead of the host's native
+// cascadelake moves the gated numbers by at most 8.3e-4 relative, the worst of
+// them on yaw (jonswap H8.5).  That is two orders of magnitude coarser than
+// the 6e-6 this comment used to claim, and the claim was not wrong when it was
+// written: the continuous hard-iron solve inverts a normal matrix of order
+// 1e-3, which multiplies the last bits of the accumulation by up to a thousand
+// on its way into the applied offset.  Half a percent still leaves six times
+// the observed build-to-build spread on the tightest gate here, but it is no
+// longer an enormous factor, and a future sentinel should be checked against a
+// re-measurement rather than against this paragraph.
+//
+// Setting one below what the filter currently achieves makes it fail every run
+// rather than catching a regression.
 //
 // Re-derived for the 900 s scoring window: a sentinel fitted to the
 // previous 60 s window is not a sentinel for this one, it is just a number the
@@ -614,10 +628,16 @@ private:
 // observable quantity here, with an error that exceeds the true bias under
 // every configuration this filter has ever shipped -- absorbs some of that
 // motion.  See docs/ou-iii-continuous-hard-iron.md.
+//
+// Yaw re-cut to hundredths, 1.1 -> 1.07.  Nothing about the filter moved; the
+// tenth was carrying 3.5 percent of slack on a channel whose rule says half a
+// percent, which is the widest gap of any gate in any family here.  The other
+// six are inside a point of the rule at the precision they are quoted in and
+// keep their values; docs/quality-gate-regauge.md lists the slack on each.
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 4.8f,    // worst 4.70 (jonswap H0.27)
     .err_limit_percent_z_pmstokes  = 4.7f,    // worst 4.66 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.1f,    // worst 1.06 (jonswap H0.27)
+    .err_limit_yaw_deg             = 1.07f,   // worst 1.0627 (jonswap H0.27)
     .err_limit_percent_3d_jonswap  = 21.1f,   // worst 20.94 (jonswap H1.5)
     .err_limit_percent_3d_pmstokes = 20.9f,   // worst 20.72 (pmstokes H4.0)
     .acc_z_bias_percent            = 5.0f,    // worst 4.91 (jonswap H8.5)
