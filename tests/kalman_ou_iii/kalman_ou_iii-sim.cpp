@@ -675,14 +675,50 @@ private:
 // the few that moves the other way.  reports/results/ou_anisotropy carries
 // both.  The three bias and displacement gates that come down are real gains
 // and are cut to the rule like the rest.
+//
+// Then tightened twice more, with the filter standing still for both.
+//
+// First the quantum.  "Rounded up in the last digit the channel is quoted in"
+// only delivers one margin if that digit is a fixed *fraction* of the value,
+// and it was a fixed absolute step -- a hundredth, which is 0.2 percent of a
+// 4.7 and 0.01 percent of an 81.  The three gates quoted near 4.7 were
+// carrying 0.63 to 0.69 percent against a rule that asks for half of one,
+// purely from where the decimal fell.  Quoting every channel to four
+// significant figures lands all of them between 0.51 and 0.57:
+//
+//   Z %Hs JONSWAP    4.74 -> 4.735    worst 4.7106   0.63% -> 0.52%
+//   Z %Hs PM-Stokes  4.69 -> 4.682    worst 4.6580   0.69% -> 0.52%
+//   acc Z bias %     4.63 -> 4.624    worst 4.6004   0.64% -> 0.51%
+//
+// Then roll and pitch, which this simulator has measured every run and gated
+// never.  What the filter has taken on over the last several changes -- the
+// Mahony-proxy startup policy, the two-stage magnetic reference, the
+// continuous hard-iron correction, and S_factor = 1 -- is mostly attitude
+// work, and yaw was the only attitude channel carrying a sentinel.  Both are
+// quiet and well clear of their bars across the eight records (roll 0.2374 to
+// 0.4179, pitch 0.1716 to 0.2200 deg).  They are gated like yaw, on the
+// magnetometer-on protocol only, and for the same reason: dropping the
+// magnetometer takes worst-case pitch to 0.2595 deg, past the bar below,
+// while worst-case roll goes the other way and improves by 19 percent.  Bars
+// fitted with the magnetometer are not measuring the IMU-only filter, and
+// scoring it against them would fail it on a channel nobody fitted for it.
+//
+// All nine limits are what tools/ou_regauge_gates.py prints for the filter
+// that ships, and all nine hold on an -march=x86-64 rebuild as well as on a
+// native one -- the thinnest margin-to-drift ratio in this family is 169x, on
+// pitch.  docs/quality-gate-regauge.md carries that measurement and the
+// command that redoes it, which is the check to repeat before cutting any of
+// these finer.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.74f,   // was 4.72,  worst 4.7106 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.69f,   // unchanged, worst 4.6580 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.297f,  // was 1.068, worst 1.2896 (jonswap H1.5)
-    .err_limit_percent_3d_jonswap  = 20.95f,  // was 21.05, worst 20.8367 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 20.86f,  // was 20.83, worst 20.7483 (pmstokes H4.0)
-    .acc_z_bias_percent            = 4.63f,   // was 4.93,  worst 4.6004 (jonswap H8.5)
-    .bias_3d_percent               = 81.84f,  // was 98.4,  worst 81.4268 (pmstokes H4.0, accel)
+    .err_limit_percent_z_jonswap   = 4.735f,  // was 4.74,  worst 4.7106 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.682f,  // was 4.69,  worst 4.6580 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.297f,  // unchanged, worst 1.2896 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.42f,   // new,       worst 0.4179 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.2211f, // new,       worst 0.2200 (pmstokes H4.0)
+    .err_limit_percent_3d_jonswap  = 20.95f,  // unchanged, worst 20.8367 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 20.86f,  // unchanged, worst 20.7483 (pmstokes H4.0)
+    .acc_z_bias_percent            = 4.624f,  // was 4.63,  worst 4.6004 (jonswap H8.5)
+    .bias_3d_percent               = 81.84f,  // unchanged, worst 81.4268 (pmstokes H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

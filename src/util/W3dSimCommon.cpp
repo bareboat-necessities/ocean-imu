@@ -1476,6 +1476,25 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     fail_if("Z", z_pct, limit_z);
     fail_if("3D", pct_3d, limit_3d);
 
+    // The attitude bars are fitted to the deployed protocol, which runs the
+    // magnetometer, so an IMU-only run is not scored against them -- the same
+    // rule yaw has always followed here, and for the same reason.  Roll and
+    // pitch are observable without a magnetometer, but not equally well:
+    // worst-case pitch over the eight records rises 18 percent for OU-III and
+    // 97 percent for OU-II under --nomag, while worst-case roll rises 13
+    // percent for OU-II and *falls* 19 percent for OU-III.  A bar fitted with
+    // the magnetometer is measuring a different filter without it.
+    auto fail_attitude_if = [&](const char* label, float deg, float limit) {
+        if (!result.with_mag || !(limit > 0.0f)) return;
+        if (deg > limit) {
+            failed = true;
+            fail_reason = std::string(label) + "_limit_exceeded";
+            std::cerr << "ERROR: " << label << " RMS above limit (" << deg
+                      << " deg > " << limit << " deg). Failing.\n";
+            if (!collect_all_gates) std::exit(EXIT_FAILURE);
+        }
+    };
+
     if (result.with_mag && rms_yaw.rms() > limits.err_limit_yaw_deg) {
         failed = true;
         fail_reason = "yaw_limit_exceeded";
@@ -1483,6 +1502,8 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
                   << limits.err_limit_yaw_deg << " deg). Failing.\n";
         if (!collect_all_gates) std::exit(EXIT_FAILURE);
     }
+    fail_attitude_if("Roll", rms_roll.rms(), limits.err_limit_roll_deg);
+    fail_attitude_if("Pitch", rms_pitch.rms(), limits.err_limit_pitch_deg);
 
     const float accb_z_pct = pct_of_max(accb_rz, acc_true_max_z);
     if (std::isfinite(accb_z_pct) && accb_z_pct > limits.acc_z_bias_percent) {
