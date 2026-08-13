@@ -583,6 +583,13 @@ Estimating the horizontal stationary covariance per axis, and feeding the full
 3x3 through the existing `set_aw_stationary_cov_full`, remains the natural next
 step and would make the OU process direction-aware.
 
+Since measured in [`ou-iii-anisotropy-consistency.md`](ou-iii-anisotropy-consistency.md):
+`S_factor = 1.87` with an isotropic `r_S` is not the equal-similarity point --
+`sigma_S ~ sigma_aw tau^3` puts that at `R_S_xy_factor = S_factor` -- but
+enforcing the consistent value costs 13.7% of pooled 3D RMS, while taking
+`S_factor` to 1 saves 2.6% pooled and 7.7% in the `H_s = 8.5` m sea. The
+`sigma_aw` side is the one worth the re-gauge; `R_S_xy_factor = 1` stands.
+
 ### Stage E - re-validation and manuscript (done)
 
 Both committed evidence bundles pin a SHA-256 of the simulator sources they

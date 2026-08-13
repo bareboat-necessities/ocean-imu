@@ -680,9 +680,19 @@ public:
             S_factor_ = s;
         }
     }
+    // The upper bound is 4, not 1.  A ceiling of 1 encoded the assumption that
+    // the horizontal integral anchor can only ever be tighter than the vertical
+    // one, which silently excluded the value the similarity law asks for: with
+    // sigma_aw,H = S_factor * sigma_aw,Z the natural scale of the horizontal S
+    // state is S_factor times the vertical one (Theorem "Nondimensional
+    // similarity of the OU-III chain", sigma_S ~ sigma_aw tau^3), so the
+    // dimensionless regularizer r_S/(sigma_aw tau^3) is equal on all three axes
+    // only at R_S_xy_factor = S_factor > 1.  Under the old clamp that
+    // configuration was accepted and then silently reduced to 1, so an ablation
+    // of it measured nothing and looked like a null result.
     void setRSXYFactor(float k) {
         if (std::isfinite(k)) {
-            R_S_xy_factor_ = std::min(std::max(k, 0.0f), 1.0f);
+            R_S_xy_factor_ = std::min(std::max(k, 0.0f), 4.0f);
         }
     }
 

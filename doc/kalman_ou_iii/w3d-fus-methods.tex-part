@@ -403,6 +403,28 @@ small-sea optimum applied to every sea state, and with the operating point tied
 to the wave band every stationary record scores better with the two equal.  The
 parameter is retained because the bound is real, but the deployed value no
 longer imposes an anisotropy.
+
+The two constants are deliberately not tied to each other.  Theorem
+\ref{thm:ou-chain-similarity} gives the natural scale of the third integral as
+$\sigma_S\sim\sigma_{aw}\tau^3$ componentwise, so the axis-consistent choice
+would be $\rho_{xy}=S_\sigma$: with $\rho_{xy}=1$ the dimensionless regularizer
+$r_S/(\sigma_{aw}\tau^3)$ is $S_\sigma$ times smaller horizontally,
+equivalently the horizontal normalized pole $\kappa=\omega_R\tau$ sits
+$S_\sigma^{1/3}=1.23$ times higher.  A five-seed paired sweep of both constants
+over the four stationary records (\texttt{docs/ou-iii-anisotropy-consistency.md})
+rejects that choice: enforcing $\rho_{xy}=S_\sigma$ raises pooled 3D
+displacement RMS by $13.7\,\%$, on every record and every seed, and $\rho_{xy}$
+acts as a trade between the two horizontal axes rather than as a
+horizontal-versus-vertical control.  The similarity law makes the prior
+self-similar across axes; it does not make the disturbance self-similar, and
+the horizontal channels reject tilt and horizontal-bias drift whose
+low-frequency content does not scale with the sea's horizontal acceleration
+amplitude.  The same sweep locates the residual mis-specification in $S_\sigma$
+itself, which the records place near unity (per-axis $0.81$ and $0.55$ of
+vertical, $0.99$ combined) and which is worth $7.7\,\%$ of 3D RMS in the
+$H_s=8.5$ m sea; that is a re-gauge of the stationary acceleration prior, not
+of the regularizer.
+
 Its componentwise square defines the covariance,
 \begin{equation}
 \mat{R}_S=\diag\!\left(\vct{r}_S\odot\vct{r}_S\right),
