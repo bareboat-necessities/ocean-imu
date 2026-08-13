@@ -574,13 +574,27 @@ private:
 
 // Regression sentinels for the deterministic single-realization protocol, not
 // targets.  Each is the worst value the current filter produces across the
-// scored records plus about half a percent, rounded up to the next tenth.
+// scored records plus about half a percent, rounded up in the last digit the
+// channel is quoted in -- a tenth for the percentage channels, a hundredth for
+// yaw.  Yaw is quoted finer on purpose: at about one degree, a tenth is three
+// percent of the value, so rounding it like a percentage channel hands back
+// six times the margin the rule asks for.
 //
-// That margin is deliberately small because the metrics are deterministic: the
-// same records and seeds under -march=native, x86-64 and x86-64-v2 agree to
-// within 6e-6 relative, so a limit this close only trips when the filter
-// actually gets worse.  Setting one below what the filter currently achieves
-// makes it fail every run rather than catching a regression.
+// That margin is deliberately small because the metrics are deterministic, and
+// the size of "deterministic" is measured rather than assumed.  Rebuilding the
+// same records and seeds at -march=x86-64 instead of the host's native
+// cascadelake moves the gated numbers by at most 8.3e-4 relative, the worst of
+// them on yaw (jonswap H8.5).  That is two orders of magnitude coarser than
+// the 6e-6 this comment used to claim, and the claim was not wrong when it was
+// written: the continuous hard-iron solve inverts a normal matrix of order
+// 1e-3, which multiplies the last bits of the accumulation by up to a thousand
+// on its way into the applied offset.  Half a percent still leaves six times
+// the observed build-to-build spread on the tightest gate here, but it is no
+// longer an enormous factor, and a future sentinel should be checked against a
+// re-measurement rather than against this paragraph.
+//
+// Setting one below what the filter currently achieves makes it fail every run
+// rather than catching a regression.
 //
 // Re-derived for the 900 s scoring window: a sentinel fitted to the
 // previous 60 s window is not a sentinel for this one, it is just a number the
@@ -613,15 +627,38 @@ private:
 // during the run, and the horizontal accelerometer bias -- already the least
 // observable quantity here, with an error that exceeds the true bias under
 // every configuration this filter has ever shipped -- absorbs some of that
-// motion.  See docs/ou-iii-continuous-hard-iron.md.
+// motion.  See docs/continuous-mag-hard-iron.md.
+//
+// Then cut to the rule rather than to the quantum.  A tenth is 2 percent of a
+// 4.7 and 2 percent of a 5.0, so rounding a half-percent margin up to the next
+// tenth was handing back four times what the rule asks for on the small-valued
+// channels.  Each gate is now written to whatever precision delivers about half
+// a percent -- a thousandth for yaw, a hundredth for the single-digit
+// percentages, a tenth where a tenth is already fine enough.
+//
+//   Z %Hs JONSWAP    4.8  -> 4.72    worst 4.6952   2.23% -> 0.53%
+//   Z %Hs PM-Stokes  4.7  -> 4.69    worst 4.6600   0.86% -> 0.64%
+//   yaw deg          1.07 -> 1.068   worst 1.0627   0.69% -> 0.50%
+//   3D % JONSWAP     21.1 -> 21.05   worst 20.9361  0.78% -> 0.55%
+//   3D % PM-Stokes   20.9 -> 20.83   worst 20.7197  0.87% -> 0.53%
+//   acc Z bias %     5.0  -> 4.93    worst 4.9054   1.93% -> 0.50%
+//   acc 3D bias %    98.4 -> 98.4    worst 97.8908  0.52%, already there
+//
+// Checked against the spread these have to survive, not against the rule alone.
+// The binding records move by 2.8e-5 (yaw) to 3.6e-4 (3D bias) relative between
+// a native cascadelake build and an -march=x86-64 one, so the thinnest of these
+// margins is 15 times the spread and most are hundreds.  Both builds pass all
+// seven.  docs/quality-gate-regauge.md carries that measurement and the command
+// that redoes it, which is the check to repeat before cutting any of these
+// finer.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.8f,    // worst 4.70 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.7f,    // worst 4.66 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.1f,    // worst 1.06 (jonswap H0.27)
-    .err_limit_percent_3d_jonswap  = 21.1f,   // worst 20.94 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 20.9f,   // worst 20.72 (pmstokes H4.0)
-    .acc_z_bias_percent            = 5.0f,    // worst 4.91 (jonswap H8.5)
-    .bias_3d_percent               = 98.4f,   // worst 97.89 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 4.72f,   // was 4.8,  worst 4.6952 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.69f,   // was 4.7,  worst 4.6600 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.068f,  // was 1.07, worst 1.0627 (jonswap H0.27)
+    .err_limit_percent_3d_jonswap  = 21.05f,  // was 21.1, worst 20.9361 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 20.83f,  // was 20.9, worst 20.7197 (pmstokes H4.0)
+    .acc_z_bias_percent            = 4.93f,   // was 5.0,  worst 4.9054 (jonswap H8.5)
+    .bias_3d_percent               = 98.4f,   // unchanged, worst 97.8908 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

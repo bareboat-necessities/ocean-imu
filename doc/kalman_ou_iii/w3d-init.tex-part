@@ -225,9 +225,18 @@ approach, roughly doubling the roll and bias gain at the cost of about
 \SI{80}{s} more before the device reports a heading.  Which of those matters is
 an application decision, so both are supported and the fast one is the default.
 
+Every column of Table~\ref{tab:startup_policy} is scored with the continuous
+hard-iron correction of Sec.~\ref{sec:mag-hard-iron} disabled.  That correction
+runs only under the proxy policy --- it consumes the proxy's tilt --- so
+enabling it would compare the two policies on different measurement models
+rather than on the estimator that supplies the startup tilt.  Its own effect,
+which is much larger than anything in the yaw row here, is reported separately
+in Sec.~\ref{sec:mag-hi-results}.
+
 \begin{table}[t]
 \caption{Startup-policy comparison over the eight reference records, trailing
-\SI{900}{s}, mean across records.  The one-stage column is the same policy
+\SI{900}{s}, mean across records, with the continuous hard-iron correction
+disabled in all columns.  The one-stage column is the same policy
 with the refinement disabled and the provisional lock deferred to \SI{90}{s};
 its displacement figures are omitted because they were measured on an earlier
 tree and are not restated here.}
@@ -269,7 +278,11 @@ eight-record mean yaw only between \SI{1.825}{\degree} and
 \SI{1.856}{\degree}, and with the noise generators disabled yaw RMS on the
 calmest record falls from \SI{2.071}{\degree} to \SI{0.153}{\degree}: about
 \pct{93} of it is magnetometer error, not attitude error.  Heading is constant
-in these records, so the hard-iron offset is absorbed into the reference and
-what remains is wave-modulated soft-iron distortion, which no attitude
-estimator can undo and no averaging window can cancel.  Closing that gap is a
-magnetometer-calibration question, not a startup-initialization one.
+in these records, so the hard-iron offset is absorbed into the learned
+reference, where it becomes the gauge itself and no attitude estimator can undo
+it.  Closing that gap is a magnetometer-calibration question rather than a
+startup-initialization one, and Sec.~\ref{sec:mag-hard-iron} is the answer this
+filter ships: an oracle diagnostic there attributes the standing error almost
+entirely to that absorbed offset, and estimating it continuously --- which is
+what no averaging window closed at startup can do --- removes more than half of
+it.

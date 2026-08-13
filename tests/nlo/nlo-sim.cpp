@@ -49,9 +49,16 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 // These gate RAW Z RMS. Earlier revisions gated the de-meaned value, which
 // could not see the standing heave offset at all; the observer now removes
 // that offset on the reporting path, so the raw number is the one to hold.
+// Cut to hundredths.  A tenth is 1.4 percent of a 7.2, so rounding a
+// half-percent margin up to the next tenth was handing back three times the
+// rule; 7.26 and 7.13 give it back.  This observer is also the most
+// reproducible of the set -- rebuilding at -march=x86-64 instead of the host's
+// native cascadelake moves the scored Z by 1.5e-6 relative, so these margins
+// are four thousand times the spread they have to survive.  See
+// docs/quality-gate-regauge.md.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 7.3f,    // worst 7.21 (jonswap H8.5)
-    .err_limit_percent_z_pmstokes  = 7.2f,    // worst 7.09 (pmstokes H8.5)
+    .err_limit_percent_z_jonswap   = 7.26f,   // was 7.3, worst 7.2143 (jonswap H8.5)
+    .err_limit_percent_z_pmstokes  = 7.13f,   // was 7.2, worst 7.0865 (pmstokes H8.5)
     .err_limit_yaw_deg             = 8.0f,    // yaw is free here and is not gated
     .err_limit_percent_3d_jonswap  = 9999.0f,
     .err_limit_percent_3d_pmstokes = 9999.0f,

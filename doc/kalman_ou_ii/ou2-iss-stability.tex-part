@@ -87,6 +87,19 @@ and the residual accelerometer-bias OU update is active throughout the certified
 interval.  The latter qualification matters because the startup magnetometer
 lock deliberately freezes accelerometer-bias learning for a short time.
 
+The magnetic world reference is a measurement-model parameter here, not a state,
+and the continuous hard-iron correction moves it slowly during the run: the
+applied body-frame offset slews with a \SI{45}{s} time constant and the
+reference's magnitude and dip follow it by the matching delta.  That is inside
+the assumptions above rather than an exception to them.  The correction writes
+no state and resets no covariance, the reference stays bounded and non-collinear
+with the specific-force direction by the same margins, and the estimator that
+produces it reads only gravity-referenced tilt and the raw magnetometer, so it
+adds no feedback path from the filter state into $H_k$.  A bounded,
+slowly varying reference error enters the ISS bound as a modeling disturbance,
+which is the term it was already carrying for an imperfect one-shot
+calibration.
+
 \subsection{Uniform observability of the OU--II translational block}
 
 For one axis, the homogeneous translational model is

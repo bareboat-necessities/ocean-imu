@@ -238,37 +238,77 @@ void process_one(const std::string& filename,
     }
 
     /*
-        Worst observed over the eight-record set, with a small margin.
+        Worst observed over the eight-record set, with a small margin -- worst
+        observed plus about half a percent, rounded up in the last digit the
+        channel is quoted in, the rule the OU simulators state.  Yaw is quoted
+        to hundredths there and here: a tenth of a degree is 3% of a
+        three-degree gate, which is six times the margin the rule asks for.
 
-          channel            TFG worst   this gate   OU-III gate
-          Z RMS  jonswap        5.39        5.5          5.4
-          Z RMS  pmstokes       5.29        5.4          5.3
-          yaw                   3.19        3.3          2.2
-          3D     jonswap       30.31       30.6         21.4
-          3D     pmstokes      67.63       68.0         22.0
-          acc bias Z            9.30        9.5          5.9
-          acc bias 3D         412.29      415.0        109.4
+          channel            TFG worst   this gate   was    OU-III gate
+          Z RMS  jonswap        5.21        5.24      5.5      4.72
+          Z RMS  pmstokes       5.10        5.13      5.4      4.69
+          yaw                   2.92        2.938     3.3      1.068
+          3D     jonswap       20.99       21.1      30.6     21.05
+          3D     pmstokes      25.78       25.91     68.0     20.83
+          acc bias Z            8.84        8.89      9.5      4.93
+          acc bias 3D         398.22      400.3     415.0     98.4
 
-        Vertical is at parity with OU-III and six of the eight records beat its
-        worst observed value. The horizontal and bias channels are not: 3D
-        error degrades sharply on the large-wave records (H4.0 and H8.5), and
-        accelerometer-bias error is several times OU-III's.
+        Every bar comes down, and none of that is this file's doing: the
+        previous set was fitted before the adaptation-policy work that brought
+        the orchestrator's exogeneity timing, commit cadence, r_S floor and
+        tau-scaled S=0 cadence up to OU-III's, and the gates were not
+        re-derived afterwards. A sentinel carrying ten points of slack on the
+        horizontal channel is not a sentinel, so they are re-derived here
+        against the same eight records the generated results table reports.
 
-        Those last two gates are therefore recording a known deficiency rather
-        than endorsing it. They belong in the article as a finding, and the
-        cause is not yet established -- the pattern points at the horizontal
-        channels under large orbital motion, which is where OU-III's own
-        article already reports paying for its vertical gain, but that is a
-        hypothesis and not a measurement.
+        What that changes about the standing finding. The horizontal channel is
+        no longer the outlier it was: 3D error on JONSWAP now sits exactly at
+        OU-III's own bar and PM--Stokes within five points of it, where it used
+        to be three times worse on the large-wave records. Accelerometer bias
+        still is the outlier -- four times OU-III's, and above 100% of the true
+        bias on six of the eight records, which means the error exceeds the
+        quantity being estimated. That gate records a known deficiency rather
+        than endorsing it, and the cause remains unestablished.
+
+        Yaw stays about three times OU-III's, and OU-II's, because the
+        continuous magnetic hard-iron correction is carried by both OU families
+        and not by this one; the standing heading error it removes is still
+        here, and its gauge argument is in the OU-III article.
+
+        bias_3d_percent gates the gyro channel too. The accelerometer sets it
+        -- the gyro's worst is 125.60% on pmstokes H4.0 -- so a gyro-bias
+        regression has to more than triple before this bar sees it. Splitting
+        the two is a change to W3dFailureLimits and to every family that uses
+        it, and is deliberately not made here.
+    */
+    /*
+        Each bar is written to whatever precision delivers about half a percent
+        over the worst observed value, rather than to a tenth regardless of the
+        value: a tenth is 2 percent of a 5.2 and 0.03 percent of a 400, so one
+        quantum for every channel means the small ones carry four times the
+        margin the rule asks for and the large ones carry none of it.
+
+          channel          worst   this bar   at a tenth   margin
+          Z RMS  jonswap    5.21     5.24        5.3        0.60%
+          Z RMS  pmstokes   5.10     5.13        5.2        0.58%
+          yaw               2.92     2.938       3.0        0.51%
+          3D     jonswap   20.99    21.1        21.1        0.52%
+          3D     pmstokes  25.78    25.91       26.0        0.52%
+          acc bias Z        8.84     8.89        8.9        0.61%
+          acc bias 3D     398.22   400.3       400.3        0.52%
+
+        Both an -march=native and an -march=x86-64 build pass all seven; the
+        binding records move by up to 3.7e-4 relative between them, so the
+        thinnest margin here is 14 times the spread it has to survive.
     */
     static constexpr W3dFailureLimits kRegressionBars{
-        .err_limit_percent_z_jonswap   = 5.5f,
-        .err_limit_percent_z_pmstokes  = 5.4f,
-        .err_limit_yaw_deg             = 3.3f,
-        .err_limit_percent_3d_jonswap  = 30.6f,
-        .err_limit_percent_3d_pmstokes = 68.0f,
-        .acc_z_bias_percent            = 9.5f,
-        .bias_3d_percent               = 415.0f,
+        .err_limit_percent_z_jonswap   = 5.24f,   // was 5.3,  worst 5.2090 (jonswap H0.27)
+        .err_limit_percent_z_pmstokes  = 5.13f,   // was 5.2,  worst 5.1004 (pmstokes H0.27)
+        .err_limit_yaw_deg             = 2.938f,  // was 2.94, worst 2.9230 (pmstokes H4.0)
+        .err_limit_percent_3d_jonswap  = 21.1f,   // unchanged, worst 20.9914 (jonswap H1.5)
+        .err_limit_percent_3d_pmstokes = 25.91f,  // was 26.0, worst 25.7764 (pmstokes H4.0)
+        .acc_z_bias_percent            = 8.89f,   // was 8.9,  worst 8.8360 (jonswap H4.0)
+        .bias_3d_percent               = 400.3f,  // unchanged, worst 398.2190 (jonswap H4.0, accel)
     };
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };

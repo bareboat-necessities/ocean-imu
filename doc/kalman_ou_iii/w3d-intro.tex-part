@@ -232,6 +232,16 @@ The main contributions of this work are:
         temperature-calibration disturbances. The optional legacy raw
         $\vct a_w$ covariance-replacement mode and general sample-time jitter
         of the nominal $S$ deadlines are explicitly outside that proof.
+  \item A continuously running, exogenous estimator of the body-fixed
+        magnetometer offset, with the identification argument for why a
+        startup window cannot supply it, an excitation-scaled ridge that
+        prices the soft-iron and misalignment error it necessarily aliases,
+        and an application path that changes measurement-model parameters
+        only, writing no attitude state. It removes more than half of the
+        standing heading error, and its failure mode --- a calibration draw
+        whose standing error is misalignment-dominated rather than
+        offset-dominated --- is measured rather than assumed
+        (Sec.~\ref{sec:mag-hard-iron}).
   \item A formulation independent of hydrodynamic equations, relying instead on
         oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
   \item A common-record deterministic comparison against a published nonlinear

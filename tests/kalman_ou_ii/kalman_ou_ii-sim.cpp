@@ -396,6 +396,17 @@ public:
         if (env_float("SF_MAG_REFINE_START_SEC", vf)) cfg_.mag_refine_start_sec = vf;
         if (env_float("SF_MAG_REFINE_WINDOW_SEC", vf)) cfg_.mag_refine_window_sec = vf;
         if (const char* r = std::getenv("SF_MAG_REFINE")) cfg_.mag_refine_enabled = (std::string(r) != "0");
+        // Continuous exogenous hard-iron estimation.  Same names as OU-III's,
+        // so a paired study can set one environment and run both families.
+        if (const char* h = std::getenv("SF_MAG_CONT_HI")) cfg_.mag_continuous_hard_iron = (std::string(h) != "0");
+        if (env_float("SF_MAG_HI_MEMORY_SEC", vf)) cfg_.mag_hi_memory_sec = vf;
+        if (env_float("SF_MAG_HI_RIDGE", vf)) cfg_.mag_hi_model_ridge = vf;
+        if (env_float("SF_MAG_HI_RIDGE_REL", vf)) cfg_.mag_hi_model_ridge_relative = vf;
+        if (env_float("SF_MAG_HI_MIN_INFO", vf)) cfg_.mag_hi_min_information = vf;
+        if (env_float("SF_MAG_HI_MIN_WEIGHT", vf)) cfg_.mag_hi_min_effective_weight = vf;
+        if (env_float("SF_MAG_HI_MAX_RESID", vf)) cfg_.mag_hi_max_residual_rms_uT = vf;
+        if (env_float("SF_MAG_HI_FRACTION", vf)) cfg_.mag_hi_apply_fraction = vf;
+        if (env_float("SF_MAG_HI_SLEW_TAU", vf)) cfg_.mag_hi_slew_tau_sec = vf;
         if (env_float("SF_PROXY_TILT_SIGMA", vf)) cfg_.proxy_handoff_tilt_sigma_rad = vf;
         if (env_float("SF_PROXY_YAW_SIGMA", vf)) cfg_.proxy_handoff_yaw_sigma_rad = vf;
     }
@@ -573,13 +584,23 @@ private:
 
 // Regression sentinels for the deterministic single-realization protocol, not
 // targets.  Each is the worst value the current filter produces across the
-// scored records plus about half a percent, rounded up to the next tenth.
+// scored records plus about half a percent, rounded up in the last digit the
+// channel is quoted in -- a tenth for the percentage channels, a hundredth for
+// yaw, which at about two degrees would otherwise be handed several times the
+// margin the rule asks for.
 //
-// That margin is deliberately small because the metrics are deterministic: the
-// same records and seeds under -march=native, x86-64 and x86-64-v2 agree to
-// within 6e-6 relative, so a limit this close only trips when the filter
-// actually gets worse.  Setting one below what the filter currently achieves
-// makes it fail every run rather than catching a regression.
+// That margin is deliberately small because the metrics are deterministic, and
+// how deterministic is measured rather than assumed: rebuilding at
+// -march=x86-64 instead of the host's native cascadelake moves the gated
+// numbers here by at most 4.4e-4 relative (accelerometer bias 3D, jonswap
+// H8.5), and yaw by 2.4e-4.  The 6e-6 this comment used to claim still holds
+// for the simpler observers -- NLO and the PII observer are within 1.5e-6 --
+// but not for a filter carrying this many matrix solves.  Half a percent
+// leaves better than a factor of ten on every gate below, which is the check
+// to redo before cutting one finer.
+//
+// Setting one below what the filter currently achieves makes it fail every run
+// rather than catching a regression.
 //
 // Re-derived for the 900 s scoring window: a sentinel fitted to the previous
 // 60 s window is not a sentinel for this one, it is just a number the filter
@@ -631,14 +652,74 @@ private:
 //
 // The three that tighten are where the improvement is deterministic enough to
 // show up in one realization as well as in the ensemble.
+//
+// Yaw re-cut to hundredths, 2.2 -> 2.18.  The filter did not move; the tenth
+// was worth 1.8 percent of slack against a rule that asks for half of one.
+// The six percentage-channel gates are already inside a point of the rule at
+// the precision they are quoted in and keep their values.
+//
+// Re-derived once more for the continuous hard-iron correction, which this
+// family now carries on the same defaults as OU-III.  Four of the seven move,
+// and they move the same way and for the same reasons they did there.
+//
+// Yaw halves -- 1.887 to 0.813 deg mean over the eight records, worst 2.161 to
+// 1.089 -- because the standing heading error was never a tracking error.  It
+// was the hard-iron offset absorbed into the world reference at acquisition,
+// which is a gauge, and correcting the stream while moving the reference by a
+// delta walks the filter off it.  That gate has to come down with the error or
+// it stops being a sentinel: 2.18 -> 1.10, which lands within three hundredths
+// of OU-III's own 1.07.
+//
+// Three go up, and saying so is the point of writing this down, because
+// raising a sentinel to admit one's own change is exactly how these stop
+// meaning anything:
+//
+//   acc Z bias %      5.33 -> 5.41   (jonswap H8.5)
+//   acc 3D bias %    91.66 -> 93.90  (jonswap H4.0)
+//   3D % PM-Stokes   21.02 -> 21.19  (pmstokes H8.5)
+//
+// The correction walks the heading onto the corrected field during the run,
+// and the horizontal accelerometer bias absorbs part of that motion.  It is
+// the least observable quantity scored here -- an error above 90 percent of
+// the true bias means the error exceeds the thing being estimated, under every
+// configuration this family has shipped -- so a two-point move in it is not a
+// measurable loss of bias accuracy.  What it is not allowed to be is hidden,
+// hence the numbers above.  The displacement channels are flat: vertical mean
+// 6.454 -> 6.461 percent of Hs, 3D mean 18.90 -> 19.03 percent, and pitch
+// improves (0.289 -> 0.255 deg) for the same reason yaw does.
+//
+// SF_MAG_CONT_HI=0 is the matched ablation and reproduces the pre-correction
+// filter to within 2.6e-4 relative, which is the noise a rebuild of this
+// family produces anyway; see docs/quality-gate-regauge.md.  It exceeds the
+// yaw gate, as it should -- these are fitted to the filter that ships.  Score
+// it with W3D_COLLECT_ALL_GATES.
+// Then cut to the rule, which the tenth-quantum was not delivering on the two
+// single-digit percentage channels.  A tenth is 1.5 percent of a 6.8 and 1.9
+// percent of a 5.4, so rounding a half-percent margin up to one hands back
+// three times what the rule asks for; a hundredth costs nothing to write and
+// gives it back.  Yaw goes to a thousandth for the same reason -- 1.0949
+// rounded to 1.10 is a 0.96 percent bar on a 0.5 percent rule.
+//
+//   Z %Hs PM-Stokes   6.9  -> 6.85    worst 6.8061, margin 1.38% -> 0.65%
+//   yaw deg           1.10 -> 1.095   worst 1.0895, margin 0.96% -> 0.50%
+//   acc Z bias %      5.5  -> 5.44    worst 5.4059, margin 1.74% -> 0.63%
+//
+// The other four were already inside the rule at the precision they are quoted
+// in and are left alone.  These three are checked against the drift measured
+// for this family rather than against the rule alone: the binding records move
+// by 9.4e-5, 1.7e-4 and 3.0e-4 relative between a native and an -march=x86-64
+// build, so the smallest of the three margins is still 21 times the spread it
+// has to survive.  docs/quality-gate-regauge.md carries that measurement and
+// the command that redoes it, which is the check to repeat before cutting any
+// of these finer.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.9f,    // was 7.0,  worst 6.86 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.9f,    // unchanged, worst 6.81 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 2.2f,    // unchanged, worst 2.16 (pmstokes H1.5)
-    .err_limit_percent_3d_jonswap  = 21.1f,   // was 20.9, worst 20.91 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 21.2f,   // was 20.7, worst 21.02 (pmstokes H8.5)
-    .acc_z_bias_percent            = 5.4f,    // was 5.9,  worst 5.33 (pmstokes H8.5)
-    .bias_3d_percent               = 92.2f,   // was 85.4, worst 91.65 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 6.9f,    // unchanged, worst 6.8638 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 6.85f,   // was 6.9,   worst 6.8061 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.095f,  // was 2.18,  worst 1.0895 (jonswap H1.5)
+    .err_limit_percent_3d_jonswap  = 21.1f,   // unchanged, worst 20.99 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 21.3f,   // was 21.2,  worst 21.19 (pmstokes H8.5)
+    .acc_z_bias_percent            = 5.44f,   // was 5.4,   worst 5.4059 (jonswap H8.5)
+    .bias_3d_percent               = 94.4f,   // was 92.2,  worst 93.90 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

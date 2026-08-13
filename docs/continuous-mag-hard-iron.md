@@ -1,10 +1,17 @@
-# OU-III continuous magnetic hard-iron correction
+# Continuous magnetic hard-iron correction
 
-`SeaStateFusion_OU_III::Config::mag_continuous_hard_iron` runs a body-fixed
-magnetometer offset estimator for the whole life of the filter and feeds its
-answer back into the magnetic measurement model. It is on by default. The
-simulator exposes it as `SF_MAG_CONT_HI=0|1`, which is also the matched
-ablation.
+`Config::mag_continuous_hard_iron` runs a body-fixed magnetometer offset
+estimator for the whole life of the filter and feeds its answer back into the
+magnetic measurement model. It is on by default in **both OU families** --
+`SeaStateFusion_OU_III` and `SeaStateFusion_OU_II` -- on identical settings,
+and each simulator exposes it as `SF_MAG_CONT_HI=0|1`, which is also the
+matched ablation.
+
+Everything from here to the OU-II section was measured on OU-III, which is
+where the mechanism was worked out. None of it is specific to the OU-III
+translational model: what the estimator reads is the private Mahony observer's
+tilt and the raw magnetometer, and what it writes is the measurement model.
+The OU-II numbers are at the end.
 
 Scored on the eight reference records, the deterministic 900 s protocol, it
 takes yaw RMS from 1.835 deg mean / 2.162 deg worst to **0.822 deg mean /
@@ -206,7 +213,7 @@ of worst observed plus about half a percent rounded up to the next tenth:
 
 | gate | was | now | worst observed |
 | --- | --- | --- | --- |
-| yaw deg | 2.2 | **1.1** | 1.06 (jonswap H0.27) |
+| yaw deg | 2.2 | **1.068** | 1.0627 (jonswap H0.27) |
 | 3D % PM--Stokes | 20.6 | **20.9** | 20.72 (pmstokes H4.0) |
 | acc Z bias % | 5.6 | **5.0** | 4.91 (jonswap H8.5) |
 | acc 3D bias % | 95.8 | **98.4** | 97.89 (jonswap H4.0) |
@@ -243,3 +250,66 @@ that limit is fitted to the filter that ships. Score the ablation with
 
 The simulator reads each as `SF_MAG_HI_*`; `W3D_MAG_HI_TRACE=1` prints the fit,
 the applied offset, the information and the residual once a minute to stderr.
+
+The table is identical for both families: OU-II takes the same defaults, and a
+sweep that moves one and not the other would be comparing two calibrations
+rather than two filters.
+
+## OU-II
+
+OU-II carries the correction on the same settings, through the same
+`ContinuousMagHardIronEstimator`, wired at the same three points of
+`updateMag()`: accumulate ahead of every startup gate, apply after the
+second-stage refinement has landed, subtract from the stream the MEKF sees.
+The port is mechanical because nothing in the mechanism touches the
+translational model — the estimator reads the private Mahony observer's
+yaw-stripped tilt and the raw magnetometer, and writes measurement-model
+parameters.
+
+Deterministic 900 s protocol, one realization per record, default seeds:
+
+| Record | Hs (m) | yaw off | yaw on | pitch off | pitch on | Z%Hs off | Z%Hs on |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| JONSWAP | 0.27 | 2.069 | 1.062 | 0.193 | 0.195 | 6.860 | 6.864 |
+| JONSWAP | 1.50 | 1.858 | 1.089 | 0.200 | 0.180 | 6.563 | 6.583 |
+| JONSWAP | 4.00 | 1.401 | 0.937 | 0.370 | 0.319 | 6.351 | 6.408 |
+| JONSWAP | 8.50 | 1.327 | 0.583 | 0.418 | 0.362 | 6.263 | 6.270 |
+| PM--Stokes | 0.27 | 2.134 | 0.726 | 0.208 | 0.209 | 6.806 | 6.806 |
+| PM--Stokes | 1.50 | 2.161 | 1.033 | 0.248 | 0.230 | 6.322 | 6.318 |
+| PM--Stokes | 4.00 | 2.086 | 0.504 | 0.341 | 0.288 | 6.190 | 6.186 |
+| PM--Stokes | 8.50 | 2.060 | 0.569 | 0.333 | 0.253 | 6.277 | 6.256 |
+| **mean** | | **1.887** | **0.813** | 0.289 | 0.255 | 6.454 | 6.461 |
+| **worst** | | **2.161** | **1.089** | 0.418 | 0.362 | 6.860 | 6.864 |
+
+Every record improves, mean yaw falls 57%, and the worst record lands at
+1.089 deg against OU-III's 1.063 — the two families end up within three
+hundredths of a degree of each other, which is what should happen when the
+error being removed belongs to the magnetometer rather than to the filter.
+
+The price is the same one OU-III paid, in the same place:
+
+| | off | on |
+| --- | --- | --- |
+| acc Z bias, worst % of true | 5.33 | 5.41 |
+| acc 3D bias, worst % of true | 91.66 | 93.90 |
+| 3D displacement, worst % | 21.02 | 21.19 |
+| vertical, mean %Hs | 6.454 | 6.461 |
+| roll, mean deg | 0.333 | 0.332 |
+
+The horizontal accelerometer bias absorbs part of the heading motion, and it is
+the least observable quantity in the set — an error above 90% of the true bias
+means the error is larger than the thing being estimated, which was true before
+this change and is true after it. Displacement does not move. Four of OU-II's
+seven gates were re-derived accordingly; see `docs/quality-gate-regauge.md`.
+
+With `SF_MAG_CONT_HI=0` the filter reproduces its pre-correction self to within
+2.6e-4 relative, which is the same order as rebuilding it at a different
+`-march`. The ablation is not bit-identical because adding the estimator's
+members to the wrapper changes what the optimizer does with the rest; it is
+identical in behaviour.
+
+The limit stated for OU-III applies unchanged here, because it is a property of
+the identification problem and not of either filter: a calibration draw whose
+standing error is misalignment-dominated rather than offset-dominated has
+nothing for this estimator to win, and the fraction of the distortion it aliases
+moves the gauge the wrong way. The residual gate cannot see that case.

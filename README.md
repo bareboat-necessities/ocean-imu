@@ -219,11 +219,12 @@ transition, and adaptation outcomes rather than uniform superiority. See
 [`docs/ou-validation.md`](docs/ou-validation.md) for the protocol, seed controls,
 and interpretation.
 
-OU-III also keeps a magnetometer hard-iron estimator running for the life of
-the filter, in a gravity-referenced frame that reads no filter state, and moves
-the magnetic reference with it. That halves the standing heading error the
-one-shot startup calibration leaves behind; see
-[`docs/ou-iii-continuous-hard-iron.md`](docs/ou-iii-continuous-hard-iron.md)
+Both OU families also keep a magnetometer hard-iron estimator running for the
+life of the filter, in a gravity-referenced frame that reads no filter state,
+and move the magnetic reference with it. That halves the standing heading error
+the one-shot startup calibration leaves behind -- eight-record mean yaw RMS
+1.835 to 0.822 deg for OU-III and 1.887 to 0.813 deg for OU-II; see
+[`docs/continuous-mag-hard-iron.md`](docs/continuous-mag-hard-iron.md)
 for the mechanism, the results, and the case it cannot fix.
 
 The adaptation channels themselves smooth their targets with an EMA whose time
