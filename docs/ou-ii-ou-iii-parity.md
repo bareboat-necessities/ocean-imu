@@ -8,7 +8,7 @@ wave-period estimator, the private attitude observer, the magnetic acquisition,
 the startup sequencing — is shared machinery that does not know which estimator
 it is driving.
 
-That machinery had drifted. OU-III accumulated four changes that OU-II never
+That machinery had drifted. OU-III accumulated changes that OU-II never
 received, and each of them is about the shared part rather than about the
 translational states, so OU-III's reasoning carries over unaltered. This
 document records what was ported, what was deliberately not, and what it
@@ -122,6 +122,44 @@ pathwise, and the bias is excluded from the certified performance coordinate and
 enters the ISS bound only as an input — so that input has to be bounded for the
 bound to say anything. Default 0.5 m/s^2, loose enough never to bind on a
 healthy MEMS unit, so it is a guarantee rather than a tuning parameter.
+
+### 6. The continuous magnetic hard-iron correction
+
+The last of the shared-machinery gaps, and the one with the largest single
+effect on a scored channel. OU-III runs a body-fixed magnetometer offset
+estimator for the life of the filter, in the private observer's yaw-stripped
+tilt frame, and moves the magnetic reference by the delta the applied offset
+implies rather than replacing it. OU-II now runs the same
+`ContinuousMagHardIronEstimator` on identical defaults, wired at the same three
+points of `updateMag()`.
+
+Nothing about it is OU-III-shaped. The estimator reads gravity-referenced tilt
+and the raw magnetometer, neither of which is a filter state, and it writes
+measurement-model parameters rather than any state — so the translational
+structure that distinguishes the two families does not enter, and neither
+family's ISS argument is touched.
+
+What it removes is a gauge rather than a tracking error: the startup
+acquisition averages the field in a tilt frame and declares that direction to
+be north, so a body-fixed offset lands in the world reference itself and every
+consistent estimator inside the filter then agrees with the wrong north.
+Eight-record mean yaw RMS falls from 1.887 to 0.813 deg and the worst record
+from 2.161 to 1.089, which puts OU-II within three hundredths of a degree of
+OU-III's 1.063 — as it should be, since the error belongs to the magnetometer
+and not to either translational model. Pitch improves 0.289 to 0.255 deg; roll,
+vertical and 3D displacement do not move.
+
+The price is also OU-III's: the correction walks the heading onto the corrected
+field during the run and the horizontal accelerometer bias absorbs part of that
+motion, so the worst accelerometer-bias figures rise from 91.66% to 93.90% of
+the true bias and the acc-Z gate from 5.33 to 5.41. That quantity's error
+already exceeds the quantity itself under every configuration this family has
+shipped, which is what a figure near 100% means.
+
+`SF_MAG_CONT_HI=0` is the matched ablation and reproduces the pre-correction
+filter to within 2.6e-4 relative — the same order as rebuilding at a different
+`-march`. Full mechanism, regularization argument and the failure mode it
+cannot detect: `docs/continuous-mag-hard-iron.md`.
 
 ## What was deliberately not ported
 
@@ -249,20 +287,23 @@ it can never wait forever.
 
 The `kalman_ou_ii-sim` regression sentinels were re-derived on the filter that
 now ships, following the existing convention of worst scored value plus about
-half a percent rounded up to the next tenth. Three tighten, two loosen, two are
-unchanged; see the comment at `FAIL_LIMITS` for why the two that loosen are
-realization moves rather than quality regressions, and for the ensemble figures
-that establish it.
+half a percent, rounded up in the last digit the channel is quoted in. The
+column below marked *parity* is the state after items 1-5; *now* is after the
+continuous hard-iron correction of item 6.
 
-| gate | was | now | worst scored |
-| --- | --- | --- | --- |
-| Z %Hs, jonswap | 7.0 | 6.9 | 6.86 (H0.27) |
-| Z %Hs, pmstokes | 6.9 | 6.9 | 6.81 (H0.27) |
-| yaw deg | 2.2 | 2.2 | 2.16 (pmstokes H1.5) |
-| 3D %, jonswap | 20.9 | 21.1 | 20.91 (H1.5) |
-| 3D %, pmstokes | 20.7 | 21.2 | 21.02 (H8.5) |
-| acc Z bias % | 5.9 | 5.4 | 5.33 (pmstokes H8.5) |
-| bias 3D % | 85.4 | 92.2 | 91.65 (jonswap H4.0) |
+| gate | before | parity | now | worst scored |
+| --- | --- | --- | --- | --- |
+| Z %Hs, jonswap | 7.0 | 6.9 | 6.9 | 6.8638 (H0.27) |
+| Z %Hs, pmstokes | 6.9 | 6.9 | 6.9 | 6.8061 (H0.27) |
+| yaw deg | 2.2 | 2.18 | **1.10** | 1.0895 (jonswap H1.5) |
+| 3D %, jonswap | 20.9 | 21.1 | 21.1 | 20.99 (H1.5) |
+| 3D %, pmstokes | 20.7 | 21.2 | **21.3** | 21.19 (H8.5) |
+| acc Z bias % | 5.9 | 5.4 | **5.5** | 5.41 (jonswap H8.5) |
+| bias 3D % | 85.4 | 92.2 | **94.4** | 93.90 (jonswap H4.0) |
+
+See the comment at `FAIL_LIMITS` for why the gates that loosen are realization
+and gauge moves rather than quality regressions, and for the ensemble figures
+that establish it.
 
 ## Knobs added
 
@@ -284,11 +325,23 @@ that establish it.
 | `setPseudoUpdateTauRatio` | 0.015/1.1 | `T_S/tau` |
 | `setPseudoUpdatePeriodBounds` | 0.005 / 0.25 s | clamps on `T_S` |
 | `set_accel_bias_limit` | 0.5 m/s^2 | radius of the accelerometer-bias projection ball |
+| `mag_continuous_hard_iron` | true | run the continuous hard-iron estimator |
+| `mag_hi_memory_sec` | 600 | exponential memory of its statistics |
+| `mag_hi_model_ridge` / `_relative` | 4e-3 / 0.5 | absolute ridge floor, and the part that scales with excitation |
+| `mag_hi_min_information` | 2.0 | excitation the window must reach |
+| `mag_hi_min_effective_weight` | 500 | effective samples before any answer |
+| `mag_hi_max_residual_rms_uT` | 3.0 | model-fit gate; what a turning hull trips |
+| `mag_hi_max_bias_fraction` | 0.35 | plausibility bound against the field norm |
+| `mag_hi_apply_fraction` | 1.0 | shrinkage on top of the ridge |
+| `mag_hi_slew_tau_sec` | 45 | how fast the applied offset moves |
 
 Simulator env overrides: `W3D_STARTUP_INIT`, `W3D_PSEUDO_CADENCE`,
 `SF_PROXY_START_MIN_SEC`, `SF_PROXY_START_TIMEOUT_SEC`, `SF_PROXY_MAG_SETTLE_SEC`,
 `SF_MAG_REFINE`, `SF_MAG_REFINE_START_SEC`, `SF_MAG_REFINE_WINDOW_SEC`,
 `SF_PROXY_TILT_SIGMA`, `SF_PROXY_YAW_SIGMA`, `SF_ACC_BIAS_UNLOCK_MAG_UPDATES`,
+`SF_MAG_CONT_HI`, `SF_MAG_HI_MEMORY_SEC`, `SF_MAG_HI_RIDGE`, `SF_MAG_HI_RIDGE_REL`,
+`SF_MAG_HI_MIN_INFO`, `SF_MAG_HI_MIN_WEIGHT`, `SF_MAG_HI_MAX_RESID`,
+`SF_MAG_HI_FRACTION`, `SF_MAG_HI_SLEW_TAU`,
 `OU_II_PSEUDO_TAU_RATIO`, `OU_II_PSEUDO_PERIOD_MIN_S`, `OU_II_PSEUDO_PERIOD_MAX_S`,
 `OU_II_R_P0_MIN`/`_MAX`, `OU_II_R_V0_MIN`/`_MAX`.
 

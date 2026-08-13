@@ -270,10 +270,10 @@ void process_one(const std::string& filename,
         quantity being estimated. That gate records a known deficiency rather
         than endorsing it, and the cause remains unestablished.
 
-        Yaw stays about three times OU-III's because the continuous magnetic
-        hard-iron correction is an OU-III component and this filter does not
-        carry it; the standing heading error it removes is still here, and its
-        gauge argument is in the OU-III article.
+        Yaw stays about three times OU-III's, and OU-II's, because the
+        continuous magnetic hard-iron correction is carried by both OU families
+        and not by this one; the standing heading error it removes is still
+        here, and its gauge argument is in the OU-III article.
 
         bias_3d_percent gates the gyro channel too. The accelerometer sets it
         -- the gyro's worst is 125.60% on pmstokes H4.0 -- so a gyro-bias

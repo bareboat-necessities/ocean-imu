@@ -36,21 +36,21 @@ instead of exiting at the first one.
 
 | family | gates | verdict |
 | --- | --- | --- |
-| OU-II | 7 | six at the rule and unchanged; **yaw 2.2 → 2.18** |
+| OU-II | 7 | **four re-derived** for the continuous hard-iron correction |
 | OU-III | 7 | six at the rule and unchanged; **yaw 1.1 → 1.07** |
 | NLO | 2 gated (Z only) | both already at the rule; unchanged |
 | PII observer | 3 gated (Z, yaw) | Z unchanged; **yaw 10.9 → 10.84** |
 | TFG | 7 | **all seven re-derived**; every one came down |
 
-The percentage-channel gates in the four non-TFG families were already within
-about a point of the rule and are left exactly as they stand. The yaw moves are
-purely the change of quantum described above.
+OU-II's four moves are a filter change, not a rounding change: it now carries
+the continuous hard-iron correction, on OU-III's settings, and pays OU-III's
+price for it. The rest of the moves in the table are the change of quantum
+described above, with no filter behind them.
 
-OU-III's were re-derived with the continuous hard-iron correction and OU-II's
-with the parity work, both recent; NLO's and PII's have not been disturbed
-since the 900 s window landed. TFG's were fitted before the adaptation-policy
-change that brought its orchestrator up to OU-III's, and were not revisited
-afterwards.
+OU-III's gates were re-derived when it took the correction, NLO's and PII's
+have not been disturbed since the 900 s window landed, and TFG's were fitted
+before the adaptation-policy change that brought its orchestrator up to
+OU-III's and were not revisited afterwards.
 
 ## Measured worst values, per family
 
@@ -59,17 +59,28 @@ percentage of max `|disp_ref|_3D`; bias figures are RMS error as a percentage
 of the maximum true bias in the window. Bracketed record is where the worst
 value occurs.
 
-### OU-II — yaw re-cut, rest unchanged
+### OU-II — four re-derived for the continuous hard-iron correction
 
-| gate | limit | worst observed |
-| --- | --- | --- |
-| Z %Hs JONSWAP | 6.9 | 6.86 (H0.27) |
-| Z %Hs PM-Stokes | 6.9 | 6.81 (H0.27) |
-| yaw deg | **2.18** | 2.1605 (pmstokes H1.5) |
-| 3D % JONSWAP | 21.1 | 20.91 (H1.5) |
-| 3D % PM-Stokes | 21.2 | 21.02 (H8.5) |
-| acc Z bias % | 5.4 | 5.33 (pmstokes H8.5) |
-| bias 3D % | 92.2 | 91.65 (jonswap H4.0, accel) |
+Limits below are for the shipped filter, which now runs the correction. The
+"was" column is the same filter without it, which is the `SF_MAG_CONT_HI=0`
+ablation and exceeds the yaw gate by a factor of two, as it should.
+
+| gate | was | now | worst observed |
+| --- | --- | --- | --- |
+| Z %Hs JONSWAP | 6.9 | 6.9 | 6.8638 (H0.27) |
+| Z %Hs PM-Stokes | 6.9 | 6.9 | 6.8061 (H0.27) |
+| yaw deg | 2.18 | **1.10** | 1.0895 (jonswap H1.5) |
+| 3D % JONSWAP | 21.1 | 21.1 | 20.99 (H1.5) |
+| 3D % PM-Stokes | 21.2 | **21.3** | 21.19 (H8.5) |
+| acc Z bias % | 5.4 | **5.5** | 5.41 (jonswap H8.5) |
+| bias 3D % | 92.2 | **94.4** | 93.90 (jonswap H4.0, accel) |
+
+Yaw halves and three go up, which is the trade OU-III recorded when it took the
+same change: the correction walks the heading onto the corrected field during
+the run and the horizontal accelerometer bias — the least observable quantity
+scored, its error already above 90% of the true bias — absorbs part of that
+motion. Displacement does not move (vertical mean 6.454 → 6.461 %Hs, 3D mean
+18.90 → 19.03 %) and pitch improves, 0.289 → 0.255 deg.
 
 ### OU-III — yaw re-cut, rest unchanged
 
@@ -130,10 +141,10 @@ Two things did not improve and are still recorded rather than endorsed:
 - **Accelerometer bias.** 398% of the true bias at worst, against OU-III's 98%,
   and above 100% on six of the eight records. An error larger than the quantity
   being estimated is not an estimate. Cause still unestablished.
-- **Yaw.** 2.92 deg against OU-III's 1.06. That gap is the continuous magnetic
-  hard-iron correction, which is an OU-III component TFG does not carry; see
-  `docs/ou-iii-continuous-hard-iron.md` for what it removes and why the error
-  it removes is a gauge rather than a tracking error.
+- **Yaw.** 2.92 deg against OU-III's 1.06 and OU-II's 1.09. That gap is the
+  continuous magnetic hard-iron correction, which both OU families carry and
+  this one does not; see `docs/continuous-mag-hard-iron.md` for what it removes
+  and why the error it removes is a gauge rather than a tracking error.
 
 `bias_3d_percent` gates the gyro channel as well as the accelerometer, and the
 accelerometer sets it on every family. TFG's worst gyro value is 125.60%
@@ -163,9 +174,15 @@ native `cascadelake` and rescoring all eight records:
 | --- | --- | --- |
 | OU-III | **8.3e-4** (jonswap H8.5) | 8.3e-4 — yaw is the worst channel |
 | TFG | 2.6e-4 (pmstokes H8.5) | 8.8e-4 (gyro bias 3D, pmstokes H4.0) |
-| OU-II | 2.4e-4 (jonswap H4.0) | 4.4e-4 (acc bias 3D, jonswap H8.5) |
+| OU-II | 6.0e-4 (jonswap H8.5) | 7.3e-4 (acc Z bias, pmstokes H8.5) |
 | PII observer | 0 — bit-identical | 1.5e-6 (Z, pmstokes H1.5) |
 | NLO | not gated | 1.5e-6 (raw Z, pmstokes H4.0) |
+
+OU-II's row is measured with the continuous hard-iron correction on, and it
+roughly tripled when the correction landed — 2.4e-4 yaw and 4.4e-4 worst-channel
+before it. That is the same mechanism as OU-III's row and is the strongest
+evidence for the cause given below: the drift follows the solve, not the
+family.
 
 So 6e-6 still describes NLO and the PII observer, and understates the OU and
 TFG families by two orders of magnitude. The likely cause is visible in the
@@ -175,7 +192,9 @@ by up to a thousand on the way into the applied offset, and the applied offset
 walks the heading — so yaw is exactly where it should show up, and does.
 
 Half a percent still leaves 6x on the tightest gate in the set (OU-III yaw) and
-better than 10x everywhere else, so the re-cut values are safe. They are not
+better than 10x everywhere else — OU-II's yaw gate, the other one cut against a
+filter carrying the solve, sits 0.96% above its binding record whose own drift
+is 1.7e-4, a factor of 58 — so the re-cut values are safe. They are not
 safe by an enormous factor any more, which is the reason this table exists:
 cutting a gate finer than a hundredth of a degree, or below half a percent on
 any channel, needs this measurement redone first rather than the old 6e-6

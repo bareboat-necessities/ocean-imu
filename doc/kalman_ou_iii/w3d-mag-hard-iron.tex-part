@@ -249,6 +249,15 @@ error sources removed perfectly.
   \end{tabular}
 \end{table}
 
+The correction is a property of the magnetometer path rather than of the
+translational structure, so the matched OU--II architecture used as the
+comparison baseline throughout Sec.~\ref{sec:observer-comparison} carries it on
+the same settings and improves by the same amount --- eight-record mean yaw RMS
+\SIrange{1.887}{0.813}{\degree}, worst \SIrange{2.161}{1.089}{\degree}, landing
+within three hundredths of a degree of the figures below.  None of the
+OU--III-minus-OU--II difference reported in this paper is therefore attributable
+to this section.
+
 Pitch improves slightly, for the same reason yaw does --- the reference's dip
 moves with the offset --- while roll and the displacement channels do not move:
 mean roll is \SI{0.339}{\degree} against \SI{0.340}{\degree}, and mean 3D

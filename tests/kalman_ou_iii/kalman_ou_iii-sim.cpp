@@ -627,7 +627,7 @@ private:
 // during the run, and the horizontal accelerometer bias -- already the least
 // observable quantity here, with an error that exceeds the true bias under
 // every configuration this filter has ever shipped -- absorbs some of that
-// motion.  See docs/ou-iii-continuous-hard-iron.md.
+// motion.  See docs/continuous-mag-hard-iron.md.
 //
 // Yaw re-cut to hundredths, 1.1 -> 1.07.  Nothing about the filter moved; the
 // tenth was carrying 3.5 percent of slack on a channel whose rule says half a

@@ -396,6 +396,17 @@ public:
         if (env_float("SF_MAG_REFINE_START_SEC", vf)) cfg_.mag_refine_start_sec = vf;
         if (env_float("SF_MAG_REFINE_WINDOW_SEC", vf)) cfg_.mag_refine_window_sec = vf;
         if (const char* r = std::getenv("SF_MAG_REFINE")) cfg_.mag_refine_enabled = (std::string(r) != "0");
+        // Continuous exogenous hard-iron estimation.  Same names as OU-III's,
+        // so a paired study can set one environment and run both families.
+        if (const char* h = std::getenv("SF_MAG_CONT_HI")) cfg_.mag_continuous_hard_iron = (std::string(h) != "0");
+        if (env_float("SF_MAG_HI_MEMORY_SEC", vf)) cfg_.mag_hi_memory_sec = vf;
+        if (env_float("SF_MAG_HI_RIDGE", vf)) cfg_.mag_hi_model_ridge = vf;
+        if (env_float("SF_MAG_HI_RIDGE_REL", vf)) cfg_.mag_hi_model_ridge_relative = vf;
+        if (env_float("SF_MAG_HI_MIN_INFO", vf)) cfg_.mag_hi_min_information = vf;
+        if (env_float("SF_MAG_HI_MIN_WEIGHT", vf)) cfg_.mag_hi_min_effective_weight = vf;
+        if (env_float("SF_MAG_HI_MAX_RESID", vf)) cfg_.mag_hi_max_residual_rms_uT = vf;
+        if (env_float("SF_MAG_HI_FRACTION", vf)) cfg_.mag_hi_apply_fraction = vf;
+        if (env_float("SF_MAG_HI_SLEW_TAU", vf)) cfg_.mag_hi_slew_tau_sec = vf;
         if (env_float("SF_PROXY_TILT_SIGMA", vf)) cfg_.proxy_handoff_tilt_sigma_rad = vf;
         if (env_float("SF_PROXY_YAW_SIGMA", vf)) cfg_.proxy_handoff_yaw_sigma_rad = vf;
     }
@@ -646,14 +657,50 @@ private:
 // was worth 1.8 percent of slack against a rule that asks for half of one.
 // The six percentage-channel gates are already inside a point of the rule at
 // the precision they are quoted in and keep their values.
+//
+// Re-derived once more for the continuous hard-iron correction, which this
+// family now carries on the same defaults as OU-III.  Four of the seven move,
+// and they move the same way and for the same reasons they did there.
+//
+// Yaw halves -- 1.887 to 0.813 deg mean over the eight records, worst 2.161 to
+// 1.089 -- because the standing heading error was never a tracking error.  It
+// was the hard-iron offset absorbed into the world reference at acquisition,
+// which is a gauge, and correcting the stream while moving the reference by a
+// delta walks the filter off it.  That gate has to come down with the error or
+// it stops being a sentinel: 2.18 -> 1.10, which lands within three hundredths
+// of OU-III's own 1.07.
+//
+// Three go up, and saying so is the point of writing this down, because
+// raising a sentinel to admit one's own change is exactly how these stop
+// meaning anything:
+//
+//   acc Z bias %      5.33 -> 5.41   (jonswap H8.5)
+//   acc 3D bias %    91.66 -> 93.90  (jonswap H4.0)
+//   3D % PM-Stokes   21.02 -> 21.19  (pmstokes H8.5)
+//
+// The correction walks the heading onto the corrected field during the run,
+// and the horizontal accelerometer bias absorbs part of that motion.  It is
+// the least observable quantity scored here -- an error above 90 percent of
+// the true bias means the error exceeds the thing being estimated, under every
+// configuration this family has shipped -- so a two-point move in it is not a
+// measurable loss of bias accuracy.  What it is not allowed to be is hidden,
+// hence the numbers above.  The displacement channels are flat: vertical mean
+// 6.454 -> 6.461 percent of Hs, 3D mean 18.90 -> 19.03 percent, and pitch
+// improves (0.289 -> 0.255 deg) for the same reason yaw does.
+//
+// SF_MAG_CONT_HI=0 is the matched ablation and reproduces the pre-correction
+// filter to within 2.6e-4 relative, which is the noise a rebuild of this
+// family produces anyway; see docs/quality-gate-regauge.md.  It exceeds the
+// yaw gate, as it should -- these are fitted to the filter that ships.  Score
+// it with W3D_COLLECT_ALL_GATES.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.9f,    // was 7.0,  worst 6.86 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.9f,    // unchanged, worst 6.81 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 2.18f,   // was 2.2,  worst 2.1605 (pmstokes H1.5)
-    .err_limit_percent_3d_jonswap  = 21.1f,   // was 20.9, worst 20.91 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 21.2f,   // was 20.7, worst 21.02 (pmstokes H8.5)
-    .acc_z_bias_percent            = 5.4f,    // was 5.9,  worst 5.33 (pmstokes H8.5)
-    .bias_3d_percent               = 92.2f,   // was 85.4, worst 91.65 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 6.9f,    // unchanged, worst 6.8638 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 6.9f,    // unchanged, worst 6.8061 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.10f,   // was 2.18,  worst 1.0895 (jonswap H1.5)
+    .err_limit_percent_3d_jonswap  = 21.1f,   // unchanged, worst 20.99 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 21.3f,   // was 21.2,  worst 21.19 (pmstokes H8.5)
+    .acc_z_bias_percent            = 5.5f,    // was 5.4,   worst 5.41 (jonswap H8.5)
+    .bias_3d_percent               = 94.4f,   // was 92.2,  worst 93.90 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
