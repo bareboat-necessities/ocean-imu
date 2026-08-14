@@ -341,6 +341,25 @@ public:
         if (env_float("SF_RACC_WARMUP_STD", vf)) cfg_.Racc_warmup_std = vf;
         if (env_float("SF_ONLINE_TUNE_WARMUP_SEC", vf)) cfg_.online_tune_warmup_sec = vf;
 
+        // The MEKF variances the Kalman3D_Wave_OU_III constructor takes.
+        //
+        // The three sensor sigmas arrive here already built by the shared
+        // harness as a multiple of the noise it actually injects -- 2.8x on
+        // accel, 2.0x on gyro, 1.2x on mag -- so they are swept as scale
+        // factors on that inflation rather than as absolute values.  A scale
+        // of 1 therefore leaves the deployed constant in place, and the value
+        // the sweep reports is directly the inflation multiplier it prefers.
+        // The remaining four are absolute and go through the Config fields
+        // added for them.  See docs/ou-iii-qmekf-variances.md.
+        if (env_float("SF_SIGMA_A_SCALE", vf)) cfg_.sigma_a *= vf;
+        if (env_float("SF_SIGMA_G_SCALE", vf)) cfg_.sigma_g *= vf;
+        if (env_float("SF_SIGMA_M_SCALE", vf)) cfg_.sigma_m *= vf;
+
+        if (env_float("SF_PQ0", vf)) cfg_.Pq0 = vf;
+        if (env_float("SF_PB0", vf)) cfg_.Pb0 = vf;
+        if (env_float("SF_GYRO_BIAS_RW_VAR", vf)) cfg_.b0 = vf;
+        if (env_float("SF_RS_NOISE_VAR", vf)) cfg_.R_S_noise = vf;
+
         if (env_float("SF_BOOT_TILT_ACC_TAU", vf)) cfg_.bootstrap_tilt_obs_acc_tau_sec = vf;
         if (env_float("SF_BOOT_GRAV_SLOW_TAU", vf)) cfg_.bootstrap_gravity_slow_tau_sec = vf;
         if (env_float("SF_BOOT_GRAV_ALIGN_MAX_SIN", vf)) cfg_.bootstrap_gravity_align_max_sin = vf;
