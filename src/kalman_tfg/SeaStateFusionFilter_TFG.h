@@ -1343,8 +1343,15 @@ private:
         changes moves what the coefficients are multiplying. Sweeps are in
         docs/tfg-adaptation-parity.md; the shape of each is stated here.
 
+        All five were then re-swept on a stronger instrument -- three IMU seed
+        triplets per record and paired per (record, seed) rather than one
+        deterministic realization -- which confirmed four of them and moved
+        S_factor.  docs/tfg-adaptation-refit.md.
+
         tau_coeff = 1.0     unchanged. A clean minimum: 0.92 costs +2.4 % of
-                            vertical RMS and 1.10 costs +2.5 %.
+                            vertical RMS and 1.10 costs +2.5 %.  The re-sweep
+                            agrees: +1.4 % of vertical at 0.92 and +2.3 % at
+                            1.08, pooled.
         sigma_coeff = 1.0   unchanged. OU-III runs 0.9, and 0.9 does buy 0.4 %
                             of vertical error here -- at 4 % on horizontal 3D
                             and 4 % on accelerometer bias. Not a trade worth
@@ -1356,15 +1363,30 @@ private:
                             tau^3 inherits that; 0.35 now over-regularizes the
                             S = 0 constraint. The vertical minimum is flat over
                             0.26..0.30 and 0.28 is where 3D stops improving.
-        S_factor = 1.20     was 1.87. Horizontal a_w no longer needs the extra
-                            headroom now that the horizontal channel is not
-                            absorbing a standing heading error: dropping it
-                            takes 5 % off accelerometer-bias error and 0.05 deg
-                            off pitch for no vertical cost.
-        R_S_xy_factor = 1.15 was 1.0. Mildly loosening the horizontal S = 0
+        S_factor = 1.00     was 1.87, then 1.20, now the value the records
+                            measure.  Over the eight scored records the
+                            generated horizontal acceleration has
+                            sigma_ax/sigma_az = 0.82 and sigma_ay/sigma_az =
+                            0.57, so the horizontal magnitude is 0.997 of the
+                            vertical one -- to within 0.3 % on every record.  A
+                            scalar horizontal prior of 1.20 was 20 % above what
+                            the sea puts there, and the excess was being spent
+                            in the two channels that absorb horizontal error:
+                            pooled over eight records at six IMU seed triplets
+                            1.00 takes 7.9 % off accelerometer bias, 7.0 % off
+                            roll/pitch and 4.2 % off yaw for +0.09 % of vertical
+                            RMS.  OU-III reached the same value from 1.87 by
+                            measurement in docs/ou-iii-anisotropy-consistency.md.
+        R_S_xy_factor = 1.15 was 1.0.  Mildly loosening the horizontal S = 0
                             constraint is free -- better on vertical, 3D, yaw
-                            and bias at once. It stops being free above ~1.2,
-                            where 3D starts paying for the yaw it buys.
+                            and bias at once.  It stops being free above ~1.2,
+                            where 3D starts paying for the yaw it buys.  The
+                            first sweep of this pair only went down to 1.15, so
+                            1.15 was a grid corner rather than an interior
+                            minimum; re-swept over 0.8..1.5 it is the genuine 3D
+                            optimum at every S_factor tried, and it is separable
+                            from S_factor -- yaw, roll/pitch and bias do not
+                            move with it at all.
 
         Flat over the ranges swept, so they keep OU-III's values rather than
         being fitted to these eight records: adapt_tau_sec (1.0..3.0 moves
@@ -1376,7 +1398,7 @@ private:
     float tau_coeff_    = 1.0f;
     float sigma_coeff_  = 1.0f;
     float R_S_coeff_    = 0.28f;
-    float S_factor_     = 1.20f;
+    float S_factor_     = 1.00f;
     float R_S_xy_factor_ = 1.15f;
     float noise_floor_sigma_ = 0.12f;
 

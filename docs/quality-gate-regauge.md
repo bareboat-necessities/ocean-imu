@@ -268,6 +268,40 @@ The margins land in the same 0.50–0.52% band as before, so the
 margin-to-drift ratios of the determinism budget below are unchanged to within
 their own precision — pitch stays the thinnest in the document, at 9.1x.
 
+#### TFG, re-derived again for `S_factor` 1.20 → 1.00
+
+The adaptation coefficients were re-swept on a multi-seed instrument
+(`docs/tfg-adaptation-refit.md`); four of the five held and the horizontal
+stationary acceleration prior went to the value the records measure. Six bars
+move by under a percent. The seventh is the first outright breach this document
+has had to record:
+
+| gate | was | now | worst observed, before → after | margin |
+| --- | --- | --- | --- | --- |
+| Z %Hs JONSWAP | 4.803 | **4.807** | 4.7784 → 4.7830 (H0.27) | 0.50% |
+| Z %Hs PM-Stokes | 4.709 | **4.707** | 4.6846 → 4.6833 (H0.27) | 0.51% |
+| yaw deg | 1.536 | **1.59** | 1.5278 (pmstokes H8.5) → 1.5818 (jonswap H8.5) | 0.52% |
+| 3D % JONSWAP | 21.14 | **21.13** | 21.0299 → 21.0169 (H1.5) | 0.54% |
+| 3D % PM-Stokes | 20.71 | **20.74** | 20.6045 → 20.6322 (H4.0) | 0.52% |
+| acc Z bias % | 5.026 | **5.022** | 5.0002 → 4.9961 (pmstokes H8.5) | 0.52% |
+| bias 3D % | 167.6 | **164.5** | 166.688 → 163.607 (pmstokes H4.0, accel) | 0.55% |
+
+The yaw bar goes up 3.5% and the filter no longer clears the old one, so it
+gets the treatment OU-III's yaw sentinel got for the same reason. The binding
+record moves to jonswap H8.5, whose yaw spans 1.03 to 4.56 deg across six IMU
+seeds; four of the six improve under the new constant, the six-seed mean on
+that record falls 2.685 → 2.476 deg, and pooled over all eight records yaw is
+0.9578 of the shipped filter. The deterministic seed draws the smallest of the
+six under the old constant, which is the whole of the 54% jump the sentinel
+sees. The bar follows the protocol it is written against; the quality claim
+rests on the seeds.
+
+That is now twice that a wide-distribution yaw record has moved a deterministic
+sentinel against the direction of the ensemble — OU-III's on jonswap H1.5, this
+one on jonswap H8.5. Both were caught by pairing across seeds after the fact.
+A yaw sentinel scored on one realization is the weakest bar in this document,
+and the two OU families' figures should be read with that in mind.
+
 ### NLO — both cut finer
 
 Yaw is free and ungated here, and the 3D and bias limits are open by design.
@@ -367,19 +401,24 @@ cd tests/<dir> && W3D_COLLECT_ALL_GATES=1 W3D_WRITE_TIMESERIES=0 ./<sim>
 with the eight `wave_data_{jonswap,pmstokes}_*.csv` records in the working
 directory.
 
-For both OU families the rule itself is mechanised, which removes the
+For the two OU families and TFG the rule itself is mechanised, which removes the
 arithmetic from the hand-application above:
 
 ```
 python3 tools/ou_regauge_gates.py --family ou_iii
 python3 tools/ou_regauge_gates.py --family ou_ii
+python3 tools/ou_regauge_gates.py --family tfg
 ```
+
+TFG carries seven bars rather than nine — roll and pitch are gated for the OU
+families and not for it — and the script skips whatever a family does not
+carry.
 
 It runs the eight records under this protocol, reports the worst value and its
 record per gate, applies the half-percent rule at the quantum the channel is
 quoted in, flags any shipped gate the filter no longer clears, and prints a
-`FAIL_LIMITS` body to paste. It reproduces all nine shipped limits of each
-family from the filter that produced them, which is the check that it
+`FAIL_LIMITS` body to paste. It reproduces every shipped limit of all three
+families from the filter that produced them, which is the check that it
 implements the rule rather than a rule. `--env OU_III_S_FACTOR=1.87` and
 friends re-gauge an ablation without rebuilding, and `--json` dumps every
 channel of every record for the build-drift comparison below.
