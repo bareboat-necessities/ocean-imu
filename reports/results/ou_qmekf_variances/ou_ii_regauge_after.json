@@ -1,0 +1,90 @@
+[
+ {
+  "record": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+  "z_pct_hs": 6.7420454,
+  "d3_pct": 12.0708551,
+  "yaw_deg": 1.06813514,
+  "roll_deg": 0.234655321,
+  "pitch_deg": 0.141977325,
+  "acc_z_bias_pct": 2.53828,
+  "acc_3d_bias_pct": 54.8994,
+  "gyro_3d_bias_pct": 12.0155
+ },
+ {
+  "record": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+  "z_pct_hs": 6.48509598,
+  "d3_pct": 16.4569016,
+  "yaw_deg": 1.04014468,
+  "roll_deg": 0.203281879,
+  "pitch_deg": 0.0795938596,
+  "acc_z_bias_pct": 3.45746,
+  "acc_3d_bias_pct": 39.254,
+  "gyro_3d_bias_pct": 11.818
+ },
+ {
+  "record": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+  "z_pct_hs": 6.19045782,
+  "d3_pct": 14.9526415,
+  "yaw_deg": 0.831384778,
+  "roll_deg": 0.433009803,
+  "pitch_deg": 0.215319678,
+  "acc_z_bias_pct": 4.34236,
+  "acc_3d_bias_pct": 91.8873,
+  "gyro_3d_bias_pct": 14.8725
+ },
+ {
+  "record": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+  "z_pct_hs": 6.01359463,
+  "d3_pct": 15.9447508,
+  "yaw_deg": 0.389997125,
+  "roll_deg": 0.36359936,
+  "pitch_deg": 0.277519464,
+  "acc_z_bias_pct": 4.77757,
+  "acc_3d_bias_pct": 81.4443,
+  "gyro_3d_bias_pct": 13.6852
+ },
+ {
+  "record": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+  "z_pct_hs": 6.76884174,
+  "d3_pct": 12.6540184,
+  "yaw_deg": 0.69121927,
+  "roll_deg": 0.220035017,
+  "pitch_deg": 0.169528916,
+  "acc_z_bias_pct": 2.53552,
+  "acc_3d_bias_pct": 55.75,
+  "gyro_3d_bias_pct": 12.9947
+ },
+ {
+  "record": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+  "z_pct_hs": 6.27578211,
+  "d3_pct": 14.5366745,
+  "yaw_deg": 0.976893842,
+  "roll_deg": 0.213525146,
+  "pitch_deg": 0.166997939,
+  "acc_z_bias_pct": 3.42043,
+  "acc_3d_bias_pct": 52.4871,
+  "gyro_3d_bias_pct": 12.1953
+ },
+ {
+  "record": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+  "z_pct_hs": 6.02623749,
+  "d3_pct": 15.4977894,
+  "yaw_deg": 0.487259805,
+  "roll_deg": 0.348861396,
+  "pitch_deg": 0.204515889,
+  "acc_z_bias_pct": 4.08931,
+  "acc_3d_bias_pct": 79.0254,
+  "gyro_3d_bias_pct": 14.7452
+ },
+ {
+  "record": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+  "z_pct_hs": 6.09099102,
+  "d3_pct": 17.5728264,
+  "yaw_deg": 0.529123366,
+  "roll_deg": 0.276098937,
+  "pitch_deg": 0.17725578,
+  "acc_z_bias_pct": 4.67853,
+  "acc_3d_bias_pct": 62.1958,
+  "gyro_3d_bias_pct": 18.2599
+ }
+]

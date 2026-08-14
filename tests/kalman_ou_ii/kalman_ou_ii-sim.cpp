@@ -49,6 +49,38 @@ bool env_int(const char* name, int& out)
 
 class FusionAdapter_OU_II final : public IW3dFusionAdapter {
 public:
+    // OU-II's own MEKF sensor variances, as multiples of the ones the shared
+    // harness hands every family.  The harness builds each as a fixed multiple
+    // of the white noise it injects -- 2.8x on accel, 2.0x on gyro, 1.2x on
+    // mag -- and those multiples had never been swept for any family.
+    // docs/ou-ii-qmekf-variances.md is the sweep.
+    //
+    // sigma_g is a units correction, not a fit, and it is the same one OU-III
+    // carries: the harness multiplies a *per-sample* gyro standard deviation
+    // at 200 Hz, but Kalman3D_Wave_OU_II integrates this argument as a noise
+    // *density* (Q_AA = Qbase * Ts), so the deployed value overstated the
+    // angular random walk by sqrt(200) = 14.1x on top of its own 2x inflation
+    // -- 28.3x in std, 800x in variance.  0.05 puts the argument back on the
+    // injected density and keeps a sqrt(2) inflation over it, which is where
+    // the measured optimum sits.  One error in two places, not two errors.
+    //
+    // The other two are empirical: accel to 1.4x the injected white (from
+    // 2.8x) and mag to 2.4x (from 1.2x).  The mag value is worth a note,
+    // because moving it alone is a *loss* here -- 2x costs pitch and 3D in the
+    // one-at-a-time sweep -- and only becomes a gain once sigma_g is
+    // corrected.  It was adopted from the joint round, not the axis round.
+    //
+    // Paired over 8 records x 5 seeds against the previous point: roll -12.5%,
+    // pitch -11.6%, yaw -1.2%, vertical displacement -1.7%, 3D displacement
+    // -23.8%, accelerometer bias -0.7%, gyro bias -36.6%.  tau_applied and
+    // sigma_applied are bit-for-bit unchanged, so the OU schedule is untouched.
+    //
+    // The SF_SIGMA_*_SCALE overrides below multiply these, so a scale of 1
+    // reproduces the deployed point and a re-run of the sweep re-centres on it.
+    static constexpr float SIGMA_A_RESCALE = 0.5f;   // 2.8x -> 1.4x injected accel white
+    static constexpr float SIGMA_G_RESCALE = 0.05f;  // 2.0x sample std -> sqrt(2)x density
+    static constexpr float SIGMA_M_RESCALE = 2.0f;   // 1.2x -> 2.4x injected mag white
+
     FusionAdapter_OU_II(bool with_mag,
                         const Vector3f& sigma_a_init,
                         const Vector3f& sigma_g,
@@ -56,9 +88,9 @@ public:
         : with_mag_(with_mag)
     {
         cfg_.with_mag = with_mag;
-        cfg_.sigma_a = sigma_a_init;
-        cfg_.sigma_g = sigma_g;
-        cfg_.sigma_m = sigma_m;
+        cfg_.sigma_a = sigma_a_init * SIGMA_A_RESCALE;
+        cfg_.sigma_g = sigma_g * SIGMA_G_RESCALE;
+        cfg_.sigma_m = sigma_m * SIGMA_M_RESCALE;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         cfg_.freeze_acc_bias_until_live = true;
         cfg_.Racc_warmup_std = 0.5f;
@@ -401,6 +433,20 @@ public:
 
         if (env_float("SF_RACC_WARMUP_STD", vf)) cfg_.Racc_warmup_std = vf;
         if (env_float("SF_ONLINE_TUNE_WARMUP_SEC", vf)) cfg_.online_tune_warmup_sec = vf;
+
+        // The MEKF variances the Kalman3D_Wave_OU_II constructor takes; see
+        // the SIGMA_*_RESCALE block above and docs/ou-ii-qmekf-variances.md.
+        // The three sensor sigmas are swept as scale factors on the deployed
+        // point, so a scale of 1 leaves it in place.
+        if (env_float("SF_SIGMA_A_SCALE", vf)) cfg_.sigma_a *= vf;
+        if (env_float("SF_SIGMA_G_SCALE", vf)) cfg_.sigma_g *= vf;
+        if (env_float("SF_SIGMA_M_SCALE", vf)) cfg_.sigma_m *= vf;
+
+        if (env_float("SF_PQ0", vf)) cfg_.Pq0 = vf;
+        if (env_float("SF_PB0", vf)) cfg_.Pb0 = vf;
+        if (env_float("SF_GYRO_BIAS_RW_VAR", vf)) cfg_.b0 = vf;
+        if (env_float("SF_RP0_NOISE_VAR", vf)) cfg_.R_p0_noise = vf;
+        if (env_float("SF_RV0_NOISE_VAR", vf)) cfg_.R_v0_noise = vf;
 
         if (env_float("SF_BOOT_TILT_ACC_TAU", vf)) cfg_.bootstrap_tilt_obs_acc_tau_sec = vf;
         if (env_float("SF_BOOT_GRAV_SLOW_TAU", vf)) cfg_.bootstrap_gravity_slow_tau_sec = vf;
@@ -831,16 +877,37 @@ private:
 // is 1.0003 -- is what bounded R_p0_coeff at 0.65.  The bias one is the least
 // observable quantity scored here, with an error above 90 percent of the true
 // bias on the binding record under every configuration this family has shipped.
+// Then all nine at once, and all nine downward, when the MEKF sensor
+// variances were swept for the first time (docs/ou-ii-qmekf-variances.md).
+// The gyro term of that sweep is a units correction -- the harness was
+// handing a per-sample standard deviation to an argument the filter
+// integrates as a noise density -- so the filter that ships now is a
+// materially better one rather than the same one re-drawn, and no channel
+// moved the wrong way.  OU-III took the identical correction in the same
+// round; the two families share the harness that supplied the argument.
+//
+//   Z %Hs JONSWAP    6.865  -> 6.776    worst 6.8300 -> 6.7420
+//   Z %Hs PM-Stokes  6.848  -> 6.803    worst 6.8139 -> 6.7688
+//   yaw deg          1.089  -> 1.074    worst 1.0833 -> 1.0681
+//   roll deg         0.4792 -> 0.4352   worst 0.4768 -> 0.4330
+//   pitch deg        0.3657 -> 0.279    worst 0.3638 -> 0.2775
+//   3D % JONSWAP     20.92  -> 16.54    worst 20.8140 -> 16.4569
+//   3D % PM-Stokes   21.03  -> 17.67    worst 20.9203 -> 17.5728
+//   acc Z bias %     5.324  -> 4.802    worst 5.2969 -> 4.7776
+//   acc 3D bias %    94.47  -> 92.35    worst 93.9911 -> 91.8873
+//
+// Everything here is what tools/ou_regauge_gates.py prints for the filter as
+// it now stands, cut to the same rule as every line above it.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.865f,  // was 6.899, worst 6.8300 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.848f,  // was 6.841, worst 6.8139 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.089f,  // was 1.095, worst 1.0833 (jonswap H1.5)
-    .err_limit_roll_deg            = 0.4792f, // was 0.4778, worst 0.4768 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.3657f, // was 0.3639, worst 0.3638 (jonswap H8.5)
-    .err_limit_percent_3d_jonswap  = 20.92f,  // was 21.1,  worst 20.8140 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 21.03f,  // was 21.3,  worst 20.9203 (pmstokes H8.5)
-    .acc_z_bias_percent            = 5.324f,  // was 5.435, worst 5.2969 (jonswap H8.5)
-    .bias_3d_percent               = 94.47f,  // was 94.37, worst 93.9911 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 6.776f,  // was 6.865, worst 6.7420 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 6.803f,  // was 6.848, worst 6.7688 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.074f,  // was 1.089, worst 1.0681 (jonswap H0.27)
+    .err_limit_roll_deg            = 0.4352f, // was 0.4792, worst 0.4330 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.279f,  // was 0.3657, worst 0.2775 (jonswap H8.5)
+    .err_limit_percent_3d_jonswap  = 16.54f,  // was 20.92, worst 16.4569 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 17.67f,  // was 21.03, worst 17.5728 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.802f,  // was 5.324, worst 4.7776 (jonswap H8.5)
+    .bias_3d_percent               = 92.35f,  // was 94.47, worst 91.8873 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

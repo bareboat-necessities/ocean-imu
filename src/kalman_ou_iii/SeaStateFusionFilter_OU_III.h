@@ -2007,6 +2007,27 @@ public:
         Eigen::Vector3f sigma_g = Eigen::Vector3f(0.01f, 0.01f, 0.01f);
         Eigen::Vector3f sigma_m = Eigen::Vector3f(0.3f, 0.3f, 0.3f);
 
+        // The remaining MEKF variances the Kalman3D_Wave_OU_III constructor
+        // takes.  They were reachable only through initialize_ext(), which
+        // this wrapper never called, so every deployment ran on the header
+        // defaults; docs/ou-iii-qmekf-variances.md is the sweep that gauged
+        // them.  The values here reproduce those defaults exactly.
+        //
+        //   Pq0      initial attitude-error variance, rad^2.  Under the
+        //            default MahonyProxy startup the handoff overwrites the
+        //            attitude block, so this reaches the filter only under
+        //            StagedMekf.
+        //   Pb0      initial gyro-bias variance, (rad/s)^2.
+        //   b0       gyro-bias random-walk variance density, (rad/s)^2/s.
+        //   R_S_noise  initial integral pseudo-measurement variance, (m*s)^2.
+        //            The tuner overwrites it at Live; it sets the pre-Live
+        //            value and seeds the commanded-parameter filter.
+        float Pq0       = 5e-4f;
+        float Pb0       = 1e-6f;
+        float b0        = 1e-11f;
+        float R_S_noise = 1.5f;
+        float gravity_magnitude = g_std;
+
         // Period-scaled sigma-band shape.  These are dimensionless wave-band
         // ratios except for the absolute safety clamps.  Keeping the ratios
         // fixed is what gives the JONSWAP sigma channel its similarity law.
@@ -2201,7 +2222,9 @@ public:
         impl_.setSigmaWaveBandLimitsHz(cfg_.sigma_band_min_hz,
                                        cfg_.sigma_band_max_hz);
 
-        impl_.initialize(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m);
+        impl_.initialize_ext(cfg_.sigma_a, cfg_.sigma_g, cfg_.sigma_m,
+                             cfg_.Pq0, cfg_.Pb0, cfg_.b0, cfg_.R_S_noise,
+                             cfg_.gravity_magnitude);
         last_impl_startup_stage_ = impl_.getStartupStage();
 
         syncLinearBlockGate_();
