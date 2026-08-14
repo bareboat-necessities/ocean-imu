@@ -61,6 +61,17 @@ FAMILIES = {
         "knobs": ["OU_ADAPT_RS_MULT"],
         "short": ["rs"],
     },
+    # TFG carries the same r_S channel and the same tau-proportional smoothing
+    # horizon, so `stage1` and `transition` mean the same thing here.  It is
+    # also the third family whose adaptation coefficients are fitted with this
+    # tool's `confirm` stage, which takes arbitrary environment knobs and does
+    # not care that the tool is named for the smoothers.
+    "TFG": {
+        "subdir": "kalman_tfg",
+        "binary": "kalman_tfg-sim",
+        "knobs": ["TFG_ADAPT_RS_MULT"],
+        "short": ["rs"],
+    },
 }
 
 # Shipped value of every multiplier.  A candidate that sets no knob is the

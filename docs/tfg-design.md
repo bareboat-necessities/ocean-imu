@@ -591,6 +591,14 @@ eight records:
 | `S_factor` | 1.87 | 1.20 | −5% bias, −0.05° pitch, no vertical cost |
 | `R_S_xy_factor` | 1.0 | 1.15 | better on vertical, 3D, yaw and bias at once; stops being free above ~1.2 |
 
+All five were later re-swept paired over three IMU seed triplets per record
+rather than on one realization, which confirmed four of them and took
+`S_factor` the rest of the way down, from 1.20 to **1.00** — the horizontal
+acceleration magnitude the eight records actually contain is 0.997 of the
+vertical one. The table above is what this change set;
+[`docs/tfg-adaptation-refit.md`](tfg-adaptation-refit.md) carries the current
+values, the measurement and the yaw sentinel it moved.
+
 Four more were swept and left at OU-III's values because the eight-record result
 is flat across the range: `adapt_tau_sec` (1.0–3.0 moves vertical RMS by 0.01%),
 `adapt_RS_mult` (2–4, likewise), the pre-band noise floor (0.06–0.20 — the band

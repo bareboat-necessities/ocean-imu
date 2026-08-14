@@ -14,8 +14,9 @@ remaining records instead of exiting at the first one.
 
 Run it after any change to the filter that could move a gated quantity, and
 paste the printed table into the FAIL_LIMITS comment block in
-tests/kalman_ou_ii/kalman_ou_ii-sim.cpp or
-tests/kalman_ou_iii/kalman_ou_iii-sim.cpp.
+tests/kalman_ou_ii/kalman_ou_ii-sim.cpp,
+tests/kalman_ou_iii/kalman_ou_iii-sim.cpp, or the kRegressionBars block in
+tests/kalman_tfg/kalman_tfg-sim.cpp.
 
 `--json` writes every channel of every record, which is what the -march drift
 measurement in docs/quality-gate-regauge.md compares between two builds.
@@ -88,6 +89,24 @@ FAMILIES = {
             "err_limit_percent_3d_pmstokes": 20.86,
             "acc_z_bias_percent":            4.624,
             "bias_3d_percent":               81.84,
+        },
+    },
+    # TFG is gated by the same rule on the same protocol and had been
+    # re-derived by hand every time, which is the arithmetic this script exists
+    # to remove.  It carries seven bars rather than nine: roll and pitch were
+    # gated for the two OU families and not for this one, so those two fields
+    # are absent here and the loop below skips whatever a family does not
+    # carry.
+    "tfg": {
+        "sim": REPO_ROOT / "tests" / "kalman_tfg" / "kalman_tfg-sim",
+        "shipped": {
+            "err_limit_percent_z_jonswap":   4.803,
+            "err_limit_percent_z_pmstokes":  4.709,
+            "err_limit_yaw_deg":             1.536,
+            "err_limit_percent_3d_jonswap":  21.14,
+            "err_limit_percent_3d_pmstokes": 20.71,
+            "acc_z_bias_percent":            5.026,
+            "bias_3d_percent":               167.6,
         },
     },
 }
@@ -197,6 +216,8 @@ def main() -> int:
     print("-" * 96)
     verdict_lines = []
     for field, (heading, group, channel) in GATE_CHANNELS.items():
+        if field not in family["shipped"]:
+            continue  # a gate this family does not carry; see FAMILIES
         shipped = family["shipped"][field]
         if channel is None:
             # One limit covers both the accelerometer and the gyro 3D bias.

@@ -280,6 +280,16 @@ OU-II's `P_factor` is still 1.5 and TFG's `S_factor` still 1.87, both
 unmeasured. The OU-III result does not transfer: OU-II anchors position and
 velocity rather than the third integral, so its loop gain responds differently.
 
+**Since resolved for TFG.** Its `S_factor` went to 1.20 in the adaptation
+re-fit that followed this note, and then to 1.0 — the same value this study
+reached, arrived at independently and pinned to a measurement this note only
+quoted: over the eight scored records the generated horizontal acceleration
+magnitude is 0.997 of the vertical one, inside 1% on every record.
+[`docs/tfg-adaptation-refit.md`](tfg-adaptation-refit.md). TFG's
+`R_S_xy_factor` stays at 1.15 rather than 1, and that difference is measured
+rather than inherited: swept over 0.8 to 1.5 it is a clean interior minimum on
+3D RMS there. OU-II's `P_factor` is still unmeasured.
+
 ## OU-II has the same gap, unmeasured here
 
 `SeaStateFusionFilter_OU_II` applies `P_factor = 1.5` to the horizontal

@@ -331,15 +331,57 @@ void process_one(const std::string& filename,
         regression has to more than triple before this bar sees it.  Splitting
         the two is a change to W3dFailureLimits and to every family that uses
         it, and is deliberately not made here.
+
+        RE-DERIVED FOR S_factor 1.20 -> 1.00, docs/tfg-adaptation-refit.md.
+        The horizontal stationary acceleration prior now matches what the
+        records put there (horizontal magnitude 0.997 of vertical, measured on
+        all eight).  Six bars move by well under a percent and one of them --
+        yaw -- had to be raised past a bar the filter no longer clears, which is
+        the case that needs its own argument rather than a table row.
+
+          channel          worst    this bar   margin   previous bar
+          Z RMS  jonswap    4.7830   4.807      0.50%    4.803
+          Z RMS  pmstokes   4.6833   4.707      0.51%    4.709
+          yaw               1.5818   1.59       0.52%    1.536   <-- raised
+          3D     jonswap   21.0169  21.13       0.54%   21.14
+          3D     pmstokes  20.6322  20.74       0.52%   20.71
+          acc bias Z        4.9961   5.022      0.52%    5.026
+          acc bias 3D     163.607  164.5        0.55%   167.6
+
+        THE YAW BAR GOES UP 3.5% AND YAW DOES NOT GET WORSE.  Pooled over the
+        eight records at six IMU seed triplets, yaw RMS is 0.9578 of the shipped
+        filter's; on the record that now binds, jonswap H8.5, it is 0.9109.  The
+        deterministic protocol disagrees because that record's yaw spans 1.03 to
+        4.56 deg across those six seeds -- a 4.4x spread -- and the default seed
+        happens to draw the smallest of the six under the old constant:
+
+          seed      S=1.20   S=1.00
+          default   1.0322   1.5818
+          7         3.7871   3.1882
+          99        1.3618   0.7669
+          3         2.9330   3.5454
+          21        2.4334   1.8283
+          55        4.5617   3.9482
+
+        Four of six improve and the six-seed mean falls 2.685 -> 2.476 deg.  The
+        sentinel follows the deterministic protocol it is written against; the
+        quality claim rests on the seeds.  This is the same shape, and the same
+        argument, as the yaw sentinel in OU-III's anisotropy study, which moved
+        21% on the same kind of draw.
+
+        The other six all come down or stay put.  Worth naming: accelerometer
+        bias 3D goes 166.688 -> 163.607 on the binding record and 80.97 ->
+        116.88 on jonswap H8.5, which is a redistribution across records rather
+        than a uniform gain -- the pooled six-seed figure is 0.9209.
     */
     static constexpr W3dFailureLimits kRegressionBars{
-        .err_limit_percent_z_jonswap   = 4.803f,  // was 5.24,  worst 4.7784 (jonswap H0.27)
-        .err_limit_percent_z_pmstokes  = 4.709f,  // was 5.13,  worst 4.6846 (pmstokes H0.27)
-        .err_limit_yaw_deg             = 1.536f,  // was 2.938, worst 1.5278 (pmstokes H8.5)
-        .err_limit_percent_3d_jonswap  = 21.14f,  // was 21.1,  worst 21.0298 (jonswap H1.5)
-        .err_limit_percent_3d_pmstokes = 20.71f,  // was 25.91, worst 20.6045 (pmstokes H4.0)
-        .acc_z_bias_percent            = 5.026f,  // was 8.89,  worst 5.0002 (pmstokes H8.5)
-        .bias_3d_percent               = 167.6f,  // was 400.3, worst 166.688 (pmstokes H4.0, accel)
+        .err_limit_percent_z_jonswap   = 4.807f,  // was 4.803, worst 4.7830 (jonswap H0.27)
+        .err_limit_percent_z_pmstokes  = 4.707f,  // was 4.709, worst 4.6833 (pmstokes H0.27)
+        .err_limit_yaw_deg             = 1.59f,   // was 1.536, worst 1.5818 (jonswap H8.5)
+        .err_limit_percent_3d_jonswap  = 21.13f,  // was 21.14, worst 21.0169 (jonswap H1.5)
+        .err_limit_percent_3d_pmstokes = 20.74f,  // was 20.71, worst 20.6322 (pmstokes H4.0)
+        .acc_z_bias_percent            = 5.022f,  // was 5.026, worst 4.9961 (pmstokes H8.5)
+        .bias_3d_percent               = 164.5f,  // was 167.6, worst 163.607 (pmstokes H4.0, accel)
     };
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };

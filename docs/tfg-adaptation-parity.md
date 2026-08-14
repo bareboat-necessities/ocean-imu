@@ -115,6 +115,16 @@ re-fitted afterwards rather than inherited.
 | `R_S_xy_factor` | 1.0 | **1.15** |
 | `adapt_tau_sec`, `adapt_RS_mult`, noise floor, band ratios | — | unchanged |
 
+Every sweep in this section scores one deterministic realization per record.
+That is adequate for the displacement channels and is not adequate for yaw or
+accelerometer bias, which on the largest JONSWAP record span a factor of four
+across IMU seeds. Re-run paired over three seed triplets,
+[`docs/tfg-adaptation-refit.md`](tfg-adaptation-refit.md) confirms `tau_coeff`,
+`sigma_coeff`, `R_S_coeff` and `R_S_xy_factor` where this section left them and
+moves `S_factor` from 1.20 to **1.00**, which is the horizontal-to-vertical
+acceleration ratio the records themselves carry. It also re-sweeps
+`R_S_xy_factor` below 1.15, which the grid below never did.
+
 ### tau_coeff — clean minimum at 1.0
 
 | `TFG_TAU_COEFF` | 0.85 | 0.92 | **1.00** | 1.10 | 1.20 |
