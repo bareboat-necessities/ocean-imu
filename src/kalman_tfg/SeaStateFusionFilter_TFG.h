@@ -225,6 +225,21 @@ public:
         Vector3f sigma_a{Vector3f::Constant(0.5f)};
         float    gyro_noise_density = 0.005f;
         Vector3f sigma_m{Vector3f::Constant(0.1f)};
+
+        // The two MEKF variances Kalman3D_Wave_TFG hard-codes rather than
+        // taking through its constructor, surfaced here so they can be swept
+        // alongside the three sensor sigmas; docs/tfg-qmekf-variances.md is
+        // that sweep.  Both values reproduce the filter's own defaults.
+        //
+        //   gyro_bias_rw_var  gyro-bias random-walk variance density,
+        //                     (rad/s)^2/s.  Unlike the OU families' b0 this
+        //                     one already matches the bench bias walk.
+        //   initial_covariance  isotropic seed for P at initialize_identity().
+        //                     The startup attitude solution overwrites the
+        //                     blocks it owns, so this reaches only the states
+        //                     that solution does not set.
+        float    gyro_bias_rw_var   = 1e-10f;
+        float    initial_covariance = 1e-4f;
         bool     with_mag = true;
         float    mag_delay_sec = MAG_DELAY_SEC;
         bool     freeze_acc_bias_until_live = true;
@@ -350,9 +365,10 @@ public:
     void begin(const Config& cfg) {
         cfg_ = cfg;
         mekf_ = Mekf(cfg.gyro_noise_density, cfg.gravity_magnitude);
-        mekf_.initialize_identity();
+        mekf_.initialize_identity(cfg.initial_covariance);
         mekf_.set_Racc_std(cfg.sigma_a);
         mekf_.set_Rmag_std(cfg.sigma_m);
+        mekf_.set_Q_bgyro_rw(Vector3f::Constant(cfg.gyro_bias_rw_var));
         Racc_nominal_ = cfg.sigma_a;
 
         tuner_ = ::SeaStateAutoTuner(2.0f, 1.0f);

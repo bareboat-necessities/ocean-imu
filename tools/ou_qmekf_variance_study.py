@@ -27,8 +27,12 @@ deployed point, every arm paired against the deployed arm on the same
         'g0.1:SF_SIGMA_G_SCALE=0.1' \
         'g0.1_m2:SF_SIGMA_G_SCALE=0.1,SF_SIGMA_M_SCALE=2'
 
-Results and reading: docs/ou-iii-qmekf-variances.md and
-docs/ou-ii-qmekf-variances.md.
+TFG carries fewer of these: its r_S has no constructor seed (the tuner owns it
+outright) and its P is seeded by one isotropic initial_covariance, so it sweeps
+SF_SIGMA_*_SCALE, SF_PQ0 and SF_GYRO_BIAS_RW_VAR only.
+
+Results and reading: docs/ou-iii-qmekf-variances.md,
+docs/ou-ii-qmekf-variances.md and docs/tfg-qmekf-variances.md.
 """
 
 from __future__ import annotations
@@ -66,6 +70,19 @@ FAMILIES = {
             "rv0": ("SF_RV0_NOISE_VAR", (0.003, 0.03, 3.0, 30.0)),
         },
     },
+    # TFG is a Lie-group filter and carries fewer of these.  It has no
+    # constructor seed for its pseudo-measurement regularizer -- the tuner owns
+    # r_S outright -- and no separate initial gyro-bias variance, since P is
+    # seeded isotropically by initialize_identity().  That single seed is the
+    # pq0 axis here, so pb0 is dropped rather than aliased onto it.
+    "tfg": {
+        "sim": REPO_ROOT / "tests" / "kalman_tfg" / "kalman_tfg-sim",
+        # Re-centred: TFG seeds P at 1e-4, not the OU families' 5e-4.
+        "tail_axes": {
+            "pq0": ("SF_PQ0", (1e-6, 1e-5, 1e-3, 1e-2)),
+        },
+        "drop_axes": ("pb0",),
+    },
 }
 
 RECORDS_BY_FAMILY = {
@@ -99,7 +116,9 @@ COMMON_AXES: dict[str, tuple[str, tuple[float, ...]]] = {
 
 
 def make_axes(family: str) -> dict[str, tuple[str, tuple[float, ...]]]:
-    return {**COMMON_AXES, **FAMILIES[family]["tail_axes"]}
+    dropped = FAMILIES[family].get("drop_axes", ())
+    common = {k: v for k, v in COMMON_AXES.items() if k not in dropped}
+    return {**common, **FAMILIES[family]["tail_axes"]}
 
 METRICS = ("roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg",
            "disp_z_rms_m", "disp_3d_rms_m", "disp_z_pct_hs",
