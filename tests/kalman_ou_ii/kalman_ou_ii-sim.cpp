@@ -49,6 +49,14 @@ bool env_int(const char* name, int& out)
 
 class FusionAdapter_OU_II final : public IW3dFusionAdapter {
 public:
+    // OU-II's own MEKF sensor variances, as multiples of the ones the shared
+    // harness hands every family (2.8x injected accel white, 2.0x gyro, 1.2x
+    // mag).  Set by the sweep in docs/ou-ii-qmekf-variances.md; 1.0 here means
+    // the harness value is used unchanged.
+    static constexpr float SIGMA_A_RESCALE = 1.0f;
+    static constexpr float SIGMA_G_RESCALE = 1.0f;
+    static constexpr float SIGMA_M_RESCALE = 1.0f;
+
     FusionAdapter_OU_II(bool with_mag,
                         const Vector3f& sigma_a_init,
                         const Vector3f& sigma_g,
@@ -56,9 +64,9 @@ public:
         : with_mag_(with_mag)
     {
         cfg_.with_mag = with_mag;
-        cfg_.sigma_a = sigma_a_init;
-        cfg_.sigma_g = sigma_g;
-        cfg_.sigma_m = sigma_m;
+        cfg_.sigma_a = sigma_a_init * SIGMA_A_RESCALE;
+        cfg_.sigma_g = sigma_g * SIGMA_G_RESCALE;
+        cfg_.sigma_m = sigma_m * SIGMA_M_RESCALE;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         cfg_.freeze_acc_bias_until_live = true;
         cfg_.Racc_warmup_std = 0.5f;
@@ -401,6 +409,20 @@ public:
 
         if (env_float("SF_RACC_WARMUP_STD", vf)) cfg_.Racc_warmup_std = vf;
         if (env_float("SF_ONLINE_TUNE_WARMUP_SEC", vf)) cfg_.online_tune_warmup_sec = vf;
+
+        // The MEKF variances the Kalman3D_Wave_OU_II constructor takes; see
+        // the SIGMA_*_RESCALE block above and docs/ou-ii-qmekf-variances.md.
+        // The three sensor sigmas are swept as scale factors on the deployed
+        // point, so a scale of 1 leaves it in place.
+        if (env_float("SF_SIGMA_A_SCALE", vf)) cfg_.sigma_a *= vf;
+        if (env_float("SF_SIGMA_G_SCALE", vf)) cfg_.sigma_g *= vf;
+        if (env_float("SF_SIGMA_M_SCALE", vf)) cfg_.sigma_m *= vf;
+
+        if (env_float("SF_PQ0", vf)) cfg_.Pq0 = vf;
+        if (env_float("SF_PB0", vf)) cfg_.Pb0 = vf;
+        if (env_float("SF_GYRO_BIAS_RW_VAR", vf)) cfg_.b0 = vf;
+        if (env_float("SF_RP0_NOISE_VAR", vf)) cfg_.R_p0_noise = vf;
+        if (env_float("SF_RV0_NOISE_VAR", vf)) cfg_.R_v0_noise = vf;
 
         if (env_float("SF_BOOT_TILT_ACC_TAU", vf)) cfg_.bootstrap_tilt_obs_acc_tau_sec = vf;
         if (env_float("SF_BOOT_GRAV_SLOW_TAU", vf)) cfg_.bootstrap_gravity_slow_tau_sec = vf;

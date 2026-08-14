@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Sweep of the MEKF variances OU-III takes through its constructor.
+"""Sweep of the MEKF variances the OU families take through their constructors.
 
-Kalman3D_Wave_OU_III is handed seven variances at construction -- the three
-sensor sigmas (sigma_a, sigma_g, sigma_m) plus Pq0, Pb0, b0 and R_S_noise_var
--- and none of them had ever been swept.  Four of the seven were not even
-reachable from SeaStateFusion_OU_III, whose begin() called the three-argument
-initialize(); they are Config fields now, and the simulator exposes all seven:
+Kalman3D_Wave_OU_III and Kalman3D_Wave_OU_II are each handed seven variances at
+construction -- the three sensor sigmas (sigma_a, sigma_g, sigma_m), Pq0, Pb0,
+b0, and the family's pseudo-measurement regularizer -- and none had ever been
+swept.  Four of the seven were not even reachable: both wrappers' begin()
+called the three-argument initialize(), leaving initialize_ext() dead code.
+They are Config fields now, and both simulators expose all seven:
 
     SF_SIGMA_A_SCALE      scale on the harness sigma_a (2.8x injected accel white)
     SF_SIGMA_G_SCALE      scale on the harness sigma_g (2.0x injected gyro white)
@@ -13,18 +14,21 @@ initialize(); they are Config fields now, and the simulator exposes all seven:
     SF_PQ0                initial attitude-error variance, rad^2
     SF_PB0                initial gyro-bias variance, (rad/s)^2
     SF_GYRO_BIAS_RW_VAR   gyro-bias random-walk variance density, (rad/s)^2/s
-    SF_RS_NOISE_VAR       initial integral pseudo-measurement variance, (m*s)^2
+    SF_RS_NOISE_VAR       OU-III: initial integral pseudo-measurement variance
+    SF_RP0_NOISE_VAR      OU-II: initial position pseudo-measurement variance
+    SF_RV0_NOISE_VAR      OU-II: initial velocity pseudo-measurement variance
 
 The default run is a coordinate sweep: one axis moved at a time about the
 deployed point, every arm paired against the deployed arm on the same
 (record, seed).  Joint arms for the refine rounds are given directly:
 
-    python3 tools/ou_qmekf_variance_study.py --seeds 1,2,3,4,5
-    python3 tools/ou_qmekf_variance_study.py \
-        --arms 'g0.1:SF_SIGMA_G_SCALE=0.1' \
-               'g0.1_rw1e-10:SF_SIGMA_G_SCALE=0.1,SF_GYRO_BIAS_RW_VAR=1e-10'
+    python3 tools/ou_qmekf_variance_study.py --family ou_ii --seeds 1,2,3,4,5
+    python3 tools/ou_qmekf_variance_study.py --arms \
+        'g0.1:SF_SIGMA_G_SCALE=0.1' \
+        'g0.1_m2:SF_SIGMA_G_SCALE=0.1,SF_SIGMA_M_SCALE=2'
 
-Results and reading: docs/ou-iii-qmekf-variances.md.
+Results and reading: docs/ou-iii-qmekf-variances.md and
+docs/ou-ii-qmekf-variances.md.
 """
 
 from __future__ import annotations
@@ -42,7 +46,27 @@ from collections import defaultdict
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SIM = REPO_ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim"
+
+# Both OU families take the same seven variances and differ only in the last
+# ones: OU-III regularizes the third integral with a single r_S, OU-II
+# regularizes position and velocity with r_p0 and r_v0.  Everything else --
+# the harness sigmas, the startup covariances, the gyro-bias random walk -- is
+# shared, including the units mismatch on sigma_g.
+FAMILIES = {
+    "ou_iii": {
+        "sim": REPO_ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim",
+        "tail_axes": {
+            "rs0": ("SF_RS_NOISE_VAR", (0.015, 0.15, 15.0, 150.0)),
+        },
+    },
+    "ou_ii": {
+        "sim": REPO_ROOT / "tests" / "kalman_ou_ii" / "kalman_ou_ii-sim",
+        "tail_axes": {
+            "rp0": ("SF_RP0_NOISE_VAR", (0.015, 0.15, 15.0, 150.0)),
+            "rv0": ("SF_RV0_NOISE_VAR", (0.003, 0.03, 3.0, 30.0)),
+        },
+    },
+}
 
 RECORDS_BY_FAMILY = {
     "jonswap": (
@@ -63,15 +87,19 @@ BASE = "deployed"
 
 # Coordinate sweep about the deployed point.  Every axis carries the deployed
 # value implicitly through the shared baseline arm, so it is not repeated here.
-AXES: dict[str, tuple[str, tuple[float, ...]]] = {
+# The family's own regularizer axes are appended by make_axes().
+COMMON_AXES: dict[str, tuple[str, tuple[float, ...]]] = {
     "sga": ("SF_SIGMA_A_SCALE",    (0.36, 0.5, 0.71, 1.41, 2.0, 3.0)),
     "sgg": ("SF_SIGMA_G_SCALE",    (0.02, 0.035, 0.056, 0.1, 0.18, 0.32, 0.56, 2.0)),
     "sgm": ("SF_SIGMA_M_SCALE",    (0.25, 0.5, 2.0, 4.0, 8.0)),
     "pq0": ("SF_PQ0",              (5e-5, 5e-3, 5e-2)),
     "pb0": ("SF_PB0",              (1e-8, 1e-7, 1e-5, 1e-4)),
     "brw": ("SF_GYRO_BIAS_RW_VAR", (1e-13, 1e-12, 1e-10, 1e-9, 1e-8)),
-    "rs0": ("SF_RS_NOISE_VAR",     (0.015, 0.15, 15.0, 150.0)),
 }
+
+
+def make_axes(family: str) -> dict[str, tuple[str, tuple[float, ...]]]:
+    return {**COMMON_AXES, **FAMILIES[family]["tail_axes"]}
 
 METRICS = ("roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg",
            "disp_z_rms_m", "disp_3d_rms_m", "disp_z_pct_hs",
@@ -107,19 +135,19 @@ def parse_arms(specs: list[str]) -> dict[str, dict[str, str]]:
     return arms
 
 
-def axis_arms(selected: list[str]) -> dict[str, dict[str, str]]:
+def axis_arms(selected: list[str], axes: dict) -> dict[str, dict[str, str]]:
     arms: dict[str, dict[str, str]] = {}
     for key in selected:
-        if key not in AXES:
-            raise SystemExit(f"unknown axis {key!r}; pick from {sorted(AXES)}")
-        env_name, values = AXES[key]
+        if key not in axes:
+            raise SystemExit(f"unknown axis {key!r}; pick from {sorted(axes)}")
+        env_name, values = axes[key]
         for v in values:
             arms[f"{key}_{v:g}"] = {env_name: f"{v:g}"}
     return arms
 
 
 def run_one(job: tuple[str, str, int], arms: dict[str, dict[str, str]],
-            base_env: dict[str, str], window_s: int) -> dict:
+            base_env: dict[str, str], window_s: int, sim: Path) -> dict:
     arm, record, seed = job
     env = os.environ.copy()
     env.update(base_env)
@@ -136,7 +164,7 @@ def run_one(job: tuple[str, str, int], arms: dict[str, dict[str, str]],
     # A non-zero return code only means a deployed quality gate tripped, which
     # the off-default seeds and off-default variances are not gauged for.  The
     # metrics line is emitted either way and the verdict is recorded with it.
-    proc = subprocess.run([str(SIM), "--input", record], cwd=SIM.parent, env=env,
+    proc = subprocess.run([str(sim), "--input", record], cwd=sim.parent, env=env,
                           capture_output=True, text=True, check=False)
     try:
         line = next(l for l in proc.stdout.splitlines()
@@ -231,11 +259,13 @@ def report(rows: list[dict], arms: dict[str, dict[str, str]]) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--family", default="ou_iii", choices=sorted(FAMILIES),
+                    help="which simulator to sweep (default ou_iii)")
     ap.add_argument("--seeds", default="1,2,3,4,5",
                     help="comma-separated W3D_SEED values (default 1,2,3,4,5)")
     ap.add_argument("--axes", default="",
-                    help=f"comma-separated axes to sweep, from {sorted(AXES)}; "
-                         "default all.  Ignored when --arms is given.")
+                    help="comma-separated axes to sweep; default all of the "
+                         "family's.  Ignored when --arms is given.")
     ap.add_argument("--arms", nargs="*", default=[],
                     help="explicit arms as 'label:KEY=VALUE,KEY=VALUE'; "
                          "replaces the coordinate sweep")
@@ -248,12 +278,18 @@ def main() -> int:
     ap.add_argument("--window-sec", type=int, default=900,
                     help="trailing scoring window (default 900)")
     ap.add_argument("--output", type=Path,
-                    default=REPO_ROOT / "reports" / "results" / "ou_qmekf_variances" /
-                    "ou_qmekf_variances_raw.csv")
+                    default=None,
+                    help="raw CSV destination; defaults to a family-named path "
+                         "under reports/results/ou_qmekf_variances/")
     args = ap.parse_args()
 
-    if not SIM.is_file():
-        raise SystemExit(f"{SIM} not built; run make -C tests/kalman_ou_iii build")
+    sim = FAMILIES[args.family]["sim"]
+    axes = make_axes(args.family)
+    if args.output is None:
+        args.output = (REPO_ROOT / "reports" / "results" / "ou_qmekf_variances" /
+                       f"{args.family}_raw.csv")
+    if not sim.is_file():
+        raise SystemExit(f"{sim} not built; run make -C {sim.parent} build")
 
     records: list[str] = []
     for family in (f.strip() for f in args.families.split(",") if f.strip()):
@@ -261,7 +297,7 @@ def main() -> int:
             raise SystemExit(f"unknown family {family!r}; "
                              f"pick from {sorted(RECORDS_BY_FAMILY)}")
         records.extend(RECORDS_BY_FAMILY[family])
-    missing = [r for r in records if not (SIM.parent / r).is_file()]
+    missing = [r for r in records if not (sim.parent / r).is_file()]
     if missing:
         raise SystemExit(f"missing records {missing}; run make fetch-sim-data")
 
@@ -273,21 +309,21 @@ def main() -> int:
         arms = parse_arms(args.arms)
     else:
         selected = ([a.strip() for a in args.axes.split(",") if a.strip()]
-                    or list(AXES))
-        arms = axis_arms(selected)
+                    or list(axes))
+        arms = axis_arms(selected, axes)
     if BASE in arms:
         raise SystemExit(f"{BASE!r} is the reserved baseline label")
     arms = {BASE: {}, **arms}
 
     seeds = [int(s) for s in args.seeds.split(",") if s.strip()]
     jobs = [(a, r, s) for a in arms for r in records for s in seeds]
-    print(f"{len(jobs)} runs: {len(arms)} arms x {len(records)} records "
-          f"x {len(seeds)} seeds", flush=True)
+    print(f"{args.family}: {len(jobs)} runs, {len(arms)} arms x "
+          f"{len(records)} records x {len(seeds)} seeds", flush=True)
     if base_env:
         print(f"baseline re-centred on {base_env}", flush=True)
     with cf.ThreadPoolExecutor(max_workers=args.jobs) as pool:
         rows = list(pool.map(
-            lambda j: run_one(j, arms, base_env, args.window_sec), jobs))
+            lambda j: run_one(j, arms, base_env, args.window_sec, sim), jobs))
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", newline="", encoding="utf-8") as fh:
