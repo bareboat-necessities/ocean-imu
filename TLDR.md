@@ -8,7 +8,8 @@ In simple terms:
 - So Joseph form and small-series approximations are used for numerical stability.
 - Includes double-integration drift-correction pseudo-measurements.
 - Kalman parameters must be and are adapted to match actual sea states.
-- Adaptation uses acceleration-frequency tracking for time-scale tuning, and direct acceleration-variance estimation for amplitude-scale tuning.
+- Adaptation uses the wave-band zero-crossing period for time-scale tuning, and direct acceleration-variance estimation for amplitude-scale tuning.
+- Acceleration-frequency tracking is kept for wave direction, which needs a carrier rather than a sea state.
 - IMU sample timestamps are tracked accurately. Correct sample timestamps are very important due to samples being double integrated over time steps.
 - Performs initial learning of gravity relation to magnetic field needed because sensor might be turned on when already in waves motion
 - Optional wave shape de-trending to correct post-estimated displacememt drifts due to unmodelled biases

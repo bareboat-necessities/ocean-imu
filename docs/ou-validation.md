@@ -67,7 +67,8 @@ filter once on a noise-free, unrandomized 1200 s record, reading its final
 `r_p0 = clip(0.6 * sigma_aw * tau**2, 0.05, 150)` together with
 `r_v0 = clip(1.1 * sigma_aw * tau, 0.01, 40)`. Both families derive `tau` from
 the same wave-band zero-crossing period, `tau = T_z / 2`; neither reads the
-acceleration-band frequency tracker for tuning.
+acceleration-band frequency tracker for tuning, at any point in the run
+(see `docs/ou-sigma-horizon.md`).
 No fixed point is optimized against displacement error. The exact
 frozen values for the committed study are in `fixed_tuning_points` in the
 manifest and are typeset by `ou_validation_tuning_points.tex`.

@@ -213,6 +213,47 @@ public:
                 filter.mekf().set_Q_bacc_rw(Eigen::Vector3f::Constant(v));
             }
 
+            // Where the tuning frequency comes from before the wave-period
+            // estimator has a value.  "wave_band" is the deployed source and
+            // never reads the acceleration-band tracker; "wave_band_gated"
+            // keeps the legacy readiness gate but still never reads it;
+            // "tracker_fallback" is the previous behaviour.
+            if (const char* src = std::getenv("W3D_TUNER_FREQ_SOURCE")) {
+                const std::string value = src;
+                if (value == "wave_band") {
+                    filter.setTunerFrequencySource(TunerFrequencySource::WaveBand);
+                } else if (value == "wave_band_gated") {
+                    filter.setTunerFrequencySource(
+                        TunerFrequencySource::WaveBandGated);
+                } else if (value == "tracker_fallback") {
+                    filter.setTunerFrequencySource(
+                        TunerFrequencySource::TrackerFallback);
+                } else {
+                    throw std::runtime_error(
+                        "W3D_TUNER_FREQ_SOURCE must be wave_band, "
+                        "wave_band_gated or tracker_fallback");
+                }
+            }
+
+            // Wave-band prior used until the period estimator has a value.
+            if (env_float("OU_TUNE_FREQ_PRIOR_HZ", v)) {
+                filter.setTuneFreqPriorHz(v);
+            }
+
+            // sigma_a averaging horizon, in periods of the tuning frequency,
+            // and its absolute clamps in seconds.
+            if (env_float("OU_SIGMA_VAR_K_PERIODS", v)) {
+                filter.setSigmaVarianceKPeriods(v);
+            }
+            {
+                float lo = 0.3f, hi = 60.0f;
+                const bool got_lo = env_float("OU_SIGMA_VAR_HORIZON_MIN_S", lo);
+                const bool got_hi = env_float("OU_SIGMA_VAR_HORIZON_MAX_S", hi);
+                if (got_lo || got_hi) {
+                    filter.setSigmaVarianceHorizonBounds(lo, hi);
+                }
+            }
+
             // Ablate the wave-band operating point back to the
             // acceleration-band frequency the filter used before.
             if (const char* band = std::getenv("W3D_TUNING_BAND")) {
@@ -709,12 +750,26 @@ private:
 // pitch.  docs/quality-gate-regauge.md carries that measurement and the
 // command that redoes it, which is the check to repeat before cutting any of
 // these finer.
+// Re-derived once more, for one gate only, when the tuning frequency stopped
+// reading the acceleration-band frequency tracker (docs/ou-sigma-horizon.md).
+// The change is invisible in displacement -- pooled vertical and 3D RMS both
+// move by 0.00% -- but pitch on pmstokes H4.0 goes 0.2200 -> 0.2218 at the
+// default seed, which is 0.83% and therefore past the half-percent this gate
+// was cut with.
+//
+// That is a re-draw, not a pitch regression, and the distinction is the same
+// one the yaw paragraph above makes.  Paired over five IMU seeds and all eight
+// records the pitch ratio is 0.9999 with a 95% interval of [0.9989, 1.0010]:
+// no systematic effect at a resolution ten times finer than the move on this
+// one record.  tools/ou_sigma_horizon_study.py --axis source --seeds 5
+// reproduces it.  Only pitch is re-cut; the other eight limits are untouched
+// because nothing this change did moved them.
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 4.735f,  // was 4.74,  worst 4.7106 (jonswap H0.27)
     .err_limit_percent_z_pmstokes  = 4.682f,  // was 4.69,  worst 4.6580 (pmstokes H0.27)
     .err_limit_yaw_deg             = 1.297f,  // unchanged, worst 1.2896 (jonswap H1.5)
     .err_limit_roll_deg            = 0.42f,   // new,       worst 0.4179 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.2211f, // new,       worst 0.2200 (pmstokes H4.0)
+    .err_limit_pitch_deg           = 0.223f,  // was 0.2211, worst 0.2218 (pmstokes H4.0)
     .err_limit_percent_3d_jonswap  = 20.95f,  // unchanged, worst 20.8367 (jonswap H1.5)
     .err_limit_percent_3d_pmstokes = 20.86f,  // unchanged, worst 20.7483 (pmstokes H4.0)
     .acc_z_bias_percent            = 4.624f,  // was 4.63,  worst 4.6004 (jonswap H8.5)

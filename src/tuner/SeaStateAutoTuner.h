@@ -13,10 +13,41 @@
     • K_periods is a dimensionless factor controlling the variance horizon:
         τ_var_dyn ≈ K_periods * T_eff,
       where T_eff = 1 / f_eff and f_eff is the smoothed frequency.
+    • The horizon is expressed in *periods of the frequency it is fed*, so what
+      that frequency means decides what the horizon means.  Fed the
+      acceleration-band tracker it was a few seconds whatever the sea did,
+      because that band barely moves with sea state; fed the wave-band
+      zero-crossing period it becomes a genuine multiple of the wave period and
+      stretches from about 5 s on a short chop to 17 s on a developed swell.
+      The clamps below therefore have to admit that whole span, and the
+      defaults are documented in docs/ou-sigma-horizon.md.
 */
 
 #include <cmath>
 #include <algorithm>
+
+// Where the tuning frequency the OU adaptation runs on comes from.
+//
+// WaveBand is the deployed choice: the operating point is a property of the
+// wave band, so it is read from WavePeriodEstimator alone and, before that
+// estimator has settled, from a fixed wave-band prior.  Nothing in the
+// adaptation path then reads the acceleration-band frequency tracker, which
+// stays where it is needed -- as the carrier of the wave-direction
+// demodulator.
+//
+// TrackerFallback is the previous behaviour, kept as an ablation: the same
+// wave-band frequency once the period estimator is ready, but the tracker's
+// output for the first minute or so of every run.
+//
+// WaveBandGated separates the two things WaveBand changes at once.  It drops
+// the tracker exactly like WaveBand but keeps the legacy readiness gate, so
+// comparing the three attributes the effect to "no tracker" or to "adopt the
+// period estimator as soon as it has a value" rather than to their sum.
+enum class TunerFrequencySource {
+    WaveBand,         // wave-period estimator as soon as it has a value, then a prior
+    WaveBandGated,    // ablation: same, but only once the estimator reports ready
+    TrackerFallback,  // legacy: acceleration-band tracker until the estimator is ready
+};
 
 struct DebiasedEMA {
     float value  = 0.0f;
@@ -46,6 +77,7 @@ public:
     inline void reset() {
         last_dt_freq = -1.0f;
         alpha_freq = 0.0f;
+        tau_var_sec = 0.0f;
         A_mean.reset(); A_sq.reset(); A_var.reset();
         Freq_smoothed.reset();
     }
@@ -64,20 +96,17 @@ public:
         // Effective frequency for variance horizon (use smoothed if ready)
         float f_eff = Freq_smoothed.isReady() ? Freq_smoothed.get() : f_input_hz;
         // Clamp to avoid insane horizons at tiny/zero frequency
-        const float F_MIN = 0.05f;   // 20 s period max
-        const float F_MAX = 5.0f;    // avoid crazy high freq
-        if (!std::isfinite(f_eff)) f_eff = F_MIN;
-        f_eff = std::max(F_MIN, std::min(F_MAX, f_eff));
+        if (!std::isfinite(f_eff)) f_eff = f_min_hz;
+        f_eff = std::max(f_min_hz, std::min(f_max_hz, f_eff));
 
         const float T_eff = 1.0f / f_eff;
 
         // Dynamic variance time constant: a few periods
-        const float TAU_MIN = 0.3f;       // seconds: don't go *too* twitchy
-        const float TAU_MAX = 60.0f;      // seconds: don't be glacial
-        const float tau_var_dyn = std::max(TAU_MIN, std::min(TAU_MAX, K_periods * T_eff));
+        tau_var_sec = std::max(tau_var_min_sec,
+                               std::min(tau_var_max_sec, K_periods * T_eff));
 
         // Compute alpha for variance based on dynamic tau
-        const float alpha_var = 1.0f - std::exp(-dt_s / tau_var_dyn);
+        const float alpha_var = 1.0f - std::exp(-dt_s / tau_var_sec);
 
         // Time-domain EWMA variance
         A_mean.update(accel, alpha_var);
@@ -100,14 +129,52 @@ public:
     inline bool isFreqReady() const { return Freq_smoothed.isReady(); }
     inline bool isVarReady()  const { return A_var.isReady(); }
 
+    // Horizon of the σ_a EWMA, in seconds, as last used.  The variance is a
+    // two-stage EWMA at this horizon (mean/square, then the variance itself),
+    // so the effective memory is about twice it.
+    inline float getVarianceHorizonSec() const { return tau_var_sec; }
+
     inline void setTauFreq(float t) {
         tau_freq = std::max(1e-3f, t);
         last_dt_freq = -1.0f;  // force recompute on next update
     }
 
+    // σ_a averaging horizon, in periods of the tuning frequency.
+    inline void setKPeriods(float k) {
+        if (std::isfinite(k) && k > 0.0f) K_periods = k;
+    }
+    inline float getKPeriods() const { return K_periods; }
+
+    // Absolute clamps on that horizon [s].  They exist so a degenerate tuning
+    // frequency cannot make the estimator either a pass-through or a constant;
+    // in the wave band the product K_periods * T_z should decide, not these.
+    inline void setVarianceHorizonBounds(float min_s, float max_s) {
+        if (!(std::isfinite(min_s) && std::isfinite(max_s))) return;
+        if (!(min_s > 0.0f && max_s >= min_s)) return;
+        tau_var_min_sec = min_s;
+        tau_var_max_sec = max_s;
+    }
+    inline float getVarianceHorizonMinSec() const { return tau_var_min_sec; }
+    inline float getVarianceHorizonMaxSec() const { return tau_var_max_sec; }
+
+    // Clamps on the tuning frequency the horizon is derived from [Hz].  The
+    // 0.05 Hz floor is a 20 s period, which is past the longest swell the wave
+    // band admits.
+    inline void setFrequencyBounds(float min_hz, float max_hz) {
+        if (!(std::isfinite(min_hz) && std::isfinite(max_hz))) return;
+        if (!(min_hz > 0.0f && max_hz >= min_hz)) return;
+        f_min_hz = min_hz;
+        f_max_hz = max_hz;
+    }
+
 private:
     // K_periods: dimensionless factor such that τ_var_dyn ≈ K_periods * T_eff
     float K_periods = 2.0f;
+    float tau_var_min_sec = 0.3f;   // seconds: don't go *too* twitchy
+    float tau_var_max_sec = 60.0f;  // seconds: don't be glacial
+    float f_min_hz = 0.05f;         // 20 s period max
+    float f_max_hz = 5.0f;          // avoid crazy high freq
+    float tau_var_sec = 0.0f;       // last horizon used, for inspection
     float tau_freq  = 1.0f;   // seconds
     float last_dt_freq  = -1.0f;
     float alpha_freq = 0.0f;
