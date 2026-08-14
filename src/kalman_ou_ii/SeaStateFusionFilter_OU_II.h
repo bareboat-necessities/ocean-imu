@@ -1638,12 +1638,24 @@ private:
     // on the four stationary JONSWAP records, jointly with the corrected
     // accelerometer-bias prior in Kalman3D_Wave_OU_II.h: tau_coeff = 1 is both
     // the documented intent, tau equal to half the zero-crossing period, and the
-    // optimum of the scan, while R_p0_coeff falls from 1.6 to 0.6 because the
+    // optimum of the scan, while R_p0_coeff fell from 1.6 to 0.6 because the
     // same law now sees a tau two to three times longer.  Along the good ridge
     // the conserved quantity is R_p0_coeff * tau_coeff^2, so the two must be
     // re-fitted together rather than one at a time.
-    float R_p0_coeff_  = 0.6f;
-    float R_v0_coeff_  = 1.1f;
+    //
+    // The two regularizer coefficients were then re-fitted again, because that
+    // fit predates the parity change: the sigma channel moved behind
+    // AdaptiveWaveBandPass and now reads lower, so r = c * sigma_aw * tau^k came
+    // out below what the records want, and the estimator was over-regularized.
+    // R_v0_coeff 1.1 -> 1.3 and R_p0_coeff 0.6 -> 0.65, measured on all eight
+    // stationary records at six IMU seeds and on synthesized sea-state
+    // transitions.  0.65 is where it stops rather than at the 3D optimum near
+    // 0.70: it is the largest position coefficient at which no record's mean
+    // vertical error degrades -- seven of the eight improve and the eighth is
+    // 1.0003 of the shipped one -- and at 0.70 three records lose, two of them
+    // by half a percent.  See docs/ou-ii-pseudo-variance-tuning.md.
+    float R_p0_coeff_  = 0.65f;
+    float R_v0_coeff_  = 1.3f;
     float tau_coeff_   = 1.0f;
     float sigma_coeff_ = 0.85f;
 

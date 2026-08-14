@@ -235,6 +235,39 @@ loses the most: worst-case roll 0.4753 → 0.5382 and worst-case pitch
 19% — the magnetic reference is not uniformly good for tilt, which is worth
 knowing and is not something a gate should be deciding.
 
+#### OU-II, re-derived again after the `(r_p0, r_v0)` re-fit
+
+The two passes above were cuts against a filter that stood still. This one is
+the other case: OU-II's two pseudo-measurement variance coefficients were
+re-fitted — `R_p0_coeff` 0.6 → 0.65, `R_v0_coeff` 1.1 → 1.3, see
+`docs/ou-ii-pseudo-variance-tuning.md` — and all nine bars followed the filter.
+
+Every one of the nine still passed on its previous value, so nothing here was
+forced. What forced the pass is that the previous bars had been cut to the rule
+against the previous filter, so once the filter moved, five sat too loose and
+four too tight — pitch at 0.0001 deg of margin, which is under this family's own
+rebuild drift on that channel and therefore a bar a rebuild decides.
+
+| gate | was | now | worst observed, before → after | margin |
+| --- | --- | --- | --- | --- |
+| Z %Hs JONSWAP | 6.899 | **6.865** | 6.8644 → 6.8300 (H0.27) | 0.51% |
+| Z %Hs PM-Stokes | 6.841 | **6.848** | 6.8062 → 6.8139 (H0.27) | 0.50% |
+| yaw deg | 1.095 | **1.089** | 1.0895 → 1.0833 (jonswap H1.5) | 0.52% |
+| roll deg | 0.4778 | **0.4792** | 0.4753 → 0.4768 (jonswap H4.0) | 0.50% |
+| pitch deg | 0.3639 | **0.3657** | 0.3620 → 0.3638 (jonswap H8.5) | 0.51% |
+| 3D % JONSWAP | 21.1 | **20.92** | 20.9867 → 20.8140 (H1.5) | 0.51% |
+| 3D % PM-Stokes | 21.3 | **21.03** | 21.1935 → 20.9203 (H8.5) | 0.52% |
+| acc Z bias % | 5.435 | **5.324** | 5.4073 → 5.2969 (jonswap H8.5) | 0.51% |
+| bias 3D % | 94.37 | **94.47** | 93.8979 → 93.9911 (jonswap H4.0, accel) | 0.51% |
+
+Reverting the two coefficients through `OU_R_P0_COEFF=0.6 OU_R_V0_COEFF=1.1`
+puts all nine back at the rule to the digit, which is the control that says
+this set moved for the re-fit and for nothing else.
+
+The margins land in the same 0.50–0.52% band as before, so the
+margin-to-drift ratios of the determinism budget below are unchanged to within
+their own precision — pitch stays the thinnest in the document, at 9.1x.
+
 ### NLO — both cut finer
 
 Yaw is free and ungated here, and the 3D and bias limits are open by design.

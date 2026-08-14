@@ -72,12 +72,18 @@ OU_III_COMMON_SPECS = {
 
 # OU_II family-specific knobs, re-centred for the same reason: the (r_p0, r_v0)
 # laws are built on the wave-band tau, so their productive coefficient ranges
-# moved with it.
+# moved with it.  Both windows are re-centred once more on the deployed
+# (0.65, 1.3) of docs/ou-ii-pseudo-variance-tuning.md: the old r_p0 window did
+# not contain the deployed value at all, and outside about a factor of two
+# either side of the optimum both coefficients cost tens of percent, so a wider
+# window only spends the sweep's budget on points that are already known to
+# lose.  The shared "practical" seed points that sit above the new r_p0 ceiling
+# clamp into it, as they already did against the old one.
 OU_II_EXTRA_SPECS = {
-    "OU_R_P0_COEFF": (0.70, 1.80, "log"),
+    "OU_R_P0_COEFF": (0.35, 1.30, "log"),
     "OU_R_P0_XY_FACTOR": (0.30, 1.00, "log"),
     "OU_P_FACTOR": (1.20, 1.80, "log"),
-    "OU_R_V0_COEFF": (0.90, 2.50, "log"),
+    "OU_R_V0_COEFF": (0.70, 2.60, "log"),
     # Smoothing horizons of the two drift-correction channels, in units of
     # tau_target.  Ranges bracket the deployed 3.0 on both sides; the
     # productive region is characterized in docs/ou-ema-adaptation-tuning.md.

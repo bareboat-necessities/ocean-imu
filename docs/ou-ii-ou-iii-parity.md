@@ -171,12 +171,17 @@ records constant to three decimals. Dropping it to 0.15 recovered 8–10% there.
 
 OU-II's laws differ only in the exponent, so the same failure was available and
 had to be checked rather than assumed. It is not present. At the smallest
-calibrated operating point (PM-Stokes `H_s = 0.27` m: `tau = 1.159 s`,
-`sigma_aw = 0.390 m/s^2`) the schedule asks for `r_p0 = 0.314` m against a
-0.05 m floor and `r_v0 = 0.497` m/s against a 0.01 m/s floor — clear by factors
-of 6.3 and 50. Scaled down to the near-still `H_s = 0.05` m stress case the
-demands are 0.058 m and 0.092 m/s, still above both floors. Lowering them
+calibrated operating point (PM-Stokes `H_s = 0.27` m: `tau = 1.173 s`,
+`sigma_aw = 0.365 m/s^2`) the schedule asks for `r_p0 = 0.326` m against a
+0.05 m floor and `r_v0 = 0.556` m/s against a 0.01 m/s floor — clear by factors
+of 6.5 and 55.6. Scaled down to the near-still `H_s = 0.05` m stress case the
+demands are 0.060 m and 0.103 m/s, still above both floors. Lowering them
 further would weaken a guard that is currently costing nothing.
+
+(Those operating points and demands are quoted for the filter that ships today,
+including the `(r_p0, r_v0)` coefficient re-fit of
+`docs/ou-ii-pseudo-variance-tuning.md`, which moves the schedule further from
+both floors. `regularizer_floor-test` carries the current numbers.)
 
 `regularizer_floor-test` pins this against the operating points the eight scored
 records actually produce, so a future coefficient re-fit that walks the schedule
