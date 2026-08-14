@@ -579,7 +579,20 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
             }
         }
 
-        const FilterSnapshot snap = fusion_adapter_.snapshot();
+        FilterSnapshot snap = fusion_adapter_.snapshot();
+
+        // The filter has no declination input, so with the magnetometer live
+        // its world horizontal axes are magnetic, while the record's disp/vel/
+        // acc columns are geographic.  Scoring x and y across that offset
+        // charges every horizontal metric a fixed rotation the vertical axis
+        // cannot have.  The yaw reference above is already moved into the
+        // filter's frame; do the mirror move here and bring the translational
+        // estimate back into the record's frame, before anything reads it.
+        if (options_.with_mag) {
+            snap.disp_est_zu = MagSim_WMM::mag_frame_to_geographic_nautical(snap.disp_est_zu);
+            snap.vel_est_zu  = MagSim_WMM::mag_frame_to_geographic_nautical(snap.vel_est_zu);
+            snap.acc_est_zu  = MagSim_WMM::mag_frame_to_geographic_nautical(snap.acc_est_zu);
+        }
 
         Vector3f disp_ref(rec.wave.disp_x, rec.wave.disp_y, rec.wave.disp_z);
         Vector3f vel_ref(rec.wave.vel_x, rec.wave.vel_y, rec.wave.vel_z);
@@ -847,7 +860,15 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
             }
         }
 
-        const TvgNloFilterSnapshot snap = fusion_adapter_.snapshot();
+        TvgNloFilterSnapshot snap = fusion_adapter_.snapshot();
+
+        // Same magnetic-versus-geographic horizontal offset as the W3D runner
+        // above; see the comment there.
+        if (options_.with_mag) {
+            snap.disp_est_zu = MagSim_WMM::mag_frame_to_geographic_nautical(snap.disp_est_zu);
+            snap.vel_est_zu  = MagSim_WMM::mag_frame_to_geographic_nautical(snap.vel_est_zu);
+            snap.acc_est_zu  = MagSim_WMM::mag_frame_to_geographic_nautical(snap.acc_est_zu);
+        }
 
         result.snapshots.push_back(snap);
         result.final_snapshot = snap;
