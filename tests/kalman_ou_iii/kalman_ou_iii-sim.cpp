@@ -49,6 +49,40 @@ bool env_int(const char* name, int& out)
 
 class FusionAdapter_OU_III final : public IW3dFusionAdapter {
 public:
+    // OU-III's own MEKF sensor variances, as multiples of the ones the shared
+    // harness hands every family.  The harness builds each as a fixed multiple
+    // of the white noise it injects -- 2.8x on accel, 2.0x on gyro, 1.2x on
+    // mag -- and those multiples had never been swept for any family.
+    // docs/ou-iii-qmekf-variances.md is the sweep; it moves all three, and the
+    // gyro one is much the largest effect.
+    //
+    // sigma_g is a units correction, not a fit.  The harness multiplies a
+    // *per-sample* gyro standard deviation at 200 Hz, but
+    // Kalman3D_Wave_OU_III integrates this argument as a noise *density*
+    // (Q_AA = Qbase * Ts), so the deployed value overstated the angular random
+    // walk by sqrt(200) = 14.1x on top of its own 2x inflation -- 28.3x in
+    // std, 800x in variance.  0.05 puts the argument back on the injected
+    // density and keeps a sqrt(2) inflation over it, which is where the
+    // measured optimum sits: correcting the units *is* the optimum, to within
+    // the width of the basin.
+    //
+    // The other two are empirical, measured against this harness's noise model
+    // rather than derived, and both are small next to the gyro term: accel to
+    // 2.0x the injected white (from 2.8x) and mag to 2.4x (from 1.2x).
+    //
+    // Paired over 8 records x 5 seeds against the previous point, every
+    // channel improves and none is traded away: roll -13.3%, pitch -14.7%,
+    // yaw -1.2%, vertical displacement -2.4%, 3D displacement -37.2%,
+    // accelerometer bias -1.0%, gyro bias -36.5%.  The tuner operating point
+    // (tau_applied, sigma_applied) is bit-for-bit unchanged, so this is a
+    // MEKF-side effect only and does not perturb the OU schedule.
+    //
+    // The SF_SIGMA_*_SCALE overrides below multiply these, so a scale of 1
+    // reproduces the deployed point and a re-run of the sweep re-centres on it.
+    static constexpr float SIGMA_A_RESCALE = 0.71f;  // 2.8x -> 2.0x injected accel white
+    static constexpr float SIGMA_G_RESCALE = 0.05f;  // 2.0x sample std -> sqrt(2)x density
+    static constexpr float SIGMA_M_RESCALE = 2.0f;   // 1.2x -> 2.4x injected mag white
+
     FusionAdapter_OU_III(bool with_mag,
                          const Vector3f& sigma_a_init,
                          const Vector3f& sigma_g,
@@ -56,9 +90,9 @@ public:
         : with_mag_(with_mag)
     {
         cfg_.with_mag = with_mag;
-        cfg_.sigma_a = sigma_a_init;
-        cfg_.sigma_g = sigma_g;
-        cfg_.sigma_m = sigma_m;
+        cfg_.sigma_a = sigma_a_init * SIGMA_A_RESCALE;
+        cfg_.sigma_g = sigma_g * SIGMA_G_RESCALE;
+        cfg_.sigma_m = sigma_m * SIGMA_M_RESCALE;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         cfg_.freeze_acc_bias_until_live = true;
         cfg_.Racc_warmup_std = 0.5f;
@@ -783,16 +817,39 @@ private:
 // one record.  tools/ou_sigma_horizon_study.py --axis source --seeds 5
 // reproduces it.  Only pitch is re-cut; the other eight limits are untouched
 // because nothing this change did moved them.
+//
+// Then all nine at once, and all nine downward, when the MEKF sensor
+// variances were swept for the first time (docs/ou-iii-qmekf-variances.md).
+// The gyro term of that sweep is a units correction -- the harness was
+// handing a per-sample standard deviation to an argument the filter
+// integrates as a noise density -- so the filter that ships now is a
+// materially better one rather than the same one re-drawn, and there is no
+// re-draw-versus-regression question to settle: nothing got worse.
+//
+//   Z %Hs JONSWAP    4.735 -> 4.72     worst 4.7106 -> 4.6961
+//   Z %Hs PM-Stokes  4.682 -> 4.666    worst 4.6580 -> 4.6426
+//   yaw deg          1.297 -> 1.27     worst 1.2896 -> 1.2630
+//   roll deg         0.42  -> 0.3637   worst 0.4179 -> 0.3618
+//   pitch deg        0.223 -> 0.195    worst 0.2218 -> 0.1940
+//   3D % JONSWAP     20.95 -> 13.94    worst 20.8367 -> 13.8686
+//   3D % PM-Stokes   20.86 -> 14.92    worst 20.7483 -> 14.8387
+//   acc Z bias %     4.624 -> 4.475    worst 4.6004 -> 4.4519
+//   acc 3D bias %    81.84 -> 78.61    worst 81.4268 -> 78.2145
+//
+// The two 3D displacement gates come down by about a third, which is the
+// largest single move any of these bars has made.  Everything here is what
+// tools/ou_regauge_gates.py prints for the filter as it now stands, cut to
+// the same rule as every line above it.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.735f,  // was 4.74,  worst 4.7106 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.682f,  // was 4.69,  worst 4.6580 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.297f,  // unchanged, worst 1.2896 (jonswap H1.5)
-    .err_limit_roll_deg            = 0.42f,   // new,       worst 0.4179 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.223f,  // was 0.2211, worst 0.2218 (pmstokes H4.0)
-    .err_limit_percent_3d_jonswap  = 20.95f,  // unchanged, worst 20.8367 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 20.86f,  // unchanged, worst 20.7483 (pmstokes H4.0)
-    .acc_z_bias_percent            = 4.624f,  // was 4.63,  worst 4.6004 (jonswap H8.5)
-    .bias_3d_percent               = 81.84f,  // unchanged, worst 81.4268 (pmstokes H4.0, accel)
+    .err_limit_percent_z_jonswap   = 4.72f,   // was 4.735, worst 4.6961 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.666f,  // was 4.682, worst 4.6426 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.27f,   // was 1.297, worst 1.2630 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.3637f, // was 0.42,  worst 0.3618 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.195f,  // was 0.223, worst 0.1940 (pmstokes H4.0)
+    .err_limit_percent_3d_jonswap  = 13.94f,  // was 20.95, worst 13.8686 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 14.92f,  // was 20.86, worst 14.8387 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.475f,  // was 4.624, worst 4.4519 (pmstokes H8.5)
+    .bias_3d_percent               = 78.61f,  // was 81.84, worst 78.2145 (pmstokes H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
