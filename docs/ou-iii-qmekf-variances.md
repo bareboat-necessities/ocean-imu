@@ -233,10 +233,12 @@ re-draw; that question does not arise here, because nothing got worse.
   untouched.** Correcting the units there would move all three families at
   once, including the one nobody has measured, so each family's correction
   lives in its own adapter.
-- **The committed evidence bundles are now stale.** `reports/results/ou_validation`,
-  `reports/results/ou_robustness` and the generated `doc/kalman_ou_iii/*.tex-part`
-  macros were produced by the previous operating point. They are regenerated
-  by the `ou-validation` workflow on `main`.
+- **The committed evidence bundles have been regenerated.**
+  `reports/results/ou_validation`, `reports/results/ou_robustness` and the
+  generated `doc/kalman_ou_iii/*.tex-part` macros were all produced by the
+  previous operating point and no longer described the filter. The
+  `ou-validation` workflow rebuilt them on `main` once this landed, so the
+  article is typeset against numbers this code actually produces.
 
 ## Reproducing
 
