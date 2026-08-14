@@ -223,10 +223,16 @@ re-draw; that question does not arise here, because nothing got worse.
   recommendation is the same conversion:
   `gyro_noise_density_from_sample_std(gyr_sigma_ref_rps * imu_rate_scale, 1/LOOP_HZ)`,
   times whatever inflation a hardware measurement supports.
-- **OU-II and TFG are unchanged.** Both take the same harness sigmas through
-  the same shared `W3dSimCommon.h`, so both are very likely carrying the same
-  gyro units error. Neither was swept here, and the shared harness constants
-  were deliberately left alone so that this change moves one family only.
+- **OU-II took the same correction, in a later round.** It draws the same
+  harness sigmas through the same shared `W3dSimCommon.h` and was carrying the
+  identical gyro units error;
+  [`ou-ii-qmekf-variances.md`](ou-ii-qmekf-variances.md) has that sweep and the
+  one place the two families disagree. **TFG is still unswept** and is very
+  likely carrying it too.
+- **The shared harness constants in `W3dSimCommon.h` are deliberately
+  untouched.** Correcting the units there would move all three families at
+  once, including the one nobody has measured, so each family's correction
+  lives in its own adapter.
 - **The committed evidence bundles are now stale.** `reports/results/ou_validation`,
   `reports/results/ou_robustness` and the generated `doc/kalman_ou_iii/*.tex-part`
   macros were produced by the previous operating point. They are regenerated
