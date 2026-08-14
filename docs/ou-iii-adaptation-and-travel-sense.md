@@ -442,6 +442,12 @@ is what the law says it should be: `r_p0 = c * sigma_aw * tau^2`. The scan was
 therefore run as a small 2D grid, and `tau_coeff = 1` was chosen from the ridge
 because it is the documented intent, `tau = T_z/2`, and OU-III's value.
 
+The two regularizer coefficients in that table have since been re-fitted again,
+to `R_p0_coeff = 0.65` and `R_v0_coeff = 1.3`, because this fit predates the
+parity change that moved OU-II's `sigma_aw` channel behind a band-pass. The
+values above are what this change set; `docs/ou-ii-pseudo-variance-tuning.md`
+carries the current ones and the measurement that moved them.
+
 The accelerometer-bias random walk had to move with the operating point, and
 this was not anticipated. OU-II assumed `1e-3` per sqrt(s) where the reference
 simulation generates `5e-4`; OU-III had already been corrected. Left alone it

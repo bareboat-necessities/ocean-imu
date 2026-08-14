@@ -56,15 +56,22 @@ struct OperatingPoint {
     float sigma;
 };
 
+// Re-measured on the filter that ships.  Both channels are exogenous of the
+// regularizer coefficients by construction -- the tuner reads the levelled
+// acceleration and the wave-band period, never an estimator state -- and the
+// (r_p0, r_v0) re-fit reproduces all sixteen numbers bit-for-bit, which is that
+// exogeneity measured rather than assumed.  What had moved them since they were
+// last written down is the attitude and magnetic work, which reaches the tuner
+// through its levelled input.
 constexpr OperatingPoint CALIBRATED[] = {
-    {"jonswap  H0.27", 1.29072f, 0.372228f},
-    {"jonswap  H1.50", 2.15978f, 0.727695f},
-    {"jonswap  H4.00", 3.55174f, 1.08005f},
-    {"jonswap  H8.50", 4.21382f, 1.36701f},
-    {"pmstokes H0.27", 1.15878f, 0.390050f},
-    {"pmstokes H1.50", 2.03414f, 0.745440f},
-    {"pmstokes H4.00", 3.29769f, 1.06346f},
-    {"pmstokes H8.50", 4.13898f, 1.41090f},
+    {"jonswap  H0.27", 1.28034f, 0.339120f},
+    {"jonswap  H1.50", 2.18073f, 0.688910f},
+    {"jonswap  H4.00", 3.59057f, 1.06115f},
+    {"jonswap  H8.50", 4.22184f, 1.34176f},
+    {"pmstokes H0.27", 1.17259f, 0.364507f},
+    {"pmstokes H1.50", 2.04482f, 0.746216f},
+    {"pmstokes H4.00", 3.28991f, 1.06387f},
+    {"pmstokes H8.50", 4.10027f, 1.41327f},
 };
 
 // The near-still stress case OU-III used to justify moving its floor. Scaled

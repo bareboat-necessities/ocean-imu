@@ -753,16 +753,53 @@ private:
 // anywhere in the five families, and the first bar to re-measure rather than
 // re-cut if a rebuild ever breaches it.  docs/quality-gate-regauge.md carries
 // that measurement and the command that redoes it.
+//
+// Re-derived for the (r_p0, r_v0) coefficient re-fit,
+// docs/ou-ii-pseudo-variance-tuning.md.  Every one of the nine still passed on
+// its previous value, so this pass is the rule following a filter that moved,
+// not a breach being papered over -- but pitch had come down to 0.0001 deg of
+// margin against a channel whose measured -march rebuild drift is about 2e-4
+// deg, so leaving the set alone would have shipped a bar that a rebuild
+// decides, and not the filter.  Reverting both coefficients through
+// OU_R_P0_COEFF/OU_R_V0_COEFF puts all nine back at the rule to the digit,
+// which is the check that this set moved for the re-fit and for nothing else.
+//
+// Five tighten and four loosen:
+//
+//   Z %Hs JONSWAP    6.899 -> 6.865   worst 6.8644 -> 6.8300 (jonswap H0.27)
+//   Z %Hs PM-Stokes  6.841 -> 6.848   worst 6.8062 -> 6.8139 (pmstokes H0.27)
+//   yaw deg          1.095 -> 1.089   worst 1.0895 -> 1.0833 (jonswap H1.5)
+//   roll deg        0.4778 -> 0.4792  worst 0.4753 -> 0.4768 (jonswap H4.0)
+//   pitch deg       0.3639 -> 0.3657  worst 0.3620 -> 0.3638 (jonswap H8.5)
+//   3D % JONSWAP      21.1 -> 20.92   worst 20.9867 -> 20.8140 (jonswap H1.5)
+//   3D % PM-Stokes    21.3 -> 21.03   worst 21.1935 -> 20.9203 (pmstokes H8.5)
+//   acc Z bias %     5.435 -> 5.324   worst 5.4073 -> 5.2969 (jonswap H8.5)
+//   bias 3D %        94.37 -> 94.47   worst 93.8979 -> 93.9911 (jonswap H4.0)
+//
+// Both displacement gates come down, by 0.9 and 1.3 percent, which is where a
+// change to the translational regularizer is supposed to show up.
+//
+// Of the four that loosen, three are single-realization moves against an
+// ensemble that goes the other way.  Pooled over the eight records at six IMU
+// seed triplets the re-fit reads 0.9958 vertical, 0.9796 pitch, 1.0003 roll and
+// 1.0006 accelerometer-bias 3D, so pitch improves 2 percent while its
+// deterministic worst record moves up 0.0018 deg, and roll is flat within its
+// own realization noise.  The vertical one is not noise: it is the small-sea
+// end of the position-coefficient trade, and holding the per-record mean
+// vertical error where it is -- seven of eight records improve and the eighth
+// is 1.0003 -- is what bounded R_p0_coeff at 0.65.  The bias one is the least
+// observable quantity scored here, with an error above 90 percent of the true
+// bias on the binding record under every configuration this family has shipped.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.899f,  // was 6.9,   worst 6.8644 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.841f,  // was 6.85,  worst 6.8062 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.095f,  // unchanged, worst 1.0895 (jonswap H1.5)
-    .err_limit_roll_deg            = 0.4778f, // new,       worst 0.4753 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.3639f, // new,       worst 0.3620 (jonswap H8.5)
-    .err_limit_percent_3d_jonswap  = 21.1f,   // unchanged, worst 20.9867 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 21.3f,   // unchanged, worst 21.1935 (pmstokes H8.5)
-    .acc_z_bias_percent            = 5.435f,  // was 5.44,  worst 5.4073 (jonswap H8.5)
-    .bias_3d_percent               = 94.37f,  // was 94.4,  worst 93.8979 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 6.865f,  // was 6.899, worst 6.8300 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 6.848f,  // was 6.841, worst 6.8139 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.089f,  // was 1.095, worst 1.0833 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.4792f, // was 0.4778, worst 0.4768 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.3657f, // was 0.3639, worst 0.3638 (jonswap H8.5)
+    .err_limit_percent_3d_jonswap  = 20.92f,  // was 21.1,  worst 20.8140 (jonswap H1.5)
+    .err_limit_percent_3d_pmstokes = 21.03f,  // was 21.3,  worst 20.9203 (pmstokes H8.5)
+    .acc_z_bias_percent            = 5.324f,  // was 5.435, worst 5.2969 (jonswap H8.5)
+    .bias_3d_percent               = 94.47f,  // was 94.37, worst 93.9911 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

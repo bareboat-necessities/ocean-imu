@@ -158,13 +158,17 @@ class DeployedLawMirrorTests(unittest.TestCase):
     """
 
     HEADER = REPO_ROOT / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
+    HEADER_OU_II = REPO_ROOT / "src" / "kalman_ou_ii" / "SeaStateFusionFilter_OU_II.h"
 
     def _header_value(self, pattern: str) -> float:
+        return self._value_from(self.HEADER, pattern)
+
+    def _value_from(self, header, pattern: str) -> float:
         import re
 
-        text = self.HEADER.read_text(encoding="utf-8")
+        text = header.read_text(encoding="utf-8")
         match = re.search(pattern, text)
-        self.assertIsNotNone(match, f"{pattern} not found in {self.HEADER.name}")
+        self.assertIsNotNone(match, f"{pattern} not found in {header.name}")
         return float(match.group(1))
 
     def test_rs_coefficient_matches_the_filter_default(self):
@@ -189,6 +193,38 @@ class DeployedLawMirrorTests(unittest.TestCase):
             self._header_value(r"MAX_R_S\s*=\s*([0-9.]+)f"),
             places=6,
         )
+
+    def test_ou_ii_coefficients_match_the_filter_defaults(self):
+        """OU-II's mirror has the same failure mode and had no test.
+
+        Its two coefficients are the ones a re-fit moves, so pin both.
+        """
+        import ou_validation as validation
+
+        self.assertAlmostEqual(
+            validation.OU_II_RP0_COEFF,
+            self._value_from(self.HEADER_OU_II,
+                             r"float\s+R_p0_coeff_\s*=\s*([0-9.]+)f"),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            validation.OU_II_RV0_COEFF,
+            self._value_from(self.HEADER_OU_II,
+                             r"float\s+R_v0_coeff_\s*=\s*([0-9.]+)f"),
+            places=6,
+        )
+
+    def test_ou_ii_bounds_match_the_filter_clamps(self):
+        import ou_validation as validation
+
+        for value, pattern in (
+            (validation.OU_II_RP0_BOUNDS_M[0], r"MIN_R_p0_std\s*=\s*([0-9.]+)f"),
+            (validation.OU_II_RP0_BOUNDS_M[1], r"MAX_R_p0_std\s*=\s*([0-9.]+)f"),
+            (validation.OU_II_RV0_BOUNDS_MPS[0], r"MIN_R_v0_std\s*=\s*([0-9.]+)f"),
+            (validation.OU_II_RV0_BOUNDS_MPS[1], r"MAX_R_v0_std\s*=\s*([0-9.]+)f"),
+        ):
+            self.assertAlmostEqual(
+                value, self._value_from(self.HEADER_OU_II, pattern), places=6)
 
     def test_robustness_bounds_match_the_filter_clamps(self):
         import ou_robustness as robustness

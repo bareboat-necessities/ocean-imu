@@ -232,3 +232,10 @@ constant scales with the OU operating point. `tools/ou_ema_adapt_study.py`
 sweeps those horizons against synthesized sea-state transitions, which is the
 only instrument that can see them; see
 [`docs/ou-ema-adaptation-tuning.md`](docs/ou-ema-adaptation-tuning.md).
+
+The coefficients of the drift-regularizer laws themselves -- OU-II's
+`r_p0 ~ sigma_aw tau^2` and `r_v0 ~ sigma_aw tau` -- are fitted the same way,
+and have to be re-fitted whenever the way `sigma_aw` is measured changes, since
+they pass that measurement straight through. OU-II's pair was last re-fitted
+after its variance channel moved into the wave band; see
+[`docs/ou-ii-pseudo-variance-tuning.md`](docs/ou-ii-pseudo-variance-tuning.md).
