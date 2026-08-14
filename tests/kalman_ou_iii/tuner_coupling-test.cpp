@@ -80,7 +80,10 @@ void sample(int k, Eigen::Vector3f& gyro, Eigen::Vector3f& acc) {
 }
 
 // Mirrors what SeaStateFusion_OU_III::begin() does to the inner filter.
-void bring_up(Filter& f) {
+// Templated because the tracker-independence check below has to bring up two
+// filters that differ in nothing but their TrackerType.
+template <typename F>
+void bring_up(F& f) {
     f.setWithMag(false);
     f.setOnlineTuneWarmupSec(5.0f);
     f.initialize(Eigen::Vector3f::Constant(0.0148f),
@@ -92,7 +95,8 @@ void bring_up(Filter& f) {
     f.initialize_from_acc(acc);
 }
 
-void run(Filter& f, int from, int to) {
+template <typename F>
+void run(F& f, int from, int to) {
     Eigen::Vector3f gyro, acc;
     for (int k = from; k < to; ++k) {
         sample(k, gyro, acc);
@@ -254,6 +258,82 @@ bool test_default_frequency_channel_is_exogenous() {
     return ok;
 }
 
+// The operating point must not depend on the acceleration-band frequency
+// tracker at all, at any point in the run -- not only after the wave-period
+// estimator reports ready.
+//
+// Two filters differing in nothing but their TrackerType are driven with
+// identical samples.  KalmANF and Aranovskiy converge differently and report
+// different frequencies, especially early, so if any part of the adaptation
+// path still read the tracker the two schedules would diverge.  Everything the
+// two filters share -- the input low-pass, the stillness detector, the private
+// Mahony observer, the sigma band -- is a function of the measurement, so the
+// only thing this can detect is a tracker dependence.
+//
+// The comparison is made at 30 s, well before the wave-period estimator is
+// ready: under the previous TrackerFallback source that is exactly the window
+// in which the tracker set the sigma band's corners, the sigma_a averaging
+// horizon and tau, and this check fails on it.
+bool test_operating_point_is_tracker_independent() {
+    bool ok = true;
+
+    SeaStateFusionFilter_OU_III<TrackerType::KALMANF> kalmanf;
+    SeaStateFusionFilter_OU_III<TrackerType::ARANOVSKIY> aranovskiy;
+    bring_up(kalmanf);
+    bring_up(aranovskiy);
+
+    ok &= check(kalmanf.tunerFrequencySource() == TunerFrequencySource::WaveBand,
+                "the default tuning-frequency source must be the wave-band one");
+
+    constexpr int EARLY = 240 * 30;
+    run(kalmanf, 0, EARLY);
+    run(aranovskiy, 0, EARLY);
+
+    ok &= check(!kalmanf.wavePeriodReady(),
+                "the period estimator must still be unsettled here, or this "
+                "measures the settled path and proves nothing about the "
+                "window the tracker used to own");
+    // Raw, not getFreqHz(): the smoothed branch is clamped into
+    // [min_freq_hz_, max_freq_hz_], and this synthetic 8 s wave sits under the
+    // 0.2 Hz floor, so both trackers report the floor however much they
+    // disagree underneath it.
+    ok &= check(kalmanf.getFreqRawHz() != aranovskiy.getFreqRawHz(),
+                "the two trackers must actually disagree, or this test cannot "
+                "detect a dependence on them");
+
+    ok &= check(kalmanf.getTauTarget() == aranovskiy.getTauTarget(),
+                "tau target must not depend on which frequency tracker runs");
+    ok &= check(kalmanf.getSigmaTarget() == aranovskiy.getSigmaTarget(),
+                "sigma target must not depend on which frequency tracker runs");
+    ok &= check(kalmanf.getRSTarget() == aranovskiy.getRSTarget(),
+                "r_S target must not depend on which frequency tracker runs");
+    ok &= check(kalmanf.sigma_wave_band_.lowHz() == aranovskiy.sigma_wave_band_.lowHz() &&
+                kalmanf.sigma_wave_band_.highHz() == aranovskiy.sigma_wave_band_.highHz(),
+                "sigma-band corners must not depend on which tracker runs");
+
+    // And again once the estimator has settled, where both sources agree.
+    run(kalmanf, EARLY, SETTLE);
+    run(aranovskiy, EARLY, SETTLE);
+    ok &= check(kalmanf.wavePeriodReady(), "the period estimator must settle");
+    ok &= check(kalmanf.getTauTarget() == aranovskiy.getTauTarget() &&
+                kalmanf.getSigmaTarget() == aranovskiy.getSigmaTarget() &&
+                kalmanf.getRSTarget() == aranovskiy.getRSTarget(),
+                "the settled operating point must be tracker-independent too");
+
+    std::cout << "  tracker independence at " << (EARLY / 240) << " s: f_raw "
+              << kalmanf.getFreqRawHz() << " vs " << aranovskiy.getFreqRawHz()
+              << " Hz, tau " << kalmanf.getTauTarget() << " s both\n";
+
+    if (!ok) {
+        std::cerr << "  Part of the adaptation path is reading the "
+                     "acceleration-band\n"
+                     "  frequency tracker again. The tracker is the wave-direction\n"
+                     "  demodulator's carrier; the operating point is a wave-band\n"
+                     "  quantity and comes from WavePeriodEstimator.\n";
+    }
+    return ok;
+}
+
 bool test_tilt_gate_stays_outside_the_live_analysis_region() {
     bool ok = true;
 
@@ -288,6 +368,7 @@ int main() {
     bool ok = true;
     ok &= test_sigma_channel_input_is_exogenous();
     ok &= test_default_frequency_channel_is_exogenous();
+    ok &= test_operating_point_is_tracker_independent();
     ok &= test_leveled_ablation_coupling_stays_bounded();
     ok &= test_tilt_gate_stays_outside_the_live_analysis_region();
 

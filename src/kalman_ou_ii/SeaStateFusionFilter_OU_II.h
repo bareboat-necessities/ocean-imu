@@ -27,9 +27,12 @@
       SeaStateAutoTuner, which estimates acceleration variance and applies the
       σₐ·τ² and σₐ·τ regularization laws to stabilize displacement drift
       correction.  The time scale those laws are built on comes from
-      WavePeriodEstimator, not from the acceleration-band frequency tracker;
-      see "Where" below.  The variance channel first applies a period-scaled
-      measurement-only wave band.
+      WavePeriodEstimator, not from the acceleration-band frequency tracker,
+      at every instant of the run: before that estimator has a value a fixed
+      wave-band prior stands in rather than the tracker (see
+      TunerFrequencySource).  See "Where" below.  The variance channel first
+      applies a period-scaled measurement-only wave band, and averages its
+      variance over a horizon of K wave periods.
 
   Where
   – τ (tau):  OU process time constant = ½ · T_z, half the zero-crossing period
@@ -151,6 +154,30 @@ constexpr float MAX_FREQ_HZ = 6.0f;
 // acceleration-band tracker and is far too high for a zero-crossing period:
 // 0.03 Hz admits a 33 s swell.
 constexpr float MIN_TUNE_FREQ_HZ = 0.03f;
+
+// Ceiling for the wave-band tuning frequency.  MAX_FREQ_HZ is the tracker's
+// bound and does not belong in the adaptation path: with the tuning frequency
+// read from the wave band, setFreqBounds() is a wave-direction knob and must
+// not move the OU operating point.  Neither bound binds on any reference
+// record -- the wave band spans 0.12 to 0.40 Hz -- so this is a safety limit,
+// not a tuning surface.  1.5 Hz is a 0.67 s zero-crossing period, shorter than
+// any sea a hull responds to.
+constexpr float MAX_TUNE_FREQ_HZ = 1.5f;
+
+// Wave-band tuning frequency used before WavePeriodEstimator has a value.
+//
+// It has to be a constant: the whole point of the wave-band source is that no
+// part of the adaptation path reads the acceleration-band tracker, and a
+// constant is trivially exogenous.  0.2 Hz is a 5 s zero-crossing period, and
+// the estimator reports 2.3-8.4 s across the reference family, so the prior is
+// never worse than a factor of two off; the estimator replaces it after about
+// 50 s in any case.  It is the same constant SeaStateFusionFilter_TFG has always
+// used for this, which is where the value comes from rather than a fit.
+// Sensitivity to it is measured in docs/ou-sigma-horizon.md: sweeping it over
+// 0.1-0.4 Hz leaves every scored 900 s metric unchanged to four decimal places
+// in both families, because the estimator has replaced it 250 s before the
+// window opens.
+constexpr float TUNE_FREQ_PRIOR_HZ = 0.2f;
 
 // JONSWAP-similar acceleration-variance band, matching OU-III's.  Away from
 // the absolute safety clamps, its transfer shape is fixed in f/f_tune, which
@@ -1049,6 +1076,10 @@ public:
     inline float getR_p0_std_target()  const noexcept { return R_p0_std_target_; }
     inline float getR_v0_std_target()  const noexcept { return R_v0_std_target_; }
 
+    // Apparent period of the *acceleration* band, from the slow tracker
+    // branch.  This is a reporting channel: the OU operating point uses
+    // getWavePeriodSec(), the zero-crossing period of the elevation, which is
+    // a different and much longer quantity.
     inline float getPeriodSec() const noexcept {
         return (freq_hz_slow_ > 1e-6f) ? 1.0f / freq_hz_slow_ : NAN;
     }
@@ -1130,6 +1161,46 @@ public:
     // below the wave band; see VerticalAccelComplementary.h.
     void setWavePeriodComplementaryGains(float two_kp, float two_ki) {
         vertical_accel_comp_.setGains(two_kp, two_ki);
+    }
+
+    // Where the tuning frequency comes from.  WaveBand (default) keeps the
+    // whole adaptation path -- sigma band corners, sigma_a horizon, tau -- off
+    // the acceleration-band frequency tracker at every instant of the run; the
+    // other two are ablations.  See TunerFrequencySource.
+    void setTunerFrequencySource(TunerFrequencySource source) {
+        tuner_freq_source_ = source;
+    }
+    TunerFrequencySource tunerFrequencySource() const noexcept {
+        return tuner_freq_source_;
+    }
+
+    // Wave-band frequency used before WavePeriodEstimator has a value.
+    void setTuneFreqPriorHz(float hz) {
+        if (std::isfinite(hz) && hz > 0.0f) tune_freq_prior_hz_ = hz;
+    }
+    float tuneFreqPriorHz() const noexcept { return tune_freq_prior_hz_; }
+
+    // Bounds on the wave-band tuning frequency.  Distinct from setFreqBounds(),
+    // which bounds the acceleration-band tracker that drives wave direction.
+    void setTuneFreqBounds(float min_hz, float max_hz) {
+        if (!(std::isfinite(min_hz) && std::isfinite(max_hz))) return;
+        if (!(min_hz > 0.0f && max_hz > min_hz)) return;
+        min_tune_freq_hz_ = min_hz;
+        max_tune_freq_hz_ = max_hz;
+    }
+
+    // sigma_a averaging horizon, in periods of the tuning frequency, and its
+    // absolute clamps in seconds.  The horizon moved with the operating point
+    // when tuning moved to the wave band -- the same K is now 5-17 s instead of
+    // about 4 -- so it is a tuning surface; docs/ou-sigma-horizon.md measures it.
+    void setSigmaVarianceKPeriods(float k) { tuner_.setKPeriods(k); }
+    float getSigmaVarianceKPeriods() const noexcept { return tuner_.getKPeriods(); }
+    void setSigmaVarianceHorizonBounds(float min_s, float max_s) {
+        tuner_.setVarianceHorizonBounds(min_s, max_s);
+    }
+    // Horizon currently in force [s]; the variance is a two-stage EWMA at it.
+    float getSigmaVarianceHorizonSec() const noexcept {
+        return tuner_.getVarianceHorizonSec();
     }
 
     inline WaveDirection getDirSignState() const noexcept { return dir_sign_state_; }
@@ -1281,10 +1352,11 @@ private:
             ? tuner_.getFrequencyHz()
             : freq_hz_for_tuner;
         const float f_tune_floor = wave_band_tuning_ ? min_tune_freq_hz_ : min_freq_hz_;
+        const float f_tune_ceil = wave_band_tuning_ ? max_tune_freq_hz_ : max_freq_hz_;
         if (!std::isfinite(f_for_sigma_band) || f_for_sigma_band < f_tune_floor) {
             f_for_sigma_band = f_tune_floor;
         }
-        f_for_sigma_band = std::min(f_for_sigma_band, max_freq_hz_);
+        f_for_sigma_band = std::min(f_for_sigma_band, f_tune_ceil);
 
         const float a_for_variance = wave_band_tuning_
             ? sigma_wave_band_.step(a_vertical_measurement, dt, f_for_sigma_band)
@@ -1320,12 +1392,14 @@ private:
                 break;
         }
 
-        // The tuning frequency is a wave-band quantity and has to be allowed
-        // below the tracker's floor: a developed sea has T_z = 8.6 s, i.e.
-        // 0.12 Hz, well under the 0.2 Hz the tracker is bounded to.
+        // The tuning frequency is a wave-band quantity and is bounded by the
+        // wave band, not by the tracker's bounds: a developed sea has
+        // T_z = 8.6 s, i.e. 0.12 Hz, well under the 0.2 Hz the tracker is
+        // bounded to, and setFreqBounds() moves the demodulator carrier rather
+        // than the OU operating point.
         float f_tune = tuner_.getFrequencyHz();
         if (!std::isfinite(f_tune) || f_tune < f_tune_floor) f_tune = f_tune_floor;
-        if (f_tune > max_freq_hz_) f_tune = max_freq_hz_;
+        if (f_tune > f_tune_ceil) f_tune = f_tune_ceil;
 
         const float band_noise_sigma = band_noise_floor_sigma_();
         const float var_noise = band_noise_sigma * band_noise_sigma;
@@ -1421,12 +1495,30 @@ private:
         }
     }
 
+    // The frequency the whole adaptation path runs on: the sigma band's
+    // corners, the sigma_a averaging horizon, and tau.
+    //
+    // Under the deployed WaveBand source it never reads tracker_hz.  The
+    // estimator's own value is taken as soon as it exists rather than at
+    // isReady(): the readiness gate wants a settled *statistic*, and it does
+    // not clear until 60-85 s into a run, whereas a value that has survived the
+    // integrator settling transient is already a far better wave-band estimate
+    // than a constant.  Before that the fixed prior stands in.  Both are
+    // exogenous, so the schedule is a pure function of the measurements at
+    // every instant of the run rather than only after the gate clears.
     float tuner_frequency_hz_(float tracker_hz) const {
-        if (wave_band_tuning_ && wave_period_.isReady()) {
-            const float wave_hz = wave_period_.getFrequencyHz();
-            if (std::isfinite(wave_hz) && wave_hz > 0.0f) return wave_hz;
-        }
-        return tracker_hz;
+        if (!wave_band_tuning_) return tracker_hz;
+
+        const float wave_hz = wave_period_.getFrequencyHz();
+        const bool usable =
+            std::isfinite(wave_hz) && wave_hz > 0.0f &&
+            (tuner_freq_source_ == TunerFrequencySource::WaveBand ||
+             wave_period_.isReady());
+        if (usable) return wave_hz;
+
+        return (tuner_freq_source_ == TunerFrequencySource::TrackerFallback)
+                   ? tracker_hz
+                   : tune_freq_prior_hz_;
     }
 
     void resetTrackingState_() {
@@ -1563,7 +1655,10 @@ private:
     bool  wave_band_tuning_       = true;
     WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;
     FreqTrackerInputSource freq_tracker_input_ = FreqTrackerInputSource::Complementary;
+    TunerFrequencySource tuner_freq_source_ = TunerFrequencySource::WaveBand;
+    float tune_freq_prior_hz_     = TUNE_FREQ_PRIOR_HZ;
     float min_tune_freq_hz_       = MIN_TUNE_FREQ_HZ;
+    float max_tune_freq_hz_       = MAX_TUNE_FREQ_HZ;
     float min_freq_hz_            = MIN_FREQ_HZ;
     float max_freq_hz_            = MAX_FREQ_HZ;
     float min_tau_s_              = MIN_TAU_S;

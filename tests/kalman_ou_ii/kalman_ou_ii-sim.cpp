@@ -211,6 +211,47 @@ public:
                 filter.mekf().set_Q_bacc_rw(Eigen::Vector3f::Constant(v));
             }
 
+            // Where the tuning frequency comes from before the wave-period
+            // estimator has a value.  "wave_band" is the deployed source and
+            // never reads the acceleration-band tracker; "wave_band_gated"
+            // keeps the legacy readiness gate but still never reads it;
+            // "tracker_fallback" is the previous behaviour.
+            if (const char* src = std::getenv("W3D_TUNER_FREQ_SOURCE")) {
+                const std::string value = src;
+                if (value == "wave_band") {
+                    filter.setTunerFrequencySource(TunerFrequencySource::WaveBand);
+                } else if (value == "wave_band_gated") {
+                    filter.setTunerFrequencySource(
+                        TunerFrequencySource::WaveBandGated);
+                } else if (value == "tracker_fallback") {
+                    filter.setTunerFrequencySource(
+                        TunerFrequencySource::TrackerFallback);
+                } else {
+                    throw std::runtime_error(
+                        "W3D_TUNER_FREQ_SOURCE must be wave_band, "
+                        "wave_band_gated or tracker_fallback");
+                }
+            }
+
+            // Wave-band prior used until the period estimator has a value.
+            if (env_float("OU_TUNE_FREQ_PRIOR_HZ", v)) {
+                filter.setTuneFreqPriorHz(v);
+            }
+
+            // sigma_a averaging horizon, in periods of the tuning frequency,
+            // and its absolute clamps in seconds.
+            if (env_float("OU_SIGMA_VAR_K_PERIODS", v)) {
+                filter.setSigmaVarianceKPeriods(v);
+            }
+            {
+                float lo = 0.3f, hi = 60.0f;
+                const bool got_lo = env_float("OU_SIGMA_VAR_HORIZON_MIN_S", lo);
+                const bool got_hi = env_float("OU_SIGMA_VAR_HORIZON_MAX_S", hi);
+                if (got_lo || got_hi) {
+                    filter.setSigmaVarianceHorizonBounds(lo, hi);
+                }
+            }
+
             // Ablate the wave-band operating point back to the
             // acceleration-band frequency the filter used before.
             if (const char* band = std::getenv("W3D_TUNING_BAND")) {
