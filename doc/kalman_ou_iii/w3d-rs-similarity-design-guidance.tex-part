@@ -550,6 +550,223 @@ floor must eventually dominate --- \eqref{eq:riccati-exponent-law} predicts the
 exponent should fall toward $6/7$.  That is a sharper and more testable
 statement than the $\beta_m$ postulate it replaces.
 
+\subsubsection{Reading the optimum per axis}
+\label{sec:riccati-per-axis}
+
+Everything above is written for the vertical channel, but nothing in the
+derivation of either term of \eqref{eq:riccati-optimal-pole} uses the axis.
+The drift term comes from the triple-integrator error transfer
+\eqref{eq:riccati-error-transfers}, which is the same three chains on $x$, $y$
+and $z$; the distortion term comes from the $S=0$ constraint, which is imposed
+componentwise.  Read per axis $i\in\{x,y,z\}$, the optimum is
+\begin{equation}
+ \mathrm{MSE}_{p_i}\simeq\frac{3q_{\mathrm{eff},i}}{2\omega_{R,i}^3}
+ +4m_{-4,i}\omega_{R,i}^4,
+ \qquad
+ \omega_{R,i}^{\star7}=\frac{9}{32}\,\frac{q_{\mathrm{eff},i}}{m_{-4,i}},
+\label{eq:riccati-axis-optimal-pole}
+\end{equation}
+and, inverting $\omega_{R,i}=(q_{\mathrm{eff},i}/R_{S,i}T_S)^{1/6}$ with
+$R_{S,i}=r_{S,i}^2$,
+\begin{equation}
+ \boxed{
+ r_{S,i}^{\star}
+ =\left(\tfrac{32}{9}\right)^{3/7}
+ q_{\mathrm{eff},i}^{1/14}\,m_{-4,i}^{3/7}\,T_S^{-1/2} .}
+\label{eq:riccati-axis-optimal-rs}
+\end{equation}
+The horizontal weight $\rho_{xy}$ of \eqref{eq:fus-rs-anisotropy} is therefore
+not a free constant.  Taking the ratio, $T_S$ and the numerical prefactor
+cancel and
+\begin{equation}
+ \boxed{
+ \frac{r_{S,i}^{\star}}{r_{S,j}^{\star}}
+ =\left(\frac{q_{\mathrm{eff},i}}{q_{\mathrm{eff},j}}\right)^{1/14}
+  \left(\frac{m_{-4,i}}{m_{-4,j}}\right)^{3/7} ,}
+\label{eq:riccati-axis-ratio}
+\end{equation}
+so the deployed anisotropy is fixed by two measurable quantities and needs no
+new calibration.  The exponents are six to one apart, which is the whole point
+of what follows: the axis anisotropy is set by the wave signal the regularizer
+fights, not by the drift noise it exists to suppress.
+
+\paragraph{Why $q_{\mathrm{eff}}$ is anisotropic, and by how much.}
+Per axis the reduction of Sec.~\ref{sec:riccati-drift-band} reads
+$\mu_i=\sqrt{\tau^{-2}+2\sigma_{a,i}^2/(\tau r_{a,i})}$ with
+$\sigma_{a,i}^2=[\matg\Sigma_{aw}^{\mathrm{stat}}]_{ii}$, and
+$q_{\mathrm{eff},i}=2r_{a,i}(1-1/\mu_i\tau)$.  What differs across axes is
+$r_{a,i}$, and \eqref{eq:acc-meas} already says why.  With
+$\vct\varepsilon_a=\hat{\vct a}_w-\vct a_w$ and the Jacobians of
+Sec.~\ref{sec:measurement_model},
+\begin{equation}
+ \vct\varepsilon_a\simeq
+ -\Rot_{bw}\Skew{\vct f_{\mathrm{cog},b}}\delta\vct\theta
+ +\Rot_{bw}\delta\vct b_a+\Rot_{bw}\vct n_a+\vct\varepsilon_{\mathrm{model}},
+\label{eq:riccati-axis-acc-error}
+\end{equation}
+and near level, with $\vct f_{\mathrm{cog}}\simeq(a_x,a_y,a_z-g)^{T}$,
+\begin{equation}
+\begin{aligned}
+ \varepsilon_{a,x}&\simeq-g\,\delta\theta_y-a_y\delta\theta_z+\delta b_x+n_x,\\
+ \varepsilon_{a,y}&\simeq+g\,\delta\theta_x+a_x\delta\theta_z+\delta b_y+n_y,\\
+ \varepsilon_{a,z}&\simeq\;\;\,a_y\delta\theta_x-a_x\delta\theta_y+\delta b_z+n_z.
+\end{aligned}
+\label{eq:riccati-axis-tilt-leak}
+\end{equation}
+The horizontal rows carry tilt uncertainty multiplied by
+$g\simeq\SI{9.81}{m/s^2}$; the vertical row carries it multiplied only by the
+horizontal wave acceleration, which is smaller by an order of magnitude in
+every calibration sea.  This is a first- versus second-order distinction, not a
+tuning accident: to first order the vertical channel does not see tilt error at
+all, because $\vct a_w-\vct g$ is almost exactly $-g\vct e_z$ and
+$\Skew{\vct e_z}$ annihilates its own axis.  The natural definition is
+therefore the spectral one,
+\begin{equation}
+ \mat Q_{\mathrm{eff}}=\mat S_{\varepsilon_a}(0),
+ \qquad
+ q_{\mathrm{eff},i}=\vct e_i^{T}\mat S_{\varepsilon_a}(0)\vct e_i ,
+\label{eq:riccati-axis-qeff}
+\end{equation}
+which is preferable to forcing attitude, bias and model error into a fictitious
+white $r_{a,i}$.
+
+\paragraph{Per-axis $m_{-4}$.}
+Equally, \eqref{eq:riccati-m4} generalizes by replacing the elevation spectrum
+with the spectrum of the displacement component the constraint acts on,
+\begin{equation}
+ m_{-4,i}=\int_0^\infty\frac{S_{p_i}(\omega)}{\omega^4}\,d\omega
+ =\Var\!\left[\textstyle\int S_i\,dt\right]
+ =\int_0^\infty\frac{S_{a_i}(\omega)}{\omega^8}\,d\omega .
+\label{eq:riccati-axis-m4}
+\end{equation}
+The last form shows why this quantity must be band-limited in practice: the
+$\omega^{-8}$ weight puts essentially all of it on the lowest resolved
+frequencies, so it is taken from the reference channel over the band the sea
+actually occupies, never from the estimate.  The complete object is the matrix
+\begin{equation}
+ \mat M_{-4}=\int_0^\infty\frac{\mat S_p(\omega)}{\omega^4}\,d\omega ,
+\label{eq:riccati-axis-m4-matrix}
+\end{equation}
+whose diagonal is \eqref{eq:riccati-axis-m4} and whose off-diagonal entries
+carry the directional correlation between $x$ and $y$.  For a directional sea
+$\mat M_{-4}$ is not diagonal in NED, so the componentwise reading below is a
+choice, not an identity; the rotated reading it invites is noted in
+Sec.~\ref{sec:riccati-per-axis-limits} and deliberately not deployed here.
+
+\paragraph{Measurement.}
+Both quantities are measured directly from the simulator rather than inferred
+(\texttt{tools/ou\_axis\_rs\_optimum.py}), over the same trailing
+\SI{900}{s} window the validation study scores, by Welch periodogram with
+\SI{300}{s} Hann segments at \SI{75}{\percent} overlap.  For $q_{\mathrm{eff},i}$
+the residual $\varepsilon_{a,i}=\hat a_{w,i}-a_{w,i}^{\mathrm{ref}}$ is formed
+and its drift-band spectrum --- everything below the bottom edge of the sea's
+own energy --- fitted to $2P_i\mu_i/(\mu_i^2+\omega^2)$, whose zero-frequency
+value is $q_{\mathrm{eff},i}$.  For $m_{-4,i}$ the reference displacement
+spectrum is integrated against $\omega^{-4}$ over that same wave band.
+Table~\ref{tab:riccati-axis-ratios} gives the result for the eight stationary
+calibration seas.
+
+\begin{table}[t]
+\caption{Per-axis drift-band intensity and true-displacement moment, measured
+over the trailing \SI{900}{s} of the eight stationary calibration records, with
+the regularizer ratio \eqref{eq:riccati-axis-ratio} they imply.  The deployed
+filter runs $\rho_{xy}=1$, i.e.\ unity in both of the last two columns.}
+\label{tab:riccati-axis-ratios}
+\centering
+\footnotesize
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{$q_{\mathrm{eff},i}/q_{\mathrm{eff},z}$}
+& \multicolumn{2}{c}{$m_{-4,i}/m_{-4,z}$}
+& \multicolumn{2}{c}{$r_{S,i}^\star/r_{S,z}^\star$} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+Sea & $x$ & $y$ & $x$ & $y$ & $x$ & $y$ \\
+\midrule
+JONSWAP $H_s=0.27$  & 106.9 & 229.9 & 0.694 & 0.306 & 1.193 & 0.888 \\
+JONSWAP $H_s=1.50$  &  77.2 & 150.1 & 0.729 & 0.272 & 1.191 & 0.819 \\
+JONSWAP $H_s=4.00$  &  32.7 &  51.9 & 0.677 & 0.320 & 1.085 & 0.813 \\
+JONSWAP $H_s=8.50$  &  73.5 &  60.9 & 0.644 & 0.370 & 1.126 & 0.875 \\
+PM/Stokes $H_s=0.27$& 112.3 & 232.0 & 0.658 & 0.338 & 1.171 & 0.926 \\
+PM/Stokes $H_s=1.50$&  77.5 & 143.9 & 0.703 & 0.293 & 1.173 & 0.843 \\
+PM/Stokes $H_s=4.00$&  49.3 &  84.4 & 0.643 & 0.361 & 1.093 & 0.887 \\
+PM/Stokes $H_s=8.50$&  39.5 &  39.0 & 0.646 & 0.362 & 1.079 & 0.840 \\
+\midrule
+Geometric mean      &  65.4 & 102.3 & 0.674 & 0.326 & \textbf{1.138} & \textbf{0.861} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{What the measurement says.}
+Four things, and the first three are checks on the measurement itself.
+
+The measured $q_{\mathrm{eff},z}$ runs from \SI{9.3e-7}{m^2/s^3} at
+$H_s=\SI{0.27}{m}$ to \SI{2.0e-5}{m^2/s^3} at $H_s=\SI{8.5}{m}$, bracketing the
+bench floor $2r_a=\SI{2.19e-6}{m^2/s^3}$ of \eqref{eq:riccati-ra-sensor} from
+below in the smallest seas --- as \eqref{eq:riccati-qeff} requires, since
+$q_{\mathrm{eff}}=2r_a(1-1/\mu\tau)<2r_a$ --- and rising above it with sea
+state, which is the model-mismatch term
+\eqref{eq:riccati-Ra-floor-plus-model} showing up on the axis where it is
+weakest.
+
+The measured moments satisfy $m_{-4,x}+m_{-4,y}=m_{-4,z}$ to between
+\SI{0.03}{\percent} and \SI{1.4}{\percent} on all eight records.  That is the
+deep-water orbital identity --- horizontal displacement equal in magnitude to
+vertical, split between the two horizontal axes by the record azimuth --- and
+it is an independent confirmation that \eqref{eq:riccati-axis-m4} is being
+estimated correctly rather than a result in its own right.  It also says the
+$m_{-4}$ anisotropy is pure geometry: at azimuth $\alpha$ the split is
+$\cos^2\alpha:\sin^2\alpha$, broadened toward $1:1$ by the directional spread,
+which is why the measured $0.674:0.326$ sits between $\cos^2 30^\circ:\sin^2
+30^\circ=0.75:0.25$ and even.
+
+The prediction is insensitive to the harder of the two measurements.  Because
+$q_{\mathrm{eff}}$ enters \eqref{eq:riccati-axis-ratio} through the $1/14$
+power, an error of a factor of two in it moves $r_{S,i}^\star$ by
+\SI{5}{\percent} and an error of a factor of ten moves it by
+\SI{18}{\percent}.  Substituting the drift-band plateau mean for the
+Lorentzian fit --- a materially different estimator --- moves the geometric
+means from $1.138$ and $0.861$ to $1.110$ and $0.822$.
+
+Finally, the substantive result.  The horizontal channels carry $65$ to $102$
+times the vertical drift-band intensity, two orders of magnitude, and it buys
+almost nothing: the $1/14$ exponent turns $65\times$ into $1.35\times$, the
+geometric factor $m_{-4,x}/m_{-4,z}=0.674$ pulls back by $0.84\times$, and the
+product is $1.14$.  The deployed isotropic $\rho_{xy}=1$ is within
+\SI{14}{\percent} of the analytic optimum on both horizontal axes, well inside
+the spread of the estimate, whereas the historical $\rho_{xy}=0.36$ was wrong
+by a factor of $3.2$ on $x$ and $2.4$ on $y$ --- and wrong in sign of
+correction on $x$, where the optimum asks for a \emph{looser} anchor than the
+vertical, not a tighter one.  The intuition that drove $\rho_{xy}=0.36$, that
+noisier horizontal channels need harder regularization, is exactly the
+inference \eqref{eq:riccati-axis-ratio} forbids.
+
+\paragraph{Consequences, and what this does not fix.}
+\label{sec:riccati-per-axis-limits}
+The horizontal displacement RMS is overwhelmingly a $q_{\mathrm{eff}}$ problem
+--- the two orders of magnitude in Table~\ref{tab:riccati-axis-ratios} are not
+subtle --- and \eqref{eq:riccati-axis-ratio} says that $R_S$ is the wrong
+instrument against it.  At the optimum the regularizer is already doing what it
+can; the residual is set by $\mathrm{MSE}_{p_i}^\star\propto
+q_{\mathrm{eff},i}^{4/7}m_{-4,i}^{3/7}$, in which $q_{\mathrm{eff}}$ now enters
+with weight $4/7$, eight times its weight in the tuning ratio.  Reducing the
+horizontal error therefore requires reducing $q_{\mathrm{eff},x}$ and
+$q_{\mathrm{eff},y}$ themselves --- that is, better tilt and horizontal-bias
+observability, per \eqref{eq:riccati-axis-tilt-leak} --- and no choice of
+$\rho_{xy}$ substitutes for it.  This is consistent with the direct ablation:
+loosening the anchor toward the horizontal optimum improves the in-band gain
+and worsens total error, because the drift it was holding back is real.
+
+Two limits are worth stating.  The componentwise reading uses only the diagonal
+of $\mat M_{-4}$ and $\mat Q_{\mathrm{eff}}$, and for a directional sea both
+have off-diagonal entries; a reading in the frame that diagonalizes
+$\mat M_{-4}$ would separate the along-crest and cross-crest channels, which
+carry very different low-frequency moments, and is the natural next step but is
+not taken here.  And the whole construction is per-sea and offline: across a factor of thirty in
+$H_s$ the measured ratios span $1.08$--$1.19$ on $x$ and $0.81$--$0.93$ on $y$,
+a spread of \SI{11}{\percent} and \SI{14}{\percent} of their own value, which is
+why a single constant is defensible, but a filter that estimated
+$\mat M_{-4}$ online would not need one.
+
 \subsubsection{The multipliers are calibrated; the floor was not}
 \label{sec:riccati-multiplier-retune}
 

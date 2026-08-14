@@ -85,3 +85,17 @@ tests/wave_sim/wave-convention-check
 # moved into doc/ for the manuscript.
 plots/*/*.pgf
 plots/*/*.svg
+
+# LaTeX build products from compiling the manuscripts under doc/.  The papers
+# are built in CI and the PDFs published as release assets; nothing generated
+# by a local latexmk run belongs in the tree.
+doc/**/*.aux
+doc/**/*.bbl
+doc/**/*.blg
+doc/**/*.fdb_latexmk
+doc/**/*.fls
+doc/**/*.log
+doc/**/*.out
+doc/**/*.pdf
+doc/**/*.synctex.gz
+doc/**/*.toc

@@ -400,14 +400,15 @@ agreeing, PM-Stokes flat to $0.15\,\%$, vertical unchanged at $+0.16\,\%$, and
 yaw $-3.2\,\%$.  Both $0.9$ and $1.1$ score $-1.19\,\%$, so the minimum is
 interior rather than a fitted edge.
 and the integral pseudo-measurement standard-deviation vector is
-\[
+\begin{equation}
 \vct{r}_S=\begin{bmatrix}
 \rho_{xy}r_{S,\mathrm{appl}}&
 \rho_{xy}r_{S,\mathrm{appl}}&
 r_{S,\mathrm{appl}}
 \end{bmatrix}^{\top},
 \qquad \rho_{xy}=1 .
-\]
+\label{eq:fus-rs-anisotropy}
+\end{equation}
 The horizontal weight was previously $\rho_{xy}=0.36$, which made the
 horizontal high-pass $2.8\times$ stronger than the vertical one.  That was a
 small-sea optimum applied to every sea state, and with the operating point tied
@@ -437,6 +438,17 @@ low-frequency content does not scale with the sea's horizontal acceleration
 amplitude.  Closing it downward, by taking $S_\sigma$ to the value the records
 measure, both satisfies the theorem and improves every pooled metric, and is
 what the deployed constant now does.
+
+Both readings above argue from similarity of the prior.  A sharper statement is
+available from the bias--variance optimum: Sec.~\ref{sec:riccati-per-axis}
+reads \eqref{eq:riccati-optimal-RS} per axis and obtains $\rho_{xy}$ as a
+prediction rather than a calibration,
+$r_{S,i}^\star/r_{S,z}^\star=(q_{\mathrm{eff},i}/q_{\mathrm{eff},z})^{1/14}
+(m_{-4,i}/m_{-4,z})^{3/7}$, measuring $1.14$ on $x$ and $0.86$ on $y$ across
+the eight calibration seas.  The deployed $\rho_{xy}=1$ therefore sits within
+$14\,\%$ of the analytic optimum, and the discarded $0.36$ was wrong by a
+factor of three --- in the wrong direction on $x$, where the optimum asks for a
+looser horizontal anchor than the vertical one.
 
 Its componentwise square defines the covariance,
 \begin{equation}
