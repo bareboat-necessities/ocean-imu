@@ -204,6 +204,26 @@ struct MagSim_WMM {
         return zu_to_ned(mag_world_nautical(declination_deg, inclination_deg, total_field_uT));
     }
 
+    // Rotate a nautical ENU (x=East, y=North, z=Up) world vector out of the
+    // magnetic frame a magnetometer-aided filter locks onto and into the
+    // geographic frame.  A filter with no declination input takes north to be
+    // wherever the horizontal field points, so its world horizontal axes sit
+    // declination_deg away from true north.  The vertical axis is shared by
+    // both frames and passes through untouched, which is why only x and y
+    // need this and z never does.
+    static Eigen::Vector3f mag_frame_to_geographic_nautical(
+        const Eigen::Vector3f& v_mag_zu,
+        float declination_deg = default_declination_deg)
+    {
+        const float dec_rad = declination_deg * std::numbers::pi_v<float> / 180.0f;
+        const float c = std::cos(dec_rad);
+        const float s = std::sin(dec_rad);
+        return Eigen::Vector3f(
+            c * v_mag_zu.x() + s * v_mag_zu.y(),
+           -s * v_mag_zu.x() + c * v_mag_zu.y(),
+            v_mag_zu.z());
+    }
+
     // Simulate body-frame magnetometer [uT] from nautical Euler (deg)
     static Eigen::Vector3f simulate_mag_from_euler_nautical(
         float roll_deg, float pitch_deg, float yaw_deg,
