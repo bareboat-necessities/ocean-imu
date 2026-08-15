@@ -1,0 +1,829 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\usepackage{array,booktabs,tabularx}
+\usepackage{graphicx}
+\usepackage{siunitx}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\usepackage[final]{microtype}
+
+\interdisplaylinepenalty=2500
+\allowdisplaybreaks
+\emergencystretch=2em
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\T}{^{\mathsf T}}
+\newcommand{\Skew}[1]{\left[#1\right]_{\times}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\diag}{\operatorname{diag}}
+
+\title{Marine Attitude Initialization and Continuous Magnetic Self-Calibration\\
+\large Mahony-Proxy Tilt Handoff, Two-Stage Magnetic Referencing, and Hard-Iron Gauge Correction (draft)}
+
+\author{%
+\IEEEauthorblockN{Mikhail S. Grushinskiy}
+\IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+Bareboat Necessities GitHub Project\\
+Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Marine inertial estimators are often judged by their steady-state filter equations,
+yet a large fraction of persistent attitude error can be created before those
+equations reach their nominal operating regime.  In waves, instantaneous specific
+force is not a gravity vector, a warming attitude filter can therefore acquire a
+tilt error, and a magnetic world reference learned in that tilted frame freezes the
+error into the heading gauge.  A second and distinct error is produced by body-fixed
+magnetometer hard iron: if startup declares the average measured horizontal field to
+be north, the offset becomes part of north itself and no internally consistent yaw
+filter can later recover true magnetic heading.  This paper documents the startup
+and magnetic self-calibration architecture now shared by the OU--II, OU--III, and
+two-frame Lie-group (TFG) marine inertial estimators in the \texttt{ocean-imu}
+repository.  The deployed path uses an exogenous, low-bandwidth Mahony complementary
+observer to solve tilt and frame magnetic acquisition while the navigation filter is
+held out of the loop; a legacy staged quaternion MEKF path remains available as a
+matched ablation.  Magnetic acquisition is performed provisionally for availability
+and repeated after convergence for accuracy.  A continuously running hard-iron
+estimator then uses raw magnetometer data and yaw-stripped proxy tilt to solve a
+regularized body-offset identification problem without adding a magnetic-bias state
+to any navigation filter.  The evidence separates the mechanisms.  In OU--III the
+proxy startup reduced mean roll RMS from 0.372 to 0.339 deg and accelerometer-bias RMS
+from 0.0631 to 0.0574 m/s$^2$ with essentially unchanged displacement, while the
+continuous hard-iron correction subsequently reduced mean yaw RMS from 1.835 to
+0.822 deg.  OU--II shows the same magnetic effect, 1.887 to 0.813 deg mean yaw.  In
+TFG feature ablations, disabling hard-iron tracking raises mean yaw from 1.077 to
+2.349 deg, whereas reverting only the startup policy raises roll from 0.308 to
+0.696 deg and the worst accelerometer-bias error from 166.7\% to 398.1\%.  These
+results show that marine initialization is not merely an initial-quaternion problem:
+it is a one-time observability and gauge-establishment problem followed by a
+continuous sensor-identification problem.
+\end{abstract}
+
+\begin{IEEEkeywords}
+marine inertial navigation, attitude initialization, magnetometer calibration,
+hard iron, Mahony filter, multiplicative extended Kalman filter, Lie-group EKF,
+magnetic heading, sensor fusion, self-calibration
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:introduction}
+
+An inertial attitude filter can converge after startup and still remain wrong by a
+nearly constant amount.  The reason is that some startup decisions are not transient
+states.  They define a reference frame.  If magnetic north is learned while the
+estimated hull tilt is wrong, or if a body-fixed magnetometer offset is absorbed into
+the learned world magnetic vector, the navigation filter can subsequently track that
+incorrect frame with excellent innovation statistics.  Better steady-state tuning
+cannot repair a gauge that the estimator itself defines as truth.
+
+The problem is unusually acute on small marine platforms.  The accelerometer measures
+specific force,
+\begin{equation}
+\vct f_m^{\mathcal B}
+ = \mat R_{WB}\left(\vct a^{\mathcal W}-\vct g^{\mathcal W}\right)
+ + \vct b_a + \vct n_a,
+\label{eq:acc-model}
+\end{equation}
+not gravity alone.  Wave-induced translational acceleration can be comparable with the
+gravity-projection error produced by several degrees of tilt.  Thus an
+accelerometer-only leveling step made at one wave phase is not a reliable marine
+attitude initializer.  The magnetometer has a complementary failure mode,
+\begin{equation}
+\vct m_i^{\mathcal B}
+ = \mat R_i^{\mathsf T}\vct B^{\mathcal L}
+ + \vct b_m + \vct d_i + \vct n_m,
+\label{eq:mag-model}
+\end{equation}
+where $\vct b_m$ is body-fixed hard iron and $\vct d_i$ denotes unmodeled soft-iron
+and sensor-axis distortion.  At one attitude, a change in $\vct b_m$ is
+indistinguishable from a change in the unknown world field.  Motion is needed to
+separate them.
+
+The architecture studied here follows three principles.  First, solve the startup
+tilt with a measurement-only observer whose correction bandwidth lies below the wave
+band, rather than forcing the navigation MEKF to level itself while its translational
+states are deliberately disabled.  Second, learn the magnetic world reference in a
+frame built from that exogenous tilt, and relearn it after the slow observer has
+converged.  Third, do not close the hard-iron identification window at startup:
+accumulate the weak tilt excitation for the life of the filter and apply only the
+regularized, physically plausible part of the solution.
+
+The current implementation applies those ideas to three estimator families.  OU--II
+and OU--III are quaternion multiplicative EKFs with different translational drift
+regularizers.  TFG is a right-invariant two-frame Lie-group error-state EKF.  Their
+attitude coordinates differ, but the startup evidence is largely outside those
+coordinates because the proxy observer, magnetic acquisition, and hard-iron
+identification are exogenous front-end processes.
+
+This paper makes four contributions.  It formalizes startup as a persistent-frame
+identification problem; documents the deployed Mahony-proxy and optional staged-MEKF
+paths; derives the continuous hard-iron solve and its regularization; and collects the
+matched ablations that identify which errors each mechanism actually removes.
+
+\section{Startup Is a Gauge-Establishment Problem}
+\label{sec:gauge-problem}
+
+A conventional description says that startup finds an initial quaternion.  That is
+incomplete.  In the present marine estimators startup establishes at least three
+quantities with different persistence:
+\begin{enumerate}
+  \item roll and pitch relative to gravity;
+  \item a magnetic yaw gauge, i.e. which horizontal direction the filter calls north;
+  \item long-lived nuisance estimates, especially accelerometer bias, that can absorb
+        startup attitude error if allowed to learn too early.
+\end{enumerate}
+The first can be corrected continuously.  The second is dangerous because a world
+magnetic reference is then used as if it were external truth.  The third is dangerous
+because the residual accelerometer-bias model has a very long correlation time; a
+startup mistake can therefore remain visible throughout a 20-minute record.
+
+Let $\hat{\mat R}_{0}$ be the tilt frame used while learning a magnetic reference.
+A simple startup average is
+\begin{equation}
+\hat{\vct B}_{0}
+ = \frac{1}{N}\sum_{i=1}^{N}\hat{\mat R}_{0,i}\vct m_i.
+\label{eq:reference-average}
+\end{equation}
+If $\hat{\mat R}_{0,i}$ has a persistent tilt error, the average rotates the measured
+field into the wrong level frame.  If $\vct m_i$ also contains hard iron,
+\begin{equation}
+\hat{\vct B}_{0}
+ = \vct B_{\rm hull}
+ + \overline{\mat R}\,\vct b_m
+ + \text{distortion/noise},
+\label{eq:hardiron-in-reference}
+\end{equation}
+so the body offset is embedded directly in the vector later declared to be north.
+The resulting yaw error is a gauge error, not a tracking error.
+
+This distinction is visible in the repository evidence.  On the OU--III PM--Stokes
+$H_s=1.5$ m record before continuous hard-iron correction, scored yaw has mean
+2.146 deg but standard deviation only 0.265 deg.  The estimator tracks a heading
+stably; it tracks the wrong north stably.
+
+\section{Marine Tilt Initialization}
+\label{sec:tilt}
+
+\subsection{Why instantaneous accelerometer leveling is insufficient}
+
+For a stationary sensor, $-\vct f_m$ is an estimate of down.  In waves,
+\cref{eq:acc-model} contains real orbital acceleration and the same construction
+chases wave motion.  The relevant separation is therefore temporal: gravity is the
+persistent direction, whereas the wave acceleration is oscillatory over the sea-state
+band.  A useful startup attitude observer should correct slowly enough that it does
+not rotate the hull frame to explain each wave-cycle acceleration.
+
+\subsection{Private Mahony proxy}
+
+The deployed OU--II, OU--III, and TFG wrappers use a private complementary attitude
+observer based on the nonlinear complementary-filter structure of
+Mahony--Hamel--Pflimlin \cite{Mahony2008NonlinearComplementary}.  In generic notation,
+its gravity correction has the form
+\begin{align}
+\vct e_g &= \hat{\vct g}_{\mathcal B}\times
+            \vct g_{\mathcal B,\rm meas},\\
+\vct\omega_c &= \vct\omega_m-\hat{\vct b}_g+k_P\vct e_g,\\
+\dot{\hat{\vct b}}_g &= -k_I\vct e_g,
+\label{eq:mahony-generic}
+\end{align}
+with quaternion/SO(3) integration of $\vct\omega_c$.  The repository implementation
+uses the conventional \texttt{two\_kp} and \texttt{two\_ki} parameterization.  The
+deployed proxy values in all three wrappers are
+\begin{equation}
+\texttt{two\_kp}=0.2,
+\qquad
+\texttt{two\_ki}=0.02.
+\label{eq:proxy-gains}
+\end{equation}
+The proportional corner is intentionally below the wave band.  This proxy is not a
+second navigation solution: it has no displacement states and is used as an
+exogenous gravity-referenced frame for startup, wave-period preprocessing, and
+magnetic learning.
+
+The integral term is essential once the observer becomes an attitude initializer.
+With no integral term, the implementation has the approximate static relation
+\begin{equation}
+\theta_{\rm bias}\simeq \frac{2b_g}{\texttt{two\_kp}}.
+\label{eq:static-tilt}
+\end{equation}
+A dedicated test injects a constant 0.05 deg/s gyro bias: the observer settles at
+0.711 deg of tilt when \texttt{two\_ki}=0 and at approximately zero with the deployed
+0.02.  A vertical acceleration channel could previously tolerate that error because
+its downstream processing was high-pass; an attitude seed cannot, because the tilt
+is retained.
+
+\subsection{Gravity agreement and handoff}
+
+The proxy is not handed to the navigation filter immediately.  A gravity-agreement
+gate and hold logic require a consistent tilt estimate, while the independent
+wave-period/tuning front end is allowed to reach a usable operating point.  The
+normal handoff is quality-driven, but a timeout is also required: a filter that never
+starts in a calm or pathological record is a more severe failure than one that starts
+from a conservative prior.  The OU wrappers and TFG use an earliest handoff near
+8 s and a 150 s timeout, with the timeout internally prevented from truncating an
+active magnetic acquisition.
+
+At handoff, the navigation attitude covariance is deliberately anisotropic.  Proxy
+tilt has finite uncertainty; yaw is either magnetically gauged or almost free.  The
+OU wrappers use representative standard deviations of 0.035 rad for tilt and
+0.087 rad for gauged yaw, with roughly $\pi/2$ uncertainty when no yaw reference
+exists.  This prevents the first live accelerometer or magnetometer update from
+fighting an unrealistically overconfident seed.
+
+\section{Two Startup Policies}
+\label{sec:policies}
+
+\subsection{Deployed MahonyProxy path}
+
+The wrapper-level default is \texttt{StartupInitPolicy::MahonyProxy}.  From the first
+sample, the measurement-only front end runs while the navigation MEKF is untouched.
+The proxy supplies tilt to the gravity gate and to magnetic accumulation.  When tilt,
+magnetic north, and the tuning operating point are ready, the navigation estimator is
+seeded once and enters its full live configuration in one step.  It does not spend
+startup trying to estimate tilt with its translational block disabled.
+
+This is also an exogeneity property.  The signal used to decide the magnetic reference
+is not a function of the filter that will later consume that reference.  Therefore a
+provisional MEKF error cannot be read out, averaged into the reference, and fed back as
+an apparently self-consistent world vector.
+
+\subsection{Optional staged quaternion MEKF path}
+
+The original path remains implemented as
+\texttt{StartupInitPolicy::StagedMekf}; it is useful as a backward-compatible mode and,
+more importantly, as a matched scientific ablation.  In this mode the quaternion
+MEKF (QMEKF-style multiplicative attitude filter) runs from the first IMU sample in a
+deliberately degraded state: the linear navigation block is off, accelerometer-bias
+learning is frozen, and accelerometer measurement noise is inflated.  The wrapper
+reads that warming MEKF attitude both to decide when magnetic acquisition may start
+and to define the frame in which the magnetic reference is averaged.
+
+The failure mechanism is structural.  During the period when the linear block is off,
+the attitude update has nowhere to assign real orbital acceleration except attitude
+error.  A transient tilt error would be harmless if all startup products were later
+re-estimated, but the magnetic gauge is persistent.  This is why the staged path can
+look converged after several minutes while retaining a larger scored roll or bias
+error.
+
+The inner OU filter classes still retain staged behavior as their standalone default:
+only the higher-level wrapper has enough information to perform the proxy handoff.
+The deployed sea-state wrappers select \texttt{MahonyProxy}.
+
+\section{Magnetic Reference Acquisition}
+\label{sec:mag-acq}
+
+\subsection{Yaw-stripped tilt frame}
+
+The magnetic reference is learned in a level frame constructed from proxy roll and
+pitch with yaw removed.  This has two purposes.  It prevents the proxy's unobservable
+heading from contaminating the reference and makes the accumulation frame a function
+of gravity alone.  For the continuous hard-iron estimator it also gives a useful
+failure signal: if the vessel changes heading, the real world field moves inside the
+hull-tied level frame and the model residual rises.
+
+\subsection{Why acquisition is two-stage}
+
+The low observer bandwidth that rejects wave acceleration also makes convergence slow.
+On the OU--III study, mean proxy tilt error over a 23 s magnetic averaging window was
+as large as 2.76 deg when the window began at 7 s, but the worst value fell below
+about one degree by 40--60 s.  Waiting until the observer is fully settled before
+reporting any heading put first heading near 105 s, which is operationally unattractive.
+
+The deployed compromise is therefore:
+\begin{enumerate}
+  \item a \emph{provisional} magnetic reference as soon as the gravity gate permits,
+        so heading becomes available on roughly the historical schedule; and
+  \item a \emph{refinement} starting at 90 s with a 30 s averaging window, after
+        the proxy has had time to converge.
+\end{enumerate}
+Both passes are framed on the proxy, never on the navigation MEKF.  A refinement
+framed on the MEKF would be self-confirming because the MEKF has already been steering
+to the provisional reference that the second pass exists to replace.
+
+\subsection{Bias-learning hold}
+
+Accelerometer bias and tilt are weakly separable in waves.  If the bias estimator is
+allowed to learn while the provisional magnetic reference is still in force, some of
+the provisional tilt error is stored as accelerometer bias and persists because the
+bias process is slow.  The OU wrappers therefore hold accelerometer-bias learning
+until the refined reference has landed.  In the original OU--III experiment, removing
+this hold made the early-lock path fail its bias gate at 187\% against a 109\% limit.
+TFG uses the same sequencing principle, with estimator-specific timing/gating.
+
+\section{Continuous Hard-Iron Identification}
+\label{sec:hardiron}
+
+\subsection{Identifiability from tilt excitation}
+
+The continuous estimator uses the model implemented in
+\texttt{ContinuousMagHardIronEstimator}:
+\begin{equation}
+\vct m_i = \mat R_i\T\vct B + \vct b + \vct n_i,
+\label{eq:hi-model}
+\end{equation}
+where $\mat R_i$ is the yaw-stripped body-to-level tilt rotation, $\vct B$ is an
+unknown field vector in that level frame, and $\vct b$ is a body-fixed hard-iron
+offset.  Define exponentially weighted means
+\begin{equation}
+\bar{\mat A}=\overline{\mat R_i},\qquad
+\bar{\vct w}=\overline{\mat R_i\vct m_i},\qquad
+\bar{\vct m}=\overline{\vct m_i}.
+\end{equation}
+Eliminating $\vct B$ from the normal equations gives
+\begin{equation}
+\left(\mat I-\bar{\mat A}\T\bar{\mat A}\right)\vct b
+ = \bar{\vct m}-\bar{\mat A}\T\bar{\vct w}.
+\label{eq:hi-normal}
+\end{equation}
+Thus the magnetic field never has to become a navigation-filter state.
+
+Let
+\begin{equation}
+\mat M=\mat I-\bar{\mat A}\T\bar{\mat A}.
+\label{eq:M}
+\end{equation}
+For small roll and pitch with standard deviations $\sigma_r$ and $\sigma_p$,
+\begin{equation}
+\mat M\approx
+\diag\!\left(\sigma_p^2,\sigma_r^2,
+\sigma_r^2+\sigma_p^2\right).
+\label{eq:small-angle-information}
+\end{equation}
+This exposes the difficulty: a hull moving only a few degrees provides an excitation
+matrix of order $10^{-3}$.  A 15--30 s startup window does not make hard iron
+well-conditioned.  Continuous accumulation is not merely convenient; it is the
+identifiability strategy.
+
+\subsection{Regularized solve}
+
+The unmodeled term $\vct d_i$ in \cref{eq:mag-model} is not white sample noise.  Soft
+iron and axis misalignment are modulated by tilt and therefore alias coherently into
+the hard-iron solution.  Inverting a matrix of order $10^{-3}$ can amplify that model
+error by orders of magnitude.  The implementation consequently solves
+\begin{equation}
+\hat{\vct b}
+ = \left(\mat M+\lambda\mat I\right)^{-1}
+   \left(\bar{\vct m}-\bar{\mat A}\T\bar{\vct w}\right),
+\label{eq:ridge-solve}
+\end{equation}
+with
+\begin{equation}
+\lambda
+ = \lambda_0
+ + \lambda_{\rm rel}\frac{\operatorname{tr}(\mat M)}{3}.
+\label{eq:ridge}
+\end{equation}
+The deployed values are an absolute floor $\lambda_0=4\times10^{-3}$ and relative
+coefficient $\lambda_{\rm rel}=0.5$.  Scaling part of the ridge with excitation is
+important: a fixed ridge shrinks the best-excited large-sea records most strongly,
+which is opposite the desired behavior.
+
+The estimator reports information
+\begin{equation}
+\mathcal I = N_{\rm eff}\lambda_{\min}(\mat M)
+\label{eq:information}
+\end{equation}
+and does not offer a solution until both effective weight and information thresholds
+are satisfied.  It also rejects implausibly large offsets and windows whose magnetic
+model residual exceeds a configured limit.  Current defaults use a 600 s exponential
+memory, minimum effective weight 500, minimum information 2.0, residual limit
+3 $\mu$T, and bias magnitude below 35\% of the measured field norm.
+
+\subsection{Continuous application}
+
+Accumulation begins with raw magnetometer samples before startup is complete, but an
+offset is not applied until the two-stage magnetic reference has finished.  This
+separates identification memory from actuation.  The applied offset is slewed rather
+than stepped (45 s nominal time constant in the OU implementation), reducing the
+chance that a model-parameter change itself becomes an attitude transient.
+
+Crucially, the estimator sees the \emph{raw} magnetometer, not a stream from which its
+previous answer has already been subtracted.  Otherwise it would be fitting its own
+correction.
+
+\section{Correcting the Magnetic Gauge}
+\label{sec:gauge-correction}
+
+A subtle implementation choice determines whether a correct hard-iron estimate fixes
+yaw at all.  The tempting update is
+\begin{equation}
+\vct m' = \vct m-\hat{\vct b},
+\qquad
+\vct B'_{\rm ref}=\vct B_{\rm ref}-\bar{\mat A}\hat{\vct b}.
+\label{eq:naive-pair}
+\end{equation}
+Near the attitude at which the reference was learned,
+$\mat R\T\bar{\mat A}\approx\mat I$, so the magnetometer innovation
+\begin{equation}
+\vct r_m=\vct m-\mat R\T\vct B_{\rm ref}
+\end{equation}
+is nearly unchanged by \cref{eq:naive-pair}.  The filter continues to agree with the
+same wrong north.  A forced 10 $\mu$T offset through that path moved scored yaw by only
+about 0.3 deg in the repository diagnostic: it was almost a no-op.
+
+The deployed correction instead removes the body-fixed offset from the measurement
+stream while preserving the canonical horizontal heading of the startup reference.
+Only field magnitude and vertical/dip components are adjusted, and only by the delta
+implied by the applied offset.  The corrected measurement then disagrees in heading
+with the old gauge and the normal magnetometer update rotates yaw toward the corrected
+field.  No attitude state is directly overwritten by continuous hard-iron learning.
+
+This distinction also explains the TFG refinement operation.  Its discrete second
+magnetic acquisition may apply a heading state correction through
+\texttt{set\_attitude\_yaw\_absolute()}, because the refinement is explicitly
+re-establishing the provisional gauge.  The continuous hard-iron path, by contrast,
+changes measurement-model parameters and lets the estimator dynamics move yaw.
+
+\section{Why the Calibration Remains Exogenous}
+\label{sec:exogenous}
+
+The hard-iron estimator reads two quantities: raw magnetometer samples and the private
+proxy's yaw-stripped tilt.  It reads no OU--II state, no OU--III state, and no TFG
+state.  Its output changes magnetic measurement preprocessing/reference parameters;
+it does not add a stochastic state, covariance block, or process model to any of the
+three navigation estimators.
+
+This matters for analysis.  The continuous calibration does not change the navigation
+state dimension, $\mat F$, $\mat Q$, or the Riccati state covariance structure.  It is
+an exogenous, slowly varying measurement-model parameter.  The existing local
+stability arguments for the navigation dynamics therefore do not acquire an
+additional estimator-state feedback loop merely because hard iron is learned.
+This does not make arbitrary magnetic adaptation harmless: the residual, excitation,
+plausibility, and slew gates are what bound the parameter variation that is actually
+applied.
+
+\section{OU--III Implementation}
+\label{sec:ou3}
+
+OU--III carries the most complete evidence lineage because the startup and hard-iron
+mechanisms were first isolated there.  Its wrapper defaults to
+\texttt{MahonyProxy}; \texttt{StagedMekf} remains a matched ablation.  The proxy owns
+tilt, gravity gating, and both magnetic acquisition frames.  A provisional magnetic
+lock is followed by the 90 s/30 s refinement, and accelerometer-bias learning is held
+until refinement completes.  The continuous hard-iron estimator then runs for the
+life of the filter.
+
+The inner OU--III MEKF does not need a magnetic-bias state.  It continues to receive a
+corrected body magnetometer and a world reference.  Therefore the magnetic mechanism
+is independent of OU--III's distinctive translational state
+$[\vct v,\vct p,\vct S,\vct a_w]$ and of its integral-state regularizer.
+
+\section{OU--II Implementation}
+\label{sec:ou2}
+
+OU--II now uses the same startup policy, observer gains, two-stage acquisition, and
+\texttt{ContinuousMagHardIronEstimator} defaults as OU--III.  The port is deliberately
+mechanical: the magnetic front end does not know whether the downstream filter
+regularizes $\vct p,\vct v$ directly or regularizes an integral state $\vct S$.
+The current source accumulates hard-iron statistics before startup gates, applies the
+correction only after refinement, and subtracts the applied body offset before the
+MEKF magnetometer measurement update.
+
+Keeping identical magnetic defaults across the two OU families is important for fair
+filter comparison.  A study that moves the hard-iron regularization or acquisition
+window in one family but not the other is partly comparing magnetometer calibration,
+not translational estimation.
+
+\section{TFG Implementation}
+\label{sec:tfg}
+
+TFG uses different attitude-error coordinates but now follows the same front-end
+logic.  Its previous magnetic acquisition consisted effectively of a single noisy
+sample once the gravity gate passed.  The current wrapper uses the Mahony proxy,
+windowed magnetic averaging, two-stage acquisition, and continuous hard-iron tracking.
+The proxy remains outside the Lie-group state.
+
+At refinement TFG must distinguish a heading state correction from a world-frame gauge
+transformation.  The implementation uses
+\texttt{set\_attitude\_yaw\_absolute()} to correct heading while leaving the world
+motion columns $\vct v,\vct p,\vct S,\vct a_w$ untouched.  Rotating those columns as
+though the entire world frame had changed would alter displacement history in response
+to a correction that says only that the estimated hull heading was wrong.
+
+TFG also exposes the same continuous hard-iron configuration and drives it from raw
+magnetometer plus proxy tilt.  As in the OU filters, correction is applied only after
+the refined magnetic reference is in force.
+
+\section{Experimental Evidence and Attribution}
+\label{sec:results}
+
+The studies below were run at different stages of the implementation.  They are kept
+separate deliberately.  A startup ablation should not be used to claim a hard-iron
+effect, and a later combined TFG parity change should not be attributed to one feature
+when feature-off arms are available.
+
+\subsection{OU--III startup: staged MEKF versus Mahony proxy}
+
+The original startup study scored the trailing 900 s of eight 1200 s JONSWAP and
+PM--Stokes records.  It predates the later continuous hard-iron correction, which is
+useful because it isolates the startup mechanism.
+
+\begin{table}[!t]
+\caption{OU--III startup-policy comparison.}
+\label{tab:ou3-startup}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrrrrr}
+\toprule
+Policy & first heading & Z \%Hs & 3D \% & roll & pitch & yaw & $b_a$ RMS \\
+& & & & deg & deg & deg & m/s$^2$ \\
+\midrule
+Staged MEKF & $\sim22$ s & 4.301 & 19.872 & 0.372 & 0.275 & 1.796 & 0.0631 \\
+Mahony proxy, 2-stage & 22--52 s & 4.287 & 19.851 & 0.339 & 0.266 & 1.835 & 0.0574 \\
+Mahony proxy, late single-stage & $\sim105$ s & -- & -- & 0.310 & 0.259 & 1.839 & 0.0517 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Relative to staged startup, the deployed two-stage proxy reduces mean roll by about
+8.9\%, pitch by 3.3\%, and accelerometer-bias RMS by about 9.0\%, while Z and 3-D
+displacement are essentially unchanged.  The price in this study is a roughly 2.2\%
+increase in yaw.  This is informative rather than contradictory: the proxy improves
+the tilt frame and bias sequencing, but yaw remains dominated by which magnetic vector
+is declared north.  The continuous self-calibration introduced later addresses that
+separate error.
+
+The late single-stage proxy row is an accuracy ceiling for startup alone: waiting for
+a better-converged tilt frame improves roll and bias further but delays first heading
+by roughly 80 s.  The deployed two-stage scheme keeps availability near the old path
+and recovers much of the accuracy later through refinement.
+
+\subsection{OU--II startup ensemble}
+
+OU--II provides a five-IMU-seed, eight-record paired decomposition ($n=40$) in which
+sigma-band, cadence, and startup changes were stacked one at a time.  The marginal
+startup step is especially diagnostic:
+\begin{table}[!t]
+\caption{OU--II marginal effect of switching from staged to proxy startup after the
+other shared front-end changes are already present.}
+\label{tab:ou2-startup}
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Metric & before proxy & proxy & change \\
+\midrule
+roll RMS [deg] & 0.348 & 0.286 & $-17.8\%$ \\
+pitch RMS [deg] & 0.308 & 0.300 & $-2.6\%$ \\
+yaw RMS [deg] & 2.360 & 2.411 & $+2.2\%$ \\
+accel-bias RMS [m/s$^2$] & 0.0616 & 0.0520 & $-15.6\%$ \\
+3-D displacement [\%] & 19.073 & 19.042 & $-0.16\%$ \\
+Z displacement [\%Hs] & 6.343 & 6.350 & $+0.11\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The full baseline-to-deployed package reduced roll 19.3\% and accelerometer-bias
+aggregate 15.4\%, while combined tilt RMS
+$\sqrt{\mathrm{roll}^2+\mathrm{pitch}^2}$ improved from 0.444 to 0.414 deg (6.7\%).
+The decomposition shows that the roll and bias gains come primarily from startup;
+the pitch cost in the full package came from the sigma-band change, and the cadence
+change was a measured no-op.  This is unusually useful attribution because it keeps
+the initialization claim separate from unrelated adaptation work.
+
+\subsection{Continuous hard iron: OU--III}
+
+With startup held fixed, disabling only continuous hard-iron correction gives the
+matched comparison in \cref{tab:ou3-hardiron}.
+\begin{table}[!t]
+\caption{OU--III continuous hard-iron ablation, eight deterministic records.}
+\label{tab:ou3-hardiron}
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Metric & hard iron off & on & change \\
+\midrule
+yaw RMS mean [deg] & 1.835 & 0.822 & $-55.2\%$ \\
+yaw RMS worst [deg] & 2.162 & 1.063 & $-50.8\%$ \\
+roll RMS mean [deg] & 0.339 & 0.340 & $+0.3\%$ \\
+pitch RMS mean [deg] & 0.266 & 0.243 & $-8.6\%$ \\
+3-D RMS mean [m] & 0.6212 & 0.6199 & $-0.2\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every one of the eight yaw records improves.  An oracle decomposition explains why:
+with no correction the mean/worst yaw were 1.835/2.162 deg; removing only soft iron
+and misalignment gave 1.811/2.121 deg, while removing only hard iron gave
+0.496/1.084 deg.  For the shipped calibration realization, hard iron therefore
+accounts for almost all of the standing gauge error.
+
+\subsection{Continuous hard iron: OU--II}
+
+OU--II independently reproduces the same mechanism:
+\begin{table}[!t]
+\caption{OU--II continuous hard-iron ablation.}
+\label{tab:ou2-hardiron}
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Metric & hard iron off & on & change \\
+\midrule
+yaw RMS mean [deg] & 1.887 & 0.813 & $-56.9\%$ \\
+yaw RMS worst [deg] & 2.161 & 1.089 & $-49.6\%$ \\
+pitch RMS mean [deg] & 0.289 & 0.255 & $-11.8\%$ \\
+roll RMS mean [deg] & 0.333 & 0.332 & $-0.3\%$ \\
+Z RMS mean [\%Hs] & 6.454 & 6.461 & $+0.1\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The two OU families end within three hundredths of a degree in worst yaw once they use
+the same calibration machinery.  That convergence is evidence that the removed error
+belongs to the magnetometer rather than to either translational state model.
+
+\subsection{TFG feature-off ablations}
+
+TFG offers the clearest separation among startup, refinement, and hard iron because
+the parity study disabled one feature at a time at deployed coefficients.
+\begin{table}[!t]
+\caption{Selected TFG one-feature-off ablations. Lower is better.}
+\label{tab:tfg-ablation}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrrrr}
+\toprule
+Arm & yaw mean & yaw worst & roll & pitch & bias mean & bias worst \\
+& deg & deg & deg & deg & \% & \% \\
+\midrule
+Deployed & 1.077 & 1.528 & 0.308 & 0.340 & 92.7 & 166.7 \\
+Hard iron off & 2.349 & 3.303 & 0.316 & 0.350 & 90.2 & 162.2 \\
+Mag refinement off & 0.873 & 1.264 & 0.614 & 0.259 & 120.7 & 204.1 \\
+Staged startup & 2.202 & 2.906 & 0.696 & 0.308 & 144.8 & 398.1 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Turning off only hard-iron tracking increases mean yaw by a factor of 2.18 and worst
+yaw by 2.16 while moving the other channels by only a few percent.  It is therefore a
+clean yaw-gauge mechanism.  Reverting only to staged startup more than doubles roll
+and raises worst accelerometer-bias error from 166.7\% to 398.1\%; it also raises
+worst 3-D displacement from 21.03\% to 24.27\% in the full table.  That is the tilt
+and nuisance-bias mechanism.
+
+The refinement arm shows a genuine trade rather than a monotone improvement.  Turning
+refinement off improves mean yaw from 1.077 to 0.873 deg but roughly doubles roll
+from 0.308 to 0.614 deg and raises mean accelerometer-bias error from 92.7\% to
+120.7\%.  Refinement is therefore retained for the weakly observable tilt/bias
+channels; continuous hard-iron correction supplies the separate yaw-gauge fix.
+
+\section{What Improved, and Why}
+\label{sec:what-improved}
+
+The experiments support a causal decomposition:
+\begin{enumerate}
+  \item \textbf{Proxy tilt initialization primarily improves roll/tilt and
+        accelerometer-bias behavior.}  It prevents a warming navigation filter's
+        wave-corrupted tilt from becoming the frame used to learn persistent magnetic
+        parameters.
+  \item \textbf{Two-stage magnetic acquisition primarily protects tilt and bias while
+        preserving usable startup latency.}  The provisional pass buys availability;
+        the refined pass buys a cleaner frame after proxy convergence.
+  \item \textbf{Continuous hard-iron learning primarily improves yaw.}  It removes a
+        body-fixed offset that startup otherwise absorbs into north itself.
+  \item \textbf{Displacement usually changes little in the OU families.}  That is an
+        important result: the improvements are genuinely in initialization and
+        magnetic gauge rather than being hidden retuning of translational dynamics.
+\end{enumerate}
+The ordering also matters.  A better tilt frame cannot remove a magnetic hard-iron
+offset, and a hard-iron estimator cannot repair an accelerometer-bias estimate that
+was already contaminated by a provisional tilt error.  The deployed sequence solves
+the two problems in the order in which they become identifiable.
+
+\section{Robustness and Failure Modes}
+\label{sec:limits}
+
+\subsection{Soft iron and sensor misalignment}
+
+The continuous estimator identifies only an additive body-fixed offset.  It cannot
+separate that offset perfectly from multiplicative distortion when heading does not
+change.  Across five magnetometer calibration draws (40 record/seed pairs), mean yaw
+with the hard-iron estimator improved from 2.430 to 1.726 deg, but 5 of 40 pairs became
+worse.  All five came from the same calibration draw.  Oracle diagnostics showed that
+that draw was misalignment-dominated: perfect hard-iron removal changed yaw only
+2.98 to 2.74 deg, whereas removing soft iron/misalignment changed it to 1.02 deg.
+
+The failure is not reliably detectable from the hard-iron residual because the
+aliased component is precisely the part the simplified model can explain.  This is
+why ridge shrinkage is part of the model-error bound rather than merely numerical
+regularization.
+
+\subsection{Heading maneuvers}
+
+The current accumulation frame is tied to the hull's heading.  A real turn moves the
+world magnetic vector inside that frame and raises the residual; the estimator
+therefore stands down.  A future estimator could exploit heading excitation to
+identify a full soft-iron/misalignment model, but that is a different observability
+problem and is not claimed here.
+
+\subsection{Magnetic disturbances}
+
+Local ferromagnetic changes, current-dependent magnetic fields, and nearby equipment
+can violate the assumption of a slowly varying body-fixed hard-iron vector.  Residual,
+field-norm, plausibility, and slew gates are necessary but cannot make an arbitrary
+magnetic environment identifiable.  Operational implementations should expose
+calibration validity and avoid interpreting every yaw innovation as evidence for a
+new permanent offset.
+
+\subsection{Very weak wave excitation}
+
+The hard-iron solve needs tilt diversity.  In a nearly motionless vessel,
+$\lambda_{\min}(\mat M)$ becomes small and the information gate prevents the estimator
+from claiming a precise offset.  This is preferable to inverting an unobservable
+problem.  The long memory allows later motion to contribute information without
+requiring the device to restart calibration.
+
+\section{Recommended Validation Contract}
+\label{sec:validation}
+
+A publication-quality extension of this work should preserve feature attribution.
+At minimum, future evaluations should include:
+\begin{enumerate}
+  \item paired \texttt{MahonyProxy} versus \texttt{StagedMekf} startup with all later
+        magnetic options held fixed;
+  \item magnetic refinement on/off with startup and hard iron fixed;
+  \item continuous hard iron on/off with startup and refinement fixed;
+  \item multiple IMU noise seeds and independent magnetometer calibration draws;
+  \item fixed-heading wave records and deliberate heading maneuvers;
+  \item additive hard iron, multiplicative soft iron, axis misalignment, and mixed
+        calibration errors as separate oracle-controlled arms;
+  \item startup latency, time to first valid heading, handoff attitude covariance,
+        and recovery after a large tilt reset;
+  \item per-axis roll/pitch/yaw RMS, accelerometer-bias error, and displacement metrics
+        so gains cannot be hidden in a single aggregate attitude number.
+\end{enumerate}
+The TFG one-feature-off study is a useful model because it demonstrates that the
+largest yaw improvement and the largest roll/bias improvement come from different
+mechanisms.
+
+\section{Discussion}
+\label{sec:discussion}
+
+The main design lesson is that initialization and calibration should be assigned to
+the estimator that has the right information, not automatically to the estimator
+that ultimately consumes the result.  The navigation MEKF has the richer state, but
+during startup that richness is intentionally disabled or poorly observed.  A small
+independent complementary observer can therefore be the better source of tilt for a
+one-time magnetic decision because it is not entangled with the provisional magnetic
+reference or with translational states that are not yet live.
+
+The second lesson is that a magnetometer world reference is not just another tuning
+constant.  Its horizontal direction defines a gauge.  Once a body-fixed offset has
+been absorbed into that direction, the filter can be statistically self-consistent
+and physically wrong.  The continuous hard-iron estimator works because it solves the
+sensor-identification problem outside the navigation filter and then changes the
+measurement model in a way that forces a new heading innovation instead of preserving
+the old one.
+
+The third lesson is that continuous self-calibration does not necessarily require
+augmenting the navigation state.  When a nuisance parameter can be identified from
+exogenous sufficient statistics, keeping it outside the navigation covariance can
+preserve estimator structure, simplify cross-family reuse, and make ablation much
+cleaner.  That strategy is justified here specifically for a slowly varying hard-iron
+offset under the stated excitation and distortion limits; it is not a general argument
+against joint-state calibration.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Marine attitude startup is a persistent-frame estimation problem, not merely a request
+for an initial quaternion.  Wave acceleration corrupts instantaneous gravity leveling;
+a magnetic reference learned in the resulting tilt frame can freeze that error into
+roll, pitch, yaw, and slowly learned accelerometer bias.  The deployed OU--II,
+OU--III, and TFG architecture separates the problem into an exogenous low-bandwidth
+Mahony proxy, two-stage magnetic acquisition, delayed nuisance-bias learning, and
+continuous regularized hard-iron identification.  The legacy staged quaternion MEKF
+path remains valuable as a matched ablation and demonstrates why the separation is
+needed.
+
+The measurements show distinct benefits.  Proxy startup primarily reduces roll/tilt
+and accelerometer-bias error without materially moving OU displacement.  Continuous
+hard-iron correction then removes the standing magnetic gauge: mean yaw falls by
+about 55--57\% in both OU families, and TFG's hard-iron-off arm more than doubles yaw
+while leaving the other channels nearly unchanged.  The remaining limitation is also
+clear: additive hard-iron learning cannot identify soft-iron/misalignment error without
+additional heading excitation.  That boundary is preferable to hiding the problem
+inside a larger filter.  The resulting architecture is therefore best understood as
+staged observability management: gravity first establishes tilt, a refined magnetic
+reference establishes heading, and long-horizon motion supplies the weak excitation
+needed to continuously improve the sensor calibration.
+
+\bibliographystyle{IEEEtran}
+\bibliography{w3d}
+
+\end{document}
