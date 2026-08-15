@@ -134,10 +134,12 @@ class Kalman3D_Wave_TFG {
         P_ *= T(1e-4);
     }
 
-    void initialize_identity() {
+    // The seed is an argument so it can be swept; the default is the value
+    // this filter has always used.  See docs/tfg-qmekf-variances.md.
+    void initialize_identity(T initial_covariance = T(1e-4)) {
         X_ = Group::Identity();
         P_.setIdentity();
-        P_ *= T(1e-4);
+        P_ *= std::max(T(0), initial_covariance);
     }
 
     void initialize_from_truth(const Eigen::Quaternion<T>& q_bw,

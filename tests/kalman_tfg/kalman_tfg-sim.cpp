@@ -97,6 +97,14 @@ TuningMode load_tuning_mode() {
 
 class FusionAdapter_TFG final : public IW3dFusionAdapter {
 public:
+    // TFG's own MEKF sensor variances, as multiples of the ones the shared
+    // harness hands every family (2.8x injected accel white, 2.0x gyro, 1.2x
+    // mag).  Set by the sweep in docs/tfg-qmekf-variances.md; 1.0 here means
+    // the harness value is used unchanged.
+    static constexpr float SIGMA_A_RESCALE = 1.0f;
+    static constexpr float SIGMA_G_RESCALE = 1.0f;
+    static constexpr float SIGMA_M_RESCALE = 1.0f;
+
     FusionAdapter_TFG(bool with_mag,
                       const Vector3f& sigma_a_init,
                       const Vector3f& sigma_g,
@@ -104,9 +112,18 @@ public:
     {
         Fusion::Config cfg;
         cfg.with_mag = with_mag;
-        cfg.sigma_a = sigma_a_init;
-        cfg.gyro_noise_density = sigma_g.x();
-        cfg.sigma_m = sigma_m;
+        cfg.sigma_a = sigma_a_init * SIGMA_A_RESCALE;
+        cfg.gyro_noise_density = sigma_g.x() * SIGMA_G_RESCALE;
+        cfg.sigma_m = sigma_m * SIGMA_M_RESCALE;
+
+        // The MEKF variances, swept in docs/tfg-qmekf-variances.md.  The three
+        // sensor sigmas are scale factors on the deployed point above, so a
+        // scale of 1 leaves it in place; the other two are absolute.
+        if (float v = 0.0f; env_float("SF_SIGMA_A_SCALE", v)) cfg.sigma_a *= v;
+        if (float v = 0.0f; env_float("SF_SIGMA_G_SCALE", v)) cfg.gyro_noise_density *= v;
+        if (float v = 0.0f; env_float("SF_SIGMA_M_SCALE", v)) cfg.sigma_m *= v;
+        if (float v = 0.0f; env_float("SF_GYRO_BIAS_RW_VAR", v)) cfg.gyro_bias_rw_var = v;
+        if (float v = 0.0f; env_float("SF_PQ0", v)) cfg.initial_covariance = v;
         cfg.mag_delay_sec = ocean_imu::tfg::MAG_DELAY_SEC;
         if (float v = 0.0f; env_float("SF_MAG_DELAY_SEC", v)) cfg.mag_delay_sec = v;
         cfg.freeze_acc_bias_until_live = true;
