@@ -1,0 +1,930 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsthm}
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\usepackage{array,booktabs}
+\usepackage{siunitx}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\usepackage[final]{microtype}
+
+\interdisplaylinepenalty=2500
+\allowdisplaybreaks
+\emergencystretch=2em
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Id}{\mat I}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\T}{^{\mathsf T}}
+\DeclareMathOperator{\blkdiag}{blkdiag}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\Exp}{Exp}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\newtheorem{assumption}{Assumption}
+
+\title{Pseudo-Measurement Anchoring and Input-to-State Stability in Marine Inertial Observers\\
+\large A Unified Analysis of OU--II, OU--III, Two-Frame EKF, PII, and Time-Varying-Gain Nonlinear Estimators (draft)}
+\author{%
+  \IEEEauthorblockN{Mikhail S. Grushinskiy}
+  \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+  Bareboat Necessities GitHub Project\\
+  Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Marine inertial motion estimators commonly suppress low-frequency integration
+drift by introducing information that is not a conventional instantaneous
+sensor measurement: zero-mean displacement constraints, integral-displacement
+pseudo-measurements, virtual integrated-height measurements, or deterministic
+restoring feedback.  This paper gives a common stability interpretation for
+five estimators implemented in the same marine IMU code base: OU--II and
+OU--III quaternion error-state Kalman filters, a right-invariant two-frame
+Lie-group EKF (TFG), a vertical PII observer, and a nonlinear time-varying-gain
+observer derived from the marine INS construction of Bryne, Fossen and
+Johansen.  The central result is that bounded-gap anchoring of the head of an
+integrator chain creates a uniformly observable finite-horizon block; stable
+unobserved tails preserve detectability; and bounded exogenous scheduling plus
+standard Riccati hypotheses yields uniform exponential stability of the
+linearized Kalman recursion.  A quadratic nonlinear remainder then gives a
+local input-to-state stability (ISS) bound.  The same structure survives smooth
+bounded coordinate changes, which transfers the OU--III local result to the
+TFG linearization under a Jacobian-consistency hypothesis.  For the PII
+observer a scaled-coordinate Lyapunov argument gives an explicit slow-scheduling
+condition.  Finally, the published time-varying-gain nonlinear-observer proof is
+recast as an interconnection of two ISS subsystems and extended to expose the
+additional schedule-rate term created when the high-gain scale itself is made
+time varying.  The analysis also separates stability from accuracy: a virtual
+zero constraint that is only approximately true appears as an input in the ISS
+bound, so stronger anchoring can improve drift stability while simultaneously
+biasing the desired wave-band signal.
+\end{abstract}
+
+\begin{IEEEkeywords}
+input-to-state stability, pseudo-measurement, inertial navigation, marine
+heave, error-state Kalman filter, invariant EKF, nonlinear observer, virtual
+measurement, Ornstein--Uhlenbeck process
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+A free inertial integrator has neutral modes.  In a marine wave estimator this
+is not merely a numerical inconvenience: accelerometer bias, attitude error and
+low-frequency specific-force leakage are integrated into velocity and
+position, eventually overwhelming the oscillatory motion of interest.  Several
+practical estimators in this repository attack the same problem with apparently
+different mechanisms:
+\begin{itemize}
+  \item OU--II applies periodic $p=0$ and $v=0$ pseudo-measurements to a
+        $[v,p,a_w]$ translational chain;
+  \item OU--III adds $S=\int p\,dt$ and applies the higher-order constraint
+        $S=0$ to $[v,p,S,a_w]$;
+  \item the two-frame group EKF retains the OU--III $S=0$ information in
+        right-invariant coordinates;
+  \item the vertical PII observer continuously feeds back $S,p,v$ with a
+        repeated-real-pole restoring law;
+  \item the nonlinear observer of Bryne, Fossen and Johansen augments vertical
+        position with its integral and uses the virtual measurement of that
+        integral at zero \cite{BryneFossenJohansen2014_TimeVarGain}.
+\end{itemize}
+
+The common object is therefore not the OU process, the Kalman filter, or a
+particular attitude representation.  It is \emph{integral-state anchoring}:
+information is injected at one or more levels of an otherwise drifting
+kinematic chain.  Once that information is persistent enough to make the chain
+uniformly observable or detectable, the remaining stability argument depends
+on the estimator class rather than on the marine interpretation of the
+constraint.
+
+This paper has four goals.  First, it states a general finite-horizon
+observability result for an integrated chain with either an OU tail or the
+pure-integrator limit.  Second, it places the existing OU--II and OU--III local
+ISS proofs under one Kalman/LTV theorem and shows which assumptions are shared.
+Third, it treats TFG and PII without pretending they are ordinary instances of
+the same Riccati recursion: TFG is handled by bounded local coordinate
+conjugacy, while PII is handled by a direct Lyapunov proof.  Fourth, it gives an
+ISS reading of the time-varying-gain nonlinear observer and identifies exactly
+what changes when the repository schedules the high-gain scale $\theta$ rather
+than only the multiplier $\vartheta(t)$ used as time varying in the published
+proof.
+
+The main conceptual limitation is equally important.  Stability of an estimator
+that is anchored by the virtual equation ``integral displacement equals zero''
+does not prove that the physical integral is zero at every instant.  Any
+mismatch between the virtual equation and the actual wave/current/tide motion
+enters the estimation error as a disturbance.  ISS is the appropriate language
+because it says precisely that bounded mismatch produces bounded estimation
+error, while leaving the magnitude of that error to the anchoring design.
+
+\section{Preliminaries and a Common Error Model}
+
+\subsection{Uniform exponential stability and ISS}
+For a discrete LTV homogeneous system
+\begin{equation}
+  \vct e_{k+1}=\mat A_k\vct e_k,
+\end{equation}
+let $\mat\Psi(k,j)$ denote its transition matrix.  The origin is uniformly
+exponentially stable (UES) if there are constants $M\ge1$ and $0<\rho<1$ such
+that
+\begin{equation}
+  \norm{\mat\Psi(k,j)}\le M\rho^{k-j},\qquad k\ge j.
+  \label{eq:ues-def}
+\end{equation}
+For nonlinear discrete-time systems we use the standard local ISS notion of
+Jiang and Wang \cite{JiangWang2001_DiscreteISS}: in a neighborhood of the
+origin the state is bounded by a decaying function of the initial condition
+plus a class-$\mathcal K$ function of the disturbance supremum.
+
+The EKF-family error recursions considered below can be written locally as
+\begin{equation}
+ \vct e_{k+1}
+ =\mat A_k\vct e_k+\vct\phi_k(\vct e_k)+\mat D_k\vct d_k,
+ \qquad
+ \norm{\vct\phi_k(\vct e)}\le c_\phi\norm{\vct e}^2,
+ \label{eq:local-error-model}
+\end{equation}
+where $\vct d_k$ collects sensor/model error, imperfect virtual constraints and
+bounded exogenous scheduling error.  The quadratic remainder is the normal
+local consequence of a continuously differentiable nonlinear measurement and
+propagation model after subtracting its first-order linearization.
+
+\begin{lemma}[UES linear part implies a local ISS envelope]
+\label{lem:ues-local-iss}
+Suppose \eqref{eq:ues-def} holds, $\sup_k\norm{\mat D_k}\le d_D$, and
+\eqref{eq:local-error-model} holds on $\norm e\le r$.  If
+\begin{equation}
+  \frac{M c_\phi r}{1-\rho}<1,
+  \label{eq:small-gain-radius}
+\end{equation}
+then a sufficiently small initial condition and sufficiently small bounded input
+remain inside that ball, and the nonlinear recursion is locally ISS.
+\end{lemma}
+
+\begin{proof}
+Variation of constants gives
+\begin{align}
+ \norm{e_k}
+ &\le M\rho^{k-j}\norm{e_j}
+ +\sum_{i=j}^{k-1}M\rho^{k-1-i}
+ \bigl(c_\phi\norm{e_i}^2+d_D\norm{d_i}\bigr).
+ \label{eq:voc-bound}
+\end{align}
+Inside $\norm e_i\le r$, replace $\norm e_i^2$ by
+$r\norm e_i$.  The induced convolution gain of the UES kernel is at most
+$M/(1-\rho)$.  Condition \eqref{eq:small-gain-radius} therefore makes the
+state-dependent feedback gain strictly smaller than one.  Standard discrete
+small-gain/continuation then yields forward invariance of a smaller ball and a
+bound consisting of a decaying initial-condition term plus a finite multiple of
+$\sup_i\norm d_i$.  This is local ISS.  This is the same constructive step used
+in the companion OU--III proof rather than an appeal to EKF stability by name.
+\end{proof}
+
+\subsection{What a zero pseudo-measurement actually means}
+Let a virtual measurement be implemented as
+\begin{equation}
+  \vct y^{0}=0=\mat C\vct x+\vct\nu.
+  \label{eq:pseudo-zero}
+\end{equation}
+If the physical trajectory does not satisfy $\mat C\vct x=0$ instantaneously,
+then the correct error model contains the pseudo-measurement mismatch
+\begin{equation}
+  \vct d^{0}:=-\mat C\vct x_{\rm true}.
+\end{equation}
+Thus a zero pseudo-measurement is an anchoring model, not a claim that the true
+wave state vanishes sample by sample.
+
+\begin{proposition}[Stability--accuracy separation]
+\label{prop:stability-accuracy}
+If the homogeneous estimator error is UES and the pseudo-measurement mismatch is
+bounded, then the resulting estimation error is bounded proportionally to that
+mismatch.  Increasing pseudo-measurement information can improve the homogeneous
+decay rate while increasing wave-band bias when the zero model is imperfect.
+\end{proposition}
+
+\begin{proof}
+The mismatch enters \eqref{eq:local-error-model} through the innovation channel
+and is therefore one component of $d_k$.  Apply Lemma~\ref{lem:ues-local-iss}.
+The stability conclusion depends on boundedness of the input, whereas the
+steady error magnitude depends on the closed-loop input gain.  Nothing in ISS
+requires that gain to decrease monotonically as the virtual measurement is made
+stronger.
+\end{proof}
+
+This proposition is the mathematical reason not to infer filter accuracy from
+a stability proof.  The OU regularization covariance, PII restoring bandwidth,
+and NLO virtual-measurement gain remain performance parameters even after their
+stability role has been established.
+
+\section{A General Anchored-Chain Observability Theorem}
+\label{sec:chain-theorem}
+
+Consider one scalar kinematic axis with $m$ integrator levels followed by an OU
+(or pure-integrator) acceleration state:
+\begin{align}
+ \dot x_0&=x_1,\quad \dot x_1=x_2,\quad\ldots,\quad
+ \dot x_{m-2}=x_{m-1},\\
+ \dot x_{m-1}&=a,\qquad \dot a=-\lambda(t)a,
+ \qquad 0\le\lambda(t)\le\bar\lambda<\infty.
+ \label{eq:general-chain}
+\end{align}
+The OU case has $\lambda=1/\tau$ with $0<\tau_-\le\tau(t)\le\tau_+$;
+the limit $\lambda=0$ is a pure integrated-force state.  Define
+\begin{equation}
+ E(t)=\exp\!\left(-\int_0^t\lambda(s)\,ds\right),
+ \qquad
+ A_m(t)=\frac{1}{(m-1)!}\int_0^t(t-s)^{m-1}E(s)\,ds .
+ \label{eq:Am-def}
+\end{equation}
+Then
+\begin{equation}
+ x_0(t)=\sum_{j=0}^{m-1}\frac{t^j}{j!}x_j(0)+A_m(t)a(0),
+ \qquad A_m^{(m)}(t)=E(t)>0.
+ \label{eq:head-solution}
+\end{equation}
+
+\begin{theorem}[Bounded-gap head anchoring]
+\label{thm:head-anchor}
+Suppose $x_0$ is observed at $m+1$ instants
+$0=t_0<t_1<\cdots<t_m$ whose consecutive gaps obey
+$T_-\le t_j-t_{j-1}\le T_+$ with $T_->0$.  Then the
+$(m+1)$-state chain \eqref{eq:general-chain} is uniformly observable on that
+horizon.  More precisely, the finite-horizon observation matrix has determinant
+bounded away from zero uniformly over every admissible $\lambda(\cdot)$ and
+sampling pattern.
+\end{theorem}
+
+\begin{proof}
+Using \eqref{eq:head-solution}, the observation matrix has rows
+\begin{equation}
+ \left[1,\ t_i,\ \frac{t_i^2}{2!},\ldots,
+ \frac{t_i^{m-1}}{(m-1)!},\ A_m(t_i)\right].
+ \label{eq:general-observation-matrix}
+\end{equation}
+Up to the fixed factorial column scalings, its determinant is the Vandermonde
+factor
+$V(t)=\prod_{i<j}(t_j-t_i)$ multiplied by the $m$th divided difference
+$A_m[t_0,\ldots,t_m]$.  The Hermite--Genocchi formula expresses this divided
+difference as a simplex average of $A_m^{(m)}=E$.  Since
+$0\le t\le t_m\le mT_+$,
+\begin{equation}
+ E(t)\ge e^{-\bar\lambda mT_+}>0.
+\end{equation}
+The bounded-gap hypothesis also gives
+$\abs{V(t)}\ge T_-^{m(m+1)/2}$.  Hence
+\begin{equation}
+ \abs{\det\mat O_m}
+ \ge c_m T_-^{m(m+1)/2}e^{-\bar\lambda mT_+}>0
+ \label{eq:general-det-bound}
+\end{equation}
+for a constant $c_m>0$ depending only on the fixed factorial scalings and the
+simplex mass.  All entries are uniformly bounded on the admissible compact set,
+so a positive determinant lower bound gives a positive lower singular-value
+bound and therefore a finite-horizon observability-Gramian lower bound.
+\end{proof}
+
+\begin{remark}
+The theorem explains why increasing the order of the integration chain costs
+pseudo-measurement history.  A single head measurement of a four-state
+$[S,p,v,a]$ chain requires four distinct instants; direct measurement of an
+intermediate state reduces that requirement.  OU--II exploits exactly this by
+measuring both $p$ and $v$.
+\end{remark}
+
+\begin{lemma}[Stable-tail augmentation preserves detectability]
+\label{lem:stable-tail}
+Let an LTV system be partitioned into a uniformly observable subsystem and an
+unobserved subsystem whose homogeneous transition is UES.  If all coupling
+blocks are uniformly bounded, the full system is uniformly detectable.
+\end{lemma}
+
+\begin{proof}
+Choose a uniformly stabilizing observer injection for the observable block and
+zero injection on the stable tail.  The resulting error transition is block
+triangular.  Its diagonal blocks are UES, and the off-diagonal response is a
+convolution of two exponentially decaying transition bounds with a uniformly
+bounded coupling.  That convolution is exponentially bounded, so the complete
+observer error is UES.  This is precisely the construction used for the slow
+Gauss--Markov accelerometer-bias residual in the OU filters.
+\end{proof}
+
+\section{Kalman Pseudo-Measurements: UES to Local ISS}
+\label{sec:kalman-general}
+
+The discrete LTV Kalman implication used by the OU papers is the
+Anderson--Moore detectability/stabilizability theory, including the
+singular-transition extension \cite{AndersonMoore1981_DetectabilityStabilizability,MooreAnderson1980_SingularTransitionStability}.
+We state only the specialization required here.
+
+\begin{theorem}[Pseudo-measurement Kalman stability template]
+\label{thm:kalman-template}
+Consider an admissible Live interval of an error-state filter
+\begin{equation}
+ \vct e_{k+1}=\mat F_k\vct e_k+\vct w_k,
+ \qquad
+ \vct y_k=\mat H_k\vct e_k+\vct v_k,
+ \label{eq:ltv-kalman}
+\end{equation}
+where $H_k$ includes the physical and virtual measurement rows.  Assume:
+\begin{enumerate}
+ \item $F_k$ and $H_k$ are uniformly bounded;
+ \item $(F_k,H_k)$ is uniformly detectable;
+ \item $(F_k,Q_k^{1/2})$ is uniformly stabilizable;
+ \item the process and measurement covariances are uniformly finite and the
+       active measurement covariances are uniformly positive definite;
+ \item the schedule controlling transition, covariance and pseudo-measurement
+       strength is exogenous and bounded, and pseudo-update gaps satisfy the
+       finite-horizon conditions used to prove detectability.
+\end{enumerate}
+Then the stabilizing Riccati/Kalman recursion has a UES homogeneous estimation
+error transition.  If the underlying nonlinear filter has a uniformly quadratic
+local remainder, the nonlinear Live recursion is locally ISS by
+Lemma~\ref{lem:ues-local-iss}.
+\end{theorem}
+
+\begin{proof}
+The first four hypotheses are the standard LTV Kalman stability conditions in
+the cited results and yield a bounded stabilizing Riccati solution and UES
+closed-loop homogeneous error transition.  The fifth hypothesis is what makes
+the first four uniform rather than pointwise: it prevents arbitrarily long loss
+of the anchoring information or unbounded gain/covariance scheduling.  Apply
+Lemma~\ref{lem:ues-local-iss} to the nonlinear remainder.
+\end{proof}
+
+\subsection{OU--II as a corollary}
+For one OU--II axis use state $[v,p,a]^T$ and two joint $v=0,p=0$
+pseudo-update instants separated by $T\in[T_-,T_+]$.  Selecting $v,p$ at the
+first instant and propagated $v$ at the second gives
+\begin{equation}
+ \mat O_{\rm II}(T)=
+ \begin{bmatrix}
+  1&0&0\\0&1&0\\1&0&A_1(T)
+ \end{bmatrix},\qquad
+ A_1(T)=\int_0^T E(s)\,ds .
+ \label{eq:ou2-observation}
+\end{equation}
+Since $A_1(T)\ge T_-e^{-T_+/\tau_-}>0$, the translational block is UCO.
+Two non-collinear inertial/magnetic vector observations over a bounded attitude
+transition make the attitude/gyro-bias block observable, while the active
+finite-correlation accelerometer-bias residual is a stable tail.
+
+\begin{corollary}[OU--II local ISS]
+\label{cor:ou2}
+Under the bounded Live-interval assumptions stated in the OU--II companion
+analysis---bounded $h$, $\tau$, $\sigma_{aw}$, $r_{p0}$, $r_{v0}$, positive
+finite covariances, bounded pseudo-update gaps, non-collinear accepted vector
+updates, active finite-$\tau_b$ accelerometer-bias propagation, and no hard
+reset---the 18-state OU--II linearized Kalman error is UES and the nonlinear
+Live recursion is locally ISS.
+\end{corollary}
+
+\begin{proof}
+Equation~\eqref{eq:ou2-observation} proves UCO of each translational axis.  The
+three axes and attitude/gyro-bias block form a UCO performance subsystem.  The
+residual accelerometer-bias block contracts as
+$e^{-h/\tau_b}$ and Lemma~\ref{lem:stable-tail} gives full detectability.
+Positive finite process driving supplies uniform stabilizability.  Apply
+Theorem~\ref{thm:kalman-template}.
+\end{proof}
+
+\subsection{OU--III as a corollary}
+For one OU--III axis reorder the translational state as $[S,p,v,a]^T$.
+This is \eqref{eq:general-chain} with $m=3$, and the $S=0$ pseudo-measurement is
+exactly the head observation of Theorem~\ref{thm:head-anchor}.  Four consecutive
+bounded-gap pseudo-updates therefore make the axis UCO even when $\tau(t)$
+varies measurably inside fixed positive bounds.
+
+\begin{corollary}[OU--III local ISS]
+\label{cor:ou3}
+Under the admissible Live-interval conditions of the OU--III companion proof,
+the 21-state OU--III linearized Kalman error is UES and the nonlinear Live
+recursion is locally ISS.
+\end{corollary}
+
+\begin{proof}
+Theorem~\ref{thm:head-anchor} gives UCO of all three $[S,p,v,a_w]$ axes.  The
+accepted inertial/magnetic vector geometry gives the attitude/gyro-bias finite
+horizon rank condition.  The finite-$\tau_b$ residual accelerometer-bias block
+is UES and hence a detectable stable tail.  Bounded positive process driving
+provides uniform stabilizability and the configured covariance clamps provide
+finite positive measurement covariance.  Apply
+Theorem~\ref{thm:kalman-template} and then Lemma~\ref{lem:ues-local-iss}.
+\end{proof}
+
+\begin{remark}[What adaptation is allowed]
+Neither corollary requires $\tau$, $\sigma_{aw}$ or pseudo-measurement strength
+to be constant.  They may vary arbitrarily within the stated compact set as far
+as the deterministic LTV theorem is concerned, provided the resulting matrices
+remain bounded and the required measurement gaps remain bounded.  The deployed
+one-sample scheduling delay additionally makes the active schedule predictable
+with respect to the current innovation for the stochastic interpretation.  A
+state-dependent tuner that closes an unmodeled fast feedback loop would require
+a different proof.
+\end{remark}
+
+\section{Transfer to the Two-Frame Lie-Group EKF}
+\label{sec:tfg}
+
+The TFG filter carries the same physical OU--III variables
+$(R,v,p,S,a_w,b_g,b_a)$ but uses a right-invariant two-frame local error.
+Near a consistent state, the conventional MEKF error $e$ and the TFG tangent
+error $\xi$ are related by a smooth local coordinate map
+\begin{equation}
+ \xi=\mat T_k e+\mathcal O(\norm e^2),
+ \label{eq:tfg-local-map}
+\end{equation}
+where, for example, the rotational bridge is the rotated and negated MEKF
+increment rather than a bare sign flip.  On a compact attitude/state set away
+from the logarithm cut locus, $T_k$ and $T_k^{-1}$ are uniformly bounded.
+
+\begin{theorem}[UES is invariant under a bounded time-varying local coordinate change]
+\label{thm:coord-ues}
+Let the homogeneous linearized error in coordinates $e_k$ be UES and let
+$\xi_k=T_k e_k$ with
+\begin{equation}
+ \sup_k\norm{T_k}\le\bar T,
+ \qquad
+ \sup_k\norm{T_k^{-1}}\le\bar T_-.
+ \label{eq:T-bounds}
+\end{equation}
+Then the conjugate linear recursion in $\xi$ is UES.
+\end{theorem}
+
+\begin{proof}
+If $e_k=\Psi_e(k,j)e_j$, then
+\begin{equation}
+ \xi_k=T_k\Psi_e(k,j)T_j^{-1}\xi_j.
+\end{equation}
+Hence
+\begin{equation}
+ \norm{\Psi_\xi(k,j)}
+ \le\bar T\bar T_-M\rho^{k-j},
+\end{equation}
+which is UES.
+\end{proof}
+
+\begin{corollary}[Conditional local ISS of TFG]
+\label{cor:tfg}
+Assume the TFG process and measurement Jacobians are the first-order
+representation, in the two-frame tangent coordinates, of the same physical
+Live recursion certified by Corollary~\ref{cor:ou3}; the covariance and noise
+models are transformed consistently; and the trajectory remains in a compact
+chart satisfying \eqref{eq:T-bounds}.  Then the TFG homogeneous linearized
+error is UES and its nonlinear recursion is locally ISS.
+\end{corollary}
+
+\begin{proof}
+Under the Jacobian-consistency assumption, the first-order TFG recursion is the
+bounded coordinate conjugate of the physical OU--III linearization.  Apply
+Theorem~\ref{thm:coord-ues}.  The group exponential, residuals and omitted
+innovation-dependent invariant-Jacobian terms are smooth near a consistent
+state, so their discrepancy from first order is quadratic.  Apply
+Lemma~\ref{lem:ues-local-iss}.
+\end{proof}
+
+The qualification in Corollary~\ref{cor:tfg} is deliberate.  The implemented
+marine process is not claimed to be group affine, and therefore no global
+log-linear InEKF theorem is invoked.  What the two-frame construction changes
+is the local coordinate geometry and finite retraction, not the physical need
+for persistent $S$ anchoring, attitude excitation, bounded covariances and a
+valid local chart.  The repository's convention and Jacobian tests provide
+implementation evidence for the first-order correspondence; they are not a
+substitute for the mathematical hypotheses of the corollary.
+
+\section{PII as Continuous Integral-State Anchoring}
+\label{sec:pii}
+
+Ignoring the optional very-slow bias channel for the moment, the vertical PII
+core obeys
+\begin{align}
+ \dot S&=p, & \dot p&=v,\\
+ \dot v&=u-3rv-3r^2p-r^3S,
+ \label{eq:pii-core}
+\end{align}
+where $u=a_f-b$ is the filtered acceleration input after any bias correction.
+For frozen $r>0$ the characteristic polynomial is
+\begin{equation}
+ s^3+3rs^2+3r^2s+r^3=(s+r)^3,
+ \label{eq:pii-poly}
+\end{equation}
+so the unforced core is exponentially stable.  This is the deterministic
+continuous-feedback analogue of anchoring $S,p,v$ to zero rather than a
+sampled Kalman pseudo-measurement.
+
+The adaptive implementation changes $r$ slowly.  Pointwise Hurwitz stability of
+$A(r(t))$ alone is not enough for an arbitrarily fast time-varying system, so a
+schedule-rate condition is required.
+
+\begin{theorem}[ISS of the slowly scheduled PII core]
+\label{thm:pii-scheduled}
+Let $0<r_-\le r(t)\le r_+<\infty$ be absolutely continuous and define
+$\nu(t)=\dot r(t)/r(t)$.  Let
+\begin{equation}
+ \vct z=\mat D(r)\begin{bmatrix}S&p&v\end{bmatrix}\T,
+ \qquad
+ \mat D(r)=\diag(r^2,r,1),
+ \end{equation}
+so that
+\begin{equation}
+ \dot z=
+ \left[r\mat A_0+\nu\mat J\right]z+\mat D(r)\vct B u,
+ \label{eq:pii-scaled}
+\end{equation}
+with
+\begin{equation}
+ A_0=\begin{bmatrix}0&1&0\\0&0&1\\-1&-3&-3\end{bmatrix},
+ \qquad J=\diag(2,1,0),
+ \qquad B=\begin{bmatrix}0\\0\\1\end{bmatrix}.
+\end{equation}
+Let $P=P^T>0$ solve
+\begin{equation}
+ A_0^TP+PA_0=-I.
+ \end{equation}
+If
+\begin{equation}
+ \bar\nu\,\norm{J^TP+PJ}<r_-,
+ \qquad \bar\nu:=\sup_t\abs{\dot r/r},
+ \label{eq:pii-rate-condition}
+\end{equation}
+then the unforced scheduled PII core is UES and the forced core is ISS from
+$u$ to $(S,p,v)$.
+\end{theorem}
+
+\begin{proof}
+The scaling gives \eqref{eq:pii-scaled} by direct differentiation.  With
+$V=z^TPz$,
+\begin{align}
+ \dot V
+ &=-r\norm z^2
+ +\nu z^T(J^TP+PJ)z
+ +2z^TPD(r)Bu\\
+ &\le-\alpha_z\norm z^2+c_u\norm z\abs u,
+ \label{eq:pii-Vdot}
+\end{align}
+where
+$\alpha_z=r_--\bar\nu\norm{J^TP+PJ}>0$ and $c_u$ is finite because $r$ lies in
+a compact positive interval.  Young's inequality gives
+\begin{equation}
+ \dot V\le-\frac{\alpha_z}{2}\norm z^2
+ +\frac{c_u^2}{2\alpha_z}\abs u^2,
+\end{equation}
+which is an ISS Lyapunov inequality.  Uniform bounds on $D(r)$ and $D(r)^{-1}$
+transfer the result to $(S,p,v)$.
+\end{proof}
+
+The acceleration prefilter
+$\dot a_f=-(1/\tau_a)a_f+(1/\tau_a)a_{\rm meas}$ is itself UES for any
+$0<\tau_{a,-}\le\tau_a(t)\le\tau_{a,+}$; no $\dot\tau_a$ bound is needed for
+that scalar equation.  Cascading it into Theorem~\ref{thm:pii-scheduled}
+preserves ISS.  The implementation's long input and parameter smoothing time
+constants are therefore not merely heuristic anti-jitter devices: they also
+push the scheduled system toward the explicit slow-variation regime
+\eqref{eq:pii-rate-condition}.
+
+\begin{remark}[Optional PII bias channel]
+With the optional states
+$\dot d=(p-d)/\tau_d$ and $\dot b=k_b d-\lambda_b b$, the bias subsystem is
+stable for frozen positive $\tau_d,\lambda_b$ and is driven by $p$, while $b$
+re-enters the PII core as an input.  Theorem~\ref{thm:pii-scheduled} therefore
+reduces certification of the full optional extension to a standard two-block
+ISS small-gain condition.  The present paper does not claim that every arbitrary
+manual combination of $(k_b,\lambda_b,\tau_d)$ satisfies that condition; the
+repository clamps and very small scheduled $k_b$ make it a separately
+verifiable implementation condition rather than an automatic consequence of
+the repeated-pole design.
+\end{remark}
+
+The semi-implicit embedded update is a consistent discretization of
+\eqref{eq:pii-core}.  For a compact $r$ interval satisfying the continuous
+margin above there exists $h^*>0$ such that all sufficiently small bounded
+steps preserve a discrete UES margin.  The deployed IMU step is orders of
+magnitude smaller than the inverse PII pole rate, but a formal maximum-step
+certificate for every optional clamp/bias configuration is outside the present
+claim.
+
+\section{The Bryne--Fossen--Johansen NLO as an ISS Interconnection}
+\label{sec:nlo}
+
+Bryne, Fossen and Johansen augment the vertical translational state with the
+integrated height $p'_z=\int p_z\,dt$ and use the virtual measurement $p'_z=0$
+for a surface vessel \cite{BryneFossenJohansen2014_TimeVarGain}.  Their
+translation error is of the form
+\begin{equation}
+ \dot{\tilde x}=(A-\vartheta(t)K_\theta C)\tilde x+B\tilde d,
+ \label{eq:nlo-x}
+\end{equation}
+where $\vartheta(t)$ is the time-varying gain multiplier and $\theta$ is a
+high-gain scaling parameter.  With
+\begin{equation}
+ L_\theta=\blkdiag(1,\theta^{-1}I,
+ \theta^{-2}I,\theta^{-3}I),
+ \qquad \eta=L_\theta\tilde x,
+ \label{eq:nlo-scaling}
+\end{equation}
+their Appendix obtains, for constant $\theta$,
+\begin{equation}
+ \frac{1}{\theta}\dot\eta
+ =(A-\vartheta(t)K_0C)\eta+\rho(t,\tilde\zeta),
+ \label{eq:nlo-scaled-error}
+\end{equation}
+where $\tilde\zeta$ denotes the attitude/gyro-bias error and
+$\rho$ is the coupling disturbance.  Choosing $K_0=PC^T$ from their Riccati
+equation gives a quadratic Lyapunov function
+$U=\theta^{-1}\eta^TP^{-1}\eta$ and an inequality of the form
+\begin{equation}
+ \dot U
+ \le-a_\eta\norm\eta^2
+ +b_\eta\theta^{-4}\norm\eta\norm{\tilde\zeta},
+ \qquad a_\eta,b_\eta>0.
+ \label{eq:nlo-U-iss}
+\end{equation}
+Their attitude/gyro-bias Lyapunov analysis gives the complementary structure
+\begin{equation}
+ \dot W
+ \le-a_\zeta\norm{\tilde\zeta}^2
+ +b_\zeta\theta^{3}\norm{\tilde\zeta}\norm\eta,
+ \label{eq:nlo-W-iss}
+\end{equation}
+inside the semiglobal attitude region used in their theorem.  The positive
+power $\theta^3$ is expected: the physical specific-force error is recovered
+from the fourth scaled translation coordinate by multiplying by $\theta^3$.
+
+\begin{proposition}[ISS interpretation of the published NLO proof]
+\label{prop:nlo-iss}
+For fixed admissible $\theta$, inequality \eqref{eq:nlo-U-iss} makes the
+translational subsystem ISS with respect to the attitude/gyro-bias error, with a
+state-gain coefficient proportional to $\theta^{-4}$.  Inequality
+\eqref{eq:nlo-W-iss} makes the attitude subsystem locally/semiglobally ISS with
+respect to the scaled translational error, with gain proportional to
+$\theta^3$.  Their sufficiently-large-$\theta$ requirement is an interconnection
+small-gain requirement in addition to the separate stability of each nominal
+subsystem.
+\end{proposition}
+
+\begin{proof}
+Apply Young's inequality to \eqref{eq:nlo-U-iss}:
+\begin{equation}
+ \dot U\le-\frac{a_\eta}{2}\norm\eta^2
+ +\frac{b_\eta^2}{2a_\eta}\theta^{-8}
+  \norm{\tilde\zeta}^2.
+ \label{eq:nlo-U-young}
+\end{equation}
+This is an ISS Lyapunov inequality.  The same step on
+\eqref{eq:nlo-W-iss} yields an ISS inequality in the other direction.  The
+product of the corresponding state gains scales as $\theta^{-1}$, so increasing
+$\theta$ weakens the closed interconnection.  The published composite choice
+\begin{equation}
+ Y=U+\theta^{-7}W
+ \label{eq:nlo-composite}
+\end{equation}
+is consistent with this interpretation: multiplying the
+$\theta^3\norm{\tilde\zeta}\norm\eta$ cross term in $\dot W$ by
+$\theta^{-7}$ places it at the same $\theta^{-4}$ order as the cross term in
+$\dot U$.  The resulting $2\times2$ quadratic-form condition becomes positive
+definite for sufficiently large $\theta$, which is exactly the small-gain
+closure used to establish their USGES result.
+\end{proof}
+
+This reading is useful because it distinguishes three statements that are easy
+to conflate.  First, $A-\vartheta K_0C$ can remain Hurwitz for positive gains.
+Second, the translation subsystem can be ISS with respect to attitude error.
+Third, the \emph{interconnected} nonlinear observer is USGES only after the
+cross-gains satisfy the stronger large-$\theta$ condition and the attitude
+initial error lies in the theorem's semiglobal set.  The published theorem
+proves the third statement under its assumptions; it is not merely a pole test.
+
+\subsection{What changes when $\theta$ itself is scheduled}
+The repository's wave-oriented NLO does not keep the high-gain scale fixed: it
+schedules $\theta$ from a wave-frequency proxy.  This is not the same operation
+as the published $\vartheta(t)$ multiplier.  If $\theta=\theta(t)$, then
+$\dot L_\theta$ in \eqref{eq:nlo-scaling} is no longer zero.  With
+\begin{equation}
+ \nu_\theta=\frac{\dot\theta}{\theta},
+ \qquad
+ D_\theta=\blkdiag(0,I,2I,3I),
+\end{equation}
+one obtains
+\begin{equation}
+ \dot L_\theta L_\theta^{-1}=-\nu_\theta D_\theta.
+ \label{eq:nlo-Ldot}
+\end{equation}
+Thus the scaled translation dynamics acquire the additional term
+$-\nu_\theta D_\theta\eta$.  The Lyapunov function also contains the explicit
+factor $1/\theta$, so its derivative receives another bounded term proportional
+to $\abs{\nu_\theta}U$.
+
+\begin{theorem}[Conditional local ISS with scheduled NLO high-gain scale]
+\label{thm:nlo-scheduled}
+Assume $0<\theta_-\le\theta(t)\le\theta_+<\infty$, the published Riccati and
+$\vartheta(t)$ lower-bound conditions hold, the attitude variables remain in a
+compact local region where the coupling estimates used in
+\eqref{eq:nlo-U-iss}--\eqref{eq:nlo-W-iss} are valid, and
+$\abs{\dot\theta/\theta}\le\bar\nu_\theta$.  Then there is a constant
+$c_\theta>0$ such that the translation Lyapunov derivative satisfies
+\begin{equation}
+ \dot U
+ \le-\bigl(a_\eta-c_\theta\bar\nu_\theta\bigr)\norm\eta^2
+ +b_\eta\theta_-^{-4}\norm\eta\norm{\tilde\zeta}.
+ \label{eq:nlo-scheduled-bound}
+\end{equation}
+Consequently, if $c_\theta\bar\nu_\theta<a_\eta$ the translation subsystem
+remains ISS.  If, in addition, the two ISS cross-gains satisfy a local small-gain
+condition, the scheduled interconnected observer is locally ISS.
+\end{theorem}
+
+\begin{proof}
+Differentiate $\eta=L_{\theta(t)}\tilde x$ and use
+\eqref{eq:nlo-Ldot}.  Every new schedule-rate contribution is bilinear in
+$\eta$ and bounded by a constant times
+$\abs{\nu_\theta}\norm\eta^2$ on the compact $\theta$ interval.  Differentiating
+the prefactor $1/\theta$ in $U$ adds a term with the same bound.  Absorb all of
+these terms into $c_\theta\bar\nu_\theta\norm\eta^2$, giving
+\eqref{eq:nlo-scheduled-bound}.  A positive residual decay margin yields an ISS
+Lyapunov inequality by Young's inequality.  Closing the two subsystems uses the
+standard local ISS small-gain argument.
+\end{proof}
+
+\begin{remark}[Scope of the repository NLO]
+The published theorem assumes a sufficiently large constant high-gain
+$\theta\ge\theta^*$; the wave-tuned repository configuration can deliberately
+operate below that conservative high-gain range to keep the aiding corner below
+the wave band.  Therefore the published USGES theorem cannot simply be quoted
+as a certificate for that modified operating policy.  The correct claim is the
+conditional local one in Theorem~\ref{thm:nlo-scheduled}: bounded positive
+$\theta$, sufficiently slow scheduling, and a verified local interconnection
+margin.  This distinction preserves the performance motivation for low
+$\theta$ without overstating what the 2014 proof establishes.
+\end{remark}
+
+\section{A Unified Stability Map}
+
+\begin{table*}[t]
+\centering
+\caption{Common anchoring structure and stability route.  ``Virtual state'' means the zero relation is a modeling constraint whose mismatch enters the ISS disturbance.}
+\label{tab:unified-map}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.13\textwidth}p{0.19\textwidth}p{0.20\textwidth}p{0.20\textwidth}p{0.20\textwidth}@{}}
+\toprule
+Estimator & Anchored quantity & Linear/core stability mechanism & Nonlinear or scheduled extension & Certified scope in this paper \\
+\midrule
+OU--II & periodic $p=0$, $v=0$ & UCO of $[p,v,a_w]$; bounded Riccati gives UES & quadratic MEKF remainder & local ISS on admissible Live intervals \\
+OU--III & periodic $S=0$ & Theorem~\ref{thm:head-anchor} for $[S,p,v,a_w]$; bounded Riccati gives UES & quadratic MEKF remainder & local ISS on admissible Live intervals \\
+TFG & invariant $S=0$ residual & bounded local coordinate conjugacy to OU--III linearization & group retraction and invariant residual remainder & conditional local ISS in a compact chart \\
+Vertical PII & continuous restoring of $S,p,v$ & $(s+r)^3$ for fixed $r$; scaled Lyapunov proof for $r(t)$ & slow schedule and stable acceleration LPF & ISS under explicit schedule-rate condition; optional bias loop needs small-gain check \\
+Time-varying-gain NLO & virtual integrated-height state $p'_z=0$ & Riccati-designed deterministic observer gain & ISS interconnection of translation and attitude; scheduled $\theta$ adds $\dot\theta/\theta$ term & published constant-$\theta$ observer: USGES under cited assumptions; repository scheduled-$\theta$: conditional local ISS \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Table~\ref{tab:unified-map} suggests a reusable design procedure for marine
+inertial observers:
+\begin{enumerate}
+ \item identify the neutral integration modes;
+ \item choose a physically defensible virtual quantity whose long-term value is
+       bounded or approximately zero;
+ \item prove that the resulting output makes the integration chain uniformly
+       observable over bounded update gaps;
+ \item isolate any unobserved states and require them to be intrinsically stable
+       or separately observable;
+ \item keep adaptive schedules in compact sets and, when the coordinate/gain
+       transformation itself changes, bound its relative rate;
+ \item establish UES of the homogeneous linear/core recursion;
+ \item treat model error, virtual-constraint mismatch and higher-order nonlinear
+       terms as ISS inputs rather than silently setting them to zero.
+\end{enumerate}
+
+The order matters.  A pseudo-measurement covariance or restoring gain cannot
+repair an unobservable chain if the update disappears for arbitrarily long
+periods; conversely, observability alone does not ensure a numerically sensible
+or wave-faithful gain.  Stability is a structural prerequisite, not the tuning
+objective.
+
+\section{Hybrid Operations and Failure Boundaries}
+
+All proofs above concern continuous Live intervals or their discrete-time
+counterparts.  Real implementations contain startup handoffs, covariance
+initialization, attitude resets, magnetic re-acquisition, confidence gating,
+state clamps and possible measurement rejection.  Those operations are hybrid
+jumps and require either separate jump-map inequalities or an interval-by-
+interval interpretation.
+
+For the OU filters, the existing local proofs deliberately begin after startup
+and re-lock events and require bounded pseudo-update gaps.  TFG inherits the
+same restriction.  PII state clamps make the actual implementation globally
+bounded in a practical sense when enabled, but saturation is nonlinear and can
+invalidate the nominal Lyapunov derivative; boundedness from a clamp should not
+be relabeled asymptotic stability.  For NLO, parameter projection bounds the
+estimated gyro bias in the published proof, while the scheduled-$\theta$
+extension additionally needs the rate condition above.
+
+A long outage is especially revealing.  If the pseudo-measurement is removed,
+the low-order inertial chain regains neutral integration modes.  The estimator
+may remain bounded for a finite outage because the previous state is finite,
+but no theorem that relies on uniform complete observability can cover
+arbitrarily long loss of the anchor.  This is a hypothesis failure, not a
+contradiction of the theorem.
+
+\section{Discussion}
+
+The main unification is stronger than saying that all five methods ``remove
+drift.''  They create a feedback path from an integrated quantity back into an
+otherwise neutral kinematic chain.  In OU--II and OU--III the feedback gain is
+chosen indirectly by a covariance and Riccati recursion.  In TFG the same
+information is expressed in a different local geometry.  In PII it is explicit
+pole placement.  In the NLO it is a deterministic high-gain observer driven by
+a virtual integrated-position measurement.  The mathematical questions are
+therefore the same: Is the chain observable from the anchor?  Is the gain law
+uniformly stabilizing?  Is the adaptive schedule bounded and sufficiently
+regular?  Are unobserved modes stable?  How large is the mismatch between the
+virtual constraint and the physical motion?
+
+The general chain theorem also clarifies the role of OU regularization.  The OU
+state is not what makes the integral chain observable.  Its exponential tail
+simply replaces the final polynomial basis function by $A_m(t)$ whose $m$th
+derivative remains strictly positive.  The same determinant argument includes
+the pure-integrator limit.  OU dynamics matter for stochastic prior quality and
+regularization tuning, whereas the existence of the finite-horizon anchor is a
+separate structural fact.
+
+For TFG, the result is intentionally local.  A Lie-group state can improve
+consistency of finite corrections and remove estimated-state dependence from
+some first-order measurement Jacobians, but geometry does not abolish the need
+for excitation and anchoring.  Because the implemented marine process is not
+fully group affine, global log-linear invariant-filter stability is not
+available merely from the choice of group.
+
+For PII and NLO, the schedule-rate terms are the most useful practical lesson.
+A family of frozen gains can be stable at every operating point while an
+arbitrarily fast schedule destabilizes the time-varying system.  The scaled
+coordinates expose the exact perturbation: $\dot r/r$ for PII and
+$\dot\theta/\theta$ for the scheduled NLO.  The repository's deliberately slow
+PII adaptation and bumpless NLO parameter changes therefore have a stability
+interpretation in addition to their transient-performance purpose.
+
+Finally, the ISS view gives a clean way to discuss real-ocean deviations from
+the zero-mean assumptions.  Tide, current, sustained vessel acceleration,
+nonzero mean set-down, imperfect gravity compensation, and slowly varying
+sensor bias need not be declared absent.  They can be carried as bounded inputs.
+The theorem then says the estimator will not turn a bounded modeling error into
+unbounded drift inside the certified regime.  How much of that error leaks into
+the reported wave signal is a frequency-response and tuning question that must
+be validated separately.
+
+\section{Conclusion}
+
+A common stability structure underlies the OU--II, OU--III, TFG, vertical PII
+and time-varying-gain nonlinear marine estimators.  Persistent integral-state
+anchoring converts drifting integration chains into observable or directly
+stabilized systems; stable unobserved tails preserve detectability; bounded
+Riccati recursions or direct Lyapunov feedback then provide UES; and nonlinear
+model mismatch is naturally handled through local ISS.  The same framework
+also exposes where the methods genuinely differ.  TFG requires a local
+coordinate-conjugacy argument rather than a new global invariant theorem.  PII
+requires a schedule-rate condition when its repeated pole moves.  The published
+NLO theorem proves USGES for a sufficiently large constant high-gain scale and a
+time-varying multiplier, whereas scheduling the high-gain scale itself creates
+an additional $\dot\theta/\theta$ perturbation and supports only a conditional
+local ISS claim unless a new interconnection margin is verified.
+
+The resulting design rule is simple: first prove that the virtual anchor
+actually observes the drift chain; then prove that the chosen gain mechanism is
+uniformly stabilizing under its real schedule; finally treat the fact that the
+virtual zero is only approximately true as an input, not as an identity.  This
+separates stability, adaptation and wave fidelity cleanly enough that the same
+proof architecture can be reused across estimator families.
+
+\section*{Acknowledgments}
+This work was prepared with the supervised assistance of artificial intelligence
+tools, including ChatGPT, used for mathematical drafting, source comparison and
+editorial preparation.  All conceptual choices, validation and final revisions
+remain the responsibility of the author.
+
+\section*{Disclosure Statement}
+The author declares no conflicts of interest and received no funding for this
+research.
+
+\bibliographystyle{IEEEtran}
+\bibliography{w3d-iss,pseudo-meas-stability}
+
+\end{document}
