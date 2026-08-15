@@ -52,16 +52,3 @@ Sec.~\ref{sec:direction} estimates both sine and cosine coefficients, so a
 constant carrier-phase offset does not bias the recovered propagation axis.
 Frequency-tracker alternatives are retained for implementation portability but
 are not compared in the direction-validation evidence reported here.
-
-\begin{figure}[!t]
-  \centering
-  \resizebox{\columnwidth}{!}{%
-    \input{w3d_ou3_jonswap_medium_tuner.pgf}%
-  }
-  \caption{Representative integrated frequency/tuning diagnostic for the
-  medium JONSWAP record.  The upper panel is the KalmANF carrier-frequency
-  trace used by the direction estimator.  The remaining panels are generated
-  by the shared OU--III motion-estimator pipeline and are shown only as context;
-  they are not inputs to the direction estimator.}
-  \label{fig:wave-dir-frequency-medium}
-\end{figure}
