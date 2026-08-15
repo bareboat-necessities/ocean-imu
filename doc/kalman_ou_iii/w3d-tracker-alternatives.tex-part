@@ -2,8 +2,7 @@
 \label{app:tracker-alternatives}
 
 The wave-direction results in this paper use KalmANF exclusively.  The following
-policies are maintained as selectable implementation options but were not
-evaluated as direction-estimator tracker ablations, so no relative-performance
+policies are maintained as selectable implementation options but were not evaluated as direction-estimator tracker ablations, so no relative-performance
 claim is made.  Their presence in the common frequency-tracker interface is
 implementation evidence only and is not evidence that either can be substituted
 for KalmANF without changing direction performance.
