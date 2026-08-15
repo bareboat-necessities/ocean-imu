@@ -2,7 +2,7 @@
 \label{sec:sim-and-eval}
 
 \subsection{Simulation protocol}
-The estimator is evaluated on four JONSWAP directional seas and four
+The estimator is evaluated on four JONSWAP seas and four
 Pierson--Moskowitz (PM)--Stokes seas spanning the wave conditions in
 Table~\ref{tab:scenarios}.  Each record is \SI{1200}{s} long at
 \SI{200}{Hz}; the magnetometer is sampled independently at \SI{25}{Hz} and
@@ -14,15 +14,15 @@ angular rate, and magnetic-field measurements.
   \centering
   \caption{Stationary simulation scenarios.}
   \label{tab:scenarios}
-  \setlength{\tabcolsep}{3pt}
-  \begin{tabular}{@{}lccc@{}}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}lcc@{}}
     \toprule
-    Scenario & $H_s$ [m] & $T_p$ [s] & Nominal direction \\
+    Scenario & $H_s$ [m] & $T_p$ [s] \\
     \midrule
-    W1 & 0.27 & 3.0  & $+30^\circ$ \\
-    W2 & 1.50 & 5.7  & $-30^\circ$ \\
-    W3 & 4.00 & 8.5  & $+30^\circ$ \\
-    W4 & 8.50 & 11.4 & $-30^\circ$ \\
+    W1 & 0.27 & 3.0  \\
+    W2 & 1.50 & 5.7  \\
+    W3 & 4.00 & 8.5  \\
+    W4 & 8.50 & 11.4 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -67,11 +67,11 @@ model and the random-walk accelerometer-bias truth process.
 
 All deterministic and ensemble comparisons use the final \SI{900}{s} of each
 record, excluding startup while retaining a long common scoring interval.
-Reported metrics include per-axis and three-dimensional displacement RMS,
-attitude RMS, and wave-direction error.  Both OU--II and OU--III obtain their
-operating period from the same wave-band zero-crossing estimate; this matched
-input is required for the family comparison to isolate the additional
-integral-displacement state rather than a difference in tuning signal.
+Reported metrics include per-axis and three-dimensional displacement RMS and
+attitude RMS.  Both OU--II and OU--III obtain their operating period from the
+same wave-band zero-crossing estimate; this matched input is required for the
+family comparison to isolate the additional integral-displacement state rather
+than a difference in tuning signal.
 
 \begin{figure}[!t]
   \centering
@@ -132,10 +132,6 @@ normalization by the final $H_s$ is retained only for continuity.  Interpretatio
 uses separate pure-start, crossfade, and pure-endpoint intervals and the
 scale-free ratio of estimation RMS to reference-displacement RMS over the same
 interval.
-
-\IfFileExists{w3d-sim-results-generated.tex-part}{%
-  \input{w3d-sim-results-generated.tex-part}%
-}{}
 
 \input{w3d-baseline-comparison.tex-part}
 
