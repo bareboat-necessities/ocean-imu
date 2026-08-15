@@ -19,6 +19,9 @@ class WaveDirectionChartContractTests(unittest.TestCase):
         frequency = (DOC / "w3d-frequency-tracking.tex-part").read_text(
             encoding="utf-8"
         )
+        config = (DOC / "w3d-wave-direction-config.tex-part").read_text(
+            encoding="utf-8"
+        )
         charts = (DOC / "w3d-wave-direction-charts.tex-part").read_text(
             encoding="utf-8"
         )
@@ -40,12 +43,16 @@ class WaveDirectionChartContractTests(unittest.TestCase):
         ):
             self.assertIn(name, charts)
 
-        publication_sources = article + results + frequency + charts
+        publication_sources = article + results + frequency + config + charts
         self.assertNotIn("w3d_ou3_jonswap_medium_tuner.pgf", publication_sources)
-        self.assertNotIn("R_S", publication_sources)
-        self.assertNotIn("r_S", publication_sources)
-        self.assertNotIn("tau_applied", publication_sources)
-        self.assertNotIn("sigma_a_applied", publication_sources)
+        for token in ("R_S", "r_S", r"R_{S}", r"r_{S}", "tau_applied", "sigma_a_applied", "sigma_{aw}"):
+            self.assertNotIn(token, publication_sources)
+
+        # OU--III is allowed only where the paper explicitly reports the
+        # integrated replay that supplied its upstream attitude input.
+        non_integration_sources = article + frequency + config + charts
+        self.assertNotIn("OU--III", non_integration_sources)
+        self.assertIn(r"\subsection{Integrated replay with OU--III attitude input}", results)
 
         # IEEE conference output is two-column.  Publication plots stay inside
         # one column; no figure* or text-width scaling may creep back in.
