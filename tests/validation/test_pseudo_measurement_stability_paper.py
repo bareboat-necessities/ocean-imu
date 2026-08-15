@@ -55,7 +55,7 @@ def test_tfg_claim_is_local_and_not_a_fake_global_inekf_theorem():
 def test_pii_scheduling_requires_an_explicit_rate_margin():
     text = paper_text()
     assert r"\label{thm:pii-scheduled}" in text
-    assert r"\frac{\dot r(t)}{r(t)}" in text
+    assert r"\dot r(t)/r(t)" in text
     assert r"\label{eq:pii-rate-condition}" in text
     assert "optional bias" in text.lower()
     assert "small-gain" in text
@@ -68,7 +68,7 @@ def test_nlo_distinguishes_published_usges_from_scheduled_theta_extension():
     assert "USGES" in text
     assert r"\dot L_\theta L_\theta^{-1}" in text
     assert r"\frac{\dot\theta}{\theta}" in text
-    assert "published theorem cannot simply be quoted" in text
+    assert "published USGES theorem cannot simply be quoted" in text
     assert "conditional local ISS" in text
 
 
