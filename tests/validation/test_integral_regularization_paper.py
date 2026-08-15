@@ -15,19 +15,26 @@ def compact(text: str) -> str:
     return " ".join(text.split())
 
 
+def prose(text: str) -> str:
+    """Normalize wrapping and simple emphasis markup for prose assertions."""
+    flat = compact(text)
+    return re.sub(r"\\(?:emph|textbf|textit)\{([^{}]*)\}", r"\1", flat)
+
+
 class IntegralRegularizationPaperTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.text = PAPER.read_text(encoding="utf-8")
         cls.flat = compact(cls.text)
+        cls.prose = prose(cls.text)
 
     def test_paper_has_standalone_publication_scope(self):
         self.assertIn(
             "Adaptive Integral-State Regularization for Drift-Bounded Inertial Motion Estimation",
             self.flat,
         )
-        self.assertIn("integral-state regularization", self.flat.lower())
-        self.assertIn("regularizer, not as a physical sensor", self.flat)
+        self.assertIn("integral-state regularization", self.prose.lower())
+        self.assertIn("regularizer, not as a physical sensor", self.prose)
         self.assertIn(r"\bibliography{w3d}", self.text)
 
     def test_bias_variance_optimum_is_explicit(self):
