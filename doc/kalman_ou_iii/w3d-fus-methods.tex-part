@@ -1,51 +1,4 @@
 % =======================================================
-\section{Frequency Tracking from Vertical Specific Force}
-\label{sec:freq-tracking}
-
-Online tuning requires a stable estimate of the dominant acceleration
-frequency. All OU--III experiments in this paper use KalmANF
-\cite{Ali2023DAFx}; the implementation also compiles two alternative policies,
-documented separately in Appendix~\ref{app:tracker-alternatives}. Using the
-vertical specific force or vertical inertial acceleration, the selected tracker
-produces a raw frequency that is clamped and smoothed to give $\bar f_k$ for
-adaptation and direction estimation.
-
-For normalized operation the scalar tracker input is
-\[
-u(t)=\frac{a_z(t)}{g},\qquad
-\omega=2\pi f,\qquad
-\phi(t)=\int_0^t \omega(s)\,ds .
-\]
-
-\subsection{\textsc{KalmANF}: Kalman-updated adaptive notch}
-
-KalmANF models the signal with a second-order notch parameterized by
-$\chi=2\cos\omega$. It treats $\chi$ as a slowly varying scalar state and
-updates it from the instantaneous prediction error.
-
-Embed the notch with $\chi\in(-2,2)$:
-\begin{align}
-\vct{x}_{k+1} &= \begin{bmatrix}0&1\\-1&\chi_k\end{bmatrix}\vct{x}_k
- + \begin{bmatrix}0\\1\end{bmatrix}u_k,
-&y_k&=\begin{bmatrix}1&0\end{bmatrix}\vct{x}_k,\\
-\chi_{k+1}&=\chi_k+w_k,
-&w_k&\sim\mathcal{N}(0,q_\chi).
-\end{align}
-For $\varepsilon_k=u_k-y_k$, the scalar correction is
-\begin{align}
-\widetilde\chi_k&=\chi_k,&p_{\chi,k}^-&=p_{\chi,k-1}+q_\chi,\\
-\kappa_k&=\frac{p_{\chi,k}^-\,\partial\varepsilon_k/\partial\chi}
-{(\partial\varepsilon_k/\partial\chi)^2p_{\chi,k}^-+r},\\
-\chi_k&\leftarrow\widetilde\chi_k+\kappa_k\varepsilon_k,&
-p_{\chi,k}&=(1-\kappa_k\,\partial\varepsilon_k/\partial\chi)p_{\chi,k}^-.
-\end{align}
-The derivative follows the standard state-sensitivity recursion, and
-\[
-\hat\omega_k=\arccos\!\left(\tfrac12\clip(\chi_k,-2,2)\right),
-\qquad \hat f_k=\hat\omega_k/(2\pi).
-\]
-
-% =======================================================
 \section{Variance-Informed Online Adaptation}
 \label{sec:adaptation}
 
@@ -220,23 +173,22 @@ static tilt of about $b/k_P$ --- roughly \SI{0.5}{\degree} at the
 \SI{0.05}{\degree\per\second} residual bias of the reference records --- that
 nothing downstream of an attitude seed high-passes.
 
-Equation~\eqref{eq:proxy-vertical} is the default vertical measurement for all
-three measurement-only consumers --- the frequency tracker and its stillness
-detector, the wave-period estimator, and the sigma channel --- so a single
-levelled acceleration serves the whole adaptation path.  Until the observer's
-\SI{20}{s} settling window has elapsed --- long enough that the levelling
-transient never reaches the period statistics --- they fall back to the
-unlevelled body-$Z$ proxy $-(a_z+g)$.  The startup bootstrap does not wait for
-that window, because it needs the attitude as soon as it exists and applies
-its own quality gate instead (Sec.~\ref{sec:proxy-handoff}).  Both the older
-attitude-levelled input and the raw body-$Z$ proxy remain selectable for
-ablation; what each costs is quantified in Sec.~\ref{sec:wave-band-period}.
+Equation~\eqref{eq:proxy-vertical} is the default vertical measurement for the
+wave-period estimator and sigma channel, so a single levelled acceleration
+serves the adaptation path.  Until the observer's \SI{20}{s} settling window
+has elapsed --- long enough that the levelling transient never reaches the
+period statistics --- they fall back to the unlevelled body-$Z$ proxy
+$-(a_z+g)$.  The startup bootstrap does not wait for that window, because it
+needs the attitude as soon as it exists and applies its own quality gate instead
+(Sec.~\ref{sec:proxy-handoff}).  Both the older attitude-levelled input and the
+raw body-$Z$ proxy remain selectable for ablation; what each costs is quantified
+in Sec.~\ref{sec:wave-band-period}.
 
 \subsubsection{Wave-band period}
 \label{sec:wave-band-period}
 Both $\tau$ and $r_S$ are properties of the wave band, so the frequency that
-sets them has to follow the sea state.  A dominant-frequency estimate tracked
-from $a_{\uparrow}$ does not.  An ocean acceleration spectrum is the elevation
+sets them has to follow the sea state.  A dominant-frequency estimate from raw
+acceleration does not.  An ocean acceleration spectrum is the elevation
 spectrum weighted by $\omega^4$, and that weighting opposes the spectral
 roll-off, so the acceleration-band estimate sits well above the spectral peak
 and barely moves as the sea grows: over the JONSWAP family used here the
@@ -297,9 +249,7 @@ sea does, against a truth of \SIrange{2.4}{8.7}{s}, and vertical RMS error
 degrades by $2.5\times$.  Opening the loop is therefore free only because the
 observer levels as well as the MEKF does: over the eight reference records
 $a^{P}_{\uparrow}$ reproduces the attitude-levelled input to within \pct{0.2}
-of vertical RMS.  The frequency tracker is the one consumer indifferent to the
-choice --- it is not integrated, so it never sees the $\omega^{-4}$ weighting,
-and the two measurement-only inputs are RMS-equivalent on these records.
+of vertical RMS.
 
 Online coefficients are additionally staged by one IMU sample. At step $k$ the
 MEKF uses only $\vartheta_k$ committed before the current innovation; after
@@ -309,18 +259,20 @@ $\vartheta_k\in\mathcal F_{k-1}$ for the measurement filtration
 $\mathcal F_k$. The delay is one sample (about \SI{5}{ms} at
 \SI{200}{Hz}), far below the adaptation time scales.
 
-The tuner input frequency is $1/\widehat{T}_z$, or the tracker frequency until
-the period estimator settles.  It is smoothed by a fixed-horizon EMA with time
-constant $\tau_f$ inside the tuner, and the tuning frequency is the clipped
-result,
+The tuner input frequency is $1/\widehat{T}_z$ once the period estimate is
+available; during its settling interval the wrapper retains its existing
+bounded front-end frequency fallback.  The carrier-frequency algorithm that
+supplies that companion fallback is outside this article.  The wave-band
+estimate is smoothed by a fixed-horizon EMA with time constant $\tau_f$ inside
+the tuner, and the tuning frequency is the clipped result,
 \begin{equation}
 f_{\mathrm{tune}}
 =\clip\!\left(\overline{1/\widehat{T}_z},
 f_{\mathrm{tune,min}},f_{\max}\right),
 \label{eq:tuning-frequency}
 \end{equation}
-with a floor an order of magnitude below the tracker band $f_{\min}$ because a
-developed sea has $T_z\approx\SI{8.6}{s}$.
+with a low floor that admits developed seas with
+$T_z\approx\SI{8.6}{s}$.
 
 \subsubsection{Period-tied variance horizon}
 The variance is estimated over a fixed number of periods.  It uses the same
@@ -465,7 +417,7 @@ setters can override the tunable bounds. The $r_S$ limits apply to the
 standard-deviation scale, not to the covariance $\mat{R}_S$.
 
 \begin{table*}[t]
-\caption{Principal implementation defaults used in the reported experiments.}
+\caption{Principal OU--III implementation defaults used in the reported experiments.}
 \label{tab:implementation-gates}
 \centering
 \footnotesize
@@ -477,40 +429,22 @@ standard-deviation scale, not to the covariance $\mat{R}_S$.
 Bound or gate & Default & Bound or gate & Default \\
 \midrule
 IMU period $h$ & \SI{0.005}{s}
-& tracker band $[f_{\min},f_{\max}]$ & $[0.2,6.0]$ Hz \\
-wave-band period corner $\lambda/2\pi$ & \SI{0.02}{Hz}
-& tuning-frequency floor $f_{\mathrm{tune,min}}$ & \SI{0.03}{Hz} \\
-OU time scale $[\tau_{\min},\tau_{\max}]$
-& $[0.02,12.0]$ s
-& stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{\meter\per\second\squared} \\
-acceleration noise floor $\sigma_{\mathrm{nf}}$
-& \SI{0.12}{m.s^{-2}}
-& integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s \\
-accelerometer-bias residual OU
-& $\tau_b=\SI{5000}{s}$; drive $\SI{5e-4}{m.s^{-2}.s^{-0.5}}$
-& adaptation cadence / time constant & $0.1/1.8$ s \\
-tuner coefficients $(c_\tau,c_\sigma,c_R)$
-& $(1.0,0.9,0.35)$
-& $r_S$ smoothing time & $5\tau_\star$ \\
-tuner frequency horizon $\tau_f$ / variance horizon
-& \SI{1.0}{s} / $2T_{\mathrm{eff}}$, clipped to $[0.3,60]$ s
-& variance-horizon clip $[f_{\mathrm{var,min}},f_{\mathrm{var,max}}]$
-& $[0.05,5.0]$ Hz \\
-online-tuning warmup / magnetometer delay
-& $5/7$ s
-& frequency smoothing (fast/slow) & $3.5/10$ s \\
-horizontal OU / $r_S$ scale
-& $S_\sigma=1$, $\rho_{xy}=1$
+& wave-band period corner $\lambda/2\pi$ & \SI{0.02}{Hz} \\
+tuning-frequency floor $f_{\mathrm{tune,min}}$ & \SI{0.03}{Hz}
+& OU time scale $[\tau_{\min},\tau_{\max}]$ & $[0.02,12.0]$ s \\
+stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{\meter\per\second\squared}
+& acceleration noise floor $\sigma_{\mathrm{nf}}$ & \SI{0.12}{m.s^{-2}} \\
+integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
+& accelerometer-bias residual OU & $\tau_b=\SI{5000}{s}$; drive $\SI{5e-4}{m.s^{-2}.s^{-0.5}}$ \\
+adaptation cadence / time constant & $0.1/1.8$ s
+& tuner coefficients $(c_\tau,c_\sigma,c_R)$ & $(1.0,0.9,0.35)$ \\
+$r_S$ smoothing time & $5\tau_\star$
+& tuner frequency horizon $\tau_f$ / variance horizon & \SI{1.0}{s} / $2T_{\mathrm{eff}}$, clipped to $[0.3,60]$ s \\
+variance-horizon clip $[f_{\mathrm{var,min}},f_{\mathrm{var,max}}]$
+& $[0.05,5.0]$ Hz
+& online-tuning warmup / magnetometer delay & $5/7$ s \\
+horizontal OU / $r_S$ scale & $S_\sigma=1$, $\rho_{xy}=1$
 & tilt reset (threshold/hold/cooldown) & $70^\circ/0.35/3$ s \\
-direction-axis validity (amplitude/confidence/linearity)
-& $0.08/20/0.25$
-& sense coherence on/off & $0.20/0.12$ \\
-sense absolute RMS gates (horizontal/vertical slope)
-& $0.01\,\mathrm{m\,s^{-2}}/0.01\,\mathrm{m\,s^{-3}}$
-& KalmANF policy for reported OU results & enabled \\
 \bottomrule
 \end{tabular}
 \end{table*}
-
-% =======================================================
-\input{w3d-direction-methods.tex-part}

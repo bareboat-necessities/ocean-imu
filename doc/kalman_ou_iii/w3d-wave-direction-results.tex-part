@@ -1,0 +1,101 @@
+% =======================================================
+\section{Validation Methodology}
+\label{sec:direction-validation}
+
+The estimator is evaluated on the same directional records used by the marine
+motion study: four JONSWAP seas and four Pierson--Moskowitz seas with nonlinear
+Stokes harmonics.  Each record is \SI{1200}{s} long at \SI{200}{Hz}; scoring
+uses the final \SI{900}{s} so that startup and magnetic-reference acquisition
+do not dominate the direction metric.  Ten paired seed triplets vary the wave
+realization, sensor noise and drift, and residual-error initialization.  The
+direction evidence is simulation based; it is not yet a comparison against a
+physical directional wave buoy.
+
+\begin{table}[t]
+\centering
+\caption{Stationary direction-validation scenarios.}
+\label{tab:direction-scenarios}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Scenario & $H_s$ [m] & $T_p$ [s] & propagation-to azimuth \\
+\midrule
+W1 & 0.27 & 3.0  & $+30^\circ$ \\
+W2 & 1.50 & 5.7  & $-30^\circ$ \\
+W3 & 4.00 & 8.5  & $+30^\circ$ \\
+W4 & 8.50 & 11.4 & $-30^\circ$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The propagation-plane estimate is axial, so its error is evaluated modulo
+$180^\circ$.  For truth axis $\theta$ and estimate $\hat\theta$, define
+\begin{equation}
+e_{\rm axis}=\frac12\left|\wrap_{(-\pi,\pi]}
+\left(2(\hat\theta-\theta)\right)\right|.
+\label{eq:axis-error}
+\end{equation}
+Once travel sense is resolved, the directed propagation-to vector is scored
+modulo $360^\circ$.  Travel sense is counted as correct, wrong, or unresolved
+against the generator's physical propagation direction.  The implementation's
+FORWARD/BACKWARD labels themselves are not treated as physical truth: they are
+labels relative to whichever axial representative the estimator returns and
+can exchange names when that representative flips by $180^\circ$.
+
+\section{Results}
+\label{sec:direction-results}
+
+Across the eight stationary JONSWAP and PM--Stokes seas, the pooled absolute
+circular-mean wave-axis error is
+\OUValidationDirectionAbsError{} degrees and the worst scenario is
+\OUValidationDirectionWorstAbsError{} degrees.  Truth-referenced travel sense
+is correct for \OUValidationTravelCorrect\% of samples, wrong for
+\OUValidationTravelWrong\%, and unresolved for
+\OUValidationTravelUnresolved\%.  The absolute error of the final directed
+estimate is \OUValidationTravelAbsError{} degrees under the aggregate metric
+reported by the committed validation bundle.
+
+These numbers answer two different questions.  The axial statistic measures
+whether horizontal orbital motion identifies the vertical propagation plane;
+the travel-sense statistic measures whether the horizontal--vertical phase test
+chooses the correct direction along that plane.  A low axial error therefore
+does not, by itself, demonstrate a correct $0$--$360^\circ$ propagation
+direction, which is why both stages are scored separately.
+
+\subsection{Frequency and confidence interpretation}
+
+KalmANF supplies the carrier frequency used to advance the quadrature phase.
+The direction estimator does not require its carrier phase to be correct,
+because both sine and cosine quadratures are fitted and combined through the
+phase-independent moment matrix in Eq.~\eqref{eq:dir-moment}.  Frequency error
+and sea nonstationarity are nevertheless omitted from the first-order angular
+uncertainty in Eq.~\eqref{eq:dir-axis-uncertainty}; the reported confidence is
+therefore a local estimator diagnostic rather than a calibrated frequentist
+coverage probability.
+
+\section{Discussion and Limitations}
+\label{sec:direction-discussion}
+
+The method estimates a dominant propagation plane and its apparent travel sense
+from a single IMU plus an attitude/heading frame.  It does not reconstruct a
+full directional spectrum $S(f,\theta)$, and crossing seas with comparable
+energy in multiple directions can reduce the linearity statistic or cause the
+principal axis to represent only the dominant component.  Low-energy motion is
+handled by amplitude, covariance, linearity, and phase-coherence gates rather
+than by forcing a direction output.
+
+The direct result is an encounter, boat-relative direction.  Converting it to
+an intrinsic water-relative direction requires vessel velocity through water
+and a dispersion model; converting further to a ground-referenced phase
+velocity requires current and heading in a common earth-fixed frame, as shown
+in Sec.~\ref{sec:direction}.  Following-sea overtaking can reverse the apparent
+phase progression, so encounter and intrinsic travel sense are not assumed to
+be identical in that regime.
+
+The present validation uses synthetic directional seas and the committed
+sensor-error model.  Dedicated experiments should next sweep vessel heading,
+propagation azimuth, crossing-sea mixtures, current, vessel speed, and tracker
+policy, followed by comparison against a directional wave buoy or wave-tank
+reference.  The alternative Aranovskiy and PLL trackers in
+Appendix~\ref{app:tracker-alternatives} are implementation options only; the
+current evidence does not rank them against KalmANF.

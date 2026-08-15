@@ -1,0 +1,54 @@
+% =======================================================
+\section{Adaptive Frequency Tracking}
+\label{sec:freq-tracking}
+
+The direction estimator requires a stable carrier-frequency estimate from the
+wave-band inertial signal.  The reported direction results use KalmANF
+\cite{Ali2023DAFx}; the implementation also compiles the alternative policies
+documented in Appendix~\ref{app:tracker-alternatives}.  Using vertical specific
+force or levelled vertical inertial acceleration, the selected tracker produces
+a raw frequency that is clamped and smoothed to give $\bar f_k$.  The direction
+stage advances its quadrature phase from this estimate but does not assume that
+the tracker's absolute phase is aligned with horizontal motion.
+
+For normalized operation the scalar tracker input is
+\[
+u(t)=\frac{a_z(t)}{g},\qquad
+\omega=2\pi f,\qquad
+\phi(t)=\int_0^t \omega(s)\,ds .
+\]
+
+\subsection{\textsc{KalmANF}: Kalman-updated adaptive notch}
+
+KalmANF models the signal with a second-order notch parameterized by
+$\chi=2\cos\omega$. It treats $\chi$ as a slowly varying scalar state and
+updates it from the instantaneous prediction error.
+
+Embed the notch with $\chi\in(-2,2)$:
+\begin{align}
+\vct{x}_{k+1} &= \begin{bmatrix}0&1\\-1&\chi_k\end{bmatrix}\vct{x}_k
+ + \begin{bmatrix}0\\1\end{bmatrix}u_k,
+&y_k&=\begin{bmatrix}1&0\end{bmatrix}\vct{x}_k,\\
+\chi_{k+1}&=\chi_k+w_k,
+&w_k&\sim\mathcal{N}(0,q_\chi).
+\end{align}
+For $\varepsilon_k=u_k-y_k$, the scalar correction is
+\begin{align}
+\widetilde\chi_k&=\chi_k,&p_{\chi,k}^-&=p_{\chi,k-1}+q_\chi,\\
+\kappa_k&=\frac{p_{\chi,k}^-\,\partial\varepsilon_k/\partial\chi}
+{(\partial\varepsilon_k/\partial\chi)^2p_{\chi,k}^-+r},\\
+\chi_k&\leftarrow\widetilde\chi_k+\kappa_k\varepsilon_k,&
+p_{\chi,k}&=(1-\kappa_k\,\partial\varepsilon_k/\partial\chi)p_{\chi,k}^-.
+\end{align}
+The derivative follows the standard state-sensitivity recursion, and
+\[
+\hat\omega_k=\arccos\!\left(\tfrac12\clip(\chi_k,-2,2)\right),
+\qquad \hat f_k=\hat\omega_k/(2\pi).
+\]
+
+The frequency estimate is used as a slowly varying carrier, not as a claim that
+the sea is monochromatic.  The quadrature direction estimator in
+Sec.~\ref{sec:direction} estimates both sine and cosine coefficients, so a
+constant carrier-phase offset does not bias the recovered propagation axis.
+Frequency-tracker alternatives are retained for implementation portability but
+are not compared in the direction-validation evidence reported here.

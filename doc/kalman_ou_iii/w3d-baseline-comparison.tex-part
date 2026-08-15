@@ -113,19 +113,13 @@ exception.  The additional integral-state regularization should therefore be
 interpreted primarily as a heave improvement; in most tested cases it incurs a
 horizontal-displacement cost, especially in the $Y$ channel.
 
-\paragraph{Second spectrum and direction}
+\paragraph{Second spectrum}
 The paired PM--Stokes ensemble reproduces the vertical advantage, with a
 seed-level mean difference of $\OUValidationPMStokesDifference$ percentage
 point
 ($[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$).
 It is reported separately from the JONSWAP primary endpoint rather than pooled
-with it.  Across the eight stationary seas, the wave-axis estimate has pooled
-absolute circular-mean error \OUValidationDirectionAbsError{} degrees and no
-scenario exceeds \OUValidationDirectionWorstAbsError{} degrees.  Truth-referenced
-travel sense is correct for \OUValidationTravelCorrect\% of samples, wrong for
-\OUValidationTravelWrong\%, and unresolved for
-\OUValidationTravelUnresolved\%.  The exported FORWARD/BACKWARD names remain
-vessel-frame labels and are not themselves treated as physical truth.
+with it.
 
 \paragraph{Adaptation mechanism}
 Figure~\ref{fig:ou_mc_vertical} shows that online tuning strongly reduces the

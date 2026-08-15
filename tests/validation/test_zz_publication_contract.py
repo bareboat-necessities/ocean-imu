@@ -229,6 +229,33 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
     self.assertIn("outside the claims of this study", simulation)
 
 
+def _contribution_is_framed_at_the_width_of_the_evidence(self):
+    """Keep the evidence-scope contract without dictating the paper title."""
+    intro = self.read_flat("w3d-intro.tex-part")
+    manuscript = self.read("kalman_ou-w3d.tex")
+    title_match = re.search(r"\\title\{(.+?)\}", manuscript)
+    self.assertIsNotNone(title_match)
+    title = title_match.group(1)
+
+    # The current publication title is intentional.  Scope is enforced by the
+    # introduction and results rather than by requiring the superseded title or
+    # forbidding the term "INS" in an editorial title.
+    self.assertIn("OU-Regularized Quaternion MEKF", title)
+    self.assertIn("3-D Marine Inertial Navigation and Motion Estimation", title)
+
+    self.assertIn("not about the necessity of joint three-parameter", intro)
+    self.assertIn("par:channel-ablation", intro)
+    self.assertIn("higher total 3D displacement error", intro)
+    self.assertIn("not a global navigation position", intro)
+    self.assertIn("comes from simulation", intro)
+
+    self.assertIn("local 21-state stability result", intro)
+    self.assertIn("uniformly detectable 21-state system", intro)
+    self.assertIn("UES of the homogeneous 21-state Live error dynamics", intro)
+    self.assertIn("optional legacy raw", intro)
+    self.assertIn("outside that theorem", intro)
+
+
 core.CommittedFullResultsTests.test_abstract_reports_committed_stationary_aggregate = (
     _abstract_reports_committed_stationary_aggregate
 )
@@ -247,6 +274,9 @@ core.ManuscriptMethodologyTests.test_transition_and_secondary_ensembles_are_resc
 core.ManuscriptMethodologyTests.test_baseline_fairness_thresholds_and_hardware_limits_are_recorded = (
     _baseline_fairness_thresholds_and_hardware_limits_are_recorded
 )
+core.ManuscriptMethodologyTests.test_the_contribution_is_framed_at_the_width_of_the_evidence = (
+    _contribution_is_framed_at_the_width_of_the_evidence
+)
 
 
 class PublicationContractOverrideTests(unittest.TestCase):
@@ -260,6 +290,10 @@ class PublicationContractOverrideTests(unittest.TestCase):
         self.assertIs(
             core.ManuscriptMethodologyTests.test_inference_is_qualified_rather_than_asserted,
             _inference_is_qualified_rather_than_asserted,
+        )
+        self.assertIs(
+            core.ManuscriptMethodologyTests.test_the_contribution_is_framed_at_the_width_of_the_evidence,
+            _contribution_is_framed_at_the_width_of_the_evidence,
         )
 
     def test_bias_discretization_matches_the_stability_model(self):

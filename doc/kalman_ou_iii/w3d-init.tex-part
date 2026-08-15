@@ -47,17 +47,11 @@ below the wave band, so it rejects the orbital specific force by construction
 instead of chasing it.  Under this policy:
 
 \begin{enumerate}[leftmargin=1.4em]
-  \item The measurement-only front end --- proxy, frequency tracker and its
-        stillness detector, wave-period estimator, sigma band, tuner, and the
-        wave-direction stage --- runs from the first sample with the MEKF left
-        untouched.  Every one of those consumers is already exogenous by
+  \item The measurement-only adaptation front end --- proxy, wave-period
+        estimator, sigma band, and tuner --- runs from the first sample with
+        the MEKF left untouched.  Every one of those consumers is exogenous by
         design, so withholding the MEKF changes none of their outputs; the
-        regression suite pins that bit-for-bit.  The one stage that needs an
-        attitude, the direction estimator, is given the proxy quaternion, and
-        it resolves acceleration into the projected bow axis of a levelled
-        heading frame, which is invariant under $q\mapsto R_z(\psi)q$, so the
-        proxy's drifting yaw cannot reach it and the later handoff to the MEKF
-        quaternion is continuous in everything the stage can see.
+        regression suite pins that bit-for-bit.
   \item The gravity-agreement gate and the magnetic accumulation frame read the
         proxy tilt, at both acquisition stages
         (Sec.~\ref{sec:mag-two-stage}).
@@ -71,20 +65,20 @@ instead of chasing it.  Under this policy:
 Model parameters staged by the tuner are still written to the MEKF while the
 front end runs alone.  They are parameters, not state, so the filter reaches
 its first live sample already on the right operating point rather than
-adapting toward it from the initial frequency guess.
+adapting toward it from the initial period guess.
 
 \subsection{Staged enabling and covariance policy}
 Startup proceeds through Cold, TunerWarm, TunerReady, and Live stages.  During
-Cold and TunerWarm the tuner collects a dominant-frequency estimate and an
+Cold and TunerWarm the tuner collects a wave-band period estimate and an
 acceleration-variance estimate, producing targets for
 $(\tau,\matg{\Sigma}_{aw}^{\mathrm{stat}},\mat{R}_S)$, while the
 $[\vct{v},\vct{p},\vct{S},\vct{a}_w]$ block is disabled and accelerometer-bias
-learning may be frozen.  Under StagedMekf the attitude MEKF and frequency
-tracker both run through these stages and the filter enters Live by itself
-once the tuner is ready.  Under MahonyProxy the same tuner logic runs inside
-the measurement-only front end and parks at TunerReady: the operating point is
-trusted, but the attitude is not the filter's to decide, so it waits for the
-handoff described below.
+learning may be frozen.  Under StagedMekf the attitude MEKF and tuner run
+through these stages and the filter enters Live by itself once the tuner is
+ready.  Under MahonyProxy the same tuner logic runs inside the measurement-only
+front end and parks at TunerReady: the operating point is trusted, but the
+attitude is not the filter's to decide, so it waits for the handoff described
+below.
 
 The transition into Live follows this order:
 \begin{enumerate}

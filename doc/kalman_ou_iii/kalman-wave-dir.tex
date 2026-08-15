@@ -1,0 +1,184 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,bm}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\interdisplaylinepenalty=2500
+\usepackage{array,booktabs}
+\usepackage{mathtools}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\DeclareRobustCommand{\matg}[1]{\bm{#1}}
+\DeclareMathOperator{\clip}{clip}
+\DeclareMathOperator{\wrap}{wrap}
+\DeclareMathOperator{\sgn}{sgn}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\pct}[1]{#1\%}
+
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\AtBeginEnvironment{equation}{\small}
+\AtBeginEnvironment{align}{\small}
+\emergencystretch=2em
+\allowdisplaybreaks
+
+\pdfstringdefDisableCommands{%
+    \def\SI#1#2{#1 #2}%
+    \def\bm#1{#1}%
+    \def\vct#1{#1}%
+    \def\mat#1{#1}%
+    \def\matg#1{#1}%
+    \def\degree{deg}%
+    \def\omega{omega}%
+    \def\theta{theta}%
+}
+
+\title{Single-IMU Wave-Direction and Apparent Travel-Sense Estimation with Adaptive Frequency Tracking (draft)}
+\author{%
+    \IEEEauthorblockN{Mikhail S. Grushinskiy}
+    \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+    Bareboat Necessities GitHub Project\\
+    Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+
+\IfFileExists{w3d-ou-validation-macros-generated.tex-part}{%
+  \input{w3d-ou-validation-macros-generated.tex-part}%
+}{}
+\providecommand{\OUValidationDirectionAbsError}{--}
+\providecommand{\OUValidationDirectionRMSE}{--}
+\providecommand{\OUValidationDirectionWorstAbsError}{--}
+\providecommand{\OUValidationDirectionDominant}{--}
+\providecommand{\OUValidationDirectionUncertain}{--}
+\providecommand{\OUValidationTravelCorrect}{--}
+\providecommand{\OUValidationTravelWrong}{--}
+\providecommand{\OUValidationTravelUnresolved}{--}
+\providecommand{\OUValidationTravelAbsError}{--}
+
+\maketitle
+
+\begin{abstract}
+A real-time estimator is presented for recovering the dominant horizontal wave
+propagation axis and resolving its $180^\circ$ travel-sense ambiguity from a
+single marine IMU.  A Kalman-updated adaptive notch supplies a slowly varying
+carrier frequency.  Horizontal inertial acceleration is expressed in a levelled
+heading frame and fitted with sine and cosine quadratures, making the recovered
+axis insensitive to arbitrary carrier-phase offset.  A second stage compares
+signed acceleration along that axis with the vertical orbital quadrature to
+resolve apparent propagation sense.  In a ten-seed simulation study spanning
+four directional JONSWAP and four PM--Stokes seas, the pooled absolute
+circular-mean axis error is \OUValidationDirectionAbsError{} degrees and no
+scenario exceeds \OUValidationDirectionWorstAbsError{} degrees.  The
+truth-referenced travel-sense decision is correct for
+\OUValidationTravelCorrect\% of samples, wrong for
+\OUValidationTravelWrong\%, and unresolved for
+\OUValidationTravelUnresolved\%.  The direct estimate is an encounter,
+boat-relative direction; conversion to intrinsic or ground-referenced wave
+direction requires vessel velocity, current, and a dispersion model.
+\end{abstract}
+
+\begin{IEEEkeywords}
+wave direction, inertial measurement unit, IMU, marine sensing, adaptive notch
+filter, Kalman filter, wave buoy, directional waves, travel sense
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:wave-direction-intro}
+
+A single surface-following IMU contains directional information because the
+horizontal and vertical components of wave-induced orbital motion are coupled.
+The estimation problem nevertheless has two distinct ambiguities.  First,
+horizontal motion identifies an \emph{axis}: the propagation plane is unchanged
+when its representative vector is multiplied by $-1$.  Second, a physical
+propagation direction requires choosing one of the two senses along that axis.
+Treating those as one angle-estimation problem can hide a $180^\circ$ failure
+behind otherwise accurate axial statistics.
+
+The method studied here therefore separates the two tasks.  A frequency tracker
+provides only a carrier for a quadrature Kalman estimator; both sine and cosine
+coefficients are fitted, so the propagation axis does not depend on the
+tracker's absolute phase.  The dominant eigenvector of the resulting horizontal
+second moment gives an axial estimate and a linearity measure.  A separate
+horizontal--vertical phase discriminator then resolves apparent travel sense.
+The estimator is designed for real-time embedded use and reports uncertainty or
+an unresolved state rather than forcing a direction when excitation is weak or
+insufficiently linear.
+
+The principal contributions are: (i) a phase-offset-invariant quadrature
+formulation for the dominant wave axis; (ii) an explicit second-stage
+travel-sense discriminator using the signed horizontal projection and vertical
+orbital phase; (iii) confidence and gating rules that preserve the distinction
+between an axis and a directed wavevector; and (iv) a simulation evaluation
+that scores axial error and truth-referenced travel-sense correctness
+separately.  The KalmANF carrier tracker used by the reported results is also
+documented here; alternative compiled tracker policies are retained as
+unevaluated appendices rather than being mixed into the direction claim.
+
+\section{Signal Interfaces and Direction Conventions}
+\label{sec:direction-interfaces}
+
+The estimator consumes body-frame specific force, an attitude solution used to
+remove roll--pitch gravity mixing, a projected bow heading, and a dominant
+frequency estimate.  Its levelled horizontal frame is boat fixed: $+X$ is
+forward, $+Y$ is starboard, and $+Z$ is up.  Angles formed with
+$\operatorname{atan2}(Y,X)$ are therefore clockwise-positive when viewed from
+above.  The method first reports a propagation-to vector; the conventional
+waves-from direction is obtained by adding $180^\circ$.
+
+\subsection{Attitude handoff}
+\label{sec:proxy-handoff}
+The direction stage does not estimate the vessel attitude itself.  In the
+integrated implementation, a private gyro--accelerometer observer supplies
+levelled tilt during startup and the navigation MEKF supplies attitude after
+handoff.  The direction signals are resolved against the projected bow axis,
+so arbitrary yaw of the startup tilt observer does not enter the horizontal
+projection.  This interface lets the direction estimator remain a separable
+measurement-side subsystem rather than a state of the navigation filter.
+
+\input{w3d-frequency-tracking.tex-part}
+\input{w3d-direction-methods.tex-part}
+\input{w3d-wave-direction-config.tex-part}
+\input{w3d-wave-direction-results.tex-part}
+
+\section{Conclusion}
+The separated estimator recovers a dominant wave axis from horizontal
+quadratures and resolves its $180^\circ$ ambiguity with horizontal--vertical
+orbital phase.  The committed simulation evidence shows small scenario-level
+axial errors and a high truth-referenced travel-sense decision rate across the
+eight tested directional seas.  The result should be read at that scope: it is
+a dominant encounter-direction estimator, not a reconstruction of the full
+directional spectrum, and it has not yet been physically referenced against a
+directional wave instrument.  The most important next tests are crossing seas,
+heading and vessel-speed sweeps, current-aware encounter correction, tracker
+ablations, and external directional validation.
+
+\appendices
+\input{w3d-tracker-alternatives.tex-part}
+
+\section*{Acknowledgments}
+This work was prepared with the supervised assistance of artificial intelligence
+tools, including ChatGPT, Claude and DeepSeek, which were employed to aid in
+code generation, mathematical drafting, and editorial preparation. All
+conceptual development, validation of results, and final revisions were
+conducted independently by the author.
+
+\section*{Disclosure Statement}
+The author declares no conflicts of interest and received no funding for this
+research.
+
+\bibliographystyle{IEEEtran}
+\bibliography{w3d,w3d-baselines}
+\end{document}

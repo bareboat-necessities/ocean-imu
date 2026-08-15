@@ -1,12 +1,11 @@
 \section{Alternative Compiled Frequency-Tracker Policies}
 \label{app:tracker-alternatives}
 
-The OU--III results and adaptation claims in this paper use KalmANF exclusively.
-The following policies are maintained as selectable implementation options but
-were not evaluated as OU--III tracker ablations, so no relative-performance
-claim is made. The PII baseline in Sec.~\ref{sec:observer-comparison} uses its
-own committed PLL configuration and is not evidence for substituting that PLL
-inside OU--III.
+The wave-direction results in this paper use KalmANF exclusively.  The following
+policies are maintained as selectable implementation options but were not evaluated as direction-estimator tracker ablations, so no relative-performance
+claim is made.  Their presence in the common frequency-tracker interface is
+implementation evidence only and is not evidence that either can be substituted
+for KalmANF without changing direction performance.
 
 \subsection{Aranovskiy nonlinear adaptive observer}
 
