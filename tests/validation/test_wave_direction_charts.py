@@ -71,7 +71,11 @@ class WaveDirectionChartContractTests(unittest.TestCase):
         )
 
         self.assertIn(r"\label{tab:direction-ou3-integration}", results)
-        self.assertIn("integration evidence, not an OU--III performance claim", results)
+        normalized_results = " ".join(results.split())
+        self.assertIn(
+            "integration evidence, not an OU--III performance claim",
+            normalized_results,
+        )
         self.assertIn("OUValidationDirectionRMSE", results)
         self.assertNotIn("Z RMS", results)
         self.assertNotIn(r"Z\%$H_s$", results)
