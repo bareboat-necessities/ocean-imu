@@ -41,9 +41,8 @@ $\tau$ and $\sigma_{aw}$ stay frozen reproduces essentially the whole adaptive
 result, whereas the converse recovers none of it. The supported claim is
 therefore about adaptive integral-state regularization, not about the necessity
 of joint three-parameter OU adaptation, and the paper is written around that
-narrower claim. Together with an online directional estimator, these elements
-address colored excitation and MEMS errors in an efficient, embedded-friendly
-framework.
+narrower claim. These elements address colored excitation and MEMS errors in an
+efficient, embedded-friendly framework.
 
 Section~\ref{app:iss-stability} gives a local 21-state stability result for the
 normal Live recursion under explicit operating conditions. Because the tuner is
@@ -150,33 +149,28 @@ A fixed-parameter Kalman filter performs optimally only under a
 particular sea-state regime, determined by its assumed correlation time
 $\tau$ and stationary acceleration variance
 $\matg{\Sigma}_{aw}^{\mathrm{stat}}$.
-Different wave spectra exhibit distinct dominant frequencies and energy
-levels. To maintain performance across conditions, we use an online
-adaptation law that continuously estimates and tunes these parameters together
-with the integral-state regularization scale. All OU--III results reported in
-this paper use the \textit{KalmANF adaptive notch filter}; two compiled
-alternative tracker policies are documented in
-Appendix~\ref{app:tracker-alternatives} but are not evaluated as OU--III
-ablations. The wave-band zero-crossing period, estimated separately from that
-tracker (Sec.~\ref{sec:wave-band-period}), provides the correlation time
-$\tau$, while the stationary acceleration scale $\sigma_{aw}$ is estimated
-in the time domain. The pseudo-measurement standard-deviation scale is adapted
+Different wave spectra exhibit distinct characteristic periods and energy
+levels. To maintain performance across conditions, we use an online adaptation
+law that continuously estimates and tunes these parameters together with the
+integral-state regularization scale. The wave-band zero-crossing period
+estimated in Sec.~\ref{sec:wave-band-period} provides the correlation time
+$\tau$, while the stationary acceleration scale $\sigma_{aw}$ is estimated in
+the time domain. The pseudo-measurement standard-deviation scale is adapted
 through the spectrally motivated law
 \[
 r_S \propto \sigma_{aw}\tau^3,
 \]
 which couples displacement drift suppression to the estimated strength and
-time scale of stochastic excitation. This law, driven by a period estimated in
-the wave band, is the principal architectural contribution, and the channel
-ablation of Sec.~\ref{par:channel-ablation} is what locates the measured
-benefit in it rather than in the OU parameters it is derived from. The two
-readings are consistent: $\tau$'s material role in this filter is setting
-$r_S\propto\tau^{3}$ rather than shaping the OU process covariance, which the
-accelerometer already observes closely. The accelerometer-bias correlation time
-$\tau_b$ is a fixed sensor-model parameter and is never driven by the wave
-tuner. The normalization is approximate and assumes a fixed pseudo-update
-cadence and a bounded family of spectral shapes and effective low-frequency
-cutoffs.
+time scale of stochastic excitation. This law is the principal architectural
+contribution, and the channel ablation of Sec.~\ref{par:channel-ablation} is
+what locates the measured benefit in it rather than in the OU parameters it is
+derived from. The two readings are consistent: $\tau$'s material role in this
+filter is setting $r_S\propto\tau^{3}$ rather than shaping the OU process
+covariance, which the accelerometer already observes closely. The
+accelerometer-bias correlation time $\tau_b$ is a fixed sensor-model parameter
+and is never driven by the wave tuner. The normalization is approximate and
+assumes a fixed pseudo-update cadence and a bounded family of spectral shapes
+and effective low-frequency cutoffs.
 
 \subsection*{Validation}
 
