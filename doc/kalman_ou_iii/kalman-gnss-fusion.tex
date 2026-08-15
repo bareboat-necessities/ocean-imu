@@ -1,0 +1,808 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\usepackage{array,booktabs,tabularx}
+\usepackage{graphicx}
+\usepackage{siunitx}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\usepackage[final]{microtype}
+
+\interdisplaylinepenalty=2500
+\allowdisplaybreaks
+\emergencystretch=2em
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\T}{^{\mathsf T}}
+\newcommand{\Skew}[1]{\left[#1\right]_{\times}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\N}{\mathcal N}
+
+\title{GNSS-Aided Fusion in Marine Inertial Navigation Filters\\
+\large Absolute Navigation, Lever Arms, Asynchronous Aiding, Outages, and Wave--Trajectory Separation (draft)}
+
+\author{%
+\IEEEauthorblockN{Mikhail S. Grushinskiy}
+\IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+Bareboat Necessities GitHub Project\\
+Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Marine inertial motion estimators and absolute navigation filters solve related but
+not identical problems.  A wave-motion estimator seeks bounded surge, sway, and
+heave about a slowly moving vessel trajectory, whereas GNSS reports the absolute
+motion of an antenna phase center in an earth-fixed or local-level frame.  Treating
+those quantities as one position state creates a structural conflict: virtual
+zero-mean constraints that are useful for wave-drift control are false for a vessel
+under way, while direct absolute GNSS updates can suppress or absorb the wave motion
+one wishes to estimate.  This paper develops a common GNSS-aiding architecture for
+four marine inertial filters in the Bareboat Necessities \texttt{ocean-imu}
+repository: the OU--II and OU--III quaternion MEKFs, the right-invariant two-frame
+Lie-group EKF (TFG), and the time-varying-gain nonlinear observer (NLO).  The central
+proposal is to separate a slow absolute navigation trajectory
+$(\vct r_n,\vct u_n,\vct a_n)$ from bounded wave motion
+$(\vct p_w,\vct v_w,\vct a_w)$ and let GNSS observe their physical sum at the
+antenna.  Known IMU-to-center-of-gravity and GNSS-antenna lever arms are modeled with
+full rigid-body kinematics.  The paper also specifies asynchronous event-time fusion,
+delayed-measurement handling, outage/reacquisition logic, local-tangent-plane
+navigation, and validation protocols.  OU--II and OU--III already contain the IMU
+lever-arm acceleration correction and generic full-covariance position/velocity
+updates needed as building blocks; the complete absolute-navigation layer and the
+corresponding TFG/NLO extensions remain prospective.  No new GNSS performance result
+is claimed here; the manuscript defines the model and the experiments required to
+establish one.
+\end{abstract}
+
+\begin{IEEEkeywords}
+GNSS/INS, marine inertial navigation, wave motion, lever arm, asynchronous sensor
+fusion, outage reacquisition, multiplicative extended Kalman filter, Lie-group EKF,
+nonlinear observer, heave, surge, sway
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:introduction}
+
+GNSS and inertial sensors are naturally complementary.  GNSS bounds long-term
+position and velocity drift but arrives slowly, with latency, dropouts, multipath,
+and a measurement point displaced from the IMU.  An IMU provides high-rate angular
+rate and specific force but cannot maintain absolute position without external
+aiding.  This complementarity motivates GNSS/INS integration in conventional
+navigation filters and in nonlinear observers designed for satellite-aided marine
+systems \cite{Kalman1960_Filtering,BryneFossenJohansen2014_TVG_NLO}.
+
+Wave-motion estimation adds a second requirement.  The estimator must preserve
+oscillatory motion that an ordinary navigation filter may regard as disturbance.
+Marine heave and wave estimators therefore introduce band-limited motion models,
+virtual zero constraints, or other drift-suppression structure
+\cite{Auestad2013_HeaveStrapdownIMU,Pascoal2009_KalmanDirectionalSpectrum,
+YurovskyKudinov2025_IMUwaves}.  Those constraints are meaningful only for a
+\emph{wave displacement about a moving reference}, not for the absolute position of
+a vessel sailing through the world.
+
+The repository currently contains four relevant estimator families.  OU--II carries
+velocity, displacement, and OU acceleration and periodically applies zero-position
+and zero-velocity virtual measurements.  OU--III replaces those direct anchors by a
+zero pseudo-measurement on the integral of displacement.  TFG expresses the OU--III
+world vectors on a two-frame Lie-group error state.  NLO is derived from a
+satellite-aided nonlinear observer and already has a horizontal GNSS position path,
+with virtual horizontal aiding available when the position reference disappears.
+The four filters therefore provide an unusually useful test bed for separating the
+\emph{geometry of GNSS aiding} from the \emph{internal drift-control mechanism}.
+
+This paper has six goals.  First, it fixes reference-point semantics so that all
+filters estimate motion of the vessel center of gravity (CoG) while sensors may be
+mounted elsewhere.  Second, it gives the rigid-body IMU and GNSS antenna lever-arm
+models.  Third, it introduces separate absolute-navigation and wave-motion states.
+Fourth, it specifies event-time GNSS fusion, including delayed observations and
+reacquisition after outages.  Fifth, it maps the architecture onto OU--II, OU--III,
+TFG, and NLO without pretending their error coordinates are interchangeable.  Sixth,
+it predeclares the studies needed before any GNSS-aided performance claim should be
+made.
+
+\section{Frames, Reference Points, and State Semantics}
+\label{sec:frames}
+
+Let $\mathcal W$ be a local NED navigation frame, $\mathcal B$ the physical rigid-body
+frame of the vessel, and $\mat R_{BW}$ the rotation from body to world.  Its inverse is
+$\mat R_{WB}=\mat R_{BW}\T$.  Three physical points are distinguished:
+\begin{itemize}
+  \item $C$: vessel center of gravity or another declared navigation reference point;
+  \item $I$: IMU sensing point;
+  \item $G$: GNSS antenna phase center.
+\end{itemize}
+Their fixed body-frame lever arms are
+\begin{equation}
+\vct \ell_I^{\mathcal B}=\vct r_I^{\mathcal B}-\vct r_C^{\mathcal B},
+\qquad
+\vct \ell_G^{\mathcal B}=\vct r_G^{\mathcal B}-\vct r_C^{\mathcal B}.
+\label{eq:lever-defs}
+\end{equation}
+If a survey provides only the IMU-to-antenna baseline,
+$\vct \ell_{GI}^{\mathcal B}$, then
+\begin{equation}
+\vct \ell_G^{\mathcal B}=\vct \ell_I^{\mathcal B}+\vct \ell_{GI}^{\mathcal B}.
+\label{eq:lever-compose}
+\end{equation}
+The sign convention in \cref{eq:lever-defs} is worth fixing explicitly because a
+reversed baseline produces a plausible but systematically wrong rotational
+correction.
+
+The core wave states in the existing OU filters should be interpreted as motion of
+$C$ about a moving reference.  They are not geodetic coordinates.  Introduce a slow
+navigation trajectory
+\begin{equation}
+\vct x_n=
+\begin{bmatrix}
+\vct r_n\T & \vct u_n\T & \vct a_n\T
+\end{bmatrix}\T,
+\label{eq:nav-state}
+\end{equation}
+and bounded wave motion
+\begin{equation}
+\vct x_w=
+\begin{bmatrix}
+\vct p_w\T & \vct v_w\T & \vct a_w\T
+\end{bmatrix}\T,
+\label{eq:wave-state}
+\end{equation}
+with the OU--III extension $\vct S_w=\int\vct p_w\,dt$.  The physical CoG motion is
+then
+\begin{align}
+\vct r_C^{\mathcal W} &= \vct r_n^{\mathcal W}+\vct p_w^{\mathcal W},
+\label{eq:sum-position}\\
+\vct v_C^{\mathcal W} &= \vct u_n^{\mathcal W}+\vct v_w^{\mathcal W},
+\label{eq:sum-velocity}\\
+\vct a_C^{\mathcal W} &= \vct a_n^{\mathcal W}+\vct a_w^{\mathcal W}.
+\label{eq:sum-acceleration}
+\end{align}
+Equations~\eqref{eq:sum-position}--\eqref{eq:sum-acceleration} are the organizing
+principle of the paper.  Absolute navigation and wave motion are separate latent
+components whose sum is physical.
+
+\section{Rigid-Body Lever-Arm Kinematics}
+\label{sec:rigid-body}
+
+For any fixed point $P$ on the rigid body with body-frame lever arm
+$\vct\ell_P^{\mathcal B}$ from $C$, the velocity and acceleration are
+\begin{align}
+\vct v_P^{\mathcal W}
+&=\vct v_C^{\mathcal W}
+ +\mat R_{BW}\bigl(\vct\omega^{\mathcal B}\times
+ \vct\ell_P^{\mathcal B}\bigr),
+\label{eq:lever-velocity}\\
+\vct a_P^{\mathcal W}
+&=\vct a_C^{\mathcal W}
+ +\mat R_{BW}\Bigl(
+ \vct\alpha^{\mathcal B}\times\vct\ell_P^{\mathcal B}
+ +\vct\omega^{\mathcal B}\times
+  (\vct\omega^{\mathcal B}\times\vct\ell_P^{\mathcal B})
+ \Bigr).
+\label{eq:lever-acceleration}
+\end{align}
+The first rotational term is tangential acceleration and the second is centripetal.
+There is no Coriolis term because the sensor is fixed to the rigid hull.
+
+Two practical details matter.  Angular acceleration $\vct\alpha$ is usually obtained
+by differentiating a bias-corrected gyro signal, which amplifies noise.  It therefore
+needs timestamp-consistent differentiation and often mild smoothing.  Second,
+lever-arm corrections must use the same physical-body convention as the surveyed
+baseline.  If an estimator internally uses a virtual un-heeled body frame, the lever
+arm should be transformed into that frame before applying the kinematics; the
+surveyed geometry itself should remain stored in the physical body frame.
+
+\section{IMU Lever Arm from the Center of Gravity}
+\label{sec:imu-lever}
+
+An accelerometer mounted at $I$ measures specific force at the IMU point, not at the
+CoG.  Ignoring scale-factor and misalignment errors, its model is
+\begin{align}
+\vct z_f^{\mathcal B}
+={}&\mat R_{WB}
+\bigl(\vct a_C^{\mathcal W}-\vct g^{\mathcal W}\bigr)
++\vct a_{I/C}^{\mathcal B}
++\vct b_a+\vct n_a,
+\label{eq:imu-specific-force}\\
+\vct a_{I/C}^{\mathcal B}
+={}&\vct\alpha^{\mathcal B}\times\vct\ell_I^{\mathcal B}
++\vct\omega^{\mathcal B}\times
+ (\vct\omega^{\mathcal B}\times\vct\ell_I^{\mathcal B}).
+\label{eq:imu-rot-acc}
+\end{align}
+Thus a filter whose translational state is defined at the CoG should either subtract
+$\vct a_{I/C}^{\mathcal B}$ from the measurement before fusion or add it to the
+predicted IMU specific force.  The latter is preferable inside a coupled MEKF because
+its dependence on attitude and gyro bias can be represented in the measurement
+Jacobian.
+
+\subsection{Current OU--II and OU--III implementation}
+
+The current OU--II and OU--III classes already implement this model.  Both expose
+\texttt{set\_imu\_lever\_arm\_body()},
+\texttt{clear\_imu\_lever\_arm()}, and
+\texttt{set\_alpha\_smoothing\_tau()}.  The configured vector is documented as the
+IMU position with respect to CoG in the physical body frame.  During the accelerometer
+measurement update the implementation forms
+\begin{equation}
+\vct a_{I/C}
+=\vct\alpha\times\vct\ell_I
+ +\vct\omega\times(\vct\omega\times\vct\ell_I),
+\label{eq:repo-imu-lever}
+\end{equation}
+from bias-corrected angular rate and the internal angular-acceleration estimate.  When
+the optional wind-heel frame is active, the physical lever arm is de-heeled into the
+virtual frame before the term is evaluated.  The accelerometer Jacobian also includes
+the gyro-bias sensitivity of the lever-arm term.
+
+This means the first GNSS-aided implementation should \emph{not} add a second,
+independent IMU lever-arm correction in a wrapper.  Doing so would double-correct the
+measurement.  Instead, the GNSS layer should keep the OU filter's existing CoG
+specific-force model and add only the antenna-side geometry in the GNSS observation.
+
+\subsection{Limits of the current correction}
+
+The lever arm should be disabled during initialization if the angular-acceleration
+estimate is not yet meaningful; the current warm-up path already clears it.  A
+production study should quantify the trade between angular-acceleration smoothing and
+phase error.  It should also test lever-arm miscalibration and a slowly shifting CoG
+due to crew, fuel, or payload.  Online lever-arm estimation is possible in principle,
+but it requires rotational excitation and creates additional observability coupling;
+it is outside the first implementation proposed here.
+
+\section{GNSS Antenna Measurement Model}
+\label{sec:gnss-measurement}
+
+Assume a GNSS position solution has been converted to the local frame and refers to
+the antenna phase center.  Using \cref{eq:sum-position}, the position measurement is
+\begin{equation}
+\boxed{
+\vct z_r
+=\vct r_n+\vct p_w
+ +\mat R_{BW}\vct\ell_G^{\mathcal B}
+ +\vct n_r.}
+\label{eq:gnss-position}
+\end{equation}
+If the receiver supplies Doppler velocity at the antenna,
+\begin{equation}
+\boxed{
+\vct z_v
+=\vct u_n+\vct v_w
+ +\mat R_{BW}
+   (\vct\omega^{\mathcal B}\times\vct\ell_G^{\mathcal B})
+ +\vct n_v.}
+\label{eq:gnss-velocity}
+\end{equation}
+The position lever arm is attitude dependent; the velocity lever arm is attitude,
+angular-rate, and gyro-bias dependent.  During a turn, omitting the latter can create
+a velocity residual that looks exactly like sway or wave orbital velocity.
+
+For a multiplicative EKF, the position Jacobian contains identity blocks for both
+$\vct r_n$ and $\vct p_w$, plus an attitude block proportional to the skew matrix of
+the rotated lever arm.  The velocity Jacobian similarly contains identity blocks for
+$\vct u_n$ and $\vct v_w$ and an attitude block generated by
+$\vct\omega\times\vct\ell_G$.  If $\vct\omega$ is formed from gyro measurement minus
+estimated bias, there is also a gyro-bias block.  The exact signs depend on the
+filter's multiplicative-error convention; they must be derived in each filter's own
+coordinates rather than copied between OU and TFG implementations.
+
+The antenna acceleration, useful for diagnostics and latency propagation, follows
+\cref{eq:lever-acceleration} with $P=G$:
+\begin{equation}
+\vct a_G^{\mathcal W}=\vct a_C^{\mathcal W}
++\mat R_{BW}\Bigl(
+\vct\alpha\times\vct\ell_G
++\vct\omega\times(\vct\omega\times\vct\ell_G)
+\Bigr).
+\label{eq:gnss-antenna-acc}
+\end{equation}
+
+\section{Absolute Navigation in a Local Tangent Plane}
+\label{sec:absolute-navigation}
+
+GNSS fixes should be converted from latitude, longitude, and height to a declared
+navigation frame before filtering.  For local marine operation a fixed NED origin is
+usually sufficient:
+\begin{equation}
+\vct z_r^{\mathcal W}
+=\operatorname{LLAtoNED}
+\bigl(\operatorname{LLA}_{G};\operatorname{LLA}_0\bigr).
+\label{eq:lla-ned}
+\end{equation}
+The filter must record whether the vertical coordinate is ellipsoidal height,
+orthometric height, or a local mean-water reference.  Mixing those conventions can
+look like a slow heave bias or tide signal.
+
+For long routes, a single flat local tangent plane eventually becomes inaccurate.
+Two clean options are an ECEF navigation state or periodic local-frame re-anchoring.
+Re-anchoring is a coordinate transformation, not a measurement reset: the navigation
+position, velocity, covariance, and any world-frame cross-covariances must be rotated
+and translated consistently.  The bounded wave state is translation invariant and
+should not jump when the geodetic origin changes.
+
+Receiver-reported horizontal/vertical accuracy can initialize
+$\mat R_r$ and Doppler-velocity accuracy can initialize $\mat R_v$.  DOP values alone
+are not measurement covariance unless converted with an assumed ranging-error model.
+The first implementation should support anisotropic NED covariances and allow vertical
+GNSS aiding to be disabled independently.
+
+\section{Joint Separation of Vessel Trajectory and Wave Motion}
+\label{sec:joint-separation}
+
+The preferred architecture is a single joint estimator in which navigation and wave
+states share covariance or observer coupling.  A useful slow trajectory model is
+\begin{align}
+\dot{\vct r}_n &= \vct u_n,\\
+\dot{\vct u}_n &= \vct a_n,\\
+d\vct a_n &= -\mat\Lambda_n\vct a_n\,dt+\mat L_n\,d\vct W_n,
+\label{eq:nav-process}
+\end{align}
+where $\mat\Lambda_n$ is chosen much slower than the wave-acceleration dynamics.  A
+random-walk acceleration model is another option.  The wave channel keeps the filter's
+existing OU or integrated-wave process.
+
+The separation is therefore model based rather than produced by a post-hoc low-pass
+filter.  GNSS position and velocity observe the sums in
+\cref{eq:gnss-position,eq:gnss-velocity}; the IMU observes the acceleration sum in
+\cref{eq:sum-acceleration}.  Cross-covariance lets GNSS constrain accelerometer bias,
+low-frequency attitude leakage, and trajectory acceleration without forcing the
+bounded wave state to carry secular motion.
+
+The split is not universally identifiable.  A sharp vessel maneuver can occupy the
+same frequency band as a wave group, and a long swell can overlap a slowly varying
+trajectory model.  Separation then depends on additional structure: GNSS velocity,
+heading, water speed, control inputs, current models, the wave OU prior, and the
+relative process covariances.  The ambiguity should be measured, not hidden by a
+fixed cutoff.
+
+\subsection{Cascaded alternative}
+
+A lower-complexity implementation can run a slow GNSS navigation filter first,
+estimate $(\vct r_n,\vct u_n,\vct a_n)$, subtract the estimated trajectory acceleration
+from the leveled IMU signal, and feed the residual to an unchanged wave filter.  This
+is attractive for initial prototyping, but it ignores cross-covariance and can imprint
+the navigation filter's phase lag into the wave estimate.  The cascaded architecture
+should therefore be treated as an ablation or engineering approximation, not as
+mathematically equivalent to the joint filter.
+
+\section{Asynchronous GNSS Aiding and Timestamp Alignment}
+\label{sec:asynchronous}
+
+The IMU may run near hundreds of hertz while GNSS arrives at 1--20~Hz.  A discrete
+Kalman implementation should fuse a GNSS sample exactly once at its measurement time.
+Holding the same fix and reapplying it at every IMU tick double-counts information.
+The preferred event sequence is
+\begin{enumerate}
+  \item propagate IMU states to the GNSS measurement timestamp $t_g$;
+  \item evaluate attitude, angular rate, and both lever arms at $t_g$;
+  \item apply the GNSS position/velocity update once;
+  \item continue propagation to the current processing time.
+\end{enumerate}
+
+If the receiver delivers delayed observations, a short state-history ring buffer can
+support rewind/update/replay.  For constrained embedded systems, a cheaper
+approximation is to propagate the GNSS measurement to the current epoch using its
+velocity and measured age, then inflate covariance for acceleration and timestamp
+uncertainty.  The approximation should be tested against exact replay.
+
+A clock offset $\delta t$ is especially damaging under motion.  To first order,
+position error contains $\vct v_G\delta t$ and velocity error contains
+$\vct a_G\delta t$.  At \SI{5}{m/s}, a \SI{100}{ms} timing error already creates a
+\SI{0.5}{m} apparent position offset before any lever-arm effect is considered.
+
+NLO requires a slightly different interpretation.  Its current satellite reference
+is a continuously evaluated observer input rather than a discrete Kalman update.
+Sample-and-hold GNSS can therefore be legitimate, but the implementation still needs
+sample age, freshness timeout, and explicit invalidation during outages.  A stale
+position reference must not remain ``valid'' indefinitely.
+
+\section{Application to OU--II}
+\label{sec:ou2}
+
+The current OU--II translational state consists of wave velocity, wave displacement,
+and latent OU acceleration, with accelerometer bias optional.  Periodically, the
+implementation calls the same full-covariance position and velocity update routines
+with zero measurements.  That architecture makes the semantic boundary very clear:
+those states are bounded wave states.
+
+A GNSS-aided OU--II should therefore augment, rather than reinterpret, the core state:
+\begin{equation}
+\vct x_{\rm OU2+nav}=
+\begin{bmatrix}
+\delta\vct\theta & \vct b_g &
+\vct v_w & \vct p_w & \vct a_w & \vct b_a &
+\vct u_n & \vct r_n & \vct a_n
+\end{bmatrix}\T.
+\label{eq:ou2-augmented}
+\end{equation}
+The existing zero-$p$ and zero-$v$ virtual measurements remain attached only to
+$(\vct p_w,\vct v_w)$.  They must never be applied to $(\vct r_n,\vct u_n)$.
+
+The existing
+\texttt{measurement\_update\_position\_pseudo()} and
+\texttt{measurement\_update\_velocity\_pseudo()} routines demonstrate the required
+Joseph-form full-covariance update machinery, but a direct call with absolute GNSS
+position would still be wrong because those methods currently target the wave blocks.
+A true GNSS update needs a new measurement matrix that contains both navigation and
+wave blocks and the antenna lever-arm attitude terms from
+\cref{eq:gnss-position,eq:gnss-velocity}.
+
+The existing IMU CoG lever-arm model should remain enabled.  In the augmented
+accelerometer prediction, the world acceleration entering
+\cref{eq:imu-specific-force} becomes $\vct a_n+\vct a_w$.  This prevents a sustained
+turn or propulsion transient from being misidentified as wave acceleration.
+
+\section{Application to OU--III}
+\label{sec:ou3}
+
+OU--III adds the wave integral state $\vct S_w$ and regulates drift through a virtual
+$\vct S_w=0$ measurement rather than direct $p_w=0$ and $v_w=0$ updates.  The GNSS
+extension should preserve that distinction:
+\begin{equation}
+\vct x_{\rm OU3+nav}=
+\begin{bmatrix}
+\delta\vct\theta & \vct b_g &
+\vct v_w & \vct p_w & \vct S_w & \vct a_w & \vct b_a &
+\vct u_n & \vct r_n & \vct a_n
+\end{bmatrix}\T.
+\label{eq:ou3-augmented}
+\end{equation}
+The integral state is
+\begin{equation}
+\dot{\vct S}_w=\vct p_w,
+\label{eq:sw-wave-only}
+\end{equation}
+not the integral of absolute position.  Integrating $\vct r_n+\vct p_w$ would make the
+zero-$S$ regularizer fundamentally inconsistent with a vessel under way.
+
+GNSS position and velocity constrain the sums
+$(\vct r_n+\vct p_w)$ and $(\vct u_n+\vct v_w)$.  The OU--III integral regularizer
+continues to bound the wave component through periods of GNSS loss.  Under reliable
+GNSS, one may consider softening the $S_w=0$ measurement because GNSS provides an
+additional low-frequency anchor, but this is not obviously beneficial: the GNSS
+trajectory/wave split and the integral regularizer solve different problems.  The
+correct policy should be determined by an ablation comparing fixed $R_S$, GNSS-aware
+$R_S$ inflation, and temporary $S$ suppression.
+
+The present OU--III implementation already contains the same CoG IMU lever-arm
+compensation as OU--II, including transformation through the optional un-heeled body
+frame.  Therefore the new work is chiefly state augmentation, GNSS antenna geometry,
+and asynchronous measurement handling rather than a new accelerometer correction.
+
+\section{Application to the Two-Frame Lie-Group EKF}
+\label{sec:tfg}
+
+The current TFG estimator stores four world vectors
+$(\vct v_w,\vct p_w,\vct S_w,\vct a_w)$ inside a two-frame group and uses a
+right-invariant error-state EKF.  It does not currently expose the OU-style generic
+GNSS position/velocity measurement API, so the GNSS update must be derived in TFG
+coordinates rather than copied from the MEKF.
+
+A natural joint extension is to add three more world-vector columns,
+$(\vct u_n,\vct r_n,\vct a_n)$, producing a seven-column two-frame state.  The physical
+measurement functions remain exactly
+\cref{eq:gnss-position,eq:gnss-velocity}; only the tangent-coordinate Jacobians change.
+The GNSS position residual must couple attitude, $\vct p_w$, and $\vct r_n$; the
+velocity residual must couple attitude, gyro bias, $\vct v_w$, and $\vct u_n$.
+
+The update should preserve TFG's full retraction/reset covariance transport.  An
+additive EKF attitude Jacobian inserted without the corresponding group reset would
+be internally inconsistent.  Conversely, adding navigation columns does not justify
+a stronger global invariant-filter claim: the repository's complete marine process
+already contains estimate-dependent OU/bias couplings and is intentionally described
+as an invariant-style right-invariant EKF rather than a globally log-linear InEKF.
+
+A lower-risk first implementation can append a conventional additive navigation block
+to the TFG covariance while retaining invariant attitude/wave coordinates.  That
+hybrid design should be compared with the seven-column group extension.  The study
+should report whether either choice materially changes consistency or merely code
+complexity.
+
+\section{Application to the Time-Varying-Gain NLO}
+\label{sec:nlo}
+
+The NLO has the strongest historical connection to GNSS because its source formulation
+is explicitly an inertial-navigation observer aided by satellite reference systems
+\cite{BryneFossenJohansen2014_TVG_NLO}.  The repository implementation currently
+exposes a horizontal \texttt{GnssXY} object containing position, RMS, and a validity
+flag.  When a usable GNSS reference is absent, it can switch the horizontal axes to
+the same virtual zero-mean integrated-position concept used for the vertical channel.
+This already provides an interesting outage fallback.
+
+However, the present interface does not yet provide GNSS velocity, vertical absolute
+navigation, antenna lever-arm fields, or an explicit GNSS timestamp/freshness model.
+Those should be added before comparing NLO fairly with the Kalman families.
+
+The simplest NLO lever-arm integration is a measurement front end.  At the GNSS
+timestamp, correct antenna position and velocity to the CoG:
+\begin{align}
+\vct z_{r,C} &= \vct z_{r,G}-\hat{\mat R}_{BW}\vct\ell_G,\\
+\vct z_{v,C} &= \vct z_{v,G}
+ -\hat{\mat R}_{BW}(\hat{\vct\omega}\times\vct\ell_G).
+\label{eq:nlo-cog-front-end}
+\end{align}
+Because NLO is not covariance based, uncertainty from attitude, lever-arm calibration,
+and angular-rate error cannot simply appear as cross-covariance.  It should instead
+inflate the effective reference uncertainty or modulate the observer gain.
+
+Trajectory/wave separation is a deeper change.  The current horizontal position state
+with GNSS aiding behaves as a navigation quantity, while the no-GNSS fallback uses a
+zero-mean wave-style constraint.  A unified GNSS/wave product should introduce a slow
+trajectory state and a bounded wave state rather than asking one state to change
+meaning when GNSS validity changes.  This requires re-deriving the translational
+observer gains or introducing an explicitly complementary two-channel observer.  It
+should not be implemented by merely high-pass filtering the published position output
+and calling the remainder ``wave motion.''
+
+\section{GNSS Outages and Reacquisition}
+\label{sec:outages}
+
+A robust implementation should expose three aiding modes:
+\begin{description}
+  \item[AIDED:] fresh GNSS measurements pass quality and innovation gates;
+  \item[COAST:] GNSS is absent or rejected; inertial/navigation states propagate and
+  uncertainty grows;
+  \item[REACQUIRE:] new fixes have returned, but the estimator has not yet accepted a
+  stable reference.
+\end{description}
+
+During COAST, the bounded wave regularizer should continue normally.  The absolute
+navigation state must \emph{not} be pulled toward zero; its covariance or observer
+uncertainty should grow according to the navigation process model.  This asymmetry is
+one of the main benefits of explicit wave/trajectory separation.
+
+Reacquisition should use receiver quality and innovation consistency.  For a Kalman
+filter, normalized innovation squared (NIS) can gate position and velocity separately.
+Velocity is often safer to accept before position because a long outage may produce a
+large absolute position residual while Doppler velocity is already physically
+plausible.  A soft-start policy can inflate $\mat R_r$ and $\mat R_v$ for the first few
+fixes, then return to nominal values as consistency is established.
+
+If an outage is so long that the navigation position must be reset, the correction
+should be applied to $\vct r_n$ while preserving $\vct p_w$.  Resetting the wave state
+would create an artificial phase discontinuity in heave/surge/sway.  Attitude should
+not be hard-reset from single-antenna GNSS position.  Course over ground can provide a
+heading cue only when speed and sideslip assumptions justify it; dual-antenna GNSS is
+a separate heading measurement and should be modeled as such.
+
+\section{Observability and Ambiguities}
+\label{sec:observability}
+
+GNSS dramatically improves low-frequency observability, but several ambiguities
+remain.  Position alone does not instantly separate $\vct r_n$ from $\vct p_w$ because
+only their sum is measured.  The process spectra, velocity measurement, and wave
+regularizer create the separation over time.  Likewise, horizontal specific-force
+error can be explained by accelerometer bias, tilt error, slow maneuver acceleration,
+or wave acceleration.  GNSS velocity is especially valuable because it constrains
+that ambiguity one derivative closer to acceleration than position alone.
+
+Lever arms create both information and sensitivity.  A known nonzero antenna lever
+arm can couple GNSS residuals to attitude during rotational excitation.  But an
+incorrect lever arm produces attitude-correlated position and velocity residuals that
+can be absorbed by wave motion or bias states.  The correct question is therefore not
+whether lever arms are ``small,'' but whether their induced motion is small relative
+to the requested wave/navigation accuracy.
+
+The proposed study should compute finite-horizon empirical observability Gramians or
+singular values for at least the following cases: position only; position plus Doppler
+velocity; magnetometer enabled/disabled; zero versus nonzero antenna lever arm; steady
+straight motion versus turns; and GNSS aided versus outage.  For TFG, the analysis
+should be performed in its local invariant error coordinates.  For NLO, use the
+linearized observer error dynamics rather than importing a Kalman observability test
+unchanged.
+
+\section{Interaction with Wind Heel and Other Reference-Point Transforms}
+\label{sec:heel-interaction}
+
+If the optional steady-wind-heel transform is active, both lever arms remain surveyed
+in the physical body frame.  OU--II and OU--III already de-heel the IMU lever arm
+internally before evaluating rotational acceleration.  The GNSS antenna term must use
+the physical boat attitude when predicting the physical antenna position.  A virtual
+un-heeled attitude must therefore be recomposed with the current heel estimate before
+applying $\mat R_{BW}\vct\ell_G$.
+
+This distinction prevents a subtle double transformation: the IMU measurement model
+may be evaluated in the virtual frame, while GNSS geometry belongs to the real hull.
+The validation should include static heel plus mast/rail antenna offsets and verify
+that changing the estimated heel does not create a fictitious GNSS translation.
+
+\section{Implementation Roadmap}
+\label{sec:roadmap}
+
+A staged implementation reduces the number of simultaneous changes.
+
+\paragraph{Phase A: geometry and timestamp front end.}
+Define CoG, IMU, and GNSS antenna points; add a common GNSS sample type with measurement
+time, local-NED position, velocity, covariance, validity, and age.  Verify antenna
+lever-arm correction independently using truth attitude/gyro data.
+
+\paragraph{Phase B: OU--III joint navigation block.}
+OU--III is the best first target because its $S_w=0$ regularizer already leaves
+$\vct p_w$ and $\vct v_w$ available for direct GNSS sum measurements.  Add
+$(\vct r_n,\vct u_n,\vct a_n)$, cross-covariance, and event-time GNSS updates while
+reusing the existing IMU CoG lever-arm model.
+
+\paragraph{Phase C: OU--II parity.}
+Add the same navigation block but retain zero-$p_w$/zero-$v_w$ virtual measurements.
+This creates a useful experiment on whether GNSS and explicit navigation reduce the
+need for those stronger wave anchors.
+
+\paragraph{Phase D: TFG geometry.}
+Implement the GNSS residual in right-invariant coordinates, first with an additive
+navigation block and then, if justified, with navigation as additional two-frame world
+columns.
+
+\paragraph{Phase E: NLO parity.}
+Add timestamped 3-D position/velocity input and antenna-to-CoG correction.  Then
+re-derive the translational observer if a simultaneous absolute-trajectory and
+bounded-wave output is required.
+
+\section{Validation Methodology}
+\label{sec:validation}
+
+No result should be reported from a single deterministic realization.  A minimum
+validation bundle should use paired wave/noise seeds and truth at the CoG, IMU, and
+antenna points.  Every scenario should log raw GNSS observations, corrected CoG
+observations, filter innovations, aiding mode, lever-arm contributions, navigation
+states, wave states, attitude/bias states, and covariance or observer confidence.
+
+Primary navigation metrics should include horizontal and vertical position RMS,
+velocity RMS, outage drift rate, reacquisition overshoot, and time to recover nominal
+error.  Primary wave metrics should include per-axis displacement RMS, vertical error
+as percent of $H_s$, spectral gain/phase in the wave band, and leakage between
+trajectory and wave components.  The split should be scored directly:
+\begin{align}
+E_{n\rightarrow w}
+&=\frac{\|\mathcal P_w(\hat{\vct p}_w-\vct p_w^{\rm ref})\|}
+        {\|\mathcal P_n\vct r_n^{\rm ref}\|+\epsilon},\\
+E_{w\rightarrow n}
+&=\frac{\|\mathcal P_n(\hat{\vct r}_n-\vct r_n^{\rm ref})\|}
+        {\|\mathcal P_w\vct p_w^{\rm ref}\|+\epsilon},
+\label{eq:leakage-metrics}
+\end{align}
+where $\mathcal P_n$ and $\mathcal P_w$ are declared slow and wave-band projections
+used only for scoring, not for constructing the estimate.
+
+Consistency metrics for the Kalman families should include GNSS position/velocity NIS
+and covariance coverage.  NLO should report normalized innovation energy and observer
+transient envelopes instead of pretending to have a Kalman covariance.
+
+\section{Required Study Matrix}
+\label{sec:studies}
+
+The following studies are required before turning this design paper into a performance
+paper.
+
+\subsection{Reference-point and lever-arm studies}
+Use zero wave motion with commanded roll, pitch, yaw, and angular acceleration so the
+truth consists almost entirely of lever-arm motion.  Sweep IMU and antenna offsets,
+including zero, realistic deck offsets, and deliberately exaggerated baselines.  Test
+survey error in magnitude and direction.  For the IMU correction, sweep angular-
+acceleration smoothing and compare uncompensated, truth-compensated, and estimated
+compensation.
+
+\subsection{Absolute-navigation studies}
+Test stationary, constant-velocity, constant-turn-rate, acceleration/deceleration,
+and curved trajectories with no waves.  These runs establish whether the slow
+navigation model tracks real vessel motion without leaking it into $\vct p_w$.
+Include current-driven translation that changes velocity without a corresponding wind
+or heading change.
+
+\subsection{Wave-plus-trajectory studies}
+Superimpose JONSWAP and PM--Stokes wave realizations on straight sailing, turns, and
+slow acceleration.  Include head, following, beam, and quartering seas plus crossing
+seas.  The key metric is not only total CoG error but whether
+$\hat{\vct r}_n+\hat{\vct p}_w$ is correct \emph{and} each component matches its truth.
+
+\subsection{GNSS-rate, latency, and asynchrony studies}
+Sweep 1, 5, 10, and 20~Hz aiding; deterministic and jittered latency; and clock offsets
+of 0, 50, 100, and 250~ms.  Compare exact rewind/replay with forward-propagated delayed
+measurements.  Include position-only, velocity-only, and combined aiding.
+
+\subsection{Outage and reacquisition studies}
+Inject outages of 1, 5, 30, 120, and 600~s at different wave phases and maneuver
+states.  Reacquire with clean fixes, biased fixes, and isolated outliers.  Compare hard
+acceptance, NIS-gated soft start, and velocity-first reacquisition.  Verify that wave
+phase remains continuous when absolute navigation is corrected.
+
+\subsection{GNSS quality and vertical-aiding studies}
+Sweep realistic horizontal/vertical covariance, multipath bursts, degraded satellite
+geometry, and vertical-bias offsets.  Compare 2-D position plus 3-D velocity against
+full 3-D position/velocity.  Determine when low-quality GNSS height improves or harms
+heave.
+
+\subsection{Architecture ablations}
+For OU--III, compare joint navigation, cascaded navigation, and no GNSS.  For OU--II,
+compare fixed zero anchors with GNSS-aware anchor weakening.  For TFG, compare additive
+navigation augmentation with group-column augmentation.  For NLO, compare current
+horizontal GNSS semantics, lever-arm-corrected GNSS, outage virtual aiding, and the
+re-derived trajectory/wave split.  All comparisons should use the same sensor data and
+reference trajectories.
+
+\section{Results Reporting Contract}
+\label{sec:results}
+
+This manuscript presently contains no GNSS-aided performance table because the joint
+trajectory/wave estimator and the corresponding cross-family study have not yet been
+implemented.  A future Results section should report, at minimum:
+\begin{itemize}
+  \item absolute CoG position and velocity errors in aided, outage, and reacquisition
+  intervals;
+  \item wave surge/sway/heave error and wave-band gain/phase;
+  \item navigation-to-wave and wave-to-navigation leakage;
+  \item attitude, gyro-bias, and accelerometer-bias changes attributable to GNSS;
+  \item innovation consistency and rejection statistics;
+  \item lever-arm ablations and survey-error sensitivity;
+  \item latency and GNSS-rate sensitivity;
+  \item filter-family comparison using identical measurement streams.
+\end{itemize}
+Any result that reports only total antenna or CoG position error without the separated
+wave and trajectory components is insufficient to validate the central claim of this
+paper.
+
+\section{Discussion}
+\label{sec:discussion}
+
+The most important design decision is semantic rather than numerical.  A marine wave
+filter cannot become an absolute navigator merely by sending latitude/longitude to an
+existing position pseudo-measurement.  If that position state is explicitly
+zero-mean, the measurement models are contradictory.  The solution is to introduce a
+slow navigation trajectory and let physical sensors observe the sum of trajectory and
+wave motion.
+
+The same reasoning clarifies lever arms.  There are two different baselines and two
+different kinematic effects.  The IMU-to-CoG offset modifies measured specific force
+through angular acceleration and centripetal acceleration.  The GNSS-antenna-to-CoG
+offset modifies measured position through attitude and measured velocity through
+angular rate.  Using only an IMU-to-GNSS baseline can hide which reference point the
+state represents; expressing both offsets from CoG makes the model auditable.
+
+GNSS aiding should substantially improve horizontal low-frequency observability, which
+is a known weakness of unaided marine inertial motion estimation.  But the study must
+verify that this benefit does not come from attenuating the desired wave signal.  The
+joint model provides a mechanism for avoiding that trade: GNSS constrains the slow
+trajectory and the physical sum, while the wave prior and virtual measurements shape
+only the bounded component.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+A coherent GNSS-aided marine inertial estimator needs three things at once: a declared
+reference point, correct rigid-body sensor geometry, and separate semantics for
+absolute trajectory and wave motion.  The proposed model writes
+\[
+\vct r_C=\vct r_n+\vct p_w,\qquad
+\vct v_C=\vct u_n+\vct v_w,\qquad
+\vct a_C=\vct a_n+\vct a_w,
+\]
+and lets the GNSS antenna observe those sums through its attitude-dependent lever arm.
+The IMU observes the same CoG acceleration through its own rotational lever-arm term.
+OU--II and OU--III already contain the latter correction and the covariance-update
+machinery required for position/velocity aiding, but absolute GNSS should be added by
+augmenting the state rather than reusing a zero-mean wave state as global position.
+TFG requires a group-consistent measurement extension, while NLO requires timestamped
+lever-arm-corrected satellite aiding and a re-derived state split if it is to output
+absolute navigation and bounded wave motion simultaneously.  The resulting framework
+also gives clean outage behavior: absolute navigation uncertainty may grow while the
+wave estimator remains drift bounded, and reacquisition can correct the trajectory
+without resetting wave phase.  The next step is implementation followed by the paired
+lever-arm, latency, outage, maneuver, and directional-sea studies specified here.
+
+\bibliographystyle{IEEEtran}
+\bibliography{w3d,w3d-baselines}
+\end{document}
