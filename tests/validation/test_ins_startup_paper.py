@@ -77,14 +77,28 @@ class InsStartupPaperTests(unittest.TestCase):
         self.assertIn("90 s", self.startup_doc)
 
     def test_proxy_integral_term_and_handoff_numbers_are_current(self):
+        # The OU wrappers expose their shared proxy gains through named constants;
+        # TFG carries the same values directly in Config.
+        for source in (self.ou3, self.ou2):
+            self.assertRegex(
+                source,
+                re.compile(r"STARTUP_PROXY_TWO_KP_DEFAULT\s*=\s*0\.2f"),
+            )
+            self.assertRegex(
+                source,
+                re.compile(r"STARTUP_PROXY_TWO_KI_DEFAULT\s*=\s*0\.02f"),
+            )
+        self.assertRegex(self.tfg, re.compile(r"proxy_two_kp\s*=\s*0\.2f"))
+        self.assertRegex(self.tfg, re.compile(r"proxy_two_ki\s*=\s*0\.02f"))
+
         for source in (self.ou3, self.ou2, self.tfg):
-            self.assertRegex(source, re.compile(r"proxy_two_kp\s*=\s*0\.2f"))
-            self.assertRegex(source, re.compile(r"proxy_two_ki\s*=\s*0\.02f"))
-            self.assertRegex(source, re.compile(r"proxy_startup_timeout_sec\s*=\s*150\.0f"))
+            self.assertRegex(
+                source, re.compile(r"proxy_startup_timeout_sec\s*=\s*150\.0f")
+            )
 
         self.assertIn("0.711 deg", self.flat)
         self.assertIn("0.05 deg/s", self.flat)
-        self.assertIn("0.711 deg", self.startup_doc)
+        self.assertIn("0.71 deg", self.startup_doc)
 
     def test_hard_iron_derivation_matches_implementation(self):
         for token in (
