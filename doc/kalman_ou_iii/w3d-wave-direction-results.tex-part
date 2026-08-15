@@ -72,16 +72,49 @@ separate travel-sense decision.
 \subsection{Integrated replay with OU--III attitude input}
 \label{sec:direction-ou3-integration}
 
-The deterministic traces above were originally produced in the integrated
-OU--III replay.  In that configuration the direction subsystem receives the
-levelled attitude/heading frame from the surrounding marine estimator after its
-startup handoff.  OU--III translational states, its integral pseudo-measurement,
-and its adaptive regularization variables are \emph{not} inputs to the
-direction algorithm.  Table~\ref{tab:direction-ou3-integration} therefore
-reproduces only the direction-relevant fields from the deterministic OU--III
-results table: upstream attitude RMS errors and the resulting direction/travel
-outputs.  It is integration evidence, not an OU--III performance claim for this
-paper.
+The reported ten-seed direction metrics were obtained from the adaptive OU--III
+integrated replay: the direction subsystem receives the levelled attitude and
+heading frame from the surrounding marine estimator after startup handoff.
+OU--III translational states, its integral pseudo-measurement, and its adaptive
+regularization variables are \emph{not} inputs to the direction algorithm.
+Table~\ref{tab:direction-ou3-rms} reports the wave-direction RMS errors from
+that integrated test, while Table~\ref{tab:direction-ou3-integration} gives the
+corresponding single-realization attitude and commitment diagnostics retained in
+the original OU--III results section.  This is integration evidence, not an
+OU--III performance claim for this paper.
+
+\begin{table}[t]
+  \centering
+  \caption{Wave-direction RMS errors in the ten-seed adaptive OU--III integrated
+  replay.  Entries are mean $\pm$ sample standard deviation across the ten seed
+  triplets, in degrees.}
+  \label{tab:direction-ou3-rms}
+  \footnotesize
+  \setlength{\tabcolsep}{3.0pt}
+  \renewcommand{\arraystretch}{1.06}
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Case & $H_s$ [m] & Axis RMS & Directed RMS \\
+    \midrule
+    JONSWAP    & 0.27 & $13.78\pm0.98$ & $15.20\pm0.97$ \\
+    JONSWAP    & 1.50 & $12.03\pm0.53$ & $19.50\pm2.15$ \\
+    JONSWAP    & 4.00 & $11.44\pm0.55$ & $23.87\pm1.88$ \\
+    JONSWAP    & 8.50 & $11.27\pm0.39$ & $26.94\pm2.47$ \\
+    \addlinespace
+    PM--Stokes & 0.27 & $14.35\pm1.11$ & $14.42\pm1.31$ \\
+    PM--Stokes & 1.50 & $12.37\pm0.65$ & $15.10\pm0.79$ \\
+    PM--Stokes & 4.00 & $12.11\pm0.79$ & $15.78\pm1.17$ \\
+    PM--Stokes & 8.50 & $12.30\pm0.82$ & $16.60\pm1.34$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The directed RMS is intentionally much larger than the scenario-level circular
+mean error.  A small fraction of wrong travel-sense decisions produces errors
+near $180^\circ$ and therefore carries large quadratic weight in RMS, even
+though the truth-referenced travel-sense decision is correct for
+\OUValidationTravelCorrect\% of samples.  Reporting both metrics prevents the
+high correct-decision fraction from hiding those rare but severe sense flips.
 
 \begin{table}[t]
   \centering

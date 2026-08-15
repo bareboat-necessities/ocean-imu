@@ -1,5 +1,6 @@
 """Publication contract for figures and integrated validation in kalman-wave-dir.tex."""
 
+import csv
 import re
 import unittest
 from pathlib import Path
@@ -8,6 +9,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
 PLOTS = REPO_ROOT / "plots" / "kalman_ou_iii"
+VALIDATION_SUMMARY = REPO_ROOT / "reports" / "results" / "ou_validation" / "ou_validation_summary.csv"
 
 
 class WaveDirectionChartContractTests(unittest.TestCase):
@@ -69,7 +71,11 @@ class WaveDirectionChartContractTests(unittest.TestCase):
         )
 
         self.assertIn(r"\label{tab:direction-ou3-integration}", results)
-        self.assertIn("integration evidence, not an OU--III performance claim", results)
+        normalized_results = " ".join(results.split())
+        self.assertIn(
+            "integration evidence, not an OU--III performance claim",
+            normalized_results,
+        )
         self.assertIn("OUValidationDirectionRMSE", results)
         self.assertNotIn("Z RMS", results)
         self.assertNotIn(r"Z\%$H_s$", results)
@@ -93,6 +99,48 @@ class WaveDirectionChartContractTests(unittest.TestCase):
                 rf"{re.escape(roll)}\s*&\s*{re.escape(pitch)}\s*&\s*"
                 rf"{re.escape(yaw)}\s*&\s*{re.escape(theta)}\s*&\s*"
                 rf"{re.escape(tau)}"
+            )
+            self.assertRegex(results, expected)
+
+    def test_ou3_direction_rms_table_mirrors_ten_seed_summary(self):
+        results = (DOC / "w3d-wave-direction-results.tex-part").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(r"\label{tab:direction-ou3-rms}", results)
+
+        scenario_labels = {
+            "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": ("JONSWAP", "0.27"),
+            "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": ("JONSWAP", "1.50"),
+            "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": ("JONSWAP", "4.00"),
+            "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": ("JONSWAP", "8.50"),
+            "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": ("PM--Stokes", "0.27"),
+            "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": ("PM--Stokes", "1.50"),
+            "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": ("PM--Stokes", "4.00"),
+            "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": ("PM--Stokes", "8.50"),
+        }
+        metrics = {}
+        with VALIDATION_SUMMARY.open(newline="", encoding="utf-8") as stream:
+            for row in csv.DictReader(stream):
+                scenario = row["scenario"]
+                if (
+                    scenario in scenario_labels
+                    and row["family"] == "OU_III"
+                    and row["mode"] == "Adaptive"
+                    and row["metric"] in {"dir_axis_rmse_deg", "dir_travel_rmse_deg"}
+                ):
+                    metrics[(scenario, row["metric"])] = (
+                        float(row["mean"]),
+                        float(row["std"]),
+                    )
+
+        self.assertEqual(len(metrics), 16)
+        for scenario, (case, hs) in scenario_labels.items():
+            axis_mean, axis_std = metrics[(scenario, "dir_axis_rmse_deg")]
+            travel_mean, travel_std = metrics[(scenario, "dir_travel_rmse_deg")]
+            expected = (
+                rf"{re.escape(case)}\s*&\s*{re.escape(hs)}\s*&\s*"
+                rf"\${axis_mean:.2f}\\pm{axis_std:.2f}\$\s*&\s*"
+                rf"\${travel_mean:.2f}\\pm{travel_std:.2f}\$"
             )
             self.assertRegex(results, expected)
 
