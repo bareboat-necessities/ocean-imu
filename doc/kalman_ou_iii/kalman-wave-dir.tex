@@ -11,6 +11,9 @@
 \interdisplaylinepenalty=2500
 \usepackage{array,booktabs}
 \usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{pgf}
+\usepackage{pgfplots}
 \usepackage{siunitx}
 \usepackage[final]{microtype}
 \usepackage{cite}
@@ -27,6 +30,8 @@
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\E}{\mathbb{E}}
 \newcommand{\pct}[1]{#1\%}
+\providecommand{\mathdefault}[1]{#1}
+\pgfplotsset{compat=1.18}
 
 \sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
 \AtBeginEnvironment{equation}{\small}

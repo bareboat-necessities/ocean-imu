@@ -60,7 +60,13 @@ whether horizontal orbital motion identifies the vertical propagation plane;
 the travel-sense statistic measures whether the horizontal--vertical phase test
 chooses the correct direction along that plane.  A low axial error therefore
 does not, by itself, demonstrate a correct $0$--$360^\circ$ propagation
-direction, which is why both stages are scored separately.
+direction, which is why both stages are scored separately.  Figures
+\ref{fig:wave-dir-jonswap-medium}--\ref{fig:wave-dir-pmstokes-medium} show the
+same distinction in the generated time-domain diagnostics: direction angle,
+uncertainty and confidence are estimator metrics, while the final panel is the
+separate travel-sense decision.
+
+\input{w3d-wave-direction-charts.tex-part}
 
 \subsection{Frequency and confidence interpretation}
 
