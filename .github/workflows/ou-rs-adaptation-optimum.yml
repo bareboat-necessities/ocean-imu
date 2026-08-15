@@ -1,0 +1,57 @@
+name: ou-rs-adaptation-optimum
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou_rs_adaptation_optimum.py"
+      - ".github/workflows/ou-rs-adaptation-optimum.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  experiment:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends g++ make libeigen3-dev python3-numpy
+
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip \
+            --clobber
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Run physical-period optimum experiment
+        run: |
+          python3 -u tools/ou_rs_adaptation_optimum.py \
+            --stretch "0.85,0.925,1.0,1.075,1.15" \
+            --rs-factors "0.65,0.78,0.9,1.0,1.12,1.28,1.5" \
+            --wave-seeds "11,29,47" \
+            --imu-seeds "101,211,307" \
+            --init-seeds "1009,1103,1201" \
+            --duration-sec 600 \
+            --window-sec 300 \
+            --jobs "$(nproc)" \
+            --bootstrap 2000 \
+            --output-dir reports/results/ou_rs_adaptation_optimum
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou-rs-adaptation-optimum
+          path: reports/results/ou_rs_adaptation_optimum/**
+          if-no-files-found: warn
