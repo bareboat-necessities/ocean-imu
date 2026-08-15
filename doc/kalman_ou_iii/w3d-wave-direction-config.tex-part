@@ -1,0 +1,39 @@
+% =======================================================
+\section{Implementation and Confidence Gates}
+\label{sec:direction-config}
+
+Table~\ref{tab:direction-implementation-gates} records the direction-specific
+settings used by the reported simulations.  These thresholds are validity and
+hysteresis safeguards rather than reference-trajectory fit parameters.  They
+were previously listed with the OU--III navigation-filter defaults; they belong
+to the direction subsystem because they govern the carrier tracker, axial
+acceptance, and travel-sense decision only.
+
+\begin{table}[t]
+\centering
+\caption{Direction-estimator implementation defaults.}
+\label{tab:direction-implementation-gates}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.55\columnwidth}
+                    >{\raggedright\arraybackslash}p{0.34\columnwidth}@{}}
+\toprule
+Setting & Default \\
+\midrule
+KalmANF carrier policy & enabled \\
+carrier tracker band & $[0.2,6.0]$ Hz \\
+frequency smoothing, fast/slow & $3.5/10$ s \\
+axis amplitude/confidence/linearity gates & $0.08/20/0.25$ \\
+travel-sense coherence, on/off & $0.20/0.12$ \\
+travel-sense RMS floors, horizontal/vertical slope &
+$0.01\,\mathrm{m\,s^{-2}}/0.01\,\mathrm{m\,s^{-3}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The axial estimator reports no current direction unless amplitude, covariance
+confidence, and linearity pass simultaneously.  The travel-sense stage has its
+own absolute-energy and coherence requirements and may therefore remain
+unresolved even while the axis is valid.  This separation is intentional: a
+well-determined propagation plane is not sufficient evidence for choosing one
+of its two directed senses.
