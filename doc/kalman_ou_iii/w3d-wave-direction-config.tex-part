@@ -5,9 +5,8 @@
 Table~\ref{tab:direction-implementation-gates} records the direction-specific
 settings used by the reported simulations.  These thresholds are validity and
 hysteresis safeguards rather than reference-trajectory fit parameters.  They
-were previously listed with the OU--III navigation-filter defaults; they belong
-to the direction subsystem because they govern the carrier tracker, axial
-acceptance, and travel-sense decision only.
+belong to the direction subsystem because they govern the carrier tracker,
+axial acceptance, and travel-sense decision only.
 
 \begin{table}[t]
 \centering

@@ -47,10 +47,11 @@ can exchange names when that representative flips by $180^\circ$.
 
 Across the eight stationary JONSWAP and PM--Stokes seas, the pooled absolute
 circular-mean wave-axis error is
-\OUValidationDirectionAbsError{} degrees and the worst scenario is
-\OUValidationDirectionWorstAbsError{} degrees.  Truth-referenced travel sense
-is correct for \OUValidationTravelCorrect\% of samples, wrong for
-\OUValidationTravelWrong\%, and unresolved for
+\OUValidationDirectionAbsError{} degrees, the pooled sample-level axial RMS
+error is \OUValidationDirectionRMSE{} degrees, and the worst scenario-level
+absolute circular-mean error is \OUValidationDirectionWorstAbsError{} degrees.
+Truth-referenced travel sense is correct for \OUValidationTravelCorrect\% of
+samples, wrong for \OUValidationTravelWrong\%, and unresolved for
 \OUValidationTravelUnresolved\%.  The absolute error of the final directed
 estimate is \OUValidationTravelAbsError{} degrees under the aggregate metric
 reported by the committed validation bundle.
@@ -67,6 +68,54 @@ uncertainty and confidence are estimator metrics, while the final panel is the
 separate travel-sense decision.
 
 \input{w3d-wave-direction-charts.tex-part}
+
+\subsection{Integrated replay with OU--III attitude input}
+\label{sec:direction-ou3-integration}
+
+The deterministic traces above were originally produced in the integrated
+OU--III replay.  In that configuration the direction subsystem receives the
+levelled attitude/heading frame from the surrounding marine estimator after its
+startup handoff.  OU--III translational states, its integral pseudo-measurement,
+and its adaptive regularization variables are \emph{not} inputs to the
+direction algorithm.  Table~\ref{tab:direction-ou3-integration} therefore
+reproduces only the direction-relevant fields from the deterministic OU--III
+results table: upstream attitude RMS errors and the resulting direction/travel
+outputs.  It is integration evidence, not an OU--III performance claim for this
+paper.
+
+\begin{table}[t]
+  \centering
+  \caption{Direction-relevant results from the deterministic integrated OU--III
+  replay, scored over the final \SI{900}{s}.  R/P/Y are upstream attitude RMS
+  errors in degrees; $\bar\theta$ is the mean axial direction estimate.}
+  \label{tab:direction-ou3-integration}
+  \scriptsize
+  \setlength{\tabcolsep}{1.6pt}
+  \renewcommand{\arraystretch}{1.06}
+  \begin{tabular}{@{}lrrrrrl@{}}
+    \toprule
+    Case & $H_s$ & R & P & Y & $\bar\theta$ & T/A/U [\%] \\
+    \midrule
+    JONSWAP    & 0.27 & 0.28 & 0.17 & 1.06 &  31.5 & 0.0/96.9/3.1 \\
+    JONSWAP    & 1.50 & 0.26 & 0.15 & 1.05 & -28.5 & 96.7/0.9/2.4 \\
+    JONSWAP    & 4.00 & 0.49 & 0.33 & 1.04 &  31.0 & 1.2/96.5/2.3 \\
+    JONSWAP    & 8.50 & 0.45 & 0.44 & 0.71 & -25.9 & 94.4/1.7/3.9 \\
+    \addlinespace
+    PM--Stokes & 0.27 & 0.27 & 0.20 & 0.74 &  32.7 & 0.0/97.4/2.6 \\
+    PM--Stokes & 1.50 & 0.26 & 0.21 & 1.03 & -28.1 & 97.0/0.4/2.6 \\
+    PM--Stokes & 4.00 & 0.40 & 0.23 & 0.47 &  30.1 & 0.2/98.2/1.5 \\
+    PM--Stokes & 8.50 & 0.32 & 0.20 & 0.48 & -26.6 & 97.9/0.3/1.8 \\
+    \bottomrule
+  \end{tabular}
+  \vspace{1pt}
+
+  \parbox{0.98\columnwidth}{\scriptsize
+  T/A/U denotes the estimator's Toward/Away/Uncertain labels relative to its
+  chosen axial representative; it is a commitment diagnostic, not the
+  truth-referenced correctness rate reported above.  The deterministic table is
+  a single-realization integration check and is not interchangeable with the
+  ten-seed aggregate direction statistics.}
+\end{table}
 
 \subsection{Frequency and confidence interpretation}
 
