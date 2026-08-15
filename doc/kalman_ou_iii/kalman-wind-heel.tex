@@ -1,0 +1,711 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\usepackage{array,booktabs}
+\usepackage{graphicx}
+\usepackage{siunitx}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\usepackage[final]{microtype}
+
+\interdisplaylinepenalty=2500
+\allowdisplaybreaks
+\emergencystretch=2em
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\newcommand{\T}{^{\mathsf T}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\abs}[1]{\left|#1\right|}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\wrap}{wrap}
+\DeclareMathOperator{\sat}{sat}
+
+\title{Separation of Steady Wind Heel and Wave-Induced Roll Using Marine IMU Sensor Fusion\\
+\large State Decomposition, Apparent-Wind Aiding, Observability, and a Validation Program (concept paper)}
+\author{%
+  \IEEEauthorblockN{Mikhail S. Grushinskiy}
+  \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+  Bareboat Necessities GitHub Project\\
+  Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A sailing vessel can carry a substantial quasi-steady roll angle under aerodynamic
+load while simultaneously executing wave-induced roll about that moving equilibrium.
+A conventional attitude estimator observes the physical attitude but does not, by
+itself, identify which part of roll is steady wind heel and which part is wave motion.
+That distinction matters when an IMU is used not only for navigation but also for wave
+measurement: subtracting too much roll suppresses the signal of interest, while leaving
+steady heel inside the wave frame distorts gravity compensation, horizontal acceleration,
+and directional-motion estimates. This concept paper formulates the separation as a
+latent-state sensor-fusion problem. The physical body frame is decomposed into a slowly
+varying heel-neutral frame and a dynamic wave-attitude frame. The mean-heel state is
+modeled as a slow response to an apparent-wind heeling-moment proxy, while a quaternion
+attitude estimator retains the dynamic roll, pitch, and yaw response. Apparent wind is
+used only as probabilistic low-frequency aiding because wind speed and angle do not
+uniquely determine heel without sail trim, aerodynamic coefficients, hydrostatic
+stiffness, and vessel speed. The paper identifies a central observability ambiguity:
+low-frequency transverse acceleration and roll-induced gravity projection enter the
+accelerometer through nearly the same channel, so total attitude sensing does not by
+itself make the heel/wave decomposition observable. Gyroscope dynamics, magnetic
+heading, time-scale separation, wind forcing, maneuver logic, and optional external
+velocity/position aiding must supply the missing information. No performance result is
+claimed in this draft. Instead, a predeclared program of constant-wind, gust, tack/gybe,
+and irregular-directional-sea experiments is proposed, together with baselines, metrics,
+and failure tests needed before the decomposition can be treated as a validated marine
+estimation method.
+\end{abstract}
+
+\begin{IEEEkeywords}
+sailboat heel, wave-induced roll, marine IMU, sensor fusion, apparent wind, attitude
+estimation, Kalman filtering, observability, maneuver detection, wave measurement
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:introduction}
+
+Marine IMUs are often asked to serve two purposes at once: estimate vessel attitude for
+navigation and control, and estimate vessel motion as a proxy for the surrounding wave
+field. The two purposes become coupled on a sailing vessel. Aerodynamic side force on
+the sails produces a persistent heeling moment, so the mean hull roll can remain many
+degrees away from zero even when the wave-induced roll has zero mean. A wave-motion
+estimator that interprets the full roll angle as wave motion can contaminate gravity
+compensation and horizontal acceleration. A preprocessing step that simply subtracts a
+low-pass roll estimate can create the opposite error by removing genuine long-period
+wave roll.
+
+The repository already contains an optional implementation mechanism for an externally
+supplied steady heel angle: body-frame accelerometer, gyroscope, and magnetometer vectors
+can be transformed into a virtual un-heeled frame before the attitude and motion updates.
+That mechanism has not been validated in the reported OU-filter experiments, and no
+existing result establishes how the heel angle itself should be estimated. The present
+paper is therefore deliberately prospective. It asks what estimator structure and what
+evidence would be required to turn that frame transform into a defensible separation of
+steady wind heel and dynamic wave attitude.
+
+Attitude estimation from inertial and magnetic measurements is well established
+\cite{Markley2003AttitudeError,MarkleyCrassidis2014_Attitude,Sola2017_QuaternionESKF},
+and vessel-motion estimation from strapdown inertial sensors has been studied for heave
+and directional wave applications \cite{Auestad2013_HeaveStrapdownIMU,Pascoal2009_KalmanDirectionalSpectrum,YurovskyKudinov2025_IMUwaves}.
+The problem considered here is narrower and different: the physical attitude may be
+well estimated while its decomposition into a slowly varying aerodynamic equilibrium and
+a wave-induced perturbation remains ambiguous. That decomposition is not a new attitude
+reference; it is a model-based partition of one measured motion into two latent causes.
+
+The proposed contribution has three layers. First, the frame algebra is made explicit so
+that changes in the heel estimate do not create artificial jumps in physical attitude.
+Second, a slow heel state, a dynamic wave-attitude state, and an apparent-wind forcing
+model are combined with explicit observability caveats. Third, the paper predeclares a
+validation program broad enough to test the difficult cases: low-frequency horizontal
+acceleration, gusts whose time scale overlaps the wave band, tack and gybe transitions,
+and irregular directional seas. The objective is not to prove that frequency separation
+always works; it is to identify when the separation is identifiable, when it is merely a
+useful prior, and when the estimator must report ambiguity rather than invent a clean
+heel/wave split.
+
+\section{Sailboat Heel and Wave-Roll Dynamics}
+\label{sec:dynamics}
+
+Let the physical roll of the hull be generated by at least two mechanisms. The first is
+a slowly varying equilibrium under aerodynamic heeling moment and hydrostatic restoring
+moment. The second is a dynamic response to waves, vessel maneuvering, gust transients,
+and coupled roll--yaw--sway dynamics. For modest pitch and local analysis it is tempting
+to write
+\begin{equation}
+ \phi_{\mathrm{body}}(t)\approx \phi_h(t)+\phi_w(t),
+ \label{eq:additive-roll}
+\end{equation}
+where $\phi_h$ is steady or slowly varying heel and $\phi_w$ is wave-induced roll. The
+matrix formulation used later is preferable because rotations do not add globally, but
+\eqref{eq:additive-roll} captures the intended time-scale decomposition.
+
+A simple quasi-static roll balance is
+\begin{equation}
+ M_{\mathrm{aero}}(t)+M_{\mathrm{wave,LF}}(t)
+ \approx M_{\mathrm{rest}}\!\left(\phi_h(t)\right),
+ \label{eq:heel-balance}
+\end{equation}
+where the low-frequency wave term is written explicitly to emphasize an important
+limitation: a long swell or persistent asymmetric wave loading can shift the apparent
+mean roll even without wind. Near an operating point, the hydrostatic restoring moment
+may be linearized as $M_{\mathrm{rest}}\approx K_\phi\phi_h$, but $K_\phi$ depends on
+loading, geometry, and heel itself.
+
+The dynamic component can be represented at several levels of fidelity. A minimal
+single-mode roll model is
+\begin{equation}
+ \ddot\phi_w+2\zeta_r\omega_r\dot\phi_w+\omega_r^2\phi_w
+ = b_r u_{\mathrm{wave}} + w_r,
+ \label{eq:roll-oscillator}
+\end{equation}
+where $\omega_r$ and $\zeta_r$ are effective roll parameters. For a general directional
+sea this scalar oscillator is only a shaping prior: the actual vessel response contains
+multiple encounter frequencies and coupling to pitch, yaw, sway, and surge. A full
+quaternion attitude state is therefore retained in the proposed sensor-fusion
+architecture; \eqref{eq:roll-oscillator} is useful as a hypothesis to test, not as a
+required truth model.
+
+The desired separation is consequently asymmetric. The steady-heel state should be
+allowed to move when the aerodynamic equilibrium really moves, but it should not chase
+ordinary wave roll. The dynamic attitude state should follow rapid roll accurately, but
+it should not be forced to carry a large quasi-static heel if the downstream wave-motion
+model assumes an approximately zero-mean roll frame.
+
+\section{Coordinate Frames and Measurements}
+\label{sec:frames}
+
+Use a world NED frame $\mathcal W$, a physical IMU/body frame $\mathcal B$, and a virtual
+heel-neutral frame $\mathcal B'$. The body axes are $x$ forward, $y$ starboard, and $z$
+down. Positive roll follows the right-hand rule about $+x$. Let
+$\mat R_{WB}$ map vector coordinates from $\mathcal B$ to $\mathcal W$ and let
+$\mat R_{WB'}$ map $\mathcal B'$ to $\mathcal W$. Define the mean-heel transform by
+\begin{equation}
+ \vct v_{B'}=\mat R_x(-\phi_h)\vct v_B.
+ \label{eq:deheel-vector}
+\end{equation}
+Then the physical attitude is
+\begin{equation}
+ \boxed{\mat R_{WB}=\mat R_{WB'}\mat R_x(-\phi_h).}
+ \label{eq:attitude-compose}
+\end{equation}
+The dynamic wave roll is retained inside $\mat R_{WB'}$; only the slowly varying
+$\phi_h$ is removed from the physical sensor frame.
+
+The IMU measurements are modeled conventionally as
+\begin{align}
+ \vct\omega_m &= \vct\omega_B+\vct b_g+\vct n_g,\\
+ \vct f_m &= \mat R_{BW}(\vct a_W-\vct g_W)+\vct b_a+\vct n_a,\\
+ \vct m_m &= \mat R_{BW}\vct m_W+\vct b_m+\vct n_m,
+ \label{eq:imu-model}
+\end{align}
+with the usual caution that magnetic disturbances can be strongly vessel dependent. The
+accelerometer is a specific-force sensor, not a gravity-direction sensor whenever vessel
+translation is appreciable. This distinction becomes central in
+\cref{sec:observability}.
+
+The apparent-wind instrument supplies at least a relative wind angle $\beta_a$ and often
+a speed $V_a$. If a vector measurement is available at a masthead lever arm $\vct r_m$,
+then rotational velocity contributes to the local apparent wind. A first-order correction
+has the structure
+\begin{equation}
+ \vct v_{a,m}
+ \simeq \vct v_{a,O}-\vct\omega_B\times\vct r_m+\vct n_w,
+ \label{eq:wind-lever}
+\end{equation}
+with sign depending on the chosen relative-velocity convention. This term should be
+modeled or its uncertainty inflated during large roll/yaw rates; otherwise the wave
+motion being estimated can feed back into the wind-based heel aid.
+
+\section{Steady-Heel State/Model}
+\label{sec:heel-model}
+
+A useful first model is deliberately low order. Let
+\begin{equation}
+ \vct x_h=\begin{bmatrix}\phi_h & \kappa_h\end{bmatrix}\T,
+ \label{eq:heel-state}
+\end{equation}
+where $\kappa_h$ is an effective mapping from a wind-load proxy to equilibrium heel. The
+state obeys
+\begin{align}
+ \dot\phi_h &= -\frac{1}{\tau_h}\left(\phi_h-\phi_{\mathrm{eq}}\right)+w_h,\\
+ \dot\kappa_h &= w_\kappa,
+ \label{eq:heel-dynamics}
+\end{align}
+with a long heel time constant $\tau_h$ relative to the dominant wave period under
+steady conditions. A candidate equilibrium map is
+\begin{equation}
+ \phi_{\mathrm{eq}}
+ = \sat_{\phi_{\max}}\!\left(\kappa_h u_w\right),
+ \qquad
+ u_w=V_a^2 g_w(\beta_a,\delta_s,V_b),
+ \label{eq:heel-equilibrium}
+\end{equation}
+where $\delta_s$ denotes sail trim if available and $V_b$ vessel speed. The exact function
+$g_w$ is not prescribed in this draft. A signed lateral-force proxy such as
+$\sin\beta_a$ is a useful starting hypothesis, but it must be identified against vessel
+and sail configuration rather than treated as universal aerodynamics.
+
+An alternative second-order state
+\begin{equation}
+ \ddot\phi_h+2\zeta_h\omega_h\dot\phi_h
+ +\omega_h^2(\phi_h-\phi_{\mathrm{eq}})=w_h
+ \label{eq:heel-second-order}
+\end{equation}
+may be required when gust-driven heel transients are not slow compared with wave roll.
+The experiments in \cref{sec:gusts} should determine whether the added state improves
+separation or merely gives the heel model enough bandwidth to absorb wave energy.
+
+The process covariance of $\phi_h$ is therefore a scientific parameter, not just a
+numerical tuning constant. Too little process noise prevents adaptation to real wind
+changes; too much makes the ``steady'' heel state a low-pass copy of the total roll.
+
+\section{Dynamic Wave-Attitude Model}
+\label{sec:wave-attitude}
+
+The dynamic attitude is represented by a quaternion or rotation matrix for
+$\mathcal B'\rightarrow\mathcal W$ and the usual local attitude-error state
+\cite{Markley2003AttitudeError,Sola2017_QuaternionESKF}. A minimal error-state vector is
+\begin{equation}
+ \delta\vct x_a=
+ \begin{bmatrix}
+   \delta\vct\theta & \vct b_g & \vct b_a
+ \end{bmatrix}\T,
+ \label{eq:att-state}
+\end{equation}
+optionally augmented by translational wave states. The gyroscope update is performed on
+the de-heeled angular-rate vector, while accelerometer and magnetometer predictions are
+formed in $\mathcal B'$. The physical hull attitude returned to applications is restored
+through \eqref{eq:attitude-compose}.
+
+The crucial design rule is that the attitude estimator must not be asked to zero the
+dynamic roll. The wave component is a legitimate part of $\mat R_{WB'}$. In a
+frequency-aware implementation, the existing wave-period estimator can provide a slowly
+varying characteristic frequency $\omega_p$ that shapes, but does not dictate, the
+separation prior. One candidate is to model the wave-roll innovation with a band-limited
+Gauss--Markov or second-order process centered near encounter frequency while leaving the
+quaternion kinematics exact.
+
+The dynamic model should also preserve cross-axis motion. Directional waves can generate
+roll, pitch, yaw, and horizontal acceleration together; forcing an independent scalar
+roll oscillator can improve one metric while breaking the cross-covariances that a
+three-dimensional inertial estimator needs. Accordingly, the scalar roll model in
+\eqref{eq:roll-oscillator} is best treated as an ablation against the full 3-D attitude
+model.
+
+\section{Apparent-Wind Aiding}
+\label{sec:wind-aiding}
+
+Apparent wind is informative about heel because aerodynamic side force is a major cause
+of steady sailing heel, but it is not a direct angle measurement. A schematic heeling
+moment is
+\begin{equation}
+ M_a \approx \frac12\rho_{air}V_a^2 A_s h_{CE}
+ C_H(\beta_a,\delta_s,\mathrm{reef},\ldots),
+ \label{eq:wind-moment}
+\end{equation}
+so the same $V_a$ and $\beta_a$ can produce different heel for different sail trim,
+reefing, loading, righting moment, and boat speed. The proposed filter therefore uses
+wind as a broad, adaptive prior on $\phi_h$, not as a hard pseudo-measurement.
+
+One formulation writes
+\begin{equation}
+ z_w=0=\phi_h-\kappa_h u_w+\nu_w,
+ \qquad \nu_w\sim\mathcal N(0,R_w),
+ \label{eq:wind-pseudo}
+\end{equation}
+with a deliberately large $R_w$ and slowly adapting $\kappa_h$. A more conservative
+form uses only the expected sign of heel and a magnitude envelope. Both should be tested.
+A hard mapping from apparent wind to heel is unlikely to be robust enough across reef
+changes, crew movement, sail trim, and different boats.
+
+Three additional issues deserve explicit experiments. First, the wind sensor is mounted
+on the moving vessel and can contain wave-induced rotational-velocity contamination as in
+\eqref{eq:wind-lever}. Second, apparent wind changes when vessel speed and yaw change even
+if true wind does not. Third, sensor latency can be comparable with a gust transient.
+Wind aiding should therefore carry time alignment, lever-arm correction when possible,
+and dropout/innovation gating.
+
+\section{Heel-Frame Transformation}
+\label{sec:heel-transform}
+
+The frame transform is the mechanism that allows the downstream wave-motion estimator to
+operate in a heel-neutral body frame without deleting wave roll. Every body-frame vector
+used by that estimator is mapped as in \eqref{eq:deheel-vector}, while the dynamic
+attitude remains $\mat R_{WB'}$.
+
+Changing $\hat\phi_h$ changes the definition of $\mathcal B'$. If the heel estimate is
+updated by $\Delta\phi_h$, the internal attitude must be retargeted so that the physical
+attitude does not jump. From \eqref{eq:attitude-compose}, invariance of $\mat R_{WB}$
+requires
+\begin{equation}
+ \boxed{
+ \mat R_{WB'}^{+}=\mat R_{WB'}^{-}\mat R_x(\Delta\phi_h).}
+ \label{eq:retarget}
+\end{equation}
+The covariance must be transformed consistently with the local attitude coordinates.
+This is especially important if $\phi_h$ changes rapidly after a tack: merely changing
+the preprocessing rotation while leaving the quaternion untouched creates an artificial
+attitude step.
+
+The repository's current optional heel path already follows this conceptual pattern: an
+externally commanded heel angle retargets the virtual body frame before subsequent IMU
+updates. The missing problem is estimation and validation of that command. A first unit
+test for the new estimator should therefore be purely geometric: arbitrary sequences of
+$\phi_h$ updates with no physical motion must leave the recovered physical quaternion,
+gravity prediction, and magnetic prediction unchanged to numerical precision.
+
+\section{Observability and Ambiguity with Horizontal Acceleration}
+\label{sec:observability}
+
+This is the central theoretical problem. Linearizing the accelerometer around an attitude
+estimate gives an attitude-error contribution of the form
+\begin{equation}
+ \delta\vct f
+ \simeq -\big[\mat R_{BW}(\vct a_W-\vct g_W)\big]_\times
+ \delta\vct\theta
+ +\mat R_{BW}\delta\vct a_W+\delta\vct b_a.
+ \label{eq:acc-linearized}
+\end{equation}
+For small roll error and weak translation, the lateral channel contains approximately
+$g\,\delta\phi$. The same channel also contains real transverse acceleration and
+accelerometer bias. Therefore a slowly varying lateral specific-force residual can be
+explained by changing mean heel, changing horizontal acceleration, or changing bias.
+Those explanations are locally close to collinear in the measurement Jacobian.
+
+A magnetometer and a gyroscope improve physical-attitude estimation, but they do not
+fully solve the decomposition problem. The magnetometer observes total orientation with
+respect to the magnetic field, not the semantic labels ``steady heel'' and ``wave roll.''
+A constant heel has zero angular rate, so the gyro cannot determine its absolute offset.
+The decomposition becomes identifiable only through additional structure: different
+process time scales, a wind-correlated slow state, bounded bias dynamics, vessel-motion
+models, and potentially GNSS or water-speed aiding.
+
+The validation program should therefore include an explicit local observability study.
+For an augmented state containing at least $(\delta\phi_w,\phi_h,b_{a,y},a_y)$, construct
+the finite-horizon linearized observability Gramian
+\begin{equation}
+ \mat W_o(t_0,T)=
+ \int_{t_0}^{t_0+T}
+ \mat\Phi(t,t_0)\T\mat H(t)\T\mat R^{-1}(t)
+ \mat H(t)\mat\Phi(t,t_0)\,dt,
+ \label{eq:gramian}
+\end{equation}
+and report its smallest singular value and condition number across the study cases. The
+same experiment should be repeated with wind aiding removed, with magnetometer removed,
+and with horizontal GNSS velocity added. The purpose is not to obtain one global
+observability theorem for a nonlinear sailing vessel; it is to identify which excitation
+and aiding combinations actually separate the slow heel state from low-frequency
+horizontal inertial error.
+
+A particularly important negative control is constant transverse acceleration with no
+wind change. An estimator that responds by changing $\phi_h$ has confused kinematics
+with heel. Conversely, a constant wind-induced heel on calm water should not be absorbed
+into accelerometer bias. These two cases are almost mirror images and should be treated as
+primary identifiability tests.
+
+\section{Adaptive Separation of Mean Heel and Wave Roll}
+\label{sec:adaptive-separation}
+
+The simplest adaptive architecture is a slow heel process coupled to a full dynamic
+attitude filter. Let $\omega_p$ be a robust estimate of the dominant wave/encounter
+frequency. A separation parameter can be expressed nondimensionally as
+\begin{equation}
+ \lambda_h=\frac{1/\tau_h}{\omega_p},
+ \label{eq:lambda-h}
+\end{equation}
+with $\lambda_h\ll1$ under stationary sailing. Rather than fixing one cutoff in seconds,
+the estimator can adapt $\tau_h$ so that the heel process remains slow relative to the
+observed sea state. This is analogous to other sea-state-normalized schedules in the
+repository, but here the design objective is spectral separation rather than integral
+regularization.
+
+A candidate update hierarchy is:
+\begin{enumerate}
+ \item estimate total physical attitude from gyro, accelerometer, and magnetometer;
+ \item propagate a slow heel state using the wind-forced model;
+ \item retarget $\mathcal B'$ continuously using \eqref{eq:retarget};
+ \item keep wave roll in $\mat R_{WB'}$ rather than subtracting instantaneous physical roll;
+ \item adapt $\tau_h$, $Q_h$, or $R_w$ only from slow statistics, with explicit bounds;
+ \item suspend or widen the slow-state model during maneuvers and large innovations.
+\end{enumerate}
+
+Several variants should be compared rather than assumed equivalent: a fixed low-pass
+heel estimate, a first-order Kalman heel state, the wind-aided state
+\eqref{eq:wind-pseudo}, the second-order model \eqref{eq:heel-second-order}, and a joint
+augmented-state EKF in which $\phi_h$ participates directly in the sensor Jacobians. The
+joint formulation is theoretically cleaner but creates stronger coupling between heel,
+attitude, horizontal acceleration, and bias. A cascade can be easier to stabilize and
+interpret but may underestimate cross-covariance.
+
+Adaptation should also report uncertainty. When the estimated slow and wave spectra
+substantially overlap, a confidence measure can be based on the posterior variance of
+$\phi_h$, the innovation consistency of the wind pseudo-measurement, and the observability
+Gramian. The correct output in an ambiguous interval may be ``heel estimate uncertain,''
+not an aggressively filtered angle.
+
+\section{Maneuver/Tack Detection}
+\label{sec:maneuvers}
+
+Tacks and gybes deliberately violate the stationary-heel assumption. A tack typically
+changes the sign of the aerodynamic heeling moment while yaw rate, apparent-wind angle,
+and often roll rate all change together. A gybe can produce a large transient with a
+different apparent-wind geometry. Treating either event as ordinary process noise can
+make the slow heel state lag through the maneuver and temporarily contaminate the wave
+frame.
+
+A practical event detector should combine circular apparent-wind angle, yaw rate, and
+heel evidence. One candidate state machine has stable-port, transition, and
+stable-starboard states. A tack candidate is triggered when the signed apparent-wind
+angle crosses the bow-sector centerline with sufficient yaw rotation; confirmation
+requires dwell on the opposite side and, when wind loading is substantial, a compatible
+change in the slow heel sign. A gybe uses an analogous circular crossing around the aft
+sector rather than a naive discontinuity at $\pm180^\circ$.
+
+During a confirmed maneuver the estimator can temporarily:
+\begin{enumerate}
+ \item increase $Q_h$ so the equilibrium heel can move;
+ \item freeze adaptation of $\kappa_h$ so one maneuver does not relearn the aerodynamic map;
+ \item inflate $R_w$ while the masthead wind is contaminated by rapid rotation;
+ \item retain continuous physical attitude through the frame-retarget rule;
+ \item restart the slow-separation statistics only after a post-maneuver dwell.
+\end{enumerate}
+The detector itself needs a scored study: event recall, false detections per hour,
+detection latency, and the time for heel and wave-roll estimates to recover afterward.
+
+\section{Validation Methodology}
+\label{sec:validation}
+
+No quantitative result is reported in this concept draft. The following validation plan
+is intended to prevent post-hoc selection of only favorable sailing conditions.
+
+The simulator should expose separate truth signals for $\phi_h(t)$ and the dynamic vessel
+attitude, then compose them through \eqref{eq:attitude-compose} before synthesizing IMU,
+magnetometer, and apparent-wind measurements. This is essential: if ``truth heel'' is
+constructed afterward by low-pass filtering the same roll signal being evaluated, the
+validation becomes circular.
+
+At minimum the experiment should compare six estimators:
+\begin{enumerate}
+ \item no heel separation: the physical attitude is used directly;
+ \item fixed-cutoff low-pass subtraction of roll;
+ \item slow heel state without wind aiding;
+ \item wind-aided adaptive heel state;
+ \item an oracle heel transform supplied the true $\phi_h$;
+ \item a deliberately over-fast heel state showing the failure mode in which wave roll is absorbed into heel.
+\end{enumerate}
+The oracle is not deployable; it establishes the maximum downstream benefit available if
+mean heel were known exactly.
+
+Each stochastic scenario should use paired seeds for wave phases, IMU noise/bias,
+magnetometer error, and wind-sensor noise so that estimator differences are paired. A
+multi-seed ensemble should be predeclared before examining results. The repository's
+existing ten-seed paired-validation machinery provides a useful template, but the heel
+study requires new scenario generators and new truth channels.
+
+Primary metrics should include
+\begin{align}
+ e_h &= \hat\phi_h-\phi_h^{\mathrm{true}},\\
+ e_w &= \hat\phi_w-\phi_w^{\mathrm{true}},
+ \label{eq:errors}
+\end{align}
+reported as RMS, mean bias, 95th-percentile absolute error, and paired uncertainty across
+seeds. Frequency-domain metrics are equally important. Define a wave-band leakage ratio
+\begin{equation}
+ L_{w\rightarrow h}=
+ \frac{\int_{\Omega_w}S_{\hat\phi_h-\phi_h}(\omega)d\omega}
+      {\int_{\Omega_w}S_{\phi_w}(\omega)d\omega},
+ \label{eq:wave-to-heel-leak}
+\end{equation}
+and a low-frequency heel leakage into the wave estimate analogously. Report gain and
+phase error of $\hat\phi_w$ over the truth wave-roll band, not only time-domain RMS.
+
+The downstream effect should also be measured. The same physical run should be processed
+through the wave-motion estimator with no heel correction, estimated heel, and oracle
+heel. Compare horizontal/vertical acceleration residuals, displacement RMS, wave-height
+statistics, and wave-direction metrics. A heel separator that improves its own scalar
+RMSE but damages wave estimation has failed the actual application.
+
+Finally, the validation must include sensor-model ablations: magnetometer dropout and
+bias, apparent-wind latency, mast lever-arm error, accelerometer bias/random walk, heading
+error, and optional GNSS velocity aiding. The observability claim should be conditioned on
+which of those sensors are present.
+
+\section{Constant-Wind Cases}
+\label{sec:constant-wind}
+
+The first study should remove maneuver and gust confounds. Use constant apparent-wind
+forcing and impose equilibrium heel values spanning upright to strongly heeled sailing,
+for example a grid in $\abs{\phi_h}$ from near zero through approximately
+\SI{30}{\degree}. Both signs must be tested. Repeat each heel level with no waves, regular
+single-frequency roll, and irregular seas of increasing energy.
+
+The calm-water constant-heel cases answer the basic bias question: can the estimator
+recover a static heel without converting it into accelerometer bias or dynamic roll? The
+wave cases answer the leakage question: as the wave period approaches the chosen heel
+time constant, how much true roll is absorbed by the slow state? A sweep over
+$\lambda_h$ in \eqref{eq:lambda-h} should be reported rather than selecting one crossover
+from a single sea state.
+
+Wind-aiding ablations should vary the mapping error in $\kappa_h$, including an initially
+wrong sign/magnitude and a mid-run sail-trim change with unchanged wind. These cases are
+necessary to determine whether the wind model helps or merely imposes a plausible-looking
+heel prior.
+
+\section{Gusts and Changing Wind}
+\label{sec:gusts}
+
+The second study should vary wind forcing on time scales both slower and faster than the
+wave band. Recommended inputs include smooth ramps, steps filtered by a realistic wind
+sensor, isolated gust pulses, and stochastic colored gusts. The difficult regime is not
+an extremely slow wind change; it is a gust with a characteristic period near the vessel
+roll response or dominant wave period.
+
+For every gust case report the peak heel error, settling time, maximum wave-roll
+attenuation, and the fraction of gust-driven roll assigned to the dynamic state. There is
+no universally correct semantic split during a fast gust: a gust produces real dynamic
+roll even though its cause is wind. The paper should therefore distinguish
+\emph{equilibrium heel} from \emph{wind-caused roll}. Only the former belongs in
+$\phi_h$. A successful estimator should allow a rapid gust response to remain temporarily
+in the dynamic attitude and then move the slow equilibrium as evidence accumulates.
+
+A useful stress test is a wind step with no waves followed by the same wind step embedded
+in an irregular sea. The difference measures whether wave excitation corrupts the slow
+state adaptation. Another is a wind-direction change at nearly constant speed, which
+tests the signed force proxy independently of the $V_a^2$ scaling.
+
+\section{Tacks and Gybes}
+\label{sec:tack-gybe-study}
+
+The maneuver study should generate controlled tacks with known yaw trajectory, wind
+crossing, and heel reversal. Separate slow tacks from aggressive tacks so that the heel
+sign change occurs over a range of time scales. Gybes should be modeled separately
+because the apparent-wind angle crosses the circular aft boundary and the roll transient
+need not resemble a tack.
+
+The primary estimator metric is recovery, not just event classification. Report tack/gybe
+detection latency, false triggers, maximum physical-attitude discontinuity, peak error in
+$\hat\phi_h$, peak error in wave roll, and time to recover the predeclared steady-state
+error envelope. The geometric invariant in \eqref{eq:retarget} should be tested during
+every event; physical attitude must remain continuous even if the estimated heel state is
+allowed to change quickly.
+
+Negative controls should include a large wave-roll excursion with no maneuver, a heading
+change under power with little heel, and a short magnetometer disturbance. The detector
+must not convert those events into tack resets merely because yaw or roll crosses a
+threshold.
+
+\section{Irregular Directional Seas}
+\label{sec:directional-seas}
+
+The final simulation stage should use irregular directional seas rather than only scalar
+roll forcing. The existing JONSWAP and PM/Stokes generators provide a starting point for
+broad sea-state amplitude and period sweeps, but the heel study needs vessel rotational
+response and encounter geometry. At least the following should be included: beam seas,
+head/following seas, quartering seas, and two-component crossing seas with different peak
+periods and directions.
+
+Directional seas matter for two reasons. First, true roll energy depends strongly on wave
+direction and vessel response, so an adaptive separator tuned on beam-sea roll may become
+overconfident in head seas. Second, horizontal acceleration and attitude are correlated;
+this is precisely the regime in which the ambiguity of \cref{sec:observability} becomes
+important. The study should therefore report not only roll error but also the horizontal
+specific-force residual and the smallest singular value of the augmented observability
+Gramian.
+
+Long-period swell is a required edge case. If a swell component enters the nominal
+``slow'' band, a purely spectral separator will classify real wave roll as heel. The
+wind-aided model should improve that case only if the wind evidence is informative; if it
+is not, uncertainty should increase. Crossing seas with one long-period component provide
+an even stronger test of whether the method is truly model-based or merely a low-pass
+filter with extra states.
+
+\section{Results}
+\label{sec:results}
+
+\textbf{No experimental or simulation results are claimed in this draft.} This section
+is intentionally a reporting contract for the studies above. It should not be populated
+with deterministic examples and then described as validation.
+
+The completed study should contain, at minimum, one primary table for constant-wind
+steady-state separation, one for gust/change transients, one for tack/gybe recovery, and
+one for directional-sea performance. Each table should report the paired estimator
+comparison for heel RMS/bias, wave-roll RMS, wave-band gain/phase error, and both leakage
+ratios. A separate table should report the observability diagnostics with and without
+wind, magnetometer, and GNSS-velocity aiding.
+
+Recommended figures are: (i) a time trace showing physical roll, truth mean heel, truth
+wave roll, and both estimates; (ii) a PSD decomposition demonstrating leakage between the
+slow and wave bands; (iii) a gust case with wind forcing and state uncertainty; (iv) a
+tack showing frame retargeting without a physical-attitude jump; and (v) an observability
+condition-number map versus wave direction, wind angle, and heel magnitude.
+
+The primary claim should be accepted only if the adaptive method improves separation over
+the fixed-cutoff baseline across the predeclared ensemble without materially degrading
+total physical attitude or downstream wave-motion estimates. If improvement occurs only
+when wind and wave spectra are widely separated, that narrower result should be stated
+explicitly. If apparent-wind aiding helps only under some sail configurations, the method
+should expose that dependency rather than absorb it into an opaque tuned coefficient.
+
+\section{Discussion}
+\label{sec:discussion}
+
+The proposed architecture reframes ``heel correction'' as state decomposition. That
+framing avoids a common conceptual error: the IMU does not observe two roll angles. It
+observes one physical motion. Mean heel and wave roll become separate quantities only
+after process assumptions and exogenous information are introduced. Consequently, good
+physical-attitude accuracy is necessary but not sufficient evidence that the decomposition
+is correct.
+
+The most promising information source is not an accelerometer-derived static tilt angle;
+that channel is precisely where low-frequency horizontal acceleration creates ambiguity.
+Instead, the decomposition should combine the gyro's dynamic information, magnetometer or
+other attitude reference, a deliberately slow heel process, and apparent wind as a noisy
+causal input. External horizontal velocity or position aiding could be especially
+valuable because it directly reduces the acceleration/tilt ambiguity identified in
+\eqref{eq:acc-linearized}.
+
+Apparent-wind aiding is also a possible failure source. Sail trim, reefing, crew movement,
+and boat loading change the wind-to-heel map. A model that is too confident can make the
+heel estimate look smooth while being systematically wrong. For this reason the wind
+coefficient should adapt slowly, its covariance should widen after configuration changes,
+and the estimator should retain a wind-free mode. If the method eventually requires sail
+load sensors, traveler position, or hydraulic pressure to become reliable, those should
+be treated as additional measurements rather than hidden tuning assumptions.
+
+The virtual heel frame is useful even if the final estimator is not Kalman-based. The
+geometric requirement \eqref{eq:retarget} applies equally to a complementary filter,
+nonlinear observer, or Lie-group estimator: changing the definition of the heel-neutral
+frame must not change the represented physical attitude. The same separation concept can
+therefore be tested across OU-III, TFG, or other attitude/motion back ends once the
+measurement and state semantics are fixed.
+
+Real-vessel truth remains challenging. Simulation can define $\phi_h$ and $\phi_w$
+separately by construction, but a field reference normally measures only total attitude.
+A strong validation campaign should therefore combine several regimes: flat-water or
+quasi-static sailing to establish mean-heel accuracy; a wave tank or controlled motion
+platform where the decomposition is imposed; and open-water trials using a high-grade
+attitude reference for total roll plus independent wind and navigation measurements. In
+open water, any ``truth'' split produced only by post-filtering the reference roll should
+be labeled an operational definition rather than ground truth.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Separating steady wind heel from wave-induced roll is not equivalent to estimating roll
+accurately and then applying a low-pass filter. It is a latent-cause decomposition in
+which the accelerometer contains a fundamental ambiguity between gravity projection,
+horizontal acceleration, and bias. A defensible solution therefore needs explicit frame
+algebra, a slow heel process, a dynamic three-dimensional attitude model, cautious
+apparent-wind aiding, maneuver logic, and uncertainty that grows when the two components
+cannot be distinguished.
+
+The repository already has the geometric machinery required to work in a virtual
+heel-neutral frame. The next step is evidence, not another tuning constant. The proposed
+study program begins with constant-wind identifiability, then introduces gusts, tacks and
+gybes, and finally irregular directional seas with sensor degradations and observability
+analysis. The central questions are measurable: how much true wave roll leaks into the
+heel state, how much slow heel contaminates the wave state, which aiding signals break
+the horizontal-acceleration ambiguity, and whether the separation improves downstream
+wave-motion estimation without degrading physical attitude. Until those questions are
+answered over a paired multi-seed ensemble and controlled reference experiments, the
+method should remain a structured hypothesis rather than a validated performance claim.
+
+\bibliographystyle{IEEEtran}
+\bibliography{w3d}
+
+\end{document}
