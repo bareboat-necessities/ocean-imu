@@ -145,8 +145,8 @@
     }
   },
   "git_branch": "main",
-  "git_commit": "ea811dfeed77aac169c75e2260cf4eb3e4f4dc90",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 23086 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   672 +-\n .../ou_validation/ou_validation_covsync.svg        |   546 +-\n .../ou_validation/ou_validation_displacement.svg   |   284 +-\n .../ou_validation/ou_validation_paired_effects.csv |  1580 +-\n .../results/ou_validation/ou_validation_raw.csv    |   222 +-\n .../ou_validation/ou_validation_summary.csv        |  1572 +-\n .../ou_validation/ou_validation_vertical.svg       |   704 +-\n 8 files changed, 14333 insertions(+), 14333 deletions(-)",
+  "git_commit": "9df1c02a6cd3539e531a86135cbb5f60a91684fa",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 744 ++++++++++-----------\n .../ou_validation/ou_validation_attitude.svg       |   8 +-\n .../ou_validation/ou_validation_covsync.svg        |  12 +-\n .../ou_validation/ou_validation_displacement.svg   |  12 +-\n .../ou_validation/ou_validation_paired_effects.csv |  96 +--\n .../results/ou_validation/ou_validation_raw.csv    |   2 +-\n .../ou_validation/ou_validation_summary.csv        |  32 +-\n .../ou_validation/ou_validation_vertical.svg       |  12 +-\n 8 files changed, 459 insertions(+), 459 deletions(-)",
   "numpy": "1.26.4",
   "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
   "protocol": {
@@ -272,40 +272,40 @@
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4664157,
-      "sha256": "d569865462bffd8efbb3f1a315b3bf6f4fc587f2c7bb31b69777ea67c7b32873"
+      "bytes": 4664168,
+      "sha256": "7842cc2f18496ada608d1c9bc76e4a9b383bc5e7bbd239479b257f2a25ddf964"
     },
     "ou_validation_attitude.svg": {
       "bytes": 80175,
-      "sha256": "acbac2535384c600f1eadabcf98c7ed875af56155d5883b26ebe32746cbfc6c3"
+      "sha256": "68bf61142327a2d75fd995beaac84df81c5e82dd8c36870d6587466433799ffb"
     },
     "ou_validation_covsync.svg": {
       "bytes": 94092,
-      "sha256": "e12e20f85fd3442ca06e0d74efd88b509ab0bffd5b19cac1d0babf53f540c164"
+      "sha256": "e34633d8baaf5e2ee0a7979138d07c422ab79e0973521630d5e393ab84d9f57f"
     },
     "ou_validation_displacement.svg": {
       "bytes": 82468,
-      "sha256": "6bd71a7e5002ce3a945a62f876bf90f04e3effee5978a847cc6b191808f86bb8"
+      "sha256": "cd2a8ce0a57600e16348a24bca38ec8b578577678d1c3760359dba2f1f5630cb"
     },
     "ou_validation_macros.tex": {
       "bytes": 10700,
       "sha256": "44ba6c79b53ea64cf776cb82ada9912a3d8215bf6f289d201caa01730fbc4b8f"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 626702,
-      "sha256": "62266e2b7d7446f6794b3036d9cb5f084eca386a4a4687e7ed06bee550f1a787"
+      "bytes": 626728,
+      "sha256": "fa8c272844be9c4ed8750d8cf9b1262003c26ac23253695ed1eaa5e8073bf107"
     },
     "ou_validation_publication.tex": {
       "bytes": 12652,
       "sha256": "ac6e01aae5b58f8989b61aeab0f811ce6e771efafd33a68d3261a7ed48502989"
     },
     "ou_validation_raw.csv": {
-      "bytes": 560891,
-      "sha256": "b1e4da4a97e7074271ab3ee9249135a68c6ce6d85fdf73b12a40cbd4ce7a1abd"
+      "bytes": 560898,
+      "sha256": "6042f18aed8ba87825b4c126c607a2749db0230532f9c775c738b9ddff7972c7"
     },
     "ou_validation_summary.csv": {
-      "bytes": 653814,
-      "sha256": "1afae9079294e26265c62de7d403a05165ab0ab9905807d303f29e4511fad58e"
+      "bytes": 653792,
+      "sha256": "e35682537eecb20afd060a34c78dbffcaeb45a8a6c4cdc21228c662c2977f78c"
     },
     "ou_validation_table.tex": {
       "bytes": 15630,
@@ -324,8 +324,8 @@
       "sha256": "a6db9ea6395a14ad4ad4ded7b746a39be8c5dd0261fb4d45859ff4ff8f0a350c"
     },
     "ou_validation_vertical.svg": {
-      "bytes": 83518,
-      "sha256": "8628a074a9e593f5aef78a40bc95cf9f6e82a495d346908cbdbbc45fd755e2f9"
+      "bytes": 83520,
+      "sha256": "a0b5f482ae169e59aee6912e3f450797f5893bdb80297d3c64bb568f8b07b747"
     }
   },
   "source_files": {
