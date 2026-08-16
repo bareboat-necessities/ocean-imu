@@ -67,7 +67,7 @@ jobs:
             --output-dir /tmp/ou-validation-smoke
           python3 -u tools/ou_robustness.py \
             --mode smoke \
-            --sensitivity-scales '0.75,1.0,1.25' \
+            --sensitivity-scales '0.5,0.75,1.0,1.25,1.5' \
             --bootstrap-resamples 200 \
             --output-dir /tmp/ou-robustness-smoke
           python3 - <<'PY'
