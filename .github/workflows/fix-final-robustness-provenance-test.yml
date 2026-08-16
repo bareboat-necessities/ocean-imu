@@ -1,0 +1,31 @@
+name: fix-final-robustness-provenance-test
+
+on:
+  push:
+    branches: [agent/harden-ou-evidence-provenance]
+    paths:
+      - .fix-final-robustness-provenance-test-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/harden-ou-evidence-provenance
+      - name: Fix fresh-generation/restatement test semantics
+        run: |
+          python3 tools/fix_final_robustness_provenance_test.py
+          python3 -m py_compile tests/validation/test_ou_robustness.py
+      - name: Commit permanent non-workflow change
+        run: |
+          set -euo pipefail
+          rm tools/fix_final_robustness_provenance_test.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/validation/test_ou_robustness.py tools/fix_final_robustness_provenance_test.py
+          git commit -m "Align robustness provenance test with fresh full generation"
+          git push origin HEAD:refs/heads/agent/harden-ou-evidence-provenance
