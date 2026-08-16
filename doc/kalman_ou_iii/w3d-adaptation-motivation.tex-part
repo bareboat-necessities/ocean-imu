@@ -1,0 +1,29 @@
+\section{Adaptation Motivation and Regularization Scaling}
+\label{sec:adaptation-motivation}
+\label{app:rs-scaling}
+
+The estimator mathematics above is independent of how its bounded parameters
+are scheduled.  This section asks a different question: how should a practical
+marine implementation move the OU time scale, stationary acceleration scale,
+and integral-state regularization as the wave regime changes?  The analysis is
+used to identify sensible dimensions, time-scale similarity, and qualitative
+trade-offs.  It is not presented as a closed-form optimum for the complete
+21-state MEKF; the final schedule and its coefficients are selected and tested
+empirically in Sec.~\ref{sec:adaptation}.
+
+The starting point is the third-integral coordinate itself.  For a scalar
+acceleration process with characteristic standard deviation $\sigma_{aw}$ and
+time scale $\tau$, dimensional similarity gives the natural state scales
+\[
+a_w\sim\sigma_{aw},\qquad
+v\sim\sigma_{aw}\tau,\qquad
+p\sim\sigma_{aw}\tau^2,\qquad
+S\sim\sigma_{aw}\tau^3.
+\]
+The result is made exact for the OU prior below.  Because an unregularized third
+integral is not stationary, the theorem is a similarity statement; it does not
+by itself determine the Kalman pseudo-measurement covariance or its optimal
+closed-loop strength.
+
+\input{w3d-rs-scale-theorem.tex-part}
+\input{w3d-jonswap-integrated-elevation-clarification.tex-part}
