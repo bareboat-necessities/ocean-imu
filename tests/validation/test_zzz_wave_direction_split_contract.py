@@ -68,11 +68,11 @@ def _tracker_and_heel_material_are_scoped_as_unevaluated_appendices(self):
     ou_manuscript = self.read("kalman_ou-w3d.tex")
     fusion = self.read("w3d-fus-methods.tex-part")
     trackers = self.read("w3d-tracker-alternatives.tex-part")
-    heel = self.read("w3d-wind-heel.tex-part")
     wave_article = (DOC / "kalman-wave-dir.tex").read_text(encoding="utf-8")
     frequency = (DOC / "w3d-frequency-tracking.tex-part").read_text(
         encoding="utf-8"
     )
+    wind_heel_article = (DOC / "kalman-wind-heel.tex").read_text(encoding="utf-8")
 
     self.assertNotIn(r"\input{w3d-tracker-alternatives.tex-part}", ou_manuscript)
     self.assertNotIn("Frequency Tracking from Vertical Specific Force", fusion)
@@ -89,9 +89,14 @@ def _tracker_and_heel_material_are_scoped_as_unevaluated_appendices(self):
     self.assertIn("KalmANF", frequency)
     self.assertIn("not evaluated as direction-estimator tracker ablations", trackers)
 
-    # Steady heel remains companion material and is still outside the scored OU
-    # configuration; this split does not promote it into either publication.
-    self.assertIn("disabled in every deterministic simulation", heel)
+    # Wind-heel material now belongs to its standalone concept paper.  The old
+    # OU-III fragment was deliberately deleted, and neither publication should
+    # silently re-import it as evaluated OU evidence.
+    self.assertNotIn(r"\input{w3d-wind-heel.tex-part}", ou_manuscript)
+    self.assertFalse((DOC / "w3d-wind-heel.tex-part").exists())
+    self.assertIn("No performance result is", wind_heel_article)
+    self.assertIn("claimed in this draft", wind_heel_article)
+    self.assertIn("has not been validated in the reported OU-filter experiments", wind_heel_article)
 
 
 def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
