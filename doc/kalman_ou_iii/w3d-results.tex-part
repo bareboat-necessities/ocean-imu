@@ -27,16 +27,51 @@ a 3-D motion estimator rather than as a heave-only filter.}
 \label{fig:representative-3d-kinematics}
 \end{figure*}
 
-Horizontal error has a different physical source mix from vertical error.  To
-first order a small attitude error leaks gravity into horizontal acceleration,
-whereas the vertical channel has no corresponding first-order $g\,\delta\theta$
-term.  The reduced analysis in Sec.~\ref{sec:riccati-per-axis-limits} therefore
-predicts that improving horizontal performance is primarily an observability and
-low-frequency acceleration-error problem, not simply a reason to tighten the
-horizontal $S=0$ regularizer.  The full-filter evidence below is consistent with
-that interpretation: the current isotropic regularizer performs well across the
-tested headings, but no universal separate $x/y$ optimum is inferred from this
-limited directional set.
+\paragraph{Horizontal drift and isotropic regularization}
+\label{sec:riccati-per-axis-limits}
+The most striking horizontal diagnostic is not a tuned axis ratio but a large
+separation in the disturbance itself.  After attitude compensation, a small
+tilt error leaks gravity into horizontal acceleration approximately as
+\begin{equation}
+\boxed{
+\vct\varepsilon_{a,H}
+\simeq
+\begin{bmatrix}
+g\,\delta\theta_y\\-g\,\delta\theta_x
+\end{bmatrix}
++\vct b_{a,H}+\vct n_H .}
+\label{eq:riccati-axis-tilt-leak}
+\end{equation}
+The vertical channel has no corresponding first-order $g\,\delta\theta$ term,
+and without GNSS or another horizontal kinematic reference the residual
+horizontal bias is also less observable.  Direct drift-band diagnostics over
+the eight stationary calibration records put the world-$x$ and world-$y$
+low-frequency acceleration-error intensities at approximately $65$ and $102$
+times the vertical value, respectively.
+
+Yet the full-filter experiments do not support the intuitive response
+``regularize the noisy axis much harder.''  The reduced theorem of
+Sec.~\ref{sec:riccati-mis-specified-pseudo} explains why that lever is weak:
+$q_{\mathrm{eff}}$ enters the reduced preferred regularizer through only the
+$1/14$ power, so even a factor-of-ten error in drift intensity changes
+$r_{S,\mathrm{red}}^{\star}$ by only
+$10^{1/14}\simeq1.18$.  At the same reduced optimum, residual error carries the
+much stronger $q_{\mathrm{eff}}^{4/7}$ dependence.  A large horizontal
+disturbance can therefore dominate the residual motion error while moving the
+useful regularization scale only modestly.
+
+The desired-motion term pulls in the opposite direction.  The horizontal
+$m_{-4}$ content is a projection of real directional orbital motion, so its
+world-$x/world-y$ split changes with wave heading.  The present simulations
+sample too few independent headings to identify universal separate $x$ and $y$
+regularization constants from those moments.  The defensible full-estimator
+finding is instead that the current \emph{isotropic} $r_S$ performs well over
+the tested directional cases.  This shifts the engineering priority from
+``regularize the noisy horizontal axis harder'' toward reducing the actual
+low-frequency acceleration error---better tilt, better accelerometer-bias
+observability, GNSS, or another horizontal reference.  The $65$--$102\times$
+ratios are simulation diagnostics, not universal ocean constants, and the
+conclusion must be re-tested on a broader multidirectional ensemble.
 
 \subsection{Attitude and adaptation behavior}
 
