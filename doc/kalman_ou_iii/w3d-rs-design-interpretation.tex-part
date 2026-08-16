@@ -103,9 +103,16 @@ $\sigma_{aw}$ dependence performs best among the tested amplitude exponents.
 This is useful evidence for the deployed scheduler, but it does not identify a
 unique physical decomposition of $q_{\mathrm{eff}}$: attitude leakage, bias
 observability, model mismatch, and sensor noise all contribute to the
-low-frequency acceleration error seen by the complete MEKF.  The empirical
-result therefore validates the engineering law over the tested envelope rather
-than retroactively turning the reduced model into a proof of that law.
+low-frequency acceleration error seen by the complete MEKF.  A useful
+bookkeeping model, referenced by the scalar Riccati discussion above, is
+\begin{equation}
+R_a=R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2,
+\label{eq:riccati-Ra-floor-plus-model}
+\end{equation}
+where $\beta_m$ is not a fitted sensor-noise constant but a placeholder for
+sea-dependent model mismatch.  The empirical result therefore validates the
+engineering law over the tested envelope rather than retroactively turning this
+decomposition or the reduced model into a proof of that law.
 
 \subsection{Horizontal channels: large drift does not imply a much tighter anchor}
 \label{sec:riccati-per-axis}
