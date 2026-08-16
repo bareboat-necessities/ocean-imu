@@ -10894,7 +10894,6 @@
     "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
     "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
     "replay_inclusion_rule": "all completed replays with machine-readable metrics; deterministic simulator regression thresholds are not statistical acceptance criteria",
-    "restated_from": "reports/results/ou_robustness/ou_robustness.json",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {

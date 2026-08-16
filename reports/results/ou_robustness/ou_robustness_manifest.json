@@ -12,14 +12,21 @@
   "command": [
     "/usr/bin/python3",
     "tools/ou_robustness.py",
-    "--restat-from",
-    "reports/results/ou_robustness/ou_robustness.json",
+    "--mode",
+    "full",
+    "--sensitivity-scales",
+    "0.5,0.75,1.0,1.25,1.5",
+    "--bootstrap-resamples",
+    "10000",
+    "--combine-shards",
+    "--shard-dir",
+    "shards",
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "agent/reorganize-ou-iii-article",
-  "git_commit": "1c74f3b7eb79e4be193cebe8ad392fa2be4b5fa0",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   |  1 +\n reports/results/ou_validation/ou_validation.json   |  1 +\n .../ou_validation/ou_validation_manifest.json      | 23 ++++++++++------------\n 3 files changed, 12 insertions(+), 13 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "538a6337fae3542b4249d4d250905c0630fdf2d9",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 623 ++++++++++++++++++++-\n .../results/ou_robustness/ou_robustness_raw.csv    | 622 ++++++++++----------\n 2 files changed, 931 insertions(+), 314 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -138,7 +145,7 @@
     "sigma_a_mps2": 0.724445343,
     "tau_s": 2.17904091
   },
-  "numpy": "2.5.2",
+  "numpy": "1.26.4",
   "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
@@ -151,7 +158,6 @@
     "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
     "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
     "replay_inclusion_rule": "all completed replays with machine-readable metrics; deterministic simulator regression thresholds are not statistical acceptance criteria",
-    "restated_from": "reports/results/ou_robustness/ou_robustness.json",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {
@@ -238,11 +244,10 @@
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
-  "restated_from": "reports/results/ou_robustness/ou_robustness.json",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1401879,
-      "sha256": "0015c95a8d0ceac13e3f26162531891edf00fa72b0410960299457326a622e4b"
+      "bytes": 1401806,
+      "sha256": "4cdcdcb59c66870a8820cd1d0b1481d279abb566b608b78d0598580adb5e7b25"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1852,
@@ -301,12 +306,6 @@
     "tools/ou_validation.py": {
       "bytes": 150208,
       "sha256": "7166cacf8ddcf05bd4b1ed04f4bafabd005a5e2875bc358ca0c1a5db00bcc19d"
-    }
-  },
-  "sources_moved_since_rows": {
-    "tools/ou_validation.py": {
-      "bytes": 150437,
-      "sha256": "bf0857d4e8836b4866b3c6beae108ee68fdf7647df7950612799cf46a0d2ab8c"
     }
   }
 }
