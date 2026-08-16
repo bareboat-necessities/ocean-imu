@@ -1,0 +1,103 @@
+\section{Results and Empirical Observations}
+\label{sec:results}
+
+The representative traces below are included to make the three-dimensional
+behavior visible before the aggregate statistics.  They are not independent
+experiments: each is one deterministic realization from the same simulation
+family used by the paired study.  Statistical claims are taken from the
+versioned ten-seed evidence that follows.
+
+\subsection{Representative three-dimensional reconstruction}
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \IncludePGF{w3d_ou3_jonswap_medium_xykin.pgf}
+  \small (a) Horizontal surge/sway kinematics.
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \IncludePGF{w3d_ou3_jonswap_medium_zkin.pgf}
+  \small (b) Vertical kinematics.
+\end{minipage}
+\caption{Representative $H_s=\SI{1.5}{m}$ JONSWAP reconstruction.  Horizontal
+and vertical channels are shown together because the estimator is evaluated as
+a 3-D motion estimator rather than as a heave-only filter.}
+\label{fig:representative-3d-kinematics}
+\end{figure*}
+
+Horizontal error has a different physical source mix from vertical error.  To
+first order a small attitude error leaks gravity into horizontal acceleration,
+whereas the vertical channel has no corresponding first-order $g\,\delta\theta$
+term.  The reduced analysis in Sec.~\ref{sec:riccati-per-axis-limits} therefore
+predicts that improving horizontal performance is primarily an observability and
+low-frequency acceleration-error problem, not simply a reason to tighten the
+horizontal $S=0$ regularizer.  The full-filter evidence below is consistent with
+that interpretation: the current isotropic regularizer performs well across the
+tested headings, but no universal separate $x/y$ optimum is inferred from this
+limited directional set.
+
+\subsection{Attitude and adaptation behavior}
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \IncludePGF{w3d_ou3_jonswap_medium.pgf}
+  \small (a) Roll, pitch, and yaw reconstruction/error.
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \IncludePGF{w3d_ou3_jonswap_medium_tuner.pgf}
+  \small (b) Wave-band tuning and applied parameters.
+\end{minipage}
+\caption{Representative attitude and adaptation traces.  The first tuner panel
+shows the wave-band frequency implied by the applied OU time scale,
+$f_{\mathrm{wave,appl}}=1/(2\tau_{\mathrm{appl}})$, which is the smoothed
+schedule derived from the wave-period estimator.  The acceleration-band carrier
+retained for wave-direction demodulation is intentionally omitted because it is
+not used by the deployed OU-III adaptation path.}
+\label{fig:attitude-and-tuning}
+\end{figure*}
+
+The trace is best read together with Sec.~\ref{sec:adaptation}: wave period and
+band-limited acceleration variance are estimated from the measurement-only
+proxy, converted to targets, and then smoothed before being applied.  The plot
+therefore shows the parameters actually seen by the MEKF rather than an
+obsolete carrier-frequency diagnostic from a different subsystem.
+
+\subsection{Bias tracking}
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \IncludePGF{w3d_ou3_jonswap_medium_acc_bias.pgf}
+  \small (a) Accelerometer-bias tracking.
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \IncludePGF{w3d_ou3_jonswap_medium_gyro_bias.pgf}
+  \small (b) Gyroscope-bias tracking.
+\end{minipage}
+\caption{Representative true and estimated sensor-bias trajectories.  The
+accelerometer truth uses a random walk while the estimator uses a slow
+mean-reverting residual around a fixed temperature-calibration mean; agreement
+therefore measures robustness to model mismatch, not validation of the thermal
+model itself.}
+\label{fig:bias-tracking}
+\end{figure*}
+
+\subsection{Comparative results and ablations}
+
+\input{w3d-baseline-comparison.tex-part}
+
+\subsection{Embedded portability}
+\label{sec:real-hardware-platform}
+
+The same estimator source compiles and executes on an M5Stack AtomS3R
+(ESP32--S3) with calibrated MEMS input.  This establishes functional source
+portability only.  Processor load, memory use, power, deadline margin, thermal
+behavior, and externally referenced wave-reconstruction accuracy were not
+measured in the reported study and are not inferred from successful execution.
