@@ -1,0 +1,13 @@
+\section{Integral-State Regularization Analysis}
+\label{sec:integral-regularization-theory}
+
+The $\vct S=\vct 0$ pseudo-measurement is part of the core estimator, not part
+of the sea-state tuner.  It is also deliberately false for real wave motion:
+$\vct S$ is generally nonzero.  Its role is therefore best understood as a
+regularizer whose Kalman gain suppresses low-frequency integration drift while
+inevitably rejecting some desired low-frequency motion.  This section analyzes
+that mechanism with reduced linear models before any particular adaptation law
+is introduced.
+
+\input{w3d-rs-riccati-analysis.tex-part}
+\input{w3d-rs-reduced-mse.tex-part}
