@@ -1,0 +1,72 @@
+\subsection{Reduced drift--distortion optimum}
+\label{sec:riccati-mis-specified-pseudo}
+
+The Riccati analysis above describes how a fictitious $S=0$ observation changes
+the estimator covariance.  It does not yet price the fact that the observation
+is physically false: the true wave process has nonzero $S$ content, and a
+stronger regularizer therefore rejects some desired low-frequency motion.  A
+reduced asymptotic model makes that missing cost explicit.
+
+At frequencies below the posterior acceleration correlation rate, approximate
+the residual acceleration error by white noise of zero-frequency intensity
+$q_{\mathrm{eff}}$ and let the continuous-equivalent $S$ correction have
+regularization bandwidth
+\begin{equation}
+\omega_R=\left(\frac{q_{\mathrm{eff}}}{R_ST_S}\right)^{1/6}.
+\label{eq:reduced-omega-r}
+\end{equation}
+For a wave spectrum sufficiently separated above that correction bandwidth, the
+position mean-square error has the leading form
+\begin{equation}
+\boxed{
+J_{\mathrm{red}}(\omega_R)
+\simeq
+\frac{3q_{\mathrm{eff}}}{2\omega_R^3}
++4m_{-4}\omega_R^4,}
+\qquad
+m_{-4}:=\int_{\Omega_{\mathrm{wave}}}
+\frac{S_p(\omega)}{\omega^4}\,d\omega .
+\label{eq:reduced-mse-tradeoff}
+\end{equation}
+The first term is residual-integrator drift; the second is distortion of the
+real wave motion by the false zero observation.  The reduced-model minimizer is
+therefore
+\begin{equation}
+\boxed{
+(\omega_R^{\star})^7
+=\frac{9}{32}\frac{q_{\mathrm{eff}}}{m_{-4}},}
+\label{eq:reduced-optimal-omega}
+\end{equation}
+and, with $R_S=r_S^2$,
+\begin{equation}
+\boxed{
+r_{S,\mathrm{red}}^{\star}
+=\left(\frac{32}{9}\right)^{3/7}
+q_{\mathrm{eff}}^{1/14}
+ m_{-4}^{3/7}T_S^{-1/2}.}
+\label{eq:reduced-optimal-rs}
+\end{equation}
+At this stationary point the minimized error scales as
+\begin{equation}
+J_{\mathrm{red}}^{\star}
+\propto q_{\mathrm{eff}}^{4/7}m_{-4}^{3/7}.
+\label{eq:reduced-optimal-mse-scaling}
+\end{equation}
+
+The contrast between Eqs.~\eqref{eq:reduced-optimal-rs} and
+\eqref{eq:reduced-optimal-mse-scaling} is important.  Drift intensity enters
+the reduced preferred regularizer through only the $1/14$ power, but it enters
+the minimum achievable residual error through the much larger $4/7$ power.
+Thus a disturbance can dominate the residual error without implying a
+comparably large change in the useful regularization strength.
+
+Equations~\eqref{eq:reduced-optimal-omega}--\eqref{eq:reduced-optimal-rs}
+are an exact minimizer of the stated reduced asymptotic cost, not an exact
+solution for the complete 21-state MEKF.  The full estimator couples attitude,
+gyro bias, residual accelerometer bias, and all three translational axes through
+the covariance; its $S=0$ update has a full Kalman gain;
+$q_{\mathrm{eff}}$ is endogenous to those coupled errors; the pseudo-update is
+discrete; and the spectral-separation approximation is least reliable during
+changing or multimodal seas.  The result is therefore used as a sensitivity and
+mechanism theorem, not as a claim that the production scheduler has a
+closed-form full-MEKF optimum.

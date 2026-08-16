@@ -2,304 +2,120 @@
 \section{Continuous Magnetic Hard-Iron Correction}
 \label{sec:mag-hard-iron}
 
-The startup alignment of Sec.~\ref{sec:mag-two-stage} delivers a magnetic world
-reference and a heading gauge, and once it has run, the residual heading error
-of this filter is no longer an attitude-tracking error.  It is a property of
-the reference the alignment learned.  This section states what that error is,
-why no startup window can remove it, and what the deployed filter does about
-it: a continuously running, exogenous estimator of the body-fixed magnetometer
-offset, whose answer is applied to the measurement stream rather than to any
-attitude state.
+The startup alignment of Sec.~\ref{sec:mag-two-stage} establishes a magnetic
+world reference and therefore fixes the yaw gauge.  A body-fixed magnetometer
+offset biases that gauge even when the attitude tracker itself is stable.  The
+deployed correction is consequently formulated as a continuously running,
+measurement-only estimator of the additive magnetic offset.  Its output changes
+the magnetometer measurement model; it does not write an attitude state or reset
+Kalman covariance.
 
-\subsection{The standing error is a gauge, not a tracking error}
+\subsection{Why the standing error is a gauge error}
 \label{sec:mag-gauge}
 
-On the PM--Stokes $H_s=\SI{1.5}{m}$ record with the correction disabled, the
-scored yaw error has mean \SI{2.146}{\degree} and standard deviation
-\SI{0.265}{\degree} over the \SI{900}{s} window.  The filter is not failing to
-track heading; it is pointing \SI{2.1}{\degree} away from magnetic north for
-the whole record and holding that direction steadily.
-
-The reason is visible in what the alignment averages.  With $\mat A_i$ the
-yaw-stripped body-to-level rotation at magnetometer sample $i$, a body-fixed
-offset $\vct b_m$ and the level-frame field $\vct B_\ell$, the measurement is
-\begin{equation}
-\vct m_i=\mat A_i^{\top}\vct B_\ell+\vct b_m+\vct n_i ,
-\label{eq:mag-offset-model}
-\end{equation}
-so the average the acquisition declares to be north is
-\begin{equation}
-\bar{\vct w}
-:=\frac{1}{N}\sum_i \mat A_i\vct m_i
-=\vct B_\ell+\bar{\mat A}\,\vct b_m ,
-\qquad
-\bar{\mat A}:=\frac{1}{N}\sum_i \mat A_i .
-\label{eq:mag-ref-average}
-\end{equation}
-For a hull at fixed heading $\bar{\mat A}\approx\Id$, and the learned north is
-the direction of $\vct B_\ell+\vct b_m$ rather than of $\vct B_\ell$.  The
-angle between them is the standing yaw error.  The simulator's hard-iron
-residual is drawn from a \SI{2.0}{\micro\tesla} half-range per axis
-(Table~\ref{tab:sim_constants}); the shipped draw is \SI{1.26}{\micro\tesla} in
-norm with a horizontal part of \SI{0.83}{\micro\tesla}.  Against the simulated
-field --- \SI{52}{\micro\tesla} total at \SI{66.5}{\degree} inclination, so
-\SI{20.7}{\micro\tesla} horizontal --- that is an angle of \SI{2.3}{\degree},
-which is the standing error the filter reports, to the accuracy this
-small-angle argument deserves.
-
-Nothing downstream can recover it, because the world frame \emph{is} that
-direction: the yaw error is a gauge choice, and every consistent estimator
-inside the filter agrees with it.  Removing each part of the simulator's
-magnetometer error with simulator truth, as a non-deployable oracle
-diagnostic, locates it unambiguously.  Over the eight records, yaw RMS mean and
-worst are \SI{1.835}{\degree}/\SI{2.162}{\degree} uncorrected,
-\SI{1.811}{\degree}/\SI{2.121}{\degree} with soft iron and misalignment removed
-perfectly, \SI{0.496}{\degree}/\SI{1.084}{\degree} with the hard iron removed
-perfectly, and \SI{0.479}{\degree}/\SI{1.059}{\degree} with both.  On the
-shipped draw essentially all of the standing error is the offset, and perfect
-knowledge of it would leave about half a degree.
-
-\subsection{Why a startup window cannot identify the offset}
-\label{sec:mag-excitation}
-
-Estimating $\vct b_m$ jointly with $\vct B_\ell$ from \eqref{eq:mag-offset-model}
-is only possible through attitude change: at a single attitude an offset and a
-rotated world field produce the same reading.  Eliminating $\vct B_\ell$
-analytically from the weighted normal equations of \eqref{eq:mag-offset-model}
-leaves
-\begin{equation}
-\underbrace{\left(\Id-\bar{\mat A}^{\top}\bar{\mat A}\right)}_{=:\;\mat M}
-\vct b_m
-=\bar{\vct m}-\bar{\mat A}^{\top}\bar{\vct w},
-\qquad
-\bar{\vct m}:=\frac{1}{N}\sum_i\vct m_i ,
-\label{eq:mag-normal}
-\end{equation}
-so the world field never becomes a filter state and $\mat M$ alone decides what
-is identifiable.  For roll and pitch of standard deviation $\sigma_r$,
-$\sigma_p$ about a fixed heading,
-\begin{equation}
-\mat M\approx\diag\!\left(\sigma_p^{2},\;\sigma_r^{2},\;
-\sigma_r^{2}+\sigma_p^{2}\right)
-\label{eq:mag-excitation}
-\end{equation}
-to second order, which is of order $10^{-3}$ for a hull working through a few
-degrees.  A \SI{15}{s} acquisition window buys a few wave periods of that, and
-the fix is not a longer window: the deficiency is in the conditioning of
-\eqref{eq:mag-normal}, not in the sample count.  The window has to stay open.
-
-\subsection{Estimator}
-\label{sec:mag-hi-estimator}
-
-The deployed filter therefore runs the accumulation for the whole life of the
-record.  Exponentially weighted sufficient statistics of $(\mat A_i,\vct m_i)$
-with memory \SI{600}{s} are maintained at magnetometer rate, and
-\eqref{eq:mag-normal} is solved once per second.  Two properties make the
-estimator exogenous with respect to the MEKF in the same sense as the tuner of
-Sec.~\ref{sec:startup-policy}: the rotation is the yaw-stripped tilt of the
-private Mahony observer, built from gravity alone, and the magnetometer stream
-is the raw one, not the stream with the estimator's own answer already
-subtracted.  No MEKF state is read, and no loop is closed through the filter.
-
-Stripping yaw from the accumulation frame does two things.  It keeps the
-observer's unobservable, drifting heading out of the statistics.  And it ties
-the frame to the hull's own heading, so a hull that turns makes $\vct B_\ell$
-move within the frame and raises the model residual immediately, which is what
-the residual gate below is for.
-
-\paragraph{Regularization} The solve is ridge-regularized, and the ridge prices
-model error rather than sample noise.  Inverting a matrix of order $10^{-3}$
-multiplies whatever \eqref{eq:mag-offset-model} does not carry by up to a
-thousand, and what it does not carry is soft iron and sensor misalignment ---
-both modulated by the very tilt the offset is read from, so neither averages
-away as the record lengthens.  An unregularized fit does not converge on the
-offset; it converges on the offset plus an aliased image of the distortion,
-which over the full \SI{1200}{s} against truth attitude returns about
-$1.8\times$ the true offset on every well-excited record and overshoots the
-correction into a heading error of the opposite sign.
-
-The size of that aliased error is of order $\varepsilon\lVert\vct B\rVert$ ---
-the fractional distortion times the field --- largely independently of sea
-state, because it enters the right-hand side of \eqref{eq:mag-normal} through
-the same tilt that carries the signal.  A hull working through
-\SI{30}{\degree} is not fitting a cleaner offset than one working through five;
-it is fitting the same wrong one with more confidence.  A fixed ridge therefore
-shrinks hardest exactly where the fit is most trustworthy.  The deployed ridge
+Let $\mat A_i$ be the yaw-stripped body-to-level rotation supplied by the
+private Mahony proxy at magnetometer sample $i$, $\vct B_\ell$ the field in that
+level frame, and $\vct b_m$ a body-fixed additive offset.  The raw measurement
 is
 \begin{equation}
-\left(\mat M+\left(\rho_0+\rho_1\,\tfrac{1}{3}\operatorname{tr}\mat M\right)
-\Id\right)\hat{\vct b}_m=\bar{\vct m}-\bar{\mat A}^{\top}\bar{\vct w},
+\vct m_i=\mat A_i^{\top}\vct B_\ell+\vct b_m+\vct n_i .
+\label{eq:mag-offset-model}
+\end{equation}
+A startup acquisition that averages the rotated field obtains
+\begin{equation}
+\bar{\vct w}
+=\frac{1}{N}\sum_i\mat A_i\vct m_i
+=\vct B_\ell+\bar{\mat A}\vct b_m,
+\qquad
+\bar{\mat A}=\frac{1}{N}\sum_i\mat A_i .
+\label{eq:mag-ref-average}
+\end{equation}
+For a vessel that maintains approximately one heading,
+$\bar{\mat A}\approx\mat I$ and the learned reference therefore points along
+$\vct B_\ell+\vct b_m$, not the true field.  Once that direction has defined
+north, every internally consistent attitude update preserves the same gauge
+error.  A longer startup average reduces random noise but cannot separate the
+offset from the world field at a single attitude.
+
+Eliminating $\vct B_\ell$ from the weighted normal equations makes the
+identifiability condition explicit,
+\begin{equation}
+\underbrace{(\mat I-\bar{\mat A}^{\top}\bar{\mat A})}_{\mat M}\vct b_m
+=\bar{\vct m}-\bar{\mat A}^{\top}\bar{\vct w} .
+\label{eq:mag-normal}
+\end{equation}
+Small roll and pitch variations make $\mat M$ nonzero, but for only a few
+degrees of excitation its smallest eigenvalues remain small.  The limitation is
+therefore conditioning, not sample count, which is why the estimator keeps the
+window open after startup.
+
+\subsection{Exogenous continuous offset estimator}
+\label{sec:mag-hi-estimator}
+
+Exponentially weighted sufficient statistics of $(\mat A_i,\vct m_i)$ are
+maintained for the lifetime of the record with an effective memory of
+\SI{600}{s}; the offset solve is updated once per second.  The rotation comes
+from the yaw-stripped Mahony proxy and the magnetic input is the \emph{raw}
+measurement before any estimated offset is subtracted.  Thus neither the MEKF
+state nor the estimator's own corrected stream is fed back into the fit.
+
+Because scale, cross-axis, and misalignment errors are not part of
+Eq.~\eqref{eq:mag-offset-model}, an unregularized inverse of the weakly excited
+$\mat M$ can alias those distortions into a spurious hard-iron estimate.  The
+deployed solve therefore uses an excitation-scaled ridge,
+\begin{equation}
+\left[\mat M+\left(\rho_0+ho_1\frac{\operatorname{tr}\mat M}{3}\right)
+\mat I\right]\hat{\vct b}_m
+=\bar{\vct m}-\bar{\mat A}^{\top}\bar{\vct w},
 \label{eq:mag-ridge}
 \end{equation}
-with $\rho_1=0.5$ scaling with the mean excitation so that the fraction of the
-offset returned is a property of the sensor rather than of the weather, and
-$\rho_0=\num{4e-3}$ as an absolute floor for a window with almost no excitation
-at all.  A unit test pins the difference: replaying one offset and one
-distortion through a small and a large sea, the floor alone returns \num{0.27}
-and \num{0.88} of the offset, while \eqref{eq:mag-ridge} returns \num{0.24} and
-\num{0.66}.
+with $\rho_0=4\times10^{-3}$ and $\rho_1=0.5$.  The excitation-dependent term
+prevents a large sea from being interpreted as automatically providing a
+cleaner sensor model: it provides more geometric information, but the
+unmodeled distortion grows through the same geometry.
 
-\paragraph{Validity gates} An estimate is offered only when the window has
-reached \num{500} effective samples and an excitation
-$N\lambda_{\min}(\mat M)\geq 2$, when the fitted offset is below \pct{35} of
-the measured field norm, and when the weighted residual of
-$\mat A_i\vct m_i=\vct B_\ell+\mat A_i\vct b_m$ is at or below
-\SI{3}{\micro\tesla} RMS.  The excitation gate answers only whether the hull
-has moved at all --- how much of a poorly excited window survives is
-\eqref{eq:mag-ridge}'s business, and a gate set high enough to act as a second
-shrinkage stands the estimator down in exactly the calm seas where the standing
-error is largest.
+An estimate is offered only after at least \num{500} effective samples, when
+$N\lambda_{\min}(\mat M)\ge2$, when the fitted offset is below \pct{35} of the
+measured field norm, and when the weighted residual of the level-frame model is
+no greater than \SI{3}{\micro\tesla} RMS.  These gates reject insufficient
+excitation and obvious model failure; they cannot detect the part of soft-iron
+or misalignment error that the additive model explains successfully.
 
-\subsection{Applying the estimate without preserving the gauge}
+\subsection{Application without an attitude reset}
 \label{sec:mag-hi-apply}
 
-The obvious way to stay self-consistent is to subtract $\hat{\vct b}_m$ from
-every sample and subtract the matching $\bar{\mat A}\hat{\vct b}_m$ from the
-reference, per \eqref{eq:mag-ref-average}.  That is exactly wrong, and it is a
-measurable no-op: the innovation
-\begin{equation}
-\vct m-\hat{\vct b}_m
--\mat A^{\top}\!\left(\bar{\vct w}-\bar{\mat A}\hat{\vct b}_m\right)
-\label{eq:mag-noop}
-\end{equation}
-is identical to the uncorrected one at the attitude the filter already holds,
-because $\mat A^{\top}\bar{\mat A}\approx\Id$ for a hull at fixed heading.
-Forcing a \SI{10}{\micro\tesla} offset through that path moves the scored yaw by
-\SI{0.3}{\degree}.  A change that preserves the innovation preserves the gauge,
-and the gauge is the error being removed.
+Subtracting the same offset from both the measurement and the learned magnetic
+reference would preserve the existing innovation and therefore preserve the
+wrong yaw gauge.  The implementation instead slews the offset subtraction into
+the raw magnetometer stream with a \SI{45}{s} time constant while retaining the
+canonical reference direction established by acquisition.  Only the reference
+magnitude and dip are adjusted by the delta implied by the applied offset.  The
+ordinary magnetometer Kalman update then moves yaw toward the newly consistent
+field direction.
 
-What the filter does instead is to break that identity deliberately:
+No attitude state is written and no covariance is reset.  Once startup
+acquisition is complete, the hard-iron correction is therefore a bounded change
+of measurement-model parameters inside the normal Live recursion rather than a
+hybrid reinitialization event.  If the estimator never validates, the
+measurement stream and reference remain unchanged.
 
-\begin{itemize}[leftmargin=1.2em]
-  \item the offset is subtracted from the magnetometer stream, slewed toward
-        the fitted value with a \SI{45}{s} time constant so the measurement
-        model never steps; and
-  \item the world reference stays in the canonical form the acquisition
-        produced --- horizontal magnitude on $+X$, vertical below it --- with
-        only its magnitude and vertical component moved, and only by the
-        \emph{delta} that the applied offset makes to them, both evaluated
-        against the statistics as they stand.
-\end{itemize}
-
-The corrected field then implies a different heading than the reference
-asserts, and the magnetometer update of Sec.~\ref{sec:measurement_model} walks
-yaw onto it over its own time constant.  No attitude state is written and no
-covariance is reset: the correction is a change of measurement-model
-parameters, which is what keeps it inside the Live recursion analyzed in
-Sec.~\ref{app:iss-stability} rather than alongside the one-time reconfiguration
-events that are excluded from it.
-
-Taking the magnitude and dip as a delta, rather than adopting the estimator's
-own window wholesale, is also not cosmetic.  That window is longer and less
-selective than the one the acquisition gated, and adopting its magnitude and
-dip costs about a fifth of the roll accuracy on the moderate seas while the
-offset correction itself costs none.  With the delta form, an estimator that
-never validates leaves every scored metric bit-identical.  Accumulation begins
-with the first magnetometer sample, but nothing is applied until the two-stage
-acquisition has finished, so first heading, handoff and refinement are exactly
-as Sec.~\ref{sec:mag-two-stage} describes them.
-
-\subsection{Measured effect}
-\label{sec:mag-hi-results}
-
-Table~\ref{tab:mag-hi-yaw} reports the deterministic protocol of
-Sec.~\ref{sec:sim-and-eval} --- one realization per record, default seeds, the
-final \SI{900}{s} of a \SI{1200}{s} replay, and not the ten-seed study --- with
-the correction disabled and enabled.  Every record improves, the eight-record mean falls from
-\SI{1.835}{\degree} to \SI{0.822}{\degree}, and the worst record falls from
-\SI{2.162}{\degree} to \SI{1.063}{\degree}, which is close to the
-\SI{1.059}{\degree} the oracle of Sec.~\ref{sec:mag-gauge} obtains with both
-error sources removed perfectly.
-
-\begin{table}[t]
-  \centering
-  \caption{Yaw RMS with the continuous hard-iron correction disabled and
-           enabled (deterministic protocol, last \SI{900}{s}).}
-  \label{tab:mag-hi-yaw}
-  \setlength{\tabcolsep}{4pt}
-  \renewcommand{\arraystretch}{1.08}
-  \footnotesize
-  \sisetup{detect-all}
-  \begin{tabular}{@{}l
-                  S[table-format=1.2]
-                  S[table-format=1.3]
-                  S[table-format=1.3]
-                  S[table-format=1.3]
-                  S[table-format=1.3]
-                  @{}}
-    \toprule
-    {Case} & {$H_s$} & \multicolumn{2}{c}{Yaw RMS (\si{\degree})}
-           & \multicolumn{2}{c}{Pitch RMS (\si{\degree})} \\
-    \cmidrule(lr){3-4}\cmidrule(lr){5-6}
-    {} & {\si{m}} & {off} & {on} & {off} & {on} \\
-    \midrule
-    JONSWAP    & 0.27 & 2.075 & 1.063 & 0.174 & 0.175 \\
-    JONSWAP    & 1.50 & 1.825 & 1.050 & 0.169 & 0.152 \\
-    JONSWAP    & 4.00 & 1.298 & 1.041 & 0.358 & 0.330 \\
-    JONSWAP    & 8.50 & 1.104 & 0.709 & 0.469 & 0.445 \\
-    \addlinespace
-    PM--Stokes & 0.27 & 2.155 & 0.741 & 0.200 & 0.200 \\
-    PM--Stokes & 1.50 & 2.162 & 1.026 & 0.223 & 0.208 \\
-    PM--Stokes & 4.00 & 2.053 & 0.473 & 0.278 & 0.235 \\
-    PM--Stokes & 8.50 & 2.007 & 0.476 & 0.259 & 0.196 \\
-    \midrule
-    {mean}     & {}   & 1.835 & 0.822 & 0.266 & 0.243 \\
-    {worst}    & {}   & 2.162 & 1.063 & 0.469 & 0.445 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-The correction is a property of the magnetometer path rather than of the
-translational structure, so the matched OU--II architecture used as the
-comparison baseline throughout Sec.~\ref{sec:observer-comparison} carries it on
-the same settings and improves by the same amount --- eight-record mean yaw RMS
-\SIrange{1.887}{0.813}{\degree}, worst \SIrange{2.161}{1.089}{\degree}, landing
-within three hundredths of a degree of the figures below.  None of the
-OU--III-minus-OU--II difference reported in this paper is therefore attributable
-to this section.
-
-Pitch improves slightly, for the same reason yaw does --- the reference's dip
-moves with the offset --- while roll and the displacement channels do not move:
-mean roll is \SI{0.339}{\degree} against \SI{0.340}{\degree}, and mean 3D
-displacement RMS \SI{0.6212}{m} against \SI{0.6199}{m}.  The vertical channel
-is unchanged to the precision the deterministic table reports.  The
-regression sentinel on yaw is re-derived accordingly, from \SI{2.2}{\degree} to
-\SI{1.068}{\degree}; the matched ablation is the disabled correction, and it now
-exceeds that sentinel, as a limit fitted to the deployed configuration should.
-
-\subsection{What the estimator cannot do}
+\subsection{Limitations of the additive model}
 \label{sec:mag-hi-limits}
 
-The correction removes one of the two things that shift the gauge, and there is
-no local signal that says which one the filter is facing.  Repeating the
-deterministic protocol over five draws of the magnetometer calibration
-(\texttt{W3D\_INIT\_SEED} of the shipped default, \num{11}, \num{23}, \num{202}
-and \num{3033}, which redraw the offset, the scale and cross-axis terms and the
-misalignment together), \num{40} record/draw pairs, the eight-record mean yaw
-falls from \SI{2.810}{\degree} to \SI{2.124}{\degree} and the worst pair from
-\SI{5.258}{\degree} to \SI{4.510}{\degree}.  Ten of the forty are worse with
-the correction on, and all ten belong to two draws --- the two whose standing
-error is not offset-dominated.  On one of them the mean uncorrected yaw is
-already \SI{0.738}{\degree}, half that of any other draw: there is little for a
-hard-iron estimator to win, and the fraction of the distortion it aliases into
-its answer moves the gauge the wrong way.  On the other, draw \num{23}, the
-same oracle diagnostic says why --- removing its hard iron perfectly takes yaw
-from \SI{2.98}{\degree} to \SI{2.74}{\degree}, while removing its soft iron and
-misalignment perfectly takes it to \SI{1.02}{\degree}.
+The estimator identifies only a body-fixed additive offset.  It cannot in
+general separate hard iron from soft-iron scale/cross-axis error or sensor
+misalignment using the fixed-heading directional records of this study.  The
+aliased part of those distortions can satisfy the residual gate because it is,
+by construction, the part the additive model explains.  Multi-heading
+excitation is required to identify a full distortion model; the current
+implementation instead stands down when hull turning violates its residual
+assumptions.
 
-Neither case is detectable from inside the filter.  The aliased part of the
-distortion is, by construction, the part the model \emph{explains}, so it does
-not raise the residual the validity gate watches: the estimator reports
-\SI{1.683}{\micro\tesla} on the shipped draw and \SI{1.685}{\micro\tesla} on
-draw \num{23}, against a white-noise floor of \SI{1.386}{\micro\tesla} --- the
-per-axis \SI{0.80}{\micro\tesla} of Table~\ref{tab:sim_constants} over three
-axes.  The residual gate catches a turning hull, not a misaligned sensor.
-
-Two consequences are worth stating plainly.  The shrinkage of
-\eqref{eq:mag-ridge} is not a tuning convenience but the bound on that failure
-mode, which is why the ridge is left large enough to give up real accuracy on
-the favourable draws.  And the way to actually fix a misalignment-dominated
-draw is to identify the distortion, which requires heading excitation these
-fixed-heading records do not contain.  The estimator stands itself down on a
-turn today rather than exploiting it; using the turn is the obvious next piece
-of work and is deliberately not attempted here.
+This failure mode is measured rather than assumed away.  Across additional
+magnetometer-calibration draws, cases whose standing error is
+misalignment-dominated can become worse when the additive correction is
+applied, even though the shipped draw is strongly offset dominated.  The ridge
+in Eq.~\eqref{eq:mag-ridge} is therefore a bound on model misspecification, not
+merely numerical regularization.  The quantitative deterministic result for the
+reported draw is presented with the other empirical observations in
+Sec.~\ref{sec:mag-hi-results}.

@@ -419,8 +419,8 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         self.assertEqual({float(row["window_s"]) for row in raw}, {900.0})
         self.assertTrue(
             all(
-                int(row["simulator_return_code"])
-                == 1 - int(row["quality_gate_pass"])
+                "simulator_return_code" not in row
+                and "quality_gate_pass" not in row
                 for row in raw
             )
         )

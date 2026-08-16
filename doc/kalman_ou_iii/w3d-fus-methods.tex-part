@@ -1,137 +1,23 @@
 % =======================================================
-\section{Variance-Informed Online Adaptation}
+\section{Engineering Adaptation Pipeline}
 \label{sec:adaptation}
-
-\subsection{Spectral scaling and pseudo-measurement on \texorpdfstring{$S$}{S}}
-\label{sec:spectral-Rs}
-\label{app:rs-scaling}
-
-The pseudo-measurement on the triple-integral state is written using a scalar
-standard-deviation scale $r_S$,
-\[
-y_S=0=S+n_S,\qquad n_S\sim\mathcal{N}(0,r_S^2).
-\]
-For three-axis operation, the corresponding vector $\vct{r}_S$ is squared
-componentwise to form the covariance $\mat{R}_S$, as defined in
-\eqref{eq:RS-from-rS}.  The channel is a regularizer, not a physical sensor.
-The purpose of the scaling argument below is to choose $r_S$ on the same
-physical scale as the natural fluctuations of $S$ within a stated family of
-wave spectra, at a reference pseudo-update cadence.  Section
-\ref{sec:riccati-similarity-design-guidance} revisits the cadence itself and
-Sec.~\ref{sec:riccati-deployed-cadence} records what the wrapper actually
-schedules.
-
-\subsection{Variance of \texorpdfstring{$S$}{S} from the acceleration spectrum}
-
-Let $a(t)$ denote vertical acceleration and let
-\[
-\dot v=a,\qquad \dot p=v,\qquad \dot S=p,
-\]
-so that $S$ is the triple time-integral of $a$.  In the frequency domain,
-\[
-H_S(j\omega)=\frac{1}{(j\omega)^3},\qquad
-|H_S(j\omega)|^2=\frac{1}{\omega^6}.
-\]
-We use a two-sided angular-frequency PSD $S_a^{(2)}(\omega)$ with convention
-\[
-\Var[a]=\frac{1}{2\pi}\int_{-\infty}^{\infty}S_a^{(2)}(\omega)\,d\omega .
-\]
-For a real process the PSD is even, and therefore
-\begin{equation}
-\Var[S]
-=\frac{1}{2\pi}\int_{-\infty}^{\infty}
-\frac{S_a^{(2)}(\omega)}{\omega^6}\,d\omega
-=\frac{1}{\pi}\int_0^{\infty}
-\frac{S_a^{(2)}(\omega)}{\omega^6}\,d\omega .
-\label{eq:varS-two-sided}
-\end{equation}
-Equivalently, with the one-sided PSD $S_a^{(1)}(\omega)=2S_a^{(2)}(\omega)$ for
-$\omega>0$,
-\[
-\Var[S]=\frac{1}{2\pi}\int_0^{\infty}
-\frac{S_a^{(1)}(\omega)}{\omega^6}\,d\omega .
-\]
-
-For linear deep-water waves, displacement $\eta$ and acceleration satisfy
-$a(\omega)=-(j\omega)^2\eta(\omega)$, so
-$S_a^{(2)}(\omega)=\omega^4S_\eta^{(2)}(\omega)$ and
-\[
-\Var[S]=\frac{1}{\pi}\int_0^{\infty}
-\frac{S_\eta^{(2)}(\omega)}{\omega^2}\,d\omega .
-\]
-
-\subsection{Normalization and spectral shape factor}
-
-Let $\sigma_{aw}^2=\Var[a]$ and let $\tau$ be a characteristic time scale. Write
-the two-sided PSD for positive frequency as
-\begin{equation}
-S_a^{(2)}(\omega)=\sigma_{aw}^2\tau\psi_a(\omega\tau),
-\label{eq:Sa-normalized}
-\end{equation}
-with
-\[
-\frac{1}{\pi}\int_0^\infty\psi_a(u)\,du=1.
-\]
-The triple integral is not stationary for a model with nonzero spectral density
-at zero frequency.  We therefore make the low-frequency assumption explicit:
-the scaling applies after the physical spectrum, preprocessing, or finite
-observation interval supplies an effective cutoff $\omega_{\min}>0$.  Then
-\begin{equation}
-\Var[S]
-=\sigma_{aw}^2\tau^6
-\left[\frac{1}{\pi}\int_{u_{\min}}^\infty
-\frac{\psi_a(u)}{u^6}\,du\right],
-\qquad u_{\min}=\omega_{\min}\tau .
-\label{eq:varS-shape}
-\end{equation}
-Define
-\begin{equation}
-c_{\mathrm{spec}}^2(u_{\min})
-:=\frac{1}{\pi}\int_{u_{\min}}^\infty
-\frac{\psi_a(u)}{u^6}\,du,
-\label{eq:c-spec-def}
-\end{equation}
-so that
-\begin{equation}
-\sigma_S=\sqrt{\Var[S]}
-=c_{\mathrm{spec}}(u_{\min})\sigma_{aw}\tau^3.
-\label{eq:sigmaS-scaling}
-\end{equation}
-The units are correct because $\sigma_{aw}\tau^3$ has units $\mathrm{m\,s}$.
-The coefficient depends strongly on spectral shape and on the effective
-low-frequency cutoff; it is not universal.
-
-For the two-sided OU surrogate
-\[
-\psi_{a,\mathrm{OU}}(u)=\frac{2}{1+u^2}
-\]
-and $u_{\min}=1$, Eqs.~\eqref{eq:c-spec-def}--\eqref{eq:sigmaS-scaling} give
-$c_{\mathrm{spec}}\approx0.227$.  Under the equivalent one-sided convention,
-the PSD and normalization both change consistently and produce the same
-physical variance.
-
-\input{w3d-rs-scale-theorem.tex-part}
-
-\subsection{Online Adaptation}
 \label{sec:adapt-impl}
 
-The adaptation law updates the OU time constant $\tau$, the OU stationary
-acceleration scale $\sigma_{aw}$, and the integral pseudo-measurement
-standard-deviation scale $r_S$.
+The preceding section explains why the wave time scale, acceleration level, and
+integral-state regularization are the natural quantities to move with sea state.
+This section describes the estimator that supplies those quantities and the
+smoothing and cadence rules used by the deployed implementation.  The design is
+intentionally exogenous to the MEKF: no displacement, velocity, covariance, or
+MEKF attitude state is fed back into the tuner.
 
-\subsubsection{Vertical signal}
-Let $a_{z,\mathrm{inert}}=a_z+g$ denote vertical inertial acceleration in the body/NED convention. We use the up-positive signal
-\[
-a_{\uparrow}:=-a_{z,\mathrm{inert}}.
-\]
-
-\subsubsection{Exogenous levelled vertical acceleration}
+\subsection{Measurement-only vertical acceleration}
 \label{sec:vertical-proxy}
-The tuner needs that signal levelled, for the reason quantified below, and it
-must not be levelled with the filter's own attitude, which would close a loop
-the stability argument then has to carry.  The deployed solution is a private Mahony
-complementary observer \cite{Mahony2008NonlinearComplementary} running on the
-raw gyro and accelerometer, ahead of the MEKF and independently of it,
+
+The wave statistics require a levelled vertical acceleration, but levelling it
+with the MEKF attitude would make the schedule a function of the state it is
+controlling.  The implementation therefore uses a private Mahony complementary
+observer \cite{Mahony2008NonlinearComplementary} driven only by raw gyro and
+accelerometer measurements,
 \begin{equation}
 \begin{aligned}
 \vct\varepsilon&=\hat{\vct d}_{\mathrm{meas}}\times\hat{\vct d}(\hat q),
@@ -140,281 +26,208 @@ raw gyro and accelerometer, ahead of the MEKF and independently of it,
 \dot{\hat q}&=\tfrac12\,\hat q\otimes
 \bigl(\vct\omega^{B}+\vct\beta+k_P\vct\varepsilon\bigr),
 \qquad
-\dot{\vct\beta}=k_I\vct\varepsilon,
+\dot{\vct\beta}=k_I\vct\varepsilon .
 \end{aligned}
 \label{eq:proxy-mahony}
 \end{equation}
-where $\hat{\vct d}_{\mathrm{meas}}$ is the measured world-down direction in
-body coordinates, $\hat{\vct d}(\hat q)$ the observer's own, $\vct\omega^{B}$
-the raw gyro, and $\vct\beta$ its estimated bias; the implementation is the
-first-order discretization of \eqref{eq:proxy-mahony} with renormalization.
-Its levelled output is
+The resulting up-positive acceleration is
 \begin{equation}
 a^{P}_{\uparrow,k}
-=-\!\left(\left[\mat{R}_{NB}(\hat q_k)\vct f^{B}_k\right]_{D}+g\right),
+=-\!\left(\left[\mat{R}_{NB}(\hat q_k)\vct f^{B}_k\right]_{D}+g\right).
 \label{eq:proxy-vertical}
 \end{equation}
-which is a function of the measurements alone.  The observer is seeded from
-the first accelerometer sample so that it starts levelled, and yaw, which is
-unobservable to it, is left to drift; only the tilt of $\hat q$ enters
-\eqref{eq:proxy-vertical}.
+Only the proxy tilt is used; its yaw is unobservable and irrelevant to the
+vertical channel.  The default gains are $k_P=\SI{0.1}{\per\second}$ and
+$k_I=\SI{0.01}{\per\second\squared}$ (the source stores $2k_P,2k_I$).  The
+correction corner is deliberately below the wave band so that gyro propagation
+carries wave-frequency attitude while the accelerometer trims slow tilt and the
+integral term removes standing gyro-bias tilt.  The same observer later supplies
+the startup attitude in Sec.~\ref{sec:startup-policy}.
 
-The gains are $k_P=\SI{0.1}{\per\second}$ and $k_I=\SI{0.01}{\per\second\squared}$
-(the implementation parameterizes them as $2k_P$ and $2k_I$).  The correction
-corner near \SI{0.016}{\hertz} must sit \emph{below} the wave band, not above
-it: a fast observer chases the horizontal orbital acceleration into tilt,
-which is the same gravity-leakage failure by another route.  At an order of
-magnitude under the \SIrange{0.11}{0.42}{\hertz} the reference records occupy,
-the gyro carries attitude through the wave band and the accelerometer only
-trims slow drift.  The integral term estimates the gyro bias; it is required
-because the same observer supplies the startup attitude seed
-(Sec.~\ref{sec:proxy-handoff}), and with $k_I=0$ a constant bias $b$ leaves a
-static tilt of about $b/k_P$ --- roughly \SI{0.5}{\degree} at the
-\SI{0.05}{\degree\per\second} residual bias of the reference records --- that
-nothing downstream of an attitude seed high-passes.
+The measurement-only choice is not merely a proof convenience.  Levelling with
+the MEKF closes a gain loop from attitude error into the estimated period and
+therefore back into the filter.  Using unlevelled body-$Z$ is exogenous but
+fails spectrally: gravity leakage is heavily amplified by the integrations used
+to infer elevation.  The two alternatives remain available as ablations; the
+deployed proxy gives the useful combination of levelling and one-way
+information flow required by the stability assumptions of
+Sec.~\ref{app:iss-tuner}.
 
-Equation~\eqref{eq:proxy-vertical} is the default vertical measurement for the
-wave-period estimator and sigma channel, so a single levelled acceleration
-serves the adaptation path.  Until the observer's \SI{20}{s} settling window
-has elapsed --- long enough that the levelling transient never reaches the
-period statistics --- they fall back to the unlevelled body-$Z$ proxy
-$-(a_z+g)$.  The startup bootstrap does not wait for that window, because it
-needs the attitude as soon as it exists and applies its own quality gate instead
-(Sec.~\ref{sec:proxy-handoff}).  Both the older attitude-levelled input and the
-raw body-$Z$ proxy remain selectable for ablation; what each costs is quantified
-in Sec.~\ref{sec:wave-band-period}.
-
-\subsubsection{Wave-band period}
+\subsection{Wave-period estimate}
 \label{sec:wave-band-period}
-Both $\tau$ and $r_S$ are properties of the wave band, so the frequency that
-sets them has to follow the sea state.  A dominant-frequency estimate from raw
-acceleration does not.  An ocean acceleration spectrum is the elevation
-spectrum weighted by $\omega^4$, and that weighting opposes the spectral
-roll-off, so the acceleration-band estimate sits well above the spectral peak
-and barely moves as the sea grows: over the JONSWAP family used here the
-elevation peak moves from \SI{0.335}{\hertz} to \SI{0.085}{\hertz} while the
-acceleration-band estimate stays between \SI{0.42}{\hertz} and
-\SI{0.55}{\hertz}.  Driving $\tau$ from it leaves the OU time scale nearly
-independent of the sea, and because $r_S\propto\tau^3$ that error is cubed.
 
-The tuner therefore estimates the zero-crossing period
-$T_z=2\pi\sqrt{m_0/m_2}$ of the elevation, where $m_n$ are elevation spectral
-moments.  The levelled vertical acceleration $a^{P}_{\uparrow}$ of
-\eqref{eq:proxy-vertical} is passed through two first-order high-pass
-stages and two leaky integrators, all sharing the corner $\lambda$, giving
-band-limited velocity and elevation proxies $v_p$ and $\eta_p$.  The proxies
-differ by exactly one integrator $1/(s+\lambda)$, so for a narrow band at
-$\omega$
+The acceleration-band carrier used by the wave-direction demodulator is not the
+tuning frequency.  Because acceleration weights an elevation spectrum by
+$\omega^4$, that carrier remains near the upper energetic part of the spectrum
+and changes little as the sea period grows.  The adaptation path instead
+estimates the elevation zero-crossing period
+$T_z=2\pi\sqrt{m_0/m_2}$.
+
+The levelled acceleration $a^{P}_{\uparrow}$ is passed through two high-pass
+stages and two leaky integrators with common corner $\lambda$, forming velocity
+and elevation proxies $v_p$ and $\eta_p$.  Their common filtering cancels in
+the ratio, giving for a narrow band
 \begin{equation}
 \frac{\sigma_{v_p}}{\sigma_{\eta_p}}=\sqrt{\omega^{2}+\lambda^{2}},
 \qquad
 \widehat{\omega}^{2}
 =\frac{\sigma_{v_p}^{2}}{\sigma_{\eta_p}^{2}}-\lambda^{2},
 \qquad
-\widehat{T}_z=\frac{2\pi}{\widehat{\omega}},
+\widehat{T}_z=\frac{2\pi}{\widehat{\omega}} .
 \label{eq:wave-band-period}
 \end{equation}
-and a broadband input returns the same relation averaged over whatever the
-shared response passes.  The relation is invariant to any filtering the two
-proxies have in common, which is what the high-pass stages exploit: double
-integration weights a spectrum by $\omega^{-4}$, so without them the sub-band
-energy of a real strapdown signal dominates $\eta_p$.  Two stages at the same
-corner make the shared response $s^{2}/(s+\lambda)^{2}$, removing that growth at
-a cost below \SI{6}{\percent} of gain at the lowest wave frequency of interest,
-and leaving (\ref{eq:wave-band-period}) unchanged.
+The two high-pass stages keep very-low-frequency strapdown leakage from
+controlling the double-integrated proxy while leaving the ratio in
+\eqref{eq:wave-band-period} unchanged.  The estimator never reads the MEKF
+position or velocity.
 
-The estimator reads the accelerometer and an attitude solution only.  It does
-not read the filter's own displacement, which would close a positive feedback
-loop: the integral pseudo-measurement high-passes displacement, which raises the
-apparent frequency, which shortens $\tau$, which strengthens the
-pseudo-measurement.
-
-Whose attitude solution it reads is the remaining coupling, and it is worth
-stating plainly because the stability appendix has to account for it.
-Levelling with the MEKF estimate would let $\delta\vct\theta$ reach $f$, hence
-$\tau$ and $r_S$, hence the gains.  That is why the deployed input is
-$a^{P}_{\uparrow}$, levelled by the private observer of
-Sec.~\ref{sec:vertical-proxy}, which makes $\vct\vartheta$ a function of the
-measurements alone.  The two ablations bound what that choice buys and what it
-avoids.  Selecting the older attitude-levelled input reinstates the loop --- a
-\SI{0.25}{rad} attitude displacement then moves the estimated period from
-\SI{8.05}{s} to \SI{10.1}{s} and $\tau$ by a factor $1.25$, and reaches the
-linear block indirectly besides, since displacing $\vct v$, $\vct p$, $\vct S$
-or $\vct a_w$ perturbs attitude through the filter's cross-covariances; see
-Sec.~\ref{app:iss-tuner}.  Selecting the unlevelled body-$Z$ proxy opens the
-loop but destroys the estimate, because double integration weights a spectrum
-by $\omega^{-4}$ and the gravity a tilting platform leaks into body $Z$ then
-dominates $\eta_p$: the estimator reports \SIrange{6.8}{10.0}{s} whatever the
-sea does, against a truth of \SIrange{2.4}{8.7}{s}, and vertical RMS error
-degrades by $2.5\times$.  Opening the loop is therefore free only because the
-observer levels as well as the MEKF does: over the eight reference records
-$a^{P}_{\uparrow}$ reproduces the attitude-levelled input to within \pct{0.2}
-of vertical RMS.
-
-Online coefficients are additionally staged by one IMU sample. At step $k$ the
-MEKF uses only $\vartheta_k$ committed before the current innovation; after
-$y_k$ has been processed, the tuner may update its smoothed candidate, but that
-candidate becomes active only at the beginning of step $k+1$. Therefore
-$\vartheta_k\in\mathcal F_{k-1}$ for the measurement filtration
-$\mathcal F_k$. The delay is one sample (about \SI{5}{ms} at
-\SI{200}{Hz}), far below the adaptation time scales.
-
-The tuner input frequency is $1/\widehat{T}_z$ once the period estimate is
-available; during its settling interval the wrapper retains its existing
-bounded front-end frequency fallback.  The carrier-frequency algorithm that
-supplies that companion fallback is outside this article.  The wave-band
-estimate is smoothed by a fixed-horizon EMA with time constant $\tau_f$ inside
-the tuner, and the tuning frequency is the clipped result,
+As soon as the wave-period estimator has a usable value, the tuner frequency is
+$1/\widehat T_z$; before that, a bounded wave-band prior is used.  A fixed-horizon
+EMA produces
 \begin{equation}
 f_{\mathrm{tune}}
 =\clip\!\left(\overline{1/\widehat{T}_z},
-f_{\mathrm{tune,min}},f_{\max}\right),
+ f_{\mathrm{tune,min}},f_{\mathrm{tune,max}}\right).
 \label{eq:tuning-frequency}
 \end{equation}
-with a low floor that admits developed seas with
-$T_z\approx\SI{8.6}{s}$.
+The deployed frequency-smoothing time constant is \SI{1}{s}.  This frequency
+sets the OU time scale, the sigma-band corners, and the variance horizon.  The
+separate acceleration carrier remains in the implementation for wave direction
+only and is not used by the deployed OU-III tuning path.
 
-\subsubsection{Period-tied variance horizon}
-The variance is estimated over a fixed number of periods.  It uses the same
-smoothed frequency as (\ref{eq:tuning-frequency}) but its own clip, which is
-wider at the top and narrower at the bottom because its purpose is to keep the
-horizon finite rather than to bound the operating point:
+\subsection{Acceleration-scale estimate and averaging}
+
+The stationary OU acceleration scale is estimated from the same measurement-only
+vertical channel.  Before its variance is formed, the signal passes through a
+period-scaled wave band whose corners remain fixed multiples of
+$f_{\mathrm{tune}}$.  The variance horizon follows a fixed number of estimated
+periods,
 \begin{equation}
 \begin{aligned}
 T_{\mathrm{eff}}&=\frac{1}
-{\clip(\overline{1/\widehat{T}_z},f_{\mathrm{var,min}},f_{\mathrm{var,max}})},\\
+ {\clip(f_{\mathrm{tune}},f_{\mathrm{var,min}},f_{\mathrm{var,max}})},\\
 \tau_{\mathrm{var}}&=\clip\!\left(K_{\mathrm{periods}}T_{\mathrm{eff}},
-\tau_{\mathrm{var,min}},\tau_{\mathrm{var,max}}\right),\\
+ \tau_{\mathrm{var,min}},\tau_{\mathrm{var,max}}\right),\\
 \alpha_{\mathrm{var}}&=1-e^{-\Delta t/\tau_{\mathrm{var}}}.
 \end{aligned}
+\label{eq:sigma-variance-horizon}
 \end{equation}
-Using $\alpha_{\mathrm{var}}$, the tuner maintains
-$\widehat\sigma_{\mathrm{tot}}^2\approx\Var[a_{\uparrow}]$.
-
-\subsubsection{Noise-floor subtraction}
-\[
+The implementation uses $K_{\mathrm{periods}}=2$ and clamps the horizon to
+$[\SI{0.3}{s},\SI{60}{s}]$.  A two-stage EWMA at this horizon maintains the
+band-limited second moment.  The corresponding band-adjusted sensor-noise floor
+is subtracted before the wave component is square-rooted,
+\begin{equation}
 \widehat\sigma_{\mathrm{wave}}^2
-=\max\{0,\widehat\sigma_{\mathrm{tot}}^2-\sigma_{\mathrm{nf}}^2\}.
-\]
+=\max\!\left(0,
+ \widehat\sigma_{\mathrm{tot}}^2-\sigma_{\mathrm{nf,band}}^2\right).
+\label{eq:sigma-noise-subtraction}
+\end{equation}
+Thus increasing sea period lengthens the statistical averaging interval rather
+than changing the number of wave cycles represented by the estimate.
 
-\subsubsection{Targets}
-The adaptation targets are
+\subsection{Targets, smoothing, and application cadence}
+
+The raw engineering targets are
 \begin{equation}
 \begin{aligned}
-\tau_\star&=c_\tau\frac{1}{2f_{\mathrm{tune}}}
-=c_\tau\frac{\widehat{T}_z}{2},\\
+\tau_\star&=c_\tau\frac{\widehat T_z}{2},\\
 \sigma_{aw,\star}&=c_\sigma
-\sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
-r_{S,\star}&=c_R\sigma_{aw,\star}\tau_\star^3.
+ \sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
+r_{S,\star}^{\mathrm{base}}&=c_R\sigma_{aw,\star}\tau_\star^3 .
 \end{aligned}
 \label{eq:tuner-targets}
 \end{equation}
+The deployed coefficients are $(c_\tau,c_\sigma,c_R)=(1.0,0.9,0.35)$.  These
+coefficients are empirical calibration constants.  The cubic base scale is
+motivated by the similarity analysis of Sec.~\ref{sec:adaptation-motivation};
+that analysis is not claimed to compute the complete-MEKF optimum.
 
-\subsubsection{Smoothing}
-Applied $(\tau,\sigma_{aw})$ are EMA filtered with time constant $\tau_{\mathrm{adapt}}$:
+Applied $\tau$ and $\sigma_{aw}$ use a common EMA,
 \begin{equation}
 \begin{aligned}
 \alpha&=1-e^{-\Delta t/\tau_{\mathrm{adapt}}},\\
 \tau_{\mathrm{appl}}&\leftarrow\tau_{\mathrm{appl}}
-+\alpha(\tau_\star-\tau_{\mathrm{appl}}),\\
+ +\alpha(\tau_\star-\tau_{\mathrm{appl}}),\\
 \sigma_{aw,\mathrm{appl}}&\leftarrow\sigma_{aw,\mathrm{appl}}
-+\alpha(\sigma_{aw,\star}-\sigma_{aw,\mathrm{appl}}).
+ +\alpha(\sigma_{aw,\star}-\sigma_{aw,\mathrm{appl}}),
 \end{aligned}
 \label{eq:adapt-ewma}
 \end{equation}
-The pseudo-measurement standard-deviation scale uses
+with deployed $\tau_{\mathrm{adapt}}=\SI{1.8}{s}$.  The regularizer has a
+slower sea-scaled horizon,
 \begin{equation}
 \begin{aligned}
 \tau_{r_S}&=m_{r_S}\tau_\star,\qquad
 \alpha_{r_S}=1-e^{-\Delta t/\tau_{r_S}},\\
-r_{S,\mathrm{appl}}&\leftarrow r_{S,\mathrm{appl}}
-+\alpha_{r_S}(r_{S,\star}-r_{S,\mathrm{appl}}).
+r_{S,\mathrm{appl}}^{\mathrm{base}}&\leftarrow
+ r_{S,\mathrm{appl}}^{\mathrm{base}}
+ +\alpha_{r_S}(r_{S,\star}^{\mathrm{base}}
+              -r_{S,\mathrm{appl}}^{\mathrm{base}}),
 \end{aligned}
 \label{eq:adapt-RS}
 \end{equation}
+where $m_{r_S}=5$.  Candidates are committed at \SI{0.1}{s} cadence and are
+staged by one IMU sample: the MEKF processes $y_k$ with parameters measurable
+with respect to data through $k-1$, and a candidate updated using $y_k$ first
+becomes active at step $k+1$.
 
-\subsubsection{Anisotropic parameterization}
-The OU stationary standard deviation carries a horizontal scale,
+The pseudo-measurement cadence follows the applied OU time scale,
+\begin{equation}
+T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max}),
+\qquad
+c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}},
+\label{eq:engineering-pseudo-cadence}
+\end{equation}
+with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{250}{ms}$.  To preserve the
+historical information rate when this cadence changes, the standard deviation
+actually passed to the Kalman update is
+\begin{equation}
+r_{S,\mathrm{filter}}
+=r_{S,\mathrm{appl}}^{\mathrm{base}}
+ \sqrt{\frac{T_{S,0}}{T_S}},
+\qquad T_{S,0}=\SI{15}{ms}.
+\label{eq:engineering-rs-filter}
+\end{equation}
+Away from clamps, Eqs.~\eqref{eq:tuner-targets},
+\eqref{eq:engineering-pseudo-cadence}, and
+\eqref{eq:engineering-rs-filter} make the effective filter-input dependence
+$r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}$.  This is the implemented
+schedule evaluated in the reported experiments; the earlier cubic expression is
+the base target before cadence renormalization.
+
+\subsection{Three-axis application}
+
+The current OU--III operating point is isotropic in the OU stationary scale,
 \[
 (\matg{\Sigma}_{aw}^{\mathrm{stat}})^{1/2}
-=\diag(S_\sigma\sigma_{aw,\mathrm{appl}},
-S_\sigma\sigma_{aw,\mathrm{appl}},\sigma_{aw,\mathrm{appl}}),
-\qquad S_\sigma=1,
+=\diag(\sigma_{aw,\mathrm{appl}},
+       \sigma_{aw,\mathrm{appl}},
+       \sigma_{aw,\mathrm{appl}}),
 \]
-which the deployed value leaves isotropic.  $S_\sigma$ was $1.87$, carried from
-the acceleration-band operating point and never re-measured after the tuner
-moved to the wave band.  The records put it at $0.81$ and $0.55$ of vertical on
-the two horizontal axes, $0.99$ combined as deep-water theory requires, and a
-sweep over the eight scored records and five seeds finds a flat minimum of 3D
-displacement RMS exactly at $S_\sigma=1$: $-1.28\,\%$ pooled against $1.87$,
-$-7.7\,\%$ on JONSWAP $H_s=8.5$ m and $-2.5\,\%$ on $H_s=4.0$ m with every seed
-agreeing, PM-Stokes flat to $0.15\,\%$, vertical unchanged at $+0.16\,\%$, and
-yaw $-3.2\,\%$.  Both $0.9$ and $1.1$ score $-1.19\,\%$, so the minimum is
-interior rather than a fitted edge.
-and the integral pseudo-measurement standard-deviation vector is
+and in the integral pseudo-measurement standard deviation,
 \begin{equation}
-\vct{r}_S=\begin{bmatrix}
-\rho_{xy}r_{S,\mathrm{appl}}&
-\rho_{xy}r_{S,\mathrm{appl}}&
-r_{S,\mathrm{appl}}
+\vct r_S=
+\begin{bmatrix}
+r_{S,\mathrm{filter}}&r_{S,\mathrm{filter}}&r_{S,\mathrm{filter}}
 \end{bmatrix}^{\top},
-\qquad \rho_{xy}=1 .
+\qquad
+\mat R_S=\diag(\vct r_S\odot\vct r_S).
 \label{eq:fus-rs-anisotropy}
 \end{equation}
-The horizontal weight was previously $\rho_{xy}=0.36$, which made the
-horizontal high-pass $2.8\times$ stronger than the vertical one.  That was a
-small-sea optimum applied to every sea state, and with the operating point tied
-to the wave band every stationary record scores better with the two equal.  The
-parameter is retained because the bound is real, but the deployed value no
-longer imposes an anisotropy.
+The important empirical observation is not an axis-specific optimum.  The
+current paired evidence shows that isotropic regularization works well over the
+tested directional records.  Separate universal $x$ and $y$ tuning ratios are
+not inferred from this finite set because surge and sway are projections of the
+same directional wave motion and therefore depend strongly on heading.  The
+larger horizontal drift source is addressed analytically in
+Sec.~\ref{sec:riccati-per-axis-limits} and empirically in the 3-D results, not by
+claiming a heading-independent horizontal multiplier.
 
-Theorem~\ref{thm:ou-chain-similarity} ties the two constants together.  It
-gives the natural scale of the third integral as $\sigma_S\sim\sigma_{aw}\tau^3$
-componentwise, so the axis-consistent choice is $\rho_{xy}=S_\sigma$; the
-deployed $S_\sigma=\rho_{xy}=1$ satisfies it.  The previous pair,
-$(S_\sigma,\rho_{xy})=(1.87,1)$, did not: the dimensionless regularizer
-$r_S/(\sigma_{aw}\tau^3)$ was $S_\sigma$ times smaller horizontally, putting
-the horizontal normalized pole $\kappa=\omega_R\tau$ a factor
-$S_\sigma^{1/3}=1.23$ higher than the vertical one.
+\subsection{Implementation bounds}
 
-Which way to close that gap is a measurement, not a corollary, and the two
-directions are far from equivalent.  A five-seed paired sweep of both constants
-(\texttt{docs/ou-iii-anisotropy-consistency.md}) rejects closing it upward:
-holding $S_\sigma=1.87$ and raising $\rho_{xy}$ to match raises pooled 3D
-displacement RMS by $13.7\,\%$, on every record and every seed, because
-$\rho_{xy}$ acts as a trade between the two horizontal axes rather than as a
-horizontal-versus-vertical control.  The similarity law makes the prior
-self-similar across axes; it does not make the disturbance self-similar, and
-the horizontal channels reject tilt and horizontal-bias drift whose
-low-frequency content does not scale with the sea's horizontal acceleration
-amplitude.  Closing it downward, by taking $S_\sigma$ to the value the records
-measure, both satisfies the theorem and improves every pooled metric, and is
-what the deployed constant now does.
-
-Both readings above argue from similarity of the prior.  A sharper statement is
-available from the bias--variance optimum: Sec.~\ref{sec:riccati-per-axis}
-reads \eqref{eq:riccati-optimal-RS} per axis and obtains $\rho_{xy}$ as a
-prediction rather than a calibration,
-$r_{S,i}^\star/r_{S,z}^\star=(q_{\mathrm{eff},i}/q_{\mathrm{eff},z})^{1/14}
-(m_{-4,i}/m_{-4,z})^{3/7}$, measuring $1.14$ on $x$ and $0.86$ on $y$ across
-the eight calibration seas.  The deployed $\rho_{xy}=1$ therefore sits within
-$14\,\%$ of the analytic optimum, and the discarded $0.36$ was wrong by a
-factor of three --- in the wrong direction on $x$, where the optimum asks for a
-looser horizontal anchor than the vertical one.
-
-Its componentwise square defines the covariance,
-\begin{equation}
-\mat{R}_S=\diag\!\left(\vct{r}_S\odot\vct{r}_S\right),
-\end{equation}
-consistent with the measurement model in Sec.~\ref{sec:measurement_model}.
-
-\subsection{Implementation bounds and validity gates}
-
-Table~\ref{tab:implementation-gates} records the defaults used by the reported
-OU--III implementation. They are saturation and validity safeguards rather
-than quantities estimated from the reference trajectory; public configuration
-setters can override the tunable bounds. The $r_S$ limits apply to the
-standard-deviation scale, not to the covariance $\mat{R}_S$.
+Table~\ref{tab:implementation-gates} lists the principal safeguards used by the
+reported implementation.  They are runtime bounds and validity limits rather
+than parameters selected from the scored reference error.
 
 \begin{table*}[t]
 \caption{Principal OU--III implementation defaults used in the reported experiments.}
@@ -429,22 +242,21 @@ standard-deviation scale, not to the covariance $\mat{R}_S$.
 Bound or gate & Default & Bound or gate & Default \\
 \midrule
 IMU period $h$ & \SI{0.005}{s}
-& wave-band period corner $\lambda/2\pi$ & \SI{0.02}{Hz} \\
-tuning-frequency floor $f_{\mathrm{tune,min}}$ & \SI{0.03}{Hz}
+& wave-period high-pass corner $\lambda/2\pi$ & \SI{0.02}{Hz} \\
+tuning-frequency floor & \SI{0.03}{Hz}
 & OU time scale $[\tau_{\min},\tau_{\max}]$ & $[0.02,12.0]$ s \\
-stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{\meter\per\second\squared}
-& acceleration noise floor $\sigma_{\mathrm{nf}}$ & \SI{0.12}{m.s^{-2}} \\
-integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
-& accelerometer-bias residual OU & $\tau_b=\SI{5000}{s}$; drive $\SI{5e-4}{m.s^{-2}.s^{-0.5}}$ \\
-adaptation cadence / time constant & $0.1/1.8$ s
-& tuner coefficients $(c_\tau,c_\sigma,c_R)$ & $(1.0,0.9,0.35)$ \\
-$r_S$ smoothing time & $5\tau_\star$
-& tuner frequency horizon $\tau_f$ / variance horizon & \SI{1.0}{s} / $2T_{\mathrm{eff}}$, clipped to $[0.3,60]$ s \\
-variance-horizon clip $[f_{\mathrm{var,min}},f_{\mathrm{var,max}}]$
-& $[0.05,5.0]$ Hz
-& online-tuning warmup / magnetometer delay & $5/7$ s \\
-horizontal OU / $r_S$ scale & $S_\sigma=1$, $\rho_{xy}=1$
-& tilt reset (threshold/hold/cooldown) & $70^\circ/0.35/3$ s \\
+stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{m.s^{-2}}
+& base acceleration-noise floor & \SI{0.12}{m.s^{-2}} \\
+base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
+& residual accelerometer-bias OU & $\tau_b=\SI{5000}{s}$ \\
+adaptation commit / EMA horizon & $0.1/1.8$ s
+& coefficients $(c_\tau,c_\sigma,c_R)$ & $(1.0,0.9,0.35)$ \\
+$r_S$ smoothing horizon & $5\tau_\star$
+& frequency / variance horizons & \SI{1.0}{s} / $2T_{\mathrm{eff}}$ \\
+variance-horizon bounds & $[0.3,60]$ s
+& pseudo-update period bounds & $[5,250]$ ms \\
+online tuning warmup / magnetometer delay & $5/7$ s
+& horizontal OU / $r_S$ scale & isotropic \\
 \bottomrule
 \end{tabular}
 \end{table*}

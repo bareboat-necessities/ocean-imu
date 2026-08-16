@@ -1,263 +1,80 @@
-\section{Introduction and Outline}
+\section{Introduction}
 \label{sec:intro}
 
-This paper presents a complete mathematical and algorithmic formulation of a
-\emph{quaternion left-multiplicative extended Kalman filter} (Q-MEKF)
-augmented with an Ornstein--Uhlenbeck (OU) process model for latent
-acceleration and a much slower first-order Gauss--Markov residual model for
-accelerometer bias about a deterministic temperature-calibration curve. The
-filter is designed for marine inertial sensing and wave-kinematics
-reconstruction. The proposed framework unifies attitude estimation, 3D
-kinematics, stochastic excitation modeling, and a finite-correlation-time
-residual bias state in an analytically tractable structure intended for
-resource-constrained embedded estimation. The temperature-centered bias model
-is used structurally by the estimator and stability analysis; the present
-experiments do not constitute a thermal-calibration validation.
+Marine inertial motion estimation has a structural difficulty that is distinct
+from ordinary attitude estimation.  Accelerometer bias, small attitude errors,
+and low-frequency model mismatch are integrated into velocity and displacement,
+while the desired signal itself is oscillatory and must not be removed by the
+same mechanism that suppresses drift.  This is especially severe horizontally,
+where first-order gravity leakage from tilt competes with real surge and sway.
+At the same time, a deployable estimator has to operate across sea states whose
+characteristic periods and acceleration levels vary by large factors.
 
-Recent marine heave work spans discrete-time Kalman reconstruction
-\cite{Reis2023_DiscreteKalmanHeave}, adaptive delay-free IMU filtering
-\cite{Lu2023_AdaptiveDelayFreeHeave}, and nonlinear/frequency-assisted Kalman
-approaches \cite{Li2025_HeaveCKF}.  Practical buoy studies likewise emphasize
-the error mechanisms and phase fidelity of inertial wave measurements
-\cite{YurovskyKudinov2025_IMUwaves,Hope2025_SFY}.  The contribution here is not
-a claim to replace those method classes.  It is the isolation of an adaptive
-integral-regularization mechanism inside a fully specified 21-state MEKF,
-together with exact discretization, matched OU-family ablations, and a local
-stability result at the scope stated below.
+Recent heave estimators span discrete Kalman reconstruction, adaptive IMU
+filtering, nonlinear observers, and frequency-assisted approaches
+\cite{Reis2023_DiscreteKalmanHeave,Lu2023_AdaptiveDelayFreeHeave,
+Li2025_HeaveCKF,YurovskyKudinov2025_IMUwaves,Hope2025_SFY}.  The contribution of
+this work is not the Ornstein--Uhlenbeck process itself: first-order
+Gauss--Markov acceleration models are classical
+\cite{UhlenbeckOrnstein1930_OU,Singer1970_ManeuverModel}.  The contribution is
+to integrate such a prior into a fully specified three-dimensional quaternion
+MEKF with an additional integral-displacement state, to regularize that state in
+a way that remains compatible with the coupled Kalman covariance, and to build
+an exogenous sea-state adaptation layer whose effect can be separated from the
+core estimator by controlled ablation.
 
-Most wave measurement systems derive parameters by chaining separate motion estimation
-and spectral analysis stages, a process prone to bias and delay.
-Our approach instead uses a unified 21-state Kalman filter that
-directly incorporates wave kinematics. The architectural contributions are the
-integration of a first-order Gauss--Markov acceleration prior into the
-quaternion MEKF, an explicit integral-of-displacement state, a slow
-mean-reverting accelerometer-bias residual about the calibrated temperature
-mean, and a wave-band-driven adaptive law for the regularization scale $r_S$
-that constrains it. The tuning law is written to adjust the prior time scale,
-the stationary acceleration scale, and $r_S$ together, but the demonstrated
-vertical benefit is attributable to the $r_S$ channel: a $2\times2$ channel
-ablation (Sec.~\ref{par:channel-ablation}) shows that letting $r_S$ adapt while
-$\tau$ and $\sigma_{aw}$ stay frozen reproduces essentially the whole adaptive
-result, whereas the converse recovers none of it. The supported claim is
-therefore about adaptive integral-state regularization, not about the necessity
-of joint three-parameter OU adaptation, and the paper is written around that
-narrower claim. These elements address colored excitation and MEMS errors in an
-efficient, embedded-friendly framework.
+The article is organized deliberately from mathematics to engineering.  First,
+Secs.~\ref{sec:state}--\ref{app:iss-stability} define the 21-state estimator,
+its measurements, exact discrete translational model, Kalman updates, and the
+local Live-state stability result.  The zero pseudo-measurement on the integral
+state is part of that core formulation: it is a regularizer, not a physical
+observation.  Only after the mathematical estimator and its stability scope are
+fixed do Secs.~\ref{sec:adaptation-motivation} and~\ref{sec:adaptation} develop
+the sea-state scaling arguments, measurement-only wave statistics, and the
+empirically calibrated schedule used by the implementation.  Startup and
+magnetic calibration are then treated as separate engineering layers, followed
+by the experimental protocol and results.
 
-Section~\ref{app:iss-stability} gives a local 21-state stability result for the
-normal Live recursion under explicit operating conditions. Because the tuner is
-driven by raw IMU data and a private Mahony attitude solution, its schedule is
-exogenous with respect to the MEKF state. That same observer also owns startup:
-it supplies the tilt that gates the magnetometer and frames the learned
-magnetic reference, and the MEKF is seeded from the finished solution and
-starts live rather than warming up in a degraded configuration
-(Sec.~\ref{sec:startup-policy}). The section proves uniform
-finite-horizon observability of the OU--III translational block and of the
-attitude--gyro-bias block under bounded noncollinear accel/mag geometry. The
-formerly problematic accelerometer-bias coordinates are now residuals about the
-temperature model and obey a slow OU transition
-$e^{-h/\tau_b}\mat I_3$; with finite $\tau_b$ they are intrinsically uniformly
-exponentially stable, so augmenting the observable 18-state subsystem gives a
-uniformly detectable 21-state system. With uniformly bounded positive process
-and measurement covariances, bounded magnetic-update gaps, exact $T_S$ spacing
-of the four $S$ pseudo-updates used on each translational proof horizon, the
-default prediction-time PSD $\vct a_w$ covariance inflation, and no hard reset
-in the analysis interval, standard time-varying Kalman theory then gives bounded
-Riccati solutions and UES of the homogeneous 21-state Live error dynamics. A
-quadratic-remainder argument yields local ISS for bounded temperature-model,
-sensor, pseudo-measurement, and modeling disturbances. The optional legacy raw
-$\vct a_w$ covariance replacement remains available for reproducibility but is
-outside that theorem, as are startup/re-lock resets, sample-time jitter of the
-nominal $S$-update deadlines, and deterministic infinite-horizon claims for
-unbounded Gaussian sample paths.
-
-\subsection*{From Standard Q-MEKF to Extended Kinematics}
-
-We start from a standard Q-MEKF \cite{Markley2003AttitudeError,TrawnyRoumeliotis2005_IndirectKF,Sola2017_QuaternionESKF}, which estimates body attitude and
-gyroscope bias using a left-multiplicative quaternion error
-representation. To enable full wave motion estimation, the state vector
-is augmented to include additional translational quantities:
-world-frame acceleration, velocity, oscillatory displacement, and the integral of
-oscillatory displacement in three dimensions, together with a slow residual
-accelerometer-bias state. This augmentation allows the estimator to reconstruct
-instantaneous and cumulative wave kinematics in the world frame while tracking
-a residual bias around a supplied temperature-dependent calibration mean.
-
-\subsection*{Stochastic Forcing and the OU Acceleration Model}
-
-The latent world acceleration $\bm{a}_w$ is modeled with an
-Ornstein--Uhlenbeck (OU) prior
-\cite{UhlenbeckOrnstein1930_OU,Singer1970_ManeuverModel} characterized by a stationary variance
-$\matg{\Sigma}_{aw}^{\mathrm{stat}}$ and a correlation time constant
-$\tau_{aw}$, referred to hereafter as $\tau$.
-The OU prior is a low-order Gauss--Markov model for broadband, temporally
-correlated excitation with bounded variance; it is not asserted to be the
-physical ocean-wave spectrum. In each scalar axis this is the continuous
-first-order Gauss--Markov acceleration model used in the Singer tracking
-family, with $\alpha=1/\tau$ and the diffusion chosen to give the prescribed
-stationary covariance \cite{Singer1970_ManeuverModel}. We do not claim the OU
-or Singer process itself as new. The contribution is its use as a latent 3D
-world-acceleration prior inside a coupled left-MEKF, $v$--$p$--$S$ chain,
-analytic discretization, adaptive pseudo-constraint, and embedded
-implementation. For
-Lagrangian sensors following surface motion, this prior improves low-frequency
-stability without sacrificing responsiveness to swell-band motion.
-
-The accelerometer-bias state uses the same first-order Gauss--Markov family but
-on a deliberately much slower fixed time scale. It represents only the residual
-about the deterministic temperature correction, not the total physical bias.
-The default $\tau_b=\SI{5000}{s}$ is independent of the wave tuner, and the
-continuous driving-noise density retains the historical short-time bias
-process-noise calibration.  In this paper that choice is chiefly a sensor-model
-and detectability assumption; a varying-temperature compensation experiment is
-left for physical validation.
-
-\subsection*{Continuous-Time Model Formulation}
-
-The continuous-time model is organized into three independent linear
-chains, one for each axis, linking acceleration, velocity, oscillatory displacement,
-and integral of oscillatory displacement. These linear chains are coupled to the
-quaternion attitude subsystem through the standard small-angle error
-kinematics of the Q-MEKF. IMU measurements provide specific force and
-angular rate observations, while a pseudo-measurement of the integral of
-displacement serves as a long-term constraint to suppress drift. The
-pseudo-measurement standard-deviation scale $r_S$, whose square forms the
-covariance $\mat{R}_S$, is a crucial design parameter: smaller values tighten the
-constraint but risk biasing slow wave components, while larger values relax
-drift control.
-
-\subsection*{Discrete-Time Analytic Derivation}
-
-Having established the continuous-time system, we derive the discrete
-transition and process-noise covariance matrices required for Kalman
-recursion. The OU-driven linear subsystem is discretized analytically by
-integrating the exponential kernel of the OU correlation function, yielding
-closed-form expressions for its transition matrix $\Phi(h,\tau)$ and
-discrete process-noise matrix $Q_d(h,\tau)$. The slow accelerometer-bias OU
-state has the exact scalar block
-$\phi_b=e^{-h/\tau_b}$ and
-$\mat Q_{d,b}=\frac{\tau_b}{2}\mat Q_{ba}(1-e^{-2h/\tau_b})$.
-For small $x=h/\tau$, high-order Maclaurin series prevent floating-point
-cancellation and preserve stability. The attitude/gyro-bias transition is also
-structured analytically; some anisotropic attitude covariance integrals are
-evaluated by Simpson quadrature. The pseudo-measurement weighting can be
-anisotropic to reflect different vertical and lateral dynamics.
-
-\subsection*{Adaptive Parameter Estimation}
-
-A fixed-parameter Kalman filter performs optimally only under a
-particular sea-state regime, determined by its assumed correlation time
-$\tau$ and stationary acceleration variance
-$\matg{\Sigma}_{aw}^{\mathrm{stat}}$.
-Different wave spectra exhibit distinct characteristic periods and energy
-levels. To maintain performance across conditions, we use an online adaptation
-law that continuously estimates and tunes these parameters together with the
-integral-state regularization scale. The wave-band zero-crossing period
-estimated in Sec.~\ref{sec:wave-band-period} provides the correlation time
-$\tau$, while the stationary acceleration scale $\sigma_{aw}$ is estimated in
-the time domain. The pseudo-measurement standard-deviation scale is adapted
-through the spectrally motivated law
-\[
-r_S \propto \sigma_{aw}\tau^3,
-\]
-which couples displacement drift suppression to the estimated strength and
-time scale of stochastic excitation. This law is the principal architectural
-contribution, and the channel ablation of Sec.~\ref{par:channel-ablation} is
-what locates the measured benefit in it rather than in the OU parameters it is
-derived from. The two readings are consistent: $\tau$'s material role in this
-filter is setting $r_S\propto\tau^{3}$ rather than shaping the OU process
-covariance, which the accelerometer already observes closely. The
-accelerometer-bias correlation time $\tau_b$ is a fixed sensor-model parameter
-and is never driven by the wave tuner. The normalization is approximate and
-assumes a fixed pseudo-update cadence and a bounded family of spectral shapes
-and effective low-frequency cutoffs.
-
-\subsection*{Validation}
-
-The complete filter is validated using synthetic data generated from
-directional JONSWAP spectra and Pierson--Moskowitz seas augmented by nonlinear
-Stokes harmonics. The simulated IMU represents a surface-following
-(Lagrangian) buoy subject to realistic measurement noise. Performance is
-assessed via RMS displacement errors relative to the true wave elevation. The
-OU-based Q-MEKF achieves drift-suppressed reconstruction of three-dimensional
-surface motion. The simulation continues to inject the documented accelerometer
-bias random walk, so the slow-OU residual used by the estimator is also tested
-under deliberate bias-process mismatch; that mismatch is treated as an
-exogenous disturbance by the local ISS statement rather than silently removed
-from the evidence protocol. Temperature itself is not swept, and calibration
-error, thermal lag, and hysteresis are not independently scored, so the
-simulation does not validate temperature compensation as a performance claim.
-
-The principal runtime bounds, gates, and time constants are tabulated in
-Sec.~\ref{sec:adapt-impl}. The complete coefficient set, fixed baseline
-configurations, seed manifest, and simulation configuration are versioned with
-the source and result bundle in the Bareboat Necessities GitHub project.
-
-\subsection{Main Contributions}
-
-The main contributions of this work are:
-\begin{itemize}
-  \item A 21-state quaternion MEKF architecture that couples an OU-driven
-        latent world-acceleration prior to marine attitude and wave-motion
-        estimation and models the residual accelerometer bias as a much slower
-        temperature-centered first-order Gauss--Markov process.  The finite
-        residual correlation time is used in the stability result; empirical
-        thermal-compensation performance is not claimed.
-  \item Closed-form discrete-time transition and covariance matrices for
-        the OU process and linear kinematic chain, with numerically stable
-        small-step series expansions, together with the exact scalar
-        discretization of the residual bias OU block.
-  \item An adaptive law for the integral pseudo-measurement scale,
-        $r_S\propto\sigma_{aw}\tau^{3}$, driven by a period estimated in the
-        wave band, together with the $2\times2$ ablation that isolates it as
-        the channel carrying the measured vertical benefit. The same law
-        updates $\tau$ and $\sigma_{aw}$ online, but the evidence here supports
-        adaptive integral-state regularization rather than joint
-        three-parameter OU adaptation, which costs a little accuracy where a
-        well-matched frozen operating point already exists.
-  \item An analytical stability treatment of the complete 21-state Live error
-        system. The translational and attitude--gyro-bias blocks supply the
-        finite-horizon observability result; the temperature-centered residual
-        bias OU block is intrinsically exponentially stable, which upgrades the
-        augmentation to uniform detectability. Under the stated exact
-        $S$-pseudo-update spacing, geometry, covariance, bounded-schedule, and
-        no-reset conditions, this yields bounded Riccati solutions and 21-state
-        UES, followed by a local ISS bound for bounded modeling and
-        temperature-calibration disturbances. The optional legacy raw
-        $\vct a_w$ covariance-replacement mode and general sample-time jitter
-        of the nominal $S$ deadlines are explicitly outside that proof.
-  \item A continuously running, exogenous estimator of the body-fixed
-        magnetometer offset, with the identification argument for why a
-        startup window cannot supply it, an excitation-scaled ridge that
-        prices the soft-iron and misalignment error it necessarily aliases,
-        and an application path that changes measurement-model parameters
-        only, writing no attitude state. It removes more than half of the
-        standing heading error, and its failure mode --- a calibration draw
-        whose standing error is misalignment-dominated rather than
-        offset-dominated --- is measured rather than assumed
-        (Sec.~\ref{sec:mag-hard-iron}).
-  \item A formulation independent of hydrodynamic equations, relying instead on
-        oscillatory kinematics with slowly varying spectra and high-rate inertial measurements.
-  \item A common-record deterministic comparison against a published nonlinear
-        observer and two earlier author-developed observer architectures,
-        together with a separate ten-seed paired OU--III/OU--II study that
-        isolates the incremental effect of the OU--III translational structure
-        while using the same wave-band period input for both filters.
-  \item A versioned ten-seed paired validation on stationary and transitioning
-        directional sea spectra, including a paired bootstrap interval and an
-        exact paired sign-flip check on the declared primary endpoint, negative
-        results, and the limits of the observed OU--III advantage.
+\subsection{Main contributions}
+The strongest contributions are:
+\begin{itemize}[leftmargin=1.25em]
+  \item a 21-state left-multiplicative quaternion MEKF coupling attitude,
+        gyro and residual accelerometer bias, and three exact OU-driven
+        $[v,p,S,a_w]$ chains, with the integral state $S$ providing a soft
+        low-frequency drift-control channel rather than a direct position
+        constraint;
+  \item a constructive local stability treatment of the normal Live recursion:
+        finite-horizon observability of the translational and
+        attitude--gyro-bias blocks, a finite-correlation residual bias model,
+        bounded Riccati covariance, uniform exponential stability of the
+        homogeneous error recursion, and a local ISS bound under the explicit
+        bounded-schedule, reference-geometry, covariance, and no-reset
+        assumptions stated in Sec.~\ref{app:iss-stability};
+  \item an exogenous adaptation architecture that estimates the wave time scale
+        and acceleration level from measurement-only signals, then schedules the
+        OU prior and integral regularizer.  The scaling analysis explains why
+        these are natural variables; the deployed law and coefficients are
+        engineering choices supported by full-filter experiments rather than
+        claimed as an exact optimum of the reduced analytical models;
+  \item a versioned paired evaluation that tests vertical and horizontal
+        displacement, attitude, bias tracking, stationary and changing seas,
+        and adaptation-channel ablations.  In the current isotropic
+        configuration OU--III improves the paired mean 3-D displacement RMS
+        relative to matched OU--II in all four stationary JONSWAP cases and the
+        controlled transition, while the adaptation ablation identifies the
+        integral-regularization channel as the principal source of the adaptive
+        benefit.
 \end{itemize}
 
-The scope of the claim deserves stating once, plainly, at the outset. The
-displacement state $\vct{p}$ is oscillatory wave-induced motion, not a global
-navigation position; an optional absolute-position/GNSS extension is retained
-as repository companion material but is not part of the evaluated publication
-configuration. The measured advantage over the matched OU--II architecture is
-a \emph{vertical} one: OU--III has higher total 3D displacement error in
-\OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
-principal scenarios, because the vertical gain is largely paid for in the
-horizontal channels (Sec.~\ref{sec:observer-comparison}). And every quantitative
-result below comes from simulation. The embedded exercise establishes source
-portability, not a timing or memory margin, and no result here is validated
-against an external physical displacement reference.
+The scope remains narrower than the title ``navigation'' can suggest.  The
+reported displacement $\vct p$ is bounded wave-induced motion about a local
+reference, not geodetic position.  GNSS aiding and a separated absolute
+trajectory are companion designs, not evaluated results.  The evidence in this
+paper is primarily synthetic; the ESP32--S3 exercise establishes source
+portability but not timing, power, memory margin, or externally referenced
+accuracy.  The residual accelerometer-bias state is centered on a deterministic
+temperature model, but temperature is not swept in the scored experiments, so
+thermal-calibration performance is not claimed.  Startup resets, magnetic
+reference changes, and other hybrid reconfiguration events are outside the
+Live-state ISS theorem and are evaluated separately rather than hidden inside
+its assumptions.

@@ -1,0 +1,20 @@
+\input{w3d-regularization-theory.tex-part}
+
+\section{Adaptation Motivation and Sea-State Scaling}
+\label{sec:adaptation-motivation}
+\label{app:rs-scaling}
+
+The core estimator and the regularization analysis above are independent of how bounded model parameters are scheduled. This section asks the engineering question that follows from them: how should a practical marine implementation move the OU time scale, stationary acceleration scale, and integral-state regularization as the wave regime changes? The purpose is to identify sensible sea-state coordinates and build a candidate schedule. The final coefficients and amplitude dependence are selected and tested with the complete estimator; this section does not claim a closed-form optimum for the 21-state MEKF.
+
+The starting point is the third-integral coordinate itself. For a scalar acceleration process with characteristic standard deviation $\sigma_{aw}$ and time scale $\tau$, dimensional similarity gives the natural state scales
+\[
+a_w\sim\sigma_{aw},\qquad
+v\sim\sigma_{aw}\tau,\qquad
+p\sim\sigma_{aw}\tau^2,\qquad
+S\sim\sigma_{aw}\tau^3.
+\]
+The result is made exact for the OU prior below. Because an unregularized third integral is not stationary, the theorem is a similarity statement; it does not by itself determine the pseudo-measurement covariance or the full-filter regularization strength.
+
+\input{w3d-rs-scale-theorem.tex-part}
+\input{w3d-jonswap-integrated-elevation-clarification.tex-part}
+\input{w3d-rs-design-interpretation.tex-part}

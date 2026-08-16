@@ -46,7 +46,7 @@ def _transition_and_secondary_ensembles_are_rescored(self):
     )
 
     # OU--III still owns its transition and second-spectrum motion evidence.
-    self.assertIn("pure-start, crossfade, and pure-endpoint intervals", protocol)
+    self.assertIn("pure-start, blend, and pure-end", protocol)
     self.assertIn("whole-window transition percentages", results)
     self.assertIn("tab:ou_transition_segments", generated)
     self.assertIn("tab:ou_mc_pmstokes", generated)
@@ -97,7 +97,8 @@ def _tracker_and_heel_material_are_scoped_as_unevaluated_appendices(self):
 def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
     baseline = self.read_flat("w3d-baseline-comparison.tex-part")
     fusion = self.read("w3d-fus-methods.tex-part")
-    simulation = self.read_flat("w3d-sim-charts.tex-part")
+    startup = self.read("w3d-init.tex-part")
+    results = self.read_flat("w3d-results.tex-part")
 
     self.assertIn("Parameters are frozen before evaluation", baseline)
     self.assertIn("reference displacement is never used to select gains", baseline)
@@ -132,17 +133,17 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
         (clamp("MIN_R_S"), clamp("MAX_R_S")),
     )
 
-    # Direction/tracker thresholds no longer belong to the OU implementation
-    # table; the remaining attitude reset is an OU startup/recovery safeguard.
+    # Direction/tracker thresholds no longer belong to the OU adaptation
+    # table; tilt re-lock is documented with startup/recovery, while embedded
+    # portability limits are reported with the empirical results.
     self.assertNotIn("direction-axis validity", fusion)
     self.assertNotIn("sense coherence", fusion)
     self.assertNotIn("tracker band", fusion)
-    self.assertIn("70^\\circ", fusion)
+    self.assertIn("70^\\circ", startup)
 
-    self.assertIn("functional source portability only", simulation)
-    self.assertIn("timing, processor load, memory use, power, deadline margin", simulation)
-    self.assertIn("were not measured", simulation)
-    self.assertIn("outside the claims of this study", simulation)
+    self.assertIn("functional source portability only", results)
+    self.assertIn("Processor load, memory use, power, deadline margin", results)
+    self.assertIn("were not measured", results)
 
 
 core.ManuscriptMethodologyTests.test_the_deterministic_table_is_generated_not_typed = (
