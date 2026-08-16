@@ -1,0 +1,39 @@
+name: apply-provenance-docs-patch-once
+
+on:
+  push:
+    branches: [agent/harden-ou-evidence-provenance]
+
+concurrency:
+  group: apply-provenance-docs-patch-once
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/harden-ou-evidence-provenance
+      - name: Update provenance documentation and workflow paths
+        run: python3 tools/apply_provenance_docs_patch.py
+      - name: Assert OU-III title still says navigation
+        run: grep -Ei '\\title\{.*navigation' doc/kalman_ou_iii/kalman_ou-w3d.tex
+      - name: Commit permanent documentation changes and remove one-shot helpers
+        run: |
+          set -euo pipefail
+          rm tools/apply_provenance_docs_patch.py
+          rm .github/workflows/apply-provenance-docs-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md docs/ou-validation.md docs/ou-robustness.md \
+                  doc/kalman_ou_iii/w3d-sim-charts.tex-part \
+                  reports/results/ou_validation/PROVENANCE.md \
+                  .github/workflows/ou-validation.yml \
+                  tools/apply_provenance_docs_patch.py \
+                  .github/workflows/apply-provenance-docs-patch.yml
+          git commit -m "Document immutable replay and restatement provenance"
+          git push origin HEAD:refs/heads/agent/harden-ou-evidence-provenance
