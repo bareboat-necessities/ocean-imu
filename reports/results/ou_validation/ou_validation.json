@@ -35271,6 +35271,7 @@
     "primary_endpoint": "seed-level mean normalized vertical displacement RMS error over the four stationary JONSWAP seas, OU-III Adaptive minus OU-II Adaptive",
     "primary_endpoint_inference": "the confirmatory endpoint carries four companion statements on the same paired seed-level differences: the percentile bootstrap interval, a Student-t interval, an exact sign test, and an exact paired randomization (sign-flip) test enumerated over all 2^n sign patterns.  They are companions, not independent confirmations: all four read the same n paired differences, and none of them widens the ensemble.",
     "replay_inclusion_rule": "all completed replays with machine-readable metrics; deterministic simulator regression thresholds are not statistical acceptance criteria",
+    "restated_from": "reports/results/ou_validation/ou_validation.json",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {

@@ -5,28 +5,21 @@
       "sha256": "c62bc0bfcc31812fc99d286f765625dd94b7d8f2d790fd3c907c89ffb2db96a9"
     },
     "tools/ou_validation.py": {
-      "bytes": 150437,
-      "sha256": "bf0857d4e8836b4866b3c6beae108ee68fdf7647df7950612799cf46a0d2ab8c"
+      "bytes": 150208,
+      "sha256": "7166cacf8ddcf05bd4b1ed04f4bafabd005a5e2875bc358ca0c1a5db00bcc19d"
     }
   },
   "command": [
     "/usr/bin/python3",
     "tools/ou_robustness.py",
-    "--mode",
-    "full",
-    "--sensitivity-scales",
-    "0.5,0.75,1.0,1.25,1.5",
-    "--bootstrap-resamples",
-    "10000",
-    "--combine-shards",
-    "--shard-dir",
-    "shards",
+    "--restat-from",
+    "reports/results/ou_robustness/ou_robustness.json",
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "5df1f3b42d3eb456961d12e598257b5859470451",
-  "git_diff_stat": "",
+  "git_branch": "agent/reorganize-ou-iii-article",
+  "git_commit": "1c74f3b7eb79e4be193cebe8ad392fa2be4b5fa0",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   |  1 +\n reports/results/ou_validation/ou_validation.json   |  1 +\n .../ou_validation/ou_validation_manifest.json      | 23 ++++++++++------------\n 3 files changed, 12 insertions(+), 13 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -145,7 +138,7 @@
     "sigma_a_mps2": 0.724445343,
     "tau_s": 2.17904091
   },
-  "numpy": "1.26.4",
+  "numpy": "2.5.2",
   "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
@@ -158,6 +151,7 @@
     "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
     "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
     "replay_inclusion_rule": "all completed replays with machine-readable metrics; deterministic simulator regression thresholds are not statistical acceptance criteria",
+    "restated_from": "reports/results/ou_robustness/ou_robustness.json",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {
@@ -244,10 +238,11 @@
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "restated_from": "reports/results/ou_robustness/ou_robustness.json",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1401806,
-      "sha256": "4cdcdcb59c66870a8820cd1d0b1481d279abb566b608b78d0598580adb5e7b25"
+      "bytes": 1401879,
+      "sha256": "0015c95a8d0ceac13e3f26162531891edf00fa72b0410960299457326a622e4b"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1852,
@@ -303,6 +298,12 @@
       "bytes": 55378,
       "sha256": "c62bc0bfcc31812fc99d286f765625dd94b7d8f2d790fd3c907c89ffb2db96a9"
     },
+    "tools/ou_validation.py": {
+      "bytes": 150208,
+      "sha256": "7166cacf8ddcf05bd4b1ed04f4bafabd005a5e2875bc358ca0c1a5db00bcc19d"
+    }
+  },
+  "sources_moved_since_rows": {
     "tools/ou_validation.py": {
       "bytes": 150437,
       "sha256": "bf0857d4e8836b4866b3c6beae108ee68fdf7647df7950612799cf46a0d2ab8c"
