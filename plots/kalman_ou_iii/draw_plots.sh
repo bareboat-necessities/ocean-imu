@@ -1,21 +1,42 @@
 #!/bin/bash -e
 
-# The corrected telemetry names the axial field explicitly. Execute the existing
-# plotting script with an in-memory compatibility substitution so both new
-# `dir_axis_deg` CSVs and older `dir_deg` CSVs remain plottable.
+# Execute the existing plotting script with two publication-only compatibility
+# substitutions.  The simulator still records the acceleration-band carrier for
+# direction diagnostics, but OU-III adaptation is driven by the wave-band period.
+# Plot the smoothed wave-band schedule actually applied to the filter instead:
+# with deployed c_tau=1, tau_applied = Tz_applied/2 and therefore
+# f_wave_applied = 1/(2*tau_applied).  This avoids changing simulator telemetry
+# (and therefore the evidence contract) solely for a publication figure.
 python3 - <<'PY'
 from pathlib import Path
 
 path = Path("kalman_ou_iii-plots.py")
 source = path.read_text(encoding="utf-8")
-old = '        ("dir_deg",        r"Dir (deg, axial)"),'
-new = '        (("dir_axis_deg" if "dir_axis_deg" in df.columns else "dir_deg"), r"Dir (deg, axial)"),'
-if source.count(old) != 1:
+
+old_dir = '        ("dir_deg",        r"Dir (deg, axial)"),'
+new_dir = '        (("dir_axis_deg" if "dir_axis_deg" in df.columns else "dir_deg"), r"Dir (deg, axial)"),'
+if source.count(old_dir) != 1:
     raise RuntimeError("OU-III direction plot column anchor not found exactly once")
+source = source.replace(old_dir, new_dir, 1)
+
+old_panel = '        ("freq_tracker_hz", "Frequency (Hz)"),'
+new_panel = '        ("wave_tuning_freq_hz", "Applied wave-band frequency (Hz)"),'
+if source.count(old_panel) != 1:
+    raise RuntimeError("OU-III tuner frequency panel anchor not found exactly once")
+source = source.replace(old_panel, new_panel, 1)
+
+anchor = '    # === Frequency / Tuner ===\n'
+inject = '''    # Publication diagnostic for the deployed WaveBand tuning path.\n    # The acceleration carrier in freq_tracker_hz belongs to wave direction and\n    # is intentionally not shown in the adaptation figure.\n    tau_for_plot = pd.to_numeric(df["tau_applied"], errors="coerce").to_numpy()\n    df["wave_tuning_freq_hz"] = np.where(\n        np.isfinite(tau_for_plot) & (tau_for_plot > 0.0),\n        1.0 / (2.0 * tau_for_plot),\n        np.nan,\n    )\n\n'''
+if source.count(anchor) != 1:
+    raise RuntimeError("OU-III tuner section anchor not found exactly once")
+source = source.replace(anchor, inject + anchor, 1)
+
 namespace = {"__name__": "__main__", "__file__": str(path)}
-exec(compile(source.replace(old, new, 1), str(path), "exec"), namespace)
+exec(compile(source, str(path), "exec"), namespace)
 PY
 
+# Directional frequency--direction spectra used by the evaluation-methodology
+# section are generated from the same committed source records.
 python3 ../spectrum/spectrum-plots.py
 
 # Re-run all comparison observers in this workspace from the same source records.
@@ -66,9 +87,7 @@ cp -f ../../reports/results/ou_robustness/ou_robustness_stress.svg \
 
 # Keep the complete machine-generated validation tables as evidence, but make a
 # compact publication view. Detailed covariance-control and per-scenario
-# direction tables remain in the full generated study. The adaptive/fixed
-# vertical table is also omitted from the publication because the same values
-# are already presented in Fig. ou_mc_vertical.
+# direction tables remain in the full generated study.
 python3 - <<'PY'
 from pathlib import Path
 
@@ -98,11 +117,7 @@ dst.write_text(text, encoding="utf-8")
 PY
 
 # The robustness publication view omits the two full-width tables because both
-# datasets are already shown by the sensitivity and degradation figures. The
-# detailed-results document continues to consume the unfiltered generated file.
-# The scalar macros quoted by the prose are not in either file: they are
-# mirrored separately above and input from the preamble, because the Riccati
-# analysis quotes them before these tables are read.
+# datasets are already shown by the sensitivity and degradation figures.
 python3 - <<'PY'
 from pathlib import Path
 
@@ -128,29 +143,4 @@ for label in (
 ):
     text = strip_table(text, label)
 dst.write_text(text, encoding="utf-8")
-PY
-
-python3 - <<'PY'
-from pathlib import Path
-
-sim_path = Path("../../doc/kalman_ou_iii/w3d-sim-charts.tex-part")
-source = sim_path.read_text(encoding="utf-8")
-# Use one manuscript name for the nonlinear Pierson--Moskowitz cases.
-source = source.replace("PM+Stokes", "PM--Stokes")
-include = r"\input{w3d-baseline-comparison.tex-part}"
-anchor = r"\section{Real-Hardware Validation Platform}"
-if include not in source:
-    if source.count(anchor) != 1:
-        raise RuntimeError("hardware-section insertion anchor not found exactly once")
-    source = source.replace(anchor, include + "\n\n" + anchor, 1)
-sim_path.write_text(source, encoding="utf-8")
-
-main_path = Path("../../doc/kalman_ou_iii/kalman_ou-w3d.tex")
-main = main_path.read_text(encoding="utf-8")
-old_bib = r"\bibliography{w3d,w3d-iss}"
-new_bib = r"\bibliography{w3d,w3d-iss,w3d-baselines}"
-if new_bib not in main:
-    if main.count(old_bib) != 1:
-        raise RuntimeError("article bibliography anchor not found exactly once")
-    main_path.write_text(main.replace(old_bib, new_bib, 1), encoding="utf-8")
 PY
