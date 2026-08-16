@@ -42,8 +42,7 @@ The PM--Stokes ensemble gives the same qualitative vertical result.  With the
 current isotropic OU--III configuration, mean 3-D displacement RMS is also lower
 than matched OU--II in each of the four stationary JONSWAP seas and in the
 controlled transition, with the paired bootstrap interval excluding zero in
-each comparison.  That result is stronger than the earlier anisotropic operating
-point, but it should still be read within the tested directional and spectral
+each comparison.  That result should still be read within the tested directional and spectral
 families rather than as a general absolute-navigation claim.
 
 The horizontal analysis clarifies why isotropic regularization is plausible
@@ -58,7 +57,7 @@ horizontal $S=0$ constraint.  The measured $x/y$ split remains heading dependent
 so this study supports isotropic regularization for the tested records rather
 than a universal pair of world-axis tuning constants.
 
-Several limitations remain material.  The inferential comparison is still
+Several limitations remain.  The inferential comparison is still
 primarily against the author-developed OU--II predecessor; the external
 nonlinear observer is not run under the same ten-seed protocol, and a
 conventional spectral double-integration baseline plus a current published

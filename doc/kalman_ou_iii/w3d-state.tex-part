@@ -72,5 +72,4 @@ acceleration state.  Changing $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ does not, by
 itself, overwrite $\mat{P}_{a_wa_w}$.  Hard initialization may reset the
 posterior block and its cross-covariances, whereas the default online
 maintenance can only add the positive-semidefinite covariance needed to reach
-the current stationary floor; the optional legacy mode restores the historical
-raw marginal replacement.
+the current stationary floor.

@@ -4,8 +4,8 @@
 This section analyzes the normal Live-state linearization of the implemented
 OU--III estimator after replacing the accelerometer-bias random walk by a slow
 first-order Gauss--Markov residual about the deterministic temperature model.
-The change removes the neutral, nondecaying bias mode that prevented a
-21-state detectability result in the former formulation.  The proof proceeds in
+
+The proof proceeds in
 four steps: (i) uniform finite-horizon observability of the 12-state
 $[\vct v,\vct p,\vct S,\vct a_w]$ block, (ii) finite-horizon observability of
 attitude and gyro bias, (iii) uniform detectability of the 21-state augmentation
@@ -388,13 +388,7 @@ Thus the 18-state subsystem is uniformly completely observable.
 
 \subsection{Slow OU bias removes the 21-state obstruction}
 
-The former random-walk model had homogeneous transition $\mat I_3$ for
-$\widetilde{\vct b}_a$. A static attitude error parallel to the magnetic vector
-could then be cancelled indefinitely in the accelerometer residual by a fixed
-accelerometer-bias error, producing a nondecaying unobservable eigenvalue at
-one. The slow OU residual changes precisely that block.
-
-For the present model,
+For the our model,
 \begin{equation}
 \widetilde{\vct b}_{a,k+1}
 =\phi_{b,k}\widetilde{\vct b}_{a,k},

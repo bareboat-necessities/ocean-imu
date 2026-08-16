@@ -10,8 +10,7 @@ is left untouched.  In parallel, the wave-period and acceleration-variance
 estimators converge toward the initial operating point.  When attitude,
 magnetic reference, and tuner quality are adequate, the completed proxy
 solution is handed to the MEKF and the filter starts directly in its normal
-Live configuration.  The article therefore does not treat the older degraded
-MEKF warmup path as part of the deployed algorithm.
+Live configuration.
 
 \subsection{Tilt and operating-point bootstrap}
 

@@ -115,6 +115,5 @@ Their second-order coupling through attitude uncertainty is neglected, so the
 state Jacobians remain those of \eqref{eq:acc-meas}.  Setting $\vct{r}_b=0$
 disables the correction.
 
-The optional steady-heel frame transform is retained in the repository as
-companion material. It is outside the evaluated configuration and is disabled
+The optional steady-heel frame transform is outside the evaluated configuration and is disabled
 for all results in this paper.
