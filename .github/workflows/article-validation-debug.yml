@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Install validation dependencies
+        run: python3 -m pip install --quiet numpy scipy pandas matplotlib
       - name: Run validation tests and capture output
         shell: bash
         run: |
