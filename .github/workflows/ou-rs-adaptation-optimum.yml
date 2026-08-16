@@ -5,6 +5,7 @@ on:
     paths:
       - "tools/ou_rs_adaptation_optimum.py"
       - "tools/ou_rs_adaptation_optimum_run.py"
+      - "tools/ou_rs_adaptation_refine.py"
       - ".github/workflows/ou-rs-adaptation-optimum.yml"
   workflow_dispatch:
 
@@ -40,11 +41,11 @@ jobs:
             -exec cp -f {} plots/kalman_ou_ii/ \;
           test -f plots/kalman_ou_ii/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv
 
-      - name: Run physical-period optimum experiment
+      - name: Run refined physical-period optimum experiment
         run: |
-          python3 -u tools/ou_rs_adaptation_optimum_run.py \
+          python3 -u tools/ou_rs_adaptation_refine.py \
             --stretch "0.85,0.925,1.0,1.075,1.15" \
-            --rs-factors "0.65,0.78,0.9,1.0,1.12,1.28,1.5" \
+            --rs-factors "0.25,0.35,0.45,0.55,0.65,0.78,0.9,1.05,1.2" \
             --wave-seeds "11,29,47" \
             --imu-seeds "101,211,307" \
             --init-seeds "1009,1103,1201" \
