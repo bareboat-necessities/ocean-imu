@@ -88,9 +88,3 @@ scale used by the estimator and the single-integrated-elevation scale implied
 by JONSWAP have the same sea-state similarity.  It is not a statement that the
 filter triple-integrates a JONSWAP process, and it is not the derivation of the
 deployed adaptation law.
-
-% The following analysis explains the Kalman regularization mechanism and the
-% drift--distortion trade without promoting the reduced model to a complete-MEKF
-% optimum.
-\input{w3d-rs-riccati-analysis.tex-part}
-\input{w3d-rs-design-interpretation.tex-part}
