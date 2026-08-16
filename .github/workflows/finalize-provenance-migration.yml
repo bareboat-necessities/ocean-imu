@@ -70,13 +70,12 @@ jobs:
           python3 tools/ou_evidence_contract.py --check --study robustness
           grep -Ei '\\title\{.*navigation' doc/kalman_ou_iii/kalman_ou-w3d.tex
 
-      - name: Commit permanent migration
+      - name: Commit verified non-workflow changes
         run: |
           set -euo pipefail
           rm tools/apply_provenance_docs_patch.py
           rm tools/apply_provenance_safety_patch.py
           rm tools/apply_migration_lineage_patch.py
-          rm .github/workflows/finalize-provenance-migration.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md docs/ou-validation.md docs/ou-robustness.md \
@@ -84,10 +83,8 @@ jobs:
                   reports/results/ou_validation/PROVENANCE.md \
                   reports/results/ou_validation/ou_validation_manifest.json \
                   reports/results/ou_robustness/ou_robustness_manifest.json \
-                  .github/workflows/ou-validation.yml \
                   tools/ou_evidence_provenance.py tools/ou_validation.py tools/ou_robustness.py \
                   tools/apply_provenance_docs_patch.py tools/apply_provenance_safety_patch.py \
-                  tools/apply_migration_lineage_patch.py \
-                  .github/workflows/finalize-provenance-migration.yml
+                  tools/apply_migration_lineage_patch.py
           git commit -m "Migrate OU evidence to immutable replay provenance"
           git push origin HEAD:refs/heads/agent/harden-ou-evidence-provenance
