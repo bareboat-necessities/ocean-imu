@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 from pathlib import Path
 
-path = Path(__file__).resolve().parent / "ou_evidence_provenance.py"
+TOOLS = Path(__file__).resolve().parent
+path = TOOLS / "ou_evidence_provenance.py"
 text = path.read_text(encoding="utf-8")
 
 old = '''def _input_records_from_legacy(manifest: Mapping[str, Any]) -> dict[str, dict[str, object]]:\n    return {name: normalize_record(record) for name, record in manifest.get("source_files", {}).items()}\n'''
-new = '''def _input_records_from_legacy(study: str, manifest: Mapping[str, Any]) -> dict[str, dict[str, object]]:\n    # Legacy robustness manifests mixed replay inputs, simulator sources, and\n    # Python analysis files under one source_files key.  Preserve only actual\n    # replay inputs here; implementation/build and analysis provenance have\n    # their own explicit namespaces in schema v2.\n    excluded = set(implementation_records(study)) | set(analysis_records(study))\n    return {\n        name: normalize_record(record)\n        for name, record in manifest.get("source_files", {}).items()\n        if name not in excluded\n    }\n'''
+new = '''def _input_records_from_legacy(study: str, manifest: Mapping[str, Any]) -> dict[str, dict[str, object]]:\n    # Legacy robustness manifests mixed replay inputs, simulator sources, and\n    # Python analysis files under one source_files key. Preserve only actual\n    # replay inputs here; implementation/build and analysis provenance have\n    # their own explicit namespaces in schema v2.\n    excluded = set(implementation_records(study)) | set(analysis_records(study))\n    return {\n        name: normalize_record(record)\n        for name, record in manifest.get("source_files", {}).items()\n        if name not in excluded\n    }\n'''
 if old not in text:
     raise SystemExit("legacy input-record helper anchor not found")
 text = text.replace(old, new, 1)
@@ -40,5 +41,37 @@ if old not in text:
     raise SystemExit("legacy recovered restatement anchor missing")
 text = text.replace(old, new, 1)
 
+# Fresh replay provenance is initialized in the commit/check job, but the
+# compiler and Eigen environment must describe the combine job that actually
+# rebuilt the simulator. Full-generation manifests now carry that environment
+# forward explicitly.
+old = '''        "environment": environment_metadata(),\n    }\n\n\ndef _compare_record_maps'''
+new = '''        "environment": manifest.get("build_environment") or environment_metadata(),\n    }\n\n\ndef _compare_record_maps'''
+if old not in text:
+    raise SystemExit("fresh replay environment anchor missing")
+text = text.replace(old, new, 1)
 path.write_text(text, encoding="utf-8")
+
+validation = TOOLS / "ou_validation.py"
+vtext = validation.read_text(encoding="utf-8")
+old = '''        "numpy": np.__version__,\n        "command": [sys.executable, *sys.argv],\n        "protocol": protocol,\n'''
+new = '''        "numpy": np.__version__,\n        "build_environment": evidence_provenance.environment_metadata(),\n        "command": [sys.executable, *sys.argv],\n        "protocol": protocol,\n'''
+# The first occurrence is restat; the second is full generation. Only full
+# generation should claim a replay build environment.
+if vtext.count(old) < 2:
+    raise SystemExit("validation manifest environment anchors missing")
+first = vtext.find(old)
+second = vtext.find(old, first + len(old))
+vtext = vtext[:second] + vtext[second:].replace(old, new, 1)
+validation.write_text(vtext, encoding="utf-8")
+
+robustness = TOOLS / "ou_robustness.py"
+rtext = robustness.read_text(encoding="utf-8")
+old = '''        "matplotlib": matplotlib.__version__,\n        "command": [sys.executable, *sys.argv],\n        "protocol": protocol,\n'''
+new = '''        "matplotlib": matplotlib.__version__,\n        "build_environment": evidence_provenance.environment_metadata(),\n        "command": [sys.executable, *sys.argv],\n        "protocol": protocol,\n'''
+if old not in rtext:
+    raise SystemExit("robustness full-generation environment anchor missing")
+rtext = rtext.replace(old, new, 1)
+robustness.write_text(rtext, encoding="utf-8")
+
 print("strengthened replay/restatement provenance safety checks")
