@@ -518,8 +518,6 @@ q_-\mat I\preceq\mat Q_k^{\mathrm{eff}}
 \preceq(q_++\overline\Delta)\mat I.
 \label{eq:iss-Qeff-bounds}
 \end{equation}
-The optional legacy raw marginal replacement is not an ordinary Riccati step and
-is not covered by the theorem.
 
 \begin{theorem}[21-state Live UES]
 \label{thm:iss-21-ues}
