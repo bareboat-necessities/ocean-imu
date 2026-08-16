@@ -1,0 +1,31 @@
+name: article-validation-debug
+
+on:
+  push:
+    branches:
+      - agent/reorganize-ou-iii-article
+
+permissions:
+  contents: read
+
+jobs:
+  validation-log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run validation tests and capture output
+        shell: bash
+        run: |
+          set +e
+          make -C tests/validation test > validation-test.log 2>&1
+          status=$?
+          echo "$status" > validation-test.status
+          cat validation-test.log
+          exit 0
+      - name: Upload diagnostic log
+        uses: actions/upload-artifact@v7
+        with:
+          name: article-validation-debug-log
+          path: |
+            validation-test.log
+            validation-test.status
