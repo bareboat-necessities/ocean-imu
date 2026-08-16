@@ -33,6 +33,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 import ou_validation as core  # noqa: E402
+import ou_evidence_provenance as evidence_provenance  # noqa: E402
 
 matplotlib.rcParams["svg.hashsalt"] = "ocean-imu-ou-robustness"
 
@@ -731,8 +732,6 @@ def _run_unit(
                 tuning_point.sigma_a_mps2 if tuning_point else "adaptive"
             ),
             "configured_r_s_ms": tuning_point.RS_ms if tuning_point else "adaptive",
-            "quality_gate_pass": int(gate_pass),
-            "simulator_return_code": return_code,
             **{
                 key: value for key, value in metrics.items()
                 if key not in ("family", "tuning_mode", "input")
@@ -817,6 +816,9 @@ def restat_bundle(
     is on disk.
     """
 
+    restatement_context = evidence_provenance.begin_restatement(
+        "robustness", source
+    )
     with source.open(encoding="utf-8") as stream:
         bundle = json.load(stream)
     rows = [dict(row) for row in bundle["raw_runs"]]
@@ -852,7 +854,7 @@ def restat_bundle(
     macros_path = output_dir / "ou_robustness_macros.tex"
     manifest_path = output_dir / "ou_robustness_manifest.json"
 
-    core.write_csv(raw_path, rows)
+    evidence_provenance.preserve_raw_rows(restatement_context, raw_path)
     core.write_csv(summary_path, summary)
     core.write_csv(effects_path, effects)
     write_publication_table(
@@ -908,38 +910,17 @@ def restat_bundle(
             for path in result_paths
         }
     )
-    source_files, moved = _restated_source_files(manifest.get("source_files", {}))
     manifest.update(
         {
-            "git_commit": core.git_output("rev-parse", "HEAD"),
-            "git_branch": core.git_output("branch", "--show-current"),
-            "git_diff_stat": core.git_output("diff", "--stat"),
-            "python": sys.version,
-            "platform": platform.platform(),
-            "numpy": np.__version__,
-            "command": [sys.executable, *sys.argv],
             "protocol": protocol,
             "restated_from": protocol["restated_from"],
-            "source_files": source_files,
             "result_files": result_files,
         }
     )
-    # Only ever present after a restat, and only for sources that actually
-    # moved: the pin above is what the tables were computed under, and this is
-    # what the replays were run under.
-    if moved:
-        manifest["sources_moved_since_rows"] = moved
-    else:
-        manifest.pop("sources_moved_since_rows", None)
-
+    manifest = evidence_provenance.finalize_restatement_manifest(
+        "robustness", manifest, restatement_context
+    )
     core.write_json(manifest_path, manifest)
-
-    for name in moved:
-        print(
-            f"Note: {name} has changed since the archived rows were produced. "
-            "The rows are carried, not re-run; regenerate the study if that "
-            "file decides what the simulator does."
-        )
     for path in (*result_paths, manifest_path):
         print(f"Wrote {path}")
     return 0

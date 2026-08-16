@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Paired Monte Carlo validation for the OU-II and OU-III filters.
 
-The runner reports the simulator's own executable quality gates alongside, but
-separately from, its inferential score.  Validation uses a configurable long
+The simulator retains deterministic executable regression gates, but they are
+not Monte Carlo inclusion criteria and are not exported as statistical-row
+fields. Validation uses a configurable long
 window (900 seconds in full mode, matching the window the simulators gate on),
 independent wave-realization, IMU-noise, and initialization seeds, and paired
 realizations across filters and ablations.
@@ -28,6 +29,8 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 import numpy as np
+
+import ou_evidence_provenance as evidence_provenance
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -2814,6 +2817,9 @@ def restat_bundle(
     bundle scored is the ensemble the restated bundle reports.
     """
 
+    restatement_context = evidence_provenance.begin_restatement(
+        "validation", source
+    )
     with source.open(encoding="utf-8") as stream:
         bundle = json.load(stream)
     raw_rows = [dict(row) for row in bundle["raw_runs"]]
@@ -2875,7 +2881,7 @@ def restat_bundle(
     tuning_tex_path = output_dir / "ou_validation_tuning_points.tex"
     manifest_path = output_dir / "ou_validation_manifest.json"
 
-    write_csv(raw_path, raw_rows)
+    evidence_provenance.preserve_raw_rows(restatement_context, raw_path)
     write_csv(summary_path, summary)
     write_csv(effects_path, effects)
     write_latex_table(tex_path, summary)
@@ -2959,6 +2965,9 @@ def restat_bundle(
             "result_files": result_files,
             "stationary_normalized_aggregate": normalized_aggregate,
         }
+    )
+    manifest = evidence_provenance.finalize_restatement_manifest(
+        "validation", manifest, restatement_context
     )
     write_json(manifest_path, manifest)
 
@@ -3333,8 +3342,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                                 "imu_noise_seed": seed.imu_noise_seed,
                                 "initialization_seed": seed.initialization_seed,
                                 "score_window_sec": window_sec,
-                                "quality_gate_pass": int(gate_pass),
-                                "simulator_return_code": return_code,
                                 **{
                                     key: value for key, value in metrics.items()
                                     if key not in (
