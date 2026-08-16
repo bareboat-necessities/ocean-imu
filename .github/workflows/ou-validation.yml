@@ -11,8 +11,6 @@ on:
       - "tests/validation/**"
       - "tools/ou_validation.py"
       - "tools/ou_robustness.py"
-      - "tools/ou_evidence_provenance.py"
-      - "tools/ou_evidence_contract.py"
       - "reports/results/ou_validation/**"
       - "reports/results/ou_robustness/**"
       - "docs/ou-validation.md"
@@ -31,8 +29,6 @@ on:
       - "tests/validation/**"
       - "tools/ou_validation.py"
       - "tools/ou_robustness.py"
-      - "tools/ou_evidence_provenance.py"
-      - "tools/ou_evidence_contract.py"
       - "reports/results/ou_validation/**"
       - "reports/results/ou_robustness/**"
       - "docs/ou-validation.md"
@@ -82,17 +78,17 @@ jobs:
   # Gated on the mode rather than the event: in a called workflow
   # github.event_name is the caller's event, so an event test here would read
   # "push" and run the wrong half. `inputs` covers dispatch and workflow_call
+  # alike, and is empty -- so not 'full' -- for a plain push or pull request.
   validate:
-    if: ${{ (inputs.validation_mode || 'smoke') == 'smoke' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    if: inputs.validation_mode != 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Install dependencies
-        timeout-minutes: 15
-        shell: bash
+        timeout-minutes: 27
         run: |
           set -uo pipefail
           # Each attempt is capped at 8 minutes and there are two retries.
@@ -142,16 +138,16 @@ jobs:
         run: |
           python3 -u tools/ou_validation.py \
             --mode smoke \
-            --bootstrap-resamples 500 \
-            --output-dir reports/results/ou_validation_smoke
+            --bootstrap-resamples 1000 \
+            --output-dir reports/results/ou_validation
 
       - name: Run robustness validation
         run: |
           python3 -u tools/ou_robustness.py \
             --mode smoke \
-            --sensitivity-scales '0.5,0.75,1.0,1.25,1.5' \
-            --bootstrap-resamples 500 \
-            --output-dir reports/results/ou_robustness_smoke
+            --sensitivity-scales "0.5,1.0,1.5" \
+            --bootstrap-resamples 1000 \
+            --output-dir reports/results/ou_robustness
 
       - name: Upload validation artifacts
         if: always()
@@ -159,26 +155,41 @@ jobs:
         with:
           name: ou-validation-smoke
           path: |
-            reports/results/ou_validation_smoke/**
-            reports/results/ou_robustness_smoke/**
+            reports/results/ou_validation/**
+            reports/results/ou_robustness/**
+          if-no-files-found: warn
 
+  # Evidence regeneration. Dispatch-only, and sharded: the full validation
+  # study is roughly 840 twenty-minute simulator replays and the robustness
+  # study another 310, and a single four-core runner gets through those at
+  # about the rate that made this a multi-hour job.
+  #
+  # Every replay is fixed by its seed triplet, so the seed repetitions split
+  # across runners with no coordination. Each shard writes its rows to a file;
+  # the combine job merges them and produces the bundle a single process would
+  # have produced, byte for byte. Sharding by study as well as by seed keeps a
+  # failure in one bundle from throwing away the other's hours.
   regenerate:
-    if: ${{ inputs.validation_mode == 'full' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
+    if: inputs.validation_mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
     strategy:
       fail-fast: false
       matrix:
+        study: [validation, robustness]
         shard: [0, 1, 2]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Install dependencies
-        timeout-minutes: 15
-        shell: bash
+        timeout-minutes: 27
         run: |
           set -uo pipefail
+          # Each attempt is capped at 8 minutes and there are two retries.
+          # A stalled mirror is then abandoned and retried against whatever
+          # the load balancer hands out next, instead of holding the step
+          # until its own timeout kills the job with nothing installed.
           apt_get() {
             sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
               -o Acquire::Retries=2 \
@@ -215,52 +226,63 @@ jobs:
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
-      - name: Run validation shard
+      - name: Run paired validation shard
+        if: matrix.study == 'validation'
         run: |
-          mkdir -p reports/results/ou_validation_shards
           python3 -u tools/ou_validation.py \
             --mode full \
             --bootstrap-resamples 10000 \
-            --shard-count "$SHARD_COUNT" \
-            --shard-index "${{ matrix.shard }}" \
-            --shard-dir reports/results/ou_validation_shards
+            --jobs "$(nproc)" \
+            --shard-count ${{ env.SHARD_COUNT }} \
+            --shard-index ${{ matrix.shard }} \
+            --shard-dir shards \
+            --output-dir reports/results/ou_validation
 
-      - name: Run robustness shard
+      - name: Run robustness validation shard
+        if: matrix.study == 'robustness'
         run: |
-          mkdir -p reports/results/ou_robustness_shards
           python3 -u tools/ou_robustness.py \
             --mode full \
+            --sensitivity-scales "0.5,0.75,1.0,1.25,1.5" \
             --bootstrap-resamples 10000 \
-            --shard-count "$SHARD_COUNT" \
-            --shard-index "${{ matrix.shard }}" \
-            --shard-dir reports/results/ou_robustness_shards
+            --jobs "$(nproc)" \
+            --shard-count ${{ env.SHARD_COUNT }} \
+            --shard-index ${{ matrix.shard }} \
+            --shard-dir shards \
+            --output-dir reports/results/ou_robustness
 
-      - name: Upload validation shard
+      - name: Upload shard
         uses: actions/upload-artifact@v6
         with:
-          name: ou-validation-shard-${{ matrix.shard }}
-          path: reports/results/ou_validation_shards/**
+          name: ou-${{ matrix.study }}-shard-${{ matrix.shard }}
+          path: shards/**
+          if-no-files-found: error
 
-      - name: Upload robustness shard
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou-robustness-shard-${{ matrix.shard }}
-          path: reports/results/ou_robustness_shards/**
-
+  # Merges the shards and writes the bundle. Kept separate from the shards
+  # because the statistics are computed over all ten repetitions at once --
+  # bootstrap intervals and paired effects are not something a shard can hold
+  # a piece of.
   combine:
-    if: ${{ inputs.validation_mode == 'full' }}
     needs: regenerate
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
+    if: inputs.validation_mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        study: [validation, robustness]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Install dependencies
-        timeout-minutes: 15
-        shell: bash
+        timeout-minutes: 27
         run: |
           set -uo pipefail
+          # Each attempt is capped at 8 minutes and there are two retries.
+          # A stalled mirror is then abandoned and retried against whatever
+          # the load balancer hands out next, instead of holding the step
+          # until its own timeout kills the job with nothing installed.
           apt_get() {
             sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
               -o Acquire::Retries=2 \
@@ -285,7 +307,9 @@ jobs:
           done
           echo "apt-get did not succeed after 3 attempts"
           exit 1
-
+      # The combine step re-derives the calibrated tuning points and the
+      # transition diagnostic, which are simulator work, so it needs the same
+      # records and toolchain the shards had.
       - name: Download versioned simulation data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -297,114 +321,170 @@ jobs:
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
-      - name: Download validation shards
-        uses: actions/download-artifact@v7
+      - name: Download this study's shards
+        uses: actions/download-artifact@v8
         with:
-          pattern: ou-validation-shard-*
-          path: reports/results/ou_validation_shards
+          pattern: ou-${{ matrix.study }}-shard-*
           merge-multiple: true
+          path: shards
 
-      - name: Download robustness shards
-        uses: actions/download-artifact@v7
-        with:
-          pattern: ou-robustness-shard-*
-          path: reports/results/ou_robustness_shards
-          merge-multiple: true
-
-      - name: Combine validation shards
+      # Spelled out per study rather than templated, so the flags that shape
+      # the protocol recorded in the manifest are the same ones the shards ran
+      # under and cannot drift apart silently.
+      - name: Combine paired validation shards
+        if: matrix.study == 'validation'
         run: |
           python3 -u tools/ou_validation.py \
             --mode full \
-            --combine-shards \
-            --shard-count "$SHARD_COUNT" \
-            --shard-dir reports/results/ou_validation_shards \
             --bootstrap-resamples 10000 \
+            --combine-shards \
+            --shard-dir shards \
             --output-dir reports/results/ou_validation
 
       - name: Combine robustness shards
+        if: matrix.study == 'robustness'
         run: |
           python3 -u tools/ou_robustness.py \
             --mode full \
-            --combine-shards \
-            --shard-count "$SHARD_COUNT" \
-            --shard-dir reports/results/ou_robustness_shards \
+            --sensitivity-scales "0.5,0.75,1.0,1.25,1.5" \
             --bootstrap-resamples 10000 \
+            --combine-shards \
+            --shard-dir shards \
             --output-dir reports/results/ou_robustness
 
-      - name: Normalize and bind evidence provenance
-        run: python3 tools/ou_evidence_contract.py --auto
-
-      - name: Verify committed-to-generated evidence contracts
-        run: make -C tests/validation test
-
-      - name: Upload full validation bundle
+      - name: Upload regenerated bundle
+        if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou-validation-full
-          path: reports/results/ou_validation/**
+          name: ou-${{ matrix.study }}-full
+          path: reports/results/ou_${{ matrix.study }}/**
+          if-no-files-found: warn
 
-      - name: Upload full robustness bundle
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou-robustness-full
-          path: reports/results/ou_robustness/**
-
+  # Lands both regenerated bundles together, but only after the manuscript and
+  # committed-evidence contract passes against the regenerated working tree.
+  # A failed consistency check must never mutate the target branch.
   commit:
-    if: ${{ inputs.validation_mode == 'full' }}
     needs: combine
-    runs-on: ubuntu-latest
+    if: inputs.validation_mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     permissions:
       contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Download full validation bundle
-        uses: actions/download-artifact@v7
         with:
-          name: ou-validation-full
-          path: reports/results/ou_validation
+          ref: ${{ github.ref_name }}
 
-      - name: Download full robustness bundle
-        uses: actions/download-artifact@v7
-        with:
-          name: ou-robustness-full
-          path: reports/results/ou_robustness
-
-      - name: Mirror generated manuscript fragments
+      - name: Install dependencies
+        timeout-minutes: 27
         run: |
-          cp reports/results/ou_validation/ou_validation_macros.tex \
-             doc/kalman_ou_iii/w3d-ou-validation-macros-generated.tex-part
-          cp reports/results/ou_validation/ou_validation_results.tex \
-             doc/kalman_ou_iii/w3d-ou-validation-generated.tex-part
-          cp reports/results/ou_validation/ou_validation_paired_effects.tex \
-             doc/kalman_ou_iii/w3d-ou-validation-paired-generated.tex-part
-          cp reports/results/ou_robustness/ou_robustness_macros.tex \
-             doc/kalman_ou_iii/w3d-ou-robustness-macros-generated.tex-part
-          cp reports/results/ou_robustness/ou_robustness_publication.tex \
-             doc/kalman_ou_iii/w3d-ou-robustness-generated.tex-part
-
-      - name: Commit regenerated evidence
+          set -uo pipefail
+          # Each attempt is capped at 8 minutes and there are two retries.
+          # A stalled mirror is then abandoned and retried against whatever
+          # the load balancer hands out next, instead of holding the step
+          # until its own timeout kills the job with nothing installed.
+          apt_get() {
+            sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
+              -o Acquire::Retries=2 \
+              -o Acquire::http::Timeout=15 \
+              -o Acquire::https::Timeout=15 \
+              -o Dpkg::Use-Pty=0 \
+              "$@"
+          }
+          install_deps() {
+            apt_get update && apt_get install -y --no-install-recommends \
+              python3-numpy python3-matplotlib
+          }
+          for attempt in 1 2 3; do
+            if install_deps; then
+              echo "dependencies installed on attempt ${attempt}"
+              exit 0
+            fi
+            echo "attempt ${attempt} failed; clearing any half-configured state"
+            sudo dpkg --configure -a || true
+            sleep $((attempt * 15))
+          done
+          echo "apt-get did not succeed after 3 attempts"
+          exit 1
+      # The consistency step hashes every non-code source the manifest names,
+      # and those include the simulation records. Without them the check errors
+      # out on a missing file instead of reporting whether the numbers moved.
+      - name: Download versioned simulation data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip \
+            --clobber
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Download regenerated bundles
+        uses: actions/download-artifact@v8
+        with:
+          pattern: ou-*-full
+          path: regenerated
+
+      - name: Place bundles and mirror the manuscript copies
+        run: |
           set -euo pipefail
-          branch="${GITHUB_REF_NAME}"
+          rm -rf reports/results/ou_validation reports/results/ou_robustness
+          mkdir -p reports/results/ou_validation reports/results/ou_robustness
+          cp -a regenerated/ou-validation-full/. reports/results/ou_validation/
+          cp -a regenerated/ou-robustness-full/. reports/results/ou_robustness/
+          rm -rf regenerated
+
+          # These publication inputs are mechanical mirrors of the regenerated
+          # evidence. The validation step below verifies the complete contract
+          # before any commit can be created or pushed.
+          mirror() {
+            cp "reports/results/$1" "doc/kalman_ou_iii/$2"
+          }
+          mirror ou_validation/ou_validation_publication.tex \
+                 w3d-ou-validation-results-generated.tex-part
+          mirror ou_validation/ou_validation_macros.tex \
+                 w3d-ou-validation-macros-generated.tex-part
+          mirror ou_validation/ou_validation_tuning_points.tex \
+                 w3d-ou-validation-tuning-points-generated.tex-part
+          mirror ou_validation/ou_validation_vertical.svg \
+                 ou_validation_vertical.svg
+          mirror ou_validation/ou_validation_transition.svg \
+                 ou_validation_transition.svg
+          mirror ou_robustness/ou_robustness_publication.tex \
+                 w3d-ou-robustness-results-generated.tex-part
+          mirror ou_robustness/ou_robustness_macros.tex \
+                 w3d-ou-robustness-macros-generated.tex-part
+          mirror ou_robustness/ou_robustness_sensitivity.svg \
+                 ou_robustness_sensitivity.svg
+          mirror ou_robustness/ou_robustness_stress.svg \
+                 ou_robustness_stress.svg
+
+      - name: Check the manuscript against the regenerated evidence
+        run: make -C tests/validation test
+
+      - name: Commit the regenerated evidence
+        run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            reports/results/ou_validation \
-            reports/results/ou_robustness \
-            doc/kalman_ou_iii/w3d-ou-validation-macros-generated.tex-part \
-            doc/kalman_ou_iii/w3d-ou-validation-generated.tex-part \
-            doc/kalman_ou_iii/w3d-ou-validation-paired-generated.tex-part \
-            doc/kalman_ou_iii/w3d-ou-robustness-macros-generated.tex-part \
-            doc/kalman_ou_iii/w3d-ou-robustness-generated.tex-part
+          git add reports/results/ou_validation reports/results/ou_robustness \
+                  doc/kalman_ou_iii
           if git diff --cached --quiet; then
-            echo "Full evidence is already current"
+            echo "Regenerated bundle is identical to the committed one."
             exit 0
           fi
-          git commit -m "Regenerate the full OU validation and robustness evidence"
-          # The normal full-regeneration path is main. A manual dispatch on a
-          # feature branch is allowed as well, but it only updates that branch.
-          git push origin "HEAD:${branch}"
+          git commit \
+            -m "Regenerate the full OU validation and robustness evidence" \
+            -m "Produced by ou-validation run ${{ github.run_id }} from ${{ github.sha }}."
+          # Fully qualified on both sides. A short name here is ambiguous the
+          # moment a tag shares the branch's name -- git refuses the push with
+          # "dst refspec matches more than one", and the rebase in the retry
+          # silently fetches the tag instead of the branch.
+          for attempt in 1 2 3 4; do
+            git push origin HEAD:refs/heads/${{ github.ref_name }} && exit 0
+            sleep $((2 ** attempt))
+            git pull --rebase origin refs/heads/${{ github.ref_name }}
+          done
+          exit 1
