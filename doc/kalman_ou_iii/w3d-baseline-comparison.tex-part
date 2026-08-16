@@ -21,7 +21,9 @@ is restricted to vertical displacement and tilt, which are available from every
 method.  Parameters are frozen before evaluation and reference displacement is
 never used to select gains.  OU--II and OU--III use the same wave-band period
 input, so their comparison does not confound state architecture with the tuning
-band.
+band.  OU--III uses the deployed integral-state schedule of
+Sec.~\ref{sec:adaptation}, including pseudo-update cadence renormalization;
+OU--II uses its second-order position/velocity regularizers.
 
 \begin{table}[t]
 \centering
@@ -103,15 +105,16 @@ primary effect-size statement; the ten paired realizations establish
 repeatability within the stated simulator and sensor model, not uncertainty
 over alternative simulators, vessels, spectra, or update cadences.
 
-\paragraph{Vertical versus three-dimensional displacement}
+\paragraph{Vertical and three-dimensional displacement}
 OU--III has lower vertical error in every stationary JONSWAP sea and in the
-controlled transition.  The benefit is not a general three-dimensional
-improvement: Table~\ref{tab:ou_mc_axes} shows higher OU--III 3D displacement
-error in \OUValidationThreeDHigherCount{} of the
-\OUValidationThreeDScenarios{} scenarios, with the largest sea as the
-exception.  The additional integral-state regularization should therefore be
-interpreted primarily as a heave improvement; in most tested cases it incurs a
-horizontal-displacement cost, especially in the $Y$ channel.
+controlled transition.  With the current isotropic OU--III configuration, the
+three-dimensional result is favorable as well: Table~\ref{tab:ou_mc_axes} shows
+lower paired mean 3-D displacement RMS than OU--II in all
+\OUValidationThreeDScenarios{} JONSWAP-plus-transition scenarios, and the paired
+bootstrap interval excludes zero in every comparison.  This does not imply a
+universal horizontal-axis tuning rule: the magnitude and the $X/Y$ decomposition
+remain scenario and heading dependent, and the directional ensemble is too
+limited to identify separate world-axis regularization constants.
 
 \paragraph{Second spectrum}
 The paired PM--Stokes ensemble reproduces the vertical advantage, with a
