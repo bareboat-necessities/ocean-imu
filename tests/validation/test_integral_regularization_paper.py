@@ -33,20 +33,32 @@ class IntegralRegularizationPaperTests(unittest.TestCase):
             "Adaptive Integral-State Regularization for Drift-Bounded Inertial Motion Estimation",
             self.flat,
         )
+        self.assertIn("Sea-State Scaling and Empirical Tuning", self.flat)
         self.assertIn("integral-state regularization", self.prose.lower())
-        self.assertIn("regularizer, not as a physical sensor", self.prose)
+        self.assertIn("regularizer rather than a physical sensor", self.prose)
         self.assertIn(r"\bibliography{w3d}", self.text)
 
-    def test_bias_variance_optimum_is_explicit(self):
-        for token in (
-            r"\label{thm:mse-opt}",
-            r"\frac{3q_{\rm eff}}{2\omega_R^3}",
-            r"4m_{-4}\omega_R^4",
-            r"\frac{9}{32}\frac{q_{\rm eff}}{m_{-4}}",
-            r"q_{\rm eff}^{1/14}m_{-4}^{3/7}T_S^{-1/2}",
-            r"q_{\rm eff}^{4/7}m_{-4}^{3/7}",
-        ):
-            self.assertIn(token, self.text)
+    def test_similarity_theorem_is_scaling_not_optimality_claim(self):
+        self.assertIn(r"\label{thm:similarity}", self.text)
+        self.assertIn(r"\boxed{\sigma_a\tau^3}", self.text)
+        self.assertIn("coordinate-scale statement", self.prose)
+        self.assertIn("does not prove that this is the optimal Kalman tuning", self.prose)
+
+    def test_reduced_tradeoff_is_explicitly_illustrative(self):
+        self.assertIn(r"\label{prop:reduced-tradeoff}", self.text)
+        self.assertIn(r"\frac{3q_{\rm eff}}{2\omega_R^3}", self.text)
+        self.assertIn(r"4m_{-4}\omega_R^4", self.text)
+        self.assertIn(r"q_{\rm eff}^{1/14}m_{-4}^{3/7}T_S^{-1/2}", self.text)
+        self.assertIn("not asserted to be the optimum of the complete MEKF", self.prose)
+        self.assertIn("Where the analytical logic stops", self.flat)
+
+    def test_deployed_law_is_empirical_not_theorem_derived(self):
+        self.assertIn(r"r_S\propto\sigma_a\tau^{5/2}", self.text)
+        self.assertIn("The coefficient and the decision to retain this schedule", self.flat)
+        self.assertIn("are empirical design choices", self.flat)
+        self.assertIn("full-estimator evidence", self.flat)
+        self.assertNotIn(r"\label{thm:mse-opt}", self.text)
+        self.assertNotIn(r"r_S^\star", self.text)
 
     def test_amplitude_exponent_ablation_matches_committed_study(self):
         self.assertIn(r"\label{tab:p-ablation}", self.text)
@@ -58,7 +70,8 @@ class IntegralRegularizationPaperTests(unittest.TestCase):
             r"$p=1.5$  & 4.817 & $+0.070\pm0.016$ & 0.660",
         ):
             self.assertIn(row, self.text)
-        self.assertIn(r"p=\frac{m+12}{14}", self.text)
+        self.assertNotIn(r"p=\frac{m+12}{14}", self.text)
+        self.assertIn("used directly as empirical support", self.flat)
 
     def test_channel_ablation_keeps_rs_as_the_dominant_adaptive_channel(self):
         self.assertIn(r"\label{tab:channel-ablation}", self.text)
@@ -71,44 +84,45 @@ class IntegralRegularizationPaperTests(unittest.TestCase):
             self.assertIn(row, self.text)
         self.assertIn("adaptive integral anchor is", self.flat)
 
-    def test_horizontal_vertical_optimum_is_measured_not_assumed(self):
-        self.assertIn(r"\label{eq:axis-opt}", self.text)
-        self.assertIn(
-            r"\left(\frac{q_{{\rm eff},i}}{q_{{\rm eff},j}}\right)^{1/14}",
-            self.text,
-        )
-        self.assertIn(
-            r"\left(\frac{m_{-4,i}}{m_{-4,j}}\right)^{3/7}", self.text
-        )
-        self.assertRegex(
-            self.flat,
-            re.compile(
-                r"Geometric mean\s*&\s*65\.4\s*&\s*102\.3\s*&\s*0\.674\s*&\s*0\.326\s*&\s*\\textbf\{1\.138\}\s*&\s*\\textbf\{0\.861\}"
-            ),
-        )
-        self.assertIn("two orders of magnitude", self.flat)
-        self.assertIn("do not attempt to compensate", self.flat)
+    def test_awkward_local_sensitivity_table_is_removed(self):
+        self.assertNotIn(r"\label{tab:sensitivity}", self.text)
+        self.assertIn("A separate local sensitivity sweep reaches the same mechanistic conclusion", self.flat)
 
-    def test_anisotropy_ablation_preserves_counterintuitive_result(self):
-        self.assertIn(r"\label{tab:aniso-arms}", self.text)
-        self.assertIn(r"$(1.87,1.87)$ & +2.3 & +27.6 & -0.2 & +13.7", self.text)
-        self.assertIn(r"$(1.00,1.00)$ & -4.2 & -1.1 & +0.1 & -2.6", self.text)
-        self.assertIn(r"\label{tab:ssigma}", self.text)
-        self.assertIn(
-            r"\textbf{1.00} & \textbf{-2.11} & \textbf{-0.54} & +0.16 & \textbf{-1.28}",
-            self.text,
-        )
+    def test_horizontal_claim_is_isotropic_and_direction_limited(self):
+        self.assertIn(r"\section{Three-Axis Regularization}", self.text)
+        self.assertIn("limited set of wave headings", self.flat)
+        self.assertIn("separate universal $x$ and $y$ regularizer coefficients", self.flat)
+        self.assertIn("isotropic integral regularization performed adequately", self.flat)
+        self.assertIn("same integral-regularization scale on all three axes", self.flat)
 
-    def test_historical_validation_scope_is_not_hidden(self):
-        self.assertIn("generated before the final horizontal OU-prior factor", self.flat)
-        self.assertIn("changed from 1.87 to the currently deployed isotropic value 1.0", self.flat)
-        self.assertIn("A future full regeneration should collapse that historical distinction", self.flat)
+    def test_legacy_horizontal_tuning_and_axis_optimum_are_removed(self):
+        for token in (
+            r"\rho_{xy}",
+            r"\label{eq:axis-opt}",
+            r"\label{tab:axis-opt}",
+            r"\label{tab:aniso-arms}",
+            r"\label{tab:ssigma}",
+            "1.138",
+            "0.861",
+            "historical horizontal factor",
+        ):
+            self.assertNotIn(token, self.text)
+
+    def test_abstract_contains_no_reduced_optimum_numbers(self):
+        abstract = self.text.split(r"\begin{abstract}", 1)[1].split(r"\end{abstract}", 1)[0]
+        for token in (
+            r"q_{\rm eff}^{1/14}",
+            r"m_{-4}^{3/7}",
+            "1.138",
+            "0.861",
+            "two orders of magnitude",
+        ):
+            self.assertNotIn(token, abstract)
+        self.assertIn("justified empirically", abstract)
 
     def test_two_column_paper_does_not_use_full_width_tables(self):
         self.assertNotIn(r"\begin{table*}", self.text)
         self.assertNotIn(r"\begin{figure*}", self.text)
-        # Wide numeric tables, where needed, are explicitly fit to one IEEE column.
-        self.assertGreaterEqual(self.text.count(r"\resizebox{\columnwidth}{!}"), 2)
 
 
 if __name__ == "__main__":
