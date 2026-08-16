@@ -115,9 +115,14 @@ Paired effects use percentile-bootstrap intervals obtained by resampling the
 seed-level paired differences; a Student-$t$ interval, exact sign test, and
 exact paired sign-flip test are reported as companion checks for the single
 primary endpoint.  Descriptive secondary comparisons retain paired intervals
-without promoting each one to an additional confirmatory hypothesis.  The full
-protocol, seed triplets, implementation-source hashes, and generated results are
-versioned in the committed evidence bundle.
+without promoting each one to an additional confirmatory hypothesis.  A full
+simulator generation establishes immutable replay provenance: replay source
+commit, replay-producing implementation/build hashes, input hashes, and the
+normalized raw-row hash.  A later statistical restatement is recorded
+separately and is permitted only while that replay dependency closure and the
+raw rows still match; it cannot substitute for a replay after implementation
+changes.  The evidence contract enforces the same file-hash guarantees in a
+source archive even when Git metadata is unavailable.
 
 The reported metrics are not restricted to heave.  The study scores
 $X$, $Y$, $Z$, and 3-D displacement RMS; roll, pitch, and yaw RMS; accelerometer

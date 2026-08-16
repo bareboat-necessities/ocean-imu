@@ -146,7 +146,7 @@
     }
   },
   "git_branch": "agent/reorganize-ou-iii-article",
-  "git_commit": "1c74f3b7eb79e4be193cebe8ad392fa2be4b5fa0",
+  "git_commit": "5df1f3b42d3eb456961d12e598257b5859470451",
   "git_diff_stat": "reports/results/ou_validation/ou_validation.json | 1 +\n 1 file changed, 1 insertion(+)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -261,9 +261,17 @@
       "bytes": 2717,
       "sha256": "d25550d481c3062100a9a136e3df06e3740c39af4aa5459425c7fd212edfd5a7"
     },
+    "tests/kalman_ou_ii/Makefile": {
+      "bytes": 1728,
+      "sha256": "d77ea30ac9ceed1dc8b4f2d41fa858cbe371d7ea8cf3e777aa271f1e55224c3b"
+    },
     "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp": {
       "bytes": 48068,
       "sha256": "558260a229dbc5fcd00612af0e5765e6b6464bf5df5b944e70aad93f92e6b003"
+    },
+    "tests/kalman_ou_iii/Makefile": {
+      "bytes": 2808,
+      "sha256": "ad578493840d66ab8fad853d4eef25d7e84889935c35aca3c1ff9f95410fabf4"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
       "bytes": 45303,
@@ -395,7 +403,222 @@
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "replay_provenance": {
+    "environment": {
+      "compiler": {
+        "note": "legacy replay predates compiler identity provenance",
+        "recorded": false
+      },
+      "eigen": {
+        "note": "legacy replay predates explicit Eigen identity provenance",
+        "recorded": false
+      },
+      "numpy": "1.26.4",
+      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+    },
+    "generated_at": null,
+    "git_commit": "5df1f3b42d3eb456961d12e598257b5859470451",
+    "implementation_files": {
+      "src/ahrs/FrameConversions.h": {
+        "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+        "size_bytes": 18427
+      },
+      "src/ahrs/Mahony_AHRS.h": {
+        "sha256": "ce0e93bf9c2b6213594985e3c9d3cf06edfd7418ba2bbfcace666f6ac93cddf3",
+        "size_bytes": 12635
+      },
+      "src/detrend/AdaptiveWaveDetrender3D.h": {
+        "sha256": "917c035cd0a7815afedc65a5a68751d0df9d64354a9a095fc3ae83222e3689d7",
+        "size_bytes": 26350
+      },
+      "src/freq/AranovskiyFreqTracker.h": {
+        "sha256": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+        "size_bytes": 9000
+      },
+      "src/freq/FirstOrderIIRSmoother.h": {
+        "sha256": "04e8bef7d537bd9a1baa10c5d5b70333ee69b7b92fabcc2e21e60536680c3073",
+        "size_bytes": 1271
+      },
+      "src/freq/FrequencyTrackerPolicy.h": {
+        "sha256": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+        "size_bytes": 9727
+      },
+      "src/freq/KalmANFFreqTracker.h": {
+        "sha256": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+        "size_bytes": 13310
+      },
+      "src/freq/PLLFreqTracker.h": {
+        "sha256": "23529d1327ab88a175f6f0d1d01660732a3e6fea220d2aee845be55be6064092",
+        "size_bytes": 19306
+      },
+      "src/freq/SchmittTriggerZCFreqTracker.h": {
+        "sha256": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+        "size_bytes": 13561
+      },
+      "src/kalman_common/SeaStateFusionFilterCommon.h": {
+        "sha256": "64c1a451891fcd5f3b7d9a1a8c92a39a20abd116b4ac8d681074be1bc42cd4ea",
+        "size_bytes": 10445
+      },
+      "src/kalman_ou_common/KalmanOUCoreMath.h": {
+        "sha256": "4298c6fb6636ed3e91897257ed384fedc6143ee8e66a7c564459006d14075e2b",
+        "size_bytes": 15755
+      },
+      "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": {
+        "sha256": "c4d31b89013ddbb8b5009edeca1e659707040b5f451ca8a1eb7c26288e2ca174",
+        "size_bytes": 97268
+      },
+      "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": {
+        "sha256": "e1127f59999ab11054605cbede34edb3b2ad60541bcb8a56872649931e8606ba",
+        "size_bytes": 136295
+      },
+      "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
+        "sha256": "ab76e29edd22a12bf2d46766232ccca36aa3cf29f733734907f847528d306faa",
+        "size_bytes": 99058
+      },
+      "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
+        "sha256": "e3b2d5e9ccaee16f92421a815a3713521f0945a444b0bc05d92f258239089387",
+        "size_bytes": 145395
+      },
+      "src/tuner/AdaptiveWaveBandPass.h": {
+        "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+        "size_bytes": 5864
+      },
+      "src/tuner/ContinuousMagHardIronEstimator.h": {
+        "sha256": "1ec5a8b1b19c249d88ccfc1219c33aa3aba63de59a7254dbe6aa5d6bff40e85b",
+        "size_bytes": 12690
+      },
+      "src/tuner/MagAutoTuner.h": {
+        "sha256": "3f454b9507bf52c7ed44b2e16082f0bc37640bc0bf8193ad59b2ee9781c691f3",
+        "size_bytes": 22706
+      },
+      "src/tuner/SeaStateAutoTuner.h": {
+        "sha256": "2fc7a1fef2f5a131d3fc1e8207d78ab931416b4e654f944916af3126727c63be",
+        "size_bytes": 8777
+      },
+      "src/tuner/SeaStateFusionTunerCommon.h": {
+        "sha256": "4f8145c2774a213c301b63210557efa0f78f60b9516e6696bb39e8877bd8f253",
+        "size_bytes": 3888
+      },
+      "src/tuner/VerticalAccelComplementary.h": {
+        "sha256": "447db93508fd6bf3b6e51a757239f7d7a2c470471bce7f298f682981217bb335",
+        "size_bytes": 10277
+      },
+      "src/tuner/WavePeriodEstimator.h": {
+        "sha256": "4b8d1a0db2bf8fee6e67013c68e1554048f57a41774198a5bbca83bb64b41825",
+        "size_bytes": 8471
+      },
+      "src/util/W3dSimCommon.cpp": {
+        "sha256": "bad245314d94cb345c1c3a4a7a6923fee9d16bcae24928a2a4eea71442139de3",
+        "size_bytes": 69786
+      },
+      "src/util/W3dSimCommon.h": {
+        "sha256": "8e5c8a9cccf887e522b713f3680df9e5bff629b38445f5803466ffc391ecafe9",
+        "size_bytes": 19587
+      },
+      "src/util/WaveFilesSupport.h": {
+        "sha256": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
+        "size_bytes": 13244
+      },
+      "src/wave_dir/KalmanWaveDirection.h": {
+        "sha256": "1ad6a373b318c06436da0941be5b9c8e13b7c09c5338cd8057b95120c70736f6",
+        "size_bytes": 15178
+      },
+      "src/wave_dir/WaveDirectionDetector.h": {
+        "sha256": "4c80e90daf9279280e165529177e0a7056184cd04086e1b8c9ac5b91fa961a8b",
+        "size_bytes": 11595
+      },
+      "src/wave_dir/WaveDirectionFrame.h": {
+        "sha256": "d25550d481c3062100a9a136e3df06e3740c39af4aa5459425c7fd212edfd5a7",
+        "size_bytes": 2717
+      },
+      "tests/kalman_ou_ii/Makefile": {
+        "sha256": "d77ea30ac9ceed1dc8b4f2d41fa858cbe371d7ea8cf3e777aa271f1e55224c3b",
+        "size_bytes": 1728
+      },
+      "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp": {
+        "sha256": "558260a229dbc5fcd00612af0e5765e6b6464bf5df5b944e70aad93f92e6b003",
+        "size_bytes": 48068
+      },
+      "tests/kalman_ou_iii/Makefile": {
+        "sha256": "ad578493840d66ab8fad853d4eef25d7e84889935c35aca3c1ff9f95410fabf4",
+        "size_bytes": 2808
+      },
+      "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
+        "sha256": "4ad1bbe8a61682d8299f70bbbc582c603dd8a182574704a2c87ca944e38e9993",
+        "size_bytes": 45303
+      }
+    },
+    "input_files": {
+      "plots/kalman_ou_ii/wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": {
+        "sha256": "fa724aaea217b953cfcdde89b346d18218a970b79c277068ed3e7a8ef3f8981b",
+        "size_bytes": 52541812
+      },
+      "plots/kalman_ou_ii/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": {
+        "sha256": "2fa6c06d80d61e76f00dea60cc5f4330007c4192536bee46c52e8fd639bc30ae",
+        "size_bytes": 50706074
+      },
+      "plots/kalman_ou_ii/wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": {
+        "sha256": "5258a757b11c0aa5ce2fee37bb061031d4229025d3381ca4f524451deab7e18a",
+        "size_bytes": 49837318
+      },
+      "plots/kalman_ou_ii/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
+        "sha256": "f0be2c41464e4a5a0924bab652549d38ffc6bec55406156b7b4a0ef72ce490d4",
+        "size_bytes": 49106162
+      },
+      "plots/kalman_ou_ii/wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": {
+        "sha256": "f1d13e93aabcea7d2ab002d7829f7d5a0fb820165851f2bb327021e73b5c7fb7",
+        "size_bytes": 52316264
+      },
+      "plots/kalman_ou_ii/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": {
+        "sha256": "b250fbd7147c5edb67427b22055f36d75989a9aeba01a01716a48b24feb0af55",
+        "size_bytes": 50419224
+      },
+      "plots/kalman_ou_ii/wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": {
+        "sha256": "c0f833b6618576f768a05c31f2552a9644587a9ed73cdf3d6f4f261aa49372b2",
+        "size_bytes": 49662236
+      },
+      "plots/kalman_ou_ii/wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": {
+        "sha256": "fd91aa656af65590c050f9ebe38f3f1935efec35871d26905d4838183a1f3eed",
+        "size_bytes": 48801626
+      }
+    },
+    "provenance_migration": {
+      "historical_evidence_commit": "35120f96d3f8c02872fd3e06fa94ebe547c3f5eb",
+      "historical_raw_rows_sha256": "c5e18fc85f3e1bf15c9c46bf8ac66c209a513feab1c15daee85555b2ba1270af",
+      "kind": "verified_legacy_full_replay",
+      "normalization_only_columns_removed": [
+        "quality_gate_pass",
+        "simulator_return_code"
+      ],
+      "replay_source_commit": "5df1f3b42d3eb456961d12e598257b5859470451",
+      "verified_at": "2026-08-16T15:32:11+00:00",
+      "verified_at_git_commit": "d4d95b4c36539d1b258bdd349e42efe1783625a4"
+    },
+    "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
+    "raw_rows_sha256": "390aac7a82ed9260d5d3d2bcb2b23f2bec4c60b61403114c9a4f4ba88655204d",
+    "raw_rows_size_bytes": 557516,
+    "workflow_run": null
+  },
   "restated_from": "reports/results/ou_validation/ou_validation.json",
+  "restatement": {
+    "analysis_pipeline_files": {
+      "tools/ou_validation.py": {
+        "sha256": "7166cacf8ddcf05bd4b1ed04f4bafabd005a5e2875bc358ca0c1a5db00bcc19d",
+        "size_bytes": 150208
+      }
+    },
+    "environment": {
+      "numpy": "2.5.2",
+      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+    },
+    "git_commit": "1c74f3b7eb79e4be193cebe8ad392fa2be4b5fa0",
+    "provenance_migration_note": "restatement metadata recovered from the legacy manifest; source bundle/manifest hashes and timestamp were not recorded and are intentionally not fabricated",
+    "restated_at": null,
+    "source_bundle_sha256": null,
+    "source_manifest_sha256": null
+  },
   "result_files": {
     "ou_validation.json": {
       "bytes": 4610720,
@@ -454,6 +677,7 @@
       "sha256": "05233cb22bc0e353d581f968cf5b5c3095dcf140e37fdd4861d95750834e8ae5"
     }
   },
+  "schema_version": 2,
   "source_files": {
     "plots/kalman_ou_ii/wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": {
       "bytes": 52541812,

@@ -5,13 +5,13 @@ the OU-II and OU-III filter families. The committed publication evidence is in
 `reports/results/ou_validation/`.
 
 The current full bundle was regenerated from the current isotropic OU-III
-implementation by GitHub Actions run `31943137398`. The replay source commit is
-`5df1f3b42d3eb456961d12e598257b5859470451`; the generated evidence was committed
-as `35120f96d3f8c02872fd3e06fa94ebe547c3f5eb`. The manifest records that source
-commit and, through the evidence contract, hashes the transitive repository-local
-C/C++ implementation dependency closure of the OU simulator targets together
-with the analysis pipeline. A filter/header change therefore makes the committed
-evidence stale until a full regeneration is performed.
+implementation by GitHub Actions run `31943137398`. Its immutable replay source
+commit is `5df1f3b42d3eb456961d12e598257b5859470451`; the generated evidence was
+committed as `35120f96d3f8c02872fd3e06fa94ebe547c3f5eb`. The manifest now separates
+that replay provenance from any later statistical restatement. Replay provenance
+pins the simulator/filter dependency closure, build files, versioned inputs, and
+normalized raw-row hash; a later restatement records its analysis context in a
+separate block and cannot replace those replay pins.
 
 The completed study contains 840 simulator rows over ten paired seed triplets:
 nine scenarios (four JONSWAP seas, four PM--Stokes seas, and one controlled
@@ -117,23 +117,38 @@ paired sample count; they do not create additional independent experiments.
 
 ## Provenance contract
 
-`ou_validation_manifest.json` records the command, versions, source commit,
-protocol, seed triplets, input hashes, result hashes, analysis-pipeline hashes,
-and the transitive implementation hashes reachable from the simulator sources.
-The implementation closure includes the simulator translation units and their
-repository-local headers, including the actual OU-II/OU-III filter headers and
-shared simulator code.
+`ou_validation_manifest.json` has two provenance layers. `replay_provenance` is
+immutable for a set of simulator rows: it records the replay source commit, the
+transitive repository-local simulator/filter dependency closure, the simulator
+build Makefiles, input hashes, and a SHA-256 of the normalized raw replay CSV.
+The build environment is also recorded when a new full replay is generated
+(compiler identity/version, Eigen identity, Python, NumPy, and platform), but
+those environment fields are informational rather than cross-platform validity
+keys.
 
-`tools/ou_evidence_contract.py --check` verifies that the recorded
-implementation and analysis hashes still match the checkout. The normal
-`tests/validation` target runs this contract automatically. A source change in
-the estimator path therefore fails the evidence check instead of silently
-leaving publication numbers attached to a different implementation.
+A later `--restat-from` may recompute summaries, paired effects, tables, or
+publication text from those same rows. Before writing anything it compares the
+current replay dependency closure with the immutable replay closure and verifies
+the raw-row hash. If a filter header, simulator translation unit, shared replay
+dependency, or recorded build file changed, restatement fails and requires a
+full simulator replay. If only approved analysis/presentation code changed, the
+restatement records a separate `restatement` block with its analysis hashes and
+source-bundle hash; it never changes the replay commit or replay dependency
+hashes.
 
-During a full regeneration, the same contract is allowed to normalize and stamp
-the newly generated bundle only when the manifest's recorded replay commit is
-the checked-out source commit. It cannot restamp old rows after implementation
-code changes.
+`tools/ou_evidence_contract.py --check` enforces the replay pins and result
+inventory. In a Git checkout it can additionally validate the recorded replay
+commit; in a GitHub source ZIP, release archive, Zenodo artifact, or copied tree
+without `.git`, it falls back to read-only manifest/file-hash verification and
+retains the same dependency-hash checks. `--auto` cannot promote a legacy
+restatement or old rows to a new estimator revision.
+
+The existing isotropic bundle was migrated to this schema without replay only
+after Git history proved that its replay-producing dependency closure had not
+changed since the recorded full replay and that the current normalized raw CSV
+was exactly the historical replay CSV with only the retired regression-gate
+columns removed. No numerical replay metric or paired statistic was changed by
+that provenance migration.
 
 ## Running
 

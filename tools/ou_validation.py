@@ -3687,6 +3687,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "python": sys.version,
         "platform": platform.platform(),
         "numpy": np.__version__,
+        "build_environment": evidence_provenance.environment_metadata(),
         "command": [sys.executable, *sys.argv],
         "protocol": protocol,
         "source_files": {

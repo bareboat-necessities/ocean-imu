@@ -335,8 +335,17 @@ def normalize_statistical_schema(study: str) -> None:
     strip_gate_macros(Path(cfg["mirrored_macro"]) if cfg["mirrored_macro"] else None)
 
 
-def _input_records_from_legacy(manifest: Mapping[str, Any]) -> dict[str, dict[str, object]]:
-    return {name: normalize_record(record) for name, record in manifest.get("source_files", {}).items()}
+def _input_records_from_legacy(study: str, manifest: Mapping[str, Any]) -> dict[str, dict[str, object]]:
+    # Legacy robustness manifests mixed replay inputs, simulator sources, and
+    # Python analysis files under one source_files key. Preserve only actual
+    # replay inputs here; implementation/build and analysis provenance have
+    # their own explicit namespaces in schema v2.
+    excluded = set(implementation_records(study)) | set(analysis_records(study))
+    return {
+        name: normalize_record(record)
+        for name, record in manifest.get("source_files", {}).items()
+        if name not in excluded
+    }
 
 
 def _legacy_map(records: Mapping[str, Mapping[str, Any]]) -> dict[str, dict[str, object]]:
@@ -372,13 +381,13 @@ def create_replay_provenance_from_fresh_generation(study: str, manifest: Mapping
     return {
         "git_commit": head,
         "implementation_files": implementation_records(study),
-        "input_files": _input_records_from_legacy(manifest),
+        "input_files": _input_records_from_legacy(study, manifest),
         "raw_rows_sha256": sha256_file(raw),
         "raw_rows_size_bytes": raw.stat().st_size,
         "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
         "workflow_run": workflow_metadata(),
         "generated_at": utc_now(),
-        "environment": environment_metadata(),
+        "environment": manifest.get("build_environment") or environment_metadata(),
     }
 
 
@@ -416,15 +425,12 @@ def replay_errors(study: str, manifest: Mapping[str, Any]) -> list[str]:
         path = REPO_ROOT / name
         if path.is_file() and file_record(path) != normalize_record(record):
             errors.append(f"{study}: replay input differs from recorded provenance: {name}")
-    if git_available():
-        commit = replay.get("git_commit")
-        if not commit:
-            errors.append(f"{study}: replay source commit is missing")
-        elif subprocess.run(
-            ("git", "cat-file", "-e", f"{commit}^{{commit}}"), cwd=REPO_ROOT,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
-        ).returncode != 0:
-            errors.append(f"{study}: replay source commit is unavailable in this checkout: {commit}")
+    commit = str(replay.get("git_commit", ""))
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        errors.append(f"{study}: replay source commit is missing or malformed")
+    # A shallow Git checkout may not contain the historical replay object.
+    # Hash validation above is authoritative for the committed source tree;
+    # full Git history is required only for the explicit legacy migration.
     return errors
 
 
@@ -436,6 +442,26 @@ def analysis_warnings(study: str, manifest: Mapping[str, Any]) -> list[str]:
     if not recorded:
         return [f"{study}: restatement provenance has no analysis pipeline hashes"]
     return [f"{study}: current analysis differs from last restatement: {msg}" for msg in _compare_record_maps(recorded, analysis_records(study))]
+
+
+def _assert_bundle_rows_match_raw_csv(source_bundle: Path, raw_csv: Path) -> None:
+    bundle = json.loads(source_bundle.read_text(encoding="utf-8"))
+    rows = bundle.get("raw_runs", [])
+    with raw_csv.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        fields = reader.fieldnames or []
+        csv_rows = list(reader)
+    if len(rows) != len(csv_rows):
+        raise ProvenanceError("bundle raw_runs count differs from canonical raw replay CSV")
+    expected_fields = set(fields)
+    for index, (row, csv_row) in enumerate(zip(rows, csv_rows)):
+        if set(row) != expected_fields:
+            raise ProvenanceError(f"bundle raw_runs schema differs from canonical raw CSV at row {index}")
+        for field in fields:
+            if str(row[field]) != csv_row[field]:
+                raise ProvenanceError(
+                    f"bundle raw_runs differs from canonical raw replay CSV at row {index}, field {field}"
+                )
 
 
 def begin_restatement(study: str, source_bundle: Path) -> RestatementContext:
@@ -454,12 +480,15 @@ def begin_restatement(study: str, source_bundle: Path) -> RestatementContext:
             "statistical restatement cannot establish replay provenance."
         )
     errors = replay_errors(study, manifest)
+    if not source_raw.is_file():
+        errors.append(f"{study}: canonical raw replay CSV is missing: {source_raw}")
     if errors:
         raise ProvenanceError(
             "ERROR: simulator/estimator implementation differs from replay provenance.\n"
             "A full replay is required; statistical restatement cannot update this bundle.\n"
             + "\n".join(errors)
         )
+    _assert_bundle_rows_match_raw_csv(source_bundle, source_raw)
     return RestatementContext(
         study=study,
         source_bundle=source_bundle,
@@ -500,14 +529,26 @@ def finalize_restatement_manifest(
     return result
 
 
-def migrate_legacy_manifest(study: str, replay_commit: str) -> None:
+def migrate_legacy_manifest(
+    study: str,
+    replay_commit: str,
+    historical_evidence_commit: str,
+) -> None:
     """One-time, auditable migration of a legacy *restated* committed bundle.
 
-    This is not a replay and never claims to be one.  It succeeds only when Git
-    history proves (a) the nominated historical manifest was a full generation,
-    (b) every current replay dependency is unchanged since that commit, and (c)
-    the committed normalized raw CSV is exactly the historical replay CSV with
-    only the retired gate columns removed.
+    `replay_commit` identifies the source tree that produced simulator outputs.
+    `historical_evidence_commit` identifies the later commit that first stored
+    the corresponding full-generation manifest and raw rows. Keeping these two
+    identities separate is essential: an evidence-archive commit must never be
+    misrepresented as the estimator revision that produced the replay.
+
+    The migration succeeds only when Git history proves that:
+      1. the historical evidence manifest says its replay source was
+         `replay_commit` and is not itself a restatement;
+      2. every replay-producing dependency in the current closure is unchanged
+         since `replay_commit`; and
+      3. the current normalized raw CSV is byte-identical to the historical
+         full-replay CSV after removing only the retired gate columns.
     """
     if not git_available():
         raise ProvenanceError("legacy replay migration requires full Git history")
@@ -521,29 +562,46 @@ def migrate_legacy_manifest(study: str, replay_commit: str) -> None:
 
     manifest_repo_path = repo_name(manifest_path)
     raw_repo_path = repo_name(raw_path)
-    historical = json.loads(git_bytes(replay_commit, manifest_repo_path).decode("utf-8"))
+    historical = json.loads(
+        git_bytes(historical_evidence_commit, manifest_repo_path).decode("utf-8")
+    )
     command = [str(item) for item in historical.get("command", [])]
-    if historical.get("git_commit") != replay_commit or "--restat-from" in command or historical.get("restated_from"):
+    historical_restat = (
+        historical.get("restated_from")
+        or historical.get("protocol", {}).get("restated_from")
+        or "--restat-from" in command
+    )
+    if historical.get("git_commit") != replay_commit or historical_restat:
         raise ProvenanceError(
-            f"{study}: {replay_commit} does not contain a full-generation manifest"
+            f"{study}: {historical_evidence_commit} is not a full-generation "
+            f"bundle produced from replay source {replay_commit}"
         )
 
     paths = [repo_name(path) for path in implementation_paths(study)]
     changed = subprocess.run(
-        ("git", "diff", "--quiet", replay_commit, "--", *paths), cwd=REPO_ROOT,
+        ("git", "diff", "--quiet", replay_commit, "--", *paths),
+        cwd=REPO_ROOT,
         check=False,
     ).returncode
     if changed != 0:
+        changed_names = subprocess.run(
+            ("git", "diff", "--name-only", replay_commit, "--", *paths),
+            cwd=REPO_ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            text=True, check=False,
+        ).stdout.strip()
         raise ProvenanceError(
-            "ERROR: simulator/estimator implementation differs from the nominated "
-            "historical replay commit. A full replay is required."
+            "ERROR: simulator/estimator implementation differs from replay "
+            "provenance. A full replay is required; statistical migration "
+            "cannot update this bundle."
+            + (f"\nChanged replay dependencies:\n{changed_names}" if changed_names else "")
         )
 
-    historical_raw = git_bytes(replay_commit, raw_repo_path)
+    historical_raw = git_bytes(historical_evidence_commit, raw_repo_path)
     if not normalized_raw_rows_equal_historical(raw_path, historical_raw):
         raise ProvenanceError(
-            f"{study}: normalized raw rows are not the historical replay rows with "
-            "only legacy gate columns removed"
+            f"{study}: normalized raw rows are not the historical full-replay "
+            "rows with only legacy gate columns removed; a replay or forensic "
+            "reconstruction is required"
         )
 
     old_analysis = {
@@ -566,16 +624,20 @@ def migrate_legacy_manifest(study: str, replay_commit: str) -> None:
     replay = {
         "git_commit": replay_commit,
         "implementation_files": implementation_records(study),
-        "input_files": _input_records_from_legacy(historical),
+        "input_files": _input_records_from_legacy(study, historical),
         "raw_rows_sha256": sha256_file(raw_path),
         "raw_rows_size_bytes": raw_path.stat().st_size,
-        "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
+        "raw_rows_schema": (
+            "normalized statistical replay rows; deterministic simulator gate "
+            "columns excluded"
+        ),
         "workflow_run": None,
         "generated_at": None,
         "environment": replay_environment,
         "provenance_migration": {
             "kind": "verified_legacy_full_replay",
-            "historical_manifest_commit": replay_commit,
+            "replay_source_commit": replay_commit,
+            "historical_evidence_commit": historical_evidence_commit,
             "historical_raw_rows_sha256": sha256_bytes(historical_raw),
             "normalization_only_columns_removed": list(GATE_FIELDS),
             "verified_at_git_commit": git_output("rev-parse", "HEAD"),
@@ -588,7 +650,7 @@ def migrate_legacy_manifest(study: str, replay_commit: str) -> None:
         current["restatement"] = {
             "git_commit": current.get("git_commit"),
             "analysis_pipeline_files": old_analysis,
-            "source_bundle_sha256": sha256_file(out / cfg["json"]),
+            "source_bundle_sha256": None,
             "source_manifest_sha256": None,
             "restated_at": None,
             "environment": {
@@ -596,10 +658,16 @@ def migrate_legacy_manifest(study: str, replay_commit: str) -> None:
                 "numpy": current.get("numpy", "unrecorded"),
                 "platform": current.get("platform", "unrecorded"),
             },
-            "provenance_migration_note": "restatement metadata recovered from the legacy manifest; timestamp/source-manifest hash were not recorded",
+            "provenance_migration_note": (
+                "restatement metadata recovered from the legacy manifest; "
+                "source bundle/manifest hashes and timestamp were not recorded "
+                "and are intentionally not fabricated"
+            ),
         }
     _replay_aliases(current)
-    manifest_path.write_text(json.dumps(current, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(current, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def initialize_fresh_manifest(study: str, manifest: dict[str, Any]) -> dict[str, Any]:
