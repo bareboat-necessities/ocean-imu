@@ -1,0 +1,35 @@
+name: normalize-ou-evidence-once
+
+on:
+  push:
+    branches:
+      - agent/ou-evidence-provenance
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/ou-evidence-provenance
+
+      - name: Normalize and stamp committed OU evidence
+        run: python3 tools/ou_evidence_contract.py --study all
+
+      - name: Commit normalized evidence
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/results/ou_validation reports/results/ou_robustness \
+                  doc/kalman_ou_iii/w3d-ou-validation-macros-generated.tex-part
+          if git diff --cached --quiet; then
+            echo "Evidence already normalized."
+            exit 0
+          fi
+          git commit -m "Normalize OU evidence provenance and gate schema"
+          git push origin HEAD:refs/heads/agent/ou-evidence-provenance
