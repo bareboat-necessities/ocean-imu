@@ -43,7 +43,7 @@ text = text.replace(old, new, 1)
 
 # Fresh replay provenance is initialized in the commit/check job, but the
 # compiler and Eigen environment must describe the combine job that actually
-# rebuilt the simulator. Full-generation manifests now carry that environment
+# rebuilt the simulator. Full-generation manifests carry that environment
 # forward explicitly.
 old = '''        "environment": environment_metadata(),\n    }\n\n\ndef _compare_record_maps'''
 new = '''        "environment": manifest.get("build_environment") or environment_metadata(),\n    }\n\n\ndef _compare_record_maps'''
@@ -56,21 +56,17 @@ validation = TOOLS / "ou_validation.py"
 vtext = validation.read_text(encoding="utf-8")
 old = '''        "numpy": np.__version__,\n        "command": [sys.executable, *sys.argv],\n        "protocol": protocol,\n'''
 new = '''        "numpy": np.__version__,\n        "build_environment": evidence_provenance.environment_metadata(),\n        "command": [sys.executable, *sys.argv],\n        "protocol": protocol,\n'''
-# The first occurrence is restat; the second is full generation. Only full
-# generation should claim a replay build environment.
-if vtext.count(old) < 2:
-    raise SystemExit("validation manifest environment anchors missing")
-first = vtext.find(old)
-second = vtext.find(old, first + len(old))
-vtext = vtext[:second] + vtext[second:].replace(old, new, 1)
+if vtext.count(old) != 1:
+    raise SystemExit(f"expected one validation full-generation environment anchor, found {vtext.count(old)}")
+vtext = vtext.replace(old, new, 1)
 validation.write_text(vtext, encoding="utf-8")
 
 robustness = TOOLS / "ou_robustness.py"
 rtext = robustness.read_text(encoding="utf-8")
 old = '''        "matplotlib": matplotlib.__version__,\n        "command": [sys.executable, *sys.argv],\n        "protocol": protocol,\n'''
 new = '''        "matplotlib": matplotlib.__version__,\n        "build_environment": evidence_provenance.environment_metadata(),\n        "command": [sys.executable, *sys.argv],\n        "protocol": protocol,\n'''
-if old not in rtext:
-    raise SystemExit("robustness full-generation environment anchor missing")
+if rtext.count(old) != 1:
+    raise SystemExit(f"expected one robustness full-generation environment anchor, found {rtext.count(old)}")
 rtext = rtext.replace(old, new, 1)
 robustness.write_text(rtext, encoding="utf-8")
 
