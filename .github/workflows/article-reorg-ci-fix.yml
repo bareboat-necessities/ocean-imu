@@ -1,0 +1,33 @@
+name: article-reorg-ci-fix-once
+
+on:
+  push:
+    branches:
+      - agent/reorganize-ou-iii-article
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/reorganize-ou-iii-article
+      - name: Apply article CI repair
+        run: python3 tools/article_reorg_ci_fix.py
+      - name: Commit repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/ou_validation.py \
+                  tests/validation/test_ou_validation.py \
+                  tests/validation/test_ou_robustness.py \
+                  tests/validation/test_zzz_wave_direction_split_contract.py \
+                  tests/validation/test_zz_publication_contract.py \
+                  doc/kalman_ou_iii/w3d-init.tex-part
+          git commit -m "Align article validation with cleaned evidence schema"
+          git push origin HEAD:refs/heads/agent/reorganize-ou-iii-article
