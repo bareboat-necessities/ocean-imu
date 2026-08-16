@@ -306,15 +306,21 @@ class RestatTests(unittest.TestCase):
         self.assertIn("tools/ou_validation.py", analysis)
         self.assertIn("tools/ou_robustness.py", analysis)
 
-    def test_a_restat_records_the_sources_that_moved_under_it(self):
-        """The obsolete warn-and-repin path must not survive schema v2."""
+    def test_committed_manifest_has_no_obsolete_moved_source_state(self):
+        """Schema v2 has one immutable replay model; restatement exists only after one occurs."""
         self.assertFalse(hasattr(robustness, "_restated_source_files"))
         manifest = json.loads(
             (self.RESULTS / "ou_robustness_manifest.json").read_text(encoding="utf-8")
         )
         self.assertNotIn("sources_moved_since_rows", manifest)
-        self.assertIn("replay_provenance", manifest)
-        self.assertIn("restatement", manifest)
+        replay = manifest["replay_provenance"]
+        self.assertEqual(manifest["git_commit"], replay["git_commit"])
+        if "restatement" in manifest:
+            self.assertIn("analysis_pipeline_files", manifest["restatement"])
+        else:
+            # A freshly generated bundle has no reason to manufacture a
+            # restatement event merely to satisfy the schema.
+            self.assertIn("analysis_pipeline_files", manifest)
 
     def test_a_restat_cannot_manufacture_an_ensemble(self):
         with tempfile.TemporaryDirectory() as tmp:
