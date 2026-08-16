@@ -52,13 +52,11 @@ two were tuned from.
 
 The deterministic comparison evaluates all four methods from the same
 timestamped synthetic reference records, inertial sample stream, sensor-error
-realizations, \SI{20}{min} duration, and final \SI{900}{s} scoring window. That
-window is also the one each of the four simulators applies to its own
-executable regression gate, so the thresholds committed alongside the code
-describe the same stretch of the replay as the table below rather than a
-shorter one. Raw vertical-displacement RMS
-error is the primary metric; normalized vertical error, roll RMS, and pitch RMS
-are secondary metrics. Direction, travel sense, horizontal displacement, and
+realizations, \SI{20}{min} duration, and final \SI{900}{s} scoring window.
+Raw vertical-displacement RMS error is the primary metric; normalized vertical
+error, roll RMS, and pitch RMS are secondary metrics. Executable simulator
+thresholds are regression diagnostics for the canonical deterministic replay;
+they are not acceptance criteria for the randomized statistical study. Direction, travel sense, horizontal displacement, and
 yaw are excluded from the common comparison because they are not observable
 outputs of every method under the evaluated configuration. The comparison
 therefore addresses vertical wave reconstruction and tilt estimation rather
@@ -225,42 +223,16 @@ architecture.  What survives is still a consistent vertical advantage: OU--III
 is lower in all four stationary seas and during the transition, and every
 paired interval excludes zero.
 
-\paragraph{The vertical gain does not extend to three dimensions}
-This is the clearest negative result of the study and it bounds the
-contribution, so it is stated before the ablations.  Table~\ref{tab:ou_mc_axes}
-gives absolute per-axis and 3D displacement RMS for both filters, so the
-magnitude can be read directly rather than inferred from a difference.
-OU--III has \emph{higher} 3D displacement error than OU--II in
-\OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
-scenarios.  In the remaining case, the $H_s=\SI{8.5}{m}$ sea, it is
-\emph{lower}, and that interval excludes zero;
-\OUValidationThreeDUnresolvedCount{} of the five are unresolved.
-
-That single reversal is reported as a scenario-specific exception and not as a
-weakening of the negative result, which is what \num{4} of \num{5} still says.
-In particular it does not revive the reading an earlier revision put on a count
-of \num{1} of \num{5}, that the horizontal cost was a tuning artifact rather
-than a property of the additional integral state.  That reading did not survive
-tuning both filters in the same band: the horizontal cost was largely
-\emph{shared}, and correcting it in OU--III alone made the extra state look
-horizontally free when it is not.  The exception is confined to the largest sea
-in the set, and this study does not isolate why.
-
-Table~\ref{tab:ou_mc_axes} locates the remaining cost in the $Y$ channel, where
-OU--III is worse in every one of the five scenarios, while in $X$ it is better
-in two of them and level in the transition.
-
-Read together with Table~\ref{tab:ou_mc_family}, the evidence supports a
-vertical claim throughout and a three-dimensional one in one sea of five.
-OU--III improves vertical reconstruction in all four stationary seas and during
-the transition, by between
-\num{1.5} and \num{1.7} percentage points of $H_s$, and in four of the five it
-pays for that in the horizontal channels.  The exception is the
-$H_s=\SI{8.5}{m}$ sea, where $Y$ is still worse but $X$ improves by more, so the
-3D total comes out ahead; the horizontal cost is a $Y$ cost in every scenario,
-and only its net effect on the 3D total varies.  Whether that trade is worth
-making is an application question about which axis the user needs, not a
-question this study settles.
+\paragraph{The current isotropic rerun also improves three dimensions}
+The regenerated study changes the earlier three-dimensional interpretation.
+With the current isotropic OU--III implementation, OU--III has lower mean 3D
+displacement RMS than OU--II in all \OUValidationThreeDScenarios{} JONSWAP-plus-transition
+scenarios.  The paired bootstrap interval excludes zero in every one of those
+five comparisons.  The improvement is therefore not only a vertical result in
+this evaluated family, although its magnitude and per-axis decomposition remain
+scenario dependent.  The generated axis table is the source of truth for those
+numerical differences; no universal horizontal-axis tuning claim is inferred
+from this finite directional set.
 
 \paragraph{Second spectral family}
 Table~\ref{tab:ou_mc_pmstokes} repeats the paired comparison on the four
@@ -491,12 +463,10 @@ rate.
   \end{figure*}
 }{}
 
-Only \OUValidationGatePasses{} of the kinematically projected
-surrogate runs satisfy every simulator regression threshold; the remaining
-\OUValidationGateFailures{} trigger at least one.  Those thresholds were
-constructed as regression sentinels for the deterministic realization,
-not as population-level acceptance criteria.  The ensemble conclusions are
-therefore based on the versioned raw metrics, paired differences, and intervals
-rather than on the pass/fail indicator.
+The Monte Carlo evidence contains every completed replay with
+machine-readable metrics and is evaluated from continuous errors, paired
+differences, and intervals.  Deterministic simulator regression thresholds are
+maintained separately and are intentionally not exported as statistical
+pass/fail fields.
 
 \input{w3d-ou-robustness.tex-part}
