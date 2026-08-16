@@ -192,7 +192,18 @@ distortion model.
 \label{sec:real-hardware-platform}
 
 The same estimator source compiles and executes on an M5Stack AtomS3R
-(ESP32--S3) with calibrated MEMS input.  This establishes functional source
-portability only.  Processor load, memory use, power, deadline margin, thermal
-behavior, and externally referenced wave-reconstruction accuracy were not
-measured in the reported study and are not inferred from successful execution.
+(ESP32--S3) with calibrated MEMS input (Fig.~\ref{fig:atoms3r-platform}).
+
+\begin{figure}[t]
+  \centering
+  \includesvg[width=0.72\columnwidth]{AtomS3R_device}
+  \caption{M5Stack AtomS3R (ESP32--S3) target used for the embedded build and
+  execution check.  The illustration is the device SVG distributed with the
+  project repository.}
+  \label{fig:atoms3r-platform}
+\end{figure}
+
+This establishes functional source portability only.  Processor load, memory
+use, power, deadline margin, thermal behavior, and externally referenced
+wave-reconstruction accuracy were not measured in the reported study and are
+not inferred from successful execution.

@@ -37,23 +37,18 @@ declared primary comparison, while PM--Stokes is a second predeclared family
 that tests whether the result survives a different spectral shape and bound
 harmonics.
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
-\begin{minipage}[t]{0.49\textwidth}
-  \centering
-  \IncludePGF{spectrum_jonswap_medium_3d.pgf}
-  \small (a) JONSWAP, $H_s=\SI{1.5}{m}$.
-\end{minipage}\hfill
-\begin{minipage}[t]{0.49\textwidth}
-  \centering
-  \IncludePGF{spectrum_pmstokes_medium_3d.pgf}
-  \small (b) PM--Stokes, $H_s=\SI{1.5}{m}$.
-\end{minipage}
+\IncludePGF{spectrum_jonswap_medium_3d.pgf}
+\small (a) JONSWAP, $H_s=\SI{1.5}{m}$.\par
+\vspace{0.5em}
+\IncludePGF{spectrum_pmstokes_medium_3d.pgf}
+\small (b) PM--Stokes, $H_s=\SI{1.5}{m}$.
 \caption{Representative three-dimensional directional input spectra.  These
 spectra generate the reference motion; the OU prior inside the filter is not a
 JONSWAP or PM--Stokes process.}
 \label{fig:input-spectra-3d}
-\end{figure*}
+\end{figure}
 
 \subsection{Sensor and model-error injection}
 
