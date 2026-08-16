@@ -200,6 +200,17 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         ]
         positions = [main.index(item) for item in ordered]
         self.assertEqual(positions, sorted(positions))
+        adaptation = (DOC / "w3d-adaptation-motivation.tex-part").read_text(
+            encoding="utf-8"
+        ).lstrip()
+        self.assertTrue(
+            adaptation.startswith(r"\input{w3d-regularization-theory.tex-part}")
+        )
+        pure = (DOC / "w3d-regularization-theory.tex-part").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(r"\input{w3d-rs-riccati-analysis.tex-part}", pure)
+        self.assertIn(r"\input{w3d-rs-reduced-mse.tex-part}", pure)
 
     def test_intro_does_not_preempt_the_adaptation_derivation(self):
         intro = (DOC / "w3d-intro.tex-part").read_text(encoding="utf-8")
@@ -233,17 +244,18 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertNotIn("article bibliography anchor", draw)
 
     def test_reduced_horizontal_analysis_keeps_scope_boundary(self):
-        analysis = (DOC / "w3d-rs-design-interpretation.tex-part").read_text(
+        reduced = (DOC / "w3d-rs-reduced-mse.tex-part").read_text(encoding="utf-8")
+        design = (DOC / "w3d-rs-design-interpretation.tex-part").read_text(
             encoding="utf-8"
         )
-        self.assertIn(r"q_{\mathrm{eff}}^{1/14}", analysis)
-        self.assertIn(r"q_{\mathrm{eff}}^{4/7}", analysis)
-        self.assertIn("about $65$ times", analysis)
-        self.assertIn("$102$ times", analysis)
-        self.assertIn("not universal ocean constants", analysis)
-        self.assertIn("isotropic integral regularization performs well", analysis)
+        results = (DOC / "w3d-results.tex-part").read_text(encoding="utf-8")
+        self.assertIn(r"q_{\mathrm{eff}}^{1/14}", reduced)
+        self.assertIn(r"q_{\mathrm{eff}}^{4/7}", reduced)
+        self.assertIn("approximately $65$ and $102$", results)
+        self.assertIn("not universal ocean constants", results)
+        self.assertIn("isotropic", results)
         for legacy in ("1.138", "0.861", "0.36", "1.87"):
-            self.assertNotIn(legacy, analysis)
+            self.assertNotIn(legacy, reduced + design + results)
 
     def test_future_work_preserves_major_limitations_and_companion_paths(self):
         conclusion = _flat(DOC / "w3d-conclusion-summary.tex-part")
