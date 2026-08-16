@@ -298,7 +298,11 @@ class RestatTests(unittest.TestCase):
         replay_impl = set(manifest["replay_provenance"]["implementation_files"])
         self.assertIn("tests/kalman_ou_iii/kalman_ou_iii-sim.cpp", replay_impl)
         self.assertIn("src/kalman_ou_iii/Kalman3D_Wave_OU_III.h", replay_impl)
-        analysis = set(manifest["restatement"]["analysis_pipeline_files"])
+        analysis = set(
+            manifest.get("restatement", {}).get(
+                "analysis_pipeline_files", manifest.get("analysis_pipeline_files", {})
+            )
+        )
         self.assertIn("tools/ou_validation.py", analysis)
         self.assertIn("tools/ou_robustness.py", analysis)
 
@@ -449,7 +453,9 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
                 hashlib.sha256(path.read_bytes()).hexdigest(), metadata["sha256"], name
             )
             self.assertEqual(path.stat().st_size, metadata["size_bytes"], name)
-        analysis = manifest["restatement"]["analysis_pipeline_files"]
+        analysis = manifest.get("restatement", {}).get(
+            "analysis_pipeline_files", manifest.get("analysis_pipeline_files", {})
+        )
         self.assertIn("tools/ou_validation.py", analysis)
         self.assertIn("tools/ou_robustness.py", analysis)
 

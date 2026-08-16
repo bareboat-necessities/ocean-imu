@@ -634,6 +634,16 @@ def migrate_legacy_manifest(
         name: normalize_record(record)
         for name, record in current.get("analysis_pipeline_files", {}).items()
     }
+    current_command = [str(item) for item in current.get("command", [])]
+    current_is_restatement = bool(
+        current.get("restated_from")
+        or current.get("protocol", {}).get("restated_from")
+        or "--restat-from" in current_command
+    )
+    historical_fields = csv.DictReader(
+        io.StringIO(historical_raw.decode("utf-8"), newline="")
+    ).fieldnames or []
+    removed_gate_columns = [name for name in GATE_FIELDS if name in historical_fields]
     replay_environment = {
         "python": historical.get("python", "unrecorded"),
         "numpy": historical.get("numpy", "unrecorded"),
@@ -665,14 +675,14 @@ def migrate_legacy_manifest(
             "replay_source_commit": replay_commit,
             "historical_evidence_commit": historical_evidence_commit,
             "historical_raw_rows_sha256": sha256_bytes(historical_raw),
-            "normalization_only_columns_removed": list(GATE_FIELDS),
+            "normalization_only_columns_removed": removed_gate_columns,
             "verified_at_git_commit": git_output("rev-parse", "HEAD"),
             "verified_at": utc_now(),
         },
     }
     current["schema_version"] = SCHEMA_VERSION
     current["replay_provenance"] = replay
-    if old_analysis:
+    if old_analysis and current_is_restatement:
         current["restatement"] = {
             "git_commit": current.get("git_commit"),
             "analysis_pipeline_files": old_analysis,
@@ -690,6 +700,8 @@ def migrate_legacy_manifest(
                 "and are intentionally not fabricated"
             ),
         }
+    else:
+        current.pop("restatement", None)
     _replay_aliases(current)
     manifest_path.write_text(
         json.dumps(current, indent=2, sort_keys=True) + "\n", encoding="utf-8"

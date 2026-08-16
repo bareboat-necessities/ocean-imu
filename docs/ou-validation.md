@@ -5,9 +5,9 @@ the OU-II and OU-III filter families. The committed publication evidence is in
 `reports/results/ou_validation/`.
 
 The current full bundle was regenerated from the current isotropic OU-III
-implementation by GitHub Actions run `31943137398`. Its immutable replay source
-commit is `5df1f3b42d3eb456961d12e598257b5859470451`; the generated evidence was
-committed as `35120f96d3f8c02872fd3e06fa94ebe547c3f5eb`. The manifest now separates
+implementation by GitHub Actions run `31953533100`. Its immutable replay source
+commit is `538a6337fae3542b4249d4d250905c0630fdf2d9`; the generated evidence was
+committed as `bfe25ed2972d67ed806301129cc2a6547d4090ac`. The manifest now separates
 that replay provenance from any later statistical restatement. Replay provenance
 pins the simulator/filter dependency closure, build files, versioned inputs, and
 normalized raw-row hash; a later restatement records its analysis context in a
@@ -146,9 +146,8 @@ restatement or old rows to a new estimator revision.
 The existing isotropic bundle was migrated to this schema without replay only
 after Git history proved that its replay-producing dependency closure had not
 changed since the recorded full replay and that the current normalized raw CSV
-was exactly the historical replay CSV with only the retired regression-gate
-columns removed. No numerical replay metric or paired statistic was changed by
-that provenance migration.
+was byte-identical to the archived full-replay CSV. No numerical replay metric
+or paired statistic was changed by that provenance migration.
 
 ## Running
 
