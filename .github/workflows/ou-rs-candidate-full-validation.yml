@@ -1,0 +1,60 @@
+name: ou-rs-candidate-full-validation
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou_rs_candidate_full_validation.py"
+      - ".github/workflows/ou-rs-candidate-full-validation.yml"
+      - "src/kalman_ou_iii/**"
+      - "tests/kalman_ou_iii/**"
+      - "tools/ou_validation.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends g++ make libeigen3-dev python3-numpy unzip
+
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip \
+            --clobber
+          rm -rf /tmp/ou-sim-data
+          mkdir -p /tmp/ou-sim-data plots/kalman_ou_ii
+          unzip -q sim-data-files.zip -d /tmp/ou-sim-data
+          find /tmp/ou-sim-data -type f \
+            \( -name 'wave_data_jonswap_*.csv' -o -name 'wave_data_pmstokes_*.csv' \) \
+            -exec cp -f {} plots/kalman_ou_ii/ \;
+          test -f plots/kalman_ou_ii/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv
+          test -f plots/kalman_ou_ii/wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv
+
+      - name: Run deployed vs cubic vs fitted full validation
+        run: |
+          python3 -u tools/ou_rs_candidate_full_validation.py \
+            --jobs "$(nproc)" \
+            --shards 2 \
+            --bootstrap 5000 \
+            --output-dir reports/results/ou_rs_candidate_full_validation
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou-rs-candidate-full-validation
+          path: reports/results/ou_rs_candidate_full_validation/**
+          if-no-files-found: warn
