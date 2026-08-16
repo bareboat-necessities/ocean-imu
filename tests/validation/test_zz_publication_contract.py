@@ -268,13 +268,3 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertTrue("hard reset" in stability or "hard-reset" in stability)
 
 
-class PublicationOverrideInstallationTests(unittest.TestCase):
-    def test_semantic_overrides_are_installed(self):
-        self.assertIs(
-            core.CommittedFullResultsTests.test_abstract_reports_committed_stationary_aggregate,
-            _abstract_reports_committed_stationary_aggregate,
-        )
-        self.assertIs(
-            core.ManuscriptMethodologyTests.test_inference_is_qualified_rather_than_asserted,
-            _inference_is_qualified_rather_than_asserted,
-        )

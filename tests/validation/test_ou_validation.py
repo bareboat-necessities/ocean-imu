@@ -698,6 +698,7 @@ class CommittedFullResultsTests(unittest.TestCase):
         from test_zz_publication_contract import _abstract_reports_committed_stationary_aggregate
         _abstract_reports_committed_stationary_aggregate(self)
 
+
 class PairedInferenceTests(unittest.TestCase):
     """The companion inference on the confirmatory endpoint.
 
@@ -882,7 +883,7 @@ class RestatTests(unittest.TestCase):
             empty = Path(tmp) / "empty.json"
             empty.write_text(json.dumps({"raw_runs": []}), encoding="utf-8")
             with contextlib.redirect_stdout(io.StringIO()):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(validation.evidence_provenance.ProvenanceError):
                     validation.restat_bundle(empty, Path(tmp), 100, 1)
 
 
@@ -1108,6 +1109,16 @@ class ManuscriptMethodologyTests(unittest.TestCase):
     def test_baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
         from test_zz_publication_contract import _baseline_fairness_thresholds_and_hardware_limits_are_recorded
         _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self)
+
+
+STUB_SIMULATOR = """#!/bin/sh
+echo "XYZ RMS (m): X=0.0372370929 Y=0.0284884889 Z=0.0186269842"
+echo "XYZ RMS (%Hs): X=13.7915154% Y=10.5512915% Z=6.89888287% (Hs=0.27)"
+echo "Angles RMS (deg): Roll=0.562675 Pitch=0.157529 Yaw=1.60768"
+echo "dir_deg_gen ([-90,90], 0=+Y CW): mean_circ=-28.275 circ_std 9.21715 deg"
+echo "sense: +AXIS=11199 (93.325%) -AXIS=251 (2.09167%) UNCERTAIN=550 (4.58333%)"
+"""
+
 
 class SixtySecondTableToolTests(unittest.TestCase):
     def test_a_relative_binary_path_survives_the_child_directory_change(self):

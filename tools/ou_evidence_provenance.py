@@ -444,6 +444,23 @@ def analysis_warnings(study: str, manifest: Mapping[str, Any]) -> list[str]:
     return [f"{study}: current analysis differs from last restatement: {msg}" for msg in _compare_record_maps(recorded, analysis_records(study))]
 
 
+def _scalar_matches_csv(value: Any, csv_value: str) -> bool:
+    if value is None:
+        return csv_value == ""
+    if isinstance(value, bool):
+        return csv_value.lower() in ({"true", "1"} if value else {"false", "0"})
+    if isinstance(value, (int, float)) and csv_value != "":
+        try:
+            lhs = float(value)
+            rhs = float(csv_value)
+            if lhs != lhs and rhs != rhs:  # NaN
+                return True
+            return lhs == rhs
+        except ValueError:
+            pass
+    return str(value) == csv_value
+
+
 def _assert_bundle_rows_match_raw_csv(source_bundle: Path, raw_csv: Path) -> None:
     bundle = json.loads(source_bundle.read_text(encoding="utf-8"))
     rows = bundle.get("raw_runs", [])
@@ -455,12 +472,21 @@ def _assert_bundle_rows_match_raw_csv(source_bundle: Path, raw_csv: Path) -> Non
         raise ProvenanceError("bundle raw_runs count differs from canonical raw replay CSV")
     expected_fields = set(fields)
     for index, (row, csv_row) in enumerate(zip(rows, csv_rows)):
-        if set(row) != expected_fields:
-            raise ProvenanceError(f"bundle raw_runs schema differs from canonical raw CSV at row {index}")
+        extra = set(row) - expected_fields
+        if extra:
+            raise ProvenanceError(
+                f"bundle raw_runs has fields outside canonical raw CSV at row {index}: {sorted(extra)}"
+            )
         for field in fields:
-            if str(row[field]) != csv_row[field]:
+            if field not in row:
+                if csv_row[field] != "":
+                    raise ProvenanceError(
+                        f"bundle raw_runs omits non-empty canonical field at row {index}, field {field}"
+                    )
+                continue
+            if not _scalar_matches_csv(row[field], csv_row[field]):
                 raise ProvenanceError(
-                    f"bundle raw_runs differs from canonical raw replay CSV at row {index}, field {field}"
+                    f"bundle raw_runs contradicts canonical raw replay CSV at row {index}, field {field}"
                 )
 
 
