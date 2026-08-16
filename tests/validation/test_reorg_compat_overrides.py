@@ -51,12 +51,3 @@ def _unevaluated_tracker_and_heel_material_stays_out_of_main_claims(self):
     self.assertIn("Wind-heel separation", conclusion)
 
 
-core.ManuscriptMethodologyTests.test_the_deterministic_table_is_generated_not_typed = (
-    _deterministic_table_remains_generated_evidence
-)
-core.ManuscriptMethodologyTests.test_singer_relationship_and_contribution_wording = (
-    _singer_relationship_and_contribution_boundary
-)
-core.ManuscriptMethodologyTests.test_tracker_and_heel_material_are_scoped_as_unevaluated_appendices = (
-    _unevaluated_tracker_and_heel_material_stays_out_of_main_claims
-)
