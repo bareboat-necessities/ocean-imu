@@ -1,4 +1,14 @@
 {
+  "analysis_pipeline_files": {
+    "tools/ou_robustness.py": {
+      "bytes": 55378,
+      "sha256": "c62bc0bfcc31812fc99d286f765625dd94b7d8f2d790fd3c907c89ffb2db96a9"
+    },
+    "tools/ou_validation.py": {
+      "bytes": 150437,
+      "sha256": "bf0857d4e8836b4866b3c6beae108ee68fdf7647df7950612799cf46a0d2ab8c"
+    }
+  },
   "command": [
     "/usr/bin/python3",
     "tools/ou_robustness.py",
@@ -17,6 +27,116 @@
   "git_branch": "main",
   "git_commit": "5df1f3b42d3eb456961d12e598257b5859470451",
   "git_diff_stat": "",
+  "implementation_files": {
+    "src/ahrs/FrameConversions.h": {
+      "bytes": 18427,
+      "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d"
+    },
+    "src/ahrs/Mahony_AHRS.h": {
+      "bytes": 12635,
+      "sha256": "ce0e93bf9c2b6213594985e3c9d3cf06edfd7418ba2bbfcace666f6ac93cddf3"
+    },
+    "src/detrend/AdaptiveWaveDetrender3D.h": {
+      "bytes": 26350,
+      "sha256": "917c035cd0a7815afedc65a5a68751d0df9d64354a9a095fc3ae83222e3689d7"
+    },
+    "src/freq/AranovskiyFreqTracker.h": {
+      "bytes": 9000,
+      "sha256": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125"
+    },
+    "src/freq/FirstOrderIIRSmoother.h": {
+      "bytes": 1271,
+      "sha256": "04e8bef7d537bd9a1baa10c5d5b70333ee69b7b92fabcc2e21e60536680c3073"
+    },
+    "src/freq/FrequencyTrackerPolicy.h": {
+      "bytes": 9727,
+      "sha256": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3"
+    },
+    "src/freq/KalmANFFreqTracker.h": {
+      "bytes": 13310,
+      "sha256": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc"
+    },
+    "src/freq/PLLFreqTracker.h": {
+      "bytes": 19306,
+      "sha256": "23529d1327ab88a175f6f0d1d01660732a3e6fea220d2aee845be55be6064092"
+    },
+    "src/freq/SchmittTriggerZCFreqTracker.h": {
+      "bytes": 13561,
+      "sha256": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5"
+    },
+    "src/kalman_common/SeaStateFusionFilterCommon.h": {
+      "bytes": 10445,
+      "sha256": "64c1a451891fcd5f3b7d9a1a8c92a39a20abd116b4ac8d681074be1bc42cd4ea"
+    },
+    "src/kalman_ou_common/KalmanOUCoreMath.h": {
+      "bytes": 15755,
+      "sha256": "4298c6fb6636ed3e91897257ed384fedc6143ee8e66a7c564459006d14075e2b"
+    },
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
+      "bytes": 99058,
+      "sha256": "ab76e29edd22a12bf2d46766232ccca36aa3cf29f733734907f847528d306faa"
+    },
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
+      "bytes": 145395,
+      "sha256": "e3b2d5e9ccaee16f92421a815a3713521f0945a444b0bc05d92f258239089387"
+    },
+    "src/tuner/AdaptiveWaveBandPass.h": {
+      "bytes": 5864,
+      "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021"
+    },
+    "src/tuner/ContinuousMagHardIronEstimator.h": {
+      "bytes": 12690,
+      "sha256": "1ec5a8b1b19c249d88ccfc1219c33aa3aba63de59a7254dbe6aa5d6bff40e85b"
+    },
+    "src/tuner/MagAutoTuner.h": {
+      "bytes": 22706,
+      "sha256": "3f454b9507bf52c7ed44b2e16082f0bc37640bc0bf8193ad59b2ee9781c691f3"
+    },
+    "src/tuner/SeaStateAutoTuner.h": {
+      "bytes": 8777,
+      "sha256": "2fc7a1fef2f5a131d3fc1e8207d78ab931416b4e654f944916af3126727c63be"
+    },
+    "src/tuner/SeaStateFusionTunerCommon.h": {
+      "bytes": 3888,
+      "sha256": "4f8145c2774a213c301b63210557efa0f78f60b9516e6696bb39e8877bd8f253"
+    },
+    "src/tuner/VerticalAccelComplementary.h": {
+      "bytes": 10277,
+      "sha256": "447db93508fd6bf3b6e51a757239f7d7a2c470471bce7f298f682981217bb335"
+    },
+    "src/tuner/WavePeriodEstimator.h": {
+      "bytes": 8471,
+      "sha256": "4b8d1a0db2bf8fee6e67013c68e1554048f57a41774198a5bbca83bb64b41825"
+    },
+    "src/util/W3dSimCommon.cpp": {
+      "bytes": 69786,
+      "sha256": "bad245314d94cb345c1c3a4a7a6923fee9d16bcae24928a2a4eea71442139de3"
+    },
+    "src/util/W3dSimCommon.h": {
+      "bytes": 19587,
+      "sha256": "8e5c8a9cccf887e522b713f3680df9e5bff629b38445f5803466ffc391ecafe9"
+    },
+    "src/util/WaveFilesSupport.h": {
+      "bytes": 13244,
+      "sha256": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128"
+    },
+    "src/wave_dir/KalmanWaveDirection.h": {
+      "bytes": 15178,
+      "sha256": "1ad6a373b318c06436da0941be5b9c8e13b7c09c5338cd8057b95120c70736f6"
+    },
+    "src/wave_dir/WaveDirectionDetector.h": {
+      "bytes": 11595,
+      "sha256": "4c80e90daf9279280e165529177e0a7056184cd04086e1b8c9ac5b91fa961a8b"
+    },
+    "src/wave_dir/WaveDirectionFrame.h": {
+      "bytes": 2717,
+      "sha256": "d25550d481c3062100a9a136e3df06e3740c39af4aa5459425c7fd212edfd5a7"
+    },
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
+      "bytes": 45303,
+      "sha256": "4ad1bbe8a61682d8299f70bbbc582c603dd8a182574704a2c87ca944e38e9993"
+    }
+  },
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 2.62343205657498,
@@ -37,6 +157,7 @@
     "mode": "full",
     "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
     "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
+    "replay_inclusion_rule": "all completed replays with machine-readable metrics; deterministic simulator regression thresholds are not statistical acceptance criteria",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {
@@ -105,6 +226,7 @@
       1.25,
       1.5
     ],
+    "simulator_regression_gates_exported": false,
     "stats_seed": 20260329,
     "transition_cases": [
       {
@@ -124,8 +246,8 @@
   "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1421425,
-      "sha256": "9a1fc407dedeb44ce47c9574edb440f759776a6a59abbd4fd7865a8f6345165b"
+      "bytes": 1401806,
+      "sha256": "4cdcdcb59c66870a8820cd1d0b1481d279abb566b608b78d0598580adb5e7b25"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1852,
@@ -140,8 +262,8 @@
       "sha256": "df8502e94ea862a7a854cc0210e1089b371dabce1023e8d8301d83ce4f0847c7"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 196257,
-      "sha256": "a27fa0d1456922f7d243213c178306c55a7a36aabbcc3515deaa1e52320d6f90"
+      "bytes": 194977,
+      "sha256": "3d7636e877427e80e459e39a3c5de1f717464bb423e76a03e1243fbdd4c9cb17"
     },
     "ou_robustness_sensitivity.svg": {
       "bytes": 115064,
