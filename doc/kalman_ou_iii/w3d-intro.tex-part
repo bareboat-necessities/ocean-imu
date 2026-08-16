@@ -11,7 +11,7 @@ At the same time, a deployable estimator has to operate across sea states whose
 characteristic periods and acceleration levels vary by large factors.
 
 Recent heave estimators span discrete Kalman reconstruction, adaptive IMU
-filtering, nonlinear observers, and frequency-assisted approaches
+filtering, nonlinear observers, and spectral approaches
 \cite{Reis2023_DiscreteKalmanHeave,Lu2023_AdaptiveDelayFreeHeave,
 Li2025_HeaveCKF,YurovskyKudinov2025_IMUwaves,Hope2025_SFY}.  The contribution of
 this work is not the Ornstein--Uhlenbeck process itself: first-order
@@ -23,20 +23,8 @@ a way that remains compatible with the coupled Kalman covariance, and to build
 an exogenous sea-state adaptation layer whose effect can be separated from the
 core estimator by controlled ablation.
 
-The article is organized deliberately from mathematics to engineering.  First,
-Secs.~\ref{sec:state}--\ref{app:iss-stability} define the 21-state estimator,
-its measurements, exact discrete translational model, Kalman updates, and the
-local Live-state stability result.  The zero pseudo-measurement on the integral
-state is part of that core formulation: it is a regularizer, not a physical
-observation.  Only after the mathematical estimator and its stability scope are
-fixed do Secs.~\ref{sec:adaptation-motivation} and~\ref{sec:adaptation} develop
-the sea-state scaling arguments, measurement-only wave statistics, and the
-empirically calibrated schedule used by the implementation.  Startup and
-magnetic calibration are then treated as separate engineering layers, followed
-by the experimental protocol and results.
-
 \subsection{Main contributions}
-The strongest contributions are:
+The contributions of this work are:
 \begin{itemize}[leftmargin=1.25em]
   \item a 21-state left-multiplicative quaternion MEKF coupling attitude,
         gyro and residual accelerometer bias, and three exact OU-driven
@@ -66,8 +54,7 @@ The strongest contributions are:
         benefit.
 \end{itemize}
 
-The scope remains narrower than the title ``navigation'' can suggest.  The
-reported displacement $\vct p$ is bounded wave-induced motion about a local
+The reported displacement $\vct p$ is bounded wave-induced motion about a local
 reference, not geodetic position.  GNSS aiding and a separated absolute
 trajectory are companion designs, not evaluated results.  The evidence in this
 paper is primarily synthetic; the ESP32--S3 exercise establishes source

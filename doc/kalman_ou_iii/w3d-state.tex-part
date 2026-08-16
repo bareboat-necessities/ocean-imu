@@ -61,16 +61,7 @@ N_X = 3+3+3+3+3+3+3=21.
 The stored covariance is
 $\mat{P}=\E[\delta\vct{x}\,\delta\vct{x}^{\top}]$.
 
-The residual accelerometer-bias correlation time is denoted $\tau_b$.  The
-implementation default is $\tau_b=\SI{5000}{s}$.  The existing
-\texttt{set\_Q\_bacc\_rw} API name is retained for source compatibility, but
-its argument is interpreted as the continuous driving-noise density of this
-OU state.  With the historical density
-$(5\times10^{-4}\,\mathrm{m\,s^{-2}/\sqrt{s}})^2$ and
-$\tau_b=\SI{5000}{s}$, the implied stationary standard deviation is
-approximately $\SI{0.02500}{m\,s^{-2}}$.  Thus the short-time process-noise
-calibration is unchanged while the formerly neutral bias mode acquires a finite
-restoring time scale.
+The residual accelerometer-bias correlation time is denoted $\tau_b$.
 
 Two distinct acceleration covariances are used throughout the paper.  The
 matrix $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ is a \emph{process-model

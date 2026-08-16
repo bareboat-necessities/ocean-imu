@@ -100,17 +100,6 @@ IMU sample at or after it, realized gaps are quantized to the IMU grid and need
 not be integer multiples of $T_S$; they always lie between one IMU step and one
 configured period plus one step.
 
-The period $T_S$ is itself a scheduled quantity.  The default OU--III wrapper
-sets it self-similarly from the applied OU time constant,
-$T_S=\operatorname{clip}(c_T\tau_{\mathrm{applied}},T_{S,\min},T_{S,\max})$;
-Sec.~\ref{sec:riccati-deployed-cadence} gives the deployed coefficients and the
-accompanying renormalization of $\vct r_S$.  The effective regularization
-strength depends on both $\vct{r}_S$ and $T_S$, so comparisons of tuning laws
-hold the cadence policy fixed unless stated otherwise.
-Appendix~\ref{app:iss-stability} assumes only that successive pseudo-update
-gaps are bounded above and below, which the scheduler above guarantees; equal
-spacing is not required by its translational observability lemma.
-
 \subsection{IMU lever-arm model}
 If the IMU is displaced from the center of gravity by known body-frame vector
 $\vct{r}_b$, the predicted specific force includes
