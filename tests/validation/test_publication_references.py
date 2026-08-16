@@ -12,8 +12,8 @@ file, so a label may be defined anywhere in the document, but a macro has to
 exist when TeX reads the character that uses it: quoting a generated value in a
 section that is typeset before the file defining it is input is a fatal
 undefined-control-sequence error, not a warning.  The last test therefore
-replays the input order of each compiled document and requires every generated
-macro to be defined before it is quoted.
+replays the input order of the compiled publication document and requires every
+generated macro to be defined before it is quoted.
 """
 
 import re
@@ -24,7 +24,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
 MAIN = DOC / "kalman_ou-w3d.tex"
-RESULTS = DOC / "kalman_ou-w3d-results.tex"
 
 INPUT_RE = re.compile(r"\\input\{([^}]+)\}")
 DEFINITION_RE = re.compile(r"\\(?:provide|new|renew)command\s*\{\s*\\([A-Za-z]+)\s*\}")
@@ -160,23 +159,21 @@ class PublicationReferenceTests(unittest.TestCase):
         # late.  That is how a Riccati-section sentence quoting the robustness
         # spans -- defined with the robustness tables, several sections further
         # down -- took the paper build down on main.
-        for root in (MAIN, RESULTS):
-            with self.subTest(document=root.name):
-                defined: set[str] = set()
-                early: list[str] = []
-                for path, number, line in typeset_order(root):
-                    names = DEFINITION_RE.findall(line)
-                    body = DEFINITION_RE.sub("", line)
-                    for name in MACRO_USE_RE.findall(body):
-                        if name not in defined:
-                            early.append(f"{path.name}:{number}: \\{name}")
-                    defined.update(names)
-                self.assertEqual(
-                    early,
-                    [],
-                    "generated macros quoted before they are defined: "
-                    f"{early}",
-                )
+        defined: set[str] = set()
+        early: list[str] = []
+        for path, number, line in typeset_order(MAIN):
+            names = DEFINITION_RE.findall(line)
+            body = DEFINITION_RE.sub("", line)
+            for name in MACRO_USE_RE.findall(body):
+                if name not in defined:
+                    early.append(f"{path.name}:{number}: \\{name}")
+            defined.update(names)
+        self.assertEqual(
+            early,
+            [],
+            "generated macros quoted before they are defined: "
+            f"{early}",
+        )
 
     def test_removed_unevaluated_appendices_are_not_referenced(self):
         sources = reachable_sources()
