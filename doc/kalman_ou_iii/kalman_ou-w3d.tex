@@ -187,17 +187,21 @@
 \maketitle
 
 \begin{abstract}
-We present a quaternion multiplicative EKF for marine wave-state estimation that
-couples attitude to a third-order translational chain for velocity, oscillatory
-displacement, and the integral of displacement.  World-frame acceleration is
-modeled by an Ornstein--Uhlenbeck prior, and integration drift is controlled by
-a zero pseudo-measurement on the integral state whose scale is adapted online
-from the estimated wave regime.  The continuous model, analytic discretization,
-small-step covariance treatment, and measurement Jacobians are given explicitly.
-A paired ten-seed study evaluates four stationary JONSWAP seas, four PM--Stokes
-seas, and a controlled transition over a common final \SI{900}{s} window.  For
-the stationary JONSWAP primary endpoint, the seed-wise mean normalized vertical
-RMS error is
+We present a quaternion multiplicative EKF for three-dimensional marine inertial
+motion estimation.  The estimator couples attitude and sensor-bias states to an
+OU-driven translational chain for velocity, oscillatory displacement, its
+integral, and latent world acceleration.  A zero pseudo-measurement on the
+integral state provides low-frequency regularization.  The core model is given
+with analytic discrete-time propagation, and the normal Live recursion is shown
+to be locally input-to-state stable under explicit bounded-schedule,
+observability, covariance, and no-reset assumptions.  The sea-state scheduler is
+then developed separately as an engineering layer: a measurement-only Mahony
+proxy levels vertical acceleration, a wave-band period estimator and a
+period-scaled variance estimator form exogenous tuning signals, and an
+empirically calibrated regularization schedule is applied with bounded
+smoothing and cadence.  A paired ten-seed study covers four stationary JONSWAP
+seas, four PM--Stokes seas, and a controlled transition.  On the stationary
+JONSWAP primary endpoint, normalized vertical RMS error is
 $\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
 $H_s$ for OU--III and
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
@@ -205,23 +209,20 @@ OU--II, with paired difference
 $\OUValidationNormalizedDifference$ percentage point and bootstrap 95\%
 interval
 $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$.
-The PM--Stokes ensemble reproduces the vertical advantage.  The gain is not a
-general 3D-position improvement: OU--III has higher 3D displacement error in
-\OUValidationThreeDHigherCount{} of the \OUValidationThreeDScenarios{}
-tested scenarios.  A channel ablation shows that the vertical adaptation benefit
-comes almost entirely from adapting the integral regularization scale $r_S$;
-adapting the OU parameters with $r_S$ fixed contributes little to the vertical
-score.  Online tuning improves robustness to large fixed-point mismatch and to
-the controlled changing sea, while a matched covariance-maintenance control
-shows that these differences are not caused by covariance bookkeeping.  The
-same estimator source executes on an ESP32--S3 target; quantitative embedded
-performance and externally referenced hardware accuracy remain outside the
-claims of this study.
+With the current isotropic OU--III configuration, mean 3-D displacement RMS is
+also lower than OU--II in all four stationary JONSWAP cases and the transition,
+with the paired interval excluding zero in each comparison.  Channel ablations
+show that the measured adaptation benefit is carried primarily by the
+integral-regularization channel rather than by retuning the directly observed
+OU acceleration prior.  The evidence remains simulation based; global
+navigation accuracy, thermal-calibration performance, and quantitative embedded
+resource margins are not claimed.
 \end{abstract}
 
 \begin{IEEEkeywords}
 extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, MRU, Ornstein--Uhlenbeck process, Heave Reference System, HRS, heave sensor, wave height estimation, wave measurement buoy\end{IEEEkeywords}
 
+% Part I: estimator mathematics.
 \input{w3d-intro.tex-part}
 \input{w3d-nomenclature.tex-part}
 \input{w3d-state.tex-part}
@@ -230,13 +231,18 @@ extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, 
 \input{w3d-lti-discrete.tex-part}
 \input{w3d-analytic-coeff.tex-part}
 \input{w3d-kalm-up.tex-part}
-\input{w3d-init.tex-part}
-\input{w3d-mag-hard-iron.tex-part}
-\input{w3d-fus-methods.tex-part}
-\input{w3d-jonswap-integrated-elevation-clarification.tex-part}
 \input{w3d-iss-stability.tex-part}
 \input{w3d-iss-theorem-audit.tex-part}
+
+% Part II: motivational analysis and deployed engineering.
+\input{w3d-adaptation-motivation.tex-part}
+\input{w3d-fus-methods.tex-part}
+\input{w3d-init.tex-part}
+\input{w3d-mag-hard-iron.tex-part}
+
+% Part III: experimental protocol, results, and limitations.
 \input{w3d-sim-charts.tex-part}
+\input{w3d-results.tex-part}
 \input{w3d-conclusion-summary.tex-part}
 
 \FloatBarrier
