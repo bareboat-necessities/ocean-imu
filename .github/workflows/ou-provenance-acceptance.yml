@@ -1,0 +1,107 @@
+name: ou-provenance-acceptance
+
+on:
+  push:
+    branches: [agent/harden-ou-evidence-provenance]
+    paths:
+      - .ou-provenance-acceptance-trigger
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/harden-ou-evidence-provenance
+          fetch-depth: 0
+
+      - name: Install validation dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            g++ make libeigen3-dev python3-numpy python3-scipy \
+            python3-pandas python3-matplotlib unzip
+
+      - name: Download normal versioned wave records
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip \
+            --clobber
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Exact normal-checkout validation target
+        run: make -C tests/validation test
+
+      - name: Exact vanilla unittest discovery
+        run: |
+          cd tests/validation
+          python3 -m unittest discover -v -p 'test_*.py'
+
+      - name: Direct evidence contracts
+        run: |
+          python3 tools/ou_evidence_contract.py --check --study validation
+          python3 tools/ou_evidence_contract.py --check --study robustness
+
+      - name: Target the laundering and title regressions explicitly
+        run: |
+          cd tests/validation
+          python3 -m unittest -v \
+            test_ou_evidence_contract.ProvenanceAdversarialTests \
+            test_source_archive_provenance.SourceArchiveProvenanceTests \
+            test_ou_title_contract.OUTitleContractTests
+
+      - name: Smoke-run current statistical generators
+        run: |
+          rm -rf /tmp/ou-validation-smoke /tmp/ou-robustness-smoke
+          python3 -u tools/ou_validation.py \
+            --mode smoke \
+            --bootstrap-resamples 200 \
+            --output-dir /tmp/ou-validation-smoke
+          python3 -u tools/ou_robustness.py \
+            --mode smoke \
+            --sensitivity-scales '0.75,1.0,1.25' \
+            --bootstrap-resamples 200 \
+            --output-dir /tmp/ou-robustness-smoke
+          python3 - <<'PY'
+          import csv
+          from pathlib import Path
+          for path in (
+              Path('/tmp/ou-validation-smoke/ou_validation_raw.csv'),
+              Path('/tmp/ou-robustness-smoke/ou_robustness_raw.csv'),
+          ):
+              with path.open(newline='', encoding='utf-8') as f:
+                  fields = csv.DictReader(f).fieldnames or []
+              assert 'quality_gate_pass' not in fields, (path, fields)
+              assert 'simulator_return_code' not in fields, (path, fields)
+          PY
+
+      - name: Build a source archive copy without .git
+        run: |
+          rm -rf /tmp/ocean-imu-source-archive
+          mkdir -p /tmp/ocean-imu-source-archive
+          tar --exclude=.git -cf - . | tar -xf - -C /tmp/ocean-imu-source-archive
+          test ! -e /tmp/ocean-imu-source-archive/.git
+
+      - name: Exact validation target in source archive
+        run: make -C /tmp/ocean-imu-source-archive/tests/validation test
+
+      - name: Direct archive-mode evidence contracts
+        run: |
+          cd /tmp/ocean-imu-source-archive
+          python3 tools/ou_evidence_contract.py --check --study validation
+          python3 tools/ou_evidence_contract.py --check --study robustness
+
+      - name: Paper publication contracts
+        run: |
+          cd tests/validation
+          python3 -m unittest -v \
+            test_publication_references.PublicationReferenceTests \
+            test_zz_publication_contract.ReorganizedPublicationContractTests
