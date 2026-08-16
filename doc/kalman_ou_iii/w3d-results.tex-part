@@ -198,8 +198,7 @@ The same estimator source compiles and executes on an M5Stack AtomS3R
   \centering
   \includesvg[width=0.72\columnwidth]{AtomS3R_device}
   \caption{M5Stack AtomS3R (ESP32--S3) target used for the embedded build and
-  execution check.  The illustration is the device SVG distributed with the
-  project repository.}
+  execution check.}
   \label{fig:atoms3r-platform}
 \end{figure}
 
