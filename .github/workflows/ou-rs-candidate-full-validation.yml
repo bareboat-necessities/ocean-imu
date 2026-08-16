@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "tools/ou_rs_candidate_full_validation.py"
+      - "tools/ou_rs_candidate_full_validation_fixed.py"
       - ".github/workflows/ou-rs-candidate-full-validation.yml"
       - "src/kalman_ou_iii/**"
       - "tests/kalman_ou_iii/**"
@@ -45,7 +46,7 @@ jobs:
 
       - name: Run deployed vs cubic vs fitted full validation
         run: |
-          python3 -u tools/ou_rs_candidate_full_validation.py \
+          python3 -u tools/ou_rs_candidate_full_validation_fixed.py \
             --jobs "$(nproc)" \
             --shards 2 \
             --bootstrap 5000 \
