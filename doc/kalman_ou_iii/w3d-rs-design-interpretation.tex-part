@@ -1,0 +1,173 @@
+\subsection{Reduced drift--distortion interpretation}
+\label{sec:riccati-mis-specified-pseudo}
+
+The Riccati analysis above describes how a fictitious $S=0$ observation changes
+the estimator covariance.  It does not yet price the fact that the observation
+is physically false: the true wave process has nonzero $S$ content, and a
+stronger regularizer therefore rejects some desired low-frequency motion.  A
+useful reduced model makes this missing cost explicit.
+
+At frequencies below the posterior acceleration correlation rate, approximate
+the residual acceleration error by white noise of zero-frequency intensity
+$q_{\mathrm{eff}}$ and let the continuous-equivalent $S$ correction have
+regularization bandwidth
+\begin{equation}
+\omega_R=\left(\frac{q_{\mathrm{eff}}}{R_ST_S}\right)^{1/6}.
+\label{eq:reduced-omega-r}
+\end{equation}
+For a wave spectrum sufficiently separated above that correction bandwidth, the
+position mean-square error has the leading form
+\begin{equation}
+\boxed{
+J_{\mathrm{red}}(\omega_R)
+\simeq
+\frac{3q_{\mathrm{eff}}}{2\omega_R^3}
++4m_{-4}\omega_R^4,}
+\qquad
+m_{-4}:=\int_{\Omega_{\mathrm{wave}}}
+\frac{S_p(\omega)}{\omega^4}\,d\omega .
+\label{eq:reduced-mse-tradeoff}
+\end{equation}
+The first term is residual-integrator drift; the second is distortion of the
+real wave motion by the false zero observation.  The reduced-model minimizer is
+therefore
+\begin{equation}
+\boxed{
+(\omega_R^{\star})^7
+=\frac{9}{32}\frac{q_{\mathrm{eff}}}{m_{-4}},}
+\label{eq:reduced-optimal-omega}
+\end{equation}
+and, with $R_S=r_S^2$,
+\begin{equation}
+\boxed{
+r_{S,\mathrm{red}}^{\star}
+=\left(\frac{32}{9}\right)^{3/7}
+q_{\mathrm{eff}}^{1/14}
+ m_{-4}^{3/7}T_S^{-1/2}.}
+\label{eq:reduced-optimal-rs}
+\end{equation}
+At this stationary point the minimized error scales as
+\begin{equation}
+J_{\mathrm{red}}^{\star}
+\propto q_{\mathrm{eff}}^{4/7}m_{-4}^{3/7}.
+\label{eq:reduced-optimal-mse-scaling}
+\end{equation}
+
+Equations~\eqref{eq:reduced-optimal-omega}--\eqref{eq:reduced-optimal-rs}
+are an exact minimizer of the stated reduced asymptotic cost, not an exact
+solution for the complete 21-state MEKF.  The distinction is important.  The
+full estimator couples attitude, gyro bias, residual accelerometer bias, and all
+three translational axes through the covariance; its $S=0$ update has a full
+Kalman gain; $q_{\mathrm{eff}}$ is endogenous to those coupled errors; the
+pseudo-update is discrete; and the spectral-separation approximation is least
+reliable during changing or multimodal seas.  Consequently the reduced
+minimizer is used to understand sensitivities and to motivate a scheduler, not
+to claim a universal full-filter optimum.
+
+\subsection{Design interpretation and deployed schedule}
+\label{sec:riccati-similarity-design-guidance}
+
+The combined similarity and reduced-MSE arguments identify three useful design
+ideas without uniquely determining the production coefficients.  First,
+$\sigma_{aw}\tau^3$ is the natural scale of the third-integral state.  Second,
+scaling the pseudo-update period with $\tau$ keeps the number of regularization
+updates per OU correlation time approximately fixed.  Third, the useful
+regularization strength is a drift--distortion compromise rather than covariance
+matching to a true sensor.
+
+\subsubsection{What the wrapper deploys}
+\label{sec:riccati-deployed-cadence}
+The deployed wrapper uses
+\begin{equation}
+T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max})
+\end{equation}
+and a base target $r_S^{\mathrm{base}}=c_R\sigma_{aw}\tau^3$.  It then applies
+the information-rate normalization
+\begin{equation}
+r_{S,\mathrm{filter}}
+=r_S^{\mathrm{base}}\sqrt{\frac{T_{S,0}}{T_S}},
+\label{eq:deployed-rs-summary}
+\end{equation}
+so away from clamps the actual filter-input dependence is
+$r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}$.  The constants and
+smoothing rules are given in Sec.~\ref{sec:adaptation}.  This schedule should be
+read as an empirically calibrated implementation informed by the similarity and
+Riccati arguments above, not as the algebraic consequence of
+Eq.~\eqref{eq:reduced-optimal-rs}.
+
+\subsubsection{Empirical amplitude check}
+\label{sec:riccati-law-ablation}
+The implementation exposes the amplitude dependence independently of the common
+time-scale factor.  The full paired experiment finds that retaining the linear
+$\sigma_{aw}$ dependence performs best among the tested amplitude exponents.
+This is useful evidence for the deployed scheduler, but it does not identify a
+unique physical decomposition of $q_{\mathrm{eff}}$: attitude leakage, bias
+observability, model mismatch, and sensor noise all contribute to the
+low-frequency acceleration error seen by the complete MEKF.  The empirical
+result therefore validates the engineering law over the tested envelope rather
+than retroactively turning the reduced model into a proof of that law.
+
+\subsection{Horizontal channels: large drift does not imply a much tighter anchor}
+\label{sec:riccati-per-axis}
+\label{sec:riccati-per-axis-limits}
+
+The horizontal and vertical channels do not have the same low-frequency error
+source.  After attitude compensation, small tilt error leaks gravity into the
+horizontal acceleration approximately as
+\begin{equation}
+\boxed{
+\vct\varepsilon_{a,H}
+\simeq
+\begin{bmatrix}
+g\,\delta\theta_y\\-g\,\delta\theta_x
+\end{bmatrix}
++\vct b_{a,H}+\vct n_H .}
+\label{eq:riccati-axis-tilt-leak}
+\end{equation}
+The vertical channel does not contain the same first-order
+$g\,\delta\theta$ term.  Without GNSS or another horizontal kinematic
+reference, residual horizontal bias is also less observable.  It is therefore
+reasonable, and observed in the simulation diagnostics, that
+$q_{\mathrm{eff},H}\gg q_{\mathrm{eff},z}$.
+
+Across the eight stationary calibration records, the measured drift-band
+intensity is about $65$ times the vertical value on world $x$ and $102$ times
+on world $y$.  These are diagnostic ratios, not universal ocean constants: the
+records cover only a limited set of directions, and world-axis surge/sway energy
+moves with wave heading.  The important analytical result is the sensitivity,
+not a fitted $x/y$ coefficient.  In the reduced model,
+$q_{\mathrm{eff}}$ enters the preferred regularizer through only the
+$1/14$ power.  Thus a factor-of-ten error in the drift intensity changes
+$r_{S,\mathrm{red}}^{\star}$ by only
+$10^{1/14}\simeq1.18$.  Even two orders of magnitude in horizontal drift is
+therefore not, by itself, an argument for an order-of-magnitude stronger
+horizontal $S=0$ anchor.
+
+The desired-motion term points in the opposite direction.  For a directional
+sea, $m_{-4,x}$ and $m_{-4,y}$ are primarily projections of the same orbital
+motion and change with heading; strengthening one world-axis regularizer can
+therefore suppress genuine wave motion rather than cure the disturbance that
+made that axis noisy.  The present directional sample is too limited to infer a
+universal pair of separate $x/y$ regularization constants from those moments.
+The full-filter evidence supports the simpler statement actually needed by the
+implementation: isotropic integral regularization performs well in the tested
+directional cases.
+
+The stronger consequence concerns engineering priority.  At the reduced-model
+stationary point,
+Eq.~\eqref{eq:reduced-optimal-mse-scaling} carries
+$q_{\mathrm{eff}}^{4/7}$, eight times the exponent with which
+$q_{\mathrm{eff}}$ enters the tuning ratio in
+Eq.~\eqref{eq:reduced-optimal-rs}.  Residual horizontal error is therefore much
+more sensitive to the disturbance itself than the preferred regularization
+scale is.  Improving tilt accuracy, accelerometer-bias observability, or adding
+a horizontal reference such as GNSS attacks the dominant quantity directly;
+simply ``regularizing the noisy axis harder'' does not.
+
+This conclusion is limited in the same way as the reduced model.  The two
+orders-of-magnitude diagnostic is simulation-derived, the world-axis split is
+heading dependent, and the estimator has not been tested on a broad ensemble of
+crossing or multidirectional seas.  A future study should estimate the full
+low-frequency acceleration-error spectral matrix and the directional
+$\mat M_{-4}$ moment over a much wider directional ensemble before considering
+an online anisotropic regularizer.
