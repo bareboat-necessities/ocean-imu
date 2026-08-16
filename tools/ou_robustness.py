@@ -756,42 +756,6 @@ def read_shards(shard_dir: Path) -> list[dict[str, Any]]:
     return core.read_shards(shard_dir, SHARD_PREFIX, ordered=True)
 
 
-def _restated_source_files(
-    previous: Mapping[str, Mapping[str, Any]],
-) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
-    """Re-pin the sources a restat runs under, and report what moved.
-
-    The wave records are versioned release inputs and are not in the checkout,
-    so an entry whose file is absent is carried across unchanged rather than
-    dropped -- a restat must not shrink what the manifest covers.  Everything
-    present is hashed from disk, including the code sources, which is the point:
-    the restat's derived files really were produced by the tree as it stands.
-
-    The rows, though, were produced by the tree as it stood *then*.  Any source
-    whose hash moved between the two is returned separately so the manifest can
-    say so, because a moved simulator source means the replays are stale and a
-    restat cannot fix that.
-    """
-
-    restated: dict[str, dict[str, Any]] = {}
-    moved: dict[str, dict[str, Any]] = {}
-    names = {
-        *previous,
-        *(str(path.relative_to(REPO_ROOT)) for path in CODE_SOURCE_PATHS),
-    }
-    for name in sorted(names):
-        path = REPO_ROOT / name
-        recorded = dict(previous.get(name, {}))
-        if not path.is_file():
-            if recorded:
-                restated[name] = recorded
-            continue
-        entry = {"sha256": core.sha256_file(path), "bytes": path.stat().st_size}
-        restated[name] = entry
-        if recorded and recorded.get("sha256") != entry["sha256"]:
-            moved[name] = recorded
-    return restated, moved
-
 
 def restat_bundle(
     source: Path,
