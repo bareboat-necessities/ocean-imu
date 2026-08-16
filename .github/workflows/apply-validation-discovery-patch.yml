@@ -4,6 +4,10 @@ on:
   push:
     branches: [agent/harden-ou-evidence-provenance]
 
+concurrency:
+  group: apply-validation-discovery-patch-once
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
