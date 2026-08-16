@@ -164,28 +164,6 @@ def _contribution_is_framed_at_the_width_of_the_evidence(self):
     self.assertIn("outside the Live-state ISS theorem", intro)
 
 
-core.CommittedFullResultsTests.test_abstract_reports_committed_stationary_aggregate = (
-    _abstract_reports_committed_stationary_aggregate
-)
-core.ManuscriptMethodologyTests.test_fixed_reference_and_transition_limits_are_stated = (
-    _fixed_reference_and_transition_limits_are_stated
-)
-core.ManuscriptMethodologyTests.test_inference_is_qualified_rather_than_asserted = (
-    _inference_is_qualified_rather_than_asserted
-)
-core.ManuscriptMethodologyTests.test_three_dimensional_and_channel_results_are_reported = (
-    _three_dimensional_and_channel_results_are_reported
-)
-core.ManuscriptMethodologyTests.test_transition_and_secondary_ensembles_are_rescored = (
-    _transition_and_secondary_ensembles_are_rescored
-)
-core.ManuscriptMethodologyTests.test_baseline_fairness_thresholds_and_hardware_limits_are_recorded = (
-    _baseline_fairness_thresholds_and_hardware_limits_are_recorded
-)
-core.ManuscriptMethodologyTests.test_the_contribution_is_framed_at_the_width_of_the_evidence = (
-    _contribution_is_framed_at_the_width_of_the_evidence
-)
-
 
 class ReorganizedPublicationContractTests(unittest.TestCase):
     def test_article_order_is_math_then_engineering_then_evidence(self):
@@ -290,13 +268,3 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertTrue("hard reset" in stability or "hard-reset" in stability)
 
 
-class PublicationOverrideInstallationTests(unittest.TestCase):
-    def test_semantic_overrides_are_installed(self):
-        self.assertIs(
-            core.CommittedFullResultsTests.test_abstract_reports_committed_stationary_aggregate,
-            _abstract_reports_committed_stationary_aggregate,
-        )
-        self.assertIs(
-            core.ManuscriptMethodologyTests.test_inference_is_qualified_rather_than_asserted,
-            _inference_is_qualified_rather_than_asserted,
-        )

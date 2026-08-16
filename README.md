@@ -60,9 +60,9 @@ Autopilot Use Cases:
 
 There are two versions of Kalman INS filters and one filter (PII observer) based on control theory:
 
-- OU_III is using higher-order integral drift correction. It is 21 dimensional state Kalman filter. It seems works better on high precision IMUs.
+- OU_III uses higher-order integral drift correction. It is a 21-dimensional-state Kalman filter and is the OU variant used for the main 3-D navigation study.
 - TFG is a right-invariant two-frame Lie-group error-state EKF. Same 21 dimensional state and the same OU wave model as OU_III, but attitude, the world-frame kinematic states and the body-frame biases live on one group, so an attitude correction rotates velocity, position, integral displacement and wave acceleration coherently instead of leaving them behind.
-- OU_II is using more direct integral drift correction and more responsive to sea state changes. It is 18 dimentional state Kalman filter.
+- OU_II uses more direct integral drift correction and is more responsive to sea-state changes. It is an 18-dimensional-state Kalman filter.
 - PII observer is based on control theory. It is very computationally light-weight with no matrix operations. It's less accurate than Kalman filters.
 - All above filters are adaptive.
 - All filters tested to run on esp32s3.
@@ -200,11 +200,11 @@ For module-level validation, run `make all` inside the relevant folder under `te
 
 ### Paired OU validation
 
-The OU-II/OU-III statistical validation runner keeps the executable regression
-gates, and scores both them and the primary full experiment over the final
-15 minutes of each 20-minute run. It pairs wave realization, IMU noise, and
-initialization across both filters and the Adaptive, FixedNominal, and
-FixedOracle ablations.
+The OU-II/OU-III statistical validation runner scores continuous metrics over
+the final 15 minutes of each 20-minute run. Deterministic simulator regression
+gates remain executable diagnostics, but they are not Monte Carlo inclusion
+criteria and are not exported as pass/fail evidence. Wave realization, IMU
+noise, and initialization are paired across both filters and matched ablations.
 
 ```bash
 python3 tools/ou_validation.py --mode smoke
@@ -212,12 +212,12 @@ python3 tools/ou_validation.py --mode full
 ```
 
 Full mode produces raw and summary CSV, JSON, LaTeX, paired-effect, manifest,
-and SVG plot artifacts under `reports/results/ou_validation/`. The completed
-ten-seed, 300-run evidence used by the article is versioned in that directory;
-it shows a consistent stationary vertical OU-III benefit but mixed 3D,
-transition, and adaptation outcomes rather than uniform superiority. See
-[`docs/ou-validation.md`](docs/ou-validation.md) for the protocol, seed controls,
-and interpretation.
+and SVG plot artifacts under `reports/results/ou_validation/`. The versioned
+ten-seed study contains **840 simulator replays** across the declared stationary,
+transition, comparison, covariance-policy, and channel-ablation configurations;
+paired seed-level aggregates, not 840 independent samples, are used for the
+primary inference. See [`docs/ou-validation.md`](docs/ou-validation.md) for the
+protocol, provenance contract, seed controls, and interpretation.
 
 Both OU families also keep a magnetometer hard-iron estimator running for the
 life of the filter, in a gravity-referenced frame that reads no filter state,

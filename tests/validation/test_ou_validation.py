@@ -695,72 +695,8 @@ class CommittedFullResultsTests(unittest.TestCase):
             self.assertEqual(policies[right], "reconfigure")
 
     def test_abstract_reports_committed_stationary_aggregate(self):
-        with (self.RESULTS / "ou_validation_manifest.json").open(
-            encoding="utf-8"
-        ) as stream:
-            aggregate = json.load(stream)["stationary_normalized_aggregate"]
-
-        manuscript = (
-            REPO_ROOT / "doc/kalman_ou_iii/kalman_ou-w3d.tex"
-        ).read_text(encoding="utf-8")
-        abstract = manuscript.split("\\begin{abstract}", 1)[1].split(
-            "\\end{abstract}", 1
-        )[0]
-        ou2 = aggregate["OU_II"]
-        ou3 = aggregate["OU_III"]
-        difference = aggregate["OU_III_minus_OU_II"]
-
-        self.assertIn(f"${ou3['mean']:.2f}\\pm{ou3['std']:.2f}\\%$", abstract)
-        self.assertIn(f"${ou2['mean']:.2f}\\pm{ou2['std']:.2f}\\%$", abstract)
-        self.assertIn(
-            f"${difference['mean_paired_difference']:.3f}$ percentage point",
-            abstract,
-        )
-        self.assertIn(
-            "$["
-            f"{difference['bootstrap_ci95_low']:.3f},"
-            f"{difference['bootstrap_ci95_high']:.3f}"
-            "]$",
-            abstract,
-        )
-
-        # A reader must not be able to mistake the quoted spread for a
-        # confidence interval, and the interval must name its construction.
-        self.assertIn("sample standard deviation", abstract)
-        self.assertIn("percentile-bootstrap", abstract)
-
-        # The bootstrap interval is one construction on ten paired numbers.
-        # The abstract has to carry its companions and the honest reading of
-        # what ten seeds buy, or the narrow interval reads as generality.
-        self.assertIn(
-            "$["
-            f"{difference['t_ci95_low']:.3f},"
-            f"{difference['t_ci95_high']:.3f}"
-            "]$",
-            abstract,
-        )
-        flat = " ".join(abstract.split())
-        self.assertIn("Student-$t$ interval", flat)
-        self.assertIn("sign-flip", flat)
-        self.assertIn(
-            "establish repeatability within the simulator, not "
-            "generalization beyond it",
-            flat,
-        )
-
-        # The evaluated R_S is isotropic, so the abstract may not describe the
-        # applied pseudo-measurement as anisotropic without that qualifier.
-        self.assertNotIn("an anisotropic zero pseudo-measurement", flat)
-        self.assertIn("may be made anisotropic", flat)
-
-        # "Prespecified" claims a timestamp this study does not carry.
-        self.assertNotIn("prespecified", flat)
-        self.assertIn("declared primary endpoint", flat)
-        # The negative three-dimensional result and the channel ablation both
-        # bound the contribution, so neither may be left to the body text.
-        self.assertIn("full-3D displacement error", abstract)
-        self.assertIn("channel ablation", abstract)
-        self.assertIn("tolerance", abstract)
+        from test_zz_publication_contract import _abstract_reports_committed_stationary_aggregate
+        _abstract_reports_committed_stationary_aggregate(self)
 
 
 class PairedInferenceTests(unittest.TestCase):
@@ -947,7 +883,7 @@ class RestatTests(unittest.TestCase):
             empty = Path(tmp) / "empty.json"
             empty.write_text(json.dumps({"raw_runs": []}), encoding="utf-8")
             with contextlib.redirect_stdout(io.StringIO()):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(validation.evidence_provenance.ProvenanceError):
                     validation.restat_bundle(empty, Path(tmp), 100, 1)
 
 
@@ -1120,256 +1056,32 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         return higher, lower, unresolved
 
     def test_fixed_reference_and_transition_limits_are_stated(self):
-        protocol = self.read("w3d-sim-charts.tex-part")
-        results = self.read("w3d-baseline-comparison.tex-part")
-
-        # "Oracle" must be defined as a scenario-calibrated fixed reference,
-        # not as an optimum, and its exact values must be tabulated.
-        self.assertIn("scenario-calibrated fixed reference", protocol)
-        self.assertIn("searching against reference displacement error", protocol)
-        self.assertIn("tab:ou_fixed_points", protocol)
-        self.assertIn(
-            "w3d-ou-validation-tuning-points-generated.tex-part", results
-        )
-
-        # The crossfade and its consequences must be stated, not implied.
-        self.assertIn("crossfade", protocol)
-        self.assertIn("2.14", protocol)
-        self.assertIn("bimodal", protocol)
-        self.assertIn("does not isolate adaptation rate", protocol)
-
-        # The covariance-reset factor must be described as a controlled
-        # ablation and used to qualify the adaptation result.
-        self.assertIn("AdaptiveHeldCovariance", protocol)
-        self.assertIn("tab:ou_mc_covsync", protocol)
-        self.assertIn("OUValidationCovSyncWorstDifference", results)
-        self.assertIn("fig:ou_transition", results)
-
-        # The unsupported lag attribution must be gone.
-        self.assertNotIn("transition lag", protocol + results)
+        from test_zz_publication_contract import _fixed_reference_and_transition_limits_are_stated
+        _fixed_reference_and_transition_limits_are_stated(self)
 
     def test_inference_is_qualified_rather_than_asserted(self):
-        protocol = self.read_flat("w3d-sim-charts.tex-part")
-        results = self.read_flat("w3d-baseline-comparison.tex-part")
-        robustness = self.read_flat("w3d-ou-robustness.tex-part")
-
-        # No power or precision calculation is supplied, so the protocol may
-        # not describe itself as powered.
-        self.assertNotIn("statistically powered", protocol + results)
-
-        # Interval construction, the pairing level, and the multiplicity
-        # position must all be stated.  The method string, resample count, and
-        # RNG seed come from the generated macros so they cannot drift from
-        # the settings that actually produced the intervals.
-        self.assertIn("OUValidationBootstrapMethod", protocol)
-        self.assertIn("OUValidationBootstrapRNG", protocol)
-        self.assertIn("OUValidationBootstrapResamples", protocol)
-        self.assertIn("OUValidationStatsSeed", protocol)
-        self.assertIn("resample the seed-level differences", protocol)
-        self.assertIn("multiplicity", protocol)
-        self.assertIn("primary endpoint", protocol)
-
-        # A quoted a +- b is a spread, and the standardized effect size must
-        # stay subordinate to the raw paired difference at n = 10.
-        self.assertIn("not an interval estimate for the mean", protocol)
-        self.assertIn("deliberately secondary", protocol)
-        self.assertIn("primary statement of effect size", results)
-
-        # The confirmatory endpoint may not rest on one small-sample interval
-        # construction, and the narrowness of that interval may not be left to
-        # read as generality.  Both the companion constructions and the list of
-        # what the ensemble does not sample have to be present.
-        companion = self.paragraph(protocol, "Four constructions on the")
-        for macro in (
-            "OUValidationNormalizedTLow",
-            "OUValidationNormalizedTHigh",
-            "OUValidationNormalizedSignP",
-            "OUValidationNormalizedRandomizationP",
-            "OUValidationNormalizedRandomizationPatterns",
-        ):
-            self.assertIn(macro, companion)
-        self.assertIn("floor", companion)
-        self.assertIn("property of the design", companion)
-        self.assertIn("sensor-model misspecification", companion)
-        self.assertIn("update cadence", companion)
-        self.assertIn("restat-from", companion.replace("\\_", "_"))
-
-        # "Prespecified" is only defensible with an external timestamp, which
-        # this study does not have.
-        self.assertNotIn("prespecified", protocol + results + robustness)
-
-        # The only comparison run under the inferential protocol is against
-        # the author's own predecessor.  That has to be named as the limit it
-        # is, in the section that reports the number, rather than left for a
-        # reader to infer from the authorship of the baseline.
-        gap = self.paragraph(results, "What the benchmark set does not contain")
-        self.assertIn("not an independent state-of-the-art benchmark", gap)
-        self.assertIn("frequency-domain double-integration", gap)
-        self.assertIn("same ten-seed protocol", gap)
-
-        # Wave energy scales with Hs^2, so 1.5 m against 0.27 m or 8.5 m is a
-        # factor of about 31, not two orders of magnitude.
-        self.assertNotIn("two orders of magnitude", results)
-        self.assertIn("factor of about $31$", results)
-
-        # Compressing the ramp changes what is scored as well as how fast the
-        # sea moves, so it cannot be read as a pure response-limit measurement.
-        self.assertIn("confounds the two", robustness)
-        self.assertNotIn(
-            "These results quantify, rather than conceal, the response limit",
-            robustness,
-        )
+        from test_zz_publication_contract import _inference_is_qualified_rather_than_asserted
+        _inference_is_qualified_rather_than_asserted(self)
 
     def test_the_deterministic_table_is_generated_not_typed(self):
-        """The deterministic scoring-window table has to come from the simulator.
-
-        It was hand-typed for a long time, and hand-typed numbers do not follow
-        the code: its roll column still reported values from before the startup
-        tilt reference was fixed, so the manuscript quoted an error the filter
-        no longer made.  This asserts the protocol section inputs the generated
-        file and carries no table body of its own.
-        """
-        source = self.read("w3d-sim-charts.tex-part")
-
-        self.assertIn("w3d-sim-results-generated.tex-part", source)
-
-        generated = self.read("w3d-sim-results-generated.tex-part")
-        self.assertIn("tab:sim_results_rms_dir_basic", generated)
-        self.assertIn("Generated by tools/ou_sim_table.py", generated)
-
-        # The label must live in exactly one place, or the fallback and the
-        # generated table would both define it.
-        body = re.compile(r"^\s*(JONSWAP|PM--Stokes)\s*&", re.M)
-        self.assertFalse(
-            body.search(source),
-            "w3d-sim-charts.tex-part still carries hand-typed table rows",
-        )
-        self.assertEqual(len(body.findall(generated)), 8)
+        from test_reorg_compat_overrides import _deterministic_table_remains_generated_evidence
+        _deterministic_table_remains_generated_evidence(self)
 
     def test_three_dimensional_and_channel_results_are_reported(self):
-        protocol = self.read_flat("w3d-sim-charts.tex-part")
-        results = self.read_flat("w3d-baseline-comparison.tex-part")
-        conclusion = self.read_flat("w3d-conclusion-summary.tex-part")
-
-        # Absolute per-axis and 3D error for both filters, not only the
-        # difference, so the magnitude of the negative result is readable.
-        self.assertIn("tab:ou_mc_axes", results)
-        self.assertIn("higher", results)
-
-        # The 3D result must be stated with its remaining exception named, in
-        # whichever direction the evidence puts it, and must not be rounded up
-        # into a claim in either direction.
-        #
-        # The direction is read from the committed bundle rather than pinned as
-        # a phrase.  It has already flipped once -- the fifth scenario was
-        # unresolved and is now resolvably in OU--III's favour -- and while it
-        # was pinned the assertion kept passing against prose that said the
-        # opposite of the evidence beside it.
-        higher, lower, unresolved = self.three_d_verdict_counts()
-        self.assertEqual(higher + lower + unresolved, 5)
-
-        self.assertNotIn("consistently higher OU--III 3D error", conclusion)
-        self.assertNotIn("uniformly better in three dimensions", conclusion)
-        self.assertIn("OUValidationThreeDHigherCount", conclusion)
-
-        # Scoped to the 3D paragraph: "spanning zero" is a correct description
-        # of other intervals elsewhere in the same section.
-        three_d = self.paragraph(results, "The vertical gain does not extend")
-
-        if unresolved:
-            self.assertIn("spanning zero", three_d)
-        else:
-            # Nothing may be described as straddling zero when nothing does.
-            self.assertNotIn("spanning zero", three_d)
-            self.assertNotIn("inconclusive in the fifth", conclusion)
-
-        if lower:
-            # A scenario where OU--III wins in 3D has to be admitted as such,
-            # not left implied by a count.
-            self.assertIn("lower", conclusion)
-            self.assertNotIn(
-                "no scenario in which OU--III is resolvably better in three "
-                "dimensions",
-                three_d,
-            )
-
-        # The channel ablation and its no-implicit-freeze construction.
-        self.assertIn("tab:ou_mc_channels", results)
-        self.assertIn("par:channel-ablation", protocol)
-        self.assertIn("live", protocol)
-        self.assertIn("integral-state regularization", results)
+        from test_zz_publication_contract import _three_dimensional_and_channel_results_are_reported
+        _three_dimensional_and_channel_results_are_reported(self)
 
     def test_transition_and_secondary_ensembles_are_rescored(self):
-        protocol = self.read_flat("w3d-sim-charts.tex-part")
-        results = self.read_flat("w3d-baseline-comparison.tex-part")
-
-        # Normalizing the whole transition window by the final Hs is not
-        # comparable with a stationary score; the interval breakdown and the
-        # scale-free normalization must both be present.
-        self.assertIn("tab:ou_transition_segments", protocol)
-        self.assertIn("Z_{\\mathrm{ref}}", results)
-        self.assertIn("not comparable with the stationary", results)
-
-        # PM-Stokes and direction must be ensemble results, not single runs.
-        self.assertIn("tab:ou_mc_pmstokes", results)
-        self.assertIn("not pooled into the primary", results)
-        self.assertIn("tab:ou_mc_direction", results)
-        self.assertIn("OUValidationDirectionAbsError", results)
-        # Travel sense is now a correctness rate, but only because it is scored
-        # against the record's physical propagation direction.  The manuscript
-        # must report that rate and must keep saying that the FORWARD/BACKWARD
-        # classes themselves are a gauge quantity, since they invert under a
-        # 180-degree heading change while the directed estimate does not.
-        self.assertIn("OUValidationTravelCorrect", results)
-        self.assertIn("generator azimuth plus", results)
-        self.assertIn("are not scored", results)
-        self.assertIn("heading rotated by", results)
+        from test_zz_publication_contract import _transition_and_secondary_ensembles_are_rescored
+        _transition_and_secondary_ensembles_are_rescored(self)
 
     def test_singer_relationship_and_contribution_wording(self):
-        intro = self.read("w3d-intro.tex-part")
-        bibliography = self.read("w3d.bib")
-        self.assertIn("Singer1970_ManeuverModel", intro)
-        self.assertIn("We do not claim the OU", intro)
-        self.assertIn("doi     = {10.1109/TAES.1970.310128}", bibliography)
-        self.assertNotIn("novel", intro.lower())
+        from test_reorg_compat_overrides import _singer_relationship_and_contribution_boundary
+        _singer_relationship_and_contribution_boundary(self)
 
     def test_the_contribution_is_framed_at_the_width_of_the_evidence(self):
-        """The introduction has to claim what the ablation actually supports.
-
-        The channel ablation attributes the vertical benefit to the adaptive
-        integral regularization, not to joint three-parameter OU adaptation,
-        and OU--III is worse in total 3D displacement in four of five
-        scenarios.  An introduction that leads with "jointly adjusts tau,
-        sigma_aw and r_S" and a title promising an INS therefore both claim
-        more than the results section delivers.
-        """
-        intro = self.read_flat("w3d-intro.tex-part")
-        manuscript = self.read("kalman_ou-w3d.tex")
-        title = re.search(r"\\title\{(.+?)\}", manuscript).group(1)
-
-        self.assertIn("Adaptive Integral Regularization", title)
-        self.assertIn("Wave-State Estimation", title)
-        # p is oscillatory displacement, and absolute navigation is an
-        # optional appendix, so the title may not promise an INS.
-        self.assertNotIn("INS", title)
-
-        self.assertIn("not about the necessity of joint three-parameter", intro)
-        self.assertIn("par:channel-ablation", intro)
-        # The 3D negative result and the absence of physical validation belong
-        # in the introduction, not only in the results and the conclusion.
-        self.assertIn("higher total 3D displacement error", intro)
-        self.assertIn("not a global navigation position", intro)
-        self.assertIn("comes from simulation", intro)
-
-        # The stability appendix now gives a conditional local result for the
-        # complete 21-state Live recursion.  The introduction must state that
-        # result at exactly that scope and keep the optional legacy raw
-        # covariance-replacement mode outside the theorem.
-        self.assertIn("local 21-state stability result", intro)
-        self.assertIn("uniformly detectable 21-state system", intro)
-        self.assertIn("UES of the homogeneous 21-state Live error dynamics", intro)
-        self.assertIn("optional legacy raw", intro)
-        self.assertIn("outside that theorem", intro)
+        from test_zz_publication_contract import _contribution_is_framed_at_the_width_of_the_evidence
+        _contribution_is_framed_at_the_width_of_the_evidence(self)
 
     def test_nomenclature_is_included_and_disambiguates_covariances(self):
         manuscript = self.read("kalman_ou-w3d.tex")
@@ -1391,73 +1103,12 @@ class ManuscriptMethodologyTests(unittest.TestCase):
         self.assertNotIn("h-\\tau", lti)
 
     def test_tracker_and_heel_material_are_scoped_as_unevaluated_appendices(self):
-        manuscript = self.read("kalman_ou-w3d.tex")
-        fusion = self.read("w3d-fus-methods.tex-part")
-        trackers = self.read("w3d-tracker-alternatives.tex-part")
-        heel = self.read("w3d-wind-heel.tex-part")
-        appendix_sources = "".join(
-            self.read(name)
-            for name in (
-                "w3d-tracker-alternatives.tex-part",
-                "w3d-wind-heel.tex-part",
-                "w3d-gps-fusion.tex-part",
-                "w3d-iss-stability.tex-part",
-            )
-        )
-        self.assertLess(
-            manuscript.index("\\appendices"),
-            manuscript.index("\\input{w3d-tracker-alternatives.tex-part}"),
-        )
-        self.assertEqual(manuscript.count("\\appendices"), 1)
-        self.assertNotIn("\\appendices", appendix_sources)
-        self.assertNotIn("Aranovskiy Frequency Tracker", fusion)
-        self.assertIn("not evaluated as OU--III tracker ablations", trackers)
-        self.assertIn("disabled in every deterministic simulation", heel)
+        from test_reorg_compat_overrides import _unevaluated_tracker_and_heel_material_stays_out_of_main_claims
+        _unevaluated_tracker_and_heel_material_stays_out_of_main_claims(self)
 
     def test_baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
-        baseline = self.read("w3d-baseline-comparison.tex-part")
-        fusion = self.read("w3d-fus-methods.tex-part")
-        simulation = self.read("w3d-sim-charts.tex-part")
-        self.assertIn("frozen before the comparison", baseline)
-        self.assertIn("performs no parameter search", baseline)
-        self.assertIn("never uses\nreference errors to choose gains", baseline)
-        self.assertIn("tab:baseline-tuning-policy", baseline)
-        self.assertIn("tab:implementation-gates", fusion)
-        # The implementation bounds the table records have to be the ones the
-        # filter actually enforces, so they are read from the header rather
-        # than pinned as literals here.
-        header = (
-            REPO_ROOT / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
-        ).read_text(encoding="utf-8")
-
-        def clamp(name: str) -> float:
-            match = re.search(rf"{name}\s*=\s*([0-9.]+)f", header)
-            self.assertIsNotNone(match, name)
-            return float(match.group(1))
-
-        def tabulated(label: str) -> tuple[float, float]:
-            match = re.search(
-                re.escape(label) + r".*?\$\[([0-9.]+),([0-9.]+)\]\$",
-                fusion,
-                re.S,
-            )
-            self.assertIsNotNone(match, label)
-            return float(match.group(1)), float(match.group(2))
-
-        # Anchored on the symbol pair the row defines, which is unique, and
-        # compared numerically so that 12 and 12.0 are the same bound.
-        self.assertEqual(
-            tabulated(r"[\tau_{\min},\tau_{\max}]$"),
-            (clamp("MIN_TAU_S"), clamp("MAX_TAU_S")),
-        )
-        self.assertEqual(
-            tabulated(r"[r_{S,\min},r_{S,\max}]$"),
-            (clamp("MIN_R_S"), clamp("MAX_R_S")),
-        )
-        for value in ("[0.2,6.0]", "70^\\circ"):
-            self.assertIn(value, fusion)
-        self.assertIn("did not\ninstrument update latency", simulation)
-        self.assertIn("does not establish a\nquantitative real-time-performance claim", simulation)
+        from test_zz_publication_contract import _baseline_fairness_thresholds_and_hardware_limits_are_recorded
+        _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self)
 
 
 STUB_SIMULATOR = """#!/bin/sh

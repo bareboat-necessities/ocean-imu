@@ -37,25 +37,26 @@ committed CSV/JSON evidence as pass/fail fields.
 
 ## Provenance
 
-The robustness manifest now records two distinct source classes in addition to
-input/result hashes:
+The robustness manifest uses the same two-layer contract as the primary study.
+Immutable `replay_provenance` pins the full OU-III simulator/filter dependency
+closure, the simulator build file, replay inputs, and the normalized raw-row
+SHA-256. A later `restatement` block may identify different Python analysis code
+and derived outputs, but it cannot replace the replay source commit or replay
+hashes.
 
-- `implementation_files`: the transitive repository-local C/C++ dependency
-  closure reachable from the OU-III simulator and shared simulation code;
-- `analysis_pipeline_files`: the validation/robustness Python analysis sources.
+Before `--restat-from` writes anything, the current replay closure is compared
+with the recorded one. A change in `SeaStateFusionFilter_OU_III.h`,
+`Kalman3D_Wave_OU_III.h`, the simulator, shared replay code, or the recorded
+Makefile is therefore a hard replay requirement rather than a warning. Analysis
+or presentation changes may be restated only while the immutable replay and raw
+rows still verify.
 
-This is stronger than pinning only the simulator translation unit. A change in
-`SeaStateFusionFilter_OU_III.h`, `Kalman3D_Wave_OU_III.h`, or another local
-header in the simulator include graph invalidates the committed evidence.
-
-`tools/ou_evidence_contract.py --check` verifies those hashes and the clean
-statistical schema. The normal `tests/validation` target runs the same contract.
-Thus a code change cannot leave the old Monte Carlo bundle looking current just
-because the wave-input hashes still match.
-
-The protocol also records that all completed replays with machine-readable
-metrics are included and that simulator regression gates are not exported. This
-keeps regression testing and inferential evidence separate.
+`tools/ou_evidence_contract.py --check` works both in a Git checkout and in a
+source archive without `.git`; archive mode uses the committed manifest and
+file hashes and does not weaken dependency verification. The protocol separately
+records that all completed machine-readable replays are included and that
+deterministic simulator regression gates are not Monte Carlo acceptance
+criteria.
 
 ## Running
 

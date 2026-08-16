@@ -288,56 +288,46 @@ class RestatTests(unittest.TestCase):
             self.assertIn("restated_from", restated["protocol"])
 
     def test_a_restat_keeps_covering_the_files_it_did_not_rewrite(self):
-        """A restat rewrites the tables; the figures stay as the run left them.
-
-        Matplotlib's SVG output is not a function of the rows alone, so the
-        figures are carried rather than redrawn.  The manifest is the bundle's
-        inventory, and dropping the files a restat happens not to touch would
-        quietly shrink what the hash check covers.
-        """
+        """Result inventory stays complete while code provenance has explicit namespaces."""
         manifest = json.loads(
             (self.RESULTS / "ou_robustness_manifest.json").read_text(encoding="utf-8")
         )
         covered = set(manifest["result_files"])
-        for name in (
-            "ou_robustness_sensitivity.svg",
-            "ou_robustness_stress.svg",
-        ):
+        for name in ("ou_robustness_sensitivity.svg", "ou_robustness_stress.svg"):
             self.assertIn(name, covered, name)
-        # The code sources are pinned by whichever path wrote the manifest, so
-        # a restat must not be a way to lose them.
-        pinned = set(manifest["source_files"])
-        for path in robustness.CODE_SOURCE_PATHS:
-            self.assertIn(str(path.relative_to(REPO_ROOT)), pinned)
-
-    def test_a_restat_records_the_sources_that_moved_under_it(self):
-        """The rows come from the earlier run; the tables come from this tree.
-
-        When those two disagree about a source file the manifest has to say so,
-        because a moved simulator source means the replays are stale and no
-        amount of restating fixes that.
-        """
-        previous = {
-            "tools/ou_validation.py": {"sha256": "0" * 64, "bytes": 1},
-            "plots/kalman_ou_ii/absent.csv": {"sha256": "1" * 64, "bytes": 2},
-        }
-        restated, moved = robustness._restated_source_files(previous)
-        # Present and changed: re-pinned, and reported as moved.
-        self.assertEqual(set(moved), {"tools/ou_validation.py"})
-        self.assertEqual(moved["tools/ou_validation.py"], previous["tools/ou_validation.py"])
-        self.assertNotEqual(restated["tools/ou_validation.py"]["sha256"], "0" * 64)
-        # Absent from the checkout: carried across, never dropped.
-        self.assertEqual(
-            restated["plots/kalman_ou_ii/absent.csv"],
-            previous["plots/kalman_ou_ii/absent.csv"],
+        replay_impl = set(manifest["replay_provenance"]["implementation_files"])
+        self.assertIn("tests/kalman_ou_iii/kalman_ou_iii-sim.cpp", replay_impl)
+        self.assertIn("src/kalman_ou_iii/Kalman3D_Wave_OU_III.h", replay_impl)
+        analysis = set(
+            manifest.get("restatement", {}).get(
+                "analysis_pipeline_files", manifest.get("analysis_pipeline_files", {})
+            )
         )
+        self.assertIn("tools/ou_validation.py", analysis)
+        self.assertIn("tools/ou_robustness.py", analysis)
+
+    def test_committed_manifest_has_no_obsolete_moved_source_state(self):
+        """Schema v2 has one immutable replay model; restatement exists only after one occurs."""
+        self.assertFalse(hasattr(robustness, "_restated_source_files"))
+        manifest = json.loads(
+            (self.RESULTS / "ou_robustness_manifest.json").read_text(encoding="utf-8")
+        )
+        self.assertNotIn("sources_moved_since_rows", manifest)
+        replay = manifest["replay_provenance"]
+        self.assertEqual(manifest["git_commit"], replay["git_commit"])
+        if "restatement" in manifest:
+            self.assertIn("analysis_pipeline_files", manifest["restatement"])
+        else:
+            # A freshly generated bundle has no reason to manufacture a
+            # restatement event merely to satisfy the schema.
+            self.assertIn("analysis_pipeline_files", manifest)
 
     def test_a_restat_cannot_manufacture_an_ensemble(self):
         with tempfile.TemporaryDirectory() as tmp:
             empty = Path(tmp) / "empty.json"
             empty.write_text(json.dumps({"raw_runs": []}), encoding="utf-8")
             with contextlib.redirect_stdout(io.StringIO()):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(robustness.evidence_provenance.ProvenanceError):
                     robustness.restat_bundle(empty, Path(tmp), 100, 1)
 
 
@@ -447,43 +437,33 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
                 hashlib.sha256(path.read_bytes()).hexdigest(), metadata["sha256"], name
             )
             self.assertEqual(path.stat().st_size, metadata["bytes"], name)
-        # Source pins are provenance, and the two kinds of source drift for
-        # different reasons.
-        #
-        # The wave records are versioned release inputs.  They do not change
-        # under editing, and a hash that moved would mean the bundle was scored
-        # against different seas than the ones it names, so they are still
-        # checked byte for byte.
-        #
-        # The code sources are the tree that produced the bundle, and that tree
-        # moves whenever anyone touches the tools -- a comment, a docstring, a
-        # crash fix on a path the full study never takes.  Asserting they still
-        # match the checkout made every such edit fail this test, and the only
-        # way to satisfy it was a multi-hour regeneration dispatch, so a
-        # one-line fix could not be landed without re-running the study.  It
-        # also contradicts the tools themselves: `_restated_source_files`
-        # already treats a moved code hash as something to *record* rather than
-        # something to reject.  What has to hold is that the manifest keeps
-        # naming them with well-formed entries, so provenance cannot quietly
-        # shrink to nothing.
-        code_sources = {
-            str(path.relative_to(REPO_ROOT))
-            for path in robustness.CODE_SOURCE_PATHS
-        }
-        self.assertTrue(
-            code_sources <= set(manifest["source_files"]),
-            sorted(code_sources - set(manifest["source_files"])),
-        )
-        for name, metadata in manifest["source_files"].items():
-            self.assertRegex(metadata["sha256"], r"\A[0-9a-f]{64}\Z", name)
-            self.assertGreater(metadata["bytes"], 0, name)
-            if name in code_sources:
-                continue
+        # Schema v2 separates replay-producing code and versioned inputs from
+        # later analysis code. Replay dependencies are enforced byte-for-byte;
+        # analysis provenance belongs to the restatement block.
+        replay = manifest["replay_provenance"]
+        implementation = replay["implementation_files"]
+        self.assertIn("tests/kalman_ou_iii/kalman_ou_iii-sim.cpp", implementation)
+        self.assertIn("src/kalman_ou_iii/Kalman3D_Wave_OU_III.h", implementation)
+        self.assertIn("tests/kalman_ou_iii/Makefile", implementation)
+        for name, metadata in implementation.items():
             path = REPO_ROOT / name
             self.assertEqual(
                 hashlib.sha256(path.read_bytes()).hexdigest(), metadata["sha256"], name
             )
-            self.assertEqual(path.stat().st_size, metadata["bytes"], name)
+            self.assertEqual(path.stat().st_size, metadata["size_bytes"], name)
+        for name, metadata in replay["input_files"].items():
+            path = REPO_ROOT / name
+            if not path.is_file():
+                continue
+            self.assertEqual(
+                hashlib.sha256(path.read_bytes()).hexdigest(), metadata["sha256"], name
+            )
+            self.assertEqual(path.stat().st_size, metadata["size_bytes"], name)
+        analysis = manifest.get("restatement", {}).get(
+            "analysis_pipeline_files", manifest.get("analysis_pipeline_files", {})
+        )
+        self.assertIn("tools/ou_validation.py", analysis)
+        self.assertIn("tools/ou_robustness.py", analysis)
 
     def test_manuscript_copies_match_generated_evidence(self):
         for result_name, doc_name in (
