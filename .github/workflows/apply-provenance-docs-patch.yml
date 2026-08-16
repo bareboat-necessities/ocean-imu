@@ -24,6 +24,7 @@ jobs:
         run: |
           python3 tools/apply_provenance_docs_patch.py
           python3 tools/apply_provenance_safety_patch.py
+          python3 tools/apply_migration_lineage_patch.py
           python3 -m py_compile \
             tools/ou_evidence_provenance.py \
             tools/ou_evidence_contract.py \
@@ -49,7 +50,8 @@ jobs:
           python3 tools/ou_evidence_contract.py \
             --migrate-legacy \
             --study all \
-            --replay-commit 5df1f3b42d3eb456961d12e598257b5859470451
+            --replay-commit 5df1f3b42d3eb456961d12e598257b5859470451 \
+            --historical-evidence-commit 35120f96d3f8c02872fd3e06fa94ebe547c3f5eb
 
       - name: Prove numerical evidence did not change
         shell: bash
@@ -75,6 +77,7 @@ jobs:
           set -euo pipefail
           rm tools/apply_provenance_docs_patch.py
           rm tools/apply_provenance_safety_patch.py
+          rm tools/apply_migration_lineage_patch.py
           rm .github/workflows/apply-provenance-docs-patch.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -86,6 +89,7 @@ jobs:
                   .github/workflows/ou-validation.yml \
                   tools/ou_evidence_provenance.py tools/ou_validation.py tools/ou_robustness.py \
                   tools/apply_provenance_docs_patch.py tools/apply_provenance_safety_patch.py \
+                  tools/apply_migration_lineage_patch.py \
                   .github/workflows/apply-provenance-docs-patch.yml
           git commit -m "Migrate OU evidence to immutable replay provenance"
           git push origin HEAD:refs/heads/agent/harden-ou-evidence-provenance
