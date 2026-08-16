@@ -89,9 +89,69 @@ model itself.}
 \label{fig:bias-tracking}
 \end{figure*}
 
-\subsection{Comparative results and ablations}
+\subsection{Comparative results and adaptation ablations}
 
 \input{w3d-baseline-comparison.tex-part}
+
+\subsection{Hard-iron correction result}
+\label{sec:mag-hi-results}
+
+The hard-iron correction of Sec.~\ref{sec:mag-hard-iron} is evaluated under the
+deterministic protocol rather than the ten-seed OU-family comparison: one
+realization per stationary record, default sensor-error draw, and the final
+\SI{900}{s}.  With the correction enabled, yaw RMS improves on every one of the
+eight records.  The eight-record mean falls from
+\SI{1.835}{\degree} to \SI{0.822}{\degree}, and the worst record falls from
+\SI{2.162}{\degree} to \SI{1.063}{\degree}.  Pitch improves slightly, while
+roll and displacement change negligibly.  The matched OU--II baseline carries
+the same magnetic correction, so this improvement does not contribute to the
+reported OU--III-minus-OU--II translational difference.
+
+\begin{table}[t]
+  \centering
+  \caption{Yaw RMS with the continuous hard-iron correction disabled and
+           enabled (deterministic protocol, final \SI{900}{s}).}
+  \label{tab:mag-hi-yaw}
+  \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{1.08}
+  \footnotesize
+  \sisetup{detect-all}
+  \begin{tabular}{@{}l
+                  S[table-format=1.2]
+                  S[table-format=1.3]
+                  S[table-format=1.3]
+                  S[table-format=1.3]
+                  S[table-format=1.3]
+                  @{}}
+    \toprule
+    {Case} & {$H_s$} & \multicolumn{2}{c}{Yaw RMS (\si{\degree})}
+           & \multicolumn{2}{c}{Pitch RMS (\si{\degree})} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-6}
+    {} & {\si{m}} & {off} & {on} & {off} & {on} \\
+    \midrule
+    JONSWAP    & 0.27 & 2.075 & 1.063 & 0.174 & 0.175 \\
+    JONSWAP    & 1.50 & 1.825 & 1.050 & 0.169 & 0.152 \\
+    JONSWAP    & 4.00 & 1.298 & 1.041 & 0.358 & 0.330 \\
+    JONSWAP    & 8.50 & 1.104 & 0.709 & 0.469 & 0.445 \\
+    \addlinespace
+    PM--Stokes & 0.27 & 2.155 & 0.741 & 0.200 & 0.200 \\
+    PM--Stokes & 1.50 & 2.162 & 1.026 & 0.223 & 0.208 \\
+    PM--Stokes & 4.00 & 2.053 & 0.473 & 0.278 & 0.235 \\
+    PM--Stokes & 8.50 & 2.007 & 0.476 & 0.259 & 0.196 \\
+    \midrule
+    {mean}     & {}   & 1.835 & 0.822 & 0.266 & 0.243 \\
+    {worst}    & {}   & 2.162 & 1.063 & 0.469 & 0.445 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The result is conditional on the shipped calibration draw.  Additional draws
+include misalignment-dominated cases in which an additive hard-iron estimator
+can regress, because soft-iron and misalignment terms can alias into the fitted
+offset while still satisfying the residual gate.  This negative result is the
+reason the article does not promote the correction to a complete magnetometer
+calibration method; multi-heading excitation is required to identify the larger
+distortion model.
 
 \subsection{Embedded portability}
 \label{sec:real-hardware-platform}
