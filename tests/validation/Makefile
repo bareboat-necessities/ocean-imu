@@ -11,6 +11,7 @@ build:
 		test_ou_robustness.py \
 		test_ou_evidence_contract.py \
 		test_source_archive_provenance.py \
+		test_ou_title_contract.py \
 		test_record_conventions.py \
 		test_publication_references.py \
 		test_workflow_contract.py \
