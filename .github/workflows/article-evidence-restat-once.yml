@@ -1,0 +1,88 @@
+name: article-evidence-restat-once
+
+on:
+  push:
+    branches:
+      - agent/reorganize-ou-iii-article
+
+permissions:
+  contents: write
+
+jobs:
+  restat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/reorganize-ou-iii-article
+
+      - name: Install restatement dependencies
+        run: python3 -m pip install --quiet numpy scipy pandas matplotlib
+
+      - name: Snapshot numerical evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ou-evidence-before/validation /tmp/ou-evidence-before/robustness
+          cp reports/results/ou_validation/ou_validation_raw.csv /tmp/ou-evidence-before/validation/
+          cp reports/results/ou_validation/ou_validation_summary.csv /tmp/ou-evidence-before/validation/
+          cp reports/results/ou_validation/ou_validation_paired_effects.csv /tmp/ou-evidence-before/validation/
+          cp reports/results/ou_robustness/ou_robustness_raw.csv /tmp/ou-evidence-before/robustness/
+          cp reports/results/ou_robustness/ou_robustness_summary.csv /tmp/ou-evidence-before/robustness/
+          cp reports/results/ou_robustness/ou_robustness_paired_effects.csv /tmp/ou-evidence-before/robustness/
+
+      - name: Restate committed bundles without replaying simulations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/ou_validation.py \
+            --restat-from reports/results/ou_validation/ou_validation.json \
+            --output-dir reports/results/ou_validation
+          python3 tools/ou_robustness.py \
+            --restat-from reports/results/ou_robustness/ou_robustness.json \
+            --output-dir reports/results/ou_robustness
+
+      - name: Prove numerical evidence is unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp /tmp/ou-evidence-before/validation/ou_validation_raw.csv reports/results/ou_validation/ou_validation_raw.csv
+          cmp /tmp/ou-evidence-before/validation/ou_validation_summary.csv reports/results/ou_validation/ou_validation_summary.csv
+          cmp /tmp/ou-evidence-before/validation/ou_validation_paired_effects.csv reports/results/ou_validation/ou_validation_paired_effects.csv
+          cmp /tmp/ou-evidence-before/robustness/ou_robustness_raw.csv reports/results/ou_robustness/ou_robustness_raw.csv
+          cmp /tmp/ou-evidence-before/robustness/ou_robustness_summary.csv reports/results/ou_robustness/ou_robustness_summary.csv
+          cmp /tmp/ou-evidence-before/robustness/ou_robustness_paired_effects.csv reports/results/ou_robustness/ou_robustness_paired_effects.csv
+
+      - name: Refresh implementation and analysis provenance hashes
+        run: python3 tools/ou_evidence_contract.py --auto
+
+      - name: Mirror regenerated publication evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp reports/results/ou_validation/ou_validation_publication.tex \
+             doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part
+          cp reports/results/ou_validation/ou_validation_macros.tex \
+             doc/kalman_ou_iii/w3d-ou-validation-macros-generated.tex-part
+          cp reports/results/ou_robustness/ou_robustness_publication.tex \
+             doc/kalman_ou_iii/w3d-ou-robustness-results-generated.tex-part
+          cp reports/results/ou_robustness/ou_robustness_macros.tex \
+             doc/kalman_ou_iii/w3d-ou-robustness-macros-generated.tex-part
+
+      - name: Verify refreshed evidence contract
+        run: python3 tools/ou_evidence_contract.py --check
+
+      - name: Commit restated provenance and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/article-evidence-restat-once.yml
+          git add reports/results/ou_validation reports/results/ou_robustness \
+                  doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part \
+                  doc/kalman_ou_iii/w3d-ou-validation-macros-generated.tex-part \
+                  doc/kalman_ou_iii/w3d-ou-robustness-results-generated.tex-part \
+                  doc/kalman_ou_iii/w3d-ou-robustness-macros-generated.tex-part
+          git commit -m "Restate OU evidence after analysis-schema cleanup"
+          git push origin HEAD:refs/heads/agent/reorganize-ou-iii-article
