@@ -66,7 +66,7 @@ def _abstract_reports_committed_stationary_aggregate(self):
     self.assertIn("paired ten-seed study", flat)
     self.assertIn("stationary JONSWAP primary endpoint", flat)
     self.assertIn("bootstrap 95\\%", flat)
-    self.assertIn("current isotropic OU--III configuration", flat)
+    self.assertIn("measured adaptation benefit is carried primarily", flat)
     self.assertIn("integral-regularization channel", flat)
     self.assertIn("evidence remains simulation based", flat)
 

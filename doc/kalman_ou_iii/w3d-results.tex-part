@@ -104,14 +104,14 @@ obsolete carrier-frequency diagnostic from a different subsystem.
 
 \subsection{Bias tracking}
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
-\begin{minipage}[t]{0.49\textwidth}
+\begin{minipage}[t]{0.49\columnwidth}
   \centering
   \IncludePGF{w3d_ou3_jonswap_medium_acc_bias.pgf}
   \small (a) Accelerometer-bias tracking.
 \end{minipage}\hfill
-\begin{minipage}[t]{0.49\textwidth}
+\begin{minipage}[t]{0.49\columnwidth}
   \centering
   \IncludePGF{w3d_ou3_jonswap_medium_gyro_bias.pgf}
   \small (b) Gyroscope-bias tracking.
@@ -122,7 +122,7 @@ mean-reverting residual around a fixed temperature-calibration mean; agreement
 therefore measures robustness to model mismatch, not validation of the thermal
 model itself.}
 \label{fig:bias-tracking}
-\end{figure*}
+\end{figure}
 
 \subsection{Comparative results and adaptation ablations}
 
@@ -196,7 +196,7 @@ The same estimator source compiles and executes on an M5Stack AtomS3R
 
 \begin{figure}[t]
   \centering
-  \includesvg[width=0.72\columnwidth]{AtomS3R_device}
+  \includesvg[width=0.24\columnwidth]{AtomS3R_device}
   \caption{M5Stack AtomS3R (ESP32--S3) target used for the embedded build and
   execution check.}
   \label{fig:atoms3r-platform}

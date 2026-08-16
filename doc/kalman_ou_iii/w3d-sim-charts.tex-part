@@ -39,11 +39,16 @@ harmonics.
 
 \begin{figure}[t]
 \centering
-\IncludePGF{spectrum_jonswap_medium_3d.pgf}
-\small (a) JONSWAP, $H_s=\SI{1.5}{m}$.\par
-\vspace{0.5em}
-\IncludePGF{spectrum_pmstokes_medium_3d.pgf}
-\small (b) PM--Stokes, $H_s=\SI{1.5}{m}$.
+\begin{minipage}[t]{0.49\columnwidth}
+  \centering
+  \IncludePGF{spectrum_jonswap_medium_3d.pgf}
+  \small (a) JONSWAP, $H_s=\SI{1.5}{m}$.
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\columnwidth}
+  \centering
+  \IncludePGF{spectrum_pmstokes_medium_3d.pgf}
+  \small (b) PM--Stokes, $H_s=\SI{1.5}{m}$.
+\end{minipage}
 \caption{Representative three-dimensional directional input spectra.  These
 spectra generate the reference motion.}
 \label{fig:input-spectra-3d}
