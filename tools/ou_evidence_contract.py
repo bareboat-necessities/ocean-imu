@@ -8,7 +8,7 @@ The contract distinguishes two provenance layers:
 * restatement: later analysis/editorial context used to regenerate derived
   statistics, tables, and publication text from the already-existing rows.
 
-Only a genuine full simulator regeneration may create replay provenance.  A
+Only a genuine full simulator regeneration may create replay provenance. A
 statistical restatement may never replace it or make rows from an older
 estimator appear current.
 """
@@ -103,7 +103,7 @@ def _result_inventory_errors(study: str, manifest: Mapping[str, Any]) -> list[st
 def check(study: str, *, require_current_analysis: bool = False) -> list[str]:
     """Return hard contract violations.
 
-    Replay validity is always enforced.  A later source edit to analysis code is
+    Replay validity is always enforced. A later source edit to analysis code is
     not allowed to invalidate the scientific replay itself; callers that need
     byte-for-byte reproducibility of the latest restatement can additionally
     request current-analysis matching.
@@ -125,8 +125,6 @@ def normalize(study: str) -> None:
     path, manifest = _manifest(study)
     if manifest.get("replay_provenance"):
         _refresh_result_files(study, manifest)
-        # Replay aliases are preserved by the provenance module; do not stamp
-        # current implementation hashes over them here.
         path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return
 
@@ -137,7 +135,7 @@ def normalize(study: str) -> None:
 
 
 def _auto(studies: tuple[str, ...]) -> int:
-    # In an unpacked source archive, --auto becomes a read-only check.  There is
+    # In an unpacked source archive, --auto becomes a read-only check. There is
     # no Git identity with which to create new replay provenance, and there
     # should not be: archives validate what was committed rather than inventing
     # a source commit.
@@ -187,11 +185,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--require-current-analysis",
         action="store_true",
-        help="also require the current analysis scripts to match the most recent restatement provenance",
+        help="also require current analysis scripts to match the most recent restatement provenance",
     )
     parser.add_argument(
         "--replay-commit",
-        help="historical full-replay commit used only with --migrate-legacy",
+        help="source commit whose simulator/estimator implementation produced the replay rows; migration only",
+    )
+    parser.add_argument(
+        "--historical-evidence-commit",
+        help="commit containing the original full-generation manifest/raw rows for --migrate-legacy",
     )
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true", help="read-only verification")
@@ -213,11 +215,18 @@ def main() -> int:
     studies = tuple(STUDIES) if args.study == "all" else (args.study,)
 
     if args.migrate_legacy:
-        if not args.replay_commit:
-            raise SystemExit("--migrate-legacy requires --replay-commit")
+        if not args.replay_commit or not args.historical_evidence_commit:
+            raise SystemExit(
+                "--migrate-legacy requires both --replay-commit and "
+                "--historical-evidence-commit"
+            )
         try:
             for study in studies:
-                provenance.migrate_legacy_manifest(study, args.replay_commit)
+                provenance.migrate_legacy_manifest(
+                    study,
+                    replay_commit=args.replay_commit,
+                    historical_evidence_commit=args.historical_evidence_commit,
+                )
         except provenance.ProvenanceError as exc:
             print(str(exc))
             return 1
