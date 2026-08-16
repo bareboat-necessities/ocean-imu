@@ -1,13 +1,30 @@
 {
   "analysis_pipeline_files": {
     "tools/ou_robustness.py": {
-      "bytes": 55378,
-      "sha256": "c62bc0bfcc31812fc99d286f765625dd94b7d8f2d790fd3c907c89ffb2db96a9"
+      "bytes": 53048,
+      "sha256": "2473f8d352fab3bd119ed4520b450bb74dc214150ee06daaf4bdf7c4715b360d"
     },
     "tools/ou_validation.py": {
-      "bytes": 150208,
-      "sha256": "7166cacf8ddcf05bd4b1ed04f4bafabd005a5e2875bc358ca0c1a5db00bcc19d"
+      "bytes": 150500,
+      "sha256": "0e3ba85fda3e6932a73ade09bc0f7c1d9ef898640b1be696f9cf8eebc05df87d"
     }
+  },
+  "build_environment": {
+    "compiler": {
+      "CPPFLAGS_env": "",
+      "CXXFLAGS_env": "",
+      "banner": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "command": "g++",
+      "version": "13.3.0"
+    },
+    "eigen": {
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
+      "version": "3.4.0"
+    },
+    "numpy": "1.26.4",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
   },
   "command": [
     "/usr/bin/python3",
@@ -25,8 +42,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "538a6337fae3542b4249d4d250905c0630fdf2d9",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 623 ++++++++++++++++++++-\n .../results/ou_robustness/ou_robustness_raw.csv    | 622 ++++++++++----------\n 2 files changed, 931 insertions(+), 314 deletions(-)",
+  "git_commit": "b5a1352b5e06048568bda7240a21145d5bdeec7f",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -161,7 +178,6 @@
     "mode": "full",
     "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
     "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
-    "replay_inclusion_rule": "all completed replays with machine-readable metrics; deterministic simulator regression thresholds are not statistical acceptance criteria",
     "score_window_sec": 900.0,
     "seed_triplets": [
       {
@@ -230,7 +246,6 @@
       1.25,
       1.5
     ],
-    "simulator_regression_gates_exported": false,
     "stats_seed": 20260329,
     "transition_cases": [
       {
@@ -251,19 +266,23 @@
   "replay_provenance": {
     "environment": {
       "compiler": {
-        "note": "legacy replay predates compiler identity provenance",
-        "recorded": false
+        "CPPFLAGS_env": "",
+        "CXXFLAGS_env": "",
+        "banner": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+        "command": "g++",
+        "version": "13.3.0"
       },
       "eigen": {
-        "note": "legacy replay predates explicit Eigen identity provenance",
-        "recorded": false
+        "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+        "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
+        "version": "3.4.0"
       },
       "numpy": "1.26.4",
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": null,
-    "git_commit": "538a6337fae3542b4249d4d250905c0630fdf2d9",
+    "generated_at": "2026-08-16T17:37:30+00:00",
+    "git_commit": "b5a1352b5e06048568bda7240a21145d5bdeec7f",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -392,19 +411,15 @@
         "size_bytes": 49106162
       }
     },
-    "provenance_migration": {
-      "historical_evidence_commit": "bfe25ed2972d67ed806301129cc2a6547d4090ac",
-      "historical_raw_rows_sha256": "3d7636e877427e80e459e39a3c5de1f717464bb423e76a03e1243fbdd4c9cb17",
-      "kind": "verified_legacy_full_replay",
-      "normalization_only_columns_removed": [],
-      "replay_source_commit": "538a6337fae3542b4249d4d250905c0630fdf2d9",
-      "verified_at": "2026-08-16T15:51:57+00:00",
-      "verified_at_git_commit": "43dc35df4b5cbc46eea0a1fe538badaee4d7855c"
-    },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
     "raw_rows_sha256": "3d7636e877427e80e459e39a3c5de1f717464bb423e76a03e1243fbdd4c9cb17",
     "raw_rows_size_bytes": 194977,
-    "workflow_run": null
+    "workflow_run": {
+      "job": "commit",
+      "run_attempt": "1",
+      "run_id": "31960893559",
+      "workflow": "build"
+    }
   },
   "result_files": {
     "ou_robustness.json": {
