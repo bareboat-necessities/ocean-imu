@@ -1,163 +1,171 @@
 # Paired OU-II/OU-III validation
 
 `tools/ou_validation.py` implements the paired inferential validation path for
-the two OU filter families. It does not replace the executable regression gates:
-the simulators still calculate and enforce their own thresholds over the
-trailing 900 seconds of each 20-minute realization, which is the same window
-the full experiment scores.
+the OU-II and OU-III filter families. The committed publication evidence is in
+`reports/results/ou_validation/`.
 
-The repository versions the completed ten-seed study used by the manuscript in
-`reports/results/ou_validation/`. It contains 840 simulator rows over ten
-paired seed triplets: nine scenarios (four JONSWAP seas, four PM-Stokes seas,
-one controlled transition) and two filter families. The three primary modes run
-on all nine scenarios; the two covariance-policy controls and the two
-OU-III-only channel-freeze modes run on the five JONSWAP-plus-transition
-scenarios.
+The current full bundle was regenerated from the current isotropic OU-III
+implementation by GitHub Actions run `31943137398`. The replay source commit is
+`5df1f3b42d3eb456961d12e598257b5859470451`; the generated evidence was committed
+as `35120f96d3f8c02872fd3e06fa94ebe547c3f5eb`. The manifest records that source
+commit and, through the evidence contract, hashes the transitive repository-local
+C/C++ implementation dependency closure of the OU simulator targets together
+with the analysis pipeline. A filter/header change therefore makes the committed
+evidence stale until a full regeneration is performed.
+
+The completed study contains 840 simulator rows over ten paired seed triplets:
+nine scenarios (four JONSWAP seas, four PM--Stokes seas, and one controlled
+transition) and two filter families. The three primary modes run on all nine
+scenarios; the covariance-policy controls and OU-III-only channel-freeze modes
+run on the five JONSWAP-plus-transition scenarios.
 
 ## Experiment design
 
-- Each repetition has three independent seeds: wave realization, IMU noise/random walk,
-  and sensor-error initialization.
+- Each repetition has three independent seeds: wave realization, IMU noise/random
+  walk, and sensor-error initialization.
 - A repetition uses the identical seed triplet for OU-II and OU-III and for every
   adaptation ablation, enabling paired inference.
-- Wave realizations use one random Fourier phase per retained frequency,
-  shared by world velocity and Euler channels over the JONSWAP model's
-  0.02--1.60 Hz fundamental-plus-bound-harmonic band. Displacement and
-  acceleration are analytically derived from the same randomized velocity
-  spectrum, eliminating finite-record boundary leakage while preserving the
-  retained primitive auto- and cross-spectra. Quaternion, body specific force,
-  and body angular rate are then reconstructed.
-- Full mode defaults to ten predeclared seed triplets. Seeds can be supplied as
-  one value (broadcast) or equally sized comma-separated lists.
-- The non-stationary case uses a C2 quintic transition from
-  $H_s=1.5$ m, $T_p=5.7$ s to $H_s=4.0$ m, $T_p=11.4$ s between 420 and 780 seconds.
-  Velocity and acceleration include the exact first- and second-derivative
-  terms introduced by the time-varying blend.
-- That transition is a **crossfade between two independently phase-randomized
-  stationary records**, not a continuously evolving spectrum. During the blend
-  both spectra coexist, so there is no single intermediate $T_p$ and the sea can
-  be bimodal. Because the records are independent their variances add, so the
-  midpoint effective height is $\sqrt{0.5^2(1.5)^2+0.5^2(4.0)^2}\approx 2.14$ m
-  rather than the 2.75 m of a linear $H_s$ ramp.
-- The 900 s score therefore covers 300--420 s of the pure start sea, 420--780 s
-  of blend, and 780--1200 s of the pure endpoint sea. 47% of the scored record
-  is the endpoint sea alone, which favours the endpoint-calibrated fixed
-  reference. `transition_window_composition_sec` in the manifest records the
-  split for whatever window is configured.
+- Wave realizations use one random Fourier phase per retained frequency, shared by
+  world velocity and Euler channels. Displacement and acceleration are derived
+  analytically from the same randomized velocity spectrum before quaternion,
+  body specific force, and body angular rate are rebuilt.
+- Full mode uses ten predeclared seed triplets. A single supplied seed is
+  broadcast; equally sized lists remain paired element by element.
+- The non-stationary case uses a C2 quintic crossfade from the $H_s=1.5$ m,
+  $T_p=5.7$ s sea to the $H_s=4.0$ m, $T_p=11.4$ s sea between 420 and 780 s.
+  The two endpoint records are independently phase-randomized, so the blend is
+  deliberately bimodal rather than a continuously evolving single spectrum.
+- The final 900 s are scored. For the transition that window contains 300--420 s
+  of the start sea, 420--780 s of blend, and 780--1200 s of the endpoint sea.
 
-The adaptation ablations are:
+The principal adaptation modes are:
 
-- `Adaptive`: the online tuner remains enabled.
-- `FixedNominal`: parameters are held at the noise-free full-trace operating point
-  for the nominal $H_s=1.5$ m, $T_p=5.7$ s sea, in every scenario.
-- `FixedOracle`: parameters are held at the operating point calibrated from the
-  stationary sea being scored; for the transition it uses the known final-sea
-  point. This is a **scenario-calibrated fixed reference**, not a deployable
-  online estimator and not an optimum.
-- `AdaptiveHeldCovariance` and `FixedNominalHeldCovariance`: matched controls
-  that repeat their partner mode with the periodic covariance re-alignment
-  switched off (see below).
+- `Adaptive`: online sea-state tuning is enabled.
+- `FixedNominal`: tuning is frozen at the noise-free full-trace operating point
+  of the nominal $H_s=1.5$ m sea.
+- `FixedOracle`: tuning is frozen at the noise-free operating point of the sea
+  being scored; for the transition it uses the known endpoint. This is a
+  scenario-calibrated reference, not a deployable online estimator and not an
+  error-minimizing oracle.
+- `AdaptiveHeldCovariance` and `FixedNominalHeldCovariance`: matched controls with
+  periodic $P_{a_wa_w}$ re-alignment disabled.
+- `AdaptiveRSOnly` and `AdaptiveOUOnly`: OU-III-only controls that freeze one of
+  the two adaptation channels.
 
-There is no separate "oracle" solver. All three of the first modes run the same
-filter; the fixed modes simply freeze `(tau, sigma_aw, r_S)` after the normal
-startup/Live transition. Each fixed triple is obtained by running the adaptive
-filter once on a noise-free, unrandomized 1200 s record, reading its final
-`tau` and `sigma_aw`, and computing
-`r_S = clip(0.35 * sigma_aw * tau**3, 0.4, 400)` (OU-III), or, for OU-II,
-`r_p0 = clip(0.6 * sigma_aw * tau**2, 0.05, 150)` together with
-`r_v0 = clip(1.1 * sigma_aw * tau, 0.01, 40)`. Both families derive `tau` from
-the same wave-band zero-crossing period, `tau = T_z / 2`; neither reads the
-acceleration-band frequency tracker for tuning, at any point in the run
-(see `docs/ou-sigma-horizon.md`).
-No fixed point is optimized against displacement error. The exact
-frozen values for the committed study are in `fixed_tuning_points` in the
-manifest and are typeset by `ou_validation_tuning_points.tex`.
+Both OU families derive their operating time scale from the same wave-band
+zero-crossing period. The exact frozen points used by the committed study are in
+`fixed_tuning_points` in the manifest and in
+`ou_validation_tuning_points.tex`.
 
-Those values are the vertical/base parameters. The filter derives the applied
-values internally: OU-III is now isotropic in both, `(sigma_aw, sigma_aw,
-sigma_aw)` for the stationary acceleration standard deviation and
-`diag(r_S, r_S, r_S)**2` for the integral pseudo-measurement covariance; OU-II
-uses `1.5*sigma_aw` horizontally and, since the operating point moved to the
-wave band, an isotropic `r_p0`.
+For current OU-III the translational OU acceleration prior and the integral
+pseudo-measurement are isotropic: the stationary acceleration standard deviation
+is `(sigma_aw, sigma_aw, sigma_aw)` and the integral pseudo-measurement covariance
+uses the same `r_S` standard-deviation scale on X, Y, and Z. Thus the committed
+Monte Carlo rows and the current estimator configuration now refer to the same
+implementation.
 
-The committed bundle was produced with OU-III's horizontal acceleration scale
-at `1.87*sigma_aw`, which
-[`ou-iii-anisotropy-consistency.md`](ou-iii-anisotropy-consistency.md) has since
-taken to 1. Its numbers therefore describe the previous operating point until
-the `regenerate` job re-runs; the bundle hashes its input records and simulator
-sources, not the filter header, so `tests/validation` does not catch that.
+## Statistical evidence versus simulator regression gates
 
-### Covariance policy and its control
+The Monte Carlo evidence is a continuous-metric study, not a pass/fail study.
+Every completed replay with a valid machine-readable metrics record is included
+in the paired analysis. The statistical CSV/JSON bundle intentionally does not
+export `quality_gate_pass`, `simulator_return_code`, or pass/fail counts.
 
-The filter re-aligns the posterior marginal `P_aw_aw` with the stationary OU
-covariance once per adaptation period, keeping the cross-covariances it has
-learned. It stops the marginal settling far below the level the process model
-considers stationary, which keeps the accelerometer gain responsive when the sea
-state changes. The inflation is not small -- typically a factor of 40 to 100 --
-and the operation is not a consistent posterior update: keeping the raw
-cross-covariances while replacing the marginal rescales the implied correlation
-coefficients by the square root of the marginal change.
+The simulators may still retain deterministic threshold checks as executable
+regression diagnostics for their canonical deterministic realization. Those
+thresholds are **not** cohort acceptance criteria for randomized Monte Carlo
+replays. Keeping that distinction in the schema prevents a reader from
+mistaking a legacy regression threshold miss for a failed statistical
+experiment.
 
-`W3D_AW_COV_SYNC=congruent` performs the same re-alignment as a congruence,
-which reaches the same marginal, leaves the whitened cross-covariance untouched
-and stays positive semi-definite by construction. It is measurably *worse* than
-the deployed overwrite, because consistency propagates the inflation into the
-cross-covariances and the filter cannot absorb it. The conclusion is that the
-periodic re-alignment should be retired or bounded rather than made
-self-consistent; the `*HeldCovariance` modes are what price that.
+The bundle protocol records this explicitly as:
 
-Earlier revisions applied the re-alignment inside the adaptation path only.
-That made it run in `Adaptive` and never in a fixed mode that stops re-tuning,
-so comparing the two confounded *whether parameters adapt* with *whether part
-of the covariance is periodically re-aligned*. The re-alignment is now driven
-independently of the tuner, so all three primary modes apply it identically.
-The `*HeldCovariance` modes switch it off at matched tuning settings so the
-policy can be priced on its own. Use `W3D_AW_COV_SYNC=reconfigure` to run that
-policy directly; `periodic` is the default.
+- `simulator_regression_gates_exported: false`;
+- `replay_inclusion_rule`: all completed replays with machine-readable metrics;
+  deterministic simulator regression thresholds are not statistical acceptance
+  criteria.
+
+## Current full-study result
+
+For the declared primary endpoint, the four stationary JONSWAP seas are first
+averaged within each seed triplet and the paired seed-level values are then
+analyzed. The current isotropic bundle gives:
+
+- OU-II Adaptive: **6.464% of $H_s$** mean normalized vertical RMS;
+- OU-III Adaptive: **4.729% of $H_s$**;
+- OU-III minus OU-II: **-1.735 percentage points**;
+- percentile-bootstrap 95% interval: **[-1.811, -1.668]** points;
+- Student-t 95% interval: **[-1.823, -1.647]** points;
+- all ten paired seed-level differences are negative; the exact sign test and
+  exact paired sign-flip test both give $p=0.001953125$.
+
+The current isotropic rerun also changes the three-dimensional interpretation of
+the JONSWAP-plus-transition comparison. OU-III has lower paired mean 3-D
+ displacement RMS than OU-II in **all four stationary JONSWAP seas and the
+transition**, with all ten paired seeds improving in each of those five
+scenarios. This supersedes prose attached to the earlier operating point; the
+generated tables/macros are the source of truth for numerical publication
+statements.
+
+PM--Stokes remains a separate declared ensemble and is not pooled into the
+confirmatory JONSWAP endpoint.
+
+Differences throughout the generated paired-effect tables are `left - right`.
+For displacement/attitude errors, a negative value therefore favors the
+left-hand estimator. Descriptive intervals should be interpreted with their
+paired sample count; they do not create additional independent experiments.
+
+## Provenance contract
+
+`ou_validation_manifest.json` records the command, versions, source commit,
+protocol, seed triplets, input hashes, result hashes, analysis-pipeline hashes,
+and the transitive implementation hashes reachable from the simulator sources.
+The implementation closure includes the simulator translation units and their
+repository-local headers, including the actual OU-II/OU-III filter headers and
+shared simulator code.
+
+`tools/ou_evidence_contract.py --check` verifies that the recorded
+implementation and analysis hashes still match the checkout. The normal
+`tests/validation` target runs this contract automatically. A source change in
+the estimator path therefore fails the evidence check instead of silently
+leaving publication numbers attached to a different implementation.
+
+During a full regeneration, the same contract is allowed to normalize and stamp
+the newly generated bundle only when the manifest's recorded replay commit is
+the checked-out source commit. It cannot restamp old rows after implementation
+code changes.
 
 ## Running
 
-Fetch the versioned simulation data and run a short integration check:
+Fetch the versioned simulation data and run the short integration profile:
 
 ```bash
 make fetch-sim-data
 python3 tools/ou_validation.py --mode smoke
 ```
 
-Run the declared full defaults:
+Run the full declared profile directly:
 
 ```bash
 python3 tools/ou_validation.py --mode full
 ```
 
-Configure independent seed streams explicitly:
-
-```bash
-python3 tools/ou_validation.py --mode full \
-  --wave-seeds 11,29,47,71 \
-  --imu-seeds 101,211,307,401 \
-  --initialization-seeds 1009,1103,1201,1301
-```
+The production CI path is `.github/workflows/ou-validation.yml`. Full mode is
+sharded across three validation and three robustness jobs, combines each study,
+checks the manuscript/evidence contract, and then commits the regenerated
+bundles and mirrored publication inputs together. The repository `build`
+workflow calls that full regeneration on `main`; a manual full dispatch is also
+available.
 
 Useful controls include `--stationary-input` (repeatable),
 `--skip-nonstationary`, `--duration-sec`, `--window-sec`, `--jobs`, and
-`--bootstrap-resamples`. `--mode smoke` is only an integration test: its single
-short realization is not statistical evidence.
-
-`--mode full` is roughly 840 twenty-minute simulator replays and takes hours,
-so the committed bundle is regenerated by the dispatch-only `regenerate` job in
-`.github/workflows/ou-validation.yml` rather than on a workstation or in the
-pull-request gate. That job runs the validation and robustness bundles as
-separate matrix legs, because the two together do not fit in one runner
-lifetime. It uploads the result as an artifact rather than committing it: a
-regenerated bundle has to be read against the manuscript before it replaces the
-committed one.
+`--bootstrap-resamples`. Smoke mode is an integration check only and is not
+inferential evidence.
 
 ### Restating a bundle without re-simulating
 
-The replays are the expensive half of this study and are fully determined by
-their seed triplets, so a change to how the rows are *summarized* does not
-require re-running them:
+A pure change to summary/statistical presentation can reuse the archived raw
+rows:
 
 ```bash
 python3 tools/ou_validation.py \
@@ -165,101 +173,45 @@ python3 tools/ou_validation.py \
   --output-dir reports/results/ou_validation
 ```
 
-This reads `raw_runs` back out of the bundle and rewrites every derived file --
-summaries, paired effects, LaTeX tables, generated macros, bundle, and manifest
--- with the statistics of the current source. Restating the committed bundle
-unchanged reproduces its derived files byte for byte, which
-`tests/validation/test_ou_validation.py` asserts; that is what makes it safe to
-use for adding or changing an interval construction. It cannot invent rows:
-whatever ensemble the source bundle scored is the ensemble the restated bundle
-reports, so widening the seed set still requires a `--mode full` run.
+Restatement cannot substitute for a replay when any file in the recorded
+implementation closure has changed. The evidence contract will report the
+mismatch and require a new `--mode full` generation. This prevents a statistical
+or formatting restat from laundering rows produced by an older estimator into a
+current-code publication bundle.
 
-Protocol fields that describe what was *run* (seeds, durations, transition
-bounds) are carried over untouched. Fields that describe how the rows are
-summarized are taken from the current source, so a restated bundle cannot
-disagree with the manuscript generated beside it.
-
-## Outputs and interpretation
+## Outputs
 
 The output directory contains:
 
-- `ou_validation_raw.csv`: one row per paired filter/mode run, including the
-  historical gate result;
-- `ou_validation_summary.csv`: $n$, mean, sample standard deviation, normal 95%
-  interval, and bootstrap 95% interval;
-- `ou_validation_paired_effects.csv`: paired mean differences, bootstrap intervals,
-  Cohen's $d_z$, and small-sample-corrected Hedges' $g_z$;
-- the `stationary_normalized_aggregate` block of the bundle and manifest, which
-  carries the declared primary endpoint under four constructions on the same
-  paired differences: the percentile bootstrap, a Student-t interval, an exact
-  sign test, and an exact paired randomization (sign-flip) test enumerated over
-  all $2^n$ sign patterns. Descriptive contrasts keep the bootstrap alone; four
-  p-values on every one of them would enlarge the family of tests without
-  adding evidence. At $n=10$ both exact tests bottom out at $2^{-9}=0.002$
-  regardless of the data, so that floor is a property of the design;
+- `ou_validation_raw.csv`: one row per completed filter/mode replay with
+  continuous metrics and seed identifiers; no simulator regression-gate result;
+- `ou_validation_summary.csv`: sample size, mean, sample standard deviation and
+  confidence intervals;
+- `ou_validation_paired_effects.csv`: paired mean differences, bootstrap
+  intervals, Cohen's $d_z$, and Hedges' $g_z$;
 - `ou_validation.json`: protocol, calibration points, raw observations, and all
   statistics;
-- `ou_validation_manifest.json`: command, versions, Git state, source-file hashes,
-  result-file hashes, seed triplets, and the stationary normalized aggregate;
-- `ou_validation_tuning_points.tex`: the exact frozen operating points used by
-  the fixed modes;
-- `ou_validation_transition.csv` and `ou_validation_transition.svg`: a decimated
-  time series of one transition realization -- blend weight, reference rolling
-  $H_s$, reference and estimated vertical displacement, error, and the applied
-  `tau`/`sigma_aw`/`r_S` against the two fixed levels;
-- `ou_validation_table.tex`, `ou_validation_publication.tex`, and the SVG
-  figures for publication workflows.
+- `ou_validation_manifest.json`: provenance and self-hashes, including
+  implementation and analysis-pipeline hashes;
+- `ou_validation_tuning_points.tex`: exact frozen operating points;
+- transition CSV/SVG diagnostics and generated LaTeX/SVG publication inputs.
 
-Differences are always `left - right`. Thus negative displacement or attitude
-error differences favor the left-hand estimator. A confidence interval spanning
-zero is inconclusive at that interval level. Effect sizes should be interpreted
-with their paired sample count and interval, not in isolation.
-
-Across the four stationary JONSWAP seas, the within-seed mean normalized
-vertical RMS is 4.98% of $H_s$ for OU-III and 6.68% for OU-II. The paired
-difference is -1.697 percentage points with a bootstrap 95% interval of
-[-1.781, -1.623], a Student-t interval of [-1.794, -1.601], and all ten
-seed-level differences negative (exact sign and paired sign-flip tests both at
-$p=0.002$, the smallest two-sided p-value ten pairs can produce). OU-III is
-lower vertically in every stationary sea and during
-the transition, and has higher 3D displacement RMS in four of the five
-scenarios. In the fifth, the $H_s=8.5$ m sea, it is lower with an interval
-excluding zero; that is a scenario-specific exception, not a general
-three-dimensional advantage. Which band and which axis produce that pattern is
-attributed in [`ou-3d-error-attribution.md`](ou-3d-error-attribution.md).
-
-Both families now take the operating point from the same wave-band
-zero-crossing period. Earlier bundles tuned only OU-III that way, which made
-the reported vertical difference (-3.233 points) roughly twice what the
-architecture alone accounts for, and made the 3D count look like 1 of 5 rather
-than 4 of 5. Conclusions should remain conditional on the evaluated JONSWAP
-family rather than be read as uniform estimator dominance.
-
-The follow-on OU-III parameter-sensitivity and degradation-case protocol is
-documented separately in [`ou-robustness.md`](ou-robustness.md). It reuses the
-same paired seed triplets but does not alter the confirmatory comparison or
-select a new reported operating point from reference errors.
-
-The simulator pass/fail thresholds are intentionally retained as
-deterministic regression sentinels. They are calibrated to the deterministic
-realization: only a minority of the kinematically projected surrogate runs
-satisfy all of them, and the exact count is regenerated into
-`\OUValidationGatePasses`. They
-must not be interpreted as ensemble acceptance criteria; the statistical study
-uses the raw long-window metrics and paired intervals instead.
+The follow-on OU-III sensitivity/degradation protocol is documented in
+[`ou-robustness.md`](ou-robustness.md). It reuses the same paired seed triplets
+but does not alter the confirmatory comparison or select a new reported operating
+point from reference errors.
 
 ## Direct simulator controls
 
-Both OU executables accept repeated `--input PATH` arguments. Their validation
-environment variables are:
+Both OU executables accept repeated `--input PATH` arguments. Validation-related
+environment variables include:
 
 - `W3D_IMU_SEED`, `W3D_INIT_SEED`, or combined `W3D_SEED`;
-- `W3D_VALIDATION_WINDOW_SEC` for the machine-readable `VALIDATION_METRICS` line;
+- `W3D_VALIDATION_WINDOW_SEC` for the machine-readable metrics line;
 - `W3D_WRITE_TIMESERIES=0` to suppress large diagnostic CSVs;
 - `W3D_TUNING_MODE=adaptive`, `fixed_nominal`, or `fixed_oracle`, plus the
   family-specific `W3D_FIXED_*` values;
-- `W3D_AW_COV_SYNC=periodic` (default) or `reconfigure` for the a_w
-  covariance-alignment policy.
+- `W3D_AW_COV_SYNC=periodic` or `reconfigure` for the $a_w$ covariance policy.
 
-If no seed variable is present, the original deterministic 1234/5678/9012
-realization and its historical random-number draw order are retained.
+If no seed variable is present, the canonical deterministic realization and its
+historical random-number draw order are retained for simulator regression use.
