@@ -110,7 +110,10 @@ def _three_dimensional_and_channel_results_are_reported(self):
     self.assertIn("all \\OUValidationThreeDScenarios", results)
     self.assertIn("paired bootstrap interval excludes zero in every", results)
     self.assertIn("par:channel-ablation", protocol)
-    self.assertIn("integral-regularization", conclusion)
+    self.assertTrue(
+        "integral-state regularization" in conclusion
+        or "integral regularizer" in conclusion
+    )
     for asset in (
         "w3d_ou3_jonswap_medium_xykin.pgf",
         "w3d_ou3_jonswap_medium_zkin.pgf",
@@ -284,7 +287,7 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertIn("T_j:=t_j-t_{j-1}\\in[T_-,T_+]", stability)
         self.assertIn("need not be equally spaced", stability)
         self.assertIn(r"T_+\le T_{S,\max}+h_{\max}", stability)
-        self.assertIn("hard resets", stability)
+        self.assertTrue("hard reset" in stability or "hard-reset" in stability)
 
 
 class PublicationOverrideInstallationTests(unittest.TestCase):

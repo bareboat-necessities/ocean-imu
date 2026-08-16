@@ -1604,7 +1604,6 @@ def write_publication_table(
         if pmstokes_scenarios
         else None
     )
-    gate_passes = sum(int(row["quality_gate_pass"]) for row in rows)
 
     def mean_std(
         scenario: str, family: str, mode: str, metric: str = "disp_z_pct_hs",
@@ -1744,8 +1743,6 @@ def write_publication_table(
         rf"{{{_latex_p_value(difference.get('randomization_p_value'))}}}",
         rf"\providecommand{{\OUValidationNormalizedRandomizationPatterns}}"
         rf"{{{randomization_patterns}}}",
-        rf"\providecommand{{\OUValidationGatePasses}}{{{gate_passes}}}",
-        rf"\providecommand{{\OUValidationGateFailures}}{{{len(rows) - gate_passes}}}",
         # Interval construction, so the manuscript states the method rather
         # than leaving "bootstrap 95% interval" unqualified.
         rf"\providecommand{{\OUValidationBootstrapResamples}}{{{bootstrap_resamples:,}}}".replace(",", r"{,}"),

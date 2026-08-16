@@ -96,7 +96,10 @@ sea family rather than claiming a universal startup schedule.
 \subsection{Live re-lock boundary}
 
 A sufficiently large sustained tilt inconsistency can trigger a tilt-only
-re-lock that preserves the current yaw gauge.  Such resets are safety behavior,
-not part of the nominal Kalman recursion.  They are therefore treated exactly
-like startup and magnetic re-gauging in the analysis: bounded and testable in
-implementation, but outside the local ISS theorem between reset events.
+re-lock that preserves the current yaw gauge.  The deployed safeguard requires
+a tilt inconsistency above $70^\circ$ for \SI{0.35}{s}, followed by a
+\SI{3}{s} cooldown before another re-lock is permitted.  Such resets are safety
+behavior, not part of the nominal Kalman recursion.  They are therefore treated
+exactly like startup and magnetic re-gauging in the analysis: bounded and
+testable in implementation, but outside the local ISS theorem between reset
+events.
