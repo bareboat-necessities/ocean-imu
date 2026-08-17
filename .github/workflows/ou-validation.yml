@@ -11,6 +11,8 @@ on:
       - "tests/validation/**"
       - "tools/ou_validation.py"
       - "tools/ou_robustness.py"
+      - "tools/ou_publication_sync.py"
+      - "plots/kalman_ou_iii/baseline-comparison.py"
       - "reports/results/ou_validation/**"
       - "reports/results/ou_robustness/**"
       - "docs/ou-validation.md"
@@ -29,6 +31,8 @@ on:
       - "tests/validation/**"
       - "tools/ou_validation.py"
       - "tools/ou_robustness.py"
+      - "tools/ou_publication_sync.py"
+      - "plots/kalman_ou_iii/baseline-comparison.py"
       - "reports/results/ou_validation/**"
       - "reports/results/ou_robustness/**"
       - "docs/ou-validation.md"
@@ -341,6 +345,12 @@ jobs:
             --shard-dir shards \
             --output-dir reports/results/ou_validation
 
+      - name: Align validation publication wording with the article
+        if: matrix.study == 'validation'
+        run: |
+          python3 tools/ou_publication_sync.py \
+            --validation-dir reports/results/ou_validation
+
       - name: Combine robustness shards
         if: matrix.study == 'robustness'
         run: |
@@ -486,5 +496,9 @@ jobs:
             git push origin HEAD:refs/heads/${{ github.ref_name }} && exit 0
             sleep $((2 ** attempt))
             git pull --rebase origin refs/heads/${{ github.ref_name }}
+            # A newer branch tip can change replay-producing source after this
+            # run generated its rows. Revalidate after every rebase before the
+            # next push so stale evidence can never be replayed onto new code.
+            make -C tests/validation test
           done
           exit 1
