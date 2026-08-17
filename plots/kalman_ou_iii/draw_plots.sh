@@ -132,7 +132,7 @@ def compact_axes_table(text: str) -> str:
 
     block = re.sub(
         r"([0-9]+\.[0-9]+) \$\\pm\$ ([0-9]+\.[0-9]+)",
-        r"$\1{\pm}\2$",
+        r"$\1{\\pm}\2$",
         block,
     )
     return text[:start] + block + text[end:]
