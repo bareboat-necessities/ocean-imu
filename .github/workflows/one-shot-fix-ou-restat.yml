@@ -1,0 +1,44 @@
+name: one-shot-fix-ou-restat
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/one-shot-fix-ou-restat.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Make generator own the publication wording
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("tools/ou_validation.py")
+          text = path.read_text(encoding="utf-8")
+          old = r'''        r"  \\caption{Absolute per-axis and three-dimensional displacement RMS error over the final \\SI{900}{s} (Adaptive mode, mean in metres, $n=10$ paired seed triplets). $\\Delta$ is OU--III minus OU--II with its paired bootstrap 95\\% interval; positive $\\Delta$ favors OU--II. The vertical gain of OU--III is paid for in the horizontal channels.}",'''
+          new = r'''        r"  \\caption{Absolute per-axis and three-dimensional displacement RMS error over the final \\SI{900}{s} (Adaptive mode, mean in metres, $n=10$ paired seed triplets). $\\Delta$ is OU--III minus OU--II with its paired bootstrap 95\\% interval; positive $\\Delta$ favors OU--II.}",'''
+          if text.count(old) != 1:
+              raise SystemExit(f"expected exactly one stale caption, found {text.count(old)}")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+          python3 -m py_compile tools/ou_validation.py
+
+      - name: Commit fix and remove one-shot workflow
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/one-shot-fix-ou-restat.yml
+          git add tools/ou_validation.py
+          git commit -m "Fix OU validation restatement publication wording"
+          git push origin HEAD:refs/heads/main
