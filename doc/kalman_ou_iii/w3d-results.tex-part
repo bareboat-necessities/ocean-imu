@@ -119,8 +119,8 @@ realization per stationary record, the default sensor-error draw, and the final
 from \SI{1.835}{\degree} to \SI{0.822}{\degree} and the worst case from
 \SI{2.162}{\degree} to \SI{1.063}{\degree}.  Pitch changes slightly, while roll
 and displacement are negligible.  Because matched OU--II uses the same magnetic
-correction, this effect does not contribute to the reported OU--III--OU--II
-translational difference.
+correction, this effect does not contribute to the reported
+OU--III-minus-OU--II translational difference.
 
 \begin{table}[t]
   \centering
