@@ -26,6 +26,18 @@ INS Filters:
 
 - [Non-Linear Observer NLO](https://torarnj.folk.ntnu.no/TimeVarGain.pdf)
 
+Research Studies:
+
+- [Wave Direction](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman-wave-dir.pdf)
+
+- [Filters Stability](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/pseudo-meas-stability.pdf)
+
+- [Filters Startup](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/ins-startup.pdf)
+
+- [Filters Adaptation](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/adaptive-integral-state-regularization.pdf)
+
+- [GNSS Fusion](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman-gnss-fusion.pdf)
+
 Frequency tracking:
 
 - [KalmANF Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/freq-tracking_adaptive_notch_kalman.pdf)
