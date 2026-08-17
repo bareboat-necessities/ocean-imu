@@ -15,13 +15,13 @@ published full observer, so horizontal position and yaw are unscored.  PII
 provides a feedback-based heave reference; OU--II is the immediate stochastic
 predecessor of OU--III.
 
-All methods replay identical timestamped records and use the final \SI{900}{s}.
-The common comparison is vertical displacement and tilt, available from every
-method.  Parameters are frozen before evaluation and reference displacement is
-not used for tuning.  OU--II and OU--III share the same wave-band period input;
-OU--III uses the deployed integral-state schedule of Sec.~\ref{sec:adaptation},
-including cadence renormalization, whereas OU--II uses its second-order
-position/velocity regularizers.
+All methods replay the same timestamped synthetic motion and inertial records
+and use the final \SI{900}{s}.  The common comparison is vertical displacement
+and tilt, available from every method.  Parameters are frozen before evaluation
+and reference displacement is never used to select gains.  OU--II and OU--III
+share the same wave-band period input; OU--III uses the deployed integral-state
+schedule of Sec.~\ref{sec:adaptation}, including cadence renormalization,
+whereas OU--II uses its second-order position/velocity regularizers.
 
 \begin{table}[t]
 \centering
@@ -116,7 +116,7 @@ the directional ensemble is limited.
 The paired PM--Stokes ensemble reproduces the vertical advantage, with seed-level
 mean difference $\OUValidationPMStokesDifference$ percentage points
 ($[\OUValidationPMStokesDifferenceLow,\OUValidationPMStokesDifferenceHigh]$).
-It remains separate from the JONSWAP primary endpoint.
+It remains separate rather than pooled into the JONSWAP primary endpoint.
 
 \paragraph{Adaptation mechanism}
 Figure~\ref{fig:ou_mc_vertical} shows that online tuning reduces the penalty of
