@@ -178,6 +178,6 @@ The same estimator source compiles and executes on an M5Stack AtomS3R
   \label{fig:atoms3r-platform}
 \end{figure}
 
-This establishes source portability only.  Processor load, memory, power,
-deadline margin, thermal behavior, and externally referenced reconstruction
-accuracy were not measured.
+This establishes functional source portability only.  Processor load, memory,
+power, deadline margin, thermal behavior, and externally referenced
+reconstruction accuracy were not measured.
