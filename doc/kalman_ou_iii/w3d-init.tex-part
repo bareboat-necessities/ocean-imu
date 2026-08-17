@@ -3,100 +3,77 @@
 \label{sec:init_alignment}
 \label{sec:startup-policy}
 
-The deployed startup keeps attitude initialization outside the MEKF.  The same
-measurement-only Mahony observer used by the adaptation front end
-(Sec.~\ref{sec:vertical-proxy}) runs from the first sample, while the MEKF state
-is left untouched.  In parallel, the wave-period and acceleration-variance
-estimators converge toward the initial operating point.  When attitude,
-magnetic reference, and tuner quality are adequate, the completed proxy
-solution is handed to the MEKF and the filter starts in its Live configuration.
+Startup keeps attitude initialization outside the MEKF.  The measurement-only
+Mahony observer of Sec.~\ref{sec:vertical-proxy} runs from the first sample
+while the MEKF remains untouched; wave-period and acceleration-variance
+estimators converge in parallel.  Once attitude, magnetic reference, and tuner
+quality are adequate, the proxy solution initializes the MEKF in Live mode.
 
 \subsection{Tilt and operating-point bootstrap}
 
 Before magnetic north is established, yaw is a gauge degree of freedom.  The
-proxy is initialized from accelerometer direction, which constrains roll and
-pitch but leaves yaw arbitrary, and then evolves according to
-Eq.~\eqref{eq:proxy-mahony}.  Its low correction bandwidth prevents ordinary
-orbital acceleration from being interpreted as rapid tilt, while the integral
-term estimates the standing gyro bias that would otherwise survive in an
-attitude seed.
+proxy initializes roll and pitch from accelerometer direction and evolves by
+Eq.~\eqref{eq:proxy-mahony}.  Its low correction bandwidth avoids interpreting
+ordinary orbital acceleration as rapid tilt, while the integral term estimates
+standing gyro-bias tilt.
 
-The adaptation front end runs independently at the same time.  It estimates the
-wave-band period and acceleration level and stages the corresponding
-$(\tau,\sigma_{aw},r_S)$ operating point.  These writes are model parameters,
-not state corrections, so the first propagated MEKF sample already uses the
-best available sea-state schedule instead of starting from the nominal period
-and adapting after handoff.
+In parallel, the adaptation front end stages the estimated
+$(\tau,\sigma_{aw},r_S)$ operating point.  These are model parameters rather
+than state corrections, so the first propagated MEKF sample uses the best
+available sea-state schedule.
 
 \subsection{Quality-gated handoff}
 \label{sec:proxy-handoff}
 
-Normal handoff requires three conditions simultaneously: (i) proxy tilt has
-held gravity agreement for \SI{2}{s}, with sine-angle error below \num{0.075}
-(about \SI{4.3}{\degree}) and a veto while gyro magnitude exceeds
-\SI{30}{\degree\per\second}; (ii) magnetic north has been gauged when a
-magnetometer is present; and (iii) the sea-state tuner is ready.  A minimum
-startup duration of \SI{8}{s} prevents an accidentally quiet initial interval
-from passing the gate before the observer has integrated useful information.
-A bounded timeout of \SI{150}{s} guarantees that a difficult sea cannot keep
-the estimator outside Live indefinitely; the timeout is internally constrained
-not to interrupt an active magnetic-reference acquisition.
+Normal handoff requires: (i) \SI{2}{s} of proxy gravity agreement with
+sine-angle error below \num{0.075} (about \SI{4.3}{\degree}) and gyro magnitude
+below \SI{30}{\degree\per\second}; (ii) a magnetic gauge when a magnetometer is
+present; and (iii) tuner readiness.  A minimum \SI{8}{s} startup prevents a
+quiet initial interval from passing prematurely.  A \SI{150}{s} timeout bounds
+startup duration without interrupting active magnetic-reference acquisition.
 
-At handoff, the MEKF attitude is seeded once from the proxy solution and its
-attitude covariance is anisotropic,
+At handoff, the proxy attitude seeds the MEKF once.  With magnetic north
+established, attitude covariance uses
 \[
 \sigma_{\mathrm{tilt}}=\SI{0.035}{rad},\qquad
-\sigma_{\mathrm{yaw}}=\SI{0.087}{rad},
+\sigma_{\mathrm{yaw}}=\SI{0.087}{rad};
 \]
-when north has been established, while yaw receives the much looser
-$\sigma_{\mathrm{yaw}}=\pi/2$ when no magnetic gauge is available.  The linear
+without a magnetic gauge, $\sigma_{\mathrm{yaw}}=\pi/2$.  The linear
 $[v,p,S,a_w]$ block, nominal accelerometer covariance, current OU parameters,
-and integral-state regularizer are enabled together.  Accelerometer-bias
-learning remains externally held until the magnetic refinement described below
-has landed, because bias and small tilt error are weakly separable in waves and
-the residual bias has a very long correlation time.
+and integral regularizer are enabled together.  Accelerometer-bias learning is
+held until the magnetic refinement below because bias and small tilt error are
+weakly separable in waves and the residual bias correlation time is long.
 
-This handoff is a hard initialization event.  It is deliberately outside the
-Live-state ISS theorem of Sec.~\ref{app:iss-stability}; the theorem begins after
-the state and covariance have been seeded and no longer treats startup as a
-sequence of ordinary Kalman updates.
+The handoff is a hard initialization outside the Live-state ISS theorem of
+Sec.~\ref{app:iss-stability}; the theorem begins after state and covariance are
+seeded.
 
 \subsection{Two-stage magnetic reference}
 \label{sec:mag-two-stage}
 
-Magnetic reference acquisition uses the proxy tilt rather than the MEKF.  Raw
-magnetometer samples are accumulated in a yaw-stripped level frame, so the
-proxy's arbitrary yaw cannot contaminate the learned field direction.  The
-averaging window is specified in seconds rather than samples and spans multiple
-wave periods, reducing wave-correlated levelling error.
+Magnetic acquisition uses proxy tilt rather than the MEKF.  Raw magnetometer
+samples are averaged in a yaw-stripped level frame, preventing arbitrary proxy
+yaw from contaminating field direction; the time-based window spans multiple
+wave periods to reduce wave-correlated levelling error.
 
-The deployed acquisition has two stages because fast availability and accurate
-reference formation have conflicting time scales.  A provisional reference is
-accepted once the gravity gate permits it, typically providing a heading and
-MEKF handoff within roughly \SIrange{22}{52}{s} in the scored simulations.  A
-second \SI{30}{s} acquisition beginning at \SI{90}{s} then relearns the
-reference after the low-bandwidth proxy has settled.  The refinement remains
-framed on the proxy: using the already-live MEKF would make the new reference
-self-confirm the provisional reference it is intended to replace.
+Two stages balance availability and reference accuracy.  A provisional
+reference is accepted after the gravity gate, typically enabling heading and
+MEKF handoff within \SIrange{22}{52}{s} in the scored simulations.  A second
+\SI{30}{s} acquisition beginning at \SI{90}{s} relearns the reference after the
+low-bandwidth proxy settles.  It remains proxy framed to avoid self-confirmation
+from the already-live MEKF.
 
-When the refined reference is accepted, the world magnetic reference is
-replaced and yaw is re-gauged once.  Accelerometer-bias learning is released
-only after this event.  The refinement occurs before the common
-\SI{900}{s} scoring window, but it is still a discrete reconfiguration and is
-excluded from the continuous Live interval covered by the stability theorem.
-
-A longer initial wait can produce a cleaner first reference but delays
-usable heading; an earlier reference increases the burden on the later
-refinement.  The reported default fixes that trade for the evaluated device and
-sea family rather than claiming a universal startup schedule.
+Acceptance of the refined reference replaces the world magnetic reference,
+re-gauges yaw once, and releases accelerometer-bias learning.  This event occurs
+before the \SI{900}{s} scoring window but remains a discrete reconfiguration
+outside the continuous Live interval of the stability theorem.  The reported
+timing is an evaluated engineering tradeoff rather than a universal startup
+schedule.
 
 \subsection{Live re-lock boundary}
 
-A sufficiently large sustained tilt inconsistency can trigger a tilt-only
-re-lock that preserves the current yaw gauge.  The deployed safeguard requires
-a tilt inconsistency above $70^\circ$ for \SI{0.35}{s}, followed by a
-\SI{3}{s} cooldown before another re-lock is permitted.  Such resets are safety
-behavior, not part of the nominal Kalman recursion.  They are therefore treated
-exactly like startup and magnetic re-gauging in the analysis: bounded and
-testable in implementation, but outside the local ISS theorem between reset
-events.
+A sustained tilt inconsistency above $70^\circ$ for \SI{0.35}{s} can trigger a
+tilt-only re-lock that preserves yaw; a \SI{3}{s} cooldown limits repeated
+resets.  This safety reconfiguration is testable in implementation but, like
+startup and magnetic re-gauging, lies outside the local ISS theorem between
+reset events.
