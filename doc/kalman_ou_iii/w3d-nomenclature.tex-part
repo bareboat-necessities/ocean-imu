@@ -1,12 +1,12 @@
 \section{Nomenclature and Conventions}
 \label{sec:nomenclature}
 
-Table~\ref{tab:nomenclature} collects the symbols that recur across the
-attitude, translational, and adaptation models. Bold lower- and upper-case
-symbols denote vectors and matrices, respectively; a hat denotes an estimate.
+Table~\ref{tab:nomenclature} summarizes recurring notation. Bold lower- and
+upper-case symbols denote vectors and matrices, respectively; hats denote
+estimates.
 
 \begin{table*}[t]
-\caption{Principal notation and disambiguation of similarly named quantities.}
+\caption{Principal notation.}
 \label{tab:nomenclature}
 \centering
 \footnotesize
