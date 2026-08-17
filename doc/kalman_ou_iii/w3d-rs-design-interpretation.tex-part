@@ -30,12 +30,12 @@ bounded smoothing, and a coefficient calibrated by full-filter experiments.
 \label{sec:riccati-law-ablation}
 
 Paired exponent ablation finds that linear dependence on $\sigma_{aw}$ performs
-best among the tested amplitude exponents.  This supports the deployed schedule
+best among the tested amplitude exponents.  This supports the applied schedule
 for the evaluated sea family but does not uniquely decompose low-frequency
 acceleration error into sensor noise, attitude leakage, residual bias, and model
 mismatch.
 
-Section~\ref{sec:adaptation} specifies the deployed coefficients, bounds,
+Section~\ref{sec:adaptation} specifies the applied coefficients, bounds,
 averaging horizons, and one-sample staging.  The separation is intentional:
 theory identifies mechanisms and scaling variables; complete-estimator
 experiments select and validate the engineering schedule.

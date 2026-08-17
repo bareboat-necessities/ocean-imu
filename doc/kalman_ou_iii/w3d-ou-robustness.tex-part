@@ -8,7 +8,7 @@
 A ten-seed robustness study perturbs the nominal OU--III operating point by
 multipliers $0.5$, $0.75$, $1.0$, $1.25$, and $1.5$.  One-factor sweeps vary
 $\tau$, $\sigma_{aw}$, or $r_S$ with the other parameters fixed; coupled sweeps
-also move $r_S$ according to the deployed relation
+also move $r_S$ according to the applied relation
 $r_S=\clip(0.35\,\sigma_{aw}\tau^3,0.15,400)$.  Before clipping, a coupled scale
 change therefore gives $r_S\to c^{3}r_S$.  Two additional degradation cases
 test a low-motion $H_s=\SI{0.05}{m}$ record and a rapid \SI{30}{s} transition
@@ -58,7 +58,7 @@ With their companion parameters frozen, the $\tau$ and $\sigma_{aw}$ sweeps
 change mean vertical error by only \OURobustnessTauSpan{} and
 \OURobustnessSigmaSpan{} percentage points over the full multiplier range,
 whereas $r_S$ changes it by \OURobustnessRSSpan{} points and the coupled sweeps
-show the sensitivity of the deployed tuning law.  This does not indicate an
+show the sensitivity of the applied tuning law.  This does not indicate an
 unused OU parameter.  The accelerometer directly observes the latent
 acceleration at \SI{200}{Hz} with measurement noise small relative to its
 stationary variance, so the latent-acceleration gain is already close to

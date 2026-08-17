@@ -10,7 +10,7 @@ regularization $r_S$.  The OU similarity theorem below makes the resulting
 state scales exact and relates observable wave statistics to candidate
 scheduler coordinates.  Because the unregularized third integral is
 nonstationary, similarity alone does not determine the pseudo-measurement
-covariance or the full-MEKF optimum; the deployed coefficients are selected
+covariance or the full-MEKF optimum; the applied coefficients are selected
 with complete-estimator experiments.
 
 \input{w3d-rs-scale-theorem.tex-part}

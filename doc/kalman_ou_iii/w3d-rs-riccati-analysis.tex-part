@@ -210,4 +210,4 @@ high-rate and low-frequency approximations.  Because these reductions omit
 attitude/bias coupling, reset events, nonstationarity, and rejected wave energy,
 they identify mechanisms and scaling variables rather than a full-MEKF tuning
 law.  The next section adds wave distortion, and Sec.~\ref{sec:adaptation}
-documents the deployed empirical schedule.
+documents the applied empirical schedule.

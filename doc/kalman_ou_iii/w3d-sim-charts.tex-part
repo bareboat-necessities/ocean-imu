@@ -119,7 +119,7 @@ sway, or attitude error.
 \label{par:channel-ablation}
 
 Three operating modes separate adaptation from architecture.  \emph{Adaptive}
-uses the deployed online schedule.  \emph{FixedNominal} freezes the point
+uses the applied online schedule.  \emph{FixedNominal} freezes the point
 calibrated from a noise-free $H_s=\SI{1.5}{m}$, $T_p=\SI{5.7}{s}$ record.
 \emph{FixedOracle} applies the same calibration procedure to the scored sea, or
 to the known final sea of the transition; it is scenario matched but not an

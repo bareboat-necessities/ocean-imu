@@ -55,7 +55,7 @@ be north, the offset becomes part of north itself and no internally consistent y
 filter can later recover true magnetic heading.  This paper documents the startup
 and magnetic self-calibration architecture now shared by the OU--II, OU--III, and
 two-frame Lie-group (TFG) marine inertial estimators in the \texttt{ocean-imu}
-repository.  The deployed path uses an exogenous, low-bandwidth Mahony complementary
+repository.  The applied path uses an exogenous, low-bandwidth Mahony complementary
 observer to solve tilt and frame magnetic acquisition while the navigation filter is
 held out of the loop; a legacy staged quaternion MEKF path remains available as a
 matched ablation.  Magnetic acquisition is performed provisionally for availability
@@ -132,8 +132,8 @@ coordinates because the proxy observer, magnetic acquisition, and hard-iron
 identification are exogenous front-end processes.
 
 This paper makes four contributions.  It formalizes startup as a persistent-frame
-identification problem; documents the deployed Mahony-proxy and optional staged-MEKF
-paths; derives the continuous hard-iron solve and its regularization; and collects the
+identification problem; documents the Mahony-proxy;
+derives the continuous hard-iron solve and its regularization; and collects the
 matched ablations that identify which errors each mechanism actually removes.
 
 \section{Startup Is a Gauge-Establishment Problem}
@@ -191,7 +191,7 @@ not rotate the hull frame to explain each wave-cycle acceleration.
 
 \subsection{Private Mahony proxy}
 
-The deployed OU--II, OU--III, and TFG wrappers use a complementary attitude
+The OU--II, OU--III, and TFG wrappers use a complementary attitude
 observer based on the nonlinear complementary-filter structure of
 Mahony--Hamel--Pflimlin \cite{Mahony2008NonlinearComplementary}.  In generic notation,
 its gravity correction has the form
@@ -204,7 +204,7 @@ its gravity correction has the form
 \end{align}
 with quaternion/SO(3) integration of $\vct\omega_c$.  The repository implementation
 uses the conventional \texttt{two\_kp} and \texttt{two\_ki} parameterization.  The
-deployed proxy values in all three wrappers are
+proxy values in all three wrappers are
 \begin{equation}
 \texttt{two\_kp}=0.2,
 \qquad

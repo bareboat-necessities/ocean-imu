@@ -4,7 +4,7 @@
 
 The startup alignment of Sec.~\ref{sec:mag-two-stage} fixes the yaw gauge from a
 magnetic world reference; a body-fixed magnetometer offset therefore biases yaw
-even with stable attitude tracking.  The deployed measurement-only estimator
+even with stable attitude tracking.  The measurement-only estimator
 continuously updates the additive magnetic offset without writing attitude state
 or resetting Kalman covariance.
 

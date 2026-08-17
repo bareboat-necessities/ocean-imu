@@ -66,7 +66,7 @@ is mechanistic rather than prescriptive.  It shows that preferred regularizer
 strength depends only weakly on drift-band acceleration intensity, while the
 remaining error is much more sensitive to the disturbance itself.  The complete
 attitude/bias-coupled MEKF violates several assumptions of the reduction, so the
-deployed schedule is selected empirically.  Paired multi-seed simulations favor
+applied schedule is selected empirically.  Paired multi-seed simulations favor
 linear amplitude scheduling and show that the integral-regularization channel
 carries most of the adaptive benefit.  Horizontal drift-band acceleration error
 is roughly two orders of magnitude larger than the vertical channel in the
@@ -234,7 +234,7 @@ Thus dimensional consistency fixes only one normalized group.  Changes in
 cadence, observation noise, or sample interval can still change the normalized
 gain.
 
-Away from safety clamps, the deployed implementation schedules
+Away from safety clamps, the implementation schedules
 \begin{equation}
  T_S=c_T\tau
  \label{eq:cadence}
@@ -252,7 +252,7 @@ effective scaling
 \end{equation}
 when the cadence schedule is unclipped.
 
-This algebra explains how the deployed exponent arises from a cubic coordinate
+This algebra explains how the exponent arises from a cubic coordinate
 scale plus cadence renormalization.  It does \emph{not} establish that $5/2$ is
 an MSE-optimal exponent.  The coefficient and the decision to retain this
 schedule are empirical design choices validated in the complete estimator.
@@ -405,7 +405,7 @@ Then \eqref{eq:rsred} gives the reduced-model relation
  \label{eq:p-red-law}
 \end{equation}
 This relation is useful for interpreting plausible amplitude powers, but the
-unknown full-estimator $q_{\rm eff}$ is not inferred from it.  The deployed
+unknown full-estimator $q_{\rm eff}$ is not inferred from it.  The
 amplitude exponent is selected directly by the full-estimator ablation in
 \cref{sec:adaptation-study}.
 
@@ -442,7 +442,7 @@ nonstationary.  Adaptation lag, changing spectra, and heading-dependent
 partition of surge and sway are absent from the stationary scalar model.
 
 These limitations explain why the reduced theorem is retained as analysis but
-not used to claim that the deployed $\tau^{5/2}$ law is analytically optimal.
+not used to claim that the chosen $\tau^{5/2}$ law is analytically optimal.
 The full-estimator experiments remain the tuning authority.
 
 \section{Empirical Adaptation-Law Evidence}
@@ -484,7 +484,7 @@ $p=1.5$  & 4.817 & $+0.070\pm0.016$ & 0.660 \\
 The best tested amplitude schedule is linear in $\sigma_{aw}$.  Removing
 amplitude dependence costs $0.300$ percentage points of $H_s$ in the pooled
 vertical metric and also worsens 3D RMS.  This result is used directly as
-empirical support for the deployed amplitude factor.  The reduced relation
+empirical support for the chosen amplitude factor.  The reduced relation
 \eqref{eq:p-red-law} provides context for why powers near unity are plausible,
 but it is not inverted to identify a hidden physical exponent for the full
 MEKF.
@@ -550,7 +550,7 @@ $H_s=0.05$ m & Adaptive & 18.03 & 0.023 \\
 \end{tabular}
 \end{table}
 
-The deployed adaptive schedule retains most of its performance when the
+The adaptive schedule retains most of its performance when the
 controlled sea-state transition is shortened from 360 s to 30 s, while a fixed
 nominal point remains far from the endpoint operating point.  The calm-water
 case exposes the opposite limit: when physical motion approaches the fixed
@@ -560,10 +560,10 @@ the regularizer should simply be made stronger.
 
 \subsection{What the experiments justify}
 
-The empirical results support the deployed schedule as a practical,
+The empirical results support the applied schedule as a practical,
 properly-scaled adaptation law over the tested envelope.  They do not establish
 a universal mathematical optimum.  In particular, stationary tuning changes
-need not transfer unchanged to nonstationary transitions.  The deployed law is
+need not transfer unchanged to nonstationary transitions.  The applied law is
 therefore retained on full-estimator evidence rather than identified with the
 minimum of $J_{\rm red}$.
 
@@ -765,7 +765,7 @@ source/input hashes, raw rows, derived summary tables, and paired effects.
 Integral-state pseudo-measurements provide a useful middle ground between free
 inertial integration and hard position/velocity zeroing.  OU similarity gives
 the natural third-integral coordinate scale $\sigma_a\tau^3$, and explicit
-pseudo-update cadence accounting converts the deployed cubic base scale into the
+pseudo-update cadence accounting converts the applied cubic base scale into the
 effective dependence $r_S\propto\sigma_a\tau^{5/2}$ away from clamps.  That
 scheduler is physically motivated but empirically selected; it is not presented
 as the exact optimum of the full MEKF.

@@ -19,7 +19,7 @@ All methods replay the same timestamped synthetic motion and inertial records
 and use the final \SI{900}{s}.  The common comparison is vertical displacement
 and tilt, available from every method.  Parameters are frozen before evaluation
 and reference displacement is never used to select gains.  OU--II and OU--III
-share the same wave-band period input; OU--III uses the deployed integral-state
+share the same wave-band period input; OU--III uses the integral-state
 schedule of Sec.~\ref{sec:adaptation}, including cadence renormalization,
 whereas OU--II uses its second-order position/velocity regularizers.
 

@@ -156,7 +156,7 @@ Bounded adaptive schedule & Enforced by the default fusion-wrapper clamps; concr
 Predictable schedule & Enforced by staging the tuner result for the following IMU sample, Eq.~\eqref{eq:iss-predictable-schedule}. \\
 Bounded $S$ pseudo-update gaps & Proved for the deployed self-similar cadence, Eq.~\eqref{eq:iss-deployed-cadence-gap-check}; the scheduler bound Eq.~\eqref{eq:iss-scheduler-gap-witness} holds for any configured period. Equal spacing is not required. \\
 Vector excitation & Live-interval assumption: accepted accelerometer/magnetometer pairs must satisfy Eqs.~\eqref{eq:iss-vector-magnitude-bounds}--\eqref{eq:iss-vector-gap}. \\
-No reset/outage & Live-interval assumption; startup, hard reset, re-lock, and arbitrarily long rejection/outage patterns remain outside the theorem.  Under the deployed startup policy this excludes the proxy handoff and the second-stage magnetic re-acquisition, both of which precede the analyzed interval (Sec.~\ref{app:iss-tuner}). \\
+No reset/outage & Live-interval assumption; startup, hard reset, re-lock, and arbitrarily long rejection/outage patterns remain outside the theorem.  Under the chosen startup policy this excludes the proxy handoff and the second-stage magnetic re-acquisition, both of which precede the analyzed interval (Sec.~\ref{app:iss-tuner}). \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -56,4 +56,4 @@ Eq.~\eqref{eq:jonswap-ou-target-scaling}, and therefore
 \end{equation}
 Equation~\eqref{eq:jonswap-ou-physical-scale-consistency} is a consistency check
 between the OU state scale and JONSWAP sea-state similarity.  It neither implies
-that the filter propagates JONSWAP nor derives the deployed adaptation law.
+that the filter propagates JONSWAP nor derives the applied adaptation law.

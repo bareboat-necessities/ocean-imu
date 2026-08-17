@@ -286,7 +286,7 @@ why a fixed pseudo-update period alone cannot justify a universal
 $r_S=c_R\sigma_{aw}\tau^3$ coefficient.  If the relevant horizon $T_S$ obeys
 $T_S/\tau=\mathrm{const}$, then $\sqrt{F_3(T_S/\tau)}$ is constant and the cubic
 law follows immediately.  If $T_S$ is fixed in seconds while $\tau$ varies,
-the coefficient changes with $T_S/\tau$.  The deployed wrapper takes the first
+the coefficient changes with $T_S/\tau$.  The wrapper takes the first
 branch away from its safety clamps
 (Sec.~\ref{sec:riccati-deployed-cadence}).  In particular,
 \begin{equation}
@@ -297,10 +297,10 @@ branch away from its safety clamps
 so for $T_S\ll\tau$ the local free-accumulation scale approaches
 $\sigma_{aw}T_S^3/6$.
 
-The deployed $S=0$ update is a Kalman pseudo-measurement rather than a hard
+The applied $S=0$ update is a Kalman pseudo-measurement rather than a hard
 reset of the integrated states, so Theorem~\ref{thm:ou-finite-horizon-rs}
 should be read as a finite-horizon scaling result, not as an exact closed-loop
-steady-state covariance formula.  The primary justification for the deployed
+steady-state covariance formula.  The primary justification for the applied
 monomial law is therefore the OU similarity and dimensionless low-frequency
 regularization of Theorem~\ref{thm:ou-regularized-rs}; $c_R$ remains a
 dimensionless design/calibration coefficient.
@@ -547,7 +547,7 @@ parameter clamps, and the fixed physical dynamics of the upstream
 complementary levelling observer introduce additional time scales and therefore
 break exact JONSWAP similarity at the boundaries.  Likewise, the finite-horizon
 coefficient of Theorem~\ref{thm:ou-finite-horizon-rs} is invariant only while
-$T_S/\tau$ is held fixed; the deployed self-similar cadence does hold it fixed
+$T_S/\tau$ is held fixed; the applied self-similar cadence does hold it fixed
 between the period clamps, but not on them
 (Sec.~\ref{sec:riccati-deployed-cadence}).
 Neither fact changes the dimensional OU state scale

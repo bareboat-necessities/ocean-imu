@@ -3,7 +3,7 @@
 \label{sec:adaptation}
 \label{sec:adapt-impl}
 
-The deployed tuner estimates wave time scale and acceleration level from a
+The tuner estimates wave time scale and acceleration level from a
 measurement-only proxy and applies bounded smoothing and cadence rules to
 $\tau$, $\sigma_{aw}$, and $r_S$.  No MEKF displacement, velocity, covariance,
 or attitude state is fed back into the tuner.
@@ -44,7 +44,7 @@ attitude in Sec.~\ref{sec:startup-policy}.
 
 MEKF-based levelling would close a loop from attitude error through the tuner;
 unlevelled body-$Z$ remains exogenous but suffers strongly integrated gravity
-leakage.  The deployed proxy provides levelling with the one-way information
+leakage.  The proxy provides levelling with the one-way information
 flow required by Sec.~\ref{app:iss-tuner}; both alternatives remain available
 for ablation.
 
@@ -79,7 +79,7 @@ f_{\mathrm{tune}}
  f_{\mathrm{tune,min}},f_{\mathrm{tune,max}}\right).
 \label{eq:tuning-frequency}
 \end{equation}
-Before then, a bounded wave-band prior is used.  The deployed smoothing time is
+Before then, a bounded wave-band prior is used.  The applied smoothing time is
 \SI{1}{s}.  This frequency sets the OU time scale, sigma-band corners, and
 variance horizon; the separate acceleration carrier is retained only for wave
 direction.
@@ -125,7 +125,7 @@ r_{S,\star}^{\mathrm{base}}&=c_R\sigma_{aw,\star}\tau_\star^3 .
 \end{aligned}
 \label{eq:tuner-targets}
 \end{equation}
-The deployed coefficients $(c_\tau,c_\sigma,c_R)=(1.0,0.9,0.35)$ are empirical
+The applied coefficients $(c_\tau,c_\sigma,c_R)=(1.0,0.9,0.35)$ are empirical
 calibration constants; Sec.~\ref{sec:adaptation-motivation} motivates the cubic
 base scale but does not determine a complete-MEKF optimum.
 

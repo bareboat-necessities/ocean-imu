@@ -16,7 +16,7 @@ measurement-only Mahony observer supplies levelled vertical acceleration, while
 wave-period and band-limited variance estimates schedule the OU prior and
 integral regularizer through bounded smoothing.  OU similarity,
 periodic-Riccati analysis, and the reduced drift--distortion model identify the
-relevant scales but not the full-MEKF optimum; the deployed coefficients and
+relevant scales but not the full-MEKF optimum; the applied coefficients and
 effective $\sigma_{aw}\tau^{5/2}$ filter-input schedule are empirical.  Channel
 ablation attributes most of the measured adaptive benefit to the integral-state
 regularizer rather than retuning the directly observed OU acceleration prior.
