@@ -105,20 +105,32 @@ _original_full_bundle_test = (
 
 def _full_result_bundle_is_complete_and_self_consistent(self):
     """Run every original bundle check, relaxing only publication prose bytes."""
-    result_path = self.RESULTS / "ou_validation_publication.tex"
-    doc_path = DOC / "w3d-ou-validation-results-generated.tex-part"
-    _assert_publication_evidence_matches(self, result_path, doc_path)
+    editable_tex_pairs = (
+        (
+            self.RESULTS / "ou_validation_publication.tex",
+            DOC / "w3d-ou-validation-results-generated.tex-part",
+        ),
+        (
+            self.RESULTS / "ou_validation_tuning_points.tex",
+            DOC / "w3d-ou-validation-tuning-points-generated.tex-part",
+        ),
+    )
+    for result_path, doc_path in editable_tex_pairs:
+        _assert_publication_evidence_matches(self, result_path, doc_path)
 
     original_read_bytes = Path.read_bytes
-    generated_bytes = original_read_bytes(result_path)
+    generated_bytes_by_doc = {
+        doc_path: original_read_bytes(result_path)
+        for result_path, doc_path in editable_tex_pairs
+    }
 
     def read_bytes_with_editable_publication(path):
         path = Path(path)
-        if path == doc_path:
+        if path in generated_bytes_by_doc:
             # The semantic evidence comparison above already passed. Feed the
             # generator bytes to the legacy byte-equality assertion so the rest
             # of the original integrity test runs unchanged.
-            return generated_bytes
+            return generated_bytes_by_doc[path]
         return original_read_bytes(path)
 
     with mock.patch.object(Path, "read_bytes", read_bytes_with_editable_publication):
