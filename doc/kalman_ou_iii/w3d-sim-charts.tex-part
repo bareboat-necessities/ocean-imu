@@ -3,14 +3,12 @@
 
 \subsection{Sea-state ensemble and reference motion}
 
-The estimator is evaluated on four stationary JONSWAP seas and four
-Pierson--Moskowitz seas with nonlinear Stokes harmonics, spanning the conditions
-in Table~\ref{tab:scenarios}.  Each record is \SI{1200}{s} long at
-\SI{200}{Hz}.  The simulator provides reference three-dimensional displacement,
-velocity, acceleration, and attitude together with body-frame specific force,
-angular rate, and magnetic-field measurements.  The principal results are
-scored over the final \SI{900}{s}; startup and one-time magnetic-reference
-reconfiguration therefore occur before the common statistical window.
+The evaluation uses four stationary JONSWAP seas and four Pierson--Moskowitz
+seas with nonlinear Stokes harmonics (Table~\ref{tab:scenarios}).  Each
+\SI{1200}{s} record is sampled at \SI{200}{Hz} and provides reference 3-D
+displacement, velocity, acceleration, attitude, and corresponding body-frame
+sensor measurements.  Results are scored over the final \SI{900}{s}, after
+startup and one-time magnetic-reference reconfiguration.
 
 \begin{table}[t]
   \centering
@@ -29,13 +27,10 @@ reconfiguration therefore occur before the common statistical window.
   \end{tabular}
 \end{table}
 
-The stationary records are directional rather than scalar heave inputs.  The
-medium-sea examples in Fig.~\ref{fig:input-spectra-3d} show the joint frequency--direction
-energy density used to generate the kinematic reference.  The two spectral
-families are kept separate in inference: the JONSWAP ensemble supplies the
-declared primary comparison, while PM--Stokes is a second predeclared family
-that tests whether the result survives a different spectral shape and bound
-harmonics.
+The records are directional rather than scalar heave inputs.  Figure~\ref{fig:input-spectra-3d}
+shows representative frequency--direction energy densities.  JONSWAP supplies
+the declared primary comparison; PM--Stokes is a separate predeclared family
+testing transfer to a different spectral shape with bound harmonics.
 
 \begin{figure}[t]
 \centering
@@ -49,24 +44,22 @@ harmonics.
   \IncludePGF{spectrum_pmstokes_medium_3d.pgf}
   \small (b) PM--Stokes, $H_s=\SI{1.5}{m}$.
 \end{minipage}
-\caption{Representative three-dimensional directional input spectra.  These
-spectra generate the reference motion.}
+\caption{Representative directional input spectra.}
 \label{fig:input-spectra-3d}
 \end{figure}
 
 \subsection{Sensor and model-error injection}
 
-The inertial measurements include white noise, residual constant bias, and slow
-bias drift.  The magnetometer additionally includes a hard-iron residual,
-scale/cross-axis error, misalignment, and slow drift.  The principal levels are
-summarized in Table~\ref{tab:sim_constants}.  The accelerometer truth retains a
-random-walk bias while the estimator models the residual about its temperature
-calibration as a slow first-order Gauss--Markov process, so the study deliberately
-contains bias-process mismatch.
+Inertial measurements include white noise, residual constant bias, and slow
+bias drift; magnetometer errors additionally include hard iron, scale/cross-axis
+error, misalignment, and slow drift (Table~\ref{tab:sim_constants}).  The
+accelerometer truth uses random-walk bias while the estimator uses a slow
+Gauss--Markov residual about its temperature calibration, deliberately
+introducing bias-process mismatch.
 
 \begin{table}[t]
   \centering
-  \caption{Principal simulation timing and sensor-error levels.}
+  \caption{Simulation timing and sensor-error levels.}
   \label{tab:sim_constants}
   \setlength{\tabcolsep}{3pt}
   \begin{tabular}{@{}lll@{}}
@@ -86,85 +79,69 @@ contains bias-process mismatch.
   \end{tabular}
 \end{table}
 
-Temperature is not varied in the scored simulations.  There is no independent
-thermal calibration-error, lag, or hysteresis experiment, so the finite-$\tau_b$
-temperature-centered residual is a structural sensor model and a stability
-assumption, not a demonstrated temperature-compensation result.  The relevant
-empirical question here is whether the estimator remains useful under mismatch
-between that residual model and the injected random-walk bias.
+Temperature is fixed in the scored simulations; no independent thermal
+calibration-error, lag, or hysteresis experiment is performed.  The
+finite-$\tau_b$ residual is therefore a structural model and stability
+assumption, while the empirical test concerns robustness to the injected
+random-walk mismatch.
 
-The optional IMU lever-arm model is implemented but the principal study uses the
-reference-point configuration committed with the validation bundle; it is not a
-physical validation of an off-CoG installation.  Likewise, the records model a
-surface-following inertial package rather than the response of a particular hull
-through a vessel RAO.
+The principal study also uses the committed reference-point configuration, so
+the implemented lever-arm model is not physically validated off-CoG.  The
+records represent a surface-following inertial package rather than a particular
+hull RAO.
 
 \subsection{Paired Monte Carlo protocol}
 
-Ten predeclared seed triplets independently vary wave phase, IMU noise/bias
-realization, and sensor-error initialization.  A triplet is shared between
-OU--II, OU--III, and each matched tuning ablation.  This pairing converts the
-comparison from two independent ensembles into a distribution of within-seed
-differences.
+Ten predeclared seed triplets vary wave phase, IMU noise/bias realization, and
+sensor-error initialization.  Each triplet is shared by OU--II, OU--III, and
+matched ablations, yielding within-seed paired differences.
 
-The declared primary endpoint is the seed-level mean normalized vertical
-RMS displacement error across the four stationary JONSWAP seas.  Scenario
-summaries report the sample mean and standard deviation across the ten seeds.
-Paired effects use percentile-bootstrap intervals obtained by resampling the
-seed-level paired differences; a Student-$t$ interval, exact sign test, and
-exact paired sign-flip test are reported as companion checks for the single
-primary endpoint.  Descriptive secondary comparisons retain paired intervals
-without promoting each one to an additional confirmatory hypothesis.  A full
-simulator generation establishes immutable replay provenance: replay source
-commit, replay-producing implementation/build hashes, input hashes, and the
-normalized raw-row hash.  A later statistical restatement is recorded
-separately and is permitted only while that replay dependency closure and the
-raw rows still match; it cannot substitute for a replay after implementation
-changes.  The evidence contract enforces the same file-hash guarantees in a
-source archive even when Git metadata is unavailable.
+The primary endpoint is the seed-level mean normalized vertical RMS displacement
+error across the four stationary JONSWAP seas.  Scenario summaries report mean
+and standard deviation over ten seeds.  Paired effects use percentile-bootstrap
+intervals of seed-level differences; Student-$t$, exact sign, and exact paired
+sign-flip tests provide companion checks for the single primary endpoint.
+Secondary comparisons retain paired intervals without additional confirmatory
+hypotheses.
 
-The reported metrics are not restricted to heave.  The study scores
-$X$, $Y$, $Z$, and 3-D displacement RMS; roll, pitch, and yaw RMS; accelerometer
-and gyroscope bias error; direction diagnostics; and the adaptation traces.
-This is important for a three-dimensional estimator: improvement in $Z$ alone
-is insufficient if it is purchased by uncontrolled surge, sway, or attitude
-error.
+A full simulator generation records replay source commit, implementation/build
+hashes, input hashes, and normalized raw-row hash.  Statistical restatements are
+permitted only while this dependency closure and raw rows match; the source
+archive enforces equivalent file-hash guarantees when Git metadata is absent.
+
+Metrics include $X$, $Y$, $Z$, and 3-D displacement RMS; roll, pitch, and yaw
+RMS; accelerometer and gyroscope bias error; direction diagnostics; and
+adaptation traces.  Thus vertical improvement cannot mask uncontrolled surge,
+sway, or attitude error.
 
 \subsection{Adaptation and covariance ablations}
 \label{par:fixed-points}
 \label{par:channel-ablation}
 
-Three principal operating modes separate adaptation from architecture.
-\emph{Adaptive} runs the deployed online schedule.  \emph{FixedNominal} freezes
-the operating point calibrated from a noise-free $H_s=\SI{1.5}{m}$,
-$T_p=\SI{5.7}{s}$ record.  \emph{FixedOracle} uses the same calibration
-procedure for the sea being scored, or the known final sea of the transition;
-it is a scenario-matched nondeployable reference, not an error-minimizing
-oracle.
+Three operating modes separate adaptation from architecture.  \emph{Adaptive}
+uses the deployed online schedule.  \emph{FixedNominal} freezes the point
+calibrated from a noise-free $H_s=\SI{1.5}{m}$, $T_p=\SI{5.7}{s}$ record.
+\emph{FixedOracle} applies the same calibration procedure to the scored sea, or
+to the known final sea of the transition; it is scenario matched but not an
+error-minimizing oracle.
 
-For OU--III, a $2\times2$ channel ablation further separates the OU process
-parameters from the integral regularizer.  In \emph{$r_S$ only},
-$(\tau,\sigma_{aw})$ are frozen while the regularizer follows the live tuner.
-In \emph{OU only}, the OU parameters adapt while $r_S$ is fixed.  A matched
-covariance-policy control repeats Adaptive and FixedNominal without the periodic
-latent-acceleration covariance re-alignment.  These controls are necessary
-because the filter contains several mechanisms that change simultaneously in a
-naive adaptive-versus-fixed comparison.
+A $2\times2$ OU--III channel ablation separates OU parameters from the integral
+regularizer.  In \emph{$r_S$ only}, $(\tau,\sigma_{aw})$ are frozen while
+$r_S$ adapts; in \emph{OU only}, the reverse applies.  A covariance-policy
+control repeats Adaptive and FixedNominal without periodic latent-acceleration
+covariance re-alignment.  These controls isolate mechanisms that otherwise
+change simultaneously.
 
 \subsection{Controlled non-stationary case}
 
-The changing-sea study is a $C^2$ quintic crossfade from
+The changing-sea study uses a $C^2$ quintic crossfade from
 $(H_s,T_p)=(\SI{1.5}{m},\SI{5.7}{s})$ to
-$(\SI{4.0}{m},\SI{11.4}{s})$ over $t=420$--$780$~s.  The endpoint records are
+$(\SI{4.0}{m},\SI{11.4}{s})$ over $t=420$--$780$~s.  Endpoint records are
 independently phase randomized, and derivative-consistent velocity and
-acceleration include the terms introduced by the time-varying blend.  This is a
-kinematically closed transition, not a continuously evolving wave spectrum.
-Both endpoint spectra coexist during the blend, so an intermediate sample need
-not have a unique $T_p$ and can be effectively bimodal.  Interpretation therefore
-uses separate pure-start, blend, and pure-end intervals in addition to the
-common trailing-window score.
+acceleration include blend-derivative terms.  This is a kinematically closed
+transition rather than a continuously evolving spectrum; both endpoint spectra
+coexist during the blend, which can therefore be effectively bimodal.
+Interpretation uses pure-start, blend, and pure-end, plus common trailing windows.
 
-The study consequently does not establish performance for arbitrary spectral
-evolution, crossing seas, or a continuously changing directional spectrum.
-Those are left as explicit extensions rather than folded into the claim made by
-this controlled transition.
+This case does not establish performance for arbitrary spectral evolution,
+crossing seas, or continuously changing directional spectra.

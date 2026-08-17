@@ -1,90 +1,59 @@
 \subsection{Kinematic interpretation of the JONSWAP consistency check}
 \label{sec:jonswap-integrated-elevation-clarification}
 
-A distinction between the OU model and the JONSWAP comparison is important here.
-The JONSWAP spectrum in Sec.~\ref{sec:jonswap-tuner-map} is an \emph{elevation}
-(or displacement) spectrum $S_\eta(\omega)$; it is not an acceleration spectrum
-and it is not the stochastic process propagated by the Kalman filter.  Under
-linear wave kinematics,
+JONSWAP supplies an elevation spectrum $S_\eta(\omega)$, not the acceleration
+process propagated by the filter.  Under linear wave kinematics,
 \begin{equation}
  A(\omega)=-\omega^2\widehat{\eta}(\omega).
 \label{eq:jonswap-acc-from-elevation-clarification}
 \end{equation}
-The OU--III state $S$ is the third time integral of acceleration.  Therefore,
-for a physical wave acceleration generated from elevation,
+Because OU--III defines $S$ as the third integral of acceleration,
 \begin{equation}
  S(\omega)
  =\frac{A(\omega)}{(j\omega)^3}
  =\frac{-\omega^2}{(j\omega)^3}\widehat{\eta}(\omega),
 \label{eq:jonswap-S-from-eta-clarification}
 \end{equation}
-which, apart from the sign/phase convention, is one time integration of
-elevation.  In the time domain this is the simple kinematic identity
+which is, apart from phase convention, one integration of elevation.  Equivalently,
+for zero integrated initial conditions,
 \begin{equation}
  \boxed{\displaystyle
- S=\iiint a\,dt^3=\int\eta\,dt}
+ S=\iiint a\,dt^3=\int\eta\,dt.}
 \label{eq:triple-acc-single-elevation-integral}
 \end{equation}
-for the corresponding zero-initial-condition components.  Thus the phrase
-``third integral'' refers to the acceleration input.  It must not be read as
-three integrations of the JONSWAP elevation process.
+Thus ``third integral'' refers to acceleration, not to three integrations of the
+JONSWAP elevation process.
 
-The same cancellation is explicit at the PSD level.  Since
+At the PSD level,
 \begin{equation}
  S_a^{(2)}(\omega)=\omega^4S_\eta^{(2)}(\omega),
 \end{equation}
-three integrations of acceleration give
+so
 \begin{equation}
  S_S^{(2)}(\omega)
  =\frac{S_a^{(2)}(\omega)}{\omega^6}
- =\boxed{\displaystyle
-   \frac{S_\eta^{(2)}(\omega)}{\omega^2}}.
+ =\boxed{\displaystyle\frac{S_\eta^{(2)}(\omega)}{\omega^2}}.
 \label{eq:jonswap-S-psd-clarification}
 \end{equation}
-Hence the physical $S$-variance implied by a JONSWAP elevation spectrum is
+Hence
 \begin{equation}
  \Var[S]
  =\frac{1}{\pi}\int_0^\infty
    \frac{S_\eta^{(2)}(\omega)}{\omega^2}\,d\omega,
 \label{eq:jonswap-integrated-elevation-variance}
 \end{equation}
-which is the variance of an \emph{integrated-elevation} quantity.  For the
-fixed-shape similarity form
-$S_\eta^{(2)}=(H_s^2/\omega_p)\Phi_\gamma(\omega/\omega_p)$, substitution of
-$x=\omega/\omega_p$ gives
-\begin{equation}
- \sigma_{S,\mathrm{phys}}
- \propto \frac{H_s}{\omega_p}.
-\label{eq:jonswap-integrated-elevation-scale}
-\end{equation}
+and fixed-shape JONSWAP gives
+$\sigma_{S,\mathrm{phys}}\propto H_s/\omega_p$.
 
-This physical calculation has a different role from
-Theorems~\ref{thm:ou-chain-similarity} and~\ref{thm:ou-regularized-rs}.  Inside
-the estimator the latent process $a_w$ is OU acceleration and the chain really
-is
-\[
- a_w\xrightarrow{\int}v
- \xrightarrow{\int}p
- \xrightarrow{\int}S,
-\]
-so the OU similarity scale is $\sigma_{aw}\tau^3$.  JONSWAP is used only to
-motivate the sea-state dependence of the tuner inputs.  From
-Theorem~\ref{thm:jonswap-tuner-similarity},
-\begin{equation}
- \sigma_{aw,\star}\propto H_s\omega_p^2,
- \qquad
- \tau_\star\propto\omega_p^{-1},
-\end{equation}
-and consequently
+Inside the estimator, the OU chain instead has natural scale
+$\sigma_{aw}\tau^3$.  The tuner-input scaling is already given by
+Eq.~\eqref{eq:jonswap-ou-target-scaling}, and therefore
 \begin{equation}
  \sigma_{aw,\star}\tau_\star^3
  \propto\frac{H_s}{\omega_p}
  \propto\sigma_{S,\mathrm{phys}}.
 \label{eq:jonswap-ou-physical-scale-consistency}
 \end{equation}
-Equation~\eqref{eq:jonswap-ou-physical-scale-consistency} is therefore a
-\emph{consistency check between two model layers}: the triple-integrated OU
-scale used by the estimator and the single-integrated-elevation scale implied
-by JONSWAP have the same sea-state similarity.  It is not a statement that the
-filter triple-integrates a JONSWAP process, and it is not the derivation of the
-deployed adaptation law.
+Equation~\eqref{eq:jonswap-ou-physical-scale-consistency} is a consistency check
+between the OU state scale and JONSWAP sea-state similarity.  It neither implies
+that the filter propagates JONSWAP nor derives the deployed adaptation law.

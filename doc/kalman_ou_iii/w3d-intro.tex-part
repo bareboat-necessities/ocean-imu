@@ -1,67 +1,55 @@
 \section{Introduction}
 \label{sec:intro}
 
-Marine inertial motion estimation has a structural difficulty that is distinct
-from ordinary attitude estimation.  Accelerometer bias, small attitude errors,
-and low-frequency model mismatch are integrated into velocity and displacement,
-while the desired signal itself is oscillatory and must not be removed by the
-same mechanism that suppresses drift.  This is especially severe horizontally,
-where first-order gravity leakage from tilt competes with real surge and sway.
-At the same time, a deployable estimator has to operate across sea states whose
-characteristic periods and acceleration levels vary by large factors.
+Marine inertial wave-motion estimation is more difficult than attitude
+estimation because accelerometer bias, attitude error, and low-frequency model
+mismatch integrate into velocity and displacement, whereas the desired motion
+is itself oscillatory.  The difficulty is strongest horizontally, where
+tilt-induced gravity leakage competes with real surge and sway, and must be
+controlled across sea states with widely varying periods and acceleration
+levels.
 
-Recent heave estimators span discrete Kalman reconstruction, adaptive IMU
+Recent heave estimators include discrete Kalman reconstruction, adaptive IMU
 filtering, nonlinear observers, and spectral approaches
 \cite{Reis2023_DiscreteKalmanHeave,Lu2023_AdaptiveDelayFreeHeave,
-Li2025_HeaveCKF,YurovskyKudinov2025_IMUwaves,Hope2025_SFY}.  The contribution of
-this work is not the Ornstein--Uhlenbeck process itself: first-order
-Gauss--Markov acceleration models are classical
-\cite{UhlenbeckOrnstein1930_OU,Singer1970_ManeuverModel}.  The contribution is
-to integrate such a prior into a fully specified three-dimensional quaternion
-MEKF with an additional integral-displacement state, to regularize that state in
-a way that remains compatible with the coupled Kalman covariance, and to build
-an exogenous sea-state adaptation layer whose effect can be separated from the
-core estimator by controlled ablation.
+Li2025_HeaveCKF,YurovskyKudinov2025_IMUwaves,Hope2025_SFY}.  First-order
+Gauss--Markov acceleration models, including the Ornstein--Uhlenbeck process itself,
+are classical \cite{UhlenbeckOrnstein1930_OU,Singer1970_ManeuverModel}.  This work
+embeds such a prior in a fully specified three-dimensional quaternion MEKF with an
+integral-displacement state, covariance-consistent regularization, and an
+exogenous sea-state adaptation layer whose contribution is isolated by
+controlled ablation.
 
 \subsection{Main contributions}
-The contributions of this work are:
+The contributions are:
 \begin{itemize}[leftmargin=1.25em]
   \item a 21-state left-multiplicative quaternion MEKF coupling attitude,
         gyro and residual accelerometer bias, and three exact OU-driven
-        $[v,p,S,a_w]$ chains, with the integral state $S$ providing a soft
-        low-frequency drift-control channel rather than a direct position
-        constraint;
-  \item a constructive local stability treatment of the normal Live recursion:
-        finite-horizon observability of the translational and
-        attitude--gyro-bias blocks, a finite-correlation residual bias model,
-        bounded Riccati covariance, uniform exponential stability of the
-        homogeneous error recursion, and a local ISS bound under the explicit
-        bounded-schedule, reference-geometry, covariance, and no-reset
-        assumptions stated in Sec.~\ref{app:iss-stability};
-  \item an exogenous adaptation architecture that estimates the wave time scale
-        and acceleration level from measurement-only signals, then schedules the
-        OU prior and integral regularizer.  The scaling analysis explains why
-        these are natural variables; the deployed law and coefficients are
-        engineering choices supported by full-filter experiments rather than
-        claimed as an exact optimum of the reduced analytical models;
-  \item a versioned paired evaluation that tests vertical and horizontal
-        displacement, attitude, bias tracking, stationary and changing seas,
-        and adaptation-channel ablations.  In the current isotropic
-        configuration OU--III improves the paired mean 3-D displacement RMS
-        relative to matched OU--II in all four stationary JONSWAP cases and the
-        controlled transition, while the adaptation ablation identifies the
-        integral-regularization channel as the principal source of the adaptive
-        benefit.
+        $[v,p,S,a_w]$ chains, with $S$ providing soft low-frequency drift
+        control rather than a direct position constraint;
+  \item a constructive local stability result for the normal Live recursion,
+        combining finite-horizon observability of the translational and
+        attitude--gyro-bias blocks, a finite-correlation residual-bias model,
+        bounded Riccati covariance, UES of the homogeneous error recursion,
+        and a local ISS bound under the assumptions of
+        Sec.~\ref{app:iss-stability};
+  \item an exogenous adaptation architecture that estimates wave time scale and
+        acceleration level from measurement-only signals and schedules the OU
+        prior and integral regularizer.  Scaling analysis identifies the
+        relevant variables; full-filter experiments select the deployed
+        engineering law and coefficients;
+  \item a versioned paired evaluation of vertical and horizontal displacement,
+        attitude, bias tracking, stationary and changing seas, and adaptation
+        channels.  With the current isotropic configuration, OU--III reduces
+        paired mean 3-D displacement RMS relative to matched OU--II in all four
+        stationary JONSWAP cases and the controlled transition, while ablation
+        identifies integral-state regularization as the principal source of
+        the adaptive benefit.
 \end{itemize}
 
-The reported displacement $\vct p$ is bounded wave-induced motion about a local
-reference, not geodetic position.  GNSS aiding and a separated absolute
-trajectory are companion designs, not evaluated results.  The evidence in this
-paper is primarily synthetic; the ESP32--S3 exercise establishes source
-portability but not timing, power, memory margin, or externally referenced
-accuracy.  The residual accelerometer-bias state is centered on a deterministic
-temperature model, but temperature is not swept in the scored experiments, so
-thermal-calibration performance is not claimed.  Startup resets, magnetic
-reference changes, and other hybrid reconfiguration events are outside the
-Live-state ISS theorem and are evaluated separately rather than hidden inside
-its assumptions.
+Here, $\vct p$ denotes bounded wave-induced motion about a local reference, not
+geodetic position; GNSS-aided absolute trajectory estimation is not evaluated.
+The evidence is primarily synthetic, and the ESP32--S3 exercise establishes
+source portability only.  Thermal-calibration performance is not evaluated,
+while startup and reconfiguration events remain outside the Live-state ISS
+theorem.

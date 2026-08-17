@@ -1,22 +1,15 @@
 \subsection{Reduced drift--distortion optimum}
 \label{sec:riccati-mis-specified-pseudo}
 
-The Riccati analysis above describes how a fictitious $S=0$ observation changes
-the estimator covariance.  It does not yet price the fact that the observation
-is physically false: the true wave process has nonzero $S$ content, and a
-stronger regularizer therefore rejects some desired low-frequency motion.  A
-reduced asymptotic model makes that missing cost explicit.
+The Riccati analysis quantifies covariance contraction but not distortion of
+real wave motion, for which $S$ is generally nonzero.  A reduced asymptotic cost
+adds this missing term.
 
-At frequencies below the posterior acceleration correlation rate, approximate
-the residual acceleration error by white noise of zero-frequency intensity
-$q_{\mathrm{eff}}$ and let the continuous-equivalent $S$ correction have
-regularization bandwidth
-\begin{equation}
-\omega_R=\left(\frac{q_{\mathrm{eff}}}{R_ST_S}\right)^{1/6}.
-\label{eq:reduced-omega-r}
-\end{equation}
-For a wave spectrum sufficiently separated above that correction bandwidth, the
-position mean-square error has the leading form
+Below the posterior acceleration correlation rate, approximate residual
+acceleration error by white noise of zero-frequency intensity
+$q_{\mathrm{eff}}$ and use the continuous-equivalent $S$-correction bandwidth
+$\omega_R$ of Eq.~\eqref{eq:riccati-omegaR}.  For a wave spectrum sufficiently
+separated above this bandwidth, the leading position mean-square error is
 \begin{equation}
 \boxed{
 J_{\mathrm{red}}(\omega_R)
@@ -28,9 +21,8 @@ m_{-4}:=\int_{\Omega_{\mathrm{wave}}}
 \frac{S_p(\omega)}{\omega^4}\,d\omega .
 \label{eq:reduced-mse-tradeoff}
 \end{equation}
-The first term is residual-integrator drift; the second is distortion of the
-real wave motion by the false zero observation.  The reduced-model minimizer is
-therefore
+The terms represent residual-integrator drift and rejection of desired wave
+motion, respectively.  The minimizer is
 \begin{equation}
 \boxed{
 (\omega_R^{\star})^7
@@ -46,27 +38,21 @@ q_{\mathrm{eff}}^{1/14}
  m_{-4}^{3/7}T_S^{-1/2}.}
 \label{eq:reduced-optimal-rs}
 \end{equation}
-At this stationary point the minimized error scales as
+At this point,
 \begin{equation}
 J_{\mathrm{red}}^{\star}
 \propto q_{\mathrm{eff}}^{4/7}m_{-4}^{3/7}.
 \label{eq:reduced-optimal-mse-scaling}
 \end{equation}
-
-The contrast between Eqs.~\eqref{eq:reduced-optimal-rs} and
-\eqref{eq:reduced-optimal-mse-scaling} is important.  Drift intensity enters
-the reduced preferred regularizer through only the $1/14$ power, but it enters
-the minimum achievable residual error through the much larger $4/7$ power.
-Thus a disturbance can dominate the residual error without implying a
-comparably large change in the useful regularization strength.
+Thus drift intensity changes the preferred regularizer only as
+$q_{\mathrm{eff}}^{1/14}$ but changes the minimized residual error as
+$q_{\mathrm{eff}}^{4/7}$; a dominant disturbance need not imply a comparably
+large change in useful regularization strength.
 
 Equations~\eqref{eq:reduced-optimal-omega}--\eqref{eq:reduced-optimal-rs}
-are an exact minimizer of the stated reduced asymptotic cost, not an exact
-solution for the complete 21-state MEKF.  The full estimator couples attitude,
-gyro bias, residual accelerometer bias, and all three translational axes through
-the covariance; its $S=0$ update has a full Kalman gain;
-$q_{\mathrm{eff}}$ is endogenous to those coupled errors; the pseudo-update is
-discrete; and the spectral-separation approximation is least reliable during
-changing or multimodal seas.  The result is therefore used as a sensitivity and
-mechanism theorem, not as a claim that the production scheduler has a
-closed-form full-MEKF optimum.
+exactly minimize the stated asymptotic cost, not the complete 21-state MEKF.
+Attitude/bias and three-axis covariance coupling, discrete pseudo-updates,
+endogenous $q_{\mathrm{eff}}$, and imperfect spectral separation limit the
+reduction, particularly in changing or multimodal seas.  The result is therefore
+used for mechanism and sensitivity rather than as a closed-form production
+optimum.

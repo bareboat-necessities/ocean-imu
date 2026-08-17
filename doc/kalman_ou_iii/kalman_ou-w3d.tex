@@ -187,34 +187,28 @@
 \maketitle
 
 \begin{abstract}
-We present a quaternion multiplicative EKF for three-dimensional marine inertial
-motion estimation.  The estimator couples attitude and sensor-bias states to an
-OU-driven translational chain for velocity, oscillatory displacement, its
-integral, and latent world acceleration.  A zero pseudo-measurement on the
-integral state provides low-frequency regularization.  The core model is given
-with analytic discrete-time propagation, and the normal Live recursion is shown
-to be locally input-to-state stable under explicit bounded-schedule,
-observability, covariance, and no-reset assumptions.  The sea-state scheduler is
-then developed separately as an engineering layer: a measurement-only Mahony
-proxy levels vertical acceleration, a wave-band period estimator and a
-period-scaled variance estimator form exogenous tuning signals, and an
-empirically calibrated regularization schedule is applied with bounded
-smoothing and cadence.  A paired ten-seed study covers four stationary JONSWAP
-seas, four PM--Stokes seas, and a controlled transition.  On the stationary
-JONSWAP primary endpoint, normalized vertical RMS error is
+We present an adaptive quaternion multiplicative EKF for three-dimensional
+marine inertial wave-motion estimation.  The 21-state estimator couples attitude
+and sensor biases with an OU-driven translational chain comprising velocity,
+oscillatory displacement, integral displacement, and latent world acceleration.
+A zero pseudo-measurement on the integral state provides low-frequency
+regularization.  The core model admits analytic discrete-time propagation, and
+the normal Live recursion is locally input-to-state stable under explicit
+bounded-schedule, observability, covariance, and no-reset assumptions.
+Sea-state adaptation is implemented as an exogenous measurement-only layer that
+estimates wave period and band-limited acceleration variance and schedules the
+OU prior and integral regularizer.  A paired ten-seed study spans four
+stationary JONSWAP seas, four PM--Stokes seas, and a controlled transition.  For
+the stationary JONSWAP primary endpoint, normalized vertical RMS error is
 $\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
-$H_s$ for OU--III and
+$H_s$ for OU--III versus
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
-OU--II, with paired difference
-$\OUValidationNormalizedDifference$ percentage point and bootstrap 95\%
-interval
+OU--II, with a paired difference of $\OUValidationNormalizedDifference$
+percentage points and bootstrap 95\% interval
 $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$.
-Channel ablations
-show that the measured adaptation benefit is carried primarily by the
-integral-regularization channel rather than by retuning the directly observed
-OU acceleration prior.  The evidence remains simulation based; global
-navigation accuracy, thermal-calibration performance, and quantitative embedded
-resource margins are not claimed.
+Ablations attribute most of the adaptive benefit to integral-state
+regularization.  Results remain simulation based and do not establish global
+navigation, thermal-calibration, or embedded resource performance.
 \end{abstract}
 
 \begin{IEEEkeywords}

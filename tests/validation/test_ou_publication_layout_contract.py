@@ -43,6 +43,18 @@ class OUPublicationLayoutContractTests(unittest.TestCase):
         self.assertIn("text = compact_axes_table(text)", source)
         self.assertIn("w3d-ou-validation-results-publication.tex-part", source)
 
+    def test_publication_view_uses_compact_validation_table_captions(self):
+        source = DRAW_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("def replace_table_caption(text: str, label: str, caption: str) -> str:", source)
+        for caption in (
+            r"Ten-seed paired OU-family comparison over the final \SI{900}{s}.",
+            r"Ten-seed adaptive displacement RMS by axis over the final \SI{900}{s}.",
+            r"OU--III adaptation-channel ablation over the final \SI{900}{s}.",
+            r"Controlled transition scored by interval (Adaptive mode).",
+            r"Ten-seed paired OU-family comparison on PM--Stokes seas.",
+        ):
+            self.assertIn(caption, source)
+
 
 if __name__ == "__main__":
     unittest.main()

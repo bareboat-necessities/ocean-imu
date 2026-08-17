@@ -106,6 +106,28 @@ def strip_table(text: str, label: str) -> str:
     return text[:start].rstrip() + "\n\n" + text[end:].lstrip()
 
 
+def replace_table_caption(text: str, label: str, caption: str) -> str:
+    pos = text.find(label)
+    if pos < 0:
+        raise RuntimeError(f"table label not found: {label}")
+    start = text.rfind(r"\begin{table*}", 0, pos)
+    cap = text.find(r"\caption{", start, pos)
+    if start < 0 or cap < 0:
+        raise RuntimeError(f"caption not found for table: {label}")
+    body_start = cap + len(r"\caption{")
+    depth = 1
+    i = body_start
+    while i < pos and depth:
+        if text[i] == "{" and (i == 0 or text[i - 1] != "\\"):
+            depth += 1
+        elif text[i] == "}" and (i == 0 or text[i - 1] != "\\"):
+            depth -= 1
+        i += 1
+    if depth != 0:
+        raise RuntimeError(f"unbalanced caption for table: {label}")
+    return text[:cap] + r"\caption{" + caption + "}" + text[i:]
+
+
 def compact_axes_table(text: str) -> str:
     label = r"\label{tab:ou_mc_axes}"
     pos = text.find(label)
@@ -148,6 +170,19 @@ for label in (
 ):
     text = strip_table(text, label)
 text = compact_axes_table(text)
+for label, caption in (
+    (r"\label{tab:ou_mc_family}",
+     r"Ten-seed paired OU-family comparison over the final \SI{900}{s}."),
+    (r"\label{tab:ou_mc_axes}",
+     r"Ten-seed adaptive displacement RMS by axis over the final \SI{900}{s}."),
+    (r"\label{tab:ou_mc_channels}",
+     r"OU--III adaptation-channel ablation over the final \SI{900}{s}."),
+    (r"\label{tab:ou_transition_segments}",
+     r"Controlled transition scored by interval (Adaptive mode)."),
+    (r"\label{tab:ou_mc_pmstokes}",
+     r"Ten-seed paired OU-family comparison on PM--Stokes seas."),
+):
+    text = replace_table_caption(text, label, caption)
 dst.write_text(text, encoding="utf-8")
 PY
 

@@ -220,15 +220,53 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
 
     def test_reduced_model_and_bias_discretization_equations_remain_present(self):
         reduced = _read("w3d-rs-reduced-mse.tex-part")
+        lti = _read("w3d-lti-discrete.tex-part")
         analytic = _read("w3d-analytic-coeff.tex-part")
         stability = _read("w3d-iss-stability.tex-part")
 
         self.assertIn(r"q_{\mathrm{eff}}^{1/14}", reduced)
         self.assertIn(r"q_{\mathrm{eff}}^{4/7}", reduced)
-        self.assertIn(r"e^{-h/\tau_b}\Id", analytic)
-        self.assertIn(r"1-e^{-2h/\tau_b}", analytic)
+        self.assertIn(r"\label{eq:ba-ou-phi}", lti)
+        self.assertIn(r"\label{eq:ba-ou-Qd}", lti)
+        self.assertIn(r"e^{-h/\tau_b}\mat I_3", lti)
+        self.assertIn(r"1-e^{-2h/\tau_b}", lti)
+        self.assertIn(r"\eqref{eq:ba-ou-phi}", analytic)
+        self.assertIn(r"\eqref{eq:ba-ou-Qd}", analytic)
         self.assertIn(r"\phi_{b,k}=e^{-h_k/\tau_b}", stability)
-        self.assertIn(r"1-e^{-2h_k/\tau_b}", stability)
+        self.assertIn(r"\eqref{eq:ba-ou-Qd}", stability)
+        self.assertNotIn(r"1-e^{-2h_k/\tau_b}", stability)
+
+    def test_repeated_model_equations_use_canonical_cross_references(self):
+        measurement = _read("w3d-meas.tex-part")
+        update = _read("w3d-kalm-up.tex-part")
+        stability = _read("w3d-iss-stability.tex-part")
+        reduced = _read("w3d-rs-reduced-mse.tex-part")
+        design = _read("w3d-rs-design-interpretation.tex-part")
+        jonswap = _read("w3d-rs-scale-theorem.tex-part")
+
+        for label in (
+            "eq:acc-meas-jacobians",
+            "eq:mag-meas-jacobian",
+            "eq:HS-selector",
+        ):
+            self.assertIn(label, measurement)
+            self.assertIn(rf"\eqref{{{label}}}", update)
+            self.assertIn(rf"\eqref{{{label}}}", stability)
+
+        self.assertIn(r"\eqref{eq:phi-att-bias}", stability)
+        self.assertIn(r"\eqref{eq:phi-axis-ou3}", stability)
+        self.assertNotIn("eq:iss-att-bg-transition", stability)
+        self.assertNotIn("eq:iss-implemented-phi", stability)
+        self.assertNotIn("eq:iss-Qdb", stability)
+        self.assertNotIn("eq:iss-error-vector", stability)
+
+        self.assertIn(r"\eqref{eq:riccati-omegaR}", reduced)
+        self.assertNotIn("eq:reduced-omega-r", reduced)
+        self.assertIn(r"\eqref{eq:Rs-sigmaa-tau3}", design)
+        self.assertIn(r"\eqref{eq:engineering-pseudo-cadence}", design)
+        self.assertIn(r"\eqref{eq:engineering-rs-filter}", design)
+        self.assertNotIn("eq:deployed-rs-summary", design)
+        self.assertNotIn("eq:jonswap-sigma-tau3-scale", jonswap)
 
     def test_stability_contract_keeps_bounded_update_gap_and_reset_scope(self):
         stability = _read("w3d-iss-stability.tex-part")

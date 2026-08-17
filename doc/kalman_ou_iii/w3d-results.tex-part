@@ -1,11 +1,9 @@
 \section{Results and Empirical Observations}
 \label{sec:results}
 
-The representative traces below are included to make the three-dimensional
-behavior visible before the aggregate statistics.  They are not independent
-experiments: each is one deterministic realization from the same simulation
-family used by the paired study.  Statistical claims are taken from the
-versioned ten-seed evidence that follows.
+Representative traces illustrate 3-D behavior; they are deterministic examples
+from the same simulation family, not independent experiments.  Statistical
+claims use the versioned ten-seed evidence below.
 
 \subsection{Representative three-dimensional reconstruction}
 
@@ -21,17 +19,14 @@ versioned ten-seed evidence that follows.
   \IncludePGF{w3d_ou3_jonswap_medium_zkin.pgf}
   \small (b) Vertical kinematics.
 \end{minipage}
-\caption{Representative $H_s=\SI{1.5}{m}$ JONSWAP reconstruction.  Horizontal
-and vertical channels are shown together because the estimator is evaluated as
-a 3-D motion estimator rather than as a heave-only filter.}
+\caption{Representative 3-D JONSWAP reconstruction, $H_s=\SI{1.5}{m}$.}
 \label{fig:representative-3d-kinematics}
 \end{figure*}
 
 \paragraph{Horizontal drift and isotropic regularization}
 \label{sec:riccati-per-axis-limits}
-The most striking horizontal diagnostic is not a tuned axis ratio but a large
-separation in the disturbance itself.  After attitude compensation, a small
-tilt error leaks gravity into horizontal acceleration approximately as
+After attitude compensation, small tilt errors leak gravity into horizontal
+acceleration approximately as
 \begin{equation}
 \boxed{
 \vct\varepsilon_{a,H}
@@ -42,36 +37,28 @@ g\,\delta\theta_y\\-g\,\delta\theta_x
 +\vct b_{a,H}+\vct n_H .}
 \label{eq:riccati-axis-tilt-leak}
 \end{equation}
-The vertical channel has no corresponding first-order $g\,\delta\theta$ term,
-and without GNSS or another horizontal kinematic reference the residual
-horizontal bias is also less observable.  Direct drift-band diagnostics over
-the eight stationary calibration records put the world-$x$ and world-$y$
-low-frequency acceleration-error intensities at approximately $65$ and $102$
-times the vertical value, respectively.
+The vertical channel has no corresponding first-order term, and horizontal bias
+is less observable without an external kinematic reference.  Across the eight
+stationary calibration records, world-$x$ and world-$y$ low-frequency
+acceleration-error intensities are approximately $65$ and $102$ times the
+vertical value.
 
-Yet the full-filter experiments do not support the intuitive response
-``regularize the noisy axis much harder.''  The reduced theorem of
-Sec.~\ref{sec:riccati-mis-specified-pseudo} explains why that lever is weak:
-$q_{\mathrm{eff}}$ enters the reduced preferred regularizer through only the
-$1/14$ power, so even a factor-of-ten error in drift intensity changes
-$r_{S,\mathrm{red}}^{\star}$ by only
-$10^{1/14}\simeq1.18$.  At the same reduced optimum, residual error carries the
-much stronger $q_{\mathrm{eff}}^{4/7}$ dependence.  A large horizontal
-disturbance can therefore dominate the residual motion error while moving the
-useful regularization scale only modestly.
+This large disturbance does not imply proportionally stronger horizontal
+regularization.  Section~\ref{sec:riccati-mis-specified-pseudo} gives
+$r_{S,\mathrm{red}}^\star\propto q_{\mathrm{eff}}^{1/14}$ but
+$J_{\mathrm{red}}^\star\propto q_{\mathrm{eff}}^{4/7}$; even a tenfold drift
+intensity change alters the preferred $r_S$ by only
+$10^{1/14}\simeq1.18$.  Large horizontal disturbance can therefore dominate
+residual error while shifting useful regularization only modestly.
 
-The desired-motion term pulls in the opposite direction.  The horizontal
-$m_{-4}$ content is a projection of real directional orbital motion, so its
-world-$x/world-y$ split changes with wave heading.  The present simulations
-sample too few independent headings to identify universal separate $x$ and $y$
-regularization constants from those moments.  The defensible full-estimator
-finding is instead that the current \emph{isotropic} $r_S$ performs well over
-the tested directional cases.  This shifts the engineering priority from
-``regularize the noisy horizontal axis harder'' toward reducing the actual
-low-frequency acceleration error---better tilt, better accelerometer-bias
-observability, GNSS, or another horizontal reference.  The $65$--$102\times$
-ratios are simulation diagnostics, not universal ocean constants, and the
-conclusion must be re-tested on a broader multidirectional ensemble.
+The desired-motion moment $m_{-4}$ is also heading dependent because horizontal
+motion is a projection of directional orbital motion.  The present heading
+ensemble is insufficient to identify universal separate $x$ and $y$ factors.
+The supported full-filter result is that isotropic $r_S$ performs well over the
+tested cases.  Further horizontal improvement should target the disturbance
+itself---tilt error, accelerometer-bias observability, GNSS, or another
+horizontal reference.  The $65$--$102\times$ ratios are simulation diagnostics,
+not universal ocean constants.
 
 \subsection{Attitude and adaptation behavior}
 
@@ -88,20 +75,15 @@ conclusion must be re-tested on a broader multidirectional ensemble.
   \IncludePGF{w3d_ou3_jonswap_medium_tuner.pgf}
   \small (b) Wave-band tuning and applied parameters.
 \end{minipage}
-\caption{Representative attitude and adaptation traces.  The first tuner panel
-shows the wave-band frequency implied by the applied OU time scale,
-$f_{\mathrm{wave,appl}}=1/(2\tau_{\mathrm{appl}})$, which is the smoothed
-schedule derived from the wave-period estimator.  The acceleration-band carrier
-retained for wave-direction demodulation is intentionally omitted because it is
-not used by the deployed OU-III adaptation path.}
+\caption{Representative attitude and applied adaptation traces.  The tuner
+frequency is $f_{\mathrm{wave,appl}}=1/(2\tau_{\mathrm{appl}})$.}
 \label{fig:attitude-and-tuning}
 \end{figure}
 
-The trace is best read together with Sec.~\ref{sec:adaptation}: wave period and
-band-limited acceleration variance are estimated from the measurement-only
-proxy, converted to targets, and then smoothed before being applied.  The plot
-therefore shows the parameters actually seen by the MEKF rather than an
-obsolete carrier-frequency diagnostic from a different subsystem.
+The plotted quantities are the smoothed parameters applied to the MEKF from the
+measurement-only wave-period and acceleration-variance estimates of
+Sec.~\ref{sec:adaptation}; the separate wave-direction carrier is not part of
+this tuning path.
 
 \subsection{Bias tracking}
 
@@ -118,11 +100,9 @@ obsolete carrier-frequency diagnostic from a different subsystem.
   \IncludePGF{w3d_ou3_jonswap_medium_gyro_bias.pgf}
   \small (b) Gyroscope-bias tracking.
 \end{minipage}
-\caption{Representative true and estimated sensor-bias trajectories.  The
-accelerometer truth uses a random walk while the estimator uses a slow
-mean-reverting residual around a fixed temperature-calibration mean; agreement
-therefore measures robustness to model mismatch, not validation of the thermal
-model itself.}
+\caption{Representative sensor-bias trajectories.  Accelerometer truth uses a
+random walk, whereas the estimator uses a slow temperature-centered
+Gauss--Markov residual.}
 \label{fig:bias-tracking}
 \end{figure}
 
@@ -133,21 +113,18 @@ model itself.}
 \subsection{Hard-iron correction result}
 \label{sec:mag-hi-results}
 
-The hard-iron correction of Sec.~\ref{sec:mag-hard-iron} is evaluated under the
-deterministic protocol rather than the ten-seed OU-family comparison: one
-realization per stationary record, default sensor-error draw, and the final
-\SI{900}{s}.  With the correction enabled, yaw RMS improves on every one of the
-eight records.  The eight-record mean falls from
-\SI{1.835}{\degree} to \SI{0.822}{\degree}, and the worst record falls from
-\SI{2.162}{\degree} to \SI{1.063}{\degree}.  Pitch improves slightly, while
-roll and displacement change negligibly.  The matched OU--II baseline carries
-the same magnetic correction, so this improvement does not contribute to the
-reported OU--III-minus-OU--II translational difference.
+The hard-iron correction is evaluated under the deterministic protocol: one
+realization per stationary record, the default sensor-error draw, and the final
+\SI{900}{s}.  Enabling it reduces yaw RMS on all eight records; the mean falls
+from \SI{1.835}{\degree} to \SI{0.822}{\degree} and the worst case from
+\SI{2.162}{\degree} to \SI{1.063}{\degree}.  Pitch changes slightly, while roll
+and displacement are negligible.  Because matched OU--II uses the same magnetic
+correction, this effect does not contribute to the reported
+OU--III-minus-OU--II translational difference.
 
 \begin{table}[t]
   \centering
-  \caption{Yaw RMS with the continuous hard-iron correction disabled and
-           enabled (deterministic protocol, final \SI{900}{s}).}
+  \caption{Hard-iron correction effect on attitude RMS.}
   \label{tab:mag-hi-yaw}
   \setlength{\tabcolsep}{4pt}
   \renewcommand{\arraystretch}{1.08}
@@ -182,13 +159,11 @@ reported OU--III-minus-OU--II translational difference.
   \end{tabular}
 \end{table}
 
-The result is conditional on the shipped calibration draw.  Additional draws
-include misalignment-dominated cases in which an additive hard-iron estimator
-can regress, because soft-iron and misalignment terms can alias into the fitted
-offset while still satisfying the residual gate.  This negative result is the
-reason the article does not promote the correction to a complete magnetometer
-calibration method; multi-heading excitation is required to identify the larger
-distortion model.
+This result is conditional on the reported calibration draw.  Additional
+misalignment-dominated draws can regress because soft-iron and misalignment
+terms alias into the additive fit while satisfying its residual gate.  The
+correction is therefore not claimed as a complete magnetometer calibration;
+full distortion identification requires multi-heading excitation.
 
 \subsection{Embedded portability}
 \label{sec:real-hardware-platform}
@@ -199,12 +174,10 @@ The same estimator source compiles and executes on an M5Stack AtomS3R
 \begin{figure}[!t]
   \centering
   \includesvg[width=0.25\columnwidth,inkscapelatex=false]{AtomS3R_device}
-  \caption{M5Stack AtomS3R device based on the ESP32--S3 MCU, used as the
-  embedded real-hardware validation target.}
+  \caption{M5Stack AtomS3R embedded validation target.}
   \label{fig:atoms3r-platform}
 \end{figure}
 
-This establishes functional source portability only.  Processor load, memory
-use, power, deadline margin, thermal behavior, and externally referenced
-wave-reconstruction accuracy were not measured in the reported study and are
-not inferred from successful execution.
+This establishes functional source portability only.  Processor load, memory,
+power, deadline margin, thermal behavior, and externally referenced
+reconstruction accuracy were not measured.

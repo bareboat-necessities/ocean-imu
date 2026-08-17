@@ -439,24 +439,6 @@ band supplies exactly the acceleration-amplitude similarity required by
 Theorem~\ref{thm:jonswap-tuner-similarity}.
 \end{remark}
 
-\begin{remark}[Consistency with the OU regularizer scale]
-\label{rem:jonswap-ou-consistency}
-Combining the two tuner-input similarities gives
-\begin{equation}
- \sigma_{aw,\star}\tau_\star^3
- \propto
- \frac{H_s}{\omega_p}.
-\label{eq:jonswap-sigma-tau3-scale}
-\end{equation}
-This is a useful physical consistency check: longer, larger seas produce a
-larger integral-regularization scale.  Equation
-\eqref{eq:jonswap-sigma-tau3-scale} is \emph{not} the derivation of the cubic
-law.  The law follows from the OU chain and
-Theorem~\ref{thm:ou-regularized-rs}; JONSWAP is used only to motivate how the
-measurement-derived targets $\sigma_{aw,\star}$ and $\tau_\star$ should vary
-with sea state.
-\end{remark}
-
 \subsubsection{Physical meaning of the three tuner channels}
 \label{sec:jonswap-tuner-meaning}
 
