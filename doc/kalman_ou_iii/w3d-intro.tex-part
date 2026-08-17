@@ -13,7 +13,8 @@ Recent heave estimators include discrete Kalman reconstruction, adaptive IMU
 filtering, nonlinear observers, and spectral approaches
 \cite{Reis2023_DiscreteKalmanHeave,Lu2023_AdaptiveDelayFreeHeave,
 Li2025_HeaveCKF,YurovskyKudinov2025_IMUwaves,Hope2025_SFY}.  First-order
-Gauss--Markov acceleration models are classical
+Gauss--Markov acceleration models, including the Ornstein--Uhlenbeck process
+itself, are classical
 \cite{UhlenbeckOrnstein1930_OU,Singer1970_ManeuverModel}.  This work embeds such
 a prior in a fully specified three-dimensional quaternion MEKF with an
 integral-displacement state, covariance-consistent regularization, and an
