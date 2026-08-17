@@ -55,7 +55,7 @@ After an accepted correction, additive states are injected as
 \hat{\vct{b}}_a &\leftarrow \hat{\vct{b}}_a+\delta\hat{\vct{b}}_a.
 \label{eq:additive-state-injection}
 \end{align}
-Disabled bias terms are omitted.  The left-multiplicative quaternion injection
+The left-multiplicative quaternion injection
 then uses
 \begin{equation}
 q\leftarrow\exp_q\!\left(\tfrac12\delta\hat{\vct{\theta}}\right)\otimes q.

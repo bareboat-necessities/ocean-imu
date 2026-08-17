@@ -146,7 +146,7 @@ waves-from direction is obtained by adding $180^\circ$.
 \subsection{Attitude handoff}
 \label{sec:proxy-handoff}
 The direction stage does not estimate the vessel attitude itself.  In the
-integrated implementation, a private gyro--accelerometer observer supplies
+integrated implementation, a complementary gyro--accelerometer observer supplies
 levelled tilt during startup and the navigation MEKF supplies attitude after
 handoff.  The direction signals are resolved against the projected bow axis,
 so arbitrary yaw of the startup tilt observer does not enter the horizontal

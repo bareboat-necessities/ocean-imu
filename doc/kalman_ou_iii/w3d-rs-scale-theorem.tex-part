@@ -490,7 +490,7 @@ acceleration scale obeys the $H_s\omega_p^2$ similarity of
 Theorem~\ref{thm:jonswap-tuner-similarity}.
 
 The band is driven by the vertical acceleration $a^{P}_{\uparrow}$ of the
-private complementary observer, Eq.~\eqref{eq:proxy-vertical}.  That observer
+complementary observer, Eq.~\eqref{eq:proxy-vertical}.  That observer
 reads only gyro and accelerometer measurements and no
 OU--III estimator state, so the sigma channel preserves the exogenous tuner
 schedule used by the stability analysis.  The band corners use the previous

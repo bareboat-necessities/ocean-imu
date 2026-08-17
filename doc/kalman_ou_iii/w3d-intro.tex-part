@@ -3,7 +3,7 @@
 
 Marine inertial wave-motion estimation is more difficult than attitude
 estimation because accelerometer bias, attitude error, and low-frequency model
-mismatch integrate into velocity and displacement, whereas the desired motion
+mismatch integrate into velocity and displacement, whereas the motion
 is itself oscillatory.  The difficulty is strongest horizontally, where
 tilt-induced gravity leakage competes with real surge and sway, and must be
 controlled across sea states with widely varying periods and acceleration
@@ -26,8 +26,8 @@ The contributions are:
   \item a 21-state left-multiplicative quaternion MEKF coupling attitude,
         gyro and residual accelerometer bias, and three exact OU-driven
         $[v,p,S,a_w]$ chains, with $S$ providing soft low-frequency drift
-        control rather than a direct position constraint;
-  \item a constructive local stability result for the normal Live recursion,
+        control;
+  \item a local stability result for the normal Live recursion,
         combining finite-horizon observability of the translational and
         attitude--gyro-bias blocks, a finite-correlation residual-bias model,
         bounded Riccati covariance, UES of the homogeneous error recursion,
@@ -37,7 +37,7 @@ The contributions are:
         acceleration level from measurement-only signals and schedules the OU
         prior and integral regularizer.  Scaling analysis identifies the
         relevant variables; full-filter experiments select the deployed
-        engineering law and coefficients;
+        adaptation law and coefficients;
   \item a versioned paired evaluation of vertical and horizontal displacement,
         attitude, bias tracking, stationary and changing seas, and adaptation
         channels.  With the current isotropic configuration, OU--III reduces
@@ -50,6 +50,7 @@ The contributions are:
 Here, $\vct p$ denotes bounded wave-induced motion about a local reference, not
 geodetic position; GNSS-aided absolute trajectory estimation is not evaluated.
 The evidence is primarily synthetic, and the ESP32--S3 exercise establishes
-source portability only.  Thermal-calibration performance is not evaluated,
-while startup and reconfiguration events remain outside the Live-state ISS
-theorem.
+source portability only.
+The startup and reconfiguration events remain outside
+the Live-state ISS theorem.
+Thermal-calibration performance is not evaluated.

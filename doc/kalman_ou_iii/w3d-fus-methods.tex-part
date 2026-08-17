@@ -13,7 +13,7 @@ or attitude state is fed back into the tuner.
 
 Wave statistics require levelled vertical acceleration, but using MEKF attitude
 would make the schedule state dependent.  The implementation therefore uses a
-private Mahony complementary observer
+Mahony complementary observer
 \cite{Mahony2008NonlinearComplementary} driven only by raw gyro and
 accelerometer measurements,
 \begin{equation}

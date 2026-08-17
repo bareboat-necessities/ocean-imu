@@ -7,9 +7,8 @@ observability of the translational and attitude/gyro-bias subsystems and
 contraction of the residual-bias dynamics yield uniform detectability of the
 21-state model.  With bounded Riccati covariance, the homogeneous error
 recursion is UES; a local ISS bound then follows from the quadratic EKF
-remainder.  Startup, hard resets, re-lock logic, arbitrary rejection patterns,
-and the legacy raw $P_{a_wa_w}\leftarrow\Sigma_{aw}^{\mathrm{stat}}$
-covariance replacement are excluded.  The default prediction-time PSD
+remainder.  Startup, hard resets, re-lock logic, arbitrary rejection patterns.
+The default prediction-time PSD
 covariance inflation remains within the result as a bounded positive-semidefinite
 addition to process covariance.
 
@@ -21,14 +20,14 @@ The adaptive wave variables are exogenous signals,
 \vartheta(t)=\bigl(\tau(t),\sigma_{aw}(t),r_S(t)\bigr).
 \label{eq:iss-schedule}
 \end{equation}
-The wave-period and variance estimators use raw IMU measurements and the private
+The wave-period and variance estimators use raw IMU measurements and the
 Mahony solution of Eqs.~\eqref{eq:proxy-mahony}--%
 \eqref{eq:proxy-vertical}, which never reads OU--III state or covariance; the
 information flow is therefore proxy~$\to$~MEKF only.  The same proxy supplies
 startup attitude, magnetometer gating, and the magnetic-reference frame
 (Sec.~\ref{sec:startup-policy}).  The initial handoff and the second magnetic
 acquisition at $t=\SI{90}{s}$ are hard reconfiguration events and define Live
-interval boundaries; both precede the \SI{900}{s} scoring window.
+interval boundaries.
 
 The online schedule is also predictable with respect to the current innovation.
 Let $\mathcal F_k$ denote measurements through IMU sample $k$.  Step $k$ uses

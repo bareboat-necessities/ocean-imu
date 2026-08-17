@@ -191,7 +191,7 @@ not rotate the hull frame to explain each wave-cycle acceleration.
 
 \subsection{Private Mahony proxy}
 
-The deployed OU--II, OU--III, and TFG wrappers use a private complementary attitude
+The deployed OU--II, OU--III, and TFG wrappers use a complementary attitude
 observer based on the nonlinear complementary-filter structure of
 Mahony--Hamel--Pflimlin \cite{Mahony2008NonlinearComplementary}.  In generic notation,
 its gravity correction has the form
@@ -453,7 +453,7 @@ changes measurement-model parameters and lets the estimator dynamics move yaw.
 \section{Why the Calibration Remains Exogenous}
 \label{sec:exogenous}
 
-The hard-iron estimator reads two quantities: raw magnetometer samples and the private
+The hard-iron estimator reads two quantities: raw magnetometer samples and the
 proxy's yaw-stripped tilt.  It reads no OU--II state, no OU--III state, and no TFG
 state.  Its output changes magnetic measurement preprocessing/reference parameters;
 it does not add a stochastic state, covariance block, or process model to any of the

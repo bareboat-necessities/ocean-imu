@@ -11,7 +11,7 @@ or resetting Kalman covariance.
 \subsection{Why the standing error is a gauge error}
 \label{sec:mag-gauge}
 
-Let $\mat A_i$ be the yaw-stripped body-to-level rotation from the private
+Let $\mat A_i$ be the yaw-stripped body-to-level rotation from the
 Mahony proxy, $\vct B_\ell$ the level-frame field, and $\vct b_m$ a body-fixed
 additive offset.  The raw measurement is
 \begin{equation}

@@ -16,8 +16,7 @@ q &
 \vct{b}_a^{\top}
 \end{bmatrix}^{\!\top}.
 \end{equation}
-The quaternion is propagated and corrected on $\Sph^3$, not by vector
-addition.
+The quaternion is propagated and corrected on $\Sph^3$.
 
 The covariance is defined for the local error state
 \begin{equation}
