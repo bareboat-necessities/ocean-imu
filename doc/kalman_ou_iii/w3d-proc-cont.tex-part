@@ -1,14 +1,13 @@
 \section{Process Model (Continuous Time)}
 \label{sec:proc}
 
-We separate (i) the quaternion attitude subsystem used by the
-left-multiplicative MEKF and (ii) the linear OU-driven kinematic chain.  The
-nominal quaternion is propagated on the manifold, while the covariance is
-propagated for the additive error state of \eqref{eq:state-vector}.
+The nominal quaternion is propagated on the manifold, while covariance evolves
+for the additive error state of \eqref{eq:state-vector}; the translational
+subsystem is an OU-driven linear chain.
 
 \subsection{Attitude subsystem}
 Let $\vct{\omega}_m$ be measured body angular rate and $\vct{b}_g$ the nominal
-gyroscope bias.  The stored quaternion maps world to body and obeys
+gyroscope bias.  The world-to-body quaternion obeys
 \begin{equation}
 \dot q=-\tfrac12\,\Omega(\vct{\omega}_m-\vct{b}_g)q,
 \qquad q\in\Sph^3,
@@ -31,7 +30,7 @@ Gyroscope bias follows
 =\matg{Q}_{bg}\,\delta(t-s).
 \end{equation}
 For the left-multiplicative local error,
-$q^+=\exp_q(\tfrac12\delta\vct{\theta})\otimes q$, the first-order dynamics are
+$q^+=\exp_q(\tfrac12\delta\vct{\theta})\otimes q$,
 \begin{equation}
 \dot{\delta\vct{\theta}}
 =-\Skew{\hat{\vct{\omega}}}\,\delta\vct{\theta}
@@ -45,10 +44,8 @@ where
 \E[\vct{n}_g(t)\vct{n}_g^{\top}(s)]
 =\matg{Q}_g\,\delta(t-s).
 \]
-Thus $\matg{Q}_g$ is a continuous-time spectral-density matrix.  If a
-simulator specifies independent per-sample angular-rate noise with standard
-deviation $\vct{\sigma}_{g,\mathrm{samp}}$ at sample interval $h$, the
-corresponding density passed to the filter is
+If a simulator specifies per-sample angular-rate noise
+$\vct{\sigma}_{g,\mathrm{samp}}$ at interval $h$, the continuous density is
 \begin{equation}
 \vct{\sigma}_{g,\mathrm{dens}}
 =\vct{\sigma}_{g,\mathrm{samp}}\sqrt{h},
@@ -56,8 +53,7 @@ corresponding density passed to the filter is
 \matg{Q}_g=\diag(\vct{\sigma}_{g,\mathrm{dens}}^2).
 \label{eq:gyro-density-conversion}
 \end{equation}
-This distinction prevents a sample-rate change from silently changing the
-attitude process covariance.
+This conversion preserves process covariance under sample-rate changes.
 
 \subsection{Linear kinematic chain with OU acceleration}
 The world-frame chain is
@@ -68,7 +64,7 @@ The world-frame chain is
 \qquad
 \dot{\vct{S}}=\vct{p}.
 \end{equation}
-The latent acceleration is assigned the vector OU prior
+The latent acceleration has vector OU prior
 \begin{equation}
 \begin{aligned}
  d\vct{a}_w
@@ -79,38 +75,31 @@ The latent acceleration is assigned the vector OU prior
 \end{aligned}
 \label{eq:ou-ct}
 \end{equation}
-Here $\tau>0$ is the correlation time and
-$\matg{\Sigma}_{aw}^{\mathrm{stat}}\succeq0$ is the stationary acceleration
-covariance.
+Here $\tau>0$ and $\matg{\Sigma}_{aw}^{\mathrm{stat}}\succeq0$ are the
+correlation time and stationary acceleration covariance.
 
-Ocean-wave acceleration is not asserted to be an OU process. Equation
-\eqref{eq:ou-ct} is a low-order stationary Gauss--Markov prior
-\cite{Maybeck1979_StochasticModels,Jazwinski1970_Filtering}. For each scalar
-axis it belongs to the Singer first-order acceleration-model family under the
-identification $\alpha=1/\tau$; here the diffusion is parameterized directly by
-the desired stationary covariance
-\cite{Singer1970_ManeuverModel}. It is useful because it is Markov,
-mean-reverting, bounded in variance, and analytically discretizable. For a
-scalar component with stationary variance $\sigma_{aw}^2$,
+Equation~\eqref{eq:ou-ct} is a low-order Gauss--Markov prior, not an assertion
+that ocean-wave acceleration is OU
+\cite{Maybeck1979_StochasticModels,Jazwinski1970_Filtering}.  Per axis it is a
+Singer first-order acceleration model with $\alpha=1/\tau$, parameterized by
+stationary covariance \cite{Singer1970_ManeuverModel}.  For stationary variance
+$\sigma_{aw}^2$,
 \[
 S_{a_w}(\omega)=\frac{2\sigma_{aw}^2\tau}{1+\omega^2\tau^2}.
 \]
-This is a zero-centered first-order low-pass spectrum.  The empirical relation
-between $\tau$ and a tracked wave period is therefore a tuning rule for the
-prior, not a claim that the OU spectrum has a resonant peak at the wave
-frequency.
+The spectrum is zero-centered and nonresonant; relating $\tau$ to wave period is
+therefore a tuning rule for the prior, not a spectral identity.
 
 \subsection{Temperature-centered accelerometer-bias OU process}
-The physical accelerometer bias is decomposed into a deterministic calibrated
-temperature mean and a stochastic residual,
+The physical bias is decomposed into calibrated temperature mean and stochastic
+residual,
 \begin{equation}
 \vct b_a^{\mathrm{tot}}(T)
 =\underbrace{\vct k_a(T-T_{\mathrm{ref}})}_{\bar{\vct b}_a(T)}
 +\vct b_a .
 \label{eq:ba-temperature-decomposition}
 \end{equation}
-The stored state $\vct b_a$ is the residual about that curve.  It follows a
-slow first-order Gauss--Markov process
+The residual state follows
 \begin{equation}
  d\vct b_a
  =-\frac{1}{\tau_b}\vct b_a\,dt+d\vct\eta_b,
@@ -119,25 +108,20 @@ slow first-order Gauss--Markov process
 =\matg Q_{ba}\,dt,
 \label{eq:ba-ou}
 \end{equation}
-with finite correlation time $\tau_b>0$.  Its stationary covariance is
+with stationary covariance
 \begin{equation}
 \matg\Sigma_b^{\mathrm{stat}}=\frac{\tau_b}{2}\matg Q_{ba}.
 \label{eq:ba-ou-stationary}
 \end{equation}
-
-The temperature curve is not itself made stochastic inside the Kalman state.
-Temperature-sensor error, imperfect coefficients, thermal lag, and hysteresis
-therefore enter as model mismatch; in the local stability result they are
-bounded exogenous inputs.  During the explicit warmup/frozen-bias mode the
-implementation retains its historical semantics and freezes the residual bias
-state and covariance rather than applying the OU transition.
+Temperature-sensor error, calibration error, lag, and hysteresis remain model
+mismatch and enter the local stability analysis as bounded exogenous inputs.
+During warmup/frozen-bias mode, the residual state and covariance are frozen
+rather than propagated by the OU transition.
 
 \subsection{Unified local-error SDE}
-Over one sample interval, $\hat{\vct{\omega}}$ is treated as constant.  With
-block ordering
+Over one sample, $\hat{\vct{\omega}}$ is treated as constant.  With ordering
 $[\delta\vct{\theta},\delta\vct{b}_g,\delta\vct{v},
-\delta\vct{p},\delta\vct{S},\delta\vct{a}_w,\delta\vct{b}_a]$, the local error
-model is
+\delta\vct{p},\delta\vct{S},\delta\vct{a}_w,\delta\vct{b}_a]$,
 \begin{equation}
 \dot{\delta\vct{x}}=\mat{F}\,\delta\vct{x}+\mat{L}\vct{w},
 \end{equation}
@@ -156,15 +140,11 @@ where
 \end{bmatrix}.
 }
 \]
-The driving spectral density is assembled from $\matg{Q}_g$,
-$\matg{Q}_{bg}$, $2\matg{\Sigma}_{aw}^{\mathrm{stat}}/\tau$, and
-$\matg{Q}_{ba}$.
-
-The covariance propagation satisfies
+The driving spectral density combines $\matg{Q}_g$, $\matg{Q}_{bg}$,
+$2\matg{\Sigma}_{aw}^{\mathrm{stat}}/\tau$, and $\matg{Q}_{ba}$, with
 \begin{equation}
-\dot{\mat{P}}=\mat{F}\mat{P}+\mat{P}\mat{F}^{\top}+\matg{Q}_c,
+\dot{\mat{P}}=\mat{F}\mat{P}+\mat{P}\mat{F}^{\top}+\matg{Q}_c.
 \label{eq:lyap-prop}
 \end{equation}
-which is discretized in the following sections.  Measurement updates use the
-Joseph form, followed by the MEKF reset transformation described in
-Sec.~\ref{sec:meas-update-structure}.
+The following sections discretize this flow; measurement updates use Joseph
+form followed by the MEKF reset of Sec.~\ref{sec:meas-update-structure}.
