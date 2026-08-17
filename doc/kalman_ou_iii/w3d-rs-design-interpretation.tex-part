@@ -1,15 +1,11 @@
 \subsection{From analysis to a candidate sea-state schedule}
 \label{sec:riccati-similarity-design-guidance}
 
-The pure regularization analysis of Sec.~\ref{sec:integral-regularization-theory}
-and the sea-state similarity arguments above constrain a sensible scheduler
-without uniquely determining it.  Three ideas survive the model reductions.
-First, $\sigma_{aw}\tau^3$ is the natural scale of the third-integral state.
-Second, scaling the pseudo-update period with $\tau$ keeps the number of
-regularization updates per OU correlation time approximately fixed.  Third,
-regularization is a drift--distortion compromise rather than covariance matching
-to a true sensor.  These principles motivated the implementation family that
-was then calibrated and tested with the complete MEKF.
+The reduced analyses support three scheduler principles without uniquely fixing
+a law: $\sigma_{aw}\tau^3$ sets the third-integral scale, scaling pseudo-update
+period with $\tau$ approximately preserves updates per OU correlation time, and
+regularization trades drift suppression against signal distortion.  These
+principles define the implementation family calibrated with the complete MEKF.
 
 \subsubsection{Candidate wrapper law}
 \label{sec:riccati-deployed-cadence}
@@ -18,45 +14,39 @@ The deployed wrapper forms the cubic base target
 \begin{equation}
 r_S^{\mathrm{base}}=c_R\sigma_{aw}\tau^3,
 \end{equation}
-and scales the pseudo-update cadence with the applied OU time scale,
+and scales pseudo-update cadence with the applied OU time scale,
 \begin{equation}
 T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max}).
 \end{equation}
-To preserve the historical pseudo-measurement information rate when that cadence
-moves, the standard deviation passed to the filter is
+To preserve the historical pseudo-measurement information rate as cadence
+changes, the filter receives
 \begin{equation}
 r_{S,\mathrm{filter}}
 =r_S^{\mathrm{base}}\sqrt{\frac{T_{S,0}}{T_S}}.
 \label{eq:deployed-rs-summary}
 \end{equation}
-Away from clamps, this produces the implemented filter-input dependence
+Away from clamps,
 \begin{equation}
 \boxed{
 r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}.}
 \label{eq:deployed-effective-law}
 \end{equation}
-Equation~\eqref{eq:deployed-effective-law} is an engineering schedule, not the
-closed-form optimum of Eq.~\eqref{eq:reduced-optimal-rs}.  In particular, the
-reduced MSE theorem contains the true-motion moment $m_{-4}$ and a coupled
-$q_{\mathrm{eff}}$ that are not available as independent online quantities in
-the deployed MEKF.  The scheduler therefore uses the directly estimated wave
-time scale and acceleration level, applies bounded smoothing, and calibrates its
-coefficient from full-filter experiments.
+This engineering schedule is not the closed-form optimum of
+Eq.~\eqref{eq:reduced-optimal-rs}, which depends on $m_{-4}$ and coupled
+$q_{\mathrm{eff}}$ not available as independent online quantities.  The
+implementation instead uses estimated wave time scale and acceleration level,
+bounded smoothing, and a coefficient calibrated by full-filter experiments.
 
 \subsubsection{Empirical amplitude choice}
 \label{sec:riccati-law-ablation}
 
-The implementation exposes the amplitude dependence independently of the common
-time-scale factor.  The paired exponent ablation reported with the validation
-study finds that retaining a linear dependence on $\sigma_{aw}$ performs best
-among the tested amplitude exponents.  This is evidence for the engineering
-schedule over the evaluated sea family; it does not identify a unique physical
-decomposition of the full estimator's low-frequency acceleration error into
-sensor noise, attitude leakage, residual bias, and model mismatch.
+Paired exponent ablation finds that linear dependence on $\sigma_{aw}$ performs
+best among the tested amplitude exponents.  This supports the deployed schedule
+for the evaluated sea family but does not uniquely decompose low-frequency
+acceleration error into sensor noise, attitude leakage, residual bias, and model
+mismatch.
 
-The coefficients, bounds, averaging horizons, and one-sample staging used by
-the actual scheduler are specified in Sec.~\ref{sec:adaptation}.  Keeping that
-implementation description separate from the reduced analysis makes the claim
-hierarchy explicit: theory identifies the mechanism and useful scaling
-variables; complete-estimator experiments select and validate the deployed
-schedule.
+Section~\ref{sec:adaptation} specifies the deployed coefficients, bounds,
+averaging horizons, and one-sample staging.  The separation is intentional:
+theory identifies mechanisms and scaling variables; complete-estimator
+experiments select and validate the engineering schedule.
