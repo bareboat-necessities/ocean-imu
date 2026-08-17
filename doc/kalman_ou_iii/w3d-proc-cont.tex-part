@@ -92,14 +92,8 @@ therefore a tuning rule for the prior, not a spectral identity.
 
 \subsection{Temperature-centered accelerometer-bias OU process}
 The physical bias is decomposed into calibrated temperature mean and stochastic
-residual,
-\begin{equation}
-\vct b_a^{\mathrm{tot}}(T)
-=\underbrace{\vct k_a(T-T_{\mathrm{ref}})}_{\bar{\vct b}_a(T)}
-+\vct b_a .
-\label{eq:ba-temperature-decomposition}
-\end{equation}
-The residual state follows
+residual by Eq.~\eqref{eq:acc-bias-temperature-model}.  The residual state
+follows
 \begin{equation}
  d\vct b_a
  =-\frac{1}{\tau_b}\vct b_a\,dt+d\vct\eta_b,

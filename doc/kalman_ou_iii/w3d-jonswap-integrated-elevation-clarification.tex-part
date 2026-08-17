@@ -42,21 +42,12 @@ Hence
    \frac{S_\eta^{(2)}(\omega)}{\omega^2}\,d\omega,
 \label{eq:jonswap-integrated-elevation-variance}
 \end{equation}
-and the fixed-shape JONSWAP form gives
-\begin{equation}
- \sigma_{S,\mathrm{phys}}
- \propto \frac{H_s}{\omega_p}.
-\label{eq:jonswap-integrated-elevation-scale}
-\end{equation}
+and fixed-shape JONSWAP gives
+$\sigma_{S,\mathrm{phys}}\propto H_s/\omega_p$.
 
 Inside the estimator, the OU chain instead has natural scale
-$\sigma_{aw}\tau^3$.  Theorem~\ref{thm:jonswap-tuner-similarity} gives
-\begin{equation}
- \sigma_{aw,\star}\propto H_s\omega_p^2,
- \qquad
- \tau_\star\propto\omega_p^{-1},
-\end{equation}
-and therefore
+$\sigma_{aw}\tau^3$.  The tuner-input scaling is already given by
+Eq.~\eqref{eq:jonswap-ou-target-scaling}, and therefore
 \begin{equation}
  \sigma_{aw,\star}\tau_\star^3
  \propto\frac{H_s}{\omega_p}

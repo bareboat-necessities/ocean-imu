@@ -26,7 +26,8 @@ For the left-multiplicative convention,
 \frac{\partial\vct{f}_b}{\partial\delta\vct{\theta}}
 &=-\Skew{\hat{\vct{f}}_{\mathrm{cog},b}},&
 \frac{\partial\vct{f}_b}{\partial\vct{a}_w}&=\Rot_{wb},&
-\frac{\partial\vct{f}_b}{\partial\vct{b}_a}&=\Id,
+\frac{\partial\vct{f}_b}{\partial\vct{b}_a}&=\Id.
+\label{eq:acc-meas-jacobians}
 \end{align}
 where
 $\hat{\vct{f}}_{\mathrm{cog},b}=\Rot_{wb}(\hat{\vct{a}}_w-\vct{g}_w)$.
@@ -46,6 +47,7 @@ and
 \begin{equation}
 \frac{\partial\vct{m}_b}{\partial\delta\vct{\theta}}
 =-\Skew{\hat{\vct{m}}_b}.
+\label{eq:mag-meas-jacobian}
 \end{equation}
 
 \subsection{Integral pseudo-measurement}
@@ -106,7 +108,7 @@ $\vct{r}_b$, the predicted specific force includes
 \end{equation}
 The angular-rate and angular-acceleration terms are treated as known inputs.
 Their second-order attitude-uncertainty coupling is neglected, so the state
-Jacobians remain those of \eqref{eq:acc-meas}; $\vct r_b=0$ disables the
-correction.
+Jacobians remain those of \eqref{eq:acc-meas-jacobians}; $\vct r_b=0$ disables
+the correction.
 
 The optional steady-heel transform is disabled in all reported results.

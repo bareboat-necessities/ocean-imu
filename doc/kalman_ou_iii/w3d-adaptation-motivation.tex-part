@@ -6,18 +6,12 @@
 
 The remaining design question is how sea state should schedule the OU time
 scale $\tau$, stationary acceleration scale $\sigma_{aw}$, and integral-state
-regularization $r_S$.  Dimensional similarity of the OU-driven chain gives
-\[
-a_w\sim\sigma_{aw},\qquad
-v\sim\sigma_{aw}\tau,\qquad
-p\sim\sigma_{aw}\tau^2,\qquad
-S\sim\sigma_{aw}\tau^3.
-\]
-The results below make this scaling exact for the OU prior and relate observable
-wave statistics to candidate scheduler coordinates.  Because the unregularized
-third integral is nonstationary, similarity alone does not determine the
-pseudo-measurement covariance or the full-MEKF optimum; the deployed
-coefficients are selected with complete-estimator experiments.
+regularization $r_S$.  The OU similarity theorem below makes the resulting
+state scales exact and relates observable wave statistics to candidate
+scheduler coordinates.  Because the unregularized third integral is
+nonstationary, similarity alone does not determine the pseudo-measurement
+covariance or the full-MEKF optimum; the deployed coefficients are selected
+with complete-estimator experiments.
 
 \input{w3d-rs-scale-theorem.tex-part}
 \input{w3d-jonswap-integrated-elevation-clarification.tex-part}

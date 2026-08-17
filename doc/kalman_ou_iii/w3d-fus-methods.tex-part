@@ -193,12 +193,11 @@ and integral pseudo-measurement standard deviation,
 \vct r_S=
 \begin{bmatrix}
 r_{S,\mathrm{filter}}&r_{S,\mathrm{filter}}&r_{S,\mathrm{filter}}
-\end{bmatrix}^{\top},
-\qquad
-\mat R_S=\diag(\vct r_S\odot\vct r_S).
+\end{bmatrix}^{\top}.
 \label{eq:fus-rs-anisotropy}
 \end{equation}
-Paired results support this isotropic regularization over the tested directional
+The corresponding covariance follows from Eq.~\eqref{eq:RS-from-rS}.  Paired
+results support this isotropic regularization over the tested directional
 records.  Universal separate $x$ and $y$ factors are not inferred because surge
 and sway are heading-dependent projections of the same directional motion.
 The larger horizontal disturbance is addressed in

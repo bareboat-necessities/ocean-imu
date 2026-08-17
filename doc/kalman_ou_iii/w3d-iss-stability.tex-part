@@ -123,22 +123,9 @@ Lemma~\ref{lem:iss-axis-uco} is proved directly for these unequal gaps.
 
 \subsection{Exact Live-state linearized structure}
 
-With both biases enabled, order the local error state as
-\begin{equation}
-\vct e_{21}=
-\begin{bmatrix}
-\delta\vct\theta^\top &
-\widetilde{\vct b}_g^\top &
-\widetilde{\vct v}^\top &
-\widetilde{\vct p}^\top &
-\widetilde{\vct S}^\top &
-\widetilde{\vct a}_w^\top &
-\widetilde{\vct b}_a^\top
-\end{bmatrix}^{\!\top}.
-\label{eq:iss-error-vector}
-\end{equation}
-Here $\vct b_a$ is the stochastic residual in
-Eq.~\eqref{eq:ba-temperature-decomposition}; the deterministic temperature mean
+With both biases enabled, let $\vct e_{21}$ use the local-error ordering of
+Eq.~\eqref{eq:state-vector}.  Here $\vct b_a$ is the stochastic residual in
+Eq.~\eqref{eq:acc-bias-temperature-model}; the deterministic temperature mean
 is not a Kalman state.
 
 The prediction is block diagonal before covariance coupling through
@@ -150,47 +137,14 @@ measurements,
 \label{eq:iss-F21}
 \end{equation}
 The 18-state performance block consists of attitude/gyro bias and the three
-OU--III translational chains. For one IMU interval,
-\begin{equation}
-\mat F_{A,k}=
-\begin{bmatrix}
-\mat R_k&\mat B_k\\
-0&\mat I_3
-\end{bmatrix},
-\qquad
-\mat R_k=e^{-[\widehat{\vct\omega}_k]_\times h_k},
-\qquad
-\mat B_k=\int_0^{h_k}e^{-[\widehat{\vct\omega}_k]_\times s}\,ds.
-\label{eq:iss-att-bg-transition}
-\end{equation}
-For one translational axis and state order $[v,p,S,a]^\top$,
-\begin{equation}
-\mat\Phi_L(h,\tau)=
-\begin{bmatrix}
-1&0&0&\phi_{va}\\
-h&1&0&\phi_{pa}\\
-h^2/2&h&1&\phi_{Sa}\\
-0&0&0&e^{-h/\tau}
-\end{bmatrix},
-\label{eq:iss-implemented-phi}
-\end{equation}
-with the coefficients derived in Sec.~\ref{sec:block-Phi-Qd}.
-
-The vector-measurement Jacobians are
-\begin{align}
-\delta\vct y_a
-&=-[\widehat{\vct f}_b]_\times\delta\vct\theta
- +\mat R_{wb}\widetilde{\vct a}_w
- +\widetilde{\vct b}_a,
-\label{eq:iss-acc-full-H}\\
-\delta\vct y_m
-&=-[\widehat{\vct m}_b]_\times\delta\vct\theta,
-\label{eq:iss-mag-full-H}\\
-\delta\vct y_S&=\widetilde{\vct S}.
-\label{eq:iss-S-H}
-\end{align}
-The optional lever-arm term adds a bounded gyro-bias Jacobian and does not
-weaken the argument below; it is omitted from the proof notation.
+OU--III translational chains.  Its attitude/gyro-bias transition is
+Eq.~\eqref{eq:phi-att-bias} evaluated at $h_k$, and each translational-axis
+transition is Eq.~\eqref{eq:phi-axis-ou3} with the corresponding $h_k$ and
+$\tau_k$.  The vector-measurement Jacobians are those of
+Eqs.~\eqref{eq:acc-meas-jacobians}, \eqref{eq:mag-meas-jacobian}, and
+\eqref{eq:HS-selector}.  The optional lever-arm term adds a bounded gyro-bias
+Jacobian and does not weaken the argument below; it is omitted from the proof
+notation.
 
 \subsection{Uniform observability of the OU--III translational block}
 
@@ -431,14 +385,8 @@ $\rho_b\to1$ and the uniform detectability margin disappears.
 
 For the residual bias OU process, let $\mat Q_{ba}$ be the continuous driving
 spectral density retained by the source-compatible
-\texttt{set\_Q\_bacc\_rw} API. Exact discretization gives
-\begin{equation}
-\mat Q_{d,b}(h_k)
-=\frac{\tau_b}{2}
-\left(1-e^{-2h_k/\tau_b}\right)\mat Q_{ba}.
-\label{eq:iss-Qdb}
-\end{equation}
-If
+\texttt{set\_Q\_bacc\_rw} API.  Its exact discrete covariance is
+Eq.~\eqref{eq:ba-ou-Qd} evaluated at $h=h_k$.  If
 \begin{equation}
 0<\underline q_b\mat I\preceq\mat Q_{ba}
 \preceq\overline q_b\mat I<\infty,

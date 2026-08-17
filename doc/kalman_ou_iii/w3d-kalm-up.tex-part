@@ -16,6 +16,7 @@ define
 \vct{r}&=\vct{z}-h(\hat{\vct{x}}^-),\\
 \matg{\Lambda}&=\mat{C}\mat{P}^-\mat{C}^{\top}+\mat{R},\\
 \mat{K}&=\mat{P}^-\mat{C}^{\top}\matg{\Lambda}^{-1}.
+\label{eq:kalman-gain}
 \end{align}
 The error-state and Joseph covariance updates are
 \begin{equation}
@@ -36,27 +37,12 @@ where $\vct{A}\in\mathbb{R}^6$,
 $\vct{L}=[\delta\vct{v},\delta\vct{p},\delta\vct{S},
 \delta\vct{a}_w]\in\mathbb{R}^{12}$, and
 $\vct{B}=\delta\vct{b}_a\in\mathbb{R}^3$.  Each correction therefore requires
-one $3\times3$ innovation solve,
-\begin{equation}
-\mat{K}=(\mat{P}^-\mat{C}^{\top})\matg{\Lambda}^{-1},
-\end{equation}
-while cross-covariances can update state groups not directly selected by
-$\mat C$.
-
-For the magnetometer,
-\[
-\mat{C}_{\mathrm{mag}}
-=\begin{bmatrix}-\Skew{\hat{\vct{m}}_b}&0&0&0\end{bmatrix}.
-\]
-For the accelerometer,
-\[
-\mat{C}_{\mathrm{acc}}
-=\begin{bmatrix}
--\Skew{\hat{\vct{f}}_{\mathrm{cog},b}}&0&0&0&0&\Rot_{wb}&\Id
-\end{bmatrix},
-\]
-with columns ordered as in \eqref{eq:state-vector}; $\mat C_S$ selects the
-$\vct S$ block.
+the $3\times3$ innovation solve of Eq.~\eqref{eq:kalman-gain}, while
+cross-covariances can update state groups not directly selected by $\mat C$.
+The accelerometer, magnetometer, and integral-channel Jacobians are given by
+Eqs.~\eqref{eq:acc-meas-jacobians}, \eqref{eq:mag-meas-jacobian}, and
+\eqref{eq:HS-selector}, respectively, with columns ordered as in
+\eqref{eq:state-vector}.
 
 \subsection{Nominal-state injection and quaternion reset}
 After an accepted correction, additive states are injected as

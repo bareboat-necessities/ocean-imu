@@ -204,15 +204,9 @@ which is equivalently
 $\matg{Q}_{LL}=\mat{C}\otimes\matg{\Sigma}_{aw}^{\mathrm{stat}}$ for this
 ordering.
 
-The residual accelerometer-bias block uses the same finite-$\tau_b$ process as
-the continuous model and Sec.~\ref{sec:lti-disc}:
-\[
-\matg{\Phi}_{b_ab_a}(h)=e^{-h/\tau_b}\Id,
-\qquad
-\matg{Q}_{d,b}(h)=\frac{\tau_b}{2}
-\left(1-e^{-2h/\tau_b}\right)\matg{Q}_{ba}.
-\]
-Thus the discrete model retains the restoring factor required by the 21-state
+The residual accelerometer-bias block uses the exact finite-$\tau_b$
+discretization in Eqs.~\eqref{eq:ba-ou-phi}--\eqref{eq:ba-ou-Qd}.  Thus the
+discrete model retains the restoring factor required by the 21-state
 detectability result rather than reverting to the former random-walk block.
 The complete transition and process covariance are assembled blockwise while
 retaining all propagated cross-covariances in $\mat{P}$.

@@ -7,14 +7,9 @@ adds this missing term.
 
 Below the posterior acceleration correlation rate, approximate residual
 acceleration error by white noise of zero-frequency intensity
-$q_{\mathrm{eff}}$ and let the continuous-equivalent $S$ correction have
-bandwidth
-\begin{equation}
-\omega_R=\left(\frac{q_{\mathrm{eff}}}{R_ST_S}\right)^{1/6}.
-\label{eq:reduced-omega-r}
-\end{equation}
-For a wave spectrum sufficiently separated above this bandwidth, the leading
-position mean-square error is
+$q_{\mathrm{eff}}$ and use the continuous-equivalent $S$-correction bandwidth
+$\omega_R$ of Eq.~\eqref{eq:riccati-omegaR}.  For a wave spectrum sufficiently
+separated above this bandwidth, the leading position mean-square error is
 \begin{equation}
 \boxed{
 J_{\mathrm{red}}(\omega_R)

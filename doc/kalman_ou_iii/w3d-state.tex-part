@@ -48,8 +48,8 @@ where
         OU prior;
   \item $\vct{b}_a\in\mathbb{R}^3$ is residual accelerometer bias about the
         deterministic temperature-calibration curve, modeled as a slow
-        first-order Gauss--Markov/OU process.  The total bias is
-        $\vct b_a^{\mathrm{tot}}(T)=\vct k_a(T-T_{\mathrm{ref}})+\vct b_a$.
+        first-order Gauss--Markov/OU process; the total bias is defined by
+        Eq.~\eqref{eq:acc-bias-temperature-model}.
 \end{itemize}
 
 With both bias states enabled, $N_X=21$ and
