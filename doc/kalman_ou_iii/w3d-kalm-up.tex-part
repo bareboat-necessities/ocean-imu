@@ -2,8 +2,8 @@
 \label{sec:meas-update-structure}
 
 At each IMU step, the gyroscope propagates the nominal quaternion and process
-covariance.  Accelerometer, magnetometer, and integral-drift channels are
-rank--3 corrections.  For a measurement
+covariance; accelerometer, magnetometer, and integral-drift channels provide
+rank--3 corrections.  For
 \[
 \vct{z}=h(\vct{x})+\vct{\nu},
 \qquad
@@ -17,11 +17,10 @@ define
 \matg{\Lambda}&=\mat{C}\mat{P}^-\mat{C}^{\top}+\mat{R},\\
 \mat{K}&=\mat{P}^-\mat{C}^{\top}\matg{\Lambda}^{-1}.
 \end{align}
-The additive error-state correction is
+The error-state and Joseph covariance updates are
 \begin{equation}
 \delta\hat{\vct{x}}^+=\delta\hat{\vct{x}}^-+\mat{K}\vct{r},
 \end{equation}
-and covariance is updated in Joseph form,
 \begin{equation}
 \mat{P}^+=(\Id-\mat{K}\mat{C})\mat{P}^-(\Id-\mat{K}\mat{C})^{\top}
 +\mat{K}\mat{R}\mat{K}^{\top}.
@@ -29,21 +28,20 @@ and covariance is updated in Joseph form,
 \end{equation}
 
 \subsection{Rank--3 block structure}
-Partition the error state into attitude/gyro-bias, linear OU chain, and
-accelerometer-bias groups:
+Partition
 \[
 \delta\vct{x}=[\vct{A}^{\top},\vct{L}^{\top},\vct{B}^{\top}]^{\top},
 \]
 where $\vct{A}\in\mathbb{R}^6$,
 $\vct{L}=[\delta\vct{v},\delta\vct{p},\delta\vct{S},
 \delta\vct{a}_w]\in\mathbb{R}^{12}$, and
-$\vct{B}=\delta\vct{b}_a\in\mathbb{R}^3$.  Because every correction here has
-measurement dimension three, the gain is obtained from one $3\times3$ solve:
+$\vct{B}=\delta\vct{b}_a\in\mathbb{R}^3$.  Each correction therefore requires
+one $3\times3$ innovation solve,
 \begin{equation}
-\mat{K}=(\mat{P}^-\mat{C}^{\top})\matg{\Lambda}^{-1}.
+\mat{K}=(\mat{P}^-\mat{C}^{\top})\matg{\Lambda}^{-1},
 \end{equation}
-All state groups may be corrected through cross-covariances even when a
-measurement Jacobian directly touches only one group.
+while cross-covariances can update state groups not directly selected by
+$\mat C$.
 
 For the magnetometer,
 \[
@@ -57,13 +55,11 @@ For the accelerometer,
 -\Skew{\hat{\vct{f}}_{\mathrm{cog},b}}&0&0&0&0&\Rot_{wb}&\Id
 \end{bmatrix},
 \]
-with columns placed according to \eqref{eq:state-vector}.  For the integral
-pseudo-measurement, $\mat{C}_S$ selects the $\vct{S}$ block.
+with columns ordered as in \eqref{eq:state-vector}; $\mat C_S$ selects the
+$\vct S$ block.
 
 \subsection{Nominal-state injection and quaternion reset}
-After an accepted correction, the complete Kalman correction is first added to
-the nominal additive state vector.  Writing $\delta\hat{\vct{x}}^+$ in the
-ordering of \eqref{eq:state-vector}, the nominal additive states are injected as
+After an accepted correction, additive states are injected as
 \begin{align}
 \hat{\vct{b}}_g &\leftarrow \hat{\vct{b}}_g+\delta\hat{\vct{b}}_g,&
 \hat{\vct{v}} &\leftarrow \hat{\vct{v}}+\delta\hat{\vct{v}},\\
@@ -73,29 +69,23 @@ ordering of \eqref{eq:state-vector}, the nominal additive states are injected as
 \hat{\vct{b}}_a &\leftarrow \hat{\vct{b}}_a+\delta\hat{\vct{b}}_a.
 \label{eq:additive-state-injection}
 \end{align}
-The optional bias terms are omitted when the corresponding state is disabled.
-The full additive-state injection precedes the quaternion correction.
-
-Let $\delta\hat{\vct{\theta}}$ be the first three components of the corrected
-error state.  The left-multiplicative quaternion injection is
+Disabled bias terms are omitted.  The left-multiplicative quaternion injection
+then uses
 \begin{equation}
 q\leftarrow\exp_q\!\left(\tfrac12\delta\hat{\vct{\theta}}\right)\otimes q.
 \label{eq:quat-error-injection}
 \end{equation}
-This injection changes the local coordinates in which the attitude error and
-its cross-covariances are expressed.  Therefore simply setting
-$\delta\hat{\vct{\theta}}=0$ is not covariance-consistent.
-
-To first order, the reset Jacobian for the convention used here is
+Because this changes local attitude coordinates, simply setting
+$\delta\hat{\vct\theta}=0$ is not covariance consistent.  To first order,
 \begin{equation}
 \mat{G}_{\theta}
 =\Id+\tfrac12\Skew{\delta\hat{\vct{\theta}}},
 \qquad
 \mat{G}_{\mathrm{reset}}
-=\blkdiag(\mat{G}_{\theta},\Id_{N_X-3}).
+=\blkdiag(\mat{G}_{\theta},\Id_{N_X-3}),
 \label{eq:left-reset-jacobian}
 \end{equation}
-The covariance is transformed before clearing the local attitude coordinates:
+followed by
 \begin{equation}
 \mat{P}^+
 \leftarrow
@@ -105,20 +95,11 @@ The covariance is transformed before clearing the local attitude coordinates:
 \delta\hat{\vct{\theta}}\leftarrow0.
 \label{eq:mekf-reset-covariance}
 \end{equation}
-The non-attitude entries of the stored vector now contain the injected nominal
-additive states, while the first three entries are reset to zero.  Thus the
-post-update representation is a nominal quaternion plus additive navigation
-and bias states, with a zero-mean local attitude error.
-
-The transformation applies to both the attitude marginal and every attitude
-cross-covariance.  It is required after accelerometer, magnetometer, position,
-velocity, and $S=0$ updates whenever those updates induce a nonzero attitude
-correction through direct sensitivity or learned cross-covariance.
+This transformation applies to the attitude marginal and all attitude
+cross-covariances whenever a correction induces nonzero attitude error.
 
 \subsection{Numerical invariants}
-The innovation matrix is factored with an LDL$^{\top}$ solve and a small
-scale-dependent diagonal safeguard only when needed.  Equation
-\eqref{eq:joseph-update}, covariance symmetrization, and the reset
-\eqref{eq:mekf-reset-covariance} preserve the intended invariants to numerical
-precision: $\mat{P}=\mat{P}^{\top}$, $\mat{P}\succeq0$, unit quaternion norm,
-and a zero local attitude-error mean after injection.
+The innovation matrix uses an LDL$^{\top}$ solve with a scale-dependent diagonal
+safeguard only when needed.  The Joseph update, covariance symmetrization, and
+MEKF reset preserve $\mat P=\mat P^\top$, $\mat P\succeq0$, unit quaternion
+norm, and zero local attitude-error mean to numerical precision.
