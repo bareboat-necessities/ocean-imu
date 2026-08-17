@@ -225,8 +225,8 @@ claiming a heading-independent horizontal multiplier.
 
 \subsection{Implementation bounds}
 
-Table~\ref{tab:implementation-gates} lists the principal safeguards used by the
-reported implementation.  They are runtime bounds and validity limits rather
+Table~\ref{tab:implementation-gates} lists the principal safeguards.
+They are runtime bounds and validity limits rather
 than parameters selected from the scored reference error.
 
 \begin{table*}[t]

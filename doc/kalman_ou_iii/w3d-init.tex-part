@@ -9,8 +9,7 @@ measurement-only Mahony observer used by the adaptation front end
 is left untouched.  In parallel, the wave-period and acceleration-variance
 estimators converge toward the initial operating point.  When attitude,
 magnetic reference, and tuner quality are adequate, the completed proxy
-solution is handed to the MEKF and the filter starts directly in its normal
-Live configuration.
+solution is handed to the MEKF and the filter starts in its Live configuration.
 
 \subsection{Tilt and operating-point bootstrap}
 
@@ -86,8 +85,7 @@ only after this event.  The refinement occurs before the common
 \SI{900}{s} scoring window, but it is still a discrete reconfiguration and is
 excluded from the continuous Live interval covered by the stability theorem.
 
-The two-stage procedure is an engineering compromise, not an observability
-proof.  A longer initial wait can produce a cleaner first reference but delays
+A longer initial wait can produce a cleaner first reference but delays
 usable heading; an earlier reference increases the burden on the later
 refinement.  The reported default fixes that trade for the evaluated device and
 sea family rather than claiming a universal startup schedule.
