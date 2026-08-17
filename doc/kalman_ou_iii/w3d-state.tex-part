@@ -1,9 +1,8 @@
 \section{State Definition}
 \label{sec:state}
 
-The estimator maintains a nominal quaternion separately from the additive
-navigation and bias states.  With the quaternion written as $q\in\Sph^3$, the
-nominal state is
+The nominal quaternion is stored separately from the additive navigation and
+bias states.  For $q\in\Sph^3$,
 \begin{equation}
 \label{eq:nominal-state-vector}
 \vct{x}_{\mathrm{nom}} =
@@ -17,8 +16,8 @@ q &
 \vct{b}_a^{\top}
 \end{bmatrix}^{\!\top}.
 \end{equation}
-The quaternion is propagated and corrected on $\Sph^3$; it is not updated by
-ordinary vector addition.
+The quaternion is propagated and corrected on $\Sph^3$, not by vector
+addition.
 
 The covariance is defined for the local error state
 \begin{equation}
@@ -42,34 +41,26 @@ where
   \item $\vct{b}_g\in\mathbb{R}^3$ is gyroscope bias, modeled as a random walk;
   \item $\vct{v}\in\mathbb{R}^3$ is velocity in the world NED frame;
   \item $\vct{p}\in\mathbb{R}^3$ is position or displacement in the world frame;
-  \item $\vct{S}\in\mathbb{R}^3$ is the integral of displacement,
-        $\vct{S}(t)=\int_0^t\vct{p}(s)\,ds$, used by the drift-control
+  \item $\vct{S}\in\mathbb{R}^3$ is the displacement integral
+        $\vct{S}(t)=\int_0^t\vct{p}(s)\,ds$ used by the drift-control
         pseudo-measurement;
   \item $\vct{a}_w\in\mathbb{R}^3$ is latent world-frame acceleration with an
-        OU process prior;
-  \item $\vct{b}_a\in\mathbb{R}^3$ is the \emph{residual} accelerometer bias
-        about the deterministic temperature-calibration curve.  It is modeled
-        as a slow first-order Gauss--Markov/OU process rather than a random walk.
-        The physical bias entering the accelerometer model is
+        OU prior;
+  \item $\vct{b}_a\in\mathbb{R}^3$ is residual accelerometer bias about the
+        deterministic temperature-calibration curve, modeled as a slow
+        first-order Gauss--Markov/OU process.  The total bias is
         $\vct b_a^{\mathrm{tot}}(T)=\vct k_a(T-T_{\mathrm{ref}})+\vct b_a$.
 \end{itemize}
 
-With both bias states enabled, the additive error-state dimension is
-\[
-N_X = 3+3+3+3+3+3+3=21.
-\]
-The stored covariance is
-$\mat{P}=\E[\delta\vct{x}\,\delta\vct{x}^{\top}]$.
+With both bias states enabled, $N_X=21$ and
+$\mat{P}=\E[\delta\vct{x}\,\delta\vct{x}^{\top}]$.  The residual
+accelerometer-bias correlation time is $\tau_b$.
 
-The residual accelerometer-bias correlation time is denoted $\tau_b$.
-
-Two distinct acceleration covariances are used throughout the paper.  The
-matrix $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ is a \emph{process-model
-parameter}: it is the stationary covariance of the OU prior and determines the
-discrete process covariance $\matg{Q}_d$.  In contrast,
-$\mat{P}_{a_wa_w}$ is the current posterior uncertainty of the estimated
-acceleration state.  Changing $\matg{\Sigma}_{aw}^{\mathrm{stat}}$ does not, by
-itself, overwrite $\mat{P}_{a_wa_w}$.  Hard initialization may reset the
-posterior block and its cross-covariances, whereas the default online
-maintenance can only add the positive-semidefinite covariance needed to reach
-the current stationary floor.
+Two acceleration covariances must be distinguished.
+$\matg{\Sigma}_{aw}^{\mathrm{stat}}$ is the prescribed stationary covariance
+of the OU prior and determines $\matg{Q}_d$, whereas $\mat{P}_{a_wa_w}$ is the
+posterior uncertainty of the estimated acceleration state.  Changing
+$\matg{\Sigma}_{aw}^{\mathrm{stat}}$ does not overwrite
+$\mat{P}_{a_wa_w}$.  Hard initialization may reset this posterior block and its
+cross-covariances; default online maintenance only adds the positive-semidefinite
+covariance required to reach the current stationary floor.
