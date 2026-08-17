@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import glob
 import os
 import re
@@ -28,6 +29,15 @@ plt.rcParams.update({
         r"\providecommand{\mathdefault}[1]{#1}"
     ])
 })
+
+parser = argparse.ArgumentParser(description="Generate OU-III diagnostic plots.")
+parser.add_argument(
+    "--show-titles",
+    action="store_true",
+    help="show the dataset header above each figure (disabled by default)",
+)
+args = parser.parse_args()
+SHOW_TITLES = args.show_titles
 
 # === Config ===
 DATA_DIR = "./"             # Directory with *_w3d.csv files
@@ -88,7 +98,8 @@ def make_subplots(nrows: int, title: str, width: float = 10.0, row_height: float
     """
     fig_height = row_height * nrows
     fig, axes = plt.subplots(nrows, 1, figsize=(width, fig_height), sharex=sharex)
-    fig.suptitle(title)
+    if SHOW_TITLES:
+        fig.suptitle(title)
     if nrows == 1:
         axes = [axes]
     return fig, axes
@@ -97,7 +108,8 @@ def finalize_plot(fig, outbase: str, suffix: str = "", exts=("pgf", "svg")):
     """
     Finalize a plot: layout, save to multiple formats, and close.
     """
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    top = 0.95 if SHOW_TITLES else 1.0
+    plt.tight_layout(rect=[0, 0.03, 1, top])
     for ext in exts:
         fig.savefig(f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")
     plt.close(fig)
