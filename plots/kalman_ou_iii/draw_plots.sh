@@ -90,6 +90,7 @@ cp -f ../../reports/results/ou_robustness/ou_robustness_stress.svg \
 # direction tables remain in the full generated study.
 python3 - <<'PY'
 from pathlib import Path
+import re
 
 
 def strip_table(text: str, label: str) -> str:
@@ -104,6 +105,39 @@ def strip_table(text: str, label: str) -> str:
     end += len(end_token)
     return text[:start].rstrip() + "\n\n" + text[end:].lstrip()
 
+
+def compact_axes_table(text: str) -> str:
+    label = r"\label{tab:ou_mc_axes}"
+    pos = text.find(label)
+    if pos < 0:
+        raise RuntimeError("3-D axis table label not found")
+    start = text.rfind(r"\begin{table*}", 0, pos)
+    end_token = r"\end{table*}"
+    end = text.find(end_token, pos)
+    if start < 0 or end < 0:
+        raise RuntimeError("could not delimit 3-D axis table")
+    end += len(end_token)
+    block = text[start:end]
+
+    spacing = r"\setlength{\tabcolsep}{3.0pt}"
+    if block.count(spacing) != 1:
+        raise RuntimeError("3-D axis table spacing anchor not found exactly once")
+    block = block.replace(spacing, r"\setlength{\tabcolsep}{1.6pt}", 1)
+
+    block, scenario_count = re.subn(r"\$H_s=([0-9.]+)\$ m", r"\1 m", block)
+    if scenario_count != 4:
+        raise RuntimeError(
+            f"expected four stationary H_s labels in 3-D axis table, found {scenario_count}"
+        )
+
+    block = re.sub(
+        r"([0-9]+\.[0-9]+) \$\\pm\$ ([0-9]+\.[0-9]+)",
+        r"$\1\,\pm\,\2$",
+        block,
+    )
+    return text[:start] + block + text[end:]
+
+
 src = Path("../../doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part")
 dst = Path("../../doc/kalman_ou_iii/w3d-ou-validation-results-publication.tex-part")
 text = src.read_text(encoding="utf-8")
@@ -113,6 +147,7 @@ for label in (
     r"\label{tab:ou_mc_direction}",
 ):
     text = strip_table(text, label)
+text = compact_axes_table(text)
 dst.write_text(text, encoding="utf-8")
 PY
 
