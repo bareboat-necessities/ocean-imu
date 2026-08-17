@@ -141,7 +141,7 @@ independently phase randomized, and derivative-consistent velocity and
 acceleration include blend-derivative terms.  This is a kinematically closed
 transition rather than a continuously evolving spectrum; both endpoint spectra
 coexist during the blend, which can therefore be effectively bimodal.
-Interpretation uses pure-start, blend, pure-end, and common trailing windows.
+Interpretation uses pure-start, blend, and pure-end, plus common trailing windows.
 
 This case does not establish performance for arbitrary spectral evolution,
 crossing seas, or continuously changing directional spectra.
