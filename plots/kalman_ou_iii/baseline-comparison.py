@@ -116,6 +116,23 @@ def write_tables(rows, output):
             "mean_pitch": float(np.mean([v["pitch_rms"] for v in vals])),
         }
 
+    macro_names = {
+        "pii": "OUBaselinePIIMeanVerticalPercent",
+        "nlo": "OUBaselineTVGNLOMeanVerticalPercent",
+        "ou2": "OUBaselineOUIIMeanVerticalPercent",
+        "ou3": "OUBaselineOUIIIMeanVerticalPercent",
+    }
+    for method in methods:
+        macro = macro_names[method]
+        value = tex_num(aggregates[method]["mean_z_pct"], 1)
+        # provide+renew works both when the article installed a fallback and
+        # when this generated file is compiled on its own.
+        lines += [
+            rf"\providecommand{{\{macro}}}{{}}",
+            rf"\renewcommand{{\{macro}}}{{{value}}}",
+        ]
+    lines.append("")
+
     lines += [
         r"\begin{table}[t]",
         r"  \centering",

@@ -19,6 +19,30 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("make -C tests/validation test", gate)
         self.assertNotIn("continue-on-error", gate)
 
+    def test_validation_publication_is_aligned_before_bundle_upload(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        combine = workflow.index("- name: Combine paired validation shards")
+        align = workflow.index(
+            "- name: Align validation publication wording with the article"
+        )
+        upload = workflow.index("- name: Upload regenerated bundle")
+
+        self.assertLess(combine, align)
+        self.assertLess(align, upload)
+        stage = workflow[align:upload]
+        self.assertIn("tools/ou_publication_sync.py", stage)
+        self.assertIn("reports/results/ou_validation", stage)
+
+    def test_push_retry_revalidates_after_rebase(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        start = workflow.index("for attempt in 1 2 3 4; do")
+        end = workflow.index("\n          done", start)
+        loop = workflow[start:end]
+
+        rebase = loop.index("git pull --rebase")
+        validate = loop.index("make -C tests/validation test")
+        self.assertLess(rebase, validate)
+
     def test_failure_message_cannot_run_after_a_push(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("The regenerated bundle is committed, but", workflow)

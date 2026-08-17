@@ -45,13 +45,19 @@ TVG--NLO & fixed gains for vertical adaptation & IMU only; yaw/horizontal unscor
 \end{tabular}
 \end{table}
 
+\providecommand{\OUBaselinePIIMeanVerticalPercent}{--}
+\providecommand{\OUBaselineTVGNLOMeanVerticalPercent}{--}
+\providecommand{\OUBaselineOUIIMeanVerticalPercent}{--}
+\providecommand{\OUBaselineOUIIIMeanVerticalPercent}{--}
 \IfFileExists{w3d-baseline-results-generated.tex-part}{%
   \input{w3d-baseline-results-generated.tex-part}%
 }{}
 
 In the single-realization comparison, OU--III has the lowest mean normalized
-vertical-displacement RMS error: \pct{4.5} of $H_s$, compared with \pct{6.5}
-for OU--II, \pct{11.9} for PII, and \pct{14.5} for the adapted TVG--NLO.
+vertical-displacement RMS error: \pct{\OUBaselineOUIIIMeanVerticalPercent} of
+$H_s$, compared with \pct{\OUBaselineOUIIMeanVerticalPercent} for OU--II,
+\pct{\OUBaselinePIIMeanVerticalPercent} for PII, and
+\pct{\OUBaselineTVGNLOMeanVerticalPercent} for the adapted TVG--NLO.
 These values provide a reproducible external reference but are not ensemble
 estimates; the inferential OU-family statement comes from the paired ten-seed
 study below.
