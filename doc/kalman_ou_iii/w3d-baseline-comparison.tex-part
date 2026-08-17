@@ -134,7 +134,7 @@ supports adaptive integral-state regularization as the dominant channel in these
 tests; direct OU-parameter adaptation contributes little once $r_S$ is fixed.
 
 \paragraph{Controlled transition and covariance control}
-Whole-window transition percentages use the final $H_s=\SI{4.0}{m}$ and are
+The whole-window transition percentages use the final $H_s=\SI{4.0}{m}$ and are
 descriptive.  Table~\ref{tab:ou_transition_segments} shows that Adaptive matches
 the nominal fixed point before the transition and gains as the longer-period sea
 emerges.  It also beats endpoint-calibrated FixedOracle over the whole record
