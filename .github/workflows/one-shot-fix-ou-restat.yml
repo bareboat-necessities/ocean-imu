@@ -25,11 +25,11 @@ jobs:
 
           path = Path("tools/ou_validation.py")
           text = path.read_text(encoding="utf-8")
-          old = r'''        r"  \\caption{Absolute per-axis and three-dimensional displacement RMS error over the final \\SI{900}{s} (Adaptive mode, mean in metres, $n=10$ paired seed triplets). $\\Delta$ is OU--III minus OU--II with its paired bootstrap 95\\% interval; positive $\\Delta$ favors OU--II. The vertical gain of OU--III is paid for in the horizontal channels.}",'''
-          new = r'''        r"  \\caption{Absolute per-axis and three-dimensional displacement RMS error over the final \\SI{900}{s} (Adaptive mode, mean in metres, $n=10$ paired seed triplets). $\\Delta$ is OU--III minus OU--II with its paired bootstrap 95\\% interval; positive $\\Delta$ favors OU--II.}",'''
-          if text.count(old) != 1:
-              raise SystemExit(f"expected exactly one stale caption, found {text.count(old)}")
-          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          retired = " The vertical gain of OU--III is paid for in the horizontal channels."
+          count = text.count(retired)
+          if count != 1:
+              raise SystemExit(f"expected exactly one retired sentence, found {count}")
+          path.write_text(text.replace(retired, "", 1), encoding="utf-8")
           PY
           python3 -m py_compile tools/ou_validation.py
 
