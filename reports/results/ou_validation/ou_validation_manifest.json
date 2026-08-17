@@ -1,8 +1,8 @@
 {
   "analysis_pipeline_files": {
     "tools/ou_validation.py": {
-      "bytes": 150500,
-      "sha256": "0e3ba85fda3e6932a73ade09bc0f7c1d9ef898640b1be696f9cf8eebc05df87d"
+      "bytes": 150431,
+      "sha256": "6411c49f07f41d7490fa1365663f3a0dc95616b631e2826f45c8e40b4a08656b"
     }
   },
   "build_environment": {
@@ -168,8 +168,8 @@
     }
   },
   "git_branch": "main",
-  "git_commit": "efb9f6270f1d64437f38892ee63499fe00796ec1",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 27961 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   676 +-\n .../ou_validation/ou_validation_covsync.svg        |   728 +-\n .../ou_validation/ou_validation_displacement.svg   |   308 +-\n .../ou_validation/ou_validation_paired_effects.csv |  1622 +-\n .../results/ou_validation/ou_validation_raw.csv    |   444 +-\n .../ou_validation/ou_validation_summary.csv        |  1618 +-\n .../ou_validation/ou_validation_transition.csv     |  1772 +-\n .../ou_validation/ou_validation_vertical.svg       |   704 +-\n 9 files changed, 17916 insertions(+), 17917 deletions(-)",
+  "git_commit": "eaef4d45424c165e5864dbbd9ecb05c524ccc62a",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json            | 3 +--\n reports/results/ou_validation/ou_validation_publication.tex | 2 +-\n 2 files changed, 2 insertions(+), 3 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -441,8 +441,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-17T01:28:44+00:00",
-    "git_commit": "efb9f6270f1d64437f38892ee63499fe00796ec1",
+    "generated_at": "2026-08-17T06:49:28+00:00",
+    "git_commit": "eaef4d45424c165e5864dbbd9ecb05c524ccc62a",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -613,7 +613,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "31983793022",
+      "run_id": "32001095473",
       "workflow": "build"
     }
   },
@@ -643,8 +643,8 @@
       "sha256": "119cf4fcfbc83d039eeeb3643f255beffbf11fc5c912988229170a707fcddeac"
     },
     "ou_validation_publication.tex": {
-      "bytes": 12652,
-      "sha256": "ac6e01aae5b58f8989b61aeab0f811ce6e771efafd33a68d3261a7ed48502989"
+      "bytes": 12583,
+      "sha256": "4a38ebb233dcaa198b82775bde1a7db12298849d5dcd9a3488539a4df002766e"
     },
     "ou_validation_raw.csv": {
       "bytes": 557509,
