@@ -1,9 +1,9 @@
 \section{Measurement Model}
 \label{sec:measurement_model}
 
-The filter uses accelerometer and magnetometer corrections together with a
-zero-valued pseudo-measurement on the integral displacement $\vct{S}$.  The
-gyroscope is a propagation input.
+Accelerometer and magnetometer measurements provide corrections; the gyroscope
+drives propagation.  A zero pseudo-measurement on the integral displacement
+$\vct S$ provides regularization.
 
 \subsection{Accelerometer model}
 The body-frame specific-force measurement is
@@ -18,10 +18,8 @@ $\vct{n}_a\sim\mathcal{N}(0,\mat{R}_a)$, and
 =\vct{k}_a(T-T_{\mathrm{ref}})+\vct b_a.
 \label{eq:acc-bias-temperature-model}
 \end{equation}
-Here $\vct b_a$ is the estimated slow OU residual about the deterministic
-temperature-calibration curve, not the total physical bias.  The model is
-therefore mean-reverting around the temperature-dependent calibrated mean rather
-than around zero total bias.
+Here $\vct b_a$ is the estimated slow OU residual about the calibrated
+temperature-dependent mean, not the total physical bias.
 
 For the left-multiplicative convention,
 \begin{align}
@@ -32,10 +30,9 @@ For the left-multiplicative convention,
 \end{align}
 where
 $\hat{\vct{f}}_{\mathrm{cog},b}=\Rot_{wb}(\hat{\vct{a}}_w-\vct{g}_w)$.
-Thus the accelerometer update couples attitude, latent world acceleration, and
-the slow residual accelerometer bias through one rank--3 correction.  The
-Jacobian is unchanged by the switch from random-walk to OU residual dynamics;
-only the bias-state prediction and process covariance change.
+The rank--3 correction therefore couples attitude, latent world acceleration,
+and residual accelerometer bias.  OU rather than random-walk bias dynamics
+change only prediction and process covariance, not this Jacobian.
 
 \subsection{Magnetometer model}
 With calibrated world reference $\vct{B}_w$,
@@ -71,17 +68,16 @@ with
 &:=\begin{bmatrix}0&\cdots&\Id_S&\cdots&0\end{bmatrix}.
 \label{eq:HS-selector}
 \end{align}
-Here $\vct{r}_S$ is the per-axis pseudo-measurement standard-deviation
-vector, in units of $\mathrm{m\,s}$, whereas $\mat{R}_S$ is the covariance
-used by the Kalman update.
+Here $\vct r_S$ is the per-axis pseudo-measurement standard-deviation vector
+(in $\mathrm{m\,s}$), and $\mat R_S$ is its covariance.
 
-This pseudo-measurement is a regularizer, not a physical observation.  Repeated
-application creates a soft leak in the augmented integration chain: smaller
-$\vct{r}_S$ gives stronger low-frequency drift suppression, while larger
-values preserve slower motion at the cost of more drift.
+The pseudo-measurement is a regularizer rather than a physical observation.
+Repeated updates create a soft leak: smaller $\vct r_S$ strengthens
+low-frequency drift suppression, whereas larger values preserve slower motion
+but allow more drift.
 
-\paragraph{Time-based cadence.}
-Let $T_S>0$ be the configured pseudo-update period and let $e_k$ be elapsed time
+\paragraph{Time-based cadence}
+Let $T_S>0$ be the configured pseudo-update period and $e_k$ the elapsed time
 since the previous application.  At each variable-duration IMU step $h_k$,
 \[
 \tilde e_{k+1}=e_k+h_k.
@@ -92,13 +88,11 @@ $e_{k+1}=\tilde e_{k+1}$.  Otherwise the update is applied and
 e_{k+1}=\tilde e_{k+1}\bmod T_S.
 \label{eq:pseudo-elapsed-scheduler}
 \end{equation}
-A floating-point tolerance is used at the boundary.  Defining cadence in
-seconds rather than as every $N$ samples makes the regularization rate invariant
-to the IMU sample rate; the same $T_S$ produces the same number of updates per
-unit time at 100, 200, or 400~Hz.  Because the deadline is served on the first
-IMU sample at or after it, realized gaps are quantized to the IMU grid and need
-not be integer multiples of $T_S$; they always lie between one IMU step and one
-configured period plus one step.
+A floating-point tolerance is used at the boundary.  Cadence is defined in
+seconds, making the regularization rate independent of IMU sample rate.
+Deadlines are served on the first subsequent IMU sample, so realized gaps are
+grid-quantized and lie between one step and one configured period plus one
+step.
 
 \subsection{IMU lever-arm model}
 If the IMU is displaced from the center of gravity by known body-frame vector
@@ -111,9 +105,8 @@ $\vct{r}_b$, the predicted specific force includes
 \label{eq:acc-meas-lever}
 \end{equation}
 The angular-rate and angular-acceleration terms are treated as known inputs.
-Their second-order coupling through attitude uncertainty is neglected, so the
-state Jacobians remain those of \eqref{eq:acc-meas}.  Setting $\vct{r}_b=0$
-disables the correction.
+Their second-order attitude-uncertainty coupling is neglected, so the state
+Jacobians remain those of \eqref{eq:acc-meas}; $\vct r_b=0$ disables the
+correction.
 
-The optional steady-heel frame transform is outside the evaluated configuration and is disabled
-for all results in this paper.
+The optional steady-heel transform is disabled in all reported results.
