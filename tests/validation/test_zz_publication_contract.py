@@ -41,6 +41,107 @@ def _assert_any(test: unittest.TestCase, text: str, *alternatives: str) -> None:
     )
 
 
+# Compatibility entry points imported by test_ou_validation.py.  Keep these
+# names stable, but deliberately make their contracts semantic rather than
+# editorial: labels, generated tables/macros, broad scope concepts, and method
+# families are protected; exact sentences are not.
+def _abstract_reports_committed_stationary_aggregate(self):
+    manuscript = _read("kalman_ou-w3d.tex")
+    abstract = manuscript.split(r"\begin{abstract}", 1)[1].split(
+        r"\end{abstract}", 1
+    )[0]
+    macros = _read("w3d-ou-validation-macros-generated.tex-part")
+    with (RESULTS / "ou_validation_manifest.json").open(encoding="utf-8") as stream:
+        aggregate = json.load(stream)["stationary_normalized_aggregate"]
+
+    expected = {
+        "OUValidationOUIIINormalizedMean": aggregate["OU_III"]["mean"],
+        "OUValidationOUIIINormalizedStd": aggregate["OU_III"]["std"],
+        "OUValidationOUIINormalizedMean": aggregate["OU_II"]["mean"],
+        "OUValidationOUIINormalizedStd": aggregate["OU_II"]["std"],
+        "OUValidationNormalizedDifference": aggregate["OU_III_minus_OU_II"][
+            "mean_paired_difference"
+        ],
+        "OUValidationNormalizedDifferenceLow": aggregate["OU_III_minus_OU_II"][
+            "bootstrap_ci95_low"
+        ],
+        "OUValidationNormalizedDifferenceHigh": aggregate["OU_III_minus_OU_II"][
+            "bootstrap_ci95_high"
+        ],
+    }
+    for name, value in expected.items():
+        self.assertIn(rf"\{name}", abstract)
+        self.assertAlmostEqual(float(_macro_value(macros, name)), float(value), places=2)
+
+
+def _fixed_reference_and_transition_limits_are_stated(self):
+    protocol = _read("w3d-sim-charts.tex-part")
+    fixed_points = _read("w3d-ou-validation-tuning-points-generated.tex-part")
+    results = _read("w3d-baseline-comparison.tex-part")
+
+    self.assertIn(r"\label{par:fixed-points}", protocol)
+    self.assertIn("tab:ou_fixed_points", fixed_points)
+    self.assertIn("FixedNominal", fixed_points)
+    self.assertIn("FixedOracle", fixed_points)
+    self.assertIn("tab:ou_transition_segments", results)
+
+
+def _inference_is_qualified_rather_than_asserted(self):
+    protocol = _read("w3d-sim-charts.tex-part")
+    _assert_any(self, protocol, "paired monte carlo", "paired")
+    _assert_any(self, protocol, "bootstrap", "resampling")
+    _assert_any(self, protocol, "sign-flip", "sign flip")
+    _assert_any(self, protocol, "primary endpoint", "primary comparison")
+    self.assertNotIn("statistically powered", protocol.casefold())
+
+
+def _three_dimensional_and_channel_results_are_reported(self):
+    protocol = _read("w3d-sim-charts.tex-part")
+    results = _read("w3d-baseline-comparison.tex-part")
+    generated = _read("w3d-ou-validation-results-generated.tex-part")
+
+    self.assertIn("tab:ou_mc_axes", results)
+    self.assertIn(r"\label{par:channel-ablation}", protocol)
+    self.assertIn("tab:ou_mc_channels", generated)
+
+
+def _transition_and_secondary_ensembles_are_rescored(self):
+    results = _read("w3d-baseline-comparison.tex-part")
+    generated = _read("w3d-ou-validation-results-generated.tex-part")
+    self.assertIn("tab:ou_transition_segments", results)
+    self.assertIn("tab:ou_mc_pmstokes", generated)
+    self.assertIn("tab:ou_mc_direction", generated)
+
+
+def _contribution_is_framed_at_the_width_of_the_evidence(self):
+    manuscript = _read("kalman_ou-w3d.tex")
+    intro = _read("w3d-intro.tex-part")
+    conclusion = _read("w3d-conclusion-summary.tex-part")
+    scope = "\n".join((intro, conclusion))
+
+    title_match = re.search(r"\\title\{(.+?)\}", manuscript)
+    self.assertIsNotNone(title_match)
+    title = title_match.group(1)
+    self.assertIn("MEKF", title)
+    _assert_any(self, title, "OU", "Ornstein")
+    _assert_any(self, scope, "simulation", "synthetic")
+    _assert_any(self, scope, "local reference", "geodetic", "global navigation")
+    _assert_any(self, scope, "temperature", "thermal")
+
+
+def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
+    baseline = _read("w3d-baseline-comparison.tex-part")
+    fusion = _read("w3d-fus-methods.tex-part")
+    results = _read("w3d-results.tex-part")
+    conclusion = _read("w3d-conclusion-summary.tex-part")
+
+    self.assertIn("tab:baseline-tuning-policy", baseline)
+    self.assertIn("tab:implementation-gates", fusion)
+    for method in ("OU--III", "OU--II", "PII", "TVG--NLO"):
+        self.assertIn(method, baseline)
+    _assert_any(self, results + conclusion, "processor", "memory", "deadline")
+
+
 class ReorganizedPublicationContractTests(unittest.TestCase):
     def test_article_order_is_math_then_engineering_then_evidence(self):
         main = _read("kalman_ou-w3d.tex")
@@ -65,33 +166,7 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertIn(r"\input{w3d-rs-reduced-mse.tex-part}", pure)
 
     def test_abstract_uses_generated_validation_values(self):
-        manuscript = _read("kalman_ou-w3d.tex")
-        abstract = manuscript.split(r"\begin{abstract}", 1)[1].split(
-            r"\end{abstract}", 1
-        )[0]
-        macros = _read("w3d-ou-validation-macros-generated.tex-part")
-
-        with (RESULTS / "ou_validation_manifest.json").open(encoding="utf-8") as stream:
-            aggregate = json.load(stream)["stationary_normalized_aggregate"]
-
-        expected = {
-            "OUValidationOUIIINormalizedMean": aggregate["OU_III"]["mean"],
-            "OUValidationOUIIINormalizedStd": aggregate["OU_III"]["std"],
-            "OUValidationOUIINormalizedMean": aggregate["OU_II"]["mean"],
-            "OUValidationOUIINormalizedStd": aggregate["OU_II"]["std"],
-            "OUValidationNormalizedDifference": aggregate["OU_III_minus_OU_II"][
-                "mean_paired_difference"
-            ],
-            "OUValidationNormalizedDifferenceLow": aggregate["OU_III_minus_OU_II"][
-                "bootstrap_ci95_low"
-            ],
-            "OUValidationNormalizedDifferenceHigh": aggregate["OU_III_minus_OU_II"][
-                "bootstrap_ci95_high"
-            ],
-        }
-        for name, value in expected.items():
-            self.assertIn(rf"\{name}", abstract)
-            self.assertAlmostEqual(float(_macro_value(macros, name)), float(value), places=2)
+        _abstract_reports_committed_stationary_aggregate(self)
 
     def test_intro_does_not_preempt_the_adaptation_derivation(self):
         intro = _read("w3d-intro.tex-part")
