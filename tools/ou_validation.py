@@ -1975,7 +1975,7 @@ def _three_dimensional_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Absolute per-axis and three-dimensional displacement RMS error over the final \SI{900}{s} (Adaptive mode, mean in metres, $n=10$ paired seed triplets). $\Delta$ is OU--III minus OU--II with its paired bootstrap 95\% interval; positive $\Delta$ favors OU--II. The vertical gain of OU--III is paid for in the horizontal channels.}",
+        r"  \caption{Absolute per-axis and three-dimensional displacement RMS error over the final \SI{900}{s} (Adaptive mode, mean in metres, $n=10$ paired seed triplets). $\Delta$ is OU--III minus OU--II with its paired bootstrap 95\% interval; positive $\Delta$ favors OU--II.}",
         r"  \label{tab:ou_mc_axes}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{3.0pt}",
