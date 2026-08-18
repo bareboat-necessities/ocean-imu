@@ -1,12 +1,4 @@
-% =======================================================
-\section{Engineering Adaptation Pipeline}
-\label{sec:adaptation}
-\label{sec:adapt-impl}
-
-The tuner estimates wave time scale and acceleration level from a
-measurement-only proxy and applies bounded smoothing and cadence rules to
-$\tau$, $\sigma_{aw}$, and $r_S$.  No MEKF displacement, velocity, covariance,
-or attitude state is fed back into the tuner.
+% Implementation details for Sec.~\ref{sec:adaptation}.
 
 \subsection{Measurement-only vertical acceleration}
 \label{sec:vertical-proxy}
@@ -80,16 +72,20 @@ f_{\mathrm{tune}}
 \label{eq:tuning-frequency}
 \end{equation}
 Before then, a bounded wave-band prior is used.  The applied smoothing time is
-\SI{1}{s}.  This frequency sets the OU time scale, sigma-band corners, and
-variance horizon; the separate acceleration carrier is retained only for wave
-direction.
+\SI{1}{s}.  This frequency sets the OU time scale, acceleration-statistic band
+corners, and variance horizon; the separate acceleration carrier is retained
+only for wave direction.
 
-\subsection{Acceleration-scale estimate and averaging}
+\subsection{Physical acceleration-scale estimate and averaging}
+\label{sec:adaptation-physical-sigma}
 
-The same measurement-only vertical channel provides the stationary OU
-acceleration scale.  Before variance estimation, the signal passes through a
-period-scaled wave band with corners fixed relative to $f_{\mathrm{tune}}$.
-The averaging horizon spans a fixed number of estimated periods,
+The same measurement-only vertical channel supplies the physical wave-band
+acceleration statistic $\widehat\sigma_{a,B}$ used in
+Eq.~\eqref{eq:adapt-sigma-map}.  It does not directly measure
+$\sigma_{aw}$.  Before variance estimation, the signal passes through a
+period-scaled wave band with corners fixed relative to
+$f_{\mathrm{tune}}$.  The averaging horizon spans a fixed number of estimated
+periods,
 \begin{equation}
 \begin{aligned}
 T_{\mathrm{eff}}&=\frac{1}
@@ -107,27 +103,62 @@ before square rooting,
 \begin{equation}
 \widehat\sigma_{\mathrm{wave}}^2
 =\max\!\left(0,
- \widehat\sigma_{\mathrm{tot}}^2-\sigma_{\mathrm{nf,band}}^2\right).
+ \widehat\sigma_{\mathrm{tot}}^2-\sigma_{\mathrm{nf,band}}^2\right),
+\qquad
+\widehat\sigma_{a,B}:=\sqrt{\widehat\sigma_{\mathrm{wave}}^2}.
 \label{eq:sigma-noise-subtraction}
 \end{equation}
 Thus the averaging interval grows with sea period while representing
 approximately the same number of wave cycles.
 
-\subsection{Targets, smoothing, and application cadence}
+The nominal band corners are
+\begin{equation}
+f_L=0.5f_{\mathrm{tune}},
+\qquad
+f_H=4f_{\mathrm{tune}},
+\label{eq:implemented-scaled-band}
+\end{equation}
+with absolute safety clamps of \SI{0.01}{Hz} and \SI{6}{Hz}, plus a Nyquist
+guard.  Away from the clamps, the band shape is fixed in normalized frequency,
+which is the condition used in Eq.~\eqref{eq:adapt-band-acc-scaling}.
+Noise-floor subtraction is performed in the same moving band.  For the
+corresponding two-state time-varying band filter, the implementation propagates
+the unit-input covariance
+\begin{equation}
+\mat P_{B,k}
+=\mat A_{B,k}\mat P_{B,k-1}\mat A_{B,k}^{\top}
+ +\vct b_{B,k}\vct b_{B,k}^{\top},
+\label{eq:sigma-band-noise-covariance}
+\end{equation}
+and uses
+\begin{equation}
+\sigma_{\mathrm{nf},B,k}^2
+=\sigma_{\mathrm{nf}}^2[\mat P_{B,k}]_{22}
+\label{eq:sigma-band-noise-floor}
+\end{equation}
+as the band-referred sensor floor.
 
-The engineering targets are
+\subsection{Targets, smoothing, and application cadence}
+\label{sec:adaptation-target-implementation}
+
+The implemented targets are
 \begin{equation}
 \begin{aligned}
 \tau_\star&=c_\tau\frac{\widehat T_z}{2},\\
-\sigma_{aw,\star}&=c_\sigma
- \sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
-r_{S,\star}^{\mathrm{base}}&=c_R\sigma_{aw,\star}\tau_\star^3 .
+\widehat\sigma_{a,B,\star}
+ &=\sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
+\sigma_{aw,\star}&=c_\sigma\widehat\sigma_{a,B,\star},\\
+r_{S,\star}^{\mathrm{base}}
+ &=c_R\sigma_{aw,\star}\tau_\star^3.
 \end{aligned}
 \label{eq:tuner-targets}
 \end{equation}
-The applied coefficients $(c_\tau,c_\sigma,c_R)=(1.0,0.9,0.35)$ are empirical
-calibration constants; Sec.~\ref{sec:adaptation-motivation} motivates the cubic
-base scale but does not determine a complete-MEKF optimum.
+The applied coefficients $(c_\tau,c_\sigma,c_R)=(1.0,0.9,0.35)$ are
+full-filter calibration constants.  Their roles are separated by the preceding
+analysis: $c_\tau$ places the OU time scale relative to the wave period,
+$c_\sigma$ maps measured physical acceleration energy to OU-prior amplitude,
+and $c_R$ sets the integral regularization scale and hence the normalized
+correction corner through Eq.~\eqref{eq:adapt-cR-spectral-meaning}.
 
 Applied $\tau$ and $\sigma_{aw}$ use a common EMA,
 \begin{equation}
@@ -157,27 +188,28 @@ where $m_{r_S}=5$.  Candidates are committed every \SI{0.1}{s} and staged by
 one IMU sample, so parameters used at step $k$ are measurable with respect to
 data through $k-1$.
 
-Pseudo-update cadence follows the applied OU time scale,
+The pseudo-update cadence follows the applied OU time scale,
 \begin{equation}
 T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max}),
 \qquad
 c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}},
-\label{eq:engineering-pseudo-cadence}
+\label{eq:engineering-pseudo-cadence-implementation}
 \end{equation}
-with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{250}{ms}$.  Cadence
+with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{250}{ms}$.  This is the
+implemented form of Eq.~\eqref{eq:engineering-pseudo-cadence}.  Cadence
 renormalization preserves the historical information rate,
 \begin{equation}
 r_{S,\mathrm{filter}}
 =r_{S,\mathrm{appl}}^{\mathrm{base}}
  \sqrt{\frac{T_{S,0}}{T_S}},
-\qquad T_{S,0}=\SI{15}{ms}.
-\label{eq:engineering-rs-filter}
+\qquad T_{S,0}=\SI{15}{ms},
+\label{eq:engineering-rs-filter-implementation}
 \end{equation}
-Away from clamps, Eqs.~\eqref{eq:tuner-targets},
-\eqref{eq:engineering-pseudo-cadence}, and
-\eqref{eq:engineering-rs-filter} yield
-$r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}$; the cubic expression is
-the base target before cadence renormalization.
+which is the implemented form of Eq.~\eqref{eq:engineering-rs-filter}.  Away
+from clamps, the deployed period dependence is therefore $\tau^{5/2}$, as
+derived in Eq.~\eqref{eq:adapt-rs-strong-law}; the retained linear amplitude
+factor is the additional calibrated choice identified after
+Eq.~\eqref{eq:deployed-effective-law}.
 
 \subsection{Three-axis application}
 
