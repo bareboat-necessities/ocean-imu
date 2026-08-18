@@ -18,19 +18,20 @@
       "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
       "version": "3.4.0"
     },
-    "numpy": "2.4.6",
-    "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
-    "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
+    "numpy": "1.26.4",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
   },
   "command": [
-    "/usr/local/bin/python3",
+    "/usr/bin/python3",
     "tools/ou_validation.py",
     "--mode",
     "full",
     "--bootstrap-resamples",
     "10000",
-    "--jobs",
-    "4",
+    "--combine-shards",
+    "--shard-dir",
+    "shards",
     "--output-dir",
     "reports/results/ou_validation"
   ],
@@ -166,9 +167,9 @@
       }
     }
   },
-  "git_branch": "claude/ou-iii-adaptation-law-46mbmn",
-  "git_commit": "de33db84a89162c54f66fc5aa343461cdeb1b5dc",
-  "git_diff_stat": ".../w3d-reduced-mse-validation.tex-part            |     7 +-\n docs/ou-iii-rs-amplitude-retune.md                 |   181 +-\n reports/results/ou_validation/ou_validation.json   | 29691 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   296 +-\n .../ou_validation/ou_validation_covsync.svg        |   732 +-\n .../ou_validation/ou_validation_displacement.svg   |   632 +-\n .../ou_validation/ou_validation_paired_effects.csv |  2062 +-\n .../results/ou_validation/ou_validation_raw.csv    |   296 +-\n .../ou_validation/ou_validation_summary.csv        |  1950 +-\n .../ou_validation/ou_validation_vertical.svg       |   288 +-\n src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h    |    55 +-\n tests/kalman_ou_iii/kalman_ou_iii-sim.cpp          |     4 -\n tests/kalman_ou_iii/rs_law-test.cpp                |    26 +-\n tools/ou_rs_amplitude_retune_compare.py            |    17 +-\n tools/ou_rs_effective_noise_sweep.py               |   165 -\n 15 files changed, 18003 insertions(+), 18399 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "7390f09b313a9ad110e9bfe508dfae88e1822b8c",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 26831 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |  1618 +-\n .../ou_validation/ou_validation_covsync.svg        |  1936 +-\n .../ou_validation/ou_validation_displacement.svg   |  1634 +-\n .../ou_validation/ou_validation_paired_effects.csv |  1880 +-\n .../results/ou_validation/ou_validation_raw.csv    |   252 +-\n .../ou_validation/ou_validation_summary.csv        |  1844 +-\n .../ou_validation/ou_validation_transition.csv     | 22904 ++++++++--------\n .../ou_validation/ou_validation_transition.svg     | 20872 ++++++++-------\n .../ou_validation/ou_validation_vertical.svg       |  1690 +-\n 10 files changed, 40734 insertions(+), 40727 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -299,8 +300,8 @@
       "sha256": "c52bca55b6419132186e4b257f88a98df76fa2d80ba09ffae54b0d636225e9b6"
     }
   },
-  "numpy": "2.4.6",
-  "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
+  "numpy": "1.26.4",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
   "protocol": {
     "adaptation_modes": [
       "Adaptive",
@@ -421,7 +422,7 @@
     },
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
+  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "replay_provenance": {
     "environment": {
       "compiler": {
@@ -436,12 +437,12 @@
         "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
         "version": "3.4.0"
       },
-      "numpy": "2.4.6",
-      "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
-      "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
+      "numpy": "1.26.4",
+      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-18T16:15:15+00:00",
-    "git_commit": "de33db84a89162c54f66fc5aa343461cdeb1b5dc",
+    "generated_at": "2026-08-18T19:39:26+00:00",
+    "git_commit": "7390f09b313a9ad110e9bfe508dfae88e1822b8c",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -607,66 +608,71 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "674156d8d4b6fe96d549957729273195abe714d327d7b9ae85d74c19946505a5",
-    "raw_rows_size_bytes": 557439,
-    "workflow_run": null
+    "raw_rows_sha256": "eba047a8df42a5f0f6e5f5f3c9d86ae8d0ce5dfb594bcb3ab6d5d0ca3672dfaa",
+    "raw_rows_size_bytes": 557468,
+    "workflow_run": {
+      "job": "commit",
+      "run_attempt": "2",
+      "run_id": "32169710499",
+      "workflow": "build"
+    }
   },
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4610323,
-      "sha256": "1126868b0a7f80420891e83624b49c64116dabb224981ac3c4fb25c5e01222cd"
+      "bytes": 4610164,
+      "sha256": "792fd5ce30ce65a41a7bf1073c0373cdbb801c15205291751a2fe68a0e6cf5ed"
     },
     "ou_validation_attitude.svg": {
-      "bytes": 83290,
-      "sha256": "6331887a789d45dd58d704aa91487f176aa2342f066defe48b815722cc6a4961"
+      "bytes": 80195,
+      "sha256": "69a340d885dfb75716ab9f87982ccfa03e44fb5aa395e3ed328e861ebdb13395"
     },
     "ou_validation_covsync.svg": {
-      "bytes": 98011,
-      "sha256": "1dd6b7c06f595cbc6a8780aacde843d21b2bbd7e2110fcbcc9a5a86e1d539211"
+      "bytes": 94105,
+      "sha256": "9bb8777f0fc36c5d22a91c753bfefa517c0b24c60cfff49d264fe199026a291f"
     },
     "ou_validation_displacement.svg": {
-      "bytes": 82588,
-      "sha256": "18665d82f09659c0af6a1455beb48957fc1c3fe8be3e33d63b6663bcadd81e43"
+      "bytes": 79184,
+      "sha256": "09d51aff30ead1e4838cc9d4a1fb5db4978c71e1570567d69681d8f8b4fa20f9"
     },
     "ou_validation_macros.tex": {
       "bytes": 10603,
       "sha256": "6ccfcac7ebed8a26e5d8f6aeb5f0bb80ad697132eca12859c52f97586f2b2d7c"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 626550,
-      "sha256": "4a1ccc5e1587870607d69af2d9c57c0eef90de67dceead59e499de4f89ce4d44"
+      "bytes": 626380,
+      "sha256": "013e8a4b138bc4f840b4c5fb6ca3bb87ba9d3d5091a8684aa654e29578af3fe9"
     },
     "ou_validation_publication.tex": {
       "bytes": 12587,
       "sha256": "ec3f4fd2a6b6014541c143c75c69b4ae6b9ae4668a21f9d1ca6b973d888565d8"
     },
     "ou_validation_raw.csv": {
-      "bytes": 557439,
-      "sha256": "674156d8d4b6fe96d549957729273195abe714d327d7b9ae85d74c19946505a5"
+      "bytes": 557468,
+      "sha256": "eba047a8df42a5f0f6e5f5f3c9d86ae8d0ce5dfb594bcb3ab6d5d0ca3672dfaa"
     },
     "ou_validation_summary.csv": {
-      "bytes": 653781,
-      "sha256": "8c0680b37f78035073beb239ba1664f14a85bff43315d4caf5947238bca94bd2"
+      "bytes": 653768,
+      "sha256": "b12911e0cc5dd4cf427de29735041a8e502027770edcdeba02ce902d6bd541f0"
     },
     "ou_validation_table.tex": {
       "bytes": 15649,
       "sha256": "293b74d1067e44098113a83577ceef9a68f9e8fe965eef0d1959c162a2483cdc"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1339302,
-      "sha256": "8cc0d0e6f74118de40bbaf3a9a26c07c78725951f82a49915a21b368e85122af"
+      "bytes": 1339284,
+      "sha256": "f37fdd0a8942885f6b6a4244be2780ab1bf7fde1f1159f3f2009ef8ca74fefa3"
     },
     "ou_validation_transition.svg": {
-      "bytes": 318898,
-      "sha256": "57605e657130d967c2738753b1ed6288277bcbdb6bf451fcb9d3d2f469d232f2"
+      "bytes": 315931,
+      "sha256": "b19a16d28cc564489b9c1b669c57746a88c10c8802383a66b5774c68178f82d6"
     },
     "ou_validation_tuning_points.tex": {
       "bytes": 2124,
       "sha256": "9d3c92d816e3441bb5548a39650a9ebf0f4c16fed0162daf808ded3c8746922a"
     },
     "ou_validation_vertical.svg": {
-      "bytes": 86305,
-      "sha256": "d5b8351ecb2109f7edb07afcb066945d35702f565b648f8d6603786ea0d91eac"
+      "bytes": 83525,
+      "sha256": "692c60d973ef43ea1b48749eb64233f8abe7157a6c2774120c787c342ae97c99"
     }
   },
   "schema_version": 2,
@@ -706,11 +712,11 @@
   },
   "stationary_normalized_aggregate": {
     "OU_II": {
-      "bootstrap_ci95_high": 6.55618747829375,
-      "bootstrap_ci95_low": 6.3696890955,
-      "mean": 6.464028824000001,
+      "bootstrap_ci95_high": 6.5561875345562495,
+      "bootstrap_ci95_low": 6.36969082325,
+      "mean": 6.4640297175,
       "n": 10,
-      "std": 0.1592725357195283
+      "std": 0.1592719262017592
     },
     "OU_III": {
       "bootstrap_ci95_high": 4.73848123583125,
@@ -720,11 +726,11 @@
       "std": 0.08952350671898039
     },
     "OU_III_minus_OU_II": {
-      "bootstrap_ci95_high": -1.70793754295625,
-      "bootstrap_ci95_low": -1.8537525359500002,
-      "cohen_dz": -14.214712943073273,
-      "hedges_gz": -12.990469252713277,
-      "mean_paired_difference": -1.7772891462499998,
+      "bootstrap_ci95_high": -1.7079392102437503,
+      "bootstrap_ci95_low": -1.85375254225,
+      "cohen_dz": -14.214801512918898,
+      "hedges_gz": -12.990550194471364,
+      "mean_paired_difference": -1.7772900397500002,
       "n_pairs": 10,
       "randomization_exact": true,
       "randomization_p_value": 0.001953125,
@@ -733,13 +739,13 @@
       "sign_p_value": 0.001953125,
       "sign_positive": 0,
       "sign_zero": 0,
-      "standard_error": 0.03953848231303769,
-      "std_paired_difference": 0.1250316593354817,
-      "t_ci95_high": -1.6878468852793915,
-      "t_ci95_low": -1.866731407220608,
+      "standard_error": 0.03953825583307153,
+      "std_paired_difference": 0.12503094314294422,
+      "t_ci95_high": -1.6878482911126695,
+      "t_ci95_low": -1.866731788387331,
       "t_critical_value": 2.2621571627982036,
-      "t_p_value": 6.673163712753909e-12,
-      "t_statistic": -44.950869185586924
+      "t_p_value": 6.67279101720999e-12,
+      "t_statistic": -44.951149268031116
     }
   },
   "transition_diagnostic": {
