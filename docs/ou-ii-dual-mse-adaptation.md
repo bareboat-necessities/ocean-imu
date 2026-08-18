@@ -177,6 +177,51 @@ noise floor supplying one, the derivation predicts the absolute level too, and
 lands within 3 % of the empirically calibrated `c_p` without being anchored to
 it.
 
+## Calibration: the analytical value is the measured optimum
+
+`tools/ou2_pseudo_mse_scale_sweep.py` sweeps the one overall scale `C_P` while
+holding everything the derivation determines -- the 4/5 amplitude power, the
+12/5 and 7/5 period powers, and the spectral channel ratio -- fixed. The
+deterministic eight-record protocol, against the empirical law on the same
+records:
+
+| `C_P` | mean Z (%Hs) | worst Z (%Hs) | mean 3D (m) | mean roll (deg) |
+|---|---|---|---|---|
+| `Empirical` | 6.3241 | 6.7688 | 0.5024 | 0.2866 |
+| 0.070 | 6.5775 | 6.9126 | 0.4702 | 0.2841 |
+| 0.085 | 6.3741 | 6.7175 | 0.4789 | 0.2851 |
+| 0.098 | 6.2927 | 6.6573 | 0.4942 | 0.2860 |
+| **0.1116 (analytical, deployed)** | **6.2769** | **6.6736** | 0.5158 | 0.2870 |
+| 0.1146 | 6.2812 | 6.6860 | 0.5212 | 0.2872 |
+| 0.130 | 6.3392 | 6.7919 | 0.5517 | 0.2883 |
+| 0.150 | 6.4870 | 7.0121 | 0.5967 | 0.2897 |
+| 0.175 | 6.7542 | 7.3811 | 0.6588 | 0.2912 |
+
+The vertical column has an interior minimum and it is at the analytical value.
+Both neighbouring grid points are worse, so the optimum is bracketed rather
+than merely bounded, and the analytical `C_P` is a prediction the sweep
+confirms rather than a starting point the sweep moved.
+
+On the deterministic protocol the deployed law is therefore **-0.047 %Hs on the
+mean vertical endpoint and -0.095 %Hs on the worst record**, against the
+empirical schedule.
+
+The 3D column is the one thing that does not move with the vertical: it falls
+monotonically as `C_P` shrinks, so the deployed point costs +0.013 m (2.7 %) of
+3D RMS relative to the empirical law, and the 3D optimum is out at `C_P` around
+0.07 where the vertical is 0.25 %Hs worse. That split is the reduced model's
+own stated limitation showing up as a measurement. The theory carries one
+scalar `q` for all three axes, but the vertical channel is the one that takes
+gravity leakage from attitude error, so its residual acceleration intensity is
+genuinely different from the horizontal one and its optimal corner is too. A
+single isotropic `C_P` cannot sit at both optima; the filter already has the
+knob that could (`R_p0_xy_factor_`, currently 1.0, isotropic), and splitting it
+by axis is the natural follow-on -- but it needs the full-state physical-`H_2`
+calculation the note asks for, not a second fitted number.
+
+Roll and pitch move by less than 0.001 deg either way and are not what this
+parameter controls.
+
 ## What changed in the filter
 
 - `PseudoAdaptationLaw` selects the schedule; `PhysicalMSE` is the default and
