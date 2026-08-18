@@ -1,15 +1,15 @@
 % Optional investigation subsection.  It is intentionally isolated in this
 % file so it can be removed from the publication by deleting one \input line.
 
-\subsection{Coefficient-Law Investigation and Next Hypothesis}
+\subsection{Coefficient-Law Investigation and Transition Tradeoff}
 \label{sec:adaptation-coefficient-investigation}
 
 The analytical separation in Sec.~\ref{sec:adaptation} suggests three distinct
 questions: whether $c_\tau$ correctly places the OU time scale, whether the
-band-energy interpretation predicts $c_\sigma$, and whether the
-pseudo-measurement amplitude can be reduced to the raw accelerometer noise
-floor once the $\tau^{5/2}$ period dependence is fixed.  The coefficient-law
-experiment addressed the last two questions without changing the period law.
+band-energy interpretation predicts $c_\sigma$, and how the amplitude factor in
+the integral regularizer should vary with sea state once the
+$\tau^{5/2}$ period dependence is fixed.  Two successive coefficient-law
+experiments address the latter questions without changing the period law.
 
 For reference, $c_\tau=1$ gives $\tau=T_z/2$.  With
 $\omega_z=2\pi/T_z$,
@@ -42,11 +42,13 @@ The experiment does not confirm this value as a complete-filter optimum.
 However, once $c_\sigma$ is decoupled from the pseudo-measurement law, its full
 sweep changes the primary endpoint by only about 3\% end-to-end.  Thus the
 complete MEKF is only weakly sensitive to this coefficient over the tested
-range, consistent with the strong direct observation of the latent acceleration
-state.  The experiment therefore neither validates $1.80$ nor supplies a strong
-basis for replacing the applied $0.9$.
+range, consistent with strong direct observation of the latent acceleration
+state.  The experiment therefore neither validates $1.80$ nor supplies a
+strong basis for replacing the applied $0.9$.
 
-The amplitude-free regularizer used
+\subsubsection{Amplitude-free law}
+
+The first alternative used
 \begin{equation}
 r_{S,\mathrm{base}}
 =C_R\sqrt{R_a}\,\tau^3,
@@ -87,34 +89,17 @@ Thus a $\tau^{5/2}$ schedule can attain competitive or better error when its
 amplitude is supplied separately.  The transfer failure arises because the
 coefficient required by individual records varies systematically with the
 acceleration-amplitude quantity removed by Eq.~\eqref{eq:adapt-coeff-investigation-law}.
-A power-law fit in that quantity explains essentially all of the between-record
-coefficient variation (approximately 99\% in the reported diagnostic).  The
-applied law supplies a first-order amplitude factor through $\sigma_{aw}$;
-the amplitude-free law supplies none.
+A power-law fit in that quantity explains approximately 99\% of the
+between-record coefficient variation.  The applied law supplies a first-order
+amplitude factor through $\sigma_{aw}$; the amplitude-free law supplies none.
 
-This result narrows the interpretation of the scalar theory.  The condition
-$\Lambda\gg1$ correctly predicts weak sensitivity to the OU-prior variance and
-supports the $\tau^{5/2}$ period law, but the replacement
-$q_{\mathrm{eff}}\simeq2R_a h$ is too restrictive when $R_a$ is identified
-with the electronics noise floor alone.  In the complete MEKF, low-frequency
-acceleration error also contains attitude/gravity leakage, residual bias, and
-cross-covariance coupling, all of which can vary with sea state.  The empirical
-result is consistent with
-\begin{equation}
-\sqrt{q_{\mathrm{eff}}}\propto\sigma_{aw}
-\end{equation}
-over the tested envelope, which recovers the applied
-$r_S\propto\sigma_{aw}\tau^{5/2}$ form without deriving the amplitude factor
-from OU-state similarity.
+\subsubsection{Sensor-floor plus sea-dependent leakage}
 
-\subsubsection{Next experiment}
-
-The next experiment should test an explicit interpolation between a fixed
-sensor floor and sea-dependent leakage rather than another amplitude-free law.
-A minimal model is
+The second alternative tests whether the missing amplitude can be represented
+by a fixed sensor floor plus a sea-dependent term,
 \begin{equation}
 R_{a,\mathrm{eff}}
-=R_{a,\mathrm{sensor}}+\beta\sigma_{aw}^2,
+=R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2,
 \label{eq:adapt-next-effective-Ra}
 \end{equation}
 with
@@ -127,29 +112,135 @@ r_{S,\mathrm{filter}}
 =r_{S,\mathrm{base}}\sqrt{\frac{T_{S,0}}{T_S}}.
 \label{eq:adapt-next-rs-law}
 \end{equation}
-This family contains the rejected raw-noise model at $\beta=0$ and approaches a
-linear $\sigma_{aw}$ amplitude law when
-$\beta\sigma_{aw}^2\gg R_{a,\mathrm{sensor}}$.  The first sweep should hold
-$c_\tau=1$, retain the analytically predicted $C_R\simeq17.11$, and sweep
-$\beta$ on the paired ten-seed harness.  Because the decoupled $c_\sigma$ sweep
-has low leverage, the applied $c_\sigma=0.9$ should be held fixed initially; a
-small joint $(\beta,c_\sigma)$ refinement is warranted only if the first sweep
-shows a clear interior optimum.
+A 54-point sweep followed by a 25-point refinement uses a better-conditioned
+shape/scale parameterization.  On the deterministic screening protocol, the
+fitted family recovers the entire amplitude-free loss:
+\begin{table}[t]
+\caption{Deterministic screening of regularizer amplitude laws.}
+\label{tab:adapt-effective-ra-screen}
+\centering
+\footnotesize
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Law & mean normalized $z$ RMS (\%$H_s$) & worst record (\%$H_s$) \\
+\midrule
+Amplitude-free & 4.665 & 6.274 \\
+$R_{a,\mathrm{eff}}$ fitted & 4.153 & 4.580 \\
+Applied & 4.181 & 4.696 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-A complementary diagnostic should estimate the low-frequency posterior
-acceleration-error intensity directly for each sea and test whether
-$q_{\mathrm{eff}}$ is better represented by a constant floor, by
-$\sigma_{aw}^2$, or by Eq.~\eqref{eq:adapt-next-effective-Ra}.  This would test
-the physical interpretation rather than infer it only from the regularizer
-optimum.
+The optimum, however, lies in the asymptotic region in which the sensor floor
+has effectively disappeared.  The fitted values are
+\begin{equation}
+\beta_m=0.548,\qquad C_R=0.407.
+\label{eq:adapt-effective-ra-fit}
+\end{equation}
+Define
+\begin{equation}
+u:=\frac{\beta_m\sigma_{aw}^2}{R_{a,\mathrm{sensor}}}.
+\end{equation}
+Across the evaluated records, $u=324\ldots5625$.  The local logarithmic
+amplitude exponent of
+$\sqrt{R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2}$ is therefore
+\begin{equation}
+p_{\mathrm{loc}}
+:=\frac{d\log\sqrt{R_{a,\mathrm{eff}}}}{d\log\sigma_{aw}}
+=\frac{u}{1+u}
+=0.997\ldots1.000.
+\label{eq:adapt-effective-ra-local-exponent}
+\end{equation}
+Thus $R_{a,\mathrm{sensor}}$ contributes at most about 0.3\% of
+$R_{a,\mathrm{eff}}$ even at the smallest tested sea.  Equation~\eqref{eq:adapt-next-rs-law}
+therefore reduces numerically to the applied linear-$\sigma_{aw}$ law.  Its
+effective amplitude coefficient is
+\begin{equation}
+C_R\sqrt{\beta_m}=0.301,
+\end{equation}
+compared with the applied coefficient $0.35$.  This is also consistent with the
+independent gain-optimized $p=1$ scan, whose deterministic minimum is
+$4.149\%H_s$ at coefficient $0.311$.
+
+The apparent deterministic improvement does not survive paired Monte Carlo.
+On the ten-seed primary endpoint ($n=90$), the applied and fitted laws give
+$4.5081\%H_s$ and $4.5078\%H_s$, respectively, with paired difference
+$-0.0003\pm0.0146$ percentage points.  Attitude metrics are unchanged to the
+reported precision.  The static interpolation is therefore a statistical tie
+with the applied law and supplies no evidence for replacing it.  This is the
+fourth observed case in the tuning study in which a deterministic improvement
+below approximately 1.5\% disappears under the paired ten-seed evaluation;
+single-realization screening is consequently treated only as a pruning tool at
+that scale.
+
+\subsubsection{Stationary--transition tradeoff}
+
+The tie is not uniform across operating regimes.  Let
+$\Delta_z$ denote candidate minus applied normalized vertical RMS, so negative
+values favor the candidate.  The two amplitude extremes show opposite patterns:
+\begin{table}[t]
+\caption{Observed tradeoff between stationary and transition behavior.}
+\label{tab:adapt-transition-amplitude-tradeoff}
+\centering
+\footnotesize
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Law & two small stationary seas & controlled transition \\
+\midrule
+$R_{a,\mathrm{eff}}$ fitted & $-0.093,\ -0.076$ & $+0.128\pm0.012$ \\
+Amplitude-free & $+1.30,\ +0.87$ & $-0.093\pm0.033$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+Amplitude coupling therefore improves the small stationary seas while imposing
+a transient cost when the sea changes; removing amplitude coupling gives the
+opposite behavior.  A single static global amplitude law cannot simultaneously
+occupy both ends of this tradeoff.  The remaining headroom is consequently a
+dynamic adaptation problem rather than another static coefficient problem.
+
+This result narrows the interpretation of the scalar theory.  The condition
+$\Lambda\gg1$ correctly predicts weak sensitivity to the OU-prior variance and
+supports the $\tau^{5/2}$ period law, but the replacement
+$q_{\mathrm{eff}}\simeq2R_a h$ is too restrictive when $R_a$ is identified
+with the electronics noise floor alone.  In the complete MEKF, low-frequency
+acceleration error also contains attitude/gravity leakage, residual bias, and
+cross-covariance coupling, all of which can vary with sea state.  The static
+interpolation experiment further shows that adding a sensor-floor term does not
+improve the applied steady-state amplitude law over the tested envelope.
+
+\subsubsection{Next investigation: dynamic amplitude response}
+
+The next experiment should preserve the established steady-state mapping and
+modify only how its amplitude target is approached during changing seas.  Two
+minimal mechanisms are an asymmetric first-order response
+\begin{equation}
+\dot a_R=
+\begin{cases}
+(\sigma_{aw}-a_R)/\tau_{\uparrow}, & \sigma_{aw}>a_R,\\
+(\sigma_{aw}-a_R)/\tau_{\downarrow}, & \sigma_{aw}\le a_R,
+\end{cases}
+\label{eq:adapt-next-asymmetric-amplitude}
+\end{equation}
+or a rate limit on the logarithmic regularizer-amplitude target.  In either
+case the stationary limit remains
+$r_{S,\mathrm{base}}=c_R\sigma_{aw}\tau^3$; only transition dynamics change.
+The experiment should be scored jointly on the paired stationary and controlled
+transition ensembles, with the primary question being whether transient loss
+can be reduced without sacrificing the small-sea stationary benefit.  Static
+coefficient refinement should not be pursued further unless such a mechanism
+first demonstrates multi-seed benefit.
+
+A complementary diagnostic remains useful: estimate the low-frequency
+posterior acceleration-error intensity directly by sea state and through the
+controlled transition.  This can test whether the lag in the preferred
+regularizer amplitude follows the evolution of $q_{\mathrm{eff}}$, rather than
+only the measured $\sigma_{aw}$ target.
 
 Finally, any exponent study of
 $r_S\propto\sigma_{aw}^{p}\tau^{5/2}$ must optimize the gain independently at
-each $p$.  The existing exponent ablation changes $p$ at fixed gain; its gain
-normalization is not equivalent across exponents, and the $p=0$ endpoint is
-degenerate under that parameterization.  Its apparent minimum at $p=1$ should
-therefore not be cited as a gain-optimized exponent result.  Single-realization
-screening should likewise be used only for coarse pruning: settings separated
-by roughly the percent level changed rank under the paired ten-seed evaluation
-and also altered pitch and quality-gate outcomes.  Final coefficient claims
-should therefore be based on the paired multi-seed protocol.
+each $p$.  The earlier fixed-gain exponent ablation does not provide equivalent
+gain normalization across exponents, and its $p=0$ endpoint is degenerate under
+that parameterization.  Its apparent $p=1$ minimum should therefore not be cited
+as a gain-optimized exponent result.  The independent gain-optimized scan is the
+appropriate comparison and is consistent with the asymptotic
+$p_{\mathrm{loc}}\simeq1$ result above.
