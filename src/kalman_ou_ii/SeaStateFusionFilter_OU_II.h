@@ -203,6 +203,12 @@ constexpr float MAX_SIGMA_A   = 6.0f;
 // largest deployed values on the reference records are r_p0 = 20 m and
 // r_v0 = 8.6 m/s at H_s = 8.5 m, so these ceilings sit five to seven times
 // above the working range and act as saturation safeguards, not as tuning.
+//
+// regularizer_floor-test asks the *deployed* law whether these still hold.
+// Under PhysicalMSE the near-still stress case asks for r_p0 = 0.070 m against
+// this 0.05 floor, where the Empirical schedule asked 0.058 m, so the deployed
+// law clears the floor by more than the one it replaced and the clamps are
+// unchanged.
 constexpr float MIN_R_p0_std  = 0.05f;
 constexpr float MAX_R_p0_std  = 150.0f;
 constexpr float MIN_R_v0_std  = 0.01f;
@@ -264,6 +270,132 @@ constexpr float PSEUDO_UPDATE_TAU_RATIO_DEFAULT =
 // The upper guard is inactive over the current tau <= 12 s operating envelope.
 constexpr float PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT;
 constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f;
+
+// Dual pseudo-measurement adaptation laws.  Both schedule the standard
+// deviations of the two zero pseudo-measurements -- p = 0 and v = 0 -- that
+// regularize the low-frequency end of the integration chain.  They differ in
+// what they claim those numbers are.
+//
+//   Empirical    r_p0,base = c_p sigma_aw tau^2,  r_v0,base = c_v sigma_aw tau,
+//                both renormalized by sqrt(T_0/T_S).  Dimensionally consistent
+//                and swept to a sharp optimum on the reference records, but the
+//                powers of sigma_aw and tau were never derived: dimensional
+//                analysis alone does not identify them.  Effectively
+//                sigma_aw tau^(3/2) and sigma_aw tau^(1/2) at the filter input.
+//   PhysicalMSE  the joint displacement-MSE law of the OU-II dual-regularization
+//                note, doc/kalman_ou_ii/ou2-dual-regularization-mse.tex.
+//                DEPLOYED DEFAULT.
+//
+// The PhysicalMSE derivation is the OU-II analogue of the OU-III SpectralMSE
+// law and rests on the same distinction: the Kalman covariance of a filter that
+// believes a zero pseudo-measurement is not that filter's physical error.  The
+// pseudo-measurements suppress integration drift and simultaneously distort the
+// real wave, and only the second cost scales with physical wave energy.
+//
+// Treating the two channels jointly rather than as independent penalties, the
+// reduced two-state Kalman-Bucy CARE for the double integrator
+//     p_dot = v,  v_dot = n_a,   S_na = q_eff
+// under continuous pseudo densities rho_p = r_p^2 T_S and rho_v = r_v^2 T_S has
+// the closed-form stabilizing solution of Theorem (dual-channel CARE), which is
+// parameterized by
+//     omega_p = (q/rho_p)^(1/4),   chi = (omega_v/omega_p)^2,
+//     omega_v = (q/rho_v)^(1/2).
+// chi says how much of one second-order loop is supplied through the velocity
+// channel; the two pseudo channels do not generate two independent corners.
+// The closed loop reconstructs displacement through
+//     G(s) = s^2 H_pa(s) = (1/(1+chi)) s^2 / (s^2 + omega_p sqrt(2+chi) s + omega_p^2),
+// so the physical objective is
+//     J = J_n + J_w,
+//     J_n = q / (2 omega_p^3 (1+chi)^2 sqrt(2+chi)),          exact H_2 norm
+//     J_w = (1/2pi) int |G(jw)-1|^2 S_p^(2) dw.
+// Expanding both for chi << 1 and a regularization corner below the wave band,
+//     J ~ q(1 - 9chi/4)/(2 sqrt2 omega_p^3) + 2 M_-2 omega_p^2 + M_0 chi^2,
+// whose stationary point is
+//     omega_p*^5 = 3q/(8 sqrt2 M_-2),   chi* = 9q/(16 sqrt2 M_0 omega_p*^3).
+// For a self-similar sea M_0 ~ sigma_a^2 tau^4 and M_-2 ~ sigma_a^2 tau^6, so
+//     r_p = C_P q_eff^(1/10) sigma_a,B^(4/5) tau^(12/5) / sqrt(T_S),
+//     r_v = C_V q_eff^(1/10) sigma_a,B^(4/5) tau^(7/5)  / sqrt(T_S),
+// i.e. tau^(19/10) and tau^(9/10) at the filter input away from cadence clamps,
+// against the Empirical tau^(3/2) and tau^(1/2).  Note that both channels move
+// by the same tau^(2/5): the theory does not ask for a different *relative*
+// period law, only a common shape correction and a different amplitude power
+// (4/5 rather than 1).
+//
+// sigma_a,B is the physical band-limited acceleration RMS, which is what
+// carries the wave energy the pseudo-measurements distort.  The tuner passes
+// the OU prior sigma_aw = c_sigma sigma_a,B, so the law divides c_sigma back
+// out: the distortion penalty is a property of the sea and not of our choice of
+// prior, and C_P and c_sigma must stay separately identifiable.
+//
+// Empirical stays selectable with setPseudoLaw(PseudoAdaptationLaw::Empirical),
+// which also needs R_p0_coeff/R_v0_coeff (c_p, c_v) rather than C_P and the
+// channel ratio.  It costs no transcendental per tuner update where PhysicalMSE
+// costs one powf, so it remains the supported low-cost configuration for
+// embedded targets without hardware transcendental support.
+enum class PseudoAdaptationLaw : uint8_t {
+    Empirical   = 0,
+    PhysicalMSE = 1,
+};
+
+// Coefficient C_P of the PhysicalMSE position channel,
+//     r_p = C_P q_eff^(1/10) sigma_a,B^(4/5) tau^(12/5) / sqrt(T_S).
+// C_P absorbs the dimensionless spectral moment of the self-similar
+// displacement spectrum, C_P = (8 sqrt2 / 3)^(2/5) mu_-2^(2/5) with
+// mu_-2 = M_-2 / (sigma_a^2 tau^6).  Evaluating that moment on the eight
+// reference spectra at their measured OU-II operating points and solving
+// Eq. (wp-opt) record by record gives C_P ~ 0.112, so the default is an
+// analytical prediction rather than a fitted number.  See
+// tools/ou2_dual_mse_coefficients.py and docs/ou-ii-dual-mse-adaptation.md.
+constexpr float R_PSEUDO_MSE_COEFF_DEFAULT = 0.1116f;
+
+// Channel ratio C_P/C_V of the PhysicalMSE law.  This is the corollary the
+// note identifies as the more tightly constrained half of the prediction,
+// because q_eff and the cadence normalization both cancel out of it:
+//     (r_p / r_v)^2 = (3/2) M_-2 / M_0,
+// hence r_p/r_v = C_P/C_V * tau for a fixed normalized sea shape.  The eight
+// finite-band reference spectra give 0.431..0.485 with a mean of 0.461; an
+// ideal infinite-band Pierson-Moskowitz sea gives sqrt(3/(4 pi)) = 0.489 and an
+// ideal gamma = 3.3 JONSWAP 0.465.  The Empirical law's c_p/c_v = 0.500 is the
+// same relative law with a slightly looser position channel, which is the
+// agreement Sec. (ratio) of the note reports.
+//
+// Applying the ratio rather than a second independent power is exact, not an
+// approximation: sigma^(4/5) tau^(7/5) = sigma^(4/5) tau^(12/5) / tau.  It is
+// also what keeps the whole schedule down to a single transcendental.
+constexpr float R_PSEUDO_MSE_RATIO_DEFAULT = 0.4611f;
+
+// q_eff = 2 r_a with r_a = R_a * h, the density of the residual acceleration
+// error the integration chain actually sees.
+//
+// This is not the accelerometer's bench noise spec.  The note defines q as the
+// residual error "presented to the integration chain after acceleration
+// estimation", which carries attitude and gravity leakage, residual
+// accelerometer bias and estimation error on top of the sensor floor -- and
+// the reduced model that drops all three from its *dynamics* still needs their
+// intensity here.  OU-III's SpectralMSE law uses the bench figure legitimately,
+// because its strong-observation branch is a statement about the sensor; the
+// OU-II objective is not, and using the bench figure here was a
+// misidentification the calibration sweep caught.
+//
+// The filter already carries a measured estimate of the right quantity:
+// ACC_NOISE_FLOOR_SIGMA_DEFAULT, the pre-band vertical acceleration noise
+// floor the tuner subtracts as non-wave energy, at 0.12 m/s^2 -- eight times
+// the bench 0.0148 m/s^2.  Referring the law to it moves the schedule by
+// (0.12/0.0148)^(1/5) = 1.52, and the eight-record scale sweep puts the
+// complete-MEKF vertical optimum within 3 % of exactly that; see
+// docs/ou-ii-dual-mse-adaptation.md.  So the analytical C_P is deployed as
+// derived, and this constant is what changed.
+//
+// It is a separate knob rather than a live read of acc_noise_floor_sigma_, so
+// that the sweep axis stays clean and so that q stays sea-state independent,
+// which is the assumption the 4/5 amplitude exponent rests on.  A platform
+// re-characterization should move both: they are the same physical number.
+//
+// The law depends on it only as q_eff^(1/10), so ten times the noise *density*
+// moves the schedule by 26 % and ten times the noise standard deviation by
+// 58 %.  It cancels out of the channel ratio entirely.
+constexpr float R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT =
+    ACC_NOISE_FLOOR_SIGMA_DEFAULT * ACC_NOISE_FLOOR_SIGMA_DEFAULT * FREQ_SMOOTHER_DT;
 
 struct TuneState {
     float tau_applied      = 1.1f;   // s
@@ -745,12 +877,17 @@ public:
         if (std::isfinite(c) && c > 0.0f) sigma_coeff_ = c;
     }
 
+    // c_p of the Empirical law.  The in-place rescale of the staged and applied
+    // values only makes sense while that law is the one generating them; under
+    // PhysicalMSE the coefficient is stored for a later switch and nothing is
+    // rescaled.
     void setR_p0_Coeff(float c) {
         if (std::isfinite(c) && c > 0.0f) {
             const float prev = R_p0_coeff_;
             R_p0_coeff_ = c;
 
-            if (std::isfinite(prev) && prev > 0.0f) {
+            if (pseudo_law_ == PseudoAdaptationLaw::Empirical &&
+                std::isfinite(prev) && prev > 0.0f) {
                 const float scale = c / prev;
 
                 if (std::isfinite(tune_.R_p0_std_applied) && tune_.R_p0_std_applied > 0.0f) {
@@ -766,12 +903,14 @@ public:
         }
     }
 
+    // c_v of the Empirical law; see setR_p0_Coeff().
     void setR_v0_Coeff(float c) {
         if (std::isfinite(c) && c > 0.0f) {
             const float prev = R_v0_coeff_;
             R_v0_coeff_ = c;
 
-            if (std::isfinite(prev) && prev > 0.0f) {
+            if (pseudo_law_ == PseudoAdaptationLaw::Empirical &&
+                std::isfinite(prev) && prev > 0.0f) {
                 const float scale = c / prev;
 
                 if (std::isfinite(tune_.R_v0_std_applied) && tune_.R_v0_std_applied > 0.0f) {
@@ -785,6 +924,43 @@ public:
                 }
             }
         }
+    }
+
+    // Select which law generates the two pseudo-measurement targets.  Changing
+    // it while Live restages the schedule on the next adapt tick; the active
+    // covariances are refreshed here so ablations switch cleanly.
+    void setPseudoLaw(PseudoAdaptationLaw law) {
+        pseudo_law_ = law;
+        if (mekf_ && startup_stage_ == StartupStage::Live && enable_linear_block_) {
+            apply_R_p0_tune_();
+            apply_R_v0_tune_();
+        }
+    }
+    PseudoAdaptationLaw getPseudoLaw() const noexcept { return pseudo_law_; }
+
+    // C_P of the PhysicalMSE position channel.
+    void setPseudoMseCoeff(float c) {
+        if (std::isfinite(c) && c > 0.0f) pseudo_mse_coeff_ = c;
+    }
+    float getPseudoMseCoeff() const noexcept { return pseudo_mse_coeff_; }
+
+    // C_P/C_V, the PhysicalMSE channel ratio: r_p/r_v = ratio * tau.
+    void setPseudoMseRatio(float r) {
+        if (std::isfinite(r) && r > 0.0f) pseudo_mse_ratio_ = r;
+    }
+    float getPseudoMseRatio() const noexcept { return pseudo_mse_ratio_; }
+
+    // r_a = R_a * dt of the residual acceleration error entering the
+    // integration chain; the law uses q_eff = 2 r_a.  This is the same
+    // physical number as the acceleration noise floor, not the accelerometer
+    // bench spec; see R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT.
+    void setPseudoAccelNoiseDensity(float r_a) {
+        if (!(std::isfinite(r_a) && r_a > 0.0f)) return;
+        pseudo_accel_noise_density_ = r_a;
+        refresh_pseudo_qeff_pow_();
+    }
+    float getPseudoAccelNoiseDensity() const noexcept {
+        return pseudo_accel_noise_density_;
     }
 
     void setAccNoiseFloorSigma(float s) {
@@ -1320,10 +1496,73 @@ private:
     // sigma_aw*tau^2 and sigma_aw*tau schedules into effective
     // sigma_aw*tau^(3/2) and sigma_aw*tau^(1/2) schedules at the filter input.
     float pseudo_update_information_rate_scale_() const noexcept {
+        // The PhysicalMSE law already contains the realized T_S, so
+        // renormalizing it again would double-count the cadence.
+        if (pseudo_law_ != PseudoAdaptationLaw::Empirical) return 1.0f;
         if (!tau_scaled_pseudo_cadence_ || !mekf_) return 1.0f;
         const float period = mekf_->get_pseudo_update_period_s();
         if (!(std::isfinite(period) && period > 0.0f)) return 1.0f;
         return std::sqrt(pseudo_update_fixed_period_s_ / period);
+    }
+
+    // Pseudo-update period the cadence scheduler would select for a given tau.
+    // Used by the PhysicalMSE law so that the target pair and the target
+    // cadence refer to the same operating point, including the safety clamps.
+    float pseudo_update_period_for_(float tau) const noexcept {
+        if (!tau_scaled_pseudo_cadence_) return pseudo_update_fixed_period_s_;
+        if (!(std::isfinite(tau) && tau > 0.0f)) return pseudo_update_fixed_period_s_;
+        return std::min(std::max(pseudo_update_tau_ratio_ * tau,
+                                 pseudo_update_period_min_s_),
+                        pseudo_update_period_max_s_);
+    }
+
+    // q_eff^(1/10) for the current acceleration-error density, cached because
+    // it is constant between setPseudoAccelNoiseDensity() calls.
+    void refresh_pseudo_qeff_pow_() noexcept {
+        float r_a = pseudo_accel_noise_density_;
+        if (!(std::isfinite(r_a) && r_a > 0.0f))
+            r_a = R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT;
+        pseudo_qeff_pow_ = std::pow(2.0f * r_a, 0.1f);
+    }
+
+    // The two pseudo targets for the selected law.
+    //
+    // Empirical returns the *base* pair of Eq. (implemented-base); the caller's
+    // cadence renormalization sqrt(T_0/T_S) then carries it to the filter
+    // input.  PhysicalMSE returns the filter input directly, because the law is
+    // derived on the continuous densities rho = r^2 T_S and therefore already
+    // contains the realized cadence; pseudo_update_information_rate_scale_()
+    // must not renormalize it a second time.
+    void pseudo_targets_from_law_(float tau, float sigma,
+                                  float& r_p, float& r_v) const noexcept {
+        if (pseudo_law_ == PseudoAdaptationLaw::Empirical) {
+            r_p = R_p0_coeff_ * sigma * tau * tau;
+            r_v = R_v0_coeff_ * sigma * tau;
+            return;
+        }
+
+        const float TS = pseudo_update_period_for_(tau);
+        const float c_sigma = (std::isfinite(sigma_coeff_) && sigma_coeff_ > 0.0f)
+                              ? sigma_coeff_ : 1.0f;
+        const float sigma_aB = std::max(sigma / c_sigma, 1e-6f);
+        const float ratio = pseudo_mse_ratio_;
+        if (!(TS > 0.0f) || !(tau > 0.0f) ||
+            !(std::isfinite(ratio) && ratio > 0.0f)) {
+            // degenerate config: fall back to the Empirical base pair
+            r_p = R_p0_coeff_ * sigma * tau * tau;
+            r_v = R_v0_coeff_ * sigma * tau;
+            return;
+        }
+        // sigma^(4/5) tau^(12/5) == (sigma tau^3)^(4/5) exactly, so the
+        // position channel needs one transcendental rather than two, and
+        // q_eff^(1/10) is constant for a given sensor and is cached.  The
+        // velocity channel is then r_p / (ratio tau), which is exact and free:
+        // Corollary (optimal pseudo-channel ratio) fixes r_p/r_v = ratio * tau
+        // and the two channels share every other factor.
+        const float u = sigma_aB * tau * tau * tau;
+        r_p = pseudo_mse_coeff_ * pseudo_qeff_pow_
+            * std::pow(u, 0.8f) / std::sqrt(TS);
+        r_v = r_p / (ratio * tau);
     }
 
     void apply_R_p0_tune_(float rp_scale = 1.0f) {
@@ -1434,8 +1673,9 @@ private:
             sigma_target_ = std::max(sigma_target_, std::max(0.05f, band_noise_sigma));
         }
 
-        float R_p0_raw = R_p0_coeff_ * sigma_target_ * tau_target_ * tau_target_;
-        float R_v0_raw = R_v0_coeff_ * sigma_target_ * tau_target_;
+        float R_p0_raw = NAN;
+        float R_v0_raw = NAN;
+        pseudo_targets_from_law_(tau_target_, sigma_target_, R_p0_raw, R_v0_raw);
 
         if (enable_clamp_) {
             R_p0_std_target_ = std::min(std::max(R_p0_raw, MIN_R_p0_std_), MAX_R_p0_std_);
@@ -1749,8 +1989,21 @@ private:
     // vertical error degrades -- seven of the eight improve and the eighth is
     // 1.0003 of the shipped one -- and at 0.70 three records lose, two of them
     // by half a percent.  See docs/ou-ii-pseudo-variance-tuning.md.
+    // c_p and c_v of the Empirical law.  Retained under PhysicalMSE so that
+    // switching laws at runtime restores the calibrated empirical schedule.
     float R_p0_coeff_  = 0.65f;
     float R_v0_coeff_  = 1.3f;
+
+    // PhysicalMSE is the deployed law: it is the one of the two whose powers
+    // of sigma_a and tau are derived from a physical displacement-MSE
+    // criterion rather than selected empirically.  Empirical stays selectable
+    // as the low-cost embedded configuration.
+    PseudoAdaptationLaw pseudo_law_ = PseudoAdaptationLaw::PhysicalMSE;
+    float pseudo_mse_coeff_ = R_PSEUDO_MSE_COEFF_DEFAULT;
+    float pseudo_mse_ratio_ = R_PSEUDO_MSE_RATIO_DEFAULT;
+    float pseudo_accel_noise_density_ = R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT;
+    float pseudo_qeff_pow_ =
+        std::pow(2.0f * R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT, 0.1f);
     float tau_coeff_   = 1.0f;
     float sigma_coeff_ = 0.85f;
 

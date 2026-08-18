@@ -1,5 +1,13 @@
 # Re-fitting OU-II's two pseudo-measurement variance coefficients
 
+> **Superseded as the deployed law.** OU-II now schedules both pseudo channels
+> from the joint physical-MSE derivation of
+> `doc/kalman_ou_ii/ou2-dual-regularization-mse.tex`; see
+> [`ou-ii-dual-mse-adaptation.md`](ou-ii-dual-mse-adaptation.md). The
+> `(R_p0_coeff, R_v0_coeff)` pair fitted here is still the calibration of the
+> `Empirical` law, which remains selectable, so this write-up stays the record
+> of how that arm got its coefficients.
+
 OU-II regularizes double-integration drift with two zero pseudo-measurements
 fired on one periodic tick inside the MEKF, `p = 0` and `v = 0`, whose standard
 deviations the wrapper schedules from the tuner's operating point:

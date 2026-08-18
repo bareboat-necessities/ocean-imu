@@ -63,6 +63,12 @@ w3d_*.csv
 wave_spectrum_*.csv
 wave_tracker_data.csv
 
+# Per-run driver logs of the evidence tools under reports/results/.  The
+# versioned evidence is the CSV each driver writes, not the stdout of the
+# ou_validation.py invocations behind it: those are large, are rewritten in
+# place while a run is still going, and say nothing the CSV does not.
+reports/results/**/*.log
+
 # Same category, written by the rest of the suite that `make all` runs.
 # Together these are about two gigabytes per run and are regenerated from the
 # fetched records every time, so they are build output rather than evidence.

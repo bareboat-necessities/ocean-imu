@@ -61,34 +61,37 @@ GATE_CHANNELS = {
     "bias_3d_percent":               ("bias 3D %",       "all",      None),
 }
 
-# The gates each family currently ships, in the order above.
+# The gates each family currently ships, in the order above.  These mirror the
+# FAIL_LIMITS blocks of the three simulators and exist only so the printed
+# table can say what each bar is moving from; a stale entry silently reports
+# the wrong "was" without changing any "is".
 FAMILIES = {
     "ou_ii": {
         "sim": REPO_ROOT / "tests" / "kalman_ou_ii" / "kalman_ou_ii-sim",
         "shipped": {
-            "err_limit_percent_z_jonswap":   6.865,
-            "err_limit_percent_z_pmstokes":  6.848,
-            "err_limit_yaw_deg":             1.089,
-            "err_limit_roll_deg":            0.4792,
-            "err_limit_pitch_deg":           0.3657,
-            "err_limit_percent_3d_jonswap":  20.92,
-            "err_limit_percent_3d_pmstokes": 21.03,
-            "acc_z_bias_percent":            5.324,
-            "bias_3d_percent":               94.47,
+            "err_limit_percent_z_jonswap":   6.707,
+            "err_limit_percent_z_pmstokes":  6.649,
+            "err_limit_yaw_deg":             1.073,
+            "err_limit_roll_deg":            0.4357,
+            "err_limit_pitch_deg":           0.2833,
+            "err_limit_percent_3d_jonswap":  16.84,
+            "err_limit_percent_3d_pmstokes": 18.27,
+            "acc_z_bias_percent":            4.791,
+            "bias_3d_percent":               92.33,
         },
     },
     "ou_iii": {
         "sim": REPO_ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim",
         "shipped": {
-            "err_limit_percent_z_jonswap":   4.735,
-            "err_limit_percent_z_pmstokes":  4.682,
-            "err_limit_yaw_deg":             1.297,
-            "err_limit_roll_deg":            0.42,
-            "err_limit_pitch_deg":           0.2211,
-            "err_limit_percent_3d_jonswap":  20.95,
-            "err_limit_percent_3d_pmstokes": 20.86,
-            "acc_z_bias_percent":            4.624,
-            "bias_3d_percent":               81.84,
+            "err_limit_percent_z_jonswap":   4.72,
+            "err_limit_percent_z_pmstokes":  4.666,
+            "err_limit_yaw_deg":             1.27,
+            "err_limit_roll_deg":            0.3637,
+            "err_limit_pitch_deg":           0.195,
+            "err_limit_percent_3d_jonswap":  13.94,
+            "err_limit_percent_3d_pmstokes": 14.92,
+            "acc_z_bias_percent":            4.475,
+            "bias_3d_percent":               78.61,
         },
     },
     # TFG is gated by the same rule on the same protocol and had been
@@ -100,13 +103,13 @@ FAMILIES = {
     "tfg": {
         "sim": REPO_ROOT / "tests" / "kalman_tfg" / "kalman_tfg-sim",
         "shipped": {
-            "err_limit_percent_z_jonswap":   4.803,
-            "err_limit_percent_z_pmstokes":  4.709,
-            "err_limit_yaw_deg":             1.536,
-            "err_limit_percent_3d_jonswap":  21.14,
-            "err_limit_percent_3d_pmstokes": 20.71,
-            "acc_z_bias_percent":            5.026,
-            "bias_3d_percent":               167.6,
+            "err_limit_percent_z_jonswap":   4.807,
+            "err_limit_percent_z_pmstokes":  4.707,
+            "err_limit_yaw_deg":             1.59,
+            "err_limit_percent_3d_jonswap":  21.13,
+            "err_limit_percent_3d_pmstokes": 20.74,
+            "acc_z_bias_percent":            5.022,
+            "bias_3d_percent":               164.5,
         },
     },
 }

@@ -245,9 +245,18 @@ sweeps those horizons against synthesized sea-state transitions, which is the
 only instrument that can see them; see
 [`docs/ou-ema-adaptation-tuning.md`](docs/ou-ema-adaptation-tuning.md).
 
-The coefficients of the drift-regularizer laws themselves -- OU-II's
-`r_p0 ~ sigma_aw tau^2` and `r_v0 ~ sigma_aw tau` -- are fitted the same way,
-and have to be re-fitted whenever the way `sigma_aw` is measured changes, since
-they pass that measurement straight through. OU-II's pair was last re-fitted
-after its variance channel moved into the wave band; see
+Both families now deploy drift-regularizer laws whose exponents are derived
+from a physical displacement-MSE criterion rather than fitted. OU-II schedules
+its two zero pseudo-measurements as
+`r_p ~ q_eff^(1/10) sigma_a,B^(4/5) tau^(12/5)/sqrt(T_S)` with
+`r_p/r_v = (C_P/C_V) tau`, both coefficients analytical; see
+[`docs/ou-ii-dual-mse-adaptation.md`](docs/ou-ii-dual-mse-adaptation.md). The
+empirical pair it replaced -- `r_p0 ~ sigma_aw tau^2` and `r_v0 ~ sigma_aw tau`
+-- is still selectable as the low-cost embedded configuration; it was fitted
+the same way the EMA horizons are, and had to be re-fitted whenever the way
+`sigma_aw` is measured changed, since it passed that measurement straight
+through. Its last re-fit, after the variance channel moved into the wave band,
+is in
 [`docs/ou-ii-pseudo-variance-tuning.md`](docs/ou-ii-pseudo-variance-tuning.md).
+Not needing that re-fit is one of the derived law's practical advantages: it
+divides `c_sigma` back out and depends on the physical band amplitude.
