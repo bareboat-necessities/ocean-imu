@@ -43,22 +43,19 @@ stationary calibration records, world-$x$ and world-$y$ low-frequency
 acceleration-error intensities are approximately $65$ and $102$ times the
 vertical value.
 
-This large disturbance does not imply proportionally stronger horizontal
-regularization.  Section~\ref{sec:riccati-mis-specified-pseudo} gives
-$r_{S,\mathrm{red}}^\star\propto q_{\mathrm{eff}}^{1/14}$ but
-$J_{\mathrm{red}}^\star\propto q_{\mathrm{eff}}^{4/7}$; even a tenfold drift
-intensity change alters the preferred $r_S$ by only
-$10^{1/14}\simeq1.18$.  Large horizontal disturbance can therefore dominate
-residual error while shifting useful regularization only modestly.
-
-The desired-motion moment $m_{-4}$ is also heading dependent because horizontal
-motion is a projection of directional orbital motion.  The present heading
-ensemble is insufficient to identify universal separate $x$ and $y$ factors.
-The supported full-filter result is that isotropic $r_S$ performs well over the
-tested cases.  Further horizontal improvement should target the disturbance
-itself---tilt error, accelerometer-bias observability, GNSS, or another
-horizontal reference.  The $65$--$102\times$ ratios are simulation diagnostics,
-not universal ocean constants.
+These ratios do not by themselves determine separate horizontal
+pseudo-measurement covariances.  The scalar spectral reduction of
+Sec.~\ref{sec:adaptation-regularizer-transfer} identifies the mechanism by
+which $q_{\mathrm{eff}}$, $R_S$, and update cadence set a correction corner, but
+it omits attitude-error coupling, axis-dependent bias observability, and the
+directional desired-motion spectrum.  In particular, horizontal desired motion
+is a heading-dependent projection of the same orbital field, so a fixed world
+$x/y$ multiplier would not be invariant to vessel heading.  The supported
+full-filter result is therefore narrower: isotropic $r_S$ performs well over the
+tested directional records.  Further horizontal improvement should target the
+disturbance itself---tilt error, accelerometer-bias observability, GNSS, or
+another horizontal reference.  The $65$--$102\times$ ratios are simulation
+diagnostics, not universal ocean constants.
 
 \subsection{Attitude and adaptation behavior}
 
