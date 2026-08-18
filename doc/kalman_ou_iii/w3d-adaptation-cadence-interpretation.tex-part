@@ -1,0 +1,76 @@
+% Separate interpretation of the cubic base plus cadence normalization.
+% Kept in its own file so it can be removed without disturbing the primary
+% Riccati derivation.
+
+\subsection{Equivalent interpretation of the cadence-normalized cubic law}
+\label{sec:adaptation-cadence-interpretation}
+
+The same $\tau^{5/2}$ dependence admits a complementary interpretation that
+starts from the dimensional cubic base rather than from the reduced Riccati
+model.  Suppose
+\begin{equation}
+ r_{S,\mathrm{base}}
+ = C_R\sqrt{R_a}\,\tau^3
+\label{eq:adapt-cadence-cubic-base}
+\end{equation}
+is regarded as the desired pseudo-measurement standard deviation at a reference
+update period $T_{S,0}$.  Because one $S=0$ update with variance $R_S=r_S^2$
+is applied every $T_S$ seconds, its continuous-equivalent information rate is
+proportional to
+\begin{equation}
+ \mathcal I_S \propto \frac{1}{r_S^2T_S}.
+\label{eq:adapt-cadence-information-rate}
+\end{equation}
+If $T_S$ is increased while $r_S$ is left equal to the cubic base value, the
+regularizer is applied less frequently and its information rate decreases.
+Preserving the information rate represented by the cubic base therefore
+requires
+\begin{equation}
+ r_{S,\mathrm{filter}}^2 T_S
+ = r_{S,\mathrm{base}}^2 T_{S,0},
+\label{eq:adapt-cadence-rate-match}
+\end{equation}
+which gives
+\begin{equation}
+ \boxed{
+ r_{S,\mathrm{filter}}
+ = r_{S,\mathrm{base}}
+ \sqrt{\frac{T_{S,0}}{T_S}}.}
+\label{eq:adapt-cadence-rate-normalization}
+\end{equation}
+Thus, when pseudo-measurements become less frequent, each individual correction
+is made stronger than the unnormalized cubic value by reducing its standard
+deviation by $\sqrt{T_{S,0}/T_S}$.  This does not mean that the absolute
+regularization becomes stronger as $\tau$ grows: $r_S$ still increases with
+$\tau$.  Rather, the correction is stronger than it would have been if the
+$\tau^3$ base value were applied unchanged at the longer update interval.
+
+With the applied cadence $T_S=c_T\tau$ away from clamps,
+Eqs.~\eqref{eq:adapt-cadence-cubic-base} and
+\eqref{eq:adapt-cadence-rate-normalization} give
+\begin{equation}
+ \boxed{
+ r_{S,\mathrm{filter}}
+ = C_R\sqrt{R_a}
+   \sqrt{\frac{T_{S,0}}{c_T}}\,\tau^{5/2}.}
+\label{eq:adapt-cadence-five-halves}
+\end{equation}
+Hence the $5/2$ exponent need not be viewed as replacing the cubic law.  It is
+the per-update realization of that cubic dimensional scale when the
+pseudo-measurement cadence itself is proportional to $\tau$.  Equivalently,
+\begin{equation}
+ \frac{1}{r_{S,\mathrm{filter}}^2T_S}
+ \propto \tau^{-6},
+\label{eq:adapt-cadence-tau-minus-six}
+\end{equation}
+which is exactly the information-rate scaling implied by
+$r_{S,\mathrm{base}}^2\propto\tau^6$ at the reference cadence.
+
+This interpretation is independent of the strong-observation Riccati
+approximation in Sec.~\ref{sec:adaptation-rs-scaling}.  Its significance is
+that both arguments lead to the same applied $\tau^{5/2}$ dependence: the
+Riccati analysis obtains it from fixed normalized regularizer placement, while
+the cadence argument obtains it by preserving the correction information rate
+associated with a dimensionally cubic base scale.  Their agreement provides a
+second rationale for retaining the cubic base plus square-root cadence
+normalization in the implementation.
