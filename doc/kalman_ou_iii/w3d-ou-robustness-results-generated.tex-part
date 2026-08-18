@@ -2,7 +2,7 @@
 
 \begin{table*}[t]
   \centering
-  \caption{OU--III tuning sensitivity at the nominal $H_s=1.5$ m sea. Each entry is vertical-displacement RMS error in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). The first three columns hold the other two parameters frozen; the last two move $r_S$ as the applied law $r_S=\operatorname{clip}(0.35\,\sigma_{aw}\tau^3,0.15,400)$ does. The $r_S$ multiplier acts on the pseudo-measurement standard deviation, so the corresponding covariance scales quadratically.}
+  \caption{OU--III tuning sensitivity at the nominal $H_s=1.5$ m sea. Each entry is vertical-displacement RMS error in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). The first three columns hold the other two parameters frozen; the last two move $r_S$ as the deployed law $r_S=\operatorname{clip}(0.35\,\sigma_{aw}\tau^3,0.15,400)$ does. The $r_S$ multiplier acts on the pseudo-measurement standard deviation, so the corresponding covariance scales quadratically.}
   \label{tab:ou_robustness_sensitivity}
   \footnotesize
   \setlength{\tabcolsep}{7pt}

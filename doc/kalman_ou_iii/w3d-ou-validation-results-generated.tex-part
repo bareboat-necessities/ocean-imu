@@ -86,7 +86,7 @@
 
 \begin{table*}[t]
   \centering
-  \caption{OU--III adaptation-channel ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). The four columns are a $2\times2$ factorial: each channel is either adapted online or frozen at the FixedNominal operating point. \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ while the integral pseudo-measurement scale keeps adapting; \emph{OU only} does the reverse. Because the applied law sets $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.15,400)$, $r_S$ is derived from the live $\tau$ and $\sigma_{aw}$ estimates even when those are frozen on the way to the filter.}
+  \caption{OU--III adaptation-channel ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). The four columns are a $2\times2$ factorial: each channel is either adapted online or frozen at the FixedNominal operating point. \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ while the integral pseudo-measurement scale keeps adapting; \emph{OU only} does the reverse. Because the deployed law sets $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.15,400)$, $r_S$ is derived from the live $\tau$ and $\sigma_{aw}$ estimates even when those are frozen on the way to the filter.}
   \label{tab:ou_mc_channels}
   \footnotesize
   \setlength{\tabcolsep}{4.0pt}
