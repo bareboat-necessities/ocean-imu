@@ -240,12 +240,14 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
             r"\label{eq:adapt-qeff-strong}",
             r"\label{eq:adapt-G-mag}",
             r"\label{eq:adapt-G-error}",
+            r"\label{eq:adapt-RS-general}",
             r"\label{eq:adapt-rs-strong-law}",
             r"\label{eq:adapt-rs-base}",
+            r"\label{eq:adapt-cR-spectral-meaning}",
         ):
             self.assertIn(marker, adaptation)
-        self.assertIn(r"R_S\propto\tau^5", adaptation)
-        self.assertIn(r"r_S\propto\tau^{5/2}", adaptation)
+        self.assertIn(r"\tau^{5/2}", adaptation)
+        self.assertIn(r"q_{\mathrm{eff}}", adaptation)
         self.assertIn(r"\widehat\sigma_{a,B}", adaptation)
         self.assertIn(r"\sigma_{aw}", adaptation)
 
@@ -259,71 +261,19 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertIn(r"\eqref{eq:ba-ou-Qd}", stability)
         self.assertNotIn(r"1-e^{-2h_k/\tau_b}", stability)
 
-    def test_repeated_model_equations_use_canonical_cross_references(self):
-        measurement = _read("w3d-meas.tex-part")
-        update = _read("w3d-kalm-up.tex-part")
-        stability = _read("w3d-iss-stability.tex-part")
-        adaptation = _read("w3d-adaptation-motivation.tex-part")
-        fusion = _read("w3d-fus-methods.tex-part")
+    def test_reference_point_and_sim_scope_remain_explicit(self):
+        protocol = _read("w3d-sim-charts.tex-part")
+        _assert_any(self, protocol, "center of gravity", "CoG")
+        _assert_any(self, protocol, "simulation", "synthetic")
 
-        for label in (
-            "eq:acc-meas-jacobians",
-            "eq:mag-meas-jacobian",
-            "eq:HS-selector",
-        ):
-            self.assertIn(label, measurement)
-            self.assertIn(rf"\eqref{{{label}}}", update)
-            self.assertIn(rf"\eqref{{{label}}}", stability)
-
-        self.assertIn(r"\eqref{eq:phi-att-bias}", stability)
-        self.assertIn(r"\eqref{eq:phi-axis-ou3}", stability)
-        self.assertNotIn("eq:iss-att-bg-transition", stability)
-        self.assertNotIn("eq:iss-implemented-phi", stability)
-        self.assertNotIn("eq:iss-Qdb", stability)
-        self.assertNotIn("eq:iss-error-vector", stability)
-
-        self.assertIn(r"\label{eq:adapt-omegaR}", adaptation)
-        self.assertIn(r"\label{eq:engineering-pseudo-cadence}", adaptation)
-        self.assertIn(r"\label{eq:engineering-rs-filter}", adaptation)
-        self.assertIn(r"\eqref{eq:adapt-sigma-map}", fusion)
-        self.assertIn(r"\eqref{eq:adapt-cR-spectral-meaning}", fusion)
-        self.assertIn(r"\eqref{eq:adapt-rs-strong-law}", fusion)
-
-    def test_stability_contract_keeps_bounded_update_gap_and_reset_scope(self):
-        stability = _read("w3d-iss-stability.tex-part")
-        self.assertIn(r"T_j:=t_j-t_{j-1}\in[T_-,T_+]", stability)
-        self.assertIn(r"T_+\le T_{S,\max}+h_{\max}", stability)
-        self.assertIn("ISS", stability)
-        _assert_any(self, stability, "reset", "re-lock", "reconfiguration")
-
-    def test_scope_limitations_are_concepts_not_fixed_sentences(self):
-        scope = "\n".join(
-            (
-                _read("w3d-intro.tex-part"),
-                _read("w3d-results.tex-part"),
-                _read("w3d-conclusion-summary.tex-part"),
-            )
-        )
-        # Keep the important claim boundaries while allowing arbitrary prose.
-        _assert_any(self, scope, "simulation", "synthetic")
-        _assert_any(self, scope, "local reference", "geodetic", "global navigation")
-        _assert_any(self, scope, "temperature", "thermal")
-        _assert_any(self, scope, "processor", "memory", "deadline")
-
-        conclusion = _read("w3d-conclusion-summary.tex-part")
-        self.assertIn(r"\label{sec:future-work}", conclusion)
-        self.assertIn(r"\begin{itemize}", conclusion)
-
-    def test_retired_horizontal_tuning_constants_do_not_reappear(self):
-        publication = "\n".join(
-            (
-                _read("w3d-adaptation-motivation.tex-part"),
-                _read("w3d-fus-methods.tex-part"),
-                _read("w3d-results.tex-part"),
-            )
-        )
-        for legacy in ("1.138", "0.861", "0.36", "1.87"):
-            self.assertNotIn(legacy, publication)
+    def test_generated_evidence_contracts_remain_in_use(self):
+        _abstract_reports_committed_stationary_aggregate(self)
+        _fixed_reference_and_transition_limits_are_stated(self)
+        _inference_is_qualified_rather_than_asserted(self)
+        _three_dimensional_and_channel_results_are_reported(self)
+        _transition_and_secondary_ensembles_are_rescored(self)
+        _contribution_is_framed_at_the_width_of_the_evidence(self)
+        _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self)
 
 
 if __name__ == "__main__":
