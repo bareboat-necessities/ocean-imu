@@ -222,6 +222,62 @@ calculation the note asks for, not a second fitted number.
 Roll and pitch move by less than 0.001 deg either way and are not what this
 parameter controls.
 
+## Verdict: the paired multi-seed comparison
+
+The deterministic protocol is the screening instrument; the verdict is taken on
+the paired harness the paper's primary endpoint uses, so both laws see identical
+wave-phase, IMU-noise and initialization seeds on identical scenarios.
+`tools/ou2_pseudo_law_compare.py`, eight stationary scenarios x four paired
+seeds = 32 paired rows, the stationary comparison the note's
+Sec. (next-study) asks for:
+
+| endpoint | empirical | PhysicalMSE | paired delta (95 % hw) |
+|---|---|---|---|
+| **`disp_z_pct_hs`** (primary) | 6.3540 | 6.3286 | **-0.0254 +/- 0.0173** |
+| `disp_3d_rms_m` | 0.4711 | 0.4816 | +0.0104 +/- 0.0081 |
+| `roll_rms_deg` | 0.3100 | 0.3103 | +0.0003 +/- 0.0002 |
+| `pitch_rms_deg` | 0.3468 | 0.3472 | +0.0004 +/- 0.0004 |
+
+The primary endpoint improves and the interval excludes zero. For scale, the
+OU-III `SpectralMSE` deployment moved the same endpoint by
+-0.0263 +/- 0.0137 %Hs, so the two derived laws are worth about the same amount
+on their respective families.
+
+The gain is not uniform across the envelope, and its structure is the law's own:
+
+| scenario | `disp_z_pct_hs` delta |
+|---|---|
+| JONSWAP `H_s` 0.27 | **-0.063 +/- 0.011** |
+| JONSWAP `H_s` 1.50 | -0.021 +/- 0.017 |
+| JONSWAP `H_s` 4.00 | +0.005 +/- 0.030 |
+| JONSWAP `H_s` 8.50 | +0.015 +/- 0.071 |
+| PM-Stokes `H_s` 0.27 | **-0.104 +/- 0.034** |
+| PM-Stokes `H_s` 1.50 | -0.032 +/- 0.020 |
+| PM-Stokes `H_s` 4.00 | -0.003 +/- 0.019 |
+| PM-Stokes `H_s` 8.50 | -0.001 +/- 0.044 |
+
+Every gain is at the small-sea end and every large-sea scenario is a tie inside
+its own interval. That is exactly where the two laws differ most: the derived
+law is 0.85-0.90x the empirical schedule at `H_s = 0.27 m` and 1.08-1.11x at
+`H_s = 8.5 m`, so the small seas are where it says something different and they
+are where it wins. The `sigma_a^(4/5)` amplitude power, not the common
+`tau^(2/5)` shape correction, is what that measures.
+
+The 3D regression has the same shape with the opposite sign: it is entirely the
+two `H_s = 8.5 m` scenarios (+0.053 and +0.026 m), while all four small and
+medium seas improve. This is the axis split of the calibration section showing
+up again -- the reduced model carries one scalar `q` for three axes -- and it is
+the honest cost of the change, not noise.
+
+Roll and pitch move by 0.0003-0.0004 deg. Both intervals technically exclude
+zero at 32 pairs, and both are a tenth of a percent of the quantity; they are
+detectable rather than meaningful.
+
+The controlled transition is not in this comparison. The note asks for it to be
+reported separately, and the existing OU-II tuning studies show a distinct
+stationary/transient tradeoff, so pooling it into the stationary verdict would
+mix two different questions.
+
 ## What changed in the filter
 
 - `PseudoAdaptationLaw` selects the schedule; `PhysicalMSE` is the default and
