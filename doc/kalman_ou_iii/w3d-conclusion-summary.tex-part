@@ -19,7 +19,7 @@ corner.  A scalar posterior-error reduction shows that the reported simulations
 are deep in the strong acceleration-observation regime, for which
 $q_{\mathrm{eff}}\simeq2r_a$.  Keeping the regularizer corner at a fixed
 location relative to the sea time scale while using $T_S\propto\tau$ then gives
-$R_S\propto\tau^5$, or $r_S\propto\tau^{5/2}$.  The deployed wrapper realizes
+$R_S\propto\tau^5$, or $r_S\propto\tau^{5/2}$.  The applied wrapper realizes
 this period exponent through a dimensionally cubic base scale and cadence
 renormalization; its retained linear acceleration-amplitude factor and the
 numerical coefficients remain full-filter calibration choices.  Channel
