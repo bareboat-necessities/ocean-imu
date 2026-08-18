@@ -1,0 +1,107 @@
+% Optional scaling consequence of the full-state physical H2 formulation.
+% Kept separate so the detailed investigation can be removed independently.
+
+\subsection{Local amplitude exponent of the full-state objective}
+\label{sec:adaptation-full-state-h2-scaling}
+
+The full-state objective in Eq.~\eqref{eq:h2-total-cost} also provides a direct
+way to predict the amplitude exponent rather than assume it.  Define
+\begin{equation}
+\rho:=\log r_S,\qquad s:=\log\sigma_a,
+\end{equation}
+and write the physical displacement objective as $J_p(\rho,s)$.  In the actual
+adaptive estimator, the dependence on $s$ is not limited to the explicit factor
+in the physical wave spectrum.  It enters through three paths:
+\begin{enumerate}[leftmargin=1.5em]
+\item the physical spectral matrix
+      $\mat S_a^{(2)}\propto\sigma_a^2$;
+\item the applied mapping
+      $\sigma_{aw}=c_\sigma\widehat\sigma_{a,B}$, which changes the assumed OU
+      process covariance, the Riccati solution $\mat P$, and hence the complete
+      gain sequence $\mat K_j$;
+\item the trajectory Jacobian
+      $-\Skew{\Rot_{wb}\vct a_w-\Rot_{wb}\vct g}$ in
+      Eq.~\eqref{eq:h2-Ca}, through which wave acceleration changes the
+      attitude--acceleration--bias coupling itself.
+\end{enumerate}
+Accordingly, the general optimum is defined by
+\begin{equation}
+J_{\rho}(\rho_\star,s)=0,
+\end{equation}
+and implicit differentiation gives the exact local amplitude exponent
+\begin{equation}
+\boxed{
+p_a:=\frac{d\log r_S^\star}{d\log\sigma_a}
+=-\frac{J_{\rho s}}{J_{\rho\rho}}
+\bigg|_{\rho=\rho_\star}.}
+\label{eq:h2-general-local-amplitude-exponent}
+\end{equation}
+All explicit and implicit amplitude dependencies are included in the mixed
+curvature $J_{\rho s}$ when Eq.~\eqref{eq:h2-general-local-amplitude-exponent}
+is evaluated by re-solving the full Riccati and physical-error recursions at
+perturbed $(\rho,s)$.
+
+A useful limiting interpretation is obtained by freezing the gains and
+Jacobians while varying only the physical wave amplitude.  Then
+Eq.~\eqref{eq:h2-bias-variance-form} applies,
+\begin{equation}
+J_p(\rho,s)=J_n(\rho)+e^{2s}J_w(\rho),
+\end{equation}
+and Eq.~\eqref{eq:h2-general-local-amplitude-exponent} reduces to
+\begin{equation}
+\boxed{
+p_a
+=-\frac{2e^{2s}J_w'(\rho_\star)}
+{J_n''(\rho_\star)+e^{2s}J_w''(\rho_\star)}.}
+\label{eq:h2-frozen-local-amplitude-exponent}
+\end{equation}
+This form makes clear that the amplitude exponent is determined by the local
+shape of the drift--distortion tradeoff.
+
+For additional interpretation, approximate the two terms locally by power
+laws in the configured pseudo-measurement standard deviation,
+\begin{equation}
+J_n\simeq A_n r_S^{\alpha},\qquad
+J_w\simeq A_w r_S^{-\beta},
+\qquad \alpha,\beta>0,
+\label{eq:h2-local-power-laws}
+\end{equation}
+so that the physical objective is
+$J_p\simeq A_n r_S^\alpha+\sigma_a^2 A_w r_S^{-\beta}$.
+The stationary condition then gives
+\begin{equation}
+r_S^{\star\,\alpha+\beta}
+=\frac{\beta A_w}{\alpha A_n}\sigma_a^2,
+\end{equation}
+and hence
+\begin{equation}
+\boxed{
+p_a\simeq\frac{2}{\alpha+\beta}.}
+\label{eq:h2-slope-exponent-law}
+\end{equation}
+Equation~\eqref{eq:h2-slope-exponent-law} gives a sharp diagnostic for why a
+full-state model can differ from the reduced triple-integrator asymptote.  In
+the latter, $\omega_R\propto r_S^{-1/3}$ at fixed cadence and disturbance
+intensity.  Its drift contribution satisfies
+$J_n\propto\omega_R^{-3}\propto r_S$, so $\alpha=1$, while its low-corner wave
+distortion satisfies
+$J_w\propto\omega_R^4\propto r_S^{-4/3}$, so $\beta=4/3$.
+Equation~\eqref{eq:h2-slope-exponent-law} therefore recovers
+\begin{equation}
+p_a=\frac{2}{1+4/3}=\frac{6}{7},
+\end{equation}
+which is the earlier reduced-MSE amplitude exponent.
+
+The independently gain-optimized coefficient study instead places the tested
+operating envelope close to $p_a=1$.  Within the local power-law
+interpretation, this corresponds to
+\begin{equation}
+\boxed{\alpha+\beta\simeq2.}
+\label{eq:h2-unit-exponent-slope-target}
+\end{equation}
+Thus the full 21-state calculation has a falsifiable target: it should show how
+attitude/gravity leakage, gyro and accelerometer bias paths, OU-model mismatch,
+and the complete gain cross-coupling change the local sum of the noise-growth
+and wave-distortion slopes from the reduced value $7/3$ toward approximately
+$2$.  If it does, the near-linear $\sigma_a$ factor follows from the physical
+closed-loop error geometry rather than from an assumed monomial adaptation law.
