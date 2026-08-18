@@ -5,3 +5,4 @@
 ./iss_contract-test
 ./startup_init-test
 ./regularizer_floor-test
+./pseudo_law-test

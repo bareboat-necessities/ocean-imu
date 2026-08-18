@@ -272,6 +272,51 @@ class DeployedLawMirrorTests(unittest.TestCase):
             places=6,
         )
 
+    def test_ou_ii_mse_law_constants_match_the_filter_defaults(self):
+        """The deployed OU-II law is PhysicalMSE, so its constants matter most.
+
+        C_P, the channel ratio C_P/C_V and c_sigma all move every fixed-tuning
+        operating point; the law divides c_sigma back out to recover the
+        physical band RMS, so a drift in it is as damaging as a drift in C_P.
+        """
+        import ou_validation as validation
+
+        for value, pattern in (
+            (validation.OU_II_PSEUDO_MSE_COEFF,
+             r"R_PSEUDO_MSE_COEFF_DEFAULT\s*=\s*([0-9.]+)f"),
+            (validation.OU_II_PSEUDO_MSE_RATIO,
+             r"R_PSEUDO_MSE_RATIO_DEFAULT\s*=\s*([0-9.]+)f"),
+            (validation.OU_II_SIGMA_COEFF,
+             r"float\s+sigma_coeff_\s*=\s*([0-9.]+)f"),
+        ):
+            self.assertAlmostEqual(
+                value, self._value_from(self.HEADER_OU_II, pattern), places=6)
+
+    def test_ou_ii_mse_law_acceleration_density_matches_the_filter(self):
+        """q_eff = 2 r_a is mirrored as its own constant and can drift alone.
+
+        The header states it as the square of the acceleration noise floor, so
+        the mirror is checked against that constant rather than a literal: the
+        two are the same physical number and a re-characterization of the
+        platform has to move them together.
+        """
+        import ou_validation as validation
+
+        sigma_a = self._value_from(
+            self.HEADER_OU_II,
+            r"R_PSEUDO_ACCEL_NOISE_DENSITY_DEFAULT\s*=\s*\n?\s*"
+            r"([A-Za-z0-9._]+?)f?\s*\*",
+        )
+        self.assertAlmostEqual(
+            validation.OU_II_PSEUDO_QEFF, 2.0 * sigma_a ** 2 / 200.0, places=12
+        )
+        self.assertAlmostEqual(
+            sigma_a,
+            self._value_from(self.HEADER_OU_II,
+                             r"ACC_NOISE_FLOOR_SIGMA_DEFAULT\s*=\s*([0-9.]+)f"),
+            places=6,
+        )
+
     def test_ou_ii_bounds_match_the_filter_clamps(self):
         import ou_validation as validation
 

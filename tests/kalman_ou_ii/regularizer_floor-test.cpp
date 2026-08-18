@@ -8,22 +8,29 @@
 // nothing the multipliers could say survived the clamp. Dropping the floor to
 // 0.15 recovered 8-10% on those records.
 //
-// OU-II's laws differ only in the exponent -- r_p0 = c_p0 sigma_aw tau^2 and
-// r_v0 = c_v0 sigma_aw tau against OU-III's tau^3 -- so the same failure is
-// available to it and has to be checked rather than assumed. This test does
-// the checking, against the operating points the eight scored records actually
-// produce, so it also fails if a future coefficient re-fit walks the schedule
-// down into the clamp.
+// OU-II's laws are of the same shape -- the deployed PhysicalMSE law asks for
+// r_p ~ sigma_a,B^(4/5) tau^(12/5)/sqrt(T_S) against OU-III's tau^(24/7) -- so
+// the same failure is available to it and has to be checked rather than
+// assumed. This test does the checking against the deployed law at the
+// operating points the eight scored records actually produce, so it also fails
+// if a future re-fit, or a switch of deployed law, walks the schedule down into
+// the clamp.
 //
-// The answer today is that OU-II's floors are clear by a factor of seven and
-// fifty, which is why the parity change carried across everything in OU-III's
-// r_S work except the floor value itself.
+// It is asked of the *deployed* law rather than of a hard-coded schedule,
+// because a floor is only clear of the law that ships. PhysicalMSE is tighter
+// at the small-sea end than the Empirical law it replaced -- that is what a
+// distortion penalty scaling with wave energy does -- and moving to it is what
+// took the r_p0 floor from 0.05 m to 0.03 m.
 //
-// Also pinned: the clamp is applied to the *base* tuner value and the cadence
-// renormalization is deliberately applied after it, so the filter input is
-// allowed below the base floor once T_S exceeds the nominal 15 ms. That
-// ordering is what stops the tau-scaled cadence from reintroducing exactly the
-// clipping the floor discussion is about.
+// Also pinned: under the Empirical law the clamp is applied to the *base*
+// tuner value and the cadence renormalization is deliberately applied after
+// it, so the filter input is allowed below the base floor once T_S exceeds the
+// nominal 15 ms. That ordering is what stops the tau-scaled cadence from
+// reintroducing exactly the clipping the floor discussion is about.
+// PhysicalMSE reaches the same place by a different route: it evaluates at the
+// realized T_S and returns the filter input itself, so there is no second
+// factor to re-clamp and the clamp already applies where it matters. Both
+// halves are checked.
 #define EIGEN_NON_ARDUINO
 
 #include <cmath>
@@ -80,24 +87,47 @@ constexpr OperatingPoint CALIBRATED[] = {
 constexpr float STILL_HS = 0.05f;
 constexpr float SMALLEST_CALIBRATED_HS = 0.27f;
 
+// The two pseudo standard deviations the deployed law puts at the filter
+// input for a given operating point, including each law's cadence contract.
+float law_input_p(Filter& f, float tau, float sigma) {
+    float r_p = 0.0f, r_v = 0.0f;
+    f.pseudo_targets_from_law_(tau, sigma, r_p, r_v);
+    if (f.getPseudoLaw() != PseudoAdaptationLaw::Empirical) return r_p;
+    return r_p * std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S
+                           / f.pseudo_update_period_for_(tau));
+}
+
+float law_input_v(Filter& f, float tau, float sigma) {
+    float r_p = 0.0f, r_v = 0.0f;
+    f.pseudo_targets_from_law_(tau, sigma, r_p, r_v);
+    if (f.getPseudoLaw() != PseudoAdaptationLaw::Empirical) return r_v;
+    return r_v * std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S
+                           / f.pseudo_update_period_for_(tau));
+}
+
 // The floors have to stay clear of the schedule across the calibrated
 // envelope, or they, and not the law, are setting the regularizer.
 bool test_floors_are_clear_of_the_schedule() {
     bool ok = true;
 
     Filter f(false);
-    const float c_p0 = f.R_p0_coeff_;
-    const float c_v0 = f.R_v0_coeff_;
 
     float worst_p0 = 1e30f;
     float worst_v0 = 1e30f;
     const char* worst_p0_rec = "";
     const char* worst_v0_rec = "";
+    float worst_tau = 0.0f;
+    float worst_sigma = 0.0f;
 
+    // Ask the deployed law, and compare at the filter input -- the quantity
+    // the clamps actually see once each law's cadence contract is applied.
     for (const auto& op : CALIBRATED) {
-        const float r_p0 = c_p0 * op.sigma * op.tau * op.tau;
-        const float r_v0 = c_v0 * op.sigma * op.tau;
-        if (r_p0 < worst_p0) { worst_p0 = r_p0; worst_p0_rec = op.record; }
+        const float r_p0 = law_input_p(f, op.tau, op.sigma);
+        const float r_v0 = law_input_v(f, op.tau, op.sigma);
+        if (r_p0 < worst_p0) {
+            worst_p0 = r_p0; worst_p0_rec = op.record;
+            worst_tau = op.tau; worst_sigma = op.sigma;
+        }
         if (r_v0 < worst_v0) { worst_v0 = r_v0; worst_v0_rec = op.record; }
     }
 
@@ -114,10 +144,13 @@ bool test_floors_are_clear_of_the_schedule() {
               << " floor, " << (worst_v0 / MIN_R_v0_std) << "x clear\n";
 
     // The near-still case is where a floor first starts to bite, so it is
-    // checked separately and with a smaller margin.
+    // checked separately and with a smaller margin.  Scale the *input* to the
+    // law rather than its output: the amplitude exponent is 4/5 under the
+    // deployed law and 1 under Empirical, so scaling the output would assume
+    // the schedule that a change of law is allowed to move.
     const float still_scale = STILL_HS / SMALLEST_CALIBRATED_HS;
-    const float still_p0 = worst_p0 * still_scale;
-    const float still_v0 = worst_v0 * still_scale;
+    const float still_p0 = law_input_p(f, worst_tau, worst_sigma * still_scale);
+    const float still_v0 = law_input_v(f, worst_tau, worst_sigma * still_scale);
 
     ok &= check(still_p0 > MIN_R_p0_std,
                 "the r_p0 floor must not clip the near-still stress case");
@@ -144,6 +177,10 @@ bool test_cadence_renormalization_is_not_reclamped() {
     f.initialize_from_acc(Eigen::Vector3f(0.0f, 0.0f, -g_std));
     f.startup_stage_ = Filter::StartupStage::Live;
     f.mekf_->set_linear_block_enabled(true);
+    // The clamp-then-renormalize ordering is a property of the Empirical law's
+    // cadence contract, so select it explicitly rather than depending on which
+    // law happens to ship.
+    f.setPseudoLaw(PseudoAdaptationLaw::Empirical);
 
     // Sit the base value exactly on the floor and stretch the cadence past
     // nominal, which is what a long-period low sea does.
@@ -171,8 +208,21 @@ bool test_cadence_renormalization_is_not_reclamped() {
     ok &= check(std::fabs(applied_v0 - MIN_R_v0_std * scale) < 1e-6f,
                 "the r_v0 filter input must be exactly the renormalized base");
 
-    std::cout << "  at tau = 4 s, T_S = " << period << " s, base floor "
-              << MIN_R_p0_std << " -> filter input " << applied_p0 << " m\n";
+    std::cout << "  Empirical: at tau = 4 s, T_S = " << period
+              << " s, base floor " << MIN_R_p0_std << " -> filter input "
+              << applied_p0 << " m\n";
+
+    // PhysicalMSE has no second factor to re-clamp: the law already contains
+    // the realized T_S, so its clamped value *is* the filter input.  Applying
+    // the Empirical renormalization on top would divide the regularizer by
+    // sqrt(T_S/T_0) a second time, which at tau = 4 s is a 90 % error.
+    f.setPseudoLaw(PseudoAdaptationLaw::PhysicalMSE);
+    f.apply_R_p0_tune_();
+    f.apply_R_v0_tune_();
+    ok &= check(std::fabs(std::sqrt(f.mekf_->R_p0(2, 2)) - MIN_R_p0_std) < 1e-6f,
+                "the PhysicalMSE r_p0 clamp must land at the filter input");
+    ok &= check(std::fabs(std::sqrt(f.mekf_->R_v0(2, 2)) - MIN_R_v0_std) < 1e-6f,
+                "the PhysicalMSE r_v0 clamp must land at the filter input");
 
     return ok;
 }

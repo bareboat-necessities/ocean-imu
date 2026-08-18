@@ -160,6 +160,28 @@ public:
                 filter.setR_v0_Coeff(v);
             }
 
+            // Dual pseudo-measurement adaptation law.
+            // 0 = Empirical (c_p sigma_aw tau^2, c_v sigma_aw tau),
+            // 1 = PhysicalMSE (deployed joint displacement-MSE law).
+            if (env_float("OU_II_PSEUDO_LAW", v)) {
+                const int law = static_cast<int>(v);
+                if (law == 0) {
+                    filter.setPseudoLaw(PseudoAdaptationLaw::Empirical);
+                } else {
+                    filter.setPseudoLaw(PseudoAdaptationLaw::PhysicalMSE);
+                }
+            }
+            // C_P and the channel ratio C_P/C_V of the PhysicalMSE law.
+            if (env_float("OU_II_PSEUDO_MSE_COEFF", v)) {
+                filter.setPseudoMseCoeff(v);
+            }
+            if (env_float("OU_II_PSEUDO_MSE_RATIO", v)) {
+                filter.setPseudoMseRatio(v);
+            }
+            if (env_float("OU_II_PSEUDO_RA", v)) {
+                filter.setPseudoAccelNoiseDensity(v);
+            }
+
             // Clamps on the two drift-band regularizers.  Exposed because
             // OU-III found that its equivalent floor, not the schedule, was
             // setting the operating point in every low-motion sea, and the

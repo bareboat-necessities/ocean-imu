@@ -52,8 +52,15 @@ int main() {
         std::max(f.pseudo_update_tau_ratio_ * staged_tau,
                  f.pseudo_update_period_min_s_),
         f.pseudo_update_period_max_s_);
-    const float staged_cadence_scale = std::sqrt(
-        PSEUDO_UPDATE_PERIOD_NOMINAL_S / staged_pseudo);
+    // Only the Empirical base is renormalized for cadence; the PhysicalMSE law
+    // already contains the realized T_S, so renormalizing it again would
+    // double-count it.  Mirror the filter's own rule rather than assuming a
+    // law -- this test is about staging and commit timing, not about which
+    // schedule is deployed.
+    const float staged_cadence_scale =
+        (f.pseudo_law_ == PseudoAdaptationLaw::Empirical)
+            ? std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / staged_pseudo)
+            : 1.0f;
     const float staged_rp = staged_rp_base * staged_cadence_scale;
     const float staged_rv = staged_rv_base * staged_cadence_scale;
     const float staged_rp_var = staged_rp * staged_rp;
@@ -96,10 +103,21 @@ int main() {
     // Both drift-correction channels fire on the same periodic tick, so both
     // have to hold r^2 * T_S -- the continuous-equivalent information rate --
     // at the value the historical 15 ms cadence produced.
+    // The cadence contract differs by law, and both halves are worth pinning.
+    // Empirical states a base pair at the reference cadence and renormalizes,
+    // so its continuous-equivalent information rate r^2*T_S is pinned to T_S,0
+    // whatever the realized cadence.  PhysicalMSE instead evaluates at the
+    // realized T_S and hands back the filter inputs directly, so its product is
+    // r^2*T_S at that cadence.  Asserting the Empirical form for every law
+    // would just be asserting that Empirical is deployed.
+    const float info_period =
+        (f.pseudo_law_ == PseudoAdaptationLaw::Empirical)
+            ? PSEUDO_UPDATE_PERIOD_NOMINAL_S
+            : staged_pseudo;
     const float expected_rp_product =
-        staged_rp_base * staged_rp_base * PSEUDO_UPDATE_PERIOD_NOMINAL_S;
+        staged_rp_base * staged_rp_base * info_period;
     const float expected_rv_product =
-        staged_rv_base * staged_rv_base * PSEUDO_UPDATE_PERIOD_NOMINAL_S;
+        staged_rv_base * staged_rv_base * info_period;
     if (!near(f.mekf_->R_p0(2, 2) * f.getPseudoUpdatePeriodSec(),
               expected_rp_product, 1e-5f) ||
         !near(f.mekf_->R_v0(2, 2) * f.getPseudoUpdatePeriodSec(),

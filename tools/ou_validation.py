@@ -725,6 +725,19 @@ OU_III_RS_COEFF = 17.112
 # R_S_ACCEL_NOISE_DENSITY_DEFAULT / FREQ_SMOOTHER_DT.
 OU_III_RS_ACCEL_SIGMA_MPS2 = 0.0148
 OU_III_RS_BOUNDS_MS = (0.15, 400.0)
+# The deployed OU-II law is PhysicalMSE:
+#     r_p = C_P q_eff^(1/10) sigma_a,B^(4/5) tau^(12/5) / sqrt(T_S),
+#     r_v = r_p / (C_P/C_V * tau),
+# both returned as filter inputs, so no cadence renormalization is applied.
+# OU_II_RP0_COEFF/OU_II_RV0_COEFF below are the Empirical c_p and c_v, kept
+# because the law ablation uses them; the fixed-tuning modes derive their
+# frozen pair from the deployed law.
+OU_II_PSEUDO_MSE_COEFF = 0.1116
+OU_II_PSEUDO_MSE_RATIO = 0.4611
+OU_II_PSEUDO_QEFF = 2.0 * (0.12 ** 2) * (1.0 / 200.0)
+OU_II_PSEUDO_TAU_RATIO = 0.015 / 1.1
+OU_II_PSEUDO_PERIOD_BOUNDS_S = (1.0 / 200.0, 0.25)
+OU_II_SIGMA_COEFF = 0.85
 OU_II_RP0_COEFF = 0.65
 OU_II_RP0_BOUNDS_M = (0.05, 150.0)
 OU_II_RV0_COEFF = 1.3
@@ -735,9 +748,21 @@ def tuning_point_from_pilot(family: str, metrics: Mapping[str, Any]) -> TuningPo
     tau = float(metrics["tau_applied_s"])
     sigma = float(metrics["sigma_applied_mps2"])
     if family == "OU_II":
-        R_p0 = min(max(OU_II_RP0_COEFF * sigma * tau * tau,
-                       OU_II_RP0_BOUNDS_M[0]), OU_II_RP0_BOUNDS_M[1])
-        R_v0 = min(max(OU_II_RV0_COEFF * sigma * tau,
+        # PhysicalMSE, the deployed law.  sigma is the OU prior sigma_aw, so
+        # divide c_sigma back out to recover the physical band RMS the
+        # distortion penalty depends on, exactly as OU-III does below.  See
+        # docs/ou-ii-dual-mse-adaptation.md.
+        T_S = min(max(OU_II_PSEUDO_TAU_RATIO * tau,
+                      OU_II_PSEUDO_PERIOD_BOUNDS_S[0]),
+                  OU_II_PSEUDO_PERIOD_BOUNDS_S[1])
+        sigma_aB = max(sigma / OU_II_SIGMA_COEFF, 1e-6)
+        r_p = (OU_II_PSEUDO_MSE_COEFF
+               * OU_II_PSEUDO_QEFF ** 0.1
+               * sigma_aB ** 0.8
+               * tau ** 2.4
+               / math.sqrt(T_S))
+        R_p0 = min(max(r_p, OU_II_RP0_BOUNDS_M[0]), OU_II_RP0_BOUNDS_M[1])
+        R_v0 = min(max(r_p / (OU_II_PSEUDO_MSE_RATIO * tau),
                        OU_II_RV0_BOUNDS_MPS[0]), OU_II_RV0_BOUNDS_MPS[1])
         return TuningPoint(tau, sigma, R_p0_std_m=R_p0, R_v0_std_mps=R_v0)
     # SpectralMSE, the deployed law.  sigma here is the OU prior sigma_aw, so
