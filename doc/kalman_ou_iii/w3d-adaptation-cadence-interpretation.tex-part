@@ -76,9 +76,10 @@ For the applied OU--III schedule, $a_R=\sigma_{aw}$, so this argument gives
 $r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}$.  The amplitude-free
 experiment replaced $a_R$ by the constant sensor-noise scale $\sqrt{R_a}$ and
 confirmed the same $5/2$ period behavior but degraded the multi-seed endpoint.
-The cadence argument is therefore supported as an explanation of the period
-exponent while remaining deliberately agnostic about the correct amplitude
-scale.  The Riccati analysis supplies the corresponding statement in terms of
-$\sqrt{q_{\mathrm{eff}}}$; the coefficient-law experiment shows that the
-complete-MEKF $q_{\mathrm{eff}}$ cannot be represented by the raw sensor floor
-alone over the tested sea-state envelope.
+The subsequent sensor-floor-plus-leakage interpolation returned to
+$a_R\propto\sigma_{aw}$ over the entire tested envelope and tied the applied law
+under paired ten-seed evaluation.  The cadence argument is therefore supported
+as an explanation of the period exponent while remaining deliberately agnostic
+about the correct steady-state amplitude scale.  The remaining observed
+stationary--transition tradeoff concerns how that amplitude target is followed
+in time, not the square-root cadence normalization itself.
