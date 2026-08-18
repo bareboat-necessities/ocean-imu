@@ -1,0 +1,97 @@
+% Optional investigation subsection.  It is intentionally isolated in this
+% file so it can be removed from the publication by deleting one \input line.
+
+\subsection{Analytical Coefficient Predictions to Be Investigated}
+\label{sec:adaptation-coefficient-investigation}
+
+The preceding analysis determines the structure of the adaptation law more
+strongly than it determines all three numerical coefficients.  In particular,
+\begin{equation}
+\tau_\star=c_\tau\frac{T_z}{2},\qquad
+\sigma_{aw,\star}=c_\sigma\widehat\sigma_{a,B},\qquad
+r_{S,\star}^{\mathrm{base}}=C_R\sqrt{R_a}\,\tau_\star^3
+\label{eq:adapt-coeff-investigation-law}
+\end{equation}
+contains three coefficients with different analytical status.  The following
+values are therefore treated as predictions or physically motivated reference
+points to be tested against the complete MEKF rather than as fitted conclusions.
+
+For the OU time-scale coefficient, let
+$\omega_z=2\pi/T_z$.  Equation~\eqref{eq:adapt-tau-map} gives
+\begin{equation}
+\omega_z\tau_\star=\pi c_\tau,
+\qquad
+\frac{1/\tau_\star}{\omega_z}=\frac{1}{\pi c_\tau}.
+\label{eq:adapt-ctau-meaning}
+\end{equation}
+Thus $c_\tau$ places the OU pole relative to the measured wave frequency.  The
+simple choice $c_\tau=1$ gives $\tau=T_z/2$ and places the OU decay rate at
+$\omega_z/\pi\simeq0.318\omega_z$.  Similarity determines the proportionality
+$\tau\propto T_z$, but does not by itself select a unique value of $c_\tau$;
+$c_\tau=1$ is therefore a natural spectral reference rather than a theorem of
+optimality.
+
+The amplitude coefficient admits an independent moment-matching reference.  If
+the period-scaled acceleration band is approximated by the ideal symmetric band
+$\omega_L<|\omega|<\omega_H$, the OU fraction inside that band is given by
+Eq.~\eqref{eq:adapt-ou-band-fraction}.  With the applied normalized corners
+$f_L=0.5f_z$ and $f_H=4f_z$, and with $c_\tau=1$, one has
+\begin{equation}
+\omega_L\tau=\frac{\pi}{2},\qquad
+\omega_H\tau=4\pi,
+\end{equation}
+and hence
+\begin{equation}
+F_{\mathrm{OU}}
+=\frac{2}{\pi}\left[
+\tan^{-1}(4\pi)-\tan^{-1}\!\left(\frac{\pi}{2}\right)
+\right]
+\simeq0.3104.
+\label{eq:adapt-csigma-Fou}
+\end{equation}
+Equating the OU variance inside this idealized band to the measured physical
+band variance gives
+\begin{equation}
+\boxed{
+c_\sigma^{(\mathrm{band})}=F_{\mathrm{OU}}^{-1/2}\simeq1.80.}
+\label{eq:adapt-csigma-prediction}
+\end{equation}
+This value should not be interpreted as an exact prediction for the complete
+filter.  The physical acceleration spectrum is not OU, the implemented band is
+soft rather than rectangular, and attitude and bias errors enter the actual
+innovation.  Nevertheless, Eq.~\eqref{eq:adapt-csigma-prediction} supplies a
+useful independent reference against which the present empirical value can be
+tested.  Importantly, changing $c_\sigma$ now affects only the OU-prior amplitude
+and no longer changes the pseudo-measurement strength directly.
+
+The regularization coefficient has the strongest analytical interpretation.
+Under strong acceleration observation,
+$q_{\mathrm{eff}}\simeq2R_a h$, and matching the cubic base plus cadence
+normalization to a desired normalized corner
+$\kappa=\omega_R\tau$ gives Eq.~\eqref{eq:adapt-cR-kappa},
+\begin{equation}
+\boxed{
+C_R=\frac{\sqrt{2h/T_{S,0}}}{\kappa^3}.}
+\label{eq:adapt-CR-investigation}
+\end{equation}
+For $h=\SI{5}{ms}$, $T_{S,0}=\SI{15}{ms}$, and the current reference
+$\kappa=0.3627$, this gives
+\begin{equation}
+\boxed{C_R\simeq17.11.}
+\label{eq:adapt-CR-reference-value}
+\end{equation}
+The numerical value remains conditional on the selected $\kappa$; the theory
+identifies $\kappa$ as the spectral design variable but does not prove that the
+current reference is the complete-MEKF optimum.
+
+These observations suggest a cleaner coefficient experiment than was possible
+when $r_S$ contained the OU-amplitude multiplier.  A first investigation should
+hold $c_\tau=1$ and independently sweep $c_\sigma$ around both the current
+empirical value and the band-matching reference of approximately $1.80$, while
+sweeping $C_R$ around the analytical reference $17.11$.  The same global pair
+$(c_\sigma,C_R)$ should be used across all sea states.  If the resulting optimum
+remains near these analytical references, the coefficients acquire a direct
+spectral interpretation; substantial displacement from them would quantify the
+importance of the full-MEKF effects omitted by the scalar reduction.  A later
+$c_\tau$ sweep can then test whether moving the OU pole away from the simple
+$T_z/2$ reference produces a reproducible benefit.
