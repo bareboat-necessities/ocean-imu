@@ -195,8 +195,9 @@ Amplitude-free & $+1.30,\ +0.87$ & $-0.093\pm0.033$ \\
 Amplitude coupling therefore improves the small stationary seas while imposing
 a transient cost when the sea changes; removing amplitude coupling gives the
 opposite behavior.  A single static global amplitude law cannot simultaneously
-occupy both ends of this tradeoff.  The remaining headroom is consequently a
-dynamic adaptation problem rather than another static coefficient problem.
+occupy both ends of this tradeoff.  This pattern suggests dynamic headroom, but
+it does not by itself identify the mechanism or justify another adaptation
+parameter.
 
 This result narrows the interpretation of the scalar theory.  The condition
 $\Lambda\gg1$ correctly predicts weak sensitivity to the OU-prior variance and
@@ -208,33 +209,23 @@ cross-covariance coupling, all of which can vary with sea state.  The static
 interpolation experiment further shows that adding a sensor-floor term does not
 improve the applied steady-state amplitude law over the tested envelope.
 
-\subsubsection{Next investigation: dynamic amplitude response}
+\subsubsection{Next analytical investigation: full-state physical error}
 
-The next experiment should preserve the established steady-state mapping and
-modify only how its amplitude target is approached during changing seas.  Two
-minimal mechanisms are an asymmetric first-order response
-\begin{equation}
-\dot a_R=
-\begin{cases}
-(\sigma_{aw}-a_R)/\tau_{\uparrow}, & \sigma_{aw}>a_R,\\
-(\sigma_{aw}-a_R)/\tau_{\downarrow}, & \sigma_{aw}\le a_R,
-\end{cases}
-\label{eq:adapt-next-asymmetric-amplitude}
-\end{equation}
-or a rate limit on the logarithmic regularizer-amplitude target.  In either
-case the stationary limit remains
-$r_{S,\mathrm{base}}=c_R\sigma_{aw}\tau^3$; only transition dynamics change.
-The experiment should be scored jointly on the paired stationary and controlled
-transition ensembles, with the primary question being whether transient loss
-can be reduced without sacrificing the small-sea stationary benefit.  Static
-coefficient refinement should not be pursued further unless such a mechanism
-first demonstrates multi-seed benefit.
+The next step is therefore not another coefficient sweep.  Section~\ref{sec:adaptation-full-state-h2}
+constructs the periodic 21-state closed-loop model using the implemented
+attitude, gyroscope-bias, accelerometer-bias, OU-acceleration, magnetometer, and
+integral-update couplings.  It evaluates physical displacement error as the sum
+of real sensor/bias noise and wave-signal distortion rather than as the
+filter-reported $P_{pp}$ covariance.  The central test is whether minimization of
+that full-state $H_2$ objective predicts both the observed regularizer amplitude
+dependence and the gain-optimized exponent near unity without inserting either
+as an assumed power law.
 
-A complementary diagnostic remains useful: estimate the low-frequency
-posterior acceleration-error intensity directly by sea state and through the
-controlled transition.  This can test whether the lag in the preferred
-regularizer amplitude follows the evolution of $q_{\mathrm{eff}}$, rather than
-only the measured $\sigma_{aw}$ target.
+Only after that calculation should transition-specific mechanisms be selected.
+If the full-state model predicts the observed stationary--transition conflict,
+an asymmetric or rate-limited response of the regularizer-amplitude target is a
+natural candidate.  If it does not, adding such a mechanism would merely fit a
+residual that the analytical model still fails to explain.
 
 Finally, any exponent study of
 $r_S\propto\sigma_{aw}^{p}\tau^{5/2}$ must optimize the gain independently at
