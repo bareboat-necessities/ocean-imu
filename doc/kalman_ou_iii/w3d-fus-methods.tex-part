@@ -141,7 +141,7 @@ as the band-referred sensor floor.
 \subsection{Targets, smoothing, and application cadence}
 \label{sec:adaptation-target-implementation}
 
-The implemented targets are
+The revised targets are
 \begin{equation}
 \begin{aligned}
 \tau_\star&=c_\tau\frac{\widehat T_z}{2},\\
@@ -149,16 +149,17 @@ The implemented targets are
  &=\sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
 \sigma_{aw,\star}&=c_\sigma\widehat\sigma_{a,B,\star},\\
 r_{S,\star}^{\mathrm{base}}
- &=c_R\sigma_{aw,\star}\tau_\star^3.
+ &=C_R\sqrt{R_a}\,\tau_\star^3.
 \end{aligned}
 \label{eq:tuner-targets}
 \end{equation}
-The applied coefficients $(c_\tau,c_\sigma,c_R)=(1.0,0.9,0.35)$ are
-full-filter calibration constants.  Their roles are separated by the preceding
-analysis: $c_\tau$ places the OU time scale relative to the wave period,
-$c_\sigma$ maps measured physical acceleration energy to OU-prior amplitude,
-and $c_R$ sets the integral regularization scale and hence the normalized
-correction corner through Eq.~\eqref{eq:adapt-cR-spectral-meaning}.
+The first two mappings adapt the OU prior to the measured sea.  The third is
+independent of the measured wave amplitude and uses the accelerometer
+measurement-noise standard deviation $\sqrt{R_a}$ as the acceleration scale
+required by the cubic base.  The pole-equivalent value from
+Eq.~\eqref{eq:adapt-cR-kappa} is $C_R\simeq17.11$ for the nominal
+\SI{200}{Hz} sample rate and \SI{15}{ms} reference pseudo-update period; the
+complete-filter coefficient remains subject to the calibration sweep.
 
 Applied $\tau$ and $\sigma_{aw}$ use a common EMA,
 \begin{equation}
@@ -197,7 +198,7 @@ c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}},
 \end{equation}
 with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{250}{ms}$.  This is the
 implemented form of Eq.~\eqref{eq:engineering-pseudo-cadence}.  Cadence
-renormalization preserves the historical information rate,
+renormalization gives
 \begin{equation}
 r_{S,\mathrm{filter}}
 =r_{S,\mathrm{appl}}^{\mathrm{base}}
@@ -206,10 +207,9 @@ r_{S,\mathrm{filter}}
 \label{eq:engineering-rs-filter-implementation}
 \end{equation}
 which is the implemented form of Eq.~\eqref{eq:engineering-rs-filter}.  Away
-from clamps, the applied period dependence is therefore $\tau^{5/2}$, as
-derived in Eq.~\eqref{eq:adapt-rs-strong-law}; the retained linear amplitude
-factor is the additional calibrated choice identified after
-Eq.~\eqref{eq:deployed-effective-law}.
+from clamps, the resulting pseudo-measurement schedule is independent of
+$\widehat\sigma_{a,B}$ and $\sigma_{aw}$ and follows
+$r_{S,\mathrm{filter}}\propto\tau^{5/2}$.
 
 \subsection{Three-axis application}
 
@@ -262,7 +262,7 @@ stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{m.s^{-2}}
 base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
 & residual accelerometer-bias OU & $\tau_b=\SI{5000}{s}$ \\
 adaptation commit / EMA horizon & $0.1/1.8$ s
-& coefficients $(c_\tau,c_\sigma,c_R)$ & $(1.0,0.9,0.35)$ \\
+& coefficients $(c_\tau,c_\sigma,C_R)$ & $(1.0,0.9,17.11\ \text{reference})$ \\
 $r_S$ smoothing horizon & $3\tau_\star$
 & frequency / variance horizons & \SI{1.0}{s} / $2T_{\mathrm{eff}}$ \\
 variance-horizon bounds & $[0.3,60]$ s
