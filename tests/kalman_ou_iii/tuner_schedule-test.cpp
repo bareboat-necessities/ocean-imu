@@ -48,8 +48,15 @@ int main() {
         std::max(f.pseudo_update_tau_ratio_ * staged_tau,
                  f.pseudo_update_period_min_s_),
         f.pseudo_update_period_max_s_);
-    const float staged_cadence_scale = std::sqrt(
-        PSEUDO_UPDATE_PERIOD_NOMINAL_S / staged_pseudo);
+    // Only the Cubic base is renormalized for cadence; the Riccati and
+    // SpectralMSE laws already contain the realized T_S, so renormalizing them
+    // again would double-count it.  Mirror the filter's own rule rather than
+    // assuming a law -- this test is about staging and commit timing, not
+    // about which schedule is deployed.
+    const float staged_cadence_scale =
+        (f.rs_law_ == RSAdaptationLaw::Cubic)
+            ? std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / staged_pseudo)
+            : 1.0f;
     const float staged_rs = staged_rs_base * staged_cadence_scale;
     const float staged_rs_var = staged_rs * staged_rs;
 
@@ -84,8 +91,17 @@ int main() {
         std::cerr << "FAIL: T_S/tau is not invariant after the staged update\n";
         return 1;
     }
+    // The cadence contract differs by law, and both halves are worth pinning.
+    // Cubic states a base at the reference cadence and renormalizes, so its
+    // continuous-equivalent information rate R_S*T_S is pinned to T_S,0
+    // whatever the realized cadence.  The Riccati and SpectralMSE laws instead
+    // evaluate at the realized T_S and hand back the filter input directly, so
+    // theirs is R_S*T_S at that cadence.  Asserting the Cubic form for every
+    // law would just be asserting that Cubic is deployed.
     const float expected_info_product =
-        staged_rs_base * staged_rs_base * PSEUDO_UPDATE_PERIOD_NOMINAL_S;
+        staged_rs_base * staged_rs_base *
+        ((f.rs_law_ == RSAdaptationLaw::Cubic) ? PSEUDO_UPDATE_PERIOD_NOMINAL_S
+                                               : staged_pseudo);
     if (!near(f.mekf_->R_S(2, 2) * f.getPseudoUpdatePeriodSec(),
               expected_info_product, 1e-5f)) {
         std::cerr << "FAIL: cadence compensation did not preserve R_S*T_S information rate\n";
