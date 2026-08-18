@@ -7,16 +7,22 @@
 
 The same $\tau^{5/2}$ dependence admits a complementary interpretation that
 starts from the dimensional cubic base rather than from the reduced Riccati
-model.  Suppose
+model.  Let $a_R$ denote the acceleration scale chosen for the regularizer and
+write
 \begin{equation}
  r_{S,\mathrm{base}}
- = C_R\sqrt{R_a}\,\tau^3
+ = C_R a_R\tau^3.
 \label{eq:adapt-cadence-cubic-base}
 \end{equation}
-is regarded as the desired pseudo-measurement standard deviation at a reference
-update period $T_{S,0}$.  Because one $S=0$ update with variance $R_S=r_S^2$
-is applied every $T_S$ seconds, its continuous-equivalent information rate is
-proportional to
+For the cadence argument, $a_R$ is held fixed while the pseudo-update period is
+changed.  The argument therefore determines the period exponent but does not
+select whether $a_R$ should be the raw sensor-noise standard deviation, the OU
+amplitude, or another effective low-frequency error scale.
+
+Suppose Eq.~\eqref{eq:adapt-cadence-cubic-base} defines the desired
+pseudo-measurement standard deviation at a reference update period $T_{S,0}$.
+Because one $S=0$ update with variance $R_S=r_S^2$ is applied every $T_S$
+seconds, its continuous-equivalent information rate is proportional to
 \begin{equation}
  \mathcal I_S \propto \frac{1}{r_S^2T_S}.
 \label{eq:adapt-cadence-information-rate}
@@ -39,8 +45,8 @@ which gives
 \label{eq:adapt-cadence-rate-normalization}
 \end{equation}
 Thus, when pseudo-measurements become less frequent, each individual correction
-is made stronger than the unnormalized cubic value by reducing its standard
-deviation by $\sqrt{T_{S,0}/T_S}$.  This does not mean that the absolute
+is stronger than the unnormalized cubic value because its standard deviation is
+reduced by $\sqrt{T_{S,0}/T_S}$.  This does not mean that the absolute
 regularization becomes stronger as $\tau$ grows: $r_S$ still increases with
 $\tau$.  Rather, the correction is stronger than it would have been if the
 $\tau^3$ base value were applied unchanged at the longer update interval.
@@ -51,26 +57,28 @@ Eqs.~\eqref{eq:adapt-cadence-cubic-base} and
 \begin{equation}
  \boxed{
  r_{S,\mathrm{filter}}
- = C_R\sqrt{R_a}
+ = C_R a_R
    \sqrt{\frac{T_{S,0}}{c_T}}\,\tau^{5/2}.}
 \label{eq:adapt-cadence-five-halves}
 \end{equation}
-Hence the $5/2$ exponent need not be viewed as replacing the cubic law.  It is
-the per-update realization of that cubic dimensional scale when the
-pseudo-measurement cadence itself is proportional to $\tau$.  Equivalently,
+Hence the $5/2$ exponent does not replace the cubic law.  It is the per-update
+realization of the cubic dimensional scale when the pseudo-measurement cadence
+itself is proportional to $\tau$.  Equivalently,
 \begin{equation}
  \frac{1}{r_{S,\mathrm{filter}}^2T_S}
- \propto \tau^{-6},
+ \propto \frac{1}{a_R^2\tau^6},
 \label{eq:adapt-cadence-tau-minus-six}
 \end{equation}
-which is exactly the information-rate scaling implied by
-$r_{S,\mathrm{base}}^2\propto\tau^6$ at the reference cadence.
+which is exactly the information-rate scaling implied by the cubic base at the
+reference cadence.
 
-This interpretation is independent of the strong-observation Riccati
-approximation in Sec.~\ref{sec:adaptation-rs-scaling}.  Its significance is
-that both arguments lead to the same applied $\tau^{5/2}$ dependence: the
-Riccati analysis obtains it from fixed normalized regularizer placement, while
-the cadence argument obtains it by preserving the correction information rate
-associated with a dimensionally cubic base scale.  Their agreement provides a
-second rationale for retaining the cubic base plus square-root cadence
-normalization in the implementation.
+For the applied OU--III schedule, $a_R=\sigma_{aw}$, so this argument gives
+$r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}$.  The amplitude-free
+experiment replaced $a_R$ by the constant sensor-noise scale $\sqrt{R_a}$ and
+confirmed the same $5/2$ period behavior but degraded the multi-seed endpoint.
+The cadence argument is therefore supported as an explanation of the period
+exponent while remaining deliberately agnostic about the correct amplitude
+scale.  The Riccati analysis supplies the corresponding statement in terms of
+$\sqrt{q_{\mathrm{eff}}}$; the coefficient-law experiment shows that the
+complete-MEKF $q_{\mathrm{eff}}$ cannot be represented by the raw sensor floor
+alone over the tested sea-state envelope.
