@@ -206,7 +206,7 @@ r_{S,\mathrm{filter}}
 \label{eq:engineering-rs-filter-implementation}
 \end{equation}
 which is the implemented form of Eq.~\eqref{eq:engineering-rs-filter}.  Away
-from clamps, the deployed period dependence is therefore $\tau^{5/2}$, as
+from clamps, the applied period dependence is therefore $\tau^{5/2}$, as
 derived in Eq.~\eqref{eq:adapt-rs-strong-law}; the retained linear amplitude
 factor is the additional calibrated choice identified after
 Eq.~\eqref{eq:deployed-effective-law}.
