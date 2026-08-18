@@ -11,15 +11,21 @@ error recursion is uniformly exponentially stable and the nonlinear remainder
 admits a local ISS bound.  Startup and other hard reconfiguration events remain
 outside this result.
 
-The adaptation layer is a separate engineering contribution.  A
-measurement-only Mahony observer supplies levelled vertical acceleration, while
-wave-period and band-limited variance estimates schedule the OU prior and
-integral regularizer through bounded smoothing.  OU similarity,
-periodic-Riccati analysis, and the reduced drift--distortion model identify the
-relevant scales but not the full-MEKF optimum; the applied coefficients and
-effective $\sigma_{aw}\tau^{5/2}$ filter-input schedule are empirical.  Channel
-ablation attributes most of the measured adaptive benefit to the integral-state
-regularizer rather than retuning the directly observed OU acceleration prior.
+The adaptation layer is derived as three separate scale mappings.  The measured
+sea period selects the OU correlation time, the physical band-limited
+acceleration RMS is mapped to the stationary OU-prior amplitude, and the
+$S=0$ pseudo-measurement is interpreted through its closed-loop regularization
+corner.  A scalar posterior-error reduction shows that the reported simulations
+are deep in the strong acceleration-observation regime, for which
+$q_{\mathrm{eff}}\simeq2r_a$.  Keeping the regularizer corner at a fixed
+location relative to the sea time scale while using $T_S\propto\tau$ then gives
+$R_S\propto\tau^5$, or $r_S\propto\tau^{5/2}$.  The deployed wrapper realizes
+this period exponent through a dimensionally cubic base scale and cadence
+renormalization; its retained linear acceleration-amplitude factor and the
+numerical coefficients remain full-filter calibration choices.  Channel
+ablation attributes most of the measured adaptive benefit to integral-state
+regularization rather than retuning the directly observed OU acceleration
+prior.
 
 Under the paired ten-seed stationary JONSWAP protocol, normalized vertical RMS
 displacement error is
@@ -37,13 +43,15 @@ intervals excluding zero.  These results apply to the tested directional and
 spectral families, not to absolute navigation.
 
 The horizontal analysis explains why isotropic regularization can remain useful
-despite much larger low-frequency horizontal acceleration error.  In the
-reduced model, drift intensity enters the preferred regularizer as a $1/14$
-power but the minimized residual error as a $4/7$ power.  Reducing tilt error,
-improving accelerometer-bias observability, or adding horizontal aiding is
-therefore a stronger lever than simply tightening the horizontal $S=0$
-constraint.  The observed $x/y$ split is heading dependent and does not support
-universal world-axis tuning constants.
+despite much larger low-frequency horizontal acceleration error.  The scalar
+spectral reduction identifies how posterior acceleration-error intensity,
+pseudo-measurement covariance, and cadence jointly place the low-frequency
+correction corner, but it does not determine universal world-axis gains in the
+presence of attitude coupling and heading-dependent orbital motion.  Reducing
+tilt error, improving accelerometer-bias observability, or adding horizontal
+aiding remains a more direct route to reducing the horizontal disturbance.  The
+observed $x/y$ split is heading dependent and does not support universal
+world-axis tuning constants.
 
 The main limitations are the primarily simulation-based evidence, comparison
 centered on the OU--II predecessor, controlled rather than general changing-sea
@@ -84,4 +92,3 @@ global navigation position is claimed without external aiding.
         commercial MRU and measure execution time, memory, power, and deadline
         margin across update rates and sensor configurations.
 \end{itemize}
-
