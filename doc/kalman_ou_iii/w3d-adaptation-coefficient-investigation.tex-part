@@ -1,97 +1,155 @@
 % Optional investigation subsection.  It is intentionally isolated in this
 % file so it can be removed from the publication by deleting one \input line.
 
-\subsection{Analytical Coefficient Predictions to Be Investigated}
+\subsection{Coefficient-Law Investigation and Next Hypothesis}
 \label{sec:adaptation-coefficient-investigation}
 
-The preceding analysis determines the structure of the adaptation law more
-strongly than it determines all three numerical coefficients.  In particular,
-\begin{equation}
-\tau_\star=c_\tau\frac{T_z}{2},\qquad
-\sigma_{aw,\star}=c_\sigma\widehat\sigma_{a,B},\qquad
-r_{S,\star}^{\mathrm{base}}=C_R\sqrt{R_a}\,\tau_\star^3
-\label{eq:adapt-coeff-investigation-law}
-\end{equation}
-contains three coefficients with different analytical status.  The following
-values are therefore treated as predictions or physically motivated reference
-points to be tested against the complete MEKF rather than as fitted conclusions.
+The analytical separation in Sec.~\ref{sec:adaptation} suggests three distinct
+questions: whether $c_\tau$ correctly places the OU time scale, whether the
+band-energy interpretation predicts $c_\sigma$, and whether the
+pseudo-measurement amplitude can be reduced to the raw accelerometer noise
+floor once the $\tau^{5/2}$ period dependence is fixed.  The coefficient-law
+experiment addressed the last two questions without changing the period law.
 
-For the OU time-scale coefficient, let
-$\omega_z=2\pi/T_z$.  Equation~\eqref{eq:adapt-tau-map} gives
+For reference, $c_\tau=1$ gives $\tau=T_z/2$.  With
+$\omega_z=2\pi/T_z$,
 \begin{equation}
-\omega_z\tau_\star=\pi c_\tau,
+\omega_z\tau=\pi c_\tau,
 \qquad
-\frac{1/\tau_\star}{\omega_z}=\frac{1}{\pi c_\tau}.
+\frac{1/\tau}{\omega_z}=\frac{1}{\pi c_\tau},
 \label{eq:adapt-ctau-meaning}
 \end{equation}
-Thus $c_\tau$ places the OU pole relative to the measured wave frequency.  The
-simple choice $c_\tau=1$ gives $\tau=T_z/2$ and places the OU decay rate at
-$\omega_z/\pi\simeq0.318\omega_z$.  Similarity determines the proportionality
-$\tau\propto T_z$, but does not by itself select a unique value of $c_\tau$;
-$c_\tau=1$ is therefore a natural spectral reference rather than a theorem of
-optimality.
+so the applied value places the OU decay rate at
+$\omega_z/\pi\simeq0.318\omega_z$.  This remains a spectral reference rather
+than a theorem of optimum pole placement.
 
-The amplitude coefficient admits an independent moment-matching reference.  If
-the period-scaled acceleration band is approximated by the ideal symmetric band
-$\omega_L<|\omega|<\omega_H$, the OU fraction inside that band is given by
-Eq.~\eqref{eq:adapt-ou-band-fraction}.  With the applied normalized corners
-$f_L=0.5f_z$ and $f_H=4f_z$, and with $c_\tau=1$, one has
-\begin{equation}
-\omega_L\tau=\frac{\pi}{2},\qquad
-\omega_H\tau=4\pi,
-\end{equation}
-and hence
+For the OU-amplitude mapping, ideal rectangular-band matching gives
 \begin{equation}
 F_{\mathrm{OU}}
 =\frac{2}{\pi}\left[
 \tan^{-1}(4\pi)-\tan^{-1}\!\left(\frac{\pi}{2}\right)
 \right]
-\simeq0.3104.
+\simeq0.3104,
 \label{eq:adapt-csigma-Fou}
 \end{equation}
-Equating the OU variance inside this idealized band to the measured physical
-band variance gives
+and therefore
 \begin{equation}
 \boxed{
 c_\sigma^{(\mathrm{band})}=F_{\mathrm{OU}}^{-1/2}\simeq1.80.}
 \label{eq:adapt-csigma-prediction}
 \end{equation}
-This value should not be interpreted as an exact prediction for the complete
-filter.  The physical acceleration spectrum is not OU, the implemented band is
-soft rather than rectangular, and attitude and bias errors enter the actual
-innovation.  Nevertheless, Eq.~\eqref{eq:adapt-csigma-prediction} supplies a
-useful independent reference against which the present empirical value can be
-tested.  Importantly, changing $c_\sigma$ now affects only the OU-prior amplitude
-and no longer changes the pseudo-measurement strength directly.
+The experiment does not confirm this value as a complete-filter optimum.
+However, once $c_\sigma$ is decoupled from the pseudo-measurement law, its full
+sweep changes the primary endpoint by only about 3\% end-to-end.  Thus the
+complete MEKF is only weakly sensitive to this coefficient over the tested
+range, consistent with the strong direct observation of the latent acceleration
+state.  The experiment therefore neither validates $1.80$ nor supplies a strong
+basis for replacing the applied $0.9$.
 
-The regularization coefficient has the strongest analytical interpretation.
-Under strong acceleration observation,
-$q_{\mathrm{eff}}\simeq2R_a h$, and matching the cubic base plus cadence
-normalization to a desired normalized corner
-$\kappa=\omega_R\tau$ gives Eq.~\eqref{eq:adapt-cR-kappa},
+The amplitude-free regularizer used
+\begin{equation}
+r_{S,\mathrm{base}}
+=C_R\sqrt{R_a}\,\tau^3,
+\label{eq:adapt-coeff-investigation-law}
+\end{equation}
+followed by the same cadence normalization as the applied filter.  For
+$h=\SI{5}{ms}$, $T_{S,0}=\SI{15}{ms}$, and
+$\kappa=0.3627$, the scalar pole-placement relation
 \begin{equation}
 \boxed{
-C_R=\frac{\sqrt{2h/T_{S,0}}}{\kappa^3}.}
+C_R=\frac{\sqrt{2h/T_{S,0}}}{\kappa^3}}
 \label{eq:adapt-CR-investigation}
 \end{equation}
-For $h=\SI{5}{ms}$, $T_{S,0}=\SI{15}{ms}$, and the current reference
-$\kappa=0.3627$, this gives
+gives
 \begin{equation}
 \boxed{C_R\simeq17.11.}
 \label{eq:adapt-CR-reference-value}
 \end{equation}
-The numerical value remains conditional on the selected $\kappa$; the theory
-identifies $\kappa$ as the spectral design variable but does not prove that the
-current reference is the complete-MEKF optimum.
+This prediction is strongly supported within the amplitude-free family.  The
+analytical value is the minimum of every $c_\sigma$ row of a grid spanning a
+factor of sixteen in amplitude and remains preferred on the paired multi-seed
+harness.  At this value, the cadence-normalized cubic base and the reduced
+StrongRiccati expression coincide, so $C_R$ is interpretable as a normalized
+pole placement rather than merely as a fitted gain.
 
-These observations suggest a cleaner coefficient experiment than was possible
-when $r_S$ contained the OU-amplitude multiplier.  A first investigation should
-hold $c_\tau=1$ and independently sweep $c_\sigma$ around both the current
-empirical value and the band-matching reference of approximately $1.80$, while
-sweeping $C_R$ around the analytical reference $17.11$.  The same global pair
-$(c_\sigma,C_R)$ should be used across all sea states.  If the resulting optimum
-remains near these analytical references, the coefficients acquire a direct
-spectral interpretation; substantial displacement from them would quantify the
-importance of the full-MEKF effects omitted by the scalar reduction.  A later
-$c_\tau$ sweep can then test whether moving the OU pole away from the simple
-$T_z/2$ reference produces a reproducible benefit.
+The amplitude-free family nevertheless fails as a global sea-state schedule.
+On the paired ten-seed primary endpoint ($n=90$), replacing the applied
+amplitude-dependent law by the best amplitude-free configuration changes
+normalized vertical RMS from $4.5081\%H_s$ to $4.8882\%H_s$, a paired increase
+of $0.380\pm0.096$ percentage points; six of nine scored scenarios are worse.
+The law is therefore not adopted.
+
+A diagnostic per-sea coefficient selection separates the failure of the
+amplitude model from the period law.  Allowing each sea to select its own
+amplitude-free regularizer coefficient reaches $4.109\%H_s$ in the corresponding
+coefficient-grid summary, compared with $4.181\%H_s$ for the applied schedule.
+Thus a $\tau^{5/2}$ schedule can attain competitive or better error when its
+amplitude is supplied separately.  The transfer failure arises because the
+coefficient required by individual records varies systematically with the
+acceleration-amplitude quantity removed by Eq.~\eqref{eq:adapt-coeff-investigation-law}.
+A power-law fit in that quantity explains essentially all of the between-record
+coefficient variation (approximately 99\% in the reported diagnostic).  The
+applied law supplies a first-order amplitude factor through $\sigma_{aw}$;
+the amplitude-free law supplies none.
+
+This result narrows the interpretation of the scalar theory.  The condition
+$\Lambda\gg1$ correctly predicts weak sensitivity to the OU-prior variance and
+supports the $\tau^{5/2}$ period law, but the replacement
+$q_{\mathrm{eff}}\simeq2R_a h$ is too restrictive when $R_a$ is identified
+with the electronics noise floor alone.  In the complete MEKF, low-frequency
+acceleration error also contains attitude/gravity leakage, residual bias, and
+cross-covariance coupling, all of which can vary with sea state.  The empirical
+result is consistent with
+\begin{equation}
+\sqrt{q_{\mathrm{eff}}}\propto\sigma_{aw}
+\end{equation}
+over the tested envelope, which recovers the applied
+$r_S\propto\sigma_{aw}\tau^{5/2}$ form without deriving the amplitude factor
+from OU-state similarity.
+
+\subsubsection{Next experiment}
+
+The next experiment should test an explicit interpolation between a fixed
+sensor floor and sea-dependent leakage rather than another amplitude-free law.
+A minimal model is
+\begin{equation}
+R_{a,\mathrm{eff}}
+=R_{a,\mathrm{sensor}}+\beta\sigma_{aw}^2,
+\label{eq:adapt-next-effective-Ra}
+\end{equation}
+with
+\begin{equation}
+\boxed{
+r_{S,\mathrm{base}}
+=C_R\sqrt{R_{a,\mathrm{eff}}}\,\tau^3,}
+\qquad
+r_{S,\mathrm{filter}}
+=r_{S,\mathrm{base}}\sqrt{\frac{T_{S,0}}{T_S}}.
+\label{eq:adapt-next-rs-law}
+\end{equation}
+This family contains the rejected raw-noise model at $\beta=0$ and approaches a
+linear $\sigma_{aw}$ amplitude law when
+$\beta\sigma_{aw}^2\gg R_{a,\mathrm{sensor}}$.  The first sweep should hold
+$c_\tau=1$, retain the analytically predicted $C_R\simeq17.11$, and sweep
+$\beta$ on the paired ten-seed harness.  Because the decoupled $c_\sigma$ sweep
+has low leverage, the applied $c_\sigma=0.9$ should be held fixed initially; a
+small joint $(\beta,c_\sigma)$ refinement is warranted only if the first sweep
+shows a clear interior optimum.
+
+A complementary diagnostic should estimate the low-frequency posterior
+acceleration-error intensity directly for each sea and test whether
+$q_{\mathrm{eff}}$ is better represented by a constant floor, by
+$\sigma_{aw}^2$, or by Eq.~\eqref{eq:adapt-next-effective-Ra}.  This would test
+the physical interpretation rather than infer it only from the regularizer
+optimum.
+
+Finally, any exponent study of
+$r_S\propto\sigma_{aw}^{p}\tau^{5/2}$ must optimize the gain independently at
+each $p$.  The existing exponent ablation changes $p$ at fixed gain; its gain
+normalization is not equivalent across exponents, and the $p=0$ endpoint is
+degenerate under that parameterization.  Its apparent minimum at $p=1$ should
+therefore not be cited as a gain-optimized exponent result.  Single-realization
+screening should likewise be used only for coarse pruning: settings separated
+by roughly the percent level changed rank under the paired ten-seed evaluation
+and also altered pitch and quality-gate outcomes.  Final coefficient claims
+should therefore be based on the paired multi-seed protocol.
