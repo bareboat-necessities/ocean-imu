@@ -350,10 +350,15 @@ Consequently, a sea-invariant normalized corner is obtained when
 $q_{\mathrm{eff}}\propto\sigma_{aw}^2$.  The coefficient-law experiment is
 consistent with this dependence over the tested records, providing a physical
 interpretation for why the applied linear $\sigma_{aw}$ factor transfers better
-than the raw-sensor-floor alternative.  It does not establish this relation as
-universal; the next experiment in
-Sec.~\ref{sec:adaptation-coefficient-investigation} tests an explicit sensor
-floor plus sea-dependent leakage model.
+than the raw-sensor-floor alternative.  The explicit
+$R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2$ interpolation tested in
+Sec.~\ref{sec:adaptation-coefficient-investigation} collapses into this same
+linear-$\sigma_{aw}$ regime: the sensor-floor term contributes at most about
+$0.3\%$ of the fitted effective variance and the paired ten-seed endpoint is a
+statistical tie with the applied law.  Thus the tested steady-state amplitude
+families provide no supported improvement over the current schedule; the
+remaining observed headroom is associated with amplitude-response dynamics
+during sea-state transitions.
 
 The resulting applied schedule is summarized by
 \begin{equation}
