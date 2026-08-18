@@ -291,7 +291,7 @@ discrete-time effects near the clamps, and nonstationary or multimodal seas.
 
 \subsection{Dimensional base scale and applied cadence normalization}
 \label{sec:riccati-similarity-design-guidance}
-\label{sec:riccati-applied-cadence}
+\label{sec:riccati-deployed-cadence}
 
 The implementation retains a cubic dimensional base scale before applying the
 cadence normalization,
@@ -328,7 +328,7 @@ Away from clamps,
 r_{S,\mathrm{filter}}
 \propto\sigma_{aw}\tau^{5/2}
 \propto\widehat\sigma_{a,B}\tau^{5/2}.}
-\label{eq:applied-effective-law}
+\label{eq:deployed-effective-law}
 \end{equation}
 Thus the applied schedule retains the analytically predicted strong-observation
 \emph{period exponent} $5/2$, while its linear acceleration-amplitude factor is
