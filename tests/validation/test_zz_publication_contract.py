@@ -4,8 +4,8 @@ This file intentionally avoids sentence-level editorial checks. Numerical
 results, replay provenance, and evidence integrity are tested elsewhere. Here we
 only pin structure and technical invariants that should survive ordinary prose
 editing: document wiring, generated-result macros, required assets, equations,
-deployed plotting logic, theorem scope markers, and removal of retired startup
-modes.
+deployed plotting logic, adaptation scope markers, and removal of retired
+startup modes.
 """
 
 import json
@@ -160,10 +160,20 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
 
         adaptation = _read("w3d-adaptation-motivation.tex-part")
-        pure = _read("w3d-regularization-theory.tex-part")
-        self.assertIn(r"\input{w3d-regularization-theory.tex-part}", adaptation)
-        self.assertIn(r"\input{w3d-rs-riccati-analysis.tex-part}", pure)
-        self.assertIn(r"\input{w3d-rs-reduced-mse.tex-part}", pure)
+        fusion = _read("w3d-fus-methods.tex-part")
+        self.assertIn(
+            r"\section{Sea-State Adaptation and Integral-State Regularization}",
+            adaptation,
+        )
+        self.assertIn(r"\label{sec:adaptation}", adaptation)
+        self.assertNotIn(r"\section{Engineering Adaptation Pipeline}", fusion)
+        for retired_input in (
+            r"\input{w3d-regularization-theory.tex-part}",
+            r"\input{w3d-rs-scale-theorem.tex-part}",
+            r"\input{w3d-jonswap-integrated-elevation-clarification.tex-part}",
+            r"\input{w3d-rs-design-interpretation.tex-part}",
+        ):
+            self.assertNotIn(retired_input, adaptation)
 
     def test_abstract_uses_generated_validation_values(self):
         _abstract_reports_committed_stationary_aggregate(self)
@@ -218,14 +228,27 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertIn("wave_tuning_freq_hz", draw)
         self.assertIn("1.0 / (2.0 * tau_for_plot)", draw)
 
-    def test_reduced_model_and_bias_discretization_equations_remain_present(self):
-        reduced = _read("w3d-rs-reduced-mse.tex-part")
+    def test_adaptation_derivation_and_bias_discretization_remain_present(self):
+        adaptation = _read("w3d-adaptation-motivation.tex-part")
         lti = _read("w3d-lti-discrete.tex-part")
         analytic = _read("w3d-analytic-coeff.tex-part")
         stability = _read("w3d-iss-stability.tex-part")
 
-        self.assertIn(r"q_{\mathrm{eff}}^{1/14}", reduced)
-        self.assertIn(r"q_{\mathrm{eff}}^{4/7}", reduced)
+        for marker in (
+            r"\label{eq:adapt-sigma-map}",
+            r"\label{eq:adapt-Lambda}",
+            r"\label{eq:adapt-qeff-strong}",
+            r"\label{eq:adapt-G-mag}",
+            r"\label{eq:adapt-G-error}",
+            r"\label{eq:adapt-rs-strong-law}",
+            r"\label{eq:adapt-rs-base}",
+        ):
+            self.assertIn(marker, adaptation)
+        self.assertIn(r"R_S\propto\tau^5", adaptation)
+        self.assertIn(r"r_S\propto\tau^{5/2}", adaptation)
+        self.assertIn(r"\widehat\sigma_{a,B}", adaptation)
+        self.assertIn(r"\sigma_{aw}", adaptation)
+
         self.assertIn(r"\label{eq:ba-ou-phi}", lti)
         self.assertIn(r"\label{eq:ba-ou-Qd}", lti)
         self.assertIn(r"e^{-h/\tau_b}\mat I_3", lti)
@@ -240,9 +263,8 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         measurement = _read("w3d-meas.tex-part")
         update = _read("w3d-kalm-up.tex-part")
         stability = _read("w3d-iss-stability.tex-part")
-        reduced = _read("w3d-rs-reduced-mse.tex-part")
-        design = _read("w3d-rs-design-interpretation.tex-part")
-        jonswap = _read("w3d-rs-scale-theorem.tex-part")
+        adaptation = _read("w3d-adaptation-motivation.tex-part")
+        fusion = _read("w3d-fus-methods.tex-part")
 
         for label in (
             "eq:acc-meas-jacobians",
@@ -260,13 +282,12 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertNotIn("eq:iss-Qdb", stability)
         self.assertNotIn("eq:iss-error-vector", stability)
 
-        self.assertIn(r"\eqref{eq:riccati-omegaR}", reduced)
-        self.assertNotIn("eq:reduced-omega-r", reduced)
-        self.assertIn(r"\eqref{eq:Rs-sigmaa-tau3}", design)
-        self.assertIn(r"\eqref{eq:engineering-pseudo-cadence}", design)
-        self.assertIn(r"\eqref{eq:engineering-rs-filter}", design)
-        self.assertNotIn("eq:deployed-rs-summary", design)
-        self.assertNotIn("eq:jonswap-sigma-tau3-scale", jonswap)
+        self.assertIn(r"\label{eq:adapt-omegaR}", adaptation)
+        self.assertIn(r"\label{eq:engineering-pseudo-cadence}", adaptation)
+        self.assertIn(r"\label{eq:engineering-rs-filter}", adaptation)
+        self.assertIn(r"\eqref{eq:adapt-sigma-map}", fusion)
+        self.assertIn(r"\eqref{eq:adapt-cR-spectral-meaning}", fusion)
+        self.assertIn(r"\eqref{eq:adapt-rs-strong-law}", fusion)
 
     def test_stability_contract_keeps_bounded_update_gap_and_reset_scope(self):
         stability = _read("w3d-iss-stability.tex-part")
@@ -296,8 +317,8 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
     def test_retired_horizontal_tuning_constants_do_not_reappear(self):
         publication = "\n".join(
             (
-                _read("w3d-rs-reduced-mse.tex-part"),
-                _read("w3d-rs-design-interpretation.tex-part"),
+                _read("w3d-adaptation-motivation.tex-part"),
+                _read("w3d-fus-methods.tex-part"),
                 _read("w3d-results.tex-part"),
             )
         )
