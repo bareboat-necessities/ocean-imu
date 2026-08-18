@@ -1,0 +1,284 @@
+% Optional full-state analytical investigation.  The section is isolated so it
+% can be removed from the publication by deleting one \input line.
+
+\subsection{Full-State Closed-Loop Spectral Error Formulation}
+\label{sec:adaptation-full-state-h2}
+
+The reduced triple-integrator analysis isolates the period dependence of the
+integral regularizer, but it cannot determine the complete-MEKF amplitude law.
+The remaining question is therefore posed directly on the implemented
+21-state error system.  The objective is the physical displacement mean-square
+error, not the covariance reported internally by a filter that treats the
+nonphysical $S=0$ constraint as a measurement.
+
+\subsubsection{Linearized 21-state recursion}
+
+With both bias states enabled, use the local-error ordering of
+Eq.~\eqref{eq:state-vector},
+\begin{equation}
+\delta\vct x=
+[\delta\vct\theta^\top,\delta\vct b_g^\top,
+ \delta\vct v^\top,\delta\vct p^\top,\delta\vct S^\top,
+ \delta\vct a_w^\top,\delta\vct b_a^\top]^\top\in\R^{21}.
+\label{eq:h2-state-order}
+\end{equation}
+Over an IMU interval $h_k$, the actual implementation propagates this state with
+the discrete transition $\mat\Phi_k$ and model covariance $\mat Q_{d,k}$ of
+Sec.~\ref{sec:lti-disc}.  The accelerometer Jacobian is
+\begin{equation}
+\mat C_{a,k}=
+\begin{bmatrix}
+-\Skew{\hat{\vct f}_{\mathrm{cog},b,k}} &
+\mat 0 & \mat 0 & \mat 0 & \mat 0 &
+\Rot_{wb,k} & \Id
+\end{bmatrix},
+\label{eq:h2-Ca}
+\end{equation}
+where
+$\hat{\vct f}_{\mathrm{cog},b,k}=\Rot_{wb,k}
+(\hat{\vct a}_{w,k}-\vct g_w)$.  Thus the correction retains the implemented
+attitude--gravity, latent-acceleration, and accelerometer-bias coupling.  The
+magnetometer and integral-channel Jacobians are
+\begin{equation}
+\mat C_{m,k}=
+\begin{bmatrix}-\Skew{\Rot_{wb,k}\vct B_w}&\mat 0&\cdots&\mat 0\end{bmatrix},
+\qquad
+\mat C_S=\begin{bmatrix}\mat 0&\cdots&\Id_S&\cdots&\mat 0\end{bmatrix}.
+\label{eq:h2-Cm-Cs}
+\end{equation}
+The optional lever-arm Jacobian with respect to $\delta\vct b_g$ can be added
+without changing the construction; it is zero for the zero-lever-arm records
+used in the reported validation.
+
+For channel $j\in\{a,m,S\}$, define the gain from the same covariance recursion
+used by the estimator,
+\begin{equation}
+\mat K_{j,k}=\mat P^-_k\mat C_{j,k}^\top
+(\mat C_{j,k}\mat P^-_k\mat C_{j,k}^\top+\mat R_j)^{-1},
+\label{eq:h2-Kj}
+\end{equation}
+and the first-order correction map
+\begin{equation}
+\mat M_{j,k}=\mat G_{j,k}(\Id-\mat K_{j,k}\mat C_{j,k}),
+\label{eq:h2-Mj}
+\end{equation}
+where $\mat G_{j,k}$ is the MEKF reset Jacobian.  At a frozen zero-error
+operating point $\mat G_{j,k}=\Id$ to first order; a trajectory-linearized
+calculation retains the reset matrices produced along the reference replay.
+Because the $S=0$ and magnetometer updates occur at lower cadences than the IMU
+propagation, the resulting closed loop is linear periodically time varying even
+when the operating point is frozen.
+
+If $\epsilon_{S,k}$ and $\epsilon_{m,k}$ indicate whether the corresponding
+updates occur on sample $k$, the homogeneous error map over one implemented
+step is
+\begin{equation}
+\mat A_k=
+\mat M_{m,k}^{\epsilon_{m,k}}
+\mat M_{a,k}
+\mat M_{S,k}^{\epsilon_{S,k}}
+\mat\Phi_k.
+\label{eq:h2-Ak}
+\end{equation}
+This ordering matches the source recursion: propagation first, the periodic
+integral update when due, then the accelerometer correction, with magnetometer
+correction on its own sampling schedule.
+
+\subsubsection{Why the internal covariance is not the physical MSE}
+
+For an ordinary physical measurement, the local estimation error is multiplied
+by $\Id-\mat K\mat C$ and driven by the physical measurement noise.  The
+integral update differs because its target is identically zero even though the
+true wave integral is not.  Let $\vct e=\hat{\vct x}-\vct x_{\rm true}$ and let
+$\vct S_{\rm true,k}$ denote the true displacement integral.  At an integral
+update,
+\begin{equation}
+\boxed{
+\vct e_k^+
+=\mat M_{S,k}\vct e_k^-
+-\mat G_{S,k}\mat K_{S,k}\vct S_{\rm true,k}.}
+\label{eq:h2-pseudo-error-forcing}
+\end{equation}
+The second term is physical wave distortion.  It is absent from the estimator's
+Joseph covariance recursion, which instead contains the fictitious term
+$\mat K_S\mat R_S\mat K_S^\top$ associated with an assumed noisy measurement.
+Consequently, $\mat P_{pp}$ is a covariance believed by the regularized filter;
+it is not, by itself, the displacement MSE that should be minimized.
+
+A second mismatch enters prediction.  The estimator propagates
+$[\vct v,\vct p,\vct S,\vct a_w]$ with the integrated OU transition
+$\mat\Phi_{L,k}(\tau)$, whereas the physical wave acceleration need not obey the
+OU equation.  For a harmonic physical acceleration
+$\vct a(t)=\Re\{\vct a_0 e^{j\omega t}\}$, define
+\begin{equation}
+\mat T_w(\omega)=
+\begin{bmatrix}
+(j\omega)^{-1}\Id\\
+(j\omega)^{-2}\Id\\
+(j\omega)^{-3}\Id\\
+\Id
+\end{bmatrix},
+\qquad
+\vct\xi_w(\omega)=\mat T_w(\omega)\vct a_0.
+\label{eq:h2-wave-kinematics}
+\end{equation}
+For $z=e^{j\omega h}$, the physical prediction-mismatch forcing on the 12-state
+linear block is
+\begin{equation}
+\vct d_w(\omega)
+=\mat E_L[\mat\Phi_L(\tau)-z\Id_{12}]
+ \mat T_w(\omega)\vct a_0,
+\label{eq:h2-ou-mismatch-forcing}
+\end{equation}
+where $\mat E_L$ inserts the linear block into the 21-state ordering.  Equations
+\eqref{eq:h2-pseudo-error-forcing} and
+\eqref{eq:h2-ou-mismatch-forcing} therefore retain both sources of wave error:
+OU model mismatch between accelerometer updates and deliberate distortion by the
+integral regularizer.
+
+\subsubsection{Periodic harmonic transfer from physical acceleration}
+
+For a frozen operating point, let the update pattern repeat after $N$ IMU
+samples.  At phase $i=0,\ldots,N-1$, collect the two physical-wave forcings into
+$\mat B_{w,i}(\omega)$.  The phase-dependent harmonic error response
+$\mat E_i(\omega)\in\C^{21\times3}$ is the periodic solution of
+\begin{equation}
+z\mat E_{i+1}(\omega)
+=\mat A_i\mat E_i(\omega)+\mat B_{w,i}(\omega),
+\qquad
+\mat E_N=\mat E_0.
+\label{eq:h2-harmonic-balance}
+\end{equation}
+Let $\mat C_p$ select the three displacement states.  The physical
+acceleration-to-displacement-error transfer at phase $i$ is
+\begin{equation}
+\boxed{
+\mat T_{pa,i}(j\omega)=\mat C_p\mat E_i(\omega).}
+\label{eq:h2-Tpa}
+\end{equation}
+Unlike the reduced scalar transfer, Eq.~\eqref{eq:h2-Tpa} contains all 21
+states and all gain cross-couplings.  In particular, the horizontal channels
+retain the gravity leakage through the attitude columns of
+Eq.~\eqref{eq:h2-Ca}, the slowly observed accelerometer-bias state, gyro-bias
+coupling through attitude propagation, and the OU acceleration state itself.
+The existing spectral attribution results---larger horizontal sub-band drift in
+OU--III and strong sensitivity to gyro-noise specification---are consistent
+with precisely these retained paths.
+
+For the $3\times3$ physical acceleration spectral-density matrix
+$\mat S_a^{(2)}(\omega)$, the wave-induced displacement MSE is
+\begin{equation}
+\boxed{
+J_{p,\mathrm{wave}}
+=\frac{1}{N}\sum_{i=0}^{N-1}
+ \frac{1}{2\pi}\int_{-\infty}^{\infty}
+\operatorname{tr}\!\left[
+ \mat T_{pa,i}(j\omega)\mat S_a^{(2)}(\omega)
+ \mat T_{pa,i}^{H}(j\omega)
+\right]d\omega.}
+\label{eq:h2-wave-cost}
+\end{equation}
+This expression admits the actual directional JONSWAP or PM--Stokes spectral
+matrix directly and therefore does not require the physical wave to be modeled
+as OU.
+
+\subsubsection{Noise contribution and direct physical \texorpdfstring{$H_2$}{H2} error}
+
+The physical stochastic contribution uses the same homogeneous matrices
+$\mat A_i$ but only real sensor and bias disturbances.  Let $\mat W_i$ be the
+one-step covariance injected by gyroscope white noise, gyro-bias diffusion,
+accelerometer white noise through $\mat K_{a,i}$, residual accelerometer-bias
+diffusion, and magnetometer noise when present.  The periodic covariance of the
+physical estimation error satisfies
+\begin{equation}
+\mat X_{i+1}=\mat A_i\mat X_i\mat A_i^\top+\mat W_i,
+\qquad
+\mat X_N=\mat X_0.
+\label{eq:h2-periodic-lyapunov}
+\end{equation}
+No term $\mat K_S\mat R_S\mat K_S^\top$ is inserted in
+Eq.~\eqref{eq:h2-periodic-lyapunov}, because the pseudo-measurement has no
+physical sensor noise.  Likewise, the OU process covariance used to form the
+Kalman gains remains in the estimator Riccati recursion but is not counted as an
+independent physical disturbance when the actual sea spectrum is already
+represented by Eq.~\eqref{eq:h2-wave-cost}.  The noise contribution is
+\begin{equation}
+J_{p,\mathrm{noise}}
+=\frac{1}{N}\sum_{i=0}^{N-1}
+\operatorname{tr}(\mat C_p\mat X_i\mat C_p^\top).
+\label{eq:h2-noise-cost}
+\end{equation}
+The full stationary displacement objective is therefore
+\begin{equation}
+\boxed{
+J_p(r_S,\tau,\sigma_{aw};\mat S_a)
+=J_{p,\mathrm{noise}}+J_{p,\mathrm{wave}},}
+\label{eq:h2-total-cost}
+\end{equation}
+with colored calibration residuals or other modeled disturbances added by the
+same spectral-transfer construction.  Equation~\eqref{eq:h2-total-cost}, rather
+than $\mat P_{pp}$, is the quantity to minimize when selecting the integral
+regularizer.
+
+\subsubsection{How physical acceleration amplitude re-enters analytically}
+
+The amplitude dependence now appears without assigning sea-state dependence to
+the electronics noise floor.  For a fixed normalized sea shape, write
+\begin{equation}
+\mat S_a^{(2)}(\omega;\sigma_a,\tau)
+=\sigma_a^2\,\overline{\mat S}_a^{(2)}(\omega;\tau).
+\label{eq:h2-sea-amplitude-factor}
+\end{equation}
+If the gains and Jacobians are frozen while the physical input amplitude is
+varied, Eqs.~\eqref{eq:h2-wave-cost}--\eqref{eq:h2-total-cost} reduce exactly to
+\begin{equation}
+\boxed{
+J_p(\rho,s)=J_n(\rho)+e^{2s}J_w(\rho),
+\qquad
+\rho:=\log r_S,\quad s:=\log\sigma_a.}
+\label{eq:h2-bias-variance-form}
+\end{equation}
+Thus larger seas increase the penalty for attenuating or resonantly reshaping
+real displacement even when sensor noise is unchanged.  This is the missing
+physical amplitude mechanism in a covariance-only pole-placement argument.
+
+At an interior optimum $\partial J_p/\partial\rho=0$, implicit
+differentiation gives the local amplitude exponent
+\begin{equation}
+\boxed{
+p_a
+:=\frac{d\log r_S^\star}{d\log\sigma_a}
+=-\frac{J_{\rho s}}{J_{\rho\rho}}
+=-\frac{2e^{2s}J_w'(\rho)}
+ {J_n''(\rho)+e^{2s}J_w''(\rho)}.}
+\label{eq:h2-local-amplitude-exponent}
+\end{equation}
+The full-state theory therefore predicts the local power of $\sigma_a$ from the
+curvature of the physical drift--distortion tradeoff rather than assuming that
+power in advance.  A corresponding
+$p_\tau=d\log r_S^\star/d\log\tau$ is obtained by differentiating the same
+objective with respect to $\log\tau$.
+
+The frozen-coefficient factorization in Eq.~\eqref{eq:h2-bias-variance-form} is
+only the first level.  In the actual MEKF,
+\begin{equation}
+\mat C_{a,k}
+=\mat C_{a,0,k}
++\begin{bmatrix}-\Skew{\Rot_{wb,k}\vct a_{w,k}}&\mat0&\cdots&\mat0\end{bmatrix},
+\label{eq:h2-Ca-amplitude-modulation}
+\end{equation}
+so wave amplitude also modulates the attitude/acceleration/bias covariance
+coupling and hence the gain sequence itself.  A trajectory-linearized
+calculation evaluates Eqs.~\eqref{eq:h2-Kj}--\eqref{eq:h2-total-cost} along a
+reference replay rather than freezing $\mat C_a$ at zero acceleration.  This
+second level can determine whether the observed gain-optimized amplitude
+exponent near unity is produced primarily by physical wave-distortion cost, by
+amplitude-dependent attitude/gravity coupling, or by both.
+
+The next analytical test is therefore numerical but not empirical coefficient
+fitting: solve the 21-state periodic Riccati recursion at each calibrated sea,
+compute Eqs.~\eqref{eq:h2-wave-cost} and \eqref{eq:h2-noise-cost} over a sweep of
+$r_S$, and compare the predicted minimizer and local exponents with the
+independently measured regularizer optima.  Agreement would supply an
+analytical explanation for the retained $\sigma_{aw}$ factor; disagreement
+would identify which full-filter mismatch remains outside the linearized model.
