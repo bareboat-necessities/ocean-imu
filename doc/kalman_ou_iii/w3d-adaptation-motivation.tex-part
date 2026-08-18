@@ -293,25 +293,23 @@ discrete-time effects near the clamps, and nonstationary or multimodal seas.
 \label{sec:riccati-similarity-design-guidance}
 \label{sec:riccati-deployed-cadence}
 
-The implementation retains a cubic dimensional base scale before applying the
-cadence normalization,
+For a sampled acceleration observation with per-sample variance $R_a$ and period
+$h$, the strong-observation approximation gives $r_a\simeq R_a h$.  This
+suggests the dimensionally cubic base standard deviation
 \begin{equation}
 \boxed{
 r_{S,\star}^{\mathrm{base}}
-=c_R\sigma_{aw,\star}\tau_\star^3
-=\widetilde c_R\widehat\sigma_{a,B}\tau_\star^3,}
-\qquad
-\widetilde c_R:=c_Rc_\sigma.
+=C_R\sqrt{R_a}\,\tau_\star^3.}
 \label{eq:adapt-rs-base}
 \end{equation}
-The two forms are equivalent because of Eq.~\eqref{eq:adapt-sigma-map}.  Writing
-the second form makes clear that $\widehat\sigma_{a,B}$ is the measured physical
-acceleration scale, whereas $\sigma_{aw}$ is the OU-prior parameter.  The cubic
-power is dimensionally natural for the third integral of acceleration; it is
-not, by itself, the strong-observation closed-loop scaling.
+Here $\sqrt{R_a}$ has acceleration units, so
+$\sqrt{R_a}\,\tau^3$ has the required units of m\,s.  Unlike the previous
+$\sigma_{aw}\tau^3$ form, Eq.~\eqref{eq:adapt-rs-base} does not couple the
+pseudo-measurement strength to the estimated physical wave amplitude.  The
+measured acceleration statistic therefore affects $\sigma_{aw}$ through
+Eq.~\eqref{eq:adapt-sigma-map}, but not $r_S$ directly.
 
-The applied pseudo-update period and historical information-rate normalization
-are
+The applied pseudo-update period and information-rate normalization are
 \begin{equation}
 T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max}),
 \label{eq:engineering-pseudo-cadence}
@@ -322,50 +320,54 @@ r_{S,\mathrm{filter}}
 \sqrt{\frac{T_{S,0}}{T_S}}.
 \label{eq:engineering-rs-filter}
 \end{equation}
-Away from clamps,
+Away from cadence clamps,
 \begin{equation}
 \boxed{
 r_{S,\mathrm{filter}}
-\propto\sigma_{aw}\tau^{5/2}
-\propto\widehat\sigma_{a,B}\tau^{5/2}.}
+=C_R\sqrt{R_a}\sqrt{\frac{T_{S,0}}{c_T}}\,
+\tau^{5/2}.}
 \label{eq:deployed-effective-law}
 \end{equation}
-Thus the applied schedule retains the analytically predicted strong-observation
-\emph{period exponent} $5/2$, while its linear acceleration-amplitude factor is
-an additional calibrated engineering choice.  The strong-observation reduction
-alone does not require that factor because
-$q_{\mathrm{eff}}\simeq2r_a$ is independent of $\sigma_{aw}$.
+Thus the cubic base preserves the desired physical dimensions while the cadence
+normalization produces exactly the strong-observation period exponent $5/2$.
+No measured wave-amplitude multiplier remains in the pseudo-measurement law.
 
-This distinction also clarifies the meaning of $c_R$.  Combining
-Eqs.~\eqref{eq:adapt-omegaR}, \eqref{eq:engineering-pseudo-cadence}, and
-\eqref{eq:engineering-rs-filter} yields, away from clamps,
+The coefficient $C_R$ now has a direct closed-loop interpretation.  Combining
+Eqs.~\eqref{eq:adapt-omegaR}, \eqref{eq:adapt-rs-base}, and
+\eqref{eq:engineering-rs-filter} gives
 \begin{equation}
 \boxed{
 (\omega_R\tau)^6
 =\frac{q_{\mathrm{eff}}}
- {c_R^2\sigma_{aw}^2T_{S,0}}.}
+ {C_R^2R_aT_{S,0}}.}
 \label{eq:adapt-cR-spectral-meaning}
 \end{equation}
-Hence $c_R$ controls the normalized regularizer corner together with the
-posterior drift intensity and the selected OU amplitude.  In the strong regime,
-where $q_{\mathrm{eff}}$ is nearly amplitude independent, the retained
-$\sigma_{aw}$ factor causes the normalized corner to vary weakly with the
-amplitude schedule.  It should therefore be regarded as a separately testable
-full-filter design choice rather than as a consequence of the strong-observation
-derivation.
+Using $q_{\mathrm{eff}}\simeq2R_a h$ in the strong-observation regime yields
+\begin{equation}
+\boxed{
+C_R=\frac{\sqrt{2h/T_{S,0}}}{\kappa^3},
+\qquad \kappa=\omega_R\tau.}
+\label{eq:adapt-cR-kappa}
+\end{equation}
+Hence $C_R$ selects the regularization corner relative to the sea time scale.
+For the nominal $h=\SI{5}{ms}$, $T_{S,0}=\SI{15}{ms}$, and
+$\kappa=0.3627$, Eq.~\eqref{eq:adapt-cR-kappa} gives $C_R\simeq17.11$.
+This value is an analytical pole-placement reference rather than a claim of
+full-MEKF optimality; coefficient sweeps remain appropriate because the scalar
+reduction omits attitude/gravity leakage, residual bias, covariance coupling,
+and cadence-clamp effects.
 
-The resulting analytical schedule is consequently interpreted in three layers:
+The resulting adaptation law therefore separates the three channels:
 \begin{equation}
 \boxed{
 \tau_\star=c_\tau T_{\rm sea},\qquad
 \sigma_{aw,\star}=c_\sigma\widehat\sigma_{a,B},\qquad
-r_S\sim\tau^{5/2}\ \text{in the strong-observation limit}.}
+r_{S,\star}^{\mathrm{base}}=C_R\sqrt{R_a}\,\tau_\star^3.}
 \label{eq:adapt-three-layer-summary}
 \end{equation}
-The applied wrapper implements the last relation through the cubic dimensional
-base of Eq.~\eqref{eq:adapt-rs-base} and the cadence normalization of
-Eq.~\eqref{eq:engineering-rs-filter}.  Numerical values of $c_\tau$,
-$c_\sigma$, and $c_R$ remain calibration parameters of the complete MEKF; the
-analysis above identifies their time-, amplitude-, and spectral roles and the
-conditions under which the associated powers are expected to scale across sea
-states.
+With $T_S\propto\tau$, the final pseudo-measurement standard deviation follows
+$r_{S,\mathrm{filter}}\propto\tau^{5/2}$.  The coefficients $c_\tau$ and
+$c_\sigma$ retain their time-scale and OU-prior amplitude roles, while $C_R$
+sets the normalized regularization corner.  The complete-MEKF calibration is
+therefore reduced to coefficients with distinct physical meanings rather than a
+single monomial coupling wave amplitude and regularizer strength.
