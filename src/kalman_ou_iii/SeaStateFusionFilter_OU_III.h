@@ -161,7 +161,7 @@ constexpr float MAX_SIGMA_A = 6.0f;
 // real guard against r_S collapsing toward zero while staying clear of the
 // calibrated envelope.
 constexpr float MIN_R_S     = 0.15f;
-// r_S ~ sigma_aw * tau^3 inherits that range.  The old 35 m*s ceiling was the
+// r_S ~ sqrt(R_a) tau^3 inherits that range.  The old 35 m*s ceiling was the
 // binding constraint at H_s = 8.5 m: the calibrated fixed-oracle point sat at
 // 34.66 and the error was still falling monotonically against it.
 constexpr float MAX_R_S     = 400.0f;
@@ -172,7 +172,7 @@ constexpr float ADAPT_EVERY_SECS           = 0.1f;
 // the versioned records against synthesized sea-state transitions: the error
 // during a transition falls monotonically as this shortens, the stationary
 // worst-record vertical error rises monotonically, and 3.0 is where the two
-// cross at an acceptable cost.  r_S ~ sigma_aw tau^3 amplifies tau noise by
+// cross at an acceptable cost.  r_S ~ tau^3 amplifies tau noise by
 // the third power, which is why this sits above OU-II's tau^2 and tau^1
 // channels.  See docs/ou-ema-adaptation-tuning.md.
 constexpr float ADAPT_RS_MULT              = 3.0f;   // dimensionless
@@ -220,49 +220,125 @@ constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f;
 // they assume, where r_a ~ R_a*dt is the acceleration measurement noise
 // spectral density seen by the reduced scalar model.
 //
-//   Cubic            r_S,base = c_R sigma_aw tau^3, then renormalized by
+//   Cubic            r_S,base = C_R sqrt(R_a) tau^3, then renormalized by
 //                    sqrt(T_0/T_S).  With the self-similar cadence
-//                    T_S = c_T tau this is effectively r_S ~ sigma_aw
-//                    tau^(5/2).  DEPLOYED DEFAULT, and the measured optimum.
+//                    T_S = c_T tau this is effectively r_S ~ tau^(5/2).
 //   StrongRiccati    q_eff = 2 r_a: r_S = sqrt(2 r_a) tau^3 / (sqrt(T_S) k^3),
-//                    with no leading-order sigma_aw dependence.
+//                    with no leading-order sigma_aw dependence.  At the
+//                    analytical C_R this is the *same schedule* as Cubic, not
+//                    merely the same shape; see below.
 //   PosteriorRiccati the full transition law, reducing to a sigma_aw tau^3
 //                    schedule as zeta -> 0 and to StrongRiccati as
 //                    zeta -> infinity.
 //
 // The deployed envelope has zeta ~ 1e5..1e7 against the bench sensor floor, so
-// StrongRiccati looks like the applicable branch.  It is not: the amplitude
-// ablation (tools/ou_rs_law_ablation.py) shows dropping the sigma_aw factor
-// costs +0.30 %Hs of vertical error, and a sweep of r_S ~ sigma_aw^p has a
-// clean minimum at p = 1.  The reduction models r_a as a sea-state-independent
-// sensor constant, whereas the real low-frequency acceleration error is
-// dominated by attitude/gravity and bias leakage that scales with sea state,
-// i.e. R_a = R_a,sensor + beta_m sigma_aw^2.  With that term dominant, q_eff ~
-// 2 beta_m sigma_aw^2 dt and the pole-preserving schedule is the deployed
-// sigma_aw tau^(5/2).  The non-Cubic laws exist for that ablation, not as
+// the strong-observation branch q_eff ~ 2 r_a is the applicable one and the
+// drift-driving error is set by the *sensor*, not by the sea.  The base
+// schedule takes its acceleration scale accordingly: R_a is the accelerometer
+// measurement-noise variance, and sqrt(R_a) tau^3 carries the required units of
+// m*s.  The wave amplitude still enters the filter through the OU prior,
+// sigma_aw = c_sigma sigma_a,B; it no longer sets pseudo-measurement strength.
+//
+// Writing the base this way makes C_R a pole placement rather than a gain.
+// With r_a = R_a h, the cadence-normalized base is
+//     C_R sqrt(R_a) tau^3 sqrt(T_0/T_S) = sqrt(2 r_a) tau^3 / (kappa^3 sqrt(T_S))
+// exactly when C_R = sqrt(2h/T_0)/kappa^3, so C_R and the normalized corner
+// kappa = omega_R tau are two spellings of one number and the Cubic and
+// StrongRiccati laws coincide there.  R_S_COEFF_ANALYTICAL_REFERENCE is that
+// value for kappa = 0.3627.  The applied C_R comes from a complete-MEKF sweep
+// against it, because the scalar reduction omits attitude/gravity leakage,
+// residual bias, three-axis covariance coupling and the cadence clamps; see
+// tools/ou_rs_amplitude_retune_sweep.py and
+// docs/ou-iii-rs-amplitude-retune.md.
+//
+// The amplitude tilt of the Riccati laws spans the removed multiplier as a
+// one-parameter family: p = 0 is the deployed schedule and p = 1 restores the
+// sigma_aw factor, so tools/ou_rs_law_ablation.py still measures exactly that
+// one degree of freedom.  The non-Cubic laws exist for that ablation, not as
 // candidate defaults.
+//   SpectralMSE      the bias-variance law.  The three above all answer "what
+//                    r_S holds a chosen normalized pole?"; none answers "what
+//                    pole minimizes displacement error for a sea of amplitude
+//                    sigma_a?".  The pseudo-measurement both suppresses
+//                    integration drift and distorts the real wave, and the
+//                    second cost scales with physical wave energy, so
+//                        J(omega_R) = 3 q_eff / (2 omega_R^3) + J_wave,
+//                        J_wave = (1/2pi) int |G(jw)-1|^2 S_eta^(2) dw,
+//                    with |G(jw)-1|^2 = (1+4x^2)/(1+x^6), x = w/omega_R.  Well
+//                    below the wave band |G-1|^2 -> 4/x^4, so J_wave -> 4 m_-4
+//                    omega_R^4 and the balance gives
+//                        omega_R*^7 = (9/32) q_eff / m_-4.
+//                    For a self-similar sea m_-4 ~ sigma_a^2 tau^8, hence
+//                        r_S* ~ C_J q_eff^(1/14) sigma_a^(6/7) tau^(24/7)
+//                               / sqrt(T_S),
+//                    i.e. tau^(41/14) away from cadence clamps.  This is where
+//                    sigma_a belongs analytically: not in the noise floor, but
+//                    in the penalty for suppressing genuine displacement.
+//                    DEPLOYED DEFAULT.
+//
+// Cubic and SpectralMSE are the two laws intended for deployment, and the
+// choice between them is a cost/accuracy trade rather than a right/wrong one.
+// Over the calibrated envelope the two schedules differ only by
+//     r_S,MSE / r_S,Cubic ~ (tau^3 / sigma_aw)^(1/7),
+// a seventh root that compresses the exponent difference to about 1.3x across
+// the whole H_s = 0.27..8.5 m range, and along the calibrated sea-state
+// trajectory (sigma_aw ~ tau^1.1) to a ratio varying only as tau^0.27.  The
+// measured difference is correspondingly small but real: SpectralMSE improves
+// the paired ten-seed vertical endpoint by 0.0263 +/- 0.0137 %Hs.
+//
+// SpectralMSE costs one powf per tuner update where Cubic costs none:
+// 19.8 ns versus 3.2 ns per evaluation on x86-64 (-O3 -march=native), a factor
+// of 6.  On a microcontroller without hardware transcendentals the ratio is
+// far larger, and the tuner update is one of the few places the filter calls
+// one at all.  Cubic is therefore the supported low-cost configuration for
+// embedded targets, and it is a documented operating point rather than a
+// deprecated one: on this evidence it gives up well under 1 % of the vertical
+// endpoint.  Select it with setRSLaw(RSAdaptationLaw::Cubic), which also needs
+// R_S_coeff (C_R) rather than C_J.
 enum class RSAdaptationLaw : uint8_t {
     Cubic = 0,
     StrongRiccati = 1,
     PosteriorRiccati = 2,
+    SpectralMSE = 3,
 };
 
 // Normalized regularization pole omega_R*tau targeted by the Riccati laws.
 //
-// The ratio between the Riccati and Cubic schedules is independent of tau,
-//     r_S,strong / r_S,cubic = sigma_ref / sigma_aw,
+// The ratio between the tilted (p = 1) and deployed (p = 0) members of the
+// Riccati family is independent of tau,
+//     r_S,p=1 / r_S,p=0 = sigma_aw / sigma_ref,
 //     sigma_ref = sqrt(2 r_a) / (kappa^3 c_R sqrt(T_0)),
-// because the tau^3/sqrt(T_S) factor is common to both.  The default kappa is
-// therefore chosen so that sigma_ref equals the sigma_aw of the Hs = 1.5 m
-// nominal calibration sea (tau = 2.179 s, sigma_aw = 0.724 m/s^2, base
-// r_S = 2.622 m*s).  The two laws then agree exactly at that operating point
-// for every tau, and the ablation measures only the sigma_aw dependence of the
-// schedule rather than an overall change of regularizer gain.
+// because the tau^3/sqrt(T_S) factor is common to both.  sigma_ref is the
+// amplitude at which the two members cross, so the ablation measures only the
+// sigma_aw dependence of the schedule rather than an overall change of
+// regularizer gain.  kappa was calibrated when the deployed base still carried
+// sigma_aw, so that sigma_ref matched the sigma_aw of the Hs = 1.5 m nominal
+// sea; it is left as it was, and the anchor now sits wherever the re-fitted
+// c_R puts it.  Nothing in the ablation depends on where that anchor is.
 constexpr float R_S_POLE_KAPPA_DEFAULT = 0.3627f;
 // r_a = R_a * dt for the reduced scalar acceleration observation.  The default
 // is the bench accelerometer noise of the validated configuration
 // (0.0148 m/s^2)^2 at the nominal 200 Hz sample interval.
 constexpr float R_S_ACCEL_NOISE_DENSITY_DEFAULT = 0.0148f * 0.0148f * FREQ_SMOOTHER_DT;
+// Analytical pole-placement value of C_R, Eq. (adapt-cR-kappa) of the OU-III
+// paper: C_R = sqrt(2h/T_S,0) / kappa^3.  With h = 5 ms (200 Hz), T_S,0 = 15 ms
+// and kappa = 0.3627 this is 17.112.  It is the value at which the deployed
+// Cubic base, after the sqrt(T_S,0/T_S) cadence renormalization, is *identical*
+// to the StrongRiccati law -- the cubic base and the pole-placement law are two
+// spellings of the same schedule, and C_R is the spelling that names the corner
+// directly.  Quoted here as the reference the calibration sweep is measured
+// against, not as the applied value; see docs/ou-iii-rs-amplitude-retune.md.
+constexpr float R_S_COEFF_ANALYTICAL_REFERENCE = 17.112f;
+
+// Coefficient C_J of the SpectralMSE law,
+//     r_S = C_J q_eff^(1/14) sigma_a,B^(6/7) tau^(24/7) / sqrt(T_S).
+// It absorbs the dimensionless spectral moment int x^-8 Phi_a(x) dx of the
+// self-similar acceleration spectrum, raised to 3/7.  Evaluating that moment on
+// the eight reference spectra and solving the exact balance record by record
+// gives C_J ~ 0.054, so the default is an analytical prediction rather than a
+// fitted number; the sweep is what decides whether it is the complete-MEKF
+// optimum.  See docs/ou-iii-rs-amplitude-retune.md.
+constexpr float R_S_MSE_COEFF_DEFAULT = 0.0538f;
 
 struct TuneState {
     float tau_applied   = 1.1f;    // s
@@ -895,8 +971,14 @@ public:
     void setRSAccelNoiseDensity(float r_a) {
         if (!(std::isfinite(r_a) && r_a > 0.0f)) return;
         rs_accel_noise_density_ = r_a;
+        refresh_qeff_pow_();
     }
     float getRSAccelNoiseDensity() const noexcept { return rs_accel_noise_density_; }
+    // C_J of the SpectralMSE law.
+    void setRSMseCoeff(float c) {
+        if (std::isfinite(c) && c > 0.0f) rs_mse_coeff_ = c;
+    }
+    float getRSMseCoeff() const noexcept { return rs_mse_coeff_; }
     // Amplitude tilt exponent p of the Riccati laws: r_S ~ sigma^p tau^(5/2).
     // p = 0 is the strong-observation asymptote; p = 1 reproduces Cubic.
     void setRSSigmaExponent(float p) {
@@ -956,7 +1038,7 @@ public:
 
     // Freeze one adaptation channel while the other keeps tracking the sea.
     //
-    // The deployed law couples the two: r_S = clip(c * sigma_a * tau^3), so
+    // The deployed law derives r_S from tau: r_S = clip(C_R sqrt(R_a) tau^3), so
     // simply freezing tau and sigma_a with setFixedTuning() freezes r_S as
     // well, and an ablation built that way cannot say which channel carries
     // the benefit.  Here the tuner keeps running and keeps deriving r_S from
@@ -1389,7 +1471,7 @@ private:
     // again after this normalization: the smallest-sea operating point is already
     // on the 0.4 base floor and must move below 0.4 when T_S > 15 ms to preserve
     // r_S^2 T_S. With unclamped T_S proportional to tau this turns the existing
-    // base sigma_aw*tau^3 schedule into an effective sigma_aw*tau^(5/2) schedule
+    // base C_R*sqrt(R_a)*tau^3 schedule into an effective tau^(5/2) schedule
     // at the filter input.
     float pseudo_update_information_rate_scale_() const noexcept {
         // The Riccati laws already contain the realized T_S, so renormalizing
@@ -1412,20 +1494,81 @@ private:
                         pseudo_update_period_max_s_);
     }
 
+    // sqrt(R_a), the accelerometer measurement-noise standard deviation the
+    // Cubic base uses as its acceleration scale.  The configured quantity is
+    // the reduced scalar density r_a = R_a * h, so this divides the sample
+    // period back out.  Falls back to the compiled default rather than to
+    // zero, because a zero here would silently disable the drift-band
+    // regularizer.
+    float rs_accel_noise_sigma_() const noexcept {
+        const float h = FREQ_SMOOTHER_DT;
+        float r_a = rs_accel_noise_density_;
+        if (!(std::isfinite(r_a) && r_a > 0.0f)) r_a = R_S_ACCEL_NOISE_DENSITY_DEFAULT;
+        return std::sqrt(r_a / h);
+    }
+
+    // Bias-variance optimal r_S, Eq. (spectral-mse-rs):
+    //     r_S = C_J q_eff^(1/14) sigma_a,B^(6/7) tau^(24/7) / sqrt(T_S).
+    // Returned as the *filter input*, like the Riccati laws, because the
+    // cadence is already in it; pseudo_update_information_rate_scale_() must
+    // therefore not renormalize it again.
+    //
+    // sigma_a,B is the physical band-limited acceleration RMS, which is what
+    // carries the wave energy the pseudo-measurement distorts.  The tuner
+    // passes the OU prior sigma_aw = c_sigma sigma_a,B, so divide c_sigma back
+    // out: the distortion penalty is a property of the sea, not of our choice
+    // of prior, and C_J should not move when c_sigma does.
+    float rs_spectral_mse_target_(float tau, float sigma) const noexcept {
+        const float TS = pseudo_update_period_for_(tau);
+        const float c_sigma = (std::isfinite(sigma_coeff_) && sigma_coeff_ > 0.0f)
+                              ? sigma_coeff_ : 1.0f;
+        const float sigma_aB = std::max(sigma / c_sigma, 1e-6f);
+        if (!(TS > 0.0f) || !(tau > 0.0f)) return rs_mse_coeff_;
+        // sigma^(6/7) tau^(24/7) == (sigma tau^4)^(6/7) exactly, so the whole
+        // schedule needs one transcendental rather than three: q_eff^(1/14) is
+        // constant for a given sensor and is cached in rs_qeff_pow_.  This
+        // matters on a microcontroller without hardware transcendentals, where
+        // powf dominates the tuner update; see the RSAdaptationLaw comment on
+        // the Cubic law as the low-cost alternative.
+        const float tau2 = tau * tau;
+        const float u = sigma_aB * tau2 * tau2;
+        return rs_mse_coeff_ * rs_qeff_pow_
+             * std::pow(u, 6.0f / 7.0f)
+             / std::sqrt(TS);
+    }
+
+    // q_eff^(1/14) for the current sensor noise density, cached because it is
+    // constant between setRSAccelNoiseDensity() calls.
+    void refresh_qeff_pow_() noexcept {
+        float r_a = rs_accel_noise_density_;
+        if (!(std::isfinite(r_a) && r_a > 0.0f)) r_a = R_S_ACCEL_NOISE_DENSITY_DEFAULT;
+        rs_qeff_pow_ = std::pow(2.0f * r_a, 1.0f / 14.0f);
+    }
+
     // r_S target in m*s for the selected adaptation law.  For the Riccati laws
     // this is Eq. (pole-target) of the OU-III paper,
     //     r_S = sqrt(q_eff) * tau^3 / (sqrt(T_S) * kappa^3),
     // evaluated at the cadence the scheduler will actually use.
+    //
+    // The Cubic base is Eq. (adapt-rs-base) of the OU-III paper,
+    //     r_S,base = C_R sqrt(R_a) tau^3,
+    // where R_a is the per-sample accelerometer measurement-noise variance.
+    // The acceleration scale is the *sensor* noise, not the measured wave
+    // amplitude; see the RSAdaptationLaw comment.
     float rs_target_from_law_(float tau, float sigma) const noexcept {
         const float tau3 = tau * tau * tau;
         if (rs_law_ == RSAdaptationLaw::Cubic) {
-            return R_S_coeff_ * sigma * tau3;
+            return R_S_coeff_ * rs_accel_noise_sigma_() * tau3;
+        }
+        if (rs_law_ == RSAdaptationLaw::SpectralMSE) {
+            return rs_spectral_mse_target_(tau, sigma);
         }
         const float r_a = rs_accel_noise_density_;
         const float kappa = rs_pole_kappa_;
         if (!(std::isfinite(r_a) && r_a > 0.0f) ||
             !(std::isfinite(kappa) && kappa > 0.0f)) {
-            return R_S_coeff_ * sigma * tau3;   // degenerate config: stay on Cubic
+            // degenerate config: stay on Cubic
+            return R_S_coeff_ * rs_accel_noise_sigma_() * tau3;
         }
         float q_eff = 2.0f * r_a;
         if (rs_law_ == RSAdaptationLaw::PosteriorRiccati) {
@@ -1438,19 +1581,26 @@ private:
             q_eff *= std::max(0.0f, w);
         }
         const float TS = pseudo_update_period_for_(tau);
-        if (!(q_eff > 0.0f) || !(TS > 0.0f)) return R_S_coeff_ * sigma * tau3;
+        if (!(q_eff > 0.0f) || !(TS > 0.0f))
+            return R_S_coeff_ * rs_accel_noise_sigma_() * tau3;
         const float k3 = kappa * kappa * kappa;
         float rs = std::sqrt(q_eff) * tau3 / (std::sqrt(TS) * k3);
-        // Optional amplitude tilt (sigma/sigma_ref)^p about the anchor sea.
-        // sigma_ref = sqrt(2 r_a) / (kappa^3 c_R sqrt(T_0)) is the sigma at
-        // which the Riccati and Cubic schedules coincide for every tau, so
-        // p = 0 is the pure strong-observation law and p = 1 reproduces the
-        // deployed Cubic law exactly.  Intermediate p models a low-frequency
+        // Optional amplitude tilt (sigma/sigma_ref)^p about the anchor
+        // amplitude sigma_ref = sqrt(2 r_a) / (kappa^3 C_R sqrt(R_a T_0)), the
+        // sigma at which the p = 0 and p = 1 members cross for every tau.
+        // p = 0 is the pure strong-observation law, which is the deployed
+        // Cubic schedule up to the constant gain sigma_ref; p = 1 restores the
+        // sigma_aw multiplier the deployed base no longer carries.  At the
+        // analytical C_R of Eq. (adapt-cR-kappa) the two coincide exactly,
+        // sigma_ref = 1, because that C_R is by construction the one that makes
+        // the cadence-normalized cubic base equal to the strong-observation
+        // pole-placement law.  Intermediate p models a low-frequency
         // acceleration-error density that is itself sea-state dependent.
         const float p = rs_sigma_exponent_;
         if (p != 0.0f && sigma > 0.0f) {
             const float sigma_ref = std::sqrt(2.0f * r_a) /
-                (k3 * R_S_coeff_ * std::sqrt(pseudo_update_fixed_period_s_));
+                (k3 * R_S_coeff_ * rs_accel_noise_sigma_() *
+                 std::sqrt(pseudo_update_fixed_period_s_));
             if (std::isfinite(sigma_ref) && sigma_ref > 0.0f) {
                 rs *= std::pow(sigma / sigma_ref, p);
             }
@@ -1792,9 +1942,18 @@ private:
     float pseudo_update_period_max_s_ = PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT;
     float pseudo_update_fixed_period_s_ = PSEUDO_UPDATE_PERIOD_NOMINAL_S;
 
-    RSAdaptationLaw rs_law_ = RSAdaptationLaw::Cubic;
+    // SpectralMSE is the deployed law: it is the only one of the four that
+    // answers which regularization corner minimizes displacement error rather
+    // than merely how to hold a corner once chosen, and it is the only
+    // configuration measured on this branch that improves the primary endpoint
+    // against main (-0.0263 +/- 0.0137 %Hs, n = 90) while passing all eight
+    // deterministic quality gates.  Its coefficient is analytical, not fitted.
+    RSAdaptationLaw rs_law_ = RSAdaptationLaw::SpectralMSE;
     float rs_pole_kappa_ = R_S_POLE_KAPPA_DEFAULT;
     float rs_accel_noise_density_ = R_S_ACCEL_NOISE_DENSITY_DEFAULT;
+    float rs_mse_coeff_           = R_S_MSE_COEFF_DEFAULT;
+    float rs_qeff_pow_            =
+        std::pow(2.0f * R_S_ACCEL_NOISE_DENSITY_DEFAULT, 1.0f / 14.0f);
     float rs_sigma_exponent_ = 0.0f;
 
     bool  wave_band_tuning_       = true;
@@ -1890,12 +2049,34 @@ private:
 
     float acc_noise_floor_sigma_ = ACC_NOISE_FLOOR_SIGMA_DEFAULT;
 
-    // r_S = R_S_coeff * sigma_aw * tau^3 and tau = tau_coeff * T_z / 2.  Both
-    // coefficients are re-fitted for the wave-band period: tau_coeff = 1 is the
-    // documented intent, tau equal to half the zero-crossing period, and
-    // R_S_coeff was fitted on the four stationary JONSWAP records against the
-    // per-record optimum located by a fixed-r_S scan.
-    float R_S_coeff_    = 0.35f;
+    // The three adaptation coefficients of Eq. (adapt-three-layer-summary):
+    //     tau      = tau_coeff * T_z / 2
+    //     sigma_aw = sigma_coeff * sigma_a,B
+    //     r_S,base = R_S_coeff * sqrt(R_a) * tau^3
+    // tau_coeff = 1 is the documented intent, tau equal to half the
+    // zero-crossing period.
+    //
+    // R_S_coeff is C_R, and it is not a bare gain: by Eq. (adapt-cR-kappa) it
+    // places the normalized regularizer corner, kappa = omega_R tau =
+    // (sqrt(2h/T_S,0)/C_R)^(1/3).  The applied value is the analytical
+    // pole-placement value itself, and that is a measured outcome rather than a
+    // deference to the theory: C_R = 17.11 is the argmin of every c_sigma row
+    // of the coarse calibration sweep, and on the paired multi-seed harness it
+    // beats the deterministic sweep argmin C_R = 14.4 on the primary endpoint
+    // and on pitch.  The scalar reduction that predicts it omits
+    // attitude/gravity leakage, residual bias, three-axis covariance coupling
+    // and the cadence clamps, so this agreement was checked, not assumed.
+    //
+    // sigma_coeff no longer enters r_S at all, and the filter is correspondingly
+    // insensitive to it: the whole axis from 0.27 to 1.8 spans 3 % of the
+    // vertical endpoint at the optimal C_R.  It stays at the 0.9 that shipped
+    // with the old law.  The deterministic sweep prefers ~0.32, but that
+    // preference does not survive the multi-seed protocol and costs 0.027 deg
+    // of pitch; the band-matching prediction c_sigma = F_OU^(-1/2) ~ 1.80 is
+    // significantly worse on the vertical endpoint, if only by 0.037 %Hs.  See
+    // docs/ou-iii-rs-amplitude-retune.md and
+    // tools/ou_rs_amplitude_retune_sweep.py.
+    float R_S_coeff_    = R_S_COEFF_ANALYTICAL_REFERENCE;
     float tau_coeff_    = 1.0f;
     float sigma_coeff_  = 0.9f;
 

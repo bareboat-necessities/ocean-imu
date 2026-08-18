@@ -709,7 +709,21 @@ def run_simulator(
 # reading it out of the filter, so a mismatch silently scores every fixed mode
 # at a point the deployed filter would never choose.  Keep these in step with
 # the C++ defaults.
-OU_III_RS_COEFF = 0.35
+# The deployed OU-III law is SpectralMSE:
+#     r_S = C_J q_eff^(1/14) sigma_a,B^(6/7) tau^(24/7) / sqrt(T_S),
+# returned as the filter input, so no cadence renormalization is applied.
+# OU_III_RS_COEFF below is the Cubic C_R, kept because the ablation family uses
+# it; the fixed-tuning modes derive their frozen r_S from the deployed law.
+OU_III_RS_MSE_COEFF = 0.0538
+OU_III_RS_QEFF = 2.0 * (0.0148 ** 2) * (1.0 / 200.0)
+OU_III_PSEUDO_TAU_RATIO = 0.015 / 1.1
+OU_III_PSEUDO_PERIOD_BOUNDS_S = (1.0 / 200.0, 0.25)
+OU_III_SIGMA_COEFF = 0.9
+OU_III_RS_COEFF = 17.112
+# sqrt(R_a): the accelerometer measurement-noise standard deviation the OU-III
+# base schedule uses as its acceleration scale.  Mirrors
+# R_S_ACCEL_NOISE_DENSITY_DEFAULT / FREQ_SMOOTHER_DT.
+OU_III_RS_ACCEL_SIGMA_MPS2 = 0.0148
 OU_III_RS_BOUNDS_MS = (0.15, 400.0)
 OU_II_RP0_COEFF = 0.65
 OU_II_RP0_BOUNDS_M = (0.05, 150.0)
@@ -726,7 +740,17 @@ def tuning_point_from_pilot(family: str, metrics: Mapping[str, Any]) -> TuningPo
         R_v0 = min(max(OU_II_RV0_COEFF * sigma * tau,
                        OU_II_RV0_BOUNDS_MPS[0]), OU_II_RV0_BOUNDS_MPS[1])
         return TuningPoint(tau, sigma, R_p0_std_m=R_p0, R_v0_std_mps=R_v0)
-    RS = min(max(OU_III_RS_COEFF * sigma * tau * tau * tau,
+    # SpectralMSE, the deployed law.  sigma here is the OU prior sigma_aw, so
+    # divide c_sigma back out to recover the physical band RMS the distortion
+    # penalty depends on.  See docs/ou-iii-rs-amplitude-retune.md.
+    T_S = min(max(OU_III_PSEUDO_TAU_RATIO * tau, OU_III_PSEUDO_PERIOD_BOUNDS_S[0]),
+              OU_III_PSEUDO_PERIOD_BOUNDS_S[1])
+    sigma_aB = max(sigma / OU_III_SIGMA_COEFF, 1e-6)
+    RS = min(max(OU_III_RS_MSE_COEFF
+                 * OU_III_RS_QEFF ** (1.0 / 14.0)
+                 * sigma_aB ** (6.0 / 7.0)
+                 * tau ** (24.0 / 7.0)
+                 / math.sqrt(T_S),
                  OU_III_RS_BOUNDS_MS[0]), OU_III_RS_BOUNDS_MS[1])
     return TuningPoint(tau, sigma, RS_ms=RS)
 

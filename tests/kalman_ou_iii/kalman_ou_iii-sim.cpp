@@ -155,13 +155,16 @@ public:
             }
 
             // Integral-regularizer adaptation law ablation.
-            // 0 = Cubic (deployed), 1 = StrongRiccati, 2 = PosteriorRiccati.
+            // 0 = Cubic (deployed), 1 = StrongRiccati, 2 = PosteriorRiccati,
+            // 3 = SpectralMSE (bias-variance).
             if (env_float("OU_III_RS_LAW", v)) {
                 const int law = static_cast<int>(v);
                 if (law == 1) {
                     filter.setRSLaw(RSAdaptationLaw::StrongRiccati);
                 } else if (law == 2) {
                     filter.setRSLaw(RSAdaptationLaw::PosteriorRiccati);
+                } else if (law == 3) {
+                    filter.setRSLaw(RSAdaptationLaw::SpectralMSE);
                 } else {
                     filter.setRSLaw(RSAdaptationLaw::Cubic);
                 }
@@ -171,6 +174,10 @@ public:
             }
             if (env_float("OU_III_RS_RA", v)) {
                 filter.setRSAccelNoiseDensity(v);
+            }
+            // C_J of the SpectralMSE (bias-variance) law.
+            if (env_float("OU_III_RS_MSE_COEFF", v)) {
+                filter.setRSMseCoeff(v);
             }
             if (env_float("OU_III_RS_SIGMA_EXP", v)) {
                 filter.setRSSigmaExponent(v);

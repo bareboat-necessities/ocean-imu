@@ -169,15 +169,73 @@ class DeployedLawMirrorTests(unittest.TestCase):
         text = header.read_text(encoding="utf-8")
         match = re.search(pattern, text)
         self.assertIsNotNone(match, f"{pattern} not found in {header.name}")
-        return float(match.group(1))
+        return self._resolve(text, match.group(1), header)
+
+    def _resolve(self, text: str, token: str, header) -> float:
+        """Read a float, following one level of named constant.
+
+        A default written as a named constant says why it has the value it has,
+        which is worth more than a bare literal -- but it means the mirror test
+        cannot simply float() what it matched.  Resolve the name against the
+        same header rather than forcing the constant back into a literal.
+        """
+        import re
+
+        try:
+            return float(token)
+        except ValueError:
+            pass
+        named = re.search(
+            rf"\b{re.escape(token)}\s*=\s*([0-9.eE+-]+)f?\s*;", text
+        )
+        self.assertIsNotNone(
+            named, f"{token} is not a float constant defined in {header.name}"
+        )
+        return float(named.group(1))
 
     def test_rs_coefficient_matches_the_filter_default(self):
         import ou_validation as validation
 
         self.assertAlmostEqual(
             validation.OU_III_RS_COEFF,
-            self._header_value(r"float\s+R_S_coeff_\s*=\s*([0-9.]+)f"),
+            self._header_value(r"float\s+R_S_coeff_\s*=\s*([A-Za-z0-9._]+?)f?\s*;"),
             places=6,
+        )
+
+    def test_mse_coefficient_and_sigma_coeff_match_the_filter_defaults(self):
+        """The deployed law is SpectralMSE, so its C_J is the one that matters.
+
+        c_sigma is mirrored too because the law divides it back out to recover
+        the physical band RMS; a drift in either would move every fixed-tuning
+        operating point.
+        """
+        import ou_validation as validation
+
+        self.assertAlmostEqual(
+            validation.OU_III_RS_MSE_COEFF,
+            self._header_value(r"R_S_MSE_COEFF_DEFAULT\s*=\s*([A-Za-z0-9._]+?)f?\s*;"),
+            places=6,
+        )
+        self.assertAlmostEqual(
+            validation.OU_III_SIGMA_COEFF,
+            self._header_value(r"float\s+sigma_coeff_\s*=\s*([A-Za-z0-9._]+?)f?\s*;"),
+            places=6,
+        )
+
+    def test_rs_acceleration_scale_matches_the_filter_default(self):
+        """The OU-III base schedule scales with sqrt(R_a), not with sigma_aw.
+
+        The mirror carries sqrt(R_a) as its own constant, so it can drift from
+        the header exactly the way the coefficient can.  The header states the
+        reduced density r_a = R_a * h; recover sqrt(R_a) from it.
+        """
+        import ou_validation as validation
+
+        sigma_a = self._header_value(
+            r"R_S_ACCEL_NOISE_DENSITY_DEFAULT\s*=\s*([0-9.]+)f\s*\*"
+        )
+        self.assertAlmostEqual(
+            validation.OU_III_RS_ACCEL_SIGMA_MPS2, sigma_a, places=6
         )
 
     def test_rs_bounds_match_the_filter_clamps(self):

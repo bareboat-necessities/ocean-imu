@@ -1,7 +1,7 @@
 // Guards the OU-III adaptation-channel ablation.
 //
-// The deployed tuning law couples the integral pseudo-measurement scale to the
-// OU parameters through r_S = clip(1.2 sigma_aw tau^3).  Because of that
+// The deployed tuning law derives the integral pseudo-measurement scale from
+// the OU time constant through r_S = clip(C_R sqrt(R_a) tau^3).  Because of that
 // coupling, an ablation that freezes tau and sigma_aw with setFixedTuning()
 // also freezes r_S, and cannot say which channel carries the benefit.
 // setChannelFreeze() exists to break exactly that coupling, so the properties
