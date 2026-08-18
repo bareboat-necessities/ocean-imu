@@ -184,7 +184,7 @@ r_{S,\mathrm{appl}}^{\mathrm{base}}&\leftarrow
 \end{aligned}
 \label{eq:adapt-RS}
 \end{equation}
-where $m_{r_S}=5$.  Candidates are committed every \SI{0.1}{s} and staged by
+where $m_{r_S}=3$.  Candidates are committed every \SI{0.1}{s} and staged by
 one IMU sample, so parameters used at step $k$ are measurable with respect to
 data through $k-1$.
 
@@ -263,7 +263,7 @@ base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
 & residual accelerometer-bias OU & $\tau_b=\SI{5000}{s}$ \\
 adaptation commit / EMA horizon & $0.1/1.8$ s
 & coefficients $(c_\tau,c_\sigma,c_R)$ & $(1.0,0.9,0.35)$ \\
-$r_S$ smoothing horizon & $5\tau_\star$
+$r_S$ smoothing horizon & $3\tau_\star$
 & frequency / variance horizons & \SI{1.0}{s} / $2T_{\mathrm{eff}}$ \\
 variance-horizon bounds & $[0.3,60]$ s
 & pseudo-update period bounds & $[5,250]$ ms \\
