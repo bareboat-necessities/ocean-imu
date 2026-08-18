@@ -5,21 +5,21 @@
 \label{sec:adapt-impl}
 \label{app:rs-scaling}
 
-The adaptation problem is treated as three distinct mappings rather than as a
-single dimensional similarity law.  A measured sea time scale selects the OU
-correlation time, a measured wave-band acceleration statistic selects the OU
-stationary acceleration scale, and the $S=0$ pseudo-measurement sets a separate
-low-frequency correction bandwidth.  This separation is important because the
-measured physical acceleration RMS and the stationary standard deviation of the
-OU prior are not the same quantity, and neither is the posterior acceleration
-error that drives integration drift.
+The adaptation problem is treated as three related but distinct mappings.  A
+measured sea time scale selects the OU correlation time, a measured wave-band
+acceleration statistic selects the stationary OU-prior amplitude, and the
+$S=0$ pseudo-measurement sets a low-frequency correction bandwidth.  The last
+mapping depends on the low-frequency posterior acceleration error of the
+complete estimator, not directly on either the physical wave acceleration RMS
+or the OU-prior variance.  Keeping these quantities distinct is essential to
+interpreting the adaptation law.
 
-Throughout this section,
-$\widehat\sigma_{a,B}$ denotes the noise-corrected RMS of the physical
-acceleration in the period-scaled measurement band, $\sigma_{aw}$ denotes the
-stationary standard deviation of the latent OU acceleration prior, and
-$R_S=r_S^2$ denotes the scalar pseudo-measurement variance.  Thus a
-$r_S\propto\tau^{5/2}$ law is equivalent to $R_S\propto\tau^5$.
+Throughout this section, $\widehat\sigma_{a,B}$ denotes the noise-corrected RMS
+of the physical acceleration in the period-scaled measurement band,
+$\sigma_{aw}$ denotes the stationary standard deviation of the latent OU
+acceleration prior, $q_{\mathrm{eff}}$ denotes the low-frequency posterior
+acceleration-error intensity entering the integration chain, and $R_S=r_S^2$
+denotes the scalar pseudo-measurement variance.
 
 \subsection{Sea time scale and OU correlation time}
 \label{sec:adaptation-time-scale}
@@ -32,24 +32,23 @@ S_\eta^{(2)}(\omega;H_s,\omega_p)
  \Phi\!\left(\frac{\omega}{\omega_p}\right),
 \label{eq:adapt-jonswap-normalized}
 \end{equation}
-where $\Phi$ is dimensionless.  Consequently any characteristic period formed
-from fixed-order spectral moments scales as $\omega_p^{-1}$.  The applied
-period estimator uses the elevation zero-crossing period
+where $\Phi$ is dimensionless.  Consequently, characteristic periods formed
+from fixed-order spectral moments scale as $\omega_p^{-1}$.  The applied period
+estimator uses the elevation zero-crossing period
 \begin{equation}
 T_z=2\pi\sqrt{\frac{m_0}{m_2}},
 \qquad
 T_{\rm sea}:=\frac{T_z}{2},
 \label{eq:adapt-sea-time}
 \end{equation}
-and the OU correlation-time target is therefore
+and the OU correlation-time target is
 \begin{equation}
 \boxed{\tau_\star=c_\tau T_{\rm sea}.}
 \label{eq:adapt-tau-map}
 \end{equation}
-The coefficient $c_\tau$ places the OU pole $1/\tau$ relative to the
-characteristic wave frequency.  Equation~\eqref{eq:adapt-tau-map} is a mapping
-of observed time scales; it does not assert that the wave acceleration spectrum
-is OU.
+The coefficient $c_\tau$ places the OU pole $1/\tau$ relative to the measured
+wave time scale.  Equation~\eqref{eq:adapt-tau-map} is a time-scale mapping; it
+does not assert that the wave acceleration spectrum is OU.
 
 \subsection{Measured acceleration scale and OU prior amplitude}
 \label{sec:adaptation-sigma-map}
@@ -69,14 +68,13 @@ acceleration statistic is
 \end{equation}
 after subtraction of the band-referred sensor-noise floor.  If the band shape
 is fixed in normalized frequency, substitution of
-\eqref{eq:adapt-jonswap-normalized} gives
+Eq.~\eqref{eq:adapt-jonswap-normalized} gives
 \begin{equation}
-\widehat\sigma_{a,B}
-\propto H_s\omega_p^2.
+\widehat\sigma_{a,B}\propto H_s\omega_p^2.
 \label{eq:adapt-band-acc-scaling}
 \end{equation}
 This statistic is a property of the measured wave acceleration, not an estimate
-of an underlying OU variance.  The OU prior amplitude is selected separately by
+of an underlying OU variance.  The OU prior amplitude is selected separately,
 \begin{equation}
 \boxed{\sigma_{aw,\star}=c_\sigma\widehat\sigma_{a,B}.}
 \label{eq:adapt-sigma-map}
@@ -84,7 +82,7 @@ of an underlying OU variance.  The OU prior amplitude is selected separately by
 The coefficient $c_\sigma$ therefore maps physical band energy to the amplitude
 of a deliberately approximate OU prior.
 
-A spectral interpretation of $c_\sigma$ follows from the OU PSD
+A spectral reference for $c_\sigma$ follows from the OU PSD
 \begin{equation}
 S_{a,\mathrm{OU}}^{(2)}(\omega)
 =\frac{2\sigma_{aw}^2\tau}{1+\omega^2\tau^2}.
@@ -100,25 +98,22 @@ F_{\mathrm{OU}}
 \label{eq:adapt-ou-band-fraction}
 \end{equation}
 Literal band-energy matching would give
-$c_\sigma=F_{\mathrm{OU}}^{-1/2}$.  The implemented $c_\sigma$ is instead a
-full-filter calibration coefficient because the physical acceleration is not
-OU, the measurement band is soft, and attitude and bias errors also enter the
-accelerometer innovation.
+$c_\sigma=F_{\mathrm{OU}}^{-1/2}$.  This is only a reference because the
+physical acceleration is not OU, the implemented band is soft, and attitude
+and bias errors also enter the complete estimator.
 
 \subsection{Posterior acceleration-error regime}
 \label{sec:adaptation-strong-observation}
 
-The regularizer responds to posterior acceleration error, not directly to
-$\sigma_{aw}$.  To expose this distinction, consider one OU acceleration
-component
+The regularizer responds to posterior acceleration error.  To expose the role
+of direct acceleration observation, consider one OU acceleration component
 \begin{equation}
 da_w=-\frac{1}{\tau}a_w\,dt
  +\sqrt{\frac{2\sigma_{aw}^2}{\tau}}\,dW_t
 \label{eq:adapt-ou-scalar}
 \end{equation}
-and approximate the high-rate accelerometer by the continuous measurement
-$y_a=a_w+n_a$ with white-noise density $r_a$.  The stabilizing scalar Riccati
-solution has posterior correlation rate
+and the reduced continuous observation $y_a=a_w+n_a$ with white-noise density
+$r_a$.  The stabilizing scalar Riccati solution has posterior correlation rate
 \begin{equation}
 \mu=\sqrt{\frac{1}{\tau^2}
  +\frac{2\sigma_{aw}^2}{\tau r_a}},
@@ -131,7 +126,7 @@ q_{\mathrm{eff}}
 =2r_a\left(1-\frac{1}{\mu\tau}\right).}
 \label{eq:adapt-qeff}
 \end{equation}
-Define the dimensionless observation parameter
+Define
 \begin{equation}
 \Lambda:=\frac{2\sigma_{aw}^2\tau}{r_a},
 \qquad
@@ -147,25 +142,35 @@ q_{\mathrm{eff}}
 For $\Lambda\ll1$,
 $q_{\mathrm{eff}}\simeq2\sigma_{aw}^2\tau$; for $\Lambda\gg1$,
 \begin{equation}
-\boxed{q_{\mathrm{eff}}\simeq2r_a,}
+\boxed{q_{\mathrm{eff}}\simeq2r_a.}
 \label{eq:adapt-qeff-strong}
 \end{equation}
-so the drift-driving low-frequency error becomes essentially independent of the
-OU stationary amplitude.
+Thus, in the reduced scalar model, the posterior acceleration error becomes
+insensitive to the OU-prior amplitude once acceleration is strongly observed.
 
-The reported simulations operate deeply in the latter regime.  Matching the
-information rate of a sampled acceleration measurement with variance $R_a$ and
-period $h$ gives $r_a\simeq R_a h$.  With
+The validated simulations are deep in this direct-observation regime.  If the
+sampled acceleration variance $R_a$ at period $h$ is identified with the scalar
+measurement noise, then $r_a\simeq R_a h$.  With
 $h=\SI{0.005}{s}$, $\sqrt{R_a}=\SI{0.0148}{m.s^{-2}}$, and the smallest
 reported fixed OU point
 $(\tau,\sigma_{aw})=(\SI{1.247}{s},\SI{0.354}{m.s^{-2}})$,
 Eq.~\eqref{eq:adapt-Lambda} gives
 $\Lambda\simeq2.85\times10^5$ and
-$q_{\mathrm{eff}}/(2r_a)\simeq0.998$.  This scalar calculation is not a
-replacement for the 21-state covariance recursion, but it explains why the
-simulated latent-acceleration gain is near saturation and why direct changes of
-$\sigma_{aw}$ have little effect on vertical displacement once $r_S$ is held
-fixed.
+$q_{\mathrm{eff}}/(2r_a)\simeq0.998$.  This correctly predicts the weak direct
+sensitivity of the latent-acceleration estimate to $\sigma_{aw}$.
+
+It does not, however, establish that the low-frequency acceleration error of
+the complete 21-state MEKF is limited by the raw sensor floor.  Tilt error
+projects gravity into the horizontal acceleration channels, residual
+accelerometer bias is slowly varying, and cross-covariance coupling transfers
+these disturbances into the translational states.  The coefficient-law
+experiment in Sec.~\ref{sec:adaptation-coefficient-investigation} shows that
+this distinction is material: removing sea-amplitude dependence from the
+regularizer degrades the paired multi-seed endpoint even though the scalar
+strong-observation condition remains satisfied.  Accordingly,
+Eq.~\eqref{eq:adapt-qeff-strong} is used below to identify the period and pole
+scaling, not to assert that the complete-filter $q_{\mathrm{eff}}$ equals a
+sea-state-independent electronics-noise floor.
 
 \subsection{Pseudo-measurement as a spectral regularizer}
 \label{sec:adaptation-regularizer-transfer}
@@ -197,16 +202,14 @@ The corresponding closed-loop dynamics are
 \dot v=a-\omega_R^3S.
 \label{eq:adapt-reduced-closed-loop}
 \end{equation}
-Eliminating $S$ and $v$ gives the transfer function from acceleration to
-estimated displacement,
+Eliminating $S$ and $v$ gives
 \begin{equation}
 H_{pa}(s)
 =\frac{s+2\omega_R}
 {s^3+2\omega_Rs^2+2\omega_R^2s+\omega_R^3}.
 \label{eq:adapt-Hpa}
 \end{equation}
-Ideal double integration has transfer $1/s^2$.  Define the reconstruction
-factor
+Ideal double integration has transfer $1/s^2$.  Define
 \begin{equation}
 G(s):=s^2H_{pa}(s).
 \label{eq:adapt-G}
@@ -218,15 +221,15 @@ For $x=\omega/\omega_R$,
 =\frac{x^4(x^2+4)}{1+x^6},}
 \label{eq:adapt-G-mag}
 \end{equation}
-and the actual displacement-error transfer is
+and
 \begin{equation}
 \boxed{
 |G(j\omega)-1|^2
 =\frac{1+4x^2}{1+x^6}.}
 \label{eq:adapt-G-error}
 \end{equation}
-Thus the pseudo-measurement is a low-frequency spectral regularizer, not a
-position measurement.  In particular, because
+Thus the pseudo-measurement acts as a low-frequency spectral regularizer rather
+than as a physical position observation.  Since
 $S_a^{(2)}=\omega^4S_\eta^{(2)}$, the regularized displacement PSD is
 \begin{equation}
 \boxed{
@@ -235,14 +238,11 @@ S_{\hat p}^{(2)}(\omega)
 \label{eq:adapt-output-spectrum}
 \end{equation}
 At $\omega\gg\omega_R$, $G\rightarrow1$ and the estimator approaches ordinary
-double integration; near $\omega_R$ the regularizer both attenuates and reshapes
-the desired spectrum.
+double integration; near $\omega_R$ the regularizer attenuates and reshapes the
+desired spectrum.
 
-Equation~\eqref{eq:adapt-output-spectrum} gives the spectral meaning of the
-regularizer corner.  For a family whose wave spectrum is self-similar in
-$\omega/\omega_p$, and with $\tau\propto\omega_p^{-1}$ from
-Eq.~\eqref{eq:adapt-tau-map}, preserving the same normalized reconstruction
-curve requires
+For a self-similar spectral family, preserving the same reconstruction curve in
+normalized frequency requires
 \begin{equation}
 \boxed{\kappa:=\omega_R\tau=\mathrm{const}.}
 \label{eq:adapt-kappa}
@@ -250,10 +250,10 @@ curve requires
 This is a similarity condition on the closed-loop reconstruction error, not a
 claim that the OU and JONSWAP spectra have the same shape.
 
-\subsection{Strong-observation scaling of the pseudo-measurement}
+\subsection{Period scaling of the pseudo-measurement}
 \label{sec:adaptation-rs-scaling}
 
-Substituting $\omega_R=\kappa/\tau$ into
+Substitution of $\omega_R=\kappa/\tau$ into
 Eq.~\eqref{eq:adapt-omegaR} gives
 \begin{equation}
 R_S
@@ -265,51 +265,57 @@ The applied cadence scales with the OU time constant away from safety clamps,
 T_S=c_T\tau.
 \label{eq:adapt-TS-scale}
 \end{equation}
-In the strong-observation regime of
-Eq.~\eqref{eq:adapt-qeff-strong},
+so
 \begin{equation}
 \boxed{
-R_S\simeq\frac{2r_a}{c_T\kappa^6}\tau^5,}
-\qquad
-\boxed{
-r_S\propto\tau^{5/2}.}
+r_S
+=\frac{\sqrt{q_{\mathrm{eff}}}}{\sqrt{c_T}\,\kappa^3}
+ \tau^{5/2}.}
 \label{eq:adapt-rs-strong-law}
 \end{equation}
-The $5/2$ exponent therefore follows from three ingredients: direct
-high-information acceleration observation, a regularization corner kept at a
-fixed dimensionless location relative to the sea time scale, and a
-pseudo-update period proportional to $\tau$.
+Equation~\eqref{eq:adapt-rs-strong-law} separates two effects.  The period
+exponent $5/2$ follows from fixed normalized pole placement together with
+$T_S\propto\tau$.  The amplitude factor is $\sqrt{q_{\mathrm{eff}}}$ and is not
+determined by the period argument.  If the complete-filter
+$q_{\mathrm{eff}}$ were sea-state independent, an amplitude-free
+$r_S\propto\tau^{5/2}$ law would follow.  The paired experiment rejects that
+additional assumption for the tested MEKF.
 
-The coefficient in Eq.~\eqref{eq:adapt-rs-strong-law} also has a direct spectral
-interpretation.  For fixed sensor information density $r_a$, selecting
-$\kappa$ selects the regularizer corner relative to the wave band.  Larger
-$\kappa$ moves the correction corner upward and requires smaller $R_S$; smaller
-$\kappa$ moves it farther below the wave band and requires weaker correction.
-The reduced derivation does not determine the full-MEKF optimum because it
-omits attitude/gravity leakage, residual bias, three-axis covariance coupling,
-discrete-time effects near the clamps, and nonstationary or multimodal seas.
+For reference, identifying the scalar strong-observation intensity with the raw
+sampled sensor noise gives
+\begin{equation}
+q_{\mathrm{eff}}\simeq2R_a h,
+\qquad
+C_R=\frac{\sqrt{2h/T_{S,0}}}{\kappa^3},
+\label{eq:adapt-cR-kappa}
+\end{equation}
+which gives $C_R\simeq17.11$ for $h=\SI{5}{ms}$,
+$T_{S,0}=\SI{15}{ms}$, and $\kappa=0.3627$.  The coefficient experiment
+confirms this pole-placement scale within the amplitude-free family, but the
+family as a whole loses because its disturbance amplitude is held fixed across
+sea states.
 
-\subsection{Dimensional base scale and applied cadence normalization}
+\subsection{Applied cubic base and cadence normalization}
 \label{sec:riccati-similarity-design-guidance}
 \label{sec:riccati-deployed-cadence}
 
-For a sampled acceleration observation with per-sample variance $R_a$ and period
-$h$, the strong-observation approximation gives $r_a\simeq R_a h$.  This
-suggests the dimensionally cubic base standard deviation
+The applied filter retains the dimensionally cubic base
 \begin{equation}
 \boxed{
 r_{S,\star}^{\mathrm{base}}
-=C_R\sqrt{R_a}\,\tau_\star^3.}
+=c_R\sigma_{aw,\star}\tau_\star^3.}
 \label{eq:adapt-rs-base}
 \end{equation}
-Here $\sqrt{R_a}$ has acceleration units, so
-$\sqrt{R_a}\,\tau^3$ has the required units of m\,s.  Unlike the previous
-$\sigma_{aw}\tau^3$ form, Eq.~\eqref{eq:adapt-rs-base} does not couple the
-pseudo-measurement strength to the estimated physical wave amplitude.  The
-measured acceleration statistic therefore affects $\sigma_{aw}$ through
-Eq.~\eqref{eq:adapt-sigma-map}, but not $r_S$ directly.
+The cubic factor supplies the natural third-integral units, while the
+$\sigma_{aw}$ factor is now interpreted as an empirical proxy for the
+sea-dependent low-frequency error scale $\sqrt{q_{\mathrm{eff}}}$, not as a
+consequence of OU/JONSWAP similarity.  This interpretation is supported by the
+per-record coefficient study: the regularizer amplitude required by individual
+seas follows the amplitude quantity deleted by the amplitude-free law closely,
+whereas a single amplitude-independent coefficient does not transfer across the
+same records.
 
-The applied pseudo-update period and information-rate normalization are
+The pseudo-update period and information-rate normalization are
 \begin{equation}
 T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max}),
 \label{eq:engineering-pseudo-cadence}
@@ -324,50 +330,41 @@ Away from cadence clamps,
 \begin{equation}
 \boxed{
 r_{S,\mathrm{filter}}
-=C_R\sqrt{R_a}\sqrt{\frac{T_{S,0}}{c_T}}\,
+=c_R\sigma_{aw}\sqrt{\frac{T_{S,0}}{c_T}}\,
 \tau^{5/2}.}
 \label{eq:deployed-effective-law}
 \end{equation}
-Thus the cubic base preserves the desired physical dimensions while the cadence
-normalization produces exactly the strong-observation period exponent $5/2$.
-No measured wave-amplitude multiplier remains in the pseudo-measurement law.
+Thus the analytically supported $5/2$ period exponent and the empirically
+required sea-amplitude factor enter for different reasons.
 
-The coefficient $C_R$ now has a direct closed-loop interpretation.  Combining
-Eqs.~\eqref{eq:adapt-omegaR}, \eqref{eq:adapt-rs-base}, and
+Combining Eqs.~\eqref{eq:adapt-omegaR}, \eqref{eq:adapt-rs-base}, and
 \eqref{eq:engineering-rs-filter} gives
 \begin{equation}
 \boxed{
 (\omega_R\tau)^6
 =\frac{q_{\mathrm{eff}}}
- {C_R^2R_aT_{S,0}}.}
+ {c_R^2\sigma_{aw}^2T_{S,0}}.}
 \label{eq:adapt-cR-spectral-meaning}
 \end{equation}
-Using $q_{\mathrm{eff}}\simeq2R_a h$ in the strong-observation regime yields
-\begin{equation}
-\boxed{
-C_R=\frac{\sqrt{2h/T_{S,0}}}{\kappa^3},
-\qquad \kappa=\omega_R\tau.}
-\label{eq:adapt-cR-kappa}
-\end{equation}
-Hence $C_R$ selects the regularization corner relative to the sea time scale.
-For the nominal $h=\SI{5}{ms}$, $T_{S,0}=\SI{15}{ms}$, and
-$\kappa=0.3627$, Eq.~\eqref{eq:adapt-cR-kappa} gives $C_R\simeq17.11$.
-This value is an analytical pole-placement reference rather than a claim of
-full-MEKF optimality; coefficient sweeps remain appropriate because the scalar
-reduction omits attitude/gravity leakage, residual bias, covariance coupling,
-and cadence-clamp effects.
+Consequently, a sea-invariant normalized corner is obtained when
+$q_{\mathrm{eff}}\propto\sigma_{aw}^2$.  The coefficient-law experiment is
+consistent with this dependence over the tested records, providing a physical
+interpretation for why the applied linear $\sigma_{aw}$ factor transfers better
+than the raw-sensor-floor alternative.  It does not establish this relation as
+universal; the next experiment in
+Sec.~\ref{sec:adaptation-coefficient-investigation} tests an explicit sensor
+floor plus sea-dependent leakage model.
 
-The resulting adaptation law therefore separates the three channels:
+The resulting applied schedule is summarized by
 \begin{equation}
 \boxed{
 \tau_\star=c_\tau T_{\rm sea},\qquad
 \sigma_{aw,\star}=c_\sigma\widehat\sigma_{a,B},\qquad
-r_{S,\star}^{\mathrm{base}}=C_R\sqrt{R_a}\,\tau_\star^3.}
+r_{S,\star}^{\mathrm{base}}
+=c_R\sigma_{aw,\star}\tau_\star^3.}
 \label{eq:adapt-three-layer-summary}
 \end{equation}
-With $T_S\propto\tau$, the final pseudo-measurement standard deviation follows
-$r_{S,\mathrm{filter}}\propto\tau^{5/2}$.  The coefficients $c_\tau$ and
-$c_\sigma$ retain their time-scale and OU-prior amplitude roles, while $C_R$
-sets the normalized regularization corner.  The complete-MEKF calibration is
-therefore reduced to coefficients with distinct physical meanings rather than a
-single monomial coupling wave amplitude and regularizer strength.
+with Eq.~\eqref{eq:engineering-rs-filter} converting the cubic base to the
+per-update value.  The theory therefore predicts the time-scale mapping and the
+$\tau^{5/2}$ cadence-normalized period dependence, while the tested complete
+MEKF requires an additional sea-dependent acceleration-error scale.
