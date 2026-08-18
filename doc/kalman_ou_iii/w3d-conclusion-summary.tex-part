@@ -11,22 +11,27 @@ error recursion is uniformly exponentially stable and the nonlinear remainder
 admits a local ISS bound.  Startup and other hard reconfiguration events remain
 outside this result.
 
-The adaptation layer is derived as three separate scale mappings.  The measured
-sea period selects the OU correlation time, the physical band-limited
-acceleration RMS is mapped to the stationary OU-prior amplitude, and the
-$S=0$ pseudo-measurement is interpreted through its closed-loop regularization
-corner.  A scalar posterior-error reduction shows that the reported simulations
-are deep in the strong acceleration-observation regime, for which
-$q_{\mathrm{eff}}\simeq2r_a$.  Keeping the regularizer corner at a fixed
-location relative to the sea time scale while using $T_S\propto\tau$ then gives
-$R_S\propto\tau^5$, or $r_S\propto\tau^{5/2}$.  A dimensionally cubic base
-$r_S^{\mathrm{base}}=C_R\sqrt{R_a}\tau^3$, followed by the applied cadence
-normalization, realizes this scaling without coupling pseudo-measurement
-strength to measured wave amplitude.  Wave amplitude therefore schedules the
-OU-prior standard deviation through $\sigma_{aw}=c_\sigma\widehat\sigma_{a,B}$,
-whereas $C_R$ sets the normalized regularization corner.  Complete-filter
-coefficient calibration remains necessary because the scalar reduction omits
-attitude/gravity leakage, bias coupling, and cadence-clamp effects.
+The adaptation layer separates sea time scale, OU-prior amplitude, and integral
+regularization.  The measured sea period sets $\tau$, the physical band-limited
+acceleration RMS is mapped to $\sigma_{aw}$, and the $S=0$ pseudo-measurement is
+interpreted through its closed-loop regularization corner.  The reduced Riccati
+model gives
+$r_S\propto\sqrt{q_{\mathrm{eff}}}\tau^{5/2}$ when
+$T_S\propto\tau$ and the normalized corner $\omega_R\tau$ is held fixed.  A
+separate cadence argument reaches the same $5/2$ period exponent by preserving
+the information rate of a cubic base scale as the pseudo-update interval grows.
+The paired coefficient-law experiment confirms the analytical pole-placement
+scale within the amplitude-free family but rejects identifying
+$q_{\mathrm{eff}}$ with the raw accelerometer-noise floor alone: the
+amplitude-free schedule increases the primary normalized vertical RMS endpoint
+from $4.5081\%H_s$ to $4.8882\%H_s$, with paired increase
+$0.380\pm0.096$ percentage points, and worsens six of nine scored scenarios.
+Per-sea coefficient optima show that the missing regularizer amplitude varies
+systematically with sea state.  The applied
+$r_S\propto\sigma_{aw}\tau^{5/2}$ form is therefore retained, with
+$\sigma_{aw}$ interpreted as an empirical proxy for the sea-dependent
+low-frequency acceleration-error scale rather than as a consequence of OU
+spectral similarity.
 
 Under the paired ten-seed stationary JONSWAP protocol, normalized vertical RMS
 displacement error is
@@ -64,6 +69,11 @@ global navigation position is claimed without external aiding.
 
 \subsection*{Future work}
 \begin{itemize}[leftmargin=1.25em]
+  \item \textbf{Effective acceleration-error model.}  Test
+        $R_{a,\mathrm{eff}}=R_{a,\mathrm{sensor}}+\beta\sigma_{aw}^2$ in the
+        cadence-normalized cubic regularizer using paired multi-seed sweeps,
+        and estimate $q_{\mathrm{eff}}$ directly by sea state to distinguish a
+        fixed sensor floor from attitude/gravity and bias leakage.
   \item \textbf{Reference-point and GNSS validation.}  Validate the lever-arm
         model at a surveyed nonzero offset and add GNSS-aided separation of slow
         absolute trajectory from bounded wave motion, including asynchronous
