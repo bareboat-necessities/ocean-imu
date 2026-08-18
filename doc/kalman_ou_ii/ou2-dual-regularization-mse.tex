@@ -10,6 +10,7 @@
 \usepackage{mathtools}
 \usepackage{siunitx}
 \usepackage[final]{microtype}
+\usepackage{cite}
 \usepackage[hidelinks]{hyperref}
 
 \newtheorem{theorem}{Theorem}
@@ -77,7 +78,32 @@ standard deviations are therefore not independent observation uncertainties;
 they are design parameters that trade drift suppression against distortion of
 real wave motion.
 
-The deployed adaptation was selected empirically and has the base form
+Marine virtual-reference methods provide a useful precedent for imposing such
+nonphysical constraints on inertial integration.  Bryne, Fossen, and Johansen
+augmented a marine INS observer with integrated vertical position and used a
+zero virtual measurement motivated by the zero long-time mean of vessel heave;
+the subsequent virtual-vertical-reference work developed this into a dedicated
+GNSS/INS aiding concept and validated it with low-cost MEMS inertial sensing on
+surface vessels \cite{Bryne2014,Bryne2015,Bryne2018,Rogne2021}.  Recent heave
+and height estimators continue to combine inertial measurements with explicit
+state-space filtering, including discrete-time Kalman reconstruction,
+fixed-order Kalman filtering with GNSS and virtual measurements, and cubature
+Kalman methods \cite{Reis2023,Overaas2025,Li2025}.  The present OU--II
+construction is not identical to these methods: it applies soft zero
+pseudo-measurements simultaneously to displacement and velocity and treats
+their covariances as regularization parameters to be scheduled with sea state.
+
+A parallel development in inertial navigation uses invariant or equivariant
+state errors on matrix Lie groups.  Invariant EKFs provide stable-observer
+properties for group-affine systems, while newer equivariant formulations
+incorporate inertial-sensor biases and position aiding
+\cite{BarrauBonnabel2017,Fornasier2022,VanGoor2023}.  Recent underwater
+INS/DVL studies have applied Lie-group error models together with robust or
+adaptive filtering \cite{Du2024,Qian2025}.  OU--II remains a quaternion MEKF;
+these geometric filters are cited as neighboring modern design families rather
+than as equivalent formulations of the estimator studied here.
+
+The applied adaptation was selected empirically and has the base form
 \begin{equation}
  r_{p,0}^{\mathrm{base}}=c_p\sigma_{aw}\tau^2,
  \qquad
@@ -166,12 +192,15 @@ The two continuous pseudo-observations have $\mat C=\Id$ and
  \mat R_c=\operatorname{diag}(\rho_p,\rho_v).
 \end{equation}
 The stabilizing covariance satisfies the Kalman--Bucy algebraic Riccati
-equation \cite{KalmanBucy1961,Jazwinski1970}
+equation \cite{KalmanBucy1961,Jazwinski1970,SarkkaSvensson2023,Anderson1971}
 \begin{equation}
  \mat A\mat P+\mat P\mat A^{\top}+\mat Q
  -\mat P\mat R_c^{-1}\mat P=0.
  \label{eq:care}
 \end{equation}
+The Riccati equation itself is standard filtering theory; the contribution
+below is its closed-form specialization and physical-MSE interpretation for
+the jointly regularized OU--II double-integrator chain.
 
 Define the two natural regularization frequencies
 \begin{equation}
@@ -628,7 +657,10 @@ repository coefficient sweeps show that $r_{v,0}$ affects roll/pitch more
 strongly than the displacement-only reduction predicts.  A full-state
 physical-$H_2$ calculation should retain attitude/gravity leakage, gyroscope
 and accelerometer bias, latent OU acceleration, and both pseudo channels before
-claiming that Eq.~\eqref{eq:theory-test-law} is the final optimal law.
+claiming that Eq.~\eqref{eq:theory-test-law} is the final optimal law.  Modern
+invariant and equivariant INS filters, and recent Lie-group SINS/DVL
+integrations, provide useful comparison points for that full-state analysis
+\cite{BarrauBonnabel2017,Fornasier2022,VanGoor2023,Du2024,Qian2025}.
 
 \section{Limitations}
 \label{sec:limitations}
@@ -687,15 +719,7 @@ next step is a paired multi-seed comparison of the analytical and implemented
 power laws followed by a full-state physical-$H_2$ analysis of the residual
 attitude and bias coupling.
 
-\begin{thebibliography}{9}
-\bibitem{KalmanBucy1961}
-R. E. Kalman and R. S. Bucy, ``New results in linear filtering and prediction
-theory,'' \emph{Journal of Basic Engineering}, vol. 83, no. 1, pp. 95--108,
-1961.
-
-\bibitem{Jazwinski1970}
-A. H. Jazwinski, \emph{Stochastic Processes and Filtering Theory}.
-New York, NY, USA: Academic Press, 1970.
-\end{thebibliography}
+\bibliographystyle{IEEEtran}
+\bibliography{ou2-modern}
 
 \end{document}

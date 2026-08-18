@@ -1,0 +1,36 @@
+\subsection{Filtering and virtual-reference precedent}
+\label{sec:adaptation-literature-context}
+
+The covariance equations used above are standard continuous-time
+Kalman--Bucy/Riccati constructions.  Modern treatments of Bayesian state-space
+filtering give the discrete and continuous filtering context, covariance
+propagation, and nonlinear Gaussian approximations used by EKF-type estimators
+\cite{SarkkaSvensson2023_BayesianFiltering}; classical stability results for
+the Kalman--Bucy filter relate bounded stabilizing Riccati solutions to
+observability and controllability conditions
+\cite{Anderson1971_KalmanBucyStability}.  Accordingly, the scalar Riccati
+solution in Sec.~\ref{sec:adaptation-strong-observation} and the reduced
+triple-integrator CARE in Sec.~\ref{sec:adaptation-regularizer-transfer} are
+applications of standard filtering theory to the particular OU and integration
+chains used here, rather than new Riccati results.
+
+The integral-state pseudo-measurement also has a direct marine precedent.  In
+the time-varying-gain nonlinear observer of Bryne, Fossen, and Johansen, the
+translational state is augmented by integrated vertical position and the poor
+GNSS height channel is replaced by the virtual measurement that this integrated
+height is zero in the long-term mean
+\cite{Bryne2014_TimeVaryingGNSSINS}.  The subsequent virtual-vertical-reference
+(VVR) studies formalized this sea-surface constraint for GNSS/INS aiding and
+extended it with an explicit VVR error model, including full-scale validation
+with a MEMS strapdown INS on an offshore vessel
+\cite{Bryne2015_VirtualVerticalReference,Bryne2018_VVRAidedINS}.
+
+The present $S=0$ construction should be read as related to, but distinct from,
+that VVR lineage.  The VVR is a vertical aid derived from the zero long-time
+mean of vessel heave relative to the sea surface.  Here, $S$ is a three-axis
+integral of the estimated oscillatory displacement and its zero
+pseudo-measurement is assigned a finite covariance and adaptive cadence so that
+it acts as a soft low-frequency spectral regularizer.  Thus the prior work
+supports the physical use of an integrated sea-surface constraint to arrest
+marine inertial drift; the Riccati and physical-MSE analyses in this article
+specify how that idea is embedded and tuned in the OU--III MEKF.

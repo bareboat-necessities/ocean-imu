@@ -1,0 +1,43 @@
+\subsection{Relation to recent marine inertial estimation}
+\label{sec:recent-marine-inertial-work}
+
+The marine literature has moved beyond stand-alone heave filters toward
+integrated strapdown inertial estimation with explicit treatment of sensor
+bias, aiding quality, and vessel-specific constraints.  Nonlinear-observer
+work on surface vessels introduced virtual vertical references for aiding
+GNSS/INS integration and subsequently demonstrated full six-degree-of-freedom
+motion estimation with low-cost MEMS inertial sensors on operational offshore
+vessels \cite{Bryne2015_VirtualVerticalReference,Bryne2018_VVRAidedINS,
+Bryne2017_INSObserverImplementation,Rogne2021_LowCostMEMSDP}.  Related full-scale
+studies have addressed attitude and heave estimation from MEMS IMUs and
+adaptive wave filtering embedded in marine strapdown INS architectures
+\cite{Bryne2016_AttitudeHeaveMEMS,Bryne2017_AdaptiveWaveINS}.  More recent
+Kalman-based work continues this line: discrete-time heave reconstruction has
+been formulated with explicit observability and stability analysis, while a
+2025 fixed-order Kalman filter combines inertial, GNSS, and virtual
+measurements to estimate both wave-frequency heave and lower-frequency vessel
+height \cite{Reis2023_DiscreteKalmanHeave,Overaas2025_HeightKalman,
+Li2025_HeaveCKF}.
+
+In parallel, geometric state estimation has developed from invariant filtering
+on matrix Lie groups to equivariant formulations that include inertial-sensor
+biases.  The invariant EKF provides trajectory-independent error structures
+for an important class of group-affine systems
+\cite{BarrauBonnabel2017_IEKF}; later equivariant filters and observers extend
+this viewpoint to biased inertial navigation and position-aided INS
+\cite{Fornasier2022_EquivariantINSBias,VanGoor2023_EquivariantINS}.  Recent
+marine and underwater integrations apply Lie-group error models directly to
+INS/DVL fusion, including robust and adaptive estimators
+\cite{Du2024_LieGroupINSDVL,Qian2025_SE33DVL}.  Current work also continues to
+clarify implementation details specific to matrix-Lie-group EKFs, including
+covariance reparameterization after measurement updates
+\cite{Maurer2026_LeftRightIEKF}.
+
+The estimator developed here remains a quaternion MEKF rather than an
+invariant or equivariant full-state filter.  These geometric methods are
+therefore neighboring design families, not interchangeable formulations of
+the present algorithm.  Their relevance is that they provide a modern
+reference point for treating attitude, velocity, position, and bias jointly,
+whereas the contribution pursued here is different: an OU-driven marine
+translational prior, integral-state low-frequency regularization, and exogenous
+sea-state adaptation within a conventional error-state MEKF.
