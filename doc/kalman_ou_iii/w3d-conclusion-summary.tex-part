@@ -33,6 +33,28 @@ $\sigma_{aw}$ interpreted as an empirical proxy for the sea-dependent
 low-frequency acceleration-error scale rather than as a consequence of OU
 spectral similarity.
 
+A complementary reduced physical-MSE calculation gives
+\begin{equation}
+r_S^\star\propto
+q_{\mathrm{eff}}^{1/14}m_{-4}^{3/7}T_S^{-1/2}.
+\end{equation}
+For a fixed-shape sea with
+$m_{-4}\propto\sigma_a^2\tau^8$, strong-observation
+$q_{\mathrm{eff}}$ independent of sea amplitude to leading order, and
+$T_S\propto\tau$, this becomes
+\begin{equation}
+\boxed{r_S^\star\propto\sigma_a^{6/7}\tau^{41/14}.}
+\end{equation}
+The resulting exponents, $6/7\simeq0.857$ and
+$41/14\simeq2.929$, are independently derived yet remain close to the applied
+$(1,5/2)$ pair over the calibrated envelope.  With both laws normalized at the
+$H_s=\SI{1.5}{m}$ operating point, the reduced-MSE schedule differs from the
+applied schedule by approximately $-12.8\%$, $0\%$, $+16.3\%$, and $+20.6\%$
+across the four calibrated JONSWAP points.  Because the ratio is proportional to
+$\sigma_{aw}^{-1/7}\tau^{3/7}$, the discrepancy is compressed by a seventh
+root.  This makes the reduced physical-MSE law a direct first-principles
+candidate for paired comparison rather than merely an asymptotic observation.
+
 A second experiment tests the interpolation
 $R_{a,\mathrm{eff}}=R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2$.  It recovers
 the deterministic amplitude-free loss, but its optimum lies in the asymptotic
@@ -57,7 +79,8 @@ physical displacement objective on the complete 21-state linearized closed
 loop.  It separates real sensor/bias noise from distortion of the physical wave
 and retains the attitude/gravity, bias, latent-acceleration, and periodic
 integral-update couplings omitted by the scalar reduction.  This model provides
-the appropriate next test of whether the observed near-linear amplitude law and
+the appropriate next test of whether the residual difference between the
+reduced-MSE and applied laws, the observed near-linear amplitude dependence, and
 the stationary--transition tradeoff follow from the estimator dynamics rather
 than from an empirical coefficient choice.
 
@@ -97,19 +120,22 @@ global navigation position is claimed without external aiding.
 
 \subsection*{Future work}
 \begin{itemize}[leftmargin=1.25em]
-  \item \textbf{Full-state physical $H_2$ regularizer analysis.}  Solve the
-        periodic 21-state Riccati and physical-error recursions of
-        Sec.~\ref{sec:adaptation-full-state-h2} at the calibrated sea states,
-        evaluate the directional wave-distortion and real sensor/bias-noise
-        contributions over $r_S$, and compare the predicted minimizing
-        amplitude and local exponents with the independent coefficient sweeps.
-        Extend the frozen-point calculation to trajectory-linearized Jacobians
-        to quantify the amplitude-dependent attitude/gravity coupling.
+  \item \textbf{Reduced-MSE law and full-state physical $H_2$ analysis.}  First
+        compare
+        $r_S\propto\sigma_{aw}^{6/7}\tau^{41/14}$ directly against the applied
+        $r_S\propto\sigma_{aw}\tau^{5/2}$ law using an identical nominal anchor
+        or one-parameter gain normalization and the paired ten-seed protocol.
+        Then solve the periodic 21-state Riccati and physical-error recursions of
+        Sec.~\ref{sec:adaptation-full-state-h2} at the calibrated sea states and
+        compare their predicted minimizing amplitudes and local exponents with
+        the independent coefficient sweeps.  Extend the frozen-point
+        calculation to trajectory-linearized Jacobians to quantify the
+        amplitude-dependent attitude/gravity coupling.
   \item \textbf{Transition-aware regularizer amplitude.}  If the full-state
         model supports the measured stationary--transition conflict, preserve
-        the steady-state $r_{S,\mathrm{base}}\propto\sigma_{aw}\tau^3$ mapping
-        and test asymmetric or rate-limited amplitude response during changing
-        seas, scoring stationary and transition ensembles jointly.
+        the steady-state regularizer mapping and test asymmetric or rate-limited
+        amplitude response during changing seas, scoring stationary and
+        transition ensembles jointly.
   \item \textbf{Reference-point and GNSS validation.}  Validate the lever-arm
         model at a surveyed nonzero offset and add GNSS-aided separation of slow
         absolute trajectory from bounded wave motion, including asynchronous
