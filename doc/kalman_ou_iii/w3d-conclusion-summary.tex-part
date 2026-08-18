@@ -19,13 +19,14 @@ corner.  A scalar posterior-error reduction shows that the reported simulations
 are deep in the strong acceleration-observation regime, for which
 $q_{\mathrm{eff}}\simeq2r_a$.  Keeping the regularizer corner at a fixed
 location relative to the sea time scale while using $T_S\propto\tau$ then gives
-$R_S\propto\tau^5$, or $r_S\propto\tau^{5/2}$.  The applied wrapper realizes
-this period exponent through a dimensionally cubic base scale and cadence
-renormalization; its retained linear acceleration-amplitude factor and the
-numerical coefficients remain full-filter calibration choices.  Channel
-ablation attributes most of the measured adaptive benefit to integral-state
-regularization rather than retuning the directly observed OU acceleration
-prior.
+$R_S\propto\tau^5$, or $r_S\propto\tau^{5/2}$.  A dimensionally cubic base
+$r_S^{\mathrm{base}}=C_R\sqrt{R_a}\tau^3$, followed by the applied cadence
+normalization, realizes this scaling without coupling pseudo-measurement
+strength to measured wave amplitude.  Wave amplitude therefore schedules the
+OU-prior standard deviation through $\sigma_{aw}=c_\sigma\widehat\sigma_{a,B}$,
+whereas $C_R$ sets the normalized regularization corner.  Complete-filter
+coefficient calibration remains necessary because the scalar reduction omits
+attitude/gravity leakage, bias coupling, and cadence-clamp effects.
 
 Under the paired ten-seed stationary JONSWAP protocol, normalized vertical RMS
 displacement error is
