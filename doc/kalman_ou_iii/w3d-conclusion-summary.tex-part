@@ -20,8 +20,8 @@ $r_S\propto\sqrt{q_{\mathrm{eff}}}\tau^{5/2}$ when
 $T_S\propto\tau$ and the normalized corner $\omega_R\tau$ is held fixed.  A
 separate cadence argument reaches the same $5/2$ period exponent by preserving
 the information rate of a cubic base scale as the pseudo-update interval grows.
-The paired coefficient-law experiment confirms the analytical pole-placement
-scale within the amplitude-free family but rejects identifying
+The amplitude-free coefficient-law experiment confirms the analytical
+pole-placement scale within its restricted family but rejects identifying
 $q_{\mathrm{eff}}$ with the raw accelerometer-noise floor alone: the
 amplitude-free schedule increases the primary normalized vertical RMS endpoint
 from $4.5081\%H_s$ to $4.8882\%H_s$, with paired increase
@@ -32,6 +32,29 @@ $r_S\propto\sigma_{aw}\tau^{5/2}$ form is therefore retained, with
 $\sigma_{aw}$ interpreted as an empirical proxy for the sea-dependent
 low-frequency acceleration-error scale rather than as a consequence of OU
 spectral similarity.
+
+A second experiment tests the interpolation
+$R_{a,\mathrm{eff}}=R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2$.  It recovers
+the deterministic amplitude-free loss, but its optimum lies in the asymptotic
+regime where the sensor-floor contribution is at most about $0.3\%$ of
+$R_{a,\mathrm{eff}}$ over the tested seas.  The fitted law therefore reduces
+numerically to the same linear-$\sigma_{aw}$ dependence already used by the
+applied filter.  Its deterministic endpoint is slightly lower, but the paired
+ten-seed comparison is a dead tie: $4.5081\%H_s$ for the applied law versus
+$4.5078\%H_s$ for the fitted law, with paired difference
+$-0.0003\pm0.0146$ percentage points and no measurable attitude change.  Static
+amplitude refinement therefore provides no supported improvement over the
+current schedule.
+
+The nonuniformity of that tie identifies the remaining design tradeoff.  The
+amplitude-coupled fit improves the two smallest stationary seas but worsens the
+controlled transition by $0.128\pm0.012$ percentage points, whereas the
+amplitude-free law worsens those stationary seas and improves the transition by
+$0.093\pm0.033$ percentage points.  Thus amplitude tracking buys stationary
+accuracy at a transient cost when the sea state changes.  A single global
+static amplitude coefficient cannot occupy both ends of this tradeoff; the
+remaining headroom is more plausibly associated with the dynamics of amplitude
+adaptation than with another steady-state coefficient.
 
 Under the paired ten-seed stationary JONSWAP protocol, normalized vertical RMS
 displacement error is
@@ -69,11 +92,15 @@ global navigation position is claimed without external aiding.
 
 \subsection*{Future work}
 \begin{itemize}[leftmargin=1.25em]
-  \item \textbf{Effective acceleration-error model.}  Test
-        $R_{a,\mathrm{eff}}=R_{a,\mathrm{sensor}}+\beta\sigma_{aw}^2$ in the
-        cadence-normalized cubic regularizer using paired multi-seed sweeps,
-        and estimate $q_{\mathrm{eff}}$ directly by sea state to distinguish a
-        fixed sensor floor from attitude/gravity and bias leakage.
+  \item \textbf{Transition-aware regularizer amplitude.}  Preserve the
+        steady-state $r_{S,\mathrm{base}}\propto\sigma_{aw}\tau^3$ mapping but
+        test asymmetric or rate-limited amplitude response during changing
+        seas.  Score stationary and transition ensembles jointly to determine
+        whether transient loss can be reduced without surrendering the
+        small-sea stationary benefit.  Estimate $q_{\mathrm{eff}}$ through the
+        same transitions to test whether the preferred regularizer amplitude
+        follows posterior error dynamics rather than the instantaneous
+        $\sigma_{aw}$ target.
   \item \textbf{Reference-point and GNSS validation.}  Validate the lever-arm
         model at a surveyed nonzero offset and add GNSS-aided separation of slow
         absolute trajectory from bounded wave motion, including asynchronous
