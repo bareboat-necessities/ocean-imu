@@ -33,7 +33,7 @@ S_\eta^{(2)}(\omega;H_s,\omega_p)
 \label{eq:adapt-jonswap-normalized}
 \end{equation}
 where $\Phi$ is dimensionless.  Consequently any characteristic period formed
-from fixed-order spectral moments scales as $\omega_p^{-1}$.  The deployed
+from fixed-order spectral moments scales as $\omega_p^{-1}$.  The applied
 period estimator uses the elevation zero-crossing period
 \begin{equation}
 T_z=2\pi\sqrt{\frac{m_0}{m_2}},
@@ -260,7 +260,7 @@ R_S
 =\frac{q_{\mathrm{eff}}\tau^6}{T_S\kappa^6}.
 \label{eq:adapt-RS-general}
 \end{equation}
-The deployed cadence scales with the OU time constant away from safety clamps,
+The applied cadence scales with the OU time constant away from safety clamps,
 \begin{equation}
 T_S=c_T\tau.
 \label{eq:adapt-TS-scale}
@@ -289,7 +289,7 @@ The reduced derivation does not determine the full-MEKF optimum because it
 omits attitude/gravity leakage, residual bias, three-axis covariance coupling,
 discrete-time effects near the clamps, and nonstationary or multimodal seas.
 
-\subsection{Dimensional base scale and deployed cadence normalization}
+\subsection{Dimensional base scale and applied cadence normalization}
 \label{sec:riccati-similarity-design-guidance}
 \label{sec:riccati-deployed-cadence}
 
@@ -330,7 +330,7 @@ r_{S,\mathrm{filter}}
 \propto\widehat\sigma_{a,B}\tau^{5/2}.}
 \label{eq:deployed-effective-law}
 \end{equation}
-Thus the deployed schedule retains the analytically predicted strong-observation
+Thus the applied schedule retains the analytically predicted strong-observation
 \emph{period exponent} $5/2$, while its linear acceleration-amplitude factor is
 an additional calibrated engineering choice.  The strong-observation reduction
 alone does not require that factor because
@@ -362,7 +362,7 @@ The resulting analytical schedule is consequently interpreted in three layers:
 r_S\sim\tau^{5/2}\ \text{in the strong-observation limit}.}
 \label{eq:adapt-three-layer-summary}
 \end{equation}
-The deployed wrapper implements the last relation through the cubic dimensional
+The applied wrapper implements the last relation through the cubic dimensional
 base of Eq.~\eqref{eq:adapt-rs-base} and the cadence normalization of
 Eq.~\eqref{eq:engineering-rs-filter}.  Numerical values of $c_\tau$,
 $c_\sigma$, and $c_R$ remain calibration parameters of the complete MEKF; the
