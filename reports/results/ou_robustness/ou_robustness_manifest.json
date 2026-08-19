@@ -23,11 +23,11 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
-    "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
   },
   "command": [
-    "/usr/local/bin/python3",
+    "/usr/bin/python3",
     "tools/ou_robustness.py",
     "--mode",
     "full",
@@ -35,14 +35,15 @@
     "0.5,0.75,1.0,1.25,1.5",
     "--bootstrap-resamples",
     "10000",
-    "--jobs",
-    "4",
+    "--combine-shards",
+    "--shard-dir",
+    "shards",
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/remove-a-z-proxy-tau-xw4f5m",
-  "git_commit": "3289fea1e93ef05c55fa3c297a17df31f51e9d77",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 27418 +++---\n .../results/ou_robustness/ou_robustness_macros.tex |    10 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1174 +-\n .../ou_robustness/ou_robustness_publication.tex    |     2 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1584 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   526 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1402 +-\n reports/results/ou_validation/ou_validation.json   | 96051 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   926 +-\n .../ou_validation/ou_validation_covsync.svg        |   728 +-\n .../ou_validation/ou_validation_displacement.svg   |  1040 +-\n .../results/ou_validation/ou_validation_macros.tex |    70 +-\n .../ou_validation/ou_validation_manifest.json      |   482 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4432 +-\n .../ou_validation/ou_validation_publication.tex    |    44 +-\n .../results/ou_validation/ou_validation_raw.csv    |  1680 +-\n .../ou_validation/ou_validation_summary.csv        |  4492 +-\n .../results/ou_validation/ou_validation_table.tex  |    24 +-\n .../ou_validation/ou_validation_transition.csv     | 23998 ++---\n .../ou_validation/ou_validation_transition.svg     | 20426 ++--\n .../ou_validation/ou_validation_vertical.svg       |   704 +-\n 22 files changed, 93738 insertions(+), 94095 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "23bdca6256d1ca37f08b01afc76a05f6459d911a",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   |    2 -\n .../ou_robustness/ou_robustness_sensitivity.svg    | 1584 ++++++++++----------\n .../results/ou_robustness/ou_robustness_stress.svg |  334 ++---\n 3 files changed, 959 insertions(+), 961 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -166,7 +167,7 @@
     "tau_s": 2.17904091
   },
   "numpy": "1.26.4",
-  "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -261,7 +262,7 @@
     "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
+  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "replay_provenance": {
     "environment": {
       "compiler": {
@@ -277,11 +278,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
-      "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
+      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-19T20:38:33+00:00",
-    "git_commit": "3289fea1e93ef05c55fa3c297a17df31f51e9d77",
+    "generated_at": "2026-08-19T23:21:52+00:00",
+    "git_commit": "23bdca6256d1ca37f08b01afc76a05f6459d911a",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -413,7 +414,12 @@
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
     "raw_rows_sha256": "c2e222157646179fdeba81c8e61910b6ff5458d2ae9473211d2e392dd228b0cc",
     "raw_rows_size_bytes": 195245,
-    "workflow_run": null
+    "workflow_run": {
+      "job": "commit",
+      "run_attempt": "2",
+      "run_id": "32302195439",
+      "workflow": "build"
+    }
   },
   "result_files": {
     "ou_robustness.json": {
@@ -437,12 +443,12 @@
       "sha256": "c2e222157646179fdeba81c8e61910b6ff5458d2ae9473211d2e392dd228b0cc"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 114813,
-      "sha256": "57ad67a210894f370588560134722b40803a1647ce7601cc2f82a7b8b7209642"
+      "bytes": 114752,
+      "sha256": "5a90b4bd533369930be8c0b13b39337a2b0c93d2135aa54e40ca84164bcbbfd9"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 42073,
-      "sha256": "3d16b43f56679ce07172c505087c94edad18741d0b5916ffeb5aabed2aa15d24"
+      "bytes": 42070,
+      "sha256": "2d2cc5dfd36e11658168fb1681f98aa7193d913ca53e9ef787723a89fb4ecda9"
     },
     "ou_robustness_summary.csv": {
       "bytes": 126943,
