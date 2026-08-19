@@ -5,8 +5,8 @@
       "sha256": "b00dd5e91efb522ee9ce3ab69fada59c507c88275a6ec2de85988898ad594886"
     },
     "tools/ou_validation.py": {
-      "bytes": 156257,
-      "sha256": "7db115a855e771ad54a4e4f1539e89a5f25bd32f871309d1985828daf966d3f7"
+      "bytes": 157188,
+      "sha256": "6c19adbae3bcbb4b21d6b2ea605d009c865f3b5834f9fa6c4f25f44f0672b286"
     }
   },
   "build_environment": {
@@ -23,11 +23,11 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+    "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
+    "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
   },
   "command": [
-    "/usr/bin/python3",
+    "/usr/local/bin/python3",
     "tools/ou_robustness.py",
     "--mode",
     "full",
@@ -35,15 +35,14 @@
     "0.5,0.75,1.0,1.25,1.5",
     "--bootstrap-resamples",
     "10000",
-    "--combine-shards",
-    "--shard-dir",
-    "shards",
+    "--jobs",
+    "4",
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "24932e88c4c1d05fe595509d7a82adfb7f202fbf",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 6312 ++++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  644 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   38 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    | 2406 ++++----\n .../results/ou_robustness/ou_robustness_stress.svg |  769 ++-\n .../ou_robustness/ou_robustness_summary.csv        |  580 +-\n 6 files changed, 5373 insertions(+), 5376 deletions(-)",
+  "git_branch": "claude/remove-a-z-proxy-tau-xw4f5m",
+  "git_commit": "3289fea1e93ef05c55fa3c297a17df31f51e9d77",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 27418 +++---\n .../results/ou_robustness/ou_robustness_macros.tex |    10 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1174 +-\n .../ou_robustness/ou_robustness_publication.tex    |     2 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1584 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   526 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1402 +-\n reports/results/ou_validation/ou_validation.json   | 96051 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   926 +-\n .../ou_validation/ou_validation_covsync.svg        |   728 +-\n .../ou_validation/ou_validation_displacement.svg   |  1040 +-\n .../results/ou_validation/ou_validation_macros.tex |    70 +-\n .../ou_validation/ou_validation_manifest.json      |   482 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4432 +-\n .../ou_validation/ou_validation_publication.tex    |    44 +-\n .../results/ou_validation/ou_validation_raw.csv    |  1680 +-\n .../ou_validation/ou_validation_summary.csv        |  4492 +-\n .../results/ou_validation/ou_validation_table.tex  |    24 +-\n .../ou_validation/ou_validation_transition.csv     | 23998 ++---\n .../ou_validation/ou_validation_transition.svg     | 20426 ++--\n .../ou_validation/ou_validation_vertical.svg       |   704 +-\n 22 files changed, 93738 insertions(+), 94095 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -82,8 +81,8 @@
       "sha256": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5"
     },
     "src/kalman_common/SeaStateFusionFilterCommon.h": {
-      "bytes": 10445,
-      "sha256": "64c1a451891fcd5f3b7d9a1a8c92a39a20abd116b4ac8d681074be1bc42cd4ea"
+      "bytes": 13324,
+      "sha256": "fd711306ba81cd2280430e8f82f793309d34b90f4a14c44cd7727a6a9e9cd601"
     },
     "src/kalman_ou_common/KalmanOUCoreMath.h": {
       "bytes": 15755,
@@ -94,8 +93,8 @@
       "sha256": "ab76e29edd22a12bf2d46766232ccca36aa3cf29f733734907f847528d306faa"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "bytes": 156936,
-      "sha256": "5557c72d6d921cd4f1488511aabc18c25fbc4dc6829d01bf8728774ce9ee69d7"
+      "bytes": 155192,
+      "sha256": "ee3a781a185e896249f7a9fa927f50dbfc8e75b3ad7109ba4a3f9aa4f8c15b85"
     },
     "src/tuner/AdaptiveWaveBandPass.h": {
       "bytes": 5864,
@@ -110,28 +109,28 @@
       "sha256": "3f454b9507bf52c7ed44b2e16082f0bc37640bc0bf8193ad59b2ee9781c691f3"
     },
     "src/tuner/SeaStateAutoTuner.h": {
-      "bytes": 8777,
-      "sha256": "2fc7a1fef2f5a131d3fc1e8207d78ab931416b4e654f944916af3126727c63be"
+      "bytes": 7636,
+      "sha256": "501f420dc1640d8f2d3444a2b9710e6c967c8263458e182a3cffe281d0017b27"
     },
     "src/tuner/SeaStateFusionTunerCommon.h": {
-      "bytes": 3888,
-      "sha256": "4f8145c2774a213c301b63210557efa0f78f60b9516e6696bb39e8877bd8f253"
+      "bytes": 3878,
+      "sha256": "218c6db9a9305b1d27c320d6471d4e5d3324b65ddfd33cdcd73d6859c0cb91f3"
     },
     "src/tuner/VerticalAccelComplementary.h": {
-      "bytes": 10277,
-      "sha256": "447db93508fd6bf3b6e51a757239f7d7a2c470471bce7f298f682981217bb335"
+      "bytes": 9716,
+      "sha256": "7b2e38abc8d3260e3ce0f0d1111a59b2855932c3196298072783532292ae2c0a"
     },
     "src/tuner/WavePeriodEstimator.h": {
       "bytes": 8471,
       "sha256": "4b8d1a0db2bf8fee6e67013c68e1554048f57a41774198a5bbca83bb64b41825"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 69786,
-      "sha256": "bad245314d94cb345c1c3a4a7a6923fee9d16bcae24928a2a4eea71442139de3"
+      "bytes": 69915,
+      "sha256": "7c1d5c33e92d1fefc6f42f2796b469f2f8afdad350095e332cfd4d5d54132e72"
     },
     "src/util/W3dSimCommon.h": {
-      "bytes": 19587,
-      "sha256": "8e5c8a9cccf887e522b713f3680df9e5bff629b38445f5803466ffc391ecafe9"
+      "bytes": 20064,
+      "sha256": "7d3bc4d283d31a1ae48dc15fb66c00fd0914dc58c6e8155dc9f84a36b0778eb6"
     },
     "src/util/WaveFilesSupport.h": {
       "bytes": 13244,
@@ -154,20 +153,20 @@
       "sha256": "ad578493840d66ab8fad853d4eef25d7e84889935c35aca3c1ff9f95410fabf4"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 51368,
-      "sha256": "5e628675cd7c75562e7458842e3722450ce239e13c5e3711901b9b6e791be393"
+      "bytes": 50345,
+      "sha256": "8805308788c8a2751f32e0728faee23372729269861dd841389b0fdb0eaf8092"
     }
   },
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
-    "RS_ms": 1.4758578462470502,
+    "RS_ms": 1.475858886977708,
     "R_p0_std_m": null,
     "R_v0_std_mps": null,
-    "sigma_a_mps2": 0.724445343,
+    "sigma_a_mps2": 0.724445939,
     "tau_s": 2.17904091
   },
   "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -262,7 +261,7 @@
     "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
   "replay_provenance": {
     "environment": {
       "compiler": {
@@ -278,11 +277,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+      "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
+      "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-19T13:31:28+00:00",
-    "git_commit": "24932e88c4c1d05fe595509d7a82adfb7f202fbf",
+    "generated_at": "2026-08-19T20:38:33+00:00",
+    "git_commit": "3289fea1e93ef05c55fa3c297a17df31f51e9d77",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -321,8 +320,8 @@
         "size_bytes": 13561
       },
       "src/kalman_common/SeaStateFusionFilterCommon.h": {
-        "sha256": "64c1a451891fcd5f3b7d9a1a8c92a39a20abd116b4ac8d681074be1bc42cd4ea",
-        "size_bytes": 10445
+        "sha256": "fd711306ba81cd2280430e8f82f793309d34b90f4a14c44cd7727a6a9e9cd601",
+        "size_bytes": 13324
       },
       "src/kalman_ou_common/KalmanOUCoreMath.h": {
         "sha256": "4298c6fb6636ed3e91897257ed384fedc6143ee8e66a7c564459006d14075e2b",
@@ -333,8 +332,8 @@
         "size_bytes": 99058
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-        "sha256": "5557c72d6d921cd4f1488511aabc18c25fbc4dc6829d01bf8728774ce9ee69d7",
-        "size_bytes": 156936
+        "sha256": "ee3a781a185e896249f7a9fa927f50dbfc8e75b3ad7109ba4a3f9aa4f8c15b85",
+        "size_bytes": 155192
       },
       "src/tuner/AdaptiveWaveBandPass.h": {
         "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
@@ -349,28 +348,28 @@
         "size_bytes": 22706
       },
       "src/tuner/SeaStateAutoTuner.h": {
-        "sha256": "2fc7a1fef2f5a131d3fc1e8207d78ab931416b4e654f944916af3126727c63be",
-        "size_bytes": 8777
+        "sha256": "501f420dc1640d8f2d3444a2b9710e6c967c8263458e182a3cffe281d0017b27",
+        "size_bytes": 7636
       },
       "src/tuner/SeaStateFusionTunerCommon.h": {
-        "sha256": "4f8145c2774a213c301b63210557efa0f78f60b9516e6696bb39e8877bd8f253",
-        "size_bytes": 3888
+        "sha256": "218c6db9a9305b1d27c320d6471d4e5d3324b65ddfd33cdcd73d6859c0cb91f3",
+        "size_bytes": 3878
       },
       "src/tuner/VerticalAccelComplementary.h": {
-        "sha256": "447db93508fd6bf3b6e51a757239f7d7a2c470471bce7f298f682981217bb335",
-        "size_bytes": 10277
+        "sha256": "7b2e38abc8d3260e3ce0f0d1111a59b2855932c3196298072783532292ae2c0a",
+        "size_bytes": 9716
       },
       "src/tuner/WavePeriodEstimator.h": {
         "sha256": "4b8d1a0db2bf8fee6e67013c68e1554048f57a41774198a5bbca83bb64b41825",
         "size_bytes": 8471
       },
       "src/util/W3dSimCommon.cpp": {
-        "sha256": "bad245314d94cb345c1c3a4a7a6923fee9d16bcae24928a2a4eea71442139de3",
-        "size_bytes": 69786
+        "sha256": "7c1d5c33e92d1fefc6f42f2796b469f2f8afdad350095e332cfd4d5d54132e72",
+        "size_bytes": 69915
       },
       "src/util/W3dSimCommon.h": {
-        "sha256": "8e5c8a9cccf887e522b713f3680df9e5bff629b38445f5803466ffc391ecafe9",
-        "size_bytes": 19587
+        "sha256": "7d3bc4d283d31a1ae48dc15fb66c00fd0914dc58c6e8155dc9f84a36b0778eb6",
+        "size_bytes": 20064
       },
       "src/util/WaveFilesSupport.h": {
         "sha256": "e46bccb68c72d841ed3adbd9b9aa0b24348804d71120a0ee3af775cdc9c98128",
@@ -393,8 +392,8 @@
         "size_bytes": 2808
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-        "sha256": "5e628675cd7c75562e7458842e3722450ce239e13c5e3711901b9b6e791be393",
-        "size_bytes": 51368
+        "sha256": "8805308788c8a2751f32e0728faee23372729269861dd841389b0fdb0eaf8092",
+        "size_bytes": 50345
       }
     },
     "input_files": {
@@ -412,47 +411,42 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "a46a8deed62350f8cdd3a2d6b3c6c9a9d96044c2e7bbcf5464afe67009222e1a",
-    "raw_rows_size_bytes": 195600,
-    "workflow_run": {
-      "job": "commit",
-      "run_attempt": "1",
-      "run_id": "32255648054",
-      "workflow": "build"
-    }
+    "raw_rows_sha256": "c2e222157646179fdeba81c8e61910b6ff5458d2ae9473211d2e392dd228b0cc",
+    "raw_rows_size_bytes": 195245,
+    "workflow_run": null
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1402146,
-      "sha256": "2e0c314f2f461c8abcc7fc7822827e9c19e789da866d459765d85bd2d0b6e927"
+      "bytes": 1401990,
+      "sha256": "b4677c2169b2c09a17be6c2a4f7fa05eb09737a2c20cfa535e18486f0d0f8ee9"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
-      "sha256": "0e865c1d2469275c1d57cf39d24b0c641f514168d0902aad35bfa0a9a02ce095"
+      "sha256": "5f448d3770865ef81ab5ce41dc977a596362f9caf410d7ebb04de329d5d2ce6c"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 143665,
-      "sha256": "58b6d217df6aca628b78a29cad47726c4994ac0163561a51623b908a9fb2e627"
+      "bytes": 143593,
+      "sha256": "fa6fec535f07d383ffe5cc11c8ea9a4e3e2ee90a388f1a480ede3e5376c186bf"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2738,
-      "sha256": "0786ef9d26249ff023e32677bdf7bba241dbff699f9d114a28282d244afcde2a"
+      "sha256": "879dd3718091320164f9e83ca8a7e49e9c7c0f24d1d92bf0f90b396ac4b9912b"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 195600,
-      "sha256": "a46a8deed62350f8cdd3a2d6b3c6c9a9d96044c2e7bbcf5464afe67009222e1a"
+      "bytes": 195245,
+      "sha256": "c2e222157646179fdeba81c8e61910b6ff5458d2ae9473211d2e392dd228b0cc"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 114770,
-      "sha256": "90f00e2eaa9eb44888d864ce90be8531683c7d046862d868a14d85f956e0cb0f"
+      "bytes": 114813,
+      "sha256": "57ad67a210894f370588560134722b40803a1647ce7601cc2f82a7b8b7209642"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 43372,
-      "sha256": "b09b2796e26f02bd86a812036874dc2eda69bc3c120c39e28dbc0fc3ad2ca6d8"
+      "bytes": 42073,
+      "sha256": "3d16b43f56679ce07172c505087c94edad18741d0b5916ffeb5aabed2aa15d24"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126671,
-      "sha256": "dde07e7534d3b72ababa1321fb5a52c3d1062e265b15cae8f5efc63e17e1c800"
+      "bytes": 126943,
+      "sha256": "df53a6b6f7c060d0ca7597c72d7904a36685dbb6be8e9fe5e149236e0617bf93"
     }
   },
   "schema_version": 2,
