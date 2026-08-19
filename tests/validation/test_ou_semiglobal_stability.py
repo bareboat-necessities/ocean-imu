@@ -37,6 +37,7 @@ class OUIIISemiglobalStabilityContractTests(unittest.TestCase):
         proof = _read("w3d-semiglobal-stability.tex-part")
         for marker in (
             r"\mathcal K_{\epsilon,B_\beta}",
+            r"\mathcal N_P:=W^s(\mathcal U_P)",
             "antipodal",
             r"\cite{Mahony2008NonlinearComplementary}",
             r"\label{thm:semiglobal-proxy-live}",
@@ -51,6 +52,9 @@ class OUIIISemiglobalStabilityContractTests(unittest.TestCase):
         startup = _read("w3d-init.tex-part")
         self.assertIn("0.075", proof)
         self.assertIn(r"\SI{150}{s}", proof)
+        self.assertIn(r"\label{eq:semiglobal-aligned-branch}", proof)
+        self.assertIn("sine-only residual is not by itself", proof)
+        self.assertIn(r"\eqref{eq:semiglobal-aligned-branch}", startup)
         self.assertIn(r"\eqref{eq:semiglobal-basin-entry}", startup)
         self.assertIn(r"\ref{thm:semiglobal-proxy-live}", startup)
 
