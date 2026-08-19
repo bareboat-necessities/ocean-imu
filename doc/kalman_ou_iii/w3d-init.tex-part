@@ -45,12 +45,17 @@ held until the magnetic refinement below because bias and small tilt error are
 weakly separable in waves and the residual bias correlation time is long.
 
 The handoff is the basin-entry map analyzed in
-Sec.~\ref{sec:semiglobal-handoff}.  When the accepted proxy/magnetic errors and
-the remaining state mismatch satisfy
+Sec.~\ref{sec:semiglobal-handoff}.  The implemented gravity residual is a sine
+of the alignment angle, so it does not by itself distinguish the aligned and
+antipodal branches.  The semiglobal theorem therefore explicitly requires the
+accepted handoff to satisfy the aligned-branch condition
+Eq.~\eqref{eq:semiglobal-aligned-branch}; this is a theorem assumption, not an
+extra runtime gate claimed for the present implementation.  When that condition,
+the accepted proxy/magnetic errors, and the remaining state mismatch satisfy
 Eq.~\eqref{eq:semiglobal-basin-entry}, the handoff lands inside the invariant
 neighborhood of the 21-state Live ISS theorem and
 Theorem~\ref{thm:semiglobal-proxy-live} applies.  A timeout-forced handoff that
-does not satisfy that condition remains outside the semiglobal result.
+does not satisfy those conditions remains outside the semiglobal result.
 
 \subsection{Two-stage magnetic reference}
 \label{sec:mag-two-stage}
