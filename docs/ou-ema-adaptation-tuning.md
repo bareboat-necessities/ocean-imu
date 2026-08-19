@@ -290,13 +290,27 @@ about the constant:
   That is the smoother passing tuner jitter into `r_S` on the record where the
   jitter happens to be worst.
 
-`1.5` is where the mean gain and the worst-record loss cross on the blend:
--1.50% against +1.56%. That is the same shape of rule section 6 stopped at
-`3.0` with -- take the shortest horizon whose worst-record cost has not yet
-outrun its mean gain -- applied to the instrument that can now see the cost.
-It is not the minimum of the mean curve, and it is not meant to be: below it
-every further tenth of a percent of average gain is bought with two to three
-tenths of worst-case loss.
+The rule is the one section 6 used, applied to the instrument that can now see
+the cost: follow the horizon down until the worst-record loss has caught up
+with the mean gain, and stop at the crossing. On the blend the two curves meet
+between `2.0` and `1.5`:
+
+| `ADAPT_RS_MULT` | mean gain | worst-record loss |
+| --- | --- | --- |
+| 2.0 | 1.00% | 0.77% |
+| **1.5** | **1.50%** | **1.56%** |
+| 1.0 | 1.99% | 3.00% |
+
+`1.5` is the grid point at that crossing and the last one where the tail is
+still the same size as the mean: the step from 2.0 to 1.5 buys half a point of
+mean for eight tenths of a point on the worst record, and the next step buys
+half a point for one and a half. `2.0` is the conservative reading of the same
+table -- it is the last point where the gain still exceeds the loss outright --
+and it leaves a third of the available blend gain unclaimed; `1.5` is taken
+because a tail of 1.6% on one crossfade realization is inside the spread the
+ensemble already shows between records, while the mean gain is not. Below it
+the trade is plainly bad, which is what the rule is there to catch. It is not
+the minimum of the mean curve, and it is not meant to be.
 
 Attitude and the accelerometer bias do not object. On the transition ensemble
 roll/pitch is 0.9992 [0.9984, 1.0001] and the bias 0.9999 [0.9991, 1.0006] in

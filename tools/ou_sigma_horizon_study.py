@@ -186,7 +186,8 @@ RATIO_METRICS = (
 TRANSITION_RATIO_METRICS = (
     ("seg_start_disp_z_rms_m", "transition start-sea vertical RMS [m]"),
     ("seg_blend_disp_z_rms_m", "transition blend vertical RMS [m]"),
-    ("seg_end_disp_z_rms_m", "transition end-sea vertical RMS [m]"),
+    ("seg_recover_disp_z_rms_m", "transition run-on vertical RMS [m]"),
+    ("seg_end_disp_z_rms_m", "transition settled-sea vertical RMS [m]"),
 )
 
 

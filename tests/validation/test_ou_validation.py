@@ -380,10 +380,15 @@ class StatisticsTests(unittest.TestCase):
         )
 
     def test_transition_window_composition_is_reported(self):
+        # Driven by the shipped fractions rather than by a second copy of the
+        # numbers they produce, so this cannot silently keep describing a
+        # crossfade the tool no longer builds.
+        duration_sec = 1200.0
         composition = validation.transition_window_composition(
-            transition_start_sec=540.0,
-            transition_end_sec=660.0,
-            duration_sec=1200.0,
+            transition_start_sec=validation.TRANSITION_START_FRACTION
+            * duration_sec,
+            transition_end_sec=validation.TRANSITION_END_FRACTION * duration_sec,
+            duration_sec=duration_sec,
             window_sec=900.0,
         )
         self.assertAlmostEqual(composition["window_start_sec"], 300.0)
@@ -405,6 +410,11 @@ class StatisticsTests(unittest.TestCase):
             validation.TRANSITION_END_FRACTION
             - validation.TRANSITION_START_FRACTION
         )
+        # A band rather than the shipped value: the exact crossfade is pinned
+        # by the composition test above and by the committed manifest, and what
+        # this test owns is the property that makes it an instrument.  The
+        # upper bound is a few times the longest memory, the lower one keeps
+        # the blend from collapsing toward a step the record cannot represent.
         self.assertLessEqual(crossfade_sec, 150.0)
         self.assertGreaterEqual(crossfade_sec, 60.0)
         # Centred on the record, so the window keeps a run-in at the start sea

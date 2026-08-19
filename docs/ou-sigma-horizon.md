@@ -18,9 +18,10 @@ means something different, but the sweep says the alternatives net to nothing:
 re-measured against a crossfade fast enough to lag (section 5), the sign of the
 effect reverses between a building and a decaying sea, so no constant captures
 it, and `2.0` is where the ensemble's worst realization sits. What the sweep
-does establish is that `2.0` is on the correct side of the optimum -- halving it
-costs 1% on the stationary ensemble -- and the constant is now a settable,
-measured knob rather than an inherited one.
+does establish is that `2.0` is on the correct side of the optimum -- shortening
+it costs on the stationary ensemble, 0.25-0.33% at `K = 1` and 0.4-1.0% at
+`K = 0.5` (section 4) -- and the constant is now a settable, measured knob
+rather than an inherited one.
 
 ## 1. What was still coupled
 
@@ -232,11 +233,14 @@ favourable bias in one direction of travel, and it is paid back in the other
 direction and in the settled sea. A constant cannot buy it: the sign of the
 correction it would need is the sign of `d(sigma_a)/dt`.
 
-The worst single realization is what closes the case. It is minimized at
-`K = 1.5-2` in every interval and rises in both directions -- 1.0138 at 1.5,
-1.0201 at 3, 1.0426 at 6, 1.0378 at 1, all on the blend -- so the shipped value
-is not merely a point where means cancel; it is where the ensemble's tail is
-narrowest. `K` stays at 2.0.
+The worst single realization is what closes the case. On the blend it is
+minimized at `K = 1.5` and rises in both directions -- 1.0138 at 1.5, 1.0201 at
+3, 1.0378 at 1, 1.0426 at 6 -- and the same holds on the settled interval
+(1.0017 at 1.5 against 1.0087 at 3), on the start interval and over the whole
+window (1.0022 at 1.5, 1.0057 at 3). The run-on interval is the one exception,
+narrowest at `K = 3` with 1.0061 against 1.0108 at 1.5. So on every interval a
+fixed `K` has to be safe on, the shipped value is at or one grid step from the
+narrowest tail, which is more than "the means cancel here". `K` stays at 2.0.
 
 Getting the blend gain *and* the settled recovery needs a horizon that
 shortens when the sea state actually moves -- the same two-regime problem

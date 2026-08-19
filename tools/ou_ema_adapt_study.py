@@ -56,12 +56,14 @@ FAMILIES = {
         "binary": "kalman_ou_ii-sim",
         "knobs": ["OU_ADAPT_R_P0_MULT", "OU_ADAPT_R_V0_MULT"],
         "short": ["p0", "v0"],
+        "shipped_mult": 3.0,
     },
     "OU_III": {
         "subdir": "kalman_ou_iii",
         "binary": "kalman_ou_iii-sim",
         "knobs": ["OU_ADAPT_RS_MULT"],
         "short": ["rs"],
+        "shipped_mult": 1.5,
     },
     # TFG carries the same r_S channel and the same tau-proportional smoothing
     # horizon, so `stage1` and `transition` mean the same thing here.  It is
@@ -73,13 +75,19 @@ FAMILIES = {
         "binary": "kalman_tfg-sim",
         "knobs": ["TFG_ADAPT_RS_MULT"],
         "short": ["rs"],
+        "shipped_mult": 3.0,
     },
 }
 
-# Shipped value of every multiplier.  A candidate that sets no knob is the
-# baseline and must reproduce it exactly, so this is only used to keep the
-# sweep grid from carrying a second, redundant copy of the shipped point.
-DEFAULT_MULT = 3.0
+# `shipped_mult` above is what each family's multipliers are compiled with.  A
+# candidate that sets no knob is the baseline and reproduces that point exactly,
+# so the only use of the number here is to keep the sweep grid from carrying a
+# second, redundant copy of it.  It is per family because they no longer agree:
+# OU-III's r_S horizon was refitted to 1.5 against a faster sea-state
+# transition (docs/ou-ema-adaptation-tuning.md section 7) while OU-II's two
+# channels and TFG's stayed at 3.0.  A single shared constant would prune the
+# wrong point from the grid -- dropping the real comparison and keeping a
+# candidate that merely re-runs the baseline under an environment override.
 
 # Scoring window, matching the committed 900 s convention.
 WINDOW_SEC = 900.0
@@ -405,10 +413,11 @@ def parse_grid(text):
 def stage1_candidates(family, grid):
     """One knob at a time, every other knob at its shipped value."""
     cfg = FAMILIES[family]
+    shipped = cfg["shipped_mult"]
     cands = [("baseline", {})]
     for knob, short in zip(cfg["knobs"], cfg["short"]):
         for v in grid:
-            if abs(v - DEFAULT_MULT) < 1e-9:
+            if abs(v - shipped) < 1e-9:
                 continue
             cands.append((f"{short}={v:g}", {knob: v}))
     return cands
@@ -421,9 +430,10 @@ def grid2d_candidates(family, grid_a, grid_b):
                          f"{len(cfg['knobs'])}")
     ka, kb = cfg["knobs"]
     sa, sb = cfg["short"]
+    shipped = cfg["shipped_mult"]
     cands = [("baseline", {})]
     for a, b in itertools.product(grid_a, grid_b):
-        if abs(a - DEFAULT_MULT) < 1e-9 and abs(b - DEFAULT_MULT) < 1e-9:
+        if abs(a - shipped) < 1e-9 and abs(b - shipped) < 1e-9:
             continue
         cands.append((f"{sa}={a:g},{sb}={b:g}", {ka: a, kb: b}))
     return cands
