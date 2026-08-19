@@ -9,8 +9,8 @@ from an arbitrary startup attitude.  Before handoff, the MEKF is untouched and
 a measurement-only Mahony observer supplies tilt while the magnetic-reference
 logic establishes the yaw gauge.  This section uses that architecture to extend
 the result from a local Live theorem to an almost-global, semiglobal practical
-proxy-to-Live statement.  ``Semiglobal'' here refers to arbitrary compact
-startup-attitude sets separated from the antipodal gravity configuration; it
+proxy-to-Live statement.  ``Semiglobal'' means uniformity on any prescribed
+compact startup set contained in the desired proxy domain of attraction; it
 does not claim semiglobal convergence of an already-running MEKF from arbitrary
 21-state errors.
 
@@ -86,35 +86,46 @@ not included in the reduced error
 \begin{equation}
 \vct z_P=(\widehat{\vct d}_P,\widetilde{\vct\beta}_{\perp}).
 \end{equation}
-The desired set is
+The desired reduced set is
 \begin{equation}
 \mathcal A_P=\{\widehat{\vct d}_P=\vct d,
-               \widetilde{\vct\beta}_{\perp}=0\},
+               \widetilde{\vct\beta}_{\perp}=0\}.
 \end{equation}
-whereas the antipodal gravity configuration
-$\widehat{\vct d}_P=-\vct d$ is the undesired critical set of the smooth
-single-vector correction.  The latter has measure zero in the physical
-attitude space once yaw is treated as a gauge.
+The smooth single-vector correction also has the undesired antipodal critical
+set $\mathcal U_P$ associated with
+$\widehat{\vct d}_P=-\vct d$.  With integral bias estimation, the set that must
+be excluded from the desired domain is rigorously the stable set of those
+undesired critical points, not merely the critical points themselves.  Denote
+that measure-zero set by
+\begin{equation}
+\mathcal N_P:=W^s(\mathcal U_P),
+\qquad
+\mathcal D_P:=\bigl(\mathbb S^2\times\mathbb R^2\bigr)\setminus\mathcal N_P.
+\label{eq:semiglobal-proxy-domain}
+\end{equation}
 
 In the disturbance-free case, the reduced dynamics induced by
 Eq.~\eqref{eq:proxy-mahony} are the standard nonlinear complementary-filter
 dynamics on the observable gravity quotient.  The Mahony construction gives
-almost-global asymptotic convergence to $\mathcal A_P$, with the antipodal
-critical set excluded \cite{Mahony2008NonlinearComplementary}.  This standard
-result can be converted into the uniform compact-set statement needed here.
-For any $\epsilon>0$ and $B_\beta<\infty$, define
+almost-global asymptotic convergence to $\mathcal A_P$; equivalently,
+$\mathcal D_P$ is the desired domain of attraction and its complement is the
+measure-zero stable set of the undesired attitude equilibria
+\cite{Mahony2008NonlinearComplementary}.
+
+Fix any compact startup set
 \begin{equation}
-\mathcal K_{\epsilon,B_\beta}
-=\{\theta_P\le\pi-\epsilon,
-    \|\widetilde{\vct\beta}_{\perp}\|\le B_\beta\}.
+\mathcal K_{\epsilon,B_\beta}\Subset\mathcal D_P,
+\qquad
+\operatorname{dist}(\mathcal K_{\epsilon,B_\beta},\mathcal N_P)\ge\epsilon>0,
+\qquad
+\|\widetilde{\vct\beta}_{\perp}\|\le B_\beta<\infty.
 \label{eq:semiglobal-proxy-compact}
 \end{equation}
-Every such compact set lies strictly inside the domain of attraction of
-$\mathcal A_P$.  A converse Lyapunov theorem therefore supplies, on a compact
-forward neighborhood of $\mathcal K_{\epsilon,B_\beta}$, a smooth function
-$V_\epsilon$ and class-$\mathcal K$ functions
+Because this compact set lies strictly inside the domain of attraction, a
+converse Lyapunov theorem supplies, on a compact forward neighborhood, a smooth
+function $V_\epsilon$ and class-$\mathcal K$ functions
 $\alpha_{1,\epsilon}$, $\alpha_{2,\epsilon}$, and
-$\alpha_{3,\epsilon}$ such that
+$\alpha_{3,\epsilon}$ such that \cite{Khalil2002_NonlinearSystems}
 \begin{equation}
 \alpha_{1,\epsilon}(|\vct z_P|_{\mathcal A_P})
 \le V_\epsilon
@@ -128,15 +139,15 @@ Here $|\cdot|_{\mathcal A_P}$ denotes distance to the desired reduced set.
 
 Let $\vct u_P$ collect bounded perturbations of the proxy vector field:
 wave-frequency specific force in the normalized gravity direction, gyro noise,
-slow bias/model mismatch, and discretization error.  Smoothness on the compact
-neighborhood gives a finite $L_\epsilon$ with
+slow bias/model mismatch, and finite-step discretization error.  Smoothness on
+the compact neighborhood gives a finite $L_\epsilon$ with
 \begin{equation}
 \dot V_\epsilon
 \le-\alpha_{3,\epsilon}(|\vct z_P|_{\mathcal A_P})
    +L_\epsilon\|\vct u_P\|.
 \label{eq:semiglobal-proxy-perturbed}
 \end{equation}
-The comparison lemma then yields class-$\mathcal{KL}$ and class-$\mathcal K$
+Standard comparison then yields class-$\mathcal{KL}$ and class-$\mathcal K$
 functions $\beta_\epsilon$ and $\gamma_\epsilon$ such that, for sufficiently
 small bounded perturbations that keep the trajectory in that compact
 neighborhood,
@@ -148,18 +159,18 @@ neighborhood,
 \label{eq:semiglobal-proxy-iss}
 \end{equation}
 This is the semiglobal practical-ISS property of the startup tilt observer:
-the bound is uniform on every prescribed
-$\mathcal K_{\epsilon,B_\beta}$, while its constants need not remain uniform as
-$\epsilon\downarrow0$ and the antipodal set is approached.
+the bound is uniform on every prescribed compact subset of $\mathcal D_P$, but
+its constants need not remain uniform as that set approaches
+$\mathcal N_P$.
 
 \subsection{Quality gate as a basin-entry map}
 \label{sec:semiglobal-handoff}
 
 The proxy is not required to converge asymptotically before handoff.  It need
-only enter the basin in which the Live MEKF theorem applies.  Let
-$\eta_g$ bound the angular difference between the normalized measured
-specific-force direction used by the startup gate and the true gravity
-direction during the accepted hold.  The implemented sine-angle gate
+only enter the basin in which the Live MEKF theorem applies.  Let $\eta_g$
+bound the angular difference between the normalized measured specific-force
+direction used by the startup gate and the true gravity direction during the
+accepted hold.  The implemented sine-angle gate
 $\|\widehat{\vct d}_P\times\widehat{\vct d}_{\rm meas}\|\le0.075$ implies the
 conservative true-tilt bound
 \begin{equation}
@@ -197,13 +208,14 @@ r_H:=\sqrt{\overline\theta_H^2+B_H^2}<r.
 \end{equation}
 This condition is deliberately explicit.  The proxy removes the almost-global
 attitude-initialization obstruction; it does not manufacture a theorem for
-arbitrarily large translational or bias errors at the handoff.  Those states
-must enter the same local Live neighborhood as required by the existing
-21-state nonlinear remainder bound.
+arbitrarily large translational or bias errors at handoff.  Those states must
+enter the same local Live neighborhood required by the existing 21-state
+nonlinear remainder bound.
 
 \begin{theorem}[Almost-global/semiglobal practical proxy-to-Live ISS]
 \label{thm:semiglobal-proxy-live}
-Fix $\epsilon>0$, $B_\beta<\infty$, and a compact family of physical startup
+Fix a compact $\mathcal K_{\epsilon,B_\beta}\Subset\mathcal D_P$ as in
+Eq.~\eqref{eq:semiglobal-proxy-compact} and a compact family of physical startup
 conditions satisfying Eq.~\eqref{eq:semiglobal-handoff-E}.  Assume:
 (i) the reduced proxy initial error belongs to
 $\mathcal K_{\epsilon,B_\beta}$;
@@ -233,10 +245,11 @@ converges to zero.  For bounded deterministic disturbance,
 \le\Gamma\|\vct d\|_\infty.
 \label{eq:semiglobal-ultimate-bound}
 \end{equation}
-Because $\epsilon>0$ is arbitrary, the startup attraction domain covers every
-compact initial-tilt set except the antipodal critical set; hence the attitude
-capture is almost global and semiglobal on compact subsets, while the bounded
-input produces a practical ultimate neighborhood.
+Because every compact subset of the almost-global domain $\mathcal D_P$ is
+admissible, the startup attraction property is semiglobal on that domain; since
+its complement $\mathcal N_P$ has measure zero, the attitude-capture statement
+is almost global.  Bounded inputs enlarge the target to the practical
+neighborhood in Eq.~\eqref{eq:semiglobal-ultimate-bound}.
 \end{theorem}
 
 \begin{proof}
@@ -254,16 +267,16 @@ $\|\vct e_{k_H}\|\le r_H<r$.  Therefore the handoff lands inside the invariant
 neighborhood used in Theorem~\ref{thm:iss-21-local}.  Applying
 Eq.~\eqref{eq:iss-local-bound} from $j=k_H$ gives
 Eq.~\eqref{eq:semiglobal-live-bound}; taking the limit superior gives
-Eq.~\eqref{eq:semiglobal-ultimate-bound}.  Finally, the excluded antipodal set
-has measure zero and every compact subset of its complement is contained in
-some $\mathcal K_{\epsilon,B_\beta}$, which gives the almost-global/semiglobal
-qualification.
+Eq.~\eqref{eq:semiglobal-ultimate-bound}.  Finally, the almost-global proxy
+result makes $\mathcal N_P$ measure zero, while the argument above is uniform
+on every compact subset of $\mathcal D_P$.  This gives the claimed
+almost-global/semiglobal qualification.
 \end{proof}
 
 \paragraph{Finite startup timeout}
-Almost-global convergence is not uniform as the antipodal set is approached.
-Therefore a fixed startup timeout cannot certify all
-$\epsilon\downarrow0$ simultaneously.  With the implemented \SI{150}{s}
+Almost-global convergence is not uniform as the undesired stable set is
+approached.  Therefore a fixed startup timeout cannot certify all compact sets
+approaching $\mathcal N_P$ simultaneously.  With the implemented \SI{150}{s}
 latest-handoff policy, Theorem~\ref{thm:semiglobal-proxy-live} applies to those
 compact sets and disturbance levels whose uniform gate-entry time is less than
 the effective timeout, or whenever the timeout policy does not bypass the
