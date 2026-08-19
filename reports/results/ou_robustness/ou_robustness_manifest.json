@@ -41,8 +41,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "claude/ou-iii-transition-adaptation-ko76eq",
-  "git_commit": "9276aee2c05804d61079d383d8657daa894c16b3",
-  "git_diff_stat": "doc/kalman_ou_iii/w3d-ou-robustness.tex-part       |     2 +-\n reports/results/ou_robustness/ou_robustness.json   | 18888 ++--\n .../results/ou_robustness/ou_robustness_macros.tex |    28 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1090 +-\n .../ou_robustness/ou_robustness_publication.tex    |    10 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   324 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  2406 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   831 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1312 +-\n reports/results/ou_validation/ou_validation.json   | 94618 ++++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |  1618 +-\n .../ou_validation/ou_validation_covsync.svg        |  1922 +-\n .../ou_validation/ou_validation_displacement.svg   |  1634 +-\n .../results/ou_validation/ou_validation_macros.tex |   204 +-\n .../ou_validation/ou_validation_manifest.json      |   470 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4519 +-\n .../ou_validation/ou_validation_publication.tex    |    75 +-\n .../results/ou_validation/ou_validation_raw.csv    |  1682 +-\n .../ou_validation/ou_validation_summary.csv        |  5652 +-\n .../results/ou_validation/ou_validation_table.tex  |    50 +-\n .../ou_validation/ou_validation_transition.csv     | 23970 ++---\n .../ou_validation/ou_validation_transition.svg     | 21290 ++---\n .../ou_validation/ou_validation_vertical.svg       |  1676 +-\n 23 files changed, 95733 insertions(+), 88538 deletions(-)",
+  "git_commit": "805f00a64f1d882b27cb5584586541d02215ab51",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   |  32494 +++---\n .../results/ou_robustness/ou_robustness_macros.tex |      4 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |   1400 +-\n .../ou_robustness/ou_robustness_publication.tex    |      4 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |    600 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |    996 +-\n .../results/ou_robustness/ou_robustness_stress.svg |    104 +-\n .../ou_robustness/ou_robustness_summary.csv        |   1680 +-\n reports/results/ou_validation/ou_validation.json   | 108551 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |    680 +-\n .../ou_validation/ou_validation_covsync.svg        |    728 +-\n .../ou_validation/ou_validation_displacement.svg   |    680 +-\n .../results/ou_validation/ou_validation_macros.tex |     46 +-\n .../ou_validation/ou_validation_manifest.json      |    414 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4552 +-\n .../ou_validation/ou_validation_publication.tex    |     40 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   5086 +-\n .../results/ou_validation/ou_validation_table.tex  |    168 +-\n .../ou_validation/ou_validation_transition.csv     |  20978 ++--\n .../ou_validation/ou_validation_transition.svg     |  11799 +-\n .../ou_validation/ou_validation_vertical.svg       |    704 +-\n 22 files changed, 96531 insertions(+), 96857 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -93,16 +93,16 @@
       "sha256": "ab76e29edd22a12bf2d46766232ccca36aa3cf29f733734907f847528d306faa"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "bytes": 156720,
-      "sha256": "c673d55d9c77dd487cfae5c0ae7de62bf334fc4572c149ba685e90821f28b977"
+      "bytes": 156936,
+      "sha256": "5557c72d6d921cd4f1488511aabc18c25fbc4dc6829d01bf8728774ce9ee69d7"
     },
     "src/tuner/AdaptiveWaveBandPass.h": {
       "bytes": 5864,
       "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021"
     },
     "src/tuner/ContinuousMagHardIronEstimator.h": {
-      "bytes": 12690,
-      "sha256": "1ec5a8b1b19c249d88ccfc1219c33aa3aba63de59a7254dbe6aa5d6bff40e85b"
+      "bytes": 13924,
+      "sha256": "86c34baa0453c747632790b26df1b08d382951da71773eeb6c04399a47a5a917"
     },
     "src/tuner/MagAutoTuner.h": {
       "bytes": 22706,
@@ -153,8 +153,8 @@
       "sha256": "ad578493840d66ab8fad853d4eef25d7e84889935c35aca3c1ff9f95410fabf4"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 47013,
-      "sha256": "1a08352110a132aa8a5d26b8cfeb5e3c19e57452d203da8565567bddaa44b7e7"
+      "bytes": 51368,
+      "sha256": "5e628675cd7c75562e7458842e3722450ce239e13c5e3711901b9b6e791be393"
     }
   },
   "matplotlib": "3.11.1",
@@ -280,8 +280,8 @@
       "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
       "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-19T05:20:53+00:00",
-    "git_commit": "9276aee2c05804d61079d383d8657daa894c16b3",
+    "generated_at": "2026-08-19T10:24:32+00:00",
+    "git_commit": "805f00a64f1d882b27cb5584586541d02215ab51",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -332,16 +332,16 @@
         "size_bytes": 99058
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-        "sha256": "c673d55d9c77dd487cfae5c0ae7de62bf334fc4572c149ba685e90821f28b977",
-        "size_bytes": 156720
+        "sha256": "5557c72d6d921cd4f1488511aabc18c25fbc4dc6829d01bf8728774ce9ee69d7",
+        "size_bytes": 156936
       },
       "src/tuner/AdaptiveWaveBandPass.h": {
         "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
         "size_bytes": 5864
       },
       "src/tuner/ContinuousMagHardIronEstimator.h": {
-        "sha256": "1ec5a8b1b19c249d88ccfc1219c33aa3aba63de59a7254dbe6aa5d6bff40e85b",
-        "size_bytes": 12690
+        "sha256": "86c34baa0453c747632790b26df1b08d382951da71773eeb6c04399a47a5a917",
+        "size_bytes": 13924
       },
       "src/tuner/MagAutoTuner.h": {
         "sha256": "3f454b9507bf52c7ed44b2e16082f0bc37640bc0bf8193ad59b2ee9781c691f3",
@@ -392,8 +392,8 @@
         "size_bytes": 2808
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-        "sha256": "1a08352110a132aa8a5d26b8cfeb5e3c19e57452d203da8565567bddaa44b7e7",
-        "size_bytes": 47013
+        "sha256": "5e628675cd7c75562e7458842e3722450ce239e13c5e3711901b9b6e791be393",
+        "size_bytes": 51368
       }
     },
     "input_files": {
@@ -411,42 +411,42 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "81821a1a57b63205cfb1638f1159ed5d06c4c824b2cb9c79bf3a375d1f2ff02a",
-    "raw_rows_size_bytes": 195506,
+    "raw_rows_sha256": "adccd89100586e221b8f77dce43ef8af758af49eebac9eb08b350933ddd81c62",
+    "raw_rows_size_bytes": 195602,
     "workflow_run": null
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1402003,
-      "sha256": "cb2311815392ece5104dcd70e7bc13cd88beb687ceb45cce28452cddd2a18c8d"
+      "bytes": 1402186,
+      "sha256": "b4cfc6dc23542df434c9ba8b2c5e66396b1d305429bf2df08989dd5e505f88c0"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
-      "sha256": "05806d45aeb7a542e37a393699ed5a1e997cf213eda275bc2d7f629e36fcda01"
+      "sha256": "0e865c1d2469275c1d57cf39d24b0c641f514168d0902aad35bfa0a9a02ce095"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 143772,
-      "sha256": "12b64fec015b3817aba8806b4617e25e35efb9b2dc5dce6cc2fd38cb0fb817df"
+      "bytes": 143679,
+      "sha256": "bace660b46ea24e652b7043c0ecd5979a93b5fa21bc3ad9a19d016d4a0b3b1ba"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2738,
-      "sha256": "568ce20533f644222196412905df60802fe412eabba4aa427155f2db2c385567"
+      "sha256": "0786ef9d26249ff023e32677bdf7bba241dbff699f9d114a28282d244afcde2a"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 195506,
-      "sha256": "81821a1a57b63205cfb1638f1159ed5d06c4c824b2cb9c79bf3a375d1f2ff02a"
+      "bytes": 195602,
+      "sha256": "adccd89100586e221b8f77dce43ef8af758af49eebac9eb08b350933ddd81c62"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 118941,
-      "sha256": "712b74208dc64064939c6bcf2e73adf0ad9b2713b9d403f7d2c9c9b350891c11"
+      "bytes": 118948,
+      "sha256": "132dfeb753a39db2d0ffb311b1462c52ee064c0eedb1569f91dd48f73e9daa81"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 45416,
-      "sha256": "23e7d5b70b1be589f7e2477c279efd79eb0de9ccfd9f147a7ce8307f3357cd45"
+      "bytes": 45408,
+      "sha256": "d04b23e4fcc5bfebc3559a3c99637098432dec8d393440107beccbec2c8870b9"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126515,
-      "sha256": "8c987dced51b35b0a4521ee3bedde0b6eed41ecaaf5bf6f3b5a9551a47951d73"
+      "bytes": 126695,
+      "sha256": "39011682825b8daae34117b067a27ab68ab7d39aa37f1a5aca17af590be872d6"
     }
   },
   "schema_version": 2,
