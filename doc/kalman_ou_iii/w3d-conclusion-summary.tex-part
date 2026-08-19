@@ -19,26 +19,12 @@ neighborhood.
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
 acceleration RMS is mapped to $\sigma_{aw}$, and the $S=0$ pseudo-measurement is
-interpreted through its closed-loop regularization corner.  The reduced Riccati
-model gives
-$r_S\propto\sqrt{q_{\mathrm{eff}}}\tau^{5/2}$ when
-$T_S\propto\tau$ and the normalized corner $\omega_R\tau$ is held fixed.  A
-separate cadence argument reaches the same $5/2$ period exponent by preserving
-the information rate of a cubic base scale as the pseudo-update interval grows.
-The amplitude-free coefficient-law experiment confirms the analytical
-pole-placement scale within its restricted family but rejects identifying
-$q_{\mathrm{eff}}$ with the raw accelerometer-noise floor alone: the
-amplitude-free schedule increases the primary normalized vertical RMS endpoint
-from $4.5081\%H_s$ to $4.8882\%H_s$, with paired increase
-$0.380\pm0.096$ percentage points, and worsens six of nine scored scenarios.
-Per-sea coefficient optima show that the missing regularizer amplitude varies
-systematically with sea state.  The applied
-$r_S\propto\sigma_{aw}\tau^{5/2}$ form is therefore retained, with
-$\sigma_{aw}$ interpreted as an empirical proxy for the sea-dependent
-low-frequency acceleration-error scale rather than as a consequence of OU
-spectral similarity.
-
-A complementary reduced physical-MSE calculation gives
+interpreted through its closed-loop regularization corner.  The earlier
+fixed-corner Riccati and cadence arguments give a useful reduced reference with
+an effective $\tau^{5/2}$ dependence when $T_S\propto\tau$, but they do not
+optimize the displacement tradeoff between low-frequency noise growth and
+physical-wave distortion.  The current SpectralMSE schedule instead uses the
+physical-MSE optimum
 \begin{equation}
 r_S^\star\propto
 q_{\mathrm{eff}}^{1/14}m_{-4}^{3/7}T_S^{-1/2}.
@@ -50,44 +36,40 @@ $T_S\propto\tau$, this becomes
 \begin{equation}
 \boxed{r_S^\star\propto\sigma_a^{6/7}\tau^{41/14}.}
 \end{equation}
-The resulting exponents, $6/7\simeq0.857$ and
-$41/14\simeq2.929$, are independently derived yet remain close to the applied
-$(1,5/2)$ pair over the calibrated envelope.  With both laws normalized at the
-$H_s=\SI{1.5}{m}$ operating point, the reduced-MSE schedule differs from the
-applied schedule by approximately $-12.8\%$, $0\%$, $+16.3\%$, and $+20.6\%$
-across the four calibrated JONSWAP points.  Because the ratio is proportional to
-$\sigma_{aw}^{-1/7}\tau^{3/7}$, the discrepancy is compressed by a seventh
-root.  This makes the reduced physical-MSE law a direct first-principles
-candidate for paired comparison rather than merely an asymptotic observation.
+Thus the deployed theoretical exponents are $6/7\simeq0.857$ and
+$41/14\simeq2.929$; the semiglobal stability result uses this law only through
+its bounded predictable scheduled values and does not rely on a
+$\sigma\tau^3$ adaptation relation.
 
-A second experiment tests the interpolation
-$R_{a,\mathrm{eff}}=R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2$.  It recovers
-the deterministic amplitude-free loss, but its optimum lies in the asymptotic
-regime where the sensor-floor contribution is at most about $0.3\%$ of
-$R_{a,\mathrm{eff}}$ over the tested seas.  The fitted law therefore reduces
-numerically to the same linear-$\sigma_{aw}$ dependence already used by the
-applied filter.  Its deterministic endpoint is slightly lower, but the paired
-ten-seed comparison is a dead tie: $4.5081\%H_s$ for the applied law versus
-$4.5078\%H_s$ for the fitted law, with paired difference
-$-0.0003\pm0.0146$ percentage points and no measurable attitude change.  Static
-amplitude refinement therefore provides no supported improvement over the
-current schedule.
+The exact spectral evaluation fixes the SpectralMSE coefficient analytically
+and the paired ten-seed comparison supports the resulting schedule.  Across the
+nine scored stationary-plus-transition scenarios ($n=90$ pairs), normalized
+vertical RMS changes from $4.508\%H_s$ for the supported low-cost cubic
+configuration to $4.482\%H_s$ for SpectralMSE, a pooled difference of
+$-0.026\,\%H_s$ with $95\,\%$ half-width $0.014$.  Four scenarios improve by
+more than their own interval, one degrades, and four are statistical ties.  The
+controlled transition also improves by $0.018\,\%H_s$, so the pooled gain is not
+purchased by a measured transient penalty.  SpectralMSE is therefore the
+default adaptation law outside the low-cost embedded configuration, while the
+cubic schedule remains a supported implementation option when transcendental
+cost dominates a sub-percent displacement difference.
 
-The nonuniformity of that tie identifies a remaining design tradeoff.  The
-amplitude-coupled fit improves the two smallest stationary seas but worsens the
-controlled transition by $0.128\pm0.012$ percentage points, whereas the
-amplitude-free law worsens those stationary seas and improves the transition by
-$0.093\pm0.033$ percentage points.  Thus amplitude tracking buys stationary
-accuracy at a transient cost when the sea state changes.  Before adding another
-adaptation mechanism, Sec.~\ref{sec:adaptation-full-state-h2} formulates the
-physical displacement objective on the complete 21-state linearized closed
-loop.  It separates real sensor/bias noise from distortion of the physical wave
-and retains the attitude/gravity, bias, latent-acceleration, and periodic
-integral-update couplings omitted by the scalar reduction.  This model provides
-the appropriate next test of whether the residual difference between the
-reduced-MSE and applied laws, the observed near-linear amplitude dependence, and
-the stationary--transition tradeoff follow from the estimator dynamics rather
-than from an empirical coefficient choice.
+A separate interpolation experiment tests
+$R_{a,\mathrm{eff}}=R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2$.  Its optimum
+lies in the asymptotic regime where the sensor-floor contribution is at most
+about $0.3\%$ of $R_{a,\mathrm{eff}}$ over the tested seas, and its paired
+endpoint is effectively tied with the former amplitude-coupled schedule.  This
+experiment is therefore retained as evidence about the complete-filter
+acceleration-error scale rather than as the deployed regularizer law.
+
+The remaining analytical gap is no longer whether the reduced physical-MSE law
+beats the previous schedule on the tested ensemble; that comparison is now
+measured.  The open question is how the complete 21-state closed loop modifies
+the reduced exponents and coefficient once attitude/gravity leakage, gyro and
+accelerometer bias paths, OU-model mismatch, cross-covariance coupling, and the
+periodic integral update are all retained.  Section~\ref{sec:adaptation-full-state-h2}
+formulates that physical displacement objective and provides the natural next
+step from the reduced SpectralMSE law to a full-state theoretical optimum.
 
 Under the paired ten-seed stationary JONSWAP protocol, normalized vertical RMS
 displacement error is
@@ -125,22 +107,20 @@ global navigation position is claimed without external aiding.
 
 \subsection*{Future work}
 \begin{itemize}[leftmargin=1.25em]
-  \item \textbf{Reduced-MSE law and full-state physical $H_2$ analysis.}  First
-        compare
-        $r_S\propto\sigma_{aw}^{6/7}\tau^{41/14}$ directly against the applied
-        $r_S\propto\sigma_{aw}\tau^{5/2}$ law using an identical nominal anchor
-        or one-parameter gain normalization and the paired ten-seed protocol.
-        Then solve the periodic 21-state Riccati and physical-error recursions of
-        Sec.~\ref{sec:adaptation-full-state-h2} at the calibrated sea states and
-        compare their predicted minimizing amplitudes and local exponents with
-        the independent coefficient sweeps.  Extend the frozen-point
-        calculation to trajectory-linearized Jacobians to quantify the
-        amplitude-dependent attitude/gravity coupling.
+  \item \textbf{Full-state physical $H_2$ analysis.}  Solve the periodic
+        21-state Riccati and physical-error recursions of
+        Sec.~\ref{sec:adaptation-full-state-h2} at the calibrated sea states,
+        and compare their predicted minimizing amplitudes and local exponents
+        with the deployed SpectralMSE $6/7,41/14$ law and the independent
+        coefficient sweeps.  Extend the frozen-point calculation to
+        trajectory-linearized Jacobians to quantify amplitude-dependent
+        attitude/gravity coupling; retain the cubic schedule as the low-cost
+        embedded comparator rather than as the theoretical baseline.
   \item \textbf{Transition-aware regularizer amplitude.}  If the full-state
-        model supports the measured stationary--transition conflict, preserve
-        the steady-state regularizer mapping and test asymmetric or rate-limited
-        amplitude response during changing seas, scoring stationary and
-        transition ensembles jointly.
+        model predicts a stationary--transition conflict outside the currently
+        tested transition, preserve the steady-state regularizer mapping and
+        test asymmetric or rate-limited amplitude response during changing
+        seas, scoring stationary and transition ensembles jointly.
   \item \textbf{Reference-point and GNSS validation.}  Validate the lever-arm
         model at a surveyed nonzero offset and add GNSS-aided separation of slow
         absolute trajectory from bounded wave motion, including asynchronous
