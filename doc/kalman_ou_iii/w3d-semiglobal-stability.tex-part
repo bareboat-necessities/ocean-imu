@@ -114,7 +114,7 @@ measure-zero stable set of the undesired attitude equilibria
 
 Fix any compact startup set
 \begin{equation}
-\mathcal K_{\epsilon,B_\beta}\Subset\mathcal D_P,
+\mathcal K_{\epsilon,B_\beta}\subset\mathcal D_P,
 \qquad
 \operatorname{dist}(\mathcal K_{\epsilon,B_\beta},\mathcal N_P)\ge\epsilon>0,
 \qquad
@@ -167,17 +167,41 @@ $\mathcal N_P$.
 \label{sec:semiglobal-handoff}
 
 The proxy is not required to converge asymptotically before handoff.  It need
-only enter the basin in which the Live MEKF theorem applies.  Let $\eta_g$
-bound the angular difference between the normalized measured specific-force
-direction used by the startup gate and the true gravity direction during the
-accepted hold.  The implemented sine-angle gate
-$\|\widehat{\vct d}_P\times\widehat{\vct d}_{\rm meas}\|\le0.075$ implies the
-conservative true-tilt bound
+only enter the basin in which the Live MEKF theorem applies.  The implementation
+forms a sine residual from the predicted and low-pass measured rest-specific-
+force directions.  Write
+\begin{equation}
+\widehat{\vct s}_P=-\widehat{\vct d}_P,
+\qquad
+\widehat{\vct s}_{\rm meas}
+=\frac{\vct f_{\rm LP}}{\|\vct f_{\rm LP}\|}.
+\end{equation}
+The current gate requires
+\begin{equation}
+\|\widehat{\vct s}_P\times\widehat{\vct s}_{\rm meas}\|\le0.075.
+\label{eq:semiglobal-sine-gate}
+\end{equation}
+Because a sine residual is identical at angles $\alpha$ and $\pi-\alpha$,
+Eq.~\eqref{eq:semiglobal-sine-gate} by itself is not a branch certificate.  The
+semiglobal theorem therefore additionally assumes that an accepted handoff lies
+on the aligned branch,
+\begin{equation}
+\widehat{\vct s}_P^{\top}\widehat{\vct s}_{\rm meas}>0.
+\label{eq:semiglobal-aligned-branch}
+\end{equation}
+On that branch the angle between the two directions is at most
+$\sin^{-1}(0.075)$.  Let $\eta_g$ bound the angular difference between
+$\widehat{\vct s}_{\rm meas}$ and the true rest-specific-force direction
+$-\vct d$ during the accepted hold.  Then the spherical triangle inequality
+gives the conservative true-tilt bound
 \begin{equation}
 \theta_{H,\rm tilt}
 \le\sin^{-1}(0.075)+\eta_g.
 \label{eq:semiglobal-handoff-tilt}
 \end{equation}
+Thus the proof does not infer a small tilt merely from a small sine residual;
+it also requires the physically correct alignment branch.
+
 Let $\eta_m$ be a bound on the heading error supplied by an accepted magnetic
 gauge.  For example, if the true horizontal magnetic component has magnitude
 at least $B_{h,0}>0$ and the learned horizontal reference error is at most
@@ -214,18 +238,19 @@ nonlinear remainder bound.
 
 \begin{theorem}[Almost-global/semiglobal practical proxy-to-Live ISS]
 \label{thm:semiglobal-proxy-live}
-Fix a compact $\mathcal K_{\epsilon,B_\beta}\Subset\mathcal D_P$ as in
+Fix a compact $\mathcal K_{\epsilon,B_\beta}\subset\mathcal D_P$ as in
 Eq.~\eqref{eq:semiglobal-proxy-compact} and a compact family of physical startup
 conditions satisfying Eq.~\eqref{eq:semiglobal-handoff-E}.  Assume:
 (i) the reduced proxy initial error belongs to
 $\mathcal K_{\epsilon,B_\beta}$;
 (ii) the bounded proxy perturbation is small enough for
-Eq.~\eqref{eq:semiglobal-proxy-iss} to enter and remain inside the implemented
-quality gate;
-(iii) an accepted magnetic gauge satisfies the bound used in
+Eq.~\eqref{eq:semiglobal-proxy-iss} to reach an accepted gravity interval;
+(iii) the accepted gravity interval satisfies the aligned-branch condition
+\eqref{eq:semiglobal-aligned-branch};
+(iv) an accepted magnetic gauge satisfies the bound used in
 Eq.~\eqref{eq:semiglobal-handoff-attitude};
-(iv) the basin-entry inequality \eqref{eq:semiglobal-basin-entry} holds; and
-(v) after handoff, the hypotheses of
+(v) the basin-entry inequality \eqref{eq:semiglobal-basin-entry} holds; and
+(vi) after handoff, the hypotheses of
 Theorems~\ref{thm:iss-21-ues} and \ref{thm:iss-21-local} hold, including the
 bounded predictable SpectralMSE schedule and no hard reset on the analyzed Live
 interval.  Then there is a finite handoff index $k_H$, uniform over the chosen
@@ -257,15 +282,17 @@ Equation~\eqref{eq:semiglobal-proxy-iss} implies uniform convergence, up to the
 input-dependent practical radius, on the compact set
 $\mathcal K_{\epsilon,B_\beta}$.  Under assumption (ii), choose a finite time
 $T_H$ for which the right-hand side of
-Eq.~\eqref{eq:semiglobal-proxy-iss} is smaller than the proxy accuracy required
-by the gravity gate; compactness makes this choice uniform over the prescribed
-startup family.  Assumption (iii) then bounds yaw, and
-Eqs.~\eqref{eq:semiglobal-handoff-tilt}--\eqref{eq:semiglobal-handoff-attitude}
-bound the complete attitude error at the accepted handoff.  Together with
-Eq.~\eqref{eq:semiglobal-handoff-E}, assumption (iv) gives
-$\|\vct e_{k_H}\|\le r_H<r$.  Therefore the handoff lands inside the invariant
-neighborhood used in Theorem~\ref{thm:iss-21-local}.  Applying
-Eq.~\eqref{eq:iss-local-bound} from $j=k_H$ gives
+Eq.~\eqref{eq:semiglobal-proxy-iss} reaches the proxy accuracy required by an
+accepted gravity interval; compactness makes this choice uniform over the
+prescribed startup family.  Assumption (iii) selects the aligned branch of the
+sine gate, so Eqs.~\eqref{eq:semiglobal-sine-gate} and
+\eqref{eq:semiglobal-handoff-tilt} provide a genuine small-tilt bound rather
+than its antipodal alternative.  Assumption (iv) then bounds yaw, and
+Eq.~\eqref{eq:semiglobal-handoff-attitude} bounds the complete attitude error at
+the accepted handoff.  Together with Eq.~\eqref{eq:semiglobal-handoff-E},
+assumption (v) gives $\|\vct e_{k_H}\|\le r_H<r$.  Therefore the handoff lands
+inside the invariant neighborhood used in Theorem~\ref{thm:iss-21-local}.
+Applying Eq.~\eqref{eq:iss-local-bound} from $j=k_H$ gives
 Eq.~\eqref{eq:semiglobal-live-bound}; taking the limit superior gives
 Eq.~\eqref{eq:semiglobal-ultimate-bound}.  Finally, the almost-global proxy
 result makes $\mathcal N_P$ measure zero, while the argument above is uniform
@@ -279,9 +306,20 @@ approached.  Therefore a fixed startup timeout cannot certify all compact sets
 approaching $\mathcal N_P$ simultaneously.  With the implemented \SI{150}{s}
 latest-handoff policy, Theorem~\ref{thm:semiglobal-proxy-live} applies to those
 compact sets and disturbance levels whose uniform gate-entry time is less than
-the effective timeout, or whenever the timeout policy does not bypass the
-quality conditions used above.  A timeout-forced handoff that violates
-Eq.~\eqref{eq:semiglobal-basin-entry} is outside the theorem.
+the effective timeout, or whenever a timeout-triggered handoff independently
+satisfies Eqs.~\eqref{eq:semiglobal-aligned-branch} and
+\eqref{eq:semiglobal-basin-entry}.  A timeout-forced handoff that does not
+satisfy those conditions is outside the theorem.
+
+\paragraph{Implementation note on the branch certificate}
+The current implementation computes the gravity alignment residual from the
+cross-product norm and does not separately test the dot-product sign in
+Eq.~\eqref{eq:semiglobal-aligned-branch}.  In normal startup the Mahony proxy is
+seeded from the measured accelerometer direction, so the aligned branch is the
+intended operating branch; nevertheless, a sine-only residual is not by itself
+a formal certificate of that fact.  Equation~\eqref{eq:semiglobal-aligned-branch}
+is therefore an explicit theorem assumption rather than an asserted property
+of the present gate.
 
 \paragraph{Later reconfiguration}
 The theorem certifies the first quality-gated proxy-to-MEKF handoff and each
