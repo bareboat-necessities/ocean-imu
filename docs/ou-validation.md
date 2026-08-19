@@ -4,10 +4,12 @@
 the OU-II and OU-III filter families. The committed publication evidence is in
 `reports/results/ou_validation/`.
 
-The current full bundle was regenerated from the current isotropic OU-III
-implementation by GitHub Actions run `31953533100`. Its immutable replay source
-commit is `538a6337fae3542b4249d4d250905c0630fdf2d9`; the generated evidence was
-committed as `bfe25ed2972d67ed806301129cc2a6547d4090ac`. The manifest now separates
+The current full bundle was regenerated for the shortened controlled transition
+and the refitted `r_S` averaging horizon. Its immutable replay source commit is
+`9276aee2c05804d61079d383d8657daa894c16b3`. It was produced outside GitHub
+Actions, so the manifest's `workflow_run` is null and its `build_environment`
+records the toolchain that did produce it; the replay hashes, not the runner,
+are what the contract checks. The manifest separates
 that replay provenance from any later statistical restatement. Replay provenance
 pins the simulator/filter dependency closure, build files, versioned inputs, and
 normalized raw-row hash; a later restatement records its analysis context in a

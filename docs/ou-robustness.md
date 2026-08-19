@@ -4,10 +4,10 @@
 that complements the paired OU-II/OU-III comparison in `tools/ou_validation.py`.
 It does not retroactively tune the primary comparison.
 
-The current committed robustness bundle was regenerated in GitHub Actions run
-`31943137398` from source commit
-`5df1f3b42d3eb456961d12e598257b5859470451` and landed with the full validation
-bundle in commit `35120f96d3f8c02872fd3e06fa94ebe547c3f5eb`.
+The current committed robustness bundle was regenerated from source commit
+`9276aee2c05804d61079d383d8657daa894c16b3` and landed with the full validation
+bundle. Both were produced outside GitHub Actions, so `workflow_run` is null in
+either manifest and the replay hashes carry the provenance.
 
 ## Design
 

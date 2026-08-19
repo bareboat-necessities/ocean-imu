@@ -352,9 +352,11 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         self.assertEqual(
             protocol["sensitivity_scales"], [0.5, 0.75, 1.0, 1.25, 1.5]
         )
+        # The controlled case is the crossfade the paired validation study
+        # scores, so it moved with it; the rapid case is the rate contrast.
         self.assertEqual(
             [case["end_sec"] - case["start_sec"] for case in protocol["transition_cases"]],
-            [360.0, 30.0],
+            [120.0, 30.0],
         )
         self.assertIn("analytically derived", protocol["wave_phase_method"])
         self.assertIn(

@@ -239,10 +239,10 @@ a loss of displacement accuracy.
 
 Sections 3-6 were measured against a 360 s crossfade. That is a long ramp
 compared with the horizon being tuned: at the deployed operating points
-`3.0 * tau` is 4-13 s, so even the shipped horizon had 30 to 90 crossfade
-lengths' worth of time to catch up, and what the blend interval mostly scored
-was how well the schedule sat on a slowly moving target rather than how fast it
-followed. `tools/ou_validation.py` now crossfades over 120 s, which is about
+`3.0 * tau` is 4-13 s, so the crossfade was 27 to 90 smoothing horizons long and
+the smoother had time to settle at every point along it. What the blend
+interval mostly scored was therefore how well the schedule sat on a slowly
+moving target, not how fast it followed. `tools/ou_validation.py` now crossfades over 120 s, which is about
 three times the longest averaging memory anywhere in the adaptation path, and
 the endpoint sea is scored twice -- a run-on interval one crossfade long, then
 the settled remainder -- so a horizon that keeps carrying the sea it just left
@@ -270,11 +270,12 @@ four JONSWAP and four PM-Stokes records at the same three seed triplets
 Three things changed relative to the first pass, and only the first of them is
 about the constant:
 
-- **The interval that used to be a wash now separates.** The run-on interval
-  degrades monotonically with the horizon (0.9905 at 1.0, 1.0177 at 8.0) and it
-  does so in the same direction as the blend. Under the 360 s crossfade that
-  cost was spread over a 420 s endpoint interval that was three quarters
-  settled sea, and it read as noise.
+- **The run-on cost is now scored on its own.** The run-on interval moves
+  monotonically with the horizon (0.9905 at 1.0, 1.0177 at 8.0), in the same
+  direction as the blend and about five times harder than the settled interval
+  beside it (1.0036 at 8.0). Under the 360 s crossfade that interval was the
+  first quarter of a single 420 s endpoint segment, so the same cost was
+  averaged down by the settled sea around it.
 - **The stationary ensemble now agrees with the transition ensemble.** In the
   first pass the stationary worst-record vertical error rose as the horizon
   shortened, and that is what stopped the constant at 3.0. It no longer does:

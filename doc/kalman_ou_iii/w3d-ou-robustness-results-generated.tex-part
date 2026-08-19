@@ -31,11 +31,11 @@
     \toprule
     Case & Mode & Z [m] & Z [\%$H_s$] & 3D [m] & Pitch [$^\circ$] \\
     \midrule
-    Low motion, $H_s=0.27$ m & Adaptive & 0.013 $\pm$ 0.000 & 5.00 $\pm$ 0.14 & 0.028 $\pm$ 0.001 & 0.26 $\pm$ 0.11 \\
-    Low motion, $H_s=0.05$ m & Adaptive & 0.012 $\pm$ 0.005 & 24.31 $\pm$ 9.62 & 0.033 $\pm$ 0.016 & 0.45 $\pm$ 0.18 \\
-    Controlled 360 s ramp & Adaptive & 0.186 $\pm$ 0.004 & 4.64 $\pm$ 0.09 & 0.473 $\pm$ 0.024 & 0.26 $\pm$ 0.11 \\
-    Controlled 360 s ramp & FixedNominal & 0.401 $\pm$ 0.023 & 10.01 $\pm$ 0.57 & 0.802 $\pm$ 0.042 & 0.27 $\pm$ 0.10 \\
-    Rapid 30 s ramp & Adaptive & 0.196 $\pm$ 0.007 & 4.90 $\pm$ 0.18 & 0.493 $\pm$ 0.019 & 0.27 $\pm$ 0.11 \\
+    Low motion, $H_s=0.27$ m & Adaptive & 0.013 $\pm$ 0.000 & 4.99 $\pm$ 0.14 & 0.028 $\pm$ 0.001 & 0.26 $\pm$ 0.11 \\
+    Low motion, $H_s=0.05$ m & Adaptive & 0.012 $\pm$ 0.004 & 23.51 $\pm$ 8.52 & 0.032 $\pm$ 0.014 & 0.45 $\pm$ 0.18 \\
+    Controlled 120 s ramp & Adaptive & 0.188 $\pm$ 0.004 & 4.69 $\pm$ 0.10 & 0.481 $\pm$ 0.023 & 0.26 $\pm$ 0.11 \\
+    Controlled 120 s ramp & FixedNominal & 0.411 $\pm$ 0.024 & 10.28 $\pm$ 0.59 & 0.823 $\pm$ 0.043 & 0.27 $\pm$ 0.10 \\
+    Rapid 30 s ramp & Adaptive & 0.194 $\pm$ 0.007 & 4.86 $\pm$ 0.18 & 0.492 $\pm$ 0.019 & 0.27 $\pm$ 0.11 \\
     Rapid 30 s ramp & FixedNominal & 0.418 $\pm$ 0.023 & 10.44 $\pm$ 0.57 & 0.834 $\pm$ 0.042 & 0.27 $\pm$ 0.10 \\
     \bottomrule
   \end{tabular}
