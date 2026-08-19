@@ -1,0 +1,353 @@
+\section{Almost-Global Startup Capture and Semiglobal Practical Extension}
+\label{sec:semiglobal-stability}
+
+The Live-state result of Sec.~\ref{app:iss-stability} is necessarily local in
+MEKF coordinates: the attitude error is represented by a three-vector chart and
+the nonlinear remainder is absorbed only inside an invariant neighborhood.
+The deployed estimator nevertheless does not ask the MEKF itself to recover
+from an arbitrary startup attitude.  Before handoff, the MEKF is untouched and
+a measurement-only Mahony observer supplies tilt while the magnetic-reference
+logic establishes the yaw gauge.  This section uses that architecture to extend
+the result from a local Live theorem to an almost-global, semiglobal practical
+proxy-to-Live statement.  ``Semiglobal'' means uniformity on any prescribed
+compact startup set contained in the desired proxy domain of attraction; it
+does not claim semiglobal convergence of an already-running MEKF from arbitrary
+21-state errors.
+
+\subsection{Compatibility with the deployed physical-MSE schedule}
+\label{sec:semiglobal-mse-schedule}
+
+The stability argument does not require a particular monomial relationship
+between the scheduled OU and pseudo-measurement parameters.  It requires only
+the predictable, positive compact bounds of
+Eqs.~\eqref{eq:iss-step-tau-bounds}--\eqref{eq:iss-tuning-bounds}.  For the
+deployed SpectralMSE regularizer, the physical-MSE calculation gives
+\begin{equation}
+ r_{S,\star}
+ =C_J q_{\rm eff}^{1/14}\,
+ \widehat\sigma_{a,B}^{\,6/7}\,
+ \tau_\star^{24/7}T_S^{-1/2},
+\label{eq:semiglobal-mse-schedule}
+\end{equation}
+which is Eq.~\eqref{eq:adapt-mse-applied-form}.  Away from the cadence clamps,
+$T_S=c_T\tau$ and therefore
+\begin{equation}
+ r_{S,\star}\propto
+ q_{\rm eff}^{1/14}\widehat\sigma_{a,B}^{\,6/7}
+ \tau^{41/14}.
+\label{eq:semiglobal-mse-powers}
+\end{equation}
+The exponents $6/7$ and $41/14$ are the theoretical physical-MSE exponents;
+no $\sigma\tau^3$ adaptation relation is used in this proof.
+
+To see why adaptation remains admissible, first suppose the unclipped inputs of
+Eq.~\eqref{eq:semiglobal-mse-schedule} lie in positive compact intervals,
+\begin{equation}
+0<\underline q\le q_{\rm eff}\le\overline q,
+\quad
+0<\underline\sigma_B\le\widehat\sigma_{a,B}\le\overline\sigma_B,
+\quad
+0<\underline T_S\le T_S\le\overline T_S.
+\end{equation}
+Together with Eq.~\eqref{eq:iss-step-tau-bounds}, monotonicity gives
+\begin{align}
+\underline r_{S,\rm MSE}
+&=C_J\underline q^{1/14}\underline\sigma_B^{6/7}
+  \underline\tau^{24/7}\overline T_S^{-1/2},\\
+\overline r_{S,\rm MSE}
+&=C_J\overline q^{1/14}\overline\sigma_B^{6/7}
+  \overline\tau^{24/7}\underline T_S^{-1/2}.
+\end{align}
+Thus $0<\underline r_{S,\rm MSE}\le r_{S,\star}
+\le\overline r_{S,\rm MSE}<\infty$.  The implementation further clips the
+regularizer to a strictly positive finite interval and applies only positive
+bounded cadence normalization.  Consequently the same conclusion holds even
+when a near-still analytical target approaches zero.  Exponential smoothing is
+a convex update between the previous applied value and the bounded target, so
+it preserves the enclosure.  Hence the SpectralMSE law changes the numerical
+compact set over which Theorem~\ref{thm:iss-21-ues} is uniform, not the
+structure of its proof.
+
+\subsection{Reduced proxy attitude error}
+\label{sec:semiglobal-proxy}
+
+Let $\vct d\in\mathbb S^2$ denote the true body-frame direction of world down
+and let $\widehat{\vct d}_P\in\mathbb S^2$ be the direction predicted by the
+startup proxy.  Only tilt is observable from this channel, so define
+\begin{equation}
+\theta_P=\cos^{-1}(\widehat{\vct d}_P^{\top}\vct d),
+\qquad 0\le\theta_P\le\pi,
+\label{eq:semiglobal-tilt-error}
+\end{equation}
+and let $\widetilde{\vct\beta}_{\perp}$ be the component of proxy gyro-bias
+error perpendicular to $\vct d$.  Rotation about $\vct d$ and the corresponding
+parallel bias component are gauge variables for the gravity-only proxy and are
+not included in the reduced error
+\begin{equation}
+\vct z_P=(\widehat{\vct d}_P,\widetilde{\vct\beta}_{\perp}).
+\end{equation}
+The desired reduced set is
+\begin{equation}
+\mathcal A_P=\{\widehat{\vct d}_P=\vct d,
+               \widetilde{\vct\beta}_{\perp}=0\}.
+\end{equation}
+The smooth single-vector correction also has the undesired antipodal critical
+set $\mathcal U_P$ associated with
+$\widehat{\vct d}_P=-\vct d$.  With integral bias estimation, the set that must
+be excluded from the desired domain is rigorously the stable set of those
+undesired critical points, not merely the critical points themselves.  Denote
+that measure-zero set by
+\begin{equation}
+\mathcal N_P:=W^s(\mathcal U_P),
+\qquad
+\mathcal D_P:=\bigl(\mathbb S^2\times\mathbb R^2\bigr)\setminus\mathcal N_P.
+\label{eq:semiglobal-proxy-domain}
+\end{equation}
+
+In the disturbance-free case, the reduced dynamics induced by
+Eq.~\eqref{eq:proxy-mahony} are the standard nonlinear complementary-filter
+dynamics on the observable gravity quotient.  The Mahony construction gives
+almost-global asymptotic convergence to $\mathcal A_P$; equivalently,
+$\mathcal D_P$ is the desired domain of attraction and its complement is the
+measure-zero stable set of the undesired attitude equilibria
+\cite{Mahony2008NonlinearComplementary}.
+
+Fix any compact startup set
+\begin{equation}
+\mathcal K_{\epsilon,B_\beta}\subset\mathcal D_P,
+\qquad
+\operatorname{dist}(\mathcal K_{\epsilon,B_\beta},\mathcal N_P)\ge\epsilon>0,
+\qquad
+\|\widetilde{\vct\beta}_{\perp}\|\le B_\beta<\infty.
+\label{eq:semiglobal-proxy-compact}
+\end{equation}
+Because this compact set lies strictly inside the domain of attraction, a
+converse Lyapunov theorem supplies, on a compact forward neighborhood, a smooth
+function $V_\epsilon$ and class-$\mathcal K$ functions
+$\alpha_{1,\epsilon}$, $\alpha_{2,\epsilon}$, and
+$\alpha_{3,\epsilon}$ such that \cite{Khalil2002_NonlinearSystems}
+\begin{equation}
+\alpha_{1,\epsilon}(|\vct z_P|_{\mathcal A_P})
+\le V_\epsilon
+\le\alpha_{2,\epsilon}(|\vct z_P|_{\mathcal A_P}),
+\qquad
+\dot V_\epsilon
+\le-\alpha_{3,\epsilon}(|\vct z_P|_{\mathcal A_P}).
+\label{eq:semiglobal-proxy-converse}
+\end{equation}
+Here $|\cdot|_{\mathcal A_P}$ denotes distance to the desired reduced set.
+
+Let $\vct u_P$ collect bounded perturbations of the proxy vector field:
+wave-induced non-gravitational specific force in the normalized direction,
+gyro noise, slow bias/model mismatch, and the finite-step implementation
+defect.  Assume on the startup family that
+\begin{equation}
+0<f_{P,0}\le\|\vct f_b(t)\|\le f_{P,1}<\infty,
+\label{eq:semiglobal-proxy-force-bound}
+\end{equation}
+so normalization of the accelerometer vector is smooth and Lipschitz on the
+relevant compact set.  For the sampled implementation, take the step bound in
+Eq.~\eqref{eq:iss-step-tau-bounds} sufficiently small on that set that the
+consistent Mahony discretization error is included in $\vct u_P$.  Smoothness
+then gives a finite $L_\epsilon$ with
+\begin{equation}
+\dot V_\epsilon
+\le-\alpha_{3,\epsilon}(|\vct z_P|_{\mathcal A_P})
+   +L_\epsilon\|\vct u_P\|.
+\label{eq:semiglobal-proxy-perturbed}
+\end{equation}
+Standard comparison then yields class-$\mathcal{KL}$ and class-$\mathcal K$
+functions $\beta_\epsilon$ and $\gamma_\epsilon$ such that, for sufficiently
+small bounded perturbations that keep the trajectory in that compact
+neighborhood,
+\begin{equation}
+|\vct z_P(t)|_{\mathcal A_P}
+\le
+\beta_\epsilon(|\vct z_P(0)|_{\mathcal A_P},t)
++\gamma_\epsilon(\|\vct u_P\|_\infty).
+\label{eq:semiglobal-proxy-iss}
+\end{equation}
+This is the semiglobal practical-ISS property of the startup tilt observer:
+the bound is uniform on every prescribed compact subset of $\mathcal D_P$, but
+its constants need not remain uniform as that set approaches
+$\mathcal N_P$.
+
+\subsection{Quality gate as a basin-entry map}
+\label{sec:semiglobal-handoff}
+
+The proxy is not required to converge asymptotically before handoff.  It need
+only enter the basin in which the Live MEKF theorem applies.  The implementation
+forms a sine residual from the predicted and low-pass measured rest-specific-
+force directions.  Write
+\begin{equation}
+\widehat{\vct s}_P=-\widehat{\vct d}_P,
+\qquad
+\widehat{\vct s}_{\rm meas}
+=\frac{\vct f_{\rm LP}}{\|\vct f_{\rm LP}\|}.
+\end{equation}
+The current gate requires
+\begin{equation}
+\|\widehat{\vct s}_P\times\widehat{\vct s}_{\rm meas}\|\le0.075.
+\label{eq:semiglobal-sine-gate}
+\end{equation}
+Because a sine residual is identical at angles $\alpha$ and $\pi-\alpha$,
+Eq.~\eqref{eq:semiglobal-sine-gate} by itself is not a branch certificate.  The
+semiglobal theorem therefore additionally assumes that an accepted handoff lies
+on the aligned branch,
+\begin{equation}
+\widehat{\vct s}_P^{\top}\widehat{\vct s}_{\rm meas}>0.
+\label{eq:semiglobal-aligned-branch}
+\end{equation}
+On that branch the angle between the two directions is at most
+$\sin^{-1}(0.075)$.  Let $\eta_g$ bound the angular difference between
+$\widehat{\vct s}_{\rm meas}$ and the true rest-specific-force direction
+$-\vct d$ during the accepted hold.  Then the spherical triangle inequality
+gives the conservative true-tilt bound
+\begin{equation}
+\theta_{H,\rm tilt}
+\le\sin^{-1}(0.075)+\eta_g.
+\label{eq:semiglobal-handoff-tilt}
+\end{equation}
+Thus the proof does not infer a small tilt merely from a small sine residual;
+it also requires the physically correct alignment branch.
+
+Let $\eta_m$ be a bound on the heading error supplied by an accepted magnetic
+gauge.  For example, if the true horizontal magnetic component has magnitude
+at least $B_{h,0}>0$ and the learned horizontal reference error is at most
+$\delta B_h<B_{h,0}$, then one may take
+$\eta_m=\sin^{-1}(\delta B_h/B_{h,0})$.  By the geodesic triangle inequality,
+\begin{equation}
+d_{\SO(3)}(\widetilde{\mat R}_H,\mat I)
+\le\overline\theta_H
+:=\sin^{-1}(0.075)+\eta_g+\eta_m.
+\label{eq:semiglobal-handoff-attitude}
+\end{equation}
+Thus, provided $\overline\theta_H<\pi$, the principal MEKF attitude-error
+coordinate exists at handoff and satisfies
+$\|\delta\vct\theta_H\|\le\overline\theta_H$.
+
+Let $\vct e_{E,H}$ collect the remaining handoff errors in gyro bias,
+$v,p,S,a_w$, and residual accelerometer bias, and suppose the physical startup
+scenario gives the finite bound
+\begin{equation}
+\|\vct e_{E,H}\|\le B_H.
+\label{eq:semiglobal-handoff-E}
+\end{equation}
+Let $r$ be any invariant Live radius admitted by the proof of
+Theorem~\ref{thm:iss-21-local}.  A sufficient basin-entry condition is
+\begin{equation}
+r_H:=\sqrt{\overline\theta_H^2+B_H^2}<r.
+\label{eq:semiglobal-basin-entry}
+\end{equation}
+This condition is deliberately explicit.  The proxy removes the almost-global
+attitude-initialization obstruction; it does not manufacture a theorem for
+arbitrarily large translational or bias errors at handoff.  Those states must
+enter the same local Live neighborhood required by the existing 21-state
+nonlinear remainder bound.
+
+\begin{theorem}[Almost-global/semiglobal practical proxy-to-Live ISS]
+\label{thm:semiglobal-proxy-live}
+Fix a compact $\mathcal K_{\epsilon,B_\beta}\subset\mathcal D_P$ as in
+Eq.~\eqref{eq:semiglobal-proxy-compact} and a compact family of physical startup
+conditions satisfying Eqs.~\eqref{eq:semiglobal-proxy-force-bound} and
+\eqref{eq:semiglobal-handoff-E}.  Assume:
+(i) the reduced proxy initial error belongs to
+$\mathcal K_{\epsilon,B_\beta}$;
+(ii) the bounded proxy perturbation and sample step are small enough for
+Eq.~\eqref{eq:semiglobal-proxy-iss} to reach an accepted gravity interval;
+(iii) the accepted gravity interval satisfies the aligned-branch condition
+\eqref{eq:semiglobal-aligned-branch};
+(iv) the auxiliary handoff channels---tuner readiness and, when required by the
+Live observability hypothesis, a noncollinear magnetic or equivalent vector
+reference---become ready within a finite time uniform over the chosen startup
+family, with heading error bounded as in
+Eq.~\eqref{eq:semiglobal-handoff-attitude};
+(v) the basin-entry inequality \eqref{eq:semiglobal-basin-entry} holds; and
+(vi) after handoff, the hypotheses of
+Theorems~\ref{thm:iss-21-ues} and \ref{thm:iss-21-local} hold, including the
+bounded predictable SpectralMSE schedule and no hard reset on the analyzed Live
+interval.  Then there is a finite handoff index $k_H$, uniform over the chosen
+compact startup family, and constants $C\ge1$, $0<\lambda<1$, and
+$\Gamma<\infty$ such that for every $k\ge k_H$,
+\begin{equation}
+\boxed{
+\|\vct e_k\|
+\le C\lambda^{k-k_H}r_H
+ +\Gamma\sup_{k_H\le i<k}\|\vct d_i\| .}
+\label{eq:semiglobal-live-bound}
+\end{equation}
+For zero Live disturbance and exact accepted references, the post-handoff error
+converges to zero.  For bounded deterministic disturbance,
+\begin{equation}
+\limsup_{k\to\infty}\|\vct e_k\|
+\le\Gamma\|\vct d\|_\infty.
+\label{eq:semiglobal-ultimate-bound}
+\end{equation}
+Because every compact subset of the almost-global domain $\mathcal D_P$ is
+admissible, the startup attraction property is semiglobal on that domain; since
+its complement $\mathcal N_P$ has measure zero, the attitude-capture statement
+is almost global.  Bounded inputs enlarge the target to the practical
+neighborhood in Eq.~\eqref{eq:semiglobal-ultimate-bound}.
+\end{theorem}
+
+\begin{proof}
+Equation~\eqref{eq:semiglobal-proxy-iss} implies uniform convergence, up to the
+input-dependent practical radius, on the compact set
+$\mathcal K_{\epsilon,B_\beta}$.  Under assumption (ii), choose a finite time
+$T_P$ for which the right-hand side of
+Eq.~\eqref{eq:semiglobal-proxy-iss} reaches the proxy accuracy required by an
+accepted gravity interval; compactness makes this choice uniform over the
+prescribed startup family.  Assumption (iii) selects the aligned branch of the
+sine gate, so Eqs.~\eqref{eq:semiglobal-sine-gate} and
+\eqref{eq:semiglobal-handoff-tilt} provide a genuine small-tilt bound rather
+than its antipodal alternative.  Assumption (iv) supplies a finite uniform time
+$T_A$ for the remaining handoff channels and bounds yaw.  Hence an accepted
+handoff exists no later than a finite family-dependent bound formed from
+$T_P$ and $T_A$, subject to the timeout qualification below, and
+Eq.~\eqref{eq:semiglobal-handoff-attitude} bounds the complete attitude error at
+that handoff.  Together with Eq.~\eqref{eq:semiglobal-handoff-E}, assumption
+(v) gives $\|\vct e_{k_H}\|\le r_H<r$.  Therefore the handoff lands inside the
+invariant neighborhood used in Theorem~\ref{thm:iss-21-local}.  Applying
+Eq.~\eqref{eq:iss-local-bound} from $j=k_H$ gives
+Eq.~\eqref{eq:semiglobal-live-bound}; taking the limit superior gives
+Eq.~\eqref{eq:semiglobal-ultimate-bound}.  Finally, the almost-global proxy
+result makes $\mathcal N_P$ measure zero, while the argument above is uniform
+on every compact subset of $\mathcal D_P$.  This gives the claimed
+almost-global/semiglobal qualification.
+\end{proof}
+
+\paragraph{Finite startup timeout}
+Almost-global convergence is not uniform as the undesired stable set is
+approached.  Therefore a fixed startup timeout cannot certify all compact sets
+approaching $\mathcal N_P$ simultaneously.  With the implemented \SI{150}{s}
+latest-handoff policy, Theorem~\ref{thm:semiglobal-proxy-live} applies to those
+compact sets and disturbance levels whose uniform quality-handoff time is less
+than the effective timeout, or whenever a timeout-triggered handoff
+independently satisfies Eqs.~\eqref{eq:semiglobal-aligned-branch} and
+\eqref{eq:semiglobal-basin-entry}.  A timeout-forced handoff that does not
+satisfy those conditions is outside the theorem.
+
+\paragraph{Implementation note on the branch certificate}
+The current implementation computes the gravity alignment residual from the
+cross-product norm and does not separately test the dot-product sign in
+Eq.~\eqref{eq:semiglobal-aligned-branch}.  In normal startup the Mahony proxy is
+seeded from the measured accelerometer direction, so the aligned branch is the
+intended operating branch; nevertheless, a sine-only residual is not by itself
+a formal certificate of that fact.  Equation~\eqref{eq:semiglobal-aligned-branch}
+is therefore an explicit theorem assumption rather than an asserted property
+of the present gate.
+
+\paragraph{Later reconfiguration}
+The theorem certifies the first quality-gated proxy-to-MEKF handoff and each
+subsequent uninterrupted Live interval satisfying the standing assumptions.
+The second magnetic re-gauging and the $70^\circ$ tilt re-lock remain separate
+hard maps.  They are covered only if their post-map state is independently
+verified to satisfy Eq.~\eqref{eq:semiglobal-basin-entry}; otherwise they remain
+boundaries between certified Live intervals rather than part of the present
+proof.
+
+\paragraph{Stochastic qualification}
+As in Sec.~\ref{app:iss-stability}, the ISS statements above are deterministic
+bounded-input statements.  Gaussian process and measurement noise do not have
+an almost-sure finite infinite-horizon supremum; corresponding stochastic
+claims require mean-square or finite-horizon high-probability bounds.
