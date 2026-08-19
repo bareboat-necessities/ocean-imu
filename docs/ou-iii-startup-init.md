@@ -41,12 +41,23 @@ Under `MahonyProxy`:
    pins that bit-for-bit.
 2. The gravity gate and the magnetic accumulation frame read the proxy tilt --
    for both acquisition stages, not just the first.
-3. When tilt has held agreement with gravity, north has been gauged, and the
-   tuner is ready, `goLive()` seeds the MEKF with the finished attitude and it
-   goes live in one step — linear block on, nominal `Racc`, operating point
+3. When tilt has held agreement with gravity *on the aligned branch*, north
+   has been gauged, and the tuner is ready, `goLive()` seeds the MEKF with the
+   finished attitude and it goes live in one step — linear block on, nominal `Racc`, operating point
    already converged. It never occupies the staged warmup at all.
 4. The magnetic reference is re-learned once the observer has converged, and
    accelerometer-bias learning waits for that; see below.
+
+The gate's residual is `||s_hat x s_meas||`, a sine, and a sine reads the same
+at an angle and at its supplement: on its own it scores an attitude and its
+180-degree flip alike. So the gate also tests `s_hat . s_meas > 0` and only
+counts hold time on the aligned branch. The sign test is a condition, not a
+threshold, so it has no knob; both timeouts -- the bootstrap gravity timeout and
+`proxy_startup_timeout_sec` -- are held to it too, which delays a forced handoff
+rather than letting it seed the filter upside down. The antipodal set is not
+attracting for an accel-corrected observer, so that delay is bounded. This is
+the aligned-branch condition the semiglobal startup theorem assumes of an
+accepted handoff.
 
 The inner `SeaStateFusionFilter_OU_III` still defaults to `StagedMekf`. Only
 something above it can perform the handoff, so a filter driven directly through
@@ -165,7 +176,7 @@ gap needs a better exogenous tilt frame, not a later or longer average.
 | `mag_refine_start_sec` | 90 | when the refinement begins |
 | `mag_refine_window_sec` | 30 | its averaging window |
 | `proxy_startup_min_sec` | 8 | earliest handoff |
-| `proxy_startup_timeout_sec` | 150 | latest handoff; raised internally so it can never cut the mag acquisition short |
+| `proxy_startup_timeout_sec` | 150 | latest handoff; raised internally so it can never cut the mag acquisition short, and still held to the aligned-branch test |
 | `proxy_handoff_tilt_sigma_rad` | 0.035 | seeded tilt variance |
 | `proxy_handoff_yaw_sigma_rad` | 0.087 | seeded yaw variance once north is gauged |
 | `acc_bias_unlock_mag_updates` | 250 | magnetometer updates after going live before the accelerometer-bias gate opens |

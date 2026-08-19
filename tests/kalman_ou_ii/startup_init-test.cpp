@@ -57,6 +57,36 @@ using Wrapper = SeaStateFusion_OU_II<TrackerType::KALMANF>;
 using Policy = Filter::StartupInitPolicy;
 using Stage  = Filter::StartupStage;
 
+using WrapperConfig = Wrapper::Config;
+
+// Mirrors the wrapper's private gravity low-pass so runStartupGravityInit can
+// be driven directly, without a filter around it.
+struct SlowLPF {
+    Eigen::Vector3f state = Eigen::Vector3f::Zero();
+    bool initialized = false;
+
+    void reset() {
+        state.setZero();
+        initialized = false;
+    }
+
+    Eigen::Vector3f step(const Eigen::Vector3f& x, float dt, float tau_sec) {
+        if (!x.allFinite()) return state;
+
+        const float tau = std::max(1.0e-3f, tau_sec);
+        const float alpha = 1.0f - std::exp(-dt / tau);
+
+        if (!initialized) {
+            state = x;
+            initialized = true;
+            return state;
+        }
+
+        state += alpha * (x - state);
+        return state;
+    }
+};
+
 bool check(bool condition, const char* message) {
     if (!condition) std::cerr << "FAIL: " << message << '\n';
     return condition;
@@ -380,6 +410,133 @@ bool test_refinement_frame_is_exogenous() {
     return ok;
 }
 
+// The startup gravity gates certify a branch, not just an angle.
+//
+// Both gates score attitude against measured gravity with the sine residual
+// ||s_hat x s_meas||. A sine is symmetric about a right angle: it reads the
+// same at an angle and at its supplement, so an attitude flipped through
+// 180 deg scores exactly as well as the correct one. What separates the two is
+// the sign of s_hat . s_meas, and no sine residual carries it.
+//
+// That gap is not decorative here, because these gates are the basin-entry map
+// of the startup argument: the tilt they accept is the tilt that frames the
+// magnetic reference and seeds the MEKF, and the semiglobal startup theorem
+// only applies to a handoff on the aligned branch. So both gates now also
+// require s_hat . s_meas > 0, and so do the two forced paths -- the bootstrap
+// timeout and the proxy handoff timeout -- which bypass the residual entirely
+// and would otherwise hand over whatever the observer happened to be holding.
+bool test_startup_gate_certifies_the_aligned_branch() {
+    bool ok = true;
+
+    WrapperConfig cfg;
+
+    const Eigen::Vector3f acc_level(0.0f, 0.0f, -G);
+
+    const Eigen::Quaternionf q_upright = Eigen::Quaternionf::Identity();
+    const Eigen::Quaternionf q_flipped(
+        Eigen::AngleAxisf(float(M_PI), Eigen::Vector3f::UnitX()));
+
+    const float sin_upright =
+        seastate::common::gravityAlignResidualSin(q_upright, acc_level);
+    const float sin_flipped =
+        seastate::common::gravityAlignResidualSin(q_flipped, acc_level);
+
+    // The residual cannot tell these apart, and this is the whole reason the
+    // sign test exists: both of them pass the deployed 0.075 gate.
+    ok &= check(sin_upright <= cfg.mag_gravity_align_max_sin,
+                "the upright attitude must pass the sine gate");
+    ok &= check(sin_flipped <= cfg.mag_gravity_align_max_sin,
+                "the antipodal attitude must also pass the sine gate");
+
+    ok &= check(seastate::common::gravityAlignedBranch(q_upright, acc_level),
+                "the branch test must accept the upright attitude");
+    ok &= check(!seastate::common::gravityAlignedBranch(q_flipped, acc_level),
+                "the branch test must reject the antipodal attitude");
+
+    // Cosine and sine agree away from the branch boundary, so the sign test
+    // adds a branch and takes nothing else away.
+    for (float ang : {0.02f, 0.6f, 1.4f}) {
+        const Eigen::Quaternionf q_tilted(
+            Eigen::AngleAxisf(ang, Eigen::Vector3f::UnitY()));
+        ok &= check(seastate::common::gravityAlignedBranch(q_tilted, acc_level),
+                    "an ordinary tilt must stay on the aligned branch");
+    }
+
+    // Now the forced path. The bootstrap timeout does not look at the residual
+    // at all, so before the branch test it would seed the filter with whatever
+    // the observer held once the clock ran out -- including an attitude that
+    // disagrees with measured gravity by more than a right angle.
+    seastate::common::StartupTiltObserver obs;
+    SlowLPF slow;
+    float good_sec = 0.0f;
+
+    bool fired = false;
+    Eigen::Vector3f seed = Eigen::Vector3f::Zero();
+
+    auto step_init = [&](const Eigen::Vector3f& gyro,
+                         const Eigen::Vector3f& acc,
+                         float elapsed) {
+        return seastate::common::runStartupGravityInit(
+            gyro, acc, DT, elapsed, G,
+            cfg.bootstrap_tilt_obs_acc_tau_sec,
+            cfg.bootstrap_gravity_slow_tau_sec,
+            cfg.bootstrap_gravity_align_max_sin,
+            cfg.bootstrap_gravity_hold_sec,
+            cfg.bootstrap_gravity_min_sec,
+            cfg.bootstrap_gravity_timeout_sec,
+            cfg.bootstrap_gravity_norm_frac,
+            obs, slow, good_sec,
+            [&](const Eigen::Vector3f& acc_init) {
+                seed = acc_init;
+                fired = true;
+            });
+    };
+
+    // Drive the observer 170 deg away from measured gravity while the
+    // accelerometer reads three times g. That norm error drives the observer's
+    // accel correction weight to zero, so it propagates on the gyro alone
+    // while the low-passed gravity direction stays where it was -- which is
+    // exactly the state the sine residual is blind to.
+    const float turn_sec = 10.0f;
+    const Eigen::Vector3f gyro_turn(
+        (170.0f * float(M_PI) / 180.0f) / turn_sec, 0.0f, 0.0f);
+    const Eigen::Vector3f acc_heavy(0.0f, 0.0f, -3.0f * G);
+
+    float t = 0.0f;
+    const int steps_away = int(30.0f / DT);
+    for (int k = 0; k < steps_away; ++k) {
+        t += DT;
+        step_init(t <= turn_sec ? gyro_turn : Eigen::Vector3f::Zero(),
+                  acc_heavy, t);
+    }
+
+    ok &= check(t > cfg.bootstrap_gravity_timeout_sec,
+                "the antipodal interval must outlast the bootstrap timeout");
+    ok &= check(!fired,
+                "a timed-out bootstrap must not seed an antipodal attitude");
+
+    // The antipodal set is not attracting for an accel-corrected observer, so
+    // holding the timeout closed costs a bounded wait rather than the run: put
+    // the accelerometer back on gravity and the handoff arrives on its own.
+    const int steps_back = int(120.0f / DT);
+    for (int k = 0; k < steps_back && !fired; ++k) {
+        t += DT;
+        step_init(Eigen::Vector3f::Zero(), acc_level, t);
+    }
+
+    ok &= check(fired, "the branch requirement must be a wait, not a stall");
+
+    // What the forced path certifies is the branch, not the angle: it fires as
+    // soon as the observer is back on the correct side, which is what the
+    // theorem's timeout qualification assumes and no more.
+    const float seed_n = seed.norm();
+    ok &= check(seed_n > 1e-3f, "the seed must be a usable gravity vector");
+    ok &= check((seed / std::max(seed_n, 1e-6f)).dot(acc_level.normalized()) > 0.0f,
+                "the accepted seed must lie on the aligned branch");
+
+    return ok;
+}
+
 }  // namespace
 
 int main() {
@@ -391,6 +548,7 @@ int main() {
     ok &= test_staged_policy_still_warms_the_mekf();
     ok &= test_startup_proxy_rejects_gyro_bias();
     ok &= test_refinement_frame_is_exogenous();
+    ok &= test_startup_gate_certifies_the_aligned_branch();
 
     if (!ok) {
         std::cerr << "startup init checks FAILED\n";

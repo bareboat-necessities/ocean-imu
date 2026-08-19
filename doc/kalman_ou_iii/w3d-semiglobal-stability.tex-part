@@ -185,19 +185,22 @@ force directions.  Write
 \widehat{\vct s}_{\rm meas}
 =\frac{\vct f_{\rm LP}}{\|\vct f_{\rm LP}\|}.
 \end{equation}
-The current gate requires
+The residual part of the gate requires
 \begin{equation}
 \|\widehat{\vct s}_P\times\widehat{\vct s}_{\rm meas}\|\le0.075.
 \label{eq:semiglobal-sine-gate}
 \end{equation}
 Because a sine residual is identical at angles $\alpha$ and $\pi-\alpha$,
-Eq.~\eqref{eq:semiglobal-sine-gate} by itself is not a branch certificate.  The
-semiglobal theorem therefore additionally assumes that an accepted handoff lies
-on the aligned branch,
+Eq.~\eqref{eq:semiglobal-sine-gate} by itself is not a branch certificate: it
+scores an attitude and its antipode alike.  An accepted handoff is therefore
+required to lie on the aligned branch as well,
 \begin{equation}
-\widehat{\vct s}_P^{\top}\widehat{\vct s}_{\rm meas}>0.
+\widehat{\vct s}_P^{\top}\widehat{\vct s}_{\rm meas}>0,
 \label{eq:semiglobal-aligned-branch}
 \end{equation}
+which is the sign of the inner product of the same two directions and is
+evaluated with Eq.~\eqref{eq:semiglobal-sine-gate} on every sample of the
+accepted hold and on the sample that seeds the filter.
 On that branch the angle between the two directions is at most
 $\sin^{-1}(0.075)$.  Let $\eta_g$ bound the angular difference between
 $\widehat{\vct s}_{\rm meas}$ and the true rest-specific-force direction
@@ -298,7 +301,8 @@ $T_P$ for which the right-hand side of
 Eq.~\eqref{eq:semiglobal-proxy-iss} reaches the proxy accuracy required by an
 accepted gravity interval; compactness makes this choice uniform over the
 prescribed startup family.  Assumption (iii) selects the aligned branch of the
-sine gate, so Eqs.~\eqref{eq:semiglobal-sine-gate} and
+sine gate---the condition the deployed gate tests rather than infers---so
+Eqs.~\eqref{eq:semiglobal-sine-gate} and
 \eqref{eq:semiglobal-handoff-tilt} provide a genuine small-tilt bound rather
 than its antipodal alternative.  Assumption (iv) supplies a finite uniform time
 $T_A$ for the remaining handoff channels and bounds yaw.  Hence an accepted
@@ -324,18 +328,31 @@ latest-handoff policy, Theorem~\ref{thm:semiglobal-proxy-live} applies to those
 compact sets and disturbance levels whose uniform quality-handoff time is less
 than the effective timeout, or whenever a timeout-triggered handoff
 independently satisfies Eqs.~\eqref{eq:semiglobal-aligned-branch} and
-\eqref{eq:semiglobal-basin-entry}.  A timeout-forced handoff that does not
-satisfy those conditions is outside the theorem.
+\eqref{eq:semiglobal-basin-entry}.  The implementation withholds a
+timeout-forced handoff until Eq.~\eqref{eq:semiglobal-aligned-branch} holds, so
+the branch half of that qualification is enforced rather than assumed; because
+the antipodal set is not attracting for the accel-corrected proxy, this delays
+the forced handoff by a bounded interval rather than suppressing it.  The forced
+path does not test the residual magnitude, so it certifies the branch and not
+the tilt bound of Eq.~\eqref{eq:semiglobal-handoff-tilt}: a timeout-forced
+handoff that does not independently satisfy
+Eq.~\eqref{eq:semiglobal-basin-entry} is outside the theorem.
 
 \paragraph{Implementation note on the branch certificate}
-The current implementation computes the gravity alignment residual from the
-cross-product norm and does not separately test the dot-product sign in
+The implementation evaluates both halves of the gate: the cross-product norm
+for Eq.~\eqref{eq:semiglobal-sine-gate} and the sign of the inner product for
 Eq.~\eqref{eq:semiglobal-aligned-branch}.  In normal startup the Mahony proxy is
 seeded from the measured accelerometer direction, so the aligned branch is the
-intended operating branch; nevertheless, a sine-only residual is not by itself
-a formal certificate of that fact.  Equation~\eqref{eq:semiglobal-aligned-branch}
-is therefore an explicit theorem assumption rather than an asserted property
-of the present gate.
+intended operating branch; a sine-only residual is nevertheless not by itself a
+formal certificate of that fact, which is why the sign is tested rather than
+inferred from the seeding argument.  The test is a proof condition and not a
+tuning parameter, so it carries no configurable tolerance, and it holds on both
+acceptance paths---quality hold and forced timeout---for the startup gravity
+bootstrap and for the proxy-to-MEKF handoff alike.
+Equation~\eqref{eq:semiglobal-aligned-branch} remains stated as an assumption of
+Theorem~\ref{thm:semiglobal-proxy-live} because the theorem is a statement about
+accepted handoffs; for handoffs the deployed gate accepts, the gate discharges
+it.
 
 \paragraph{Later reconfiguration}
 The theorem certifies the first quality-gated proxy-to-MEKF handoff and each

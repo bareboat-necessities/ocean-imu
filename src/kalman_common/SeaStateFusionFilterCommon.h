@@ -107,6 +107,30 @@ inline float unitVecAlignSin(const Eigen::Vector3f& a,
     return std::min(std::max(s, 0.0f), 1.0f);
 }
 
+// Companion to unitVecAlignSin.  A sine residual is symmetric about
+// 90 deg, so it reads the same at an angle and at its supplement: it cannot
+// tell the aligned branch from the antipodal one.  This returns the cosine,
+// whose sign is exactly that branch, and fails closed at -1 so a degenerate
+// input can never be read as aligned.
+inline float unitVecAlignCos(const Eigen::Vector3f& a,
+                             const Eigen::Vector3f& b)
+{
+    if (!a.allFinite() || !b.allFinite()) return -1.0f;
+
+    const float an = a.norm();
+    const float bn = b.norm();
+    if (!(an > 1e-6f) || !(bn > 1e-6f) ||
+        !std::isfinite(an) || !std::isfinite(bn))
+    {
+        return -1.0f;
+    }
+
+    const float c = (a / an).dot(b / bn);
+    if (!std::isfinite(c)) return -1.0f;
+
+    return std::min(std::max(c, -1.0f), 1.0f);
+}
+
 inline Eigen::Vector3f predictedGravityDirBody(const Eigen::Quaternionf& q_bw_in)
 {
     if (!q_bw_in.coeffs().allFinite()) {
@@ -151,6 +175,25 @@ inline float gravityAlignResidualSin(const Eigen::Quaternionf& q_bw_in,
     return std::min(std::max(s, 0.0f), 1.0f);
 }
 
+// Branch companion to gravityAlignResidualSin: the cosine between the
+// predicted and measured rest-specific-force directions.  Positive means the
+// attitude is on the aligned branch; the sine residual alone is satisfied just
+// as well by the attitude flipped through 180 deg.
+inline float gravityAlignResidualCos(const Eigen::Quaternionf& q_bw_in,
+                                     const Eigen::Vector3f& acc_body_ned)
+{
+    return unitVecAlignCos(predictedGravityDirBody(q_bw_in), acc_body_ned);
+}
+
+// The runtime branch certificate the startup gates are judged against:
+// s_hat^T s_meas > 0.  Kept as a named predicate because it is a proof
+// condition, not a tuning knob, and is therefore not exposed as a threshold.
+inline bool gravityAlignedBranch(const Eigen::Quaternionf& q_bw_in,
+                                 const Eigen::Vector3f& acc_body_ned)
+{
+    return gravityAlignResidualCos(q_bw_in, acc_body_ned) > 0.0f;
+}
+
 template<typename Vec3LPFType, typename OnReadyFn>
 inline bool runStartupGravityInit(const Eigen::Vector3f& gyro_body_ned,
                                   const Eigen::Vector3f& acc_body_ned,
@@ -186,6 +229,13 @@ inline bool runStartupGravityInit(const Eigen::Vector3f& gyro_body_ned,
 
     const float align_sin = unitVecAlignSin(s_obs, g_slow);
 
+    // Branch certificate.  The sine residual above is blind to a 180 deg flip,
+    // so on its own it would accept an observer that has settled on the
+    // antipodal gravity direction and seed the filter upside down.  The
+    // aligned branch is the sign of the dot product, and it is required both
+    // for the quality path and for the timeout path below.
+    const bool aligned_branch = (unitVecAlignCos(s_obs, g_slow) > 0.0f);
+
     const float g_slow_n = g_slow.norm();
     const float g_rel_err =
         (std::isfinite(g_slow_n) && gravity_std > 1e-6f)
@@ -195,6 +245,7 @@ inline bool runStartupGravityInit(const Eigen::Vector3f& gyro_body_ned,
     const bool gravity_good_now =
         std::isfinite(align_sin) &&
         (align_sin <= gravity_align_max_sin) &&
+        aligned_branch &&
         std::isfinite(g_rel_err) &&
         (g_rel_err <= gravity_norm_frac);
 
@@ -216,6 +267,16 @@ inline bool runStartupGravityInit(const Eigen::Vector3f& gyro_body_ned,
         (elapsed_sec >= gravity_timeout_sec);
 
     if (!ready_by_quality && !ready_by_timeout) return false;
+
+    // Both acceptance paths are held to the branch certificate on the sample
+    // that actually seeds the filter.  The hold counter alone is not that
+    // certificate: it can still stand above the hold time for one sample after
+    // the branch flips.  A forced handoff is still a handoff -- the timeout may
+    // bound how long startup takes, but it may not hand over an attitude that
+    // is upside down with respect to the measurement it is derived from.  The
+    // antipodal set is not attracting for the accel-corrected observer, so this
+    // is a bounded extra wait rather than a stall.
+    if (!aligned_branch) return false;
 
     Eigen::Vector3f g_init_dir = s_obs;
 
