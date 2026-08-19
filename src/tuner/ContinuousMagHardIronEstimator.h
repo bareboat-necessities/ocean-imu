@@ -43,11 +43,19 @@
   plus an aliased image of the distortion, and in a wave record that image is
   as large as the offset itself.
 
-  The ridge is that model error, not sample noise.  Config::model_ridge is a
-  prior variance ratio in the same dimensionless units as the excitation above:
-  a direction excited far above it is returned nearly whole, and one excited far
-  below it is returned nearly zero.  It does not shrink as samples accumulate,
-  because the error it prices does not either.
+  The ridge is that model error, not sample noise.  It is a prior variance ratio
+  in the same dimensionless units as the excitation above: a direction excited
+  far above it is returned nearly whole, and one excited far below it is
+  returned nearly zero.  It does not shrink as samples accumulate, because the
+  error it prices does not either.
+
+  It has two terms and they are not two ways of saying the same thing.
+  Config::model_ridge_relative carries the calibration and scales with the
+  excitation, so what survives is a property of the sensor.  Config::model_ridge
+  is a floor for a window with no excitation at all, and it only does that job
+  while it stays below what a working hull produces -- above that it is a fixed
+  ridge, shrinking hardest in the calm seas where the standing error is largest,
+  which is precisely what the relative term exists to avoid.
 
   The class estimates only.  A caller decides whether, how much, and how
   quickly to apply the result, and levelReferenceForBias() gives it the
@@ -87,9 +95,20 @@ public:
     // exactly the calm seas where the standing yaw error is largest.
     float min_information = 2.0f;
 
-    // Prior variance ratio that regularises the solve; see the header note.
-    // The floor is what protects a window with almost no excitation at all.
-    float model_ridge = 4.0e-3f;
+    // Absolute floor under the ridge; see the header note.  It exists for a
+    // window with almost no excitation at all, and it only does that job while
+    // it stays below the excitation a working hull produces.  Above that it
+    // stops being a floor and becomes the whole regularisation, which is the
+    // fixed-ridge behaviour the relative term below was introduced to replace.
+    //
+    // What sets the scale is the information gate above: at the saturated
+    // weight of an exponential window -- memory_sec over the magnetometer
+    // sample period -- the gate admits a direction of eigenvalue
+    // min_information/weight, which is 1.3e-4 on these settings.  This floor
+    // sits a few times above that and one to two orders of magnitude below
+    // what even a slight sea excites, so the relative term governs whenever
+    // the hull moves at all.
+    float model_ridge = 5.0e-4f;
 
     // The part of the ridge that scales with the excitation, as a multiple of
     // the mean eigenvalue of the normal matrix.

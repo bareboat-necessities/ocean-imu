@@ -391,14 +391,33 @@ void process_one(const std::string& filename,
         116.88 on jonswap H8.5, which is a redistribution across records rather
         than a uniform gain -- the pooled six-seed figure is 0.9209.
     */
+    // Re-derived for the continuous hard-iron re-tune, which cut the
+    // estimator's absolute ridge floor from 4e-3 to 5e-4.  TFG carries the
+    // same calibration as the two OU families and is re-gauged with them; see
+    // docs/continuous-mag-hard-iron.md.
+    //
+    // Yaw per record, old ridge -> new: 1.4747 -> 0.6001, 1.3156 -> 0.9497,
+    // 0.3801 -> 0.5061, 1.5817 -> 1.3449, 0.9256 -> 0.4271, 0.7652 -> 0.4052,
+    // 0.9783 -> 0.7392, 1.4724 -> 1.2469.  Mean 1.1117 -> 0.7774, worst
+    // 1.5817 -> 1.3449; seven of eight records improve.  This is the largest
+    // yaw gain of the three families, which is what should happen: TFG's
+    // standing heading error was the largest to begin with.
+    //
+    // The accelerometer Z-bias bar goes up 2 percent (4.9961 -> 5.0940) and
+    // the 3D bias bar 0.3 percent.  That is the price the correction has
+    // always charged, in the same place: the heading walks onto the corrected
+    // field during the run and the horizontal accelerometer bias absorbs part
+    // of that motion.  An error at 164 percent of the true bias means the
+    // error already exceeds the thing being estimated, which was true before
+    // this change and is true after it.
     static constexpr W3dFailureLimits kRegressionBars{
-        .err_limit_percent_z_jonswap   = 4.807f,  // was 4.803, worst 4.7830 (jonswap H0.27)
-        .err_limit_percent_z_pmstokes  = 4.707f,  // was 4.709, worst 4.6833 (pmstokes H0.27)
-        .err_limit_yaw_deg             = 1.59f,   // was 1.536, worst 1.5818 (jonswap H8.5)
-        .err_limit_percent_3d_jonswap  = 21.13f,  // was 21.14, worst 21.0169 (jonswap H1.5)
-        .err_limit_percent_3d_pmstokes = 20.74f,  // was 20.71, worst 20.6322 (pmstokes H4.0)
-        .acc_z_bias_percent            = 5.022f,  // was 5.026, worst 4.9961 (pmstokes H8.5)
-        .bias_3d_percent               = 164.5f,  // was 167.6, worst 163.607 (pmstokes H4.0, accel)
+        .err_limit_percent_z_jonswap   = 4.812f,  // was 4.807, worst 4.7874 (jonswap H0.27)
+        .err_limit_percent_z_pmstokes  = 4.71f,   // was 4.707, worst 4.6858 (pmstokes H0.27)
+        .err_limit_yaw_deg             = 1.352f,  // was 1.59,  worst 1.3449 (jonswap H8.5)
+        .err_limit_percent_3d_jonswap  = 20.43f,  // was 21.13, worst 20.3196 (jonswap H1.5)
+        .err_limit_percent_3d_pmstokes = 19.64f,  // was 20.74, worst 19.5357 (pmstokes H0.27)
+        .acc_z_bias_percent            = 5.12f,   // was 5.022, worst 5.0940 (pmstokes H8.5)
+        .bias_3d_percent               = 164.9f,  // was 164.5, worst 164.050 (pmstokes H4.0, accel)
     };
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
