@@ -382,10 +382,14 @@ truth. Yaw is the objective; this number is a diagnostic.
 
 ## Quality gates
 
-`FAIL_LIMITS` in `kalman_ou_iii-sim.cpp` is re-derived, by the documented rule
-of worst observed plus about half a percent rounded up to the next tenth:
+`FAIL_LIMITS` in `kalman_ou_iii-sim.cpp` was re-derived when the correction
+landed, by the documented rule of worst observed plus about half a percent
+rounded up to the next tenth. **This table is that cut, not the bars in force
+now** -- the filter has been re-gauged twice since, and the current values are
+in the `FAIL_LIMITS` comment in the simulator (yaw is 0.8827 there, not the
+1.068 below):
 
-| gate | was | now | worst observed |
+| gate | before that cut | at that cut | worst observed then |
 | --- | --- | --- | --- |
 | yaw deg | 2.2 | **1.068** | 1.0627 (jonswap H0.27) |
 | 3D % PM--Stokes | 20.6 | **20.9** | 20.72 (pmstokes H4.0) |
@@ -409,7 +413,10 @@ that limit is fitted to the filter that ships. Score the ablation with
 
 That table is the cut the correction landed with. All three families were
 re-gauged again for the re-tune, and the current bars are in each simulator's
-`FAIL_LIMITS` comment. OU-III's yaw bar comes down from 1.27 to 0.8824 and its
+`FAIL_LIMITS` comment. OU-III's was re-derived once more when this change met
+the shortened-transition `r_S` horizon refit in a merge, which moved its bars
+in the fourth digit (yaw 0.8824 to 0.8827); the comment there carries that
+pass too. OU-III's yaw bar comes down from 1.27 to 0.8824 and its
 two displacement bars come down as well -- though the displacement move is
 drift already in the tree from the integral-regularizer schedule rather than
 anything this change did, and the comment there separates the two. OU-II's yaw

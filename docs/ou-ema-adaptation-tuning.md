@@ -23,6 +23,13 @@ Everything below is measured on the versioned simulation records
 records are nearly indifferent; the gain is on sea-state transitions, where the
 shipped horizon lagged the target by 10 to 20 s.
 
+**Result, second pass.** OU-III's `ADAPT_RS_MULT` moves again, from `3.0` to
+`1.5`, when the transition instrument is sharpened: the crossfade the study
+blends over went from 360 s to 120 s, which is fast enough for the smoothing
+horizon to actually lag it. Section 7 is that measurement. OU-II's two
+multipliers and TFG's are untouched and stay at `3.0`; the same instrument is
+available for them, but this pass measured OU-III.
+
 ## 1. Why the stationary records cannot answer the question
 
 A smoothing horizon is only observable while its target moves. On a stationary
@@ -48,12 +55,13 @@ for an instrument that holds the target still.
 
 `tools/ou_ema_adapt_study.py transition` builds non-stationary records with the
 same C2 quintic crossfade `tools/ou_validation.py` uses for its transition
-scenario: two independently phase-randomized realizations blended over
-420-780 s of a 1200 s record, with displacement, velocity and acceleration all
-carrying the blend's derivatives so the record stays kinematically consistent.
-The 900 s scoring window opens at 300 s, so it contains 120 s of the start sea,
-the whole crossfade and 420 s of the endpoint sea. Those three intervals are
-scored separately through `W3D_VALIDATION_SEGMENTS`.
+scenario, with displacement, velocity and acceleration all carrying the blend's
+derivatives so the record stays kinematically consistent. Sections 3-6 below
+were measured when that crossfade ran over 420-780 s of a 1200 s record; it now
+runs over 540-660 s, and section 7 is the re-measurement. The 900 s scoring
+window opens at 300 s, so it contains 240 s of the start sea, the whole 120 s
+crossfade, and 540 s of the endpoint sea; the intervals are scored separately
+through `W3D_VALIDATION_SEGMENTS`.
 
 Two endpoint pairs are used, each run in both directions (sea building and sea
 decaying) at five wave-phase seeds:
@@ -227,7 +235,139 @@ displacement error on that same record is unchanged (OU-II 20.779% -> 20.776%)
 while the bias aggregate rises. It is a redistribution between two states, not
 a loss of displacement accuracy.
 
-## 7. Reproducing
+## 7. Second pass: the same question on a crossfade fast enough to lag
+
+Sections 3-6 were measured against a 360 s crossfade. That is a long ramp
+compared with the horizon being tuned: at the deployed operating points
+`3.0 * tau` is 4-13 s, so the crossfade was 27 to 90 smoothing horizons long and
+the smoother had time to settle at every point along it. What the blend
+interval mostly scored was therefore how well the schedule sat on a slowly
+moving target, not how fast it followed. `tools/ou_validation.py` now crossfades over 120 s, which is about
+three times the longest averaging memory anywhere in the adaptation path, and
+the endpoint sea is scored twice -- a run-on interval one crossfade long, then
+the settled remainder -- so a horizon that keeps carrying the sea it just left
+is charged for it separately from one that is simply wrong.
+
+Sweeping `ADAPT_RS_MULT` on that record. Ratios to the shipped `3.0` on the
+identical realization; transition columns pool 2 endpoint pairs x 2 directions
+x 3 wave-phase seeds x 3 IMU seed triplets (n = 36), the stationary column the
+four JONSWAP and four PM-Stokes records at the same three seed triplets
+(n = 24). Vertical RMS throughout:
+
+| `ADAPT_RS_MULT` | blend | blend worst | run-on | settled | whole window | stationary | stationary worst |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0.35 | 0.9761 | 1.0627 | 0.9842 | 0.9900 | 0.9865 | 0.9907 | 0.9962 |
+| 0.5 | 0.9761 | 1.0550 | 0.9859 | 0.9910 | 0.9875 | 0.9923 | 0.9978 |
+| 0.75 | 0.9778 | 1.0413 | 0.9885 | 0.9927 | 0.9895 | 0.9944 | 0.9994 |
+| 1.0 | 0.9801 | 1.0300 | 0.9905 | 0.9942 | 0.9913 | 0.9958 | 1.0003 |
+| **1.5** | **0.9850** | **1.0156** | **0.9937** | **0.9964** | **0.9943** | **0.9977** | **1.0013** |
+| 2.0 | 0.9900 | 1.0077 | 0.9961 | 0.9980 | 0.9966 | 0.9988 | 1.0013 |
+| 3.0 (was shipped) | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| 4.0 | 1.0094 | 1.0323 | 1.0033 | 1.0013 | 1.0026 | 1.0005 | 1.0032 |
+| 5.0 | 1.0180 | 1.0618 | 1.0066 | 1.0022 | 1.0047 | 1.0007 | 1.0056 |
+| 8.0 | 1.0394 | 1.1341 | 1.0177 | 1.0036 | 1.0095 | 1.0007 | 1.0098 |
+
+Three things changed relative to the first pass, and only the first of them is
+about the constant:
+
+- **The run-on cost is now scored on its own.** The run-on interval moves
+  monotonically with the horizon (0.9905 at 1.0, 1.0177 at 8.0), in the same
+  direction as the blend and about five times harder than the settled interval
+  beside it (1.0036 at 8.0). Under the 360 s crossfade that interval was the
+  first quarter of a single 420 s endpoint segment, so the same cost was
+  averaged down by the settled sea around it.
+- **The stationary ensemble now agrees with the transition ensemble.** In the
+  first pass the stationary worst-record vertical error rose as the horizon
+  shortened, and that is what stopped the constant at 3.0. It no longer does:
+  at 1.5 the stationary mean is 0.9977 and the worst record 1.0013, and the
+  curve is still falling at 0.35. What changed in between is the rest of the
+  filter -- the operating point moved to the wave band, the `r_S` law was
+  re-gauged, and `MIN_R_S` came down -- so this is a re-measurement at a
+  different operating point rather than a contradiction of the old one.
+- **The cost is in the tail, not the mean.** The mean keeps improving down to
+  0.35 while the worst single realization degrades monotonically the other way:
+  +0.8% at 2.0, +1.6% at 1.5, +3.0% at 1.0, +6.3% at 0.35, all on the blend.
+  That is the smoother passing tuner jitter into `r_S` on the record where the
+  jitter happens to be worst.
+
+The rule is the one section 6 used, applied to the instrument that can now see
+the cost: follow the horizon down until the worst-record loss has caught up
+with the mean gain, and stop at the crossing. On the blend the two curves meet
+between `2.0` and `1.5`:
+
+| `ADAPT_RS_MULT` | mean gain | worst-record loss |
+| --- | --- | --- |
+| 2.0 | 1.00% | 0.77% |
+| **1.5** | **1.50%** | **1.56%** |
+| 1.0 | 1.99% | 3.00% |
+
+`1.5` is the grid point at that crossing and the last one where the tail is
+still the same size as the mean: the step from 2.0 to 1.5 buys half a point of
+mean for eight tenths of a point on the worst record, and the next step buys
+half a point for one and a half. `2.0` is the conservative reading of the same
+table -- it is the last point where the gain still exceeds the loss outright --
+and it leaves a third of the available blend gain unclaimed; `1.5` is taken
+because a tail of 1.6% on one crossfade realization is inside the spread the
+ensemble already shows between records, while the mean gain is not. Below it
+the trade is plainly bad, which is what the rule is there to catch. It is not
+the minimum of the mean curve, and it is not meant to be.
+
+Attitude and the accelerometer bias do not object. On the transition ensemble
+roll/pitch is 0.9992 [0.9984, 1.0001] and the bias 0.9999 [0.9991, 1.0006] in
+the blend; on the stationary ensemble 0.9998 [0.9996, 1.0000] and 0.9998
+[0.9996, 1.0000]. The first pass's finding that these degrade below about 1.5
+was measured with the tuner jitter of the pre-wave-band operating point; at the
+deployed one they are flat over the whole grid.
+
+### The other two averaging horizons
+
+The `r_S` channel is not the only averaging horizon in the adaptation path, so
+the same instrument was pointed at the other two. Neither moves.
+
+`OU_ADAPT_TAU_SEC`, the fixed-seconds EMA on applied `tau` and `sigma_aw`
+(shipped 1.8 s), vertical RMS ratios on the same ensemble:
+
+| `ADAPT_TAU_SEC` | blend | run-on | settled | whole window |
+| --- | --- | --- | --- | --- |
+| 0.5 | 0.9983 | 0.9992 | 0.9993 | 0.9991 |
+| 1.0 | 0.9988 | 0.9995 | 0.9996 | 0.9994 |
+| 1.8 (shipped) | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| 3.0 | 1.0017 | 1.0007 | 1.0005 | 1.0008 |
+| 6.0 | 1.0051 | 1.0019 | 1.0011 | 1.0019 |
+| 12.0 | 1.0102 | 1.0038 | 1.0015 | 1.0030 |
+
+The sign is the same as `r_S`'s -- shorter follows a transition better -- but
+the whole grid spans 0.4% against `r_S`'s 4%, and the available gain below the
+shipped value is 0.06% of the window. `tau` enters `r_S` as `tau^3`, so
+shortening this horizon is the expensive way to buy what `ADAPT_RS_MULT` buys
+directly. It stays at 1.8 s.
+
+`OU_SIGMA_VAR_K_PERIODS`, the `sigma_a` variance horizon, is measured in
+docs/ou-sigma-horizon.md and stays at 2.0 for a different reason: its effect
+reverses sign between a building and a decaying sea, so there is no
+direction-symmetric optimum to move it to.
+
+### Sentinel re-derivation, second pass
+
+All nine OU-III deterministic gates were re-cut with `tools/ou_regauge_gates.py`
+against the deployed filter, as docs/quality-gate-regauge.md requires. Eight of
+the nine move down, i.e. the filter got better on their binding records; pitch
+is the only gate the old bar no longer held, at 0.1940 -> 0.1952 deg on
+PM-Stokes H_s = 4.0 m (+0.6%, against a bar cut with half a percent of margin),
+which is a re-draw of the same kind section 8 of docs/ou-sigma-horizon.md
+describes -- roll/pitch improves on average over both ensembles while this one
+record moves inside its own scatter.
+
+Those are this change measured on its own. It then met the continuous
+hard-iron ridge re-tune (docs/continuous-mag-hard-iron.md) in a merge, and
+since that change had re-cut the same nine bars from its own tree, they were
+re-derived once more from the two together: the displacement and bias bars move
+by this change, the yaw bar by the ridge, and combining them moves nothing
+beyond the fourth digit either pass predicted. The full before/after tables for
+all three passes are in the comment above `FAIL_LIMITS` in
+`tests/kalman_ou_iii/kalman_ou_iii-sim.cpp`.
+
+## 8. Reproducing
 
 ```sh
 # stationary sweep, one knob at a time
@@ -236,6 +376,23 @@ tools/ou_ema_adapt_study.py stage1 --family OU_III --records jonswap,pmstokes
 # crossfade sweep, both transition directions, five wave-phase seeds
 tools/ou_ema_adapt_study.py transition --family OU_III \
     --transition-pair large --transition-seeds 11,12,13,14,15
+
+# section 7: the whole grid on both endpoint pairs and both directions
+tools/ou_ema_adapt_study.py transition --family OU_III \
+    --grid 0.35,0.5,0.75,1,1.5,2,4,5,8 \
+    --transition-pair large,small --transition-dir up,down \
+    --transition-seeds 11,12,13 --seeds default,7,99
+
+# the same grid on the stationary ensemble, which is what bounds it from below
+tools/ou_ema_adapt_study.py stage1 --family OU_III \
+    --grid 0.35,0.5,0.75,1,1.5,2,4,5,8 \
+    --records jonswap,pmstokes --seeds default,7,99
+
+# the fixed-seconds tau/sigma horizon, on the same records
+tools/ou_ema_adapt_study.py transition --family OU_III --transition-stage confirm \
+    --point 'atau=1:OU_ADAPT_TAU_SEC=1' --point 'atau=6:OU_ADAPT_TAU_SEC=6' \
+    --transition-pair large,small --transition-dir up,down \
+    --transition-seeds 11,12,13 --seeds default,7,99
 
 # scaling-law check: same sweep one octave down in wave period
 tools/ou_ema_adapt_study.py transition --family OU_III --transition-pair small

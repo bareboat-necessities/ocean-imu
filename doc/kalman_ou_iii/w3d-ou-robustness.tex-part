@@ -72,7 +72,7 @@ At $H_s=\SI{0.05}{m}$, the mean absolute vertical RMS error is
 \SI{\OURobustnessLowStressAbsolute}{m}, corresponding to
 \OURobustnessLowStressMean\% of $H_s$; the increase in normalized error exposes
 the approximately fixed absolute sensor-error floor.  Compressing the
-transition from \SI{360}{s} to \SI{30}{s} changes the Adaptive mean from
+transition from \SI{120}{s} to \SI{30}{s} changes the Adaptive mean from
 \OURobustnessControlledAdaptiveMean\% to
 \OURobustnessRapidAdaptiveMean\% of the final $H_s$.  This rapid-case difference
 is a degradation result rather than a pure adaptation-rate measurement because

@@ -38,10 +38,12 @@ Scenarios
 ---------
 The eight released stationary records, plus -- unless ``--skip-transition`` --
 the controlled non-stationary record of ``tools/ou_validation.py``: a C2 quintic
-crossfade from H_s = 1.5 m, T_p = 5.7 s to H_s = 4.0 m, T_p = 11.4 s between 420
-and 780 s.  That record is scored three more times, over its start, blend and
-end intervals, so a horizon that is merely slow can be told apart from one that
-is wrong: a longer sigma_a memory should cost most in ``blend``.
+crossfade from H_s = 1.5 m, T_p = 5.7 s to H_s = 4.0 m, T_p = 11.4 s between 540
+and 660 s.  That record is scored four more times, over its start, blend,
+recover and end intervals, so a horizon that is merely slow can be told apart
+from one that is wrong: a longer sigma_a memory should cost in ``blend``, where
+it lags the moving sea, and again in ``recover``, where it is still carrying the
+start sea into the new one.
 
 Protocol
 --------
@@ -76,8 +78,16 @@ import ou_validation as ouv  # noqa: E402  (path set above)
 # Trailing window the simulators score their own quality gates over.
 WINDOW_SEC = 900.0
 DURATION_SEC = 1200.0
-TRANSITION_START_SEC = 420.0
-TRANSITION_END_SEC = 780.0
+# Crossfade of the controlled transition record, as tools/ou_validation.py
+# builds it: 120 s centred on the 1200 s replay.
+TRANSITION_START_SEC = 540.0
+TRANSITION_END_SEC = 660.0
+# The endpoint sea is scored twice, split one crossfade length past the blend.
+# "recover" is where a schedule whose averaging horizon is too long is still
+# carrying the start sea; "end" is the settled endpoint sea.
+TRANSITION_RECOVER_END_SEC = TRANSITION_END_SEC + (
+    TRANSITION_END_SEC - TRANSITION_START_SEC
+)
 TRANSITION_END_HEIGHT_M = 4.0
 
 FAMILIES = {
@@ -104,7 +114,8 @@ TRANSITION_KEY = "nonstationary_H1_5_to_H4_0"
 SEGMENTS = (
     ("start", DURATION_SEC - WINDOW_SEC, TRANSITION_START_SEC),
     ("blend", TRANSITION_START_SEC, TRANSITION_END_SEC),
-    ("end", TRANSITION_END_SEC, DURATION_SEC),
+    ("recover", TRANSITION_END_SEC, TRANSITION_RECOVER_END_SEC),
+    ("end", TRANSITION_RECOVER_END_SEC, DURATION_SEC),
 )
 
 # axis -> (env var, values, baseline).  The baseline is the denominator of every
@@ -175,7 +186,8 @@ RATIO_METRICS = (
 TRANSITION_RATIO_METRICS = (
     ("seg_start_disp_z_rms_m", "transition start-sea vertical RMS [m]"),
     ("seg_blend_disp_z_rms_m", "transition blend vertical RMS [m]"),
-    ("seg_end_disp_z_rms_m", "transition end-sea vertical RMS [m]"),
+    ("seg_recover_disp_z_rms_m", "transition run-on vertical RMS [m]"),
+    ("seg_end_disp_z_rms_m", "transition settled-sea vertical RMS [m]"),
 )
 
 

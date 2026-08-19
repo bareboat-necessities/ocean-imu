@@ -83,6 +83,18 @@ class TransitionCase:
         return self.end_sec - self.start_sec
 
 
+# Transition-rate cases of the full study.  "controlled" is the crossfade the
+# paired validation study scores -- 120 s centred on the 1200 s replay, per
+# tools/ou_validation.py's TRANSITION_*_FRACTION -- so the two studies mean the
+# same record by "the controlled transition".  "rapid" compresses the same
+# crossfade to 30 s about the same midpoint, which is what makes this pair a
+# rate contrast rather than two unrelated records.
+FULL_TRANSITION_CASES = (
+    TransitionCase("controlled", 540.0, 660.0),
+    TransitionCase("rapid", 585.0, 615.0),
+)
+
+
 def parse_float_list(text: str) -> list[float]:
     values = [float(token.strip()) for token in text.split(",") if token.strip()]
     if not values or any(not math.isfinite(value) or value <= 0.0 for value in values):
@@ -480,7 +492,12 @@ def write_stress_plot(
             color=color,
             label=mode,
         )
-    axes[1].set_xticks(x, ("360 s ramp", "30 s ramp"))
+    axes[1].set_xticks(
+        x,
+        tuple(
+            f"{case.duration_sec:g} s ramp" for case in FULL_TRANSITION_CASES
+        ),
+    )
     axes[1].set_title("Sea-state transition rate")
     axes[1].set_ylim(0.0, transition_upper * 1.22)
     axes[1].grid(True, axis="y", alpha=0.25)
@@ -639,13 +656,18 @@ def write_publication_table(
             r"    \midrule",
         )
     )
+    # Ramp labels carry the configured crossfade length so the table cannot
+    # keep advertising a duration the study no longer runs.
+    ramp_sec = {case.name: case.duration_sec for case in FULL_TRANSITION_CASES}
+    controlled_label = f"Controlled {ramp_sec['controlled']:g} s ramp"
+    rapid_label = f"Rapid {ramp_sec['rapid']:g} s ramp"
     stress_rows = (
         ("Low motion, $H_s=0.27$ m", "low_motion", "Hs0.27", "Adaptive"),
         ("Low motion, $H_s=0.05$ m", "low_motion", "Hs0.05", "Adaptive"),
-        ("Controlled 360 s ramp", "transition_rate", "controlled", "Adaptive"),
-        ("Controlled 360 s ramp", "transition_rate", "controlled", "FixedNominal"),
-        ("Rapid 30 s ramp", "transition_rate", "rapid", "Adaptive"),
-        ("Rapid 30 s ramp", "transition_rate", "rapid", "FixedNominal"),
+        (controlled_label, "transition_rate", "controlled", "Adaptive"),
+        (controlled_label, "transition_rate", "controlled", "FixedNominal"),
+        (rapid_label, "transition_rate", "rapid", "Adaptive"),
+        (rapid_label, "transition_rate", "rapid", "FixedNominal"),
     )
     for label, experiment, case, mode in stress_rows:
         values = [
@@ -1155,10 +1177,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         default_wave = list(core.DEFAULT_FULL_WAVE_SEEDS)
         default_imu = list(core.DEFAULT_FULL_IMU_SEEDS)
         default_init = list(core.DEFAULT_FULL_INIT_SEEDS)
-        transition_cases = (
-            TransitionCase("controlled", 420.0, 780.0),
-            TransitionCase("rapid", 585.0, 615.0),
-        )
+        transition_cases = FULL_TRANSITION_CASES
     if duration_sec < max(case.end_sec for case in transition_cases):
         raise ValueError("duration does not contain the configured transition cases")
     seeds = core.broadcast_seed_triplets(

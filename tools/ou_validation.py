@@ -108,11 +108,36 @@ COVARIANCE_SYNC_PAIRS = (
     ("FixedNominal", "FixedNominalHeldCovariance"),
 )
 
+# Crossfade placement of the non-stationary record, as fractions of the replay
+# duration.  The blend is centred on the record, so the scored window contains a
+# run-in at the start sea, the whole crossfade, and a tail at the endpoint sea.
+#
+# The crossfade spans a tenth of the record -- 120 s of the 1200 s replay.  It
+# used to span 0.35-0.65, i.e. 360 s, and that was too slow to be an instrument:
+# the slowest adaptation memory in either filter is the two-stage sigma_a EWMA
+# at about 2*K_periods*T_z, some 34 s on the largest reference sea, so a 360 s
+# ramp is quasi-static from the schedule's point of view and the score cannot
+# resolve tracking lag from steady-state accuracy.  At 120 s the crossfade is
+# about three times that memory: still a sea state changing rather than a step,
+# but fast enough that a horizon which lags shows up as an error.  Shortening it
+# from the front also leaves the settled interval (780-1200 s) exactly where it
+# was, so settled numbers stay comparable with the previously published ones.
+TRANSITION_START_FRACTION = 0.45
+TRANSITION_END_FRACTION = 0.55
+
 # Scoring segments for the non-stationary record, in seconds from the start of
 # the run.  A single trailing window mixes the pure start sea, the crossfade,
 # and the pure endpoint sea; these split the same window so that each interval
 # can be read on its own.
-TRANSITION_SEGMENTS = ("start", "blend", "end")
+#
+# "recover" is the interval immediately after the crossfade, one crossfade
+# length long, and "end" is the settled remainder.  A schedule whose averaging
+# horizon is too long does not only lag during the blend: it carries the old
+# sea into the new one, and that cost lands after the crossfade rather than
+# inside it.  Scoring the two apart is what separates "slow to follow" from
+# "wrong once it has followed"; pooled into one endpoint interval they partly
+# cancel, which is what a single "end" segment reported before.
+TRANSITION_SEGMENTS = ("start", "blend", "recover", "end")
 
 SEGMENT_METRIC_NAMES = (
     "disp_z_rms_m",
@@ -2172,24 +2197,29 @@ def _transition_segment_table(
     value_of: Any,
     indexed_effects: Mapping[tuple[str, str, str, str], Mapping[str, Any]],
 ) -> list[str]:
-    """Split the transition score into its three sea-state intervals.
+    """Split the transition score into its four sea-state intervals.
 
     The aggregate normalizes by the final H_s although the window opens in the
     start sea, so its percentage is not comparable with a stationary score.
     Absolute RMS and a reference-RMS normalization are reported per interval.
+
+    The endpoint sea is split at one crossfade length past the blend: the
+    run-on interval prices how long the schedule keeps carrying the old sea in
+    its averages, and the settled interval is the endpoint sea proper.
     """
 
     segments = (
         ("start", "Pure start sea"),
         ("blend", "Crossfade"),
-        ("end", "Pure endpoint sea"),
+        ("recover", "Endpoint sea, run-on"),
+        ("end", "Endpoint sea, settled"),
         ("", "Whole window"),
     )
     lines = [
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Controlled transition scored by interval rather than as one window (Adaptive mode, mean over $n=10$ seed triplets). $Z_{\mathrm{ref}}$ is the RMS of the reference vertical displacement in the same interval, so $Z/Z_{\mathrm{ref}}$ is a scale-free normalization that remains meaningful while the sea state changes; $Z/H_s^{\mathrm{end}}$ is the whole-window convention normalized by the final $H_s=\SI{4.0}{m}$ and is reported for continuity only. The window opens in the \SI{1.5}{m} start sea, so the two normalizations disagree by construction.}",
+        r"  \caption{Controlled transition scored by interval rather than as one window (Adaptive mode, mean over $n=10$ seed triplets). $Z_{\mathrm{ref}}$ is the RMS of the reference vertical displacement in the same interval, so $Z/Z_{\mathrm{ref}}$ is a scale-free normalization that remains meaningful while the sea state changes; $Z/H_s^{\mathrm{end}}$ is the whole-window convention normalized by the final $H_s=\SI{4.0}{m}$ and is reported for continuity only. The window opens in the \SI{1.5}{m} start sea, so the two normalizations disagree by construction. The endpoint sea is split at one crossfade length past the blend: the run-on interval is where a schedule that averages too long is still carrying the start sea, and the settled interval is the endpoint sea proper.}",
         r"  \label{tab:ou_transition_segments}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{3.4pt}",
@@ -2569,17 +2599,29 @@ def transition_window_composition(
     so the score is not a uniform sample of "transitioning" conditions: it
     contains a run-in at the start sea, the blend itself, and a long tail at
     the endpoint sea.  Reporting the split keeps that visible.
+
+    The endpoint tail is reported twice: once whole (``pure_end_sea_sec``) and
+    once split into the crossfade-length run-on the schedule needs to shed the
+    old sea from its averages (``recovery_sec``) and the settled remainder
+    (``settled_end_sea_sec``).  Those two are what the ``recover`` and ``end``
+    scoring segments cover.
     """
 
     window_start = duration_sec - window_sec
     start_end = max(window_start, min(transition_start_sec, duration_sec))
     blend_end = max(start_end, min(transition_end_sec, duration_sec))
+    # One crossfade length past the blend, measured on the crossfade the record
+    # was built with rather than on the part of it the window happens to see.
+    crossfade_sec = max(0.0, transition_end_sec - transition_start_sec)
+    recovery_end = max(blend_end, min(blend_end + crossfade_sec, duration_sec))
     return {
         "window_start_sec": window_start,
         "window_end_sec": duration_sec,
         "pure_start_sea_sec": start_end - window_start,
         "blended_sec": blend_end - start_end,
         "pure_end_sea_sec": duration_sec - blend_end,
+        "recovery_sec": recovery_end - blend_end,
+        "settled_end_sea_sec": duration_sec - recovery_end,
     }
 
 
@@ -3159,9 +3201,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     transition_start = args.transition_start_sec
     transition_end = args.transition_end_sec
     if transition_start is None:
-        transition_start = 0.35 * duration_sec
+        transition_start = TRANSITION_START_FRACTION * duration_sec
     if transition_end is None:
-        transition_end = 0.65 * duration_sec
+        transition_end = TRANSITION_END_FRACTION * duration_sec
 
     if args.mode == "smoke":
         default_wave, default_imu, default_init = ([11], [101], [1009])
@@ -3293,6 +3335,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         # Segments are only meaningful where the sea state changes inside the
         # scored window.  They are keyed to the same window the aggregate uses.
         window_start = duration_sec - window_sec
+        # The recovery interval is one crossfade long, so it scales with the
+        # transition it follows instead of being a constant somebody picked.
+        recovery_end = min(
+            duration_sec, transition_end + (transition_end - transition_start)
+        )
         transition_segments = tuple(
             (name, lower, upper)
             for name, lower, upper in (
@@ -3304,7 +3351,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 for name, start, stop in (
                     ("start", window_start, transition_start),
                     ("blend", transition_start, transition_end),
-                    ("end", transition_end, duration_sec),
+                    ("recover", transition_end, recovery_end),
+                    ("end", recovery_end, duration_sec),
                 )
             )
             if upper > lower

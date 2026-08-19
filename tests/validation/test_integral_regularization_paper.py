@@ -77,7 +77,7 @@ class IntegralRegularizationPaperTests(unittest.TestCase):
 
     def test_channel_ablation(self):
         self.assertIn(r"\label{tab:channel-ablation}", self.text)
-        self.assertIn(r"Transition    & 4.66 & 4.65 & 8.82 & 8.90", self.text)
+        self.assertIn(r"Transition    & 4.70 & 4.91 & 8.66 & 10.31", self.text)
         self.assertIn("adaptive integral anchor is", self.flat)
 
     def test_awkward_sensitivity_table_stays_removed(self):

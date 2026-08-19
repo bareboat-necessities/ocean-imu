@@ -4,10 +4,10 @@
 that complements the paired OU-II/OU-III comparison in `tools/ou_validation.py`.
 It does not retroactively tune the primary comparison.
 
-The current committed robustness bundle was regenerated in GitHub Actions run
-`31943137398` from source commit
-`5df1f3b42d3eb456961d12e598257b5859470451` and landed with the full validation
-bundle in commit `35120f96d3f8c02872fd3e06fa94ebe547c3f5eb`.
+The current committed robustness bundle was regenerated from source commit
+`9276aee2c05804d61079d383d8657daa894c16b3` and landed with the full validation
+bundle. Both were produced outside GitHub Actions, so `workflow_run` is null in
+either manifest and the replay hashes carry the provenance.
 
 ## Design
 
@@ -27,7 +27,10 @@ The degradation cases include:
 
 - a spectrally matched low-motion input scaled below the main study envelope;
 - the controlled $H_s=1.5$ m, $T_p=5.7$ s to $H_s=4.0$ m, $T_p=11.4$ s
-  transition under both the standard 360 s blend and a rapid 30 s blend;
+  transition under both the standard 120 s blend and a rapid 30 s blend. The
+  standard case is the crossfade the paired validation study scores, so both
+  studies mean the same record by "the controlled transition"; it was a 360 s
+  blend until that crossfade was shortened;
 - Adaptive and FixedNominal modes evaluated on identical paired realizations.
 
 The study scores continuous displacement, attitude, bias, and tuning metrics.

@@ -853,7 +853,33 @@ private:
 //   acc 3D bias %    81.84 -> 78.61    worst 81.4268 -> 78.2145
 //
 // The two 3D displacement gates come down by about a third, which is the
-// largest single move any of these bars has made.  Everything here is what
+// largest single move any of these bars has made.
+//
+// Then all nine again when the r_S smoothing horizon was re-measured against
+// a sea-state transition fast enough to lag -- ADAPT_RS_MULT 3.0 -> 1.5, see
+// docs/ou-ema-adaptation-tuning.md.  The bars in this paragraph are that
+// change measured on its own, against the tree it was developed on; it and the
+// hard-iron re-tune below met in a merge, and the block that ships is
+// re-derived from both together at the end.  Eight of the nine move down, so
+// this is again mostly a better filter rather than a re-draw:
+//
+//   Z %Hs JONSWAP    4.72   -> 4.527   worst 4.6961  -> 4.5040
+//   Z %Hs PM-Stokes  4.666  -> 4.508   worst 4.6426  -> 4.4850
+//   yaw deg          1.27   -> 1.272   worst 1.2630  -> 1.2654
+//   roll deg         0.3637 -> 0.3625  worst 0.3618  -> 0.3607
+//   pitch deg        0.195  -> 0.1962  worst 0.1940  -> 0.1952
+//   3D % JONSWAP     13.94  -> 13.69   worst 13.8686 -> 13.6203
+//   3D % PM-Stokes   14.92  -> 14.56   worst 14.8387 -> 14.4810
+//   acc Z bias %     4.475  -> 4.488   worst 4.4519  -> 4.4652
+//   acc 3D bias %    78.61  -> 78.62   worst 78.2145 -> 78.2238
+//
+// Pitch is the one gate the shipped bar no longer held (0.1940 -> 0.1952,
+// +0.6%), and it is a re-draw of the same kind the paragraph above describes:
+// paired over the transition and stationary ensembles the roll/pitch ratio is
+// 0.9998 [0.9996, 1.0000] and 0.9997 [0.9994, 1.0000], i.e. attitude improves
+// on average while this one record moves inside its own scatter.  Yaw, acc Z
+// bias and acc 3D bias move up by 0.1% or less on their binding record and
+// are re-cut for the same reason.  Everything here is what
 // tools/ou_regauge_gates.py prints for the filter as it now stands, cut to
 // the same rule as every line above it.
 //
@@ -887,18 +913,42 @@ private:
 // IMU-noise draws, the re-tune moves pooled pitch by +0.1 and +0.4 percent,
 // which is a re-draw at ten times this resolution.
 //
+// Then all nine once more, because the two paragraphs above are two branches
+// that met here: the r_S smoothing horizon and the hard-iron ridge floor were
+// developed against the same parent and each re-cut all nine bars from its own
+// tree, so neither block describes the filter that now ships.  Re-derived on
+// the merged tree, against the bars the ridge re-tune left:
+//
+//   Z %Hs JONSWAP    4.545  -> 4.527   worst 4.5218 -> 4.5044
+//   Z %Hs PM-Stokes  4.511  -> 4.509   worst 4.4881 -> 4.4858
+//   yaw deg          0.8824 -> 0.8827  worst 0.8780 -> 0.8783
+//   roll deg         0.3634 -> 0.3633  worst 0.3616 -> 0.3614
+//   pitch deg        0.1967 -> 0.197   worst 0.1957 -> 0.1960
+//   3D % JONSWAP     13.73  -> 13.7    worst 13.6518 -> 13.6307
+//   3D % PM-Stokes   14.62  -> 14.58   worst 14.5421 -> 14.5033
+//   acc Z bias %     4.497  -> 4.489   worst 4.4738 -> 4.4662
+//   acc 3D bias %    78.84  -> 78.86   worst 78.4439 -> 78.4668
+//
+// Every bar the ridge re-tune cut still holds on the merged filter -- none of
+// these is a breach -- so this pass only takes back the slack the two changes
+// opened in each other's numbers.  The two effects stay separable: the
+// displacement and bias channels move by the r_S horizon and yaw by the ridge,
+// which is what the per-record numbers in the two paragraphs above already
+// showed, and combining them moves nothing beyond the fourth digit either
+// paragraph did not predict.
+//
 // All nine are what tools/ou_regauge_gates.py prints for the filter that
 // ships, cut to the same rule as every line above.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.545f,  // was 4.72,   worst 4.5218 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.511f,  // was 4.666,  worst 4.4881 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 0.8824f, // was 1.27,   worst 0.8780 (jonswap H1.5)
-    .err_limit_roll_deg            = 0.3634f, // was 0.3637, worst 0.3616 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.1967f, // was 0.195,  worst 0.1957 (pmstokes H4.0)
-    .err_limit_percent_3d_jonswap  = 13.73f,  // was 13.94,  worst 13.6518 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 14.62f,  // was 14.92,  worst 14.5421 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.497f,  // was 4.475,  worst 4.4738 (pmstokes H8.5)
-    .bias_3d_percent               = 78.84f,  // was 78.61,  worst 78.4439 (pmstokes H4.0, accel)
+    .err_limit_percent_z_jonswap   = 4.527f,  // was 4.545,  worst 4.5044 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.509f,  // was 4.511,  worst 4.4858 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 0.8827f, // was 0.8824, worst 0.8783 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.3633f, // was 0.3634, worst 0.3614 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.197f,  // was 0.1967, worst 0.1960 (pmstokes H4.0)
+    .err_limit_percent_3d_jonswap  = 13.7f,   // was 13.73,  worst 13.6307 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 14.58f,  // was 14.62,  worst 14.5033 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.489f,  // was 4.497,  worst 4.4662 (pmstokes H8.5)
+    .bias_3d_percent               = 78.86f,  // was 78.84,  worst 78.4668 (pmstokes H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

@@ -1,8 +1,8 @@
 {
   "analysis_pipeline_files": {
     "tools/ou_validation.py": {
-      "bytes": 152998,
-      "sha256": "2313b690aedaaa88ed44241e54dd9c852f67ff80dc924d918a5a4d48f17fd469"
+      "bytes": 156257,
+      "sha256": "7db115a855e771ad54a4e4f1539e89a5f25bd32f871309d1985828daf966d3f7"
     }
   },
   "build_environment": {
@@ -18,20 +18,19 @@
       "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
       "version": "3.4.0"
     },
-    "numpy": "1.26.4",
-    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+    "numpy": "2.4.6",
+    "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
+    "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
   },
   "command": [
-    "/usr/bin/python3",
+    "/usr/local/bin/python3",
     "tools/ou_validation.py",
     "--mode",
     "full",
     "--bootstrap-resamples",
     "10000",
-    "--combine-shards",
-    "--shard-dir",
-    "shards",
+    "--jobs",
+    "4",
     "--output-dir",
     "reports/results/ou_validation"
   ],
@@ -167,9 +166,9 @@
       }
     }
   },
-  "git_branch": "main",
-  "git_commit": "26331b1fe98e399b1db363163af89664f82b803c",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 76249 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   680 +-\n .../ou_validation/ou_validation_covsync.svg        |   877 +-\n .../ou_validation/ou_validation_displacement.svg   |   652 +-\n .../results/ou_validation/ou_validation_macros.tex |   114 +-\n .../ou_validation/ou_validation_paired_effects.csv |  3940 +-\n .../ou_validation/ou_validation_publication.tex    |    56 +-\n .../results/ou_validation/ou_validation_raw.csv    |  1022 +-\n .../ou_validation/ou_validation_summary.csv        |  4196 +-\n .../results/ou_validation/ou_validation_table.tex  |    74 +-\n .../ou_validation/ou_validation_tuning_points.tex  |    18 +-\n .../ou_validation/ou_validation_vertical.svg       |   821 +-\n 12 files changed, 44330 insertions(+), 44369 deletions(-)",
+  "git_branch": "claude/ou-iii-transition-adaptation-ko76eq",
+  "git_commit": "805f00a64f1d882b27cb5584586541d02215ab51",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 108551 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |    680 +-\n .../ou_validation/ou_validation_covsync.svg        |    728 +-\n .../ou_validation/ou_validation_displacement.svg   |    680 +-\n .../results/ou_validation/ou_validation_macros.tex |     46 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4552 +-\n .../ou_validation/ou_validation_publication.tex    |     40 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   5086 +-\n .../results/ou_validation/ou_validation_table.tex  |    168 +-\n .../ou_validation/ou_validation_transition.csv     |  20978 ++--\n .../ou_validation/ou_validation_transition.svg     |  11799 +-\n .../ou_validation/ou_validation_vertical.svg       |    704 +-\n 13 files changed, 77847 insertions(+), 77845 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -220,24 +219,24 @@
       "sha256": "c4d31b89013ddbb8b5009edeca1e659707040b5f451ca8a1eb7c26288e2ca174"
     },
     "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": {
-      "bytes": 150407,
-      "sha256": "dbba8da9c0453290893cbc9c749a5cd74036594ed19c853fe7a120150f1a4a66"
+      "bytes": 150623,
+      "sha256": "3a07af4e7398e385f907f1c5e6170dd67a89ffdaa4f2a038d93fdacee35590f8"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
       "bytes": 99058,
       "sha256": "ab76e29edd22a12bf2d46766232ccca36aa3cf29f733734907f847528d306faa"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "bytes": 156384,
-      "sha256": "6848f17b18044ad103fc342f501276970f107603bf7fb03645b3e1a5aa42a8c1"
+      "bytes": 156936,
+      "sha256": "5557c72d6d921cd4f1488511aabc18c25fbc4dc6829d01bf8728774ce9ee69d7"
     },
     "src/tuner/AdaptiveWaveBandPass.h": {
       "bytes": 5864,
       "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021"
     },
     "src/tuner/ContinuousMagHardIronEstimator.h": {
-      "bytes": 12690,
-      "sha256": "1ec5a8b1b19c249d88ccfc1219c33aa3aba63de59a7254dbe6aa5d6bff40e85b"
+      "bytes": 13924,
+      "sha256": "86c34baa0453c747632790b26df1b08d382951da71773eeb6c04399a47a5a917"
     },
     "src/tuner/MagAutoTuner.h": {
       "bytes": 22706,
@@ -288,20 +287,20 @@
       "sha256": "991c6e64ca7008f8f38010b5118fd1fb8cfa655159a645a46389ae2200e8669d"
     },
     "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp": {
-      "bytes": 51417,
-      "sha256": "a8d7104f3c7d27cc2c6182936fcb6a4a92850c57f0d54e0f48b10bc5dfa05375"
+      "bytes": 53667,
+      "sha256": "45e037c7a61d89a6acf4addde909c447718d9ccf6eeb23069bebbe51a4290920"
     },
     "tests/kalman_ou_iii/Makefile": {
       "bytes": 2808,
       "sha256": "ad578493840d66ab8fad853d4eef25d7e84889935c35aca3c1ff9f95410fabf4"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 45626,
-      "sha256": "c52bca55b6419132186e4b257f88a98df76fa2d80ba09ffae54b0d636225e9b6"
+      "bytes": 51368,
+      "sha256": "5e628675cd7c75562e7458842e3722450ce239e13c5e3711901b9b6e791be393"
     }
   },
-  "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "numpy": "2.4.6",
+  "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
   "protocol": {
     "adaptation_modes": [
       "Adaptive",
@@ -394,35 +393,41 @@
       }
     ],
     "stats_seed": 20260317,
-    "transition_end_sec": 780.0,
+    "transition_end_sec": 660.0,
     "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
     "transition_midpoint_linear_hs_m": 2.75,
     "transition_midpoint_mixture_hs_m": 2.1360009363293826,
     "transition_segments_sec": {
       "blend": [
-        420.0,
-        780.0
+        540.0,
+        660.0
       ],
       "end": [
         780.0,
         1200.0
       ],
+      "recover": [
+        660.0,
+        780.0
+      ],
       "start": [
         300.0,
-        420.0
+        540.0
       ]
     },
-    "transition_start_sec": 420.0,
+    "transition_start_sec": 540.0,
     "transition_window_composition_sec": {
-      "blended_sec": 360.0,
-      "pure_end_sea_sec": 420.0,
-      "pure_start_sea_sec": 120.0,
+      "blended_sec": 120.0,
+      "pure_end_sea_sec": 540.0,
+      "pure_start_sea_sec": 240.0,
+      "recovery_sec": 120.0,
+      "settled_end_sea_sec": 420.0,
       "window_end_sec": 1200.0,
       "window_start_sec": 300.0
     },
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
   "replay_provenance": {
     "environment": {
       "compiler": {
@@ -437,12 +442,12 @@
         "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
         "version": "3.4.0"
       },
-      "numpy": "1.26.4",
-      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+      "numpy": "2.4.6",
+      "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
+      "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-18T21:57:55+00:00",
-    "git_commit": "26331b1fe98e399b1db363163af89664f82b803c",
+    "generated_at": "2026-08-19T10:24:32+00:00",
+    "git_commit": "805f00a64f1d882b27cb5584586541d02215ab51",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -493,24 +498,24 @@
         "size_bytes": 97268
       },
       "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": {
-        "sha256": "dbba8da9c0453290893cbc9c749a5cd74036594ed19c853fe7a120150f1a4a66",
-        "size_bytes": 150407
+        "sha256": "3a07af4e7398e385f907f1c5e6170dd67a89ffdaa4f2a038d93fdacee35590f8",
+        "size_bytes": 150623
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
         "sha256": "ab76e29edd22a12bf2d46766232ccca36aa3cf29f733734907f847528d306faa",
         "size_bytes": 99058
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-        "sha256": "6848f17b18044ad103fc342f501276970f107603bf7fb03645b3e1a5aa42a8c1",
-        "size_bytes": 156384
+        "sha256": "5557c72d6d921cd4f1488511aabc18c25fbc4dc6829d01bf8728774ce9ee69d7",
+        "size_bytes": 156936
       },
       "src/tuner/AdaptiveWaveBandPass.h": {
         "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
         "size_bytes": 5864
       },
       "src/tuner/ContinuousMagHardIronEstimator.h": {
-        "sha256": "1ec5a8b1b19c249d88ccfc1219c33aa3aba63de59a7254dbe6aa5d6bff40e85b",
-        "size_bytes": 12690
+        "sha256": "86c34baa0453c747632790b26df1b08d382951da71773eeb6c04399a47a5a917",
+        "size_bytes": 13924
       },
       "src/tuner/MagAutoTuner.h": {
         "sha256": "3f454b9507bf52c7ed44b2e16082f0bc37640bc0bf8193ad59b2ee9781c691f3",
@@ -561,16 +566,16 @@
         "size_bytes": 1819
       },
       "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp": {
-        "sha256": "a8d7104f3c7d27cc2c6182936fcb6a4a92850c57f0d54e0f48b10bc5dfa05375",
-        "size_bytes": 51417
+        "sha256": "45e037c7a61d89a6acf4addde909c447718d9ccf6eeb23069bebbe51a4290920",
+        "size_bytes": 53667
       },
       "tests/kalman_ou_iii/Makefile": {
         "sha256": "ad578493840d66ab8fad853d4eef25d7e84889935c35aca3c1ff9f95410fabf4",
         "size_bytes": 2808
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-        "sha256": "c52bca55b6419132186e4b257f88a98df76fa2d80ba09ffae54b0d636225e9b6",
-        "size_bytes": 45626
+        "sha256": "5e628675cd7c75562e7458842e3722450ce239e13c5e3711901b9b6e791be393",
+        "size_bytes": 51368
       }
     },
     "input_files": {
@@ -608,71 +613,66 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "1176cefc69f2d14a6c6cd34a888be48c6186a47cbeb2734f5f654651aafb8dbc",
-    "raw_rows_size_bytes": 557459,
-    "workflow_run": {
-      "job": "commit",
-      "run_attempt": "1",
-      "run_id": "32187730796",
-      "workflow": "build"
-    }
+    "raw_rows_sha256": "4ce472a5b7ec3923b2e2e7a24e30e0c877813a45762e2719f782e250df970107",
+    "raw_rows_size_bytes": 567903,
+    "workflow_run": null
   },
   "result_files": {
     "ou_validation.json": {
-      "bytes": 4610671,
-      "sha256": "118525bdc710f76be38043ccb45dee52c8e6d2c1329dfba7ff435a88fa13c371"
+      "bytes": 4825479,
+      "sha256": "2ac6d563bd67d597abd75829e7aaefb8d4ae7f93f986942b5c136c9dfa2210ae"
     },
     "ou_validation_attitude.svg": {
-      "bytes": 80198,
-      "sha256": "fd5b4bd589cf1c5d9807110ca74ccc6b946c2a3148168eb943433b62fe8263be"
+      "bytes": 83293,
+      "sha256": "8ca6f19d2fec12bdf78fbf72e5130a8293dd759dbe033eba5dd31437f8a987de"
     },
     "ou_validation_covsync.svg": {
-      "bytes": 93480,
-      "sha256": "ed237deec722182e7a81c2a2804109cd19c49b9787244de08bdd38c53612923a"
+      "bytes": 97333,
+      "sha256": "6698025c6f9e963ee48fe617ef36a9b1bfd705b3ab9140c03509e398651321a4"
     },
     "ou_validation_displacement.svg": {
-      "bytes": 79160,
-      "sha256": "ca39db1f4a81d4d057441ccd29e4bae7ab5fe68763c8daa3dec6edb2f9323185"
+      "bytes": 82576,
+      "sha256": "d62cfdadff8ac9a8c5a4d543bf72bbf34728e1b44300555a4f8e264b575cf312"
     },
     "ou_validation_macros.tex": {
-      "bytes": 10605,
-      "sha256": "472b8d8f89779a407d5b947f2dbd055b42ee33881b684a0464f426f66e1a4dcf"
+      "bytes": 10604,
+      "sha256": "e66ce1d543618193c6a08f2946d5df69dd244c99757c30fdeb254a02bc645865"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 626588,
-      "sha256": "f2f8f07b6b49f02fdc0642f70f2a1227e5299f6d61a6a0567b7e1bcb738c1bdb"
+      "bytes": 640730,
+      "sha256": "0ce98574d511bed5231d3010aa295abe3b60b8766aaeff95cff5069a7de3f839"
     },
     "ou_validation_publication.tex": {
-      "bytes": 12587,
-      "sha256": "166e813041c45a9d9907b42c01b4d82db4eccc71a7d14c0d30654a0c1fadd640"
+      "bytes": 12896,
+      "sha256": "0022f86b1961afa34eb6d7b0410df751b809bd01c552c14cab7b91b96657180d"
     },
     "ou_validation_raw.csv": {
-      "bytes": 557459,
-      "sha256": "1176cefc69f2d14a6c6cd34a888be48c6186a47cbeb2734f5f654651aafb8dbc"
+      "bytes": 567903,
+      "sha256": "4ce472a5b7ec3923b2e2e7a24e30e0c877813a45762e2719f782e250df970107"
     },
     "ou_validation_summary.csv": {
-      "bytes": 654067,
-      "sha256": "8e7fd45e9475552da8915a794e18b6867c43e1697ab3d6c751b7d5d33d701de4"
+      "bytes": 711491,
+      "sha256": "9d16f84a94a4219869685d027f49503b64b23fbe19f4f28215ef3f3c950841fe"
     },
     "ou_validation_table.tex": {
-      "bytes": 15650,
-      "sha256": "72f086e9c0b408cbcb12818d37da7a5e5cb2476bef23a802cb5c63c211fab554"
+      "bytes": 15647,
+      "sha256": "9a10eacbb2e9bebb7d99eaaf5bfdcbf4495e22254a1202a2c9becd597b39a74e"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1339284,
-      "sha256": "f37fdd0a8942885f6b6a4244be2780ab1bf7fde1f1159f3f2009ef8ca74fefa3"
+      "bytes": 1266571,
+      "sha256": "4befc44cd88aa2ac554f3558b96979feec20a55d4716892043412ed659f28341"
     },
     "ou_validation_transition.svg": {
-      "bytes": 315931,
-      "sha256": "b19a16d28cc564489b9c1b669c57746a88c10c8802383a66b5774c68178f82d6"
+      "bytes": 323315,
+      "sha256": "2ee6ef9bf8873d6a6d9718f96dee00a24d1c928da9fc27afe1f783d466910850"
     },
     "ou_validation_tuning_points.tex": {
       "bytes": 2122,
       "sha256": "aa68c9c106617acead7143dbf5debdd0b5e48ba3a1a513887df27e164568ac23"
     },
     "ou_validation_vertical.svg": {
-      "bytes": 82908,
-      "sha256": "d1e81346dc76bb672f8ffd407a4672b2d63fb44465bf1d979b6a165f91083a27"
+      "bytes": 85634,
+      "sha256": "c62608fbe1b477062d665176b21c2b17cddf45cf8bcda0ccb6ac01bf95e602d5"
     }
   },
   "schema_version": 2,
@@ -712,25 +712,25 @@
   },
   "stationary_normalized_aggregate": {
     "OU_II": {
-      "bootstrap_ci95_high": 6.544931766574998,
-      "bootstrap_ci95_low": 6.34587302175,
-      "mean": 6.44655482725,
+      "bootstrap_ci95_high": 6.545938469881251,
+      "bootstrap_ci95_low": 6.34636868365,
+      "mean": 6.447061872500001,
       "n": 10,
-      "std": 0.17014780896234433
+      "std": 0.1707698607303324
     },
     "OU_III": {
-      "bootstrap_ci95_high": 4.7384790833374995,
-      "bootstrap_ci95_low": 4.63410660725,
-      "mean": 4.686738587000001,
+      "bootstrap_ci95_high": 4.72752916003125,
+      "bootstrap_ci95_low": 4.622424897681251,
+      "mean": 4.6751283515,
       "n": 10,
-      "std": 0.08952347858012476
+      "std": 0.09043877717228772
     },
     "OU_III_minus_OU_II": {
-      "bootstrap_ci95_high": -1.6841461191687501,
-      "bootstrap_ci95_low": -1.8400111855125003,
-      "cohen_dz": -13.08948429029772,
-      "hedges_gz": -11.96215103941614,
-      "mean_paired_difference": -1.7598162402500002,
+      "bootstrap_ci95_high": -1.69754263676875,
+      "bootstrap_ci95_low": -1.8514513447499996,
+      "cohen_dz": -13.359887423757417,
+      "hedges_gz": -12.209265673746987,
+      "mean_paired_difference": -1.771933521,
       "n_pairs": 10,
       "randomization_exact": true,
       "randomization_p_value": 0.001953125,
@@ -739,18 +739,18 @@
       "sign_p_value": 0.001953125,
       "sign_positive": 0,
       "sign_zero": 0,
-      "standard_error": 0.04251525468172213,
-      "std_paired_difference": 0.134445040096379,
-      "t_ci95_high": -1.6636400523435526,
-      "t_ci95_low": -1.8559924281564477,
+      "standard_error": 0.04194156440867582,
+      "std_paired_difference": 0.13263087216206876,
+      "t_ci95_high": -1.6770551106539517,
+      "t_ci95_low": -1.8668119313460483,
       "t_critical_value": 2.2621571627982036,
-      "t_p_value": 1.3972030119331822e-11,
-      "t_statistic": -41.39258375433344
+      "t_p_value": 1.1633468587561739e-11,
+      "t_statistic": -42.24767354251256
     }
   },
   "transition_diagnostic": {
     "decimation": 20,
-    "disp_z_pct_hs": 4.57077551,
+    "disp_z_pct_hs": 4.68500566,
     "family": "OU_III",
     "imu_noise_seed": 101,
     "initialization_seed": 1009,

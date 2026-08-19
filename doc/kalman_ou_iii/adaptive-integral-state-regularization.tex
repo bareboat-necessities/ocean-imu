@@ -506,11 +506,11 @@ in percent of $H_s$ (mean over ten paired seeds).}
 \toprule
 & Adapt. & $r_S$ only & OU only & Fixed \\
 \midrule
-$H_s=0.27$ m & 5.13 & 5.13 & 15.82 & 15.72 \\
-$H_s=1.50$ m & 4.91 & 4.91 & 4.84 & 4.85 \\
-$H_s=4.00$ m & 4.85 & 4.84 & 7.05 & 7.02 \\
-$H_s=8.50$ m & 4.03 & 4.02 & 11.28 & 11.14 \\
-Transition    & 4.66 & 4.65 & 8.82 & 8.90 \\
+$H_s=0.27$ m & 4.99 & 5.07 & 11.68 & 13.62 \\
+$H_s=1.50$ m & 4.84 & 4.84 & 4.84 & 4.85 \\
+$H_s=4.00$ m & 4.85 & 4.92 & 7.15 & 7.75 \\
+$H_s=8.50$ m & 4.02 & 4.12 & 10.67 & 12.63 \\
+Transition    & 4.70 & 4.91 & 8.66 & 10.31 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -541,17 +541,17 @@ important adaptation channel in the tested estimator.
 \toprule
 Case & Mode & Z [\%$H_s$] & 3D [m] \\
 \midrule
-$H_s=0.05$ m & Adaptive & 18.03 & 0.023 \\
-360 s ramp & Adaptive & 4.66 & 0.468 \\
-360 s ramp & Fixed & 8.88 & 0.720 \\
-30 s ramp & Adaptive & 4.87 & 0.486 \\
-30 s ramp & Fixed & 9.26 & 0.748 \\
+$H_s=0.05$ m & Adaptive & 23.51 & 0.032 \\
+120 s ramp & Adaptive & 4.69 & 0.481 \\
+120 s ramp & Fixed & 10.28 & 0.823 \\
+30 s ramp & Adaptive & 4.86 & 0.492 \\
+30 s ramp & Fixed & 10.44 & 0.834 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The adaptive schedule retains most of its performance when the
-controlled sea-state transition is shortened from 360 s to 30 s, while a fixed
+controlled sea-state transition is shortened from 120 s to 30 s, while a fixed
 nominal point remains far from the endpoint operating point.  The calm-water
 case exposes the opposite limit: when physical motion approaches the fixed
 sensor and attitude-error floor, normalization by $H_s$ necessarily

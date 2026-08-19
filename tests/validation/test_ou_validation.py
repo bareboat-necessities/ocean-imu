@@ -380,16 +380,50 @@ class StatisticsTests(unittest.TestCase):
         )
 
     def test_transition_window_composition_is_reported(self):
+        # Driven by the shipped fractions rather than by a second copy of the
+        # numbers they produce, so this cannot silently keep describing a
+        # crossfade the tool no longer builds.
+        duration_sec = 1200.0
         composition = validation.transition_window_composition(
-            transition_start_sec=420.0,
-            transition_end_sec=780.0,
-            duration_sec=1200.0,
+            transition_start_sec=validation.TRANSITION_START_FRACTION
+            * duration_sec,
+            transition_end_sec=validation.TRANSITION_END_FRACTION * duration_sec,
+            duration_sec=duration_sec,
             window_sec=900.0,
         )
         self.assertAlmostEqual(composition["window_start_sec"], 300.0)
-        self.assertAlmostEqual(composition["pure_start_sea_sec"], 120.0)
-        self.assertAlmostEqual(composition["blended_sec"], 360.0)
-        self.assertAlmostEqual(composition["pure_end_sea_sec"], 420.0)
+        self.assertAlmostEqual(composition["pure_start_sea_sec"], 240.0)
+        self.assertAlmostEqual(composition["blended_sec"], 120.0)
+        self.assertAlmostEqual(composition["pure_end_sea_sec"], 540.0)
+        # The endpoint tail splits one crossfade length past the blend.
+        self.assertAlmostEqual(composition["recovery_sec"], 120.0)
+        self.assertAlmostEqual(composition["settled_end_sea_sec"], 420.0)
+
+    def test_default_crossfade_is_short_against_the_adaptation_memory(self):
+        # The crossfade is the instrument for adaptation lag, so it has to be
+        # fast compared with the horizons it is meant to resolve.  The longest
+        # is the two-stage sigma_a EWMA, about 2*K_periods*T_z ~ 34 s on the
+        # largest reference sea; a crossfade of several hundred seconds is
+        # quasi-static against that and cannot separate lag from accuracy.
+        duration_sec = 1200.0
+        crossfade_sec = duration_sec * (
+            validation.TRANSITION_END_FRACTION
+            - validation.TRANSITION_START_FRACTION
+        )
+        # A band rather than the shipped value: the exact crossfade is pinned
+        # by the composition test above and by the committed manifest, and what
+        # this test owns is the property that makes it an instrument.  The
+        # upper bound is a few times the longest memory, the lower one keeps
+        # the blend from collapsing toward a step the record cannot represent.
+        self.assertLessEqual(crossfade_sec, 150.0)
+        self.assertGreaterEqual(crossfade_sec, 60.0)
+        # Centred on the record, so the window keeps a run-in at the start sea
+        # and a long settled tail at the endpoint sea.
+        self.assertAlmostEqual(
+            validation.TRANSITION_START_FRACTION
+            + validation.TRANSITION_END_FRACTION,
+            1.0,
+        )
 
     def test_crossfade_midpoint_is_below_a_linear_height_ramp(self):
         # The two blended records are independent, so their variances add and
@@ -655,6 +689,17 @@ class CommittedFullResultsTests(unittest.TestCase):
             + composition["pure_end_sea_sec"],
             protocol["score_window_sec"],
         )
+        # The endpoint tail is also reported as its two scored halves.
+        self.assertAlmostEqual(
+            composition["recovery_sec"] + composition["settled_end_sea_sec"],
+            composition["pure_end_sea_sec"],
+        )
+        # A crossfade the schedule can actually lag: the blend must not be so
+        # long that the record is quasi-static for the adaptation horizons,
+        # which is what a blend longer than the settled interval would mean.
+        self.assertLess(
+            composition["blended_sec"], composition["settled_end_sea_sec"]
+        )
         self.assertLess(
             protocol["transition_midpoint_mixture_hs_m"],
             protocol["transition_midpoint_linear_hs_m"],
@@ -673,7 +718,17 @@ class CommittedFullResultsTests(unittest.TestCase):
         self.assertEqual(bounds["blend"][0], protocol["transition_start_sec"])
         self.assertEqual(bounds["blend"][1], protocol["transition_end_sec"])
         self.assertEqual(bounds["start"][1], bounds["blend"][0])
-        self.assertEqual(bounds["end"][0], bounds["blend"][1])
+        # The endpoint sea is scored on either side of one crossfade length
+        # past the blend: the run-on interval prices how long the schedule
+        # keeps carrying the sea it just left, the settled interval is the
+        # endpoint sea proper, and the two must tile the rest of the window.
+        self.assertEqual(bounds["recover"][0], bounds["blend"][1])
+        self.assertEqual(bounds["end"][0], bounds["recover"][1])
+        self.assertAlmostEqual(
+            bounds["recover"][1] - bounds["recover"][0],
+            bounds["blend"][1] - bounds["blend"][0],
+        )
+        self.assertEqual(bounds["end"][1], protocol["duration_sec"])
 
         # Interval construction and the multiplicity position must travel with
         # the evidence, not only with the prose.
