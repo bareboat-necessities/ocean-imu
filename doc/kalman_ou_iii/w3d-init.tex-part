@@ -44,9 +44,13 @@ and integral regularizer are enabled together.  Accelerometer-bias learning is
 held until the magnetic refinement below because bias and small tilt error are
 weakly separable in waves and the residual bias correlation time is long.
 
-The handoff is a hard initialization outside the Live-state ISS theorem of
-Sec.~\ref{app:iss-stability}; the theorem begins after state and covariance are
-seeded.
+The handoff is the basin-entry map analyzed in
+Sec.~\ref{sec:semiglobal-handoff}.  When the accepted proxy/magnetic errors and
+the remaining state mismatch satisfy
+Eq.~\eqref{eq:semiglobal-basin-entry}, the handoff lands inside the invariant
+neighborhood of the 21-state Live ISS theorem and
+Theorem~\ref{thm:semiglobal-proxy-live} applies.  A timeout-forced handoff that
+does not satisfy that condition remains outside the semiglobal result.
 
 \subsection{Two-stage magnetic reference}
 \label{sec:mag-two-stage}
@@ -66,14 +70,16 @@ from the already-live MEKF.
 Acceptance of the refined reference replaces the world magnetic reference,
 re-gauges yaw once, and releases accelerometer-bias learning.  This event occurs
 before the \SI{900}{s} scoring window but remains a discrete reconfiguration
-outside the continuous Live interval of the stability theorem.  The reported
-timing is an evaluated engineering tradeoff rather than a universal startup
-schedule.
+outside the uninterrupted Live interval.  It is covered by the semiglobal
+argument only when its post-map state is independently verified to re-enter
+Eq.~\eqref{eq:semiglobal-basin-entry}; otherwise it defines a new Live-interval
+boundary.  The reported timing is an evaluated engineering tradeoff rather
+than a universal startup schedule.
 
 \subsection{Live re-lock boundary}
 
 A sustained tilt inconsistency above $70^\circ$ for \SI{0.35}{s} can trigger a
 tilt-only re-lock that preserves yaw; a \SI{3}{s} cooldown limits repeated
 resets.  This safety reconfiguration is testable in implementation but, like
-startup and magnetic re-gauging, lies outside the local ISS theorem between
-reset events.
+magnetic re-gauging, is a separate hard map.  The stability result resumes after
+it only if the reset state satisfies the same Live-basin-entry condition.
