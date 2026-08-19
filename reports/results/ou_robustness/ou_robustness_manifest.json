@@ -22,12 +22,12 @@
       "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
       "version": "3.4.0"
     },
-    "numpy": "2.4.6",
-    "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
-    "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
+    "numpy": "1.26.4",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
   },
   "command": [
-    "/usr/local/bin/python3",
+    "/usr/bin/python3",
     "tools/ou_robustness.py",
     "--mode",
     "full",
@@ -35,14 +35,15 @@
     "0.5,0.75,1.0,1.25,1.5",
     "--bootstrap-resamples",
     "10000",
-    "--jobs",
-    "4",
+    "--combine-shards",
+    "--shard-dir",
+    "shards",
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/ou-iii-transition-adaptation-ko76eq",
-  "git_commit": "805f00a64f1d882b27cb5584586541d02215ab51",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   |  32494 +++---\n .../results/ou_robustness/ou_robustness_macros.tex |      4 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |   1400 +-\n .../ou_robustness/ou_robustness_publication.tex    |      4 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |    600 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |    996 +-\n .../results/ou_robustness/ou_robustness_stress.svg |    104 +-\n .../ou_robustness/ou_robustness_summary.csv        |   1680 +-\n reports/results/ou_validation/ou_validation.json   | 108551 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |    680 +-\n .../ou_validation/ou_validation_covsync.svg        |    728 +-\n .../ou_validation/ou_validation_displacement.svg   |    680 +-\n .../results/ou_validation/ou_validation_macros.tex |     46 +-\n .../ou_validation/ou_validation_manifest.json      |    414 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4552 +-\n .../ou_validation/ou_validation_publication.tex    |     40 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   5086 +-\n .../results/ou_validation/ou_validation_table.tex  |    168 +-\n .../ou_validation/ou_validation_transition.csv     |  20978 ++--\n .../ou_validation/ou_validation_transition.svg     |  11799 +-\n .../ou_validation/ou_validation_vertical.svg       |    704 +-\n 22 files changed, 96531 insertions(+), 96857 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "24932e88c4c1d05fe595509d7a82adfb7f202fbf",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 6312 ++++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  644 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   38 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    | 2406 ++++----\n .../results/ou_robustness/ou_robustness_stress.svg |  769 ++-\n .../ou_robustness/ou_robustness_summary.csv        |  580 +-\n 6 files changed, 5373 insertions(+), 5376 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -157,7 +158,7 @@
       "sha256": "5e628675cd7c75562e7458842e3722450ce239e13c5e3711901b9b6e791be393"
     }
   },
-  "matplotlib": "3.11.1",
+  "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 1.4758578462470502,
     "R_p0_std_m": null,
@@ -165,8 +166,8 @@
     "sigma_a_mps2": 0.724445343,
     "tau_s": 2.17904091
   },
-  "numpy": "2.4.6",
-  "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
+  "numpy": "1.26.4",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -261,7 +262,7 @@
     "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
     "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
   },
-  "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]",
+  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
   "replay_provenance": {
     "environment": {
       "compiler": {
@@ -276,12 +277,12 @@
         "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
         "version": "3.4.0"
       },
-      "numpy": "2.4.6",
-      "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
-      "python": "3.11.15 (main, Mar  3 2026, 09:26:23) [GCC 13.3.0]"
+      "numpy": "1.26.4",
+      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-19T10:24:32+00:00",
-    "git_commit": "805f00a64f1d882b27cb5584586541d02215ab51",
+    "generated_at": "2026-08-19T13:31:28+00:00",
+    "git_commit": "24932e88c4c1d05fe595509d7a82adfb7f202fbf",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -411,42 +412,47 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "adccd89100586e221b8f77dce43ef8af758af49eebac9eb08b350933ddd81c62",
-    "raw_rows_size_bytes": 195602,
-    "workflow_run": null
+    "raw_rows_sha256": "a46a8deed62350f8cdd3a2d6b3c6c9a9d96044c2e7bbcf5464afe67009222e1a",
+    "raw_rows_size_bytes": 195600,
+    "workflow_run": {
+      "job": "commit",
+      "run_attempt": "1",
+      "run_id": "32255648054",
+      "workflow": "build"
+    }
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1402186,
-      "sha256": "b4cfc6dc23542df434c9ba8b2c5e66396b1d305429bf2df08989dd5e505f88c0"
+      "bytes": 1402146,
+      "sha256": "2e0c314f2f461c8abcc7fc7822827e9c19e789da866d459765d85bd2d0b6e927"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
       "sha256": "0e865c1d2469275c1d57cf39d24b0c641f514168d0902aad35bfa0a9a02ce095"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 143679,
-      "sha256": "bace660b46ea24e652b7043c0ecd5979a93b5fa21bc3ad9a19d016d4a0b3b1ba"
+      "bytes": 143665,
+      "sha256": "58b6d217df6aca628b78a29cad47726c4994ac0163561a51623b908a9fb2e627"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2738,
       "sha256": "0786ef9d26249ff023e32677bdf7bba241dbff699f9d114a28282d244afcde2a"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 195602,
-      "sha256": "adccd89100586e221b8f77dce43ef8af758af49eebac9eb08b350933ddd81c62"
+      "bytes": 195600,
+      "sha256": "a46a8deed62350f8cdd3a2d6b3c6c9a9d96044c2e7bbcf5464afe67009222e1a"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 118948,
-      "sha256": "132dfeb753a39db2d0ffb311b1462c52ee064c0eedb1569f91dd48f73e9daa81"
+      "bytes": 114770,
+      "sha256": "90f00e2eaa9eb44888d864ce90be8531683c7d046862d868a14d85f956e0cb0f"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 45408,
-      "sha256": "d04b23e4fcc5bfebc3559a3c99637098432dec8d393440107beccbec2c8870b9"
+      "bytes": 43372,
+      "sha256": "b09b2796e26f02bd86a812036874dc2eda69bc3c120c39e28dbc0fc3ad2ca6d8"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126695,
-      "sha256": "39011682825b8daae34117b067a27ab68ab7d39aa37f1a5aca17af590be872d6"
+      "bytes": 126671,
+      "sha256": "dde07e7534d3b72ababa1321fb5a52c3d1062e265b15cae8f5efc63e17e1c800"
     }
   },
   "schema_version": 2,
