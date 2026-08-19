@@ -194,7 +194,12 @@ oscillatory displacement, integral displacement, and latent world acceleration.
 A zero pseudo-measurement on the integral state provides low-frequency
 regularization.  The core model admits analytic discrete-time propagation, and
 the normal Live recursion is locally input-to-state stable under explicit
-bounded-schedule, observability, covariance, and no-reset assumptions.
+bounded-schedule, observability, covariance, and no-reset assumptions.  The
+measurement-only startup observer additionally gives an almost-global,
+semiglobal practical attitude-capture extension: on every compact initial-tilt
+set separated from the antipodal gravity configuration, a quality-gated handoff
+enters the certified Live basin under explicit bounded-disturbance and handoff
+conditions.
 Sea-state adaptation is implemented as an exogenous measurement-only layer that
 estimates wave period and band-limited acceleration variance and schedules the
 OU prior and integral regularizer.  A paired ten-seed study spans four
@@ -225,6 +230,7 @@ extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, 
 \input{w3d-analytic-coeff.tex-part}
 \input{w3d-kalm-up.tex-part}
 \input{w3d-iss-stability.tex-part}
+\input{w3d-semiglobal-stability.tex-part}
 
 % Part II: motivational analysis and chosen adaptation.
 \input{w3d-adaptation-motivation.tex-part}
