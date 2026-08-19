@@ -6,10 +6,20 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
+SRC = REPO_ROOT / "src"
 
 
 def _read(name: str) -> str:
     return (DOC / name).read_text(encoding="utf-8")
+
+
+def _flat(text: str) -> str:
+    """Line breaks in the sources are wrapping, not content."""
+    return " ".join(text.split())
+
+
+def _source(relative: str) -> str:
+    return (SRC / relative).read_text(encoding="utf-8")
 
 
 class OUIIISemiglobalStabilityContractTests(unittest.TestCase):
@@ -53,10 +63,40 @@ class OUIIISemiglobalStabilityContractTests(unittest.TestCase):
         self.assertIn("0.075", proof)
         self.assertIn(r"\SI{150}{s}", proof)
         self.assertIn(r"\label{eq:semiglobal-aligned-branch}", proof)
-        self.assertIn("sine-only residual is not by itself", proof)
+        self.assertIn("sine-only residual is nevertheless not by itself", proof)
         self.assertIn(r"\eqref{eq:semiglobal-aligned-branch}", startup)
         self.assertIn(r"\eqref{eq:semiglobal-basin-entry}", startup)
         self.assertIn(r"\ref{thm:semiglobal-proxy-live}", startup)
+
+    def test_aligned_branch_is_gated_and_not_merely_assumed(self):
+        """The sine residual is blind to a 180 deg flip, so the branch has to
+        be tested where the handoff is accepted -- including on the forced
+        timeout path, which never looks at the residual at all."""
+        proof = _flat(_read("w3d-semiglobal-stability.tex-part"))
+        startup = _flat(_read("w3d-init.tex-part"))
+
+        self.assertIn("sign of the inner product", proof)
+        self.assertIn("sign of the inner product", startup)
+        self.assertIn("withholds a timeout-forced handoff until", proof)
+        self.assertIn("delayed rather than accepted on the antipodal branch", startup)
+
+        common = _source("kalman_common/SeaStateFusionFilterCommon.h")
+        self.assertIn("inline bool gravityAlignedBranch", common)
+        self.assertIn("unitVecAlignCos(s_obs, g_slow) > 0.0f", common)
+        self.assertIn("if (!aligned_branch) return false;", common)
+
+        for header in (
+            "kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
+            "kalman_ou_ii/SeaStateFusionFilter_OU_II.h",
+        ):
+            gate = _flat(_source(header))
+            self.assertIn("seastate::common::gravityAlignedBranch", gate)
+            # The quality hold and the 150 s forced handoff are both branch-gated.
+            self.assertIn(
+                "const bool tilt_trusted = mag_gravity_aligned_branch_ &&", gate)
+            self.assertIn(
+                "const bool ready_by_timeout = proxy_ready && (t_ >= timeout_sec) "
+                "&& mag_gravity_aligned_branch_;", gate)
 
 
 if __name__ == "__main__":

@@ -65,11 +65,11 @@ regularized body-offset identification problem without adding a magnetic-bias st
 to any navigation filter.  The evidence separates the mechanisms.  In OU--III the
 proxy startup reduced mean roll RMS from 0.372 to 0.339 deg and accelerometer-bias RMS
 from 0.0631 to 0.0574 m/s$^2$ with essentially unchanged displacement, while the
-continuous hard-iron correction subsequently reduced mean yaw RMS from 1.835 to
-0.822 deg.  OU--II shows the same magnetic effect, 1.887 to 0.813 deg mean yaw.  In
-TFG feature ablations, disabling hard-iron tracking raises mean yaw from 1.077 to
-2.349 deg, whereas reverting only the startup policy raises roll from 0.308 to
-0.696 deg and the worst accelerometer-bias error from 166.7\% to 398.1\%.  These
+continuous hard-iron correction subsequently reduced mean yaw RMS from 2.065 to
+0.617 deg.  OU--II shows the same magnetic effect, 1.869 to 0.661 deg mean yaw.  In
+TFG feature ablations, disabling hard-iron tracking raises mean yaw from 0.777 to
+2.486 deg, whereas reverting only the startup policy raises roll from 0.296 to
+0.697 deg and the worst accelerometer-bias error from 164.1\% to 398.3\%.  These
 results show that marine initialization is not merely an initial-quaternion problem:
 it is a one-time observability and gauge-establishment problem followed by a
 continuous sensor-identification problem.
@@ -526,7 +526,12 @@ the refined magnetic reference is in force.
 The studies below were run at different stages of the implementation.  They are kept
 separate deliberately.  A startup ablation should not be used to claim a hard-iron
 effect, and a later combined TFG parity change should not be attributed to one feature
-when feature-off arms are available.
+when feature-off arms are available.  The startup-policy tables are the original
+study and are left at the numbers it produced, because the mechanism they isolate is
+the one that was changed then.  The hard-iron ablations are re-measured on the filter
+as it now stands, which is why their uncorrected baselines no longer match the yaw
+column of the startup table: the ridge floor of the hard-iron solve was re-cut after
+that study, and the magnetometer variance the attitude update uses was re-gauged.
 
 \subsection{OU--III startup: staged MEKF versus Mahony proxy}
 
@@ -608,20 +613,23 @@ matched comparison in \cref{tab:ou3-hardiron}.
 \toprule
 Metric & hard iron off & on & change \\
 \midrule
-yaw RMS mean [deg] & 1.835 & 0.822 & $-55.2\%$ \\
-yaw RMS worst [deg] & 2.162 & 1.063 & $-50.8\%$ \\
-roll RMS mean [deg] & 0.339 & 0.340 & $+0.3\%$ \\
-pitch RMS mean [deg] & 0.266 & 0.243 & $-8.6\%$ \\
-3-D RMS mean [m] & 0.6212 & 0.6199 & $-0.2\%$ \\
+yaw RMS mean [deg] & 2.065 & 0.617 & $-70.1\%$ \\
+yaw RMS worst [deg] & 2.132 & 0.878 & $-58.8\%$ \\
+roll RMS mean [deg] & 0.264 & 0.267 & $+1.4\%$ \\
+pitch RMS mean [deg] & 0.161 & 0.164 & $+1.9\%$ \\
+3-D RMS mean [m] & 0.4108 & 0.4123 & $+0.4\%$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Every one of the eight yaw records improves.  An oracle decomposition explains why:
-with no correction the mean/worst yaw were 1.835/2.162 deg; removing only soft iron
-and misalignment gave 1.811/2.121 deg, while removing only hard iron gave
-0.496/1.084 deg.  For the shipped calibration realization, hard iron therefore
-accounts for almost all of the standing gauge error.
+Every one of the eight yaw records improves.  An oracle decomposition explains why.
+It was measured on the configuration in force when the correction landed, whose
+uncorrected baseline was 1.835/2.162 deg mean/worst: removing only soft iron and
+misalignment gave 1.811/2.121 deg, while removing only hard iron gave
+0.496/1.084 deg.  The attribution is a property of the injected calibration draw
+rather than of the ridge setting, so it carries over to the re-measured table
+above: for the shipped calibration realization, hard iron accounts for almost all
+of the standing gauge error.
 
 \subsection{Continuous hard iron: OU--II}
 
@@ -634,18 +642,21 @@ OU--II independently reproduces the same mechanism:
 \toprule
 Metric & hard iron off & on & change \\
 \midrule
-yaw RMS mean [deg] & 1.887 & 0.813 & $-56.9\%$ \\
-yaw RMS worst [deg] & 2.161 & 1.089 & $-49.6\%$ \\
-pitch RMS mean [deg] & 0.289 & 0.255 & $-11.8\%$ \\
-roll RMS mean [deg] & 0.333 & 0.332 & $-0.3\%$ \\
-Z RMS mean [\%Hs] & 6.454 & 6.461 & $+0.1\%$ \\
+yaw RMS mean [deg] & 1.869 & 0.661 & $-64.6\%$ \\
+yaw RMS worst [deg] & 2.133 & 1.078 & $-49.5\%$ \\
+pitch RMS mean [deg] & 0.179 & 0.180 & $+0.4\%$ \\
+roll RMS mean [deg] & 0.282 & 0.288 & $+2.2\%$ \\
+Z RMS mean [\%Hs] & 6.275 & 6.278 & $+0.0\%$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The two OU families end within three hundredths of a degree in worst yaw once they use
-the same calibration machinery.  That convergence is evidence that the removed error
-belongs to the magnetometer rather than to either translational state model.
+Both families lose about two thirds of their mean yaw error to the same correction,
+from starting points two tenths of a degree apart, and both pay for it with a rise of
+about two percent in the tilt channels.  That common response is evidence that the
+removed error belongs to the magnetometer rather than to either translational state
+model; the remaining gap in worst yaw, 0.878 deg against 1.078, is the residue each
+family's own attitude solution leaves for the correction to work against.
 
 \subsection{TFG feature-off ablations}
 
@@ -661,26 +672,27 @@ the parity study disabled one feature at a time at deployed coefficients.
 Arm & yaw mean & yaw worst & roll & pitch & bias mean & bias worst \\
 & deg & deg & deg & deg & \% & \% \\
 \midrule
-Deployed & 1.077 & 1.528 & 0.308 & 0.340 & 92.7 & 166.7 \\
-Hard iron off & 2.349 & 3.303 & 0.316 & 0.350 & 90.2 & 162.2 \\
-Mag refinement off & 0.873 & 1.264 & 0.614 & 0.259 & 120.7 & 204.1 \\
-Staged startup & 2.202 & 2.906 & 0.696 & 0.308 & 144.8 & 398.1 \\
+Deployed & 0.777 & 1.345 & 0.296 & 0.366 & 97.1 & 164.1 \\
+Hard iron off & 2.486 & 3.256 & 0.307 & 0.373 & 94.3 & 159.3 \\
+Mag refinement off & 0.688 & 1.534 & 0.600 & 0.241 & 118.0 & 204.3 \\
+Staged startup & 2.265 & 2.906 & 0.697 & 0.303 & 145.7 & 398.3 \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-Turning off only hard-iron tracking increases mean yaw by a factor of 2.18 and worst
-yaw by 2.16 while moving the other channels by only a few percent.  It is therefore a
-clean yaw-gauge mechanism.  Reverting only to staged startup more than doubles roll
-and raises worst accelerometer-bias error from 166.7\% to 398.1\%; it also raises
-worst 3-D displacement from 21.03\% to 24.27\% in the full table.  That is the tilt
-and nuisance-bias mechanism.
+Turning off only hard-iron tracking increases mean yaw by a factor of 3.20 and worst
+yaw by 2.42 while moving the other channels by a few percent, in both directions and
+without a consistent sign.  It is therefore a clean yaw-gauge mechanism.  Reverting
+only to staged startup more than doubles roll and raises worst accelerometer-bias
+error from 164.1\% to 398.3\%; it also raises worst 3-D displacement from 20.32\% to
+23.42\%.  That is the tilt and nuisance-bias mechanism.
 
 The refinement arm shows a genuine trade rather than a monotone improvement.  Turning
-refinement off improves mean yaw from 1.077 to 0.873 deg but roughly doubles roll
-from 0.308 to 0.614 deg and raises mean accelerometer-bias error from 92.7\% to
-120.7\%.  Refinement is therefore retained for the weakly observable tilt/bias
-channels; continuous hard-iron correction supplies the separate yaw-gauge fix.
+refinement off improves mean yaw from 0.777 to 0.688 deg -- while making its worst
+record worse, 1.345 to 1.534 -- but roughly doubles roll from 0.296 to 0.600 deg and
+raises mean accelerometer-bias error from 97.1\% to 118.0\%.  Refinement is therefore
+retained for the weakly observable tilt/bias channels; continuous hard-iron correction
+supplies the separate yaw-gauge fix.
 
 \section{What Improved, and Why}
 \label{sec:what-improved}

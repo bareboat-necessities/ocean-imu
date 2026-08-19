@@ -2257,6 +2257,7 @@ public:
 
         gravity_gate_acc_lpf_.reset();
         mag_gravity_good_sec_ = 0.0f;
+        mag_gravity_aligned_branch_ = false;
         mag_init_eligible_t0_ = NAN;
         last_mag_sample_t_ = NAN;
       
@@ -2423,6 +2424,16 @@ public:
             const float align_sin =
                 seastate::common::gravityAlignResidualSin(attitudeReferenceQuat_(), acc_gate_lp);
 
+            // The sine residual is the same at an angle and at its supplement,
+            // so it accepts an attitude flipped through 180 deg just as readily
+            // as the right one.  The branch is the sign of the dot product, and
+            // the gate has to carry it: this gate is what certifies the tilt
+            // that frames the magnetic reference and that is handed to the MEKF.
+            const bool aligned_branch =
+                seastate::common::gravityAlignedBranch(attitudeReferenceQuat_(), acc_gate_lp);
+
+            mag_gravity_aligned_branch_ = aligned_branch;
+
             const float gyro_dps = gyro_body_ned.norm() * 57.295779513f;
 
             // Main gate: gravity-direction agreement only.
@@ -2434,6 +2445,7 @@ public:
             const bool gravity_good_now =
                 std::isfinite(align_sin) &&
                 (align_sin <= cfg_.mag_gravity_align_max_sin) &&
+                aligned_branch &&
                 !extreme_motion;
 
             if (gravity_good_now) {
@@ -2472,6 +2484,7 @@ public:
                 mag_auto_tuner_.reset();
                 gravity_gate_acc_lpf_.reset();
                 mag_gravity_good_sec_ = 0.0f;
+                mag_gravity_aligned_branch_ = false;
                 mag_init_eligible_t0_ = NAN;
                 last_mag_sample_t_ = NAN;
 
@@ -2999,6 +3012,7 @@ private:
         const bool proxy_ready = impl_.startupProxyInitialized();
 
         const bool tilt_trusted =
+            mag_gravity_aligned_branch_ &&
             (mag_gravity_good_sec_ >= cfg_.mag_gravity_align_hold_sec);
 
         const bool north_ready = !cfg_.with_mag || mag_ref_set_;
@@ -3029,7 +3043,15 @@ private:
         const float timeout_sec =
             std::max(cfg_.proxy_startup_timeout_sec, mag_acquire_deadline);
 
-        const bool ready_by_timeout = proxy_ready && (t_ >= timeout_sec);
+        // The timeout bounds how long startup may take; it does not license a
+        // handoff onto the antipodal branch.  Seeding the MEKF with an attitude
+        // that disagrees with measured gravity by more than a right angle is
+        // worse than waiting out the extra samples it takes the observer to
+        // leave a set it is not attracted to in the first place.
+        const bool ready_by_timeout =
+            proxy_ready &&
+            (t_ >= timeout_sec) &&
+            mag_gravity_aligned_branch_;
 
         if (!ready_by_quality && !ready_by_timeout) return;
 
@@ -3259,6 +3281,7 @@ private:
 
     Vec3LPF gravity_gate_acc_lpf_{};
     float   mag_gravity_good_sec_ = 0.0f;
+    bool    mag_gravity_aligned_branch_ = false;
     float   mag_init_eligible_t0_ = NAN;
 
     StartupTiltObserver bootstrap_tilt_obs_{};

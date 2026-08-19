@@ -80,7 +80,10 @@ Three parts of this were not optional:
   `two_ki = 0` and at zero with the deployed `two_ki = 0.02`.
 - **The handoff needs a timeout.** Past `proxy_startup_timeout_sec` (150 s, and
   internally raised so it can never cut the magnetic acquisition short) the
-  handoff proceeds on proxy tilt alone. A filter that silently produces nothing
+  handoff proceeds on proxy tilt alone, subject only to that tilt being on the
+  aligned branch of the gravity gate -- the sine residual cannot tell an
+  attitude from its 180-degree flip, so the sign of `s_hat . s_meas` is tested
+  separately and the forced handoff waits for it. A filter that silently produces nothing
   is a worse failure than one that starts from a stale operating point.
 - **The seeded attitude covariance is anisotropic.** Tilt has been integrated
   through the wave band; yaw is either gauged by the magnetometer or entirely

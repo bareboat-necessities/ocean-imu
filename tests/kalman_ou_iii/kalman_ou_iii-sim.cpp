@@ -939,6 +939,17 @@ private:
 //
 // All nine are what tools/ou_regauge_gates.py prints for the filter that
 // ships, cut to the same rule as every line above.
+//
+// Then a tenth bar, which is not a re-cut but a bar that was missing.  The 3D
+// bias limit was one number covering the accelerometer and the gyro, and it
+// was fitted to the accelerometer: 78.86 against a worst accelerometer error
+// of 78.4668 and a worst gyro error of 18.7167.  The gyro therefore sat a
+// factor of four under its own gate and could have quadrupled without anything
+// noticing.  It now carries its own bar at 18.82, cut to the same rule from
+// the same run, and `bias_3d_percent` above is the accelerometer's alone.  The
+// gyro-bias channel is not incidental here: it is what the startup observer's
+// integral term is for, and what a tilt seed inherits as a standing roll and
+// pitch error, so it is the one channel that had a measurement and no bar.
 static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_z_jonswap   = 4.527f,  // was 4.545,  worst 4.5044 (jonswap H0.27)
     .err_limit_percent_z_pmstokes  = 4.509f,  // was 4.511,  worst 4.4858 (pmstokes H0.27)
@@ -949,6 +960,7 @@ static constexpr W3dFailureLimits FAIL_LIMITS{
     .err_limit_percent_3d_pmstokes = 14.58f,  // was 14.62,  worst 14.5033 (pmstokes H8.5)
     .acc_z_bias_percent            = 4.489f,  // was 4.497,  worst 4.4662 (pmstokes H8.5)
     .bias_3d_percent               = 78.86f,  // was 78.84,  worst 78.4668 (pmstokes H4.0, accel)
+    .gyro_bias_3d_percent          = 18.82f,  // new bar,    worst 18.7167 (pmstokes H8.5, gyro)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

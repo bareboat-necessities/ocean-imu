@@ -1543,11 +1543,14 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
                   << "% of max TRUE bias). Failing.\n";
         if (!collect_all_gates) std::exit(EXIT_FAILURE);
     }
-    if (std::isfinite(gyrb_r3_pct) && gyrb_r3_pct > limits.bias_3d_percent) {
+    const float gyro_bias_limit = (limits.gyro_bias_3d_percent > 0.0f)
+        ? limits.gyro_bias_3d_percent
+        : limits.bias_3d_percent;
+    if (std::isfinite(gyrb_r3_pct) && gyrb_r3_pct > gyro_bias_limit) {
         failed = true;
         fail_reason = "gyro_bias_3d_percent_exceeded";
         std::cerr << "ERROR: 3D gyro bias error RMS above limit ("
-                  << gyrb_r3_pct << "% > " << limits.bias_3d_percent
+                  << gyrb_r3_pct << "% > " << gyro_bias_limit
                   << "% of max TRUE bias). Failing.\n";
         if (!collect_all_gates) std::exit(EXIT_FAILURE);
     }

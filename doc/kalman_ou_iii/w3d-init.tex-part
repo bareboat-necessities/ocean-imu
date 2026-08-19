@@ -26,10 +26,12 @@ available sea-state schedule.
 \label{sec:proxy-handoff}
 
 Normal handoff requires: (i) \SI{2}{s} of proxy gravity agreement with
-sine-angle error below \num{0.075} (about \SI{4.3}{\degree}) and gyro magnitude
-below \SI{30}{\degree\per\second}; (ii) a magnetic gauge when a magnetometer is
-present; and (iii) tuner readiness.  A minimum \SI{8}{s} startup prevents a
-quiet initial interval from passing prematurely.  A \SI{150}{s} timeout bounds
+sine-angle error below \num{0.075} (about \SI{4.3}{\degree}) on the aligned
+branch---predicted and measured gravity directions with positive inner
+product---and gyro magnitude below \SI{30}{\degree\per\second}; (ii) a
+magnetic gauge when a magnetometer is present; and (iii) tuner readiness.  A
+minimum \SI{8}{s} startup prevents a quiet initial interval from passing
+prematurely.  A \SI{150}{s} timeout bounds
 startup duration without interrupting active magnetic-reference acquisition.
 
 At handoff, the proxy attitude seeds the MEKF once.  With magnetic north
@@ -45,17 +47,20 @@ held until the magnetic refinement below because bias and small tilt error are
 weakly separable in waves and the residual bias correlation time is long.
 
 The handoff is the basin-entry map analyzed in
-Sec.~\ref{sec:semiglobal-handoff}.  The implemented gravity residual is a sine
-of the alignment angle, so it does not by itself distinguish the aligned and
-antipodal branches.  The semiglobal theorem therefore explicitly requires the
-accepted handoff to satisfy the aligned-branch condition
-Eq.~\eqref{eq:semiglobal-aligned-branch}; this is a theorem assumption, not an
-extra runtime gate claimed for the present implementation.  When that condition,
-the accepted proxy/magnetic errors, and the remaining state mismatch satisfy
-Eq.~\eqref{eq:semiglobal-basin-entry}, the handoff lands inside the invariant
-neighborhood of the 21-state Live ISS theorem and
-Theorem~\ref{thm:semiglobal-proxy-live} applies.  A timeout-forced handoff that
-does not satisfy those conditions remains outside the semiglobal result.
+Sec.~\ref{sec:semiglobal-handoff}.  The gravity residual is a sine of the
+alignment angle, so it does not by itself distinguish the aligned and antipodal
+branches; the gate therefore also tests the sign of the inner product of the
+same two directions, and an accepted handoff satisfies the aligned-branch
+condition Eq.~\eqref{eq:semiglobal-aligned-branch} of the semiglobal theorem.
+The \SI{150}{s} timeout is held to that same test, so a forced handoff is
+delayed rather than accepted on the antipodal branch; it does not test the
+residual magnitude, so it certifies the branch and not the tilt bound.  When the
+branch condition, the accepted proxy/magnetic errors, and the remaining state
+mismatch satisfy Eq.~\eqref{eq:semiglobal-basin-entry}, the handoff lands inside
+the invariant neighborhood of the 21-state Live ISS theorem and
+Theorem~\ref{thm:semiglobal-proxy-live} applies.  A timeout-forced handoff whose
+state mismatch does not satisfy Eq.~\eqref{eq:semiglobal-basin-entry} remains
+outside the semiglobal result.
 
 \subsection{Two-stage magnetic reference}
 \label{sec:mag-two-stage}
