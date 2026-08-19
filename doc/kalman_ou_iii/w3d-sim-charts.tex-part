@@ -136,12 +136,16 @@ change simultaneously.
 
 The changing-sea study uses a $C^2$ quintic crossfade from
 $(H_s,T_p)=(\SI{1.5}{m},\SI{5.7}{s})$ to
-$(\SI{4.0}{m},\SI{11.4}{s})$ over $t=420$--$780$~s.  Endpoint records are
+$(\SI{4.0}{m},\SI{11.4}{s})$ over $t=540$--$660$~s.  Endpoint records are
 independently phase randomized, and derivative-consistent velocity and
 acceleration include blend-derivative terms.  This is a kinematically closed
 transition rather than a continuously evolving spectrum; both endpoint spectra
-coexist during the blend, which can therefore be effectively bimodal.
-Interpretation uses pure-start, blend, and pure-end, plus common trailing windows.
+coexist during the blend, which can therefore be effectively bimodal.  The
+\SI{120}{s} crossfade is short against the estimator's own averaging memories,
+so the score can separate tracking lag from steady-state accuracy; a longer
+ramp is quasi-static from the schedule's point of view.  Interpretation uses
+pure-start, blend, endpoint run-on, and settled endpoint intervals, plus common
+trailing windows.
 
 This case does not establish performance for arbitrary spectral evolution,
 crossing seas, or continuously changing directional spectra.

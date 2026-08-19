@@ -16,7 +16,9 @@ Instrument.  A smoothing horizon is only observable while its target moves, so
 the stationary records answer almost nothing: after warmup the target sits
 still and every horizon converges to the same value.  The `transition` stage
 therefore synthesizes non-stationary records with the same C2 quintic crossfade
-`tools/ou_validation.py` uses, and scores the crossfade interval on its own.
+`tools/ou_validation.py` uses, and scores the crossfade interval on its own --
+together with the run-on interval just after it, which is where a horizon that
+is too long is still carrying the sea it just left.
 
 Scoring.  Per record the simulator reports RMS errors over a window.  Each
 candidate is scored by the ratio of its error to the default's error on the
@@ -75,8 +77,9 @@ FAMILIES = {
 }
 
 # Shipped value of every multiplier.  A candidate that sets no knob is the
-# baseline and must reproduce it exactly.
-DEFAULT_MULT = 5.0
+# baseline and must reproduce it exactly, so this is only used to keep the
+# sweep grid from carrying a second, redundant copy of the shipped point.
+DEFAULT_MULT = 3.0
 
 # Scoring window, matching the committed 900 s convention.
 WINDOW_SEC = 900.0
@@ -85,9 +88,16 @@ DT_SEC = 1.0 / 200.0
 
 # Crossfade interval of the synthesized transition records, in seconds from the
 # start of the record.  These are tools/ou_validation.py's defaults for a
-# 1200 s record (0.35 and 0.65 of the duration).
-TRANSITION_START_SEC = 420.0
-TRANSITION_END_SEC = 780.0
+# 1200 s record (0.45 and 0.55 of the duration), i.e. a 120 s crossfade centred
+# on the replay.
+TRANSITION_START_SEC = 540.0
+TRANSITION_END_SEC = 660.0
+# One crossfade length past the blend.  The endpoint sea is scored on either
+# side of this instant: a smoother that averages too long is still carrying the
+# start sea before it, and is on the endpoint operating point after it.
+TRANSITION_RECOVER_END_SEC = TRANSITION_END_SEC + (
+    TRANSITION_END_SEC - TRANSITION_START_SEC
+)
 
 METRIC_RENAME = {
     "disp_3d_rms_m": "rms_3d",
@@ -494,15 +504,20 @@ def main():
             [d.strip() for d in args.transition_dir.split(",") if d.strip()],
             [p.strip() for p in args.transition_pair.split(",") if p.strip()],
         )
-        # The scored window opens at 300 s, so it contains 120 s of the start
-        # sea, the whole crossfade, and 420 s of the endpoint sea.  Splitting
-        # it keeps the crossfade from being diluted by the two stationary
-        # stretches that surround it.
+        # The scored window opens at 300 s, so it contains 240 s of the start
+        # sea, the whole 120 s crossfade, and 540 s of the endpoint sea.
+        # Splitting it keeps the crossfade from being diluted by the two
+        # stationary stretches that surround it, and splits the endpoint sea
+        # at one crossfade length past the blend so the run-on -- where a long
+        # averaging horizon is still carrying the start sea -- is scored apart
+        # from the settled endpoint sea it otherwise cancels against.
         segments = (f"start:{RECORD_SEC - WINDOW_SEC:g}:"
                     f"{TRANSITION_START_SEC:g},"
                     f"blend:{TRANSITION_START_SEC:g}:{TRANSITION_END_SEC:g},"
-                    f"end:{TRANSITION_END_SEC:g}:{RECORD_SEC:g}")
-        report_segments = ["window", "blend", "end", "start"]
+                    f"recover:{TRANSITION_END_SEC:g}:"
+                    f"{TRANSITION_RECOVER_END_SEC:g},"
+                    f"end:{TRANSITION_RECOVER_END_SEC:g}:{RECORD_SEC:g}")
+        report_segments = ["window", "blend", "recover", "end", "start"]
     else:
         cands = candidates_for(args.stage)
         recs = records(args.family)

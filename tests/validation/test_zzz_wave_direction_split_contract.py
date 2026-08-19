@@ -46,7 +46,9 @@ def _transition_and_secondary_ensembles_are_rescored(self):
     )
 
     # OU--III still owns its transition and second-spectrum motion evidence.
-    self.assertIn("pure-start, blend, and pure-end", protocol)
+    # The endpoint sea is scored as a run-on interval and a settled one, so the
+    # methodology has to name four intervals rather than three.
+    self.assertIn("pure-start, blend, endpoint run-on, and settled", protocol)
     self.assertIn("whole-window transition percentages", results)
     self.assertIn("tab:ou_transition_segments", generated)
     self.assertIn("tab:ou_mc_pmstokes", generated)

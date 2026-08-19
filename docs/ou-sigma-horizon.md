@@ -14,11 +14,13 @@ replay. `tools/ou_sigma_horizon_study.py` reproduces every table.
 **Result.** The tracker is gone from the adaptation path and costs nothing:
 pooled vertical RMS moves by 0.00%, worst record 0.11%. `K_periods` stays at
 `2.0`. It is not the value anyone would pick from first principles now that it
-means something different, but the sweep says the alternatives trade one
-interval of a sea-state transition for another and net to nothing, so there is
-no free improvement to take. What the sweep does establish is that `2.0` is on
-the correct side of the optimum -- halving it costs 1% -- and the constant is
-now a settable, measured knob rather than an inherited one.
+means something different, but the sweep says the alternatives net to nothing:
+re-measured against a crossfade fast enough to lag (section 5), the sign of the
+effect reverses between a building and a decaying sea, so no constant captures
+it, and `2.0` is where the ensemble's worst realization sits. What the sweep
+does establish is that `2.0` is on the correct side of the optimum -- halving it
+costs 1% on the stationary ensemble -- and the constant is now a settable,
+measured knob rather than an inherited one.
 
 ## 1. What was still coupled
 
@@ -166,65 +168,92 @@ than estimating the sea state. Doubling it, by contrast, buys about 0.1% and
 then saturates: `K = 3` and `K = 8` are indistinguishable. Whatever the
 stationary records are measuring, it is already finished by three wave periods.
 
-## 5. Sea-state transitions: the two intervals disagree
+## 5. Sea-state transitions: the two directions disagree
 
 A stationary record cannot price a lag. The instrument for that is the
 crossfade: `tools/ou_ema_adapt_study.py transition` builds records that blend
-two independently phase-randomized realizations over 420-780 s, in both
-directions and on two endpoint pairs an octave apart in wave period, and scores
-the three intervals of the 900 s window separately (n = 12 records: 2 pairs x
-2 directions x 3 wave-phase seeds, OU-III).
+two independently phase-randomized realizations, in both directions and on two
+endpoint pairs an octave apart in wave period, and scores the intervals of the
+900 s window separately (12 records: 2 pairs x 2 directions x 3 wave-phase
+seeds, OU-III, here at 3 IMU seed triplets each, n = 36).
+
+That instrument has since been sharpened twice. The crossfade now runs over
+540-660 s instead of 420-780 s -- 120 s rather than 360 s, which is about three
+times the longest averaging memory in the filter instead of ten times it -- and
+the endpoint sea is scored as two intervals rather than one: a `run-on`
+interval one crossfade long, where a schedule that averages too long is still
+carrying the sea it just left, and the `settled` remainder. The numbers below
+are that instrument, on the deployed filter (`ADAPT_RS_MULT = 1.5`).
 
 Vertical RMS, geometric mean of the ratio to `K = 2`, and the worst single
-record in the ensemble:
+realization:
 
-| `K_periods` | blend | blend worst | end sea | end worst | whole window |
+| `K_periods` | blend | blend worst | run-on | settled | whole window |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 1.0042 | 1.0116 | 0.9940 | 1.0002 | 0.9987 |
+| 1 | 1.0057 | 1.0378 | 0.9990 | 0.9975 | 0.9980 |
+| 1.5 | 1.0018 | 1.0138 | 0.9999 | 0.9988 | 0.9990 |
 | 2 (shipped) | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
-| 3 | 0.9973 | 1.0005 | 1.0043 | 1.0112 | 1.0009 |
-| 4 | 0.9947 | 1.0007 | 1.0070 | 1.0190 | 1.0010 |
-| 6 | 0.9894 | 1.0022 | 1.0096 | 1.0251 | 0.9999 |
-| 8 | 0.9849 | 1.0023 | 1.0103 | 1.0250 | 0.9984 |
+| 3 | 0.9968 | 1.0201 | 0.9989 | 1.0017 | 1.0010 |
+| 4 | 0.9928 | 1.0318 | 0.9972 | 1.0027 | 1.0012 |
+| 6 | 0.9848 | 1.0426 | 0.9943 | 1.0035 | 1.0008 |
 
-The two intervals move in opposite directions, monotonically, and they very
-nearly cancel. That is the signature of a bias-variance trade rather than of a
-mis-set constant:
+The whole window still spans 0.998 to 1.001 across a six-fold change in `K`, so
+the conclusion of the first pass survives: there is no fixed `K` worth moving
+to. What the sharper instrument adds is *why*, and the reason is not the one
+the first pass proposed. Splitting by transition direction:
 
-- **While the sea state is moving**, the crossfade is where `sigma_a` is
-  hardest to estimate — the record is genuinely bimodal, so the instantaneous
-  variance swings widely — and a longer memory rejects those swings. Hence the
-  blend improves monotonically out to `K = 8`.
-- **Once it has stopped moving**, the same memory is still carrying the
-  transition. At `K = 8` and `T_z = 8.4 s` the two-stage EWMA remembers about
-  120 s, so a quarter of the 420 s endpoint interval is scored on a `sigma_a`
-  the previous sea contributed to. Hence the endpoint sea degrades
-  monotonically, by up to 2.5% on the worst record.
+| `K_periods` | blend, sea building | blend, sea decaying | run-on, building | run-on, decaying |
+| --- | --- | --- | --- | --- |
+| 1 | 1.0267 | 0.9947 | 0.9959 | 0.9988 |
+| 1.5 | 1.0104 | 0.9969 | 0.9982 | 1.0010 |
+| 3 | 0.9823 | 1.0056 | 1.0022 | 0.9941 |
+| 4 | 0.9659 | 1.0091 | 1.0030 | 0.9874 |
+| 6 | 0.9402 | 1.0125 | 1.0022 | 0.9776 |
 
-Whole-window ratios of 0.9984 to 1.0010 across a sixteen-fold change in `K` say
-those two effects are the same size. There is no fixed `K` that takes the blend
-gain without the endpoint cost, so `K` stays at 2.0: it does not regress
-anything, and moving it would buy one interval of a transition by selling
-another.
+(`large` endpoint pair, H_s = 1.5 m to 4.0 m and back; the `small` pair has the
+same signs and a third of the amplitude.)
 
-The one unambiguous finding is the direction. `K = 1` is worse on the blend
-(1.0042) *and* on the stationary ensemble (1.0025-1.0033), so the shipped value
-is on the correct side of the trade and the pre-existing constant survives the
-change of units it was subjected to. Getting the blend gain *and* the endpoint
-recovery needs a horizon that shortens when the sea state actually moves — the
-same two-regime problem `adaptiveSmoothingHorizonSec()` already solves for the
-`r_S` channel with its `slew_log` term. That is not attempted here: the
-detector would have to compare two variance timescales rather than a target
-against an applied value, and it introduces a constant of its own that this
-evidence cannot fit.
+The effect does not cancel because two intervals disagree. It cancels because
+the *same* interval wants opposite things depending on which way the sea is
+going, and the ensemble weights both directions equally:
+
+- A long `sigma_a` memory lags, and a lagging estimate is biased **low** while
+  the sea builds and **high** while it decays.
+- The filter is not symmetric in that bias. Under-estimating `sigma_a` shrinks
+  `r_S ~ sigma_a tau^3`, which tightens the integral anchor, and during a fast
+  change that is worth up to 6% of vertical RMS (`K = 6`, sea building).
+  Over-estimating it loosens the anchor and costs about 1.2%.
+- The run-on interval mirrors it with the sign flipped, because that is where
+  the memory of the sea just left is still in the average: the decaying case
+  gains there (0.9776 at `K = 6`) exactly where the building case pays.
+
+So the pooled blend gain of a long horizon is not better tracking. It is a
+favourable bias in one direction of travel, and it is paid back in the other
+direction and in the settled sea. A constant cannot buy it: the sign of the
+correction it would need is the sign of `d(sigma_a)/dt`.
+
+The worst single realization is what closes the case. It is minimized at
+`K = 1.5-2` in every interval and rises in both directions -- 1.0138 at 1.5,
+1.0201 at 3, 1.0426 at 6, 1.0378 at 1, all on the blend -- so the shipped value
+is not merely a point where means cancel; it is where the ensemble's tail is
+narrowest. `K` stays at 2.0.
+
+Getting the blend gain *and* the settled recovery needs a horizon that
+shortens when the sea state actually moves -- the same two-regime problem
+`adaptiveSmoothingHorizonSec()` already solves for the `r_S` channel with its
+`slew_log` term. That is not attempted here: the detector would have to compare
+two variance timescales rather than a target against an applied value, and it
+introduces a constant of its own that this evidence cannot fit. The `r_S`
+channel is where the sharpened instrument did move a constant; see
+docs/ou-ema-adaptation-tuning.md, section 7.
 
 ## 6. Two constants that turned out not to matter
 
 **The wave-band prior.** `tools/ou_sigma_horizon_study.py --axis prior --seeds 3`
 sweeps it over 0.1-0.4 Hz, a factor of four, i.e. a 2.5-10 s assumed
 zero-crossing period. Every pooled ratio is `1.0000` with a 95% interval of
-`[1.0000, 1.0000]`, in both families, on the stationary records and on all three
-transition intervals. The prior is replaced by a measurement about 50 s into
+`[1.0000, 1.0000]`, in both families, on the stationary records and on every
+transition interval. The prior is replaced by a measurement about 50 s into
 the run and the window opens at 300 s, so this is the expected answer; it is
 recorded because a constant that reaches the shipped filter should be shown not
 to matter rather than assumed not to.

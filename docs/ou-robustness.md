@@ -27,7 +27,10 @@ The degradation cases include:
 
 - a spectrally matched low-motion input scaled below the main study envelope;
 - the controlled $H_s=1.5$ m, $T_p=5.7$ s to $H_s=4.0$ m, $T_p=11.4$ s
-  transition under both the standard 360 s blend and a rapid 30 s blend;
+  transition under both the standard 120 s blend and a rapid 30 s blend. The
+  standard case is the crossfade the paired validation study scores, so both
+  studies mean the same record by "the controlled transition"; it was a 360 s
+  blend until that crossfade was shortened;
 - Adaptive and FixedNominal modes evaluated on identical paired realizations.
 
 The study scores continuous displacement, attitude, bias, and tuning metrics.

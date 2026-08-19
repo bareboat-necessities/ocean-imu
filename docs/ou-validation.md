@@ -32,11 +32,25 @@ run on the five JONSWAP-plus-transition scenarios.
 - Full mode uses ten predeclared seed triplets. A single supplied seed is
   broadcast; equally sized lists remain paired element by element.
 - The non-stationary case uses a C2 quintic crossfade from the $H_s=1.5$ m,
-  $T_p=5.7$ s sea to the $H_s=4.0$ m, $T_p=11.4$ s sea between 420 and 780 s.
+  $T_p=5.7$ s sea to the $H_s=4.0$ m, $T_p=11.4$ s sea between 540 and 660 s.
   The two endpoint records are independently phase-randomized, so the blend is
   deliberately bimodal rather than a continuously evolving single spectrum.
-- The final 900 s are scored. For the transition that window contains 300--420 s
-  of the start sea, 420--780 s of blend, and 780--1200 s of the endpoint sea.
+  The crossfade used to span 420--780 s. A 360 s ramp is quasi-static against
+  the adaptation horizons it is meant to exercise -- the slowest is the
+  two-stage $\sigma_a$ EWMA at roughly $2K T_z$, about 34 s on the largest
+  reference sea -- so the score could not separate tracking lag from
+  steady-state accuracy. At 120 s the crossfade is about three times that
+  memory: still a sea state changing rather than a step, but fast enough for a
+  lagging schedule to show up as an error.
+- The final 900 s are scored. For the transition that window contains 300--540 s
+  of the start sea, 540--660 s of blend, 660--780 s of endpoint-sea run-on, and
+  780--1200 s of settled endpoint sea. The run-on interval is scored apart from
+  the settled one because a schedule that averages too long does not only lag
+  during the blend, it carries the old sea into the new one, and that cost
+  lands after the crossfade; pooled into a single endpoint interval the two
+  partly cancel. Shortening the crossfade from the front leaves the settled
+  interval where it was, so settled numbers remain comparable with those the
+  360 s protocol published.
 
 The principal adaptation modes are:
 

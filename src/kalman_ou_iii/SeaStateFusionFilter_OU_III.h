@@ -170,12 +170,16 @@ constexpr float ADAPT_TAU_SEC              = 1.8f;
 constexpr float ADAPT_EVERY_SECS           = 0.1f;
 // Smoothing horizon of the r_S channel, in units of tau_target.  Measured on
 // the versioned records against synthesized sea-state transitions: the error
-// during a transition falls monotonically as this shortens, the stationary
-// worst-record vertical error rises monotonically, and 3.0 is where the two
-// cross at an acceptable cost.  r_S ~ tau^3 amplifies tau noise by
-// the third power, which is why this sits above OU-II's tau^2 and tau^1
-// channels.  See docs/ou-ema-adaptation-tuning.md.
-constexpr float ADAPT_RS_MULT              = 3.0f;   // dimensionless
+// during a transition falls monotonically as this shortens while the worst
+// single realization degrades monotonically the other way, and the value is
+// where the mean gain and the worst-record loss cross.  That crossing sat at
+// 3.0 while the transition instrument was a 360 s crossfade; re-measured on
+// the 120 s crossfade the study now uses -- fast enough for the horizon to
+// actually lag it -- it sits at 1.5, and 1.5 also wins on the stationary
+// ensemble, on attitude and on the accelerometer bias.  r_S ~ tau^3 amplifies
+// tau noise by the third power, which is why this stays above the horizon a
+// tau^1 channel would want.  See docs/ou-ema-adaptation-tuning.md.
+constexpr float ADAPT_RS_MULT              = 1.5f;   // dimensionless
 // Discrepancy, in natural-log units of the r_S target-to-applied ratio, above
 // which the smoothing horizon shortens.  Zero keeps the plain proportional
 // horizon; see docs/ou-ema-adaptation-tuning.md.

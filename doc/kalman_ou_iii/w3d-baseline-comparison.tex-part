@@ -151,7 +151,7 @@ the adaptation differences.
     \centering
     \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_transition}
     \caption{OU--III Adaptive controlled transition; shaded interval denotes the
-    $420$--$780$~s crossfade.}
+    $540$--$660$~s crossfade.}
     \label{fig:ou_transition}
   \end{figure}
 }{}

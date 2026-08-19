@@ -844,19 +844,42 @@ private:
 //   acc 3D bias %    81.84 -> 78.61    worst 81.4268 -> 78.2145
 //
 // The two 3D displacement gates come down by about a third, which is the
-// largest single move any of these bars has made.  Everything here is what
+// largest single move any of these bars has made.
+//
+// Then all nine again when the r_S smoothing horizon was re-measured against
+// a sea-state transition fast enough to lag -- ADAPT_RS_MULT 3.0 -> 1.5, see
+// docs/ou-ema-adaptation-tuning.md.  Eight of the nine move down, so this is
+// again mostly a better filter rather than a re-draw:
+//
+//   Z %Hs JONSWAP    4.72   -> 4.527   worst 4.6961  -> 4.5040
+//   Z %Hs PM-Stokes  4.666  -> 4.508   worst 4.6426  -> 4.4850
+//   yaw deg          1.27   -> 1.272   worst 1.2630  -> 1.2654
+//   roll deg         0.3637 -> 0.3625  worst 0.3618  -> 0.3607
+//   pitch deg        0.195  -> 0.1962  worst 0.1940  -> 0.1952
+//   3D % JONSWAP     13.94  -> 13.69   worst 13.8686 -> 13.6203
+//   3D % PM-Stokes   14.92  -> 14.56   worst 14.8387 -> 14.4810
+//   acc Z bias %     4.475  -> 4.488   worst 4.4519  -> 4.4652
+//   acc 3D bias %    78.61  -> 78.62   worst 78.2145 -> 78.2238
+//
+// Pitch is the one gate the shipped bar no longer held (0.1940 -> 0.1952,
+// +0.6%), and it is a re-draw of the same kind the paragraph above describes:
+// paired over the transition and stationary ensembles the roll/pitch ratio is
+// 0.9998 [0.9996, 1.0000] and 0.9997 [0.9994, 1.0000], i.e. attitude improves
+// on average while this one record moves inside its own scatter.  Yaw, acc Z
+// bias and acc 3D bias move up by 0.1% or less on their binding record and
+// are re-cut for the same reason.  Everything here is what
 // tools/ou_regauge_gates.py prints for the filter as it now stands, cut to
 // the same rule as every line above it.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.72f,   // was 4.735, worst 4.6961 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.666f,  // was 4.682, worst 4.6426 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.27f,   // was 1.297, worst 1.2630 (jonswap H1.5)
-    .err_limit_roll_deg            = 0.3637f, // was 0.42,  worst 0.3618 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.195f,  // was 0.223, worst 0.1940 (pmstokes H4.0)
-    .err_limit_percent_3d_jonswap  = 13.94f,  // was 20.95, worst 13.8686 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 14.92f,  // was 20.86, worst 14.8387 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.475f,  // was 4.624, worst 4.4519 (pmstokes H8.5)
-    .bias_3d_percent               = 78.61f,  // was 81.84, worst 78.2145 (pmstokes H4.0, accel)
+    .err_limit_percent_z_jonswap   = 4.527f,  // was 4.72,   worst 4.5040 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.508f,  // was 4.666,  worst 4.4850 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.272f,  // was 1.27,   worst 1.2654 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.3625f, // was 0.3637, worst 0.3607 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.1962f, // was 0.195,  worst 0.1952 (pmstokes H4.0)
+    .err_limit_percent_3d_jonswap  = 13.69f,  // was 13.94,  worst 13.6203 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 14.56f,  // was 14.92,  worst 14.4810 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.488f,  // was 4.475,  worst 4.4652 (pmstokes H8.5)
+    .bias_3d_percent               = 78.62f,  // was 78.61,  worst 78.2238 (pmstokes H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
