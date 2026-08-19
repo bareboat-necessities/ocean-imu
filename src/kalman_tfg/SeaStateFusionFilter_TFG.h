@@ -681,6 +681,7 @@ private:
 
         gravity_gate_acc_lpf_.reset();
         proxy_gravity_good_sec_ = 0.0f;
+        proxy_gravity_aligned_branch_ = false;
 
         last_acc_body_.setZero();
         last_gyro_body_.setZero();
@@ -835,7 +836,14 @@ private:
         const float timeout_sec =
             std::max(cfg_.proxy_startup_timeout_sec, mag_acquire_deadline);
 
-        const bool timed_out = elapsed_sec_ >= timeout_sec;
+        // The timeout bounds how long startup may take; it does not license a
+        // handoff onto the antipodal branch. Seeding the MEKF with an attitude
+        // that disagrees with measured gravity by more than a right angle is
+        // worse than waiting out the extra samples it takes the observer to
+        // leave a set it is not attracted to in the first place.
+        const bool timed_out =
+            (elapsed_sec_ >= timeout_sec) && proxy_gravity_aligned_branch_;
+
         if (!timed_out) {
             if (!vertical_complementary_.isReady()) return;
             // The quality gate, not a timer. OU-III's measured proxy tilt error
@@ -1164,12 +1172,25 @@ private:
         low-passed-residual-plus-hard-reset version.
     */
     void updateProxyGravityQuality_(float dt, const Vector3f& gyro, const Vector3f& acc) {
-        if (!vertical_complementary_.isInitialized()) { proxy_gravity_good_sec_ = 0.0f; return; }
+        if (!vertical_complementary_.isInitialized()) {
+            proxy_gravity_good_sec_ = 0.0f;
+            proxy_gravity_aligned_branch_ = false;
+            return;
+        }
 
         const Vector3f acc_lp =
             gravity_gate_acc_lpf_.step(acc, dt, cfg_.proxy_gravity_lpf_sec);
         const float sin_res = ::seastate::common::gravityAlignResidualSin(
             vertical_complementary_.quaternion(), acc_lp);
+
+        // A sine residual is symmetric about a right angle, so it scores an
+        // attitude and its 180 deg flip alike and is not by itself a branch
+        // certificate. The branch is the sign of the two directions' inner
+        // product, and this gate is what the handoff trusts, so it carries it.
+        const bool aligned_branch = ::seastate::common::gravityAlignedBranch(
+            vertical_complementary_.quaternion(), acc_lp);
+
+        proxy_gravity_aligned_branch_ = aligned_branch;
 
         const float gyro_dps = gyro.norm() * 57.295779513f;
         const bool extreme_motion =
@@ -1177,6 +1198,7 @@ private:
 
         const bool good_now = std::isfinite(sin_res) &&
                               (sin_res <= cfg_.proxy_gravity_align_sin) &&
+                              aligned_branch &&
                               !extreme_motion;
 
         if (good_now) {
@@ -1186,7 +1208,8 @@ private:
         }
     }
     [[nodiscard]] bool proxyGravityTrusted_() const {
-        return proxy_gravity_good_sec_ >= cfg_.proxy_gravity_hold_sec;
+        return proxy_gravity_aligned_branch_ &&
+               (proxy_gravity_good_sec_ >= cfg_.proxy_gravity_hold_sec);
     }
 
     /*
@@ -1463,6 +1486,7 @@ private:
     bool  acc_bias_hold_ = false;
     float live_since_sec_ = 0.0f;
     float proxy_gravity_good_sec_ = 0.0f;
+    bool  proxy_gravity_aligned_branch_ = false;
     Vec3LPF gravity_gate_acc_lpf_{};
 
     // Periodic a_w marginal re-alignment; see periodicAwCovSyncTick_.

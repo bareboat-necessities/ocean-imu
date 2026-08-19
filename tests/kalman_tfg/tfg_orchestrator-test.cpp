@@ -233,6 +233,73 @@ void test_proxy_handoff_times_out() {
     check(f.handoffTimedOut(), "the timeout fired but was not reported");
 }
 
+/*
+    The gravity gate certifies a branch, not just an angle.
+
+    The residual it forms is ||s_hat x s_meas||, a sine, and a sine reads the
+    same at an angle and at its supplement: an attitude flipped through 180 deg
+    scores as well as the correct one. The branch is the sign of s_hat . s_meas,
+    which no sine residual carries -- so the gate tests it separately, and the
+    handoff timeout is held to it too. This is OU-III's construction; the gate
+    is what the seed is trusted on, so the two filters have to agree about it.
+
+    Driven here by flipping the accelerometer once the proxy has settled. The
+    low-passed measurement follows the flip within a second or so while the
+    low-bandwidth observer stays where it was, which puts the two directions
+    almost exactly antipodal: the sine residual reads near zero -- gravity
+    agreement, as far as it can tell -- while the attitude on offer is upside
+    down.
+*/
+void test_proxy_gate_requires_the_aligned_branch() {
+    Fusion f;
+    auto cfg = default_config();
+    cfg.startup_init_policy = Fusion::StartupInitPolicy::MahonyProxy;
+    cfg.with_mag = false;
+    // Only the quality gate may hand off in this test; the timeout is checked
+    // separately in test_proxy_handoff_times_out.
+    cfg.proxy_startup_timeout_sec = 1.0e6f;
+    cfg.online_tune_warmup_sec = 2.0f;
+    // A nearly frozen observer, so the antipodal interval lasts long enough to
+    // observe. The gate's behaviour is the subject here, not the observer's
+    // convergence rate.
+    cfg.proxy_two_kp = 0.01f;
+    cfg.proxy_two_ki = 0.0f;
+    f.begin(cfg);
+
+    Sea sea;
+    constexpr float dt = 0.005f;
+    float t = 0.0f;
+
+    auto drive = [&](float seconds, float acc_sign) {
+        const int n = static_cast<int>(seconds / dt);
+        for (int i = 0; i < n; ++i) {
+            f.update(dt, sea.gyro(t), acc_sign * sea.acc_body(t));
+            t += dt;
+        }
+    };
+
+    // Settle the observer on the real gravity direction, but stop short of the
+    // handoff so the gate is still the thing being asked.
+    drive(5.0f, +1.0f);
+    check(f.stage() == Stage::Cold,
+          "the proxy handed off before proxy_startup_min_sec");
+
+    // Now the antipodal interval. Everything else the handoff waits on -- the
+    // minimum startup, the tuner, the period channel -- becomes ready during
+    // it, so the gravity gate is the only thing left holding the seed back.
+    drive(200.0f, -1.0f);
+    check(f.stage() == Stage::Cold,
+          "the gate accepted an attitude 180 deg from measured gravity");
+
+    // And it is a wait, not a stall: put the accelerometer back on gravity and
+    // the handoff arrives.
+    drive(60.0f, +1.0f);
+    check(f.stage() == Stage::Live,
+          "the branch test blocked a handoff that was on the aligned branch");
+    check(!f.handoffTimedOut(),
+          "this handoff must come from the quality gate, not a timeout");
+}
+
 // While warming, the accelerometer bias must stay frozen and Racc inflated:
 // a filter that has not yet levelled cannot tell bias from tilt.
 void test_warmup_gates() {
@@ -958,6 +1025,7 @@ int main() {
     test_staging_staged_mekf();
     test_staging_mahony_proxy();
     test_proxy_handoff_times_out();
+    test_proxy_gate_requires_the_aligned_branch();
     test_warmup_gates();
     test_tuning_laws();
     test_rs_units_are_a_standard_deviation();
