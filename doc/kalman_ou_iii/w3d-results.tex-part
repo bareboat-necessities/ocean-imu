@@ -113,9 +113,14 @@ Gauss--Markov residual.}
 The hard-iron correction is evaluated under the deterministic protocol: one
 realization per stationary record, the default sensor-error draw, and the final
 \SI{900}{s}.  Enabling it reduces yaw RMS on all eight records; the mean falls
-from \SI{1.835}{\degree} to \SI{0.822}{\degree} and the worst case from
-\SI{2.162}{\degree} to \SI{1.063}{\degree}.  Pitch changes slightly, while roll
-and displacement are negligible.  Because matched OU--II uses the same magnetic
+from \SI{2.065}{\degree} to \SI{0.617}{\degree} and the worst case from
+\SI{2.132}{\degree} to \SI{0.878}{\degree}.  The tilt channels move in the
+opposite direction by a much smaller amount---mean roll
+\SIrange{0.264}{0.267}{\degree} and mean pitch
+\SIrange{0.161}{0.164}{\degree}, both under \pct{2}---and vertical and
+three-dimensional displacement RMS change by less than \pct{0.1}, so the gauge
+correction is not paid for in the channels it shares an attitude solution
+with.  Because matched OU--II uses the same magnetic
 correction, this effect does not contribute to the reported
 OU--III-minus-OU--II translational difference.
 
@@ -140,18 +145,18 @@ OU--III-minus-OU--II translational difference.
     \cmidrule(lr){3-4}\cmidrule(lr){5-6}
     {} & {\si{m}} & {off} & {on} & {off} & {on} \\
     \midrule
-    JONSWAP    & 0.27 & 2.075 & 1.063 & 0.174 & 0.175 \\
-    JONSWAP    & 1.50 & 1.825 & 1.050 & 0.169 & 0.152 \\
-    JONSWAP    & 4.00 & 1.298 & 1.041 & 0.358 & 0.330 \\
-    JONSWAP    & 8.50 & 1.104 & 0.709 & 0.469 & 0.445 \\
+    JONSWAP    & 0.27 & 2.130 & 0.631 & 0.170 & 0.175 \\
+    JONSWAP    & 1.50 & 2.068 & 0.878 & 0.130 & 0.130 \\
+    JONSWAP    & 4.00 & 1.922 & 0.503 & 0.131 & 0.131 \\
+    JONSWAP    & 8.50 & 2.030 & 0.531 & 0.149 & 0.150 \\
     \addlinespace
-    PM--Stokes & 0.27 & 2.155 & 0.741 & 0.200 & 0.200 \\
-    PM--Stokes & 1.50 & 2.162 & 1.026 & 0.223 & 0.208 \\
-    PM--Stokes & 4.00 & 2.053 & 0.473 & 0.278 & 0.235 \\
-    PM--Stokes & 8.50 & 2.007 & 0.476 & 0.259 & 0.196 \\
+    PM--Stokes & 0.27 & 2.129 & 0.695 & 0.172 & 0.182 \\
+    PM--Stokes & 1.50 & 2.132 & 0.562 & 0.167 & 0.167 \\
+    PM--Stokes & 4.00 & 2.034 & 0.733 & 0.188 & 0.196 \\
+    PM--Stokes & 8.50 & 2.071 & 0.400 & 0.181 & 0.182 \\
     \midrule
-    {mean}     & {}   & 1.835 & 0.822 & 0.266 & 0.243 \\
-    {worst}    & {}   & 2.162 & 1.063 & 0.469 & 0.445 \\
+    {mean}     & {}   & 2.065 & 0.617 & 0.161 & 0.164 \\
+    {worst}    & {}   & 2.132 & 0.878 & 0.188 & 0.196 \\
     \bottomrule
   \end{tabular}
 \end{table}

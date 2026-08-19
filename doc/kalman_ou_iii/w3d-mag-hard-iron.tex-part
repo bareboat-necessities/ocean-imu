@@ -60,9 +60,14 @@ therefore uses an excitation-scaled ridge,
 =\bar{\vct m}-\bar{\mat A}^{\top}\bar{\vct w},
 \label{eq:mag-ridge}
 \end{equation}
-with $\rho_0=4\times10^{-3}$ and $\rho_1=0.5$.  The excitation-dependent term
+with $\rho_0=5\times10^{-4}$ and $\rho_1=0.5$.  The excitation-dependent term
 limits misspecification when larger motion increases both geometric information
-and unmodeled distortion.
+and unmodeled distortion.  The absolute floor $\rho_0$ is set by the admission
+gate below rather than by a sweep: at the saturated weight of the \SI{600}{s}
+window the information gate already declines directions of eigenvalue below
+about $1.3\times10^{-4}$, so a floor above that band would shrink hardest in
+the calm seas where the standing gauge error is largest, which is the failure
+mode the excitation-scaled term exists to avoid.
 
 An estimate is accepted only after at least \num{500} effective samples, with
 $N\lambda_{\min}(\mat M)\ge2$, fitted offset below \pct{35} of field norm, and
