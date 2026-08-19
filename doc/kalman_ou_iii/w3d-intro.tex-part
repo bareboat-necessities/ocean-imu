@@ -27,12 +27,14 @@ The contributions are:
         gyro and residual accelerometer bias, and three exact OU-driven
         $[v,p,S,a_w]$ chains, with $S$ providing soft low-frequency drift
         control;
-  \item a local stability result for the normal Live recursion,
-        combining finite-horizon observability of the translational and
-        attitude--gyro-bias blocks, a finite-correlation residual-bias model,
-        bounded Riccati covariance, UES of the homogeneous error recursion,
-        and a local ISS bound under the assumptions of
-        Sec.~\ref{app:iss-stability};
+  \item a two-level stability result: finite-horizon observability,
+        finite-correlation residual-bias contraction, bounded Riccati
+        covariance, and UES yield local 21-state Live ISS, while the
+        independent Mahony startup observer gives an almost-global,
+        semiglobal practical attitude-capture extension into that Live basin
+        on compact initial-tilt sets separated from the antipodal gravity
+        configuration under the explicit handoff conditions of
+        Secs.~\ref{app:iss-stability} and \ref{sec:semiglobal-stability};
   \item an exogenous adaptation architecture that estimates wave time scale and
         acceleration level from measurement-only signals and schedules the OU
         prior and integral regularizer.  Scaling analysis identifies the
@@ -50,7 +52,7 @@ The contributions are:
 Here, $\vct p$ denotes bounded wave-induced motion about a local reference, not
 geodetic position; GNSS-aided absolute trajectory estimation is not evaluated.
 The evidence is primarily synthetic, and the ESP32--S3 exercise establishes
-source portability only.
-The startup and reconfiguration events remain outside
-the Live-state ISS theorem.
+source portability only.  The semiglobal result covers the first quality-gated
+proxy-to-Live handoff subject to an explicit Live-basin-entry condition; later
+magnetic re-gauging and tilt re-lock remain separate hard reconfiguration maps.
 Thermal-calibration performance is not evaluated.
