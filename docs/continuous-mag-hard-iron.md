@@ -3,9 +3,10 @@
 `Config::mag_continuous_hard_iron` runs a body-fixed magnetometer offset
 estimator for the whole life of the filter and feeds its answer back into the
 magnetic measurement model. It is on by default in **both OU families** --
-`SeaStateFusion_OU_III` and `SeaStateFusion_OU_II` -- on identical settings,
-and each simulator exposes it as `SF_MAG_CONT_HI=0|1`, which is also the
-matched ablation.
+`SeaStateFusion_OU_III` and `SeaStateFusion_OU_II` -- and in
+`SeaStateFusion_TFG`, on identical settings. The two OU simulators expose it as
+`SF_MAG_CONT_HI=0|1`, which is also the matched ablation; the TFG simulator
+does not expose it, so scoring TFG against a setting means rebuilding it.
 
 Everything from here to the OU-II section was measured on OU-III, which is
 where the mechanism was worked out. None of it is specific to the OU-III
@@ -17,6 +18,12 @@ Scored on the eight reference records, the deterministic 900 s protocol, it
 takes yaw RMS from 1.835 deg mean / 2.162 deg worst to **0.822 deg mean /
 1.063 deg worst**. Every record improves. Pitch improves, roll and the
 displacement channels do not move.
+
+Those are the numbers the correction landed with. Its calibration was
+re-measured against the filter as it now stands, after the changes that landed
+under it; the shipped defaults, the one that moved, and the current results are
+in [the re-tune](#the-re-tune). The mechanism sections between here and there
+are unchanged and still describe what ships.
 
 ## What the standing yaw error actually was
 
@@ -108,8 +115,12 @@ normal matrix, so the fraction returned is a property of the sensor rather than
 of the weather. `Config::model_ridge` remains as an absolute floor for a window
 with almost no excitation at all. `continuous_mag_hard_iron-test` pins the
 difference: replaying one offset and one distortion through a small and a large
-sea, a fixed ridge alone returns 0.27 and 0.88 of the offset, and the relative
-ridge returns 0.24 and 0.66.
+sea, a fixed ridge of 4e-3 returns 0.27 and 0.88 of the offset, and the
+relative ridge returns 0.58 and 0.71.
+
+The floor only does its job while it stays *under* the excitation a working
+hull produces. It did not, and [the re-tune](#the-re-tune) below is that
+correction.
 
 ## Why the reference cannot simply follow the offset
 
@@ -206,6 +217,169 @@ contain — a hull that turns. The estimator stands itself down on a turn today
 rather than exploiting it; using the turn is the obvious next piece of work and
 is deliberately not attempted here.
 
+## The re-tune
+
+The calibration above was fitted when the correction was introduced, and the
+filter has changed underneath it since -- the reduced physical-MSE integral
+regularizer, the `S_factor = 1` anisotropy constant, and the MEKF
+sensor-variance sweep, which doubled `sigma_m` and so changed how hard the
+magnetometer pulls the heading onto the corrected field. The results table
+above no longer describes what ships: measured on this tree with the shipped
+`mag_hi_*`, yaw is 0.768 deg mean and 1.265 worst, against the 0.822 / 1.063
+recorded when the correction landed. The worst record got worse while the mean
+got better.
+
+So the knobs were re-measured against the filter as it now stands. The dominant
+finding is **not** a consequence of any of those changes, which is worth saying
+plainly: one of the two ridge terms had been mis-scaled from the day it was
+written, and what the sweep did was make that visible.
+
+`tools/mag_hard_iron_retune.py` is the sweep. It scores yaw within a draw and
+pools only after that normalization, over two seed axes that are not
+interchangeable: `--axis init` redraws the magnetometer calibration itself
+(`W3D_INIT_SEED`, the thing being estimated), `--axis imu` redraws the sensor
+noise with the calibration held (`W3D_IMU_SEED`).
+
+### What was wrong
+
+**The absolute floor had become the whole regularisation.** The ridge is
+`model_ridge + model_ridge_relative * mean_eigenvalue(M)`, and the design
+intent -- stated in the section above and in the header -- is that the second
+term governs and the first only catches a window with no excitation at all.
+Measured on the eight records, the excitation is:
+
+| record | `lambda_min` | reported information |
+| --- | --- | --- |
+| jonswap H0.27 | 3.4e-4 | 4.4 |
+| jonswap H1.5 | 1.4e-3 | 18.1 |
+| jonswap H4.0 | 2.5e-3 | 32.9 |
+| jonswap H8.5 | 4.6e-3 | 58.9 |
+
+(`W3D_MAG_HI_TRACE=1`, end of the replay, effective weight 12935.)
+
+Against that, a floor of 4e-3 is ten times the calmest record's excitation and
+comparable to the roughest one's. It was not a floor; it was a fixed ridge
+sitting on top of the relative one, and it shrank hardest exactly where the
+standing yaw error is largest -- which is the failure mode the whole "why the
+ridge scales" argument above exists to avoid.
+
+The consequence is visible in the fitted offsets. Unregularised, over the full
+record against a true offset of 1.145 uT, the solve returns 2.73, 2.44, 3.36
+and 3.18 uT on the four JONSWAP records -- inflated by a factor of 2.1 to 2.9,
+in every sea, roughly constant across them, exactly as the aliasing argument
+predicts. The shipped ridge then returned 0.34 of that on the calmest record
+and 0.53 on the roughest, when a constant fraction was what the physics asked
+for.
+
+### What changed
+
+One number:
+
+    model_ridge:  4.0e-3  ->  5.0e-4
+
+`model_ridge_relative` stays at 0.5, and so does everything else. The new value
+is set by the information gate rather than by a sweep: at the saturated weight
+of a 600 s exponential window at 25 Hz, `min_information = 2` admits a
+direction of eigenvalue 1.3e-4, so a floor of 5e-4 binds only on windows at or
+below what the gate already declines. The records barely notice where in that
+range it lands: the paired yaw ratio is 0.871 at a floor of zero, 0.889 at
+5e-4 and 0.905 at 1e-3, against 1.000 at the shipped 4e-3. A three-point
+spread across two decades, under a fifteen-point step out of the old value, is
+what a floor that has stopped competing with the relative term looks like.
+
+### Why nothing else moved
+
+The one-factor sweep, five calibration draws by eight records, pooled yaw
+change against the shipped configuration:
+
+| knob | values, pooled yaw change |
+| --- | --- |
+| `model_ridge` | 0: **-10.3%**, 1e-3: -8.4%, 4e-3 shipped, 8e-3: +6.7%, 2e-2: +17.2% |
+| `model_ridge_relative` | 0.15: -4.2%, 0.25: -3.3%, 0.5 shipped, 1.0: +5.8%, 1.5: +10.7% |
+| `memory_sec` | 150: +13.5%, 300: +1.9%, 1200: -0.5%, cumulative: -0.8% |
+| `apply_fraction` | 0.5: +16.8%, 0.75: +6.3%, 1.25: -1.7%, 1.5: -0.1% |
+| `slew_tau_sec` | 10: -0.4%, 20: -0.2%, 90: +0.3%, 180: +2.2% |
+| `min_information` | 0.5: -0.8%, 8: +12.6% |
+| `min_effective_weight`, `max_residual_rms_uT` | inert |
+
+The floor dominates the list. `apply_fraction` and `model_ridge_relative` are
+the same lever seen twice -- both scale how much of the fit is applied -- and
+both point the same way the floor does, which is what a single over-shrinkage
+looks like from three directions. The two gates are inert because these records
+carry no heading change and the window saturates long before scoring opens;
+they are safety gates, not tuning knobs, and are left alone.
+
+A 4x4 joint grid over the floor and the relative term found the pooled optimum
+at `ridge_rel = 0.3`, better than 0.5 by three points of pooled yaw on the
+calibration axis. **It did not replicate.** On the IMU-noise axis the same
+point is worth -1.4% against the floor cut's -11.8%: it was fitting the five
+calibration draws, not the filter. The floor cut holds on both axes, which is
+why it is the only thing that ships.
+
+### What it buys
+
+Deterministic protocol, default seeds, the eight scored records, yaw RMS in
+degrees:
+
+| Record | Hs | OU-III was | now | OU-II was | now | TFG was | now |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| JONSWAP | 0.27 | 1.135 | **0.631** | 1.067 | **0.644** | 1.475 | **0.600** |
+| JONSWAP | 1.50 | 1.265 | **0.878** | 1.040 | **0.653** | 1.316 | **0.950** |
+| JONSWAP | 4.00 | 0.303 | 0.504 | 0.832 | 1.078 | 0.380 | 0.506 |
+| JONSWAP | 8.50 | 0.755 | **0.531** | 0.391 | 0.491 | 1.582 | **1.345** |
+| PM--Stokes | 0.27 | 0.705 | **0.695** | 0.690 | 0.712 | 0.926 | **0.427** |
+| PM--Stokes | 1.50 | 0.975 | **0.562** | 0.977 | **0.565** | 0.765 | **0.405** |
+| PM--Stokes | 4.00 | 0.493 | 0.734 | 0.487 | 0.719 | 0.978 | **0.739** |
+| PM--Stokes | 8.50 | 0.515 | **0.400** | 0.528 | **0.429** | 1.472 | **1.247** |
+| **mean** | | 0.768 | **0.617** | 0.751 | **0.661** | 1.112 | **0.777** |
+| **worst** | | 1.265 | **0.878** | 1.067 | 1.078 | 1.582 | **1.345** |
+
+Mean yaw falls 20% on OU-III, 12% on OU-II and 30% on TFG. No other channel
+moves outside the third digit on either OU family: OU-III's vertical goes
+4.5214 -> 4.5218 %Hs, 3D 13.6405 -> 13.6518 %, roll 0.3608 -> 0.3616 deg,
+pitch 0.1949 -> 0.1957 deg.
+
+Over five magnetometer-calibration draws and all eight records -- 40 paired
+replays -- the paired geometric-mean yaw ratio is **0.889**, the worst record
+of each draw improves by 10.1% on average, and the largest yaw across all 40
+pairs falls from 4.155 to 3.708 deg. Nine of the 40 pairs get worse, the worst
+of them by 0.38 deg, on the one draw whose standing error is
+misalignment-dominated rather than offset-dominated -- the failure mode "the
+limit, stated plainly" describes, which this change does not fix and does not
+make qualitatively worse. On the IMU-noise axis, which holds the calibration
+and redraws the sensor noise, pooled yaw falls 11.8% and the worst record
+16.5%.
+
+### Two records get worse, and it is the same two
+
+`jonswap H4.0` and `pmstokes H4.0` regress on both OU families. They are the
+mid-sea records, where the old floor was shrinking least and the fit was
+therefore already close to fully applied; handing back the rest of it there
+adds more aliased distortion than offset. This is the sea-state dependence the
+relative ridge is supposed to remove and does not remove completely, and it is
+why `model_ridge_relative` is left where it is rather than cut further.
+
+OU-II's worst record changes identity because of it -- `jonswap H0.27` at 1.067
+was binding and is now 0.644, while `jonswap H4.0` becomes the worst at 1.078 --
+so OU-II's yaw gate goes *up* by one percent while its mean falls 12%. That is
+reported rather than hidden: see the `FAIL_LIMITS` comment in
+`kalman_ou_ii-sim.cpp`.
+
+### Measuring the offset directly
+
+The simulators used to report `Bias error RMS (mag, uT)` from the MEKF's
+magnetometer-bias state, which does not exist, so the number was the injected
+offset itself no matter what the correction did. The three OU simulators now
+report the wrapper's applied hard iron in that slot, which makes the offset
+error readable in uT: 1.403 uT with the correction off, 1.052 with it on at the
+old ridge, 0.784 at the new one on the IMU axis.
+
+Note that this quantity does **not** track yaw, and the reason is worth
+stating: the applied offset is a heading-gauge correction, not an offset
+estimate. Because the fit absorbs part of the distortion, applying more of it
+can move the gauge the right way while moving the offset vector further from
+truth. Yaw is the objective; this number is a diagnostic.
+
 ## Quality gates
 
 `FAIL_LIMITS` in `kalman_ou_iii-sim.cpp` is re-derived, by the documented rule
@@ -233,13 +407,26 @@ Running the `SF_MAG_CONT_HI=0` ablation now exceeds the yaw gate, as it should:
 that limit is fitted to the filter that ships. Score the ablation with
 `W3D_COLLECT_ALL_GATES=1`.
 
+That table is the cut the correction landed with. All three families were
+re-gauged again for the re-tune, and the current bars are in each simulator's
+`FAIL_LIMITS` comment. OU-III's was re-derived once more when this change met
+the shortened-transition `r_S` horizon refit in a merge, which moved its bars
+in the fourth digit (yaw 0.8824 to 0.8827); the comment there carries that
+pass too. OU-III's yaw bar comes down from 1.27 to 0.8824 and its
+two displacement bars come down as well -- though the displacement move is
+drift already in the tree from the integral-regularizer schedule rather than
+anything this change did, and the comment there separates the two. OU-II's yaw
+bar goes up one percent for the reason given in "two records get worse"; TFG's
+accelerometer Z-bias bar goes up two percent for the reason this section
+already gives about the horizontal accelerometer bias.
+
 ## Configuration
 
 | field | default | what it does |
 | --- | --- | --- |
 | `mag_continuous_hard_iron` | `true` | master switch (`SF_MAG_CONT_HI`) |
 | `mag_hi_memory_sec` | 600 | exponential memory of the statistics |
-| `mag_hi_model_ridge` | 4e-3 | absolute ridge floor |
+| `mag_hi_model_ridge` | 5e-4 | absolute ridge floor; see [the re-tune](#the-re-tune) |
 | `mag_hi_model_ridge_relative` | 0.5 | ridge as a multiple of the mean excitation |
 | `mag_hi_min_information` | 2.0 | `weight * lambda_min` the window must reach |
 | `mag_hi_min_effective_weight` | 500 | effective samples before any answer |
@@ -251,9 +438,10 @@ that limit is fitted to the filter that ships. Score the ablation with
 The simulator reads each as `SF_MAG_HI_*`; `W3D_MAG_HI_TRACE=1` prints the fit,
 the applied offset, the information and the residual once a minute to stderr.
 
-The table is identical for both families: OU-II takes the same defaults, and a
-sweep that moves one and not the other would be comparing two calibrations
-rather than two filters.
+The table is identical for all three families that carry the correction: OU-II
+and TFG take the same defaults, and a sweep that moves one and not the others
+would be comparing calibrations rather than filters. `tools/mag_hard_iron_retune.py`
+is the sweep that produced them.
 
 ## OU-II
 
@@ -280,6 +468,9 @@ Deterministic 900 s protocol, one realization per record, default seeds:
 | PM--Stokes | 8.50 | 2.060 | 0.569 | 0.333 | 0.253 | 6.277 | 6.256 |
 | **mean** | | **1.887** | **0.813** | 0.289 | 0.255 | 6.454 | 6.461 |
 | **worst** | | **2.161** | **1.089** | 0.418 | 0.362 | 6.860 | 6.864 |
+
+(Those are the numbers OU-II landed with; for what it produces on the re-tuned
+calibration, see [the re-tune](#the-re-tune).)
 
 Every record improves, mean yaw falls 57%, and the worst record lands at
 1.089 deg against OU-III's 1.063 — the two families end up within three

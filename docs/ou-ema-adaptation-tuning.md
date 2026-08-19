@@ -342,8 +342,16 @@ is the only gate the old bar no longer held, at 0.1940 -> 0.1952 deg on
 PM-Stokes H_s = 4.0 m (+0.6%, against a bar cut with half a percent of margin),
 which is a re-draw of the same kind section 8 of docs/ou-sigma-horizon.md
 describes -- roll/pitch improves on average over both ensembles while this one
-record moves inside its own scatter. The full before/after table is in the
-comment above `FAIL_LIMITS` in `tests/kalman_ou_iii/kalman_ou_iii-sim.cpp`.
+record moves inside its own scatter.
+
+Those are this change measured on its own. It then met the continuous
+hard-iron ridge re-tune (docs/continuous-mag-hard-iron.md) in a merge, and
+since that change had re-cut the same nine bars from its own tree, they were
+re-derived once more from the two together: the displacement and bias bars move
+by this change, the yaw bar by the ridge, and combining them moves nothing
+beyond the fourth digit either pass predicted. The full before/after tables for
+all three passes are in the comment above `FAIL_LIMITS` in
+`tests/kalman_ou_iii/kalman_ou_iii-sim.cpp`.
 
 ## 8. Reproducing
 

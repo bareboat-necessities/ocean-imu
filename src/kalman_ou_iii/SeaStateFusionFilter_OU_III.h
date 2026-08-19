@@ -2286,7 +2286,10 @@ public:
         // they were.
         bool  mag_continuous_hard_iron        = true;
         float mag_hi_memory_sec               = 600.0f;
-        float mag_hi_model_ridge              = 4.0e-3f;
+        // Absolute floor only; the relative term below carries the
+        // calibration.  See ContinuousMagHardIronEstimator::Config and
+        // docs/continuous-mag-hard-iron.md for why it came down from 4e-3.
+        float mag_hi_model_ridge              = 5.0e-4f;
         float mag_hi_model_ridge_relative     = 0.5f;
         float mag_hi_min_information          = 2.0f;
         float mag_hi_min_effective_weight     = 500.0f;
