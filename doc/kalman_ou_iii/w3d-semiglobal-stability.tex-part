@@ -138,9 +138,18 @@ $\alpha_{3,\epsilon}$ such that \cite{Khalil2002_NonlinearSystems}
 Here $|\cdot|_{\mathcal A_P}$ denotes distance to the desired reduced set.
 
 Let $\vct u_P$ collect bounded perturbations of the proxy vector field:
-wave-frequency specific force in the normalized gravity direction, gyro noise,
-slow bias/model mismatch, and finite-step discretization error.  Smoothness on
-the compact neighborhood gives a finite $L_\epsilon$ with
+wave-induced non-gravitational specific force in the normalized direction,
+gyro noise, slow bias/model mismatch, and the finite-step implementation
+defect.  Assume on the startup family that
+\begin{equation}
+0<f_{P,0}\le\|\vct f_b(t)\|\le f_{P,1}<\infty,
+\label{eq:semiglobal-proxy-force-bound}
+\end{equation}
+so normalization of the accelerometer vector is smooth and Lipschitz on the
+relevant compact set.  For the sampled implementation, take the step bound in
+Eq.~\eqref{eq:iss-step-tau-bounds} sufficiently small on that set that the
+consistent Mahony discretization error is included in $\vct u_P$.  Smoothness
+then gives a finite $L_\epsilon$ with
 \begin{equation}
 \dot V_\epsilon
 \le-\alpha_{3,\epsilon}(|\vct z_P|_{\mathcal A_P})
@@ -240,14 +249,18 @@ nonlinear remainder bound.
 \label{thm:semiglobal-proxy-live}
 Fix a compact $\mathcal K_{\epsilon,B_\beta}\subset\mathcal D_P$ as in
 Eq.~\eqref{eq:semiglobal-proxy-compact} and a compact family of physical startup
-conditions satisfying Eq.~\eqref{eq:semiglobal-handoff-E}.  Assume:
+conditions satisfying Eqs.~\eqref{eq:semiglobal-proxy-force-bound} and
+\eqref{eq:semiglobal-handoff-E}.  Assume:
 (i) the reduced proxy initial error belongs to
 $\mathcal K_{\epsilon,B_\beta}$;
-(ii) the bounded proxy perturbation is small enough for
+(ii) the bounded proxy perturbation and sample step are small enough for
 Eq.~\eqref{eq:semiglobal-proxy-iss} to reach an accepted gravity interval;
 (iii) the accepted gravity interval satisfies the aligned-branch condition
 \eqref{eq:semiglobal-aligned-branch};
-(iv) an accepted magnetic gauge satisfies the bound used in
+(iv) the auxiliary handoff channels---tuner readiness and, when required by the
+Live observability hypothesis, a noncollinear magnetic or equivalent vector
+reference---become ready within a finite time uniform over the chosen startup
+family, with heading error bounded as in
 Eq.~\eqref{eq:semiglobal-handoff-attitude};
 (v) the basin-entry inequality \eqref{eq:semiglobal-basin-entry} holds; and
 (vi) after handoff, the hypotheses of
@@ -281,18 +294,21 @@ neighborhood in Eq.~\eqref{eq:semiglobal-ultimate-bound}.
 Equation~\eqref{eq:semiglobal-proxy-iss} implies uniform convergence, up to the
 input-dependent practical radius, on the compact set
 $\mathcal K_{\epsilon,B_\beta}$.  Under assumption (ii), choose a finite time
-$T_H$ for which the right-hand side of
+$T_P$ for which the right-hand side of
 Eq.~\eqref{eq:semiglobal-proxy-iss} reaches the proxy accuracy required by an
 accepted gravity interval; compactness makes this choice uniform over the
 prescribed startup family.  Assumption (iii) selects the aligned branch of the
 sine gate, so Eqs.~\eqref{eq:semiglobal-sine-gate} and
 \eqref{eq:semiglobal-handoff-tilt} provide a genuine small-tilt bound rather
-than its antipodal alternative.  Assumption (iv) then bounds yaw, and
+than its antipodal alternative.  Assumption (iv) supplies a finite uniform time
+$T_A$ for the remaining handoff channels and bounds yaw.  Hence an accepted
+handoff exists no later than a finite family-dependent bound formed from
+$T_P$ and $T_A$, subject to the timeout qualification below, and
 Eq.~\eqref{eq:semiglobal-handoff-attitude} bounds the complete attitude error at
-the accepted handoff.  Together with Eq.~\eqref{eq:semiglobal-handoff-E},
-assumption (v) gives $\|\vct e_{k_H}\|\le r_H<r$.  Therefore the handoff lands
-inside the invariant neighborhood used in Theorem~\ref{thm:iss-21-local}.
-Applying Eq.~\eqref{eq:iss-local-bound} from $j=k_H$ gives
+that handoff.  Together with Eq.~\eqref{eq:semiglobal-handoff-E}, assumption
+(v) gives $\|\vct e_{k_H}\|\le r_H<r$.  Therefore the handoff lands inside the
+invariant neighborhood used in Theorem~\ref{thm:iss-21-local}.  Applying
+Eq.~\eqref{eq:iss-local-bound} from $j=k_H$ gives
 Eq.~\eqref{eq:semiglobal-live-bound}; taking the limit superior gives
 Eq.~\eqref{eq:semiglobal-ultimate-bound}.  Finally, the almost-global proxy
 result makes $\mathcal N_P$ measure zero, while the argument above is uniform
@@ -305,9 +321,9 @@ Almost-global convergence is not uniform as the undesired stable set is
 approached.  Therefore a fixed startup timeout cannot certify all compact sets
 approaching $\mathcal N_P$ simultaneously.  With the implemented \SI{150}{s}
 latest-handoff policy, Theorem~\ref{thm:semiglobal-proxy-live} applies to those
-compact sets and disturbance levels whose uniform gate-entry time is less than
-the effective timeout, or whenever a timeout-triggered handoff independently
-satisfies Eqs.~\eqref{eq:semiglobal-aligned-branch} and
+compact sets and disturbance levels whose uniform quality-handoff time is less
+than the effective timeout, or whenever a timeout-triggered handoff
+independently satisfies Eqs.~\eqref{eq:semiglobal-aligned-branch} and
 \eqref{eq:semiglobal-basin-entry}.  A timeout-forced handoff that does not
 satisfy those conditions is outside the theorem.
 
