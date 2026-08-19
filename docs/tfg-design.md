@@ -553,8 +553,8 @@ through that same band's white-noise variance gain rather than subtracted raw,
 because the band rejects part of it and the band moves.
 
 Measured over the eight records, at the deployed coefficients: vertical RMS
-−1.1% mean and −1.9% worst, 3D −0.5% mean and −1.2% worst, yaw −4.0% mean and
-−14.3% worst, accelerometer bias −5.7% mean. `TFG_WAVE_BAND=0` restores the
+−1.0% mean and −1.9% worst, 3D −0.8% mean and −1.6% worst, yaw −4.8% mean and
+−11.1% worst, accelerometer bias −5.6% mean. `TFG_WAVE_BAND=0` restores the
 broadband channel for ablation.
 
 ### The a_w marginal is re-aligned on the adaptation cadence

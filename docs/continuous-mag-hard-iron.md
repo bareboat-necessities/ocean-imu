@@ -15,15 +15,18 @@ tilt and the raw magnetometer, and what it writes is the measurement model.
 The OU-II numbers are at the end.
 
 Scored on the eight reference records, the deterministic 900 s protocol, it
-takes yaw RMS from 1.835 deg mean / 2.162 deg worst to **0.822 deg mean /
-1.063 deg worst**. Every record improves. Pitch improves, roll and the
-displacement channels do not move.
+takes yaw RMS from 2.065 deg mean / 2.133 deg worst to **0.617 deg mean /
+0.878 deg worst** on the filter as it now stands. Every record improves. The
+tilt channels rise by about two percent as it does -- roll 0.264 -> 0.267 deg,
+pitch 0.161 -> 0.164 deg -- and displacement does not move, 0.4108 -> 0.4123 m
+of 3-D RMS. `doc/kalman_ou_iii/ins-startup.tex` quotes this table.
 
-Those are the numbers the correction landed with. Its calibration was
-re-measured against the filter as it now stands, after the changes that landed
-under it; the shipped defaults, the one that moved, and the current results are
-in [the re-tune](#the-re-tune). The mechanism sections between here and there
-are unchanged and still describe what ships.
+The correction landed on a different baseline: 1.835 deg mean / 2.162 deg worst
+uncorrected, 0.822 / 1.063 corrected. Its calibration was re-measured against
+the filter as it now stands, after the changes that landed under it; the shipped
+defaults, the one that moved, and the current results are in
+[the re-tune](#the-re-tune). The mechanism sections between here and there are
+written against the numbers it landed with and still describe what ships.
 
 ## What the standing yaw error actually was
 
@@ -480,6 +483,14 @@ Every record improves, mean yaw falls 57%, and the worst record lands at
 1.089 deg against OU-III's 1.063 — the two families end up within three
 hundredths of a degree of each other, which is what should happen when the
 error being removed belongs to the magnetometer rather than to the filter.
+
+On the re-tuned calibration the mechanism is the same and the agreement is
+looser: OU-II goes 1.869 -> 0.662 deg mean and 2.134 -> 1.078 worst, against
+OU-III's 2.065 -> 0.617 and 2.133 -> 0.878. Both families still lose about two
+thirds of their mean yaw to the correction from starting points two tenths of a
+degree apart, but the worst records no longer coincide; what separates them is
+the residue each family's own attitude solution leaves for the correction to
+work against.
 
 The price is the same one OU-III paid, in the same place:
 
