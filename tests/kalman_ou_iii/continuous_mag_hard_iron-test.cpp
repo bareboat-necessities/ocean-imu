@@ -177,7 +177,18 @@ void testShrinkageDoesNotChaseTheSeaState()
     for (int rel = 0; rel < 2; ++rel) {
         for (int k = 0; k < 2; ++k) {
             ContinuousMagHardIronEstimator::Config cfg;
-            if (rel == 0) cfg.model_ridge_relative = 0.0f;
+            if (rel == 0) {
+                cfg.model_ridge_relative = 0.0f;
+                // The fixed-ridge arm names its own strength rather than
+                // borrowing the deployed floor.  What is demonstrated here is
+                // how a fixed prior and an excitation-scaled one respond to the
+                // sea, so the two arms have to be comparably strong; the
+                // deployed floor is deliberately far weaker than that, because
+                // its job is to catch a dead window rather than to regularise a
+                // working one.  Reading it here would make this a test of
+                // whatever that floor currently is.
+                cfg.model_ridge = 4.0e-3f;
+            }
             ContinuousMagHardIronEstimator est(cfg);
 
             Replay r;

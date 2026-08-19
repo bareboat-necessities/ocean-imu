@@ -583,7 +583,16 @@ s.euler_nautical_deg = Vector3f(roll_deg, pitch_deg, wrapDeg(yaw_deg));
        
         s.acc_bias_est_ned    = filter.mekf().get_acc_bias();
         s.gyro_bias_est_ned   = filter.mekf().gyroscope_bias();
-        s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf());
+
+        // The MEKF has no magnetometer-bias state, so get_mag_bias_est_uT()
+        // returns zero here and the harness's "Bias error RMS (mag)" was
+        // reporting the injected offset itself rather than anything the filter
+        // had done about it.  The wrapper's continuous hard-iron correction is
+        // the estimate of that offset -- it is subtracted from every sample the
+        // MEKF sees -- so it is what belongs in this slot, and reporting it
+        // makes the correction measurable in uT instead of only through yaw.
+        s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf()) +
+                                fusion_.magHardIronBodyUT();
 
         s.tau_target     = filter.getTauTarget();
         s.sigma_target   = filter.getSigmaTarget();
@@ -957,16 +966,43 @@ private:
 //
 // Everything here is what tools/ou_regauge_gates.py prints for the filter as
 // it now stands, cut to the same rule as every line above it.
+//
+// Then for the continuous hard-iron re-tune, which cut the estimator's
+// absolute ridge floor from 4e-3 to 5e-4.  OU-II takes that calibration
+// unchanged from OU-III, for the reason the shared table has always given: a
+// sweep that moved one family and not the other would be comparing two
+// calibrations rather than two filters.  See docs/continuous-mag-hard-iron.md.
+//
+// Per record, old ridge -> new: 1.0668 -> 0.6437, 1.0397 -> 0.6533,
+// 0.8316 -> 1.0779, 0.3907 -> 0.4910, 0.6896 -> 0.7121, 0.9773 -> 0.5648,
+// 0.4867 -> 0.7194, 0.5278 -> 0.4287.  Mean yaw 0.7513 -> 0.6614, five of
+// eight records improve.
+//
+// The yaw bar goes *up*, by one percent, and it is the one number here that
+// has to be argued rather than reported.  The worst record changes identity --
+// jonswap H0.27 at 1.0668 was the binding one and is now 0.6437, while jonswap
+// H4.0 goes 0.8316 -> 1.0779 and takes its place.  What the re-tune does is
+// hand back most of the fit on the poorly excited records and a little more on
+// the well excited ones; H4.0 is a well excited record on a draw where the
+// extra fit is partly aliased distortion, so it pays.  Pooled over five
+// magnetometer-calibration draws the same change takes OU-III's yaw down 11
+// percent with its own worst record down 10, so this is one record on one
+// draw, not the correction over-applying in general.  The bar is re-cut to it
+// because a sentinel is fitted to what the filter produces.
+//
+// Everything else moves in the third digit or better and is re-cut to the
+// rule.  All nine are what tools/ou_regauge_gates.py prints for the filter
+// that ships.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.707f,  // was 6.776, worst 6.6736 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.649f,  // was 6.803, worst 6.6152 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.073f,  // was 1.074, worst 1.0668 (jonswap H0.27)
-    .err_limit_roll_deg            = 0.4357f, // was 0.4352, worst 0.4335 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.2833f, // was 0.279, worst 0.2819 (jonswap H8.5)
-    .err_limit_percent_3d_jonswap  = 16.84f,  // was 16.54, worst 16.7559 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 18.27f,  // was 17.67, worst 18.1773 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.791f,  // was 4.802, worst 4.7668 (jonswap H8.5)
-    .bias_3d_percent               = 92.33f,  // was 92.35, worst 91.8692 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 6.708f,  // was 6.707,  worst 6.6741 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 6.65f,   // was 6.649,  worst 6.6168 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.084f,  // was 1.073,  worst 1.0779 (jonswap H4.0)
+    .err_limit_roll_deg            = 0.4377f, // was 0.4357, worst 0.4355 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.281f,  // was 0.2833, worst 0.2796 (jonswap H8.5)
+    .err_limit_percent_3d_jonswap  = 16.86f,  // was 16.84,  worst 16.7757 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 18.31f,  // was 18.27,  worst 18.2135 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.79f,   // was 4.791,  worst 4.7653 (jonswap H8.5)
+    .bias_3d_percent               = 92.67f,  // was 92.33,  worst 92.2087 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

@@ -536,7 +536,16 @@ public:
 
         s.acc_bias_est_ned    = filter.mekf().get_acc_bias();
         s.gyro_bias_est_ned   = filter.mekf().gyroscope_bias();
-        s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf());
+
+        // The MEKF has no magnetometer-bias state, so get_mag_bias_est_uT()
+        // returns zero here and the harness's "Bias error RMS (mag)" was
+        // reporting the injected offset itself rather than anything the filter
+        // had done about it.  The wrapper's continuous hard-iron correction is
+        // the estimate of that offset -- it is subtracted from every sample the
+        // MEKF sees -- so it is what belongs in this slot, and reporting it
+        // makes the correction measurable in uT instead of only through yaw.
+        s.mag_bias_est_ned_uT = get_mag_bias_est_uT(filter.mekf()) +
+                                fusion_.magHardIronBodyUT();
 
         s.tau_target      = filter.getTauTarget();
         s.sigma_target    = filter.getSigmaTarget();
@@ -847,16 +856,49 @@ private:
 // largest single move any of these bars has made.  Everything here is what
 // tools/ou_regauge_gates.py prints for the filter as it now stands, cut to
 // the same rule as every line above it.
+//
+// Then all nine again for the continuous hard-iron re-tune, which cut the
+// estimator's absolute ridge floor from 4e-3 to 5e-4 (see
+// docs/continuous-mag-hard-iron.md).  Two separate things moved these bars and
+// the comment has to keep them apart, because only one of them is this change:
+//
+//   drift already in the tree.  The bars above were fitted before the reduced
+//   physical-MSE integral-regularizer schedule landed, and that schedule took
+//   the displacement channels down without a re-gauge.  Measured on this tree
+//   with the old ridge, the worsts were already 4.5214 / 4.4872 (vertical),
+//   13.6405 / 14.5198 (3D) against bars of 4.72 / 4.666 and 13.94 / 14.92 --
+//   3.7 and 1.6 percent of slack that no longer belonged to anyone.
+//
+//   the re-tune itself.  Yaw, and almost nothing else.  Per record, old ridge
+//   -> new: 1.1345 -> 0.6307, 1.2651 -> 0.8780, 0.3031 -> 0.5039,
+//   0.7548 -> 0.5307, 0.7049 -> 0.6953, 0.9746 -> 0.5618, 0.4934 -> 0.7339,
+//   0.5148 -> 0.4004.  Mean 0.7682 -> 0.6168, worst 1.2651 -> 0.8780.  Every
+//   other channel moves in the fourth digit: vertical 4.5214 -> 4.5218, 3D
+//   13.6405 -> 13.6518, roll 0.3608 -> 0.3616, pitch 0.1949 -> 0.1957,
+//   accelerometer Z bias 4.4728 -> 4.4738.
+//
+// The yaw bar therefore comes down by 30 percent and the displacement bars by
+// the drift, not by the re-tune.  Pitch and the two bias bars go up in the
+// third digit, which is the same price the correction has always charged: the
+// heading walks onto the corrected field during the run and the horizontal
+// accelerometer bias -- the least observable quantity scored here -- absorbs
+// part of that motion.  Pitch moving 0.5 percent at the default seed is not a
+// pitch regression: paired over five magnetometer-calibration draws and five
+// IMU-noise draws, the re-tune moves pooled pitch by +0.1 and +0.4 percent,
+// which is a re-draw at ten times this resolution.
+//
+// All nine are what tools/ou_regauge_gates.py prints for the filter that
+// ships, cut to the same rule as every line above.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.72f,   // was 4.735, worst 4.6961 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.666f,  // was 4.682, worst 4.6426 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.27f,   // was 1.297, worst 1.2630 (jonswap H1.5)
-    .err_limit_roll_deg            = 0.3637f, // was 0.42,  worst 0.3618 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.195f,  // was 0.223, worst 0.1940 (pmstokes H4.0)
-    .err_limit_percent_3d_jonswap  = 13.94f,  // was 20.95, worst 13.8686 (jonswap H1.5)
-    .err_limit_percent_3d_pmstokes = 14.92f,  // was 20.86, worst 14.8387 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.475f,  // was 4.624, worst 4.4519 (pmstokes H8.5)
-    .bias_3d_percent               = 78.61f,  // was 81.84, worst 78.2145 (pmstokes H4.0, accel)
+    .err_limit_percent_z_jonswap   = 4.545f,  // was 4.72,   worst 4.5218 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.511f,  // was 4.666,  worst 4.4881 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 0.8824f, // was 1.27,   worst 0.8780 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.3634f, // was 0.3637, worst 0.3616 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.1967f, // was 0.195,  worst 0.1957 (pmstokes H4.0)
+    .err_limit_percent_3d_jonswap  = 13.73f,  // was 13.94,  worst 13.6518 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 14.62f,  // was 14.92,  worst 14.5421 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.497f,  // was 4.475,  worst 4.4738 (pmstokes H8.5)
+    .bias_3d_percent               = 78.84f,  // was 78.61,  worst 78.4439 (pmstokes H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
