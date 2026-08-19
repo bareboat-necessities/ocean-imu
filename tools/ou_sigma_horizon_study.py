@@ -1,22 +1,14 @@
 #!/usr/bin/env python3
-"""Decouple the OU adaptation path from the acceleration-band frequency tracker,
-and measure what the sigma_a averaging horizon is worth once it has.
+"""Measure what the sigma_a averaging horizon is worth on the wave-band
+operating point.
 
-Two questions, one harness, because they are the same question asked twice.
-
-``--axis source`` varies where the tuning frequency comes from
-(``W3D_TUNER_FREQ_SOURCE``).  Both OU families already read the wave-band
-zero-crossing period from ``WavePeriodEstimator`` once that estimator reports
-ready, but that gate does not clear until 60-85 s into a run, and until it does
-the operating point -- the sigma band's corners, the sigma_a averaging horizon,
-and tau -- was taken from the acceleration-band tracker:
-
-  ``tracker_fallback``   the previous behaviour and the baseline of this axis.
-  ``wave_band_gated``    the tracker replaced by a fixed wave-band prior, with
-                         the legacy readiness gate left alone.  Isolates "stop
-                         reading the tracker" from the change below.
-  ``wave_band``          (shipped) the same, and the estimator's own value
-                         adopted as soon as it exists rather than at isReady().
+Both OU families take the whole operating point -- the sigma band's corners,
+the sigma_a averaging horizon, and tau -- from the wave-band zero-crossing
+period of ``WavePeriodEstimator``, adopting the estimator's own value as soon
+as it exists and standing a fixed wave-band prior in before that.  The
+acceleration-band frequency tracker has no path into the adaptation, so the
+``source`` axis this harness used to sweep (``W3D_TUNER_FREQ_SOURCE``, with its
+``tracker_fallback`` and ``wave_band_gated`` arms) is gone with it.
 
 ``--axis k_periods`` varies the sigma_a averaging horizon
 (``OU_SIGMA_VAR_K_PERIODS``), which ``SeaStateAutoTuner`` expresses in periods
@@ -54,7 +46,7 @@ single-realization protocol of ``tools/ou_sim_table.py`` and is bit-identical to
 it.  Every ratio is against the axis baseline on the identical realization.
 
 Usage:
-  tools/ou_sigma_horizon_study.py --axis source --seeds 6
+  tools/ou_sigma_horizon_study.py --seeds 6
   tools/ou_sigma_horizon_study.py --axis k_periods --seeds 6 --csv k.csv
 """
 
@@ -119,14 +111,8 @@ SEGMENTS = (
 )
 
 # axis -> (env var, values, baseline).  The baseline is the denominator of every
-# ratio.  On the source axis it is deliberately the *old* behaviour, because
-# the question that axis answers is what dropping the tracker changed.
+# ratio.
 AXES = {
-    "source": (
-        "W3D_TUNER_FREQ_SOURCE",
-        ("tracker_fallback", "wave_band_gated", "wave_band"),
-        "tracker_fallback",
-    ),
     "k_periods": (
         "OU_SIGMA_VAR_K_PERIODS",
         ("0.5", "1", "2", "3", "4", "6", "8"),
@@ -295,7 +281,7 @@ def paired_logs(raw, family, metric, value, baseline, keys, seeds) -> list[float
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--axis", choices=sorted(AXES), default="source")
+    ap.add_argument("--axis", choices=sorted(AXES), default="k_periods")
     ap.add_argument("--values", help="comma-separated override of the axis values")
     ap.add_argument("--baseline", help="override the ratio denominator")
     ap.add_argument("--family", choices=sorted(FAMILIES), action="append")

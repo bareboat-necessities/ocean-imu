@@ -265,25 +265,20 @@ public:
                 filter.mekf().set_Q_bacc_rw(Eigen::Vector3f::Constant(v));
             }
 
-            // Where the tuning frequency comes from before the wave-period
-            // estimator has a value.  "wave_band" is the deployed source and
-            // never reads the acceleration-band tracker; "wave_band_gated"
-            // keeps the legacy readiness gate but still never reads it;
-            // "tracker_fallback" is the previous behaviour.
-            if (const char* src = std::getenv("W3D_TUNER_FREQ_SOURCE")) {
-                const std::string value = src;
-                if (value == "wave_band") {
-                    filter.setTunerFrequencySource(TunerFrequencySource::WaveBand);
-                } else if (value == "wave_band_gated") {
-                    filter.setTunerFrequencySource(
-                        TunerFrequencySource::WaveBandGated);
-                } else if (value == "tracker_fallback") {
-                    filter.setTunerFrequencySource(
-                        TunerFrequencySource::TrackerFallback);
-                } else {
+            // Knobs that no longer exist.  tau and the sigma band are
+            // wave-band quantities at every instant of the run, and every
+            // consumer of a vertical acceleration reads the private Mahony
+            // observer.  A stale sweep script must fail here rather than
+            // silently reporting the deployed configuration as an ablation.
+            for (const char* removed : {"W3D_TUNER_FREQ_SOURCE",
+                                        "W3D_TUNING_BAND",
+                                        "W3D_FREQ_TRACKER_INPUT"}) {
+                if (std::getenv(removed) != nullptr) {
                     throw std::runtime_error(
-                        "W3D_TUNER_FREQ_SOURCE must be wave_band, "
-                        "wave_band_gated or tracker_fallback");
+                        std::string(removed) +
+                        " was removed: the tuning frequency is always the wave"
+                        " band and the frequency tracker always runs on the"
+                        " complementary observer");
                 }
             }
 
@@ -306,53 +301,21 @@ public:
                 }
             }
 
-            // Ablate the wave-band operating point back to the
-            // acceleration-band frequency the filter used before.
-            if (const char* band = std::getenv("W3D_TUNING_BAND")) {
-                const std::string value = band;
-                if (value == "acceleration") {
-                    filter.setWaveBandTuning(false);
-                } else if (value != "wave") {
-                    throw std::runtime_error(
-                        "W3D_TUNING_BAND must be wave or acceleration");
-                }
-            }
-
             // Ablate the wave-period estimator's input away from the
             // complementary-levelled default.  "leveled" restores the older
             // behaviour, which levels with the attitude solution and so closes
-            // the tuner coupling; "body_z" is the raw proxy, measurement-only
-            // like the default but unlevelled.
+            // the tuner coupling.
             if (const char* src = std::getenv("W3D_WAVE_PERIOD_INPUT")) {
                 const std::string value = src;
-                if (value == "body_z") {
-                    filter.setWavePeriodInput(WavePeriodInputSource::BodyZ);
-                } else if (value == "complementary") {
+                if (value == "complementary") {
                     filter.setWavePeriodInput(
                         WavePeriodInputSource::Complementary);
                 } else if (value == "leveled") {
                     filter.setWavePeriodInput(WavePeriodInputSource::Leveled);
                 } else {
                     throw std::runtime_error(
-                        "W3D_WAVE_PERIOD_INPUT must be leveled, body_z or "
+                        "W3D_WAVE_PERIOD_INPUT must be leveled or "
                         "complementary");
-                }
-            }
-
-            // Ablate the frequency tracker's input from the raw body-Z proxy
-            // (default) to the levelled signal from the private Mahony
-            // observer.  Both are measurement-only; this changes the tracker
-            // frequency and so the direction demodulator's carrier.
-            if (const char* src = std::getenv("W3D_FREQ_TRACKER_INPUT")) {
-                const std::string value = src;
-                if (value == "complementary") {
-                    filter.setFreqTrackerInput(
-                        FreqTrackerInputSource::Complementary);
-                } else if (value == "body_z") {
-                    filter.setFreqTrackerInput(FreqTrackerInputSource::BodyZ);
-                } else {
-                    throw std::runtime_error(
-                        "W3D_FREQ_TRACKER_INPUT must be body_z or complementary");
                 }
             }
 

@@ -185,8 +185,9 @@ deterministic single-seed protocol of `tools/ou_sim_table.py`. The second one
 is now the default; ratios below are still taken against attitude levelling,
 since the question is what changed relative to it.
 
-**`body_z`** is the raw proxy the frequency tracker already runs on. It opens
-the loop and is not usable:
+**`body_z`** was the raw proxy the frequency tracker then ran on. It opens the
+loop and is not usable, which is why it has since been deleted rather than left
+selectable — the numbers below are what it cost while it existed:
 
 | filter | vertical RMS | 3D RMS | worst record |
 | --- | --- | --- | --- |
@@ -234,8 +235,8 @@ horizontal acceleration.
 
 ### The same signal in the frequency tracker
 
-The tracker has the same two signals available (`W3D_FREQ_TRACKER_INPUT`,
-`setFreqTrackerInput()`), and the question is worth asking on its own terms
+The tracker then had the same two signals available (`W3D_FREQ_TRACKER_INPUT`,
+`setFreqTrackerInput()`), and the question was worth asking on its own terms
 because the tracker frequency is also the direction demodulator's carrier.
 Both signals are measurement-only, so neither choice touches the loop. Six
 seeds per record, paired on the realization:
@@ -266,8 +267,9 @@ The levelled signal is the default here regardless. Nothing in the measurement
 argues for it and nothing argues against it, so the tie is broken on structure:
 one vertical acceleration then serves every consumer in the filter - period
 estimator, frequency tracker, stillness detector - instead of two signals whose
-difference has to be justified at each call site. `body_z` remains selectable,
-and the ablation is what the table above reports. Note that the numbers quoted
+difference has to be justified at each call site. That structural argument is
+now the whole story: `body_z` has been deleted, so the table above is what the
+ablation cost while it was still selectable. Note that the numbers quoted
 elsewhere for the `Leveled` wave-period ablation shifted slightly with this
 change (`tau` ratio 1.28 -> 1.25), because that ablation now runs against a
 levelled tracker input too.
@@ -339,8 +341,8 @@ rather than from the simulator, so it is a default to override, not a constant.
 The claim that has to survive scrutiny is that the displacement improvement
 comes from the wave band and not from this. Decomposed on the four stationary
 JONSWAP records (3D RMS in metres; "old band" is the acceleration-band
-operating point restored through `W3D_TUNING_BAND=acceleration`, with the
-raised clamps in both arms):
+operating point, restored at the time through `W3D_TUNING_BAND=acceleration`
+and since removed, with the raised clamps in both arms):
 
 | record | old band, old prior | old band, new prior | wave band, old prior | wave band, new prior |
 | --- | --- | --- | --- | --- |
@@ -410,8 +412,9 @@ regularizer. It is the same failure with a smaller multiplier.
 
 `WavePeriodEstimator` is now wired into `SeaStateFusionFilter_OU_II` exactly as
 it is in OU-III: fed the leveled vertical acceleration the direction stage
-already forms, consulted only once it reports ready, and ablatable back to the
-old behaviour with `setWaveBandTuning(false)` / `W3D_TUNING_BAND=acceleration`.
+already forms, consulted only once it reports ready, and — while the legacy
+path existed — ablatable back to the old behaviour with
+`setWaveBandTuning(false)` / `W3D_TUNING_BAND=acceleration`.
 The estimator itself is unchanged and shared, so the `T_z` accuracy table in
 section 1.6 applies unaltered, as does the input study beside it -
 `setWavePeriodInput()` exists on both filters and the eight-record numbers for
@@ -644,8 +647,10 @@ smoke mode and never produces numbers anyone cites.
 
 Section 1.7. Without it the family comparison confounds the extra
 integral-displacement state with the spectral band the two filters are tuned
-from. `W3D_TUNING_BAND=acceleration` restores the old OU-II behaviour so the
-change stays ablatable on both sides of the comparison.
+from. `W3D_TUNING_BAND=acceleration` restored the old OU-II behaviour, keeping
+the change ablatable on both sides of the comparison while that path existed;
+it has since been removed, together with the tracker-driven operating point and
+every body-Z consumer, so the wave band is now the only path.
 
 ### Still open
 

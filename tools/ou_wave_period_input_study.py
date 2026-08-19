@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """Compare the vertical-acceleration inputs the OU-II / OU-III filters can use.
 
-Two places in the filter consume a vertical acceleration, and each has more than
-one signal available.  This tool replays the eight reference records under every
-choice, for both filters, and reports the RMS errors and the direction metrics
-side by side.
-
-``--axis wave_period`` (default) varies what drives ``WavePeriodEstimator``,
-which sets the OU operating point:
+``--axis wave_period`` varies what drives ``WavePeriodEstimator``, which sets
+the OU operating point.  This tool replays the eight reference records under
+each choice, for both filters, and reports the RMS errors and the direction
+metrics side by side:
 
   ``leveled``            the heading-frame up component, i.e. the accelerometer
                          rotated by the filter's own attitude solution.  It
@@ -15,31 +12,16 @@ which sets the OU operating point:
                          state, so the tuner is inside a loop.  This is what
                          the filter shipped before ``complementary``.
 
-  ``body_z``             the raw body-Z proxy ``-(acc.z + g)`` that the
-                         frequency tracker runs on.  It never touches the
-                         attitude solution, so the loop is open, but a tilting
-                         platform leaks gravity into it below the wave band,
-                         where double integration weights the spectrum by
-                         1/omega^4.
-
   ``complementary``      (shipped) levelled with a private Mahony observer
-                         running on the raw gyro and accelerometer.  Also a
-                         pure function of the measurements, so the loop is
-                         equally open, but levelled, so the leakage is removed
+                         running on the raw gyro and accelerometer.  A pure
+                         function of the measurements, so the loop is open,
+                         and levelled, so sub-band gravity leakage is removed
                          rather than accepted.
 
-``--axis freq_tracker`` varies what drives the frequency tracker, and with it
-the stillness detector that shares its input.  The tracker frequency is the
-direction demodulator's carrier, so this axis moves the direction estimates as
-well as the displacement RMS:
-
-  ``body_z``             (shipped) the raw proxy.
-  ``complementary``      the same levelled signal as above.
-
-Both choices on this axis are measurement-only, so neither closes a loop.
-Levelling is not obviously right here the way it is for the period estimator:
-the tracker output is not integrated, so it does not suffer the 1/omega^4
-weighting that makes sub-band gravity leakage fatal downstream.
+The raw body-Z proxy ``-(acc.z + g)`` was a third choice here, and a second
+choice for the frequency tracker.  Both are gone: every consumer of a vertical
+acceleration in the filters now reads the private Mahony observer, so there is
+no longer a ``freq_tracker`` axis to sweep.
 
 The default protocol is the deterministic one of ``tools/ou_sim_table.py``: one
 realization per record, default seeds, the final 900 s of a 20-minute replay.
@@ -47,11 +29,11 @@ It is not the ten-seed ensemble study and must not be quoted interchangeably
 with it.  ``--seeds N`` replicates each record over N seeds and reports a
 paired confidence interval alongside the pooled ratio, which is necessary
 whenever the effect being measured is smaller than the record-to-record
-scatter -- as it is on the ``freq_tracker`` axis.
+scatter.
 
 Usage:
   tools/ou_wave_period_input_study.py
-  tools/ou_wave_period_input_study.py --axis freq_tracker --seeds 6
+  tools/ou_wave_period_input_study.py --seeds 6
 """
 
 from __future__ import annotations
@@ -88,19 +70,14 @@ RECORDS = (
 )
 
 # axis -> (env var, inputs, baseline).  The baseline is the denominator of every
-# ratio; on the wave_period axis it is deliberately *not* the shipped value,
-# because the question that axis answers is what the shipped value changed
-# relative to attitude levelling.
+# ratio, and it is deliberately *not* the shipped value, because the question
+# this axis answers is what the shipped value changed relative to attitude
+# levelling.
 AXES = {
     "wave_period": (
         "W3D_WAVE_PERIOD_INPUT",
-        ("leveled", "body_z", "complementary"),
+        ("leveled", "complementary"),
         "leveled",
-    ),
-    "freq_tracker": (
-        "W3D_FREQ_TRACKER_INPUT",
-        ("body_z", "complementary"),
-        "body_z",
     ),
 }
 

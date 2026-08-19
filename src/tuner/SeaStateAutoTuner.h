@@ -19,35 +19,14 @@
       because that band barely moves with sea state; fed the wave-band
       zero-crossing period it becomes a genuine multiple of the wave period and
       stretches from about 5 s on a short chop to 17 s on a developed swell.
-      The clamps below therefore have to admit that whole span, and the
-      defaults are documented in docs/ou-sigma-horizon.md.
+      The wave band is what the filters feed it -- the acceleration-band
+      tracker no longer reaches the adaptation path at all -- so the clamps
+      below have to admit that whole span, and the defaults are documented in
+      docs/ou-sigma-horizon.md.
 */
 
 #include <cmath>
 #include <algorithm>
-
-// Where the tuning frequency the OU adaptation runs on comes from.
-//
-// WaveBand is the deployed choice: the operating point is a property of the
-// wave band, so it is read from WavePeriodEstimator alone and, before that
-// estimator has settled, from a fixed wave-band prior.  Nothing in the
-// adaptation path then reads the acceleration-band frequency tracker, which
-// stays where it is needed -- as the carrier of the wave-direction
-// demodulator.
-//
-// TrackerFallback is the previous behaviour, kept as an ablation: the same
-// wave-band frequency once the period estimator is ready, but the tracker's
-// output for the first minute or so of every run.
-//
-// WaveBandGated separates the two things WaveBand changes at once.  It drops
-// the tracker exactly like WaveBand but keeps the legacy readiness gate, so
-// comparing the three attributes the effect to "no tracker" or to "adopt the
-// period estimator as soon as it has a value" rather than to their sum.
-enum class TunerFrequencySource {
-    WaveBand,         // wave-period estimator as soon as it has a value, then a prior
-    WaveBandGated,    // ablation: same, but only once the estimator reports ready
-    TrackerFallback,  // legacy: acceleration-band tracker until the estimator is ready
-};
 
 struct DebiasedEMA {
     float value  = 0.0f;
