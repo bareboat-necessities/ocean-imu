@@ -34,8 +34,11 @@ before subtraction, rather than being subtracted as a broadband constant.
 Two things changed together here, exactly as they did in OU-III: the band
 itself, and the tuner's input signal moving from the raw body-Z proxy to the
 complementary-levelled vertical acceleration. `setWaveBandTuning(false)` /
-`W3D_TUNING_BAND=acceleration` bypasses both, so the old broadband path stays
-available as a coherent ablation.
+`W3D_TUNING_BAND=acceleration` bypassed both while the legacy path existed; the
+figures below were measured against it. Both are gone now — the operating point
+is a wave-band quantity unconditionally, and no consumer of a vertical
+acceleration reads the body-Z proxy any more — so the comparison is history
+rather than a switch.
 
 ### 2. The pseudo-measurement cadence is self-similar in `tau`
 
@@ -365,10 +368,12 @@ make -C tests/kalman_ou_ii build
 # deployed default, eight scored records
 W3D_WRITE_TIMESERIES=0 W3D_COLLECT_ALL_GATES=1 ./kalman_ou_ii-sim
 
-# the three ablations that decompose the change
+# the two ablations that still decompose the change
 W3D_STARTUP_INIT=staged_mekf W3D_PSEUDO_CADENCE=fixed ./kalman_ou_ii-sim   # sigma band only
 W3D_STARTUP_INIT=staged_mekf ./kalman_ou_ii-sim                            # + tau cadence
-W3D_TUNING_BAND=acceleration ./kalman_ou_ii-sim                            # legacy broadband path
+
+# the legacy broadband arm (W3D_TUNING_BAND=acceleration) was removed with the
+# tracker-driven operating point; the simulator now rejects that variable.
 ```
 
 The ensemble figures above come from replaying each configuration under

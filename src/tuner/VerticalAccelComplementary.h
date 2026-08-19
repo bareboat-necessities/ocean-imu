@@ -20,9 +20,10 @@
   it is not usable: double integration weights a spectrum by 1/omega^4, so the
   gravity a tilting platform leaks into body Z swamps the elevation proxy.  Fed
   the body-Z proxy the estimator reports 6.8-10.0 s whatever the sea does,
-  against a truth of 2.4-8.7 s.
+  against a truth of 2.4-8.7 s.  That is why it was removed rather than kept
+  as a fallback: the filters have no body-Z path left.
 
-  This class is the third option, and the deployed one: level with an attitude
+  This class is the option the filters run on: level with an attitude
   solution that is also a pure function of the measurements.  It runs its own
   Mahony observer on the raw gyro and accelerometer - never the calibrated or
   bias-corrected values, never any filter state - and reports
@@ -67,25 +68,13 @@
 #include "ahrs/Mahony_AHRS.h"
 
 // Which vertical acceleration the wave-period estimator is driven by.
-// Complementary is the default; the other two are kept for ablation.
+// Complementary is the default and the only measurement-only choice; Leveled
+// is kept for ablation.  The raw body-Z proxy -(acc.z + g) is no longer an
+// option anywhere in the filters: every consumer of a vertical acceleration
+// now reads this observer, for the reasons in the note above.
 enum class WavePeriodInputSource {
     Leveled,        // heading-frame up from the main filter's attitude
-    BodyZ,          // raw -(acc.z + g) proxy, the frequency tracker's input
     Complementary,  // private Mahony observer; levelled and measurement-only
-};
-
-// Which vertical acceleration the frequency tracker - and the stillness
-// detector that shares its input - is driven by.  Both choices are
-// measurement-only, so neither closes a loop; they differ in whether the
-// platform's tilt is removed first, and on the reference records they are
-// RMS-equivalent.  Levelling does not buy here what it buys the period
-// estimator: the tracker is not integrated, so it never sees the 1/omega^4
-// weighting that makes sub-band gravity leakage fatal downstream.  The
-// levelled signal is nevertheless the default, so that a single vertical
-// acceleration serves every consumer in the filter.
-enum class FreqTrackerInputSource {
-    BodyZ,          // raw -(acc.z + g) proxy, kept for ablation
-    Complementary,  // private Mahony observer; levelled
 };
 
 class VerticalAccelComplementary {

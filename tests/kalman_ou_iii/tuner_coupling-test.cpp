@@ -20,7 +20,8 @@
 //    every estimator state leaves the reported period and operating point
 //    bit-for-bit unchanged.
 //
-//    WavePeriodInputSource::Leveled is the older behaviour, kept for ablation,
+//    WavePeriodInputSource::Leveled is the older behaviour, the only ablation
+//    left on this axis,
 //    and it does close the loop: it feeds direction_accel.up_ms2, which uses
 //    the attitude estimate, so delta_theta -> wave period -> tau, sigma_a,
 //    r_S -> filter gains -> delta_theta is a real feedback path. It reaches
@@ -227,7 +228,7 @@ bool test_default_frequency_channel_is_exogenous() {
     ok &= check(nominal.isAdaptiveLive(),
                 "the tuner must reach its live stage, or this test proves nothing");
     ok &= check(nominal.wavePeriodReady(),
-                "the period must have settled, or the body-Z fallback is what "
+                "the period must have settled, or the wave-band prior is what "
                 "is being measured");
 
     displace_state(displaced, /*attitude=*/true, /*linear=*/true);
@@ -271,9 +272,9 @@ bool test_default_frequency_channel_is_exogenous() {
 // only thing this can detect is a tracker dependence.
 //
 // The comparison is made at 30 s, well before the wave-period estimator is
-// ready: under the previous TrackerFallback source that is exactly the window
-// in which the tracker set the sigma band's corners, the sigma_a averaging
-// horizon and tau, and this check fails on it.
+// ready: that is exactly the window in which the removed tracker-fallback
+// source let the tracker set the sigma band's corners, the sigma_a averaging
+// horizon and tau, and this check fails on any such path returning.
 bool test_operating_point_is_tracker_independent() {
     bool ok = true;
 
@@ -281,9 +282,6 @@ bool test_operating_point_is_tracker_independent() {
     SeaStateFusionFilter_OU_III<TrackerType::ARANOVSKIY> aranovskiy;
     bring_up(kalmanf);
     bring_up(aranovskiy);
-
-    ok &= check(kalmanf.tunerFrequencySource() == TunerFrequencySource::WaveBand,
-                "the default tuning-frequency source must be the wave-band one");
 
     constexpr int EARLY = 240 * 30;
     run(kalmanf, 0, EARLY);

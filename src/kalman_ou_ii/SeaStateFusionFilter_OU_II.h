@@ -29,10 +29,10 @@
       correction.  The time scale those laws are built on comes from
       WavePeriodEstimator, not from the acceleration-band frequency tracker,
       at every instant of the run: before that estimator has a value a fixed
-      wave-band prior stands in rather than the tracker (see
-      TunerFrequencySource).  See "Where" below.  The variance channel first
-      applies a period-scaled measurement-only wave band, and averages its
-      variance over a horizon of K wave periods.
+      wave-band prior stands in rather than the tracker, and the tracker has no
+      path into the adaptation at all.  See "Where" below.  The variance
+      channel first applies a period-scaled measurement-only wave band, and
+      averages its variance over a horizon of K wave periods.
 
   Where
   – τ (tau):  OU process time constant = ½ · T_z, half the zero-crossing period
@@ -74,8 +74,6 @@
      the transfer shape is therefore fixed in f/f_tune, which is the condition
      the σₐ similarity argument needs.  The bench noise floor is referred
      through that band's own time-varying coefficients before subtraction.
-     setWaveBandTuning(false) bypasses both the band and the wave-band period,
-     which keeps the old broadband path available as a coherent ablation.
 
   3. THE PSEUDO-MEASUREMENT CADENCE IS SELF-SIMILAR IN τ, AND THE
      REGULARIZERS FOLLOW IT.  One pseudo update has covariance r²; at one
@@ -619,14 +617,6 @@ private:
         time_ += dt;
         startup_stage_t_ += dt;
 
-
-        // BODY-Z-based proxy used as a measurement-only fallback.
-        // This is NOT true world/inertial vertical acceleration; it is only a
-        // body-Z residual that behaves like up-positive vertical motion when the
-        // platform is near-level:
-        //   acc.z() ~ -g at rest  => proxy ~ 0
-        const float a_z_body_proxy = acc.z() + g_std;
-
         // Private Mahony observer for the wave-period estimator, the default
         // sigma channel and the startup attitude.  It is fed the raw gyro and
         // accelerometer, before the MEKF sees them, so that the levelling it
@@ -686,39 +676,24 @@ private:
             }
         }
 
-        // Up-positive BODY-Z proxy used as fallback by measurement-only paths.
-        // Not true world vertical unless the platform is close to level.
-        a_body_z_up_proxy_ = -a_z_body_proxy;
-
-        // Default levelled vertical measurement shared by the frequency
-        // tracker, the wave-period estimator, and the sigma channel.  It comes
-        // from a private complementary observer and therefore does not read
-        // any MEKF state.  Until that observer is ready, use the body-Z proxy.
-        const float a_vert_measurement = vertical_accel_comp_.isReady()
-            ? vertical_accel_comp_.verticalAccelUpMs2()
-            : a_body_z_up_proxy_;
-
-        // Vertical acceleration the tracker runs on.  Both choices are
-        // measurement-only, and they are RMS-equivalent: levelling buys here
-        // none of what it buys the period estimator, because the tracker is
-        // not integrated and so never sees the 1/omega^4 weighting that makes
-        // sub-band gravity leakage matter downstream.  The levelled signal is
-        // the default anyway, so that one vertical acceleration serves every
-        // consumer in the filter.
-        const float a_vert_for_tracker =
-            (freq_tracker_input_ == FreqTrackerInputSource::Complementary)
-                ? a_vert_measurement
-                : a_body_z_up_proxy_;
+        // The one levelled vertical measurement every consumer in this filter
+        // reads: the frequency tracker and its stillness detector, the
+        // wave-period estimator, and the sigma channel.  It comes from the
+        // private Mahony observer and therefore reads no MEKF state.  The
+        // observer is seeded from the first accelerometer sample, so the value
+        // is usable immediately; its isReady() gate is about settled period
+        // *statistics*, which is a stricter requirement than a usable tilt.
+        const float a_vert_measurement = vertical_accel_comp_.verticalAccelUpMs2();
 
         // LPF on the tracker input
-        const float a_body_z_up_lp = freq_input_lpf_.step(a_vert_for_tracker, dt);
+        const float a_vert_lp = freq_input_lpf_.step(a_vert_measurement, dt);
 
         // Raw freq from tracker
-        const float f_tracker = static_cast<float>(tracker_policy_.run(a_body_z_up_lp, dt));
+        const float f_tracker = static_cast<float>(tracker_policy_.run(a_vert_lp, dt));
         f_raw = f_tracker;
 
         // Stillness detector shares the tracker's input, as it always has.
-        const float f_after_still = freq_stillness_.step(a_body_z_up_lp, dt, f_tracker);
+        const float f_after_still = freq_stillness_.step(a_vert_lp, dt, f_tracker);
 
         // Fast & slow smoothed frequencies
         float f_fast = freq_fast_smoother_.update(f_after_still);
@@ -730,21 +705,20 @@ private:
         freq_hz_      = f_fast;   // demod / direction
         freq_hz_slow_ = f_slow;   // tuner / moments
 
-        // Tuner gets vertical accel, and the wave-band frequency when the
-        // period estimator has settled.  That single substitution fixes both
-        // halves of the old operating point: tau stops being derived from an
-        // acceleration-band frequency that barely moves with the sea state, and
-        // the tuner's variance horizon (a few periods) stops being shorter than
-        // one wave period, which was biasing sigma_aw low.
+        // Tuner gets vertical accel and the wave-band frequency.  That single
+        // substitution fixed both halves of the old operating point: tau is no
+        // longer derived from an acceleration-band frequency that barely moves
+        // with the sea state, and the tuner's variance horizon (a few periods)
+        // is no longer shorter than one wave period, which was biasing
+        // sigma_aw low.  The acceleration-band tracker reaches none of it; it
+        // stays where it is needed, as the wave-direction demodulator carrier.
         //
-        // The variance channel now sees the same exogenous levelled
-        // acceleration the wave-period estimator does, but only after a
-        // period-scaled band-pass.  The band is inside update_tuner because its
-        // corners use the tuner's own lagged/smoothed wave frequency.  Turning
-        // wave-band tuning off deliberately bypasses that band so the old
-        // broadband variance path remains available as a clean ablation.
+        // The variance channel sees the same exogenous levelled acceleration
+        // the wave-period estimator does, but only after a period-scaled
+        // band-pass.  The band is inside update_tuner because its corners use
+        // the tuner's own lagged/smoothed wave frequency.
         if (enable_tuner_) {
-            update_tuner(dt, a_vert_measurement, tuner_frequency_hz_(f_after_still));
+            update_tuner(dt, a_vert_measurement, tuner_frequency_hz_());
         }
 
         // R_p0/R_v0 are committed with the rest of the staged online
@@ -782,9 +756,10 @@ private:
         //
         // Levelled, because double integration weights a spectrum by
         // 1/omega^4, so the sub-band gravity leakage a tilting platform puts
-        // into the body-Z proxy dominates the elevation proxy.  Fed the raw
-        // body-Z proxy the estimator reports 6.8-10.0 s whatever the sea does,
-        // against a truth of 2.4-8.7 s, and vertical RMS degrades 2.5x.
+        // into a raw body-Z residual dominates the elevation proxy.  Fed that
+        // residual the estimator reports 6.8-10.0 s whatever the sea does,
+        // against a truth of 2.4-8.7 s, and vertical RMS degrades 2.5x.  That
+        // is why no body-Z path is left in this filter.
         //
         // Exogenous, because levelling with the filter's own attitude closes a
         // loop: a 0.25 rad attitude displacement moved the reported period
@@ -798,9 +773,9 @@ private:
         // so it is a pure function of the measurements.  It costs nothing --
         // over the eight reference records it matches the old attitude-levelled
         // input to within 0.2% of vertical RMS -- and it is the default.
-        // setWavePeriodInput() still reaches the other two for ablation;
-        // tests/kalman_ou_iii/tuner_coupling-test.cpp asserts the default is
-        // exogenous bit-for-bit and bounds the Leveled path's gain.
+        // setWavePeriodInput() still reaches the attitude-levelled one for
+        // ablation; tests/kalman_ou_iii/tuner_coupling-test.cpp asserts the
+        // default is exogenous bit-for-bit and bounds the Leveled path's gain.
         wave_period_.update(dt, wave_period_input_ms2_(direction_accel));
 
         dir_filter_.update(direction_accel.forward_ms2,
@@ -985,7 +960,7 @@ public:
     float getSigmaWaveBandHighRatio() const noexcept { return sigma_wave_band_.highRatio(); }
     float getSigmaBandNoiseStd() const noexcept { return band_noise_floor_sigma_(); }
 
-    // Configure LPF on BODY-Z proxy for tracker input
+    // Configure LPF on the levelled vertical acceleration the tracker runs on
     void setFreqInputCutoffHz(float fc) { freq_input_lpf_.setCutoff(fc); }
 
     void enableClamp(bool flag = true) { enable_clamp_ = flag; }
@@ -1260,13 +1235,15 @@ public:
         return (freq_hz_slow_ > 1e-6f) ? 1.0f / freq_hz_slow_ : NAN;
     }
 
-    // Variance after the period-scaled sigma band in the default mode; the
-    // legacy broadband variance when setWaveBandTuning(false).
+    // Variance measured after the period-scaled sigma band.
     inline float getAccelVariance() const noexcept { return tuner_.getAccelVariance(); }
 
-    // Returns the BODY-Z-based up-positive fallback proxy.
-    // This is not a true world/inertial vertical acceleration estimate.
-    inline float getAccelVertical() const noexcept { return a_body_z_up_proxy_; }
+    // Up-positive vertical acceleration from the private Mahony observer: the
+    // signal the tracker, the wave-period estimator and the sigma channel all
+    // run on.  Measurement-only -- it reads no filter state.
+    inline float getAccelVertical() const noexcept {
+        return vertical_accel_comp_.verticalAccelUpMs2();
+    }
 
     inline float getHeaveAbs() const noexcept {
         if (!mekf_) return NAN;
@@ -1295,23 +1272,11 @@ public:
     inline float getWavePeriodSec() const noexcept { return wave_period_.getPeriodSec(); }
     inline bool wavePeriodReady() const noexcept { return wave_period_.isReady(); }
 
-    // Drive the operating point from the wave band (default) or from the
-    // acceleration-band tracker, which is what the filter did before and is
-    // kept so the change can be ablated rather than assumed.  The legacy mode
-    // also bypasses the period-scaled sigma band so this remains a coherent
-    // old-versus-new tuning-path comparison.
-    void setWaveBandTuning(bool flag) {
-        if (wave_band_tuning_ != flag) sigma_wave_band_.reset();
-        wave_band_tuning_ = flag;
-    }
-    bool waveBandTuning() const noexcept { return wave_band_tuning_; }
-
     // Select which vertical acceleration drives the wave-period estimator.
     // Complementary (default) levels with the private Mahony observer and is
     // measurement-only, so the tuner is outside the estimator's loop.  Leveled
     // is the older behaviour, which levels with the main filter's attitude and
-    // closes that loop; BodyZ is measurement-only but unlevelled.  See the call
-    // site in updateTime for what each one costs.
+    // closes that loop.  See the call site in updateTime for what it costs.
     void setWavePeriodInput(WavePeriodInputSource source) {
         wave_period_input_ = source;
     }
@@ -1319,35 +1284,11 @@ public:
         return wave_period_input_;
     }
 
-    // Select which vertical acceleration the frequency tracker runs on.
-    // Complementary (default) is the levelled signal from the private Mahony
-    // observer; BodyZ is the raw proxy, kept for ablation.  Both are
-    // measurement-only, and the two are RMS-equivalent on the reference
-    // records; the default is the levelled one so that every consumer of a
-    // vertical acceleration in this filter reads the same signal.
-    void setFreqTrackerInput(FreqTrackerInputSource source) {
-        freq_tracker_input_ = source;
-    }
-    FreqTrackerInputSource freqTrackerInput() const noexcept {
-        return freq_tracker_input_;
-    }
-
     // Gains of the private Mahony observer that levels the default input.
     // two_kp sets the accelerometer-to-gyro correction corner, which must stay
     // below the wave band; see VerticalAccelComplementary.h.
     void setWavePeriodComplementaryGains(float two_kp, float two_ki) {
         vertical_accel_comp_.setGains(two_kp, two_ki);
-    }
-
-    // Where the tuning frequency comes from.  WaveBand (default) keeps the
-    // whole adaptation path -- sigma band corners, sigma_a horizon, tau -- off
-    // the acceleration-band frequency tracker at every instant of the run; the
-    // other two are ablations.  See TunerFrequencySource.
-    void setTunerFrequencySource(TunerFrequencySource source) {
-        tuner_freq_source_ = source;
-    }
-    TunerFrequencySource tunerFrequencySource() const noexcept {
-        return tuner_freq_source_;
     }
 
     // Wave-band frequency used before WavePeriodEstimator has a value.
@@ -1416,7 +1357,7 @@ private:
     // is time varying, so the gain has to come from the filter's own state
     // rather than from a closed-form transfer function.
     float band_noise_floor_sigma_() const noexcept {
-        if (!wave_band_tuning_ || !sigma_wave_band_.isReady()) {
+        if (!sigma_wave_band_.isReady()) {
             return acc_noise_floor_sigma_;
         }
         const float gain = sigma_wave_band_.whiteNoiseVarianceGain();
@@ -1590,16 +1531,15 @@ private:
         float f_for_sigma_band = tuner_.isFreqReady()
             ? tuner_.getFrequencyHz()
             : freq_hz_for_tuner;
-        const float f_tune_floor = wave_band_tuning_ ? min_tune_freq_hz_ : min_freq_hz_;
-        const float f_tune_ceil = wave_band_tuning_ ? max_tune_freq_hz_ : max_freq_hz_;
+        const float f_tune_floor = min_tune_freq_hz_;
+        const float f_tune_ceil = max_tune_freq_hz_;
         if (!std::isfinite(f_for_sigma_band) || f_for_sigma_band < f_tune_floor) {
             f_for_sigma_band = f_tune_floor;
         }
         f_for_sigma_band = std::min(f_for_sigma_band, f_tune_ceil);
 
-        const float a_for_variance = wave_band_tuning_
-            ? sigma_wave_band_.step(a_vertical_measurement, dt, f_for_sigma_band)
-            : a_vertical_measurement;
+        const float a_for_variance =
+            sigma_wave_band_.step(a_vertical_measurement, dt, f_for_sigma_band);
 
         tuner_.update(dt, a_for_variance, freq_hz_for_tuner);
 
@@ -1714,51 +1654,38 @@ private:
         }
     }
 
-    // Vertical acceleration the wave-period estimator is driven by.  Each
-    // measurement-only source falls back to the body-Z proxy while it is
-    // unusable, which is what the leveled source already does when heading is
-    // not yet resolved.
+    // Vertical acceleration the wave-period estimator is driven by.  The
+    // leveled ablation falls back to the complementary observer while heading
+    // is not yet resolved, so the estimator is never fed a body-frame residual.
     float wave_period_input_ms2_(
         const wave_direction::HeadingFrameAcceleration<float>& leveled) const
     {
+        const float a_comp = vertical_accel_comp_.verticalAccelUpMs2();
         switch (wave_period_input_) {
-            case WavePeriodInputSource::BodyZ:
-                return a_body_z_up_proxy_;
-            case WavePeriodInputSource::Complementary:
-                return vertical_accel_comp_.isReady()
-                           ? vertical_accel_comp_.verticalAccelUpMs2()
-                           : a_body_z_up_proxy_;
             case WavePeriodInputSource::Leveled:
+                return leveled.heading_valid ? leveled.up_ms2 : a_comp;
+            case WavePeriodInputSource::Complementary:
             default:
-                return leveled.heading_valid ? leveled.up_ms2
-                                             : a_body_z_up_proxy_;
+                return a_comp;
         }
     }
 
     // The frequency the whole adaptation path runs on: the sigma band's
-    // corners, the sigma_a averaging horizon, and tau.
+    // corners, the sigma_a averaging horizon, and tau.  It is a wave-band
+    // quantity and nothing else; the acceleration-band tracker never reaches
+    // it, at any instant of the run.
     //
-    // Under the deployed WaveBand source it never reads tracker_hz.  The
-    // estimator's own value is taken as soon as it exists rather than at
+    // The estimator's own value is taken as soon as it exists rather than at
     // isReady(): the readiness gate wants a settled *statistic*, and it does
     // not clear until 60-85 s into a run, whereas a value that has survived the
     // integrator settling transient is already a far better wave-band estimate
-    // than a constant.  Before that the fixed prior stands in.  Both are
-    // exogenous, so the schedule is a pure function of the measurements at
+    // than a constant.  Before that the fixed wave-band prior stands in.  Both
+    // are exogenous, so the schedule is a pure function of the measurements at
     // every instant of the run rather than only after the gate clears.
-    float tuner_frequency_hz_(float tracker_hz) const {
-        if (!wave_band_tuning_) return tracker_hz;
-
+    float tuner_frequency_hz_() const {
         const float wave_hz = wave_period_.getFrequencyHz();
-        const bool usable =
-            std::isfinite(wave_hz) && wave_hz > 0.0f &&
-            (tuner_freq_source_ == TunerFrequencySource::WaveBand ||
-             wave_period_.isReady());
-        if (usable) return wave_hz;
-
-        return (tuner_freq_source_ == TunerFrequencySource::TrackerFallback)
-                   ? tracker_hz
-                   : tune_freq_prior_hz_;
+        if (std::isfinite(wave_hz) && wave_hz > 0.0f) return wave_hz;
+        return tune_freq_prior_hz_;
     }
 
     void resetTrackingState_() {
@@ -1874,7 +1801,6 @@ private:
     float freq_hz_slow_ = FREQ_GUESS;
     float f_raw         = FREQ_GUESS;
 
-    float a_body_z_up_proxy_ = 0.0f;  // BODY-Z-based up-positive proxy used by tracker/tuner logic.
 
     bool enable_clamp_ = true;
     bool enable_tuner_ = true;
@@ -1892,10 +1818,7 @@ private:
     float pseudo_update_period_max_s_ = PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT;
     float pseudo_update_fixed_period_s_ = PSEUDO_UPDATE_PERIOD_NOMINAL_S;
 
-    bool  wave_band_tuning_       = true;
     WavePeriodInputSource wave_period_input_ = WavePeriodInputSource::Complementary;
-    FreqTrackerInputSource freq_tracker_input_ = FreqTrackerInputSource::Complementary;
-    TunerFrequencySource tuner_freq_source_ = TunerFrequencySource::WaveBand;
     float tune_freq_prior_hz_     = TUNE_FREQ_PRIOR_HZ;
     float min_tune_freq_hz_       = MIN_TUNE_FREQ_HZ;
     float max_tune_freq_hz_       = MAX_TUNE_FREQ_HZ;

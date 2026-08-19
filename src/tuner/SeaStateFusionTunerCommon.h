@@ -59,7 +59,7 @@ struct StillnessAdapter {
         }
     }
 
-    float step(float a_z_body_proxy_lp, float dt, float freq_in) {
+    float step(float a_vert_up_lp, float dt, float freq_in) {
         if (!(dt > 0.0f) || !std::isfinite(freq_in)) {
             return freq_in;
         }
@@ -69,7 +69,7 @@ struct StillnessAdapter {
             freq_init  = true;
         }
 
-        const float a_norm      = a_z_body_proxy_lp / gravity_std_;
+        const float a_norm      = a_vert_up_lp / gravity_std_;
         const float inst_energy = a_norm * a_norm;
 
         energy_ema = (1.0f - energy_alpha) * energy_ema + energy_alpha * inst_energy;

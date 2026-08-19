@@ -69,14 +69,20 @@ tracker's output frequency.
 
 ## 2. The replacement
 
-`TunerFrequencySource::WaveBand`, now the default in both families, changes two
-things at once, so a third value exists to separate them:
+The wave-band source changed two things at once, and while it was selectable
+two further values existed to separate them:
 
 | source | before the estimator has a value | when it has one |
 | --- | --- | --- |
 | `TrackerFallback` (legacy) | tracker output | at `isReady()` |
 | `WaveBandGated` (ablation) | 0.2 Hz prior | at `isReady()` |
 | `WaveBand` (deployed) | 0.2 Hz prior | as soon as it is finite |
+
+`TunerFrequencySource` has since been removed along with every path from the
+acceleration-band tracker into the adaptation: the bottom row is what both
+families now do unconditionally, and the two rows above it are history rather
+than options.  The measurements in the sections below were taken while all
+three were selectable.
 
 The prior is a constant because that is what makes the schedule exogenous at
 every instant of the run rather than only after the gate clears — a constant is
@@ -291,7 +297,6 @@ New API on both filters, and the environment overrides the simulators read:
 
 | setter | environment variable |
 | --- | --- |
-| `setTunerFrequencySource()` | `W3D_TUNER_FREQ_SOURCE` |
 | `setTuneFreqPriorHz()` | `OU_TUNE_FREQ_PRIOR_HZ` |
 | `setTuneFreqBounds()` | — |
 | `setSigmaVarianceKPeriods()` | `OU_SIGMA_VAR_K_PERIODS` |
