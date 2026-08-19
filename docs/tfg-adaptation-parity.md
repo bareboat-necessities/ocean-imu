@@ -66,38 +66,44 @@ One feature turned off at a time, at the deployed coefficients.
 
 | arm | Z mean | Z worst | 3D mean | 3D worst | yaw mean | yaw worst | roll | pitch | bias mean | bias worst |
 |---|---|---|---|---|---|---|---|---|---|---|
-| **deployed** | 4.369 | 4.778 | 19.74 | 21.03 | 1.077 | 1.528 | 0.308 | 0.340 | 92.7 | 166.7 |
-| `TFG_WAVE_BAND=0` | 4.415 | 4.873 | 19.84 | 21.29 | 1.122 | 1.784 | 0.298 | 0.367 | 98.3 | 168.3 |
-| `TFG_AW_COV_SYNC=0` | 4.369 | 4.783 | 19.76 | 21.05 | 1.064 | 1.504 | 0.311 | 0.336 | 92.0 | 166.7 |
-| `TFG_MAG_REFINE=0` | 4.289 | 4.728 | 19.81 | 21.04 | 0.873 | 1.264 | 0.614 | 0.259 | 120.7 | 204.1 |
-| `TFG_MAG_HARD_IRON=0` | 4.403 | 4.775 | 19.73 | 21.01 | **2.349** | **3.303** | 0.316 | 0.350 | 90.2 | 162.2 |
-| `TFG_STARTUP_INIT=staged` | 4.427 | 4.809 | 20.44 | **24.27** | 2.202 | 2.906 | 0.696 | 0.308 | 144.8 | **398.1** |
+| **deployed** | 4.388 | 4.787 | 18.82 | 20.32 | 0.777 | 1.345 | 0.296 | 0.366 | 97.1 | 164.1 |
+| `TFG_WAVE_BAND=0` | 4.432 | 4.880 | 18.97 | 20.64 | 0.816 | 1.513 | 0.290 | 0.396 | 102.9 | 166.6 |
+| `TFG_AW_COV_SYNC=0` | 4.389 | 4.793 | 18.83 | 20.33 | 0.772 | 1.310 | 0.298 | 0.357 | 95.9 | 163.8 |
+| `TFG_MAG_REFINE=0` | 4.301 | 4.738 | 18.73 | 20.25 | 0.688 | 1.534 | 0.600 | 0.241 | 118.0 | 204.3 |
+| `TFG_MAG_HARD_IRON=0` | 4.412 | 4.779 | 19.12 | 20.50 | **2.486** | **3.256** | 0.307 | 0.373 | 94.3 | 159.3 |
+| `TFG_STARTUP_INIT=staged` | 4.431 | 4.814 | 19.84 | **23.42** | 2.265 | 2.906 | 0.697 | 0.303 | 145.7 | **398.3** |
 | old coefficients | 4.447 | 5.006 | 19.89 | 21.18 | 1.097 | 1.759 | 0.329 | 0.390 | 99.5 | 168.5 |
+
+The six live arms were re-measured on the current tree, after the hard-iron
+ridge floor was re-cut; the yaw columns in particular are not the ones this
+section first reported, and `doc/kalman_ou_iii/ins-startup.tex` quotes the
+re-measured values. The `old coefficients` row keeps its original measurement:
+that coefficient set no longer exists in the tree, so it cannot be replayed.
 
 Reading it:
 
 **Continuous hard iron is the largest single effect, and it is entirely in yaw.**
-Turning it off costs 2.2× on mean yaw and 2.2× on worst yaw and moves nothing
-else by more than 3%. This is the feature both OU families carried and this one
+Turning it off costs 3.2× on mean yaw and 2.4× on worst yaw and moves nothing
+else by more than 4%. This is the feature both OU families carried and this one
 did not, and it is the whole of the previously-unexplained yaw gap.
 
 **The proxy startup policy is what fixes the horizontal channel and the bias.**
-Worst 3D goes 21.03 → 24.27 and worst bias 166.7 → 398.1 without it. Note that
+Worst 3D goes 20.32 → 23.42 and worst bias 164.1 → 398.3 without it. Note that
 the staged arm here still has the band-passed sigma channel and the retuned
 coefficients, so it is not the old filter — it is the old *startup*, which is
-worth about 15% of worst-case 3D and 139% of worst-case bias on its own.
+worth about 15% of worst-case 3D and 143% of worst-case bias on its own.
 
-**The magnetic refinement is a genuine trade.** It costs 1.9% of vertical and
-23% of mean yaw, and buys a halving of roll (0.614 → 0.308) and 23% of mean
-accelerometer bias (120.7 → 92.7). It stays on for the same reason OU-III keeps
+**The magnetic refinement is a genuine trade.** It costs 2.0% of vertical and
+13% of mean yaw, and buys a halving of roll (0.600 → 0.296), 18% of mean
+accelerometer bias (118.0 → 97.1) and 12% of worst yaw (1.534 → 1.345). It stays on for the same reason OU-III keeps
 it: the channels it improves are the weak ones, and roll and bias are the pair
 that the provisional reference's tilt error was being parked in.
 
-**The band-passed sigma channel** is worth 1–2% on vertical, 14% on worst yaw
+**The band-passed sigma channel** is worth 1–2% on vertical, 11% on worst yaw
 and 6% on mean bias.
 
 **The periodic a_w covariance sync** is within noise on everything: −0.1% on 3D
-mean, +0.8% the wrong way on bias mean. It is kept for the consistency argument
+mean, +1.2% the wrong way on bias mean. It is kept for the consistency argument
 in `docs/tfg-design.md` section 8, not for the number, and that is stated rather
 than dressed up.
 

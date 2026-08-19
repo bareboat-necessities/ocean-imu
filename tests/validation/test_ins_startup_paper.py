@@ -154,32 +154,47 @@ class InsStartupPaperTests(unittest.TestCase):
         self.assertIn("0.444 to 0.414 deg", self.ou2_doc)
 
     def test_hard_iron_results_match_committed_evidence(self):
+        # The paper and the note both quote the ablation as re-measured on the
+        # re-cut ridge floor.  The numbers the correction originally landed
+        # with are a different baseline and are pinned separately below, so
+        # the two cannot be confused for each other again.
         for row in (
-            r"yaw RMS mean [deg] & 1.835 & 0.822 & $-55.2\%$",
-            r"yaw RMS worst [deg] & 2.162 & 1.063 & $-50.8\%$",
-            r"yaw RMS mean [deg] & 1.887 & 0.813 & $-56.9\%$",
-            r"yaw RMS worst [deg] & 2.161 & 1.089 & $-49.6\%$",
+            r"yaw RMS mean [deg] & 2.065 & 0.617 & $-70.1\%$",
+            r"yaw RMS worst [deg] & 2.132 & 0.878 & $-58.8\%$",
+            r"yaw RMS mean [deg] & 1.869 & 0.661 & $-64.6\%$",
+            r"yaw RMS worst [deg] & 2.133 & 1.078 & $-49.5\%$",
         ):
             self.assertIn(row, self.paper)
 
+        self.assertIn("2.065 deg mean / 2.133 deg worst", self.hi_doc)
+        self.assertIn("0.617 deg mean /", self.hi_doc)
+        self.assertIn("| **mean** | | 0.768 | **0.617** | 0.751 | **0.661** |",
+                      self.hi_doc)
+        self.assertIn("| **worst** | | 1.265 | **0.878** | 1.067 | 1.078 |",
+                      self.hi_doc)
+
+    def test_hard_iron_landing_baseline_is_kept_as_history(self):
+        # The note keeps what the correction landed with, and says so.  This
+        # pins that framing: the older numbers must stay, and must not be the
+        # ones the paper quotes.
         self.assertIn("1.835 deg mean / 2.162 deg worst", self.hi_doc)
-        self.assertIn("0.822 deg mean /", self.hi_doc)
         self.assertIn("**1.887** | **0.813**", self.hi_doc)
         self.assertIn("**2.161** | **1.089**", self.hi_doc)
+        self.assertNotIn(r"yaw RMS mean [deg] & 1.835", self.paper)
 
     def test_tfg_feature_attribution_matches_evidence(self):
         for row in (
-            "Deployed & 1.077 & 1.528 & 0.308 & 0.340 & 92.7 & 166.7",
-            "Hard iron off & 2.349 & 3.303 & 0.316 & 0.350 & 90.2 & 162.2",
-            "Mag refinement off & 0.873 & 1.264 & 0.614 & 0.259 & 120.7 & 204.1",
-            "Staged startup & 2.202 & 2.906 & 0.696 & 0.308 & 144.8 & 398.1",
+            "Deployed & 0.777 & 1.345 & 0.296 & 0.366 & 97.1 & 164.1",
+            "Hard iron off & 2.486 & 3.256 & 0.307 & 0.373 & 94.3 & 159.3",
+            "Mag refinement off & 0.688 & 1.534 & 0.600 & 0.241 & 118.0 & 204.3",
+            "Staged startup & 2.265 & 2.906 & 0.697 & 0.303 & 145.7 & 398.3",
         ):
             self.assertIn(row, self.paper)
 
         for evidence in (
-            "| **deployed** | 4.369 | 4.778 | 19.74 | 21.03 | 1.077 | 1.528 | 0.308 | 0.340 | 92.7 | 166.7 |",
-            "| `TFG_MAG_HARD_IRON=0` | 4.403 | 4.775 | 19.73 | 21.01 | **2.349** | **3.303** | 0.316 | 0.350 | 90.2 | 162.2 |",
-            "| `TFG_STARTUP_INIT=staged` | 4.427 | 4.809 | 20.44 | **24.27** | 2.202 | 2.906 | 0.696 | 0.308 | 144.8 | **398.1** |",
+            "| **deployed** | 4.388 | 4.787 | 18.82 | 20.32 | 0.777 | 1.345 | 0.296 | 0.366 | 97.1 | 164.1 |",
+            "| `TFG_MAG_HARD_IRON=0` | 4.412 | 4.779 | 19.12 | 20.50 | **2.486** | **3.256** | 0.307 | 0.373 | 94.3 | 159.3 |",
+            "| `TFG_STARTUP_INIT=staged` | 4.431 | 4.814 | 19.84 | **23.42** | 2.265 | 2.906 | 0.697 | 0.303 | 145.7 | **398.3** |",
         ):
             self.assertIn(evidence, self.tfg_doc)
 
