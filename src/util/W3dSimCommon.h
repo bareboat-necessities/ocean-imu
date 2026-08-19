@@ -448,7 +448,14 @@ struct W3dFailureLimits {
     float err_limit_percent_3d_jonswap = 0.0f;
     float err_limit_percent_3d_pmstokes = 0.0f;
     float acc_z_bias_percent = 0.0f;
+    // Fitted to the accelerometer, which is the larger of the two 3D bias
+    // errors by a factor of four on every family that has measured both.  A
+    // single bar over both channels is therefore the accelerometer's bar, and
+    // the gyro rides four times below it, catching nothing.
     float bias_3d_percent = 0.0f;
+    // The gyro's own 3D bias bar.  Zero keeps the shared behaviour above, so a
+    // family that has not fitted one is gated exactly as before.
+    float gyro_bias_3d_percent = 0.0f;
 };
 
 struct W3dSummaryLabels {

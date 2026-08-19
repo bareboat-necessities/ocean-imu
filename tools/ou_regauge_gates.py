@@ -57,8 +57,10 @@ GATE_CHANNELS = {
     "err_limit_percent_3d_jonswap":  ("3D % JONSWAP",    "jonswap",  "d3_pct"),
     "err_limit_percent_3d_pmstokes": ("3D % PM-Stokes",  "pmstokes", "d3_pct"),
     "acc_z_bias_percent":            ("acc Z bias %",    "all",      "acc_z_bias_pct"),
-    # One limit covers both the accelerometer and the gyro 3D bias; handled below.
+    # One limit covers both the accelerometer and the gyro 3D bias, unless the
+    # family also carries `gyro_bias_3d_percent`; handled below.
     "bias_3d_percent":               ("bias 3D %",       "all",      None),
+    "gyro_bias_3d_percent":          ("gyro 3D bias %",  "all",      "gyro_3d_bias_pct"),
 }
 
 # The gates each family currently ships, in the order above.  These mirror the
@@ -83,15 +85,19 @@ FAMILIES = {
     "ou_iii": {
         "sim": REPO_ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim",
         "shipped": {
-            "err_limit_percent_z_jonswap":   4.545,
-            "err_limit_percent_z_pmstokes":  4.511,
-            "err_limit_yaw_deg":             0.8824,
-            "err_limit_roll_deg":            0.3634,
-            "err_limit_pitch_deg":           0.1967,
-            "err_limit_percent_3d_jonswap":  13.73,
-            "err_limit_percent_3d_pmstokes": 14.62,
-            "acc_z_bias_percent":            4.497,
-            "bias_3d_percent":               78.84,
+            "err_limit_percent_z_jonswap":   4.527,
+            "err_limit_percent_z_pmstokes":  4.509,
+            "err_limit_yaw_deg":             0.8827,
+            "err_limit_roll_deg":            0.3633,
+            "err_limit_pitch_deg":           0.197,
+            "err_limit_percent_3d_jonswap":  13.7,
+            "err_limit_percent_3d_pmstokes": 14.58,
+            "acc_z_bias_percent":            4.489,
+            "bias_3d_percent":               78.86,
+            # The first family to gate the gyro's 3D bias on its own bar.  The
+            # shared one is the accelerometer's, and the gyro sits four times
+            # under it.
+            "gyro_bias_3d_percent":          18.82,
         },
     },
     # TFG is gated by the same rule on the same protocol and had been
@@ -223,11 +229,16 @@ def main() -> int:
             continue  # a gate this family does not carry; see FAMILIES
         shipped = family["shipped"][field]
         if channel is None:
-            # One limit covers both the accelerometer and the gyro 3D bias.
+            # One limit covers both the accelerometer and the gyro 3D bias --
+            # unless the family gates the gyro separately, in which case this
+            # bar is the accelerometer's alone and the gyro gets its own row.
             worst_a, rec_a = worst_of("acc_3d_bias_pct", "all")
-            worst_g, rec_g = worst_of("gyro_3d_bias_pct", "all")
-            worst, rec = ((worst_a, rec_a + ", accel") if worst_a >= worst_g
-                          else (worst_g, rec_g + ", gyro"))
+            if "gyro_bias_3d_percent" in family["shipped"]:
+                worst, rec = worst_a, rec_a + ", accel"
+            else:
+                worst_g, rec_g = worst_of("gyro_3d_bias_pct", "all")
+                worst, rec = ((worst_a, rec_a + ", accel") if worst_a >= worst_g
+                              else (worst_g, rec_g + ", gyro"))
         else:
             worst, rec = worst_of(channel, group)
         limit, margin = round_to_rule(worst)

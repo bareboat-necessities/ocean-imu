@@ -53,7 +53,7 @@ instead of exiting at the first one.
 | family | gates | verdict |
 | --- | --- | --- |
 | OU-II | 7 → **9** | four re-derived for the continuous hard-iron correction, three cut finer; then four cut finer again on the relative quantum, and roll and pitch gated for the first time |
-| OU-III | 7 → **9** | six cut finer; then all seven re-derived for `S_factor = 1`; then three cut finer again on the relative quantum, and roll and pitch gated for the first time |
+| OU-III | 7 → **10** | six cut finer; then all seven re-derived for `S_factor = 1`; then three cut finer again on the relative quantum, and roll and pitch gated for the first time; then the gyro's 3D bias split off the shared bias bar |
 | NLO | 2 gated (Z only) | both cut finer |
 | PII observer | 3 gated (Z, yaw) | all three cut finer |
 | TFG | 7 | all seven re-derived, then five cut finer; then re-derived again after the OU parity work |
@@ -301,6 +301,36 @@ sentinel against the direction of the ensemble — OU-III's on jonswap H1.5, thi
 one on jonswap H8.5. Both were caught by pairing across seeds after the fact.
 A yaw sentinel scored on one realization is the weakest bar in this document,
 and the two OU families' figures should be read with that in mind.
+
+### OU-III — the gyro bias gets its own bar
+
+`bias_3d_percent` was one number covering two channels: the accelerometer's 3D
+bias error and the gyro's. It was fitted to the accelerometer, which is the
+larger of the two by a factor of four, so the gyro rode four times below its own
+gate. A sentinel with 320% of slack is not a sentinel, and this one sat on the
+channel the startup observer's integral term exists to control — the error a
+tilt seed inherits as a standing roll and pitch bias.
+
+OU-III now carries a tenth bar. `bias_3d_percent` becomes the accelerometer's
+alone, and `gyro_bias_3d_percent` is cut by the same rule from the same run.
+Families that do not set it are gated exactly as before: zero means "use the
+shared bar", so OU-II, TFG, NLO and PII are untouched.
+
+| gate | was | now | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| gyro 3D bias % | 78.86 (shared) | **18.82** | 18.7167 (pmstokes H8.5) | 0.55% |
+
+The other nine OU-III bars were re-derived in the same pass and none moved:
+`tools/ou_regauge_gates.py` prints all ten as already at the rule.
+
+This bar does not discriminate between the deployed filter and its two matched
+ablations, and that is worth recording rather than hiding: worst gyro-bias error
+is **18.72%** deployed, **13.70%** under `SF_MAG_CONT_HI=0` and **11.98%** under
+`W3D_STARTUP_INIT=staged_mekf`. The shipped filter has the largest gyro-bias
+error of the three arms, so a bar fitted to it cannot fail either ablation. It
+is a watch bar, not a discriminating one — the channel had a measurement and no
+limit, and now it has one that is four times tighter than the limit it was
+sharing.
 
 ### NLO — both cut finer
 
