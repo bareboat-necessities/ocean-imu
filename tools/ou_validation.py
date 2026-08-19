@@ -1834,13 +1834,13 @@ def write_publication_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Ten-seed paired OU-family comparison over the final \SI{900}{s}. Values are mean $\pm$ sample standard deviation. $\Delta$ is OU--III Adaptive minus OU--II Adaptive; brackets give the paired bootstrap 95\% interval. Negative $\Delta$Z favors OU--III, whereas positive $\Delta$3D indicates larger OU--III three-dimensional displacement error.}",
+        r"  \caption{Ten-seed paired OU-family comparison over the final \SI{900}{s}. Values are mean $\pm$ sample standard deviation. $\Delta$ is OU--III Adaptive minus OU--II Adaptive; brackets give the paired bootstrap 95\% interval. Negative $\Delta$Z favors OU--III, whereas positive $\Delta$3D indicates larger OU--III three-dimensional displacement error. Yaw is carried alongside the displacement channels because the ensemble redraws the magnetometer calibration on every seed triplet: its spread is the spread of that draw, not of the estimator, and the two families share it. The single-draw deterministic yaw of Table~\ref{tab:mag-hi-yaw} is one realization of this distribution.}",
         r"  \label{tab:ou_mc_family}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4.0pt}",
-        r"  \begin{tabular}{@{}lrrrr@{}}",
+        r"  \begin{tabular}{@{}lrrrrrrr@{}}",
         r"    \toprule",
-        r"    Scenario & OU--II Z [\%$H_s$] & OU--III Z [\%$H_s$] & $\Delta$Z [percentage points] & $\Delta$3D [m] \\",
+        r"    Scenario & OU--II Z [\%$H_s$] & OU--III Z [\%$H_s$] & $\Delta$Z [percentage points] & $\Delta$3D [m] & OU--II yaw [\si{\degree}] & OU--III yaw [\si{\degree}] & $\Delta$yaw [\si{\degree}] \\",
         r"    \midrule",
     ]
     for scenario in scenarios:
@@ -1853,6 +1853,9 @@ def write_publication_table(
                     mean_std(scenario, "OU_III", "Adaptive"),
                     paired_ci(scenario, "disp_z_pct_hs", 3),
                     paired_ci(scenario, "disp_3d_rms_m", 3),
+                    mean_std(scenario, "OU_II", "Adaptive", "yaw_rms_deg"),
+                    mean_std(scenario, "OU_III", "Adaptive", "yaw_rms_deg"),
+                    paired_ci(scenario, "yaw_rms_deg", 3),
                 )
             )
             + r" \\"
@@ -2303,9 +2306,9 @@ def _pmstokes_table(
         r"  \label{tab:ou_mc_pmstokes}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{4.0pt}",
-        r"  \begin{tabular}{@{}lrrrr@{}}",
+        r"  \begin{tabular}{@{}lrrrrrrr@{}}",
         r"    \toprule",
-        r"    Scenario & OU--II Z [\%$H_s$] & OU--III Z [\%$H_s$] & $\Delta$Z [percentage points] & $\Delta$3D [m] \\",
+        r"    Scenario & OU--II Z [\%$H_s$] & OU--III Z [\%$H_s$] & $\Delta$Z [percentage points] & $\Delta$3D [m] & OU--II yaw [\si{\degree}] & OU--III yaw [\si{\degree}] & $\Delta$yaw [\si{\degree}] \\",
         r"    \midrule",
     ]
     for scenario in scenarios:
@@ -2318,6 +2321,9 @@ def _pmstokes_table(
                     mean_std(scenario, "OU_III", "Adaptive"),
                     paired_ci(scenario, "disp_z_pct_hs", 3),
                     paired_ci(scenario, "disp_3d_rms_m", 3),
+                    mean_std(scenario, "OU_II", "Adaptive", "yaw_rms_deg"),
+                    mean_std(scenario, "OU_III", "Adaptive", "yaw_rms_deg"),
+                    paired_ci(scenario, "yaw_rms_deg", 3),
                 )
             )
             + r" \\"
