@@ -382,10 +382,14 @@ truth. Yaw is the objective; this number is a diagnostic.
 
 ## Quality gates
 
-`FAIL_LIMITS` in `kalman_ou_iii-sim.cpp` is re-derived, by the documented rule
-of worst observed plus about half a percent rounded up to the next tenth:
+`FAIL_LIMITS` in `kalman_ou_iii-sim.cpp` was re-derived when the correction
+landed, by the documented rule of worst observed plus about half a percent
+rounded up to the next tenth. **This table is that cut, not the bars in force
+now** -- the filter has been re-gauged twice since, and the current values are
+in the `FAIL_LIMITS` comment in the simulator (yaw is 0.8827 there, not the
+1.068 below):
 
-| gate | was | now | worst observed |
+| gate | before that cut | at that cut | worst observed then |
 | --- | --- | --- | --- |
 | yaw deg | 2.2 | **1.068** | 1.0627 (jonswap H0.27) |
 | 3D % PM--Stokes | 20.6 | **20.9** | 20.72 (pmstokes H4.0) |
