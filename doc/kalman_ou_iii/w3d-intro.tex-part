@@ -32,8 +32,8 @@ The contributions are:
         covariance, and UES yield local 21-state Live ISS, while the
         independent Mahony startup observer gives an almost-global,
         semiglobal practical attitude-capture extension into that Live basin
-        on compact initial-tilt sets separated from the antipodal gravity
-        configuration under the explicit handoff conditions of
+        uniformly on compact startup sets contained in the proxy's desired
+        almost-global domain under the explicit handoff conditions of
         Secs.~\ref{app:iss-stability} and \ref{sec:semiglobal-stability};
   \item an exogenous adaptation architecture that estimates wave time scale and
         acceleration level from measurement-only signals and schedules the OU
