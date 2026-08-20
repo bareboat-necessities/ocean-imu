@@ -1,0 +1,44 @@
+name: period-log-bootstrap
+on:
+  push:
+    branches:
+      - agent/period-log-smoothing-retune
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/period-log-smoothing-retune
+      - name: Apply targeted source/test patch
+        run: python3 tools/_period_log_refactor_patch.py
+      - name: Compile affected native tests
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq g++ make libeigen3-dev
+          make -C tests/kalman_ou_iii build
+          make -C tests/kalman_ou_ii build
+          make -C tests/kalman_tfg build
+      - name: Commit patched files
+        run: |
+          if git diff --quiet; then
+            echo "No patch changes to commit"
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -- \
+            src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h \
+            src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h \
+            src/kalman_tfg/SeaStateFusionFilter_TFG.h \
+            tests/kalman_ou_iii/kalman_ou_iii-sim.cpp \
+            tests/kalman_ou_ii/kalman_ou_ii-sim.cpp \
+            tests/kalman_tfg/kalman_tfg-sim.cpp \
+            tests/kalman_ou_iii/tuner_schedule-test.cpp \
+            tests/kalman_ou_ii/tuner_schedule-test.cpp
+          git commit -m "Wire log-period statistics through filter wrappers"
+          git push origin HEAD:agent/period-log-smoothing-retune
