@@ -3,13 +3,15 @@ name: Sync OU-III paper to SpectralMSE default
 on:
   push:
     branches: [agent/sync-ou3-paper-spectral-mse-default]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   sync:
-    if: github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && (github.event_name == 'push' || github.head_ref == 'agent/sync-ou3-paper-spectral-mse-default')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
