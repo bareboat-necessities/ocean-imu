@@ -6,6 +6,7 @@ on:
       - agent/sea-scaled-ou-ema
     paths:
       - tools/ou_sea_period_ema_experiment.py
+      - tools/ou_sea_period_ema_preserve_cadence.py
       - .github/workflows/ou-sea-period-ema-sweep.yml
 
 permissions:
@@ -40,7 +41,9 @@ jobs:
           unzip -o sim-data-files.zip -d tests/kalman_ou_iii >/dev/null
 
       - name: Patch runner checkout for experiment
-        run: python3 tools/ou_sea_period_ema_experiment.py patch
+        run: |
+          python3 tools/ou_sea_period_ema_experiment.py patch
+          python3 tools/ou_sea_period_ema_preserve_cadence.py
 
       - name: Build OU-III simulator
         run: make -C tests/kalman_ou_iii kalman_ou_iii-sim
