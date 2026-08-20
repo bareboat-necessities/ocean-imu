@@ -35,6 +35,19 @@ jobs:
           mkdir -p /tmp/model-mismatch-data
           unzip -o sim-data-files.zip -d /tmp/model-mismatch-data >/dev/null
 
+      - name: Use LF in permanent CSV outputs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tools/model_mismatch_ablation.py')
+          text = path.read_text()
+          old = 'writer = csv.DictWriter(handle, fieldnames=list(fieldnames))'
+          new = 'writer = csv.DictWriter(handle, fieldnames=list(fieldnames), lineterminator="\\n")'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one CSV writer line, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
       - name: Build study and unit test
         run: |
           python3 -m py_compile tools/model_mismatch_ablation.py \
@@ -59,6 +72,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- \
+            tools/model_mismatch_ablation.py \
             reports/results/model_mismatch_ablation/model_mismatch_runs.csv \
             reports/results/model_mismatch_ablation/model_mismatch_summary.csv \
             reports/results/model_mismatch_ablation/model_mismatch_report.md \
