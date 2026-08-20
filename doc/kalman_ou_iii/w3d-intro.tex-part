@@ -37,9 +37,11 @@ The contributions are:
         Secs.~\ref{app:iss-stability} and \ref{sec:semiglobal-stability};
   \item an exogenous adaptation architecture that estimates wave time scale and
         acceleration level from measurement-only signals and schedules the OU
-        prior and integral regularizer.  Scaling analysis identifies the
-        relevant variables; full-filter experiments select the applied
-        adaptation law and coefficients;
+        prior and integral regularizer.  Sea-similarity arguments determine the
+        OU amplitude/time mappings and averaging horizons, while reduced
+        physical-MSE optimization and spectral-moment evaluation provide the
+        deployed SpectralMSE regularizer law and its analytical default
+        coefficient; complete-filter experiments then validate those choices;
   \item a versioned paired evaluation of vertical and horizontal displacement,
         attitude, bias tracking, stationary and changing seas, and adaptation
         channels.  With the current isotropic configuration, OU--III reduces

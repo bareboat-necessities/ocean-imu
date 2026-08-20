@@ -1,0 +1,13 @@
+\section{Ablations and Additional Analytical Investigations}
+\label{sec:post-results-investigations}
+
+The preceding sections define the deployed estimator and present its primary
+comparative evidence.  The material below records historical coefficient-law
+ablations and the optional full-state physical-error formulation.  These
+studies are retained because they explain how the present design was reached
+and where the reduced model is limited, but they are not required to understand
+the deployed adaptation law.
+
+\input{w3d-adaptation-coefficient-investigation.tex-part}
+\input{w3d-full-state-h2.tex-part}
+\input{w3d-full-state-h2-scaling.tex-part}

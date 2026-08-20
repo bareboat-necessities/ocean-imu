@@ -1,0 +1,137 @@
+\subsection{Deployed reduced-MSE schedule and coefficient meaning}
+\label{sec:riccati-similarity-design-guidance}
+\label{sec:riccati-deployed-cadence}
+
+The reduced physical-MSE calculation of
+Sec.~\ref{sec:adaptation-reduced-mse-envelope}, together with the spectral
+coefficient evaluation of Sec.~\ref{sec:adaptation-reduced-mse-validation},
+sets the deployed OU--III regularizer target.  For the realized target cadence
+\begin{equation}
+T_{S,\star}=\clip(c_T\tau_\star,T_{S,\min},T_{S,\max}),
+\label{eq:engineering-pseudo-cadence}
+\end{equation}
+the SpectralMSE target is
+\begin{equation}
+\boxed{
+r_{S,\star}^{\mathrm{MSE}}
+=C_J q_{\mathrm{eff}}^{1/14}
+ \widehat\sigma_{a,B,\star}^{\,6/7}
+ \tau_\star^{24/7}T_{S,\star}^{-1/2},
+\qquad C_J=0.0538.}
+\label{eq:adapt-default-rs-law}
+\end{equation}
+Here the acceleration amplitude is the physical band-limited wave statistic,
+not the OU-prior standard deviation.  Under the strong-observation reduction
+used to interpret the coefficient, $q_{\mathrm{eff}}\simeq2R_a h$ to leading
+order.  The exponent $1/14$ makes the optimum only weakly sensitive to the
+low-frequency acceleration-error intensity, whereas the $3/7$ dependence on
+the displacement spectral moment in the preceding derivation gives the true
+wave content substantially greater leverage over the optimum regularization
+corner.
+
+The dimensionless coefficient $C_J$ collects the normalized spectral moment of
+the self-similar wave family and the numerical constants of the reduced
+optimization.  It can therefore be estimated from the measured/reference
+spectral shape rather than treated only as an unconstrained empirical gain.  The
+record-wise spectral calculation gives the default $C_J=0.0538$ used by the
+implementation; the full-filter study then tests, rather than defines, that
+analytical operating point.
+
+The factor $T_S^{-1/2}$ is already part of
+Eq.~\eqref{eq:adapt-default-rs-law}; therefore the deployed SpectralMSE target
+is \emph{not} multiplied again by the reference-cadence normalization derived
+for the cubic construction.  Away from cadence clamps,
+$T_S\propto\tau$ and
+\begin{equation}
+\boxed{
+r_{S,\star}^{\mathrm{MSE}}
+\propto\widehat\sigma_{a,B}^{\,6/7}\tau^{41/14}.}
+\label{eq:adapt-mse-unclipped-scaling}
+\end{equation}
+Thus the deployed period exponent is $41/14\simeq2.929$ and the deployed
+acceleration exponent is $6/7\simeq0.857$.
+
+The resulting current schedule is
+\begin{equation}
+\boxed{
+\begin{aligned}
+\tau_\star&=c_\tau T_{\rm sea},\\
+\sigma_{aw,\star}&=c_\sigma\widehat\sigma_{a,B},\\
+r_{S,\star}&=C_J q_{\mathrm{eff}}^{1/14}
+ \widehat\sigma_{a,B}^{\,6/7}\tau_\star^{24/7}T_{S,\star}^{-1/2}.
+\end{aligned}}
+\label{eq:adapt-three-layer-summary}
+\end{equation}
+The first two mappings set the approximate OU prior.  The third independently
+sets the low-frequency regularizer by balancing drift rejection against
+distortion of genuine displacement.
+
+\subsection{Legacy dimensional cubic schedule}
+\label{sec:adaptation-legacy-cubic}
+
+Before the reduced physical-MSE optimum was available, the regularizer used the
+dimensionally natural third-integral scale
+\begin{equation}
+\boxed{
+r_{S,\star}^{\mathrm{legacy,base}}
+=c_R\sigma_{aw,\star}\tau_\star^3.}
+\label{eq:adapt-rs-base}
+\end{equation}
+The dimensions are correct because acceleration integrated three times has
+units of $\mathrm{m\,s}$, the same as $S$.  This construction therefore gave a
+portable dimensional base but did not by itself optimize the bias--distortion
+tradeoff or determine its coefficient.
+
+At the reference cadence $T_{S,0}$ the base can be interpreted as one
+pseudo-measurement standard deviation.  Changing the update period while
+preserving the same continuous-equivalent information rate requires
+\begin{equation}
+r_{S,\mathrm{filter}}^{\mathrm{legacy}}
+=r_{S,\mathrm{appl}}^{\mathrm{legacy,base}}
+\sqrt{\frac{T_{S,0}}{T_S}},
+\label{eq:engineering-rs-filter}
+\end{equation}
+so, with $T_S\propto\tau$ away from clamps,
+\begin{equation}
+\boxed{
+r_{S,\mathrm{filter}}^{\mathrm{legacy}}
+\propto\sigma_{aw}\tau^{5/2}.}
+\label{eq:deployed-effective-law}
+\end{equation}
+The $5/2$ law is therefore the per-update realization of the dimensional cubic
+base under a sea-scaled update cadence; it is not the present displacement-MSE
+optimum.
+
+For this historical comparator, combining the reduced corner relation with
+Eqs.~\eqref{eq:adapt-rs-base} and \eqref{eq:engineering-rs-filter} gives
+\begin{equation}
+\boxed{
+(\omega_R\tau)^6
+=\frac{q_{\mathrm{eff}}}
+ {c_R^2\sigma_{aw}^2T_{S,0}}.}
+\label{eq:adapt-cR-spectral-meaning}
+\end{equation}
+This relation explains why the earlier amplitude-law experiments were
+informative about fixed normalized pole placement even though their gain was
+empirically tuned.
+
+For the former amplitude-coupled schedule, the generic dimensional construction
+of Sec.~\ref{sec:adaptation-cadence-interpretation} used
+$a_R=\sigma_{aw}$ and therefore produced
+$r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}$.  The amplitude-free
+experiment replaced $a_R$ by the constant sensor-noise scale $\sqrt{R_a}$ and
+confirmed the same $5/2$ period dependence but degraded the multi-seed endpoint.
+The subsequent sensor-floor-plus-leakage interpolation returned to
+$a_R\propto\sigma_{aw}$ over the tested envelope and tied the legacy cubic
+comparator under paired ten-seed evaluation.  These historical results explain
+why the empirical cubic schedule was a credible engineering choice before the
+reduced-MSE derivation, while also showing that its coefficient and amplitude
+law were selected empirically rather than by displacement-MSE optimization.
+
+The cubic schedule remains a supported low-cost embedded option.  It requires
+only ordinary products and the cadence square root already present in the
+scheduler, whereas SpectralMSE evaluates fractional powers.  The paired study
+shows a small but repeatable advantage for SpectralMSE over the calibrated
+cubic comparator, so the reduced-MSE law is the default and the cubic law is a
+computationally cheaper fallback rather than the analytical basis of the
+current configuration.
