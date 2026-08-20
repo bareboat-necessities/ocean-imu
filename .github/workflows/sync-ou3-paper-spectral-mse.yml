@@ -1,0 +1,45 @@
+name: Sync OU-III paper to SpectralMSE default
+
+on:
+  push:
+    branches: [agent/sync-ou3-paper-spectral-mse-default]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/sync-ou3-paper-spectral-mse-default
+          fetch-depth: 0
+
+      - name: Synchronize manuscript
+        run: python3 tools/_sync_ou3_paper_spectral_mse.py
+
+      - name: Check publication semantic contract
+        run: |
+          (cd tests/validation && python3 -m unittest -v test_zz_publication_contract.py)
+          git diff --check
+
+      - name: Commit manuscript correction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            doc/kalman_ou_iii/w3d-adaptation-motivation.tex-part \
+            doc/kalman_ou_iii/w3d-fus-methods.tex-part \
+            doc/kalman_ou_iii/w3d-adaptation-cadence-interpretation.tex-part \
+            doc/kalman_ou_iii/w3d-reduced-mse-envelope.tex-part \
+            doc/kalman_ou_iii/w3d-adaptation-coefficient-investigation.tex-part \
+            doc/kalman_ou_iii/w3d-reduced-mse-validation.tex-part \
+            doc/kalman_ou_iii/w3d-ou-robustness.tex-part \
+            doc/kalman_ou_iii/w3d-conclusion-summary.tex-part
+          git diff --cached --check
+          git commit -m "Synchronize OU-III paper with SpectralMSE default"
+          git push origin HEAD:refs/heads/agent/sync-ou3-paper-spectral-mse-default
