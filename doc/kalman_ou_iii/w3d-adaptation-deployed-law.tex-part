@@ -46,7 +46,7 @@ $T_S\propto\tau$ and
 \boxed{
 r_{S,\star}^{\mathrm{MSE}}
 \propto\widehat\sigma_{a,B}^{\,6/7}\tau^{41/14}.}
-\label{eq:adapt-mse-applied-form}
+\label{eq:adapt-mse-unclipped-scaling}
 \end{equation}
 Thus the deployed period exponent is $41/14\simeq2.929$ and the deployed
 acceleration exponent is $6/7\simeq0.857$.
