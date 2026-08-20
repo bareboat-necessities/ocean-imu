@@ -1,0 +1,64 @@
+\subsection{Per-axis regularizer optimum and isotropic deployment}
+\label{sec:adaptation-rs-anisotropy}
+
+The reduced-MSE optimum is scalar but applies independently to each axis.  Let
+$q_i$ be the low-frequency posterior acceleration-error intensity and
+$m_{-4,i}$ the negative fourth moment of the \emph{true} displacement spectrum
+for axis $i\in\{x,y,z\}$.  From
+Eq.~\eqref{eq:adapt-reduced-mse-pole},
+\begin{equation}
+ r_{S,i}^{\star}
+ \propto q_i^{1/14}m_{-4,i}^{3/7}T_S^{-1/2},
+\end{equation}
+and therefore the anisotropic ratios relative to the vertical channel are
+\begin{equation}
+\boxed{
+\rho_x:=\frac{r_{S,x}^{\star}}{r_{S,z}^{\star}}
+=\left(\frac{q_x}{q_z}\right)^{1/14}
+ \left(\frac{m_{-4,x}}{m_{-4,z}}\right)^{3/7},
+\qquad
+\rho_y:=\frac{r_{S,y}^{\star}}{r_{S,z}^{\star}}
+=\left(\frac{q_y}{q_z}\right)^{1/14}
+ \left(\frac{m_{-4,y}}{m_{-4,z}}\right)^{3/7}.}
+\label{eq:adapt-rs-axis-ratios}
+\end{equation}
+This expression explains why anisotropy cannot be chosen from drift intensity
+alone.  Horizontal tilt/gravity leakage can make $q_x$ and $q_y$ much larger
+than $q_z$, but the exponent is only $1/14$.  The desired-motion term carries
+exponent $3/7$ and therefore has six times the logarithmic weight.  The
+amplitudes and spectra of surge and sway enter through $m_{-4,x}$ and
+$m_{-4,y}$: a channel containing more genuine low-frequency displacement is
+penalized more strongly for a tight $S=0$ anchor.
+
+That dependence also makes fixed world-axis factors problematic for marine
+motion.  Surge and sway are projections of the directional orbital field into
+the vessel/world frame, so their amplitudes change with heading and encounter
+direction.  A pair of constants $(\rho_x,\rho_y)$ inferred from one heading
+would generally not remain the same after rotating the vessel relative to the
+same sea.  A common horizontal multiplier cannot remove this issue; it merely
+forces two different desired-motion spectra to share one compromise.
+
+The dedicated anisotropy study therefore treated the axis formula as a
+diagnostic rather than as a new fixed tuning law.  Sweeps of the common
+horizontal factor showed the expected $x$--$y$ trade: loosening the horizontal
+anchor helps one projected horizontal channel while degrading the other, with
+little vertical movement, and the pooled three-dimensional endpoint is best
+near the isotropic setting.  A separate sweep of the OU-prior horizontal scale
+likewise moved the optimum toward the isotropic prior.  The deployed
+configuration consequently uses
+\begin{equation}
+\boxed{
+\vct r_S=
+\begin{bmatrix}
+r_{S,\mathrm{filter}}&r_{S,\mathrm{filter}}&r_{S,\mathrm{filter}}
+\end{bmatrix}^{\top},
+\qquad
+(\matg{\Sigma}_{aw}^{\mathrm{stat}})^{1/2}
+=\sigma_{aw,\mathrm{appl}}\mat I_3 .}
+\label{eq:fus-rs-anisotropy}
+\end{equation}
+The choice is empirical over the tested directional ensemble, not a claim that
+$q_x=q_y=q_z$ or that real marine motion is isotropic.  If heading-dependent
+surge/sway spectra and a sufficiently observable horizontal reference are
+available, Eq.~\eqref{eq:adapt-rs-axis-ratios} provides the appropriate route to
+a physically motivated anisotropic extension.
