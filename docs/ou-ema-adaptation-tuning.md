@@ -319,6 +319,57 @@ the blend; on the stationary ensemble 0.9998 [0.9996, 1.0000] and 0.9998
 was measured with the tuner jitter of the pre-wave-band operating point; at the
 deployed one they are flat over the whole grid.
 
+### Third pass: make the remaining fixed-second EMAs self-similar
+
+The earlier fixed-seconds sweep above answered only whether `1.8 s` should be
+shorter.  It did not test the stronger physical hypothesis that the remaining
+adaptation memories should be expressed in the same sea time scale as the OU
+operating point.  A joint sweep therefore replaced only the two fixed-second
+EMAs while leaving `c_tau`, `c_sigma`, `OU_SIGMA_VAR_K_PERIODS`,
+`ADAPT_RS_MULT`, the pseudo-update cadence, and the SpectralMSE law unchanged.
+Every physical sample still updates the tuner and the EMA state; the existing
+0.1 s timer only gates when the already-smoothed candidate becomes active.
+
+The sweep used the same two transition endpoint pairs in both directions.  A
+coarse joint grid was followed by confirmation over 3 wave-phase seeds x 3 IMU
+seed triplets (36 transition realizations per candidate) plus the eight
+stationary JONSWAP/PM-Stokes seas at the same three IMU seeds (24 realizations).
+The measured winner in the paper's convention `T_sea=T_z/2` is
+
+```
+tau_adapt = 0.40 T_sea   (= 0.20 T_z)
+tau_freq  = 0.10 T_sea   (= 0.05 T_z)
+```
+
+Ratios below are to the previous fixed `1.8 s / 1.0 s` baseline:
+
+| ensemble / interval | 3D RMS | Z RMS | roll/pitch | yaw | accel bias |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| transition blend | 0.99493 | 0.99298 | 0.99863 | 0.99964 | 0.99933 |
+| transition run-on | 0.99778 | 0.99658 | 0.99862 | 0.99852 | 0.99905 |
+| transition whole 900 s | 0.99866 | 0.99659 | 0.99723 | 0.99951 | 0.99735 |
+| stationary 900 s | 0.99913 | 0.99614 | 0.99937 | 0.99960 | 0.99941 |
+
+There were no new quality-gate regressions.  Paired bootstrap intervals on the
+primary endpoints exclude unity: stationary 3D RMS is 0.99913
+[0.99898, 0.99928] and stationary Z RMS 0.99614 [0.99512, 0.99714]; transition
+whole-window 3D RMS is 0.99866 [0.99843, 0.99890] and Z RMS 0.99659
+[0.99586, 0.99731].
+
+A deliberately aggressive fixed-seconds control (`0.5 s / 0.25 s`) wins some
+transition 3D averages, but has a worse stationary vertical tail (maximum Z
+ratio 1.00133 versus 0.99984 for the sea-scaled winner).  A fixed control
+matched near the nominal 5 s zero-crossing period (`1.0 s / 0.25 s`) is also
+slightly better in mean 3D RMS, but the sea-scaled law is better in Z RMS and in
+the composite/tail score on the transition and stationary ensembles.  The
+chosen law is therefore not merely "make the EMA faster"; it buys the expected
+cross-sea normalization while preserving the stationary tail.
+
+Reproduce the comparison with `tools/ou_ema_adapt_study.py` using the simulator
+environment knobs `OU_III_ADAPT_TAU_SEA_PERIODS` and
+`OU_III_TUNER_FREQ_SEA_PERIODS`.  Fixed-seconds controls remain available as
+`OU_III_ADAPT_TAU_SEC` and `OU_III_TUNER_FREQ_TAU_SEC`.
+
 ### The other two averaging horizons
 
 The `r_S` channel is not the only averaging horizon in the adaptation path, so

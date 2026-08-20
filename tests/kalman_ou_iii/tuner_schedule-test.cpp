@@ -37,11 +37,41 @@ int main() {
         return 1;
     }
 
+    if (!near(f.adapt_tau_sea_periods_, 0.40f) ||
+        !near(f.tuner_.getFrequencySmoothingSeaPeriods(), 0.10f)) {
+        std::cerr << "FAIL: OU-III sea-scaled EMA defaults are not 0.40/0.10 of T_sea\n";
+        return 1;
+    }
+
+    // Physical measurements are never cadence-decimated.  Even inside the
+    // 0.1 s parameter-activation interval, a valid sample must move the EMA
+    // candidate while leaving the active MEKF schedule untouched.
+    {
+        Filter s(false);
+        s.time_ = 2.0;
+        s.last_adapt_time_sec_ = 2.0;
+        s.online_tune_apply_pending_ = false;
+        const float before = s.tune_.tau_applied;
+        constexpr float T_sea = 2.5f;
+        constexpr float dt_ema = 0.1f;
+        const float expected_alpha = 1.0f - std::exp(-dt_ema / (0.40f * T_sea));
+        const float expected = before + expected_alpha * (3.0f - before);
+        s.adapt_mekf(dt_ema, 3.0f, 0.8f, 1.2f, T_sea);
+        if (!near(s.tune_.tau_applied, expected, 1e-5f)) {
+            std::cerr << "FAIL: sea-scaled EMA did not consume the physical sample\n";
+            return 1;
+        }
+        if (s.online_tune_apply_pending_) {
+            std::cerr << "FAIL: EMA sample incorrectly bypassed activation cadence\n";
+            return 1;
+        }
+    }
+
     const float active_tau_before = f.mekf_->tau_aw;
     const float active_rs_before = f.mekf_->R_S(2, 2);
     const float active_pseudo_before = f.getPseudoUpdatePeriodSec();
 
-    f.adapt_mekf(0.1f, 3.0f, 0.8f, 1.2f);
+    f.adapt_mekf(0.1f, 3.0f, 0.8f, 1.2f, 2.5f);
     const float staged_tau = f.tune_.tau_applied;
     const float staged_rs_base = std::min(std::max(f.tune_.RS_applied, f.min_R_S_), f.max_R_S_);
     const float staged_pseudo = std::min(

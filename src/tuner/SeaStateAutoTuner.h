@@ -54,8 +54,8 @@ public:
     }
 
     inline void reset() {
-        last_dt_freq = -1.0f;
         alpha_freq = 0.0f;
+        tau_freq_applied_sec = tau_freq;
         tau_var_sec = 0.0f;
         A_mean.reset(); A_sq.reset(); A_var.reset();
         Freq_smoothed.reset();
@@ -66,8 +66,10 @@ public:
         if (!(dt_s > 0.0f) || !std::isfinite(accel) || !std::isfinite(f_input_hz))
             return;
 
-        // Update alpha for frequency smoothing (fixed horizon in seconds)
-        updateAlphaFreq(dt_s);
+        // The frequency EMA is updated on every physical sample.  When the
+        // period-scaled mode is enabled, only its horizon changes with the
+        // externally measured sea period; no sample is decimated or skipped.
+        updateAlphaFreq(dt_s, f_input_hz);
 
         // Smooth incoming frequency first
         Freq_smoothed.update(f_input_hz, alpha_freq);
@@ -113,10 +115,21 @@ public:
     // so the effective memory is about twice it.
     inline float getVarianceHorizonSec() const { return tau_var_sec; }
 
+    // Fixed-seconds compatibility mode.  Calling this explicitly disables
+    // sea-period scaling for the frequency EMA.
     inline void setTauFreq(float t) {
         tau_freq = std::max(1e-3f, t);
-        last_dt_freq = -1.0f;  // force recompute on next update
+        freq_sea_periods = 0.0f;
+        tau_freq_applied_sec = tau_freq;
     }
+
+    // Frequency-EMA horizon in sea-time units T_sea=T_z/2 of the externally
+    // supplied wave-band frequency. The input is measurement-only in OU-III.
+    inline void setFrequencySmoothingSeaPeriods(float k) {
+        if (std::isfinite(k) && k > 0.0f) freq_sea_periods = k;
+    }
+    inline float getFrequencySmoothingSeaPeriods() const { return freq_sea_periods; }
+    inline float getFrequencySmoothingHorizonSec() const { return tau_freq_applied_sec; }
 
     // σ_a averaging horizon, in periods of the tuning frequency.
     inline void setKPeriods(float k) {
@@ -153,18 +166,25 @@ private:
     float tau_var_max_sec = 60.0f;  // seconds: don't be glacial
     float f_min_hz = 0.05f;         // 20 s period max
     float f_max_hz = 5.0f;          // avoid crazy high freq
-    float tau_var_sec = 0.0f;       // last horizon used, for inspection
-    float tau_freq  = 1.0f;   // seconds
-    float last_dt_freq  = -1.0f;
+    float tau_var_sec = 0.0f;       // last variance horizon used, for inspection
+    float tau_freq = 1.0f;             // fixed-seconds compatibility horizon
+    float freq_sea_periods = 0.0f;         // >0: frequency EMA horizon / T_sea
+    float tau_freq_applied_sec = 1.0f; // last frequency-EMA horizon used
     float alpha_freq = 0.0f;
 
     DebiasedEMA A_mean, A_sq, A_var;
     DebiasedEMA Freq_smoothed;
 
-    inline void updateAlphaFreq(float dt_s) {
-        if (dt_s == last_dt_freq) return;
-        last_dt_freq = dt_s;
-        alpha_freq = 1.0f - std::exp(-dt_s / tau_freq);
+    inline void updateAlphaFreq(float dt_s, float f_input_hz) {
+        float horizon = tau_freq;
+        if (freq_sea_periods > 0.0f) {
+            float f = f_input_hz;
+            if (!std::isfinite(f)) f = f_min_hz;
+            f = std::max(f_min_hz, std::min(f_max_hz, f));
+            horizon = freq_sea_periods * (0.5f / f);
+        }
+        tau_freq_applied_sec = std::max(1e-3f, horizon);
+        alpha_freq = 1.0f - std::exp(-dt_s / tau_freq_applied_sec);
     }
 };
 

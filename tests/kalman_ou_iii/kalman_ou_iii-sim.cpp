@@ -213,6 +213,28 @@ public:
                 filter.setAdaptationTimeConstants(v);
             }
 
+            // Common tau/sigma EMA horizon in measured sea-time units T_sea=T_z/2.
+            if (env_float("OU_ADAPT_TAU_SEA_PERIODS", v)) {
+                filter.setAdaptationSeaPeriods(v);
+            }
+            if (env_float("OU_III_ADAPT_TAU_SEA_PERIODS", v)) {
+                filter.setAdaptationSeaPeriods(v);
+            }
+
+            // Frequency EMA inside the tuner, also in measured sea-time units T_sea=T_z/2.
+            if (env_float("OU_TUNER_FREQ_SEA_PERIODS", v)) {
+                filter.setTunerFreqSmoothingSeaPeriods(v);
+            }
+            if (env_float("OU_III_TUNER_FREQ_SEA_PERIODS", v)) {
+                filter.setTunerFreqSmoothingSeaPeriods(v);
+            }
+            if (env_float("OU_TUNER_FREQ_TAU_SEC", v)) {
+                filter.setTunerFreqSmoothingTimeConstant(v);
+            }
+            if (env_float("OU_III_TUNER_FREQ_TAU_SEC", v)) {
+                filter.setTunerFreqSmoothingTimeConstant(v);
+            }
+
             // Smoothing horizon of the r_S EMA, in units of tau_target.
             if (env_float("OU_ADAPT_RS_MULT", v)) {
                 filter.setRSAdaptMult(v);
