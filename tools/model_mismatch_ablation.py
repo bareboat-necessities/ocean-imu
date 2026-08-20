@@ -335,7 +335,7 @@ def markdown_report(rows: list[dict[str, Any]], summaries: list[dict[str, Any]],
 def write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: Iterable[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(fieldnames))
+        writer = csv.DictWriter(handle, fieldnames=list(fieldnames), lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow({key: row.get(key, "") for key in writer.fieldnames})
