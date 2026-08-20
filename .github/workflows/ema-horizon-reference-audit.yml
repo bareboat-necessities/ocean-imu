@@ -1,0 +1,55 @@
+name: EMA horizon reference audit
+
+on:
+  push:
+    branches:
+      - agent/universal-ema-horizon-clamps
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: agent/universal-ema-horizon-clamps
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq g++ make libeigen3-dev python3
+
+      - name: Restore reference wave data
+        run: make ensure-sim-data
+
+      - name: Build reference simulators
+        run: |
+          make -C tests/kalman_ou_iii kalman_ou_iii-sim
+          make -C tests/kalman_ou_ii kalman_ou_ii-sim
+          make -C tests/kalman_tfg kalman_tfg-sim
+
+      - name: Run all eight seas for each family
+        env:
+          W3D_COLLECT_ALL_GATES: "1"
+        run: |
+          set -o pipefail
+          (cd tests/kalman_ou_iii && ./kalman_ou_iii-sim) 2>&1 | tee /tmp/ou3.log
+          (cd tests/kalman_ou_ii  && ./kalman_ou_ii-sim)  2>&1 | tee /tmp/ou2.log
+          (cd tests/kalman_tfg    && ./kalman_tfg-sim)    2>&1 | tee /tmp/tfg.log
+
+      - name: Summarize requested dynamic EMA horizons
+        run: |
+          python3 tools/ema_horizon_reference_audit.py \
+            --log ou3=/tmp/ou3.log \
+            --log ou2=/tmp/ou2.log \
+            --log tfg=/tmp/tfg.log | tee /tmp/ema-horizon-audit.txt
+
+      - name: Upload audit
+        uses: actions/upload-artifact@v6
+        with:
+          name: ema-horizon-reference-audit
+          path: /tmp/ema-horizon-audit.txt
