@@ -4,6 +4,10 @@ on:
     branches:
       - agent/period-log-smoothing-retune
 
+concurrency:
+  group: period-statistics-retune
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
