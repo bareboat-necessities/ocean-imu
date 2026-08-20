@@ -143,30 +143,38 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
 
 
 class ReorganizedPublicationContractTests(unittest.TestCase):
-    def test_article_order_is_math_then_engineering_then_evidence(self):
+    def test_article_order_follows_design_then_stability_then_evidence(self):
         main = _read("kalman_ou-w3d.tex")
         ordered = [
             r"\input{w3d-state.tex-part}",
             r"\input{w3d-kalm-up.tex-part}",
-            r"\input{w3d-iss-stability.tex-part}",
             r"\input{w3d-adaptation-motivation.tex-part}",
+            r"\input{w3d-adaptation-cadence-interpretation.tex-part}",
+            r"\input{w3d-reduced-mse-envelope.tex-part}",
+            r"\input{w3d-reduced-mse-validation.tex-part}",
+            r"\input{w3d-adaptation-deployed-law.tex-part}",
+            r"\input{w3d-rs-anisotropy-design.tex-part}",
             r"\input{w3d-fus-methods.tex-part}",
             r"\input{w3d-init.tex-part}",
             r"\input{w3d-mag-hard-iron.tex-part}",
+            r"\input{w3d-iss-stability.tex-part}",
+            r"\input{w3d-semiglobal-stability.tex-part}",
             r"\input{w3d-sim-charts.tex-part}",
             r"\input{w3d-results.tex-part}",
+            r"\input{w3d-post-results-investigations.tex-part}",
+            r"\input{w3d-conclusion-summary.tex-part}",
         ]
         positions = [main.index(item) for item in ordered]
         self.assertEqual(positions, sorted(positions))
 
         adaptation = _read("w3d-adaptation-motivation.tex-part")
-        fusion = _read("w3d-fus-methods.tex-part")
         self.assertIn(
             r"\section{Sea-State Adaptation and Integral-State Regularization}",
             adaptation,
         )
         self.assertIn(r"\label{sec:adaptation}", adaptation)
-        self.assertNotIn(r"\section{Engineering Adaptation Pipeline}", fusion)
+        self.assertIn(r"\input{w3d-adaptation-observables.tex-part}", adaptation)
+
         for retired_input in (
             r"\input{w3d-regularization-theory.tex-part}",
             r"\input{w3d-rs-scale-theorem.tex-part}",
@@ -174,6 +182,30 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
             r"\input{w3d-rs-design-interpretation.tex-part}",
         ):
             self.assertNotIn(retired_input, adaptation)
+
+    def test_adaptation_narrative_orders_observables_sigma_tau_and_regularizer(self):
+        adaptation = _read("w3d-adaptation-motivation.tex-part")
+        observables = _read("w3d-adaptation-observables.tex-part")
+        deployed = _read("w3d-adaptation-deployed-law.tex-part")
+        anisotropy = _read("w3d-rs-anisotropy-design.tex-part")
+        fusion = _read("w3d-fus-methods.tex-part")
+
+        self.assertLess(
+            adaptation.index(r"\input{w3d-adaptation-observables.tex-part}"),
+            adaptation.index(r"\subsection{Measured acceleration scale and OU prior amplitude}"),
+        )
+        self.assertLess(
+            adaptation.index(r"\subsection{Measured acceleration scale and OU prior amplitude}"),
+            adaptation.index(r"\subsection{Sea time scale and OU correlation time}"),
+        )
+        self.assertIn(r"\label{eq:sigma-noise-subtraction}", observables)
+        self.assertIn(r"\label{eq:wave-band-period}", observables)
+        self.assertIn(r"\label{eq:adapt-default-rs-law}", deployed)
+        self.assertIn(r"\label{eq:adapt-rs-base}", deployed)
+        self.assertIn(r"\label{eq:adapt-rs-axis-ratios}", anisotropy)
+        self.assertIn("isotropic", anisotropy.casefold())
+        self.assertIn(r"\label{eq:adapt-one-sample-staging}", fusion)
+        self.assertNotIn("activated at approximately", fusion.casefold())
 
     def test_abstract_uses_generated_validation_values(self):
         _abstract_reports_committed_stationary_aggregate(self)
@@ -230,10 +262,14 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
 
     def test_adaptation_derivation_and_bias_discretization_remain_present(self):
         adaptation = _read("w3d-adaptation-motivation.tex-part")
+        observables = _read("w3d-adaptation-observables.tex-part")
+        deployed = _read("w3d-adaptation-deployed-law.tex-part")
+        cadence = _read("w3d-adaptation-cadence-interpretation.tex-part")
         lti = _read("w3d-lti-discrete.tex-part")
         analytic = _read("w3d-analytic-coeff.tex-part")
         stability = _read("w3d-iss-stability.tex-part")
 
+        combined_adaptation = "\n".join((adaptation, observables, cadence, deployed))
         for marker in (
             r"\label{eq:adapt-sigma-map}",
             r"\label{eq:adapt-Lambda}",
@@ -244,12 +280,15 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
             r"\label{eq:adapt-rs-strong-law}",
             r"\label{eq:adapt-rs-base}",
             r"\label{eq:adapt-cR-spectral-meaning}",
+            r"\label{eq:adapt-default-rs-law}",
+            r"\label{eq:sigma-noise-subtraction}",
+            r"\label{eq:wave-band-period}",
         ):
-            self.assertIn(marker, adaptation)
-        self.assertIn(r"\tau^{5/2}", adaptation)
-        self.assertIn(r"q_{\mathrm{eff}}", adaptation)
-        self.assertIn(r"\widehat\sigma_{a,B}", adaptation)
-        self.assertIn(r"\sigma_{aw}", adaptation)
+            self.assertIn(marker, combined_adaptation)
+        self.assertIn(r"\tau^{5/2}", combined_adaptation)
+        self.assertIn(r"q_{\mathrm{eff}}", combined_adaptation)
+        self.assertIn(r"\widehat\sigma_{a,B}", combined_adaptation)
+        self.assertIn(r"\sigma_{aw}", combined_adaptation)
 
         self.assertIn(r"\label{eq:ba-ou-phi}", lti)
         self.assertIn(r"\label{eq:ba-ou-Qd}", lti)
