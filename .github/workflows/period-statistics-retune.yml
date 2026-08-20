@@ -25,23 +25,23 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern 'sim-data-files.zip' --clobber
-          unzip -o sim-data-files.zip -d tests/kalman_ou_iii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_iii
       - name: Sweep wave-period moment horizon
         run: |
           python3 -u tools/ou_period_statistics_retune.py \
-            --axis moment --seeds 3 --jobs 3 \
+            --axis moment --seeds 3 --jobs 3 --data-dir plots/kalman_ou_iii \
             --csv reports/results/period_statistics_retune/coarse_moment_runs.csv \
             --report reports/results/period_statistics_retune/coarse_moment.md
       - name: Sweep log-period smoothing horizon
         run: |
           python3 -u tools/ou_period_statistics_retune.py \
-            --axis log --seeds 3 --jobs 3 \
+            --axis log --seeds 3 --jobs 3 --data-dir plots/kalman_ou_iii \
             --csv reports/results/period_statistics_retune/coarse_log_runs.csv \
             --report reports/results/period_statistics_retune/coarse_log.md
       - name: Sweep acceleration-variance horizon
         run: |
           python3 -u tools/ou_period_statistics_retune.py \
-            --axis sigma_k --seeds 3 --jobs 3 \
+            --axis sigma_k --seeds 3 --jobs 3 --data-dir plots/kalman_ou_iii \
             --csv reports/results/period_statistics_retune/coarse_sigma_k_runs.csv \
             --report reports/results/period_statistics_retune/coarse_sigma_k.md
       - name: Commit coarse evidence
