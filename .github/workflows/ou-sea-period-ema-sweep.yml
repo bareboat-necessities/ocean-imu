@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - agent/sea-scaled-ou-ema
+    paths:
+      - tools/ou_sea_period_ema_experiment.py
+      - .github/workflows/ou-sea-period-ema-sweep.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   sweep:
@@ -43,6 +46,15 @@ jobs:
 
       - name: Rank coarse sweep
         run: python3 -u tools/ou_sea_period_ema_experiment.py rank
+
+      - name: Commit coarse sweep summaries
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- reports/results/ou_sea_period_ema/coarse.csv \
+                     reports/results/ou_sea_period_ema/coarse_summary.csv
+          git commit -m "Record sea-period EMA coarse sweep [sweep-result]"
+          git push origin HEAD:agent/sea-scaled-ou-ema
 
       - name: Upload sweep data
         if: always()
