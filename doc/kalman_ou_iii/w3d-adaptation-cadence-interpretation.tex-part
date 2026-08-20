@@ -1,23 +1,23 @@
-% Separate interpretation of the cubic base plus cadence normalization.
-% Kept in its own file so it can be removed without disturbing the primary
-% Riccati derivation.
+% Dimensional construction of the S-state regularizer and its cadence normalization.
+% Historical interpretation of the former cubic schedule is deferred until after
+% the reduced physical-MSE derivation.
 
-\subsection{Equivalent interpretation of the cadence-normalized cubic law}
+\subsection{Dimensionally consistent base and cadence normalization}
 \label{sec:adaptation-cadence-interpretation}
 
-The same $\tau^{5/2}$ dependence admits a complementary interpretation that
-starts from the dimensional cubic base rather than from the reduced Riccati
-model.  Let $a_R$ denote the acceleration scale chosen for the regularizer and
-write
+Before optimizing physical displacement MSE, it is useful to establish the
+natural dimensions of the integral-state pseudo-measurement and the effect of
+changing its cadence.  Let $a_R$ denote an acceleration scale chosen for the
+regularizer.  Because $S$ is the third time integral of acceleration, its
+natural dimensional scale is
 \begin{equation}
  r_{S,\mathrm{base}}
  = C_R a_R\tau^3.
 \label{eq:adapt-cadence-cubic-base}
 \end{equation}
-For the cadence argument, $a_R$ is held fixed while the pseudo-update period is
-changed.  The argument therefore determines the period exponent but does not
-select whether $a_R$ should be the raw sensor-noise standard deviation, the OU
-amplitude, or another effective low-frequency error scale.
+Here $C_R$ is dimensionless.  This equation is a dimensional construction only:
+it does not yet decide which acceleration scale $a_R$ is physically appropriate,
+nor does it claim MSE optimality.
 
 Suppose Eq.~\eqref{eq:adapt-cadence-cubic-base} defines the desired
 pseudo-measurement standard deviation at a reference update period $T_{S,0}$.
@@ -27,10 +27,9 @@ seconds, its continuous-equivalent information rate is proportional to
  \mathcal I_S \propto \frac{1}{r_S^2T_S}.
 \label{eq:adapt-cadence-information-rate}
 \end{equation}
-If $T_S$ is increased while $r_S$ is left equal to the cubic base value, the
-regularizer is applied less frequently and its information rate decreases.
-Preserving the information rate represented by the cubic base therefore
-requires
+If $T_S$ increases while $r_S$ is left at the same base value, the regularizer
+is applied less frequently and its information rate falls.  Preserving the
+information rate represented by the base value therefore requires
 \begin{equation}
  r_{S,\mathrm{filter}}^2 T_S
  = r_{S,\mathrm{base}}^2 T_{S,0},
@@ -44,14 +43,13 @@ which gives
  \sqrt{\frac{T_{S,0}}{T_S}}.}
 \label{eq:adapt-cadence-rate-normalization}
 \end{equation}
-Thus, when pseudo-measurements become less frequent, each individual correction
-is stronger than the unnormalized cubic value because its standard deviation is
-reduced by $\sqrt{T_{S,0}/T_S}$.  This does not mean that the absolute
-regularization becomes stronger as $\tau$ grows: $r_S$ still increases with
-$\tau$.  Rather, the correction is stronger than it would have been if the
-$\tau^3$ base value were applied unchanged at the longer update interval.
+Thus, when pseudo-measurements are less frequent, each individual update must be
+stronger than the unnormalized base value by the square-root cadence factor.
+This does not make absolute regularization stronger as the sea period grows;
+$r_S$ can still increase strongly with $\tau$.  The square root only preserves
+information rate while the update interval changes.
 
-With the applied cadence $T_S=c_T\tau$ away from clamps,
+With the sea-scaled cadence $T_S=c_T\tau$ away from clamps,
 Eqs.~\eqref{eq:adapt-cadence-cubic-base} and
 \eqref{eq:adapt-cadence-rate-normalization} give
 \begin{equation}
@@ -61,26 +59,15 @@ Eqs.~\eqref{eq:adapt-cadence-cubic-base} and
    \sqrt{\frac{T_{S,0}}{c_T}}\,\tau^{5/2}.}
 \label{eq:adapt-cadence-five-halves}
 \end{equation}
-Hence the $5/2$ exponent does not replace the cubic law.  It is the per-update
-realization of the cubic dimensional scale when the pseudo-measurement cadence
-itself is proportional to $\tau$.  Equivalently,
+Equivalently,
 \begin{equation}
  \frac{1}{r_{S,\mathrm{filter}}^2T_S}
- \propto \frac{1}{a_R^2\tau^6},
+ \propto \frac{1}{a_R^2\tau^6}.
 \label{eq:adapt-cadence-tau-minus-six}
 \end{equation}
-which is exactly the information-rate scaling implied by the cubic base at the
-reference cadence.
-
-For the former amplitude-coupled cubic OU--III schedule,
-$a_R=\sigma_{aw}$, so this argument gives
-$r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}$.  The amplitude-free
-experiment replaced $a_R$ by the constant sensor-noise scale $\sqrt{R_a}$ and
-confirmed the same $5/2$ period behavior but degraded the multi-seed endpoint.
-The subsequent sensor-floor-plus-leakage interpolation returned to
-$a_R\propto\sigma_{aw}$ over the tested envelope and tied that legacy cubic
-comparator under paired ten-seed evaluation.  These results remain useful for
-interpreting the fixed-corner/cadence family, but they do not define the current
-default.  SpectralMSE instead contains $T_S^{-1/2}$ directly in its reduced-MSE
-target and is not multiplied by this reference-cadence normalization a second
-time.
+The $5/2$ exponent is therefore the per-update consequence of combining a
+third-integral dimensional scale with a cadence proportional to $\tau$.  This
+construction fixes neither the correct amplitude dependence nor the physical
+bias--distortion optimum.  Those are supplied by the reduced-MSE analysis in
+the following sections; only afterward is the historical
+$a_R=\sigma_{aw}$ implementation interpreted as the legacy cubic schedule.
