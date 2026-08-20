@@ -72,14 +72,15 @@ itself is proportional to $\tau$.  Equivalently,
 which is exactly the information-rate scaling implied by the cubic base at the
 reference cadence.
 
-For the applied OU--III schedule, $a_R=\sigma_{aw}$, so this argument gives
+For the former amplitude-coupled cubic OU--III schedule,
+$a_R=\sigma_{aw}$, so this argument gives
 $r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}$.  The amplitude-free
 experiment replaced $a_R$ by the constant sensor-noise scale $\sqrt{R_a}$ and
 confirmed the same $5/2$ period behavior but degraded the multi-seed endpoint.
 The subsequent sensor-floor-plus-leakage interpolation returned to
-$a_R\propto\sigma_{aw}$ over the entire tested envelope and tied the applied law
-under paired ten-seed evaluation.  The cadence argument is therefore supported
-as an explanation of the period exponent while remaining deliberately agnostic
-about the correct steady-state amplitude scale.  The remaining observed
-stationary--transition tradeoff concerns how that amplitude target is followed
-in time, not the square-root cadence normalization itself.
+$a_R\propto\sigma_{aw}$ over the tested envelope and tied that legacy cubic
+comparator under paired ten-seed evaluation.  These results remain useful for
+interpreting the fixed-corner/cadence family, but they do not define the current
+default.  SpectralMSE instead contains $T_S^{-1/2}$ directly in its reduced-MSE
+target and is not multiplied by this reference-cadence normalization a second
+time.
