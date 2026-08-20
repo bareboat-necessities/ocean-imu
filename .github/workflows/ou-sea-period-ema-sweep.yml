@@ -1,19 +1,18 @@
 name: OU sea-period EMA sweep
 
 on:
-  push:
-    branches:
-      - agent/sea-scaled-ou-ema
+  pull_request:
+    branches: [main]
     paths:
       - tools/ou_sea_period_ema_experiment.py
       - tools/ou_sea_period_ema_preserve_cadence.py
       - .github/workflows/ou-sea-period-ema-sweep.yml
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: ou-sea-period-ema-${{ github.ref }}
+  group: ou-sea-period-ema-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -23,18 +22,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Report sweep start
-        run: |
-          mkdir -p reports/results/ou_sea_period_ema
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          printf 'started_sha=%s\nrun=%s/%s/actions/runs/%s\n' \
-            "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" \
-            > reports/results/ou_sea_period_ema/STATUS.txt
-          git add -- reports/results/ou_sea_period_ema/STATUS.txt
-          git commit -m "Mark sea-period EMA sweep running [sweep-status]"
-          git push origin HEAD:agent/sea-scaled-ou-ema
 
       - name: Install dependencies
         run: |
@@ -62,6 +49,7 @@ jobs:
 
       - name: Run screening joint sweep
         run: |
+          mkdir -p reports/results/ou_sea_period_ema
           python3 -u tools/ou_ema_adapt_study.py transition \
             --family OU_III \
             --transition-stage confirm \
@@ -90,26 +78,6 @@ jobs:
 
       - name: Rank screening sweep
         run: python3 -u tools/ou_sea_period_ema_experiment.py rank
-
-      - name: Commit screening summaries
-        run: |
-          printf '\ncompleted=1\n' >> reports/results/ou_sea_period_ema/STATUS.txt
-          git add -- reports/results/ou_sea_period_ema/STATUS.txt \
-                     reports/results/ou_sea_period_ema/coarse.csv \
-                     reports/results/ou_sea_period_ema/coarse_summary.csv
-          git commit -m "Record sea-period EMA screening sweep [sweep-result]"
-          git push origin HEAD:agent/sea-scaled-ou-ema
-
-      - name: Report sweep failure
-        if: failure()
-        run: |
-          mkdir -p reports/results/ou_sea_period_ema
-          printf 'failed_sha=%s\nrun=%s/%s/actions/runs/%s\n' \
-            "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" \
-            > reports/results/ou_sea_period_ema/FAILED.txt
-          git add -- reports/results/ou_sea_period_ema/FAILED.txt
-          git commit -m "Record sea-period EMA sweep failure [sweep-status]" || true
-          git push origin HEAD:agent/sea-scaled-ou-ema || true
 
       - name: Upload sweep data
         if: always()
