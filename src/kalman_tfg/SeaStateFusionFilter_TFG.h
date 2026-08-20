@@ -171,6 +171,13 @@ constexpr float SIGMA_BAND_HIGH_RATIO_DEFAULT = 4.0f;
 constexpr float SIGMA_BAND_MIN_HZ_DEFAULT     = 0.01f;
 constexpr float SIGMA_BAND_MAX_HZ_DEFAULT     = 6.0f;
 
+// The two EMA horizons that remained fixed in wall-clock seconds now use the
+// same measured sea-time normalization as OU-III. Fixed-second compatibility
+// remains available through the setters below.
+constexpr float ADAPT_TAU_SEC_DEFAULT              = 1.8f;
+constexpr float ADAPT_TAU_SEA_PERIODS_DEFAULT      = 0.40f;
+constexpr float TUNER_FREQ_EMA_SEA_PERIODS_DEFAULT = 0.10f;
+
 struct TfgTuneState {
     float tau_applied   = 1.1f;
     float sigma_applied = 1e-2f;
@@ -374,7 +381,11 @@ public:
         mekf_.set_Q_bgyro_rw(Vector3f::Constant(cfg.gyro_bias_rw_var));
         Racc_nominal_ = cfg.sigma_a;
 
-        tuner_ = ::SeaStateAutoTuner(2.0f, 1.0f);
+        tuner_ = ::SeaStateAutoTuner(2.0f, tuner_freq_tau_sec_);
+        if (tuner_freq_ema_sea_periods_ > 0.0f) {
+            tuner_.setFrequencySmoothingSeaPeriods(tuner_freq_ema_sea_periods_);
+        }
+        sea_time_sec_ = 0.5f / 0.2f;
         wave_period_.reset();
         vertical_complementary_.setGains(cfg.proxy_two_kp, cfg.proxy_two_ki);
         vertical_complementary_.reset();
@@ -587,8 +598,36 @@ public:
     void setSFactor(float s)       { if (s > 0.0f && std::isfinite(s)) S_factor_ = s; }
     void setRSXYFactor(float k)    { if (k > 0.0f && std::isfinite(k)) R_S_xy_factor_ = k; }
     void setAccNoiseFloorSigma(float s) { if (s >= 0.0f && std::isfinite(s)) noise_floor_sigma_ = s; }
+    // Fixed-seconds compatibility mode for the common tau/sigma EMA.
     void setAdaptationTimeConstants(float tau_sec) {
-        if (tau_sec > 0.0f && std::isfinite(tau_sec)) adapt_tau_sec_ = tau_sec;
+        if (tau_sec > 0.0f && std::isfinite(tau_sec)) {
+            adapt_tau_sec_ = tau_sec;
+            adapt_tau_sea_periods_ = 0.0f;
+        }
+    }
+    void setAdaptationSeaPeriods(float periods) {
+        if (periods > 0.0f && std::isfinite(periods)) {
+            adapt_tau_sea_periods_ = periods;
+        }
+    }
+    void setTunerFreqSmoothingSeaPeriods(float periods) {
+        if (periods > 0.0f && std::isfinite(periods)) {
+            tuner_freq_ema_sea_periods_ = periods;
+            tuner_.setFrequencySmoothingSeaPeriods(periods);
+        }
+    }
+    void setTunerFreqSmoothingTimeConstant(float tau_sec) {
+        if (tau_sec > 0.0f && std::isfinite(tau_sec)) {
+            tuner_freq_tau_sec_ = tau_sec;
+            tuner_freq_ema_sea_periods_ = 0.0f;
+            tuner_.setTauFreq(tau_sec);
+        }
+    }
+    [[nodiscard]] float getAdaptationSeaPeriods() const noexcept {
+        return adapt_tau_sea_periods_;
+    }
+    [[nodiscard]] float getTunerFreqSmoothingSeaPeriods() const noexcept {
+        return tuner_.getFrequencySmoothingSeaPeriods();
     }
     void setRSAdaptMult(float m)     { if (m > 0.0f && std::isfinite(m)) adapt_RS_mult_ = m; }
     void setRSAdaptSlewLog(float d)  { if (d >= 0.0f && std::isfinite(d)) adapt_RS_slew_log_ = d; }
@@ -765,6 +804,7 @@ private:
         float f_tune = tuner_.isFreqReady() ? tuner_.getFrequencyHz() : kMinTuneFreqHz;
         if (!std::isfinite(f_tune) || f_tune < kMinTuneFreqHz) f_tune = kMinTuneFreqHz;
         f_tune = std::min(f_tune, kMaxFreqHz);
+        sea_time_sec_ = 0.5f / f_tune;  // T_sea = T_z/2
 
         const float band_noise_sigma = bandNoiseFloorSigma_();
         const float var_noise = band_noise_sigma * band_noise_sigma;
@@ -1241,7 +1281,12 @@ private:
 
         // The smoother sees every sample; only the commit is cadenced.
         if (!freeze_ou_channel_) {
-            const float a = 1.0f - std::exp(-dt / adapt_tau_sec_);
+            float adapt_sec = adapt_tau_sec_;
+            if (adapt_tau_sea_periods_ > 0.0f &&
+                std::isfinite(sea_time_sec_) && sea_time_sec_ > 0.0f) {
+                adapt_sec = std::max(dt, adapt_tau_sea_periods_ * sea_time_sec_);
+            }
+            const float a = 1.0f - std::exp(-dt / adapt_sec);
             tune_.tau_applied   += a * (tau_target_ - tune_.tau_applied);
             tune_.sigma_applied += a * (sigma_target_ - tune_.sigma_applied);
         }
@@ -1444,9 +1489,13 @@ private:
     float R_S_xy_factor_ = 1.15f;
     float noise_floor_sigma_ = 0.12f;
 
-    float adapt_tau_sec_    = 1.8f;
-    float adapt_RS_mult_    = 3.0f;
-    float adapt_RS_slew_log_ = 0.0f;
+    float adapt_tau_sec_              = ADAPT_TAU_SEC_DEFAULT;
+    float adapt_tau_sea_periods_      = ADAPT_TAU_SEA_PERIODS_DEFAULT;
+    float tuner_freq_tau_sec_          = 1.0f;
+    float tuner_freq_ema_sea_periods_ = TUNER_FREQ_EMA_SEA_PERIODS_DEFAULT;
+    float sea_time_sec_                = 0.5f / 0.2f;
+    float adapt_RS_mult_                = 3.0f;
+    float adapt_RS_slew_log_            = 0.0f;
 
     float min_tau_ = 0.02f, max_tau_ = 12.0f;
     // 0.15, matching OU-III's MIN_R_S. The old 0.4 was the binding

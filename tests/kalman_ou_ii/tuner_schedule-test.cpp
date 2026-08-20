@@ -36,13 +36,40 @@ int main() {
         std::cerr << "FAIL: OU-II tau-scaled pseudo cadence did not preserve the nominal point\n";
         return 1;
     }
+    if (!near(f.getAdaptationSeaPeriods(), 0.40f) ||
+        !near(f.getTunerFreqSmoothingSeaPeriods(), 0.10f)) {
+        std::cerr << "FAIL: OU-II sea-scaled EMA defaults are not 0.40/0.10 of T_sea\n";
+        return 1;
+    }
+
+    // A sample inside the activation interval must still move the EMA state.
+    {
+        Filter s(false);
+        s.time_ = 2.0;
+        s.last_adapt_time_sec_ = 2.0;
+        s.online_tune_apply_pending_ = false;
+        const float before = s.tune_.tau_applied;
+        constexpr float T_sea = 2.5f;
+        constexpr float dt_ema = 0.1f;
+        const float expected_alpha = 1.0f - std::exp(-dt_ema / (0.40f * T_sea));
+        const float expected = before + expected_alpha * (3.0f - before);
+        s.adapt_mekf(dt_ema, 3.0f, 0.8f, 1.2f, 0.7f, T_sea);
+        if (!near(s.tune_.tau_applied, expected, 1e-5f)) {
+            std::cerr << "FAIL: OU-II sea-scaled EMA did not consume the physical sample\n";
+            return 1;
+        }
+        if (s.online_tune_apply_pending_) {
+            std::cerr << "FAIL: OU-II EMA sample incorrectly bypassed activation cadence\n";
+            return 1;
+        }
+    }
 
     const float active_tau_before = f.mekf_->tau_aw;
     const float active_rp_before = f.mekf_->R_p0(2, 2);
     const float active_rv_before = f.mekf_->R_v0(2, 2);
     const float active_pseudo_before = f.getPseudoUpdatePeriodSec();
 
-    f.adapt_mekf(0.1f, 3.0f, 0.8f, 1.2f, 0.7f);
+    f.adapt_mekf(0.1f, 3.0f, 0.8f, 1.2f, 0.7f, 2.5f);
     const float staged_tau = f.tune_.tau_applied;
     const float staged_rp_base =
         std::min(std::max(f.tune_.R_p0_std_applied, f.MIN_R_p0_std_), f.MAX_R_p0_std_);

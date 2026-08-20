@@ -597,6 +597,24 @@ void test_adaptation_is_cadenced() {
     next update. So a single violent sample must leave the MEKF's applied r_S
     untouched *within that same update*.
 */
+void test_sea_scaled_ema_defaults() {
+    Fusion f;
+    f.begin(default_config());
+    check(std::fabs(f.getAdaptationSeaPeriods() - 0.40f) <= 1e-6f,
+          "TFG common tau/sigma EMA is not 0.40*T_sea by default");
+    check(std::fabs(f.getTunerFreqSmoothingSeaPeriods() - 0.10f) <= 1e-6f,
+          "TFG tuner frequency EMA is not 0.10*T_sea by default");
+
+    // Fixed-second setters remain real ablations rather than being ignored by
+    // the new defaults.
+    f.setAdaptationTimeConstants(1.8f);
+    f.setTunerFreqSmoothingTimeConstant(1.0f);
+    check(f.getAdaptationSeaPeriods() == 0.0f,
+          "TFG fixed tau/sigma EMA setter did not disable sea scaling");
+    check(f.getTunerFreqSmoothingSeaPeriods() == 0.0f,
+          "TFG fixed frequency EMA setter did not disable sea scaling");
+}
+
 void test_schedule_is_exogenous_to_the_current_sample() {
     Fusion f;
     f.begin(default_config());
@@ -1035,6 +1053,7 @@ int main() {
     test_with_mag_disabled();
     test_tracks_heave();
     test_adaptation_is_cadenced();
+    test_sea_scaled_ema_defaults();
     test_schedule_is_exogenous_to_the_current_sample();
     test_rs_floor_allows_low_motion_seas();
     test_proxy_has_an_integral_term();
