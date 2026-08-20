@@ -1,9 +1,8 @@
 name: OU sea-period EMA sweep
 
 on:
-  push:
-    branches:
-      - agent/sea-scaled-ou-ema
+  pull_request:
+    branches: [main]
     paths:
       - tools/ou_sea_period_ema_experiment.py
       - tools/ou_sea_period_ema_preserve_cadence.py
@@ -14,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ou-sea-period-ema-${{ github.ref }}
+  group: ou-sea-period-ema-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
