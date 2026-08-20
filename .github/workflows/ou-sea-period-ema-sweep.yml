@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ou-sea-period-ema-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sweep:
     runs-on: ubuntu-24.04
@@ -41,25 +45,51 @@ jobs:
       - name: Build OU-III simulator
         run: make -C tests/kalman_ou_iii kalman_ou_iii-sim
 
-      - name: Run coarse joint sweep
-        run: python3 -u tools/ou_sea_period_ema_experiment.py coarse
+      - name: Run screening joint sweep
+        run: |
+          mkdir -p reports/results/ou_sea_period_ema
+          python3 -u tools/ou_ema_adapt_study.py transition \
+            --family OU_III \
+            --transition-stage confirm \
+            --transition-pair large,small \
+            --transition-dir up,down \
+            --transition-seeds 11 \
+            --seeds default \
+            --jobs "$(nproc)" \
+            --out reports/results/ou_sea_period_ema/coarse.csv \
+            --point 'a=.05,f=.05:OU_III_ADAPT_TAU_PERIODS=.05:OU_III_TUNER_FREQ_PERIODS=.05' \
+            --point 'a=.05,f=.10:OU_III_ADAPT_TAU_PERIODS=.05:OU_III_TUNER_FREQ_PERIODS=.10' \
+            --point 'a=.05,f=.20:OU_III_ADAPT_TAU_PERIODS=.05:OU_III_TUNER_FREQ_PERIODS=.20' \
+            --point 'a=.05,f=.35:OU_III_ADAPT_TAU_PERIODS=.05:OU_III_TUNER_FREQ_PERIODS=.35' \
+            --point 'a=.10,f=.05:OU_III_ADAPT_TAU_PERIODS=.10:OU_III_TUNER_FREQ_PERIODS=.05' \
+            --point 'a=.10,f=.10:OU_III_ADAPT_TAU_PERIODS=.10:OU_III_TUNER_FREQ_PERIODS=.10' \
+            --point 'a=.10,f=.20:OU_III_ADAPT_TAU_PERIODS=.10:OU_III_TUNER_FREQ_PERIODS=.20' \
+            --point 'a=.10,f=.35:OU_III_ADAPT_TAU_PERIODS=.10:OU_III_TUNER_FREQ_PERIODS=.35' \
+            --point 'a=.20,f=.05:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.05' \
+            --point 'a=.20,f=.10:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.10' \
+            --point 'a=.20,f=.20:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.20' \
+            --point 'a=.20,f=.35:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.35' \
+            --point 'a=.35,f=.05:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.05' \
+            --point 'a=.35,f=.10:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.10' \
+            --point 'a=.35,f=.20:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.20' \
+            --point 'a=.35,f=.35:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.35'
 
-      - name: Rank coarse sweep
+      - name: Rank screening sweep
         run: python3 -u tools/ou_sea_period_ema_experiment.py rank
 
-      - name: Commit coarse sweep summaries
+      - name: Commit screening summaries
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- reports/results/ou_sea_period_ema/coarse.csv \
                      reports/results/ou_sea_period_ema/coarse_summary.csv
-          git commit -m "Record sea-period EMA coarse sweep [sweep-result]"
+          git commit -m "Record sea-period EMA screening sweep [sweep-result]"
           git push origin HEAD:agent/sea-scaled-ou-ema
 
       - name: Upload sweep data
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou-sea-period-ema-coarse
+          name: ou-sea-period-ema-screen
           path: reports/results/ou_sea_period_ema/**
           if-no-files-found: warn
