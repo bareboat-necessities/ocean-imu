@@ -3,30 +3,27 @@
 /*
   Copyright (c) 2025-2026  Mikhail Grushinskiy
 
-  SeaStateAutoTuner — minimal online acceleration stats
+  SeaStateAutoTuner — minimal online acceleration statistics.
 
-  Purpose:
-    • Estimate acceleration variance σ_a² (time-domain EWMA)
-    • Smooth externally provided frequency f_in (Hz) via EMA
+  The wave-frequency input is already the canonical, measurement-only output of
+  WavePeriodEstimator.  This class therefore does not estimate or smooth that
+  time scale again.  It stores the latest supplied frequency only so the
+  period-scaled acceleration band and variance horizon can use the same
+  one-sample-predictable value.
 
-  Notes:
-    • K_periods is a dimensionless factor controlling the variance horizon:
-        τ_var_dyn ≈ K_periods * T_eff,
-      where T_eff = 1 / f_eff and f_eff is the smoothed frequency.
-    • The horizon is expressed in *periods of the frequency it is fed*, so what
-      that frequency means decides what the horizon means.  Fed the
-      acceleration-band tracker it was a few seconds whatever the sea did,
-      because that band barely moves with sea state; fed the wave-band
-      zero-crossing period it becomes a genuine multiple of the wave period and
-      stretches from about 5 s on a short chop to 17 s on a developed swell.
-      The wave band is what the filters feed it -- the acceleration-band
-      tracker no longer reaches the adaptation path at all -- so the clamps
-      below have to admit that whole span, and the defaults are documented in
-      docs/ou-sigma-horizon.md.
+  Acceleration variance is the ordinary exponentially weighted second central
+  moment
+
+      sigma_a^2 = E_w[a^2] - E_w[a]^2,
+
+  with identical weights for the first and second raw moments.  The previous
+  second EMA of this already-smoothed variance has been removed; any desired
+  downstream parameter slew belongs to the filter scheduler, not to the
+  statistical variance estimator.
 */
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
 #include "tuner/SeaStateAdaptationLimits.h"
 
@@ -46,109 +43,81 @@ struct DebiasedEMA {
 
 class SeaStateAutoTuner {
 public:
-    // K_periods: dimensionless horizon in periods.
-    //   τ_var_dyn ≈ K_periods * T_eff,  T_eff = 1 / f_eff
-    // Default K_periods ≈ 2.0 → ~6.0 periods for ~95% response.
-    explicit SeaStateAutoTuner(float K_periods_   = 2.0f,
-                               float tau_freq_sec = 1.0f)   // frequency smoothing horizon (seconds)
-    : K_periods(K_periods_), tau_freq(tau_freq_sec) {
+    // K_periods: dimensionless time constant of the acceleration-moment EMA in
+    // periods of the canonical wave-frequency input.
+    //
+    // The second constructor argument is retained only for source compatibility
+    // with older call sites; frequency smoothing no longer occurs here.
+    explicit SeaStateAutoTuner(float K_periods_ = 2.0f,
+                               float /*legacy_tau_freq_sec*/ = 1.0f)
+        : K_periods(std::max(1e-3f, K_periods_)) {
         reset();
     }
 
     inline void reset() {
-        alpha_freq = 0.0f;
-        tau_freq_applied_sec = tau_freq;
         tau_var_sec = 0.0f;
-        A_mean.reset(); A_sq.reset(); A_var.reset();
-        Freq_smoothed.reset();
+        frequency_hz = NAN;
+        A_mean.reset();
+        A_sq.reset();
     }
 
-    // main update
     inline void update(float dt_s, float accel, float f_input_hz) {
-        if (!(dt_s > 0.0f) || !std::isfinite(accel) || !std::isfinite(f_input_hz))
+        if (!(dt_s > 0.0f) || !std::isfinite(accel) ||
+            !std::isfinite(f_input_hz)) {
             return;
+        }
 
-        // The frequency EMA is updated on every physical sample.  When the
-        // period-scaled mode is enabled, only its horizon changes with the
-        // externally measured sea period; no sample is decimated or skipped.
-        updateAlphaFreq(dt_s, f_input_hz);
-
-        // Smooth incoming frequency first
-        Freq_smoothed.update(f_input_hz, alpha_freq);
-
-        // Effective frequency for variance horizon (use smoothed if ready)
-        float f_eff = Freq_smoothed.isReady() ? Freq_smoothed.get() : f_input_hz;
-        // Clamp to avoid insane horizons at tiny/zero frequency
-        if (!std::isfinite(f_eff)) f_eff = f_min_hz;
+        float f_eff = f_input_hz;
         f_eff = std::max(f_min_hz, std::min(f_max_hz, f_eff));
+        frequency_hz = f_eff;
 
         const float sea_time_sec =
             seastate::tuner::limits::clampDynamicEmaTimeScaleSec(0.5f / f_eff);
         const float T_eff = 2.0f * sea_time_sec;  // T_z = 2 T_sea
 
-        // Dynamic variance time constant: a few wave periods.  The local
-        // bounds remain useful for controlled studies, while the universal
-        // guard prevents any dynamically estimated horizon from escaping the
-        // shared safety envelope.
         const float tau_var_requested = std::max(
             tau_var_min_sec, std::min(tau_var_max_sec, K_periods * T_eff));
         tau_var_sec = seastate::tuner::limits::clampDynamicEmaHorizonSec(
             tau_var_requested, dt_s);
 
-        // Compute alpha for variance based on dynamic tau
         const float alpha_var = 1.0f - std::exp(-dt_s / tau_var_sec);
-
-        // Time-domain EWMA variance
         A_mean.update(accel, alpha_var);
         A_sq.update(accel * accel, alpha_var);
-        const float mu       = A_mean.get();
-        const float var_inst = std::max(0.0f, A_sq.get() - mu * mu);
-        A_var.update(var_inst, alpha_var);
     }
 
-    // accessors
-    inline float getAccelVariance() const { return A_var.get(); }       // σ_a²
-    inline float getAccelStd()      const { return std::sqrt(std::max(0.0f, A_var.get())); }
-    inline float getFrequencyHz()   const { return Freq_smoothed.get(); }
-    inline float getPeriodSec()     const {
-        const float f = Freq_smoothed.get();
-        return (f > 1e-9f) ? (1.0f / f) : 0.0f;
+    inline float getAccelVariance() const {
+        if (!(A_mean.isReady() && A_sq.isReady())) return 0.0f;
+        const float mu = A_mean.get();
+        return std::max(0.0f, A_sq.get() - mu * mu);
     }
 
-    inline bool isReady() const { return A_var.isReady() && Freq_smoothed.isReady(); }
-    inline bool isFreqReady() const { return Freq_smoothed.isReady(); }
-    inline bool isVarReady()  const { return A_var.isReady(); }
+    inline float getAccelStd() const {
+        return std::sqrt(getAccelVariance());
+    }
 
-    // Horizon of the σ_a EWMA, in seconds, as last used.  The variance is a
-    // two-stage EWMA at this horizon (mean/square, then the variance itself),
-    // so the effective memory is about twice it.
+    inline float getFrequencyHz() const { return frequency_hz; }
+
+    inline float getPeriodSec() const {
+        return (std::isfinite(frequency_hz) && frequency_hz > 1e-9f)
+            ? (1.0f / frequency_hz)
+            : 0.0f;
+    }
+
+    inline bool isReady() const { return isVarReady() && isFreqReady(); }
+    inline bool isFreqReady() const {
+        return std::isfinite(frequency_hz) && frequency_hz > 0.0f;
+    }
+    inline bool isVarReady() const { return A_mean.isReady() && A_sq.isReady(); }
+
+    // The requested horizon is now the actual first/second-moment time constant;
+    // there is no hidden second variance EMA doubling its memory.
     inline float getVarianceHorizonSec() const { return tau_var_sec; }
 
-    // Fixed-seconds compatibility mode.  Calling this explicitly disables
-    // sea-period scaling for the frequency EMA.
-    inline void setTauFreq(float t) {
-        tau_freq = std::max(1e-3f, t);
-        freq_sea_periods = 0.0f;
-        tau_freq_applied_sec = tau_freq;
-    }
-
-    // Frequency-EMA horizon in sea-time units T_sea=T_z/2 of the externally
-    // supplied wave-band frequency. The input is measurement-only in OU-III.
-    inline void setFrequencySmoothingSeaPeriods(float k) {
-        if (std::isfinite(k) && k > 0.0f) freq_sea_periods = k;
-    }
-    inline float getFrequencySmoothingSeaPeriods() const { return freq_sea_periods; }
-    inline float getFrequencySmoothingHorizonSec() const { return tau_freq_applied_sec; }
-
-    // σ_a averaging horizon, in periods of the tuning frequency.
     inline void setKPeriods(float k) {
         if (std::isfinite(k) && k > 0.0f) K_periods = k;
     }
     inline float getKPeriods() const { return K_periods; }
 
-    // Absolute clamps on that horizon [s].  They exist so a degenerate tuning
-    // frequency cannot make the estimator either a pass-through or a constant;
-    // in the wave band the product K_periods * T_z should decide, not these.
     inline void setVarianceHorizonBounds(float min_s, float max_s) {
         if (!(std::isfinite(min_s) && std::isfinite(max_s))) return;
         if (!(min_s > 0.0f && max_s >= min_s)) return;
@@ -158,9 +127,6 @@ public:
     inline float getVarianceHorizonMinSec() const { return tau_var_min_sec; }
     inline float getVarianceHorizonMaxSec() const { return tau_var_max_sec; }
 
-    // Clamps on the tuning frequency the horizon is derived from [Hz].  The
-    // 0.05 Hz floor is a 20 s period, which is past the longest swell the wave
-    // band admits.
     inline void setFrequencyBounds(float min_hz, float max_hz) {
         if (!(std::isfinite(min_hz) && std::isfinite(max_hz))) return;
         if (!(min_hz > 0.0f && max_hz >= min_hz)) return;
@@ -168,40 +134,25 @@ public:
         f_max_hz = max_hz;
     }
 
+    // Compatibility shims for older wrappers/ablation code.  Frequency
+    // smoothing has intentionally moved upstream into WavePeriodEstimator's
+    // canonical log-period state, so these knobs no longer alter the tuner.
+    inline void setTauFreq(float) {}
+    inline void setFrequencySmoothingSeaPeriods(float) {}
+    inline float getFrequencySmoothingSeaPeriods() const { return 0.0f; }
+    inline float getFrequencySmoothingHorizonSec() const { return 0.0f; }
+
 private:
-    // K_periods: dimensionless factor such that τ_var_dyn ≈ K_periods * T_eff
     float K_periods = 2.0f;
-    float tau_var_min_sec = 0.3f;   // seconds: don't go *too* twitchy
-    float tau_var_max_sec = 60.0f;  // seconds: don't be glacial
-    float f_min_hz = 0.05f;         // 20 s period max
-    float f_max_hz = 5.0f;          // avoid crazy high freq
-    float tau_var_sec = 0.0f;       // last variance horizon used, for inspection
-    float tau_freq = 1.0f;             // fixed-seconds compatibility horizon
-    float freq_sea_periods = 0.0f;         // >0: frequency EMA horizon / T_sea
-    float tau_freq_applied_sec = 1.0f; // last frequency-EMA horizon used
-    float alpha_freq = 0.0f;
+    float tau_var_min_sec = 0.3f;
+    float tau_var_max_sec = 60.0f;
+    float f_min_hz = 0.05f;
+    float f_max_hz = 5.0f;
+    float tau_var_sec = 0.0f;
+    float frequency_hz = NAN;
 
-    DebiasedEMA A_mean, A_sq, A_var;
-    DebiasedEMA Freq_smoothed;
-
-    inline void updateAlphaFreq(float dt_s, float f_input_hz) {
-        float horizon = tau_freq;
-        if (freq_sea_periods > 0.0f) {
-            float f = f_input_hz;
-            if (!std::isfinite(f)) f = f_min_hz;
-            f = std::max(f_min_hz, std::min(f_max_hz, f));
-            const float sea_time_sec =
-                seastate::tuner::limits::clampDynamicEmaTimeScaleSec(0.5f / f);
-            horizon = seastate::tuner::limits::clampDynamicEmaHorizonSec(
-                freq_sea_periods * sea_time_sec, dt_s);
-            tau_freq_applied_sec = horizon;
-        } else {
-            // Explicit fixed-seconds compatibility mode is not dynamically
-            // estimated, so preserve the caller's requested ablation value.
-            tau_freq_applied_sec = std::max(1e-3f, horizon);
-        }
-        alpha_freq = 1.0f - std::exp(-dt_s / tau_freq_applied_sec);
-    }
+    DebiasedEMA A_mean;
+    DebiasedEMA A_sq;
 };
 
 #ifdef SEA_STATE_TUNER_TEST
@@ -213,9 +164,7 @@ static inline void SeaStateAutoTuner_test() {
     constexpr float F_HZ = 0.5f;
     const float omega = 2.0f * 3.14159265358979323846f * F_HZ;
 
-    // K_periods ≈ 1.5 → τ_var_dyn ≈ 1.5 * T = 3 s at 0.5 Hz
-    // ~9 s (~4.5 periods) for 95% response
-    SeaStateAutoTuner tuner(1.5f, 3.0f);
+    SeaStateAutoTuner tuner(1.5f);
 
     float t = 0.0f;
     for (int n = 0; n < int(20.0f / DT); ++n) {
@@ -224,8 +173,8 @@ static inline void SeaStateAutoTuner_test() {
         tuner.update(DT, a, F_HZ);
     }
 
-    std::cerr << "[AutoTuner] σ_a=" << tuner.getAccelStd()
-              << " m/s², f=" << tuner.getFrequencyHz()
+    std::cerr << "[AutoTuner] sigma_a=" << tuner.getAccelStd()
+              << " m/s2, f=" << tuner.getFrequencyHz()
               << " Hz\n";
 }
 #endif
