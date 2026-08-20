@@ -115,6 +115,19 @@ This relation explains why the earlier amplitude-law experiments were
 informative about fixed normalized pole placement even though their gain was
 empirically tuned.
 
+For the former amplitude-coupled schedule, the generic dimensional construction
+of Sec.~\ref{sec:adaptation-cadence-interpretation} used
+$a_R=\sigma_{aw}$ and therefore produced
+$r_{S,\mathrm{filter}}\propto\sigma_{aw}\tau^{5/2}$.  The amplitude-free
+experiment replaced $a_R$ by the constant sensor-noise scale $\sqrt{R_a}$ and
+confirmed the same $5/2$ period dependence but degraded the multi-seed endpoint.
+The subsequent sensor-floor-plus-leakage interpolation returned to
+$a_R\propto\sigma_{aw}$ over the tested envelope and tied the legacy cubic
+comparator under paired ten-seed evaluation.  These historical results explain
+why the empirical cubic schedule was a credible engineering choice before the
+reduced-MSE derivation, while also showing that its coefficient and amplitude
+law were selected empirically rather than by displacement-MSE optimization.
+
 The cubic schedule remains a supported low-cost embedded option.  It requires
 only ordinary products and the cadence square root already present in the
 scheduler, whereas SpectralMSE evaluates fractional powers.  The paired study
