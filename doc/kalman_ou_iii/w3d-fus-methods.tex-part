@@ -64,15 +64,17 @@ ratio, so for a narrow band
 The high-pass stages suppress very-low-frequency strapdown leakage without
 changing this ratio; no MEKF position or velocity is used.
 
-Once $\widehat T_z$ is valid, a fixed-horizon EMA forms
+Once $\widehat T_z$ is valid, the reciprocal period is smoothed on a
+sea-scaled horizon,
 \begin{equation}
-f_{\mathrm{tune}}
-=\clip\!\left(\overline{1/\widehat{T}_z},
- f_{\mathrm{tune,min}},f_{\mathrm{tune,max}}\right).
-\label{eq:tuning-frequency}
+\tau_f=c_f T_{\mathrm{sea}},\qquad
+T_{\mathrm{sea}}=\widehat T_z/2,\qquad
+\alpha_f=1-e^{-\Delta t/\tau_f},
+\label{eq:tuning-frequency-horizon}
 \end{equation}
-Before then, a bounded wave-band prior is used.  The applied smoothing time is
-\SI{1}{s}.  This frequency sets the OU time scale, acceleration-statistic band
+and $f_{\mathrm{tune}}$ is the bounded EMA of $1/\widehat T_z$.  The
+measured value is $c_f=0.10$.  Before a valid period is available, a bounded
+wave-band prior is used.  This frequency sets the OU time scale, acceleration-statistic band
 corners, and variance horizon; the separate acceleration carrier is retained
 only for wave direction.
 
@@ -171,7 +173,13 @@ Applied $\tau$ and $\sigma_{aw}$ use a common EMA,
 \end{aligned}
 \label{eq:adapt-ewma}
 \end{equation}
-with $\tau_{\mathrm{adapt}}=\SI{1.8}{s}$.  The regularizer uses the slower
+with a sea-scaled horizon
+\begin{equation}
+\tau_{\mathrm{adapt}}=c_{\mathrm{adapt}}T_{\mathrm{sea}},\qquad
+c_{\mathrm{adapt}}=0.40.
+\label{eq:adapt-ema-sea-time}
+\end{equation}
+The regularizer uses the slower
 sea-scaled horizon
 \begin{equation}
 \begin{aligned}
@@ -184,9 +192,11 @@ r_{S,\mathrm{appl}}^{\mathrm{base}}&\leftarrow
 \end{aligned}
 \label{eq:adapt-RS}
 \end{equation}
-where $m_{r_S}=3$.  Candidates are committed every \SI{0.1}{s} and staged by
-one IMU sample, so parameters used at step $k$ are measurable with respect to
-data through $k-1$.
+where $m_{r_S}=3$.  Every valid physical sample contributes to the tuner and
+to the EMAs above.  The resulting candidate is activated every \SI{0.1}{s}
+and staged by one IMU sample; this activation cadence does not decimate the
+measurement stream.  Parameters used at step $k$ are therefore measurable
+with respect to data through $k-1$.
 
 The pseudo-update cadence follows the applied OU time scale,
 \begin{equation}

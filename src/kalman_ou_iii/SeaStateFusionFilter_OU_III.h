@@ -166,7 +166,16 @@ constexpr float MIN_R_S     = 0.15f;
 // 34.66 and the error was still falling monotonically against it.
 constexpr float MAX_R_S     = 400.0f;
 
+// Legacy fixed-second horizon is retained for ablation/backward compatibility.
+// A positive sea-period multiplier makes the common tau/sigma EMA self-similar:
+//     tau_ema = ADAPT_TAU_SEA_PERIODS * T_sea,  T_sea = T_z/2.
+// The measured default 0.40 is the 0.20*T_z winner from the paired sweep.
+// Zero selects the legacy ADAPT_TAU_SEC path for controlled ablations.
 constexpr float ADAPT_TAU_SEC              = 1.8f;
+constexpr float ADAPT_TAU_SEA_PERIODS          = 0.40f;
+constexpr float TUNER_FREQ_EMA_SEA_PERIODS     = 0.10f;
+// This cadence belongs only to posterior a_w covariance maintenance.  Online
+// tuner candidates are staged after every valid physical measurement.
 constexpr float ADAPT_EVERY_SECS           = 0.1f;
 // Smoothing horizon of the r_S channel, in units of tau_target.  Measured on
 // the versioned records against synthesized sea-state transitions: the error
@@ -408,6 +417,10 @@ public:
         // Default cutoff ~max_freq_hz_ Hz: passes waves, kills 8–37 Hz engine band
         freq_input_lpf_.setCutoff(max_freq_hz_);
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
+        // OU-III opts into the measured sea-scaled tuner-frequency EMA.
+        // SeaStateAutoTuner itself remains fixed-seconds by default so OU-II/TFG
+        // are unchanged by this OU-III-only calibration.
+        tuner_.setFrequencySmoothingSeaPeriods(TUNER_FREQ_EMA_SEA_PERIODS);
         startup_stage_   = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
     }
@@ -1124,9 +1137,39 @@ public:
         max_R_S_ = max_RS;
     }
 
+    // Fixed-seconds compatibility mode.  Explicitly selecting it disables
+    // the period-scaled common tau/sigma EMA.
     void setAdaptationTimeConstants(float tau_sec) {
-        if (std::isfinite(tau_sec) && tau_sec > 0.0f)   adapt_tau_sec_   = tau_sec;
-     }
+        if (std::isfinite(tau_sec) && tau_sec > 0.0f) {
+            adapt_tau_sec_ = tau_sec;
+            adapt_tau_sea_periods_ = 0.0f;
+        }
+    }
+
+    // Common tau/sigma EMA horizon as a fraction/multiple of measured T_sea=T_z/2.
+    // This changes only averaging memory; tau_coeff_, sigma_coeff_, the sigma
+    // variance K-period horizon, and the already swept r_S horizon are untouched.
+    void setAdaptationSeaPeriods(float periods) {
+        if (std::isfinite(periods) && periods > 0.0f) {
+            adapt_tau_sea_periods_ = periods;
+        }
+    }
+
+    // Frequency EMA inside SeaStateAutoTuner, likewise expressed in T_sea=T_z/2.
+    void setTunerFreqSmoothingSeaPeriods(float periods) {
+        if (std::isfinite(periods) && periods > 0.0f) {
+            tuner_freq_ema_sea_periods_ = periods;
+            tuner_.setFrequencySmoothingSeaPeriods(periods);
+        }
+    }
+
+    // Fixed-seconds frequency-EMA compatibility mode for controlled ablations.
+    void setTunerFreqSmoothingTimeConstant(float tau_sec) {
+        if (std::isfinite(tau_sec) && tau_sec > 0.0f) {
+            tuner_freq_ema_sea_periods_ = 0.0f;
+            tuner_.setTauFreq(tau_sec);
+        }
+    }
 
     // Smoothing-horizon multiplier for the r_S channel.  The EMA time
     // constant is mult * tau_target, so the horizon follows the sea state
@@ -1695,16 +1738,26 @@ private:
         if (freeze_RS_channel_) {
             RS_target_ = frozen_RS_;
         }
-        adapt_mekf(dt, tau_target_, sigma_target_, RS_target_);
+        const float sea_time_sec = 0.5f / f_tune;  // T_sea = T_z/2
+        adapt_mekf(dt, tau_target_, sigma_target_, RS_target_, sea_time_sec);
     }
 
-    void adapt_mekf(float dt, float tau_t, float sigma_t, float RS_t) {
-        const float alpha = 1.0f - std::exp(-dt / adapt_tau_sec_);
+    void adapt_mekf(float dt, float tau_t, float sigma_t, float RS_t,
+                    float sea_time_sec) {
+        float adapt_sec = adapt_tau_sec_;
+        if (adapt_tau_sea_periods_ > 0.0f &&
+            std::isfinite(sea_time_sec) && sea_time_sec > 0.0f) {
+            adapt_sec = std::max(dt, adapt_tau_sea_periods_ * sea_time_sec);
+        }
+        const float alpha = 1.0f - std::exp(-dt / adapt_sec);
 
         const float RS_sec = seastate::common::adaptiveSmoothingHorizonSec(
             adapt_RS_mult_, tau_t, RS_t, tune_.RS_applied, adapt_RS_slew_log_, dt);
         const float alpha_RS = 1.0f - std::exp(-dt / RS_sec);
 
+        // Every valid physical sample contributes to every EMA.  The deployed
+        // activation cadence is deliberately kept separate from that sampling:
+        // it throttles parameter commits, not physical measurements or EMA input.
         tune_.tau_applied   += alpha    * (tau_t   - tune_.tau_applied);
         tune_.sigma_applied += alpha    * (sigma_t - tune_.sigma_applied);
         tune_.RS_applied    += alpha_RS * (RS_t    - tune_.RS_applied);
@@ -1910,6 +1963,8 @@ private:
     float min_R_S_                = MIN_R_S;
     float max_R_S_                = MAX_R_S;
     float adapt_tau_sec_          = ADAPT_TAU_SEC;
+    float adapt_tau_sea_periods_      = ADAPT_TAU_SEA_PERIODS;
+    float tuner_freq_ema_sea_periods_ = TUNER_FREQ_EMA_SEA_PERIODS;
     float adapt_RS_mult_          = ADAPT_RS_MULT;
     float adapt_RS_slew_log_      = ADAPT_RS_SLEW_LOG;
     float adapt_every_secs_       = ADAPT_EVERY_SECS;
