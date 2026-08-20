@@ -1747,7 +1747,10 @@ private:
         float adapt_sec = adapt_tau_sec_;
         if (adapt_tau_sea_periods_ > 0.0f &&
             std::isfinite(sea_time_sec) && sea_time_sec > 0.0f) {
-            adapt_sec = std::max(dt, adapt_tau_sea_periods_ * sea_time_sec);
+            const float safe_sea_time =
+                seastate::tuner::limits::clampDynamicEmaTimeScaleSec(sea_time_sec);
+            adapt_sec = seastate::tuner::limits::clampDynamicEmaHorizonSec(
+                adapt_tau_sea_periods_ * safe_sea_time, dt);
         }
         const float alpha = 1.0f - std::exp(-dt / adapt_sec);
 

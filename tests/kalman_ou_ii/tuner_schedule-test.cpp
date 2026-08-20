@@ -42,6 +42,55 @@ int main() {
         return 1;
     }
 
+
+    // Universal dynamic-EMA safety envelope.  The complete eight-record
+    // reference family spans T_z ~= 2.3..8.4 s, hence T_sea ~= 1.15..4.2 s;
+    // both ends must pass through unchanged rather than riding a clamp.
+    using namespace seastate::tuner::limits;
+    if (!near(clampDynamicEmaTimeScaleSec(1.15f), 1.15f) ||
+        !near(clampDynamicEmaTimeScaleSec(4.20f), 4.20f)) {
+        std::cerr << "FAIL: reference sea-time envelope touches the safety clamp\n";
+        return 1;
+    }
+    if (!near(clampDynamicEmaTimeScaleSec(0.01f), kDynamicEmaTimeScaleMinSec) ||
+        !near(clampDynamicEmaTimeScaleSec(100.0f), kDynamicEmaTimeScaleMaxSec)) {
+        std::cerr << "FAIL: dynamic EMA time-scale clamp does not catch excursions\n";
+        return 1;
+    }
+    if (!near(seastate::common::adaptiveSmoothingHorizonSec(
+                  0.001f, 0.001f, 1.0f, 1.0f, 0.0f, 0.005f),
+              kDynamicEmaHorizonMinSec) ||
+        !near(seastate::common::adaptiveSmoothingHorizonSec(
+                  100.0f, 100.0f, 1.0f, 1.0f, 0.0f, 0.005f),
+              kDynamicEmaHorizonMaxSec)) {
+        std::cerr << "FAIL: dynamic EMA final horizon guard is not universal\n";
+        return 1;
+    }
+
+    // The shared tuner must use the same guards.  At absurdly short/long input
+    // periods the deployed 0.10*T_sea frequency EMA becomes 0.05/0.60 s, and
+    // the K=2 variance horizon becomes 2/24 s.  These values are far outside
+    // the eight calibrated seas but finite and deliberately bounded.
+    {
+        SeaStateAutoTuner fast(2.0f, 1.0f);
+        fast.setFrequencySmoothingSeaPeriods(0.10f);
+        fast.update(0.005f, 0.0f, 100.0f);
+        if (!near(fast.getFrequencySmoothingHorizonSec(), 0.05f) ||
+            !near(fast.getVarianceHorizonSec(), 2.0f)) {
+            std::cerr << "FAIL: short-period tuner horizons escaped universal clamps\n";
+            return 1;
+        }
+
+        SeaStateAutoTuner slow(2.0f, 1.0f);
+        slow.setFrequencySmoothingSeaPeriods(0.10f);
+        slow.update(0.005f, 0.0f, 0.001f);
+        if (!near(slow.getFrequencySmoothingHorizonSec(), 0.60f) ||
+            !near(slow.getVarianceHorizonSec(), 24.0f)) {
+            std::cerr << "FAIL: long-period tuner horizons escaped universal clamps\n";
+            return 1;
+        }
+    }
+
     // A sample inside the activation interval must still move the EMA state.
     {
         Filter s(false);
