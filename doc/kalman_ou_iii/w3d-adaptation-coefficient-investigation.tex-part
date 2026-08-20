@@ -91,7 +91,7 @@ The law is therefore not adopted.
 A diagnostic per-sea coefficient selection separates the failure of the
 amplitude model from the period law.  Allowing each sea to select its own
 amplitude-free regularizer coefficient reaches $4.109\%H_s$ in the corresponding
-coefficient-grid summary, compared with $4.181\%H_s$ for the applied schedule.
+coefficient-grid summary, compared with $4.181\%H_s$ for the legacy cubic schedule.
 Thus a $\tau^{5/2}$ schedule can attain competitive or better error when its
 amplitude is supplied separately.  The transfer failure arises because the
 coefficient required by individual records varies systematically with the
@@ -174,7 +174,7 @@ On the ten-seed primary endpoint ($n=90$), the legacy cubic and fitted laws give
 $4.5081\%H_s$ and $4.5078\%H_s$, respectively, with paired difference
 $-0.0003\pm0.0146$ percentage points.  Attitude metrics are unchanged to the
 reported precision.  The static interpolation is therefore a statistical tie
-with the applied law and supplies no evidence for replacing it.  This is the
+with the legacy cubic law and supplies no evidence for replacing it.  This is the
 fourth observed case in the tuning study in which a deterministic improvement
 below approximately 1.5\% disappears under the paired ten-seed evaluation;
 single-realization screening is consequently treated only as a pruning tool at
