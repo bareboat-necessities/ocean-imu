@@ -52,15 +52,15 @@ Thus the physical-MSE calculation independently predicts an acceleration
 exponent $6/7\simeq0.857$ and a period exponent
 $41/14\simeq2.929$.  Neither exponent is fitted to the applied adaptation law.
 
-The result is numerically close to the applied schedule
-$r_{S,\rm appl}\propto\sigma_{aw}\tau^{5/2}$.  Since the applied mapping
+The result is numerically close to the legacy amplitude-coupled cubic schedule
+$r_{S,\rm cubic}\propto\sigma_{aw}\tau^{5/2}$.  Since the applied mapping
 $\sigma_{aw}=c_\sigma\widehat\sigma_{a,B}$ has a fixed coefficient, using
 $\sigma_{aw}$ in a normalized shape comparison is equivalent to using the
 measured acceleration amplitude.  After absorbing constant factors, the ratio
 of the two schedule shapes is
 \begin{equation}
 \boxed{
-\frac{r_{S,\rm MSE}^\star}{r_{S,\rm appl}}
+\frac{r_{S,\rm MSE}^\star}{r_{S,\rm cubic}}
 \propto
 \sigma_{aw}^{-1/7}\tau^{3/7}
 =\left(\frac{\tau^3}{\sigma_{aw}}\right)^{1/7}.}
@@ -76,13 +76,13 @@ $(\sigma_{aw},\tau)$ pairs are
 $(0.354,1.247)$, $(0.724,2.179)$, $(1.124,3.589)$, and
 $(1.420,4.222)$ in SI units.
 \begin{table}[t]
-\caption{Applied and reduced physical-MSE schedule shapes over the calibrated operating envelope.}
+\caption{Legacy cubic and reduced physical-MSE schedule shapes over the calibrated operating envelope.}
 \label{tab:adapt-reduced-mse-envelope}
 \centering
 \footnotesize
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-$H_s$ (m) & applied $\sigma_{aw}\tau^{5/2}$ & MSE $\sigma_{aw}^{6/7}\tau^{41/14}$ & MSE/applied $-1$ \\
+$H_s$ (m) & legacy cubic $\sigma_{aw}\tau^{5/2}$ & MSE $\sigma_{aw}^{6/7}\tau^{41/14}$ & MSE/applied $-1$ \\
 \midrule
 0.27 & 0.121 & 0.106 & $-12.8\%$ \\
 1.50 & 1.000 & 1.000 & $0.0\%$ \\
@@ -92,7 +92,7 @@ $H_s$ (m) & applied $\sigma_{aw}\tau^{5/2}$ & MSE $\sigma_{aw}^{6/7}\tau^{41/14}
 \end{tabular}
 \end{table}
 Therefore the first-principles reduced-MSE shape remains within approximately
-$-13\%$ to $+21\%$ of the applied $r_S$ schedule across the full calibrated
+$-13\%$ to $+21\%$ of the legacy cubic $r_S$ schedule across the full calibrated
 range when the laws share the nominal anchor.  This difference in configured
 pseudo-measurement standard deviation is substantially smaller than the raw
 range spanned by either schedule and should not be interpreted as the same
@@ -105,17 +105,17 @@ fit to the four operating points gives
 \sigma_{aw}\propto\tau^{1.107}.
 \label{eq:adapt-calibrated-sigma-tau-fit}
 \end{equation}
-Along this particular operating manifold, the applied and reduced-MSE laws
+Along this particular operating manifold, the legacy cubic and reduced-MSE laws
 therefore behave approximately as
 \begin{equation}
-r_{S,\rm appl}\propto\tau^{3.607},
+r_{S,\rm cubic}\propto\tau^{3.607},
 \qquad
 r_{S,\rm MSE}^\star\propto\tau^{3.877},
 \end{equation}
 so their ratio varies only as
 \begin{equation}
 \boxed{
-\frac{r_{S,\rm MSE}^\star}{r_{S,\rm appl}}
+\frac{r_{S,\rm MSE}^\star}{r_{S,\rm cubic}}
 \propto\tau^{0.270}.}
 \label{eq:adapt-calibrated-ratio-tau}
 \end{equation}
@@ -123,7 +123,7 @@ Equation~\eqref{eq:adapt-calibrated-sigma-tau-fit} is only a description of the
 four calibrated points, not a universal sea-state law.
 
 This comparison changes the role of the reduced physical-MSE result.  Its
-exponents are not exact matches to the applied $(1,5/2)$ pair, but over the
+exponents are not exact matches to the legacy cubic $(1,5/2)$ pair, but over the
 validated operating envelope they generate a nearby schedule without fitting
 either exponent.  The appropriate empirical test is therefore a direct paired
 comparison of
@@ -136,6 +136,12 @@ r_S\propto\sigma_{aw}\tau^{5/2},
 using the same nominal anchor or an otherwise identical one-parameter gain
 normalization for both laws and the paired ten-seed protocol.  A statistical
 tie would support Eq.~\eqref{eq:adapt-reduced-mse-law} as a first-principles
-explanation of why the empirically selected law lies near the observed optimum;
+explanation of why the former empirical cubic law lay near the observed optimum;
 a systematic difference would provide a quantitative target for the full
 21-state physical-$H_2$ model of Sec.~\ref{sec:adaptation-full-state-h2}.
+
+The paired evaluation reported in
+Sec.~\ref{sec:adaptation-reduced-mse-validation} subsequently favored the
+reduced-MSE schedule and the implementation promoted SpectralMSE to the default.
+Accordingly, the cubic curve in this subsection is a historical comparator, not
+the current deployed adaptation law.

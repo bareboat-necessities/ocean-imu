@@ -49,10 +49,9 @@ configuration to $4.482\%H_s$ for SpectralMSE, a pooled difference of
 $-0.026\,\%H_s$ with $95\,\%$ half-width $0.014$.  Four scenarios improve by
 more than their own interval, one degrades, and four are statistical ties.  The
 controlled transition also improves by $0.018\,\%H_s$, so the pooled gain is not
-purchased by a measured transient penalty.  SpectralMSE is therefore the
-default adaptation law outside the low-cost embedded configuration, while the
-cubic schedule remains a supported implementation option when transcendental
-cost dominates a sub-percent displacement difference.
+purchased by a measured transient penalty.  SpectralMSE is therefore the deployed/default adaptation law, while the cubic
+schedule remains an explicitly selectable low-cost implementation option when
+transcendental cost dominates a sub-percent displacement difference.
 
 A separate interpolation experiment tests
 $R_{a,\mathrm{eff}}=R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2$.  Its optimum

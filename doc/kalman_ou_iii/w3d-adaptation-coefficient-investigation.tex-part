@@ -4,6 +4,13 @@
 \subsection{Coefficient-Law Investigation and Transition Tradeoff}
 \label{sec:adaptation-coefficient-investigation}
 
+This subsection records coefficient experiments performed against the former
+amplitude-coupled cubic schedule.  That schedule is retained here as the
+\emph{legacy cubic comparator}; the later reduced-MSE study promoted SpectralMSE
+to the deployed default.  The numerical comparisons below are therefore
+historical evidence about the route to the present law, not a statement that
+$\sigma_{aw}\tau^3$ is currently applied.
+
 The analytical separation in Sec.~\ref{sec:adaptation} suggests three distinct
 questions: whether $c_\tau$ correctly places the OU time scale, whether the
 band-energy interpretation predicts $c_\sigma$, and how the amplitude factor in
@@ -75,7 +82,7 @@ StrongRiccati expression coincide, so $C_R$ is interpretable as a normalized
 pole placement rather than merely as a fitted gain.
 
 The amplitude-free family nevertheless fails as a global sea-state schedule.
-On the paired ten-seed primary endpoint ($n=90$), replacing the applied
+On the paired ten-seed primary endpoint ($n=90$), replacing the legacy cubic
 amplitude-dependent law by the best amplitude-free configuration changes
 normalized vertical RMS from $4.5081\%H_s$ to $4.8882\%H_s$, a paired increase
 of $0.380\pm0.096$ percentage points; six of nine scored scenarios are worse.
@@ -90,7 +97,7 @@ amplitude is supplied separately.  The transfer failure arises because the
 coefficient required by individual records varies systematically with the
 acceleration-amplitude quantity removed by Eq.~\eqref{eq:adapt-coeff-investigation-law}.
 A power-law fit in that quantity explains approximately 99\% of the
-between-record coefficient variation.  The applied law supplies a first-order
+between-record coefficient variation.  The legacy cubic law supplies a first-order
 amplitude factor through $\sigma_{aw}$; the amplitude-free law supplies none.
 
 \subsubsection{Sensor-floor plus sea-dependent leakage}
@@ -126,7 +133,7 @@ Law & mean normalized $z$ RMS (\%$H_s$) & worst record (\%$H_s$) \\
 \midrule
 Amplitude-free & 4.665 & 6.274 \\
 $R_{a,\mathrm{eff}}$ fitted & 4.153 & 4.580 \\
-Applied & 4.181 & 4.696 \\
+Legacy cubic & 4.181 & 4.696 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -153,17 +160,17 @@ p_{\mathrm{loc}}
 \end{equation}
 Thus $R_{a,\mathrm{sensor}}$ contributes at most about 0.3\% of
 $R_{a,\mathrm{eff}}$ even at the smallest tested sea.  Equation~\eqref{eq:adapt-next-rs-law}
-therefore reduces numerically to the applied linear-$\sigma_{aw}$ law.  Its
+therefore reduces numerically to the legacy linear-$\sigma_{aw}$ cubic law.  Its
 effective amplitude coefficient is
 \begin{equation}
 C_R\sqrt{\beta_m}=0.301,
 \end{equation}
-compared with the applied coefficient $0.35$.  This is also consistent with the
+compared with the legacy cubic coefficient $0.35$.  This is also consistent with the
 independent gain-optimized $p=1$ scan, whose deterministic minimum is
 $4.149\%H_s$ at coefficient $0.311$.
 
 The apparent deterministic improvement does not survive paired Monte Carlo.
-On the ten-seed primary endpoint ($n=90$), the applied and fitted laws give
+On the ten-seed primary endpoint ($n=90$), the legacy cubic and fitted laws give
 $4.5081\%H_s$ and $4.5078\%H_s$, respectively, with paired difference
 $-0.0003\pm0.0146$ percentage points.  Attitude metrics are unchanged to the
 reported precision.  The static interpolation is therefore a statistical tie
@@ -176,7 +183,7 @@ that scale.
 \subsubsection{Stationary--transition tradeoff}
 
 The tie is not uniform across operating regimes.  Let
-$\Delta_z$ denote candidate minus applied normalized vertical RMS, so negative
+$\Delta_z$ denote candidate minus legacy-cubic normalized vertical RMS, so negative
 values favor the candidate.  The two amplitude extremes show opposite patterns:
 \begin{table}[t]
 \caption{Observed tradeoff between stationary and transition behavior.}
@@ -207,7 +214,7 @@ with the electronics noise floor alone.  In the complete MEKF, low-frequency
 acceleration error also contains attitude/gravity leakage, residual bias, and
 cross-covariance coupling, all of which can vary with sea state.  The static
 interpolation experiment further shows that adding a sensor-floor term does not
-improve the applied steady-state amplitude law over the tested envelope.
+improve the legacy cubic steady-state amplitude law over the tested envelope.
 
 \subsubsection{Next analytical investigation: full-state physical error}
 

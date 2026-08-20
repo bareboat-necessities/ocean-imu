@@ -295,50 +295,44 @@ confirms this pole-placement scale within the amplitude-free family, but the
 family as a whole loses because its disturbance amplitude is held fixed across
 sea states.
 
-\subsection{Applied cubic base and cadence normalization}
+\subsection{Legacy cubic reference and deployed reduced-MSE schedule}
 \label{sec:riccati-similarity-design-guidance}
 \label{sec:riccati-deployed-cadence}
 
-The applied filter retains the dimensionally cubic base
+The fixed-corner analysis above historically led to an amplitude-coupled cubic
+schedule.  It remains useful as the comparator used in the earlier coefficient
+and cadence studies, but it is no longer the deployed OU--III default.  In that
+former schedule the dimensional base was
 \begin{equation}
 \boxed{
-r_{S,\star}^{\mathrm{base}}
+r_{S,\star}^{\mathrm{legacy,base}}
 =c_R\sigma_{aw,\star}\tau_\star^3.}
 \label{eq:adapt-rs-base}
 \end{equation}
-The cubic factor supplies the natural third-integral units, while the
-$\sigma_{aw}$ factor is now interpreted as an empirical proxy for the
-sea-dependent low-frequency error scale $\sqrt{q_{\mathrm{eff}}}$, not as a
-consequence of OU/JONSWAP similarity.  This interpretation is supported by the
-per-record coefficient study: the regularizer amplitude required by individual
-seas follows the amplitude quantity deleted by the amplitude-free law closely,
-whereas a single amplitude-independent coefficient does not transfer across the
-same records.
-
-The pseudo-update period and information-rate normalization are
+Together with the self-similar pseudo-update period
 \begin{equation}
-T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max}),
+T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max})
 \label{eq:engineering-pseudo-cadence}
 \end{equation}
+and the reference-cadence information normalization
 \begin{equation}
-r_{S,\mathrm{filter}}
-=r_{S,\mathrm{appl}}^{\mathrm{base}}
-\sqrt{\frac{T_{S,0}}{T_S}}.
+r_{S,\mathrm{filter}}^{\mathrm{legacy}}
+=r_{S,\mathrm{appl}}^{\mathrm{legacy,base}}
+\sqrt{\frac{T_{S,0}}{T_S}},
 \label{eq:engineering-rs-filter}
 \end{equation}
-Away from cadence clamps,
+the unclipped former schedule has
 \begin{equation}
 \boxed{
-r_{S,\mathrm{filter}}
-=c_R\sigma_{aw}\sqrt{\frac{T_{S,0}}{c_T}}\,
-\tau^{5/2}.}
+r_{S,\mathrm{filter}}^{\mathrm{legacy}}
+\propto\sigma_{aw}\tau^{5/2}.}
 \label{eq:deployed-effective-law}
 \end{equation}
-Thus the analytically supported $5/2$ period exponent and the empirically
-required sea-amplitude factor enter for different reasons.
+The $5/2$ exponent remains a useful fixed-corner/cadence reference, but it is
+not the displacement-MSE optimum.
 
-Combining Eqs.~\eqref{eq:adapt-omegaR}, \eqref{eq:adapt-rs-base}, and
-\eqref{eq:engineering-rs-filter} gives
+For that historical comparator, combining the reduced corner relation with
+Eqs.~\eqref{eq:adapt-rs-base} and \eqref{eq:engineering-rs-filter} gives
 \begin{equation}
 \boxed{
 (\omega_R\tau)^6
@@ -346,30 +340,55 @@ Combining Eqs.~\eqref{eq:adapt-omegaR}, \eqref{eq:adapt-rs-base}, and
  {c_R^2\sigma_{aw}^2T_{S,0}}.}
 \label{eq:adapt-cR-spectral-meaning}
 \end{equation}
-Consequently, a sea-invariant normalized corner is obtained when
-$q_{\mathrm{eff}}\propto\sigma_{aw}^2$.  The coefficient-law experiment is
-consistent with this dependence over the tested records, providing a physical
-interpretation for why the applied linear $\sigma_{aw}$ factor transfers better
-than the raw-sensor-floor alternative.  The explicit
-$R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2$ interpolation tested in
-Sec.~\ref{sec:adaptation-coefficient-investigation} collapses into this same
-linear-$\sigma_{aw}$ regime: the sensor-floor term contributes at most about
-$0.3\%$ of the fitted effective variance and the paired ten-seed endpoint is a
-statistical tie with the applied law.  Thus the tested steady-state amplitude
-families provide no supported improvement over the current schedule; the
-remaining observed headroom is associated with amplitude-response dynamics
-during sea-state transitions.
+This relation explains why the earlier amplitude-law experiments were
+informative about fixed normalized pole placement; it does not define the
+current target.
 
-The resulting applied schedule is summarized by
+The current implementation instead uses the reduced physical-MSE optimum
+derived in Sec.~\ref{sec:adaptation-reduced-mse-envelope} and fixed
+analytically in Sec.~\ref{sec:adaptation-reduced-mse-validation}.  For the
+realized target cadence
+\begin{equation}
+T_{S,\star}=\clip(c_T\tau_\star,T_{S,\min},T_{S,\max}),
+\end{equation}
+the default SpectralMSE target is
 \begin{equation}
 \boxed{
-\tau_\star=c_\tau T_{\rm sea},\qquad
-\sigma_{aw,\star}=c_\sigma\widehat\sigma_{a,B},\qquad
-r_{S,\star}^{\mathrm{base}}
-=c_R\sigma_{aw,\star}\tau_\star^3.}
+r_{S,\star}^{\mathrm{MSE}}
+=C_J q_{\mathrm{eff}}^{1/14}
+ \widehat\sigma_{a,B,\star}^{\,6/7}
+ \tau_\star^{24/7}T_{S,\star}^{-1/2},
+\qquad C_J=0.0538.}
+\label{eq:adapt-default-rs-law}
+\end{equation}
+Here the acceleration amplitude is the physical band-limited wave statistic,
+not the OU-prior standard deviation.  Under the strong-observation reduction
+used by the deployed coefficient, $q_{\mathrm{eff}}\simeq2R_a h$ to leading
+order.  The factor $T_S^{-1/2}$ is already part of
+Eq.~\eqref{eq:adapt-default-rs-law}; therefore the default SpectralMSE target is
+\emph{not} multiplied again by the reference-cadence factor of
+Eq.~\eqref{eq:engineering-rs-filter}.  Away from cadence clamps,
+$T_S\propto\tau$ and
+\begin{equation}
+\boxed{
+r_{S,\star}^{\mathrm{MSE}}
+\propto\widehat\sigma_{a,B}^{\,6/7}\tau^{41/14}.}
+\end{equation}
+Thus the deployed period exponent is $41/14\simeq2.929$, rather than $5/2$,
+and the deployed acceleration exponent is $6/7\simeq0.857$, rather than one.
+
+The resulting current schedule is summarized by
+\begin{equation}
+\boxed{
+\begin{aligned}
+\tau_\star&=c_\tau T_{\rm sea},\\
+\sigma_{aw,\star}&=c_\sigma\widehat\sigma_{a,B},\\
+r_{S,\star}&=C_J q_{\mathrm{eff}}^{1/14}
+ \widehat\sigma_{a,B}^{\,6/7}\tau_\star^{24/7}T_{S,\star}^{-1/2}.
+\end{aligned}}
 \label{eq:adapt-three-layer-summary}
 \end{equation}
-with Eq.~\eqref{eq:engineering-rs-filter} converting the cubic base to the
-per-update value.  The theory therefore predicts the time-scale mapping and the
-$\tau^{5/2}$ cadence-normalized period dependence, while the tested complete
-MEKF requires an additional sea-dependent acceleration-error scale.
+The first two mappings set the OU prior; the third separately chooses the
+integral-regularization strength by balancing drift rejection against distortion
+of genuine wave displacement.  The cubic schedule remains a supported low-cost
+comparison/fallback, but it is not the default adaptation law.

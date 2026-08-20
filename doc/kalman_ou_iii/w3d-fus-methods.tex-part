@@ -143,24 +143,27 @@ as the band-referred sensor floor.
 \subsection{Targets, smoothing, and application cadence}
 \label{sec:adaptation-target-implementation}
 
-The applied targets are
+The OU targets and the target pseudo-update period are
 \begin{equation}
 \begin{aligned}
 \tau_\star&=c_\tau\frac{\widehat T_z}{2},\\
 \widehat\sigma_{a,B,\star}
  &=\sqrt{\max(\widehat\sigma_{\mathrm{wave}}^2,\epsilon)},\\
 \sigma_{aw,\star}&=c_\sigma\widehat\sigma_{a,B,\star},\\
-r_{S,\star}^{\mathrm{base}}
- &=c_R\sigma_{aw,\star}\tau_\star^3.
+T_{S,\star}&=\clip(c_T\tau_\star,T_{S,\min},T_{S,\max}),\\
+r_{S,\star}&=C_Jq_{\mathrm{eff}}^{1/14}
+ \widehat\sigma_{a,B,\star}^{\,6/7}
+ \tau_\star^{24/7}T_{S,\star}^{-1/2}.
 \end{aligned}
 \label{eq:tuner-targets}
 \end{equation}
-The first two mappings adapt the OU prior to the measured sea.  The third uses
-$\sigma_{aw}$ as a proxy for the sea-dependent low-frequency acceleration-error
-scale identified in Sec.~\ref{sec:adaptation-rs-scaling}.  The paired
-coefficient-law experiment rejects replacing this factor by the raw sensor
-noise floor alone; Sec.~\ref{sec:adaptation-coefficient-investigation}
-quantifies that result.
+The last line is the deployed SpectralMSE law of
+Eq.~\eqref{eq:adapt-default-rs-law}, with $C_J=0.0538$.  The implementation
+uses the strong-observation reduced intensity $q_{\mathrm{eff}}\simeq2R_a h$
+and caches its $1/14$ power.  The physical wave statistic
+$\widehat\sigma_{a,B}$, rather than $\sigma_{aw}$, enters the distortion term;
+in code the tuner supplies $\sigma_{aw}=c_\sigma\widehat\sigma_{a,B}$ and the
+factor $c_\sigma$ is divided back out when evaluating the regularizer target.
 
 Applied $\tau$ and $\sigma_{aw}$ use a common EMA,
 \begin{equation}
@@ -173,55 +176,54 @@ Applied $\tau$ and $\sigma_{aw}$ use a common EMA,
 \end{aligned}
 \label{eq:adapt-ewma}
 \end{equation}
-with a sea-scaled horizon
+with the sea-scaled horizon
 \begin{equation}
 \tau_{\mathrm{adapt}}=c_{\mathrm{adapt}}T_{\mathrm{sea}},\qquad
 c_{\mathrm{adapt}}=0.40.
 \label{eq:adapt-ema-sea-time}
 \end{equation}
-The regularizer uses the slower
-sea-scaled horizon
+The regularizer target is smoothed separately,
 \begin{equation}
 \begin{aligned}
 \tau_{r_S}&=m_{r_S}\tau_\star,\qquad
 \alpha_{r_S}=1-e^{-\Delta t/\tau_{r_S}},\\
-r_{S,\mathrm{appl}}^{\mathrm{base}}&\leftarrow
- r_{S,\mathrm{appl}}^{\mathrm{base}}
- +\alpha_{r_S}(r_{S,\star}^{\mathrm{base}}
-              -r_{S,\mathrm{appl}}^{\mathrm{base}}),
+r_{S,\mathrm{appl}}&\leftarrow
+ r_{S,\mathrm{appl}}
+ +\alpha_{r_S}(r_{S,\star}-r_{S,\mathrm{appl}}),
 \end{aligned}
 \label{eq:adapt-RS}
 \end{equation}
-where $m_{r_S}=3$.  Every valid physical sample contributes to the tuner and
-to the EMAs above.  The resulting candidate is activated every \SI{0.1}{s}
-and staged by one IMU sample; this activation cadence does not decimate the
-measurement stream.  Parameters used at step $k$ are therefore measurable
-with respect to data through $k-1$.
+where the measured default is $m_{r_S}=1.5$.  Every valid physical sample
+contributes to the tuner and to all three EMAs.  The smoothed candidate is
+activated at approximately \SI{0.1}{s} intervals and staged by one IMU sample;
+this activation cadence does not decimate the measurement stream.  Parameters
+used at step $k$ are therefore measurable with respect to data through $k-1$.
 
-The pseudo-update cadence follows the applied OU time scale,
+The actual pseudo-update cadence follows the applied OU time scale,
 \begin{equation}
 T_S=\clip(c_T\tau_{\mathrm{appl}},T_{S,\min},T_{S,\max}),
 \qquad
 c_T=\frac{\SI{15}{ms}}{\SI{1.1}{s}},
 \label{eq:engineering-pseudo-cadence-implementation}
 \end{equation}
-with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{250}{ms}$.  Cadence
-renormalization gives
+with $T_{S,\min}=\SI{5}{ms}$ and $T_{S,\max}=\SI{250}{ms}$.  For the deployed
+SpectralMSE law, the $T_S^{-1/2}$ dependence is already contained in the target,
+so the filter receives
 \begin{equation}
-r_{S,\mathrm{filter}}
-=r_{S,\mathrm{appl}}^{\mathrm{base}}
- \sqrt{\frac{T_{S,0}}{T_S}},
-\qquad T_{S,0}=\SI{15}{ms},
+r_{S,\mathrm{filter}}=r_{S,\mathrm{appl}}
+\qquad\text{(SpectralMSE default).}
 \label{eq:engineering-rs-filter-implementation}
 \end{equation}
-which is the implemented form of Eq.~\eqref{eq:engineering-rs-filter}.  Away
-from clamps,
+No additional $\sqrt{T_{S,0}/T_S}$ factor is applied.  That reference-cadence
+renormalization belongs only to the supported cubic fallback described by
+Eq.~\eqref{eq:engineering-rs-filter}.  Away from cadence clamps, the deployed
+schedule therefore has
 \begin{equation}
 r_{S,\mathrm{filter}}
-\propto\sigma_{aw}\tau^{5/2},
+\propto\widehat\sigma_{a,B}^{\,6/7}\tau^{41/14},
 \end{equation}
-so the applied schedule retains the analytically derived period exponent while
-allowing the disturbance amplitude to vary with sea state.
+which is the reduced physical-MSE prediction rather than the former
+$\sigma_{aw}\tau^{5/2}$ schedule.
 
 \subsection{Three-axis application}
 
@@ -273,10 +275,10 @@ stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{m.s^{-2}}
 & base acceleration-noise floor & \SI{0.12}{m.s^{-2}} \\
 base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
 & residual accelerometer-bias OU & $\tau_b=\SI{5000}{s}$ \\
-adaptation commit / EMA horizon & $0.1/1.8$ s
-& coefficients $(c_\tau,c_\sigma,c_R)$ & $(1.0,0.9,0.35)$ \\
-$r_S$ smoothing horizon & $3\tau_\star$
-& frequency / variance horizons & \SI{1.0}{s} / $2T_{\mathrm{eff}}$ \\
+adaptation activation / common EMA horizon & $0.1$ s / $0.40T_{\mathrm{sea}}$
+& default coefficients $(c_\tau,c_\sigma,C_J)$ & $(1.0,0.9,0.0538)$ \\
+$r_S$ smoothing horizon & $1.5\tau_\star$
+& frequency / variance horizons & $0.10T_{\mathrm{sea}}$ / $2T_{\mathrm{eff}}$ \\
 variance-horizon bounds & $[0.3,60]$ s
 & pseudo-update period bounds & $[5,250]$ ms \\
 online tuning warmup / magnetometer delay & $5/7$ s
