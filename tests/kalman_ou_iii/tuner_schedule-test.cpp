@@ -28,24 +28,34 @@ int main() {
     f.last_adapt_time_sec_ = 0.0;
     f.adapt_every_secs_ = 0.05f;
 
-    // The deployed wrapper starts at tau=1.1 s and historically used a 15 ms
-    // pseudo-update period.  The new self-similar cadence must preserve that
-    // operating point exactly while scaling subsequent periods with tau.
     if (!near(f.getPseudoUpdateTauRatio(), 0.015f / 1.1f) ||
         !near(f.getPseudoUpdatePeriodSec(), 0.015f)) {
         std::cerr << "FAIL: OU-III tau-scaled pseudo cadence did not preserve the nominal point\n";
         return 1;
     }
 
-    if (!near(f.adapt_tau_sea_periods_, 0.40f) ||
-        !near(f.tuner_.getFrequencySmoothingSeaPeriods(), 0.10f)) {
-        std::cerr << "FAIL: OU-III sea-scaled EMA defaults are not 0.40/0.10 of T_sea\n";
+    // Period estimation and parameter slew are separate layers.  The common
+    // parameter EMA keeps its sea-time coefficient, but SeaStateAutoTuner must
+    // not add another frequency estimator after WavePeriodEstimator.
+    if (!near(f.adapt_tau_sea_periods_, 0.40f)) {
+        std::cerr << "FAIL: OU-III parameter-slew default is not 0.40 of T_sea\n";
         return 1;
+    }
+    {
+        SeaStateAutoTuner tuner(2.0f);
+        tuner.setFrequencySmoothingSeaPeriods(0.10f); // compatibility no-op
+        tuner.update(0.005f, 0.2f, 0.25f);
+        if (!near(tuner.getFrequencyHz(), 0.25f) ||
+            !near(tuner.getFrequencySmoothingSeaPeriods(), 0.0f) ||
+            !near(tuner.getFrequencySmoothingHorizonSec(), 0.0f)) {
+            std::cerr << "FAIL: SeaStateAutoTuner reintroduced a second frequency smoother\n";
+            return 1;
+        }
     }
 
     // Physical measurements are never cadence-decimated.  Even inside the
-    // 0.1 s parameter-activation interval, a valid sample must move the EMA
-    // candidate while leaving the active MEKF schedule untouched.
+    // parameter-activation interval, a valid sample must move the EMA candidate
+    // while leaving the active MEKF schedule untouched.
     {
         Filter s(false);
         s.time_ = 2.0;
@@ -78,11 +88,6 @@ int main() {
         std::max(f.pseudo_update_tau_ratio_ * staged_tau,
                  f.pseudo_update_period_min_s_),
         f.pseudo_update_period_max_s_);
-    // Only the Cubic base is renormalized for cadence; the Riccati and
-    // SpectralMSE laws already contain the realized T_S, so renormalizing them
-    // again would double-count it.  Mirror the filter's own rule rather than
-    // assuming a law -- this test is about staging and commit timing, not
-    // about which schedule is deployed.
     const float staged_cadence_scale =
         (f.rs_law_ == RSAdaptationLaw::Cubic)
             ? std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / staged_pseudo)
@@ -105,8 +110,6 @@ int main() {
         return 1;
     }
 
-    // Keep the check isolated from a second tuner update without invoking the
-    // public disable setter, which intentionally cancels a pending candidate.
     f.enable_tuner_ = false;
     f.updateTime(0.005f, gyro, acc);
 
@@ -121,13 +124,7 @@ int main() {
         std::cerr << "FAIL: T_S/tau is not invariant after the staged update\n";
         return 1;
     }
-    // The cadence contract differs by law, and both halves are worth pinning.
-    // Cubic states a base at the reference cadence and renormalizes, so its
-    // continuous-equivalent information rate R_S*T_S is pinned to T_S,0
-    // whatever the realized cadence.  The Riccati and SpectralMSE laws instead
-    // evaluate at the realized T_S and hand back the filter input directly, so
-    // theirs is R_S*T_S at that cadence.  Asserting the Cubic form for every
-    // law would just be asserting that Cubic is deployed.
+
     const float expected_info_product =
         staged_rs_base * staged_rs_base *
         ((f.rs_law_ == RSAdaptationLaw::Cubic) ? PSEUDO_UPDATE_PERIOD_NOMINAL_S
@@ -142,8 +139,6 @@ int main() {
         return 1;
     }
 
-    // Explicit ablation: disabling self-similar cadence restores the historical
-    // fixed 15 ms period and leaves tau free to change independently.
     f.setTauScaledPseudoUpdateCadence(false);
     const float fixed_rs_var = staged_rs_base * staged_rs_base;
     if (!near(f.getPseudoUpdatePeriodSec(), PSEUDO_UPDATE_PERIOD_NOMINAL_S) ||
@@ -158,6 +153,6 @@ int main() {
         return 1;
     }
 
-    std::cout << "OU-III predictable tuner scheduling, tau-scaled cadence, and information-rate compensation passed\n";
+    std::cout << "OU-III predictable tuner scheduling, direct canonical frequency, tau-scaled cadence, and information-rate compensation passed\n";
     return 0;
 }
