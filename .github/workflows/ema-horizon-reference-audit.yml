@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/universal-ema-horizon-clamps
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
