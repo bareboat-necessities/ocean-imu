@@ -48,7 +48,7 @@ jobs:
       - name: Build OU-III simulator
         run: make -C tests/kalman_ou_iii kalman_ou_iii-sim
 
-      - name: Run screening joint sweep
+      - name: Confirm on controlled transitions
         run: |
           mkdir -p reports/results/ou_sea_period_ema
           python3 -u tools/ou_ema_adapt_study.py transition \
@@ -56,34 +56,57 @@ jobs:
             --transition-stage confirm \
             --transition-pair large,small \
             --transition-dir up,down \
-            --transition-seeds 11 \
-            --seeds default \
+            --transition-seeds 11,12,13 \
+            --seeds default,7,99 \
             --jobs "$(nproc)" \
-            --out reports/results/ou_sea_period_ema/coarse.csv \
-            --point 'a=.05,f=.05:OU_III_ADAPT_TAU_PERIODS=.05:OU_III_TUNER_FREQ_PERIODS=.05' \
-            --point 'a=.05,f=.10:OU_III_ADAPT_TAU_PERIODS=.05:OU_III_TUNER_FREQ_PERIODS=.10' \
-            --point 'a=.05,f=.20:OU_III_ADAPT_TAU_PERIODS=.05:OU_III_TUNER_FREQ_PERIODS=.20' \
-            --point 'a=.05,f=.35:OU_III_ADAPT_TAU_PERIODS=.05:OU_III_TUNER_FREQ_PERIODS=.35' \
-            --point 'a=.10,f=.05:OU_III_ADAPT_TAU_PERIODS=.10:OU_III_TUNER_FREQ_PERIODS=.05' \
-            --point 'a=.10,f=.10:OU_III_ADAPT_TAU_PERIODS=.10:OU_III_TUNER_FREQ_PERIODS=.10' \
-            --point 'a=.10,f=.20:OU_III_ADAPT_TAU_PERIODS=.10:OU_III_TUNER_FREQ_PERIODS=.20' \
-            --point 'a=.10,f=.35:OU_III_ADAPT_TAU_PERIODS=.10:OU_III_TUNER_FREQ_PERIODS=.35' \
-            --point 'a=.20,f=.05:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.05' \
-            --point 'a=.20,f=.10:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.10' \
-            --point 'a=.20,f=.20:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.20' \
-            --point 'a=.20,f=.35:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.35' \
-            --point 'a=.35,f=.05:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.05' \
-            --point 'a=.35,f=.10:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.10' \
-            --point 'a=.35,f=.20:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.20' \
-            --point 'a=.35,f=.35:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.35'
+            --out reports/results/ou_sea_period_ema/confirm_transition.csv \
+            --point 'period_a=.20,f=.05:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.05' \
+            --point 'period_a=.35,f=.05:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.05' \
+            --point 'fixed_a=1.0,f=.25:OU_III_ADAPT_TAU_SEC=1.0:OU_III_TUNER_FREQ_TAU_SEC=.25' \
+            --point 'fixed_a=1.8,f=.25:OU_III_ADAPT_TAU_SEC=1.8:OU_III_TUNER_FREQ_TAU_SEC=.25' \
+            --point 'fixed_a=.5,f=.25:OU_III_ADAPT_TAU_SEC=.5:OU_III_TUNER_FREQ_TAU_SEC=.25'
 
-      - name: Rank screening sweep
-        run: python3 -u tools/ou_sea_period_ema_experiment.py rank
+      - name: Confirm on stationary reference seas
+        run: |
+          python3 -u tools/ou_ema_adapt_study.py confirm \
+            --family OU_III \
+            --records jonswap,pmstokes \
+            --seeds default,7,99 \
+            --jobs "$(nproc)" \
+            --out reports/results/ou_sea_period_ema/confirm_stationary.csv \
+            --point 'period_a=.20,f=.05:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.05' \
+            --point 'period_a=.35,f=.05:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.05' \
+            --point 'fixed_a=1.0,f=.25:OU_III_ADAPT_TAU_SEC=1.0:OU_III_TUNER_FREQ_TAU_SEC=.25' \
+            --point 'fixed_a=1.8,f=.25:OU_III_ADAPT_TAU_SEC=1.8:OU_III_TUNER_FREQ_TAU_SEC=.25' \
+            --point 'fixed_a=.5,f=.25:OU_III_ADAPT_TAU_SEC=.5:OU_III_TUNER_FREQ_TAU_SEC=.25'
+
+      - name: Print confirmation verdict table
+        run: |
+          python3 - <<'PY'
+          import csv
+          from pathlib import Path
+          root = Path('reports/results/ou_sea_period_ema')
+          for name in ('confirm_transition_summary.csv', 'confirm_stationary_summary.csv'):
+              print('\n===', name, '===')
+              with (root / name).open(newline='') as fh:
+                  rows = list(csv.DictReader(fh))
+              for r in rows:
+                  if name.startswith('confirm_transition') and r['segment'] not in ('blend','recover','window'):
+                      continue
+                  print(' '.join([
+                      r['label'], r['segment'],
+                      '3D='+r['rms_3d_gm'], '3Dmax='+r['rms_3d_max'],
+                      'Z='+r['z_rms_gm'], 'Zmax='+r['z_rms_max'],
+                      'RP='+r['roll_pitch_rms_gm'], 'yaw='+r['yaw_rms_gm'],
+                      'bias='+r['acc_bias_rms_3d_gm'],
+                      'regr='+r['gate_regressions'], 'score='+r['score'],
+                  ]))
+          PY
 
       - name: Upload sweep data
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou-sea-period-ema-screen
+          name: ou-sea-period-ema-confirm
           path: reports/results/ou_sea_period_ema/**
           if-no-files-found: warn
