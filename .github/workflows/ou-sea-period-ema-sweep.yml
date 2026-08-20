@@ -85,4 +85,4 @@ jobs:
           git diff --cached --check
           git diff --cached --stat
           git commit -m "Scale OU-III adaptation EMAs with sea time"
-          git push origin HEAD:agent/sea-scaled-ou-ema
+          git push origin HEAD:refs/heads/agent/sea-scaled-ou-ema
