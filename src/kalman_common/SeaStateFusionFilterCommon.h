@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "tuner/SeaStateFusionTunerCommon.h"
+#include "tuner/SeaStateAdaptationLimits.h"
 
 namespace seastate::common {
 
@@ -324,7 +325,9 @@ inline float adaptiveSmoothingHorizonSec(float mult,
                                          float slew_log,
                                          float dt)
 {
-    float horizon = mult * tau_sec;
+    const float safe_time_scale =
+        seastate::tuner::limits::clampDynamicEmaTimeScaleSec(tau_sec);
+    float horizon = mult * safe_time_scale;
 
     if (slew_log > 0.0f && target > 0.0f && applied > 0.0f &&
         std::isfinite(target) && std::isfinite(applied))
@@ -336,10 +339,11 @@ inline float adaptiveSmoothingHorizonSec(float mult,
         }
     }
 
-    // The horizon is proportional to the operating point, so a degenerate tau
-    // must not collapse it to zero and turn the EMA into a pass-through.  One
-    // step is the shortest meaningful horizon.
-    return std::max(horizon, dt);
+    // The dynamic time base and the final EMA horizon have independent
+    // guards: the latter also protects the optional discrepancy gate above
+    // from collapsing a legitimate sea-scaled horizon into sample-to-sample
+    // pass-through.
+    return seastate::tuner::limits::clampDynamicEmaHorizonSec(horizon, dt);
 }
 
 template<typename MekfPtr, typename EnterColdFn, typename ApplyTuneFn>

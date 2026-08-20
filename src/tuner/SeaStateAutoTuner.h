@@ -28,6 +28,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include "tuner/SeaStateAdaptationLimits.h"
+
 struct DebiasedEMA {
     float value  = 0.0f;
     float weight = 0.0f;
@@ -80,11 +82,18 @@ public:
         if (!std::isfinite(f_eff)) f_eff = f_min_hz;
         f_eff = std::max(f_min_hz, std::min(f_max_hz, f_eff));
 
-        const float T_eff = 1.0f / f_eff;
+        const float sea_time_sec =
+            seastate::tuner::limits::clampDynamicEmaTimeScaleSec(0.5f / f_eff);
+        const float T_eff = 2.0f * sea_time_sec;  // T_z = 2 T_sea
 
-        // Dynamic variance time constant: a few periods
-        tau_var_sec = std::max(tau_var_min_sec,
-                               std::min(tau_var_max_sec, K_periods * T_eff));
+        // Dynamic variance time constant: a few wave periods.  The local
+        // bounds remain useful for controlled studies, while the universal
+        // guard prevents any dynamically estimated horizon from escaping the
+        // shared safety envelope.
+        const float tau_var_requested = std::max(
+            tau_var_min_sec, std::min(tau_var_max_sec, K_periods * T_eff));
+        tau_var_sec = seastate::tuner::limits::clampDynamicEmaHorizonSec(
+            tau_var_requested, dt_s);
 
         // Compute alpha for variance based on dynamic tau
         const float alpha_var = 1.0f - std::exp(-dt_s / tau_var_sec);
@@ -181,9 +190,16 @@ private:
             float f = f_input_hz;
             if (!std::isfinite(f)) f = f_min_hz;
             f = std::max(f_min_hz, std::min(f_max_hz, f));
-            horizon = freq_sea_periods * (0.5f / f);
+            const float sea_time_sec =
+                seastate::tuner::limits::clampDynamicEmaTimeScaleSec(0.5f / f);
+            horizon = seastate::tuner::limits::clampDynamicEmaHorizonSec(
+                freq_sea_periods * sea_time_sec, dt_s);
+            tau_freq_applied_sec = horizon;
+        } else {
+            // Explicit fixed-seconds compatibility mode is not dynamically
+            // estimated, so preserve the caller's requested ablation value.
+            tau_freq_applied_sec = std::max(1e-3f, horizon);
         }
-        tau_freq_applied_sec = std::max(1e-3f, horizon);
         alpha_freq = 1.0f - std::exp(-dt_s / tau_freq_applied_sec);
     }
 };
