@@ -2,18 +2,19 @@
 """Summarize dynamically computed EMA horizons on the reference simulations.
 
 The three filter families print the final tuning operating point for each of the
-same eight versioned wave records.  With the deployed coefficients:
+same eight versioned wave records. With the deployed coefficients:
 
   T_sea = tau_target                    (all three currently use c_tau = 1)
   tau_common = 0.40 * T_sea
   tau_freq   = 0.10 * T_sea = 0.05 * T_z
   tau_var    = 2 * T_z = 4 * T_sea
   tau_reg    = c_reg * tau_target
+  tau_period_estimator = 8 * T_z
 
 where c_reg is 1.5 for OU-III and 3.0 for OU-II/TFG.
 
 This tool intentionally derives the *unclamped requested* horizons from the
-reference logs.  It is an evidence tool for choosing safety bounds, not part of
+reference logs. It is an evidence tool for choosing safety bounds, not part of
 the runtime implementation.
 """
 
@@ -58,6 +59,10 @@ class Row:
     @property
     def regularizer(self) -> float:
         return REG_MULT[self.family] * self.tau_target
+
+    @property
+    def period_estimator(self) -> float:
+        return 8.0 * self.wave_period
 
 
 def parse_log(family: str, path: pathlib.Path) -> list[Row]:
@@ -113,11 +118,15 @@ def main() -> int:
             raise SystemExit(f"bad --log {spec!r}; expected ou3=..., ou2=..., or tfg=...")
         rows.extend(parse_log(family, pathlib.Path(raw_path)))
 
-    print("family,record,tau_target_s,wave_period_s,freq_ema_s,common_ema_s,variance_ema_s,regularizer_ema_s")
+    print(
+        "family,record,tau_target_s,wave_period_s,freq_ema_s,common_ema_s,"
+        "variance_ema_s,regularizer_ema_s,period_estimator_ema_s"
+    )
     for r in rows:
         print(
             f"{r.family},{r.record},{r.tau_target:.6f},{r.wave_period:.6f},"
-            f"{r.freq:.6f},{r.common:.6f},{r.variance:.6f},{r.regularizer:.6f}"
+            f"{r.freq:.6f},{r.common:.6f},{r.variance:.6f},{r.regularizer:.6f},"
+            f"{r.period_estimator:.6f}"
         )
 
     channels = {
@@ -125,6 +134,7 @@ def main() -> int:
         "common_tau_sigma": [r.common for r in rows],
         "variance": [r.variance for r in rows],
         "regularizer": [r.regularizer for r in rows],
+        "wave_period_estimator": [r.period_estimator for r in rows],
     }
     print("\nGLOBAL_HORIZON_RANGES")
     all_values: list[float] = []
