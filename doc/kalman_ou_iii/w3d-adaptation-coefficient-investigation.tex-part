@@ -61,7 +61,7 @@ r_{S,\mathrm{base}}
 =C_R\sqrt{R_a}\,\tau^3,
 \label{eq:adapt-coeff-investigation-law}
 \end{equation}
-followed by the same cadence normalization as the applied filter.  For
+followed by the same reference-cadence normalization as the legacy cubic comparator.  For
 $h=\SI{5}{ms}$, $T_{S,0}=\SI{15}{ms}$, and
 $\kappa=0.3627$, the scalar pole-placement relation
 \begin{equation}

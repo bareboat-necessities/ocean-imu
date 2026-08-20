@@ -50,7 +50,7 @@ r_{S,\rm MSE}^\star
 \end{equation}
 Thus the physical-MSE calculation independently predicts an acceleration
 exponent $6/7\simeq0.857$ and a period exponent
-$41/14\simeq2.929$.  Neither exponent is fitted to the applied adaptation law.
+$41/14\simeq2.929$.  Neither exponent was fitted to the legacy cubic comparator; they are the exponents of the deployed SpectralMSE schedule.
 
 The result is numerically close to the legacy amplitude-coupled cubic schedule
 $r_{S,\rm cubic}\propto\sigma_{aw}\tau^{5/2}$.  Since the applied mapping
@@ -82,7 +82,7 @@ $(1.420,4.222)$ in SI units.
 \footnotesize
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-$H_s$ (m) & legacy cubic $\sigma_{aw}\tau^{5/2}$ & MSE $\sigma_{aw}^{6/7}\tau^{41/14}$ & MSE/applied $-1$ \\
+$H_s$ (m) & legacy cubic $\sigma_{aw}\tau^{5/2}$ & MSE $\sigma_{aw}^{6/7}\tau^{41/14}$ & MSE/cubic $-1$ \\
 \midrule
 0.27 & 0.121 & 0.106 & $-12.8\%$ \\
 1.50 & 1.000 & 1.000 & $0.0\%$ \\
