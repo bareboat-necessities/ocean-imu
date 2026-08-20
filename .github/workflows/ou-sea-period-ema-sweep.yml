@@ -1,28 +1,31 @@
-name: OU sea-period EMA sweep
+name: OU sea-period EMA promotion
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - tools/ou_sea_period_ema_experiment.py
-      - tools/ou_sea_period_ema_preserve_cadence.py
+      - tools/ou_sea_period_ema_promote.py
       - .github/workflows/ou-sea-period-ema-sweep.yml
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: ou-sea-period-ema-pr-${{ github.event.pull_request.number }}
+  group: ou-sea-period-ema-promote-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  sweep:
+  promote:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.ref == 'agent/sea-scaled-ou-ema'
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
+    timeout-minutes: 90
     steps:
-      - name: Checkout
+      - name: Checkout experiment branch
         uses: actions/checkout@v6
+        with:
+          ref: agent/sea-scaled-ou-ema
+          fetch-depth: 0
 
       - name: Install dependencies
         run: |
@@ -40,73 +43,46 @@ jobs:
             --clobber
           unzip -o sim-data-files.zip -d tests/kalman_ou_iii >/dev/null
 
-      - name: Patch runner checkout for experiment
+      - name: Apply confirmed production patch
+        run: python3 tools/ou_sea_period_ema_promote.py
+
+      - name: Build OU-III simulator and relevant tests
         run: |
-          python3 tools/ou_sea_period_ema_experiment.py patch
-          python3 tools/ou_sea_period_ema_preserve_cadence.py
+          make -C tests/kalman_ou_iii \
+            kalman_ou_iii-sim tuner_schedule-test tuner_coupling-test \
+            wave_band_sigma-test rs_law-test
 
-      - name: Build OU-III simulator
-        run: make -C tests/kalman_ou_iii kalman_ou_iii-sim
-
-      - name: Confirm on controlled transitions
+      - name: Run relevant OU-III tests
         run: |
-          mkdir -p reports/results/ou_sea_period_ema
-          python3 -u tools/ou_ema_adapt_study.py transition \
-            --family OU_III \
-            --transition-stage confirm \
-            --transition-pair large,small \
-            --transition-dir up,down \
-            --transition-seeds 11,12,13 \
-            --seeds default,7,99 \
-            --jobs "$(nproc)" \
-            --out reports/results/ou_sea_period_ema/confirm_transition.csv \
-            --point 'period_a=.20,f=.05:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.05' \
-            --point 'period_a=.35,f=.05:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.05' \
-            --point 'fixed_a=1.0,f=.25:OU_III_ADAPT_TAU_SEC=1.0:OU_III_TUNER_FREQ_TAU_SEC=.25' \
-            --point 'fixed_a=1.8,f=.25:OU_III_ADAPT_TAU_SEC=1.8:OU_III_TUNER_FREQ_TAU_SEC=.25' \
-            --point 'fixed_a=.5,f=.25:OU_III_ADAPT_TAU_SEC=.5:OU_III_TUNER_FREQ_TAU_SEC=.25'
+          tests/kalman_ou_iii/tuner_schedule-test
+          tests/kalman_ou_iii/tuner_coupling-test
+          tests/kalman_ou_iii/wave_band_sigma-test
+          tests/kalman_ou_iii/rs_law-test
 
-      - name: Confirm on stationary reference seas
+      - name: Inspect production diff
         run: |
-          python3 -u tools/ou_ema_adapt_study.py confirm \
-            --family OU_III \
-            --records jonswap,pmstokes \
-            --seeds default,7,99 \
-            --jobs "$(nproc)" \
-            --out reports/results/ou_sea_period_ema/confirm_stationary.csv \
-            --point 'period_a=.20,f=.05:OU_III_ADAPT_TAU_PERIODS=.20:OU_III_TUNER_FREQ_PERIODS=.05' \
-            --point 'period_a=.35,f=.05:OU_III_ADAPT_TAU_PERIODS=.35:OU_III_TUNER_FREQ_PERIODS=.05' \
-            --point 'fixed_a=1.0,f=.25:OU_III_ADAPT_TAU_SEC=1.0:OU_III_TUNER_FREQ_TAU_SEC=.25' \
-            --point 'fixed_a=1.8,f=.25:OU_III_ADAPT_TAU_SEC=1.8:OU_III_TUNER_FREQ_TAU_SEC=.25' \
-            --point 'fixed_a=.5,f=.25:OU_III_ADAPT_TAU_SEC=.5:OU_III_TUNER_FREQ_TAU_SEC=.25'
+          git status --short
+          git diff --check
+          git diff --stat -- \
+            src/tuner/SeaStateAutoTuner.h \
+            src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h \
+            tests/kalman_ou_iii/kalman_ou_iii-sim.cpp \
+            tests/kalman_ou_iii/tuner_schedule-test.cpp \
+            docs/ou-ema-adaptation-tuning.md \
+            doc/kalman_ou_iii/w3d-fus-methods.tex-part
 
-      - name: Print confirmation verdict table
+      - name: Commit production changes to branch
         run: |
-          python3 - <<'PY'
-          import csv
-          from pathlib import Path
-          root = Path('reports/results/ou_sea_period_ema')
-          for name in ('confirm_transition_summary.csv', 'confirm_stationary_summary.csv'):
-              print('\n===', name, '===')
-              with (root / name).open(newline='') as fh:
-                  rows = list(csv.DictReader(fh))
-              for r in rows:
-                  if name.startswith('confirm_transition') and r['segment'] not in ('blend','recover','window'):
-                      continue
-                  print(' '.join([
-                      r['label'], r['segment'],
-                      '3D='+r['rms_3d_gm'], '3Dmax='+r['rms_3d_max'],
-                      'Z='+r['z_rms_gm'], 'Zmax='+r['z_rms_max'],
-                      'RP='+r['roll_pitch_rms_gm'], 'yaw='+r['yaw_rms_gm'],
-                      'bias='+r['acc_bias_rms_3d_gm'],
-                      'regr='+r['gate_regressions'], 'score='+r['score'],
-                  ]))
-          PY
-
-      - name: Upload sweep data
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou-sea-period-ema-confirm
-          path: reports/results/ou_sea_period_ema/**
-          if-no-files-found: warn
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            src/tuner/SeaStateAutoTuner.h \
+            src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h \
+            tests/kalman_ou_iii/kalman_ou_iii-sim.cpp \
+            tests/kalman_ou_iii/tuner_schedule-test.cpp \
+            docs/ou-ema-adaptation-tuning.md \
+            doc/kalman_ou_iii/w3d-fus-methods.tex-part
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m "Scale OU-III adaptation EMAs with sea time"
+          git push origin HEAD:agent/sea-scaled-ou-ema
