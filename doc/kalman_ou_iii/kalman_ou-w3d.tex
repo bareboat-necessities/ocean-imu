@@ -234,7 +234,6 @@ extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, 
 % Part II: adaptive design.  Logical order is observable sea state -> OU maps ->
 % pseudo-measurement cadence -> reduced physical-MSE law -> deployed schedule.
 \input{w3d-adaptation-motivation.tex-part}
-\input{w3d-adaptation-literature-context.tex-part}
 % Dimensional cubic base and per-update information-rate normalization.
 \input{w3d-adaptation-cadence-interpretation.tex-part}
 % Reduced physical-MSE derivation and analytical coefficient validation.
@@ -246,6 +245,9 @@ extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, 
 \input{w3d-rs-anisotropy-design.tex-part}
 % Remaining deployed smoothing, staging, cadence, and safety bounds.
 \input{w3d-fus-methods.tex-part}
+% Filtering/Riccati and marine virtual-reference precedent, after the complete
+% adaptation design so it does not interrupt the design argument.
+\input{w3d-adaptation-literature-context.tex-part}
 
 % Part III: initialization, magnetic alignment, then the stability statements
 % for the architecture just defined.
