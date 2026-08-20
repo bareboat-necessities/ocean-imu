@@ -1,25 +1,11 @@
 #!/usr/bin/env python3
-"""Paired retuning study for the OU-III sea-time/statistics pipeline.
+"""Paired retuning study for the OU-III period/statistics pipeline.
 
-The refactored path has three statistical horizons before the existing parameter
-slew dynamics:
-
-* WavePeriodEstimator moment horizon K_T * T_z (compile-time constructor default)
-* WavePeriodEstimator canonical log(T_z) EMA K_log * T_z (compile-time default)
-* SeaStateAutoTuner acceleration-moment horizon K_sigma * T_z (runtime setter)
-
-Two downstream scheduler horizons are rechecked after the statistical defaults
-are selected:
-
-* common tau/sigma slew c_adapt * T_sea
-* r_S slew m_RS * tau_target
-
-For every candidate the harness replays identical records and seeds, reports
-paired log-ratios against the axis baseline, and includes the controlled
-1.5 -> 4.0 m transition with separate blend/recovery segments.  Lower error is
-better.  Compile-time axes are implemented by patching constructor defaults in
-the disposable Actions checkout, compiling a private simulator binary, then
-restoring the source before the next candidate; production APIs remain clean.
+Compile-time axes patch constructor defaults only in the disposable checkout;
+runtime axes use existing simulator environment overrides. Every candidate is
+compared with the axis baseline on identical records/seeds using paired log
+ratios. The controlled 1.5 -> 4.0 m transition is also scored over blend and
+recovery segments so a smoother cannot win merely by being slow.
 """
 
 from __future__ import annotations
@@ -128,59 +114,65 @@ def transition_record(wave_seed: int, data_dir: Path, tmpdir: Path) -> Path:
         TRANSITION_START_SEC,
         TRANSITION_END_SEC,
     )
-    path = tmpdir / f"wave{wave_seed}" / "wave_data_jonswap_H4.000_L202.839_A-30.00_P120.00.csv"
+    path = (
+        tmpdir
+        / f"wave{wave_seed}"
+        / "wave_data_jonswap_H4.000_L202.839_A-30.00_P120.00.csv"
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     ouv.write_wave_csv(path, columns, generated)
     return path
 
 
-def patch_default(axis: str, value: str, original_wave: str, original_tuner: str) -> None:
-    wave = ROOT / "src" / "tuner" / "WavePeriodEstimator.h"
-    tuner = ROOT / "src" / "tuner" / "SeaStateAutoTuner.h"
-    wave_text = original_wave
-    tuner_text = original_tuner
+def patch_default(axis: str, value: str, original_wave: str) -> None:
+    path = ROOT / "src" / "tuner" / "WavePeriodEstimator.h"
+    text = original_wave
     if axis == "moment":
-        wave_text, n = re.subn(
+        text, count = re.subn(
             r"float moment_horizon_periods = [0-9.]+f,",
             f"float moment_horizon_periods = {float(value):.8g}f,",
-            wave_text,
+            text,
             count=1,
         )
-        if n != 1:
-            raise SystemExit("could not patch moment_horizon_periods default")
     elif axis == "log":
-        wave_text, n = re.subn(
+        text, count = re.subn(
             r"float log_smoothing_periods = [0-9.]+f,",
             f"float log_smoothing_periods = {float(value):.8g}f,",
-            wave_text,
+            text,
             count=1,
         )
-        if n != 1:
-            raise SystemExit("could not patch log_smoothing_periods default")
     else:
-        raise SystemExit(f"axis {axis} is not compile-time")
-    wave.write_text(wave_text, encoding="utf-8")
-    tuner.write_text(tuner_text, encoding="utf-8")
+        raise SystemExit(f"not a compile-time axis: {axis}")
+    if count != 1:
+        raise SystemExit(f"failed to patch {axis} default")
+    path.write_text(text, encoding="utf-8")
 
 
-def restore_sources(original_wave: str, original_tuner: str) -> None:
-    (ROOT / "src" / "tuner" / "WavePeriodEstimator.h").write_text(original_wave, encoding="utf-8")
-    (ROOT / "src" / "tuner" / "SeaStateAutoTuner.h").write_text(original_tuner, encoding="utf-8")
-
-
-def build_binary(out: Path) -> None:
+def build_binary(out: Path | None = None) -> Path:
     work = ROOT / "tests" / "kalman_ou_iii"
-    subprocess.run(["make", "clean"], cwd=work, check=False, stdout=subprocess.DEVNULL)
+    subprocess.run(
+        ["make", "clean"], cwd=work, check=False, stdout=subprocess.DEVNULL
+    )
     subprocess.run(["make", "build"], cwd=work, check=True)
     src = work / "kalman_ou_iii-sim"
     if not src.exists():
-        raise SystemExit(f"build did not produce {src}")
+        raise SystemExit(f"missing {src}")
+    if out is None or out.resolve() == src.resolve():
+        src.chmod(0o755)
+        return src
     shutil.copy2(src, out)
     out.chmod(0o755)
+    return out
 
 
-def run_one(binary: Path, record: Path, env_name: str | None, value: str,
-            seed: int | None, segments: bool) -> dict[str, float]:
+def run_one(
+    binary: Path,
+    record: Path,
+    env_name: str | None,
+    value: str,
+    seed: int | None,
+    segments: bool,
+) -> dict[str, float]:
     env = dict(os.environ)
     env["W3D_WRITE_TIMESERIES"] = "0"
     env["W3D_COLLECT_ALL_GATES"] = "1"
@@ -207,11 +199,24 @@ def run_one(binary: Path, record: Path, env_name: str | None, value: str,
         parsed = ouv.parse_validation_metrics(completed.stdout)
     except ValueError:
         sys.stderr.write(completed.stdout[-4000:] + completed.stderr[-4000:])
-        raise SystemExit(f"no VALIDATION_METRICS for {record.name} value={value} seed={seed}")
+        raise SystemExit(
+            f"no VALIDATION_METRICS for {record.name} value={value} seed={seed}"
+        )
     return {field: float(parsed.get(field, float("nan"))) for field in FIELDS}
 
 
-def ratio_summary(logs: list[float]) -> tuple[float, float, float]:
+def paired_logs(raw, metric, value, baseline, keys, seeds):
+    logs = []
+    for key in keys:
+        for seed in seeds:
+            num = raw[(key, value, seed)][metric]
+            den = raw[(key, baseline, seed)][metric]
+            if num > 0.0 and den > 0.0 and math.isfinite(num) and math.isfinite(den):
+                logs.append(math.log(num / den))
+    return logs
+
+
+def ratio_summary(logs):
     if not logs:
         return float("nan"), float("nan"), float("nan")
     mean = sum(logs) / len(logs)
@@ -222,24 +227,21 @@ def ratio_summary(logs: list[float]) -> tuple[float, float, float]:
     return math.exp(mean), math.exp(mean - half), math.exp(mean + half)
 
 
-def paired_logs(raw, metric, value, baseline, scenario_keys, seeds):
-    out = []
-    for key in scenario_keys:
-        for seed in seeds:
-            num = raw[(key, value, seed)][metric]
-            den = raw[(key, baseline, seed)][metric]
-            if num > 0.0 and den > 0.0 and math.isfinite(num) and math.isfinite(den):
-                out.append(math.log(num / den))
-    return out
-
-
 def fmt_ratio(summary):
-    r, lo, hi = summary
-    if not math.isfinite(r):
+    ratio, lo, hi = summary
+    if not math.isfinite(ratio):
         return "n/a"
     if math.isfinite(lo) and math.isfinite(hi):
-        return f"{100*(r-1):+.3f}% [{100*(lo-1):+.3f},{100*(hi-1):+.3f}]"
-    return f"{100*(r-1):+.3f}%"
+        return (
+            f"{100 * (ratio - 1):+.3f}% "
+            f"[{100 * (lo - 1):+.3f},{100 * (hi - 1):+.3f}]"
+        )
+    return f"{100 * (ratio - 1):+.3f}%"
+
+
+def finite_mean(values):
+    vals = [x for x in values if math.isfinite(x)]
+    return sum(vals) / len(vals) if vals else float("nan")
 
 
 def main() -> int:
@@ -249,13 +251,19 @@ def main() -> int:
     ap.add_argument("--baseline")
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--jobs", type=int, default=max(1, os.cpu_count() or 2))
-    ap.add_argument("--data-dir", type=Path, default=ROOT / "tests" / "kalman_ou_iii")
+    ap.add_argument(
+        "--data-dir", type=Path, default=ROOT / "plots" / "kalman_ou_iii"
+    )
     ap.add_argument("--csv", type=Path)
     ap.add_argument("--report", type=Path)
     args = ap.parse_args()
 
     spec = AXES[args.axis]
-    values = tuple(v.strip() for v in args.values.split(",")) if args.values else spec["values"]
+    values = (
+        tuple(v.strip() for v in args.values.split(","))
+        if args.values
+        else spec["values"]
+    )
     baseline = args.baseline or spec["baseline"]
     if baseline not in values:
         raise SystemExit(f"baseline {baseline} not in values {values}")
@@ -264,101 +272,125 @@ def main() -> int:
     tmp_holder = tempfile.TemporaryDirectory(prefix="ou_period_retune_")
     tmp = Path(tmp_holder.name)
     transition = transition_record(11, args.data_dir, tmp)
-    scenarios = [(record, False) for _, _, record in STATIONARY]
-    scenarios.append((str(transition), True))
+    scenarios = [
+        (args.data_dir / filename, False) for _, _, filename in STATIONARY
+    ]
+    scenarios.append((transition, True))
 
     wave_path = ROOT / "src" / "tuner" / "WavePeriodEstimator.h"
-    tuner_path = ROOT / "src" / "tuner" / "SeaStateAutoTuner.h"
     original_wave = wave_path.read_text(encoding="utf-8")
-    original_tuner = tuner_path.read_text(encoding="utf-8")
-
     binaries: dict[str, Path] = {}
-    default_binary = ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim"
     try:
         if spec["kind"] == "compile":
             for value in values:
-                patch_default(args.axis, value, original_wave, original_tuner)
-                out = tmp / f"kalman_ou_iii-sim-{args.axis}-{value.replace('.', '_')}"
-                build_binary(out)
-                binaries[value] = out
-                restore_sources(original_wave, original_tuner)
+                patch_default(args.axis, value, original_wave)
+                binaries[value] = build_binary(
+                    tmp / f"sim-{args.axis}-{value.replace('.', '_')}"
+                )
+                wave_path.write_text(original_wave, encoding="utf-8")
         else:
-            restore_sources(original_wave, original_tuner)
-            build_binary(default_binary)
-            binaries = {value: default_binary for value in values}
+            wave_path.write_text(original_wave, encoding="utf-8")
+            binary = build_binary()
+            binaries = {value: binary for value in values}
     finally:
-        restore_sources(original_wave, original_tuner)
+        wave_path.write_text(original_wave, encoding="utf-8")
 
-    raw: dict[tuple[str, str, int | None], dict[str, float]] = {}
-    jobs = []
+    raw = {}
+    pending = []
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        for scenario, segments in scenarios:
-            record = Path(scenario)
-            key = "transition" if segments else record.name
+        for record, is_transition in scenarios:
+            key = "transition" if is_transition else record.name
             for value in values:
                 for seed in seeds:
-                    fut = pool.submit(
+                    future = pool.submit(
                         run_one,
                         binaries[value],
                         record,
                         spec.get("env"),
                         value,
                         seed,
-                        segments,
+                        is_transition,
                     )
-                    jobs.append((key, value, seed, fut))
-        for key, value, seed, fut in jobs:
-            raw[(key, value, seed)] = fut.result()
+                    pending.append((key, value, seed, future))
+        for key, value, seed, future in pending:
+            raw[(key, value, seed)] = future.result()
 
-    stationary_keys = [name for _, _, name in STATIONARY]
+    stationary_keys = [filename for _, _, filename in STATIONARY]
     transition_keys = ["transition"]
-    rows = []
     report_lines = [
         f"# OU-III period/statistics retune: {args.axis}",
         "",
         f"seeds={args.seeds}; baseline={baseline}; values={', '.join(values)}",
         "",
-        "Ratios are paired geometric means against the baseline; negative is better.",
+        "Paired geometric-mean ratios vs baseline; negative is better.",
         "",
-        "| value | stationary Z | stationary 3D | transition blend Z | transition recover Z | settled period | sigma |",
+        "| value | stationary Z | stationary 3D | blend Z | recover Z | mean Tz [s] | mean sigma [m/s2] |",
         "|---:|---:|---:|---:|---:|---:|---:|",
     ]
 
     for value in values:
-        st_z = ratio_summary(paired_logs(raw, "disp_z_rms_m", value, baseline, stationary_keys, seeds))
-        st_3d = ratio_summary(paired_logs(raw, "disp_3d_rms_m", value, baseline, stationary_keys, seeds))
-        tr_blend = ratio_summary(paired_logs(raw, "seg_blend_disp_z_rms_m", value, baseline, transition_keys, seeds))
-        tr_recover = ratio_summary(paired_logs(raw, "seg_recover_disp_z_rms_m", value, baseline, transition_keys, seeds))
-
-        period_vals = [raw[(key, value, seed)]["wave_period_s"] for key in stationary_keys for seed in seeds]
-        sigma_vals = [raw[(key, value, seed)]["sigma_applied_mps2"] for key in stationary_keys for seed in seeds]
-        mean_period = sum(x for x in period_vals if math.isfinite(x)) / max(1, sum(math.isfinite(x) for x in period_vals))
-        mean_sigma = sum(x for x in sigma_vals if math.isfinite(x)) / max(1, sum(math.isfinite(x) for x in sigma_vals))
-        rows.append({
-            "axis": args.axis,
-            "value": value,
-            "baseline": baseline,
-            "stationary_z_ratio": st_z[0],
-            "stationary_z_lo": st_z[1],
-            "stationary_z_hi": st_z[2],
-            "stationary_3d_ratio": st_3d[0],
-            "transition_blend_z_ratio": tr_blend[0],
-            "transition_recover_z_ratio": tr_recover[0],
-            "mean_wave_period_s": mean_period,
-            "mean_sigma_applied_mps2": mean_sigma,
-        })
+        st_z = ratio_summary(
+            paired_logs(raw, "disp_z_rms_m", value, baseline, stationary_keys, seeds)
+        )
+        st_3d = ratio_summary(
+            paired_logs(raw, "disp_3d_rms_m", value, baseline, stationary_keys, seeds)
+        )
+        tr_blend = ratio_summary(
+            paired_logs(
+                raw,
+                "seg_blend_disp_z_rms_m",
+                value,
+                baseline,
+                transition_keys,
+                seeds,
+            )
+        )
+        tr_recover = ratio_summary(
+            paired_logs(
+                raw,
+                "seg_recover_disp_z_rms_m",
+                value,
+                baseline,
+                transition_keys,
+                seeds,
+            )
+        )
+        mean_period = finite_mean(
+            raw[(key, value, seed)]["wave_period_s"]
+            for key in stationary_keys
+            for seed in seeds
+        )
+        mean_sigma = finite_mean(
+            raw[(key, value, seed)]["sigma_applied_mps2"]
+            for key in stationary_keys
+            for seed in seeds
+        )
         report_lines.append(
-            f"| {value} | {fmt_ratio(st_z)} | {fmt_ratio(st_3d)} | {fmt_ratio(tr_blend)} | {fmt_ratio(tr_recover)} | {mean_period:.4f} | {mean_sigma:.4f} |"
+            f"| {value} | {fmt_ratio(st_z)} | {fmt_ratio(st_3d)} | "
+            f"{fmt_ratio(tr_blend)} | {fmt_ratio(tr_recover)} | "
+            f"{mean_period:.4f} | {mean_sigma:.4f} |"
         )
 
-    # Raw per-run appendix makes the study independently auditable.
     if args.csv:
         args.csv.parent.mkdir(parents=True, exist_ok=True)
-        with args.csv.open("w", newline="", encoding="utf-8") as fh:
-            writer = csv.DictWriter(fh, fieldnames=["scenario", "value", "seed", *FIELDS], lineterminator="\n")
+        with args.csv.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(
+                stream,
+                fieldnames=["scenario", "value", "seed", *FIELDS],
+                lineterminator="\n",
+            )
             writer.writeheader()
-            for (scenario, value, seed), metrics in sorted(raw.items(), key=lambda x: (x[0][0], x[0][1], str(x[0][2]))):
-                writer.writerow({"scenario": scenario, "value": value, "seed": "default" if seed is None else seed, **metrics})
+            for (scenario, value, seed), metrics in sorted(
+                raw.items(), key=lambda item: (item[0][0], item[0][1], str(item[0][2]))
+            ):
+                writer.writerow(
+                    {
+                        "scenario": scenario,
+                        "value": value,
+                        "seed": "default" if seed is None else seed,
+                        **metrics,
+                    }
+                )
 
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
