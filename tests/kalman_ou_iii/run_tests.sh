@@ -13,5 +13,6 @@
 ./wave_band_sigma-test
 ./iss_contract-test
 ./live_basin_diagnostic
+python3 ../../tools/ou_live_basin_interval_proof.py --repo-root ../..
 ./rs_law-test
 ./startup_init-test
