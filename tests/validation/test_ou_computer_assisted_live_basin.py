@@ -48,6 +48,9 @@ class ComputerAssistedLiveBasinProofTests(unittest.TestCase):
             v["q_frozen_horizon_lower"],
         )
         self.assertGreater(v["deltaH_lower"], v["delta_frozen_lower"])
+        # The final-sample full-state floor really is limited by the integrated
+        # translational block, not by the residual accelerometer-bias OU state.
+        self.assertGreater(v["qba_step_lower"], v["q_step_lower"])
 
     def test_detectability_and_lifted_nonlinear_closures_are_computed(self):
         v = self.run_proof()
@@ -73,8 +76,8 @@ class ComputerAssistedLiveBasinProofTests(unittest.TestCase):
             r"\label{eq:iss-ca-delta-num}",
             r"\label{eq:iss-ca-chi-margin}",
             "source-enforced OU standard-deviation floor",
-            "not a useful numerical handoff radius",
-            "no reference-sea simulation is needed",
+            "operationally useless",
+            "No reference-sea simulation is needed",
         ):
             self.assertIn(marker, text)
 
