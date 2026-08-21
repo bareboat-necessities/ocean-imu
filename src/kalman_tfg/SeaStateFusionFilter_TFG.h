@@ -176,7 +176,6 @@ constexpr float SIGMA_BAND_MAX_HZ_DEFAULT     = 6.0f;
 // remains available through the setters below.
 constexpr float ADAPT_TAU_SEC_DEFAULT              = 1.8f;
 constexpr float ADAPT_TAU_SEA_PERIODS_DEFAULT      = 0.40f;
-constexpr float TUNER_FREQ_EMA_SEA_PERIODS_DEFAULT = 0.10f;
 
 // sigma_a averaging horizon in periods of the tuning frequency.  It has to be
 // stated here rather than left to SeaStateAutoTuner's own default, because TFG
@@ -391,11 +390,7 @@ public:
         mekf_.set_Q_bgyro_rw(Vector3f::Constant(cfg.gyro_bias_rw_var));
         Racc_nominal_ = cfg.sigma_a;
 
-        tuner_ = ::SeaStateAutoTuner(TUNER_SIGMA_VAR_K_PERIODS_DEFAULT,
-                                     tuner_freq_tau_sec_);
-        if (tuner_freq_ema_sea_periods_ > 0.0f) {
-            tuner_.setFrequencySmoothingSeaPeriods(tuner_freq_ema_sea_periods_);
-        }
+        tuner_ = ::SeaStateAutoTuner(TUNER_SIGMA_VAR_K_PERIODS_DEFAULT);
         sea_time_sec_ = 0.5f / 0.2f;
         wave_period_.reset();
         vertical_complementary_.setGains(cfg.proxy_two_kp, cfg.proxy_two_ki);
@@ -621,19 +616,12 @@ public:
             adapt_tau_sea_periods_ = periods;
         }
     }
-    void setTunerFreqSmoothingSeaPeriods(float periods) {
-        if (periods > 0.0f && std::isfinite(periods)) {
-            tuner_freq_ema_sea_periods_ = periods;
-            tuner_.setFrequencySmoothingSeaPeriods(periods);
-        }
-    }
-    void setTunerFreqSmoothingTimeConstant(float tau_sec) {
-        if (tau_sec > 0.0f && std::isfinite(tau_sec)) {
-            tuner_freq_tau_sec_ = tau_sec;
-            tuner_freq_ema_sea_periods_ = 0.0f;
-            tuner_.setTauFreq(tau_sec);
-        }
-    }
+    // No-ops kept so existing ablation scripts still compile and run.  The
+    // tuner's second frequency EMA was removed when WavePeriodEstimator took
+    // ownership of the canonical log-period state, and there is nothing left
+    // here to smooth.  getTunerFreqSmoothingSeaPeriods() reports 0 to say so.
+    void setTunerFreqSmoothingSeaPeriods(float /*periods*/) {}
+    void setTunerFreqSmoothingTimeConstant(float /*tau_sec*/) {}
     [[nodiscard]] float getAdaptationSeaPeriods() const noexcept {
         return adapt_tau_sea_periods_;
     }
@@ -1505,8 +1493,6 @@ private:
 
     float adapt_tau_sec_              = ADAPT_TAU_SEC_DEFAULT;
     float adapt_tau_sea_periods_      = ADAPT_TAU_SEA_PERIODS_DEFAULT;
-    float tuner_freq_tau_sec_          = 1.0f;
-    float tuner_freq_ema_sea_periods_ = TUNER_FREQ_EMA_SEA_PERIODS_DEFAULT;
     float sea_time_sec_                = 0.5f / 0.2f;
     float adapt_RS_mult_                = 3.0f;
     float adapt_RS_slew_log_            = 0.0f;

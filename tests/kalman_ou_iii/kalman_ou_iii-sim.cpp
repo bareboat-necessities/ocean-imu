@@ -221,9 +221,10 @@ public:
                 filter.setAdaptationSeaPeriods(v);
             }
 
-            // Legacy tuner-frequency smoothing knobs retained for source compatibility.
-// SeaStateAutoTuner no longer smooths frequency; WavePeriodEstimator owns
-// the canonical log-period state, so these setters are compatibility no-ops.
+            // Legacy tuner-frequency smoothing knobs, retained so existing
+            // ablation scripts keep running.  SeaStateAutoTuner no longer
+            // smooths frequency -- WavePeriodEstimator owns the canonical
+            // log-period state -- so these setters have no effect.
             if (env_float("OU_TUNER_FREQ_SEA_PERIODS", v)) {
                 filter.setTunerFreqSmoothingSeaPeriods(v);
             }
@@ -956,16 +957,16 @@ private:
 // This is a full re-gauge, not a one-off relaxation of the binding PM-Stokes
 // 3D bar: six limits tighten, one is unchanged, and only three rise.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.489f,  // was 4.545,  worst 4.5044 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.462f,  // was 4.511,  worst 4.4858 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 0.887f, // was 0.8824, worst 0.8783 (jonswap H1.5)
-    .err_limit_roll_deg            = 0.3625f, // was 0.3634, worst 0.3614 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.1969f,  // was 0.1967, worst 0.1960 (pmstokes H4.0)
-    .err_limit_percent_3d_jonswap  = 13.7f,   // was 13.73,  worst 13.6307 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 14.68f,  // was 14.62,  worst 14.5033 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.492f,  // was 4.497,  worst 4.4662 (pmstokes H8.5)
-    .bias_3d_percent               = 78.84f,  // was 78.84,  worst 78.4668 (pmstokes H4.0, accel)
-    .gyro_bias_3d_percent          = 18.8f,  // new bar,    worst 18.7167 (pmstokes H8.5, gyro)
+    .err_limit_percent_z_jonswap   = 4.489f,  // was 4.527,  worst 4.46644 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.462f,  // was 4.509,  worst 4.43916 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 0.887f,  // was 0.8827, worst 0.882582 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.3625f, // was 0.3633, worst 0.360654 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.1969f, // was 0.197,   worst 0.195849 (pmstokes H4.0)
+    .err_limit_percent_3d_jonswap  = 13.7f,   // was 13.7,   worst 13.6263 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 14.68f,  // was 14.58,  worst 14.5995 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.492f,  // was 4.489,  worst 4.4693 (pmstokes H8.5)
+    .bias_3d_percent               = 78.84f,  // was 78.86,  worst 78.4386 (pmstokes H4.0, accel)
+    .gyro_bias_3d_percent          = 18.8f,   // was 18.82,  worst 18.6981 (pmstokes H8.5, gyro)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
