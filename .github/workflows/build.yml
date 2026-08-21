@@ -1,438 +1,64 @@
 name: build
 on:
   push:
-  pull_request:
-  workflow_dispatch:
+    branches:
+      - agent/period-log-smoothing-retune
+
+concurrency:
+  group: period-statistics-retune-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # A PDF cut from main has to quote numbers this code actually produces, so
-  # the full study runs and lands its bundle on main before the article is
-  # typeset. Off main this is skipped and the article builds against the
-  # committed evidence: regeneration is most of an hour of runners, and it
-  # belongs on the branch the releases come from.
-  ou-evidence:
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-    uses: ./.github/workflows/ou-validation.yml
-    with:
-      validation_mode: full
-
-  build:
-    needs: [ou-evidence]
-    # Off main ou-evidence is skipped, and on main it fails when the
-    # regenerated numbers no longer match the prose. Neither is a reason to
-    # stop typesetting -- by the time that check runs the bundle has already
-    # landed, and the run is red on its own without withholding the article.
-    if: ${{ !cancelled() }}
+  period-statistics-retune:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, kalman_tfg, imu_calibrate, detrend, nlo]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          # On main the evidence job has just committed the regenerated bundle
-          # and its mirrored manuscript copies. Build from that tree rather
-          # than from the commit that started the run, or the article is
-          # typeset against the evidence the regeneration just replaced.
-          ref: ${{ github.ref == 'refs/heads/main' && 'refs/heads/main' || '' }}
-
-      - name: Download sim data from oceanography-waves-lib GitHub repo release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern "sim-data-files.zip" --clobber
-
-      - name: Unpack simulation data (${{ matrix.dir }})
-        run: |
-          unzip -o sim-data-files.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
-
-      # Retries and per-connection timeouts, because the archive stalling is
-      # what actually burns the twenty minutes when this step fails.
-      #
-      # Installed *with* recommends, deliberately. Cutting them takes the
-      # package count from 339 to 136, and it also silently removed cm-super
-      # and texlive-plain-generic, which matplotlib's text.usetex path needs.
-      # Every draw_plots.sh then failed identically with "No pages of output"
-      # from the texcache -- nine of ten dirs in run 31048810866. The set is
-      # recoverable by naming those two explicitly, but the saving is not
-      # worth another round of finding out which package the plots need next
-      # by breaking main, and the timeout this was meant to help is a slow
-      # mirror rather than package volume.
-      - name: Install build dependencies
-        timeout-minutes: 27
-        run: |
-          set -uo pipefail
-          # Each attempt is capped at 8 minutes and there are two retries.
-          # A stalled mirror is then abandoned and retried against whatever
-          # the load balancer hands out next, instead of holding the step
-          # until its own timeout kills the job with nothing installed.
-          apt_get() {
-            sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
-              -o Acquire::Retries=2 \
-              -o Acquire::http::Timeout=15 \
-              -o Acquire::https::Timeout=15 \
-              -o Dpkg::Use-Pty=0 \
-              "$@"
-          }
-          install_deps() {
-            apt_get update && apt_get install -y \
-              g++ make libeigen3-dev \
-              texlive-xetex texlive-latex-recommended texlive-fonts-recommended \
-              texlive-latex-extra texlive-fonts-extra dvipng cm-super \
-              texlive-plain-generic \
-              inkscape graphviz python3-pip \
-              python3-matplotlib python3-numpy python3-pandas python3-scipy \
-              fonts-dejavu-core
-          }
-          for attempt in 1 2 3; do
-            if install_deps; then
-              echo "dependencies installed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "attempt ${attempt} failed; clearing any half-configured state"
-            sudo dpkg --configure -a || true
-            sleep $((attempt * 15))
-          done
-          echo "apt-get did not succeed after 3 attempts"
-          exit 1
-
-      - name: Compile tests (${{ matrix.dir }})
-        run: |
-          cd tests/${{ matrix.dir }}
-          make build
-
-      - name: Copy test data (${{ matrix.dir }})
-        run: |
-          cp ${{ github.workspace }}/plots/${{ matrix.dir }}/*.csv tests/${{ matrix.dir }}
-
-      - name: Run tests (${{ matrix.dir }})
-        run: |
-          cd tests/${{ matrix.dir }}
-          chmod +x *.sh
-          ./run_tests.sh
-          cp *.csv ../../plots/${{ matrix.dir }}
-
-      # Regenerated while the simulator still exists and before the document is
-      # built, so the deterministic 900 s table in the PDF is the one this code
-      # produces rather than whatever was last typed by hand.
-      - name: Regenerate the deterministic 900 s table (kalman_ou_iii)
-        if: matrix.dir == 'kalman_ou_iii'
-        run: |
-          python3 -u tools/ou_sim_table.py \
-            --binary tests/kalman_ou_iii/kalman_ou_iii-sim \
-            --data-dir plots/kalman_ou_iii \
-            --output doc/kalman_ou_iii/w3d-sim-results-generated.tex-part
-          git --no-pager diff --stat -- doc/kalman_ou_iii/w3d-sim-results-generated.tex-part
-
-      - name: Regenerate the deterministic 900 s table (kalman_tfg)
-        if: matrix.dir == 'kalman_tfg'
-        run: |
-          python3 -u tools/tfg_sim_table.py \
-            --binary tests/kalman_tfg/kalman_tfg-sim \
-            --data-dir plots/kalman_tfg \
-            --output doc/kalman_tfg/tfg-sim-results-generated.tex-part
-          git --no-pager diff --stat -- doc/kalman_tfg/tfg-sim-results-generated.tex-part
-
-      - name: Clean test build (${{ matrix.dir }})
-        run: make -C tests/${{ matrix.dir }} clean
-
-      - name: Generate PGF plots (${{ matrix.dir }})
-        shell: bash
-        run: |
-          cd plots/${{ matrix.dir }}
-          chmod +x *.sh
-          ./draw_plots.sh
-          mv -v *.pgf ../../doc/${{ matrix.dir }}/ || true
-          mv -v *.svg ../../doc/${{ matrix.dir }}/ || true
-          mv -v *.png ../../doc/${{ matrix.dir }}/ || true
-
-      # Keep one retry for transient TeX/package failures. PlantUML is not used
-      # by any document in this repository, so the build deliberately has no
-      # runtime PlantUML/CTAN download dependency. Keep the two `with:` blocks
-      # identical.
-      - name: Compile LaTeX document (${{ matrix.dir }})
-        id: latex
-        continue-on-error: true
-        uses: xu-cheng/latex-action@v4
-        with:
-          root_file: "*.tex"
-          pre_compile: |
-            echo "openout_any = a" | tee -a $(kpsewhich texmf.cnf)
-            if [ "${{ matrix.dir }}" = "kalman_ou_iii" ]; then
-              cp -v ${{ github.workspace }}/img/devices/AtomS3R_device.svg ${{ github.workspace }}/doc/${{ matrix.dir }}/AtomS3R_device.svg
-            fi
-          work_in_root_file_dir: true
-          working_directory: doc/${{ matrix.dir }}
-          latexmk_use_lualatex: true
-          latexmk_shell_escape: true
-          args: "-shell-escape"
-          extra_system_packages: "inkscape ghostscript graphviz ncurses"
-
-      - name: Compile LaTeX document, retry (${{ matrix.dir }})
-        if: steps.latex.outcome == 'failure'
-        uses: xu-cheng/latex-action@v4
-        with:
-          root_file: "*.tex"
-          pre_compile: |
-            echo "openout_any = a" | tee -a $(kpsewhich texmf.cnf)
-            if [ "${{ matrix.dir }}" = "kalman_ou_iii" ]; then
-              cp -v ${{ github.workspace }}/img/devices/AtomS3R_device.svg ${{ github.workspace }}/doc/${{ matrix.dir }}/AtomS3R_device.svg
-            fi
-          work_in_root_file_dir: true
-          working_directory: doc/${{ matrix.dir }}
-          latexmk_use_lualatex: true
-          latexmk_shell_escape: true
-          args: "-shell-escape"
-          extra_system_packages: "inkscape ghostscript graphviz ncurses"
-
-      - name: Upload PDF artifacts (${{ matrix.dir }})
-        uses: actions/upload-artifact@v6
-        with:
-          name: latex-pdfs-${{ matrix.dir }}
-          path: doc/${{ matrix.dir }}/**/*.pdf
-          if-no-files-found: error
-
-      - name: Find SVGs (${{ matrix.dir }})
-        id: find_svgs
-        shell: bash
-        run: |
-          shopt -s nullglob globstar
-          files=(
-            doc/${{ matrix.dir }}/**/*pmstokes*H1.5*.svg
-            doc/${{ matrix.dir }}/**/*pmstokes*medium*.svg
-          )
-
-          if [ ${#files[@]} -gt 0 ]; then
-            mkdir -p release-svg/${{ matrix.dir }}
-            for f in "${files[@]}"; do
-              cp -v "$f" release-svg/${{ matrix.dir }}/
-            done
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Upload SVG artifacts (${{ matrix.dir }})
-        if: steps.find_svgs.outputs.found == 'true'
-        uses: actions/upload-artifact@v6
-        with:
-          name: release-svgs-${{ matrix.dir }}
-          path: release-svg/${{ matrix.dir }}/**/*.svg
-          if-no-files-found: error
-
-  ou-tuning:
-    if: ${{ (false && github.event_name == 'push') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - family: OU_II
-            subdir: kalman_ou_ii
-            report_name: ou_ii
-          - family: OU_III
-            subdir: kalman_ou_iii
-            report_name: ou_iii
-
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download sim data from oceanography-waves-lib GitHub repo release
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq g++ make libeigen3-dev unzip python3-numpy python3-pandas python3-scipy
+
+      - name: Fetch reference wave records
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release download v1.1.3 \
             --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern "sim-data-files.zip" \
+            --pattern 'sim-data-files.zip' \
             --clobber
+          unzip -o sim-data-files.zip -d plots/kalman_ou_iii
 
-      - name: Install tuning dependencies
-        timeout-minutes: 20
+      - name: Coarse wave-period moment horizon
         run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ make libeigen3-dev unzip python3
+          python3 -u tools/ou_period_statistics_retune.py \
+            --axis moment --values 4,6,8,10 --baseline 8 --seeds 1 --jobs 4 \
+            --data-dir plots/kalman_ou_iii \
+            --csv reports/results/period_statistics_retune/coarse_moment_runs.csv \
+            --report reports/results/period_statistics_retune/coarse_moment.md
 
-      - name: Unpack simulation data for ${{ matrix.family }}
+      - name: Coarse log-period smoothing horizon
         run: |
-          unzip -o sim-data-files.zip -d "${{ github.workspace }}/tests/${{ matrix.subdir }}"
+          python3 -u tools/ou_period_statistics_retune.py \
+            --axis log --values 0,0.10,0.25,0.50,1.0 --baseline 0.50 --seeds 1 --jobs 4 \
+            --data-dir plots/kalman_ou_iii \
+            --csv reports/results/period_statistics_retune/coarse_log_runs.csv \
+            --report reports/results/period_statistics_retune/coarse_log.md
 
-      - name: Run ${{ matrix.family }} tuning sweep
-        shell: bash
+      - name: Coarse acceleration-variance horizon
         run: |
-          set -o pipefail
-          mkdir -p reports/results
+          python3 -u tools/ou_period_statistics_retune.py \
+            --axis sigma_k --values 1,2,3,4,6 --baseline 2 --seeds 1 --jobs 4 \
+            --data-dir plots/kalman_ou_iii \
+            --csv reports/results/period_statistics_retune/coarse_sigma_k_runs.csv \
+            --report reports/results/period_statistics_retune/coarse_sigma_k.md
 
-          python3 -u tools/ou_tuning_sweep.py \
-            --family ${{ matrix.family }} \
-            --mode full \
-            --samples 52 \
-            --seed 77 \
-            --tier all \
-            --top-k 8 \
-            --out-csv reports/results/ou_tuning_${{ matrix.report_name }}.csv \
-            2>&1 | tee reports/results/ou_tuning_${{ matrix.report_name }}.log
-
-      - name: Upload ${{ matrix.family }} tuning reports
+      - name: Upload coarse sweep evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou-tuning-reports-${{ matrix.report_name }}
-          path: reports/results/*
+          name: period-statistics-retune-coarse
+          path: reports/results/period_statistics_retune/**
           if-no-files-found: warn
-          
-  release:
-    # ou-evidence only runs on main, and a skipped job propagates through the
-    # graph: build survives it with !cancelled(), but release inherited the skip
-    # from build's ancestor and never ran off main. That is why v1.1.2 and
-    # v1.1.3 shipped with source code only while v1.1.1, tagged before the
-    # evidence job existed, got its assets. Naming a status function here stops
-    # the automatic skip, so the results of the two jobs that actually produce
-    # the assets are what decides.
-    if: >-
-      ${{ !cancelled()
-          && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-          && needs.build.result == 'success'
-          && needs['build-MCU'].result == 'success' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    needs: [build, build-MCU]
-
-    steps:
-      - name: Download all workflow artifacts
-        uses: actions/download-artifact@v8
-        with:
-          path: release-assets
-          merge-multiple: false
-
-      - name: Show downloaded files
-        shell: bash
-        run: |
-          find release-assets -type f | sort
-
-      - name: Upload PDFs to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: release-assets/latex-pdfs-*/*.pdf
-          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
-          overwrite: true
-          file_glob: true
-
-      - name: Upload SVGs to release
-        shell: bash
-        run: |
-          shopt -s nullglob globstar
-          files=(release-assets/release-svgs-*/*.svg)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No matching SVG files to upload."
-            exit 0
-          fi
-          printf '%s\n' "${files[@]}" > svg_files.txt
-          cat svg_files.txt
-
-      - name: Upload SVGs to release (serialized)
-        if: hashFiles('release-assets/release-svgs-*/*.svg') != ''
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: release-assets/release-svgs-*/*.svg
-          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
-          overwrite: true
-          file_glob: true
-
-      - name: Upload MCU binaries to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: release-assets/mcu-binaries-*/*.zip
-          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
-          overwrite: true
-          file_glob: true
-
-  build-MCU:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        ino_dir: [ "full_marine_ins", "compass_ahrs", "imu_basic" ]
-  
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-  
-      - name: Compile sketch
-        uses: ArminJo/arduino-test-compile@v3
-        with:
-          arduino-board-fqbn: esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc
-          arduino-platform: esp32:esp32@3.3.7
-          platform-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-          required-libraries: M5Unified@0.2.13,M5GFX@0.2.19,Eigen@0.3.2
-          sketch-names: "*.ino"
-          sketch-names-find-start: sensors/${{ matrix.ino_dir }}/*
-          build-properties: >-
-            { "All": "-funroll-loops -fno-finite-math-only" }
-          extra-arduino-cli-args: >-
-            --warnings default
-            --library ${{ github.workspace }}
-            --build-property compiler.libraries.ldflags=-Wl,--allow-multiple-definition
-          set-build-path: true
-
-      - name: Make merged MCU binaries (${{ matrix.ino_dir }})
-        shell: bash
-        run: |
-          set -euo pipefail
-          ESPTOOL="$(find "$HOME/.arduino15/packages/esp32/tools/esptool_py" -type f -name esptool | sort -V | tail -n 1)"
-          BOOT_APP0="$(find "$HOME/.arduino15/packages/esp32/hardware/esp32" -path '*/tools/partitions/boot_app0.bin' | sort -V | tail -n 1)"
-          if [ -z "$ESPTOOL" ] || [ -z "$BOOT_APP0" ]; then
-            echo "Unable to find esptool or boot_app0.bin."
-            exit 1
-          fi
-          for sketch in sensors/${{ matrix.ino_dir }}/*/*.ino; do
-            sketch_dir="$(dirname "$sketch")"
-            sketch_name="$(basename "$sketch" .ino)"
-            build_dir="$sketch_dir/build"
-            if [ ! -d "$build_dir" ]; then
-              echo "Missing build directory: $build_dir"
-              exit 1
-            fi
-            "$ESPTOOL" --chip esp32s3 merge_bin -o "$build_dir/${sketch_name}_firmware.bin" \
-              --flash_mode dio --flash_freq 80m --flash_size 8MB \
-              0x0 "$build_dir/${sketch_name}.ino.bootloader.bin" \
-              0x8000 "$build_dir/${sketch_name}.ino.partitions.bin" \
-              0xe000 "$BOOT_APP0" \
-              0x10000 "$build_dir/${sketch_name}.ino.bin"
-          done
-
-      - name: Package MCU binaries (${{ matrix.ino_dir }})
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p mcu-binaries
-          shopt -s nullglob
-          for build_dir in sensors/${{ matrix.ino_dir }}/*/build; do
-            sketch_name="$(basename "$(dirname "$build_dir")")"
-            files=("$build_dir"/*.bin "$build_dir"/*.csv)
-            if [ ${#files[@]} -eq 0 ]; then
-              echo "No binary files found in $build_dir"
-              exit 1
-            fi
-            zip -j "mcu-binaries/${sketch_name}_bin-$(date +%Y-%m-%d).zip" "${files[@]}"
-          done
-          ls -la mcu-binaries
-
-      - name: Upload MCU binary artifacts (${{ matrix.ino_dir }})
-        uses: actions/upload-artifact@v6
-        with:
-          name: mcu-binaries-${{ matrix.ino_dir }}
-          path: mcu-binaries/*.zip
-          if-no-files-found: error
