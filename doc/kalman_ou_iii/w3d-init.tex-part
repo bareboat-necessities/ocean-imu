@@ -60,7 +60,8 @@ $[\delta\theta,\delta b_g,\delta S,\delta a_w,\delta b_a]$ from the kinematic
 $[\delta v,\delta p]$ block.  When the accepted proxy/magnetic bounds, the two
 handoff-block bounds, and the declared bounded Live disturbance satisfy
 Eq.~\eqref{eq:semiglobal-basin-entry}, the handoff enters the invariant
-sensitive tube of Theorem~\ref{thm:iss-block-local}, and
+sensitive tube of the block-local ISS theorem,
+Theorem~\ref{thm:iss-block-local}, and
 Theorem~\ref{thm:semiglobal-proxy-live} applies.  A timeout-forced handoff that
 does not independently satisfy Eq.~\eqref{eq:semiglobal-basin-entry} remains
 outside the semiglobal result.
