@@ -1,0 +1,198 @@
+name: PR 360 focused repair
+
+on:
+  push:
+    branches: [fix/post-356-validation]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/post-356-validation
+          fetch-depth: 0
+
+      - name: Patch stale post-retune contracts
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              s = p.read_text()
+              n = s.count(old)
+              if n != 1:
+                  raise SystemExit(f"{path}: expected exactly one match, found {n}: {old[:80]!r}")
+              p.write_text(s.replace(old, new, 1))
+
+          # TFG: the shared WavePeriodEstimator owns the only period/frequency
+          # smoother after #356.  SeaStateAutoTuner's old frequency-EMA API is
+          # deliberately a compatibility no-op and must remain disabled.
+          path = "tests/kalman_tfg/tfg_orchestrator-test.cpp"
+          old = '''void test_sea_scaled_ema_defaults() {
+              Fusion f;
+              f.begin(default_config());
+              check(std::fabs(f.getAdaptationSeaPeriods() - 0.40f) <= 1e-6f,
+                    "TFG common tau/sigma EMA is not 0.40*T_sea by default");
+              check(std::fabs(f.getTunerFreqSmoothingSeaPeriods() - 0.10f) <= 1e-6f,
+                    "TFG tuner frequency EMA is not 0.10*T_sea by default");
+
+              // Fixed-second setters remain real ablations rather than being ignored by
+              // the new defaults.
+              f.setAdaptationTimeConstants(1.8f);
+              f.setTunerFreqSmoothingTimeConstant(1.0f);
+              check(f.getAdaptationSeaPeriods() == 0.0f,
+                    "TFG fixed tau/sigma EMA setter did not disable sea scaling");
+              check(f.getTunerFreqSmoothingSeaPeriods() == 0.0f,
+                    "TFG fixed frequency EMA setter did not disable sea scaling");
+          }
+          '''
+          new = '''void test_sea_scaled_ema_defaults() {
+              Fusion f;
+              f.begin(default_config());
+              check(std::fabs(f.getAdaptationSeaPeriods() - 0.40f) <= 1e-6f,
+                    "TFG common tau/sigma EMA is not 0.40*T_sea by default");
+
+              // WavePeriodEstimator owns the only period/frequency smoothing state.
+              // SeaStateAutoTuner consumes its canonical reciprocal directly and must
+              // not add the removed second frequency EMA.
+              check(f.getTunerFreqSmoothingSeaPeriods() == 0.0f,
+                    "TFG re-enabled the removed second frequency EMA");
+
+              WavePeriodEstimator period;
+              check(std::fabs(period.getMomentHorizonPeriods() - 4.0f) <= 1e-6f,
+                    "shared wave-period moment horizon is not 4*T_z by default");
+              check(std::fabs(period.getLogSmoothingPeriods() - 0.05f) <= 1e-6f,
+                    "shared canonical log-period smoothing is not 0.05*T_z by default");
+
+              // The common scheduler still has a real fixed-second compatibility mode.
+              f.setAdaptationTimeConstants(1.8f);
+              check(f.getAdaptationSeaPeriods() == 0.0f,
+                    "TFG fixed tau/sigma EMA setter did not disable sea scaling");
+
+              // Legacy frequency-smoothing setters are compatibility no-ops. Calling
+              // one must not resurrect a second smoother downstream of the canonical
+              // log-period state.
+              f.setTunerFreqSmoothingTimeConstant(1.0f);
+              check(f.getTunerFreqSmoothingSeaPeriods() == 0.0f,
+                    "TFG legacy frequency-EMA setter re-enabled a second smoother");
+          }
+          '''
+          replace_once(path, old, new)
+
+          # OU-III: re-gauge all deterministic sentinels from the complete
+          # eight-record output produced by the retuned (4, 0.05, 4) defaults.
+          # Values are worst * 1.005 rounded upward to four significant digits,
+          # exactly as tools/ou_regauge_gates.py specifies.
+          path = "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp"
+          changes = {
+              '.err_limit_percent_z_jonswap   = 4.527f,': '.err_limit_percent_z_jonswap   = 4.489f,',
+              '.err_limit_percent_z_pmstokes  = 4.509f,': '.err_limit_percent_z_pmstokes  = 4.462f,',
+              '.err_limit_yaw_deg             = 0.8827f,': '.err_limit_yaw_deg             = 0.887f,',
+              '.err_limit_roll_deg            = 0.3633f,': '.err_limit_roll_deg            = 0.3625f,',
+              '.err_limit_pitch_deg           = 0.197f,': '.err_limit_pitch_deg           = 0.1969f,',
+              '.err_limit_percent_3d_pmstokes = 14.58f,': '.err_limit_percent_3d_pmstokes = 14.68f,',
+              '.acc_z_bias_percent            = 4.489f,': '.acc_z_bias_percent            = 4.492f,',
+              '.bias_3d_percent               = 78.86f,': '.bias_3d_percent               = 78.84f,',
+              '.gyro_bias_3d_percent          = 18.82f,': '.gyro_bias_3d_percent          = 18.8f,',
+          }
+          for a, b in changes.items():
+              replace_once(path, a, b)
+
+          marker = 'static constexpr W3dFailureLimits FAIL_LIMITS{\n'
+          note = '''// Re-derived after the shared period-statistics retune adopted
+          // (K_T, K_log, K_sigma) = (4, 0.05, 4).  The deterministic protocol is
+          // unchanged: default seeds, eight reference records, trailing 900 s.  Applying
+          // tools/ou_regauge_gates.py's half-percent/four-significant-digit rule gives:
+          //
+          //   Z %Hs JONSWAP    4.527  -> 4.489   worst 4.46644  (JONSWAP H0.27)
+          //   Z %Hs PM-Stokes  4.509  -> 4.462   worst 4.43916  (PM-Stokes H0.27)
+          //   yaw deg          0.8827 -> 0.887   worst 0.882582 (JONSWAP H1.5)
+          //   roll deg         0.3633 -> 0.3625  worst 0.360654 (JONSWAP H4.0)
+          //   pitch deg        0.197  -> 0.1969  worst 0.195849 (PM-Stokes H4.0)
+          //   3D % JONSWAP     13.7   -> 13.7    worst 13.6263  (JONSWAP H8.5)
+          //   3D % PM-Stokes   14.58  -> 14.68   worst 14.5995  (PM-Stokes H8.5)
+          //   acc Z bias %     4.489  -> 4.492   worst 4.4693   (PM-Stokes H8.5)
+          //   acc 3D bias %    78.86  -> 78.84   worst 78.4386  (PM-Stokes H4.0)
+          //   gyro 3D bias %   18.82  -> 18.8    worst 18.6981  (PM-Stokes H8.5)
+          //
+          // This is a full re-gauge, not a one-off relaxation of the binding PM-Stokes
+          // 3D bar: six limits tighten, one is unchanged, and only three rise.
+          '''
+          replace_once(path, marker, note + marker)
+
+          old_comment = '// Frequency EMA inside the tuner, also in measured sea-time units T_sea=T_z/2.\n'
+          new_comment = '''// Legacy tuner-frequency smoothing knobs retained for source compatibility.
+          // SeaStateAutoTuner no longer smooths frequency; WavePeriodEstimator owns
+          // the canonical log-period state, so these setters are compatibility no-ops.
+          '''
+          replace_once(path, old_comment, new_comment)
+
+          # Keep the mechanical re-gauge tool's declared shipped values in sync.
+          path = "tools/ou_regauge_gates.py"
+          script_changes = {
+              '"err_limit_percent_z_jonswap":   4.527,': '"err_limit_percent_z_jonswap":   4.489,',
+              '"err_limit_percent_z_pmstokes":  4.509,': '"err_limit_percent_z_pmstokes":  4.462,',
+              '"err_limit_yaw_deg":             0.8827,': '"err_limit_yaw_deg":             0.887,',
+              '"err_limit_roll_deg":            0.3633,': '"err_limit_roll_deg":            0.3625,',
+              '"err_limit_pitch_deg":           0.197,': '"err_limit_pitch_deg":           0.1969,',
+              '"err_limit_percent_3d_pmstokes": 14.58,': '"err_limit_percent_3d_pmstokes": 14.68,',
+              '"acc_z_bias_percent":            4.489,': '"acc_z_bias_percent":            4.492,',
+              '"bias_3d_percent":               78.86,': '"bias_3d_percent":               78.84,',
+              '"gyro_bias_3d_percent":          18.82,': '"gyro_bias_3d_percent":          18.8,',
+          }
+          for a, b in script_changes.items():
+              replace_once(path, a, b)
+          PY
+
+          git diff --check
+          git diff -- tests/kalman_tfg/tfg_orchestrator-test.cpp \
+                     tests/kalman_ou_iii/kalman_ou_iii-sim.cpp \
+                     tools/ou_regauge_gates.py
+
+      - name: Install focused-test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq g++ make libeigen3-dev unzip
+
+      - name: Verify TFG orchestrator contract
+        run: |
+          make -C tests/kalman_tfg build
+          tests/kalman_tfg/tfg_orchestrator-test
+
+      - name: Verify binding OU-III deterministic case
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          W3D_WRITE_TIMESERIES: '0'
+          W3D_VALIDATION_WINDOW_SEC: '900'
+        run: |
+          make -C tests/kalman_ou_iii build
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip --clobber
+          rm -rf /tmp/pr360-wave-data
+          mkdir -p /tmp/pr360-wave-data
+          unzip -q -o sim-data-files.zip -d /tmp/pr360-wave-data
+          record=$(find /tmp/pr360-wave-data -name 'wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv' -print -quit)
+          test -n "$record"
+          tests/kalman_ou_iii/kalman_ou_iii-sim --input "$record"
+
+      - name: Commit focused repair
+        run: |
+          rm .github/workflows/pr360-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -- tests/kalman_tfg/tfg_orchestrator-test.cpp \
+                     tests/kalman_ou_iii/kalman_ou_iii-sim.cpp \
+                     tools/ou_regauge_gates.py \
+                     .github/workflows/pr360-fix.yml
+          git diff --cached --check
+          git commit -m 'Re-gauge post-retune sentinels and update TFG statistics contract'
+          git push origin HEAD:fix/post-356-validation
