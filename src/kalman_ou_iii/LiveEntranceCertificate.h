@@ -12,13 +12,17 @@
   ISS bound for the Live error dynamics in the filter's own covariance
   (Riccati) metric, and gives a sufficient entrance inequality
 
-      M_H * ||e_H||_{V_H}  +  disturbance_margin  <  (1 - nu) * r,
+      M_xi_xi * ||e_H||_{xi,H} + M_xi_ell * ||e_H||_{ell,H}
+          + disturbance_margin  <  (1 - nu) * r,
       nu = c_eff * r,
 
-  where ||.||_{V_H} is the metric norm at the handoff sample, r is the
-  sensitive-tube radius, and c_eff is the small-gain slope assembled from the
-  interval gain envelopes.  This header evaluates that inequality with the
-  numbers a running system actually has at the handoff sample.
+  where the two norms are the sensitive and kinematic block norms in the
+  filter's own metric at the handoff sample, r is the sensitive-tube radius,
+  and c_eff is the small-gain slope assembled from the interval gain
+  envelopes.  Only the sensitive block has to lie in the tube; the kinematic
+  one is charged through its own transient gain, which is what Phase 1's block
+  separation buys.  This header evaluates that inequality with the numbers a
+  running system actually has at the handoff sample.
 
   What it is not
   --------------
@@ -32,7 +36,8 @@
       gyro turn-on bias).  These are the assumptions the theorem is
       conditional on.
     * measured startup statistic - taken from the bootstrap's own observables
-      (gravity-residual hold, learned field magnitude, installed seed sigmas).
+      (the gravity-residual hold and its branch, whether a magnetic gauge was
+      accepted, and the seed marginals actually installed).
     * analytically constructed bound - what the paper's inequalities make of
       the two above.
     * certified margin - the final number, and the only one that decides.
@@ -150,8 +155,12 @@ struct LiveBasinConstants {
     float disturbance_margin = 0.0f;
 
     // Largest sensitive-tube radius the remainder expansion is valid on
-    // (r_xi of the paper).
-    float r_xi = 8.0f;
+    // (r_xi of the paper), where the inverse-left-Jacobian bound was taken.
+    // The diagnostic measures 88 to 327 over the eight reference points, and
+    // the operating radius 1/(2 c_eff) is at most 0.74, so this cap does not
+    // bind at the deployed slope.  It is carried because it is a hypothesis of
+    // the remainder bound, not because it is close.
+    float r_xi = 88.0f;
 
     bool valid() const {
         return std::isfinite(M_xi_xi) && M_xi_xi >= 1.0f &&

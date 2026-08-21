@@ -180,6 +180,9 @@ private:
 
 struct Scenario {
     std::string label;
+    // Turn the certificate into a gate as well.  Not the deployed default;
+    // exercised here because an untested optional gate is worse than none.
+    bool require_certified = false;
     size_t sea_index = 0;
     unsigned seed = 1;
     float phase = 0.0f;
@@ -302,6 +305,7 @@ Outcome runScenario(const Scenario& sc) {
     cfg.sigma_a = Vec3::Constant(0.0294f);
     cfg.sigma_g = Vec3::Constant(0.00157f);
     cfg.sigma_m = Vec3::Constant(0.36f);
+    cfg.require_certified_live = sc.require_certified;
     if (std::getenv("NO_BG_SEED")) cfg.seed_gyro_bias_at_handoff = false;
     if (std::getenv("NO_AW_SEED")) cfg.seed_world_accel_at_handoff = false;
     if (std::getenv("NO_ENV_COV")) cfg.seed_covariance_from_envelope = false;
@@ -561,6 +565,22 @@ std::vector<Scenario> buildScenarios() {
         v.push_back(sc);
     }
 
+    // require_certified_live turns the certificate into a gate.  With the
+    // deployed constants it certifies nothing, so a filter configured this way
+    // must stay in bootstrap -- which is the point: the flag really withholds
+    // the handoff rather than quietly doing nothing.  This is the one scenario
+    // that is expected not to reach Live, and it is kept out of the sweep's
+    // "everything goes Live" accounting for that reason.
+    {
+        Scenario sc;
+        sc.label = "require-certified-gate";
+        sc.sea_index = 0;
+        sc.seed = 3000u;
+        sc.phase = ph(rng);
+        sc.require_certified = true;
+        v.push_back(sc);
+    }
+
     return v;
 }
 
@@ -592,6 +612,7 @@ int main(int argc, char** argv) {
 
     std::cout << std::setprecision(6);
     for (const Outcome& o : outcomes) {
+        if (o.label == "require-certified-gate") continue;
         ++n_total;
         if (o.handed_off) ++n_handed;
         if (o.certified) {
@@ -705,6 +726,16 @@ int main(int argc, char** argv) {
                      " (worst " << worst_S << " m s); the epoch reset did not"
                      " happen\n";
         return 1;
+    }
+
+    // The optional gate must actually gate.
+    for (const Outcome& o : outcomes) {
+        if (o.label != "require-certified-gate") continue;
+        if (o.handed_off) {
+            std::cerr << "FAIL: require_certified_live did not withhold a"
+                         " handoff the certificate refused\n";
+            return 1;
+        }
     }
 
     // A handoff with no magnetometer has no heading bound, so it must not be

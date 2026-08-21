@@ -132,8 +132,14 @@ $565.6$ is $1.02$.
 Let $\mat E_\xi,\mat E_\ell$ be the block selectors of
 Sec.~\ref{sec:iss-block-basin} and put
 $\mat N_k:=(\mat E_\xi\mat P_k\mat E_\xi^\top)^{1/2}$,
-$\mat\Lambda_k:=(\mat E_\ell\mat P_k\mat E_\ell^\top)^{1/2}$.  Define the
-sensitive seminorm $\|\vct e\|_{\xi,k}:=\|\mat N_k^{-1}\mat E_\xi\vct e\|_2$.
+$\mat\Lambda_k:=(\mat E_\ell\mat P_k\mat E_\ell^\top)^{1/2}$.  Define the two
+block seminorms
+\begin{equation}
+\|\vct e\|_{\xi,k}:=\|\mat N_k^{-1}\mat E_\xi\vct e\|_2,
+\qquad
+\|\vct e\|_{\ell,k}:=\|\mat\Lambda_k^{-1}\mat E_\ell\vct e\|_2 .
+\label{eq:cert-block-seminorms}
+\end{equation}
 Because $\mat N_k^{-1}\mat E_\xi\mat L_k$ is a coisometry,
 $\|\vct e\|_{\xi,k}\le\|\vct e\|_{V_k}$, so
 Theorem~\ref{thm:cert-metric-ues} bounds the projected gains as well; write
@@ -173,7 +179,9 @@ memory $M_H/(1-\rho_H)$, define the directional $\ell_1$ injection gains
 \label{eq:cert-gamma}
 \end{equation}
 which are finite by Theorem~\ref{thm:cert-metric-ues} and are computed by
-forward impulse propagation, with no matrix products to store.  The scalar
+forward impulse propagation, with no matrix products to store.  The same
+construction with $\mat N_g=\widetilde{\mat G}_k$ gives the disturbance gain
+$\Gamma_d$ that multiplies the declared Live disturbance bound $\bar d$ below.  The scalar
 bound is recovered by replacing every $\Gamma_g$ with
 $M_H\|\mat N_g\|_{V}/(1-\rho_H)$, so Eq.~\eqref{eq:cert-gamma} is never worse
 and is dramatically better on the fast channels.
@@ -206,7 +214,7 @@ Choose $0<r\le r_\xi$ with $\nu:=c_{\rm eff}r<1$.  If
 \begin{equation}
 \boxed{
 M_{\xi\xi}\,\|\vct e_{k_H}\|_{\xi,k_H}
-+M_{\xi\ell}\,\bigl\|\mat\Lambda_{k_H}^{-1}\mat E_\ell\vct e_{k_H}\bigr\|_2
++M_{\xi\ell}\,\|\vct e_{k_H}\|_{\ell,k_H}
 +\Gamma_d\bar d
 <(1-\nu)\,r,}
 \label{eq:cert-entrance}
@@ -366,7 +374,10 @@ $\Gamma_a\in[1.84,2.00]\times10^{3}\,(\mathrm{m/s^2})^{-1}$;
 $\Gamma_m\in[2.73,3.93]\times10^{2}\,\mu\mathrm{T}^{-1}$.  The scalar
 alternative $M_H/(1-\rho_H)$ is $3.45\times10^{5}$ samples, so the directional
 gains are between one and three orders of magnitude tighter depending on the
-channel.  The resulting slope is strongly sea-dependent:
+channel.  The validity radius of the remainder expansion,
+$r_\xi=\theta_c/(\sigma_\theta+A_g)$ with $\theta_c=1$, is between $88$ and
+$327$, so it does not bind: the operating radius $1/(2c_{\rm eff})$ is at most
+$0.74$.  The resulting slope is strongly sea-dependent:
 $c_{\rm eff}=0.681$ at the \SI{0.27}{m} reference point and $29.28$ at the
 \SI{8.5}{m} one, giving $r_{\rm cert}=1/c_{\rm eff}$ between $1.47$ and
 $0.034$, and a budget $1/(4c_{\rm eff}M_H)$ between $0.360$ and $0.0084$.
@@ -463,7 +474,9 @@ apart, because their sum can hold while one of the two assumptions does not.
 Two identities are checked separately: the integral state is exactly zero at
 every handoff, and a handoff with no magnetic gauge is never certified.  All
 $91$ scenarios reach Live, the latest at \SI{75}{s}, so the certificate does
-not withhold the handoff.  The run also reports, for each scenario, the largest
+not withhold the handoff; a further scenario turns the optional
+\texttt{require\_certified\_live} gate on and is required not to reach Live,
+so that the gate is known to gate rather than to do nothing.  The run also reports, for each scenario, the largest
 $c_{\rm eff}$ that would have certified it, which turns a rejection into a
 number and separates the part of the gap that belongs to the handoff from the
 part that belongs to the interval.

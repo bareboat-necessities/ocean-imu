@@ -165,6 +165,10 @@ conservatism ratio at 1.07. The `S` identity is checked separately and is
 exactly zero everywhere, and a handoff with no magnetic gauge is required never
 to be certified.
 
+One further scenario turns the optional `require_certified_live` gate on and
+is required *not* to reach Live, so that the flag is known to withhold the
+handoff rather than to do nothing.
+
 The declared envelope in that test is wider than the library defaults on
 purpose. An envelope is a declaration, and a deployment has to declare one that
 covers what it will see; declaring one the scenarios then leave is not a

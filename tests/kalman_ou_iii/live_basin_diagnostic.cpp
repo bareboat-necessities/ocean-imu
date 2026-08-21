@@ -294,6 +294,7 @@ struct Report {
     double eth_Km = 0.0;
     double eth_KS = 0.0;
     double c_eff = 0.0;          // small-gain slope, nu = c_eff * r
+    double r_xi = 0.0;           // largest tube the remainder expansion is valid on
     double r_cert = 0.0;         // 1 / c_eff
     double budget = 0.0;         // max admissible ||e_H||_{V_H}
     double tail_share = 0.0;     // fraction of gamma_theta supplied by the bound
@@ -486,11 +487,17 @@ Report evaluate(const OperatingPoint& op, const Horizons& hz) {
                          + r.sigma_theta * r.sigma_aw;
     const double c_mag   = 0.5 * m1 * r.sigma_theta * r.sigma_theta;
 
+    // Largest tube the rotation-vector expansion is valid on: inside it both
+    // the attitude error and the correction angle it composes with have to
+    // stay under theta_c, since that is where the inverse left Jacobian's
+    // bound j_c was taken.
+    r.r_xi = theta_c / (r.sigma_theta + A_g);
+
     r.c_eff = r.gamma_theta * c_theta + r.gamma_acc * c_acc + r.gamma_mag * c_mag;
     if (r.c_eff > 0.0) {
-        r.r_cert = 1.0 / r.c_eff;
-        // (1 - c_eff r) r is maximised at r = 1/(2 c_eff).
-        const double r_opt = 0.5 / r.c_eff;
+        r.r_cert = std::min(1.0 / r.c_eff, r.r_xi);
+        // (1 - c_eff r) r is maximised at r = 1/(2 c_eff), capped at r_xi.
+        const double r_opt = std::min(0.5 / r.c_eff, r.r_xi);
         r.budget = (1.0 - r.c_eff * r_opt) * r_opt / std::max(1.0, r.M_H);
     }
     return r;
@@ -531,6 +538,7 @@ int main(int argc, char** argv) {
     double worst_gamma_mag = 0.0;
     double smallest_budget = std::numeric_limits<double>::infinity();
     double smallest_r_cert = std::numeric_limits<double>::infinity();
+    double smallest_r_xi = std::numeric_limits<double>::infinity();
 
     std::array<Report, 8> reports{};
 
@@ -565,6 +573,7 @@ int main(int argc, char** argv) {
         worst_gamma_mag = std::max(worst_gamma_mag, r.gamma_mag);
         smallest_budget = std::min(smallest_budget, r.budget);
         smallest_r_cert = std::min(smallest_r_cert, r.r_cert);
+        smallest_r_xi = std::min(smallest_r_xi, r.r_xi);
     }
 
     const double global_kappa =
@@ -592,7 +601,7 @@ int main(int argc, char** argv) {
 
     std::cout << "PHASE3_POINTS name,alpha_max,M_H,gamma_theta,gamma_acc,gamma_mag,"
                  "sigma_theta,sigma_bg,sigma_S,sigma_aw,sigma_ba,"
-                 "EthKa,EthKm,EthKS,c_eff,r_cert,budget,gamma_theta_tail_share\n";
+                 "EthKa,EthKm,EthKS,r_xi,c_eff,r_cert,budget,gamma_theta_tail_share\n";
     for (size_t i = 0; i < kReferencePoints.size(); ++i) {
         const Report& r = reports[i];
         std::cout << "PHASE3_ROW " << kReferencePoints[i].name
@@ -601,6 +610,7 @@ int main(int argc, char** argv) {
                   << ',' << r.sigma_theta << ',' << r.sigma_bg << ',' << r.sigma_S
                   << ',' << r.sigma_aw << ',' << r.sigma_ba
                   << ',' << r.eth_Ka << ',' << r.eth_Km << ',' << r.eth_KS
+                  << ',' << r.r_xi
                   << ',' << r.c_eff << ',' << r.r_cert << ',' << r.budget
                   << ',' << r.tail_share << '\n';
     }
@@ -611,6 +621,7 @@ int main(int argc, char** argv) {
               << " worst_gamma_acc=" << worst_gamma_acc
               << " worst_gamma_mag=" << worst_gamma_mag
               << " worst_c_eff=" << worst_c_eff
+              << " smallest_r_xi=" << smallest_r_xi
               << " smallest_r_cert=" << smallest_r_cert
               << " smallest_budget=" << smallest_budget
               << " scalar_l1_gain=" << (rho_sample > 0.0 ? worst_M_H / (1.0 - rho_sample) : 0.0)
