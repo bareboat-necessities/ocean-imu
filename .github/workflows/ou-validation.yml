@@ -5,26 +5,26 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: period-statistics-retune-pr-${{ github.event.pull_request.number || github.ref }}
+  group: period-statistics-confirm-pr-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  period-statistics-retune:
-    name: period-statistics-retune (${{ matrix.axis }})
+  period-statistics-confirm:
+    name: period-statistics-confirm (${{ matrix.axis }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
         include:
           - axis: moment
-            values: "4,6,8,10"
+            values: "4,5,6,8"
             baseline: "8"
           - axis: log
-            values: "0,0.10,0.25,0.50,1.0"
+            values: "0,0.05,0.10,0.25,0.50"
             baseline: "0.50"
           - axis: sigma_k
-            values: "1,2,3,4,6"
+            values: "1.5,2,2.5,3"
             baseline: "2"
 
     steps:
@@ -46,21 +46,21 @@ jobs:
             --clobber
           unzip -o sim-data-files.zip -d plots/kalman_ou_iii
 
-      - name: Run coarse ${{ matrix.axis }} sweep
+      - name: Run paired ${{ matrix.axis }} confirmation
         run: |
           python3 -u tools/ou_period_statistics_retune.py \
             --axis "${{ matrix.axis }}" \
             --values "${{ matrix.values }}" \
             --baseline "${{ matrix.baseline }}" \
-            --seeds 1 --jobs 4 \
+            --seeds 5 --jobs 4 \
             --data-dir plots/kalman_ou_iii \
-            --csv "reports/results/period_statistics_retune/coarse_${{ matrix.axis }}_runs.csv" \
-            --report "reports/results/period_statistics_retune/coarse_${{ matrix.axis }}.md"
+            --csv "reports/results/period_statistics_retune/confirm_${{ matrix.axis }}_runs.csv" \
+            --report "reports/results/period_statistics_retune/confirm_${{ matrix.axis }}.md"
 
-      - name: Upload coarse ${{ matrix.axis }} evidence
+      - name: Upload paired ${{ matrix.axis }} evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: period-statistics-retune-${{ matrix.axis }}
+          name: period-statistics-confirm-${{ matrix.axis }}
           path: reports/results/period_statistics_retune/**
           if-no-files-found: warn
