@@ -1,46 +1,55 @@
 \subsection{Computer-Assisted Analytical Closure of the Live Certificate}
 \label{sec:iss-computer-assisted-certificate}
 
-The finite-horizon certificate of Sec.~\ref{sec:iss-live-certificate}
-separates the logical stability implication from the numerical task of
-constructing uniform constants.  The eight-sea diagnostic demonstrates that
-the deployed estimator contracts strongly in its realized Riccati metric, but
-it does not provide a uniform theorem.  This subsection closes the linear
-finite-horizon implication by a verified-arithmetic calculation over a declared
-certificate domain.  The calculation is analytical in the sense relevant here:
-it evaluates closed-form inequalities over intervals and contains no simulated
-sea, random seed, sampled wave spectrum, or fitted stability margin.
+The Phase-2 certificate separates the logical stability implication from the
+construction of uniform constants.  The eight-sea diagnostic demonstrates
+strong realized Riccati-metric contraction, but it is not part of the theorem.
+This subsection closes the missing analytical steps by verified arithmetic over
+a declared compact domain.  The proof program
+\texttt{tools/ou\_live\_basin\_interval\_proof.py} contains no sea spectrum,
+random seed, replay trajectory, or fitted stability margin.
 
 \subsubsection{Certificate domain and source contract}
 
-The proof tool is
-\texttt{tools/ou\_live\_basin\_interval\_proof.py}.  It first checks the source
-tree for the proof-relevant default constants and aborts if they drift.  The
-source/default part of the domain uses the default tuning path
-$\tau_\star=(2f_{\rm tune})^{-1}$ with $f_{\rm tune}\le\SI{1.5}{Hz}$ and the
-source ceiling $\tau\le\SI{12}{s}$, hence
+The fixed dimensionless scales are those of
+Eq.~\eqref{eq:iss-cert-scales}.  The source/default part of the proof domain
+uses the default tuning path $\tau_\star=(2f_{\rm tune})^{-1}$ with
+$f_{\rm tune}\le\SI{1.5}{Hz}$ and the source ceiling
+$\tau\le\SI{12}{s}$, so
 \begin{equation}
-  \frac13\ {\rm s}\le\tau\le12\ {\rm s}.
-  \label{eq:iss-ca-tau-domain}
+ \frac13\ {\rm s}\le\tau\le12\ {\rm s}.
+ \label{eq:iss-ca-tau-domain}
 \end{equation}
-It also uses $\sigma_{aw}\le\SI{6}{m/s^2}$, the default
-$\tau_b=\SI{5000}{s}$ residual-bias model, the validated sensor-noise
-configuration, and the effective $S$-pseudo standard-deviation enclosure
+The wrapper also applies a source-enforced OU standard-deviation floor before
+committing the stationary covariance,
 \begin{equation}
-  0.044\le r_S\le694\ {\rm m\,s}.
-  \label{eq:iss-ca-rs-domain}
+ \sigma_{aw,i}\ge\SI{0.05}{m/s^2},
+ \qquad
+ \sigma_{aw,i}\le\SI{6}{m/s^2},
+ \label{eq:iss-ca-sigma-domain}
 \end{equation}
-The latter is the conservative post-cadence enclosure already pinned by the
-implementation contract test; it is deliberately wider than the base
-$[0.15,400]$ clamp.
+for all three default axes because $S_{\rm factor}=1$.  This is stronger than
+the tuner output alone: the wrapper evaluates
+\texttt{max(0.05, band\_noise\_floor, sigma\_applied)} before calling
+\texttt{set\_aw\_stationary\_std}.  Hence a positive OU diffusion floor is an
+implementation property of the default wrapper and is not introduced merely to
+make the proof work.
 
-Not every theorem hypothesis is enforced by the current source.  The verified
-calculation therefore labels the remaining quantities as
-\emph{certificate-domain assumptions}, rather than implementation guarantees:
+The remaining source/default quantities used below are the finite
+$\tau_b=\SI{5000}{s}$ residual accelerometer-bias model, the validated sensor
+noise configuration, and the audited effective $S$-pseudo standard-deviation
+enclosure
+\begin{equation}
+ 0.044\le r_S\le694\ {\rm m\,s}.
+ \label{eq:iss-ca-rs-domain}
+\end{equation}
+The proof tool checks these source tokens and aborts if they drift.
+
+The assumptions not enforced by the current source remain explicit certificate
+conditions:
 \begin{equation}
 \begin{gathered}
-\SI{4.5}{ms}\le h_k\le\SI{5.5}{ms},\qquad
-\sigma_{aw}\ge\SI{0.01}{m/s^2},\\
+\SI{4.5}{ms}\le h_k\le\SI{5.5}{ms},\\
 5\le\|\widehat f_b\|\le15\ {\rm m/s^2},\qquad
 10\le\|\widehat m_b\|\le100\ {\rm \mu T},\\
 1-|u_f^\top u_m|\ge0.05,\qquad
@@ -49,275 +58,403 @@ calculation therefore labels the remaining quantities as
 \end{gathered}
 \label{eq:iss-ca-external-domain}
 \end{equation}
-for the selected accepted vector-update pair.  In particular, the production
-tuner has no positive lower clamp on $\sigma_{aw}$.  Equation
-\eqref{eq:iss-ca-external-domain} is therefore a condition under which an
-interval may be called certified; it is not silently attributed to the current
-implementation.
+for the selected accepted vector-update pair.  These conditions delimit the
+certified set; they are not inferred from covariance or from simulation.
 
-\subsubsection{Exact finite-horizon covariance decomposition}
+\subsubsection{Exact Riccati energy identity}
 
-Consider the linearized, scaled error system over one proof horizon,
+Let $P_k$ denote the scaled covariance and let
 \begin{equation}
- z_{i+1}=F_i z_i+B_iw_i,\qquad
- y_i=C_i z_i+v_i ,
+ V_k(\vct z)=\vct z^\top P_k^{-1}\vct z.
 \end{equation}
-with the same accepted-update schedule as the Live theorem.  Stack the
-independent process noises after whitening into $\xi$.  At the horizon endpoint
-one may write
+For one accepted measurement with prior covariance $P^-$,
+innovation covariance $S=C P^-C^\top+R$, and gain
+$K=P^-C^\top S^{-1}$, the homogeneous correction is
+$z^+=(I-KC)z^-$.  Using the exact covariance update gives
 \begin{equation}
- z_H=\Phi_H z_0+\mathcal B_H\xi ,
+ \boxed{V^- -V^+
+ = (Cz^-)^\top S^{-1}(Cz^-).}
+ \label{eq:iss-ca-meas-energy}
+\end{equation}
+A covariance-consistent MEKF reset is a congruence and therefore leaves $V$
+unchanged.  Prediction is nonexpansive because
+$P^-=F P F^\top+Q\succeq FPF^\top$.
+Telescoping over one horizon gives the exact identity
+\begin{equation}
+ \boxed{
+ P_0^{-1}-\Psi_H^\top P_H^{-1}\Psi_H=\mathcal G_H\succeq0,}
+ \label{eq:iss-ca-energy-identity}
+\end{equation}
+where $\mathcal G_H$ is the accumulated prediction and measurement dissipation.
+If $P_0=L_0L_0^\top$ and $P_H=L_HL_H^\top$, then any verified
+\begin{equation}
+ L_0^\top\mathcal G_HL_0\succeq\underline\delta_H I
+ \label{eq:iss-ca-energy-margin}
+\end{equation}
+immediately implies
+\begin{equation}
+ \|L_H^{-1}\Psi_HL_0\|_2
+ \le\sqrt{1-\underline\delta_H}<1.
+ \label{eq:iss-ca-energy-contraction}
+\end{equation}
+
+\subsubsection{Finite-horizon process-noise posterior}
+
+Stack the whitened process noise over one horizon into $\xi$ and write
+\begin{equation}
+ z_H=\Phi_Hz_0+\mathcal B_H\xi,
  \qquad
- Y=\mathcal O_Hz_0+\mathcal H_H\xi+v .
+ Y=\mathcal O_Hz_0+\mathcal H_H\xi+v.
  \label{eq:iss-ca-batch}
 \end{equation}
-For the actual Kalman estimator, linearity gives the covariance decomposition
+Giving an auxiliary estimator the exact initial state can only reduce its error
+covariance.  Conditional on that oracle information, the minimum covariance of
+the terminal process-noise contribution is
 \begin{equation}
- P_H=\Psi_HP_0\Psi_H^\top+\Omega_H ,
- \label{eq:iss-ca-cov-decomp}
-\end{equation}
-where $\Psi_H$ is the homogeneous closed-loop transition and $\Omega_H$ is the
-error covariance generated by process and measurement noise with zero initial
-error.
-
-Give an auxiliary estimator the true initial state $z_0$.  Conditional on that
-additional information, estimating the process-noise contribution
-$\mathcal B_H\xi$ from
-$\mathcal H_H\xi+v$ is a linear Gaussian problem.  Its minimum covariance is
-\begin{equation}
- P_{\rm or}
- =
- \mathcal B_H
- \left(I+\mathcal H_H^\top R^{-1}\mathcal H_H\right)^{-1}
- \mathcal B_H^\top .
+ P_{\rm or}=\mathcal B_H
+ (I+\mathcal H_H^\top R^{-1}\mathcal H_H)^{-1}
+ \mathcal B_H^\top.
  \label{eq:iss-ca-oracle}
 \end{equation}
-The noise-only part of the actual Kalman estimator is another linear estimator
-of the same quantity but without the oracle information; consequently
+Therefore the noise-only covariance of the actual Kalman estimator satisfies
 \begin{equation}
  \Omega_H\succeq P_{\rm or}.
- \label{eq:iss-ca-oracle-order}
 \end{equation}
 If
 \begin{equation}
  \mathcal B_H\mathcal B_H^\top\succeq\alpha_c I,
  \qquad
- \|\mathcal H_H^\top R^{-1}\mathcal H_H\|_2\le\beta_c ,
- \label{eq:iss-ca-alpha-beta}
+ \|\mathcal H_H^\top R^{-1}\mathcal H_H\|\le\beta_c,
 \end{equation}
 then
 \begin{equation}
- \boxed{\Omega_H\succeq q_H I,\qquad
- q_H:=\frac{\alpha_c}{1+\beta_c}.}
+ \boxed{\Omega_H\succeq q_HI,\qquad
+ q_H=\frac{\alpha_c}{1+\beta_c}.}
  \label{eq:iss-ca-qh}
 \end{equation}
 
-Suppose independently that the explicit finite-window observer constructed
-below yields
-\begin{equation}
- P_H\preceq\overline p I .
- \label{eq:iss-ca-pbar}
-\end{equation}
-Substitution of Eqs.~\eqref{eq:iss-ca-qh}--\eqref{eq:iss-ca-pbar} into
-Eq.~\eqref{eq:iss-ca-cov-decomp} gives
-\begin{equation}
- \Psi_HP_0\Psi_H^\top
- \preceq
- \left(1-\delta_H\right)P_H,\qquad
- \delta_H:=\frac{q_H}{\overline p}>0 .
- \label{eq:iss-ca-delta}
-\end{equation}
-Hence, if $P_i=L_iL_i^\top$,
-\begin{equation}
- \boxed{
- \|L_H^{-1}\Psi_HL_0\|_2
- \le \sqrt{1-\delta_H}<1 .}
- \label{eq:iss-ca-contraction}
-\end{equation}
-This establishes strict finite-horizon Riccati-metric contraction without
-evaluating $\Psi_H$ on a simulated trajectory.
+The remaining question is to obtain $\alpha_c$ without reverting to the tiny
+one-sample $Q_{SS}=O(h^7)$ eigenvalue.  This can be done for an
+\emph{arbitrarily time-varying} OU pole; no adaptation-slew assumption is
+needed.
 
-\subsubsection{Uniform process floor for an arbitrarily varying schedule}
+For one scaled OU--III axis write
+\begin{align}
+ \dot z_v&=\frac{s_{aw}}{s_v}z_a,&
+ \dot z_p&=\frac{s_v}{s_p}z_v,\\
+ \dot z_S&=\frac{s_p}{s_S}z_p,&
+ \dot z_a&=-\lambda(t)z_a+rac{\sqrt{q_c(t)}}{s_{aw}}u,
+ \label{eq:iss-ca-scaled-axis}
+\end{align}
+where
+$q_c(t)=2\sigma_{aw}^2(t)/\tau(t)$ and
+$\lambda(t)=1/\tau(t)$.  The source bounds give
+$q_c(t)\ge q_{c,-}=2(0.05)^2/12$ and
+$0<\lambda(t)\le3$.
 
-The computer-assisted proof does not freeze $\tau$ in the theorem used for
-Eq.~\eqref{eq:iss-ca-contraction}.  For one OU--III axis and one IMU sample,
-write $x=h/\tau$ and factor the scaled exact process covariance as
+Fix the horizon length $T_H$ and any desired terminal scaled state
+$z_f=(z_v,z_p,z_S,z_a)$.  Choose the acceleration trajectory
 \begin{equation}
- Q_{L,z}=q_ch D_h\widehat W(x)D_h,\qquad
- q_c=\frac{2\sigma_{aw}^2}{\tau},
+ z_a(t)=\sum_{j=1}^4 c_j(t/T_H)^j.
+ \label{eq:iss-ca-steering-poly}
+\end{equation}
+It starts from $z_a(0)=0$.  Triple integration and the endpoint condition give
+$z_f=M_Hc$, where
+\begin{equation}
+M_H=
+\begin{bmatrix}
+A_1/2&A_1/3&A_1/4&A_1/5\\
+A_2/6&A_2/12&A_2/20&A_2/30\\
+A_3/24&A_3/60&A_3/120&A_3/210\\
+1&1&1&1
+\end{bmatrix},
+\end{equation}
+with
+$A_1=s_{aw}T_H/s_v$,
+$A_2=s_{aw}T_H^2/s_p$, and
+$A_3=s_{aw}T_H^3/s_S$.
+The normalized rational part has the exact inverse
+\begin{equation}
+\begin{bmatrix}
+60&-360&840&-4\\
+-420&2340&-5040&30\\
+780&-4080&8400&-60\\
+-420&2100&-4200&35
+\end{bmatrix},
+\end{equation}
+so
+\begin{equation}
+ \|c\|^2\le\Gamma_M(T_H)\|z_f\|^2,
 \end{equation}
 where
 \begin{equation}
- D_h=\operatorname{diag}
- \left(\frac{h}{s_v},\frac{h^2}{s_p},
-       \frac{h^3}{s_S},\frac{1}{s_{aw}}\right).
+ \Gamma_M=
+ \frac{964800}{A_1^2}+
+ \frac{26661600}{A_2^2}+
+ \frac{114307200}{A_3^2}+5741.
+ \label{eq:iss-ca-moment-inverse}
 \end{equation}
-The four dimensionless impulse functions satisfy the elementary bounds used in
-the script, which imply
+
+The control that realizes Eq.~\eqref{eq:iss-ca-steering-poly} is
+$u=s_{aw}(\dot z_a+\lambda z_a)/\sqrt{q_c}$.  The derivative and value Gramian
+row-sum bounds are respectively $241/35$ and $19/20$; hence
 \begin{equation}
- \det\widehat W(x)
- \ge
- \frac{e^{-2x}}{870912000},
- \qquad
- \operatorname{tr}\widehat W(x)\le\frac{437}{315}.
+\int_0^{T_H}u^2dt
+\le
+\frac{2s_{aw}^2}{q_{c,-}}
+\left[
+ \frac{241}{35T_H}+\frac{19}{20}\lambda_+^2T_H
+\right]
+\Gamma_M(T_H)\|z_f\|^2.
+\label{eq:iss-ca-steering-energy}
 \end{equation}
-Therefore
-\begin{equation}
- \lambda_{\min}(\widehat W)
- \ge
- \frac{e^{-2x}}
- {870912000(437/315)^3}.
-\end{equation}
-Using the endpoint values of the declared intervals gives a one-sample,
-schedule-independent lower bound
+The minimum control energy for reaching $z_f$ is
+$z_f^\top W_c^{-1}z_f$.  Therefore Eq.~\eqref{eq:iss-ca-steering-energy}
+proves the uniform controllability inequality
 \begin{equation}
  \boxed{
- q_{\rm step}\ge1.036520021409\times10^{-34}.}
- \label{eq:iss-ca-qstep-num}
+ W_c(T_H)\succeq\alpha_c I,\qquad
+ \alpha_c=\Gamma_c^{-1},}
+ \label{eq:iss-ca-controllability}
 \end{equation}
-Because the final prediction in a proof horizon contributes this positive
-covariance, $\alpha_c=q_{\rm step}$ is sufficient even when $\tau$ changes
-arbitrarily from sample to sample inside the certificate domain.
+for every measurable/piecewise-constant schedule in the declared box.  Because
+the implementation uses the exact OU finite-step covariance for each
+piecewise-constant sample, this continuous finite-horizon Gramian is exactly the
+accumulated discrete process covariance of the model.
 
-For comparison only, if $\tau$ and $\sigma_{aw}$ are held fixed over the
-complete maximum proof horizon
-$T_H=\SI{0.5074090909}{s}$, applying the same analytical bound with
-$h=T_H$ gives
+For the maximum proof horizon
+$T_H=\SI{0.5074090909}{s}$, verified arithmetic gives
 \begin{equation}
- q_{\rm frozen}\ge1.182332737117\times10^{-21},
- \label{eq:iss-ca-frozen-q}
+ \boxed{\alpha_c\ge6.881415950832\times10^{-19}.}
+ \label{eq:iss-ca-alpha-num}
 \end{equation}
-about $1.14\times10^{13}$ larger than
-Eq.~\eqref{eq:iss-ca-qstep-num}.  Equation
-\eqref{eq:iss-ca-frozen-q} is a diagnostic strengthening, not a hypothesis
-inserted into the time-varying theorem.
+The older final-sample bound is retained only as a diagnostic:
+\begin{equation}
+ q_{\rm step}\ge2.591300053522\times10^{-33}.
+\end{equation}
+Thus the finite-horizon steering argument removes approximately
+$2.66\times10^{14}$ of artificial process-floor conservatism while allowing
+arbitrary time variation of $\tau$ and $\sigma_{aw}$ inside the certificate
+box.  A frozen-schedule calculation gives
+$2.955831842793\times10^{-20}$ and is therefore weaker than
+Eq.~\eqref{eq:iss-ca-alpha-num}; it is no longer needed even as a strengthening.
 
-\subsubsection{Constructive covariance upper bound}
+\subsubsection{Constructive observability and covariance upper bound}
 
-The four bounded-gap $S$ observations recover the scalar
-$[v,p,S,a_w]$ state by divided differences.  The third divided difference
-annihilates the quadratic $S_0+t p_0+t^2v_0/2$ part and yields $a_w$.  With
-successive gaps no smaller than $T_-$, its weight vector obeys
+For one translational axis, four $S$ observations have
+\begin{equation}
+ S(t)=S_0+t p_0+\frac12t^2v_0+A_3(t)a_0.
+\end{equation}
+The third divided difference annihilates the quadratic polynomial and isolates
+$a_0$.  For successive gaps at least $T_-$,
 \begin{equation}
  \|w_3\|_2\le\frac{\sqrt5}{3T_-^3},
 \end{equation}
-while the Hermite--Genocchi bound already used in
-Lemma~\ref{lem:iss-axis-uco} gives
+and Hermite--Genocchi gives
 \begin{equation}
  A_3[t_0,t_1,t_2,t_3]
  \ge\frac16e^{-3T_+/\underline\tau}.
 \end{equation}
-After $a_w$ is removed, second and first divided differences recover $v$ and
-$p$, and $S$ is the $t_0=0$ sample.  Carrying the fixed state scaling and the
-global $r_S$ enclosure through this explicit inverse gives the verified
-one-axis bound
+After recovering $a_0$, ordinary second and first divided differences recover
+$v_0,p_0$, while the first sample recovers $S_0$.  Carrying the state scaling
+and the complete effective-$r_S$ enclosure through this explicit inverse yields
 \begin{equation}
  \boxed{\sigma_{\min}(\mathcal O_L)
  \ge1.216353822821\times10^{-15}.}
  \label{eq:iss-ca-sl}
 \end{equation}
+This is the expected $T_-^{-3}$ inverse scaling rather than the much more
+conservative determinant/Frobenius $T_-^{-6}$ construction.
 
-The two-vector attitude/gyro-bias construction gives, under
-Eq.~\eqref{eq:iss-ca-external-domain},
+The two-vector attitude/gyro-bias construction gives
 \begin{equation}
  \boxed{\sigma_{\min}(\mathcal O_A)
  \ge3.161536500037\times10^{-5}.}
- \label{eq:iss-ca-sa}
 \end{equation}
-Combining the translational and attitude blocks through the actual
-block-triangular observation structure and bounding the acceleration-to-vector
-cross block yields
+Combining these through the actual block-triangular 18-state observation matrix
+and bounding the acceleration-to-vector cross block gives
 \begin{equation}
  \boxed{\sigma_{\min}(\mathcal O_{18})
  \ge6.707390504261\times10^{-23}.}
  \label{eq:iss-ca-s18}
 \end{equation}
 
-A finite-window least-squares observer for these 18 coordinates, with the
-stable residual accelerometer bias treated as bounded colored nuisance, is an
-admissible estimator using the same measurements as the Kalman filter.  Its
-explicit covariance therefore upper-bounds the optimal Kalman covariance.
-The calculation uses
+An explicit finite-window comparison observer for these 18 coordinates, with
+the stable residual accelerometer bias treated as bounded colored nuisance,
+then gives
 \begin{equation}
- \overline P_{b_a}
- =
- \max\left\{
- (0.004/0.5)^2,\,
- \frac{(2.5\times10^{-7})5000}{2(0.5)^2}
- \right\}
- =2.5\times10^{-3}
-\end{equation}
-in scaled coordinates, together with closed-form transition and accumulated
-process-noise envelopes.  The resulting verified full-state bound is
-\begin{equation}
- \boxed{\overline p
- \le4.176061086161\times10^{57}.}
+ \boxed{P_H\preceq\overline pI,\qquad
+ \overline p\le4.176061086161\times10^{57}.}
  \label{eq:iss-ca-pbar-num}
 \end{equation}
-The number is intentionally not presented as a realistic covariance estimate:
-it is a worst-case comparison-estimator bound over the complete declared box.
+The bound is intentionally a worst-case theorem constant, not a realistic
+covariance estimate.
 
-\subsubsection{Verified result and interpretation}
-
-The process-to-selected-measurement operator is bounded by
+The process-to-selected-measurement operator satisfies
 \begin{equation}
  \beta_c\le1.052749938580\times10^{10},
 \end{equation}
-so the oracle argument yields
+so Eq.~\eqref{eq:iss-ca-qh} gives
 \begin{equation}
- q_H\ge9.845833120718\times10^{-45}.
+ \boxed{q_H\ge6.536610165432\times10^{-29}.}
+ \label{eq:iss-ca-qh-num}
 \end{equation}
-Together with Eq.~\eqref{eq:iss-ca-pbar-num},
+Combining Eqs.~\eqref{eq:iss-ca-qh-num} and
+\eqref{eq:iss-ca-pbar-num} with
+$P_H=\Psi_HP_0\Psi_H^\top+\Omega_H$ yields
 \begin{equation}
- \boxed{
- \delta_H\ge2.357684171179\times10^{-102}>0.}
+ \boxed{\delta_H
+ \ge1.565257315582\times10^{-86}>0,}
  \label{eq:iss-ca-delta-num}
 \end{equation}
-Consequently
+and therefore
 \begin{equation}
- \boxed{
- 1-\chi_H
- \ge1.178842085590\times10^{-102}>0,}
+ \boxed{1-\chi_H
+ \ge7.826286577912\times10^{-87}>0.}
  \label{eq:iss-ca-chi-margin}
 \end{equation}
-where the last inequality uses
-$1-\sqrt{1-\delta}\ge\delta/2$.
 
-This is a constructive proof of strict contraction on the declared
-certificate domain; it is not a useful numerical handoff radius.  The
-calculation identifies two dominant losses.  First, insisting on arbitrary
-sample-to-sample scheduling forces the universal process floor to inherit the
-triple-integrator one-sample scale.  Freezing the schedule over the same horizon
-raises the corresponding verified $\delta$ lower bound to
+\subsubsection{Independent observable/detectable energy closure}
+
+The covariance-decomposition proof above already establishes strict
+contraction.  We additionally verify the structural detectable decomposition
+suggested by Eq.~\eqref{eq:iss-ca-energy-identity} rather than relying on a raw
+$21\times21$ interval eigenproblem.
+
+Let $x\in\mathbb R^{18}$ collect the uniformly observable coordinates and let
+$b\in\mathbb R^3$ denote the residual accelerometer bias.  The selected
+measurement-energy term can be bounded in the form
 \begin{equation}
- 2.689351987219\times10^{-89},
+ c_m\|\mathcal O_{18}x+D_bb\|^2,
 \end{equation}
-approximately thirteen orders of magnitude, but remains far from the realized
-Riccati contraction.  Second, and more importantly, the covariance upper bound
-is dominated by the global four-$S$-measurement inverse and the
-block-triangular cross coupling, producing the very small
-Eq.~\eqref{eq:iss-ca-s18}.  Thus the broad-box comparison estimator, not an
-observed instability of the filter, is the principal obstruction to a useful
-deterministic basin constant.
+where $c_m>0$ accounts for innovation covariance and the strictly lower
+triangular correction-feedback map.  The script uses
+$\|KR^{1/2}\|\le\sqrt{\overline p}/2$ and the finite-horizon transition bound
+to obtain a verified $c_m$.
 
-The practical conclusion is deliberately narrow.  The computer-assisted
-calculation closes the previously existential linear UES implication with
-strict, reproducible constants and proves that no reference-sea simulation is
-needed for that implication.  It does \emph{not} justify replacing the
-Phase-2 measured $\chi_{V,30}\approx0.94$ by
-Eq.~\eqref{eq:iss-ca-chi-margin} for engineering tuning, and it does not yet
-supply a practically sized nonlinear handoff tube.  A useful theorem-certified
-runtime basin requires a sharper covariance comparison---most naturally one
-that exploits the coupled deployed $r_S(\tau,\sigma_{aw})$ schedule and a
-verified slew bound rather than combining mutually incompatible global
-worst cases.  No such coupling is assumed in the result above.
+For the $b_a$ OU prediction, Woodbury gives a process-dissipation lower bound on
+the bias subspace even with arbitrary covariance cross terms.  If
+$q_b$ is the scaled exact one-step residual-bias covariance, then
+\begin{equation}
+ d_b\ge
+ \frac{q_b}{\overline p^2(1+q_b/\overline p)}>0.
+ \label{eq:iss-ca-db}
+\end{equation}
+With
+$\sigma_{\min}(\mathcal O_{18})\ge s_{18}$, define
+\begin{equation}
+ L_*=\begin{bmatrix}
+ 1/(\sqrt{c_m}s_{18})&
+ \|D_b\|/(s_{18}\sqrt{d_b})\\
+ 0&1/\sqrt{d_b}
+ \end{bmatrix}.
+ \label{eq:iss-ca-detect-left-inverse}
+\end{equation}
+Then the block operator satisfies
+\begin{equation}
+ c_m\|\mathcal O_{18}x+D_bb\|^2+d_b\|b\|^2
+ \ge\frac{1}{\|L_*\|_2^2}\|(x,b)\|^2.
+ \label{eq:iss-ca-detect-bound}
+\end{equation}
+The verified broad-box value is strictly positive but more conservative than
+the covariance-decomposition route:
+\begin{equation}
+ \delta_{\rm det}
+ \ge4.988195497798\times10^{-203}>0.
+\end{equation}
+Its role is therefore structural: it confirms independently that measurement
+dissipation covers the observable 18-state block while the finite residual-bias
+OU process closes the remaining detectable direction.
 
-\paragraph{Reproducibility.}
-The proof script uses Python \texttt{Decimal} arithmetic at high precision.
-Algebraic operations are rounded in the adverse direction; correctly rounded
-transcendentals are widened by one ulp before they enter a certified bound.
-The program checks the source/default constants, emits all intermediate
-constants, and exits unsuccessfully unless
-$q_H>0$, $\sigma_{\min}(\mathcal O_{18})>0$, and
-$\delta_H>0$.  Its frozen-schedule comparison is printed separately and is not
-used to pass the uniform theorem.
+\subsubsection{Lifted nonlinear Riccati-metric basin}
+
+The remaining nonlinear constants can also be bounded without replay.  From
+$P\preceq\overline pI$ and $R\succeq\underline rI$,
+\begin{equation}
+ \|K_z\|\le\frac{\overline p\,\|C_z\|}{\underline r}.
+ \label{eq:iss-ca-gain-bound}
+\end{equation}
+Substitution of this inequality into the accelerometer/magnetometer Taylor
+remainders and the $\SO(3)$ composition bound of
+Sec.~\ref{sec:iss-cert-remainder} yields the verified one-step constant
+\begin{equation}
+ \boxed{c_\xi\le2.603125914091\times10^{126},}
+ \label{eq:iss-ca-cxi-num}
+\end{equation}
+with chart radius
+\begin{equation}
+ \boxed{r_\xi\ge3.348105435485\times10^{-63}.}
+ \label{eq:iss-ca-rxi-num}
+\end{equation}
+These values are intentionally worst-cased independently and are not engineering
+tuning numbers.
+
+At horizon boundaries define
+\begin{equation}
+ R_n=\|P_{k_n}^{-1/2}z_{k_n}\|.
+\end{equation}
+Every intermediate linear Riccati step is nonexpansive.  If
+$p_{-,i}$ is a verified intermediate covariance floor, then the nonlinear
+injection satisfies
+\begin{equation}
+ \|\varphi_i\|_{V_{i+1}}
+ \le c_\xi\frac{\overline p}{\sqrt{p_{-,i}}}R_i^2.
+\end{equation}
+Summing these coefficients over the at most 113 samples in one proof horizon
+defines $C_H$, and the lifted recursion is
+\begin{equation}
+ \boxed{
+ R_{n+1}\le\chi_HR_n+C_HR_n^2+G_H\overline d.}
+ \label{eq:iss-ca-lifted-recursion}
+\end{equation}
+For zero deterministic disturbance, a sufficient invariant radius is
+\begin{equation}
+ \boxed{
+ R_{\rm cert}
+ <\min\left\{
+ \frac{r_\xi}{\sqrt{\overline p}},
+ \frac{1-\chi_H}{C_H}
+ \right\}.}
+ \label{eq:iss-ca-lifted-radius}
+\end{equation}
+The verified broad-box calculation gives
+\begin{equation}
+ \boxed{R_{\rm cert}
+ \ge3.243203027309\times10^{-289}}
+ \label{eq:iss-ca-lifted-radius-num}
+\end{equation}
+as a strictly positive sufficient radius.  This is mathematically constructive
+but operationally useless.  For nonzero bounded disturbance the usual quadratic
+discriminant condition
+$(1-\chi_H)^2>4C_HG_H\overline d$ gives the corresponding practical invariant
+tube.
+
+\subsubsection{Findings and scope}
+
+The computer-assisted closure changes the interpretation of the Phase-2
+certificate in four ways.
+
+First, the one-sample triple-integrator floor is no longer the theorem's process
+bottleneck.  The arbitrary-time-varying finite-horizon steering construction
+improves the verified controllability floor by approximately
+$2.66\times10^{14}$ while requiring no schedule-freezing or slew hypothesis.
+
+Second, the translational observability constant is constructed by divided
+differences rather than by a determinant/Frobenius conversion, yielding the
+correct $T_-^{-3}$ inverse scaling.
+
+Third, the full 21-state detectable structure is closed analytically through the
+observable 18-state block and the finite residual-bias OU direction; a raw
+interval eigenvalue sweep is unnecessary.
+
+Fourth, the nonlinear Riccati-metric radius is now computed rather than left as
+an uninstantiated formula.  Its value shows that the remaining obstacle is not
+strict stability but conservatism of the global covariance/measurement bounds,
+especially the complete effective-$r_S$ enclosure and the block-triangular
+cross coupling.  The present broad-domain proof is therefore a valid existence
+certificate, not a useful numerical handoff test.
+
+No reference-sea simulation is needed for any implication in this subsection.
+The existing \texttt{live\_basin\_diagnostic} remains useful only for measuring
+how conservative these analytical constants are relative to realized operation.
+No filter or tuner behavior is changed by this proof.
