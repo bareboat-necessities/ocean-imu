@@ -143,7 +143,7 @@ For one scaled OU--III axis write
  \dot z_v&=\frac{s_{aw}}{s_v}z_a,&
  \dot z_p&=\frac{s_v}{s_p}z_v,\\
  \dot z_S&=\frac{s_p}{s_S}z_p,&
- \dot z_a&=-\lambda(t)z_a+rac{\sqrt{q_c(t)}}{s_{aw}}u,
+ \dot z_a&=-\lambda(t)z_a+\frac{\sqrt{q_c(t)}}{s_{aw}}u,
  \label{eq:iss-ca-scaled-axis}
 \end{align}
 where
