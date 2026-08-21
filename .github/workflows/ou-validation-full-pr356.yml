@@ -1,0 +1,16 @@
+name: ou-validation-full-pr356
+
+on:
+  push:
+    branches:
+      - agent/period-log-smoothing-retune
+    paths:
+      - ".github/workflows/ou-validation-full-pr356.yml"
+
+jobs:
+  full-validation:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/ou-validation.yml
+    with:
+      validation_mode: full
