@@ -85,19 +85,19 @@ FAMILIES = {
     "ou_iii": {
         "sim": REPO_ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim",
         "shipped": {
-            "err_limit_percent_z_jonswap":   4.527,
-            "err_limit_percent_z_pmstokes":  4.509,
-            "err_limit_yaw_deg":             0.8827,
-            "err_limit_roll_deg":            0.3633,
-            "err_limit_pitch_deg":           0.197,
+            "err_limit_percent_z_jonswap":   4.489,
+            "err_limit_percent_z_pmstokes":  4.462,
+            "err_limit_yaw_deg":             0.887,
+            "err_limit_roll_deg":            0.3625,
+            "err_limit_pitch_deg":           0.1969,
             "err_limit_percent_3d_jonswap":  13.7,
-            "err_limit_percent_3d_pmstokes": 14.58,
-            "acc_z_bias_percent":            4.489,
-            "bias_3d_percent":               78.86,
+            "err_limit_percent_3d_pmstokes": 14.68,
+            "acc_z_bias_percent":            4.492,
+            "bias_3d_percent":               78.84,
             # The first family to gate the gyro's 3D bias on its own bar.  The
             # shared one is the accelerometer's, and the gyro sits four times
             # under it.
-            "gyro_bias_3d_percent":          18.82,
+            "gyro_bias_3d_percent":          18.8,
         },
     },
     # TFG is gated by the same rule on the same protocol and had been

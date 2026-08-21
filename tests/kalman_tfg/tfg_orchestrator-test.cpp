@@ -602,17 +602,30 @@ void test_sea_scaled_ema_defaults() {
     f.begin(default_config());
     check(std::fabs(f.getAdaptationSeaPeriods() - 0.40f) <= 1e-6f,
           "TFG common tau/sigma EMA is not 0.40*T_sea by default");
-    check(std::fabs(f.getTunerFreqSmoothingSeaPeriods() - 0.10f) <= 1e-6f,
-          "TFG tuner frequency EMA is not 0.10*T_sea by default");
 
-    // Fixed-second setters remain real ablations rather than being ignored by
-    // the new defaults.
+    // WavePeriodEstimator owns the only period/frequency smoothing state.
+    // SeaStateAutoTuner consumes its canonical reciprocal directly and must
+    // not add the removed second frequency EMA.
+    check(f.getTunerFreqSmoothingSeaPeriods() == 0.0f,
+          "TFG re-enabled the removed second frequency EMA");
+
+    WavePeriodEstimator period;
+    check(std::fabs(period.getMomentHorizonPeriods() - 4.0f) <= 1e-6f,
+          "shared wave-period moment horizon is not 4*T_z by default");
+    check(std::fabs(period.getLogSmoothingPeriods() - 0.05f) <= 1e-6f,
+          "shared canonical log-period smoothing is not 0.05*T_z by default");
+
+    // The common scheduler still has a real fixed-second compatibility mode.
     f.setAdaptationTimeConstants(1.8f);
-    f.setTunerFreqSmoothingTimeConstant(1.0f);
     check(f.getAdaptationSeaPeriods() == 0.0f,
           "TFG fixed tau/sigma EMA setter did not disable sea scaling");
+
+    // Legacy frequency-smoothing setters are compatibility no-ops. Calling
+    // one must not resurrect a second smoother downstream of the canonical
+    // log-period state.
+    f.setTunerFreqSmoothingTimeConstant(1.0f);
     check(f.getTunerFreqSmoothingSeaPeriods() == 0.0f,
-          "TFG fixed frequency EMA setter did not disable sea scaling");
+          "TFG legacy frequency-EMA setter re-enabled a second smoother");
 }
 
 void test_schedule_is_exogenous_to_the_current_sample() {
