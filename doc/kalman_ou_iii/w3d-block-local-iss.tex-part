@@ -58,11 +58,20 @@ $\widetilde M\ge1$ and the same $0<\rho<1$ such that
 The numerical size of a certified basin depends on the selected physical
 scales, as it must; the stability property itself does not.
 
+For the structural remainder statement, index the sampled recursion at the
+post-prediction, pre-correction phase of each IMU sample.  From such an index,
+the sample applies the accepted accelerometer, magnetometer, and $S$ updates
+and their MEKF reset, followed by the next exact prediction.  This is only a
+phase convention for the same Live recursion; all one-step transition matrices
+are uniformly bounded on the standing compact set, so the UES property above
+is unchanged.  The convention matters because the exact prediction contains
+the linear chain $v\rightarrow p\rightarrow S$: its effect belongs in the
+homogeneous transition rather than being hidden inside a nonlinear remainder.
+
 \begin{lemma}[Remainder depends directly only on the sensitive block]
 \label{lem:iss-block-remainder}
-For the prediction, accelerometer update, magnetometer update, $S=0$
-pseudo-update, additive-state injection, and MEKF attitude reset used by the
-normal Live recursion, the scaled nonlinear error map can be written
+With the post-prediction indexing above, the scaled normal-Live error map can be
+written
 \begin{equation}
 \vct z_{k+1}
 =\widetilde{\mat A}^{\rm cl}_k\vct z_k
@@ -86,20 +95,30 @@ No smallness condition on $\vct z_\ell$ is needed for this remainder bound.
 \end{lemma}
 
 \begin{proof}
-The OU--III prediction is exactly linear in the additive
-$[v,p,S,a_w,b_a]$ coordinates, while the attitude/gyro-bias propagation is the
-only nonlinear prediction map.  The accelerometer model
-Eq.~\eqref{eq:acc-meas-jacobians} depends on attitude, $a_w$, and $b_a$ but not
-on $v$ or $p$; the magnetometer model depends only on attitude; and the
-integral pseudo-measurement Eq.~\eqref{eq:HS-selector} depends on $S$ but not on
-$v$ or $p$.  Additive-state injection is exact.  The remaining nonlinear
-operation is the quaternion injection/reset of
-Eqs.~\eqref{eq:quat-error-injection}--\eqref{eq:mekf-reset-covariance}; its
-attitude correction is driven by the same accelerometer, magnetometer, and $S$
-residuals and therefore again has no direct $v$ or $p$ dependence.  After the
-first-order terms are collected in $\widetilde{\mat A}^{\rm cl}_k$, Taylor's
-theorem on the compact accepted-update geometry gives the uniform quadratic
-bound \eqref{eq:iss-block-remainder}.
+At the chosen phase, every measurement residual presented to the correction
+map is independent of $v$ and $p$: the accelerometer model
+Eq.~\eqref{eq:acc-meas-jacobians} depends on attitude, $a_w$, and $b_a$; the
+magnetometer model depends only on attitude; and the integral
+pseudo-measurement Eq.~\eqref{eq:HS-selector} depends on $S$.  Additive-state
+injection is exact.  The quaternion injection/reset of
+Eqs.~\eqref{eq:quat-error-injection}--\eqref{eq:mekf-reset-covariance} is
+nonlinear, but its attitude correction is driven by those same residuals and
+therefore is a function of the sensitive coordinates only.  Consequently the
+post-correction attitude/gyro-bias coordinates, and every nonlinear part of the
+post-correction additive coordinates, depend nonlinearly only on
+$\vct z_{\xi,k}$; $v,p$ enter that correction map only through the homogeneous
+linearized state transformation.
+
+The prediction that closes the indexed step is exactly linear in the additive
+$[v,p,S,a_w,b_a]$ coordinates.  It can therefore carry the homogeneous
+$v,p$ error into the next $S$ coordinate, and that coupling is retained in
+$\widetilde{\mat A}^{\rm cl}_k$.  Its only nonlinear part is the
+attitude/gyro-bias error propagation, whose arguments after the preceding
+correction are already functions of the sensitive block alone.  Hence, after
+all first-order terms are collected in $\widetilde{\mat A}^{\rm cl}_k$, the
+remaining one-step nonlinear term has no direct $\vct z_\ell$ argument.
+Taylor's theorem on the compact accepted-update geometry then gives the uniform
+quadratic bound \eqref{eq:iss-block-remainder}.
 
 The inclusion of $S$ in $\vct z_\xi$ is essential.  Although the $S=0$
 measurement is itself linear, its Kalman gain can have attitude rows through
