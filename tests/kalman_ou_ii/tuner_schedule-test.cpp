@@ -28,24 +28,16 @@ int main() {
     f.last_adapt_time_sec_ = 0.0;
     f.adapt_every_secs_ = 0.05f;
 
-    // The deployed wrapper starts at tau=1.1 s and historically used a 15 ms
-    // pseudo-update period.  The self-similar cadence must preserve that
-    // operating point exactly while scaling subsequent periods with tau.
     if (!near(f.getPseudoUpdateTauRatio(), 0.015f / 1.1f) ||
         !near(f.getPseudoUpdatePeriodSec(), 0.015f)) {
         std::cerr << "FAIL: OU-II tau-scaled pseudo cadence did not preserve the nominal point\n";
         return 1;
     }
-    if (!near(f.getAdaptationSeaPeriods(), 0.40f) ||
-        !near(f.getTunerFreqSmoothingSeaPeriods(), 0.10f)) {
-        std::cerr << "FAIL: OU-II sea-scaled EMA defaults are not 0.40/0.10 of T_sea\n";
+    if (!near(f.getAdaptationSeaPeriods(), 0.40f)) {
+        std::cerr << "FAIL: OU-II parameter-slew default is not 0.40 of T_sea\n";
         return 1;
     }
 
-
-    // Universal dynamic-EMA safety envelope.  The complete eight-record
-    // reference family spans T_z ~= 2.3..8.4 s, hence T_sea ~= 1.15..4.2 s;
-    // both ends must pass through unchanged rather than riding a clamp.
     using namespace seastate::tuner::limits;
     if (!near(clampDynamicEmaTimeScaleSec(1.15f), 1.15f) ||
         !near(clampDynamicEmaTimeScaleSec(4.20f), 4.20f)) {
@@ -67,31 +59,44 @@ int main() {
         return 1;
     }
 
-    // The shared tuner must use the same guards.  At absurdly short/long input
-    // periods the deployed 0.10*T_sea frequency EMA becomes 0.05/0.60 s, and
-    // the K=2 variance horizon becomes 2/24 s.  These values are far outside
-    // the eight calibrated seas but finite and deliberately bounded.
+    // SeaStateAutoTuner consumes the canonical period-estimator frequency
+    // directly. Only its acceleration-moment horizon is dynamically bounded.
     {
-        SeaStateAutoTuner fast(2.0f, 1.0f);
-        fast.setFrequencySmoothingSeaPeriods(0.10f);
+        SeaStateAutoTuner fast(2.0f);
+        fast.setFrequencySmoothingSeaPeriods(0.10f); // compatibility no-op
         fast.update(0.005f, 0.0f, 100.0f);
-        if (!near(fast.getFrequencySmoothingHorizonSec(), 0.05f) ||
+        if (!near(fast.getFrequencyHz(), 5.0f) ||
+            !near(fast.getFrequencySmoothingHorizonSec(), 0.0f) ||
             !near(fast.getVarianceHorizonSec(), 2.0f)) {
-            std::cerr << "FAIL: short-period tuner horizons escaped universal clamps\n";
+            std::cerr << "FAIL: short-period tuner direct-frequency/variance guard failed\n";
             return 1;
         }
 
-        SeaStateAutoTuner slow(2.0f, 1.0f);
-        slow.setFrequencySmoothingSeaPeriods(0.10f);
+        SeaStateAutoTuner slow(2.0f);
         slow.update(0.005f, 0.0f, 0.001f);
-        if (!near(slow.getFrequencySmoothingHorizonSec(), 0.60f) ||
+        if (!near(slow.getFrequencyHz(), 0.05f) ||
             !near(slow.getVarianceHorizonSec(), 24.0f)) {
-            std::cerr << "FAIL: long-period tuner horizons escaped universal clamps\n";
+            std::cerr << "FAIL: long-period tuner direct-frequency/variance guard failed\n";
             return 1;
         }
     }
 
-    // A sample inside the activation interval must still move the EMA state.
+    // Verify there is no hidden second EMA on variance. With identical EW
+    // weights, getAccelVariance() must be exactly E_w[a^2]-E_w[a]^2.
+    {
+        SeaStateAutoTuner tuner(1.0f);
+        for (int i = 0; i < 5000; ++i) {
+            const float a = (i & 1) ? 2.0f : -1.0f;
+            tuner.update(0.005f, a, 0.5f);
+        }
+        const float mu = tuner.A_mean.get();
+        const float expected = std::max(0.0f, tuner.A_sq.get() - mu * mu);
+        if (!near(tuner.getAccelVariance(), expected, 1e-6f)) {
+            std::cerr << "FAIL: acceleration variance contains a hidden second smoother\n";
+            return 1;
+        }
+    }
+
     {
         Filter s(false);
         s.time_ = 2.0;
@@ -128,11 +133,6 @@ int main() {
         std::max(f.pseudo_update_tau_ratio_ * staged_tau,
                  f.pseudo_update_period_min_s_),
         f.pseudo_update_period_max_s_);
-    // Only the Empirical base is renormalized for cadence; the PhysicalMSE law
-    // already contains the realized T_S, so renormalizing it again would
-    // double-count it.  Mirror the filter's own rule rather than assuming a
-    // law -- this test is about staging and commit timing, not about which
-    // schedule is deployed.
     const float staged_cadence_scale =
         (f.pseudo_law_ == PseudoAdaptationLaw::Empirical)
             ? std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / staged_pseudo)
@@ -158,8 +158,6 @@ int main() {
         return 1;
     }
 
-    // Keep the check isolated from a second tuner update without invoking the
-    // public disable setter, which intentionally cancels a pending candidate.
     f.enable_tuner_ = false;
     f.updateTime(0.005f, gyro, acc);
 
@@ -176,16 +174,6 @@ int main() {
         return 1;
     }
 
-    // Both drift-correction channels fire on the same periodic tick, so both
-    // have to hold r^2 * T_S -- the continuous-equivalent information rate --
-    // at the value the historical 15 ms cadence produced.
-    // The cadence contract differs by law, and both halves are worth pinning.
-    // Empirical states a base pair at the reference cadence and renormalizes,
-    // so its continuous-equivalent information rate r^2*T_S is pinned to T_S,0
-    // whatever the realized cadence.  PhysicalMSE instead evaluates at the
-    // realized T_S and hands back the filter inputs directly, so its product is
-    // r^2*T_S at that cadence.  Asserting the Empirical form for every law
-    // would just be asserting that Empirical is deployed.
     const float info_period =
         (f.pseudo_law_ == PseudoAdaptationLaw::Empirical)
             ? PSEUDO_UPDATE_PERIOD_NOMINAL_S
@@ -206,8 +194,6 @@ int main() {
         return 1;
     }
 
-    // Explicit ablation: disabling self-similar cadence restores the historical
-    // fixed 15 ms period and leaves tau free to change independently.
     f.setTauScaledPseudoUpdateCadence(false);
     const float fixed_rp_var = staged_rp_base * staged_rp_base;
     const float fixed_rv_var = staged_rv_base * staged_rv_base;
@@ -225,6 +211,6 @@ int main() {
         return 1;
     }
 
-    std::cout << "OU-II predictable tuner scheduling, tau-scaled cadence, and information-rate compensation passed\n";
+    std::cout << "OU-II predictable tuner scheduling, direct canonical frequency, tau-scaled cadence, and information-rate compensation passed\n";
     return 0;
 }
