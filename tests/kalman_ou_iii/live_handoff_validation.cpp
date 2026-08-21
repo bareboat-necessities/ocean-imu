@@ -210,7 +210,7 @@ struct Outcome {
     // the bounds those were certified against
     float b_theta = 0, b_bg = 0, b_S = 0, b_aw = 0, b_ba = 0, b_v = 0, b_p = 0;
 
-    float margin = std::numeric_limits<float>::quiet_NaN();
+    double margin = std::numeric_limits<double>::quiet_NaN();
     float sensitive_metric = std::numeric_limits<float>::quiet_NaN();
     float kinematic_metric = std::numeric_limits<float>::quiet_NaN();
     // The largest small-gain slope that would still have certified this
@@ -218,7 +218,12 @@ struct Outcome {
     // closes exactly when c_eff < 1 / (4 * basin_lhs).  Reporting it turns a
     // rejection into a number: it says how much of the gap is the handoff and
     // how much is the interval.
-    float required_c_eff = std::numeric_limits<float>::quiet_NaN();
+    double required_c_eff = std::numeric_limits<double>::quiet_NaN();
+    // The same evaluated handoff scored against the measured interval
+    // constants.  The left-hand side of the inequality is built from the
+    // handoff bounds and the installed seed and does not depend on the
+    // constants, so this is exact rather than a re-run.
+    bool would_certify_measured = false;
 
     bool violated = false;
     bool bounds_checked = false;
@@ -353,8 +358,12 @@ Outcome runScenario(const Scenario& sc) {
             out.margin = c.margin;
             out.sensitive_metric = c.sensitive_metric_norm;
             out.kinematic_metric = c.kinematic_metric_norm;
-            if (std::isfinite(c.basin_lhs) && c.basin_lhs > 0.0f) {
-                out.required_c_eff = 1.0f / (4.0f * c.basin_lhs);
+            if (std::isfinite(c.basin_lhs) && c.basin_lhs > 0.0) {
+                out.required_c_eff = 1.0 / (4.0 * c.basin_lhs);
+                out.would_certify_measured =
+                    c.basin_lhs < ocean_imu::kalman::ou3::liveBasinBudget(
+                        ocean_imu::kalman::ou3::LiveBasinConstants::
+                            intervalMeasured());
             }
 
             const auto& m = filter.raw().mekf();
@@ -600,14 +609,14 @@ int main(int argc, char** argv) {
     }
 
     int n_total = 0, n_handed = 0, n_certified = 0, n_false = 0, n_uncertified = 0;
-    int n_violations = 0, n_bounds_checked = 0;
-    float min_margin = std::numeric_limits<float>::infinity();
+    int n_violations = 0, n_bounds_checked = 0, n_measured_would_certify = 0;
+    double min_margin = std::numeric_limits<double>::infinity();
     float max_handoff_certified = 0.0f;
     float max_handoff_uncertified = 0.0f;
     float worst_ratio_theta = std::numeric_limits<float>::infinity();
     float worst_ratio_any = std::numeric_limits<float>::infinity();
-    float best_required_c_eff = 0.0f;
-    float worst_required_c_eff = std::numeric_limits<float>::infinity();
+    double best_required_c_eff = 0.0;
+    double worst_required_c_eff = std::numeric_limits<double>::infinity();
     float worst_tilt = 0.0f, worst_yaw = 0.0f, worst_S = 0.0f;
 
     std::cout << std::setprecision(6);
@@ -633,6 +642,7 @@ int main(int argc, char** argv) {
         worst_tilt = std::max(worst_tilt, o.e_tilt);
         worst_yaw = std::max(worst_yaw, o.e_yaw);
         worst_S = std::max(worst_S, o.e_S);
+        if (o.would_certify_measured) ++n_measured_would_certify;
         if (o.bounds_checked) {
             ++n_bounds_checked;
             worst_ratio_any = std::min(worst_ratio_any, o.worst_ratio);
@@ -670,6 +680,7 @@ int main(int argc, char** argv) {
               << " false_certifications=" << n_false
               << " bounds_checked=" << n_bounds_checked
               << " bound_violations=" << n_violations
+              << " would_certify_measured=" << n_measured_would_certify
               << " acceptance_rate="
               << (n_handed ? double(n_certified) / double(n_handed) : 0.0)
               << " min_margin=" << min_margin

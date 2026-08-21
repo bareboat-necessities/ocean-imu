@@ -2180,8 +2180,8 @@ public:
     // downstream may report the first as the second.
     enum class LiveCertification : uint8_t {
         NotLive = 0,   // still bootstrapping
-        Uncertified,   // Live, but the entrance inequality did not hold
-        Certified      // Live, and the entrance inequality held
+        Uncertified,   // Live, but not covered by the theorem
+        Certified      // Live, and the analytical entrance inequality held
     };
 
     static const char* liveCertificationName(LiveCertification c) {
@@ -3107,6 +3107,12 @@ public:
             impl_.liveIntervalEpoch() != live_cert_epoch_) {
             return "interval-boundary";
         }
+        // The inequality held, but under constants that are measured rather
+        // than proved.  Saying "certified" here would be the one thing this
+        // whole distinction exists to prevent.
+        if (live_certificate_.certified && !live_certificate_.theoremCertified()) {
+            return "passed-unproved-constants";
+        }
         return live_certificate_.failureName();
     }
 
@@ -3737,7 +3743,12 @@ private:
             obs, cfg_.live_envelope, cfg_.live_basin_constants,
             cfg_.mag_gravity_align_max_sin);
 
-        live_certification_ = live_certificate_.certified
+        // Certified means covered by the theorem, so it needs the analytical
+        // constants as well as a passing inequality.  A pass decided by the
+        // measured interval envelopes is a real result about the deployed
+        // schedule and is kept on the certificate, but it is not proof and does
+        // not reach this state.
+        live_certification_ = live_certificate_.theoremCertified()
                                   ? LiveCertification::Certified
                                   : LiveCertification::Uncertified;
     }

@@ -8,9 +8,61 @@ evaluate — and reports what happens when you do.
 The short version: the theorem's constants improved by about three orders of
 magnitude, the handoff bounds are now constructed rather than assumed, the true
 handoff error respects every one of them across 91 truth-based scenarios, and
-the basin inequality still does not close — by a factor of about 50 at the
-calmest reference sea and about 2100 at the roughest. That factor is reported
-rather than tuned away.
+the basin inequality still does not close.
+
+Since the computer-assisted closure landed
+(`doc/kalman_ou_iii/w3d-computer-assisted-live-basin.tex-part`), the certificate
+runs on *proved* constants by default rather than on replayed ones. That is
+strictly the right thing and it also makes the shortfall enormous: the
+analytical broad-box constants miss by some 291 orders of magnitude, where the
+measured ones miss by 50 to 2100. Both numbers are reported, neither is tuned
+away, and the certificate records which set decided it.
+
+## Two sources, and why the distinction is load-bearing
+
+`LiveBasinConstants::source` is either `Analytical` or `IntervalMeasured`.
+
+**Analytical** is the default. The constants come from
+`tools/ou_live_basin_interval_proof.py`, which evaluates closed-form worst-case
+inequalities with directed-rounding Decimal arithmetic over a declared compact
+domain — no sea spectrum, no seed, no replay. Translating its horizon-lifted
+recursion `R_{n+1} <= chi_H R_n + C_H R_n^2` into the form this header uses is
+immediate: metric monotonicity makes every intermediate step nonexpansive, so
+`M = 1` exactly, and the tube `R <= r` is invariant precisely when
+`C_H r <= 1 - chi_H`, so `c_eff = C_H / (1 - chi_H) = 9.250e288`, whose
+reciprocal is the proof's own `riccati_cert_radius_lower`. A certificate that
+passes against these is a theorem.
+
+**IntervalMeasured** is `live_basin_diagnostic.cpp`'s worst case over the eight
+committed reference operating points: `c_eff = 29.3`. It is about 290 orders of
+magnitude tighter and it is not a proof — it holds for the schedule that was
+replayed, and nothing onboard checks that a running trajectory satisfies the
+same envelopes. A pass under it is recorded on the certificate and reported by
+the state machine as *uncertified*, with the reason
+`passed-unproved-constants`. Reporting it as certified is the one thing the
+whole source field exists to prevent.
+
+Because `M = 1` under both, the left-hand side of the inequality does not depend
+on the source, so a single evaluated handoff is scored against both sets
+exactly rather than by re-running it.
+
+## A drift found on the way in
+
+The article's printed analytical constants did not match the program that
+verifies them. `beta_process_measurement_upper` had been tightened by 3x
+without the six constants downstream of it being regenerated, so the article
+claimed `1 - chi_H >= 7.83e-87` where the program verifies `2.61e-87` — a proof
+document advertising a margin three times stronger than its own arithmetic. Five
+further constants had drifted in their last digits, all in the optimistic
+direction. The conclusions are unaffected (the margins are strictly positive
+either way, and the broad-box radius stays operationally useless), but the
+numbers were wrong.
+
+They are corrected here, and
+`tests/validation/test_ou_analytic_constants_match_proof.py` now pins every
+printed constant to the program's own formatter, with a second check that a
+lower bound is never printed above what is verified. A future tightening either
+updates the article or fails CI.
 
 ## What changed in the mathematics
 
@@ -130,13 +182,18 @@ envelopes taken over a 600 s established interval:
 | P8.50 | 26.06 | 0.0384 | 0.0094 |
 
 Against those, the constructed handoff error in metric units puts the left side
-of the entrance inequality at 18.17 with the deployed seed, so the inequality
-would close only for `c_eff < 0.0138`; with the coherent seed the same bounds
-give 4.24 and `c_eff < 0.0589`. Both are printed by
-`live_entrance_certificate-test` rather than typed here. The certificate is
-short by a factor of about 50 at the calmest reference point and about 2100 at
-the roughest with the deployed seed — about 12 and 500 with the coherent one —
-and it certifies nothing in the truth-based sweep.
+of the entrance inequality at 17.82 with the deployed seed, so the inequality
+would close only for `c_eff < 0.0140`; with the coherent seed the same bounds
+give 4.16 and `c_eff < 0.0601`. Both are printed by
+`live_entrance_certificate-test` rather than typed here.
+
+Under the **analytical** source the admissible budget is `2.70e-290` against a
+left side of 17.82 — short by some 291 orders of magnitude, which is the
+broad-box proof's own verdict restated in handoff coordinates. Under the
+**measured** source the budget is `8.53e-3`: short by about 50 at the calmest
+reference point and about 2100 at the roughest with the deployed seed, about 12
+and 500 with the coherent one. Neither certifies anything in the truth-based
+sweep.
 
 What is left is two structural terms rather than slack. `Gamma_theta`, the
 roughly 100 s memory of the attitude channel, multiplied by the attitude

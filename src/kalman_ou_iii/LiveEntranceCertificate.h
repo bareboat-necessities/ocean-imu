@@ -113,61 +113,131 @@ inline const char* liveCertFailureName(LiveCertFailure f) {
     return "?";
 }
 
+// Where a set of interval constants comes from, which decides what a passing
+// certificate is evidence of.
+enum class CertificateSource : uint8_t {
+    // Verified arithmetic over the declared compact domain of
+    // doc/kalman_ou_iii/w3d-computer-assisted-live-basin.tex-part, evaluated by
+    // tools/ou_live_basin_interval_proof.py.  No sea spectrum, no replay, no
+    // fitted margin.  A certificate issued against these is a theorem.
+    Analytical,
+    // Suprema measured by tests/kalman_ou_iii/live_basin_diagnostic.cpp over
+    // the eight committed reference operating points.  Vastly tighter, and
+    // conditional on the running trajectory actually satisfying the same
+    // envelopes -- which nothing onboard checks.  A certificate issued against
+    // these is evidence, not a proof.
+    IntervalMeasured
+};
+
+inline const char* certificateSourceName(CertificateSource s) {
+    switch (s) {
+        case CertificateSource::Analytical:      return "analytical";
+        case CertificateSource::IntervalMeasured: return "interval-measured";
+    }
+    return "?";
+}
+
 /*
   Interval constants of the metric block-local ISS theorem.
 
-  These are properties of the linearised Live interval, not of a trajectory,
-  and they are not computable on an MCU: they come from
-  tests/kalman_ou_iii/live_basin_diagnostic.cpp, which reconstructs the exact
-  closed-loop transition from the filter's own prediction matrices and Kalman
-  gains at the committed reference operating points and reports them.  The
-  defaults are that diagnostic's worst case over the eight points.
+  Two sets exist and they differ by roughly 290 orders of magnitude, so which
+  one is in force is part of the certificate rather than a detail.
 
-  Pinning them here rather than recomputing them is the contract the paper
-  states: an operating trajectory is certified only if it satisfies its own
-  interval envelopes, and the diagnostic is the regression witness that the
-  pinned numbers are the ones the deployed schedule produces.
+  The default is the analytical set.  Its numbers come from the computer-
+  assisted closure, which proves over a declared compact domain exactly the
+  three things this header needs and Phase 3 previously had to assume: that the
+  horizon contraction margin 1-chi_H is strictly positive, that the covariance
+  is bounded above, and that the one-step nonlinear constants are finite.  They
+  are quoted at the precision the proof program prints and are checked against
+  it by tests/validation/test_ou_analytic_constants_match_proof.py.
+
+  The measured set is available through intervalMeasured() for deployments that
+  have verified their own interval envelopes.  It is the honest, useful, and
+  unproved number; the analytical set is the honest, useless, and proved one.
+  Neither is allowed to be reported as the other.
 */
 struct LiveBasinConstants {
+    CertificateSource source = CertificateSource::Analytical;
+
     // Metric transition constant, sensitive block against sensitive block.
-    // The Joseph identity makes the one-sample metric gain at most one, so the
-    // prefix bound is exactly 1 and M_H = rho_H^{-(H-1)} is barely above it.
-    // This is the constant that was ~566 in the Phase-2 Euclidean formulation:
-    // the diagnostic reports 1.020 against an implied Euclidean 565.6.
-    float M_xi_xi = 1.02f;
+    //
+    // Exactly one under either source, and for the same reason: the Joseph
+    // identity makes every intermediate Riccati step nonexpansive in the
+    // covariance metric, so the metric norm over a horizon is largest at the
+    // horizon's own start.  This is the constant that was ~566 in the Phase-2
+    // Euclidean formulation.
+    double M_xi_xi = 1.0;
 
-    // Transient gain from the kinematic block into the sensitive one.  It is
-    // bounded by the same monotonicity argument, so M_xi_xi is a valid and
-    // conservative default; a deployment that has measured its own may pin a
-    // smaller one.  Phase 1's separation lives here: v and p are charged
-    // through this gain rather than being required to lie in the tube.
-    float M_xi_ell = 1.02f;
+    // Transient gain from the kinematic block into the sensitive one, bounded
+    // by the same argument.  Phase 1's separation lives here: v and p are
+    // charged through this gain rather than being required to lie in the tube.
+    double M_xi_ell = 1.0;
 
-    // Small-gain slope: nu = c_eff * r.  Assembled by the diagnostic from the
-    // directional l1 injection gains and the interval gain envelopes.  It is
-    // strongly operating-point dependent -- 0.68 at the 0.27 m reference sea
-    // and 29.3 at the 8.5 m one -- and the default is the worst of the eight,
-    // because a certificate has to be sound over the declared envelope rather
-    // than over the sea that happens to be running.
-    float c_eff = 29.3f;
+    // Small-gain slope: nu = c_eff * r.
+    //
+    // The lifted analytical recursion is R_{n+1} <= chi_H R_n + C_H R_n^2 at
+    // horizon boundaries, so the tube R <= r is invariant exactly when
+    // C_H r <= 1 - chi_H.  Hence c_eff = C_H / (1 - chi_H), which is the
+    // reciprocal of the proof program's riccati_nonlinear_radius_lower.
+    //
+    //   C_H       <= 2.413134956828e+202
+    //   1 - chi_H >= 2.608762190650e-87
+    //
+    // The quotient is enormous, and that is the honest state of the broad-box
+    // proof: the article's own conclusion is that the remaining obstacle is
+    // conservatism of the global covariance and measurement bounds, not strict
+    // stability.  See intervalMeasured() for what the deployed schedule
+    // actually exhibits.
+    double c_eff = 9.250114730570e+288;
 
     // Metric disturbance allowance already charged against the budget.
-    float disturbance_margin = 0.0f;
+    double disturbance_margin = 0.0;
 
-    // Largest sensitive-tube radius the remainder expansion is valid on
-    // (r_xi of the paper), where the inverse-left-Jacobian bound was taken.
-    // The diagnostic measures 88 to 327 over the eight reference points, and
-    // the operating radius 1/(2 c_eff) is at most 0.74, so this cap does not
-    // bind at the deployed slope.  It is carried because it is a hypothesis of
-    // the remainder bound, not because it is close.
-    float r_xi = 88.0f;
+    // Largest tube radius the rotation-vector remainder expansion is valid on,
+    // r_xi / sqrt(pbar) in metric units (the proof program's
+    // riccati_chart_radius_lower).  Under the analytical source it does not
+    // bind: the operating radius 1/(2 c_eff) is ~5.4e-290.
+    double r_xi = 5.181025192391e-92;
+
+    // Interval constants measured by live_basin_diagnostic.cpp over the eight
+    // committed reference operating points, worst case.
+    //
+    // These are ~290 orders of magnitude tighter than the analytical set and
+    // they are not a proof: they hold for the schedule the diagnostic replayed,
+    // and nothing onboard verifies that a running trajectory satisfies the same
+    // envelopes.  A deployment that has established its own envelopes may pin
+    // them; the certificate then reports source = IntervalMeasured and must not
+    // be described as theorem-certified.
+    static LiveBasinConstants intervalMeasured() {
+        LiveBasinConstants k;
+        k.source = CertificateSource::IntervalMeasured;
+        // Exactly one, as under the analytical source and for the same
+        // reason.  The 1.02 that an earlier draft carried here was
+        // rho_H^{-(H-1)}, the overshoot of insisting on an M rho^{k-j}
+        // envelope; the tube argument needs only the supremum over the
+        // interval, and metric monotonicity gives that as one.  Keeping both
+        // sources at one also makes the inequality's left-hand side
+        // independent of which constants are in force, so a single evaluated
+        // handoff can be scored against both.
+        k.M_xi_xi = 1.0;
+        k.M_xi_ell = 1.0;
+        // Worst of the eight points: 0.68 at the 0.27 m reference sea, 29.3 at
+        // the 8.5 m one.  The worst is the default because a certificate has to
+        // be sound over the declared envelope, not over the sea that happens to
+        // be running.
+        k.c_eff = 29.3;
+        // Measured 88 to 327; does not bind against an operating radius of
+        // at most 0.74.
+        k.r_xi = 88.0;
+        return k;
+    }
 
     bool valid() const {
-        return std::isfinite(M_xi_xi) && M_xi_xi >= 1.0f &&
-               std::isfinite(M_xi_ell) && M_xi_ell >= 0.0f &&
-               std::isfinite(c_eff) && c_eff > 0.0f &&
-               std::isfinite(disturbance_margin) && disturbance_margin >= 0.0f &&
-               std::isfinite(r_xi) && r_xi > 0.0f;
+        return std::isfinite(M_xi_xi) && M_xi_xi >= 1.0 &&
+               std::isfinite(M_xi_ell) && M_xi_ell >= 0.0 &&
+               std::isfinite(c_eff) && c_eff > 0.0 &&
+               std::isfinite(disturbance_margin) && disturbance_margin >= 0.0 &&
+               std::isfinite(r_xi) && r_xi > 0.0;
     }
 };
 
@@ -293,19 +363,36 @@ struct LiveEntranceCertificate {
     float kinematic_metric_norm = std::numeric_limits<float>::quiet_NaN();
 
     // ---- the inequality ----
-    float nonlinear_radius        = std::numeric_limits<float>::quiet_NaN(); // r
-    float small_gain_nu           = std::numeric_limits<float>::quiet_NaN(); // nu
-    float linear_certificate_gain = std::numeric_limits<float>::quiet_NaN(); // M_xi_xi
-    float kinematic_gain          = std::numeric_limits<float>::quiet_NaN(); // M_xi_ell
-    float disturbance_margin      = std::numeric_limits<float>::quiet_NaN();
-    float basin_lhs               = std::numeric_limits<float>::quiet_NaN();
-    float basin_rhs               = std::numeric_limits<float>::quiet_NaN();
-    float margin                  = std::numeric_limits<float>::quiet_NaN();
+    //
+    // Double, not float: under the analytical source c_eff is ~9.25e288 and
+    // the tube radius ~5.4e-290, neither of which a float can hold.  The
+    // physical bounds above stay float because they are physical.
+    double nonlinear_radius        = std::numeric_limits<double>::quiet_NaN(); // r
+    double small_gain_nu           = std::numeric_limits<double>::quiet_NaN(); // nu
+    double linear_certificate_gain = std::numeric_limits<double>::quiet_NaN(); // M_xi_xi
+    double kinematic_gain          = std::numeric_limits<double>::quiet_NaN(); // M_xi_ell
+    double disturbance_margin      = std::numeric_limits<double>::quiet_NaN();
+    double basin_lhs               = std::numeric_limits<double>::quiet_NaN();
+    double basin_rhs               = std::numeric_limits<double>::quiet_NaN();
+    double margin                  = std::numeric_limits<double>::quiet_NaN();
+
+    // Which set of interval constants decided this certificate.  A pass under
+    // IntervalMeasured is evidence about the deployed schedule; only a pass
+    // under Analytical is a theorem.
+    CertificateSource source = CertificateSource::Analytical;
 
     bool            certified = false;
     LiveCertFailure failure   = LiveCertFailure::NotAttempted;
 
     const char* failureName() const { return liveCertFailureName(failure); }
+    const char* sourceName() const { return certificateSourceName(source); }
+
+    // True only for a certificate that both passed and was decided by the
+    // analytical constants.  This is the predicate anything reporting
+    // "covered by the semiglobal theorem" has to use.
+    bool theoremCertified() const {
+        return certified && source == CertificateSource::Analytical;
+    }
 
     // Weakest provenance among the bounds the inequality used.  A certificate
     // resting on an External bound is not a proof of anything the system
@@ -323,6 +410,17 @@ struct LiveEntranceCertificate {
         return worst;
     }
 };
+
+// Right-hand side of the entrance inequality for a given constant set: the
+// largest sensitive-block metric norm the tube can absorb.  Exposed because
+// the left-hand side does not depend on the constants at all -- it is built
+// from the handoff bounds and the installed seed -- so one evaluated handoff
+// can be scored against both constant sets without being re-run.
+inline double liveBasinBudget(const LiveBasinConstants& k) {
+    if (!k.valid()) return std::numeric_limits<double>::quiet_NaN();
+    const double r = std::fmin(0.5 / k.c_eff, k.r_xi);
+    return (1.0 - k.c_eff * r) * r - k.disturbance_margin;
+}
 
 namespace cert_detail {
 
@@ -358,6 +456,7 @@ inline LiveEntranceCertificate evaluateLiveEntrance(
     float                         gravity_align_max_sin)
 {
     LiveEntranceCertificate c;
+    c.source                  = k.source;
     c.linear_certificate_gain = k.M_xi_xi;
     c.kinematic_gain          = k.M_xi_ell;
     c.disturbance_margin      = k.disturbance_margin;
@@ -484,20 +583,20 @@ inline LiveEntranceCertificate evaluateLiveEntrance(
     // ---- the basin inequality -----------------------------------------
     // The budget (1 - c_eff r) r is maximised at r = 1/(2 c_eff); the tube is
     // capped at r_xi, where the remainder expansion stops being valid.
-    const float r_opt = 0.5f / k.c_eff;
+    const double r_opt = 0.5 / k.c_eff;
     c.nonlinear_radius = std::fmin(r_opt, k.r_xi);
     c.small_gain_nu    = k.c_eff * c.nonlinear_radius;
 
     // Only the sensitive block has to lie in the tube; the kinematic block is
     // charged through its own projected transient gain, which is Phase 1's
     // separation carried into the metric.
-    c.basin_lhs = k.M_xi_xi * c.sensitive_metric_norm
-                + k.M_xi_ell * c.kinematic_metric_norm
+    c.basin_lhs = k.M_xi_xi * double(c.sensitive_metric_norm)
+                + k.M_xi_ell * double(c.kinematic_metric_norm)
                 + k.disturbance_margin;
-    c.basin_rhs = (1.0f - c.small_gain_nu) * c.nonlinear_radius;
+    c.basin_rhs = (1.0 - c.small_gain_nu) * c.nonlinear_radius;
     c.margin    = c.basin_rhs - c.basin_lhs;
 
-    if (!(c.small_gain_nu < 1.0f) || !(c.margin > 0.0f)) {
+    if (!(c.small_gain_nu < 1.0) || !(c.margin > 0.0)) {
         c.failure = LiveCertFailure::BasinExceeded;
         return c;
     }

@@ -269,13 +269,13 @@ conservative determinant/Frobenius $T_-^{-6}$ construction.
 The two-vector attitude/gyro-bias construction gives
 \begin{equation}
  \boxed{\sigma_{\min}(\mathcal O_A)
- \ge3.161536500037\times10^{-5}.}
+ \ge3.161536498732\times10^{-5}.}
 \end{equation}
 Combining these through the actual block-triangular 18-state observation matrix
 and bounding the acceleration-to-vector cross block gives
 \begin{equation}
  \boxed{\sigma_{\min}(\mathcal O_{18})
- \ge6.707390504261\times10^{-23}.}
+ \ge6.707390501493\times10^{-23}.}
  \label{eq:iss-ca-s18}
 \end{equation}
 
@@ -284,7 +284,7 @@ the stable residual accelerometer bias treated as bounded colored nuisance,
 then gives
 \begin{equation}
  \boxed{P_H\preceq\overline pI,\qquad
- \overline p\le4.176061086161\times10^{57}.}
+ \overline p\le4.176061089607\times10^{57}.}
  \label{eq:iss-ca-pbar-num}
 \end{equation}
 The bound is intentionally a worst-case theorem constant, not a realistic
@@ -292,11 +292,11 @@ covariance estimate.
 
 The process-to-selected-measurement operator satisfies
 \begin{equation}
- \beta_c\le1.052749938580\times10^{10},
+ \beta_c\le3.158249815739\times10^{10},
 \end{equation}
 so Eq.~\eqref{eq:iss-ca-qh} gives
 \begin{equation}
- \boxed{q_H\ge6.536610165432\times10^{-29}.}
+ \boxed{q_H\ge2.178870055282\times10^{-29}.}
  \label{eq:iss-ca-qh-num}
 \end{equation}
 Combining Eqs.~\eqref{eq:iss-ca-qh-num} and
@@ -304,13 +304,13 @@ Combining Eqs.~\eqref{eq:iss-ca-qh-num} and
 $P_H=\Psi_HP_0\Psi_H^\top+\Omega_H$ yields
 \begin{equation}
  \boxed{\delta_H
- \ge1.565257315582\times10^{-86}>0,}
+ \ge5.217524381299\times10^{-87}>0,}
  \label{eq:iss-ca-delta-num}
 \end{equation}
 and therefore
 \begin{equation}
  \boxed{1-\chi_H
- \ge7.826286577912\times10^{-87}>0.}
+ \ge2.608762190650\times10^{-87}>0.}
  \label{eq:iss-ca-chi-margin}
 \end{equation}
 
@@ -360,7 +360,7 @@ The verified broad-box value is strictly positive but more conservative than
 the covariance-decomposition route:
 \begin{equation}
  \delta_{\rm det}
- \ge4.988195497798\times10^{-203}>0.
+ \ge1.662731828588\times10^{-203}>0.
 \end{equation}
 Its role is therefore structural: it confirms independently that measurement
 dissipation covers the observable 18-state block while the finite residual-bias
@@ -378,12 +378,12 @@ Substitution of this inequality into the accelerometer/magnetometer Taylor
 remainders and the $\SO(3)$ composition bound of
 Sec.~\ref{sec:iss-cert-remainder} yields the verified one-step constant
 \begin{equation}
- \boxed{c_\xi\le2.603125914091\times10^{126},}
+ \boxed{c_\xi\le2.603125918388\times10^{126},}
  \label{eq:iss-ca-cxi-num}
 \end{equation}
 with chart radius
 \begin{equation}
- \boxed{r_\xi\ge3.348105435485\times10^{-63}.}
+ \boxed{r_\xi\ge3.348105432722\times10^{-63}.}
  \label{eq:iss-ca-rxi-num}
 \end{equation}
 These values are intentionally worst-cased independently and are not engineering
@@ -420,7 +420,7 @@ For zero deterministic disturbance, a sufficient invariant radius is
 The verified broad-box calculation gives
 \begin{equation}
  \boxed{R_{\rm cert}
- \ge3.243203027309\times10^{-289}}
+ \ge1.081067672269\times10^{-289}}
  \label{eq:iss-ca-lifted-radius-num}
 \end{equation}
 as a strictly positive sufficient radius.  This is mathematically constructive

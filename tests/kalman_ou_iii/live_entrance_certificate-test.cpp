@@ -129,12 +129,70 @@ void testEnvelopeEntersTheBound() {
           "a looser declared envelope did not cost margin");
 }
 
+void testAnalyticalIsTheDefaultSource() {
+    // The default constants are the ones the proof program verifies, so a
+    // certificate that passes by default is a theorem rather than a replay
+    // result.  Switching to the measured set has to be a deliberate act and
+    // has to be visible on the certificate afterwards.
+    const ou3::LiveBasinConstants def;
+    check(def.source == ou3::CertificateSource::Analytical,
+          "the default constant set is not the analytical one");
+    check(def.M_xi_xi == 1.0,
+          "the analytical metric transition constant is not exactly one");
+
+    const ou3::LiveBasinConstants meas =
+        ou3::LiveBasinConstants::intervalMeasured();
+    check(meas.source == ou3::CertificateSource::IntervalMeasured,
+          "intervalMeasured() did not label its own source");
+    check(meas.c_eff < def.c_eff,
+          "the measured slope is not tighter than the analytical one");
+    // The gap between proof and replay is the headline of this phase; if it
+    // ever collapses, the write-up is wrong rather than the code.
+    check(def.c_eff / meas.c_eff > 1e200,
+          "the analytical and measured slopes are no longer orders apart");
+
+    const auto c = ou3::evaluateLiveEntrance(goodObservables(),
+                                             ou3::LiveEnvelope{}, meas, 0.075f);
+    check(c.source == ou3::CertificateSource::IntervalMeasured,
+          "the certificate did not record which constants decided it");
+    check(!c.theoremCertified(),
+          "a measured-constant certificate claimed theorem coverage");
+}
+
+void testMeasuredPassIsNotTheoremCoverage() {
+    // A handoff small enough to satisfy the measured constants but not the
+    // analytical ones must report certified under the measured set and still
+    // refuse theorem coverage.  This is the whole point of carrying the source.
+    // Physically absurd seed marginals on purpose: this test is about the
+    // arithmetic and the source bookkeeping, not about a realistic handoff.
+    ou3::LiveHandoffObservables o = goodObservables();
+    o.sigma_theta = 1000.0f;
+    o.sigma_bg = 100.0f;
+    o.sigma_aw = 10000.0f;
+    o.sigma_ba = 1000.0f;
+    o.sigma_v = 10000.0f;
+    o.sigma_p = 10000.0f;
+
+    const auto meas = ou3::evaluateLiveEntrance(
+        o, ou3::LiveEnvelope{}, ou3::LiveBasinConstants::intervalMeasured(),
+        0.075f);
+    const auto anal = ou3::evaluateLiveEntrance(
+        o, ou3::LiveEnvelope{}, ou3::LiveBasinConstants{}, 0.075f);
+
+    check(meas.certified, "the measured constants did not certify a tiny handoff");
+    check(!meas.theoremCertified(),
+          "a measured-constant pass was reported as theorem coverage");
+    check(!anal.certified,
+          "the broad-box analytical constants certified a deployed-scale handoff");
+    check(anal.basin_lhs == meas.basin_lhs,
+          "the left-hand side must not depend on which constants are used");
+}
+
 void testDiagnosticsAreReadable() {
     // A refusal has to say which term spent the budget: both sides of the
     // inequality, the tube radius, and the small-gain slope's effect are all
     // required to be present.
-    ou3::LiveBasinConstants k;
-    k.c_eff = 29.3f;
+    ou3::LiveBasinConstants k = ou3::LiveBasinConstants::intervalMeasured();
     const auto c = ou3::evaluateLiveEntrance(goodObservables(), ou3::LiveEnvelope{},
                                              k, 0.075f);
     check(!c.certified, "the deployed constants certified a nominal handoff");
@@ -157,8 +215,8 @@ void testASmallEnoughHandoffCertifies() {
     // The inequality has to be capable of holding.  A certificate that can
     // only ever refuse would pass every safety test and mean nothing, so this
     // pins that the arithmetic closes when the handoff really is small.
-    ou3::LiveBasinConstants k;
-    k.c_eff = 0.01f;
+    ou3::LiveBasinConstants k = ou3::LiveBasinConstants::intervalMeasured();
+    k.c_eff = 0.01;
     ou3::LiveHandoffObservables o = goodObservables();
     o.sigma_theta = 5.0f;
     o.sigma_bg = 1.0f;
@@ -236,7 +294,7 @@ void testSeedersDropTheirCrossCovariance() {
 // ones are the constructed bounds themselves.
 void reportNominalBudget() {
     const ou3::LiveEnvelope env;                 // library defaults
-    const ou3::LiveBasinConstants k;             // worst-of-eight c_eff
+    const ou3::LiveBasinConstants k;             // analytical (default)
 
     ou3::LiveHandoffObservables deployed = goodObservables();
     deployed.sigma_theta = 0.087f;   // proxy_handoff_yaw_sigma_rad
@@ -264,11 +322,19 @@ void reportNominalBudget() {
                   << " z_xi=" << c.sensitive_metric_norm
                   << " z_ell=" << c.kinematic_metric_norm
                   << " lhs=" << c.basin_lhs
-                  << " required_c_eff=" << (1.0f / (4.0f * c.basin_lhs))
+                  << " required_c_eff=" << (1.0 / (4.0 * c.basin_lhs))
                   << "\n";
     };
     line("deployed_seed", a);
     line("coherent_seed", b);
+
+    // What each constant set can absorb, against those left-hand sides.
+    const ou3::LiveBasinConstants meas =
+        ou3::LiveBasinConstants::intervalMeasured();
+    std::cout << "CERT_SOURCE analytical c_eff=" << k.c_eff
+              << " budget=" << ou3::liveBasinBudget(k)
+              << "\nCERT_SOURCE interval_measured c_eff=" << meas.c_eff
+              << " budget=" << ou3::liveBasinBudget(meas) << "\n";
 }
 
 }  // namespace
@@ -279,6 +345,8 @@ int main() {
     testBranchIsAPrecondition();
     testTiltBoundTracksTheDeployedGate();
     testEnvelopeEntersTheBound();
+    testAnalyticalIsTheDefaultSource();
+    testMeasuredPassIsNotTheoremCoverage();
     testDiagnosticsAreReadable();
     testASmallEnoughHandoffCertifies();
     testEpochResetOnTheFilter();

@@ -23,6 +23,7 @@ build:
 		test_deterministic_baseline_contract.py \
 		test_workflow_contract.py \
 		test_reorg_compat_overrides.py \
+		test_ou_analytic_constants_match_proof.py \
 		test_ou_live_handoff_certificate.py \
 		test_zz_publication_contract.py
 
