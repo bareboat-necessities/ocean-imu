@@ -77,6 +77,8 @@ class OUIIISemiglobalStabilityContractTests(unittest.TestCase):
             self.assertIn(marker, block)
 
         self.assertIn("dimensionless", block)
+        self.assertIn("post-prediction, pre-correction", block)
+        self.assertIn("uniform bounds on both", block)
         self.assertIn("no direct dependence on", block)
         self.assertIn("does \\emph{not} certify arbitrarily large", block)
         self.assertIn("Nor does it remove $S$ from", block)
