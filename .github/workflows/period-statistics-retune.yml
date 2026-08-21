@@ -1,8 +1,6 @@
 name: period-statistics-retune
 on:
-  push:
-    branches:
-      - agent/period-log-smoothing-retune
+  workflow_dispatch:
 
 concurrency:
   group: period-statistics-retune
