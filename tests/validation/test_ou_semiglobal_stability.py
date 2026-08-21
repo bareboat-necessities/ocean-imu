@@ -55,7 +55,7 @@ class OUIIISemiglobalStabilityContractTests(unittest.TestCase):
             r"\label{eq:semiglobal-basin-entry}",
         ):
             self.assertIn(marker, proof)
-        self.assertIn("does not claim semiglobal convergence", proof)
+        self.assertIn("does not claim semiglobal convergence", _flat(proof))
 
     def test_phase1_uses_block_structured_dimensionless_live_basin(self):
         block = _read("w3d-block-local-iss.tex-part")
