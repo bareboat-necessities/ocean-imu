@@ -178,6 +178,16 @@ constexpr float ADAPT_TAU_SEC_DEFAULT              = 1.8f;
 constexpr float ADAPT_TAU_SEA_PERIODS_DEFAULT      = 0.40f;
 constexpr float TUNER_FREQ_EMA_SEA_PERIODS_DEFAULT = 0.10f;
 
+// sigma_a averaging horizon in periods of the tuning frequency.  It has to be
+// stated here rather than left to SeaStateAutoTuner's own default, because TFG
+// is not scored by the OU-III period-statistics sweep that sets that default.
+//
+// The tuner used to cascade two EWMAs at this horizon (mean/square, then the
+// variance), so the effective memory was about 2*K_periods*T_eff.  That second
+// stage is gone and the variance is now a single EWMA, so preserving TFG's
+// calibrated ~4*T_eff memory takes K_periods = 4 where it used to take 2.
+constexpr float TUNER_SIGMA_VAR_K_PERIODS_DEFAULT = 4.0f;
+
 struct TfgTuneState {
     float tau_applied   = 1.1f;
     float sigma_applied = 1e-2f;
@@ -381,7 +391,8 @@ public:
         mekf_.set_Q_bgyro_rw(Vector3f::Constant(cfg.gyro_bias_rw_var));
         Racc_nominal_ = cfg.sigma_a;
 
-        tuner_ = ::SeaStateAutoTuner(2.0f, tuner_freq_tau_sec_);
+        tuner_ = ::SeaStateAutoTuner(TUNER_SIGMA_VAR_K_PERIODS_DEFAULT,
+                                     tuner_freq_tau_sec_);
         if (tuner_freq_ema_sea_periods_ > 0.0f) {
             tuner_.setFrequencySmoothingSeaPeriods(tuner_freq_ema_sea_periods_);
         }
@@ -1407,7 +1418,7 @@ private:
     Mekf   mekf_{};
     StartupStage stage_{StartupStage::Cold};
 
-    ::SeaStateAutoTuner tuner_{2.0f, 1.0f};
+    ::SeaStateAutoTuner tuner_{TUNER_SIGMA_VAR_K_PERIODS_DEFAULT, 1.0f};
     ::WavePeriodEstimator wave_period_{};
     ::VerticalAccelComplementary vertical_complementary_{};
 
