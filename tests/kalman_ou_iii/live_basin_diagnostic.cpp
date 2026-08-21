@@ -5,7 +5,7 @@
 #include <iostream>
 #include <limits>
 #include <string>
-#include <vector>
+#include <utility>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -32,6 +32,7 @@ constexpr int OFF_S  = 12;
 constexpr int OFF_AW = 15;
 constexpr int OFF_BA = 18;
 constexpr double DT = 1.0 / 200.0;
+constexpr int HORIZON_STEPS = 30 * 200;
 
 struct OperatingPoint {
     const char* name;
@@ -64,6 +65,8 @@ Mat3 skew(const Vec3& v) {
 }
 
 double norm2(const Mat21& A) {
+    // Singular values only.  Thin U/V are invalid for fixed-size Eigen
+    // matrices and are unnecessary for an induced 2-norm.
     Eigen::JacobiSVD<Mat21> svd(A);
     return svd.singularValues()(0);
 }
@@ -147,8 +150,7 @@ StepResult step(Core& f, int k, const Vec3& mag_world) {
     const bool pseudo = elapsed_after < elapsed_before + DT - 1e-10;
     if (pseudo) {
         const Mat3x21 C = S_jacobian();
-        const Mat21 J = correction_transition(f.K_scratch_, C);
-        A = J * A;
+        A = correction_transition(f.K_scratch_, C) * A;
     }
 
     const Mat3x21 Ca = accel_jacobian(f);
@@ -167,15 +169,44 @@ StepResult step(Core& f, int k, const Vec3& mag_world) {
     return out;
 }
 
+// Induced norm from the covariance/Riccati metric at the start of a lifted
+// interval to the metric at its end.  If P0=L0 L0^T and P1=L1 L1^T, then
+// ||Psi||_{P0^{-1}->P1^{-1}} = ||L1^{-1} Psi L0||_2.
+double covariance_metric_norm(const Mat21& Psi,
+                              const Mat21& P0,
+                              const Mat21& P1) {
+    Eigen::LLT<Mat21> llt0(P0);
+    Eigen::LLT<Mat21> llt1(P1);
+    if (llt0.info() != Eigen::Success || llt1.info() != Eigen::Success) {
+        return std::numeric_limits<double>::infinity();
+    }
+    const Mat21 L0 = llt0.matrixL();
+    const Mat21 B = llt1.matrixL().solve(Psi * L0);
+    return norm2(B);
+}
+
+std::pair<double,double> scaled_cov_eigen_bounds(const Mat21& P,
+                                                  const Mat21& D) {
+    const Mat21 Pz = D * P * D;
+    Eigen::SelfAdjointEigenSolver<Mat21> es(Pz, Eigen::EigenvaluesOnly);
+    if (es.info() != Eigen::Success) {
+        return {0.0, std::numeric_limits<double>::infinity()};
+    }
+    return {es.eigenvalues()(0), es.eigenvalues()(20)};
+}
+
 struct Report {
-    double chi = std::numeric_limits<double>::quiet_NaN();
-    double prefix = 0.0;
+    double chi_euclid = std::numeric_limits<double>::quiet_NaN();
+    double prefix_euclid = 0.0;
+    double chi_metric = std::numeric_limits<double>::quiet_NaN();
+    double rho_metric_sample = 0.0;
+    double rho_metric_second = 0.0;
+    double pz_min = std::numeric_limits<double>::infinity();
+    double pz_max = 0.0;
+    double kappa_euclid = std::numeric_limits<double>::infinity();
     double xi_xi = 0.0;
     double xi_ell = 0.0;
     double xi_all = 0.0;
-    double rho_sample = 0.0;
-    double rho_second = 0.0;
-    double M = 0.0;
     int pseudo_count = 0;
 };
 
@@ -198,7 +229,7 @@ Report evaluate(const OperatingPoint& op) {
     f.reset_aw_covariance_to_stationary();
 
     // Covariance warm-up at the exact equilibrium.  This is not part of the
-    // proof; it only makes the margin diagnostic representative of established
+    // proof; it makes the margin diagnostic representative of established
     // Live operation rather than constructor transients.
     constexpr int warm_steps = 120 * 200;
     for (int k = 0; k < warm_steps; ++k) {
@@ -209,27 +240,43 @@ Report evaluate(const OperatingPoint& op) {
     Mat21 D = Mat21::Zero();
     for (int i = 0; i < 21; ++i) D(i,i) = 1.0 / S(i,i);
 
-    // Thirty seconds is long enough to include many S and magnetic updates and
-    // is still short compared with the 5000 s residual-bias time constant.
-    constexpr int H = 30 * 200;
-    Mat21 Psi = Mat21::Identity();
-    double prefix = 1.0;
+    const Mat21 P0 = f.Pext;
+    Mat21 Psi_phys = Mat21::Identity();
+    Mat21 Psi_scaled = Mat21::Identity();
+    double prefix_euclid = 1.0;
     int pseudo_count = 0;
-    for (int k = 0; k < H; ++k) {
+
+    auto [pz_min, pz_max] = scaled_cov_eigen_bounds(P0, D);
+
+    for (int k = 0; k < HORIZON_STEPS; ++k) {
         const StepResult sr = step(f, warm_steps + k, mag_world);
         if (sr.pseudo) ++pseudo_count;
+
+        Psi_phys = sr.A * Psi_phys;
         const Mat21 Abar = D * sr.A * S;
-        Psi = Abar * Psi;
-        // Exact prefix maximum for this diagnostic window.  This is reported
-        // as evidence only; a future runtime certificate must check its own
-        // matrix inequalities rather than trust this replay value.
-        prefix = std::max(prefix, norm2(Psi));
+        Psi_scaled = Abar * Psi_scaled;
+        prefix_euclid = std::max(prefix_euclid, norm2(Psi_scaled));
+
+        const auto [lo, hi] = scaled_cov_eigen_bounds(f.Pext, D);
+        pz_min = std::min(pz_min, lo);
+        pz_max = std::max(pz_max, hi);
     }
 
     Report r;
-    r.chi = norm2(Psi);
-    r.prefix = prefix;
+    r.chi_euclid = norm2(Psi_scaled);
+    r.prefix_euclid = prefix_euclid;
+    r.chi_metric = covariance_metric_norm(Psi_phys, P0, f.Pext);
     r.pseudo_count = pseudo_count;
+    r.pz_min = pz_min;
+    r.pz_max = pz_max;
+    if (pz_min > 0.0 && std::isfinite(pz_max)) {
+        r.kappa_euclid = std::sqrt(pz_max / pz_min);
+    }
+    if (r.chi_metric > 0.0 && r.chi_metric < 1.0) {
+        r.rho_metric_sample =
+            std::pow(r.chi_metric, 1.0 / double(HORIZON_STEPS));
+        r.rho_metric_second = std::pow(r.chi_metric, 1.0 / 30.0);
+    }
 
     std::array<int, 15> xi{{0,1,2,3,4,5,12,13,14,15,16,17,18,19,20}};
     std::array<int, 6> ell{{6,7,8,9,10,11}};
@@ -237,60 +284,84 @@ Report evaluate(const OperatingPoint& op) {
     Eigen::Matrix<double,15,6> Pxl;
     Eigen::Matrix<double,15,21> Px;
     for (int i = 0; i < 15; ++i) {
-        for (int j = 0; j < 15; ++j) Pxx(i,j) = Psi(xi[i], xi[j]);
-        for (int j = 0; j < 6; ++j) Pxl(i,j) = Psi(xi[i], ell[j]);
-        for (int j = 0; j < 21; ++j) Px(i,j) = Psi(xi[i], j);
+        for (int j = 0; j < 15; ++j) Pxx(i,j) = Psi_scaled(xi[i], xi[j]);
+        for (int j = 0; j < 6; ++j) Pxl(i,j) = Psi_scaled(xi[i], ell[j]);
+        for (int j = 0; j < 21; ++j) Px(i,j) = Psi_scaled(xi[i], j);
     }
     r.xi_xi = norm2_fixed(Pxx);
     r.xi_ell = norm2_fixed(Pxl);
     r.xi_all = norm2_fixed(Px);
-
-    if (r.chi > 0.0 && r.chi < 1.0) {
-        r.rho_sample = std::pow(r.chi, 1.0 / double(H));
-        r.rho_second = std::pow(r.chi, 1.0 / 30.0);
-        r.M = r.prefix * std::pow(r.rho_sample, -(H - 1));
-    }
     return r;
 }
 
 }  // namespace
 
 int main() {
-    std::cout << std::setprecision(10);
+    std::cout << std::setprecision(12);
     std::cout << "PHASE2_SCALES s_theta=0.087 s_bg=0.001 s_v=1 s_p=20 s_S=50 s_aw=6 s_ba=0.5\n";
-    std::cout << "name,tau,sigma_aw,rS,chi30,prefix30,xi_xi30,xi_ell30,xi_all30,rho_sample,rho_second,M,pseudo_count\n";
+    std::cout << "name,tau,sigma_aw,rS,chiE30,prefixE30,chiV30,rhoV_sample,rhoV_second,pz_min,pz_max,kappaE,xi_xiE30,xi_ellE30,xi_allE30,pseudo_count\n";
 
-    double worst_chi = 0.0;
-    double worst_prefix = 0.0;
-    double worst_M = 0.0;
-    double worst_rho_second = 0.0;
-    bool all_contract = true;
+    double worst_chi_metric = 0.0;
+    double worst_chi_euclid = 0.0;
+    double worst_prefix_euclid = 0.0;
+    double worst_rho_metric_second = 0.0;
+    double global_pz_min = std::numeric_limits<double>::infinity();
+    double global_pz_max = 0.0;
+    bool all_metric_contract = true;
 
     for (const auto& op : kReferencePoints) {
         const Report r = evaluate(op);
         std::cout << op.name << ',' << op.tau << ',' << op.sigma_aw << ',' << op.rS
-                  << ',' << r.chi << ',' << r.prefix
-                  << ',' << r.xi_xi << ',' << r.xi_ell << ',' << r.xi_all
-                  << ',' << r.rho_sample << ',' << r.rho_second << ',' << r.M
-                  << ',' << r.pseudo_count << '\n';
-        all_contract = all_contract && std::isfinite(r.chi) && r.chi < 1.0;
-        worst_chi = std::max(worst_chi, r.chi);
-        worst_prefix = std::max(worst_prefix, r.prefix);
-        worst_M = std::max(worst_M, r.M);
-        worst_rho_second = std::max(worst_rho_second, r.rho_second);
+                  << ',' << r.chi_euclid << ',' << r.prefix_euclid
+                  << ',' << r.chi_metric << ',' << r.rho_metric_sample
+                  << ',' << r.rho_metric_second << ',' << r.pz_min << ',' << r.pz_max
+                  << ',' << r.kappa_euclid << ',' << r.xi_xi << ',' << r.xi_ell
+                  << ',' << r.xi_all << ',' << r.pseudo_count << '\n';
+
+        all_metric_contract = all_metric_contract
+            && std::isfinite(r.chi_metric) && r.chi_metric < 1.0
+            && std::isfinite(r.pz_min) && r.pz_min > 0.0
+            && std::isfinite(r.pz_max);
+        worst_chi_metric = std::max(worst_chi_metric, r.chi_metric);
+        worst_chi_euclid = std::max(worst_chi_euclid, r.chi_euclid);
+        worst_prefix_euclid = std::max(worst_prefix_euclid, r.prefix_euclid);
+        worst_rho_metric_second =
+            std::max(worst_rho_metric_second, r.rho_metric_second);
+        global_pz_min = std::min(global_pz_min, r.pz_min);
+        global_pz_max = std::max(global_pz_max, r.pz_max);
     }
 
-    std::cout << "PHASE2_SUMMARY worst_chi30=" << worst_chi
-              << " worst_prefix30=" << worst_prefix
-              << " worst_M=" << worst_M
-              << " worst_rho_second=" << worst_rho_second
-              << " all_reference_contract=" << (all_contract ? 1 : 0) << '\n';
+    const double global_kappa =
+        (global_pz_min > 0.0 && std::isfinite(global_pz_max))
+        ? std::sqrt(global_pz_max / global_pz_min)
+        : std::numeric_limits<double>::infinity();
+    const double rho_sample =
+        (worst_chi_metric > 0.0 && worst_chi_metric < 1.0)
+        ? std::pow(worst_chi_metric, 1.0 / double(HORIZON_STEPS)) : 0.0;
+    const double M_euclid =
+        (rho_sample > 0.0 && std::isfinite(global_kappa))
+        ? global_kappa * std::pow(rho_sample, -(HORIZON_STEPS - 1))
+        : std::numeric_limits<double>::infinity();
 
-    // This diagnostic is not a uniform proof over the admissible schedule, but
-    // every committed reference point should at least exhibit finite-horizon
-    // contraction.  The article is explicit about this distinction.
-    if (!all_contract) {
-        std::cerr << "FAIL: at least one deployed reference operating point did not contract over 30 s\n";
+    std::cout << "PHASE2_SUMMARY worst_chiV30=" << worst_chi_metric
+              << " worst_chiE30=" << worst_chi_euclid
+              << " worst_prefixE30=" << worst_prefix_euclid
+              << " worst_rhoV_second=" << worst_rho_metric_second
+              << " global_pz_min=" << global_pz_min
+              << " global_pz_max=" << global_pz_max
+              << " global_kappaE=" << global_kappa
+              << " implied_M_E=" << M_euclid
+              << " all_reference_metric_contract=" << (all_metric_contract ? 1 : 0)
+              << '\n';
+
+    // The fixed Euclidean norm is deliberately reported but not required to
+    // contract over 30 s: the 5000 s residual-bias OU mode produces a long
+    // non-normal transient.  The constructive certificate uses the Riccati
+    // covariance as its time-varying Lyapunov metric and converts back to the
+    // fixed physical coordinates through the reported covariance eigenvalue
+    // bounds.  Reference replay remains evidence, not a uniform proof.
+    if (!all_metric_contract) {
+        std::cerr << "FAIL: at least one deployed reference operating point did not contract in the Riccati metric over 30 s\n";
         return 1;
     }
     return 0;
