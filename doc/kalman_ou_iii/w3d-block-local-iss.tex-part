@@ -94,8 +94,8 @@ on $v$ or $p$; the magnetometer model depends only on attitude; and the
 integral pseudo-measurement Eq.~\eqref{eq:HS-selector} depends on $S$ but not on
 $v$ or $p$.  Additive-state injection is exact.  The remaining nonlinear
 operation is the quaternion injection/reset of
-Eqs.~\eqref{eq:mekf-reset-jacobian}--\eqref{eq:mekf-reset-cov}; its attitude
-correction is driven by the same accelerometer, magnetometer, and $S$
+Eqs.~\eqref{eq:quat-error-injection}--\eqref{eq:mekf-reset-covariance}; its
+attitude correction is driven by the same accelerometer, magnetometer, and $S$
 residuals and therefore again has no direct $v$ or $p$ dependence.  After the
 first-order terms are collected in $\widetilde{\mat A}^{\rm cl}_k$, Taylor's
 theorem on the compact accepted-update geometry gives the uniform quadratic
