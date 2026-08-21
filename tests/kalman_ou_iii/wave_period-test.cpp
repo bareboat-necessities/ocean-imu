@@ -61,8 +61,12 @@ bool test_monochromatic() {
 // integrations frequency-weight the displacement spectrum. The internal
 // elevation proxy has |G_eta(jw)|^2 = [w^2/(w^2 + lambda^2)]^4 relative
 // to true displacement, so its broadband moment ratio must be compared with
-// the same synthetic spectrum after this deterministic weighting.
-bool test_broadband(unsigned seed, float peak_period, float* estimated, float* reference) {
+// the same synthetic spectrum after this deterministic weighting. Because the
+// estimator is an exponentially weighted finite-memory statistic, one terminal
+// sample is phase-sensitive; the settled 300-s mean is the primary accuracy
+// contract and the terminal value remains a separate excursion check.
+bool test_broadband(unsigned seed, float peak_period,
+                    float* terminal, float* settled_mean, float* reference) {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<float> phase(0.0f, kTwoPi);
 
@@ -97,6 +101,8 @@ bool test_broadband(unsigned seed, float peak_period, float* estimated, float* r
 
     WavePeriodEstimator estimator(high_pass_hz);
     const int steps = static_cast<int>(1200.0f / kDt);
+    double settled_sum = 0.0;
+    size_t settled_samples = 0;
     for (int i = 0; i < steps; ++i) {
         const float t = static_cast<float>(i) * kDt;
         float acceleration = 0.0f;
@@ -104,26 +110,52 @@ bool test_broadband(unsigned seed, float peak_period, float* estimated, float* r
             acceleration -= amplitude[k] * omega[k] * omega[k] * std::sin(omega[k] * t + offset[k]);
         }
         estimator.update(kDt, acceleration);
+        if (t >= 900.0f && estimator.isReady()) {
+            const float period = estimator.getPeriodSec();
+            if (std::isfinite(period)) {
+                settled_sum += period;
+                ++settled_samples;
+            }
+        }
     }
-    *estimated = estimator.getPeriodSec();
-    return estimator.isReady() && reciprocal_contract(estimator);
+    *terminal = estimator.getPeriodSec();
+    *settled_mean = settled_samples > 0
+        ? static_cast<float>(settled_sum / static_cast<double>(settled_samples))
+        : std::numeric_limits<float>::quiet_NaN();
+    return estimator.isReady() && reciprocal_contract(estimator) &&
+           settled_samples > 0 && std::isfinite(*settled_mean);
 }
 
 bool test_broadband_tracks_sea_state() {
     float previous = 0.0f;
     for (float peak_period : {3.0f, 5.7f, 8.5f, 11.4f}) {
-        float estimated = 0.0f;
+        float terminal = 0.0f;
+        float settled_mean = 0.0f;
         float reference = 0.0f;
-        if (!check(test_broadband(20260803u, peak_period, &estimated, &reference),
+        if (!check(test_broadband(20260803u, peak_period,
+                                  &terminal, &settled_mean, &reference),
                    "broadband estimate never became ready or broke reciprocal contract")) return false;
-        const float relative = std::abs(estimated - reference) / reference;
-        if (!check(relative < 0.06f, "broadband T_z is off by more than 6 percent")) {
-            std::fprintf(stderr, "  peak %.1f s: estimated %.3f reference %.3f\n",
-                         peak_period, estimated, reference);
+
+        const float settled_relative = std::abs(settled_mean - reference) / reference;
+        if (!check(settled_relative < 0.03f,
+                   "broadband settled-mean T_z is off by more than 3 percent")) {
+            std::fprintf(stderr,
+                         "  peak %.1f s: settled mean %.3f terminal %.3f reference %.3f\n",
+                         peak_period, settled_mean, terminal, reference);
             return false;
         }
-        if (!check(estimated > previous, "T_z did not grow with the sea state")) return false;
-        previous = estimated;
+
+        const float terminal_relative = std::abs(terminal - reference) / reference;
+        if (!check(terminal_relative < 0.06f,
+                   "broadband terminal T_z excursion exceeds 6 percent")) {
+            std::fprintf(stderr,
+                         "  peak %.1f s: terminal %.3f settled mean %.3f reference %.3f\n",
+                         peak_period, terminal, settled_mean, reference);
+            return false;
+        }
+
+        if (!check(settled_mean > previous, "T_z did not grow with the sea state")) return false;
+        previous = settled_mean;
     }
     return true;
 }
