@@ -57,6 +57,41 @@ class OUIIISemiglobalStabilityContractTests(unittest.TestCase):
             self.assertIn(marker, proof)
         self.assertIn("does not claim semiglobal convergence", proof)
 
+    def test_phase1_uses_block_structured_dimensionless_live_basin(self):
+        block = _read("w3d-block-local-iss.tex-part")
+        semiglobal = _read("w3d-semiglobal-stability.tex-part")
+
+        self.assertTrue(
+            semiglobal.startswith(r"\input{w3d-block-local-iss.tex-part}"),
+            "block-local refinement must be inserted before Section XII",
+        )
+        for marker in (
+            r"\label{lem:iss-block-remainder}",
+            r"\label{thm:iss-block-local}",
+            r"\label{eq:iss-block-basin}",
+            r"\delta\vct S",
+            r"\delta\vct v",
+            r"\delta\vct p",
+            r"M_{\xi\ell}",
+        ):
+            self.assertIn(marker, block)
+
+        self.assertIn("dimensionless", block)
+        self.assertIn("no direct dependence on", block)
+        self.assertIn("does \\emph{not} certify arbitrarily large", block)
+        self.assertIn("Nor does it remove $S$ from", block)
+
+        for marker in (
+            r"B_{\xi,H}",
+            r"B_{\ell,H}",
+            r"M_{\xi\ell}B_{\ell,H}",
+            r"\overline d_L",
+            r"\ref{thm:iss-block-local}",
+        ):
+            self.assertIn(marker, semiglobal)
+        self.assertIn("replaces the earlier unscaled 21-state Euclidean-ball condition", semiglobal)
+        self.assertIn("$S$ remains in the sensitive block", semiglobal)
+
     def test_implemented_handoff_and_timeout_are_part_of_scope(self):
         proof = _read("w3d-semiglobal-stability.tex-part")
         startup = _read("w3d-init.tex-part")
