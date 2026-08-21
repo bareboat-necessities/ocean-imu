@@ -1,0 +1,27 @@
+name: ou-validation-full-pr356
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/ou-validation-full-pr356.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch-full-validation:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch full OU validation on the PR branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run ou-validation.yml \
+            --repo bareboat-necessities/ocean-imu \
+            --ref agent/period-log-smoothing-retune \
+            -f validation_mode=full

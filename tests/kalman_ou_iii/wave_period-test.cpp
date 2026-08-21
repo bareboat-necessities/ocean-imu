@@ -1,8 +1,10 @@
 // Copyright (c) 2025-2026  Mikhail Grushinskiy
 //
-// The wave-band period estimator has to do one thing the acceleration-band
-// frequency tracker cannot: follow the sea state.  These checks pin that down
-// on signals whose zero-crossing period is known in closed form.
+// The wave-band period estimator follows the physical zero-crossing period
+// through spectral moments.  The canonical output is a log-domain time-scale
+// state: period and frequency must therefore remain exact reciprocals, and the
+// moment horizon must follow the smoothed positive state rather than the raw
+// nonlinear ratio.
 
 #define EIGEN_NON_ARDUINO
 
@@ -25,6 +27,13 @@ bool check(bool condition, const char* message) {
     return condition;
 }
 
+bool reciprocal_contract(const WavePeriodEstimator& estimator) {
+    const float T = estimator.getPeriodSec();
+    const float f = estimator.getFrequencyHz();
+    return std::isfinite(T) && std::isfinite(f) &&
+           std::abs(T * f - 1.0f) < 2e-6f;
+}
+
 // Single sinusoid: acceleration -omega^2 A sin(omega t) belongs to elevation
 // A sin(omega t), so T_z is exactly the sinusoid period.
 bool test_monochromatic() {
@@ -38,6 +47,7 @@ bool test_monochromatic() {
             estimator.update(kDt, -amplitude * omega * omega * std::sin(omega * t));
         }
         if (!check(estimator.isReady(), "monochromatic estimate never became ready")) return false;
+        if (!check(reciprocal_contract(estimator), "period/frequency are not exact reciprocal outputs")) return false;
         const float relative = std::abs(estimator.getPeriodSec() - period) / period;
         if (!check(relative < 0.02f, "monochromatic period is off by more than 2 percent")) {
             std::fprintf(stderr, "  period %.2f estimated %.3f\n", period, estimator.getPeriodSec());
@@ -58,7 +68,6 @@ bool test_broadband(unsigned seed, float peak_period, float* estimated, float* r
     std::vector<float> amplitude;
     std::vector<float> offset;
 
-    // JONSWAP-like: f^4 rise below the peak, f^-5 above it, over a decade.
     const int components = 60;
     double m0 = 0.0;
     double m2 = 0.0;
@@ -86,18 +95,16 @@ bool test_broadband(unsigned seed, float peak_period, float* estimated, float* r
         estimator.update(kDt, acceleration);
     }
     *estimated = estimator.getPeriodSec();
-    return estimator.isReady();
+    return estimator.isReady() && reciprocal_contract(estimator);
 }
 
 bool test_broadband_tracks_sea_state() {
-    // The failure this replaces: an acceleration-band frequency that stays near
-    // 0.42-0.55 Hz while the sea grows.  A wave-band estimate must move.
     float previous = 0.0f;
     for (float peak_period : {3.0f, 5.7f, 8.5f, 11.4f}) {
         float estimated = 0.0f;
         float reference = 0.0f;
         if (!check(test_broadband(20260803u, peak_period, &estimated, &reference),
-                   "broadband estimate never became ready")) return false;
+                   "broadband estimate never became ready or broke reciprocal contract")) return false;
         const float relative = std::abs(estimated - reference) / reference;
         if (!check(relative < 0.06f, "broadband T_z is off by more than 6 percent")) {
             std::fprintf(stderr, "  peak %.1f s: estimated %.3f reference %.3f\n",
@@ -108,6 +115,37 @@ bool test_broadband_tracks_sea_state() {
         previous = estimated;
     }
     return true;
+}
+
+// With a deliberately slow log smoother, a period step makes the raw moment
+// ratio move first.  The next moment horizon must remain tied to the canonical
+// period, not jump to the raw candidate.  This is the architectural separation
+// that removes the old direct self-modulation of estimator bandwidth.
+bool test_moment_horizon_uses_canonical_period() {
+    WavePeriodEstimator estimator(0.02f, 4.0f, 2.0f, 1.0f, 180.0f);
+
+    auto drive = [&](float period, float seconds, float t0) {
+        const float omega = kTwoPi / period;
+        const int steps = static_cast<int>(seconds / kDt);
+        for (int i = 0; i < steps; ++i) {
+            const float t = t0 + static_cast<float>(i) * kDt;
+            estimator.update(kDt, -omega * omega * std::sin(omega * t));
+        }
+    };
+
+    drive(4.0f, 180.0f, 0.0f);
+    if (!check(estimator.isReady(), "canonical-horizon test never became ready")) return false;
+    drive(10.0f, 12.0f, 180.0f);
+
+    const float raw = estimator.getRawPeriodSec();
+    const float canonical = estimator.getPeriodSec();
+    const float horizon = estimator.getMomentHorizonSec();
+    if (!check(std::isfinite(raw) && std::isfinite(canonical) && raw > canonical,
+               "period step did not separate raw and canonical estimates")) return false;
+    const float canonical_horizon = 4.0f * canonical;
+    const float raw_horizon = 4.0f * raw;
+    return check(std::abs(horizon - canonical_horizon) < std::abs(horizon - raw_horizon),
+                 "moment horizon follows raw period instead of canonical log-period state");
 }
 
 // A constant offset is what an accelerometer bias looks like; the leak has to
@@ -130,7 +168,6 @@ bool test_offset_rejection() {
     return true;
 }
 
-// The estimate must not depend on the sample rate.
 bool test_rate_invariance() {
     const float period = 6.5f;
     const float omega = kTwoPi / period;
@@ -143,6 +180,7 @@ bool test_rate_invariance() {
             estimator.update(dt, -omega * omega * std::sin(omega * t));
         }
         if (!check(estimator.isReady(), "rate case never became ready")) return false;
+        if (!check(reciprocal_contract(estimator), "rate case broke reciprocal period/frequency contract")) return false;
         if (first == 0.0f) {
             first = estimator.getPeriodSec();
         } else if (!check(std::abs(estimator.getPeriodSec() - first) / first < 0.01f,
@@ -153,12 +191,6 @@ bool test_rate_invariance() {
     return true;
 }
 
-// The property that decides the design: a strapdown vertical channel carries
-// white noise and a bias random walk, both outside the wave band, and double
-// integration weights a spectrum by 1/omega^4.  Without the shared high-pass
-// stages the estimate collapses toward the leak corner and loses the ordering
-// entirely - on the reference records a leak-only estimator reads 33, 14, 9.8
-// and 9.7 s for true periods of 2.5, 4.5, 6.6 and 8.6 s.
 bool test_survives_instrument_disturbances() {
     std::mt19937 rng(12345);
     std::normal_distribution<float> white(0.0f, 0.35f);
@@ -190,7 +222,6 @@ bool test_survives_instrument_disturbances() {
     return true;
 }
 
-// Malformed samples must not corrupt the state, and reset must clear it.
 bool test_rejects_bad_samples_and_resets() {
     WavePeriodEstimator estimator;
     const float omega = kTwoPi / 7.0f;
@@ -227,6 +258,7 @@ bool test_no_signal_stays_unready() {
 int main() {
     if (!test_monochromatic()) return 1;
     if (!test_broadband_tracks_sea_state()) return 1;
+    if (!test_moment_horizon_uses_canonical_period()) return 1;
     if (!test_offset_rejection()) return 1;
     if (!test_rate_invariance()) return 1;
     if (!test_survives_instrument_disturbances()) return 1;

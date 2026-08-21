@@ -27,10 +27,10 @@ class OUIIISemiglobalStabilityContractTests(unittest.TestCase):
         main = _read("kalman_ou-w3d.tex")
         local = r"\input{w3d-iss-stability.tex-part}"
         semiglobal = r"\input{w3d-semiglobal-stability.tex-part}"
-        adaptation = r"\input{w3d-adaptation-motivation.tex-part}"
+        evidence = r"\input{w3d-sim-charts.tex-part}"
         self.assertIn(semiglobal, main)
         self.assertLess(main.index(local), main.index(semiglobal))
-        self.assertLess(main.index(semiglobal), main.index(adaptation))
+        self.assertLess(main.index(semiglobal), main.index(evidence))
 
     def test_extension_uses_spectral_mse_schedule_not_cubic_adaptation(self):
         proof = _read("w3d-semiglobal-stability.tex-part")

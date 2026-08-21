@@ -96,15 +96,15 @@ OU--III performance claim for this paper.
     \toprule
     Case & $H_s$ [m] & Axis RMS & Directed RMS \\
     \midrule
-    JONSWAP    & 0.27 & $13.78\pm0.97$ & $15.23\pm1.01$ \\
-    JONSWAP    & 1.50 & $12.03\pm0.53$ & $19.40\pm1.92$ \\
-    JONSWAP    & 4.00 & $11.44\pm0.55$ & $23.90\pm1.79$ \\
+    JONSWAP    & 0.27 & $13.78\pm0.97$ & $15.24\pm0.94$ \\
+    JONSWAP    & 1.50 & $12.03\pm0.53$ & $19.41\pm1.87$ \\
+    JONSWAP    & 4.00 & $11.44\pm0.55$ & $23.87\pm1.77$ \\
     JONSWAP    & 8.50 & $11.27\pm0.39$ & $26.92\pm2.47$ \\
     \addlinespace
-    PM--Stokes & 0.27 & $14.35\pm1.10$ & $14.42\pm1.28$ \\
-    PM--Stokes & 1.50 & $12.37\pm0.65$ & $15.10\pm0.80$ \\
-    PM--Stokes & 4.00 & $12.11\pm0.79$ & $15.80\pm1.12$ \\
-    PM--Stokes & 8.50 & $12.30\pm0.82$ & $16.59\pm1.32$ \\
+    PM--Stokes & 0.27 & $14.35\pm1.10$ & $14.41\pm1.28$ \\
+    PM--Stokes & 1.50 & $12.37\pm0.65$ & $15.11\pm0.79$ \\
+    PM--Stokes & 4.00 & $12.11\pm0.79$ & $15.81\pm1.15$ \\
+    PM--Stokes & 8.50 & $12.30\pm0.82$ & $16.59\pm1.33$ \\
     \bottomrule
   \end{tabular}
 \end{table}
