@@ -1,18 +1,22 @@
+\input{w3d-block-local-iss.tex-part}
+
 \section{Almost-Global Startup Capture and Semiglobal Practical Extension}
 \label{sec:semiglobal-stability}
 
 The Live-state result of Sec.~\ref{app:iss-stability} is necessarily local in
 MEKF coordinates: the attitude error is represented by a three-vector chart and
 the nonlinear remainder is absorbed only inside an invariant neighborhood.
-The deployed estimator nevertheless does not ask the MEKF itself to recover
-from an arbitrary startup attitude.  Before handoff, the MEKF is untouched and
-a measurement-only Mahony observer supplies tilt while the magnetic-reference
-logic establishes the yaw gauge.  This section uses that architecture to extend
-the result from a local Live theorem to an almost-global, semiglobal practical
-proxy-to-Live statement.  ``Semiglobal'' means uniformity on any prescribed
-compact startup set contained in the desired proxy domain of attraction; it
-does not claim semiglobal convergence of an already-running MEKF from arbitrary
-21-state errors.
+Theorem~\ref{thm:iss-21-local} gives a convenient sufficient 21-state ball,
+while Theorem~\ref{thm:iss-block-local} sharpens that ball using the exact
+measurement and reset structure.  The deployed estimator nevertheless does not
+ask the MEKF itself to recover from an arbitrary startup attitude.  Before
+handoff, the MEKF is untouched and a measurement-only Mahony observer supplies
+tilt while the magnetic-reference logic establishes the yaw gauge.  This
+section uses that architecture to extend the result from a local Live theorem
+to an almost-global, semiglobal practical proxy-to-Live statement.
+``Semiglobal'' means uniformity on any prescribed compact startup set contained
+in the desired proxy domain of attraction; it does not claim semiglobal
+convergence of an already-running MEKF from arbitrary 21-state errors.
 
 \subsection{Compatibility with the deployed physical-MSE schedule}
 \label{sec:semiglobal-mse-schedule}
@@ -172,7 +176,7 @@ the bound is uniform on every prescribed compact subset of $\mathcal D_P$, but
 its constants need not remain uniform as that set approaches
 $\mathcal N_P$.
 
-\subsection{Quality gate as a basin-entry map}
+\subsection{Quality gate as a block-structured basin-entry map}
 \label{sec:semiglobal-handoff}
 
 The proxy is not required to converge asymptotically before handoff.  It need
@@ -229,31 +233,73 @@ Thus, provided $\overline\theta_H<\pi$, the principal MEKF attitude-error
 coordinate exists at handoff and satisfies
 $\|\delta\vct\theta_H\|\le\overline\theta_H$.
 
-Let $\vct e_{E,H}$ collect the remaining handoff errors in gyro bias,
-$v,p,S,a_w$, and residual accelerometer bias, and suppose the physical startup
-scenario gives the finite bound
+For the remaining sensitive coordinates, suppose the physical startup family
+provides finite bounds
 \begin{equation}
-\|\vct e_{E,H}\|\le B_H.
-\label{eq:semiglobal-handoff-E}
+\|\delta\vct b_{g,H}\|\le B_{g,H},\quad
+\|\delta\vct S_H\|\le B_{S,H},\quad
+\|\delta\vct a_{w,H}\|\le B_{aw,H},\quad
+\|\delta\vct b_{a,H}\|\le B_{a,H},
+\label{eq:semiglobal-handoff-sensitive-bounds}
 \end{equation}
-Let $r$ be any invariant Live radius admitted by the proof of
-Theorem~\ref{thm:iss-21-local}.  A sufficient basin-entry condition is
+and let
 \begin{equation}
-r_H:=\sqrt{\overline\theta_H^2+B_H^2}<r.
+\|\delta\vct v_H\|\le B_{v,H},\qquad
+\|\delta\vct p_H\|\le B_{p,H}
+\label{eq:semiglobal-handoff-kinematic-bounds}
+\end{equation}
+bound the kinematic-only coordinates.  With the fixed scales of
+Eqs.~\eqref{eq:iss-block-xi}--\eqref{eq:iss-block-ell}, define the dimensionless
+handoff bounds
+\begin{align}
+B_{\xi,H}
+&:=\left[
+ \left(\frac{\overline\theta_H}{s_\theta}\right)^2
+ +\left(\frac{B_{g,H}}{s_{bg}}\right)^2
+ +\left(\frac{B_{S,H}}{s_S}\right)^2
+ +\left(\frac{B_{aw,H}}{s_{aw}}\right)^2
+ +\left(\frac{B_{a,H}}{s_{ba}}\right)^2
+ \right]^{1/2},\\
+B_{\ell,H}
+&:=\left[
+ \left(\frac{B_{v,H}}{s_v}\right)^2
+ +\left(\frac{B_{p,H}}{s_p}\right)^2
+ \right]^{1/2}.
+\label{eq:semiglobal-handoff-block-bounds}
+\end{align}
+Then $\|\vct z_{\xi,H}\|\le B_{\xi,H}$ and
+$\|\vct z_{\ell,H}\|\le B_{\ell,H}$.
+
+Let $\overline d_L$ bound the deterministic Live disturbance on the certified
+interval.  Choose the sensitive-tube radius $r$ and small-gain margin $\nu$ of
+Theorem~\ref{thm:iss-block-local}.  A sufficient block-structured basin-entry
+condition is
+\begin{equation}
+\boxed{
+r_H^{\rm blk}:=
+M_{\xi\xi}B_{\xi,H}
++M_{\xi\ell}B_{\ell,H}
++\frac{M_\xi\overline G_z}{1-\rho}\,\overline d_L
+<(1-\nu)r .}
 \label{eq:semiglobal-basin-entry}
 \end{equation}
-This condition is deliberately explicit.  The proxy removes the almost-global
-attitude-initialization obstruction; it does not manufacture a theorem for
-arbitrarily large translational or bias errors at handoff.  Those states must
-enter the same local Live neighborhood required by the existing 21-state
-nonlinear remainder bound.
+This replaces the earlier unscaled 21-state Euclidean-ball condition.  It does
+not require $v$ and $p$ themselves to lie inside the same local radius as the
+nonlinear coordinates; only their induced homogeneous transient into the
+sensitive block is charged through $M_{\xi\ell}$.  The result is not a claim of
+arbitrarily large translational capture: $M_{\xi\ell}$ is generally nonzero,
+and $S$ remains in the sensitive block because its pseudo-measurement can
+produce an attitude correction through Kalman cross-covariance.  This is the
+block separation supported by the deployed architecture without changing the
+filter.
 
 \begin{theorem}[Almost-global/semiglobal practical proxy-to-Live ISS]
 \label{thm:semiglobal-proxy-live}
 Fix a compact $\mathcal K_{\epsilon,B_\beta}\subset\mathcal D_P$ as in
 Eq.~\eqref{eq:semiglobal-proxy-compact} and a compact family of physical startup
-conditions satisfying Eqs.~\eqref{eq:semiglobal-proxy-force-bound} and
-\eqref{eq:semiglobal-handoff-E}.  Assume:
+conditions satisfying Eqs.~\eqref{eq:semiglobal-proxy-force-bound},
+\eqref{eq:semiglobal-handoff-sensitive-bounds}, and
+\eqref{eq:semiglobal-handoff-kinematic-bounds}.  Assume:
 (i) the reduced proxy initial error belongs to
 $\mathcal K_{\epsilon,B_\beta}$;
 (ii) the bounded proxy perturbation and sample step are small enough for
@@ -265,25 +311,27 @@ Live observability hypothesis, a noncollinear magnetic or equivalent vector
 reference---become ready within a finite time uniform over the chosen startup
 family, with heading error bounded as in
 Eq.~\eqref{eq:semiglobal-handoff-attitude};
-(v) the basin-entry inequality \eqref{eq:semiglobal-basin-entry} holds; and
-(vi) after handoff, the hypotheses of
-Theorems~\ref{thm:iss-21-ues} and \ref{thm:iss-21-local} hold, including the
-bounded predictable SpectralMSE schedule and no hard reset on the analyzed Live
-interval.  Then there is a finite handoff index $k_H$, uniform over the chosen
-compact startup family, and constants $C\ge1$, $0<\lambda<1$, and
-$\Gamma<\infty$ such that for every $k\ge k_H$,
+(v) the block basin-entry inequality \eqref{eq:semiglobal-basin-entry} holds for
+a declared Live disturbance bound $\overline d_L$; and
+(vi) after handoff, the hypotheses of Theorems~\ref{thm:iss-21-ues} and
+\ref{thm:iss-block-local} hold, including the bounded predictable SpectralMSE
+schedule and no hard reset on the analyzed Live interval.  Then there is a
+finite handoff index $k_H$, uniform over the chosen compact startup family, and
+constants $C_z\ge1$, $0<\lambda_z<1$, and $\Gamma_z<\infty$ such that for every
+$k\ge k_H$,
 \begin{equation}
 \boxed{
-\|\vct e_k\|
-\le C\lambda^{k-k_H}r_H
- +\Gamma\sup_{k_H\le i<k}\|\vct d_i\| .}
+\|\vct z_k\|
+\le C_z\lambda_z^{k-k_H}
+ \bigl(B_{\xi,H}+B_{\ell,H}\bigr)
+ +\Gamma_z\sup_{k_H\le i<k}\|\vct d_i\| .}
 \label{eq:semiglobal-live-bound}
 \end{equation}
 For zero Live disturbance and exact accepted references, the post-handoff error
 converges to zero.  For bounded deterministic disturbance,
 \begin{equation}
-\limsup_{k\to\infty}\|\vct e_k\|
-\le\Gamma\|\vct d\|_\infty.
+\limsup_{k\to\infty}\|\vct z_k\|
+\le\Gamma_z\|\vct d\|_\infty.
 \label{eq:semiglobal-ultimate-bound}
 \end{equation}
 Because every compact subset of the almost-global domain $\mathcal D_P$ is
@@ -309,10 +357,12 @@ $T_A$ for the remaining handoff channels and bounds yaw.  Hence an accepted
 handoff exists no later than a finite family-dependent bound formed from
 $T_P$ and $T_A$, subject to the timeout qualification below, and
 Eq.~\eqref{eq:semiglobal-handoff-attitude} bounds the complete attitude error at
-that handoff.  Together with Eq.~\eqref{eq:semiglobal-handoff-E}, assumption
-(v) gives $\|\vct e_{k_H}\|\le r_H<r$.  Therefore the handoff lands inside the
-invariant neighborhood used in Theorem~\ref{thm:iss-21-local}.  Applying
-Eq.~\eqref{eq:iss-local-bound} from $j=k_H$ gives
+that handoff.  Equations~\eqref{eq:semiglobal-handoff-sensitive-bounds}--
+\eqref{eq:semiglobal-handoff-block-bounds} then give the two scaled handoff
+bounds.  Assumption (v) is exactly the invariant-tube entrance condition of
+Theorem~\ref{thm:iss-block-local}, so the handoff enters the sensitive Live tube
+even when the admissible $v,p$ block is larger than that tube.  Applying
+Eq.~\eqref{eq:iss-block-local-bound} from $j=k_H$ gives
 Eq.~\eqref{eq:semiglobal-live-bound}; taking the limit superior gives
 Eq.~\eqref{eq:semiglobal-ultimate-bound}.  Finally, the almost-global proxy
 result makes $\mathcal N_P$ measure zero, while the argument above is uniform
@@ -332,10 +382,10 @@ independently satisfies Eqs.~\eqref{eq:semiglobal-aligned-branch} and
 timeout-forced handoff until Eq.~\eqref{eq:semiglobal-aligned-branch} holds, so
 the branch half of that qualification is enforced rather than assumed; because
 the antipodal set is not attracting for the accel-corrected proxy, this delays
-the forced handoff by a bounded interval rather than suppressing it.  The forced
-path does not test the residual magnitude, so it certifies the branch and not
-the tilt bound of Eq.~\eqref{eq:semiglobal-handoff-tilt}: a timeout-forced
-handoff that does not independently satisfy
+the forced handoff by a bounded interval rather than suppressing it.  The
+forced path does not test the residual magnitude, so it certifies the branch
+and not the tilt bound of Eq.~\eqref{eq:semiglobal-handoff-tilt}: a
+timeout-forced handoff that does not independently satisfy
 Eq.~\eqref{eq:semiglobal-basin-entry} is outside the theorem.
 
 \paragraph{Implementation note on the branch certificate}

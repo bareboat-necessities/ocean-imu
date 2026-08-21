@@ -1,0 +1,234 @@
+\subsection{Block-Structured Refinement of the Live Basin}
+\label{sec:iss-block-basin}
+
+The Euclidean ball used in Theorem~\ref{thm:iss-21-local} is a sufficient
+local neighborhood, but it is not structurally sharp for the deployed MEKF.
+It also assigns a numerical radius to coordinates with different physical
+units.  This subsection refines that statement in two ways.  First, it fixes a
+positive coordinate scaling and works with a dimensionless norm.  Second, it
+uses the exact update structure to identify which coordinates enter nonlinear
+remainders directly.
+
+Let fixed positive scales
+$s_\theta,s_{bg},s_v,s_p,s_S,s_{aw},s_{ba}$ be chosen once for the proof, with
+the corresponding physical units.  Define the nonlinear-sensitive and
+kinematic-only scaled coordinates
+\begin{align}
+\vct z_{\xi}
+&=\mat D_\xi
+\begin{bmatrix}
+\delta\vct\theta\\
+\delta\vct b_g\\
+\delta\vct S\\
+\delta\vct a_w\\
+\delta\vct b_a
+\end{bmatrix},
+&
+\mat D_\xi
+&=\operatorname{diag}\!\left(
+ s_\theta^{-1}\mat I_3,
+ s_{bg}^{-1}\mat I_3,
+ s_S^{-1}\mat I_3,
+ s_{aw}^{-1}\mat I_3,
+ s_{ba}^{-1}\mat I_3\right),
+\label{eq:iss-block-xi}\\
+\vct z_{\ell}
+&=\mat D_\ell
+\begin{bmatrix}
+\delta\vct v\\
+\delta\vct p
+\end{bmatrix},
+&
+\mat D_\ell
+&=\operatorname{diag}\!\left(
+ s_v^{-1}\mat I_3,
+ s_p^{-1}\mat I_3\right).
+\label{eq:iss-block-ell}
+\end{align}
+Thus $\vct z=[\vct z_\xi^\top,\vct z_\ell^\top]^\top$ is a fixed
+nonsingular linear reparameterization of the 21-state local error and is
+dimensionless.  Uniform exponential stability is invariant under this fixed
+change of coordinates: Theorem~\ref{thm:iss-21-ues} implies constants
+$\widetilde M\ge1$ and the same $0<\rho<1$ such that
+\begin{equation}
+\|\widetilde\Psi(k,j)\|
+\le\widetilde M\rho^{k-j}.
+\label{eq:iss-block-ues}
+\end{equation}
+The numerical size of a certified basin depends on the selected physical
+scales, as it must; the stability property itself does not.
+
+For the structural remainder statement, index the sampled recursion at the
+post-prediction, pre-correction phase of each IMU sample.  From such an index,
+the sample applies the accepted accelerometer, magnetometer, and $S$ updates
+and their MEKF reset, followed by the next exact prediction.  This is only a
+phase convention for the same Live recursion.  If $\widetilde\Phi_k$ denotes
+the scaled homogeneous prediction transition, the bounds on $h_k$, $\tau$,
+$\tau_b$, and $\|\widehat\omega\|$ imply uniform bounds on both
+$\widetilde\Phi_k$ and $\widetilde\Phi_k^{-1}$: the rotational block is a
+matrix exponential, the OU factors are strictly positive on the compact
+parameter set, and the integrated kinematic block is triangular with identity
+diagonal blocks.  Therefore the pre-correction and post-correction transition
+products differ only by uniformly bounded endpoint factors
+$\widetilde\Phi_k$ and $\widetilde\Phi_j^{-1}$.  UES is consequently preserved
+under this phase shift, with a changed multiplicative constant and the same
+exponential rate $\rho$.  The convention matters because the exact prediction
+contains the linear chain $v\rightarrow p\rightarrow S$: its effect belongs in
+the homogeneous transition rather than being hidden inside a nonlinear
+remainder.
+
+\begin{lemma}[Remainder depends directly only on the sensitive block]
+\label{lem:iss-block-remainder}
+With the post-prediction indexing above, the scaled normal-Live error map can be
+written
+\begin{equation}
+\vct z_{k+1}
+=\widetilde{\mat A}^{\rm cl}_k\vct z_k
+ +\widetilde{\vct\varphi}_k(\vct z_{\xi,k})
+ +\widetilde{\mat G}_k\vct d_k,
+\label{eq:iss-block-recursion}
+\end{equation}
+where $\widetilde{\vct\varphi}_k$ has no direct dependence on
+$\vct z_\ell$.  On the compact Live geometry of
+Eqs.~\eqref{eq:iss-vector-magnitude-bounds}--\eqref{eq:iss-vector-geometry},
+there exist $r_\xi>0$ and $c_\xi<\infty$ such that, uniformly in the admissible
+schedule,
+\begin{equation}
+\|\widetilde{\vct\varphi}_k(\vct z_\xi)\|
+\le c_\xi\|\vct z_\xi\|^2,
+\qquad
+\|\vct z_\xi\|\le r_\xi.
+\label{eq:iss-block-remainder}
+\end{equation}
+No smallness condition on $\vct z_\ell$ is needed for this remainder bound.
+\end{lemma}
+
+\begin{proof}
+At the chosen phase, every measurement residual presented to the correction
+map is independent of $v$ and $p$: the accelerometer model
+Eq.~\eqref{eq:acc-meas-jacobians} depends on attitude, $a_w$, and $b_a$; the
+magnetometer model depends only on attitude; and the integral
+pseudo-measurement Eq.~\eqref{eq:HS-selector} depends on $S$.  Additive-state
+injection is exact.  The quaternion injection/reset of
+Eqs.~\eqref{eq:quat-error-injection}--\eqref{eq:mekf-reset-covariance} is
+nonlinear, but its attitude correction is driven by those same residuals and
+therefore is a function of the sensitive coordinates only.  Consequently the
+post-correction attitude/gyro-bias coordinates, and every nonlinear part of the
+post-correction additive coordinates, depend nonlinearly only on
+$\vct z_{\xi,k}$; $v,p$ enter that correction map only through the homogeneous
+linearized state transformation.
+
+The prediction that closes the indexed step is exactly linear in the additive
+$[v,p,S,a_w,b_a]$ coordinates.  It can therefore carry the homogeneous
+$v,p$ error into the next $S$ coordinate, and that coupling is retained in
+$\widetilde{\mat A}^{\rm cl}_k$.  Its only nonlinear part is the
+attitude/gyro-bias error propagation, whose arguments after the preceding
+correction are already functions of the sensitive block alone.  Hence, after
+all first-order terms are collected in $\widetilde{\mat A}^{\rm cl}_k$, the
+remaining one-step nonlinear term has no direct $\vct z_\ell$ argument.
+Taylor's theorem on the compact accepted-update geometry then gives the uniform
+quadratic bound \eqref{eq:iss-block-remainder}.
+
+The inclusion of $S$ in $\vct z_\xi$ is essential.  Although the $S=0$
+measurement is itself linear, its Kalman gain can have attitude rows through
+cross-covariance, and the resulting quaternion injection has a quadratic
+reset remainder.  Hence the deployed architecture does not support the same
+claim with $S$ moved into $\vct z_\ell$.
+\end{proof}
+
+Let $\mat E_\xi$ and $\mat E_\ell$ select the two scaled blocks.  From
+Eq.~\eqref{eq:iss-block-ues}, possibly enlarging constants, there are finite
+$M_{\xi\xi}\ge1$, $M_{\xi\ell}\ge0$, and $M_\xi\ge1$ such that
+\begin{align}
+\|\mat E_\xi\widetilde\Psi(k,j)\mat E_\xi^\top\|
+&\le M_{\xi\xi}\rho^{k-j},\\
+\|\mat E_\xi\widetilde\Psi(k,j)\mat E_\ell^\top\|
+&\le M_{\xi\ell}\rho^{k-j},\\
+\|\mat E_\xi\widetilde\Psi(k,j)\|
+&\le M_\xi\rho^{k-j}.
+\label{eq:iss-block-projected-gains}
+\end{align}
+The constant $M_{\xi\ell}$ is the homogeneous transient gain from initial
+velocity/position error into the nonlinear-sensitive coordinates.  It is
+finite by UES, but it is not generally zero because the exact chain
+$v\rightarrow p\rightarrow S$ can carry a kinematic error into the
+$S$ pseudo-update.
+
+\begin{theorem}[Block-local ISS of the 21-state Live error dynamics]
+\label{thm:iss-block-local}
+Assume Theorem~\ref{thm:iss-21-ues}, Lemma~\ref{lem:iss-block-remainder}, and a
+uniform scaled disturbance gain
+$\|\widetilde{\mat G}_k\|\le\overline G_z$.  Choose $0<r<r_\xi$ and define
+\begin{equation}
+\nu:=\frac{M_\xi c_\xi r}{1-\rho}.
+\label{eq:iss-block-small-gain}
+\end{equation}
+If $\nu<1$ and, at some Live index $j$,
+\begin{equation}
+M_{\xi\xi}\|\vct z_{\xi,j}\|
++M_{\xi\ell}\|\vct z_{\ell,j}\|
++\frac{M_\xi\overline G_z}{1-\rho}\|\vct d\|_{\infty,[j,\infty)}
+<(1-\nu)r,
+\label{eq:iss-block-basin}
+\end{equation}
+then $\|\vct z_{\xi,k}\|<r$ for every $k\ge j$.  Moreover there exist
+$C_z\ge1$, $0<\lambda_z<1$, and $\Gamma_z<\infty$ such that
+\begin{equation}
+\boxed{
+\|\vct z_k\|
+\le C_z\lambda_z^{k-j}
+\bigl(\|\vct z_{\xi,j}\|+\|\vct z_{\ell,j}\|\bigr)
++\Gamma_z\|\vct d\|_{\infty,[j,k)} .}
+\label{eq:iss-block-local-bound}
+\end{equation}
+Thus local smallness is required for the nonlinear-sensitive tube, not for a
+single unscaled 21-state Euclidean ball.
+\end{theorem}
+
+\begin{proof}
+Project variation of constants for Eq.~\eqref{eq:iss-block-recursion} onto the
+sensitive block.  For $k\ge j$, Eqs.~\eqref{eq:iss-block-projected-gains} and
+\eqref{eq:iss-block-remainder} give, as long as
+$\|\vct z_{\xi,i}\|\le r$,
+\begin{align}
+\|\vct z_{\xi,k}\|
+&\le \rho^{k-j}
+ \left(M_{\xi\xi}\|\vct z_{\xi,j}\|
+      +M_{\xi\ell}\|\vct z_{\ell,j}\|\right)\\
+&\quad+M_\xi c_\xi
+ \sum_{i=j}^{k-1}\rho^{k-1-i}\|\vct z_{\xi,i}\|^2
+ +\frac{M_\xi\overline G_z}{1-\rho}
+  \|\vct d\|_{\infty,[j,k)}.
+\label{eq:iss-block-voc}
+\end{align}
+Under the bootstrap hypothesis $\|\vct z_{\xi,i}\|\le r$, the nonlinear
+convolution is at most
+$M_\xi c_\xi r^2/(1-\rho)=\nu r$.  The strict entrance condition
+\eqref{eq:iss-block-basin} therefore maps the closed sensitive tube into its
+interior.  Induction closes the invariant-tube argument and proves
+$\|\vct z_{\xi,k}\|<r$ for all $k\ge j$.
+
+Inside that tube,
+$\|\widetilde{\vct\varphi}_k\|\le c_\xi r\|\vct z_{\xi,k}\|$.  The projected
+Volterra inequality then has linear convolution gain
+$M_\xi c_\xi r$; Eq.~\eqref{eq:iss-block-small-gain} is exactly
+$M_\xi c_\xi r<1-\rho$.  Standard discrete convolution comparison therefore
+gives an exponential rate that may be chosen strictly above
+$\rho+M_\xi c_\xi r$ and below one, together with a finite disturbance gain.
+Substitution in the full variation-of-constants formula and
+Eq.~\eqref{eq:iss-block-ues} yields
+Eq.~\eqref{eq:iss-block-local-bound}.
+\end{proof}
+
+\begin{remark}[What Phase 1 does and does not remove]
+\label{rem:iss-block-phase1}
+The refinement removes $v$ and $p$ from the coordinates whose nonlinear
+remainder must be locally small.  It does \emph{not} certify arbitrarily large
+velocity or position error: their homogeneous transient into $S$ is measured by
+$M_{\xi\ell}$ in Eq.~\eqref{eq:iss-block-basin}.  Nor does it remove $S$ from
+the local block.  A stronger claim would require an additional structural
+change or proof, such as constraining the $S$-to-attitude cross-gain or defining
+a handoff map that resets and decouples the integral channel.  The present
+result is therefore the strongest block separation supported by the deployed
+measurement and reset architecture without changing code.
+\end{remark}

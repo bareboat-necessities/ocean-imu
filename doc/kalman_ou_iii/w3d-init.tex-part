@@ -54,12 +54,16 @@ same two directions, and an accepted handoff satisfies the aligned-branch
 condition Eq.~\eqref{eq:semiglobal-aligned-branch} of the semiglobal theorem.
 The \SI{150}{s} timeout is held to that same test, so a forced handoff is
 delayed rather than accepted on the antipodal branch; it does not test the
-residual magnitude, so it certifies the branch and not the tilt bound.  When the
-branch condition, the accepted proxy/magnetic errors, and the remaining state
-mismatch satisfy Eq.~\eqref{eq:semiglobal-basin-entry}, the handoff lands inside
-the invariant neighborhood of the 21-state Live ISS theorem and
-Theorem~\ref{thm:semiglobal-proxy-live} applies.  A timeout-forced handoff whose
-state mismatch does not satisfy Eq.~\eqref{eq:semiglobal-basin-entry} remains
+residual magnitude, so it certifies the branch and not the tilt bound.  The
+Phase-1 basin refinement separates the dimensionless nonlinear-sensitive block
+$[\delta\theta,\delta b_g,\delta S,\delta a_w,\delta b_a]$ from the kinematic
+$[\delta v,\delta p]$ block.  When the accepted proxy/magnetic bounds, the two
+handoff-block bounds, and the declared bounded Live disturbance satisfy
+Eq.~\eqref{eq:semiglobal-basin-entry}, the handoff enters the invariant
+sensitive tube of the block-local ISS theorem,
+Theorem~\ref{thm:iss-block-local}, and
+Theorem~\ref{thm:semiglobal-proxy-live} applies.  A timeout-forced handoff that
+does not independently satisfy Eq.~\eqref{eq:semiglobal-basin-entry} remains
 outside the semiglobal result.
 
 \subsection{Two-stage magnetic reference}
