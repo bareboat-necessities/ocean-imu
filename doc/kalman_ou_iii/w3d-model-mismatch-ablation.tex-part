@@ -1,0 +1,61 @@
+\subsection{Noise-Free Model-Mismatch Floor}
+\label{sec:model-mismatch-ablation}
+
+A separate ablation removes simulated sensor corruption while leaving each
+estimator otherwise in its deployed configuration.  The eight stationary
+JONSWAP and PM--Stokes records are replayed through OU--II, OU--III, and TFG
+with the simulator's \texttt{--no-noise} option.  Accelerometer and gyroscope
+white noise, initial bias, bias random walk, and magnetometer noise and
+calibration perturbations are therefore absent, while the physical wave and
+attitude motion are unchanged.  The estimators are \emph{not} retuned for ideal
+measurements: their process/measurement covariances, pseudo-measurements,
+adaptation, startup logic, and regularization remain those used in normal
+operation.  The experiment consequently measures a deployed
+estimator/model-mismatch floor, not pure plant-model mismatch.
+
+All values in Table~\ref{tab:model-mismatch-floor} pool the final \SI{900}{s}
+of the eight equal-length records.  With identical window lengths, the pooled
+RMS is the RMS obtained by concatenating the eight scored windows.
+
+\begin{table}[t]
+  \centering
+  \caption{Noise-free deployed-estimator mismatch floor over eight stationary
+  records.  $Z/Z_{\rm ref}$ is normalized by pooled reference vertical RMS.}
+  \label{tab:model-mismatch-floor}
+  \footnotesize
+  \setlength{\tabcolsep}{3.4pt}
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    Family & $X$ [m] & $Y$ [m] & $Z$ [m] & 3-D [m] & $Z/Z_{\rm ref}$ [\%] \\
+    \midrule
+    OU--II  & 0.333 & 0.224 & 0.240 & 0.467 & 20.32 \\
+    OU--III & 0.246 & 0.174 & 0.140 & 0.332 & 11.87 \\
+    TFG     & 0.542 & 0.199 & 0.155 & 0.598 & 13.15 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+OU--III has the lowest pooled displacement floor: vertical RMS is
+\SI{0.140}{m} and 3-D RMS is \SI{0.332}{m}, compared with
+\SI{0.240}{m} and \SI{0.467}{m} for OU--II.  TFG is close to OU--III
+vertically at \SI{0.155}{m}, but its \SI{0.542}{m} $X$-axis floor drives the
+3-D value to \SI{0.598}{m}.  The residual therefore does not vanish when the
+sensor corruption is removed.  Across individual records, vertical residual
+error remains approximately \pct{2.9}--\pct{3.4} of $H_s$ for OU--III,
+\pct{5.0}--\pct{5.45} for OU--II, and \pct{2.94}--\pct{3.35} for TFG, which is
+consistent with a substantial deterministic estimator/regularization component.
+
+The zero-bias input also exposes estimator-generated bias states.  Pooled
+accelerometer-bias-state RMS is \SI{0.0132}{m.s^{-2}} for OU--III,
+\SI{0.0384}{m.s^{-2}} for OU--II, and \SI{0.0254}{m.s^{-2}} for TFG.  These are
+not physical sensor-bias errors in this experiment because the injected true
+bias is zero; they quantify bias state used by each estimator while fitting
+ideal but model-mismatched motion.
+
+The result should not be attributed to the OU or TFG stochastic model alone.
+The virtual measurements intentionally distort low-frequency physical motion,
+the adaptive operating point has finite bandwidth, attitude error can feed
+gravity into horizontal acceleration, and the filters retain measurement
+covariances calibrated for real sensors.  The ablation therefore bounds the
+combined residual of these deployed estimator choices under ideal input
+measurements rather than isolating a single source of model error.
