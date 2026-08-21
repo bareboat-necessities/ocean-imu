@@ -12,6 +12,7 @@ build:
 		test_ou_validation.py \
 		test_ou_robustness.py \
 		test_ou_rs_law_ablation.py \
+		test_ou_article_ablations.py \
 		test_ou_evidence_contract.py \
 		test_source_archive_provenance.py \
 		test_record_conventions.py \
