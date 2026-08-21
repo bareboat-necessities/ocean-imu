@@ -48,7 +48,7 @@ public:
     //
     // The second constructor argument is retained only for source compatibility
     // with older call sites; frequency smoothing no longer occurs here.
-    explicit SeaStateAutoTuner(float K_periods_ = 2.0f,
+    explicit SeaStateAutoTuner(float K_periods_ = 4.0f,
                                float /*legacy_tau_freq_sec*/ = 1.0f)
         : K_periods(std::max(1e-3f, K_periods_)) {
         reset();
@@ -143,7 +143,7 @@ public:
     inline float getFrequencySmoothingHorizonSec() const { return 0.0f; }
 
 private:
-    float K_periods = 2.0f;
+    float K_periods = 4.0f;
     float tau_var_min_sec = 0.3f;
     float tau_var_max_sec = 60.0f;
     float f_min_hz = 0.05f;
