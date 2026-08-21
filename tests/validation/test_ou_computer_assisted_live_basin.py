@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / "tools" / "ou_live_basin_interval_proof.py"
 DOC = ROOT / "doc" / "kalman_ou_iii" / "w3d-computer-assisted-live-basin.tex-part"
+ARTICLE = ROOT / "doc" / "kalman_ou_iii" / "kalman_ou-w3d.tex"
 
 
 class ComputerAssistedLiveBasinProofTests(unittest.TestCase):
@@ -50,6 +51,11 @@ class ComputerAssistedLiveBasinProofTests(unittest.TestCase):
             "frozen-schedule comparison",
         ):
             self.assertIn(marker, text)
+
+    def test_publication_wires_both_constructive_certificate_parts(self):
+        text = ARTICLE.read_text(encoding="utf-8")
+        self.assertIn(r"\input{w3d-live-basin-certificate.tex-part}", text)
+        self.assertIn(r"\input{w3d-computer-assisted-live-basin.tex-part}", text)
 
 
 if __name__ == "__main__":
