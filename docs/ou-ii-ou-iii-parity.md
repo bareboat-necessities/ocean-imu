@@ -100,6 +100,13 @@ and a live filter on the old schedule, and a second pass at
 `mag_refine_start_sec` (90 s, 30 s window) re-learns the reference and re-gauges
 heading once the observer has converged.
 
+"As soon as the gravity gate allows" was worth a great deal less than it
+sounds until that gate was measured in the world frame rather than the body
+frame; see `docs/ou-startup-gravity-gate.md`. Both families now reach a live
+filter in 22 to 33 s across the eight reference records, where the range used
+to be 22 to 150 s and the top of it was the handoff timeout rather than a
+quality exit.
+
 Two properties of that second pass are load bearing, and are the same two
 OU-III found:
 

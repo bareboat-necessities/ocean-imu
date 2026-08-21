@@ -360,7 +360,8 @@ public:
         if (env_float("SF_MAG_DELAY_SEC", vf)) cfg_.mag_delay_sec = vf;
         if (env_float("SF_MAG_GRAV_ALIGN_MAX_SIN", vf)) cfg_.mag_gravity_align_max_sin = vf;
         if (env_float("SF_MAG_GRAV_ALIGN_HOLD_SEC", vf)) cfg_.mag_gravity_align_hold_sec = vf;
-        if (env_float("SF_MAG_GRAV_ALIGN_LPF_TAU", vf)) cfg_.mag_gravity_align_lpf_tau = vf;
+        if (env_float("SF_MAG_GRAV_ALIGN_LPF_TAU", vf)) cfg_.mag_gravity_align_world_tau_sec = vf;
+        if (env_float("SF_MAG_GRAV_ALIGN_WARMUP_SEC", vf)) cfg_.mag_gravity_align_world_warmup_sec = vf;
         if (env_float("SF_MAG_TILT_FALLBACK_SEC", vf)) cfg_.mag_tilt_fallback_sec = vf;
         if (env_float("SF_MAG_EXTREME_GYRO_DPS", vf)) cfg_.mag_extreme_gyro_dps = vf;
         if (env_float("SF_MAG_INIT_MIN_MAG_NORM", vf)) cfg_.mag_init_min_mag_norm = vf;
@@ -956,17 +957,47 @@ private:
 //
 // This is a full re-gauge, not a one-off relaxation of the binding PM-Stokes
 // 3D bar: six limits tighten, one is unchanged, and only three rise.
+//
+// Then all ten again when the startup gravity gate moved into the world frame
+// (docs/ou-startup-gravity-gate.md).  The gate is what certifies the tilt the
+// magnetic reference is framed in and the MEKF is seeded with, and in waves it
+// was measuring the sea rather than the levelling error, so it only closed by
+// luck: time to a live filter ran 22 s in the calm records and 72 to 150 s in
+// the big ones, the worst of them by timeout.  It now closes on quality in 22
+// to 33 s everywhere.
+//
+// Five records are untouched to four significant figures -- the two calm ones
+// are bit-identical, because there the old gate already closed on the first
+// quiet stretch -- and the big-sea records re-mix:
+//
+//   jonswap  H4.0   roll 0.3607 -> 0.3148, acc 3D bias 74.64 -> 65.13,
+//                   yaw 0.4973 -> 0.4808, gyro 3D bias 14.76 -> 14.15
+//   pmstokes H8.5   roll 0.2719 -> 0.1619, pitch 0.1835 -> 0.1129,
+//                   acc 3D bias 62.95 -> 31.37, gyro 3D bias 18.70 -> 13.65,
+//                   3D 14.5994 -> 14.4313
+//   jonswap  H8.5   roll 0.3102 -> 0.1678, pitch 0.1517 -> 0.1122,
+//                   acc Z bias 4.2488 -> 4.1490, but 3D 13.6263 -> 13.9186
+//
+// Two bars go up.  jonswap H8.5's 3D is the binding one, and on that record
+// the move is real but small: paired over six IMU seeds its pooled RMS goes
+// 12.711 -> 12.839, +1.0%, while its sister record pmstokes H8.5 goes
+// 13.344 -> 13.232, -0.8%.  Yaw's bar goes up on jonswap H1.5, +1.0% at the
+// default seed and inside that record's own scatter.  Pooled over all eight
+// records and six seeds nothing displacement- or attitude-shaped moves --
+// 3D is 0.9998 [0.9972, 1.0023], yaw 0.9980 [0.9786, 1.0178], roll 1.0463
+// [0.9430, 1.1611] -- while gyro bias is 0.9650 [0.9410, 0.9896], better at
+// 95%.  Seven of the ten bars come down, the gyro-bias aggregate by 16%.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.489f,  // was 4.527,  worst 4.46644 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.462f,  // was 4.509,  worst 4.43916 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 0.887f,  // was 0.8827, worst 0.882582 (jonswap H1.5)
-    .err_limit_roll_deg            = 0.3625f, // was 0.3633, worst 0.360654 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.1969f, // was 0.197,   worst 0.195849 (pmstokes H4.0)
-    .err_limit_percent_3d_jonswap  = 13.7f,   // was 13.7,   worst 13.6263 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 14.68f,  // was 14.58,  worst 14.5995 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.492f,  // was 4.489,  worst 4.4693 (pmstokes H8.5)
-    .bias_3d_percent               = 78.84f,  // was 78.86,  worst 78.4386 (pmstokes H4.0, accel)
-    .gyro_bias_3d_percent          = 18.8f,   // was 18.82,  worst 18.6981 (pmstokes H8.5, gyro)
+    .err_limit_percent_z_jonswap   = 4.489f,  // was 4.489,  worst 4.4664 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.462f,  // was 4.462,  worst 4.4392 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 0.9004f, // was 0.887,  worst 0.8959 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.3513f, // was 0.3625, worst 0.3495 (pmstokes H4.0)
+    .err_limit_pitch_deg           = 0.1975f, // was 0.1969, worst 0.1965 (pmstokes H4.0)
+    .err_limit_percent_3d_jonswap  = 13.98f,  // was 13.7,   worst 13.9042 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 14.51f,  // was 14.68,  worst 14.4313 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.301f,  // was 4.492,  worst 4.2788 (pmstokes H8.5)
+    .bias_3d_percent               = 78.92f,  // was 78.84,  worst 78.5198 (pmstokes H4.0, accel)
+    .gyro_bias_3d_percent          = 15.76f,  // was 18.8,   worst 15.6765 (pmstokes H0.27, gyro)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

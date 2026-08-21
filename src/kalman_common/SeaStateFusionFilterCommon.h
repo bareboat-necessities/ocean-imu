@@ -186,6 +186,74 @@ inline float gravityAlignResidualCos(const Eigen::Quaternionf& q_bw_in,
     return unitVecAlignCos(predictedGravityDirBody(q_bw_in), acc_body_ned);
 }
 
+// Rotate a body-frame specific force into the estimator's world frame.
+//
+// Only the tilt part of q_bw matters to the gravity gates below -- both the
+// residual and the branch test read the z axis and the horizontal magnitude,
+// and both are invariant under q_bw -> Rz(psi) q_bw -- so this may be fed the
+// attitude of an observer whose heading is arbitrary and drifting.
+inline Eigen::Vector3f accWorldFromBody(const Eigen::Quaternionf& q_bw_in,
+                                        const Eigen::Vector3f& acc_body_ned)
+{
+    if (!q_bw_in.coeffs().allFinite() || !acc_body_ned.allFinite()) {
+        return Eigen::Vector3f::Zero();
+    }
+
+    Eigen::Quaternionf q_bw = q_bw_in;
+    q_bw.normalize();
+    if (!q_bw.coeffs().allFinite()) return Eigen::Vector3f::Zero();
+
+    return q_bw * acc_body_ned;
+}
+
+// Gravity-agreement residual measured on a world-frame specific force that has
+// already been averaged over the wave band.
+//
+// The body-frame residual above asks whether the *instantaneous* specific
+// force points where the attitude says gravity should be.  Under way that
+// question has no useful answer: the measured vector is gravity plus orbital
+// acceleration, and the low-pass that is supposed to remove the second term
+// runs in the body frame, where the hull's own roll and pitch smear the
+// average across whole wave periods.  What comes out is a wave-band residual
+// of a few degrees to tens of degrees that says nothing about how well the
+// estimator is levelled.
+//
+// Rotating into the world frame first fixes the frame the average is taken
+// in.  Orbital acceleration is zero mean over a wave period *there*, so a
+// sufficiently long average leaves gravity, and the angle between it and world
+// down is the estimator's tilt error and nothing else.  The averaging is the
+// caller's, so it can pick a horizon against the sea it is actually in.
+//
+// Input is the low-passed world-frame specific force; at rest with a correct
+// attitude that is (0, 0, -g) in NED.  Returns |horizontal| / |vector|, the
+// sine of the tilt error, and fails closed at 1.
+inline float gravityAlignResidualSinWorld(const Eigen::Vector3f& acc_world_lp)
+{
+    if (!acc_world_lp.allFinite()) return 1.0f;
+
+    const float n = acc_world_lp.norm();
+    if (!(n > 1e-6f) || !std::isfinite(n)) return 1.0f;
+
+    const float h = acc_world_lp.head<2>().norm();
+    if (!std::isfinite(h)) return 1.0f;
+
+    return std::min(std::max(h / n, 0.0f), 1.0f);
+}
+
+// Branch companion to gravityAlignResidualSinWorld.  A specific force at rest
+// points up, so world down-component negative is the aligned branch; the sine
+// residual on its own is satisfied just as well by the attitude flipped
+// through 180 deg.  Fails closed on a degenerate input.
+inline bool gravityAlignedBranchWorld(const Eigen::Vector3f& acc_world_lp)
+{
+    if (!acc_world_lp.allFinite()) return false;
+
+    const float n = acc_world_lp.norm();
+    if (!(n > 1e-6f) || !std::isfinite(n)) return false;
+
+    return acc_world_lp.z() < 0.0f;
+}
+
 // The runtime branch certificate the startup gates are judged against:
 // s_hat^T s_meas > 0.  Kept as a named predicate because it is a proof
 // condition, not a tuning knob, and is therefore not exposed as a threshold.

@@ -2200,9 +2200,39 @@ public:
         float sigma_band_max_hz     = SIGMA_BAND_MAX_HZ_DEFAULT;
 
         // Mag-start gate: gravity-direction agreement using current tilt.
+        //
+        // The residual is measured on the world-frame specific force, averaged
+        // over the wave band; see gravityAlignResidualSinWorld() and
+        // mag_gravity_align_world_tau_sec below.
         float mag_gravity_align_max_sin   = 0.075f; // sin(deg)
         float mag_gravity_align_hold_sec  = 2.0f;
-        float mag_gravity_align_lpf_tau   = 1.0f;
+
+        // Horizon of the world-frame average the gate is judged on, and how
+        // long that average must have been running before its verdict counts.
+        //
+        // The average has to span whole wave periods for orbital acceleration
+        // to cancel out of it, so the horizon is set against the longest swell
+        // the device is expected to start up in rather than against the sea it
+        // happens to be in -- the frequency tracker is not converged this
+        // early, and being conservative here costs settling time rather than
+        // accuracy.  12 s covers the band these filters work in.
+        //
+        // The warmup exists because the average and the observer are seeded
+        // from the *same* accelerometer sample.  Until the average has moved
+        // off that seed, a small residual only says the two agree about the
+        // instant they both started from, which they do by construction even
+        // when the boat was mid-wave and both are wrong.
+        //
+        // It is set so the gate's earliest possible verdict lands with the
+        // magnetometer's first eligible sample -- mag_delay_sec less the hold
+        // the gate has to serve anyway -- which is the last moment at which it
+        // is free.  Beyond that it delays a calm start for nothing: the
+        // magnetometer cannot begin averaging before mag_delay_sec however
+        // early the gate closes, so any warmup shorter than this buys no time
+        // and any warmup longer than it costs time one-for-one.
+        float mag_gravity_align_world_tau_sec    = 12.0f;
+        float mag_gravity_align_world_warmup_sec = 5.0f;
+
         float mag_tilt_fallback_sec       = 30.0f;
         float mag_extreme_gyro_dps        = 30.0f; // veto only truly violent motion
         float mag_init_min_mag_norm       = 1e-3f;
@@ -2307,7 +2337,8 @@ public:
         stage_ = Stage::Uninitialized;
         t_ = 0.0f;
 
-        gravity_gate_acc_lpf_.reset();
+        gravity_gate_acc_world_lpf_.reset();
+        gravity_gate_world_elapsed_sec_ = 0.0f;
         mag_gravity_good_sec_ = 0.0f;
         mag_gravity_aligned_branch_ = false;
         mag_init_eligible_t0_ = NAN;
@@ -2466,31 +2497,62 @@ public:
                 impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
             }
 
-            const Eigen::Vector3f acc_gate_lp =
-                gravity_gate_acc_lpf_.step(
-                    acc_body_ned,
-                    dt,
-                    cfg_.mag_gravity_align_lpf_tau);
-
             // Whose tilt the magnetometer gate is judged against.  Under the
             // proxy policy this is the observer's before handoff, so the gate
             // measures the attitude that will actually frame the magnetic
             // reference rather than one the MEKF is still converging toward.
-            const float align_sin =
-                seastate::common::gravityAlignResidualSin(
+            //
+            // The residual is taken in that attitude's own world frame rather
+            // than in the body frame.  A body-frame average of the specific
+            // force is not gravity under way: the hull rolls and pitches
+            // through the window, so the orbital term the average is there to
+            // remove is smeared across it instead of cancelling.  What the
+            // body-frame gate then reports is the sea state, not the levelling
+            // error -- on the 8.5 m reference record its residual sits between
+            // 0.03 and 0.45 for the whole run against a 0.075 threshold, so
+            // the gate simply never closes and startup falls through to its
+            // timeout.  Rotating first fixes the frame the average is taken
+            // in, orbital acceleration is zero mean there, and the residual
+            // becomes the tilt error it was always meant to be: on that same
+            // record it settles below 0.05 within about twenty seconds.
+            gravity_gate_acc_world_lpf_.step(
+                seastate::common::accWorldFromBody(
                     attitudeReferenceQuat_(),
-                    acc_gate_lp);
+                    acc_body_ned),
+                dt,
+                cfg_.mag_gravity_align_world_tau_sec);
+
+            const Eigen::Vector3f acc_gate_world_lp =
+                gravity_gate_acc_world_lpf_.state;
+
+            gravity_gate_world_elapsed_sec_ += dt;
+
+            const bool gate_average_warm =
+                gravity_gate_world_elapsed_sec_ >=
+                    cfg_.mag_gravity_align_world_warmup_sec;
+
+            const float align_sin =
+                gate_average_warm
+                    ? seastate::common::gravityAlignResidualSinWorld(
+                          acc_gate_world_lp)
+                    : 1.0f;
 
             // The sine residual is the same at an angle and at its supplement,
             // so it accepts an attitude flipped through 180 deg just as
-            // readily as the right one.  The branch is the sign of the dot
-            // product, and the gate has to carry it: this gate is what
+            // readily as the right one.  The branch is the sign of the world
+            // down component, and the gate has to carry it: this gate is what
             // certifies the tilt that frames the magnetic reference and that
             // is handed to the MEKF.
+            //
+            // The branch is deliberately not held behind the warmup.  It is
+            // the one part of the certificate an unaveraged sample can answer
+            // -- a specific force pointing down in the world frame is a
+            // filter that has been seeded upside down, not a wave -- and the
+            // handoff timeout is gated on it, so withholding it early would
+            // let a stalled startup sit unbranched rather than fail closed.
             const bool aligned_branch =
-                seastate::common::gravityAlignedBranch(
-                    attitudeReferenceQuat_(),
-                    acc_gate_lp);
+                seastate::common::gravityAlignedBranchWorld(
+                    acc_gate_world_lp);
 
             mag_gravity_aligned_branch_ = aligned_branch;
 
@@ -2556,7 +2618,8 @@ public:
                 mag_ref_set_ = false;
                 mag_auto_tuner_.reset();
 
-                gravity_gate_acc_lpf_.reset();
+                gravity_gate_acc_world_lpf_.reset();
+                gravity_gate_world_elapsed_sec_ = 0.0f;
                 mag_gravity_good_sec_ = 0.0f;
                 mag_gravity_aligned_branch_ = false;
                 mag_init_eligible_t0_ = NAN;
@@ -3448,7 +3511,8 @@ private:
     AdaptiveWaveDetrender3D::Output displacement_det_out_{};
     Eigen::Vector3f displacement_up_m_ = Eigen::Vector3f::Zero();
 
-    Vec3LPF gravity_gate_acc_lpf_{};
+    Vec3LPF gravity_gate_acc_world_lpf_{};
+    float   gravity_gate_world_elapsed_sec_ = 0.0f;
     float   mag_gravity_good_sec_ = 0.0f;
     bool    mag_gravity_aligned_branch_ = false;
     float   mag_init_eligible_t0_ = NAN;
