@@ -39,7 +39,7 @@ so the certificate does not depend on the choice of physical scales at all.
 The Phase-2 scaling survives only as a reporting convention.
 
 On top of that, the nonlinear remainder is no longer priced at the slowest
-mode's memory. Each remainder enters through a known three-dimensional channel
+mode's memory, which at the deployed schedule is 3.45e5 samples. Each remainder enters through a known three-dimensional channel
 — the MEKF reset through attitude, the measurement-model remainders through
 their own Kalman gains — so each gets its own `l1` injection gain, computed by
 forward impulse propagation with nothing to store. The scalar alternative
@@ -120,14 +120,14 @@ envelopes taken over a 600 s established interval:
 
 | point | c_eff | r_cert | budget |
 |---|---|---|---|
-| J0.27 | 0.694 | 1.44 | 0.353 |
+| J0.27 | 0.694 | 1.441 | 0.353 |
 | J1.50 | 1.067 | 0.937 | 0.230 |
-| J4.00 | 12.52 | 0.0799 | 0.0196 |
-| J8.50 | 29.28 | 0.0342 | 0.0084 |
-| P0.27 | 0.681 | 1.47 | 0.360 |
-| P1.50 | 0.988 | 1.01 | 0.248 |
-| P4.00 | 7.006 | 0.143 | 0.0350 |
-| P8.50 | 26.05 | 0.0384 | 0.0094 |
+| J4.00 | 12.53 | 0.0798 | 0.0196 |
+| J8.50 | 29.28 | 0.0341 | 0.0084 |
+| P0.27 | 0.681 | 1.468 | 0.360 |
+| P1.50 | 0.988 | 1.012 | 0.248 |
+| P4.00 | 7.007 | 0.1427 | 0.0350 |
+| P8.50 | 26.06 | 0.0384 | 0.0094 |
 
 Against those, the constructed handoff error in metric units puts the left side
 of the entrance inequality at 18.17 with the deployed seed, so the inequality
@@ -161,7 +161,7 @@ Because the certificate currently certifies nothing, checking bounds only on
 certified handoffs would be vacuous. The test therefore checks the
 unconditional form: on every handoff, each finite constructed bound must
 actually bound the true error. It does, on all of them, with the worst
-conservatism ratio at 1.15. The `S` identity is checked separately and is
+conservatism ratio at 1.07. The `S` identity is checked separately and is
 exactly zero everywhere, and a handoff with no magnetic gauge is required never
 to be certified.
 

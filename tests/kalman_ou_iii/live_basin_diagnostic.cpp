@@ -28,12 +28,12 @@
 //
 // What the small-gain slope needs on top of that is the size of the nonlinear
 // remainder measured in the same metric.  Bounding it with a single
-// M_H/(1-rho_H) prices every injection at the slowest mode's memory.  The
-// directional l1 injection gains below price each channel at its own: an
-// attitude-reset remainder, an accelerometer residual remainder and a
-// magnetometer residual remainder decay at very different rates, and the
-// accelerometer channel in particular is nearly two orders of magnitude
-// cheaper than the scalar bound admits.
+// M_H/(1-rho_H) prices every injection at the slowest mode's memory, which at
+// the deployed schedule is 3.45e5 samples.  The directional l1 injection gains
+// below price each channel at its own instead: an attitude-reset remainder, an
+// accelerometer residual remainder and a magnetometer residual remainder decay
+// at very different rates, and nothing about the slowest mode describes the
+// first two.
 //
 // Reference replay remains feasibility evidence.  An operating trajectory is
 // certified only if it satisfies its own interval envelopes.

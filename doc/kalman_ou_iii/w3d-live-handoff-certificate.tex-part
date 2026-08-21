@@ -392,8 +392,9 @@ cost of a measured accuracy regression is not a trade worth making.
 
 That result is reported rather than tuned away, and it should be read against
 where Phase~2 stood.  The transition constant alone has moved from $565.6$ to
-$1.020$, a factor of $554$, and the injection gains have moved by a further one
-to three orders of magnitude on the fast channels.  What is left is dominated
+$1.020$, a factor of $554$, and each injection channel is now charged its own
+memory instead of the $3.45\times10^{5}$ samples the scalar form would apply to
+all of them.  What is left is dominated
 by two terms that are structural rather than incidental: $\Gamma_\theta$, the
 $\sim\!\SI{100}{s}$ memory of the attitude channel, multiplied by the attitude
 correction the $S$~pseudo-measurement and the magnetometer produce; and
