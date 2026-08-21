@@ -26,8 +26,8 @@ class ComputerAssistedProcessBlockTests(unittest.TestCase):
         v = {k: D(x) for k, x in json.loads(cp.stdout).items()}
         T = v["horizon_max_s"]
 
-        # Scaled attitude/gyro-bias process envelope.  Rotation preserves the
-        # gyro-noise norm.  Bias driving noise contributes directly to b_g and
+        # Scaled attitude/gyro-bias process envelope. Rotation preserves the
+        # gyro-noise norm. Bias driving noise contributes directly to b_g and
         # through the attitude integral B(t), with ||B(t)|| <= t.
         qg = (D("0.00157") / D("0.087")) ** 2
         qbg = D("1e-11") / D("0.001") ** 2
@@ -47,9 +47,19 @@ class ComputerAssistedProcessBlockTests(unittest.TestCase):
         self.assertGreater(v["process_window_upper"], w_att)
         self.assertGreater(v["process_window_upper"], w_ba)
 
-        # The translational OU-III floor is also the limiting lower process
-        # block by many orders of magnitude.  b_a alone has O(h) diffusion.
+        # The translational OU-III floor is the limiting lower process block by
+        # many orders of magnitude. For the attitude/gyro-bias block, for any
+        # eta>0,
+        #   ||u_b+B^T u_theta||^2 >= eta/(1+eta)||u_b||^2
+        #                               - eta ||B^T u_theta||^2,
+        # and ||B(t)||<=t. Choosing eta so at most half the direct gyro-noise
+        # term is spent on that cross bound gives the explicit block floor below.
         h = v["h_min"]
+        hmax = v["h_max"]
+        eta = min(D(1), D(3) * qg / (D(2) * qbg * hmax * hmax))
+        qatt_step = h * min(qg / D(2), qbg * eta / (D(1) + eta))
+
+        # The residual accelerometer-bias OU block has its exact O(h) diffusion.
         qba_step = (
             D("2.5e-7")
             * D("5000")
@@ -57,6 +67,8 @@ class ComputerAssistedProcessBlockTests(unittest.TestCase):
             * (D(1) - (-D(2) * h / D("5000")).exp())
             / D("0.5")**2
         )
+
+        self.assertLess(v["q_step_lower"], qatt_step)
         self.assertLess(v["q_step_lower"], qba_step)
 
 
