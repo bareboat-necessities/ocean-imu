@@ -2,503 +2,65 @@ name: ou-validation
 
 on:
   pull_request:
-    paths:
-      - "src/kalman_ou_ii/**"
-      - "src/kalman_ou_iii/**"
-      - "src/util/W3dSimCommon.*"
-      - "tests/kalman_ou_ii/**"
-      - "tests/kalman_ou_iii/**"
-      - "tests/validation/**"
-      - "tools/ou_validation.py"
-      - "tools/ou_robustness.py"
-      - "tools/ou_publication_sync.py"
-      - "plots/kalman_ou_iii/baseline-comparison.py"
-      - "reports/results/ou_validation/**"
-      - "reports/results/ou_robustness/**"
-      - "docs/ou-validation.md"
-      - "docs/ou-robustness.md"
-      - "doc/kalman_ou_iii/**"
-      - "Makefile"
-      - ".github/workflows/ou-validation.yml"
-  push:
-    branches: [main]
-    paths:
-      - "src/kalman_ou_ii/**"
-      - "src/kalman_ou_iii/**"
-      - "src/util/W3dSimCommon.*"
-      - "tests/kalman_ou_ii/**"
-      - "tests/kalman_ou_iii/**"
-      - "tests/validation/**"
-      - "tools/ou_validation.py"
-      - "tools/ou_robustness.py"
-      - "tools/ou_publication_sync.py"
-      - "plots/kalman_ou_iii/baseline-comparison.py"
-      - "reports/results/ou_validation/**"
-      - "reports/results/ou_robustness/**"
-      - "docs/ou-validation.md"
-      - "docs/ou-robustness.md"
-      - "doc/kalman_ou_iii/**"
-      - "Makefile"
-      - ".github/workflows/ou-validation.yml"
   workflow_dispatch:
-    inputs:
-      validation_mode:
-        description: Experiment size
-        required: true
-        default: smoke
-        type: choice
-        options:
-          - smoke
-          - full
-  # Called by the build workflow so a main build regenerates the evidence
-  # before the article is typeset. The caller's ref is what the commit job
-  # pushes to, and the caller has to grant contents: write for it.
-  workflow_call:
-    inputs:
-      validation_mode:
-        description: Experiment size
-        required: true
-        type: string
 
-permissions:
-  contents: read
-
-# Keyed on the mode as well as the ref. The fast gate and a full regeneration
-# are different pieces of work with different runtimes, and on a push to main
-# both are in flight at once -- a shared group would have them cancelling each
-# other rather than the stale copy of themselves.
 concurrency:
-  group: ou-validation-${{ inputs.validation_mode || 'gate' }}-${{ github.event.pull_request.number || github.ref }}
+  group: period-statistics-retune-pr-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  # Must match the length of the regenerate matrix's shard list.
-  SHARD_COUNT: 3
-
 jobs:
-  # Fast gate. Runs on every pull request and push, and on a smoke dispatch.
-  # Smoke mode exists to catch breakage in the runner and the committed
-  # bundles, not to produce evidence: it never writes numbers anyone cites.
-  # Gated on the mode rather than the event: in a called workflow
-  # github.event_name is the caller's event, so an event test here would read
-  # "push" and run the wrong half. `inputs` covers dispatch and workflow_call
-  # alike, and is empty -- so not 'full' -- for a plain push or pull request.
-  validate:
-    if: inputs.validation_mode != 'full'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 180
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Install dependencies
-        timeout-minutes: 27
-        run: |
-          set -uo pipefail
-          # Each attempt is capped at 8 minutes and there are two retries.
-          # A stalled mirror is then abandoned and retried against whatever
-          # the load balancer hands out next, instead of holding the step
-          # until its own timeout kills the job with nothing installed.
-          apt_get() {
-            sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
-              -o Acquire::Retries=2 \
-              -o Acquire::http::Timeout=15 \
-              -o Acquire::https::Timeout=15 \
-              -o Dpkg::Use-Pty=0 \
-              "$@"
-          }
-          install_deps() {
-            apt_get update && apt_get install -y --no-install-recommends \
-              g++ make libeigen3-dev \
-              python3-numpy python3-matplotlib
-          }
-          for attempt in 1 2 3; do
-            if install_deps; then
-              echo "dependencies installed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "attempt ${attempt} failed; clearing any half-configured state"
-            sudo dpkg --configure -a || true
-            sleep $((attempt * 15))
-          done
-          echo "apt-get did not succeed after 3 attempts"
-          exit 1
-
-      - name: Download versioned simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
-          mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
-
-      - name: Run validation unit tests
-        run: make -C tests/validation test
-
-      - name: Run paired validation
-        run: |
-          python3 -u tools/ou_validation.py \
-            --mode smoke \
-            --bootstrap-resamples 1000 \
-            --output-dir reports/results/ou_validation
-
-      - name: Run robustness validation
-        run: |
-          python3 -u tools/ou_robustness.py \
-            --mode smoke \
-            --sensitivity-scales "0.5,1.0,1.5" \
-            --bootstrap-resamples 1000 \
-            --output-dir reports/results/ou_robustness
-
-      - name: Upload validation artifacts
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou-validation-smoke
-          path: |
-            reports/results/ou_validation/**
-            reports/results/ou_robustness/**
-          if-no-files-found: warn
-
-  # Evidence regeneration. Dispatch-only, and sharded: the full validation
-  # study is roughly 840 twenty-minute simulator replays and the robustness
-  # study another 310, and a single four-core runner gets through those at
-  # about the rate that made this a multi-hour job.
-  #
-  # Every replay is fixed by its seed triplet, so the seed repetitions split
-  # across runners with no coordination. Each shard writes its rows to a file;
-  # the combine job merges them and produces the bundle a single process would
-  # have produced, byte for byte. Sharding by study as well as by seed keeps a
-  # failure in one bundle from throwing away the other's hours.
-  regenerate:
-    if: inputs.validation_mode == 'full'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 350
-    strategy:
-      fail-fast: false
-      matrix:
-        study: [validation, robustness]
-        shard: [0, 1, 2]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Install dependencies
-        timeout-minutes: 27
-        run: |
-          set -uo pipefail
-          # Each attempt is capped at 8 minutes and there are two retries.
-          # A stalled mirror is then abandoned and retried against whatever
-          # the load balancer hands out next, instead of holding the step
-          # until its own timeout kills the job with nothing installed.
-          apt_get() {
-            sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
-              -o Acquire::Retries=2 \
-              -o Acquire::http::Timeout=15 \
-              -o Acquire::https::Timeout=15 \
-              -o Dpkg::Use-Pty=0 \
-              "$@"
-          }
-          install_deps() {
-            apt_get update && apt_get install -y --no-install-recommends \
-              g++ make libeigen3-dev \
-              python3-numpy python3-matplotlib
-          }
-          for attempt in 1 2 3; do
-            if install_deps; then
-              echo "dependencies installed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "attempt ${attempt} failed; clearing any half-configured state"
-            sudo dpkg --configure -a || true
-            sleep $((attempt * 15))
-          done
-          echo "apt-get did not succeed after 3 attempts"
-          exit 1
-
-      - name: Download versioned simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
-          mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
-
-      - name: Run paired validation shard
-        if: matrix.study == 'validation'
-        run: |
-          python3 -u tools/ou_validation.py \
-            --mode full \
-            --bootstrap-resamples 10000 \
-            --jobs "$(nproc)" \
-            --shard-count ${{ env.SHARD_COUNT }} \
-            --shard-index ${{ matrix.shard }} \
-            --shard-dir shards \
-            --output-dir reports/results/ou_validation
-
-      - name: Run robustness validation shard
-        if: matrix.study == 'robustness'
-        run: |
-          python3 -u tools/ou_robustness.py \
-            --mode full \
-            --sensitivity-scales "0.5,0.75,1.0,1.25,1.5" \
-            --bootstrap-resamples 10000 \
-            --jobs "$(nproc)" \
-            --shard-count ${{ env.SHARD_COUNT }} \
-            --shard-index ${{ matrix.shard }} \
-            --shard-dir shards \
-            --output-dir reports/results/ou_robustness
-
-      - name: Upload shard
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou-${{ matrix.study }}-shard-${{ matrix.shard }}
-          path: shards/**
-          if-no-files-found: error
-
-  # Merges the shards and writes the bundle. Kept separate from the shards
-  # because the statistics are computed over all ten repetitions at once --
-  # bootstrap intervals and paired effects are not something a shard can hold
-  # a piece of.
-  combine:
-    needs: regenerate
-    if: inputs.validation_mode == 'full'
+  period-statistics-retune:
+    name: period-statistics-retune (${{ matrix.axis }})
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        study: [validation, robustness]
+        include:
+          - axis: moment
+            values: "4,6,8,10"
+            baseline: "8"
+          - axis: log
+            values: "0,0.10,0.25,0.50,1.0"
+            baseline: "0.50"
+          - axis: sigma_k
+            values: "1,2,3,4,6"
+            baseline: "2"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Install dependencies
-        timeout-minutes: 27
         run: |
-          set -uo pipefail
-          # Each attempt is capped at 8 minutes and there are two retries.
-          # A stalled mirror is then abandoned and retried against whatever
-          # the load balancer hands out next, instead of holding the step
-          # until its own timeout kills the job with nothing installed.
-          apt_get() {
-            sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
-              -o Acquire::Retries=2 \
-              -o Acquire::http::Timeout=15 \
-              -o Acquire::https::Timeout=15 \
-              -o Dpkg::Use-Pty=0 \
-              "$@"
-          }
-          install_deps() {
-            apt_get update && apt_get install -y --no-install-recommends \
-              g++ make libeigen3-dev \
-              python3-numpy python3-matplotlib
-          }
-          for attempt in 1 2 3; do
-            if install_deps; then
-              echo "dependencies installed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "attempt ${attempt} failed; clearing any half-configured state"
-            sudo dpkg --configure -a || true
-            sleep $((attempt * 15))
-          done
-          echo "apt-get did not succeed after 3 attempts"
-          exit 1
-      # The combine step re-derives the calibrated tuning points and the
-      # transition diagnostic, which are simulator work, so it needs the same
-      # records and toolchain the shards had.
-      - name: Download versioned simulation data
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq g++ make libeigen3-dev unzip python3-numpy python3-pandas python3-scipy
+
+      - name: Fetch reference wave records
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release download v1.1.3 \
             --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
+            --pattern 'sim-data-files.zip' \
             --clobber
-          mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+          unzip -o sim-data-files.zip -d plots/kalman_ou_iii
 
-      - name: Download this study's shards
-        uses: actions/download-artifact@v8
-        with:
-          pattern: ou-${{ matrix.study }}-shard-*
-          merge-multiple: true
-          path: shards
-
-      # Spelled out per study rather than templated, so the flags that shape
-      # the protocol recorded in the manifest are the same ones the shards ran
-      # under and cannot drift apart silently.
-      - name: Combine paired validation shards
-        if: matrix.study == 'validation'
+      - name: Run coarse ${{ matrix.axis }} sweep
         run: |
-          python3 -u tools/ou_validation.py \
-            --mode full \
-            --bootstrap-resamples 10000 \
-            --combine-shards \
-            --shard-dir shards \
-            --output-dir reports/results/ou_validation
+          python3 -u tools/ou_period_statistics_retune.py \
+            --axis "${{ matrix.axis }}" \
+            --values "${{ matrix.values }}" \
+            --baseline "${{ matrix.baseline }}" \
+            --seeds 1 --jobs 4 \
+            --data-dir plots/kalman_ou_iii \
+            --csv "reports/results/period_statistics_retune/coarse_${{ matrix.axis }}_runs.csv" \
+            --report "reports/results/period_statistics_retune/coarse_${{ matrix.axis }}.md"
 
-      - name: Align validation publication wording with the article
-        if: matrix.study == 'validation'
-        run: |
-          python3 tools/ou_publication_sync.py \
-            --validation-dir reports/results/ou_validation
-
-      - name: Combine robustness shards
-        if: matrix.study == 'robustness'
-        run: |
-          python3 -u tools/ou_robustness.py \
-            --mode full \
-            --sensitivity-scales "0.5,0.75,1.0,1.25,1.5" \
-            --bootstrap-resamples 10000 \
-            --combine-shards \
-            --shard-dir shards \
-            --output-dir reports/results/ou_robustness
-
-      - name: Upload regenerated bundle
+      - name: Upload coarse ${{ matrix.axis }} evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou-${{ matrix.study }}-full
-          path: reports/results/ou_${{ matrix.study }}/**
+          name: period-statistics-retune-${{ matrix.axis }}
+          path: reports/results/period_statistics_retune/**
           if-no-files-found: warn
-
-  # Lands both regenerated bundles together, but only after the manuscript and
-  # committed-evidence contract passes against the regenerated working tree.
-  # A failed consistency check must never mutate the target branch.
-  commit:
-    needs: combine
-    if: inputs.validation_mode == 'full'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.ref_name }}
-
-      - name: Install dependencies
-        timeout-minutes: 27
-        run: |
-          set -uo pipefail
-          # Each attempt is capped at 8 minutes and there are two retries.
-          # A stalled mirror is then abandoned and retried against whatever
-          # the load balancer hands out next, instead of holding the step
-          # until its own timeout kills the job with nothing installed.
-          apt_get() {
-            sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
-              -o Acquire::Retries=2 \
-              -o Acquire::http::Timeout=15 \
-              -o Acquire::https::Timeout=15 \
-              -o Dpkg::Use-Pty=0 \
-              "$@"
-          }
-          install_deps() {
-            apt_get update && apt_get install -y --no-install-recommends \
-              python3-numpy python3-matplotlib
-          }
-          for attempt in 1 2 3; do
-            if install_deps; then
-              echo "dependencies installed on attempt ${attempt}"
-              exit 0
-            fi
-            echo "attempt ${attempt} failed; clearing any half-configured state"
-            sudo dpkg --configure -a || true
-            sleep $((attempt * 15))
-          done
-          echo "apt-get did not succeed after 3 attempts"
-          exit 1
-      # The consistency step hashes every non-code source the manifest names,
-      # and those include the simulation records. Without them the check errors
-      # out on a missing file instead of reporting whether the numbers moved.
-      - name: Download versioned simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
-          mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
-
-      - name: Download regenerated bundles
-        uses: actions/download-artifact@v8
-        with:
-          pattern: ou-*-full
-          path: regenerated
-
-      - name: Place bundles and mirror the manuscript copies
-        run: |
-          set -euo pipefail
-          rm -rf reports/results/ou_validation reports/results/ou_robustness
-          mkdir -p reports/results/ou_validation reports/results/ou_robustness
-          cp -a regenerated/ou-validation-full/. reports/results/ou_validation/
-          cp -a regenerated/ou-robustness-full/. reports/results/ou_robustness/
-          rm -rf regenerated
-
-          # These publication inputs are mechanical mirrors of the regenerated
-          # evidence. The validation step below verifies the complete contract
-          # before any commit can be created or pushed.
-          mirror() {
-            cp "reports/results/$1" "doc/kalman_ou_iii/$2"
-          }
-          mirror ou_validation/ou_validation_publication.tex \
-                 w3d-ou-validation-results-generated.tex-part
-          mirror ou_validation/ou_validation_macros.tex \
-                 w3d-ou-validation-macros-generated.tex-part
-          mirror ou_validation/ou_validation_tuning_points.tex \
-                 w3d-ou-validation-tuning-points-generated.tex-part
-          mirror ou_validation/ou_validation_vertical.svg \
-                 ou_validation_vertical.svg
-          mirror ou_validation/ou_validation_transition.svg \
-                 ou_validation_transition.svg
-          mirror ou_robustness/ou_robustness_publication.tex \
-                 w3d-ou-robustness-results-generated.tex-part
-          mirror ou_robustness/ou_robustness_macros.tex \
-                 w3d-ou-robustness-macros-generated.tex-part
-          mirror ou_robustness/ou_robustness_sensitivity.svg \
-                 ou_robustness_sensitivity.svg
-          mirror ou_robustness/ou_robustness_stress.svg \
-                 ou_robustness_stress.svg
-
-      - name: Check the manuscript against the regenerated evidence
-        run: make -C tests/validation test
-
-      - name: Commit the regenerated evidence
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/results/ou_validation reports/results/ou_robustness \
-                  doc/kalman_ou_iii
-          if git diff --cached --quiet; then
-            echo "Regenerated bundle is identical to the committed one."
-            exit 0
-          fi
-          git commit \
-            -m "Regenerate the full OU validation and robustness evidence" \
-            -m "Produced by ou-validation run ${{ github.run_id }} from ${{ github.sha }}."
-          # Fully qualified on both sides. A short name here is ambiguous the
-          # moment a tag shares the branch's name -- git refuses the push with
-          # "dst refspec matches more than one", and the rebase in the retry
-          # silently fetches the tag instead of the branch.
-          for attempt in 1 2 3 4; do
-            git push origin HEAD:refs/heads/${{ github.ref_name }} && exit 0
-            sleep $((2 ** attempt))
-            git pull --rebase origin refs/heads/${{ github.ref_name }}
-            # A newer branch tip can change replay-producing source after this
-            # run generated its rows. Revalidate after every rebase before the
-            # next push so stale evidence can never be replayed onto new code.
-            make -C tests/validation test
-          done
-          exit 1
