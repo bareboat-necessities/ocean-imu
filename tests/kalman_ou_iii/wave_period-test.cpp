@@ -57,8 +57,11 @@ bool test_monochromatic() {
     return true;
 }
 
-// Broadband sea. T_z = 2*pi*sqrt(m0/m2) is computed from the same components
-// that build the signal, so the reference needs no spectral estimation.
+// Broadband sea. The estimator's two high-pass stages and two leaky
+// integrations frequency-weight the displacement spectrum. The internal
+// elevation proxy has |G_eta(jw)|^2 = [w^2/(w^2 + lambda^2)]^4 relative
+// to true displacement, so its broadband moment ratio must be compared with
+// the same synthetic spectrum after this deterministic weighting.
 bool test_broadband(unsigned seed, float peak_period, float* estimated, float* reference) {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<float> phase(0.0f, kTwoPi);
@@ -69,6 +72,9 @@ bool test_broadband(unsigned seed, float peak_period, float* estimated, float* r
     std::vector<float> offset;
 
     const int components = 60;
+    constexpr float high_pass_hz = 0.02f;
+    const double lambda = double(kTwoPi) * double(high_pass_hz);
+    const double lambda_sq = lambda * lambda;
     double m0 = 0.0;
     double m2 = 0.0;
     for (int i = 0; i < components; ++i) {
@@ -79,12 +85,17 @@ bool test_broadband(unsigned seed, float peak_period, float* estimated, float* r
         omega.push_back(w);
         amplitude.push_back(a);
         offset.push_back(phase(rng));
-        m0 += 0.5 * double(a) * double(a);
-        m2 += 0.5 * double(a) * double(a) * double(w) * double(w);
+        const double w_sq = double(w) * double(w);
+        const double displacement_gain_sq =
+            std::pow(w_sq / (w_sq + lambda_sq), 4.0);
+        const double component_power =
+            0.5 * double(a) * double(a) * displacement_gain_sq;
+        m0 += component_power;
+        m2 += component_power * w_sq;
     }
     *reference = float(kTwoPi / std::sqrt(m2 / m0));
 
-    WavePeriodEstimator estimator;
+    WavePeriodEstimator estimator(high_pass_hz);
     const int steps = static_cast<int>(1200.0f / kDt);
     for (int i = 0; i < steps; ++i) {
         const float t = static_cast<float>(i) * kDt;
