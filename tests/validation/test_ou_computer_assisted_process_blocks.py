@@ -47,29 +47,31 @@ class ComputerAssistedProcessBlockTests(unittest.TestCase):
         self.assertGreater(v["process_window_upper"], w_att)
         self.assertGreater(v["process_window_upper"], w_ba)
 
-        # The translational OU-III floor is the limiting lower process block by
-        # many orders of magnitude. For the attitude/gyro-bias block, for any
-        # eta>0,
-        #   ||u_b+B^T u_theta||^2 >= eta/(1+eta)||u_b||^2
-        #                               - eta ||B^T u_theta||^2,
-        # and ||B(t)||<=t. Choosing eta so at most half the direct gyro-noise
-        # term is spent on that cross bound gives the explicit block floor below.
+        # The finite-horizon translational controllability constant is also a
+        # valid full-state process floor because the other two process blocks
+        # have much larger one-step floors.  For attitude/gyro bias, use
+        # ||B(t)|| <= cb*t in scaled coordinates and spend at most half of the
+        # direct gyro-noise term on the cross term.
         h = v["h_min"]
         hmax = v["h_max"]
-        eta = min(D(1), D(3) * qg / (D(2) * qbg * hmax * hmax))
+        eta = min(
+            D(1),
+            D(3) * qg / (D(2) * qbg * cb * cb * hmax * hmax),
+        )
         qatt_step = h * min(qg / D(2), qbg * eta / (D(1) + eta))
 
-        # The residual accelerometer-bias OU block has its exact O(h) diffusion.
-        qba_step = (
-            D("2.5e-7")
-            * D("5000")
-            / D(2)
-            * (D(1) - (-D(2) * h / D("5000")).exp())
-            / D("0.5")**2
-        )
+        # The residual accelerometer-bias OU block has exact O(h) diffusion.
+        qba_step = v["qba_step_lower"]
 
-        self.assertLess(v["q_step_lower"], qatt_step)
-        self.assertLess(v["q_step_lower"], qba_step)
+        self.assertGreater(qatt_step, v["alpha_controllability_lower"])
+        self.assertGreater(qba_step, v["alpha_controllability_lower"])
+        self.assertGreater(qatt_step, D("1e-9"))
+        self.assertGreater(qba_step, D("1e-9"))
+
+        # The old final-sample translational h^7 bound remains much smaller and
+        # is retained only as a conservatism diagnostic.
+        self.assertGreater(qatt_step, v["q_step_lower"])
+        self.assertGreater(qba_step, v["q_step_lower"])
 
 
 if __name__ == "__main__":
