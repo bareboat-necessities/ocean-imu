@@ -101,11 +101,19 @@ public:
             // OU/SeaStateAutoTuner-aligned acceleration noise floor.
             T acc_noise_floor_sigma = T(0.12);
 
-            // SeaStateAutoTuner-style dynamic variance horizon:
-            // tau_var ~= K_periods / f.
+            // Dynamic variance horizon, tau_var ~= K_periods / f.
+            //
+            // This envelope was modelled on SeaStateAutoTuner but is now an
+            // independent estimator: the tuner dropped the second EWMA stage
+            // and retuned K_periods to 4, while this observer still cascades
+            // mean/square and variance at K_periods = 2 (same ~4/f effective
+            // memory, different shape).  Changing either value here is a PII
+            // retune scored on the PII gates, not a parity fix.
             T tuner_K_periods = T(2.0);
 
-            // SeaStateAutoTuner frequency EMA horizon.
+            // Retained for source compatibility only.  It is range-checked and
+            // never read: this observer has no frequency EMA, and neither does
+            // SeaStateAutoTuner any more.
             T tuner_tau_freq_s = T(1.0);
 
             // OU-style mapping:

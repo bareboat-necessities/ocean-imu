@@ -4,13 +4,25 @@ on:
   push:
     paths:
       - 'src/kalman_tfg/**'
+      - 'src/kalman_common/**'
       - 'src/lie/**'
+      # TFG includes tuner/SeaStateAutoTuner.h and tuner/WavePeriodEstimator.h,
+      # so a shared-tuner change is a TFG change even when nothing under
+      # src/kalman_tfg is touched.
+      - 'src/tuner/**'
+      - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
       - '.github/workflows/tfg-validation.yml'
   pull_request:
     paths:
       - 'src/kalman_tfg/**'
+      - 'src/kalman_common/**'
       - 'src/lie/**'
+      # TFG includes tuner/SeaStateAutoTuner.h and tuner/WavePeriodEstimator.h,
+      # so a shared-tuner change is a TFG change even when nothing under
+      # src/kalman_tfg is touched.
+      - 'src/tuner/**'
+      - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
       - '.github/workflows/tfg-validation.yml'
   workflow_dispatch:

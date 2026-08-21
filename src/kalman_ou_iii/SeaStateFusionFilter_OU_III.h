@@ -173,7 +173,6 @@ constexpr float MAX_R_S     = 400.0f;
 // Zero selects the legacy ADAPT_TAU_SEC path for controlled ablations.
 constexpr float ADAPT_TAU_SEC              = 1.8f;
 constexpr float ADAPT_TAU_SEA_PERIODS          = 0.40f;
-constexpr float TUNER_FREQ_EMA_SEA_PERIODS     = 0.10f;
 // This cadence belongs only to posterior a_w covariance maintenance.  Online
 // tuner candidates are staged after every valid physical measurement.
 constexpr float ADAPT_EVERY_SECS           = 0.1f;
@@ -417,10 +416,6 @@ public:
         // Default cutoff ~max_freq_hz_ Hz: passes waves, kills 8–37 Hz engine band
         freq_input_lpf_.setCutoff(max_freq_hz_);
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
-        // OU-III opts into the measured sea-scaled tuner-frequency EMA.
-        // SeaStateAutoTuner itself remains fixed-seconds by default so OU-II/TFG
-        // are unchanged by this OU-III-only calibration.
-        tuner_.setFrequencySmoothingSeaPeriods(TUNER_FREQ_EMA_SEA_PERIODS);
         startup_stage_   = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
     }
@@ -1155,21 +1150,12 @@ public:
         }
     }
 
-    // Frequency EMA inside SeaStateAutoTuner, likewise expressed in T_sea=T_z/2.
-    void setTunerFreqSmoothingSeaPeriods(float periods) {
-        if (std::isfinite(periods) && periods > 0.0f) {
-            tuner_freq_ema_sea_periods_ = periods;
-            tuner_.setFrequencySmoothingSeaPeriods(periods);
-        }
-    }
-
-    // Fixed-seconds frequency-EMA compatibility mode for controlled ablations.
-    void setTunerFreqSmoothingTimeConstant(float tau_sec) {
-        if (std::isfinite(tau_sec) && tau_sec > 0.0f) {
-            tuner_freq_ema_sea_periods_ = 0.0f;
-            tuner_.setTauFreq(tau_sec);
-        }
-    }
+    // No-ops kept so existing ablation scripts still compile and run.  The
+    // tuner's second frequency EMA was removed when WavePeriodEstimator took
+    // ownership of the canonical log-period state, and there is nothing left
+    // here to smooth.
+    void setTunerFreqSmoothingSeaPeriods(float /*periods*/) {}
+    void setTunerFreqSmoothingTimeConstant(float /*tau_sec*/) {}
 
     // Smoothing-horizon multiplier for the r_S channel.  The EMA time
     // constant is mult * tau_target, so the horizon follows the sea state
@@ -1967,7 +1953,6 @@ private:
     float max_R_S_                = MAX_R_S;
     float adapt_tau_sec_          = ADAPT_TAU_SEC;
     float adapt_tau_sea_periods_      = ADAPT_TAU_SEA_PERIODS;
-    float tuner_freq_ema_sea_periods_ = TUNER_FREQ_EMA_SEA_PERIODS;
     float adapt_RS_mult_          = ADAPT_RS_MULT;
     float adapt_RS_slew_log_      = ADAPT_RS_SLEW_LOG;
     float adapt_every_secs_       = ADAPT_EVERY_SECS;

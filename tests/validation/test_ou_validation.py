@@ -402,9 +402,10 @@ class StatisticsTests(unittest.TestCase):
     def test_default_crossfade_is_short_against_the_adaptation_memory(self):
         # The crossfade is the instrument for adaptation lag, so it has to be
         # fast compared with the horizons it is meant to resolve.  The longest
-        # is the two-stage sigma_a EWMA, about 2*K_periods*T_z ~ 34 s on the
-        # largest reference sea; a crossfade of several hundred seconds is
-        # quasi-static against that and cannot separate lag from accuracy.
+        # is the sigma_a EWMA, about K_periods*T_z ~ 34 s on the largest
+        # reference sea, capped at the 30 s universal EMA guard there; a
+        # crossfade of several hundred seconds is quasi-static against that
+        # and cannot separate lag from accuracy.
         duration_sec = 1200.0
         crossfade_sec = duration_sec * (
             validation.TRANSITION_END_FRACTION

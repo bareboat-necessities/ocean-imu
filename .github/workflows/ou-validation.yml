@@ -5,6 +5,10 @@ on:
     paths:
       - "src/kalman_ou_ii/**"
       - "src/kalman_ou_iii/**"
+      - "src/kalman_common/**"
+      # Both OU families read the shared tuner, so a change confined to
+      # src/tuner still moves every number this workflow gauges.
+      - "src/tuner/**"
       - "src/util/W3dSimCommon.*"
       - "tests/kalman_ou_ii/**"
       - "tests/kalman_ou_iii/**"
@@ -25,6 +29,10 @@ on:
     paths:
       - "src/kalman_ou_ii/**"
       - "src/kalman_ou_iii/**"
+      - "src/kalman_common/**"
+      # Both OU families read the shared tuner, so a change confined to
+      # src/tuner still moves every number this workflow gauges.
+      - "src/tuner/**"
       - "src/util/W3dSimCommon.*"
       - "tests/kalman_ou_ii/**"
       - "tests/kalman_ou_iii/**"
