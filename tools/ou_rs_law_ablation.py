@@ -74,6 +74,15 @@ DEFAULT_TRANSITION_RETURN_START_SEC = 800.0
 ROUNDTRIP_DURATION_SEC = 1200.0
 ROUNDTRIP_WINDOW_SEC = 900.0
 ROUNDTRIP_SCENARIO = "nonstationary_H1_5_to_H4_0_to_H1_5_Tp5_7_to_11_4"
+# Name the ablation already gives its generated round-trip surrogate; the
+# diagnostic figure reuses it so the plotted realization is the scored one.
+ROUNDTRIP_WAVE_NAME = "wave_data_jonswap_H4.000_L202.839_A30.00_P120.00.csv"
+
+# Endpoint heights of the round trip.  The high sea is the H_s = 8.5 m source
+# record scaled to 4.0 m, the same endpoint the one-way instrument uses.
+DIAGNOSTIC_LOW_HEIGHT_M = 1.5
+DIAGNOSTIC_HIGH_HEIGHT_M = 4.0
+DIAGNOSTIC_SOURCE_HEIGHT_M = 8.5
 
 
 def _validation_module():
@@ -313,7 +322,7 @@ def run_roundtrip(
                     start_sec, return_start_sec,
                 )
                 sub = root / f"wave_{wave_seed}"
-                path = sub / "wave_data_jonswap_H4.000_L202.839_A30.00_P120.00.csv"
+                path = sub / ROUNDTRIP_WAVE_NAME
                 ov.write_wave_csv(path, columns, generated)
                 metrics, gate_pass, returncode = ov.run_simulator(
                     "OU_III",
@@ -352,6 +361,158 @@ def run_roundtrip(
     _write_rows(raw, rows)
     print(f"[{label}] round-trip transition rows -> {raw}", flush=True)
     return load(raw)
+
+
+def write_roundtrip_diagnostic(
+    svg_path: Path,
+    csv_path: Path,
+    wave_seed: int,
+    imu_seed: int,
+    init_seed: int,
+    start_sec: float = DEFAULT_TRANSITION_START_SEC,
+    return_start_sec: float = DEFAULT_TRANSITION_RETURN_START_SEC,
+    decimation: int = 20,
+) -> dict[str, Any]:
+    """Plot one round-trip realization the way the one-way figure is plotted.
+
+    The scored tables cannot show whether the tuner follows the sea in both
+    directions or only up, so the ablation gets the same four-panel view the
+    general-validation transition figure uses: the sea state the record
+    actually carries, the wave and its estimate, the vertical error, and the
+    applied tuning against the two frozen operating points.  Only the protocol
+    differs -- two crossfades and a return to the same low realization.
+    """
+
+    ov = _validation_module()
+    low_path = ov.find_default_input(OU_III_DATA, "1.500", "50.710")
+    high_path = ov.find_default_input(OU_III_DATA, "8.500", "202.839")
+    columns, low_data = ov.read_wave_csv(low_path, ROUNDTRIP_DURATION_SEC)
+    _, high_data = ov.read_wave_csv(high_path, ROUNDTRIP_DURATION_SEC)
+    high_scale = DIAGNOSTIC_HIGH_HEIGHT_M / DIAGNOSTIC_SOURCE_HEIGHT_M
+
+    _, _, _, return_end_sec = transition_bounds(start_sec, return_start_sec)
+    window_start_sec = ROUNDTRIP_DURATION_SEC - ROUNDTRIP_WINDOW_SEC
+
+    with tempfile.TemporaryDirectory(prefix="ou_rs_diagnostic_") as tmp:
+        root = Path(tmp)
+
+        # The two frozen points are the reference lines of the bottom panel:
+        # each is calibrated once from its own noise-free record, exactly as
+        # the general validation calibrates its fixed-tuning modes.
+        low_reference = root / "calibration" / "low" / low_path.name
+        ov.write_wave_csv(low_reference, columns, low_data)
+        high_reference = root / "calibration" / "high" / ROUNDTRIP_WAVE_NAME
+        ov.write_wave_csv(
+            high_reference,
+            columns,
+            ov.scale_wave_motion(columns, high_data, high_scale),
+        )
+        low_point = ov.calibrate_tuning_point(
+            "OU_III", low_reference, ROUNDTRIP_WINDOW_SEC
+        )
+        high_point = ov.calibrate_tuning_point(
+            "OU_III", high_reference, ROUNDTRIP_WINDOW_SEC
+        )
+
+        generated = make_roundtrip_wave(
+            ov, columns, low_data, high_data, wave_seed, high_scale,
+            start_sec, return_start_sec,
+        )
+        surrogate = root / f"wave_{wave_seed}" / ROUNDTRIP_WAVE_NAME
+        ov.write_wave_csv(surrogate, columns, generated)
+        metrics, _, _ = ov.run_simulator(
+            "OU_III",
+            surrogate,
+            ROUNDTRIP_WINDOW_SEC,
+            imu_seed=imu_seed,
+            initialization_seed=init_seed,
+            tuning_mode="adaptive",
+            aw_cov_sync="periodic",
+            segments=roundtrip_segments(start_sec, return_start_sec),
+            write_timeseries=True,
+        )
+        series = ov.read_diagnostic_timeseries("OU_III", surrogate)
+
+    time = series["time"]
+    weight, _, _ = roundtrip_profile(ov, time, start_sec, return_start_sec)
+    reference = series["disp_ref_z"]
+    estimate = series["disp_est_z"]
+    error = estimate - reference
+
+    rolling_hs = ov.rolling_significant_height(reference)
+    mixture_hs = np.asarray(
+        [
+            ov.mixture_significant_height_m(
+                DIAGNOSTIC_LOW_HEIGHT_M, DIAGNOSTIC_HIGH_HEIGHT_M, value
+            )
+            for value in weight
+        ]
+    )
+    linear_hs = (
+        (1.0 - weight) * DIAGNOSTIC_LOW_HEIGHT_M
+        + weight * DIAGNOSTIC_HIGH_HEIGHT_M
+    )
+
+    step = max(1, int(decimation))
+    _write_rows(
+        csv_path,
+        [
+            {
+                "time_s": float(time[index]),
+                "blend_weight": float(weight[index]),
+                "rolling_hs_m": float(rolling_hs[index]),
+                "mixture_hs_m": float(mixture_hs[index]),
+                "disp_ref_z_m": float(reference[index]),
+                "disp_est_z_m": float(estimate[index]),
+                "disp_err_z_m": float(error[index]),
+                "tau_applied_s": float(series["tau_applied"][index]),
+                "sigma_aw_applied_mps2": float(series["sigma_a_applied"][index]),
+                "r_s_applied_ms": float(series["R_p0_applied"][index]),
+                "freq_tracker_hz": float(series["freq_tracker_hz"][index]),
+            }
+            for index in range(0, time.size, step)
+        ],
+    )
+
+    sliced = slice(None, None, step)
+    svg_path.parent.mkdir(parents=True, exist_ok=True)
+    ov.plot_transition_diagnostic(
+        svg_path,
+        time[sliced],
+        reference[sliced],
+        estimate[sliced],
+        rolling_hs[sliced],
+        mixture_hs[sliced],
+        linear_hs[sliced],
+        series["tau_applied"][sliced],
+        series["sigma_a_applied"][sliced],
+        series["R_p0_applied"][sliced],
+        (
+            (r"low-sea fixed point ($H_s=1.5$ m)", low_point, ":"),
+            (r"high-sea fixed point ($H_s=4.0$ m)", high_point, "--"),
+        ),
+        (
+            (start_sec, start_sec + TRANSITION_DURATION_SEC),
+            (return_start_sec, return_end_sec),
+        ),
+        window_start_sec,
+    )
+    print(f"round-trip transition diagnostic -> {svg_path}", flush=True)
+
+    return {
+        "family": "OU_III",
+        "wave_phase_seed": wave_seed,
+        "imu_noise_seed": imu_seed,
+        "initialization_seed": init_seed,
+        "decimation": step,
+        "disp_z_pct_hs": float(metrics["disp_z_pct_hs"]),
+        "low_tau_s": low_point.tau_s,
+        "low_sigma_aw_mps2": low_point.sigma_a_mps2,
+        "low_r_s_ms": low_point.RS_ms,
+        "high_tau_s": high_point.tau_s,
+        "high_sigma_aw_mps2": high_point.sigma_a_mps2,
+        "high_r_s_ms": high_point.RS_ms,
+    }
 
 
 def paired_delta(runs: dict[str, dict], keys: list, label: str,
@@ -406,12 +567,35 @@ def main(argv: list[str] | None = None) -> int:
                     default=REPO_ROOT / "reports" / "results" / "ou_rs_law")
     ap.add_argument("--reuse", action="store_true",
                     help="reuse existing stationary and round-trip raw CSVs")
+    ap.add_argument("--diagnostic-seeds", default="11,101,1009",
+                    help="wave,imu,init seeds of the plotted round-trip "
+                         "realization (default 11,101,1009, the first triplet "
+                         "of the full validation ensemble)")
+    ap.add_argument("--diagnostic-only", action="store_true",
+                    help="write only the round-trip transition figure and exit")
     ap.add_argument("rest", nargs=argparse.REMAINDER,
                     help="extra args forwarded to ou_validation.py")
     args = ap.parse_args(argv)
 
     # Validate the requested placement before any expensive simulator work.
     transition_bounds(args.transition_start_sec, args.transition_return_start_sec)
+
+    diagnostic_seeds = [int(x) for x in args.diagnostic_seeds.split(",") if x.strip()]
+    if len(diagnostic_seeds) != 3:
+        raise SystemExit("--diagnostic-seeds takes wave,imu,init")
+
+    def diagnostic() -> None:
+        write_roundtrip_diagnostic(
+            args.output_dir / "ou_rs_roundtrip_transition.svg",
+            args.output_dir / "ou_rs_roundtrip_transition.csv",
+            *diagnostic_seeds,
+            start_sec=args.transition_start_sec,
+            return_start_sec=args.transition_return_start_sec,
+        )
+
+    if args.diagnostic_only:
+        diagnostic()
+        return 0
 
     extra = [a for a in args.rest if a != "--"]
     exponents = [e.strip() for e in args.exponents.split(",") if e.strip()]
@@ -484,6 +668,7 @@ def main(argv: list[str] | None = None) -> int:
     print()
 
     print_roundtrip_segments(runs, order)
+    diagnostic()
     return 0
 
 

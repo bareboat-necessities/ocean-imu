@@ -139,16 +139,31 @@ The whole-window transition percentages use the final $H_s=\SI{4.0}{m}$ and are
 descriptive.  Table~\ref{tab:ou_transition_segments} shows that Adaptive matches
 the nominal fixed point before the transition and gains as the longer-period sea
 emerges.  It also beats endpoint-calibrated FixedOracle over the whole record
-because that reference is mismatched before the endpoint.  This historical
-one-way validation protocol is distinct from the coefficient-law ablation's
-round-trip instrument in Sec.~\ref{sec:roundtrip-transition-ablation}; the
-one-way diagnostic is therefore not used as the transition figure for that
-ablation.
+because that reference is mismatched before the endpoint.  This one-way
+validation protocol is distinct from the coefficient-law ablation's round-trip
+instrument in Sec.~\ref{sec:roundtrip-transition-ablation}, which carries its
+own diagnostic of the same form.
 
 The covariance-maintenance control changes normalized vertical error by at most
 $\OUValidationCovSyncWorstDifference$ percentage points
 ($[\OUValidationCovSyncWorstLow,\OUValidationCovSyncWorstHigh]$), indicating
 that periodic latent-acceleration covariance re-alignment is not the source of
 the adaptation differences.
+
+\IfFileExists{ou_validation_transition.svg}{%
+  \begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_transition}
+    \caption{OU--III Adaptive controlled transition (wave, IMU and
+    initialization seeds $11/101/1009$).  Top: the rolling \SI{60}{s}
+    significant height the record carries, against the independent-mixture
+    $H_s$ of the crossfade and the linear ramp that is \emph{not} simulated.
+    Second: reference and estimated vertical displacement.  Third: vertical
+    error.  Bottom: the applied $\tau$, $\sigma_{aw}$ and $r_S$ against the
+    frozen FixedNominal and FixedOracle points.  The shaded interval is the
+    $540$--$660$~s crossfade; the dash-dotted line opens the scored window.}
+    \label{fig:ou_transition}
+  \end{figure}
+}{}
 
 \input{w3d-ou-robustness.tex-part}
