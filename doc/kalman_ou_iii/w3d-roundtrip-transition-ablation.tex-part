@@ -1,0 +1,65 @@
+\subsection{Round-Trip Transition Ablation}
+\label{sec:roundtrip-transition-ablation}
+
+The regularizer-law ablation uses a round-trip non-stationary record so that
+adaptation is tested in both directions rather than only from a smaller to a
+larger sea.  The low-sea realization is
+$(H_s,T_p)=(\SI{1.5}{m},\SI{5.7}{s})$.  A $C^2$ quintic crossfade to the
+high-sea realization $(\SI{4.0}{m},\SI{11.4}{s})$ begins at $t=400$~s and
+ends at $t=520$~s.  The high sea is then held until $t=800$~s, when an
+identical \SI{120}{s} crossfade returns to the \emph{same phase-randomized
+low-sea realization}, ending at $t=920$~s.  The high realization is randomized
+independently.  Velocity and acceleration retain the exact first- and
+second-derivative blend terms, so the synthetic record remains kinematically
+closed through both transitions.
+
+\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=\columnwidth,
+      height=0.48\columnwidth,
+      xmin=300,xmax=1200,
+      ymin=-0.05,ymax=1.08,
+      xlabel={time [s]},
+      ylabel={high-sea blend weight},
+      xtick={300,400,520,640,800,920,1040,1200},
+      ytick={0,0.5,1},
+      grid=major,
+      tick label style={font=\scriptsize},
+      label style={font=\small},
+    ]
+      \addplot[draw=none,fill=black,fill opacity=0.07]
+        coordinates {(400,0) (400,1.05) (520,1.05) (520,0)} \closedcycle;
+      \addplot[draw=none,fill=black,fill opacity=0.07]
+        coordinates {(800,0) (800,1.05) (920,1.05) (920,0)} \closedcycle;
+      \addplot[very thick,domain=300:400,samples=2] {0};
+      \addplot[very thick,domain=400:520,samples=61]
+        {((x-400)/120)^3*(10-15*((x-400)/120)+6*((x-400)/120)^2)};
+      \addplot[very thick,domain=520:800,samples=2] {1};
+      \addplot[very thick,domain=800:920,samples=61]
+        {1-((x-800)/120)^3*(10-15*((x-800)/120)+6*((x-800)/120)^2)};
+      \addplot[very thick,domain=920:1200,samples=2] {0};
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Round-trip transition protocol used by the OU--III regularizer-law
+  ablation.  The shaded \SI{120}{s} intervals are the low-to-high and
+  high-to-low $C^2$ quintic crossfades; the return leg uses the same low-sea
+  realization as the initial leg.}
+  \label{fig:ou-rs-roundtrip-protocol}
+\end{figure}
+
+The scored \SI{900}{s} window is partitioned as
+\emph{low-start} (300--400~s), \emph{rise} (400--520~s),
+\emph{high-recovery} (520--640~s), \emph{high} (640--800~s),
+\emph{fall} (800--920~s), \emph{low-recovery} (920--1040~s), and
+\emph{low-return} (1040--1200~s).  Rise and fall are therefore reported
+separately, as are the run-on intervals after each crossfade.  This prevents
+opposite-direction adaptation lags from cancelling in a single transition
+score and directly tests whether a schedule tuned to follow increasing sea
+energy also releases that tuning when the sea subsides.
+
+This round-trip instrument belongs to the coefficient-law ablation.  The
+historical one-way transition in the primary OU-family validation bundle remains
+a separate evidence protocol; its old one-way diagnostic is therefore not used
+as the figure for this ablation.
