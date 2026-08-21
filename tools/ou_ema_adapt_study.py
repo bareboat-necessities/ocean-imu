@@ -15,10 +15,12 @@ of the resulting estimate relative to the shipped default.
 Instrument.  A smoothing horizon is only observable while its target moves, so
 the stationary records answer almost nothing: after warmup the target sits
 still and every horizon converges to the same value.  The `transition` stage
-therefore synthesizes non-stationary records with the same C2 quintic crossfade
-`tools/ou_validation.py` uses, and scores the crossfade interval on its own --
-together with the run-on interval just after it, which is where a horizon that
-is too long is still carrying the sea it just left.
+therefore synthesizes a C2 round trip: low sea -> high sea over 400--520 s,
+holds the high sea, then high sea -> the same low realization over 800--920 s.
+Both crossfades retain the exact displacement/velocity/acceleration derivative
+cross terms used by `tools/ou_validation.py`, so the generated record remains
+kinematically closed in both directions.  Legacy one-way `up` and `down`
+records remain available explicitly through `--transition-dir`.
 
 Scoring.  Per record the simulator reports RMS errors over a window.  Each
 candidate is scored by the ratio of its error to the default's error on the
@@ -94,17 +96,25 @@ WINDOW_SEC = 900.0
 RECORD_SEC = 1200.0
 DT_SEC = 1.0 / 200.0
 
-# Crossfade interval of the synthesized transition records, in seconds from the
-# start of the record.  These are tools/ou_validation.py's defaults for a
-# 1200 s record (0.45 and 0.55 of the duration), i.e. a 120 s crossfade centred
-# on the replay.
-TRANSITION_START_SEC = 540.0
-TRANSITION_END_SEC = 660.0
-# One crossfade length past the blend.  The endpoint sea is scored on either
-# side of this instant: a smoother that averages too long is still carrying the
-# start sea before it, and is on the endpoint operating point after it.
-TRANSITION_RECOVER_END_SEC = TRANSITION_END_SEC + (
-    TRANSITION_END_SEC - TRANSITION_START_SEC
+# Preserve the 120 s crossfade duration of the existing instrument, but move
+# the build transition forward and add a symmetric decay transition later in
+# the same record.  Full-record defaults are therefore:
+#
+#   400--520 s  low -> high
+#   520--800 s  high sea
+#   800--920 s  high -> the same low realization
+#   920--1200 s low sea
+#
+# The score still opens at t=300 s, giving a clean low-sea baseline before the
+# first transition and settled intervals on both sides of the high-sea plateau.
+TRANSITION_START_SEC = 400.0
+TRANSITION_END_SEC = 520.0
+TRANSITION_RETURN_START_SEC = 800.0
+TRANSITION_RETURN_END_SEC = 920.0
+TRANSITION_DURATION_SEC = TRANSITION_END_SEC - TRANSITION_START_SEC
+TRANSITION_RECOVER_END_SEC = TRANSITION_END_SEC + TRANSITION_DURATION_SEC
+TRANSITION_RETURN_RECOVER_END_SEC = (
+    TRANSITION_RETURN_END_SEC + TRANSITION_DURATION_SEC
 )
 
 METRIC_RENAME = {
@@ -356,8 +366,87 @@ TRANSITION_PAIRS = {
 }
 
 
+def roundtrip_profile(ov, times):
+    """High-sea weight and derivatives for the low->high->same-low record."""
+    up, up_rate, up_accel = ov.smoothstep_profile(
+        times, TRANSITION_START_SEC, TRANSITION_END_SEC
+    )
+    down, down_rate, down_accel = ov.smoothstep_profile(
+        times, TRANSITION_RETURN_START_SEC, TRANSITION_RETURN_END_SEC
+    )
+    return up - down, up_rate - down_rate, up_accel - down_accel
+
+
+def make_roundtrip_transition(ov, columns, low_data, high_data, seed):
+    """Build a C2 low->high->same-low record with exact kinematic cross terms."""
+    count = min(low_data.shape[0], high_data.shape[0])
+    low = ov.phase_randomize_wave(columns, low_data[:count], seed * 2 + 1)
+    high = ov.phase_randomize_wave(columns, high_data[:count], seed * 2 + 2)
+    times = low[:, columns.index("time")]
+    weight, weight_rate, weight_accel = roundtrip_profile(ov, times)
+
+    displacement = [columns.index(name) for name in ("disp_x", "disp_y", "disp_z")]
+    velocity = [columns.index(name) for name in ("vel_x", "vel_y", "vel_z")]
+    acceleration = [columns.index(name) for name in ("acc_x", "acc_y", "acc_z")]
+    attitude = [columns.index(name) for name in ("roll_deg", "pitch_deg", "yaw_deg")]
+
+    result = low.copy()
+    w = weight[:, None]
+    dw = weight_rate[:, None]
+    ddw = weight_accel[:, None]
+    displacement_delta = high[:, displacement] - low[:, displacement]
+    velocity_delta = high[:, velocity] - low[:, velocity]
+
+    result[:, displacement] = (1.0 - w) * low[:, displacement] + w * high[:, displacement]
+    result[:, velocity] = (
+        (1.0 - w) * low[:, velocity]
+        + w * high[:, velocity]
+        + dw * displacement_delta
+    )
+    result[:, acceleration] = (
+        (1.0 - w) * low[:, acceleration]
+        + w * high[:, acceleration]
+        + 2.0 * dw * velocity_delta
+        + ddw * displacement_delta
+    )
+    result[:, attitude] = (1.0 - w) * low[:, attitude] + w * high[:, attitude]
+    return ov.rebuild_body_imu(columns, result)
+
+
+def transition_segment_spec(directions):
+    """Return simulator segment specification and display order."""
+    if "roundtrip" in directions:
+        if len(directions) != 1:
+            raise SystemExit("roundtrip cannot be combined with one-way transition directions")
+        window_start = RECORD_SEC - WINDOW_SEC
+        segments = (
+            f"low_start:{window_start:g}:{TRANSITION_START_SEC:g},"
+            f"rise:{TRANSITION_START_SEC:g}:{TRANSITION_END_SEC:g},"
+            f"high_recover:{TRANSITION_END_SEC:g}:{TRANSITION_RECOVER_END_SEC:g},"
+            f"high:{TRANSITION_RECOVER_END_SEC:g}:{TRANSITION_RETURN_START_SEC:g},"
+            f"fall:{TRANSITION_RETURN_START_SEC:g}:{TRANSITION_RETURN_END_SEC:g},"
+            f"low_recover:{TRANSITION_RETURN_END_SEC:g}:"
+            f"{TRANSITION_RETURN_RECOVER_END_SEC:g},"
+            f"low_return:{TRANSITION_RETURN_RECOVER_END_SEC:g}:{RECORD_SEC:g}"
+        )
+        report = [
+            "window", "low_start", "rise", "high_recover", "high",
+            "fall", "low_recover", "low_return",
+        ]
+        return segments, report
+
+    window_start = RECORD_SEC - WINDOW_SEC
+    segments = (
+        f"start:{window_start:g}:{TRANSITION_START_SEC:g},"
+        f"blend:{TRANSITION_START_SEC:g}:{TRANSITION_END_SEC:g},"
+        f"recover:{TRANSITION_END_SEC:g}:{TRANSITION_RECOVER_END_SEC:g},"
+        f"end:{TRANSITION_RECOVER_END_SEC:g}:{RECORD_SEC:g}"
+    )
+    return segments, ["window", "blend", "recover", "end", "start"]
+
+
 def build_transition_records(family, seeds, out_dir, directions, pairs):
-    """Synthesize non-stationary records with ou_validation's crossfade."""
+    """Synthesize round-trip (default) or legacy one-way transition records."""
     sys.path.insert(0, str(ROOT / "tools"))
     import ou_validation as ov
 
@@ -371,22 +460,29 @@ def build_transition_records(family, seeds, out_dir, directions, pairs):
         hi_path = ov.find_default_input(data_dir, hi_h, hi_l)
         columns, lo_data = ov.read_wave_csv(lo_path, RECORD_SEC)
         _, hi_data = ov.read_wave_csv(hi_path, RECORD_SEC)
-        # The endpoint sea keeps the source record's period and is rescaled in
+        # The high sea keeps the source record's period and is rescaled in
         # height, exactly as the committed validation builds its transition.
         hi_scaled = ov.scale_wave_motion(columns, hi_data, hi_target / float(hi_h))
 
         for direction in directions:
-            if direction == "up":
+            if direction == "roundtrip":
+                start = end = None
+            elif direction == "up":
                 start, end = lo_data, hi_scaled
             elif direction == "down":
                 start, end = hi_scaled, lo_data
             else:
                 raise SystemExit(f"unknown transition direction {direction}")
             for seed in seeds:
-                generated = ov.make_nonstationary_wave(
-                    columns, start, end, seed, 1.0,
-                    TRANSITION_START_SEC, TRANSITION_END_SEC,
-                )
+                if direction == "roundtrip":
+                    generated = make_roundtrip_transition(
+                        ov, columns, lo_data, hi_scaled, seed
+                    )
+                else:
+                    generated = ov.make_nonstationary_wave(
+                        columns, start, end, seed, 1.0,
+                        TRANSITION_START_SEC, TRANSITION_END_SEC,
+                    )
                 # The simulator infers the spectrum and the nominal H_s and
                 # azimuth from the filename, so a synthesized record has to
                 # carry a conforming name.  A per-record directory keeps the
@@ -471,8 +567,8 @@ def main():
                     help="comma-separated substrings selecting stationary records")
     ap.add_argument("--transition-seeds", default="11,12,13",
                     help="wave phase seeds for the synthesized transition records")
-    ap.add_argument("--transition-dir", default="up,down",
-                    help="'up' (sea builds), 'down' (sea decays), or both")
+    ap.add_argument("--transition-dir", default="roundtrip",
+                    help="'roundtrip' (default), or legacy 'up', 'down', or 'up,down'")
     ap.add_argument("--transition-pair", default="large",
                     help=f"endpoint seas: {','.join(TRANSITION_PAIRS)}")
     ap.add_argument("--transition-stage", default="stage1",
@@ -506,28 +602,16 @@ def main():
                     else Path(tempfile.mkdtemp(prefix="ou_ema_transition_")))
         if not args.keep_generated:
             tmp_dir = gen_root
+        directions = [d.strip() for d in args.transition_dir.split(",") if d.strip()]
+        segments, report_segments = transition_segment_spec(directions)
         log(f"GENERATE transition records in {gen_root}")
         recs = build_transition_records(
             args.family,
             [int(s) for s in args.transition_seeds.split(",") if s.strip()],
             gen_root,
-            [d.strip() for d in args.transition_dir.split(",") if d.strip()],
+            directions,
             [p.strip() for p in args.transition_pair.split(",") if p.strip()],
         )
-        # The scored window opens at 300 s, so it contains 240 s of the start
-        # sea, the whole 120 s crossfade, and 540 s of the endpoint sea.
-        # Splitting it keeps the crossfade from being diluted by the two
-        # stationary stretches that surround it, and splits the endpoint sea
-        # at one crossfade length past the blend so the run-on -- where a long
-        # averaging horizon is still carrying the start sea -- is scored apart
-        # from the settled endpoint sea it otherwise cancels against.
-        segments = (f"start:{RECORD_SEC - WINDOW_SEC:g}:"
-                    f"{TRANSITION_START_SEC:g},"
-                    f"blend:{TRANSITION_START_SEC:g}:{TRANSITION_END_SEC:g},"
-                    f"recover:{TRANSITION_END_SEC:g}:"
-                    f"{TRANSITION_RECOVER_END_SEC:g},"
-                    f"end:{TRANSITION_RECOVER_END_SEC:g}:{RECORD_SEC:g}")
-        report_segments = ["window", "blend", "recover", "end", "start"]
     else:
         cands = candidates_for(args.stage)
         recs = records(args.family)
