@@ -1,5 +1,14 @@
 # OU-III startup initialization: staged MEKF vs Mahony proxy
 
+> The "22-52 s" and "roughly 20 s" figures below were what the gravity gate
+> delivered when it happened to close. It usually did not: measured across the
+> eight records, time to a live filter actually ran 22 s on the calm ones and
+> 72 to 150 s on the big ones, the worst by timeout. That was a defect in the
+> gate rather than in this policy, and `docs/ou-startup-gravity-gate.md` is the
+> fix; with it the same policy reaches live in 22 to 33 s on all eight. The
+> attitude-quality argument in this document is unchanged, but read its startup
+> timings as the intent rather than as measurements.
+
 `SeaStateFusion_OU_III::Config::startup_init_policy` selects which estimator
 solves the attitude the filter starts from. `MahonyProxy` is the default;
 `StagedMekf` restores the previous behaviour and is the matched ablation.
