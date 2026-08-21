@@ -221,9 +221,10 @@ public:
                 filter.setAdaptationSeaPeriods(v);
             }
 
-            // Legacy tuner-frequency smoothing knobs retained for source compatibility.
-// SeaStateAutoTuner no longer smooths frequency; WavePeriodEstimator owns
-// the canonical log-period state, so these setters are compatibility no-ops.
+            // Legacy tuner-frequency smoothing knobs, retained so existing
+            // ablation scripts keep running.  SeaStateAutoTuner no longer
+            // smooths frequency -- WavePeriodEstimator owns the canonical
+            // log-period state -- so these setters have no effect.
             if (env_float("OU_TUNER_FREQ_SEA_PERIODS", v)) {
                 filter.setTunerFreqSmoothingSeaPeriods(v);
             }
@@ -956,6 +957,7 @@ private:
 //
 // This is a full re-gauge, not a one-off relaxation of the binding PM-Stokes
 // 3D bar: six limits tighten, one is unchanged, and only three rise.
+//
 // Then all ten again when the startup gravity gate moved into the world frame
 // (docs/ou-startup-gravity-gate.md).  The gate is what certifies the tilt the
 // magnetic reference is framed in and the MEKF is seeded with, and in waves it

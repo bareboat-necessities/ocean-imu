@@ -65,12 +65,19 @@ T_{\mathrm{eff}}&=\frac{1}
 \end{aligned}
 \label{eq:sigma-variance-horizon}
 \end{equation}
-The implementation uses $K_{\mathrm{periods}}=2$.  The tuner-local requested
-range is $[\SI{0.3}{s},\SI{60}{s}]$, while all dynamically generated EMA
-horizons are finally guarded by the common
-$[\SI{0.05}{s},\SI{30}{s}]$ safety envelope.  The eight scored seas remain
-strictly interior to that universal guard.  A two-stage EWMA maintains the
-band-limited second moment.
+The implementation uses $K_{\mathrm{periods}}=4$, shared by all three filter
+families.  The tuner-local requested range is $[\SI{0.3}{s},\SI{60}{s}]$, while
+all dynamically generated EMA horizons are finally guarded by the common
+$[\SI{0.05}{s},\SI{30}{s}]$ safety envelope.  Across the eight scored seas
+$T_z$ spans about \SIrange{2.3}{8.4}{s}, so the requested horizon spans about
+\SIrange{9}{34}{s}: the universal guard is inactive on seven of the eight and
+binds only on the largest sea, where it caps the horizon at \SI{30}{s}.
+
+The band-limited first and second raw moments are maintained by a single
+exponentially weighted average at $\tau_{\mathrm{var}}$, with identical weights,
+and the variance is their difference.  There is no second EWMA of the variance
+itself, so $\tau_{\mathrm{var}}$ is the whole memory of the statistic rather
+than half of it.
 
 Because a variance estimate from the measured signal contains both physical
 wave energy and sensor noise, using it directly would impose a nonzero apparent

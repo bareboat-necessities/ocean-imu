@@ -216,7 +216,6 @@ constexpr float MAX_R_v0_std  = 40.0f;
 // common tau/sigma EMA follows measured sea time T_sea=T_z/2, matching OU-III.
 constexpr float ADAPT_TAU_SEC                  = 1.8f;
 constexpr float ADAPT_TAU_SEA_PERIODS          = 0.40f;
-constexpr float TUNER_FREQ_EMA_SEA_PERIODS     = 0.10f;
 constexpr float ADAPT_EVERY_SECS               = 0.1f;
 // Smoothing horizons of the two drift-correction channels, in units of
 // tau_target.  Measured on the versioned records against synthesized sea-state
@@ -465,9 +464,6 @@ public:
         // Default cutoff ~max_freq_hz_ Hz: passes waves, kills 8–37 Hz engine band
         freq_input_lpf_.setCutoff(max_freq_hz_);
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
-        // The frequency EMA belongs to the measurement-only tuner, so the same
-        // sea-time normalization measured for OU-III applies here unchanged.
-        tuner_.setFrequencySmoothingSeaPeriods(TUNER_FREQ_EMA_SEA_PERIODS);
         startup_stage_   = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
     }
@@ -1148,19 +1144,12 @@ public:
         }
     }
 
-    void setTunerFreqSmoothingSeaPeriods(float periods) {
-        if (std::isfinite(periods) && periods > 0.0f) {
-            tuner_freq_ema_sea_periods_ = periods;
-            tuner_.setFrequencySmoothingSeaPeriods(periods);
-        }
-    }
-
-    void setTunerFreqSmoothingTimeConstant(float tau_sec) {
-        if (std::isfinite(tau_sec) && tau_sec > 0.0f) {
-            tuner_freq_ema_sea_periods_ = 0.0f;
-            tuner_.setTauFreq(tau_sec);
-        }
-    }
+    // No-ops kept so existing ablation scripts still compile and run.  The
+    // tuner's second frequency EMA was removed when WavePeriodEstimator took
+    // ownership of the canonical log-period state, and there is nothing left
+    // here to smooth.
+    void setTunerFreqSmoothingSeaPeriods(float /*periods*/) {}
+    void setTunerFreqSmoothingTimeConstant(float /*tau_sec*/) {}
 
     float getAdaptationSeaPeriods() const noexcept { return adapt_tau_sea_periods_; }
     float getTunerFreqSmoothingSeaPeriods() const noexcept {
@@ -1881,7 +1870,6 @@ private:
     float MAX_R_v0_std_           = MAX_R_v0_std;
     float adapt_tau_sec_              = ADAPT_TAU_SEC;
     float adapt_tau_sea_periods_      = ADAPT_TAU_SEA_PERIODS;
-    float tuner_freq_ema_sea_periods_ = TUNER_FREQ_EMA_SEA_PERIODS;
     float adapt_R_p0_mult_            = ADAPT_R_p0_MULT;
     float adapt_R_v0_mult_        = ADAPT_R_v0_MULT;
     float adapt_R_slew_log_       = ADAPT_R_SLEW_LOG;

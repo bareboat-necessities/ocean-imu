@@ -1,5 +1,15 @@
 # Taking the OU operating point off the acceleration-band frequency tracker, and re-gauging the `sigma_a` horizon
 
+> **Superseded in part.** The measurements below stand as the record of that
+> study, but two of the things they describe have since changed. The
+> period-statistics retune removed the second stage of the `sigma_a` EWMA and
+> raised `K_periods` from 2 to 4, which keeps the effective memory at roughly
+> `4 * T_eff` while making `tau_var` the whole memory rather than half of it;
+> and `SeaStateAutoTuner`'s own frequency EMA is gone, so the tuner now reads
+> the canonical log-period state of `WavePeriodEstimator` directly. Read
+> section 3's `K = 2` and "two-stage EWMA" as the state at the time of this
+> study. `docs/adaptive-ema-safety-clamps.md` carries the current horizons.
+
 Two changes, one cause. The OU adaptation path had one remaining read of the
 acceleration-band frequency tracker, and that read also fixed the units of the
 `sigma_a` averaging horizon. Removing the read makes the horizon mean something

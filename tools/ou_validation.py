@@ -2657,6 +2657,150 @@ def _read_timeseries_columns(
     return {name: data[:, position] for position, name in enumerate(names)}
 
 
+def read_diagnostic_timeseries(
+    family: str, surrogate_path: Path
+) -> dict[str, np.ndarray]:
+    """Read and delete the time series a diagnostic simulator run just wrote."""
+
+    # The simulator derives its output name from the input path it was given,
+    # so the time series lands next to the surrogate rather than in the cwd.
+    output_name = "w3d_" + surrogate_path.name.removeprefix("wave_data_")
+    suffix = FAMILY_TIMESERIES_SUFFIX[family]
+    output_path = surrogate_path.parent / output_name.replace(
+        ".csv", f"{suffix}.csv"
+    )
+    if not output_path.exists():
+        raise FileNotFoundError(f"simulator did not write {output_path}")
+
+    wanted = (
+        "time",
+        "disp_ref_z",
+        "disp_est_z",
+        "tau_applied",
+        "sigma_a_applied",
+        "R_p0_applied",
+        "freq_tracker_hz",
+    )
+    try:
+        return _read_timeseries_columns(output_path, wanted)
+    finally:
+        output_path.unlink(missing_ok=True)
+
+
+def rolling_significant_height(
+    reference: np.ndarray, average_sec: float = 60.0
+) -> np.ndarray:
+    """Rolling significant height of a reference elevation record.
+
+    This reads the sea state out of the record itself rather than out of the
+    blend weight the record was built from, so a figure that shows both can be
+    checked against the protocol it claims to follow.
+    """
+
+    window_samples = max(2, int(round(average_sec / DT_SECONDS)))
+    kernel = np.ones(window_samples) / window_samples
+    rolling_mean = np.convolve(reference, kernel, mode="same")
+    rolling_mean_square = np.convolve(reference**2, kernel, mode="same")
+    return 4.0 * np.sqrt(np.maximum(rolling_mean_square - rolling_mean**2, 0.0))
+
+
+def reproducible_pyplot():
+    """Return pyplot configured so two identical runs agree on SVG bytes."""
+
+    cache_dir = Path(tempfile.gettempdir()) / "ocean-imu-matplotlib-cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    os.environ.setdefault("MPLCONFIGDIR", str(cache_dir))
+    import matplotlib
+
+    matplotlib.use("Agg")
+    # Without these the bundle cannot be reproduced: matplotlib derives svg
+    # element ids from a per-process salt and stamps a creation date, so two
+    # identical runs disagree on bytes the manifest hashes.
+    matplotlib.rcParams["svg.hashsalt"] = "ocean-imu-ou-validation"
+    import matplotlib.pyplot as plt
+
+    return plt
+
+
+def plot_transition_diagnostic(
+    svg_path: Path,
+    time: np.ndarray,
+    reference: np.ndarray,
+    estimate: np.ndarray,
+    rolling_hs: np.ndarray,
+    mixture_hs: np.ndarray,
+    linear_hs: np.ndarray,
+    tau_applied: np.ndarray,
+    sigma_a_applied: np.ndarray,
+    r_s_applied: np.ndarray,
+    reference_points: Sequence[tuple[str, TuningPoint, str]],
+    shaded_intervals: Sequence[tuple[float, float]],
+    window_start_sec: float,
+) -> None:
+    """Draw the four-panel time-domain view of one transition realization.
+
+    Top to bottom: what the sea does, what the wave and its estimate look
+    like, what the resulting vertical error is, and what the tuner does about
+    it against the frozen operating points.  Both the one-way validation
+    protocol and the round-trip ablation protocol are drawn by this function
+    so the two figures stay directly comparable.
+    """
+
+    plt = reproducible_pyplot()
+    figure, axes = plt.subplots(4, 1, figsize=(9.0, 10.0), sharex=True)
+
+    axes[0].plot(time, rolling_hs, color="#0072B2",
+                 label=r"reference rolling $H_s$ (60 s)")
+    axes[0].plot(time, mixture_hs, color="#D55E00",
+                 linestyle="--", label=r"independent-mixture $H_s$")
+    axes[0].plot(
+        time, linear_hs,
+        color="#999999", linestyle=":", label=r"linear $H_s$ ramp (not simulated)",
+    )
+    axes[0].set_ylabel(r"$H_s$ (m)")
+    axes[0].legend(fontsize=7, ncol=2)
+
+    axes[1].plot(time, reference, color="#000000",
+                 linewidth=0.7, label="reference $p_z$")
+    axes[1].plot(time, estimate, color="#009E73",
+                 linewidth=0.7, label="estimated $p_z$")
+    axes[1].set_ylabel("vertical displacement (m)")
+    axes[1].legend(fontsize=7)
+
+    axes[2].plot(time, estimate - reference, color="#CC79A7", linewidth=0.7)
+    axes[2].set_ylabel("vertical error (m)")
+
+    axes[3].plot(time, tau_applied, color="#0072B2",
+                 label=r"applied $\tau$ (s)")
+    axes[3].plot(time, sigma_a_applied, color="#D55E00",
+                 label=r"applied $\sigma_{aw}$ (m/s$^2$)")
+    axes[3].plot(time, r_s_applied, color="#009E73",
+                 label=r"applied $r_S$ (m$\cdot$s)")
+    for point_label, point, style in reference_points:
+        for value, color, name in (
+            (point.tau_s, "#0072B2", None),
+            (point.sigma_a_mps2, "#D55E00", None),
+            (point.RS_ms or point.R_p0_std_m, "#009E73", point_label),
+        ):
+            axes[3].axhline(
+                value, color=color, linestyle=style, linewidth=0.9, label=name
+            )
+    axes[3].set_ylabel("applied tuning")
+    axes[3].set_xlabel("time (s)")
+    axes[3].legend(fontsize=7, ncol=2)
+
+    for axis in axes:
+        axis.grid(alpha=0.3)
+        for shade_start, shade_end in shaded_intervals:
+            axis.axvspan(shade_start, shade_end, color="#888888", alpha=0.12)
+        axis.axvline(
+            window_start_sec, color="#444444", linewidth=0.8, linestyle="-.",
+        )
+    figure.tight_layout()
+    figure.savefig(svg_path, format="svg", metadata={"Date": None})
+    plt.close(figure)
+
+
 def write_transition_diagnostic(
     svg_path: Path,
     csv_path: Path,
@@ -2682,18 +2826,6 @@ def write_transition_diagnostic(
     what the resulting vertical error looks like.
     """
 
-    cache_dir = Path(tempfile.gettempdir()) / "ocean-imu-matplotlib-cache"
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    os.environ.setdefault("MPLCONFIGDIR", str(cache_dir))
-    import matplotlib
-
-    matplotlib.use("Agg")
-    # Without these the bundle cannot be reproduced: matplotlib derives svg
-    # element ids from a per-process salt and stamps a creation date, so two
-    # identical runs disagree on bytes the manifest hashes.
-    matplotlib.rcParams["svg.hashsalt"] = "ocean-imu-ou-validation"
-    import matplotlib.pyplot as plt
-
     metrics, _, _ = run_simulator(
         family,
         surrogate_path,
@@ -2703,50 +2835,23 @@ def write_transition_diagnostic(
         tuning_mode="adaptive",
         write_timeseries=True,
     )
-    # The simulator derives its output name from the input path it was given,
-    # so the time series lands next to the surrogate rather than in the cwd.
-    output_name = "w3d_" + surrogate_path.name.removeprefix("wave_data_")
-    suffix = FAMILY_TIMESERIES_SUFFIX[family]
-    output_path = surrogate_path.parent / output_name.replace(
-        ".csv", f"{suffix}.csv"
-    )
-    if not output_path.exists():
-        raise FileNotFoundError(f"simulator did not write {output_path}")
-
-    wanted = (
-        "time",
-        "disp_ref_z",
-        "disp_est_z",
-        "tau_applied",
-        "sigma_a_applied",
-        "R_p0_applied",
-        "freq_tracker_hz",
-    )
-    try:
-        series = _read_timeseries_columns(output_path, wanted)
-    finally:
-        output_path.unlink(missing_ok=True)
+    series = read_diagnostic_timeseries(family, surrogate_path)
 
     time = series["time"]
     weight = smoothstep_weight(time, transition_start_sec, transition_end_sec)
-    error = series["disp_est_z"] - series["disp_ref_z"]
+    reference = series["disp_ref_z"]
+    error = series["disp_est_z"] - reference
 
     # Rolling significant height of the reference record, as an independent
     # readout of what the crossfade actually does to the sea state.
-    window_samples = max(2, int(round(60.0 / DT_SECONDS)))
-    kernel = np.ones(window_samples) / window_samples
-    reference = series["disp_ref_z"]
-    rolling_mean = np.convolve(reference, kernel, mode="same")
-    rolling_mean_square = np.convolve(reference**2, kernel, mode="same")
-    rolling_hs = 4.0 * np.sqrt(
-        np.maximum(rolling_mean_square - rolling_mean**2, 0.0)
-    )
+    rolling_hs = rolling_significant_height(reference)
     mixture_hs = np.asarray(
         [
             mixture_significant_height_m(start_height_m, end_height_m, value)
             for value in weight
         ]
     )
+    linear_hs = (1.0 - weight) * start_height_m + weight * end_height_m
 
     step = max(1, int(decimation))
     write_csv(
@@ -2770,64 +2875,21 @@ def write_transition_diagnostic(
     )
 
     sliced = slice(None, None, step)
-    figure, axes = plt.subplots(4, 1, figsize=(9.0, 10.0), sharex=True)
-
-    axes[0].plot(time[sliced], rolling_hs[sliced], color="#0072B2",
-                 label=r"reference rolling $H_s$ (60 s)")
-    axes[0].plot(time[sliced], mixture_hs[sliced], color="#D55E00",
-                 linestyle="--", label=r"independent-mixture $H_s$")
-    axes[0].plot(
+    plot_transition_diagnostic(
+        svg_path,
         time[sliced],
-        (1.0 - weight[sliced]) * start_height_m + weight[sliced] * end_height_m,
-        color="#999999", linestyle=":", label=r"linear $H_s$ ramp (not simulated)",
+        reference[sliced],
+        series["disp_est_z"][sliced],
+        rolling_hs[sliced],
+        mixture_hs[sliced],
+        linear_hs[sliced],
+        series["tau_applied"][sliced],
+        series["sigma_a_applied"][sliced],
+        series["R_p0_applied"][sliced],
+        (("FixedNominal", nominal_point, ":"), ("FixedOracle", oracle_point, "--")),
+        ((transition_start_sec, transition_end_sec),),
+        float(time[-1]) - window_sec,
     )
-    axes[0].set_ylabel(r"$H_s$ (m)")
-    axes[0].legend(fontsize=7, ncol=2)
-
-    axes[1].plot(time[sliced], reference[sliced], color="#000000",
-                 linewidth=0.7, label="reference $p_z$")
-    axes[1].plot(time[sliced], series["disp_est_z"][sliced], color="#009E73",
-                 linewidth=0.7, label="estimated $p_z$")
-    axes[1].set_ylabel("vertical displacement (m)")
-    axes[1].legend(fontsize=7)
-
-    axes[2].plot(time[sliced], error[sliced], color="#CC79A7", linewidth=0.7)
-    axes[2].set_ylabel("vertical error (m)")
-
-    axes[3].plot(time[sliced], series["tau_applied"][sliced], color="#0072B2",
-                 label=r"applied $\tau$ (s)")
-    axes[3].plot(time[sliced], series["sigma_a_applied"][sliced], color="#D55E00",
-                 label=r"applied $\sigma_{aw}$ (m/s$^2$)")
-    axes[3].plot(time[sliced], series["R_p0_applied"][sliced], color="#009E73",
-                 label=r"applied $r_S$ (m$\cdot$s)")
-    for value, color, name in (
-        (nominal_point.tau_s, "#0072B2", None),
-        (nominal_point.sigma_a_mps2, "#D55E00", None),
-        (nominal_point.RS_ms or nominal_point.R_p0_std_m, "#009E73", "FixedNominal"),
-    ):
-        axes[3].axhline(value, color=color, linestyle=":", linewidth=0.9, label=name)
-    for value, color, name in (
-        (oracle_point.tau_s, "#0072B2", None),
-        (oracle_point.sigma_a_mps2, "#D55E00", None),
-        (oracle_point.RS_ms or oracle_point.R_p0_std_m, "#009E73", "FixedOracle"),
-    ):
-        axes[3].axhline(value, color=color, linestyle="--", linewidth=0.9, label=name)
-    axes[3].set_ylabel("applied tuning")
-    axes[3].set_xlabel("time (s)")
-    axes[3].legend(fontsize=7, ncol=2)
-
-    for axis in axes:
-        axis.grid(alpha=0.3)
-        axis.axvspan(
-            transition_start_sec, transition_end_sec, color="#888888", alpha=0.12
-        )
-        axis.axvline(
-            float(time[-1]) - window_sec, color="#444444", linewidth=0.8,
-            linestyle="-.",
-        )
-    figure.tight_layout()
-    figure.savefig(svg_path, format="svg", metadata={"Date": None})
-    plt.close(figure)
 
     return {
         "family": family,
