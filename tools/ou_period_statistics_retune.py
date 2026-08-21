@@ -59,7 +59,7 @@ AXES = {
     },
     "log": {
         "kind": "compile",
-        "values": ("0", "0.05", "0.10", "0.25", "0.50", "1.0", "2.0"),
+        "values": ("0", "0.05", "0.10", "0.25", "0.50", """1.0""", "2.0"),
         "baseline": "0.50",
     },
     "sigma_k": {
@@ -124,20 +124,32 @@ def transition_record(wave_seed: int, data_dir: Path, tmpdir: Path) -> Path:
     return path
 
 
+def cpp_float_literal(value: str) -> str:
+    """Format a finite sweep value as a portable C++ float literal."""
+    number = float(value)
+    if not math.isfinite(number):
+        raise SystemExit(f"non-finite sweep value: {value}")
+    literal = f"{number:.8g}"
+    if "." not in literal and "e" not in literal.lower():
+        literal += ".0"
+    return literal + "f"
+
+
 def patch_default(axis: str, value: str, original_wave: str) -> None:
     path = ROOT / "src" / "tuner" / "WavePeriodEstimator.h"
     text = original_wave
+    literal = cpp_float_literal(value)
     if axis == "moment":
         text, count = re.subn(
             r"float moment_horizon_periods = [0-9.]+f,",
-            f"float moment_horizon_periods = {float(value):.8g}f,",
+            f"float moment_horizon_periods = {literal},",
             text,
             count=1,
         )
     elif axis == "log":
         text, count = re.subn(
             r"float log_smoothing_periods = [0-9.]+f,",
-            f"float log_smoothing_periods = {float(value):.8g}f,",
+            f"float log_smoothing_periods = {literal},",
             text,
             count=1,
         )
