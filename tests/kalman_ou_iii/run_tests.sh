@@ -13,5 +13,7 @@
 ./wave_band_sigma-test
 ./iss_contract-test
 ./live_basin_diagnostic
+./live_entrance_certificate-test
+./live_handoff_validation
 ./rs_law-test
 ./startup_init-test

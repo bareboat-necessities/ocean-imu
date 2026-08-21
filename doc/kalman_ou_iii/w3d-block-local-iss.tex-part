@@ -228,7 +228,12 @@ velocity or position error: their homogeneous transient into $S$ is measured by
 $M_{\xi\ell}$ in Eq.~\eqref{eq:iss-block-basin}.  Nor does it remove $S$ from
 the local block.  A stronger claim would require an additional structural
 change or proof, such as constraining the $S$-to-attitude cross-gain or defining
-a handoff map that resets and decouples the integral channel.  The present
+a handoff map that resets and decouples the integral channel.  Phase~3 supplies
+half of the second option: Eq.~\eqref{eq:cert-S-zero} makes the $S$ handoff
+error exactly zero by declaring the integration epoch, which removes that
+coordinate from the entrance condition without removing it from the block.  It
+is zero only at the handoff sample, and the $S$ pseudo-measurement keeps its
+attitude rows, so the block structure below is unchanged.  The present
 result is therefore the strongest block separation supported by the deployed
 measurement and reset architecture without changing code.
 \end{remark}

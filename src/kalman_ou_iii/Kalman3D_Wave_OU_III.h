@@ -444,6 +444,123 @@ class Kalman3D_Wave_OU_III {
         Pext.template block<3,3>(OFF_S, OFF_S) = Matrix3::Identity() * (sigma_S0 * sigma_S0);   // S (3)
     }
 
+    /* ------------------------------------------------------------------
+       Phase-3 Live-handoff seeding.
+
+       The proxy-to-Live handoff installs an attitude through
+       initialize_from_attitude().  Everything else the bootstrap knows --
+       a gyro-bias estimate, a levelled world acceleration, a translational
+       seed, and the integral epoch -- used to be dropped on the floor, so the
+       remaining six blocks entered Live at the constructor's values with the
+       constructor's covariance.  The basin certificate in
+       doc/kalman_ou_iii/w3d-live-handoff-certificate.tex-part has to charge
+       that gap, and a bound it cannot construct is a bound it has to assume.
+
+       Each seeder writes the state, rewrites the block's own marginal, and
+       drops that block's cross-covariances.  Dropping them is the same
+       argument initialize_from_attitude() makes for attitude: a correlation
+       learned against a value that has just been replaced does not describe
+       the replacement.
+       ------------------------------------------------------------------ */
+
+    // Restart the integral channel at the current instant.
+    //
+    // S is defined as the running integral of p.  Its lower limit is a free
+    // integration epoch: p, v and the S=0 pseudo-measurement model are all
+    // invariant under S -> S + const, because the pseudo-measurement asserts
+    // that the *displacement* has zero running mean, and shifting the epoch
+    // shifts the assertion by the same constant.  Declaring the epoch to be
+    // the Live transition therefore costs nothing physically and makes the
+    // handoff error in this coordinate exactly zero rather than merely small.
+    //
+    // sigma_S0 is the residual numerical floor, not an uncertainty estimate:
+    // at the epoch the state is known exactly, and the covariance recovers
+    // within seconds through the v -> p -> S chain.
+    void reset_integral_epoch(T sigma_S0 = T(1e-3)) {
+        xext.template segment<3>(OFF_S).setZero();
+        Pext.template block<NX,3>(0, OFF_S).setZero();
+        Pext.template block<3,NX>(OFF_S, 0).setZero();
+        const T s = (std::isfinite(sigma_S0) && sigma_S0 > T(0)) ? sigma_S0 : T(1e-3);
+        Pext.template block<3,3>(OFF_S, OFF_S) = Matrix3::Identity() * (s * s);
+        symmetrize_Pext_();
+    }
+
+    // Seed the gyro-bias state from an estimate solved outside the filter.
+    // b_g is expected in the same body frame the filter is driven in; it is
+    // de-heeled here, exactly as a measurement would be.
+    void seed_gyro_bias(const Vector3& b_g_body, T sigma_bg) {
+        if constexpr (with_gyro_bias) {
+            if (!b_g_body.allFinite()) return;
+            xext.template segment<3>(3) = deheel_vector_(b_g_body);
+            const T s = (std::isfinite(sigma_bg) && sigma_bg > T(0)) ? sigma_bg : T(1e-3);
+            Pext.template block<NX,3>(0, 3).setZero();
+            Pext.template block<3,NX>(3, 0).setZero();
+            Pext.template block<3,3>(3, 3) = Matrix3::Identity() * (s * s);
+            symmetrize_Pext_();
+        } else {
+            (void)b_g_body; (void)sigma_bg;
+        }
+    }
+
+    // Seed the world-acceleration OU state.  a_w is in WORLD (NED) axes, the
+    // same frame the state itself lives in.
+    void seed_world_accel(const Vector3& a_w_ned, T sigma_aw) {
+        if (!a_w_ned.allFinite()) return;
+        xext.template segment<3>(OFF_AW) = a_w_ned;
+        const T s = (std::isfinite(sigma_aw) && sigma_aw > T(0)) ? sigma_aw : T(1);
+        Pext.template block<NX,3>(0, OFF_AW).setZero();
+        Pext.template block<3,NX>(OFF_AW, 0).setZero();
+        Pext.template block<3,3>(OFF_AW, OFF_AW) = Matrix3::Identity() * (s * s);
+        symmetrize_Pext_();
+    }
+
+    // Seed the translational states from a measurement-only bootstrap.
+    // Both are WORLD (NED).
+    void seed_translational(const Vector3& v_ned, const Vector3& p_ned,
+                            T sigma_v, T sigma_p) {
+        if (!v_ned.allFinite() || !p_ned.allFinite()) return;
+        xext.template segment<3>(OFF_V) = v_ned;
+        xext.template segment<3>(OFF_P) = p_ned;
+        const T sv = (std::isfinite(sigma_v) && sigma_v > T(0)) ? sigma_v : T(1);
+        const T sp = (std::isfinite(sigma_p) && sigma_p > T(0)) ? sigma_p : T(20);
+        Pext.template block<NX,6>(0, OFF_V).setZero();
+        Pext.template block<6,NX>(OFF_V, 0).setZero();
+        Pext.template block<3,3>(OFF_V, OFF_V) = Matrix3::Identity() * (sv * sv);
+        Pext.template block<3,3>(OFF_P, OFF_P) = Matrix3::Identity() * (sp * sp);
+        symmetrize_Pext_();
+    }
+
+    // The seven three-vector blocks of the extended state, named rather than
+    // offset, so a caller outside the class can ask for one without the
+    // layout constants leaking out of it.
+    enum class StateBlock {
+        Attitude, GyroBias, Velocity, Position, IntegralS, WorldAccel, AccelBias
+    };
+
+    // Marginal standard deviation of one block of the covariance, as the
+    // square root of its largest eigenvalue.  This is the sigma the basin
+    // certificate converts a physical handoff bound into a metric one with.
+    [[nodiscard]] T block_sigma(StateBlock which) const {
+        int offset = 0;
+        switch (which) {
+            case StateBlock::Attitude:   offset = 0; break;
+            case StateBlock::GyroBias:
+                if constexpr (!with_gyro_bias) return T(0);
+                offset = 3; break;
+            case StateBlock::Velocity:   offset = OFF_V;  break;
+            case StateBlock::Position:   offset = OFF_P;  break;
+            case StateBlock::IntegralS:  offset = OFF_S;  break;
+            case StateBlock::WorldAccel: offset = OFF_AW; break;
+            case StateBlock::AccelBias:
+                if constexpr (!with_accel_bias) return T(0);
+                offset = OFF_BA; break;
+        }
+        const Matrix3 B = Pext.template block<3,3>(offset, offset);
+        Eigen::SelfAdjointEigenSolver<Matrix3> es(B, Eigen::EigenvaluesOnly);
+        if (es.info() != Eigen::Success) return std::numeric_limits<T>::quiet_NaN();
+        return std::sqrt(std::max(T(0), es.eigenvalues()(2)));
+    }
+
     void set_initial_acc_bias_std(T s) {
         if constexpr (with_accel_bias) {
             sigma_bacc0_ = std::max(T(0), s);

@@ -62,6 +62,7 @@
 #include <numbers>
 #include <memory>
 #include <algorithm>
+#include <cstdint>
 
 #include "freq/FirstOrderIIRSmoother.h"
 #include "freq/FrequencyTrackerPolicy.h"
@@ -72,6 +73,7 @@
 #include "tuner/MagAutoTuner.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
+#include "kalman_ou_iii/LiveEntranceCertificate.h"
 #include "wave_dir/KalmanWaveDirection.h"
 #include "wave_dir/WaveDirectionDetector.h"
 #include "wave_dir/WaveDirectionFrame.h"
@@ -423,6 +425,12 @@ public:
     StartupStage getStartupStage() const noexcept { return startup_stage_; }
     bool isAdaptiveLive() const noexcept { return startup_stage_ == StartupStage::Live; }
 
+    // Monotonic index of the current Live interval.  It advances on every hard
+    // map the stability argument treats as an interval boundary: the 70 deg
+    // tilt re-lock on either branch, and a return to Cold.  A basin
+    // certificate is valid only for the epoch it was issued in.
+    uint32_t liveIntervalEpoch() const noexcept { return live_interval_epoch_; }
+
     // The operating point is trustworthy.  Under StagedMekf this coincides
     // with going Live; under MahonyProxy it is reached first, while the MEKF
     // is still held, and it is one of the conditions the caller waits on
@@ -517,6 +525,18 @@ public:
         return vertical_accel_comp_.isInitialized();
     }
 
+    // Gyro-bias estimate carried by the startup observer's integral term
+    // [rad/s], raw body frame.  Only the part perpendicular to downBody() is
+    // observable; see VerticalAccelComplementary::gyroBiasEstimate().
+    Eigen::Vector3f startupProxyGyroBias() const noexcept {
+        return vertical_accel_comp_.gyroBiasEstimate();
+    }
+
+    // Down direction in body coordinates as the startup observer sees it.
+    Eigen::Vector3f startupProxyDownBody() const noexcept {
+        return vertical_accel_comp_.downBody();
+    }
+
     // Gains of the private Mahony observer, which serves both the vertical
     // channel and the startup attitude.  Same knob as
     // setWavePeriodComplementaryGains(); kept under this name because the
@@ -537,16 +557,75 @@ public:
     // allow_acc_bias only unlocks the accelerometer-bias gate early.  Left
     // false, the filter keeps waiting for its usual count of magnetometer
     // updates after going live, which is the deployed behaviour.
+    // Everything the bootstrap knows that initialize_from_attitude() does not
+    // install.  Each field is optional; an unset one leaves the corresponding
+    // MEKF block at its constructor value, and the basin certificate then has
+    // to charge the whole physical envelope of that block instead of a
+    // constructed residual.
+    struct LiveHandoffSeed {
+        bool            seed_gyro_bias = false;
+        Eigen::Vector3f gyro_bias_body = Eigen::Vector3f::Zero();  // rad/s
+        float           gyro_bias_sigma = 1.0e-3f;
+
+        bool            seed_world_accel = false;
+        Eigen::Vector3f world_accel_ned = Eigen::Vector3f::Zero();  // m/s^2
+        float           world_accel_sigma = 1.0f;
+
+        bool            seed_translational = false;
+        Eigen::Vector3f velocity_ned = Eigen::Vector3f::Zero();
+        Eigen::Vector3f position_ned = Eigen::Vector3f::Zero();
+        float           velocity_sigma = 1.0f;
+        float           position_sigma = 20.0f;
+
+        // The integral epoch is restarted unconditionally: S is defined up to
+        // its lower limit of integration, and declaring that limit to be the
+        // Live transition is a coordinate choice, not an estimate.
+        //
+        // The sigma is a separate question from the state, and the default
+        // deliberately keeps the constructor's value.  The certificate does not
+        // need a small one: the handoff bound for this block is exactly zero,
+        // so its contribution to the metric norm is zero whatever the
+        // marginal is, and a covariance that is merely too large is
+        // conservative rather than wrong.  Collapsing it would change the
+        // pseudo-measurement's transient for no gain the theorem can use.
+        float           integral_sigma = 50.0f;
+    };
+
     void goLive(const Eigen::Quaternionf& q_bw,
                 float tilt_sigma_rad,
                 float yaw_sigma_rad,
                 bool allow_acc_bias = false)
+    {
+        goLive(q_bw, tilt_sigma_rad, yaw_sigma_rad, LiveHandoffSeed{},
+               allow_acc_bias);
+    }
+
+    void goLive(const Eigen::Quaternionf& q_bw,
+                float tilt_sigma_rad,
+                float yaw_sigma_rad,
+                const LiveHandoffSeed& seed,
+                bool allow_acc_bias)
     {
         if (!mekf_) return;
         if (!q_bw.coeffs().allFinite()) return;
         if (!(q_bw.norm() > 1e-8f)) return;
 
         mekf_->initialize_from_attitude(q_bw, tilt_sigma_rad, yaw_sigma_rad);
+
+        // Order matters only in that the attitude seed above rebuilds the
+        // attitude marginal and drops its cross terms; each seeder below owns
+        // exactly its own block.
+        if (seed.seed_gyro_bias) {
+            mekf_->seed_gyro_bias(seed.gyro_bias_body, seed.gyro_bias_sigma);
+        }
+        if (seed.seed_world_accel) {
+            mekf_->seed_world_accel(seed.world_accel_ned, seed.world_accel_sigma);
+        }
+        if (seed.seed_translational) {
+            mekf_->seed_translational(seed.velocity_ned, seed.position_ned,
+                                      seed.velocity_sigma, seed.position_sigma);
+        }
+        mekf_->reset_integral_epoch(seed.integral_sigma);
 
         if (allow_acc_bias) {
             accel_bias_locked_ = false;
@@ -613,6 +692,11 @@ private:
             }
 
             if (tilt_over_limit_sec_ >= TILT_RESET_HOLD_SEC && tilt_reset_cooldown_sec_ <= 0.0f) {
+                // Either branch is a hard map, and the paper treats hard maps
+                // as Live-interval boundaries: whatever basin certificate was
+                // issued for the interval that just ended says nothing about
+                // the one that starts here.
+                ++live_interval_epoch_;
                 if (startup_stage_ == StartupStage::Live) {
                     // In Live, re-lock only tilt while preserving yaw/north frame.
                     mekf_->initialize_from_acc_preserve_yaw(acc);
@@ -1825,6 +1909,7 @@ private:
     void enterCold_() {
         startup_stage_   = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
+        ++live_interval_epoch_;
 
         if (!mekf_) return;
         mekf_->set_linear_block_enabled(false);
@@ -1866,6 +1951,7 @@ private:
 
     StartupStage startup_stage_    = StartupStage::Cold;
     float        startup_stage_t_  = 0.0f;
+    uint32_t     live_interval_epoch_ = 0;
 
     // Warmup behavior
     bool  freeze_acc_bias_until_live_ = true;
@@ -2080,6 +2166,33 @@ public:
     using StartupInitPolicy =
         typename SeaStateFusionFilter_OU_III<trackerT>::StartupInitPolicy;
 
+    using Mekf               = Kalman3D_Wave_OU_III<float>;
+    using LiveEnvelope       = ocean_imu::kalman::ou3::LiveEnvelope;
+    using LiveBasinConstants = ocean_imu::kalman::ou3::LiveBasinConstants;
+    using LiveEntranceCertificate =
+        ocean_imu::kalman::ou3::LiveEntranceCertificate;
+    using LiveCertFailure    = ocean_imu::kalman::ou3::LiveCertFailure;
+
+    // Whether the Live interval the filter is in is covered by the semiglobal
+    // theorem.  The distinction is the point: a timeout-forced handoff and a
+    // handoff whose basin certificate passed both produce a running filter,
+    // and only one of them is a theorem-certified Live entry.  Nothing
+    // downstream may report the first as the second.
+    enum class LiveCertification : uint8_t {
+        NotLive = 0,   // still bootstrapping
+        Uncertified,   // Live, but the entrance inequality did not hold
+        Certified      // Live, and the entrance inequality held
+    };
+
+    static const char* liveCertificationName(LiveCertification c) {
+        switch (c) {
+            case LiveCertification::NotLive:     return "not-live";
+            case LiveCertification::Uncertified: return "live-uncertified";
+            case LiveCertification::Certified:   return "live-certified";
+        }
+        return "?";
+    }
+
     struct Config {
         bool with_mag = true;
 
@@ -2205,6 +2318,78 @@ public:
         // over the wave band; see gravityAlignResidualSinWorld() and
         // mag_gravity_align_world_tau_sec below.
         float mag_gravity_align_max_sin   = 0.075f; // sin(deg)
+
+        // ---- Phase-3 Live-entrance basin certificate ---------------------
+        //
+        // Evaluating the certificate never withholds a handoff: the deployed
+        // product still goes Live on the quality gate or on the timeout,
+        // exactly as before.  What the certificate decides is whether that
+        // Live entry may be *reported* as covered by the semiglobal theorem.
+        // require_certified_live turns the certificate into a gate as well,
+        // for deployments that would rather wait than run uncertified; it is
+        // off by default because a filter that never starts is worse than one
+        // that starts outside a proof.
+        bool enable_live_entrance_certificate = true;
+        bool require_certified_live           = false;
+
+        // Bootstrap seeds installed at handoff.  Each one replaces an
+        // assumed-envelope handoff bound with a constructed one, which is the
+        // only reason they exist; see
+        // doc/kalman_ou_iii/w3d-live-handoff-certificate.tex-part.
+        // Off, and the measurement is why.
+        //
+        // The startup observer's integral term does estimate a constant gyro
+        // bias at rest, which is what it was turned on for.  In a seaway it
+        // also winds up against the horizontal orbital acceleration -- the
+        // failure VerticalAccelComplementary's own note predicts for an
+        // integral term -- and the wind-up is the larger of the two by an
+        // order of magnitude.  Measured at handoff over the eight reference
+        // seas: seeding from it leaves 1.6e-3 to 3.3e-3 rad/s of true
+        // gyro-bias error against turn-on draws of about 1e-4, while leaving
+        // the state at zero leaves 4e-5 to 1e-4.  The estimate is worse than
+        // the thing it estimates, so the constructive bound for this block
+        // stays the declared turn-on envelope and the seed stays off.  The
+        // switch is kept because the conclusion is about the deployed proxy
+        // gains and the deployed sea states, not about the idea.
+        bool seed_gyro_bias_at_handoff   = false;
+        bool seed_world_accel_at_handoff = true;
+
+        // Make the handoff covariance agree with the declared envelope.
+        //
+        // Phase 3 turned up a coherence defect rather than a tuning
+        // opportunity: the constructor seeds the residual accelerometer bias
+        // at 0.004 m/s^2 and the world acceleration at its OU stationary
+        // spread, while the declared calibration and levelling envelopes only
+        // bound the true errors at roughly 0.05 and 2 m/s^2.  A filter that
+        // enters Live an order of magnitude more confident than its own
+        // assumptions allow is overconfident in the ordinary estimator sense:
+        // it under-weights exactly the measurements that would correct those
+        // states.  It also makes the metric the certificate is evaluated in
+        // disagree with the bounds being evaluated, so the entrance inequality
+        // is dominated by the disagreement rather than by the theorem.
+        //
+        // With this on, the seed marginals of b_g, a_w, b_a, v and p are set
+        // to the constructed handoff bounds themselves -- one sigma equal to a
+        // deterministic bound, which is the loosest reading of the bound that
+        // is still defensible, and not a free parameter.  Attitude keeps its
+        // configured tilt/yaw split, since that seed is anisotropic for
+        // reasons the envelope does not describe.
+        //
+        // Off by default, and measured rather than assumed: turning it on
+        // moves the scored pitch RMS on the pmstokes H4.0 reference record
+        // from inside its committed limit to outside it, because inflating the
+        // residual-bias marginal by two orders of variance lets the filter
+        // chase that bias through the wave band.  Since the certificate does
+        // not close either way (Sec. "Numerical evaluation"), taking a
+        // measured accuracy regression to buy a factor the theorem still
+        // cannot use would be paying for nothing.  The switch is kept because
+        // the coherence defect it addresses is real and is reported as such.
+        bool seed_covariance_from_envelope = false;
+
+        // Declared physical envelope and pinned interval constants.  Neither
+        // is measured onboard; both are what the theorem is conditional on.
+        ocean_imu::kalman::ou3::LiveEnvelope       live_envelope{};
+        ocean_imu::kalman::ou3::LiveBasinConstants live_basin_constants{};
         float mag_gravity_align_hold_sec  = 2.0f;
 
         // Horizon of the world-frame average the gate is judged on, and how
@@ -2555,6 +2740,7 @@ public:
                     acc_gate_world_lp);
 
             mag_gravity_aligned_branch_ = aligned_branch;
+            last_gravity_align_sin_ = align_sin;
 
             const float gyro_dps =
                 gyro_body_ned.norm() * 57.295779513f;
@@ -2622,6 +2808,12 @@ public:
                 gravity_gate_world_elapsed_sec_ = 0.0f;
                 mag_gravity_good_sec_ = 0.0f;
                 mag_gravity_aligned_branch_ = false;
+                last_gravity_align_sin_ = NAN;
+
+                // A return to Cold ends the certified interval.
+                live_certificate_ = LiveEntranceCertificate{};
+                live_certification_ = LiveCertification::NotLive;
+                live_cert_boundary_ = false;
                 mag_init_eligible_t0_ = NAN;
                 last_mag_sample_t_ = NAN;
 
@@ -2876,6 +3068,46 @@ public:
 
     bool isLive() const {
         return stage_ == Stage::Live;
+    }
+
+    // Whether this Live interval is covered by the semiglobal theorem.  A
+    // timeout-forced handoff and a certificate failure both land on
+    // Uncertified; nothing downstream may report that as certified.
+    LiveCertification liveCertification() const noexcept {
+        if (stage_ != Stage::Live) return LiveCertification::NotLive;
+        // A hard map since the certificate was issued -- the 70 deg tilt
+        // re-lock, or a return to Cold -- ends the interval the certificate
+        // was about.  The paper treats those as interval boundaries, so the
+        // certification does not survive one.
+        if (live_cert_boundary_ ||
+            impl_.liveIntervalEpoch() != live_cert_epoch_) {
+            return LiveCertification::Uncertified;
+        }
+        return live_certification_;
+    }
+
+    bool isLiveCertified() const noexcept {
+        return liveCertification() == LiveCertification::Certified;
+    }
+
+    // The certificate itself, for diagnostics.  A failed certification is
+    // readable: every constructed bound, its provenance, and both sides of
+    // the basin inequality are kept.
+    const LiveEntranceCertificate& liveEntranceCertificate() const noexcept {
+        return live_certificate_;
+    }
+
+    // Why the last handoff was not certified, or "certified".
+    const char* liveCertificationReason() const noexcept {
+        if (stage_ != Stage::Live) {
+            return ocean_imu::kalman::ou3::liveCertFailureName(
+                LiveCertFailure::NotAttempted);
+        }
+        if (live_cert_boundary_ ||
+            impl_.liveIntervalEpoch() != live_cert_epoch_) {
+            return "interval-boundary";
+        }
+        return live_certificate_.failureName();
     }
 
     float freqHz() const {
@@ -3230,6 +3462,14 @@ private:
         mag_refine_done_    = true;
         mag_refine_time_sec_ = t_;
 
+        // The refinement rewrites the world magnetic reference and the boat
+        // quaternion's heading.  That is one of the hard maps the paper counts
+        // as a Live-interval boundary, so the entrance certificate issued for
+        // the interval before it no longer describes the interval after it.
+        // The certificate itself is left intact and readable; what changes is
+        // that it no longer applies.
+        live_cert_boundary_ = true;
+
         // The reference the bias would have been fitting is now the good one.
         impl_.setAccBiasHold(false);
     }
@@ -3283,10 +3523,49 @@ private:
 
         if (!ready_by_quality && !ready_by_timeout) return;
 
-        handOffToMekf_();
+        // The certificate can also be asked to hold the handoff.  It is not
+        // the deployed default: withholding a filter until a proof closes
+        // leaves a vessel with no estimate at all, which is the worse failure.
+        if (cfg_.require_certified_live &&
+            cfg_.enable_live_entrance_certificate &&
+            !certificateWouldPass_(ready_by_quality)) {
+            return;
+        }
+
+        handOffToMekf_(ready_by_quality);
     }
 
-    void handOffToMekf_() {
+    // Predicted seed sigmas, without touching the filter.  Used only by the
+    // optional require_certified_live gate, which has to answer "would this
+    // handoff certify?" before performing it.
+    bool certificateWouldPass_(bool ready_by_quality) {
+        ocean_imu::kalman::ou3::LiveHandoffObservables obs;
+        obs.gate_satisfied = ready_by_quality;
+        obs.aligned_branch = mag_gravity_aligned_branch_;
+        obs.yaw_gauged     = std::isfinite(pending_yaw_abs_rad_);
+        obs.gravity_align_sin = last_gravity_align_sin_;
+        obs.sigma_theta = std::max(cfg_.proxy_handoff_tilt_sigma_rad,
+                                   obs.yaw_gauged
+                                       ? cfg_.proxy_handoff_yaw_sigma_rad
+                                       : cfg_.proxy_handoff_yaw_sigma_free_rad);
+        obs.sigma_bg = cfg_.seed_gyro_bias_at_handoff
+                           ? cfg_.live_envelope.gyro_bias_perp_rad_s
+                           : std::sqrt(std::max(0.0f, cfg_.Pb0));
+        obs.sigma_S  = 1.0e-3f;
+        obs.sigma_aw = impl_.mekf().block_sigma(Mekf::StateBlock::WorldAccel);
+        obs.sigma_ba = impl_.mekf().block_sigma(Mekf::StateBlock::AccelBias);
+        obs.sigma_v  = impl_.mekf().block_sigma(Mekf::StateBlock::Velocity);
+        obs.sigma_p  = impl_.mekf().block_sigma(Mekf::StateBlock::Position);
+        obs.seeded_gyro_bias   = cfg_.seed_gyro_bias_at_handoff;
+        obs.seeded_world_accel = cfg_.seed_world_accel_at_handoff;
+
+        const auto c = ocean_imu::kalman::ou3::evaluateLiveEntrance(
+            obs, cfg_.live_envelope, cfg_.live_basin_constants,
+            cfg_.mag_gravity_align_max_sin);
+        return c.certified;
+    }
+
+    void handOffToMekf_(bool ready_by_quality) {
         const bool have_yaw_gauge = std::isfinite(pending_yaw_abs_rad_);
 
         // boatQuatWithAbsoluteYaw_ strips the incoming heading before writing
@@ -3305,6 +3584,50 @@ private:
             ? cfg_.proxy_handoff_yaw_sigma_rad
             : cfg_.proxy_handoff_yaw_sigma_free_rad;
 
+        typename SeaStateFusionFilter_OU_III<trackerT>::LiveHandoffSeed seed;
+
+        // B2: the startup observer's integral term is a gyro-bias estimate in
+        // the body frame the observer is driven in, which is the frame the
+        // filter is driven in too.  Only the two components perpendicular to
+        // measured down are observable; the third is left to the declared
+        // turn-on envelope, and the seed sigma says so.
+        if (cfg_.seed_gyro_bias_at_handoff) {
+            const Eigen::Vector3f bg = impl_.startupProxyGyroBias();
+            if (bg.allFinite()) {
+                seed.seed_gyro_bias  = true;
+                seed.gyro_bias_body  = bg;
+                seed.gyro_bias_sigma =
+                    std::max(1.0e-6f,
+                             std::sqrt(
+                                 cfg_.live_envelope.gyro_bias_perp_rad_s *
+                                     cfg_.live_envelope.gyro_bias_perp_rad_s +
+                                 cfg_.live_envelope.gyro_bias_axial_rad_s *
+                                     cfg_.live_envelope.gyro_bias_axial_rad_s));
+            }
+        }
+
+        // B3: a_w is the levelled specific force with gravity removed, in the
+        // same convention the filter's own measurement model uses,
+        //   f_b = R_wb (a_w - g),  g = (0,0,+g)_NED,
+        // so a_w = R_bw f_b + g.  The proxy attitude is the levelling frame,
+        // which keeps this a pure function of the measurements: no MEKF state
+        // enters, so the exogenous startup path stays exogenous.  Entering
+        // Live with a_w = 0 instead is not neutral -- it declares the platform
+        // still, which in a seaway is the one thing it is not.
+        if (cfg_.seed_world_accel_at_handoff && have_last_imu_) {
+            const Eigen::Vector3f g_ned(0.0f, 0.0f, cfg_.gravity_magnitude);
+            const Eigen::Vector3f a_w =
+                seastate::common::accWorldFromBody(q_seed, last_acc_body_ned_) +
+                g_ned;
+            if (a_w.allFinite()) {
+                seed.seed_world_accel  = true;
+                seed.world_accel_ned   = a_w;
+                seed.world_accel_sigma =
+                    std::max(1.0e-3f, cfg_.live_envelope.accel_meas_ms2 +
+                                          cfg_.live_envelope.accel_bias_ms2);
+            }
+        }
+
         // The accelerometer-bias gate is deliberately left closed here.  Going
         // live early does not make that bias any more observable in waves, so
         // it keeps waiting for its count of magnetometer updates exactly as it
@@ -3312,6 +3635,7 @@ private:
         impl_.goLive(q_seed,
                      cfg_.proxy_handoff_tilt_sigma_rad,
                      yaw_sigma,
+                     seed,
                      /*allow_acc_bias=*/false);
 
         stage_ = Stage::Live;
@@ -3319,6 +3643,103 @@ private:
         last_impl_startup_stage_ = impl_.getStartupStage();
 
         syncLinearBlockGate_();
+
+        if (cfg_.seed_covariance_from_envelope) {
+            applyEnvelopeSeedCovariance_(seed);
+        }
+
+        issueLiveCertificate_(ready_by_quality, have_yaw_gauge, seed);
+    }
+
+    // Rewrite the seed marginals of the blocks whose handoff bound is a
+    // declared envelope, so the covariance the filter enters Live with says
+    // what the envelope says.  Runs after goLive(), because entering Live
+    // re-synchronises the a_w marginal to its OU stationary spread and would
+    // otherwise overwrite this.
+    void applyEnvelopeSeedCovariance_(
+        const typename SeaStateFusionFilter_OU_III<trackerT>::LiveHandoffSeed& seed)
+    {
+        auto& m = impl_.mekf();
+        const LiveEnvelope& e = cfg_.live_envelope;
+
+        const float bg = std::sqrt(e.gyro_bias_perp_rad_s * e.gyro_bias_perp_rad_s +
+                                   e.gyro_bias_axial_rad_s * e.gyro_bias_axial_rad_s);
+        m.seed_gyro_bias(seed.seed_gyro_bias ? seed.gyro_bias_body
+                                             : Eigen::Vector3f::Zero(),
+                         std::max(1.0e-6f, bg));
+
+        // The a_w seed error is dominated by the levelling error of the
+        // attitude it was resolved in, not by the accelerometer.
+        const float theta_bound =
+            std::asin(std::min(0.999f, cfg_.mag_gravity_align_max_sin)) +
+            e.gravity_direction_rad +
+            std::asin(std::min(0.999f, e.mag_reference_rel_error));
+        const float aw = cfg_.gravity_magnitude *
+                             std::sin(std::fmin(theta_bound, 1.5707963f)) +
+                         e.accel_meas_ms2 + e.accel_bias_ms2;
+        m.seed_world_accel(seed.seed_world_accel ? seed.world_accel_ned
+                                                 : Eigen::Vector3f::Zero(),
+                           std::max(1.0e-3f, aw));
+
+        m.set_initial_acc_bias_std(std::max(1.0e-4f, e.accel_bias_ms2));
+
+        m.seed_translational(seed.seed_translational ? seed.velocity_ned
+                                                     : Eigen::Vector3f::Zero(),
+                             seed.seed_translational ? seed.position_ned
+                                                     : Eigen::Vector3f::Zero(),
+                             std::max(1.0e-3f, e.translational_velocity_ms),
+                             std::max(1.0e-3f, e.translational_position_m));
+
+        // seed_translational() rewrites the v/p marginals and drops their
+        // cross-covariances, which includes the S column; restore the epoch
+        // reset so S stays exactly known.
+        m.reset_integral_epoch(seed.integral_sigma);
+    }
+
+    // Evaluate the entrance inequality against the seed that was actually
+    // installed, and record whether this Live interval is theorem-certified.
+    void issueLiveCertificate_(
+        bool ready_by_quality,
+        bool have_yaw_gauge,
+        const typename SeaStateFusionFilter_OU_III<trackerT>::LiveHandoffSeed& seed)
+    {
+        live_cert_epoch_ = impl_.liveIntervalEpoch();
+        live_cert_boundary_ = false;
+
+        if (!cfg_.enable_live_entrance_certificate) {
+            live_certificate_ = LiveEntranceCertificate{};
+            live_certification_ = LiveCertification::Uncertified;
+            return;
+        }
+
+        ocean_imu::kalman::ou3::LiveHandoffObservables obs;
+        obs.gate_satisfied    = ready_by_quality;
+        obs.aligned_branch    = mag_gravity_aligned_branch_;
+        obs.yaw_gauged        = have_yaw_gauge;
+        obs.gravity_align_sin = last_gravity_align_sin_;
+
+        // Read the metric back out of the filter rather than predicting it, so
+        // the certificate is evaluated in the covariance the filter really has.
+        const auto& m = impl_.mekf();
+        obs.sigma_theta = m.block_sigma(Mekf::StateBlock::Attitude);
+        obs.sigma_bg    = m.block_sigma(Mekf::StateBlock::GyroBias);
+        obs.sigma_v     = m.block_sigma(Mekf::StateBlock::Velocity);
+        obs.sigma_p     = m.block_sigma(Mekf::StateBlock::Position);
+        obs.sigma_S     = m.block_sigma(Mekf::StateBlock::IntegralS);
+        obs.sigma_aw    = m.block_sigma(Mekf::StateBlock::WorldAccel);
+        obs.sigma_ba    = m.block_sigma(Mekf::StateBlock::AccelBias);
+
+        obs.seeded_gyro_bias   = seed.seed_gyro_bias;
+        obs.seeded_world_accel = seed.seed_world_accel;
+        obs.seeded_translation = seed.seed_translational;
+
+        live_certificate_ = ocean_imu::kalman::ou3::evaluateLiveEntrance(
+            obs, cfg_.live_envelope, cfg_.live_basin_constants,
+            cfg_.mag_gravity_align_max_sin);
+
+        live_certification_ = live_certificate_.certified
+                                  ? LiveCertification::Certified
+                                  : LiveCertification::Uncertified;
     }
 
     void resetTiltInit_() {
@@ -3513,6 +3934,16 @@ private:
 
     Vec3LPF gravity_gate_acc_world_lpf_{};
     float   gravity_gate_world_elapsed_sec_ = 0.0f;
+    float   last_gravity_align_sin_ = std::numeric_limits<float>::quiet_NaN();
+
+    // Phase-3 Live-entrance certificate state.
+    LiveEntranceCertificate live_certificate_{};
+    LiveCertification       live_certification_ = LiveCertification::NotLive;
+    uint32_t                live_cert_epoch_    = 0;
+    // Set by the hard maps that end a Live interval without changing the
+    // inner filter's epoch counter -- currently the second magnetic
+    // re-gauging, which rewrites the world reference and the heading.
+    bool                    live_cert_boundary_ = false;
     float   mag_gravity_good_sec_ = 0.0f;
     bool    mag_gravity_aligned_branch_ = false;
     float   mag_init_eligible_t0_ = NAN;

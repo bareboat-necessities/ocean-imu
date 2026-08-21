@@ -1,4 +1,6 @@
 \input{w3d-block-local-iss.tex-part}
+\input{w3d-live-basin-certificate.tex-part}
+\input{w3d-live-handoff-certificate.tex-part}
 
 \section{Almost-Global Startup Capture and Semiglobal Practical Extension}
 \label{sec:semiglobal-stability}
@@ -233,8 +235,12 @@ Thus, provided $\overline\theta_H<\pi$, the principal MEKF attitude-error
 coordinate exists at handoff and satisfies
 $\|\delta\vct\theta_H\|\le\overline\theta_H$.
 
-For the remaining sensitive coordinates, suppose the physical startup family
-provides finite bounds
+For the remaining sensitive coordinates, Sec.~\ref{sec:cert-handoff-bounds}
+constructs the bounds and labels each one by what it rests on.  One of them is
+exact: the $S$ integration epoch is declared at the Live transition, so
+$B_{S,H}=0$ by Eq.~\eqref{eq:cert-S-zero} rather than by assumption.  The
+others reduce to a declared physical envelope.  Suppose then that the physical
+startup family provides finite bounds
 \begin{equation}
 \|\delta\vct b_{g,H}\|\le B_{g,H},\quad
 \|\delta\vct S_H\|\le B_{S,H},\quad
@@ -370,6 +376,15 @@ on every compact subset of $\mathcal D_P$.  This gives the claimed
 almost-global/semiglobal qualification.
 \end{proof}
 
+\paragraph{Certified and uncertified Live}
+Sec.~\ref{sec:cert-state-machine} makes the qualification below a state of the
+implementation rather than a caveat in the text.  A Live interval is recorded
+as theorem-certified only when the proxy is ready, the aligned branch holds,
+the magnetic gauge is available, and the constructive entrance inequality
+\eqref{eq:cert-entrance} holds for the seed that was installed; every other
+Live interval, timeout-forced ones included, is recorded as uncertified.  The
+certification is cleared at the interval boundaries named below.
+
 \paragraph{Finite startup timeout}
 Almost-global convergence is not uniform as the undesired stable set is
 approached.  Therefore a fixed startup timeout cannot certify all compact sets
@@ -411,7 +426,9 @@ The second magnetic re-gauging and the $70^\circ$ tilt re-lock remain separate
 hard maps.  They are covered only if their post-map state is independently
 verified to satisfy Eq.~\eqref{eq:semiglobal-basin-entry}; otherwise they remain
 boundaries between certified Live intervals rather than part of the present
-proof.
+proof.  The implementation clears its Live certification at each of them, so an
+interval that follows a hard map is reported as uncertified until a new
+entrance is certified.
 
 \paragraph{Stochastic qualification}
 As in Sec.~\ref{app:iss-stability}, the ISS statements above are deterministic

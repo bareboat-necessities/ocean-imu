@@ -1,0 +1,477 @@
+\subsection{Constructive Live-Handoff Certificate in the Riccati Metric}
+\label{sec:iss-handoff-certificate}
+
+Section~\ref{sec:iss-live-certificate} makes the linear part of the Live basin
+constructive but leaves two obstructions.  First, its uniform-exponential
+constants are stated in the fixed dimensionless coordinates of
+Eq.~\eqref{eq:iss-cert-scales}, so the covariance contraction that the deployed
+schedule actually exhibits has to be converted back into those coordinates
+through $\sqrt{\bar p/\underline p}$; the diagnostic measures that conversion
+factor as $555.7$ and the implied transition constant as $M_H\approx565.6$.
+Second, the small-gain quantity $\nu_{\rm cert}$ of
+Eq.~\eqref{eq:iss-cert-nu} prices every nonlinear injection at
+$M_H/(1-\rho_H)$, which is the memory of the slowest mode in the estimator: at
+the deployed \SI{5000}{s} residual-bias correlation time that is
+$3.45\times10^{5}$ samples.  Multiplying the two makes the admissible radius of
+Eq.~\eqref{eq:iss-cert-radius} numerically meaningless.
+
+This subsection removes both obstructions by carrying the whole argument in the
+Riccati metric instead of converting out of it, and by replacing the scalar
+memory with per-channel injection gains.  It then constructs the handoff bounds
+themselves, block by block, and states exactly which of them are proved, which
+are checkable, and which are declared.
+
+\subsubsection{The metric and its two structural properties}
+\label{sec:cert-metric}
+
+Let $\mat P_k$ be the filter's covariance sequence on a Live interval.  It is a
+deterministic sequence: the Riccati recursion depends on the schedule, the
+Jacobians, and the accepted-update pattern, not on the measured values.  Define
+the time-varying norm
+\begin{equation}
+\|\vct e\|_{V_k}:=\sqrt{\vct e^\top\mat P_k^{-1}\vct e}
+=\|\mat L_k^{-1}\vct e\|_2,
+\qquad
+\mat P_k=\mat L_k\mat L_k^\top .
+\label{eq:cert-metric-norm}
+\end{equation}
+Nothing here asserts that $\mat P_k$ bounds the true error.  It is used only as
+a Lyapunov metric; every bound on an actual error in this subsection is
+constructed in Sec.~\ref{sec:cert-handoff-bounds} from physical assumptions.
+
+\begin{lemma}[Scale invariance]
+\label{lem:cert-scale-invariance}
+For any fixed nonsingular $\mat D$,
+$\|\mat D\vct e\|_{(\mat D\mat P\mat D^\top)^{-1}}=\|\vct e\|_{\mat P^{-1}}$.
+Consequently every induced norm of a transition, an injection, or a projection
+taken between metrics of this family is invariant under the fixed coordinate
+scaling of Eq.~\eqref{eq:iss-cert-scales}.
+\end{lemma}
+
+\begin{proof}
+Immediate from
+$(\mat D\vct e)^\top(\mat D\mat P\mat D^\top)^{-1}(\mat D\vct e)
+=\vct e^\top\mat P^{-1}\vct e$.
+\end{proof}
+
+Lemma~\ref{lem:cert-scale-invariance} settles a question the Phase-2
+formulation had to argue rather than remove: the certificate below does not
+depend on the choice of physical scales at all.  Equation~\eqref{eq:iss-cert-scales}
+is retained for reporting, so that the Phase-2 columns of the diagnostic remain
+comparable, and for nothing else.
+
+\begin{lemma}[One-sample metric monotonicity]
+\label{lem:cert-monotone}
+Let $\mat A_k^{\rm cl}=(\Id-\mat K_k\mat C_k)\mat F_k$ be the closed-loop
+transition of one accepted Kalman update executed in Joseph form, with
+$\mat Q_k\succeq0$ and $\mat R_k\succeq0$.  Then
+\begin{equation}
+\alpha_k:=\bigl\|\mat L_{k+1}^{-1}\mat A_k^{\rm cl}\mat L_k\bigr\|_2\le1 .
+\label{eq:cert-alpha}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Write $\mat P_{k+1|k}=\mat F_k\mat P_k\mat F_k^\top+\mat Q_k$ and let
+$\mat N_k=\Id-\mat K_k\mat C_k$.  The Joseph form gives
+$\mat P_{k+1}=\mat N_k\mat P_{k+1|k}\mat N_k^\top
++\mat K_k\mat R_k\mat K_k^\top$.  Hence
+\begin{align}
+\mat A_k^{\rm cl}\mat P_k(\mat A_k^{\rm cl})^\top
+&=\mat N_k\bigl(\mat P_{k+1|k}-\mat Q_k\bigr)\mat N_k^\top\\
+&=\mat P_{k+1}
+ -\mat K_k\mat R_k\mat K_k^\top
+ -\mat N_k\mat Q_k\mat N_k^\top
+\;\preceq\;\mat P_{k+1}.
+\end{align}
+Congruence by $\mat L_{k+1}^{-1}$ preserves the ordering, so
+$\mat L_{k+1}^{-1}\mat A_k^{\rm cl}\mat L_k
+ (\mat L_{k+1}^{-1}\mat A_k^{\rm cl}\mat L_k)^\top\preceq\Id$, which is
+Eq.~\eqref{eq:cert-alpha}.
+\end{proof}
+
+Lemma~\ref{lem:cert-monotone} is an identity of the deployed update, not a
+hypothesis about the sea.  It is what removes the Phase-2 conversion factor:
+the prefix quantity $B_H$ of Eq.~\eqref{eq:iss-cert-prefix}, which had to be
+measured in the fixed coordinates, is exactly $1$ in the metric.
+
+\begin{theorem}[Metric finite-horizon UES certificate]
+\label{thm:cert-metric-ues}
+Suppose an uninterrupted Live interval satisfies, for one fixed horizon $H$,
+\begin{equation}
+\chi_H^V:=\sup_k\bigl\|\mat L_{k+H}^{-1}\Psi(k+H,k)\mat L_k\bigr\|_2
+\le\bar\chi<1 .
+\label{eq:cert-chiV}
+\end{equation}
+Then, with $\rho_H=\bar\chi^{1/H}$ and
+\begin{equation}
+\boxed{M_H=\rho_H^{-(H-1)},}
+\label{eq:cert-MH}
+\end{equation}
+one has
+$\|\mat L_k^{-1}\Psi(k,j)\mat L_j\|_2\le M_H\rho_H^{k-j}$ for all $k\ge j$.
+\end{theorem}
+
+\begin{proof}
+Identical to Theorem~\ref{thm:iss-cert-finite-horizon}, with
+$\bar B=1$ supplied by Lemma~\ref{lem:cert-monotone} and submultiplicativity
+taken across the intermediate metrics, which is legitimate because the norms
+compose: $\|\mat L_k^{-1}\Psi(k,i)\mat L_i\|
+\|\mat L_i^{-1}\Psi(i,j)\mat L_j\|$ bounds
+$\|\mat L_k^{-1}\Psi(k,j)\mat L_j\|$.
+\end{proof}
+
+At the eight committed reference operating points the diagnostic measures
+$\alpha_k\le1$ at every sample, $\chi^V_{30}\in[0.9804,0.9825]$, and hence
+$M_H\in[1.0179,1.0201]$: the constant the Phase-2 formulation had to take as
+$565.6$ is $1.02$.
+
+\subsubsection{Block-local bootstrap in the metric}
+\label{sec:cert-bootstrap}
+
+Let $\mat E_\xi,\mat E_\ell$ be the block selectors of
+Sec.~\ref{sec:iss-block-basin} and put
+$\mat N_k:=(\mat E_\xi\mat P_k\mat E_\xi^\top)^{1/2}$,
+$\mat\Lambda_k:=(\mat E_\ell\mat P_k\mat E_\ell^\top)^{1/2}$.  Define the
+sensitive seminorm $\|\vct e\|_{\xi,k}:=\|\mat N_k^{-1}\mat E_\xi\vct e\|_2$.
+Because $\mat N_k^{-1}\mat E_\xi\mat L_k$ is a coisometry,
+$\|\vct e\|_{\xi,k}\le\|\vct e\|_{V_k}$, so
+Theorem~\ref{thm:cert-metric-ues} bounds the projected gains as well; write
+$M_{\xi\xi}$ and $M_{\xi\ell}$ for the corresponding projected constants, both
+of which may conservatively be taken equal to $M_H$.
+
+The point of the seminorm is that membership of the tube converts directly into
+per-block physical bounds.  If $\|\vct e_k\|_{\xi,k}\le R$ then, for each
+sensitive block $b\in\{\theta,b_g,S,a_w,b_a\}$,
+\begin{equation}
+\|\delta\vct x_{b,k}\|
+\le\sigma_{b,k}R,
+\qquad
+\sigma_{b,k}:=\bigl\|\mat E_b\mat N_k\bigr\|_2 ,
+\label{eq:cert-block-sigma}
+\end{equation}
+which is the marginal standard deviation of that block.  This replaces the
+fixed design scales of Eq.~\eqref{eq:iss-cert-scales} inside the remainder
+bound by the estimator's own interval envelopes, and it is the second place
+where the metric formulation is quantitatively decisive: over the reference
+interval $\sigma_S$ is between \SI{0.023}{m.s} and \SI{3.45}{m.s} against the
+design scale $s_S=\SI{50}{m.s}$, and $\sigma_{a_w}$ between \SI{0.024}{m/s^2}
+and \SI{0.053}{m/s^2} against $s_{aw}=\SI{6}{m/s^2}$.
+
+Each nonlinear remainder enters the state through a known three-dimensional
+channel: the group-composition remainder of the MEKF reset through the attitude
+coordinates, and the measurement-model remainders of
+Eqs.~\eqref{eq:iss-cert-acc-rem}--\eqref{eq:iss-cert-mag-rem} through the
+corresponding Kalman gains.  Rather than pricing all of them at the scalar
+memory $M_H/(1-\rho_H)$, define the directional $\ell_1$ injection gains
+\begin{equation}
+\Gamma_g
+:=\sup_i\sum_{k>i}
+ \bigl\|\Psi(k,i+1)\mat N_{g,i}\bigr\|_{V_k},
+\qquad
+\mat N_{g}\in\{\mat E_\theta^\top,\mat K_a,\mat K_m\},
+\label{eq:cert-gamma}
+\end{equation}
+which are finite by Theorem~\ref{thm:cert-metric-ues} and are computed by
+forward impulse propagation, with no matrix products to store.  The scalar
+bound is recovered by replacing every $\Gamma_g$ with
+$M_H\|\mat N_g\|_{V}/(1-\rho_H)$, so Eq.~\eqref{eq:cert-gamma} is never worse
+and is dramatically better on the fast channels.
+
+\begin{theorem}[Metric block-local entrance]
+\label{thm:cert-metric-entrance}
+Assume Theorem~\ref{thm:cert-metric-ues} on a Live interval beginning at $k_H$,
+finite gains \eqref{eq:cert-gamma}, and the interval envelopes
+$\sigma_b:=\sup_k\sigma_{b,k}$, $\|\mat E_\theta\mat K_u\|\le\varkappa_u$.
+Define
+\begin{align}
+\hat c_\theta&=j_c\,\sigma_\theta
+ \Bigl(\varkappa_a\bigl(f_1\sigma_\theta+\sigma_{a_w}+\sigma_{b_a}\bigr)
+ +\varkappa_m m_1\sigma_\theta
+ +\varkappa_S\sigma_S
+ +h_{\max}\sigma_{b_g}\Bigr),\\
+\hat c_a&=\tfrac12f_1\sigma_\theta^2+\sigma_\theta\sigma_{a_w},
+\qquad
+\hat c_m=\tfrac12m_1\sigma_\theta^2,
+\label{eq:cert-chat}
+\end{align}
+and the small-gain slope
+\begin{equation}
+\boxed{
+c_{\rm eff}
+:=\Gamma_\theta\hat c_\theta+\Gamma_a\hat c_a+\Gamma_m\hat c_m .}
+\label{eq:cert-ceff}
+\end{equation}
+Choose $0<r\le r_\xi$ with $\nu:=c_{\rm eff}r<1$.  If
+\begin{equation}
+\boxed{
+M_{\xi\xi}\,\|\vct e_{k_H}\|_{\xi,k_H}
++M_{\xi\ell}\,\bigl\|\mat\Lambda_{k_H}^{-1}\mat E_\ell\vct e_{k_H}\bigr\|_2
++\Gamma_d\bar d
+<(1-\nu)\,r,}
+\label{eq:cert-entrance}
+\end{equation}
+then $\|\vct e_k\|_{\xi,k}<r$ for every $k\ge k_H$ in the interval, and the
+conclusion of Theorem~\ref{thm:iss-block-local} holds in the metric.
+\end{theorem}
+
+\begin{proof}
+Project variation of constants onto the sensitive seminorm.  For as long as
+$\|\vct e_i\|_{\xi,i}\le r$, Eq.~\eqref{eq:cert-block-sigma} bounds every
+physical block entering the remainders, so
+Eqs.~\eqref{eq:iss-cert-exp-remainder}--\eqref{eq:iss-cert-jinv} give
+$\|\vct\eta_{a,i}\|\le\hat c_ar^2$, $\|\vct\eta_{m,i}\|\le\hat c_mr^2$ and an
+attitude-channel remainder of magnitude at most $\hat c_\theta r^2$.  Summing
+each channel against its own gain \eqref{eq:cert-gamma} bounds the nonlinear
+convolution by $c_{\rm eff}r^2=\nu r$, and the strict inequality
+\eqref{eq:cert-entrance} maps the closed tube into its interior.  Induction
+closes the bootstrap.  Inside the tube the remainder is at most
+$c_{\rm eff}r\|\vct e\|_{\xi}$, so the linear convolution gain is
+$\nu<1$ and the usual discrete comparison gives an exponential rate strictly
+below one together with a finite disturbance gain.
+\end{proof}
+
+Since the budget $(1-c_{\rm eff}r)r$ is maximised at $r=1/(2c_{\rm eff})$, the
+certificate has one headline number: a handoff is admissible when
+\begin{equation}
+\boxed{
+M_{\xi\xi}\|\vct e_{k_H}\|_{\xi,k_H}
++M_{\xi\ell}\|\vct e_{k_H}\|_{\ell,k_H}
++\Gamma_d\bar d
+<\frac{1}{4c_{\rm eff}} .}
+\label{eq:cert-budget}
+\end{equation}
+
+\subsubsection{Constructing the handoff bounds}
+\label{sec:cert-handoff-bounds}
+
+Equation~\eqref{eq:cert-entrance} needs a bound on the \emph{true} error of
+each block at $k_H$.  The covariance cannot supply one.  What follows
+constructs each bound and labels its provenance; the labels are carried in the
+implementation as well, so a certificate can be read rather than trusted.
+
+\paragraph{Attitude}
+The deployed gate certifies the aligned branch
+\eqref{eq:semiglobal-aligned-branch} and a sine residual
+\eqref{eq:semiglobal-sine-gate}, giving
+$\theta_{H,\rm tilt}\le\sin^{-1}(0.075)+\eta_g$ as in
+Eq.~\eqref{eq:semiglobal-handoff-tilt}, and with an accepted magnetic gauge
+$\overline\theta_H=\sin^{-1}(0.075)+\eta_g+\eta_m$.  Neither $\eta_g$ nor
+$\eta_m$ is observable onboard.  A small accelerometer-direction residual is
+the residual of a windowed average, and the part of the orbital specific force
+that survives that window is precisely what $\eta_g$ has to cover; a
+self-consistent learned magnetic reference likewise says nothing about absolute
+heading, and $\eta_m=\sin^{-1}(\delta B_h/B_{h,0})$ is a declaration about the
+reference error.  Both are therefore \emph{configured physical envelope}, and
+the aligned-branch requirement is retained as a hard precondition rather than
+absorbed into either.  Without a magnetic gauge there is no finite
+$\overline\theta_H$ at all and the certificate refuses on those grounds.
+
+\paragraph{Gyro bias}
+The startup proxy carries an integral term whose stationary value is the
+negation of the bias it cancels, so it is a candidate seed, and the coordinate
+mapping is direct: the observer is driven in the same body frame as the filter,
+and only the de-heel composition intervenes.  Only the two components
+perpendicular to measured down are observable from a single vector.  Measured
+against truth at handoff over the reference seas, however, seeding from it is
+worse than not seeding: the integral also winds up against the horizontal
+orbital acceleration, and the wind-up dominates.  The true gyro-bias error at
+handoff is $1.6\times10^{-3}$ to $3.3\times10^{-3}$\,rad/s when the state is
+seeded from the proxy, against $4\times10^{-5}$ to $1\times10^{-4}$\,rad/s when
+it is left at zero, for turn-on draws of order $10^{-4}$\,rad/s.  The seed is
+therefore implemented but disabled, and the bound remains the declared turn-on
+envelope: \emph{configured physical envelope}.
+
+\paragraph{World acceleration}
+Initialising $a_w$ to zero declares the platform still, which in a seaway is
+the one thing it is not.  The bootstrap can do better without any circular
+dependency on the Live estimate: the filter's own measurement model is
+$\vct f_b=\mat R_{wb}(\vct a_w-\vct g)$, so
+$\vct a_{w,H}=\mat R_{bw}\vct f_b+\vct g$ evaluated in the proxy attitude is a
+pure function of the measurements.  Its error is the levelling error times the
+specific-force magnitude plus the accelerometer's own error,
+\begin{equation}
+B_{aw,H}=g\sin\overline\theta_H+\epsilon_{\rm acc}+B_{a,H},
+\label{eq:cert-aw-bound}
+\end{equation}
+which is \emph{analytically constructed} from an envelope.  Measured against
+truth the seed leaves \SI{0.04}{m/s^2} to \SI{0.51}{m/s^2} of error against a
+constructed bound of \SI{1.95}{m/s^2}.
+
+\paragraph{Integral state}
+$S$ is the running integral of $p$, and its lower limit of integration is free:
+$p$, $v$ and the $S=0$ pseudo-measurement model are all invariant under
+$S\mapsto S+\text{const}$, because the pseudo-measurement asserts that the
+displacement has zero running mean and shifting the epoch shifts the assertion
+by the same constant.  Declaring the epoch to be the Live transition is
+therefore a coordinate choice, not an estimate, and it makes
+\begin{equation}
+\boxed{B_{S,H}=0\quad\text{exactly}.}
+\label{eq:cert-S-zero}
+\end{equation}
+The implementation performs the reset at handoff, zeroing the state, dropping
+the $S$ cross-covariances that were learned against the discarded value, and
+leaving a numerical floor in place of the constructor's \SI{50}{m.s}.  This is
+\emph{exact by construction}.  It does not move $S$ out of the sensitive block:
+$\delta S$ is zero only at $k_H$ and grows afterwards, and the
+$S$~pseudo-measurement retains attitude rows through cross-covariance, so
+Remark~\ref{rem:iss-block-phase1} stands.
+
+\paragraph{Velocity and position}
+These are kinematic-only after Phase~1 and enter \eqref{eq:cert-entrance} only
+through $M_{\xi\ell}$.  A measurement-only translational bootstrap was
+considered and then measured rather than built: with $v$ and $p$ entering Live
+at zero, the true errors at handoff over the reference seas are
+\SIrange{0.13}{3.33}{m/s} and \SIrange{0.04}{4.12}{m}, inside a declared
+wave-orbital envelope that has to cover the \SI{8.5}{m} sea in any case, and
+the term they contribute to the budget is smaller than the sensitive one.  The
+bootstrap is therefore not implemented, and this paragraph is the measurement
+that says so.  The bound is \emph{configured physical envelope}, and it scales
+with the sea.
+
+\paragraph{Accelerometer bias}
+The deployed model is $b_a(T)=k_a(T-T_{\rm ref})+\beta_a$ with $\beta_a$ a slow
+OU residual confined by the hard projection of
+Sec.~\ref{sec:iss-live-certificate}.  The projection bounds the
+\emph{estimate}, not the true error; the true residual after temperature
+correction is a calibration property and nothing onboard measures it.  It is
+therefore \emph{configured physical envelope}.
+
+\subsubsection{Coherence of the seed covariance}
+\label{sec:cert-coherence}
+
+Equation~\eqref{eq:cert-entrance} is evaluated in the metric of the covariance
+the filter actually enters Live with, so that covariance and the constructed
+bounds have to describe the same state of knowledge.  Phase~3 found that they
+did not.  The constructor seeds the residual accelerometer bias at
+\SI{0.004}{m/s^2} and re-synchronises $a_w$ to its OU stationary spread of
+\SIrange{0.024}{0.053}{m/s^2}, while the declared calibration and levelling
+envelopes bound the corresponding true errors at \SI{0.05}{m/s^2} and
+\SI{1.95}{m/s^2}.  Entering Live an order of magnitude more confident than the
+declared assumptions allow is overconfidence in the ordinary estimator sense,
+and it also makes the entrance inequality report the disagreement rather than
+the theorem.  The implementation therefore rewrites the seed marginals of the
+envelope-bounded blocks to the constructed bounds themselves---one standard
+deviation equal to a deterministic bound, which is the loosest reading of a
+bound that is still defensible and is not a free parameter.
+
+\subsubsection{Numerical evaluation, and the gap that remains}
+\label{sec:cert-numbers}
+
+Table-free summary of the diagnostic at the eight committed reference
+operating points, with envelopes taken over a \SI{600}{s} established interval:
+$\alpha_k\le1$ everywhere; $M_H\le1.0200$;
+$\Gamma_\theta\in[1.23,1.35]\times10^{7}\,\mathrm{rad}^{-1}$;
+$\Gamma_a\in[1.84,2.00]\times10^{3}\,(\mathrm{m/s^2})^{-1}$;
+$\Gamma_m\in[2.73,3.93]\times10^{2}\,\mu\mathrm{T}^{-1}$.  The scalar
+alternative $M_H/(1-\rho_H)$ is $3.45\times10^{5}$ samples, so the directional
+gains are between one and three orders of magnitude tighter depending on the
+channel.  The resulting slope is strongly sea-dependent:
+$c_{\rm eff}=0.681$ at the \SI{0.27}{m} reference point and $29.28$ at the
+\SI{8.5}{m} one, giving $r_{\rm cert}=1/c_{\rm eff}$ between $1.47$ and
+$0.034$, and a budget $1/(4c_{\rm eff}M_H)$ between $0.360$ and $0.0084$.
+
+Against that budget, the constructed handoff error in metric units is what the
+seed covariance makes of the bounds of
+Sec.~\ref{sec:cert-handoff-bounds}.  With the deployed seed and the default
+declared envelope,
+$\|\vct e_{k_H}\|_{\xi}=13.80$ and $\|\vct e_{k_H}\|_{\ell}=4.02$, so the left
+side of Eq.~\eqref{eq:cert-budget} is $18.17$ and the inequality would close
+only for $c_{\rm eff}<0.0138$.  With the coherent seed of
+Sec.~\ref{sec:cert-coherence} the same bounds give $2.74$ and $1.41$, a left
+side of $4.24$, and $c_{\rm eff}<0.0589$.  Both numbers are regenerated by
+\texttt{live\_entrance\_certificate-test} rather than quoted from a draft.
+
+The certificate therefore does \emph{not} certify the deployed handoff.  It is
+short by a factor of about $50$ at the calmest reference point and about
+$2100$ at the roughest with the deployed seed, and by about $12$ and $500$ with
+the coherent one.  The coherent seed is not enabled by default: making it so
+moves the scored pitch RMS on one reference record from inside its committed
+limit to outside it, and buying a factor the theorem still cannot use at the
+cost of a measured accuracy regression is not a trade worth making.
+
+That result is reported rather than tuned away, and it should be read against
+where Phase~2 stood.  The transition constant alone has moved from $565.6$ to
+$1.020$, a factor of $554$, and the injection gains have moved by a further one
+to three orders of magnitude on the fast channels.  What is left is dominated
+by two terms that are structural rather than incidental: $\Gamma_\theta$, the
+$\sim\!\SI{100}{s}$ memory of the attitude channel, multiplied by the attitude
+correction the $S$~pseudo-measurement and the magnetometer produce; and
+$\Gamma_a\hat c_a$, the accelerometer residual remainder
+$\|\delta\vct\theta\|\|\delta\vct a_w\|$.  Both grow with sea state, which is
+why the calm and rough reference points differ by a factor of $43$.  Closing
+the remaining gap requires either a structural change to the
+$S$-to-attitude cross-gain---which is the change
+Remark~\ref{rem:iss-block-phase1} already identifies as the one that would move
+$S$ out of the sensitive block---or a sharper treatment of the quadratic
+remainder than a single isotropic coefficient.  Neither is attempted here, and
+neither is assumed.
+
+\subsubsection{Theorem-certified and ordinary Live}
+\label{sec:cert-state-machine}
+
+The implementation keeps the two apart.  A Live interval is
+\emph{theorem-certified} only when the startup proxy is ready, the aligned
+branch holds, the magnetic gauge is available when the Live observability
+hypothesis requires it, and Eq.~\eqref{eq:cert-entrance} holds for the seed
+that was installed.  Every other Live interval---including every
+timeout-forced handoff, which by construction does not test the residual
+magnitude---is \emph{uncertified}.  The distinction is exposed rather than
+folded into a single flag, and nothing downstream may report an uncertified
+interval as covered by Theorem~\ref{thm:semiglobal-proxy-live}.
+
+Certification is not permanent.  The hard maps the preceding sections already
+treat as Live-interval boundaries---the $70^\circ$ tilt re-lock on either
+branch, the second magnetic re-gauging, and any return to Cold---end the
+interval the certificate was issued for, and the implementation clears the
+certification when they occur.  Continuous re-certification during a Live
+interval is deliberately not attempted: the entrance condition is what
+Theorem~\ref{thm:cert-metric-entrance} needs, and a running check would have to
+re-establish the interval envelopes, not merely the state.
+
+Evaluating the certificate never withholds a handoff in the deployed
+configuration.  A filter that refuses to start because a proof did not close
+leaves a vessel with no estimate at all, which is the worse failure; the
+optional gate exists for deployments that judge otherwise.
+
+\subsubsection{Truth-based validation}
+\label{sec:cert-validation}
+
+Simulation has truth, so the safety property can be checked directly rather
+than argued.  \texttt{live\_handoff\_validation.cpp} synthesises seas at the
+eight committed reference $(H_s,T_p)$ pairs---synthesised rather than replayed,
+because what is needed is exact truth for $v$, $p$, $a_w$, the body rate and
+the attitude at one specific sample---and drives the deployed wrapper from cold
+through $91$ scenarios: eight seas by three seeds by three wave phases with
+gyro- and accelerometer-bias draws, plus large initial roll/pitch/yaw,
+attitudes $170^\circ$ from level and so near but not on the antipodal set,
+delayed magnetometer availability, sea state changing during startup, magnetic
+reference errors at the edge of the declared envelope, and runs with no
+magnetometer at all.  At every attempted handoff it records the true error of
+each block, the bound that block was certified against, both sides of the basin
+inequality, and the outcome.
+
+The property the theorem claims is one-directional: if a handoff is certified,
+every true handoff error must be inside the bound it was certified against.
+Since the certificate currently certifies nothing, checking only certified
+handoffs would be vacuous, so the test enforces the unconditional form
+instead---on \emph{every} handoff, each finite constructed bound must bound the
+true error.  Over the $91$ scenarios it does, with no violations and a worst
+conservatism ratio of $1.07$; the two halves of the attitude bound are checked
+apart, because their sum can hold while one of the two assumptions does not.
+Two identities are checked separately: the integral state is exactly zero at
+every handoff, and a handoff with no magnetic gauge is never certified.  All
+$91$ scenarios reach Live, the latest at \SI{75}{s}, so the certificate does
+not withhold the handoff.  The run also reports, for each scenario, the largest
+$c_{\rm eff}$ that would have certified it, which turns a rejection into a
+number and separates the part of the gap that belongs to the handoff from the
+part that belongs to the interval.
+
+The declared envelope in that test is wider than the library defaults, and
+deliberately so: an envelope is a declaration, a deployment has to declare one
+that covers what it will see, and declaring one that the scenario family then
+leaves would be applying the theorem outside its own hypotheses rather than
+testing it harder.  For the same reason the bias draws are uniform inside a
+ball rather than Gaussian---a Gaussian leaves any finite envelope eventually,
+and a failure for that reason would be the theorem correctly declining to cover
+a case, not a defect in it.

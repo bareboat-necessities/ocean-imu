@@ -162,6 +162,40 @@ public:
     // exists and applies its own quality gate, so it reads this instead.
     bool isInitialized() const noexcept { return initialized_; }
 
+    // Gyro-bias estimate carried by the observer's integral term [rad/s],
+    // in the raw body frame the observer is driven in.
+    //
+    // Mahony adds its integral state to the measured rate before propagating,
+    // so that state converges to the negation of the bias it is cancelling:
+    // with a measured rate w_m = w + b, an unbiased propagation needs
+    // w_m + integralFB = w, hence integralFB -> -b.  The sign is undone here
+    // so the caller gets the bias itself.
+    //
+    // Only the two components perpendicular to measured down are observable
+    // from a single vector; the component about it is a gauge direction the
+    // accelerometer cannot see, and it drifts.  A consumer that needs a bound
+    // has to declare that third component rather than read it.
+    Eigen::Vector3f gyroBiasEstimate() const noexcept {
+        if (!(two_ki_ > 0.0f)) return Eigen::Vector3f::Zero();
+        const Eigen::Vector3f b(-ahrs_.integralFBx,
+                                -ahrs_.integralFBy,
+                                -ahrs_.integralFBz);
+        if (!b.allFinite()) return Eigen::Vector3f::Zero();
+        return b;
+    }
+
+    // Down direction in body coordinates, i.e. the axis the bias estimate
+    // above is unobservable about.
+    Eigen::Vector3f downBody() const noexcept {
+        const float w = ahrs_.q0, x = ahrs_.q1, y = ahrs_.q2, z = ahrs_.q3;
+        const Eigen::Vector3f d(2.0f * (x * z - w * y),
+                                2.0f * (y * z + w * x),
+                                w * w - x * x - y * y + z * z);
+        const float n = d.norm();
+        if (!(n > 1e-6f) || !std::isfinite(n)) return Eigen::Vector3f::UnitZ();
+        return d / n;
+    }
+
     float elapsedSec() const noexcept { return elapsed_sec_; }
 
     // BODY -> NED attitude of the private observer.

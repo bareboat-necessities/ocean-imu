@@ -1,6 +1,46 @@
+// Interval constants of the OU-III Live-basin certificate, evaluated on the
+// eight committed SpectralMSE reference operating points.
+//
+// Phase 2 established the certificate in a fixed dimensionless Euclidean norm
+// and reported that the deployed schedule contracts in the Riccati metric but
+// not in that Euclidean norm over 30 s -- the 5000 s residual-bias OU mode
+// produces a long non-normal transient.  Converting the metric contraction
+// back into the fixed norm cost a factor sqrt(pbar/punder) ~ 566, and that
+// factor is what made the resulting basin radius meaningless.
+//
+// Phase 3 carries the whole argument in the metric instead.  Two things fall
+// out of that and are checked here:
+//
+//   1. The one-sample gain in the covariance metric is at most one, for every
+//      sample, with no hypothesis at all.  This is the Joseph identity: with
+//      A = (I-KC)F,
+//        A P A^T = P^+ - K R K^T - (I-KC) Q (I-KC)^T  <=  P^+,
+//      so ||L^+{-1} A L||_2 <= 1.  The prefix constant of the horizon
+//      certificate is therefore exactly 1 rather than a measured envelope,
+//      and M_H = rho_H^{-(H-1)} sits just above one instead of at ~600.
+//      alpha_max below is the numerical witness.
+//
+//   2. The metric norms are invariant under the fixed diagonal scaling, since
+//      ||D e||_{(D P D)^{-1}} = ||e||_{P^{-1}}.  The certificate therefore no
+//      longer depends on the choice of physical scales at all.  The Phase-2
+//      scaled quantities are still reported, unchanged, as the regression
+//      witness they were.
+//
+// What the small-gain slope needs on top of that is the size of the nonlinear
+// remainder measured in the same metric.  Bounding it with a single
+// M_H/(1-rho_H) prices every injection at the slowest mode's memory.  The
+// directional l1 injection gains below price each channel at its own: an
+// attitude-reset remainder, an accelerometer residual remainder and a
+// magnetometer residual remainder decay at very different rates, and the
+// accelerometer channel in particular is nearly two orders of magnitude
+// cheaper than the scalar bound admits.
+//
+// Reference replay remains feasibility evidence.  An operating trajectory is
+// certified only if it satisfies its own interval envelopes.
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -23,6 +63,7 @@ using Vec3 = Eigen::Vector3d;
 using Mat3 = Eigen::Matrix3d;
 using Mat21 = Eigen::Matrix<double, 21, 21>;
 using Mat3x21 = Eigen::Matrix<double, 3, 21>;
+using Mat21x3 = Eigen::Matrix<double, 21, 3>;
 
 constexpr int OFF_TH = 0;
 constexpr int OFF_BG = 3;
@@ -33,6 +74,29 @@ constexpr int OFF_AW = 15;
 constexpr int OFF_BA = 18;
 constexpr double DT = 1.0 / 200.0;
 constexpr int HORIZON_STEPS = 30 * 200;
+
+// Established-interval window.  The certificate's interval envelopes are the
+// suprema over this window, taken after the seed covariance has settled; the
+// settling transient itself is an explicit hypothesis of the theorem rather
+// than something these numbers cover.  See the paper's discussion of the
+// handoff-to-established map.
+//
+// The window length is part of the declaration, not a free parameter: the
+// residual-bias marginal grows slowly over a Live interval, so a certificate
+// issued against a 300 s envelope is a statement about a 300 s interval.
+// --long widens both windows for offline work; CI runs the default.
+constexpr double SETTLE_SEC = 30.0;
+
+struct Horizons {
+    int envelope_steps = 600 * 200;
+    int impulse_steps  = 2000 * 200;
+    int alpha_stride   = 1;
+};
+
+// The one-sample metric gain is bounded by an identity rather than by a
+// hypothesis, so a stride would still be a sufficient regression witness for
+// the identity holding in the implementation.  The default checks every
+// sample because it is affordable at these horizons.
 
 struct OperatingPoint {
     const char* name;
@@ -64,24 +128,22 @@ Mat3 skew(const Vec3& v) {
     return M;
 }
 
-double norm2(const Mat21& A) {
-    // Singular values only.  Thin U/V are invalid for fixed-size Eigen
-    // matrices and are unnecessary for an induced 2-norm.
-    Eigen::JacobiSVD<Mat21> svd(A);
-    return svd.singularValues()(0);
-}
-
+// Singular values only.  Thin U/V are invalid for fixed-size Eigen matrices
+// and are unnecessary for an induced 2-norm.
 template <int R, int C>
 double norm2_fixed(const Eigen::Matrix<double, R, C>& A) {
     Eigen::JacobiSVD<Eigen::Matrix<double, R, C>> svd(A);
     return svd.singularValues()(0);
 }
 
+double norm2(const Mat21& A) { return norm2_fixed<21, 21>(A); }
+
 Mat21 state_scale() {
-    // Fixed proof coordinates.  These are design scales, not fitted weights:
-    // magnetically gauged handoff yaw sigma, constructor gyro-bias sigma,
-    // constructor v/p/S sigmas, wrapper a_w safety ceiling, and the hard b_a
-    // projection radius respectively.
+    // Fixed Phase-2 proof coordinates.  These are design scales, not fitted
+    // weights: magnetically gauged handoff yaw sigma, constructor gyro-bias
+    // sigma, constructor v/p/S sigmas, wrapper a_w safety ceiling, and the
+    // hard b_a projection radius respectively.  Phase 3 does not depend on
+    // them; they are kept so the Phase-2 columns stay comparable.
     Mat21 S = Mat21::Zero();
     S.diagonal().segment<3>(OFF_TH).setConstant(0.087);  // rad
     S.diagonal().segment<3>(OFF_BG).setConstant(0.001);  // rad/s
@@ -93,8 +155,7 @@ Mat21 state_scale() {
     return S;
 }
 
-Mat21 correction_transition(const Eigen::Matrix<double, 21, 3>& K,
-                            const Mat3x21& C) {
+Mat21 correction_transition(const Mat21x3& K, const Mat3x21& C) {
     return Mat21::Identity() - K * C;
 }
 
@@ -134,7 +195,11 @@ Mat3x21 S_jacobian() {
 
 struct StepResult {
     Mat21 A = Mat21::Identity();
+    Mat21x3 Ka = Mat21x3::Zero();
+    Mat21x3 Km = Mat21x3::Zero();
+    Mat21x3 KS = Mat21x3::Zero();
     bool pseudo = false;
+    bool mag = false;
 };
 
 StepResult step(Core& f, int k, const Vec3& mag_world) {
@@ -149,19 +214,22 @@ StepResult step(Core& f, int k, const Vec3& mag_world) {
     const double elapsed_after = f.pseudo_update_elapsed_s_;
     const bool pseudo = elapsed_after < elapsed_before + DT - 1e-10;
     if (pseudo) {
-        const Mat3x21 C = S_jacobian();
-        A = correction_transition(f.K_scratch_, C) * A;
+        out.KS = f.K_scratch_;
+        A = correction_transition(out.KS, S_jacobian()) * A;
     }
 
     const Mat3x21 Ca = accel_jacobian(f);
     f.measurement_update_acc_only(acc, 35.0);
-    A = correction_transition(f.K_scratch_, Ca) * A;
+    out.Ka = f.K_scratch_;
+    A = correction_transition(out.Ka, Ca) * A;
 
     // Reference simulations provide a 100 Hz magnetometer against 200 Hz IMU.
     if ((k & 1) == 0) {
         const Mat3x21 Cm = mag_jacobian(f);
         f.measurement_update_mag_only(mag_world);
-        A = correction_transition(f.K_scratch_, Cm) * A;
+        out.Km = f.K_scratch_;
+        A = correction_transition(out.Km, Cm) * A;
+        out.mag = true;
     }
 
     out.A = A;
@@ -172,9 +240,7 @@ StepResult step(Core& f, int k, const Vec3& mag_world) {
 // Induced norm from the covariance/Riccati metric at the start of a lifted
 // interval to the metric at its end.  If P0=L0 L0^T and P1=L1 L1^T, then
 // ||Psi||_{P0^{-1}->P1^{-1}} = ||L1^{-1} Psi L0||_2.
-double covariance_metric_norm(const Mat21& Psi,
-                              const Mat21& P0,
-                              const Mat21& P1) {
+double covariance_metric_norm(const Mat21& Psi, const Mat21& P0, const Mat21& P1) {
     Eigen::LLT<Mat21> llt0(P0);
     Eigen::LLT<Mat21> llt1(P1);
     if (llt0.info() != Eigen::Success || llt1.info() != Eigen::Success) {
@@ -185,8 +251,7 @@ double covariance_metric_norm(const Mat21& Psi,
     return norm2(B);
 }
 
-std::pair<double,double> scaled_cov_eigen_bounds(const Mat21& P,
-                                                  const Mat21& D) {
+std::pair<double,double> scaled_cov_eigen_bounds(const Mat21& P, const Mat21& D) {
     const Mat21 Pz = D * P * D;
     Eigen::SelfAdjointEigenSolver<Mat21> es(Pz, Eigen::EigenvaluesOnly);
     if (es.info() != Eigen::Success) {
@@ -195,7 +260,12 @@ std::pair<double,double> scaled_cov_eigen_bounds(const Mat21& P,
     return {es.eigenvalues()(0), es.eigenvalues()(20)};
 }
 
+double block_sigma(const Mat21& P, int off) {
+    return std::sqrt(std::max(0.0, norm2_fixed<3,3>(Mat3(P.block<3,3>(off, off)))));
+}
+
 struct Report {
+    // Phase-2 columns, unchanged.
     double chi_euclid = std::numeric_limits<double>::quiet_NaN();
     double prefix_euclid = 0.0;
     double chi_metric = std::numeric_limits<double>::quiet_NaN();
@@ -208,9 +278,28 @@ struct Report {
     double xi_ell = 0.0;
     double xi_all = 0.0;
     int pseudo_count = 0;
+
+    // Phase-3 columns.
+    double alpha_max = 0.0;      // sup one-sample metric gain; must be <= 1
+    double M_H = 0.0;            // rho_H^{-(H-1)}
+    double gamma_theta = 0.0;    // l1 injection gain, attitude channel [1/rad]
+    double gamma_acc = 0.0;      // [1/(m/s^2)]
+    double gamma_mag = 0.0;      // [1/uT]
+    double sigma_theta = 0.0;    // established-interval envelopes
+    double sigma_bg = 0.0;
+    double sigma_S = 0.0;
+    double sigma_aw = 0.0;
+    double sigma_ba = 0.0;
+    double eth_Ka = 0.0;         // attitude rows of each accepted gain
+    double eth_Km = 0.0;
+    double eth_KS = 0.0;
+    double c_eff = 0.0;          // small-gain slope, nu = c_eff * r
+    double r_cert = 0.0;         // 1 / c_eff
+    double budget = 0.0;         // max admissible ||e_H||_{V_H}
+    double tail_share = 0.0;     // fraction of gamma_theta supplied by the bound
 };
 
-Report evaluate(const OperatingPoint& op) {
+Report evaluate(const OperatingPoint& op, const Horizons& hz) {
     const Vec3 sigma_a = Vec3::Constant(0.0294);
     const Vec3 sigma_g = Vec3::Constant(0.000157);
     const Vec3 sigma_m = Vec3::Constant(0.36);
@@ -228,14 +317,58 @@ Report evaluate(const OperatingPoint& op) {
     f.set_pseudo_update_period_s(period);
     f.reset_aw_covariance_to_stationary();
 
-    // Covariance warm-up at the exact equilibrium.  This is not part of the
-    // proof; it makes the margin diagnostic representative of established
-    // Live operation rather than constructor transients.
-    constexpr int warm_steps = 120 * 200;
-    for (int k = 0; k < warm_steps; ++k) {
-        (void)step(f, k, mag_world);
-    }
+    // Accepted-vector magnitude bounds of the ISS geometry hypotheses: the
+    // specific force the accelerometer update may accept, and the field
+    // magnitude the magnetometer update may accept.
+    const double f1 = 9.80665 + 3.0 * op.sigma_aw;
+    const double m1 = mag_world.norm();
+    // Inverse-left-Jacobian constant of the group-composition remainder on
+    // |x| <= theta_c; see the paper.  theta_c = 1 rad.
+    const double theta_c = 1.0;
+    const double j_c = 0.5 + (1.0 / (theta_c * theta_c)
+                              - (1.0 + std::cos(theta_c))
+                                    / (2.0 * theta_c * std::sin(theta_c)))
+                             * theta_c;
 
+    Report r;
+    Mat21 P_prev = f.Pext;
+
+    // ---- pass 1: settle, then take the established-interval envelopes ----
+    const int settle_steps = int(SETTLE_SEC / DT);
+    const int envelope_steps = hz.envelope_steps;
+    double alpha_max = 0.0;
+    for (int k = 0; k < settle_steps + envelope_steps; ++k) {
+        const bool check_alpha = (k % hz.alpha_stride) == 0;
+        Mat21 L0 = Mat21::Identity();
+        bool have_L0 = false;
+        if (check_alpha) {
+            Eigen::LLT<Mat21> llt0(P_prev);
+            have_L0 = (llt0.info() == Eigen::Success);
+            if (have_L0) L0 = llt0.matrixL();
+        }
+        const StepResult s = step(f, k, mag_world);
+        if (check_alpha && have_L0) {
+            Eigen::LLT<Mat21> llt1(f.Pext);
+            if (llt1.info() == Eigen::Success) {
+                const Mat21 B = llt1.matrixL().solve(s.A * L0);
+                alpha_max = std::max(alpha_max, norm2(B));
+            }
+        }
+        if (k >= settle_steps) {
+            r.sigma_theta = std::max(r.sigma_theta, block_sigma(f.Pext, OFF_TH));
+            r.sigma_bg    = std::max(r.sigma_bg,    block_sigma(f.Pext, OFF_BG));
+            r.sigma_S     = std::max(r.sigma_S,     block_sigma(f.Pext, OFF_S));
+            r.sigma_aw    = std::max(r.sigma_aw,    block_sigma(f.Pext, OFF_AW));
+            r.sigma_ba    = std::max(r.sigma_ba,    block_sigma(f.Pext, OFF_BA));
+            r.eth_Ka = std::max(r.eth_Ka, norm2_fixed<3,3>(Mat3(s.Ka.block<3,3>(0,0))));
+            r.eth_Km = std::max(r.eth_Km, norm2_fixed<3,3>(Mat3(s.Km.block<3,3>(0,0))));
+            r.eth_KS = std::max(r.eth_KS, norm2_fixed<3,3>(Mat3(s.KS.block<3,3>(0,0))));
+        }
+        P_prev = f.Pext;
+    }
+    r.alpha_max = alpha_max;
+
+    // ---- pass 2: Phase-2 horizon quantities on the established interval ----
     const Mat21 S = state_scale();
     Mat21 D = Mat21::Zero();
     for (int i = 0; i < 21; ++i) D(i,i) = 1.0 / S(i,i);
@@ -245,12 +378,19 @@ Report evaluate(const OperatingPoint& op) {
     Mat21 Psi_scaled = Mat21::Identity();
     double prefix_euclid = 1.0;
     int pseudo_count = 0;
-
     auto [pz_min, pz_max] = scaled_cov_eigen_bounds(P0, D);
 
+    // Impulse states for the directional l1 gains, launched from this sample.
+    Eigen::Matrix<double,21,9> Z;
+    Z.setZero();
+    for (int j = 0; j < 3; ++j) Z(OFF_TH + j, j) = 1.0;   // 1 rad of attitude remainder
+    bool have_Ka = false, have_Km = false;
+
     for (int k = 0; k < HORIZON_STEPS; ++k) {
-        const StepResult sr = step(f, warm_steps + k, mag_world);
+        const StepResult sr = step(f, k, mag_world);
         if (sr.pseudo) ++pseudo_count;
+        if (!have_Ka) { Z.block<21,3>(0,3) = sr.Ka; have_Ka = true; }
+        if (!have_Km && sr.mag) { Z.block<21,3>(0,6) = sr.Km; have_Km = true; }
 
         Psi_phys = sr.A * Psi_phys;
         const Mat21 Abar = D * sr.A * S;
@@ -262,7 +402,6 @@ Report evaluate(const OperatingPoint& op) {
         pz_max = std::max(pz_max, hi);
     }
 
-    Report r;
     r.chi_euclid = norm2(Psi_scaled);
     r.prefix_euclid = prefix_euclid;
     r.chi_metric = covariance_metric_norm(Psi_phys, P0, f.Pext);
@@ -273,30 +412,105 @@ Report evaluate(const OperatingPoint& op) {
         r.kappa_euclid = std::sqrt(pz_max / pz_min);
     }
     if (r.chi_metric > 0.0 && r.chi_metric < 1.0) {
-        r.rho_metric_sample =
-            std::pow(r.chi_metric, 1.0 / double(HORIZON_STEPS));
+        r.rho_metric_sample = std::pow(r.chi_metric, 1.0 / double(HORIZON_STEPS));
         r.rho_metric_second = std::pow(r.chi_metric, 1.0 / 30.0);
+        // Prefix bound is exactly 1 by the metric monotonicity lemma, so the
+        // horizon certificate's transition constant is just rho^{-(H-1)}.
+        r.M_H = std::pow(r.rho_metric_sample, -(HORIZON_STEPS - 1));
     }
 
-    std::array<int, 15> xi{{0,1,2,3,4,5,12,13,14,15,16,17,18,19,20}};
-    std::array<int, 6> ell{{6,7,8,9,10,11}};
-    Eigen::Matrix<double,15,15> Pxx;
-    Eigen::Matrix<double,15,6> Pxl;
-    Eigen::Matrix<double,15,21> Px;
-    for (int i = 0; i < 15; ++i) {
-        for (int j = 0; j < 15; ++j) Pxx(i,j) = Psi_scaled(xi[i], xi[j]);
-        for (int j = 0; j < 6; ++j) Pxl(i,j) = Psi_scaled(xi[i], ell[j]);
-        for (int j = 0; j < 21; ++j) Px(i,j) = Psi_scaled(xi[i], j);
+    {
+        std::array<int, 15> xi{{0,1,2,3,4,5,12,13,14,15,16,17,18,19,20}};
+        std::array<int, 6> ell{{6,7,8,9,10,11}};
+        Eigen::Matrix<double,15,15> Pxx;
+        Eigen::Matrix<double,15,6> Pxl;
+        Eigen::Matrix<double,15,21> Px;
+        for (int i = 0; i < 15; ++i) {
+            for (int j = 0; j < 15; ++j) Pxx(i,j) = Psi_scaled(xi[size_t(i)], xi[size_t(j)]);
+            for (int j = 0; j < 6; ++j)  Pxl(i,j) = Psi_scaled(xi[size_t(i)], ell[size_t(j)]);
+            for (int j = 0; j < 21; ++j) Px(i,j)  = Psi_scaled(xi[size_t(i)], j);
+        }
+        r.xi_xi = norm2_fixed<15,15>(Pxx);
+        r.xi_ell = norm2_fixed<15,6>(Pxl);
+        r.xi_all = norm2_fixed<15,21>(Px);
     }
-    r.xi_xi = norm2_fixed(Pxx);
-    r.xi_ell = norm2_fixed(Pxl);
-    r.xi_all = norm2_fixed(Px);
+
+    // ---- pass 3: directional l1 injection gains in the metric --------------
+    // Gamma_g = sum_k || Psi(k, i+1) N_g ||_{V_k}: how much of one unit of
+    // remainder injected in channel g the metric still carries, summed over
+    // all later samples.  The scalar bound M_H/(1-rho_H) replaces every one of
+    // these with the slowest mode's memory.
+    const int impulse_steps = hz.impulse_steps;
+    double tail_theta = 0.0, tail_acc = 0.0, tail_mag = 0.0;
+    for (int k = 0; k < impulse_steps; ++k) {
+        const StepResult sr = step(f, HORIZON_STEPS + k, mag_world);
+        Z = sr.A * Z;
+        Eigen::LLT<Mat21> llt(f.Pext);
+        if (llt.info() != Eigen::Success) break;
+        const Eigen::Matrix<double,21,9> Y = llt.matrixL().solve(Z);
+        tail_theta = norm2_fixed<21,3>(Mat21x3(Y.block<21,3>(0,0)));
+        tail_acc   = norm2_fixed<21,3>(Mat21x3(Y.block<21,3>(0,3)));
+        tail_mag   = norm2_fixed<21,3>(Mat21x3(Y.block<21,3>(0,6)));
+        r.gamma_theta += tail_theta;
+        r.gamma_acc   += tail_acc;
+        r.gamma_mag   += tail_mag;
+    }
+
+    // Everything beyond the computed horizon is bounded rather than dropped.
+    // Psi(k, i+1) factors through Psi(k, i+1+K), so Theorem "metric
+    // finite-horizon UES" gives
+    //   sum_{k>K} ||Psi(k,i+1) N||_{V_k} <= ||Z_K||_V * M_H rho_H / (1-rho_H),
+    // which is a genuine upper bound and not an extrapolation.  Truncating
+    // without it would understate the injection gains, which is the unsafe
+    // direction.
+    if (r.rho_metric_sample > 0.0 && r.rho_metric_sample < 1.0) {
+        const double tail_gain =
+            r.M_H * r.rho_metric_sample / (1.0 - r.rho_metric_sample);
+        r.gamma_theta += tail_theta * tail_gain;
+        r.gamma_acc   += tail_acc * tail_gain;
+        r.gamma_mag   += tail_mag * tail_gain;
+        r.tail_share = (r.gamma_theta > 0.0)
+                           ? (tail_theta * tail_gain) / r.gamma_theta : 0.0;
+    }
+
+    // ---- small-gain slope --------------------------------------------------
+    // Inside the metric tube ||e_k||_{V_k} <= R every block obeys
+    // ||delta x_b|| <= sigma_b R, so each remainder is a product of two such
+    // bounds and is quadratic in R with the coefficients below.
+    const double A_g = r.eth_Ka * (f1 * r.sigma_theta + r.sigma_aw + r.sigma_ba)
+                     + r.eth_Km * m1 * r.sigma_theta
+                     + r.eth_KS * r.sigma_S
+                     + DT * r.sigma_bg;
+    const double c_theta = j_c * r.sigma_theta * A_g;
+    const double c_acc   = 0.5 * f1 * r.sigma_theta * r.sigma_theta
+                         + r.sigma_theta * r.sigma_aw;
+    const double c_mag   = 0.5 * m1 * r.sigma_theta * r.sigma_theta;
+
+    r.c_eff = r.gamma_theta * c_theta + r.gamma_acc * c_acc + r.gamma_mag * c_mag;
+    if (r.c_eff > 0.0) {
+        r.r_cert = 1.0 / r.c_eff;
+        // (1 - c_eff r) r is maximised at r = 1/(2 c_eff).
+        const double r_opt = 0.5 / r.c_eff;
+        r.budget = (1.0 - r.c_eff * r_opt) * r_opt / std::max(1.0, r.M_H);
+    }
     return r;
 }
 
 }  // namespace
 
-int main() {
+int main(int argc, char** argv) {
+    // CI runs the default horizons.  --long widens both windows for offline
+    // work; it changes the interval the envelopes describe, so the two are not
+    // interchangeable and the certificate constants are quoted for the
+    // default.
+    Horizons hz;
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "--long") {
+            hz.envelope_steps = 1800 * 200;
+            hz.impulse_steps = 4000 * 200;
+        }
+    }
+
     std::cout << std::setprecision(12);
     std::cout << "PHASE2_SCALES s_theta=0.087 s_bg=0.001 s_v=1 s_p=20 s_S=50 s_aw=6 s_ba=0.5\n";
     std::cout << "name,tau,sigma_aw,rS,chiE30,prefixE30,chiV30,rhoV_sample,rhoV_second,pz_min,pz_max,kappaE,xi_xiE30,xi_ellE30,xi_allE30,pseudo_count\n";
@@ -309,8 +523,21 @@ int main() {
     double global_pz_max = 0.0;
     bool all_metric_contract = true;
 
-    for (const auto& op : kReferencePoints) {
-        const Report r = evaluate(op);
+    double worst_alpha = 0.0;
+    double worst_M_H = 0.0;
+    double worst_c_eff = 0.0;
+    double worst_gamma_theta = 0.0;
+    double worst_gamma_acc = 0.0;
+    double worst_gamma_mag = 0.0;
+    double smallest_budget = std::numeric_limits<double>::infinity();
+    double smallest_r_cert = std::numeric_limits<double>::infinity();
+
+    std::array<Report, 8> reports{};
+
+    for (size_t i = 0; i < kReferencePoints.size(); ++i) {
+        const OperatingPoint& op = kReferencePoints[i];
+        const Report r = evaluate(op, hz);
+        reports[i] = r;
         std::cout << op.name << ',' << op.tau << ',' << op.sigma_aw << ',' << op.rS
                   << ',' << r.chi_euclid << ',' << r.prefix_euclid
                   << ',' << r.chi_metric << ',' << r.rho_metric_sample
@@ -329,6 +556,15 @@ int main() {
             std::max(worst_rho_metric_second, r.rho_metric_second);
         global_pz_min = std::min(global_pz_min, r.pz_min);
         global_pz_max = std::max(global_pz_max, r.pz_max);
+
+        worst_alpha = std::max(worst_alpha, r.alpha_max);
+        worst_M_H = std::max(worst_M_H, r.M_H);
+        worst_c_eff = std::max(worst_c_eff, r.c_eff);
+        worst_gamma_theta = std::max(worst_gamma_theta, r.gamma_theta);
+        worst_gamma_acc = std::max(worst_gamma_acc, r.gamma_acc);
+        worst_gamma_mag = std::max(worst_gamma_mag, r.gamma_mag);
+        smallest_budget = std::min(smallest_budget, r.budget);
+        smallest_r_cert = std::min(smallest_r_cert, r.r_cert);
     }
 
     const double global_kappa =
@@ -354,15 +590,65 @@ int main() {
               << " all_reference_metric_contract=" << (all_metric_contract ? 1 : 0)
               << '\n';
 
+    std::cout << "PHASE3_POINTS name,alpha_max,M_H,gamma_theta,gamma_acc,gamma_mag,"
+                 "sigma_theta,sigma_bg,sigma_S,sigma_aw,sigma_ba,"
+                 "EthKa,EthKm,EthKS,c_eff,r_cert,budget,gamma_theta_tail_share\n";
+    for (size_t i = 0; i < kReferencePoints.size(); ++i) {
+        const Report& r = reports[i];
+        std::cout << "PHASE3_ROW " << kReferencePoints[i].name
+                  << ',' << r.alpha_max << ',' << r.M_H
+                  << ',' << r.gamma_theta << ',' << r.gamma_acc << ',' << r.gamma_mag
+                  << ',' << r.sigma_theta << ',' << r.sigma_bg << ',' << r.sigma_S
+                  << ',' << r.sigma_aw << ',' << r.sigma_ba
+                  << ',' << r.eth_Ka << ',' << r.eth_Km << ',' << r.eth_KS
+                  << ',' << r.c_eff << ',' << r.r_cert << ',' << r.budget
+                  << ',' << r.tail_share << '\n';
+    }
+
+    std::cout << "PHASE3_SUMMARY worst_alpha=" << worst_alpha
+              << " worst_M_H=" << worst_M_H
+              << " worst_gamma_theta=" << worst_gamma_theta
+              << " worst_gamma_acc=" << worst_gamma_acc
+              << " worst_gamma_mag=" << worst_gamma_mag
+              << " worst_c_eff=" << worst_c_eff
+              << " smallest_r_cert=" << smallest_r_cert
+              << " smallest_budget=" << smallest_budget
+              << " scalar_l1_gain=" << (rho_sample > 0.0 ? worst_M_H / (1.0 - rho_sample) : 0.0)
+              << '\n';
+
     // The fixed Euclidean norm is deliberately reported but not required to
     // contract over 30 s: the 5000 s residual-bias OU mode produces a long
-    // non-normal transient.  The constructive certificate uses the Riccati
-    // covariance as its time-varying Lyapunov metric and converts back to the
-    // fixed physical coordinates through the reported covariance eigenvalue
-    // bounds.  Reference replay remains evidence, not a uniform proof.
+    // non-normal transient.  Phase 3 carries the certificate in the metric and
+    // never converts back, so that column is a witness rather than a
+    // requirement.
     if (!all_metric_contract) {
         std::cerr << "FAIL: at least one deployed reference operating point did not contract in the Riccati metric over 30 s\n";
         return 1;
     }
+
+    // The metric monotonicity lemma is an identity, not a hypothesis.  A
+    // one-sample metric gain above one would mean the Joseph update in the
+    // implementation is no longer the Joseph update the lemma is about, which
+    // invalidates M_H and everything downstream of it.
+    if (!(worst_alpha <= 1.0 + 1e-9)) {
+        std::cerr << "FAIL: one-sample covariance-metric gain exceeded 1 (alpha_max="
+                  << worst_alpha << "); the metric monotonicity lemma no longer holds\n";
+        return 1;
+    }
+
+    // M_H is the constant Phase 2 had to take as ~600 after converting the
+    // metric contraction back to fixed Euclidean coordinates.  Losing that
+    // improvement would silently restore the meaningless Phase-2 radius.
+    if (!(worst_M_H < 2.0)) {
+        std::cerr << "FAIL: metric transition constant M_H=" << worst_M_H
+                  << " is no longer close to one\n";
+        return 1;
+    }
+
+    if (!(worst_c_eff > 0.0) || !std::isfinite(worst_c_eff)) {
+        std::cerr << "FAIL: small-gain slope is not a finite positive number\n";
+        return 1;
+    }
+
     return 0;
 }

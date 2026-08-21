@@ -83,6 +83,8 @@ vertical_accel_drift_*.csv
 tests/*/*-sim
 tests/*/*-test
 tests/freq/freq-track
+tests/kalman_ou_iii/live_basin_diagnostic
+tests/kalman_ou_iii/live_handoff_validation
 tests/pii_observer/pii_observer-adaptive
 tests/wave_sim/wave-convention-check
 
