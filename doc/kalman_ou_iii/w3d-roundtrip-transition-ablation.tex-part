@@ -33,20 +33,13 @@ closed through both transitions.
         coordinates {(400,0) (400,1.05) (520,1.05) (520,0)} \closedcycle;
       \addplot[draw=none,fill=black,fill opacity=0.07]
         coordinates {(800,0) (800,1.05) (920,1.05) (920,0)} \closedcycle;
-      \addplot[very thick] coordinates {
-        (300,0)
-        (400,0)
-        (430,0.103515625)
-        (460,0.5)
-        (490,0.896484375)
-        (520,1)
-        (800,1)
-        (830,0.896484375)
-        (860,0.5)
-        (890,0.103515625)
-        (920,0)
-        (1200,0)
-      };
+      \addplot[very thick,domain=300:400,samples=2] {0};
+      \addplot[very thick,domain=400:520,samples=61]
+        {((x-400)/120)^3*(10-15*((x-400)/120)+6*((x-400)/120)^2)};
+      \addplot[very thick,domain=520:800,samples=2] {1};
+      \addplot[very thick,domain=800:920,samples=61]
+        {1-((x-800)/120)^3*(10-15*((x-800)/120)+6*((x-800)/120)^2)};
+      \addplot[very thick,domain=920:1200,samples=2] {0};
     \end{axis}
   \end{tikzpicture}
   \caption{Round-trip transition protocol used by the OU--III regularizer-law
