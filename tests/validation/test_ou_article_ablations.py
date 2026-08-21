@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 
+import csv
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 DOC = ROOT / "doc" / "kalman_ou_iii"
+MISMATCH_SUMMARY = (
+    ROOT / "reports" / "results" / "model_mismatch_ablation"
+    / "model_mismatch_summary.csv"
+)
 
 
 class OuArticleAblationContractTests(unittest.TestCase):
@@ -31,18 +36,37 @@ class OuArticleAblationContractTests(unittest.TestCase):
         text = (DOC / "w3d-baseline-comparison.tex-part").read_text(
             encoding="utf-8"
         )
-        self.assertNotIn(r"\includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_transition}", text)
+        self.assertNotIn(
+            r"\includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_transition}",
+            text,
+        )
         self.assertIn(r"Sec.~\ref{sec:roundtrip-transition-ablation}", text)
 
     def test_model_mismatch_table_matches_committed_summary(self):
         text = (DOC / "w3d-model-mismatch-ablation.tex-part").read_text(
             encoding="utf-8"
         )
+        normalized = " ".join(text.split())
         self.assertIn(r"\texttt{--no-noise}", text)
-        self.assertIn("OU--III & 0.246 & 0.174 & 0.140 & 0.332 & 11.87", text)
-        self.assertIn("OU--II  & 0.333 & 0.224 & 0.240 & 0.467 & 20.32", text)
-        self.assertIn("TFG     & 0.542 & 0.199 & 0.155 & 0.598 & 13.15", text)
         self.assertIn("not pure plant-model mismatch", text)
+
+        with MISMATCH_SUMMARY.open(encoding="utf-8", newline="") as stream:
+            rows = {row["family"]: row for row in csv.DictReader(stream)}
+
+        tex_names = {"OU-II": "OU--II", "OU-III": "OU--III", "TFG": "TFG"}
+        for family in ("OU-II", "OU-III", "TFG"):
+            row = rows[family]
+            expected = " ".join(
+                (
+                    tex_names[family], "&",
+                    f"{float(row['disp_x_rms_m']):.3f}", "&",
+                    f"{float(row['disp_y_rms_m']):.3f}", "&",
+                    f"{float(row['disp_z_rms_m']):.3f}", "&",
+                    f"{float(row['disp_3d_rms_m']):.3f}", "&",
+                    f"{float(row['disp_z_pct_refrms']):.2f}",
+                )
+            )
+            self.assertIn(expected, normalized)
 
 
 if __name__ == "__main__":
