@@ -64,14 +64,13 @@ Mat3 skew(const Vec3& v) {
 }
 
 double norm2(const Mat21& A) {
-    Eigen::JacobiSVD<Mat21> svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Eigen::JacobiSVD<Mat21> svd(A);
     return svd.singularValues()(0);
 }
 
 template <int R, int C>
 double norm2_fixed(const Eigen::Matrix<double, R, C>& A) {
-    Eigen::JacobiSVD<Eigen::Matrix<double, R, C>> svd(
-        A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Eigen::JacobiSVD<Eigen::Matrix<double, R, C>> svd(A);
     return svd.singularValues()(0);
 }
 
