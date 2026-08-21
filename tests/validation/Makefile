@@ -8,12 +8,14 @@ build:
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
 		../../tools/ou_publication_sync.py \
+		../../tools/ou_live_basin_interval_proof.py \
 		../../tools/rotate_record_heading.py \
 		test_ou_validation.py \
 		test_ou_robustness.py \
 		test_ou_rs_law_ablation.py \
 		test_ou_article_ablations.py \
 		test_ou_evidence_contract.py \
+		test_ou_computer_assisted_live_basin.py \
 		test_source_archive_provenance.py \
 		test_record_conventions.py \
 		test_publication_references.py \
