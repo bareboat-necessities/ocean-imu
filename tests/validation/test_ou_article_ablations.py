@@ -32,15 +32,38 @@ class OuArticleAblationContractTests(unittest.TestCase):
         self.assertIn("low-return", text)
         self.assertIn("high-to-low", text)
 
-    def test_article_no_longer_renders_legacy_one_way_transition_svg(self):
-        text = (DOC / "w3d-baseline-comparison.tex-part").read_text(
+    def test_each_transition_protocol_renders_its_own_diagnostic(self):
+        # Both protocols are shown the same way -- sea state, wave shapes,
+        # vertical error and the applied tuning traces -- so the round-trip
+        # figure cannot regress to an abstract plot of the blend weight while
+        # the one-way figure keeps its time-domain evidence.
+        baseline = (DOC / "w3d-baseline-comparison.tex-part").read_text(
             encoding="utf-8"
         )
-        self.assertNotIn(
+        self.assertIn(
             r"\includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_transition}",
-            text,
+            baseline,
         )
-        self.assertIn(r"Sec.~\ref{sec:roundtrip-transition-ablation}", text)
+        self.assertIn(r"Sec.~\ref{sec:roundtrip-transition-ablation}", baseline)
+
+        ablation = (DOC / "w3d-roundtrip-transition-ablation.tex-part").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            r"\includesvg[width=\columnwidth,inkscapelatex=false]{ou_rs_roundtrip_transition}",
+            ablation,
+        )
+        self.assertNotIn("high-sea blend weight", ablation)
+        self.assertIn(r"Fig.~\ref{fig:ou_transition}", ablation)
+
+    def test_roundtrip_figure_is_mirrored_from_the_generated_evidence(self):
+        generated = (
+            ROOT / "reports" / "results" / "ou_rs_law"
+            / "ou_rs_roundtrip_transition.svg"
+        )
+        mirrored = DOC / "ou_rs_roundtrip_transition.svg"
+        self.assertTrue(generated.exists(), generated)
+        self.assertEqual(generated.read_bytes(), mirrored.read_bytes())
 
     def test_model_mismatch_table_matches_committed_summary(self):
         text = (DOC / "w3d-model-mismatch-ablation.tex-part").read_text(
