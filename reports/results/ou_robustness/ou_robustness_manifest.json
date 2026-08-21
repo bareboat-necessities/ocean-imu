@@ -5,8 +5,8 @@
       "sha256": "b00dd5e91efb522ee9ce3ab69fada59c507c88275a6ec2de85988898ad594886"
     },
     "tools/ou_validation.py": {
-      "bytes": 157188,
-      "sha256": "6c19adbae3bcbb4b21d6b2ea605d009c865f3b5834f9fa6c4f25f44f0672b286"
+      "bytes": 159028,
+      "sha256": "4ad57e12c6de9e69b1f3bb457f42f231d45250a03c0a991d4ddf78e7ce9ee579"
     }
   },
   "build_environment": {
@@ -42,8 +42,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "f5007556815d2f54760e0c1aac68b880e4c61888",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 38412 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |    58 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1400 +-\n .../ou_robustness/ou_robustness_publication.tex    |    22 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1548 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   525 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1736 +-\n 8 files changed, 22195 insertions(+), 22126 deletions(-)",
+  "git_commit": "e9bfbb2691465844102a139d9f744ffa2baabe59",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -285,8 +285,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-21T12:30:16+00:00",
-    "git_commit": "f5007556815d2f54760e0c1aac68b880e4c61888",
+    "generated_at": "2026-08-21T13:37:40+00:00",
+    "git_commit": "e9bfbb2691465844102a139d9f744ffa2baabe59",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -425,7 +425,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "32480060072",
+      "run_id": "32484849665",
       "workflow": "build"
     }
   },
