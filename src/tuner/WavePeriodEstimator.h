@@ -40,8 +40,8 @@ public:
     // log_smoothing_periods: canonical log(T_z) EMA time constant in T_z units.
     // min/max_horizon_sec: absolute guards on the moment horizon only.
     explicit WavePeriodEstimator(float high_pass_hz = 0.02f,
-                                 float moment_horizon_periods = 8.0f,
-                                 float log_smoothing_periods = 0.50f,
+                                 float moment_horizon_periods = 4.0f,
+                                 float log_smoothing_periods = 0.05f,
                                  float min_horizon_sec = 20.0f,
                                  float max_horizon_sec = 180.0f)
         : lambda_(2.0f * 3.14159265358979323846f * std::max(1e-4f, high_pass_hz)),
