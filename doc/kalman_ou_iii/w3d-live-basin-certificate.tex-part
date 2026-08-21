@@ -1,0 +1,269 @@
+\subsection{Constructive Phase-2 Live-Basin Certificate}
+\label{sec:iss-live-certificate}
+
+The preceding block-local theorem is uniform but existential: the constants
+$M_{\xi\xi}$, $M_{\xi\ell}$, $M_\xi$, $\rho$, $c_\xi$, and $r_\xi$ are not
+numerical objects that the implementation can inspect.  This subsection turns
+that statement into a constructive certificate without replacing a proof by a
+finite grid.  The certificate has two parts.  First, a finite-horizon norm test
+on the \emph{actual} closed-loop linearized transition supplies explicit UES
+constants.  Second, closed-form rotation inequalities and bounded Kalman gains
+supply an explicit quadratic-remainder constant.  The reference-sea replay at
+the end of the subsection is used only to report margin for the deployed
+operating points; it is not used to establish uniform stability.
+
+\subsubsection{Fixed dimensionless coordinates}
+
+The scaling of Eqs.~\eqref{eq:iss-block-xi}--\eqref{eq:iss-block-ell} is fixed
+before the certificate is evaluated.  We use
+\begin{equation}
+\boxed{
+\begin{aligned}
+s_\theta&=0.087\ {\rm rad},&
+s_{bg}&=10^{-3}\ {\rm rad/s},\\
+s_v&=1\ {\rm m/s},&
+s_p&=20\ {\rm m},\\
+s_S&=50\ {\rm m\,s},&
+s_{aw}&=6\ {\rm m/s^2},\\
+s_{ba}&=0.5\ {\rm m/s^2}.&&
+\end{aligned}}
+\label{eq:iss-cert-scales}
+\end{equation}
+These are design anchors rather than optimized matrix-balancing weights.
+Specifically, $s_\theta$ is the magnetically gauged Live yaw standard deviation,
+$s_{bg}$ is the square root of the constructor gyro-bias variance, $s_v,s_p,s_S$
+are the constructor linear-state standard deviations, $s_{aw}$ is the deployed
+stationary-acceleration safety ceiling, and $s_{ba}$ is the hard residual
+accelerometer-bias projection radius.  Fixing them a priori prevents a posteriori
+rescaling from manufacturing a favorable contraction norm.
+
+Let $\mat D$ be the corresponding full $21\times21$ diagonal scaling, so that
+$\vct z=\mat D\vct e$.  In the remainder of this subsection all matrix norms are
+induced Euclidean norms in these fixed coordinates.
+
+\subsubsection{Exact finite-horizon contraction certificate}
+
+At a normal Live sample, every matrix needed by the homogeneous linearized error
+map is already available to the filter: the exact prediction transition,
+accepted measurement Jacobians, Kalman gains, and the MEKF reset Jacobian.  If
+$u$ indexes the accepted corrections in their executed order, define
+\begin{equation}
+\mat J_{u,k}=\mat G_{{\rm reset},u,k}
+              (\mat I-\mat K_{u,k}\mat C_{u,k})
+\end{equation}
+and let $\mat\Phi_k$ denote the prediction transition.  Their product in the
+actual execution order gives the one-sample homogeneous transition
+$\mat A_k^{\rm cl}$.  Hence
+\begin{equation}
+\widetilde{\mat A}_k
+=\mat D\mat A_k^{\rm cl}\mat D^{-1}
+\label{eq:iss-cert-one-step}
+\end{equation}
+is reconstructible from estimator quantities; no truth state or simulated
+trajectory is required to evaluate it.
+
+For an integer horizon $H\ge1$, define
+\begin{align}
+\chi_H
+&:=\sup_k\left\|
+ \widetilde\Psi(k+H,k)\right\|_2,
+\label{eq:iss-cert-chi}\\
+B_H
+&:=\sup_k\max_{0\le r<H}\left\|
+ \widetilde\Psi(k+r,k)\right\|_2 .
+\label{eq:iss-cert-prefix}
+\end{align}
+These are conditions on the realized Live interval, not values inferred from a
+parameter grid.
+
+\begin{theorem}[Constructive finite-horizon UES certificate]
+\label{thm:iss-cert-finite-horizon}
+Suppose an uninterrupted Live interval satisfies, for one fixed $H$,
+\begin{equation}
+\chi_H\le\bar\chi<1,
+\qquad
+B_H\le\bar B<\infty .
+\label{eq:iss-cert-contract}
+\end{equation}
+Then its scaled homogeneous transition is UES with the explicit constants
+\begin{equation}
+\boxed{
+\rho_H=\bar\chi^{1/H},
+\qquad
+M_H=\bar B\,\rho_H^{-(H-1)},}
+\label{eq:iss-cert-M-rho}
+\end{equation}
+that is,
+\begin{equation}
+\|\widetilde\Psi(k,j)\|_2
+\le M_H\rho_H^{k-j},\qquad k\ge j.
+\label{eq:iss-cert-ues}
+\end{equation}
+Consequently the projected constants in
+Eq.~\eqref{eq:iss-block-projected-gains} may conservatively be chosen as
+\begin{equation}
+M_{\xi\xi}=M_{\xi\ell}=M_\xi=M_H.
+\label{eq:iss-cert-projected-M}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Write $k-j=qH+r$ with $0\le r<H$.  Split the transition into $q$ consecutive
+$H$-sample products and one remainder product.  Submultiplicativity and
+Eq.~\eqref{eq:iss-cert-contract} give
+\begin{equation}
+\|\widetilde\Psi(k,j)\|_2
+\le \bar B\,\bar\chi^q
+=\bar B\rho_H^{qH}
+\le\bar B\rho_H^{-(H-1)}\rho_H^{k-j},
+\end{equation}
+which is Eq.~\eqref{eq:iss-cert-ues}.  Projection by coordinate selectors has
+unit norm, yielding Eq.~\eqref{eq:iss-cert-projected-M}.
+\end{proof}
+
+This theorem is intentionally stronger than checking eight sea states: if the
+matrix inequalities are enforced or verified for an interval, the UES
+constants follow algebraically for that interval.  Conversely, a replay that
+happens to satisfy the inequalities is evidence that the chosen thresholds are
+practical, not a proof that an unexamined trajectory will do so.
+
+\subsubsection{Constructive nonlinear remainder}
+\label{sec:iss-cert-remainder}
+
+For the quantitative certificate we first state the default zero-lever-arm
+configuration.  A nonzero IMU lever arm adds a known quadratic centripetal term
+in gyro-bias error and can be appended to the bound; it is not silently covered
+by the numerical constants below.  Hard heel retargeting, magnetic re-gauging,
+and tilt re-lock remain interval boundaries as in the preceding theorems.
+
+For any skew-symmetric $\mat X$, orthogonality of $e^{s\mat X}$ and the integral
+Taylor remainder give
+\begin{equation}
+\boxed{
+\|e^{\mat X}-\mat I-\mat X\|_2
+\le\frac12\|\mat X\|_2^2 .}
+\label{eq:iss-cert-exp-remainder}
+\end{equation}
+Indeed,
+$e^{\mat X}-\mat I-\mat X=
+\int_0^1(1-s)e^{s\mat X}\mat X^2ds$.
+Therefore, after subtracting the first-order MEKF Jacobians, the accelerometer
+and magnetometer residual remainders satisfy
+\begin{align}
+\|\vct\eta_a\|
+&\le\frac12 f_1\|\delta\vct\theta\|^2
+ +\|\delta\vct\theta\|\,\|\delta\vct a_w\|,
+\label{eq:iss-cert-acc-rem}\\
+\|\vct\eta_m\|
+&\le\frac12 m_1\|\delta\vct\theta\|^2,
+\label{eq:iss-cert-mag-rem}
+\end{align}
+where $f_1,m_1$ are the accepted-vector magnitude bounds already required by
+Eqs.~\eqref{eq:iss-vector-magnitude-bounds}.  The $S=0$ residual is exactly
+linear and contributes no measurement-model remainder.
+
+Let $\mat E_\xi$ select the sensitive scaled coordinates and define the
+realized gain envelopes
+\begin{equation}
+\kappa_a=\sup_k\|\mat E_\xi\mat D\mat K_{a,k}\|_2,
+\qquad
+\kappa_m=\sup_k\|\mat E_\xi\mat D\mat K_{m,k}\|_2 .
+\label{eq:iss-cert-gain-envelopes}
+\end{equation}
+Then the nonlinear measurement contribution is bounded by
+\begin{equation}
+c_{\rm meas}
+=\kappa_a\left(\frac12 f_1s_\theta^2+s_\theta s_{aw}\right)
+ +\kappa_m\frac12m_1s_\theta^2 .
+\label{eq:iss-cert-cmeas}
+\end{equation}
+These gain norms are estimator quantities and can be checked directly on the
+same certified interval as Eq.~\eqref{eq:iss-cert-contract}.
+
+The remaining group nonlinearity is quaternion composition during prediction
+and reset.  For $\|\vct x\|<\pi$, the inverse left Jacobian of $\SO(3)$ is
+\begin{equation}
+\mat J_l^{-1}(\vct x)
+=\mat I-\frac12[\vct x]_\times
+ +A(\|\vct x\|)[\vct x]_\times^2,
+\end{equation}
+where
+\begin{equation}
+A(q)=\frac1{q^2}-\frac{1+\cos q}{2q\sin q}.
+\end{equation}
+Hence, on $0\le q\le\theta_c<\pi$,
+\begin{equation}
+\|\mat J_l^{-1}(\vct x)-\mat I\|_2
+\le j_c\|\vct x\|,
+\qquad
+j_c:=\frac12+A(\theta_c)\theta_c .
+\label{eq:iss-cert-jinv}
+\end{equation}
+If one exact group composition applies a correction whose angle is bounded by
+$a_g\|\vct z_\xi\|$, while
+$\|\delta\vct\theta\|\le s_\theta\|\vct z_\xi\|$ and
+$(s_\theta+a_g)r\le\theta_c$, integration of the logarithm along the correction
+path gives the normalized quadratic bound
+\begin{equation}
+c_g
+=\frac{j_c}{s_\theta}(s_\theta+a_g)a_g .
+\label{eq:iss-cert-group-rem}
+\end{equation}
+For prediction one may take $a_g=h_{\max}s_{bg}$.  For an accepted correction
+$u\in\{a,m,S\}$, a conservative $a_g$ is obtained from the attitude rows of its
+Kalman gain and the first-order residual bound,
+\begin{align}
+a_a&=\|\mat E_\theta\mat K_a\|_2
+       (f_1s_\theta+s_{aw}+s_{ba}),\\
+a_m&=\|\mat E_\theta\mat K_m\|_2m_1s_\theta,\\
+a_S&=\|\mat E_\theta\mat K_S\|_2s_S .
+\label{eq:iss-cert-angle-gains}
+\end{align}
+Taking suprema over the certified interval and summing the group operations in
+one sample yields $c_{\rm grp}=\sum_g c_g$.  Thus an explicit one-step choice
+for Lemma~\ref{lem:iss-block-remainder} is
+\begin{equation}
+\boxed{c_\xi=c_{\rm meas}+c_{\rm grp},}
+\label{eq:iss-cert-cxi}
+\end{equation}
+valid for every
+\begin{equation}
+0<r\le r_\xi:=
+\min_g\frac{\theta_c}{s_\theta+a_g}.
+\label{eq:iss-cert-rxi}
+\end{equation}
+The bounds are deliberately conservative: they price every gain and rotation at
+its interval supremum rather than relying on cancellation.
+
+Combining Eqs.~\eqref{eq:iss-cert-M-rho} and
+\eqref{eq:iss-cert-cxi} makes the Phase-1 small-gain quantity numerical,
+\begin{equation}
+\boxed{
+\nu_{\rm cert}(r)
+=\frac{M_Hc_\xi r}{1-\rho_H}.}
+\label{eq:iss-cert-nu}
+\end{equation}
+A constructive admissible radius is therefore
+\begin{equation}
+\boxed{
+r_{\rm cert}
+<\min\left\{r_\xi,
+\frac{1-\rho_H}{M_Hc_\xi}\right\}.}
+\label{eq:iss-cert-radius}
+\end{equation}
+Substitution of $r=r_{\rm cert}$ in
+Eq.~\eqref{eq:semiglobal-basin-entry} produces a numerical handoff test rather
+than the existential radius used in Phase 1.
+
+\subsubsection{Deployed-point margin diagnostic}
+\label{sec:iss-cert-diagnostic}
+
+The host-side program \texttt{live\_basin\_diagnostic.cpp} reconstructs
+Eq.~\eqref{eq:iss-cert-one-step} from the filter's own prediction matrices and
+Kalman gains at the eight committed SpectralMSE reference operating points.  It
+uses a \SI{30}{s} horizon after covariance warm-up and reports
+$\chi_H$, the prefix norm $B_H$, the sensitive/kinematic projected norms, and
+the implied $M_H,\rho_H$.  The diagnostic is a regression witness for the
+practicality of the certificate.  It is \emph{not} substituted for the uniform
+conditions of Theorem~\ref{thm:iss-cert-finite-horizon}; an operating trajectory
+must satisfy its own matrix and gain envelopes to be called certified.
