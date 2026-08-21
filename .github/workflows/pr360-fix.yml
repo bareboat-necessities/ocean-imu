@@ -142,11 +142,74 @@ jobs:
           }
           for a, b in changes.items():
               replace_once(path, a, b)
+
+          # The broadband reference must include the estimator's deterministic
+          # leak/high-pass weighting.  Relaxing the 6% tolerance would hide a
+          # reference-model mismatch rather than test the estimator.
+          path = "tests/kalman_ou_iii/wave_period-test.cpp"
+          replace_once(
+              path,
+              '''// Broadband sea. T_z = 2*pi*sqrt(m0/m2) is computed from the same components
+          // that build the signal, so the reference needs no spectral estimation.
+          ''',
+              '''// Broadband sea. The estimator's two high-pass stages and two leaky
+          // integrations frequency-weight the displacement spectrum. The internal
+          // elevation proxy has |G_eta(jw)|^2 = [w^2/(w^2 + lambda^2)]^4 relative
+          // to true displacement, so its broadband moment ratio must be compared with
+          // the same synthetic spectrum after this deterministic weighting.
+          ''')
+          replace_once(
+              path,
+              '''    double m0 = 0.0;
+              double m2 = 0.0;
+          ''',
+              '''    constexpr float high_pass_hz = 0.02f;
+              const double lambda = double(kTwoPi) * double(high_pass_hz);
+              const double lambda_sq = lambda * lambda;
+              double m0 = 0.0;
+              double m2 = 0.0;
+          ''')
+          replace_once(
+              path,
+              '''        m0 += 0.5 * double(a) * double(a);
+                  m2 += 0.5 * double(a) * double(a) * double(w) * double(w);
+          ''',
+              '''        const double w_sq = double(w) * double(w);
+                  const double displacement_gain_sq =
+                      std::pow(w_sq / (w_sq + lambda_sq), 4.0);
+                  const double component_power =
+                      0.5 * double(a) * double(a) * displacement_gain_sq;
+                  m0 += component_power;
+                  m2 += component_power * w_sq;
+          ''')
+          replace_once(
+              path,
+              '''    *reference = float(kTwoPi / std::sqrt(m2 / m0));
+
+              WavePeriodEstimator estimator;
+          ''',
+              '''    *reference = float(kTwoPi / std::sqrt(m2 / m0));
+
+              WavePeriodEstimator estimator(high_pass_hz);
+          ''')
+
+          # Remove the accidentally merged PR #356 branch-only retuning block;
+          # the permanent unit/simulation driver must not contain PR-specific CI.
+          path = "tests/kalman_ou_iii/run_tests.sh"
+          p = Path(path)
+          s = p.read_text()
+          marker = '\n# PR #356 retunes the statistical horizons after removing the layered\n'
+          if s.count(marker) != 1:
+              raise SystemExit(f"{path}: expected one PR #356 block marker")
+          s = s.split(marker, 1)[0].rstrip() + '\n'
+          p.write_text(s)
           PY
 
           git diff --check
           git diff -- tests/kalman_tfg/tfg_orchestrator-test.cpp \
                      tests/kalman_ou_iii/kalman_ou_iii-sim.cpp \
+                     tests/kalman_ou_iii/wave_period-test.cpp \
+                     tests/kalman_ou_iii/run_tests.sh \
                      tools/ou_regauge_gates.py
 
       - name: Install focused-test dependencies
@@ -184,8 +247,10 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -- tests/kalman_tfg/tfg_orchestrator-test.cpp \
                      tests/kalman_ou_iii/kalman_ou_iii-sim.cpp \
+                     tests/kalman_ou_iii/wave_period-test.cpp \
+                     tests/kalman_ou_iii/run_tests.sh \
                      tools/ou_regauge_gates.py \
                      .github/workflows/pr360-fix.yml
           git diff --cached --check
-          git commit -m 'Re-gauge post-retune sentinels and update TFG statistics contract'
+          git commit -m 'Repair post-retune validation contracts'
           git push origin HEAD:fix/post-356-validation
