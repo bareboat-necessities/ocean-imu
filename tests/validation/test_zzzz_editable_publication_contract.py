@@ -168,7 +168,7 @@ _original_full_bundle_test = (
 
 
 def _full_result_bundle_is_complete_and_self_consistent(self):
-    """Run every original bundle check, relaxing only publication prose bytes."""
+    """Run original bundle checks while allowing a curated publication tree."""
     editable_tex_pairs = (
         (
             self.RESULTS / "ou_validation_publication.tex",
@@ -187,6 +187,16 @@ def _full_result_bundle_is_complete_and_self_consistent(self):
         doc_path: original_read_bytes(result_path)
         for result_path, doc_path in editable_tex_pairs
     }
+
+    # The complete validation archive intentionally retains the historical
+    # one-way transition SVG for provenance.  It is no longer a manuscript
+    # asset, so satisfy the legacy mirror assertion from the archive bytes
+    # while separately pinning that the publication tree does not contain it.
+    retired_transition = DOC / "ou_validation_transition.svg"
+    self.assertFalse(retired_transition.exists())
+    generated_bytes_by_doc[retired_transition] = original_read_bytes(
+        self.RESULTS / "ou_validation_transition.svg"
+    )
 
     def read_bytes_with_editable_publication(path):
         path = Path(path)
