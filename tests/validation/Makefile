@@ -4,14 +4,14 @@ build:
 	python3 -m py_compile \
 		../../tools/ou_validation.py \
 		../../tools/ou_robustness.py \
-		../../tools/ou_rs_law_ablation.py \
+		../../tools/ou_roundtrip_transition.py \
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
 		../../tools/ou_publication_sync.py \
 		../../tools/rotate_record_heading.py \
 		test_ou_validation.py \
 		test_ou_robustness.py \
-		test_ou_rs_law_ablation.py \
+		test_ou_roundtrip_transition.py \
 		test_ou_article_ablations.py \
 		test_ou_evidence_contract.py \
 		test_ou_semiglobal_stability.py \
