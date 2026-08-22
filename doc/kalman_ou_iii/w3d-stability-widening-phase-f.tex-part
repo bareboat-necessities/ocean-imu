@@ -1,0 +1,148 @@
+\subsection{Phase F: constructive stochastic practical stability}
+\label{sec:stability-widening-phase-f}
+
+The stochastic theorem in Sec.~\ref{sec:finite-live-capture} intentionally does
+not infer a Gaussian drift inequality from deterministic bounded-input ISS.
+With the explicit Phase-B metric and Phase-E deterministic decrease margin, the
+missing drift coefficients can instead be derived from conditional noise
+moments and a source-map remainder bound.
+
+On a certified Phase-C normal-Live tube, write one exact accepted/rejected
+source step as
+\begin{equation}
+ \vct z_{k+1}
+ =\vct f_k(\vct z_k)
+ +\mat G_k\vct w_k
+ +\vct r_{w,k}(\vct z_k,\vct w_k),
+ \label{eq:widen-stochastic-map}
+\end{equation}
+where $\vct f_k$ is the zero-noise nonlinear map already covered by Phase E,
+$\mat G_k\vct w_k$ is the first-order noise channel, and the remaining
+noise--geometry interaction satisfies
+\begin{equation}
+ \|\vct r_{w,k}\|
+ \le c_{zw}\|\vct z_k\|\,\|\vct w_k\|
+      +c_{ww}\|\vct w_k\|^2.
+ \label{eq:widen-stochastic-remainder}
+\end{equation}
+Such constants exist on every compact accepted-measurement/geodesic source
+family because the rotation, gain injection, and reset maps are smooth on each
+source branch; branch changes caused by rejected measurements are included as
+members of the bounded switching family.  Let
+\begin{equation}
+ \mathbb E[\vct w_k\mid\mathcal F_k]=0,
+ \qquad
+ \mathbb E[\vct w_k\vct w_k^\top\mid\mathcal F_k]=\mat\Sigma_k,
+ \qquad
+ \mat\Sigma_k\preceq\bar\mat\Sigma.
+ \label{eq:widen-gaussian-noise}
+\end{equation}
+For conditionally Gaussian noise define
+\begin{align}
+ s_2&:=\operatorname{tr}\bar\mat\Sigma,\\
+ s_4&:=s_2^2+2\operatorname{tr}(\bar\mat\Sigma^2),
+ \label{eq:widen-gaussian-moments}
+\end{align}
+so that
+$\mathbb E\|w_k\|^2\le s_2$ and
+$\mathbb E\|w_k\|^4\le s_4$.
+
+Let
+$L_f:=\bar A+\ell$, $\bar G:=\sup_k\|\mat G_k\|$, and let $a_0$ be
+Eq.~\eqref{eq:widen-a0}.  Define
+\begin{align}
+ a_s&:=\frac{3a_0}{4}
+ -2p_+^{\rm an}L_f c_{zw}\sqrt{s_2}
+ -4p_+^{\rm an}c_{zw}^2s_2,
+ \label{eq:widen-stochastic-margin}\\
+ b_s&:=2p_+^{\rm an}\bar G^2s_2
+ +4p_+^{\rm an}c_{ww}^2s_4
+ +\frac{4[p_+^{\rm an}L_fc_{ww}]^2}{a_0}s_2^2.
+ \label{eq:widen-stochastic-floor}
+\end{align}
+
+\begin{theorem}[Constructive Gaussian mean-square practical drift]
+\label{thm:widen-stochastic-drift}
+Assume Eqs.~\eqref{eq:widen-stochastic-map}--\eqref{eq:widen-gaussian-noise}
+and $a_s>0$.  While the source state remains in the certified Phase-C
+normal-Live family,
+\begin{equation}
+ \boxed{
+ \mathbb E[V_{k+1}\mid\mathcal F_k]
+ \le(1-\alpha_s)V_k+b_s,
+ \qquad
+ \alpha_s:=\frac{a_s}{p_+^{\rm an}}>0.}
+ \label{eq:widen-stochastic-drift}
+\end{equation}
+Consequently, over any interval on which the certified source family remains
+active,
+\begin{equation}
+ \boxed{
+ \mathbb E V_k
+ \le(1-\alpha_s)^{k-j}\mathbb E V_j
+ +\frac{b_s}{\alpha_s}.}
+ \label{eq:widen-stochastic-ms}
+\end{equation}
+Thus the stochastic drift coefficients previously denoted abstractly by
+$(\lambda_s,\sigma_s^2)$ may be taken as
+\begin{equation}
+ \lambda_s=1-\alpha_s,
+ \qquad \sigma_s^2=b_s,
+ \label{eq:widen-stochastic-coefficients}
+\end{equation}
+provided the explicit noise-margin condition $a_s>0$ holds.
+\end{theorem}
+
+\begin{proof}
+Set $\vct y_k=\mat G_k\vct w_k+\vct r_{w,k}$.  Phase E gives
+$V(f_k(z_k))-V(z_k)\le-a_0\|z_k\|^2$.  Conditional zero mean removes the
+cross term between $f_k$ and $G_kw_k$.  From
+Eq.~\eqref{eq:widen-stochastic-remainder}, Cauchy--Schwarz, and the Gaussian
+moments,
+\begin{align}
+ \mathbb E\|r_{w,k}\|
+ &\le c_{zw}\|z_k\|\sqrt{s_2}+c_{ww}s_2,\\
+ \mathbb E\|r_{w,k}\|^2
+ &\le2c_{zw}^2\|z_k\|^2s_2+2c_{ww}^2s_4.
+\end{align}
+Using
+$\mathbb E\|y_k\|^2\le2\bar G^2s_2+2\mathbb E\|r_{w,k}\|^2$ and
+$\|f_k(z_k)\|\le L_f\|z_k\|$, the remaining cross term is bounded by
+$2p_+^{\rm an}L_f\|z_k\|\mathbb E\|r_{w,k}\|$.  Young's inequality spends
+$a_0/4$ of deterministic decrease on its $c_{ww}s_2$ component.  Collecting
+the state-quadratic and constant terms yields
+$-a_s\|z_k\|^2+b_s$.  Since
+$V_k\le p_+^{\rm an}\|z_k\|^2$, Eq.~\eqref{eq:widen-stochastic-drift}
+follows, and scalar expectation iteration gives
+Eq.~\eqref{eq:widen-stochastic-ms}.
+\end{proof}
+
+Because Gaussian noise is unbounded, a local nonlinear theorem should not
+silently claim almost-sure invariance of a compact tube.  Let
+$\tau_{\mathcal T}$ be the first source step that leaves the certified
+Phase-C family and let $V_{\partial}>0$ be a Lyapunov level contained in that
+family.  Applying the drift bound to the process stopped before the first exit
+and using Markov's inequality gives the finite-horizon engineering bound
+\begin{equation}
+ \mathbb P\!\left(
+ \max_{j\le n\le k}V_n\ge V_{\partial}
+ \right)
+ \le
+ \frac{\mathbb E V_j+(k-j)b_s}{V_{\partial}},
+ \label{eq:widen-stochastic-exit}
+\end{equation}
+with sharper supermartingale bounds available when needed.  This separates the
+mean-square normal-Live claim from rare excursions that invoke the source's
+existing rejection, relock, and hybrid-recovery logic.
+
+\begin{remark}[What Phase F closes]
+\label{rem:widen-stochastic-scope}
+Phase F removes the need to posit numerical drift coefficients independently of
+the deterministic proof: $\lambda_s$ and $\sigma_s^2$ are explicit functions
+of the deterministic margin, the declared covariance bound, and the
+noise--geometry remainder constants.  It does not turn a regional MEKF into a
+global Gaussian system.  Unbounded-noise excursions are explicitly separated
+from the normal-Live mean-square result and are handled by an exit probability
+plus the hybrid recovery theorem rather than being hidden inside a deterministic
+bounded-input assumption.
+\end{remark}
