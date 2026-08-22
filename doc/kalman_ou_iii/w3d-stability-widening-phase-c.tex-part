@@ -112,21 +112,26 @@ The source does not use the first-order quaternion $[1,\delta\theta/2]$ for
 state injection.  It calls \texttt{quat\_from\_delta\_theta}, which uses the
 trigonometric radial quaternion map outside a small series threshold and a
 normalized fourth-order sine/cosine series inside that threshold.  Denote the
-resulting unit quaternion by $q_c(\vct d)$ and its physical rotation angle by
-$\chi(\|\vct d\|)$.  For $\|\vct d\|\ge10^{-2}$,
+resulting unit quaternion by $q_c(\vct d)$ and its rotation matrix by
+$\mathcal R(q_c)$.  For $\|\vct d\|\ge10^{-2}$,
 \begin{equation}
  q_c(\vct d)=
  \left(\cos\frac{\|\vct d\|}{2},
  \frac{\sin(\|\vct d\|/2)}{\|\vct d\|}\vct d\right),
  \qquad
- \chi(\|\vct d\|)=\|\vct d\|\pmod{2\pi}.
+ \boxed{\mathcal R(q_c(\vct d))=\exp([\vct d]_\times).}
  \label{eq:widen-exact-injection}
 \end{equation}
+This identity is valid for arbitrary finite $\vct d$; the principal physical
+rotation angle is, as usual, the geodesic representative in $[0,\pi]$ rather
+than the unwrapped norm $\|\vct d\|$ when the latter exceeds $\pi$.
 On the series branch, Taylor's theorem and normalization give a finite constant
-$c_s$ such that
+$c_s$ such that the geodesic injection defect obeys
 \begin{equation}
- |\chi(\theta)-\theta|\le c_s\theta^6,
- \qquad 0\le\theta\le10^{-2}.
+ d_{\SO(3)}\!\left(\mathcal R(q_c(\vct d)),
+                    \exp([\vct d]_\times)\right)
+ \le c_s\|\vct d\|^6,
+ \qquad 0\le\|\vct d\|\le10^{-2}.
  \label{eq:widen-series-defect}
 \end{equation}
 The tiny branch defect may therefore be retained as a bounded deterministic
@@ -187,8 +192,8 @@ $\|\Delta\theta\|=\pi$ is required.
 
 \begin{proof}
 Equation~\eqref{eq:widen-exact-injection} is the implemented radial quaternion
-map; the small-angle branch differs from it only by the Taylor remainder in
-Eq.~\eqref{eq:widen-series-defect}.  Equation~\eqref{eq:widen-reset-G-bound}
+map; the small-angle branch differs from the exact exponential only by the
+Taylor remainder in Eq.~\eqref{eq:widen-series-defect}.  Equation~\eqref{eq:widen-reset-G-bound}
 follows by direct multiplication of Eq.~\eqref{eq:widen-reset-G}.  On
 $\theta_e\le\theta_*<\pi$, the logarithmic attitude coordinate and
 $V_R^{1/2}$ are uniformly equivalent by Eq.~\eqref{eq:widen-SO3-sector}, and
