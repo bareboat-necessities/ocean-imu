@@ -354,15 +354,16 @@ norm: for constants $0<a_1\le a_2<\infty$,
  a_2\|\vct r_n\|_{\vct w,\infty}^2.
  \label{eq:capture-stochastic-equivalence}
 \end{equation}
-Suppose the exact stochastic Live lift satisfies the conditional drift bound
+Suppose that, for every lifted index on the horizon under consideration, the
+exact stochastic Live map satisfies almost surely the conditional drift bound
 \begin{equation}
  \boxed{
  \mathbb E[V_{n+1}\mid\mathcal F_n]
  \le\lambda_sV_n+\sigma_s^2,
- \qquad 0<\lambda_s<1,}
+ \qquad 0<\lambda_s<1.}
  \label{eq:capture-stochastic-drift}
 \end{equation}
-through the stochastic certificate domain.  Then
+If this condition holds for all $n\ge0$, then
 \begin{equation}
  \boxed{
  \mathbb E[V_n]
@@ -391,7 +392,7 @@ For every $A>0$,
  \right),
  \label{eq:capture-stochastic-one-time}
 \end{equation}
-and, over any finite horizon on which
+and, over any finite horizon $0\le n\le N$ on which
 Eq.~\eqref{eq:capture-stochastic-drift} is valid,
 \begin{equation}
  \Pr\left\{\max_{0\le j\le N}V_j\ge A\right\}
@@ -415,8 +416,10 @@ $j=0,\ldots,N$ and using the union bound gives
 Eq.~\eqref{eq:capture-stochastic-finite-hp}.
 \end{proof}
 
-Thus the deterministic finite-capture statement and the stochastic steady-Live
-statement have distinct disturbance hypotheses.  The former proves that the
-Mahony/initialization handoff lies in a region from which the implemented EKF
-reaches its invariant regional set; the latter describes the mean-square
-neighborhood maintained there under Gaussian Live noise.
+The stochastic theorem does not assert almost-sure invariance of a finite local
+chart under unbounded Gaussian support.  Its infinite-horizon mean-square claim
+requires Eq.~\eqref{eq:capture-stochastic-drift} for all lifted indices; when the
+drift inequality is certified only on a finite stochastic domain or horizon,
+only the corresponding finite-horizon bounds are claimed.  Thus the
+deterministic finite-capture statement and the stochastic steady-Live statement
+have distinct disturbance hypotheses.
