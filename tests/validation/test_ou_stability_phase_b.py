@@ -45,9 +45,10 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, hybrid)
 
-        self.assertIn("not asserted numerically here", hybrid)
-        self.assertIn("not convergence to zero", hybrid)
-        self.assertIn("continuous hard-iron correction", hybrid)
+        folded = hybrid.casefold()
+        self.assertIn("not asserted numerically here", folded)
+        self.assertIn("not convergence to zero", folded)
+        self.assertIn("continuous hard-iron correction", folded)
 
     def test_magnetic_refinement_contract_matches_source(self):
         src = _read(SRC / "SeaStateFusionFilter_OU_III.h")
@@ -95,16 +96,14 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         ):
             self.assertIn(token, src)
 
-        # initialize_from_acc() clears the attitude cross-covariances with
-        # gyro bias and accelerometer bias before preserve-yaw rewrites yaw.
         self.assertIn("Pext.template block<3,3>(0,3).setZero();", src)
         self.assertIn("Pext.template block<3,3>(0, OFF_BA).setZero();", src)
 
     def test_repeated_reset_claim_is_safety_not_false_convergence(self):
-        hybrid = _read(DOC / "w3d-hybrid-stability.tex-part")
-        self.assertIn("If the hard-jump sequence is finite", hybrid)
+        hybrid = _read(DOC / "w3d-hybrid-stability.tex-part").casefold()
+        self.assertIn("if the hard-jump sequence is finite", hybrid)
         self.assertIn("if tilt re-locks occur infinitely often", hybrid)
-        self.assertIn("prevents Zeno behavior", hybrid)
+        self.assertIn("prevents zeno behavior", hybrid)
         self.assertIn("recurrent capture claim", hybrid)
         self.assertIn("resets eventually cease", hybrid)
 
