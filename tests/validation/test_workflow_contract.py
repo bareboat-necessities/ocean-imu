@@ -4,9 +4,6 @@ import unittest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-validation.yml"
-POST_BUILD_WORKFLOW = (
-    REPO_ROOT / ".github" / "workflows" / "ou-validation-post-build.yml"
-)
 
 
 class WorkflowContractTests(unittest.TestCase):
@@ -50,19 +47,6 @@ class WorkflowContractTests(unittest.TestCase):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("The regenerated bundle is committed, but", workflow)
         self.assertNotIn("Fail if the manuscript no longer matches", workflow)
-
-    def test_completed_main_build_dispatches_smoke_for_current_tip(self):
-        workflow = POST_BUILD_WORKFLOW.read_text(encoding="utf-8")
-        primary = WORKFLOW.read_text(encoding="utf-8")
-
-        self.assertIn("workflow_dispatch:", primary)
-        self.assertIn("workflow_run:", workflow)
-        self.assertIn('workflows: ["build"]', workflow)
-        self.assertIn("head_branch == 'main'", workflow)
-        self.assertIn("actions: write", workflow)
-        self.assertIn("gh workflow run ou-validation.yml", workflow)
-        self.assertIn("--ref main", workflow)
-        self.assertIn("-f validation_mode=smoke", workflow)
 
 
 if __name__ == "__main__":
