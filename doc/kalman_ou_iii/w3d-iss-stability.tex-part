@@ -1,24 +1,20 @@
-\section{Analytical Observability, Gauge-Aware Live Stability, and Local ISS}
+\section{Mode-Aware Gauge Stability of the Live MEKF}
 \label{app:iss-stability}
 
-This section establishes local stability of the normal Live recursion without
-requiring true-heading convergence, simultaneous vector updates, four
-consecutive integral pseudo-updates, or a finite accelerometer-bias correlation
-time in every admissible case.  The proof has two full-heading routes.  A
-\emph{full-PE route} uses a windowed augmented observability Gramian for
-attitude, gyro bias, and accelerometer bias and therefore permits the
-accelerometer-bias random-walk limit.  An \emph{OU-fallback route} requires less
-measurement excitation and instead uses intrinsic contraction of a finite-time-
-constant residual accelerometer bias.  A separate gravity-only theorem gives
-stability modulo the unobservable yaw gauge when no absolute heading reference
-is available.
+The Live proof follows the estimator modes implemented by the source.  The
+linear navigation block is active in Live mode.  Accelerometer-bias learning,
+however, can remain held after handoff: while held, the source propagates the
+residual accelerometer-bias state with the identity map and suppresses its
+Kalman-gain row.  Stability is therefore stated for the active coordinates of
+each source mode and the held bias is treated as a bounded input until its
+one-time release.  This avoids assigning exponential decay to a coordinate that
+the implemented recursion intentionally freezes.
 
-\subsection{Adopted horizontal gauge and error objective}
+\subsection{Adopted horizontal gauge}
 \label{sec:iss-heading-gauge}
 
-A learned magnetic reference need not coincide exactly with true north.  A
-consistent heading gauge is therefore a rotation of the complete horizontal
-world frame, not of attitude alone.  Let
+A learned magnetic reference fixes a horizontal coordinate gauge rather than
+necessarily true north.  Let
 \begin{equation}
  \mat Q_\psi(t):=\mat R_z\!\left(b_{\psi,\mathrm{ref}}(t)\right)
  \label{eq:iss-gauge-rotation}
@@ -33,19 +29,12 @@ and define the gauge-referenced physical trajectory by
  \vct a_{w,g}&=\mat Q_\psi\vct a_{w,\rm true}.
  \label{eq:iss-gauge-world-vectors}
 \end{align}
-Body-frame sensor biases are not rotated by this action.  Because
-$\mat Q_\psi\vct g=\vct g$, the accelerometer model is invariant under the
-simultaneous transformation of attitude and world acceleration.  The
-$v\to p\to S$ chain, the isotropic OU drift operator, and the $S=0$
-pseudo-measurement are likewise equivariant.  Thus a constant yaw-reference
-offset defines another representation of the same horizontal physical motion.
-Any non-yaw magnetic-model error (for example residual dip, scale, soft-iron, or
-misalignment error) remains a bounded model disturbance rather than part of
-this symmetry.
+Body-frame sensor biases are unchanged by this action.  Because
+$\mat Q_\psi\vct g=\vct g$, the accelerometer model, the isotropic OU drift,
+the $v\rightarrow p\rightarrow S$ chain, and the $S=0$ pseudo-measurement are
+equivariant under a constant horizontal-frame rotation.
 
-All world-frame state errors below are measured relative to the trajectory in
-Eq.~\eqref{eq:iss-gauge-world-vectors}; the local attitude error is measured
-relative to $\mat R_g$.  Locally decompose
+Locally write
 \begin{equation}
  \delta\vct\theta
  =\delta\vct\theta_\perp+\delta\psi_{\rm int}\vct d,
@@ -53,91 +42,97 @@ relative to $\mat R_g$.  Locally decompose
  \vct d^\top\delta\vct\theta_\perp=0,
  \label{eq:iss-tilt-yaw-split}
 \end{equation}
-where $\vct d$ is world down.  The true heading error is therefore
+where $\vct d$ is world down.  True-north heading error is
 \begin{equation}
  \delta\psi_{\rm true}
  =\delta\psi_{\rm int}+b_{\psi,\mathrm{ref}}.
  \label{eq:iss-true-yaw-error}
 \end{equation}
-A constant $b_{\psi,\mathrm{ref}}$ changes the adopted horizontal gauge but does
-not create a nonzero estimator error relative to that gauge.  If the gauge
-varies slowly, $\dot{\mat Q}_\psi$ contributes bounded forcing to attitude and
-to the gauge-referenced world-vector dynamics; on a compact physical-motion
-family this forcing is bounded by $|\dot b_{\psi,\mathrm{ref}}|$ times the
-corresponding world-vector magnitudes.  Accordingly, disturbance-free
-convergence below means convergence to the adopted horizontal gauge; it does not
-claim removal of residual magnetic calibration or reference bias.
+A constant $b_{\psi,\mathrm{ref}}$ therefore does not consume a stability
+radius.  Bounded variation of the adopted gauge contributes a bounded forcing
+proportional to $|\dot b_{\psi,\mathrm{ref}}|$ and the bounded physical
+world-vector magnitudes.
 
-\subsection{Exogenous scheduling and bounded Live family}
-\label{app:iss-tuner}
+\subsection{Source-reachable schedule and Live modes}
+\label{sec:iss-source-family}
 
-The adaptive wave variables are exogenous signals,
+Let
 \begin{equation}
- \vartheta_k=\bigl(\tau_k,\sigma_{aw,k},r_{S,k}\bigr)
- \in\mathcal F_{k-1},
+ \vartheta_k=(\tau_k,\sigma_{aw,k},r_{S,k},T_{S,k})
+ \in\mathcal F_{k-1}
  \label{eq:iss-schedule}
 \end{equation}
-where $\mathcal F_k$ contains measurements through sample $k$.  The wave-period
-and variance estimators read raw IMU data and the measurement-only proxy, never
-OU--III state or covariance.  Thus the deterministic proof needs only a bounded
-exogenous schedule, while the one-sample staging gives predictability for the
-stochastic formulation.
-
-Assume a Live interval on which
+be the parameters committed before physical sample $k$.  The tuner is
+measurement-only and stages candidates after the current measurement, so
+$\vartheta_k$ is predictable.  Applied scalar channels have the source form
 \begin{equation}
- 0<h_{\min}\le h_k\le h_{\max}<\infty,
+ x_{k+1}=x_k+\alpha_{x,k}(x_k^\star-x_k),
  \qquad
- 0<\underline\tau\le\tau_k\le\overline\tau<\infty,
- \label{eq:iss-step-tau-bounds}
+ \alpha_{x,k}=1-e^{-h_k/T_{x,k}},
+ \label{eq:iss-source-ema}
 \end{equation}
+with clamped targets and positive clamped smoothing horizons.  Hence, on the
+implemented compact ranges,
 \begin{equation}
- 0\le\sigma_{aw,k}\le\overline\sigma<\infty,
+ |x_{k+1}-x_k|
+ \le \bar\alpha_x(\bar x-\underline x),
+ \qquad 0<\bar\alpha_x\le1,
+ \label{eq:iss-source-slew}
+\end{equation}
+for $x\in\{\tau,\sigma_{aw},r_S\}$.  The pseudo-update period is a deterministic
+clamped function of the applied $\tau$.  Denote by
+$\Pi^{\rm src}_{k,m}$ only parameter and enable-state sequences generated by
+these recurrences and the source state machine.  It is a strict source-reachable
+family, not an arbitrary Cartesian product of the one-sample parameter bounds.
+
+The bounds used below are
+\begin{align}
+ 0<h_-&\le h_k\le h_+,&
+ 0<\tau_-&\le\tau_k\le\tau_+<\infty,\\
+ 0<r_-&\le r_{S,k}\le r_+<\infty,&
+ 0<T_{S,-}&\le T_{S,k}\le T_{S,+}<\infty,
+ \label{eq:iss-source-bounds}
+\end{align}
+and uniformly positive accepted measurement covariances.  The deployed
+MEKF process channel uses
+\begin{equation}
+ \sigma_{aw,k}^{\rm proc}
+ \ge \sigma_{aw,-}^{\rm proc}>0;
  \qquad
- 0<\underline r_S\le r_{S,k}\le\overline r_S<\infty.
- \label{eq:iss-tuning-bounds}
+ \sigma_{aw,-}^{\rm proc}=0.05\ \mathrm{m/s^2}
+ \label{eq:iss-aw-process-floor}
 \end{equation}
-No positive lower bound on $\sigma_{aw}$ is imposed merely for observability.
-For the OU-fallback route only, assume
-\begin{equation}
- 0<\underline\tau_b\le\tau_b\le\overline\tau_b<\infty.
- \label{eq:iss-bias-tau-bounds}
-\end{equation}
-The full-PE route also admits $\tau_b=\infty$.
+for the default isotropic acceleration scaling.  This is the process floor
+applied before the stationary OU covariance is sent to the MEKF; it is distinct
+from whether the estimated physical wave amplitude is small.
 
-Measurement covariances satisfy
+Let $\chi_k\in\{H,A\}$ denote the accelerometer-bias mode.  In mode $H$
+(held), the active error is
 \begin{equation}
- \underline r\mat I
- \preceq \mat R_{a,k},\mat R_{m,k},\mat R_{S,k}
- \preceq \overline r\mat I,
- \qquad 0<\underline r\le\overline r<\infty.
- \label{eq:iss-R-bounds}
+ \vct e_H=
+ (\delta\vct\theta,\delta\vct b_g,
+  \delta\vct v,\delta\vct p,\delta\vct S,\delta\vct a_w)
+ \in\mathbb R^{18},
+ \label{eq:iss-held-state}
 \end{equation}
-Accepted vector rows obey compact magnitude and rate bounds
+while $\delta\vct b_a$ is constant under the homogeneous source recursion and
+enters the accelerometer residual as a bounded input.  In mode $A$ (active),
 \begin{equation}
- f_0\le\|\widehat{\vct f}_b\|\le f_1,
- \qquad
- m_0\le\|\widehat{\vct m}_b\|\le m_1,
- \label{eq:iss-vector-magnitude-bounds}
+ \vct e_A=(\vct e_H,\delta\vct b_a)\in\mathbb R^{21}.
+ \label{eq:iss-active-state}
 \end{equation}
+The source transition $H\rightarrow A$ leaves the nominal bias state unchanged
+and applies only a bounded covariance floor before normal bias propagation and
+measurement correction resume.
+
+\subsection{Translational information from the integral regularizer}
+\label{sec:iss-trans-observability}
+
+For one axis of the exact continuous interpolation,
 \begin{equation}
- \|\widehat{\vct\omega}_k\|\le\overline\omega<\infty.
- \label{eq:iss-vector-geometry}
-\end{equation}
-No pointwise accelerometer--magnetometer noncollinearity and no
-$\overline\omega\Delta<\pi/2$ condition are assumed.  Heading/tilt information
-is required through the windowed Gramian below instead.
-
-No hard reset occurs inside an analyzed Live window.
-
-\subsection{Four usable $S$ updates are sufficient}
-
-For one translational axis,
-\begin{equation}
- \dot v=a,\qquad
- \dot p=v,\qquad
- \dot S=p,\qquad
+ \dot v=a,\qquad \dot p=v,\qquad \dot S=p,\qquad
  \dot a=-\lambda(t)a,
- \qquad \lambda(t)=1/\tau(t),
+ \quad \lambda(t)=1/\tau(t),
  \label{eq:iss-scalar-chain}
 \end{equation}
 and
@@ -149,21 +144,24 @@ and
 Then
 \begin{equation}
  S(t)=S_0+t p_0+\frac{t^2}{2}v_0+A_3(t)a_0.
+ \label{eq:iss-S-history}
 \end{equation}
-
-Each translational proof window need only contain four \emph{usable} $S$
-pseudo-updates, not four consecutive scheduler firings.  After shifting the
-first time to zero, assume
+Let usable pseudo-update times satisfy
 \begin{equation}
- 0=t_0<t_1<t_2<t_3\le T_{S,W},
- \qquad
- \min_{0\le i<j\le3}(t_j-t_i)\ge\Delta_{S,-}>0.
+ \Delta_{S,-}\le t_{j+1}-t_j\le\Delta_{S,+}.
  \label{eq:iss-S-gap-bounds}
 \end{equation}
-Skipped or deferred pseudo-updates are therefore allowed provided another four
-usable updates satisfying this bounded-window condition remain.
+For a proof window $T_{S,W}$ choose
+\begin{equation}
+ q_W:=\max\{q\in\mathbb N:3q\Delta_{S,+}\le T_{S,W}\},
+ \qquad q_W\ge1.
+ \label{eq:iss-S-spread-index}
+\end{equation}
+The four source-realizable firings
+$t_0,t_{q_W},t_{2q_W},t_{3q_W}$ then lie in the window and every pair is
+separated by at least $q_W\Delta_{S,-}$.
 
-At those times,
+For any four selected times define
 \begin{equation}
  \mat O_S=
  \begin{bmatrix}
@@ -174,75 +172,100 @@ At those times,
  \end{bmatrix}.
 \end{equation}
 
-\begin{lemma}[Uniform observability from four usable $S$ updates]
+\begin{lemma}[Spread-selected $S$ observability]
 \label{lem:iss-axis-uco}
-For every measurable $\tau(t)$ satisfying
-$\underline\tau\le\tau(t)\le\overline\tau$ and any four usable pseudo-updates
-obeying Eq.~\eqref{eq:iss-S-gap-bounds},
+For every source-reachable $\tau(t)\in[\tau_-,\tau_+]$ and the spread-selected
+firings above,
 \begin{equation}
  \boxed{
  |\det\mat O_S|
- \ge\frac{\Delta_{S,-}^6}{12}
- \exp\!\left(-\frac{T_{S,W}}{\underline\tau}\right)>0.}
+ \ge d_{S,W}:=
+ \frac{(q_W\Delta_{S,-})^6}{12}
+ \exp\!\left(-\frac{T_{S,W}}{\tau_-}\right)>0.}
  \label{eq:iss-det-lower}
 \end{equation}
-Hence $[v,p,S,a]$ is uniformly observable on that window.
+If $B_{S,W}$ uniformly bounds $\|\mat O_S\|_F$ on the compact window, then
+\begin{equation}
+ \sigma_{\min}(\mat O_S)
+ \ge d_{S,W}/B_{S,W}^3.
+ \label{eq:iss-S-smin}
+\end{equation}
+Consequently the summed $S$-measurement Gramian over all usable firings in the
+window is uniformly positive definite.
 \end{lemma}
 
 \begin{proof}
-Let $f=A_3$.  The divided-difference identity gives
+The divided-difference identity gives
 \begin{equation}
  \det\mat O_S
- =-\tfrac12 V(t)A_3[t_0,t_1,t_2,t_3],
- \qquad
- V(t)=\prod_{i<j}(t_j-t_i).
- \label{eq:iss-det-divided-difference}
+ =-\tfrac12\prod_{i<j}(t_j-t_i)\,A_3[t_0,t_1,t_2,t_3].
 \end{equation}
-Because $A_3'''=E$, the Hermite--Genocchi formula yields
-\begin{equation}
- A_3[t_0,t_1,t_2,t_3]
- \ge\frac16\exp\!\left(-\frac{t_3}{\underline\tau}\right)
- \ge\frac16\exp\!\left(-\frac{T_{S,W}}{\underline\tau}\right).
-\end{equation}
-Equation~\eqref{eq:iss-S-gap-bounds} gives
-$V(t)\ge\Delta_{S,-}^6$.  Substitution proves
-Eq.~\eqref{eq:iss-det-lower}.  Compactness of the bounded timing and $\tau$
-family converts the determinant and entry bounds into a uniform positive lower
-bound on $\sigma_{\min}(\mat O_S)$.
+Since $A_3'''=E$, the Hermite--Genocchi formula gives
+$A_3[t_0,t_1,t_2,t_3]\ge
+\frac16e^{-T_{S,W}/\tau_-}$.  The selected spacings give the first bound.
+For a $4\times4$ matrix,
+$|\det O_S|=\prod_i\sigma_i$ and each of the three largest singular values is
+at most $\|O_S\|_F$, which proves Eq.~\eqref{eq:iss-S-smin}.  Adding further
+positive-semidefinite measurement terms cannot reduce the Gramian.
 \end{proof}
 
-For the normal time-based scheduler a simple source-level witness is
-\begin{equation}
- t_3-t_0\le3(T_{S,\max}+h_{\max}),
- \qquad
- \Delta_{S,-}\ge h_{\min}
- \label{eq:iss-scheduler-gap-witness}
-\end{equation}
-when no firings are skipped.  The theorem itself is more general and permits
-skips whenever Eq.~\eqref{eq:iss-S-gap-bounds} remains true.
-The three-axis 12-state translational result follows componentwise.
+The source cadence has
+$\Delta_{S,-}\ge h_-$ and
+$\Delta_{S,+}\le T_{S,+}+h_+$, so the lemma is mechanically tied to the
+implemented bounded scheduler.  Choosing a longer proof window increases
+$q_W$ and credits the separation available from the actual sequence rather
+than forcing the proof to use adjacent firings.
 
-\subsection{Windowed asynchronous attitude/bias excitation}
+A second route is available when physical vector updates provide independent
+latent-acceleration information.  Let three distinct $S$ rows be partitioned as
+$[\mat P_3\ \vct c]$, where $\mat P_3$ acts on $(v_0,p_0,S_0)$ and
+$\vct c$ acts on $a_0$.  The polynomial block $\mat P_3$ is a nonsingular
+Vandermonde-type matrix.  If the conditional information on $a_0$ after
+eliminating attitude and bias coordinates is at least $\mu_a>0$, the combined
+Gramian has the block form
+\begin{equation}
+ \mat W=
+ \begin{bmatrix}
+ \mat P_3^\top\mat P_3&\mat P_3^\top\vct c\\
+ \vct c^\top\mat P_3&\vct c^\top\vct c+\mu_a
+ \end{bmatrix}.
+ \label{eq:iss-three-S-gramian}
+\end{equation}
+Its Schur complement with respect to
+$\mat P_3^\top\mat P_3$ equals $\mu_a$.
+
+\begin{lemma}[Three-$S$ coupled route]
+\label{lem:iss-three-s-coupled}
+Three distinct usable $S$ updates plus a uniform conditional
+latent-acceleration information bound $\mu_a>0$ give uniform observability of
+$(v,p,S,a_w)$ on the bounded window.
+\end{lemma}
+
+This route is used only on windows where the conditional vector-information
+bound is verified; Lemma~\ref{lem:iss-axis-uco} supplies a source-cadence route
+without that extra condition.
+
+\subsection{Asynchronous attitude and bias information}
 \label{sec:iss-windowed-pe}
 
-Order the remaining error coordinates as
+For held-bias mode define
 \begin{equation}
- \vct\eta
- =\begin{bmatrix}
- \delta\vct\theta^\top&
- \delta\vct b_g^\top&
- \delta\vct b_a^\top
- \end{bmatrix}^{\!\top}\in\mathbb R^9.
+ \vct\eta_6=
+ \begin{bmatrix}\delta\vct\theta^\top&\delta\vct b_g^\top\end{bmatrix}^{\!\top},
+ \label{eq:iss-eta6-state}
+\end{equation}
+and for active-bias mode define
+\begin{equation}
+ \vct\eta_9=
+ \begin{bmatrix}
+ \delta\vct\theta^\top&\delta\vct b_g^\top&\delta\vct b_a^\top
+ \end{bmatrix}^{\!\top}.
  \label{eq:iss-eta-state}
 \end{equation}
-Let $\mat\Phi_\eta(i,k)$ be their homogeneous transition from $k$ to $i$.  It
-contains the exact attitude/gyro-bias transition and either
-$e^{-h/\tau_b}\mat I$ or $\mat I$ in the homogeneous accelerometer-bias block;
-the latter covers the random-walk/constant-bias limit.
-
-After the translational contribution $\mat R_{wb}\delta\vct a_w$ is placed in
-the already observable translational block, the vector-measurement rows acting
-on $\vct\eta$ are
+Accepted accelerometer and magnetometer update sets
+$\mathcal A_{k,N}$ and $\mathcal M_{k,N}$ need not coincide.  After the
+translational $a_w$ contribution is retained in its own block, the active-bias
+vector rows are
 \begin{align}
  \mat C_{a,i}
  &=\begin{bmatrix}
@@ -254,8 +277,7 @@ on $\vct\eta$ are
  \end{bmatrix}.
  \label{eq:iss-eta-rows}
 \end{align}
-Let $\mathcal A_{k,N}$ and $\mathcal M_{k,N}$ be the accepted accelerometer and
-magnetometer update indices in a window.  They need not coincide.  Define
+With the homogeneous transition $\mat\Phi_\eta(i,k)$, define
 \begin{align}
  \mat W_\eta(k,N)
  &:={}
@@ -270,288 +292,221 @@ magnetometer update indices in a window.  They need not coincide.  Define
  \mat\Phi_\eta(i,k).
  \label{eq:iss-eta-gramian}
 \end{align}
-The full-PE condition is
+The full active-bias PE condition is
 \begin{equation}
- \boxed{
- \alpha_\eta\mat I_9
- \preceq\mat W_\eta(k,N_\eta)
- \preceq\beta_\eta\mat I_9,
- \qquad 0<\alpha_\eta\le\beta_\eta<\infty,}
+ \alpha_9\mat I_9\preceq
+ \mat W_\eta(k,N_9)\preceq\beta_9\mat I_9,
+ \qquad \alpha_9>0.
  \label{eq:iss-eta-pe}
 \end{equation}
-uniformly in $k$.  This is a finite-window persistent-excitation condition,
-not a simultaneous-vector condition.  It allows unequal sensor rates,
-individual rejected measurements, short outages, and rotations exceeding
-$90^\circ$; all such behavior is admissible if the accumulated information
-still satisfies Eq.~\eqref{eq:iss-eta-pe}.
+Deleting the accelerometer-bias columns gives the held/reduced condition
+\begin{equation}
+ \alpha_6\mat I_6\preceq
+ \mat W_{\eta_6}(k,N_6)\preceq\beta_6\mat I_6,
+ \qquad \alpha_6>0.
+ \label{eq:iss-eta6-pe}
+\end{equation}
+These are finite-window asynchronous conditions.  Unequal sensor rates,
+rejected samples, and short outages are admissible whenever the accumulated
+information remains coercive.  No pointwise accelerometer--magnetometer
+noncollinearity or small-turn condition is required.
 
-\begin{lemma}[Full 21-state UCO including accelerometer bias]
+When accelerometer bias is active, Eq.~\eqref{eq:iss-eta-pe} directly observes
+its constant/random-walk limit.  If only Eq.~\eqref{eq:iss-eta6-pe} is
+available, the deployed finite residual-bias correlation time gives
+\begin{equation}
+ \|\Phi_b(k,j)\|
+ \le \exp[-(t_k-t_j)/\tau_{b,+}],
+ \label{eq:iss-bias-contraction}
+\end{equation}
+which supplies the detectability fallback for the active 21-state mode.
+
+\subsection{Process excitation supplied by the deployed source}
+\label{sec:iss-process-source}
+
+For one translational axis in the order $(v,p,S,a)$, the continuous drift and
+OU-noise input are
+\begin{equation}
+ \mat F_\lambda=
+ \begin{bmatrix}
+ 0&0&0&1\\
+ 1&0&0&0\\
+ 0&1&0&0\\
+ 0&0&0&-\lambda
+ \end{bmatrix},
+ \qquad
+ \vct G_a=\begin{bmatrix}0&0&0&1\end{bmatrix}^{\!\top}.
+ \label{eq:iss-trans-FG}
+\end{equation}
+Its controllability matrix satisfies
+\begin{equation}
+ \det[\vct G_a,\mat F_\lambda\vct G_a,
+ \mat F_\lambda^2\vct G_a,\mat F_\lambda^3\vct G_a]=-1
+ \label{eq:iss-trans-controllability}
+\end{equation}
+for every finite $\lambda$.  Thus the exact finite-interval covariance
+\begin{equation}
+ \mat Q_L(h)=q_a\int_0^h
+ e^{\mat F_\lambda s}\vct G_a\vct G_a^\top
+ e^{\mat F_\lambda^\top s}\,ds
+ \label{eq:iss-trans-process-gramian}
+\end{equation}
+is positive definite for every $h>0$ whenever $q_a>0$.  By
+Eq.~\eqref{eq:iss-aw-process-floor} and compactness of
+$[h_-,h_+]\times[1/\tau_+,1/\tau_-]$, there is a uniform
+$q_{L,-}>0$ such that the three-axis translational covariance is bounded below
+on every source-reachable Live sample.
+
+The attitude/gyro-bias block has positive deployed gyro and gyro-bias driving
+noise; when accelerometer bias is active, its residual OU channel has positive
+driving covariance.  The corresponding exact finite-interval Gramians are
+positive definite on their active coordinates.  Therefore there are constants
+$q_{H,-},q_{A,-}>0$ such that
+\begin{equation}
+ \mat Q^{\rm act}_{H,k}\succeq q_{H,-}\mat I_{18},
+ \qquad
+ \mat Q^{\rm act}_{A,k}\succeq q_{A,-}\mat I_{21}
+ \label{eq:iss-source-Q-lower}
+\end{equation}
+on the compact deployed source family.  No process lower bound is assigned to
+$\delta b_a$ in held mode because that coordinate is not part of the active
+Riccati subsystem there.
+
+\subsection{Mode-aware full-heading Live stability}
+
+\begin{lemma}[Active-mode uniform observability]
 \label{lem:iss-21-uco-fullpe}
-If Lemma~\ref{lem:iss-axis-uco} holds on each translational proof window and
-Eq.~\eqref{eq:iss-eta-pe} holds on a uniformly bounded vector-update window,
-then the complete 21-state linearized system is uniformly completely
-observable, including for homogeneous accelerometer-bias dynamics
+Assume either Lemma~\ref{lem:iss-axis-uco} or
+Lemma~\ref{lem:iss-three-s-coupled} on each translational axis.  In held-bias
+mode, Eq.~\eqref{eq:iss-eta6-pe} makes the complete 18-state active system
+uniformly completely observable.  In active-bias mode,
+Eq.~\eqref{eq:iss-eta-pe} makes the complete 21-state system uniformly
+completely observable, including the homogeneous limit
 $\delta b_{a,k+1}=\delta b_{a,k}$.
 \end{lemma}
 
 \begin{proof}
-Order the state as the 12 translational coordinates followed by $\vct\eta$.
-Stack the four $S$ observations and all accepted vector observations over a
-common window containing the two component windows.  The resulting observation
-operator has block-lower-triangular form
-\begin{equation}
- \mat O_{21}=
- \begin{bmatrix}
- \mat O_L&0\\
- \mat D&\mat O_\eta
- \end{bmatrix},
- \label{eq:iss-O21-fullpe}
-\end{equation}
-where $\mat O_L$ is the three-axis translational operator and $\mat D$ contains
-the legitimate acceleration-to-accelerometer coupling.  Lemma
-\ref{lem:iss-axis-uco} gives a uniform positive singular-value lower bound for
-$\mat O_L$, while Eq.~\eqref{eq:iss-eta-pe} gives one for
-$\mat O_\eta$.  Both diagonal blocks are therefore uniformly injective and all
-blocks are uniformly bounded; hence $\mat O_{21}$ has a uniform positive
-minimum singular value.  In particular, once the $S$ history separates the
-latent $a_w$ trajectory, the additive accelerometer residual carries an
-independent $\mat I\,\delta b_a$ term, so a constant $b_a$ is not a structural
-unobservable mode under the augmented PE condition.
+Order the active state as translational coordinates followed by the applicable
+attitude/bias coordinates.  Stacking $S$ and vector observations over a common
+bounded window gives a block-lower-triangular observation operator.  The
+translational diagonal block is uniformly injective by the selected
+translational lemma and the attitude/bias diagonal block is uniformly injective
+by the corresponding PE condition.  Uniform boundedness of all blocks then
+gives a positive minimum singular value for the complete operator.
 \end{proof}
 
-The lemma removes the previous observability obstruction at
-$\tau_b=\infty$.  It does not assert that every motion supplies the required
-excitation; Eq.~\eqref{eq:iss-eta-pe} is exactly the condition that distinguishes
-an informative window from a weakly excited one.
-
-\subsection{Finite-$\tau_b$ detectability fallback}
-
-When Eq.~\eqref{eq:iss-eta-pe} is too strong, define
-$\vct\eta_6=(\delta\vct\theta,\delta\vct b_g)$ and the corresponding windowed
-Gramian $\mat W_{\eta_6}$ by deleting the accelerometer-bias columns from
-Eq.~\eqref{eq:iss-eta-rows}.  Assume
-\begin{equation}
- \alpha_6\mat I_6\preceq
- \mat W_{\eta_6}(k,N_6)\preceq\beta_6\mat I_6.
- \label{eq:iss-eta6-pe}
-\end{equation}
-Together with the translational lemma this makes the 18-state subsystem UCO.
-For finite $\tau_b$,
-\begin{equation}
- \|\Phi_b(k,j)\|
- \le\exp\!\left[-\frac{(k-j)h_{\min}}{\overline\tau_b}\right],
- \label{eq:iss-bias-contraction}
-\end{equation}
-so any residual unobserved $b_a$ direction is itself UES.  The standard
-block-triangular observer construction then gives uniform detectability of the
-complete 21-state system.  Thus finite $\tau_b$ remains a valid fallback, but
-is no longer an essential assumption when the full augmented PE condition
-holds.
-
-\subsection{Process covariance: finite-horizon rather than pointwise excitation}
-
-Let $\mat Q_k^{\rm eff}\succeq0$ denote the exact discrete process covariance,
-including the optional prediction-time PSD $a_w$ covariance maintenance.  Only
-a uniform upper bound is required pointwise,
-\begin{equation}
- 0\preceq\mat Q_k^{\rm eff}\preceq q_+\mat I.
- \label{eq:iss-Q-bounds}
-\end{equation}
-Individual $\mat Q_k^{\rm eff}$ may therefore be singular.  When a classical
-uniform-controllability Riccati route is used, require instead a finite-horizon
-process Gramian
-\begin{equation}
- \mat W_c(k,N_c)
- :=\sum_{i=k}^{k+N_c-1}
- \mat\Phi(k+N_c,i+1)\mat Q_i^{\rm eff}
- \mat\Phi(k+N_c,i+1)^\top
- \succeq\alpha_c\mat I,
- \qquad \alpha_c>0.
- \label{eq:iss-process-gramian}
-\end{equation}
-This is strictly weaker than $q_-\mat I\preceq\mat Q_k$ at every sample.  In
-particular, integrated OU forcing may reach $(v,p,S,a_w)$ only over several
-steps, and a process channel may be zero at isolated samples without violating
-Eq.~\eqref{eq:iss-process-gramian}.  The output-error limit with zero process
-noise is also compatible with Kalman stability under UCO; see
-\cite{Zhang2017_DiscreteKalmanOE}.  For the exponential conclusion below we use
-the finite-horizon condition Eq.~\eqref{eq:iss-process-gramian}; this avoids
-claiming a uniform exponential rate from an unqualified singular-covariance
-case.
-
-\subsection{Full-heading Live UES}
-
-\begin{theorem}[Gauge-referenced 21-state Live UES]
+\begin{theorem}[Mode-aware full-heading Live UES/ISS]
 \label{thm:iss-21-ues}
-Assume the bounded Live family above, Lemma~\ref{lem:iss-axis-uco}, positive
-measurement-covariance bounds, the finite-horizon process condition
-Eq.~\eqref{eq:iss-process-gramian}, no hard reset inside the analyzed interval,
-and either
-\begin{enumerate}[label=(\alph*),leftmargin=1.6em]
- \item the full-PE condition Eq.~\eqref{eq:iss-eta-pe}; or
- \item the reduced condition Eq.~\eqref{eq:iss-eta6-pe} together with the
-       finite-$\tau_b$ fallback Eq.~\eqref{eq:iss-bias-tau-bounds}.
-\end{enumerate}
-Then the homogeneous full-heading 21-state linearized Kalman estimation-error
-transition relative to the adopted horizontal gauge is uniformly exponentially
-stable: there exist $M\ge1$ and $0<\rho<1$ such that
+Assume the source-reachable compact family of
+Sec.~\ref{sec:iss-source-family}, positive accepted measurement covariances,
+no hard attitude rewrite inside a normal-Live interval, and either
+Lemma~\ref{lem:iss-axis-uco} or Lemma~\ref{lem:iss-three-s-coupled} for the
+translational block.
+
+In held-bias mode, if Eq.~\eqref{eq:iss-eta6-pe} holds, the homogeneous active
+18-state Kalman error transition is UES: there exist $M_H\ge1$ and
+$0<\rho_H<1$ such that
+\begin{equation}
+ \|\Psi_H(k,j)\|\le M_H\rho_H^{k-j}.
+ \label{eq:iss-held-ues}
+\end{equation}
+For bounded frozen accelerometer-bias error and bounded model disturbance
+$\vct d$, the active error satisfies
 \begin{equation}
  \boxed{
- \|\Psi_{21}(k,j)\|\le M\rho^{k-j},\qquad k\ge j.}
+ \|\vct e_{H,k}\|
+ \le C_H\lambda_H^{k-j}\|\vct e_{H,j}\|
+ +\Gamma_{ba,H}\|\delta\vct b_{a,H}\|
+ +\Gamma_{d,H}\|\vct d\|_{\infty,[j,k)}.}
+ \label{eq:iss-held-forced}
+\end{equation}
+
+In active-bias mode, if either
+(i) Eq.~\eqref{eq:iss-eta-pe} holds, or
+(ii) Eq.~\eqref{eq:iss-eta6-pe} holds together with a finite bounded
+$\tau_b$, then the homogeneous 21-state Kalman error transition is UES:
+\begin{equation}
+ \boxed{
+ \|\Psi_A(k,j)\|\le M_A\rho_A^{k-j},
+ \qquad 0<\rho_A<1.}
  \label{eq:iss-21-ues}
 \end{equation}
-The full-PE route permits the accelerometer-bias random-walk limit
-$\tau_b=\infty$; the fallback route does not.
+The full-PE route admits the accelerometer-bias random-walk limit; the
+finite-$\tau_b$ route uses intrinsic residual-bias contraction.
+
+At the source transition from held to active bias, the nominal state is
+continuous and the covariance operation is bounded.  Hence any finite held
+interval satisfying Eq.~\eqref{eq:iss-held-forced}, followed by an active
+interval satisfying Eq.~\eqref{eq:iss-21-ues}, has a finite multiplicative
+mode-transition constant and inherits the active-mode exponential/practical
+bound after release.
 \end{theorem}
 
 \begin{proof}
-Under route (a), Lemma~\ref{lem:iss-21-uco-fullpe} gives UCO of the complete
-21-state system.  Under route (b), the translational and reduced attitude/bias
-windows give an 18-state UCO subsystem while finite-$\tau_b$ contraction makes
-the remaining augmentation uniformly detectable.  In either case the
-finite-horizon process Gramian supplies uniform complete controllability for the
-Riccati recursion without requiring pointwise full-rank process covariance.
-Together with Eq.~\eqref{eq:iss-R-bounds}, standard discrete LTV
+Lemma~\ref{lem:iss-21-uco-fullpe} supplies UCO in the corresponding active
+coordinates.  Equation~\eqref{eq:iss-source-Q-lower} supplies uniform complete
+controllability of each active Riccati recursion.  Standard discrete LTV
 Kalman/Riccati stability theory
 \cite{Jazwinski1970_Filtering,AndersonMoore1981_DetectabilityStabilizability}
-gives uniform covariance regularity and exponential stability of the
-homogeneous Kalman error transition.
+then gives covariance regularity and UES.  In held mode,
+$\delta b_a$ appears only as a bounded exogenous measurement/model input, so
+variation of constants yields Eq.~\eqref{eq:iss-held-forced}.  In active mode,
+route (ii) replaces direct $b_a$ observability by exponential stability of the
+unobserved residual-bias direction, giving uniform detectability.  The enable
+operation is a bounded linear mode jump in the error/covariance coordinates, so
+finite composition preserves the stated bounds.
 \end{proof}
-
-A constant residual accelerometer bias with zero driving covariance is already
-observable under route (a) by Lemma~\ref{lem:iss-21-uco-fullpe}; however, the
-specific UES statement above invokes Eq.~\eqref{eq:iss-process-gramian}.  Thus
-the theorem directly covers the random-walk limit with positive driving
-covariance.  The exactly deterministic zero-process-noise bias limit can use
-output-error Kalman results under UCO, but no stronger uniform exponential rate
-is asserted here without the corresponding Riccati hypotheses.
 
 \subsection{Gravity-only stability modulo yaw}
 \label{sec:iss-nomag-quotient}
 
-Without a magnetic or equivalent heading reference, absolute yaw is a gauge
-symmetry.  Let $\mathcal G_\alpha$ denote a rotation of the adopted horizontal
-world frame by $\alpha$ about gravity, applied consistently to attitude and all
-horizontal world-frame translational states.  The accelerometer model and the
-$S=0$ pseudo-measurement are invariant under this action.  Let
-$\vct g_k$ be the tangent of this one-dimensional orbit in local error
-coordinates and let $\mat P_k^\perp$ project onto a uniformly chosen complement.
-Define the quotient error
+Without an absolute heading reference, the action
+$\mathcal G_\alpha$ that rotates the complete horizontal world frame by
+$\alpha$ about gravity is a symmetry.  Let $\mat P_k^\perp$ project onto a
+uniformly chosen complement of the yaw-orbit tangent and write
 \begin{equation}
  \vct e_k^\perp=\mat P_k^\perp\vct e_k.
  \label{eq:iss-nomag-error}
 \end{equation}
-
-Let $\mat W_o^{\perp}(k,N)$ be the finite-window observability Gramian formed
-from accepted accelerometer and $S$ rows and projected onto that complement.
-Assume
+Let the accepted accelerometer and $S$ rows induce the projected finite-window
+gramian
 \begin{equation}
- \boxed{
- \alpha_\perp\mat I
- \preceq\mat W_o^{\perp}(k,N_\perp)
- \preceq\beta_\perp\mat I,
- \qquad \alpha_\perp>0,}
+ \alpha_\perp\mat I\preceq
+ \mat W_o^\perp(k,N_\perp)\preceq\beta_\perp\mat I,
+ \qquad \alpha_\perp>0.
  \label{eq:iss-nomag-pe}
 \end{equation}
-uniformly in $k$, together with the projected analogue of
-Eq.~\eqref{eq:iss-process-gramian}.
 
-\begin{theorem}[No-magnetometer Live UES modulo heading gauge]
+\begin{theorem}[Gravity-only mode-aware Live stability on the yaw quotient]
 \label{thm:iss-nomag-quotient}
-Under Lemma~\ref{lem:iss-axis-uco}, Eq.~\eqref{eq:iss-nomag-pe}, bounded
-covariances and schedule, the projected homogeneous Live error is UES:
+Under the source-reachable bounds, a translational observability route above,
+and Eq.~\eqref{eq:iss-nomag-pe}, the homogeneous active error on the yaw
+quotient is UES in either accelerometer-bias source mode.  In held-bias mode the
+frozen $\delta b_a$ enters the projected active dynamics as a bounded input; in
+active-bias mode the same full-PE or finite-$\tau_b$ alternatives as
+Theorem~\ref{thm:iss-21-ues} apply after projection.  Thus, for the appropriate
+active quotient coordinate,
 \begin{equation}
  \boxed{
  \|\vct e_k^\perp\|
- \le M_\perp\rho_\perp^{k-j}\|\vct e_j^\perp\|,
- \qquad 0<\rho_\perp<1.}
+ \le C_\perp\lambda_\perp^{k-j}\|\vct e_j^\perp\|
+ +\Gamma_\perp\|\vct d^\perp\|_{\infty,[j,k)}.}
  \label{eq:iss-nomag-ues}
 \end{equation}
 No convergence of absolute yaw is claimed.
 \end{theorem}
 
 \begin{proof}
-The measurement and process models descend to the quotient because the
-one-dimensional yaw action is a symmetry of the gravity-only outputs.  The
-projected Gramian condition gives UCO on the quotient and the projected process
-condition gives the corresponding finite-horizon Riccati controllability.
-Applying the same discrete LTV Kalman stability argument on that reduced space
-gives Eq.~\eqref{eq:iss-nomag-ues}.  The removed gauge coordinate is neutral by
-construction rather than incorrectly declared observable.
+The gravity-only prediction and outputs descend to the quotient.  The projected
+observability condition and the source process excitation give the same active
+Riccati hypotheses as in the full-heading proof, while the one-dimensional yaw
+orbit is removed rather than declared observable.  Held accelerometer bias is
+handled as a projected bounded input exactly as in
+Eq.~\eqref{eq:iss-held-forced}.
 \end{proof}
 
-This theorem is deliberately a quotient result.  It supports stable tilt and
-wave-motion estimation without absolute heading, but it is not a full-heading
-21-state UES claim.  A numerical regional certificate for no-magnetometer mode
-must likewise use a gauge-invariant metric rather than the full-heading metric
-of Sec.~\ref{sec:finite-live-capture}.
-
-\subsection{Local nonlinear ISS}
-
-For the full-heading branch, write the nonlinear local error recursion after
-prediction, correction, and MEKF reset as
-\begin{equation}
- \vct e_{k+1}
- =\mat A_k^{\rm cl}\vct e_k
- +\vct\varphi_k(\vct e_k)
- +\mat G_k\vct d_k,
- \label{eq:iss-nonlinear-recursion}
-\end{equation}
-where Theorem~\ref{thm:iss-21-ues} supplies UES and, on a local chart,
-\begin{equation}
- \|\vct\varphi_k(\vct e)\|
- \le c_\varphi\|\vct e\|^2,
- \qquad \|\vct e\|\le r_0.
- \label{eq:iss-quadratic-remainder}
-\end{equation}
-The disturbance $\vct d_k$ collects bounded model/sensor mismatch, including
-thermal-calibration error, pseudo-measurement model error, non-yaw magnetic
-model error, and bounded variation of the adopted horizontal gauge.  A constant
-$b_{\psi,\mathrm{ref}}$ is absorbed by the joint attitude/world-vector gauge
-trajectory and therefore does not consume the local error radius.
-
-\begin{theorem}[Local ISS of the gauge-referenced 21-state Live dynamics]
-\label{thm:iss-21-local}
-Under Theorem~\ref{thm:iss-21-ues}, Eq.~\eqref{eq:iss-quadratic-remainder}, and
-$\|\mat G_k\|\le\overline G$, there exist a sufficiently small invariant
-neighborhood, $C\ge1$, $0<\lambda<1$, and $\Gamma<\infty$ such that
-\begin{equation}
- \boxed{
- \|\vct e_k\|
- \le C\lambda^{k-j}\|\vct e_j\|
- +\Gamma\sup_{j\le i<k}\|\vct d_i\|.}
- \label{eq:iss-local-bound}
-\end{equation}
-\end{theorem}
-
-\begin{proof}
-Variation of constants and Eq.~\eqref{eq:iss-21-ues} give
-\begin{align}
- \|e_k\|
- &\le M\rho^{k-j}\|e_j\|\\
- &\quad+M\sum_{i=j}^{k-1}\rho^{k-1-i}
- \left(c_\varphi\|e_i\|^2+\overline G\|d_i\|\right).
-\end{align}
-Choose $r<r_0$ with $Mc_\varphi r/(1-\rho)<1$.  The quadratic convolution is
-then absorbed into a slightly slower exponential factor and the bounded-input
-convolution has finite geometric gain.  Shrinking the admissible initial and
-input bounds so the trajectory remains in the selected chart closes the usual
-local invariant-set argument and yields Eq.~\eqref{eq:iss-local-bound}.
-\end{proof}
-
-\paragraph{Stochastic qualification}
-Gaussian process and sensor noise have no finite almost-sure infinite-horizon
-supremum, so Eq.~\eqref{eq:iss-local-bound} is a deterministic bounded-input
-statement.  The regional stochastic theorem of
-Sec.~\ref{sec:capture-stochastic} treats mean-square and finite-horizon
-probability statements separately.
-
-\paragraph{Scope}
-The full-heading UES/ISS proof covers asynchronous accepted vector updates,
-short rejection/outage intervals consistent with the PE window, nonconsecutive
-$S$ updates satisfying Eq.~\eqref{eq:iss-S-gap-bounds}, rotations not restricted
-by a $\pi/2$ small-turn condition, singular one-step process covariances
-satisfying the finite-horizon process condition, and either augmented
-accelerometer-bias PE or the finite-$\tau_b$ fallback.  Startup and hard reset
-maps remain outside this Live theorem.  The gravity-only branch is stable only
-modulo yaw and therefore carries no absolute-heading convergence claim.
+The remaining motion-dependent analytical condition is finite-window vector
+excitation: source timing and process excitation are fixed by implementation,
+whereas whether a physical trajectory supplies the required attitude/bias
+information is an operating-envelope condition to be checked for the motion
+family being certified.
