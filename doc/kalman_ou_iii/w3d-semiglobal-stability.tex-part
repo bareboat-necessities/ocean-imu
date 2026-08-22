@@ -146,11 +146,13 @@ remaining source dynamics can be written
  &=k_I\vct e_P+\vct w_b,
  \label{eq:semiglobal-proxy-reduced-dynamics}
 \end{align}
-where $\mathsf D_t$ is the tangent-plane covariant derivative.  The perturbation
-$\vct w_\omega$ collects gyro noise, $k_P\vct\nu_\varepsilon$, the neutral
-parallel-bias rotation, and the bounded sample-and-normalize defect; $\vct w_b$
-collects bias drift, $k_I\vct\nu_\varepsilon$, tangent-frame transport, and its
-finite-step defect.  Thus source/physics bounds give calculable constants
+where $\mathsf D_t$ is the tangent-plane covariant derivative and
+$\vct w_\omega,\vct w_b$ are represented in that transported tangent plane.
+The perturbation $\vct w_\omega$ collects gyro noise,
+$k_P\vct\nu_\varepsilon$, the neutral parallel-bias rotation, and the bounded
+sample-and-normalize defect; $\vct w_b$ collects bias drift,
+$k_I\vct\nu_\varepsilon$, tangent-frame transport, and its finite-step defect.
+Thus source/physics bounds give calculable constants
 \begin{equation}
  \|\vct w_\omega\|\le\overline w_\omega,
  \qquad
@@ -290,7 +292,8 @@ If
  \max\{\overline V_{P,0},V_{P,\infty}\}<V_{P,\star},}
  \label{eq:semiglobal-proxy-chart-invariance}
 \end{equation}
-then the trajectory remains in $\mathcal K_{\epsilon,B_\beta}$ and
+then the trajectory remains in the quantitative tilt chart
+$\theta_P<\theta_\star$; its observable bias is bounded explicitly below, and
 \begin{equation}
  \boxed{
  \dot V_P
@@ -391,7 +394,7 @@ A second Young inequality yields
 Eq.~\eqref{eq:semiglobal-proxy-iss-differential}.  Scalar comparison gives
 Eq.~\eqref{eq:semiglobal-proxy-iss};
 Eq.~\eqref{eq:semiglobal-proxy-chart-invariance} keeps the comparison envelope
-strictly inside the chart because
+strictly inside the tilt chart because
 $U_P\le V_P/(1-q_P)$.  Finally
 $U_P=2\sin^2(\theta_P/2)$ gives the first bound in
 Eq.~\eqref{eq:semiglobal-proxy-explicit-bounds}, while the bias term in $W_P$
