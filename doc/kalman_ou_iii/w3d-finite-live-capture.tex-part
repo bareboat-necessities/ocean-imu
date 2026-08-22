@@ -1,17 +1,17 @@
 \section{Finite-Step Regional Capture of the Live MEKF}
 \label{sec:finite-live-capture}
 
-The block-local ISS result of Sec.~\ref{sec:iss-block-basin} proves that the
-normal Live recursion possesses a local invariant ISS neighborhood.  It is not,
-however, used below as an operational startup bottleneck.  The deployed handoff
-can be appreciably farther from the equilibrium and may undergo a short
-covariance/OU settling transient before contraction becomes dominant.  The
-operational statement is therefore proved directly for the complete nonlinear
-Live map: a structured post-handoff set is propagated by verified finite-step
-comparison maps until it enters a smaller robustly invariant regional set.  No
-individual sample, and no individual lifted interval, is required to contract.
+The block-local result of Sec.~\ref{sec:iss-block-basin} establishes local ISS
+of the normal Live recursion from its analytical structure.  Startup requires a
+different statement because the initialized filter can begin farther from the
+equilibrium and can undergo a bounded covariance/OU settling transient.  The
+operational result below is therefore formulated directly for the complete
+implemented nonlinear Live map.  A structured post-handoff set is propagated
+by verified finite-step comparison envelopes until it reaches a smaller robustly
+invariant regional set.  Individual samples and individual lifted intervals are
+not required to contract.
 
-\subsection{Structured regional coordinates and the exact lifted map}
+\subsection{Structured regional coordinates and exact lifted map}
 
 Use the sensitive/kinematic split of
 Eqs.~\eqref{eq:iss-block-xi}--\eqref{eq:iss-block-ell},
@@ -23,10 +23,10 @@ Eqs.~\eqref{eq:iss-block-xi}--\eqref{eq:iss-block-ell},
  \qquad
  \vct e_\ell=(\delta\vct v,\delta\vct p).
 \end{equation}
-Let $\pi_k$ denote the complete normal-Live proof mode at sample $k$: the
-implemented covariance, enabled-state flags, staged OU/$R_S$ parameters, and
-the accepted-update pattern known to the filter.  Over the declared compact
-regional mode family choose uniformly positive-definite block metrics
+Let $\pi_k$ denote the complete normal-Live proof mode at sample $k$, including
+the implemented covariance, enabled-state flags, staged OU/$R_S$ parameters,
+and accepted-update pattern.  On the declared compact regional mode family,
+choose uniformly positive-definite block metrics
 $\mat Q_\xi(\pi)$ and $\mat Q_\ell(\pi)$ and define
 \begin{align}
  r_{\xi,k}(\vct e)
@@ -36,22 +36,13 @@ $\mat Q_\xi(\pi)$ and $\mat Q_\ell(\pi)$ and define
  \vct r_k(\vct e)&:=(r_{\xi,k},r_{\ell,k})^\top .
  \label{eq:capture-structured-radii}
 \end{align}
-The fixed dimensionless scaling used in Sec.~\ref{sec:iss-live-certificate} is
-one admissible choice.  A mode-dependent metric derived from the implemented
-covariance is another.  The scalar Riccati norm retained as a useful diagnostic
-is
-\begin{equation}
- \|\vct e\|_{P,k}:=
- \left(\vct e^\top\mat P_k^{-1}\vct e\right)^{1/2}.
- \label{eq:capture-riccati-norm}
-\end{equation}
-Uniform positive definiteness on the compact mode family makes these metrics
-uniformly norm equivalent; the structured formulation is used because it does
-not force the admissible attitude/$S$/bias errors and the kinematic errors into
-one spherical radius.
+A fixed dimensionless metric or a mode-dependent metric derived from the
+implemented covariance may be used, provided the chosen family is uniformly
+positive definite.  The two-block construction avoids forcing attitude,
+$S$, bias, velocity, and position errors into one spherical radius.
 
-For a lift of $m\ge1$ samples, denote the \emph{complete implemented nonlinear
-error map} by
+For a lift of $m\ge1$ samples, denote the complete implemented nonlinear error
+map by
 \begin{equation}
  \boxed{
  \vct e_{k+m}
@@ -59,34 +50,35 @@ error map} by
    (\vct e_k,\vct d_{k:k+m-1};\pi_{k:k+m}).}
  \label{eq:capture-exact-lift}
 \end{equation}
-This map contains the exact prediction, the executed accelerometer and
-magnetometer corrections, the full $S=0$ Kalman correction, quaternion
-injection/reset, covariance propagation, state-enable staging, and the
-predictable adaptive schedule.  In particular, the $S=0$ update retains its
-attitude and bias rows through cross-covariance.  No Schmidt, block-only, or
-gain-truncated approximation is introduced for the proof.
+The map contains the exact prediction, executed accelerometer and magnetometer
+corrections, the full $S=0$ Kalman correction, quaternion injection/reset,
+covariance propagation, state-enable staging, and predictable adaptive
+schedule.  In particular, the $S=0$ correction retains its attitude and bias
+rows through cross-covariance.  No Schmidt, block-only, or gain-truncated
+approximation is introduced.
 
-For $\vct a\in\mathbb R_+^2$, write
+For $\vct a\in\mathbb R_+^2$, define
 \begin{equation}
  \mathcal C_k(\vct a)
  :=\{\vct e:\vct r_k(\vct e)\preceq\vct a\},
  \label{eq:capture-structured-box}
 \end{equation}
-where inequalities between two-vectors are componentwise.  Fix positive vectors
+where vector inequalities are componentwise.  Choose positive vectors
 \begin{equation}
  0\prec\vct R_B\prec\vct R_C\preceq\vct R_D .
  \label{eq:capture-region-order}
 \end{equation}
-Here $\mathcal C_k(\vct R_D)$ is the chart/measurement-safe proof domain,
-$\mathcal C_k(\vct R_C)$ is the certified outer handoff/capture set, and
-$\mathcal B_k:=\mathcal C_k(\vct R_B)$ is the inner regional set.  The proof
-allows the state to grow beyond $\vct R_C$ temporarily, provided every verified
-prefix remains inside $\vct R_D$.
+Here $\mathcal C_k(\vct R_D)$ is the chart- and measurement-safe proof domain,
+$\mathcal C_k(\vct R_C)$ is the outer handoff/capture set, and
+$\mathcal B_k:=\mathcal C_k(\vct R_B)$ is the inner regional set.  A trajectory
+may temporarily leave $\mathcal C_k(\vct R_C)$ during capture, provided every
+verified prefix remains inside $\mathcal C_k(\vct R_D)$.
 
 \subsection{Exact comparison envelopes}
 
-For a disturbance budget $\|\vct d\|_\infty\le\overline d$ define the
-componentwise comparison envelope of the complete lift by
+For a deterministic disturbance budget
+$\|\vct d\|_\infty\le\overline d$, define the componentwise envelope of the
+complete lift by
 \begin{equation}
  \boxed{
  [\mathcal T_{k,m}(\vct a;\overline d)]_i
@@ -102,11 +94,12 @@ componentwise comparison envelope of the complete lift by
  \quad i\in\{\xi,\ell\}.
  \label{eq:capture-comparison-envelope}
 \end{equation}
-The admissible set $\Pi_{k,m}$ contains only predictable schedules and accepted
-update patterns satisfying the declared Live assumptions.  Compactness and
-continuity make the suprema finite.  Because
+The admissible family $\Pi_{k,m}$ contains only predictable schedules and
+accepted-update patterns satisfying the declared Live assumptions.  Compactness
+of the certified domain and continuity of the implemented local error map make
+the suprema finite.  Since
 $\mathcal C_k(\vct a)\subseteq\mathcal C_k(\vct b)$ whenever
-$\vct a\preceq\vct b$, the map $\mathcal T_{k,m}$ is monotone:
+$\vct a\preceq\vct b$, the envelope is monotone:
 \begin{equation}
  \vct a\preceq\vct b
  \quad\Longrightarrow\quad
@@ -116,33 +109,32 @@ $\vct a\preceq\vct b$, the map $\mathcal T_{k,m}$ is monotone:
  \label{eq:capture-comparison-monotone}
 \end{equation}
 Prefix envelopes $\mathcal T_{k,j}^{\rm pre}$, $1\le j<m$, are defined by the
-same supremum with $\mathcal F_{k,j}$.  Equation~\eqref{eq:capture-comparison-envelope}
-is deliberately taken on the complete nonlinear map; it therefore preserves
-any cancellation produced by the Kalman correction, quaternion reset, and
-subsequent prediction instead of applying a triangle inequality separately to
-linear and nonlinear pieces.
+same supremum with $\mathcal F_{k,j}$.  Because the envelope is evaluated on the
+complete nonlinear map, cancellation produced by the Kalman correction,
+quaternion reset, and subsequent prediction is retained.
 
-Choose an admissible sequence of lift lengths $m_n\ge1$ and let $k_0=k_H$,
-$k_{n+1}=k_n+m_n$.  Define
+Choose an admissible sequence of lift lengths $m_n\ge1$, let $k_0=k_H$ and
+$k_{n+1}=k_n+m_n$, and define the comparison recursion
 \begin{equation}
  \overline{\vct r}_{n+1}
  =\mathcal T_{k_n,m_n}(\overline{\vct r}_n;\overline d).
  \label{eq:capture-comparison-sequence}
 \end{equation}
-The maps may change with $n$; hence the first post-handoff lifts may expand and
-later lifts may contract more strongly.  No frozen covariance and no common
-one-step contraction factor are assumed.
+The maps may vary with $n$.  Consequently, early post-handoff lifts may expand
+while later lifts contract more strongly; no common one-step contraction factor
+is assumed.
 
 \begin{theorem}[Finite-step regional Live capture and practical ISS]
 \label{thm:finite-live-capture}
-Assume the exact comparison envelopes above are valid on
+Assume the exact comparison envelopes are valid on
 $\mathcal C_k(\vct R_D)$.  Starting from
 $\overline{\vct r}^{\,C}_0=\vct R_C$, generate
-Eq.~\eqref{eq:capture-comparison-sequence}.  Suppose there is a finite
-$N_C$ such that
+Eq.~\eqref{eq:capture-comparison-sequence}.  Suppose a finite $N_C$ exists such
+that
 \begin{align}
  \overline{\vct r}^{\,C}_n&\preceq\vct R_D,
- &&0\le n\le N_C,\label{eq:capture-lift-domain}\\
+ &&0\le n\le N_C,
+ \label{eq:capture-lift-domain}\\
  \mathcal T^{\rm pre}_{k_n,j}
  (\overline{\vct r}^{\,C}_n;\overline d)
  &\preceq\vct R_D,
@@ -151,15 +143,15 @@ $N_C$ such that
  \overline{\vct r}^{\,C}_{N_C}&\preceq\vct R_B.
  \label{eq:capture-finite-entry}
 \end{align}
-Assume further that every admissible post-capture normal-Live lift satisfies the
-robust invariance condition
+Assume further that every admissible post-capture normal-Live lift has chart-safe
+prefixes and satisfies
 \begin{equation}
  \boxed{
  \mathcal T_{k,m}(\vct R_B;\overline d)\preceq\vct R_B,}
  \label{eq:capture-inner-invariance}
 \end{equation}
-with chart-safe prefixes, and that for some positive weight vector $\vct w$,
-$0<\lambda_B<1$, and class-$\mathcal K$ function $\gamma_B$,
+and that for some positive weight vector $\vct w$, some
+$0<\lambda_B<1$, and a class-$\mathcal K$ function $\gamma_B$,
 \begin{equation}
  \boxed{
  \|\mathcal T_{k,m}(\vct a;\overline d)\|_{\vct w,\infty}
@@ -173,9 +165,9 @@ $0<\lambda_B<1$, and class-$\mathcal K$ function $\gamma_B$,
 where
 $\|\vct a\|_{\vct w,\infty}:=\max_i a_i/w_i$.
 Then every deterministic Live trajectory beginning in
-$\mathcal C_{k_H}(\vct R_C)$ remains in the certified chart/measurement domain,
-enters $\mathcal B_{k_{N_C}}$ after at most $N_C$ lifted intervals, and remains
-in the inner regional set thereafter.  After capture,
+$\mathcal C_{k_H}(\vct R_C)$ remains in the certified proof domain, enters
+$\mathcal B_{k_{N_C}}$ after at most $N_C$ lifted intervals, and remains in the
+inner regional set thereafter.  For every post-capture lifted index $j$,
 \begin{equation}
  \boxed{
  \|\vct r_{k_{N_C+j}}\|_{\vct w,\infty}
@@ -185,45 +177,41 @@ in the inner regional set thereafter.  After capture,
  \label{eq:capture-practical-iss}
 \end{equation}
 Thus the full nonlinear Live recursion is regionally practically ISS on the
-captured set.  For $\overline d=0$, the captured error converges exponentially
-to zero.
+captured set.  If $\overline d=0$, the captured error converges exponentially to
+zero.
 \end{theorem}
 
 \begin{proof}
-Let an arbitrary initial error satisfy
+Let
 $\vct r_{k_H}(\vct e_{k_H})\preceq\vct R_C
 =\overline{\vct r}^{\,C}_0$.  Monotonicity
-Eq.~\eqref{eq:capture-comparison-monotone} and the definition of the exact
-envelope give by induction
+Eq.~\eqref{eq:capture-comparison-monotone} and the definition of the envelope
+give by induction
 \begin{equation}
  \vct r_{k_n}(\vct e_{k_n})
  \preceq\overline{\vct r}^{\,C}_n,
  \qquad0\le n\le N_C.
 \end{equation}
-The prefix inequalities
-Eq.~\eqref{eq:capture-prefix-domain} therefore keep every intermediate sample
-inside $\mathcal C(\vct R_D)$, even when a prefix or a complete early lift grows.
-Equation~\eqref{eq:capture-finite-entry} then yields
-$\vct r_{k_{N_C}}\preceq\vct R_B$.  Applying monotonicity once more to
+The prefix inequalities Eq.~\eqref{eq:capture-prefix-domain} keep every
+intermediate sample inside $\mathcal C(\vct R_D)$ even when an early prefix or
+complete lift grows.  Equation~\eqref{eq:capture-finite-entry} gives
+$\vct r_{k_{N_C}}\preceq\vct R_B$.  Monotonicity together with
 Eq.~\eqref{eq:capture-inner-invariance} proves forward invariance of the inner
-set.  Finally Eq.~\eqref{eq:capture-inner-contraction} applied recursively after
-capture gives the geometric-series bound
-Eq.~\eqref{eq:capture-practical-iss}.  No inclusion in the separate block-local
-entrance condition is required.
+set.  Iterating Eq.~\eqref{eq:capture-inner-contraction} then gives the geometric
+series in Eq.~\eqref{eq:capture-practical-iss}.
 \end{proof}
 
-The theorem is a finite-step Lyapunov/comparison result rather than a one-step
-contraction theorem.  A composite sequence
+The result is a finite-step Lyapunov/comparison theorem.  A composite sequence
 $\mathcal T_{k_{q-1},m_{q-1}}\circ\cdots\circ
- \mathcal T_{k_0,m_0}$ may map the outer set strictly inward even when one or
-more constituent maps expand it.  This is the proof counterpart of the observed
-post-\texttt{goLive()} ringing.
+ \mathcal T_{k_0,m_0}$ may map the outer set inward even if one or more
+constituent lifts expand it, matching the permitted post-\texttt{goLive()}
+settling transient.
 
 \subsection{Handoff-specific capture time}
 
-The basin-wide bound above starts from the complete outer set.  Startup normally
-starts from a much smaller structured handoff envelope.  Let
-$\vct R_H\preceq\vct R_C$ be any certified handoff bound and define
+The basin-wide construction starts from the complete outer set.  Startup begins
+from its own structured handoff envelope.  Let
+$\vct R_H\preceq\vct R_C$ be a certified handoff bound and define
 \begin{equation}
  \overline{\vct r}^{\,H}_0=\vct R_H,
  \qquad
@@ -232,15 +220,15 @@ $\vct R_H\preceq\vct R_C$ be any certified handoff bound and define
   (\overline{\vct r}^{\,H}_n;\overline d).
  \label{eq:capture-handoff-sequence}
 \end{equation}
-The rigorous startup capture count is
+The startup capture count is
 \begin{equation}
  \boxed{
  N_H:=\min\{n\ge0:
  \overline{\vct r}^{\,H}_n\preceq\vct R_B\}.}
  \label{eq:capture-count}
 \end{equation}
-Whenever the outer-set certificate exists, monotonicity gives
-$N_H\le N_C$.  The corresponding time bounds are
+Whenever the outer-set certificate exists, monotonicity gives $N_H\le N_C$.
+The corresponding time bounds are
 \begin{equation}
  \boxed{
  T_H\le h_{\max}\sum_{n=0}^{N_H-1}m_n,
@@ -248,54 +236,20 @@ $N_H\le N_C$.  The corresponding time bounds are
  T_C\le h_{\max}\sum_{n=0}^{N_C-1}m_n.}
  \label{eq:capture-time}
 \end{equation}
-Thus the startup claim is not penalized by pretending every accepted Mahony
-handoff begins on the extreme boundary of the outer capture set.
-
-\subsection{Scalar quadratic bound as an optional sufficient corollary}
-
-The earlier split bound remains a valid but generally more conservative way to
-construct an envelope.  If, in a scalar norm, verified constants satisfy
-\begin{align}
- \|\mat L_{k+m}^{-1}\mat\Psi_{k,m}\mat L_k\|_2
- &\le\chi_C,\label{eq:capture-linear-contraction}\\
- \|\mat L_{k+m}^{-1}\vct\varphi_{k,m}(\vct e)\|_2
- &\le c_C\|\vct e\|_k^2,
- \label{eq:capture-nonlinear-bound}\\
- \|\mat L_{k+m}^{-1}\vct\Delta_{k,m}(\vct e,\vct d)\|_2
- &\le g_C\overline d,
- \label{eq:capture-disturbance-bound}
-\end{align}
-then
-\begin{equation}
- r_{n+1}\le
- \psi_C(r_n):=\chi_Cr_n+c_Cr_n^2+g_C\overline d.
- \label{eq:capture-scalar-recursion}
-\end{equation}
-When
-\begin{equation}
- \Delta_C=(1-\chi_C)^2-4c_Cg_C\overline d>0,
- \qquad
- R_\pm=\frac{(1-\chi_C)\pm\sqrt{\Delta_C}}{2c_C},
- \label{eq:capture-roots}
-\end{equation}
-$\psi_C(r)<r$ on $(R_-,R_+)$.  Even in this scalar special case the sharp
-finite certificate is obtained by iterating $\psi_C$ from the actual handoff
-bound, not by dividing the annulus width by its single worst decrement.  The
-quadratic construction is therefore a sufficient corollary of the exact-map
-framework, not the operational theorem itself.
+Thus the certified startup time is computed from the actual admissible handoff
+family rather than from the boundary of the larger outer set.
 
 \subsection{Operational capture-certificate contract}
 \label{sec:capture-certificate-contract}
 
-The numerical certificate must start from the covariance and estimator mode
+The numerical certificate starts from the covariance and estimator mode
 produced by the actual \texttt{goLive()} handoff, including staged OU
 parameters, covariance synchronization, the enabled linear block, the full
-$S=0$ gain, and the initially held accelerometer-bias update.  It must not insert
-the \SI{120}{s} equilibrium covariance warm-up used by the separate
-steady-Live diagnostic.
+$S=0$ gain, and the initially held accelerometer-bias update.  No artificial
+pre-capture covariance warm-up is permitted.
 
 Let $\vct R_H$ be the structured worst-case handoff radius supplied by
-Sec.~\ref{sec:semiglobal-handoff}.  A useful dimensionless handoff margin is
+Sec.~\ref{sec:semiglobal-handoff}.  Define the dimensionless handoff margin
 \begin{equation}
  \boxed{
  \eta_H:=
@@ -311,10 +265,9 @@ The certificate reports at least
    \vct w,\lambda_B,\gamma_B\},}
  \label{eq:capture-certificate-outputs}
 \end{equation}
-where $B_{\rm pre}$ summarizes the largest verified normalized prefix
-amplification and $N_C,T_C$ are optional when only the declared handoff family,
-rather than the whole outer box, is being certified.  The operational startup
-pass conditions are
+where $B_{\rm pre}$ is the largest verified normalized prefix amplification and
+$N_C,T_C$ may be omitted when only the declared handoff family, rather than the
+whole outer set, is certified.  The startup pass conditions are
 \begin{equation}
  \boxed{
  \vct R_H\prec\vct R_C\preceq\vct R_D,
@@ -328,26 +281,22 @@ pass conditions are
 \end{equation}
 together with the prefix-domain and inner-invariance conditions
 Eqs.~\eqref{eq:capture-prefix-domain} and
-\eqref{eq:capture-inner-invariance}.  No prescribed ratio between the outer and
-inner radii is a stability condition.  The componentwise ratios
-$R_{C,i}/R_{B,i}$ and whether the handoff family already intersects or lies
-outside $\mathcal B$ may be reported descriptively, but they are not used to
-manufacture a pass.
+\eqref{eq:capture-inner-invariance}.
 
 \subsection{Stochastic Live qualification}
 \label{sec:capture-stochastic}
 
-The deterministic capture theorem uses $\overline d$ only for disturbances that
-are legitimately bounded on the declared interval, such as bounded model
-mismatch or a prescribed deterministic perturbation.  Gaussian process and
-measurement noise are treated separately because their infinite-horizon sample
-supremum is almost surely not bounded by a fixed deterministic constant.
+The deterministic capture theorem uses $\overline d$ only for perturbations that
+are legitimately bounded on the declared capture interval, such as bounded
+model mismatch.  Gaussian process and measurement noise are treated separately
+because their infinite-horizon sample supremum is not bounded by a fixed
+deterministic constant.
 
 \begin{theorem}[Mean-square practical stability under stochastic Live noise]
 \label{thm:capture-stochastic-live}
-Let $\mathcal F_n$ be the filtration at the post-capture lifted indices and let
-$V_n\ge0$ be a Lyapunov function uniformly equivalent to the squared structured
-norm: for constants $0<a_1\le a_2<\infty$,
+Let $\mathscr F_n$ be the filtration at the post-capture lifted indices and let
+$V_n\ge0$ be uniformly equivalent to the squared structured norm: for constants
+$0<a_1\le a_2<\infty$,
 \begin{equation}
  a_1\|\vct r_n\|_{\vct w,\infty}^2
  \le V_n\le
@@ -355,10 +304,10 @@ norm: for constants $0<a_1\le a_2<\infty$,
  \label{eq:capture-stochastic-equivalence}
 \end{equation}
 Suppose that, for every lifted index on the horizon under consideration, the
-exact stochastic Live map satisfies almost surely the conditional drift bound
+exact stochastic Live map satisfies almost surely
 \begin{equation}
  \boxed{
- \mathbb E[V_{n+1}\mid\mathcal F_n]
+ \mathbb E[V_{n+1}\mid\mathscr F_n]
  \le\lambda_sV_n+\sigma_s^2,
  \qquad 0<\lambda_s<1.}
  \label{eq:capture-stochastic-drift}
@@ -406,20 +355,17 @@ Eq.~\eqref{eq:capture-stochastic-drift} is valid,
 \end{theorem}
 
 \begin{proof}
-Taking total expectation in
-Eq.~\eqref{eq:capture-stochastic-drift} and iterating the scalar affine
-recursion gives Eq.~\eqref{eq:capture-stochastic-ms};
-Eq.~\eqref{eq:capture-stochastic-state-ms} follows from the lower norm-equivalence
-bound.  Markov's inequality gives
-Eq.~\eqref{eq:capture-stochastic-one-time}.  Applying that inequality at each
+Taking total expectation in Eq.~\eqref{eq:capture-stochastic-drift} and
+iterating the scalar affine recursion gives
+Eq.~\eqref{eq:capture-stochastic-ms}.  The lower norm-equivalence inequality
+gives Eq.~\eqref{eq:capture-stochastic-state-ms}.  Markov's inequality gives
+Eq.~\eqref{eq:capture-stochastic-one-time}; applying it for each
 $j=0,\ldots,N$ and using the union bound gives
 Eq.~\eqref{eq:capture-stochastic-finite-hp}.
 \end{proof}
 
-The stochastic theorem does not assert almost-sure invariance of a finite local
-chart under unbounded Gaussian support.  Its infinite-horizon mean-square claim
-requires Eq.~\eqref{eq:capture-stochastic-drift} for all lifted indices; when the
-drift inequality is certified only on a finite stochastic domain or horizon,
-only the corresponding finite-horizon bounds are claimed.  Thus the
-deterministic finite-capture statement and the stochastic steady-Live statement
-have distinct disturbance hypotheses.
+The stochastic statement does not assert almost-sure invariance of a finite
+local chart under unbounded Gaussian support.  Its infinite-horizon mean-square
+conclusion requires Eq.~\eqref{eq:capture-stochastic-drift} for every lifted
+index.  When the drift inequality is certified only on a finite stochastic
+domain or horizon, only the corresponding finite-horizon bounds are claimed.
