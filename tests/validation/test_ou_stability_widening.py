@@ -56,6 +56,29 @@ class OUIIIStabilityWideningContractTests(unittest.TestCase):
         self.assertIn("does not depend on the adaptation-law exponents", flat)
         self.assertIn("performance mechanism rather than a stability-critical feedback law", flat)
 
+    def test_phase_b_constructs_ues_and_lyapunov_constants(self):
+        proof = _read(DOC / "w3d-analytical-stability-widening.tex-part")
+        for marker in (
+            r"\label{eq:widen-kappaN}",
+            r"\label{lem:widen-constructive-ues}",
+            r"\label{eq:widen-Mrho}",
+            r"\label{thm:widen-explicit-P}",
+            r"\label{eq:widen-P-bounds}",
+            r"\label{eq:widen-P-decrease}",
+            r"\label{eq:widen-pq-constants}",
+            r"\label{eq:widen-ell-star}",
+        ):
+            self.assertIn(marker, proof)
+        self.assertIn(r"p_-^{\rm an}=1", proof)
+        self.assertIn(r"q_-^{\rm an}=1", proof)
+        self.assertIn(r"\frac{M^2}{1-\rho^2}", proof)
+
+    def test_phase_b_keeps_contraction_obligation_finite_and_explicit(self):
+        flat = _flat(_read(DOC / "w3d-analytical-stability-widening.tex-part"))
+        self.assertIn("finite-window supremum", flat)
+        self.assertIn("without changing the theorem", flat)
+        self.assertNotIn("infinite-horizon simulation to identify p", flat)
+
 
 if __name__ == "__main__":
     unittest.main()
