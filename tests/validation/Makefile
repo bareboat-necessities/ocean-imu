@@ -15,6 +15,7 @@ build:
 		test_ou_article_ablations.py \
 		test_ou_evidence_contract.py \
 		test_ou_semiglobal_stability.py \
+		test_ou_stability_phase_a.py \
 		test_source_archive_provenance.py \
 		test_record_conventions.py \
 		test_publication_references.py \
