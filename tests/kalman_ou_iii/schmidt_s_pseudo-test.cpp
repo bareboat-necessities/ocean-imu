@@ -127,6 +127,12 @@ bool test_s_pseudo_freezes_attitude_but_keeps_linear_correction() {
                     "accelerometer update must retain ordinary attitude correction");
     }
 
+    std::cout << "Schmidt S diagnostics: PthetaS_norm=" << PthetaS.norm()
+              << " unrestricted_dtheta_norm=" << unrestricted_dtheta.norm()
+              << " S_innovation_norm=" << r.norm()
+              << " schmidt_quat_delta=" << dq
+              << " linear_change=" << linear_change << '\n';
+
     if (!ok) {
         std::cerr << "PthetaS_norm=" << PthetaS.norm()
                   << " unrestricted_dtheta_norm=" << unrestricted_dtheta.norm()
