@@ -1,0 +1,287 @@
+\section{Hybrid Stability Across Live Reconfiguration}
+\label{sec:hybrid-live-stability}
+
+The normal-Live results above deliberately exclude hard attitude rewrites from
+one finite-step lift.  The deployed wrapper nevertheless contains two such
+reconfiguration events: the one-time second-stage magnetic refinement and the
+Live tilt re-lock.  This section treats those events as jump maps and composes
+them with Theorem~\ref{thm:finite-live-capture}.  The purpose is not to pretend
+that a hard reset is an ordinary Kalman sample, but to state exactly what must
+hold on each side of the jump for the regional argument to continue.
+
+Let the hybrid estimator state be $(\vct e,\pi)$, where $\vct e$ is the local
+MEKF error and $\pi$ contains the covariance, state-enable flags, magnetic
+reference and applied hard-iron offset, and the staged OU/$R_S$ schedule.
+Normal Live samples evolve through the exact map
+$\mathcal F_{k,m}$ of Eq.~\eqref{eq:capture-exact-lift}.  A hard event instead
+applies
+\begin{equation}
+ (\vct e^+,\pi^+)=\mathcal R_j(\vct e^-,\pi^-;\mu_j),
+ \qquad j\in\{M,T\},
+ \label{eq:hybrid-jump-map}
+\end{equation}
+where $M$ denotes magnetic refinement, $T$ denotes tilt re-lock, and $\mu_j$
+collects the bounded measurements/reference quantities admitted by that jump.
+No normal-Live contraction claim is used across Eq.~\eqref{eq:hybrid-jump-map}.
+
+\subsection{One-time magnetic-reference refinement}
+\label{sec:hybrid-mag-jump}
+
+The source path \texttt{maybeRefineMagReference\_()} performs four operations.
+It replaces the world magnetic reference, optionally rewrites the nominal yaw
+to the absolute yaw returned by the independent yaw-stripped acquisition,
+leaves roll/pitch and every additive navigation state unchanged, and releases
+the external accelerometer-bias hold.  The attitude helper used by the source is
+\begin{equation}
+ q^+_{bw}=R_z(\psi_M)\,\mathcal Q_{\rm tilt}(q^-_{bw}),
+ \label{eq:hybrid-mag-attitude-map}
+\end{equation}
+when a finite refinement yaw $\psi_M$ is available; otherwise $q^+_{bw}=q^-_{bw}$.
+Here $\mathcal Q_{\rm tilt}$ is the exact yaw-removal operation implemented by
+\texttt{yawRemovedBoatQuat\_()}.  Hence the map does not replace tilt.  The
+additive nominal states satisfy
+\begin{equation}
+ (b_g,v,p,S,a_w,b_a)^+=(b_g,v,p,S,a_w,b_a)^-.
+ \label{eq:hybrid-mag-additive-map}
+\end{equation}
+The call to \texttt{set\_quaternion\_boat()} zeroes the stored attitude error
+coordinate but does not overwrite the covariance.  Releasing the bias hold can,
+if the normal bias gate has already unlocked, re-enable accelerometer-bias
+updates and raise the $P_{b_ab_a}$ diagonal to its configured initialization
+floor.  Denote that bounded covariance/flag operation by
+\begin{equation}
+ \pi^+=\mathcal P_M(\pi^-,B_M,\psi_M),
+ \label{eq:hybrid-mag-mode-map}
+\end{equation}
+where $B_M$ is the accepted refined magnetic reference.  Thus the event is not
+a generic covariance reset.
+
+The heading objective of Sec.~\ref{sec:iss-heading-gauge} is essential here.
+The refinement replaces the adopted heading gauge itself.  Let
+$b_{\psi,\mathrm{ref}}^+$ denote the residual true-north offset of the new
+reference and let $\delta\psi_{\rm int}^+$ be heading error relative to that
+new gauge.  A change in $b_{\psi,\mathrm{ref}}$ is not charged as MEKF state
+error.  What the jump certificate must bound is instead
+\begin{equation}
+ |\delta\psi_{\rm int}^+|\le \overline\epsilon_M,
+ \label{eq:hybrid-mag-heading-residual}
+\end{equation}
+for the admitted refinement family.  This covers both the finite-yaw branch of
+Eq.~\eqref{eq:hybrid-mag-attitude-map} and the source fallback in which only the
+reference changes.
+
+For any structured pre-jump radius $\vct a$, define the exact magnetic-jump
+envelope
+\begin{equation}
+ \boxed{
+ [\mathcal J_M(\vct a)]_i
+ :=\sup\left\{
+ r_i\!\left(\mathcal R_M(\vct e,\pi;\mu_M)\right):
+ \vct e\in\mathcal C(\vct a),\ \pi\in\Pi_M,\ \mu_M\in\mathcal M_M
+ \right\},}
+ \quad i\in\{\xi,\ell\},
+ \label{eq:hybrid-mag-envelope}
+\end{equation}
+where $\mathcal M_M$ contains the accepted reference/yaw family satisfying
+Eq.~\eqref{eq:hybrid-mag-heading-residual}.  The source map is continuous on
+this compact family and all overwritten covariance quantities are finite, so
+$\mathcal J_M$ is finite and monotone in $\vct a$.
+
+For the fixed dimensionless block norm of
+Eqs.~\eqref{eq:iss-block-xi}--\eqref{eq:iss-block-ell}, the structure above gives
+the useful direct bounds
+\begin{equation}
+ \|z_\ell^+\|=\|z_\ell^-\|,
+ \qquad
+ \|z_\xi^+\|
+ \le
+ \left(\|z_\xi^-\|^2+
+       (\overline\epsilon_M/s_\theta)^2\right)^{1/2},
+ \label{eq:hybrid-mag-fixed-bound}
+\end{equation}
+where the second inequality is conservative because it adds the new internal
+heading residual without crediting removal of the old one.  A mode-dependent
+regional metric should use Eq.~\eqref{eq:hybrid-mag-envelope} directly.
+
+The refinement is one-shot by source construction:
+\texttt{mag\_refine\_done\_} blocks every subsequent call after the first
+successful replacement.  Continuous hard-iron correction after that event is
+different.  It writes no attitude state or covariance; it slews the applied
+body-frame offset and magnetic model and therefore belongs to the bounded
+normal-Live mode family $\pi_k$, not to $\mathcal R_M$.
+
+\subsection{Live tilt re-lock}
+\label{sec:hybrid-tilt-jump}
+
+When the estimated boat tilt exceeds $70^\circ$ for the configured hold and the
+cooldown has expired, Live mode calls
+\texttt{initialize\_from\_acc\_preserve\_yaw()}.  The exact nominal-state map
+is
+\begin{equation}
+ q^+_{bw}=R_z(\psi^-_{\rm E})\,
+           Q_y(\vartheta_a)Q_x(\varphi_a),
+ \label{eq:hybrid-tilt-attitude-map}
+\end{equation}
+where $\psi^-_{\rm E}$ is the Euler yaw extracted from the pre-jump attitude and
+$(\varphi_a,\vartheta_a)$ are the roll/pitch of the accelerometer-only tilt
+solution.  All additive nominal states are unchanged,
+\begin{equation}
+ (b_g,v,p,S,a_w,b_a)^+=(b_g,v,p,S,a_w,b_a)^-.
+ \label{eq:hybrid-tilt-additive-map}
+\end{equation}
+The covariance map is also explicit: the attitude block is reseeded with the
+accelerometer-only tilt/yaw covariance, attitude--gyro-bias,
+attitude--linear-state, and attitude--accelerometer-bias cross-covariances are
+zeroed, and the remaining covariance blocks are retained.  Write this bounded
+source operation as
+\begin{equation}
+ \pi^+=\mathcal P_T(\pi^-).
+ \label{eq:hybrid-tilt-mode-map}
+\end{equation}
+
+A deterministic reset guarantee requires a condition on the accelerometer
+sample used by the hard map.  Let $u_d$ be the true body-frame down direction
+and write the measured specific force at the reset instant as
+\begin{equation}
+ f_b=-g u_d+\epsilon_f,
+ \qquad
+ \|\epsilon_f\|\le\overline f_T<g.
+ \label{eq:hybrid-tilt-force-bound}
+\end{equation}
+The perturbation $\epsilon_f$ includes physical nongravitational acceleration,
+residual accelerometer bias, bounded deterministic sensor error, and any bounded
+lever-arm/model defect present at the reset.  Because the closed ball of radius
+$\overline f_T$ about $-g u_d$ does not contain the origin, elementary tangent
+geometry gives
+\begin{equation}
+ \boxed{
+ \|\delta\theta_\perp^+\|
+ \le \overline\theta_T
+ :=\sin^{-1}(\overline f_T/g)<\frac{\pi}{2}.}
+ \label{eq:hybrid-tilt-reset-bound}
+\end{equation}
+Thus an instantaneous accelerometer re-lock is certifiable without pretending
+that the sample contains gravity alone, but a deterministic bound such as
+Eq.~\eqref{eq:hybrid-tilt-force-bound} is indispensable.  The current trigger
+checks estimated tilt and elapsed time; it does not itself impose this
+specific-force bound.
+
+The source preserves Euler yaw.  On any admitted pre-jump chart satisfying
+\begin{equation}
+ |\cos\vartheta^-|\ge c_\psi>0,
+ \label{eq:hybrid-tilt-yaw-chart}
+\end{equation}
+that yaw coordinate is smooth and Eq.~\eqref{eq:hybrid-tilt-attitude-map} gives
+\begin{equation}
+ \delta\psi_{\rm int}^+=\delta\psi_{\rm int}^-.
+ \label{eq:hybrid-tilt-yaw-preserved}
+\end{equation}
+The adopted magnetic gauge is unchanged by this reset.  Condition
+Eq.~\eqref{eq:hybrid-tilt-yaw-chart} records the actual Euler implementation;
+a geometric yaw-preserving source map would be needed to remove that chart
+condition entirely.
+
+Let $\mathcal G_T\subset\mathcal C(\vct R_D)$ be the declared re-lock guard
+family satisfying Eqs.~\eqref{eq:hybrid-tilt-force-bound} and
+\eqref{eq:hybrid-tilt-yaw-chart}.  Define
+\begin{equation}
+ \boxed{
+ [\mathcal J_T(\mathcal G_T)]_i
+ :=\sup\left\{
+ r_i\!\left(\mathcal R_T(\vct e,\pi;\mu_T)\right):
+ (\vct e,\pi,\mu_T)\in\mathcal G_T
+ \right\},}
+ \quad i\in\{\xi,\ell\}.
+ \label{eq:hybrid-tilt-envelope}
+\end{equation}
+This is the exact post-reset envelope.  The kinematic radius is unchanged at
+the instant of the jump; the sensitive radius replaces pre-jump tilt by the
+bounded value Eq.~\eqref{eq:hybrid-tilt-reset-bound}, preserves internal yaw,
+and retains the additive bias/$S$/$a_w$ states while changing the covariance
+mode according to Eq.~\eqref{eq:hybrid-tilt-mode-map}.
+
+The wrapper sets a $3\,$s cooldown after every Live tilt reset and refuses a
+new reset while that timer is positive.  Therefore reset times
+$t^T_j$ satisfy
+\begin{equation}
+ t^T_{j+1}-t^T_j\ge T_{\rm cool}=3\ \mathrm{s},
+ \label{eq:hybrid-tilt-dwell}
+\end{equation}
+which rules out Zeno accumulation of tilt jumps.  The $0.35\,$s trigger hold
+does not increase this guaranteed inter-reset spacing, because it can accrue
+while the cooldown timer is running.
+
+\subsection{Composition with finite-step regional capture}
+\label{sec:hybrid-composition}
+
+The useful jump conditions are not contraction conditions.  A safety reset may
+make the structured error larger.  It is enough that each admissible jump
+returns the estimator to the already-certified outer capture region:
+\begin{equation}
+ \boxed{
+ \mathcal J_M(\vct R_D)\preceq\vct R_C,
+ \qquad
+ \mathcal J_T(\mathcal G_T)\preceq\vct R_C.}
+ \label{eq:hybrid-jump-entry}
+\end{equation}
+For the magnetic event the first condition may be checked on a smaller known
+pre-refinement family when available; $\vct R_D$ is simply the strongest
+uniform statement.  Each jump mode must also leave its post-jump covariance and
+measurement parameters inside the compact mode family used by the subsequent
+comparison envelopes.
+
+\begin{theorem}[Hybrid regional safety and repeated recovery]
+\label{thm:hybrid-live-recovery}
+Assume Theorem~\ref{thm:finite-live-capture} on
+$\mathcal C(\vct R_D)$, the jump-entry conditions
+Eq.~\eqref{eq:hybrid-jump-entry}, and the source guard conditions stated above.
+Assume every normal-Live interval between jumps follows an admissible mode
+sequence of $\Pi_{k,m}$.  Then:
+\begin{enumerate}[label=(\roman*),leftmargin=1.6em]
+ \item every hybrid trajectory beginning in $\mathcal C(\vct R_C)$ remains in
+       $\mathcal C(\vct R_D)$ through any finite sequence of admissible magnetic
+       refinement and tilt re-lock events;
+ \item if the hard-jump sequence is finite, then after its final jump the
+       trajectory enters $\mathcal B$ in finite time and thereafter satisfies
+       the practical-ISS estimate of
+       Eq.~\eqref{eq:capture-practical-iss};
+ \item if tilt re-locks occur infinitely often, the source cooldown
+       Eq.~\eqref{eq:hybrid-tilt-dwell} prevents Zeno behavior.  Moreover, on
+       every inter-jump interval long enough to contain the certified outer-to-
+       inner capture sequence, the trajectory re-enters $\mathcal B$ before the
+       next jump.  Infinite repeated hard resets therefore support a recurrent
+       capture claim, but not convergence to zero unless the resets eventually
+       cease or a stronger jump/flow contraction condition is separately
+       verified.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Immediately after either admissible hard event,
+Eq.~\eqref{eq:hybrid-jump-entry} places the error in
+$\mathcal C(\vct R_C)$.  From there the prefix-domain condition
+Eq.~\eqref{eq:capture-prefix-domain} keeps every ordinary Live sample inside
+$\mathcal C(\vct R_D)$ until capture.  If another hard event occurs first, its
+pre-jump state is therefore still in the declared safe domain, and its jump
+condition returns it to $\mathcal C(\vct R_C)$.  Induction over the jump count
+proves (i).  If jumps stop, Theorem~\ref{thm:finite-live-capture} applies from
+the last post-jump outer-set entry and proves (ii).  The source cooldown gives
+a positive lower bound on successive tilt-reset times, hence no Zeno sequence.
+Whenever an inter-jump interval contains the full certified capture sequence,
+the same finite-step theorem reaches $\mathcal B$ before the following jump,
+which proves (iii).  Without such intervals, repeated hard resets can keep
+injecting bounded error indefinitely, so asymptotic convergence cannot be
+inferred from the normal-Live contraction alone.
+\end{proof}
+
+For a certified outer capture time $T_C$, the simple source-level sufficient
+condition for re-entry between every pair of tilt resets is
+\begin{equation}
+ \boxed{T_C\le T_{\rm cool}=3\ \mathrm{s}.}
+ \label{eq:hybrid-cooldown-capture-condition}
+\end{equation}
+This condition is intentionally not asserted numerically here; it is a quantity
+for the later regional verifier.  If it fails, Theorem~\ref{thm:hybrid-live-recovery}
+still gives hybrid safety and finite-jump recovery.  A less conservative
+infinite-reset result can instead be certified directly from the actual guarded
+jump/flow sequence without changing the estimator.
