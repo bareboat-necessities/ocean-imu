@@ -8,10 +8,10 @@ Mahony observer of Sec.~\ref{sec:vertical-proxy} runs from the first sample
 while the MEKF remains untouched; wave-period and acceleration-variance
 estimators converge in parallel.  Once attitude, magnetic reference, and tuner
 quality are adequate, the proxy solution initializes the MEKF in Live mode.
-The resulting state is not required to lie immediately inside the final local
-ISS tube.  Instead, Sec.~\ref{sec:finite-live-capture} certifies a larger
-post-handoff capture region from which the full Live recursion reaches that tube
-in finite time.
+The resulting state is not required to lie immediately inside the final
+regional invariant set.  Instead, Sec.~\ref{sec:finite-live-capture} certifies a
+larger structured post-handoff set from which the full nonlinear Live recursion
+reaches that invariant set in finite time.
 
 \subsection{Tilt and operating-point bootstrap}
 
@@ -59,28 +59,35 @@ Eq.~\eqref{eq:semiglobal-aligned-branch}.  The \SI{150}{s} timeout is held to
 that same sign test, so a forced handoff is delayed rather than accepted on the
 antipodal branch.
 
-The stability interface is deliberately wider than the final local basin.  The
-accepted proxy/magnetic attitude bound and independent finite physical bounds
-on the remaining MEKF errors define the structured handoff set $\mathcal H$ of
-Sec.~\ref{sec:semiglobal-handoff}.  The normal startup claim requires only
+The stability interface is deliberately wider than the final regional
+invariant set.  The accepted proxy/magnetic attitude bound and independent
+finite physical bounds on the remaining MEKF errors define the structured
+handoff set $\mathcal H$ of Sec.~\ref{sec:semiglobal-handoff}.  In the
+sensitive/kinematic certificate metrics, the normal startup claim requires
+only
 \begin{equation}
- R_H^{\max}<R_C,
+ \vct R_H^{\max}\prec\vct R_C,
 \end{equation}
-that is, the actual post-\texttt{goLive()} Riccati radius lies inside the outer
-capture region.  It is not required to satisfy the block-local invariant-tube
-condition on the first Live measurement.  Theorem~\ref{thm:finite-live-capture}
-then permits bounded prefix amplification---including the observed oscillatory
-post-handoff settling---and proves finite entry into the inner radius $R_B$,
-which is contained in the entrance set of Theorem~\ref{thm:iss-block-local}.
-The operational certificate additionally requires the predeclared separation
-$R_C/R_B\ge5$ so that the startup region is materially wider than the local ISS
-entry region rather than a nominally enlarged copy of it.
+that is, the complete post-\texttt{goLive()} handoff family lies strictly inside
+the structured outer capture set.  It is not required to satisfy the
+block-local invariant-tube condition of Theorem~\ref{thm:iss-block-local} on
+the first Live measurement.
 
-A timeout-forced handoff does not test the 0.075 residual magnitude and therefore
-does not inherit the normal tilt bound.  It belongs to the composite stability
-result only when an independent timeout-state envelope yields
-$R_{H,T}^{\max}<R_C$; the branch test alone is not interpreted as a capture
-certificate.
+Theorem~\ref{thm:finite-live-capture} then propagates the complete implemented
+nonlinear map, including covariance staging and the full $S=0$ gain, through a
+sequence of exact comparison envelopes.  Individual early lifts may expand as
+long as their prefixes remain in the chart-safe proof domain.  The certified
+handoff sequence reaches the inner regional set $\mathcal B$ after the finite
+count $N_H$ of Eq.~\eqref{eq:capture-count}, after which the same regional
+theorem supplies practical ISS directly.  No prescribed ratio between outer
+and inner radii is imposed; the meaningful numerical margin is the actual
+handoff-to-capture separation of Eq.~\eqref{eq:capture-handoff-margin}.
+
+A timeout-forced handoff does not test the 0.075 residual magnitude and
+therefore does not inherit the normal tilt bound.  It belongs to the composite
+stability result only when an independent timeout-state envelope yields
+$\vct R_{H,T}^{\max}\prec\vct R_C$; the branch test alone is not interpreted as
+a capture certificate.
 
 \subsection{Two-stage magnetic reference}
 \label{sec:mag-two-stage}
@@ -101,10 +108,10 @@ Acceptance of the refined reference replaces the world magnetic reference,
 re-gauges yaw once, and releases accelerometer-bias learning.  This event occurs
 before the \SI{900}{s} scoring window but remains a discrete reconfiguration.
 It is covered by the same stability architecture whenever the post-map state is
-independently verified to re-enter $\mathcal C_{\rm cap}$; the finite-capture
-theorem may then be restarted.  Direct re-entry into the smaller invariant ISS
-tube is not required.  The reported timing is an evaluated engineering tradeoff
-rather than a universal startup schedule.
+independently verified to re-enter $\mathcal C_k(\vct R_C)$; the finite-step
+capture theorem may then be restarted.  Direct re-entry into the smaller
+regional invariant set is not required.  The reported timing is an evaluated
+engineering tradeoff rather than a universal startup schedule.
 
 \subsection{Live re-lock boundary}
 
@@ -112,5 +119,6 @@ A sustained tilt inconsistency above $70^\circ$ for \SI{0.35}{s} can trigger a
 tilt-only re-lock that preserves yaw; a \SI{3}{s} cooldown limits repeated
 resets.  This safety reconfiguration is a separate hard map.  The stability
 argument resumes after it when the reset state is independently verified to lie
-inside $\mathcal C_{\rm cap}$, after which Theorem~\ref{thm:finite-live-capture}
-again supplies finite entry to the inner ISS region.
+inside $\mathcal C_k(\vct R_C)$, after which
+Theorem~\ref{thm:finite-live-capture} again supplies finite entry into the inner
+regional invariant set.
