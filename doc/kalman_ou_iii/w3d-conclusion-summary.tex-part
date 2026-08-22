@@ -17,66 +17,46 @@ modulo the yaw gauge rather than claiming true-yaw convergence.  A constant
 residual magnetic-reference offset is therefore a gauge bias, not an estimator
 instability.
 
-The operational startup argument is separate and is now quantitative rather
-than converse-Lyapunov existential.  For the actual measurement-only Mahony
-gravity-direction observer with integral gyro-bias feedback,
-Sec.~\ref{sec:semiglobal-proxy} uses the explicit energy
-$1-\widehat d^\top d+\|\widetilde\beta_\perp\|^2/(2k_I)$ plus a bounded cross
-term to derive a calculable practical-ISS rate, input gain, tilt envelope, and
-observable-bias envelope on a declared compact source-startup chart.  The
-source's first accelerometer seed provides the initial tilt bound directly.
-The usual almost-global topological limitation remains explicit: no uniform
-fixed-time estimate is claimed for initial conditions arbitrarily close to the
-undesired antipodal stable set.  The same estimate gives a calculable sufficient
-quality-gate entry time and, when evaluated at the source timeout, an analytical
-\SI{150}{s} timeout attitude envelope.
+The operational startup argument is separate and quantitative.  For the actual
+measurement-only Mahony gravity-direction observer with integral gyro-bias
+feedback, Sec.~\ref{sec:semiglobal-proxy} uses an explicit energy function plus
+a bounded cross term to derive a calculable practical-ISS rate, input gain, tilt
+envelope, and observable-bias envelope on a declared compact source-startup
+chart.  The usual almost-global topological limitation remains explicit: no
+uniform fixed-time estimate is claimed for initial conditions arbitrarily close
+to the undesired antipodal stable set.  The same estimate gives a calculable
+sufficient quality-gate entry time and an analytical timeout attitude envelope.
 
 For a gauged timeout, the explicit Mahony bound and independent physical
 non-attitude bounds define $\mathcal H_T$ and its structured radius
 $\vct R_{H,T}^{\max}$.  The full-heading timeout path is valid only under the
 strict interface condition
 $\vct R_{H,T}^{\max}\prec\vct R_C$ of
-Theorem~\ref{thm:semiglobal-timeout-live}.  The source does not require
-\texttt{north\_ready} at timeout, so an ungauged timeout is deliberately not
-given that full-heading certificate; it remains in the gravity/yaw quotient
-until a later heading-gauge jump satisfies the hybrid entry condition.  Verified
-finite-step comparison of the exact nonlinear Live map then permits bounded
-transient growth, proves finite entry into a robustly invariant regional set,
-and supplies a direct practical-ISS bound there for bounded deterministic
-mismatch.  Gaussian Live process and measurement noise are qualified separately
-by a conditional mean-square drift theorem, with an infinite-horizon
-mean-square conclusion only when that drift condition is valid for all lifted
-indices and finite-horizon probability bounds otherwise.
+Theorem~\ref{thm:semiglobal-timeout-live}.  An ungauged timeout deliberately
+remains in the gravity/yaw quotient until a later heading-gauge jump satisfies
+the hybrid entry condition.  Verified finite-step comparison of the exact
+nonlinear Live map then permits bounded transient growth, proves finite entry
+into a robustly invariant regional set, and supplies a practical-ISS bound there
+for bounded deterministic mismatch.  Gaussian Live process and measurement
+noise are qualified separately by a conditional mean-square drift theorem.
 
 The one-time magnetic refinement and the Live tilt re-lock are included as
-explicit hybrid jump maps rather than left outside the stability chain.  The
-magnetic event changes the adopted horizontal gauge and, when available,
-rewrites yaw while leaving the stored additive navigation variables untouched;
-the proof accounts for the induced coordinate-reference jump of world-frame
-$(v,p,S,a_w)$ errors.  The tilt re-lock preserves the implemented Euler yaw,
-rebuilds tilt from accelerometer direction, reseeds the attitude covariance, and
-removes stale attitude cross-covariances.  Under bounded jump families, the
-specific-force and yaw-chart conditions of Sec.~\ref{sec:hybrid-live-stability},
-and verified jump envelopes returning to the outer capture set,
-Theorem~\ref{thm:hybrid-live-recovery} proves safety through repeated
-reconfiguration.  A finite number of jumps is followed by finite recovery and
-the regional practical-ISS bound.  If tilt re-locks continue indefinitely, the
-source's \SI{3}{s} cooldown excludes Zeno behavior and the theorem gives
+explicit hybrid jump maps rather than left outside the stability chain.  Under
+bounded jump families, the specific-force and yaw-chart conditions of
+Sec.~\ref{sec:hybrid-live-stability}, and verified jump envelopes returning to
+the outer capture set, Theorem~\ref{thm:hybrid-live-recovery} proves safety
+through repeated reconfiguration.  A finite number of jumps is followed by
+finite recovery and the regional practical-ISS bound.  If tilt re-locks continue
+indefinitely, the source cooldown excludes Zeno behavior and the theorem gives
 recurrent capture whenever inter-jump intervals contain the certified recovery
 sequence; asymptotic zero-error convergence is not claimed under endlessly
-repeated hard resets.  The subsequent continuous hard-iron correction writes no
-attitude or covariance and remains part of the bounded normal-Live
-measurement-model schedule rather than a sequence of hard jumps.
+repeated hard resets.  Continuous hard-iron correction writes no attitude or
+covariance and remains part of the bounded normal-Live measurement schedule.
 
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
 acceleration RMS is mapped to $\sigma_{aw}$, and the $S=0$ pseudo-measurement is
-interpreted through its closed-loop regularization corner.  The earlier
-fixed-corner Riccati and cadence arguments give a useful reduced reference with
-an effective $\tau^{5/2}$ dependence when $T_S\propto\tau$, but they do not
-optimize the displacement tradeoff between low-frequency noise growth and
-physical-wave distortion.  The current SpectralMSE schedule instead uses the
-physical-MSE optimum
+set independently by the reduced physical-MSE balance
 \begin{equation}
 r_S^\star\propto
 q_{\mathrm{eff}}^{1/14}m_{-4}^{3/7}T_S^{-1/2}.
@@ -88,42 +68,15 @@ $T_S\propto\tau$, this becomes
 \begin{equation}
 \boxed{r_S^\star\propto\sigma_a^{6/7}\tau^{41/14}.}
 \end{equation}
-Thus the deployed theoretical exponents are $6/7\simeq0.857$ and
-$41/14\simeq2.929$; the semiglobal stability result uses this law only through
-its bounded predictable scheduled values and does not rely on a
-$\sigma\tau^3$ adaptation relation.
+The exact spectral evaluation reproduces these exponents over the reference
+spectra and gives the deployed coefficient $C_J\simeq0.0538$.  The dimensional
+third-integral scale $\sigma_a\tau^3$ remains useful only as a coordinate
+similarity statement; it is not used as the adaptation-law evidence or as a
+numerical comparator in the present article.
 
-The exact spectral evaluation fixes the SpectralMSE coefficient analytically
-and the paired ten-seed comparison supports the resulting schedule.  Across the
-nine scored stationary-plus-transition scenarios ($n=90$ pairs), normalized
-vertical RMS changes from $4.508\%H_s$ for the supported low-cost cubic
-configuration to $4.482\%H_s$ for SpectralMSE, a pooled difference of
-$-0.026\,\%H_s$ with $95\,\%$ half-width $0.014$.  Four scenarios improve by
-more than their own interval, one degrades, and four are statistical ties.  The
-controlled transition also improves by $0.018\,\%H_s$, so the pooled gain is not
-purchased by a measured transient penalty.  SpectralMSE is therefore the deployed/default adaptation law, while the cubic
-schedule remains an explicitly selectable low-cost implementation option when
-transcendental cost dominates a sub-percent displacement difference.
-
-A separate interpolation experiment tests
-$R_{a,\mathrm{eff}}=R_{a,\mathrm{sensor}}+\beta_m\sigma_{aw}^2$.  Its optimum
-lies in the asymptotic regime where the sensor-floor contribution is at most
-about $0.3\%$ of $R_{a,\mathrm{eff}}$ over the tested seas, and its paired
-endpoint is effectively tied with the former amplitude-coupled schedule.  This
-experiment is therefore retained as evidence about the complete-filter
-acceleration-error scale rather than as the deployed regularizer law.
-
-The remaining analytical gap is no longer whether the reduced physical-MSE law
-beats the previous schedule on the tested ensemble; that comparison is now
-measured.  The open question is how the complete 21-state closed loop modifies
-the reduced exponents and coefficient once attitude/gravity leakage, gyro and
-accelerometer bias paths, OU-model mismatch, cross-covariance coupling, and the
-periodic integral update are all retained.  Section~\ref{sec:adaptation-full-state-h2}
-formulates that physical displacement objective and provides the natural next
-step from the reduced SpectralMSE law to a full-state theoretical optimum.
-
-Under the paired ten-seed stationary JONSWAP protocol, normalized vertical RMS
-displacement error is
+The complete-estimator evidence therefore concentrates on the current OU--III
+configuration and meaningful estimator baselines.  Under the paired ten-seed
+stationary JONSWAP protocol, normalized vertical RMS displacement error is
 $\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
 $H_s$ for OU--III versus
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
@@ -148,35 +101,37 @@ aiding remains a more direct route to reducing the horizontal disturbance.  The
 observed $x/y$ split is heading dependent and does not support universal
 world-axis tuning constants.
 
+The remaining analytical gap is the complete 21-state physical error problem.
+The reduced model does not retain attitude/gravity leakage, gyroscope and
+accelerometer bias paths, OU-model mismatch, cross-covariance coupling, or the
+full periodic update sequence.  Section~\ref{sec:adaptation-full-state-h2}
+formulates that physical displacement objective and provides the natural next
+step for assessing how those couplings modify the reduced SpectralMSE exponents
+and coefficient.
+
 The main limitations are the primarily simulation-based evidence, comparison
 centered on the OU--II predecessor, controlled rather than general changing-sea
 case, fixed-temperature study, lack of physical off-CoG lever-arm validation,
 and incomplete magnetic-distortion model.  The analytical startup and timeout
-bounds are explicit but still conditional on supplied physical disturbance,
-seed, heading, and non-attitude state bounds.  The regional and hybrid theorems
-remain certificate implications until their structured capture and jump
-envelopes---including $\vct R_C$, $\vct R_D$, $\mathcal J_M$, and
-$\mathcal J_T$---are numerically instantiated.  The ESP32--S3 exercise
-establishes source portability but not processor, memory, power, or deadline
-margins.  Reported displacement remains bounded wave motion about a local
-reference; no global navigation position is claimed without external aiding.
+bounds remain conditional on supplied physical disturbance, seed, heading, and
+non-attitude state bounds.  The regional and hybrid theorems remain certificate
+implications until their structured capture and jump envelopes are numerically
+instantiated.  The ESP32--S3 exercise establishes source portability but not
+processor, memory, power, or deadline margins.  Reported displacement remains
+bounded wave motion about a local reference; no global navigation position is
+claimed without external aiding.
 
 \subsection*{Future work}
 \begin{itemize}[leftmargin=1.25em]
   \item \textbf{Full-state physical $H_2$ analysis.}  Solve the periodic
         21-state Riccati and physical-error recursions of
-        Sec.~\ref{sec:adaptation-full-state-h2} at the calibrated sea states,
-        and compare their predicted minimizing amplitudes and local exponents
-        with the deployed SpectralMSE $6/7,41/14$ law and the independent
-        coefficient sweeps.  Extend the frozen-point calculation to
-        trajectory-linearized Jacobians to quantify amplitude-dependent
-        attitude/gravity coupling; retain the cubic schedule as the low-cost
-        embedded comparator rather than as the theoretical baseline.
+        Sec.~\ref{sec:adaptation-full-state-h2} at the calibrated sea states and
+        compare their predicted minimizing amplitudes and local exponents with
+        the deployed SpectralMSE $6/7,41/14$ law and complete-estimator behavior.
   \item \textbf{Transition-aware regularizer amplitude.}  If the full-state
         model predicts a stationary--transition conflict outside the currently
         tested transition, preserve the steady-state regularizer mapping and
-        test asymmetric or rate-limited amplitude response during changing
-        seas, scoring stationary and transition ensembles jointly.
+        test asymmetric or rate-limited response during changing seas.
   \item \textbf{Reference-point and GNSS validation.}  Validate the lever-arm
         model at a surveyed nonzero offset and add GNSS-aided separation of slow
         absolute trajectory from bounded wave motion, including asynchronous

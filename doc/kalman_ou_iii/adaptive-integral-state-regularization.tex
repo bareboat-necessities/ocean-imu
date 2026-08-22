@@ -10,7 +10,6 @@
 \usepackage{newtxtext,newtxmath}
 \usepackage{textcomp}
 \usepackage{array,booktabs}
-\usepackage{graphicx}
 \usepackage{siunitx}
 \usepackage{cite}
 \usepackage[breaklinks=true,hidelinks]{hyperref}
@@ -28,19 +27,18 @@
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\T}{^{\mathsf T}}
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
-\newcommand{\abs}[1]{\left|#1\right|}
 \DeclareMathOperator{\Var}{Var}
 \DeclareMathOperator{\Cov}{Cov}
 \DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\clip}{clip}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}{Proposition}
-\newtheorem{corollary}{Corollary}
 \theoremstyle{remark}
 \newtheorem{remark}{Remark}
 
 \title{Adaptive Integral-State Regularization for Drift-Bounded Inertial Motion Estimation\\
-\large Sea-State Scaling, Reduced-Order Analysis, and Empirical Tuning (draft)}
+\large Sea-State Scaling and Reduced Physical-MSE Design (draft)}
 \author{%
   \IEEEauthorblockN{Mikhail S. Grushinskiy}
   \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
@@ -53,28 +51,22 @@
 
 \begin{abstract}
 Low-frequency drift is a dominant failure mode of acceleration-only marine
-motion estimation, yet a hard zero-position constraint also suppresses the
-long-period motion being measured.  This paper studies a softer alternative:
-augment the inertial chain with an integral state $S=\int p\,dt$ and apply a
-virtual $S=0$ observation whose covariance is adapted to sea state.  The virtual
-observation is treated as a regularizer rather than a physical sensor.
-Ornstein--Uhlenbeck (OU) similarity establishes the natural third-integral scale
-$\sigma_a\tau^3$, and periodic Riccati similarity shows why dimensional scaling
-alone cannot determine correction strength.  A reduced scalar drift--distortion
-model gives a closed-form optimum \emph{within that model}; its main value here
-is mechanistic rather than prescriptive.  It shows that preferred regularizer
-strength depends only weakly on drift-band acceleration intensity, while the
-remaining error is much more sensitive to the disturbance itself.  The complete
-attitude/bias-coupled MEKF violates several assumptions of the reduction, so the
-applied schedule is selected empirically.  Paired multi-seed simulations favor
-linear amplitude scheduling and show that the integral-regularization channel
-carries most of the adaptive benefit.  Horizontal drift-band acceleration error
-is roughly two orders of magnitude larger than the vertical channel in the
-tested stationary records, yet isotropic integral regularization remains
-adequate in the tested directional simulations.  The combined result is a
-physically scaled, empirically justified adaptation law and a design priority:
-reduce the horizontal low-frequency error source rather than automatically
-regularizing the horizontal axes harder.
+motion estimation, while an overly strong zero-position constraint suppresses
+the long-period motion being measured.  This paper studies an integral-state
+regularizer: augment the inertial chain with $S=\int p\,dt$ and apply a virtual
+$S=0$ observation whose covariance varies with sea state.  The virtual
+observation is a regularizer rather than a physical sensor.  OU similarity
+identifies $\sigma_a\tau^3$ as the natural coordinate scale of the third
+integral, but that dimensional statement does not select the Kalman
+regularization strength.  A reduced drift--distortion calculation instead gives
+$r_S^\star\propto q_{\rm eff}^{1/14}m_{-4}^{3/7}T_S^{-1/2}$ and, for a
+self-similar period-scaled sea, the unclipped schedule
+$r_S^\star\propto\sigma_a^{6/7}\tau^{41/14}$.  Exact spectral evaluation on
+the reference sea records reproduces the reduced exponents and determines the
+SpectralMSE coefficient used by the implementation.  The reduction also shows
+why large horizontal drift intensity alone does not imply proportionally
+stronger horizontal regularization.  The result is a current-law design account
+rather than a historical comparison of superseded regularizer schedules.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -86,17 +78,18 @@ heave, sea-state adaptation, bias--variance tradeoff
 \section{Introduction}
 
 Acceleration-only motion estimation contains an unavoidable tension.  Repeated
-integration preserves physical displacement in the wave band, but very small
-specific-force errors create large low-frequency velocity and position drift.
-Marine heave estimators therefore commonly introduce high-pass structure,
-model-based restoring dynamics, or virtual measurements in addition to the IMU
+integration preserves physical displacement in the wave band, but small
+specific-force errors create rapidly growing low-frequency velocity and
+position error.  Marine heave estimators therefore commonly introduce
+high-pass structure, model-based restoring dynamics, or virtual measurements in
+addition to the IMU
 \cite{Kuechler2011_HeaveAcceleration,Auestad2013_HeaveStrapdownIMU,Reis2023_DiscreteKalmanHeave}.
 For low-cost IMUs the problem is not confined to the vertical axis: attitude
 error leaks gravity into horizontal specific force and residual horizontal
-accelerometer bias is weakly observable without an external position or velocity
-reference \cite{YurovskyKudinov2025_IMUwaves}.
+accelerometer bias is weakly observable without an external position or
+velocity reference \cite{YurovskyKudinov2025_IMUwaves}.
 
-The estimator studied here uses the augmented linear chain
+The estimator considered here uses the augmented linear chain
 \begin{equation}
  \dot v=a,\qquad \dot p=v,\qquad \dot S=p,
  \label{eq:chain}
@@ -107,30 +100,19 @@ and periodically applies
  \qquad R_S=r_S^2.
  \label{eq:pseudo}
 \end{equation}
-The quantity $S$ is the time integral of displacement.  The observation $S=0$
-is not physically true sample by sample; it encodes the long-time belief that
-bounded oscillatory motion should not develop an unbounded third integral.  It
-is therefore better understood as \emph{integral-state regularization} than as a
-sensor measurement.
+The observation $S=0$ is not physically true at each update.  It expresses the
+long-time belief that bounded oscillatory motion should not acquire an
+unbounded third integral.  The design question is therefore not merely how $S$
+scales dimensionally, but how strongly the false zero should be trusted while
+preserving real low-frequency wave displacement.
 
-Two distinct questions follow.  First, how should the regularizer scale when the
-motion amplitude and time scale change?  Second, does the much larger horizontal
-inertial drift imply that the horizontal virtual observation should be stronger?
-A dimensional argument alone answers neither.  The gain depends on the predicted
-covariance as well as $R_S$, while a stronger false zero observation suppresses
-both unwanted drift and wanted low-frequency motion.
-
-The contributions are separated deliberately into exact reduced-order analysis
-and complete-estimator evidence.  The paper (i) derives the OU similarity scale
-of the integral state; (ii) identifies the dimensionless groups of the periodic
-Riccati map and the corresponding regularization bandwidth; (iii) derives a
-closed-form drift--distortion optimum for a stated scalar continuous model and
-uses its exponents only as mechanistic sensitivities; (iv) states explicitly why
-that optimum is not the optimum of the full attitude/bias-coupled MEKF; (v) uses
-paired full-estimator experiments to justify the practical adaptation schedule;
-and (vi) combines measured horizontal drift intensity with the reduced-model
-sensitivity and directional simulations to explain why isotropic integral
-regularization is a reasonable choice despite much larger horizontal drift.
+The contributions are: (i) an OU similarity statement for the third-integral
+coordinate; (ii) the reduced regularization bandwidth produced by a periodic
+$S=0$ update; (iii) a drift--distortion MSE optimum in a stated scalar model;
+(iv) exact spectral evaluation of that optimum and its coefficient; and (v) an
+axis-dependent interpretation showing why drift intensity and desired motion
+must both enter any anisotropic extension.  Historical tuning-law comparisons
+are intentionally outside the scope of this paper.
 
 \section{Integral-State Regularization Model}
 \label{sec:model}
@@ -143,41 +125,27 @@ stationary OU model
  \qquad \Var[a]=\sigma_a^2,
  \label{eq:ou}
 \end{equation}
-with the chain in \eqref{eq:chain}.  OU acceleration provides a finite
+with the chain in Eq.~\eqref{eq:chain}.  OU acceleration provides a finite
 correlation time and an exact discrete transition while remaining a compact
 colored-acceleration prior \cite{UhlenbeckOrnstein1930_OU}.  The physical wave
-spectrum need not be OU; in the implementation the OU parameters represent a
-local sea-state time scale and acceleration variance.
+spectrum need not be OU; the estimator uses $(\tau,\sigma_a)$ as local
+sea-state prior parameters.
 
-The periodic $S=0$ update is applied every $T_S$.  For three-axis motion the
-scalar variance becomes
+The periodic $S=0$ update is applied every $T_S$.  In three dimensions,
 \begin{equation}
  \mat R_S=\diag(r_{S,x}^2,r_{S,y}^2,r_{S,z}^2).
  \label{eq:RS3}
 \end{equation}
-The implementation parameterizes adaptation in the standard-deviation scale
-$r_S$.
+Reducing $R_S$ increases drift-anchor authority, but because the true integral
+state is generally nonzero it also increases distortion of wanted motion.  A
+useful schedule must balance those two effects.
 
-\subsection{The virtual observation is deliberately mis-specified}
-
-Let $S^{\rm true}$ denote the third integral of the desired physical motion.
-The zero observation introduces the mismatch
-\begin{equation}
- d_S=-S^{\rm true}.
- \label{eq:false-input}
-\end{equation}
-Reducing $R_S$ increases the authority of the drift anchor, but it also
-increases the estimator response to this mismatch.  Thus a useful regularizer
-must balance drift rejection against distortion of wanted motion.  That trade is
-real even though the exact optimum depends on the complete estimator and motion
-statistics.
-
-\section{Similarity and the Meaning of the Cubic Scale}
+\section{OU Similarity and the Third-Integral Coordinate Scale}
 \label{sec:similarity}
 
 \begin{theorem}[OU similarity scale of the third integral]
 \label{thm:similarity}
-Under \eqref{eq:ou} and \eqref{eq:chain}, define
+Under Eqs.~\eqref{eq:ou} and \eqref{eq:chain}, define
 \begin{equation}
  \bar t=\frac{t}{\tau},\quad
  \bar a=\frac{a}{\sigma_a},\quad
@@ -199,93 +167,28 @@ Consequently the natural coordinate scales of $(a,v,p,S)$ are
 Set $t=\tau\bar t$ and use Brownian scaling
 $dW_t=\sqrt{\tau}\,d\bar W_{\bar t}$.  Equation~\eqref{eq:ou} becomes
 $d\bar a=-\bar a\,d\bar t+\sqrt2\,d\bar W_{\bar t}$.  Successive integrations
-then give $d\bar v/d\bar t=\bar a$, $d\bar p/d\bar t=\bar v$, and
+give $d\bar v/d\bar t=\bar a$, $d\bar p/d\bar t=\bar v$, and
 $d\bar S/d\bar t=\bar p$.
 \end{proof}
 
-A self-similar virtual-measurement standard deviation may therefore be written
-\begin{equation}
- r_S^{\rm base}=c_R\sigma_a\tau^3.
- \label{eq:cubic}
-\end{equation}
-Equation~\eqref{eq:cubic} is a \emph{coordinate-scale statement}.  It does not
-prove that cubic scaling is the optimal Kalman tuning.  In particular, free
-triple integration of stationary OU acceleration does not have a stationary
-variance because the OU spectrum remains nonzero at zero frequency.
+The boxed term is a \emph{coordinate-scale statement}, not an adaptation law.
+It establishes the dimensions and similarity transformation of the integral
+state but does not determine how a deliberately mis-specified zero observation
+should trade drift rejection against physical-signal distortion.
 
-\subsection{Periodic Riccati similarity}
-
-Let the IMU interval be $\Delta t$ and the acceleration observation variance be
-$R_a$.  With the diagonal similarity transformation
-\begin{equation}
- D=\diag(\sigma_a\tau,\sigma_a\tau^2,\sigma_a\tau^3,\sigma_a),
- \label{eq:D}
-\end{equation}
-the exact discrete scalar periodic Riccati map depends on
-\begin{equation}
- \boxed{
- \delta=\frac{\Delta t}{\tau},\qquad
- \rho=\frac{T_S}{\tau},\qquad
- \beta=\frac{R_a}{\sigma_a^2},\qquad
- r=\frac{R_S}{\sigma_a^2\tau^6}.}
- \label{eq:four-groups}
-\end{equation}
-Thus dimensional consistency fixes only one normalized group.  Changes in
-cadence, observation noise, or sample interval can still change the normalized
-gain.
-
-Away from safety clamps, the implementation schedules
-\begin{equation}
- T_S=c_T\tau
- \label{eq:cadence}
-\end{equation}
-and applies a per-update information-rate renormalization
-\begin{equation}
- r_S=r_S^{\rm base}\sqrt{\frac{T_{S,0}}{T_S}}.
- \label{eq:info-renorm}
-\end{equation}
-Combining \eqref{eq:cubic}--\eqref{eq:info-renorm} yields the implemented
-effective scaling
-\begin{equation}
- r_S\propto\sigma_a\tau^{5/2}
- \label{eq:effective-law}
-\end{equation}
-when the cadence schedule is unclipped.
-
-This algebra explains how the exponent arises from a cubic coordinate
-scale plus cadence renormalization.  It does \emph{not} establish that $5/2$ is
-an MSE-optimal exponent.  The coefficient and the decision to retain this
-schedule are empirical design choices validated in the complete estimator.
-
-\section{Reduced Drift-Band Analysis}
-\label{sec:riccati}
-
-The following analysis is exact for the stated reduced model.  Its purpose is to
-expose the mechanism and logarithmic sensitivities of the virtual measurement;
-it is not used as a calibration oracle for the complete MEKF.
+\section{Reduced Regularization Bandwidth}
+\label{sec:bandwidth}
 
 At frequencies well below the posterior acceleration correlation rate, suppose
-the residual acceleration error can be approximated as white with two-sided
-intensity $q_{\rm eff}$.  A scalar continuous acceleration estimator gives the
-reference expression
-\begin{equation}
- \mu=\sqrt{\frac{1}{\tau^2}
- +\frac{2\sigma_a^2}{\tau r_a}},
- \qquad
- q_{\rm eff}=2r_a\left(1-\frac{1}{\mu\tau}\right),
- \label{eq:qeff-care}
-\end{equation}
-where $r_a\simeq R_a\Delta t$ is a continuous-equivalent accelerometer noise
-density.  In the complete inertial estimator, the actual low-frequency error
-also contains model mismatch, residual bias, and attitude-to-gravity leakage.
-
-Reorder the integrated states as $x_d=[S,p,v]^T$ and approximate the periodic
-$S$ updates by a continuous observation with noise density
+the residual acceleration error is approximated by white noise with two-sided
+intensity $q_{\rm eff}$.  Reorder the integrated states as
+$x_d=[S,p,v]^T$ and approximate periodic $S$ updates by a continuous
+observation with noise density
 \begin{equation}
  r_{S,c}=R_ST_S.
  \label{eq:rsc}
 \end{equation}
-The corresponding continuous algebraic Riccati equation has gain
+The corresponding continuous algebraic Riccati equation gives
 \begin{equation}
  \boxed{
  K_d=\begin{bmatrix}2\omega_R&2\omega_R^2&\omega_R^3\end{bmatrix}^{T},
@@ -299,496 +202,227 @@ The closed-loop polynomial is
  =(s+\omega_R)(s^2+\omega_Rs+\omega_R^2).
  \label{eq:poles}
 \end{equation}
-Thus the virtual-measurement variance sets a genuine low-frequency
-regularization bandwidth through a weak sixth-root dependence.
+Thus $R_S$ and the update cadence together set a low-frequency correction
+corner through a sixth-root dependence.
 
-\subsection{Reduced-model drift--distortion optimum}
+\section{Reduced Physical-MSE Optimum}
+\label{sec:reduced-mse}
 
-With the reduced gain in \eqref{eq:omegaR}, the position-error transfer from
-residual acceleration is
-\begin{equation}
- T_{pe}(s)=\frac{s+2\omega_R}{D(s)},
- \qquad
- D(s)=s^3+2\omega_Rs^2+2\omega_R^2s+\omega_R^3,
- \label{eq:Tpe}
-\end{equation}
-and the transfer from the true $S$ process is
-\begin{equation}
- T_{pS}(s)=-\frac{s(2\omega_R^2s+\omega_R^3)}{D(s)}.
- \label{eq:TpS}
-\end{equation}
-For white low-frequency acceleration-error intensity $q_{\rm eff}$, the drift
-term contributes
-\begin{equation}
- \mathrm{MSE}_{p,\rm drift}
- =\frac{3q_{\rm eff}}{2\omega_R^3}.
- \label{eq:drift-mse}
-\end{equation}
-For desired motion concentrated above the regularization corner, define
+Let $m_{-4}$ denote the negative fourth moment of the desired displacement
+spectrum over the wave band,
 \begin{equation}
  m_{-4}=\int_{\Omega_{\rm wave}}
  \frac{S_p^{\rm true}(\omega)}{\omega^4}\,d\omega.
  \label{eq:m4}
 \end{equation}
-The leading high-separation leakage term from \eqref{eq:TpS} is
-\begin{equation}
- \mathrm{MSE}_{p,\rm signal}\simeq4m_{-4}\omega_R^4.
- \label{eq:signal-mse}
-\end{equation}
+For the reduced observer of Eq.~\eqref{eq:omegaR}, residual acceleration error
+produces a drift term that decreases as $\omega_R^{-3}$, while leakage of the
+nonphysical zero constraint into desired displacement grows as
+$\omega_R^4$ when the wave band lies above the correction corner.
 
-\begin{theorem}[Reduced-model MSE optimum]
+\begin{theorem}[Reduced drift--distortion optimum]
 \label{thm:reduced-mse}
-Under the scalar, continuous and spectrally separated assumptions above, the
-reduced cost
+Under the scalar continuous approximation above, the leading physical position
+MSE is
 \begin{equation}
  J_{\rm red}(\omega_R)
  =\frac{3q_{\rm eff}}{2\omega_R^3}
- +4m_{-4}\omega_R^4
- \label{eq:mse-total}
+ +4m_{-4}\omega_R^4.
+ \label{eq:Jred}
 \end{equation}
-has the unique positive minimizer
+Its unique positive minimizer satisfies
 \begin{equation}
- \boxed{
- (\omega_{R,\rm red}^{\star})^7
- =\frac{9}{32}\frac{q_{\rm eff}}{m_{-4}}.}
- \label{eq:wred}
+ \boxed{(\omega_R^\star)^7
+ =\frac{9}{32}\frac{q_{\rm eff}}{m_{-4}}},
+ \label{eq:wopt}
 \end{equation}
-Equivalently, the reduced-model optimal pseudo-measurement standard deviation is
+and, using Eq.~\eqref{eq:omegaR},
 \begin{equation}
- \boxed{
- r_{S,\rm red}^{\star}
- =\left(\frac{32}{9}\right)^{3/7}
+ \boxed{r_S^\star\propto
  q_{\rm eff}^{1/14}m_{-4}^{3/7}T_S^{-1/2}.}
- \label{eq:rsred}
+ \label{eq:rsopt}
 \end{equation}
-The minimized reduced cost scales as
+The minimized objective scales as
 \begin{equation}
- J_{\rm red}^{\star}
- \propto q_{\rm eff}^{4/7}m_{-4}^{3/7}.
- \label{eq:jredmin}
+ J_{\rm red}^\star\propto q_{\rm eff}^{4/7}m_{-4}^{3/7}.
+ \label{eq:jopt-scaling}
 \end{equation}
 \end{theorem}
 
 \begin{proof}
-Differentiating \eqref{eq:mse-total} gives
-$-(9/2)q_{\rm eff}\omega_R^{-4}+16m_{-4}\omega_R^3=0$, yielding
-\eqref{eq:wred}; the second derivative is positive there.  Substitution into
-$r_S=\sqrt{q_{\rm eff}/(T_S\omega_R^6)}$, obtained from
-\eqref{eq:omegaR}, gives \eqref{eq:rsred}.  Substitution into
-\eqref{eq:mse-total} gives \eqref{eq:jredmin}.
+Differentiate Eq.~\eqref{eq:Jred} with respect to $\omega_R$.  Setting
+$-(9/2)q_{\rm eff}\omega_R^{-4}+16m_{-4}\omega_R^3=0$ gives
+Eq.~\eqref{eq:wopt}.  Substitution into
+$R_S=q_{\rm eff}/(\omega_R^6T_S)$ gives Eq.~\eqref{eq:rsopt}; substituting the
+same optimum into either balanced term yields Eq.~\eqref{eq:jopt-scaling}.
 \end{proof}
 
-The exponents are the most useful part of the theorem.  Within the reduced
-model, the preferred $r_S$ changes with drift intensity only as
-$q_{\rm eff}^{1/14}$, whereas the desired-motion moment enters as
-$m_{-4}^{3/7}$.  An order-of-magnitude error in $q_{\rm eff}$ changes the
-reduced-model optimal $r_S$ by only
-$10^{1/14}\simeq1.18$.  At the same reduced optimum, residual position MSE
-scales as $q_{\rm eff}^{4/7}$: its logarithmic exponent with respect to the
-disturbance is eight times the exponent with which the disturbance changes the
-tuning ratio.  The model therefore predicts an important asymmetry: a large
-drift source can be a major performance problem without demanding a
-proportionally stronger integral anchor.
+The theorem states the optimum of $J_{\rm red}$, not of the complete MEKF.  Its
+value is mechanistic: it separates low-frequency error intensity from physical
+wave content and shows their very different logarithmic sensitivities.
 
-\subsection{Amplitude scaling inside the reduced model}
-
-For a fixed-shape amplitude sweep with unchanged cadence, suppose
+For a fixed-shape, period-scaled sea,
 \begin{equation}
- q_{\rm eff}\propto\sigma_{aw}^{m},
- \qquad m_{-4}\propto\sigma_{aw}^{2}.
- \label{eq:amp-assump}
+ m_{-4}\propto\sigma_a^2\tau^8.
+ \label{eq:m4-similarity}
 \end{equation}
-Then \eqref{eq:rsred} gives the reduced-model relation
+Hence
 \begin{equation}
- r_{S,\rm red}^{\star}\propto\sigma_{aw}^{p_{\rm red}},
- \qquad p_{\rm red}=\frac{m+12}{14}.
- \label{eq:p-red-law}
+ r_S^\star\propto q_{\rm eff}^{1/14}
+ \sigma_a^{6/7}\tau^{24/7}T_S^{-1/2}.
+ \label{eq:rs-self-similar}
 \end{equation}
-This relation is useful for interpreting plausible amplitude powers, but the
-unknown full-estimator $q_{\rm eff}$ is not inferred from it.  The
-amplitude exponent is selected directly by the full-estimator ablation in
-\cref{sec:adaptation-study}.
+If $q_{\rm eff}$ is amplitude-independent to leading order in the strong
+acceleration-observation regime and $T_S\propto\tau$, then
+\begin{equation}
+ \boxed{r_S^\star\propto\sigma_a^{6/7}\tau^{41/14}.}
+ \label{eq:rs-unclipped}
+\end{equation}
 
-\subsection{Where the analytical logic stops}
-\label{sec:analysis-limit}
+\section{Exact Spectral Evaluation}
+\label{sec:exact}
 
-The theorem is an optimum of $J_{\rm red}$, not of the complete MEKF.  Five
-specific differences matter.
-
-First, the scalar chain removes attitude error, gyro bias, accelerometer bias,
-and the cross-covariances that couple those states to $S$.  In the implemented
-MEKF, an $S=0$ update acts through the full covariance column associated with
-$S$, so changing $R_S$ can indirectly alter attitude and bias corrections.
-
-Second, $R_S$ is a \emph{design covariance}, not the variance of a physical noise
-sample injected into the actual estimator.  The implementation forms the false
-innovation from $-\hat S$; no random $n_S$ is generated.  Consequently the
-filter-internal Riccati covariance and the actual estimation-error covariance
-need not coincide under this deliberately mis-specified observation.  A Kalman
-covariance optimum is therefore not automatically an actual-error optimum.
-
-Third, $q_{\rm eff}$ is not an exogenous scalar white-noise intensity in the
-complete filter.  Horizontal gravity leakage, residual bias, model mismatch,
-and covariance feedback all contribute to the low-frequency error and can
-change with the operating point.
-
-Fourth, \eqref{eq:rsc} replaces discrete periodic pseudo-updates by a continuous
-information approximation, while \eqref{eq:signal-mse} assumes separation
-between the correction corner and desired wave energy.  These approximations
-are accurate only in their intended regime.
-
-Fifth, the complete objective is three-dimensional and operation is often
-nonstationary.  Adaptation lag, changing spectra, and heading-dependent
-partition of surge and sway are absent from the stationary scalar model.
-
-These limitations explain why the reduced theorem is retained as analysis but
-not used to claim that the chosen $\tau^{5/2}$ law is analytically optimal.
-The full-estimator experiments remain the tuning authority.
-
-\section{Empirical Adaptation-Law Evidence}
-\label{sec:adaptation-study}
-
-The repository evaluates the regularizer with paired simulation protocols over
-four stationary JONSWAP seas, four PM--Stokes seas, and a controlled transition.
-The statistical bundle uses ten predeclared triplets of independent wave-phase,
-IMU-noise, and initialization seeds and scores the final \SI{900}{s} of each
-\SI{1200}{s} run.  FixedOracle is a sea-specific noise-free calibration
-reference and is not an online estimator.
-
-\subsection{Amplitude scheduling}
-
-The cleanest schedule ablation changes only the amplitude exponent while all
-members pass through the same nominal $H_s=\SI{1.5}{m}$ operating point.
+The high-separation approximation can be checked without introducing another
+regularizer law.  Retaining the exact reconstruction error gives
+\begin{equation}
+J_{\rm wave}(\omega_R)
+=\frac{1}{2\pi}\int_{-\infty}^{\infty}
+\frac{1+4x^2}{1+x^6}\,S_\eta^{(2)}(\omega)\,d\omega,
+\qquad x=\frac{\omega}{\omega_R},
+\label{eq:exact-wave-cost}
+\end{equation}
+with total cost $J=3q_{\rm eff}/(2\omega_R^3)+J_{\rm wave}$.  Exact numerical
+minimization on the eight reference spectra gives the local exponents in
+Table~\ref{tab:exact-mse}.
 
 \begin{table}[t]
-\caption{Amplitude-exponent ablation of the integral regularizer.  OU--III
-Adaptive mode, nine scenarios $\times$ ten paired seed triplets.  Vertical
-error is percent of $H_s$; 3D is absolute RMS displacement.}
-\label{tab:p-ablation}
 \centering
+\caption{Exact reduced-MSE minimization on the reference spectra.}
+\label{tab:exact-mse}
 \footnotesize
-\setlength{\tabcolsep}{3.0pt}
-\begin{tabular}{@{}lrrr@{}}
+\begin{tabular}{@{}llrrrr@{}}
 \toprule
-Schedule & Z [\%$H_s$] & $\Delta$Z vs $p=1$ & 3D [m] \\
+Spectrum & $H_s$ (m) & $\kappa_\star$ & $p_a$ & $p_\tau$ & $J_{\rm wave}/J$ \\
 \midrule
-$p=0$    & 5.047 & $+0.300\pm0.071$ & 0.712 \\
-$p=0.5$  & 4.823 & $+0.076\pm0.025$ & 0.670 \\
-$\mathbf{p=1}$ & \textbf{4.747} & --- & \textbf{0.651} \\
-$p=1.25$ & 4.779 & $+0.032\pm0.012$ & 0.653 \\
-$p=1.5$  & 4.817 & $+0.070\pm0.016$ & 0.660 \\
+JONSWAP    & 0.27 & 0.556 & 0.853 & 2.927 & 0.427 \\
+JONSWAP    & 1.50 & 0.403 & 0.854 & 2.927 & 0.428 \\
+JONSWAP    & 4.00 & 0.399 & 0.855 & 2.927 & 0.428 \\
+JONSWAP    & 8.50 & 0.320 & 0.855 & 2.928 & 0.428 \\
+PM--Stokes & 0.27 & 0.513 & 0.853 & 2.926 & 0.427 \\
+PM--Stokes & 1.50 & 0.382 & 0.854 & 2.927 & 0.428 \\
+PM--Stokes & 4.00 & 0.370 & 0.855 & 2.927 & 0.428 \\
+PM--Stokes & 8.50 & 0.315 & 0.855 & 2.928 & 0.428 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The best tested amplitude schedule is linear in $\sigma_{aw}$.  Removing
-amplitude dependence costs $0.300$ percentage points of $H_s$ in the pooled
-vertical metric and also worsens 3D RMS.  This result is used directly as
-empirical support for the chosen amplitude factor.  The reduced relation
-\eqref{eq:p-red-law} provides context for why powers near unity are plausible,
-but it is not inverted to identify a hidden physical exponent for the full
-MEKF.
+The exact exponents reproduce $(6/7,41/14)$ to three significant figures over
+the calibrated envelope.  The optimum also gives an independent $m_{-4}$ value
+that agrees with direct numerical integration of the reference spectra to
+within approximately $1$--$2\,\%$.
 
-\subsection{The regularizer channel carries most of the adaptive benefit}
+Writing the implemented current law as
+\begin{equation}
+\boxed{
+r_{S,\star}=C_J q_{\rm eff}^{1/14}
+ \widehat\sigma_{a,B}^{\,6/7}
+ \tau_\star^{24/7}T_{S,\star}^{-1/2},
+ \qquad C_J=0.0538,}
+\label{eq:deployed-spectral-mse}
+\end{equation}
+the coefficient $C_J$ collects the normalized spectral moment and constants of
+the reduced optimization.  Its reference-spectrum evaluation yields
+$C_J\simeq0.0538$; no historical schedule is required as a numerical anchor.
 
-The implementation exposes a $2\times2$ channel-freeze experiment.  The OU
-parameters $(\tau,\sigma_{aw})$ and the integral scale $r_S$ are each either
-adapted or frozen at the nominal point.
+\section{Current Sea-State Schedule}
+\label{sec:schedule}
 
-\begin{table}[t]
-\caption{OU--III adaptation-channel ablation.  Entries are vertical RMS error
-in percent of $H_s$ (mean over ten paired seeds).}
-\label{tab:channel-ablation}
-\centering
-\scriptsize
-\setlength{\tabcolsep}{2.3pt}
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-& Adapt. & $r_S$ only & OU only & Fixed \\
-\midrule
-$H_s=0.27$ m & 4.99 & 5.07 & 11.68 & 13.62 \\
-$H_s=1.50$ m & 4.84 & 4.84 & 4.84 & 4.85 \\
-$H_s=4.00$ m & 4.85 & 4.92 & 7.15 & 7.75 \\
-$H_s=8.50$ m & 4.02 & 4.12 & 10.67 & 12.63 \\
-Transition    & 4.70 & 4.91 & 8.66 & 10.31 \\
-\bottomrule
-\end{tabular}
-\end{table}
+The complete adaptation layer has three separate mappings,
+\begin{equation}
+\boxed{
+\begin{aligned}
+\tau_\star&=c_\tau T_{\rm sea},\\
+\sigma_{aw,\star}&=c_\sigma\widehat\sigma_{a,B},\\
+T_{S,\star}&=\clip(c_T\tau_\star,T_{S,\min},T_{S,\max}),\\
+r_{S,\star}&=C_J q_{\rm eff}^{1/14}
+ \widehat\sigma_{a,B}^{\,6/7}
+ \tau_\star^{24/7}T_{S,\star}^{-1/2}.
+\end{aligned}}
+\label{eq:current-schedule}
+\end{equation}
+The first two quantities define the approximate OU prior; the third line sets
+how often the integral regularizer is applied; the fourth independently sets
+its strength by the reduced physical-MSE criterion.  This separation is
+important because the physical acceleration statistic belongs to the sea while
+$q_{\rm eff}$ describes the posterior low-frequency error that the regularizer
+must reject.
 
-Across the off-nominal seas and the transition, adapting $r_S$ with the OU
-parameters frozen is essentially indistinguishable from adapting everything.
-Conversely, adapting the OU prior while freezing $r_S$ remains close to the
-fixed-nominal result.  The direct process-prior adaptation is therefore not the
-main source of displacement improvement in this experiment; the adaptive
-integral anchor is.
+\section{Where the Analytical Logic Stops}
+\label{sec:limits}
 
-A separate local sensitivity sweep reaches the same mechanistic conclusion
-without being used to infer an analytical exponent.  Near the nominal operating
-point, perturbing $\tau$ or $\sigma_{aw}$ while holding $r_S$ fixed changes
-displacement little, whereas perturbations that propagate through $r_S$ produce
-substantially larger changes.  The integral regularizer is therefore the
-important adaptation channel in the tested estimator.
+The reduced calculation does not turn the virtual observation into a physical
+measurement.  $R_S$ is a design covariance, and in the implementation no random
+$n_S$ is generated: the filter receives the deterministic virtual value zero.
+Consequently the filter-internal Riccati covariance and the actual
+estimation-error covariance need not coincide when the virtual observation is
+mis-specified.  The complete estimator also contains attitude-to-gravity
+leakage, gyro and accelerometer bias states, cross-covariances, discrete
+pseudo-updates, schedule smoothing, and model mismatch that are absent from the
+scalar reduction.
 
-\subsection{Transition and low-motion stress}
+The reduced theorem therefore supplies a physically interpretable schedule and
+a coefficient construction, not a proof of complete-filter optimality.  Full-
+estimator experiments remain the validation authority for the complete MEKF,
+and external physical validation remains necessary before extrapolating beyond
+the tested simulator, spectra, sensor model, and operating envelope.
 
-\begin{table}[t]
-\caption{Selected degradation cases from the paired robustness study.}
-\label{tab:stress}
-\centering
-\footnotesize
-\setlength{\tabcolsep}{2.6pt}
-\begin{tabular}{@{}llrr@{}}
-\toprule
-Case & Mode & Z [\%$H_s$] & 3D [m] \\
-\midrule
-$H_s=0.05$ m & Adaptive & 19.58 & 0.025 \\
-120 s ramp & Adaptive & 4.69 & 0.481 \\
-120 s ramp & Fixed & 10.28 & 0.823 \\
-30 s ramp & Adaptive & 4.86 & 0.492 \\
-30 s ramp & Fixed & 10.44 & 0.834 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The adaptive schedule retains most of its performance when the
-controlled sea-state transition is shortened from 120 s to 30 s, while a fixed
-nominal point remains far from the endpoint operating point.  The calm-water
-case exposes the opposite limit: when physical motion approaches the fixed
-sensor and attitude-error floor, normalization by $H_s$ necessarily
-deteriorates.  This is an observability/noise limit rather than evidence that
-the regularizer should simply be made stronger.
-
-\subsection{What the experiments justify}
-
-The empirical results support the applied schedule as a practical,
-properly-scaled adaptation law over the tested envelope.  They do not establish
-a universal mathematical optimum.  In particular, stationary tuning changes
-need not transfer unchanged to nonstationary transitions.  The applied law is
-therefore retained on full-estimator evidence rather than identified with the
-minimum of $J_{\rm red}$.
-
-\section{Horizontal Drift: Strong Disturbance, Weak Tuning Lever}
+\section{Axis Dependence and Isotropic Deployment}
 \label{sec:axes}
 
-The vertical and horizontal channels do not have identical low-frequency error
-sources.  After attitude compensation, a small tilt error
-$\delta\vct\theta$ leaks gravity into horizontal acceleration approximately as
+For axis $i$, the reduced optimum is
 \begin{equation}
- \varepsilon_{a,H}\simeq
- \bigl[g\,\delta\theta_y,\,-g\,\delta\theta_x\bigr]^T
- +\vct b_{a,H}+\vct n_H.
- \label{eq:tilt-leak}
+ r_{S,i}^\star\propto
+ q_i^{1/14}m_{-4,i}^{3/7}T_S^{-1/2}.
+ \label{eq:axis-current}
 \end{equation}
-The vertical channel does not contain the same first-order
-$g\,\delta\theta$ term.  Without GNSS or another horizontal kinematic reference,
-residual horizontal bias is also less observable.  It is therefore physically
-reasonable to expect $q_{\rm eff,H}\gg q_{\rm eff,z}$.
-
-That expectation is visible in the stationary simulation diagnostics.  Across
-eight calibration seas, the geometric-mean measured drift-band intensity ratios
-were approximately
+The tested stationary records give the drift-band diagnostic
 \begin{equation}
- \frac{q_{{\rm eff},x}}{q_{{\rm eff},z}}=65.4,
- \qquad
- \frac{q_{{\rm eff},y}}{q_{{\rm eff},z}}=102.3.
+ \boxed{q_x/q_z\simeq65.4,\qquad q_y/q_z\simeq102.3.}
  \label{eq:q-horizontal-ratios}
 \end{equation}
-These measurements are used here only to quantify the disturbance imbalance;
-they are not used to infer universal production values of $r_{S,x}$ and
-$r_{S,y}$.
+These large ratios are consistent with first-order horizontal gravity leakage
+$\varepsilon_{a,x}\simeq g\,\delta\theta_y$ and
+$\varepsilon_{a,y}\simeq-g\,\delta\theta_x$, together with weaker horizontal
+bias observability.  They do not imply regularizer ratios of the same size:
+$q_i$ enters only through $q_i^{1/14}$, while the desired-motion spectral moment
+enters through $m_{-4,i}^{3/7}$, six times the logarithmic sensitivity.
 
-\subsection{Why two orders of magnitude in drift do not imply two orders of magnitude in tuning}
-
-The reduced theorem gives a useful explanation.  Holding the desired-motion
-moment and cadence fixed, a drift-intensity ratio $Q$ changes the reduced-model
-optimal standard deviation only by $Q^{1/14}$.  The measured ratios in
-\eqref{eq:q-horizontal-ratios} would therefore correspond to factors of only
-about $1.35$ and $1.39$ from the drift term alone.  Even a full decade of error
-in $q_{\rm eff}$ changes this factor by only about 18\%.
-
-The physical-motion term is more influential: $m_{-4}$ enters
-\eqref{eq:rsred} with exponent $3/7$.  For horizontal motion this matters
-especially because surge and sway energy projected onto world $x$ and $y$
-changes with wave heading.  Consequently, sparse directional simulations cannot
-support a universal numerical $x/y$ optimum: the apparent preferred ratio would
-mix estimator behavior with the chosen directional geometry.
-
-This is the point at which the older axis-specific numerical interpretation must
-stop.  The $1/14$ sensitivity is a valid property of the reduced model; specific
-production ratios inferred from a small set of headings are not.
-
-\subsection{The stronger design implication}
-
-The same reduced theorem gives a second, more consequential sensitivity.  At
-its own reduced optimum,
-\begin{equation}
- J_{\rm red}^{\star}\propto q_{\rm eff}^{4/7},
-\end{equation}
-whereas the tuning itself varies as $q_{\rm eff}^{1/14}$.  Thus the logarithmic
-sensitivity of residual reduced-model error to the disturbance is eight times
-the sensitivity with which that disturbance moves the preferred regularizer.
-This does not prove an exact full-MEKF RMS law, but it explains why
-``regularize the noisy axis harder'' is a weak response to a large horizontal
-drift source.
-
-The engineering lever with the larger physical effect is to reduce
-$q_{\rm eff,H}$ itself: improve tilt estimation, improve accelerometer-bias
-observability, add GNSS velocity/position or another horizontal reference, or
-otherwise suppress the low-frequency acceleration error before integration.
-The integral anchor still bounds drift, but it cannot substitute for
-observability without eventually attenuating real motion.
-
-\subsection{Full-estimator evidence for isotropic regularization}
-
-The full-estimator directional experiments provide a separate empirical result.
-Deliberately unequal integral regularization did not produce a consistent
-three-dimensional advantage; changes that helped one world horizontal axis
-could hurt the other as directional wave energy moved between $x$ and $y$.
-Within the tested headings, isotropic integral regularization therefore performs
-adequately and avoids an unsupported axis-specific tuning law.
-
-This is the central horizontal finding: the disturbance is strongly
-non-isotropic in magnitude relative to vertical, yet the evidence does not
-support correspondingly strong regularizer anisotropy.  The reduced analysis
-explains why that outcome is plausible, while the full MEKF experiments decide
-the practical choice.
-
-\section{Additional Mechanistic Checks}
-\label{sec:checks}
-
-\subsection{Covariance re-alignment is not the adaptation gain}
-
-The adaptive implementation historically re-aligned the posterior $a_w$
-marginal to the stationary OU covariance.  Matched
-Adaptive/AdaptiveHeldCovariance runs switch that operation off while keeping the
-same tuning trajectory.  Across the main scenarios the vertical metric changes
-only at the hundredth-of-a-percentage-point level.  The useful adaptive effect
-therefore does not come from periodically inflating $P_{a_wa_w}$; it comes from
-the operating point, chiefly $r_S$.
-
-\subsection{The wave-band period must be estimated in the correct band}
-
-A former tuner derived $\tau$ from an acceleration-band frequency.  Because
-acceleration weights elevation spectra by $\omega^4$, that frequency barely
-changed as the physical wave period grew.  A replacement estimator recovers the
-wave-band zero-crossing period from a levelled vertical acceleration signal via
-high-pass filtering and paired leaky integrators.  On four JONSWAP records the
-estimated versus reference $T_z$ values were approximately
-$2.60/2.51$, $4.37/4.48$, $7.09/6.60$, and $8.43/8.55$ s.  Feeding the same
-period estimator raw body-$Z$ acceleration instead of a measurement-only
-levelled signal degraded OU--III vertical RMS by a geometric factor of 2.51 and
-3D RMS by 2.24 across the eight records.  A complementary attitude
-observer reproduced the MEKF-levelled result to within 0.2\%, opening the tuner
-loop without sacrificing the wave-band estimate.
-
-This matters because the regularizer depends strongly on the sea-state time
-scale.  A frequency estimator that is excellent for phase tracking can still be
-a poor input to an adaptive drift regularizer.
-
-\section{Design Implications}
-\label{sec:design}
-
-The results suggest a practical hierarchy.
-
-First, separate the natural coordinate scale, the reduced-model optimum, and the
-full-estimator tuning.  The scale $\sigma_a\tau^3$ follows from OU similarity.
-The reduced theorem exactly minimizes $J_{\rm red}$ under its stated
-assumptions.  Neither result alone determines the complete-MEKF optimum.
-
-Second, state the pseudo-update cadence together with any $r_S$ law.  A change
-in update frequency changes the information delivered by the virtual
-observation even when its per-update variance is unchanged.
-
-Third, use the reduced theorem for sensitivity, not for unsupported precision.
-Its weak $q_{\rm eff}^{1/14}$ dependence explains why a very large drift source
-does not require a proportional change in regularizer strength; its
-$q_{\rm eff}^{4/7}$ minimized-error dependence explains why reducing the source
-itself matters much more.
-
-Fourth, estimate the sea-state time scale from the physical wave band and select
-the final schedule using full-estimator, multi-seed, stationary and transition
-experiments.  In this work the analytical models constrain and explain a
-reasonable family; the empirical studies decide which member is retained.
-
-Finally, do not infer universal $x/y$ coefficients from sparse directional
-records.  Surge and sway projection changes with heading.  The supported result
-is that isotropic integral regularization performs adequately in the tested
-three-axis simulations, not that a particular pair of axis ratios has been
-analytically or numerically established.
-
-\section{Scope and Limitations}
-\label{sec:limitations}
-
-The reduced theorem assumes a scalar linear inertial chain, white drift-band
-acceleration error, a separated desired-motion band, and a pseudo-update cadence
-fast enough to admit a continuous-information approximation.  Under those
-assumptions the minimizer in \cref{thm:reduced-mse} is mathematically well
-defined.  The limitations concern transfer of that result to the full estimator,
-not the internal algebra of the reduced theorem.
-
-The full marine MEKF contains attitude, gyro-bias, accelerometer-bias,
-translational-state, and cross-covariance couplings absent from the reduction.
-Moreover, because $S=0$ is a deliberately false observation and no random
-pseudo-measurement noise is actually drawn, the filter's internal covariance is
-not generally identical to the true estimation-error covariance.  The quantity
-$q_{\rm eff}$ is partly endogenous to attitude and bias errors, and transitions
-violate the stationary spectral assumptions.  These are precisely the points at
-which the analytical logic falls short of a complete-MEKF optimality claim.
-
-The horizontal diagnostic also has an important sampling limitation.  The
-measured drift-band intensity ratios establish that horizontal inertial error is
-large, but the available headings do not identify universal world-$x$ and
-world-$y$ desired-motion moments.  Therefore the diagnostic supports the
-weak-sensitivity argument and the need for better horizontal observability, but
-not a universal numerical $r_{S,x}/r_{S,y}$ law.
-
-No claim is made that the $S=0$ virtual observation is optimal for all marine
-motions.  Sustained maneuver acceleration, long-period swell, crossing seas,
-and non-wave translation can violate the bounded zero-mean integral model.  The
-appropriate response is full-estimator validation over the intended operating
-envelope, not extrapolation of the scalar minimizer beyond its assumptions.
-
-\section{Reproducibility}
-
-The full paired adaptation study is produced by
-\texttt{tools/ou\_validation.py}; local sensitivity and transition stress are
-produced by \texttt{tools/ou\_robustness.py}; and the amplitude-exponent family
-by \texttt{tools/ou\_rs\_law\_ablation.py}.  The reduced drift--distortion
-calculation is represented by \texttt{tools/rs\_law\_bias\_variance.py}.  The
-axis diagnostic \texttt{tools/ou\_axis\_rs\_optimum.py} is used here only for
-its measured drift-band quantities, not as an oracle for production $x/y$
-regularizer ratios.  The committed statistical bundles retain seed triplets,
-source/input hashes, raw rows, derived summary tables, and paired effects.
+The desired horizontal spectra are heading-dependent projections of the orbital
+field.  Sparse directional simulations therefore cannot support a universal
+numerical $x/y$ optimum.  Isotropic integral regularization therefore performs
+adequately over the tested directional ensemble without asserting that the
+three physical channels are isotropic.  A more direct horizontal improvement is
+to reduce $q_{\rm eff,H}$ itself through better tilt estimation, accelerometer-
+bias observability, GNSS, or another horizontal reference.  If reliable
+axis-specific desired-motion spectra and aiding become available,
+Eq.~\eqref{eq:axis-current} gives the appropriate extension.
 
 \section{Conclusion}
 
-Integral-state pseudo-measurements provide a useful middle ground between free
-inertial integration and hard position/velocity zeroing.  OU similarity gives
-the natural third-integral coordinate scale $\sigma_a\tau^3$, and explicit
-pseudo-update cadence accounting converts the applied cubic base scale into the
-effective dependence $r_S\propto\sigma_a\tau^{5/2}$ away from clamps.  That
-scheduler is physically motivated but empirically selected; it is not presented
-as the exact optimum of the full MEKF.
-
-The reduced drift--distortion theorem remains valuable.  Within its stated
-model, it shows that the preferred regularizer depends only weakly on
-low-frequency drift intensity, while minimized residual error depends much more
-strongly on that disturbance.  This distinction explains an otherwise
-counterintuitive three-axis result.  In the tested stationary records,
-horizontal drift-band acceleration intensity is about two orders of magnitude
-above the vertical channel, yet the full-estimator evidence does not justify a
-correspondingly stronger horizontal anchor.  Isotropic integral regularization
-performs adequately across the tested headings.
-
-The design implication is therefore stronger than a tuning recommendation.
-When horizontal performance is limited by gravity leakage and weak bias
-observability, changing $R_S$ is a relatively weak lever: it trades drift
-suppression against real horizontal motion.  Improving tilt, bias observability,
-or adding external horizontal kinematic information attacks the disturbance
-itself.  Theory explains that hierarchy; the full-estimator experiments determine
-the practical adaptation law.
+The third integral of an OU acceleration process has the natural coordinate
+scale $\sigma_a\tau^3$, but dimensional similarity alone does not determine the
+strength of a false zero observation.  Balancing low-frequency drift against
+physical-wave distortion instead gives the reduced optimum
+$r_S^\star\propto q_{\rm eff}^{1/14}m_{-4}^{3/7}T_S^{-1/2}$ and the
+self-similar unclipped law
+$r_S^\star\propto\sigma_a^{6/7}\tau^{41/14}$.  Exact evaluation on the
+reference spectra supports the reduced exponents and supplies the present
+SpectralMSE coefficient.  The same analysis explains why large horizontal
+drift intensity has only weak direct leverage on the regularizer optimum.  The
+remaining problem is to quantify how the full attitude/bias-coupled discrete
+MEKF modifies the reduced physical-MSE result and to validate that prediction
+against external motion reference data.
 
 \bibliographystyle{IEEEtran}
-\bibliography{w3d}
-
+\bibliography{w3d,w3d-modern}
 \end{document}

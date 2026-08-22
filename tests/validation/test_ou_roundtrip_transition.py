@@ -9,7 +9,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 
-import ou_rs_law_ablation as ablation
+import ou_roundtrip_transition as transition
 import ou_validation as validation
 
 
@@ -38,9 +38,9 @@ class FakeValidation:
         return data.copy()
 
 
-class RsLawRoundTripTests(unittest.TestCase):
+class RoundTripTransitionTests(unittest.TestCase):
     def test_default_schedule_keeps_both_crossfades_at_120_seconds(self):
-        rise_start, rise_end, fall_start, fall_end = ablation.transition_bounds()
+        rise_start, rise_end, fall_start, fall_end = transition.transition_bounds()
         self.assertEqual((rise_start, rise_end), (400.0, 520.0))
         self.assertEqual((fall_start, fall_end), (800.0, 920.0))
         self.assertEqual(rise_end - rise_start, 120.0)
@@ -50,14 +50,14 @@ class RsLawRoundTripTests(unittest.TestCase):
         times = np.asarray(
             [300.0, 400.0, 460.0, 520.0, 700.0, 800.0, 860.0, 920.0, 1000.0]
         )
-        weight, rate, acceleration = ablation.roundtrip_profile(validation, times)
+        weight, rate, acceleration = transition.roundtrip_profile(validation, times)
         np.testing.assert_allclose(
             weight,
             [0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 0.5, 0.0, 0.0],
             atol=1e-12,
         )
         boundary = np.asarray([400.0, 520.0, 800.0, 920.0])
-        _, boundary_rate, boundary_acceleration = ablation.roundtrip_profile(
+        _, boundary_rate, boundary_acceleration = transition.roundtrip_profile(
             validation, boundary
         )
         np.testing.assert_allclose(boundary_rate, 0.0, atol=1e-12)
@@ -81,7 +81,7 @@ class RsLawRoundTripTests(unittest.TestCase):
         low[:, 1:] = 1.0
         high[:, 1:] = 3.0
 
-        result = ablation.make_roundtrip_wave(
+        result = transition.make_roundtrip_wave(
             FakeValidation,
             columns,
             low,
@@ -90,16 +90,13 @@ class RsLawRoundTripTests(unittest.TestCase):
             high_scale=1.0,
         )
 
-        # On the high plateau the generated realization is exactly the high
-        # source; once the return crossfade ends it is exactly the same low
-        # source used before the first crossfade.
         np.testing.assert_allclose(result[2, 1:], high[2, 1:], atol=1e-12)
         np.testing.assert_allclose(result[3, 1:], low[3, 1:], atol=1e-12)
         np.testing.assert_allclose(result[4, 1:], low[4, 1:], atol=1e-12)
 
     def test_scoring_splits_rise_and_fall_instead_of_pooling_them(self):
         self.assertEqual(
-            ablation.roundtrip_segments(),
+            transition.roundtrip_segments(),
             (
                 ("low_start", 300.0, 400.0),
                 ("rise", 400.0, 520.0),
@@ -113,7 +110,7 @@ class RsLawRoundTripTests(unittest.TestCase):
 
     def test_return_must_leave_room_for_unchanged_transition_duration(self):
         with self.assertRaises(ValueError):
-            ablation.transition_bounds(400.0, 1120.0)
+            transition.transition_bounds(400.0, 1120.0)
 
 
 if __name__ == "__main__":

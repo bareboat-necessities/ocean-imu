@@ -14,12 +14,16 @@ MISMATCH_SUMMARY = (
 
 
 class OuArticleAblationContractTests(unittest.TestCase):
-    def test_post_results_section_includes_roundtrip_and_model_mismatch(self):
+    def test_post_results_section_keeps_current_investigations_only(self):
         text = (DOC / "w3d-post-results-investigations.tex-part").read_text(
             encoding="utf-8"
         )
         self.assertIn(r"\input{w3d-roundtrip-transition-ablation.tex-part}", text)
         self.assertIn(r"\input{w3d-model-mismatch-ablation.tex-part}", text)
+        self.assertIn(r"\input{w3d-full-state-h2.tex-part}", text)
+        self.assertNotIn(
+            r"\input{w3d-adaptation-coefficient-investigation.tex-part}", text
+        )
 
     def test_roundtrip_protocol_is_low_high_same_low(self):
         text = (DOC / "w3d-roundtrip-transition-ablation.tex-part").read_text(
@@ -31,12 +35,9 @@ class OuArticleAblationContractTests(unittest.TestCase):
         self.assertIn("low-start", text)
         self.assertIn("low-return", text)
         self.assertIn("high-to-low", text)
+        self.assertIn("not a comparison among alternative regularizer laws", text)
 
     def test_each_transition_protocol_renders_its_own_diagnostic(self):
-        # Both protocols are shown the same way -- sea state, wave shapes,
-        # vertical error and the applied tuning traces -- so the round-trip
-        # figure cannot regress to an abstract plot of the blend weight while
-        # the one-way figure keeps its time-domain evidence.
         baseline = (DOC / "w3d-baseline-comparison.tex-part").read_text(
             encoding="utf-8"
         )
@@ -46,17 +47,16 @@ class OuArticleAblationContractTests(unittest.TestCase):
         )
         self.assertIn(r"Sec.~\ref{sec:roundtrip-transition-ablation}", baseline)
 
-        ablation = (DOC / "w3d-roundtrip-transition-ablation.tex-part").read_text(
+        transition = (DOC / "w3d-roundtrip-transition-ablation.tex-part").read_text(
             encoding="utf-8"
         )
         self.assertIn(
             r"\includesvg[width=\columnwidth,inkscapelatex=false]{ou_rs_roundtrip_transition}",
-            ablation,
+            transition,
         )
-        self.assertNotIn("high-sea blend weight", ablation)
-        self.assertIn(r"Fig.~\ref{fig:ou_transition}", ablation)
+        self.assertIn(r"Fig.~\ref{fig:ou_transition}", transition)
 
-    def test_roundtrip_figure_is_mirrored_from_the_generated_evidence(self):
+    def test_roundtrip_figure_is_mirrored_from_generated_evidence(self):
         generated = (
             ROOT / "reports" / "results" / "ou_rs_law"
             / "ou_rs_roundtrip_transition.svg"
