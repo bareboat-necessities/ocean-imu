@@ -50,14 +50,20 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         self.assertIn("not convergence to zero", folded)
         self.assertIn("continuous hard-iron correction", folded)
 
-    def test_magnetic_refinement_contract_matches_source(self):
+    def test_magnetic_family_covers_late_first_gauge_and_refinement_source(self):
         src = _read(SRC / "SeaStateFusionFilter_OU_III.h")
         for token in (
-            "void maybeRefineMagReference_",
-            "if (mag_refine_done_) return;",
-            "setMagWorldRef_(mag_world_ref_uT);",
+            # Provisional acquisition can complete after an ungauged timeout.
+            "if (usingProxyInit_() && stage_ != Stage::Live)",
+            "pending_yaw_abs_rad_ = yaw_abs_rad;",
             "boatQuatWithAbsoluteYaw_(q_bw, yaw_abs_rad)",
             "impl_.mekf().set_quaternion_boat(q_new);",
+            "mag_ref_set_ = true;",
+            "mag_north_lock_time_sec_ = t_;",
+            "syncLinearBlockGate_();",
+            # Second-stage refinement is a distinct one-time member.
+            "void maybeRefineMagReference_",
+            "if (mag_refine_done_) return;",
             "mag_refine_done_    = true;",
             "impl_.setAccBiasHold(false);",
             "maybeApplyContinuousHardIron_();",
@@ -65,8 +71,18 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
             self.assertIn(token, src)
 
         hybrid = _read(DOC / "w3d-hybrid-stability.tex-part")
-        self.assertIn("one-shot by source construction", hybrid)
-        self.assertIn("writes no attitude state or covariance", hybrid)
+        for marker in (
+            "First Live gauge acquisition",
+            "Second-stage refinement",
+            r"\rho_M\in\{0,1\}",
+            r"\rho_M\in\{0,1\}",
+            "first-gauge branch",
+            r"\texttt{mag\_ref\_set\_}",
+            r"\texttt{mag\_refine\_done\_}",
+        ):
+            self.assertIn(marker, hybrid)
+        self.assertIn("writes no attitude state", hybrid)
+        self.assertIn("not to $\\mathcal R_M$", hybrid)
 
     def test_tilt_relock_contract_matches_wrapper_source(self):
         src = _read(SRC / "SeaStateFusionFilter_OU_III.h")
@@ -81,7 +97,7 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
 
         hybrid = _read(DOC / "w3d-hybrid-stability.tex-part")
         self.assertIn(r"T_{\rm cool}=3\ \mathrm{s}", hybrid)
-        self.assertIn("does not itself impose this", hybrid)
+        self.assertIn("does not itself impose", hybrid)
 
     def test_tilt_relock_contract_matches_mekf_reset_source(self):
         src = _read(SRC / "Kalman3D_Wave_OU_III.h")
@@ -106,6 +122,7 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         self.assertIn("prevents zeno behavior", hybrid)
         self.assertIn("recurrent capture claim", hybrid)
         self.assertIn("resets eventually cease", hybrid)
+        self.assertIn("two source magnetic jumps are each one-time events", hybrid)
 
 
 if __name__ == "__main__":
