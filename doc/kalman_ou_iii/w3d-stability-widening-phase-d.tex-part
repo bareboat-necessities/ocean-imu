@@ -1,0 +1,100 @@
+\subsection{Phase D: source-global reset into the startup basin}
+\label{sec:stability-widening-phase-d}
+
+The almost-global qualification of the continuous gravity observer is a
+property of smooth attitude flow on the sphere; it does not imply that the
+implemented startup must inherit an arbitrary pre-existing attitude estimate.
+The source explicitly seeds gravity direction from the first valid
+accelerometer sample and initializes the private integral correction to zero.
+Consequently the reset map can be analyzed before the continuous observer
+flow.
+
+Let $\widehat{\vct d}^{\,-}$ denote any stored gravity direction before startup,
+including one arbitrarily close to the antipodal set.  At the first accepted
+startup accelerometer sample write, as in Eq.~\eqref{eq:semiglobal-proxy-force-bound},
+\begin{equation}
+ -\vct f^B=g\vct d+\vct a_f,
+ \qquad \|\vct a_f\|\le\bar f_0<g.
+ \label{eq:widen-reset-force}
+\end{equation}
+Define the source gravity-reset map
+\begin{equation}
+ \widehat{\vct d}^{\,+}
+ :=\mathcal R_g(\vct f^B)
+ :=\frac{-\vct f^B}{\|\vct f^B\|}.
+ \label{eq:widen-gravity-reset}
+\end{equation}
+The reset depends on the current measurement and not on
+$\widehat{\vct d}^{\,-}$.
+
+\begin{lemma}[Prior-attitude-independent gravity reset]
+\label{lem:widen-global-reset}
+Under Eq.~\eqref{eq:widen-reset-force}, for every pre-reset attitude,
+\begin{equation}
+ \boxed{
+ \angle(\widehat{\vct d}^{\,+},\vct d)
+ \le\eta_{f,0}:=\sin^{-1}(\bar f_0/g)<\frac{\pi}{2}.}
+ \label{eq:widen-global-reset-bound}
+\end{equation}
+Thus the reset image lies in the desired gravity hemisphere independently of
+the pre-reset estimator attitude.
+\end{lemma}
+
+\begin{proof}
+The vector $g\vct d+\vct a_f$ lies in the closed ball of radius $\bar f_0$
+centered at $g\vct d$.  Because $\bar f_0<g$, the ball does not contain the
+origin.  The largest angle subtended at the origin by that ball is the tangent
+angle $\sin^{-1}(\bar f_0/g)$.  Normalization does not change the direction,
+which proves Eq.~\eqref{eq:widen-global-reset-bound}.  Equation~\eqref{eq:widen-gravity-reset}
+contains no pre-reset attitude variable.
+\end{proof}
+
+The private startup observer also resets its integral correction, so if the
+physical initial tangent gyro-bias error satisfies
+$\|\widetilde{\vct\beta}_{\perp}(0)\|\le B_{\beta,0}$, the reset image obeys
+\begin{equation}
+ (\theta_P(0),\|\widetilde{\vct\beta}_{\perp}(0)\|)
+ \in[0,\eta_{f,0}]\times[0,B_{\beta,0}].
+ \label{eq:widen-reset-image}
+\end{equation}
+This is exactly the initial set entering the practical-ISS comparison of
+Theorem~\ref{thm:semiglobal-proxy-explicit}.
+
+\begin{theorem}[Source-global startup capture with respect to prior attitude]
+\label{thm:widen-source-global-startup}
+Assume Eq.~\eqref{eq:widen-reset-force}, the physical initial gyro-bias bound,
+and the disturbance condition
+\begin{equation}
+ \max\{\bar V_{P,0}(\eta_{f,0},B_{\beta,0}),V_{P,\infty}\}
+ <V_{P,\star}.
+ \label{eq:widen-reset-chart-condition}
+\end{equation}
+Then, for every stored pre-startup attitude, the implemented gravity reset
+places the private startup observer inside the quantitative chart of
+Theorem~\ref{thm:semiglobal-proxy-explicit}.  The subsequent gravity-gate entry
+time is bounded by Eq.~\eqref{eq:semiglobal-quality-entry-time} with
+$\theta_{P,0}^{\max}=\eta_{f,0}$.  If the remaining source hold, rate, tuner,
+and heading-gauge gates complete, the handoff set is the same structured
+$\mathcal H_{k_H}$ used by Theorem~\ref{thm:semiglobal-proxy-live}.
+\end{theorem}
+
+\begin{proof}
+Lemma~\ref{lem:widen-global-reset} and the physical bias bound give
+Eq.~\eqref{eq:widen-reset-image} for every pre-reset attitude.  Condition
+\eqref{eq:widen-reset-chart-condition} is the chart-invariance condition of the
+existing startup theorem evaluated on that reset image.  The practical-ISS and
+quality-gate comparisons therefore apply from the post-reset state, and all
+subsequent source gates and Live handoff arguments are unchanged.
+\end{proof}
+
+\begin{remark}[Why this does not violate the attitude topological obstruction]
+\label{rem:widen-reset-topology}
+The theorem does not assert global asymptotic stability of a continuous
+attitude observer.  It asserts globality only with respect to the discarded
+\emph{pre-reset estimator attitude}: a discontinuous/source-triggered
+measurement reset maps all such stored attitudes into one physical hemisphere.
+The remaining quantitative result is still practical and conditional on the
+specific-force, gyro-bias, and disturbance bounds.  Full-heading startup also
+requires the later magnetic-gauge condition; accelerometer reset alone makes no
+absolute-yaw claim.
+\end{remark}
