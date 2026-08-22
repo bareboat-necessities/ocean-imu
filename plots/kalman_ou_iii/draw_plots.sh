@@ -1,12 +1,8 @@
 #!/bin/bash -e
 
-# Execute the existing plotting script with two publication-only compatibility
-# substitutions.  The simulator still records the acceleration-band carrier for
-# direction diagnostics, but OU-III adaptation is driven by the wave-band period.
-# Plot the smoothed wave-band schedule actually applied to the filter instead:
-# with deployed c_tau=1, tau_applied = Tz_applied/2 and therefore
-# f_wave_applied = 1/(2*tau_applied).  This avoids changing simulator telemetry
-# (and therefore the evidence contract) solely for a publication figure.
+# Execute the existing plotting script with publication-only substitutions.
+# OU-III adaptation is driven by the wave-band period, so show that schedule
+# rather than the acceleration-band carrier used by direction diagnostics.
 python3 - <<'PY'
 from pathlib import Path
 
@@ -26,7 +22,7 @@ if source.count(old_panel) != 1:
 source = source.replace(old_panel, new_panel, 1)
 
 anchor = '    # === Frequency / Tuner ===\n'
-inject = '''    # Publication diagnostic for the deployed WaveBand tuning path.\n    # The acceleration carrier in freq_tracker_hz belongs to wave direction and\n    # is intentionally not shown in the adaptation figure.\n    tau_for_plot = pd.to_numeric(df["tau_applied"], errors="coerce").to_numpy()\n    df["wave_tuning_freq_hz"] = np.where(\n        np.isfinite(tau_for_plot) & (tau_for_plot > 0.0),\n        1.0 / (2.0 * tau_for_plot),\n        np.nan,\n    )\n\n'''
+inject = '''    # Publication diagnostic for the deployed WaveBand tuning path.\n    tau_for_plot = pd.to_numeric(df["tau_applied"], errors="coerce").to_numpy()\n    df["wave_tuning_freq_hz"] = np.where(\n        np.isfinite(tau_for_plot) & (tau_for_plot > 0.0),\n        1.0 / (2.0 * tau_for_plot),\n        np.nan,\n    )\n\n'''
 if source.count(anchor) != 1:
     raise RuntimeError("OU-III tuner section anchor not found exactly once")
 source = source.replace(anchor, inject + anchor, 1)
@@ -35,12 +31,9 @@ namespace = {"__name__": "__main__", "__file__": str(path)}
 exec(compile(source, str(path), "exec"), namespace)
 PY
 
-# Directional frequency--direction spectra used by the evaluation-methodology
-# section are generated from the same committed source records.
 python3 ../spectrum/spectrum-plots.py
 
-# Re-run all comparison observers in this workspace from the same source records.
-# This guarantees identical timestamps, wave realization, and sensor-error realization.
+# Re-run comparison observers from the same source records.
 run_comparison() {
   local test_dir="$1"
   local output_glob="$2"
@@ -70,147 +63,41 @@ DOC_DIR="../../doc/kalman_ou_iii"
 cp -f w3d-baseline-results-generated.tex-part "${DOC_DIR}/"
 cp -f w3d_multi_observer_jonswap_medium.pgf "${DOC_DIR}/"
 cp -f w3d_multi_observer_jonswap_medium.svg "${DOC_DIR}/"
-cp -f ../../reports/results/ou_validation/ou_validation_publication.tex \
-  "${DOC_DIR}/w3d-ou-validation-results-generated.tex-part"
 cp -f ../../reports/results/ou_validation/ou_validation_macros.tex \
   "${DOC_DIR}/w3d-ou-validation-macros-generated.tex-part"
 cp -f ../../reports/results/ou_validation/ou_validation_vertical.svg \
   "${DOC_DIR}/ou_validation_vertical.svg"
-cp -f ../../reports/results/ou_robustness/ou_robustness_publication.tex \
-  "${DOC_DIR}/w3d-ou-robustness-results-generated.tex-part"
-cp -f ../../reports/results/ou_robustness/ou_robustness_macros.tex \
-  "${DOC_DIR}/w3d-ou-robustness-macros-generated.tex-part"
-cp -f ../../reports/results/ou_robustness/ou_robustness_sensitivity.svg \
-  "${DOC_DIR}/ou_robustness_sensitivity.svg"
-cp -f ../../reports/results/ou_robustness/ou_robustness_stress.svg \
-  "${DOC_DIR}/ou_robustness_stress.svg"
 
-# Keep the complete machine-generated validation tables as evidence, but make a
-# compact publication view. Detailed covariance-control and per-scenario
-# direction tables remain in the full generated study.
-python3 - <<'PY'
-from pathlib import Path
-import re
+# The archive bundles remain complete, but publication synchronization removes
+# every retired-law study and every one-way-transition row/table before LaTeX.
+python3 ../../tools/ou_publication_sync.py \
+  --validation-dir ../../reports/results/ou_validation
+rm -f "${DOC_DIR}/ou_validation_transition.svg"
+rm -f "${DOC_DIR}/ou_robustness_sensitivity.svg"
 
+# Regenerate the only transition evidence presented by the article: the
+# deployed SpectralMSE low--high--low protocol.  Build the simulator here
+# because the main workflow cleans it before entering the plotting stage.
+find . -maxdepth 1 -type f -name 'wave_data_*.csv' \
+  -exec cp -f {} ../../tests/kalman_ou_iii/ \;
+(
+  cd ../../tests/kalman_ou_iii
+  make build
+)
+python3 ../../tools/ou_roundtrip_transition.py \
+  --output-dir ../../reports/results/ou_rs_law
+cp -f ../../reports/results/ou_rs_law/ou_rs_roundtrip_transition.svg \
+  "${DOC_DIR}/ou_rs_roundtrip_transition.svg"
+cp -f ../../reports/results/ou_rs_law/ou_rs_roundtrip_scores.tex \
+  "${DOC_DIR}/w3d-roundtrip-transition-scores-generated.tex-part"
+(
+  cd ../../tests/kalman_ou_iii
+  make clean
+)
 
-def strip_table(text: str, label: str) -> str:
-    pos = text.find(label)
-    if pos < 0:
-        raise RuntimeError(f"supplemental table label not found: {label}")
-    start = text.rfind(r"\begin{table*}", 0, pos)
-    end_token = r"\end{table*}"
-    end = text.find(end_token, pos)
-    if start < 0 or end < 0:
-        raise RuntimeError(f"could not delimit supplemental table: {label}")
-    end += len(end_token)
-    return text[:start].rstrip() + "\n\n" + text[end:].lstrip()
-
-
-def replace_table_caption(text: str, label: str, caption: str) -> str:
-    pos = text.find(label)
-    if pos < 0:
-        raise RuntimeError(f"table label not found: {label}")
-    start = text.rfind(r"\begin{table*}", 0, pos)
-    cap = text.find(r"\caption{", start, pos)
-    if start < 0 or cap < 0:
-        raise RuntimeError(f"caption not found for table: {label}")
-    body_start = cap + len(r"\caption{")
-    depth = 1
-    i = body_start
-    while i < pos and depth:
-        if text[i] == "{" and (i == 0 or text[i - 1] != "\\"):
-            depth += 1
-        elif text[i] == "}" and (i == 0 or text[i - 1] != "\\"):
-            depth -= 1
-        i += 1
-    if depth != 0:
-        raise RuntimeError(f"unbalanced caption for table: {label}")
-    return text[:cap] + r"\caption{" + caption + "}" + text[i:]
-
-
-def compact_axes_table(text: str) -> str:
-    label = r"\label{tab:ou_mc_axes}"
-    pos = text.find(label)
-    if pos < 0:
-        raise RuntimeError("3-D axis table label not found")
-    start = text.rfind(r"\begin{table*}", 0, pos)
-    end_token = r"\end{table*}"
-    end = text.find(end_token, pos)
-    if start < 0 or end < 0:
-        raise RuntimeError("could not delimit 3-D axis table")
-    end += len(end_token)
-    block = text[start:end]
-
-    spacing = r"\setlength{\tabcolsep}{3.0pt}"
-    if block.count(spacing) != 1:
-        raise RuntimeError("3-D axis table spacing anchor not found exactly once")
-    block = block.replace(spacing, r"\setlength{\tabcolsep}{1.6pt}", 1)
-
-    block, scenario_count = re.subn(r"\$H_s=([0-9.]+)\$ m", r"\1 m", block)
-    if scenario_count != 4:
-        raise RuntimeError(
-            f"expected four stationary H_s labels in 3-D axis table, found {scenario_count}"
-        )
-
-    block = re.sub(
-        r"([0-9]+\.[0-9]+) \$\\pm\$ ([0-9]+\.[0-9]+)",
-        r"$\1{\\pm}\2$",
-        block,
-    )
-    return text[:start] + block + text[end:]
-
-
-src = Path("../../doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part")
-dst = Path("../../doc/kalman_ou_iii/w3d-ou-validation-results-publication.tex-part")
-text = src.read_text(encoding="utf-8")
-for label in (
-    r"\label{tab:ou_mc_adaptation}",
-    r"\label{tab:ou_mc_covsync}",
-    r"\label{tab:ou_mc_direction}",
-):
-    text = strip_table(text, label)
-text = compact_axes_table(text)
-for label, caption in (
-    (r"\label{tab:ou_mc_family}",
-     r"Ten-seed paired OU-family comparison over the final \SI{900}{s}."),
-    (r"\label{tab:ou_mc_axes}",
-     r"Ten-seed adaptive displacement RMS by axis over the final \SI{900}{s}."),
-    (r"\label{tab:ou_mc_channels}",
-     r"OU--III adaptation-channel ablation over the final \SI{900}{s}."),
-    (r"\label{tab:ou_transition_segments}",
-     r"Controlled transition scored by interval (Adaptive mode)."),
-    (r"\label{tab:ou_mc_pmstokes}",
-     r"Ten-seed paired OU-family comparison on PM--Stokes seas."),
-):
-    text = replace_table_caption(text, label, caption)
-dst.write_text(text, encoding="utf-8")
-PY
-
-# The robustness publication view omits the two full-width tables because both
-# datasets are already shown by the sensitivity and degradation figures.
-python3 - <<'PY'
-from pathlib import Path
-
-
-def strip_table(text: str, label: str) -> str:
-    pos = text.find(label)
-    if pos < 0:
-        raise RuntimeError(f"supplemental table label not found: {label}")
-    start = text.rfind(r"\begin{table*}", 0, pos)
-    end_token = r"\end{table*}"
-    end = text.find(end_token, pos)
-    if start < 0 or end < 0:
-        raise RuntimeError(f"could not delimit supplemental table: {label}")
-    end += len(end_token)
-    return text[:start].rstrip() + "\n\n" + text[end:].lstrip()
-
-src = Path("../../doc/kalman_ou_iii/w3d-ou-robustness-results-generated.tex-part")
-dst = Path("../../doc/kalman_ou_iii/w3d-ou-robustness-results-publication.tex-part")
-text = src.read_text(encoding="utf-8")
-for label in (
-    r"\label{tab:ou_robustness_sensitivity}",
-    r"\label{tab:ou_robustness_stress}",
-):
-    text = strip_table(text, label)
-dst.write_text(text, encoding="utf-8")
-PY
+# Defensive publication gate: these artifacts must never be recreated by a
+# plotting or evidence-regeneration path.
+test ! -e "${DOC_DIR}/ou_validation_transition.svg"
+test ! -e "${DOC_DIR}/ou_robustness_sensitivity.svg"
+grep -q 'Rise crossfade' "${DOC_DIR}/w3d-roundtrip-transition-scores-generated.tex-part"
+grep -q 'Fall crossfade' "${DOC_DIR}/w3d-roundtrip-transition-scores-generated.tex-part"
