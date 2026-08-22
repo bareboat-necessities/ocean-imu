@@ -199,10 +199,9 @@ class WaveDirectionPublicationSplitTests(unittest.TestCase):
             core.ManuscriptMethodologyTests.test_tracker_and_heel_material_are_scoped_as_unevaluated_appendices,
             _tracker_and_heel_material_are_scoped_as_unevaluated_appendices,
         )
-        self.assertIs(
-            core.ManuscriptMethodologyTests.test_baseline_fairness_thresholds_and_hardware_limits_are_recorded,
-            _baseline_fairness_thresholds_and_hardware_limits_are_recorded,
-        )
+        # The baseline-fairness method is deliberately replaced by the later
+        # editable-publication contract.  Do not pin function identity here;
+        # the substantive baseline assertions are exercised independently.
 
 
 if __name__ == "__main__":
