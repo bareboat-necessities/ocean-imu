@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""Keep OU publication text aligned with committed evidence without republishing retired studies.
+"""Keep OU publication text aligned with evidence without republishing retired studies.
 
 The statistical generators own replay rows, statistics, and the complete evidence
-archives.  The article owns claim scope.  This helper performs the mechanical
-boundary between them: it aligns current validation wording, refreshes the
-validation manifest when that archived publication text changes, mirrors the
-current validation publication into the manuscript, and curates only the
-law-independent degradation subset of the robustness archive into the OU--III
-publication tree.  Historical robustness sensitivity evidence remains archived
-under reports/results but is not republished under doc/kalman_ou_iii.
+archives. The article owns claim scope. This helper aligns editable validation
+wording, mirrors the current validation publication into the manuscript, and
+curates only law-independent degradation evidence from the robustness archive
+into the OU--III publication tree. Historical robustness sensitivity evidence
+remains under reports/results for provenance.
 """
 from __future__ import annotations
 
@@ -87,7 +85,9 @@ def _file_record(path: Path) -> dict[str, object]:
     return {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
 
 
-def _replace_caption_before_label(text: str, label: str, caption: str) -> tuple[str, bool]:
+def _replace_caption_before_label(
+    text: str, label: str, caption: str
+) -> tuple[str, bool]:
     marker = rf"\label{{{label}}}"
     try:
         label_pos = text.index(marker)
@@ -113,6 +113,7 @@ def sync_validation_publication(validation_dir: Path) -> bool:
 
     text = publication.read_text(encoding="utf-8")
     changed = False
+
     count = text.count(RETIRED_AXIS_CLAIM)
     if count > 1:
         raise RuntimeError(
@@ -121,6 +122,7 @@ def sync_validation_publication(validation_dir: Path) -> bool:
     if count == 1:
         text = text.replace(RETIRED_AXIS_CLAIM, "", 1)
         changed = True
+
     if CURRENT_CAPTION_TAIL not in text:
         raise RuntimeError(
             "OU 3-D publication caption no longer matches the article wording contract"
@@ -136,9 +138,8 @@ def sync_validation_publication(validation_dir: Path) -> bool:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     result_files = manifest.get("result_files")
     if not isinstance(result_files, dict) or PUBLICATION_NAME not in result_files:
-        raise RuntimeError(
-            f"manifest result_files has no {PUBLICATION_NAME} record"
-        )
+        raise RuntimeError(f"manifest result_files has no {PUBLICATION_NAME} record")
+
     new_record = _file_record(publication)
     if result_files[PUBLICATION_NAME] != new_record:
         result_files[PUBLICATION_NAME] = new_record
@@ -154,8 +155,7 @@ def sync_validation_doc_copy(validation_dir: Path, doc_dir: Path) -> bool:
     source = validation_dir / PUBLICATION_NAME
     target = doc_dir / "w3d-ou-validation-results-generated.tex-part"
     desired = source.read_bytes()
-    current = target.read_bytes() if target.is_file() else None
-    if current == desired:
+    if target.is_file() and target.read_bytes() == desired:
         return False
     target.write_bytes(desired)
     return True
@@ -188,6 +188,7 @@ def sync_robustness_doc_copies(robustness_dir: Path, doc_dir: Path) -> bool:
             raise FileNotFoundError(path)
 
     changed = False
+
     stress_table = _table_block_by_label(
         publication.read_text(encoding="utf-8"), "tab:ou_robustness_stress"
     )
@@ -197,25 +198,35 @@ def sync_robustness_doc_copies(robustness_dir: Path, doc_dir: Path) -> bool:
         + "\n"
     )
     results_target = doc_dir / ROBUSTNESS_DOC_RESULTS
-    if not results_target.is_file() or results_target.read_text(encoding="utf-8") != desired_results:
+    if (
+        not results_target.is_file()
+        or results_target.read_text(encoding="utf-8") != desired_results
+    ):
         results_target.write_text(desired_results, encoding="utf-8")
         changed = True
 
     archived_macros = _robustness_macro_definitions(
         macros_path.read_text(encoding="utf-8")
     )
-    missing = [name for name in ROBUSTNESS_STRESS_MACROS if name not in archived_macros]
+    missing = [
+        name for name in ROBUSTNESS_STRESS_MACROS if name not in archived_macros
+    ]
     if missing:
         raise RuntimeError(f"robustness archive is missing publication macros: {missing}")
+
     desired_macros = (
-        "% Publication subset of macros generated from the committed OU--III robustness bundle.\n"
+        "% Publication subset of macros generated from the committed OU--III "
+        "robustness bundle.\n"
         + "".join(
-            rf"\providecommand{{\{name}}}{{{archived_macros[name]}}}\n"
+            f"\\providecommand{{\\{name}}}{{{archived_macros[name]}}}\n"
             for name in ROBUSTNESS_STRESS_MACROS
         )
     )
     macros_target = doc_dir / ROBUSTNESS_DOC_MACROS
-    if not macros_target.is_file() or macros_target.read_text(encoding="utf-8") != desired_macros:
+    if (
+        not macros_target.is_file()
+        or macros_target.read_text(encoding="utf-8") != desired_macros
+    ):
         macros_target.write_text(desired_macros, encoding="utf-8")
         changed = True
 
@@ -261,7 +272,8 @@ def _direction_summary_rows(validation_dir: Path) -> list[str]:
                 and metric in {"dir_axis_rmse_deg", "dir_travel_rmse_deg"}
             ):
                 metrics[(scenario, metric)] = (
-                    float(row["mean"]), float(row["std"])
+                    float(row["mean"]),
+                    float(row["std"]),
                 )
 
     expected = {
@@ -365,7 +377,12 @@ def main() -> int:
             args.deterministic_results,
         )
 
-    if publication_changed or validation_doc_changed or robustness_changed or direction_changed:
+    if (
+        publication_changed
+        or validation_doc_changed
+        or robustness_changed
+        or direction_changed
+    ):
         print("Aligned OU publication tree with current evidence and claim scope.")
     else:
         print("OU publication tree already aligned with current evidence and claim scope.")
