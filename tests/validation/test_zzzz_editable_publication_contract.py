@@ -32,9 +32,6 @@ def _publication_evidence_signature(text):
         if r"\midrule" not in table or r"\bottomrule" not in table:
             raise AssertionError("generated evidence table lacks midrule/bottomrule")
         body = table.split(r"\midrule", 1)[1].rsplit(r"\bottomrule", 1)[0]
-        # Scenario names and prose may be edited. Numeric values and generated
-        # evidence macros may not. Parsing numbers as floats also permits
-        # harmless formatting edits such as 1.50 -> 1.5.
         numbers = tuple(
             float(value)
             for value in re.findall(
@@ -138,6 +135,32 @@ def _robustness_manuscript_copies_match_generated_evidence(self):
         self.assertNotIn(retired, normalized)
 
 
+def _robustness_generated_primary_claims_match_paired_effects(self):
+    """Only degradation claims are copied into the OU--III publication tree."""
+    effects = self.read_csv(
+        self.RESULTS / "ou_robustness_paired_effects.csv"
+    )
+    generated = (
+        self.DOC / "w3d-ou-robustness-macros-generated.tex-part"
+    ).read_text(encoding="utf-8")
+    checks = (
+        ("Hs0.05_minus_Hs0.27", "disp_z_pct_hs", 2),
+        ("rapid_minus_controlled_Adaptive", "disp_z_pct_hs", 2),
+        ("Adaptive_minus_FixedNominal_rapid", "disp_z_pct_hs", 2),
+    )
+    for comparison, metric, digits in checks:
+        row = next(
+            item for item in effects
+            if item["comparison"] == comparison and item["metric"] == metric
+        )
+        for field in (
+            "mean_paired_difference",
+            "bootstrap_ci95_low",
+            "bootstrap_ci95_high",
+        ):
+            self.assertIn(f"{float(row[field]):+.{digits}f}", generated)
+
+
 _original_full_bundle_test = (
     validation_core.CommittedFullResultsTests.
     test_full_result_bundle_is_complete_and_self_consistent
@@ -168,9 +191,6 @@ def _full_result_bundle_is_complete_and_self_consistent(self):
     def read_bytes_with_editable_publication(path):
         path = Path(path)
         if path in generated_bytes_by_doc:
-            # The semantic evidence comparison above already passed. Feed the
-            # generator bytes to the legacy byte-equality assertion so the rest
-            # of the original integrity test runs unchanged.
             return generated_bytes_by_doc[path]
         return original_read_bytes(path)
 
@@ -184,7 +204,6 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
     startup = self.read("w3d-init.tex-part")
     results = self.read_flat("w3d-results.tex-part")
 
-    # Preserve the fairness claims as concepts, not fixed editorial sentences.
     baseline_norm = re.sub(r"\s+", " ", baseline).lower()
     for terms in (
         ("parameters", "frozen", "evaluation"),
@@ -238,7 +257,6 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
     self.assertIsNotNone(match, "Embedded portability subsection")
     scope = re.sub(r"\s+", " ", match.group(1)).lower()
 
-    # The limitation must remain explicit, but authors may rewrite the sentence.
     for terms in (
         ("source", "portability"),
         ("processor", "load"),
@@ -254,6 +272,9 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
 
 robustness_core.CommittedRobustnessResultsTests.test_manuscript_copies_match_generated_evidence = (
     _robustness_manuscript_copies_match_generated_evidence
+)
+robustness_core.CommittedRobustnessResultsTests.test_generated_primary_claims_match_paired_effects = (
+    _robustness_generated_primary_claims_match_paired_effects
 )
 validation_core.CommittedFullResultsTests.test_full_result_bundle_is_complete_and_self_consistent = (
     _full_result_bundle_is_complete_and_self_consistent
