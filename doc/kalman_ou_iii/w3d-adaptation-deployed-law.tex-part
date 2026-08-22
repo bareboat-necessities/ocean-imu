@@ -73,10 +73,10 @@ coordinate scale can be written
 r_{S,\mathrm{dim}}=C_R\sigma_{aw}\tau^3.}
 \label{eq:adapt-rs-base}
 \end{equation}
-This is a coordinate-scale statement only.  It is not the deployed
-pseudo-measurement schedule and does not determine the displacement-MSE optimum.
-Combining this dimensional scale with the reduced regularization-corner relation
-would give
+This is a coordinate-scale statement only, not an adaptation law.  It is not the
+deployed pseudo-measurement schedule and does not determine the displacement-MSE
+optimum.  Combining this dimensional scale with the reduced
+regularization-corner relation would give
 \begin{equation}
 \boxed{
 (\omega_R\tau)^6
