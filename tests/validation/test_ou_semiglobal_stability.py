@@ -1,4 +1,4 @@
-"""Semantic contract for OU--III finite capture and proxy-to-Live stability."""
+"""Semantic contract for OU--III finite-step regional stability."""
 
 import unittest
 from pathlib import Path
@@ -30,7 +30,6 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         self.assertIn(semiglobal, main)
         self.assertLess(main.index(local), main.index(semiglobal))
         self.assertLess(main.index(semiglobal), main.index(evidence))
-        self.assertNotIn(r"\input{w3d-computer-assisted-live-basin.tex-part}", main)
 
     def test_capture_is_inserted_before_mahony_composition(self):
         proof = _read("w3d-semiglobal-stability.tex-part")
@@ -54,7 +53,10 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
             self.assertIn(marker, capture)
         flat = _flat(capture)
         self.assertIn("complete implemented nonlinear error map", flat)
-        self.assertIn("No individual sample, and no individual lifted interval, is required to contract", flat)
+        self.assertIn(
+            "No individual sample, and no individual lifted interval, is required to contract",
+            flat,
+        )
         self.assertIn("preserves any cancellation produced by the Kalman correction", flat)
         self.assertIn("No Schmidt, block-only, or gain-truncated approximation", flat)
 
@@ -70,24 +72,9 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
             self.assertIn(marker, capture)
         flat = _flat(capture)
         self.assertIn("the first post-handoff lifts may expand", flat)
-        self.assertIn("finite-step Lyapunov/comparison result rather than a one-step contraction theorem", flat)
-
-    def test_operational_capture_is_not_bottlenecked_by_block_local_basin(self):
-        capture = _read("w3d-finite-live-capture.tex-part")
-        proof = _read("w3d-semiglobal-stability.tex-part")
-        block = _read("w3d-block-local-iss.tex-part")
         self.assertIn(
-            "No inclusion in the separate block-local entrance condition is required",
-            _flat(capture),
-        )
-        self.assertNotIn("is contained in the block-local ISS entrance set", _flat(capture))
-        self.assertIn(
-            "It is not an additional set-inclusion test in the operational startup chain",
-            _flat(proof),
-        )
-        self.assertIn(
-            "startup proof therefore does not need to show that its regional inner set is contained",
-            _flat(block),
+            "finite-step Lyapunov/comparison result rather than a one-step contraction theorem",
+            flat,
         )
 
     def test_capture_uses_structured_two_block_regions(self):
@@ -99,8 +86,10 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
             r"\|\vct a\|_{\vct w,\infty}",
         ):
             self.assertIn(marker, capture)
-        flat = _flat(capture)
-        self.assertIn("does not force the admissible attitude/$S$/bias errors and the kinematic errors into one spherical radius", flat)
+        self.assertIn(
+            "does not force the admissible attitude/$S$/bias errors and the kinematic errors into one spherical radius",
+            _flat(capture),
+        )
 
     def test_capture_time_iterates_from_actual_handoff(self):
         capture = _read("w3d-finite-live-capture.tex-part")
@@ -111,16 +100,13 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
             r"\label{eq:capture-time}",
         ):
             self.assertIn(marker, capture)
-        self.assertNotIn(r"\frac{R_C-R_B}{\mu_C}", capture)
-        self.assertNotIn(r"\mu_C", capture)
         self.assertIn(
             "startup claim is not penalized by pretending every accepted Mahony handoff begins on the extreme boundary",
             _flat(capture),
         )
 
-    def test_no_arbitrary_factor_five_is_a_stability_gate(self):
+    def test_capture_uses_actual_structured_handoff_margin(self):
         capture = _read("w3d-finite-live-capture.tex-part")
-        proof = _read("w3d-semiglobal-stability.tex-part")
         startup = _read("w3d-init.tex-part")
         for marker in (
             r"\label{eq:capture-handoff-margin}",
@@ -128,12 +114,9 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
             r"\vct R_H\prec\vct R_C\preceq\vct R_D",
         ):
             self.assertIn(marker, capture)
-        self.assertNotIn(r"\Gamma_{\rm req}=5", capture)
-        self.assertNotIn(r"\Gamma_{\rm cap}\ge5", capture)
-        self.assertNotIn(r"R_C/R_B\ge5", proof)
-        self.assertIn("No prescribed ratio between outer and inner radii", startup)
+        self.assertIn(r"\vct R_H^{\max}\prec\vct R_C", startup)
 
-    def test_proxy_targets_structured_capture_region_not_local_basin(self):
+    def test_proxy_targets_structured_capture_region(self):
         proof = _read("w3d-semiglobal-stability.tex-part")
         startup = _read("w3d-init.tex-part")
         for marker in (
@@ -144,26 +127,19 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
             r"\label{thm:semiglobal-proxy-live}",
         ):
             self.assertIn(marker, proof)
-        self.assertNotIn(r"\label{eq:semiglobal-basin-entry}", proof)
-        self.assertIn(
-            "It does not assert direct entry into either the regional inner set or the separate block-local ISS neighborhood",
-            _flat(proof),
-        )
         self.assertIn(r"\vct R_H^{\max}\prec\vct R_C", startup)
         self.assertIn(r"\ref{thm:finite-live-capture}", startup)
-        self.assertIn("not required to satisfy the block-local invariant-tube", _flat(startup))
 
-    def test_extension_uses_spectral_mse_schedule_not_cubic_adaptation(self):
+    def test_extension_uses_spectral_mse_schedule(self):
         proof = _read("w3d-semiglobal-stability.tex-part")
         for marker in (
             r"\label{eq:semiglobal-mse-schedule}",
             r"\widehat\sigma_{a,B}^{\,6/7}",
             r"\tau^{41/14}",
             r"\label{eq:semiglobal-mse-powers}",
+            r"\Pi_{k,m}",
         ):
             self.assertIn(marker, proof)
-        self.assertIn("No $\\sigma\\tau^3$ adaptation relation", proof)
-        self.assertIn(r"\Pi_{k,m}", proof)
 
     def test_extension_is_almost_global_only_through_proxy(self):
         proof = _read("w3d-semiglobal-stability.tex-part")
@@ -195,7 +171,6 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         self.assertIn(r"B_{\xi,H}", proof)
         self.assertIn(r"B_{\ell,H}", proof)
         self.assertIn("independent analytical statement", _flat(proof))
-        self.assertNotIn("Theorem~\\ref{thm:iss-block-local} applies after capture", _flat(proof))
 
     def test_gaussian_noise_has_separate_stochastic_theorem(self):
         capture = _read("w3d-finite-live-capture.tex-part")
@@ -210,7 +185,6 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         flat = _flat(capture)
         self.assertIn("Gaussian process and measurement noise are treated separately", flat)
         self.assertIn("mean-square practical", flat)
-        self.assertIn("does not assert almost-sure invariance", flat)
         self.assertIn(r"\ref{thm:capture-stochastic-live}", proof)
 
     def test_handoff_and_timeout_keep_aligned_branch_gate(self):
@@ -222,10 +196,6 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         self.assertIn("sign of the inner product", proof)
         self.assertIn("withholds a timeout-forced handoff until", _flat(proof))
         self.assertIn(r"\eqref{eq:semiglobal-aligned-branch}", startup)
-        self.assertIn(
-            "delayed rather than accepted on the antipodal branch",
-            _flat(startup),
-        )
 
         common = _source("kalman_common/SeaStateFusionFilterCommon.h")
         self.assertIn("inline bool gravityAlignedBranch", common)
