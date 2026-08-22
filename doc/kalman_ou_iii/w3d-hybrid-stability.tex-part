@@ -202,21 +202,39 @@ cooldown gives a positive lower bound on inter-jump time.
 \subsection{Regional gravity-only capture on the yaw quotient}
 \label{sec:hybrid-quotient-capture}
 
-Let $[\vct e]$ denote the orbit of $\vct e$ under the horizontal yaw action
-$\mathcal G_\alpha$.  For any full-heading regional metric $V$, define the
-gauge-invariant quotient metric
+The gravity-only symmetry acts on the complete estimator representation, not
+only on the physical error vector.  Let $\mat T_\alpha$ be the tangent action
+induced by a horizontal rotation $R_z(\alpha)$: it rotates the attitude/world
+coordinates consistently, rotates the $(v,p,S,a_w)$ error blocks, leaves
+body-frame bias coordinates unchanged, and maps the covariance by congruence,
 \begin{equation}
- V_k^\perp([\vct e])
- :=\inf_{\alpha\in[-\pi,\pi)}V_k(\mathcal G_\alpha\vct e).
+ \mat P\mapsto\mat T_\alpha\mat P\mat T_\alpha^\top.
+ \label{eq:hybrid-quotient-covariance-action}
+\end{equation}
+Scalar schedules and enable flags are unchanged.  Denote this action on the
+complete error/mode pair by
+$\mathcal G_\alpha(\vct e,\pi)$ and its orbit by
+$[(\vct e,\pi)]$.
+
+For any regional metric $V_k(\vct e;\pi)$ define the gauge-invariant quotient
+metric
+\begin{equation}
+ \boxed{
+ V_k^\perp([(\vct e,\pi)])
+ :=\inf_{\alpha\in[-\pi,\pi)}
+ V_k\!\left(\mathcal G_\alpha(\vct e,\pi)\right).}
  \label{eq:hybrid-quotient-metric}
 \end{equation}
-The gravity-only prediction, accelerometer correction, and $S=0$ update are
-equivariant, so the exact normal-Live map descends to a well-defined quotient
-map $\mathcal F_{k,m}^\perp$.  Let
-$\mathcal H_k^\perp$, $\mathcal D_k^\perp$, and
-$\mathcal B_k^\perp$ be compact quotient handoff, safe, and inner sets, and
-define $\mathfrak T_{k,m}^\perp$ exactly as
-Eq.~\eqref{eq:capture-set-envelope} with the quotient map.
+In gravity-only mode, exact prediction, covariance propagation, accelerometer
+correction, $S=0$ correction, quaternion reset, and the source-reachable scalar
+schedule commute with this complete action.  Thus the exact normal-Live map on
+$(\vct e,\pi)$ descends to a well-defined quotient map
+$\mathcal F_{k,m}^\perp$ even when the covariance is horizontally anisotropic.
+Let $\mathcal H_k^\perp$, $\mathcal D_k^\perp$, and
+$\mathcal B_k^\perp$ be compact quotient handoff, safe, and inner sets.  Define
+$\mathfrak T_{k,m}^\perp$ by applying the set-valued construction of
+Eq.~\eqref{eq:capture-set-envelope} to the quotient map and to the transformed
+source-mode family.
 
 \begin{theorem}[Regional gravity-only finite capture modulo yaw]
 \label{thm:hybrid-quotient-capture}
@@ -236,14 +254,15 @@ No absolute-yaw convergence is asserted.
 \end{theorem}
 
 \begin{proof}
-Equivariance makes the quotient map independent of the chosen orbit
-representative.  The set-valued induction and inner-set contraction proof of
-Theorem~\ref{thm:finite-live-capture} therefore applies verbatim on the quotient
-space.
+The complete gravity-only estimator map is equivariant under
+$\mathcal G_\alpha$, including covariance congruence, so the quotient map is
+independent of the chosen representative.  The set-valued induction and
+inner-set contraction proof of Theorem~\ref{thm:finite-live-capture} therefore
+applies on the quotient state/mode space.
 \end{proof}
 
 If magnetic north is acquired after an ungauged Live handoff, the magnetic jump
-selects a horizontal representative and changes the source mode from quotient
+selects one horizontal representative and changes the source mode from quotient
 to full-heading operation.  The full-heading chain is certified whenever the
-resulting jump image lies in $\mathcal D$ and satisfies the direct recovery
+resulting exact jump image lies in $\mathcal D$ and satisfies the direct recovery
 condition Eq.~\eqref{eq:hybrid-jump-entry}.
