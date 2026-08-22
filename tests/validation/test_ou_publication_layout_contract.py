@@ -5,7 +5,11 @@ import unittest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC_RESULTS = REPO_ROOT / "doc" / "kalman_ou_iii" / "w3d-results.tex-part"
 PLOT_SCRIPT = REPO_ROOT / "plots" / "kalman_ou_iii" / "kalman_ou_iii-plots.py"
-DRAW_SCRIPT = REPO_ROOT / "plots" / "kalman_ou_iii" / "draw_plots.sh"
+SYNC_SCRIPT = REPO_ROOT / "tools" / "ou_publication_sync.py"
+PUBLICATION_VIEW = (
+    REPO_ROOT / "doc" / "kalman_ou_iii"
+    / "w3d-ou-validation-results-publication.tex-part"
+)
 
 
 class OUPublicationLayoutContractTests(unittest.TestCase):
@@ -35,25 +39,30 @@ class OUPublicationLayoutContractTests(unittest.TestCase):
         self.assertNotIn("default=True", source)
 
     def test_axes_table_publication_view_is_compacted_without_touching_evidence(self):
-        source = DRAW_SCRIPT.read_text(encoding="utf-8")
-        self.assertIn("def compact_axes_table(text: str) -> str:", source)
+        source = SYNC_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("def _compact_axes_table(text: str) -> str:", source)
         self.assertIn(r'block.replace(spacing, r"\setlength{\tabcolsep}{1.6pt}"', source)
         self.assertIn(r're.subn(r"\$H_s=([0-9.]+)\$ m", r"\1 m", block)', source)
         self.assertIn(r'r"$\1{\\pm}\2$"', source)
-        self.assertIn("text = compact_axes_table(text)", source)
+        self.assertIn("text = _compact_axes_table(text)", source)
         self.assertIn("w3d-ou-validation-results-publication.tex-part", source)
 
     def test_publication_view_uses_compact_validation_table_captions(self):
-        source = DRAW_SCRIPT.read_text(encoding="utf-8")
-        self.assertIn("def replace_table_caption(text: str, label: str, caption: str) -> str:", source)
+        source = SYNC_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("def _replace_table_caption(text: str, label: str, caption: str) -> str:", source)
         for caption in (
             r"Ten-seed paired OU-family comparison over the final \SI{900}{s}.",
             r"Ten-seed adaptive displacement RMS by axis over the final \SI{900}{s}.",
             r"OU--III adaptation-channel ablation over the final \SI{900}{s}.",
-            r"Controlled transition scored by interval (Adaptive mode).",
             r"Ten-seed paired OU-family comparison on PM--Stokes seas.",
         ):
             self.assertIn(caption, source)
+        self.assertNotIn("Controlled transition scored by interval", source)
+
+    def test_publication_view_contains_no_one_way_transition_table_or_rows(self):
+        text = PUBLICATION_VIEW.read_text(encoding="utf-8")
+        self.assertNotIn("tab:ou_transition_segments", text)
+        self.assertNotIn("\n    Transition &", text)
 
 
 if __name__ == "__main__":
