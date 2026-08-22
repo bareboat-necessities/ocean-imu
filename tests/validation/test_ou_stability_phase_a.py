@@ -1,5 +1,6 @@
 """Semantic/source contract for the mode-aware OU--III Live proof."""
 
+import re
 import unittest
 from pathlib import Path
 
@@ -13,9 +14,14 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _flat(text: str) -> str:
+    return re.sub(r"\s+", " ", text)
+
+
 class OUIIIStabilityPhaseAContractTests(unittest.TestCase):
     def test_live_proof_has_source_modes(self):
         proof = _read(DOC / "w3d-iss-stability.tex-part")
+        flat = _flat(proof)
         for marker in (
             r"\label{eq:iss-held-state}",
             r"\label{eq:iss-active-state}",
@@ -25,20 +31,22 @@ class OUIIIStabilityPhaseAContractTests(unittest.TestCase):
             r"\label{thm:iss-21-ues}",
         ):
             self.assertIn(marker, proof)
-        self.assertIn("active 18-state", proof)
-        self.assertIn("active 21-state", proof)
-        self.assertIn("frozen accelerometer-bias error", proof)
-        self.assertNotIn("homogeneous full-heading 21-state linearized", proof)
+        self.assertIn("active 18-state", flat)
+        self.assertIn("active 21-state", flat)
+        self.assertIn("frozen accelerometer-bias error", flat)
+        self.assertNotIn("homogeneous full-heading 21-state linearized", flat)
 
     def test_source_reachable_schedule_is_not_cartesian(self):
         proof = _read(DOC / "w3d-iss-stability.tex-part")
+        flat = _flat(proof)
         for marker in (
             r"\label{eq:iss-source-ema}",
             r"\label{eq:iss-source-slew}",
             r"\Pi^{\rm src}_{k,m}",
-            "strict source-reachable family",
         ):
             self.assertIn(marker, proof)
+        self.assertIn("source-reachable family", flat)
+        self.assertIn("not an arbitrary Cartesian product", flat)
 
     def test_deployed_aw_process_floor_closes_translational_process_route(self):
         proof = _read(DOC / "w3d-iss-stability.tex-part")
@@ -52,7 +60,7 @@ class OUIIIStabilityPhaseAContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, proof)
         self.assertIn("std::max(0.05f, band_noise_floor_sigma_())", src)
-        self.assertIn("det[", proof)
+        self.assertIn(r"\det[", proof)
         self.assertIn("=-1", proof)
 
     def test_s_observability_credits_spread_firings(self):
@@ -68,13 +76,14 @@ class OUIIIStabilityPhaseAContractTests(unittest.TestCase):
 
     def test_three_s_route_is_explicitly_conditional(self):
         proof = _read(DOC / "w3d-iss-stability.tex-part")
+        flat = _flat(proof)
         for marker in (
             r"\label{eq:iss-three-S-gramian}",
             r"\label{lem:iss-three-s-coupled}",
             r"\mu_a>0",
-            "conditional vector-information bound is verified",
         ):
             self.assertIn(marker, proof)
+        self.assertIn("conditional vector-information bound is verified", flat)
 
     def test_bias_hold_matches_source(self):
         src = _read(SRC / "Kalman3D_Wave_OU_III.h")
