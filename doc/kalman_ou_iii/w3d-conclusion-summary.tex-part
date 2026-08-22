@@ -28,9 +28,26 @@ and supplies a direct practical-ISS bound there for bounded deterministic
 mismatch.  Gaussian Live process and measurement noise are qualified separately
 by a conditional mean-square drift theorem, with an infinite-horizon
 mean-square conclusion only when that drift condition is valid for all lifted
-indices and finite-horizon probability bounds otherwise.  Later magnetic
-re-gauging and tilt re-lock remain separate hard maps whose explicit jump-map
-analysis is deferred to the next stability-hardening phase.
+indices and finite-horizon probability bounds otherwise.
+
+The one-time magnetic refinement and the Live tilt re-lock are now included as
+explicit hybrid jump maps rather than left outside the stability chain.  The
+magnetic event changes the adopted magnetic model and, when available, rewrites
+yaw while leaving tilt and additive navigation states untouched; the residual
+true-north reference error remains a gauge quantity.  The tilt re-lock preserves
+the implemented Euler yaw, rebuilds tilt from accelerometer direction, reseeds
+the attitude covariance, and removes stale attitude cross-covariances.  Under
+bounded jump families, the specific-force and yaw-chart conditions of
+Sec.~\ref{sec:hybrid-live-stability}, and verified jump envelopes returning to
+the outer capture set, Theorem~\ref{thm:hybrid-live-recovery} proves safety
+through repeated reconfiguration.  A finite number of jumps is followed by
+finite recovery and the regional practical-ISS bound.  If tilt re-locks continue
+indefinitely, the source's \SI{3}{s} cooldown excludes Zeno behavior and the
+theorem gives recurrent capture whenever inter-jump intervals contain the
+certified recovery sequence; asymptotic zero-error convergence is not claimed
+under endlessly repeated hard resets.  The subsequent continuous hard-iron
+correction writes no attitude or covariance and remains part of the bounded
+normal-Live measurement-model schedule rather than a sequence of hard jumps.
 
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
@@ -115,7 +132,9 @@ world-axis tuning constants.
 The main limitations are the primarily simulation-based evidence, comparison
 centered on the OU--II predecessor, controlled rather than general changing-sea
 case, fixed-temperature study, lack of physical off-CoG lever-arm validation,
-and incomplete magnetic-distortion model.  The ESP32--S3 exercise establishes
+and incomplete magnetic-distortion model.  The regional and hybrid theorems
+remain certificate implications until their structured capture and jump
+envelopes are numerically instantiated.  The ESP32--S3 exercise establishes
 source portability but not processor, memory, power, or deadline margins.
 Reported displacement remains bounded wave motion about a local reference; no
 global navigation position is claimed without external aiding.
