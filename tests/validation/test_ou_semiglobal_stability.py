@@ -142,7 +142,10 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         self.assertIn("sign of the inner product", proof)
         self.assertIn("withholds a timeout-forced handoff until", _flat(proof))
         self.assertIn(r"\eqref{eq:semiglobal-aligned-branch}", startup)
-        self.assertIn("delayed rather than accepted on the antipodal branch", startup)
+        self.assertIn(
+            "delayed rather than accepted on the antipodal branch",
+            _flat(startup),
+        )
 
         common = _source("kalman_common/SeaStateFusionFilterCommon.h")
         self.assertIn("inline bool gravityAlignedBranch", common)
