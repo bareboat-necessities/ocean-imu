@@ -1,38 +1,15 @@
-\ifdefined\OUStandaloneDetailedResults
-  \input{w3d-ou-robustness-study.tex-part}
-  \expandafter\endinput
-\fi
-
-\subsubsection{Sensitivity and degradation cases}
+\subsubsection{Degradation cases}
 \label{sec:ou-robustness}
-A ten-seed robustness study, performed before SpectralMSE became the default,
-perturbs the then-nominal OU--III operating point by multipliers $0.5$, $0.75$,
-$1.0$, $1.25$, and $1.5$.  One-factor sweeps vary $\tau$, $\sigma_{aw}$, or
-$r_S$ with the other parameters fixed; the historical coupled sweeps also move
-$r_S$ according to the former amplitude-coupled cubic relation
-$r_S=\clip(0.35\,\sigma_{aw}\tau^3,0.15,400)$.  Before clipping, a coupled scale
-change therefore gives $r_S\to c^{3}r_S$.  These coupled rows characterize the
-legacy cubic schedule and must not be read as the current SpectralMSE law.  Two additional degradation cases
-test a low-motion $H_s=\SI{0.05}{m}$ record and a rapid \SI{30}{s} transition
-between the same endpoints used in the controlled case.
+Two ten-seed degradation cases extend the main OU--III validation envelope
+without changing the deployed SpectralMSE regularizer law.  The first uses a
+low-motion $H_s=\SI{0.05}{m}$ record to expose the approximately fixed absolute
+sensor-error floor.  The second compresses the controlled transition between
+the same endpoints from \SI{120}{s} to \SI{30}{s}; both Adaptive and
+FixedNominal are scored so transition degradation remains separated from the
+fixed operating-point baseline.
 
-\IfFileExists{w3d-ou-robustness-results-publication.tex-part}{%
-  \input{w3d-ou-robustness-results-publication.tex-part}%
-}{%
-  \IfFileExists{w3d-ou-robustness-results-generated.tex-part}{%
-    \input{w3d-ou-robustness-results-generated.tex-part}%
-  }{}
-}
-
-\IfFileExists{ou_robustness_sensitivity.svg}{%
-  \begin{figure}[t]
-    \centering
-    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_robustness_sensitivity}
-    \caption{Ten-seed OU--III sensitivity around the nominal operating point.
-    Error bars are paired-bootstrap 95\% intervals; the dashed line marks the
-    frozen nominal point.}
-    \label{fig:ou_robustness_sensitivity}
-  \end{figure}
+\IfFileExists{w3d-ou-robustness-results-generated.tex-part}{%
+  \input{w3d-ou-robustness-results-generated.tex-part}%
 }{}
 
 \IfFileExists{ou_robustness_stress.svg}{%
@@ -43,32 +20,6 @@ between the same endpoints used in the controlled case.
     \label{fig:ou_robustness_stress}
   \end{figure}
 }{}
-
-Across the declared multiplier range, the largest mean normalized vertical
-error is \OURobustnessWorstMean\% of $H_s$ in the
-\OURobustnessWorstParameter{} direction at
-$\times\OURobustnessWorstScale$, differing from nominal by
-\OURobustnessWorstDifference{} percentage points
-($[\OURobustnessWorstDifferenceLow,\OURobustnessWorstDifferenceHigh]$).
-The sweeps also show competing objectives: changing $r_S$ can improve the
-vertical score while changing 3D displacement, and changing $\sigma_{aw}$ can
-alter pitch even when vertical displacement changes little.  Accordingly, no sweep point is adopted as a replacement tuning; the sweep is interpreted as
-local sensitivity rather than an offline search for a new operating point.
-
-\paragraph{Why the direct $\tau$ and $\sigma_{aw}$ effects are weak}
-With their companion parameters frozen, the $\tau$ and $\sigma_{aw}$ sweeps
-change mean vertical error by only \OURobustnessTauSpan{} and
-\OURobustnessSigmaSpan{} percentage points over the full multiplier range,
-whereas $r_S$ changes it by \OURobustnessRSSpan{} points and the coupled sweeps
-show the sensitivity of that legacy cubic tuning law.  This does not indicate an
-unused OU parameter.  The accelerometer directly observes the latent
-acceleration at \SI{200}{Hz} with measurement noise small relative to its
-stationary variance, so the latent-acceleration gain is already close to
-saturation and moderate prior rescaling has little effect on integrated
-vertical displacement.  The unobserved low-frequency drift channel remains
-sensitive to $r_S$.  Attitude is different because the latent-acceleration
-covariance also enters the accelerometer innovation covariance, explaining the
-measurable pitch sensitivity to $\sigma_{aw}$.
 
 At $H_s=\SI{0.05}{m}$, the mean absolute vertical RMS error is
 \SI{\OURobustnessLowStressAbsolute}{m}, corresponding to
