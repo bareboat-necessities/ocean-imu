@@ -36,9 +36,9 @@ Sec.~\ref{sec:startup-policy}.
 MEKF-based levelling would close a loop from attitude error through the tuner;
 unlevelled body-$Z$ remains exogenous but suffers strongly integrated gravity
 leakage.  The proxy therefore provides both levelling and the one-way
-measurement-only information flow required by the stability argument of
-Sec.~\ref{app:iss-tuner}.  The MEKF-levelled alternative is retained only for
-ablation.
+measurement-only information flow required by the source-reachable scheduling
+argument of Sec.~\ref{sec:iss-source-family}.  The MEKF-levelled alternative is
+retained only for ablation.
 
 \subsection{Noise-corrected vertical acceleration scale}
 \label{sec:adaptation-physical-sigma}
