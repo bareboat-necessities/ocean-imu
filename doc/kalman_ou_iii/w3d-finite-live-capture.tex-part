@@ -228,10 +228,3 @@ one-step local condition.  It allows $B_{\rm pre}>1$: the post-handoff estimate
 may oscillate or temporarily grow while remaining inside
 $\mathcal C_{\rm cap}$.  What is certified is finite entry into the inner ISS
 tube, not monotone decay from the first Live sample.
-
-The very broad interval certificate of Sec.~\ref{sec:iss-computer-assisted-certificate}
-serves a different purpose.  Its extremely conservative positive radius proves
-existence of a local nonlinear neighborhood over a large source-parameter box;
-it is not used as $R_C$, $R_B$, or the startup handoff test here.  Operational
-capture is established only by the regional certificate above, evaluated from
-the actual handoff family.
