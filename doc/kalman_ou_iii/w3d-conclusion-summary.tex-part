@@ -8,13 +8,19 @@ low-frequency drift control.  Under the bounded geometry, update-gap,
 covariance, finite residual-bias correlation-time, exogenous-schedule, and
 no-reset assumptions of Sec.~\ref{app:iss-stability}, the local homogeneous
 Live error recursion is uniformly exponentially stable and the nonlinear
-remainder admits a local ISS bound.  The measurement-only Mahony bootstrap of
-Sec.~\ref{sec:semiglobal-stability} extends this to almost-global, semiglobal
-practical startup-attitude capture on compact subsets of the desired proxy
-domain, provided the quality-gated handoff enters the Live invariant
-neighborhood.  Later magnetic re-gauging and tilt re-lock remain separate hard
-maps unless their post-map states are independently shown to re-enter that
-neighborhood.
+remainder admits a block-local ISS bound.  The operational startup argument is
+separate: the measurement-only Mahony bootstrap of
+Sec.~\ref{sec:semiglobal-stability} gives an almost-global, semiglobal practical
+attitude-entry result on compact subsets of the desired proxy domain; the
+complete initialized MEKF handoff must lie only inside the structured outer
+capture set of Sec.~\ref{sec:finite-live-capture}.  Verified finite-step
+comparison of the exact nonlinear Live map then permits bounded transient
+growth, proves finite entry into a robustly invariant regional set, and supplies
+a direct practical-ISS bound there.  Gaussian Live process and measurement
+noise are qualified separately by a mean-square drift theorem rather than by an
+infinite-horizon deterministic supremum.  Later magnetic re-gauging and tilt
+re-lock remain separate hard maps unless their post-map states are independently
+shown to re-enter the structured capture set.
 
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
