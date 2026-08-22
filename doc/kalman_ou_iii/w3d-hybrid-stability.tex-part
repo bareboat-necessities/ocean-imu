@@ -30,16 +30,17 @@ No normal-Live contraction claim is used across Eq.~\eqref{eq:hybrid-jump-map}.
 The source path \texttt{maybeRefineMagReference\_()} performs four operations.
 It replaces the world magnetic reference, optionally rewrites the nominal yaw
 to the absolute yaw returned by the independent yaw-stripped acquisition,
-leaves roll/pitch and every additive navigation state unchanged, and releases
-the external accelerometer-bias hold.  The attitude helper used by the source is
+leaves roll/pitch and every additive navigation state numerically unchanged,
+and releases the external accelerometer-bias hold.  The attitude helper used by
+the source is
 \begin{equation}
  q^+_{bw}=R_z(\psi_M)\,\mathcal Q_{\rm tilt}(q^-_{bw}),
  \label{eq:hybrid-mag-attitude-map}
 \end{equation}
 when a finite refinement yaw $\psi_M$ is available; otherwise $q^+_{bw}=q^-_{bw}$.
 Here $\mathcal Q_{\rm tilt}$ is the exact yaw-removal operation implemented by
-\texttt{yawRemovedBoatQuat\_()}.  Hence the map does not replace tilt.  The
-additive nominal states satisfy
+\texttt{yawRemovedBoatQuat\_()}.  Hence the map does not replace tilt.  At the
+source-variable level,
 \begin{equation}
  (b_g,v,p,S,a_w,b_a)^+=(b_g,v,p,S,a_w,b_a)^-.
  \label{eq:hybrid-mag-additive-map}
@@ -56,19 +57,82 @@ floor.  Denote that bounded covariance/flag operation by
 where $B_M$ is the accepted refined magnetic reference.  Thus the event is not
 a generic covariance reset.
 
-The heading objective of Sec.~\ref{sec:iss-heading-gauge} is essential here.
-The refinement replaces the adopted heading gauge itself.  Let
-$b_{\psi,\mathrm{ref}}^+$ denote the residual true-north offset of the new
-reference and let $\delta\psi_{\rm int}^+$ be heading error relative to that
-new gauge.  A change in $b_{\psi,\mathrm{ref}}$ is not charged as MEKF state
-error.  What the jump certificate must bound is instead
+The horizontal-gauge objective of Sec.~\ref{sec:iss-heading-gauge} is essential
+here.  Let $b_{\psi,\mathrm{ref}}^-$ and
+$b_{\psi,\mathrm{ref}}^+$ denote the old and new residual heading-reference
+offsets and define
 \begin{equation}
- |\delta\psi_{\rm int}^+|\le \overline\epsilon_M,
+ \Delta\psi_M
+ :=b_{\psi,\mathrm{ref}}^+-b_{\psi,\mathrm{ref}}^-,
+ \qquad
+ \mat Q_M:=R_z(\Delta\psi_M).
+ \label{eq:hybrid-mag-gauge-change}
+\end{equation}
+The refinement changes the adopted \emph{horizontal frame}, not merely the
+attitude reference.  Therefore the gauge-referenced physical world vectors of
+Eq.~\eqref{eq:iss-gauge-world-vectors} satisfy
+\begin{equation}
+ x_g^+=\mat Q_M x_g^- ,
+ \qquad
+ x\in\{v,p,S,a_w\}.
+ \label{eq:hybrid-mag-world-reference-map}
+\end{equation}
+The source does not rotate the stored nominal additive states in
+Eq.~\eqref{eq:hybrid-mag-additive-map}.  Consequently, if
+$e_x:=\widehat x-x_g$,
+\begin{equation}
+ \boxed{
+ e_x^+=e_x^-+(\mat I-\mat Q_M)x_g^- ,
+ \qquad x\in\{v,p,S,a_w\}.}
+ \label{eq:hybrid-mag-world-error-jump}
+\end{equation}
+This is a coordinate-reference jump, not physical translational instability.
+It is nevertheless real in the gauge-referenced error coordinates and must be
+included in the regional jump envelope.
+
+Assume the admitted magnetic-refinement family is compact and satisfies
+\begin{equation}
+ |\Delta\psi_M|\le\overline\Delta_M<\pi,
+ \qquad
+ |\delta\psi_{\rm int}^+|\le\overline\epsilon_M,
  \label{eq:hybrid-mag-heading-residual}
 \end{equation}
-for the admitted refinement family.  This covers both the finite-yaw branch of
-Eq.~\eqref{eq:hybrid-mag-attitude-map} and the source fallback in which only the
-reference changes.
+together with physical magnitude bounds at the one-time refinement instant,
+\begin{equation}
+ \|v_g^-\|\le\overline V_M,
+ \quad
+ \|p_g^-\|\le\overline P_M,
+ \quad
+ \|S_g^-\|\le\overline S_M,
+ \quad
+ \|a_{w,g}^-\|\le\overline A_M.
+ \label{eq:hybrid-mag-world-bounds}
+\end{equation}
+The first inequality in Eq.~\eqref{eq:hybrid-mag-heading-residual} bounds the
+change of adopted frame; the second bounds the estimator's internal heading
+residual relative to that new frame.  A change in true-north gauge bias is not
+itself charged as attitude error, but its coordinate action on stored world
+vectors is charged through Eq.~\eqref{eq:hybrid-mag-world-error-jump}.  This
+covers both the finite-yaw branch of Eq.~\eqref{eq:hybrid-mag-attitude-map} and
+the source fallback in which only the reference changes.
+
+Since
+\begin{equation}
+ \|\mat I-R_z(\alpha)\|_2
+ =2|\sin(\alpha/2)|,
+\end{equation}
+Eq.~\eqref{eq:hybrid-mag-world-error-jump} gives the explicit witness
+\begin{equation}
+ \boxed{
+ \|e_x^+\|
+ \le\|e_x^-\|+2s_M\overline X_M,
+ \qquad
+ s_M:=\sin(\overline\Delta_M/2),}
+ \label{eq:hybrid-mag-world-error-bound}
+\end{equation}
+with $(\overline X_M,x)$ equal to
+$(\overline V_M,v)$, $(\overline P_M,p)$,
+$(\overline S_M,S)$, or $(\overline A_M,a_w)$.
 
 For any structured pre-jump radius $\vct a$, define the exact magnetic-jump
 envelope
@@ -82,26 +146,34 @@ envelope
  \quad i\in\{\xi,\ell\},
  \label{eq:hybrid-mag-envelope}
 \end{equation}
-where $\mathcal M_M$ contains the accepted reference/yaw family satisfying
-Eq.~\eqref{eq:hybrid-mag-heading-residual}.  The source map is continuous on
-this compact family and all overwritten covariance quantities are finite, so
-$\mathcal J_M$ is finite and monotone in $\vct a$.
+where $\mathcal M_M$ contains the accepted reference/yaw and physical-state
+family satisfying Eqs.~\eqref{eq:hybrid-mag-heading-residual}--
+\eqref{eq:hybrid-mag-world-bounds}.  The complete source/reference map is
+continuous on this compact family and all overwritten covariance quantities are
+finite, so $\mathcal J_M$ is finite and monotone in $\vct a$.
 
 For the fixed dimensionless block norm of
-Eqs.~\eqref{eq:iss-block-xi}--\eqref{eq:iss-block-ell}, the structure above gives
-the useful direct bounds
-\begin{equation}
- \|z_\ell^+\|=\|z_\ell^-\|,
- \qquad
+Eqs.~\eqref{eq:iss-block-xi}--\eqref{eq:iss-block-ell}, a conservative witness
+for the coordinate-reference part of the jump is
+\begin{align}
+ \|z_\ell^+\|
+ &\le \|z_\ell^-\|
+ +2s_M\left[
+   (\overline V_M/s_v)^2+(\overline P_M/s_p)^2
+ \right]^{1/2},
+ \label{eq:hybrid-mag-fixed-kinematic-bound}\\
  \|z_\xi^+\|
- \le
- \left(\|z_\xi^-\|^2+
-       (\overline\epsilon_M/s_\theta)^2\right)^{1/2},
- \label{eq:hybrid-mag-fixed-bound}
-\end{equation}
-where the second inequality is conservative because it adds the new internal
-heading residual without crediting removal of the old one.  A mode-dependent
-regional metric should use Eq.~\eqref{eq:hybrid-mag-envelope} directly.
+ &\le \|z_\xi^-\|
+ +\left[
+   (\overline\epsilon_M/s_\theta)^2
+  +(2s_M\overline S_M/s_S)^2
+  +(2s_M\overline A_M/s_{aw})^2
+ \right]^{1/2}.
+ \label{eq:hybrid-mag-fixed-sensitive-bound}
+\end{align}
+These bounds deliberately use triangle inequalities and do not credit removal
+of the old heading residual, so the exact mode-dependent envelope
+Eq.~\eqref{eq:hybrid-mag-envelope} is the preferred certificate object.
 
 The refinement is one-shot by source construction:
 \texttt{mag\_refine\_done\_} blocks every subsequent call after the first
@@ -176,10 +248,11 @@ that yaw coordinate is smooth and Eq.~\eqref{eq:hybrid-tilt-attitude-map} gives
  \delta\psi_{\rm int}^+=\delta\psi_{\rm int}^-.
  \label{eq:hybrid-tilt-yaw-preserved}
 \end{equation}
-The adopted magnetic gauge is unchanged by this reset.  Condition
-Eq.~\eqref{eq:hybrid-tilt-yaw-chart} records the actual Euler implementation;
-a geometric yaw-preserving source map would be needed to remove that chart
-condition entirely.
+The adopted horizontal gauge is unchanged by this reset, so unlike magnetic
+refinement there is no reference-frame jump in $(v,p,S,a_w)$.
+Condition Eq.~\eqref{eq:hybrid-tilt-yaw-chart} records the actual Euler
+implementation; a geometric yaw-preserving source map would be needed to remove
+that chart condition entirely.
 
 Let $\mathcal G_T\subset\mathcal C(\vct R_D)$ be the declared re-lock guard
 family satisfying Eqs.~\eqref{eq:hybrid-tilt-force-bound} and
@@ -214,9 +287,10 @@ while the cooldown timer is running.
 \subsection{Composition with finite-step regional capture}
 \label{sec:hybrid-composition}
 
-The useful jump conditions are not contraction conditions.  A safety reset may
-make the structured error larger.  It is enough that each admissible jump
-returns the estimator to the already-certified outer capture region:
+The useful jump conditions are not contraction conditions.  A safety reset or
+reference-frame change may make the structured error larger.  It is enough that
+each admissible jump returns the estimator to the already-certified outer
+capture region:
 \begin{equation}
  \boxed{
  \mathcal J_M(\vct R_D)\preceq\vct R_C,
@@ -234,7 +308,7 @@ comparison envelopes.
 \label{thm:hybrid-live-recovery}
 Assume Theorem~\ref{thm:finite-live-capture} on
 $\mathcal C(\vct R_D)$, the jump-entry conditions
-Eq.~\eqref{eq:hybrid-jump-entry}, and the source guard conditions stated above.
+Eq.~\eqref{eq:hybrid-jump-entry}, and the source/guard conditions stated above.
 Assume every normal-Live interval between jumps follows an admissible mode
 sequence of $\Pi_{k,m}$.  Then:
 \begin{enumerate}[label=(\roman*),leftmargin=1.6em]
@@ -258,7 +332,7 @@ sequence of $\Pi_{k,m}$.  Then:
 
 \begin{proof}
 Immediately after either admissible hard event,
-Eq.~\eqref{eq:hybrid-jump-entry} places the error in
+Eq.~\eqref{eq:hybrid-jump-entry} places the gauge-referenced error in
 $\mathcal C(\vct R_C)$.  From there the prefix-domain condition
 Eq.~\eqref{eq:capture-prefix-domain} keeps every ordinary Live sample inside
 $\mathcal C(\vct R_D)$ until capture.  If another hard event occurs first, its
