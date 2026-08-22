@@ -53,6 +53,35 @@ class SourceArchiveProvenanceTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout)
             self.assertIn("archive/hash mode", result.stdout)
 
+    def test_unrelated_makefile_target_does_not_invalidate_replay(self):
+        with tempfile.TemporaryDirectory(prefix="ocean-imu-source-archive-aux-target-") as temporary:
+            root = Path(temporary)
+            self._copy_archive_fixture(root)
+            makefile = root / "tests/kalman_ou_iii/Makefile"
+            makefile.write_text(
+                makefile.read_text(encoding="utf-8")
+                + "\nauxiliary-local-check:\n\t@echo not-part-of-the-simulator-replay\n",
+                encoding="utf-8",
+            )
+            result = self._run(root, "tools/ou_evidence_contract.py", "--check")
+            self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_simulator_compile_flag_change_invalidates_replay(self):
+        with tempfile.TemporaryDirectory(prefix="ocean-imu-source-archive-build-contract-") as temporary:
+            root = Path(temporary)
+            self._copy_archive_fixture(root)
+            makefile = root / "tests/kalman_ou_iii/Makefile"
+            text = makefile.read_text(encoding="utf-8")
+            text = text.replace(
+                "BASEFLAGS = -O3 -std=c++20",
+                "BASEFLAGS = -O2 -std=c++20",
+                1,
+            )
+            makefile.write_text(text, encoding="utf-8")
+            result = self._run(root, "tools/ou_evidence_contract.py", "--check")
+            self.assertNotEqual(result.returncode, 0, result.stdout)
+            self.assertIn("replay dependency differs", result.stdout.lower())
+
     def test_changed_estimator_cannot_be_laundered_by_restat_then_auto_in_archive(self):
         with tempfile.TemporaryDirectory(prefix="ocean-imu-source-archive-adversarial-") as temporary:
             root = Path(temporary)
