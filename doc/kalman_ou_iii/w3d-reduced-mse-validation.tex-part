@@ -1,16 +1,12 @@
-\subsection{Exact spectral evaluation and paired validation of the
-reduced physical-MSE law}
+\subsection{Exact spectral evaluation of the reduced physical-MSE law}
 \label{sec:adaptation-reduced-mse-validation}
 
 Section~\ref{sec:adaptation-reduced-mse-envelope} derives the reduced
-physical-MSE schedule of Eq.~\eqref{eq:adapt-reduced-mse-law} and identifies a
-direct paired comparison against the legacy amplitude-coupled cubic comparator,
-Eq.~\eqref{eq:adapt-reduced-direct-comparison}, as the appropriate empirical
-test. This subsection reports that test. It first replaces the low-frequency
-asymptote used in Eq.~\eqref{eq:adapt-reduced-physical-mse} with an exact
-spectral evaluation, which also fixes the schedule coefficient analytically,
-and then measures the resulting law against the legacy cubic comparator under the
-paired ten-seed protocol.
+physical-MSE schedule of Eq.~\eqref{eq:adapt-reduced-mse-law}.  This subsection
+checks that reduction directly on the measured reference spectra.  It replaces
+the high-frequency asymptote used in Eq.~\eqref{eq:adapt-reduced-physical-mse}
+with the exact reconstruction integral and determines the spectral coefficient
+used by the deployed schedule.
 
 \subsubsection{Exact reconstruction integral}
 
@@ -37,7 +33,7 @@ p_\tau=\tfrac{5}{2}+3s.
 \label{eq:adapt-exponents-from-s}
 \end{equation}
 The asymptotic branch corresponds to $s=1/7$ and reproduces
-$(p_a,p_\tau)=(6/7,41/14)$; an exponent $p_a=1$ would require $s=1/6$.
+$(p_a,p_\tau)=(6/7,41/14)$.
 
 Equation~\eqref{eq:adapt-exact-wave-cost} was evaluated on the eight measured
 directional spectra of the reference records, summed over direction, and $J$
@@ -67,19 +63,14 @@ PM--Stokes & 8.50 & 0.315 & 0.855 & 2.928 & 0.428 \\
 \end{tabular}
 \end{table}
 
-Three observations follow. First, the exact exponents reproduce the asymptotic
-pair to three significant figures over the whole calibrated envelope, so
-Eq.~\eqref{eq:adapt-reduced-mse-law} is not merely a limiting form here. In
-particular $p_a$ does not approach unity at the calibrated operating points.
-Second, the ratio $J_{\rm wave}/J=0.428$ is constant and equals $3/7$, which is
-the exact stationary value of $Bw^4/(Aw^{-3}+Bw^4)$; the minimization is
-therefore located in the $\omega_R^4$ branch of the distortion cost, which is
-why no departure from the asymptote is available. Third, $\kappa_\star$ is not
-constant: it decreases monotonically from $0.556$ to $0.315$ across the
-envelope and brackets the fixed reference $\kappa=0.3627$ of
-Eq.~\eqref{eq:adapt-CR-reference-value}. The pole-placement law holds fixed a
-quantity that the physical-MSE criterion requires to vary with sea state, and
-that difference is the entire content of the comparison.
+The exact exponents reproduce the asymptotic pair to three significant figures
+over the calibrated envelope, so Eq.~\eqref{eq:adapt-reduced-mse-law} is not
+merely a limiting form for these reference spectra.  The ratio
+$J_{\rm wave}/J\simeq0.428$ is essentially constant and equals the $3/7$
+stationary balance of the reduced $A\omega_R^{-3}+B\omega_R^4$ objective.
+The optimizing $\kappa_\star$ varies from $0.556$ to $0.315$, reflecting the
+sea-state dependence of the physical drift--distortion optimum rather than a
+fixed normalized correction corner.
 
 As an independent check, $m_{-4}$ recovered from the optimality balance
 Eq.~\eqref{eq:adapt-reduced-mse-pole} agrees with direct numerical integration
@@ -87,9 +78,9 @@ of $\omega^{-4}S_\eta^{(2)}$ to within $1$--$2\,\%$ on all eight records.
 
 \subsubsection{Analytical schedule coefficient}
 
-Because Eq.~\eqref{eq:adapt-exact-wave-cost} is evaluated rather than assumed,
-the schedule coefficient is determined rather than fitted. Writing the deployed SpectralMSE
-form as
+Because Eq.~\eqref{eq:adapt-exact-wave-cost} is evaluated rather than replaced
+by a fitted regularizer-law comparison, the deployed SpectralMSE form is written
+as
 \begin{equation}
 \boxed{
 r_{S,\rm MSE}^\star
@@ -97,153 +88,16 @@ r_{S,\rm MSE}^\star
 \widehat\sigma_{a,B}^{\,6/7}\,\tau^{24/7}\,T_S^{-1/2},}
 \label{eq:adapt-mse-applied-form}
 \end{equation}
-the coefficient $C_J$ absorbs
-$\left(\int x^{-8}\Phi_a(x)\,dx\right)^{3/7}$. Solving the exact balance on the
-eight reference spectra gives
+where $C_J$ collects the normalized spectral moment
+$\left(\int x^{-8}\Phi_a(x)\,dx\right)^{3/7}$ and the constants of the reduced
+optimization. Solving the exact balance on the eight reference spectra gives
 \begin{equation}
 \boxed{C_J\simeq0.0538.}
 \label{eq:adapt-mse-coefficient}
 \end{equation}
 The physical band-limited amplitude $\widehat\sigma_{a,B}$ appears in
-Eq.~\eqref{eq:adapt-mse-applied-form} rather than the OU prior scale
-$\sigma_{aw}$, because the distortion penalty is a property of the sea and not
-of the prior; the implementation divides $c_\sigma$ back out, so $C_J$ and
-$c_\sigma$ are separately identifiable.
-
-\subsubsection{Relation to the empirically calibrated coefficients}
-
-Two analytical coefficients can now be compared with the values that were
-previously obtained by calibration, and the comparison is summarized in
-Table~\ref{tab:adapt-coefficient-predictions}.
-
-\begin{table}[t]
-\centering
-\caption{Analytically predicted coefficients against calibration.}
-\label{tab:adapt-coefficient-predictions}
-\footnotesize
-\begin{tabular}{@{}lllr@{}}
-\toprule
-Coefficient & Predicted & Swept optimum & Ratio \\
-\midrule
-$C_R$, Eq.~\eqref{eq:adapt-cR-kappa}      & $17.11$  & $17.11$  & $1.00$ \\
-$C_J$, Eq.~\eqref{eq:adapt-mse-coefficient} & $0.0538$ & $0.0538$ & $1.00$ \\
-$c_\sigma$, Eq.~\eqref{eq:adapt-csigma-prediction} & $1.80$ & $\approx0.6$ & $0.33$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The two regularizer coefficients are recovered by the sweeps to the resolution
-of the grids. For $C_R$ the coarse sweep minimum lies at the predicted value in
-every $c_\sigma$ row over a range of a factor of sixteen; for $C_J$ the
-$32$-point sweep minimum coincides with
-Eq.~\eqref{eq:adapt-mse-coefficient}. The amplitude coefficient $c_\sigma$ is
-the exception, and it is also the coefficient the endpoint is least sensitive
-to: once decoupled from the pseudo-measurement, its full sweep moves the
-primary endpoint by only about $2$--$3\,\%$, so the disagreement with the
-band-matching reference is not resolved by these data in either direction.
-
-The predicted coefficients also carry a consistent statement about the legacy
-gain. Evaluated at the nominal $H_s=\SI{1.5}{m}$ anchor, the schedule of
-Eq.~\eqref{eq:adapt-mse-applied-form} is equivalent to a cubic coefficient of
-$0.277$ in the legacy cubic parameterization $c_R\sigma_{aw}\tau^3$, against the
-calibrated $c_R=0.35$. An independent gain-optimized scan at fixed exponent
-$p_a=1$ selects $0.311$. Both indicate that the calibrated schedule is
-approximately $10$--$25\,\%$ stronger at the anchor than either criterion
-prefers, and the measured per-record improvements reported below are
-concentrated in the low sea states where over-regularization is most costly.
-
-Finally, the exponent comparison of
-Eq.~\eqref{eq:adapt-calibrated-ratio-tau} explains a previously puzzling
-empirical result. A scan that holds the period exponent at $5/2$ and fits only
-the amplitude exponent returns $p_a\simeq1.3$, which is inconsistent with both
-the legacy cubic $p_a=1$ and the predicted $p_a=6/7$. Along the calibrated
-trajectory the two variables are strongly collinear, so a law is characterized
-by its effective period exponent $p_a\,d\log\sigma_{aw}/d\log\tau+p_\tau$. Using
-the descriptive fit of Eq.~\eqref{eq:adapt-calibrated-sigma-tau-fit}, the
-legacy cubic law gives $3.61$ and Eq.~\eqref{eq:adapt-reduced-mse-law} gives $3.88$;
-a $\tau^{5/2}$ parameterization can only reach the latter by inflating $p_a$ to
-approximately $1.26$. The measured $p_a\simeq1.3$ is therefore the reduced-MSE
-schedule observed through a parameterization that cannot represent its period
-exponent, rather than evidence for a super-linear amplitude dependence.
-
-\subsubsection{Paired ten-seed comparison}
-
-Equation~\eqref{eq:adapt-mse-applied-form} was implemented in the estimator and
-compared against the legacy cubic comparator under the paired protocol of
-Sec.~\ref{sec:sim-and-eval}: identical scenarios, identical wave-phase,
-IMU-noise, and initialization seeds, $n=90$ paired
-$(\text{scenario},\text{repetition})$ observations over nine scenarios. Both
-arms use $c_\sigma=0.9$; the reduced-MSE arm uses
-Eq.~\eqref{eq:adapt-mse-coefficient} without further adjustment.
-Table~\ref{tab:adapt-mse-paired} reports the vertical-displacement endpoint.
-
-\begin{table}[t]
-\centering
-\caption{Paired comparison of the reduced physical-MSE schedule against the
-legacy cubic comparator. Vertical-displacement RMS error in percent of $H_s$ over the
-final \SI{900}{s}; $n=90$ paired seed triplets.}
-\label{tab:adapt-mse-paired}
-\footnotesize
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-Scenario & Cubic & MSE & $\Delta$ & 95\,\% h.w. \\
-\midrule
-Transition $H_s\,1.5\!\to\!4.0$ & 4.663 & 4.645 & $-0.018$ & 0.009 \\
-JONSWAP $H_s=0.27$    & 5.128 & 4.996 & $-0.132$ & 0.043 \\
-JONSWAP $H_s=1.50$    & 4.907 & 4.855 & $-0.052$ & 0.034 \\
-JONSWAP $H_s=4.00$    & 4.852 & 4.866 & $+0.014$ & 0.015 \\
-JONSWAP $H_s=8.50$    & 4.030 & 4.030 & $-0.000$ & 0.006 \\
-PM--Stokes $H_s=0.27$ & 4.735 & 4.649 & $-0.086$ & 0.047 \\
-PM--Stokes $H_s=1.50$ & 4.223 & 4.223 & $-0.001$ & 0.030 \\
-PM--Stokes $H_s=4.00$ & 4.018 & 4.036 & $+0.018$ & 0.020 \\
-PM--Stokes $H_s=8.50$ & 4.018 & 4.037 & $+0.019$ & 0.014 \\
-\midrule
-Pooled                & 4.508 & 4.482 & $\mathbf{-0.026}$ & 0.014 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The pooled paired difference is
-$-0.026\,\%H_s$ with a $95\,\%$ half-width of $0.014$, a reduction of
-$0.58\,\%$ relative. Four scenarios improve by more than their own interval,
-one degrades by more than its own interval, and four are statistical ties. The
-non-stationary transition improves rather than degrading, so the gain is not
-purchased against transient response. Secondary metrics move consistently or
-not at all: three-dimensional
-displacement RMS improves by $\SI{0.008}{m}$ ($95\,\%$ h.w.\
-$\SI{0.0015}{m}$), roll by $0.0003^\circ$, and pitch is unchanged within
-$0.0002^\circ$.
-
-Because several sub-percent effects encountered during this investigation did
-not survive replication, the primary endpoint is reported with the full
-companion inference of Sec.~\ref{sec:sim-and-eval}: a Student-$t$
-statistic of $-3.76$ ($p=1.7\times10^{-4}$), a percentile bootstrap $95\,\%$
-interval of $[-0.040,-0.013]$ excluding zero, an exact paired randomization
-test with $p=2\times10^{-4}$, and an exact sign test with $52/90$ negative
-differences ($p=0.17$). The sign test is the least powerful of the four for an
-effect that is small relative to the per-seed spread, and the three
-magnitude-sensitive statements agree. In addition, all eight deterministic
-record gates pass at their unchanged thresholds, which are fitted to the
-legacy cubic schedule's own worst values.
-
-The measured outcome is therefore not the statistical tie anticipated in
-Sec.~\ref{sec:adaptation-reduced-mse-envelope}, but a small systematic
-improvement in the predicted direction, obtained with an analytically
-determined coefficient. The residual is a legitimate target for the full
-$21$-state physical-$H_2$ model of Sec.~\ref{sec:adaptation-full-state-h2}.
-
-\subsubsection{Deployment configurations}
-
-SpectralMSE is the deployed/default configuration; the cubic family is retained as a supported low-cost comparator/fallback. Over the calibrated
-envelope their ratio varies only as $(\tau^3/\sigma_{aw})^{1/7}$,
-Eq.~\eqref{eq:adapt-reduced-vs-applied-ratio}, which spans approximately a
-factor of $1.3$ from $H_s=\SI{0.27}{m}$ to $H_s=\SI{8.5}{m}$. Evaluating
-Eq.~\eqref{eq:adapt-mse-applied-form} requires one transcendental call per
-tuner update after the constant factor $q_{\rm eff}^{1/14}$ is cached and the
-product form $\widehat\sigma_{a,B}^{\,6/7}\tau^{24/7}=
-(\widehat\sigma_{a,B}\tau^4)^{6/7}$ is used, against none for the cubic
-comparator; the measured evaluation cost is \SI{19.8}{ns} versus \SI{3.2}{ns} per call
-on a desktop target, and the disparity is considerably larger on
-microcontrollers without hardware transcendental support. The cubic
-schedule is therefore retained as an explicitly selectable low-cost configuration, at a documented cost of well under $1\,\%$ of the vertical
-endpoint, while Eq.~\eqref{eq:adapt-mse-applied-form} is the deployed/default law.
+Eq.~\eqref{eq:adapt-mse-applied-form} rather than the OU-prior scale
+$\sigma_{aw}$ because the distortion penalty is a property of the physical sea,
+not of the prior.  The implementation therefore keeps $c_\sigma$ and $C_J$
+separate: $c_\sigma$ maps the measured acceleration statistic into the OU prior,
+whereas $C_J$ sets the independent integral-state regularizer.
