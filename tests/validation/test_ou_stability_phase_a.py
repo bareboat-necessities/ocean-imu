@@ -24,7 +24,8 @@ class OUIIIStabilityPhaseAContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, proof)
         self.assertIn(r"\label{eq:semiglobal-handoff-yaw-internal}", startup)
-        self.assertIn("not part of the MEKF capture error", startup)
+        self.assertIn("residual true-north offset", startup)
+        self.assertIn("excluded by construction", startup)
 
     def test_accelerometer_bias_has_full_pe_observability_route(self):
         proof = _read("w3d-iss-stability.tex-part")
