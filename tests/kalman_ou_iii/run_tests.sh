@@ -5,6 +5,7 @@
 ./aw_covariance_policy-test
 ./acc_bias_ou-test
 ./channel_freeze-test
+./schmidt_s_pseudo-test
 ./wave_period-test
 ./mag_hard_iron-test
 ./continuous_mag_hard_iron-test
