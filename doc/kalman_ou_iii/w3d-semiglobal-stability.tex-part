@@ -1,5 +1,6 @@
 \input{w3d-block-local-iss.tex-part}
 \input{w3d-finite-live-capture.tex-part}
+\input{w3d-hybrid-stability.tex-part}
 
 \section{Almost-Global Proxy Entry to the Live Capture Region}
 \label{sec:semiglobal-stability}
@@ -11,8 +12,10 @@ is the operational full-heading result: it certifies a larger structured
 post-handoff region from which the complete nonlinear OU--III recursion reaches
 a robustly invariant regional set in finite time and then satisfies a direct
 practical-ISS bound.  Startup therefore has only to place the initialized
-filter inside the outer regional capture set.  No-magnetometer operation is a
-different symmetry class and is covered locally by the quotient result of
+filter inside the outer regional capture set.  Theorem~\ref{thm:hybrid-live-recovery}
+then stitches the normal-Live intervals across the one-time magnetic refinement
+and guarded tilt re-lock jumps.  No-magnetometer operation is a different
+symmetry class and is covered locally by the quotient result of
 Theorem~\ref{thm:iss-nomag-quotient}; it does not inherit an absolute-heading
 capture claim.
 
@@ -66,7 +69,7 @@ proxy.  Only tilt is observable from this channel, so define
 and let $\widetilde{\vct\beta}_{\perp}$ be the component of proxy gyro-bias
 error perpendicular to $\vct d$.  Rotation about $\vct d$ and the corresponding
 parallel bias component are gauge variables for the gravity-only proxy.  The
-reduced state is
+reduced state is therefore
 \begin{equation}
  \vct z_P=(\widehat{\vct d}_P,\widetilde{\vct\beta}_{\perp}),
 \end{equation}
@@ -349,11 +352,16 @@ $\mathcal H_T$ whose structured envelope
 $\vct R_{H,T}^{\max}\prec\vct R_C$.
 
 \paragraph{Later reconfiguration.}
-The refined magnetic re-gauging and the $70^\circ$ tilt re-lock are separate
-hard maps.  Their explicit jump-map analysis is deferred to the next proof
-phase.  Until then, the regional argument may restart after either event only
-when the post-map state is independently verified to lie inside
-$\mathcal C_k(\vct R_C)$.
+The one-time magnetic refinement and Live tilt re-lock are now part of the
+hybrid stability architecture rather than unmodelled breaks in it.  Under the
+jump-family conditions of Eqs.~\eqref{eq:hybrid-mag-heading-residual},
+\eqref{eq:hybrid-tilt-force-bound}, and
+\eqref{eq:hybrid-tilt-yaw-chart}, and the jump-entry test
+Eq.~\eqref{eq:hybrid-jump-entry}, Theorem~\ref{thm:hybrid-live-recovery}
+returns either event to the outer capture set and proves safety across repeated
+reconfiguration.  If hard resets cease, finite capture and practical ISS resume
+after the final jump.  Persistent re-locks give recurrent capture only when the
+inter-jump intervals are long enough for the verified recovery sequence.
 
 \paragraph{Stochastic qualification.}
 The deterministic Mahony-to-capture result uses bounded perturbations for the
