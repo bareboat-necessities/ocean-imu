@@ -198,16 +198,24 @@ is uniformly exponentially stable under explicit windowed-information
 conditions with the frozen bias acting as a bounded input; after bias release,
 the active 21-state recursion is uniformly exponentially stable under augmented
 excitation or a finite-correlation-time bias fallback.  The deployed positive OU
-process floor gives analytic translational process excitation.  A structured
-nonlinear Lyapunov argument yields practical ISS in a tube defined by attitude
-geometry and gain-weighted correction rather than a common full-state radius.
-The measurement-only startup observer gives an almost-global, semiglobal
-practical attitude-entry result on compact subsets of its desired domain.  The
-accepted handoff is propagated as its source-shaped compact set by the exact
-nonlinear Live map until it reaches a robust inner regional set.  Gravity-only
-operation has a corresponding regional result modulo yaw, and hard magnetic or
-tilt reconfiguration is composed through explicit jump-followed-by-flow
-recovery conditions.
+process floor gives analytic translational process excitation.  Additional
+sufficient conditions derive an explicit attitude/gyro-bias information margin
+from separated specific-force/magnetic vector packets and extend linear Live
+stability to arbitrary switching inside a bounded adaptation envelope.  A
+structured nonlinear Lyapunov argument yields practical ISS in an anisotropic
+tube defined by attitude geometry and gain-weighted correction rather than a
+common full-state radius; finite-window contraction gives constructive Lyapunov
+margins.  The measurement-only startup observer gives an almost-global,
+semiglobal practical attitude-entry result on compact subsets of its desired
+domain, while the implemented accelerometer reset makes entry independent of
+the discarded pre-reset attitude under a specific-force bound.  Exact nonlinear
+finite-step propagation gives sufficient conditions for the source-shaped
+handoff to reach a robust inner regional set.  Gravity-only operation has a
+corresponding regional result modulo yaw, and hard magnetic or tilt
+reconfiguration is composed through explicit jump-followed-by-flow recovery
+conditions.  Bounded non-OU forcing enters the same practical-ISS framework,
+and a conditional-moment argument gives a constructive regional mean-square
+drift bound without assuming that innovation gating preserves zero mean.
 Sea-state adaptation is implemented as an exogenous measurement-only layer that
 estimates wave period and band-limited acceleration variance and schedules the
 OU prior and integral regularizer.  A paired ten-seed study spans four
@@ -251,6 +259,10 @@ extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, 
 \input{w3d-iss-stability.tex-part}
 \input{w3d-semiglobal-stability.tex-part}
 \input{w3d-analytical-stability-widening.tex-part}
+\input{w3d-stability-widening-phase-c.tex-part}
+\input{w3d-stability-widening-phase-d.tex-part}
+\input{w3d-stability-widening-phase-e.tex-part}
+\input{w3d-stability-widening-phase-f.tex-part}
 
 \input{w3d-sim-charts.tex-part}
 \input{w3d-results.tex-part}
