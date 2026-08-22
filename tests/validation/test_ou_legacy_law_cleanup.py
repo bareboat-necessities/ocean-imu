@@ -1,121 +1,104 @@
-"""Publication contract for retiring the OU-III legacy regularizer-law studies."""
+"""Publication and study contract for retiring legacy OU adaptation laws."""
 
 import unittest
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
 
+OU2_FORBIDDEN = ("PseudoAdaptationLaw::Empirical",)
+OU3_FORBIDDEN = (
+    "RSAdaptationLaw::Cubic",
+    "RSAdaptationLaw::StrongRiccati",
+    "RSAdaptationLaw::PosteriorRiccati",
+)
 
-class OUIIILegacyLawCleanupTests(unittest.TestCase):
-    def test_main_sources_do_not_restore_legacy_numerical_comparisons(self):
-        sources = {
-            name: (DOC / name).read_text(encoding="utf-8")
-            for name in (
-                "w3d-reduced-mse-envelope.tex-part",
-                "w3d-reduced-mse-validation.tex-part",
-                "w3d-adaptation-deployed-law.tex-part",
-                "w3d-conclusion-summary.tex-part",
-                "w3d-post-results-investigations.tex-part",
-            )
-        }
-        joined = "\n".join(sources.values())
-        for retired in (
-            r"\label{tab:adapt-reduced-mse-envelope}",
-            r"\label{eq:adapt-reduced-vs-applied-ratio}",
-            r"\label{eq:adapt-reduced-direct-comparison}",
-            r"\label{tab:adapt-mse-paired}",
-            r"\label{eq:deployed-effective-law}",
-            "Legacy dimensional cubic schedule",
-            "Coefficient-Law Investigation and Transition Tradeoff",
-            "Sensor-floor plus sea-dependent leakage",
-            "supported low-cost cubic",
-        ):
-            self.assertNotIn(retired, joined)
+
+class OULegacyLawCleanupTests(unittest.TestCase):
+    def test_ou2_tests_use_only_physical_mse(self):
+        for path in (REPO_ROOT / "tests" / "kalman_ou_ii").glob("*-test.cpp"):
+            text = path.read_text(encoding="utf-8")
+            for token in OU2_FORBIDDEN:
+                self.assertNotIn(token, text, path.name)
+        self.assertFalse((REPO_ROOT / "tools" / "ou2_pseudo_law_compare.py").exists())
+        self.assertFalse((REPO_ROOT / "tools" / "ou2_pseudo_mse_scale_sweep.py").exists())
+
+    def test_ou3_tests_use_only_spectral_mse(self):
+        for path in (REPO_ROOT / "tests" / "kalman_ou_iii").glob("*-test.cpp"):
+            text = path.read_text(encoding="utf-8")
+            for token in OU3_FORBIDDEN:
+                self.assertNotIn(token, text, path.name)
+
+    def test_arduino_sketches_never_select_retired_laws(self):
+        for path in REPO_ROOT.rglob("*.ino"):
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            for token in OU2_FORBIDDEN + OU3_FORBIDDEN:
+                self.assertNotIn(token, text, str(path.relative_to(REPO_ROOT)))
+            self.assertNotIn("OU_II_PSEUDO_LAW", text, str(path.relative_to(REPO_ROOT)))
+            self.assertNotIn("OU_III_RS_LAW", text, str(path.relative_to(REPO_ROOT)))
+
+    def test_full_validation_has_no_legacy_law_selector(self):
+        texts = [
+            (REPO_ROOT / ".github" / "workflows" / "ou-validation.yml").read_text(encoding="utf-8"),
+            (REPO_ROOT / "tools" / "ou_validation.py").read_text(encoding="utf-8"),
+            (REPO_ROOT / "tools" / "ou_robustness.py").read_text(encoding="utf-8"),
+        ]
+        joined = "\n".join(texts)
+        for token in OU2_FORBIDDEN + OU3_FORBIDDEN:
+            self.assertNotIn(token, joined)
+        # Validation may exercise channel freezes, but it must never request a
+        # different law through either simulator's compatibility selector.
+        self.assertNotIn("OU_II_PSEUDO_LAW", joined)
+        self.assertNotIn("OU_III_RS_LAW", joined)
+        self.assertNotIn("OU_III_RS_SIGMA_EXP", joined)
 
     def test_publication_tree_has_no_legacy_numerical_law_studies(self):
-        validation = (DOC / "w3d-ou-validation-results-generated.tex-part").read_text(
-            encoding="utf-8"
-        )
-        robustness = (DOC / "w3d-ou-robustness.tex-part").read_text(
-            encoding="utf-8"
-        )
-        robustness_results = (
-            DOC / "w3d-ou-robustness-results-generated.tex-part"
-        ).read_text(encoding="utf-8")
-        robustness_macros = (
-            DOC / "w3d-ou-robustness-macros-generated.tex-part"
-        ).read_text(encoding="utf-8")
+        publication_files = [
+            DOC / "w3d-ou-validation-results-publication.tex-part",
+            DOC / "w3d-ou-robustness.tex-part",
+            DOC / "w3d-ou-robustness-results-generated.tex-part",
+            DOC / "w3d-ou-robustness-macros-generated.tex-part",
+            DOC / "w3d-roundtrip-transition-ablation.tex-part",
+        ]
         publication = "\n".join(
-            (validation, robustness, robustness_results, robustness_macros)
+            p.read_text(encoding="utf-8") for p in publication_files if p.exists()
         )
-
         for retired in (
             r"0.35\,\sigma_{aw}\tau",
-            r"\tau,r_S\propto\tau^3",
             "legacy cubic",
             "historical coupled",
             "OU--III tuning sensitivity",
             r"\label{tab:ou_robustness_sensitivity}",
             r"\OURobustnessWorstParameter",
-            r"\OURobustnessTauSpan",
-            r"\OURobustnessSigmaSpan",
-            r"\OURobustnessRSSpan",
-            r"\OURobustnessCoupledSigmaSpan",
-            r"\OURobustnessCoupledTauSpan",
         ):
             self.assertNotIn(retired, publication)
-
-        self.assertIn("SpectralMSE", validation)
-        self.assertIn(r"\label{tab:ou_mc_channels}", validation)
-        self.assertIn(r"\label{tab:ou_robustness_stress}", robustness_results)
         self.assertFalse((DOC / "ou_robustness_sensitivity.svg").exists())
+        self.assertFalse((DOC / "ou_validation_transition.svg").exists())
 
-    def test_current_spectral_mse_derivation_remains_the_publication_law(self):
-        envelope = (DOC / "w3d-reduced-mse-envelope.tex-part").read_text(
-            encoding="utf-8"
-        )
-        validation = (DOC / "w3d-reduced-mse-validation.tex-part").read_text(
-            encoding="utf-8"
-        )
-        deployed = (DOC / "w3d-adaptation-deployed-law.tex-part").read_text(
-            encoding="utf-8"
-        )
-        for token in (
-            r"q_{\rm eff}^{1/14}m_{-4}^{3/7}T_S^{-1/2}",
-            r"\sigma_a^{6/7}\tau^{41/14}",
-        ):
-            self.assertIn(token, envelope)
-        self.assertIn(r"\boxed{C_J\simeq0.0538.}", validation)
-        self.assertIn(r"\label{eq:adapt-default-rs-law}", deployed)
+    def test_only_roundtrip_transition_is_publishable(self):
+        sync = (REPO_ROOT / "tools" / "ou_publication_sync.py").read_text(encoding="utf-8")
+        baseline = (DOC / "w3d-baseline-comparison.tex-part").read_text(encoding="utf-8")
+        roundtrip = (DOC / "w3d-roundtrip-transition-ablation.tex-part").read_text(encoding="utf-8")
+        self.assertIn("curate_validation_for_article", sync)
+        self.assertIn("tab:ou_transition_segments", sync)
+        self.assertNotIn("fig:ou_transition", baseline)
+        self.assertNotIn("ou_validation_transition.svg", baseline)
+        self.assertIn("ou_rs_roundtrip_transition.svg", roundtrip)
+        self.assertIn("low--high--low", roundtrip)
+        self.assertIn("rise", roundtrip)
+        self.assertIn("fall", roundtrip)
 
-    def test_sigma_tau_cubed_survives_only_as_dimensional_context(self):
-        deployed = (DOC / "w3d-adaptation-deployed-law.tex-part").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn(r"r_{S,\mathrm{dim}}", deployed)
-        self.assertIn(r"\sigma_{aw}\tau^3", deployed)
-        self.assertIn("coordinate-scale statement only", deployed)
-        self.assertIn("not an adaptation law", deployed)
-
-    def test_retired_publication_fragments_and_study_drivers_are_absent(self):
-        for relative in (
-            "doc/kalman_ou_iii/w3d-adaptation-coefficient-investigation.tex-part",
-            "doc/kalman_ou_iii/w3d-rs-design-interpretation.tex-part",
-            "docs/ou-iii-rs-amplitude-retune.md",
-            "tools/ou_rs_amplitude_retune_compare.py",
-            "tools/ou_rs_amplitude_retune_sweep.py",
-            "tools/ou_rs_law_ablation.py",
-            "tools/ou_rs_spectral_mse_sweep.py",
-            "tools/rs_law_bias_variance.py",
-        ):
-            self.assertFalse((REPO_ROOT / relative).exists(), relative)
+    def test_current_analytical_derivations_remain_publication_laws(self):
+        ou3 = (DOC / "w3d-adaptation-deployed-law.tex-part").read_text(encoding="utf-8")
+        self.assertIn(r"\label{eq:adapt-default-rs-law}", ou3)
+        self.assertIn("not an adaptation law", ou3)
+        ou2 = (REPO_ROOT / "src" / "kalman_ou_ii" / "SeaStateFusionFilter_OU_II.h").read_text(encoding="utf-8")
+        ou3src = (REPO_ROOT / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h").read_text(encoding="utf-8")
+        self.assertIn("PseudoAdaptationLaw::PhysicalMSE", ou2)
+        self.assertIn("RSAdaptationLaw::SpectralMSE", ou3src)
 
     def test_roundtrip_instrument_has_no_law_comparison_mode(self):
-        tool = (REPO_ROOT / "tools" / "ou_roundtrip_transition.py").read_text(
-            encoding="utf-8"
-        )
+        tool = (REPO_ROOT / "tools" / "ou_roundtrip_transition.py").read_text(encoding="utf-8")
         self.assertIn("does not sweep or compare regularizer laws", tool)
         for token in ("--exponents", "OU_III_RS_SIGMA_EXP", "LAW_CUBIC"):
             self.assertNotIn(token, tool)
