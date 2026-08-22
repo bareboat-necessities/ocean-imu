@@ -1,0 +1,120 @@
+\subsection{Restricted-Gain Ablation of the Integral Pseudo-Measurement}
+\label{sec:restricted-s-gain-ablation}
+
+Section~\ref{sec:iss-block-basin} keeps $S$ inside the sensitive block
+$\vct z_\xi$ precisely because the Kalman gain of the linear $S=0$
+pseudo-measurement \eqref{eq:zero-pseudo} acquires attitude rows through the
+cross-covariance,
+\begin{equation}
+\mat E_\theta\mat K_S
+=\mat P_{\theta S}\left(\mat P_{SS}+\mat R_S\right)^{-1},
+\label{eq:restricted-s-gain-rows}
+\end{equation}
+so that an integral-channel residual produces an $SO(3)$ injection with a
+quadratic reset remainder.  That injection is priced by $a_S$ in
+\eqref{eq:iss-cert-angle-gains} and therefore enters both $c_\xi$
+\eqref{eq:iss-cert-cxi} and the certified radius $r_\xi$
+\eqref{eq:iss-cert-rxi}.  It is natural to ask whether the certificate can be
+improved simply by removing that path.
+
+\paragraph{The restricted update}
+The ablation applies a Schmidt-style restricted gain to the $S$ update alone,
+\begin{equation}
+\widetilde{\mat K}_S:=\left(\Id-\mat E_\theta^\top\mat E_\theta\right)\mat K_S,
+\qquad\text{so}\qquad
+\mat E_\theta\widetilde{\mat K}_S=0
+\label{eq:restricted-s-gain}
+\end{equation}
+exactly, whence $a_S=0$.  The restriction is applied to the gain only, never to
+$\mat P\mat H_S^\top$: freezing the mean correction is not the same as deleting
+the covariance, and asserting $\mat P_{\theta S}=0$ would be a different and
+false claim.  Consequently the optimal-gain shortcut is no longer available and
+the covariance must use the general-gain Joseph form
+\begin{equation}
+\mat P^{+}
+=\left(\Id-\widetilde{\mat K}_S\mat H_S\right)\mat P
+ \left(\Id-\widetilde{\mat K}_S\mat H_S\right)^{\top}
++\widetilde{\mat K}_S\mat R_S\widetilde{\mat K}_S^{\top},
+\label{eq:restricted-s-joseph}
+\end{equation}
+which remains symmetric and positive semidefinite for \emph{any} gain, optimal
+or not.  Everything else --- prediction, the OU model, the adaptation law,
+tuning, cadence, the accelerometer and magnetometer updates, state ordering,
+initialization, and quaternion conventions --- is unchanged.
+
+\paragraph{Outcome}
+The ablation fails, and it fails in both the certificate and the error metrics.
+Table~\ref{tab:restricted-s-gain} reports the certificate diagnostic over the
+eight reference records.  The intended gain is realized --- $\|\mat E_\theta
+\mat K_S\|_2$ is identically zero on every record --- but every quantity that
+matters degrades.  The attitude scale $\sigma_\theta$ inflates by a factor of
+$4.7$--$5.2$, the accelerometer gain's attitude rows
+$\|\mat E_\theta\mat K_a\|_2$ inflate by two to three orders of magnitude, and
+the effective nonlinear coefficient $c_{\rm eff}$ degrades from $29.3$ to
+$2.12\times10^{4}$, a factor of $726$.  The certified radius $r_\xi$ contracts
+from $88.0$ to $14.7$ and the Live-entrance budget collapses by the same
+$714\times$.
+
+\begin{table}[t]
+  \centering
+  \caption{Restricted-gain ablation, worst value over the eight reference
+  records.  ``Deployed'' is the unrestricted gain; ``Restricted'' imposes
+  \eqref{eq:restricted-s-gain}.}
+  \label{tab:restricted-s-gain}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    Quantity & Deployed & Restricted \\
+    \midrule
+    $\|\mat E_\theta\mat K_S\|_2$      & $2.66\times10^{-4}$ & $0$ \\
+    $\|\mat E_\theta\mat K_a\|_2$      & $1.37\times10^{-4}$ & $1.68\times10^{-2}$ \\
+    $\sigma_\theta$                    & $1.11\times10^{-2}$ & $5.27\times10^{-2}$ \\
+    $\Gamma_\theta$                    & $1.35\times10^{7}$  & $4.37\times10^{7}$ \\
+    $c_{\rm eff}$                      & $29.3$              & $2.12\times10^{4}$ \\
+    $r_\xi$                            & $88.0$              & $14.7$ \\
+    Live budget                        & $8.39\times10^{-3}$ & $1.17\times10^{-5}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Why the trade is unfavourable}
+The premise of the ablation is that the $S\!\to\!\theta$ path is a parasitic
+nonlinearity.  It is not.  A tilt error rotates the gravity vector into the
+horizontal channels, producing a persistent spurious specific-force component
+that integrates into $\vct v$, then $\vct p$, then $S$; the integral state is
+therefore a very-long-baseline observer of tilt, and $\mat P_{\theta S}$ is the
+channel through which that observation reaches attitude.  Equation
+\eqref{eq:restricted-s-gain} discards it.
+
+The work does not disappear when the channel is closed --- it migrates.  With
+the slow tilt information withheld, the attitude covariance is no longer
+reduced by the $S$ update, $\sigma_\theta$ inflates, and the accelerometer
+update must carry the entire tilt correction on its own.  Because
+$a_a=\|\mat E_\theta\mat K_a\|_2(f_1s_\theta+s_{aw}+s_{ba})$ is driven by both
+factors, and both grow, $c_{\rm grp}$ grows far more than the deleted $a_S$
+term ever contributed.  The numbers make the asymmetry concrete: at the calmest
+record the deleted term was $\|\mat E_\theta\mat K_S\|_2=2.62\times10^{-4}$
+while the inflated one went from $6.66\times10^{-6}$ to $6.02\times10^{-3}$.
+Deleting a term worth $2.6\times10^{-4}$ cost three orders of magnitude on a
+term that had been negligible.
+
+\paragraph{Empirical confirmation}
+The estimator degrades accordingly.  With tuning held fixed --- the applied
+$\tau$, $\sigma_{aw}$, and $R_S$ are bit-identical on all eight records, so the
+adaptation law is not confounding the comparison --- every quality gate that
+passes under the deployed gain fails under the restricted gain.  Three-dimensional
+displacement RMS worsens by \pct{161}--\pct{539} on seven records, gyro-bias
+error by \pct{93}--\pct{850}, and pitch RMS by up to \pct{972}.  On the
+roughest PM record the filter effectively loses lock, reaching \SI{100.7}{m}
+3-D RMS and \SI{76.4}{\degree} yaw RMS.
+
+\paragraph{Conclusion}
+The attitude rows of $\mat K_S$ are load-bearing rather than parasitic, and the
+certificate cannot be improved by deleting them.  This strengthens rather than
+weakens the argument of Section~\ref{sec:iss-block-basin}: $S$ belongs in the
+sensitive block not merely as a conservative bookkeeping choice, but because the
+coupling it carries is doing estimation work.  A tighter certificate must come
+from bounding that coupling more sharply, not from severing it.  The restricted
+gain is documented here as a negative result and is not part of the deployed
+estimator.
