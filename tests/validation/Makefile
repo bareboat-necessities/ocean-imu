@@ -17,6 +17,7 @@ build:
 		test_ou_evidence_contract.py \
 		test_ou_computer_assisted_live_basin.py \
 		test_ou_computer_assisted_process_blocks.py \
+		test_ou_semiglobal_stability.py \
 		test_source_archive_provenance.py \
 		test_record_conventions.py \
 		test_publication_references.py \
