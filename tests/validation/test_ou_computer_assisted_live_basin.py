@@ -41,15 +41,11 @@ class ComputerAssistedLiveBasinProofTests(unittest.TestCase):
             v["alpha_controllability_lower"],
             Decimal("1e10") * v["q_step_lower"],
         )
-        # The arbitrary-time-varying steering construction is now the theorem
-        # path; the older frozen-schedule bound remains only a comparison.
         self.assertGreater(
             v["alpha_controllability_lower"],
             v["q_frozen_horizon_lower"],
         )
         self.assertGreater(v["deltaH_lower"], v["delta_frozen_lower"])
-        # The final-sample full-state floor really is limited by the integrated
-        # translational block, not by the residual accelerometer-bias OU state.
         self.assertGreater(v["qba_step_lower"], v["q_step_lower"])
 
     def test_detectability_and_lifted_nonlinear_closures_are_computed(self):
@@ -62,8 +58,8 @@ class ComputerAssistedLiveBasinProofTests(unittest.TestCase):
         self.assertGreater(v["rxi_lower"], 0)
         self.assertGreater(v["CH_upper"], 0)
         self.assertGreater(v["riccati_cert_radius_lower"], 0)
-        # This utility remains an internal worst-case diagnostic and is not
-        # wired into the publication stability claim.
+        # This utility remains only an internal worst-case diagnostic.  The
+        # publication now uses an exact finite-step regional proof instead.
         self.assertLess(v["riccati_cert_radius_lower"], Decimal("1e-100"))
 
     def test_publication_excludes_broad_box_certificate(self):
