@@ -1,18 +1,20 @@
-\subsection{Constructive Local-ISS Certificate}
+\subsection{Finite-Horizon Characterization of the Local ISS Region}
 \label{sec:iss-live-certificate}
 
 The block-local theorem is uniform but existential: the constants
 $M_{\xi\xi}$, $M_{\xi\ell}$, $M_\xi$, $\rho$, $c_\xi$, and $r_\xi$ are not
-numerical objects that the implementation can inspect.  This subsection makes
-that local result constructive.  Its role is deliberately narrower than the
-regional startup certificate of Sec.~\ref{sec:capture-certificate-contract}:
-it certifies strict local contraction and an inner invariant neighborhood.  It
-is not used to require the first Live sample to satisfy the resulting radius.
+numerical objects that the implementation can inspect.  This subsection gives
+finite-horizon sufficient conditions that make the structure of that local
+result explicit and provide quantities that can be instantiated on a selected
+Live operating region.  Its role is deliberately narrower than the regional
+startup certificate of Sec.~\ref{sec:capture-certificate-contract}: it
+characterizes an inner ISS entrance region and is not used to require the first
+Live sample to satisfy that inner condition.
 
 \subsubsection{Fixed dimensionless coordinates}
 
 The scaling of Eqs.~\eqref{eq:iss-block-xi}--\eqref{eq:iss-block-ell} is fixed
-before the certificate is evaluated.  We use
+before the local characterization is evaluated.  We use
 \begin{equation}
 \boxed{
 \begin{aligned}
@@ -55,7 +57,7 @@ For an integer horizon $H\ge1$, define
  \label{eq:iss-cert-prefix}
 \end{align}
 
-\begin{theorem}[Constructive finite-horizon UES certificate]
+\begin{theorem}[Finite-horizon UES characterization]
 \label{thm:iss-cert-finite-horizon}
 Suppose an uninterrupted Live interval satisfies
 \begin{equation}
@@ -98,11 +100,11 @@ Eq.~\eqref{eq:iss-cert-projected-M}.
 \end{proof}
 
 The same lifted structure is used by the wider capture theorem, but with a
-Riccati metric and a regional nonlinear remainder rather than the broad-box
-Euclidean constants above.  In both cases finite prefix amplification is
-allowed; only the lifted map is required to contract.
+Riccati metric and a regional nonlinear remainder rather than the fixed scaled
+Euclidean norm above.  In both cases finite prefix amplification is allowed;
+only the lifted map is required to contract.
 
-\subsubsection{Constructive local nonlinear remainder}
+\subsubsection{Local nonlinear remainder}
 \label{sec:iss-cert-remainder}
 
 For the default zero-lever-arm configuration, the rotation remainder satisfies
@@ -151,41 +153,40 @@ angle bounds retain the full gains,
  a_S&=\|\mat E_\theta\mat K_S\|_2s_S .
  \label{eq:iss-cert-angle-gains}
 \end{align}
-Taking interval suprema and summing the group operations yields
+On any compact chart-safe Live region where these gains are bounded, summing
+the measurement and group-composition remainders gives a finite constant
 \begin{equation}
  \boxed{c_\xi=c_{\rm meas}+c_{\rm grp},}
  \label{eq:iss-cert-cxi}
 \end{equation}
-valid on a chart-safe radius
+valid on a radius
 \begin{equation}
  0<r\le r_\xi:=
  \min_g\frac{\theta_c}{s_\theta+a_g}.
  \label{eq:iss-cert-rxi}
 \end{equation}
-The exact expression for $c_{\rm grp}$ and its verified bounds are carried by
-the computer-assisted closure of
-Sec.~\ref{sec:iss-computer-assisted-certificate}.
+Here $c_{\rm grp}$ denotes the corresponding finite quadratic bound for the
+composition and reset terms in the chosen principal chart.
 
 Combining Eqs.~\eqref{eq:iss-cert-M-rho} and
 \eqref{eq:iss-cert-cxi} gives
 \begin{equation}
  \boxed{
- \nu_{\rm cert}(r)
+ \nu_H(r)
  =\frac{M_Hc_\xi r}{1-\rho_H}}
  \label{eq:iss-cert-nu}
 \end{equation}
-and the sufficient local radius
+and the sufficient local condition
 \begin{equation}
  \boxed{
- r_{\rm cert}<
+ r<
  \min\left\{r_\xi,
  \frac{1-\rho_H}{M_Hc_\xi}\right\}.}
  \label{eq:iss-cert-radius}
 \end{equation}
-This radius is a constructive inner invariant-neighborhood certificate.  The
-very broad interval arithmetic used below makes it intentionally conservative;
-it is not substituted for $R_C$ and is not a requirement on the first Live
-measurement.  Startup is instead certified by
+This is a sufficient inner condition for the block-local ISS argument, not a
+claim about the size of the operational startup basin.  The startup interface
+is instead the regional capture condition of
 Eqs.~\eqref{eq:capture-certificate-pass} and
 \eqref{eq:semiglobal-capture-entry}.
 
