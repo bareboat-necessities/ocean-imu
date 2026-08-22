@@ -13,6 +13,10 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _flat(text: str) -> str:
+    return " ".join(text.split())
+
+
 class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
     def test_hybrid_proof_is_wired_into_stability_chain(self):
         proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
@@ -70,19 +74,18 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         ):
             self.assertIn(token, src)
 
-        hybrid = _read(DOC / "w3d-hybrid-stability.tex-part")
+        hybrid = _flat(_read(DOC / "w3d-hybrid-stability.tex-part"))
         for marker in (
             "First Live gauge acquisition",
             "Second-stage refinement",
             r"\rho_M\in\{0,1\}",
-            r"\rho_M\in\{0,1\}",
             "first-gauge branch",
             r"\texttt{mag\_ref\_set\_}",
             r"\texttt{mag\_refine\_done\_}",
+            "writes no attitude state or covariance",
+            r"not to $\mathcal R_M$",
         ):
             self.assertIn(marker, hybrid)
-        self.assertIn("writes no attitude state", hybrid)
-        self.assertIn("not to $\\mathcal R_M$", hybrid)
 
     def test_tilt_relock_contract_matches_wrapper_source(self):
         src = _read(SRC / "SeaStateFusionFilter_OU_III.h")
@@ -116,7 +119,7 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         self.assertIn("Pext.template block<3,3>(0, OFF_BA).setZero();", src)
 
     def test_repeated_reset_claim_is_safety_not_false_convergence(self):
-        hybrid = _read(DOC / "w3d-hybrid-stability.tex-part").casefold()
+        hybrid = _flat(_read(DOC / "w3d-hybrid-stability.tex-part")).casefold()
         self.assertIn("if the hard-jump sequence is finite", hybrid)
         self.assertIn("if tilt re-locks occur infinitely often", hybrid)
         self.assertIn("prevents zeno behavior", hybrid)
