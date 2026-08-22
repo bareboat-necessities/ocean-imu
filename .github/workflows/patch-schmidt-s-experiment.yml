@@ -6,12 +6,16 @@ on:
       - agent/experiment-schmidt-s-pseudomeas
     paths:
       - .github/workflows/patch-schmidt-s-experiment.yml
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   patch-and-test:
+    if: github.head_ref == 'agent/experiment-schmidt-s-pseudomeas' || github.ref_name == 'agent/experiment-schmidt-s-pseudomeas'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,6 +43,7 @@ jobs:
           make -C tests/kalman_ou_iii schmidt_s_pseudo-test
           ./tests/kalman_ou_iii/schmidt_s_pseudo-test
       - name: Commit experiment implementation
+        if: github.event_name == 'pull_request'
         shell: bash
         run: |
           git config user.name github-actions[bot]
