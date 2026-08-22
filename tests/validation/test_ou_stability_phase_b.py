@@ -49,7 +49,7 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, hybrid)
 
-        folded = _flat(hybrid).casefold()
+        folded = hybrid.casefold()
         self.assertIn("not asserted numerically here", folded)
         self.assertIn("not convergence to zero", folded)
         self.assertIn("continuous hard-iron correction", folded)
