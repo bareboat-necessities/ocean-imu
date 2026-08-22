@@ -92,7 +92,7 @@ class OUIIIStabilityPhaseCContractTests(unittest.TestCase):
         self.assertIn("integral state is zero at reset", proof)
 
     def test_quantitative_chart_keeps_almost_global_limitation_honest(self):
-        proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
+        proof = _flat(_read(DOC / "w3d-semiglobal-stability.tex-part"))
         for marker in (
             r"\mathcal N_P:=W^s(\mathcal U_P)",
             r"\label{eq:semiglobal-proxy-chart}",
@@ -151,7 +151,7 @@ class OUIIIStabilityPhaseCContractTests(unittest.TestCase):
         )
 
     def test_timeout_does_not_invent_heading_or_copy_proxy_bias(self):
-        proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
+        proof = _flat(_read(DOC / "w3d-semiglobal-stability.tex-part"))
         wrapper = _flat(
             _read(SRC / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h")
         )
