@@ -91,8 +91,8 @@ practical ISS directly.
 A timeout-forced handoff does not test the 0.075 residual magnitude and
 therefore does not inherit the normal tilt bound.  It belongs to the composite
 stability result only when an independent timeout-state envelope yields
-$\vct R_{H,T}^{\max}\prec\vct R_C$; Phase~C of the proof hardening will derive
-that envelope from an explicit Mahony Lyapunov estimate.
+$\vct R_{H,T}^{\max}\prec\vct R_C$; Phase~C derives that envelope from an
+explicit Mahony Lyapunov estimate.
 
 \subsection{Two-stage magnetic reference}
 \label{sec:mag-two-stage}
@@ -110,18 +110,48 @@ low-bandwidth proxy settles.  It remains proxy framed to avoid self-confirmation
 from the already-live MEKF.
 
 Acceptance of the refined reference replaces the world magnetic reference,
-re-gauges yaw once, and releases accelerometer-bias learning.  This event occurs
-before the \SI{900}{s} scoring window but remains a discrete reconfiguration.
-Its jump-map stability properties are intentionally deferred to the next proof
-phase.  Until that analysis is supplied, the finite-step regional argument is
-restarted only when the post-map state is independently known to lie inside
-$\mathcal C_k(\vct R_C)$.
+re-gauges yaw once when the independent acquisition supplies a finite yaw, and
+releases the accelerometer-bias hold.  The source leaves tilt and all additive
+navigation states unchanged and does not replace the covariance; only the
+bias-enable path may apply its bounded covariance floor.  Section~\ref{sec:hybrid-mag-jump}
+therefore models this event as the explicit jump $\mathcal R_M$, not as an
+ordinary Kalman sample.  The reference change updates the adopted heading gauge,
+so a change in true-north reference bias is not itself MEKF error; the jump
+certificate instead bounds the post-jump internal heading residual through
+Eq.~\eqref{eq:hybrid-mag-heading-residual}.  If the resulting jump envelope
+satisfies Eq.~\eqref{eq:hybrid-jump-entry}, the event returns directly to the
+outer capture set and Theorem~\ref{thm:hybrid-live-recovery} supplies subsequent
+hybrid safety and recovery.
+
+The continuous hard-iron correction that follows refinement is not another hard
+attitude jump.  It slews the applied body-frame offset and the magnetic model
+without writing attitude or covariance, so it belongs to the bounded normal-Live
+mode family rather than restarting the hybrid capture argument at every update.
 
 \subsection{Live re-lock boundary}
 
-A sustained tilt inconsistency above $70^\circ$ for \SI{0.35}{s} can trigger a
-tilt-only re-lock that preserves yaw; a \SI{3}{s} cooldown limits repeated
-resets.  This safety reconfiguration is also a separate hard map.  Phase~B will
-analyze its reset image explicitly.  Until then, the current regional argument
-resumes only after the reset state is independently verified to lie inside
+A sustained estimated tilt above $70^\circ$ for \SI{0.35}{s} can trigger a
+Live tilt re-lock; a \SI{3}{s} cooldown prevents another reset while its timer is
+positive.  The exact source map preserves the pre-reset Euler yaw, rebuilds
+roll/pitch from the instantaneous accelerometer, reseeds the attitude covariance,
+and zeros attitude cross-covariances while retaining the additive navigation and
+bias states.  Section~\ref{sec:hybrid-tilt-jump} therefore treats it as a
+separate jump $\mathcal R_T$.
+
+A deterministic post-reset tilt guarantee requires the specific-force condition
+Eq.~\eqref{eq:hybrid-tilt-force-bound}; the $70^\circ$ trigger alone does not
+impose that measurement-quality bound.  Because the implementation preserves an
+Euler yaw coordinate, the proof also retains the nonsingular-yaw-chart condition
+Eq.~\eqref{eq:hybrid-tilt-yaw-chart}.  Under those conditions the reset obeys
+the tilt bound Eq.~\eqref{eq:hybrid-tilt-reset-bound} and preserves internal yaw
+as in Eq.~\eqref{eq:hybrid-tilt-yaw-preserved}.  If its exact post-jump envelope
+satisfies Eq.~\eqref{eq:hybrid-jump-entry}, the reset returns to
 $\mathcal C_k(\vct R_C)$.
+
+The cooldown gives the source-level no-Zeno bound
+Eq.~\eqref{eq:hybrid-tilt-dwell}.  If only finitely many hard resets occur, the
+last one is followed by finite regional capture and the ordinary practical-ISS
+bound.  If re-locks continue indefinitely, Theorem~\ref{thm:hybrid-live-recovery}
+claims recurrent capture only on inter-reset intervals long enough to complete
+the verified recovery sequence; repeated hard resets are not silently treated
+as asymptotically vanishing disturbances.
