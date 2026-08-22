@@ -12,40 +12,66 @@ entering as a bounded input.  After bias release, the active 21-state recursion
 is UES under either augmented attitude/gyro/accelerometer-bias excitation or the
 finite-correlation-time bias fallback.  The deployed positive OU process floor
 and exact OU-driven integration chain provide the required active translational
-process excitation analytically.  Without an absolute heading reference, the
-same structure descends to the yaw quotient rather than assigning convergence
-to absolute yaw.
+process excitation analytically.  A stronger sufficient route replaces the
+held-mode PE constant by an explicit lower bound from two separated accepted
+specific-force--magnetic vector packets.  Together with bounded update gaps and
+compact process/measurement envelopes, this extends the linear UES statement to
+arbitrary admissible switching of $\tau$, $\sigma_{aw}$, and $R_S$ inside the
+certified envelope, so the particular adaptation exponents and EMA horizons are
+performance choices rather than stability-critical feedback parameters.  Without
+an absolute heading reference, the same structure descends to the yaw quotient
+rather than assigning convergence to absolute yaw.
 
 The nonlinear Live result is expressed in the quantities that drive the MEKF
 geometry: attitude error, mixed attitude--bias and attitude--latent-acceleration
-products, and the actual gain-weighted attitude correction.  A time-varying
-quadratic Lyapunov metric converts the active-mode UES result into a practical
-ISS tube without requiring one common small Euclidean radius for
-$S$, $a_w$, $b_a$, velocity, and position.
+products, and the actual gain-weighted attitude correction.  A finite
+$N$-step contraction $\kappa_N<1$ yields constructive UES constants and an
+explicit converse-Lyapunov bound; these in turn give a closed sufficient bound
+on the structured nonlinear load.  The resulting regional certificate is
+anisotropic: large linear navigation errors are limited by their actual
+attitude cross-gain rather than by a common attitude-sized Euclidean radius.
+The implemented quaternion injection and covariance reset are also treated on
+the rotation group.  Their source map has no singularity at a correction angle
+of $\pi$; the physical attitude chart remains regional, as required by attitude
+topology and measurement ambiguity.
 
 Startup is quantitative.  For the measurement-only Mahony gravity-direction
 observer with integral gyro-bias feedback, Sec.~\ref{sec:semiglobal-proxy}
 derives an explicit practical-ISS rate, input gain, tilt envelope, and
 observable-bias envelope on a compact subset of the almost-global basin.  The
-same estimate gives a calculable sufficient gravity-gate entry time and an
-analytical timeout attitude envelope.  The accepted source handoff is propagated
-as its actual compact set $\mathcal H$, not as a mandatory outer-radius box.
-Verified exact-map reachability permits transient growth while all prefixes
-remain in the safe domain and establishes finite entry into the robust inner
-regional set.
+implemented accelerometer reset discards the stored pre-reset attitude.  Under
+$\|a_f\|<g$ its image lies in the desired gravity hemisphere for every prior
+stored attitude, so the source-level entry statement is global with respect to
+that discarded prior state while the subsequent continuous observer remains
+properly almost-global/regional.  The same estimate gives a calculable
+sufficient gravity-gate entry time and an analytical timeout attitude envelope.
+The accepted source handoff is propagated as its actual compact set
+$\mathcal H$, not as a mandatory outer-radius box.  Verified exact-map
+reachability permits transient growth while all prefixes remain in the safe
+domain and establishes finite entry into the robust inner regional set.
 
 A timeout with a heading gauge uses the same direct full-heading capture
 construction.  An ungauged timeout instead receives a regional practical-ISS
 result on the yaw quotient; a later magnetic acquisition selects a horizontal
 representative and enters the full-heading chain only when its exact jump image
 and recovery flow remain certified.  Magnetic gauge changes and Live tilt
-re-locks are explicit hybrid jumps.  They may enlarge the error while remaining
-inside the proof-safe domain.  Finite jump sequences are followed by finite
-recovery, and recurrent tilt re-locks admit a practical exponential bound when
-the source cooldown and jump/flow gains satisfy the dwell-time small-gain
-condition of Theorem~\ref{thm:hybrid-live-recovery}.  Continuous hard-iron
-correction writes no attitude or covariance and remains part of the bounded
-normal-Live measurement schedule.
+re-locks are explicit hybrid jumps.  The tilt reset has a sharper reset-to-set
+bound in which pre-reset tilt does not enter the multiplicative loop gain; when
+the analytically derived cooldown contraction gives
+$\mu_T^{\rm an}<1$, recurrent relocks satisfy a practical exponential
+Poincar\'e bound.  Continuous hard-iron correction writes no attitude or
+covariance and remains part of the bounded normal-Live measurement schedule.
+
+The same deterministic margin treats bounded departures from the OU latent
+acceleration law as an ISS input.  Non-OU harmonics, hydrodynamic forcing, and a
+bounded correlation-time error therefore enlarge the ultimate bound rather than
+invalidating the stability argument.  For stochastic sensor/process noise, a
+conditional second/fourth-moment calculation yields constructive regional
+mean-square drift coefficients without assuming that NIS gating preserves zero
+conditional mean.  Because Gaussian noise is unbounded, compact-tube
+almost-sure invariance is not claimed; a finite-horizon exit-probability bound
+is separated explicitly from the normal-Live mean-square result and from the
+hybrid recovery logic.
 
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
@@ -91,26 +117,30 @@ aiding remains a more direct route to reducing the horizontal disturbance.  The
 observed $x/y$ split is heading dependent and does not support universal
 world-axis tuning constants.
 
-The remaining analytical gap is the complete 21-state physical error problem.
-The reduced model does not retain attitude/gravity leakage, gyroscope and
-accelerometer bias paths, OU-model mismatch, cross-covariance coupling, or the
-full periodic update sequence.  Section~\ref{sec:adaptation-full-state-h2}
-formulates that physical displacement objective and provides the natural next
-step for assessing how those couplings modify the reduced SpectralMSE exponents
-and coefficient.
+The remaining analytical gap in the adaptation study is the complete 21-state
+physical error $H_2$ problem.  The reduced performance model does not retain
+attitude/gravity leakage, gyroscope and accelerometer bias paths, OU-model
+mismatch, cross-covariance coupling, or the full periodic update sequence.
+Section~\ref{sec:adaptation-full-state-h2} formulates that physical displacement
+objective and provides the natural next step for assessing how those couplings
+modify the reduced SpectralMSE exponents and coefficient.  This performance gap
+is distinct from the stability widening above, which already treats bounded
+OU-model mismatch as a disturbance.
 
 The main limitations are the primarily simulation-based evidence, comparison
 centered on OU--II, controlled rather than general changing-sea case,
 fixed-temperature study, lack of physical off-CoG lever-arm validation, and
 incomplete magnetic-distortion model.  The analytical startup and timeout bounds
 remain conditional on supplied physical disturbance, seed, heading, and
-non-attitude state bounds.  Motion-dependent attitude/bias excitation, exact
-source-shaped regional reachability, stochastic drift, and hybrid jump/flow
-gains remain certificate obligations until they are numerically instantiated
-for a declared operating envelope.  The ESP32--S3 exercise establishes source
-portability but not processor, memory, power, or deadline margins.  Reported
-displacement remains bounded wave motion about a local reference; no global
-navigation position is claimed without external aiding.
+non-attitude state bounds.  The widening results reduce, but do not eliminate,
+operating-envelope certificate work: the vector-packet geometry and update gaps,
+a strict finite-window contraction $\kappa_N<1$, the anisotropic nonlinear and
+correction gains, exact source-shaped handoff reachability, hybrid reset/cooldown
+constants, and stochastic noise--geometry remainder bounds must still be
+instantiated for a declared deployed envelope.  The ESP32--S3 exercise
+establishes source portability but not processor, memory, power, or deadline
+margins.  Reported displacement remains bounded wave motion about a local
+reference; no global navigation position is claimed without external aiding.
 
 \subsection*{Future work}
 \begin{itemize}[leftmargin=1.25em]
@@ -119,10 +149,12 @@ navigation position is claimed without external aiding.
         Sec.~\ref{sec:adaptation-full-state-h2} at the calibrated sea states and
         compare their predicted minimizing amplitudes and local exponents with
         the deployed SpectralMSE $6/7,41/14$ law and complete-estimator behavior.
-  \item \textbf{Regional certificate instantiation.}  Verify the
-        motion-dependent PE margins, source-shaped handoff reachability,
-        structured nonlinear tube, stochastic drift, quotient capture, and
-        hybrid jump/flow inequalities for the deployed source family.
+  \item \textbf{Regional certificate instantiation.}  Instantiate the
+        analytical vector-packet bounds, prove or rigorously bound a strict
+        finite-window $\kappa_N<1$, evaluate the anisotropic nonlinear tube and
+        group-correction constants, propagate the source-shaped handoff set,
+        and evaluate the hybrid and stochastic margins for the deployed source
+        family.
   \item \textbf{Transition-aware regularizer amplitude.}  If the full-state
         model predicts a stationary--transition conflict outside the currently
         tested transition, preserve the steady-state regularizer mapping and
