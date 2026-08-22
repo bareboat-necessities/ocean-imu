@@ -8,6 +8,13 @@ on:
       - .github/workflows/schmidt-quality-gate.yml
       - src/kalman_ou_iii/**
       - tests/kalman_ou_iii/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/schmidt-quality-gate.yml
+      - src/kalman_ou_iii/**
+      - tests/kalman_ou_iii/**
   workflow_dispatch:
 
 jobs:
