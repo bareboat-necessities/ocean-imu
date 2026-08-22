@@ -16,11 +16,13 @@ complete initialized MEKF handoff must lie only inside the structured outer
 capture set of Sec.~\ref{sec:finite-live-capture}.  Verified finite-step
 comparison of the exact nonlinear Live map then permits bounded transient
 growth, proves finite entry into a robustly invariant regional set, and supplies
-a direct practical-ISS bound there.  Gaussian Live process and measurement
-noise are qualified separately by a mean-square drift theorem rather than by an
-infinite-horizon deterministic supremum.  Later magnetic re-gauging and tilt
-re-lock remain separate hard maps unless their post-map states are independently
-shown to re-enter the structured capture set.
+a direct practical-ISS bound there for bounded deterministic mismatch.  Gaussian
+Live process and measurement noise are qualified separately by a conditional
+mean-square drift theorem, with an infinite-horizon mean-square conclusion only
+when that drift condition is valid for all lifted indices and finite-horizon
+probability bounds otherwise.  Later magnetic re-gauging and tilt re-lock remain
+separate hard maps unless their post-map states are independently shown to
+re-enter the structured capture set.
 
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
