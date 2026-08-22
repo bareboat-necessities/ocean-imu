@@ -1,7 +1,7 @@
 \subsection{Phase E: analytical hybrid recovery and non-OU model mismatch}
 \label{sec:stability-widening-phase-e}
 
-The hybrid theorem of Sec.~\ref{sec:hybrid-stability} permits a hard reset to
+The hybrid theorem of Sec.~\ref{sec:hybrid-live-stability} permits a hard reset to
 leave the inner Live set provided the jump remains safe and the subsequent flow
 returns to that set.  The source tilt relock has additional structure that can
 be used to sharpen the generic jump inequality: the reset replaces tilt from
