@@ -93,16 +93,14 @@ r_{S,\mathrm{filter}}=r_{S,\mathrm{appl}}
 \qquad\text{(SpectralMSE default).}
 \label{eq:engineering-rs-filter-implementation}
 \end{equation}
-No additional $\sqrt{T_{S,0}/T_S}$ factor is applied.  That reference-cadence
-renormalization belongs only to the supported cubic fallback described by
-Eq.~\eqref{eq:engineering-rs-filter}.  Away from cadence clamps, the deployed
-schedule therefore has
+No additional reference-cadence factor is applied.  Away from cadence clamps,
+the deployed schedule therefore has
 \begin{equation}
 r_{S,\mathrm{filter}}
 \propto\widehat\sigma_{a,B}^{\,6/7}\tau^{41/14},
 \end{equation}
-which is the reduced physical-MSE prediction rather than the former
-$\sigma_{aw}\tau^{5/2}$ schedule.
+which is the reduced physical-MSE prediction used throughout the current
+estimator results.
 
 \subsection{Implementation bounds}
 
