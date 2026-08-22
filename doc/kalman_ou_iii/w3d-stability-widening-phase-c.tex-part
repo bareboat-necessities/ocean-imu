@@ -189,35 +189,39 @@ remainder by $c_R(\theta_*)\theta_e^2$ on this entire compact geodesic chart.
 
 \begin{theorem}[Group-geometric correction widening]
 \label{thm:widen-group-correction}
-Replace the technical correction condition
-$\|\Delta\vct\theta_k\|<\Delta_0<\pi$ in the local remainder construction by
-\begin{equation}
- \theta_e\le\theta_*<\pi,
- \qquad
- \|\Delta\vct\theta_k\|\le\delta_Q<\infty,
+In addition to the anisotropic theorem's prefix-safety hypothesis, require each
+accepted correction to satisfy
+\begin{align}
+ \theta_e^-&\le\theta_*<\pi,\\
+ \theta_e^+
+ &:=d_{\SO(3)}\!\left(
+   \exp([\Delta\vct\theta_k]_\times)\mat R_e^-,\mat I\right)
+ \le\theta_*,\\
+ \|\Delta\vct\theta_k\|&\le\delta_Q<\infty.
  \label{eq:widen-group-domain}
-\end{equation}
-and include the series-branch defect of Eq.~\eqref{eq:widen-series-defect} in
-the bounded input.  Then the quaternion-injection and covariance-reset parts of
-the nonlinear remainder have finite explicit bounds depending on
+\end{align}
+Include the series-branch defect of Eq.~\eqref{eq:widen-series-defect} in the
+bounded input.  Then the quaternion-injection and covariance-reset parts of the
+nonlinear remainder have finite explicit bounds depending on
 $(\theta_*,\delta_Q)$, with reset amplification bounded by
-Eq.~\eqref{eq:widen-reset-G-bound}.  Consequently the anisotropic theorem above
-remains valid with a group-energy attitude coordinate on any compact chart
-strictly smaller than the antipodal set; no artificial singularity at
-$\|\Delta\theta\|=\pi$ is required.
+Eq.~\eqref{eq:widen-reset-G-bound}.  Consequently the anisotropic theorem
+remains valid with a group-energy attitude coordinate on any exact
+pre/post-correction chart strictly smaller than the antipodal set; no artificial
+singularity at $\|\Delta\theta\|=\pi$ is required.
 \end{theorem}
 
 \begin{proof}
 Equation~\eqref{eq:widen-exact-injection} is the implemented radial quaternion
 map; the small-angle branch differs from the exact exponential only by the
 Taylor remainder in Eq.~\eqref{eq:widen-series-defect}.  Equation~\eqref{eq:widen-reset-G-bound}
-follows by direct multiplication of Eq.~\eqref{eq:widen-reset-G}.  On
-$\theta_e\le\theta_*<\pi$, the logarithmic attitude coordinate and
-$V_R^{1/2}$ are uniformly equivalent by Eq.~\eqref{eq:widen-SO3-sector}, and
-all exact rotated-vector residuals have bounded second derivatives.  Hence the
-same nonlinear comparison proof applies with constants depending on the compact
-geodesic chart and finite correction budget rather than on a correction-angle
-cutoff below $\pi$.
+follows by direct multiplication of Eq.~\eqref{eq:widen-reset-G}.  The explicit
+post-correction condition in Eq.~\eqref{eq:widen-group-domain} prevents a large
+finite injection from leaving the selected geodesic chart.  On that chart the
+logarithmic attitude coordinate and $V_R^{1/2}$ are uniformly equivalent by
+Eq.~\eqref{eq:widen-SO3-sector}, and all exact rotated-vector residuals have
+bounded second derivatives.  Hence the same nonlinear comparison proof applies
+with constants depending on the compact geodesic chart and finite correction
+budget rather than on a correction-angle cutoff below $\pi$.
 \end{proof}
 
 \begin{remark}[Scope of the group result]
