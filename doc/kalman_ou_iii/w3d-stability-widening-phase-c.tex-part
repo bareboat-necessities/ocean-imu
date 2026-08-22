@@ -24,48 +24,63 @@ split is not a dynamical decoupling: all first-order cross-covariance and
 Kalman-gain effects remain in $\widetilde A_k^{\rm cl}$.  It is used only to
 bound the genuinely nonlinear remainder.
 
-Define the attitude-injection gains
-\begin{align}
- k_{\theta g}&:=\sup_k
- \left\|\mat E_\theta
- [\mat K_{a,k}\ \mat K_{m,k}]\right\|,\\
- k_{\theta S}&:=\sup_k\|\mat E_\theta\mat K_{S,k}\|,
- \label{eq:widen-injection-gains}
-\end{align}
-and let $G_{S\ell}$ be a uniform peak gain from the linear translational
-coordinates to the $S$ residual under the homogeneous envelope dynamics,
+Define the direct $S$-to-attitude correction gain
 \begin{equation}
- G_{S\ell}:=
- \sup_{k\ge j,\pi\in\Pi^{\rm env}}
- \|\mat E_S\widetilde\Psi(k,j;\pi)\mat E_\ell^\top\|<\infty.
+ k_{\theta S}:=\sup_k\|\mat E_\theta\mat K_{S,k}\mat D_S^{-1}\|<\infty,
+ \label{eq:widen-injection-gains}
+\end{equation}
+where $\mat D_S$ is the fixed dimensionless scale used in $\vct z$.  For the
+accelerometer/magnetometer part of the same correction, define the compact-tube
+incremental gain
+\begin{equation}
+ k_{\Delta g}:=
+ \sup_k\sup_{\substack{\vct z_g\ne0\\
+                        (\vct z_g,0)\in\mathcal T_k}}
+ \frac{\|\Delta\vct\theta_{g,k}(\vct z_g)\|}{\|\vct z_g\|}<\infty,
  \label{eq:widen-S-peak-gain}
 \end{equation}
-Finiteness follows from Lemma~\ref{lem:widen-constructive-ues}.  On an
-anisotropic cylinder
+where $\Delta\vct\theta_{g,k}$ contains the accelerometer and magnetometer
+corrections but not the $S$ residual.  Finiteness follows from smoothness on the
+compact accepted-measurement/geodesic family and
+$\Delta\vct\theta_{g,k}(0)=0$.  Since the integral residual is exactly linear,
+for every admitted state
+\begin{equation}
+ \|\Delta\vct\theta_k\|
+ \le k_{\Delta g}\|\vct z_g\|+k_{\theta S}\|\vct z_\ell\|.
+ \label{eq:widen-correction-split}
+\end{equation}
+This expression retains the actual full-gain $S$ cross-covariance path rather
+than replacing it by a fictitious block-diagonal update.
+
+On the anisotropic cylinder
 \begin{equation}
  \mathcal C(r_g,r_\ell):=
  \{\|\vct z_g\|\le r_g,\ \|\vct z_\ell\|\le r_\ell\},
  \label{eq:widen-cylinder}
 \end{equation}
-the $S$-generated correction contribution is therefore bounded by
-$k_{\theta S}G_{S\ell}r_\ell$ after transport from an admitted initial linear
-error.
-
-Let $c_g,c_{ga},c_b$ collect the fixed scaled coefficients multiplying the
-attitude square, attitude--latent-acceleration product, gyro-bias square, and
-other geometry-only terms in Eq.~\eqref{eq:iss-nonlinear-load}.  Let
-$k_g r_g$ bound the accelerometer/magnetometer contribution to the attitude
-correction.  A sufficient cylinder load is
+all geometry-only quadratic products in
+Eq.~\eqref{eq:iss-nonlinear-load} are bounded by
+$c_G r_g\|\vct z\|$ for a fixed scaled constant $c_G$.  Moreover,
+Eq.~\eqref{eq:widen-correction-split} and Cauchy--Schwarz give
+\begin{align}
+ \frac{\|\Delta\vct\theta_k\|^2}{\|\vct z\|}
+ &\le
+ \sqrt{k_{\Delta g}^2+k_{\theta S}^2}
+ \left(k_{\Delta g}r_g+k_{\theta S}r_\ell\right).
+ \label{eq:widen-correction-ratio}
+\end{align}
+Hence a closed sufficient cylinder load is
 \begin{equation}
+ \boxed{
  L_{\mathcal C}(r_g,r_\ell):=
- c_g r_g+c_{ga}r_g+c_b r_g
- +c_5\frac{\left(k_g r_g+k_{\theta S}G_{S\ell}r_\ell\right)^2}
- {\max\{r_g,r_\ell\}}.
+ c_G r_g+c_5
+ \sqrt{k_{\Delta g}^2+k_{\theta S}^2}
+ \left(k_{\Delta g}r_g+k_{\theta S}r_\ell\right).}
  \label{eq:widen-cylinder-load}
 \end{equation}
-The constants are deliberately grouped: a certificate may retain the sharper
-componentwise expression of Eq.~\eqref{eq:iss-nonlinear-load}; the formula above
-is only a closed sufficient bound.
+The sharper componentwise expression of Eq.~\eqref{eq:iss-nonlinear-load} may be
+used by a certificate verifier; Eq.~\eqref{eq:widen-cylinder-load} is a direct
+analytical sufficient bound valid at every interior point of the cylinder.
 
 \begin{theorem}[Anisotropic regional practical ISS]
 \label{thm:widen-cylinder-iss}
@@ -80,30 +95,32 @@ with $\ell_*$ from Eq.~\eqref{eq:widen-ell-star}, then every sufficiently small
 Lyapunov sublevel contained in $\mathcal C(r_g,r_\ell)$ is robustly invariant
 and satisfies the practical-ISS bound of Eq.~\eqref{eq:iss-block-local-bound}.
 The admissible linear-state radius is controlled by the actual cross-gain
-$k_{\theta S}G_{S\ell}$ rather than by the attitude radius itself.
+$k_{\theta S}$ rather than by the attitude radius itself.
 \end{theorem}
 
 \begin{proof}
-All first-order coupling between the two blocks is already contained in the
-UES transition.  The nonlinear remainder lemma therefore needs only a bound on
-its structured products and on the gain-weighted attitude correction.  On the
-cylinder, those terms are bounded by Eq.~\eqref{eq:widen-cylinder-load} times
-$\|\vct z\|$.  Equation~\eqref{eq:widen-cylinder-condition} then implies the
-explicit Phase-B smallness inequality and the proof of
-Theorem~\ref{thm:iss-block-local} applies without replacing $r_g$ and
-$r_\ell$ by a common radius.
+All first-order coupling between the two blocks is already contained in the UES
+transition.  On the cylinder, the geometry-only terms satisfy the first term of
+Eq.~\eqref{eq:widen-cylinder-load}, and
+Eq.~\eqref{eq:widen-correction-ratio} bounds the actual gain-weighted correction
+term at every nonzero interior state.  Thus
+$\|\widetilde\varphi_k(z)\|\le
+L_{\mathcal C}(r_g,r_\ell)\|z\|$.
+Equation~\eqref{eq:widen-cylinder-condition} implies the explicit Phase-B
+smallness inequality, so the proof of Theorem~\ref{thm:iss-block-local} applies
+without replacing $r_g$ and $r_\ell$ by a common radius.
 \end{proof}
 
 \begin{remark}[What can and cannot be global in the linear coordinates]
 \label{rem:widen-linear-global-limit}
 If the attitude rows of all translational corrections were identically zero,
-$k_{\theta S}=0$, the translational radius would disappear from the nonlinear
-condition and the stable linear block could be global while attitude remained
-regional.  The deployed full-gain MEKF generally has
-$k_{\theta S}\ne0$ because $S$ cross-covariance may nudge attitude.  Hence the
-unchanged source admits a much wider anisotropic cylinder, not an honest global
-claim in $(v,p,S)$.  This explicitly identifies the architectural obstruction
-to global translational certification.
+$k_{\theta S}=0$, the translational radius disappears from
+Eq.~\eqref{eq:widen-cylinder-load}; the stable linear block can then be global
+while the geometry block remains regional.  The deployed full-gain MEKF
+generally has $k_{\theta S}\ne0$ because $S$ cross-covariance may nudge
+attitude.  Hence the unchanged source admits a wider anisotropic cylinder, not
+an honest global claim in $(v,p,S)$.  This explicitly identifies the
+architectural obstruction to global translational certification.
 \end{remark}
 
 \subsubsection{Exact geometry of the implemented quaternion injection}
