@@ -8,8 +8,9 @@ finite-horizon sufficient conditions that make the structure of that local
 result explicit and provide quantities that can be instantiated on a selected
 Live operating region.  Its role is deliberately narrower than the regional
 startup certificate of Sec.~\ref{sec:capture-certificate-contract}: it
-characterizes an inner ISS entrance region and is not used to require the first
-Live sample to satisfy that inner condition.
+characterizes an inner local ISS condition, but the operational finite-step
+capture theorem proves its own regional invariant set and does not require the
+startup trajectory to pass through this separately parameterized certificate.
 
 \subsubsection{Fixed dimensionless coordinates}
 
@@ -99,10 +100,10 @@ Coordinate projections have unit norm, giving
 Eq.~\eqref{eq:iss-cert-projected-M}.
 \end{proof}
 
-The same lifted structure is used by the wider capture theorem, but with a
-Riccati metric and a regional nonlinear remainder rather than the fixed scaled
-Euclidean norm above.  In both cases finite prefix amplification is allowed;
-only the lifted map is required to contract.
+The regional capture theorem uses a related lifted construction, but evaluates
+the complete nonlinear map in structured sensitive/kinematic coordinates
+rather than requiring a common Euclidean contraction constant.  In both cases
+finite prefix amplification is allowed.
 
 \subsubsection{Local nonlinear remainder}
 \label{sec:iss-cert-remainder}
@@ -184,9 +185,10 @@ and the sufficient local condition
  \frac{1-\rho_H}{M_Hc_\xi}\right\}.}
  \label{eq:iss-cert-radius}
 \end{equation}
-This is a sufficient inner condition for the block-local ISS argument, not a
-claim about the size of the operational startup basin.  The startup interface
-is instead the regional capture condition of
+This is a sufficient local condition for the block-local ISS argument, not a
+claim about the size of the operational startup basin and not a required target
+of the regional finite-step certificate.  The startup interface is instead the
+structured regional capture condition of
 Eqs.~\eqref{eq:capture-certificate-pass} and
 \eqref{eq:semiglobal-capture-entry}.
 
