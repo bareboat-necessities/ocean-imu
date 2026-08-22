@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_iii-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test live_basin_diagnostic handoff_capture_diagnostic rs_law-test startup_init-test
+TARGETS = kalman_ou_iii-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test rs_law-test startup_init-test
 
 all: build test
 
@@ -72,12 +72,6 @@ wave_band_sigma-test: wave_band_sigma-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 iss_contract-test: iss_contract-test.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-
-live_basin_diagnostic: live_basin_diagnostic.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-
-handoff_capture_diagnostic: handoff_capture_diagnostic.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 rs_law-test: rs_law-test.o
