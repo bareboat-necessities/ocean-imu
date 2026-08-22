@@ -96,55 +96,73 @@ Consequently, whenever $\bar\omega\Delta_{g,+}<2$,
  \label{eq:widen-gamma-lower}
 \end{equation}
 
+Because attitude error and gyro-bias error have different physical units, state
+the explicit singular-value bound in a fixed dimensionless proof coordinate.
+Choose any declared time scale $T_{bg}>0$ and let
+\begin{equation}
+ \widetilde{\vct b}_g:=T_{bg}\delta\vct b_g,
+ \qquad
+ \widetilde\mat\Gamma_g:=\mat\Gamma_g/T_{bg},
+ \qquad
+ \gamma_-:=g_-/T_{bg}>0.
+ \label{eq:widen-bg-scaling}
+\end{equation}
+This is only a constant change of norm; UCO and UES are invariant under it, and
+the corresponding constants in the original physical coordinates follow by
+fixed norm equivalence.
+
 \begin{lemma}[Two-packet attitude/gyro-bias observability]
 \label{lem:widen-two-packet-bg}
 If every proof window contains two accepted packets satisfying
-Eqs.~\eqref{eq:widen-vector-packet}--\eqref{eq:widen-gamma-lower}, then the
-held-bias attitude/gyro-bias Gramian satisfies Eq.~\eqref{eq:iss-eta6-pe} with
-the explicit admissible lower bound
+Eqs.~\eqref{eq:widen-vector-packet}--\eqref{eq:widen-bg-scaling}, then the
+held-bias attitude/gyro-bias Gramian in the dimensionless coordinate
+$(\delta\theta,\widetilde b_g)$ has the explicit admissible lower bound
 \begin{equation}
  \boxed{
  \alpha_6^{\rm an}:=
- \frac{\mu_\theta}{1+2/g_-^2}>0.}
+ \frac{\mu_\theta}{1+2/\gamma_-^2}>0.}
  \label{eq:widen-alpha6}
 \end{equation}
 A finite upper bound $\beta_6^{\rm an}$ follows from the compact vector,
-rate, covariance, and window bounds.
+rate, covariance, window, and fixed scaling bounds.  By norm equivalence this
+implies Eq.~\eqref{eq:iss-eta6-pe} in any other fixed state scaling.
 \end{lemma}
 
 \begin{proof}
-After whitening each packet by its information square root, Lemma~\ref{lem:widen-vector-coercivity}
-allows the two packet outputs to be bounded below by
-$\sqrt{\mu_\theta}$ times the triangular observation map
+After whitening each packet by its information square root,
+Lemma~\ref{lem:widen-vector-coercivity} allows the two packet outputs to be
+bounded below by $\sqrt{\mu_\theta}$ times the dimensionless triangular
+observation map
 \begin{equation}
- \mat T_g=
+ \widetilde\mat T_g=
  \begin{bmatrix}
   \mat I&0\\
-  \mat\Phi_\theta&\mat\Gamma_g
+  \mat\Phi_\theta&\widetilde\mat\Gamma_g
  \end{bmatrix}.
 \end{equation}
 Given packet outputs $(\vct y_0,\vct y_1)$,
 $\delta\vct\theta_0=\vct y_0$ and
-$\delta\vct b_g=\mat\Gamma_g^{-1}
+$\widetilde\vct b_g=\widetilde\mat\Gamma_g^{-1}
 (\vct y_1-\mat\Phi_\theta\vct y_0)$.  Orthogonality of
-$\mat\Phi_\theta$, Eq.~\eqref{eq:widen-gamma-lower}, and
+$\mat\Phi_\theta$, Eq.~\eqref{eq:widen-bg-scaling}, and
 $(a+b)^2\le2(a^2+b^2)$ give
-$\|\mat T_g^{-1}\|^2\le1+2/g_-^2$.
+$\|\widetilde\mat T_g^{-1}\|^2\le1+2/\gamma_-^2$.
 Hence
-$\sigma_{\min}^2(\mat T_g)\ge(1+2/g_-^2)^{-1}$, yielding
-Eq.~\eqref{eq:widen-alpha6}.  Boundedness of the same finite stacked operator
-gives the upper Gramian bound.
+$\sigma_{\min}^2(\widetilde\mat T_g)\ge
+(1+2/\gamma_-^2)^{-1}$, yielding Eq.~\eqref{eq:widen-alpha6}.
+Boundedness of the same finite stacked operator gives the upper Gramian bound.
 \end{proof}
 
 The bound is intentionally a sufficient marine-motion condition, not a
 replacement for the general PE route.  Aggressive maneuvers for which
 $\bar\omega\Delta_{g,+}\ge2$ may still satisfy Eq.~\eqref{eq:iss-eta6-pe}; they
-simply use the original Gramian condition rather than Lemma~\ref{lem:widen-two-packet-bg}.
-For the active 21-state mode, the deployed finite residual-accelerometer-bias
-correlation time then invokes route (ii) of Theorem~\ref{thm:iss-21-ues}.  Thus
-full nine-state PE is not required for this analytical route.  The direct
-nine-state condition Eq.~\eqref{eq:iss-eta-pe} remains available when the
-accelerometer-bias model is intentionally taken to its random-walk limit.
+simply use the original Gramian condition rather than
+Lemma~\ref{lem:widen-two-packet-bg}.  For the active 21-state mode, the deployed
+finite residual-accelerometer-bias correlation time then invokes route (ii) of
+Theorem~\ref{thm:iss-21-ues}.  Thus full nine-state PE is not required for this
+analytical route.  The direct nine-state condition Eq.~\eqref{eq:iss-eta-pe}
+remains available when the accelerometer-bias model is intentionally taken to
+its random-walk limit.
 
 \subsubsection{Envelope switching rather than tuner-specific slew}
 
