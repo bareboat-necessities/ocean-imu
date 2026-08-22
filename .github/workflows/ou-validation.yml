@@ -24,30 +24,6 @@ on:
       - "doc/kalman_ou_iii/**"
       - "Makefile"
       - ".github/workflows/ou-validation.yml"
-  push:
-    branches: [main]
-    paths:
-      - "src/kalman_ou_ii/**"
-      - "src/kalman_ou_iii/**"
-      - "src/kalman_common/**"
-      # Both OU families read the shared tuner, so a change confined to
-      # src/tuner still moves every number this workflow gauges.
-      - "src/tuner/**"
-      - "src/util/W3dSimCommon.*"
-      - "tests/kalman_ou_ii/**"
-      - "tests/kalman_ou_iii/**"
-      - "tests/validation/**"
-      - "tools/ou_validation.py"
-      - "tools/ou_robustness.py"
-      - "tools/ou_publication_sync.py"
-      - "plots/kalman_ou_iii/baseline-comparison.py"
-      - "reports/results/ou_validation/**"
-      - "reports/results/ou_robustness/**"
-      - "docs/ou-validation.md"
-      - "docs/ou-robustness.md"
-      - "doc/kalman_ou_iii/**"
-      - "Makefile"
-      - ".github/workflows/ou-validation.yml"
   workflow_dispatch:
     inputs:
       validation_mode:
@@ -71,10 +47,9 @@ on:
 permissions:
   contents: read
 
-# Keyed on the mode as well as the ref. The fast gate and a full regeneration
-# are different pieces of work with different runtimes, and on a push to main
-# both are in flight at once -- a shared group would have them cancelling each
-# other rather than the stale copy of themselves.
+# Keyed on the mode as well as the ref. A PR/smoke gate and a full regeneration
+# are different pieces of work with different runtimes and must not cancel one
+# another. Main pushes reach this workflow only through build.yml in full mode.
 concurrency:
   group: ou-validation-${{ inputs.validation_mode || 'gate' }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -84,13 +59,13 @@ env:
   SHARD_COUNT: 3
 
 jobs:
-  # Fast gate. Runs on every pull request and push, and on a smoke dispatch.
+  # Fast gate. Runs on pull requests and on a smoke dispatch.
   # Smoke mode exists to catch breakage in the runner and the committed
   # bundles, not to produce evidence: it never writes numbers anyone cites.
   # Gated on the mode rather than the event: in a called workflow
-  # github.event_name is the caller's event, so an event test here would read
-  # "push" and run the wrong half. `inputs` covers dispatch and workflow_call
-  # alike, and is empty -- so not 'full' -- for a plain push or pull request.
+  # github.event_name is the caller's event, so an event test here can still
+  # read "push" even though the reusable workflow was explicitly called full.
+  # `inputs` covers dispatch and workflow_call alike and is empty for a PR.
   validate:
     if: inputs.validation_mode != 'full'
     runs-on: ubuntu-24.04
