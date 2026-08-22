@@ -55,12 +55,14 @@ construction.  An ungauged timeout instead receives a regional practical-ISS
 result on the yaw quotient; a later magnetic acquisition selects a horizontal
 representative and enters the full-heading chain only when its exact jump image
 and recovery flow remain certified.  Magnetic gauge changes and Live tilt
-re-locks are explicit hybrid jumps.  The tilt reset has a sharper reset-to-set
-bound in which pre-reset tilt does not enter the multiplicative loop gain; when
-the analytically derived cooldown contraction gives
-$\mu_T^{\rm an}<1$, recurrent relocks satisfy a practical exponential
-Poincar\'e bound.  Continuous hard-iron correction writes no attitude or
-covariance and remains part of the bounded normal-Live measurement schedule.
+re-locks are explicit hybrid jumps.  This sharpens the generic jump-followed-by-
+flow recovery result of Theorem~\ref{thm:hybrid-live-recovery}: the tilt reset
+has a source-specific reset-to-set bound in which pre-reset tilt does not enter
+the multiplicative loop gain; when the analytically derived cooldown
+contraction gives $\mu_T^{\rm an}<1$, recurrent relocks satisfy a practical
+exponential Poincar\'e bound.  Continuous hard-iron correction writes no
+attitude or covariance and remains part of the bounded normal-Live measurement
+schedule.
 
 The same deterministic margin treats bounded departures from the OU latent
 acceleration law as an ISS input.  Non-OU harmonics, hydrodynamic forcing, and a
