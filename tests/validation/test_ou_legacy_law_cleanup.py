@@ -34,6 +34,44 @@ class OUIIILegacyLawCleanupTests(unittest.TestCase):
         ):
             self.assertNotIn(retired, joined)
 
+    def test_publication_tree_has_no_legacy_numerical_law_studies(self):
+        validation = (DOC / "w3d-ou-validation-results-generated.tex-part").read_text(
+            encoding="utf-8"
+        )
+        robustness = (DOC / "w3d-ou-robustness.tex-part").read_text(
+            encoding="utf-8"
+        )
+        robustness_results = (
+            DOC / "w3d-ou-robustness-results-generated.tex-part"
+        ).read_text(encoding="utf-8")
+        robustness_macros = (
+            DOC / "w3d-ou-robustness-macros-generated.tex-part"
+        ).read_text(encoding="utf-8")
+        publication = "\n".join(
+            (validation, robustness, robustness_results, robustness_macros)
+        )
+
+        for retired in (
+            r"0.35\,\sigma_{aw}\tau",
+            r"\tau,r_S\propto\tau^3",
+            "legacy cubic",
+            "historical coupled",
+            "OU--III tuning sensitivity",
+            r"\label{tab:ou_robustness_sensitivity}",
+            r"\OURobustnessWorstParameter",
+            r"\OURobustnessTauSpan",
+            r"\OURobustnessSigmaSpan",
+            r"\OURobustnessRSSpan",
+            r"\OURobustnessCoupledSigmaSpan",
+            r"\OURobustnessCoupledTauSpan",
+        ):
+            self.assertNotIn(retired, publication)
+
+        self.assertIn("SpectralMSE", validation)
+        self.assertIn(r"\label{tab:ou_mc_channels}", validation)
+        self.assertIn(r"\label{tab:ou_robustness_stress}", robustness_results)
+        self.assertFalse((DOC / "ou_robustness_sensitivity.svg").exists())
+
     def test_current_spectral_mse_derivation_remains_the_publication_law(self):
         envelope = (DOC / "w3d-reduced-mse-envelope.tex-part").read_text(
             encoding="utf-8"
