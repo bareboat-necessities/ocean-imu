@@ -28,6 +28,10 @@ int main() {
     f.last_adapt_time_sec_ = 0.0;
     f.adapt_every_secs_ = 0.05f;
 
+    if (f.getRSLaw() != RSAdaptationLaw::SpectralMSE) {
+        std::cerr << "FAIL: OU-III schedule test is not using deployed SpectralMSE\n";
+        return 1;
+    }
     if (!near(f.getPseudoUpdateTauRatio(), 0.015f / 1.1f) ||
         !near(f.getPseudoUpdatePeriodSec(), 0.015f)) {
         std::cerr << "FAIL: OU-III tau-scaled pseudo cadence did not preserve the nominal point\n";
@@ -83,16 +87,11 @@ int main() {
 
     f.adapt_mekf(0.1f, 3.0f, 0.8f, 1.2f, 2.5f);
     const float staged_tau = f.tune_.tau_applied;
-    const float staged_rs_base = std::min(std::max(f.tune_.RS_applied, f.min_R_S_), f.max_R_S_);
+    const float staged_rs = std::min(std::max(f.tune_.RS_applied, f.min_R_S_), f.max_R_S_);
     const float staged_pseudo = std::min(
         std::max(f.pseudo_update_tau_ratio_ * staged_tau,
                  f.pseudo_update_period_min_s_),
         f.pseudo_update_period_max_s_);
-    const float staged_cadence_scale =
-        (f.rs_law_ == RSAdaptationLaw::Cubic)
-            ? std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / staged_pseudo)
-            : 1.0f;
-    const float staged_rs = staged_rs_base * staged_cadence_scale;
     const float staged_rs_var = staged_rs * staged_rs;
 
     if (!f.online_tune_apply_pending_) {
@@ -116,7 +115,7 @@ int main() {
     if (!near(f.mekf_->tau_aw, staged_tau) ||
         !near(f.mekf_->R_S(2, 2), staged_rs_var) ||
         !near(f.getPseudoUpdatePeriodSec(), staged_pseudo)) {
-        std::cerr << "FAIL: staged OU-III schedule/cadence was not committed at next sample\n";
+        std::cerr << "FAIL: staged OU-III SpectralMSE schedule/cadence was not committed at next sample\n";
         return 1;
     }
     if (!near(f.getPseudoUpdatePeriodSec() / f.getTauApplied(),
@@ -125,13 +124,10 @@ int main() {
         return 1;
     }
 
-    const float expected_info_product =
-        staged_rs_base * staged_rs_base *
-        ((f.rs_law_ == RSAdaptationLaw::Cubic) ? PSEUDO_UPDATE_PERIOD_NOMINAL_S
-                                               : staged_pseudo);
+    const float expected_info_product = staged_rs_var * staged_pseudo;
     if (!near(f.mekf_->R_S(2, 2) * f.getPseudoUpdatePeriodSec(),
               expected_info_product, 1e-5f)) {
-        std::cerr << "FAIL: cadence compensation did not preserve R_S*T_S information rate\n";
+        std::cerr << "FAIL: SpectralMSE R_S*T_S product moved during schedule commit\n";
         return 1;
     }
     if (f.online_tune_apply_pending_) {
@@ -140,19 +136,19 @@ int main() {
     }
 
     f.setTauScaledPseudoUpdateCadence(false);
-    const float fixed_rs_var = staged_rs_base * staged_rs_base;
+    const float fixed_rs_var = staged_rs * staged_rs;
     if (!near(f.getPseudoUpdatePeriodSec(), PSEUDO_UPDATE_PERIOD_NOMINAL_S) ||
         !near(f.mekf_->R_S(2, 2), fixed_rs_var)) {
-        std::cerr << "FAIL: fixed-cadence ablation did not restore 15 ms/base R_S\n";
+        std::cerr << "FAIL: fixed-cadence ablation did not restore 15 ms/SpectralMSE R_S\n";
         return 1;
     }
     f.setTauScaledPseudoUpdateCadence(true);
     if (!near(f.getPseudoUpdatePeriodSec(), staged_pseudo) ||
         !near(f.mekf_->R_S(2, 2), staged_rs_var)) {
-        std::cerr << "FAIL: re-enabling tau-scaled cadence did not restore compensated schedule\n";
+        std::cerr << "FAIL: re-enabling tau-scaled cadence did not restore SpectralMSE schedule\n";
         return 1;
     }
 
-    std::cout << "OU-III predictable tuner scheduling, direct canonical frequency, tau-scaled cadence, and information-rate compensation passed\n";
+    std::cout << "OU-III SpectralMSE predictable tuner scheduling, direct canonical frequency, and tau-scaled cadence passed\n";
     return 0;
 }
