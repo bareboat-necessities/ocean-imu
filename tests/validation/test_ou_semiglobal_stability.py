@@ -30,6 +30,7 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         self.assertIn(semiglobal, main)
         self.assertLess(main.index(local), main.index(semiglobal))
         self.assertLess(main.index(semiglobal), main.index(evidence))
+        self.assertNotIn(r"\input{w3d-computer-assisted-live-basin.tex-part}", main)
 
     def test_capture_is_inserted_before_mahony_composition(self):
         proof = _read("w3d-semiglobal-stability.tex-part")
@@ -74,6 +75,7 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
     def test_operational_capture_is_not_bottlenecked_by_block_local_basin(self):
         capture = _read("w3d-finite-live-capture.tex-part")
         proof = _read("w3d-semiglobal-stability.tex-part")
+        block = _read("w3d-block-local-iss.tex-part")
         self.assertIn(
             "No inclusion in the separate block-local entrance condition is required",
             _flat(capture),
@@ -82,6 +84,10 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         self.assertIn(
             "It is not an additional set-inclusion test in the operational startup chain",
             _flat(proof),
+        )
+        self.assertIn(
+            "startup proof therefore does not need to show that its regional inner set is contained",
+            _flat(block),
         )
 
     def test_capture_uses_structured_two_block_regions(self):
