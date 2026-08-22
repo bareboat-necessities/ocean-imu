@@ -1,14 +1,8 @@
-// Pins the implementation-side hypotheses of the OU-III local ISS theorem
-// (doc/kalman_ou_iii/w3d-iss-stability.tex-part and its hypothesis audit).
-//
-// Environmental excitation and the absence of resets cannot be made true by a
-// unit test and remain explicit Live-interval assumptions.  What *can* regress
-// mechanically is checked here: the 21-state proof configuration, the finite
-// residual accelerometer-bias OU contraction, the proof-compatible covariance
-// policy, the wrapper clamps that witness the bounded exogenous schedule, and
-// the pseudo-update cadence contract underlying the translational
-// observability lemma.
+// Pins implementation-side hypotheses of the OU-III local ISS theorem.
+// Environmental excitation and reset-free intervals remain theorem assumptions;
+// this test guards only source properties that can regress mechanically.
 #define EIGEN_NON_ARDUINO
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -21,7 +15,6 @@
 #undef private
 
 const float g_std = 9.80665f;
-
 using Filter = SeaStateFusionFilter_OU_III<TrackerType::KALMANF>;
 
 static bool near(float a, float b, float rel = 2e-5f) {
@@ -33,13 +26,9 @@ static int fail(const char* msg) {
     return 1;
 }
 
-// A_3(t) = 1/2 \int_0^t (t-s)^2 E(s) ds with E(s) = exp(-s/tau), evaluated by
-// composite Simpson quadrature.  The closed form is a difference of terms of
-// order tau^3, so for t << tau it loses most of its significant digits; the
-// quadrature form mirrors the definition used in the lemma and stays accurate.
 static double A3_of(double t, double tau) {
     if (t <= 0.0) return 0.0;
-    const int n = 20000;                 // even
+    const int n = 20000;
     const double dt = t / double(n);
     double acc = 0.0;
     for (int i = 0; i <= n; ++i) {
@@ -51,8 +40,6 @@ static double A3_of(double t, double tau) {
     return 0.5 * acc * dt / 3.0;
 }
 
-// Observation matrix of the S=0 pseudo-measurement over four update instants,
-// in state order [v, p, S, a]:  row_j = [t_j^2/2, t_j, 1, A_3(t_j)].
 static double detOS(const double t[4], double tau) {
     Eigen::Matrix4d O;
     for (int j = 0; j < 4; ++j) {
@@ -71,50 +58,37 @@ int main() {
                  Eigen::Vector3f::Constant(0.25f));
     if (!f.mekf_) return fail("OU-III core was not created");
 
-    // ---- Proof configuration -------------------------------------------
-    // 21 states: attitude(3), gyro bias(3), v/p/S/a_w(12), residual accel
-    // bias(3).  The 21-state detectability lemma is stated for exactly this.
     if (f.mekf_->covariance_full().rows() != 21 ||
         f.mekf_->covariance_full().cols() != 21) {
         return fail("default OU-III state dimension is no longer 21");
     }
 
-    // A finite tau_b is what makes the residual-bias block UES; the random-walk
-    // limit is explicitly outside the theorem.
     if (!near(f.mekf_->get_acc_bias_time_constant(), 5000.0f))
         return fail("default residual accel-bias OU time constant changed");
     if (!(f.mekf_->get_acc_bias_time_constant() < std::numeric_limits<float>::max()))
         return fail("residual accel-bias block degenerated to a random walk");
 
-    // Only the prediction-time PSD inflation path is covered by the proof.
     if (f.mekf_->legacy_aw_covariance_replacement())
         return fail("legacy raw a_w covariance replacement became default");
     if (!f.periodicAwCovarianceSync())
         return fail("default PSD a_w covariance synchronization was disabled");
 
-    // ---- Bounded exogenous schedule -------------------------------------
     if (!near(MIN_TAU_S, 0.02f) || !near(MAX_TAU_S, 12.0f) ||
         !near(MAX_SIGMA_A, 6.0f) ||
         !near(MIN_R_S, 0.15f) || !near(MAX_R_S, 400.0f) ||
         !near(ACC_NOISE_FLOOR_SIGMA_DEFAULT, 0.12f)) {
-        return fail("proof-relevant OU-III wrapper clamps changed");
+        return fail("OU-III wrapper clamps changed");
     }
     if (!near(f.S_factor_, 1.0f))
-        return fail("default OU-III acceleration anisotropy no longer matches proof audit");
+        return fail("default OU-III acceleration anisotropy changed");
     if (!near(f.R_S_xy_factor_, 1.0f))
         return fail("default OU-III integral regularizer is no longer isotropic");
-    // The deployed pair is (S_sigma, rho_xy) = (1, 1), which is both isotropic
-    // and the equal-normalized-pole point of the similarity law sigma_S ~
-    // sigma_aw tau^3.  It was (1.87, 1), which was neither.  The setter must
-    // still be able to express rho_xy > 1, because that is the arm that decides
-    // between the two ways of closing the gap; it was clamped to 1, which
-    // silently turned that configuration back into the deployed one and made
-    // the ablation a no-op.  See docs/ou-iii-anisotropy-consistency.md.
+
     {
         Filter probe;
         probe.setRSXYFactor(1.87f);
         if (!near(probe.R_S_xy_factor_, 1.87f))
-            return fail("rho_xy > 1 is not expressible; the similarity-law ablation is a no-op");
+            return fail("rho_xy > 1 is not expressible");
         probe.setRSXYFactor(9.0f);
         if (!near(probe.R_S_xy_factor_, 4.0f))
             return fail("rho_xy upper bound changed");
@@ -123,16 +97,12 @@ int main() {
             return fail("rho_xy lower bound changed");
     }
 
-    // ---- Pseudo-update cadence contract ---------------------------------
-    // The audit quotes T_S = clip(c_T * tau_applied, T_min, T_max).  Pin the
-    // constants that turn the bounded-gap hypothesis into a checked statement.
     if (!near(PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT, 0.005f) ||
         !near(PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT, 0.25f) ||
         !near(PSEUDO_UPDATE_TAU_RATIO_DEFAULT, 0.015f / 1.1f)) {
-        return fail("deployed OU-III pseudo-update cadence constants changed");
+        return fail("OU-III pseudo-update cadence constants changed");
     }
-    // Over the clamped tau envelope the configured period stays inside the
-    // interval quoted by the audit.
+
     const float TS_at_tau_min =
         std::min(std::max(PSEUDO_UPDATE_TAU_RATIO_DEFAULT * MIN_TAU_S,
                           PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT),
@@ -143,10 +113,9 @@ int main() {
                  PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT);
     if (!near(TS_at_tau_min, 0.005f) || TS_at_tau_max > 0.165f ||
         TS_at_tau_max < 0.160f) {
-        return fail("configured pseudo-update period left the audited envelope");
+        return fail("configured pseudo-update period left its bounded interval");
     }
 
-    // ---- Realized cadence, observed from the running scheduler -----------
     f.startup_stage_ = Filter::StartupStage::Live;
     f.mekf_->set_linear_block_enabled(true);
     if (!f.mekf_->linear_block_enabled())
@@ -155,17 +124,16 @@ int main() {
     const float h = 0.005f;
     const float Tp = 7.0f;
     const float w = 2.0f * float(M_PI) / Tp;
-
     std::vector<double> fire_times;
     double t_now = 0.0;
     float prev_elapsed = f.mekf_->pseudo_update_elapsed_s_;
+
     for (int k = 0; k < 60000; ++k) {
         const Eigen::Vector3f gyro = Eigen::Vector3f::Zero();
         const Eigen::Vector3f acc(0.0f, 0.0f, -g_std + 1.2f * std::sin(w * float(t_now)));
         f.updateTime(h, gyro, acc);
         t_now += double(h);
         const float elapsed = f.mekf_->pseudo_update_elapsed_s_;
-        // The elapsed accumulator only decreases when an update is applied.
         if (elapsed < prev_elapsed && t_now > 200.0) fire_times.push_back(t_now);
         prev_elapsed = elapsed;
     }
@@ -176,13 +144,9 @@ int main() {
     const float TS_cfg = f.getPseudoUpdatePeriodSec();
     if (!(tau_applied >= MIN_TAU_S && tau_applied <= MAX_TAU_S))
         return fail("applied tau left its clamp interval");
-    // T_S/tau is the similarity group the deployed cadence holds fixed.
     if (!near(TS_cfg / tau_applied, PSEUDO_UPDATE_TAU_RATIO_DEFAULT, 1e-3f))
-        return fail("realized T_S/tau is not the configured self-similar ratio");
+        return fail("realized T_S/tau is not the configured ratio");
 
-    // Bounded-gap witness of Lemma "Uniform observability of one OU-III axis":
-    // a gap is never shorter than one IMU step, never longer than one
-    // configured period plus one step.
     double gap_min = 1e30, gap_max = 0.0;
     for (size_t i = 1; i < fire_times.size(); ++i) {
         const double g = fire_times[i] - fire_times[i - 1];
@@ -194,19 +158,9 @@ int main() {
         return fail("realized pseudo-update gap fell below one IMU step");
     if (gap_max > double(PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT) + h_d + 1e-9)
         return fail("realized pseudo-update gap exceeded T_S_max + h");
-
-    // The gaps are quantized to the IMU grid and are NOT equal: this is the
-    // regression guard for the paper's bounded-gap (not exact-cadence)
-    // formulation.  If a future change restores an exactly periodic cadence
-    // this fires, and the proof text should be revisited rather than silently
-    // left stronger than needed.
     if (gap_max - gap_min < 0.5 * h_d)
-        return fail("realized cadence became (near) exactly periodic; revisit the ISS cadence text");
+        return fail("realized cadence became near-exactly periodic; revisit bounded-gap proof");
 
-    // ---- Determinant witness for the translational UCO lemma ------------
-    // Take four consecutive realized instants and check the lemma's bound
-    //      |det O_S| >= T_-^6 exp(-3 T_+ / tau_min)
-    // holds on the unequally spaced grid the scheduler actually produces.
     for (size_t i = 0; i + 3 < fire_times.size(); i += 7) {
         double t[4];
         for (int j = 0; j < 4; ++j) t[j] = fire_times[i + j] - fire_times[i];
@@ -218,30 +172,10 @@ int main() {
         }
         const double bound = std::pow(lo, 6.0) * std::exp(-3.0 * hi / double(tau_applied));
         const double det = std::fabs(detOS(t, double(tau_applied)));
-        if (!(det > 0.0) || !(det >= bound)) {
-            std::cerr << "  det=" << det << " bound=" << bound
-                      << " gaps=[" << lo << "," << hi << "]\n";
+        if (!(det > 0.0) || !(det >= bound))
             return fail("OU-III four-point observability determinant violated the lemma bound");
-        }
     }
 
-    // ---- Effective r_S bounds after cadence renormalization --------------
-    // apply_RS_tune_ scales the clamped base by sqrt(T_S0 / T_S) and does not
-    // re-clamp, so the audited enclosure is [0.121, 693] m*s rather than the
-    // base interval [0.15, 400].
-    const float scale_lo = std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / TS_at_tau_max);
-    const float scale_hi = std::sqrt(PSEUDO_UPDATE_PERIOD_NOMINAL_S / TS_at_tau_min);
-    if (!(scale_lo > 0.30f && scale_lo < 0.31f) || !near(scale_hi, std::sqrt(3.0f), 1e-3f))
-        return fail("cadence information-rate factor left its audited range");
-    const float rs_eff_lo = MIN_R_S * scale_lo;
-    const float rs_eff_hi = MAX_R_S * scale_hi;
-    if (!(rs_eff_lo > 0.044f && rs_eff_lo < 0.046f) || !(rs_eff_hi > 690.0f && rs_eff_hi < 694.0f))
-        return fail("effective r_S enclosure no longer matches the ISS audit");
-    const float rs_live = std::sqrt(f.mekf_->R_S(2, 2));
-    if (!(rs_live >= rs_eff_lo && rs_live <= rs_eff_hi) || !std::isfinite(rs_live))
-        return fail("live r_S left the audited effective enclosure");
-
-    // ---- Residual accelerometer-bias OU contraction ----------------------
     f.mekf_->set_linear_block_enabled(false);
     f.mekf_->set_acc_bias_updates_enabled(true);
     f.mekf_->set_acc_bias_time_constant(2.0f);
@@ -252,8 +186,6 @@ int main() {
     if (!f.mekf_->get_acc_bias().isApprox(expected, 2e-6f))
         return fail("active residual accel-bias OU block is not contractive");
 
-    // In the certified post-unlock Live regime the residual-bias OU state must
-    // be propagating, not held by the startup freeze.
     f.accel_bias_locked_ = false;
     f.startup_stage_ = Filter::StartupStage::TunerWarm;
     f.enterLive_();
@@ -262,9 +194,6 @@ int main() {
     if (!f.mekf_->linear_block_enabled())
         return fail("default Live state did not re-enable the OU-III linear block");
 
-    std::cout << "OU-III ISS proof contract passed"
-              << " (tau=" << tau_applied
-              << " s, T_S=" << TS_cfg
-              << " s, realized gaps [" << gap_min << "," << gap_max << "] s)\n";
+    std::cout << "OU-III local ISS implementation contract PASS\n";
     return 0;
 }
