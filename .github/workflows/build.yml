@@ -230,7 +230,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: release-svgs-${{ matrix.dir }}
-          path: doc/${{ matrix.dir }}/**/*.svg
+          path: release-svg/${{ matrix.dir }}/**/*.svg
           if-no-files-found: error
 
   ou-tuning:
