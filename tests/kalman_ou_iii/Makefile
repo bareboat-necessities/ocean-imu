@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_iii-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test live_basin_diagnostic rs_law-test startup_init-test
+TARGETS = kalman_ou_iii-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test schmidt_s_pseudo-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test live_basin_diagnostic rs_law-test startup_init-test
 
 all: build test
 
@@ -46,6 +46,9 @@ acc_bias_ou-test: acc_bias_ou-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 channel_freeze-test: channel_freeze-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+schmidt_s_pseudo-test: schmidt_s_pseudo-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 wave_period-test: wave_period-test.o
