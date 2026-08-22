@@ -7,6 +7,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
+SRC = REPO_ROOT / "src" / "kalman_ou_iii"
+COMMON = REPO_ROOT / "src" / "kalman_ou_common"
 
 
 def _read(path: Path) -> str:
@@ -18,9 +20,16 @@ def _flat(text: str) -> str:
 
 
 class OUIIIStabilityWideningContractTests(unittest.TestCase):
-    def test_phase_a_is_wired_into_manuscript(self):
+    def test_all_phases_are_wired_into_manuscript(self):
         main = _read(DOC / "kalman_ou-w3d.tex")
-        self.assertIn(r"\input{w3d-analytical-stability-widening.tex-part}", main)
+        for include in (
+            r"\input{w3d-analytical-stability-widening.tex-part}",
+            r"\input{w3d-stability-widening-phase-c.tex-part}",
+            r"\input{w3d-stability-widening-phase-d.tex-part}",
+            r"\input{w3d-stability-widening-phase-e.tex-part}",
+            r"\input{w3d-stability-widening-phase-f.tex-part}",
+        ):
+            self.assertIn(include, main)
 
     def test_phase_a_has_explicit_vector_information_bound(self):
         proof = _read(DOC / "w3d-analytical-stability-widening.tex-part")
@@ -76,8 +85,82 @@ class OUIIIStabilityWideningContractTests(unittest.TestCase):
     def test_phase_b_keeps_contraction_obligation_finite_and_explicit(self):
         flat = _flat(_read(DOC / "w3d-analytical-stability-widening.tex-part"))
         self.assertIn("finite-window supremum", flat)
+        self.assertIn("does not require an infinite-horizon simulation", flat)
         self.assertIn("without changing the theorem", flat)
-        self.assertNotIn("infinite-horizon simulation to identify p", flat)
+
+    def test_phase_c_has_anisotropic_basin_and_source_reset_geometry(self):
+        proof = _read(DOC / "w3d-stability-widening-phase-c.tex-part")
+        for marker in (
+            r"\label{eq:widen-cylinder-split}",
+            r"\label{eq:widen-injection-gains}",
+            r"\label{eq:widen-S-peak-gain}",
+            r"\label{thm:widen-cylinder-iss}",
+            r"\label{eq:widen-reset-G-bound}",
+            r"\label{eq:widen-SO3-energy}",
+            r"\label{thm:widen-group-correction}",
+        ):
+            self.assertIn(marker, proof)
+        flat = _flat(proof)
+        self.assertIn("not an honest global claim", flat)
+        self.assertIn("no artificial singularity", flat)
+
+        src = _read(SRC / "Kalman3D_Wave_OU_III.h")
+        common = _read(COMMON / "KalmanOUCoreMath.h")
+        self.assertIn("quat_from_delta_theta(dtheta)", src)
+        self.assertIn("Identity() + T(0.5)*skew(dtheta)", common)
+
+    def test_phase_d_reset_discards_prior_attitude_but_not_topology(self):
+        proof = _read(DOC / "w3d-stability-widening-phase-d.tex-part")
+        for marker in (
+            r"\label{lem:widen-global-reset}",
+            r"\label{eq:widen-global-reset-bound}",
+            r"\label{eq:widen-reset-image}",
+            r"\label{thm:widen-source-global-startup}",
+        ):
+            self.assertIn(marker, proof)
+        flat = _flat(proof)
+        self.assertIn("for every pre-reset attitude", flat)
+        self.assertIn("does not assert global asymptotic stability", flat)
+        self.assertIn("no absolute-yaw claim", flat)
+
+        src = _read(SRC / "Kalman3D_Wave_OU_III.h")
+        self.assertIn("qref = quaternion_from_acc(acc_n);", src)
+
+    def test_phase_e_closes_hybrid_and_model_mismatch_routes_analytically(self):
+        proof = _read(DOC / "w3d-stability-widening-phase-e.tex-part")
+        for marker in (
+            r"\label{eq:widen-reset-to-set}",
+            r"\label{eq:widen-cooldown-factor}",
+            r"\label{eq:widen-hybrid-mu}",
+            r"\label{thm:widen-hybrid-small-gain}",
+            r"\label{eq:widen-model-mismatch}",
+            r"\label{eq:widen-deterministic-drift}",
+            r"\label{thm:widen-model-mismatch-iss}",
+            r"\label{eq:widen-tau-mismatch-bound}",
+        ):
+            self.assertIn(marker, proof)
+        flat = _flat(proof)
+        self.assertIn("pre-reset tilt magnitude does not appear", flat)
+        self.assertIn("OU dynamics define the nominal regularizing state transition", flat)
+        self.assertIn(r"\ref{sec:hybrid-live-stability}", proof)
+
+    def test_phase_f_derives_gate_safe_stochastic_drift(self):
+        proof = _read(DOC / "w3d-stability-widening-phase-f.tex-part")
+        for marker in (
+            r"\label{eq:widen-stochastic-remainder}",
+            r"\label{eq:widen-gaussian-moments}",
+            r"\label{eq:widen-stochastic-margin}",
+            r"\label{eq:widen-stochastic-floor}",
+            r"\label{thm:widen-stochastic-drift}",
+            r"\label{eq:widen-stochastic-coefficients}",
+            r"\label{eq:widen-stochastic-exit}",
+        ):
+            self.assertIn(marker, proof)
+        flat = _flat(proof)
+        self.assertIn("does not require a zero conditional mean", flat)
+        self.assertIn("does not assume that NIS gating preserves zero conditional mean", flat)
+        self.assertIn("does not turn a regional MEKF into a global Gaussian system", flat)
+        self.assertIn("union bound followed by Markov", flat)
 
 
 if __name__ == "__main__":
