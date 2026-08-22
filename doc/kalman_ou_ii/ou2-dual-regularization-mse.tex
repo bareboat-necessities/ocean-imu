@@ -34,31 +34,24 @@ Email: mgrouch@users.github.com}}
 
 \begin{abstract}
 A marine inertial multiplicative extended Kalman filter (MEKF) with a latent
-Ornstein--Uhlenbeck (OU) acceleration state uses zero pseudo-measurements on
-both displacement and velocity to suppress low-frequency integration drift.
-The implemented adaptation schedules the corresponding pseudo-measurement
-standard deviations as $r_{p,0}\propto\sigma_{aw}\tau^2$ and
-$r_{v,0}\propto\sigma_{aw}\tau$, followed by a common cadence normalization.
-This note derives a reduced physical mean-square-error (MSE) model for the two
-pseudo channels jointly rather than treating them as independent penalties.
-The associated two-state Kalman--Bucy algebraic Riccati equation admits a
-closed-form solution parameterized by a position regularization frequency and
-a dimensionless velocity-to-position strength ratio.  A weak-regularization
-expansion separates residual-acceleration drift from distortion of the physical
-wave.  For a fixed-shape sea and an approximately sea-independent low-frequency
-posterior acceleration-error intensity, joint MSE minimization predicts the
-base laws
-$r_{p,0}^\star\propto\sigma_a^{4/5}\tau^{12/5}$ and
-$r_{v,0}^\star\propto\sigma_a^{4/5}\tau^{7/5}$.
-The two laws differ from the implemented powers by the same weak common factor,
-and their ratio satisfies
-$(r_{p,0}^\star/r_{v,0}^\star)^2=(3/2)M_{-2}/M_0$.
-Consequently, the theory predicts $r_{p,0}^\star/r_{v,0}^\star\propto\tau$,
-which matches the implemented relative period scaling exactly.  Evaluation on
-the finite-band reference spectra places the theoretical coefficient ratio near
-the implemented value.  The derivation supplies testable adaptation exponents
-without fitting them to the existing schedule, while its reduced displacement
-objective does not capture the full attitude and bias coupling of the MEKF.
+Ornstein--Uhlenbeck (OU) acceleration state uses soft zero pseudo-measurements
+on displacement and velocity to suppress low-frequency integration drift. This
+paper derives the deployed sea-state scaling of those two regularizers from a
+joint physical mean-square-error (MSE) objective. A reduced two-state
+Kalman--Bucy algebraic Riccati equation admits a closed-form solution
+parameterized by a position-regularization frequency and a dimensionless
+velocity-to-position strength ratio. Combining residual-acceleration drift with
+distortion of the physical displacement spectrum gives, in the weak-
+regularization regime,
+$r_p\propto q_{\rm eff}^{1/10}\sigma_a^{4/5}\tau^{12/5}T_S^{-1/2}$ and
+$r_v\propto q_{\rm eff}^{1/10}\sigma_a^{4/5}\tau^{7/5}T_S^{-1/2}$, with
+$r_p/r_v\propto\tau$. The deployed implementation evaluates these laws using
+the measured acceleration scale, OU correlation time, and pseudo-update period,
+with analytical constants obtained from the finite-band reference spectra. The
+analysis explains the two-channel schedule without introducing an alternative
+empirical adaptation law or a law-comparison ablation. Its principal limitation
+is that attitude, bias, and axis-dependent gravity leakage are reduced to the
+effective acceleration-error intensity $q_{\rm eff}$.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -70,114 +63,65 @@ error, heave estimation.
 \section{Introduction}
 
 Low-frequency drift is the central difficulty in displacement estimation from
-inertial acceleration.  The OU--II estimator considered here regularizes this
-integration chain with two nonphysical zero pseudo-measurements: one on
-world-frame displacement $p$ and one on world-frame velocity $v$.  The two
-channels are applied on the same periodic pseudo-update tick.  Their configured
-standard deviations are therefore not independent observation uncertainties;
-they are design parameters that trade drift suppression against distortion of
-real wave motion.
+inertial acceleration. The OU--II estimator considered here regularizes the
+integration chain with two soft zero pseudo-measurements: one on world-frame
+displacement $p$ and one on world-frame velocity $v$. Their configured standard
+deviations are design variables rather than physical sensor uncertainties; they
+trade drift suppression against attenuation of real marine motion.
 
-Marine virtual-reference methods provide a useful precedent for imposing such
-nonphysical constraints on inertial integration.  Bryne, Fossen, and Johansen
-augmented a marine INS observer with integrated vertical position and used a
-zero virtual measurement motivated by the zero long-time mean of vessel heave;
-the subsequent virtual-vertical-reference work developed this into a dedicated
-GNSS/INS aiding concept and validated it with low-cost MEMS inertial sensing on
-surface vessels \cite{Bryne2014,Bryne2015,Bryne2018,Rogne2021}.  Recent heave
-and height estimators continue to combine inertial measurements with explicit
-state-space filtering, including discrete-time Kalman reconstruction,
-fixed-order Kalman filtering with GNSS and virtual measurements, and cubature
-Kalman methods \cite{Reis2023,Overaas2025,Li2025}.  The present OU--II
-construction is not identical to these methods: it applies soft zero
-pseudo-measurements simultaneously to displacement and velocity and treats
-their covariances as regularization parameters to be scheduled with sea state.
+Marine virtual-reference methods provide precedent for imposing nonphysical
+constraints on inertial integration. Bryne, Fossen, and Johansen augmented a
+marine INS observer with integrated vertical position and used a zero virtual
+measurement motivated by the long-time mean of vessel heave; subsequent work
+developed this into a virtual-vertical-reference aiding concept for low-cost
+MEMS inertial sensing on surface vessels \cite{Bryne2014,Bryne2015,Bryne2018,Rogne2021}.
+Recent heave and height estimators likewise combine inertial measurements with
+explicit state-space filtering \cite{Reis2023,Overaas2025,Li2025}.
 
-A parallel development in inertial navigation uses invariant or equivariant
-state errors on matrix Lie groups.  Invariant EKFs provide stable-observer
-properties for group-affine systems, while newer equivariant formulations
-incorporate inertial-sensor biases and position aiding
-\cite{BarrauBonnabel2017,Fornasier2022,VanGoor2023}.  Recent underwater
-INS/DVL studies have applied Lie-group error models together with robust or
-adaptive filtering \cite{Du2024,Qian2025}.  OU--II remains a quaternion MEKF;
-these geometric filters are cited as neighboring modern design families rather
-than as equivalent formulations of the estimator studied here.
+The question addressed here is narrower: how should the two OU--II
+pseudo-measurement strengths scale as the sea changes? Dimensional consistency
+alone cannot determine the powers of acceleration amplitude and sea period. A
+physical design objective must account for both residual stochastic drift and
+the distortion introduced by suppressing actual wave displacement. The
+resulting law is the one deployed by OU--II; no historical non-analytic law is
+used as a comparison arm in this paper.
 
-The applied adaptation was selected empirically and has the base form
-\begin{equation}
- r_{p,0}^{\mathrm{base}}=c_p\sigma_{aw}\tau^2,
- \qquad
- r_{v,0}^{\mathrm{base}}=c_v\sigma_{aw}\tau,
- \label{eq:implemented-base}
-\end{equation}
-with current coefficients $c_p=0.65$ and $c_v=1.30$.  Here $\tau$ is the OU
-correlation time and $\sigma_{aw}$ is the stationary standard deviation of the
-latent OU acceleration prior.  Both pseudo channels use the same
-cadence-normalization factor
-\begin{equation}
- r_{j}=r_{j,0}^{\mathrm{base}}
- \sqrt{\frac{T_0}{T_S}},
- \qquad j\in\{p,v\},
- \label{eq:cadence-normalization}
-\end{equation}
-where the pseudo-update period satisfies $T_S\propto\tau$ away from safety
-clamps.  This normalization preserves the continuous-equivalent information
-density associated with a given base value.
-
-Equation~\eqref{eq:implemented-base} has the correct dimensions and performs
-well empirically, but dimensional consistency alone does not identify the
-powers of $\sigma_{aw}$ and $\tau$.  The purpose of this note is to derive those
-powers from a physical displacement-MSE criterion.  The analysis follows the
-same distinction used in the OU--III regularization study: the internal Kalman
-covariance of a filter that treats a zero pseudo-measurement as if it were a
-physical observation is not itself the physical wave-estimation error.  A
-useful design objective must include both residual stochastic drift and the
-bias introduced by suppressing the real wave signal.
-
-\section{Implemented OU--II Regularization Structure}
+\section{OU--II Translational Regularization}
 \label{sec:implementation}
 
 With gyroscope and accelerometer biases enabled, the complete OU--II MEKF has
 local error coordinates containing attitude, gyroscope bias, velocity,
-displacement, latent OU acceleration, and accelerometer bias.  The present
-analysis isolates the low-frequency translational subproblem
+displacement, latent OU acceleration, and accelerometer bias. For the scaling
+derivation, isolate the low-frequency translational chain
 \begin{equation}
  \dot p=v,\qquad \dot v=n_a,
  \label{eq:double-integrator}
 \end{equation}
-where $n_a$ denotes the residual acceleration error presented to the integration
-chain after acceleration estimation.  At frequencies below its posterior
-correlation rate, approximate $n_a$ as white with two-sided intensity
-$q_{\mathrm{eff}}$, abbreviated below as $q$.
+where $n_a$ is the residual acceleration error presented to the integration
+chain after acceleration estimation. Over the regularization band it is
+approximated as white with two-sided intensity $q_{\rm eff}$, abbreviated $q$.
 
-The position and velocity pseudo-measurements are both zero.  If their discrete
-standard deviations are $r_p$ and $r_v$ and the common update period is $T_S$,
-the corresponding continuous-equivalent measurement-noise densities are
+Let $r_p$ and $r_v$ denote the discrete standard deviations of the zero
+pseudo-measurements, both applied with period $T_S$. Their continuous-equivalent
+measurement-noise densities are
 \begin{equation}
  \rho_p=r_p^2T_S,
  \qquad
  \rho_v=r_v^2T_S.
  \label{eq:continuous-densities}
 \end{equation}
-Under Eq.~\eqref{eq:cadence-normalization},
-\begin{equation}
- \rho_p=(r_{p,0}^{\mathrm{base}})^2T_0,
- \qquad
- \rho_v=(r_{v,0}^{\mathrm{base}})^2T_0,
- \label{eq:base-density-equivalence}
-\end{equation}
-so the theoretical scaling of the continuous densities maps directly to the
-base adaptation laws.
+The deployed scheduler makes $T_S$ proportional to the applied OU correlation
+time away from safety clamps. Consequently, the cadence must remain explicit
+when mapping a continuous design optimum back to the discrete filter.
 
 \section{Exact Dual-Channel Riccati Reduction}
 \label{sec:care}
 
-Consider the continuous model
+Consider
 \begin{equation}
  \dot{\vct x}=\mat A\vct x+\mat B n_a,
  \qquad
  \vct x=\begin{bmatrix}p&v\end{bmatrix}^{\top},
- \label{eq:state-model}
 \end{equation}
 with
 \begin{equation}
@@ -188,31 +132,23 @@ with
  \mat Q=q\mat B\mat B^{\top}.
 \end{equation}
 The two continuous pseudo-observations have $\mat C=\Id$ and
-\begin{equation}
- \mat R_c=\operatorname{diag}(\rho_p,\rho_v).
-\end{equation}
-The stabilizing covariance satisfies the Kalman--Bucy algebraic Riccati
-equation \cite{KalmanBucy1961,Jazwinski1970,SarkkaSvensson2023,Anderson1971}
+$\mat R_c=\operatorname{diag}(\rho_p,\rho_v)$. The stabilizing covariance obeys
+the Kalman--Bucy algebraic Riccati equation
+\cite{KalmanBucy1961,Jazwinski1970,SarkkaSvensson2023,Anderson1971}
 \begin{equation}
  \mat A\mat P+\mat P\mat A^{\top}+\mat Q
  -\mat P\mat R_c^{-1}\mat P=0.
  \label{eq:care}
 \end{equation}
-The Riccati equation itself is standard filtering theory; the contribution
-below is its closed-form specialization and physical-MSE interpretation for
-the jointly regularized OU--II double-integrator chain.
 
-Define the two natural regularization frequencies
+Define
 \begin{equation}
  \omega_p:=\left(\frac{q}{\rho_p}\right)^{1/4},
  \qquad
  \omega_v:=\left(\frac{q}{\rho_v}\right)^{1/2},
- \label{eq:natural-frequencies}
-\end{equation}
-and the dimensionless relative velocity strength
-\begin{equation}
+ \qquad
  \chi:=\left(\frac{\omega_v}{\omega_p}\right)^2.
- \label{eq:chi}
+ \label{eq:natural-frequencies}
 \end{equation}
 
 \begin{theorem}[Dual-channel CARE solution]
@@ -227,28 +163,22 @@ Eq.~\eqref{eq:care} is
  \end{bmatrix}.}
  \label{eq:P-solution}
 \end{equation}
-The corresponding continuous pseudo-measurement gain
-$\mat K=\mat P\mat R_c^{-1}$ is
+The corresponding continuous pseudo-measurement gain is
 \begin{equation}
  \boxed{
  \mat K=
  \begin{bmatrix}
- \dfrac{\omega_p\sqrt{2+\chi}}{1+\chi} &
- \dfrac{\chi}{1+\chi}\\[2.5mm]
+ \dfrac{\omega_p\sqrt{2+\chi}}{1+\chi} & \dfrac{\chi}{1+\chi}\\[2.5mm]
  \dfrac{\omega_p^2}{1+\chi} &
  \dfrac{\omega_p\chi\sqrt{2+\chi}}{1+\chi}
  \end{bmatrix}.}
- \label{eq:K-solution}
 \end{equation}
 \end{theorem}
 
-The result shows explicitly that the two pseudo channels do not generate two
-independent scalar corners.  They alter the same second-order closed loop, and
-$\chi$ determines how much of the regularization is supplied through the
-velocity channel.
-
-If physical acceleration $a$ is injected into the model dynamics, the
-acceleration-to-estimated-displacement transfer of the reduced closed loop is
+The two pseudo channels therefore do not generate independent scalar corners;
+they alter one second-order closed loop. If physical acceleration is injected
+into the reduced dynamics, the acceleration-to-estimated-displacement transfer
+is
 \begin{equation}
  \boxed{
  H_{pa}(s)=
@@ -256,42 +186,26 @@ acceleration-to-estimated-displacement transfer of the reduced closed loop is
  \frac{1}{s^2+\omega_p\sqrt{2+\chi}\,s+\omega_p^2}.}
  \label{eq:Hpa}
 \end{equation}
-Define the reconstruction transfer relative to ideal double integration,
-\begin{equation}
- G(s):=s^2H_{pa}(s).
- \label{eq:G}
-\end{equation}
-Then
-\begin{equation}
- \lim_{\omega\rightarrow\infty}G(j\omega)=\frac{1}{1+\chi}.
- \label{eq:high-frequency-gain}
-\end{equation}
-Thus a finite velocity pseudo strength introduces a broadband attenuation
-component in addition to the low-frequency drift corner.  This distinction is
-consistent with the empirical observation that the position pseudo channel
-primarily controls displacement error, whereas the velocity pseudo channel has
-stronger interaction with attitude and bias estimation in the complete MEKF.
+Relative to ideal double integration define $G(s):=s^2H_{pa}(s)$. A finite
+velocity pseudo strength changes both low-frequency damping and the broadband
+reconstruction gain, which is why the two regularizers must be designed jointly.
 
 \section{Physical Displacement MSE}
 \label{sec:mse}
 
-The physical objective is written as
+Write the physical objective as
 \begin{equation}
  J=J_n+J_w,
- \label{eq:J-split}
 \end{equation}
 where $J_n$ is the displacement variance generated by residual acceleration
-noise and $J_w$ is the error caused by reshaping the real wave signal.
+error and $J_w$ is the distortion of the physical wave.
 
-\subsection{Residual-noise contribution}
-
-The squared $H_2$ norm of Eq.~\eqref{eq:Hpa} gives the exact reduced noise
-variance
+The exact reduced noise term is the squared $H_2$ response of
+Eq.~\eqref{eq:Hpa},
 \begin{equation}
  \boxed{
  J_n=
- \frac{q}
- {2\omega_p^3(1+\chi)^2\sqrt{2+\chi}}.}
+ \frac{q}{2\omega_p^3(1+\chi)^2\sqrt{2+\chi}}.}
  \label{eq:Jnoise-exact}
 \end{equation}
 For weak velocity regularization, $\chi\ll1$,
@@ -301,44 +215,29 @@ For weak velocity regularization, $\chi\ll1$,
  \left(1-\frac94\chi+O(\chi^2)\right).
  \label{eq:Jnoise-expansion}
 \end{equation}
-The negative first-order term explains the purpose of the $v=0$ channel in the
-reduced model: modest velocity regularization reduces low-frequency stochastic
-drift.
-
-\subsection{Wave-distortion contribution}
 
 Let $S_p^{(2)}(\omega)$ be the two-sided physical displacement spectrum and
 define
 \begin{equation}
  M_0:=\frac{1}{2\pi}\int_{-\infty}^{\infty}
  S_p^{(2)}(\omega)\,d\omega,
- \label{eq:M0}
-\end{equation}
-\begin{equation}
+ \qquad
  M_{-2}:=\frac{1}{2\pi}\int_{-\infty}^{\infty}
  \omega^{-2}S_p^{(2)}(\omega)\,d\omega.
- \label{eq:Mminus2}
 \end{equation}
-The physical wave error is
+The wave-distortion term is
 \begin{equation}
  J_w=\frac{1}{2\pi}\int_{-\infty}^{\infty}
  |G(j\omega)-1|^2S_p^{(2)}(\omega)\,d\omega.
  \label{eq:Jwave-exact}
 \end{equation}
 When the regularization corner lies below the principal wave band and
-$\chi\ll1$, expansion of Eq.~\eqref{eq:G} gives
+$\chi\ll1$,
 \begin{equation}
- \boxed{
- J_w\simeq M_0\chi^2+2M_{-2}\omega_p^2.}
+ \boxed{J_w\simeq M_0\chi^2+2M_{-2}\omega_p^2.}
  \label{eq:Jwave-asymptotic}
 \end{equation}
-The two terms have different physical meanings.  The $\omega_p^2$ term is the
-leading displacement distortion caused by the position regularization corner;
-the $\chi^2M_0$ term is the leading broadband attenuation caused by the velocity
-pseudo channel.
-
-Combining Eqs.~\eqref{eq:Jnoise-expansion} and
-\eqref{eq:Jwave-asymptotic} yields the reduced joint objective
+Thus
 \begin{equation}
  \boxed{
  J\simeq
@@ -347,16 +246,14 @@ Combining Eqs.~\eqref{eq:Jnoise-expansion} and
  +2M_{-2}\omega_p^2+M_0\chi^2.}
  \label{eq:J-reduced}
 \end{equation}
+The first contribution rewards stronger regularization by suppressing drift;
+the latter two penalize distortion of the real motion.
 
 \section{Joint MSE-Optimal Scaling}
 \label{sec:optimal-scaling}
 
-To leading order, optimize Eq.~\eqref{eq:J-reduced} first with respect to
-$\omega_p$ and then with respect to $\chi$.
-
 \begin{theorem}[Weak-regularization joint optimum]
-In the regime used to obtain Eq.~\eqref{eq:J-reduced}, the stationary point
-satisfies
+The stationary point of Eq.~\eqref{eq:J-reduced} satisfies, to leading order,
 \begin{equation}
  \boxed{
  (\omega_p^\star)^5
@@ -376,348 +273,176 @@ and
 For a fixed-shape, period-scaled physical acceleration spectrum, write
 \begin{equation}
  S_a^{(2)}(\omega;\sigma_a,\tau)
- =\sigma_a^2\tau\,\Phi_a(\omega\tau),
- \label{eq:Sa-similarity}
+ =\sigma_a^2\tau\,\Phi_a(\omega\tau).
 \end{equation}
-where $\sigma_a$ is a physical acceleration RMS scale.  Since
-$S_p^{(2)}=S_a^{(2)}/\omega^4$, similarity gives
+Since $S_p^{(2)}=S_a^{(2)}/\omega^4$, similarity gives
 \begin{equation}
  M_0\propto\sigma_a^2\tau^4,
  \qquad
  M_{-2}\propto\sigma_a^2\tau^6.
  \label{eq:moment-scaling}
 \end{equation}
-Substitution into Eqs.~\eqref{eq:wp-opt}--\eqref{eq:chi-opt} gives
+Substitution into Eqs.~\eqref{eq:wp-opt}--\eqref{eq:chi-opt} yields
 \begin{equation}
  \omega_p^\star
  \propto q^{1/5}\sigma_a^{-2/5}\tau^{-6/5},
- \label{eq:wp-scaling}
 \end{equation}
 \begin{equation}
  \chi^\star
  \propto q^{2/5}\sigma_a^{-4/5}\tau^{-2/5},
- \label{eq:chi-scaling}
 \end{equation}
-and therefore
+and
 \begin{equation}
- \omega_v^\star=\omega_p^\star\sqrt{\chi^\star}
+ \omega_v^\star
  \propto q^{2/5}\sigma_a^{-4/5}\tau^{-7/5}.
- \label{eq:wv-scaling}
 \end{equation}
-
-Using Eq.~\eqref{eq:natural-frequencies}, the corresponding continuous
-pseudo-measurement densities are
+Using Eq.~\eqref{eq:natural-frequencies},
 \begin{equation}
  \rho_p^\star
  \propto q^{1/5}\sigma_a^{8/5}\tau^{24/5},
- \label{eq:rhop-scaling}
-\end{equation}
-\begin{equation}
+ \qquad
  \rho_v^\star
  \propto q^{1/5}\sigma_a^{8/5}\tau^{14/5}.
- \label{eq:rhov-scaling}
 \end{equation}
-Equation~\eqref{eq:base-density-equivalence} then yields the central base-law
-prediction
+Combining these densities with Eq.~\eqref{eq:continuous-densities} gives the
+discrete filter-input laws
 \begin{equation}
  \boxed{
- r_{p,0}^{\mathrm{base},\star}
- \propto q^{1/10}\sigma_a^{4/5}\tau^{12/5},}
- \label{eq:rp-base-opt}
+ r_p^\star
+ \propto q^{1/10}\sigma_a^{4/5}\tau^{12/5}T_S^{-1/2},}
+ \label{eq:rp-opt}
 \end{equation}
 \begin{equation}
  \boxed{
- r_{v,0}^{\mathrm{base},\star}
- \propto q^{1/10}\sigma_a^{4/5}\tau^{7/5}.}
- \label{eq:rv-base-opt}
+ r_v^\star
+ \propto q^{1/10}\sigma_a^{4/5}\tau^{7/5}T_S^{-1/2}.}
+ \label{eq:rv-opt}
 \end{equation}
-If the strong direct-acceleration-observation regime makes $q$ approximately
-independent of sea amplitude to leading order, the two adaptation laws reduce
-to
-\begin{equation}
- \boxed{
- r_{p,0}^{\mathrm{base},\star}
- \propto\sigma_a^{4/5}\tau^{12/5},
- \qquad
- r_{v,0}^{\mathrm{base},\star}
- \propto\sigma_a^{4/5}\tau^{7/5}.}
- \label{eq:strong-observation-laws}
-\end{equation}
-Neither exponent pair is fitted to the implemented schedule.
-
-\section{Comparison with the Implemented Adaptation}
-\label{sec:comparison}
-
-Table~\ref{tab:powers} compares the reduced physical-MSE powers with the
-implemented OU--II laws.  The per-update rows include the common
-$T_S\propto\tau$ cadence normalization of Eq.~\eqref{eq:cadence-normalization}.
-
-\begin{table}[t]
-\caption{Implemented and reduced-MSE adaptation powers.}
-\label{tab:powers}
-\centering
-\footnotesize
-\begin{tabular}{@{}lll@{}}
-\toprule
-Quantity & Implemented & Reduced physical MSE \\
-\midrule
-$r_{p,0}^{\mathrm{base}}$
- & $\sigma_a\tau^2$
- & $\sigma_a^{4/5}\tau^{12/5}$ \\
-$r_{v,0}^{\mathrm{base}}$
- & $\sigma_a\tau$
- & $\sigma_a^{4/5}\tau^{7/5}$ \\
-$r_p$ per update
- & $\sigma_a\tau^{3/2}$
- & $\sigma_a^{4/5}\tau^{19/10}$ \\
-$r_v$ per update
- & $\sigma_a\tau^{1/2}$
- & $\sigma_a^{4/5}\tau^{9/10}$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The discrepancy is the same in both channels.  After absorbing fixed
-coefficients,
-\begin{equation}
- \boxed{
- \frac{r_{p,\mathrm{MSE}}}{r_{p,\mathrm{impl}}}
- \propto
- \frac{r_{v,\mathrm{MSE}}}{r_{v,\mathrm{impl}}}
- \propto
- q^{1/10}\sigma_a^{-1/5}\tau^{2/5}.}
- \label{eq:common-correction}
-\end{equation}
-For approximately constant $q$,
-\begin{equation}
- \frac{r_{\mathrm{MSE}}}{r_{\mathrm{impl}}}
- \propto\left(\frac{\tau^2}{\sigma_a}\right)^{1/5}.
- \label{eq:fifth-root-correction}
-\end{equation}
-The fifth root makes the shape difference weak over a finite operating range.
-
-The common wave-band tuner has the following OU--II fixed operating points for
-the four JONSWAP calibration records:
-$(\tau,\sigma_{aw})=(1.247,0.333)$,
-$(2.179,0.683)$,
-$(3.590,1.061)$, and $(4.222,1.340)$ in SI units.  Because the mapping from the
-physical acceleration RMS to $\sigma_{aw}$ is a fixed multiplicative factor, it
-cancels in a normalized comparison.  Normalizing
-Eq.~\eqref{eq:fifth-root-correction} at the $H_s=\SI{1.5}{m}$ point gives
-Table~\ref{tab:envelope}.
-
-\begin{table}[t]
-\caption{Reduced-MSE/common implemented shape ratio over the calibrated
-JONSWAP envelope, normalized at $H_s=\SI{1.5}{m}$.}
-\label{tab:envelope}
-\centering
-\footnotesize
-\begin{tabular}{@{}lrr@{}}
-\toprule
-$H_s$ (m) & MSE/implemented & Difference \\
-\midrule
-0.27 & 0.924 & $-7.6\%$ \\
-1.50 & 1.000 & $0.0\%$ \\
-4.00 & 1.118 & $+11.8\%$ \\
-8.50 & 1.139 & $+13.9\%$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Thus the first-principles power laws produce pseudo standard deviations within
-approximately $-8\%$ to $+14\%$ of the implemented shape over the calibrated
-JONSWAP range when both are given the same nominal anchor.  This comparison is
-in configured pseudo-measurement standard deviation; it does not imply the same
-percentage change in displacement RMS.
-
-\section{A Stronger Prediction: the Position-to-Velocity Ratio}
-\label{sec:ratio}
-
-The relative channel scaling is more tightly identified than the common
-amplitude scale because the unknown $q$ cancels.
+Away from the pseudo-cadence clamps, $T_S\propto\tau$, so the effective filter
+input powers are $r_p\propto\sigma_a^{4/5}\tau^{19/10}$ and
+$r_v\propto\sigma_a^{4/5}\tau^{9/10}$ when $q$ is approximately independent of
+sea amplitude to leading order.
 
 \begin{corollary}[Optimal pseudo-channel ratio]
 At the weak-regularization optimum,
 \begin{equation}
  \boxed{
- \left(\frac{r_{p,0}^{\star}}{r_{v,0}^{\star}}\right)^2
+ \left(\frac{r_p^\star}{r_v^\star}\right)^2
  =\frac{3}{2}\frac{M_{-2}}{M_0}.}
  \label{eq:ratio-exact}
 \end{equation}
-\end{corollary}
-
 For a fixed normalized sea shape,
 $M_{-2}/M_0\propto\tau^2$, hence
 \begin{equation}
- \boxed{
- \frac{r_{p,0}^{\star}}{r_{v,0}^{\star}}\propto\tau.}
+ \boxed{\frac{r_p^\star}{r_v^\star}\propto\tau.}
  \label{eq:ratio-tau}
 \end{equation}
-This is exactly the relative period scaling of the implemented pair,
-\begin{equation}
- \frac{r_{p,0}^{\mathrm{impl}}}{r_{v,0}^{\mathrm{impl}}}
- =\frac{c_p}{c_v}\tau
- =0.500\,\tau.
- \label{eq:implemented-ratio}
-\end{equation}
+\end{corollary}
 
-For an ideal infinite-band Pierson--Moskowitz spectrum, the spectral moments can
-be integrated analytically and Eq.~\eqref{eq:ratio-exact} gives
-\begin{equation}
- \frac{r_{p,0}^{\star}}{r_{v,0}^{\star}}
- =\sqrt{\frac{3}{4\pi}}\,\tau
- \simeq0.489\,\tau,
- \label{eq:pm-ratio}
-\end{equation}
-when $\tau=T_z/2$.  For an ideal JONSWAP spectrum with peak-enhancement factor
-$\gamma=3.3$, numerical moment integration gives approximately
-\begin{equation}
- \frac{r_{p,0}^{\star}}{r_{v,0}^{\star}}
- \simeq0.465\,\tau.
- \label{eq:jonswap-ratio}
-\end{equation}
-The actual simulator uses finite $0.02$--$0.8$ Hz spectra.  Evaluating the same
-moment ratio on those underlying first-order spectra over the four reference
-periods gives coefficient ratios approximately $0.43$--$0.49$ across the
-JONSWAP and PM families.  The implemented value $0.500$ is therefore slightly
-looser on the position channel relative to velocity, but it is close to the
-reduced physical-MSE prediction without having been obtained from
-Eq.~\eqref{eq:ratio-exact}.
+The ratio is especially useful because $q$ and the common cadence cancel. It
+sets the relative position/velocity regularization directly from physical
+spectral moments rather than from two independently fitted channel gains.
 
-This agreement is more informative than agreement of either absolute
-coefficient alone.  The ratio follows from the spectral distribution of the
-physical displacement and is independent of the assumed residual-acceleration
-intensity $q$ and of the common cadence normalization.
+\section{Deployed PhysicalMSE Schedule}
+\label{sec:deployed}
 
-\section{Interpretation for OU--II Adaptation}
-\label{sec:interpretation}
-
-The reduced theory suggests that the empirical OU--II law has captured the
-geometry of the two-channel regularizer more accurately than its simple powers
-might imply.  Three observations are notable.
-
-First, the physical-MSE amplitude exponent is $4/5$, already close to the
-implemented linear dependence on $\sigma_{aw}$.  As in the OU--III analysis,
-a modest difference in exponent produces only a weak schedule difference over
-the tested sea-state range.
-
-Second, the theoretical period powers exceed the implemented powers by the
-same $2/5$ in both base channels:
-\begin{equation}
- \frac{12}{5}-2=\frac{7}{5}-1=\frac25.
-\end{equation}
-Consequently, the theory does not ask for a different relative period law
-between the two pseudo channels.  It asks only for a common multiplicative
-shape correction.
-
-Third, the exact relative law
-$r_{p,0}/r_{v,0}\propto\tau$ is already present in the implementation.  The
-current coefficient ratio $0.65/1.30=0.5$ is also near the spectral value
-predicted by the reduced MSE.  This explains why independent empirical sweeps
-identify both coefficients sharply while still finding their best region close
-to the existing pair.
-
-\section{Testable Predictions and Next Study}
-\label{sec:next-study}
-
-The reduced analysis produces a direct experiment rather than another free
-exponent search.  Compare the existing laws
-\begin{equation}
- r_{p,0}\propto\sigma_{aw}\tau^2,
- \qquad
- r_{v,0}\propto\sigma_{aw}\tau
- \label{eq:current-test-law}
-\end{equation}
-against
+The OU--II implementation evaluates Eqs.~\eqref{eq:rp-opt}--\eqref{eq:rv-opt}
+as
 \begin{equation}
  \boxed{
- r_{p,0}\propto\sigma_{aw}^{4/5}\tau^{12/5},
- \qquad
- r_{v,0}\propto\sigma_{aw}^{4/5}\tau^{7/5}.}
- \label{eq:theory-test-law}
+ r_p=
+ C_P q_{\rm eff}^{1/10}\widehat\sigma_{a,B}^{4/5}
+ \tau^{12/5}T_S^{-1/2},}
+ \label{eq:deployed-rp}
 \end{equation}
-Both candidate pairs should use the same nominal calibration record and the
-same one-parameter common gain normalization.  The ratio between the two
-channels should not be re-fitted independently unless the experiment is
-explicitly testing the spectral-ratio prediction.  The primary comparison
-should use paired multi-seed stationary seas, with the controlled transition
-reported separately because the existing tuning studies show a distinct
-stationary--transient tradeoff.
+\begin{equation}
+ \boxed{
+ r_v=
+ C_V q_{\rm eff}^{1/10}\widehat\sigma_{a,B}^{4/5}
+ \tau^{7/5}T_S^{-1/2},}
+ \label{eq:deployed-rv}
+\end{equation}
+with
+\begin{equation}
+ C_P=0.1116,
+ \qquad
+ \frac{C_P}{C_V}=0.4611,
+ \qquad C_V\simeq0.2420.
+ \label{eq:deployed-constants}
+\end{equation}
+The physical band-amplitude estimate $\widehat\sigma_{a,B}$ is recovered from
+the scheduled OU prior amplitude rather than treating the prior coefficient as
+an additional physical exponent. The residual acceleration intensity uses the
+same measured acceleration-noise floor available to the tuner,
+\begin{equation}
+ q_{\rm eff}=2\sigma_{\rm floor}^2h,
+ \qquad
+ \sigma_{\rm floor}=\SI{0.12}{m.s^{-2}},
+ \qquad
+ h=\SI{0.005}{s}.
+ \label{eq:deployed-qeff}
+\end{equation}
+The pseudo-update period is scheduled from the OU time scale and bounded for
+implementation safety. Because $T_S$ appears explicitly in
+Eqs.~\eqref{eq:deployed-rp}--\eqref{eq:deployed-rv}, no additional historical
+cadence renormalization is applied to the PhysicalMSE target.
 
-A second test can remove the empirical channel ratio entirely by using
-Eq.~\eqref{eq:ratio-exact} with the measured or versioned displacement spectrum
-to set $r_{p,0}/r_{v,0}$ and fitting only one overall regularization scale.  If
-that constrained schedule performs comparably to the present two-coefficient
-law, it would reduce the steady-state OU--II regularizer from two fitted gains
-to one global normalization plus measured sea moments.
+The constants are obtained from the finite-band reference spectra through the
+same moment relations used in the derivation. Across those spectra the inferred
+ratio $C_P/C_V$ lies near the ideal fixed-shape values; the deployed value is a
+single analytical reference for the common scheduler rather than a scenario-
+specific fit.
 
-The next analytical layer should then use the complete OU--II MEKF
-linearization.  This is especially important for the velocity pseudo channel:
-repository coefficient sweeps show that $r_{v,0}$ affects roll/pitch more
-strongly than the displacement-only reduction predicts.  A full-state
-physical-$H_2$ calculation should retain attitude/gravity leakage, gyroscope
-and accelerometer bias, latent OU acceleration, and both pseudo channels before
-claiming that Eq.~\eqref{eq:theory-test-law} is the final optimal law.  Modern
-invariant and equivariant INS filters, and recent Lie-group SINS/DVL
-integrations, provide useful comparison points for that full-state analysis
-\cite{BarrauBonnabel2017,Fornasier2022,VanGoor2023,Du2024,Qian2025}.
+\section{Interpretation}
+
+Three structural conclusions follow. First, both pseudo channels depend on the
+same physical acceleration amplitude with exponent $4/5$. Second, their period
+powers differ by exactly one, so the position-to-velocity strength ratio scales
+linearly with the sea time scale. Third, the common pseudo-update cadence enters
+as $T_S^{-1/2}$ because the design is expressed in continuous-equivalent
+measurement density and then mapped back to discrete updates.
+
+These properties separate the roles of the three sea-dependent quantities:
+$\widehat\sigma_{a,B}$ sets the physical wave amplitude scale, $\tau$ sets the
+wave/OU time scale, and $T_S$ sets the rate at which the virtual constraints are
+applied. The resulting schedule is therefore portable across seas without
+reinterpreting the pseudo measurements as physical observations.
 
 \section{Limitations}
 \label{sec:limitations}
 
-The derivation is a low-frequency reduced model.  It assumes that the residual
+The derivation is a low-frequency reduced model. It assumes that the residual
 acceleration error entering the integration chain can be approximated as white
-over the regularization band and that the pseudo-measurement corner is below
-the dominant physical wave band.  The power laws are obtained from the
-$\chi\ll1$ and weak-distortion expansion; the exact transfer in
-Eq.~\eqref{eq:Hpa} remains valid outside that asymptotic step, but the closed
-form MSE optimum does not.
+over the regularization band and that the pseudo-measurement corner lies below
+the dominant physical wave band. The closed-form optimum uses the
+$\chi\ll1$ weak-distortion expansion; the exact transfer
+Eq.~\eqref{eq:Hpa} remains valid outside that approximation, but the power-law
+optimum need not.
 
-The displacement objective omits attitude, magnetic, gyroscope-bias, and
-accelerometer-bias penalties.  In the full MEKF, both pseudo-measurements act
-through covariance cross-couplings, and the velocity channel in particular can
-change attitude estimation.  The use of a scalar $q$ also suppresses the large
-axis dependence caused by gravity leakage.  Finally, the moment comparison to
-JONSWAP and PM uses the underlying first-order finite-band spectra; nonlinear
-Stokes harmonics in the simulated trajectories are not represented in those
-reference moment constants.
-
-These limitations affect the absolute optimum and may shift the exponents, but
-they do not remove the principal structural result that the two pseudo channels
-must be optimized jointly and that their leading relative period dependence is
-set by physical spectral moments.
+The displacement objective omits explicit attitude, magnetic, gyroscope-bias,
+and accelerometer-bias penalties. In the full MEKF, both pseudo measurements act
+through covariance cross-couplings, and the velocity channel can alter attitude
+and bias estimation. A scalar $q_{\rm eff}$ also suppresses the axis dependence
+created by gravity leakage. These effects can shift the quantitative optimum,
+particularly horizontally, without changing the reduced-model derivation of
+the deployed sea-scaling law.
 
 \section{Conclusion}
 
 A joint physical-MSE analysis of the OU--II displacement and velocity zero
-pseudo-measurements gives a closed-form reduced Riccati model and a direct
-adaptation prediction.  In the strong direct-acceleration-observation limit,
-the base pseudo standard deviations scale as
+pseudo-measurements gives a closed-form reduced Riccati model and the deployed
+adaptation schedule. The discrete pseudo standard deviations scale as
 \begin{equation}
  \boxed{
- r_{p,0}^{\star}\propto\sigma_a^{4/5}\tau^{12/5},
+ r_p\propto q_{\rm eff}^{1/10}\sigma_a^{4/5}\tau^{12/5}T_S^{-1/2},
  \qquad
- r_{v,0}^{\star}\propto\sigma_a^{4/5}\tau^{7/5}.}
+ r_v\propto q_{\rm eff}^{1/10}\sigma_a^{4/5}\tau^{7/5}T_S^{-1/2}.}
 \end{equation}
-The implemented $\sigma_a\tau^2$ and $\sigma_a\tau$ laws differ from these by
-the same fifth-root correction and remain within roughly $-8\%$ to $+14\%$ of
-the theoretical shape over the calibrated JONSWAP operating range after a
-common nominal normalization.
-
-More strongly, the reduced optimum predicts
-\begin{equation}
- \boxed{
- \left(r_{p,0}^{\star}/r_{v,0}^{\star}\right)^2
- =(3/2)M_{-2}/M_0,}
-\end{equation}
-which gives $r_{p,0}^{\star}/r_{v,0}^{\star}\propto\tau$.  The implemented
-coefficient ratio produces $0.500\tau$, close to the approximately
-$0.43$--$0.49\tau$ range obtained from the finite-band reference spectra.
-Thus the existing two-channel law lies near a first-principles physical-MSE
-schedule in both exponent space and relative channel strength.  The appropriate
-next step is a paired multi-seed comparison of the analytical and implemented
-power laws followed by a full-state physical-$H_2$ analysis of the residual
-attitude and bias coupling.
+Their ratio is fixed by physical spectral moments and satisfies
+$r_p/r_v\propto\tau$. This construction derives the OU--II regularizer from a
+physical displacement objective and supplies the analytical PhysicalMSE law
+used by the current filter. Historical non-analytic adaptation laws and their
+numerical comparisons are outside the publication scope.
 
 \bibliographystyle{IEEEtran}
 \bibliography{ou2-modern}
