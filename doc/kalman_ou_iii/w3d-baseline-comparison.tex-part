@@ -140,9 +140,9 @@ descriptive.  Table~\ref{tab:ou_transition_segments} shows that Adaptive matches
 the nominal fixed point before the transition and gains as the longer-period sea
 emerges.  It also beats endpoint-calibrated FixedOracle over the whole record
 because that reference is mismatched before the endpoint.  This one-way
-validation protocol is distinct from the coefficient-law ablation's round-trip
-instrument in Sec.~\ref{sec:roundtrip-transition-ablation}, which carries its
-own diagnostic of the same form.
+validation protocol is distinct from the bidirectional current-schedule
+transition diagnostic in Sec.~\ref{sec:roundtrip-transition-ablation}; the two
+protocols use the same diagnostic form but answer different transient questions.
 
 The covariance-maintenance control changes normalized vertical error by at most
 $\OUValidationCovSyncWorstDifference$ percentage points
@@ -165,5 +165,3 @@ the adaptation differences.
     \label{fig:ou_transition}
   \end{figure}
 }{}
-
-\input{w3d-ou-robustness.tex-part}
