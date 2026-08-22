@@ -8,6 +8,10 @@ Mahony observer of Sec.~\ref{sec:vertical-proxy} runs from the first sample
 while the MEKF remains untouched; wave-period and acceleration-variance
 estimators converge in parallel.  Once attitude, magnetic reference, and tuner
 quality are adequate, the proxy solution initializes the MEKF in Live mode.
+The resulting state is not required to lie immediately inside the final local
+ISS tube.  Instead, Sec.~\ref{sec:finite-live-capture} certifies a larger
+post-handoff capture region from which the full Live recursion reaches that tube
+in finite time.
 
 \subsection{Tilt and operating-point bootstrap}
 
@@ -31,8 +35,8 @@ branch---predicted and measured gravity directions with positive inner
 product---and gyro magnitude below \SI{30}{\degree\per\second}; (ii) a
 magnetic gauge when a magnetometer is present; and (iii) tuner readiness.  A
 minimum \SI{8}{s} startup prevents a quiet initial interval from passing
-prematurely.  A \SI{150}{s} timeout bounds
-startup duration without interrupting active magnetic-reference acquisition.
+prematurely.  A \SI{150}{s} timeout bounds startup duration without
+interrupting active magnetic-reference acquisition.
 
 At handoff, the proxy attitude seeds the MEKF once.  With magnetic north
 established, attitude covariance uses
@@ -41,30 +45,42 @@ established, attitude covariance uses
 \sigma_{\mathrm{yaw}}=\SI{0.087}{rad};
 \]
 without a magnetic gauge, $\sigma_{\mathrm{yaw}}=\pi/2$.  The linear
-$[v,p,S,a_w]$ block, nominal accelerometer covariance, current OU parameters,
-and integral regularizer are enabled together.  Accelerometer-bias learning is
-held until the magnetic refinement below because bias and small tilt error are
-weakly separable in waves and the residual bias correlation time is long.
+$[v,p,S,a_w]$ block, current OU parameters, and integral regularizer are enabled
+together.  Accelerometer-bias learning remains gated until the magnetic
+refinement logic releases it because bias and small tilt error are weakly
+separable in waves and the residual bias correlation time is long.
 
-The handoff is the basin-entry map analyzed in
+The handoff is the entry map analyzed in
 Sec.~\ref{sec:semiglobal-handoff}.  The gravity residual is a sine of the
 alignment angle, so it does not by itself distinguish the aligned and antipodal
 branches; the gate therefore also tests the sign of the inner product of the
-same two directions, and an accepted handoff satisfies the aligned-branch
-condition Eq.~\eqref{eq:semiglobal-aligned-branch} of the semiglobal theorem.
-The \SI{150}{s} timeout is held to that same test, so a forced handoff is
-delayed rather than accepted on the antipodal branch; it does not test the
-residual magnitude, so it certifies the branch and not the tilt bound.  The
-Phase-1 basin refinement separates the dimensionless nonlinear-sensitive block
-$[\delta\theta,\delta b_g,\delta S,\delta a_w,\delta b_a]$ from the kinematic
-$[\delta v,\delta p]$ block.  When the accepted proxy/magnetic bounds, the two
-handoff-block bounds, and the declared bounded Live disturbance satisfy
-Eq.~\eqref{eq:semiglobal-basin-entry}, the handoff enters the invariant
-sensitive tube of the block-local ISS theorem,
-Theorem~\ref{thm:iss-block-local}, and
-Theorem~\ref{thm:semiglobal-proxy-live} applies.  A timeout-forced handoff that
-does not independently satisfy Eq.~\eqref{eq:semiglobal-basin-entry} remains
-outside the semiglobal result.
+same two directions, and an accepted handoff satisfies
+Eq.~\eqref{eq:semiglobal-aligned-branch}.  The \SI{150}{s} timeout is held to
+that same sign test, so a forced handoff is delayed rather than accepted on the
+antipodal branch.
+
+The stability interface is deliberately wider than the final local basin.  The
+accepted proxy/magnetic attitude bound and independent finite physical bounds
+on the remaining MEKF errors define the structured handoff set $\mathcal H$ of
+Sec.~\ref{sec:semiglobal-handoff}.  The normal startup claim requires only
+\begin{equation}
+ R_H^{\max}<R_C,
+\end{equation}
+that is, the actual post-\texttt{goLive()} Riccati radius lies inside the outer
+capture region.  It is not required to satisfy the block-local invariant-tube
+condition on the first Live measurement.  Theorem~\ref{thm:finite-live-capture}
+then permits bounded prefix amplification---including the observed oscillatory
+post-handoff settling---and proves finite entry into the inner radius $R_B$,
+which is contained in the entrance set of Theorem~\ref{thm:iss-block-local}.
+The operational certificate additionally requires the predeclared separation
+$R_C/R_B\ge5$ so that the startup region is materially wider than the local ISS
+entry region rather than a nominally enlarged copy of it.
+
+A timeout-forced handoff does not test the 0.075 residual magnitude and therefore
+does not inherit the normal tilt bound.  It belongs to the composite stability
+result only when an independent timeout-state envelope yields
+$R_{H,T}^{\max}<R_C$; the branch test alone is not interpreted as a capture
+certificate.
 
 \subsection{Two-stage magnetic reference}
 \label{sec:mag-two-stage}
@@ -83,17 +99,18 @@ from the already-live MEKF.
 
 Acceptance of the refined reference replaces the world magnetic reference,
 re-gauges yaw once, and releases accelerometer-bias learning.  This event occurs
-before the \SI{900}{s} scoring window but remains a discrete reconfiguration
-outside the uninterrupted Live interval.  It is covered by the semiglobal
-argument only when its post-map state is independently verified to re-enter
-Eq.~\eqref{eq:semiglobal-basin-entry}; otherwise it defines a new Live-interval
-boundary.  The reported timing is an evaluated engineering tradeoff rather
-than a universal startup schedule.
+before the \SI{900}{s} scoring window but remains a discrete reconfiguration.
+It is covered by the same stability architecture whenever the post-map state is
+independently verified to re-enter $\mathcal C_{\rm cap}$; the finite-capture
+theorem may then be restarted.  Direct re-entry into the smaller invariant ISS
+tube is not required.  The reported timing is an evaluated engineering tradeoff
+rather than a universal startup schedule.
 
 \subsection{Live re-lock boundary}
 
 A sustained tilt inconsistency above $70^\circ$ for \SI{0.35}{s} can trigger a
 tilt-only re-lock that preserves yaw; a \SI{3}{s} cooldown limits repeated
-resets.  This safety reconfiguration is testable in implementation but, like
-magnetic re-gauging, is a separate hard map.  The stability result resumes after
-it only if the reset state satisfies the same Live-basin-entry condition.
+resets.  This safety reconfiguration is a separate hard map.  The stability
+argument resumes after it when the reset state is independently verified to lie
+inside $\mathcal C_{\rm cap}$, after which Theorem~\ref{thm:finite-live-capture}
+again supplies finite entry to the inner ISS region.
