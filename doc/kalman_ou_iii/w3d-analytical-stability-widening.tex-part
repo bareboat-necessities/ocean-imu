@@ -16,9 +16,9 @@ The finite-window conditions in Eqs.~\eqref{eq:iss-eta-pe} and
 \eqref{eq:iss-eta6-pe} remain the most general route because they allow arbitrary
 maneuvers and asynchronous accepted measurements.  For the marine-motion
 regime, however, a more explicit sufficient condition can be obtained from two
-well-separated gravity--magnetic vector packets.  The construction below is
-conservative by design: it trades general PE for quantities that can be bounded
-from sensor geometry and source timing.
+well-separated specific-force--magnetic vector packets.  The construction below
+is conservative by design: it trades general PE for quantities that can be
+bounded from sensor geometry and source timing.
 
 For a nonzero body vector $\vct u$, let
 $\mat J(\vct u):=[\vct u]_\times^\top[\vct u]_\times$.
@@ -70,11 +70,12 @@ $|\vct u^\top\vct v|\le\sqrt{1-s_{fm}^2}$, which proves the claim.
 
 To expose gyro bias, consider two such packets separated by
 $\Delta_g\in[\Delta_{g,-},\Delta_{g,+}]$.  In transported local coordinates the
-homogeneous attitude/gyro-bias error over the separation has the form
+homogeneous attitude/gyro-bias error over the separation has the source-consistent
+left-multiplicative form
 \begin{equation}
  \delta\vct\theta_1
  =\mat\Phi_\theta\delta\vct\theta_0
-  -\mat\Gamma_g\delta\vct b_g,
+  +\mat\Gamma_g\delta\vct b_g,
  \qquad
  \mat\Gamma_g:=\int_0^{\Delta_g}\mat\Phi_\theta(\Delta_g,s)\,ds,
  \label{eq:widen-bg-transition}
@@ -119,13 +120,13 @@ $\sqrt{\mu_\theta}$ times the triangular observation map
  \mat T_g=
  \begin{bmatrix}
   \mat I&0\\
-  \mat\Phi_\theta&-\mat\Gamma_g
+  \mat\Phi_\theta&\mat\Gamma_g
  \end{bmatrix}.
 \end{equation}
 Given packet outputs $(\vct y_0,\vct y_1)$,
 $\delta\vct\theta_0=\vct y_0$ and
 $\delta\vct b_g=\mat\Gamma_g^{-1}
-(\mat\Phi_\theta\vct y_0-\vct y_1)$.  Orthogonality of
+(\vct y_1-\mat\Phi_\theta\vct y_0)$.  Orthogonality of
 $\mat\Phi_\theta$, Eq.~\eqref{eq:widen-gamma-lower}, and
 $(a+b)^2\le2(a^2+b^2)$ give
 $\|\mat T_g^{-1}\|^2\le1+2/g_-^2$.
