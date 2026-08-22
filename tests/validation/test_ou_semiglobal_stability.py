@@ -1,5 +1,6 @@
 """Publication contract for the widened OU--III analytical stability chain."""
 
+import re
 import unittest
 from pathlib import Path
 
@@ -10,6 +11,10 @@ DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
 
 def _read(name: str) -> str:
     return (DOC / name).read_text(encoding="utf-8")
+
+
+def _flat(text: str) -> str:
+    return re.sub(r"\s+", " ", text)
 
 
 class OUIIIWidenedStabilityContractTests(unittest.TestCase):
@@ -94,16 +99,18 @@ class OUIIIWidenedStabilityContractTests(unittest.TestCase):
 
     def test_stochastic_claim_remains_conditional(self):
         capture = _read("w3d-finite-live-capture.tex-part")
+        flat = _flat(capture)
         self.assertIn(r"\label{thm:capture-stochastic-live}", capture)
         self.assertIn(r"\label{eq:capture-stochastic-drift}", capture)
-        self.assertIn("stochastic certificate condition", capture)
-        self.assertIn("is not inferred", capture)
+        self.assertIn("stochastic certificate condition", flat)
+        self.assertIn("is not inferred", flat)
 
     def test_hybrid_and_quotient_results_are_in_conclusion(self):
         conclusion = _read("w3d-conclusion-summary.tex-part")
+        flat = _flat(conclusion)
         self.assertIn(r"\ref{thm:hybrid-live-recovery}", conclusion)
-        self.assertIn("yaw quotient", conclusion)
-        self.assertIn("source-shaped handoff reachability", conclusion)
+        self.assertIn("yaw quotient", flat)
+        self.assertIn("source-shaped handoff reachability", flat)
 
 
 if __name__ == "__main__":
