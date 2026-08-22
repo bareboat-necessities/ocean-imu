@@ -2,12 +2,15 @@
 \label{sec:hybrid-live-stability}
 
 The normal-Live results above deliberately exclude hard attitude rewrites from
-one finite-step lift.  The deployed wrapper nevertheless contains two such
-reconfiguration events: the one-time second-stage magnetic refinement and the
-Live tilt re-lock.  This section treats those events as jump maps and composes
-them with Theorem~\ref{thm:finite-live-capture}.  The purpose is not to pretend
-that a hard reset is an ordinary Kalman sample, but to state exactly what must
-hold on each side of the jump for the regional argument to continue.
+one finite-step lift.  The deployed wrapper contains two classes of such events:
+magnetic-gauge changes and the Live tilt re-lock.  A magnetic-gauge change can
+be either the first magnetic lock if its provisional acquisition finishes only
+after an ungauged timeout has already put the MEKF in Live mode, or the later
+one-time second-stage refinement.  This section treats both source paths as one
+bounded magnetic jump family and composes them, together with tilt re-lock, with
+Theorem~\ref{thm:finite-live-capture}.  The purpose is not to pretend that a hard
+reset is an ordinary Kalman sample, but to state exactly what must hold on each
+side of each jump for the regional argument to continue.
 
 Let the hybrid estimator state be $(\vct e,\pi)$, where $\vct e$ is the local
 MEKF error and $\pi$ contains the covariance, state-enable flags, magnetic
@@ -20,43 +23,66 @@ applies
  \qquad j\in\{M,T\},
  \label{eq:hybrid-jump-map}
 \end{equation}
-where $M$ denotes magnetic refinement, $T$ denotes tilt re-lock, and $\mu_j$
-collects the bounded measurements/reference quantities admitted by that jump.
-No normal-Live contraction claim is used across Eq.~\eqref{eq:hybrid-jump-map}.
+where $M$ denotes either admissible Live magnetic-gauge source branch, $T$
+denotes tilt re-lock, and $\mu_j$ collects the bounded measurements/reference
+quantities admitted by that jump.  No normal-Live contraction claim is used
+across Eq.~\eqref{eq:hybrid-jump-map}.
 
-\subsection{One-time magnetic-reference refinement}
+\subsection{Live magnetic-gauge acquisition and refinement}
 \label{sec:hybrid-mag-jump}
 
-The source path \texttt{maybeRefineMagReference\_()} replaces the world magnetic
-reference, optionally rewrites nominal yaw to the independently acquired
-absolute yaw, leaves roll/pitch and every additive navigation state numerically
-unchanged, and releases the external accelerometer-bias hold.  When a finite
-refinement yaw $\psi_M$ is available,
+There are two source-realizable members of the magnetic family.  Let
+$\rho_M\in\{0,1\}$ identify them.
+
+\paragraph{First Live gauge acquisition ($\rho_M=0$).}
+The provisional acquisition is normally completed before handoff.  However,
+\texttt{ready\_by\_timeout} does not require \texttt{north\_ready}; therefore an
+ungauged timeout can place the MEKF in Live while the same acquisition is still
+running.  When that acquisition later succeeds inside the outer
+\texttt{updateMag()} path, the source calls \texttt{setMagWorldRef\_()}, computes
+its independently acquired yaw gauge, and on the Live branch rewrites only the
+nominal yaw through \texttt{boatQuatWithAbsoluteYaw\_()}.  It also stores the
+startup hard-iron result, sets \texttt{mag\_ref\_set\_}, records the north-lock
+time, and re-evaluates the linear-block gate.  It does not release the external
+accelerometer-bias hold; that remains reserved for the refined reference when
+refinement is enabled.
+
+\paragraph{Second-stage refinement ($\rho_M=1$).}
+The source path \texttt{maybeRefineMagReference\_()} again replaces the world
+magnetic reference, optionally rewrites nominal yaw to the independently
+acquired absolute yaw, leaves roll/pitch and every additive navigation state
+numerically unchanged, marks the refinement complete, and releases the external
+accelerometer-bias hold.
+
+For either member, when a finite acquired yaw $\psi_M$ is available the
+attitude operation is
 \begin{equation}
  q^+_{bw}=R_z(\psi_M)\,\mathcal Q_{\rm tilt}(q^-_{bw}),
  \label{eq:hybrid-mag-attitude-map}
 \end{equation}
 where $\mathcal Q_{\rm tilt}$ is the exact yaw-removal helper used by the source;
-otherwise $q^+_{bw}=q^-_{bw}$.  Hence the map does not replace tilt.  At the
+otherwise $q^+_{bw}=q^-_{bw}$.  Hence neither member replaces tilt.  At the
 source-variable level,
 \begin{equation}
  (b_g,v,p,S,a_w,b_a)^+=(b_g,v,p,S,a_w,b_a)^-.
  \label{eq:hybrid-mag-additive-map}
 \end{equation}
 The call to \texttt{set\_quaternion\_boat()} does not overwrite covariance.
-Releasing the bias hold can, if the normal bias gate has already unlocked,
-re-enable accelerometer-bias updates and raise $P_{b_ab_a}$ to its configured
-initialization floor.  Denote that bounded covariance/flag operation by
+The remaining source differences---first-lock flags and startup hard-iron for
+$\rho_M=0$, versus refinement flags and possible bias-enable covariance floor
+for $\rho_M=1$---are collected in the bounded mode operation
 \begin{equation}
- \pi^+=\mathcal P_M(\pi^-,B_M,\psi_M).
+ \pi^+=\mathcal P_M(\pi^-,B_M,\psi_M,\rho_M).
  \label{eq:hybrid-mag-mode-map}
 \end{equation}
-Thus the event is not a generic covariance reset.
+Thus neither member is a generic covariance reset.
 
 The horizontal-gauge objective of Sec.~\ref{sec:iss-heading-gauge} is essential
-here.  Let $b_{\psi,\mathrm{ref}}^-$ and
+for both.  Let $b_{\psi,\mathrm{ref}}^-$ and
 $b_{\psi,\mathrm{ref}}^+$ denote the old and new residual heading-reference
-offsets and define
+offsets.  For the first acquisition after an ungauged timeout, the ``old'' gauge
+is simply the arbitrary representative of the yaw quotient chosen at handoff.
+Define
 \begin{equation}
  \Delta\psi_M
  :=b_{\psi,\mathrm{ref}}^+-b_{\psi,\mathrm{ref}}^-,
@@ -64,7 +90,7 @@ offsets and define
  \mat Q_M:=R_z(\Delta\psi_M).
  \label{eq:hybrid-mag-gauge-change}
 \end{equation}
-The refinement changes the adopted \emph{horizontal frame}, not merely the
+The magnetic event changes the adopted \emph{horizontal frame}, not merely the
 attitude reference.  Therefore the gauge-referenced physical world vectors of
 Eq.~\eqref{eq:iss-gauge-world-vectors} satisfy
 \begin{equation}
@@ -83,7 +109,7 @@ for $e_x:=\widehat x-x_g$,
 This is a coordinate-reference jump, not physical translational instability,
 but it must be included in a gauge-referenced regional certificate.
 
-Assume the admitted one-time refinement family satisfies
+Assume every admitted magnetic-family member satisfies
 \begin{equation}
  |\Delta\psi_M|\le\overline\Delta_M<\pi,
  \qquad
@@ -99,8 +125,8 @@ and the physical world-vector bounds
  \label{eq:hybrid-mag-world-bounds}
 \end{equation}
 The first heading bound limits the frame change; the second bounds estimator
-heading relative to the new gauge.  Non-yaw magnetic-model error remains in the
-normal bounded model-disturbance family.
+heading relative to the newly adopted gauge.  Non-yaw magnetic-model error
+remains in the normal bounded model-disturbance family.
 
 Since
 $\|\mat I-R_z(\alpha)\|_2=2|\sin(\alpha/2)|$,
@@ -116,23 +142,26 @@ where $(\overline X_M,x)$ is one of
 $(\overline V_M,v)$, $(\overline P_M,p)$,
 $(\overline S_M,S)$, or $(\overline A_M,a_w)$.
 
-For any structured pre-jump radius $\vct a$, define the exact magnetic-jump
-envelope
+For any structured pre-jump radius $\vct a$, define the exact union-envelope of
+the two Live magnetic source paths by
 \begin{equation}
  \boxed{
  [\mathcal J_M(\vct a)]_i
  :=\sup\left\{
- r_i\!\left(\mathcal R_M(\vct e,\pi;\mu_M)\right):
- \vct e\in\mathcal C(\vct a),\ \pi\in\Pi_M,\ \mu_M\in\mathcal M_M
+ r_i\!\left(\mathcal R_M(\vct e,\pi;\mu_M,\rho_M)\right):
+ \begin{array}{l}
+ \vct e\in\mathcal C(\vct a),\ \pi\in\Pi_M,\\
+ \mu_M\in\mathcal M_M,\ \rho_M\in\{0,1\}
+ \end{array}
  \right\},}
  \quad i\in\{\xi,\ell\},
  \label{eq:hybrid-mag-envelope}
 \end{equation}
 where $\mathcal M_M$ contains the accepted reference/yaw and physical-state
-family satisfying Eqs.~\eqref{eq:hybrid-mag-heading-residual}--
-\eqref{eq:hybrid-mag-world-bounds}.  The complete source/reference map is
-continuous on this compact family, so $\mathcal J_M$ is finite and monotone in
-$\vct a$.
+families satisfying Eqs.~\eqref{eq:hybrid-mag-heading-residual}--
+\eqref{eq:hybrid-mag-world-bounds}.  The complete source/reference maps are
+continuous on these compact families, so $\mathcal J_M$ is finite and monotone
+in $\vct a$.
 
 For the fixed dimensionless block norm of
 Eqs.~\eqref{eq:iss-block-xi}--\eqref{eq:iss-block-ell}, conservative witnesses
@@ -157,12 +186,14 @@ These bounds deliberately do not credit cancellation or removal of the old
 heading residual, so the exact envelope Eq.~\eqref{eq:hybrid-mag-envelope} is
 the preferred certificate object.
 
-The refinement is one-shot by source construction:
-\texttt{mag\_refine\_done\_} blocks every subsequent call after the first
-successful replacement.  Continuous hard-iron correction after that event is
-different.  It writes no attitude state or covariance; it slews the applied
-body-frame offset and magnetic model and therefore belongs to the bounded
-normal-Live mode family $\pi_k$, not to $\mathcal R_M$.
+Both hard magnetic branches are finite by source construction.  The first-gauge
+branch can succeed only while \texttt{mag\_ref\_set\_} is false and therefore
+occurs at most once.  The second-stage branch is blocked after
+\texttt{mag\_refine\_done\_} is set and also occurs at most once.  Continuous
+hard-iron correction after refinement is different: it writes no attitude state
+or covariance, slews the applied body-frame offset and magnetic model, and
+therefore belongs to the bounded normal-Live mode family $\pi_k$, not to
+$\mathcal R_M$.
 
 \subsection{Live tilt re-lock}
 \label{sec:hybrid-tilt-jump}
@@ -294,11 +325,11 @@ capture region:
  \mathcal J_T(\mathcal G_T)\preceq\vct R_C.}
  \label{eq:hybrid-jump-entry}
 \end{equation}
-For the magnetic event the first condition may be checked on a smaller known
-pre-refinement family when available; $\vct R_D$ is simply the strongest
-uniform statement.  Each jump mode must also leave its post-jump covariance and
-measurement parameters inside the compact mode family used by subsequent
-comparison envelopes.
+For a magnetic event the first condition may be checked on the smaller known
+pre-event family when available; $\vct R_D$ is simply the strongest uniform
+statement.  Each jump member must also leave its post-jump covariance,
+state-enable flags, and measurement parameters inside the compact mode family
+used by subsequent comparison envelopes.
 
 \begin{theorem}[Hybrid regional safety and repeated recovery]
 \label{thm:hybrid-live-recovery}
@@ -309,8 +340,8 @@ Assume every normal-Live interval between jumps follows an admissible mode
 sequence of $\Pi_{k,m}$.  Then:
 \begin{enumerate}[label=(\roman*),leftmargin=1.6em]
  \item every hybrid trajectory beginning in $\mathcal C(\vct R_C)$ remains in
-       $\mathcal C(\vct R_D)$ through any finite sequence of admissible magnetic
-       refinement and tilt re-lock events;
+       $\mathcal C(\vct R_D)$ through any finite sequence of admissible
+       magnetic-gauge acquisition/refinement and tilt re-lock events;
  \item if the hard-jump sequence is finite, then after its final jump the
        trajectory enters $\mathcal B$ in finite time and thereafter satisfies
        the practical-ISS estimate of Eq.~\eqref{eq:capture-practical-iss};
@@ -326,21 +357,23 @@ sequence of $\Pi_{k,m}$.  Then:
 \end{theorem}
 
 \begin{proof}
-Immediately after either admissible hard event,
+Immediately after either admissible hard-event class,
 Eq.~\eqref{eq:hybrid-jump-entry} places the gauge-referenced error in
 $\mathcal C(\vct R_C)$.  From there the prefix-domain condition
 Eq.~\eqref{eq:capture-prefix-domain} keeps every ordinary Live sample inside
 $\mathcal C(\vct R_D)$ until capture.  If another hard event occurs first, its
 pre-jump state remains in the declared safe domain and its jump condition
 returns it to $\mathcal C(\vct R_C)$.  Induction over the jump count proves
-(i).  If jumps stop, Theorem~\ref{thm:finite-live-capture} applies from the last
-post-jump outer-set entry and proves (ii).  The source cooldown gives a positive
-lower bound on successive tilt-reset times, hence no Zeno sequence.  Whenever
-an inter-jump interval contains the full certified capture sequence, the same
-finite-step theorem reaches $\mathcal B$ before the following jump, proving
-(iii).  Without such intervals, repeated hard resets can keep injecting bounded
-error indefinitely, so asymptotic convergence cannot be inferred from the
-normal-Live contraction alone.
+(i).  The two source magnetic jumps are each one-time events, so only tilt
+re-lock can contribute an infinite hard-jump subsequence.  If jumps stop,
+Theorem~\ref{thm:finite-live-capture} applies from the last post-jump outer-set
+entry and proves (ii).  The source cooldown gives a positive lower bound on
+successive tilt-reset times, hence no Zeno sequence.  Whenever an inter-jump
+interval contains the full certified capture sequence, the same finite-step
+theorem reaches $\mathcal B$ before the following jump, proving (iii).  Without
+such intervals, repeated hard resets can keep injecting bounded error
+indefinitely, so asymptotic convergence cannot be inferred from the normal-Live
+contraction alone.
 \end{proof}
 
 For a certified outer capture time $T_C$, the simple source-level sufficient
