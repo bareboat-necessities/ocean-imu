@@ -210,6 +210,7 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         flat = _flat(capture)
         self.assertIn("Gaussian process and measurement noise are treated separately", flat)
         self.assertIn("mean-square practical", flat)
+        self.assertIn("does not assert almost-sure invariance", flat)
         self.assertIn(r"\ref{thm:capture-stochastic-live}", proof)
 
     def test_handoff_and_timeout_keep_aligned_branch_gate(self):
