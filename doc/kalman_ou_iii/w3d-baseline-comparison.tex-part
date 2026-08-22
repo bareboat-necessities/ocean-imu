@@ -75,11 +75,11 @@ baseline is included.
 }{}
 
 \subsubsection{Ten-seed OU-family and adaptation study}
+% Never fall back to the complete archived validation fragment here: that
+% archive intentionally retains the retired one-way transition protocol.
 \IfFileExists{w3d-ou-validation-results-publication.tex-part}{%
   \input{w3d-ou-validation-results-publication.tex-part}%
-}{%
-  \input{w3d-ou-validation-results-generated.tex-part}%
-}
+}{}
 
 \IfFileExists{ou_validation_vertical.svg}{%
   \begin{figure}[t]
