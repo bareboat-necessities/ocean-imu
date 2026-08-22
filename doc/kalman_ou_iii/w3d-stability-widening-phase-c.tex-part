@@ -1,0 +1,208 @@
+\subsection{Phase C: anisotropic nonlinear basin and exact group geometry}
+\label{sec:stability-widening-phase-c}
+
+The nonlinear remainder in Sec.~\ref{sec:iss-block-basin} is already structured:
+velocity, position, integral displacement, latent acceleration, and
+accelerometer bias do not each generate their own quadratic self-term.  The
+remaining conservatism comes from collapsing physically different coordinates
+into one small Euclidean tube.  This phase retains the exact homogeneous LTV
+couplings while assigning separate radii only to the quantities that enter the
+nonlinear geometry.
+
+Let the dimensionless active error be partitioned as
+\begin{equation}
+ \vct z=(\vct z_g,\vct z_\ell),
+ \qquad
+ \vct z_g=(\delta\vct\theta,\delta\vct b_g,
+            \delta\vct a_w,\delta\vct b_a),
+ \qquad
+ \vct z_\ell=(\delta\vct v,\delta\vct p,\delta\vct S),
+ \label{eq:widen-cylinder-split}
+\end{equation}
+with the held-bias coordinate omitted from $\vct z_g$ when it is frozen.  The
+split is not a dynamical decoupling: all first-order cross-covariance and
+Kalman-gain effects remain in $\widetilde A_k^{\rm cl}$.  It is used only to
+bound the genuinely nonlinear remainder.
+
+Define the attitude-injection gains
+\begin{align}
+ k_{\theta g}&:=\sup_k
+ \left\|\mat E_\theta
+ [\mat K_{a,k}\ \mat K_{m,k}]\right\|,\\
+ k_{\theta S}&:=\sup_k\|\mat E_\theta\mat K_{S,k}\|,
+ \label{eq:widen-injection-gains}
+\end{align}
+and let $G_{S\ell}$ be a uniform peak gain from the linear translational
+coordinates to the $S$ residual under the homogeneous envelope dynamics,
+\begin{equation}
+ G_{S\ell}:=
+ \sup_{k\ge j,\pi\in\Pi^{\rm env}}
+ \|\mat E_S\widetilde\Psi(k,j;\pi)\mat E_\ell^\top\|<\infty.
+ \label{eq:widen-S-peak-gain}
+\end{equation}
+Finiteness follows from Lemma~\ref{lem:widen-constructive-ues}.  On an
+anisotropic cylinder
+\begin{equation}
+ \mathcal C(r_g,r_\ell):=
+ \{\|\vct z_g\|\le r_g,\ \|\vct z_\ell\|\le r_\ell\},
+ \label{eq:widen-cylinder}
+\end{equation}
+the $S$-generated correction contribution is therefore bounded by
+$k_{\theta S}G_{S\ell}r_\ell$ after transport from an admitted initial linear
+error.
+
+Let $c_g,c_{ga},c_b$ collect the fixed scaled coefficients multiplying the
+attitude square, attitude--latent-acceleration product, gyro-bias square, and
+other geometry-only terms in Eq.~\eqref{eq:iss-nonlinear-load}.  Let
+$k_g r_g$ bound the accelerometer/magnetometer contribution to the attitude
+correction.  A sufficient cylinder load is
+\begin{equation}
+ L_{\mathcal C}(r_g,r_\ell):=
+ c_g r_g+c_{ga}r_g+c_b r_g
+ +c_5\frac{\left(k_g r_g+k_{\theta S}G_{S\ell}r_\ell\right)^2}
+ {\max\{r_g,r_\ell\}}.
+ \label{eq:widen-cylinder-load}
+\end{equation}
+The constants are deliberately grouped: a certificate may retain the sharper
+componentwise expression of Eq.~\eqref{eq:iss-nonlinear-load}; the formula above
+is only a closed sufficient bound.
+
+\begin{theorem}[Anisotropic regional practical ISS]
+\label{thm:widen-cylinder-iss}
+Assume Phases A and B and choose $r_g,r_\ell>0$ such that the complete cylinder
+and its admitted one-step prefixes remain inside the accepted measurement
+geometry.  If
+\begin{equation}
+ \boxed{L_{\mathcal C}(r_g,r_\ell)<\ell_*}
+ \label{eq:widen-cylinder-condition}
+\end{equation}
+with $\ell_*$ from Eq.~\eqref{eq:widen-ell-star}, then every sufficiently small
+Lyapunov sublevel contained in $\mathcal C(r_g,r_\ell)$ is robustly invariant
+and satisfies the practical-ISS bound of Eq.~\eqref{eq:iss-block-local-bound}.
+The admissible linear-state radius is controlled by the actual cross-gain
+$k_{\theta S}G_{S\ell}$ rather than by the attitude radius itself.
+\end{theorem}
+
+\begin{proof}
+All first-order coupling between the two blocks is already contained in the
+UES transition.  The nonlinear remainder lemma therefore needs only a bound on
+its structured products and on the gain-weighted attitude correction.  On the
+cylinder, those terms are bounded by Eq.~\eqref{eq:widen-cylinder-load} times
+$\|\vct z\|$.  Equation~\eqref{eq:widen-cylinder-condition} then implies the
+explicit Phase-B smallness inequality and the proof of
+Theorem~\ref{thm:iss-block-local} applies without replacing $r_g$ and
+$r_\ell$ by a common radius.
+\end{proof}
+
+\begin{remark}[What can and cannot be global in the linear coordinates]
+\label{rem:widen-linear-global-limit}
+If the attitude rows of all translational corrections were identically zero,
+$k_{\theta S}=0$, the translational radius would disappear from the nonlinear
+condition and the stable linear block could be global while attitude remained
+regional.  The deployed full-gain MEKF generally has
+$k_{\theta S}\ne0$ because $S$ cross-covariance may nudge attitude.  Hence the
+unchanged source admits a much wider anisotropic cylinder, not an honest global
+claim in $(v,p,S)$.  This explicitly identifies the architectural obstruction
+to global translational certification.
+\end{remark}
+
+\subsubsection{Exact geometry of the implemented quaternion injection}
+
+The source does not use the first-order quaternion $[1,\delta\theta/2]$ for
+state injection.  It calls \texttt{quat\_from\_delta\_theta}, which uses the
+trigonometric radial quaternion map outside a small series threshold and a
+normalized fourth-order sine/cosine series inside that threshold.  Denote the
+resulting unit quaternion by $q_c(\vct d)$ and its physical rotation angle by
+$\chi(\|\vct d\|)$.  For $\|\vct d\|\ge10^{-2}$,
+\begin{equation}
+ q_c(\vct d)=
+ \left(\cos\frac{\|\vct d\|}{2},
+ \frac{\sin(\|\vct d\|/2)}{\|\vct d\|}\vct d\right),
+ \qquad
+ \chi(\|\vct d\|)=\|\vct d\|\pmod{2\pi}.
+ \label{eq:widen-exact-injection}
+\end{equation}
+On the series branch, Taylor's theorem and normalization give a finite constant
+$c_s$ such that
+\begin{equation}
+ |\chi(\theta)-\theta|\le c_s\theta^6,
+ \qquad 0\le\theta\le10^{-2}.
+ \label{eq:widen-series-defect}
+\end{equation}
+The tiny branch defect may therefore be retained as a bounded deterministic
+input rather than absorbed into an unspecified local smoothness constant.
+
+The implemented covariance reset uses
+\begin{equation}
+ \mat G_r(\vct d)=\mat I+\frac12[\vct d]_\times.
+ \label{eq:widen-reset-G}
+\end{equation}
+Because the skew part cancels in $\mat G_r^\top\mat G_r$,
+\begin{equation}
+ \boxed{
+ \|\mat G_r(\vct d)\|_2
+ =\sqrt{1+\frac14\|\vct d\|^2},
+ \qquad
+ \det\mat G_r=1+\frac14\|\vct d\|^2>0.}
+ \label{eq:widen-reset-G-bound}
+\end{equation}
+Thus the implemented covariance reset has no singularity at a correction angle
+of $\pi$; its amplification grows algebraically with the correction magnitude.
+
+For the physical attitude error
+$\mat R_e=\widehat{\mat R}\mat R^\top$, define the exact group energy
+\begin{equation}
+ V_R(\mat R_e):=\frac12\operatorname{tr}(\mat I-\mat R_e)
+ =1-\cos\theta_e.
+ \label{eq:widen-SO3-energy}
+\end{equation}
+For every fixed $0<\theta_*<\pi$ and $0\le\theta_e\le\theta_*$,
+\begin{equation}
+ \frac{1-\cos\theta_*}{\theta_*^2}\theta_e^2
+ \le V_R\le\frac12\theta_e^2.
+ \label{eq:widen-SO3-sector}
+\end{equation}
+Exact rotation identities also bound the vector-measurement linearization
+remainder by $c_R(\theta_*)\theta_e^2$ on this entire compact geodesic chart.
+
+\begin{theorem}[Group-geometric correction widening]
+\label{thm:widen-group-correction}
+Replace the technical correction condition
+$\|\Delta\vct\theta_k\|<\Delta_0<\pi$ in the local remainder construction by
+\begin{equation}
+ \theta_e\le\theta_*<\pi,
+ \qquad
+ \|\Delta\vct\theta_k\|\le\delta_Q<\infty,
+ \label{eq:widen-group-domain}
+\end{equation}
+and include the series-branch defect of Eq.~\eqref{eq:widen-series-defect} in
+the bounded input.  Then the quaternion-injection and covariance-reset parts of
+the nonlinear remainder have finite explicit bounds depending on
+$(\theta_*,\delta_Q)$, with reset amplification bounded by
+Eq.~\eqref{eq:widen-reset-G-bound}.  Consequently the anisotropic theorem above
+remains valid with a group-energy attitude coordinate on any compact chart
+strictly smaller than the antipodal set; no artificial singularity at
+$\|\Delta\theta\|=\pi$ is required.
+\end{theorem}
+
+\begin{proof}
+Equation~\eqref{eq:widen-exact-injection} is the implemented radial quaternion
+map; the small-angle branch differs from it only by the Taylor remainder in
+Eq.~\eqref{eq:widen-series-defect}.  Equation~\eqref{eq:widen-reset-G-bound}
+follows by direct multiplication of Eq.~\eqref{eq:widen-reset-G}.  On
+$\theta_e\le\theta_*<\pi$, the logarithmic attitude coordinate and
+$V_R^{1/2}$ are uniformly equivalent by Eq.~\eqref{eq:widen-SO3-sector}, and
+all exact rotated-vector residuals have bounded second derivatives.  Hence the
+same nonlinear comparison proof applies with constants depending on the compact
+geodesic chart and finite correction budget rather than on a correction-angle
+cutoff below $\pi$.
+\end{proof}
+
+\begin{remark}[Scope of the group result]
+The theorem widens the geometry used to bound the implemented correction; it
+does not claim global MEKF convergence.  The antipodal attitude topology,
+measurement ambiguity, and gain-coupled translational injection remain real
+limitations.  The useful conclusion is that the previous $\Delta_0<\pi$
+restriction was a proof-device restriction, not a singularity of the source
+reset map.
+\end{remark}
