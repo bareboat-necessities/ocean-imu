@@ -62,13 +62,14 @@ the antipodal branch.
 The stability handoff separates tilt accuracy from heading-reference accuracy.
 The normal gravity gate gives the transverse attitude bound
 Eq.~\eqref{eq:semiglobal-handoff-tilt}.  When a magnetic/equivalent heading
-reference is accepted, it defines the \emph{adopted heading gauge} used by the
-full-heading Live proof.  The internal heading error relative to that gauge is
-bounded by Eq.~\eqref{eq:semiglobal-handoff-yaw-internal}.  A residual magnetic
-reference offset $b_{\psi,\mathrm{ref}}$ contributes to true-north error through
-Eq.~\eqref{eq:iss-true-yaw-error}, but it is not charged against the MEKF capture
-radius.  Thus a stable filter may retain a bounded standing compass/reference
-bias without violating the convergence theorem.
+reference is accepted, it defines the \emph{adopted horizontal gauge} used by
+the full-heading Live proof.  The internal heading error relative to that gauge
+is bounded by Eq.~\eqref{eq:semiglobal-handoff-yaw-internal}.  A residual
+magnetic reference offset $b_{\psi,\mathrm{ref}}$ contributes to true-north
+heading error through Eq.~\eqref{eq:iss-true-yaw-error}, while the complete
+horizontal world-frame trajectory is represented in the jointly rotated gauge
+of Eq.~\eqref{eq:iss-gauge-world-vectors}.  Thus a fixed standing compass
+reference offset is not mistaken for estimator instability.
 
 The accepted tilt/internal-heading bounds and independent finite physical
 bounds on the remaining MEKF errors define the structured handoff set
@@ -112,16 +113,20 @@ from the already-live MEKF.
 Acceptance of the refined reference replaces the world magnetic reference,
 re-gauges yaw once when the independent acquisition supplies a finite yaw, and
 releases the accelerometer-bias hold.  The source leaves tilt and all additive
-navigation states unchanged and does not replace the covariance; only the
-bias-enable path may apply its bounded covariance floor.  Section~\ref{sec:hybrid-mag-jump}
-therefore models this event as the explicit jump $\mathcal R_M$, not as an
-ordinary Kalman sample.  The reference change updates the adopted heading gauge,
-so a change in true-north reference bias is not itself MEKF error; the jump
-certificate instead bounds the post-jump internal heading residual through
-Eq.~\eqref{eq:hybrid-mag-heading-residual}.  If the resulting jump envelope
-satisfies Eq.~\eqref{eq:hybrid-jump-entry}, the event returns directly to the
-outer capture set and Theorem~\ref{thm:hybrid-live-recovery} supplies subsequent
-hybrid safety and recovery.
+navigation variables numerically unchanged and does not replace the covariance;
+only the bias-enable path may apply its bounded covariance floor.
+Section~\ref{sec:hybrid-mag-jump} therefore models this event as the explicit
+jump $\mathcal R_M$, not as an ordinary Kalman sample.  Because the proof's
+heading gauge is a complete horizontal-frame rotation, changing that gauge also
+changes the reference values of $(v,p,S,a_w)$ even though their stored source
+variables are untouched.  Equations~\eqref{eq:hybrid-mag-world-error-jump}--
+\eqref{eq:hybrid-mag-world-error-bound} account for this coordinate-reference
+jump using a bounded gauge change and bounded physical world-vector magnitudes.
+The magnetic jump certificate separately bounds the internal heading residual
+through Eq.~\eqref{eq:hybrid-mag-heading-residual}.  If the resulting exact jump
+envelope satisfies Eq.~\eqref{eq:hybrid-jump-entry}, the event returns directly
+to the outer capture set and Theorem~\ref{thm:hybrid-live-recovery} supplies
+subsequent hybrid safety and recovery.
 
 The continuous hard-iron correction that follows refinement is not another hard
 attitude jump.  It slews the applied body-frame offset and the magnetic model
