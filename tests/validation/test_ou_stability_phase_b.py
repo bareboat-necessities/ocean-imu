@@ -31,8 +31,8 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
             r"\label{thm:finite-live-capture}",
         ):
             self.assertIn(marker, capture)
-        self.assertIn("actual compact handoff set", flat)
-        self.assertIn("propagates $\\mathcal H$ itself", flat)
+        self.assertIn("compact handoff set actually produced by the source", flat)
+        self.assertIn("propagation of $x$ itself is the certificate object", flat.casefold())
         self.assertNotIn(r"\vct R_H\prec\vct R_C", capture)
         self.assertNotIn(r"\vct R_C", capture)
 
