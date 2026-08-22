@@ -4,6 +4,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# A new push to the same branch supersedes every expensive job from the older
+# build, including the full OU evidence call. Keep pull requests isolated from
+# their source-branch push runs by keying PRs on the pull-request number.
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # A PDF cut from main has to quote numbers this code actually produces, so
   # the full study runs and lands its bundle on main before the article is
@@ -223,7 +230,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: release-svgs-${{ matrix.dir }}
-          path: release-svg/${{ matrix.dir }}/**/*.svg
+          path: doc/${{ matrix.dir }}/**/*.svg
           if-no-files-found: error
 
   ou-tuning:
