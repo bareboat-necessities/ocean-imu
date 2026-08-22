@@ -1,11 +1,8 @@
 """Stable semantic publication contract for the main OU--III article.
 
-This file intentionally avoids sentence-level editorial checks. Numerical
-results, replay provenance, and evidence integrity are tested elsewhere. Here we
-only pin structure and technical invariants that should survive ordinary prose
-editing: document wiring, generated-result macros, required assets, equations,
-deployed plotting logic, adaptation scope markers, and removal of retired
-startup modes.
+Numerical results, replay provenance, and evidence integrity are tested
+elsewhere.  This module pins article structure and technical invariants while
+allowing ordinary editorial changes and equivalent mathematical notation.
 """
 
 import json
@@ -33,7 +30,6 @@ def _macro_value(text: str, name: str) -> str:
 
 
 def _assert_any(test: unittest.TestCase, text: str, *alternatives: str) -> None:
-    """Require a concept without requiring one particular sentence."""
     folded = text.casefold()
     test.assertTrue(
         any(term.casefold() in folded for term in alternatives),
@@ -41,10 +37,7 @@ def _assert_any(test: unittest.TestCase, text: str, *alternatives: str) -> None:
     )
 
 
-# Compatibility entry points imported by test_ou_validation.py.  Keep these
-# names stable, but deliberately make their contracts semantic rather than
-# editorial: labels, generated tables/macros, broad scope concepts, and method
-# families are protected; exact sentences are not.
+# Compatibility entry points imported by test_ou_validation.py.
 def _abstract_reports_committed_stationary_aggregate(self):
     manuscript = _read("kalman_ou-w3d.tex")
     abstract = manuscript.split(r"\begin{abstract}", 1)[1].split(
@@ -78,7 +71,6 @@ def _fixed_reference_and_transition_limits_are_stated(self):
     protocol = _read("w3d-sim-charts.tex-part")
     fixed_points = _read("w3d-ou-validation-tuning-points-generated.tex-part")
     results = _read("w3d-baseline-comparison.tex-part")
-
     self.assertIn(r"\label{par:fixed-points}", protocol)
     self.assertIn("tab:ou_fixed_points", fixed_points)
     self.assertIn("FixedNominal", fixed_points)
@@ -99,7 +91,6 @@ def _three_dimensional_and_channel_results_are_reported(self):
     protocol = _read("w3d-sim-charts.tex-part")
     results = _read("w3d-baseline-comparison.tex-part")
     generated = _read("w3d-ou-validation-results-generated.tex-part")
-
     self.assertIn("tab:ou_mc_axes", results)
     self.assertIn(r"\label{par:channel-ablation}", protocol)
     self.assertIn("tab:ou_mc_channels", generated)
@@ -118,7 +109,6 @@ def _contribution_is_framed_at_the_width_of_the_evidence(self):
     intro = _read("w3d-intro.tex-part")
     conclusion = _read("w3d-conclusion-summary.tex-part")
     scope = "\n".join((intro, conclusion))
-
     title_match = re.search(r"\\title\{(.+?)\}", manuscript)
     self.assertIsNotNone(title_match)
     title = title_match.group(1)
@@ -134,7 +124,6 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
     fusion = _read("w3d-fus-methods.tex-part")
     results = _read("w3d-results.tex-part")
     conclusion = _read("w3d-conclusion-summary.tex-part")
-
     self.assertIn("tab:baseline-tuning-policy", baseline)
     self.assertIn("tab:implementation-gates", fusion)
     for method in ("OU--III", "OU--II", "PII", "TVG--NLO"):
@@ -166,7 +155,6 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         ]
         positions = [main.index(item) for item in ordered]
         self.assertEqual(positions, sorted(positions))
-
         adaptation = _read("w3d-adaptation-motivation.tex-part")
         self.assertIn(
             r"\section{Sea-State Adaptation and Integral-State Regularization}",
@@ -174,7 +162,6 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         )
         self.assertIn(r"\label{sec:adaptation}", adaptation)
         self.assertIn(r"\input{w3d-adaptation-observables.tex-part}", adaptation)
-
         for retired_input in (
             r"\input{w3d-regularization-theory.tex-part}",
             r"\input{w3d-rs-scale-theorem.tex-part}",
@@ -189,7 +176,6 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         deployed = _read("w3d-adaptation-deployed-law.tex-part")
         anisotropy = _read("w3d-rs-anisotropy-design.tex-part")
         fusion = _read("w3d-fus-methods.tex-part")
-
         self.assertLess(
             adaptation.index(r"\input{w3d-adaptation-observables.tex-part}"),
             adaptation.index(r"\subsection{Measured acceleration scale and OU prior amplitude}"),
@@ -217,17 +203,11 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
 
     def test_startup_keeps_the_deployed_proxy_architecture(self):
         startup = _read("w3d-init.tex-part")
-
-        # These are architecture markers, not editorial phrases. The exact
-        # description of handoff is free to change.
         self.assertIn(r"\label{sec:startup-policy}", startup)
         self.assertIn(r"\label{sec:proxy-handoff}", startup)
         _assert_any(self, startup, "measurement-only", "measurement only")
-        self.assertIn("Mahony", startup)
-        self.assertIn("MEKF", startup)
-        self.assertIn("Live", startup)
-        self.assertIn("ISS", startup)
-
+        for term in ("Mahony", "MEKF", "Live", "ISS"):
+            self.assertIn(term, startup)
         for legacy in ("StagedMekf", "TunerWarm", "degraded warmup"):
             self.assertNotIn(legacy, startup)
 
@@ -236,7 +216,6 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         results = _read("w3d-baseline-comparison.tex-part")
         generated = _read("w3d-ou-validation-results-generated.tex-part")
         figures = _read("w3d-results.tex-part")
-
         for asset in (
             "spectrum_jonswap_medium_3d.pgf",
             "spectrum_pmstokes_medium_3d.pgf",
@@ -247,16 +226,15 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
             "w3d_ou3_jonswap_medium_gyro_bias.pgf",
         ):
             self.assertIn(asset, methodology + figures)
-
         self.assertIn("tab:ou_mc_axes", results)
         self.assertIn("tab:ou_transition_segments", results)
         self.assertIn("tab:ou_mc_pmstokes", generated)
         self.assertIn("tab:ou_mc_direction", generated)
 
     def test_adaptation_figure_uses_deployed_wave_band_schedule(self):
-        draw = (
-            REPO_ROOT / "plots" / "kalman_ou_iii" / "draw_plots.sh"
-        ).read_text(encoding="utf-8")
+        draw = (REPO_ROOT / "plots" / "kalman_ou_iii" / "draw_plots.sh").read_text(
+            encoding="utf-8"
+        )
         self.assertIn("wave_tuning_freq_hz", draw)
         self.assertIn("1.0 / (2.0 * tau_for_plot)", draw)
 
@@ -268,7 +246,6 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         lti = _read("w3d-lti-discrete.tex-part")
         analytic = _read("w3d-analytic-coeff.tex-part")
         stability = _read("w3d-iss-stability.tex-part")
-
         combined_adaptation = "\n".join((adaptation, observables, cadence, deployed))
         for marker in (
             r"\label{eq:adapt-sigma-map}",
@@ -285,10 +262,8 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
             r"\label{eq:wave-band-period}",
         ):
             self.assertIn(marker, combined_adaptation)
-        self.assertIn(r"\tau^{5/2}", combined_adaptation)
-        self.assertIn(r"q_{\mathrm{eff}}", combined_adaptation)
-        self.assertIn(r"\widehat\sigma_{a,B}", combined_adaptation)
-        self.assertIn(r"\sigma_{aw}", combined_adaptation)
+        for marker in (r"\tau^{5/2}", r"q_{\mathrm{eff}}", r"\widehat\sigma_{a,B}", r"\sigma_{aw}"):
+            self.assertIn(marker, combined_adaptation)
 
         self.assertIn(r"\label{eq:ba-ou-phi}", lti)
         self.assertIn(r"\label{eq:ba-ou-Qd}", lti)
@@ -296,11 +271,9 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertIn(r"1-e^{-2h/\tau_b}", lti)
         self.assertIn(r"\eqref{eq:ba-ou-phi}", analytic)
         self.assertIn(r"\eqref{eq:ba-ou-Qd}", analytic)
-        # The stability proof now uses a finite-window transition bound for the
-        # finite-tau_b fallback instead of duplicating the one-step formula.
         self.assertIn(r"\label{eq:iss-bias-contraction}", stability)
         self.assertIn(r"\|\Phi_b(k,j)\|", stability)
-        self.assertIn(r"\overline\tau_b", stability)
+        _assert_any(self, stability, r"\tau_{b,+}", r"\overline\tau_b")
         self.assertNotIn(r"1-e^{-2h_k/\tau_b}", stability)
 
     def test_reference_point_and_sim_scope_remain_explicit(self):

@@ -6,14 +6,10 @@
 Startup keeps attitude initialization outside the MEKF.  The measurement-only
 Mahony observer of Sec.~\ref{sec:vertical-proxy} runs from the first sample
 while the MEKF remains untouched; wave-period and acceleration-variance
-estimators converge in parallel.  Once tilt, tuner state, and, for full-heading
-operation, an adopted magnetic/equivalent heading gauge are adequate, the proxy
-solution initializes the MEKF in Live mode.  The resulting state is not
-required to lie immediately inside the final regional invariant set.
-Sec.~\ref{sec:finite-live-capture} instead certifies a larger structured
-post-handoff set from which the complete nonlinear full-heading Live recursion
-can reach that invariant set in finite time.  Gravity-only operation has a yaw
-symmetry and is treated separately by Theorem~\ref{thm:iss-nomag-quotient}.
+estimators converge in parallel.  Once the source gates are satisfied, the
+proxy solution initializes the MEKF in Live mode.  The accepted handoff is
+represented by the compact set $\mathcal H$ and is propagated directly by the
+regional theorem of Sec.~\ref{sec:finite-live-capture}.
 
 \subsection{Tilt and operating-point bootstrap}
 
@@ -21,33 +17,28 @@ Before magnetic north is established, yaw is a gauge degree of freedom.  The
 proxy initializes roll and pitch from accelerometer direction and evolves by
 Eq.~\eqref{eq:proxy-mahony}.  Its low correction bandwidth avoids interpreting
 ordinary orbital acceleration as rapid tilt, while the integral term estimates
-standing gyro-bias tilt.  Section~\ref{sec:semiglobal-proxy} now gives an
-explicit Lyapunov estimate for this exact gravity-direction/integral-bias core,
-including a source-level first-sample seed bound and bounded finite-step defect.
+standing gyro-bias tilt.  Section~\ref{sec:semiglobal-proxy} gives the explicit
+practical-ISS estimate used to bound the proxy contribution at handoff.
 
 In parallel, the adaptation front end stages the estimated
 $(\tau,\sigma_{aw},r_S)$ operating point.  These are model parameters rather
-than state corrections, so the first propagated MEKF sample uses the best
-available sea-state schedule.
+than state corrections, and the source-reachable schedule family is defined in
+Sec.~\ref{sec:iss-source-family}.
 
 \subsection{Quality-gated handoff}
 \label{sec:proxy-handoff}
 
 Normal handoff requires: (i) \SI{2}{s} of proxy gravity agreement with
-sine-angle error below \num{0.075} (about \SI{4.3}{\degree}) on the aligned
-branch---predicted and measured gravity directions with positive inner
-product---and gyro magnitude below \SI{30}{\degree\per\second}; (ii) a
-magnetic gauge when a magnetometer is present and full-heading operation is
-requested; and (iii) tuner readiness.  A minimum \SI{8}{s} startup prevents a
-quiet initial interval from passing prematurely.  The Mahony part of the gate
-has the explicit sufficient entry time $T_Q$ in
-Eq.~\eqref{eq:semiglobal-quality-entry-time}; the hold, rate, magnetic, and tuner
-gates remain separate source conditions.
+sine-angle error below \num{0.075} on the aligned branch and gyro magnitude
+below \SI{30}{\degree\per\second}; (ii) a magnetic gauge when a magnetometer is
+present and full-heading operation is requested; and (iii) tuner readiness.  A
+minimum \SI{8}{s} startup prevents a quiet initial interval from passing
+prematurely.  The Mahony contribution to gate entry is bounded by $T_Q$ in
+Eq.~\eqref{eq:semiglobal-quality-entry-time}.
 
-The configured proxy timeout is \SI{150}{s}, but the source actually uses the
-maximum of that number and the magnetic-acquisition deadline.  With the deployed
-$0+2(15)+30=60\,$s magnetic deadline, the effective default remains exactly
-\SI{150}{s}, as shown in Eq.~\eqref{eq:semiglobal-timeout-150}.
+The configured proxy timeout is \SI{150}{s}; with the deployed magnetic
+acquisition deadline the effective source timeout remains
+Eq.~\eqref{eq:semiglobal-timeout-150}.
 
 At handoff, the proxy attitude seeds the MEKF once.  With magnetic north
 established, attitude covariance uses
@@ -55,63 +46,50 @@ established, attitude covariance uses
 \sigma_{\mathrm{tilt}}=\SI{0.035}{rad},\qquad
 \sigma_{\mathrm{yaw}}=\SI{0.087}{rad};
 \]
-without a magnetic gauge, $\sigma_{\mathrm{yaw}}=\pi/2$.  The linear
+without a heading gauge, $\sigma_{\mathrm{yaw}}=\pi/2$.  The linear
 $[v,p,S,a_w]$ block, current OU parameters, and integral regularizer are enabled
-together.  Accelerometer-bias learning remains gated until the magnetic
-refinement logic releases it because bias and small tilt error are weakly
-separable in waves and the residual bias correlation time is long.
+together.  Accelerometer-bias learning remains held until the magnetic
+refinement logic releases it.  The initial normal-Live interval therefore uses
+the held-bias branch of Theorem~\ref{thm:iss-21-ues}, with the frozen residual
+bias entering the active dynamics as a bounded input.
 
-The gravity residual is a sine of the alignment angle, so it does not by itself
-distinguish aligned and antipodal branches.  The gate therefore also tests the
-sign of the inner product, and every accepted handoff satisfies
-Eq.~\eqref{eq:semiglobal-aligned-branch}.  The timeout path is held to that same
-branch test, so it cannot force an antipodal handoff even though it bypasses the
-0.075 residual magnitude.
+The gravity residual is a sine of alignment angle, so the gate also requires
+the positive-inner-product branch of
+Eq.~\eqref{eq:semiglobal-aligned-branch}.  The timeout path uses the same branch
+test.
 
-The stability handoff separates tilt accuracy from heading-reference accuracy.
-The normal gravity gate gives the transverse attitude bound
-Eq.~\eqref{eq:semiglobal-handoff-tilt}.  When a magnetic/equivalent heading
-reference is accepted, it defines the \emph{adopted horizontal gauge} used by
-the full-heading Live proof.  The internal heading error relative to that gauge
-is bounded by Eq.~\eqref{eq:semiglobal-handoff-yaw-internal}.  A residual
-magnetic reference offset $b_{\psi,\mathrm{ref}}$ contributes to true-north
-heading error through Eq.~\eqref{eq:iss-true-yaw-error}, while the complete
-horizontal world-frame trajectory is represented in the jointly rotated gauge
-of Eq.~\eqref{eq:iss-gauge-world-vectors}.  Thus a fixed standing compass
-reference offset is not mistaken for estimator instability.
+For a full-heading handoff, the accepted magnetic or equivalent reference
+defines the adopted horizontal gauge.  The gravity gate gives the transverse
+attitude bound of Eq.~\eqref{eq:semiglobal-handoff-tilt}, and the internal
+heading error relative to the adopted gauge is bounded by
+Eq.~\eqref{eq:semiglobal-handoff-yaw-internal}.  A residual magnetic reference
+offset $b_{\psi,\mathrm{ref}}$ contributes to true-north error through
+Eq.~\eqref{eq:iss-true-yaw-error} but does not enter the gauge-referenced
+stability radius.
 
-The accepted tilt/internal-heading bounds and independent finite physical
-bounds on the remaining MEKF errors define the structured handoff set
-$\mathcal H$ of Sec.~\ref{sec:semiglobal-handoff}.  In the full-heading
-sensitive/kinematic certificate metrics, the normal startup interface is
+Those attitude bounds and independent finite physical bounds on
+$(b_g,v,p,S,a_w,b_a)$ define the compact handoff set $\mathcal H$ of
+Sec.~\ref{sec:semiglobal-handoff}.  The Live interface condition is
 \begin{equation}
- \vct R_H^{\max}\prec\vct R_C.
+ \mathcal H_{k_H}\subset\mathcal D_{k_H},
+ \label{eq:init-handoff-safe}
 \end{equation}
-The handoff need not satisfy the block-local invariant-tube condition of
-Theorem~\ref{thm:iss-block-local} on its first Live measurement.
+where $\mathcal D$ is the chart-, covariance-, measurement-, and mode-safe
+domain.  Theorem~\ref{thm:finite-live-capture} propagates $\mathcal H$ itself
+through the exact source-realizable nonlinear map.  Individual early lifts may
+expand as long as every prefix remains in $\mathcal D$, and capture occurs when
+the propagated set reaches $\mathcal B$ after the finite count $N_H$ of
+Eq.~\eqref{eq:capture-count}.
 
-Theorem~\ref{thm:finite-live-capture} then propagates the complete implemented
-nonlinear full-heading map, including covariance staging and the full $S=0$
-gain, through exact comparison envelopes.  Individual early lifts may expand as
-long as their prefixes remain in the chart-safe proof domain.  The handoff
-sequence reaches the inner regional set after the finite count $N_H$ of
-Eq.~\eqref{eq:capture-count}, after which the same regional theorem supplies
-practical ISS directly.
-
-The timeout path now has its own analytical envelope rather than an externally
-assumed tilt constant.  Equation~\eqref{eq:semiglobal-timeout-energy} evaluates
-the explicit Mahony estimate at the actual timeout and
-Eq.~\eqref{eq:semiglobal-timeout-tilt} gives the corresponding tilt bound.  For
-a timeout with a finite heading gauge, those bounds and the independent
-non-attitude startup bounds define $\mathcal H_T$ and
-$\vct R_{H,T}^{\max}$; Theorem~\ref{thm:semiglobal-timeout-live} applies only if
-\begin{equation}
- \vct R_{H,T}^{\max}\prec\vct R_C.
-\end{equation}
-The source does not require \texttt{north\_ready} at timeout.  Consequently an
-ungauged timeout is not silently assigned the full-heading certificate: it uses
-the gravity/yaw-quotient result until a heading gauge is later established, at
-which point the magnetic jump must satisfy Eq.~\eqref{eq:hybrid-jump-entry}.
+The timeout branch uses the analytical attitude envelope
+Eq.~\eqref{eq:semiglobal-timeout-tilt}.  With a finite heading gauge it defines
+$\mathcal H_T\subset\mathcal D$ and uses the same direct capture theorem.  The
+source does not require \texttt{north\_ready} at timeout, so an ungauged timeout
+instead begins in the quotient safe domain
+$\mathcal H_T^\perp\subset\mathcal D^\perp$ and is covered by
+Theorem~\ref{thm:hybrid-quotient-capture}.  A later magnetic acquisition moves
+to the full-heading chain only when the exact jump image and its recovery flow
+satisfy Eq.~\eqref{eq:hybrid-jump-entry}.
 
 \subsection{Two-stage magnetic reference}
 \label{sec:mag-two-stage}
@@ -121,61 +99,45 @@ samples are averaged in a yaw-stripped level frame, preventing arbitrary proxy
 yaw from contaminating field direction; the time-based window spans multiple
 wave periods to reduce wave-correlated levelling error.
 
-Two stages balance availability and reference accuracy.  A provisional
-reference is accepted after the gravity gate, typically enabling heading and
-MEKF handoff within \SIrange{22}{52}{s} in the scored simulations.  A second
-\SI{30}{s} acquisition beginning at \SI{90}{s} relearns the reference after the
-low-bandwidth proxy settles.  It remains proxy framed to avoid self-confirmation
-from the already-live MEKF.
+A provisional reference can establish the first horizontal gauge.  A later
+independent acquisition refines that reference after the low-bandwidth proxy has
+settled.  Acceptance of the refined reference replaces the world magnetic
+reference, re-gauges yaw once when a finite acquired yaw is available, and
+releases the accelerometer-bias hold.  Tilt and additive navigation variables
+remain numerically unchanged; the bias-enable path may apply its bounded
+covariance floor.
 
-Acceptance of the refined reference replaces the world magnetic reference,
-re-gauges yaw once when the independent acquisition supplies a finite yaw, and
-releases the accelerometer-bias hold.  The source leaves tilt and all additive
-navigation variables numerically unchanged and does not replace the covariance;
-only the bias-enable path may apply its bounded covariance floor.
-Section~\ref{sec:hybrid-mag-jump} therefore models this event as the explicit
-jump $\mathcal R_M$, not as an ordinary Kalman sample.  Because the proof's
-heading gauge is a complete horizontal-frame rotation, changing that gauge also
-changes the reference values of $(v,p,S,a_w)$ even though their stored source
-variables are untouched.  Equations~\eqref{eq:hybrid-mag-world-error-jump}--
-\eqref{eq:hybrid-mag-world-error-bound} account for this coordinate-reference
-jump using a bounded gauge change and bounded physical world-vector magnitudes.
-The magnetic jump certificate separately bounds the internal heading residual
-through Eq.~\eqref{eq:hybrid-mag-heading-residual}.  If the resulting exact jump
-envelope satisfies Eq.~\eqref{eq:hybrid-jump-entry}, the event returns directly
-to the outer capture set and Theorem~\ref{thm:hybrid-live-recovery} supplies
-subsequent hybrid safety and recovery.
-
-The continuous hard-iron correction that follows refinement is not another hard
-attitude jump.  It slews the applied body-frame offset and the magnetic model
-without writing attitude or covariance, so it belongs to the bounded normal-Live
-mode family rather than restarting the hybrid capture argument at every update.
+Section~\ref{sec:hybrid-mag-jump} models either Live magnetic source event by
+$\mathcal R_M$.  Because the adopted gauge rotates the complete horizontal
+frame, changing it changes the gauge-referenced values of $(v,p,S,a_w)$ even
+though their stored source values are unchanged.  The coordinate-reference
+jump is given by Eqs.~\eqref{eq:hybrid-mag-world-error-jump}--
+\eqref{eq:hybrid-mag-world-error-bound}.  The jump must remain inside
+$\mathcal D$ and admit the verified recovery sequence of
+Eq.~\eqref{eq:hybrid-jump-entry}.  Continuous hard-iron correction after
+refinement writes neither attitude nor covariance and remains in the bounded
+normal-Live source family.
 
 \subsection{Live re-lock boundary}
 
 A sustained estimated tilt above $70^\circ$ for \SI{0.35}{s} can trigger a
-Live tilt re-lock; a \SI{3}{s} cooldown prevents another reset while its timer is
-positive.  The exact source map preserves the pre-reset Euler yaw, rebuilds
+Live tilt re-lock; a \SI{3}{s} cooldown prevents another reset while its timer
+is positive.  The exact source map preserves pre-reset Euler yaw, rebuilds
 roll/pitch from the instantaneous accelerometer, reseeds the attitude covariance,
-and zeros attitude cross-covariances while retaining the additive navigation and
-bias states.  Section~\ref{sec:hybrid-tilt-jump} therefore treats it as a
-separate jump $\mathcal R_T$.
+and clears attitude cross-covariances while retaining additive navigation and
+bias states.
 
-A deterministic post-reset tilt guarantee requires the specific-force condition
-Eq.~\eqref{eq:hybrid-tilt-force-bound}; the $70^\circ$ trigger alone does not
-impose that measurement-quality bound.  Because the implementation preserves an
-Euler yaw coordinate, the proof also retains the nonsingular-yaw-chart condition
-Eq.~\eqref{eq:hybrid-tilt-yaw-chart}.  Under those conditions the reset obeys
-the tilt bound Eq.~\eqref{eq:hybrid-tilt-reset-bound} and preserves the exact
-Euler-yaw coordinate while its local heading component is bounded through the
-chart Lipschitz estimate in Sec.~\ref{sec:hybrid-tilt-jump}.  If its exact
-post-jump envelope satisfies Eq.~\eqref{eq:hybrid-jump-entry}, the reset returns
-to $\mathcal C_k(\vct R_C)$.
+A deterministic reset guarantee requires the specific-force condition
+Eq.~\eqref{eq:hybrid-tilt-force-bound}; the tilt trigger alone does not impose
+that measurement-quality condition.  The source Euler-yaw preservation is
+covered on the nonsingular chart of Eq.~\eqref{eq:hybrid-tilt-yaw-chart}.  The
+reset may enlarge the error, but its image must remain in $\mathcal D$ and its
+post-jump flow must satisfy Eq.~\eqref{eq:hybrid-jump-entry}.
 
-The cooldown gives the source-level no-Zeno bound
-Eq.~\eqref{eq:hybrid-tilt-dwell}.  If only finitely many hard resets occur, the
-last one is followed by finite regional capture and the ordinary practical-ISS
-bound.  If re-locks continue indefinitely, Theorem~\ref{thm:hybrid-live-recovery}
-claims recurrent capture only on inter-reset intervals long enough to complete
-the verified recovery sequence; repeated hard resets are not silently treated
-as asymptotically vanishing disturbances.
+For repeated re-locks, the cooldown supplies the dwell time in
+Eq.~\eqref{eq:hybrid-tilt-dwell}.  When the jump amplification and shortest
+admissible Live flow satisfy
+Eq.~\eqref{eq:hybrid-cooldown-capture-condition},
+Theorem~\ref{thm:hybrid-live-recovery} gives a practical exponential bound on
+the reset-to-reset sequence rather than requiring complete recovery before each
+possible reset.

@@ -2,800 +2,377 @@
 \input{w3d-finite-live-capture.tex-part}
 \input{w3d-hybrid-stability.tex-part}
 
-\section{Almost-Global Proxy Entry to the Live Capture Region}
+\section{Almost-Global Proxy Entry to Regional Live Stability}
 \label{sec:semiglobal-stability}
 
-The preceding results answer different stability questions.  Theorem~\ref{thm:iss-block-local}
-establishes analytically that the normal full-heading Live recursion has a local
-block-ISS neighborhood relative to its adopted heading gauge.  Theorem~\ref{thm:finite-live-capture}
-is the operational full-heading result: it certifies a larger structured
-post-handoff region from which the complete nonlinear OU--III recursion reaches
-a robustly invariant regional set in finite time and then satisfies a direct
-practical-ISS bound.  Startup therefore has only to place the initialized
-filter inside the outer regional capture set.  Theorem~\ref{thm:hybrid-live-recovery}
-then stitches the normal-Live intervals across the one-time magnetic refinement
-and guarded tilt re-lock jumps.  No-magnetometer operation is a different
-symmetry class and is covered locally by the quotient result of
-Theorem~\ref{thm:iss-nomag-quotient}; it does not inherit an absolute-heading
-capture claim.
-
-The gravity-only Mahony flow retains its familiar almost-global topological
-qualification: the antipodal critical set cannot be removed by a smooth
-single-vector observer.  The quantitative estimates below are intentionally
-stronger in another sense and narrower in domain.  They give explicit constants
-on a declared compact source-startup chart contained in the desired basin,
-rather than invoking an unspecified converse-Lyapunov function.  No uniform
-\SI{150}{s} claim is made for initial conditions arbitrarily close to the
-undesired antipodal stable set.
-
-\subsection{Compatibility with the deployed physical-MSE schedule}
-\label{sec:semiglobal-mse-schedule}
-
-Neither the regional capture theorem nor the local ISS theorem requires a
-particular monomial adaptation law.  They require the predictable compact
-schedule of Eqs.~\eqref{eq:iss-step-tau-bounds}--
-\eqref{eq:iss-tuning-bounds}.  For the deployed SpectralMSE regularizer, the
-physical-MSE calculation gives
-\begin{equation}
- r_{S,\star}
- =C_J q_{\rm eff}^{1/14}\,
- \widehat\sigma_{a,B}^{\,6/7}\,
- \tau_\star^{24/7}T_S^{-1/2},
- \label{eq:semiglobal-mse-schedule}
-\end{equation}
-and, away from the cadence clamps where $T_S=c_T\tau$,
-\begin{equation}
- r_{S,\star}\propto
- q_{\rm eff}^{1/14}\widehat\sigma_{a,B}^{\,6/7}
- \tau^{41/14}.
- \label{eq:semiglobal-mse-powers}
-\end{equation}
-No $\sigma\tau^3$ adaptation relation is used in this proof.  Finite bounds on
-$q_{\rm eff}$, $\widehat\sigma_{a,B}$, $T_S$, and $\tau$, together with the
-implementation clamps and convex smoothing, keep the applied
-$(\tau,\sigma_{aw},r_S)$ schedule in a compact predictable family.  That family
-is included directly in $\Pi_{k,m}$ in
-Eq.~\eqref{eq:capture-comparison-envelope}; the proof follows the actual staged
-schedule rather than replacing it by one common worst-case contraction factor.
+Startup uses a private measurement-only Mahony observer while the MEKF remains
+outside Live mode.  The observer supplies a quantitative gravity-direction
+entry bound on compact subsets of its almost-global basin.  The accepted
+handoff defines the compact set $\mathcal H$ used directly by
+Theorem~\ref{thm:finite-live-capture}; the source enters Live with the
+accelerometer-bias state held, so the first normal-Live interval uses the
+held-bias branch of Theorem~\ref{thm:iss-21-ues}.
 
 \subsection{Explicit Mahony startup estimate}
 \label{sec:semiglobal-proxy}
 
-Let $\vct d\in\mathbb S^2$ be the true body-frame direction of world down and
-$\widehat{\vct d}_P\in\mathbb S^2$ the direction predicted by the private
-measurement-only Mahony observer.  Define
+Let $\vct d\in\mathbb S^2$ be true body-frame down and
+$\widehat{\vct d}_P\in\mathbb S^2$ the private observer prediction.  Define
 \begin{equation}
  c_P:=\vct d^\top\widehat{\vct d}_P=\cos\theta_P,
  \qquad
  \vct e_P:=\vct d\times\widehat{\vct d}_P,
- \qquad
- \|\vct e_P\|=\sin\theta_P,
+ \qquad \|\vct e_P\|=\sin\theta_P.
  \label{eq:semiglobal-tilt-error}
 \end{equation}
-with $0\le\theta_P\le\pi$.  The source stores $2k_P=0.2$ and
-$2k_I=0.02$, hence the continuous-time gains in
-Eq.~\eqref{eq:proxy-mahony} are
+The source stores $2k_P=0.2$ and $2k_I=0.02$, hence
 \begin{equation}
  \boxed{k_P=0.1\ \mathrm{s}^{-1},\qquad
         k_I=0.01\ \mathrm{s}^{-2}.}
  \label{eq:semiglobal-proxy-gains}
 \end{equation}
-The source integral state is added to the measured gyro.  If $\vct b_g$ is the
-physical gyro bias and $\vct\beta$ is that integral state, define the residual
-corrected bias
+Let $\vct\beta$ be the observer integral term added to gyro and define the
+observable residual bias in the gravity tangent plane by
 \begin{equation}
  \widetilde{\vct\beta}:=\vct b_g+\vct\beta,
  \qquad
- \widetilde{\vct\beta}_{\perp}
+ \widetilde{\vct\beta}_\perp
  :=(\mat I-\vct d\vct d^\top)\widetilde{\vct\beta}.
  \label{eq:semiglobal-proxy-bias-error}
 \end{equation}
-The component parallel to $\vct d$ belongs to the gravity-only yaw gauge and is
-not included in the reduced convergence objective.
 
-Write the normalized accelerometer direction used by the implementation as
-\begin{equation}
- \vct d_m=-\frac{\vct f^B}{\|\vct f^B\|},
- \qquad
- \vct\varepsilon_P
- =\vct d_m\times\widehat{\vct d}_P
- =\vct e_P+\vct\nu_\varepsilon.
- \label{eq:semiglobal-proxy-measured-direction}
-\end{equation}
-A directly checkable physical condition is
+The normalized accelerometer direction obeys a directly checkable physical
+bound.  Write
 \begin{equation}
  -\vct f^B=g\vct d+\vct a_f,
- \qquad
- \|\vct a_f\|\le\overline f_P<g,
+ \qquad \|\vct a_f\|\le\bar f_P<g.
  \label{eq:semiglobal-proxy-force-bound}
 \end{equation}
-which includes nongravitational acceleration, accelerometer bias, deterministic
-sensor error, and lever-arm/model defect.  Elementary tangent geometry gives
+Then
 \begin{equation}
  \angle(\vct d_m,\vct d)
- \le\eta_f:=\sin^{-1}(\overline f_P/g),
+ \le\eta_f:=\sin^{-1}(\bar f_P/g),
  \qquad
  \|\vct\nu_\varepsilon\|
- \le\overline\nu_f
- :=2\sin(\eta_f/2).
+ \le\bar\nu_f:=2\sin(\eta_f/2),
  \label{eq:semiglobal-proxy-direction-error}
 \end{equation}
-The private observer is seeded from the first valid accelerometer sample and
-its integral state is zero at reset.  Therefore, for an initial physical gyro
-bias bound $\|\vct b_g(0)\|\le B_{\beta,0}$,
+where the measured direction error is written
+$\vct\varepsilon_P=\vct e_P+\vct\nu_\varepsilon$.
+The observer is seeded from the first valid accelerometer sample and its
+integral state is zero at reset, so a physical initial gyro-bias bound gives
 \begin{equation}
  \theta_P(0)\le\eta_{f,0},
  \qquad
- \|\widetilde{\vct\beta}_{\perp}(0)\|\le B_{\beta,0},
+ \|\widetilde{\vct\beta}_\perp(0)\|\le B_{\beta,0}.
  \label{eq:semiglobal-proxy-source-seed}
 \end{equation}
-where $\eta_{f,0}$ is Eq.~\eqref{eq:semiglobal-proxy-direction-error} evaluated
-for the first accepted sample.  This source-level seed is why the quantitative
-certificate below need not pretend that the deployed startup begins from an
-arbitrary quaternion.
 
-For the reduced quotient dynamics, use a transported orthonormal tangent frame
-along $\vct d$.  Common true angular motion is removed by that transport.  The
-remaining source dynamics can be written
+In a transported tangent frame the reduced source dynamics can be written
 \begin{align}
  \mathsf D_t\widehat{\vct d}_P
- &=-\bigl(\widetilde{\vct\beta}_{\perp}
+ &=-\bigl(\widetilde{\vct\beta}_\perp
           +k_P\vct e_P+\vct w_\omega\bigr)
        \times\widehat{\vct d}_P,\\
- \mathsf D_t\widetilde{\vct\beta}_{\perp}
+ \mathsf D_t\widetilde{\vct\beta}_\perp
  &=k_I\vct e_P+\vct w_b,
  \label{eq:semiglobal-proxy-reduced-dynamics}
 \end{align}
-where $\mathsf D_t$ is the tangent-plane covariant derivative and
-$\vct w_\omega,\vct w_b$ are represented in that transported tangent plane.
-The perturbation $\vct w_\omega$ collects gyro noise,
-$k_P\vct\nu_\varepsilon$, the neutral parallel-bias rotation, and the bounded
-sample-and-normalize defect; $\vct w_b$ collects bias drift,
-$k_I\vct\nu_\varepsilon$, tangent-frame transport, and its finite-step defect.
-Thus source/physics bounds give calculable constants
+with calculable physical/source bounds
 \begin{equation}
- \|\vct w_\omega\|\le\overline w_\omega,
- \qquad
- \|\vct w_b\|\le\overline w_b.
+ \|\vct w_\omega\|\le\bar w_\omega,
+ \qquad \|\vct w_b\|\le\bar w_b.
  \label{eq:semiglobal-proxy-disturbance-bounds}
 \end{equation}
-For example one conservative decomposition is
-\begin{align}
- \overline w_\omega
- &\le \overline n_g+k_P\overline\nu_f
-       +B_{\parallel}+\overline r_h,\\
- \overline w_b
- &\le \overline{\dot b}_g+k_I\overline\nu_f
-       +B_{\parallel}\overline\omega+\overline r_b,
- \label{eq:semiglobal-proxy-source-disturbance}
-\end{align}
-where $B_{\parallel}$ bounds the residual bias along gravity,
-$\overline\omega$ bounds body rate, and $\overline r_h,\overline r_b$ bound the
-discrete Euler/normalization defect over the admitted sample-time interval.
-These terms are not fitted stability constants; they are physical or
-implementation bounds.
+The terms include gyro noise and bias drift, the direction perturbation of
+Eq.~\eqref{eq:semiglobal-proxy-direction-error}, bounded tangent-frame
+transport, and bounded discrete normalization/integration defect.
 
-The smooth gravity-only observer has the usual undesired antipodal critical set
-$\mathcal U_P$.  With integral bias estimation, let
+The smooth gravity-only observer has the antipodal critical set
+$\mathcal U_P$.  Let
 \begin{equation}
- \boxed{
- \mathcal N_P:=W^s(\mathcal U_P),\qquad
- \mathcal D_P:=
- (\mathbb S^2\times\mathbb R^2)\setminus\mathcal N_P .}
+ \mathcal N_P:=W^s(\mathcal U_P),
+ \qquad
+ \mathcal D_P=(\mathbb S^2\times\mathbb R^2)\setminus\mathcal N_P.
  \label{eq:semiglobal-proxy-domain}
 \end{equation}
-The disturbance-free Mahony result is almost-global on $\mathcal D_P$ and
-$\mathcal N_P$ has measure zero \cite{Mahony2008NonlinearComplementary}.
-For an explicit quantitative certificate choose
+The disturbance-free flow is almost-global on $\mathcal D_P$
+\cite{Mahony2008NonlinearComplementary}.  For a quantitative compact chart,
+choose
 \begin{equation}
  0<\epsilon<\frac{\pi}{2},
  \qquad
- \theta_\star:=\frac{\pi}{2}-\epsilon,
+ \theta_\star=\frac{\pi}{2}-\epsilon,
  \qquad
- c_\star:=\cos\theta_\star=\sin\epsilon>0,
+ c_\star=\cos\theta_\star>0,
  \label{eq:semiglobal-proxy-chart}
 \end{equation}
-and the compact source-startup family
+and
 \begin{equation}
- \boxed{
  \mathcal K_{\epsilon,B_\beta}
- :=\{(\widehat{\vct d}_P,\widetilde{\vct\beta}_{\perp}):
-       \theta_P\le\theta_\star,
-       \ \|\widetilde{\vct\beta}_{\perp}\|\le B_\beta\}
- \subset\mathcal D_P.}
+ :=\{\theta_P\le\theta_\star,
+      \ \|\widetilde{\vct\beta}_\perp\|\le B_\beta\}
+ \subset\mathcal D_P.
  \label{eq:semiglobal-proxy-compact}
 \end{equation}
-This hemisphere chart is a sufficient quantitative subset of the almost-global
-domain, not a claim that the antipodal obstruction disappeared.
 
-Define the Mahony energy
+Define
 \begin{equation}
- U_P:=1-c_P,
- \qquad
- W_P:=U_P+
- \frac{\|\widetilde{\vct\beta}_{\perp}\|^2}{2k_I}.
+ W_P:=1-c_P+\frac{\|\widetilde{\vct\beta}_\perp\|^2}{2k_I},
  \label{eq:semiglobal-proxy-energy}
 \end{equation}
-For the unperturbed reduced dynamics,
+and the strict Lyapunov function
 \begin{equation}
- \dot W_P=-k_P\|\vct e_P\|^2.
- \label{eq:semiglobal-proxy-energy-decay}
-\end{equation}
-The energy alone is only semidefinite because the bias convergence is exposed
-through the direction dynamics.  Add the explicit cross term
-\begin{equation}
- \boxed{
- V_P:=W_P+
- \delta_P\vct e_P^\top\widetilde{\vct\beta}_{\perp}.}
+ V_P:=W_P+\delta_P\vct e_P^\top\widetilde{\vct\beta}_\perp.
  \label{eq:semiglobal-proxy-lyapunov}
 \end{equation}
 Choose
 \begin{equation}
- 0<\delta_P<
- \min\!\left\{
- k_I^{-1/2},
- \frac{k_P}{k_I+k_P^2/2}
- \right\},
- \qquad
- q_P:=\delta_P\sqrt{k_I}<1,
+ 0<\delta_P<\min\!\left\{
+ k_I^{-1/2},\frac{k_P}{k_I+k_P^2/2}\right\},
+ \qquad q_P:=\delta_P\sqrt{k_I}<1,
  \label{eq:semiglobal-proxy-delta-condition}
 \end{equation}
 and define
 \begin{align}
- a_P&:=k_P-\delta_P k_I-\frac12\delta_P k_P^2>0,\\
+ a_P&:=k_P-\delta_Pk_I-\tfrac12\delta_Pk_P^2>0,\\
  \lambda_{0,P}
- &:=\frac{
-   \min\{(1+c_\star)a_P,\ \delta_P c_\star k_I\}}
-  {1+q_P},
- \qquad
- \lambda_P:=\frac12\lambda_{0,P},
+ &:=\frac{\min\{(1+c_\star)a_P,\delta_Pc_\star k_I\}}
+ {1+q_P},
+ \qquad \lambda_P:=\tfrac12\lambda_{0,P}.
  \label{eq:semiglobal-proxy-rate}
 \end{align}
-plus
-\begin{align}
- L_{\omega,P}
- &:=\frac{\sqrt2(1+q_P)}{\sqrt{1-q_P}},\\
- L_{b,P}
- &:=\frac{\sqrt2(k_I^{-1/2}+\delta_P)}{\sqrt{1-q_P}},\\
- \Upsilon_P
- &:=L_{\omega,P}\overline w_\omega
-    +L_{b,P}\overline w_b.
+There are explicit finite gains $L_{\omega,P},L_{b,P}$ on the compact chart;
+set
+\begin{equation}
+ \Upsilon_P:=L_{\omega,P}\bar w_\omega+L_{b,P}\bar w_b.
  \label{eq:semiglobal-proxy-input-gain}
-\end{align}
-For the deployed gains, $\delta_P=\SI{5}{s}$ is a concrete admissible witness:
-$q_P=0.5$ and $a_P=0.025\ \mathrm{s}^{-1}$.  Consequently every rate and gain
-above is numerical once the chosen chart margin and physical disturbance bounds
-are supplied.
+\end{equation}
+For the deployed gains, $\delta_P=\SI{5}{s}$ is admissible and gives
+$q_P=0.5$ and $a_P=0.025\ \mathrm{s}^{-1}$.
 
-\begin{theorem}[Explicit practical-ISS estimate for the startup proxy]
+\begin{theorem}[Practical-ISS estimate for the startup proxy]
 \label{thm:semiglobal-proxy-explicit}
-Assume Eqs.~\eqref{eq:semiglobal-proxy-reduced-dynamics}--
-\eqref{eq:semiglobal-proxy-disturbance-bounds} and choose
-$\epsilon,\delta_P$ as above.  Let
-\begin{equation}
- \overline V_{P,0}
- :=(1+q_P)\left[
- 1-\cos\theta_{P,0}^{\max}
- +\frac{B_{\beta,0}^2}{2k_I}\right],
- \qquad
- V_{P,\infty}:=\left(\frac{\Upsilon_P}{\lambda_{0,P}}\right)^2,
+Let
+\begin{align}
+ \bar V_{P,0}
+ &:=(1+q_P)\left[
+ 1-\cos\theta_{P,0}^{\max}+\frac{B_{\beta,0}^2}{2k_I}\right],\\
+ V_{P,\infty}&:=\left(\frac{\Upsilon_P}{\lambda_{0,P}}\right)^2,\\
+ V_{P,\star}&:=(1-q_P)(1-\cos\theta_\star).
  \label{eq:semiglobal-proxy-initial-envelope}
-\end{equation}
-and define the chart-energy margin
-\begin{equation}
- V_{P,\star}:=(1-q_P)(1-\cos\theta_\star).
- \label{eq:semiglobal-proxy-chart-energy}
-\end{equation}
+\end{align}
 If
 \begin{equation}
- \boxed{
- \max\{\overline V_{P,0},V_{P,\infty}\}<V_{P,\star},}
+ \max\{\bar V_{P,0},V_{P,\infty}\}<V_{P,\star},
  \label{eq:semiglobal-proxy-chart-invariance}
 \end{equation}
-then the trajectory remains in the quantitative tilt chart
-$\theta_P<\theta_\star$; its observable bias is bounded explicitly below, and
+then the trajectory remains in the chart and
 \begin{equation}
  \boxed{
- \dot V_P
- \le-\lambda_P V_P+
- \frac{\Upsilon_P^2}{2\lambda_{0,P}}.}
+ \dot V_P\le-\lambda_PV_P
+ +\frac{\Upsilon_P^2}{2\lambda_{0,P}}.}
  \label{eq:semiglobal-proxy-iss-differential}
 \end{equation}
-Hence
+Consequently
 \begin{equation}
  \boxed{
  V_P(t)\le
- \overline V_P(t):=
- e^{-\lambda_P t}\overline V_{P,0}
- +(1-e^{-\lambda_P t})V_{P,\infty}.}
+ e^{-\lambda_Pt}\bar V_{P,0}
+ +(1-e^{-\lambda_Pt})V_{P,\infty}.}
  \label{eq:semiglobal-proxy-iss}
 \end{equation}
-The corresponding explicit tilt and observable-bias bounds are
+and
 \begin{align}
  \theta_P(t)
- &\le
- 2\sin^{-1}\!\sqrt{
-  \frac{\overline V_P(t)}{2(1-q_P)}},\\
- \|\widetilde{\vct\beta}_{\perp}(t)\|
- &\le
- \sqrt{\frac{2k_I\overline V_P(t)}{1-q_P}}.
+ &\le2\sin^{-1}\!\sqrt{\frac{V_P(t)}{2(1-q_P)}},\\
+ \|\widetilde{\vct\beta}_\perp(t)\|
+ &\le\sqrt{\frac{2k_IV_P(t)}{1-q_P}}.
  \label{eq:semiglobal-proxy-explicit-bounds}
 \end{align}
-A convenient additive ISS form is
-\begin{equation}
- \boxed{
- \theta_P(t)
- \le\underbrace{
- \frac{\pi e^{-\lambda_Pt/2}}
-      {\sqrt{2(1-q_P)}}\sqrt{\overline V_{P,0}}
- }_{\beta_P(\theta_{P,0}^{\max},B_{\beta,0},t)}
- +\underbrace{
- \frac{\pi}{\sqrt{2(1-q_P)}}
- \frac{\Upsilon_P}{\lambda_{0,P}}
- }_{\gamma_P(\overline w_\omega,\overline w_b)}.}
- \label{eq:semiglobal-proxy-beta-gamma}
-\end{equation}
 \end{theorem}
 
 \begin{proof}
-The source sign convention in Eq.~\eqref{eq:proxy-mahony} gives, in the reduced
-tangent frame and with $\vct w_\omega=\vct w_b=0$,
-\begin{equation}
- \dot U_P
- =-\widetilde{\vct\beta}_{\perp}^{\top}\vct e_P
-  -k_P\|\vct e_P\|^2,
- \qquad
- \mathsf D_t\widetilde{\vct\beta}_{\perp}=k_I\vct e_P.
-\end{equation}
-These terms cancel in $\dot W_P$, proving
-Eq.~\eqref{eq:semiglobal-proxy-energy-decay}.  On
-$c_P\ge c_\star>0$,
-\begin{equation}
- \frac{d}{dt}
- (\vct e_P^\top\widetilde{\vct\beta}_{\perp})
- =-c_P\|\widetilde{\vct\beta}_{\perp}\|^2
-  -c_Pk_P\vct e_P^\top\widetilde{\vct\beta}_{\perp}
-  +k_I\|\vct e_P\|^2.
- \label{eq:semiglobal-proxy-cross-derivative}
-\end{equation}
-Young's inequality gives
-\begin{equation}
- \dot V_P
- \le-a_P\|\vct e_P\|^2
- -\frac12\delta_Pc_\star
-  \|\widetilde{\vct\beta}_{\perp}\|^2
- +D_P,
- \label{eq:semiglobal-proxy-dissipation}
-\end{equation}
-where the two perturbation channels satisfy
-\begin{equation}
- |D_P|
- \le
- \|\vct w_\omega\|
-   (\|\vct e_P\|+\delta_P\|\widetilde{\vct\beta}_{\perp}\|)
- +\|\vct w_b\|
-   (k_I^{-1}\|\widetilde{\vct\beta}_{\perp}\|
-     +\delta_P\|\vct e_P\|).
-\end{equation}
-Because $\|\vct e_P\|^2=(1+c_P)U_P$ and
-$|\delta_P\vct e_P^\top\widetilde{\vct\beta}_{\perp}|
-\le q_PW_P$,
-\begin{equation}
- (1-q_P)W_P\le V_P\le(1+q_P)W_P.
- \label{eq:semiglobal-proxy-equivalence}
-\end{equation}
-Equations~\eqref{eq:semiglobal-proxy-dissipation}--
-\eqref{eq:semiglobal-proxy-equivalence} imply
+With zero perturbation,
+$\dot W_P=-k_P\|\vct e_P\|^2$.  On $c_P\ge c_\star$,
+differentiation of the cross term in Eq.~\eqref{eq:semiglobal-proxy-lyapunov}
+and Young inequalities give
 \begin{equation}
  \dot V_P
  \le-\lambda_{0,P}V_P+\Upsilon_P\sqrt{V_P}.
 \end{equation}
-A second Young inequality yields
-Eq.~\eqref{eq:semiglobal-proxy-iss-differential}.  Scalar comparison gives
-Eq.~\eqref{eq:semiglobal-proxy-iss};
-Eq.~\eqref{eq:semiglobal-proxy-chart-invariance} keeps the comparison envelope
-strictly inside the tilt chart because
-$U_P\le V_P/(1-q_P)$.  Finally
-$U_P=2\sin^2(\theta_P/2)$ gives the first bound in
-Eq.~\eqref{eq:semiglobal-proxy-explicit-bounds}, while the bias term in $W_P$
-gives the second.  The additive form uses
-$\theta\le(\pi/\sqrt2)\sqrt{1-\cos\theta}$ and
-$\sqrt{x+y}\le\sqrt x+\sqrt y$.
+The cross term also gives
+$(1-q_P)W_P\le V_P\le(1+q_P)W_P$.
+A final Young inequality gives
+Eq.~\eqref{eq:semiglobal-proxy-iss-differential}, scalar comparison gives
+Eq.~\eqref{eq:semiglobal-proxy-iss}, and the energy identities give the tilt and
+bias bounds.  Condition~\eqref{eq:semiglobal-proxy-chart-invariance} keeps the
+comparison solution strictly inside the selected chart.
 \end{proof}
 
-\paragraph{Almost-global limitation.}
-Theorem~\ref{thm:semiglobal-proxy-explicit} is a computable sufficient
-certificate for the deployed source-startup family, not a replacement for the
-topology of the full Mahony flow.  Disturbance-free trajectories outside this
-hemisphere certificate but outside $\mathcal N_P$ still have the usual
-almost-global convergence property \cite{Mahony2008NonlinearComplementary}.
-However, their entry time into this particular quantitative chart is not
-uniform as the initial condition approaches $\mathcal N_P$.  Such initial sets
-therefore do not receive a fixed-time timeout certificate from this argument.
+The almost-global qualification remains topological: a uniform fixed-time bound
+cannot extend through initial sets approaching $\mathcal N_P$.  The compact
+chart above supplies the quantitative startup family used by the source
+certificate.
 
-\subsection{Quality gate, explicit gate-entry time, and heading gauge}
+\subsection{Quality gate and structured handoff}
 \label{sec:semiglobal-handoff}
 
-The implemented gravity gate uses
-\begin{equation}
- \widehat{\vct s}_P=-\widehat{\vct d}_P,
- \qquad
- \widehat{\vct s}_{\rm meas}
- =\frac{\vct f_{\rm LP}}{\|\vct f_{\rm LP}\|},
-\end{equation}
-and requires
+The implemented gravity gate requires
 \begin{equation}
  \|\widehat{\vct s}_P\times\widehat{\vct s}_{\rm meas}\|
- \le0.075.
+ \le0.075
  \label{eq:semiglobal-sine-gate}
 \end{equation}
-Every accepted handoff also tests
+and also
 \begin{equation}
  \boxed{
- \widehat{\vct s}_P^\top\widehat{\vct s}_{\rm meas}>0,}
+ \widehat{\vct s}_P^\top\widehat{\vct s}_{\rm meas}>0.}
  \label{eq:semiglobal-aligned-branch}
 \end{equation}
-so the sine residual cannot select the antipodal branch.  If $\eta_g$ bounds
-the angular difference between the low-pass measured direction and true rest
-specific force, the observed quality gate gives
+If $\eta_g$ bounds the low-pass measured gravity-direction error, every normal
+accepted handoff satisfies
 \begin{equation}
  \boxed{
  \|\delta\vct\theta_{\perp,H}\|
- \le\overline\theta_{\perp,H}
- :=\sin^{-1}(0.075)+\eta_g.}
+ \le\bar\theta_{\perp,H}:=\sin^{-1}(0.075)+\eta_g.}
  \label{eq:semiglobal-handoff-tilt}
 \end{equation}
 
-The explicit Mahony estimate also gives a calculable sufficient time at which
-the gravity part of that gate must hold.  If
+A sufficient time for the gravity part of the gate follows from the Mahony
+comparison.  Let
 \begin{equation}
  \theta_Q:=\sin^{-1}(0.075)-\eta_g>0,
  \qquad
- V_Q:=2(1-q_P)\sin^2(\theta_Q/2),
+ V_Q:=2(1-q_P)\sin^2(\theta_Q/2).
  \label{eq:semiglobal-quality-target}
 \end{equation}
-and $V_{P,\infty}<V_Q$, define
+If $V_{P,\infty}<V_Q$, define
 \begin{equation}
  \boxed{
  T_Q:=
  \begin{cases}
- 0,&\overline V_{P,0}\le V_Q,\\[1ex]
+ 0,&\bar V_{P,0}\le V_Q,\\[1ex]
  \displaystyle\frac{1}{\lambda_P}
- \log\!\frac{\overline V_{P,0}-V_{P,\infty}}
-              {V_Q-V_{P,\infty}},
- &\overline V_{P,0}>V_Q.
+ \log\!\frac{\bar V_{P,0}-V_{P,\infty}}
+ {V_Q-V_{P,\infty}},&\bar V_{P,0}>V_Q.
  \end{cases}}
  \label{eq:semiglobal-quality-entry-time}
 \end{equation}
-Then $\theta_P(t)\le\theta_Q$ for $t\ge T_Q$, and the proxy-to-low-pass gravity
-angle is at most $\sin^{-1}(0.075)$.  The complete source quality handoff still
-waits for the configured \SI{2}{s} hold, gyro-rate veto, \SI{8}{s} minimum,
-heading availability when required, and tuner readiness; Eq.~\eqref{eq:semiglobal-quality-entry-time}
-quantifies the Mahony part rather than replacing those independent gates.
+The source additionally requires its \SI{2}{s} hold, gyro-rate veto,
+\SI{8}{s} minimum startup, tuner readiness, and a heading gauge when
+full-heading handoff is requested.
 
-For a full-heading handoff, let the accepted magnetic or equivalent reference
-define the adopted heading gauge of Sec.~\ref{sec:iss-heading-gauge}.  Let
-$\eta_m$ bound the internal heading error relative to that adopted gauge,
+For a full-heading handoff, let
 \begin{equation}
- |\delta\psi_{\rm int,H}|\le\eta_m.
+ |\delta\psi_{\rm int,H}|\le\eta_m
  \label{eq:semiglobal-handoff-yaw-internal}
 \end{equation}
-The residual reference bias $b_{\psi,\rm ref}$ is not part of the MEKF capture
-error.  Relative to true north,
+relative to the adopted horizontal gauge.  The residual true-north offset
+$b_{\psi,\mathrm{ref}}$ is excluded by construction from the estimator error
+radius and enters true-north reporting only through
+Eq.~\eqref{eq:iss-true-yaw-error}.  Combine
+Eqs.~\eqref{eq:semiglobal-handoff-tilt}--
+\eqref{eq:semiglobal-handoff-yaw-internal} with finite physical startup bounds
+on $(b_g,v,p,S,a_w,b_a)$ to define the compact source handoff set
 \begin{equation}
- |\delta\psi_{\rm true,H}|
- \le\eta_m+|b_{\psi,\rm ref}|,
- \label{eq:semiglobal-handoff-yaw-true}
-\end{equation}
-but only the first term belongs in the stability radius.  A conservative local
-three-axis gauge-referenced attitude bound is
-\begin{equation}
- \boxed{
- \|\delta\vct\theta_H^{(g)}\|
- \le\overline\theta_H^{(g)}
- :=\overline\theta_{\perp,H}+\eta_m<\pi.}
- \label{eq:semiglobal-handoff-attitude}
-\end{equation}
-The residual true-north offset is therefore excluded by construction from the
-MEKF capture radius.
-
-The proxy does not estimate every MEKF state and its private integral bias is
-not copied by \texttt{goLive()}.  Let the physical startup family independently
-provide
-\begin{align}
- \|\delta\vct b_{g,H}\|&\le B_{g,H},&
- \|\delta\vct S_H\|&\le B_{S,H},\\
- \|\delta\vct a_{w,H}\|&\le B_{aw,H},&
- \|\delta\vct b_{a,H}\|&\le B_{a,H},
- \label{eq:semiglobal-handoff-sensitive-bounds}
-\end{align}
-and
-\begin{equation}
- \|\delta\vct v_H\|\le B_{v,H},
- \qquad
- \|\delta\vct p_H\|\le B_{p,H}.
- \label{eq:semiglobal-handoff-kinematic-bounds}
-\end{equation}
-For compatibility with the block-local notation define
-\begin{align}
- B_{\xi,H}
- &:={\left[
- (\overline\theta_H^{(g)}/s_\theta)^2
- +(B_{g,H}/s_{bg})^2
- +(B_{S,H}/s_S)^2
- +(B_{aw,H}/s_{aw})^2
- +(B_{a,H}/s_{ba})^2\right]^{1/2}},\\
- B_{\ell,H}
- &:={\left[
- (B_{v,H}/s_v)^2+(B_{p,H}/s_p)^2\right]^{1/2}}.
- \label{eq:semiglobal-handoff-block-bounds}
-\end{align}
-
-Let $\Pi_H$ be the compact set of staged handoff tuning/covariance modes and
-$\mathcal H$ the structured gauge-referenced physical-error set above.  In the
-regional metrics of Eq.~\eqref{eq:capture-structured-radii}, define
-\begin{equation}
- \boxed{
- \vct R_H^{\max}:=
- \begin{bmatrix}
- \displaystyle
- \sup_{\pi\in\Pi_H}\sup_{\vct e\in\mathcal H}r_{\xi,H}(\vct e)\\[1ex]
- \displaystyle
- \sup_{\pi\in\Pi_H}\sup_{\vct e\in\mathcal H}r_{\ell,H}(\vct e)
- \end{bmatrix}.}
- \label{eq:semiglobal-handoff-metric-radius}
-\end{equation}
-The normal quality-gated proxy-to-Live interface condition is
-\begin{equation}
- \boxed{
- \vct R_H^{\max}\prec\vct R_C.}
+ \boxed{\mathcal H_{k_H}\subset\mathcal D_{k_H}.}
  \label{eq:semiglobal-capture-entry}
 \end{equation}
+Its optional radius summary is
+\begin{equation}
+ \vct R_H^{\max}:=\mathcal R_{k_H}(\mathcal H_{k_H}),
+ \label{eq:semiglobal-handoff-metric-radius}
+\end{equation}
+but the capture proof propagates $\mathcal H$ itself.
 
-\begin{theorem}[Quantified proxy-to-Live finite capture]
+The source enters Live with the linear block enabled and accelerometer-bias
+learning held.  The private Mahony integral state is not copied to the MEKF.
+The held-bias branch of Theorem~\ref{thm:iss-21-ues} therefore governs the
+initial normal-Live mode, and the later bias release is the bounded mode
+transition included in $\Pi^{\rm src}$.
+
+\begin{theorem}[Quantified proxy-to-Live regional capture]
 \label{thm:semiglobal-proxy-live}
-Fix the explicit compact source-startup family
-$\mathcal K_{\epsilon,B_\beta}$ of
-Eq.~\eqref{eq:semiglobal-proxy-compact} and a compact physical startup family
-satisfying Eqs.~\eqref{eq:semiglobal-proxy-force-bound},
-\eqref{eq:semiglobal-handoff-sensitive-bounds}, and
-\eqref{eq:semiglobal-handoff-kinematic-bounds}.  Assume:
-(i) the source seed and perturbation bounds satisfy
-Eq.~\eqref{eq:semiglobal-proxy-chart-invariance};
-(ii) the gravity-gate target satisfies $V_{P,\infty}<V_Q$, so
-Eq.~\eqref{eq:semiglobal-quality-entry-time} is finite;
-(iii) the source hold/rate gates, tuner readiness, and an adopted
-magnetic/equivalent heading gauge become available in finite time, and
-subsequent full-heading Live windows satisfy either route (a) or (b) of
-Theorem~\ref{thm:iss-21-ues};
-(iv) the resulting gauge-referenced handoff family satisfies
-Eq.~\eqref{eq:semiglobal-capture-entry}; and
-(v) the exact-map regional certificate of
-Theorem~\ref{thm:finite-live-capture}, including its predictable schedule,
-prefix-domain, and no-hard-reset assumptions, holds through the capture
-interval.  Initialize the comparison sequence with
-$\overline{\vct r}^{\,H}_0=\vct R_H^{\max}$ and let $N_H$ be
-Eq.~\eqref{eq:capture-count}.  Then the Mahony contribution to gravity-gate
-entry is bounded explicitly by $T_Q$, the accepted handoff lies in
-$\mathcal C(\vct R_C)$, and there is a finite capture index satisfying
-\begin{equation}
- \boxed{
- k_C-k_H\le\sum_{n=0}^{N_H-1}m_n,
- \qquad
- t_C-t_H\le h_{\max}\sum_{n=0}^{N_H-1}m_n.}
- \label{eq:semiglobal-capture-count}
-\end{equation}
-At $k_C$ the gauge-referenced Live error belongs to $\mathcal B_{k_C}$ and
-\begin{equation}
- \boxed{
- \|\vct r_{k_{C+j}}\|_{\vct w,\infty}
- \le
- \lambda_B^j\|\vct r_{k_C}\|_{\vct w,\infty}
- +\frac{1-\lambda_B^j}{1-\lambda_B}\gamma_B(\overline d).}
- \label{eq:semiglobal-live-bound}
-\end{equation}
+Assume Theorem~\ref{thm:semiglobal-proxy-explicit}, finite completion of the
+source hold/rate/tuner/heading gates, the handoff inclusion
+Eq.~\eqref{eq:semiglobal-capture-entry}, and the direct set conditions of
+Theorem~\ref{thm:finite-live-capture} for
+$X_0=\mathcal H_{k_H}$.  Then the Mahony contribution to normal gravity-gate
+entry is bounded by $T_Q$, every accepted handoff begins inside the proof-safe
+Live domain, and the complete source-realizable Live recursion enters
+$\mathcal B$ after the finite count $N_H$ of Eq.~\eqref{eq:capture-count}.
+Thereafter it satisfies Eq.~\eqref{eq:capture-practical-iss}; Gaussian Live
+noise is covered only when the separate drift condition of
+Theorem~\ref{thm:capture-stochastic-live} is verified.
 \end{theorem}
 
 \begin{proof}
-Theorem~\ref{thm:semiglobal-proxy-explicit} supplies calculable tilt and
-observable-bias envelopes and Eq.~\eqref{eq:semiglobal-quality-entry-time}
-supplies a calculable sufficient gravity-gate entry time.  Once the independent
-source gates in assumption (iii) also hold, Eqs.~\eqref{eq:semiglobal-handoff-tilt}--
-\eqref{eq:semiglobal-handoff-kinematic-bounds} place the initialized,
-gauge-referenced MEKF error in $\mathcal H$.  The residual true-north offset is
-excluded by construction.  Equation~\eqref{eq:semiglobal-capture-entry} places
-that family in the outer capture set.  The monotone exact comparison envelopes
-of Theorem~\ref{thm:finite-live-capture} then give the finite sample/time bound
-and subsequent practical-ISS estimate.
+The startup theorem supplies the gravity-direction and observable gyro-bias
+envelopes.  The source gates and independent physical startup bounds define
+$\mathcal H$.  Equation~\eqref{eq:semiglobal-capture-entry} places that exact
+family in the safe Live domain.  Theorem~\ref{thm:finite-live-capture} then
+propagates the complete source-shaped set through the held-bias and, when
+reached, active-bias modes until inner-set capture.
 \end{proof}
 
-\subsection{Analytical \SI{150}{s} timeout handoff envelope}
+\subsection{Timeout handoff}
 \label{sec:semiglobal-timeout}
 
-The source timeout is not merely the configured proxy number.  It computes
+The source timeout is
 \begin{equation}
- T_T:=\max\{T_{\rm proxy},T_{\rm mag,deadline}\},
- \qquad
- T_{\rm mag,deadline}
- =T_{\rm mag,settle}+2\max(T_{\rm mag,win},1\,\mathrm{s})
-  +T_{\rm mag,fallback}.
+ T_{\rm to}=\max\{T_{\rm proxy},T_{\rm mag-deadline}\}.
  \label{eq:semiglobal-timeout-source-time}
 \end{equation}
-At the defaults,
-$T_{\rm proxy}=\SI{150}{s}$,
-$T_{\rm mag,settle}=0$,
-$T_{\rm mag,win}=\SI{15}{s}$, and
-$T_{\rm mag,fallback}=\SI{30}{s}$, so
+With the deployed defaults $T_{\rm proxy}=150\,$s and
+$T_{\rm mag-deadline}=60\,$s,
 \begin{equation}
- \boxed{T_T=\max(150,60)\ \mathrm{s}=\SI{150}{s}.}
+ \boxed{T_{\rm to}=\SI{150}{s}.}
  \label{eq:semiglobal-timeout-150}
 \end{equation}
-If the first valid accelerometer sample seeds the proxy at $t_{P,0}>0$, replace
-$T_T$ below by the actual available Mahony evolution time
-$T_{P,T}=T_T-t_{P,0}$.  For the normal valid-from-start sensor family,
-$T_{P,T}=\SI{150}{s}$ to one sample interval.
-
-Applying Eq.~\eqref{eq:semiglobal-proxy-iss} at the timeout gives
+Evaluate the comparison solution at this time,
 \begin{equation}
- \boxed{
- \overline V_{P,T}
- =e^{-\lambda_P T_{P,T}}\overline V_{P,0}
- +(1-e^{-\lambda_P T_{P,T}})V_{P,\infty}.}
+ \bar V_{P,T}:=
+ e^{-\lambda_PT_{\rm to}}\bar V_{P,0}
+ +(1-e^{-\lambda_PT_{\rm to}})V_{P,\infty},
  \label{eq:semiglobal-timeout-energy}
 \end{equation}
-Thus the timeout tilt and proxy observable-bias bounds are
-\begin{align}
- \boxed{
- \overline\theta_{P,T}
- :=2\sin^{-1}\!\sqrt{
- \frac{\overline V_{P,T}}{2(1-q_P)}}},
- \label{eq:semiglobal-timeout-tilt}\\
- \boxed{
- B_{\beta,T}
- :=\sqrt{\frac{2k_I\overline V_{P,T}}{1-q_P}}.}
- \label{eq:semiglobal-timeout-proxy-bias}
-\end{align}
-These are analytical functions of the source gains, source seed bound, compact
-chart margin, and physical disturbance bounds; they are not externally assumed
-``timeout attitude'' constants.
-
-The implementation still requires the aligned branch
-Eq.~\eqref{eq:semiglobal-aligned-branch} at timeout, but it deliberately does
-not require the 0.075 residual magnitude.  More importantly, its
-\texttt{ready\_by\_timeout} expression does not require
-\texttt{north\_ready} or tuner readiness.  Therefore the timeout theorem must
-split the source branches.
-
-\paragraph{Gauged full-heading timeout.}
-Suppose \texttt{pending\_yaw\_abs\_rad\_} is finite at handoff and let
-$\eta_{m,T}$ bound its internal heading error relative to the adopted gauge.
-Then
+which yields
 \begin{equation}
- \overline\theta_{H,T}^{(g)}
- :=\overline\theta_{P,T}+\eta_{m,T}<\pi
- \label{eq:semiglobal-timeout-attitude}
+ \boxed{
+ \theta_{P,T}\le
+ 2\sin^{-1}\sqrt{\frac{\bar V_{P,T}}{2(1-q_P)}}.}
+ \label{eq:semiglobal-timeout-tilt}
 \end{equation}
-is a conservative gauge-referenced three-axis attitude envelope.  Let the
-physical timeout family provide
-\begin{align}
- \|\delta\vct b_{g,T}\|&\le B_{g,T},&
- \|\delta\vct S_T\|&\le B_{S,T},\\
- \|\delta\vct a_{w,T}\|&\le B_{aw,T},&
- \|\delta\vct b_{a,T}\|&\le B_{a,T},\\
- \|\delta\vct v_T\|&\le B_{v,T},&
- \|\delta\vct p_T\|&\le B_{p,T}.
- \label{eq:semiglobal-timeout-physical-bounds}
-\end{align}
-The proxy integral-bias bound
-Eq.~\eqref{eq:semiglobal-timeout-proxy-bias} is used to certify proxy tilt but
-is not substituted for $B_{g,T}$ because \texttt{goLive()} copies the proxy
-quaternion, not its private integral state.  Since timeout may bypass tuner
-readiness, let $\Pi_{H,T}$ include every bounded default/partially warmed tuning
-and covariance mode reachable by this source path.
+Together with the physical non-attitude startup bounds, this defines a compact
+timeout handoff family $\mathcal H_T$ when a heading gauge is available, or its
+yaw-orbit image $\mathcal H_T^\perp$ when it is not.
 
-Define the timeout handoff set
+\begin{theorem}[Gauged and ungauged timeout regional entry]
+\label{thm:semiglobal-timeout-live}
+Assume the timeout source branch satisfies the aligned-branch test
+Eq.~\eqref{eq:semiglobal-aligned-branch} and the physical bounds used above.
+
+If a finite heading gauge is available and
 \begin{equation}
- \mathcal H_T:=\left\{\vct e:
- \begin{array}{l}
- \|\delta\vct\theta_T^{(g)}\|\le\overline\theta_{H,T}^{(g)},\\
- \|\delta\vct b_{g,T}\|\le B_{g,T},\
- \|\delta\vct S_T\|\le B_{S,T},\
- \|\delta\vct a_{w,T}\|\le B_{aw,T},\
- \|\delta\vct b_{a,T}\|\le B_{a,T},\\
- \|\delta\vct v_T\|\le B_{v,T},\
- \|\delta\vct p_T\|\le B_{p,T}
- \end{array}\right\}.
- \label{eq:semiglobal-timeout-handoff-set}
-\end{equation}
-A convenient block-norm upper bound is
-\begin{align}
- B_{\xi,T}
- &:={\left[
- (\overline\theta_{H,T}^{(g)}/s_\theta)^2
- +(B_{g,T}/s_{bg})^2
- +(B_{S,T}/s_S)^2
- +(B_{aw,T}/s_{aw})^2
- +(B_{a,T}/s_{ba})^2\right]^{1/2}},\\
- B_{\ell,T}
- &:={\left[
- (B_{v,T}/s_v)^2+(B_{p,T}/s_p)^2\right]^{1/2}}.
- \label{eq:semiglobal-timeout-block-bounds}
-\end{align}
-In the exact regional metrics define
-\begin{equation}
- \boxed{
- \vct R_{H,T}^{\max}:=
- \begin{bmatrix}
- \displaystyle
- \sup_{\pi\in\Pi_{H,T}}\sup_{\vct e\in\mathcal H_T}
- r_{\xi,T}(\vct e)\\[1ex]
- \displaystyle
- \sup_{\pi\in\Pi_{H,T}}\sup_{\vct e\in\mathcal H_T}
- r_{\ell,T}(\vct e)
- \end{bmatrix}.}
- \label{eq:semiglobal-timeout-radius}
-\end{equation}
-The source timeout is admitted to the full-heading regional theorem only when
-\begin{equation}
- \boxed{
- \vct R_{H,T}^{\max}\prec\vct R_C.}
+ \mathcal H_T\subset\mathcal D,
  \label{eq:semiglobal-timeout-capture-entry}
 \end{equation}
+then Theorem~\ref{thm:finite-live-capture} applies directly from
+$X_0=\mathcal H_T$ whenever its source-shaped prefix and finite-entry conditions
+are verified.
 
-\begin{theorem}[Analytical timeout-to-Live handoff]
-\label{thm:semiglobal-timeout-live}
-Assume the explicit Mahony hypotheses of
-Theorem~\ref{thm:semiglobal-proxy-explicit} through $T_{P,T}$, the source aligned
-branch at timeout, a finite adopted heading gauge with error $\eta_{m,T}$, the
-physical bounds Eq.~\eqref{eq:semiglobal-timeout-physical-bounds}, a compact
-reachable mode family $\Pi_{H,T}$, and
-Eq.~\eqref{eq:semiglobal-timeout-capture-entry}.  Then the timeout handoff is in
-the outer full-heading capture set.  Starting the exact finite-step comparison
-sequence from $\vct R_{H,T}^{\max}$ gives finite entry into $\mathcal B$ and the
-same post-capture practical-ISS bound as
-Theorem~\ref{thm:finite-live-capture}.
+If no heading gauge is available and
+\begin{equation}
+ \mathcal H_T^\perp\subset\mathcal D^\perp,
+ \label{eq:semiglobal-timeout-quotient-entry}
+\end{equation}
+then Theorem~\ref{thm:hybrid-quotient-capture} gives regional practical
+stability modulo yaw.  A later magnetic acquisition transfers the trajectory to
+the full-heading chain when its exact jump image satisfies the safe-domain and
+recovery condition Eq.~\eqref{eq:hybrid-jump-entry}.
 \end{theorem}
 
-\begin{proof}
-Equation~\eqref{eq:semiglobal-timeout-energy} is the explicit Mahony comparison
-at the actual source timeout, so Eqs.~\eqref{eq:semiglobal-timeout-tilt} and
-\eqref{eq:semiglobal-timeout-attitude} bound the attitude written by
-\texttt{goLive()}.  Combining that with the independent physical and mode bounds
-defines $\mathcal H_T$ and its exact structured radius
-Eq.~\eqref{eq:semiglobal-timeout-radius}.  The strict inclusion
-Eq.~\eqref{eq:semiglobal-timeout-capture-entry} is precisely the interface
-hypothesis of the finite-step regional theorem.
-\end{proof}
-
-\paragraph{Ungauged timeout branch.}
-If \texttt{pending\_yaw\_abs\_rad\_} is not finite, the source still permits the
-timeout handoff with the free-yaw covariance.  That branch does not satisfy a
-full-heading $\vct R_{H,T}^{\max}\prec\vct R_C$ statement because no absolute
-heading gauge exists.  It is covered only by the gravity/yaw-quotient result of
-Theorem~\ref{thm:iss-nomag-quotient} until a heading gauge is established.  A
-later magnetic re-gauge may enter the full-heading regional chain only through
-the explicit jump condition Eq.~\eqref{eq:hybrid-jump-entry}.  This distinction
-matches the source; timeout itself does not manufacture north observability.
-
-\paragraph{Relation to the block-local theorem.}
-Theorem~\ref{thm:iss-block-local} remains an independent analytical statement
-about the local normal-Live equilibrium.  It is not an additional set-inclusion
-test in either the quality-gated or timeout startup chain.
-
-\paragraph{Later reconfiguration.}
-The one-time magnetic refinement and Live tilt re-lock are part of the hybrid
-stability architecture.  Under the jump-family conditions of
-Eqs.~\eqref{eq:hybrid-mag-heading-residual},
-\eqref{eq:hybrid-tilt-force-bound}, and
-\eqref{eq:hybrid-tilt-yaw-chart}, and the jump-entry test
-Eq.~\eqref{eq:hybrid-jump-entry}, Theorem~\ref{thm:hybrid-live-recovery}
-returns either event to the outer capture set and proves safety across repeated
-reconfiguration.  If hard resets cease, finite capture and practical ISS resume
-after the final jump.  Persistent re-locks give recurrent capture only when the
-inter-jump intervals are long enough for the verified recovery sequence.
-
-\paragraph{Stochastic qualification.}
-The deterministic Mahony-to-capture result uses bounded perturbations for the
-startup proxy and bounded deterministic mismatch during finite capture.
-Gaussian Live process and measurement noise are treated by
-Theorem~\ref{thm:capture-stochastic-live} under its separate drift hypothesis.
+The timeout path does not require \texttt{north\_ready}; the two branches above
+therefore preserve the distinction between an adopted heading gauge and the
+gravity-only yaw quotient while using the same source-realizable Live dynamics.

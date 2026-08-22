@@ -192,18 +192,22 @@ marine inertial wave-motion estimation.  The 21-state estimator couples attitude
 and sensor biases with an OU-driven translational chain comprising velocity,
 oscillatory displacement, integral displacement, and latent world acceleration.
 A zero pseudo-measurement on the integral state provides low-frequency
-regularization.  The core model admits analytic discrete-time propagation, and
-the normal full-heading Live recursion is locally input-to-state stable relative
-to an adopted heading gauge under explicit bounded-schedule, windowed
-observability, covariance, and no-reset assumptions; a gravity-only theorem
-gives the corresponding local result modulo the unobservable yaw gauge.  The
-measurement-only startup observer additionally gives an almost-global,
-semiglobal practical attitude-entry result on compact subsets of its desired
-domain.  A quality-gated handoff defines a structured post-initialization error
-set, and a finite-step exact-map theorem gives finite entry into a robust
-regional set whenever its explicit comparison-envelope and handoff conditions
-are verified; numerical instantiation of that regional certificate is separate
-from the analytical implication.
+regularization.  The Live stability analysis follows the implemented source
+modes: while accelerometer-bias learning is held, the active 18-state subsystem
+is uniformly exponentially stable under explicit windowed-information
+conditions with the frozen bias acting as a bounded input; after bias release,
+the active 21-state recursion is uniformly exponentially stable under augmented
+excitation or a finite-correlation-time bias fallback.  The deployed positive OU
+process floor gives analytic translational process excitation.  A structured
+nonlinear Lyapunov argument yields practical ISS in a tube defined by attitude
+geometry and gain-weighted correction rather than a common full-state radius.
+The measurement-only startup observer gives an almost-global, semiglobal
+practical attitude-entry result on compact subsets of its desired domain.  The
+accepted handoff is propagated as its source-shaped compact set by the exact
+nonlinear Live map until it reaches a robust inner regional set.  Gravity-only
+operation has a corresponding regional result modulo yaw, and hard magnetic or
+tilt reconfiguration is composed through explicit jump-followed-by-flow
+recovery conditions.
 Sea-state adaptation is implemented as an exogenous measurement-only layer that
 estimates wave period and band-limited acceleration variance and schedules the
 OU prior and integral regularizer.  A paired ten-seed study spans four
@@ -223,8 +227,6 @@ navigation, thermal-calibration, or embedded resource performance.
 \begin{IEEEkeywords}
 extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, MRU, Ornstein--Uhlenbeck process, Heave Reference System, HRS, heave sensor, wave height estimation, wave measurement buoy\end{IEEEkeywords}
 
-% Part I: core estimator mathematics.  Keep the Kalman model and update chain
-% together before introducing the sea-state scheduler.
 \input{w3d-intro.tex-part}
 \input{w3d-related-work-modern.tex-part}
 \input{w3d-nomenclature.tex-part}
@@ -235,36 +237,23 @@ extended Kalman filter, inertial navigation, IMU, marine Motion Reference Unit, 
 \input{w3d-analytic-coeff.tex-part}
 \input{w3d-kalm-up.tex-part}
 
-% Part II: adaptive design.  Logical order is observable sea state -> OU maps ->
-% pseudo-measurement cadence -> reduced physical-MSE law -> deployed schedule.
 \input{w3d-adaptation-motivation.tex-part}
-% Dimensional cubic base and per-update information-rate normalization.
 \input{w3d-adaptation-cadence-interpretation.tex-part}
-% Reduced physical-MSE derivation and analytical coefficient validation.
 \input{w3d-reduced-mse-envelope.tex-part}
 \input{w3d-reduced-mse-validation.tex-part}
-% Current SpectralMSE schedule, coefficient meaning, and legacy embedded fallback.
 \input{w3d-adaptation-deployed-law.tex-part}
-% Per-axis optimum and the reason the deployed R_S remains isotropic.
 \input{w3d-rs-anisotropy-design.tex-part}
-% Remaining deployed smoothing, staging, cadence, and safety bounds.
 \input{w3d-fus-methods.tex-part}
-% Filtering/Riccati and marine virtual-reference precedent, after the complete
-% adaptation design so it does not interrupt the design argument.
 \input{w3d-adaptation-literature-context.tex-part}
 
-% Part III: initialization, magnetic alignment, local Live stability, then the
-% structured finite-step regional capture and Mahony-to-Live composition.
 \input{w3d-init.tex-part}
 \input{w3d-mag-hard-iron.tex-part}
 \input{w3d-iss-stability.tex-part}
 \input{w3d-semiglobal-stability.tex-part}
 
-% Part IV: experimental protocol and primary comparative results.
 \input{w3d-sim-charts.tex-part}
 \input{w3d-results.tex-part}
 
-% Part V: retained historical ablations and optional full-state investigations.
 \input{w3d-post-results-investigations.tex-part}
 \input{w3d-conclusion-summary.tex-part}
 

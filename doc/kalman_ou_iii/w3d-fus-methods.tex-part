@@ -72,8 +72,8 @@ sample $k+1$.  Thus no physical samples are decimated and
 \vartheta_k=(\tau_k,\sigma_{aw,k},r_{S,k})\in\mathcal F_{k-1},
 \label{eq:adapt-one-sample-staging}
 \end{equation}
-which is the predictability property used in Sec.~\ref{app:iss-tuner}.  At
-\SI{200}{Hz} the staging delay is approximately \SI{5}{ms}.  The separate
+which is the predictability property used in Sec.~\ref{sec:iss-source-family}.
+At \SI{200}{Hz} the staging delay is approximately \SI{5}{ms}.  The separate
 approximately \SI{0.1}{s} timer in the implementation is used for bounded
 latent-$a_w$ covariance maintenance; it is not an adaptation-activation
 cadence.

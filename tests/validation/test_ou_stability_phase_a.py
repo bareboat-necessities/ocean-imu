@@ -1,89 +1,108 @@
-"""Semantic contract for OU--III stability hardening Phase A."""
+"""Semantic/source contract for the mode-aware OU--III Live proof."""
 
+import re
 import unittest
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
+SRC = REPO_ROOT / "src" / "kalman_ou_iii"
 
 
-def _read(name: str) -> str:
-    return (DOC / name).read_text(encoding="utf-8")
+def _read(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def _flat(text: str) -> str:
+    return re.sub(r"\s+", " ", text)
 
 
 class OUIIIStabilityPhaseAContractTests(unittest.TestCase):
-    def test_heading_error_is_relative_to_adopted_gauge(self):
-        proof = _read("w3d-iss-stability.tex-part")
-        startup = _read("w3d-semiglobal-stability.tex-part")
+    def test_live_proof_has_source_modes(self):
+        proof = _read(DOC / "w3d-iss-stability.tex-part")
+        flat = _flat(proof)
         for marker in (
-            r"\label{eq:iss-gauge-reference}",
-            r"\label{eq:iss-tilt-yaw-split}",
-            r"\label{eq:iss-true-yaw-error}",
-            r"b_{\psi,\mathrm{ref}}",
+            r"\label{eq:iss-held-state}",
+            r"\label{eq:iss-active-state}",
+            r"\label{eq:iss-held-ues}",
+            r"\label{eq:iss-held-forced}",
+            r"\label{eq:iss-21-ues}",
+            r"\label{thm:iss-21-ues}",
         ):
             self.assertIn(marker, proof)
-        self.assertIn(r"\label{eq:semiglobal-handoff-yaw-internal}", startup)
-        self.assertIn("residual true-north offset", startup)
-        self.assertIn("excluded by construction", startup)
+        self.assertIn("active 18-state", flat)
+        self.assertIn("active 21-state", flat)
+        self.assertIn("frozen accelerometer-bias error", flat)
+        self.assertNotIn("homogeneous full-heading 21-state linearized", flat)
 
-    def test_accelerometer_bias_has_full_pe_observability_route(self):
-        proof = _read("w3d-iss-stability.tex-part")
+    def test_source_reachable_schedule_is_not_cartesian(self):
+        proof = _read(DOC / "w3d-iss-stability.tex-part")
+        flat = _flat(proof)
         for marker in (
-            r"\label{eq:iss-eta-state}",
-            r"\label{eq:iss-eta-gramian}",
-            r"\label{eq:iss-eta-pe}",
-            r"\label{lem:iss-21-uco-fullpe}",
-            r"\delta b_{a,k+1}=\delta b_{a,k}",
+            r"\label{eq:iss-source-ema}",
+            r"\label{eq:iss-source-slew}",
+            r"\Pi^{\rm src}_{k,m}",
         ):
             self.assertIn(marker, proof)
-        self.assertIn("random-walk limit", proof)
-        self.assertIn("finite $\\tau_b$ remains a valid fallback", proof)
+        self.assertIn("source-reachable family", flat)
+        self.assertIn("not an arbitrary Cartesian product", flat)
 
-    def test_vector_information_is_windowed_and_asynchronous(self):
-        proof = _read("w3d-iss-stability.tex-part")
-        self.assertIn(r"\mathcal A_{k,N}", proof)
-        self.assertIn(r"\mathcal M_{k,N}", proof)
-        self.assertIn("They need not coincide", proof)
-        self.assertIn("unequal sensor rates", proof)
-        self.assertNotIn(r"\overline\omega\Delta_{\max}<\frac{\pi}{2}", proof)
-        self.assertNotIn("two accepted accelerometer--magnetometer", proof)
+    def test_deployed_aw_process_floor_closes_translational_process_route(self):
+        proof = _read(DOC / "w3d-iss-stability.tex-part")
+        src = _read(SRC / "SeaStateFusionFilter_OU_III.h")
+        for marker in (
+            r"\label{eq:iss-aw-process-floor}",
+            r"\label{eq:iss-trans-FG}",
+            r"\label{eq:iss-trans-controllability}",
+            r"\label{eq:iss-trans-process-gramian}",
+            r"\label{eq:iss-source-Q-lower}",
+        ):
+            self.assertIn(marker, proof)
+        self.assertIn("std::max(0.05f, band_noise_floor_sigma_())", src)
+        self.assertIn(r"\det[", proof)
+        self.assertIn("=-1", proof)
 
-    def test_s_observability_uses_any_four_usable_updates(self):
-        proof = _read("w3d-iss-stability.tex-part")
-        self.assertIn("four \\emph{usable} $S$", proof)
-        self.assertIn(r"t_3\le T_{S,W}", proof)
-        self.assertIn(r"\Delta_{S,-}", proof)
-        self.assertIn(r"\frac{\Delta_{S,-}^6}{12}", proof)
-        self.assertNotIn("four consecutive $S$", proof)
+    def test_s_observability_credits_spread_firings(self):
+        proof = _read(DOC / "w3d-iss-stability.tex-part")
+        for marker in (
+            r"\label{eq:iss-S-spread-index}",
+            r"q_W\Delta_{S,-}",
+            r"\label{eq:iss-S-smin}",
+            r"\label{lem:iss-axis-uco}",
+        ):
+            self.assertIn(marker, proof)
+        self.assertIn(r"(q_W\Delta_{S,-})^6", proof)
 
-    def test_process_covariance_is_finite_horizon_not_pointwise_full_rank(self):
-        proof = _read("w3d-iss-stability.tex-part")
-        self.assertIn(r"0\preceq\mat Q_k^{\rm eff}\preceq q_+\mat I", proof)
-        self.assertIn(r"\label{eq:iss-process-gramian}", proof)
-        self.assertIn("Individual $\\mat Q_k^{\\rm eff}$ may therefore be singular", proof)
-        self.assertNotIn(r"0<q_-\mat I\preceq\mat Q_k", proof)
+    def test_three_s_route_is_explicitly_conditional(self):
+        proof = _read(DOC / "w3d-iss-stability.tex-part")
+        flat = _flat(proof)
+        for marker in (
+            r"\label{eq:iss-three-S-gramian}",
+            r"\label{lem:iss-three-s-coupled}",
+            r"\mu_a>0",
+        ):
+            self.assertIn(marker, proof)
+        self.assertIn("conditional vector-information bound is verified", flat)
 
-    def test_no_magnetometer_mode_is_a_quotient_theorem(self):
-        proof = _read("w3d-iss-stability.tex-part")
-        startup = _read("w3d-semiglobal-stability.tex-part")
+    def test_bias_hold_matches_source(self):
+        src = _read(SRC / "Kalman3D_Wave_OU_III.h")
+        self.assertIn(
+            "const T phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / tau_b) : T(1);",
+            src,
+        )
+        self.assertIn("if (!use_ba) freeze_acc_bias_rows_(PCt);", src)
+        self.assertIn("if (!use_ba) freeze_acc_bias_rows_(K);", src)
+
+    def test_no_mag_stays_on_yaw_quotient(self):
+        proof = _read(DOC / "w3d-iss-stability.tex-part")
         for marker in (
             r"\label{sec:iss-nomag-quotient}",
             r"\label{eq:iss-nomag-pe}",
             r"\label{thm:iss-nomag-quotient}",
-            r"\label{eq:iss-nomag-ues}",
+            "No convergence of absolute yaw is claimed",
         ):
             self.assertIn(marker, proof)
-        self.assertIn("No convergence of absolute yaw is claimed", proof)
-        self.assertIn(r"\ref{thm:iss-nomag-quotient}", startup)
-
-    def test_full_heading_ues_keeps_fallback_and_relaxed_route(self):
-        proof = _read("w3d-iss-stability.tex-part")
-        self.assertIn(r"\label{thm:iss-21-ues}", proof)
-        self.assertIn("full-PE route", proof)
-        self.assertIn("OU-fallback route", proof)
-        self.assertIn(r"\label{eq:iss-eta6-pe}", proof)
-        self.assertNotIn("finite upper bound on $\\tau_b$ is essential", proof)
 
 
 if __name__ == "__main__":

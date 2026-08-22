@@ -1,4 +1,4 @@
-"""Semantic/source contract for OU--III stability hardening Phase C."""
+"""Semantic/source contract for nonlinear Live and startup composition proofs."""
 
 import unittest
 from pathlib import Path
@@ -13,159 +13,85 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _flat(text: str) -> str:
-    return " ".join(text.split())
-
-
 class OUIIIStabilityPhaseCContractTests(unittest.TestCase):
-    def test_explicit_mahony_lyapunov_replaces_converse_existence(self):
+    def test_nonlinear_remainder_uses_actual_geometric_load(self):
+        proof = _read(DOC / "w3d-block-local-iss.tex-part")
+        for marker in (
+            r"\label{eq:iss-structured-residuals}",
+            r"\label{eq:iss-attitude-correction-load}",
+            r"\label{eq:iss-ba-projection-nonexpansive}",
+            r"\label{eq:iss-nonlinear-load}",
+            r"\label{lem:iss-block-remainder}",
+            r"\label{eq:iss-block-remainder}",
+        ):
+            self.assertIn(marker, proof)
+        self.assertIn("gain-weighted correction", proof)
+        self.assertIn("lever-arm curvature", proof)
+        self.assertIn("nonexpansive", proof)
+        self.assertIn("no direct term proportional", proof.casefold())
+        self.assertNotIn(r"c_\xi\|\vct z_\xi\|^2", proof)
+
+    def test_time_varying_lyapunov_metric_closes_local_iss(self):
+        proof = _read(DOC / "w3d-block-local-iss.tex-part")
+        for marker in (
+            r"\label{eq:iss-converse-P}",
+            r"\label{eq:iss-converse-decrease}",
+            r"\label{eq:iss-structured-lipschitz}",
+            r"\label{eq:iss-block-basin}",
+            r"\label{thm:iss-block-local}",
+        ):
+            self.assertIn(marker, proof)
+
+    def test_explicit_mahony_proxy_bound_is_retained(self):
         proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
         for marker in (
             r"\label{eq:semiglobal-proxy-gains}",
-            r"\label{eq:semiglobal-proxy-reduced-dynamics}",
-            r"\label{eq:semiglobal-proxy-energy}",
-            r"\label{eq:semiglobal-proxy-lyapunov}",
-            r"\label{eq:semiglobal-proxy-delta-condition}",
-            r"\label{eq:semiglobal-proxy-rate}",
-            r"\label{eq:semiglobal-proxy-input-gain}",
-            r"\label{eq:semiglobal-proxy-iss-differential}",
-            r"\label{eq:semiglobal-proxy-iss}",
-            r"\label{eq:semiglobal-proxy-explicit-bounds}",
-            r"\label{eq:semiglobal-proxy-beta-gamma}",
-            r"\label{thm:semiglobal-proxy-explicit}",
-        ):
-            self.assertIn(marker, proof)
-
-        self.assertNotIn("A converse Lyapunov theorem", proof)
-        self.assertNotIn(r"\alpha_{1,\epsilon}", proof)
-        self.assertNotIn(r"\alpha_{3,\epsilon}", proof)
-        self.assertIn(r"\delta_P=\SI{5}{s}", proof)
-        self.assertIn(r"q_P=0.5", proof)
-        self.assertIn(r"a_P=0.025\ \mathrm{s}^{-1}", proof)
-
-    def test_proxy_gain_and_sign_contract_matches_source(self):
-        wrapper = _read(SRC / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h")
-        vertical = _read(SRC / "tuner" / "VerticalAccelComplementary.h")
-        mahony = _read(SRC / "ahrs" / "Mahony_AHRS.h")
-        proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
-
-        self.assertIn("constexpr float STARTUP_PROXY_TWO_KP_DEFAULT = 0.2f;", wrapper)
-        self.assertIn("constexpr float STARTUP_PROXY_TWO_KI_DEFAULT = 0.02f;", wrapper)
-        self.assertIn("STARTUP_PROXY_TWO_KP_DEFAULT,", wrapper)
-        self.assertIn("STARTUP_PROXY_TWO_KI_DEFAULT};", wrapper)
-
-        self.assertIn("ahrs_.reset(-1.0f, -1.0f);", vertical)
-        self.assertIn("ahrs_.init(two_kp_, two_ki_);", vertical)
-        self.assertIn("seed_from_acc_(acc / acc_norm);", vertical)
-        self.assertIn("-acc.x(), -acc.y(), -acc.z(),", vertical)
-
-        for token in (
-            "halfex = (ay * halfvz - az * halfvy);",
-            "halfey = (az * halfvx - ax * halfvz);",
-            "halfez = (ax * halfvy - ay * halfvx);",
-            "integralFBx += twoKi * halfex * delta_t_sec;",
-            "gx += integralFBx;",
-            "gx += twoKp * halfex;",
-        ):
-            self.assertIn(token, mahony)
-
-        self.assertIn(r"k_P=0.1\ \mathrm{s}^{-1}", proof)
-        self.assertIn(r"k_I=0.01\ \mathrm{s}^{-2}", proof)
-        self.assertIn(
-            r"\widetilde{\vct\beta}:=\vct b_g+\vct\beta",
-            proof,
-        )
-
-    def test_source_seed_and_physical_direction_bound_are_explicit(self):
-        proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
-        for marker in (
             r"\label{eq:semiglobal-proxy-force-bound}",
-            r"\label{eq:semiglobal-proxy-direction-error}",
-            r"\label{eq:semiglobal-proxy-source-seed}",
-            r"\label{eq:semiglobal-proxy-disturbance-bounds}",
-            r"\label{eq:semiglobal-proxy-source-disturbance}",
-            r"\overline r_h",
-            r"\overline r_b",
+            r"\label{eq:semiglobal-proxy-reduced-dynamics}",
+            r"\label{eq:semiglobal-proxy-lyapunov}",
+            r"\label{eq:semiglobal-proxy-iss-differential}",
+            r"\label{thm:semiglobal-proxy-explicit}",
+            r"\delta_P=\SI{5}{s}",
+            r"q_P=0.5",
         ):
             self.assertIn(marker, proof)
-        self.assertIn("first valid accelerometer sample", proof)
-        self.assertIn("integral state is zero at reset", proof)
+        self.assertIn("almost-global", proof)
+        self.assertIn("antipodal", proof)
 
-    def test_quantitative_chart_keeps_almost_global_limitation_honest(self):
-        proof = _flat(_read(DOC / "w3d-semiglobal-stability.tex-part"))
-        for marker in (
-            r"\mathcal N_P:=W^s(\mathcal U_P)",
-            r"\label{eq:semiglobal-proxy-chart}",
-            r"\theta_\star:=\frac{\pi}{2}-\epsilon",
-            r"\label{eq:semiglobal-proxy-chart-invariance}",
-            "antipodal",
-            "almost-global",
-            "not a replacement for the topology",
-        ):
-            self.assertIn(marker, proof)
-        self.assertIn(r"\cite{Mahony2008NonlinearComplementary}", proof)
-
-    def test_quality_gate_has_calculable_entry_time(self):
+    def test_quality_gate_enters_safe_domain_not_outer_box(self):
         proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
+        init = _read(DOC / "w3d-init.tex-part")
         for marker in (
-            r"\label{eq:semiglobal-quality-target}",
             r"\label{eq:semiglobal-quality-entry-time}",
-            r"V_{P,\infty}<V_Q",
-            r"\sin^{-1}(0.075)",
-            r"\SI{2}{s}",
-            r"\SI{8}{s}",
+            r"\label{eq:semiglobal-aligned-branch}",
+            r"\label{eq:semiglobal-capture-entry}",
+            r"\mathcal H_{k_H}\subset\mathcal D_{k_H}",
+            r"\label{thm:semiglobal-proxy-live}",
         ):
             self.assertIn(marker, proof)
+        self.assertIn(r"\mathcal H_{k_H}\subset\mathcal D_{k_H}", init)
+        self.assertNotIn(r"R_C", proof)
+        self.assertNotIn(r"R_C", init)
 
-    def test_timeout_envelope_is_analytical_and_source_exact(self):
+    def test_timeout_has_gauged_and_quotient_routes(self):
         proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
-        wrapper = _flat(
-            _read(SRC / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h")
-        )
-
         for marker in (
-            r"\label{eq:semiglobal-timeout-source-time}",
             r"\label{eq:semiglobal-timeout-150}",
             r"\label{eq:semiglobal-timeout-energy}",
             r"\label{eq:semiglobal-timeout-tilt}",
-            r"\label{eq:semiglobal-timeout-proxy-bias}",
-            r"\label{eq:semiglobal-timeout-handoff-set}",
-            r"\label{eq:semiglobal-timeout-radius}",
             r"\label{eq:semiglobal-timeout-capture-entry}",
+            r"\label{eq:semiglobal-timeout-quotient-entry}",
+            r"\ref{thm:hybrid-quotient-capture}",
             r"\label{thm:semiglobal-timeout-live}",
-            r"\vct R_{H,T}^{\max}\prec\vct R_C",
         ):
             self.assertIn(marker, proof)
 
+    def test_proxy_source_gains_and_timeout_still_match_source(self):
+        wrapper = _read(SRC / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h")
+        self.assertIn("constexpr float STARTUP_PROXY_TWO_KP_DEFAULT = 0.2f;", wrapper)
+        self.assertIn("constexpr float STARTUP_PROXY_TWO_KI_DEFAULT = 0.02f;", wrapper)
         self.assertIn("float proxy_startup_timeout_sec = 150.0f;", wrapper)
-        self.assertIn("float proxy_mag_settle_sec = 0.0f;", wrapper)
-        self.assertIn("float mag_min_window_sec = 15.0f;", wrapper)
-        self.assertIn("float mag_tilt_fallback_sec = 30.0f;", wrapper)
-        self.assertIn(
-            "const float timeout_sec = std::max(cfg_.proxy_startup_timeout_sec, mag_acquire_deadline);",
-            wrapper,
-        )
-        self.assertIn(
-            "const bool ready_by_timeout = proxy_ready && (t_ >= timeout_sec) && mag_gravity_aligned_branch_;",
-            wrapper,
-        )
-
-    def test_timeout_does_not_invent_heading_or_copy_proxy_bias(self):
-        proof = _flat(_read(DOC / "w3d-semiglobal-stability.tex-part"))
-        wrapper = _flat(
-            _read(SRC / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h")
-        )
-        self.assertIn("ready_by_timeout", wrapper)
-        self.assertIn("const bool north_ready = !cfg_.with_mag || mag_ref_set_;", wrapper)
-        self.assertIn("const bool have_yaw_gauge = std::isfinite(pending_yaw_abs_rad_);", wrapper)
-        self.assertIn("impl_.goLive(q_seed,", wrapper)
         self.assertIn("/*allow_acc_bias=*/false", wrapper)
-
-        self.assertIn("does not require", proof)
-        self.assertIn(r"\texttt{north\_ready}", proof)
-        self.assertIn("Ungauged timeout branch", proof)
-        self.assertIn(r"\ref{thm:iss-nomag-quotient}", proof)
-        self.assertIn("copies the proxy quaternion, not its private integral state", proof)
 
 
 if __name__ == "__main__":
