@@ -16,10 +16,10 @@ channel ratio C_P/C_V -- fixed.  The analytical value is a grid point, so the
 outcome is reported against it rather than merely near it.
 
 The deterministic eight-record protocol is the screening instrument here, as it
-is for the OU-III retune: default seeds, the trailing 900 s of each replay, one
-realization per record, W3D_COLLECT_ALL_GATES=1 so a breach scores the
-remaining records instead of exiting at the first.  The verdict is taken on the
-paired multi-seed harness (tools/ou2_pseudo_law_compare.py).
+is for the other OU sweep utilities: default seeds, the trailing 900 s of each
+replay, one realization per record, W3D_COLLECT_ALL_GATES=1 so a breach scores
+the remaining records instead of exiting at the first.  The verdict is taken on
+the paired multi-seed harness (tools/ou2_pseudo_law_compare.py).
 
 Both displacement endpoints are printed, because they do not move together
 under this parameter: the pseudo channels regularize all three axes, but the
@@ -43,7 +43,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ou_rs_amplitude_retune_sweep import PATTERNS, RECORDS, summarize  # noqa: E402
+from ou_sweep_common import PATTERNS, RECORDS, summarize  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BINARY = REPO_ROOT / "tests" / "kalman_ou_ii" / "kalman_ou_ii-sim"
