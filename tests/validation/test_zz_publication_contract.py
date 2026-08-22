@@ -296,8 +296,11 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         self.assertIn(r"1-e^{-2h/\tau_b}", lti)
         self.assertIn(r"\eqref{eq:ba-ou-phi}", analytic)
         self.assertIn(r"\eqref{eq:ba-ou-Qd}", analytic)
-        self.assertIn(r"\phi_{b,k}=e^{-h_k/\tau_b}", stability)
-        self.assertIn(r"\eqref{eq:ba-ou-Qd}", stability)
+        # The stability proof now uses a finite-window transition bound for the
+        # finite-tau_b fallback instead of duplicating the one-step formula.
+        self.assertIn(r"\label{eq:iss-bias-contraction}", stability)
+        self.assertIn(r"\|\Phi_b(k,j)\|", stability)
+        self.assertIn(r"\overline\tau_b", stability)
         self.assertNotIn(r"1-e^{-2h_k/\tau_b}", stability)
 
     def test_reference_point_and_sim_scope_remain_explicit(self):

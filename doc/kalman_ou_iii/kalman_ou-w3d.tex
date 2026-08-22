@@ -193,13 +193,17 @@ and sensor biases with an OU-driven translational chain comprising velocity,
 oscillatory displacement, integral displacement, and latent world acceleration.
 A zero pseudo-measurement on the integral state provides low-frequency
 regularization.  The core model admits analytic discrete-time propagation, and
-the normal Live recursion is locally input-to-state stable under explicit
-bounded-schedule, observability, covariance, and no-reset assumptions.  The
+the normal full-heading Live recursion is locally input-to-state stable relative
+to an adopted heading gauge under explicit bounded-schedule, windowed
+observability, covariance, and no-reset assumptions; a gravity-only theorem
+gives the corresponding local result modulo the unobservable yaw gauge.  The
 measurement-only startup observer additionally gives an almost-global,
-semiglobal practical attitude-capture extension: uniformly on every compact
-startup set contained in its desired almost-global domain, a quality-gated
-handoff enters the certified Live basin under explicit bounded-disturbance and
-handoff conditions.
+semiglobal practical attitude-entry result on compact subsets of its desired
+domain.  A quality-gated handoff defines a structured post-initialization error
+set, and a finite-step exact-map theorem gives finite entry into a robust
+regional set whenever its explicit comparison-envelope and handoff conditions
+are verified; numerical instantiation of that regional certificate is separate
+from the analytical implication.
 Sea-state adaptation is implemented as an exogenous measurement-only layer that
 estimates wave period and band-limited acceleration variance and schedules the
 OU prior and integral regularizer.  A paired ten-seed study spans four

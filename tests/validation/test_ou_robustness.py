@@ -440,8 +440,9 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
             )
             self.assertEqual(path.stat().st_size, metadata["bytes"], name)
         # Schema v2 separates replay-producing code and versioned inputs from
-        # later analysis code. Replay dependencies are enforced byte-for-byte;
-        # analysis provenance belongs to the restatement block.
+        # later analysis code. Source files remain byte-for-byte dependencies;
+        # the one legacy multi-target Makefile record is compared by the exact
+        # replay-producing build projection in the provenance core.
         replay = manifest["replay_provenance"]
         implementation = replay["implementation_files"]
         self.assertIn("tests/kalman_ou_iii/kalman_ou_iii-sim.cpp", implementation)
@@ -449,10 +450,16 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         self.assertIn("tests/kalman_ou_iii/Makefile", implementation)
         for name, metadata in implementation.items():
             path = REPO_ROOT / name
-            self.assertEqual(
-                hashlib.sha256(path.read_bytes()).hexdigest(), metadata["sha256"], name
+            actual = {
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "size_bytes": path.stat().st_size,
+            }
+            self.assertTrue(
+                robustness.evidence_provenance.implementation_record_matches(
+                    name, metadata, actual
+                ),
+                name,
             )
-            self.assertEqual(path.stat().st_size, metadata["size_bytes"], name)
         for name, metadata in replay["input_files"].items():
             path = REPO_ROOT / name
             if not path.is_file():
