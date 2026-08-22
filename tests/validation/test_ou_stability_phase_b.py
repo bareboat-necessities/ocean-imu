@@ -1,5 +1,6 @@
 """Semantic/source contract for direct regional and hybrid recovery proofs."""
 
+import re
 import unittest
 from pathlib import Path
 
@@ -13,9 +14,14 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _flat(text: str) -> str:
+    return re.sub(r"\s+", " ", text)
+
+
 class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
     def test_capture_propagates_actual_handoff_set(self):
         capture = _read(DOC / "w3d-finite-live-capture.tex-part")
+        flat = _flat(capture)
         for marker in (
             r"\label{eq:capture-set-envelope}",
             r"X_0=\mathcal H_{k_H}",
@@ -25,19 +31,21 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
             r"\label{thm:finite-live-capture}",
         ):
             self.assertIn(marker, capture)
-        self.assertIn("propagated set", capture)
+        self.assertIn("actual compact handoff set", flat)
+        self.assertIn("propagates $\\mathcal H$ itself", flat)
         self.assertNotIn(r"\vct R_H\prec\vct R_C", capture)
         self.assertNotIn(r"\vct R_C", capture)
 
     def test_radius_box_is_optional_enclosure(self):
         capture = _read(DOC / "w3d-finite-live-capture.tex-part")
+        flat = _flat(capture)
         for marker in (
             r"\label{eq:capture-structured-radii}",
             r"\label{eq:capture-radius-enclosure}",
-            "optional outer",
-            "need not be attained by the same physical state",
         ):
             self.assertIn(marker, capture)
+        self.assertIn("optional outer approximation", flat)
+        self.assertIn("need not be attained by the same physical state", flat)
 
     def test_certificate_contract_starts_at_exact_go_live_mode(self):
         capture = _read(DOC / "w3d-finite-live-capture.tex-part")
