@@ -64,18 +64,19 @@ the sample applies the accepted accelerometer, magnetometer, and $S$ updates
 and their MEKF reset, followed by the next exact prediction.  This is only a
 phase convention for the same Live recursion.  If $\widetilde\Phi_k$ denotes
 the scaled homogeneous prediction transition, the bounds on $h_k$, $\tau$,
-$\tau_b$, and $\|\widehat\omega\|$ imply uniform bounds on both
-$\widetilde\Phi_k$ and $\widetilde\Phi_k^{-1}$: the rotational block is a
-matrix exponential, the OU factors are strictly positive on the compact
-parameter set, and the integrated kinematic block is triangular with identity
-diagonal blocks.  Therefore the pre-correction and post-correction transition
-products differ only by uniformly bounded endpoint factors
-$\widetilde\Phi_k$ and $\widetilde\Phi_j^{-1}$.  UES is consequently preserved
-under this phase shift, with a changed multiplicative constant and the same
-exponential rate $\rho$.  The convention matters because the exact prediction
-contains the linear chain $v\rightarrow p\rightarrow S$: its effect belongs in
-the homogeneous transition rather than being hidden inside a nonlinear
-remainder.
+$\|\widehat\omega\|$, and either the compact finite-$\tau_b$ family or the
+identity accelerometer-bias transition in the random-walk limit imply uniform
+bounds on both $\widetilde\Phi_k$ and $\widetilde\Phi_k^{-1}$: the rotational
+block is a matrix exponential, the finite-$\tau_b$ OU factors are strictly
+positive on the compact parameter set while the random-walk factor is exactly
+one, and the integrated kinematic block is triangular with identity diagonal
+blocks.  Therefore the pre-correction and post-correction transition products
+differ only by uniformly bounded endpoint factors $\widetilde\Phi_k$ and
+$\widetilde\Phi_j^{-1}$.  UES is consequently preserved under this phase shift,
+with a changed multiplicative constant and the same exponential rate $\rho$.
+The convention matters because the exact prediction contains the linear chain
+$v\rightarrow p\rightarrow S$: its effect belongs in the homogeneous
+transition rather than being hidden inside a nonlinear remainder.
 
 \begin{lemma}[Remainder depends directly only on the sensitive block]
 \label{lem:iss-block-remainder}
