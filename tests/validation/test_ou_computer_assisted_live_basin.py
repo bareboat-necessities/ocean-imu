@@ -1,4 +1,4 @@
-"""Contract tests for the computer-assisted OU-III Live-basin proof."""
+"""Contract tests for the internal OU-III Live-basin interval proof utility."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / "tools" / "ou_live_basin_interval_proof.py"
-DOC = ROOT / "doc" / "kalman_ou_iii" / "w3d-computer-assisted-live-basin.tex-part"
 ARTICLE = ROOT / "doc" / "kalman_ou_iii" / "kalman_ou-w3d.tex"
+BROAD_BOX_TEX = ROOT / "doc" / "kalman_ou_iii" / "w3d-computer-assisted-live-basin.tex-part"
 
 
 class ComputerAssistedLiveBasinProofTests(unittest.TestCase):
@@ -62,29 +62,15 @@ class ComputerAssistedLiveBasinProofTests(unittest.TestCase):
         self.assertGreater(v["rxi_lower"], 0)
         self.assertGreater(v["CH_upper"], 0)
         self.assertGreater(v["riccati_cert_radius_lower"], 0)
-        # The broad-box nonlinear radius is intentionally not advertised as
-        # operationally useful.
+        # This utility remains an internal worst-case diagnostic and is not
+        # wired into the publication stability claim.
         self.assertLess(v["riccati_cert_radius_lower"], Decimal("1e-100"))
 
-    def test_article_states_scope_and_no_simulation_dependency(self):
-        text = DOC.read_text(encoding="utf-8")
-        for marker in (
-            "Computer-Assisted Analytical Closure",
-            r"\label{eq:iss-ca-controllability}",
-            r"\label{eq:iss-ca-detect-left-inverse}",
-            r"\label{eq:iss-ca-lifted-radius}",
-            r"\label{eq:iss-ca-delta-num}",
-            r"\label{eq:iss-ca-chi-margin}",
-            "source-enforced OU standard-deviation floor",
-            "operationally useless",
-            "No reference-sea simulation is needed",
-        ):
-            self.assertIn(marker, text)
-
-    def test_publication_wires_both_constructive_certificate_parts(self):
+    def test_publication_excludes_broad_box_certificate(self):
         text = ARTICLE.read_text(encoding="utf-8")
         self.assertIn(r"\input{w3d-live-basin-certificate.tex-part}", text)
-        self.assertIn(r"\input{w3d-computer-assisted-live-basin.tex-part}", text)
+        self.assertNotIn(r"\input{w3d-computer-assisted-live-basin.tex-part}", text)
+        self.assertFalse(BROAD_BOX_TEX.exists())
 
 
 if __name__ == "__main__":
