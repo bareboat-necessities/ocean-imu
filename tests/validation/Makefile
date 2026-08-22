@@ -13,6 +13,7 @@ build:
 		test_ou_robustness.py \
 		test_ou_roundtrip_transition.py \
 		test_ou_article_ablations.py \
+		test_ou_legacy_law_cleanup.py \
 		test_ou_evidence_contract.py \
 		test_ou_semiglobal_stability.py \
 		test_ou_stability_phase_a.py \
