@@ -1,0 +1,237 @@
+\section{Finite Certified Capture into the Live ISS Tube}
+\label{sec:finite-live-capture}
+
+The local ISS result of Sec.~\ref{sec:iss-block-basin} is an invariance theorem,
+not a startup theorem.  Requiring the first Live sample to lie inside its final
+small nonlinear tube is unnecessarily strong and does not match the deployed
+transient: after the linear block and regularizer are enabled, the estimator may
+ring before covariance coupling and repeated vector and $S=0$ corrections settle
+the error.  The appropriate statement is therefore finite \emph{capture}: the
+handoff must lie in a larger certified region from which the full implemented
+Live recursion reaches the smaller invariant ISS region after a finite lifted
+horizon.  Individual samples, and even short prefixes, need not contract.
+
+\subsection{Riccati metric and exact lifted map}
+
+Let $\vct e_k\in\mathbb R^{21}$ denote the local error at the same normal-Live
+phase used in Sec.~\ref{sec:iss-block-basin}, and let $\mat P_k\succ0$ be the
+corresponding covariance produced by the implemented filter.  With
+$\mat P_k=\mat L_k\mat L_k^\top$, define
+\begin{equation}
+ \|\vct e\|_k:=
+ \left(\vct e^\top\mat P_k^{-1}\vct e\right)^{1/2}
+ =\|\mat L_k^{-1}\vct e\|_2 .
+ \label{eq:capture-riccati-norm}
+\end{equation}
+For a lift of $m\ge1$ samples, write the exact nonlinear error map of the
+implemented recursion as
+\begin{equation}
+ \vct e_{k+m}
+ =\mat\Psi_{k,m}\vct e_k
+  +\vct\varphi_{k,m}(\vct e_k)
+  +\vct\Delta_{k,m}(\vct e_k,\vct d_{k:k+m-1}),
+ \label{eq:capture-lifted-map}
+\end{equation}
+where $\mat\Psi_{k,m}$ is the homogeneous linearized transition,
+$\vct\varphi_{k,m}(0)=0$ and
+$D\vct\varphi_{k,m}(0)=0$, and $\vct\Delta_{k,m}$ collects bounded model and
+measurement disturbances over the lift.  Equation~\eqref{eq:capture-lifted-map}
+uses the actual execution order and the full Kalman correction.  In particular,
+the $S=0$ update retains its attitude and bias rows through cross-covariance;
+no Schmidt, block-only, or gain-truncated approximation is introduced for the
+proof.
+
+Let $\mathcal C_{\rm cap}$ be a compact, principal-chart-safe Live domain and
+let $R_C$ satisfy
+\begin{equation}
+ \{\vct e:\|\vct e\|_k\le R_C\}\subset\mathcal C_{\rm cap}.
+ \label{eq:capture-outer-domain}
+\end{equation}
+The capture certificate consists of uniform bounds over this domain, the
+admissible predictable OU/$R_S$ schedule, and the accepted-update patterns.
+First, the lifted homogeneous map contracts in the Riccati metric,
+\begin{equation}
+ \boxed{
+ \left\|\mat L_{k+m}^{-1}\mat\Psi_{k,m}\mat L_k\right\|_2
+ \le\chi_C<1 .}
+ \label{eq:capture-linear-contraction}
+\end{equation}
+Second, the lifted nonlinear and disturbance terms obey
+\begin{align}
+ \left\|\mat L_{k+m}^{-1}
+ \vct\varphi_{k,m}(\vct e)\right\|_2
+ &\le c_C\|\vct e\|_k^2,
+ \label{eq:capture-nonlinear-bound}\\
+ \left\|\mat L_{k+m}^{-1}
+ \vct\Delta_{k,m}(\vct e,\vct d)\right\|_2
+ &\le g_C\overline d_L,
+ \label{eq:capture-disturbance-bound}
+\end{align}
+for $\|\vct d\|_\infty\le\overline d_L$.  Finally, every prefix
+$j=1,\ldots,m-1$ is verified to remain inside the same chart and measurement
+geometry.  A finite prefix amplification larger than one is permitted.  Thus
+Eq.~\eqref{eq:capture-linear-contraction} is deliberately a lifted condition,
+not a requirement that the first or every Live correction decrease the error.
+
+Taking the norm of Eq.~\eqref{eq:capture-lifted-map} gives the scalar comparison
+\begin{equation}
+ r_{n+1}\le\chi_C r_n+c_Cr_n^2+g_C\overline d_L,
+ \qquad r_n:=\|\vct e_{k+nm}\|_{k+nm}.
+ \label{eq:capture-scalar-recursion}
+\end{equation}
+Define
+\begin{equation}
+ \Delta_C:=(1-\chi_C)^2-4c_Cg_C\overline d_L
+ \label{eq:capture-discriminant}
+\end{equation}
+and, when $\Delta_C>0$,
+\begin{equation}
+ \boxed{
+ R_\pm=
+ \frac{(1-\chi_C)\pm\sqrt{\Delta_C}}{2c_C}.}
+ \label{eq:capture-roots}
+\end{equation}
+
+\begin{theorem}[Finite certified Live capture]
+\label{thm:finite-live-capture}
+Assume Eqs.~\eqref{eq:capture-linear-contraction}--
+\eqref{eq:capture-disturbance-bound} and the certified prefix bounds hold on
+$\mathcal C_{\rm cap}$, with $\Delta_C>0$.  Choose an inner radius $R_B$ and an
+outer capture radius $R_C$ such that
+\begin{equation}
+ \boxed{R_-<R_B<R_C<R_+.}
+ \label{eq:capture-radius-order}
+\end{equation}
+Assume additionally that the Riccati ball
+$\mathcal B_B(k):=\{\vct e:\|\vct e\|_k\le R_B\}$ is contained in the
+block-local ISS entrance set of Theorem~\ref{thm:iss-block-local}.  Then every
+Live trajectory beginning with $\|\vct e_H\|_H\le R_C$ enters
+$\mathcal B_B$ after finitely many lifted intervals and remains in the
+block-local ISS region thereafter.
+
+More precisely, define
+\begin{equation}
+ q_C(r):=(1-\chi_C)r-c_Cr^2-g_C\overline d_L
+ \label{eq:capture-decrease-function}
+\end{equation}
+and
+\begin{equation}
+ \mu_C:=\min\{q_C(R_B),q_C(R_C)\}>0 .
+ \label{eq:capture-mu}
+\end{equation}
+Then capture occurs after no more than
+\begin{equation}
+ \boxed{
+ N_C=\left\lceil\frac{R_C-R_B}{\mu_C}\right\rceil}
+ \label{eq:capture-count}
+\end{equation}
+lifted intervals, hence within
+\begin{equation}
+ T_C\le m h_{\max}N_C .
+ \label{eq:capture-time}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Subtract Eq.~\eqref{eq:capture-scalar-recursion} from $r_n$ to obtain
+\begin{equation}
+ r_n-r_{n+1}\ge q_C(r_n).
+\end{equation}
+The function $q_C$ is a concave quadratic with roots $R_-$ and $R_+$, so it is
+strictly positive on $(R_-,R_+)$.  Before the first entrance into
+$[0,R_B]$, Eq.~\eqref{eq:capture-radius-order} gives
+$R_B\le r_n\le R_C$.  Concavity implies that the minimum of $q_C$ on this
+closed interval occurs at an endpoint, giving
+$r_{n+1}\le r_n-\mu_C$.  Therefore at most
+$\lceil(R_C-R_B)/\mu_C\rceil$ lifted intervals can elapse without entering
+$[0,R_B]$.
+
+For invariance after entrance, let
+$f_C(r)=\chi_Cr+c_Cr^2+g_C\overline d_L$.  This function is increasing for
+$r\ge0$, and $q_C(R_B)>0$ implies
+$f_C(R_B)<R_B$.  Hence $r_n\le R_B$ gives
+$r_{n+1}\le f_C(r_n)\le f_C(R_B)<R_B$.  The prefix certificate keeps all
+intermediate samples inside the chart-safe domain.  By the assumed set
+inclusion, Theorem~\ref{thm:iss-block-local} applies after capture.
+\end{proof}
+
+Inside $\mathcal B_B$, the quadratic term satisfies
+$c_Cr_n^2\le c_CR_Br_n$, and therefore
+\begin{equation}
+ r_{n+1}\le\lambda_B r_n+g_C\overline d_L,
+ \qquad
+ \lambda_B:=\chi_C+c_CR_B<1 .
+ \label{eq:capture-post-bound}
+\end{equation}
+Thus the captured trajectory has the explicit practical exponential bound
+\begin{equation}
+ \boxed{
+ r_{N_C+j}\le
+ \lambda_B^j r_{N_C}
+ +\frac{g_C}{1-\lambda_B}\overline d_L .}
+ \label{eq:capture-practical-iss}
+\end{equation}
+For zero Live disturbance, $R_-=0$ and the post-capture error converges
+exponentially to zero.
+
+\subsection{Operational capture-certificate contract}
+\label{sec:capture-certificate-contract}
+
+A startup certificate must demonstrate a materially larger capture region than
+the inner ISS-entry region; otherwise it merely renames the local-basin test.
+Accordingly define the capture-width ratio
+\begin{equation}
+ \boxed{\Gamma_{\rm cap}:=\frac{R_C}{R_B}.}
+ \label{eq:capture-width-ratio}
+\end{equation}
+The verification declares a minimum separation
+$\Gamma_{\rm req}>1$ \emph{before} evaluating the certificate and must show
+\begin{equation}
+ \boxed{\Gamma_{\rm cap}\ge\Gamma_{\rm req}.}
+ \label{eq:capture-width-requirement}
+\end{equation}
+For the operational startup claim in this work we set the predeclared target
+$\Gamma_{\rm req}=5$.  This factor is not a stability constant and is not used
+to manufacture contraction; it is a reporting requirement that prevents a
+barely enlarged local tube from being presented as a useful capture result.
+If verified arithmetic does not meet it, the paper retains the local theorem
+but does not claim operational startup capture.
+
+The numerical capture certificate must start at the covariance and estimator
+mode produced by the actual \texttt{goLive()} handoff, including the staged OU
+parameters, covariance synchronization, enabled linear block, full $S=0$ gain,
+and the initially held accelerometer-bias update.  It must not insert the
+\SI{120}{s} equilibrium covariance warm-up used by the separate deployed-point
+diagnostic.  The certificate reports at least
+\begin{equation}
+ \boxed{
+ \{R_H^{\max},R_B,R_C,R_-,R_+,\Gamma_{\rm cap},
+   \chi_C,c_C,g_C,\mu_C,N_C,T_C,B_{\rm pre}\},}
+ \label{eq:capture-certificate-outputs}
+\end{equation}
+where $R_H^{\max}$ is the worst Riccati norm of the declared handoff set and
+$B_{\rm pre}$ is the worst verified prefix amplification.  The operational
+pass conditions are
+\begin{equation}
+ \boxed{
+ R_H^{\max}<R_C,
+ \quad R_-<R_B<R_C<R_+,
+ \quad\Gamma_{\rm cap}\ge5,
+ \quad N_C<\infty,}
+ \label{eq:capture-certificate-pass}
+\end{equation}
+together with the chart/measurement prefix conditions and the inclusion of
+$\mathcal B_B$ in the block-local ISS entrance set.
+
+This certificate is intentionally wider than the first-measurement or
+one-step local condition.  It allows $B_{\rm pre}>1$: the post-handoff estimate
+may oscillate or temporarily grow while remaining inside
+$\mathcal C_{\rm cap}$.  What is certified is finite entry into the inner ISS
+tube, not monotone decay from the first Live sample.
+
+The very broad interval certificate of Sec.~\ref{sec:iss-computer-assisted-certificate}
+serves a different purpose.  Its extremely conservative positive radius proves
+existence of a local nonlinear neighborhood over a large source-parameter box;
+it is not used as $R_C$, $R_B$, or the startup handoff test here.  Operational
+capture is established only by the regional certificate above, evaluated from
+the actual handoff family.
