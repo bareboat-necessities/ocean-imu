@@ -1,0 +1,49 @@
+name: Stage Schmidt S pseudo experiment
+
+on:
+  push:
+    branches:
+      - agent/experiment-schmidt-s-pseudomeas
+    paths:
+      - .github/workflows/patch-schmidt-s-experiment.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/experiment-schmidt-s-pseudomeas
+          fetch-depth: 0
+      - name: Apply restricted S gain
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/kalman_ou_iii/Kalman3D_Wave_OU_III.h')
+          text = path.read_text()
+          old = '''    MatrixNX3& K = K_scratch_;\n    gain_from_ldlt3_(PCt, ldlt, K);\n    if constexpr (with_accel_bias) {\n        if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(K);\n    }\n\n    xext.noalias() += K * r;            // State update\n    joseph_update3_(K, S_mat, PCt);     // Covariance update\n\n    // Apply quaternion correction (attitude may get nudged via cross-covariances)\n    applyQuaternionCorrectionFromErrorState();\n'''
+          new = '''    MatrixNX3& K = K_scratch_;\n    gain_from_ldlt3_(PCt, ldlt, K);\n    if constexpr (with_accel_bias) {\n        if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(K);\n    }\n\n    // Schmidt-style restriction for the integral pseudo measurement: S=0 is a\n    // translational regularizer, so freeze the local attitude-error estimate\n    // for this measurement while retaining its covariance cross-couplings.\n    // joseph_update3_ implements the general-gain Joseph form, so it remains\n    // covariance-consistent after these gain rows are constrained.\n    K.template topRows<3>().setZero();\n\n    xext.noalias() += K * r;            // State update\n    joseph_update3_(K, S_mat, PCt);     // General-gain Joseph covariance update\n\n    // The S update cannot inject attitude because the attitude gain rows are zero.\n    applyQuaternionCorrectionFromErrorState();\n'''
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one S pseudo update block, found {text.count(old)}')
+          path.write_text(text.replace(old, new))
+          PY
+          git diff --check
+      - name: Build and run focused regression
+        shell: bash
+        run: |
+          make -C tests/kalman_ou_iii schmidt_s_pseudo-test
+          ./tests/kalman_ou_iii/schmidt_s_pseudo-test
+      - name: Commit experiment implementation
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/patch-schmidt-s-experiment.yml
+          git add -- src/kalman_ou_iii/Kalman3D_Wave_OU_III.h
+          git commit -m 'experiment: freeze attitude in S pseudo update'
+          git push origin HEAD:agent/experiment-schmidt-s-pseudomeas
