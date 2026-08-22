@@ -287,8 +287,8 @@ post-capture lifted errors satisfy
 Thus zero bounded deterministic Live disturbance gives exponential convergence
 after finite capture, while a bounded deterministic mismatch gives the regional
 practical-ISS neighborhood of Theorem~\ref{thm:finite-live-capture}.  Gaussian
-Live process and measurement noise are covered instead by
-Theorem~\ref{thm:capture-stochastic-live}.
+Live process and measurement noise are covered instead, under their separate
+drift hypothesis, by Theorem~\ref{thm:capture-stochastic-live}.
 \end{theorem}
 
 \begin{proof}
@@ -350,7 +350,8 @@ $\mathcal B_k$.
 The deterministic Mahony-to-capture result above uses bounded perturbations for
 the startup proxy and bounded deterministic mismatch during finite capture.
 Gaussian Live process and measurement noise are not assigned an
-infinite-horizon deterministic supremum.  Once the stochastic drift condition
-Eq.~\eqref{eq:capture-stochastic-drift} is verified on the declared Live domain,
-Theorem~\ref{thm:capture-stochastic-live} supplies the corresponding mean-square
-practical bound and finite-horizon probability statement.
+infinite-horizon deterministic supremum.  If the stochastic drift condition
+Eq.~\eqref{eq:capture-stochastic-drift} holds for all post-capture lifted
+indices, Theorem~\ref{thm:capture-stochastic-live} supplies the corresponding
+mean-square practical bound; if it is certified only on a finite horizon, only
+the finite-horizon probability statement is asserted.
