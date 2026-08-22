@@ -1,0 +1,223 @@
+\subsection{Phase F: constructive localized stochastic stability}
+\label{sec:stability-widening-phase-f}
+
+The stochastic theorem in Sec.~\ref{sec:finite-live-capture} intentionally does
+not infer a Gaussian drift inequality from deterministic bounded-input ISS.  A
+samplewise converse metric $P_k$ is also not the right object for this step when
+innovation acceptance is random, because a metric constructed from a complete
+future switching sequence need not be measurable at the current filtration.
+Phase F therefore lifts the proof to the finite contraction window of Phase B
+and uses the ordinary Euclidean norm at those lifted indices.  The resulting
+Lyapunov function is common to every admissible accepted/rejected branch and is
+nonanticipative.
+
+A second distinction is essential.  The Phase-C nonlinear certificate is
+regional, whereas an exact Gaussian increment has unbounded support.  The proof
+therefore first constructs a stochastic drift certificate for an explicitly
+localized noise process whose increments remain inside the same robust tube,
+and then bounds the probability that the true Gaussian process differs from
+that localized process over a finite horizon.  No global Gaussian invariance is
+claimed.
+
+Fix a source mode of constant active dimension and the Phase-B window length
+$N$ for which $\kappa_N<1$.  Let $k_n=k_0+nN$.  For a realized length-$N$
+source branch $\beta_n$ (including accepted/rejected updates and any parameter
+switching allowed by $\Pi^{\rm env}$), let
+$\mathcal F_{n,\beta_n}$ denote the zero-noise nonlinear lifted map obtained by
+holding that same branch sequence fixed while setting the sensor/process
+increments to zero.  Its linearization at the origin is
+$\Psi_{n,\beta_n}$ and Phase B gives
+\begin{equation}
+ \|\Psi_{n,\beta_n}\|\le\kappa_N<1
+ \label{eq:widen-stochastic-map}
+\end{equation}
+for every admissible branch.  On a compact Phase-C tube of Euclidean radius
+$r_{\mathcal T}$ define the finite lifted nonlinear coefficient
+\begin{equation}
+ L_N:=
+ \sup_{n,\beta_n}
+ \sup_{\substack{0<\|z\|\le r_{\mathcal T}\\
+                  \text{all zero-noise prefixes remain in }\mathcal T}}
+ \frac{\|\mathcal F_{n,\beta_n}(z)-
+          \Psi_{n,\beta_n}z\|}{\|z\|^2}<\infty.
+ \label{eq:widen-stochastic-remainder}
+\end{equation}
+Each fixed source branch is smooth on the compact geodesic/measurement family,
+so the bound is finite.  Define the deterministic lifted contraction
+\begin{equation}
+ \boxed{
+ \kappa_c:=\kappa_N+L_N r_{\mathcal T}<1.}
+ \label{eq:widen-stochastic-margin}
+\end{equation}
+Then, pointwise for every admissible branch,
+\begin{equation}
+ \|\mathcal F_{n,\beta_n}(z)\|
+ \le\kappa_c\|z\|.
+ \label{eq:widen-stochastic-zero-noise}
+\end{equation}
+This condition is finite-window and nonanticipative; it is the stochastic
+analogue of choosing a robust inner Phase-C tube.
+
+Choose a physical-sample noise budget $w_*>0$ for which the Phase-C/E robust
+invariance calculation verifies that every length-$N$ source prefix starting
+in the selected inner set remains inside $\mathcal T$ whenever
+$\|w_k\|\le w_*$ for every sample in the block.  Define the radial localization
+\begin{equation}
+ \vct w_k^{\,c}:=
+ \begin{cases}
+ \vct w_k,&\|\vct w_k\|\le w_*,\\
+ w_*\vct w_k/\|\vct w_k\|,&\|\vct w_k\|>w_*.
+ \end{cases}
+ \label{eq:widen-gaussian-noise}
+\end{equation}
+The localized and exact source trajectories are identical until the first raw
+increment with norm exceeding $w_*$.  Localization may destroy conditional zero
+mean, especially after NIS branch selection; the proof below does not use a
+zero-mean cancellation.
+
+For one physical sample on a fixed realized branch, write the difference
+between the localized noisy and branch-matched zero-noise step as $y_k$.  Uniform
+smoothness on the robust tube gives
+\begin{equation}
+ \|y_k\|
+ \le \bar G\|w_k^c\|
+ +c_{zw}r_{\mathcal T}\|w_k^c\|
+ +c_{ww}\|w_k^c\|^2.
+ \label{eq:widen-stochastic-one-step-noise}
+\end{equation}
+Assume the raw pre-gate increments obey the conditional moment bounds
+\begin{equation}
+ \mathbb E[\|w_k\|^2\mid\mathscr F_k]\le s_2,
+ \qquad
+ \mathbb E[\|w_k\|^4\mid\mathscr F_k]\le s_4.
+ \label{eq:widen-stochastic-moments}
+\end{equation}
+Because radial localization can only reduce the norm, the same inequalities
+hold for $w_k^c$.  For conditionally Gaussian pre-gate noise with
+$\Sigma_k\preceq\overline\Sigma$, one may choose
+\begin{equation}
+ \boxed{
+ s_2=\operatorname{tr}\overline\Sigma,
+ \qquad
+ s_4=s_2^2+2\operatorname{tr}(\overline\Sigma^2).}
+ \label{eq:widen-gaussian-moments}
+\end{equation}
+The theorem therefore uses Gaussianity only to evaluate the two raw moments;
+any other noise family with the same bounds is admissible.
+
+Let $L_x<\infty$ be a uniform state-Lipschitz constant of one fixed-branch
+source step on the robust tube.  Define
+\begin{align}
+ g_{\mathcal T}&:=\bar G+c_{zw}r_{\mathcal T},\\
+ \nu_1&:=2g_{\mathcal T}^2s_2+2c_{ww}^2s_4,\\
+ \boxed{
+ \nu_N:=N\nu_1\sum_{r=0}^{N-1}L_x^{2r}.}
+ \label{eq:widen-stochastic-floor}
+\end{align}
+No independence between the $N$ physical samples is required.  Indeed, if
+$Y_n^c$ is the difference between the complete localized noisy lifted map and
+its branch-matched zero-noise map, repeated Lipschitz propagation and
+Cauchy--Schwarz give
+\begin{equation}
+ \mathbb E[\|Y_n^c\|^2\mid\mathscr F_{k_n}]
+ \le\nu_N.
+ \label{eq:widen-lifted-noise-moment}
+\end{equation}
+
+\begin{theorem}[Constructive lifted mean-square drift for localized gated noise]
+\label{thm:widen-stochastic-drift}
+Assume Eqs.~\eqref{eq:widen-stochastic-margin}--
+\eqref{eq:widen-lifted-noise-moment}.  Let
+\begin{equation}
+ V_n:=\|z_{k_n}^c\|^2,
+ \qquad
+ \boxed{
+ \lambda_s:=\frac{1+\kappa_c^2}{2}<1,
+ \qquad
+ \sigma_s^2:=
+ \frac{1+\kappa_c^2}{1-\kappa_c^2}\,\nu_N.}
+ \label{eq:widen-stochastic-coefficients}
+\end{equation}
+Then the localized exact source recursion satisfies
+\begin{equation}
+ \boxed{
+ \mathbb E[V_{n+1}\mid\mathscr F_{k_n}]
+ \le\lambda_s V_n+\sigma_s^2,}
+ \label{eq:widen-stochastic-drift}
+\end{equation}
+so Theorem~\ref{thm:capture-stochastic-live} applies to the localized regional
+process with explicitly constructed $(\lambda_s,\sigma_s^2)$, and
+\begin{equation}
+ \boxed{
+ \mathbb E V_n
+ \le\lambda_s^{n-j}\mathbb E V_j
+ +\frac{1-\lambda_s^{n-j}}{1-\lambda_s}\sigma_s^2.}
+ \label{eq:widen-stochastic-ms}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+For the realized branch sequence write
+$z_{k_{n+1}}^c=\mathcal F_{n,\beta_n}(z_{k_n}^c)+Y_n^c$.  The branch itself may
+be a function of the within-window localized noise; this causes no
+measurability problem because Eq.~\eqref{eq:widen-stochastic-zero-noise} holds
+pointwise for every admissible branch.  For any $0<\kappa_c<1$, choose
+\begin{equation}
+ \varepsilon=\frac{1-\kappa_c^2}{2\kappa_c^2}>0.
+\end{equation}
+The deterministic inequality
+$\|a+b\|^2\le(1+\varepsilon)\|a\|^2+
+(1+\varepsilon^{-1})\|b\|^2$, followed by
+Eqs.~\eqref{eq:widen-stochastic-zero-noise} and
+\eqref{eq:widen-lifted-noise-moment}, gives
+\begin{align}
+ \mathbb E[V_{n+1}\mid\mathscr F_{k_n}]
+ &\le(1+\varepsilon)\kappa_c^2V_n
+ +(1+\varepsilon^{-1})\nu_N\\
+ &=\frac{1+\kappa_c^2}{2}V_n
+ +\frac{1+\kappa_c^2}{1-\kappa_c^2}\nu_N,
+\end{align}
+which is Eq.~\eqref{eq:widen-stochastic-drift}.  Iteration gives
+Eq.~\eqref{eq:widen-stochastic-ms}.  The degenerate case $\kappa_c=0$ follows
+by continuity or directly from the same inequality with any fixed
+$\varepsilon>0$.
+\end{proof}
+
+For the true unbounded process define the raw-noise tail event over $K$ lifted
+blocks,
+\begin{equation}
+ \mathcal E_{K}^c:=
+ \left\{\max_{0\le r<K}\max_{0\le i<N}
+ \|w_{k_{j+r}+i}\|>w_*\right\}.
+\end{equation}
+A union bound followed by Markov's inequality gives the distribution-free
+fourth-moment estimate
+\begin{equation}
+ \boxed{
+ \Pr(\mathcal E_K^c)
+ \le KN\min\!\left\{\frac{s_2}{w_*^2},
+                      \frac{s_4}{w_*^4}\right\}.}
+ \label{eq:widen-stochastic-exit}
+\end{equation}
+On the complementary event $\mathcal E_K$, every raw increment is unchanged by
+localization, so the exact Gaussian/source trajectory and the localized
+trajectory coincide over the entire horizon.  Therefore, with probability at
+least one minus the right-hand side of Eq.~\eqref{eq:widen-stochastic-exit}, the
+true process inherits the same regional trajectory and the same lifted
+mean-square comparison pathwise up to that horizon.  A Gaussian or chi-square
+tail can replace the moment bound when a sharper probability is desired.
+
+\begin{remark}[What Phase F closes]
+\label{rem:widen-stochastic-scope}
+Phase F constructs stochastic drift coefficients from the finite deterministic
+contraction $\kappa_N$, the lifted nonlinear coefficient $L_N$, compact
+one-step Lipschitz/noise constants, and declared second/fourth moments.  The use
+of a common $N$-step Euclidean contraction avoids an anticipative
+switching-dependent Lyapunov metric and does not require a zero conditional
+mean.  It does not turn a regional MEKF into a global Gaussian system, and it
+does not assume that NIS gating preserves zero conditional mean.  For the true
+unbounded Gaussian process the rigorous claim is finite-horizon and
+high-probability unless additional global moment/recovery bounds are proved;
+unbounded-noise excursions are not hidden inside a deterministic bounded-input
+assumption.
+\end{remark}
