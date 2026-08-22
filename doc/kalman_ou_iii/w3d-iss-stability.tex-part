@@ -13,19 +13,39 @@ constant residual accelerometer bias.  A separate gravity-only theorem gives
 stability modulo the unobservable yaw gauge when no absolute heading reference
 is available.
 
-\subsection{Adopted heading gauge and error objective}
+\subsection{Adopted horizontal gauge and error objective}
 \label{sec:iss-heading-gauge}
 
-A learned magnetic reference need not coincide exactly with true north.  Let
-$b_{\psi,\mathrm{ref}}$ denote its residual heading offset and define the
-reference attitude used by the estimator proof as
+A learned magnetic reference need not coincide exactly with true north.  A
+consistent heading gauge is therefore a rotation of the complete horizontal
+world frame, not of attitude alone.  Let
 \begin{equation}
- \mat R_g(t)=\mat R_z\!\left(b_{\psi,\mathrm{ref}}(t)\right)\mat R_{\rm true}(t).
- \label{eq:iss-gauge-reference}
+ \mat Q_\psi(t):=\mat R_z\!\left(b_{\psi,\mathrm{ref}}(t)\right)
+ \label{eq:iss-gauge-rotation}
 \end{equation}
-The MEKF local attitude error $\delta\vct\theta$ in this section is the error
-relative to $\mat R_g$, not a requirement that the magnetic gauge itself equal
-true north.  Locally decompose
+and define the gauge-referenced physical trajectory by
+\begin{align}
+ \mat R_g(t)&=\mat Q_\psi(t)\mat R_{\rm true}(t),
+ \label{eq:iss-gauge-reference}\\
+ \vct v_g&=\mat Q_\psi\vct v_{\rm true},&
+ \vct p_g&=\mat Q_\psi\vct p_{\rm true},\\
+ \vct S_g&=\mat Q_\psi\vct S_{\rm true},&
+ \vct a_{w,g}&=\mat Q_\psi\vct a_{w,\rm true}.
+ \label{eq:iss-gauge-world-vectors}
+\end{align}
+Body-frame sensor biases are not rotated by this action.  Because
+$\mat Q_\psi\vct g=\vct g$, the accelerometer model is invariant under the
+simultaneous transformation of attitude and world acceleration.  The
+$v\to p\to S$ chain, the isotropic OU drift operator, and the $S=0$
+pseudo-measurement are likewise equivariant.  Thus a constant yaw-reference
+offset defines another representation of the same horizontal physical motion.
+Any non-yaw magnetic-model error (for example residual dip, scale, soft-iron, or
+misalignment error) remains a bounded model disturbance rather than part of
+this symmetry.
+
+All world-frame state errors below are measured relative to the trajectory in
+Eq.~\eqref{eq:iss-gauge-world-vectors}; the local attitude error is measured
+relative to $\mat R_g$.  Locally decompose
 \begin{equation}
  \delta\vct\theta
  =\delta\vct\theta_\perp+\delta\psi_{\rm int}\vct d,
@@ -39,11 +59,14 @@ where $\vct d$ is world down.  The true heading error is therefore
  =\delta\psi_{\rm int}+b_{\psi,\mathrm{ref}}.
  \label{eq:iss-true-yaw-error}
 \end{equation}
-A constant $b_{\psi,\mathrm{ref}}$ changes only the adopted gauge.  A bounded
-slow variation of that offset enters the disturbance channel through its rate.
-Accordingly, disturbance-free convergence below means convergence to the
-adopted heading gauge; it does not claim removal of residual magnetic
-calibration or reference bias.
+A constant $b_{\psi,\mathrm{ref}}$ changes the adopted horizontal gauge but does
+not create a nonzero estimator error relative to that gauge.  If the gauge
+varies slowly, $\dot{\mat Q}_\psi$ contributes bounded forcing to attitude and
+to the gauge-referenced world-vector dynamics; on a compact physical-motion
+family this forcing is bounded by $|\dot b_{\psi,\mathrm{ref}}|$ times the
+corresponding world-vector magnitudes.  Accordingly, disturbance-free
+convergence below means convergence to the adopted horizontal gauge; it does not
+claim removal of residual magnetic calibration or reference bias.
 
 \subsection{Exogenous scheduling and bounded Live family}
 \label{app:iss-tuner}
@@ -370,7 +393,7 @@ and either
        finite-$\tau_b$ fallback Eq.~\eqref{eq:iss-bias-tau-bounds}.
 \end{enumerate}
 Then the homogeneous full-heading 21-state linearized Kalman estimation-error
-transition relative to the adopted heading gauge is uniformly exponentially
+transition relative to the adopted horizontal gauge is uniformly exponentially
 stable: there exist $M\ge1$ and $0<\rho<1$ such that
 \begin{equation}
  \boxed{
@@ -482,10 +505,10 @@ where Theorem~\ref{thm:iss-21-ues} supplies UES and, on a local chart,
  \label{eq:iss-quadratic-remainder}
 \end{equation}
 The disturbance $\vct d_k$ collects bounded model/sensor mismatch, including
-thermal-calibration error, pseudo-measurement model error, and bounded variation
-of the adopted heading-reference bias.  A constant
-$b_{\psi,\mathrm{ref}}$ is part of the reference gauge and therefore does not
-consume the local error radius.
+thermal-calibration error, pseudo-measurement model error, non-yaw magnetic
+model error, and bounded variation of the adopted horizontal gauge.  A constant
+$b_{\psi,\mathrm{ref}}$ is absorbed by the joint attitude/world-vector gauge
+trajectory and therefore does not consume the local error radius.
 
 \begin{theorem}[Local ISS of the gauge-referenced 21-state Live dynamics]
 \label{thm:iss-21-local}
