@@ -88,32 +88,44 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
             self.assertIn(marker, hybrid)
 
     def test_tilt_relock_contract_matches_wrapper_source(self):
-        wrapper = _read(SRC / "SeaStateFusionFilter_OU_III.h")
+        src = _read(SRC / "SeaStateFusionFilter_OU_III.h")
         for token in (
-            "computeEulerAngles(q_bw, roll, pitch, yaw);",
-            "impl_.mekf().initialize_from_acc_preserve_yaw(acc, yaw);",
-            "TILT_RELOCK_THRESHOLD_RAD",
-            "TILT_RELOCK_HOLD_SEC",
-            "TILT_RELOCK_COOLDOWN_SEC",
+            "constexpr float TILT_RESET_DEG = 70.0f;",
+            "constexpr float TILT_RESET_HOLD_SEC = 0.35f;",
+            "constexpr float TILT_RESET_COOLDOWN_SEC = 3.0f;",
+            "mekf_->initialize_from_acc_preserve_yaw(acc);",
+            "tilt_reset_cooldown_sec_ = TILT_RESET_COOLDOWN_SEC;",
         ):
-            self.assertIn(token, wrapper)
+            self.assertIn(token, src)
 
         hybrid = _read(DOC / "w3d-hybrid-stability.tex-part")
-        self.assertIn(r"\label{eq:hybrid-tilt-dwell}", hybrid)
-        self.assertIn(r"t_{\rm cool}=3\ \mathrm{s}", hybrid)
+        self.assertIn(r"T_{\rm cool}=3\ \mathrm{s}", hybrid)
+        self.assertIn("does not itself impose", hybrid)
 
     def test_tilt_relock_contract_matches_mekf_reset_source(self):
-        source = _read(SRC / "Kalman3D_Wave_OU_III.h")
+        src = _read(SRC / "Kalman3D_Wave_OU_III.h")
         for token in (
-            "void initialize_from_acc_preserve_yaw",
-            "initialize_attitude_covariance_from_acc_(acc_mean);",
-            "P_.template block<3, 3>(IDX_TH, IDX_BG).setZero();",
-            "P_.template block<3, 3>(IDX_TH, IDX_V).setZero();",
-            "P_.template block<3, 3>(IDX_TH, IDX_P).setZero();",
-            "P_.template block<3, 3>(IDX_TH, IDX_S).setZero();",
-            "P_.template block<3, 3>(IDX_TH, IDX_AW).setZero();",
+            "initialize_from_acc_preserve_yaw",
+            "const T yaw_old = std::atan2",
+            "initialize_from_acc(acc_body);",
+            "q_new_bw = q_yaw * q_pitch * q_roll;",
+            "set_quaternion_boat(q_new_bw);",
+            "set_accel_only_attitude_covariance_();",
+            "zero_AL_cross_cov_once_();",
         ):
-            self.assertIn(token, source)
+            self.assertIn(token, src)
+
+        self.assertIn("Pext.template block<3,3>(0,3).setZero();", src)
+        self.assertIn("Pext.template block<3,3>(0, OFF_BA).setZero();", src)
+
+    def test_repeated_reset_claim_is_safety_not_false_convergence(self):
+        hybrid = _flat(_read(DOC / "w3d-hybrid-stability.tex-part")).casefold()
+        self.assertIn("if the hard-jump sequence is finite", hybrid)
+        self.assertIn("if tilt re-locks occur infinitely often", hybrid)
+        self.assertIn("prevents zeno behavior", hybrid)
+        self.assertIn("recurrent capture claim", hybrid)
+        self.assertIn("resets eventually cease", hybrid)
+        self.assertIn("two source magnetic jumps are each one-time events", hybrid)
 
 
 if __name__ == "__main__":
