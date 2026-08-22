@@ -10,14 +10,14 @@
 \providecommand{\OURobustnessRSHalfThreeDDifference}{+0.011}
 \providecommand{\OURobustnessRSHalfThreeDLow}{+0.008}
 \providecommand{\OURobustnessRSHalfThreeDHigh}{+0.013}
-\providecommand{\OURobustnessSigmaHalfPitchDifference}{-0.012}
-\providecommand{\OURobustnessSigmaHalfPitchLow}{-0.046}
-\providecommand{\OURobustnessSigmaHalfPitchHigh}{+0.023}
-\providecommand{\OURobustnessTauSpan}{0.349}
+\providecommand{\OURobustnessSigmaHalfPitchDifference}{-0.011}
+\providecommand{\OURobustnessSigmaHalfPitchLow}{-0.045}
+\providecommand{\OURobustnessSigmaHalfPitchHigh}{+0.024}
+\providecommand{\OURobustnessTauSpan}{0.348}
 \providecommand{\OURobustnessSigmaSpan}{0.026}
-\providecommand{\OURobustnessRSSpan}{0.826}
+\providecommand{\OURobustnessRSSpan}{0.825}
 \providecommand{\OURobustnessCoupledSigmaSpan}{0.756}
-\providecommand{\OURobustnessCoupledTauSpan}{8.423}
+\providecommand{\OURobustnessCoupledTauSpan}{8.419}
 \providecommand{\OURobustnessLowReferenceMean}{4.96}
 \providecommand{\OURobustnessLowStressMean}{16.98}
 \providecommand{\OURobustnessLowStressAbsolute}{0.0085}
@@ -30,5 +30,5 @@
 \providecommand{\OURobustnessRapidDifferenceLow}{+0.07}
 \providecommand{\OURobustnessRapidDifferenceHigh}{+0.28}
 \providecommand{\OURobustnessRapidAdaptationDifference}{-6.03}
-\providecommand{\OURobustnessRapidAdaptationLow}{-6.38}
+\providecommand{\OURobustnessRapidAdaptationLow}{-6.37}
 \providecommand{\OURobustnessRapidAdaptationHigh}{-5.65}
