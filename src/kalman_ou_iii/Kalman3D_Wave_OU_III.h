@@ -2400,10 +2400,17 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyIntegralZero
         if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(K);
     }
 
-    xext.noalias() += K * r;            // State update
-    joseph_update3_(K, S_mat, PCt);     // Covariance update
+    // Schmidt-style restriction for the integral pseudo measurement: S=0 is a
+    // translational regularizer, so freeze the local attitude-error estimate
+    // for this measurement while retaining its covariance cross-couplings.
+    // joseph_update3_ implements the general-gain Joseph form, so it remains
+    // covariance-consistent after these gain rows are constrained.
+    K.template topRows<3>().setZero();
 
-    // Apply quaternion correction (attitude may get nudged via cross-covariances)
+    xext.noalias() += K * r;            // State update
+    joseph_update3_(K, S_mat, PCt);     // General-gain Joseph covariance update
+
+    // The S update cannot inject attitude because the attitude gain rows are zero.
     applyQuaternionCorrectionFromErrorState();
 }
 
