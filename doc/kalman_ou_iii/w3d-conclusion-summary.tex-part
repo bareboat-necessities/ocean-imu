@@ -12,17 +12,17 @@ remainder admits a block-local ISS bound.  The operational startup argument is
 separate: the measurement-only Mahony bootstrap of
 Sec.~\ref{sec:semiglobal-stability} gives an almost-global, semiglobal practical
 attitude-entry result on compact subsets of the desired proxy domain; the
-complete initialized MEKF handoff must lie only inside the structured outer
-capture set of Sec.~\ref{sec:finite-live-capture}.  Verified finite-step
-comparison of the exact nonlinear Live map then permits bounded transient
-growth, proves finite entry into a robustly invariant regional set, and supplies
-a direct practical-ISS bound there for bounded deterministic mismatch.  Gaussian
-Live process and measurement noise are qualified separately by a conditional
-mean-square drift theorem, with an infinite-horizon mean-square conclusion only
-when that drift condition is valid for all lifted indices and finite-horizon
-probability bounds otherwise.  Later magnetic re-gauging and tilt re-lock remain
-separate hard maps unless their post-map states are independently shown to
-re-enter the structured capture set.
+complete initialized MEKF handoff must lie inside the structured outer capture
+set of Sec.~\ref{sec:finite-live-capture}.  Verified finite-step comparison of
+the exact nonlinear Live map permits bounded transient growth, proves finite
+entry into a robustly invariant regional set, and supplies a direct practical-ISS
+bound there for bounded deterministic mismatch.  Gaussian Live process and
+measurement noise are qualified separately by a conditional mean-square drift
+theorem, with an infinite-horizon mean-square conclusion only when that drift
+condition is valid for all lifted indices and finite-horizon probability bounds
+otherwise.  Later magnetic re-gauging and tilt re-lock remain separate hard maps
+whose post-map states must re-enter the structured capture set before the
+regional argument is restarted.
 
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
