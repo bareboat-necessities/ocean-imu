@@ -4,16 +4,15 @@
 \section{Almost-Global Proxy Entry to the Live Capture Region}
 \label{sec:semiglobal-stability}
 
-The preceding results separate two questions that should not be conflated.
-Theorem~\ref{thm:iss-block-local} gives an invariant local Live tube, whereas
-Theorem~\ref{thm:finite-live-capture} gives a larger regional set from which the
-full coupled OU--III recursion reaches that tube in finite time.  Startup
-therefore does not have to place the first MEKF sample directly inside the
-local ISS basin.  Its only task is to place the initialized filter inside the
-outer capture region $\mathcal C_{\rm cap}$.  This ordering matches the deployed
-behavior: the measurement-only Mahony proxy supplies a bounded attitude seed,
-then the newly enabled Live filter is allowed a bounded oscillatory transient
-before entering its invariant neighborhood.
+The preceding results answer different stability questions.  Theorem~\ref{thm:iss-block-local}
+establishes analytically that the normal Live recursion has a local block-ISS
+neighborhood.  Theorem~\ref{thm:finite-live-capture} is the operational result:
+it certifies a larger structured post-handoff region from which the complete
+nonlinear OU--III recursion reaches a robustly invariant regional set in finite
+time and then satisfies a direct practical-ISS bound.  The operational theorem
+does not require its inner set to be embedded in the separately constructed
+block-local entrance condition.  Startup therefore has only to place the
+initialized filter inside the outer regional capture set.
 
 ``Semiglobal'' below means uniformity on any prescribed compact startup set
 contained in the desired proxy domain of attraction.  It does not claim
@@ -24,10 +23,11 @@ system.
 \subsection{Compatibility with the deployed physical-MSE schedule}
 \label{sec:semiglobal-mse-schedule}
 
-The capture and ISS arguments do not require a particular monomial adaptation
-law.  They require the predictable positive compact bounds of
-Eqs.~\eqref{eq:iss-step-tau-bounds}--\eqref{eq:iss-tuning-bounds}.  For the
-deployed SpectralMSE regularizer, the physical-MSE calculation gives
+Neither the regional capture theorem nor the local ISS theorem requires a
+particular monomial adaptation law.  They require the predictable positive
+compact bounds of Eqs.~\eqref{eq:iss-step-tau-bounds}--
+\eqref{eq:iss-tuning-bounds}.  For the deployed SpectralMSE regularizer, the
+physical-MSE calculation gives
 \begin{equation}
  r_{S,\star}
  =C_J q_{\rm eff}^{1/14}\,
@@ -45,10 +45,11 @@ and, away from the cadence clamps where $T_S=c_T\tau$,
 No $\sigma\tau^3$ adaptation relation is used in this proof.  Positive finite
 bounds on $q_{\rm eff}$, $\widehat\sigma_{a,B}$, $T_S$, and $\tau$, together
 with the implementation clamps and convex exponential smoothing, keep the
-applied $(\tau,\sigma_{aw},r_S)$ schedule in a compact set.  The schedule is
-therefore part of the regional parameter family over which the capture
-constants $\chi_C,c_C,g_C$ are verified; it does not alter the logical form of
-the proof.
+applied $(\tau,\sigma_{aw},r_S)$ schedule in a compact predictable family.
+That family is included directly in $\Pi_{k,m}$ in
+Eq.~\eqref{eq:capture-comparison-envelope}; the proof therefore follows the
+actual staged schedule rather than replacing it by one common worst-case
+contraction constant.
 
 \subsection{Reduced Mahony proxy dynamics}
 \label{sec:semiglobal-proxy}
@@ -139,9 +140,9 @@ approaches $\mathcal N_P$.
 \subsection{Quality gate as an entry map to the capture region}
 \label{sec:semiglobal-handoff}
 
-The proxy is not required to converge to the final Live ISS tube.  It need only
-make the subsequent MEKF handoff belong to the larger set certified by
-Theorem~\ref{thm:finite-live-capture}.  The implemented gravity gate uses
+The proxy is not required to converge to the final Live invariant region.  It
+need only make the subsequent MEKF handoff belong to the structured outer set
+of Theorem~\ref{thm:finite-live-capture}.  The implemented gravity gate uses
 \begin{equation}
  \widehat{\vct s}_P=-\widehat{\vct d}_P,
  \qquad
@@ -209,34 +210,40 @@ For compatibility with the block-local notation define
  (B_{v,H}/s_v)^2+(B_{p,H}/s_p)^2\right]^{1/2}}.
  \label{eq:semiglobal-handoff-block-bounds}
 \end{align}
-These are physical handoff bounds, not a claim that the handoff already
-satisfies Theorem~\ref{thm:iss-block-local}.
+These are physical handoff bounds, not a claim that the handoff already lies in
+the local neighborhood of Theorem~\ref{thm:iss-block-local}.
 
 Let $\Pi_H$ denote the compact set of staged handoff tuning/covariance modes and
 let $\mathcal H$ be the structured physical-error set defined by
 Eqs.~\eqref{eq:semiglobal-handoff-attitude}--
-\eqref{eq:semiglobal-handoff-kinematic-bounds}.  Using the covariance
-$\mat P_H(\pi)$ produced by the actual \texttt{goLive()} map, define
+\eqref{eq:semiglobal-handoff-kinematic-bounds}.  In the regional metrics of
+Eq.~\eqref{eq:capture-structured-radii}, define the complete handoff envelope
 \begin{equation}
  \boxed{
- R_H^{\max}:=
- \sup_{\pi\in\Pi_H}\sup_{\vct e\in\mathcal H}
- \left(\vct e^\top\mat P_H(\pi)^{-1}\vct e\right)^{1/2}.}
+ \vct R_H^{\max}:=
+ \begin{bmatrix}
+ \displaystyle
+ \sup_{\pi\in\Pi_H}\sup_{\vct e\in\mathcal H}r_{\xi,H}(\vct e)\\[1ex]
+ \displaystyle
+ \sup_{\pi\in\Pi_H}\sup_{\vct e\in\mathcal H}r_{\ell,H}(\vct e)
+ \end{bmatrix}.}
  \label{eq:semiglobal-handoff-metric-radius}
 \end{equation}
-The proxy-to-Live interface condition is now
+With the fixed dimensionless metrics this reduces directly to the bounds in
+Eq.~\eqref{eq:semiglobal-handoff-block-bounds}.  The proxy-to-Live interface
+condition is
 \begin{equation}
- \boxed{R_H^{\max}<R_C,}
+ \boxed{
+ \vct R_H^{\max}\prec\vct R_C.}
  \label{eq:semiglobal-capture-entry}
 \end{equation}
-where $R_C$ is the \emph{outer} regional radius in
-Theorem~\ref{thm:finite-live-capture}.  Equation~\eqref{eq:semiglobal-capture-entry}
-replaces the earlier requirement that the first Live sample already satisfy the
-block-local invariant-tube inequality.  In particular, the capture certificate
-requires the declared separation $R_C/R_B\ge5$ before an operational startup
-claim is made.
+Equivalently, the normalized margin of
+Eq.~\eqref{eq:capture-handoff-margin} is strictly positive.  No prescribed
+outer/inner radius ratio is required: the meaningful condition is that the
+actual handoff family lies strictly inside the certified outer set and that its
+verified comparison sequence reaches the invariant inner set.
 
-\begin{theorem}[Almost-global/semiglobal proxy-to-Live capture and practical ISS]
+\begin{theorem}[Almost-global/semiglobal proxy-to-Live finite capture]
 \label{thm:semiglobal-proxy-live}
 Fix $\mathcal K_{\epsilon,B_\beta}$ as in
 Eq.~\eqref{eq:semiglobal-proxy-compact} and a compact physical startup family
@@ -253,27 +260,35 @@ noncollinear magnetic or equivalent reference become available in finite time
 uniformly over the startup family;
 (v) the resulting handoff family satisfies
 Eq.~\eqref{eq:semiglobal-capture-entry}; and
-(vi) the regional certificate of Theorem~\ref{thm:finite-live-capture}, including
-its predictable schedule and no-hard-reset assumptions, holds through the
-capture interval.  Then there is a finite uniform handoff index $k_H$ and a
-finite capture index $k_C$ satisfying
+(vi) the exact-map regional certificate of
+Theorem~\ref{thm:finite-live-capture}, including its predictable schedule,
+prefix-domain, and no-hard-reset assumptions, holds through the capture
+interval.  Initialize the certified comparison sequence with
+$\overline{\vct r}^{\,H}_0=\vct R_H^{\max}$ and let $N_H$ be
+Eq.~\eqref{eq:capture-count}.  Then there is a finite uniform handoff index
+$k_H$ and a finite capture index $k_C$ satisfying
 \begin{equation}
  \boxed{
- k_C-k_H\le
- m\left\lceil\frac{R_C-R_B}{\mu_C}\right\rceil .}
+ k_C-k_H\le\sum_{n=0}^{N_H-1}m_n,
+ \qquad
+ t_C-t_H\le h_{\max}\sum_{n=0}^{N_H-1}m_n.}
  \label{eq:semiglobal-capture-count}
 \end{equation}
-For every $k\ge k_C$, Theorem~\ref{thm:iss-block-local} applies and there are
-$C_z\ge1$, $0<\lambda_z<1$, and $\Gamma_z<\infty$ such that
+At $k_C$ the Live error belongs to $\mathcal B_{k_C}$, and subsequent
+post-capture lifted errors satisfy
 \begin{equation}
  \boxed{
- \|\vct z_k\|
- \le C_z\lambda_z^{k-k_C}\|\vct z_{k_C}\|
- +\Gamma_z\sup_{k_C\le i<k}\|\vct d_i\|.}
+ \|\vct r_{k_{C+j}}\|_{\vct w,\infty}
+ \le
+ \lambda_B^j\|\vct r_{k_C}\|_{\vct w,\infty}
+ +\frac{1-\lambda_B^j}{1-\lambda_B}\gamma_B(\overline d).}
  \label{eq:semiglobal-live-bound}
 \end{equation}
-Thus zero Live disturbance gives convergence to zero after finite capture,
-while bounded disturbance gives the usual practical ultimate neighborhood.
+Thus zero bounded deterministic Live disturbance gives exponential convergence
+after finite capture, while a bounded deterministic mismatch gives the regional
+practical-ISS neighborhood of Theorem~\ref{thm:finite-live-capture}.  Gaussian
+Live process and measurement noise are covered instead, under their separate
+drift hypothesis, by Theorem~\ref{thm:capture-stochastic-live}.
 \end{theorem}
 
 \begin{proof}
@@ -282,21 +297,33 @@ the prescribed compact proxy set.  Under assumptions (ii)--(iv), compactness
 gives a finite uniform time at which the gravity, branch, tuner, and heading
 conditions required for a normal handoff are satisfied.  Equations
 \eqref{eq:semiglobal-handoff-attitude}--
-\eqref{eq:semiglobal-handoff-kinematic-bounds} then place the resulting MEKF
-initial condition in $\mathcal H$.  Assumption (v) maps this set into
-$\mathcal C_{\rm cap}$; it does \emph{not} assert entry into the final local ISS
-tube.
+\eqref{eq:semiglobal-handoff-kinematic-bounds} then place the initialized MEKF
+error in $\mathcal H$.  By definition
+Eq.~\eqref{eq:semiglobal-handoff-metric-radius} bounds this complete handoff set
+by $\vct R_H^{\max}$, and assumption (v) places it strictly inside the outer
+regional capture set.  It does not assert direct entry into either the regional
+inner set or the separate block-local ISS neighborhood.
 
-Theorem~\ref{thm:finite-live-capture} now permits the full filter, including the
-coupled $S=0$ correction, to undergo its bounded transient and guarantees entry
-into $\mathcal B_B$ after at most Eq.~\eqref{eq:semiglobal-capture-count} samples.
-By construction $\mathcal B_B$ is contained in the entrance set of
-Theorem~\ref{thm:iss-block-local}, which gives
+Apply the monotone comparison-envelope argument of
+Theorem~\ref{thm:finite-live-capture} beginning from
+$\vct R_H^{\max}$.  Assumption (vi) keeps every prefix inside the proof domain,
+permits any certified early expansion, and by the definition of $N_H$ places
+the error in $\mathcal B_{k_C}$ after the finite sample/time bound
+Eq.~\eqref{eq:semiglobal-capture-count}.  Robust invariance and the direct
+post-capture contraction of that theorem then give
 Eq.~\eqref{eq:semiglobal-live-bound}.  Uniformity holds on the declared compact
 families.  Finally, $\mathcal N_P$ has measure zero, so the attitude-startup
 qualification is almost global while the complete proxy-to-Live statement is
 semiglobal on each prescribed compact physical startup family.
 \end{proof}
+
+\paragraph{Relation to the block-local theorem.}
+Theorem~\ref{thm:iss-block-local} remains an independent analytical statement
+about the local normal-Live equilibrium and explains why a local ISS
+neighborhood exists from the model structure and UES argument.  It is not an
+additional set-inclusion test in the operational startup chain.  Operational
+capture and post-capture practical ISS are established directly by the exact
+regional map in Theorem~\ref{thm:finite-live-capture}.
 
 \paragraph{Finite startup timeout.}
 Almost-global convergence is not uniform as the undesired stable set is
@@ -307,19 +334,24 @@ delayed rather than accepted.  The timeout path does not require the 0.075
 residual and therefore does not inherit
 Eq.~\eqref{eq:semiglobal-handoff-tilt}.  It is covered by the composite theorem
 only when an independent timeout attitude bound defines a handoff set
-$\mathcal H_T$ whose actual post-\texttt{goLive()} metric radius also satisfies
-$R_{H,T}^{\max}<R_C$.  This is deliberately weaker than demanding direct entry
-into the final ISS tube, but it is not an unverified forced-start claim.
+$\mathcal H_T$ whose structured envelope
+$\vct R_{H,T}^{\max}$ also satisfies
+$\vct R_{H,T}^{\max}\prec\vct R_C$.  This is weaker than demanding direct entry
+into the inner regional set, but it is not an unverified forced-start claim.
 
 \paragraph{Later reconfiguration.}
 The refined magnetic re-gauging and the $70^\circ$ tilt re-lock are separate
 hard maps.  After either event, the stability argument may restart from the
-capture theorem whenever the post-map state is independently verified to lie
-inside $\mathcal C_{\rm cap}$.  It need not jump directly into
-$\mathcal B_B$.
+regional capture theorem whenever the post-map state is independently verified
+to lie inside $\mathcal C_k(\vct R_C)$.  It need not jump directly into
+$\mathcal B_k$.
 
 \paragraph{Stochastic qualification.}
-All ISS and capture statements above are deterministic bounded-input results.
-Gaussian process and measurement noise do not possess an almost-sure finite
-infinite-horizon supremum; stochastic versions require mean-square or
-finite-horizon high-probability bounds.
+The deterministic Mahony-to-capture result above uses bounded perturbations for
+the startup proxy and bounded deterministic mismatch during finite capture.
+Gaussian Live process and measurement noise are not assigned an
+infinite-horizon deterministic supremum.  If the stochastic drift condition
+Eq.~\eqref{eq:capture-stochastic-drift} holds for all post-capture lifted
+indices, Theorem~\ref{thm:capture-stochastic-live} supplies the corresponding
+mean-square practical bound; if it is certified only on a finite horizon, only
+the finite-horizon probability statement is asserted.

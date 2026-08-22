@@ -220,15 +220,18 @@ Eq.~\eqref{eq:iss-block-ues} yields
 Eq.~\eqref{eq:iss-block-local-bound}.
 \end{proof}
 
-\begin{remark}[What Phase 1 does and does not remove]
-\label{rem:iss-block-phase1}
+\begin{remark}[Scope of the block-local refinement]
+\label{rem:iss-block-scope}
 The refinement removes $v$ and $p$ from the coordinates whose nonlinear
 remainder must be locally small.  It does \emph{not} certify arbitrarily large
 velocity or position error: their homogeneous transient into $S$ is measured by
 $M_{\xi\ell}$ in Eq.~\eqref{eq:iss-block-basin}.  Nor does it remove $S$ from
-the local block.  A stronger claim would require an additional structural
-change or proof, such as constraining the $S$-to-attitude cross-gain or defining
-a handoff map that resets and decouples the integral channel.  The present
-result is therefore the strongest block separation supported by the deployed
-measurement and reset architecture without changing code.
+the local block.  A stronger local separation would require an additional
+structural change or proof, such as constraining the $S$-to-attitude cross-gain
+or defining a handoff map that resets and decouples the integral channel.
+
+This analytical theorem is independent of the operational regional result of
+Theorem~\ref{thm:finite-live-capture}.  It establishes local ISS from UES and
+the model's quadratic remainder, while the regional theorem analyzes the
+complete nonlinear finite-step map from the initialized handoff set.
 \end{remark}
