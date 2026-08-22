@@ -959,6 +959,22 @@ class Kalman3D_Wave_OU_III {
         }
     }
 
+    /*
+      Schmidt-style restriction: the attitude error state receives no
+      correction from this measurement.
+
+      Applied to the gain only, never to P C^T.  The two are different objects
+      and only the gain is being restricted: the Joseph update still needs the
+      true cross covariance to propagate the effect of the correction that the
+      other states did receive.  Zeroing P C^T as well would additionally
+      assert that the attitude is uncorrelated with the measured state, which
+      is a different (and false) claim -- freezing the mean correction is not
+      the same as deleting the covariance.
+    */
+    EIGEN_STRONG_INLINE void freeze_attitude_rows_(MatrixNX3& M) const {
+        M.template block<3,3>(0, 0).setZero();
+    }
+
     // Steady wind heel model (roll about BODY X)
     // wind_heel_rad_ : current steady heel in radians (hull frame)
     // Internally we work in a virtual "un-heeled" body frame B'
@@ -2400,10 +2416,39 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyIntegralZero
         if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(K);
     }
 
+    /*
+      Restricted (Schmidt-style) gain: E_theta K_S = 0 exactly.
+
+      S=0 is a translational regularizer -- it asserts that the running
+      integral of displacement has zero mean, and it observes S and nothing
+      else.  The ordinary gain nevertheless corrects attitude through the
+      cross covariance,
+          K_{theta S} = P_{theta S} (P_SS + R_S)^{-1},
+      and that indirect path is not free: it makes an integral-channel
+      residual drive an SO(3) injection, which is the dominant nonlinear term
+      in the Live-basin certificate.  Direct attitude observation is the
+      accelerometer's and magnetometer's job and neither is touched here.
+
+      This is a deliberate restricted-gain estimator, not the unconstrained
+      minimum-covariance Kalman update for this measurement.  The covariance
+      update below is therefore the general-gain Joseph form, which
+      joseph_update3_() already implements: it forms
+          P - K C P - (K C P)^T + K (C P C^T + R) K^T,
+      which is exactly (I-KC)P(I-KC)^T + K R K^T for *any* K.  The optimal-gain
+      shortcut P <- (I-KC)P would be wrong once K is no longer optimal.
+    */
+    freeze_attitude_rows_(K);
+
     xext.noalias() += K * r;            // State update
     joseph_update3_(K, S_mat, PCt);     // Covariance update
 
-    // Apply quaternion correction (attitude may get nudged via cross-covariances)
+    // No attitude injection can come from this measurement: the error state's
+    // attitude block is untouched above, so it is still the zero left behind
+    // by the previous update's reset.  The call is kept rather than skipped so
+    // the reset path stays uniform across measurements -- with dtheta = 0 the
+    // quaternion composition is the identity and apply_left_error_reset()
+    // early-returns, so this is an exact no-op on both qref and Pext, while
+    // the accelerometer-bias projection still runs as it does elsewhere.
     applyQuaternionCorrectionFromErrorState();
 }
 
