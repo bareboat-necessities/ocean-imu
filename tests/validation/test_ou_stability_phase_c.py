@@ -19,12 +19,15 @@ class OUIIIStabilityPhaseCContractTests(unittest.TestCase):
         for marker in (
             r"\label{eq:iss-structured-residuals}",
             r"\label{eq:iss-attitude-correction-load}",
+            r"\label{eq:iss-ba-projection-nonexpansive}",
             r"\label{eq:iss-nonlinear-load}",
             r"\label{lem:iss-block-remainder}",
             r"\label{eq:iss-block-remainder}",
         ):
             self.assertIn(marker, proof)
         self.assertIn("gain-weighted correction", proof)
+        self.assertIn("lever-arm curvature", proof)
+        self.assertIn("nonexpansive", proof)
         self.assertIn("no direct term proportional", proof.casefold())
         self.assertNotIn(r"c_\xi\|\vct z_\xi\|^2", proof)
 
