@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -82,21 +83,16 @@ class RoundTripTransitionTests(unittest.TestCase):
         high[:, 1:] = 3.0
 
         result = transition.make_roundtrip_wave(
-            FakeValidation,
-            columns,
-            low,
-            high,
-            seed=11,
-            high_scale=1.0,
+            FakeValidation, columns, low, high, seed=11, high_scale=1.0
         )
-
         np.testing.assert_allclose(result[2, 1:], high[2, 1:], atol=1e-12)
         np.testing.assert_allclose(result[3, 1:], low[3, 1:], atol=1e-12)
         np.testing.assert_allclose(result[4, 1:], low[4, 1:], atol=1e-12)
 
-    def test_scoring_splits_rise_and_fall_instead_of_pooling_them(self):
+    def test_scoring_reports_every_segment_and_both_crossfades(self):
+        segments = transition.roundtrip_segments()
         self.assertEqual(
-            transition.roundtrip_segments(),
+            segments,
             (
                 ("low_start", 300.0, 400.0),
                 ("rise", 400.0, 520.0),
@@ -107,6 +103,20 @@ class RoundTripTransitionTests(unittest.TestCase):
                 ("low_return", 1040.0, 1200.0),
             ),
         )
+        metrics = {}
+        for index, (name, _, _) in enumerate(segments, start=1):
+            for metric in transition.SEGMENT_METRICS:
+                metrics[f"seg_{name}_{metric}"] = float(index)
+        rows = transition.roundtrip_score_rows(metrics, segments)
+        self.assertEqual([row["segment"] for row in rows], [s[0] for s in segments])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "scores.tex"
+            transition.write_roundtrip_score_table(path, rows)
+            text = path.read_text(encoding="utf-8")
+        self.assertIn("Rise crossfade", text)
+        self.assertIn("Fall crossfade", text)
+        self.assertIn(r"\label{tab:ou-roundtrip-scores}", text)
+        self.assertNotIn("one-way", text)
 
     def test_return_must_leave_room_for_unchanged_transition_duration(self):
         with self.assertRaises(ValueError):
