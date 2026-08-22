@@ -4,25 +4,33 @@
 This work develops a three-dimensional quaternion MEKF in which a latent
 Ornstein--Uhlenbeck acceleration prior drives velocity, oscillatory displacement,
 and an integral-displacement state whose zero pseudo-measurement provides
-low-frequency drift control.  Under the bounded geometry, update-gap,
-covariance, finite residual-bias correlation-time, exogenous-schedule, and
-no-reset assumptions of Sec.~\ref{app:iss-stability}, the local homogeneous
-Live error recursion is uniformly exponentially stable and the nonlinear
-remainder admits a block-local ISS bound.  The operational startup argument is
-separate: the measurement-only Mahony bootstrap of
-Sec.~\ref{sec:semiglobal-stability} gives an almost-global, semiglobal practical
-attitude-entry result on compact subsets of the desired proxy domain; the
-complete initialized MEKF handoff must lie inside the structured outer capture
-set of Sec.~\ref{sec:finite-live-capture}.  Verified finite-step comparison of
-the exact nonlinear Live map permits bounded transient growth, proves finite
-entry into a robustly invariant regional set, and supplies a direct practical-ISS
-bound there for bounded deterministic mismatch.  Gaussian Live process and
-measurement noise are qualified separately by a conditional mean-square drift
-theorem, with an infinite-horizon mean-square conclusion only when that drift
-condition is valid for all lifted indices and finite-horizon probability bounds
-otherwise.  Later magnetic re-gauging and tilt re-lock remain separate hard maps
-whose post-map states must re-enter the structured capture set before the
-regional argument is restarted.
+low-frequency drift control.  Under the bounded schedule and measurement
+geometry, four-usable-$S$ window, finite-window vector-excitation,
+finite-horizon process, covariance, and no-reset assumptions of
+Sec.~\ref{app:iss-stability}, the full-heading homogeneous Live error recursion
+is uniformly exponentially stable relative to the adopted heading gauge and the
+nonlinear remainder admits a block-local ISS bound.  The full-PE route observes
+accelerometer bias directly and permits its random-walk limit; finite
+accelerometer-bias correlation time remains only a weaker-excitation fallback.
+Without an absolute heading reference, a separate theorem gives local Live UES
+modulo the yaw gauge rather than claiming true-yaw convergence.  A constant
+residual magnetic-reference offset is therefore a gauge bias, not an estimator
+instability.
+
+The operational startup argument is separate: the measurement-only Mahony
+bootstrap of Sec.~\ref{sec:semiglobal-stability} gives an almost-global,
+semiglobal practical attitude-entry result on compact subsets of the desired
+proxy domain; the complete initialized MEKF handoff must lie inside the
+structured outer capture set of Sec.~\ref{sec:finite-live-capture}.  Verified
+finite-step comparison of the exact nonlinear Live map permits bounded
+transient growth, proves finite entry into a robustly invariant regional set,
+and supplies a direct practical-ISS bound there for bounded deterministic
+mismatch.  Gaussian Live process and measurement noise are qualified separately
+by a conditional mean-square drift theorem, with an infinite-horizon
+mean-square conclusion only when that drift condition is valid for all lifted
+indices and finite-horizon probability bounds otherwise.  Later magnetic
+re-gauging and tilt re-lock remain separate hard maps whose explicit jump-map
+analysis is deferred to the next stability-hardening phase.
 
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
