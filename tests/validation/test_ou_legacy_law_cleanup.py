@@ -58,7 +58,7 @@ class OUIIILegacyLawCleanupTests(unittest.TestCase):
         )
         self.assertIn(r"r_{S,\mathrm{dim}}", deployed)
         self.assertIn(r"\sigma_{aw}\tau^3", deployed)
-        self.assertIn("coordinate-scale reference", deployed)
+        self.assertIn("coordinate-scale statement only", deployed)
         self.assertIn("not an adaptation law", deployed)
 
     def test_retired_publication_fragments_and_study_drivers_are_absent(self):
