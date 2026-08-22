@@ -5,6 +5,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC = REPO_ROOT / "doc" / "kalman_ou_iii"
+OU2_DOC = REPO_ROOT / "doc" / "kalman_ou_ii"
 
 OU2_FORBIDDEN = ("PseudoAdaptationLaw::Empirical",)
 OU3_FORBIDDEN = (
@@ -22,6 +23,28 @@ class OULegacyLawCleanupTests(unittest.TestCase):
                 self.assertNotIn(token, text, path.name)
         self.assertFalse((REPO_ROOT / "tools" / "ou2_pseudo_law_compare.py").exists())
         self.assertFalse((REPO_ROOT / "tools" / "ou2_pseudo_mse_scale_sweep.py").exists())
+
+    def test_ou2_publication_uses_only_deployed_physical_mse(self):
+        paper = (OU2_DOC / "ou2-dual-regularization-mse.tex").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Deployed PhysicalMSE Schedule", paper)
+        self.assertIn(r"\label{eq:deployed-rp}", paper)
+        self.assertIn(r"\label{eq:deployed-rv}", paper)
+        self.assertIn("C_P=0.1116", paper)
+        self.assertIn(r"\frac{C_P}{C_V}=0.4611", paper)
+        for retired in (
+            "PseudoAdaptationLaw::Empirical",
+            "implemented empirical",
+            "Empirical law",
+            "MSE/implemented",
+            "MSE/empirical",
+            "ou2_pseudo_law_compare.py",
+            "ou2_pseudo_mse_scale_sweep.py",
+            r"c_p\sigma_{aw}\tau^2",
+            r"c_v\sigma_{aw}\tau",
+        ):
+            self.assertNotIn(retired, paper)
 
     def test_ou3_tests_use_only_spectral_mse(self):
         for path in (REPO_ROOT / "tests" / "kalman_ou_iii").glob("*-test.cpp"):
