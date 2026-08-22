@@ -58,43 +58,84 @@ def _assert_publication_evidence_matches(testcase, result_path, doc_path):
     )
 
 
-def _robustness_manuscript_copies_match_generated_evidence(self):
-    publication_result = self.RESULTS / "ou_robustness_publication.tex"
-    publication_doc = self.DOC / "w3d-ou-robustness-results-generated.tex-part"
-    _assert_publication_evidence_matches(self, publication_result, publication_doc)
-
-    # Machine-consumed macros and plots are still exact generated artifacts.
-    for result_name, doc_name in (
-        ("ou_robustness_macros.tex", "w3d-ou-robustness-macros-generated.tex-part"),
-        ("ou_robustness_sensitivity.svg", "ou_robustness_sensitivity.svg"),
-        ("ou_robustness_stress.svg", "ou_robustness_stress.svg"),
+def _table_block_by_label(text, label):
+    marker = rf"\label{{{label}}}"
+    for block in re.findall(
+        r"\\begin\{table\*\}.*?\\end\{table\*\}", text, flags=re.S
     ):
-        self.assertEqual(
-            (self.RESULTS / result_name).read_bytes(),
-            (self.DOC / doc_name).read_bytes(),
-            doc_name,
+        if marker in block:
+            return block
+    raise AssertionError(f"table not found: {label}")
+
+
+def _macro_definitions(text):
+    return dict(
+        re.findall(
+            r"\\providecommand\{\\(OURobustness[A-Za-z]+)\}\{([^}]*)\}", text
         )
+    )
+
+
+def _robustness_manuscript_copies_match_generated_evidence(self):
+    """Publication may retain only the law-independent degradation subset."""
+    archived_publication = (
+        self.RESULTS / "ou_robustness_publication.tex"
+    ).read_text(encoding="utf-8")
+    publication_doc = (
+        self.DOC / "w3d-ou-robustness-results-generated.tex-part"
+    ).read_text(encoding="utf-8")
+
+    archived_stress = _table_block_by_label(
+        archived_publication, "tab:ou_robustness_stress"
+    )
+    doc_stress = _table_block_by_label(
+        publication_doc, "tab:ou_robustness_stress"
+    )
+    self.assertEqual(
+        _publication_evidence_signature(archived_stress),
+        _publication_evidence_signature(doc_stress),
+        "degradation table payload differs from committed robustness evidence",
+    )
+    self.assertNotIn("tab:ou_robustness_sensitivity", publication_doc)
+
+    archived_macros = _macro_definitions(
+        (self.RESULTS / "ou_robustness_macros.tex").read_text(encoding="utf-8")
+    )
+    doc_macros = _macro_definitions(
+        (self.DOC / "w3d-ou-robustness-macros-generated.tex-part").read_text(
+            encoding="utf-8"
+        )
+    )
+    self.assertTrue(doc_macros)
+    for name, value in doc_macros.items():
+        self.assertIn(name, archived_macros)
+        self.assertEqual(value, archived_macros[name], name)
+    for retired in (
+        "OURobustnessWorstParameter",
+        "OURobustnessWorstScale",
+        "OURobustnessWorstMean",
+        "OURobustnessTauSpan",
+        "OURobustnessSigmaSpan",
+        "OURobustnessRSSpan",
+        "OURobustnessCoupledSigmaSpan",
+        "OURobustnessCoupledTauSpan",
+    ):
+        self.assertNotIn(retired, doc_macros)
+
+    self.assertEqual(
+        (self.RESULTS / "ou_robustness_stress.svg").read_bytes(),
+        (self.DOC / "ou_robustness_stress.svg").read_bytes(),
+        "ou_robustness_stress.svg",
+    )
+    self.assertFalse((self.DOC / "ou_robustness_sensitivity.svg").exists())
 
     source = (self.DOC / "w3d-ou-robustness.tex-part").read_text(encoding="utf-8")
     normalized = re.sub(r"\s+", " ", source).lower()
     self.assertIn("w3d-ou-robustness-results-generated.tex-part", source)
-
-    # Protect the scientific concepts, not one exact English sentence.
-    for concept in (
-        "sweep",
-        "tuning",
-        "coupled",
-        "latent",
-        "acceleration",
-        "gain",
-        "saturation",
-    ):
+    for concept in ("degradation", "low-motion", "rapid", "transition", "spectralmse"):
         self.assertIn(concept, normalized)
-    self.assertTrue(
-        any(term in normalized for term in ("replacement", "replace", "substitute", "adopt")),
-        "sensitivity sweep must remain scoped as non-replacement tuning evidence",
-    )
-    self.assertRegex(source, r"r_S\s*\\to\s*c\^\{?3\}?\s*r_S")
+    for retired in ("legacy", "historical", "coupled", "sweep", "sensitivity"):
+        self.assertNotIn(retired, normalized)
 
 
 _original_full_bundle_test = (
