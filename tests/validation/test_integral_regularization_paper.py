@@ -59,7 +59,8 @@ class IntegralRegularizationPaperTests(unittest.TestCase):
             "filter-internal Riccati covariance and the actual estimation-error covariance",
             self.flat,
         )
-        self.assertIn("Full-estimator experiments remain the validation authority", self.flat)
+        # Do not pin a TeX source line break inside "full-estimator".
+        self.assertIn("experiments remain the validation authority", self.flat)
 
     def test_legacy_numerical_studies_do_not_return(self):
         for token in (
