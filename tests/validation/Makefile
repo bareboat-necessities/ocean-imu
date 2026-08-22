@@ -1,4 +1,4 @@
-.PHONY: build evidence-contract test clean
+.PHONY: build publication-sync evidence-contract test clean
 
 build:
 	python3 -m py_compile \
@@ -25,7 +25,13 @@ build:
 		test_reorg_compat_overrides.py \
 		test_zz_publication_contract.py
 
-evidence-contract: build
+publication-sync: build
+	python3 ../../tools/ou_publication_sync.py \
+		--validation-dir ../../reports/results/ou_validation \
+		--direction-results ../../doc/kalman_ou_iii/w3d-wave-direction-results.tex-part \
+		--deterministic-results ../../doc/kalman_ou_iii/w3d-sim-results-generated.tex-part
+
+evidence-contract: publication-sync
 	python3 ../../tools/ou_evidence_contract.py --auto
 
 test: evidence-contract

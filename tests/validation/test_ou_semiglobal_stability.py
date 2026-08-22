@@ -83,7 +83,10 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, proof)
         self.assertNotIn(r"\label{eq:semiglobal-basin-entry}", proof)
-        self.assertIn("does \\emph{not} assert entry into the final local ISS tube", proof)
+        self.assertIn(
+            r"does \emph{not} assert entry into the final local ISS tube",
+            _flat(proof),
+        )
         self.assertIn(r"R_H^{\max}<R_C", startup)
         self.assertIn(r"\ref{thm:finite-live-capture}", startup)
         self.assertIn("not required to satisfy the block-local invariant-tube", _flat(startup))
@@ -137,7 +140,7 @@ class OUIIIFiniteCaptureContractTests(unittest.TestCase):
         self.assertIn(r"\SI{150}{s}", proof)
         self.assertIn(r"\label{eq:semiglobal-aligned-branch}", proof)
         self.assertIn("sign of the inner product", proof)
-        self.assertIn("withholds a timeout-forced handoff until", proof)
+        self.assertIn("withholds a timeout-forced handoff until", _flat(proof))
         self.assertIn(r"\eqref{eq:semiglobal-aligned-branch}", startup)
         self.assertIn("delayed rather than accepted on the antipodal branch", startup)
 
