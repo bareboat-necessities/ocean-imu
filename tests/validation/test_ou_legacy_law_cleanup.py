@@ -26,7 +26,6 @@ class OUIIILegacyLawCleanupTests(unittest.TestCase):
             r"\label{eq:adapt-reduced-vs-applied-ratio}",
             r"\label{eq:adapt-reduced-direct-comparison}",
             r"\label{tab:adapt-mse-paired}",
-            r"\label{eq:adapt-rs-base}",
             r"\label{eq:deployed-effective-law}",
             "Legacy dimensional cubic schedule",
             "Coefficient-Law Investigation and Transition Tradeoff",
