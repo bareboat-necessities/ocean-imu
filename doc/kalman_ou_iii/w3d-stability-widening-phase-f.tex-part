@@ -36,22 +36,43 @@ The localized and exact trajectories coincide until the first raw increment
 whose norm exceeds $w_*$.  Localization and NIS branch selection can destroy
 conditional zero mean; no zero-mean cancellation is used below.
 
-For a realized source word define the endpoint perturbation
+The active error lives on a product of the attitude group and additive error
+coordinates.  For source node $j$ define the product distance
 \begin{equation}
- \vct Y_w^c:=
- \mathcal F_w(e,w^c)-\mathcal F_w(e,0).
+ \boxed{
+ d_{\mathcal X,j}^2
+ \bigl((\mat R_1,\vct\xi_1),(\mat R_2,\vct\xi_2)\bigr)
+ :=d_{\SO(3)}(\mat R_1,\mat R_2)^2
+   +\|\vct\xi_1-\vct\xi_2\|^2.}
+ \label{eq:widen-stochastic-product-distance}
+\end{equation}
+Any fixed source scaling may be included in the additive norm; on the compact
+proof domain it changes only the finite equivalence constants.
+
+For a realized source word define the exact noisy-to-zero-noise endpoint
+separation
+\begin{equation}
+ \boxed{
+ \Delta_w^c:=d_{\mathcal X,j}\!\left(
+ \mathcal F_w(e,w^c),\mathcal F_w(e,0)\right).}
  \label{eq:widen-stochastic-remainder}
 \end{equation}
-On the compact funnel, one physical source step has a finite state Lipschitz
-constant $L_x$ and noise sensitivity constants $\bar G,c_{zw},c_{ww}$ such that
+This definition never subtracts two attitudes.  On the compact source funnel,
+smoothness of the exact prediction, correction, quaternion reset, covariance
+recursion, and accepted branch maps gives a finite one-step incremental bound
+of the form
 \begin{equation}
- \|y_k\|
- \le (\bar G+c_{zw}r_*)\|w_k^c\|
-      +c_{ww}\|w_k^c\|^2,
+ \delta_{k+1}
+ \le L_{\mathcal X}\delta_k
+ +(\bar G+c_{zw}r_*)\|w_k^c\|
+ +c_{ww}\|w_k^c\|^2,
  \label{eq:widen-stochastic-one-step-noise}
 \end{equation}
-where $r_*$ is a fixed norm-equivalent radius of the certified compact funnel.
-Assume the raw pre-gate increments obey
+where $\delta_k$ is the product distance between the branch-matched noisy and
+zero-noise trajectories, $r_*$ is a fixed norm-equivalent size of the compact
+funnel, and all constants are uniform over the certified source family.
+
+Assume the raw pre-gate increments obey the conditional moment bounds
 \begin{equation}
  \mathbb E[\|w_k\|^2\mid\mathscr F_k]\le s_2,
  \qquad
@@ -59,7 +80,7 @@ Assume the raw pre-gate increments obey
  \label{eq:widen-stochastic-moments}
 \end{equation}
 For conditionally Gaussian pre-gate noise with
-$\Sigma_k\preceq\overline\Sigma$, take
+$\Sigma_k\preceq\overline\Sigma$, one may take
 \begin{equation}
  \boxed{
  s_2=\operatorname{tr}\overline\Sigma,
@@ -75,27 +96,34 @@ Let $g_*:=\bar G+c_{zw}r_*$ and define
  \nu_1&:=2g_*^2s_2+2c_{ww}^2s_4,\\
  \boxed{
  \nu_W:=\ell_+\nu_1
- \sum_{r=0}^{\ell_+-1}L_x^{2r}.}
+ \sum_{r=0}^{\ell_+-1}L_{\mathcal X}^{2r}.}
  \label{eq:widen-stochastic-floor}
 \end{align}
-Repeated Lipschitz propagation and Cauchy--Schwarz give, for every realized
-certified word,
+Starting from zero branch-matched separation at the word entrance, repeated use
+of Eq.~\eqref{eq:widen-stochastic-one-step-noise} and Cauchy--Schwarz gives, for
+every realized certified word,
 \begin{equation}
- \mathbb E[\|Y_w^c\|^2\mid\mathscr F_n]\le\nu_W.
+ \boxed{
+ \mathbb E[(\Delta_w^c)^2\mid\mathscr F_n]\le\nu_W.}
  \label{eq:widen-lifted-noise-moment}
 \end{equation}
 No independence between physical samples within the word is required.
 
-Because $W_j$ is smooth on a compact geodesic funnel and has a strict minimum at
-the adopted gauge, there are finite constants $g_W,h_W$ such that
+Because $W_j$ is smooth and positive definite with respect to the adopted gauge
+on the compact geodesic funnel, its Riemannian gradient and Hessian have uniform
+bounds relative to $W_j$.  On a certified compact geodesic enlargement that
+contains the minimizing product geodesic between the branch-matched endpoints,
+there are finite constants $g_W,h_W$ such that
 \begin{equation}
- W_j(x+y)
- \le W_j(x)+g_W\sqrt{W_j(x)}\,\|y\|+h_W\|y\|^2
+ \boxed{
+ W_j(y)
+ \le W_j(x)
+ +g_W\sqrt{W_j(x)}\,d_{\mathcal X,j}(x,y)
+ +h_Wd_{\mathcal X,j}(x,y)^2.}
  \label{eq:widen-stochastic-W-lipschitz}
 \end{equation}
-whenever the segment from $x$ to $x+y$ remains in the certified destination
-funnel.  This is a compact-Hessian bound on the same group/path energy, not a
-change of Lyapunov function.
+This is a second-order bound on the same group/path energy; it does not replace
+attitude by an additive coordinate.
 
 \begin{theorem}[Constructive source-word mean-square drift for localized gated noise]
 \label{thm:widen-stochastic-drift}
@@ -128,18 +156,24 @@ same stochastic funnel metric.
 \end{theorem}
 
 \begin{proof}
-For the realized source word let
-$x=\mathcal F_w(e,0)$ and $y=Y_w^c$.  The deterministic certificate gives
-$W_j(x)\le\lambda_WW_i(e)$ for every certified word.  Apply
-Eq.~\eqref{eq:widen-stochastic-W-lipschitz}, take conditional expectation, use
-Cauchy--Schwarz and Eq.~\eqref{eq:widen-lifted-noise-moment}, and then apply
-Young's inequality to
-$g_W\sqrt{\lambda_WW_n}\sqrt{\nu_W}$ with state coefficient
-$(1-\lambda_W)/2$.  The resulting state coefficient is
-$(1+\lambda_W)/2$ and the remaining terms give the stated
-$\sigma_s^2$.  The branch may depend on within-word localized noise; the proof
-uses no branch-conditioned zero-mean cancellation because the deterministic
-word inequality is verified uniformly over every admissible branch map.
+For the realized source word set
+$x=\mathcal F_w(e,0)$ and $y=\mathcal F_w(e,w^c)$.  The deterministic funnel
+certificate gives $W_j(x)\le\lambda_WW_i(e)$.  Apply
+Eq.~\eqref{eq:widen-stochastic-W-lipschitz}; then conditional
+Cauchy--Schwarz and Eq.~\eqref{eq:widen-lifted-noise-moment} give
+\begin{equation}
+ \mathbb E[W_j(y)\mid\mathscr F_n]
+ \le\lambda_WW_n
+ +g_W\sqrt{\lambda_WW_n}\sqrt{\nu_W}
+ +h_W\nu_W.
+\end{equation}
+Young's inequality bounds the middle term by
+$(1-\lambda_W)W_n/2+
+ g_W^2\lambda_W\nu_W/[2(1-\lambda_W)]$, which yields the stated
+$(\lambda_s,\sigma_s^2)$.  The realized branch may depend on within-word
+localized noise; no branch-conditioned zero-mean cancellation is needed because
+the deterministic funnel inequality and the product-distance sensitivity bound
+hold uniformly for every admissible branch.
 \end{proof}
 
 For the true unbounded process define the tail event over $K$ word blocks
@@ -148,7 +182,7 @@ For the true unbounded process define the tail event over $K$ word blocks
  \left\{\max_{0\le r<K}\max_{0\le q<\ell_+}
  \|w_{k_r+q}\|>w_*\right\}.
 \end{equation}
-A union bound and the raw moment bounds give
+A union bound followed by Markov's inequality and the raw moment bounds gives
 \begin{equation}
  \boxed{
  \Pr(\mathcal E_K^c)
@@ -159,8 +193,8 @@ A union bound and the raw moment bounds give
 On $\mathcal E_K$ the raw and localized trajectories coincide over the complete
 horizon, so the true process inherits the same certified regional path and
 word-boundary comparison over that horizon.  A Gaussian quadratic-form tail may
-replace Eq.~\eqref{eq:widen-stochastic-exit} when a sharper probability bound is
-constructed.
+replace Eq.~\eqref{eq:widen-stochastic-exit} when the sharper probabilistic
+certificate of the next stage is constructed.
 
 \begin{remark}[Scope of the stochastic result]
 \label{rem:widen-stochastic-scope}
