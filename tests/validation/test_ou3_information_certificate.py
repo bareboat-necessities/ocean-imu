@@ -39,15 +39,16 @@ class Ou3InformationCertificateTests(unittest.TestCase):
 
     def test_tool_uses_estimator_covariance_not_truth_error_covariance(self):
         text = (TOOLS / "ou3_information_certificate.py").read_text()
+        compact = text.replace("_", "").replace(" ", "")
         self.assertIn("Sigma_KF", text)
-        self.assertIn("Phi Sigma0 Phi' + Omega", text)
+        self.assertIn("Sigma1=PhiSigma0Phi'+Omega", compact)
         self.assertNotIn("metric_from_samples", text)
         self.assertNotIn("X.T@X", text)
 
     def test_host_observer_records_full_covariance_at_map_boundaries(self):
         text = (ROOT / "tests" / "kalman_ou_iii" / "ou3-information-certificate-sim.cpp").read_text()
         self.assertIn("covariance_full()", text)
-        self.assertIn("OU3COV1", text)
+        self.assertIn("'O','U','3','C','O','V','1'", text.replace(" ", ""))
         self.assertIn("CertificateAdapter inner_", text)
         self.assertIn("map_block_started_", text)
         self.assertNotIn("enableLinearBlock(false)", text)
