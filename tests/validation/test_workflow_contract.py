@@ -33,7 +33,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("tools/ou_publication_sync.py", stage)
         self.assertIn("reports/results/ou_validation", stage)
 
-    def test_full_replay_is_gated_by_broad_content_fingerprint(self):
+    def test_full_replay_is_gated_by_replay_and_results_fingerprints(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         fingerprint = workflow.index("  fingerprint:")
         regenerate = workflow.index("  regenerate:")
@@ -42,9 +42,10 @@ class WorkflowContractTests(unittest.TestCase):
         gate = workflow[fingerprint:regenerate]
         self.assertIn("tools/ou_replay_fingerprint.py", gate)
         self.assertIn("sim-data-files.zip", gate)
-        self.assertIn("reports/results/ou_replay_fingerprint.json", gate)
+        self.assertIn("reports/ou_evidence_fingerprint.json", gate)
         self.assertIn("replay_required=false", gate)
         self.assertIn("replay_required=true", gate)
+        self.assertIn("complete results tree", gate)
         self.assertIn("make -C tests/validation test", gate)
 
         regen_header = workflow[regenerate:workflow.index("    runs-on:", regenerate)]
@@ -53,9 +54,9 @@ class WorkflowContractTests(unittest.TestCase):
             "needs.fingerprint.outputs.replay_required == 'true'", regen_header
         )
 
-    def test_regenerated_evidence_records_the_replay_fingerprint(self):
+    def test_regenerated_evidence_records_both_fingerprints(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        record = workflow.index("- name: Record replay fingerprint")
+        record = workflow.index("- name: Record replay and results fingerprints")
         check = workflow.index("- name: Check the manuscript against the regenerated evidence")
         commit = workflow.index("- name: Commit the regenerated evidence")
         self.assertLess(record, check)
@@ -63,10 +64,16 @@ class WorkflowContractTests(unittest.TestCase):
 
         stage = workflow[record:commit]
         self.assertIn("tools/ou_replay_fingerprint.py", stage)
-        self.assertIn("--write reports/results/ou_replay_fingerprint.json", stage)
+        self.assertIn("--write reports/ou_evidence_fingerprint.json", stage)
 
         commit_stage = workflow[commit:]
-        self.assertIn("reports/results/ou_replay_fingerprint.json", commit_stage)
+        self.assertIn("reports/ou_evidence_fingerprint.json", commit_stage)
+        self.assertIn("reports/results/ou_validation", commit_stage)
+        self.assertIn("reports/results/ou_robustness", commit_stage)
+
+    def test_results_tree_changes_are_in_workflow_trigger(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('- "reports/results/**"', workflow)
 
     def test_push_retry_revalidates_after_rebase(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
