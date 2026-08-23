@@ -1,33 +1,33 @@
 #!/usr/bin/env python3
-"""Content fingerprint for deciding whether OU simulator evidence must be replayed.
+"""Content fingerprints for deciding whether OU evidence must be replayed.
 
-The gate is deliberately conservative. It hashes every tracked file under
+The replay gate is deliberately conservative. It hashes every tracked file under
 ``tests/`` regardless of extension, every tracked source/script or build/workflow
 file elsewhere, every tracked file whose Git mode is executable, and the exact
 downloaded simulation-data ZIP.
 
+A second fingerprint hashes every file under ``reports/results/``. The record
+that stores the two fingerprints lives outside that tree, so the results digest
+has no self-reference exception.
+
 This is intentionally broader than the simulator dependency closure. False
 positive full replays are acceptable; reusing evidence after a potentially
-replay-affecting repository change is not.
-
-The fingerprint is independent of the enclosing Git commit SHA and of generated
-evidence. A documentation/evidence-only commit outside ``tests/`` therefore does
-not invalidate a scientifically identical replay. Files under ``tests/`` are
-always included because test configuration and study parameters may use
-arbitrary file extensions.
+replay-affecting repository or evidence-tree change is not.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_VERSION = 1
+RESULTS_ROOT = REPO_ROOT / "reports" / "results"
+SCHEMA_VERSION = 2
 ALGORITHM = "sha256-framed-v1"
 
 # Deliberately broad. Do not replace this with include/reachability analysis:
@@ -114,6 +114,51 @@ def _frame(digest, *parts: bytes) -> None:
         digest.update(part)
 
 
+def compute_results_fingerprint(results_root: Path = RESULTS_ROOT) -> dict[str, object]:
+    """Hash every regular file/symlink below reports/results, including names."""
+    results_root = results_root.resolve()
+    if not results_root.is_dir():
+        raise FileNotFoundError(results_root)
+
+    digest = hashlib.sha256()
+    _frame(digest, b"ocean-imu-ou-results-fingerprint", str(SCHEMA_VERSION).encode())
+
+    files: list[dict[str, object]] = []
+    for path in sorted(results_root.rglob("*"), key=lambda item: item.as_posix()):
+        if path.is_symlink():
+            target = os.readlink(path)
+            content_sha = hashlib.sha256(target.encode("utf-8")).hexdigest()
+            kind = "symlink"
+        elif path.is_file():
+            content_sha = sha256_file(path)
+            kind = "file"
+        else:
+            continue
+
+        try:
+            relative_path = path.relative_to(REPO_ROOT).as_posix()
+        except ValueError:
+            relative_path = path.relative_to(results_root).as_posix()
+
+        files.append(
+            {"path": relative_path, "kind": kind, "sha256": content_sha}
+        )
+        _frame(
+            digest,
+            b"results-entry",
+            kind.encode("ascii"),
+            relative_path.encode("utf-8", errors="surrogateescape"),
+            bytes.fromhex(content_sha),
+        )
+
+    return {
+        "root": "reports/results" if results_root == RESULTS_ROOT.resolve() else str(results_root),
+        "fingerprint": digest.hexdigest(),
+        "file_count": len(files),
+        "files": files,
+    }
+
+
 def compute_fingerprint(simulation_zip: Path) -> dict[str, object]:
     simulation_zip = simulation_zip.resolve()
     if not simulation_zip.is_file():
@@ -139,17 +184,21 @@ def compute_fingerprint(simulation_zip: Path) -> dict[str, object]:
 
     zip_sha = sha256_file(simulation_zip)
     _frame(digest, b"simulation-data-zip", bytes.fromhex(zip_sha))
+    results = compute_results_fingerprint()
 
     return {
         "schema_version": SCHEMA_VERSION,
         "algorithm": ALGORITHM,
-        "fingerprint": digest.hexdigest(),
+        "replay_fingerprint": digest.hexdigest(),
         "simulation_data": {
             "file": simulation_zip.name,
             "sha256": zip_sha,
         },
         "tracked_replay_file_count": len(files),
         "tracked_replay_files": files,
+        "results_fingerprint": results["fingerprint"],
+        "results_file_count": results["file_count"],
+        "results_files": results["files"],
     }
 
 
@@ -159,8 +208,9 @@ def _comparison_view(record: dict[str, object]) -> tuple[object, ...]:
     return (
         record.get("schema_version"),
         record.get("algorithm"),
-        record.get("fingerprint"),
+        record.get("replay_fingerprint"),
         simulation_sha,
+        record.get("results_fingerprint"),
     )
 
 
@@ -171,24 +221,31 @@ def write_record(path: Path, record: dict[str, object]) -> None:
 
 def check_record(path: Path, current: dict[str, object]) -> bool:
     if not path.is_file():
-        print(f"replay fingerprint missing: {path}", file=sys.stderr)
+        print(f"OU evidence fingerprint missing: {path}", file=sys.stderr)
         return False
     try:
         recorded = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        print(f"cannot read replay fingerprint {path}: {exc}", file=sys.stderr)
+        print(f"cannot read OU evidence fingerprint {path}: {exc}", file=sys.stderr)
         return False
     if not isinstance(recorded, dict):
-        print(f"replay fingerprint is not a JSON object: {path}", file=sys.stderr)
+        print(f"OU evidence fingerprint is not a JSON object: {path}", file=sys.stderr)
         return False
     if _comparison_view(recorded) != _comparison_view(current):
         print(
-            "OU replay fingerprint changed: "
-            f"recorded={recorded.get('fingerprint')} current={current.get('fingerprint')}",
+            "OU replay/results fingerprint changed: "
+            f"replay recorded={recorded.get('replay_fingerprint')} "
+            f"current={current.get('replay_fingerprint')}; "
+            f"results recorded={recorded.get('results_fingerprint')} "
+            f"current={current.get('results_fingerprint')}",
             file=sys.stderr,
         )
         return False
-    print(f"OU replay fingerprint unchanged: {current['fingerprint']}")
+    print(
+        "OU replay/results fingerprints unchanged: "
+        f"replay={current['replay_fingerprint']} "
+        f"results={current['results_fingerprint']}"
+    )
     return True
 
 
@@ -211,7 +268,11 @@ def main(argv: Iterable[str] | None = None) -> int:
     current = compute_fingerprint(args.simulation_zip)
     if args.write is not None:
         write_record(args.write, current)
-        print(f"wrote OU replay fingerprint {current['fingerprint']} to {args.write}")
+        print(
+            "wrote OU evidence fingerprints "
+            f"replay={current['replay_fingerprint']} "
+            f"results={current['results_fingerprint']} to {args.write}"
+        )
         return 0
     if args.check is not None:
         return 0 if check_record(args.check, current) else 1
