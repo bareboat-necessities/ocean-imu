@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """Content fingerprint for deciding whether OU simulator evidence must be replayed.
 
-The gate is deliberately conservative. It hashes every tracked source/script,
-build/workflow file, and every tracked file whose Git mode is executable. It
-also hashes the exact downloaded simulation-data ZIP.
+The gate is deliberately conservative. It hashes every tracked file under
+``tests/`` regardless of extension, every tracked source/script or build/workflow
+file elsewhere, every tracked file whose Git mode is executable, and the exact
+downloaded simulation-data ZIP.
 
 This is intentionally broader than the simulator dependency closure. False
 positive full replays are acceptable; reusing evidence after a potentially
 replay-affecting repository change is not.
 
 The fingerprint is independent of the enclosing Git commit SHA and of generated
-evidence. A documentation/evidence-only commit therefore does not invalidate a
-scientifically identical replay.
+evidence. A documentation/evidence-only commit outside ``tests/`` therefore does
+not invalidate a scientifically identical replay. Files under ``tests/`` are
+always included because test configuration and study parameters may use
+arbitrary file extensions.
 """
 from __future__ import annotations
 
@@ -91,7 +94,8 @@ def _git_ls_files() -> list[tuple[str, str]]:
 def is_replay_source(mode: str, relative_path: str) -> bool:
     path = Path(relative_path)
     return (
-        path.suffix.lower() in SOURCE_SUFFIXES
+        relative_path.startswith("tests/")
+        or path.suffix.lower() in SOURCE_SUFFIXES
         or path.name in SOURCE_BASENAMES
         or mode == "100755"
     )
