@@ -5,6 +5,7 @@ build:
 		../../tools/ou_validation.py \
 		../../tools/ou_robustness.py \
 		../../tools/ou_roundtrip_transition.py \
+		../../tools/ou3_exact_replay.py \
 		../../tools/ou3_numerical_certificate.py \
 		../../tools/ou3_information_certificate.py \
 		../../tools/ou3_information_completion.py \
