@@ -18,9 +18,8 @@ on:
       - "tools/ou_replay_fingerprint.py"
       - "tools/ou_publication_sync.py"
       - "plots/kalman_ou_iii/baseline-comparison.py"
-      - "reports/results/ou_validation/**"
-      - "reports/results/ou_robustness/**"
-      - "reports/results/ou_replay_fingerprint.json"
+      - "reports/results/**"
+      - "reports/ou_evidence_fingerprint.json"
       - "docs/ou-validation.md"
       - "docs/ou-robustness.md"
       - "doc/kalman_ou_iii/**"
@@ -37,8 +36,8 @@ on:
           - smoke
           - full
   # Called by the build workflow in full mode. A full call first compares the
-  # broad replay fingerprint; the expensive study runs only when executable,
-  # build/workflow content or the simulation-data ZIP changed.
+  # conservative replay-input and complete results-tree fingerprints; the
+  # expensive study runs only when either one changed.
   workflow_call:
     inputs:
       validation_mode:
@@ -149,11 +148,10 @@ jobs:
           if-no-files-found: warn
 
   # A full build is keyed by scientific inputs rather than the enclosing Git
-  # SHA. The fingerprint is deliberately broader than the actual simulator
-  # dependency closure: all tracked C/C++ source/headers, Python, shell, YAML,
-  # make files and Git-executable files are hashed, together with the exact
-  # simulation-data ZIP. False-positive replays are acceptable; false-negative
-  # reuse of stale evidence is not.
+  # SHA. The replay fingerprint is deliberately broader than the actual
+  # simulator dependency closure, and a second fingerprint covers every file
+  # under reports/results. False-positive replays are acceptable;
+  # false-negative reuse of stale evidence is not.
   fingerprint:
     if: inputs.validation_mode == 'full'
     runs-on: ubuntu-24.04
@@ -178,15 +176,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          marker=reports/results/ou_replay_fingerprint.json
+          marker=reports/ou_evidence_fingerprint.json
           if python3 tools/ou_replay_fingerprint.py \
               --simulation-zip sim-data-files.zip \
               --check "$marker"; then
             echo "replay_required=false" >> "$GITHUB_OUTPUT"
-            echo "Broad executable/data fingerprint is unchanged; reusing the full replay rows."
+            echo "Replay inputs and complete results tree are unchanged; reusing the full replay rows."
           else
             echo "replay_required=true" >> "$GITHUB_OUTPUT"
-            echo "Broad executable/data fingerprint changed; the full study must be regenerated."
+            echo "Replay inputs or results tree changed; the full study must be regenerated."
           fi
 
       - name: Install evidence-check dependencies
@@ -225,7 +223,8 @@ jobs:
 
   # Evidence regeneration is sharded: the full validation study is roughly
   # 840 twenty-minute simulator replays and robustness another ~310. It runs
-  # only when the broad replay fingerprint says the committed rows are stale.
+  # only when the conservative evidence fingerprints say the committed rows
+  # are stale.
   regenerate:
     needs: fingerprint
     if: inputs.validation_mode == 'full' && needs.fingerprint.outputs.replay_required == 'true'
@@ -525,11 +524,11 @@ jobs:
           mirror ou_robustness/ou_robustness_stress.svg \
                  ou_robustness_stress.svg
 
-      - name: Record replay fingerprint
+      - name: Record replay and results fingerprints
         run: |
           python3 tools/ou_replay_fingerprint.py \
             --simulation-zip sim-data-files.zip \
-            --write reports/results/ou_replay_fingerprint.json
+            --write reports/ou_evidence_fingerprint.json
 
       - name: Check the manuscript against the regenerated evidence
         run: make -C tests/validation test
@@ -540,10 +539,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports/results/ou_validation reports/results/ou_robustness \
-                  reports/results/ou_replay_fingerprint.json \
+                  reports/ou_evidence_fingerprint.json \
                   doc/kalman_ou_iii
           if git diff --cached --quiet; then
-            echo "Regenerated bundle and replay fingerprint are identical to the committed ones."
+            echo "Regenerated bundles and both evidence fingerprints are identical to the committed ones."
             exit 0
           fi
           git commit \
@@ -557,13 +556,13 @@ jobs:
             git push origin HEAD:refs/heads/${{ github.ref_name }} && exit 0
             sleep $((2 ** attempt))
             git pull --rebase origin refs/heads/${{ github.ref_name }}
-            # A newer branch tip may change any executable/build/workflow file,
-            # even one outside the simulator dependency closure. Refuse to put
-            # the old rows on it unless the broad content fingerprint still
-            # matches, then run the detailed evidence contract as well.
+            # A newer branch tip may change executable/build/workflow content
+            # or the results tree. Refuse to put old rows on it unless both
+            # conservative fingerprints still match, then run the detailed
+            # evidence contract as well.
             python3 tools/ou_replay_fingerprint.py \
               --simulation-zip sim-data-files.zip \
-              --check reports/results/ou_replay_fingerprint.json
+              --check reports/ou_evidence_fingerprint.json
             make -C tests/validation test
           done
           exit 1
