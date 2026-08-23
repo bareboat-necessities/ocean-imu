@@ -206,10 +206,6 @@ def implementation_paths(study: str) -> list[Path]:
     return sorted(paths, key=repo_name)
 
 
-def implementation_records(study: str) -> dict[str, dict[str, object]]:
-    return {repo_name(path): file_record(path) for path in implementation_paths(study)}
-
-
 def _ou_iii_sim_build_contract(text: str) -> str:
     """Project the multi-target Makefile onto replay-producing semantics."""
     lines = text.splitlines()
@@ -234,6 +230,21 @@ def _ou_iii_sim_build_contract(text: str) -> str:
     return "\n".join(selected) + "\n"
 
 
+def _implementation_record(path: Path) -> dict[str, object]:
+    """Hash replay semantics, not unrelated targets in the OU-III Makefile."""
+    if repo_name(path) != _OU_III_MAKEFILE_REPO_NAME:
+        return file_record(path)
+    projected = _ou_iii_sim_build_contract(path.read_text(encoding="utf-8")).encode("utf-8")
+    return {"sha256": sha256_bytes(projected), "size_bytes": len(projected)}
+
+
+def implementation_records(study: str) -> dict[str, dict[str, object]]:
+    return {
+        repo_name(path): _implementation_record(path)
+        for path in implementation_paths(study)
+    }
+
+
 def implementation_record_matches(
     name: str,
     expected: Mapping[str, Any],
@@ -241,15 +252,15 @@ def implementation_record_matches(
 ) -> bool:
     """Compare replay implementation records without weakening source hashes.
 
-    The only non-bytewise compatibility case is the historically over-broad
-    OU-III Makefile record.  It is accepted only for the one known immutable
-    historical hash and only while the simulator-producing projection remains
-    exactly equal to the recorded build contract.  Fresh replay manifests still
-    record the complete current Makefile through ``implementation_records``.
+    Fresh replay manifests record the OU-III simulator-producing Makefile
+    projection, while every other implementation dependency remains byte-for-byte.
+    The only legacy compatibility case is the historically over-broad OU-III
+    Makefile record, accepted only for its one known immutable full-file hash and
+    only while the simulator-producing projection matches the recorded contract.
     """
     path = REPO_ROOT / name
     current = normalize_record(actual) if actual is not None else (
-        file_record(path) if path.is_file() else None
+        _implementation_record(path) if path.is_file() else None
     )
     if current is not None and normalize_record(expected) == current:
         return True
