@@ -1,4 +1,4 @@
-"""Semantic/source contract for nonlinear Live and startup composition proofs."""
+"""Semantic/source contract for exact nonlinear Live and startup composition."""
 
 import unittest
 from pathlib import Path
@@ -14,33 +14,24 @@ def _read(path: Path) -> str:
 
 
 class OUIIIStabilityPhaseCContractTests(unittest.TestCase):
-    def test_nonlinear_remainder_uses_actual_geometric_load(self):
-        proof = _read(DOC / "w3d-block-local-iss.tex-part")
-        for marker in (
-            r"\label{eq:iss-structured-residuals}",
-            r"\label{eq:iss-attitude-correction-load}",
-            r"\label{eq:iss-ba-projection-nonexpansive}",
-            r"\label{eq:iss-nonlinear-load}",
-            r"\label{lem:iss-block-remainder}",
-            r"\label{eq:iss-block-remainder}",
-        ):
-            self.assertIn(marker, proof)
-        self.assertIn("gain-weighted correction", proof)
-        self.assertIn("lever-arm curvature", proof)
-        self.assertIn("nonexpansive", proof)
-        self.assertIn("no direct term proportional", proof.casefold())
-        self.assertNotIn(r"c_\xi\|\vct z_\xi\|^2", proof)
+    def test_obsolete_local_iss_certificate_is_removed(self):
+        self.assertFalse((DOC / "w3d-block-local-iss.tex-part").exists())
+        main = _read(DOC / "kalman_ou-w3d.tex")
+        semiglobal = _read(DOC / "w3d-semiglobal-stability.tex-part")
+        self.assertNotIn("w3d-block-local-iss", main + semiglobal)
 
-    def test_time_varying_lyapunov_metric_closes_local_iss(self):
-        proof = _read(DOC / "w3d-block-local-iss.tex-part")
+    def test_exact_large_angle_group_correction_is_primary(self):
+        proof = _read(DOC / "w3d-stability-widening-phase-c.tex-part")
         for marker in (
-            r"\label{eq:iss-converse-P}",
-            r"\label{eq:iss-converse-decrease}",
-            r"\label{eq:iss-structured-lipschitz}",
-            r"\label{eq:iss-block-basin}",
-            r"\label{thm:iss-block-local}",
+            r"\label{eq:widen-SO3-energy}",
+            r"\label{eq:widen-exact-source-correction}",
+            r"\label{eq:widen-exact-energy-change}",
+            r"\label{eq:widen-large-angle-sector}",
+            r"\label{thm:widen-large-angle-dissipation}",
         ):
             self.assertIn(marker, proof)
+        self.assertIn("full $S\\to\\theta$", proof)
+        self.assertIn(r"\theta_e\le\theta_{*,i}<\pi", proof)
 
     def test_explicit_mahony_proxy_bound_is_retained(self):
         proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
@@ -58,7 +49,7 @@ class OUIIIStabilityPhaseCContractTests(unittest.TestCase):
         self.assertIn("almost-global", proof)
         self.assertIn("antipodal", proof)
 
-    def test_quality_gate_enters_safe_domain_not_outer_box(self):
+    def test_quality_gate_initializes_funnel_not_outer_box(self):
         proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
         init = _read(DOC / "w3d-init.tex-part")
         for marker in (
@@ -67,11 +58,12 @@ class OUIIIStabilityPhaseCContractTests(unittest.TestCase):
             r"\label{eq:semiglobal-capture-entry}",
             r"\mathcal H_{k_H}\subset\mathcal D_{k_H}",
             r"\label{thm:semiglobal-proxy-live}",
+            r"\eqref{eq:capture-initial-level}",
         ):
             self.assertIn(marker, proof)
         self.assertIn(r"\mathcal H_{k_H}\subset\mathcal D_{k_H}", init)
         self.assertNotIn(r"R_C", proof)
-        self.assertNotIn(r"R_C", init)
+        self.assertIn("radius summary is not propagated", proof)
 
     def test_timeout_has_gauged_and_quotient_routes(self):
         proof = _read(DOC / "w3d-semiglobal-stability.tex-part")
