@@ -7,6 +7,7 @@ build:
 		../../tools/ou_roundtrip_transition.py \
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
+		../../tools/ou_replay_fingerprint.py \
 		../../tools/ou_publication_sync.py \
 		../../tools/rotate_record_heading.py \
 		test_ou_validation.py \
