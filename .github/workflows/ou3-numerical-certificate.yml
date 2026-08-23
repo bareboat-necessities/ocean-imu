@@ -14,6 +14,7 @@ on:
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tools/ou3_numerical_certificate.py"
       - "tools/ou3_information_certificate.py"
+      - "tools/ou3_information_completion.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
       - "tools/ou_sweep_common.py"
@@ -69,6 +70,12 @@ jobs:
         run: |
           .cert-venv/bin/python -u tools/ou3_information_certificate.py \
             --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+
+      - name: Complete executed information-metric funnel accounting
+        run: |
+          .cert-venv/bin/python -u tools/ou3_information_completion.py \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
+            --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii"
 
       - name: Retain coarse-metric replay funnel diagnostic
         run: |
