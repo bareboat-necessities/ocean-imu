@@ -27,11 +27,14 @@ jobs:
 
   build:
     needs: [ou-evidence]
-    # Off main ou-evidence is skipped, and on main it fails when the
-    # regenerated numbers no longer match the prose. Neither is a reason to
-    # stop typesetting -- by the time that check runs the bundle has already
-    # landed, and the run is red on its own without withholding the article.
-    if: ${{ !cancelled() }}
+    # Off main ou-evidence is skipped and ordinary branch/PR builds should use
+    # the committed evidence. On main, however, publication must not proceed
+    # after a failed full-evidence run: the PDF would otherwise be cut from a
+    # tree whose numerical evidence was not validated for that source state.
+    if: >-
+      ${{ !cancelled()
+          && (github.ref != 'refs/heads/main'
+              || needs['ou-evidence'].result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -297,13 +300,11 @@ jobs:
           if-no-files-found: warn
           
   release:
-    # ou-evidence only runs on main, and a skipped job propagates through the
-    # graph: build survives it with !cancelled(), but release inherited the skip
-    # from build's ancestor and never ran off main. That is why v1.1.2 and
-    # v1.1.3 shipped with source code only while v1.1.1, tagged before the
-    # evidence job existed, got its assets. Naming a status function here stops
-    # the automatic skip, so the results of the two jobs that actually produce
-    # the assets are what decides.
+    # ou-evidence only runs on main. The build job explicitly survives a
+    # skipped evidence job off main, but requires evidence success on main.
+    # Naming a status function here likewise prevents an automatic skip from
+    # an ancestor and lets the two jobs that actually produce release assets
+    # decide whether release can proceed.
     if: >-
       ${{ !cancelled()
           && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')

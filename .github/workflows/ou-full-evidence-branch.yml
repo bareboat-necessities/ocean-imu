@@ -1,13 +1,13 @@
 name: ou-full-evidence-branch
 
 on:
-  push:
-    branches-ignore:
-      - main
+  workflow_dispatch:
 
-# Branch pushes get the same full evidence gate as main. The reusable workflow
-# decides from the conservative replay-input/results fingerprints whether the
-# expensive ~1,150 simulator replays are actually necessary.
+# Full branch evidence is intentionally opt-in. Main is the authoritative
+# automatic full-study path through build.yml. Keeping branch replays manual
+# prevents ordinary development pushes from duplicating the same ~1,150
+# simulator replays while still allowing an explicit pre-merge regeneration
+# when one is useful.
 concurrency:
   group: ou-full-evidence-branch-${{ github.ref }}
   cancel-in-progress: true

@@ -25,6 +25,8 @@ on:
       - "doc/kalman_ou_iii/**"
       - "Makefile"
       - ".github/workflows/ou-validation.yml"
+      - ".github/workflows/build.yml"
+      - ".github/workflows/ou-full-evidence-branch.yml"
   workflow_dispatch:
     inputs:
       validation_mode:
