@@ -1,0 +1,129 @@
+name: ou3-proof-completion
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_neighborhood_prefix_driver.py"
+      - "tools/ou3_neighborhood_radius_search_fast.py"
+      - "tools/ou3_deployment_gate.py"
+      - "tests/validation/test_ou3_neighborhood_prefix_driver.py"
+      - "tests/validation/test_ou3_deployment_gate.py"
+      - ".github/workflows/ou3-proof-completion.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-proof-completion-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            g++ make libeigen3-dev python3-numpy unzip
+
+      - name: Unit-test new proof arithmetic and prefix replay
+        run: |
+          python3 -m py_compile \
+            tools/ou3_neighborhood_prefix_driver.py \
+            tools/ou3_neighborhood_radius_search_fast.py \
+            tools/ou3_deployment_gate.py \
+            tests/validation/test_ou3_neighborhood_prefix_driver.py \
+            tests/validation/test_ou3_deployment_gate.py
+          python3 -m unittest -v \
+            tests.validation.test_ou3_neighborhood_prefix_driver \
+            tests.validation.test_ou3_deployment_gate
+
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip \
+            --clobber
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Build exact-map and nonlinear observers
+        run: |
+          make -C tests/kalman_ou_iii \
+            ou3-information-certificate-sim \
+            ou3-neighborhood-sim
+
+      - name: Generate exact maps and covariance
+        run: |
+          python3 -u tools/ou3_exact_replay.py \
+            --no-build \
+            --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-information-certificate-sim" \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
+            --diagnostic-log-dir "$GITHUB_WORKSPACE/reports/diagnostics/ou3_numerical_certificate/logs"
+
+      - name: Generate information certificate and continuous-source contract
+        run: |
+          python3 -u tools/ou3_information_certificate.py \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+          python3 -u tools/ou3_information_completion.py \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
+            --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii"
+          python3 -u tools/ou3_information_enclosure_contract.py \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+
+      - name: Verify W=0.05 full nonlinear basis with exact prefixes
+        run: |
+          python3 -u tools/ou3_neighborhood_prefix_driver.py \
+            --no-build \
+            --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-neighborhood-sim" \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
+            --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii" \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate/neighborhood_diagnostic" \
+            --diagnostic-dir "$GITHUB_WORKSPACE/reports/diagnostics/ou3_numerical_certificate/neighborhood_full" \
+            --full-basis \
+            --target-W 0.05 \
+            --jobs 4
+
+      - name: Locate H/A sampled nonlinear boundaries with exact prefixes
+        run: |
+          python3 -u tools/ou3_neighborhood_radius_search_fast.py \
+            --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-neighborhood-sim" \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
+            --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii" \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate/neighborhood_radius_search" \
+            --diagnostic-dir "$GITHUB_WORKSPACE/reports/diagnostics/ou3_numerical_certificate/neighborhood_radius" \
+            --modes H,A \
+            --start-W 0.05 \
+            --growth 16 \
+            --max-W 838860.8 \
+            --bisection-steps 5 \
+            --jobs 4
+
+      - name: Validate deterministic result payloads
+        run: |
+          python3 tools/ou3_result_contract.py \
+            "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+
+      - name: Upload proof results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-proof-completion-results
+          path: reports/results/ou3_numerical_certificate/**
+          if-no-files-found: warn
+
+      - name: Upload proof diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-proof-completion-diagnostics
+          path: reports/diagnostics/ou3_numerical_certificate/**
+          if-no-files-found: warn
