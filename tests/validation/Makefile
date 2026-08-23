@@ -29,6 +29,7 @@ build:
 		test_record_conventions.py \
 		test_publication_references.py \
 		test_deterministic_baseline_contract.py \
+		test_readme_result_gallery.py \
 		test_workflow_contract.py \
 		test_reorg_compat_overrides.py \
 		test_zz_publication_contract.py
