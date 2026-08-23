@@ -42,11 +42,13 @@ SOURCE_SUFFIXES = {
     ".js", ".mjs", ".cjs", ".ts", ".mts", ".cts", ".java", ".kt",
     ".kts", ".rs", ".go", ".swift",
     # Workflow/build configuration that can change how executable code runs.
-    ".yml", ".yaml", ".mk", ".cmake", ".ac", ".am",
+    ".yml", ".yaml", ".mk", ".make", ".cmake", ".ninja", ".ac", ".am",
 }
 SOURCE_BASENAMES = {
     "Makefile",
     "CMakeLists.txt",
+    "CMakePresets.json",
+    "CMakeUserPresets.json",
     "Dockerfile",
     "meson.build",
     "meson_options.txt",
@@ -55,6 +57,24 @@ SOURCE_BASENAMES = {
     "WORKSPACE",
     "WORKSPACE.bazel",
     "MODULE.bazel",
+    "pyproject.toml",
+    "setup.cfg",
+    "tox.ini",
+    "platformio.ini",
+    "Pipfile",
+    "Pipfile.lock",
+    "poetry.lock",
+    "package.json",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "Cargo.toml",
+    "Cargo.lock",
+    "go.mod",
+    "go.sum",
+    "build.gradle",
+    "settings.gradle",
+    "gradle.properties",
 }
 
 
@@ -91,12 +111,23 @@ def _git_ls_files() -> list[tuple[str, str]]:
     return entries
 
 
+def _is_build_filename(name: str) -> bool:
+    lower = name.lower()
+    return (
+        name in SOURCE_BASENAMES
+        or name.startswith("Makefile")
+        or name.startswith("Dockerfile")
+        or (lower.startswith("requirements") and lower.endswith(".txt"))
+    )
+
+
 def is_replay_source(mode: str, relative_path: str) -> bool:
     path = Path(relative_path)
     return (
         relative_path.startswith("tests/")
+        or relative_path.startswith(".github/")
         or path.suffix.lower() in SOURCE_SUFFIXES
-        or path.name in SOURCE_BASENAMES
+        or _is_build_filename(path.name)
         or mode == "100755"
     )
 
