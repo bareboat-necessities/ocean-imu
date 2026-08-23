@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "6bd2452ee65c193446ad087fc064c9327b1b9f91244928c5e39706ac4a2f7c69",
+  "replay_fingerprint": "720c955f7fb54c1222b1fdd2eeab636630b517b7d01071cc761ce29e404f993c",
   "results_file_count": 115,
   "results_files": [
     {
@@ -181,7 +181,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness.json",
-      "sha256": "a4529c8989cefa93d730e6e2d6428b0888f2709c1858e2a96b808d76a97a0fb8"
+      "sha256": "e22afa183e4a88b50ebb20dddf530693d1345bd20f344c61ab131d370cd77c46"
     },
     {
       "kind": "file",
@@ -191,12 +191,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "280c2699db4fbee14201cdffb780906f0c477249860d766ec83178c64832308e"
+      "sha256": "e01beb7912ae0fc43f222f13fe509e5f79fa2a4985f29799205acb0fdc2653e9"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_paired_effects.csv",
-      "sha256": "1d6b5ac18300e1e17e8356d84f42f9c9e321b13b9ab5ded0326de60d60012942"
+      "sha256": "5d49d8c2bb318576a2ebedc099e77f85494dc0ecbaa2ec9dcac25b861abd82d2"
     },
     {
       "kind": "file",
@@ -206,22 +206,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_raw.csv",
-      "sha256": "ff3997aeb92a66a71eedf849c5cd98cfe103af681971943ae9c091f49054da5e"
+      "sha256": "ae7a17bc1e3e8570aa808e8aaf44f82e5c613beb05802585d34686b29ea396c2"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_sensitivity.svg",
-      "sha256": "8b85c455604f3738a9a771633e6ea656fa6c4aee88d35e8d14b4699de109735a"
+      "sha256": "fd77dcb6a653ee6096d7b327dc720ed06bc8c025118f659725a0aa5700533f7e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_stress.svg",
-      "sha256": "7385db8f35263ea061511b25563497c0fa3057b6c3222f98b7bc90ab5cad9c47"
+      "sha256": "28e0e9b78406c8892ac4987973cf78909f3aa0cd2976f324d5a8c6db567545c4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_summary.csv",
-      "sha256": "3b5d26d3566c75723da7b6c66751298cb94ab96030265598d7758ff8fab4a422"
+      "sha256": "0d24f1be1a2be8270b5c0d7ef9934a7906264aec05ad08e09f2a1f45da943cc1"
     },
     {
       "kind": "file",
@@ -436,22 +436,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "d677f3027af522a2900eadbc7b2bd09c2f4f738585e9c4678e106eb496029a5d"
+      "sha256": "a49cbe774752877e49a938279d5682805f715dd245ea5072ee76199162307912"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "7afadb8bccd40ac2ab31c65b7aa4bfd4523c241115a7be1c0558c8d8c6313b66"
+      "sha256": "4a323afbb77ba976f56bdc27d14c39e49e853581dd12bffcc3adce07ed80f68e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "71795bf81dfaa9e54f442a955cd49b3a3198ede6c6c7c4481d1eadaea139b351"
+      "sha256": "94bd0dea96ebea54f05c1c5b94b60d983384f1e71946bc7065dea695d2d3f550"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "70d188b8c09abc1999ad88d31a92253d18963aaa5b22e88131aeca8516be45fb"
+      "sha256": "48740d856e79e20ae6f31195056b36174ed01331dcdcb7bc655cd23dec155980"
     },
     {
       "kind": "file",
@@ -461,12 +461,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "f7ed775ae0d89e2a3c15a74b1cc029123f23944db559312d6e57c9e351b60c68"
+      "sha256": "9630cdea1f1a500d11356ca0e698310426da23a00dd9de78b1f9a4f303095d3d"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "43547b7ab5fe3467d774989d2a82fb29572c1b72de98f54a14451a61d4a3aaed"
+      "sha256": "213a4ec63eedf5d8d958e6915695067cfc1e497c98b20dc4b61788aec960bc35"
     },
     {
       "kind": "file",
@@ -476,12 +476,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "95172736edc45d81e3174760fbac9ee30cc7c2ee23b5b640f6eaadaa074ce1b2"
+      "sha256": "3813f5858cb624690d1592bae2cef1c46db633eb416c85a6728082c7d3b2127e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "7877556d4816269d6cdcb97863a14033a9ca7a12d5ebf898ed2cbe1e80e45071"
+      "sha256": "9cc07890593cc92faafb62900f22cd3d80b1eed01d7a3e8f07c1e5962d2101cf"
     },
     {
       "kind": "file",
@@ -491,7 +491,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "199e4fe48efa0b7f2a041b1409d443f9c9b091077b47369ff1ec7ceb6e43bdb1"
+      "sha256": "65b4c1727660464847798fcbc0e969e170e7209e8dffe78db27d57f1b49071bb"
     },
     {
       "kind": "file",
@@ -506,7 +506,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "66d8f32d398598cc2a13c52a54adfc4485b983cc23e9fe374d87f8996d9dafb4"
+      "sha256": "0e33194a2600eebaa5f12254371f0b2a4aeab9e8f76931d851c55ec1a42df182"
     },
     {
       "kind": "file",
@@ -579,13 +579,13 @@
       "sha256": "27537c8895cf78c1bf92c9d0d4d8b45cbd323585f02c5de12982f1616bdcab55"
     }
   ],
-  "results_fingerprint": "3e2597df61c50b1d52cfc163b624d76c4036e5a15d17a2240083b91590d4c51a",
+  "results_fingerprint": "2525fdbf3f46c44c07ca6b82d140b770257e3bb3badfa6ecb139d466e944356c",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files.zip",
     "sha256": "55cad13e6b928e9e4d9540adbedfa0189a8feb57febac41b4561bfb68986dcff"
   },
-  "tracked_replay_file_count": 276,
+  "tracked_replay_file_count": 278,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -605,7 +605,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou3-numerical-certificate.yml",
-      "sha256": "3528c3bd41ff999d41abf3a52dfdce05996e4f5a4a795ec62da304cdc83886f9"
+      "sha256": "fa56cb5db8031c9816f460649d7c9295d64c1439b5abb482898d5d2329356a78"
     },
     {
       "mode": "100644",
@@ -1485,7 +1485,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/Makefile",
-      "sha256": "ca234053e0888e82f1ab622df4086f19dc3dd9d00b92e16eaf8a6fe45a9dd78e"
+      "sha256": "a1db98a423faa8808059823f31bed3cf1ddb2b6e2ec8ba1e3d4a2e39d8ad12ed"
     },
     {
       "mode": "100644",
@@ -1520,7 +1520,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_information_certificate.py",
-      "sha256": "0978fbcd92c65e4582a5b8bd853debe6e0082288fb73386b21163cba4a82c5f2"
+      "sha256": "b6364347329d36db1e1134a23ca33b5e9fc100a63a11f85fcf5b9b03da65ad05"
     },
     {
       "mode": "100644",
@@ -1531,6 +1531,11 @@
       "mode": "100644",
       "path": "tests/validation/test_ou3_neighborhood_diagnostic.py",
       "sha256": "00f34f28654455d6cf1bd741ce739a80bdd7601788caa30810289d5f9175c568"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_ou3_neighborhood_radius_search.py",
+      "sha256": "6146fc0984096bdfaa3a8e09a9cf79526597b89676b37efe085d71c941a33da1"
     },
     {
       "mode": "100644",
@@ -1815,7 +1820,7 @@
     {
       "mode": "100644",
       "path": "tools/ou3_information_certificate.py",
-      "sha256": "8c9a9c70ece3ce81d4ed8aad7acd3658d70d4202d02e9a2d9b8a1146465b832e"
+      "sha256": "d1693f7030bf6f8969908f68f2377396e79c51ebb91cc29719e8cf4528bc12db"
     },
     {
       "mode": "100644",
@@ -1830,7 +1835,12 @@
     {
       "mode": "100644",
       "path": "tools/ou3_neighborhood_diagnostic.py",
-      "sha256": "2282e7b9de0c47b6a71a41e033fc9076aa7ce98d3091f7a9ff907cd3758806c2"
+      "sha256": "8d7e93050ff356c8f97dfe5a3cd3c801c60fb6918069e93023e92745c1ba0561"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/ou3_neighborhood_radius_search.py",
+      "sha256": "bc133b14a0380dc7d6bb1e76910421ead9d3b777d774dbcc889bcce00152b2d0"
     },
     {
       "mode": "100644",
