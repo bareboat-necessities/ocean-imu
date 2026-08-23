@@ -2,7 +2,7 @@
 """Extract the OU-III continuous-source proof domain from implementation guards.
 
 This producer intentionally does not infer bounds from the eight reference
-trajectories.  It parses the shipping implementation's safety/clamp constants
+trajectories. It parses the shipping implementation's safety/clamp constants
 and records every discrete branch the validated backend must cover.
 """
 from __future__ import annotations
@@ -23,16 +23,26 @@ REQUIRED = (
 )
 
 
-def parse_const(text: str, name: str) -> float:
-    # Keep the extractor intentionally narrow: a proof-domain change should
-    # fail loudly if the implementation stops spelling these as scalar constants.
+def parse_const(text: str, name: str, stack: tuple[str, ...] = ()) -> float:
+    """Resolve a scalar constexpr float literal or direct scalar alias."""
+    if name in stack:
+        raise RuntimeError(f"cyclic implementation constant alias: {' -> '.join((*stack, name))}")
     pat = re.compile(
-        rf"constexpr\s+float\s+{re.escape(name)}\s*=\s*([0-9.+\-eE]+)f?\s*;"
+        rf"constexpr\s+float\s+{re.escape(name)}\s*=\s*([^;]+)\s*;"
     )
     m = pat.search(text)
     if not m:
         raise RuntimeError(f"cannot extract implementation constant {name}")
-    return float(m.group(1))
+    expr = m.group(1).strip()
+    literal = re.fullmatch(r"([0-9.+\-eE]+)f?", expr)
+    if literal:
+        return float(literal.group(1))
+    alias = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)", expr)
+    if alias:
+        return parse_const(text, alias.group(1), (*stack, name))
+    raise RuntimeError(
+        f"implementation constant {name} is no longer a scalar literal/alias: {expr!r}"
+    )
 
 
 def build(header: Path) -> dict:
@@ -49,8 +59,6 @@ def build(header: Path) -> dict:
         "continuous_parameters": {
             "wave_tune_frequency_hz": [c["MIN_TUNE_FREQ_HZ"], c["MAX_TUNE_FREQ_HZ"]],
             "tau_aw_s": [c["MIN_TAU_S"], c["MAX_TAU_S"]],
-            # The implementation has only an upper safety clamp on sigma.  Zero
-            # is therefore the source-complete lower endpoint for validation.
             "sigma_aw_mps2": [0.0, c["MAX_SIGMA_A"]],
             "R_S_base": [c["MIN_R_S"], c["MAX_R_S"]],
             "pseudo_update_period_s": [
