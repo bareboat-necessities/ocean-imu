@@ -98,14 +98,19 @@ class OULegacyLawCleanupTests(unittest.TestCase):
         self.assertFalse((DOC / "ou_robustness_sensitivity.svg").exists())
         self.assertFalse((DOC / "ou_validation_transition.svg").exists())
 
-    def test_only_roundtrip_transition_is_publishable(self):
+    def test_roundtrip_remains_primary_while_stress_ramp_is_publishable(self):
         sync = (REPO_ROOT / "tools" / "ou_publication_sync.py").read_text(encoding="utf-8")
         baseline = (DOC / "w3d-baseline-comparison.tex-part").read_text(encoding="utf-8")
+        robustness = (DOC / "w3d-ou-robustness.tex-part").read_text(encoding="utf-8")
         roundtrip = (DOC / "w3d-roundtrip-transition-ablation.tex-part").read_text(encoding="utf-8")
         self.assertIn("curate_validation_for_article", sync)
         self.assertIn("tab:ou_transition_segments", sync)
         self.assertNotIn("fig:ou_transition", baseline)
         self.assertNotIn("ou_validation_transition.svg", baseline)
+        self.assertIn(r"\input{w3d-ou-robustness.tex-part}", baseline)
+        self.assertIn("ou_robustness_stress.svg", robustness)
+        self.assertIn("rapid one-way", robustness)
+        self.assertIn("degradation result", robustness)
         self.assertIn("ou_rs_roundtrip_transition.svg", roundtrip)
         self.assertIn("low--high--low", roundtrip)
         self.assertIn("rise", roundtrip)
