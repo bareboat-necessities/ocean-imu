@@ -2,7 +2,6 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -56,9 +55,9 @@ public:
                        const Vector3f& sigma_a_init,
                        const Vector3f& sigma_g,
                        const Vector3f& sigma_m)
-        : with_mag_(with_mag), trace_stride_(env_positive_int("OU3_CERT_TRACE_STRIDE", 10))
+        : trace_stride_(env_positive_int("OU3_CERT_TRACE_STRIDE", 10))
     {
-        typename Fusion::Config cfg;
+        Fusion::Config cfg;
         cfg.with_mag = with_mag;
         cfg.sigma_a = sigma_a_init * kSigmaARescale;
         cfg.sigma_g = sigma_g * kSigmaGRescale;
@@ -69,7 +68,7 @@ public:
 
         fusion_.begin(cfg);
         auto& filter = fusion_.raw();
-        // Match the deployed/default test policy.  The certificate runner does
+        // Match the deployed/default test policy. The certificate runner does
         // not accept tuning ablations: its job is to test the implementation
         // that ships, not to find a more easily certifiable estimator.
         filter.setPeriodicAwCovarianceSync(true);
@@ -91,6 +90,9 @@ public:
     void updateMag(const Vector3f& mag_body_ned) override
     {
         fusion_.updateMag(mag_body_ned);
+        if (fusion_.isLive() && fusion_.raw().mekf().lastMagDiag().accepted) {
+            ++mag_accepted_since_trace_;
+        }
     }
 
     void update(float dt,
@@ -99,15 +101,20 @@ public:
                 float temperature_c) override
     {
         auto& mekf = fusion_.raw().mekf();
+        bool pseudo_due = false;
         if (mekf.linear_block_enabled()) {
             const float period = mekf.get_pseudo_update_period_s();
-            pseudo_due_mirror_ = ocean_imu::kalman::ou_detail::periodic_update_due(
+            pseudo_due = ocean_imu::kalman::ou_detail::periodic_update_due(
                 dt, period, pseudo_elapsed_);
         } else {
             pseudo_elapsed_ = 0.0f;
-            pseudo_due_mirror_ = false;
         }
+        if (pseudo_due) ++pseudo_since_trace_;
+
         fusion_.update(dt, gyr_meas_ned, acc_meas_ned, temperature_c);
+        if (fusion_.isLive() && fusion_.raw().mekf().lastAccDiag().accepted) {
+            ++acc_accepted_since_trace_;
+        }
         time_s_ += dt;
         ++sample_index_;
     }
@@ -145,6 +152,9 @@ public:
 
         if (trace_ && sample_index_ % static_cast<unsigned>(trace_stride_) == 0u) {
             write_trace_row(q_bw_ned);
+            acc_accepted_since_trace_ = 0;
+            mag_accepted_since_trace_ = 0;
+            pseudo_since_trace_ = 0;
         }
         return s;
     }
@@ -152,6 +162,8 @@ public:
 private:
     void write_header()
     {
+        // The three *_accepted/pseudo columns are event COUNTS accumulated
+        // since the previous trace row, not sticky last-diagnostic booleans.
         trace_ << "time_s,live,linear,bias_active,mag_lock,mag_refined,"
                   "acc_accepted,mag_accepted,pseudo_due_mirror,"
                   "tau_applied,sigma_applied,rs_applied,pseudo_period_s,"
@@ -186,9 +198,9 @@ private:
                << ',' << (mekf.acc_bias_updates_enabled() ? 1 : 0)
                << ',' << (fusion_.hasMagNorthLock() ? 1 : 0)
                << ',' << (fusion_.hasRefinedMagReference() ? 1 : 0)
-               << ',' << (ad.accepted ? 1 : 0)
-               << ',' << (md.accepted ? 1 : 0)
-               << ',' << (pseudo_due_mirror_ ? 1 : 0)
+               << ',' << acc_accepted_since_trace_
+               << ',' << mag_accepted_since_trace_
+               << ',' << pseudo_since_trace_
                << ',' << filter.getTauApplied()
                << ',' << filter.getSigmaApplied()
                << ',' << filter.getRSApplied()
@@ -208,13 +220,14 @@ private:
         trace_ << '\n';
     }
 
-    bool with_mag_ = true;
     mutable Fusion fusion_;
     mutable std::ofstream trace_;
     mutable unsigned sample_index_ = 0;
     mutable float time_s_ = 0.0f;
-    mutable bool pseudo_due_mirror_ = false;
     mutable float pseudo_elapsed_ = 0.0f;
+    mutable int acc_accepted_since_trace_ = 0;
+    mutable int mag_accepted_since_trace_ = 0;
+    mutable int pseudo_since_trace_ = 0;
     int trace_stride_ = 10;
 };
 
@@ -268,7 +281,7 @@ int main(int argc, char** argv)
     if (const char* raw = std::getenv("W3D_VALIDATION_WINDOW_SEC"))
         validation_window_sec = static_cast<float>(std::atof(raw));
 
-    // A trace file corresponds to exactly one replay.  The Python driver runs
+    // A trace file corresponds to exactly one replay. The Python driver runs
     // the eight records one process at a time so provenance cannot be mixed.
     if (files.size() != 1u) {
         std::cerr << "ERROR: ou3-certificate-sim requires exactly one --input\n";
