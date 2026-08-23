@@ -10,7 +10,10 @@ on:
       - "src/util/W3dSimCommon.*"
       - "tests/kalman_ou_iii/**"
       - "tests/validation/test_ou3_numerical_certificate.py"
+      - "tests/validation/test_ou3_certificate_completion.py"
       - "tools/ou3_numerical_certificate.py"
+      - "tools/ou3_certificate_completion.py"
+      - "tools/ou3_validate_enclosure.py"
       - "tools/ou_sweep_common.py"
       - "docs/ou-iii-numerical-certificate.md"
       - ".github/workflows/ou3-numerical-certificate.yml"
@@ -58,6 +61,12 @@ jobs:
           .cert-venv/bin/python -u tools/ou3_numerical_certificate.py \
             --no-build \
             --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+
+      - name: Complete executed nonlinear and funnel accounting
+        run: |
+          .cert-venv/bin/python -u tools/ou3_certificate_completion.py \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
+            --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii"
 
       - name: Upload certificate report, exact maps and traces
         if: always()
