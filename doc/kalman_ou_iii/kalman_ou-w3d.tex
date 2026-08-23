@@ -154,7 +154,7 @@
 \begin{document}
 
 % Generated result macros are defined before any section so that the protocol
-% description can quote the same values as the results tables.  The fallbacks
+% description can quote the same values as the results tables.  Default values
 % keep the document compilable before the studies have been regenerated.
 \IfFileExists{w3d-ou-validation-macros-generated.tex-part}{%
   \input{w3d-ou-validation-macros-generated.tex-part}%
@@ -196,31 +196,30 @@ regularization.  The Live stability analysis follows the implemented source
 modes: while accelerometer-bias learning is held, the active 18-state subsystem
 is uniformly exponentially stable under explicit windowed-information
 conditions with the frozen bias acting as a bounded input; after bias release,
-the active 21-state recursion is uniformly exponentially stable under augmented
-excitation or a finite-correlation-time bias fallback.  The deployed positive OU
-process floor gives analytic translational process excitation.  Additional
-sufficient conditions derive an explicit attitude/gyro-bias information margin
-from separated specific-force/magnetic vector packets and extend linear Live
-stability to arbitrary switching inside a bounded adaptation envelope.  A
-structured nonlinear Lyapunov argument yields practical ISS in an anisotropic
-tube defined by attitude geometry and gain-weighted correction rather than a
-common full-state radius; finite-window contraction gives constructive Lyapunov
-margins.  The measurement-only startup observer gives an almost-global,
-semiglobal practical attitude-entry result on compact subsets of its desired
-domain, while the implemented accelerometer reset makes entry independent of
-the discarded pre-reset attitude under a specific-force bound.  Exact nonlinear
-finite-step propagation gives sufficient conditions for the source-shaped
-handoff to reach a robust inner regional set.  Gravity-only operation has a
-corresponding regional result modulo yaw, and hard magnetic or tilt
-reconfiguration is composed through explicit jump-followed-by-flow recovery
-conditions.  Bounded non-OU forcing enters the same practical-ISS framework,
-and a conditional-moment argument gives a constructive regional mean-square
-drift bound without assuming that innovation gating preserves zero mean.
-Sea-state adaptation is implemented as an exogenous measurement-only layer that
-estimates wave period and band-limited acceleration variance and schedules the
-OU prior and integral regularizer.  A paired ten-seed study spans four
-stationary JONSWAP seas, four PM--Stokes seas, and a controlled transition.  For
-the stationary JONSWAP primary endpoint, normalized vertical RMS error is
+the deployed finite-correlation-time residual-bias model supplies contraction of
+unobserved bias directions within the active 21-state recursion.  The positive
+OU process floor gives analytic translational process excitation, and explicit
+specific-force/magnetic vector geometry gives a sufficient attitude/gyro-bias
+information margin.  Quantitative Live certification is then restricted to
+source-reachable execution words with mode-dependent path Lyapunov metrics.  An
+exact Rodrigues identity evaluates the finite quaternion-correction change of
+the $\SO(3)$ energy $1-\cos\theta$ while retaining the complete accepted Kalman
+innovation and the full $S$-to-attitude cross-gain; the certified geodesic chart
+may extend to any verified $\theta_*<\pi$.  Startup uses a measurement-only
+observer with an almost-global, semiglobal practical entry result, and the
+accelerometer reset makes that entry independent of the discarded prior
+attitude under a specific-force bound.  The source-shaped handoff is certified
+by node Lyapunov funnels whose scalar levels contract over source words, avoiding
+recursive high-dimensional reachable-set or radius propagation.  The same
+funnel metric composes bias release, magnetic and tilt jumps, bounded non-OU
+model mismatch, and a localized conditional mean-square drift result without
+assuming that innovation gating preserves zero mean.  Gravity-only operation
+has the corresponding regional result modulo yaw.  Sea-state adaptation is an
+exogenous measurement-only layer that estimates wave period and band-limited
+acceleration variance and schedules the OU prior and integral regularizer.  A
+paired ten-seed study spans four stationary JONSWAP seas, four PM--Stokes seas,
+and a controlled transition.  For the stationary JONSWAP primary endpoint,
+normalized vertical RMS error is
 $\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
 $H_s$ for OU--III versus
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
