@@ -1,19 +1,23 @@
 # OU-III numerical source-funnel certificate
 
-This workflow turns the stability objects in the OU-III manuscript into numerical diagnostics against the **unchanged deployed filter** and the same eight noisy stationary reference records used by the validation suite.
+This workflow instantiates the stability objects in the OU-III manuscript against the **unchanged adaptive filter** and the same eight noisy stationary reference records used by the validation suite.
 
-## Scope and claim levels
+The central rule is that a stability transition is never inferred from the observed error trajectory. The certificate executable records the estimator's own closed-loop linearized error maps and the analyzer solves the path-Lyapunov inequalities for those maps.
 
-The command produces two deliberately different claim levels.
+## Claim levels
 
-1. **Finite replay certificate.**  The tool observes the exact eight noisy executions, reconstructs the full truth error state, builds source words from the branches that occurred, and checks source coverage, SO(3) chart safety, replay-bounded word inequalities, startup handoff/capture, hybrid transitions, and the ordinary OU-III RMS regression sentinels.
-2. **Deployment theorem certificate.**  This remains `NOT_ESTABLISHED` until the continuous source cells are enclosed independently of the simulations.  Dense trajectories, Monte Carlo, or a fitted word map are not replacements for a validated enclosure of every source-reachable word.
+The report separates four questions that must not be conflated.
 
-The distinction is intentional.  A run may say that all eight noisy simulations stay in the candidate funnel while still refusing to claim the theorem for unobserved points in the declared source envelope.
+1. **Filter regression.** The unchanged adaptive OU-III implementation must pass its existing RMS/quality gates on all eight noisy records.
+2. **Exact executed-word linear certificate.** Every valid ordinary-Live source word executed by those records is composed from the estimator's actual prediction, Kalman correction, pseudo-measurement, and MEKF-reset maps. Source/path Lyapunov matrices are solved from LMIs rather than from empirical error covariance. This level passes only when the worst generalized word factor is strictly below one.
+3. **Numerical full source-funnel certificate.** In addition to the linear path result, the exact SO(3) sector, nonlinear word margin, startup/invariant funnel, hybrid jumps, and metric-dependent stochastic constants must close numerically.
+4. **Deployment theorem certificate.** This additionally requires validated enclosure of the continuous source cells and nonlinear extrema. Eight trajectories cannot by themselves establish this level.
+
+The distinction is intentional. Stable simulations are evidence about the filter; they are not a substitute for the inequalities in the theorem.
 
 ## Reference matrix
 
-The record inventory is imported from `tools/ou_sweep_common.py`, so it is exactly the publication/validation matrix:
+The record inventory is imported directly from `tools/ou_sweep_common.py`:
 
 | family | Hs (m) |
 |---|---:|
@@ -26,71 +30,114 @@ The record inventory is imported from `tools/ou_sweep_common.py`, so it is exact
 | PM-Stokes | 4.00 |
 | PM-Stokes | 8.50 |
 
-The simulator calls the common `process_wave_file_for_tracker` path.  Consequently the accelerometer, gyro, magnetometer, bias initialization, random walk, sampling rates, default deterministic seeds, and truth scoring are the same ones used by the existing OU regression harness.
+The simulator uses `process_wave_file_for_tracker`, so accelerometer, gyro and magnetometer noise, bias/random-walk processes, sampling rates, deterministic seeds and truth scoring remain those of the normal OU validation harness.
 
 ## Estimator invariance
 
-`tests/kalman_ou_iii/ou3-certificate-sim.cpp` is an observer around the normal `SeaStateFusion_OU_III<TrackerType::KALMANF>` configuration.  It does not tune the estimator for proof convenience.  In particular:
+`tests/kalman_ou_iii/ou3-certificate-sim.cpp` is a host-only observer around `SeaStateFusion_OU_III<TrackerType::KALMANF>`.
+
+It does **not** introduce a proof-specific estimator configuration:
 
 - the linear OU-III block remains enabled;
-- the online tuner and production clamps remain enabled;
-- the deployed periodic `a_w` covariance synchronization policy is retained;
-- accelerometer bias is held until Live exactly as in the normal configuration;
-- the complete `P(:,S)` block is recorded, so the full `S -> attitude` cross-covariance is visible rather than replaced by a Schmidt/block-diagonal surrogate;
-- no fixed-tuning or certificate-only gain is applied.
+- the online adaptive tuner and production clamps remain enabled;
+- the deployed `a_w` covariance synchronization policy remains enabled;
+- accelerometer bias is held/released by the normal startup logic;
+- the complete `S=0` gain is retained, including `S -> attitude` cross-covariance;
+- no Schmidt restriction, fixed tuning, certificate-only gain or retuned measurement covariance is used.
 
-The extra CSV is read-only telemetry.
+The host translation unit exposes the MEKF's internal scratch matrices only so they can be recorded after the exact operations that already occurred. Production source behavior is unchanged.
 
-## Numerical objects
+## Exact closed-loop maps
 
-The trace records Live state, held/active accelerometer-bias mode, magnetic lock/refinement, accepted accelerometer/magnetometer branches, a mirror of the self-similar `S=0` cadence, applied `(tau, sigma_aw, r_S)`, innovation NIS values, the quaternion and physical states, covariance diagonals, and `P(:,S)`.
+The MEKF already computes the matrices required by the proof. The certificate executable reads those actual values:
 
-The analyzer reconstructs the error vector
+- `F_AA_scratch_` for attitude/gyro-bias prediction;
+- `F_LL_scratch_` for the exact `(v,p,S,a_w)` OU chain;
+- the active/held accelerometer-bias prediction factor;
+- `PCt_scratch_ = P H^T` and `K_scratch_` for accepted measurements;
+- the exact periodic `S=0` gain, reconstructed from the same predicted covariance and `R_S` used by the filter;
+- the left-error MEKF reset transport following quaternion injection.
+
+For an accepted correction, the local closed-loop map is
 
 \[
- e_A=(\delta\theta,b_g,v,p,S,a_w,b_a)\in\mathbb R^{21},
+ A_k^{\rm corr}=G_k\,(I-K_k H_k),
 \]
 
-and its held-bias counterpart
+where `G_k` is the actual left-error reset Jacobian. The measurement Jacobian is recovered from the exact pre-update covariance by solving
 
 \[
- e_H=(\delta\theta,b_g,v,p,S,a_w)\in\mathbb R^{18}.
+ P_k H_k^T=P_kC_k^T,
 \]
 
-Attitude is handled on SO(3), using the rotation logarithm and
+and the reconstruction residual is recorded as a map-integrity check.
+
+`time_update()` performs the periodic `S=0` correction internally before the accelerometer correction, so the certificate executable mirrors this exact ordering. The pseudo-measurement map uses the full `P(:,S)` gain; its attitude rows are never zeroed.
+
+The maps are emitted in 0.25 s blocks by default. A block containing a fixed-dimensional mode/gauge transition is marked as a hybrid block and is not silently mixed into the ordinary-Live path LMI.
+
+## Source words and path LMIs
+
+Held-bias and active-bias ordinary-Live graphs remain separate:
+
+\[
+ e_H=(\delta\theta,b_g,v,p,S,a_w)\in\mathbb R^{18},
+\]
+
+\[
+ e_A=(\delta\theta,b_g,v,p,S,a_w,b_a)\in\mathbb R^{21}.
+\]
+
+Source nodes retain the magnetic gauge state and compact cells of the applied `(tau, sigma_aw, r_S)` schedule. Consecutive exact blocks are composed into words at candidate horizons 0.25, 0.5, 1, 2 and 4 s:
+
+\[
+ \Phi_w=A_{k+\ell-1}^{\rm cl}\cdots A_k^{\rm cl}.
+\]
+
+The analyzer then solves, jointly over node metrics,
+
+\[
+ \Phi_w^T P_j\Phi_w-\rho P_i\prec0,
+ \qquad P_i\succ0,
+\]
+
+with a strict target `rho < 1`. A cutting-plane loop solves a representative subset and then evaluates **every executed exact word**, adding worst violations until it closes or fails.
+
+The numerical scales used before the LMI are coordinate conditioning only. They do not alter the estimator or create the Lyapunov metric. In particular, the old shortcuts
+
+- fitting `Phi_w` from noisy `(X,Y)` trajectory pairs, and
+- setting `P_i` to inverse empirical state covariance
+
+have been removed and are explicitly forbidden by validation tests.
+
+For the solved metrics the report computes
+
+\[
+ \lambda_w^{\rm gen}=\lambda_{\max}
+ \left(P_i^{-1/2}\Phi_w^T P_j\Phi_wP_i^{-1/2}\right)
+\]
+
+for every executed word. The exact-linear replay gate passes only when the maximum is below one.
+
+## SO(3), handoff and hybrid layers
+
+Attitude is evaluated geometrically using
 
 \[
  V_R=1-\cos\theta.
 \]
 
-It does not propagate an Euler-angle radius.
+The trace still records truth error, startup handoff angle, bias release, magnetic lock/refinement and hybrid transitions. These diagnostics are retained, but they are **not yet the numerical full funnel certificate**.
 
-### Source graph and words
+After the linear LMI closes, the remaining numerical obligations are:
 
-Nodes retain the fixed-dimensional mode, magnetic gauge state, and compact cells of the applied OU/regularizer schedule.  A one-second source word also records how many accelerometer, magnetometer, and `S=0` updates occurred.  Held and active words are never multiplied into one fictitious square state transition.
+- largest nodewise `theta_star < pi` satisfying the exact finite SO(3) measurement sector;
+- positive exact nonlinear source-word infimum `mu_W`;
+- startup handoff levels `c0_i`, invariant levels `b_i`, finite `N_H` and `T_H`;
+- held-to-active, magnetic-regauge, tilt-reset and cooldown inequalities;
+- metric-dependent, non-empirical stochastic `b_W` and `v_W` bounds.
 
-For a node `i`, a positive-definite candidate metric is constructed from the normalized replay state cloud.  Repeated source words fit a map `Phi_w`; the report evaluates
-
-\[
- \lambda_w^{\rm gen}=\lambda_{\max}
- \left(P_i^{-1/2}\Phi_w^T P_j\Phi_wP_i^{-1/2}\right).
-\]
-
-It also records replay prefix amplification, fitted-map residual bounds, and the replay decrement
-
-\[
- \mu_{W,w}=\frac{W_i(e)-W_j(e^+)}{\|e\|^2}.
-\]
-
-These are **candidate/path diagnostics** until the fitted map and source cell are replaced by validated continuous enclosures.
-
-### Handoff and hybrid report
-
-The first Live sample is the measured startup handoff.  The report records its geodesic attitude error, the bias-release transition, magnetic lock/refinement transitions, and a replay capture count/time into the final inner error envelope.  An event absent from all eight records is reported as unobserved rather than silently certified.
-
-### Stochastic report
-
-The raw Gaussian localization calculation uses per-sensor-sigma-normalized pre-gate increments and the same quadratic-form concentration used in the paper.  Replay `b_W` and `v_W` are also supplied to the Freedman expression.  Because those two constants are extracted from the executed trajectory rather than a deterministic source-family bound, the stochastic result is labelled `DIAGNOSTIC_EMPIRICAL_BW_VW` and is not a theorem-level probability certificate.
+The report therefore uses `BLOCKED_AFTER_LINEAR` rather than pretending that a linear LMI alone proves the full nonlinear/hybrid theorem.
 
 ## Running
 
@@ -101,39 +148,39 @@ python3 tools/ou3_numerical_certificate.py \
   --output-dir reports/results/ou3_numerical_certificate
 ```
 
-The tool builds `tests/kalman_ou_iii/ou3-certificate-sim`, runs all eight records one process at a time, and writes:
+CI creates an isolated Python environment containing CVXPY/SCS for the path-LMI solve.
 
-- `certificate.json` — complete machine-readable numerical objects and per-word diagnostics;
+Outputs are:
+
+- `certificate.json` — machine-readable status and per-sea obstruction data;
 - `certificate.md` — compact eight-sea summary;
-- `*_certificate_trace.csv` — proof telemetry for each replay;
-- `logs/*.log` — original simulator/quality-gate output.
+- `path_metrics.npz` — solved held/active node Lyapunov matrices when available;
+- `*_exact_maps.bin` — exact composed closed-loop filter maps;
+- `*_certificate_trace.csv` — truth/source telemetry;
+- `logs/*.log` — original simulation and quality-gate output.
 
-The simulator intentionally requires one input per process so a trace can never contain two sea records with ambiguous provenance.
+## Reading a failure
 
-## Reading failures
+The first active obstruction is the result that matters.
 
-A failed candidate is meant to expose the obstruction, not just print `FAIL`.  The JSON contains, per mode and source word:
+- Existing RMS failure: filter regression problem.
+- Exact-map reconstruction residual too large: certificate instrumentation problem.
+- Exact source/path LMI cannot obtain `lambda_worst < 1`: either the selected source-word horizon/partition is too restrictive or the actual local filter dynamics do not meet the linear certificate; the exact offending word is reported.
+- Linear LMI passes but the SO(3)/nonlinear margin fails: nonlinear certificate is the bottleneck.
+- Nonlinear words pass but `c0 -> b` capture does not close: startup/handoff is the bottleneck.
+- Deterministic funnel passes but stochastic probability is useless: concentration/localization bounds are the bottleneck.
 
-- worst generalized contraction factor `lambda_gen`;
-- source-word sample count and branch pattern;
-- fitted-map residual infinity norm;
-- replay disturbance allowance `gamma_replay`;
-- minimum and 5th-percentile replay decrement;
-- worst prefix amplification `B_pre_replay`;
-- handoff/capture timing;
-- stochastic localization/Freedman diagnostics.
+This ordering prevents a stable-looking replay from being mislabeled as certified and prevents a bad numerical identification from being mislabeled as filter instability.
 
-Typical interpretations are therefore quantitative: a word may miss contraction with `lambda_gen=1.04`, a handoff may be outside the observed inner funnel, or the replay may be stable while the theorem status remains open because the continuous source cell has not yet been interval-enclosed.
+## What ultimately closes the theorem
 
-## What closes the manuscript theorem later
+Promoting `deployment_theorem_certificate` from `NOT_ESTABLISHED` requires all numerical objects above to be replaced or surrounded by validated continuous-source enclosures:
 
-The numerical replay machinery is intentionally reusable by a validated backend.  Promoting `deployment_theorem_certificate` from `NOT_ESTABLISHED` requires all of the following without relying on the eight trajectories as coverage evidence:
-
-- validated continuous-source word families for both 18- and 21-state graphs;
-- robust verification of the path LMIs throughout every cell;
-- rigorous nodewise large-angle sectors `theta_star < pi` using the exact finite SO(3) correction;
-- rigorous lower enclosure of the full nonlinear word margin `mu_W`;
-- rigorous startup, bias-release, magnetic-regauge, tilt-reset, and cooldown funnel inequalities;
+- source-complete reachable word families for both 18- and 21-state graphs;
+- robust path LMIs throughout every continuous source cell;
+- rigorous nodewise large-angle sectors using exact finite SO(3) corrections;
+- rigorous lower enclosure of the full nonlinear word margin;
+- rigorous startup and hybrid funnel inequalities;
 - non-empirical covariance/localization and martingale fluctuation bounds.
 
-Until those objects exist, the report answers the narrower but still important engineering question: **what does the current implementation do relative to the new certificate geometry on the same eight noisy seas used to validate its performance?**
+The eight noisy simulations then serve the complementary engineering question: **does the actual adaptive OU-III implementation start inside, remain inside, and enter the invariant portion of the numerically verified source funnel on the same conditions used for its performance validation?**
