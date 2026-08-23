@@ -267,24 +267,16 @@ Then
  +\frac{1-\lambda_s^n}{1-\lambda_s}\sigma_s^2.}
  \label{eq:capture-stochastic-ms}
 \end{equation}
-Moreover, for any $a>0$ and finite horizon $N$,
-\begin{equation}
- \boxed{
- \Pr\!\left(\max_{0\le n\le N}W_n\ge a\right)
- \le\frac1a\sum_{n=0}^{N}\left(
- \lambda_s^n\mathbb EW_0+
- \frac{\sigma_s^2}{1-\lambda_s}\right).}
- \label{eq:capture-stochastic-finite-hp}
-\end{equation}
 \end{theorem}
 
 \begin{proof}
 Taking expectations in Eq.~\eqref{eq:capture-stochastic-drift} and iterating
-gives Eq.~\eqref{eq:capture-stochastic-ms}.  Markov's inequality followed by a
-union bound over the finite horizon gives
-Eq.~\eqref{eq:capture-stochastic-finite-hp}.
+gives Eq.~\eqref{eq:capture-stochastic-ms}.
 \end{proof}
 
 Equation~\eqref{eq:capture-stochastic-drift} is a stochastic certificate
 condition for the exact implemented word map; it is not inferred from the
-deterministic bounded-input theorem.
+deterministic bounded-input theorem.  Finite-horizon high-probability statements
+are derived in Sec.~\ref{sec:stability-widening-phase-f} from conditional
+Gaussian quadratic-form concentration and a martingale Bernstein/Freedman
+bound, rather than from a Markov inequality on $W_n$.
