@@ -10,8 +10,10 @@ on:
       - "src/util/W3dSimCommon.*"
       - "tests/kalman_ou_iii/**"
       - "tests/validation/test_ou3_numerical_certificate.py"
+      - "tests/validation/test_ou3_information_certificate.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tools/ou3_numerical_certificate.py"
+      - "tools/ou3_information_certificate.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
       - "tools/ou_sweep_common.py"
@@ -53,22 +55,28 @@ jobs:
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
-      - name: Build certificate replay simulator
-        run: make -C tests/kalman_ou_iii ou3-certificate-sim
+      - name: Build exact-map and covariance observer
+        run: make -C tests/kalman_ou_iii ou3-information-certificate-sim
 
       - name: Run exact-map numerical certificate on eight noisy seas
         run: |
           .cert-venv/bin/python -u tools/ou3_numerical_certificate.py \
             --no-build \
+            --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-information-certificate-sim" \
             --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
 
-      - name: Complete executed nonlinear and funnel accounting
+      - name: Evaluate source-varying Kalman information certificate
+        run: |
+          .cert-venv/bin/python -u tools/ou3_information_certificate.py \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+
+      - name: Retain coarse-metric replay funnel diagnostic
         run: |
           .cert-venv/bin/python -u tools/ou3_certificate_completion.py \
             --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
             --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii"
 
-      - name: Upload certificate report, exact maps and traces
+      - name: Upload certificate report, exact maps, covariance and traces
         if: always()
         uses: actions/upload-artifact@v6
         with:
