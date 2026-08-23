@@ -3,23 +3,24 @@
 
 The fixed/coarsely-binned path LMI can reject stable transient Kalman dynamics
 because it forces the same metric on source points with different Riccati
-covariances.  This stage uses the estimator's own *full* covariance as a
+covariances. This stage uses the estimator's own *full* covariance as a
 parameter-dependent Lyapunov metric:
 
     M(g) = Sigma(g)^(-1).
 
-For an exact deterministic word Phi and the corresponding covariance endpoints
-Sigma_0, Sigma_1, the implemented Riccati/Joseph recursion has the form
+For an exact deterministic word Phi and corresponding covariance endpoints,
 
-    Sigma_1 = Phi Sigma_0 Phi' + Omega,   Omega >= 0.
+    Sigma_1 = Phi Sigma_0 Phi' + Omega.
 
-Therefore
+In relative endpoint coordinates this gives the exact identity
 
-    Phi' Sigma_1^(-1) Phi <= Sigma_0^(-1).
+    lambda_information
+      = 1 - lambda_min(Sigma_1^(-1/2) Omega Sigma_1^(-1/2)).
 
-Strict contraction over a source-complete word is measured by the largest
-generalized information gain.  This is estimator covariance, not empirical
-truth-error covariance, and no transition matrix is fitted from a trajectory.
+Thus a uniformly positive relative Riccati injection margin is exactly a strict
+word contraction margin in the source-varying information metric. This is
+estimator covariance, not empirical truth-error covariance, and no transition
+matrix is fitted from a trajectory.
 """
 from __future__ import annotations
 
@@ -41,6 +42,7 @@ HORIZONS_S = (0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0)
 TIME_TOL_S = 2.0e-5
 PSD_REL_TOL = 2.0e-4
 STRICT_LAMBDA_TOL = 2.0e-5
+IDENTITY_ABS_TOL = 5.0e-7
 
 
 @dataclass
@@ -92,16 +94,17 @@ def information_lambda(phi: np.ndarray, Sigma0: np.ndarray, Sigma1: np.ndarray) 
     """lambda_max for Phi' Sigma1^-1 Phi <= lambda Sigma0^-1."""
     S0, _, _ = _spd_sqrt(Sigma0)
     X = np.linalg.solve(0.5 * (Sigma1 + Sigma1.T), phi @ S0)
-    # (phi S0)' Sigma1^-1 (phi S0)
     B = (phi @ S0).T @ X
     return float(np.max(np.linalg.eigvalsh(0.5 * (B + B.T))))
 
 
 def covariance_increment_margin(phi: np.ndarray, Sigma0: np.ndarray, Sigma1: np.ndarray) -> dict:
-    """Check Omega=Sigma1-Phi Sigma0 Phi' >= 0 in relative coordinates."""
+    """Return relative Riccati injection and covariance metric bounds."""
+    Sigma0 = 0.5 * (Sigma0 + Sigma0.T)
     Sigma1 = 0.5 * (Sigma1 + Sigma1.T)
     Omega = 0.5 * ((Sigma1 - phi @ Sigma0 @ phi.T) +
                    (Sigma1 - phi @ Sigma0 @ phi.T).T)
+    _, lo0, hi0 = _spd_sqrt(Sigma0)
     S1, lo1, hi1 = _spd_sqrt(Sigma1)
     invS1 = np.linalg.inv(S1)
     rel = invS1 @ Omega @ invS1
@@ -109,9 +112,16 @@ def covariance_increment_margin(phi: np.ndarray, Sigma0: np.ndarray, Sigma1: np.
     return {
         "omega_relative_lambda_min": float(np.min(vals)),
         "omega_relative_lambda_max": float(np.max(vals)),
+        "Sigma0_lambda_min": lo0,
+        "Sigma0_lambda_max": hi0,
         "Sigma1_lambda_min": lo1,
         "Sigma1_lambda_max": hi1,
     }
+
+
+def information_identity_residual(lam: float, inc: dict) -> float:
+    """Residual of 1-lambda_info=lambda_min(relative Omega)."""
+    return abs((1.0 - float(lam)) - float(inc["omega_relative_lambda_min"]))
 
 
 def pair_map_covariance(map_path: Path, record: str) -> tuple[list[BASE.MapBlock], list[CovBlock], dict]:
@@ -152,6 +162,9 @@ def evaluate_horizon(records: dict[str, tuple[list[BASE.MapBlock], list[CovBlock
                      mode: str, horizon_s: float) -> dict:
     lambdas = []
     omega_mins = []
+    identity_residuals = []
+    covariance_lows = []
+    covariance_highs = []
     worst = None
     invalid_spd = 0
     word_count = 0
@@ -174,29 +187,42 @@ def evaluate_horizon(records: dict[str, tuple[list[BASE.MapBlock], list[CovBlock
                 continue
             lambdas.append(lam)
             omega_mins.append(inc["omega_relative_lambda_min"])
+            identity_residuals.append(information_identity_residual(lam, inc))
+            covariance_lows.extend((inc["Sigma0_lambda_min"], inc["Sigma1_lambda_min"]))
+            covariance_highs.extend((inc["Sigma0_lambda_max"], inc["Sigma1_lambda_max"]))
             if worst is None or lam > worst[0]:
                 worst = (lam, record, start, start + n - 1, inc)
 
     arr = np.asarray(lambdas, float)
     omg = np.asarray(omega_mins, float)
+    ids = np.asarray(identity_residuals, float)
     if not len(arr):
         return {"mode": mode, "horizon_s": horizon_s, "status": "NO_WORDS",
                 "word_count": word_count, "information_pass": False}
     covariance_consistent = invalid_spd == 0 and float(np.min(omg)) >= -PSD_REL_TOL
+    identity_consistent = float(np.max(ids)) <= IDENTITY_ABS_TOL
     strict = float(np.max(arr)) < 1.0 - STRICT_LAMBDA_TOL
+    sigma_min = float(np.min(covariance_lows))
+    sigma_max = float(np.max(covariance_highs))
     return {
         "mode": mode,
         "horizon_s": horizon_s,
-        "status": "PASS" if covariance_consistent and strict else "FAIL",
+        "status": "PASS" if covariance_consistent and identity_consistent and strict else "FAIL",
         "word_count": word_count,
         "invalid_spd_words": invalid_spd,
         "lambda_worst_information": float(np.max(arr)),
         "lambda_p99_information": float(np.quantile(arr, 0.99)),
         "lambda_p50_information": float(np.quantile(arr, 0.50)),
         "strict_margin_1_minus_lambda": 1.0 - float(np.max(arr)),
+        "relative_Riccati_injection_margin_worst": float(np.min(omg)),
         "omega_relative_lambda_min_worst": float(np.min(omg)),
+        "information_identity_residual_max": float(np.max(ids)),
+        "information_identity_consistent": bool(identity_consistent),
+        "Sigma_endpoint_lambda_min": sigma_min,
+        "Sigma_endpoint_lambda_max": sigma_max,
+        "Sigma_endpoint_condition_bound": sigma_max / sigma_min,
         "covariance_recursion_consistent": bool(covariance_consistent),
-        "information_pass": bool(covariance_consistent and strict),
+        "information_pass": bool(covariance_consistent and identity_consistent and strict),
         "worst_word": None if worst is None else {
             "record": worst[1], "start_block": worst[2], "end_block": worst[3],
             "lambda": worst[0], "increment": worst[4],
@@ -209,24 +235,31 @@ def select_mode(records, mode: str) -> dict:
     passing = [x for x in attempts if x.get("information_pass")]
     if passing:
         selected = passing[0]
+        strongest = max(passing, key=lambda x: x["strict_margin_1_minus_lambda"])
     else:
         selected = min(attempts, key=lambda x: x.get("lambda_worst_information", math.inf))
+        strongest = selected
     return {"mode": mode, "metric": "source-varying inverse estimator covariance",
-            "selected": selected, "attempts": attempts}
+            "selected": selected, "strongest_executed_margin": strongest,
+            "attempts": attempts}
 
 
 def markdown(report: dict) -> str:
     h = report["held"]["selected"]
     a = report["active"]["selected"]
+    hs = report["held"]["strongest_executed_margin"]
+    ass = report["active"]["strongest_executed_margin"]
     out = [
         "# OU-III source-varying information certificate", "",
         f"Status: **{report['status']}**", "",
         "Metric: `M(g) = Sigma_KF(g)^(-1)` from the actual estimator covariance; no truth-error covariance is used.", "",
-        f"Held: {h.get('horizon_s')} s, worst lambda {h.get('lambda_worst_information')}, margin {h.get('strict_margin_1_minus_lambda')}",
-        f"Active: {a.get('horizon_s')} s, worst lambda {a.get('lambda_worst_information')}, margin {a.get('strict_margin_1_minus_lambda')}",
+        f"Held first strict word: {h.get('horizon_s')} s, worst lambda {h.get('lambda_worst_information')}, margin {h.get('strict_margin_1_minus_lambda')}",
+        f"Active first strict word: {a.get('horizon_s')} s, worst lambda {a.get('lambda_worst_information')}, margin {a.get('strict_margin_1_minus_lambda')}",
+        f"Held strongest tested margin: {hs.get('horizon_s')} s, 1-lambda {hs.get('strict_margin_1_minus_lambda')}",
+        f"Active strongest tested margin: {ass.get('horizon_s')} s, 1-lambda {ass.get('strict_margin_1_minus_lambda')}",
         "",
-        "The covariance-consistency gate independently checks `Sigma1 - Phi Sigma0 Phi' >= 0` (up to the declared floating-point relative tolerance).",
-        "A PASS is an exact executed-source linear certificate in a parameter-dependent information metric; deployment promotion still requires a validated continuous-source enclosure.",
+        "The certificate checks the exact Riccati identity `1-lambda_information = lambda_min(Sigma1^-1/2 Omega Sigma1^-1/2)` and records endpoint covariance metric bounds.",
+        "A PASS is an exact executed-source linear certificate in a parameter-dependent information metric; deployment promotion still requires a validated continuous-source lower injection margin and covariance bounds.",
     ]
     return "\n".join(out)
 
@@ -258,26 +291,31 @@ def main() -> int:
     passed = bool(held["selected"].get("information_pass") and
                   active["selected"].get("information_pass"))
     report = {
-        "schema": 1,
+        "schema": 2,
         "scope": "eight_noisy_reference_replays_exact_maps_and_exact_KF_covariance",
         "status": "PASS" if passed else "FAIL",
         "filter_regression": original.get("filter_regression"),
         "map_integrity": original.get("map_integrity"),
         "metric": "M(g)=Sigma_KF(g)^(-1)",
         "metric_provenance": "actual estimator Riccati/Joseph covariance, not empirical truth-error covariance",
-        "identity": "Sigma1 = Phi Sigma0 Phi^T + Omega, Omega >= 0",
+        "identity": "1-lambda_information=lambda_min(Sigma1^-1/2 Omega Sigma1^-1/2), Omega=Sigma1-Phi Sigma0 Phi^T",
+        "identity_absolute_tolerance": IDENTITY_ABS_TOL,
         "held": held,
         "active": active,
         "alignment": alignment,
+        "deployment_linear_promotion_requirements": [
+            "validated source-complete word family",
+            "uniform positive lower bound on relative Riccati injection",
+            "uniform positive lower and finite upper covariance eigenvalue bounds",
+            "finite source-prefix gain",
+        ],
         "deployment_theorem_certificate": "NOT_ESTABLISHED",
-        "deployment_missing": "validated continuous-source covariance/information enclosure and nonlinear/hybrid/stochastic bounds",
+        "deployment_missing": "validated continuous-source information/covariance enclosure and nonlinear/hybrid/stochastic bounds",
     }
     (out / "information_certificate.json").write_text(json.dumps(report, indent=2, sort_keys=True))
     text = markdown(report)
     (out / "information_certificate.md").write_text(text)
     print(text)
-    # A failed mathematical certificate is scientific output, not a CI crash.
-    # Misalignment/non-SPD covariance is already raised as an instrumentation error.
     return 0
 
 
