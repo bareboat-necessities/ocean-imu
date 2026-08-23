@@ -171,6 +171,18 @@ jobs:
             --pattern sim-data-files.zip \
             --clobber
 
+      # Every full-study job below consumes this exact archive, rather than
+      # independently redownloading a release asset that could theoretically be
+      # replaced between jobs. The ZIP bytes used to compute the replay hash
+      # are therefore the same ZIP bytes used by every simulator replay.
+      - name: Preserve fingerprinted simulation archive
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou-fingerprinted-simulation-data
+          path: sim-data-files.zip
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Decide whether the full study is stale
         id: decide
         shell: bash
@@ -272,14 +284,14 @@ jobs:
           echo "apt-get did not succeed after 3 attempts"
           exit 1
 
-      - name: Download versioned simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Reuse fingerprinted simulation data
+        uses: actions/download-artifact@v8
+        with:
+          name: ou-fingerprinted-simulation-data
+          path: .
+
+      - name: Unpack fingerprinted simulation data
         run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
@@ -364,17 +376,18 @@ jobs:
           done
           echo "apt-get did not succeed after 3 attempts"
           exit 1
+
+      - name: Reuse fingerprinted simulation data
+        uses: actions/download-artifact@v8
+        with:
+          name: ou-fingerprinted-simulation-data
+          path: .
+
       # The combine step re-derives the calibrated tuning points and the
-      # transition diagnostic, which are simulator work, so it needs the same
-      # records and toolchain the shards had.
-      - name: Download versioned simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # transition diagnostic, which are simulator work, so it unpacks the
+      # same archive that the replay fingerprint and shards used.
+      - name: Unpack fingerprinted simulation data
         run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
@@ -470,17 +483,18 @@ jobs:
           done
           echo "apt-get did not succeed after 3 attempts"
           exit 1
+
+      - name: Reuse fingerprinted simulation data
+        uses: actions/download-artifact@v8
+        with:
+          name: ou-fingerprinted-simulation-data
+          path: .
+
       # The consistency step hashes every non-code source the manifest names,
       # and those include the simulation records. Without them the check errors
       # out on a missing file instead of reporting whether the numbers moved.
-      - name: Download versioned simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Unpack fingerprinted simulation data
         run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
@@ -524,14 +538,23 @@ jobs:
           mirror ou_robustness/ou_robustness_stress.svg \
                  ou_robustness_stress.svg
 
+      # Run every sync/contract step first. Only then hash reports/results, so
+      # the recorded results fingerprint describes the exact tree that will be
+      # committed rather than a pre-validation intermediate tree.
+      - name: Check the manuscript against the regenerated evidence
+        run: make -C tests/validation test
+
       - name: Record replay and results fingerprints
         run: |
           python3 tools/ou_replay_fingerprint.py \
             --simulation-zip sim-data-files.zip \
             --write reports/ou_evidence_fingerprint.json
 
-      - name: Check the manuscript against the regenerated evidence
-        run: make -C tests/validation test
+      - name: Verify final evidence fingerprints
+        run: |
+          python3 tools/ou_replay_fingerprint.py \
+            --simulation-zip sim-data-files.zip \
+            --check reports/ou_evidence_fingerprint.json
 
       - name: Commit the regenerated evidence
         run: |
