@@ -64,7 +64,12 @@ class Ou3NeighborhoodRadiusSearchTests(unittest.TestCase):
 
     def test_summary_keeps_sampled_qualification(self):
         c = self.base_case()
-        c.update({"case": "x", "mode": "A", "direction": "theta_x"})
+        c.update({
+            "case": "x",
+            "mode": "A",
+            "direction": "theta_x",
+            "W1": 1.01,
+        })
         report = {
             "status": "FAIL_OR_INCOMPLETE_SAMPLED",
             "case_count": 1,
