@@ -6,11 +6,3 @@
 \providecommand{\OURobustnessLowDifference}{+12.02}
 \providecommand{\OURobustnessLowDifferenceLow}{+11.65}
 \providecommand{\OURobustnessLowDifferenceHigh}{+12.42}
-\providecommand{\OURobustnessControlledAdaptiveMean}{4.63}
-\providecommand{\OURobustnessRapidAdaptiveMean}{4.79}
-\providecommand{\OURobustnessRapidDifference}{+0.16}
-\providecommand{\OURobustnessRapidDifferenceLow}{+0.07}
-\providecommand{\OURobustnessRapidDifferenceHigh}{+0.28}
-\providecommand{\OURobustnessRapidAdaptationDifference}{-6.03}
-\providecommand{\OURobustnessRapidAdaptationLow}{-6.37}
-\providecommand{\OURobustnessRapidAdaptationHigh}{-5.65}
