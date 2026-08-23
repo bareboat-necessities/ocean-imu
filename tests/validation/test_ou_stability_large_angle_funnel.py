@@ -79,9 +79,9 @@ class OUIIILargeAngleFunnelContractTests(unittest.TestCase):
             r"\label{eq:capture-certificate-pass}",
         ):
             self.assertIn(marker, capture)
-        flat = _flat(capture)
-        self.assertIn("propagates verified Lyapunov funnel levels", flat)
-        self.assertIn("positive one-sample Lyapunov increments are allowed", flat)
+        flat = _flat(capture).casefold()
+        self.assertIn("propagates verified lyapunov funnel levels", flat)
+        self.assertIn("positive one-sample lyapunov increments are allowed", flat)
         self.assertIn("are not propagated and are not certificate state variables", flat)
         self.assertNotIn("radius-only implementation", flat)
         self.assertNotIn("optional outer approximation", flat)
