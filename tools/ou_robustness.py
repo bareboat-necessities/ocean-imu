@@ -297,7 +297,18 @@ def restat_bundle(
     """Restate using the coupling that produced the archived replay rows."""
     with source.open(encoding="utf-8") as stream:
         bundle = json.load(stream)
-    if _rows_use_current_spectral_mse(bundle.get("raw_runs", [])):
+    rows = bundle.get("raw_runs", [])
+    if not rows:
+        # Preserve the core provenance/error ordering. In particular, a bare
+        # empty JSON file must fail as an unprovenanced source bundle before any
+        # coupling inference is attempted.
+        return _core.restat_bundle(
+            source,
+            output_dir,
+            bootstrap_resamples=bootstrap_resamples,
+            stats_seed=stats_seed,
+        )
+    if _rows_use_current_spectral_mse(rows):
         _activate_current_study()
     else:
         _activate_legacy_study()
