@@ -26,13 +26,22 @@ class Ou3InformationCompletionTests(unittest.TestCase):
         expected = float(e @ np.linalg.solve(P, e))
         self.assertAlmostEqual(MOD.info_energy(e, P), expected, places=13)
 
-    def test_capture_recursion_closes_for_strict_affine_contraction(self):
+    def test_capture_recursion_closes_for_strict_affine_superlevel(self):
         lam = 0.8
         gamma = 0.1
-        b = gamma / (1.0 - lam)
-        n = MOD.finite_capture_steps(10.0, lam, gamma, b * 1.01)
+        b_star = gamma / (1.0 - lam)
+        b_eta = MOD.strict_capture_level(b_star)
+        self.assertGreater(b_eta, b_star)
+        n = MOD.finite_capture_steps(10.0, lam, gamma, b_eta)
         self.assertIsNotNone(n)
         self.assertGreater(n, 0)
+
+    def test_capture_does_not_claim_finite_entry_into_asymptotic_fixed_point(self):
+        lam = 0.8
+        gamma = 0.1
+        b_star = gamma / (1.0 - lam)
+        self.assertIsNone(MOD.finite_capture_steps(10.0, lam, gamma, b_star))
+        self.assertEqual(MOD.finite_capture_steps(b_star, lam, gamma, b_star), 0)
 
     def test_capture_refuses_noncontracting_lambda(self):
         self.assertIsNone(MOD.finite_capture_steps(1.0, 1.0, 0.1, 1.0))
