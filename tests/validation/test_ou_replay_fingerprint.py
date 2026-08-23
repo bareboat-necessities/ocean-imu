@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+import tempfile
 import unittest
 
 
@@ -82,16 +83,37 @@ class ReplayFingerprintClassificationTests(unittest.TestCase):
             fingerprint.is_replay_source("100755", "tools/no-recognized-extension")
         )
 
-    def test_generated_evidence_and_prose_outside_tests_do_not_self_invalidate(self):
+    def test_generated_evidence_and_prose_outside_tests_do_not_self_invalidate_replay(self):
         names = [
             "reports/results/ou_validation/ou_validation.json",
             "reports/results/ou_robustness/ou_robustness_raw.csv",
+            "reports/ou_evidence_fingerprint.json",
             "doc/kalman_ou_iii/w3d-ou-validation-results-generated.tex-part",
             "README.md",
         ]
         for name in names:
             with self.subTest(name=name):
                 self.assertFalse(fingerprint.is_replay_source("100644", name))
+
+    def test_results_fingerprint_covers_every_file_and_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "results"
+            nested = root / "nested"
+            nested.mkdir(parents=True)
+            (root / "a.json").write_text('{"value": 1}\n', encoding="utf-8")
+            (nested / "fixture.dat").write_bytes(b"abc")
+
+            first = fingerprint.compute_results_fingerprint(root)
+            self.assertEqual(first["file_count"], 2)
+
+            (nested / "fixture.dat").write_bytes(b"abcd")
+            second = fingerprint.compute_results_fingerprint(root)
+            self.assertNotEqual(first["fingerprint"], second["fingerprint"])
+
+            (nested / "new-extensionless-file").write_bytes(b"x")
+            third = fingerprint.compute_results_fingerprint(root)
+            self.assertNotEqual(second["fingerprint"], third["fingerprint"])
+            self.assertEqual(third["file_count"], 3)
 
 
 if __name__ == "__main__":
