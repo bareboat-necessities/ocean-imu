@@ -74,6 +74,15 @@ class OUIIIStochasticConcentrationContractTests(unittest.TestCase):
         self.assertIn("raw and localized trajectories coincide", flat)
         self.assertIn("finite-horizon and high-probability", flat)
 
+    def test_conclusion_no_longer_lists_concentration_as_future_work(self):
+        conclusion = _read("w3d-conclusion-summary.tex-part")
+        flat = _flat(conclusion)
+        self.assertNotIn("Sharper stochastic concentration", conclusion)
+        self.assertIn("Conditional Gaussian quadratic-form concentration", flat)
+        self.assertIn("Bernstein/Freedman", flat)
+        self.assertIn(r"$\overline\Sigma$", conclusion)
+        self.assertIn(r"$(b_W,v_W)$", conclusion)
+
 
 if __name__ == "__main__":
     unittest.main()
