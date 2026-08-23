@@ -20,22 +20,29 @@ def _flat(text: str) -> str:
 class OUIIIWidenedStabilityContractTests(unittest.TestCase):
     def test_main_article_wires_single_current_stability_chain(self):
         main = _read("kalman_ou-w3d.tex")
-        local = r"\input{w3d-iss-stability.tex-part}"
-        regional = r"\input{w3d-semiglobal-stability.tex-part}"
-        evidence = r"\input{w3d-sim-charts.tex-part}"
-        self.assertIn(local, main)
-        self.assertIn(regional, main)
-        self.assertLess(main.index(local), main.index(regional))
-        self.assertLess(main.index(regional), main.index(evidence))
+        ordered = (
+            r"\input{w3d-iss-stability.tex-part}",
+            r"\input{w3d-analytical-stability-widening.tex-part}",
+            r"\input{w3d-stability-widening-phase-c.tex-part}",
+            r"\input{w3d-stability-widening-source-path.tex-part}",
+            r"\input{w3d-semiglobal-stability.tex-part}",
+            r"\input{w3d-stability-widening-phase-d.tex-part}",
+            r"\input{w3d-stability-widening-phase-e.tex-part}",
+            r"\input{w3d-stability-widening-phase-f.tex-part}",
+            r"\input{w3d-sim-charts.tex-part}",
+        )
+        positions = [main.index(item) for item in ordered]
+        self.assertEqual(positions, sorted(positions))
+        self.assertNotIn("w3d-block-local-iss", main)
 
-    def test_semiglobal_file_wires_only_current_components(self):
+    def test_semiglobal_file_wires_only_funnel_and_hybrid_components(self):
         proof = _read("w3d-semiglobal-stability.tex-part")
         prefix = (
-            r"\input{w3d-block-local-iss.tex-part}" "\n"
             r"\input{w3d-finite-live-capture.tex-part}" "\n"
             r"\input{w3d-hybrid-stability.tex-part}"
         )
         self.assertTrue(proof.startswith(prefix))
+        self.assertNotIn("w3d-block-local-iss", proof)
         for marker in (
             r"\ref{thm:iss-21-ues}",
             r"\ref{thm:finite-live-capture}",
@@ -55,25 +62,34 @@ class OUIIIWidenedStabilityContractTests(unittest.TestCase):
         self.assertIn(r"\label{eq:capture-handoff-inclusion}", capture)
         self.assertIn(r"\label{eq:capture-funnel-recursion}", capture)
         self.assertIn(r"\mathcal H_{k_H}\subset\mathcal D_{k_H}", startup)
+        self.assertIn("radius summary is not propagated", startup)
 
-    def test_no_dead_theorem_names_are_referenced(self):
+    def test_no_dead_certificate_names_are_referenced(self):
         compiled = "\n".join(
             _read(name)
             for name in (
                 "w3d-iss-stability.tex-part",
-                "w3d-block-local-iss.tex-part",
+                "w3d-analytical-stability-widening.tex-part",
+                "w3d-stability-widening-phase-c.tex-part",
+                "w3d-stability-widening-source-path.tex-part",
                 "w3d-finite-live-capture.tex-part",
                 "w3d-hybrid-stability.tex-part",
                 "w3d-semiglobal-stability.tex-part",
+                "w3d-stability-widening-phase-d.tex-part",
+                "w3d-stability-widening-phase-e.tex-part",
+                "w3d-stability-widening-phase-f.tex-part",
                 "w3d-init.tex-part",
                 "w3d-conclusion-summary.tex-part",
             )
         )
         for dead in (
-            "thm:iss-21-local",
-            "rem:iss-block-scope",
-            "eq:capture-handoff-margin",
-            "eq:capture-handoff-sequence",
+            "thm:iss-block-local",
+            "eq:iss-block-basin",
+            "eq:widen-kappaN",
+            "thm:widen-explicit-P",
+            "widen-cylinder-iss",
+            "widen-component-iss",
+            "widen-direct-iss",
             "eq:capture-comparison-sequence",
             "eq:capture-comparison-envelope",
         ):
@@ -84,7 +100,9 @@ class OUIIIWidenedStabilityContractTests(unittest.TestCase):
             _read(name)
             for name in (
                 "w3d-iss-stability.tex-part",
-                "w3d-block-local-iss.tex-part",
+                "w3d-analytical-stability-widening.tex-part",
+                "w3d-stability-widening-phase-c.tex-part",
+                "w3d-stability-widening-source-path.tex-part",
                 "w3d-finite-live-capture.tex-part",
                 "w3d-hybrid-stability.tex-part",
                 "w3d-semiglobal-stability.tex-part",
@@ -97,6 +115,7 @@ class OUIIIWidenedStabilityContractTests(unittest.TestCase):
             "previous proof",
             "former theorem",
             "we tried",
+            "fallback",
         ):
             self.assertNotIn(phrase, compiled)
 
