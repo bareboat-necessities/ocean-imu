@@ -52,20 +52,25 @@ class ReplayFingerprintClassificationTests(unittest.TestCase):
             "tools/a.js",
             "tools/a.ts",
             ".github/workflows/build.yml",
+            ".github/dependabot/config.json",
             "config/build.yaml",
             "cmake/toolchain.cmake",
             "rules/common.mk",
+            "rules/config.make",
         ]
         for name in names:
             with self.subTest(name=name):
                 self.assertTrue(fingerprint.is_replay_source("100644", name))
 
-    def test_expected_build_files_are_included(self):
+    def test_expected_build_files_and_variants_are_included(self):
         names = [
             "Makefile",
-            "tests/foo/Makefile",
+            "Makefile.local",
+            "Makefile.release",
             "CMakeLists.txt",
+            "CMakePresets.json",
             "Dockerfile",
+            "Dockerfile.ci",
             "meson.build",
             "meson_options.txt",
             "BUILD",
@@ -73,6 +78,11 @@ class ReplayFingerprintClassificationTests(unittest.TestCase):
             "WORKSPACE",
             "WORKSPACE.bazel",
             "MODULE.bazel",
+            "pyproject.toml",
+            "setup.cfg",
+            "platformio.ini",
+            "requirements.txt",
+            "requirements-ci.txt",
         ]
         for name in names:
             with self.subTest(name=name):
