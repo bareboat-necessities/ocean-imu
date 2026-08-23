@@ -29,7 +29,7 @@ compact cells of covariance and scheduled parameters.  Each edge
 $e=(i,j)\in\mathscr E_m$ carries the compact matrix family
 \begin{equation}
  \mathscr A_e:=\left\{
- \widetilde\mat A_{k,m}^{\rm cl}:
+ \widetilde{\mat A}_{k,m}^{\rm cl}:
  \text{the implemented source can move from node $i$ to node $j$}
  \right\}.
  \label{eq:widen-src-edge-family}
