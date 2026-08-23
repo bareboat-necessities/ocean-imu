@@ -2,8 +2,9 @@
 """Independent final composition gate for the OU-III deployment theorem.
 
 This gate deliberately recomputes stochastic concentration and finite capture
-from primitive validated constants.  It never trusts a supplied final failure
-probability, capture time, or deployment PASS bit.
+from primitive validated constants. It never trusts a supplied final failure
+probability, capture time, deployment PASS bit, or a self-asserted source-domain
+completeness flag.
 """
 from __future__ import annotations
 
@@ -11,6 +12,24 @@ import argparse
 import json
 import math
 from pathlib import Path
+
+import ou3_source_domain_contract as SOURCE_DOMAIN
+
+REQUIRED_HYBRID = set(SOURCE_DOMAIN.HYBRID_OBLIGATIONS)
+SOURCE_DOMAIN_KEYS = (
+    "schema",
+    "claim",
+    "source_generated_not_trajectory_fit",
+    "source_complete_parameter_domain",
+    "validated_arithmetic",
+    "outward_rounded",
+    "implementation_header",
+    "continuous_parameters",
+    "timing_constants_s",
+    "discrete_source_branches",
+    "hybrid_obligations",
+    "periodic_aw_covariance_sync_proof",
+)
 
 
 def pos(x) -> float:
@@ -32,8 +51,10 @@ def t_star_for_radius(radius2: float, m: float, v: float, b: float) -> float:
         return 0.0
     # Solve m + 2 sqrt(v t) + 2 b t = radius2 by monotone bisection.
     lo, hi = 0.0, 1.0
+
     def f(t: float) -> float:
         return m + 2.0 * math.sqrt(max(0.0, v * t)) + 2.0 * b * t
+
     while f(hi) < radius2:
         hi *= 2.0
         if hi > 1.0e12:
@@ -45,6 +66,22 @@ def t_star_for_radius(radius2: float, m: float, v: float, b: float) -> float:
         else:
             hi = mid
     return lo
+
+
+def validate_source_domain(payload: dict) -> dict:
+    """Bind promotion to the contract regenerated from the current source tree."""
+    expected = SOURCE_DOMAIN.build(SOURCE_DOMAIN.DEFAULT_HEADER.resolve())
+    failures = []
+    for key in SOURCE_DOMAIN_KEYS:
+        if payload.get(key) != expected.get(key):
+            failures.append(f"source-domain field {key!r} does not match current implementation")
+    return {
+        "pass": not failures,
+        "failures": failures,
+        "implementation_header": expected["implementation_header"],
+        "continuous_parameters": expected["continuous_parameters"],
+        "hybrid_obligations": expected["hybrid_obligations"],
+    }
 
 
 def derive_stochastic(s: dict) -> dict:
@@ -95,7 +132,9 @@ def derive_stochastic(s: dict) -> dict:
     excursion = 1.0
     if xstar > 0.0:
         denom = 2.0 * (VW + bW * xstar / 3.0)
-        excursion = 0.0 if denom == 0.0 else min(1.0, N * math.exp(-(xstar * xstar) / denom))
+        excursion = 0.0 if denom == 0.0 else min(
+            1.0, N * math.exp(-(xstar * xstar) / denom)
+        )
 
     tstar = t_star_for_radius(wstar * wstar, mSigma, vSigma, bSigma)
     localization = min(1.0, N * ell * math.exp(-tstar))
@@ -114,7 +153,7 @@ def derive_stochastic(s: dict) -> dict:
         "excursion_failure_probability_upper": excursion,
         "finite_horizon_failure_probability_upper": total,
         "failure_probability_budget": budget,
-        "pass": bool(xstar > 0.0 and total <= budget),
+        "pass": bool(xstar > 0.0 and total < 1.0 and total <= budget),
     }
 
 
@@ -149,18 +188,22 @@ def derive_capture(c: dict) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--validated-check", type=Path, required=True)
+    ap.add_argument("--source-domain", type=Path, required=True)
     ap.add_argument("--primitive-bounds", type=Path, required=True)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
 
     check = json.loads(args.validated_check.read_text())
+    source_domain_payload = json.loads(args.source_domain.read_text())
     primitive = json.loads(args.primitive_bounds.read_text())
-    required_hybrid = {
-        "startup_handoff", "held_to_active", "magnetic_regauge",
-        "tilt_reset", "cooldown", "periodic_aw_covariance_sync",
-    }
+
+    source_domain = validate_source_domain(source_domain_payload)
     seen = set(check.get("hybrid", {}).get("seen", []))
-    hybrid_pass = bool(check.get("hybrid", {}).get("pass")) and required_hybrid <= seen
+    hybrid_pass = (
+        source_domain["pass"]
+        and bool(check.get("hybrid", {}).get("pass"))
+        and REQUIRED_HYBRID <= seen
+    )
     modes = check.get("modes", {})
     continuous_pass = all(
         modes.get(m, {}).get("linear_pass") and modes.get(m, {}).get("nonlinear_pass")
@@ -182,16 +225,22 @@ def main() -> int:
 
     capture_pass = all(capture[m]["pass"] for m in ("H", "A"))
     final_pass = bool(
-        provenance_pass and continuous_pass and hybrid_pass
-        and stochastic.get("pass") and capture_pass
+        source_domain["pass"]
+        and provenance_pass
+        and continuous_pass
+        and hybrid_pass
+        and stochastic.get("pass")
+        and capture_pass
     )
     out = {
-        "schema": 1,
+        "schema": 2,
         "qualification": "INDEPENDENT_DEPLOYMENT_THEOREM_COMPOSITION_GATE",
+        "source_domain": source_domain,
+        "source_domain_pass": source_domain["pass"],
         "validated_provenance_pass": provenance_pass,
         "continuous_linear_and_nonlinear_pass": continuous_pass,
         "hybrid_pass": hybrid_pass,
-        "hybrid_required": sorted(required_hybrid),
+        "hybrid_required": sorted(REQUIRED_HYBRID),
         "hybrid_seen": sorted(seen),
         "stochastic": stochastic,
         "capture": capture,

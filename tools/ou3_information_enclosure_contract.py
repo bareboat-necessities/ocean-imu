@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Build the continuous-source promotion contract for adaptive OU-III.
 
-The executed information certificate supplies sanity anchors only.  This tool
+The executed information certificate supplies sanity anchors only. This tool
 states the primitive outward-rounded quantities a source-complete validated
-backend must prove.  Final nonlinear, hybrid and stochastic margins are
-recomputed by ``ou3_validate_enclosure.py`` and are never accepted as asserted
-PASS values.
+backend must prove. Final nonlinear, hybrid and stochastic margins are
+recomputed by ``ou3_validate_enclosure.py`` and ``ou3_deployment_gate.py`` and
+are never accepted as asserted PASS values.
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 
 import ou3_numerical_certificate as BASE
+import ou3_source_domain_contract as SOURCE_DOMAIN
 
 SCHEMA = 2
 
@@ -88,11 +89,16 @@ def build_contract(info: dict, completion: dict) -> dict:
             "Omega=Sigma1-Phi Sigma0 Phi^T"
         ),
         "modes": modes,
+        "source_domain_requirement": {
+            "producer": "tools/ou3_source_domain_contract.py",
+            "claim": "OU3_SOURCE_COMPLETE_IMPLEMENTATION_DOMAIN_CONTRACT",
+            "validation": (
+                "final deployment gate regenerates the source-domain contract from the current "
+                "implementation and rejects stale, truncated, or self-asserted domain artifacts"
+            ),
+        },
         "hybrid_requirements": {
-            "required_kinds": [
-                "startup_handoff", "held_to_active", "magnetic_regauge",
-                "tilt_reset", "cooldown",
-            ],
+            "required_kinds": list(SOURCE_DOMAIN.HYBRID_OBLIGATIONS),
             "primitive_bounds_per_jump": [
                 "source_complete", "outward_rounded", "source_level_W_upper",
                 "jump_gain_upper", "additive_W_upper", "destination_level_W",
@@ -102,6 +108,11 @@ def build_contract(info: dict, completion: dict) -> dict:
                 "source_dimension=18", "destination_dimension=21",
                 "dimension_change_handled_by_embedding=true",
                 "new_coordinate_W_upper",
+            ],
+            "periodic_aw_covariance_sync_extra": [
+                "proof_mode=PSD_NONEXPANSIVE",
+                "P_plus=P_minus+E_a Delta_plus E_a^T with Delta_plus>=0",
+                "inverse-covariance information energy nonexpansive",
             ],
             "verifier_formula": (
                 "post_W_upper=jump_gain_upper*source_level_W_upper+"
@@ -129,11 +140,13 @@ def build_contract(info: dict, completion: dict) -> dict:
             "outward rounding",
             "source-generated enclosure, not trajectory fitting",
             "complete continuous source coverage",
+            "source-domain artifact exactly matches current implementation-generated contract",
         ],
         "promotion_rule": (
             "executed replay values are sanity anchors only; deployment PASS requires "
             "strict validated continuous-source linear and nonlinear bounds, recomputed "
-            "hybrid inward margins, and recomputed stochastic concentration"
+            "hybrid inward margins, recomputed stochastic concentration, independently "
+            "recomputed finite capture, and exact binding to the current implementation domain"
         ),
     }
 
