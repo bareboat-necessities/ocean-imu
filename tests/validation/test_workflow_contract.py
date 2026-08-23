@@ -33,6 +33,41 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("tools/ou_publication_sync.py", stage)
         self.assertIn("reports/results/ou_validation", stage)
 
+    def test_full_replay_is_gated_by_broad_content_fingerprint(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        fingerprint = workflow.index("  fingerprint:")
+        regenerate = workflow.index("  regenerate:")
+        self.assertLess(fingerprint, regenerate)
+
+        gate = workflow[fingerprint:regenerate]
+        self.assertIn("tools/ou_replay_fingerprint.py", gate)
+        self.assertIn("sim-data-files.zip", gate)
+        self.assertIn("reports/results/ou_replay_fingerprint.json", gate)
+        self.assertIn("replay_required=false", gate)
+        self.assertIn("replay_required=true", gate)
+        self.assertIn("make -C tests/validation test", gate)
+
+        regen_header = workflow[regenerate:workflow.index("    runs-on:", regenerate)]
+        self.assertIn("needs: fingerprint", regen_header)
+        self.assertIn(
+            "needs.fingerprint.outputs.replay_required == 'true'", regen_header
+        )
+
+    def test_regenerated_evidence_records_the_replay_fingerprint(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        record = workflow.index("- name: Record replay fingerprint")
+        check = workflow.index("- name: Check the manuscript against the regenerated evidence")
+        commit = workflow.index("- name: Commit the regenerated evidence")
+        self.assertLess(record, check)
+        self.assertLess(check, commit)
+
+        stage = workflow[record:commit]
+        self.assertIn("tools/ou_replay_fingerprint.py", stage)
+        self.assertIn("--write reports/results/ou_replay_fingerprint.json", stage)
+
+        commit_stage = workflow[commit:]
+        self.assertIn("reports/results/ou_replay_fingerprint.json", commit_stage)
+
     def test_push_retry_revalidates_after_rebase(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         start = workflow.index("for attempt in 1 2 3 4; do")
@@ -40,8 +75,10 @@ class WorkflowContractTests(unittest.TestCase):
         loop = workflow[start:end]
 
         rebase = loop.index("git pull --rebase")
+        fingerprint = loop.index("tools/ou_replay_fingerprint.py")
         validate = loop.index("make -C tests/validation test")
-        self.assertLess(rebase, validate)
+        self.assertLess(rebase, fingerprint)
+        self.assertLess(fingerprint, validate)
 
     def test_failure_message_cannot_run_after_a_push(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
