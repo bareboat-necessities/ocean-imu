@@ -12,6 +12,19 @@ SPEC.loader.exec_module(fingerprint)
 
 
 class ReplayFingerprintClassificationTests(unittest.TestCase):
+    def test_every_file_under_tests_is_included_regardless_of_extension(self):
+        names = [
+            "tests/kalman_ou_iii/parameters.txt",
+            "tests/kalman_ou_iii/fixture.csv",
+            "tests/validation/config.json",
+            "tests/validation/reference.dat",
+            "tests/validation/README.md",
+            "tests/custom/no-extension",
+        ]
+        for name in names:
+            with self.subTest(name=name):
+                self.assertTrue(fingerprint.is_replay_source("100644", name))
+
     def test_expected_source_and_workflow_types_are_included(self):
         names = [
             "src/a.c",
@@ -69,7 +82,7 @@ class ReplayFingerprintClassificationTests(unittest.TestCase):
             fingerprint.is_replay_source("100755", "tools/no-recognized-extension")
         )
 
-    def test_generated_evidence_and_prose_do_not_self_invalidate(self):
+    def test_generated_evidence_and_prose_outside_tests_do_not_self_invalidate(self):
         names = [
             "reports/results/ou_validation/ou_validation.json",
             "reports/results/ou_robustness/ou_robustness_raw.csv",
