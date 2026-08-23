@@ -8,7 +8,7 @@ covariance recorded at that same source point,
     W_k = e_k^T Sigma_k^{-1} e_k.
 
 The nominal noisy replay is used only to measure disturbance allowance, startup
-handoff, finite capture and observed hybrid jumps.  It is *not* promoted to a
+handoff, finite capture and observed hybrid jumps. It is *not* promoted to a
 nonzero-neighborhood or continuous-source theorem certificate.
 """
 from __future__ import annotations
@@ -61,12 +61,27 @@ def record_errors(trace_path: Path, timeseries: Path):
     return trace, E, theta
 
 
+def record_name_index() -> dict[str, str]:
+    """Map both certificate slugs and exact replay file stems to source CSVs.
+
+    ``ou3_exact_replay.py`` reports canonical slugs such as ``jonswap_0_27``,
+    while the binary map/covariance files deliberately retain the original
+    simulation stem (for example ``wave_data_jonswap_H0.270_...``).  Downstream
+    stages must accept both names because both are valid provenance identities.
+    """
+    index: dict[str, str] = {}
+    for family, hs, name in BASE.RECORDS:
+        short = f"{family.lower().replace('-', '_')}_{hs:.2f}".replace(".", "_")
+        index[short] = name
+        index[Path(name).stem] = name
+    return index
+
+
 def evaluate_mode(record_data: dict, mode: str, horizon_s: float, lam_bound: float) -> dict:
     dim = 21 if mode == "A" else 18
     residuals = []
     ratios = []
     starts = []
-    endpoints = []
     worst = None
 
     for slug, d in record_data.items():
@@ -91,7 +106,6 @@ def evaluate_mode(record_data: dict, mode: str, horizon_s: float, lam_bound: flo
             r = W1 - lam_bound * W0
             residuals.append(r)
             starts.append(W0)
-            endpoints.append(W1)
             if W0 > 1e-12:
                 ratios.append(W1 / W0)
             if worst is None or r > worst[0]:
@@ -100,7 +114,6 @@ def evaluate_mode(record_data: dict, mode: str, horizon_s: float, lam_bound: flo
     if not residuals:
         return {"mode": mode, "status": "NO_WORDS"}
     gamma = max(0.0, float(np.max(residuals)))
-    # Smallest closed affine invariant level for W+ <= lambda W + gamma.
     b = gamma / max(1e-15, 1.0 - lam_bound)
     c0 = float(np.max(starts))
     N = finite_capture_steps(c0, lam_bound, gamma, b)
@@ -134,8 +147,8 @@ def handoff_and_hybrid(record_data: dict) -> dict:
         live = np.asarray(trace["live"], int)
         rising_live = np.flatnonzero(live[1:] > live[:-1]) + 1
         if len(rising_live):
-            k = int(rising_live[0]); t = float(tt[k])
-            # First covariance block whose end is at/after the handoff.
+            k = int(rising_live[0])
+            t = float(tt[k])
             bi = min(range(len(maps)), key=lambda i: abs(maps[i].t1 - t)) if maps else None
             if bi is not None:
                 dim = 21 if maps[bi].end_active else 18
@@ -147,7 +160,8 @@ def handoff_and_hybrid(record_data: dict) -> dict:
         for i, b in enumerate(maps):
             if not b.hybrid_jump:
                 continue
-            k0 = nearest_row(tt, b.t0); k1 = nearest_row(tt, b.t1)
+            k0 = nearest_row(tt, b.t0)
+            k1 = nearest_row(tt, b.t1)
             d0 = 21 if b.start_active else 18
             d1 = 21 if b.end_active else 18
             W0 = info_energy(E[k0, :d0], covs[i].start[:d0, :d0])
@@ -189,7 +203,8 @@ def main() -> int:
     ap.add_argument("--certificate-dir", type=Path, default=BASE.DEFAULT_OUT)
     ap.add_argument("--data-dir", type=Path, default=BASE.DEFAULT_DATA_DIR)
     args = ap.parse_args()
-    out = args.certificate_dir.resolve(); data_dir = args.data_dir.resolve()
+    out = args.certificate_dir.resolve()
+    data_dir = args.data_dir.resolve()
     info = json.loads((out / "information_certificate.json").read_text())
     if info.get("status") != "PASS":
         report = {"schema": 1, "status": "BLOCKED_AT_INFORMATION_LINEAR_GATE",
@@ -202,21 +217,22 @@ def main() -> int:
         print(report["status"])
         return 0
 
-    record_lookup = {f"{fam.lower().replace('-','_')}_{hs:.2f}".replace('.', '_'): name
-                     for fam, hs, name in BASE.RECORDS}
+    record_lookup = record_name_index()
     record_data = {}
     for map_path in sorted(out.glob("*_exact_maps.bin")):
         slug = map_path.name.replace("_exact_maps.bin", "")
+        record_name = record_lookup.get(slug)
+        if record_name is None:
+            known = ", ".join(sorted(record_lookup))
+            raise KeyError(f"unknown exact-map record identity {slug!r}; known identities: {known}")
         maps, covs, _ = INFO.pair_map_covariance(map_path, slug)
-        trace_path = next(out.glob(f"*{record_lookup[slug].replace('.csv','')}*_certificate_trace.csv"), None)
-        # The trace is named from the original data stem; use the exact name if glob is ambiguous.
-        data_path = (data_dir / record_lookup[slug]).resolve()
-        exact_trace = out / f"{data_path.stem}_certificate_trace.csv"
-        if exact_trace.exists(): trace_path = exact_trace
-        if trace_path is None or not trace_path.exists():
-            raise FileNotFoundError(f"certificate trace for {slug}")
+        data_path = (data_dir / record_name).resolve()
+        trace_path = out / f"{data_path.stem}_certificate_trace.csv"
+        if not trace_path.exists():
+            raise FileNotFoundError(f"certificate trace for {slug}: {trace_path}")
         timeseries = BASE.output_csv_for(data_path)
-        if not timeseries.exists(): raise FileNotFoundError(timeseries)
+        if not timeseries.exists():
+            raise FileNotFoundError(timeseries)
         trace, E, theta = record_errors(trace_path, timeseries)
         record_data[slug] = {"maps": maps, "covs": covs, "trace": trace, "E": E, "theta": theta}
 
@@ -231,7 +247,9 @@ def main() -> int:
               "numerical_neighborhood_certificate": "NOT_ESTABLISHED",
               "deployment_theorem_certificate": "NOT_ESTABLISHED"}
     (out / "information_completion.json").write_text(json.dumps(report, indent=2, sort_keys=True))
-    text = markdown(report); (out / "information_completion.md").write_text(text); print(text)
+    text = markdown(report)
+    (out / "information_completion.md").write_text(text)
+    print(text)
     return 0
 
 
