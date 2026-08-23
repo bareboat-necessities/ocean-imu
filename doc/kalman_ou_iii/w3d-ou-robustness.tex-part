@@ -108,5 +108,5 @@ pure adaptation-rate measurement: shortening the crossfade also changes the
 composition of the fixed \SI{900}{s} scoring window. For that reason the
 bidirectional deployed-SpectralMSE low--high--low protocol of
 Sec.~\ref{sec:roundtrip-transition-ablation} remains the cleaner transient
-adaptation diagnostic, while the one-way stress case is retained as an explicit
-worst-direction robustness check.
+adaptation diagnostic, while the rapid one-way stress case is retained as an
+explicit worst-direction robustness check.
