@@ -6,8 +6,9 @@ on:
     types: [completed]
 
 # This workflow turns successful main-branch build products into stable,
-# versioned README assets. It deliberately runs after build rather than during
-# the matrix so the README is updated only when the complete build has passed.
+# versioned README assets. The main build first closes the full OU evidence
+# workflow and then builds the OU-III article/plots; this publisher persists
+# those exact SVG products only after that complete build has succeeded.
 permissions:
   actions: read
   contents: write
@@ -32,7 +33,7 @@ jobs:
           ref: refs/heads/main
           fetch-depth: 0
 
-      - name: Download generated README figures
+      - name: Download generated README SVGs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_RUN_ID: ${{ github.event.workflow_run.id }}
@@ -45,7 +46,7 @@ jobs:
             --name release-svgs-kalman_ou_iii \
             --dir incoming/kalman_ou_iii
 
-      - name: Stage stable README gallery
+      - name: Stage stable README SVG gallery
         run: |
           set -euo pipefail
           out=reports/results/readme
@@ -56,7 +57,7 @@ jobs:
             local src
             src="$(find incoming/kalman_ou_iii -type f -name "$name" -print -quit)"
             if [ -z "$src" ]; then
-              echo "required build figure is missing: $name" >&2
+              echo "required build SVG is missing: $name" >&2
               find incoming/kalman_ou_iii -maxdepth 5 -type f -print >&2 || true
               exit 1
             fi
@@ -73,14 +74,16 @@ jobs:
           cat > "$out/PROVENANCE.md" <<EOF
           # README result gallery provenance
 
-          These figures are generated automatically by the successful build
-          workflow on main; they are not hand-maintained screenshots.
+          These SVGs are copied verbatim from the successful OU-III build on
+          main; they are not screenshots or raster conversions.
 
           - build workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}
           - triggering source SHA: ${{ github.event.workflow_run.head_sha }}
           - source artifact: release-svgs-kalman_ou_iii
-          - includes the existing build-generated PM/Stokes 3-D spectrum SVG
           EOF
+
+      - name: Verify README image targets resolve
+        run: python3 tests/validation/test_readme_result_gallery.py
 
       - name: Commit refreshed gallery
         run: |
@@ -89,17 +92,18 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports/results/readme
           if git diff --cached --quiet; then
-            echo "README gallery is already current."
+            echo "README SVG gallery is already current."
             exit 0
           fi
 
           git commit \
-            -m "Refresh generated README result gallery [skip ci]" \
+            -m "Refresh generated README SVG gallery [skip ci]" \
             -m "Produced from successful build run ${{ github.event.workflow_run.id }}."
 
           for attempt in 1 2 3 4; do
             git push origin HEAD:refs/heads/main && exit 0
             sleep $((2 ** attempt))
             git pull --rebase origin refs/heads/main
+            python3 tests/validation/test_readme_result_gallery.py
           done
           exit 1
