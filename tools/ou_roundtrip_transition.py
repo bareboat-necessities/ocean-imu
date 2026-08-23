@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the OU-III current-schedule round-trip transition diagnostic.
+"""Generate the OU-III deployed-law bidirectional transition evidence.
 
-This tool is intentionally limited to the bidirectional transition instrument
-used by the OU-III article.  It does not sweep or compare regularizer laws.
+The instrument is strictly the low--high--low transition used by the OU-III
+article. It always runs the deployed SpectralMSE configuration through the
+normal adaptive simulator path; it does not sweep or compare regularizer laws.
 """
 
 from __future__ import annotations
@@ -28,6 +29,22 @@ ROUNDTRIP_WAVE_NAME = "wave_data_jonswap_H4.000_L202.839_A30.00_P120.00.csv"
 DIAGNOSTIC_LOW_HEIGHT_M = 1.5
 DIAGNOSTIC_HIGH_HEIGHT_M = 4.0
 DIAGNOSTIC_SOURCE_HEIGHT_M = 8.5
+SEGMENT_METRICS = (
+    "disp_z_rms_m",
+    "disp_z_ref_rms_m",
+    "disp_z_pct_refrms",
+    "disp_z_pct_hs",
+    "disp_3d_rms_m",
+)
+SEGMENT_LABELS = {
+    "low_start": "Low start",
+    "rise": "Rise crossfade",
+    "high_recover": "High recovery",
+    "high": "High settled",
+    "fall": "Fall crossfade",
+    "low_recover": "Low recovery",
+    "low_return": "Low return",
+}
 
 
 def _validation_module():
@@ -42,7 +59,6 @@ def transition_bounds(
     start_sec: float = DEFAULT_TRANSITION_START_SEC,
     return_start_sec: float = DEFAULT_TRANSITION_RETURN_START_SEC,
 ) -> tuple[float, float, float, float]:
-    """Return low->high and high->low bounds with the fixed transition duration."""
     end_sec = start_sec + TRANSITION_DURATION_SEC
     return_end_sec = return_start_sec + TRANSITION_DURATION_SEC
     if not (
@@ -61,7 +77,6 @@ def roundtrip_profile(
     start_sec: float = DEFAULT_TRANSITION_START_SEC,
     return_start_sec: float = DEFAULT_TRANSITION_RETURN_START_SEC,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return high-sea weight and its first two derivatives."""
     start, end, return_start, return_end = transition_bounds(
         start_sec, return_start_sec
     )
@@ -131,21 +146,19 @@ def roundtrip_segments(
     start_sec: float = DEFAULT_TRANSITION_START_SEC,
     return_start_sec: float = DEFAULT_TRANSITION_RETURN_START_SEC,
 ) -> tuple[tuple[str, float, float], ...]:
-    """Expose both transitions, run-on intervals, and settled sea states."""
+    """Expose both crossfades, both recovery intervals, and settled seas."""
     start, end, return_start, return_end = transition_bounds(
         start_sec, return_start_sec
     )
     window_start = ROUNDTRIP_DURATION_SEC - ROUNDTRIP_WINDOW_SEC
-    high_recover_end = end + TRANSITION_DURATION_SEC
-    low_recover_end = return_end + TRANSITION_DURATION_SEC
     return (
         ("low_start", window_start, start),
         ("rise", start, end),
-        ("high_recover", end, high_recover_end),
-        ("high", high_recover_end, return_start),
+        ("high_recover", end, end + TRANSITION_DURATION_SEC),
+        ("high", end + TRANSITION_DURATION_SEC, return_start),
         ("fall", return_start, return_end),
-        ("low_recover", return_end, low_recover_end),
-        ("low_return", low_recover_end, ROUNDTRIP_DURATION_SEC),
+        ("low_recover", return_end, return_end + TRANSITION_DURATION_SEC),
+        ("low_return", return_end + TRANSITION_DURATION_SEC, ROUNDTRIP_DURATION_SEC),
     )
 
 
@@ -156,10 +169,57 @@ def _write_rows(path: Path, rows: Sequence[dict[str, Any]]) -> None:
         for key in row:
             if key not in fields:
                 fields.append(key)
-    with path.open("w", newline="") as stream:
+    with path.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
+
+
+def roundtrip_score_rows(
+    metrics: dict[str, Any],
+    segments: Sequence[tuple[str, float, float]],
+) -> list[dict[str, Any]]:
+    """Extract the simulator's full-rate segment metrics without re-scoring CSV."""
+    rows: list[dict[str, Any]] = []
+    for name, start, stop in segments:
+        row: dict[str, Any] = {
+            "segment": name,
+            "start_s": start,
+            "stop_s": stop,
+        }
+        for metric in SEGMENT_METRICS:
+            key = f"seg_{name}_{metric}"
+            if key not in metrics:
+                raise RuntimeError(f"simulator did not emit round-trip score {key}")
+            row[metric] = float(metrics[key])
+        rows.append(row)
+    return rows
+
+
+def write_roundtrip_score_table(path: Path, rows: Sequence[dict[str, Any]]) -> None:
+    """Write the complete seven-segment publication table, including both crossfades."""
+    lines = [
+        r"\begin{table}[t]",
+        r"  \centering",
+        r"  \caption{Bidirectional low--high--low transition scores for the deployed OU--III SpectralMSE configuration. Rise and fall are the two \SI{120}{s} crossfade scores; recovery and settled intervals are reported separately.}",
+        r"  \label{tab:ou-roundtrip-scores}",
+        r"  \footnotesize",
+        r"  \setlength{\tabcolsep}{2.7pt}",
+        r"  \begin{tabular}{@{}lrrrrr@{}}",
+        r"    \toprule",
+        r"    Segment & $Z$ [m] & $Z_{\rm ref}$ [m] & $Z/Z_{\rm ref}$ [\%] & $Z/H_s$ [\%] & 3-D [m] \\",
+        r"    \midrule",
+    ]
+    for row in rows:
+        label = SEGMENT_LABELS[str(row["segment"])]
+        lines.append(
+            f"    {label} & {row['disp_z_rms_m']:.3f} & "
+            f"{row['disp_z_ref_rms_m']:.3f} & {row['disp_z_pct_refrms']:.2f} & "
+            f"{row['disp_z_pct_hs']:.2f} & {row['disp_3d_rms_m']:.3f} \\\\"
+        )
+    lines.extend((r"    \bottomrule", r"  \end{tabular}", r"\end{table}", ""))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_roundtrip_diagnostic(
@@ -172,13 +232,14 @@ def write_roundtrip_diagnostic(
     return_start_sec: float = DEFAULT_TRANSITION_RETURN_START_SEC,
     decimation: int = 20,
 ) -> dict[str, Any]:
-    """Replay one current OU-III adaptive round trip and draw its diagnostic."""
+    """Replay one deployed OU-III adaptive round trip and write all evidence."""
     ov = _validation_module()
     low_path = ov.find_default_input(OU_III_DATA, "1.500", "50.710")
     high_path = ov.find_default_input(OU_III_DATA, "8.500", "202.839")
     columns, low_data = ov.read_wave_csv(low_path, ROUNDTRIP_DURATION_SEC)
     _, high_data = ov.read_wave_csv(high_path, ROUNDTRIP_DURATION_SEC)
     high_scale = DIAGNOSTIC_HIGH_HEIGHT_M / DIAGNOSTIC_SOURCE_HEIGHT_M
+    segments = roundtrip_segments(start_sec, return_start_sec)
 
     _, _, _, return_end_sec = transition_bounds(start_sec, return_start_sec)
     window_start_sec = ROUNDTRIP_DURATION_SEC - ROUNDTRIP_WINDOW_SEC
@@ -214,10 +275,16 @@ def write_roundtrip_diagnostic(
             initialization_seed=init_seed,
             tuning_mode="adaptive",
             aw_cov_sync="periodic",
-            segments=roundtrip_segments(start_sec, return_start_sec),
+            segments=segments,
             write_timeseries=True,
         )
         series = ov.read_diagnostic_timeseries("OU_III", surrogate)
+
+    score_rows = roundtrip_score_rows(metrics, segments)
+    _write_rows(svg_path.parent / "ou_rs_roundtrip_scores.csv", score_rows)
+    write_roundtrip_score_table(
+        svg_path.parent / "ou_rs_roundtrip_scores.tex", score_rows
+    )
 
     time = series["time"]
     weight, _, _ = roundtrip_profile(ov, time, start_sec, return_start_sec)
@@ -225,14 +292,12 @@ def write_roundtrip_diagnostic(
     estimate = series["disp_est_z"]
     error = estimate - reference
     rolling_hs = ov.rolling_significant_height(reference)
-    mixture_hs = np.asarray(
-        [
-            ov.mixture_significant_height_m(
-                DIAGNOSTIC_LOW_HEIGHT_M, DIAGNOSTIC_HIGH_HEIGHT_M, value
-            )
-            for value in weight
-        ]
-    )
+    mixture_hs = np.asarray([
+        ov.mixture_significant_height_m(
+            DIAGNOSTIC_LOW_HEIGHT_M, DIAGNOSTIC_HIGH_HEIGHT_M, value
+        )
+        for value in weight
+    ])
     linear_hs = (
         (1.0 - weight) * DIAGNOSTIC_LOW_HEIGHT_M
         + weight * DIAGNOSTIC_HIGH_HEIGHT_M
@@ -290,6 +355,7 @@ def write_roundtrip_diagnostic(
         "initialization_seed": init_seed,
         "decimation": step,
         "disp_z_pct_hs": float(metrics["disp_z_pct_hs"]),
+        "segment_scores": score_rows,
         "low_tau_s": low_point.tau_s,
         "low_sigma_aw_mps2": low_point.sigma_a_mps2,
         "low_r_s_ms": low_point.RS_ms,

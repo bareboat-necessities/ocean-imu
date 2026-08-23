@@ -61,7 +61,6 @@
   \end{tabular}
 \end{table*}
 
-
 \begin{table*}[t]
   \centering
   \caption{Absolute per-axis and three-dimensional displacement RMS error over the final \SI{900}{s} (Adaptive mode, mean in metres, $n=10$ paired seed triplets). $\Delta$ is OU--III minus OU--II with its paired bootstrap 95\% interval; positive $\Delta$ favors OU--II.}
@@ -83,10 +82,9 @@
   \end{tabular}
 \end{table*}
 
-
 \begin{table*}[t]
   \centering
-  \caption{OU--III adaptation-channel ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). The four columns are a $2\times2$ factorial: each channel is either adapted online or frozen at the FixedNominal operating point. \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ while the integral pseudo-measurement scale keeps adapting; \emph{OU only} does the reverse. Because the deployed law sets $r_S=\clip(0.35\,\sigma_{aw}\tau^{3},0.15,400)$, $r_S$ is derived from the live $\tau$ and $\sigma_{aw}$ estimates even when those are frozen on the way to the filter.}
+  \caption{OU--III adaptation-channel ablation for vertical-displacement RMS error over the final \SI{900}{s}, in percent of $H_s$ (mean $\pm$ sample standard deviation, $n=10$ paired seed triplets). The four columns form a $2\times2$ factorial in the applied parameter channels. \emph{$r_S$ only} freezes $\tau$ and $\sigma_{aw}$ while the deployed SpectralMSE regularizer channel continues to adapt; \emph{OU only} adapts $\tau$ and $\sigma_{aw}$ while holding $r_S$ at FixedNominal. This isolates the two applied adaptation channels without introducing or comparing an alternative regularizer law.}
   \label{tab:ou_mc_channels}
   \footnotesize
   \setlength{\tabcolsep}{4.0pt}
@@ -105,7 +103,6 @@
     \bottomrule
   \end{tabular}
 \end{table*}
-
 
 \begin{table*}[t]
   \centering
@@ -128,7 +125,6 @@
   \end{tabular}
 \end{table*}
 
-
 \begin{table*}[t]
   \centering
   \caption{Ten-seed paired OU-family comparison on the PM--Stokes seas, scored over the same final \SI{900}{s} window and the same seed triplets as the JONSWAP ensemble. PM--Stokes carries third-order bound harmonics that JONSWAP does not, so it is reported as a separate declared ensemble and is not pooled into the primary aggregate.}
@@ -146,7 +142,6 @@
     \bottomrule
   \end{tabular}
 \end{table*}
-
 
 \begin{table*}[t]
   \centering
@@ -169,4 +164,3 @@
     \bottomrule
   \end{tabular}
 \end{table*}
-

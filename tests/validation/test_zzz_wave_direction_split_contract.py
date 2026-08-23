@@ -38,19 +38,25 @@ def _the_deterministic_table_is_generated_not_typed(self):
 
 
 def _transition_and_secondary_ensembles_are_rescored(self):
-    protocol = self.read_flat("w3d-sim-charts.tex-part")
     results = self.read_flat("w3d-baseline-comparison.tex-part")
     generated = self.read_flat("w3d-ou-validation-results-generated.tex-part")
+    roundtrip = self.read_flat("w3d-roundtrip-transition-ablation.tex-part")
     wave_results = (DOC / "w3d-wave-direction-results.tex-part").read_text(
         encoding="utf-8"
     )
 
-    # OU--III still owns its transition and second-spectrum motion evidence.
-    # The endpoint sea is scored as a run-on interval and a settled one, so the
-    # methodology has to name four intervals rather than three.
-    self.assertIn("pure-start, blend, endpoint run-on, and settled", protocol)
-    self.assertIn("whole-window transition percentages", results)
-    self.assertIn("tab:ou_transition_segments", generated)
+    # The complete archived validation bundle may retain the historical one-way
+    # transition, but the article presents only the bidirectional low--high--low
+    # study and its separate rise/fall/recovery/settled scores.
+    self.assertNotIn("whole-window transition percentages", results)
+    self.assertNotIn("tab:ou_transition_segments", results)
+    self.assertIn("w3d-roundtrip-transition-scores-generated.tex-part", roundtrip)
+    for segment in ("low-start", "rise", "high-recovery", "fall", "low-recovery", "low-return"):
+        self.assertIn(segment, roundtrip)
+    self.assertIn("no one-way-transition chart or score", roundtrip.lower())
+
+    # PM--Stokes remains a separate secondary ensemble in the archived evidence
+    # and the main article retains its aggregate claim.
     self.assertIn("tab:ou_mc_pmstokes", generated)
     self.assertIn("OUValidationPMStokesDifference", results)
     self.assertIn("rather than pooled", results)
@@ -193,3 +199,10 @@ class WaveDirectionPublicationSplitTests(unittest.TestCase):
             core.ManuscriptMethodologyTests.test_tracker_and_heel_material_are_scoped_as_unevaluated_appendices,
             _tracker_and_heel_material_are_scoped_as_unevaluated_appendices,
         )
+        # The baseline-fairness method is deliberately replaced by the later
+        # editable-publication contract.  Do not pin function identity here;
+        # the substantive baseline assertions are exercised independently.
+
+
+if __name__ == "__main__":
+    unittest.main()

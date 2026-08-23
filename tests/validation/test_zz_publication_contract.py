@@ -70,12 +70,15 @@ def _abstract_reports_committed_stationary_aggregate(self):
 def _fixed_reference_and_transition_limits_are_stated(self):
     protocol = _read("w3d-sim-charts.tex-part")
     fixed_points = _read("w3d-ou-validation-tuning-points-generated.tex-part")
-    results = _read("w3d-baseline-comparison.tex-part")
+    roundtrip = _read("w3d-roundtrip-transition-ablation.tex-part")
     self.assertIn(r"\label{par:fixed-points}", protocol)
     self.assertIn("tab:ou_fixed_points", fixed_points)
     self.assertIn("FixedNominal", fixed_points)
     self.assertIn("FixedOracle", fixed_points)
-    self.assertIn("tab:ou_transition_segments", results)
+    self.assertIn(r"\input{w3d-roundtrip-transition-scores-generated.tex-part}", roundtrip)
+    self.assertIn("400--520", roundtrip)
+    self.assertIn("800--920", roundtrip)
+    self.assertNotIn("tab:ou_transition_segments", roundtrip)
 
 
 def _inference_is_qualified_rather_than_asserted(self):
@@ -99,7 +102,10 @@ def _three_dimensional_and_channel_results_are_reported(self):
 def _transition_and_secondary_ensembles_are_rescored(self):
     results = _read("w3d-baseline-comparison.tex-part")
     generated = _read("w3d-ou-validation-results-generated.tex-part")
-    self.assertIn("tab:ou_transition_segments", results)
+    roundtrip = _read("w3d-roundtrip-transition-ablation.tex-part")
+    self.assertNotIn("tab:ou_transition_segments", results)
+    self.assertIn("w3d-roundtrip-transition-scores-generated.tex-part", roundtrip)
+    self.assertIn("rise and fall crossfade scores kept separate", roundtrip)
     self.assertIn("tab:ou_mc_pmstokes", generated)
     self.assertIn("tab:ou_mc_direction", generated)
 
@@ -216,6 +222,7 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         results = _read("w3d-baseline-comparison.tex-part")
         generated = _read("w3d-ou-validation-results-generated.tex-part")
         figures = _read("w3d-results.tex-part")
+        roundtrip = _read("w3d-roundtrip-transition-ablation.tex-part")
         for asset in (
             "spectrum_jonswap_medium_3d.pgf",
             "spectrum_pmstokes_medium_3d.pgf",
@@ -227,7 +234,9 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
         ):
             self.assertIn(asset, methodology + figures)
         self.assertIn("tab:ou_mc_axes", results)
-        self.assertIn("tab:ou_transition_segments", results)
+        self.assertIn("ou_rs_roundtrip_transition", roundtrip)
+        self.assertIn("w3d-roundtrip-transition-scores-generated.tex-part", roundtrip)
+        self.assertNotIn("ou_validation_transition", results + roundtrip)
         self.assertIn("tab:ou_mc_pmstokes", generated)
         self.assertIn("tab:ou_mc_direction", generated)
 
@@ -262,7 +271,12 @@ class ReorganizedPublicationContractTests(unittest.TestCase):
             r"\label{eq:wave-band-period}",
         ):
             self.assertIn(marker, combined_adaptation)
-        for marker in (r"\tau^{5/2}", r"q_{\mathrm{eff}}", r"\widehat\sigma_{a,B}", r"\sigma_{aw}"):
+        for marker in (
+            r"\tau^{5/2}",
+            r"q_{\mathrm{eff}}",
+            r"\widehat\sigma_{a,B}",
+            r"\sigma_{aw}",
+        ):
             self.assertIn(marker, combined_adaptation)
 
         self.assertIn(r"\label{eq:ba-ou-phi}", lti)

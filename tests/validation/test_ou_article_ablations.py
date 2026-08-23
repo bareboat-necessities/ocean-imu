@@ -4,7 +4,6 @@ import csv
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 DOC = ROOT / "doc" / "kalman_ou_iii"
 MISMATCH_SUMMARY = (
@@ -34,17 +33,17 @@ class OuArticleAblationContractTests(unittest.TestCase):
         self.assertIn("same phase-randomized", text)
         self.assertIn("low-start", text)
         self.assertIn("low-return", text)
-        self.assertIn("high-to-low", text)
-        self.assertIn("not a comparison among alternative regularizer laws", text)
+        self.assertIn("rise", text)
+        self.assertIn("fall", text)
+        self.assertIn("No historical", text)
+        self.assertIn("w3d-roundtrip-transition-scores-generated.tex-part", text)
 
-    def test_each_transition_protocol_renders_its_own_diagnostic(self):
+    def test_only_bidirectional_transition_renders(self):
         baseline = (DOC / "w3d-baseline-comparison.tex-part").read_text(
             encoding="utf-8"
         )
-        self.assertIn(
-            r"\includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_transition}",
-            baseline,
-        )
+        self.assertNotIn("ou_validation_transition", baseline)
+        self.assertNotIn(r"fig:ou_transition", baseline)
         self.assertIn(r"Sec.~\ref{sec:roundtrip-transition-ablation}", baseline)
 
         transition = (DOC / "w3d-roundtrip-transition-ablation.tex-part").read_text(
@@ -54,7 +53,8 @@ class OuArticleAblationContractTests(unittest.TestCase):
             r"\includesvg[width=\columnwidth,inkscapelatex=false]{ou_rs_roundtrip_transition}",
             transition,
         )
-        self.assertIn(r"Fig.~\ref{fig:ou_transition}", transition)
+        self.assertNotIn(r"Fig.~\ref{fig:ou_transition}", transition)
+        self.assertFalse((DOC / "ou_validation_transition.svg").exists())
 
     def test_roundtrip_figure_is_mirrored_from_generated_evidence(self):
         generated = (
@@ -64,6 +64,20 @@ class OuArticleAblationContractTests(unittest.TestCase):
         mirrored = DOC / "ou_rs_roundtrip_transition.svg"
         self.assertTrue(generated.exists(), generated)
         self.assertEqual(generated.read_bytes(), mirrored.read_bytes())
+
+    def test_roundtrip_generator_exports_full_segment_scores(self):
+        tool = (ROOT / "tools" / "ou_roundtrip_transition.py").read_text(
+            encoding="utf-8"
+        )
+        for token in (
+            "ou_rs_roundtrip_scores.csv",
+            "ou_rs_roundtrip_scores.tex",
+            '"rise"',
+            '"fall"',
+            "disp_z_pct_refrms",
+            "disp_3d_rms_m",
+        ):
+            self.assertIn(token, tool)
 
     def test_model_mismatch_table_matches_committed_summary(self):
         text = (DOC / "w3d-model-mismatch-ablation.tex-part").read_text(

@@ -1,15 +1,14 @@
-\subsection{Round-Trip Adaptation Transition}
+\subsection{Bidirectional Adaptation Transition}
 \label{sec:roundtrip-transition-ablation}
 
-A separate round-trip non-stationary record tests whether the deployed adaptive
-schedule follows a sea-state change in both directions rather than only from a
-smaller to a larger sea.  The low-sea realization is
-$(H_s,T_p)=(\SI{1.5}{m},\SI{5.7}{s})$.  A $C^2$ quintic crossfade to the
+The transition study presented in this article is a low--high--low non-stationary
+record. The low-sea realization is
+$(H_s,T_p)=(\SI{1.5}{m},\SI{5.7}{s})$. A $C^2$ quintic crossfade to the
 high-sea realization $(\SI{4.0}{m},\SI{11.4}{s})$ begins at $t=400$~s and
-ends at $t=520$~s.  The high sea is then held until $t=800$~s, when an
-identical \SI{120}{s} crossfade returns to the \emph{same phase-randomized
-low-sea realization}, ending at $t=920$~s.  The high realization is randomized
-independently.  Velocity and acceleration retain the exact first- and
+ends at $t=520$~s. The high sea is held until $t=800$~s, when an identical
+\SI{120}{s} crossfade returns to the \emph{same phase-randomized low-sea
+realization}, ending at $t=920$~s. The high realization is randomized
+independently. Velocity and acceleration retain the exact first- and
 second-derivative blend terms, so the synthetic record remains kinematically
 closed through both transitions.
 
@@ -17,37 +16,30 @@ closed through both transitions.
   \begin{figure}[t]
     \centering
     \includesvg[width=\columnwidth,inkscapelatex=false]{ou_rs_roundtrip_transition}
-    \caption{OU--III Adaptive on one round-trip realization (wave, IMU and
-    initialization seeds $11/101/1009$).  Top: the rolling \SI{60}{s}
-    significant height the record actually carries, against the
-    independent-mixture $H_s$ the quintic weights imply and the linear ramp
-    that is \emph{not} what is simulated.  Second: reference and estimated
-    vertical displacement.  Third: vertical error.  Bottom: the applied
-    $\tau$, $\sigma_{aw}$ and $r_S$ against the two frozen operating points
-    calibrated from the low- and high-sea reference records.  The shaded
-    intervals are the low-to-high and high-to-low \SI{120}{s} $C^2$ quintic
-    crossfades; the dash-dotted line opens the scored \SI{900}{s} window.}
+    \caption{OU--III Adaptive on the bidirectional low--high--low realization
+    (wave, IMU and initialization seeds $11/101/1009$). Top: rolling
+    \SI{60}{s} significant height and the mixture height implied by the
+    quintic weights. Second: reference and estimated vertical displacement.
+    Third: vertical error. Bottom: applied $\tau$, $\sigma_{aw}$ and $r_S$
+    against the two frozen endpoint operating points. The shaded intervals are
+    the rising and falling \SI{120}{s} $C^2$ crossfades; the dash-dotted line
+    opens the scored \SI{900}{s} window.}
     \label{fig:ou-rs-roundtrip-protocol}
   \end{figure}
 }{}
-
-Figure~\ref{fig:ou-rs-roundtrip-protocol} uses the same four-panel diagnostic as
-the one-way validation transition (Fig.~\ref{fig:ou_transition}): the sea state,
-the wave and its estimate, the vertical error, and the parameters actually
-applied by the current scheduler.  It is a transition diagnostic for the
-deployed configuration, not a comparison among alternative regularizer laws.
 
 The scored \SI{900}{s} window is partitioned as
 \emph{low-start} (300--400~s), \emph{rise} (400--520~s),
 \emph{high-recovery} (520--640~s), \emph{high} (640--800~s),
 \emph{fall} (800--920~s), \emph{low-recovery} (920--1040~s), and
-\emph{low-return} (1040--1200~s).  Rise and fall are therefore reported
-separately, as are the run-on intervals after each crossfade.  This prevents
-opposite-direction adaptation lags from cancelling in a single transition
-score and directly tests whether the schedule that follows increasing sea
-energy also releases that tuning when the sea subsides.
+\emph{low-return} (1040--1200~s). The complete segment scores are reported,
+with the rise and fall crossfade scores kept separate so opposite-direction
+adaptation lag cannot cancel in a pooled transition number.
 
-The one-way transition in the primary OU-family validation bundle remains a
-separate evidence protocol with its own diagnostic
-(Fig.~\ref{fig:ou_transition}); the two figures are drawn by the same code and
-differ only in the sea-state protocol they replay.
+\IfFileExists{w3d-roundtrip-transition-scores-generated.tex-part}{%
+  \input{w3d-roundtrip-transition-scores-generated.tex-part}%
+}{}
+
+This protocol tests only the deployed SpectralMSE configuration. No historical
+regularizer law is an arm of the transition study, and no one-way-transition
+chart or score is used in the article.

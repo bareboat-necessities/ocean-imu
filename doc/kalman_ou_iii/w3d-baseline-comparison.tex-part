@@ -11,18 +11,17 @@ The deterministic comparison includes adaptive PII, OU--II, and an adapted
 vertical-reference configuration of the time-varying-gain nonlinear observer
 (TVG--NLO) of Bryne, Fossen, and Johansen~\cite{BryneFossenJohansen2014_TVG_NLO}.
 The adapted TVG--NLO omits the horizontal GNSS and compass aiding of the
-published full observer, so horizontal position and yaw are unscored.  PII
+published full observer, so horizontal position and yaw are unscored. PII
 provides a feedback-based heave reference; OU--II is the immediate stochastic
 predecessor of OU--III.
 
 All methods replay the same timestamped synthetic motion and inertial records
-and use the final \SI{900}{s}.  The common comparison is vertical displacement
-and tilt, available from every method.  Parameters are frozen before evaluation
-and reference displacement is never used to select gains.  OU--II and OU--III
-share the same wave-band period input; OU--III uses the integral-state
-SpectralMSE schedule of Sec.~\ref{sec:adaptation}, whose $T_S^{-1/2}$ cadence
-dependence is contained directly in the target, whereas OU--II uses its
-second-order position/velocity regularizers.
+and use the final \SI{900}{s}. The common comparison is vertical displacement
+and tilt, available from every method. Parameters are frozen before evaluation
+and reference displacement is never used to select gains. OU--II and OU--III
+share the same wave-band period input. OU--II uses the analytical PhysicalMSE
+dual pseudo-measurement schedule and OU--III uses the analytical SpectralMSE
+integral-state schedule of Sec.~\ref{sec:adaptation}.
 
 \begin{table}[t]
 \centering
@@ -56,13 +55,13 @@ In this single-realization comparison, OU--III has the lowest mean normalized
 vertical-displacement RMS error: \pct{\OUBaselineOUIIIMeanVerticalPercent} of
 $H_s$, versus \pct{\OUBaselineOUIIMeanVerticalPercent} for OU--II,
 \pct{\OUBaselinePIIMeanVerticalPercent} for PII, and
-\pct{\OUBaselineTVGNLOMeanVerticalPercent} for adapted TVG--NLO.  These values
+\pct{\OUBaselineTVGNLOMeanVerticalPercent} for adapted TVG--NLO. These values
 are reproducible external references, not ensemble estimates; inferential
 OU-family claims use the paired study below.
 
 Only OU--II is evaluated under the full paired protocol, so the strongest
 statistical comparison is with the predecessor rather than a ranking against
-published practice.  Adapted TVG--NLO also differs from its GNSS/compass-aided
+published practice. Adapted TVG--NLO also differs from its GNSS/compass-aided
 published experiment, and no conventional frequency-domain double-integration
 baseline is included.
 
@@ -76,11 +75,11 @@ baseline is included.
 }{}
 
 \subsubsection{Ten-seed OU-family and adaptation study}
+% Never fall back to the complete archived validation fragment here: that
+% archive intentionally retains the retired one-way transition protocol.
 \IfFileExists{w3d-ou-validation-results-publication.tex-part}{%
   \input{w3d-ou-validation-results-publication.tex-part}%
-}{%
-  \input{w3d-ou-validation-results-generated.tex-part}%
-}
+}{}
 
 \IfFileExists{ou_validation_vertical.svg}{%
   \begin{figure}[t]
@@ -93,25 +92,24 @@ baseline is included.
 
 Across the four stationary JONSWAP seas, seed-wise mean normalized vertical
 error is
-$\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
+$\OUValidationOUIIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ of
 $H_s$ for OU--III and
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
-OU--II.  The paired difference is
+OU--II. The paired difference is
 $\OUValidationNormalizedDifference$ percentage points with bootstrap 95\%
 interval
 $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$;
 the exact paired sign-flip check gives
-$p=\OUValidationNormalizedRandomizationP$.  The ten pairs establish
+$p=\OUValidationNormalizedRandomizationP$. The ten pairs establish
 repeatability within the stated simulator and sensor model, not uncertainty over
 alternative simulators, vessels, spectra, or cadences.
 
 \paragraph{Vertical and three-dimensional displacement}
-OU--III has lower vertical error in every stationary JONSWAP sea and the
-controlled transition.  Table~\ref{tab:ou_mc_axes} also shows lower paired mean
-3-D RMS in all \OUValidationThreeDScenarios{} JONSWAP-plus-transition scenarios,
-with bootstrap intervals excluding zero.  This does not imply universal
-horizontal-axis tuning because the $X/Y$ decomposition is heading dependent and
-the directional ensemble is limited.
+OU--III has lower vertical error in every stationary JONSWAP sea. The stationary
+rows of Table~\ref{tab:ou_mc_axes} likewise report the paired three-dimensional
+RMS comparison. This does not imply universal horizontal-axis tuning because
+the $X/Y$ decomposition is heading dependent and the directional ensemble is
+limited.
 
 \paragraph{Second spectrum}
 The paired PM--Stokes ensemble reproduces the vertical advantage, with seed-level
@@ -121,47 +119,25 @@ It remains separate rather than pooled into the JONSWAP primary endpoint.
 
 \paragraph{Adaptation mechanism}
 Figure~\ref{fig:ou_mc_vertical} shows that online tuning reduces the penalty of
-using one FixedNominal point off nominal.  At $H_s=\SI{1.5}{m}$, where
+using one FixedNominal point off nominal. At $H_s=\SI{1.5}{m}$, where
 FixedNominal and FixedOracle coincide, OU--III Adaptive is slightly worse by
 $\OUValidationIIIHsOneFiveNominalDifference$ percentage points
 ($[\OUValidationIIIHsOneFiveNominalLow,\OUValidationIIIHsOneFiveNominalHigh]$),
 consistent with estimating the operating point from noisy signals.
 
-Channel ablation identifies the mechanism: adaptive $r_S$ with frozen
-$(\tau,\sigma_{aw})$ closely tracks full adaptation, whereas adapting the OU
-parameters with fixed $r_S$ recovers essentially none of the off-nominal
-vertical improvement (Table~\ref{tab:ou_mc_channels}).  The evidence therefore
-supports adaptive integral-state regularization as the dominant channel in these
-tests; direct OU-parameter adaptation contributes little once $r_S$ is fixed.
+Channel ablation identifies the mechanism without changing adaptation-law
+family: adaptive $r_S$ with frozen $(\tau,\sigma_{aw})$ closely tracks full
+SpectralMSE adaptation, whereas adapting the OU parameters with $r_S$ frozen at
+FixedNominal recovers essentially none of the off-nominal vertical improvement
+(Table~\ref{tab:ou_mc_channels}). No legacy regularizer law is an ablation arm.
 
-\paragraph{Controlled transition and covariance control}
-The whole-window transition percentages use the final $H_s=\SI{4.0}{m}$ and are
-descriptive.  Table~\ref{tab:ou_transition_segments} shows that Adaptive matches
-the nominal fixed point before the transition and gains as the longer-period sea
-emerges.  It also beats endpoint-calibrated FixedOracle over the whole record
-because that reference is mismatched before the endpoint.  This one-way
-validation protocol is distinct from the bidirectional current-schedule
-transition diagnostic in Sec.~\ref{sec:roundtrip-transition-ablation}; the two
-protocols use the same diagnostic form but answer different transient questions.
-
+\paragraph{Covariance control}
 The covariance-maintenance control changes normalized vertical error by at most
 $\OUValidationCovSyncWorstDifference$ percentage points
 ($[\OUValidationCovSyncWorstLow,\OUValidationCovSyncWorstHigh]$), indicating
 that periodic latent-acceleration covariance re-alignment is not the source of
 the adaptation differences.
 
-\IfFileExists{ou_validation_transition.svg}{%
-  \begin{figure}[t]
-    \centering
-    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_transition}
-    \caption{OU--III Adaptive controlled transition (wave, IMU and
-    initialization seeds $11/101/1009$).  Top: the rolling \SI{60}{s}
-    significant height the record carries, against the independent-mixture
-    $H_s$ of the crossfade and the linear ramp that is \emph{not} simulated.
-    Second: reference and estimated vertical displacement.  Third: vertical
-    error.  Bottom: the applied $\tau$, $\sigma_{aw}$ and $r_S$ against the
-    frozen FixedNominal and FixedOracle points.  The shaded interval is the
-    $540$--$660$~s crossfade; the dash-dotted line opens the scored window.}
-    \label{fig:ou_transition}
-  \end{figure}
-}{}
+The only transition study presented in the article is the bidirectional
+low--high--low protocol of Sec.~\ref{sec:roundtrip-transition-ablation}, which
+reports both crossfade directions and the recovery/settled intervals.

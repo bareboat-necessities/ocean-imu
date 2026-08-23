@@ -32,9 +32,6 @@ def _publication_evidence_signature(text):
         if r"\midrule" not in table or r"\bottomrule" not in table:
             raise AssertionError("generated evidence table lacks midrule/bottomrule")
         body = table.split(r"\midrule", 1)[1].rsplit(r"\bottomrule", 1)[0]
-        # Scenario names and prose may be edited. Numeric values and generated
-        # evidence macros may not. Parsing numbers as floats also permits
-        # harmless formatting edits such as 1.50 -> 1.5.
         numbers = tuple(
             float(value)
             for value in re.findall(
@@ -58,43 +55,110 @@ def _assert_publication_evidence_matches(testcase, result_path, doc_path):
     )
 
 
-def _robustness_manuscript_copies_match_generated_evidence(self):
-    publication_result = self.RESULTS / "ou_robustness_publication.tex"
-    publication_doc = self.DOC / "w3d-ou-robustness-results-generated.tex-part"
-    _assert_publication_evidence_matches(self, publication_result, publication_doc)
-
-    # Machine-consumed macros and plots are still exact generated artifacts.
-    for result_name, doc_name in (
-        ("ou_robustness_macros.tex", "w3d-ou-robustness-macros-generated.tex-part"),
-        ("ou_robustness_sensitivity.svg", "ou_robustness_sensitivity.svg"),
-        ("ou_robustness_stress.svg", "ou_robustness_stress.svg"),
+def _table_block_by_label(text, label):
+    marker = rf"\label{{{label}}}"
+    for block in re.findall(
+        r"\\begin\{table\*\}.*?\\end\{table\*\}", text, flags=re.S
     ):
-        self.assertEqual(
-            (self.RESULTS / result_name).read_bytes(),
-            (self.DOC / doc_name).read_bytes(),
-            doc_name,
+        if marker in block:
+            return block
+    raise AssertionError(f"table not found: {label}")
+
+
+def _macro_definitions(text):
+    return dict(
+        re.findall(
+            r"\\providecommand\{\\(OURobustness[A-Za-z]+)\}\{([^}]*)\}", text
         )
+    )
+
+
+def _robustness_manuscript_copies_match_generated_evidence(self):
+    """Publication may retain only the law-independent degradation subset."""
+    archived_publication = (
+        self.RESULTS / "ou_robustness_publication.tex"
+    ).read_text(encoding="utf-8")
+    publication_doc = (
+        self.DOC / "w3d-ou-robustness-results-generated.tex-part"
+    ).read_text(encoding="utf-8")
+
+    archived_stress = _table_block_by_label(
+        archived_publication, "tab:ou_robustness_stress"
+    )
+    doc_stress = _table_block_by_label(
+        publication_doc, "tab:ou_robustness_stress"
+    )
+    self.assertEqual(
+        _publication_evidence_signature(archived_stress),
+        _publication_evidence_signature(doc_stress),
+        "degradation table payload differs from committed robustness evidence",
+    )
+    self.assertNotIn("tab:ou_robustness_sensitivity", publication_doc)
+
+    archived_macros = _macro_definitions(
+        (self.RESULTS / "ou_robustness_macros.tex").read_text(encoding="utf-8")
+    )
+    doc_macros = _macro_definitions(
+        (self.DOC / "w3d-ou-robustness-macros-generated.tex-part").read_text(
+            encoding="utf-8"
+        )
+    )
+    self.assertTrue(doc_macros)
+    for name, value in doc_macros.items():
+        self.assertIn(name, archived_macros)
+        self.assertEqual(value, archived_macros[name], name)
+    for retired in (
+        "OURobustnessWorstParameter",
+        "OURobustnessWorstScale",
+        "OURobustnessWorstMean",
+        "OURobustnessTauSpan",
+        "OURobustnessSigmaSpan",
+        "OURobustnessRSSpan",
+        "OURobustnessCoupledSigmaSpan",
+        "OURobustnessCoupledTauSpan",
+    ):
+        self.assertNotIn(retired, doc_macros)
+
+    self.assertEqual(
+        (self.RESULTS / "ou_robustness_stress.svg").read_bytes(),
+        (self.DOC / "ou_robustness_stress.svg").read_bytes(),
+        "ou_robustness_stress.svg",
+    )
+    self.assertFalse((self.DOC / "ou_robustness_sensitivity.svg").exists())
 
     source = (self.DOC / "w3d-ou-robustness.tex-part").read_text(encoding="utf-8")
     normalized = re.sub(r"\s+", " ", source).lower()
     self.assertIn("w3d-ou-robustness-results-generated.tex-part", source)
-
-    # Protect the scientific concepts, not one exact English sentence.
-    for concept in (
-        "sweep",
-        "tuning",
-        "coupled",
-        "latent",
-        "acceleration",
-        "gain",
-        "saturation",
-    ):
+    for concept in ("degradation", "low-motion", "rapid", "transition", "spectralmse"):
         self.assertIn(concept, normalized)
-    self.assertTrue(
-        any(term in normalized for term in ("replacement", "replace", "substitute", "adopt")),
-        "sensitivity sweep must remain scoped as non-replacement tuning evidence",
+    for retired in ("legacy", "historical", "coupled", "sweep", "sensitivity"):
+        self.assertNotIn(retired, normalized)
+
+
+def _robustness_generated_primary_claims_match_paired_effects(self):
+    """Only degradation claims are copied into the OU--III publication tree."""
+    effects = self.read_csv(
+        self.RESULTS / "ou_robustness_paired_effects.csv"
     )
-    self.assertRegex(source, r"r_S\s*\\to\s*c\^\{?3\}?\s*r_S")
+    generated = (
+        self.DOC / "w3d-ou-robustness-macros-generated.tex-part"
+    ).read_text(encoding="utf-8")
+    checks = (
+        ("Hs0.05_minus_Hs0.27", "disp_z_pct_hs", 2),
+        ("rapid_minus_controlled_Adaptive", "disp_z_pct_hs", 2),
+        ("Adaptive_minus_FixedNominal_rapid", "disp_z_pct_hs", 2),
+    )
+    for comparison, metric, digits in checks:
+        row = next(
+            item for item in effects
+            if item["comparison"] == comparison and item["metric"] == metric
+        )
+        for field in (
+            "mean_paired_difference",
+            "bootstrap_ci95_low",
+            "bootstrap_ci95_high",
+        ):
+            self.assertIn(f"{float(row[field]):+.{digits}f}", generated)
 
 
 _original_full_bundle_test = (
@@ -104,7 +168,7 @@ _original_full_bundle_test = (
 
 
 def _full_result_bundle_is_complete_and_self_consistent(self):
-    """Run every original bundle check, relaxing only publication prose bytes."""
+    """Run original bundle checks while allowing a curated publication tree."""
     editable_tex_pairs = (
         (
             self.RESULTS / "ou_validation_publication.tex",
@@ -124,12 +188,19 @@ def _full_result_bundle_is_complete_and_self_consistent(self):
         for result_path, doc_path in editable_tex_pairs
     }
 
+    # The complete validation archive intentionally retains the historical
+    # one-way transition SVG for provenance.  It is no longer a manuscript
+    # asset, so satisfy the legacy mirror assertion from the archive bytes
+    # while separately pinning that the publication tree does not contain it.
+    retired_transition = DOC / "ou_validation_transition.svg"
+    self.assertFalse(retired_transition.exists())
+    generated_bytes_by_doc[retired_transition] = original_read_bytes(
+        self.RESULTS / "ou_validation_transition.svg"
+    )
+
     def read_bytes_with_editable_publication(path):
         path = Path(path)
         if path in generated_bytes_by_doc:
-            # The semantic evidence comparison above already passed. Feed the
-            # generator bytes to the legacy byte-equality assertion so the rest
-            # of the original integrity test runs unchanged.
             return generated_bytes_by_doc[path]
         return original_read_bytes(path)
 
@@ -143,7 +214,6 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
     startup = self.read("w3d-init.tex-part")
     results = self.read_flat("w3d-results.tex-part")
 
-    # Preserve the fairness claims as concepts, not fixed editorial sentences.
     baseline_norm = re.sub(r"\s+", " ", baseline).lower()
     for terms in (
         ("parameters", "frozen", "evaluation"),
@@ -197,7 +267,6 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
     self.assertIsNotNone(match, "Embedded portability subsection")
     scope = re.sub(r"\s+", " ", match.group(1)).lower()
 
-    # The limitation must remain explicit, but authors may rewrite the sentence.
     for terms in (
         ("source", "portability"),
         ("processor", "load"),
@@ -213,6 +282,9 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
 
 robustness_core.CommittedRobustnessResultsTests.test_manuscript_copies_match_generated_evidence = (
     _robustness_manuscript_copies_match_generated_evidence
+)
+robustness_core.CommittedRobustnessResultsTests.test_generated_primary_claims_match_paired_effects = (
+    _robustness_generated_primary_claims_match_paired_effects
 )
 validation_core.CommittedFullResultsTests.test_full_result_bundle_is_complete_and_self_consistent = (
     _full_result_bundle_is_complete_and_self_consistent
