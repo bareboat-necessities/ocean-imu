@@ -67,7 +67,8 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
             "Sigma_lambda_max_upper": 120.0,
             "prefix_information_gain_upper": 2.0,
             "theta_star": 1.0,
-            "mu_W_lower": 1.0e-4,
+            "endpoint_W_ratio_upper": 0.9999,
+            "certified_level_W": 0.05,
             "all_word_prefixes_safe": True,
         }
 
@@ -78,6 +79,7 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
         self.assertAlmostEqual(ans["lambda_information_upper"], 0.995)
         self.assertAlmostEqual(ans["information_metric_lambda_min_lower"], 1.0 / 120.0)
         self.assertAlmostEqual(ans["information_metric_lambda_max_upper"], 2.0e6)
+        self.assertAlmostEqual(ans["mu_W_lower"], 1.0e-4)
 
     def test_information_mode_rejects_zero_injection(self):
         payload = self.valid_mode_payload()
@@ -139,7 +141,8 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
         self.assertIn("relative_Riccati_injection_margin_lower", text)
         self.assertIn("Sigma_lambda_min_lower", text)
         self.assertIn("prefix_information_gain_upper", text)
-        self.assertIn("mu_W_lower", text)
+        self.assertIn("endpoint_W_ratio_upper", text)
+        self.assertIn("certified_level_W", text)
         self.assertIn("theta_star", text)
         # Prose may name the retired artifact for contrast. The implementation
         # must not load any old matrix archive or call the old box-LMI helper.
