@@ -1,8 +1,10 @@
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 
@@ -31,6 +33,47 @@ class Ou3NeighborhoodDiagnosticTests(unittest.TestCase):
     def test_held_compact_basis_never_injects_accel_bias(self):
         self.assertTrue(all(i < 18 for i in MOD.COMPACT_H))
         self.assertIn(18, MOD.COMPACT_A)
+
+    def test_certified_source_selector_uses_complete_word_start(self):
+        maps = [
+            SimpleNamespace(t0=59.75 + 0.25 * i, t1=60.0 + 0.25 * i,
+                            start_live=True, end_live=True)
+            for i in range(6)
+        ]
+        covs = [SimpleNamespace(start=np.eye(21), end=np.eye(21)) for _ in maps]
+
+        def physical_word(_maps, _covs, mode, start, count):
+            self.assertEqual(mode, "A")
+            self.assertEqual(count, 2)
+            return np.eye(21), np.eye(21), np.eye(21)
+
+        with mock.patch.object(MOD.INFO, "pair_map_covariance",
+                               return_value=(maps, covs, {"ok": True})), \
+             mock.patch.object(MOD.INFO, "physical_word", side_effect=physical_word):
+            P, meta = MOD.certified_word_start_covariance(
+                Path("record_exact_maps.bin"), 60.11, 21, "A", 0.5
+            )
+
+        np.testing.assert_allclose(P, np.eye(21))
+        self.assertEqual(meta["side"], "start")
+        self.assertAlmostEqual(meta["selected_source_time_s"], 60.0)
+        self.assertAlmostEqual(meta["word_end_time_s"], 60.5)
+        self.assertAlmostEqual(meta["word_actual_duration_s"], 0.5)
+        self.assertEqual(meta["word_block_count"], 2)
+
+    def test_case_driver_preserves_exact_source_time_digits(self):
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            fake = SimpleNamespace(returncode=0, stdout="done")
+            with mock.patch.object(MOD.subprocess, "run", return_value=fake) as run:
+                MOD.run_case(
+                    Path("/tmp/fake-sim"), td / "data.csv", td / "trace.csv",
+                    td / "case.log", "A", 299.886962890625, 16.015625,
+                    np.zeros(21),
+                )
+            env = run.call_args.kwargs["env"]
+        self.assertEqual(env["OU3_NEIGHBOR_INJECT_TIME_S"], "299.886962890625")
+        self.assertEqual(env["OU3_NEIGHBOR_HORIZON_S"], "16.015625")
 
     def test_pair_trace_requires_source_match_and_contraction(self):
         header = (
