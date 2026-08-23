@@ -46,6 +46,20 @@ class Ou3NumericalCertificateTests(unittest.TestCase):
         self.assertLess(CERT.generalized_lambda(0.8 * np.eye(3), P, P), 1.0)
         self.assertGreater(CERT.generalized_lambda(1.05 * np.eye(3), P, P), 1.0)
 
+    def test_group_compatible_metric_is_local_form_of_exact_group_energy(self):
+        Pxi = np.diag([2.0, 3.0])
+        M = CERT.group_compatible_numeric_metric(4.0, Pxi)
+        np.testing.assert_allclose(M[:3, :3], 2.0 * np.eye(3))
+        np.testing.assert_allclose(M[:3, 3:], 0.0)
+        np.testing.assert_allclose(M[3:, :3], 0.0)
+        np.testing.assert_allclose(M[3:, 3:], Pxi)
+        # a_R(1-cos(theta)) has Hessian a_R I at zero, hence quadratic
+        # coefficient a_R/2 in theta' theta.
+        th = 1e-5
+        exact = 4.0 * (1.0 - math.cos(th))
+        quad = M[0, 0] * th * th
+        self.assertAlmostEqual(exact / quad, 1.0, places=5)
+
     def test_zu_ned_basis_matches_filter_contract(self):
         got = CERT.zu_to_ned(np.array([1.0, 2.0, 3.0]))
         np.testing.assert_allclose(got, np.array([2.0, 1.0, -3.0]))
@@ -59,11 +73,15 @@ class Ou3NumericalCertificateTests(unittest.TestCase):
         self.assertIn("solve_path_metrics", text)
         self.assertIn("linear_exact_replay_pass", text)
 
-    def test_path_lmi_has_the_theorem_direction(self):
+    def test_path_lmi_has_the_theorem_direction_and_group_structure(self):
         text = (TOOLS / "ou3_numerical_certificate.py").read_text()
-        self.assertIn("w.phi.T @ P[w.end_node] @ w.phi - rho*P[w.start_node]", text)
-        self.assertIn("evaluate_metrics(words,metrics)", text.replace(" ", ""))
-        self.assertIn("rho_target=0.9999", text.replace(" ", ""))
+        compact = text.replace(" ", "")
+        self.assertIn("w.phi.T@Pj@w.phi-rho*Pi", compact)
+        self.assertIn("evaluate_metrics(words,metrics)", compact)
+        self.assertIn("target=0.9999", compact)
+        self.assertIn("0.5*a[n]*I3", compact)
+        self.assertIn("Px[n]", text)
+        self.assertIn('"metric_structure":"diag((a_R/2) I3, P_xi)"', compact)
 
     def test_certificate_simulator_uses_filter_internal_exact_maps(self):
         text = (ROOT / "tests" / "kalman_ou_iii" / "ou3-certificate-sim.cpp").read_text()
