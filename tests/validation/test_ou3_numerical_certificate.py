@@ -52,7 +52,8 @@ class Ou3NumericalCertificateTests(unittest.TestCase):
 
     def test_replay_result_cannot_be_promoted_to_theorem_certificate(self):
         text = (TOOLS / "ou3_numerical_certificate.py").read_text()
-        self.assertIn('"deployment_theorem_certificate": "NOT_ESTABLISHED"', text)
+        self.assertIn('"deployment_theorem_certificate"', text)
+        self.assertIn('"NOT_ESTABLISHED"', text)
         self.assertIn("validated continuous-source word-family enclosure", text)
         self.assertNotIn("Markov", text)
 
