@@ -8,6 +8,7 @@ follow the deployed SpectralMSE law rather than the retired cubic relation.
 """
 from __future__ import annotations
 
+import json
 import math
 import re
 from dataclasses import replace
@@ -16,6 +17,11 @@ from typing import Any, Mapping, Sequence
 
 import ou_robustness_core as _core
 from ou_robustness_core import *  # noqa: F401,F403
+
+_ORIGINAL_SCALED_TUNING_POINT = _core.scaled_tuning_point
+_ORIGINAL_WRITE_SENSITIVITY_PLOT = _core.write_sensitivity_plot
+_ORIGINAL_WRITE_PUBLICATION_TABLE = _core.write_publication_table
+_ORIGINAL_CODE_SOURCE_PATHS = tuple(_core.CODE_SOURCE_PATHS)
 
 # The source uses T_S = clip((0.015/1.1) tau, 0.005, 0.25) at the default
 # 200-Hz schedule. Keep the exact cadence in the coupled tau perturbation so
@@ -168,9 +174,6 @@ def write_sensitivity_plot(path: Path, summary: Sequence[Mapping[str, Any]]) -> 
     _core.plt.close(fig)
 
 
-_ORIGINAL_WRITE_PUBLICATION_TABLE = _core.write_publication_table
-
-
 def write_publication_table(
     path: Path,
     summary: Sequence[Mapping[str, Any]],
@@ -219,11 +222,91 @@ def _activate_current_study() -> None:
     _core.write_sensitivity_plot = write_sensitivity_plot
     _core.write_publication_table = write_publication_table
     paths = [Path(__file__).resolve(), Path(_core.__file__).resolve()]
-    for item in _core.CODE_SOURCE_PATHS:
+    for item in _ORIGINAL_CODE_SOURCE_PATHS:
         resolved = Path(item).resolve()
         if resolved not in paths:
             paths.append(resolved)
     _core.CODE_SOURCE_PATHS = tuple(paths)
+
+
+def _activate_legacy_study() -> None:
+    """Restore the historical core hooks for a legacy archived ensemble."""
+    _core.scaled_tuning_point = _ORIGINAL_SCALED_TUNING_POINT
+    _core.write_sensitivity_plot = _ORIGINAL_WRITE_SENSITIVITY_PLOT
+    _core.write_publication_table = _ORIGINAL_WRITE_PUBLICATION_TABLE
+    _core.CODE_SOURCE_PATHS = _ORIGINAL_CODE_SOURCE_PATHS
+
+
+def _rows_use_current_spectral_mse(rows: Sequence[Mapping[str, Any]]) -> bool:
+    """Identify the coupling from replayed tuning values, not editorial text.
+
+    The legacy study coupled ``r_S`` linearly to ``sigma_aw``. The deployed
+    SpectralMSE study uses the realized ``sigma_aw`` ratio to the 6/7 power.
+    A non-unit coupled sensitivity row therefore distinguishes the two archived
+    ensembles without trusting a caption or the current source revision.
+    """
+    by_repetition: dict[int, list[Mapping[str, Any]]] = {}
+    for row in rows:
+        if row.get("experiment") != "sensitivity" or row.get("parameter") != "sigma_aw_rs":
+            continue
+        by_repetition.setdefault(int(row["repetition"]), []).append(row)
+
+    for repetition_rows in by_repetition.values():
+        reference = next(
+            (
+                row
+                for row in repetition_rows
+                if math.isclose(float(row["scale_label"]), 1.0, abs_tol=1e-12)
+            ),
+            None,
+        )
+        if reference is None:
+            continue
+        sigma_ref = float(reference["configured_sigma_aw_mps2"])
+        rs_ref = float(reference["configured_r_s_ms"])
+        if not (sigma_ref > 0.0 and rs_ref > 0.0):
+            continue
+        for row in repetition_rows:
+            if math.isclose(float(row["scale_label"]), 1.0, abs_tol=1e-12):
+                continue
+            sigma_ratio = float(row["configured_sigma_aw_mps2"]) / sigma_ref
+            rs_ratio = float(row["configured_r_s_ms"]) / rs_ref
+            current_ratio = sigma_ratio ** (6.0 / 7.0)
+            legacy_ratio = sigma_ratio
+            separation = abs(current_ratio - legacy_ratio)
+            if separation <= 1e-10:
+                continue
+            tolerance = 1e-7 * max(1.0, abs(rs_ratio), abs(current_ratio))
+            if abs(rs_ratio - current_ratio) <= tolerance:
+                return True
+            if abs(rs_ratio - legacy_ratio) <= tolerance:
+                return False
+            raise ValueError(
+                "archived sigma_aw/r_S sensitivity rows match neither the "
+                "legacy cubic coupling nor the deployed SpectralMSE coupling"
+            )
+    raise ValueError("cannot identify robustness coupling from archived sensitivity rows")
+
+
+def restat_bundle(
+    source: Path,
+    output_dir: Path,
+    bootstrap_resamples: int,
+    stats_seed: int,
+) -> int:
+    """Restate using the coupling that produced the archived replay rows."""
+    with source.open(encoding="utf-8") as stream:
+        bundle = json.load(stream)
+    if _rows_use_current_spectral_mse(bundle.get("raw_runs", [])):
+        _activate_current_study()
+    else:
+        _activate_legacy_study()
+    return _core.restat_bundle(
+        source,
+        output_dir,
+        bootstrap_resamples=bootstrap_resamples,
+        stats_seed=stats_seed,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
