@@ -54,17 +54,32 @@ class WorkflowContractTests(unittest.TestCase):
             "needs.fingerprint.outputs.replay_required == 'true'", regen_header
         )
 
-    def test_regenerated_evidence_records_both_fingerprints(self):
+    def test_every_full_replay_uses_the_fingerprinted_zip_bytes(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        record = workflow.index("- name: Record replay and results fingerprints")
+        full = workflow[workflow.index("  fingerprint:"):]
+        self.assertIn("- name: Preserve fingerprinted simulation archive", full)
+        self.assertIn("name: ou-fingerprinted-simulation-data", full)
+        self.assertGreaterEqual(
+            full.count("name: ou-fingerprinted-simulation-data"),
+            4,
+        )
+        regenerate = full[full.index("  regenerate:"):]
+        self.assertNotIn("gh release download v1.1.3", regenerate)
+
+    def test_regenerated_evidence_hashes_the_final_validated_tree(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
         check = workflow.index("- name: Check the manuscript against the regenerated evidence")
+        record = workflow.index("- name: Record replay and results fingerprints")
+        verify = workflow.index("- name: Verify final evidence fingerprints")
         commit = workflow.index("- name: Commit the regenerated evidence")
-        self.assertLess(record, check)
-        self.assertLess(check, commit)
+        self.assertLess(check, record)
+        self.assertLess(record, verify)
+        self.assertLess(verify, commit)
 
         stage = workflow[record:commit]
         self.assertIn("tools/ou_replay_fingerprint.py", stage)
         self.assertIn("--write reports/ou_evidence_fingerprint.json", stage)
+        self.assertIn("--check reports/ou_evidence_fingerprint.json", stage)
 
         commit_stage = workflow[commit:]
         self.assertIn("reports/ou_evidence_fingerprint.json", commit_stage)
