@@ -66,7 +66,8 @@ jobs:
           python3 -u tools/ou3_exact_replay.py \
             --no-build \
             --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-information-certificate-sim" \
-            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
+            --diagnostic-log-dir "$GITHUB_WORKSPACE/reports/diagnostics/ou3_numerical_certificate/logs"
 
       - name: Evaluate source-varying Kalman information certificate
         run: |
@@ -79,15 +80,23 @@ jobs:
             --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
             --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii"
 
-      - name: Validate deterministic result JSON payloads
+      - name: Validate deterministic scientific result payloads
         run: |
           python3 tools/ou3_result_contract.py \
             "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
 
-      - name: Upload certificate report, exact maps, covariance and traces
+      - name: Upload scientific certificate results
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: ou3-numerical-certificate
           path: reports/results/ou3_numerical_certificate/**
+          if-no-files-found: warn
+
+      - name: Upload diagnostic logs separately
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-numerical-certificate-diagnostics
+          path: reports/diagnostics/ou3_numerical_certificate/**
           if-no-files-found: warn
