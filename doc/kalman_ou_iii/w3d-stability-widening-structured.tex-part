@@ -1,0 +1,313 @@
+\subsection{Structured componentwise and direct-decrease refinement}
+\label{sec:stability-widening-structured}
+
+The two-block cylinder of Theorem~\ref{thm:widen-cylinder-iss} is retained as a
+closed-form conservative certificate.  It is not necessary, however, to charge
+all translational coordinates or all geometry-sensitive coordinates against the
+same radius.  The exact remainder in Eq.~\eqref{eq:iss-nonlinear-load} contains
+no quadratic self-term in velocity, position, integral displacement, latent
+acceleration, or accelerometer bias.  Moreover, the integral pseudo-measurement
+residual is exactly $-\delta\vct S$: velocity and position can influence a later
+$S$ residual through the homogeneous $v\rightarrow p\rightarrow S$ dynamics,
+but they do not enter the instantaneous $S\rightarrow\theta$ correction
+nonlinearity.  This subsection preserves those two facts and then replaces the
+single adversarial Lipschitz reduction by an optional direct Lyapunov-decrease
+certificate.
+
+\subsubsection{Separating the integral state from velocity and position}
+
+Use the fixed dimensionless coordinates of
+Sec.~\ref{sec:iss-block-basin} and write
+\begin{equation}
+ \vct z=(\vct z_\theta,\vct z_{bg},\vct z_{aw},\vct z_{ba},
+         \vct z_S,\vct z_{vp}),
+ \qquad
+ \vct z_{vp}:=(\vct z_v,\vct z_p).
+ \label{eq:widen-component-split}
+\end{equation}
+The held-bias mode omits $\vct z_{ba}$ from the active state and treats the
+frozen physical bias error as an input exactly as before.  This is only a proof
+partition: all first-order cross-covariances, Kalman-gain terms, and the complete
+$v\rightarrow p\rightarrow S$ chain remain in
+$\widetilde\mat A_k^{\rm cl}$.
+
+For nonnegative radii define
+\begin{align}
+ \mathcal C_\star(\vct r,r_{vp})
+ :=\{\vct z:\;&\|\vct z_\theta\|\le r_\theta,
+ \ \|\vct z_{bg}\|\le r_{bg},
+ \ \|\vct z_{aw}\|\le r_{aw},\nonumber\\
+ &\|\vct z_{ba}\|\le r_{ba},
+ \ \|\vct z_S\|\le r_S,
+ \ \|\vct z_{vp}\|\le r_{vp}\},
+ \label{eq:widen-component-tube}\\
+ \vct r&:=(r_\theta,r_{bg},r_{aw},r_{ba},r_S)^\top.
+ \nonumber
+\end{align}
+The $r_{ba}$ constraint is omitted in held-bias active coordinates.  The radius
+$r_{vp}$ is retained for chart, physical, and finite-capture safety, but it will
+not appear in the instantaneous nonlinear-load inequality below.
+
+For each admitted sample let nonnegative incremental gains
+$k_{\theta,k}$, $k_{bg,k}$, $k_{aw,k}$, and $k_{ba,k}$ satisfy the compact-domain
+mean-value bound
+\begin{equation}
+ \|\Delta\vct\theta_{g,k}\|
+ \le k_{\theta,k}\|\vct z_\theta\|
+    +k_{bg,k}\|\vct z_{bg}\|
+    +k_{aw,k}\|\vct z_{aw}\|
+    +k_{ba,k}\|\vct z_{ba}\|,
+ \label{eq:widen-component-gain}
+\end{equation}
+where $\Delta\vct\theta_{g,k}$ contains the accepted accelerometer and
+magnetometer corrections but not the $S$ residual.  Smoothness on the declared
+compact accepted-measurement/geodesic family makes finite such gains available.
+For the integral update define the samplewise exact linear cross-gain
+\begin{equation}
+ k_{S,k}:=\|\mat E_\theta\mat K_{S,k}\mat D_S^{-1}\|.
+ \label{eq:widen-component-S-gain}
+\end{equation}
+With
+\begin{equation}
+ \vct u(\vct z):=
+ \bigl(\|\vct z_\theta\|,\|\vct z_{bg}\|,
+       \|\vct z_{aw}\|,\|\vct z_{ba}\|,\|\vct z_S\|\bigr)^\top,
+ \quad
+ \vct k_k:=(k_{\theta,k},k_{bg,k},k_{aw,k},k_{ba,k},k_{S,k})^\top,
+ \label{eq:widen-component-vectors}
+\end{equation}
+we therefore have the source-faithful bound
+\begin{equation}
+ \boxed{\|\Delta\vct\theta_k\|\le\vct k_k^\top\vct u(\vct z).}
+ \label{eq:widen-component-correction}
+\end{equation}
+In particular, neither $\delta\vct v$ nor $\delta\vct p$ appears in
+Eq.~\eqref{eq:widen-component-correction}.
+
+\subsubsection{Componentwise nonlinear budget}
+
+Absorb the fixed scaling and the factor $c_N$ of
+Eq.~\eqref{eq:iss-block-remainder} into nonnegative constants
+$\bar c_i$, $i=1,\ldots,5$, corresponding to the five terms in
+Eq.~\eqref{eq:iss-nonlinear-load}.  On
+$\mathcal C_\star(\vct r,r_{vp})$, use
+$xy\le(r_yx+r_xy)/2$ for $0\le x\le r_x$ and
+$0\le y\le r_y$ to define
+\begin{equation}
+ \vct h(\vct r):=
+ \begin{bmatrix}
+  \bar c_1r_\theta+\tfrac12\bar c_2r_{bg}
+                  +\tfrac12\bar c_3r_{aw}\\
+  \tfrac12\bar c_2r_\theta+\bar c_4r_{bg}\\
+  \tfrac12\bar c_3r_\theta\\
+  0\\
+  0
+ \end{bmatrix}.
+ \label{eq:widen-component-h}
+\end{equation}
+Then all geometry-only terms in the scaled remainder satisfy
+\begin{equation}
+ \bar c_1\|z_\theta\|^2
+ +\bar c_2\|z_\theta\|\|z_{bg}\|
+ +\bar c_3\|z_\theta\|\|z_{aw}\|
+ +\bar c_4\|z_{bg}\|^2
+ \le \|\vct h(\vct r)\|\,\|\vct z\|.
+ \label{eq:widen-component-geometry-load}
+\end{equation}
+Furthermore, because
+$\vct u\preceq\vct r$ and
+$\vct k_k^\top\vct u\le\|\vct k_k\|\,\|\vct z\|$,
+\begin{equation}
+ \frac{(\vct k_k^\top\vct u)^2}{\|\vct z\|}
+ \le \|\vct k_k\|\,\vct k_k^\top\vct r,
+ \qquad \vct z\ne0.
+ \label{eq:widen-component-correction-load}
+\end{equation}
+Thus the samplewise componentwise load
+\begin{equation}
+ \boxed{
+ L_{\star,k}(\vct r)
+ :=\|\vct h(\vct r)\|
+   +\bar c_5\|\vct k_k\|\,\vct k_k^\top\vct r}
+ \label{eq:widen-component-load}
+\end{equation}
+contains $r_\theta,r_{bg},r_{aw},r_{ba},r_S$ but no $r_{vp}$.
+If the lever-arm path is disabled, $\bar c_4=0$ as in the base theorem.  A large
+latent-acceleration radius is therefore charged only through the
+attitude--acceleration product and its actual correction gain; a large residual
+accelerometer-bias radius is charged only through its correction path; and
+velocity and position incur no instantaneous nonlinear penalty at all.
+
+\begin{theorem}[Componentwise regional practical ISS]
+\label{thm:widen-component-iss}
+Assume Phases A--C and choose a compact tube
+$\mathcal C_\star(\vct r,r_{vp})$ whose complete one-step prefixes remain in the
+accepted measurement, covariance, and geodesic domain.  If
+\begin{equation}
+ \boxed{
+ \sup_k L_{\star,k}(\vct r)<\ell_* ,}
+ \label{eq:widen-component-condition}
+\end{equation}
+then every sufficiently small Lyapunov sublevel contained in the tube is
+robustly invariant and satisfies Eq.~\eqref{eq:iss-block-local-bound}.  The
+radius $r_{vp}$ affects only proof-domain and finite-capture safety; it does not
+enter the nonlinear smallness condition.
+\end{theorem}
+
+\begin{proof}
+Equations~\eqref{eq:widen-component-geometry-load} and
+\eqref{eq:widen-component-correction-load}, together with
+Eq.~\eqref{eq:widen-component-correction}, give
+$\|\widetilde\varphi_k(z)\|\le
+L_{\star,k}(\vct r)\|z\|$ throughout the tube.  Condition
+\eqref{eq:widen-component-condition} therefore implies the Phase-B smallness
+condition, and Theorem~\ref{thm:iss-block-local} applies.  No step replaces
+$r_{vp}$ by any geometry radius because neither $v$ nor $p$ occurs in the exact
+nonlinear load.
+\end{proof}
+
+The old two-block cylinder remains a valid fallback.  Setting common radii and
+replacing the component gains by their independent worst-case suprema recovers a
+coarser sufficient bound of the previous form.  Consequently this refinement
+does not revoke any trajectory already certified by the existing theorem; it
+adds a less collapsed certificate route.
+
+\subsubsection{Joint mode-consistent gain families}
+
+Independent scalar suprema can combine gain extrema that are not simultaneously
+realizable.  To avoid that artifact, let $\mu$ denote a source proof mode
+(held/active accelerometer bias, accepted-update pattern, pseudo-update phase,
+and magnetic-gauge state), and define the compact joint family
+\begin{equation}
+ \mathcal G_\mu:=\left\{
+ (\widetilde A_k^{\rm cl},\mat P_k,\mat P_{k+1},
+  \mat K_{a,k},\mat K_{m,k},\mat K_{S,k},
+  \vct k_k):
+ \begin{array}{l}
+ \text{all entries are generated by the same admitted}\\[-1mm]
+ \text{covariance, geometry, parameters, and source mode }\mu
+ \end{array}
+ \right\}.
+ \label{eq:widen-joint-family}
+\end{equation}
+A verifier may retain
+\begin{equation}
+ L_{\star,\mu}(\vct r)
+ :=\sup_{g\in\mathcal G_\mu}L_\star(g;\vct r),
+ \qquad
+ L_\star^{\rm joint}(\vct r)
+ :=\max_{\mu}L_{\star,\mu}(\vct r),
+ \label{eq:widen-joint-load}
+\end{equation}
+rather than taking a separate supremum of each component of $\vct k$ and then
+placing all component maxima in one fictitious tuple.  Because every
+$g\in\mathcal G_\mu$ is also covered by the corresponding independent component
+bounds, the joint supremum is never larger than that independent-supremum
+relaxation.  This is a certificate refinement only; it does not yet restrict the
+proof to the narrower source-reachable switching family considered in the next
+stage of the widening program.
+
+\subsubsection{Direct structured Lyapunov decrease}
+
+The scalar test above remains conservative because it discards the direction of
+the nonlinear remainder.  For zero deterministic input define the exact
+one-step decrement associated with the same Lyapunov sequence as
+\begin{align}
+ \mathscr D_k(\vct z)
+ &:=(\widetilde A_k^{\rm cl}\vct z+
+       \widetilde\vct\varphi_k(\vct z))^\top
+       \mat P_{k+1}
+      (\widetilde A_k^{\rm cl}\vct z+
+       \widetilde\vct\varphi_k(\vct z))
+      -\vct z^\top\mat P_k\vct z
+ \label{eq:widen-direct-decrement}\\
+ &=\vct z^\top
+   (\widetilde A_k^{{\rm cl}\top}\mat P_{k+1}
+    \widetilde A_k^{\rm cl}-\mat P_k)\vct z
+   +2\vct z^\top\widetilde A_k^{{\rm cl}\top}
+      \mat P_{k+1}\widetilde\vct\varphi_k(\vct z)
+   +\widetilde\vct\varphi_k(\vct z)^\top
+      \mat P_{k+1}\widetilde\vct\varphi_k(\vct z).
+ \nonumber
+\end{align}
+Unlike Eq.~\eqref{eq:iss-block-basin}, this expression retains the signs and
+directions of the actual gain-weighted correction, skew terms, and bilinear
+rotation products.
+
+For a compact structured tube $\mathcal T_k$ define
+\begin{equation}
+ \mu_{\Delta V}:=
+ \inf_k\inf_{\substack{\vct z\in\mathcal T_k\\\vct z\ne0}}
+ \frac{-\mathscr D_k(\vct z)}{\|\vct z\|^2}.
+ \label{eq:widen-direct-margin}
+\end{equation}
+When mode information is retained, the same quantity may equivalently be
+bounded over the joint families $\mathcal G_\mu$ of
+Eq.~\eqref{eq:widen-joint-family}, so that all matrices and gains inside one
+evaluation come from the same admissible tuple.
+
+\begin{theorem}[Direct-decrease regional practical ISS]
+\label{thm:widen-direct-iss}
+Assume the applicable Live UES theorem and let $\mathcal T_k$ be a compact
+prefix-safe tube inside the accepted source geometry.  If
+\begin{equation}
+ \boxed{\mu_{\Delta V}>0,}
+ \label{eq:widen-direct-condition}
+\end{equation}
+then sufficiently small Lyapunov sublevels contained in $\mathcal T_k$ are
+robustly invariant for sufficiently small bounded deterministic input and obey a
+practical-ISS estimate of the form
+Eq.~\eqref{eq:iss-block-local-bound}.
+\end{theorem}
+
+\begin{proof}
+Condition~\eqref{eq:widen-direct-condition} gives the exact zero-input decrease
+$V_{k+1}-V_k\le-\mu_{\Delta V}\|z_k\|^2$.  On the compact tube the input matrix
+and the complete nonlinear map are bounded.  Expanding the additional terms
+from $\widetilde G_kd_k$ and applying Young inequalities leaves a strict inward
+margin for a sufficiently small input budget.  Norm equivalence of $V_k$ and
+$\|z_k\|^2$, followed by iteration, gives practical ISS.
+\end{proof}
+
+The direct condition is logically no more restrictive than the scalar
+Lipschitz route when both are evaluated on the same tube with the same
+$\mat P_k$.  Indeed, either Eq.~\eqref{eq:iss-block-basin} or the stronger
+componentwise sufficient condition
+Eq.~\eqref{eq:widen-component-condition} bounds the last two terms of
+Eq.~\eqref{eq:widen-direct-decrement} and leaves a strict negative margin;
+hence either scalar certificate implies
+Eq.~\eqref{eq:widen-direct-condition}.  The converse need not hold because the
+actual cross term in Eq.~\eqref{eq:widen-direct-decrement} may be substantially
+smaller than its norm bound or may be dissipative.  The exact direct test can
+therefore certify states rejected solely by the adversarial scalar reduction.
+
+For computer-assisted certification, define for each mode a rigorous enclosure
+\begin{equation}
+ \overline d_\mu(\vct r)
+ \ge
+ \sup_{g\in\mathcal G_\mu}
+ \sup_{\substack{z\in\mathcal C_\star(\vct r,r_{vp})\\z\ne0}}
+ \frac{\mathscr D(z;g)}{\|z\|^2}.
+ \label{eq:widen-direct-enclosure}
+\end{equation}
+Then $\max_\mu\overline d_\mu(\vct r)<0$ is a finite-dimensional sufficient
+certificate.  The enclosure may use interval arithmetic, Taylor models,
+branch-and-bound, or analytic quadratic constraints, but it must preserve the
+joint tuple of Eq.~\eqref{eq:widen-joint-family}.  Sampling alone is not a proof
+of the supremum.  Numerical instantiation of these constants is deliberately a
+separate certificate task; the present result supplies the sharper analytical
+contract without claiming an unverified deployed radius.
+
+\begin{remark}[Meaning of the combined refinement]
+\label{rem:widen-structured-meaning}
+The hierarchy is intentional.  The original two-block cylinder is the simplest
+closed-form fallback; the componentwise condition removes artificial penalties
+on $v$ and $p$ and separates the remaining nonlinear budgets; joint mode
+families remove impossible combinations of independently maximized gains; and
+the direct-decrease test avoids treating every nonlinear term as an adversarial
+vector.  None of these changes alters the estimator, covariance recursion,
+adaptation law, pseudo-measurement, or source modes.  Quantitative widening of
+the deployed certificate must still be established by rigorous instantiation,
+but the exact direct condition cannot reject a state merely because a looser
+norm inequality did.
+\end{remark}
