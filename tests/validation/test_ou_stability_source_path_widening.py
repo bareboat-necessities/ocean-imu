@@ -18,11 +18,16 @@ def _flat(text: str) -> str:
 
 
 class OUIIISourcePathStabilityWideningContractTests(unittest.TestCase):
-    def test_source_path_is_wired_before_phase_d(self):
+    def test_source_path_is_wired_before_semiglobal_composition(self):
+        main = _read(DOC / "kalman_ou-w3d.tex")
+        path_input = r"\input{w3d-stability-widening-source-path.tex-part}"
+        semiglobal_input = r"\input{w3d-semiglobal-stability.tex-part}"
+        phase_d_input = r"\input{w3d-stability-widening-phase-d.tex-part}"
+        self.assertIn(path_input, main)
+        self.assertLess(main.index(path_input), main.index(semiglobal_input))
+        self.assertLess(main.index(semiglobal_input), main.index(phase_d_input))
         phase_d = _read(DOC / "w3d-stability-widening-phase-d.tex-part")
-        self.assertTrue(
-            phase_d.startswith(r"\input{w3d-stability-widening-source-path.tex-part}")
-        )
+        self.assertNotIn("w3d-stability-widening-source-path", phase_d)
 
     def test_fixed_dimension_source_graph_is_explicit(self):
         proof = _read(DOC / "w3d-stability-widening-source-path.tex-part")
