@@ -70,10 +70,14 @@ stochastic qualification also uses the same metric.  A product-manifold distance
 combining $\SO(3)$ geodesic separation and additive-state separation bounds the
 localized noisy-to-zero-noise word endpoint; conditional second/fourth-moment
 bounds then give a constructive regional mean-square drift inequality without
-assuming that NIS gating preserves zero conditional mean.  Because Gaussian
+assuming that NIS gating preserves zero conditional mean.  Conditional Gaussian
+quadratic-form concentration gives an exponential localization-exit bound for
+raw pre-gate noise, while a centered word-boundary martingale decomposition and
+verified conditional increment/variance bounds give a Bernstein/Freedman
+finite-horizon excursion estimate for the funnel energy.  Because Gaussian
 noise has unbounded support, compact-funnel almost-sure invariance is not
-claimed; the exact Gaussian process receives a finite-horizon high-probability
-qualification through the localization-exit bound.
+claimed; the exact Gaussian process instead receives a finite-horizon
+high-probability bound combining those two exponential tails.
 
 The adaptation layer separates sea time scale, OU-prior amplitude, and integral
 regularization.  The measured sea period sets $\tau$, the physical band-limited
@@ -138,12 +142,13 @@ state bounds.  The widened stability theory is not yet a numerically
 instantiated deployed certificate: the continuous source graph and word
 families, path metrics $P_i$, group weights $a_{R,i}$, largest verified
 $\theta_{*,i}$, exact source-word margin $\mu_W$, handoff funnel levels and
-transition inequalities, hybrid cooldown/reset constants, and stochastic
-product-distance/noise constants must still be enclosed rigorously.  The
-ESP32--S3 exercise establishes source portability but not processor, memory,
-power, or deadline margins.  Reported displacement remains bounded wave motion
-about a local reference; no global navigation position is claimed without
-external aiding.
+transition inequalities, hybrid cooldown/reset constants, stochastic
+product-distance/noise constants, conditional covariance envelope
+$\overline\Sigma$, localization threshold $w_*$, and martingale fluctuation
+bounds $(b_W,v_W)$ must still be enclosed rigorously.  The ESP32--S3 exercise
+establishes source portability but not processor, memory, power, or deadline
+margins.  Reported displacement remains bounded wave motion about a local
+reference; no global navigation position is claimed without external aiding.
 
 \subsection*{Future work}
 \begin{itemize}[leftmargin=1.25em]
@@ -156,12 +161,9 @@ external aiding.
         the deployed source graph and source-complete word families, solve and
         verify the path metrics, determine the largest admissible large-angle
         sectors, bound $\mu_W$, initialize the handoff funnel directly from
-        $\mathcal H$, and evaluate hybrid and stochastic margins.  Report
-        diagnostic coordinate radii only after the funnel certificate itself is
-        established.
-  \item \textbf{Sharper stochastic concentration.}  Replace the present
-        finite-horizon moment/union bound with a stopped-supermartingale or
-        Gaussian quadratic-form concentration result on the same source funnel.
+        $\mathcal H$, and evaluate hybrid, Gaussian-localization, and martingale
+        concentration margins.  Report diagnostic coordinate radii only after
+        the funnel certificate itself is established.
   \item \textbf{Transition-aware regularizer amplitude.}  If the full-state
         model predicts a stationary--transition conflict outside the currently
         tested transition, preserve the steady-state regularizer mapping and
