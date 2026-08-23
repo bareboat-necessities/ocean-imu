@@ -5,6 +5,11 @@ build:
 		../../tools/ou_validation.py \
 		../../tools/ou_robustness.py \
 		../../tools/ou_roundtrip_transition.py \
+		../../tools/ou3_numerical_certificate.py \
+		../../tools/ou3_information_certificate.py \
+		../../tools/ou3_information_completion.py \
+		../../tools/ou3_certificate_completion.py \
+		../../tools/ou3_validate_enclosure.py \
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
 		../../tools/ou_replay_fingerprint.py \
@@ -13,6 +18,10 @@ build:
 		test_ou_validation.py \
 		test_ou_robustness.py \
 		test_ou_roundtrip_transition.py \
+		test_ou3_numerical_certificate.py \
+		test_ou3_information_certificate.py \
+		test_ou3_information_completion.py \
+		test_ou3_certificate_completion.py \
 		test_ou_article_ablations.py \
 		test_ou_legacy_law_cleanup.py \
 		test_ou_evidence_contract.py \

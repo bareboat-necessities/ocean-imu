@@ -61,18 +61,37 @@ It is \emph{source complete} when every infinite execution that remains in
 mode $m$ can be tiled successively by words in
 $\mathscr W_{{\rm src},m}$.
 
-Assign a symmetric matrix $\mat P_i\succ0$ to each graph node and require
-uniform metric bounds
+To keep the linear path certificate exactly compatible with the nonlinear
+SO(3) lift below, split the local error coordinate as
+$\vct z=(\delta\vct\theta,\vct\xi)$, where $\vct\xi$ contains every
+non-attitude coordinate in the fixed-dimensional mode.  For each graph node
+choose $a_{R,i}>0$ and a symmetric matrix $\mat P_{\xi,i}\succ0$, and define
+the group-compatible local quadratic metric
 \begin{equation}
- p_-\mat I\preceq\mat P_i\preceq p_+\mat I,
+ \boxed{
+ \overline{\mat P}_i:=
+ \operatorname{blkdiag}\!\left(
+       \frac{a_{R,i}}{2}\mat I_3,\mat P_{\xi,i}\right).}
+ \label{eq:widen-path-Pbar}
+\end{equation}
+The coefficient $a_{R,i}/2$ is not an arbitrary restriction: because
+$V_R=1-\cos\theta=\tfrac12\|\delta\theta\|^2+O(\|\delta\theta\|^4)$,
+Eq.~\eqref{eq:widen-path-Pbar} is precisely the local quadratic of the exact
+group metric in Eq.~\eqref{eq:widen-path-group-metric}.  In particular, no
+attitude--linear cross term is introduced that would disappear when the
+attitude coordinate is lifted back to SO(3).
+
+Require uniform metric bounds
+\begin{equation}
+ p_-\mat I\preceq\overline{\mat P}_i\preceq p_+\mat I,
  \qquad i\in\mathscr M_m.
  \label{eq:widen-path-P-bounds}
 \end{equation}
 For every certified word impose the robust path inequality
 \begin{equation}
  \boxed{
- \mat\Phi_w^\top\mat P_{i_r}\mat\Phi_w
- -\mat P_{i_0}\preceq-\mat Q_w,
+ \mat\Phi_w^\top\overline{\mat P}_{i_r}\mat\Phi_w
+ -\overline{\mat P}_{i_0}\preceq-\mat Q_w,
  \qquad
  \mat Q_w\succeq q_w\mat I,
  \quad q_w>0,}
@@ -93,7 +112,7 @@ source-reachable executions in that mode.  At a word boundary,
  \qquad
  \lambda_w:=1-\frac{q_w}{p_+}<1,
  \qquad
- V_i(\vct z):=\vct z^\top\mat P_i\vct z.
+ V_i(\vct z):=\vct z^\top\overline{\mat P}_i\vct z.
  \label{eq:widen-path-contraction}
 \end{equation}
 No decrease is required at an individual sample inside the word.
@@ -114,8 +133,8 @@ For quantitative use define the exact generalized word gain
  \lambda_w^{\rm gen}:=
  \sup_{\Phi_w\in\mathscr P_w}
  \lambda_{\max}\!\left(
- P_{i_0}^{-1/2}\Phi_w^\top P_{i_r}
- \Phi_wP_{i_0}^{-1/2}\right)<1,}
+ \overline P_{i_0}^{-1/2}\Phi_w^\top \overline P_{i_r}
+ \Phi_w\overline P_{i_0}^{-1/2}\right)<1,}
  \label{eq:widen-path-generalized-gain}
 \end{equation}
 and the source-prefix amplification
@@ -124,7 +143,8 @@ and the source-prefix amplification
  \sup_{w\in\mathscr W_{{\rm src},m}}
  \sup_{0\le s<\ell(w)}
  \sup_{\Phi_{w,s}}
- \left\|P_{i_s}^{1/2}\Phi_{w,s}P_{i_0}^{-1/2}\right\|<\infty,
+ \left\|\overline P_{i_s}^{1/2}\Phi_{w,s}
+              \overline P_{i_0}^{-1/2}\right\|<\infty,
  \label{eq:widen-path-prefix}
 \end{equation}
 where the last supremum is restricted to complete source-reachable prefixes.
@@ -133,16 +153,17 @@ certificates.
 
 \subsubsection{Exact group/path nonlinear metric}
 
-Let $\vct\xi$ denote all non-attitude coordinates in the fixed-dimensional
-mode and use the group energy of Eq.~\eqref{eq:widen-SO3-energy}.  For each node
-choose $a_{R,i}>0$ and define
+Using the same $a_{R,i}$ and $\mat P_{\xi,i}$ as in
+Eq.~\eqref{eq:widen-path-Pbar}, define
 \begin{equation}
  \boxed{
  W_i(\mat R_e,\vct\xi)
- :=a_{R,i}V_R(\mat R_e)+\vct\xi^\top\mat P_i\vct\xi.}
+ :=a_{R,i}V_R(\mat R_e)+\vct\xi^\top\mat P_{\xi,i}\vct\xi.}
  \label{eq:widen-path-group-metric}
 \end{equation}
-The node domain $\mathcal D_i$ uses a certified geodesic chart
+Thus the linear and nonlinear certificates use one metric geometry rather than
+independently optimized quadratic and group metrics.  The node domain
+$\mathcal D_i$ uses a certified geodesic chart
 $\theta_e\le\theta_{*,i}<\pi$ together with the source covariance,
 measurement, and state bounds.  No Euclidean attitude-radius replacement is
 made.
@@ -215,7 +236,7 @@ A rigorous deployed Live certificate reports
 \begin{equation}
  \boxed{
  \{\mathscr G_{{\rm src},m},\mathscr W_{{\rm src},m},
- P_i,a_{R,i},\theta_{*,i},\lambda_w^{\rm gen},B_{\rm pre},
+ P_{\xi,i},a_{R,i},\theta_{*,i},\lambda_w^{\rm gen},B_{\rm pre},
  \mu_W\}_{m\in\{H,A\}}.}
  \label{eq:widen-path-contract}
 \end{equation}
