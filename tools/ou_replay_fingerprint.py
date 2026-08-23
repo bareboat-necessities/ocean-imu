@@ -6,13 +6,16 @@ The replay gate is deliberately conservative. It hashes every tracked file under
 file elsewhere, every tracked file whose Git mode is executable, and the exact
 downloaded simulation-data ZIP.
 
-A second fingerprint hashes every file under ``reports/results/``. The record
-that stores the two fingerprints lives outside that tree, so the results digest
-has no self-reference exception.
+A second fingerprint hashes every scientific result below ``reports/results/``
+except ``reports/results/readme/``.  That directory is a derived presentation
+mirror populated from successful build artifacts; its bytes are not primary
+validation evidence and must not make an unchanged study look tampered with.
+The record that stores the two fingerprints lives outside the results tree, so
+the scientific digest has no self-reference exception.
 
 This is intentionally broader than the simulator dependency closure. False
 positive full replays are acceptable; reusing evidence after a potentially
-replay-affecting repository or evidence-tree change is not.
+replay-affecting repository or scientific-evidence change is not.
 """
 from __future__ import annotations
 
@@ -27,7 +30,8 @@ from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_ROOT = REPO_ROOT / "reports" / "results"
-SCHEMA_VERSION = 2
+RESULTS_FINGERPRINT_EXCLUDED_TOP_LEVEL = frozenset({"readme"})
+SCHEMA_VERSION = 3
 ALGORITHM = "sha256-framed-v1"
 
 # Deliberately broad. Do not replace this with include/reachability analysis:
@@ -145,8 +149,20 @@ def _frame(digest, *parts: bytes) -> None:
         digest.update(part)
 
 
+def is_results_fingerprint_excluded(path: Path, results_root: Path = RESULTS_ROOT) -> bool:
+    """Return whether ``path`` belongs to a derived presentation-only subtree."""
+
+    relative = path.relative_to(results_root)
+    return bool(relative.parts) and relative.parts[0] in RESULTS_FINGERPRINT_EXCLUDED_TOP_LEVEL
+
+
 def compute_results_fingerprint(results_root: Path = RESULTS_ROOT) -> dict[str, object]:
-    """Hash every regular file/symlink below reports/results, including names."""
+    """Hash protected result files/symlinks and their paths.
+
+    ``readme/`` is intentionally excluded: it mirrors successful build output
+    for repository presentation and is not scientific evidence.
+    """
+
     results_root = results_root.resolve()
     if not results_root.is_dir():
         raise FileNotFoundError(results_root)
@@ -156,6 +172,8 @@ def compute_results_fingerprint(results_root: Path = RESULTS_ROOT) -> dict[str, 
 
     files: list[dict[str, object]] = []
     for path in sorted(results_root.rglob("*"), key=lambda item: item.as_posix()):
+        if is_results_fingerprint_excluded(path, results_root):
+            continue
         if path.is_symlink():
             target = os.readlink(path)
             content_sha = hashlib.sha256(target.encode("utf-8")).hexdigest()

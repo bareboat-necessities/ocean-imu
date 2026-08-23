@@ -10,6 +10,7 @@ build:
 		../../tools/ou_replay_fingerprint.py \
 		../../tools/ou_publication_sync.py \
 		../../tools/rotate_record_heading.py \
+		../../plots/svg_determinism.py \
 		test_ou_validation.py \
 		test_ou_robustness.py \
 		test_ou_roundtrip_transition.py \
@@ -30,6 +31,7 @@ build:
 		test_publication_references.py \
 		test_deterministic_baseline_contract.py \
 		test_readme_result_gallery.py \
+		test_svg_reproducibility.py \
 		test_workflow_contract.py \
 		test_reorg_compat_overrides.py \
 		test_zz_publication_contract.py
