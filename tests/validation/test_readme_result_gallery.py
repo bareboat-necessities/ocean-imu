@@ -6,6 +6,8 @@ import unittest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 README = REPO_ROOT / "README.md"
 GALLERY = REPO_ROOT / "reports" / "results" / "readme"
+PROVENANCE = REPO_ROOT / "reports" / "readme-results-provenance.md"
+PUBLISH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "readme-results-publish.yml"
 
 EXPECTED_GALLERY = (
     "w3d_ou3_pmstokes_medium.svg",
@@ -46,6 +48,19 @@ class ReadmeResultGalleryTests(unittest.TestCase):
                 relative = source.split("?", 1)[0].split("#", 1)[0]
                 path = REPO_ROOT / relative.removeprefix("./")
                 self.assertTrue(path.is_file(), f"README image target does not exist: {source}")
+
+    def test_run_specific_provenance_is_outside_scientific_results(self):
+        self.assertFalse(
+            (GALLERY / "PROVENANCE.md").exists(),
+            "build-run provenance must not live under reports/results",
+        )
+        self.assertTrue(PROVENANCE.is_file())
+
+        workflow = PUBLISH_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("reports/readme-results-provenance.md", workflow)
+        self.assertNotIn("reports/ou_evidence_fingerprint.json", workflow)
+        self.assertNotIn("ou_replay_fingerprint.py", workflow)
+        self.assertNotIn("sim-data-files.zip", workflow)
 
 
 if __name__ == "__main__":

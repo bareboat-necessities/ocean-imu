@@ -10,6 +10,29 @@ from pathlib import Path
 path = Path("kalman_ou_iii-plots.py")
 source = path.read_text(encoding="utf-8")
 
+# Published SVGs must be byte-reproducible.  The common helper fixes
+# Matplotlib's per-process SVG id salt and suppresses volatile Date metadata.
+old_import = 'from plot_sampling import BASE_SAMPLE_RATE_HZ, get_decimation_step'
+new_import = old_import + '\nfrom svg_determinism import configure_svg, save_svg'
+if source.count(old_import) != 1:
+    raise RuntimeError("OU-III SVG helper import anchor not found exactly once")
+source = source.replace(old_import, new_import, 1)
+
+old_backend = 'mpl.use("pgf")'
+new_backend = old_backend + '\nconfigure_svg(mpl)'
+if source.count(old_backend) != 1:
+    raise RuntimeError("OU-III Matplotlib backend anchor not found exactly once")
+source = source.replace(old_backend, new_backend, 1)
+
+old_save = '        fig.savefig(f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")'
+new_save = '''        if ext == "svg":
+            save_svg(fig, f"{outbase}{suffix}.{ext}", bbox_inches="tight")
+        else:
+            fig.savefig(f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")'''
+if source.count(old_save) != 1:
+    raise RuntimeError("OU-III SVG save anchor not found exactly once")
+source = source.replace(old_save, new_save, 1)
+
 old_dir = '        ("dir_deg",        r"Dir (deg, axial)"),'
 new_dir = '        (("dir_axis_deg" if "dir_axis_deg" in df.columns else "dir_deg"), r"Dir (deg, axial)"),'
 if source.count(old_dir) != 1:
