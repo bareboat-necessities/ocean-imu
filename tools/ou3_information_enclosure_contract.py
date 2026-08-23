@@ -1,34 +1,16 @@
 #!/usr/bin/env python3
 """Build the continuous-source promotion contract for adaptive OU-III.
 
-The executed certificate in ``ou3_information_certificate.py`` uses the actual
-Kalman covariance as a source-varying information metric,
-
-    M(g) = Sigma_KF(g)^(-1).
-
-For every deterministic source word,
-
-    Sigma_1 = Phi Sigma_0 Phi^T + Omega,
-
-and therefore
-
-    Phi^T Sigma_1^-1 Phi <= (1-eta) Sigma_0^-1
-
-whenever
-
-    Sigma_1^-1/2 Omega Sigma_1^-1/2 >= eta I,  eta > 0.
-
-This tool does not invent a validated lower bound eta.  It turns the successful
-eight-replay result into a deterministic, machine-readable contract specifying
-what a continuous-source interval/Taylor-model backend must prove.  Executed
-values are retained only as sanity anchors; they are never promoted by this
-stage.
+The executed information certificate supplies sanity anchors only.  This tool
+states the primitive outward-rounded quantities a source-complete validated
+backend must prove.  Final nonlinear, hybrid and stochastic margins are
+recomputed by ``ou3_validate_enclosure.py`` and are never accepted as asserted
+PASS values.
 """
 from __future__ import annotations
 
 import argparse
 import json
-import math
 from pathlib import Path
 
 import ou3_numerical_certificate as BASE
@@ -36,22 +18,7 @@ import ou3_numerical_certificate as BASE
 SCHEMA = 2
 
 
-def _finite_positive(value) -> bool:
-    try:
-        x = float(value)
-    except (TypeError, ValueError):
-        return False
-    return math.isfinite(x) and x > 0.0
-
-
 def mode_contract(info_mode: dict, completion_mode: dict, mode: str) -> dict:
-    """Return one deterministic continuous-source obligation set.
-
-    Prefer the tested horizon with the strongest executed information margin.
-    A longer word is allowed by the source-word theorem and gives the validated
-    backend more room to prove a robust positive Riccati injection.  The first
-    strict horizon is kept as a diagnostic anchor, not as a requirement.
-    """
     first = dict(info_mode.get("selected") or {})
     strongest = dict(info_mode.get("strongest_executed_margin") or first)
     horizon = strongest.get("horizon_s")
@@ -95,7 +62,8 @@ def mode_contract(info_mode: dict, completion_mode: dict, mode: str) -> dict:
         },
         "required_nonlinear_bounds": {
             "theta_star": "0 < theta_star < pi",
-            "mu_W_lower": "> 0",
+            "endpoint_W_ratio_upper": "0 <= ratio < 1; verifier derives mu_W=1-ratio",
+            "certified_level_W": "> 0",
             "all_word_prefixes_safe": True,
             "metric_lift": "zeta^T Sigma_KF(g)^(-1) zeta with zeta=[Log(R_e); xi]",
         },
@@ -120,19 +88,42 @@ def build_contract(info: dict, completion: dict) -> dict:
             "Omega=Sigma1-Phi Sigma0 Phi^T"
         ),
         "modes": modes,
-        "hybrid_requirements": [
-            "startup_handoff_into_certified_destination_sublevel",
-            "held_to_active_jump_into_certified_destination_sublevel",
-            "magnetic_regauge_jump_into_certified_destination_sublevel",
-            "tilt_reset_jump_into_certified_destination_sublevel",
-            "cooldown_reentry_into_certified_destination_sublevel",
-        ],
-        "stochastic_requirements": [
-            "source_uniform_Sigma_bar_norm_upper",
-            "source_uniform_b_W_upper",
-            "source_uniform_v_W_upper",
-            "finite_horizon_failure_probability_upper",
-        ],
+        "hybrid_requirements": {
+            "required_kinds": [
+                "startup_handoff", "held_to_active", "magnetic_regauge",
+                "tilt_reset", "cooldown",
+            ],
+            "primitive_bounds_per_jump": [
+                "source_complete", "outward_rounded", "source_level_W_upper",
+                "jump_gain_upper", "additive_W_upper", "destination_level_W",
+                "destination_mode",
+            ],
+            "held_to_active_extra": [
+                "source_dimension=18", "destination_dimension=21",
+                "dimension_change_handled_by_embedding=true",
+                "new_coordinate_W_upper",
+            ],
+            "verifier_formula": (
+                "post_W_upper=jump_gain_upper*source_level_W_upper+"
+                "additive_W_upper+new_coordinate_W_upper; "
+                "inward_margin=destination_level_W-post_W_upper>0"
+            ),
+        },
+        "stochastic_requirements": {
+            "source_noise": "source_noise_certificate.json; standardized pre-gate Gaussian primitive covariance <= I",
+            "validated_sensitivity_bounds": [
+                "source_complete", "outward_rounded", "localization_prefix_safe",
+                "localization_radius_standardized", "word_samples_upper",
+                "finite_horizon_words", "funnel_level_a", "W0_upper",
+                "L_X_upper", "G_bar_upper", "c_zw_upper", "r_star_upper",
+                "c_ww_upper", "g_W_upper", "h_W_upper",
+            ],
+            "verifier_derives": [
+                "s2", "s4", "nu1", "nu_W", "lambda_s", "sigma_s^2",
+                "b_W=a", "v_W=a^2/4", "Gaussian localization t_star",
+                "Freedman excursion probability", "total finite-horizon failure probability",
+            ],
+        },
         "validated_backend_requirements": [
             "validated arithmetic",
             "outward rounding",
@@ -141,7 +132,8 @@ def build_contract(info: dict, completion: dict) -> dict:
         ],
         "promotion_rule": (
             "executed replay values are sanity anchors only; deployment PASS requires "
-            "strict validated continuous-source linear, nonlinear, hybrid and stochastic bounds"
+            "strict validated continuous-source linear and nonlinear bounds, recomputed "
+            "hybrid inward margins, and recomputed stochastic concentration"
         ),
     }
 
@@ -155,7 +147,7 @@ def main() -> int:
     completion = json.loads((cert / "information_completion.json").read_text())
     contract = build_contract(info, completion)
     path = cert / "information_enclosure_contract.json"
-    path.write_text(json.dumps(contract, indent=2, sort_keys=True))
+    path.write_text(json.dumps(contract, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
         "schema": contract["schema"],
         "linear": contract["upstream_executed_information_certificate"],
@@ -163,7 +155,6 @@ def main() -> int:
         "H_horizon_s": contract["modes"]["H"]["recommended_word_horizon_s"],
         "A_horizon_s": contract["modes"]["A"]["recommended_word_horizon_s"],
     }, indent=2, sort_keys=True))
-    # An upstream mathematical FAIL is scientific output, not a contract-tool crash.
     return 0
 
 

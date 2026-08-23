@@ -13,14 +13,17 @@ on:
       - "tests/validation/test_ou3_information_certificate.py"
       - "tests/validation/test_ou3_information_completion.py"
       - "tests/validation/test_ou3_certificate_completion.py"
+      - "tests/validation/test_ou3_source_noise_certificate.py"
       - "tests/validation/test_ou3_neighborhood_diagnostic.py"
       - "tests/validation/test_ou3_neighborhood_radius_search.py"
+      - "tests/validation/test_ou3_validate_enclosure.py"
       - "tests/validation/test_ou3_result_determinism.py"
       - "tools/ou3_exact_replay.py"
       - "tools/ou3_numerical_certificate.py"
       - "tools/ou3_information_certificate.py"
       - "tools/ou3_information_completion.py"
       - "tools/ou3_information_enclosure_contract.py"
+      - "tools/ou3_source_noise_certificate.py"
       - "tools/ou3_neighborhood_diagnostic.py"
       - "tools/ou3_neighborhood_radius_search.py"
       - "tools/ou3_certificate_completion.py"
@@ -91,6 +94,11 @@ jobs:
       - name: Generate continuous-source information enclosure contract
         run: |
           python3 -u tools/ou3_information_enclosure_contract.py \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+
+      - name: Derive stochastic primitive-noise certificate from source
+        run: |
+          python3 -u tools/ou3_source_noise_certificate.py \
             --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
 
       - name: Smoke-test exact nonlinear pairwise word
