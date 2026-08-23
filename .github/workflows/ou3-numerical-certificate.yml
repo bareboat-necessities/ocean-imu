@@ -1,0 +1,66 @@
+name: ou3-numerical-certificate
+
+on:
+  pull_request:
+    paths:
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/kalman_common/**"
+      - "src/tuner/**"
+      - "src/util/W3dSimCommon.*"
+      - "tests/kalman_ou_iii/**"
+      - "tests/validation/test_ou3_numerical_certificate.py"
+      - "tools/ou3_numerical_certificate.py"
+      - "tools/ou_sweep_common.py"
+      - "docs/ou-iii-numerical-certificate.md"
+      - ".github/workflows/ou3-numerical-certificate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-numerical-certificate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  certificate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            g++ make libeigen3-dev python3-numpy unzip
+
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip \
+            --clobber
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Build certificate replay simulator
+        run: make -C tests/kalman_ou_iii ou3-certificate-sim
+
+      - name: Run numerical certificate on eight noisy seas
+        run: |
+          python3 -u tools/ou3_numerical_certificate.py \
+            --no-build \
+            --output-dir reports/results/ou3_numerical_certificate
+
+      - name: Upload certificate report and traces
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-numerical-certificate
+          path: reports/results/ou3_numerical_certificate/**
+          if-no-files-found: warn
