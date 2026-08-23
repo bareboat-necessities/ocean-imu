@@ -204,7 +204,7 @@ def main() -> int:
         "H": modes["H"]["pass"], "A": modes["A"]["pass"],
         "hybrid": hybrid["pass"], "stochastic": stochastic["pass"],
         "provenance": provenance_ok,
-    }, indent=2))
+    }, indent=2, sort_keys=True))
     return 0 if passed else 2
 
 
