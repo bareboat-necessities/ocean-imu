@@ -1,0 +1,75 @@
+name: bootstrap-readme-svg-gallery
+
+on:
+  push:
+    branches:
+      - fix-readme-ou3-chart-links
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  bootstrap:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: fix-readme-ou3-chart-links
+          fetch-depth: 0
+
+      - name: Download successful OU-III SVG artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          rm -rf incoming
+          mkdir -p incoming
+          gh run download 32621747215 \
+            --repo "$GITHUB_REPOSITORY" \
+            --name release-svgs-kalman_ou_iii \
+            --dir incoming
+
+      - name: Install exact generated SVGs
+        run: |
+          set -euo pipefail
+          out=reports/results/readme
+          mkdir -p "$out"
+          for name in \
+            w3d_ou3_pmstokes_medium.svg \
+            w3d_ou3_pmstokes_medium_zkin.svg \
+            w3d_ou3_pmstokes_medium_xykin.svg \
+            w3d_ou3_pmstokes_medium_acc_bias.svg \
+            w3d_ou3_pmstokes_medium_gyro_bias.svg \
+            spectrum_pmstokes_medium_3d.svg; do
+            src="$(find incoming -type f -name "$name" -print -quit)"
+            test -n "$src"
+            cp -v "$src" "$out/$name"
+          done
+
+          cat > "$out/PROVENANCE.md" <<'EOF'
+          # README result gallery provenance
+
+          Initial gallery seeded verbatim from the successful OU-III build artifact
+          `release-svgs-kalman_ou_iii` produced by workflow run 32621747215
+          (source SHA d0f99e101472bfd7c953757f1a247036bd20c37c).
+
+          Subsequent successful main builds refresh this directory through
+          `.github/workflows/readme-results-publish.yml`.
+          EOF
+
+          # The bootstrap is intentionally one-shot; do not leave a hard-coded
+          # historical run ID in the repository after the SVGs are committed.
+          rm .github/workflows/bootstrap-readme-svg-gallery.yml
+
+      - name: Commit SVG gallery
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/results/readme .github/workflows/bootstrap-readme-svg-gallery.yml
+          git commit -m "Seed README gallery from generated OU-III SVGs [skip ci]"
+          git push origin HEAD:refs/heads/fix-readme-ou3-chart-links
