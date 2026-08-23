@@ -1,0 +1,105 @@
+name: readme-results-publish
+
+on:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+
+# This workflow turns successful main-branch build products into stable,
+# versioned README assets. It deliberately runs after build rather than during
+# the matrix so the README is updated only when the complete build has passed.
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: readme-results-publish-main
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success'
+          && github.event.workflow_run.event == 'push'
+          && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v6
+        with:
+          ref: refs/heads/main
+          fetch-depth: 0
+
+      - name: Download generated README figures
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          rm -rf incoming
+          mkdir -p incoming/kalman_ou_iii
+          gh run download "$BUILD_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name release-svgs-kalman_ou_iii \
+            --dir incoming/kalman_ou_iii
+
+      - name: Stage stable README gallery
+        run: |
+          set -euo pipefail
+          out=reports/results/readme
+          mkdir -p "$out"
+
+          copy_figure() {
+            local name="$1"
+            local src
+            src="$(find incoming/kalman_ou_iii -type f -name "$name" -print -quit)"
+            if [ -z "$src" ]; then
+              echo "required build figure is missing: $name" >&2
+              find incoming/kalman_ou_iii -maxdepth 5 -type f -print >&2 || true
+              exit 1
+            fi
+            cp -v "$src" "$out/$name"
+          }
+
+          copy_figure w3d_ou3_pmstokes_medium.svg
+          copy_figure w3d_ou3_pmstokes_medium_zkin.svg
+          copy_figure w3d_ou3_pmstokes_medium_xykin.svg
+          copy_figure w3d_ou3_pmstokes_medium_acc_bias.svg
+          copy_figure w3d_ou3_pmstokes_medium_gyro_bias.svg
+          copy_figure spectrum_pmstokes_medium_3d.svg
+
+          cat > "$out/PROVENANCE.md" <<EOF
+          # README result gallery provenance
+
+          These figures are generated automatically by the successful build
+          workflow on main; they are not hand-maintained screenshots.
+
+          - build workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}
+          - triggering source SHA: ${{ github.event.workflow_run.head_sha }}
+          - source artifact: release-svgs-kalman_ou_iii
+          - includes the existing build-generated PM/Stokes 3-D spectrum SVG
+          EOF
+
+      - name: Commit refreshed gallery
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/results/readme
+          if git diff --cached --quiet; then
+            echo "README gallery is already current."
+            exit 0
+          fi
+
+          git commit \
+            -m "Refresh generated README result gallery [skip ci]" \
+            -m "Produced from successful build run ${{ github.event.workflow_run.id }}."
+
+          for attempt in 1 2 3 4; do
+            git push origin HEAD:refs/heads/main && exit 0
+            sleep $((2 ** attempt))
+            git pull --rebase origin refs/heads/main
+          done
+          exit 1
