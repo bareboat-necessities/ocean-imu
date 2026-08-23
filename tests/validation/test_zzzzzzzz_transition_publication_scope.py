@@ -1,4 +1,4 @@
-"""Late publication contract: one-way transition evidence is provenance-only."""
+"""Late publication contract for restored OU-III degradation evidence."""
 from pathlib import Path
 import re
 
@@ -17,18 +17,14 @@ def _macro_definitions(text):
     )
 
 
-def _publication_excludes_one_way_transition(self):
-    """Keep archived one-way evidence available, but never render it in the manuscript."""
+def _publication_keeps_current_stress_evidence(self):
+    """Publish degradation cases without reviving the retired coupled law."""
     archive_publication = (
         self.RESULTS / "ou_robustness_publication.tex"
     ).read_text(encoding="utf-8")
     self.assertIn("Rapid 30 s ramp", archive_publication)
     self.assertIn("Controlled 120 s ramp", archive_publication)
 
-    # Publication synchronization may mirror archive-derived support files and
-    # macro definitions into the document tree for provenance/reproducibility.
-    # Scope is determined by what the manuscript actually inputs/references,
-    # not by whether an unused support file or macro definition exists.
     source = (self.DOC / "w3d-ou-robustness.tex-part").read_text(encoding="utf-8")
     normalized = re.sub(r"\s+", " ", source).lower()
     for required in (
@@ -37,19 +33,27 @@ def _publication_excludes_one_way_transition(self):
         "c^{6/7}",
         "c^{41/14}",
         "low--high--low",
-        "provenance only",
+        "ou_robustness_stress.svg",
+        "rapid one-way",
+        "controlled",
+        "degradation result",
     ):
         self.assertIn(required, normalized)
     for forbidden in (
-        "rapid 30",
-        "controlled 120",
-        "rapid transition degradation",
-        "w3d-ou-robustness-results-generated.tex-part",
-        "ou_robustness_stress.svg",
-        "\\ourobustnessrapid",
-        "\\ourobustnesscontrolled",
+        r"0.35\,\sigma_{aw}\tau^3",
+        r"r_s\to c^{3}r_s",
+        "legacy cubic",
     ):
         self.assertNotIn(forbidden, normalized)
+
+    baseline = (self.DOC / "w3d-baseline-comparison.tex-part").read_text(
+        encoding="utf-8"
+    )
+    self.assertIn(r"\input{w3d-ou-robustness.tex-part}", baseline)
+    self.assertIn("ou_validation_vertical.svg", baseline)
+    self.assertIn("ou_validation_displacement.svg", baseline)
+    self.assertIn("ou_validation_attitude.svg", baseline)
+    self.assertIn("SpectralMSE", baseline)
 
     archived_macros = _macro_definitions(
         (self.RESULTS / "ou_robustness_macros.tex").read_text(encoding="utf-8")
@@ -64,35 +68,40 @@ def _publication_excludes_one_way_transition(self):
         self.assertIn(name, archived_macros)
         self.assertEqual(value, archived_macros[name], name)
 
+    self.assertEqual(
+        (self.RESULTS / "ou_robustness_stress.svg").read_bytes(),
+        (self.DOC / "ou_robustness_stress.svg").read_bytes(),
+        "ou_robustness_stress.svg",
+    )
 
-def _publication_primary_claims_are_low_motion_only(self):
-    """Only low-motion degradation macros may be consumed as primary robustness claims."""
+
+def _publication_primary_claims_include_degradation(self):
+    """Low-motion and rapid-transition claims must match paired evidence."""
     effects = self.read_csv(self.RESULTS / "ou_robustness_paired_effects.csv")
     generated = (
         self.DOC / "w3d-ou-robustness-macros-generated.tex-part"
     ).read_text(encoding="utf-8")
-    source = (self.DOC / "w3d-ou-robustness.tex-part").read_text(encoding="utf-8")
-    row = next(
-        item for item in effects
-        if item["comparison"] == "Hs0.05_minus_Hs0.27"
-        and item["metric"] == "disp_z_pct_hs"
+    checks = (
+        ("Hs0.05_minus_Hs0.27", "disp_z_pct_hs"),
+        ("rapid_minus_controlled_Adaptive", "disp_z_pct_hs"),
+        ("Adaptive_minus_FixedNominal_rapid", "disp_z_pct_hs"),
     )
-    for field in (
-        "mean_paired_difference",
-        "bootstrap_ci95_low",
-        "bootstrap_ci95_high",
-    ):
-        self.assertIn(f"{float(row[field]):+.2f}", generated)
-
-    # Historical one-way macros may be defined by the synchronized archive,
-    # but the rendered publication must not consume them.
-    self.assertNotIn("\\OURobustnessRapid", source)
-    self.assertNotIn("\\OURobustnessControlled", source)
+    for comparison, metric in checks:
+        row = next(
+            item for item in effects
+            if item["comparison"] == comparison and item["metric"] == metric
+        )
+        for field in (
+            "mean_paired_difference",
+            "bootstrap_ci95_low",
+            "bootstrap_ci95_high",
+        ):
+            self.assertIn(f"{float(row[field]):+.2f}", generated)
 
 
 robustness_core.CommittedRobustnessResultsTests.test_manuscript_copies_match_generated_evidence = (
-    _publication_excludes_one_way_transition
+    _publication_keeps_current_stress_evidence
 )
 robustness_core.CommittedRobustnessResultsTests.test_generated_primary_claims_match_paired_effects = (
-    _publication_primary_claims_are_low_motion_only
+    _publication_primary_claims_include_degradation
 )
