@@ -50,21 +50,49 @@ class Ou3NumericalCertificateTests(unittest.TestCase):
         got = CERT.zu_to_ned(np.array([1.0, 2.0, 3.0]))
         np.testing.assert_allclose(got, np.array([2.0, 1.0, -3.0]))
 
+    def test_old_trajectory_fit_is_not_a_certificate_path(self):
+        text = (TOOLS / "ou3_numerical_certificate.py").read_text()
+        self.assertNotIn("def fit_map", text)
+        self.assertNotIn("def metric_from_samples", text)
+        self.assertNotIn("X.T@X", text)
+        self.assertIn("load_exact_maps", text)
+        self.assertIn("solve_path_metrics", text)
+        self.assertIn("linear_exact_replay_pass", text)
+
+    def test_path_lmi_has_the_theorem_direction(self):
+        text = (TOOLS / "ou3_numerical_certificate.py").read_text()
+        self.assertIn("w.phi.T @ P[w.end_node] @ w.phi - rho*P[w.start_node]", text)
+        self.assertIn("evaluate_metrics(words,metrics)", text.replace(" ", ""))
+        self.assertIn("rho_target=0.9999", text.replace(" ", ""))
+
+    def test_certificate_simulator_uses_filter_internal_exact_maps(self):
+        text = (ROOT / "tests" / "kalman_ou_iii" / "ou3-certificate-sim.cpp").read_text()
+        self.assertIn("F_AA_scratch_", text)
+        self.assertIn("F_LL_scratch_", text)
+        self.assertIn("PCt_scratch_", text)
+        self.assertIn("K_scratch_", text)
+        self.assertIn("OU3_CERT_MAP_TRACE", text)
+        self.assertIn("Pcur.block<kNX,3>(0,kOffS)", text)
+        self.assertIn("K.topRows<3>()", text)
+        self.assertIn("Matrix21f::Identity() - K * H", text)
+        self.assertIn("setPeriodicAwCovarianceSync(true)", text)
+        self.assertNotIn("enableLinearBlock(false)", text)
+        self.assertNotIn("setFixedTuning", text)
+
+    def test_full_s_to_attitude_gain_is_preserved(self):
+        text = (ROOT / "tests" / "kalman_ou_iii" / "ou3-certificate-sim.cpp").read_text()
+        self.assertIn("PCt = Pcur.block<kNX,3>(0,kOffS)", text)
+        self.assertIn("dtheta = K.topRows<3>() * rS", text)
+        self.assertNotIn("K.topRows<3>().setZero", text)
+        self.assertNotIn("Schmidt", text)
+
     def test_replay_result_cannot_be_promoted_to_theorem_certificate(self):
         text = (TOOLS / "ou3_numerical_certificate.py").read_text()
         self.assertIn('"deployment_theorem_certificate"', text)
         self.assertIn('"NOT_ESTABLISHED"', text)
-        self.assertIn("validated continuous-source word-family enclosure", text)
+        self.assertIn("validated continuous-source enclosure", text)
+        self.assertIn('"numerical_certificate"', text)
         self.assertNotIn("Markov", text)
-
-    def test_certificate_simulator_observes_full_s_cross_covariance(self):
-        text = (ROOT / "tests" / "kalman_ou_iii" / "ou3-certificate-sim.cpp").read_text()
-        self.assertIn("covariance_full()", text)
-        self.assertIn("P(:,S)", text)
-        self.assertIn("get_integral_displacement()", text)
-        self.assertIn("setPeriodicAwCovarianceSync(true)", text)
-        self.assertNotIn("enableLinearBlock(false)", text)
-        self.assertNotIn("setFixedTuning", text)
 
 
 if __name__ == "__main__":
