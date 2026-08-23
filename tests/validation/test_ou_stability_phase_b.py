@@ -69,16 +69,21 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         self.assertNotIn(r"\mathfrak T_{k^+,N_j}", hybrid)
         self.assertNotIn(r"\lambda_F", hybrid)
 
-    def test_repeated_relocks_use_source_word_cooldown(self):
+    def test_recurrent_relocks_are_owned_by_phase_e(self):
         hybrid = _read(DOC / "w3d-hybrid-stability.tex-part")
+        phase_e = _read(DOC / "w3d-stability-widening-phase-e.tex-part")
+        self.assertIn(r"T_{\rm cool}=3\ \mathrm{s}", hybrid)
+        self.assertIn("Recurrent-reset small gain is derived once", hybrid)
         for marker in (
-            r"T_{\rm cool}=3\ \mathrm{s}",
-            r"\label{eq:hybrid-cycle-bounds}",
-            r"\mu_T:=\kappa_U\lambda_{\rm cool}^{\rm an}<1",
-            r"\label{eq:hybrid-recurrent-bound}",
-            "excludes Zeno",
+            r"\label{eq:widen-reset-to-set}",
+            r"\label{eq:widen-cooldown-factor}",
+            r"\label{eq:widen-hybrid-mu}",
+            r"\label{eq:widen-reset-ultimate}",
+            r"\label{thm:widen-hybrid-small-gain}",
         ):
-            self.assertIn(marker, hybrid)
+            self.assertIn(marker, phase_e)
+        self.assertNotIn(r"\label{eq:hybrid-cycle-bounds}", hybrid)
+        self.assertNotIn(r"\label{eq:hybrid-recurrent-bound}", hybrid)
 
     def test_quotient_uses_same_source_funnel_construction(self):
         hybrid = _read(DOC / "w3d-hybrid-stability.tex-part")
