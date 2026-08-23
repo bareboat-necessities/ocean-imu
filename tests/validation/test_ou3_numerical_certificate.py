@@ -81,7 +81,7 @@ class Ou3NumericalCertificateTests(unittest.TestCase):
         self.assertIn("target=0.9999", compact)
         self.assertIn("0.5*a[n]*I3", compact)
         self.assertIn("Px[n]", text)
-        self.assertIn('"metric_structure":"diag((a_R/2) I3, P_xi)"', compact)
+        self.assertIn('"metric_structure":"diag((a_R/2)I3,P_xi)"', compact)
 
     def test_certificate_simulator_uses_filter_internal_exact_maps(self):
         text = (ROOT / "tests" / "kalman_ou_iii" / "ou3-certificate-sim.cpp").read_text()
