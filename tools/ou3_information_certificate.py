@@ -218,16 +218,21 @@ def evaluate_horizon(records: dict[str, tuple[list[BASE.MapBlock], list[CovBlock
     omg = np.asarray(omega_mins, float)
     ids = np.asarray(identity_residuals, float)
     if not len(arr):
+        failures = ["NO_VALID_WORDS"]
+        if invalid_spd:
+            failures.append("NON_SPD_COVARIANCE")
         return {"mode": mode, "horizon_s": horizon_s, "status": "NO_WORDS",
-                "word_count": word_count, "failure_reasons": ["NO_VALID_WORDS"],
-                "information_pass": False}
-    covariance_consistent = invalid_spd == 0 and float(np.min(omg)) >= -PSD_REL_TOL
+                "word_count": word_count, "invalid_spd_words": invalid_spd,
+                "failure_reasons": failures, "information_pass": False}
+    covariance_spd_valid = invalid_spd == 0
+    relative_injection_psd = float(np.min(omg)) >= -PSD_REL_TOL
+    covariance_consistent = covariance_spd_valid and relative_injection_psd
     identity_consistent = float(np.max(ids)) <= IDENTITY_ABS_TOL
     strict = float(np.max(arr)) < 1.0 - STRICT_LAMBDA_TOL
     failures = []
-    if invalid_spd:
+    if not covariance_spd_valid:
         failures.append("NON_SPD_COVARIANCE")
-    if not covariance_consistent:
+    if not relative_injection_psd:
         failures.append("COVARIANCE_RECURSION_NOT_PSD")
     if not identity_consistent:
         failures.append("INFORMATION_IDENTITY_NUMERICS")
@@ -255,6 +260,8 @@ def evaluate_horizon(records: dict[str, tuple[list[BASE.MapBlock], list[CovBlock
         "Sigma_endpoint_lambda_min": sigma_min,
         "Sigma_endpoint_lambda_max": sigma_max,
         "Sigma_endpoint_condition_bound": sigma_max / sigma_min,
+        "covariance_spd_valid": bool(covariance_spd_valid),
+        "relative_injection_psd_consistent": bool(relative_injection_psd),
         "covariance_recursion_consistent": bool(covariance_consistent),
         "information_pass": bool(passed),
         "worst_word": None if worst is None else {
