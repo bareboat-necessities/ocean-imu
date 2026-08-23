@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = kalman_ou_iii-sim ou3-certificate-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test rs_law-test startup_init-test
+TARGETS = kalman_ou_iii-sim ou3-certificate-sim ou3-information-certificate-sim kalman_ou_common-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test iss_contract-test rs_law-test startup_init-test
 
 all: build test
 
@@ -37,6 +37,9 @@ kalman_ou_iii-sim: kalman_ou_iii-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 ou3-certificate-sim: ou3-certificate-sim.o W3dSimCommon.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+ou3-information-certificate-sim: ou3-information-certificate-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 kalman_ou_common-test: kalman_ou_common-test.o
