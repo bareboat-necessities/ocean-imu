@@ -1,0 +1,24 @@
+name: ou-full-evidence-branch
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+# Branch pushes get the same full evidence gate as main. The reusable workflow
+# decides from the conservative replay-input/results fingerprints whether the
+# expensive ~1,150 simulator replays are actually necessary.
+concurrency:
+  group: ou-full-evidence-branch-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/ou-validation.yml
+    with:
+      validation_mode: full
