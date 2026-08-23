@@ -13,7 +13,10 @@ are common to every valid certificate route:
 * reconstruct truth errors for attitude-domain diagnostics;
 * enforce the exact-map reconstruction-integrity gate.
 
-No transition identification and no Lyapunov metric are computed here.
+No transition identification and no Lyapunov metric are computed here. Raw
+simulator stdout is diagnostic rather than scientific result data and is kept
+outside ``reports/results`` so result-tree fingerprints cannot depend on runner
+workspace paths or other execution-environment text.
 """
 from __future__ import annotations
 
@@ -26,6 +29,10 @@ from pathlib import Path
 import numpy as np
 
 import ou3_numerical_certificate as BASE
+
+DEFAULT_DIAGNOSTIC_DIR = (
+    BASE.REPO / "reports" / "diagnostics" / "ou3_numerical_certificate" / "logs"
+)
 
 
 def markdown(report: dict) -> str:
@@ -52,6 +59,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", type=Path, default=BASE.DEFAULT_DATA_DIR)
     ap.add_argument("--output-dir", type=Path, default=BASE.DEFAULT_OUT)
+    ap.add_argument("--diagnostic-log-dir", type=Path, default=DEFAULT_DIAGNOSTIC_DIR)
     ap.add_argument("--sim", type=Path,
                     default=BASE.TEST_DIR / "ou3-information-certificate-sim")
     ap.add_argument("--no-build", action="store_true")
@@ -59,9 +67,10 @@ def main() -> int:
 
     data_dir = args.data_dir.resolve()
     out = args.output_dir.resolve()
+    log_dir = args.diagnostic_log_dir.resolve()
     exe = args.sim.resolve()
     out.mkdir(parents=True, exist_ok=True)
-    (out / "logs").mkdir(exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
     if not args.no_build:
         subprocess.run(["make", "-C", str(BASE.TEST_DIR), exe.name], check=True)
 
@@ -73,7 +82,7 @@ def main() -> int:
             raise FileNotFoundError(data)
         trace_path, map_path, timeseries, metrics, ok, log = BASE.run_record(exe, data, out)
         slug = f"{family.lower().replace('-', '_')}_{hs:.2f}".replace(".", "_")
-        (out / "logs" / f"{slug}.log").write_text(log)
+        (log_dir / f"{slug}.log").write_text(log)
         trace = np.genfromtxt(trace_path, delimiter=",", names=True, dtype=None, encoding=None)
         E, theta = BASE.build_error_states(trace, timeseries)
         blocks, m = BASE.load_exact_maps(map_path, slug)
