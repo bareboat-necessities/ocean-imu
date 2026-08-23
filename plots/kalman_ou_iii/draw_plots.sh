@@ -68,12 +68,15 @@ cp -f ../../reports/results/ou_validation/ou_validation_macros.tex \
 cp -f ../../reports/results/ou_validation/ou_validation_vertical.svg \
   "${DOC_DIR}/ou_validation_vertical.svg"
 
-# The archive bundles remain complete, but publication synchronization removes
-# every retired-law study and every one-way-transition row/table before LaTeX.
+# Keep full archives for provenance, curate the validation article view, and
+# publish sensitivity evidence only when its coupled rows were regenerated with
+# the deployed SpectralMSE law.  The permanent OFAT table is not touched here.
 python3 ../../tools/ou_publication_sync.py \
   --validation-dir ../../reports/results/ou_validation
+python3 ../../tools/ou_publication_robustness_sync.py \
+  --robustness-dir ../../reports/results/ou_robustness \
+  --doc-dir "${DOC_DIR}"
 rm -f "${DOC_DIR}/ou_validation_transition.svg"
-rm -f "${DOC_DIR}/ou_robustness_sensitivity.svg"
 
 # Regenerate the only transition evidence presented by the article: the
 # deployed SpectralMSE low--high--low protocol.  Build the simulator here
@@ -95,9 +98,12 @@ cp -f ../../reports/results/ou_rs_law/ou_rs_roundtrip_scores.tex \
   make clean
 )
 
-# Defensive publication gate: these artifacts must never be recreated by a
-# plotting or evidence-regeneration path.
+# Defensive publication gates.
 test ! -e "${DOC_DIR}/ou_validation_transition.svg"
-test ! -e "${DOC_DIR}/ou_robustness_sensitivity.svg"
+if test -e "${DOC_DIR}/w3d-ou-robustness-sensitivity-current-generated.tex-part"; then
+  grep -q 'c^{6/7}' "${DOC_DIR}/w3d-ou-robustness-sensitivity-current-generated.tex-part"
+  grep -q 'c^{41/14}' "${DOC_DIR}/w3d-ou-robustness-sensitivity-current-generated.tex-part"
+  test -e "${DOC_DIR}/ou_robustness_sensitivity.svg"
+fi
 grep -q 'Rise crossfade' "${DOC_DIR}/w3d-roundtrip-transition-scores-generated.tex-part"
 grep -q 'Fall crossfade' "${DOC_DIR}/w3d-roundtrip-transition-scores-generated.tex-part"
