@@ -55,7 +55,7 @@ jobs:
         run: |
           python3 -u tools/ou3_numerical_certificate.py \
             --no-build \
-            --output-dir reports/results/ou3_numerical_certificate
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
 
       - name: Upload certificate report and traces
         if: always()
