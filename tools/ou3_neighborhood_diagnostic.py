@@ -20,6 +20,7 @@ neighborhood or deployment theorem without outward-rounded enclosure.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import fnmatch
 import json
 import math
@@ -231,6 +232,8 @@ def main() -> int:
     ap.add_argument("--active-time-s", type=float, default=DEFAULT_ACTIVE_TIME_S)
     ap.add_argument("--full-basis", action="store_true")
     ap.add_argument("--positive-only", action="store_true")
+    ap.add_argument("--jobs", type=int, default=1,
+                    help="parallel simulator subprocesses; result ordering remains deterministic")
     ap.add_argument("--no-build", action="store_true")
     args = ap.parse_args()
 
@@ -242,6 +245,8 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     diag.mkdir(parents=True, exist_ok=True)
 
+    if args.jobs < 1:
+        raise ValueError("--jobs must be >= 1")
     if not args.no_build:
         subprocess.run(["make", "-C", str(BASE.TEST_DIR), sim.name], check=True)
     if not sim.exists():
@@ -256,7 +261,7 @@ def main() -> int:
         raise ValueError("--target-W entries must be finite positive")
     signs = (1,) if args.positive_only else (-1, 1)
 
-    cases = []
+    tasks = []
     for family, hs, name in select_records(args.records):
         data = (data_dir / name).resolve()
         if not data.exists():
@@ -281,17 +286,12 @@ def main() -> int:
                             f"{record_slug(family, hs)}_{mode}_{BLOCK_NAME[index]}_"
                             f"{'p' if sign > 0 else 'm'}_W{target:.6g}"
                         ).replace(".", "_")
-                        trace = diag / f"{case_id}.csv"
-                        log = diag / f"{case_id}.log"
-                        rc, stdout = run_case(
-                            sim, data, trace, log, mode, inject_s, horizon_s, d21
-                        )
-                        result = parse_trace(trace)
-                        result.update({
+                        tasks.append({
                             "case": case_id,
                             "family": family,
                             "Hs_m": hs,
                             "source_file": name,
+                            "data": data,
                             "mode": mode,
                             "coordinate": index,
                             "direction": BLOCK_NAME[index],
@@ -299,12 +299,47 @@ def main() -> int:
                             "target_W": target,
                             "requested_injection_time_s": inject_s,
                             "word_horizon_s": horizon_s,
-                            "delta_21": [float(x) for x in d21],
+                            "delta_21": d21,
                             "covariance_reference": cov_meta,
-                            "sim_returncode": int(rc),
-                            "sim_completed_marker": "OU3_NEIGHBOR_DONE" in stdout,
+                            "trace": diag / f"{case_id}.csv",
+                            "log": diag / f"{case_id}.log",
                         })
-                        cases.append(result)
+
+    def execute(task: dict) -> dict:
+        rc, stdout = run_case(
+            sim, task["data"], task["trace"], task["log"], task["mode"],
+            task["requested_injection_time_s"], task["word_horizon_s"],
+            task["delta_21"],
+        )
+        result = parse_trace(task["trace"])
+        result.update({
+            "case": task["case"],
+            "family": task["family"],
+            "Hs_m": task["Hs_m"],
+            "source_file": task["source_file"],
+            "mode": task["mode"],
+            "coordinate": task["coordinate"],
+            "direction": task["direction"],
+            "sign": task["sign"],
+            "target_W": task["target_W"],
+            "requested_injection_time_s": task["requested_injection_time_s"],
+            "word_horizon_s": task["word_horizon_s"],
+            "delta_21": [float(x) for x in task["delta_21"]],
+            "covariance_reference": task["covariance_reference"],
+            "sim_returncode": int(rc),
+            "sim_completed_marker": "OU3_NEIGHBOR_DONE" in stdout,
+        })
+        return result
+
+    cases = []
+    if args.jobs == 1:
+        cases = [execute(task) for task in tasks]
+    else:
+        with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+            futures = [pool.submit(execute, task) for task in tasks]
+            for future in as_completed(futures):
+                cases.append(future.result())
+    cases.sort(key=lambda c: c.get("case", ""))
 
     valid = [c for c in cases if c.get("status") in ("PASS_SAMPLED", "FAIL_SAMPLED")]
     all_pass = bool(valid) and len(valid) == len(cases) and all(c["pass_sampled"] for c in valid)
