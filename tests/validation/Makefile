@@ -22,6 +22,7 @@ build:
 		test_ou_stability_phase_b.py \
 		test_ou_stability_phase_c.py \
 		test_ou_stability_widening.py \
+		test_ou_stability_structured_widening.py \
 		test_source_archive_provenance.py \
 		test_record_conventions.py \
 		test_publication_references.py \
