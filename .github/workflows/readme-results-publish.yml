@@ -9,6 +9,8 @@ on:
 # versioned README assets. The main build first closes the full OU evidence
 # workflow and then builds the OU-III article/plots; this publisher persists
 # those exact SVG products only after that complete build has succeeded.
+# The README gallery is presentation output, not scientific evidence, and is
+# deliberately outside the OU results fingerprint.
 permissions:
   actions: read
   contents: write
@@ -71,7 +73,9 @@ jobs:
           copy_figure w3d_ou3_pmstokes_medium_gyro_bias.svg
           copy_figure spectrum_pmstokes_medium_3d.svg
 
-          cat > "$out/PROVENANCE.md" <<EOF
+          # Run-specific provenance is intentionally outside reports/results so
+          # changing workflow ids never alter the scientific evidence digest.
+          cat > reports/readme-results-provenance.md <<EOF
           # README result gallery provenance
 
           These SVGs are copied verbatim from the successful OU-III build on
@@ -82,28 +86,6 @@ jobs:
           - source artifact: release-svgs-kalman_ou_iii
           EOF
 
-      # reports/results/readme is deliberately inside the complete OU results
-      # fingerprint. Refresh the marker in the same commit as the gallery so a
-      # derived README-only update cannot make the next main build perform a
-      # false-positive full replay solely because its results hash is stale.
-      - name: Download versioned simulation data for fingerprint
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
-
-      - name: Refresh OU evidence fingerprint after gallery update
-        run: |
-          python3 tools/ou_replay_fingerprint.py \
-            --simulation-zip sim-data-files.zip \
-            --write reports/ou_evidence_fingerprint.json
-          python3 tools/ou_replay_fingerprint.py \
-            --simulation-zip sim-data-files.zip \
-            --check reports/ou_evidence_fingerprint.json
-
       - name: Verify README image targets resolve
         run: python3 tests/validation/test_readme_result_gallery.py
 
@@ -112,9 +94,9 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/results/readme reports/ou_evidence_fingerprint.json
+          git add reports/results/readme reports/readme-results-provenance.md
           if git diff --cached --quiet; then
-            echo "README SVG gallery and results fingerprint are already current."
+            echo "README SVG gallery is already current."
             exit 0
           fi
 
@@ -122,17 +104,19 @@ jobs:
             -m "Refresh generated README SVG gallery [skip ci]" \
             -m "Produced from successful build run ${{ github.event.workflow_run.id }}."
 
+          # Never rebase an older build artifact onto a newer main tip. If main
+          # advanced after this workflow's checkout, its own build will publish
+          # the corresponding gallery.
+          base_sha="$(git rev-parse HEAD^)"
           for attempt in 1 2 3 4; do
-            git push origin HEAD:refs/heads/main && exit 0
+            if git push origin HEAD:refs/heads/main; then
+              exit 0
+            fi
             sleep $((2 ** attempt))
-            git pull --rebase origin refs/heads/main
-            python3 tests/validation/test_readme_result_gallery.py
-            # Do not silently bless a newer main tip with the older build's
-            # result set. If rebasing changed a replay input or results file,
-            # the marker no longer matches and this publisher must stop; the
-            # newer main build will publish its own gallery.
-            python3 tools/ou_replay_fingerprint.py \
-              --simulation-zip sim-data-files.zip \
-              --check reports/ou_evidence_fingerprint.json
+            git fetch origin refs/heads/main
+            if [ "$(git rev-parse FETCH_HEAD)" != "$base_sha" ]; then
+              echo "main advanced after this build; leaving publication to the newer main build."
+              exit 0
+            fi
           done
           exit 1
