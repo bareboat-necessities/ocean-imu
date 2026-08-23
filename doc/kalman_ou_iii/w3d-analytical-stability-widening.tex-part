@@ -96,7 +96,7 @@ time scale $T_{bg}>0$ and define
 \begin{equation}
  \widetilde{\vct b}_g:=T_{bg}\delta\vct b_g,
  \qquad
- \widetilde\mat\Gamma_g:=\mat\Gamma_g/T_{bg},
+ \widetilde{\mat\Gamma}_g:=\mat\Gamma_g/T_{bg},
  \qquad
  \gamma_-:=g_-/T_{bg}>0.
  \label{eq:widen-bg-scaling}
@@ -124,19 +124,19 @@ After whitening each packet by its information square root,
 Lemma~\ref{lem:widen-vector-coercivity} bounds the two packet outputs below by
 $\sqrt{\mu_\theta}$ times
 \begin{equation}
- \widetilde\mat T_g=
+ \widetilde{\mat T}_g=
  \begin{bmatrix}
   \mat I&0\\
-  \mat\Phi_\theta&\widetilde\mat\Gamma_g
+  \mat\Phi_\theta&\widetilde{\mat\Gamma}_g
  \end{bmatrix}.
 \end{equation}
 Given outputs $(\vct y_0,\vct y_1)$,
 $\delta\vct\theta_0=\vct y_0$ and
-$\widetilde\vct b_g=\widetilde\mat\Gamma_g^{-1}
+$\widetilde{\vct b}_g=\widetilde{\mat\Gamma}_g^{-1}
 (\vct y_1-\mat\Phi_\theta\vct y_0)$.  Orthogonality of
 $\mat\Phi_\theta$, Eq.~\eqref{eq:widen-bg-scaling}, and
 $(a+b)^2\le2(a^2+b^2)$ give
-$\|\widetilde\mat T_g^{-1}\|^2\le1+2/\gamma_-^2$, which yields
+$\|\widetilde{\mat T}_g^{-1}\|^2\le1+2/\gamma_-^2$, which yields
 Eq.~\eqref{eq:widen-alpha6}.  Boundedness of the same finite stacked operator
 gives the upper Gramian bound.
 \end{proof}
