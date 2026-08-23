@@ -90,33 +90,55 @@ def _spd_sqrt(P: np.ndarray) -> tuple[np.ndarray, float, float]:
     return U @ np.diag(np.sqrt(lam)) @ U.T, lo, hi
 
 
-def information_lambda(phi: np.ndarray, Sigma0: np.ndarray, Sigma1: np.ndarray) -> float:
-    """lambda_max for Phi' Sigma1^-1 Phi <= lambda Sigma0^-1."""
-    S0, _, _ = _spd_sqrt(Sigma0)
-    X = np.linalg.solve(0.5 * (Sigma1 + Sigma1.T), phi @ S0)
-    B = (phi @ S0).T @ X
-    return float(np.max(np.linalg.eigvalsh(0.5 * (B + B.T))))
+def _information_word_metrics(phi: np.ndarray, Sigma0: np.ndarray,
+                              Sigma1: np.ndarray) -> tuple[float, dict]:
+    """Evaluate one word in stable endpoint-whitened coordinates.
 
+    With S_i = Sigma_i^(1/2), define
 
-def covariance_increment_margin(phi: np.ndarray, Sigma0: np.ndarray, Sigma1: np.ndarray) -> dict:
-    """Return relative Riccati injection and covariance metric bounds."""
+        C = S_1^(-1) Phi S_0.
+
+    Then lambda_information = lambda_max(C' C), while the relative Riccati
+    injection is exactly I-C C'.  Evaluating the latter form avoids forming
+    Omega = Sigma1-Phi Sigma0 Phi' first, which is a subtraction of large,
+    nearly equal matrices in the strongly ill-conditioned physical units of
+    the held/active covariance.  No tolerance is relaxed and no estimator
+    quantity is changed.
+    """
     Sigma0 = 0.5 * (Sigma0 + Sigma0.T)
     Sigma1 = 0.5 * (Sigma1 + Sigma1.T)
-    Omega = 0.5 * ((Sigma1 - phi @ Sigma0 @ phi.T) +
-                   (Sigma1 - phi @ Sigma0 @ phi.T).T)
-    _, lo0, hi0 = _spd_sqrt(Sigma0)
+    S0, lo0, hi0 = _spd_sqrt(Sigma0)
     S1, lo1, hi1 = _spd_sqrt(Sigma1)
-    invS1 = np.linalg.inv(S1)
-    rel = invS1 @ Omega @ invS1
-    vals = np.linalg.eigvalsh(0.5 * (rel + rel.T))
-    return {
-        "omega_relative_lambda_min": float(np.min(vals)),
-        "omega_relative_lambda_max": float(np.max(vals)),
+    C = np.linalg.solve(S1, phi @ S0)
+
+    gram = C.T @ C
+    gram_vals = np.linalg.eigvalsh(0.5 * (gram + gram.T))
+    lam = float(np.max(gram_vals))
+
+    rel = np.eye(C.shape[0]) - C @ C.T
+    rel_vals = np.linalg.eigvalsh(0.5 * (rel + rel.T))
+    inc = {
+        "omega_relative_lambda_min": float(np.min(rel_vals)),
+        "omega_relative_lambda_max": float(np.max(rel_vals)),
         "Sigma0_lambda_min": lo0,
         "Sigma0_lambda_max": hi0,
         "Sigma1_lambda_min": lo1,
         "Sigma1_lambda_max": hi1,
+        "relative_injection_evaluation": "I-C C^T with C=Sigma1^-1/2 Phi Sigma0^1/2",
     }
+    return lam, inc
+
+
+def information_lambda(phi: np.ndarray, Sigma0: np.ndarray, Sigma1: np.ndarray) -> float:
+    """lambda_max for Phi' Sigma1^-1 Phi <= lambda Sigma0^-1."""
+    lam, _ = _information_word_metrics(phi, Sigma0, Sigma1)
+    return lam
+
+
+def covariance_increment_margin(phi: np.ndarray, Sigma0: np.ndarray, Sigma1: np.ndarray) -> dict:
+    """Return relative Riccati injection and covariance metric bounds."""
+    _, inc = _information_word_metrics(phi, Sigma0, Sigma1)
+    return inc
 
 
 def information_identity_residual(lam: float, inc: dict) -> float:
@@ -180,8 +202,7 @@ def evaluate_horizon(records: dict[str, tuple[list[BASE.MapBlock], list[CovBlock
             Phi, P0, P1 = w
             word_count += 1
             try:
-                lam = information_lambda(Phi, P0, P1)
-                inc = covariance_increment_margin(Phi, P0, P1)
+                lam, inc = _information_word_metrics(Phi, P0, P1)
             except np.linalg.LinAlgError:
                 invalid_spd += 1
                 continue
@@ -197,22 +218,40 @@ def evaluate_horizon(records: dict[str, tuple[list[BASE.MapBlock], list[CovBlock
     omg = np.asarray(omega_mins, float)
     ids = np.asarray(identity_residuals, float)
     if not len(arr):
+        failures = ["NO_VALID_WORDS"]
+        if invalid_spd:
+            failures.append("NON_SPD_COVARIANCE")
         return {"mode": mode, "horizon_s": horizon_s, "status": "NO_WORDS",
-                "word_count": word_count, "information_pass": False}
-    covariance_consistent = invalid_spd == 0 and float(np.min(omg)) >= -PSD_REL_TOL
+                "word_count": word_count, "invalid_spd_words": invalid_spd,
+                "failure_reasons": failures, "information_pass": False}
+    covariance_spd_valid = invalid_spd == 0
+    relative_injection_psd = float(np.min(omg)) >= -PSD_REL_TOL
+    covariance_consistent = covariance_spd_valid and relative_injection_psd
     identity_consistent = float(np.max(ids)) <= IDENTITY_ABS_TOL
     strict = float(np.max(arr)) < 1.0 - STRICT_LAMBDA_TOL
+    failures = []
+    if not covariance_spd_valid:
+        failures.append("NON_SPD_COVARIANCE")
+    if not relative_injection_psd:
+        failures.append("COVARIANCE_RECURSION_NOT_PSD")
+    if not identity_consistent:
+        failures.append("INFORMATION_IDENTITY_NUMERICS")
+    if not strict:
+        failures.append("NO_STRICT_CONTRACTION")
     sigma_min = float(np.min(covariance_lows))
     sigma_max = float(np.max(covariance_highs))
+    passed = covariance_consistent and identity_consistent and strict
     return {
         "mode": mode,
         "horizon_s": horizon_s,
-        "status": "PASS" if covariance_consistent and identity_consistent and strict else "FAIL",
+        "status": "PASS" if passed else "FAIL",
         "word_count": word_count,
+        "failure_reasons": failures,
         "invalid_spd_words": invalid_spd,
         "lambda_worst_information": float(np.max(arr)),
         "lambda_p99_information": float(np.quantile(arr, 0.99)),
         "lambda_p50_information": float(np.quantile(arr, 0.50)),
+        "strict_contraction": bool(strict),
         "strict_margin_1_minus_lambda": 1.0 - float(np.max(arr)),
         "relative_Riccati_injection_margin_worst": float(np.min(omg)),
         "omega_relative_lambda_min_worst": float(np.min(omg)),
@@ -221,8 +260,10 @@ def evaluate_horizon(records: dict[str, tuple[list[BASE.MapBlock], list[CovBlock
         "Sigma_endpoint_lambda_min": sigma_min,
         "Sigma_endpoint_lambda_max": sigma_max,
         "Sigma_endpoint_condition_bound": sigma_max / sigma_min,
+        "covariance_spd_valid": bool(covariance_spd_valid),
+        "relative_injection_psd_consistent": bool(relative_injection_psd),
         "covariance_recursion_consistent": bool(covariance_consistent),
-        "information_pass": bool(covariance_consistent and identity_consistent and strict),
+        "information_pass": bool(passed),
         "worst_word": None if worst is None else {
             "record": worst[1], "start_block": worst[2], "end_block": worst[3],
             "lambda": worst[0], "increment": worst[4],
@@ -259,8 +300,15 @@ def markdown(report: dict) -> str:
         f"Active strongest tested margin: {ass.get('horizon_s')} s, 1-lambda {ass.get('strict_margin_1_minus_lambda')}",
         "",
         "The certificate checks the exact Riccati identity `1-lambda_information = lambda_min(Sigma1^-1/2 Omega Sigma1^-1/2)` and records endpoint covariance metric bounds.",
+        "The relative injection is evaluated stably as `I-C C^T`, `C=Sigma1^-1/2 Phi Sigma0^1/2`, avoiding cancellation in `Sigma1-Phi Sigma0 Phi^T`; the identity tolerance is unchanged.",
         "A PASS is an exact executed-source linear certificate in a parameter-dependent information metric; deployment promotion still requires a validated continuous-source lower injection margin and covariance bounds.",
     ]
+    if report["status"] != "PASS":
+        out.extend([
+            "",
+            f"Held selected failure reasons: {h.get('failure_reasons', [])}",
+            f"Active selected failure reasons: {a.get('failure_reasons', [])}",
+        ])
     return "\n".join(out)
 
 
@@ -299,6 +347,7 @@ def main() -> int:
         "metric": "M(g)=Sigma_KF(g)^(-1)",
         "metric_provenance": "actual estimator Riccati/Joseph covariance, not empirical truth-error covariance",
         "identity": "1-lambda_information=lambda_min(Sigma1^-1/2 Omega Sigma1^-1/2), Omega=Sigma1-Phi Sigma0 Phi^T",
+        "identity_evaluation": "relative injection evaluated as I-C C^T with C=Sigma1^-1/2 Phi Sigma0^1/2",
         "identity_absolute_tolerance": IDENTITY_ABS_TOL,
         "held": held,
         "active": active,
