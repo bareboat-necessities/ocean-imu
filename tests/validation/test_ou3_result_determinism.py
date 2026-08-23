@@ -10,6 +10,8 @@ PRODUCERS = [
     ROOT / "tools" / "ou3_numerical_certificate.py",
     ROOT / "tools" / "ou3_information_certificate.py",
     ROOT / "tools" / "ou3_information_completion.py",
+    ROOT / "tools" / "ou3_information_enclosure_contract.py",
+    ROOT / "tools" / "ou3_neighborhood_diagnostic.py",
     ROOT / "tools" / "ou3_certificate_completion.py",
     ROOT / "tools" / "ou3_validate_enclosure.py",
 ]

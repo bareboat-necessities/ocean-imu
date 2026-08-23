@@ -9,6 +9,8 @@ build:
 		../../tools/ou3_numerical_certificate.py \
 		../../tools/ou3_information_certificate.py \
 		../../tools/ou3_information_completion.py \
+		../../tools/ou3_information_enclosure_contract.py \
+		../../tools/ou3_neighborhood_diagnostic.py \
 		../../tools/ou3_certificate_completion.py \
 		../../tools/ou3_validate_enclosure.py \
 		../../tools/ou3_result_contract.py \
@@ -24,6 +26,7 @@ build:
 		test_ou3_information_certificate.py \
 		test_ou3_information_completion.py \
 		test_ou3_certificate_completion.py \
+		test_ou3_neighborhood_diagnostic.py \
 		test_ou3_result_determinism.py \
 		test_ou_article_ablations.py \
 		test_ou_legacy_law_cleanup.py \

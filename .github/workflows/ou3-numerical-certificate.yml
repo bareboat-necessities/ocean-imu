@@ -18,6 +18,7 @@ on:
       - "tools/ou3_numerical_certificate.py"
       - "tools/ou3_information_certificate.py"
       - "tools/ou3_information_completion.py"
+      - "tools/ou3_information_enclosure_contract.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
       - "tools/ou3_result_contract.py"
@@ -58,8 +59,11 @@ jobs:
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
-      - name: Build exact-map and covariance observer
-        run: make -C tests/kalman_ou_iii ou3-information-certificate-sim
+      - name: Build exact-map, covariance and nonlinear observers
+        run: |
+          make -C tests/kalman_ou_iii \
+            ou3-information-certificate-sim \
+            ou3-neighborhood-sim
 
       - name: Generate exact maps and covariance on eight noisy seas
         run: |
@@ -79,6 +83,26 @@ jobs:
           python3 -u tools/ou3_information_completion.py \
             --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
             --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii"
+
+      - name: Generate continuous-source information enclosure contract
+        run: |
+          python3 -u tools/ou3_information_enclosure_contract.py \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+
+      - name: Smoke-test exact nonlinear pairwise word
+        env:
+          OU3_NEIGHBOR_TRACE: ${{ github.workspace }}/reports/diagnostics/ou3_numerical_certificate/neighborhood-smoke.csv
+          OU3_NEIGHBOR_INJECT_TIME_S: "300"
+          OU3_NEIGHBOR_HORIZON_S: "4"
+          OU3_NEIGHBOR_MODE: "A"
+          OU3_NEIGHBOR_DELTA: "0.01,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+          W3D_WRITE_TIMESERIES: "0"
+        run: |
+          mkdir -p reports/diagnostics/ou3_numerical_certificate
+          tests/kalman_ou_iii/ou3-neighborhood-sim \
+            --input "$GITHUB_WORKSPACE/plots/kalman_ou_ii/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv"
+          test -s "$OU3_NEIGHBOR_TRACE"
+          grep -q ',1,A,' "$OU3_NEIGHBOR_TRACE"
 
       - name: Validate deterministic scientific result payloads
         run: |
