@@ -1,254 +1,278 @@
-\section{Finite-Step Regional Capture of the Live MEKF}
+\section{Source-Shaped Lyapunov Funnel Capture of the Live MEKF}
 \label{sec:finite-live-capture}
 
-The startup certificate is formulated on the compact handoff set actually
-produced by the source.  It need not first be embedded in a common outer radius.
-The complete nonlinear Live map is propagated as a set until it reaches a
-robustly invariant inner region; bounded transient growth is permitted provided
-every prefix remains in the declared proof-safe domain.
+The Live handoff certificate uses the exact compact set produced by startup only
+at the initial inclusion step.  Thereafter it propagates verified Lyapunov
+funnel levels over source-reachable words rather than repeatedly enclosing the
+full 18--21 dimensional reachable set.  This avoids set-wrapping growth while
+retaining the complete nonlinear source map, including finite attitude
+corrections, the full $S=0$ cross-gain, covariance recursion, and mode changes.
 
-\subsection{Exact lifted map and safe domain}
+\subsection{Exact lifted source image and proof-safe domains}
 
-Let $\pi_k$ contain the complete source proof mode at sample $k$: covariance,
-accelerometer-bias enable state, magnetic-gauge state, staged OU/$R_S$
-parameters, pseudo-update phase, and accepted-update pattern.  Only sequences in
-the source-reachable family $\Pi^{\rm src}_{k,m}$ of
-Sec.~\ref{sec:iss-source-family} are admissible.  For a lift of $m\ge1$ samples,
-write the exact implemented error map as
+Let $\pi$ contain the complete source proof state: covariance,
+accelerometer-bias enable state, magnetic-gauge state, staged or Live OU/$R_S$
+parameters, pseudo-update phase, accepted-update pattern, and source guards.
+For any admissible lift of $m\ge1$ samples write the implemented error map as
 \begin{equation}
  \boxed{
  \vct e_{k+m}=\mathcal F_{k,m}
  (\vct e_k,\vct d_{k:k+m-1};\pi_{k:k+m}).}
  \label{eq:capture-exact-lift}
 \end{equation}
-It contains exact prediction, every accepted accelerometer and magnetometer
-correction, the full $S=0$ Kalman correction and its cross-covariance gain,
+It contains exact prediction, accepted accelerometer and magnetometer
+corrections, the full $S=0$ Kalman correction and attitude cross-covariance,
 quaternion injection/reset, covariance propagation, source enable-state
 transitions, and the predictable parameter schedule.
 
-Let $\mathcal D_k$ be a compact chart-, covariance-, measurement-, and
-source-mode-safe domain on which the complete map is continuous.  Let
-$\mathcal B_k\Subset\mathcal D_k$ be a compact inner regional set.  The proof
-does not require the handoff family to be a ball, ellipsoid, or Cartesian
-product.
-
-For a compact $X\subset\mathcal D_k$ and deterministic mismatch budget
-$\|\vct d\|_\infty\le\bar d$, define the exact reachable-set operator
+For hybrid and prefix-safety statements it is convenient to name the exact
+image operator
 \begin{equation}
  \boxed{
  \mathfrak T_{k,m}(X;\bar d):=
  \left\{
- \mathcal F_{k,m}(\vct e,\vct d;\pi):
- \begin{array}{l}
- \vct e\in X,\ \|\vct d\|_\infty\le\bar d,\\
+ \mathcal F_{k,m}(e,d;\pi):
+ e\in X,\ \|d\|_\infty\le\bar d,\
  \pi\in\Pi^{\rm src}_{k,m}
- \end{array}
  \right\}.}
  \label{eq:capture-set-envelope}
 \end{equation}
-For $1\le j<m$, $\mathfrak T^{\rm pre}_{k,j}$ is defined by the corresponding
-prefix map.  Continuity on compact families makes these sets compact.  The
-operator is inclusion-monotone:
+The operator is a definition of the exact source image; the capture verifier
+does not recursively replace that image by a radius box or by a generic outer
+reachable set.
+
+Let $\mathcal D_i$ be the proof-safe domain of source node $i$, including its
+geodesic attitude chart, covariance domain, measurement gates, and physical
+state bounds.  The fixed-dimensional normal-Live nodes and source-complete word
+families are those of Sec.~\ref{sec:stability-widening-source-path}.  A
+mode-changing source transition has its own exact jump map and destination node
+metric.
+
+\subsection{Node funnels and word contraction}
+
+Use the group/path metric
 \begin{equation}
- X\subseteq Y
- \quad\Longrightarrow\quad
- \mathfrak T_{k,m}(X;\bar d)
- \subseteq\mathfrak T_{k,m}(Y;\bar d).
- \label{eq:capture-comparison-monotone}
+ W_i(e)=a_{R,i}V_R(\mat R_e)+\vct\xi^\top\mat P_i\vct\xi
+ \label{eq:capture-funnel-metric}
 \end{equation}
-
-Choose source-admissible lift lengths $m_n\ge1$, set $k_0=k_H$ and
-$k_{n+1}=k_n+m_n$, and propagate
-\begin{equation}
- X_0=\mathcal H_{k_H},
- \qquad
- X_{n+1}=\mathfrak T_{k_n,m_n}(X_n;\bar d).
- \label{eq:capture-comparison-sequence}
-\end{equation}
-Here $\mathcal H_{k_H}$ is the structured handoff family supplied by the startup
-analysis.  Different lifts may use different source-reachable schedules and
-accepted-update patterns.
-
-\subsection{Direct handoff-to-inner-set capture}
-
-Let $V_k:\mathcal D_k\rightarrow\mathbb R_+$ be continuous and uniformly
-positive definite with respect to the chosen gauge-referenced error metric on
-$\mathcal B_k$.  Assume that every admissible post-capture lift has safe
-prefixes and satisfies, for some $0<\lambda_B<1$ and class-$\mathcal K$
-function $\gamma_B$,
+from Eq.~\eqref{eq:widen-path-group-metric}.  For a level $c_i\ge0$ define the
+source-node funnel section
 \begin{equation}
  \boxed{
- V_{k+m}(\mathcal F_{k,m}(\vct e,\vct d;\pi))
- \le \lambda_B V_k(\vct e)+\gamma_B(\bar d),
- \qquad \vct e\in\mathcal B_k.}
- \label{eq:capture-inner-contraction}
+ \mathcal F_i(c_i):=\{e\in\mathcal D_i:W_i(e)\le c_i\}.}
+ \label{eq:capture-funnel-section}
 \end{equation}
-The disturbance budget is chosen so that the right-hand side remains inside the
-sublevel defining $\mathcal B_{k+m}$; equivalently,
+For every certified source word $w:i\to j$ require a robust endpoint inequality
 \begin{equation}
- \mathfrak T_{k,m}(\mathcal B_k;\bar d)
- \subseteq\mathcal B_{k+m}.
+ \boxed{
+ W_j(\mathcal F_w(e,d))
+ \le\lambda_w W_i(e)+\gamma_w(\bar d),
+ \qquad 0\le\lambda_w<1,}
+ \label{eq:capture-funnel-word}
+\end{equation}
+for all $e$ in the admitted source-node funnel and all
+$\|d\|_\infty\le\bar d$.  Every strict sample prefix of the same word must
+remain in its corresponding proof-safe source domain:
+\begin{equation}
+ \boxed{
+ \mathfrak T^{\rm pre}_{w,s}(\mathcal F_i(c_i);\bar d)
+ \subseteq\mathcal D_{i_s},
+ \qquad 1\le s<\ell(w).}
+ \label{eq:capture-prefix-domain}
+\end{equation}
+Positive one-sample Lyapunov increments are allowed inside a word.
+
+Dimension-changing or hard-reset transitions use the same form with the exact
+jump/lift map $J:i\to j$ and the destination metric:
+\begin{equation}
+ \boxed{
+ W_j(J(e,d))\le\lambda_JW_i(e)+\gamma_J(\bar d),}
+ \label{eq:capture-funnel-jump}
+\end{equation}
+where the source transition need not be square and no homogeneous matrix product
+is formed across the dimension change.
+
+\subsection{Source-shaped handoff funnel}
+
+Let
+\begin{equation}
+ X_0:=\mathcal H_{k_H}
+ \label{eq:capture-handoff-set}
+\end{equation}
+be the exact compact handoff family supplied by the startup analysis.  If the
+handoff can enter several source nodes, define for each such node
+\begin{equation}
+ c_{0,i}:=
+ \sup_{e\in\mathcal H_{k_H}\cap\mathcal D_i}W_i(e),
+ \label{eq:capture-initial-level}
+\end{equation}
+with $c_{0,i}=-\infty$ for an unreachable node.  The required initial
+inclusion is therefore
+\begin{equation}
+ \boxed{
+ \mathcal H_{k_H}\subseteq\bigcup_i\mathcal F_i(c_{0,i})
+ \subseteq\bigcup_i\mathcal D_i.}
+ \label{eq:capture-handoff-inclusion}
+\end{equation}
+This retains the actual source-shaped handoff set without embedding it in a
+single Euclidean outer ball.
+
+Propagate only verified scalar funnel levels.  For every destination node $j$
+define
+\begin{equation}
+ \boxed{
+ c_{n+1,j}:=
+ \max_{w:i\to j\ \mathrm{reachable}}
+ \left\{\lambda_w c_{n,i}+\gamma_w(\bar d)\right\},}
+ \label{eq:capture-funnel-recursion}
+\end{equation}
+where the maximum includes certified dimension-changing transition words and is
+taken only over source-reachable incoming words.  An unreachable destination
+retains level $-\infty$.  Equation~\eqref{eq:capture-funnel-word} implies that
+every exact source image represented by level $c_{n,i}$ lies in the destination
+funnel represented by $c_{n+1,j}$.
+
+Choose terminal inner levels $b_i>0$ and define
+\begin{equation}
+ \mathcal B_i:=\mathcal F_i(b_i),
+ \qquad
+ \mathcal B:=\bigcup_i\mathcal B_i.
+ \label{eq:capture-inner-funnel}
+\end{equation}
+They are robustly invariant when every reachable certified word or jump obeys
+\begin{equation}
+ \boxed{
+ \lambda_w b_i+\gamma_w(\bar d)\le b_j.}
  \label{eq:capture-inner-invariance}
 \end{equation}
-
-\begin{theorem}[Source-shaped finite Live capture and practical ISS]
-\label{thm:finite-live-capture}
-Suppose the handoff sequence of Eq.~\eqref{eq:capture-comparison-sequence}
-has a finite $N_H$ such that
-\begin{align}
- X_n&\subseteq\mathcal D_{k_n},
- &&0\le n\le N_H,
- \label{eq:capture-lift-domain}\\
- \mathfrak T^{\rm pre}_{k_n,j}(X_n;\bar d)
- &\subseteq\mathcal D_{k_n+j},
- &&0\le n<N_H,\quad1\le j<m_n,
- \label{eq:capture-prefix-domain}\\
- X_{N_H}&\subseteq\mathcal B_{k_{N_H}}.
- \label{eq:capture-finite-entry}
-\end{align}
-If Eqs.~\eqref{eq:capture-inner-contraction}--
-\eqref{eq:capture-inner-invariance} hold thereafter, every deterministic Live
-trajectory starting in $\mathcal H_{k_H}$ remains in the proof-safe domain,
-enters the inner regional set after at most $N_H$ lifted intervals, and remains
-there.  At post-capture lifted index $j$,
+Let
 \begin{equation}
  \boxed{
- V_{k_{N_H+j}}
- \le \lambda_B^j V_{k_{N_H}}
- +\frac{1-\lambda_B^j}{1-\lambda_B}\gamma_B(\bar d).}
+ N_H:=\min\{n:c_{n,i}\le b_i\ \text{for every reachable node }i\}.}
+ \label{eq:capture-count}
+\end{equation}
+If all certified words have length at most $\ell_+$ and the sample period is at
+most $h_+$, then
+\begin{equation}
+ \boxed{T_H\le h_+\ell_+N_H.}
+ \label{eq:capture-time}
+\end{equation}
+
+\begin{theorem}[Source-shaped Lyapunov-funnel Live capture and practical ISS]
+\label{thm:finite-live-capture}
+Assume the source-complete path certificate of
+Theorem~\ref{thm:widen-path-direct-iss}, the handoff inclusion
+Eq.~\eqref{eq:capture-handoff-inclusion}, the robust word/jump inequalities
+Eqs.~\eqref{eq:capture-funnel-word} and \eqref{eq:capture-funnel-jump}, and the
+prefix-safety condition Eq.~\eqref{eq:capture-prefix-domain}.  If the funnel
+recursion has finite $N_H$ and the terminal levels satisfy
+Eq.~\eqref{eq:capture-inner-invariance}, then every deterministic Live
+trajectory starting in $\mathcal H_{k_H}$ remains proof safe, enters
+$\mathcal B$ after at most $N_H$ certified words/transitions, and remains in the
+inner funnel thereafter.
+
+Let
+\begin{equation}
+ \lambda_B:=\max_w\lambda_w<1,
+ \qquad
+ \gamma_B(\bar d):=\max_w\gamma_w(\bar d).
+ \label{eq:capture-inner-contraction}
+\end{equation}
+At post-capture word index $r$,
+\begin{equation}
+ \boxed{
+ W_r\le\lambda_B^rW_0
+ +\frac{1-\lambda_B^r}{1-\lambda_B}\gamma_B(\bar d).}
  \label{eq:capture-practical-iss}
 \end{equation}
-For $\bar d=0$, the captured error converges exponentially to the adopted gauge
-within the inner regional domain.
+For $\bar d=0$, the certified word-boundary error converges exponentially to the
+adopted gauge, with sample-prefix boundedness supplied by the certified word
+prefixes.
 \end{theorem}
 
 \begin{proof}
-Equation~\eqref{eq:capture-set-envelope} contains every admissible image of
-$X_n$.  Induction with Eqs.~\eqref{eq:capture-lift-domain}--
-\eqref{eq:capture-prefix-domain} therefore keeps the complete sample-by-sample
-trajectory in $\mathcal D$.  Equation~\eqref{eq:capture-finite-entry} gives
-finite entry into $\mathcal B$.  Forward invariance follows from
-Eq.~\eqref{eq:capture-inner-invariance}, and iteration of
-Eq.~\eqref{eq:capture-inner-contraction} gives the geometric bound.
+The initial inclusion places every source handoff in a node funnel.  Apply the
+appropriate robust word or jump inequality to each possible source transition;
+Eq.~\eqref{eq:capture-funnel-recursion} is the worst jointly reachable endpoint
+level and therefore contains every exact endpoint image.  Prefix safety keeps
+all intermediate samples inside the proof domains.  Induction gives
+$c_{n,i}$ at every reachable node.  Finite $N_H$ gives entry into the terminal
+inner funnels, Eq.~\eqref{eq:capture-inner-invariance} gives forward invariance,
+and iteration with the uniform maxima gives
+Eq.~\eqref{eq:capture-practical-iss}.
 \end{proof}
 
-The startup time bound follows directly from the source-specific sequence:
-\begin{equation}
- \boxed{
- N_H:=\min\{n:X_n\subseteq\mathcal B_{k_n}\},
- \qquad
- T_H\le h_+\sum_{n=0}^{N_H-1}m_n.}
- \label{eq:capture-count}
-\end{equation}
-No inclusion of $\mathcal H$ in a separate generic outer capture set is needed.
+\subsection{Diagnostic summaries and operational certificate contract}
+\label{sec:capture-certificate-contract}
 
-\subsection{Structured computational enclosures}
-
-For numerical enclosure it is useful to report dimensionless block radii without
-making them the theorem's state space.  Choose uniformly positive-definite
-metrics and define
-\begin{align}
- r_{\xi,k}(\vct e)
- &=\bigl(\vct e_\xi^\top\mat Q_\xi(\pi_k)\vct e_\xi\bigr)^{1/2},\\
- r_{\ell,k}(\vct e)
- &=\bigl(\vct e_\ell^\top\mat Q_\ell(\pi_k)\vct e_\ell\bigr)^{1/2},\\
- \vct r_k(\vct e)&=(r_{\xi,k},r_{\ell,k})^\top,
- \label{eq:capture-structured-radii}
-\end{align}
-with $\vct e_\ell=(\delta\vct v,\delta\vct p)$ and the remaining active
-coordinates in $\vct e_\xi$.  The corresponding enclosure is
-\begin{equation}
- \mathcal C_k(\vct a)
- :=\{\vct e:\vct r_k(\vct e)\preceq\vct a\}.
- \label{eq:capture-structured-box}
-\end{equation}
-For a compact set $X$, define its radius enclosure
+For reporting only, a verifier may summarize any compact set $X$ by selected
+physical or dimensionless coordinate radii.  Denote such a diagnostic map by
 \begin{equation}
  \mathcal R_k(X):=
- \begin{bmatrix}
- \sup_{e\in X}r_{\xi,k}(e)\\
- \sup_{e\in X}r_{\ell,k}(e)
- \end{bmatrix}.
+ \left(\sup_{e\in X}r_{1,k}(e),\ldots,
+       \sup_{e\in X}r_{q,k}(e)\right)^\top.
  \label{eq:capture-radius-enclosure}
 \end{equation}
-Then $X\subseteq\mathcal C_k(\mathcal R_k(X))$.  The two suprema need not be
-attained by the same physical state, so propagation of $X$ itself is the
-certificate object; $\mathcal C_k(\mathcal R_k(X))$ is an optional outer
-approximation used by a verifier when convenient.
-
-A radius-only implementation may define
-\begin{equation}
- [\mathcal T_{k,m}(\vct a;\bar d)]_i
- :=\sup\{r_{i,k+m}(e^+):
- e\in\mathcal C_k(\vct a),\ e^+\in
- \mathfrak T_{k,m}(\{e\};\bar d)\},
- \quad i\in\{\xi,\ell\},
- \label{eq:capture-comparison-envelope}
-\end{equation}
-but this is sufficient rather than necessary for
-Theorem~\ref{thm:finite-live-capture}.
-
-\subsection{Operational certificate contract}
-\label{sec:capture-certificate-contract}
+These numbers are not propagated and are not certificate state variables.
 
 The verifier starts at the exact covariance and source mode produced by
 \texttt{goLive()}, including the enabled linear block, staged OU parameters,
-full $S=0$ gain, pseudo-update phase, and the accelerometer-bias hold.  The
-certificate reports at least
+full $S=0$ gain, pseudo-update phase, and accelerometer-bias hold.  It reports at
+least
 \begin{equation}
  \boxed{
- \{\mathcal H,\mathcal D,\mathcal B,
- N_H,T_H,B_{\rm pre},\lambda_B,\gamma_B\},}
+ \{\mathcal H,\mathcal D_i,W_i,\mathscr W_{\rm src},
+ c_{0,i},c_{n,i},b_i,N_H,T_H,B_{\rm pre},
+ \lambda_w,\gamma_w\}.}
  \label{eq:capture-certificate-outputs}
 \end{equation}
-where $B_{\rm pre}$ is the largest verified normalized prefix amplification.
-If radius enclosures are used, the corresponding
-$\mathcal R_k(\mathcal H)$, $\mathcal R_k(\mathcal D)$ and
-$\mathcal R_k(\mathcal B)$ are reported as diagnostic summaries.
 The deterministic pass conditions are
 \begin{equation}
  \boxed{
- \mathcal H_{k_H}\subseteq\mathcal D_{k_H},
- \qquad N_H<\infty,
- \qquad X_{N_H}\subseteq\mathcal B_{k_{N_H}},
- \qquad \lambda_B<1,}
+ \mathcal H_{k_H}\subseteq\bigcup_i\mathcal D_i,
+ \qquad
+ N_H<\infty,
+ \qquad
+ c_{N_H,i}\le b_i\ \text{for every reachable }i,}
  \label{eq:capture-certificate-pass}
 \end{equation}
-together with the prefix-safety and inner-invariance conditions.
+together with rigorous word/jump inequalities, prefix safety, and inner-funnel
+invariance.  Sampling trajectories is not sufficient to establish these
+suprema; the continuous source families must be enclosed by validated
+arithmetic, robust optimization, or another rigorous enclosure method.
 
 \subsection{Stochastic Live qualification}
 \label{sec:capture-stochastic}
 
 Gaussian process and measurement noise are not represented by a deterministic
-infinite-horizon supremum.  Let $\mathscr F_n$ be the filtration at captured
-lifted indices and let $V_n$ be the same nonnegative regional Lyapunov measure.
+infinite-horizon supremum.  Let $\mathscr F_n$ be the filtration at certified
+word boundaries and let $W_n$ be the same nonnegative funnel Lyapunov measure.
 
 \begin{theorem}[Mean-square practical stability under stochastic Live noise]
 \label{thm:capture-stochastic-live}
 Assume the exact stochastic lifted map remains in the certified stochastic
-regional domain and satisfies the conditional drift inequality
+funnel domain and satisfies
 \begin{equation}
  \boxed{
- \mathbb E[V_{n+1}\mid\mathscr F_n]
- \le\lambda_s V_n+\sigma_s^2,
+ \mathbb E[W_{n+1}\mid\mathscr F_n]
+ \le\lambda_sW_n+\sigma_s^2,
  \qquad 0<\lambda_s<1.}
  \label{eq:capture-stochastic-drift}
 \end{equation}
 Then
 \begin{equation}
  \boxed{
- \mathbb E V_n
- \le\lambda_s^n\mathbb E V_0
+ \mathbb EW_n
+ \le\lambda_s^n\mathbb EW_0
  +\frac{1-\lambda_s^n}{1-\lambda_s}\sigma_s^2.}
  \label{eq:capture-stochastic-ms}
 \end{equation}
 Moreover, for any $a>0$ and finite horizon $N$,
 \begin{equation}
  \boxed{
- \Pr\!\left(\max_{0\le n\le N}V_n\ge a\right)
- \le \frac{1}{a}
- \sum_{n=0}^{N}\left(
- \lambda_s^n\mathbb E V_0+
+ \Pr\!\left(\max_{0\le n\le N}W_n\ge a\right)
+ \le\frac1a\sum_{n=0}^{N}\left(
+ \lambda_s^n\mathbb EW_0+
  \frac{\sigma_s^2}{1-\lambda_s}\right).}
  \label{eq:capture-stochastic-finite-hp}
 \end{equation}
@@ -262,5 +286,5 @@ Eq.~\eqref{eq:capture-stochastic-finite-hp}.
 \end{proof}
 
 Equation~\eqref{eq:capture-stochastic-drift} is a stochastic certificate
-condition for the exact implemented map; it is not inferred from the
+condition for the exact implemented word map; it is not inferred from the
 deterministic bounded-input theorem.
