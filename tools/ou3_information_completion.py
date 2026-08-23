@@ -23,6 +23,9 @@ import numpy as np
 import ou3_numerical_certificate as BASE
 import ou3_information_certificate as INFO
 
+CAPTURE_REL_SLACK = 1.0e-3
+CAPTURE_ABS_SLACK = 1.0e-12
+
 
 def info_energy(e: np.ndarray, Sigma: np.ndarray) -> float:
     Sigma = 0.5 * (Sigma + Sigma.T)
@@ -36,13 +39,30 @@ def nearest_row(times: np.ndarray, t: float) -> int:
     return j if abs(times[j] - t) <= abs(times[i] - t) else i
 
 
-def finite_capture_steps(c0: float, lam: float, gamma: float, b: float,
+def strict_capture_level(asymptotic_floor: float) -> float:
+    """Choose a deterministic strict superlevel of the affine fixed point.
+
+    For c_{n+1}=lambda*c_n+gamma with 0<=lambda<1, the minimal invariant
+    fixed point b*=gamma/(1-lambda) is approached asymptotically from above.
+    Finite capture is therefore claimed only into b_eta>b*.  The declared
+    relative slack is certificate bookkeeping, not filter tuning.
+    """
+    b = max(0.0, float(asymptotic_floor))
+    return b * (1.0 + CAPTURE_REL_SLACK) + CAPTURE_ABS_SLACK
+
+
+def finite_capture_steps(c0: float, lam: float, gamma: float, target: float,
                          cap: int = 100000) -> int | None:
-    if not (0.0 <= lam < 1.0) or gamma < 0.0 or b < 0.0:
+    if not (0.0 <= lam < 1.0) or gamma < 0.0 or target < 0.0:
+        return None
+    fixed = gamma / max(1e-15, 1.0 - lam)
+    # No finite-entry claim is valid for a target at or below the fixed point
+    # unless the initial level is already inside it.
+    if c0 > target and target <= fixed:
         return None
     c = max(0.0, c0)
     for n in range(cap + 1):
-        if c <= b * (1.0 + 1e-12):
+        if c <= target:
             return n
         c = lam * c + gamma
     return None
@@ -108,9 +128,10 @@ def evaluate_mode(record_data: dict, mode: str, horizon_s: float, lam_bound: flo
     if not residuals:
         return {"mode": mode, "status": "NO_WORDS", "horizon_s": horizon_s}
     gamma = max(0.0, float(np.max(residuals)))
-    b = gamma / max(1e-15, 1.0 - lam_bound)
+    b_star = gamma / max(1e-15, 1.0 - lam_bound)
+    b_eta = strict_capture_level(b_star)
     c0 = float(np.max(starts))
-    N = finite_capture_steps(c0, lam_bound, gamma, b)
+    N = finite_capture_steps(c0, lam_bound, gamma, b_eta)
     return {
         "mode": mode,
         "status": "PASS" if N is not None else "FAIL",
@@ -119,9 +140,13 @@ def evaluate_mode(record_data: dict, mode: str, horizon_s: float, lam_bound: flo
         "strict_margin_1_minus_lambda": 1.0 - lam_bound,
         "word_count": len(residuals),
         "gamma_replay": gamma,
-        "invariant_level_b_replay": b,
+        "asymptotic_floor_b_star_replay": b_star,
+        "invariant_level_b_replay": b_star,
+        "finite_capture_level_b_eta_replay": b_eta,
+        "capture_relative_slack": CAPTURE_REL_SLACK,
         "c0_executed_word_starts": c0,
-        "c0_over_b": c0 / max(b, 1e-15),
+        "c0_over_b": c0 / max(b_star, 1e-15),
+        "c0_over_capture_level": c0 / max(b_eta, 1e-15),
         "capture_words_N": N,
         "capture_time_s": None if N is None else N * horizon_s,
         "observed_endpoint_ratio_max": float(np.max(ratios)) if ratios else None,
@@ -143,7 +168,8 @@ def evaluate_contracting_horizons(record_data: dict, mode: str,
     horizon for the affine noisy funnel: when 1-lambda is tiny, gamma/(1-lambda)
     can be enormous. For replay-funnel accounting we therefore evaluate every
     already-certified contracting horizon and choose the smallest invariant
-    level b. This changes no filter behavior and no linear certificate claim.
+    fixed-point level b*. This changes no filter behavior and no linear
+    certificate claim.
     """
     candidates = []
     for a in attempts:
@@ -211,12 +237,14 @@ def markdown(report: dict) -> str:
     out = ["# OU-III information-metric funnel accounting", "",
            f"Status: **{report['status']}**", "",
            "This report uses `W=e^T Sigma_KF^-1 e` at the source point. It is executed-replay accounting, not a neighborhood theorem.",
-           "For the noisy affine funnel it selects the certified horizon with the smallest replay invariant level `b=gamma/(1-lambda)`, rather than automatically using the first contracting horizon.", ""]
+           "For the noisy affine funnel it selects the certified horizon with the smallest replay fixed point `b*=gamma/(1-lambda)`.",
+           f"Finite capture is claimed only into the declared strict superlevel `b_eta=b*(1+{CAPTURE_REL_SLACK})+{CAPTURE_ABS_SLACK}`.", ""]
     for key in ("held", "active"):
         r = report[key]
         out.append(f"{key.capitalize()}: {r.get('status')}, horizon {r.get('horizon_s')} s, "
                    f"lambda {r.get('lambda_information_bound')}, gamma {r.get('gamma_replay')}, "
-                   f"b {r.get('invariant_level_b_replay')}, c0/b {r.get('c0_over_b')}, N {r.get('capture_words_N')}")
+                   f"b* {r.get('asymptotic_floor_b_star_replay')}, b_eta {r.get('finite_capture_level_b_eta_replay')}, "
+                   f"c0/b_eta {r.get('c0_over_capture_level')}, N {r.get('capture_words_N')}")
     hh = report["handoff_hybrid"]
     out += ["", f"Max executed handoff W: {hh.get('handoff_W_max')}",
             f"Max executed hybrid amplification: {hh.get('hybrid_amplification_max')}", "",
@@ -233,7 +261,7 @@ def main() -> int:
     data_dir = args.data_dir.resolve()
     info = json.loads((out / "information_certificate.json").read_text())
     if info.get("status") != "PASS":
-        report = {"schema": 2, "status": "BLOCKED_AT_INFORMATION_LINEAR_GATE",
+        report = {"schema": 3, "status": "BLOCKED_AT_INFORMATION_LINEAR_GATE",
                   "information_status": info.get("status"),
                   "numerical_neighborhood_certificate": "NOT_ESTABLISHED"}
         (out / "information_completion.json").write_text(json.dumps(report, indent=2, sort_keys=True))
@@ -266,8 +294,9 @@ def main() -> int:
     active, active_attempts = evaluate_contracting_horizons(record_data, "A", info["active"]["attempts"])
     hh = handoff_and_hybrid(record_data)
     status = "PASS_EXECUTED_REPLAY" if held.get("status") == "PASS" and active.get("status") == "PASS" else "FAIL_EXECUTED_REPLAY"
-    report = {"schema": 2, "status": status, "metric": "e^T Sigma_KF^-1 e",
+    report = {"schema": 3, "status": status, "metric": "e^T Sigma_KF^-1 e",
               "funnel_horizon_selection": "MINIMUM_REPLAY_INVARIANT_LEVEL_B_OVER_CERTIFIED_HORIZONS",
+              "finite_capture_definition": "b_eta=b_star*(1+1e-3)+1e-12, strictly above b_star=gamma/(1-lambda)",
               "held": held, "active": active,
               "held_attempts": held_attempts, "active_attempts": active_attempts,
               "handoff_hybrid": hh,
