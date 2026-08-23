@@ -39,7 +39,7 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
 
     def test_radius_summary_is_diagnostic_only(self):
         capture = _read(DOC / "w3d-finite-live-capture.tex-part")
-        flat = _flat(capture)
+        flat = _flat(capture).casefold()
         self.assertIn(r"\label{eq:capture-radius-enclosure}", capture)
         self.assertIn("for reporting only", flat)
         self.assertIn("are not propagated and are not certificate state variables", flat)
