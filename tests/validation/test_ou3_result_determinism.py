@@ -97,6 +97,17 @@ class Ou3ResultDeterminismTests(unittest.TestCase):
                                     msg=f"ephemeral result key {key.value!r} in {path}",
                                 )
 
+    def test_readme_build_provenance_is_outside_hashed_results(self):
+        inside = ROOT / "reports" / "results" / "readme" / "PROVENANCE.md"
+        outside = ROOT / "reports" / "readme-results-provenance.md"
+        self.assertFalse(
+            inside.exists(),
+            msg="build/run provenance must not be part of the reports/results fingerprint",
+        )
+        self.assertTrue(outside.is_file())
+        text = outside.read_text(encoding="utf-8")
+        self.assertIn("intentionally outside `reports/results/`", text)
+
     def test_result_fingerprint_has_no_wall_clock_dependency(self):
         path = ROOT / "tools" / "ou_replay_fingerprint.py"
         text = path.read_text(encoding="utf-8")
