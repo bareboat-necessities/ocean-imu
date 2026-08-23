@@ -81,18 +81,44 @@ baseline is included.
   \input{w3d-ou-validation-results-publication.tex-part}%
 }{}
 
+The three ensemble plots below are generated from the same ten paired seed
+triplets and the same current validation bundle. In particular, OU--III
+Adaptive uses the analytically derived SpectralMSE integral-state schedule of
+Sec.~\ref{sec:adaptation}; these figures do not restore any retired cubic-law
+comparison.
+
 \IfFileExists{ou_validation_vertical.svg}{%
   \begin{figure}[t]
     \centering
     \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_vertical}
-    \caption{Ten-seed normalized vertical RMS; paired-bootstrap 95\% intervals.}
+    \caption{Ten-seed normalized vertical-displacement RMS; paired-bootstrap
+    95\% intervals.}
     \label{fig:ou_mc_vertical}
+  \end{figure}
+}{}
+
+\IfFileExists{ou_validation_displacement.svg}{%
+  \begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_displacement}
+    \caption{Ten-seed full three-dimensional displacement RMS; paired-bootstrap
+    95\% intervals.}
+    \label{fig:ou_mc_displacement}
+  \end{figure}
+}{}
+
+\IfFileExists{ou_validation_attitude.svg}{%
+  \begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_validation_attitude}
+    \caption{Ten-seed pitch RMS; paired-bootstrap 95\% intervals.}
+    \label{fig:ou_mc_pitch}
   \end{figure}
 }{}
 
 Across the four stationary JONSWAP seas, seed-wise mean normalized vertical
 error is
-$\OUValidationOUIIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ of
+$\OUValidationOUIIINormalizedMean\pm\OUValidationOUIIINormalizedStd\%$ of
 $H_s$ for OU--III and
 $\OUValidationOUIINormalizedMean\pm\OUValidationOUIINormalizedStd\%$ for
 OU--II. The paired difference is
@@ -107,9 +133,10 @@ alternative simulators, vessels, spectra, or cadences.
 \paragraph{Vertical and three-dimensional displacement}
 OU--III has lower vertical error in every stationary JONSWAP sea. The stationary
 rows of Table~\ref{tab:ou_mc_axes} likewise report the paired three-dimensional
-RMS comparison. This does not imply universal horizontal-axis tuning because
-the $X/Y$ decomposition is heading dependent and the directional ensemble is
-limited.
+RMS comparison, shown directly in Fig.~\ref{fig:ou_mc_displacement}. This does
+not imply universal horizontal-axis tuning because the $X/Y$ decomposition is
+heading dependent and the directional ensemble is limited. Pitch sensitivity
+across the same paired seeds is reported in Fig.~\ref{fig:ou_mc_pitch}.
 
 \paragraph{Second spectrum}
 The paired PM--Stokes ensemble reproduces the vertical advantage, with seed-level
@@ -138,6 +165,11 @@ $\OUValidationCovSyncWorstDifference$ percentage points
 that periodic latent-acceleration covariance re-alignment is not the source of
 the adaptation differences.
 
-The only transition study presented in the article is the bidirectional
-low--high--low protocol of Sec.~\ref{sec:roundtrip-transition-ablation}, which
-reports both crossfade directions and the recovery/settled intervals.
+The bidirectional low--high--low protocol of
+Sec.~\ref{sec:roundtrip-transition-ablation} remains the main transient
+diagnostic because it scores both crossfade directions and the recovery/settled
+intervals. The robustness stress study below additionally retains the controlled
+and rapid one-way ramps as explicit degradation cases rather than using them to
+derive or select the adaptation law.
+
+\input{w3d-ou-robustness.tex-part}
