@@ -24,6 +24,7 @@ build:
 		test_ou_stability_widening.py \
 		test_ou_stability_large_angle_funnel.py \
 		test_ou_stability_source_path_widening.py \
+		test_ou_stochastic_concentration.py \
 		test_source_archive_provenance.py \
 		test_record_conventions.py \
 		test_publication_references.py \
