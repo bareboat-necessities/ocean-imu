@@ -4,6 +4,8 @@ import unittest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-validation.yml"
+BRANCH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-full-evidence-branch.yml"
+BUILD_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "build.yml"
 
 
 class WorkflowContractTests(unittest.TestCase):
@@ -90,6 +92,12 @@ class WorkflowContractTests(unittest.TestCase):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('- "reports/results/**"', workflow)
 
+    def test_evidence_workflow_changes_trigger_smoke_validation(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('- ".github/workflows/ou-validation.yml"', workflow)
+        self.assertIn('- ".github/workflows/build.yml"', workflow)
+        self.assertIn('- ".github/workflows/ou-full-evidence-branch.yml"', workflow)
+
     def test_push_retry_revalidates_after_rebase(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         start = workflow.index("for attempt in 1 2 3 4; do")
@@ -106,6 +114,44 @@ class WorkflowContractTests(unittest.TestCase):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("The regenerated bundle is committed, but", workflow)
         self.assertNotIn("Fail if the manuscript no longer matches", workflow)
+
+    def test_branch_full_evidence_is_manual_only(self):
+        workflow = BRANCH_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("\n  push:", workflow)
+        self.assertIn("validation_mode: full", workflow)
+
+    def test_main_build_is_the_authoritative_automatic_full_evidence_path(self):
+        workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
+        evidence = workflow.index("  ou-evidence:")
+        build = workflow.index("  build:", evidence)
+        stage = workflow[evidence:build]
+        self.assertIn("github.ref == 'refs/heads/main'", stage)
+        self.assertIn("uses: ./.github/workflows/ou-validation.yml", stage)
+        self.assertIn("validation_mode: full", stage)
+
+    def test_main_pdf_build_uses_post_evidence_head_and_compiles_ou_iii(self):
+        workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
+        build = workflow.index("  build:")
+        tuning = workflow.index("  ou-tuning:", build)
+        stage = workflow[build:tuning]
+        self.assertIn("needs: [ou-evidence]", stage)
+        self.assertIn("kalman_ou_iii", stage)
+        self.assertIn(
+            "ref: ${{ github.ref == 'refs/heads/main' && 'refs/heads/main' || '' }}",
+            stage,
+        )
+        self.assertIn("- name: Compile LaTeX document (${{ matrix.dir }})", stage)
+        self.assertIn("working_directory: doc/${{ matrix.dir }}", stage)
+
+    def test_main_pdf_build_requires_successful_evidence(self):
+        workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
+        build = workflow.index("  build:")
+        tuning = workflow.index("  ou-tuning:", build)
+        stage = workflow[build:tuning]
+        self.assertIn("github.ref != 'refs/heads/main'", stage)
+        self.assertIn("needs['ou-evidence'].result == 'success'", stage)
+        self.assertNotIn("if: ${{ !cancelled() }}", stage)
 
 
 if __name__ == "__main__":

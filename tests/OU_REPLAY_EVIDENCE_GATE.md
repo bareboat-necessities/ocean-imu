@@ -45,6 +45,8 @@ For a full OU publication/evidence run:
 5. After regeneration, the generated validation bundle, robustness bundle, mirrored manuscript inputs, and `reports/ou_evidence_fingerprint.json` are committed together.
 6. If a write retry rebases onto a newer branch tip, both fingerprints are checked again before regenerated evidence can be pushed.
 
+`main` is the authoritative automatic full-study path: a `main` build invokes the reusable OU evidence workflow in full mode before publication is built. The separate `ou-full-evidence-branch` workflow is manual-only. This avoids launching another complete ~1,150-replay study for every ordinary development-branch push while preserving an explicit pre-merge full-regeneration option when needed.
+
 The policy is intentionally asymmetric:
 
 > An unnecessary full replay is acceptable. Reusing stale evidence after a potentially relevant repository, test-data, simulation-data, or results-tree change is not.
