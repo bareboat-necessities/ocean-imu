@@ -134,15 +134,18 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
         self.assertIn('"numerical_neighborhood_certificate": "NOT_ESTABLISHED"', text)
         self.assertIn('"deployment_theorem_certificate": "NOT_ESTABLISHED"', text)
 
-    def test_enclosure_gate_uses_information_metric_not_old_path_metrics(self):
+    def test_enclosure_gate_uses_information_metric_not_old_path_solver(self):
         text = (TOOLS / "ou3_validate_enclosure.py").read_text()
         self.assertIn("relative_Riccati_injection_margin_lower", text)
         self.assertIn("Sigma_lambda_min_lower", text)
         self.assertIn("prefix_information_gain_upper", text)
         self.assertIn("mu_W_lower", text)
         self.assertIn("theta_star", text)
-        self.assertNotIn("path_metrics.npz", text)
-        self.assertNotIn("robust_box_lmi_upper", text)
+        # Prose may name the retired artifact for contrast. The implementation
+        # must not load any old matrix archive or call the old box-LMI helper.
+        self.assertNotIn("np.load(", text)
+        self.assertNotIn("load_metrics(", text)
+        self.assertNotIn("robust_box_lmi_upper(", text)
 
 
 if __name__ == "__main__":
