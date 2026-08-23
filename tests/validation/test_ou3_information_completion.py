@@ -37,6 +37,12 @@ class Ou3InformationCompletionTests(unittest.TestCase):
         self.assertIsNone(MOD.finite_capture_steps(1.0, 1.0, 0.1, 1.0))
         self.assertIsNone(MOD.finite_capture_steps(1.0, 1.01, 0.1, 1.0))
 
+    def test_record_index_accepts_short_slug_and_exact_source_stem(self):
+        index = MOD.record_name_index()
+        source = "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv"
+        self.assertEqual(index["jonswap_0_27"], source)
+        self.assertEqual(index[Path(source).stem], source)
+
     def test_nominal_replay_cannot_promote_neighborhood_theorem(self):
         text = (TOOLS / "ou3_information_completion.py").read_text()
         self.assertIn("EXECUTED_NOISY_REPLAY_ONLY", text)
