@@ -1,8 +1,8 @@
+import copy
 import importlib.util
 import math
 from pathlib import Path
 import sys
-import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -59,7 +59,34 @@ class DeploymentGateTests(unittest.TestCase):
         })
         self.assertTrue(s["pass"])
         self.assertLessEqual(s["finite_horizon_failure_probability_upper"], 0.1)
+        self.assertLess(s["finite_horizon_failure_probability_upper"], 1.0)
         self.assertGreater(s["gaussian_t_star_lower"], 0.0)
+
+    def test_source_domain_is_regenerated_and_compared_to_current_source(self):
+        expected = mod.SOURCE_DOMAIN.build(mod.SOURCE_DOMAIN.DEFAULT_HEADER.resolve())
+        out = mod.validate_source_domain(expected)
+        self.assertTrue(out["pass"], out["failures"])
+
+        stale = copy.deepcopy(expected)
+        stale["continuous_parameters"].pop("tau_aw_s")
+        out = mod.validate_source_domain(stale)
+        self.assertFalse(out["pass"])
+        self.assertTrue(any("continuous_parameters" in x for x in out["failures"]))
+
+    def test_required_hybrid_set_is_complete(self):
+        self.assertEqual(
+            mod.REQUIRED_HYBRID,
+            {
+                "startup_handoff",
+                "held_to_active",
+                "magnetic_lock",
+                "magnetic_regauge_refinement",
+                "tilt_reset",
+                "tilt_relock",
+                "cooldown_reentry",
+                "periodic_aw_covariance_sync",
+            },
+        )
 
 
 if __name__ == "__main__":
