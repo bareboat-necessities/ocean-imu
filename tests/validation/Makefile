@@ -7,6 +7,7 @@ build:
 		../../tools/ou_roundtrip_transition.py \
 		../../tools/ou3_numerical_certificate.py \
 		../../tools/ou3_information_certificate.py \
+		../../tools/ou3_information_completion.py \
 		../../tools/ou3_certificate_completion.py \
 		../../tools/ou3_validate_enclosure.py \
 		../../tools/ou_evidence_provenance.py \
