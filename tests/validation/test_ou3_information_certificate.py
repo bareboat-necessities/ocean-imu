@@ -28,20 +28,42 @@ class Ou3InformationCertificateTests(unittest.TestCase):
         self.assertLess(lam, 1.0)
         inc = INFO.covariance_increment_margin(A, P0, P1)
         self.assertGreater(inc["omega_relative_lambda_min"], 0.0)
+        self.assertLess(INFO.information_identity_residual(lam, inc), 1e-12)
+        self.assertGreater(inc["Sigma0_lambda_min"], 0.0)
+        self.assertGreater(inc["Sigma1_lambda_min"], 0.0)
 
     def test_information_metric_detects_inconsistent_covariance(self):
         A = 1.1 * np.eye(2)
         P0 = np.eye(2)
         P1 = np.eye(2)
         inc = INFO.covariance_increment_margin(A, P0, P1)
+        lam = INFO.information_lambda(A, P0, P1)
         self.assertLess(inc["omega_relative_lambda_min"], 0.0)
-        self.assertGreater(INFO.information_lambda(A, P0, P1), 1.0)
+        self.assertGreater(lam, 1.0)
+        self.assertLess(INFO.information_identity_residual(lam, inc), 1e-12)
+
+    def test_exact_identity_matches_random_spd_riccati_word(self):
+        rng = np.random.default_rng(12345)
+        for _ in range(20):
+            X = rng.normal(size=(5, 5))
+            P0 = X @ X.T + 0.2 * np.eye(5)
+            A = rng.normal(size=(5, 5)) * 0.25 + np.eye(5)
+            Y = rng.normal(size=(5, 5))
+            Q = Y @ Y.T * 0.03 + 0.01 * np.eye(5)
+            P1 = A @ P0 @ A.T + Q
+            lam = INFO.information_lambda(A, P0, P1)
+            inc = INFO.covariance_increment_margin(A, P0, P1)
+            self.assertLess(INFO.information_identity_residual(lam, inc), 1e-10)
+            self.assertAlmostEqual(
+                1.0 - lam, inc["omega_relative_lambda_min"], places=10
+            )
 
     def test_tool_uses_estimator_covariance_not_truth_error_covariance(self):
         text = (TOOLS / "ou3_information_certificate.py").read_text()
         compact = text.replace("_", "").replace(" ", "")
         self.assertIn("Sigma_KF", text)
-        self.assertIn("Sigma1=PhiSigma0Phi'+Omega", compact)
+        self.assertIn("Omega=Sigma1-PhiSigma0Phi^T", compact)
+        self.assertIn("relative_Riccati_injection_margin_worst", text)
         self.assertNotIn("metric_from_samples", text)
         self.assertNotIn("X.T@X", text)
 
