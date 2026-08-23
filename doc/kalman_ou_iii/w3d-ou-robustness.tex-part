@@ -70,36 +70,15 @@ information-rich. Attitude can remain more sensitive because the
 latent-acceleration covariance also enters the accelerometer innovation
 covariance.
 
-Two ten-seed degradation cases extend the main validation envelope without
-changing the deployed law. The first uses a low-motion $H_s=\SI{0.05}{m}$
-record to expose the approximately fixed absolute sensor-error floor. The
-second compresses the controlled transition between the same endpoints from
-\SI{120}{s} to \SI{30}{s}; Adaptive and FixedNominal are both scored so the
-transition degradation remains separated from the fixed operating-point
-baseline.
-
-\IfFileExists{w3d-ou-robustness-results-generated.tex-part}{%
-  \input{w3d-ou-robustness-results-generated.tex-part}%
-}{}
-
-\IfFileExists{ou_robustness_stress.svg}{%
-  \begin{figure}[t]
-    \centering
-    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_robustness_stress}
-    \caption{Low-motion and rapid-transition degradation cases.}
-    \label{fig:ou_robustness_stress}
-  \end{figure}
-}{}
-
-At $H_s=\SI{0.05}{m}$, the mean absolute vertical RMS error is
-\SI{\OURobustnessLowStressAbsolute}{m}, corresponding to
+A ten-seed low-motion degradation case extends the main validation envelope
+without changing the deployed law. At $H_s=\SI{0.05}{m}$, the mean absolute
+vertical RMS error is \SI{\OURobustnessLowStressAbsolute}{m}, corresponding to
 \OURobustnessLowStressMean\% of $H_s$; the increase in normalized error exposes
-the approximately fixed absolute sensor-error floor. Compressing the transition
-from \SI{120}{s} to \SI{30}{s} changes the Adaptive mean from
-\OURobustnessControlledAdaptiveMean\% to
-\OURobustnessRapidAdaptiveMean\% of the final $H_s$. This rapid-case difference
-is a degradation result rather than a pure adaptation-rate measurement because
-compressing the crossfade also changes the composition of the fixed
-\SI{900}{s} scoring window. Isolating adaptation bandwidth would require a
-protocol that holds the scored sea-state composition fixed while varying only
-the transition rate.
+the approximately fixed absolute sensor-error floor relative to the
+$H_s=\SI{0.27}{m}$ reference case.
+
+One-way transition evidence remains in the archived robustness/validation
+bundles for provenance only and is not publication evidence. Transient
+adaptation is published only through the deployed SpectralMSE bidirectional
+low--high--low protocol of Sec.~\ref{sec:roundtrip-transition-ablation}, which
+scores both the rise and the return transition.
