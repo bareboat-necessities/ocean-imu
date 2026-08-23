@@ -13,12 +13,14 @@ on:
       - "tests/validation/test_ou3_information_certificate.py"
       - "tests/validation/test_ou3_information_completion.py"
       - "tests/validation/test_ou3_certificate_completion.py"
+      - "tests/validation/test_ou3_result_determinism.py"
       - "tools/ou3_exact_replay.py"
       - "tools/ou3_numerical_certificate.py"
       - "tools/ou3_information_certificate.py"
       - "tools/ou3_information_completion.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
+      - "tools/ou3_result_contract.py"
       - "tools/ou_sweep_common.py"
       - "docs/ou-iii-numerical-certificate.md"
       - ".github/workflows/ou3-numerical-certificate.yml"
@@ -76,6 +78,11 @@ jobs:
           python3 -u tools/ou3_information_completion.py \
             --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
             --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii"
+
+      - name: Validate deterministic result JSON payloads
+        run: |
+          python3 tools/ou3_result_contract.py \
+            "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
 
       - name: Upload certificate report, exact maps, covariance and traces
         if: always()
