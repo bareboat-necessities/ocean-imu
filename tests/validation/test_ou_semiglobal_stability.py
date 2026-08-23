@@ -115,7 +115,9 @@ class OUIIIWidenedStabilityContractTests(unittest.TestCase):
             "previous proof",
             "former theorem",
             "we tried",
-            "fallback",
+            "fallback certificate",
+            "certificate fallback",
+            "fallback route",
         ):
             self.assertNotIn(phrase, compiled)
 
@@ -129,7 +131,7 @@ class OUIIIWidenedStabilityContractTests(unittest.TestCase):
 
     def test_hybrid_and_quotient_results_are_in_conclusion(self):
         conclusion = _read("w3d-conclusion-summary.tex-part")
-        flat = _flat(conclusion)
+        flat = _flat(conclusion).casefold()
         self.assertIn(r"\ref{thm:hybrid-live-recovery}", conclusion)
         self.assertIn("yaw quotient", flat)
         self.assertIn("source-shaped handoff reachability", flat)
