@@ -60,8 +60,8 @@ jobs:
             -o Acquire::https::Timeout=15 \
             install -y --no-install-recommends \
               python3-matplotlib python3-numpy python3-pandas \
-              texlive-xetex texlive-latex-recommended \
-              fonts-dejavu-core
+              texlive-xetex texlive-latex-recommended texlive-latex-extra \
+              texlive-fonts-recommended fonts-dejavu-core
 
       - name: Generate current directional spectra
         env:
@@ -90,7 +90,7 @@ jobs:
             src="$(find incoming/kalman_ou_iii -type f -name "$name" -print -quit)"
             if [ -z "$src" ]; then
               echo "required build figure is missing: $name" >&2
-              find incoming/kalman_ou_iii -type f -maxdepth 5 -print >&2 || true
+              find incoming/kalman_ou_iii -maxdepth 5 -type f -print >&2 || true
               exit 1
             fi
             cp -v "$src" "$out/$name"
@@ -110,15 +110,13 @@ jobs:
           cat > "$out/PROVENANCE.md" <<EOF
           # README result gallery provenance
 
-          These figures are generated automatically after a successful `build`
-          workflow on `main`; they are not hand-maintained screenshots.
+          These figures are generated automatically after a successful build
+          workflow on main; they are not hand-maintained screenshots.
 
           - build workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}
-          - triggering source SHA: `${{ github.event.workflow_run.head_sha }}`
-          - OU-III time-series figures: downloaded from the successful build artifact
-            `release-svgs-kalman_ou_iii`
-          - directional spectra: regenerated from the versioned `v1.1.3`
-            `sim-data-files.zip` input used by the build
+          - triggering source SHA: ${{ github.event.workflow_run.head_sha }}
+          - OU-III time-series figures: successful-build artifact release-svgs-kalman_ou_iii
+          - directional spectra: regenerated from the versioned v1.1.3 sim-data-files.zip input used by the build
           EOF
 
       - name: Commit refreshed gallery
