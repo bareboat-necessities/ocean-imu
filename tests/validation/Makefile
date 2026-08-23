@@ -11,6 +11,7 @@ build:
 		../../tools/ou3_information_completion.py \
 		../../tools/ou3_certificate_completion.py \
 		../../tools/ou3_validate_enclosure.py \
+		../../tools/ou3_result_contract.py \
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
 		../../tools/ou_replay_fingerprint.py \
