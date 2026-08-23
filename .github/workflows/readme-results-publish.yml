@@ -92,6 +92,14 @@ jobs:
       - name: Commit refreshed gallery
         run: |
           set -euo pipefail
+
+          # workflow_run can be delivered after a newer main commit has landed.
+          # Never publish an older build's artifacts onto that newer source tip.
+          if [ "$(git rev-parse HEAD)" != "${{ github.event.workflow_run.head_sha }}" ]; then
+            echo "main no longer matches this build; leaving publication to the newer main build."
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports/results/readme reports/readme-results-provenance.md
@@ -105,7 +113,7 @@ jobs:
             -m "Produced from successful build run ${{ github.event.workflow_run.id }}."
 
           # Never rebase an older build artifact onto a newer main tip. If main
-          # advanced after this workflow's checkout, its own build will publish
+          # advances after this workflow's checkout, its own build will publish
           # the corresponding gallery.
           base_sha="$(git rev-parse HEAD^)"
           for attempt in 1 2 3 4; do
