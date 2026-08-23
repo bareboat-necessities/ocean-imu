@@ -44,7 +44,7 @@ class OUIIIWidenedStabilityContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, proof)
 
-    def test_direct_capture_has_no_mandatory_outer_radius(self):
+    def test_funnel_capture_has_no_mandatory_outer_radius(self):
         capture = _read("w3d-finite-live-capture.tex-part")
         startup = _read("w3d-semiglobal-stability.tex-part")
         init = _read("w3d-init.tex-part")
@@ -52,7 +52,8 @@ class OUIIIWidenedStabilityContractTests(unittest.TestCase):
         for text in (capture, startup, init, conclusion):
             self.assertNotIn(r"R_C", text)
             self.assertNotIn(r"\vct R_H\prec", text)
-        self.assertIn(r"\mathcal H_{k_H}\subseteq\mathcal D_{k_H}", capture)
+        self.assertIn(r"\label{eq:capture-handoff-inclusion}", capture)
+        self.assertIn(r"\label{eq:capture-funnel-recursion}", capture)
         self.assertIn(r"\mathcal H_{k_H}\subset\mathcal D_{k_H}", startup)
 
     def test_no_dead_theorem_names_are_referenced(self):
@@ -73,6 +74,8 @@ class OUIIIWidenedStabilityContractTests(unittest.TestCase):
             "rem:iss-block-scope",
             "eq:capture-handoff-margin",
             "eq:capture-handoff-sequence",
+            "eq:capture-comparison-sequence",
+            "eq:capture-comparison-envelope",
         ):
             self.assertNotIn(dead, compiled)
 
