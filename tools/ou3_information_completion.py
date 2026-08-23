@@ -62,13 +62,7 @@ def record_errors(trace_path: Path, timeseries: Path):
 
 
 def record_name_index() -> dict[str, str]:
-    """Map both certificate slugs and exact replay file stems to source CSVs.
-
-    ``ou3_exact_replay.py`` reports canonical slugs such as ``jonswap_0_27``,
-    while the binary map/covariance files deliberately retain the original
-    simulation stem (for example ``wave_data_jonswap_H0.270_...``).  Downstream
-    stages must accept both names because both are valid provenance identities.
-    """
+    """Map both certificate slugs and exact replay file stems to source CSVs."""
     index: dict[str, str] = {}
     for family, hs, name in BASE.RECORDS:
         short = f"{family.lower().replace('-', '_')}_{hs:.2f}".replace(".", "_")
@@ -112,7 +106,7 @@ def evaluate_mode(record_data: dict, mode: str, horizon_s: float, lam_bound: flo
                 worst = (r, slug, s, s + n - 1, W0, W1)
 
     if not residuals:
-        return {"mode": mode, "status": "NO_WORDS"}
+        return {"mode": mode, "status": "NO_WORDS", "horizon_s": horizon_s}
     gamma = max(0.0, float(np.max(residuals)))
     b = gamma / max(1e-15, 1.0 - lam_bound)
     c0 = float(np.max(starts))
@@ -122,10 +116,12 @@ def evaluate_mode(record_data: dict, mode: str, horizon_s: float, lam_bound: flo
         "status": "PASS" if N is not None else "FAIL",
         "horizon_s": horizon_s,
         "lambda_information_bound": lam_bound,
+        "strict_margin_1_minus_lambda": 1.0 - lam_bound,
         "word_count": len(residuals),
         "gamma_replay": gamma,
         "invariant_level_b_replay": b,
         "c0_executed_word_starts": c0,
+        "c0_over_b": c0 / max(b, 1e-15),
         "capture_words_N": N,
         "capture_time_s": None if N is None else N * horizon_s,
         "observed_endpoint_ratio_max": float(np.max(ratios)) if ratios else None,
@@ -136,6 +132,35 @@ def evaluate_mode(record_data: dict, mode: str, horizon_s: float, lam_bound: flo
         },
         "qualification": "EXECUTED_NOISY_REPLAY_ONLY",
     }
+
+
+def evaluate_contracting_horizons(record_data: dict, mode: str,
+                                  attempts: list[dict]) -> tuple[dict, list[dict]]:
+    """Evaluate every strictly contracting information horizon and retain the tightest funnel.
+
+    The linear certificate intentionally selects the *first* contracting horizon
+    to show the shortest source-complete word. That is not necessarily the best
+    horizon for the affine noisy funnel: when 1-lambda is tiny, gamma/(1-lambda)
+    can be enormous. For replay-funnel accounting we therefore evaluate every
+    already-certified contracting horizon and choose the smallest invariant
+    level b. This changes no filter behavior and no linear certificate claim.
+    """
+    candidates = []
+    for a in attempts:
+        if not bool(a.get("information_pass")):
+            continue
+        lam = float(a["lambda_worst_information"])
+        if not (0.0 <= lam < 1.0):
+            continue
+        candidates.append(evaluate_mode(record_data, mode, float(a["horizon_s"]), lam))
+    feasible = [r for r in candidates
+                if r.get("status") == "PASS" and math.isfinite(float(r.get("invariant_level_b_replay", math.inf)))]
+    if not feasible:
+        return {"mode": mode, "status": "NO_CONTRACTING_FUNNEL"}, candidates
+    selected = min(feasible, key=lambda r: (float(r["invariant_level_b_replay"]), float(r["horizon_s"])))
+    selected = dict(selected)
+    selected["selection_basis"] = "MINIMUM_REPLAY_INVARIANT_LEVEL_B_OVER_CERTIFIED_HORIZONS"
+    return selected, candidates
 
 
 def handoff_and_hybrid(record_data: dict) -> dict:
@@ -185,12 +210,13 @@ def handoff_and_hybrid(record_data: dict) -> dict:
 def markdown(report: dict) -> str:
     out = ["# OU-III information-metric funnel accounting", "",
            f"Status: **{report['status']}**", "",
-           "This report uses `W=e^T Sigma_KF^-1 e` at the source point. It is executed-replay accounting, not a neighborhood theorem.", ""]
+           "This report uses `W=e^T Sigma_KF^-1 e` at the source point. It is executed-replay accounting, not a neighborhood theorem.",
+           "For the noisy affine funnel it selects the certified horizon with the smallest replay invariant level `b=gamma/(1-lambda)`, rather than automatically using the first contracting horizon.", ""]
     for key in ("held", "active"):
         r = report[key]
         out.append(f"{key.capitalize()}: {r.get('status')}, horizon {r.get('horizon_s')} s, "
                    f"lambda {r.get('lambda_information_bound')}, gamma {r.get('gamma_replay')}, "
-                   f"b {r.get('invariant_level_b_replay')}, N {r.get('capture_words_N')}")
+                   f"b {r.get('invariant_level_b_replay')}, c0/b {r.get('c0_over_b')}, N {r.get('capture_words_N')}")
     hh = report["handoff_hybrid"]
     out += ["", f"Max executed handoff W: {hh.get('handoff_W_max')}",
             f"Max executed hybrid amplification: {hh.get('hybrid_amplification_max')}", "",
@@ -207,7 +233,7 @@ def main() -> int:
     data_dir = args.data_dir.resolve()
     info = json.loads((out / "information_certificate.json").read_text())
     if info.get("status") != "PASS":
-        report = {"schema": 1, "status": "BLOCKED_AT_INFORMATION_LINEAR_GATE",
+        report = {"schema": 2, "status": "BLOCKED_AT_INFORMATION_LINEAR_GATE",
                   "information_status": info.get("status"),
                   "numerical_neighborhood_certificate": "NOT_ESTABLISHED"}
         (out / "information_completion.json").write_text(json.dumps(report, indent=2, sort_keys=True))
@@ -236,14 +262,15 @@ def main() -> int:
         trace, E, theta = record_errors(trace_path, timeseries)
         record_data[slug] = {"maps": maps, "covs": covs, "trace": trace, "E": E, "theta": theta}
 
-    hs = info["held"]["selected"]
-    ac = info["active"]["selected"]
-    held = evaluate_mode(record_data, "H", float(hs["horizon_s"]), float(hs["lambda_worst_information"]))
-    active = evaluate_mode(record_data, "A", float(ac["horizon_s"]), float(ac["lambda_worst_information"]))
+    held, held_attempts = evaluate_contracting_horizons(record_data, "H", info["held"]["attempts"])
+    active, active_attempts = evaluate_contracting_horizons(record_data, "A", info["active"]["attempts"])
     hh = handoff_and_hybrid(record_data)
     status = "PASS_EXECUTED_REPLAY" if held.get("status") == "PASS" and active.get("status") == "PASS" else "FAIL_EXECUTED_REPLAY"
-    report = {"schema": 1, "status": status, "metric": "e^T Sigma_KF^-1 e",
-              "held": held, "active": active, "handoff_hybrid": hh,
+    report = {"schema": 2, "status": status, "metric": "e^T Sigma_KF^-1 e",
+              "funnel_horizon_selection": "MINIMUM_REPLAY_INVARIANT_LEVEL_B_OVER_CERTIFIED_HORIZONS",
+              "held": held, "active": active,
+              "held_attempts": held_attempts, "active_attempts": active_attempts,
+              "handoff_hybrid": hh,
               "numerical_neighborhood_certificate": "NOT_ESTABLISHED",
               "deployment_theorem_certificate": "NOT_ESTABLISHED"}
     (out / "information_completion.json").write_text(json.dumps(report, indent=2, sort_keys=True))
