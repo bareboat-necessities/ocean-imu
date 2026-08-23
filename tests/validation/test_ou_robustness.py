@@ -449,14 +449,9 @@ class CommittedRobustnessResultsTests(unittest.TestCase):
         self.assertIn("src/kalman_ou_iii/Kalman3D_Wave_OU_III.h", implementation)
         self.assertIn("tests/kalman_ou_iii/Makefile", implementation)
         for name, metadata in implementation.items():
-            path = REPO_ROOT / name
-            actual = {
-                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-                "size_bytes": path.stat().st_size,
-            }
             self.assertTrue(
                 robustness.evidence_provenance.implementation_record_matches(
-                    name, metadata, actual
+                    name, metadata
                 ),
                 name,
             )
