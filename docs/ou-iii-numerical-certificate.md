@@ -199,7 +199,43 @@ W^+\le(1-\delta_*)W^-,
 
 and bounded word length plus finite prefix gain gives UES of the homogeneous fixed-mode recursion on the validated source family.
 
-The old fixed-node/group-compatible SDP remains useful only as a diagnostic/comparison route; it is not the primary executed-source linear certificate.
+The old fixed-node/group-compatible SDP remains useful only as a diagnostic/comparison route; it is not the primary executed-source linear certificate or the deployment-promotion metric.
+
+## Information enclosure contract and promotion gate
+
+`tools/ou3_information_enclosure_contract.py` converts the executed information result into `information_enclosure_contract.json`. It does **not** turn replay minima into theorem bounds. Instead, it records the exact obligations a validated continuous-source backend must discharge.
+
+For each H/A mode the contract carries the strongest tested executed horizon as the recommended validation word and requires:
+
+- `source_complete = true`;
+- validated outward rounding;
+- `relative_Riccati_injection_margin_lower > 0`;
+- `Sigma_lambda_min_lower > 0`;
+- finite `Sigma_lambda_max_upper`;
+- finite positive `prefix_information_gain_upper`;
+- `0 < theta_star < pi`;
+- `mu_W_lower > 0` for the exact nonlinear information-metric word;
+- validation that every nonlinear word prefix remains inside its source/domain guards.
+
+The nonlinear lift is the full source-varying information metric in the geodesic chart,
+
+\[
+W(g,R_e,\xi)=\zeta^T\Sigma_{\rm KF}(g)^{-1}\zeta,
+\qquad
+\zeta=[\operatorname{Log}(R_e)^T,\xi^T]^T,
+\]
+
+on `theta < theta_star < pi`. This preserves the full covariance geometry instead of reintroducing a coarse fixed-node metric.
+
+`tools/ou3_validate_enclosure.py` consumes a schema-2 outward-rounded enclosure and recomputes the promotion logic. It also cross-checks continuous bounds against the executed reference points: because the validated source family must contain those points, a continuous lower bound cannot be larger than an observed minimum and a continuous upper bound cannot exclude an observed maximum.
+
+The validator reports three independent promotion layers:
+
+- `continuous_linear_information_certificate`;
+- `numerical_neighborhood_certificate`;
+- `deployment_theorem_certificate`.
+
+The last one additionally requires strict startup/held-active/magnetic/tilt/cooldown inward margins and source-uniform stochastic `Sigma_bar`, `b_W`, `v_W`, with a finite-horizon failure-probability bound strictly below one.
 
 ## Deterministic scientific results
 
@@ -232,11 +268,22 @@ python3 tools/ou3_information_completion.py \
   --certificate-dir reports/results/ou3_numerical_certificate \
   --data-dir plots/kalman_ou_ii
 
+python3 tools/ou3_information_enclosure_contract.py \
+  --certificate-dir reports/results/ou3_numerical_certificate
+
 python3 tools/ou3_result_contract.py \
   reports/results/ou3_numerical_certificate
 ```
 
 The GitHub workflow performs those stages and uploads scientific results separately from raw diagnostic logs.
+
+Once a validated schema-2 continuous-source enclosure exists, promotion is checked with:
+
+```sh
+python3 tools/ou3_validate_enclosure.py \
+  --certificate-dir reports/results/ou3_numerical_certificate \
+  --enclosure validated_information_enclosure.json
+```
 
 ## Reading a failure
 
@@ -245,10 +292,11 @@ The first active obstruction is the scientific result:
 - RMS/quality failure -> filter regression problem;
 - exact-map residual or map/covariance alignment failure -> certificate instrumentation problem;
 - no strict information contraction at tested horizons -> local/source-word dynamics or source-family problem;
-- executed linear contraction passes but nonlinear neighborhood does not -> nonlinear certificate bottleneck;
+- continuous Riccati injection/covariance bounds fail -> continuous-source linear bottleneck;
+- executed/continuous linear contraction passes but nonlinear neighborhood does not -> nonlinear certificate bottleneck;
 - nonlinear words pass but startup/hybrid destination inequalities fail -> handoff/hybrid bottleneck;
 - deterministic neighborhood passes but stochastic localization is ineffective -> stochastic bound bottleneck;
-- numerical neighborhood passes but validated continuous-source injection/covariance bounds fail -> source-envelope/theorem conservatism bottleneck.
+- all numerical layers pass but outward-rounded continuous-source enclosure fails -> source-envelope/theorem conservatism bottleneck.
 
 ## Ultimate question
 
