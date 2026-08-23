@@ -12,7 +12,11 @@ class OUIIITunerChartSemanticTests(unittest.TestCase):
         self.assertIn("Applied-equivalent wave frequency", text)
         self.assertIn("1.0 / (2.0 * tau_for_plot)", text)
         self.assertIn("deliberately not named", text)
-        self.assertNotIn("Applied wave-band frequency (Hz)", text)
+        old_panel = '("freq_tracker_hz", "Frequency (Hz)")'
+        new_panel = '("wave_tuning_freq_hz", r"Applied-equivalent wave frequency (Hz)")'
+        self.assertIn(old_panel, text)
+        self.assertIn(new_panel, text)
+        self.assertIn("source.replace(old_panel, new_panel, 1)", text)
 
     def test_acceleration_and_ou_sigma_are_distinguished(self):
         text = DRAW.read_text(encoding="utf-8")
