@@ -20,6 +20,7 @@ build:
 		test_ou_roundtrip_transition.py \
 		test_ou3_numerical_certificate.py \
 		test_ou3_information_certificate.py \
+		test_ou3_information_completion.py \
 		test_ou3_certificate_completion.py \
 		test_ou_article_ablations.py \
 		test_ou_legacy_law_cleanup.py \
