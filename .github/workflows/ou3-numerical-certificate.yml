@@ -1,0 +1,102 @@
+name: ou3-numerical-certificate
+
+on:
+  pull_request:
+    paths:
+      - "src/kalman_ou_iii/**"
+      - "src/kalman_ou_common/**"
+      - "src/kalman_common/**"
+      - "src/tuner/**"
+      - "src/util/W3dSimCommon.*"
+      - "tests/kalman_ou_iii/**"
+      - "tests/validation/test_ou3_numerical_certificate.py"
+      - "tests/validation/test_ou3_information_certificate.py"
+      - "tests/validation/test_ou3_information_completion.py"
+      - "tests/validation/test_ou3_certificate_completion.py"
+      - "tests/validation/test_ou3_result_determinism.py"
+      - "tools/ou3_exact_replay.py"
+      - "tools/ou3_numerical_certificate.py"
+      - "tools/ou3_information_certificate.py"
+      - "tools/ou3_information_completion.py"
+      - "tools/ou3_certificate_completion.py"
+      - "tools/ou3_validate_enclosure.py"
+      - "tools/ou3_result_contract.py"
+      - "tools/ou_sweep_common.py"
+      - "docs/ou-iii-numerical-certificate.md"
+      - ".github/workflows/ou3-numerical-certificate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-numerical-certificate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  certificate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            g++ make libeigen3-dev python3-numpy unzip
+
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip \
+            --clobber
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Build exact-map and covariance observer
+        run: make -C tests/kalman_ou_iii ou3-information-certificate-sim
+
+      - name: Generate exact maps and covariance on eight noisy seas
+        run: |
+          python3 -u tools/ou3_exact_replay.py \
+            --no-build \
+            --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-information-certificate-sim" \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
+            --diagnostic-log-dir "$GITHUB_WORKSPACE/reports/diagnostics/ou3_numerical_certificate/logs"
+
+      - name: Evaluate source-varying Kalman information certificate
+        run: |
+          python3 -u tools/ou3_information_certificate.py \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+
+      - name: Complete executed information-metric funnel accounting
+        run: |
+          python3 -u tools/ou3_information_completion.py \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
+            --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii"
+
+      - name: Validate deterministic scientific result payloads
+        run: |
+          python3 tools/ou3_result_contract.py \
+            "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+
+      - name: Upload scientific certificate results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-numerical-certificate
+          path: reports/results/ou3_numerical_certificate/**
+          if-no-files-found: warn
+
+      - name: Upload diagnostic logs separately
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-numerical-certificate-diagnostics
+          path: reports/diagnostics/ou3_numerical_certificate/**
+          if-no-files-found: warn

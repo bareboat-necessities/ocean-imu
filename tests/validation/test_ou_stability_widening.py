@@ -80,10 +80,10 @@ class OUIIIStabilityWideningContractTests(unittest.TestCase):
             r"\label{thm:widen-large-angle-dissipation}",
         ):
             self.assertIn(marker, proof)
-        flat = _flat(proof)
+        flat = _flat(proof).casefold()
         self.assertIn("exact for arbitrary finite", flat)
         self.assertIn("no common-radius or componentwise radius relaxation", flat)
-        self.assertIn("no global MEKF claim", flat)
+        self.assertIn("no global mekf claim", flat)
 
         src = _read(SRC / "Kalman3D_Wave_OU_III.h")
         common = _read(COMMON / "KalmanOUCoreMath.h")

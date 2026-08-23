@@ -137,7 +137,7 @@ post-jump flow must satisfy Eq.~\eqref{eq:hybrid-jump-entry}.
 For repeated re-locks, the cooldown supplies the dwell time in
 Eq.~\eqref{eq:hybrid-tilt-dwell}.  When the jump amplification and shortest
 admissible Live flow satisfy
-Eq.~\eqref{eq:hybrid-cooldown-capture-condition},
+Eq.~\eqref{eq:widen-hybrid-mu},
 Theorem~\ref{thm:hybrid-live-recovery} gives a practical exponential bound on
 the reset-to-reset sequence rather than requiring complete recovery before each
 possible reset.

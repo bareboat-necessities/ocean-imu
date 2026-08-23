@@ -47,6 +47,7 @@ class OUIIISourcePathStabilityWideningContractTests(unittest.TestCase):
     def test_path_metric_is_primary_linear_certificate(self):
         proof = _read(DOC / "w3d-stability-widening-source-path.tex-part")
         for marker in (
+            r"\label{eq:widen-path-Pbar}",
             r"\label{eq:widen-path-P-bounds}",
             r"\label{eq:widen-path-lmi}",
             r"\label{thm:widen-path-ues}",
@@ -59,6 +60,15 @@ class OUIIISourcePathStabilityWideningContractTests(unittest.TestCase):
         self.assertNotIn(r"\kappa_{N,m}^{\rm src}", proof)
         self.assertNotIn("special choice", flat)
         self.assertNotIn("fallback", flat.casefold())
+
+    def test_linear_metric_is_local_quadratic_of_group_metric(self):
+        proof = _read(DOC / "w3d-stability-widening-source-path.tex-part")
+        flat = _flat(proof)
+        self.assertIn(r"\frac{a_{R,i}}{2}\mat I_3", proof)
+        self.assertIn(r"\mat P_{\xi,i}", proof)
+        self.assertIn("precisely the local quadratic of the exact group metric", flat)
+        self.assertIn("no attitude--linear cross term", flat)
+        self.assertIn("Using the same $a_{R,i}$ and $\\mat P_{\\xi,i}$", flat)
 
     def test_nonlinear_metric_uses_group_energy_and_exact_words(self):
         proof = _read(DOC / "w3d-stability-widening-source-path.tex-part")
