@@ -24,6 +24,11 @@ CURRENT_CHANNEL_CAPTION = (
 PUBLICATION_NAME = "ou_validation_publication.tex"
 MANIFEST_NAME = "ou_validation_manifest.json"
 SUMMARY_NAME = "ou_validation_summary.csv"
+VALIDATION_ARTICLE_SVGS = (
+    "ou_validation_vertical.svg",
+    "ou_validation_displacement.svg",
+    "ou_validation_attitude.svg",
+)
 ROBUSTNESS_PUBLICATION_NAME = "ou_robustness_publication.tex"
 ROBUSTNESS_MACROS_NAME = "ou_robustness_macros.tex"
 ROBUSTNESS_STRESS_SVG = "ou_robustness_stress.svg"
@@ -210,6 +215,13 @@ def sync_validation_doc_copy(validation_dir: Path, doc_dir: Path) -> bool:
     if not publication.is_file() or publication.read_text(encoding="utf-8") != desired:
         publication.write_text(desired, encoding="utf-8")
         changed = True
+    for name in VALIDATION_ARTICLE_SVGS:
+        source_svg = validation_dir / name
+        target_svg = doc_dir / name
+        svg = source_svg.read_bytes()
+        if not target_svg.is_file() or target_svg.read_bytes() != svg:
+            target_svg.write_bytes(svg)
+            changed = True
     retired = doc_dir / "ou_validation_transition.svg"
     if retired.exists():
         retired.unlink()
