@@ -23,6 +23,7 @@ build:
 		test_ou3_information_certificate.py \
 		test_ou3_information_completion.py \
 		test_ou3_certificate_completion.py \
+		test_ou3_result_determinism.py \
 		test_ou_article_ablations.py \
 		test_ou_legacy_law_cleanup.py \
 		test_ou_evidence_contract.py \
