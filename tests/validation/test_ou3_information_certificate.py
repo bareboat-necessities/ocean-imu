@@ -58,12 +58,52 @@ class Ou3InformationCertificateTests(unittest.TestCase):
                 1.0 - lam, inc["omega_relative_lambda_min"], places=10
             )
 
+    def test_whitened_identity_survives_float32_ill_conditioning(self):
+        # Regression for the real eight-sea failure mode: map/covariance files
+        # are float32 while the physical covariance spans many orders of
+        # magnitude.  Algebraically equivalent unwhitened calculations can
+        # disagree by more than the certificate tolerance solely from roundoff.
+        A = np.array([
+            [1.0652581453323364, 0.08096306771039963],
+            [-0.09136798977851868, 0.915435791015625],
+        ])
+        P0 = np.array([
+            [4.122969627380371, -1.9218671321868896],
+            [-1.9218671321868896, 0.8958526849746704],
+        ])
+        P1 = np.array([
+            [4.353841304779053, -2.1952455043792725],
+            [-2.1952455043792725, 1.1068623065948486],
+        ])
+        self.assertGreater(np.linalg.cond(P1), 1.0e9)
+
+        lam = INFO.information_lambda(A, P0, P1)
+        inc = INFO.covariance_increment_margin(A, P0, P1)
+        stable_residual = INFO.information_identity_residual(lam, inc)
+        self.assertLess(stable_residual, 1.0e-10)
+
+        # Reproduce the legacy two-path calculation to prove this is a
+        # numerical-formulation regression, not a relaxed scientific gate.
+        S0, _, _ = INFO._spd_sqrt(P0)
+        X = np.linalg.solve(P1, A @ S0)
+        B = (A @ S0).T @ X
+        legacy_lam = float(np.max(np.linalg.eigvalsh(0.5 * (B + B.T))))
+        Omega = P1 - A @ P0 @ A.T
+        Omega = 0.5 * (Omega + Omega.T)
+        S1, _, _ = INFO._spd_sqrt(P1)
+        invS1 = np.linalg.inv(S1)
+        rel = invS1 @ Omega @ invS1
+        legacy_min = float(np.min(np.linalg.eigvalsh(0.5 * (rel + rel.T))))
+        legacy_residual = abs((1.0 - legacy_lam) - legacy_min)
+        self.assertGreater(legacy_residual, INFO.IDENTITY_ABS_TOL)
+
     def test_tool_uses_estimator_covariance_not_truth_error_covariance(self):
         text = (TOOLS / "ou3_information_certificate.py").read_text()
         compact = text.replace("_", "").replace(" ", "")
         self.assertIn("Sigma_KF", text)
         self.assertIn("Omega=Sigma1-PhiSigma0Phi^T", compact)
         self.assertIn("relative_Riccati_injection_margin_worst", text)
+        self.assertIn("np.eye(C.shape[0]) - C @ C.T", text)
         self.assertNotIn("metric_from_samples", text)
         self.assertNotIn("X.T@X", text)
 
