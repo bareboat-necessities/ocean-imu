@@ -1,0 +1,21 @@
+% Publication excerpt of the committed OU--III degradation cases.
+
+\begin{table*}[t]
+  \centering
+  \caption{OU--III degradation cases over the long scoring window (mean $\pm$ sample standard deviation, $n=\OURobustnessPairs$ paired seed triplets). Transition rows are normalized by the final $H_s=4.0$ m sea.}
+  \label{tab:ou_robustness_stress}
+  \footnotesize
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}llrrrr@{}}
+    \toprule
+    Case & Mode & Z [m] & Z [\%$H_s$] & 3D [m] & Pitch [$^\circ$] \\
+    \midrule
+    Low motion, $H_s=0.27$ m & Adaptive & 0.013 $\pm$ 0.000 & 4.96 $\pm$ 0.15 & 0.028 $\pm$ 0.001 & 0.27 $\pm$ 0.11 \\
+    Low motion, $H_s=0.05$ m & Adaptive & 0.008 $\pm$ 0.000 & 16.98 $\pm$ 0.76 & 0.021 $\pm$ 0.001 & 0.32 $\pm$ 0.19 \\
+    Controlled 120 s ramp & Adaptive & 0.185 $\pm$ 0.004 & 4.63 $\pm$ 0.11 & 0.484 $\pm$ 0.024 & 0.26 $\pm$ 0.12 \\
+    Controlled 120 s ramp & FixedNominal & 0.426 $\pm$ 0.025 & 10.66 $\pm$ 0.62 & 0.848 $\pm$ 0.045 & 0.27 $\pm$ 0.11 \\
+    Rapid 30 s ramp & Adaptive & 0.192 $\pm$ 0.009 & 4.79 $\pm$ 0.23 & 0.494 $\pm$ 0.020 & 0.26 $\pm$ 0.12 \\
+    Rapid 30 s ramp & FixedNominal & 0.433 $\pm$ 0.024 & 10.82 $\pm$ 0.59 & 0.859 $\pm$ 0.044 & 0.27 $\pm$ 0.11 \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
