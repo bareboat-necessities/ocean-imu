@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """Content fingerprint for deciding whether OU simulator evidence must be replayed.
 
-The gate is deliberately conservative.  It hashes every tracked C/C++ source or
-header, Python or shell script, YAML workflow/configuration file, make fragment,
-Makefile/CMakeLists/Dockerfile, and every tracked file whose Git mode is
-executable.  It also hashes the exact downloaded simulation-data ZIP.
+The gate is deliberately conservative. It hashes every tracked source/script,
+build/workflow file, and every tracked file whose Git mode is executable. It
+also hashes the exact downloaded simulation-data ZIP.
 
-The fingerprint is intentionally independent of the enclosing Git commit SHA and
-of generated evidence.  A documentation/evidence-only commit therefore does not
-invalidate a scientifically identical replay, while any change to executable or
-build/workflow content does.
+This is intentionally broader than the simulator dependency closure. False
+positive full replays are acceptable; reusing evidence after a potentially
+replay-affecting repository change is not.
+
+The fingerprint is independent of the enclosing Git commit SHA and of generated
+evidence. A documentation/evidence-only commit therefore does not invalidate a
+scientifically identical replay.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -26,22 +27,32 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = 1
 ALGORITHM = "sha256-framed-v1"
 
+# Deliberately broad. Do not replace this with include/reachability analysis:
+# the replay gate is designed to fail toward unnecessary recomputation rather
+# than toward accidental reuse of stale evidence.
 SOURCE_SUFFIXES = {
-    ".c",
-    ".cc",
-    ".cpp",
-    ".cxx",
-    ".h",
-    ".hh",
-    ".hpp",
-    ".hxx",
-    ".py",
-    ".sh",
-    ".yml",
-    ".yaml",
-    ".mk",
+    # C/C++/Objective-C/Arduino/assembly and source fragments.
+    ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
+    ".m", ".mm", ".ino", ".s", ".asm", ".ipp", ".tpp", ".inc",
+    # Scripts and executable-language sources.
+    ".py", ".sh", ".bash", ".zsh", ".fish", ".pl", ".rb", ".lua",
+    ".js", ".mjs", ".cjs", ".ts", ".mts", ".cts", ".java", ".kt",
+    ".kts", ".rs", ".go", ".swift",
+    # Workflow/build configuration that can change how executable code runs.
+    ".yml", ".yaml", ".mk", ".cmake", ".ac", ".am",
 }
-SOURCE_BASENAMES = {"Makefile", "CMakeLists.txt", "Dockerfile"}
+SOURCE_BASENAMES = {
+    "Makefile",
+    "CMakeLists.txt",
+    "Dockerfile",
+    "meson.build",
+    "meson_options.txt",
+    "BUILD",
+    "BUILD.bazel",
+    "WORKSPACE",
+    "WORKSPACE.bazel",
+    "MODULE.bazel",
+}
 
 
 def sha256_file(path: Path) -> str:
@@ -93,7 +104,7 @@ def replay_source_entries() -> list[tuple[str, str]]:
     )
 
 
-def _frame(digest: "hashlib._Hash", *parts: bytes) -> None:
+def _frame(digest, *parts: bytes) -> None:
     for part in parts:
         digest.update(len(part).to_bytes(8, "big"))
         digest.update(part)
