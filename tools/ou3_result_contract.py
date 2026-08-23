@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reject ephemeral provenance and noncanonical JSON in OU-III result artifacts."""
+"""Reject ephemeral provenance and noncanonical OU-III scientific results."""
 from __future__ import annotations
 
 import argparse
@@ -64,14 +64,22 @@ def main() -> int:
         raise SystemExit(f"no JSON result files found under {root}")
 
     failures: list[str] = []
+    # Raw stdout/stderr diagnostics can contain absolute workspaces, runner
+    # identity and other execution-environment text. They are useful artifacts,
+    # but must live outside reports/results so scientific result fingerprints do
+    # not depend on where/when the computation ran.
+    raw_logs = sorted(root.rglob("*.log"))
+    if raw_logs:
+        failures.extend(f"{path}: raw diagnostic log inside scientific result tree" for path in raw_logs)
+
     for path in paths:
         failures.extend(validate_json(path))
     if failures:
-        print("OU-III result JSON determinism contract: FAIL")
+        print("OU-III scientific-result determinism contract: FAIL")
         for failure in failures:
             print(f"- {failure}")
         return 2
-    print(f"OU-III result JSON determinism contract: PASS ({len(paths)} JSON files)")
+    print(f"OU-III scientific-result determinism contract: PASS ({len(paths)} JSON files; no raw logs)")
     return 0
 
 
