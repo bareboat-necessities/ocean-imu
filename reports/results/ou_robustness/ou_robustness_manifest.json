@@ -1,8 +1,8 @@
 {
   "analysis_pipeline_files": {
     "tools/ou_robustness.py": {
-      "bytes": 53916,
-      "sha256": "b00dd5e91efb522ee9ce3ab69fada59c507c88275a6ec2de85988898ad594886"
+      "bytes": 12622,
+      "sha256": "701f364783aa98565585cfee7b272af4ef518f196f165604465e07f84fc82ef9"
     },
     "tools/ou_validation.py": {
       "bytes": 159028,
@@ -42,8 +42,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "6c84f1358264e5e01380fa04b759e0bb519aacff",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 32900 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |    14 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1396 +-\n .../ou_robustness/ou_robustness_publication.tex    |     8 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   584 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1144 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   104 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1676 +-\n 8 files changed, 18882 insertions(+), 18944 deletions(-)",
+  "git_commit": "76ac90c6e3469b3a7b3a83a247fd2f33e45f7dd2",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 9326 ++++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |   12 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  448 +-\n .../ou_robustness/ou_robustness_publication.tex    |   12 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |  160 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    | 1945 ++--\n .../ou_robustness/ou_robustness_summary.csv        |  448 +-\n 7 files changed, 6212 insertions(+), 6139 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -154,8 +154,8 @@
       "sha256": "d25550d481c3062100a9a136e3df06e3740c39af4aa5459425c7fd212edfd5a7"
     },
     "tests/kalman_ou_iii/Makefile": {
-      "bytes": 3041,
-      "sha256": "d18838eb8c009408292fba8dcd09d94f97a13d01d743a9dce96ed30bb59b31eb"
+      "bytes": 809,
+      "sha256": "4dcf49d7fb2376987501a4374d1b064920830735c9038422fc92322ef97be39b"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
       "bytes": 54667,
@@ -285,8 +285,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-22T14:42:12+00:00",
-    "git_commit": "6c84f1358264e5e01380fa04b759e0bb519aacff",
+    "generated_at": "2026-08-23T17:49:17+00:00",
+    "git_commit": "76ac90c6e3469b3a7b3a83a247fd2f33e45f7dd2",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -397,8 +397,8 @@
         "size_bytes": 2717
       },
       "tests/kalman_ou_iii/Makefile": {
-        "sha256": "d18838eb8c009408292fba8dcd09d94f97a13d01d743a9dce96ed30bb59b31eb",
-        "size_bytes": 3041
+        "sha256": "4dcf49d7fb2376987501a4374d1b064920830735c9038422fc92322ef97be39b",
+        "size_bytes": 809
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
         "sha256": "15abc615849332d39dc79760b5a042f85279e4ab52207d5dbee5a4707067b811",
@@ -417,50 +417,54 @@
       "plots/kalman_ou_ii/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
         "sha256": "f0be2c41464e4a5a0924bab652549d38ffc6bec55406156b7b4a0ef72ce490d4",
         "size_bytes": 49106162
+      },
+      "tools/ou_robustness_core.py": {
+        "sha256": "b00dd5e91efb522ee9ce3ab69fada59c507c88275a6ec2de85988898ad594886",
+        "size_bytes": 53916
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "b1aad2ca9915a441cca3cb69b67a96c024e02b3faeb21cc2286afd5cdcad64a4",
-    "raw_rows_size_bytes": 195022,
+    "raw_rows_sha256": "ae7a17bc1e3e8570aa808e8aaf44f82e5c613beb05802585d34686b29ea396c2",
+    "raw_rows_size_bytes": 195042,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "32578047147",
+      "run_id": "32654478920",
       "workflow": "build"
     }
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1401497,
-      "sha256": "2dc29c10bec9b05c94e4c9aed65b7e8f5817783b83ce1ef1bd676e6e612aca50"
+      "bytes": 1401466,
+      "sha256": "e22afa183e4a88b50ebb20dddf530693d1345bd20f344c61ab131d370cd77c46"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
-      "sha256": "9500493d6152e218966903eb5c08b6fb64d9ffe5a520dadd7e6f8fced903d1e2"
+      "sha256": "148fca5d6d27ab8958c191ec8c82ae7c6523e3d180b507a7f4bdaea1f12f07b2"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 143720,
-      "sha256": "8454e2f16f9b5b2b8057b73f405cffcd04d686d0d08df0b7f1b2c56f92370379"
+      "bytes": 143760,
+      "sha256": "5d49d8c2bb318576a2ebedc099e77f85494dc0ecbaa2ec9dcac25b861abd82d2"
     },
     "ou_robustness_publication.tex": {
-      "bytes": 2738,
-      "sha256": "03a4fe6371c7a12638d5d3d175b784f965848156f574905dc33485acc4b31d90"
+      "bytes": 2903,
+      "sha256": "15607d10b7883467748018e9a66d320fd60e7984c4a821407290c21fdcbeff75"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 195022,
-      "sha256": "b1aad2ca9915a441cca3cb69b67a96c024e02b3faeb21cc2286afd5cdcad64a4"
+      "bytes": 195042,
+      "sha256": "ae7a17bc1e3e8570aa808e8aaf44f82e5c613beb05802585d34686b29ea396c2"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 112590,
-      "sha256": "eac0b57c1081a9f4548aff917dc12c7fb5dcff3792a2afb5f9b63446012f8400"
+      "bytes": 115821,
+      "sha256": "fd77dcb6a653ee6096d7b327dc720ed06bc8c025118f659725a0aa5700533f7e"
     },
     "ou_robustness_stress.svg": {
       "bytes": 44844,
       "sha256": "28e0e9b78406c8892ac4987973cf78909f3aa0cd2976f324d5a8c6db567545c4"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126546,
-      "sha256": "fc3c26c84849c133a5fe86717da2dd0a5db04bce2e2737e8a277ed6a82c24dd4"
+      "bytes": 126455,
+      "sha256": "0d24f1be1a2be8270b5c0d7ef9934a7906264aec05ad08e09f2a1f45da943cc1"
     }
   },
   "schema_version": 2,
@@ -476,6 +480,10 @@
     "plots/kalman_ou_ii/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
       "bytes": 49106162,
       "sha256": "f0be2c41464e4a5a0924bab652549d38ffc6bec55406156b7b4a0ef72ce490d4"
+    },
+    "tools/ou_robustness_core.py": {
+      "bytes": 53916,
+      "sha256": "b00dd5e91efb522ee9ce3ab69fada59c507c88275a6ec2de85988898ad594886"
     }
   }
 }

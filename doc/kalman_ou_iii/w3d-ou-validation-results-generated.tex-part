@@ -61,6 +61,7 @@
   \end{tabular}
 \end{table*}
 
+
 \begin{table*}[t]
   \centering
   \caption{Absolute per-axis and three-dimensional displacement RMS error over the final \SI{900}{s} (Adaptive mode, mean in metres, $n=10$ paired seed triplets). $\Delta$ is OU--III minus OU--II with its paired bootstrap 95\% interval; positive $\Delta$ favors OU--II.}
@@ -81,6 +82,7 @@
     \bottomrule
   \end{tabular}
 \end{table*}
+
 
 \begin{table*}[t]
   \centering
@@ -104,6 +106,7 @@
   \end{tabular}
 \end{table*}
 
+
 \begin{table*}[t]
   \centering
   \caption{Controlled transition scored by interval rather than as one window (Adaptive mode, mean over $n=10$ seed triplets). $Z_{\mathrm{ref}}$ is the RMS of the reference vertical displacement in the same interval, so $Z/Z_{\mathrm{ref}}$ is a scale-free normalization that remains meaningful while the sea state changes; $Z/H_s^{\mathrm{end}}$ is the whole-window convention normalized by the final $H_s=\SI{4.0}{m}$ and is reported for continuity only. The window opens in the \SI{1.5}{m} start sea, so the two normalizations disagree by construction. The endpoint sea is split at one crossfade length past the blend: the run-on interval is where a schedule that averages too long is still carrying the start sea, and the settled interval is the endpoint sea proper.}
@@ -125,6 +128,7 @@
   \end{tabular}
 \end{table*}
 
+
 \begin{table*}[t]
   \centering
   \caption{Ten-seed paired OU-family comparison on the PM--Stokes seas, scored over the same final \SI{900}{s} window and the same seed triplets as the JONSWAP ensemble. PM--Stokes carries third-order bound harmonics that JONSWAP does not, so it is reported as a separate declared ensemble and is not pooled into the primary aggregate.}
@@ -142,6 +146,7 @@
     \bottomrule
   \end{tabular}
 \end{table*}
+
 
 \begin{table*}[t]
   \centering
@@ -164,3 +169,4 @@
     \bottomrule
   \end{tabular}
 \end{table*}
+
