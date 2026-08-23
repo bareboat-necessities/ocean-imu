@@ -12,7 +12,7 @@ class OUIIITunerChartSemanticTests(unittest.TestCase):
         self.assertIn("Applied-equivalent wave frequency", text)
         self.assertIn("1.0 / (2.0 * tau_for_plot)", text)
         self.assertIn("deliberately not named", text)
-        self.assertNotIn('new_panel = \'        ("wave_tuning_freq_hz", "Applied wave-band frequency (Hz)"),\'', text)
+        self.assertNotIn("Applied wave-band frequency (Hz)", text)
 
     def test_acceleration_and_ou_sigma_are_distinguished(self):
         text = DRAW.read_text(encoding="utf-8")
@@ -23,7 +23,7 @@ class OUIIITunerChartSemanticTests(unittest.TestCase):
         text = DRAW.read_text(encoding="utf-8")
         self.assertIn(r"$r_S$ applied", text)
         self.assertIn("R_p0_applied is a legacy shared-harness column name", text)
-        self.assertNotIn(r'new_regularizer_panel = \'        ("p0_combo",        r"$R_{p0}$', text)
+        self.assertNotIn(r"$R_{p0}$ / $p_{0,S}$ applied", text)
 
 
 if __name__ == "__main__":
