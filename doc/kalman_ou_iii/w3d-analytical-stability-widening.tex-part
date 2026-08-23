@@ -1,26 +1,21 @@
-\section{Analytical Widening of the Stability Certificate}
+\section{Analytical Foundations for the Source-Reachable Stability Certificate}
 \label{sec:stability-widening}
 
-The preceding results deliberately state the weakest source-faithful hypotheses
-needed for the implemented filter.  This section develops stronger sufficient
-conditions that replace several trajectory-by-trajectory certificate
-obligations by analytical conditions on physical geometry, update gaps, and
-bounded parameter envelopes.  These results do not change the estimator or its
-tuning law.  They widen the class of source-realizable trajectories for which
-the existing Live, startup, and hybrid stability theorems can be invoked.
+The base Live analysis states source-faithful information and boundedness
+conditions for the implemented filter.  This section converts the deployed
+marine-motion geometry into explicit sufficient observability and covariance
+conditions and shows that the linear homogeneous error remains uniformly
+exponentially stable throughout a bounded adaptation envelope.  These results
+are analytical foundations for the source-reachable path certificate used below;
+they are not a second quantitative basin construction and they do not change the
+estimator or its tuning law.
 
-\subsection{Phase A: analytical vector observability and adaptation-independent Live UES}
+\subsection{Analytical vector observability and adaptation-independent Live UES}
 \label{sec:stability-widening-phase-a}
 
-The finite-window conditions in Eqs.~\eqref{eq:iss-eta-pe} and
-\eqref{eq:iss-eta6-pe} remain the most general route because they allow arbitrary
-maneuvers and asynchronous accepted measurements.  For the marine-motion
-regime, however, a more explicit sufficient condition can be obtained from two
-well-separated specific-force--magnetic vector packets.  The construction below
-is conservative by design: it trades general PE for quantities that can be
-bounded from sensor geometry and source timing.
-
-For a nonzero body vector $\vct u$, let
+For the deployed marine-motion regime, attitude and gyro-bias information can be
+bounded directly from accepted specific-force and magnetic vector packets.  For
+a nonzero body vector $\vct u$, let
 $\mat J(\vct u):=[\vct u]_\times^\top[\vct u]_\times$.
 Suppose an accepted accelerometer--magnetometer packet, after transporting the
 two rows to a common packet time with the known nominal attitude transition,
@@ -56,28 +51,28 @@ information bounded below by
 \begin{proof}
 Write $\vct u=\vct f/\|\vct f\|$ and
 $\vct v=\vct m/\|\vct m\|$.  Since
-$[\vct u]_\times^\top[\vct u]_\times=\mat I-\vct u\vct u^\top$,
-the packet matrix is bounded below by
+$[\vct u]_\times^\top[\vct u]_\times=\mat I-\vct u\vct u^\top$, the packet
+matrix is bounded below by
 \begin{equation}
  \min\{a_f,a_m\}
  \left(2\mat I-\vct u\vct u^\top-\vct v\vct v^\top\right).
 \end{equation}
 The eigenvalues of the matrix in parentheses are
-$2$, $1+|\vct u^\top\vct v|$, and
-$1-|\vct u^\top\vct v|$.  Equation~\eqref{eq:widen-vector-packet} gives
-$|\vct u^\top\vct v|\le\sqrt{1-s_{fm}^2}$, which proves the claim.
+$2$, $1+|\vct u^\top\vct v|$, and $1-|\vct u^\top\vct v|$.
+Equation~\eqref{eq:widen-vector-packet} gives
+$|\vct u^\top\vct v|\le\sqrt{1-s_{fm}^2}$, proving the claim.
 \end{proof}
 
-To expose gyro bias, consider two such packets separated by
+To expose gyro bias, consider two accepted packets separated by
 $\Delta_g\in[\Delta_{g,-},\Delta_{g,+}]$.  In transported local coordinates the
-homogeneous attitude/gyro-bias error over the separation has the source-consistent
-left-multiplicative form
+homogeneous attitude/gyro-bias error has the source-consistent form
 \begin{equation}
  \delta\vct\theta_1
  =\mat\Phi_\theta\delta\vct\theta_0
   +\mat\Gamma_g\delta\vct b_g,
  \qquad
- \mat\Gamma_g:=\int_0^{\Delta_g}\mat\Phi_\theta(\Delta_g,s)\,ds,
+ \mat\Gamma_g:=\int_0^{\Delta_g}
+ \mat\Phi_\theta(\Delta_g,s)\,ds,
  \label{eq:widen-bg-transition}
 \end{equation}
 where $\mat\Phi_\theta$ is orthogonal for the skew-symmetric nominal rotation
@@ -88,7 +83,7 @@ packet interval, then
  \le \frac12\bar\omega\Delta_g^2.
  \label{eq:widen-gamma-perturbation}
 \end{equation}
-Consequently, whenever $\bar\omega\Delta_{g,+}<2$,
+Consequently, when $\bar\omega\Delta_{g,+}<2$,
 \begin{equation}
  \sigma_{\min}(\mat\Gamma_g)
  \ge g_-:=\Delta_{g,-}
@@ -96,9 +91,8 @@ Consequently, whenever $\bar\omega\Delta_{g,+}<2$,
  \label{eq:widen-gamma-lower}
 \end{equation}
 
-Because attitude error and gyro-bias error have different physical units, state
-the explicit singular-value bound in a fixed dimensionless proof coordinate.
-Choose any declared time scale $T_{bg}>0$ and let
+Because attitude and gyro-bias errors have different units, introduce a fixed
+time scale $T_{bg}>0$ and define
 \begin{equation}
  \widetilde{\vct b}_g:=T_{bg}\delta\vct b_g,
  \qquad
@@ -107,32 +101,28 @@ Choose any declared time scale $T_{bg}>0$ and let
  \gamma_-:=g_-/T_{bg}>0.
  \label{eq:widen-bg-scaling}
 \end{equation}
-This is only a constant change of norm; UCO and UES are invariant under it, and
-the corresponding constants in the original physical coordinates follow by
-fixed norm equivalence.
+This is a fixed norm change and does not alter observability or UES.
 
 \begin{lemma}[Two-packet attitude/gyro-bias observability]
 \label{lem:widen-two-packet-bg}
 If every proof window contains two accepted packets satisfying
 Eqs.~\eqref{eq:widen-vector-packet}--\eqref{eq:widen-bg-scaling}, then the
 held-bias attitude/gyro-bias Gramian in the dimensionless coordinate
-$(\delta\theta,\widetilde b_g)$ has the explicit admissible lower bound
+$(\delta\theta,\widetilde b_g)$ has the explicit lower bound
 \begin{equation}
  \boxed{
  \alpha_6^{\rm an}:=
  \frac{\mu_\theta}{1+2/\gamma_-^2}>0.}
  \label{eq:widen-alpha6}
 \end{equation}
-A finite upper bound $\beta_6^{\rm an}$ follows from the compact vector,
-rate, covariance, window, and fixed scaling bounds.  By norm equivalence this
-implies Eq.~\eqref{eq:iss-eta6-pe} in any other fixed state scaling.
+A finite upper bound $\beta_6^{\rm an}$ follows from the compact vector, rate,
+covariance, window, and scaling bounds.
 \end{lemma}
 
 \begin{proof}
 After whitening each packet by its information square root,
-Lemma~\ref{lem:widen-vector-coercivity} allows the two packet outputs to be
-bounded below by $\sqrt{\mu_\theta}$ times the dimensionless triangular
-observation map
+Lemma~\ref{lem:widen-vector-coercivity} bounds the two packet outputs below by
+$\sqrt{\mu_\theta}$ times
 \begin{equation}
  \widetilde\mat T_g=
  \begin{bmatrix}
@@ -140,34 +130,26 @@ observation map
   \mat\Phi_\theta&\widetilde\mat\Gamma_g
  \end{bmatrix}.
 \end{equation}
-Given packet outputs $(\vct y_0,\vct y_1)$,
+Given outputs $(\vct y_0,\vct y_1)$,
 $\delta\vct\theta_0=\vct y_0$ and
 $\widetilde\vct b_g=\widetilde\mat\Gamma_g^{-1}
 (\vct y_1-\mat\Phi_\theta\vct y_0)$.  Orthogonality of
 $\mat\Phi_\theta$, Eq.~\eqref{eq:widen-bg-scaling}, and
 $(a+b)^2\le2(a^2+b^2)$ give
-$\|\widetilde\mat T_g^{-1}\|^2\le1+2/\gamma_-^2$.
-Hence
-$\sigma_{\min}^2(\widetilde\mat T_g)\ge
-(1+2/\gamma_-^2)^{-1}$, yielding Eq.~\eqref{eq:widen-alpha6}.
-Boundedness of the same finite stacked operator gives the upper Gramian bound.
+$\|\widetilde\mat T_g^{-1}\|^2\le1+2/\gamma_-^2$, which yields
+Eq.~\eqref{eq:widen-alpha6}.  Boundedness of the same finite stacked operator
+gives the upper Gramian bound.
 \end{proof}
 
-The bound is intentionally a sufficient marine-motion condition, not a
-replacement for the general PE route.  Aggressive maneuvers for which
-$\bar\omega\Delta_{g,+}\ge2$ may still satisfy Eq.~\eqref{eq:iss-eta6-pe}; they
-simply use the original Gramian condition rather than
-Lemma~\ref{lem:widen-two-packet-bg}.  For the active 21-state mode, the deployed
-finite residual-accelerometer-bias correlation time then invokes route (ii) of
-Theorem~\ref{thm:iss-21-ues}.  Thus full nine-state PE is not required for this
-analytical route.  The direct nine-state condition Eq.~\eqref{eq:iss-eta-pe}
-remains available when the accelerometer-bias model is intentionally taken to
-its random-walk limit.
+The deployed active-bias model has finite residual accelerometer-bias
+correlation time.  Therefore exponential contraction of any residual unobserved
+accelerometer-bias direction combines with the attitude/gyro-bias information
+bound above; no additional deployed nine-state excitation condition is added to
+the source certificate.
 
-\subsubsection{Envelope switching rather than tuner-specific slew}
+\subsubsection{Adaptation envelope}
 
-Define the adaptation-envelope family $\Pi^{\rm env}$ as all predictable Live
-parameter and enable-state sequences satisfying
+Define the compact adaptation-envelope family $\Pi^{\rm env}$ by
 \begin{align}
  0<h_-&\le h_k\le h_+,&
  0<\tau_-&\le\tau_k\le\tau_+<\infty,\\
@@ -177,9 +159,9 @@ parameter and enable-state sequences satisfying
  \label{eq:widen-envelope-bounds}
 \end{align}
 with accepted measurement covariances in fixed positive compact intervals and
-usable $S$ firings satisfying Eq.~\eqref{eq:iss-S-gap-bounds}.  No EMA recurrence,
-parameter slew bound, wave-period scaling law, or particular power law is part
-of $\Pi^{\rm env}$.
+usable $S$ firings satisfying Eq.~\eqref{eq:iss-S-gap-bounds}.  No EMA
+recurrence, parameter slew bound, wave-period scaling law, or particular power
+law is part of $\Pi^{\rm env}$.
 
 \begin{lemma}[Translational information is uniform on the envelope]
 \label{lem:widen-envelope-translation}
@@ -188,16 +170,14 @@ remain valid for every sequence in $\Pi^{\rm env}$.
 \end{lemma}
 
 \begin{proof}
-The determinant proof of Lemma~\ref{lem:iss-axis-uco} uses only the bounds on
-$\tau(t)$, the proof-window length, and the lower/upper gaps between selected
-$S$ firings.  It does not use the EMA recurrence or a bound on
-$|\tau_{k+1}-\tau_k|$.  Likewise, the one-axis controllability determinant is
-$-1$ for every finite $\lambda=1/\tau$.  The exact finite-interval process
-Gramian is continuous on the compact set
-$[h_-,h_+]\times[1/\tau_+,1/\tau_-]$ and is positive definite pointwise;
-therefore its minimum eigenvalue has a positive uniform lower bound.  The
-positive process-amplitude floor in Eq.~\eqref{eq:widen-envelope-bounds}
-completes the uniform covariance bound.
+The determinant proof of Lemma~\ref{lem:iss-axis-uco} uses only bounds on
+$\tau(t)$, the proof-window length, and lower/upper gaps between selected $S$
+firings.  The one-axis controllability determinant is $-1$ for every finite
+$\lambda=1/\tau$.  The exact finite-interval process Gramian is continuous and
+positive definite on the compact set
+$[h_-,h_+]\times[1/\tau_+,1/\tau_-]$, so its minimum eigenvalue has a positive
+uniform lower bound.  The positive process-amplitude floor in
+Eq.~\eqref{eq:widen-envelope-bounds} completes the uniform covariance bound.
 \end{proof}
 
 \begin{theorem}[Adaptation-independent full-heading Live UES]
@@ -205,159 +185,32 @@ completes the uniform covariance bound.
 Assume the compact physical geometry and covariance bounds of
 Lemma~\ref{lem:widen-two-packet-bg}, the translational conditions of
 Lemma~\ref{lem:widen-envelope-translation}, no hard attitude rewrite inside a
-normal-Live interval, and a finite bounded residual-accelerometer-bias
-correlation time after bias release.  Then the held 18-state homogeneous error
-transition and the active 21-state homogeneous error transition are UES
-uniformly over every sequence $\pi\in\Pi^{\rm env}$.  In particular, linear
-Live stability does not depend on the adaptation-law exponents, EMA horizons,
-or the rate at which admissible values of $\tau$, $\sigma_{aw}$, and $R_S$
-move inside the certified envelope.
+normal-Live interval, and the deployed finite bounded residual-accelerometer-
+bias correlation time after bias release.  Then the held 18-state and active
+21-state homogeneous error transitions are UES uniformly over the compact
+envelope.  In particular, linear Live stability does not depend on the
+adaptation-law exponents, EMA horizons, or the rate at which admissible values
+of $\tau$, $\sigma_{aw}$, and $R_S$ move inside that envelope.
 \end{theorem}
 
 \begin{proof}
-Lemma~\ref{lem:widen-two-packet-bg} supplies the held/reduced information bound
-with the explicit constant in Eq.~\eqref{eq:widen-alpha6};
-Lemma~\ref{lem:widen-envelope-translation} supplies uniform translational
-observability and process excitation.  The remaining active process channels
-and accepted measurement covariances have the same positive compact bounds as
-in Theorem~\ref{thm:iss-21-ues}.  Therefore the UCO/UCC hypotheses of the
-standard discrete LTV Kalman/Riccati stability result hold uniformly over
-$\Pi^{\rm env}$.  Held accelerometer bias is a bounded input.  After release,
-finite $\tau_b$ gives exponential stability of any residual unobserved
-accelerometer-bias direction, hence uniform detectability.  The conclusion
-follows exactly as in Theorem~\ref{thm:iss-21-ues}, now without invoking the
-source EMA recurrence.
+Lemma~\ref{lem:widen-two-packet-bg} supplies the attitude/gyro-bias information
+bound and Lemma~\ref{lem:widen-envelope-translation} supplies uniform
+translational observability and process excitation.  The remaining active
+process channels and accepted measurement covariances lie in positive compact
+sets.  Standard discrete LTV Kalman/Riccati stability therefore gives uniform
+UES in held mode, with held accelerometer bias acting as a bounded input.  After
+release, finite $\tau_b$ exponentially contracts any residual unobserved
+accelerometer-bias direction and gives uniform detectability for the active
+mode.
 \end{proof}
 
-\begin{remark}[Meaning of Phase A]
+\begin{remark}[Role of the envelope theorem]
 \label{rem:widen-phase-a-meaning}
-The deployed tuner remains source-reachable and is therefore a subset of
-$\Pi^{\rm env}$.  Phase A does not claim that arbitrary unbounded tuning is
-safe.  It shows instead that, inside declared compact parameter and update-gap
-bounds, the adaptation algorithm is a performance mechanism rather than a
-stability-critical feedback law.  The only new physical price paid for the
-explicit observability route is the conservative two-packet vector geometry
-and bounded-turn condition; trajectories outside that sufficient condition may
-still use the original finite-window PE theorem.
-\end{remark}
-
-\subsection{Phase B: finite-window contraction and constructive Lyapunov margins}
-\label{sec:stability-widening-phase-b}
-
-The converse Lyapunov construction of Eq.~\eqref{eq:iss-converse-P} is exact but
-its constants are stated existentially.  Uniformity over the compact envelope
-allows those constants to be reduced to a finite-window contraction bound.
-Let $\widetilde\Psi(k,j)$ denote the homogeneous dimensionless active-error
-transition in either source mode and define
-\begin{equation}
- \bar A:=\sup_{k,\pi\in\Pi^{\rm env}}
- \|\widetilde\mat A_k^{\rm cl}(\pi)\|<\infty.
- \label{eq:widen-Abar}
-\end{equation}
-For a positive integer $N$, define the worst-case $N$-step gain
-\begin{equation}
- \kappa_N:=
- \sup_{k,\pi\in\Pi^{\rm env}}
- \|\widetilde\Psi(k+N,k;\pi)\|.
- \label{eq:widen-kappaN}
-\end{equation}
-The supremum is over a finite product of matrices generated by the compact
-physical and scheduling envelope.  Theorem~\ref{thm:widen-envelope-ues}
-therefore implies that some finite $N$ has $\kappa_N<1$; conversely, any
-verified pair $(N,\kappa_N)$ with $\kappa_N<1$ is already a direct uniform UES
+The envelope theorem establishes structural stability and boundedness independent
+of the particular adaptation law.  Quantitative deployed certification does not
+optimize over arbitrary envelope switching; it is performed only on the
+source-reachable word graph of Sec.~\ref{sec:stability-widening-source-path}.
+Thus the envelope is an analytical hypothesis set, not a parallel basin
 certificate.
-
-\begin{lemma}[Constructive UES constants from an $N$-step contraction]
-\label{lem:widen-constructive-ues}
-Suppose Eq.~\eqref{eq:widen-kappaN} satisfies $0<\kappa_N<1$.  Define
-\begin{equation}
- \rho:=\kappa_N^{1/N},\qquad
- M:=\max_{0\le r<N}\left(\frac{\bar A}{\rho}\right)^r.
- \label{eq:widen-Mrho}
-\end{equation}
-Then, for every $k\ge j$ and every admitted switching sequence,
-\begin{equation}
- \boxed{\|\widetilde\Psi(k,j)\|\le M\rho^{k-j}.}
- \label{eq:widen-constructive-ues}
-\end{equation}
-\end{lemma}
-
-\begin{proof}
-Write $k-j=qN+r$ with $0\le r<N$.  Submultiplicativity gives
-\begin{equation}
- \|\widetilde\Psi(k,j)\|
- \le \bar A^r\kappa_N^q
- =\left(\frac{\bar A}{\rho}\right)^r\rho^{k-j}
- \le M\rho^{k-j}.
-\end{equation}
-\end{proof}
-
-Choose $\mat Q=\mat I$ in the converse Lyapunov series and define
-\begin{equation}
- \mat P_k:=\sum_{j=k}^{\infty}
- \widetilde\Psi(j,k)^\top\widetilde\Psi(j,k).
- \label{eq:widen-P-identity}
-\end{equation}
-
-\begin{theorem}[Explicit converse-Lyapunov bounds]
-\label{thm:widen-explicit-P}
-Under Lemma~\ref{lem:widen-constructive-ues}, the Lyapunov sequence in
-Eq.~\eqref{eq:widen-P-identity} satisfies
-\begin{equation}
- \boxed{
- \mat I\preceq\mat P_k\preceq
- p_+^{\rm an}\mat I,
- \qquad
- p_+^{\rm an}:=\frac{M^2}{1-\rho^2},}
- \label{eq:widen-P-bounds}
-\end{equation}
-and the decrease identity is exact:
-\begin{equation}
- \boxed{
- \widetilde\mat A_k^{{\rm cl}\top}\mat P_{k+1}
- \widetilde\mat A_k^{\rm cl}-\mat P_k=-\mat I.}
- \label{eq:widen-P-decrease}
-\end{equation}
-Thus the constants in Eq.~\eqref{eq:iss-converse-decrease} may be chosen as
-\begin{equation}
- p_-^{\rm an}=1,\qquad
- p_+^{\rm an}=\frac{M^2}{1-\rho^2},\qquad
- q_-^{\rm an}=1.
- \label{eq:widen-pq-constants}
-\end{equation}
-\end{theorem}
-
-\begin{proof}
-The $j=k$ term in Eq.~\eqref{eq:widen-P-identity} is $\mat I$, giving the lower
-bound.  Lemma~\ref{lem:widen-constructive-ues} gives
-\begin{equation}
- \mat P_k\preceq
- \sum_{n=0}^{\infty}M^2\rho^{2n}\mat I
- =\frac{M^2}{1-\rho^2}\mat I.
-\end{equation}
-Shifting the infinite series by one step gives
-Eq.~\eqref{eq:widen-P-decrease} exactly.
-\end{proof}
-
-Substituting Eq.~\eqref{eq:widen-pq-constants} into the nonlinear condition
-Eq.~\eqref{eq:iss-block-basin} produces a directly usable upper bound on the
-structured nonlinear load.  In particular, it is sufficient that
-\begin{equation}
- \boxed{
- \ell_{\mathcal T}<\ell_*:=
- \sqrt{\bar A^2+\frac{1}{2p_+^{\rm an}}}-\bar A.}
- \label{eq:widen-ell-star}
-\end{equation}
-Indeed, Eq.~\eqref{eq:widen-ell-star} is exactly the positive root of
-$p_+^{\rm an}\ell^2+2p_+^{\rm an}\bar A\ell-1/2<0$.
-
-\begin{remark}[Finite rather than trajectory-specific certification]
-\label{rem:widen-finite-certificate}
-Phase B does not require an infinite-horizon simulation to identify
-$p_\pm$ or $q_-$.  The remaining contraction quantity $\kappa_N$ is a
-finite-window supremum over the declared compact matrix family.  It may be
-bounded symbolically, by interval arithmetic, or by another rigorous compact
-optimizer without changing the theorem.  Once a strict $\kappa_N<1$ is
-available, Eqs.~\eqref{eq:widen-Mrho}--\eqref{eq:widen-ell-star} turn it into the
-Lyapunov and nonlinear margins analytically.
 \end{remark}

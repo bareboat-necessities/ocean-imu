@@ -31,7 +31,7 @@ class OUIIIStabilityWideningContractTests(unittest.TestCase):
         ):
             self.assertIn(include, main)
 
-    def test_phase_a_has_explicit_vector_information_bound(self):
+    def test_analytical_foundation_has_explicit_vector_information_bound(self):
         proof = _read(DOC / "w3d-analytical-stability-widening.tex-part")
         for marker in (
             r"\label{eq:widen-vector-packet}",
@@ -45,13 +45,7 @@ class OUIIIStabilityWideningContractTests(unittest.TestCase):
         self.assertIn(r"1-\sqrt{1-s_{fm}^2}", proof)
         self.assertIn(r"\alpha_6^{\rm an}", proof)
 
-    def test_phase_a_keeps_general_pe_as_fallback(self):
-        proof = _flat(_read(DOC / "w3d-analytical-stability-widening.tex-part"))
-        self.assertIn("not a replacement for the general PE route", proof)
-        self.assertIn("original Gramian condition", proof)
-        self.assertIn("random-walk limit", proof)
-
-    def test_phase_a_envelope_does_not_depend_on_adaptation_law(self):
+    def test_envelope_is_structural_not_a_second_quantitative_certificate(self):
         proof = _read(DOC / "w3d-analytical-stability-widening.tex-part")
         flat = _flat(proof)
         for marker in (
@@ -63,46 +57,33 @@ class OUIIIStabilityWideningContractTests(unittest.TestCase):
             self.assertIn(marker, proof)
         self.assertIn("No EMA recurrence", flat)
         self.assertIn("does not depend on the adaptation-law exponents", flat)
-        self.assertIn("performance mechanism rather than a stability-critical feedback law", flat)
-
-    def test_phase_b_constructs_ues_and_lyapunov_constants(self):
-        proof = _read(DOC / "w3d-analytical-stability-widening.tex-part")
-        for marker in (
+        self.assertIn("not a parallel basin certificate", flat)
+        for retired in (
             r"\label{eq:widen-kappaN}",
             r"\label{lem:widen-constructive-ues}",
             r"\label{eq:widen-Mrho}",
             r"\label{thm:widen-explicit-P}",
-            r"\label{eq:widen-P-bounds}",
-            r"\label{eq:widen-P-decrease}",
-            r"\label{eq:widen-pq-constants}",
             r"\label{eq:widen-ell-star}",
         ):
-            self.assertIn(marker, proof)
-        self.assertIn(r"p_-^{\rm an}=1", proof)
-        self.assertIn(r"q_-^{\rm an}=1", proof)
-        self.assertIn(r"\frac{M^2}{1-\rho^2}", proof)
+            self.assertNotIn(retired, proof)
+        self.assertNotIn("fallback", flat.casefold())
 
-    def test_phase_b_keeps_contraction_obligation_finite_and_explicit(self):
-        flat = _flat(_read(DOC / "w3d-analytical-stability-widening.tex-part"))
-        self.assertIn("finite-window supremum", flat)
-        self.assertIn("does not require an infinite-horizon simulation", flat)
-        self.assertIn("without changing the theorem", flat)
-
-    def test_phase_c_has_anisotropic_basin_and_source_reset_geometry(self):
+    def test_phase_c_uses_exact_large_angle_group_dissipation(self):
         proof = _read(DOC / "w3d-stability-widening-phase-c.tex-part")
         for marker in (
-            r"\label{eq:widen-cylinder-split}",
-            r"\label{eq:widen-injection-gains}",
-            r"\label{eq:widen-S-peak-gain}",
-            r"\label{thm:widen-cylinder-iss}",
-            r"\label{eq:widen-reset-G-bound}",
             r"\label{eq:widen-SO3-energy}",
-            r"\label{thm:widen-group-correction}",
+            r"\label{eq:widen-exact-source-correction}",
+            r"\label{eq:widen-exact-injection}",
+            r"\label{eq:widen-exact-energy-change}",
+            r"\label{eq:widen-reset-G-bound}",
+            r"\label{eq:widen-large-angle-sector}",
+            r"\label{thm:widen-large-angle-dissipation}",
         ):
             self.assertIn(marker, proof)
         flat = _flat(proof)
-        self.assertIn("not an honest global claim", flat)
-        self.assertIn("no artificial singularity", flat)
+        self.assertIn("exact for arbitrary finite", flat)
+        self.assertIn("no common-radius or componentwise radius relaxation", flat)
+        self.assertIn("no global MEKF claim", flat)
 
         src = _read(SRC / "Kalman3D_Wave_OU_III.h")
         common = _read(COMMON / "KalmanOUCoreMath.h")
@@ -126,7 +107,7 @@ class OUIIIStabilityWideningContractTests(unittest.TestCase):
         src = _read(SRC / "Kalman3D_Wave_OU_III.h")
         self.assertIn("qref = quaternion_from_acc(acc_n);", src)
 
-    def test_phase_e_closes_hybrid_and_model_mismatch_routes_analytically(self):
+    def test_phase_e_uses_same_funnel_for_hybrid_and_model_mismatch(self):
         proof = _read(DOC / "w3d-stability-widening-phase-e.tex-part")
         for marker in (
             r"\label{eq:widen-reset-to-set}",
@@ -140,13 +121,14 @@ class OUIIIStabilityWideningContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, proof)
         flat = _flat(proof)
-        self.assertIn("pre-reset tilt magnitude does not appear", flat)
-        self.assertIn("OU dynamics define the nominal regularizing state transition", flat)
-        self.assertIn(r"\ref{sec:hybrid-live-stability}", proof)
+        self.assertIn("same source-node Lyapunov metric", flat)
+        self.assertNotIn(r"p_+^{\rm an}", proof)
+        self.assertNotIn(r"\rho^{", proof)
 
-    def test_phase_f_derives_gate_safe_stochastic_drift(self):
+    def test_phase_f_uses_product_manifold_funnel_drift(self):
         proof = _read(DOC / "w3d-stability-widening-phase-f.tex-part")
         for marker in (
+            r"\label{eq:widen-stochastic-product-distance}",
             r"\label{eq:widen-stochastic-remainder}",
             r"\label{eq:widen-gaussian-moments}",
             r"\label{eq:widen-stochastic-margin}",
@@ -157,10 +139,9 @@ class OUIIIStabilityWideningContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, proof)
         flat = _flat(proof)
-        self.assertIn("does not require a zero conditional mean", flat)
-        self.assertIn("does not assume that NIS gating preserves zero conditional mean", flat)
-        self.assertIn("does not turn a regional MEKF into a global Gaussian system", flat)
-        self.assertIn("union bound followed by Markov", flat)
+        self.assertIn("never subtracts two attitudes", flat)
+        self.assertIn("same $W_i$, source graph, word family, and geodesic funnel", flat)
+        self.assertNotIn(r"\kappa_N", proof)
 
 
 if __name__ == "__main__":

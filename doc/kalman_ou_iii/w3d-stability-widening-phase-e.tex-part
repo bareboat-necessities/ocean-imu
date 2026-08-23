@@ -1,13 +1,13 @@
-\subsection{Phase E: analytical hybrid recovery and non-OU model mismatch}
+\subsection{Phase E: hybrid recovery and bounded non-OU mismatch in the funnel metric}
 \label{sec:stability-widening-phase-e}
 
-The hybrid theorem of Sec.~\ref{sec:hybrid-live-stability} permits a hard reset to
-leave the inner Live set provided the jump remains safe and the subsequent flow
-returns to that set.  The source tilt relock has additional structure that can
-be used to sharpen the generic jump inequality: the reset replaces tilt from
-the accelerometer and therefore removes dependence on the pre-reset tilt error.
+The hybrid and model-mismatch results use the same source-node Lyapunov metric
+$W_i$ as the normal-Live and handoff certificates.  No separate Euclidean or
+Phase-B quantitative metric is introduced.
 
-Let a tilt relock satisfy the physical specific-force bound
+\subsubsection{Tilt relock as a reset-to-funnel map}
+
+Let a tilt relock satisfy
 \begin{equation}
  -\vct f_T^B=g\vct d+\vct a_T,
  \qquad \|\vct a_T\|\le\bar f_T<g,
@@ -15,70 +15,68 @@ Let a tilt relock satisfy the physical specific-force bound
  \bar\theta_T:=\sin^{-1}(\bar f_T/g).
  \label{eq:widen-tilt-reset-force}
 \end{equation}
-By the same tangent-ball argument as Lemma~\ref{lem:widen-global-reset}, the
-post-reset tilt obeys
+The same tangent-ball argument as Lemma~\ref{lem:widen-global-reset} gives
 \begin{equation}
  \theta_\perp^+\le\bar\theta_T
  \label{eq:widen-tilt-reset-bound}
 \end{equation}
-independently of $\theta_\perp^-$.  The preserve-yaw source path leaves the
-adopted heading gauge unchanged while the additive navigation coordinates are
-not hard-reset.
+independently of the pre-reset tilt.  The preserve-yaw source reset leaves the
+adopted heading gauge unchanged and does not hard-reset the additive navigation
+coordinates.
 
-Let $V_k$ be the Phase-B metric and decompose its pre-jump contribution into the
-reset tilt coordinate and all coordinates left physically continuous by the
-jump.  Uniform metric equivalence across the bounded covariance reset gives a
-finite constant $\kappa_U$ for the unchanged coordinates.  Let $c_T$ map the
-post-reset group energy into the dimensionless Lyapunov metric.  Then the reset
-has the source-shaped estimate
+Let $i^-$ and $i^+$ be the pre/post reset source nodes and let
+$W_{U,i^-}$ denote the part of the pre-reset metric associated with coordinates
+that remain physically continuous across the jump.  Rigorous enclosure of the
+exact reset, covariance reseed, and destination metric gives finite
+$\kappa_U$ and $\delta_T^{\rm an}$ such that
 \begin{equation}
  \boxed{
- V^+\le \kappa_U V_U^-+\delta_T^{\rm an},
+ W_{i^+}^+\le\kappa_U W_{U,i^-}^-+\delta_T^{\rm an},
  \qquad
- \delta_T^{\rm an}:=c_T(1-\cos\bar\theta_T)+c_{T,d}\bar d_T^2,}
+ \delta_T^{\rm an}:=
+ c_T(1-\cos\bar\theta_T)+c_{T,d}\bar d_T^2.}
  \label{eq:widen-reset-to-set}
 \end{equation}
-where $V_U^-$ excludes the discarded pre-reset tilt energy and $\bar d_T$ covers
-bounded discrete reset/model defects.  Unlike a generic
-$V^+\le\kappa_TV^-+\delta_T$, Eq.~\eqref{eq:widen-reset-to-set} contains no
-multiplicative dependence on arbitrarily large pre-reset tilt.
+The discarded pre-reset tilt energy does not appear in the multiplicative term.
 
-For the source cooldown count $N_{\rm cool}$, Lemma~\ref{lem:widen-constructive-ues}
-and Theorem~\ref{thm:widen-explicit-P} give the homogeneous flow factor
+During the mandatory cooldown, tile the source execution by the certified word
+family and define the worst reachable cooldown contraction
 \begin{equation}
+ \boxed{
  \lambda_{\rm cool}^{\rm an}:=
- p_+^{\rm an}M^2\rho^{2N_{\rm cool}}.
+ \sup_{\text{reachable cooldown tilings}}
+ \prod_{w\in\mathrm{tiling}}\lambda_w<1.}
  \label{eq:widen-cooldown-factor}
 \end{equation}
-If bounded Live inputs contribute $\gamma_{\rm cool}$ over the same interval,
-then
+Let $\gamma_{\rm cool}$ be the rigorously accumulated bounded-input contribution
+through the same word sequence.  Then
 \begin{equation}
- V_{j+1}^-
- \le\lambda_{\rm cool}^{\rm an}V_j^+
+ W_{j+1}^-
+ \le\lambda_{\rm cool}^{\rm an}W_j^+
  +\gamma_{\rm cool}.
  \label{eq:widen-cooldown-flow}
 \end{equation}
 
-\begin{theorem}[Analytical recurrent tilt-reset small gain]
+\begin{theorem}[Recurrent tilt-reset funnel small gain]
 \label{thm:widen-hybrid-small-gain}
-Suppose every tilt jump and cooldown prefix remains in the Phase-C safe
-geodesic/correction domain and define
+Suppose every reset and cooldown prefix remains inside its certified source-node
+geodesic/funnel domain and
 \begin{equation}
  \boxed{
  \mu_T^{\rm an}:=\kappa_U\lambda_{\rm cool}^{\rm an}<1.}
  \label{eq:widen-hybrid-mu}
 \end{equation}
-Then at successive pre-reset sections,
+Then successive pre-reset sections satisfy
 \begin{equation}
- V_{j+1}^-
- \le\mu_T^{\rm an}V_j^-
+ W_{j+1}^-
+ \le\mu_T^{\rm an}W_j^-
  +\lambda_{\rm cool}^{\rm an}\delta_T^{\rm an}
  +\gamma_{\rm cool},
  \label{eq:widen-reset-poincare}
 \end{equation}
-and hence
+and therefore
 \begin{equation}
- \limsup_{j\to\infty}V_j^-
+ \limsup_{j\to\infty}W_j^-
  \le
  \frac{\lambda_{\rm cool}^{\rm an}\delta_T^{\rm an}
        +\gamma_{\rm cool}}
@@ -89,102 +87,92 @@ The pre-reset tilt magnitude does not appear in the multiplicative loop gain.
 \end{theorem}
 
 \begin{proof}
-Substitute Eq.~\eqref{eq:widen-reset-to-set} into
-Eq.~\eqref{eq:widen-cooldown-flow}, use $V_U^-\le V^-$, and iterate the scalar
-affine recursion.  The source dwell/cooldown logic already excludes Zeno
-behavior, so the section index is well defined.
+Apply Eq.~\eqref{eq:widen-reset-to-set}, use
+$W_{U,i^-}^-\le W_{i^-}^-$, then apply the certified cooldown word product and
+iterate the resulting scalar affine recursion.  The source cooldown excludes
+Zeno behavior.
 \end{proof}
 
-Magnetic hard re-gauging is different: it changes the adopted horizontal
-coordinate frame rather than the physical tilt.  On the full-heading gauge
-coordinates it is a bounded symmetry transformation; on the gravity-only
-quotient it is the identity equivalence class.  It therefore consumes only the
-bounded gauge-rate/jump input already present in the hybrid theorem and need
-not be assigned an artificial attitude-capture radius.
+Magnetic hard re-gauging is a bounded symmetry change of the adopted horizontal
+coordinate frame.  Its exact jump is certified between source-node funnels; on
+the gravity-only quotient it is the identity equivalence class.  It does not
+require an artificial attitude-capture radius.
 
 \subsubsection{Bounded departures from the OU latent-acceleration model}
 
-The OU state is a regularizing model, not a claim that physical ocean
-acceleration is literally an Ornstein--Uhlenbeck sample path.  Let the physical
-latent acceleration satisfy
+The OU state is a regularizer rather than a claim that physical ocean
+acceleration is an exact OU sample path.  Write
 \begin{equation}
  \dot{\vct a}_w
  =-\tau_m^{-1}\vct a_w+\vct w_{OU}+\vct d_m,
  \label{eq:widen-model-mismatch}
 \end{equation}
-where $\tau_m$ is the model value used by the filter and $\vct d_m$ collects
-bounded non-OU dynamics, unresolved harmonics, hydrodynamic forcing, and model
-mismatch.  Over one sample this contributes an additional bounded error input
-$\mat G_{m,k}\vct d_{m,k}$ with
-$\|\mat G_{m,k}\|\le\bar G_m$ on the compact sample-time envelope.
+where $\vct d_m$ collects bounded non-OU dynamics, unresolved harmonics,
+hydrodynamic forcing, and correlation-model mismatch.
 
-For a Phase-C tube let $\ell<\ell_*$ be its structured nonlinear load and define
-the strict deterministic decrease margin
+For every certified source word $w:i\to j$, compactness of the exact lifted map
+and the strict zero-input word margin imply a finite disturbance gain
+$c_{d,w}$ such that, for the declared input budget,
 \begin{equation}
- a_0:=1-2p_+^{\rm an}\bar A\ell-p_+^{\rm an}\ell^2>0.
- \label{eq:widen-a0}
+ \boxed{
+ W_j(\mathcal F_w(e,d))
+ \le\lambda_w W_i(e)+c_{d,w}\|d\|_{\infty,w}^2,
+ \qquad \lambda_w<1.}
+ \label{eq:widen-deterministic-drift}
 \end{equation}
-For a generic bounded additive input with matrix norm $\bar G_d$, Young's
-inequality applied to the exact Phase-B metric gives
-\begin{align}
- V_{k+1}
- &\le(1-\alpha_d)V_k+c_d\|\vct d_k\|^2,
- \label{eq:widen-deterministic-drift}\\
- \alpha_d&:=\frac{a_0}{2p_+^{\rm an}},\\
- c_d&:=p_+^{\rm an}\bar G_d^2
- +\frac{2[p_+^{\rm an}(\bar A+\ell)\bar G_d]^2}{a_0}.
+This is the deterministic funnel inequality used throughout the deployed
+certificate; all non-OU forcing enters through the same exact source word map.
+Define
+\begin{equation}
+ \lambda_d:=\max_w\lambda_w<1,
+ \qquad
+ c_d:=\max_w c_{d,w}<\infty.
  \label{eq:widen-deterministic-gains}
-\end{align}
+\end{equation}
 
 \begin{theorem}[Practical ISS under bounded non-OU forcing]
 \label{thm:widen-model-mismatch-iss}
-If the Phase-C tube is robustly invariant for the declared total input bound,
-then Eq.~\eqref{eq:widen-deterministic-drift} implies
+If the declared funnel is robustly invariant under the total bounded-input
+budget, then at certified word boundaries
 \begin{equation}
  \boxed{
- V_k\le(1-\alpha_d)^{k-j}V_j
- +\frac{c_d}{\alpha_d}
-  \|\vct d\|_{\infty,[j,k)}^2.}
+ W_n\le\lambda_d^{\,n-j}W_j
+ +\frac{c_d}{1-\lambda_d}
+  \|\vct d\|_{\infty,[j,n)}^2.}
  \label{eq:widen-model-iss}
 \end{equation}
-In particular, bounded $\vct d_m$ in Eq.~\eqref{eq:widen-model-mismatch}
-changes the ultimate error bound but does not destroy practical stability.
+Thus bounded $\vct d_m$ changes the ultimate bound but does not destroy
+practical stability.
 \end{theorem}
 
 \begin{proof}
-The zero-input nonlinear terms leave the margin $a_0\|z_k\|^2$.  The input
-cross term is bounded by
-$2p_+^{\rm an}(\bar A+\ell)\bar G_d\|z_k\|\|d_k\|$ and the direct quadratic
-term by $p_+^{\rm an}\bar G_d^2\|d_k\|^2$.  Young's inequality spends half the
-margin on the cross term, yielding Eqs.~\eqref{eq:widen-deterministic-drift}--
-\eqref{eq:widen-deterministic-gains}.  Since
-$V_k\le p_+^{\rm an}\|z_k\|^2$, the remaining state decrease is at least
-$\alpha_dV_k$.  Scalar iteration proves Eq.~\eqref{eq:widen-model-iss}.
+Equation~\eqref{eq:widen-deterministic-drift} holds on every source-complete
+word.  Taking the uniform word constants and iterating the scalar recursion
+gives Eq.~\eqref{eq:widen-model-iss}; certified prefix bounds control all
+physical samples between word boundaries.
 \end{proof}
 
-A mismatch in correlation time is included explicitly.  If the physical
-reference model has $\tau_*$ while the filter uses $\tau_m$, then
+A correlation-time mismatch enters explicitly.  If a physical reference model
+uses $\tau_*$ while the filter uses $\tau_m$, then
 \begin{equation}
  -\tau_*^{-1}\vct a_w
  =-\tau_m^{-1}\vct a_w
  +\underbrace{(\tau_m^{-1}-\tau_*^{-1})\vct a_w}_{\vct d_\tau}.
  \label{eq:widen-tau-mismatch}
 \end{equation}
-Thus whenever $\|\vct a_w\|\le A_w$,
+For $\|\vct a_w\|\le A_w$,
 \begin{equation}
+ \boxed{
  \|\vct d_\tau\|
- \le |\tau_m^{-1}-\tau_*^{-1}|A_w.
+ \le |\tau_m^{-1}-\tau_*^{-1}|A_w.}
  \label{eq:widen-tau-mismatch-bound}
 \end{equation}
-The same ISS gain therefore quantifies robustness to a bounded correlation-time
-error rather than requiring equality between an assumed physical OU time
-constant and the adapted filter time constant.
+Hence the same funnel ISS gain quantifies bounded correlation-time error.
 
 \begin{remark}[Interpretation of the OU assumption]
 \label{rem:widen-ou-regularizer}
-The stability claim produced by Phase E is consequently a robustness statement:
-OU dynamics define the nominal regularizing state transition, while bounded
-violations are inputs with explicit gain.  The wave-spectrum and reduced-MSE
-arguments used to choose $\tau$ and $\sigma_{aw}$ remain performance arguments;
-they are not prerequisites for the deterministic stability theorem.
+OU dynamics define the nominal regularizing state transition; bounded departures
+are source-word disturbances with explicit gain.  Wave-spectrum and reduced-MSE
+arguments used to choose $\tau$ and $\sigma_{aw}$ remain performance arguments,
+not prerequisites for deterministic stability.
 \end{remark}

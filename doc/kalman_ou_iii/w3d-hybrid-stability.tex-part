@@ -1,25 +1,24 @@
 \section{Hybrid Stability Across Live Reconfiguration}
 \label{sec:hybrid-live-stability}
 
-Normal Live intervals evolve through the exact map of
-Eq.~\eqref{eq:capture-exact-lift}.  Hard attitude/reference events are treated
-as explicit jumps
+Normal Live intervals use the source-word funnel certificate of
+Theorem~\ref{thm:widen-path-direct-iss}.  Hard attitude/reference events are
+explicit jumps
 \begin{equation}
  (\vct e^+,\pi^+)=\mathcal R_j(\vct e^-,\pi^-;\mu_j),
  \qquad j\in\{M,T\},
  \label{eq:hybrid-jump-map}
 \end{equation}
-where $M$ denotes a magnetic-gauge acquisition/refinement and $T$ a tilt
-re-lock.  A jump need only remain inside the proof-safe domain and admit a
-verified subsequent recovery sequence; it need not land immediately in the
-inner regional set.
+where $M$ denotes magnetic-gauge acquisition/refinement and $T$ a tilt re-lock.
+A jump is certified by its exact image, its destination source-node metric, and
+the same scalar funnel recursion used for normal source words.
 
 \subsection{Magnetic-gauge jump}
 \label{sec:hybrid-mag-jump}
 
 The source-realizable magnetic family contains the first Live gauge acquisition
-when Live began without north, and the one-time refined magnetic reference.  Let
-$\rho_M\in\{0,1\}$ identify the two members.  When a finite acquired yaw
+when Live began without north and the one-time refined magnetic reference.  Let
+$\rho_M\in\{0,1\}$ identify the two events.  When a finite acquired yaw
 $\psi_M$ is available, the nominal attitude operation is
 \begin{equation}
  q^+_{bw}=R_z(\psi_M)\,\mathcal Q_{\rm tilt}(q^-_{bw}),
@@ -27,7 +26,8 @@ $\psi_M$ is available, the nominal attitude operation is
 \end{equation}
 while $(b_g,v,p,S,a_w,b_a)$ are numerically unchanged.  The associated source
 flags, magnetic reference, hard-iron state, and possible bias-enable covariance
-floor are included in the bounded mode map $\pi^+=\mathcal P_M(\pi^-,\rho_M)$.
+floor are included in the bounded mode map
+$\pi^+=\mathcal P_M(\pi^-,\rho_M)$.
 
 Let the adopted horizontal gauge change by
 \begin{equation}
@@ -59,8 +59,8 @@ $\|x_g^-\|\le\bar X_M$.  Then
  \label{eq:hybrid-mag-world-error-bound}
 \end{equation}
 
-For any compact pre-jump set $X\subset\mathcal D$, define the exact magnetic
-jump image
+For any compact pre-jump funnel section $X\subset\mathcal D_i$, define the
+exact magnetic jump image
 \begin{equation}
  \boxed{
  \mathfrak J_M(X):=
@@ -70,10 +70,8 @@ jump image
  \label{eq:hybrid-mag-envelope}
 \end{equation}
 The family is compact under the declared heading and physical-state bounds.
-Each of the two magnetic source events occurs at most once.
-Continuous hard-iron correction after refinement is a bounded normal-Live
-measurement/model change and is therefore contained in
-$\Pi^{\rm src}$ rather than in $\mathcal R_M$.
+Each magnetic event occurs at most once.  Continuous hard-iron correction after
+refinement is part of the normal source-word family rather than a hard jump.
 
 \subsection{Tilt re-lock jump}
 \label{sec:hybrid-tilt-jump}
@@ -88,21 +86,20 @@ $(\varphi_a,\vartheta_a)$ are reconstructed from the current accelerometer.
 All additive nominal states are unchanged.  The attitude covariance is reseeded
 and its cross-covariances are cleared by the implemented reset map.
 
-A deterministic tilt bound requires the reset sample to satisfy
+A deterministic tilt bound requires
 \begin{equation}
  \vct f_b=-g\vct u_d+\vct\epsilon_f,
  \qquad \|\vct\epsilon_f\|\le\bar f_T<g.
  \label{eq:hybrid-tilt-force-bound}
 \end{equation}
-Then elementary tangent geometry gives
+Then tangent-ball geometry gives
 \begin{equation}
  \boxed{
  \|\delta\vct\theta_\perp^+\|
  \le\bar\theta_T:=\sin^{-1}(\bar f_T/g)<\frac{\pi}{2}.}
  \label{eq:hybrid-tilt-reset-bound}
 \end{equation}
-The reset trigger by itself is not a substitute for
-Eq.~\eqref{eq:hybrid-tilt-force-bound}.
+The reset trigger alone is not a substitute for this physical force bound.
 
 Because the source preserves ZYX Euler yaw, admit the compact chart
 \begin{equation}
@@ -112,13 +109,12 @@ Because the source preserves ZYX Euler yaw, admit the compact chart
 \end{equation}
 On this chart
 \begin{equation}
- \boxed{
- \epsilon_{\psi,E}^+=\epsilon_{\psi,E}^-,}
+ \boxed{\epsilon_{\psi,E}^+=\epsilon_{\psi,E}^-,}
  \label{eq:hybrid-tilt-yaw-preserved}
 \end{equation}
-and smooth coordinate equivalence gives a finite bound on the local yaw
-component after reset.  Let $\mathfrak J_T(X)$ denote the exact compact image of
-the admissible re-lock guard subset of $X$ under this source map.
+and smooth coordinate equivalence gives a finite post-reset local-yaw bound.
+Let $\mathfrak J_T(X)$ denote the exact compact image of the admissible re-lock
+guard subset of $X$ under this source map.
 
 The source cooldown supplies the dwell-time bound
 \begin{equation}
@@ -127,142 +123,115 @@ The source cooldown supplies the dwell-time bound
  N_{\rm cool}:=\left\lceil\frac{T_{\rm cool}}{h_+}\right\rceil
  \label{eq:hybrid-tilt-dwell}
 \end{equation}
-between completed tilt re-locks.
+between completed tilt re-locks.  Recurrent-reset small gain is derived once,
+in Sec.~\ref{sec:stability-widening-phase-e}, from this exact reset and the
+source-word cooldown contraction.
 
-\subsection{Jump-followed-by-flow recovery}
+\subsection{Exact jump-to-funnel certification}
 
-For either jump family, the required certificate is
+Consider an admissible jump from source node $i$ to node $j$.  For a pre-jump
+funnel section $\mathcal F_i(c_i)$, require
 \begin{equation}
  \boxed{
- \mathfrak J_j(X^-)\subseteq\mathcal D_{k^+},
+ \mathfrak J_j(\mathcal F_i(c_i))\subseteq\mathcal D_j,
  \qquad
- \mathfrak T_{k^+,N_j}(\mathfrak J_j(X^-);\bar d)
- \subseteq\mathcal B_{k^++N_j},}
+ W_j(\mathcal R_j(e,\pi;\mu_j))
+ \le\lambda_{J,j}W_i(e)+\gamma_{J,j}(\bar d),}
  \label{eq:hybrid-jump-entry}
 \end{equation}
-with every intermediate prefix contained in $\mathcal D$.  Thus the hard event
-may enlarge the error as long as the exact post-jump source dynamics recover
-before leaving the safe domain.
+for every admitted pre-jump state, source mode, and jump datum, with finite
+$\lambda_{J,j}\ge0$.  The post-jump level is inserted directly into the funnel
+recursion of Eq.~\eqref{eq:capture-funnel-recursion}.  Subsequent normal-Live
+words obey Eq.~\eqref{eq:capture-funnel-word}, and every word prefix remains in
+its source-node proof domain.
 
-For recurrent tilt re-locks, let $V$ be a regional Lyapunov measure on a compact
-recovery family containing the admissible guard and jump image.  Suppose the
-jump and the shortest source-permitted inter-reset flow satisfy
-\begin{align}
- V^+&\le\kappa_TV^-+\delta_T,\\
- V_{k+N_{\rm cool}}&\le
- \lambda_F^{N_{\rm cool}}V_k+\gamma_F,
- \qquad 0<\lambda_F<1.
- \label{eq:hybrid-cycle-bounds}
-\end{align}
-Define
-\begin{equation}
- \boxed{
- \mu_T:=\kappa_T\lambda_F^{N_{\rm cool}}<1.}
- \label{eq:hybrid-cooldown-capture-condition}
-\end{equation}
-
-\begin{theorem}[Hybrid Live recovery and recurrent practical stability]
+\begin{theorem}[Hybrid Live jump-to-funnel recovery]
 \label{thm:hybrid-live-recovery}
-Assume normal-Live intervals satisfy the regional hypotheses of
-Theorem~\ref{thm:finite-live-capture}; each magnetic or tilt jump satisfies
-Eq.~\eqref{eq:hybrid-jump-entry}; and the tilt reset satisfies
-Eqs.~\eqref{eq:hybrid-tilt-force-bound}--
-\eqref{eq:hybrid-tilt-yaw-chart}.  Then every finite source-realizable sequence
-of hard jumps remains in the certified domain and, after its final jump, enters
-$\mathcal B$ in finite time and obeys the regional practical-ISS bound.
-
-If tilt re-locks occur indefinitely and the common recovery-family inequalities
-Eq.~\eqref{eq:hybrid-cycle-bounds} hold with
-Eq.~\eqref{eq:hybrid-cooldown-capture-condition}, the reset-to-reset sequence is
-practically exponentially stable:
-\begin{equation}
- \boxed{
- V_n^-
- \le\mu_T^nV_0^-
- +\frac{1-\mu_T^n}{1-\mu_T}
- \left(\lambda_F^{N_{\rm cool}}\delta_T+\gamma_F\right).}
- \label{eq:hybrid-recurrent-bound}
-\end{equation}
-The source dwell time excludes Zeno behavior.
+Assume normal-Live intervals satisfy
+Theorem~\ref{thm:widen-path-direct-iss}; every magnetic or tilt jump satisfies
+Eq.~\eqref{eq:hybrid-jump-entry}; and every post-jump source word has certified
+prefix safety.  Then every finite source-realizable sequence of hard jumps
+remains in the source-funnel domain and, after its final jump, obeys the same
+regional practical-ISS funnel bound as normal Live.  The positive source
+cooldown excludes Zeno accumulation of tilt re-locks.
 \end{theorem}
 
 \begin{proof}
-For a finite jump sequence, apply Eq.~\eqref{eq:hybrid-jump-entry} after each
-hard event and Theorem~\ref{thm:finite-live-capture} on each normal-Live
-recovery interval.  For repeated tilt re-locks, substitution of the jump bound
-into the shortest admissible flow bound gives
-\begin{equation}
- V_{n+1}^-
- \le\mu_TV_n^-+\lambda_F^{N_{\rm cool}}\delta_T+\gamma_F.
-\end{equation}
-Iteration yields Eq.~\eqref{eq:hybrid-recurrent-bound}.  The fixed positive
-cooldown gives a positive lower bound on inter-jump time.
+Equation~\eqref{eq:hybrid-jump-entry} maps each hard event into a certified
+destination funnel.  The source-complete normal-Live word inequalities then
+propagate the same metric until the next jump.  Induction over any finite hard
+jump sequence proves domain safety and the post-jump practical-ISS bound.
 \end{proof}
 
-\subsection{Regional gravity-only capture on the yaw quotient}
+\subsection{Regional gravity-only certification on the yaw quotient}
 \label{sec:hybrid-quotient-capture}
 
-The gravity-only symmetry acts on the complete estimator representation, not
-only on the physical error vector.  Let $\mat T_\alpha$ be the tangent action
-induced by a horizontal rotation $R_z(\alpha)$: it rotates the attitude/world
-coordinates consistently, rotates the $(v,p,S,a_w)$ error blocks, leaves
-body-frame bias coordinates unchanged, and maps the covariance by congruence,
+The gravity-only symmetry acts on the complete estimator representation.  Let
+$\mat T_\alpha$ be the tangent action induced by a horizontal rotation
+$R_z(\alpha)$: it rotates the attitude/world coordinates consistently, rotates
+$(v,p,S,a_w)$, leaves body-frame bias coordinates unchanged, and maps covariance
+by congruence,
 \begin{equation}
  \mat P\mapsto\mat T_\alpha\mat P\mat T_\alpha^\top.
  \label{eq:hybrid-quotient-covariance-action}
 \end{equation}
 Scalar schedules and enable flags are unchanged.  Denote this action on the
-complete error/mode pair by
-$\mathcal G_\alpha(\vct e,\pi)$ and its orbit by
-$[(\vct e,\pi)]$.
+complete state/mode pair by $\mathcal G_\alpha(e,\pi)$ and its orbit by
+$[(e,\pi)]$.
 
-For any regional metric $V_k(\vct e;\pi)$ define the gauge-invariant quotient
-metric
+For a full-heading source-node metric $W_i$ define
 \begin{equation}
  \boxed{
- V_k^\perp([(\vct e,\pi)])
+ W_i^\perp([(e,\pi)])
  :=\inf_{\alpha\in[-\pi,\pi)}
- V_k\!\left(\mathcal G_\alpha(\vct e,\pi)\right).}
+ W_i\!\left(\mathcal G_\alpha(e,\pi)\right).}
  \label{eq:hybrid-quotient-metric}
 \end{equation}
 In gravity-only mode, exact prediction, covariance propagation, accelerometer
-correction, $S=0$ correction, quaternion reset, and the source-reachable scalar
-schedule commute with this complete action.  Thus the exact normal-Live map on
-$(\vct e,\pi)$ descends to a well-defined quotient map
-$\mathcal F_{k,m}^\perp$ even when the covariance is horizontally anisotropic.
-Let $\mathcal H_k^\perp$, $\mathcal D_k^\perp$, and
-$\mathcal B_k^\perp$ be compact quotient handoff, safe, and inner sets.  Define
-$\mathfrak T_{k,m}^\perp$ by applying the set-valued construction of
-Eq.~\eqref{eq:capture-set-envelope} to the quotient map and to the transformed
-source-mode family.
+correction, $S=0$ correction, quaternion reset, and the scalar source schedule
+commute with the complete action.  The exact source-word map therefore descends
+to a well-defined quotient map $\mathcal F_w^\perp$.
 
-\begin{theorem}[Regional gravity-only finite capture modulo yaw]
-\label{thm:hybrid-quotient-capture}
-If the quotient handoff sequence generated from $\mathcal H^\perp$ has safe
-prefixes in $\mathcal D^\perp$, enters $\mathcal B^\perp$ after finitely many
-lifts, and the quotient inner set satisfies a contraction inequality of the
-form Eq.~\eqref{eq:capture-inner-contraction}, then gravity-only Live operation
-is regionally practically ISS modulo yaw.  In particular,
+Let $\mathcal F_i^\perp(c):=\{[e]:W_i^\perp([e])\le c\}$ be a quotient funnel
+section.  For every source-complete gravity-only word require
 \begin{equation}
- V_{n}^\perp
- \le(\lambda_B^\perp)^nV_0^\perp
+ \boxed{
+ W_j^\perp(\mathcal F_w^\perp([e],d))
+ \le\lambda_w^\perp W_i^\perp([e])
+ +\gamma_w^\perp(\bar d),
+ \qquad \lambda_w^\perp<1,}
+ \label{eq:hybrid-quotient-word}
+\end{equation}
+with the same prefix-safety requirement on quotient source nodes.
+
+\begin{theorem}[Regional gravity-only source-funnel stability modulo yaw]
+\label{thm:hybrid-quotient-capture}
+If the compact quotient handoff family $\mathcal H^\perp$ initializes certified
+quotient funnel levels and Eq.~\eqref{eq:hybrid-quotient-word} holds on a
+source-complete quotient word family, then gravity-only Live operation is
+regionally practically ISS modulo yaw.  With
+$\lambda_B^\perp:=\max_w\lambda_w^\perp<1$ and
+$\gamma_B^\perp:=\max_w\gamma_w^\perp$, word-boundary energy satisfies
+\begin{equation}
+ \boxed{
+ W_n^\perp
+ \le(\lambda_B^\perp)^nW_0^\perp
  +\frac{1-(\lambda_B^\perp)^n}{1-\lambda_B^\perp}
- \gamma_B^\perp(\bar d).
+ \gamma_B^\perp(\bar d).}
  \label{eq:hybrid-quotient-practical}
 \end{equation}
-No absolute-yaw convergence is asserted.
+No convergence of absolute yaw is asserted.
 \end{theorem}
 
 \begin{proof}
-The complete gravity-only estimator map is equivariant under
-$\mathcal G_\alpha$, including covariance congruence, so the quotient map is
-independent of the chosen representative.  The set-valued induction and
-inner-set contraction proof of Theorem~\ref{thm:finite-live-capture} therefore
-applies on the quotient state/mode space.
+Equivariance makes the quotient word map independent of the chosen horizontal
+representative.  The source-complete funnel recursion therefore descends
+unchanged to the quotient state/mode space, and iteration of
+Eq.~\eqref{eq:hybrid-quotient-word} gives the result.
 \end{proof}
 
 If magnetic north is acquired after an ungauged Live handoff, the magnetic jump
 selects one horizontal representative and changes the source mode from quotient
-to full-heading operation.  The full-heading chain is certified whenever the
-resulting exact jump image lies in $\mathcal D$ and satisfies the direct recovery
-condition Eq.~\eqref{eq:hybrid-jump-entry}.
+to full-heading operation.  The full-heading chain resumes exactly when the
+jump satisfies Eq.~\eqref{eq:hybrid-jump-entry} for a certified full-heading
+destination node.

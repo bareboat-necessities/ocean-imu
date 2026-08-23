@@ -1,6 +1,4 @@
-\input{w3d-stability-widening-source-path.tex-part}
-
-\subsection{Phase D: source-global reset into the startup basin}
+\subsection{Source-global reset into the startup basin}
 \label{sec:stability-widening-phase-d}
 
 The almost-global qualification of the continuous gravity observer is a
@@ -84,7 +82,7 @@ $\mathcal H_{k_H}$ used by Theorem~\ref{thm:semiglobal-proxy-live}.
 Lemma~\ref{lem:widen-global-reset} and the physical bias bound give
 Eq.~\eqref{eq:widen-reset-image} for every pre-reset attitude.  Condition
 \eqref{eq:widen-reset-chart-condition} is the chart-invariance condition of the
-existing startup theorem evaluated on that reset image.  The practical-ISS and
+startup theorem evaluated on that reset image.  The practical-ISS and
 quality-gate comparisons therefore apply from the post-reset state, and all
 subsequent source gates and Live handoff arguments are unchanged.
 \end{proof}

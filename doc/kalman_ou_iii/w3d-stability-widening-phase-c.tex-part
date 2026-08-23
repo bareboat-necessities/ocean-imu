@@ -1,165 +1,125 @@
-\subsection{Phase C: anisotropic nonlinear basin and exact group geometry}
+\subsection{Phase C: exact large-angle $\SO(3)$ measurement dissipation}
 \label{sec:stability-widening-phase-c}
 
-The nonlinear remainder in Sec.~\ref{sec:iss-block-basin} is already structured:
-velocity, position, integral displacement, latent acceleration, and
-accelerometer bias do not each generate their own quadratic self-term.  The
-remaining conservatism comes from collapsing physically different coordinates
-into one small Euclidean tube.  This phase retains the exact homogeneous LTV
-couplings while assigning separate radii only to the quantities that enter the
-nonlinear geometry.
+The deployed nonlinear certificate is stated directly on the rotation group and
+on the source-reachable Kalman correction.  No common-radius or componentwise
+radius relaxation is used in the primary certificate chain.  Velocity,
+position, integral displacement, latent acceleration, and accelerometer bias
+remain in the exact source state and covariance recursion; their influence on
+attitude is retained through the actual accepted innovations and Kalman gains.
 
-Let the dimensionless active error be partitioned as
+Let
 \begin{equation}
- \vct z=(\vct z_g,\vct z_\ell),
+ \mat R_e:=\widehat{\mat R}\mat R^\top\in\SO(3),
  \qquad
- \vct z_g=(\delta\vct\theta,\delta\vct b_g,
-            \delta\vct a_w,\delta\vct b_a),
- \qquad
- \vct z_\ell=(\delta\vct v,\delta\vct p,\delta\vct S),
- \label{eq:widen-cylinder-split}
+ V_R(\mat R_e):=\frac12\operatorname{tr}(\mat I-\mat R_e)
+ =1-\cos\theta_e,
+ \label{eq:widen-SO3-energy}
 \end{equation}
-with the held-bias coordinate omitted from $\vct z_g$ when it is frozen.  The
-split is not a dynamical decoupling: all first-order cross-covariance and
-Kalman-gain effects remain in $\widetilde A_k^{\rm cl}$.  It is used only to
-bound the genuinely nonlinear remainder.
+where $\theta_e\in[0,\pi]$ is the geodesic attitude error.  Define also
+\begin{equation}
+ \vct e_R:=\operatorname{vex}\!\left(
+ \frac{\mat R_e-\mat R_e^\top}{2}\right)
+ =\sin\theta_e\,\vct u_e.
+ \label{eq:widen-SO3-gradient}
+\end{equation}
+For every fixed $0<\theta_*<\pi$ and
+$0\le\theta_e\le\theta_*$,
+\begin{equation}
+ \frac{1-\cos\theta_*}{\theta_*^2}\theta_e^2
+ \le V_R(\mat R_e)\le\frac12\theta_e^2.
+ \label{eq:widen-SO3-sector}
+\end{equation}
+Thus $V_R$ is a nonlocal attitude energy on every compact geodesic chart that
+stays strictly away from the antipodal set.
 
-Define the direct $S$-to-attitude correction gain
+At an accepted correction, use the exact source residuals and gains and write
 \begin{equation}
- k_{\theta S}:=\sup_k\|\mat E_\theta\mat K_{S,k}\mat D_S^{-1}\|<\infty,
- \label{eq:widen-injection-gains}
+ \vct d_k:=\Delta\vct\theta_k
+ =\mat E_\theta\left(
+ \mat K_{a,k}\vct r_{a,k}
+ +\mat K_{m,k}\vct r_{m,k}
+ +\mat K_{S,k}\vct r_{S,k}\right),
+ \qquad \vct r_{S,k}=-\delta\vct S.
+ \label{eq:widen-exact-source-correction}
 \end{equation}
-where $\mat D_S$ is the fixed dimensionless scale used in $\vct z$.  For the
-accelerometer/magnetometer part of the same correction, define the compact-tube
-incremental gain
-\begin{equation}
- k_{\Delta g}:=
- \sup_k\sup_{\substack{\vct z_g\ne0\\
-                        (\vct z_g,0)\in\mathcal T_k}}
- \frac{\|\Delta\vct\theta_{g,k}(\vct z_g)\|}{\|\vct z_g\|}<\infty,
- \label{eq:widen-S-peak-gain}
-\end{equation}
-where $\Delta\vct\theta_{g,k}$ contains the accelerometer and magnetometer
-corrections but not the $S$ residual.  Finiteness follows from smoothness on the
-compact accepted-measurement/geodesic family and
-$\Delta\vct\theta_{g,k}(0)=0$.  Since the integral residual is exactly linear,
-for every admitted state
-\begin{equation}
- \|\Delta\vct\theta_k\|
- \le k_{\Delta g}\|\vct z_g\|+k_{\theta S}\|\vct z_\ell\|.
- \label{eq:widen-correction-split}
-\end{equation}
-This expression retains the actual full-gain $S$ cross-covariance path rather
-than replacing it by a fictitious block-diagonal update.
+Rejected updates contribute the corresponding zero term.  Equation
+\eqref{eq:widen-exact-source-correction} retains the full $S\to\theta$
+cross-covariance path and all non-attitude contributions to the accepted
+accelerometer residual; no block-diagonal or Schmidt-style correction is
+introduced for the proof.
 
-On the anisotropic cylinder
-\begin{equation}
- \mathcal C(r_g,r_\ell):=
- \{\|\vct z_g\|\le r_g,\ \|\vct z_\ell\|\le r_\ell\},
- \label{eq:widen-cylinder}
-\end{equation}
-all geometry-only quadratic products in
-Eq.~\eqref{eq:iss-nonlinear-load} are bounded by
-$c_G r_g\|\vct z\|$ for a fixed scaled constant $c_G$.  Moreover,
-Eq.~\eqref{eq:widen-correction-split} and Cauchy--Schwarz give
-\begin{align}
- \frac{\|\Delta\vct\theta_k\|^2}{\|\vct z\|}
- &\le
- \sqrt{k_{\Delta g}^2+k_{\theta S}^2}
- \left(k_{\Delta g}r_g+k_{\theta S}r_\ell\right).
- \label{eq:widen-correction-ratio}
-\end{align}
-Hence a closed sufficient cylinder load is
+The source calls \texttt{quat\_from\_delta\_theta}.  Outside its small series
+branch the injected rotation is exactly
 \begin{equation}
  \boxed{
- L_{\mathcal C}(r_g,r_\ell):=
- c_G r_g+c_5
- \sqrt{k_{\Delta g}^2+k_{\theta S}^2}
- \left(k_{\Delta g}r_g+k_{\theta S}r_\ell\right).}
- \label{eq:widen-cylinder-load}
-\end{equation}
-The sharper componentwise expression of Eq.~\eqref{eq:iss-nonlinear-load} may be
-used by a certificate verifier; Eq.~\eqref{eq:widen-cylinder-load} is a direct
-analytical sufficient bound valid at every interior point of the cylinder.
-
-\begin{theorem}[Anisotropic regional practical ISS]
-\label{thm:widen-cylinder-iss}
-Assume Phases A and B and choose $r_g,r_\ell>0$ such that the complete cylinder
-and its admitted one-step prefixes remain inside the accepted measurement
-geometry.  If
-\begin{equation}
- \boxed{L_{\mathcal C}(r_g,r_\ell)<\ell_*}
- \label{eq:widen-cylinder-condition}
-\end{equation}
-with $\ell_*$ from Eq.~\eqref{eq:widen-ell-star}, then every sufficiently small
-Lyapunov sublevel contained in $\mathcal C(r_g,r_\ell)$ is robustly invariant
-and satisfies the practical-ISS bound of Eq.~\eqref{eq:iss-block-local-bound}.
-The admissible linear-state radius is controlled by the actual cross-gain
-$k_{\theta S}$ rather than by the attitude radius itself.
-\end{theorem}
-
-\begin{proof}
-All first-order coupling between the two blocks is already contained in the UES
-transition.  On the cylinder, the geometry-only terms satisfy the first term of
-Eq.~\eqref{eq:widen-cylinder-load}, and
-Eq.~\eqref{eq:widen-correction-ratio} bounds the actual gain-weighted correction
-term at every nonzero interior state.  Thus
-$\|\widetilde\varphi_k(z)\|\le
-L_{\mathcal C}(r_g,r_\ell)\|z\|$.
-Equation~\eqref{eq:widen-cylinder-condition} implies the explicit Phase-B
-smallness inequality, so the proof of Theorem~\ref{thm:iss-block-local} applies
-without replacing $r_g$ and $r_\ell$ by a common radius.
-\end{proof}
-
-\begin{remark}[What can and cannot be global in the linear coordinates]
-\label{rem:widen-linear-global-limit}
-If the attitude rows of all translational corrections were identically zero,
-$k_{\theta S}=0$, the translational radius disappears from
-Eq.~\eqref{eq:widen-cylinder-load}; the stable linear block can then be global
-while the geometry block remains regional.  The deployed full-gain MEKF
-generally has $k_{\theta S}\ne0$ because $S$ cross-covariance may nudge
-attitude.  Hence the unchanged source admits a wider anisotropic cylinder, not
-an honest global claim in $(v,p,S)$.  This explicitly identifies the
-architectural obstruction to global translational certification.
-\end{remark}
-
-\subsubsection{Exact geometry of the implemented quaternion injection}
-
-The source does not use the first-order quaternion $[1,\delta\theta/2]$ for
-state injection.  It calls \texttt{quat\_from\_delta\_theta}, which uses the
-trigonometric radial quaternion map outside a small series threshold and a
-normalized fourth-order sine/cosine series inside that threshold.  Denote the
-resulting unit quaternion by $q_c(\vct d)$ and its rotation matrix by
-$\mathcal R(q_c)$.  For $\|\vct d\|\ge10^{-2}$,
-\begin{equation}
- q_c(\vct d)=
- \left(\cos\frac{\|\vct d\|}{2},
- \frac{\sin(\|\vct d\|/2)}{\|\vct d\|}\vct d\right),
- \qquad
- \boxed{\mathcal R(q_c(\vct d))=\exp([\vct d]_\times).}
+ \mathcal R(q_c(\vct d))=\exp([\vct d]_\times),}
  \label{eq:widen-exact-injection}
 \end{equation}
-This identity is valid for arbitrary finite $\vct d$; the principal physical
-rotation angle is, as usual, the geodesic representative in $[0,\pi]$ rather
-than the unwrapped norm $\|\vct d\|$ when the latter exceeds $\pi$.
-On the series branch, Taylor's theorem and normalization give a finite constant
-$c_s$ such that the geodesic injection defect obeys
+and the normalized series branch differs from that exponential by a sixth-order
+geodesic defect:
 \begin{equation}
- d_{\SO(3)}\!\left(\mathcal R(q_c(\vct d)),
-                    \exp([\vct d]_\times)\right)
+ d_{\SO(3)}\!\left(
+ \mathcal R(q_c(\vct d)),\exp([\vct d]_\times)\right)
  \le c_s\|\vct d\|^6,
- \qquad 0\le\|\vct d\|\le10^{-2}.
+ \qquad \|\vct d\|\le10^{-2}.
  \label{eq:widen-series-defect}
 \end{equation}
-The tiny branch defect may therefore be retained as a bounded deterministic
-input rather than absorbed into an unspecified local smoothness constant.
+The series defect is carried as a bounded source perturbation in the word-level
+certificate below rather than replacing the finite correction by a local
+first-order reset.
 
-The implemented covariance reset uses
+Ignoring only the explicit series defect for the moment, the physical attitude
+error after the left correction is
 \begin{equation}
- \mat G_r(\vct d)=\mat I+\frac12[\vct d]_\times.
+ \mat R_e^+=\exp([\vct d_k]_\times)\mat R_e^-.
+ \label{eq:widen-exact-attitude-update}
+\end{equation}
+Let $\delta_k:=\|\vct d_k\|$ and define the continuous functions
+$\operatorname{sinc}\delta:=\sin\delta/\delta$ and
+$\operatorname{cosc}\delta:=(1-\cos\delta)/\delta^2$ with their limiting values
+at zero.  Rodrigues' identity gives the exact finite-correction energy change
+\begin{align}
+ V_R(\mat R_e^+)-V_R(\mat R_e^-)
+ &=\operatorname{sinc}(\delta_k)\,
+   \vct d_k^\top\vct e_R^-
+ \nonumber\\
+ &\quad-\frac12\operatorname{cosc}(\delta_k)
+   \operatorname{tr}\!\left(
+   [\vct d_k]_\times^2\mat R_e^-\right).
+ \label{eq:widen-exact-energy-change}
+\end{align}
+Equation~\eqref{eq:widen-exact-energy-change} is exact for arbitrary finite
+$\vct d_k$ and does not replace $\sin\theta_e$ by $\theta_e$ or bound the
+finite correction by a generic quadratic Taylor remainder.
+
+\begin{lemma}[Exact finite-correction group identity]
+\label{lem:widen-exact-group-identity}
+For every $\mat R_e\in\SO(3)$ and every finite correction $\vct d$, the update
+of Eq.~\eqref{eq:widen-exact-attitude-update} satisfies
+Eq.~\eqref{eq:widen-exact-energy-change}.  Hence the sign of the actual
+attitude-energy change can be certified directly from the implemented
+innovation and gain rather than inferred from a norm bound on
+$\|\vct d\|^2$.
+\end{lemma}
+
+\begin{proof}
+Substitute Rodrigues' formula
+$\exp([d]_\times)=I+\operatorname{sinc}(\delta)[d]_\times+
+\operatorname{cosc}(\delta)[d]_\times^2$ into
+$V_R(R^+)-V_R(R^-)=-\tfrac12\operatorname{tr}((\exp([d]_\times)-I)R^-)$.  The
+identity
+$\operatorname{tr}([d]_\times R)=-2d^\top
+\operatorname{vex}((R-R^\top)/2)$ gives the first term and the second Rodrigues
+term gives the remaining trace exactly.
+\end{proof}
+
+The implemented covariance reset is
+\begin{equation}
+ \mat G_r(\vct d)=\mat I+\frac12[\vct d]_\times,
  \label{eq:widen-reset-G}
 \end{equation}
-Because the skew part cancels in $\mat G_r^\top\mat G_r$,
+with
 \begin{equation}
  \boxed{
  \|\mat G_r(\vct d)\|_2
@@ -168,69 +128,85 @@ Because the skew part cancels in $\mat G_r^\top\mat G_r$,
  \det\mat G_r=1+\frac14\|\vct d\|^2>0.}
  \label{eq:widen-reset-G-bound}
 \end{equation}
-Thus the implemented covariance reset has no singularity at a correction angle
-of $\pi$; its amplification grows algebraically with the correction magnitude.
+Thus neither the state injection nor the covariance reset has a singularity at
+an unwrapped correction norm of $\pi$.
 
-For the physical attitude error
-$\mat R_e=\widehat{\mat R}\mat R^\top$, define the exact group energy
-\begin{equation}
- V_R(\mat R_e):=\frac12\operatorname{tr}(\mat I-\mat R_e)
- =1-\cos\theta_e.
- \label{eq:widen-SO3-energy}
-\end{equation}
-For every fixed $0<\theta_*<\pi$ and $0\le\theta_e\le\theta_*$,
-\begin{equation}
- \frac{1-\cos\theta_*}{\theta_*^2}\theta_e^2
- \le V_R\le\frac12\theta_e^2.
- \label{eq:widen-SO3-sector}
-\end{equation}
-Exact rotation identities also bound the vector-measurement linearization
-remainder by $c_R(\theta_*)\theta_e^2$ on this entire compact geodesic chart.
+\subsubsection{Source-faithful large-angle dissipation sector}
 
-\begin{theorem}[Group-geometric correction widening]
-\label{thm:widen-group-correction}
-In addition to the anisotropic theorem's prefix-safety hypothesis, require each
-accepted correction to satisfy
-\begin{align}
- \theta_e^-&\le\theta_*<\pi,\\
- \theta_e^+
- &:=d_{\SO(3)}\!\left(
-   \exp([\Delta\vct\theta_k]_\times)\mat R_e^-,\mat I\right)
- \le\theta_*,\\
- \|\Delta\vct\theta_k\|&\le\delta_Q<\infty.
- \label{eq:widen-group-domain}
-\end{align}
-Include the series-branch defect of Eq.~\eqref{eq:widen-series-defect} in the
-bounded input.  Then the quaternion-injection and covariance-reset parts of the
-nonlinear remainder have finite explicit bounds depending on
-$(\theta_*,\delta_Q)$, with reset amplification bounded by
-Eq.~\eqref{eq:widen-reset-G-bound}.  Consequently the anisotropic theorem
-remains valid with a group-energy attitude coordinate on any exact
-pre/post-correction chart strictly smaller than the antipodal set; no artificial
-singularity at $\|\Delta\theta\|=\pi$ is required.
+Let $\vct\xi$ collect the non-attitude active error coordinates in the current
+fixed-dimensional Live mode.  For every admitted source tuple $g$ (covariance,
+accepted-update pattern, measured vector geometry, OU/$R_S$ parameters,
+pseudo-update phase, and gain), define the exact correction map
+\begin{equation}
+ \vct d_g(\mat R_e,\vct\xi)
+ :=\mat E_\theta\left(
+ \mat K_a\vct r_a(\mat R_e,\vct\xi)
+ +\mat K_m\vct r_m(\mat R_e)
+ -\mat K_S\delta\vct S\right).
+ \label{eq:widen-source-correction-map}
+\end{equation}
+All quantities in one evaluation of Eq.~\eqref{eq:widen-source-correction-map}
+come from the same source-reachable tuple; independent gain extrema are never
+combined.
+
+For a compact source node $i$ and an angle $0<\theta_{*,i}<\pi$, let
+$\mathcal A_i$ be the corresponding exact source family satisfying
+$\theta_e\le\theta_{*,i}$, the declared measurement gates, covariance bounds,
+and finite correction bound.  Define
+\begin{equation}
+ \mathscr D_{R,g}(\mat R_e,\vct\xi)
+ :=V_R(\mat R_e)-
+ V_R\!\left(
+ \exp([\vct d_g(\mat R_e,\vct\xi)]_\times)\mat R_e\right).
+ \label{eq:widen-group-dissipation}
+\end{equation}
+A source node satisfies the \emph{large-angle correction sector} when there are
+$\alpha_{R,i}>0$ and $\beta_{R,i}<\infty$ such that, for every admissible tuple
+and every state in $\mathcal A_i$,
+\begin{equation}
+ \boxed{
+ \mathscr D_{R,g}(\mat R_e,\vct\xi)
+ \ge \alpha_{R,i}V_R(\mat R_e)
+      -\beta_{R,i}\|\vct\xi\|^2.}
+ \label{eq:widen-large-angle-sector}
+\end{equation}
+The inequality is evaluated with the exact finite-correction expression
+Eq.~\eqref{eq:widen-exact-energy-change}.  It therefore credits dissipative
+innovation directions and penalizes gain-coupled non-attitude errors only by
+the amount they actually perturb the group energy.
+
+\begin{theorem}[Large-angle source correction dissipation]
+\label{thm:widen-large-angle-dissipation}
+Suppose a fixed-dimensional normal-Live source node satisfies
+Eq.~\eqref{eq:widen-large-angle-sector} on
+$\theta_e\le\theta_{*,i}<\pi$.  Include the series-branch defect of
+Eq.~\eqref{eq:widen-series-defect} and bounded deterministic model error in the
+source disturbance budget.  Then every accepted correction in that node obeys
+\begin{equation}
+ V_R^+\le(1-\alpha_{R,i})V_R^-
+ +\beta_{R,i}\|\vct\xi^-\|^2+\gamma_{R,i}(\bar d),
+ \label{eq:widen-large-angle-bound}
+\end{equation}
+for a finite class-$\mathcal K$ function $\gamma_{R,i}$ on the declared compact
+source family.  The admissible attitude domain is set by the verified geodesic
+chart and source dissipation sector, not by a small-angle Taylor radius.
 \end{theorem}
 
 \begin{proof}
-Equation~\eqref{eq:widen-exact-injection} is the implemented radial quaternion
-map; the small-angle branch differs from the exact exponential only by the
-Taylor remainder in Eq.~\eqref{eq:widen-series-defect}.  Equation~\eqref{eq:widen-reset-G-bound}
-follows by direct multiplication of Eq.~\eqref{eq:widen-reset-G}.  The explicit
-post-correction condition in Eq.~\eqref{eq:widen-group-domain} prevents a large
-finite injection from leaving the selected geodesic chart.  On that chart the
-logarithmic attitude coordinate and $V_R^{1/2}$ are uniformly equivalent by
-Eq.~\eqref{eq:widen-SO3-sector}, and all exact rotated-vector residuals have
-bounded second derivatives.  Hence the same nonlinear comparison proof applies
-with constants depending on the compact geodesic chart and finite correction
-budget rather than on a correction-angle cutoff below $\pi$.
+Equation~\eqref{eq:widen-large-angle-sector} and the definition
+Eq.~\eqref{eq:widen-group-dissipation} give the zero-disturbance decrease
+exactly.  The complete correction map and $V_R$ are smooth on the compact
+source family with $\theta_e<\pi$ and finite correction norm, hence the bounded
+series/model perturbation changes the endpoint energy by a uniformly bounded
+class-$\mathcal K$ amount.  Rearrangement yields
+Eq.~\eqref{eq:widen-large-angle-bound}.
 \end{proof}
 
-\begin{remark}[Scope of the group result]
-The theorem widens the geometry used to bound the implemented correction; it
-does not claim global MEKF convergence.  The antipodal attitude topology,
-measurement ambiguity, and gain-coupled translational injection remain real
-limitations.  The useful conclusion is that the previous $\Delta_0<\pi$
-restriction was a proof-device restriction, not a singularity of the source
-reset map.
-\end{remark}
-
-\input{w3d-stability-widening-structured.tex-part}
+The condition is deliberately source faithful.  It does not assume that the
+attitude rows of the Kalman gain form a scalar Wahba gradient, and it does not
+discard the $S\to\theta$ path.  For a particular deployed source family the
+largest certifiable $\theta_{*,i}$ is the largest geodesic angle for which the
+rigorous lower bound in Eq.~\eqref{eq:widen-large-angle-sector} remains
+positive.  The value may approach $\pi$ from below, but the antipodal topology
+and any genuine measurement critical set remain excluded; no global MEKF claim
+is made.

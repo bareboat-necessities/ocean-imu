@@ -1,4 +1,3 @@
-\input{w3d-block-local-iss.tex-part}
 \input{w3d-finite-live-capture.tex-part}
 \input{w3d-hybrid-stability.tex-part}
 
@@ -8,10 +7,10 @@
 Startup uses a private measurement-only Mahony observer while the MEKF remains
 outside Live mode.  The observer supplies a quantitative gravity-direction
 entry bound on compact subsets of its almost-global basin.  The accepted
-handoff defines the compact set $\mathcal H$ used directly by
-Theorem~\ref{thm:finite-live-capture}; the source enters Live with the
-accelerometer-bias state held, so the first normal-Live interval uses the
-held-bias branch of Theorem~\ref{thm:iss-21-ues}.
+handoff defines the compact set $\mathcal H$ that initializes the source-node
+Lyapunov funnels of Theorem~\ref{thm:finite-live-capture}.  The source enters
+Live with accelerometer-bias learning held, so the first normal-Live interval
+uses the held-bias branch of Theorem~\ref{thm:iss-21-ues}.
 
 \subsection{Explicit Mahony startup estimate}
 \label{sec:semiglobal-proxy}
@@ -41,8 +40,7 @@ observable residual bias in the gravity tangent plane by
  \label{eq:semiglobal-proxy-bias-error}
 \end{equation}
 
-The normalized accelerometer direction obeys a directly checkable physical
-bound.  Write
+Write the physical specific force as
 \begin{equation}
  -\vct f^B=g\vct d+\vct a_f,
  \qquad \|\vct a_f\|\le\bar f_P<g.
@@ -57,7 +55,7 @@ Then
  \le\bar\nu_f:=2\sin(\eta_f/2),
  \label{eq:semiglobal-proxy-direction-error}
 \end{equation}
-where the measured direction error is written
+where the measured direction error is
 $\vct\varepsilon_P=\vct e_P+\vct\nu_\varepsilon$.
 The observer is seeded from the first valid accelerometer sample and its
 integral state is zero at reset, so a physical initial gyro-bias bound gives
@@ -78,13 +76,13 @@ In a transported tangent frame the reduced source dynamics can be written
  &=k_I\vct e_P+\vct w_b,
  \label{eq:semiglobal-proxy-reduced-dynamics}
 \end{align}
-with calculable physical/source bounds
+with calculable bounds
 \begin{equation}
  \|\vct w_\omega\|\le\bar w_\omega,
  \qquad \|\vct w_b\|\le\bar w_b.
  \label{eq:semiglobal-proxy-disturbance-bounds}
 \end{equation}
-The terms include gyro noise and bias drift, the direction perturbation of
+These terms include gyro noise and bias drift, the direction perturbation of
 Eq.~\eqref{eq:semiglobal-proxy-direction-error}, bounded tangent-frame
 transport, and bounded discrete normalization/integration defect.
 
@@ -121,7 +119,7 @@ Define
  W_P:=1-c_P+\frac{\|\widetilde{\vct\beta}_\perp\|^2}{2k_I},
  \label{eq:semiglobal-proxy-energy}
 \end{equation}
-and the strict Lyapunov function
+and
 \begin{equation}
  V_P:=W_P+\delta_P\vct e_P^\top\widetilde{\vct\beta}_\perp.
  \label{eq:semiglobal-proxy-lyapunov}
@@ -215,7 +213,7 @@ cannot extend through initial sets approaching $\mathcal N_P$.  The compact
 chart above supplies the quantitative startup family used by the source
 certificate.
 
-\subsection{Quality gate and structured handoff}
+\subsection{Quality gate and source-shaped handoff}
 \label{sec:semiglobal-handoff}
 
 The implemented gravity gate requires
@@ -224,7 +222,7 @@ The implemented gravity gate requires
  \le0.075
  \label{eq:semiglobal-sine-gate}
 \end{equation}
-and also
+and
 \begin{equation}
  \boxed{
  \widehat{\vct s}_P^\top\widehat{\vct s}_{\rm meas}>0.}
@@ -239,8 +237,7 @@ accepted handoff satisfies
  \label{eq:semiglobal-handoff-tilt}
 \end{equation}
 
-A sufficient time for the gravity part of the gate follows from the Mahony
-comparison.  Let
+Let
 \begin{equation}
  \theta_Q:=\sin^{-1}(0.075)-\eta_g>0,
  \qquad
@@ -269,9 +266,8 @@ For a full-heading handoff, let
  \label{eq:semiglobal-handoff-yaw-internal}
 \end{equation}
 relative to the adopted horizontal gauge.  The residual true-north offset
-$b_{\psi,\mathrm{ref}}$ is excluded by construction from the estimator error
-radius and enters true-north reporting only through
-Eq.~\eqref{eq:iss-true-yaw-error}.  Combine
+$b_{\psi,\mathrm{ref}}$ is excluded from the estimator error metric and enters
+true-north reporting only through Eq.~\eqref{eq:iss-true-yaw-error}.  Combine
 Eqs.~\eqref{eq:semiglobal-handoff-tilt}--
 \eqref{eq:semiglobal-handoff-yaw-internal} with finite physical startup bounds
 on $(b_g,v,p,S,a_w,b_a)$ to define the compact source handoff set
@@ -279,41 +275,45 @@ on $(b_g,v,p,S,a_w,b_a)$ to define the compact source handoff set
  \boxed{\mathcal H_{k_H}\subset\mathcal D_{k_H}.}
  \label{eq:semiglobal-capture-entry}
 \end{equation}
-Its optional radius summary is
+For diagnostics only,
 \begin{equation}
- \vct R_H^{\max}:=\mathcal R_{k_H}(\mathcal H_{k_H}),
+ \vct R_H^{\max}:=\mathcal R_{k_H}(\mathcal H_{k_H}).
  \label{eq:semiglobal-handoff-metric-radius}
 \end{equation}
-but the capture proof propagates $\mathcal H$ itself.
+The certificate itself initializes the source-node funnel levels by
+Eq.~\eqref{eq:capture-initial-level}; the radius summary is not propagated.
 
 The source enters Live with the linear block enabled and accelerometer-bias
 learning held.  The private Mahony integral state is not copied to the MEKF.
-The held-bias branch of Theorem~\ref{thm:iss-21-ues} therefore governs the
-initial normal-Live mode, and the later bias release is the bounded mode
-transition included in $\Pi^{\rm src}$.
+The held-bias branch of Theorem~\ref{thm:iss-21-ues} governs the initial
+normal-Live mode, and bias release is certified as an exact transition between
+the held and active source-node funnels.
 
 \begin{theorem}[Quantified proxy-to-Live regional capture]
 \label{thm:semiglobal-proxy-live}
 Assume Theorem~\ref{thm:semiglobal-proxy-explicit}, finite completion of the
 source hold/rate/tuner/heading gates, the handoff inclusion
-Eq.~\eqref{eq:semiglobal-capture-entry}, and the direct set conditions of
-Theorem~\ref{thm:finite-live-capture} for
-$X_0=\mathcal H_{k_H}$.  Then the Mahony contribution to normal gravity-gate
-entry is bounded by $T_Q$, every accepted handoff begins inside the proof-safe
-Live domain, and the complete source-realizable Live recursion enters
-$\mathcal B$ after the finite count $N_H$ of Eq.~\eqref{eq:capture-count}.
-Thereafter it satisfies Eq.~\eqref{eq:capture-practical-iss}; Gaussian Live
-noise is covered only when the separate drift condition of
-Theorem~\ref{thm:capture-stochastic-live} is verified.
+Eq.~\eqref{eq:semiglobal-capture-entry}, and the funnel initialization,
+source-word, jump, and prefix conditions of
+Theorem~\ref{thm:finite-live-capture}.  Then the Mahony contribution to normal
+gravity-gate entry is bounded by $T_Q$, every accepted handoff initializes a
+proof-safe source-node funnel, and the complete source-realizable Live recursion
+enters $\mathcal B$ after the finite count $N_H$ of
+Eq.~\eqref{eq:capture-count}.  Thereafter it satisfies
+Eq.~\eqref{eq:capture-practical-iss}; Gaussian Live noise is covered only when
+the separate drift condition of Theorem~\ref{thm:capture-stochastic-live} is
+verified.
 \end{theorem}
 
 \begin{proof}
 The startup theorem supplies the gravity-direction and observable gyro-bias
 envelopes.  The source gates and independent physical startup bounds define
 $\mathcal H$.  Equation~\eqref{eq:semiglobal-capture-entry} places that exact
-family in the safe Live domain.  Theorem~\ref{thm:finite-live-capture} then
-propagates the complete source-shaped set through the held-bias and, when
-reached, active-bias modes until inner-set capture.
+family in the safe Live domain.  Equation~\eqref{eq:capture-initial-level}
+embeds each reachable part of $\mathcal H$ directly in its source-node Lyapunov
+funnel, and Theorem~\ref{thm:finite-live-capture} propagates only the certified
+funnel levels through held mode, bias release, and active mode until inner-funnel
+capture.
 \end{proof}
 
 \subsection{Timeout handoff}
@@ -358,9 +358,10 @@ If a finite heading gauge is available and
  \mathcal H_T\subset\mathcal D,
  \label{eq:semiglobal-timeout-capture-entry}
 \end{equation}
-then Theorem~\ref{thm:finite-live-capture} applies directly from
-$X_0=\mathcal H_T$ whenever its source-shaped prefix and finite-entry conditions
-are verified.
+then Theorem~\ref{thm:finite-live-capture} applies after computing the timeout
+source-node initial levels
+$c_{0,i}=\sup_{e\in\mathcal H_T\cap\mathcal D_i}W_i(e)$ and verifying its
+word/jump and prefix-safety conditions.
 
 If no heading gauge is available and
 \begin{equation}
@@ -373,6 +374,6 @@ the full-heading chain when its exact jump image satisfies the safe-domain and
 recovery condition Eq.~\eqref{eq:hybrid-jump-entry}.
 \end{theorem}
 
-The timeout path does not require \texttt{north\_ready}; the two branches above
-therefore preserve the distinction between an adopted heading gauge and the
-gravity-only yaw quotient while using the same source-realizable Live dynamics.
+The timeout path does not require \texttt{north\_ready}; the two cases preserve
+the distinction between an adopted heading gauge and the gravity-only yaw
+quotient while using the same source-realizable Live dynamics.
