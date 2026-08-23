@@ -115,20 +115,25 @@ jobs:
             --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-neighborhood-sim" \
             --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
             --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii" \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate/neighborhood_diagnostic" \
+            --diagnostic-dir "$GITHUB_WORKSPACE/reports/diagnostics/ou3_numerical_certificate/neighborhood_full" \
             --full-basis \
             --target-W 0.05 \
             --jobs 4
 
-      - name: Locate sampled nonlinear neighborhood boundary
+      - name: Locate sampled nonlinear H/A neighborhood boundaries
         run: |
           python3 -u tools/ou3_neighborhood_radius_search.py \
             --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-neighborhood-sim" \
             --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
             --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii" \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate/neighborhood_radius_search" \
+            --diagnostic-dir "$GITHUB_WORKSPACE/reports/diagnostics/ou3_numerical_certificate/neighborhood_radius" \
+            --modes H,A \
             --start-W 0.05 \
-            --growth 4 \
-            --max-W 204.8 \
-            --bisection-steps 3 \
+            --growth 16 \
+            --max-W 838860.8 \
+            --bisection-steps 5 \
             --jobs 4
 
       - name: Validate deterministic scientific result payloads

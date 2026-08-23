@@ -28,10 +28,17 @@ class Ou3NeighborhoodRadiusSearchTests(unittest.TestCase):
             "W1": 0.9,
         }
 
-    def test_source_word_failure_has_priority(self):
+    def test_measurement_gate_failure_has_priority_when_both_flags_drop(self):
         c = self.base_case()
         c["source_match_all"] = False
         c["measurement_acceptance_match_all"] = False
+        self.assertEqual(
+            MOD.classify_case_failure(c), "MEASUREMENT_GATING_CONSISTENCY"
+        )
+
+    def test_source_word_failure_is_distinct_without_gate_divergence(self):
+        c = self.base_case()
+        c["source_match_all"] = False
         self.assertEqual(MOD.classify_case_failure(c), "SOURCE_WORD_IDENTITY")
 
     def test_measurement_gate_failure_is_distinct(self):

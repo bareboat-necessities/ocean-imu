@@ -68,28 +68,66 @@ def record_index() -> dict[str, tuple[str, float, str]]:
     return out
 
 
-def nearest_covariance(map_path: Path, t: float, dim: int) -> tuple[np.ndarray, dict]:
-    maps, covs, meta = INFO.pair_map_covariance(map_path, map_path.stem.replace("_exact_maps", ""))
-    candidates = []
-    for i, (m, c) in enumerate(zip(maps, covs)):
-        candidates.append((abs(m.t0 - t), i, "start", c.start))
-        candidates.append((abs(m.t1 - t), i, "end", c.end))
-    if not candidates:
+def certified_word_start_covariance(map_path: Path, requested_t: float, dim: int,
+                                    mode: str, horizon_s: float) -> tuple[np.ndarray, dict]:
+    """Select an actual certified source-word start near the requested time.
+
+    Exact-map/covariance blocks are event/stride aligned, not aligned to round
+    wall-clock times such as 60 or 300 s.  The old driver required a covariance
+    endpoint within 20 ms of those round times, which could abort before any
+    nonlinear case ran.  Instead choose the closest *start* of a complete,
+    valid, live, non-hybrid information word in the requested mode and inject at
+    that exact source time.  This changes no tolerance and keeps the
+    perturbation normalized by the covariance at the source actually replayed.
+    """
+    maps, covs, pairing_meta = INFO.pair_map_covariance(
+        map_path, map_path.stem.replace("_exact_maps", "")
+    )
+    if not maps:
         raise RuntimeError(f"no covariance blocks in {map_path}")
-    dt, i, side, P = min(candidates, key=lambda x: x[0])
-    if dt > 0.02:
-        raise RuntimeError(f"no covariance endpoint within 20 ms of t={t}: nearest {dt}")
+    durations = [b.t1 - b.t0 for b in maps if b.t1 > b.t0]
+    if not durations:
+        raise RuntimeError(f"no positive-duration map blocks in {map_path}")
+    base = float(np.median(durations))
+    count = max(1, int(round(horizon_s / base)))
+
+    candidates = []
+    for i in range(len(maps) - count + 1):
+        seq = maps[i:i + count]
+        if not all(b.start_live and b.end_live for b in seq):
+            continue
+        word = INFO.physical_word(maps, covs, mode, i, count)
+        if word is None:
+            continue
+        _, P0, _ = word
+        selected_t = float(seq[0].t0)
+        candidates.append((abs(selected_t - requested_t), selected_t, i, P0, seq[-1].t1))
+
+    if not candidates:
+        raise RuntimeError(
+            f"no complete live {mode} covariance word of {horizon_s:g}s in {map_path}"
+        )
+    distance, selected_t, i, P, word_end_t = min(candidates, key=lambda x: (x[0], x[1]))
     P = np.asarray(P[:dim, :dim], float)
     P = 0.5 * (P + P.T)
     eig = np.linalg.eigvalsh(P)
     if not np.all(np.isfinite(eig)) or float(np.min(eig)) <= 0.0:
-        raise RuntimeError(f"non-SPD covariance at {map_path} block {i} {side}")
+        raise RuntimeError(f"non-SPD covariance at {map_path} block {i} start")
     return P, {
-        "block": i,
-        "side": side,
-        "time_distance_s": float(dt),
+        "block": int(i),
+        "side": "start",
+        "requested_reference_time_s": float(requested_t),
+        "selected_source_time_s": float(selected_t),
+        "reference_time_shift_s": float(selected_t - requested_t),
+        "reference_time_distance_s": float(distance),
+        "word_end_time_s": float(word_end_t),
+        "word_actual_duration_s": float(word_end_t - selected_t),
+        "word_block_count": int(count),
+        "word_horizon_requested_s": float(horizon_s),
+        "block_duration_median_s": float(base),
         "lambda_min": float(np.min(eig)),
         "lambda_max": float(np.max(eig)),
+        "pairing": pairing_meta,
     }
 
 
@@ -197,8 +235,8 @@ def run_case(sim: Path, data: Path, trace: Path, log: Path,
     env = os.environ.copy()
     env.update({
         "OU3_NEIGHBOR_TRACE": str(trace.resolve()),
-        "OU3_NEIGHBOR_INJECT_TIME_S": f"{inject_s:.9g}",
-        "OU3_NEIGHBOR_HORIZON_S": f"{horizon_s:.9g}",
+        "OU3_NEIGHBOR_INJECT_TIME_S": f"{inject_s:.17g}",
+        "OU3_NEIGHBOR_HORIZON_S": f"{horizon_s:.17g}",
         "OU3_NEIGHBOR_MODE": mode,
         "OU3_NEIGHBOR_DELTA": ",".join(f"{x:.17g}" for x in delta21),
         "OU3_NEIGHBOR_TRACE_STRIDE": "50",
@@ -273,9 +311,13 @@ def main() -> int:
 
         for mode in modes:
             dim = 18 if mode == "H" else 21
-            inject_s = args.held_time_s if mode == "H" else args.active_time_s
-            horizon_s = float(contract["modes"][mode]["recommended_word_horizon_s"])
-            P, cov_meta = nearest_covariance(map_path, inject_s, dim)
+            preferred_inject_s = args.held_time_s if mode == "H" else args.active_time_s
+            certified_horizon_s = float(contract["modes"][mode]["recommended_word_horizon_s"])
+            P, cov_meta = certified_word_start_covariance(
+                map_path, preferred_inject_s, dim, mode, certified_horizon_s
+            )
+            inject_s = float(cov_meta["selected_source_time_s"])
+            replay_horizon_s = float(cov_meta["word_actual_duration_s"])
             indices = tuple(range(dim)) if args.full_basis else (COMPACT_H if mode == "H" else COMPACT_A)
             for target in targets:
                 for index in indices:
@@ -297,8 +339,10 @@ def main() -> int:
                             "direction": BLOCK_NAME[index],
                             "sign": sign,
                             "target_W": target,
+                            "preferred_injection_time_s": preferred_inject_s,
                             "requested_injection_time_s": inject_s,
-                            "word_horizon_s": horizon_s,
+                            "certified_word_horizon_s": certified_horizon_s,
+                            "word_horizon_s": replay_horizon_s,
                             "delta_21": d21,
                             "covariance_reference": cov_meta,
                             "trace": diag / f"{case_id}.csv",
@@ -322,13 +366,35 @@ def main() -> int:
             "direction": task["direction"],
             "sign": task["sign"],
             "target_W": task["target_W"],
+            "preferred_injection_time_s": task["preferred_injection_time_s"],
             "requested_injection_time_s": task["requested_injection_time_s"],
+            "certified_word_horizon_s": task["certified_word_horizon_s"],
             "word_horizon_s": task["word_horizon_s"],
             "delta_21": [float(x) for x in task["delta_21"]],
             "covariance_reference": task["covariance_reference"],
             "sim_returncode": int(rc),
             "sim_completed_marker": "OU3_NEIGHBOR_DONE" in stdout,
         })
+        if result.get("actual_injection_time_s") is not None:
+            inject_err = abs(
+                float(result["actual_injection_time_s"])
+                - float(task["covariance_reference"]["selected_source_time_s"])
+            )
+            result["injection_source_time_error_s"] = inject_err
+        if result.get("actual_endpoint_time_s") is not None:
+            endpoint_err = abs(
+                float(result["actual_endpoint_time_s"])
+                - float(task["covariance_reference"]["word_end_time_s"])
+            )
+            result["endpoint_source_time_error_s"] = endpoint_err
+        aligned = (
+            result.get("injection_source_time_error_s", math.inf) <= 1.0e-5
+            and result.get("endpoint_source_time_error_s", math.inf) <= 6.0e-3
+        )
+        result["source_time_alignment_ok"] = bool(aligned)
+        if result.get("status") in ("PASS_SAMPLED", "FAIL_SAMPLED") and not aligned:
+            result["status"] = "SOURCE_TIME_MISALIGNMENT"
+            result["pass_sampled"] = False
         return result
 
     cases = []
