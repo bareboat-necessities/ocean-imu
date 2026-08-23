@@ -39,15 +39,11 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf incoming
-          mkdir -p incoming/kalman_ou_iii incoming/spectrum
+          mkdir -p incoming/kalman_ou_iii
           gh run download "$BUILD_RUN_ID" \
             --repo "$GITHUB_REPOSITORY" \
             --name release-svgs-kalman_ou_iii \
             --dir incoming/kalman_ou_iii
-          gh run download "$BUILD_RUN_ID" \
-            --repo "$GITHUB_REPOSITORY" \
-            --name release-svgs-spectrum \
-            --dir incoming/spectrum
 
       - name: Stage stable README gallery
         run: |
@@ -56,24 +52,23 @@ jobs:
           mkdir -p "$out"
 
           copy_figure() {
-            local root="$1"
-            local name="$2"
+            local name="$1"
             local src
-            src="$(find "$root" -type f -name "$name" -print -quit)"
+            src="$(find incoming/kalman_ou_iii -type f -name "$name" -print -quit)"
             if [ -z "$src" ]; then
               echo "required build figure is missing: $name" >&2
-              find "$root" -maxdepth 5 -type f -print >&2 || true
+              find incoming/kalman_ou_iii -maxdepth 5 -type f -print >&2 || true
               exit 1
             fi
             cp -v "$src" "$out/$name"
           }
 
-          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium.svg
-          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium_zkin.svg
-          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium_xykin.svg
-          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium_acc_bias.svg
-          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium_gyro_bias.svg
-          copy_figure incoming/spectrum spectrum_pmstokes_medium_3d.svg
+          copy_figure w3d_ou3_pmstokes_medium.svg
+          copy_figure w3d_ou3_pmstokes_medium_zkin.svg
+          copy_figure w3d_ou3_pmstokes_medium_xykin.svg
+          copy_figure w3d_ou3_pmstokes_medium_acc_bias.svg
+          copy_figure w3d_ou3_pmstokes_medium_gyro_bias.svg
+          copy_figure spectrum_pmstokes_medium_3d.svg
 
           cat > "$out/PROVENANCE.md" <<EOF
           # README result gallery provenance
@@ -83,8 +78,8 @@ jobs:
 
           - build workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}
           - triggering source SHA: ${{ github.event.workflow_run.head_sha }}
-          - OU-III figures: successful-build artifact release-svgs-kalman_ou_iii
-          - 3-D directional spectrum: successful-build artifact release-svgs-spectrum
+          - source artifact: release-svgs-kalman_ou_iii
+          - includes the existing build-generated PM/Stokes 3-D spectrum SVG
           EOF
 
       - name: Commit refreshed gallery
