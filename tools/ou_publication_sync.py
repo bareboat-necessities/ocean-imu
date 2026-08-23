@@ -24,10 +24,13 @@ CURRENT_CHANNEL_CAPTION = (
 PUBLICATION_NAME = "ou_validation_publication.tex"
 MANIFEST_NAME = "ou_validation_manifest.json"
 SUMMARY_NAME = "ou_validation_summary.csv"
-ROBUSTNESS_PUBLICATION_NAME = "ou_robustness_publication.tex"
+VALIDATION_ARTICLE_SVGS = (
+    "ou_validation_vertical.svg",
+    "ou_validation_displacement.svg",
+    "ou_validation_attitude.svg",
+)
 ROBUSTNESS_MACROS_NAME = "ou_robustness_macros.tex"
 ROBUSTNESS_STRESS_SVG = "ou_robustness_stress.svg"
-ROBUSTNESS_DOC_RESULTS = "w3d-ou-robustness-results-generated.tex-part"
 ROBUSTNESS_DOC_MACROS = "w3d-ou-robustness-macros-generated.tex-part"
 ROBUSTNESS_RETIRED_SVG = "ou_robustness_sensitivity.svg"
 ROBUSTNESS_STRESS_MACROS = (
@@ -210,6 +213,13 @@ def sync_validation_doc_copy(validation_dir: Path, doc_dir: Path) -> bool:
     if not publication.is_file() or publication.read_text(encoding="utf-8") != desired:
         publication.write_text(desired, encoding="utf-8")
         changed = True
+    for name in VALIDATION_ARTICLE_SVGS:
+        source_svg = validation_dir / name
+        target_svg = doc_dir / name
+        svg = source_svg.read_bytes()
+        if not target_svg.is_file() or target_svg.read_bytes() != svg:
+            target_svg.write_bytes(svg)
+            changed = True
     retired = doc_dir / "ou_validation_transition.svg"
     if retired.exists():
         retired.unlink()
@@ -217,31 +227,14 @@ def sync_validation_doc_copy(validation_dir: Path, doc_dir: Path) -> bool:
     return changed
 
 
-def _table_block_by_label(text: str, label: str) -> str:
-    marker = rf"\label{{{label}}}"
-    for block in re.findall(r"\\begin\{table\*\}.*?\\end\{table\*\}", text, flags=re.S):
-        if marker in block:
-            return block
-    raise RuntimeError(f"cannot locate table {label}")
-
-
 def _robustness_macro_definitions(text: str) -> dict[str, str]:
     return dict(re.findall(r"\\providecommand\{\\(OURobustness[A-Za-z]+)\}\{([^}]*)\}", text))
 
 
 def sync_robustness_doc_copies(robustness_dir: Path, doc_dir: Path) -> bool:
-    publication = robustness_dir / ROBUSTNESS_PUBLICATION_NAME
     macros_path = robustness_dir / ROBUSTNESS_MACROS_NAME
     stress_svg = robustness_dir / ROBUSTNESS_STRESS_SVG
     changed = False
-    table = _table_block_by_label(
-        publication.read_text(encoding="utf-8"), "tab:ou_robustness_stress"
-    )
-    desired = "% Publication excerpt of the committed OU--III degradation cases.\n\n" + table + "\n"
-    target = doc_dir / ROBUSTNESS_DOC_RESULTS
-    if not target.is_file() or target.read_text(encoding="utf-8") != desired:
-        target.write_text(desired, encoding="utf-8")
-        changed = True
     macros = _robustness_macro_definitions(macros_path.read_text(encoding="utf-8"))
     missing = [name for name in ROBUSTNESS_STRESS_MACROS if name not in macros]
     if missing:
