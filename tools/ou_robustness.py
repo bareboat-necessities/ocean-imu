@@ -2,7 +2,7 @@
 """Current OU-III robustness study using the deployed analytical SpectralMSE coupling.
 
 The historical implementation is kept in ``ou_robustness_core`` so committed
-legacy evidence can still be restated byte-for-byte.  New simulator runs use the
+legacy evidence can still be restated byte-for-byte. New simulator runs use the
 same OFAT and degradation protocols, but the two coupled sensitivity directions
 follow the deployed SpectralMSE law rather than the retired cubic relation.
 """
@@ -18,7 +18,7 @@ import ou_robustness_core as _core
 from ou_robustness_core import *  # noqa: F401,F403
 
 # The source uses T_S = clip((0.015/1.1) tau, 0.005, 0.25) at the default
-# 200-Hz schedule.  Keep the exact cadence in the coupled tau perturbation so
+# 200-Hz schedule. Keep the exact cadence in the coupled tau perturbation so
 # the study remains correct when a scale crosses a cadence clamp.
 _PSEUDO_TAU_RATIO = 0.015 / 1.1
 _PSEUDO_MIN_S = 0.005
@@ -40,10 +40,10 @@ def spectral_mse_tau_ratio(old_tau_s: float, new_tau_s: float) -> float:
 
 
 def scaled_tuning_point(
-    baseline: TuningPoint,
+    baseline: Any,
     parameter: str,
     scale: float,
-) -> TuningPoint:
+) -> Any:
     """Apply OFAT or deployed-SpectralMSE-coupled sensitivity scaling."""
     if parameter not in SENSITIVITY_PARAMETERS:
         raise ValueError(f"unknown sensitivity parameter: {parameter}")
@@ -72,7 +72,7 @@ def scaled_tuning_point(
             RS_ms=baseline.RS_ms * realized ** (6.0 / 7.0),
         )
     else:
-        # SpectralMSE: r_S ~ tau^(24/7) / sqrt(T_S(tau)).  Away from cadence
+        # SpectralMSE: r_S ~ tau^(24/7) / sqrt(T_S(tau)). Away from cadence
         # clamps this reduces to tau^(41/14), but the study uses the exact ratio.
         tau_new = min(
             max(baseline.tau_s * scale, TAU_BOUNDS_S[0]),
@@ -193,9 +193,14 @@ def write_publication_table(
         r"acts on the pseudo-measurement standard deviation, so its covariance "
         r"scales quadratically.}"
     )
+    pattern = (
+        r"\\caption\{OU--III tuning sensitivity.*?\}\n"
+        r"\s*\\label\{tab:ou_robustness_sensitivity\}"
+    )
+    replacement = caption + "\n  " + r"\label{tab:ou_robustness_sensitivity}"
     text, count = re.subn(
-        r"\\caption\{OU--III tuning sensitivity.*?\}\n\s*\\label\{tab:ou_robustness_sensitivity\}",
-        caption + "\n  " + r"\label{tab:ou_robustness_sensitivity}",
+        pattern,
+        lambda _match: replacement,
         text,
         count=1,
         flags=re.S,
