@@ -18,6 +18,7 @@ on:
       - "tools/ou3_numerical_certificate.py"
       - "tools/ou3_information_certificate.py"
       - "tools/ou3_information_completion.py"
+      - "tools/ou3_information_enclosure_contract.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
       - "tools/ou3_result_contract.py"
@@ -79,6 +80,11 @@ jobs:
           python3 -u tools/ou3_information_completion.py \
             --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
             --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii"
+
+      - name: Generate continuous-source information enclosure contract
+        run: |
+          python3 -u tools/ou3_information_enclosure_contract.py \
+            --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
 
       - name: Validate deterministic scientific result payloads
         run: |
