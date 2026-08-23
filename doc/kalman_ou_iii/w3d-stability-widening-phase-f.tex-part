@@ -176,32 +176,198 @@ the deterministic funnel inequality and the product-distance sensitivity bound
 hold uniformly for every admissible branch.
 \end{proof}
 
-For the true unbounded process define the tail event over $K$ word blocks
+\subsubsection{Gaussian concentration for localization exit}
+
+For the true unbounded process, strengthen the raw-noise hypothesis to the
+source-faithful conditional Gaussian model
+\begin{equation}
+ \vct w_k\mid\mathscr F_k\sim\mathcal N(0,\Sigma_k),
+ \qquad
+ 0\preceq\Sigma_k\preceq\overline\Sigma.
+ \label{eq:widen-gaussian-conditional}
+\end{equation}
+This is imposed on the pre-gate increment.  The accepted innovation need not
+remain conditionally centered after NIS gating.
+
+Define
+\begin{equation}
+ m_\Sigma:=\operatorname{tr}\overline\Sigma,\qquad
+ v_\Sigma:=\operatorname{tr}(\overline\Sigma^2),\qquad
+ b_\Sigma:=\|\overline\Sigma\|_2.
+ \label{eq:widen-gaussian-tail-constants}
+\end{equation}
+
+\begin{lemma}[Conditional Gaussian quadratic-form tail]
+\label{lem:widen-gaussian-tail}
+Under Eq.~\eqref{eq:widen-gaussian-conditional}, for every $t\ge0$,
+\begin{equation}
+ \boxed{
+ \Pr\!\left(
+ \|w_k\|^2\ge
+ m_\Sigma+2\sqrt{v_\Sigma t}+2b_\Sigma t
+ \,\middle|\,\mathscr F_k\right)
+ \le e^{-t}.}
+ \label{eq:widen-gaussian-tail}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Condition on $\mathscr F_k$, diagonalize $\Sigma_k$, and write
+$\|w_k\|^2$ as a weighted sum of independent squared standard normal
+coordinates.  Chernoff's method applied to the exact Gaussian quadratic-form
+moment-generating function gives
+$\Pr(\|w_k\|^2\ge
+\operatorname{tr}\Sigma_k+
+2\sqrt{\operatorname{tr}(\Sigma_k^2)t}+
+2\|\Sigma_k\|_2t\mid\mathscr F_k)\le e^{-t}$.
+Loewner monotonicity of the ordered eigenvalues under
+$\Sigma_k\preceq\overline\Sigma$ bounds the three covariance quantities by
+$(m_\Sigma,v_\Sigma,b_\Sigma)$ and yields
+Eq.~\eqref{eq:widen-gaussian-tail}.
+\end{proof}
+
+For a selected localization radius define
+\begin{equation}
+ \boxed{
+ t_*:=\sup\left\{t\ge0:
+ m_\Sigma+2\sqrt{v_\Sigma t}+2b_\Sigma t\le w_*^2
+ \right\}.}
+ \label{eq:widen-gaussian-tail-rate}
+\end{equation}
+When $w_*^2>m_\Sigma$, $t_*>0$.  Over $K$ certified words, define
 \begin{equation}
  \mathcal E_K^c:=
  \left\{\max_{0\le r<K}\max_{0\le q<\ell_+}
  \|w_{k_r+q}\|>w_*\right\}.
 \end{equation}
-A union bound followed by Markov's inequality and the raw moment bounds gives
+Taking conditional expectations of Eq.~\eqref{eq:widen-gaussian-tail} and
+summing only over the at most $K\ell_+$ physical increments gives
 \begin{equation}
  \boxed{
  \Pr(\mathcal E_K^c)
- \le K\ell_+\min\!\left\{
- \frac{s_2}{w_*^2},\frac{s_4}{w_*^4}\right\}.}
+ \le K\ell_+e^{-t_*}.}
  \label{eq:widen-stochastic-exit}
 \end{equation}
-On $\mathcal E_K$ the raw and localized trajectories coincide over the complete
-horizon, so the true process inherits the same certified regional path and
-word-boundary comparison over that horizon.  A Gaussian quadratic-form tail may
-replace Eq.~\eqref{eq:widen-stochastic-exit} when the sharper probabilistic
-certificate of the next stage is constructed.
+No independence between physical samples or source words is required.  Relative
+to the previous moment/Markov estimate, the localization penalty now decays
+exponentially in the certified Gaussian threshold parameter.
+
+\subsubsection{Freedman--Bernstein concentration of funnel excursions}
+
+The mean-square drift controls the expected funnel energy but does not by itself
+control a finite-horizon maximum sharply.  For the localized process define the
+word-boundary martingale difference
+\begin{equation}
+ \boxed{
+ \zeta_{n+1}:=
+ W_{n+1}-\mathbb E[W_{n+1}\mid\mathscr F_n].}
+ \label{eq:widen-stochastic-martingale-difference}
+\end{equation}
+This centering is an identity and does not assume that gating preserves the
+conditional mean of a physical innovation.
+
+Because the localized source funnel and all admissible word maps are compact,
+a deployed stochastic certificate can rigorously enclose finite constants
+$b_W,v_W$ satisfying
+\begin{equation}
+ \boxed{
+ \zeta_{n+1}\le b_W,\qquad
+ \mathbb E[\zeta_{n+1}^2\mid\mathscr F_n]\le v_W}
+ \label{eq:widen-stochastic-martingale-bounds}
+\end{equation}
+for every certified word boundary.  The verifier may use exact source-word
+enclosures to make these constants considerably sharper than the trivial
+compact-range bounds.
+
+Condition on $\mathscr F_0$ and define the deterministic drift envelope
+\begin{equation}
+ \bar W_n:=
+ \lambda_s^nW_0+
+ \frac{1-\lambda_s^n}{1-\lambda_s}\sigma_s^2.
+ \label{eq:widen-stochastic-drift-envelope}
+\end{equation}
+Recursion of Eq.~\eqref{eq:widen-stochastic-drift} and
+Eq.~\eqref{eq:widen-stochastic-martingale-difference} gives
+\begin{equation}
+ W_n\le \bar W_n+
+ \sum_{j=1}^{n}\lambda_s^{\,n-j}\zeta_j.
+ \label{eq:widen-stochastic-martingale-recursion}
+\end{equation}
+For every fixed terminal $n$, the weighted sum is a martingale with increments
+bounded above by $b_W$ and predictable quadratic variation no larger than
+\begin{equation}
+ \boxed{
+ V_W:=\frac{v_W}{1-\lambda_s^2}.}
+ \label{eq:widen-stochastic-freedman-variance}
+\end{equation}
+
+\begin{theorem}[Finite-horizon source-funnel concentration]
+\label{thm:widen-stochastic-concentration}
+Assume the localized drift theorem and
+Eq.~\eqref{eq:widen-stochastic-martingale-bounds}.  For a word horizon $N\ge1$
+let
+\begin{equation}
+ \bar W_N^{\max}:=\max_{0\le n\le N}\bar W_n,
+ \qquad
+ x_*:=a-\bar W_N^{\max}>0.
+ \label{eq:widen-stochastic-excursion-margin}
+\end{equation}
+Then the localized process obeys
+\begin{equation}
+ \boxed{
+ \Pr\!\left(
+ \max_{0\le n\le N}W_n\ge a
+ \,\middle|\,\mathscr F_0\right)
+ \le
+ N\exp\!\left[
+ -\frac{x_*^2}
+ {2\left(V_W+b_Wx_*/3\right)}
+ \right].}
+ \label{eq:widen-stochastic-freedman}
+\end{equation}
+If in addition the raw increments satisfy
+Eq.~\eqref{eq:widen-gaussian-conditional}, the exact unlocalized process
+satisfies
+\begin{equation}
+ \boxed{
+ \Pr\!\left(\max_{0\le n\le N}W_n^{\rm raw}\ge a\right)
+ \le
+ N\exp\!\left[
+ -\frac{x_*^2}
+ {2\left(V_W+b_Wx_*/3\right)}
+ \right]
+ +N\ell_+e^{-t_*}.}
+ \label{eq:widen-stochastic-total-tail}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+For fixed $n$, Eq.~\eqref{eq:widen-stochastic-martingale-recursion} writes the
+excess over $\bar W_n$ as a weighted martingale sum.  Its increments are at
+most $b_W$ and its conditional variance sum is bounded by $V_W$.
+The exponential supermartingale proof of the Bernstein/Freedman inequality
+therefore gives, for every $x>0$,
+\begin{equation}
+ \Pr(W_n-\bar W_n\ge x\mid\mathscr F_0)
+ \le
+ \exp\!\left[-\frac{x^2}{2(V_W+b_Wx/3)}\right].
+\end{equation}
+If $W_n\ge a$, the excess is at least $x_*$; summing this exponential bound over
+the $N$ possible positive terminal indices proves
+Eq.~\eqref{eq:widen-stochastic-freedman}.  On $\mathcal E_N$ the raw and
+localized trajectories coincide, while Eq.~\eqref{eq:widen-stochastic-exit}
+bounds $\Pr(\mathcal E_N^c)$.  Splitting according to this event gives
+Eq.~\eqref{eq:widen-stochastic-total-tail}.
+\end{proof}
 
 \begin{remark}[Scope of the stochastic result]
 \label{rem:widen-stochastic-scope}
 The stochastic certificate uses the same $W_i$, source graph, word family, and
 geodesic funnel as the deterministic theory and does not assume that innovation
-gating preserves zero conditional mean.  It does not turn the regional MEKF
-into a global Gaussian system.  With unbounded Gaussian noise the rigorous claim
-remains finite-horizon and high-probability unless additional global recovery
-bounds are proved.
+gating preserves zero conditional mean.  The high-probability qualification now
+uses exponential Gaussian and martingale concentration rather than a
+moment/Markov tail for either raw-noise localization or funnel excursions.  It
+does not turn the regional MEKF into a global Gaussian system.  With unbounded
+Gaussian noise the rigorous claim remains finite-horizon and high-probability
+unless additional global recovery bounds are proved.
 \end{remark}
