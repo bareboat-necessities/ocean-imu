@@ -15,10 +15,11 @@ on:
       - "tests/validation/**"
       - "tools/ou_validation.py"
       - "tools/ou_robustness.py"
+      - "tools/ou_replay_fingerprint.py"
       - "tools/ou_publication_sync.py"
       - "plots/kalman_ou_iii/baseline-comparison.py"
-      - "reports/results/ou_validation/**"
-      - "reports/results/ou_robustness/**"
+      - "reports/results/**"
+      - "reports/ou_evidence_fingerprint.json"
       - "docs/ou-validation.md"
       - "docs/ou-robustness.md"
       - "doc/kalman_ou_iii/**"
@@ -34,9 +35,9 @@ on:
         options:
           - smoke
           - full
-  # Called by the build workflow so a main build regenerates the evidence
-  # before the article is typeset. The caller's ref is what the commit job
-  # pushes to, and the caller has to grant contents: write for it.
+  # Called by the build workflow in full mode. A full call first compares the
+  # conservative replay-input and complete results-tree fingerprints; the
+  # expensive study runs only when either one changed.
   workflow_call:
     inputs:
       validation_mode:
@@ -146,18 +147,99 @@ jobs:
             reports/results/ou_robustness/**
           if-no-files-found: warn
 
-  # Evidence regeneration. Dispatch-only, and sharded: the full validation
-  # study is roughly 840 twenty-minute simulator replays and the robustness
-  # study another 310, and a single four-core runner gets through those at
-  # about the rate that made this a multi-hour job.
-  #
-  # Every replay is fixed by its seed triplet, so the seed repetitions split
-  # across runners with no coordination. Each shard writes its rows to a file;
-  # the combine job merges them and produces the bundle a single process would
-  # have produced, byte for byte. Sharding by study as well as by seed keeps a
-  # failure in one bundle from throwing away the other's hours.
-  regenerate:
+  # A full build is keyed by scientific inputs rather than the enclosing Git
+  # SHA. The replay fingerprint is deliberately broader than the actual
+  # simulator dependency closure, and a second fingerprint covers every file
+  # under reports/results. False-positive replays are acceptable;
+  # false-negative reuse of stale evidence is not.
+  fingerprint:
     if: inputs.validation_mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      replay_required: ${{ steps.decide.outputs.replay_required }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 \
+            --repo bareboat-necessities/oceanography-waves-lib \
+            --pattern sim-data-files.zip \
+            --clobber
+
+      # Every full-study job below consumes this exact archive, rather than
+      # independently redownloading a release asset that could theoretically be
+      # replaced between jobs. The ZIP bytes used to compute the replay hash
+      # are therefore the same ZIP bytes used by every simulator replay.
+      - name: Preserve fingerprinted simulation archive
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou-fingerprinted-simulation-data
+          path: sim-data-files.zip
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Decide whether the full study is stale
+        id: decide
+        shell: bash
+        run: |
+          set -euo pipefail
+          marker=reports/ou_evidence_fingerprint.json
+          if python3 tools/ou_replay_fingerprint.py \
+              --simulation-zip sim-data-files.zip \
+              --check "$marker"; then
+            echo "replay_required=false" >> "$GITHUB_OUTPUT"
+            echo "Replay inputs and complete results tree are unchanged; reusing the full replay rows."
+          else
+            echo "replay_required=true" >> "$GITHUB_OUTPUT"
+            echo "Replay inputs or results tree changed; the full study must be regenerated."
+          fi
+
+      - name: Install evidence-check dependencies
+        if: steps.decide.outputs.replay_required == 'false'
+        timeout-minutes: 27
+        run: |
+          set -uo pipefail
+          apt_get() {
+            sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
+              -o Acquire::Retries=2 \
+              -o Acquire::http::Timeout=15 \
+              -o Acquire::https::Timeout=15 \
+              -o Dpkg::Use-Pty=0 \
+              "$@"
+          }
+          install_deps() {
+            apt_get update && apt_get install -y --no-install-recommends \
+              g++ make libeigen3-dev \
+              python3-numpy python3-matplotlib
+          }
+          for attempt in 1 2 3; do
+            if install_deps; then
+              exit 0
+            fi
+            sudo dpkg --configure -a || true
+            sleep $((attempt * 15))
+          done
+          exit 1
+
+      - name: Verify reusable committed evidence
+        if: steps.decide.outputs.replay_required == 'false'
+        run: |
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+          make -C tests/validation test
+
+  # Evidence regeneration is sharded: the full validation study is roughly
+  # 840 twenty-minute simulator replays and robustness another ~310. It runs
+  # only when the conservative evidence fingerprints say the committed rows
+  # are stale.
+  regenerate:
+    needs: fingerprint
+    if: inputs.validation_mode == 'full' && needs.fingerprint.outputs.replay_required == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 350
     strategy:
@@ -202,14 +284,14 @@ jobs:
           echo "apt-get did not succeed after 3 attempts"
           exit 1
 
-      - name: Download versioned simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Reuse fingerprinted simulation data
+        uses: actions/download-artifact@v8
+        with:
+          name: ou-fingerprinted-simulation-data
+          path: .
+
+      - name: Unpack fingerprinted simulation data
         run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
@@ -294,17 +376,18 @@ jobs:
           done
           echo "apt-get did not succeed after 3 attempts"
           exit 1
+
+      - name: Reuse fingerprinted simulation data
+        uses: actions/download-artifact@v8
+        with:
+          name: ou-fingerprinted-simulation-data
+          path: .
+
       # The combine step re-derives the calibrated tuning points and the
-      # transition diagnostic, which are simulator work, so it needs the same
-      # records and toolchain the shards had.
-      - name: Download versioned simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # transition diagnostic, which are simulator work, so it unpacks the
+      # same archive that the replay fingerprint and shards used.
+      - name: Unpack fingerprinted simulation data
         run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
@@ -400,17 +483,18 @@ jobs:
           done
           echo "apt-get did not succeed after 3 attempts"
           exit 1
+
+      - name: Reuse fingerprinted simulation data
+        uses: actions/download-artifact@v8
+        with:
+          name: ou-fingerprinted-simulation-data
+          path: .
+
       # The consistency step hashes every non-code source the manifest names,
       # and those include the simulation records. Without them the check errors
       # out on a missing file instead of reporting whether the numbers moved.
-      - name: Download versioned simulation data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Unpack fingerprinted simulation data
         run: |
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
           mkdir -p plots/kalman_ou_ii
           unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
 
@@ -454,8 +538,23 @@ jobs:
           mirror ou_robustness/ou_robustness_stress.svg \
                  ou_robustness_stress.svg
 
+      # Run every sync/contract step first. Only then hash reports/results, so
+      # the recorded results fingerprint describes the exact tree that will be
+      # committed rather than a pre-validation intermediate tree.
       - name: Check the manuscript against the regenerated evidence
         run: make -C tests/validation test
+
+      - name: Record replay and results fingerprints
+        run: |
+          python3 tools/ou_replay_fingerprint.py \
+            --simulation-zip sim-data-files.zip \
+            --write reports/ou_evidence_fingerprint.json
+
+      - name: Verify final evidence fingerprints
+        run: |
+          python3 tools/ou_replay_fingerprint.py \
+            --simulation-zip sim-data-files.zip \
+            --check reports/ou_evidence_fingerprint.json
 
       - name: Commit the regenerated evidence
         run: |
@@ -463,9 +562,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports/results/ou_validation reports/results/ou_robustness \
+                  reports/ou_evidence_fingerprint.json \
                   doc/kalman_ou_iii
           if git diff --cached --quiet; then
-            echo "Regenerated bundle is identical to the committed one."
+            echo "Regenerated bundles and both evidence fingerprints are identical to the committed ones."
             exit 0
           fi
           git commit \
@@ -479,9 +579,13 @@ jobs:
             git push origin HEAD:refs/heads/${{ github.ref_name }} && exit 0
             sleep $((2 ** attempt))
             git pull --rebase origin refs/heads/${{ github.ref_name }}
-            # A newer branch tip can change replay-producing source after this
-            # run generated its rows. Revalidate after every rebase before the
-            # next push so stale evidence can never be replayed onto new code.
+            # A newer branch tip may change executable/build/workflow content
+            # or the results tree. Refuse to put old rows on it unless both
+            # conservative fingerprints still match, then run the detailed
+            # evidence contract as well.
+            python3 tools/ou_replay_fingerprint.py \
+              --simulation-zip sim-data-files.zip \
+              --check reports/ou_evidence_fingerprint.json
             make -C tests/validation test
           done
           exit 1

@@ -7,6 +7,7 @@ build:
 		../../tools/ou_roundtrip_transition.py \
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
+		../../tools/ou_replay_fingerprint.py \
 		../../tools/ou_publication_sync.py \
 		../../tools/rotate_record_heading.py \
 		test_ou_validation.py \
@@ -15,6 +16,7 @@ build:
 		test_ou_article_ablations.py \
 		test_ou_legacy_law_cleanup.py \
 		test_ou_evidence_contract.py \
+		test_ou_replay_fingerprint.py \
 		test_ou_semiglobal_stability.py \
 		test_ou_stability_phase_a.py \
 		test_ou_stability_phase_b.py \
