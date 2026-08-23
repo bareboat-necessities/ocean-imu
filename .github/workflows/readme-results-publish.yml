@@ -23,7 +23,7 @@ jobs:
           && github.event.workflow_run.event == 'push'
           && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 20
 
     steps:
       - name: Checkout current main
@@ -32,51 +32,22 @@ jobs:
           ref: refs/heads/main
           fetch-depth: 0
 
-      - name: Download OU-III build figures
+      - name: Download generated README figures
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
           rm -rf incoming
-          mkdir -p incoming/kalman_ou_iii
+          mkdir -p incoming/kalman_ou_iii incoming/spectrum
           gh run download "$BUILD_RUN_ID" \
             --repo "$GITHUB_REPOSITORY" \
             --name release-svgs-kalman_ou_iii \
             --dir incoming/kalman_ou_iii
-
-      - name: Install spectrum plotting dependencies
-        timeout-minutes: 20
-        run: |
-          set -uo pipefail
-          sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
-            -o Acquire::Retries=2 \
-            -o Acquire::http::Timeout=15 \
-            -o Acquire::https::Timeout=15 \
-            update
-          sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
-            -o Acquire::Retries=2 \
-            -o Acquire::http::Timeout=15 \
-            -o Acquire::https::Timeout=15 \
-            install -y --no-install-recommends \
-              python3-matplotlib python3-numpy python3-pandas \
-              texlive-xetex texlive-latex-recommended texlive-latex-extra \
-              texlive-fonts-recommended fonts-dejavu-core
-
-      - name: Generate current directional spectra
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          gh release download v1.1.3 \
-            --repo bareboat-necessities/oceanography-waves-lib \
-            --pattern sim-data-files.zip \
-            --clobber
-          unzip -o sim-data-files.zip -d plots/spectrum >/dev/null
-          (
-            cd plots/spectrum
-            python3 spectrum-plots.py
-          )
+          gh run download "$BUILD_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name release-svgs-spectrum \
+            --dir incoming/spectrum
 
       - name: Stage stable README gallery
         run: |
@@ -84,39 +55,36 @@ jobs:
           out=reports/results/readme
           mkdir -p "$out"
 
-          copy_build_figure() {
-            local name="$1"
+          copy_figure() {
+            local root="$1"
+            local name="$2"
             local src
-            src="$(find incoming/kalman_ou_iii -type f -name "$name" -print -quit)"
+            src="$(find "$root" -type f -name "$name" -print -quit)"
             if [ -z "$src" ]; then
               echo "required build figure is missing: $name" >&2
-              find incoming/kalman_ou_iii -maxdepth 5 -type f -print >&2 || true
+              find "$root" -maxdepth 5 -type f -print >&2 || true
               exit 1
             fi
             cp -v "$src" "$out/$name"
           }
 
-          copy_build_figure w3d_ou3_pmstokes_medium.svg
-          copy_build_figure w3d_ou3_pmstokes_medium_zkin.svg
-          copy_build_figure w3d_ou3_pmstokes_medium_xykin.svg
-          copy_build_figure w3d_ou3_pmstokes_medium_acc_bias.svg
-          copy_build_figure w3d_ou3_pmstokes_medium_gyro_bias.svg
-
-          cp -v plots/spectrum/spectrum_jonswap_medium_3d.svg \
-                "$out/spectrum_jonswap_medium_3d.svg"
-          cp -v plots/spectrum/spectrum_pmstokes_medium_3d.svg \
-                "$out/spectrum_pmstokes_medium_3d.svg"
+          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium.svg
+          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium_zkin.svg
+          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium_xykin.svg
+          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium_acc_bias.svg
+          copy_figure incoming/kalman_ou_iii w3d_ou3_pmstokes_medium_gyro_bias.svg
+          copy_figure incoming/spectrum spectrum_pmstokes_medium_3d.svg
 
           cat > "$out/PROVENANCE.md" <<EOF
           # README result gallery provenance
 
-          These figures are generated automatically after a successful build
+          These figures are generated automatically by the successful build
           workflow on main; they are not hand-maintained screenshots.
 
           - build workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}
           - triggering source SHA: ${{ github.event.workflow_run.head_sha }}
-          - OU-III time-series figures: successful-build artifact release-svgs-kalman_ou_iii
-          - directional spectra: regenerated from the versioned v1.1.3 sim-data-files.zip input used by the build
+          - OU-III figures: successful-build artifact release-svgs-kalman_ou_iii
+          - 3-D directional spectrum: successful-build artifact release-svgs-spectrum
           EOF
 
       - name: Commit refreshed gallery
