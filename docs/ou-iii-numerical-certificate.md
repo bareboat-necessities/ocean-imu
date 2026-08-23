@@ -10,7 +10,7 @@ The pipeline exposes four separate statuses.
 
 1. **Filter regression.** The unchanged adaptive OU-III implementation must pass its existing RMS/quality gates on all eight noisy records.
 2. **Exact executed-word linear certificate.** Every valid ordinary-Live source word executed by those records is composed from the estimator's actual prediction, Kalman correction, pseudo-measurement, and MEKF-reset maps. Source/path Lyapunov matrices are solved from LMIs, not inferred from empirical error covariance. This level passes only when the worst generalized word factor is strictly below one.
-3. **Numerical neighborhood/source-funnel certificate.** The exact group metric, nonlinear source-word margin, startup/capture funnel, hybrid jumps, and metric-dependent stochastic bounds must close numerically on a nonzero neighborhood. Executed nominal replay accounting is reported separately and cannot satisfy this level by itself.
+3. **Numerical neighborhood/source-funnel certificate.** The exact group metric, nonlinear source-word margin, startup/capture funnel, hybrid jumps, and metric-dependent stochastic bounds must close numerically on a nonzero neighborhood. Executed nominal replay accounting is reported separately and cannot satisfy this level by itself. A dedicated nonlinear perturbation/branch-and-bound probe is the remaining numerical producer for `theta_star` and `mu_W` neighborhoods; its output must use the same metric and source-word definitions defined here.
 4. **Deployment theorem certificate.** The continuous source families must be enclosed with validated arithmetic and every robust path/nonlinear/hybrid/stochastic inequality must have a strict verified margin.
 
 Stable simulations, a solved linear LMI, and a deployment theorem are therefore never represented by the same PASS bit.
@@ -82,7 +82,7 @@ Source nodes retain magnetic gauge state and compact cells of the applied `(tau,
 \Phi_w=A_{k+\ell-1}^{\rm cl}\cdots A_k^{\rm cl}.
 \]
 
-The linear and nonlinear theorem now use one metric geometry. The numerical LMI is constrained to
+The linear and nonlinear theorem use one metric geometry. The numerical LMI is constrained to
 
 \[
 \overline P_i=\operatorname{blkdiag}\!\left(\frac{a_{R,i}}{2}I_3,P_{\xi,i}\right),
