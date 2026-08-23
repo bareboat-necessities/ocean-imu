@@ -8,6 +8,61 @@ BRANCH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ou-full-evidence-branch
 BUILD_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "build.yml"
 
 
+def _mapping_child_keys(text, section):
+    lines = text.splitlines()
+    start = lines.index(f"{section}:")
+    keys = set()
+    for line in lines[start + 1 :]:
+        if line and not line.startswith(" "):
+            break
+        if not line.startswith("  ") or line.startswith("    "):
+            continue
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or ":" not in stripped:
+            continue
+        keys.add(stripped.split(":", 1)[0])
+    return keys
+
+
+def _job_block(workflow, job_name, next_job_name):
+    start = workflow.index(f"  {job_name}:")
+    end = workflow.index(f"  {next_job_name}:", start)
+    return workflow[start:end]
+
+
+def _inline_sequence(stage, key):
+    prefix = f"{key}: ["
+    for line in stage.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(prefix) and stripped.endswith("]"):
+            values = stripped[len(prefix) : -1]
+            return [value.strip().strip("'\"") for value in values.split(",")]
+    raise AssertionError(f"inline sequence {key!r} not found")
+
+
+def _folded_scalar(stage, key):
+    lines = stage.splitlines()
+    marker = f"{key}: >-"
+    for index, line in enumerate(lines):
+        if line.strip() != marker:
+            continue
+        indent = len(line) - len(line.lstrip())
+        parts = []
+        for continuation in lines[index + 1 :]:
+            if not continuation.strip():
+                continue
+            continuation_indent = len(continuation) - len(continuation.lstrip())
+            if continuation_indent <= indent:
+                break
+            parts.append(continuation.strip())
+        return " ".join(parts)
+    raise AssertionError(f"folded scalar {key!r} not found")
+
+
+def _compact(expression):
+    return "".join(expression.split())
+
+
 class WorkflowContractTests(unittest.TestCase):
     def test_full_regeneration_validates_before_commit(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
@@ -117,8 +172,7 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_branch_full_evidence_is_manual_only(self):
         workflow = BRANCH_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("workflow_dispatch:", workflow)
-        self.assertNotIn("\n  push:", workflow)
+        self.assertEqual(_mapping_child_keys(workflow, "on"), {"workflow_dispatch"})
         self.assertIn("validation_mode: full", workflow)
 
     def test_main_build_is_the_authoritative_automatic_full_evidence_path(self):
@@ -132,11 +186,9 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_main_pdf_build_uses_post_evidence_head_and_compiles_ou_iii(self):
         workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        build = workflow.index("  build:")
-        tuning = workflow.index("  ou-tuning:", build)
-        stage = workflow[build:tuning]
+        stage = _job_block(workflow, "build", "ou-tuning")
         self.assertIn("needs: [ou-evidence]", stage)
-        self.assertIn("kalman_ou_iii", stage)
+        self.assertIn("kalman_ou_iii", _inline_sequence(stage, "dir"))
         self.assertIn(
             "ref: ${{ github.ref == 'refs/heads/main' && 'refs/heads/main' || '' }}",
             stage,
@@ -146,12 +198,13 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_main_pdf_build_requires_successful_evidence(self):
         workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
-        build = workflow.index("  build:")
-        tuning = workflow.index("  ou-tuning:", build)
-        stage = workflow[build:tuning]
-        self.assertIn("github.ref != 'refs/heads/main'", stage)
-        self.assertIn("needs['ou-evidence'].result == 'success'", stage)
-        self.assertNotIn("if: ${{ !cancelled() }}", stage)
+        stage = _job_block(workflow, "build", "ou-tuning")
+        condition = _compact(_folded_scalar(stage, "if"))
+        self.assertEqual(
+            condition,
+            "${{!cancelled()&&(github.ref!='refs/heads/main'||"
+            "needs['ou-evidence'].result=='success')}}",
+        )
 
 
 if __name__ == "__main__":
