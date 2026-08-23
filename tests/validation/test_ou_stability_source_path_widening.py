@@ -35,10 +35,17 @@ class OUIIISourcePathStabilityWideningContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, proof)
         flat = _flat(proof)
-        self.assertIn(r"\Pi^{\rm src}_{k,N}\subseteq\Pi^{\rm env}_{k,N}", proof)
-        self.assertIn(r"\kappa_N^{\rm src}\le\kappa_N^{\rm env}", proof)
+        self.assertIn(r"\Pi^{{\rm src},m}_{k,N}\subseteq\Pi^{{\rm env},m}_{k,N}", proof)
+        self.assertIn(r"\kappa_{N,m}^{\rm src}\le\kappa_{N,m}^{\rm env}", proof)
         self.assertIn("Individual samples inside the $N$-step window may have norm gain greater than one", flat)
         self.assertIn("additive refinement", flat)
+
+    def test_mode_dimension_change_is_not_hidden_in_matrix_product(self):
+        flat = _flat(_read(DOC / "w3d-stability-widening-source-path.tex-part"))
+        self.assertIn("different active coordinates (18 and 21 states)", flat)
+        self.assertIn("applied separately to each fixed-dimensional normal-Live mode", flat)
+        self.assertIn("transition that changes the active state dimension is a boundary between such graphs", flat)
+        self.assertIn("held-to-active bias-release transition must place the post-transition error", flat)
 
     def test_path_complete_metric_retains_source_consistency(self):
         proof = _read(DOC / "w3d-stability-widening-source-path.tex-part")
@@ -57,7 +64,7 @@ class OUIIISourcePathStabilityWideningContractTests(unittest.TestCase):
         self.assertIn("source complete", flat)
         self.assertIn("complete tuple is source-reachable", flat)
         self.assertIn("No one-step decrease is required inside a word", flat)
-        self.assertIn("Checking finitely many nominal trajectories alone is not a proof", flat)
+        self.assertIn("checking finitely many nominal trajectories alone is not a proof", flat.lower())
 
     def test_path_metric_contains_old_routes_as_special_cases(self):
         flat = _flat(_read(DOC / "w3d-stability-widening-source-path.tex-part"))
@@ -94,7 +101,7 @@ class OUIIISourcePathStabilityWideningContractTests(unittest.TestCase):
         proof = _read(DOC / "w3d-stability-widening-source-path.tex-part")
         self.assertIn(r"\label{eq:widen-path-contract}", proof)
         flat = _flat(proof)
-        self.assertIn("every reachable source transition is covered", flat)
+        self.assertIn("every reachable same-mode source transition is covered", flat)
         self.assertIn("complete continuous source-reachable family", flat)
         self.assertIn("Monte Carlo trajectories and dense sampling are diagnostics only", flat)
         self.assertIn("changes neither the estimator nor the adaptation law", flat)
