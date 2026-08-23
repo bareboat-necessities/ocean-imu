@@ -25,9 +25,27 @@ class OUIIITunerChartSemanticTests(unittest.TestCase):
 
     def test_legacy_shared_column_is_presented_as_ou3_r_s(self):
         text = DRAW.read_text(encoding="utf-8")
-        self.assertIn(r"$r_S$ applied", text)
         self.assertIn("R_p0_applied is a legacy shared-harness column name", text)
-        self.assertNotIn(r"$R_{p0}$ / $p_{0,S}$ applied", text)
+
+        # The old label is intentionally present as the source anchor for the
+        # publication-only rewrite.  Verify the rewrite contract rather than
+        # globally banning the anchor string from the wrapper.
+        old_panel = '("p0_combo",        r"$R_{p0}$ / $p_{0,S}$ applied")'
+        new_panel = '("p0_combo",        r"$r_S$ applied ($m\\\\,s$)")'
+        self.assertIn(old_panel, text)
+        self.assertIn(new_panel, text)
+        self.assertIn(
+            "source.replace(old_regularizer_panel, new_regularizer_panel, 1)",
+            text,
+        )
+
+        # The legacy shared-harness data column is also relabeled in the
+        # conditional plotting branch, so no generated OU-III chart calls it p0.
+        self.assertIn(
+            'label=r"$r_S$ applied")',
+            text,
+        )
+        self.assertIn('label=r"legacy regularizer column")', text)
 
 
 if __name__ == "__main__":
