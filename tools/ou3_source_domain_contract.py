@@ -9,7 +9,9 @@ must cover.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
+import math
 import re
 from pathlib import Path
 
@@ -34,27 +36,55 @@ HYBRID_OBLIGATIONS = (
     "periodic_aw_covariance_sync",
 )
 
+CONST_RE = re.compile(
+    r"constexpr\s+float\s+([A-Za-z_]\w*)\s*=\s*([^;]+);", re.MULTILINE
+)
+
+
+def _strip_float_suffixes(expr: str) -> str:
+    return re.sub(r"(?<=\d)[fF]\b", "", expr)
+
+
+def _eval_constexpr(node: ast.AST, text: str, stack: tuple[str, ...]) -> float:
+    if isinstance(node, ast.Expression):
+        return _eval_constexpr(node.body, text, stack)
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return float(node.value)
+    if isinstance(node, ast.Name):
+        return parse_const(text, node.id, stack)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+        x = _eval_constexpr(node.operand, text, stack)
+        return x if isinstance(node.op, ast.UAdd) else -x
+    if isinstance(node, ast.BinOp):
+        a = _eval_constexpr(node.left, text, stack)
+        b = _eval_constexpr(node.right, text, stack)
+        if isinstance(node.op, ast.Add):
+            return a + b
+        if isinstance(node.op, ast.Sub):
+            return a - b
+        if isinstance(node.op, ast.Mult):
+            return a * b
+        if isinstance(node.op, ast.Div):
+            return a / b
+    raise RuntimeError(f"unsupported constexpr expression node: {ast.dump(node)}")
+
 
 def parse_const(text: str, name: str, stack: tuple[str, ...] = ()) -> float:
-    """Resolve a scalar constexpr float literal or direct scalar alias."""
+    """Resolve a scalar constexpr using only names, numbers and +,-,*,/."""
     if name in stack:
         raise RuntimeError(f"cyclic implementation constant alias: {' -> '.join((*stack, name))}")
-    pat = re.compile(
-        rf"constexpr\s+float\s+{re.escape(name)}\s*=\s*([^;]+)\s*;"
-    )
-    m = pat.search(text)
-    if not m:
+    expressions = {n: expr for n, expr in CONST_RE.findall(text)}
+    if name not in expressions:
         raise RuntimeError(f"cannot extract implementation constant {name}")
-    expr = m.group(1).strip()
-    literal = re.fullmatch(r"([0-9.+\-eE]+)f?", expr)
-    if literal:
-        return float(literal.group(1))
-    alias = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)", expr)
-    if alias:
-        return parse_const(text, alias.group(1), (*stack, name))
-    raise RuntimeError(
-        f"implementation constant {name} is no longer a scalar literal/alias: {expr!r}"
-    )
+    expr = " ".join(_strip_float_suffixes(expressions[name]).split())
+    try:
+        tree = ast.parse(expr, mode="eval")
+        value = _eval_constexpr(tree, text, (*stack, name))
+    except (SyntaxError, ZeroDivisionError) as exc:
+        raise RuntimeError(f"cannot evaluate implementation constant {name}: {expr!r}") from exc
+    if not math.isfinite(value):
+        raise RuntimeError(f"implementation constant {name} is non-finite: {expr!r}")
+    return float(value)
 
 
 def parse_aw_sigma_floor(text: str) -> float:
