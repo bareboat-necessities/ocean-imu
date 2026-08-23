@@ -168,8 +168,8 @@
     }
   },
   "git_branch": "main",
-  "git_commit": "76ac90c6e3469b3a7b3a83a247fd2f33e45f7dd2",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 43441 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   680 +-\n .../ou_validation/ou_validation_covsync.svg        |   728 +-\n .../ou_validation/ou_validation_displacement.svg   |   544 +-\n .../ou_validation/ou_validation_paired_effects.csv |  3152 +-\n .../results/ou_validation/ou_validation_raw.csv    |   388 +-\n .../ou_validation/ou_validation_summary.csv        |  2918 +-\n .../ou_validation/ou_validation_vertical.svg       |   696 +-\n 8 files changed, 26273 insertions(+), 26274 deletions(-)",
+  "git_commit": "1172e20e1e381917035c958cc42b34aad98b990e",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   |   3 +-\n .../ou_validation/ou_validation_publication.tex    |   2 +-\n .../ou_validation/ou_validation_transition.csv     | 564 ++++++++++-----------\n 3 files changed, 284 insertions(+), 285 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -451,8 +451,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-23T17:49:17+00:00",
-    "git_commit": "76ac90c6e3469b3a7b3a83a247fd2f33e45f7dd2",
+    "generated_at": "2026-08-23T19:10:27+00:00",
+    "git_commit": "1172e20e1e381917035c958cc42b34aad98b990e",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -627,7 +627,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "32654478920",
+      "run_id": "32658748329",
       "workflow": "build"
     }
   },
@@ -673,8 +673,8 @@
       "sha256": "9bd4732dc838fed4974e402d1ce4ac1ebd1ead19cd7d1a753fe3fb4b6f200824"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1268111,
-      "sha256": "65b4c1727660464847798fcbc0e969e170e7209e8dffe78db27d57f1b49071bb"
+      "bytes": 1268133,
+      "sha256": "199e4fe48efa0b7f2a041b1409d443f9c9b091077b47369ff1ec7ceb6e43bdb1"
     },
     "ou_validation_transition.svg": {
       "bytes": 344033,
