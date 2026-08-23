@@ -9,6 +9,7 @@ build:
 		../../tools/ou3_numerical_certificate.py \
 		../../tools/ou3_information_certificate.py \
 		../../tools/ou3_information_completion.py \
+		../../tools/ou3_information_enclosure_contract.py \
 		../../tools/ou3_certificate_completion.py \
 		../../tools/ou3_validate_enclosure.py \
 		../../tools/ou3_result_contract.py \
