@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -42,6 +43,23 @@ class Ou3InformationCompletionTests(unittest.TestCase):
         source = "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv"
         self.assertEqual(index["jonswap_0_27"], source)
         self.assertEqual(index[Path(source).stem], source)
+
+    def test_funnel_uses_tightest_certified_horizon_not_first_pass(self):
+        attempts = [
+            {"horizon_s": 2.0, "information_pass": True, "lambda_worst_information": 0.9999},
+            {"horizon_s": 4.0, "information_pass": True, "lambda_worst_information": 0.99},
+            {"horizon_s": 8.0, "information_pass": False, "lambda_worst_information": 1.01},
+        ]
+        def fake_eval(_record_data, mode, horizon, lam):
+            b = {2.0: 1000.0, 4.0: 100.0}[horizon]
+            return {"mode": mode, "status": "PASS", "horizon_s": horizon,
+                    "lambda_information_bound": lam, "invariant_level_b_replay": b}
+        with patch.object(MOD, "evaluate_mode", side_effect=fake_eval):
+            selected, rows = MOD.evaluate_contracting_horizons({}, "H", attempts)
+        self.assertEqual(selected["horizon_s"], 4.0)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(selected["selection_basis"],
+                         "MINIMUM_REPLAY_INVARIANT_LEVEL_B_OVER_CERTIFIED_HORIZONS")
 
     def test_nominal_replay_cannot_promote_neighborhood_theorem(self):
         text = (TOOLS / "ou3_information_completion.py").read_text()
