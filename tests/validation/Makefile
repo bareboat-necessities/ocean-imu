@@ -17,6 +17,8 @@ build:
 		../../tools/ou3_validate_enclosure.py \
 		../../tools/ou3_hybrid_aw_sync_proof.py \
 		../../tools/ou3_source_word_theorem_contract.py \
+		../../tools/ou3_interval_linear_algebra.py \
+		../../tools/ou3_validated_kalman_interval.py \
 		../../tools/ou3_result_contract.py \
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
@@ -36,6 +38,7 @@ build:
 		test_ou3_validate_enclosure.py \
 		test_ou3_hybrid_aw_sync_proof.py \
 		test_ou3_source_word_theorem_contract.py \
+		test_ou3_validated_kalman_interval.py \
 		test_ou3_result_determinism.py \
 		test_ou_article_ablations.py \
 		test_ou_legacy_law_cleanup.py \
