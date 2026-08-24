@@ -1,41 +1,25 @@
 #!/usr/bin/env python3
-"""Compose the source-bound OU-III analytical stability certificate.
+"""Compose the source-bound OU-III normal-Live stability theorem certificate.
 
-This producer closes the *analytical* theorem chain from the validated proof
-lemmas already present in the repository.  It deliberately does not turn replay
-minima, sampled nonlinear radii, or synthetic final-gate fixtures into theorem
-evidence.
+This is an analytical proof-composition stage, not a replay promotion stage.
+It binds the current implementation to the validated scalar OU enclosure,
+source-uniform translational UCO/UCC, conditional vector-packet UCO, complete
+H/A process UCC, source Gaussian primitive model, and the exact PSD
+nonexpansiveness proof for periodic a_w covariance synchronization.
 
-The composition is:
+The resulting theorem is deliberately conditional on the explicit persistent-
+excitation operating envelope needed for full heading.  Under that envelope,
+uniform detectability/UCC and bounded source coefficients give the standard
+bounded stabilizing Riccati solution and UES of each fixed-dimensional normal-
+Live linearized recursion.  The implemented fixed-branch MEKF maps are smooth
+on a sufficiently small geodesic chart, so their first-order remainder is
+uniformly quadratic; UES plus variation of constants then gives a nonzero local
+ISS neighborhood.
 
-* the shipping adaptation/timing domain is compact and source-derived;
-* the exact scalar OU transition is enclosed with outward-rounded arithmetic;
-* the translational chain has source-uniform UCO/detectability and UCC;
-* attitude/gyro-bias UCO holds under the explicit vector persistent-excitation
-  operating envelope (full heading cannot be unconditional);
-* the complete H/A prediction process covariance has a strict source-uniform
-  lower bound;
-* the active accelerometer-bias Gauss-Markov tail is uniformly exponentially
-  stable;
-* the source Gaussian primitive-noise model is finite and normalized; and
-* periodic a_w covariance synchronization is nonexpansive in the information
-  metric by an exact Loewner-order argument.
-
-Uniform detectability plus uniform complete controllability, bounded source
-coefficients and positive finite measurement covariances are the standard
-Riccati hypotheses used by the manuscript.  They give bounded stabilizing
-Riccati solutions and UES of each fixed-dimensional normal-Live linearized
-Kalman recursion.  Piecewise-C1 MEKF prediction/correction/reset maps then have
-uniform quadratic local remainder on a sufficiently small geodesic chart, so
-the usual variation-of-constants/small-gain argument gives a nonzero local ISS
-neighborhood.
-
-The resulting PASS is intentionally scoped: it is a conditional normal-Live
-local-ISS theorem, not a numerical deployment-funnel certificate.  In
-particular it does not claim an explicit basin radius, arbitrary permanent
-magnetometer rejection, or the still-separate startup/hard-reset/hybrid funnel
-inequalities.  Those stronger quantitative obligations remain owned by
-``ou3_validate_enclosure.py``/``ou3_deployment_gate.py``.
+This producer does *not* claim an explicit basin radius or promote the stronger
+startup/hard-reset/stochastic deployment-funnel certificate.  Those numerical
+obligations remain separate and must still be established by validated word,
+prefix, hybrid and concentration bounds.
 """
 from __future__ import annotations
 
@@ -60,31 +44,25 @@ SCHEMA = 1
 QUALIFICATION = "SOURCE_BOUND_CONDITIONAL_NORMAL_LIVE_LOCAL_ISS"
 
 
-def _finite_positive(x) -> bool:
+def _finite_positive(value) -> bool:
     try:
-        y = float(x)
+        x = float(value)
     except (TypeError, ValueError):
         return False
-    return math.isfinite(y) and y > 0.0
+    return math.isfinite(x) and x > 0.0
 
 
-def _finite_interval(bounds, *, positive: bool = False) -> bool:
+def _finite_positive_interval(bounds) -> bool:
     if not isinstance(bounds, list) or len(bounds) != 2:
         return False
     try:
         lo, hi = map(float, bounds)
     except (TypeError, ValueError):
         return False
-    return (
-        math.isfinite(lo)
-        and math.isfinite(hi)
-        and lo <= hi
-        and (not positive or lo > 0.0)
-    )
+    return math.isfinite(lo) and math.isfinite(hi) and 0.0 < lo <= hi
 
 
-def _source_checks(source: dict) -> tuple[dict, list[str]]:
-    failures: list[str] = []
+def _source_failures(source: dict) -> tuple[dict, list[str]]:
     box = source.get("validated_parameter_box", {})
     runtime = source.get("configured_runtime_assumption", {})
     checks = {
@@ -96,37 +74,27 @@ def _source_checks(source: dict) -> tuple[dict, list[str]]:
         "configured_runtime_not_misstated_as_api_guard": runtime.get("api_enforces_this_bound") is False,
         "configured_runtime_positive_dt": _finite_positive(runtime.get("imu_dt_s")),
     }
-    for name, ok in checks.items():
-        if not ok:
-            failures.append(f"source-domain check failed: {name}")
-
+    failures = [f"source-domain check failed: {name}" for name, ok in checks.items() if not ok]
     cp = box.get("continuous_parameters", {})
     for name in (
-        "wave_tune_frequency_hz",
-        "tau_aw_s",
-        "sigma_aw_mps2",
-        "R_S_base",
-        "pseudo_update_period_s",
+        "wave_tune_frequency_hz", "tau_aw_s", "sigma_aw_mps2",
+        "R_S_base", "pseudo_update_period_s",
     ):
-        if not _finite_interval(cp.get(name), positive=True):
+        if not _finite_positive_interval(cp.get(name)):
             failures.append(f"source continuous parameter is not finite positive: {name}")
     return checks, failures
 
 
-def _noise_checks(noise: dict) -> tuple[dict, list[str]]:
-    failures: list[str] = []
+def _noise_failures(noise: dict) -> tuple[dict, list[str]]:
     z = noise.get("standardized_increment", {})
-    scales = noise.get("physical_scales", {})
     checks = {
         "schema": noise.get("schema") == NOISE.SCHEMA,
         "source_generated_not_trajectory_fit": noise.get("source_generated_not_trajectory_fit") is True,
         "standardized_dimension_18": z.get("dimension") == 18,
         "standardized_covariance_le_identity": z.get("covariance_upper_identity") is True,
     }
-    for name, ok in checks.items():
-        if not ok:
-            failures.append(f"source-noise check failed: {name}")
-    for name, value in scales.items():
+    failures = [f"source-noise check failed: {name}" for name, ok in checks.items() if not ok]
+    for name, value in noise.get("physical_scales", {}).items():
         if not _finite_positive(value):
             failures.append(f"source-noise physical scale is not finite positive: {name}")
     return checks, failures
@@ -135,18 +103,11 @@ def _noise_checks(noise: dict) -> tuple[dict, list[str]]:
 def _active_bias_stability(source: dict, process: dict) -> dict:
     dt = float(source["configured_runtime_assumption"]["imu_dt_s"])
     tau = float(process["source_constants"]["accel_bias_tau_s"])
-    if not (dt > 0.0 and tau > 0.0 and math.isfinite(dt) and math.isfinite(tau)):
-        return {
-            "pass": False,
-            "failure": "active accelerometer-bias dt/tau is not finite positive",
-        }
+    if not (_finite_positive(dt) and _finite_positive(tau)):
+        return {"pass": False, "failure": "active accelerometer-bias dt/tau is invalid"}
     x = Interval.outward_bounds(dt / tau, dt / tau)
     if x.hi > VT.MAX_ABS_ARGUMENT:
-        return {
-            "pass": False,
-            "failure": "active accelerometer-bias dt/tau exceeds validated exponential range",
-            "dt_over_tau": x.as_list(),
-        }
+        return {"pass": False, "dt_over_tau": x.as_list(), "failure": "dt/tau exceeds audited exponential range"}
     alpha = VT.exp_interval(-x)
     passed = 0.0 < alpha.lo <= alpha.hi < 1.0
     return {
@@ -155,19 +116,23 @@ def _active_bias_stability(source: dict, process: dict) -> dict:
         "tau_s": tau,
         "dt_over_tau": x.as_list(),
         "alpha_interval": alpha.as_list(),
-        "failure": None if passed else "active accelerometer-bias decay is not strictly below one",
+        "failure": None if passed else "active accelerometer-bias decay is not strict",
     }
 
 
-def _implementation_binding(paths: tuple[Path, ...]) -> list[dict]:
-    rows = []
-    for path in paths:
-        text = path.read_bytes()
-        rows.append({
+def _bindings() -> list[dict]:
+    paths = (
+        REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h",
+        REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h",
+        REPO / "src" / "kalman_ou_common" / "KalmanOUCoreMath.h",
+    )
+    return [
+        {
             "path": str(path.relative_to(REPO)),
-            "sha256": hashlib.sha256(text).hexdigest(),
-        })
-    return rows
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        }
+        for path in paths
+    ]
 
 
 def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
@@ -180,93 +145,66 @@ def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
     noise = NOISE.build_certificate()
     aw = AW_SYNC.prove()
 
-    source_checks, source_failures = _source_checks(source)
-    scalar_failures = SCALAR.validate(scalar)
-    trans_failures = TRANS.validate(trans)
-    vector_failures = VECTOR.validate(vector)
-    process_failures = PROCESS.validate(process)
-    noise_checks, noise_failures = _noise_checks(noise)
+    source_checks, source_errors = _source_failures(source)
+    scalar_errors = SCALAR.validate(scalar)
+    trans_errors = TRANS.validate(trans)
+    vector_errors = VECTOR.validate(vector)
+    process_errors = PROCESS.validate(process)
+    noise_checks, noise_errors = _noise_failures(noise)
     ba = _active_bias_stability(source, process)
-
-    aw_failures = []
-    if aw.get("status") != "PASS":
-        aw_failures.extend(str(x) for x in aw.get("failures", []))
-        if not aw_failures:
-            aw_failures.append("periodic a_w covariance synchronization proof did not pass")
+    aw_errors = [] if aw.get("status") == "PASS" else list(aw.get("failures", [])) or ["a_w sync proof failed"]
 
     pseudo = trans.get("S_observation_uco", {})
     detect = trans.get("integrator_detectability", {})
     vec = vector.get("gyro_bias_two_packet", {})
     modes = process.get("modes", {})
 
-    theorem_obligations = {
-        "compact_source_domain": not source_failures,
-        "validated_exact_scalar_ou_transition": not scalar_failures,
-        "translation_uco_ucc_detectability": not trans_failures,
-        "full_heading_vector_uco_under_explicit_PE": not vector_failures,
-        "full_state_process_ucc_H_A": not process_failures,
+    obligations = {
+        "compact_source_domain": not source_errors,
+        "validated_exact_scalar_ou_transition": not scalar_errors,
+        "translation_uco_ucc_detectability": not trans_errors,
+        "full_heading_vector_uco_under_explicit_PE": not vector_errors,
+        "full_state_process_ucc_H_A": not process_errors,
         "active_accelerometer_bias_stable_tail": ba.get("pass") is True,
-        "finite_source_gaussian_primitives": not noise_failures,
-        "periodic_aw_covariance_sync_nonexpansive": not aw_failures,
+        "finite_source_gaussian_primitives": not noise_errors,
+        "periodic_aw_covariance_sync_nonexpansive": not aw_errors,
         "bounded_pseudo_measurement_gap": _finite_positive(pseudo.get("pseudo_gap_max_s")),
-        "strict_translation_stable_tail": (
-            _finite_positive(detect.get("stable_aw_alpha_upper"))
-            and float(detect["stable_aw_alpha_upper"]) < 1.0
-        ),
+        "strict_translation_stable_tail": _finite_positive(detect.get("stable_aw_alpha_upper")) and float(detect["stable_aw_alpha_upper"]) < 1.0,
         "strict_vector_information_under_PE": _finite_positive(vec.get("alpha_6_information_lower")),
-        "strict_H_process_excitation": (
-            modes.get("H", {}).get("pass") is True
-            and _finite_positive(modes.get("H", {}).get("prediction_Q_lambda_min_lower"))
-        ),
-        "strict_A_process_excitation": (
-            modes.get("A", {}).get("pass") is True
-            and _finite_positive(modes.get("A", {}).get("prediction_Q_lambda_min_lower"))
-        ),
+        "strict_H_process_excitation": modes.get("H", {}).get("pass") is True and _finite_positive(modes.get("H", {}).get("prediction_Q_lambda_min_lower")),
+        "strict_A_process_excitation": modes.get("A", {}).get("pass") is True and _finite_positive(modes.get("A", {}).get("prediction_Q_lambda_min_lower")),
     }
 
     failures: list[str] = []
-    failures.extend(source_failures)
-    failures.extend(f"scalar OU: {x}" for x in scalar_failures)
-    failures.extend(f"translation: {x}" for x in trans_failures)
-    failures.extend(f"vector PE: {x}" for x in vector_failures)
-    failures.extend(f"process: {x}" for x in process_failures)
-    failures.extend(noise_failures)
-    failures.extend(f"a_w sync: {x}" for x in aw_failures)
+    failures += source_errors
+    failures += [f"scalar OU: {x}" for x in scalar_errors]
+    failures += [f"translation: {x}" for x in trans_errors]
+    failures += [f"vector PE: {x}" for x in vector_errors]
+    failures += [f"process: {x}" for x in process_errors]
+    failures += noise_errors
+    failures += [f"a_w sync: {x}" for x in aw_errors]
     if ba.get("pass") is not True:
         failures.append(f"active bias: {ba.get('failure')}")
-    for name, ok in theorem_obligations.items():
-        if not ok:
-            failures.append(f"theorem obligation failed: {name}")
-
-    # De-duplicate while retaining deterministic order.
+    failures += [f"theorem obligation failed: {name}" for name, ok in obligations.items() if not ok]
     failures = list(dict.fromkeys(failures))
-    linear_pass = not failures
-    nonlinear_local_pass = linear_pass
 
+    theorem_pass = not failures
     pe = dict(vector.get("operating_envelope", {}))
+    pe["persistent_excitation_is_theorem_hypothesis"] = vector.get("persistent_excitation_is_theorem_hypothesis") is True
     pe["accepted_vector_packet_bounded_gap_required"] = True
-    pe["qualification"] = (
-        "THEOREM_OPERATING_ENVELOPE_NOT_INFERRED_FROM_EIGHT_REPLAY_TRAJECTORIES"
-    )
+    pe["qualification"] = "THEOREM_OPERATING_ENVELOPE_NOT_INFERRED_FROM_EIGHT_REPLAY_TRAJECTORIES"
 
-    bindings = _implementation_binding((
-        REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h",
-        REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h",
-        REPO / "src" / "kalman_ou_common" / "KalmanOUCoreMath.h",
-    ))
-
-    status = "PASS_CONDITIONAL_LOCAL_ISS" if nonlinear_local_pass else "FAIL"
     return {
         "schema": SCHEMA,
         "claim": "OU3_SOURCE_BOUND_NORMAL_LIVE_STABILITY_THEOREM_CERTIFICATE",
         "qualification": QUALIFICATION,
-        "status": status,
+        "status": "PASS_CONDITIONAL_LOCAL_ISS" if theorem_pass else "FAIL",
         "sampled_evidence_used": False,
         "trajectory_fit_used": False,
-        "implementation_bindings": bindings,
+        "implementation_bindings": _bindings(),
         "source_domain_checks": source_checks,
         "source_noise_checks": noise_checks,
-        "theorem_obligations": theorem_obligations,
+        "theorem_obligations": obligations,
         "upstream_certificates": {
             "scalar_ou": scalar["qualification"],
             "translation": trans["qualification"],
@@ -288,24 +226,16 @@ def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
         "linearized_normal_live": {
             "H_dimension": 18,
             "A_dimension": 21,
-            "uniform_detectability_and_stabilizability": linear_pass,
-            "bounded_stabilizing_Riccati": linear_pass,
-            "uniform_exponential_stability": linear_pass,
-            "proof_route": (
-                "source-uniform bounded-gap translational detectability + conditional vector "
-                "UCO + stable Gauss-Markov tails + full process UCC; standard discrete LTV "
-                "Kalman/Riccati stability theorem"
-            ),
+            "uniform_detectability_and_stabilizability": theorem_pass,
+            "bounded_stabilizing_Riccati": theorem_pass,
+            "uniform_exponential_stability": theorem_pass,
+            "proof_route": "bounded-gap translational detectability + conditional vector UCO + stable tails + full process UCC; standard discrete LTV Kalman/Riccati theorem",
         },
         "nonlinear_normal_live": {
-            "local_iss": nonlinear_local_pass,
-            "nonzero_neighborhood_exists": nonlinear_local_pass,
+            "local_iss": theorem_pass,
+            "nonzero_neighborhood_exists": theorem_pass,
             "explicit_numeric_basin_radius_produced": False,
-            "proof_route": (
-                "fixed-mode UES plus uniform piecewise-C1 MEKF map on a geodesic chart; "
-                "the nonlinear remainder is quadratic and discrete variation-of-constants "
-                "gives a sufficiently small invariant ISS neighborhood"
-            ),
+            "proof_route": "fixed-mode UES + uniform piecewise-C1 MEKF map on a geodesic chart + quadratic remainder + discrete small gain",
         },
         "periodic_aw_covariance_sync": {
             "pass": aw.get("status") == "PASS",
@@ -322,13 +252,9 @@ def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
             "stochastic_infinite_horizon_pathwise_bound": "NOT_CLAIMED_FOR_GAUSSIAN_NOISE",
         },
         "claim_separation": {
-            "analytical_normal_live_local_ISS": "PASS" if nonlinear_local_pass else "FAIL",
+            "analytical_normal_live_local_ISS": "PASS" if theorem_pass else "FAIL",
             "numerical_source_complete_deployment_funnel": "NOT_ESTABLISHED_BY_THIS_PRODUCER",
-            "reason": (
-                "the analytical theorem proves existence of a nonzero local ISS neighborhood; "
-                "the stronger numerical deployment gate additionally asks for explicit word, "
-                "prefix, hybrid, stochastic and finite-capture constants"
-            ),
+            "reason": "analytical stability proves existence of a nonzero local ISS neighborhood; the stronger deployment gate additionally requires explicit word/prefix/hybrid/stochastic/capture constants",
         },
         "failures": failures,
     }
@@ -347,10 +273,9 @@ def validate(payload: dict) -> list[str]:
     obligations = payload.get("theorem_obligations", {})
     if not obligations or not all(v is True for v in obligations.values()):
         failures.append("one or more theorem obligations did not pass")
-    linear = payload.get("linearized_normal_live", {})
-    nonlinear = payload.get("nonlinear_normal_live", {})
-    if linear.get("uniform_exponential_stability") is not True:
+    if payload.get("linearized_normal_live", {}).get("uniform_exponential_stability") is not True:
         failures.append("linearized normal-Live UES was not established")
+    nonlinear = payload.get("nonlinear_normal_live", {})
     if nonlinear.get("local_iss") is not True or nonlinear.get("nonzero_neighborhood_exists") is not True:
         failures.append("nonlinear normal-Live local ISS was not established")
     if nonlinear.get("explicit_numeric_basin_radius_produced") is not False:
@@ -383,7 +308,6 @@ def main() -> int:
         "validation_pass": payload["validation_pass"],
         "linear_ues": payload["linearized_normal_live"]["uniform_exponential_stability"],
         "nonlinear_local_iss": payload["nonlinear_normal_live"]["local_iss"],
-        "explicit_numeric_basin_radius_produced": payload["nonlinear_normal_live"]["explicit_numeric_basin_radius_produced"],
         "failures": payload["failures"],
         "validation_failures": validation_failures,
     }, indent=2, sort_keys=True))
