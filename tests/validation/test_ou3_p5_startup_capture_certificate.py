@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 import unittest
@@ -12,6 +13,16 @@ class Ou3P5StartupCaptureCertificateTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.d = P5.build()
+        print("P5_CAPTURE_IDENTIFICATION=" + json.dumps({
+            "P5_FINITE_CAPTURE_CERTIFICATE": cls.d.get("P5_FINITE_CAPTURE_CERTIFICATE"),
+            "P5_OBSTRUCTION_IDENTIFIED": cls.d.get("P5_OBSTRUCTION_IDENTIFIED"),
+            "first_obstruction": cls.d.get("first_obstruction"),
+            "W_inner": cls.d.get("P4_H_inner_level_W"),
+            "W_capture": cls.d.get("P4_H_strict_decrease_W_threshold_lower"),
+            "q_design": cls.d.get("P4_H_nonlinear_design_canonical_norm_radius"),
+            "weakest_axis_witness": cls.d.get("weakest_axis_witness"),
+            "largest_axis_witness": cls.d.get("largest_axis_witness"),
+        }, sort_keys=True), flush=True)
 
     def test_current_P5_first_obstruction_is_source_certified(self):
         d = self.d
