@@ -1,34 +1,15 @@
 #!/usr/bin/env python3
 """Bind the OU-III paper's normal-Live theorem hypotheses to a source-word language.
 
-The source-domain contract deliberately contains accepted and rejected measurement
-branches.  Full-heading stability, however, is conditional on recurring finite-window
-vector persistent excitation (PE).  A single accepted accel/mag pair is not enough to
-tile an infinite execution.  This producer makes that missing quantifier explicit.
-
-It does not enclose a Riccati or nonlinear word.  Instead it defines the exact
-conditional language that a validated backend must cover before it may assert a
-source-complete H/A word family:
-
-* configured-runtime timing only;
-* fixed-dimensional normal-Live mode H or A;
-* source-reachable accepted/rejected branches between required PE packets;
-* every PE recurrence window contains two consecutive accepted configured magnetic
-  packets, with accepted accelerometer vectors at both packet times and the vector
-  geometry/rate bounds of ``ou3_vector_uco_certificate``;
-* the source pseudo-measurement scheduler retains its rigorously bounded firing gap;
-* hard dimension-changing/reference/reset events are excluded from the same-mode word
-  and remain separate hybrid obligations.
-
-The PE recurrence window is a deployment/theorem hypothesis, not an estimator source
-constant.  Therefore the default build reports the word language as blocked until a
-finite positive recurrence bound is supplied explicitly.  This prevents a later
-validated enclosure from silently proving only a favorable subset of source words.
+The quantitative theorem is word based.  A source-complete fixed-mode tile must
+cover both the declared recurring vector-PE event and the source-cadence-only
+four-S observability construction for the complete [v,p,S,a_w] chain.  The
+three-S detectable [v,p,S] construction remains a supporting bound only; it is
+not used as the primary theorem tile and is never a fallback certificate.
 """
 from __future__ import annotations
 
 import argparse
-import json
 import math
 from pathlib import Path
 
@@ -36,7 +17,7 @@ import ou3_source_domain_contract as SOURCE
 import ou3_translational_uco_ucc as TRANS
 import ou3_vector_uco_certificate as VECTOR
 
-SCHEMA = 1
+SCHEMA = 2
 
 
 def _finite_positive(x) -> bool:
@@ -47,22 +28,20 @@ def _finite_positive(x) -> bool:
     return math.isfinite(y) and y > 0.0
 
 
-def build(
-    pe_recurrence_window_s: float | None = None,
-    header: Path = SOURCE.DEFAULT_HEADER.resolve(),
-) -> dict:
+def build(pe_recurrence_window_s: float | None = None,
+          header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
     header = header.resolve()
     source = SOURCE.build(header)
     trans = TRANS.build(header)
     vector = VECTOR.build()
 
-    source_failures = []
+    failures: list[str] = []
     if source.get("source_complete_parameter_domain") is not True:
-        source_failures.append("source parameter domain is not complete")
+        failures.append("source parameter domain is not complete")
     if TRANS.validate(trans):
-        source_failures.append("translational UCO/UCC contract did not validate")
+        failures.append("translational UCO/UCC contract did not validate")
     if VECTOR.validate(vector):
-        source_failures.append("vector packet UCO contract did not validate")
+        failures.append("vector packet UCO contract did not validate")
 
     runtime = source["configured_runtime_assumption"]
     dt = float(runtime["imu_dt_s"])
@@ -73,33 +52,33 @@ def build(
 
     recurrence_supplied = _finite_positive(pe_recurrence_window_s)
     recurrence = float(pe_recurrence_window_s) if recurrence_supplied else None
-    recurrence_failures: list[str] = []
     if recurrence_supplied and recurrence < packet_span_upper:
-        recurrence_failures.append(
-            "PE recurrence window is shorter than one certified consecutive magnetic-packet span"
-        )
+        failures.append("PE recurrence window is shorter than one certified consecutive magnetic-packet span")
 
-    language_ready = bool(
-        not source_failures
-        and recurrence_supplied
-        and not recurrence_failures
-    )
-
+    ready = bool(not failures and recurrence_supplied)
     word_horizon = None
     word_samples_upper = None
-    if language_ready:
-        # A tile must be long enough both to contain the declared vector-PE recurrence
-        # window and to realize the source-uniform three-firing translational
-        # detectability window.  The backend may choose a longer word.
-        word_horizon = max(recurrence, float(detect["aligned_window_s"]))
+    q_W = None
+    selected_spacing_lower = None
+    spread_det_factor = None
+    if ready:
+        # The primary theorem route is the complete four-state S-observation UCO.
+        four_s_window = float(pseudo["aligned_window_s"])
+        word_horizon = max(recurrence, four_s_window)
         word_samples_upper = int(math.ceil(word_horizon / dt)) + 1
+
+        delta_min = float(pseudo["pseudo_gap_min_s"])
+        delta_max = float(pseudo["pseudo_gap_max_s"])
+        q_W = max(1, int(math.floor(word_horizon / (3.0 * delta_max))))
+        selected_spacing_lower = q_W * delta_min
+        # Relative to adjacent four firings, the determinant spacing term widens by q_W^6.
+        spread_det_factor = q_W ** 6
 
     pe = dict(vector["operating_envelope"])
     pe.update({
         "recurrence_window_s": recurrence,
         "recurrence_quantifier": (
-            "every normal-Live interval of this duration contains at least one certified "
-            "two-packet vector-PE event"
+            "every normal-Live interval of this duration contains at least one certified two-packet vector-PE event"
         ),
         "accelerometer_required_at_both_vector_times": True,
         "two_consecutive_accepted_magnetic_packets_required": True,
@@ -127,43 +106,48 @@ def build(
             "aw_covariance_sync": ["not_due", "due_psd_increment"],
             "continuous_parameters": source["validated_parameter_box"]["continuous_parameters"],
             "continuous_parameters_outward_rounded": True,
+            "joint_source_reachability_required": True,
+            "cartesian_extrema_products_not_a_valid_word": True,
         },
         "translation_recurrence": {
+            "primary_route": "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO",
+            "primary_state_order": ["v", "p", "S", "a_w"],
+            "aligned_firing_count": 4,
             "pseudo_gap_min_s": pseudo["pseudo_gap_min_s"],
             "pseudo_gap_max_s": pseudo["pseudo_gap_max_s"],
+            "minimum_four_firing_window_s": pseudo["aligned_window_s"],
+            "spread_index_q_W": q_W,
+            "spread_selected_spacing_lower_s": selected_spacing_lower,
+            "determinant_spacing_widening_factor_vs_adjacent": spread_det_factor,
+            "three_firing_integrator_detectability_is_supporting_only": True,
             "three_firing_detectability_window_s": detect["aligned_window_s"],
             "stable_aw_alpha_upper": detect["stable_aw_alpha_upper"],
             "source_complete": trans["translation_source_complete"],
         },
         "vector_persistent_excitation": pe,
         "conditional_word_language": {
-            "ready": language_ready,
+            "ready": ready,
             "word_horizon_lower_s": word_horizon,
             "word_samples_upper_at_configured_dt": word_samples_upper,
             "tiling_rule": (
-                "tile every fixed-mode normal-Live execution by bounded words that each cover "
-                "the translation recurrence window and one declared vector-PE recurrence window"
-                if language_ready else None
+                "tile every fixed-mode normal-Live execution by bounded source-correlated words that each cover one four-S complete translation observation and one declared vector-PE recurrence window"
+                if ready else None
             ),
             "coverage_rule": (
-                "validated backend must enclose every source-reachable branch/continuous-parameter "
-                "realization satisfying the declared theorem hypotheses; selected accepted packets "
-                "may not be treated as the only admissible branches"
+                "validated backend must enclose every jointly source-reachable branch and continuous-parameter realization; selected accepted packets and independently chosen edge extrema may not replace the source word"
             ),
+            "one_sample_decrease_required": False,
+            "word_endpoint_decrease_required": True,
         },
-        "source_complete_relative_to_theorem_hypotheses": language_ready,
+        "source_complete_relative_to_theorem_hypotheses": ready,
         "continuous_word_enclosed": False,
         "nonlinear_word_enclosed": False,
         "theorem_promotion": "NOT_ESTABLISHED",
-        "failures": source_failures + recurrence_failures + (
-            [] if recurrence_supplied else [
-                "finite vector-PE recurrence window is an explicit deployment theorem hypothesis and was not supplied"
-            ]
-        ),
+        "failures": failures + ([] if recurrence_supplied else [
+            "finite vector-PE recurrence window is an explicit deployment theorem hypothesis and was not supplied"
+        ]),
         "next_obligation": (
-            "provide a declared PE recurrence bound for the deployment envelope, then outward-enclose "
-            "all H/A information-metric words in this conditional source-complete language, including "
-            "finite prefix gain, exact nonlinear SO(3) endpoint decrease, and prefix safety"
+            "outward-enclose the complete jointly source-reachable H/A word endpoint maps in a group-compatible node metric; no repeated one-step contraction shortcut is admissible"
         ),
     }
 
@@ -174,16 +158,22 @@ def validate(payload: dict) -> list[str]:
         failures.append("schema mismatch")
     if payload.get("source_generated_not_trajectory_fit") is not True:
         failures.append("word-language contract must not use trajectory fitting")
-    if payload.get("normal_live_scope", {}).get("same_mode_only") is not True:
+    scope = payload.get("normal_live_scope", {})
+    if scope.get("same_mode_only") is not True:
         failures.append("normal-Live word language must be fixed-dimensional")
-    if payload.get("normal_live_scope", {}).get("dimension_change_multiplied_as_square_word") is not False:
+    if scope.get("dimension_change_multiplied_as_square_word") is not False:
         failures.append("dimension-changing transitions must remain hybrid")
     tr = payload.get("translation_recurrence", {})
     if tr.get("source_complete") is not True:
         failures.append("translation recurrence is not source-complete")
+    if tr.get("primary_route") != "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO" or tr.get("aligned_firing_count") != 4:
+        failures.append("primary translation route is not four-S complete-chain UCO")
+    if tr.get("three_firing_integrator_detectability_is_supporting_only") is not True:
+        failures.append("three-S detectability is incorrectly promoted to primary theorem route")
     alpha = tr.get("stable_aw_alpha_upper")
     if not _finite_positive(alpha) or not float(alpha) < 1.0:
         failures.append("stable a_w tail is not strictly contractive")
+
     pe = payload.get("vector_persistent_excitation", {})
     gap = pe.get("packet_gap_s")
     if not isinstance(gap, list) or len(gap) != 2 or not all(_finite_positive(x) for x in gap):
@@ -193,37 +183,39 @@ def validate(payload: dict) -> list[str]:
     if pe.get("accelerometer_required_at_both_vector_times") is not True:
         failures.append("accepted accelerometer packets must be explicit")
 
-    ready = payload.get("conditional_word_language", {}).get("ready") is True
+    word = payload.get("conditional_word_language", {})
+    ready = word.get("ready") is True
     recurrence = pe.get("recurrence_window_s")
     if ready:
         if not _finite_positive(recurrence):
             failures.append("ready word language lacks a finite PE recurrence window")
-        elif isinstance(gap, list) and len(gap) == 2 and float(recurrence) < float(gap[1]):
+        elif float(recurrence) < float(gap[1]):
             failures.append("PE recurrence window is shorter than the packet span")
         if payload.get("source_complete_relative_to_theorem_hypotheses") is not True:
             failures.append("ready word language must be conditionally source-complete")
-    else:
-        if payload.get("source_complete_relative_to_theorem_hypotheses") is not False:
-            failures.append("blocked word language must not claim source completeness")
+        if not _finite_positive(tr.get("spread_selected_spacing_lower_s")):
+            failures.append("spread-selected four-S spacing is not positive")
+        if int(tr.get("spread_index_q_W", 0)) < 1:
+            failures.append("spread-selected four-S index is invalid")
+    elif payload.get("source_complete_relative_to_theorem_hypotheses") is not False:
+        failures.append("blocked word language must not claim source completeness")
 
-    if payload.get("continuous_word_enclosed") is not False:
-        failures.append("word-language contract must not claim continuous enclosure")
-    if payload.get("nonlinear_word_enclosed") is not False:
-        failures.append("word-language contract must not claim nonlinear enclosure")
+    if word.get("one_sample_decrease_required") is not False or word.get("word_endpoint_decrease_required") is not True:
+        failures.append("word contract reintroduced a one-sample contraction requirement")
+    branches = payload.get("source_branch_language", {})
+    if branches.get("joint_source_reachability_required") is not True:
+        failures.append("word language does not require joint source reachability")
+    if payload.get("continuous_word_enclosed") is not False or payload.get("nonlinear_word_enclosed") is not False:
+        failures.append("language stage must not masquerade as enclosure")
     if payload.get("theorem_promotion") != "NOT_ESTABLISHED":
-        failures.append("word-language contract must not promote the theorem")
+        failures.append("language stage must not promote theorem")
     return failures
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--header", type=Path, default=SOURCE.DEFAULT_HEADER)
-    ap.add_argument(
-        "--pe-recurrence-window-s",
-        type=float,
-        default=None,
-        help="deployment theorem hypothesis: every such Live window contains a certified vector-PE packet pair",
-    )
+    ap.add_argument("--pe-recurrence-window-s", type=float, default=None)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
     out = build(args.pe_recurrence_window_s, args.header.resolve())
@@ -231,14 +223,12 @@ def main() -> int:
     out["contract_validation_pass"] = not structural_failures
     out["contract_validation_failures"] = structural_failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    import json
     args.output.write_text(json.dumps(out, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
-        "qualification": out["qualification"],
-        "conditional_word_language_ready": out["conditional_word_language"]["ready"],
-        "source_complete_relative_to_theorem_hypotheses": out[
-            "source_complete_relative_to_theorem_hypotheses"
-        ],
+        "ready": out["conditional_word_language"]["ready"],
         "word_horizon_lower_s": out["conditional_word_language"]["word_horizon_lower_s"],
+        "translation_recurrence": out["translation_recurrence"],
         "failures": out["failures"],
         "contract_validation_failures": structural_failures,
     }, indent=2, sort_keys=True))
