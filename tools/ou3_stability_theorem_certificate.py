@@ -1,25 +1,32 @@
 #!/usr/bin/env python3
 """Compose the source-bound OU-III normal-Live stability theorem certificate.
 
-This is an analytical proof-composition stage, not a replay promotion stage.
+This is an analytical proof-composition stage, not a replay-promotion stage.
 It binds the current implementation to the validated scalar OU enclosure,
 source-uniform translational UCO/UCC, conditional vector-packet UCO, complete
 H/A process UCC, source Gaussian primitive model, and the exact PSD
 nonexpansiveness proof for periodic a_w covariance synchronization.
 
-The resulting theorem is deliberately conditional on the explicit persistent-
-excitation operating envelope needed for full heading.  Under that envelope,
-uniform detectability/UCC and bounded source coefficients give the standard
-bounded stabilizing Riccati solution and UES of each fixed-dimensional normal-
-Live linearized recursion.  The implemented fixed-branch MEKF maps are smooth
-on a sufficiently small geodesic chart, so their first-order remainder is
-uniformly quadratic; UES plus variation of constants then gives a nonzero local
-ISS neighborhood.
+The theorem is deliberately conditional.  Full-heading observability uses the
+explicit vector persistent-excitation hypothesis of ``ou3_vector_uco_certificate``:
+a proof packet contains accepted accel/mag vectors and the two magnetic packets
+are consecutive configured 25 Hz packets.  In addition, the nonlinear local
+argument is branch-regular: the nominal source word stays a positive distance
+from innovation/gating discontinuities, so a sufficiently small error
+neighborhood follows the same finite source branch word.  Arbitrary rejection
+runs or nominal points exactly on a gate boundary are not certified here.
+
+Under those hypotheses, uniform detectability/UCC and bounded source
+coefficients give the standard bounded stabilizing Riccati family and UES of
+each fixed-dimensional H/A normal-Live linearized recursion.  On a sufficiently
+small geodesic chart the selected MEKF prediction/correction/reset branches are
+C1 with uniformly quadratic remainder; UES plus variation of constants then
+gives a nonzero local ISS neighborhood.
 
 This producer does *not* claim an explicit basin radius or promote the stronger
 startup/hard-reset/stochastic deployment-funnel certificate.  Those numerical
-obligations remain separate and must still be established by validated word,
-prefix, hybrid and concentration bounds.
+obligations remain separate and require a declared physical deployment
+envelope plus validated word/prefix/hybrid/concentration bounds.
 """
 from __future__ import annotations
 
@@ -40,8 +47,8 @@ import ou3_validated_transcendentals as VT
 import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
-SCHEMA = 1
-QUALIFICATION = "SOURCE_BOUND_CONDITIONAL_NORMAL_LIVE_LOCAL_ISS"
+SCHEMA = 2
+QUALIFICATION = "SOURCE_BOUND_CONDITIONAL_BRANCH_REGULAR_NORMAL_LIVE_LOCAL_ISS"
 
 
 def _finite_positive(value) -> bool:
@@ -77,8 +84,11 @@ def _source_failures(source: dict) -> tuple[dict, list[str]]:
     failures = [f"source-domain check failed: {name}" for name, ok in checks.items() if not ok]
     cp = box.get("continuous_parameters", {})
     for name in (
-        "wave_tune_frequency_hz", "tau_aw_s", "sigma_aw_mps2",
-        "R_S_base", "pseudo_update_period_s",
+        "wave_tune_frequency_hz",
+        "tau_aw_s",
+        "sigma_aw_mps2",
+        "R_S_base",
+        "pseudo_update_period_s",
     ):
         if not _finite_positive_interval(cp.get(name)):
             failures.append(f"source continuous parameter is not finite positive: {name}")
@@ -107,7 +117,11 @@ def _active_bias_stability(source: dict, process: dict) -> dict:
         return {"pass": False, "failure": "active accelerometer-bias dt/tau is invalid"}
     x = Interval.outward_bounds(dt / tau, dt / tau)
     if x.hi > VT.MAX_ABS_ARGUMENT:
-        return {"pass": False, "dt_over_tau": x.as_list(), "failure": "dt/tau exceeds audited exponential range"}
+        return {
+            "pass": False,
+            "dt_over_tau": x.as_list(),
+            "failure": "dt/tau exceeds audited exponential range",
+        }
     alpha = VT.exp_interval(-x)
     passed = 0.0 < alpha.lo <= alpha.hi < 1.0
     return {
@@ -152,12 +166,16 @@ def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
     process_errors = PROCESS.validate(process)
     noise_checks, noise_errors = _noise_failures(noise)
     ba = _active_bias_stability(source, process)
-    aw_errors = [] if aw.get("status") == "PASS" else list(aw.get("failures", [])) or ["a_w sync proof failed"]
+    aw_errors = (
+        [] if aw.get("status") == "PASS"
+        else list(aw.get("failures", [])) or ["a_w sync proof failed"]
+    )
 
     pseudo = trans.get("S_observation_uco", {})
     detect = trans.get("integrator_detectability", {})
     vec = vector.get("gyro_bias_two_packet", {})
     modes = process.get("modes", {})
+    pe_source = vector.get("operating_envelope", {})
 
     obligations = {
         "compact_source_domain": not source_errors,
@@ -169,10 +187,20 @@ def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
         "finite_source_gaussian_primitives": not noise_errors,
         "periodic_aw_covariance_sync_nonexpansive": not aw_errors,
         "bounded_pseudo_measurement_gap": _finite_positive(pseudo.get("pseudo_gap_max_s")),
-        "strict_translation_stable_tail": _finite_positive(detect.get("stable_aw_alpha_upper")) and float(detect["stable_aw_alpha_upper"]) < 1.0,
+        "strict_translation_stable_tail": (
+            _finite_positive(detect.get("stable_aw_alpha_upper"))
+            and float(detect["stable_aw_alpha_upper"]) < 1.0
+        ),
         "strict_vector_information_under_PE": _finite_positive(vec.get("alpha_6_information_lower")),
-        "strict_H_process_excitation": modes.get("H", {}).get("pass") is True and _finite_positive(modes.get("H", {}).get("prediction_Q_lambda_min_lower")),
-        "strict_A_process_excitation": modes.get("A", {}).get("pass") is True and _finite_positive(modes.get("A", {}).get("prediction_Q_lambda_min_lower")),
+        "configured_consecutive_vector_packet_gap": _finite_positive_interval(pe_source.get("packet_gap_s")),
+        "strict_H_process_excitation": (
+            modes.get("H", {}).get("pass") is True
+            and _finite_positive(modes.get("H", {}).get("prediction_Q_lambda_min_lower"))
+        ),
+        "strict_A_process_excitation": (
+            modes.get("A", {}).get("pass") is True
+            and _finite_positive(modes.get("A", {}).get("prediction_Q_lambda_min_lower"))
+        ),
     }
 
     failures: list[str] = []
@@ -189,14 +217,24 @@ def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
     failures = list(dict.fromkeys(failures))
 
     theorem_pass = not failures
-    pe = dict(vector.get("operating_envelope", {}))
-    pe["persistent_excitation_is_theorem_hypothesis"] = vector.get("persistent_excitation_is_theorem_hypothesis") is True
-    pe["accepted_vector_packet_bounded_gap_required"] = True
-    pe["qualification"] = "THEOREM_OPERATING_ENVELOPE_NOT_INFERRED_FROM_EIGHT_REPLAY_TRAJECTORIES"
+
+    pe = dict(pe_source)
+    pe.update({
+        "persistent_excitation_is_theorem_hypothesis": vector.get("persistent_excitation_is_theorem_hypothesis") is True,
+        "accepted_accelerometer_packet_at_vector_times_required": True,
+        "accepted_magnetometer_consecutive_pair_required": True,
+        "measurement_gate_margin_required": True,
+        "qualification": "THEOREM_OPERATING_ENVELOPE_NOT_INFERRED_FROM_EIGHT_REPLAY_TRAJECTORIES",
+        "branch_regular_note": (
+            "The local nonlinear theorem applies to nominal source words with positive "
+            "innovation/gating margin so the same finite branch word persists in a "
+            "sufficiently small error neighborhood. Gate-boundary points are excluded."
+        ),
+    })
 
     return {
         "schema": SCHEMA,
-        "claim": "OU3_SOURCE_BOUND_NORMAL_LIVE_STABILITY_THEOREM_CERTIFICATE",
+        "claim": "OU3_SOURCE_BOUND_BRANCH_REGULAR_NORMAL_LIVE_STABILITY_THEOREM_CERTIFICATE",
         "qualification": QUALIFICATION,
         "status": "PASS_CONDITIONAL_LOCAL_ISS" if theorem_pass else "FAIL",
         "sampled_evidence_used": False,
@@ -218,6 +256,7 @@ def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
             "translation_information_lower": detect.get("information_gramian_lambda_min_lower"),
             "stable_aw_alpha_upper": detect.get("stable_aw_alpha_upper"),
             "vector_alpha_6_information_lower": vec.get("alpha_6_information_lower"),
+            "vector_packet_gap_s": pe_source.get("packet_gap_s"),
             "H_prediction_Q_lambda_min_lower": modes.get("H", {}).get("prediction_Q_lambda_min_lower"),
             "A_prediction_Q_lambda_min_lower": modes.get("A", {}).get("prediction_Q_lambda_min_lower"),
             "active_accelerometer_bias": ba,
@@ -229,13 +268,20 @@ def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
             "uniform_detectability_and_stabilizability": theorem_pass,
             "bounded_stabilizing_Riccati": theorem_pass,
             "uniform_exponential_stability": theorem_pass,
-            "proof_route": "bounded-gap translational detectability + conditional vector UCO + stable tails + full process UCC; standard discrete LTV Kalman/Riccati theorem",
+            "proof_route": (
+                "bounded-gap translational detectability + accepted consecutive vector-packet "
+                "UCO + stable tails + full process UCC; standard discrete LTV Kalman/Riccati theorem"
+            ),
         },
         "nonlinear_normal_live": {
             "local_iss": theorem_pass,
             "nonzero_neighborhood_exists": theorem_pass,
+            "branch_regular_source_word_required": True,
             "explicit_numeric_basin_radius_produced": False,
-            "proof_route": "fixed-mode UES + uniform piecewise-C1 MEKF map on a geodesic chart + quadratic remainder + discrete small gain",
+            "proof_route": (
+                "H/A UES + finite branch family + positive gate margin + uniform C1 MEKF "
+                "branches on a geodesic chart + quadratic remainder + discrete small gain"
+            ),
         },
         "periodic_aw_covariance_sync": {
             "pass": aw.get("status") == "PASS",
@@ -246,15 +292,21 @@ def build(header: Path = SOURCE.DEFAULT_HEADER.resolve()) -> dict:
             "configured_runtime_only": True,
             "arbitrary_positive_caller_dt": False,
             "full_heading_requires_persistent_excitation": True,
-            "permanent_or_unbounded_mag_rejection_not_certified": True,
+            "consecutive_accepted_mag_pair_required_for_vector_uco": True,
+            "measurement_gate_boundary_points_not_certified": True,
+            "permanent_or_unbounded_measurement_rejection_not_certified": True,
             "startup_handoff_and_hard_reset_funnel_numeric_enclosure": "SEPARATE_DEPLOYMENT_CERTIFICATE_OBLIGATION",
             "explicit_nonlinear_basin_radius": "SEPARATE_NUMERICAL_ENCLOSURE_OBLIGATION",
             "stochastic_infinite_horizon_pathwise_bound": "NOT_CLAIMED_FOR_GAUSSIAN_NOISE",
         },
         "claim_separation": {
-            "analytical_normal_live_local_ISS": "PASS" if theorem_pass else "FAIL",
+            "analytical_branch_regular_normal_live_local_ISS": "PASS" if theorem_pass else "FAIL",
             "numerical_source_complete_deployment_funnel": "NOT_ESTABLISHED_BY_THIS_PRODUCER",
-            "reason": "analytical stability proves existence of a nonzero local ISS neighborhood; the stronger deployment gate additionally requires explicit word/prefix/hybrid/stochastic/capture constants",
+            "reason": (
+                "the analytical theorem proves existence of a nonzero local ISS neighborhood "
+                "under explicit PE/branch-regular hypotheses; the stronger deployment gate "
+                "additionally requires explicit word/prefix/hybrid/stochastic/capture constants"
+            ),
         },
         "failures": failures,
     }
@@ -270,21 +322,35 @@ def validate(payload: dict) -> list[str]:
         failures.append("analytical certificate must not use sampled evidence")
     if payload.get("trajectory_fit_used") is not False:
         failures.append("analytical certificate must not use trajectory fitting")
+
     obligations = payload.get("theorem_obligations", {})
     if not obligations or not all(v is True for v in obligations.values()):
         failures.append("one or more theorem obligations did not pass")
-    if payload.get("linearized_normal_live", {}).get("uniform_exponential_stability") is not True:
+
+    linear = payload.get("linearized_normal_live", {})
+    if linear.get("uniform_exponential_stability") is not True:
         failures.append("linearized normal-Live UES was not established")
+
     nonlinear = payload.get("nonlinear_normal_live", {})
     if nonlinear.get("local_iss") is not True or nonlinear.get("nonzero_neighborhood_exists") is not True:
         failures.append("nonlinear normal-Live local ISS was not established")
+    if nonlinear.get("branch_regular_source_word_required") is not True:
+        failures.append("branch-regular source-word qualification is not explicit")
     if nonlinear.get("explicit_numeric_basin_radius_produced") is not False:
         failures.append("analytical producer must not masquerade as a numerical basin enclosure")
+
     pe = payload.get("persistent_excitation_operating_envelope", {})
     if pe.get("persistent_excitation_is_theorem_hypothesis") is not True:
         failures.append("full-heading PE qualification is not explicit")
-    if pe.get("accepted_vector_packet_bounded_gap_required") is not True:
-        failures.append("bounded accepted-vector packet gap hypothesis is not explicit")
+    if pe.get("accepted_accelerometer_packet_at_vector_times_required") is not True:
+        failures.append("accepted accelerometer vector-packet hypothesis is not explicit")
+    if pe.get("accepted_magnetometer_consecutive_pair_required") is not True:
+        failures.append("consecutive accepted magnetic-packet hypothesis is not explicit")
+    if pe.get("measurement_gate_margin_required") is not True:
+        failures.append("measurement gate-margin hypothesis is not explicit")
+    if not _finite_positive_interval(pe.get("packet_gap_s")):
+        failures.append("configured vector packet gap is not finite positive")
+
     if payload.get("status") != "PASS_CONDITIONAL_LOCAL_ISS":
         failures.append("certificate status is not PASS_CONDITIONAL_LOCAL_ISS")
     if payload.get("failures"):
