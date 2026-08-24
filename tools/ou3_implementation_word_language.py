@@ -3,8 +3,14 @@
 
 The generic source-word contract intentionally stays blocked without a PE recurrence
 window.  This producer supplies that window from the versioned deployment theorem
-domain and cross-checks every PE number against the vector-UCO theorem contract.
-It does not infer any value from replay.
+domain and cross-checks the declared PE envelope against the generic vector-UCO
+theorem contract.
+
+The comparison is monotone, not equality based.  A deployment theorem may assume
+stronger observability than the generic weakest-source lemma: larger force/magnetic
+norm floors, larger vector-separation floor, and a smaller/equal rate ceiling are
+all admissible.  It may not silently weaken any of those generic hypotheses.
+No value is inferred from replay.
 """
 from __future__ import annotations
 
@@ -18,11 +24,15 @@ import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 
 
-def close(a, b, tol=1.0e-12):
-    return math.isclose(float(a), float(b), rel_tol=0.0, abs_tol=tol)
+def finite_positive(value) -> bool:
+    try:
+        x = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(x) and x > 0.0
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -35,16 +45,35 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     pe = vector["operating_envelope"]
 
     failures: list[str] = []
-    checks = {
-        "specific_force_norm_lower_mps2": pe["specific_force_norm_lower_mps2"],
-        "magnetic_vector_norm_lower_uT": pe["magnetic_vector_norm_lower_uT"],
-        "vector_sine_separation_lower": pe["vector_sine_separation_lower"],
-        "body_rate_norm_upper_deg_s": pe["body_rate_norm_upper_deg_s"],
+    relations = {
+        "specific_force_norm_lower_mps2": "ge",
+        "magnetic_vector_norm_lower_uT": "ge",
+        "vector_sine_separation_lower": "ge",
+        "body_rate_norm_upper_deg_s": "le",
     }
-    for key, expected in checks.items():
+    comparison = {}
+    for key, relation in relations.items():
         actual = live.get(key)
-        if actual is None or not close(actual, expected):
-            failures.append(f"proof domain {key}={actual!r} does not match vector-UCO contract {expected!r}")
+        generic = pe.get(key)
+        ok = finite_positive(actual) and finite_positive(generic)
+        if ok:
+            a = float(actual)
+            g = float(generic)
+            ok = a >= g if relation == "ge" else a <= g
+        comparison[key] = {
+            "declared": actual,
+            "generic_contract": generic,
+            "required_relation": relation,
+            "pass": bool(ok),
+        }
+        if not ok:
+            op = ">=" if relation == "ge" else "<="
+            failures.append(
+                f"proof domain {key}={actual!r} must be {op} generic vector-UCO bound {generic!r}"
+            )
+
+    if not finite_positive(recurrence):
+        failures.append("PE recurrence window is not finite positive")
 
     words = WORDS.build(recurrence)
     structural = WORDS.validate(words)
@@ -58,6 +87,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "trajectory_fit": False,
         "operating_domain": live,
         "vector_uco_qualification": vector["qualification"],
+        "declared_PE_is_at_least_as_strong_as_generic_contract": not any(
+            not row["pass"] for row in comparison.values()
+        ),
+        "PE_monotone_comparison": comparison,
         "word_contract": words,
         "H_dimension": 18,
         "A_dimension": 21,
@@ -76,6 +109,8 @@ def validate(d: dict) -> list[str]:
         failures.append("schema mismatch")
     if d.get("trajectory_fit") is not False:
         failures.append("word language is trajectory fitted")
+    if d.get("declared_PE_is_at_least_as_strong_as_generic_contract") is not True:
+        failures.append("declared PE envelope weakens generic vector-UCO contract")
     if d.get("source_complete_relative_to_declared_theorem_hypotheses") is not True:
         failures.append("declared-domain word language is not source complete")
     if d.get("pass") is not True:
@@ -101,6 +136,7 @@ def main() -> int:
     print(json.dumps({
         "pass": d["pass"],
         "recurrence_window_s": d["operating_domain"]["vector_pe_recurrence_window_s"],
+        "PE_monotone_comparison": d["PE_monotone_comparison"],
         "word_horizon_lower_s": d["word_contract"]["conditional_word_language"]["word_horizon_lower_s"],
         "word_samples_upper": d["word_contract"]["conditional_word_language"]["word_samples_upper_at_configured_dt"],
         "failures": failures,
