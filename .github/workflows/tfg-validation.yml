@@ -9,6 +9,7 @@ on:
       - 'src/tuner/**'
       - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
+      - 'tools/materialize_tfg_independent_rs_xy.py'
       - 'docs/tfg-spectral-mse-ou3-parity.md'
       - '.github/workflows/tfg-validation.yml'
   pull_request:
@@ -23,7 +24,32 @@ on:
       - '.github/workflows/tfg-validation.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
+  materialize-axis-api:
+    if: github.event_name == 'push' && github.ref_name == 'tfg-independent-rs-xy-isotropic'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout experiment branch
+        uses: actions/checkout@v6
+        with:
+          ref: tfg-independent-rs-xy-isotropic
+      - name: Materialize source edit
+        run: |
+          set -euo pipefail
+          python3 tools/materialize_tfg_independent_rs_xy.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/kalman_tfg/SeaStateFusionFilter_TFG.h tests/kalman_tfg/kalman_tfg-sim.cpp
+          if git diff --cached --quiet; then
+            echo 'No source changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Give TFG independent isotropic R_S axis factors'
+          git push origin HEAD:tfg-independent-rs-xy-isotropic
+
   unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -64,7 +90,7 @@ jobs:
         with:
           # On PRs use the immutable base SHA. The fallback keeps manual/push
           # runs reproducible against the baseline this comparison documents.
-          ref: ${{ github.event.pull_request.base.sha || '6d7fe815b1f218cce0007e481fb65c3f0d315f8a' }}
+          ref: ${{ github.event.pull_request.base.sha || 'e49e3a289007f0efc6bf27979b0553335db7f8a3' }}
           path: baseline-main
 
       - name: Install simulation dependencies
