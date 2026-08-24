@@ -187,7 +187,7 @@ class WorkflowContractTests(unittest.TestCase):
     def test_main_pdf_build_uses_post_evidence_head_and_compiles_ou_iii(self):
         workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
         stage = _job_block(workflow, "build", "ou-tuning")
-        self.assertIn("needs: [ou-evidence]", stage)
+        self.assertIn("needs: [ou-evidence, classify]", stage)
         self.assertIn("kalman_ou_iii", _inline_sequence(stage, "dir"))
         self.assertIn(
             "ref: ${{ github.ref == 'refs/heads/main' && 'refs/heads/main' || '' }}",
@@ -202,8 +202,8 @@ class WorkflowContractTests(unittest.TestCase):
         condition = _compact(_folded_scalar(stage, "if"))
         self.assertEqual(
             condition,
-            "${{!cancelled()&&(github.ref!='refs/heads/main'||"
-            "needs['ou-evidence'].result=='success')}}",
+            "${{!cancelled()&&needs.classify.outputs.run_build=='true'&&"
+            "(github.ref!='refs/heads/main'||needs['ou-evidence'].result=='success')}}",
         )
 
 

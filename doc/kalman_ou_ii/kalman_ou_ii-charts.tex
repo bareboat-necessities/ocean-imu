@@ -78,14 +78,15 @@ operating point: $\tau=\widehat{T}_z/2$ is derived from the zero-crossing wave
 period estimated in the wave band, and $r_{p0}$ and $r_{v0}$ follow from it. The
 two need not agree, and in a developed sea they do not.
 
-The online operating point is applied with a one-IMU-sample scheduling delay.
-At step $k$ the OU--II Kalman recursion uses only the coefficients committed
-before the current innovation. The tuner may consume the current IMU sample
-and update its smoothed candidate afterward, but that candidate becomes active
-only at step $k+1$. Thus, for the measurement filtration $\mathcal F_k$,
-the active schedule obeys $\vartheta_k\in\mathcal F_{k-1}$. At the nominal
-\SI{200}{Hz} IMU rate the added delay is about \SI{5}{ms}, negligible beside
-the adaptation horizons.
+Candidate smoothing and activation are separate in the deployed OU--II source.
+Every valid physical sample updates the smoothed candidate parameters, but the
+active Kalman schedule is held between activation instants.  The default
+activation timer is approximately \SI{0.1}{s}; when it expires after a sample,
+the current candidate is marked pending and is committed at the beginning of
+the following IMU sample, before that sample's innovation.  Thus the active
+schedule obeys $\vartheta_k\in\mathcal F_{k-1}$, while the approximately
+\SI{5}{ms} one-sample delay is only the additional commit lag after an
+activation instant, not the adaptation period itself.
 
 \input{ou2-iss-stability.tex-part}
 

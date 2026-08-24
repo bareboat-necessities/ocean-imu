@@ -372,8 +372,9 @@ with
 \end{equation}
 The physical band-amplitude estimate $\widehat\sigma_{a,B}$ is recovered from
 the scheduled OU prior amplitude rather than treating the prior coefficient as
-an additional physical exponent. The residual acceleration intensity uses the
-same measured acceleration-noise floor available to the tuner,
+an additional physical exponent. The default residual acceleration intensity is
+initialized from the same characterized acceleration-noise floor used by the
+tuner,
 \begin{equation}
  q_{\rm eff}=2\sigma_{\rm floor}^2h,
  \qquad
@@ -382,6 +383,14 @@ same measured acceleration-noise floor available to the tuner,
  h=\SI{0.005}{s}.
  \label{eq:deployed-qeff}
 \end{equation}
+In the implementation this value is stored as a separate scheduler parameter;
+the PhysicalMSE law does not live-read the tuner's noise-floor setting.  Thus a
+platform re-characterization that changes the tuner's noise-floor parameter
+must also update the PhysicalMSE residual-noise density (through the dedicated
+scheduler setter) if the two are to remain physically identified.  This
+separation keeps $q_{\rm eff}$ sea-state independent while allowing controlled
+law sweeps.
+
 The pseudo-update period is scheduled from the OU time scale and bounded for
 implementation safety. Because $T_S$ appears explicitly in
 Eqs.~\eqref{eq:deployed-rp}--\eqref{eq:deployed-rv}, no additional historical

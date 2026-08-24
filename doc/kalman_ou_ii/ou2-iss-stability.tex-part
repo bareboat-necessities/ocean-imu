@@ -25,16 +25,31 @@ first-order Gauss--Markov process with finite correlation time $\tau_b$.
 
 \subsection{Admissible Live interval and exogenous scheduling}
 
-The online tuning variables are treated as exogenous signals
+The active online tuning variables are treated as exogenous signals
 \begin{equation}
  \vartheta_k=(\tau_k,\sigma_{aw,k},r_{p0,k},r_{v0,k}).
  \label{eq:ou2-iss-schedule}
 \end{equation}
-As described above, the implementation stages a candidate computed after sample
-$k$ and commits it only before sample $k+1$, so
-$\vartheta_k\in\mathcal F_{k-1}$.  The deterministic stability result needs
-only bounded exogenous scheduling; the one-sample delay also supplies the usual
-predictability property for the stochastic Kalman interpretation.
+The source maintains a distinct smoothed candidate
+$\widetilde\vartheta$.  Every valid physical sample updates its four channels:
+$\widetilde\tau$ and $\widetilde\sigma_{aw}$ use the common
+$0.40T_{\rm sea}$ EMA, while $\widetilde r_{p0}$ and
+$\widetilde r_{v0}$ use horizons $3\tau_\star$; all dynamically generated
+horizons are passed through the common positive horizon guard.  The deployed
+discrepancy-based horizon-shortening option is disabled.  Candidate smoothing
+therefore occurs at the physical-sample rate, but the active MEKF schedule is a
+sample-and-hold signal.
+
+Specifically, the approximately \SI{0.1}{s} activation timer does not decimate
+physical measurements or candidate EMA updates.  When it expires after a
+sample, the current candidate is marked pending.  The pending tuple is committed
+at the beginning of the next IMU sample, before that sample's innovation, and
+the active tuple is otherwise held.  Hence
+$\vartheta_k\in\mathcal F_{k-1}$ still holds.  The deterministic stability
+result below needs only bounded exogenous scheduling; the commit ordering gives
+the usual predictability property for the stochastic Kalman interpretation.
+The one-sample delay is therefore the lag \emph{after an activation instant},
+not the total adaptation-update period.
 
 Assume on the analyzed interval that
 \begin{align}
@@ -388,26 +403,30 @@ standard discrete-time ISS form; see Jiang and Wang~\cite{JiangWang2001OU2}.
 \subsection{Implementation-condition audit}
 
 The theorem is deliberately conditional rather than a claim of global EKF
-stability.  The current default code supplies several of its bounds directly:
+stability.  The current default code supplies finite clamps on the OU and
+pseudo-measurement schedules and uses the shared source-reachable smoothing
+chain described above.  In particular,
 \begin{equation}
  \begin{gathered}
  \SI{0.02}{s}\le\tau_k\le\SI{12}{s},\qquad
- \SI{0.12}{m/s^2}\le\sigma_{aw,z,k}\le\SI{6}{m/s^2},\\
- \sigma_{aw,x,k}=\sigma_{aw,y,k}=1.5\,\sigma_{aw,z,k},\\
- \SI{0.05}{m}\le r_{p0,k}\le\SI{150}{m},\qquad
- \SI{0.01}{m/s}\le r_{v0,k}\le\SI{40}{m/s},\\
- \tau_b=\SI{5000}{s},\qquad T_{pv}=\SI{15}{ms}\ \text{at the default cadence}.
+ r_{p0,k}\in[\SI{0.05}{m},\SI{150}{m}],\\
+ r_{v0,k}\in[\SI{0.01}{m/s},\SI{40}{m/s}],\qquad
+ \tau_b=\SI{5000}{s}.
  \end{gathered}
  \label{eq:ou2-iss-default-bounds}
 \end{equation}
-At the nominal \SI{200}{Hz} validation rate,
-$T_{pv}=\SI{15}{ms}=3h$, so successive joint $p/v$ pseudo-updates have a
-strictly positive, finite gap.  OU--II retains the fixed pseudo-update period;
-it does not use the self-similar cadence deployed by the OU--III wrapper.  In
-either case the translational proof remains valid under bounded timing jitter
-as long as Eq.~\eqref{eq:ou2-iss-pv-gap} remains true: the OU--II argument needs
-only one nonzero propagation gap, and the OU--III four-point determinant is
-likewise proved in the unequal-spacing case.
+The pseudo-update scheduler is not fixed at \SI{15}{ms}.  The source preserves
+the historical operating point $T_S=\SI{15}{ms}$ at
+$\tau=\SI{1.1}{s}$ and otherwise uses
+\begin{equation}
+ T_S=\clip\!\left(\frac{\SI{15}{ms}}{\SI{1.1}{s}}\tau,
+                   \SI{5}{ms},\SI{250}{ms}\right).
+ \label{eq:ou2-iss-pseudo-cadence-source}
+\end{equation}
+The position-zero and velocity-zero updates share this same tick.  Thus the
+proof condition is the bounded nonzero gap of Eq.~\eqref{eq:ou2-iss-pv-gap},
+not a fixed three-IMU-sample spacing.  The argument needs only one nonzero
+propagation gap and remains valid under the source's bounded cadence sequence.
 
 \begin{table}[H]
 \centering
@@ -421,9 +440,9 @@ Condition & Status \\
 $[v,p,a_w]$ observability & Proved by Lemma~\ref{lem:ou2-iss-trans-uco} from the implemented joint $p=0$, $v=0$ pseudo-updates. \\
 Attitude/gyro-bias excitation & Conditional Live-interval assumption: accepted non-collinear accelerometer/magnetometer pairs and Eq.~\eqref{eq:ou2-iss-B-bound}. \\
 Residual accelerometer bias & Default model is OU with $\tau_b=\SI{5000}{s}$; the certified interval starts only after the startup bias gate has enabled its OU propagation. \\
-Adaptive schedule & Default wrapper clamps $\tau$, $\sigma_{aw}$, $r_{p0}$, and $r_{v0}$ to the finite ranges in Eq.~\eqref{eq:ou2-iss-default-bounds}. \\
-Schedule predictability & Enforced by committing the staged tuning candidate on the next IMU sample; the existing tuner-schedule regression test checks this contract. \\
-Pseudo-update gap & Default \SI{200}{Hz}/\SI{15}{ms} configuration satisfies it exactly; bounded timing jitter is also covered if Eq.~\eqref{eq:ou2-iss-pv-gap} holds. \\
+Adaptive schedule & Candidate EWMAs consume every valid physical sample; the active tuple is sample-and-hold with an approximately \SI{0.1}{s} activation timer. \\
+Schedule predictability & An eligible candidate is committed only at the beginning of the following IMU sample, before that sample's innovation; the tuner-schedule regression test checks this ordering. \\
+Pseudo-update gap & The deployed $T_S\propto\tau$ scheduler is clamped to $[\SI{5}{ms},\SI{250}{ms}]$ and the position/velocity pseudo-updates share its tick. \\
 Covariance maintenance & Default prediction-time PSD $a_w$ inflation is covered; legacy immediate marginal replacement is excluded. \\
 Measurement covariance & Positive finite defaults satisfy it; custom zero/degenerate covariance settings are outside the theorem. \\
 Reset/outage behavior & Hard resets, startup/re-lock, and arbitrarily long rejected-update intervals are outside the theorem. \\
@@ -433,7 +452,7 @@ Reset/outage behavior & Hard resets, startup/re-lock, and arbitrarily long rejec
 
 The accompanying proof-contract unit test pins the implementation details that
 are easy to regress mechanically: 18-state default dimension, finite residual
-bias OU time constant and contraction, the \SI{15}{ms} pseudo-update period,
+bias OU time constant and contraction, source-reachable pseudo-update cadence,
 proof-compatible covariance policy, finite wrapper clamps, and the post-unlock
 Live bias gate.  Environmental excitation and absence of resets cannot be made
 true by a unit test; they remain explicit interval assumptions rather than being

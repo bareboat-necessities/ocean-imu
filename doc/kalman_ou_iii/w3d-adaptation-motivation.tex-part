@@ -35,9 +35,12 @@ $c_\sigma$ maps measured acceleration amplitude into OU amplitude,
 $c_\tau$ maps $T_{\rm sea}$ into OU time scale, $c_f$ and
 $c_{\rm adapt}$ express EMA horizons in sea-time units, $c_T$ expresses
 pseudo-update cadence in OU/sea-time units, and the regularizer coefficient is
-a dimensionless spectral constant.  Absolute seconds appear only as safety
-bounds and startup guards; the eight scored reference seas are intentionally
-interior to the dynamic horizon clamps.
+a dimensionless spectral constant.  Absolute seconds appear as safety bounds
+and startup guards.  Most deployed horizons remain interior on the scored
+reference seas; the acceleration-variance channel is the deliberate exception:
+with its four-period request, the universal \SI{30}{s} EMA-horizon ceiling
+binds on the largest reference sea, exactly as documented in
+Sec.~\ref{sec:adaptation-physical-sigma}.
 
 Throughout this section, $\widehat\sigma_{a,B}$ denotes the noise-corrected RMS
 of physical acceleration in the period-scaled measurement band,
