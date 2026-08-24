@@ -77,14 +77,17 @@ class SourceDomainContractTests(unittest.TestCase):
             self.assertEqual(lo, math.nextafter(source_value, -math.inf))
             self.assertEqual(hi, math.nextafter(source_value, math.inf))
 
-    def test_deployment_step_domain_exposes_missing_finite_upper_guard(self):
+    def test_deployment_step_domain_distinguishes_type_bound_from_supported_guard(self):
         d = mod.build(mod.DEFAULT_HEADER)
         step = d["accepted_update_step_domain_s"]
-        self.assertEqual(step["lower_open"], 0.0)
-        self.assertIsNone(step["upper"])
-        self.assertFalse(step["source_complete_finite_upper_bound"])
+        self.assertGreater(step["lower_closed"], 0.0)
+        self.assertTrue(math.isfinite(step["upper_closed"]))
+        self.assertGreater(step["upper_closed"], 1.0e30)
+        self.assertTrue(step["type_level_finite_upper_bound"])
+        self.assertFalse(step["operational_safety_upper_guard"])
+        self.assertFalse(step["proof_usable_supported_upper_bound"])
         self.assertIn(
-            "UNBOUNDED_ACCEPTED_DT",
+            "NO_PROOF_USABLE_ACCEPTED_DT_GUARD",
             d["validated_ou_primitive_backend"]["theorem_promotion"],
         )
         self.assertFalse(
@@ -142,9 +145,6 @@ class SourceDomainContractTests(unittest.TestCase):
                         contains(i, j, exact[i][j])
 
     def test_validated_process_covariance_contains_midpoint_quadrature_samples(self):
-        # The interval construction itself is proof-producing; this numerical
-        # quadrature is only a regression oracle against several interior
-        # parameter points.  It must lie inside every elementwise interval.
         box = mod.validated_qd_axis4_kernel(
             (0.001, 0.05), (0.02, 2.0), (0.0025, 4.0), cells=12
         )
