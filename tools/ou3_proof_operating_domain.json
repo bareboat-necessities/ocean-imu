@@ -34,7 +34,9 @@
     "magnetic_vector_norm_upper_uT": 200.0,
     "vector_sine_separation_lower": 0.1,
     "body_rate_norm_upper_deg_s": 30.0,
-    "pe_scope_note": "The full-heading theorem excludes free-fall/near-free-fall and magnetic fields within 5.74 deg of gravity. The 5 m/s^2 force floor and 10 uT field floor are declared deployment assumptions, not replay-derived extrema; gravity-only/yaw-quotient operation is certified separately rather than pretending heading is observable outside this PE envelope. The quantitative P4 certificate also binds the deployed default with optional IMU lever-arm compensation disabled; enabling a nonzero lever arm requires extending the source-domain nonlinear remainder bound with the configured geometry."
+    "active_accelerometer_bias_state_norm_upper_mps2": 0.45,
+    "active_accelerometer_bias_projection_limit_mps2": 0.5,
+    "pe_scope_note": "The full-heading theorem excludes free-fall/near-free-fall and magnetic fields within 5.74 deg of gravity. The 5 m/s^2 force floor and 10 uT field floor are declared deployment assumptions, not replay-derived extrema; gravity-only/yaw-quotient operation is certified separately rather than pretending heading is observable outside this PE envelope. The quantitative P4 certificate also binds the deployed default with optional IMU lever-arm compensation disabled; enabling a nonzero lever arm requires extending the source-domain nonlinear remainder bound with the configured geometry. In A mode the normal-Live source node is restricted to a 0.45 m/s^2 bias-state ball, strictly inside the shipping 0.5 m/s^2 projection ball, so the very small certified P4 inner funnel never crosses the nonsmooth saturation surface. Boundary/saturated bias states remain a separate outer/hybrid recapture obligation rather than being silently treated as differentiable."
   },
   "stochastic": {
     "finite_horizon_failure_probability_budget": 0.05
