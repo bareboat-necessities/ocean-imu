@@ -218,17 +218,26 @@ def mode_cell(mode: str, x: Interval, rho_trans: float, sigma: Interval,
 
     other = math.inf
     qpost = float(raw["post_measurement_scaled_Omega_lambda_min_lower"])
+    qpost_interval = Interval.outward_bounds(qpost, qpost)
     trans_indices = {6+a for a in range(3)} | {9+a for a in range(3)} | {12+a for a in range(3)} | {15+a for a in range(3)}
     for i, (u, s2) in enumerate(zip(raw["Sigma_diagonal_upper"], raw["comparison_scale_diagonal_squared"])):
         if i in trans_indices:
             continue
-        other = min(other, BASE.down(qpost / BASE.up(u / s2)))
+        sui = BASE.up(u / s2)
+        sint = Interval.outward_bounds(sui, sui)
+        ratio = BASE.down(qpost_interval.lo / sint.hi)
+        other = min(other, ratio)
 
     full_delta = BASE.down(min(trans_delta, other))
     if full_delta <= 0.0:
         raise RuntimeError(f"{mode} direct generalized matrix inequality lost positivity")
     fullO, fullS = _assemble_mode_matrices(mode, raw, tO, tS)
+    shrink_count = 0
     full_ok = _spd_at_delta(fullO, fullS, full_delta)
+    while not full_ok and shrink_count < 12:
+        full_delta = BASE.down(0.5 * full_delta)
+        shrink_count += 1
+        full_ok = _spd_at_delta(fullO, fullS, full_delta)
     if not full_ok:
         raise RuntimeError(f"{mode} reported direct generalized delta did not re-certify")
 
@@ -243,13 +252,14 @@ def mode_cell(mode: str, x: Interval, rho_trans: float, sigma: Interval,
         "validated_interval_ldlt": True,
         "full_mode_dimension": len(fullO),
         "reported_delta_recertified": full_ok,
+        "rounding_boundary_downward_shrink_count": shrink_count,
         "limiting_block": limiting,
         "measurement_information_beta_upper": beta,
         "translation_Qscaled_row_sum_norm_upper": qnorm,
         "translation_posterior_matrix_factor_lower": factor,
         "translation_process_representation": "x_lo*C*(Q_scaled/x)*C^T",
         "translation_congruence": "C=R*L_inverse applied to both Omega and Sigma",
-        "full_margin_composition": "min(certified_translation_block, certified_nontranslation_diagonal_blocks), followed by full H/A LDLT recertification",
+        "full_margin_composition": "min(certified_translation_block, certified_nontranslation_interval_endpoint_blocks), followed by full H/A LDLT recertification; any recertification adjustment is downward only",
         "old_scalar_rho_over_max_scaled_upper_used": False,
     }
     return out
