@@ -10,6 +10,7 @@ on:
       - "tools/ou3_scalar_ou_enclosure.py"
       - "tools/ou3_translational_uco_ucc.py"
       - "tools/ou3_vector_uco_certificate.py"
+      - "tools/ou3_full_process_ucc.py"
       - "tools/ou3_source_interval_box.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
@@ -21,6 +22,7 @@ on:
       - "tests/validation/test_ou3_scalar_ou_enclosure.py"
       - "tests/validation/test_ou3_translational_uco_ucc.py"
       - "tests/validation/test_ou3_vector_uco_certificate.py"
+      - "tests/validation/test_ou3_full_process_ucc.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tests/validation/test_ou3_validate_enclosure.py"
       - "tests/validation/test_ou3_deployment_gate.py"
@@ -101,6 +103,21 @@ jobs:
       - name: Test conditional vector UCO certificate
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_vector_uco_certificate
+
+  full-process-ucc:
+    name: full H A process UCC
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile complete process excitation producer
+        run: |
+          python3 -m py_compile \
+            tools/ou3_full_process_ucc.py \
+            tests/validation/test_ou3_full_process_ucc.py
+      - name: Test complete H/A prediction covariance bounds
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_full_process_ucc
 
   enclosure:
     name: continuous and nonlinear enclosure arithmetic
