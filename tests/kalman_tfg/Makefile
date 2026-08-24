@@ -1,4 +1,4 @@
-.PHONY: all build test ensure-sim-data clean
+.PHONY: all build test ensure-sim-data clean directional-rs-experiment-patch
 
 CC = g++
 TEST_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
@@ -60,9 +60,15 @@ tfg_process_covariance-test: tfg_process_covariance-test.o
 tfg_orchestrator-test: tfg_orchestrator-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+# Experimental PR #411 only: patch the Actions checkout before compiling the
+# adaptive simulator. The exact-base control checkout uses main's unmodified
+# Makefile/header, so tfg-validation remains a paired control/experiment.
+directional-rs-experiment-patch:
+	python3 patch_directional_rs_experiment.py
+
 # Need W3dSimCommon for the shared runner, scoring and record loading.
-kalman_tfg-sim: kalman_tfg-sim.o W3dSimCommon.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+kalman_tfg-sim: directional-rs-experiment-patch kalman_tfg-sim.o W3dSimCommon.o
+	$(CC) $(CXXFLAGS) -o $@ kalman_tfg-sim.o W3dSimCommon.o $(LDFLAGS)
 
 kalman_tfg-legacy-sim: kalman_tfg-legacy-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
