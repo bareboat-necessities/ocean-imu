@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 """Rigorous source-uniform translational UCO/UCC constants for OU-III.
 
-This closes the two translational existence steps that the manuscript previously
-left to compactness:
+This closes the translational existence steps that the manuscript previously
+left to compactness.  It provides two complementary observation certificates:
 
-* the four-firing S=0 observation operator is given an explicit positive
-  singular-value/information lower bound; and
-* the integrated-OU process Gramian on (v,p,S,a_w) is given an explicit positive
-  eigenvalue lower bound on every configured 200 Hz Live sample.
+* a strict four-firing UCO bound for the complete ``(v,p,S,a_w)`` chain; and
+* a much stronger three-firing detectability bound for the marginal
+  ``(v,p,S)`` integrator chain, using uniform exponential stability of ``a_w``.
 
-The bounds are deliberately conservative.  They use only implementation/source
-limits and validated scalar exponential arithmetic; no replay extrema or fitted
-trajectory statistics enter the result.
+The latter is the right ingredient for a practical Riccati upper bound: a stable
+OU state need not be reconstructed through an exponentially tiny four-point
+Vandermonde determinant merely to prove bounded covariance.
 
-For the process Gramian, let k(t)=exp(F t)G for one [v,p,S,a] axis.  In the
-basis [1,t,t^2,exp(-lambda t)], the coefficient transform has determinant
-1/(2 lambda^3).  The third divided difference of exp(-lambda t) has magnitude
+The bounds use only implementation/source limits and validated scalar
+exponential arithmetic; no replay extrema or fitted trajectory statistics enter.
+
+For process UCC, let k(t)=exp(F t)G for one [v,p,S,a] axis. In the basis
+[1,t,t^2,exp(-lambda t)], the coefficient transform has determinant
+1/(2 lambda^3). The third divided difference of exp(-lambda t) has magnitude
 at least lambda^3 exp(-lambda h)/6, so for four ordered points
 
     |det[k(t0),...,k(t3)]| >= V(t0,...,t3) exp(-lambda h)/12.
@@ -25,16 +27,14 @@ Andreief's identity and four separated subintervals of width h/7 then give
     det Gram >= (2025/144) (h/7)^16 exp(-2 h/tau_min).
 
 The response norms satisfy |a|<=1, |v|<=t, |p|<=t^2/2, |S|<=t^3/6, hence
-trace Gram <= h(1+h^2+h^4/4+h^6/36).  For a 4x4 PSD Gramian,
-lambda_min >= det/trace^3.  Multiplying by the minimum OU driving intensity
+trace Gram <= h(1+h^2+h^4/4+h^6/36). For a 4x4 PSD Gramian,
+lambda_min >= det/trace^3. Multiplying by the minimum OU driving intensity
 2 sigma_aw^2/tau gives the covariance lower bound.
 
-The S-observation bound implements the determinant/singular-value argument in
-w3d-iss-stability.tex-part.  It is aligned to a pseudo-measurement firing; the
-source scheduler gives Delta_min>=h and Delta_max<=T_S,max+h.  Four firings fit
-in 3 Delta_max.  The effective S-measurement standard deviation is bounded by
-the base R_S clamp times sqrt(T0/T_S,min), which covers the Cubic cadence
-renormalization as well as the deployed SpectralMSE law.
+For the three-firing detectable integrator block, rows are
+``[t^2/2,t,1]``.  With firing gaps at least Delta_min, the determinant of rows
+at t0=0<t1<t2 is at least Delta_min^3.  A Frobenius upper bound therefore gives
+an explicit positive smallest singular value without any OU exponential factor.
 """
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ import ou3_validated_transcendentals as VT
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_HEADER = SOURCE.DEFAULT_HEADER
-SCHEMA = 1
+SCHEMA = 2
 
 
 def _point(x: float) -> Interval:
@@ -72,12 +72,7 @@ def _pow_nonnegative(x: Interval, n: int) -> Interval:
 
 
 def _exp_negative_wide(x: Interval) -> Interval:
-    """Enclose exp(-X), X>=0, by power-of-two range reduction.
-
-    The trusted Taylor core is only audited for |argument|<=1/2.  Division by a
-    power of two and repeated interval squaring extends that core without a
-    libm transcendental call.
-    """
+    """Enclose exp(-X), X>=0, by power-of-two range reduction."""
     if x.lo < 0.0 or not math.isfinite(x.hi):
         raise ValueError("wide negative exponential requires finite X>=0")
     scale = 1
@@ -109,7 +104,6 @@ def build(header: Path = DEFAULT_HEADER.resolve()) -> dict:
         raise RuntimeError("source proof box lost a positive lower endpoint")
 
     # ---------- Process uniform complete controllability ----------
-    # Use the worst decay at h_max/tau_min.
     x_decay = Interval(h.lo, h.hi) / Interval(tau.lo, tau.lo)
     e_decay = _exp_negative_wide(x_decay)
     e2_lower = _pow_nonnegative(Interval(e_decay.lo, e_decay.lo), 2).lo
@@ -133,7 +127,6 @@ def build(header: Path = DEFAULT_HEADER.resolve()) -> dict:
     gram_lambda_min_lower = math.nextafter(
         det_gram_lower / (trace_gram_upper ** 3), -math.inf
     )
-    # q_c = 2 sigma^2/tau; lower endpoint uses sigma_min,tau_max.
     qc_lower = (
         _point(2.0)
         * Interval(sigma.lo, sigma.lo).square()
@@ -143,15 +136,23 @@ def build(header: Path = DEFAULT_HEADER.resolve()) -> dict:
         qc_lower * gram_lambda_min_lower, -math.inf
     )
 
-    # ---------- S=0 uniform complete observability ----------
-    # periodic_update_due can overshoot the requested period by less than one
-    # configured sample.  A word aligned to one firing therefore sees four
-    # firings within 3*(T_S,max+h_max).
+    # ---------- S=0 scheduling and filter-noise range ----------
     delta_min = h.lo
     delta_max = math.nextafter(ts.hi + h.hi, math.inf)
-    window = math.nextafter(3.0 * delta_max, math.inf)
+    nominal_T0 = SOURCE.parse_const(
+        header.read_text(encoding="utf-8"), "PSEUDO_UPDATE_PERIOD_NOMINAL_S"
+    )
+    cadence_scale_upper = math.nextafter(math.sqrt(nominal_T0 / ts.lo), math.inf)
+    cadence_scale_lower = math.nextafter(math.sqrt(nominal_T0 / ts.hi), -math.inf)
+    # SpectralMSE/other non-Cubic laws use scale one.  Taking the hull with one
+    # makes these bounds valid for every selectable implementation law.
+    scale_lo = min(1.0, cadence_scale_lower)
+    scale_hi = max(1.0, cadence_scale_upper)
+    rs_filter_std_upper = math.nextafter(rs_base.hi * scale_hi, math.inf)
+    rs_filter_std_lower = math.nextafter(rs_base.lo * scale_lo, -math.inf)
 
-    # determinant lower d = Delta_min^6/12 * exp(-T/tau_min)
+    # ---------- Complete four-state S-observation UCO ----------
+    window = math.nextafter(3.0 * delta_max, math.inf)
     decay_obs = _exp_negative_wide(
         Interval.outward_bounds(window / tau.lo, window / tau.lo)
     )
@@ -159,10 +160,6 @@ def build(header: Path = DEFAULT_HEADER.resolve()) -> dict:
     det_obs_lower = math.nextafter(
         (delta6 / 12.0) * decay_obs.lo, -math.inf
     )
-
-    # Each row is [t^2/2,t,1,A3(t)], A3(t)<=t^3/6.  Four rows give the
-    # Frobenius upper bound 2*row_norm_max.  Zero is an exact physical endpoint;
-    # widening it below zero would create a fictitious negative-time source.
     T = Interval(0.0, math.nextafter(window, math.inf))
     row_norm2 = (
         _point(1.0)
@@ -174,15 +171,32 @@ def build(header: Path = DEFAULT_HEADER.resolve()) -> dict:
     obs_sigma_min_lower = math.nextafter(
         det_obs_lower / (B_frob_upper ** 3), -math.inf
     )
-
-    # Covers the largest possible cadence normalization of the Cubic law.
-    nominal_T0 = SOURCE.parse_const(header.read_text(encoding="utf-8"),
-                                    "PSEUDO_UPDATE_PERIOD_NOMINAL_S")
-    cadence_scale_upper = math.nextafter(math.sqrt(nominal_T0 / ts.lo), math.inf)
-    rs_filter_std_upper = math.nextafter(rs_base.hi * cadence_scale_upper, math.inf)
     s_info_lambda_min_lower = math.nextafter(
         (obs_sigma_min_lower ** 2) / (rs_filter_std_upper ** 2), -math.inf
     )
+
+    # ---------- Stronger three-firing (v,p,S) detectability ----------
+    detect_window = math.nextafter(2.0 * delta_max, math.inf)
+    Td = Interval(0.0, math.nextafter(detect_window, math.inf))
+    detect_row_norm2 = (
+        _point(1.0) + Td.square() + _pow_nonnegative(Td, 4) / _point(4.0)
+    )
+    detect_frob_upper = math.nextafter(
+        math.sqrt(3.0 * detect_row_norm2.hi), math.inf
+    )
+    detect_det_lower = math.nextafter(delta_min ** 3, -math.inf)
+    detect_sigma_min_lower = math.nextafter(
+        detect_det_lower / (detect_frob_upper ** 2), -math.inf
+    )
+    detect_info_lower = math.nextafter(
+        (detect_sigma_min_lower ** 2) / (rs_filter_std_upper ** 2), -math.inf
+    )
+
+    # The omitted a_w direction is uniformly exponentially stable on the whole
+    # tau box.  The largest one-step alpha occurs at h_min/tau_max.
+    x_stable = Interval.outward_bounds(h.lo / tau.hi, h.lo / tau.hi)
+    alpha_stable = _exp_negative_wide(x_stable)
+    aw_stationary_variance_upper = math.nextafter(sigma.hi * sigma.hi, math.inf)
 
     process_pass = all(math.isfinite(v) and v > 0.0 for v in (
         det_gram_lower, gram_lambda_min_lower, qc_lower, q_axis_lambda_min_lower
@@ -190,10 +204,14 @@ def build(header: Path = DEFAULT_HEADER.resolve()) -> dict:
     observability_pass = all(math.isfinite(v) and v > 0.0 for v in (
         det_obs_lower, obs_sigma_min_lower, s_info_lambda_min_lower
     ))
+    detectability_pass = all(math.isfinite(v) and v > 0.0 for v in (
+        detect_det_lower, detect_sigma_min_lower, detect_info_lower,
+        rs_filter_std_lower,
+    )) and alpha_stable.hi < 1.0
 
     return {
         "schema": SCHEMA,
-        "qualification": "VALIDATED_TRANSLATIONAL_UCO_UCC_CONFIGURED_RUNTIME",
+        "qualification": "VALIDATED_TRANSLATIONAL_UCO_UCC_AND_DETECTABILITY_CONFIGURED_RUNTIME",
         "source_generated_not_trajectory_fit": True,
         "validated_arithmetic": True,
         "outward_rounded": True,
@@ -221,18 +239,32 @@ def build(header: Path = DEFAULT_HEADER.resolve()) -> dict:
             "observation_det_lower": det_obs_lower,
             "observation_frobenius_upper": B_frob_upper,
             "observation_sigma_min_lower": obs_sigma_min_lower,
+            "R_S_filter_std_lower": rs_filter_std_lower,
             "R_S_filter_std_upper": rs_filter_std_upper,
             "information_gramian_lambda_min_lower": s_info_lambda_min_lower,
             "pass": observability_pass,
         },
-        "translation_source_complete": bool(process_pass and observability_pass),
+        "integrator_detectability": {
+            "state_order": ["v", "p", "S"],
+            "aligned_firing_count": 3,
+            "aligned_window_s": detect_window,
+            "observation_det_lower": detect_det_lower,
+            "observation_frobenius_upper": detect_frob_upper,
+            "observation_sigma_min_lower": detect_sigma_min_lower,
+            "information_gramian_lambda_min_lower": detect_info_lower,
+            "stable_aw_alpha_upper": alpha_stable.hi,
+            "stable_aw_stationary_variance_upper": aw_stationary_variance_upper,
+            "pass": detectability_pass,
+        },
+        "translation_source_complete": bool(
+            process_pass and observability_pass and detectability_pass
+        ),
         "continuous_word_enclosed": False,
         "nonlinear_word_enclosed": False,
         "theorem_promotion": "NOT_ESTABLISHED",
         "next_obligation": (
-            "combine these strict translational UCO/UCC constants with a source-uniform "
-            "vector-packet attitude/gyro-bias information certificate, then propagate the "
-            "complete Riccati/correction word in validated matrix arithmetic"
+            "combine the stronger translation detectability bound with conditional vector "
+            "UCO and full process UCC to derive source-uniform covariance and information-word bounds"
         ),
     }
 
@@ -254,6 +286,10 @@ def validate(payload: dict) -> list[str]:
             "observation_det_lower", "observation_sigma_min_lower",
             "information_gramian_lambda_min_lower",
         ),
+        "integrator_detectability": (
+            "observation_det_lower", "observation_sigma_min_lower",
+            "information_gramian_lambda_min_lower",
+        ),
     }.items():
         row = payload.get(section, {})
         if row.get("pass") is not True:
@@ -262,6 +298,9 @@ def validate(payload: dict) -> list[str]:
             value = row.get(key)
             if not isinstance(value, (int, float)) or not math.isfinite(float(value)) or not float(value) > 0.0:
                 failures.append(f"{section}.{key} is not finite positive")
+    alpha = payload.get("integrator_detectability", {}).get("stable_aw_alpha_upper")
+    if not isinstance(alpha, (int, float)) or not (0.0 < float(alpha) < 1.0):
+        failures.append("stable aw contraction is not strict")
     if payload.get("continuous_word_enclosed") is not False:
         failures.append("translation stage must not assert full word enclosure")
     if payload.get("theorem_promotion") != "NOT_ESTABLISHED":
@@ -285,6 +324,8 @@ def main() -> int:
         "translation_source_complete": out["translation_source_complete"],
         "Q_axis_lambda_min_lower": out["process_ucc"]["Q_axis_lambda_min_lower"],
         "S_information_lambda_min_lower": out["S_observation_uco"]["information_gramian_lambda_min_lower"],
+        "integrator_information_lambda_min_lower": out["integrator_detectability"]["information_gramian_lambda_min_lower"],
+        "stable_aw_alpha_upper": out["integrator_detectability"]["stable_aw_alpha_upper"],
         "validation_failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
