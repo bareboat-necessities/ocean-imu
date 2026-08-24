@@ -7,6 +7,12 @@ small: binary64 add/subtract/multiply/divide are evaluated once and widened by
 one representable number with ``math.nextafter``.  For the IEEE-754 basic
 operations used here, that encloses the exact real result of binary64 inputs.
 
+The matrix layer below is intentionally elementary.  It is built entirely from
+the scalar interval operations and uses absolute-sum, Gershgorin and interval
+LDL^T certificates, not ordinary floating-point eigenvalue or singular-value
+routines.  Those bounds can be conservative, but every claimed matrix
+inequality remains independently auditable and outward rounded.
+
 Transcendental functions are intentionally absent.  They require a separately
 validated implementation rather than an unqualified libm call.
 """
@@ -14,6 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+from typing import Sequence
 
 NEG_INF = -math.inf
 POS_INF = math.inf
@@ -74,6 +81,10 @@ class Interval:
     def width(self) -> float:
         return up(self.hi - self.lo)
 
+    def abs_upper(self) -> float:
+        """Outward upper bound on ``abs(x)`` for every x in this interval."""
+        return up(max(abs(self.lo), abs(self.hi)))
+
     def __add__(self, other: "Interval") -> "Interval":
         return Interval(down(self.lo + other.lo), up(self.hi + other.hi))
 
@@ -120,3 +131,182 @@ def hull(*intervals: Interval) -> Interval:
     if not intervals:
         raise ValueError("hull requires at least one interval")
     return Interval(min(x.lo for x in intervals), max(x.hi for x in intervals))
+
+
+IntervalMatrix = list[list[Interval]]
+
+
+def _shape(A: Sequence[Sequence[Interval]]) -> tuple[int, int]:
+    rows = len(A)
+    cols = len(A[0]) if rows else 0
+    if any(len(row) != cols for row in A):
+        raise ValueError("ragged interval matrix")
+    return rows, cols
+
+
+def matrix_point(values: Sequence[Sequence[float]]) -> IntervalMatrix:
+    """Convert a finite rectangular numeric matrix to point intervals."""
+    rows = [list(row) for row in values]
+    if rows:
+        cols = len(rows[0])
+        if any(len(row) != cols for row in rows):
+            raise ValueError("ragged point matrix")
+    return [[Interval.point(float(x)) for x in row] for row in rows]
+
+
+def matrix_identity(n: int) -> IntervalMatrix:
+    if n < 0:
+        raise ValueError("matrix dimension must be nonnegative")
+    return [
+        [Interval.point(1.0 if i == j else 0.0) for j in range(n)]
+        for i in range(n)
+    ]
+
+
+def matrix_transpose(A: Sequence[Sequence[Interval]]) -> IntervalMatrix:
+    rows, cols = _shape(A)
+    return [[A[i][j] for i in range(rows)] for j in range(cols)]
+
+
+def matrix_add(A: Sequence[Sequence[Interval]],
+               B: Sequence[Sequence[Interval]]) -> IntervalMatrix:
+    sa, sb = _shape(A), _shape(B)
+    if sa != sb:
+        raise ValueError(f"matrix-add shape mismatch {sa} != {sb}")
+    return [[A[i][j] + B[i][j] for j in range(sa[1])] for i in range(sa[0])]
+
+
+def matrix_sub(A: Sequence[Sequence[Interval]],
+               B: Sequence[Sequence[Interval]]) -> IntervalMatrix:
+    sa, sb = _shape(A), _shape(B)
+    if sa != sb:
+        raise ValueError(f"matrix-sub shape mismatch {sa} != {sb}")
+    return [[A[i][j] - B[i][j] for j in range(sa[1])] for i in range(sa[0])]
+
+
+def matrix_mul(A: Sequence[Sequence[Interval]],
+               B: Sequence[Sequence[Interval]]) -> IntervalMatrix:
+    ra, ca = _shape(A)
+    rb, cb = _shape(B)
+    if ca != rb:
+        raise ValueError(f"matrix-mul shape mismatch {(ra, ca)} x {(rb, cb)}")
+    out: IntervalMatrix = []
+    for i in range(ra):
+        row: list[Interval] = []
+        for j in range(cb):
+            total = Interval.point(0.0)
+            for k in range(ca):
+                total = total + A[i][k] * B[k][j]
+            row.append(total)
+        out.append(row)
+    return out
+
+
+def matrix_abs_row_sum_upper(A: Sequence[Sequence[Interval]]) -> float:
+    """Validated upper bound on max absolute row sum, hence on ||A||_inf."""
+    rows, cols = _shape(A)
+    best = 0.0
+    for i in range(rows):
+        total = 0.0
+        for j in range(cols):
+            total = up(total + A[i][j].abs_upper())
+        best = max(best, total)
+    return up(best)
+
+
+def matrix_abs_col_sum_upper(A: Sequence[Sequence[Interval]]) -> float:
+    """Validated upper bound on max absolute column sum, hence on ||A||_1."""
+    rows, cols = _shape(A)
+    best = 0.0
+    for j in range(cols):
+        total = 0.0
+        for i in range(rows):
+            total = up(total + A[i][j].abs_upper())
+        best = max(best, total)
+    return up(best)
+
+
+def matrix_spectral_norm_upper(A: Sequence[Sequence[Interval]]) -> float:
+    """Validated, sqrt-free upper bound on spectral norm.
+
+    ``||A||_2 <= sqrt(||A||_1 ||A||_inf) <= max(||A||_1,||A||_inf)``.
+    """
+    return up(max(matrix_abs_row_sum_upper(A), matrix_abs_col_sum_upper(A)))
+
+
+def symmetric_gershgorin_lower(A: Sequence[Sequence[Interval]]) -> float:
+    """Validated lower bound on every eigenvalue of every symmetric A in box."""
+    n, m = _shape(A)
+    if n != m:
+        raise ValueError("Gershgorin eigenvalue bound requires square matrix")
+    lower = POS_INF
+    for i in range(n):
+        radius = 0.0
+        for j in range(n):
+            if i != j:
+                radius = up(radius + max(A[i][j].abs_upper(), A[j][i].abs_upper()))
+        disc = down(A[i][i].lo - radius)
+        lower = min(lower, disc)
+    return lower
+
+
+def symmetric_gershgorin_upper(A: Sequence[Sequence[Interval]]) -> float:
+    """Validated upper bound on every eigenvalue of every symmetric A in box."""
+    n, m = _shape(A)
+    if n != m:
+        raise ValueError("Gershgorin eigenvalue bound requires square matrix")
+    upper_bound = NEG_INF
+    for i in range(n):
+        radius = 0.0
+        for j in range(n):
+            if i != j:
+                radius = up(radius + max(A[i][j].abs_upper(), A[j][i].abs_upper()))
+        disc = up(A[i][i].hi + radius)
+        upper_bound = max(upper_bound, disc)
+    return upper_bound
+
+
+def symmetric_positive_definite_gershgorin(
+    A: Sequence[Sequence[Interval]],
+) -> tuple[bool, float]:
+    """Certify SPD when the outward Gershgorin lower bound is strictly positive."""
+    lower = symmetric_gershgorin_lower(A)
+    return lower > 0.0, lower
+
+
+def symmetric_positive_definite_ldlt(
+    A: Sequence[Sequence[Interval]],
+) -> tuple[bool, list[Interval]]:
+    """Certify a whole symmetric interval family SPD by interval LDL^T.
+
+    For every concrete symmetric matrix inside ``A`` the ordinary unpivoted
+    LDL^T recurrence is enclosed by the intervals below.  If every diagonal
+    pivot interval is strictly positive, Sylvester/LDL theory proves every
+    concrete member positive definite.  If a pivot touches zero the routine
+    returns ``False`` instead of pivoting or making an unsupported claim.
+    """
+    n, m = _shape(A)
+    if n != m:
+        raise ValueError("interval LDLT requires a square matrix")
+    if n == 0:
+        return True, []
+    zero = Interval.point(0.0)
+    one = Interval.point(1.0)
+    L: IntervalMatrix = [[zero for _ in range(n)] for _ in range(n)]
+    d: list[Interval] = [zero for _ in range(n)]
+    for i in range(n):
+        L[i][i] = one
+
+    for j in range(n):
+        pivot = A[j][j]
+        for k in range(j):
+            pivot = pivot - L[j][k].square() * d[k]
+        d[j] = pivot
+        if not d[j].lo > 0.0:
+            return False, d[: j + 1]
+        for i in range(j + 1, n):
+            numerator = A[i][j]
+            for k in range(j):
+                numerator = numerator - L[i][k] * L[j][k] * d[k]
+            L[i][j] = numerator / d[j]
+    return True, d

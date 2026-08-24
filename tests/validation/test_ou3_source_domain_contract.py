@@ -21,23 +21,14 @@ def f32(value):
 class SourceDomainContractTests(unittest.TestCase):
     def test_contract_uses_shipping_clamps_and_keeps_theorem_unpromoted(self):
         d = mod.build(mod.DEFAULT_HEADER)
-        self.assertEqual(d["schema"], 2)
+        self.assertEqual(d["schema"], 3)
         self.assertTrue(d["source_generated_not_trajectory_fit"])
         self.assertTrue(d["source_complete_parameter_domain"])
         self.assertFalse(d["validated_arithmetic"])
         self.assertFalse(d["outward_rounded"])
-        self.assertEqual(
-            d["implementation_scalar_semantics"]["type"], "IEEE754_BINARY32"
-        )
-        self.assertEqual(
-            d["continuous_parameters"]["tau_aw_s"], [f32(0.02), f32(12.0)]
-        )
-        # apply_ou_tune_ enforces max(0.05f, band_noise_floor_sigma_()) before
-        # writing the OU stationary standard deviation.  The contract records
-        # the actually deployed binary32 floor, not the decimal source token.
-        self.assertEqual(
-            d["continuous_parameters"]["sigma_aw_mps2"], [f32(0.05), f32(6.0)]
-        )
+        self.assertEqual(d["implementation_scalar_semantics"]["type"], "IEEE754_BINARY32")
+        self.assertEqual(d["continuous_parameters"]["tau_aw_s"], [f32(0.02), f32(12.0)])
+        self.assertEqual(d["continuous_parameters"]["sigma_aw_mps2"], [f32(0.05), f32(6.0)])
         self.assertEqual(set(d["discrete_source_branches"]["mode"]), {"H", "A"})
 
     def test_constexpr_arithmetic_rounds_as_binary32_after_each_operation(self):
@@ -65,14 +56,12 @@ class SourceDomainContractTests(unittest.TestCase):
         self.assertEqual(box["theorem_promotion"], "NOT_ESTABLISHED")
         self.assertFalse(box["continuous_word_enclosed"])
         self.assertFalse(box["nonlinear_word_enclosed"])
-
         for name, source_bounds in d["continuous_parameters"].items():
             lo, hi = box["continuous_parameters"][name]
             self.assertLess(lo, source_bounds[0])
             self.assertGreater(hi, source_bounds[1])
             self.assertEqual(lo, math.nextafter(source_bounds[0], -math.inf))
             self.assertEqual(hi, math.nextafter(source_bounds[1], math.inf))
-
         for name, source_value in d["timing_constants_s"].items():
             lo, hi = box["timing_constants_s"][name]
             self.assertLess(lo, source_value)
@@ -80,25 +69,30 @@ class SourceDomainContractTests(unittest.TestCase):
             self.assertEqual(lo, math.nextafter(source_value, -math.inf))
             self.assertEqual(hi, math.nextafter(source_value, math.inf))
 
+    def test_configured_runtime_sampling_assumption_is_explicit_and_source_bound(self):
+        d = mod.build(mod.DEFAULT_HEADER)
+        runtime = d["configured_runtime_assumption"]
+        expected = f32(f32(1.0) / f32(200.0))
+        self.assertEqual(runtime["qualification"], "CONFIGURED_VALIDATION_RUNTIME_ASSUMPTION")
+        self.assertEqual(runtime["sample_period_contract"], "FIXED_SOURCE_NOMINAL")
+        self.assertEqual(runtime["imu_dt_s"], expected)
+        self.assertFalse(runtime["api_enforces_this_bound"])
+        lo, hi = runtime["imu_dt_outward_interval_s"]
+        self.assertLess(lo, expected)
+        self.assertGreater(hi, expected)
+        self.assertEqual(d["validated_parameter_box"]["configured_runtime"], runtime)
+
     def test_contract_names_every_hybrid_transition_required_for_deployment(self):
         d = mod.build(mod.DEFAULT_HEADER)
         self.assertEqual(
             set(d["hybrid_obligations"]),
             {
-                "startup_handoff",
-                "held_to_active",
-                "magnetic_lock",
-                "magnetic_regauge_refinement",
-                "tilt_reset",
-                "tilt_relock",
-                "cooldown_reentry",
-                "periodic_aw_covariance_sync",
+                "startup_handoff", "held_to_active", "magnetic_lock",
+                "magnetic_regauge_refinement", "tilt_reset", "tilt_relock",
+                "cooldown_reentry", "periodic_aw_covariance_sync",
             },
         )
-        self.assertEqual(
-            d["periodic_aw_covariance_sync_proof"]["required_mode"],
-            "PSD_NONEXPANSIVE",
-        )
+        self.assertEqual(d["periodic_aw_covariance_sync_proof"]["required_mode"], "PSD_NONEXPANSIVE")
 
 
 if __name__ == "__main__":

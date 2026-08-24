@@ -12,6 +12,7 @@ TOOL = ROOT / "tools" / "ou3_validate_enclosure.py"
 sys.path.insert(0, str(ROOT / "tools"))
 
 import ou3_source_domain_contract as SOURCE  # noqa: E402
+import ou3_interval as IA  # noqa: E402
 from ou3_interval import Interval  # noqa: E402
 import ou3_source_interval_box as SOURCE_BOX  # noqa: E402
 
@@ -101,6 +102,50 @@ class Ou3IntervalArithmeticTests(unittest.TestCase):
         C = Interval(-3.0, 2.0).square()
         self.assertEqual(C.lo, 0.0)
         assert_contains_exact(self, C, Fraction(9, 1))
+
+    def test_interval_matrix_product_contains_exact_product(self):
+        A = [
+            [Interval.outward_bounds(0.9, 1.1), Interval.outward_bounds(-0.2, -0.1)],
+            [Interval.outward_bounds(0.3, 0.4), Interval.outward_bounds(1.9, 2.1)],
+        ]
+        B = IA.matrix_point([[2.0, -1.0], [0.5, 3.0]])
+        C = IA.matrix_mul(A, B)
+        for a00, a01, a10, a11 in (
+            (0.9, -0.2, 0.3, 1.9),
+            (1.1, -0.1, 0.4, 2.1),
+            (1.0, -0.15, 0.35, 2.0),
+        ):
+            exact_c = (
+                (2.0 * a00 + 0.5 * a01, -a00 + 3.0 * a01),
+                (2.0 * a10 + 0.5 * a11, -a10 + 3.0 * a11),
+            )
+            for i in range(2):
+                for j in range(2):
+                    self.assertTrue(C[i][j].contains(exact_c[i][j]))
+
+    def test_gershgorin_certifies_uniform_spd_without_eigensolver(self):
+        A = [
+            [Interval.outward_bounds(3.9, 4.1), Interval.outward_bounds(-0.2, 0.2)],
+            [Interval.outward_bounds(-0.2, 0.2), Interval.outward_bounds(2.9, 3.1)],
+        ]
+        ok, lower = IA.symmetric_positive_definite_gershgorin(A)
+        self.assertTrue(ok)
+        self.assertGreater(lower, 2.6)
+        self.assertGreaterEqual(IA.symmetric_gershgorin_upper(A), 4.1)
+
+    def test_gershgorin_refuses_to_claim_spd_when_box_is_too_wide(self):
+        A = [
+            [Interval.outward_bounds(0.9, 1.1), Interval.outward_bounds(-2.0, 2.0)],
+            [Interval.outward_bounds(-2.0, 2.0), Interval.outward_bounds(0.9, 1.1)],
+        ]
+        ok, lower = IA.symmetric_positive_definite_gershgorin(A)
+        self.assertFalse(ok)
+        self.assertLess(lower, 0.0)
+
+    def test_validated_spectral_norm_bound_uses_absolute_sums(self):
+        A = IA.matrix_point([[1.0, -2.0], [3.0, 4.0]])
+        bound = IA.matrix_spectral_norm_upper(A)
+        self.assertGreaterEqual(bound, 7.0)
 
     def test_source_box_encloses_every_source_domain_endpoint_without_promoting_theorem(self):
         source = SOURCE.build(SOURCE.DEFAULT_HEADER.resolve())
