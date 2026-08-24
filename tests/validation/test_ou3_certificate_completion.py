@@ -28,8 +28,6 @@ ENC = load("ou3_validate_enclosure")
 
 class Ou3CertificateCompletionTests(unittest.TestCase):
     def test_group_metric_matches_exact_so3_energy(self):
-        # Legacy path-metric completion remains a diagnostic utility. P00=1 ->
-        # a_R=2; zero xi; theta=pi/2 gives V_R=1 and W=2.
         P = np.eye(21)
         e = np.zeros(21)
         e[0] = math.pi / 2
@@ -90,8 +88,6 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
 
     def test_information_mode_rejects_optimistic_anchor_exclusion(self):
         payload = self.valid_mode_payload()
-        # The continuous source family contains the executed reference points,
-        # so its minimum cannot exceed the observed minimum.
         payload["relative_Riccati_injection_margin_lower"] = 0.02
         ans = ENC.validate_mode("A", payload, self.contract_mode())
         self.assertFalse(ans["linear_pass"])
@@ -129,7 +125,16 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
         c = CONTRACT.build_contract(info, completion)
         self.assertEqual(c["modes"]["H"]["recommended_word_horizon_s"], 16.0)
         self.assertEqual(c["modes"]["A"]["recommended_word_horizon_s"], 4.0)
-        self.assertEqual(c["metric"], "source-varying inverse estimator covariance")
+        policy = c["metric_policy"]
+        self.assertTrue(policy["P3_conditioning_coordinate_invariant"])
+        self.assertTrue(policy["P3_metric_need_not_equal_P4_metric"])
+        self.assertTrue(policy["P4_group_compatible_node_metric_required"])
+        self.assertTrue(policy["node_dependent_metrics_allowed"])
+        self.assertFalse(policy["common_Euclidean_or_common_quadratic_fallback_allowed"])
+        self.assertEqual(
+            c["modes"]["H"]["required_path_metric"],
+            "Pbar_i=blkdiag((a_R_i/2) I3, P_xi_i), a_R_i>0, P_xi_i>>0",
+        )
 
     def test_completion_does_not_promote_sampled_replay(self):
         text = (TOOLS / "ou3_information_completion.py").read_text()
@@ -144,8 +149,6 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
         self.assertIn("endpoint_W_ratio_upper", text)
         self.assertIn("certified_level_W", text)
         self.assertIn("theta_star", text)
-        # Prose may name the retired artifact for contrast. The implementation
-        # must not load any old matrix archive or call the old box-LMI helper.
         self.assertNotIn("np.load(", text)
         self.assertNotIn("load_metrics(", text)
         self.assertNotIn("robust_box_lmi_upper(", text)
