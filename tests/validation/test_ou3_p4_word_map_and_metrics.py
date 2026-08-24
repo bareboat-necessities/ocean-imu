@@ -37,29 +37,31 @@ class Ou3P4WordMapAndMetricTests(unittest.TestCase):
         self.assertEqual(p["kind"], "exact_Euclidean_projection_onto_closed_ball")
         self.assertTrue(p["nonexpansive"])
 
-    def test_metric_family_is_group_compatible_and_ou_scaled(self):
+    def test_metric_is_exact_cayley_lift_of_full_P3_information_matrix(self):
         d = METRIC.build()
         self.assertEqual(METRIC.validate(d), [])
-        self.assertTrue(d["selection_requires_validated_endpoint_word_bound"])
-        self.assertIsNone(d["selected_candidate"])
-        for candidate in d["candidates"].values():
-            self.assertTrue(candidate["same_multiplier_on_every_graph_node"])
-            for mode, dim in (("H",18),("A",21)):
-                for node in candidate["nodes"][mode]:
-                    m = node["metric"]
-                    self.assertEqual(m["kind"], "GROUP_COMPATIBLE_NODE_METRIC")
-                    self.assertFalse(m["attitude_linear_cross_terms"])
-                    self.assertFalse(m["equals_Kalman_inverse_covariance"])
-                    self.assertEqual(len(m["Pbar_diagonal"]), dim)
-                    labels = [b["label"] for b in m["P_xi_blocks"]]
-                    self.assertEqual(labels[:5], ["b_g","v","p","S","a_w"])
-                    if mode == "A":
-                        self.assertEqual(labels[-1], "b_a")
+        self.assertTrue(d["single_quantitative_metric_route"])
+        self.assertFalse(d["retired_block_diagonal_route_available"])
+        for mode, dim in (("H",18),("A",21)):
+            m = d["modes"][mode]
+            self.assertEqual(m["dimension"], dim)
+            self.assertEqual(m["kind"], "CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC")
+            self.assertTrue(m["source_covariance_inverse"])
+            self.assertTrue(m["full_attitude_linear_cross_terms_retained"])
+            self.assertFalse(m["block_diagonal_metric_used"])
+            self.assertFalse(m["common_Euclidean_metric_used"])
+            self.assertTrue(m["local_coordinate_matches_P3_delta_theta"])
+            self.assertTrue(m["local_quadratic_equals_P3_information_metric"])
+            self.assertTrue(m["endpoint_metric_must_match_endpoint_source_covariance"])
+            self.assertGreater(m["metric_lambda_min_lower"], 0.0)
+            self.assertGreaterEqual(m["metric_lambda_max_upper"], m["metric_lambda_min_lower"])
+            self.assertGreater(m["P3_word_endpoint_margin_lower"], 0.0)
 
-    def test_no_old_metric_fallback_names_are_present(self):
+    def test_no_retired_block_metric_or_schmidt_route_remains(self):
         text = (ROOT / "tools" / "ou3_p4_node_metrics.py").read_text(encoding="utf-8").casefold()
-        self.assertNotIn("common euclidean fallback", text)
         self.assertNotIn("schmidt", text)
+        self.assertIn("retired_block_diagonal_route_available", text)
+        self.assertIn("full_attitude_linear_cross_terms_retained", text)
 
 
 if __name__ == "__main__":
