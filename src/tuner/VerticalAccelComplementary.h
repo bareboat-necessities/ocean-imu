@@ -46,14 +46,11 @@
   0.11-0.42 Hz the reference records occupy, so the gyro carries attitude
   through the wave band and the accelerometer only trims slow drift.
 
-  The startup observer also needs the slow integral channel.  With two_ki = 0
-  a constant gyro bias leaves a standing tilt error of about 2b/two_kp.  That
-  was acceptable when this observer only fed high-passed period statistics,
-  but it is not acceptable when the same attitude seeds the MEKF: the error
-  becomes a standing roll/pitch bias.  The deployed OU-III startup theorem and
-  startup study therefore use two_ki = 0.02.  This remains measurement-only and
-  exogenous to the MEKF; the integral term estimates the observer's own slow
-  gyro-bias correction and does not close a loop through filter state.
+  With two_ki = 0 a constant gyro bias b leaves a static tilt error of about
+  2b/two_kp.  At the reference bias range (0.05 deg/s) that is ~0.5 deg, and it
+  is static, so the estimator's two high-pass stages reject it.  Bias is
+  deliberately not estimated here: an integral term is another slow state that
+  can wind up against a sustained horizontal acceleration.
 
   Yaw is unobservable without a magnetometer and is left to drift.  It does not
   matter: only the vertical component is used, and that depends on tilt alone.
@@ -83,11 +80,11 @@ enum class WavePeriodInputSource {
 class VerticalAccelComplementary {
 public:
     // two_kp     : accelerometer-to-gyro correction gain; corner ~ two_kp/2 rad/s.
-    // two_ki     : integral (bias) gain.  The deployed startup theorem uses 0.02.
+    // two_ki     : integral (bias) gain.  0 disables it; see the note above.
     // settle_sec : hold isReady() low this long after the first sample, so the
     //              levelling transient never reaches the period statistics.
     explicit VerticalAccelComplementary(float two_kp = 0.2f,
-                                        float two_ki = 0.02f,
+                                        float two_ki = 0.0f,
                                         float settle_sec = 20.0f)
         : two_kp_(two_kp), two_ki_(two_ki),
           settle_sec_(std::max(0.0f, settle_sec))
