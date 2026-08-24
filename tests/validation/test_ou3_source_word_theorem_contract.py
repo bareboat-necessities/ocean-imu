@@ -24,19 +24,25 @@ class SourceWordTheoremContractTests(unittest.TestCase):
         self.assertEqual(d["theorem_promotion"], "NOT_ESTABLISHED")
         self.assertTrue(any("recurrence" in x for x in d["failures"]))
 
-    def test_declared_recurrence_creates_a_tileable_conditional_language(self):
+    def test_declared_recurrence_creates_four_S_tileable_language(self):
         d = mod.build(pe_recurrence_window_s=1.0)
         self.assertEqual(mod.validate(d), [])
         self.assertTrue(d["conditional_word_language"]["ready"])
         self.assertTrue(d["source_complete_relative_to_theorem_hypotheses"])
+        tr = d["translation_recurrence"]
+        self.assertEqual(tr["primary_route"], "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO")
+        self.assertEqual(tr["aligned_firing_count"], 4)
+        self.assertEqual(tr["primary_state_order"], ["v", "p", "S", "a_w"])
+        self.assertTrue(tr["three_firing_integrator_detectability_is_supporting_only"])
+        self.assertGreaterEqual(tr["spread_index_q_W"], 1)
+        self.assertGreater(tr["spread_selected_spacing_lower_s"], 0.0)
+        self.assertGreaterEqual(tr["determinant_spacing_widening_factor_vs_adjacent"], 1)
         self.assertGreaterEqual(
-            d["conditional_word_language"]["word_horizon_lower_s"], 1.0
+            d["conditional_word_language"]["word_horizon_lower_s"],
+            tr["minimum_four_firing_window_s"],
         )
-        self.assertGreater(
-            d["conditional_word_language"]["word_samples_upper_at_configured_dt"], 0
-        )
-        self.assertFalse(d["continuous_word_enclosed"])
-        self.assertEqual(d["theorem_promotion"], "NOT_ESTABLISHED")
+        self.assertFalse(d["conditional_word_language"]["one_sample_decrease_required"])
+        self.assertTrue(d["conditional_word_language"]["word_endpoint_decrease_required"])
 
     def test_recurrence_cannot_be_shorter_than_vector_packet_span(self):
         base = mod.build()
@@ -50,9 +56,9 @@ class SourceWordTheoremContractTests(unittest.TestCase):
         d = mod.build(pe_recurrence_window_s=1.0)
         branches = d["source_branch_language"]
         self.assertEqual(branches["accelerometer_gate"], ["accepted", "rejected"])
-        self.assertEqual(
-            branches["magnetometer_gate"], ["not_due", "accepted", "rejected"]
-        )
+        self.assertEqual(branches["magnetometer_gate"], ["not_due", "accepted", "rejected"])
+        self.assertTrue(branches["joint_source_reachability_required"])
+        self.assertTrue(branches["cartesian_extrema_products_not_a_valid_word"])
         pe = d["vector_persistent_excitation"]
         self.assertTrue(pe["arbitrary_rejections_between_required_pe_events_allowed"])
         self.assertTrue(pe["two_consecutive_accepted_magnetic_packets_required"])
@@ -71,6 +77,7 @@ class SourceWordTheoremContractTests(unittest.TestCase):
         self.assertIn("tools/ou3_source_word_theorem_contract.py", text)
         self.assertIn("OU3_CONDITIONAL_SOURCE_COMPLETE_NORMAL_LIVE_WORD_LANGUAGE", text)
         self.assertIn('"pe_recurrence_window_s"', text)
+        self.assertIn("four spread-selected S", text)
         self.assertIn("single favorable vector pair", text)
 
     def test_contract_uses_no_replay_or_observed_extrema(self):
