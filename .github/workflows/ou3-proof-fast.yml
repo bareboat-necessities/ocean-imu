@@ -46,7 +46,7 @@ jobs:
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_source_domain_contract
 
-  # Proof-only: no wave replay, simulator build, plot generation, or document build.
+  # Focused proof-only job: no replay, simulator, plots, PDFs, or broad build.
   scalar-ou:
     name: validated scalar OU transition
     runs-on: ubuntu-24.04
