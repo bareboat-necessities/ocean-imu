@@ -24,33 +24,68 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  proof-unit:
+  source-domain:
+    name: source-complete implementation domain
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+      - name: Compile source-domain producer
+        run: python3 -m py_compile tools/ou3_source_domain_contract.py
+      - name: Test source-domain contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_source_domain_contract
 
-      - name: Install Python test dependency
+  enclosure:
+    name: continuous and nonlinear enclosure arithmetic
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
         run: |
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
-
-      - name: Compile proof tools
+      - name: Compile enclosure tools
         run: |
           python3 -m py_compile \
             tools/ou3_certificate_completion.py \
-            tools/ou3_validate_enclosure.py \
-            tools/ou3_deployment_gate.py \
-            tools/ou3_hybrid_aw_sync_proof.py \
-            tools/ou3_source_domain_contract.py
-
-      - name: Run focused theorem unit tests
+            tools/ou3_validate_enclosure.py
+      - name: Test enclosure and completion contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_certificate_completion \
-            test_ou3_validate_enclosure \
-            test_ou3_deployment_gate \
-            test_ou3_hybrid_aw_sync_proof \
-            test_ou3_source_domain_contract
+            test_ou3_validate_enclosure
+
+  hybrid:
+    name: hybrid jump certificates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile hybrid proof
+        run: python3 -m py_compile tools/ou3_hybrid_aw_sync_proof.py
+      - name: Test hybrid proof
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_hybrid_aw_sync_proof
+
+  composition:
+    name: stochastic capture and final composition arithmetic
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile final composition gate
+        run: python3 -m py_compile tools/ou3_deployment_gate.py
+      - name: Test stochastic, capture, and deployment composition
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_deployment_gate
