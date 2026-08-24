@@ -335,7 +335,10 @@ public:
     void setSigmaCoeff(float c)    { if (c > 0.0f && std::isfinite(c)) sigma_coeff_ = c; }
     void setRSCoeff(float c)       { if (c > 0.0f && std::isfinite(c)) R_S_coeff_ = c; }
     void setSFactor(float s)       { if (s > 0.0f && std::isfinite(s)) S_factor_ = s; }
-    void setRSXYFactor(float k)    { if (k > 0.0f && std::isfinite(k)) R_S_xy_factor_ = k; }
+    void setRSXFactor(float k)     { if (k > 0.0f && std::isfinite(k)) R_S_x_factor_ = k; }
+    void setRSYFactor(float k)     { if (k > 0.0f && std::isfinite(k)) R_S_y_factor_ = k; }
+    [[nodiscard]] float getRSXFactor() const noexcept { return R_S_x_factor_; }
+    [[nodiscard]] float getRSYFactor() const noexcept { return R_S_y_factor_; }
     void setAccNoiseFloorSigma(float s) { if (s >= 0.0f && std::isfinite(s)) noise_floor_sigma_ = s; }
 
     void setRSLaw(RSLaw law) noexcept { rs_law_ = law; }
@@ -908,7 +911,7 @@ private:
             rs *= std::sqrt(kPseudoPeriodNominalS / pseudo_period_sec_);
         }
         RS_filter_input_ = rs;
-        mekf_.set_RS_noise(Vector3f(rs * R_S_xy_factor_, rs * R_S_xy_factor_, rs));
+        mekf_.set_RS_noise(Vector3f(rs * R_S_x_factor_, rs * R_S_y_factor_, rs));
     }
 
     struct Vec3LPF {
@@ -955,14 +958,15 @@ private:
     float sigma_target_ = 1e-2f;
     float RS_target_ = 0.5f;
 
-    // TFG-specific physical prior/anisotropy coefficients remain the values
-    // independently measured for TFG.  Front-end statistical coefficients are
-    // what are kept at OU-III parity.
+    // TFG-specific physical OU prior coefficients remain independently fitted.
+    // Integral-state regularization is isotropic by default, matching OU-III;
+    // X/Y factors are independent opt-in experiment/tuning knobs.
     float tau_coeff_ = 1.0f;
     float sigma_coeff_ = 1.0f;
     float R_S_coeff_ = 0.28f;
     float S_factor_ = 1.00f;
-    float R_S_xy_factor_ = 1.15f;
+    float R_S_x_factor_ = 1.0f;
+    float R_S_y_factor_ = 1.0f;
     float noise_floor_sigma_ = 0.12f;
 
     RSLaw rs_law_ = RSLaw::SpectralMSE;
