@@ -13,7 +13,7 @@ spec.loader.exec_module(mod)
 
 
 def row(kind: str) -> dict:
-    return {
+    out = {
         "kind": kind,
         "destination_mode": "H",
         "source_level_W_upper": 2.0,
@@ -24,19 +24,28 @@ def row(kind: str) -> dict:
         "inward_margin_lower": 3.8,
         "pass": True,
     }
+    if kind == "tilt_reset":
+        out.update({
+            "discarded_pre_reset_tilt_excluded_from_multiplicative_gain": True,
+            "reset_to_funnel_exact_map": True,
+        })
+    if kind == "cooldown_reentry":
+        out.update({
+            "reachable_word_product_used": True,
+            "global_worst_word_power_used": False,
+        })
+    return out
 
 
 def complete_check() -> dict:
-    # Use the legacy names for regauge/cooldown deliberately.  The independent
-    # theorem gate must normalize them to the current source-domain contract.
     kinds = [
         "startup_handoff",
         "held_to_active",
         "magnetic_lock",
-        "magnetic_regauge",
+        "magnetic_regauge_refinement",
         "tilt_reset",
         "tilt_relock",
-        "cooldown",
+        "cooldown_reentry",
     ]
     return {"hybrid": {"pass": False, "bounds": [row(k) for k in kinds]}}
 
@@ -44,31 +53,54 @@ def complete_check() -> dict:
 class HybridContractTests(unittest.TestCase):
     def test_source_domain_obligations_are_exact(self):
         self.assertEqual(mod.REQUIRED, {
-            "startup_handoff",
-            "held_to_active",
-            "magnetic_lock",
-            "magnetic_regauge_refinement",
-            "tilt_reset",
-            "tilt_relock",
-            "cooldown_reentry",
-            "periodic_aw_covariance_sync",
+            "startup_handoff", "held_to_active", "magnetic_lock",
+            "magnetic_regauge_refinement", "tilt_reset", "tilt_relock",
+            "cooldown_reentry", "periodic_aw_covariance_sync",
         })
 
-    def test_legacy_names_are_normalized_and_aw_sync_is_analytic(self):
+    def test_current_names_close_and_aw_sync_is_analytic(self):
         out = mod.validate(complete_check())
         self.assertTrue(out["pass"], out["failures"])
         self.assertFalse(out["sampled_evidence_used"])
+        self.assertFalse(out["legacy_name_aliases_used"])
         self.assertEqual(out["missing"], [])
         self.assertTrue(out["periodic_aw_covariance_sync"]["pass"])
         self.assertFalse(out["periodic_aw_covariance_sync"]["strict_inward_margin_required"])
         self.assertEqual(out["periodic_aw_covariance_sync"]["jump_gain_upper"], 1.0)
         self.assertEqual(out["periodic_aw_covariance_sync"]["additive_W_upper"], 0.0)
 
+    def test_legacy_names_do_not_satisfy_current_obligations(self):
+        check = complete_check()
+        for r in check["hybrid"]["bounds"]:
+            if r["kind"] == "magnetic_regauge_refinement":
+                r["kind"] = "magnetic_regauge"
+            if r["kind"] == "cooldown_reentry":
+                r["kind"] = "cooldown"
+        out = mod.validate(check)
+        self.assertFalse(out["pass"])
+        self.assertIn("magnetic_regauge_refinement", out["missing"])
+        self.assertIn("cooldown_reentry", out["missing"])
+
+    def test_tilt_reset_must_discard_rewritten_tilt_energy(self):
+        check = complete_check()
+        tilt = next(x for x in check["hybrid"]["bounds"] if x["kind"] == "tilt_reset")
+        tilt["discarded_pre_reset_tilt_excluded_from_multiplicative_gain"] = False
+        out = mod.validate(check)
+        self.assertFalse(out["pass"])
+        self.assertIn("tilt_reset", out["missing"])
+
+    def test_cooldown_must_use_reachable_word_products(self):
+        check = complete_check()
+        cool = next(x for x in check["hybrid"]["bounds"] if x["kind"] == "cooldown_reentry")
+        cool["reachable_word_product_used"] = False
+        cool["global_worst_word_power_used"] = True
+        out = mod.validate(check)
+        self.assertFalse(out["pass"])
+        self.assertIn("cooldown_reentry", out["missing"])
+
     def test_missing_source_obligation_fails_closed(self):
         check = complete_check()
-        check["hybrid"]["bounds"] = [
-            x for x in check["hybrid"]["bounds"] if x["kind"] != "magnetic_lock"
-        ]
+        check["hybrid"]["bounds"] = [x for x in check["hybrid"]["bounds"] if x["kind"] != "magnetic_lock"]
         out = mod.validate(check)
         self.assertFalse(out["pass"])
         self.assertIn("magnetic_lock", out["missing"])
