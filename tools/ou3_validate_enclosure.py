@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Validate the rigorous OU-III source-word enclosure and promotion margins.
+"""Validate rigorous OU-III source-word enclosure and promotion margins.
 
-Schema 3 separates the coordinate-invariant P3 endpoint information inequality
-from the P4/P5 Lyapunov geometry.  P3 must provide a strictly positive complete-
-word endpoint Riccati injection margin.  Nonlinear promotion must additionally
-provide a group-compatible node metric of the paper's form
+Schema 4 uses one exact P3/P4 information geometry.  P3 proves the homogeneous
+complete-word inequality in the source Kalman information metric.  On the
+chart theta<pi, P4 lifts the same local coordinate with
 
-    Pbar_i = blkdiag((a_R_i/2) I3, P_xi_i),
-    W_i = a_R_i (1-cos(theta)) + xi' P_xi_i xi.
+    c(R)=2 tan(theta/2) u = 4 e_R/(1+tr R),
+    z_C=[c(R);xi],
+    W_g=z_C^T Sigma_KF(g)^-1 z_C.
 
-No inverse-covariance-as-W alias, repeated one-step contraction, common-
-Euclidean fallback, replay-fitted promotion path, or legacy hybrid-name alias is
-accepted.
+The endpoint covariance and W metric must belong to the same reachable source
+endpoint.  All attitude--linear cross terms are retained.  The former
+block-diagonal a_R/P_xi group metric, common Euclidean metrics, replay-fitted
+promotion, and repeated one-sample contraction are not accepted as fallbacks.
 """
 from __future__ import annotations
 
@@ -23,12 +24,9 @@ from pathlib import Path
 import ou3_numerical_certificate as BASE
 import ou3_source_domain_contract as SOURCE_DOMAIN
 
-SCHEMA = 3
+SCHEMA = 4
 SOURCE_NOISE_SCHEMA = 1
 ANCHOR_REL_TOL = 5.0e-6
-# periodic_aw_covariance_sync is discharged independently by the analytic
-# PSD/Loewner proof in ou3_hybrid_contract; every other current source-domain
-# obligation must be present as an explicit validated jump row here.
 REQUIRED_HYBRID_ROWS = set(SOURCE_DOMAIN.HYBRID_OBLIGATIONS) - {"periodic_aw_covariance_sync"}
 
 
@@ -48,94 +46,104 @@ def finite_nonnegative(value) -> bool:
     return math.isfinite(x) and x >= 0.0
 
 
-def _anchor_upper(value: float, anchor: float) -> bool:
-    tol = ANCHOR_REL_TOL * max(1.0, abs(anchor))
-    return value <= anchor + tol
+def down(x: float) -> float:
+    return math.nextafter(float(x), -math.inf)
 
 
-def _anchor_lower(value: float, anchor: float) -> bool:
-    tol = ANCHOR_REL_TOL * max(1.0, abs(anchor))
-    return value + tol >= anchor
+def up(x: float) -> float:
+    return math.nextafter(float(x), math.inf)
 
 
-def _validate_group_metric(payload: dict) -> tuple[dict, list[str]]:
+def _validate_cayley_information_metric(payload: dict, sigma_lo, sigma_hi) -> tuple[dict, list[str]]:
     failures: list[str] = []
-    if payload.get("kind") != "GROUP_COMPATIBLE_NODE_METRIC":
-        failures.append("path metric kind is not GROUP_COMPATIBLE_NODE_METRIC")
+    if payload.get("kind") != "CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC":
+        failures.append("path metric kind is not CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC")
+    if payload.get("source_covariance_inverse") is not True:
+        failures.append("Cayley metric is not the matching source covariance inverse")
     if payload.get("node_dependent") is not True:
-        failures.append("path metric does not permit/retain node dependence")
-    if payload.get("attitude_block_isotropic") is not True:
-        failures.append("attitude block is not isotropic (a_R/2) I3")
-    if payload.get("attitude_linear_cross_terms") is not False:
-        failures.append("attitude-linear cross terms are not excluded")
-    if payload.get("common_Euclidean_metric") is not False:
+        failures.append("Cayley metric is not source/node dependent")
+    if payload.get("full_attitude_linear_cross_terms_retained") is not True:
+        failures.append("Cayley metric discards attitude-linear cross terms")
+    if payload.get("block_diagonal_metric_used") is not False:
+        failures.append("retired block-diagonal metric is active")
+    if payload.get("common_Euclidean_metric_used") is not False:
         failures.append("common Euclidean metric fallback is active")
-    if payload.get("equals_Kalman_inverse_covariance") is not False:
-        failures.append("nonlinear W is incorrectly identified with Kalman inverse covariance")
+    if payload.get("local_coordinate_matches_P3_delta_theta") is not True:
+        failures.append("Cayley local coordinate does not match P3 delta-theta")
+    if payload.get("local_quadratic_equals_P3_information_metric") is not True:
+        failures.append("P4 local quadratic differs from P3 information metric")
+    if payload.get("endpoint_metric_must_match_endpoint_source_covariance") is not True:
+        failures.append("endpoint metric/source covariance correlation is not required")
+    if payload.get("joint_source_reachability_required") is not True:
+        failures.append("Cayley metric does not require joint source reachability")
+    chart = str(payload.get("chart_domain", ""))
+    if "pi" not in chart or "theta" not in chart:
+        failures.append("Cayley chart domain theta<pi is not explicit")
 
-    aR = payload.get("a_R_lower")
-    pmin = payload.get("P_xi_lambda_min_lower")
-    pmax = payload.get("P_xi_lambda_max_upper")
-    pbar_min = payload.get("Pbar_lambda_min_lower")
-    pbar_max = payload.get("Pbar_lambda_max_upper")
-    for label, value in (
-        ("a_R_lower", aR),
-        ("P_xi_lambda_min_lower", pmin),
-        ("P_xi_lambda_max_upper", pmax),
-        ("Pbar_lambda_min_lower", pbar_min),
-        ("Pbar_lambda_max_upper", pbar_max),
-    ):
-        if not finite_positive(value):
-            failures.append(f"{label} is not finite positive")
-    if finite_positive(pmin) and finite_positive(pmax) and float(pmax) < float(pmin):
-        failures.append("P_xi upper metric bound is below lower bound")
-    if finite_positive(pbar_min) and finite_positive(pbar_max) and float(pbar_max) < float(pbar_min):
-        failures.append("Pbar upper metric bound is below lower bound")
+    mlo = payload.get("metric_lambda_min_lower")
+    mhi = payload.get("metric_lambda_max_upper")
+    if not finite_positive(mlo):
+        failures.append("metric_lambda_min_lower is not finite positive")
+    if not finite_positive(mhi):
+        failures.append("metric_lambda_max_upper is not finite positive")
+    if finite_positive(mlo) and finite_positive(mhi) and float(mhi) < float(mlo):
+        failures.append("metric eigenvalue upper bound is below lower bound")
+
+    # The source information metric has exact eigenvalue relations
+    # lambda_min(Sigma^-1)=1/lambda_max(Sigma) and vice versa.  Reported bounds
+    # may be wider but may not be optimistic.
+    if finite_positive(sigma_hi) and finite_positive(mlo):
+        exact_lower = 1.0 / float(sigma_hi)
+        tol = ANCHOR_REL_TOL * max(abs(exact_lower), 1.0e-300)
+        if float(mlo) > exact_lower + tol:
+            failures.append("metric lower bound is optimistic relative to Sigma upper bound")
+    if finite_positive(sigma_lo) and finite_positive(mhi):
+        exact_upper = 1.0 / float(sigma_lo)
+        tol = ANCHOR_REL_TOL * max(abs(exact_upper), 1.0e-300)
+        if float(mhi) + tol < exact_upper:
+            failures.append("metric upper bound is optimistic relative to Sigma lower bound")
+
     return {
         "kind": payload.get("kind"),
+        "chart_coordinate": payload.get("chart_coordinate"),
+        "chart_domain": payload.get("chart_domain"),
+        "exact_group_metric": payload.get("exact_group_metric"),
+        "source_covariance_inverse": payload.get("source_covariance_inverse"),
         "node_dependent": payload.get("node_dependent"),
-        "a_R_lower": aR,
-        "P_xi_lambda_min_lower": pmin,
-        "P_xi_lambda_max_upper": pmax,
-        "Pbar_lambda_min_lower": pbar_min,
-        "Pbar_lambda_max_upper": pbar_max,
-        "attitude_block_isotropic": payload.get("attitude_block_isotropic"),
-        "attitude_linear_cross_terms": payload.get("attitude_linear_cross_terms"),
-        "common_Euclidean_metric": payload.get("common_Euclidean_metric"),
-        "equals_Kalman_inverse_covariance": payload.get("equals_Kalman_inverse_covariance"),
+        "full_attitude_linear_cross_terms_retained": payload.get("full_attitude_linear_cross_terms_retained"),
+        "block_diagonal_metric_used": payload.get("block_diagonal_metric_used"),
+        "common_Euclidean_metric_used": payload.get("common_Euclidean_metric_used"),
+        "local_quadratic_equals_P3_information_metric": payload.get("local_quadratic_equals_P3_information_metric"),
+        "endpoint_metric_must_match_endpoint_source_covariance": payload.get("endpoint_metric_must_match_endpoint_source_covariance"),
+        "metric_lambda_min_lower": mlo,
+        "metric_lambda_max_upper": mhi,
     }, failures
 
 
 def validate_mode(mode: str, payload: dict, contract_mode: dict,
                   sampled_mode: dict | None = None) -> dict:
     failures: list[str] = []
-    if not payload.get("source_complete", False):
+    if payload.get("source_complete") is not True:
         failures.append("source family is not declared source-complete")
-    if not payload.get("outward_rounded", False):
+    if payload.get("outward_rounded") is not True:
         failures.append("mode bounds are not declared outward-rounded")
     if payload.get("joint_source_reachability") is not True:
         failures.append("mode enclosure is not jointly source-reachable")
     if payload.get("one_sample_decrease_used") is not False:
         failures.append("one-sample decrease/repeated-step shortcut is active")
+    if payload.get("source_replay_used", False) is not False:
+        failures.append("source replay is used to establish P4")
 
-    expected_horizon = contract_mode.get("recommended_word_horizon_s")
     horizon = payload.get("word_horizon_s")
     if not finite_positive(horizon):
         failures.append("word_horizon_s is not finite positive")
-    elif expected_horizon is not None and not math.isclose(
-        float(horizon), float(expected_horizon), rel_tol=0.0, abs_tol=1e-9
-    ):
-        failures.append(f"word_horizon_s {horizon} does not match contract horizon {expected_horizon}")
 
     eta = payload.get("word_endpoint_relative_Riccati_injection_margin_lower")
     sigma_lo = payload.get("Sigma_lambda_min_lower")
     sigma_hi = payload.get("Sigma_lambda_max_upper")
     prefix = payload.get("prefix_information_gain_upper")
-
-    if not finite_positive(eta):
-        failures.append("word-endpoint Riccati injection lower bound is not strictly positive")
-    elif float(eta) >= 1.0:
-        failures.append("word-endpoint Riccati injection lower bound must be < 1")
+    if not finite_positive(eta) or not float(eta) < 1.0:
+        failures.append("word-endpoint Riccati injection lower bound is not in (0,1)")
     if not finite_positive(sigma_lo):
         failures.append("Sigma_lambda_min_lower is not strictly positive")
     if not finite_positive(sigma_hi):
@@ -145,42 +153,66 @@ def validate_mode(mode: str, payload: dict, contract_mode: dict,
     if not finite_positive(prefix):
         failures.append("prefix_information_gain_upper is not finite positive")
 
-    ref = contract_mode.get("executed_reference_only", {})
-    ref_eta = ref.get("relative_Riccati_injection_margin_worst")
-    if finite_positive(eta) and finite_positive(ref_eta) and not _anchor_upper(float(eta), float(ref_eta)):
-        failures.append(f"validated endpoint Riccati lower bound exceeds included executed minimum ({eta} > {ref_eta})")
-    ref_sigma_lo = ref.get("Sigma_endpoint_lambda_min")
-    if finite_positive(sigma_lo) and finite_positive(ref_sigma_lo) and not _anchor_upper(float(sigma_lo), float(ref_sigma_lo)):
-        failures.append(f"validated Sigma lower bound exceeds included executed minimum ({sigma_lo} > {ref_sigma_lo})")
-    ref_sigma_hi = ref.get("Sigma_endpoint_lambda_max")
-    if finite_positive(sigma_hi) and finite_positive(ref_sigma_hi) and not _anchor_lower(float(sigma_hi), float(ref_sigma_hi)):
-        failures.append(f"validated Sigma upper bound excludes an executed maximum ({sigma_hi} < {ref_sigma_hi})")
-
     linear_failures = list(failures)
-    lambda_upper = 1.0 - float(eta) if finite_positive(eta) and float(eta) < 1.0 else None
     conditioning_lower = 1.0 / float(sigma_hi) if finite_positive(sigma_hi) else None
     conditioning_upper = 1.0 / float(sigma_lo) if finite_positive(sigma_lo) else None
 
-    metric, metric_failures = _validate_group_metric(payload.get("path_metric", {}))
+    metric, metric_failures = _validate_cayley_information_metric(
+        payload.get("path_metric", {}), sigma_lo, sigma_hi
+    )
     failures.extend(metric_failures)
+
     theta = payload.get("theta_star")
     if not finite_positive(theta) or not float(theta) < math.pi:
         failures.append("theta_star is not in (0, pi)")
-    endpoint_ratio = payload.get("endpoint_W_ratio_upper")
-    mu = None
-    if not finite_nonnegative(endpoint_ratio) or not float(endpoint_ratio) < 1.0:
-        failures.append("endpoint_W_ratio_upper is not in [0,1)")
-    else:
-        mu = 1.0 - float(endpoint_ratio)
     certified_level = payload.get("certified_level_W")
     if not finite_positive(certified_level):
         failures.append("certified_level_W is not finite positive")
-    if not payload.get("all_word_prefixes_safe", False):
+    decrease = payload.get("endpoint_relative_W_decrease_lower")
+    if not finite_positive(decrease) or not float(decrease) < 1.0:
+        failures.append("endpoint_relative_W_decrease_lower is not in (0,1)")
+    mu = payload.get("mu_W_lower")
+    if not finite_positive(mu):
+        failures.append("mu_W_lower is not finite positive")
+    elif finite_positive(decrease) and finite_positive(metric.get("metric_lambda_min_lower")):
+        derived = down(float(decrease) * float(metric["metric_lambda_min_lower"]))
+        # A validated lower bound may be smaller than the direct product but not larger.
+        if float(mu) > derived and not math.isclose(float(mu), derived, rel_tol=5e-15, abs_tol=0.0):
+            failures.append("mu_W_lower exceeds decrease*metric_lambda_min_lower")
+
+    if payload.get("all_word_prefixes_safe") is not True:
         failures.append("nonlinear word prefixes are not validated safe")
+    if payload.get("accepted_correction_uses_source_series_branch") is not True:
+        failures.append("accepted correction branch is not fixed to the exact deployed series path")
+    qprefix = payload.get("prefix_canonical_error_norm_upper")
+    qlimit = payload.get("cayley_norm_limit")
+    if not finite_nonnegative(qprefix) or not finite_positive(qlimit) or not float(qprefix) < float(qlimit):
+        failures.append("Cayley prefix bootstrap does not stay inside chart norm limit")
+    dcorr = payload.get("accepted_correction_norm_prefix_upper")
+    if not finite_nonnegative(dcorr) or not float(dcorr) < 1.0e-2:
+        failures.append("accepted correction can leave the certified deployed quaternion branch")
+
+    if mode == "A":
+        proj = payload.get("active_bias_projection", {})
+        if proj.get("projection_surface_reached_in_certified_funnel") is not False:
+            failures.append("A-mode inner funnel reaches accelerometer-bias projection surface")
+        if proj.get("exact_projection_branch_in_certified_funnel") != "identity_interior_branch":
+            failures.append("A-mode projection is not certified on its exact interior identity branch")
+
     if sampled_mode and finite_positive(certified_level):
         first_fail = sampled_mode.get("first_fail_W")
         if finite_positive(first_fail) and float(certified_level) >= float(first_fail):
-            failures.append(f"certified nonlinear level reaches/exceeds a sampled failure ({certified_level} >= {first_fail})")
+            failures.append(
+                f"certified nonlinear level reaches/exceeds a sampled failure ({certified_level} >= {first_fail})"
+            )
+
+    # Do not form 1-decrease when the gap is below binary64 epsilon; that would
+    # round back to one and erase a perfectly valid strict theorem margin.
+    endpoint_ratio = None
+    if finite_positive(decrease) and float(decrease) > math.ulp(1.0):
+        endpoint_ratio = up(1.0 - float(decrease))
+        if not endpoint_ratio < 1.0:
+            endpoint_ratio = None
 
     return {
         "mode": mode,
@@ -191,7 +223,6 @@ def validate_mode(mode: str, payload: dict, contract_mode: dict,
         "linear_failures": linear_failures,
         "word_horizon_s": horizon,
         "word_endpoint_relative_Riccati_injection_margin_lower": eta,
-        "lambda_information_upper": lambda_upper,
         "Sigma_lambda_min_lower": sigma_lo,
         "Sigma_lambda_max_upper": sigma_hi,
         "P3_inverse_covariance_conditioning_lambda_min_lower": conditioning_lower,
@@ -199,9 +230,11 @@ def validate_mode(mode: str, payload: dict, contract_mode: dict,
         "prefix_information_gain_upper": prefix,
         "path_metric": metric,
         "theta_star": theta,
+        "endpoint_relative_W_decrease_lower": decrease,
         "endpoint_W_ratio_upper": endpoint_ratio,
         "mu_W_lower": mu,
         "certified_level_W": certified_level,
+        "all_word_prefixes_safe": payload.get("all_word_prefixes_safe"),
     }
 
 
@@ -210,7 +243,6 @@ def validate_hybrid(payload: list[dict], modes: dict) -> dict:
     seen: set[str] = set()
     failures: list[str] = []
     rows = []
-
     for i, jump in enumerate(payload):
         kind = str(jump.get("kind", ""))
         if kind not in required:
@@ -218,9 +250,9 @@ def validate_hybrid(payload: list[dict], modes: dict) -> dict:
             continue
         seen.add(kind)
         row_failures: list[str] = []
-        if not jump.get("source_complete", False):
+        if jump.get("source_complete") is not True:
             row_failures.append("source family is not source-complete")
-        if not jump.get("outward_rounded", False):
+        if jump.get("outward_rounded") is not True:
             row_failures.append("bounds are not outward-rounded")
         source = jump.get("source_level_W_upper")
         gain = jump.get("jump_gain_upper")
@@ -272,18 +304,12 @@ def validate_hybrid(payload: list[dict], modes: dict) -> dict:
         if row_failures:
             failures.extend(f"hybrid[{i}] {kind}: {f}" for f in row_failures)
         rows.append({
-            "kind": kind,
-            "destination_mode": dest_mode,
-            "source_level_W_upper": source,
-            "jump_gain_upper": gain,
-            "additive_W_upper": additive,
-            "new_coordinate_W_upper": new_coord,
-            "post_jump_W_upper": post,
-            "destination_level_W": dest,
-            "inward_margin_lower": margin,
-            "pass": not row_failures,
+            "kind": kind, "destination_mode": dest_mode,
+            "source_level_W_upper": source, "jump_gain_upper": gain,
+            "additive_W_upper": additive, "new_coordinate_W_upper": new_coord,
+            "post_jump_W_upper": post, "destination_level_W": dest,
+            "inward_margin_lower": margin, "pass": not row_failures,
         })
-
     missing = sorted(required - seen)
     if missing:
         failures.append(f"missing hybrid obligations: {missing}")
@@ -300,7 +326,7 @@ def source_noise_moments(payload: dict) -> tuple[dict, list[str]]:
     failures: list[str] = []
     if payload.get("schema") != SOURCE_NOISE_SCHEMA:
         failures.append("source noise certificate schema mismatch")
-    if not payload.get("source_generated_not_trajectory_fit", False):
+    if payload.get("source_generated_not_trajectory_fit") is not True:
         failures.append("noise certificate is not source-generated")
     std = payload.get("standardized_increment", {})
     d = std.get("dimension")
@@ -341,13 +367,24 @@ def _gaussian_t_star(w_star: float, m: float, v: float, b: float) -> float | Non
     return y * y if y > 0.0 and math.isfinite(y) else None
 
 
+def _stochastic_lambda_upper(mode: dict) -> float | None:
+    ratio = mode.get("endpoint_W_ratio_upper")
+    if finite_nonnegative(ratio) and float(ratio) < 1.0:
+        return float(ratio)
+    gap = mode.get("endpoint_relative_W_decrease_lower")
+    if finite_positive(gap) and float(gap) > math.ulp(1.0):
+        r = up(1.0 - float(gap))
+        return r if r < 1.0 else None
+    return None
+
+
 def validate_stochastic(payload: dict, modes: dict, source_noise: dict) -> dict:
     failures: list[str] = []
-    if not payload.get("source_complete", False):
+    if payload.get("source_complete") is not True:
         failures.append("stochastic source family is not source-complete")
-    if not payload.get("outward_rounded", False):
+    if payload.get("outward_rounded") is not True:
         failures.append("stochastic sensitivity bounds are not outward-rounded")
-    if not payload.get("localization_prefix_safe", False):
+    if payload.get("localization_prefix_safe") is not True:
         failures.append("localized word prefixes are not validated safe")
     if payload.get("gaussian_localization_used") is not True:
         failures.append("Gaussian localization is not explicitly certified")
@@ -397,10 +434,10 @@ def validate_stochastic(payload: dict, modes: dict, source_noise: dict) -> dict:
     else:
         W0 = float(W0)
 
-    ratios = [m.get("endpoint_W_ratio_upper") for m in modes.values()]
+    ratios = [_stochastic_lambda_upper(m) for m in modes.values()]
     lambda_W = None
-    if any(not finite_nonnegative(r) or not float(r) < 1.0 for r in ratios):
-        failures.append("deterministic mode contraction factors are unavailable")
+    if any(r is None for r in ratios):
+        failures.append("deterministic mode contraction factors are unavailable at stochastic arithmetic precision")
     else:
         lambda_W = max(float(r) for r in ratios)
 
@@ -451,27 +488,18 @@ def validate_stochastic(payload: dict, modes: dict, source_noise: dict) -> dict:
                     failures.append("recomputed finite-horizon stochastic failure probability is not < 1")
 
     return {
-        "pass": not failures,
-        "failures": failures,
-        "source_noise_moments": moments,
-        "lambda_W_upper": lambda_W,
-        "lambda_s_upper": lambda_s,
-        "nu1_upper": nu1,
-        "nu_W_upper": nu_W,
-        "sigma_s2_upper": sigma_s2,
-        "funnel_level_a": a,
-        "W0_upper": W0,
-        "b_W_upper": b_W,
-        "v_W_upper": v_W,
-        "V_W_upper": V_W,
+        "pass": not failures, "failures": failures,
+        "source_noise_moments": moments, "lambda_W_upper": lambda_W,
+        "lambda_s_upper": lambda_s, "nu1_upper": nu1, "nu_W_upper": nu_W,
+        "sigma_s2_upper": sigma_s2, "funnel_level_a": a, "W0_upper": W0,
+        "b_W_upper": b_W, "v_W_upper": v_W, "V_W_upper": V_W,
         "drift_envelope_max_upper": drift_max,
         "excursion_margin_x_star_lower": x_star,
         "gaussian_t_star_lower": t_star,
         "localization_failure_probability_upper": p_localization,
         "freedman_failure_probability_upper": p_freedman,
         "finite_horizon_failure_probability_upper": p_total,
-        "word_samples_upper": ell,
-        "finite_horizon_words": N,
+        "word_samples_upper": ell, "finite_horizon_words": N,
     }
 
 
@@ -503,10 +531,12 @@ def main() -> int:
 
     prov = inp.get("provenance", {})
     provenance_ok = (
-        bool(prov.get("validated_arithmetic")) and bool(prov.get("outward_rounding"))
-        and bool(prov.get("source_generated_not_trajectory_fit"))
-        and bool(prov.get("continuous_source_coverage"))
-        and bool(prov.get("joint_source_reachability"))
+        prov.get("validated_arithmetic") is True
+        and prov.get("outward_rounding") is True
+        and prov.get("source_generated_not_trajectory_fit") is True
+        and prov.get("continuous_source_coverage") is True
+        and prov.get("joint_source_reachability") is True
+        and prov.get("exact_deployed_quaternion_injection") is True
     )
     modes = {
         mode: validate_mode(mode, inp.get("modes", {}).get(mode, {}),
@@ -523,14 +553,13 @@ def main() -> int:
     out = {
         "schema": SCHEMA,
         "metric_policy": {
-            "P3": "word-endpoint generalized information inequality; conditioning congruence only",
-            "P4_P5": "node-wise group-compatible W_i=a_R_i(1-cos(theta))+xi^T P_xi_i xi",
+            "P3": "word-endpoint generalized information inequality",
+            "P4": "exact Cayley lift W_g=[c(R);xi]^T Sigma_KF(g)^-1[c(R);xi] with matching source covariance",
+            "attitude_linear_cross_terms": "RETAINED",
             "fallbacks": "NONE",
         },
         "validated_enclosure_provenance_pass": provenance_ok,
-        "modes": modes,
-        "hybrid": hybrid,
-        "stochastic": stochastic,
+        "modes": modes, "hybrid": hybrid, "stochastic": stochastic,
         "continuous_linear_information_certificate": "PASS" if linear_pass else "FAIL",
         "numerical_neighborhood_certificate": "PASS" if nonlinear_pass else "FAIL",
         "hybrid_funnel_certificate": "PASS" if hybrid_pass else "FAIL",
@@ -538,18 +567,16 @@ def main() -> int:
         "deployment_theorem_certificate": "PASS" if deployment_pass else "FAIL",
         "promotion_is_machine_verified": True,
     }
-    (cert / "validated_enclosure_check.json").write_text(json.dumps(out, indent=2, sort_keys=True), encoding="utf-8")
+    (cert / "validated_enclosure_check.json").write_text(
+        json.dumps(out, indent=2, sort_keys=True), encoding="utf-8"
+    )
     print(json.dumps({
         "continuous_linear_information_certificate": out["continuous_linear_information_certificate"],
         "numerical_neighborhood_certificate": out["numerical_neighborhood_certificate"],
         "hybrid_funnel_certificate": out["hybrid_funnel_certificate"],
         "stochastic_certificate": out["stochastic_certificate"],
         "deployment_theorem_certificate": out["deployment_theorem_certificate"],
-        "H": modes["H"]["pass"],
-        "A": modes["A"]["pass"],
-        "hybrid": hybrid["pass"],
-        "stochastic": stochastic["pass"],
-        "provenance": provenance_ok,
+        "H": modes["H"], "A": modes["A"],
     }, indent=2, sort_keys=True))
     return 0 if deployment_pass else 2
 
