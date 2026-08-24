@@ -8,10 +8,10 @@ one representable number with ``math.nextafter``.  For the IEEE-754 basic
 operations used here, that encloses the exact real result of binary64 inputs.
 
 The matrix layer below is intentionally elementary.  It is built entirely from
-the scalar interval operations and uses Gershgorin/absolute-row-sum bounds, not
-ordinary floating-point eigenvalue or singular-value routines.  Those bounds
-can be conservative, but every claimed matrix inequality remains independently
-auditable and outward rounded.
+the scalar interval operations and uses absolute-sum, Gershgorin and interval
+LDL^T certificates, not ordinary floating-point eigenvalue or singular-value
+routines.  Those bounds can be conservative, but every claimed matrix
+inequality remains independently auditable and outward rounded.
 
 Transcendental functions are intentionally absent.  They require a separately
 validated implementation rather than an unqualified libm call.
@@ -230,19 +230,12 @@ def matrix_spectral_norm_upper(A: Sequence[Sequence[Interval]]) -> float:
     """Validated, sqrt-free upper bound on spectral norm.
 
     ``||A||_2 <= sqrt(||A||_1 ||A||_inf) <= max(||A||_1,||A||_inf)``.
-    The last expression avoids adding a transcendental square-root operation to
-    the trusted core.
     """
     return up(max(matrix_abs_row_sum_upper(A), matrix_abs_col_sum_upper(A)))
 
 
 def symmetric_gershgorin_lower(A: Sequence[Sequence[Interval]]) -> float:
-    """Validated lower bound on every eigenvalue of every symmetric A in box.
-
-    The caller is responsible for the semantic fact that concrete matrices are
-    symmetric.  Interval off-diagonal entries may be wider/asymmetric as boxes;
-    the absolute radius safely covers either orientation.
-    """
+    """Validated lower bound on every eigenvalue of every symmetric A in box."""
     n, m = _shape(A)
     if n != m:
         raise ValueError("Gershgorin eigenvalue bound requires square matrix")
@@ -279,3 +272,41 @@ def symmetric_positive_definite_gershgorin(
     """Certify SPD when the outward Gershgorin lower bound is strictly positive."""
     lower = symmetric_gershgorin_lower(A)
     return lower > 0.0, lower
+
+
+def symmetric_positive_definite_ldlt(
+    A: Sequence[Sequence[Interval]],
+) -> tuple[bool, list[Interval]]:
+    """Certify a whole symmetric interval family SPD by interval LDL^T.
+
+    For every concrete symmetric matrix inside ``A`` the ordinary unpivoted
+    LDL^T recurrence is enclosed by the intervals below.  If every diagonal
+    pivot interval is strictly positive, Sylvester/LDL theory proves every
+    concrete member positive definite.  If a pivot touches zero the routine
+    returns ``False`` instead of pivoting or making an unsupported claim.
+    """
+    n, m = _shape(A)
+    if n != m:
+        raise ValueError("interval LDLT requires a square matrix")
+    if n == 0:
+        return True, []
+    zero = Interval.point(0.0)
+    one = Interval.point(1.0)
+    L: IntervalMatrix = [[zero for _ in range(n)] for _ in range(n)]
+    d: list[Interval] = [zero for _ in range(n)]
+    for i in range(n):
+        L[i][i] = one
+
+    for j in range(n):
+        pivot = A[j][j]
+        for k in range(j):
+            pivot = pivot - L[j][k].square() * d[k]
+        d[j] = pivot
+        if not d[j].lo > 0.0:
+            return False, d[: j + 1]
+        for i in range(j + 1, n):
+            numerator = A[i][j]
+            for k in range(j):
+                numerator = numerator - L[i][k] * L[j][k] * d[k]
+            L[i][j] = numerator / d[j]
+    return True, d
