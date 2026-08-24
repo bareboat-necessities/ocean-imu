@@ -20,6 +20,7 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
             g = c.get("generalized_matrix_inequality", {})
             diagnostics[mode] = {
                 "delta": row["relative_Riccati_injection_margin_lower"],
+                "one_step_delta": row["one_step_relative_Riccati_injection_margin_lower"],
                 "gate": row["useful_margin_gate"],
                 "tau_s": c["tau_s"],
                 "sigma_aw_mps2": c["sigma_aw_mps2"],
@@ -44,6 +45,10 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
         self.assertTrue(d["outward_rounded"])
         self.assertEqual(d["p3_backend"], "SOURCE_CELL_GENERALIZED_MATRIX_COMPARISON")
         self.assertEqual(d["generalized_matrix_backend"], "DIRECT_RL_INVERSE_CONGRUENCE_INTERVAL_LDLT")
+        self.assertEqual(
+            d["p3_window_backend"],
+            "RECURRING_PE_FINITE_WINDOW_GENERALIZED_INFORMATION_COMPOSITION",
+        )
         self.assertFalse(d["old_scalar_min_Q_route_used"])
         self.assertFalse(d["old_scalar_generalized_ratio_used"])
         self.assertGreater(d["cell_partition"]["joint_cells"], 0)
@@ -51,12 +56,33 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
         self.assertEqual(d["continuous_linear_information_certificate"], "PASS")
         self.assertFalse(d["nonlinear_word_enclosed"])
         self.assertEqual(d["theorem_promotion"], "LINEAR_ONLY")
+
+        requirement = d["theorem_margin_requirement"]
+        self.assertEqual(requirement["predicate"], "> 0")
+        self.assertEqual(requirement["numeric_boundary"], 0.0)
+        self.assertFalse(requirement["old_fixed_1e_minus_18_gate_is_theorem_requirement"])
+        self.assertEqual(requirement["numerical_search_seed_only"], 1.0e-18)
+
+        binding = d["source_word_binding"]
+        self.assertTrue(binding["source_complete_relative_to_declared_theorem_hypotheses"])
+        self.assertTrue(binding["arbitrary_source_branches_between_required_PE_events_remain_admissible"])
+        self.assertGreater(binding["recurring_PE_window_s"], 0.0)
+        self.assertGreater(binding["word_horizon_lower_s"], 0.0)
+        self.assertGreater(binding["complete_steps_lower_used_for_information_composition"], 0)
+
         for mode in ("H", "A"):
             row = d["modes"][mode]
             self.assertGreater(row["Sigma_lambda_min_lower"], 0.0)
             self.assertGreater(row["Sigma_lambda_max_upper"], row["Sigma_lambda_min_lower"])
             self.assertGreater(row["word_noise_Omega_lambda_min_lower"], 0.0)
-            self.assertGreaterEqual(row["relative_Riccati_injection_margin_lower"], row["useful_margin_gate"])
+            self.assertGreater(row["one_step_relative_Riccati_injection_margin_lower"], 0.0)
+            self.assertGreaterEqual(
+                row["relative_Riccati_injection_margin_lower"],
+                row["one_step_relative_Riccati_injection_margin_lower"],
+            )
+            self.assertGreater(row["relative_Riccati_injection_margin_lower"], row["useful_margin_gate"])
+            self.assertEqual(row["useful_margin_gate"], 0.0)
+            self.assertEqual(row["useful_margin_gate_predicate"], "> 0")
             self.assertLess(row["relative_Riccati_injection_margin_lower"], 1.0)
             self.assertTrue(row["useful_margin_pass"])
             self.assertEqual(row["prefix_information_gain_upper"], 1.0)
@@ -71,6 +97,38 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
             self.assertTrue(g["reported_delta_recertified"])
             self.assertFalse(g["old_scalar_rho_over_max_scaled_upper_used"])
             self.assertEqual(g["full_mode_dimension"], row["dimension"])
+
+            comp = matrix["finite_window_information_composition"]
+            self.assertTrue(comp["recurring_PE_source_language_bound"])
+            self.assertFalse(comp["source_replay_used"])
+            self.assertFalse(comp["single_step_translation_usefulness_gate_used"])
+            self.assertEqual(comp["coupled_translation_block"], "[v,p,S,a_w]")
+            self.assertEqual(
+                comp["complete_steps_lower"],
+                binding["complete_steps_lower_used_for_information_composition"],
+            )
+
+            metric = matrix["state_information_metric"]
+            self.assertEqual(
+                metric["kind"],
+                "SOURCE_DEPENDENT_NONDIMENSIONAL_INFORMATION_METRIC",
+            )
+            self.assertEqual(len(metric["D_diagonal_squared"]), row["dimension"])
+            self.assertTrue(metric["same_metric_applied_to_noise_and_covariance"])
+            self.assertFalse(metric["raw_Euclidean_eigenvalue_gate_used"])
+            self.assertEqual(metric["translation_coupling_retained"], "full 4x4 [v,p,S,a_w] block")
+
+    def test_window_composition_is_monotone_and_cancellation_safe(self):
+        d = CERT.build()
+        n = d["source_word_binding"]["complete_steps_lower_used_for_information_composition"]
+        self.assertGreater(n, 1)
+        for mode in ("H", "A"):
+            row = d["modes"][mode]
+            one = row["one_step_relative_Riccati_injection_margin_lower"]
+            win = row["finite_window_relative_Riccati_injection_margin_lower"]
+            self.assertGreaterEqual(win, one)
+            self.assertGreater(win, 0.0)
+            self.assertAlmostEqual(win / one, n, delta=max(1.0, 1e-10 * n))
 
     def test_exact_RL_inverse_process_congruence_is_bound_to_certificate(self):
         d = CERT.build()
@@ -122,6 +180,7 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
         self.assertNotIn("prediction_Q_lambda_min_lower", text)
         self.assertNotIn("posterior_floor(", text)
         self.assertIn("ou3_source_reachable_matrix_p3_direct", text)
+        self.assertIn("THEOREM_REQUIRED_MARGIN_PREDICATE = \"> 0\"", text)
 
 
 if __name__ == "__main__":
