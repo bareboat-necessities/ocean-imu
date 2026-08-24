@@ -1,0 +1,56 @@
+name: ou3-proof-fast
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_certificate_completion.py"
+      - "tools/ou3_validate_enclosure.py"
+      - "tools/ou3_deployment_gate.py"
+      - "tools/ou3_hybrid_aw_sync_proof.py"
+      - "tools/ou3_source_domain_contract.py"
+      - "tests/validation/test_ou3_certificate_completion.py"
+      - "tests/validation/test_ou3_validate_enclosure.py"
+      - "tests/validation/test_ou3_deployment_gate.py"
+      - "tests/validation/test_ou3_hybrid_aw_sync_proof.py"
+      - "tests/validation/test_ou3_source_domain_contract.py"
+      - ".github/workflows/ou3-proof-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-proof-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof-unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Python test dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+
+      - name: Compile proof tools
+        run: |
+          python3 -m py_compile \
+            tools/ou3_certificate_completion.py \
+            tools/ou3_validate_enclosure.py \
+            tools/ou3_deployment_gate.py \
+            tools/ou3_hybrid_aw_sync_proof.py \
+            tools/ou3_source_domain_contract.py
+
+      - name: Run focused theorem unit tests
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_certificate_completion \
+            test_ou3_validate_enclosure \
+            test_ou3_deployment_gate \
+            test_ou3_hybrid_aw_sync_proof \
+            test_ou3_source_domain_contract
