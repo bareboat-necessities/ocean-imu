@@ -98,7 +98,6 @@ def _certified_generalized_delta(Omega, Sigma, gate: float) -> float:
         else:
             return 0.0
 
-    # Geometric bisection gives relative precision even when delta is tiny.
     for _ in range(44):
         mid = math.sqrt(lo * hi)
         if _spd_at_delta(Omega, Sigma, mid):
@@ -144,26 +143,35 @@ def _measurement_beta_upper(mode: str, sigma: Interval, rs: Interval,
 
 def _translation_direct_blocks(x: Interval, sigma: Interval, raw: dict,
                                beta: float, sched: dict):
-    """Return conditioned (Omega,Sigma), process factor and norm diagnostics."""
-    Q = FACTORED.step_scaled_q(x)
-    qnorm = _matrix_abs_row_sum_upper(Q)
+    """Return conditioned (Omega,Sigma), process factor and norm diagnostics.
+
+    The process family is represented as Q_scaled = x * Shape(x).  We keep the
+    already-conditioned Shape(x)=Q_scaled/x interval family, transform it by C,
+    and use x.lo only after the congruence.  For every concrete source value in
+    the cell, x*Shape(x) >= x.lo*Shape(x) in Loewner order because Shape(x) is
+    PSD.  This avoids reintroducing the small-x interval dependency eliminated
+    by the exact RL^{-1} process certificate.
+    """
+    shape = FACTORED.process_shape_q(x)
+    shape_norm = _matrix_abs_row_sum_upper(shape)
+    qnorm = BASE.up(x.hi * shape_norm)
     factor = BASE.down(1.0 / BASE.up(1.0 + BASE.up(beta * qnorm)))
-    Omega = _scale_matrix(Q, factor)
+
+    C = FACTORED._C_INTERVAL
+    Ct = BASE.matrix_transpose(C)
+    shape_tilde = BASE.matrix_symmetric_hull(
+        BASE.matrix_mul(BASE.matrix_mul(C, shape), Ct)
+    )
+    omega_scale = BASE.down(factor * x.lo)
+    Omega_tilde = _scale_matrix(shape_tilde, omega_scale)
 
     h = sched["dt_s"]
     scales = [sigma.lo * h, sigma.lo * h * h, sigma.lo * h * h * h, sigma.lo]
     upper = raw["Sigma_diagonal_upper"]
-    # State order is theta(3), bg(3), v(3), p(3), S(3), aw(3), [ba(3)].
     physical = [upper[6], upper[9], upper[12], upper[15]]
     Sigma = _diag_matrix([
         BASE.up(physical[i] / (scales[i] * scales[i])) for i in range(4)
     ])
-
-    C = FACTORED._C_INTERVAL
-    Ct = BASE.matrix_transpose(C)
-    Omega_tilde = BASE.matrix_symmetric_hull(
-        BASE.matrix_mul(BASE.matrix_mul(C, Omega), Ct)
-    )
     Sigma_tilde = BASE.matrix_symmetric_hull(
         BASE.matrix_mul(BASE.matrix_mul(C, Sigma), Ct)
     )
@@ -214,8 +222,6 @@ def mode_cell(mode: str, x: Interval, rho_trans: float, sigma: Interval,
     if not full_ok:
         raise RuntimeError(f"{mode} reported direct generalized delta did not re-certify")
 
-    # Identify whether the direct translation block or the retained scalar
-    # attitude/bias comparison limits the assembled H/A word.
     other = math.inf
     qpost = float(raw["post_measurement_scaled_Omega_lambda_min_lower"])
     trans_indices = {6+a for a in range(3)} | {9+a for a in range(3)} | {12+a for a in range(3)} | {15+a for a in range(3)}
@@ -238,14 +244,13 @@ def mode_cell(mode: str, x: Interval, rho_trans: float, sigma: Interval,
         "measurement_information_beta_upper": beta,
         "translation_Qscaled_row_sum_norm_upper": qnorm,
         "translation_posterior_matrix_factor_lower": factor,
+        "translation_process_representation": "x_lo*C*(Q_scaled/x)*C^T",
         "translation_congruence": "C=R*L_inverse applied to both Omega and Sigma",
         "old_scalar_rho_over_max_scaled_upper_used": False,
     }
     return out
 
 
-# FACTORED has already patched the process representation and source-cell
-# splitter.  Patch only the final per-cell comparison before building.
 BASE.mode_cell = mode_cell
 BASE._build_cached.cache_clear()
 
