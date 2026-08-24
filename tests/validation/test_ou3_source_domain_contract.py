@@ -32,9 +32,6 @@ class SourceDomainContractTests(unittest.TestCase):
         self.assertEqual(
             d["continuous_parameters"]["tau_aw_s"], [f32(0.02), f32(12.0)]
         )
-        # apply_ou_tune_ enforces max(0.05f, band_noise_floor_sigma_()) before
-        # writing the OU stationary standard deviation.  The contract records
-        # the actually deployed binary32 floor, not the decimal source token.
         self.assertEqual(
             d["continuous_parameters"]["sigma_aw_mps2"], [f32(0.05), f32(6.0)]
         )
@@ -92,9 +89,6 @@ class SourceDomainContractTests(unittest.TestCase):
         )
 
     def test_rational_taylor_ou_primitive_box_contains_direct_evaluations(self):
-        # This is the range the proof backend will use once deployment supplies
-        # a finite accepted-step upper guard.  It deliberately spans the full
-        # current tau safety range, including the x=h/tau=12.5 corner.
         box = mod.validated_ou_primitives((0.001, 0.25), (0.02, 12.0))
         self.assertTrue(box["validated_arithmetic"])
         self.assertTrue(box["outward_rounded"])
@@ -114,6 +108,34 @@ class SourceDomainContractTests(unittest.TestCase):
                 self.assertGreaterEqual(box["phi_pa_s2"][1], phi_pa)
                 self.assertLessEqual(box["phi_Sa_s3"][0], phi_sa)
                 self.assertGreaterEqual(box["phi_Sa_s3"][1], phi_sa)
+
+    def test_validated_axis_transition_contains_deployed_formula_grid(self):
+        box = mod.validated_phi_axis4((0.001, 0.25), (0.02, 12.0))
+        self.assertTrue(box["validated_arithmetic"])
+        self.assertTrue(box["outward_rounded"])
+        self.assertEqual(box["state_order"], ["v", "p", "S", "a_w"])
+        M = box["Phi_interval"]
+
+        def contains(i, j, value):
+            self.assertLessEqual(M[i][j][0], value, (i, j, value, M[i][j]))
+            self.assertGreaterEqual(M[i][j][1], value, (i, j, value, M[i][j]))
+
+        for h in (0.001, 0.005, 0.05, 0.25):
+            for tau in (0.02, 0.1, 1.0, 12.0):
+                x = h / tau
+                alpha = math.exp(-x)
+                phi_va = tau * (1.0 - alpha)
+                phi_pa = tau * tau * (x + math.expm1(-x))
+                phi_sa = tau ** 3 * (0.5 * x * x - x - math.expm1(-x))
+                exact = (
+                    (1.0, 0.0, 0.0, phi_va),
+                    (h, 1.0, 0.0, phi_pa),
+                    (0.5 * h * h, h, 1.0, phi_sa),
+                    (0.0, 0.0, 0.0, alpha),
+                )
+                for i in range(4):
+                    for j in range(4):
+                        contains(i, j, exact[i][j])
 
     def test_contract_names_every_hybrid_transition_required_for_deployment(self):
         d = mod.build(mod.DEFAULT_HEADER)
