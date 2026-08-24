@@ -11,10 +11,16 @@ import ou3_explicit_information_word_certificate as CERT
 
 
 class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
-    def test_source_uniform_H_A_information_margins_are_strict(self):
+    def test_source_uniform_H_A_information_margins_are_matrix_certified(self):
         d = CERT.build()
         self.assertEqual(CERT.validate(d), [])
-        self.assertFalse(d["source_generated_not_trajectory_fit"] is False)
+        self.assertTrue(d["source_generated_not_trajectory_fit"])
+        self.assertTrue(d["validated_arithmetic"])
+        self.assertTrue(d["outward_rounded"])
+        self.assertEqual(d["p3_backend"], "SOURCE_CELL_GENERALIZED_MATRIX_COMPARISON")
+        self.assertFalse(d["old_scalar_min_Q_route_used"])
+        self.assertGreater(d["cell_partition"]["joint_cells"], 0)
+        self.assertGreater(d["source_schedule"]["tau_applied_invariant_s"][0], 0.3)
         self.assertEqual(d["continuous_linear_information_certificate"], "PASS")
         self.assertFalse(d["nonlinear_word_enclosed"])
         self.assertEqual(d["theorem_promotion"], "LINEAR_ONLY")
@@ -23,9 +29,29 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
             self.assertGreater(row["Sigma_lambda_min_lower"], 0.0)
             self.assertGreater(row["Sigma_lambda_max_upper"], row["Sigma_lambda_min_lower"])
             self.assertGreater(row["word_noise_Omega_lambda_min_lower"], 0.0)
-            self.assertGreater(row["relative_Riccati_injection_margin_lower"], 0.0)
+            self.assertGreaterEqual(row["relative_Riccati_injection_margin_lower"], row["useful_margin_gate"])
             self.assertLess(row["relative_Riccati_injection_margin_lower"], 1.0)
+            self.assertTrue(row["useful_margin_pass"])
             self.assertEqual(row["prefix_information_gain_upper"], 1.0)
+            matrix = row["matrix_comparison"]
+            self.assertEqual(len(matrix["comparison_scale_diagonal_squared"]), row["dimension"])
+            self.assertEqual(len(matrix["Sigma_diagonal_upper"]), row["dimension"])
+            self.assertGreater(matrix["post_measurement_scaled_Omega_lambda_min_lower"], 0.0)
+            self.assertGreater(matrix["Sigma_scaled_lambda_max_upper"], 0.0)
+
+    def test_pseudo_cadence_is_coupled_to_tau_inside_worst_cells(self):
+        d = CERT.build()
+        ratio = d["source_schedule"]["pseudo_ratio"]
+        lo_guard = d["source_schedule"]["pseudo_min_s"]
+        hi_guard = d["source_schedule"]["pseudo_max_s"]
+        for mode in ("H", "A"):
+            c = d["modes"][mode]["matrix_comparison"]
+            tau_lo, tau_hi = c["tau_s"]
+            expected_lo = min(max(ratio * tau_lo, lo_guard), hi_guard)
+            expected_hi = min(max(ratio * tau_hi, lo_guard), hi_guard)
+            cadence_lo, cadence_hi = c["cadence_s"]
+            self.assertLessEqual(cadence_lo, expected_lo)
+            self.assertGreaterEqual(cadence_hi, expected_hi)
 
     def test_certificate_depends_on_declared_physical_upper_bounds(self):
         base = json.loads(CERT.DEFAULT_DOMAIN.read_text(encoding="utf-8"))
@@ -36,6 +62,12 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
             p.write_text(json.dumps(broken), encoding="utf-8")
             with self.assertRaises(KeyError):
                 CERT.build(p)
+
+    def test_compatibility_entry_point_does_not_contain_retired_scalar_floor(self):
+        text = (ROOT / "tools" / "ou3_explicit_information_word_certificate.py").read_text()
+        self.assertNotIn("prediction_Q_lambda_min_lower", text)
+        self.assertNotIn("posterior_floor(", text)
+        self.assertIn("ou3_source_reachable_matrix_p3", text)
 
 
 if __name__ == "__main__":
