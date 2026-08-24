@@ -1,0 +1,216 @@
+name: tfg-directional-rs-experiment
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/tfg-directional-rs-experiment.yml'
+  workflow_dispatch:
+
+jobs:
+  compare-directional-rs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq g++ make libeigen3-dev unzip curl
+
+      - name: Download paired wave records
+        run: |
+          curl -fL --retry 3 --connect-timeout 20 \
+            https://github.com/bareboat-necessities/oceanography-waves-lib/releases/download/v1.1.3/sim-data-files.zip \
+            -o sim-data-files.zip
+          unzip -o sim-data-files.zip -d tests/kalman_tfg >/dev/null
+
+      - name: Build control TFG
+        run: |
+          make -C tests/kalman_tfg kalman_tfg-sim
+          cp tests/kalman_tfg/kalman_tfg-sim tests/kalman_tfg/kalman_tfg-sim-control
+
+      - name: Patch checkout with directional SpectralMSE R_S law
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/kalman_tfg/SeaStateFusionFilter_TFG.h')
+          text = path.read_text()
+          old = '        mekf_.set_RS_noise(Vector3f(rs * R_S_xy_factor_, rs * R_S_xy_factor_, rs));'
+          new = r'''        // EXPERIMENT ONLY: separate TFG X/Y regularization from the
+        // reduced directional 3-D MSE model.  The production source is not
+        // changed by this workflow; this replacement exists only in CI's
+        // checkout so the hypothesis can be compared against the shipped
+        // (1.15, 1.15, 1) regularizer on identical records.
+        constexpr float sigma_x_over_z = 0.569f; // NED X = generator North
+        constexpr float sigma_y_over_z = 0.819f; // NED Y = generator East
+        const float c_sigma = (std::isfinite(sigma_coeff_) && sigma_coeff_ > 0.0f)
+                                  ? sigma_coeff_ : 1.0f;
+        const float sigma_z = std::max(tune_.sigma_applied / c_sigma, 1.0e-6f);
+        const float qz = std::max(2.0f * rs_accel_noise_density_, 1.0e-12f);
+
+        // X/pitch channel: magnetic observation of phi_y.  Use the filter's
+        // configured isotropic magnetometer standard deviation and the 25 Hz
+        // simulator ODR.  The learned field norm is used once available.
+        const float mag_std_uT = std::max(cfg_.sigma_m.maxCoeff(), 1.0e-6f);
+        constexpr float mag_dt_sec = 1.0f / 25.0f;
+        const float B_uT = mekf_.has_magnetic_reference()
+            ? std::max(mekf_.magnetic_reference_world().norm(), 1.0e-3f)
+            : 52.0f;
+        const float g = cfg_.gravity_magnitude;
+        const float qx = qz + 2.0f * g * g *
+            (mag_std_uT * mag_std_uT * mag_dt_sec) / (B_uT * B_uT);
+
+        // Y/roll channel: reduced low-frequency roll/OU ambiguity model.
+        // Retain qz as a floor so the directional model cannot claim less
+        // low-frequency error than the directly observed vertical channel.
+        const float sigma_y = sigma_y_over_z * sigma_z;
+        const float qy = std::max(qz,
+            4.0f * sigma_y * sigma_y * std::max(tune_.tau_applied, 1.0e-3f));
+
+        const float kx = std::pow(sigma_x_over_z, 6.0f / 7.0f) *
+                         std::pow(qx / qz, 1.0f / 14.0f);
+        const float ky = std::pow(sigma_y_over_z, 6.0f / 7.0f) *
+                         std::pow(qy / qz, 1.0f / 14.0f);
+        mekf_.set_RS_noise(Vector3f(rs * kx, rs * ky, rs));'''
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one R_S assignment, found {text.count(old)}')
+          path.write_text(text.replace(old, new))
+          PY
+
+      - name: Build directional TFG
+        run: |
+          rm -f tests/kalman_tfg/kalman_tfg-sim
+          make -C tests/kalman_tfg kalman_tfg-sim
+          cp tests/kalman_tfg/kalman_tfg-sim tests/kalman_tfg/kalman_tfg-sim-directional
+
+      - name: Run current control arm
+        working-directory: tests/kalman_tfg
+        env:
+          W3D_WRITE_TIMESERIES: '0'
+          W3D_VALIDATION_WINDOW_SEC: '900'
+        run: ./kalman_tfg-sim-control | tee directional-control.log || true
+
+      - name: Run derived X/Y arm
+        working-directory: tests/kalman_tfg
+        env:
+          W3D_WRITE_TIMESERIES: '0'
+          W3D_VALIDATION_WINDOW_SEC: '900'
+        run: ./kalman_tfg-sim-directional | tee directional-derived.log || true
+
+      - name: Compare eight-record results
+        working-directory: tests/kalman_tfg
+        run: |
+          python3 - <<'PY'
+          import csv
+          import math
+          from pathlib import Path
+
+          def parse(path):
+              rows = {}
+              for line in Path(path).read_text().splitlines():
+                  if not line.startswith('VALIDATION_METRICS '):
+                      continue
+                  fields = {}
+                  for token in line.split()[1:]:
+                      if '=' in token:
+                          k, v = token.split('=', 1)
+                          fields[k] = v
+                  rows[fields['input']] = fields
+              if len(rows) != 8:
+                  raise SystemExit(f'{path}: expected 8 validation rows, got {len(rows)}')
+              return rows
+
+          control = parse('directional-control.log')
+          derived = parse('directional-derived.log')
+          if set(control) != set(derived):
+              raise SystemExit('control/derived record sets differ')
+
+          metrics = [
+              'disp_x_pct_hs', 'disp_y_pct_hs', 'disp_z_pct_hs',
+              'disp_3d_pct_refmax', 'roll_rms_deg', 'pitch_rms_deg',
+              'yaw_rms_deg', 'accel_bias_3d_rms_mps2'
+          ]
+
+          def f(row, key):
+              return float(row[key])
+
+          def pct(new, old):
+              return 100.0 * (new / old - 1.0) if old else float('nan')
+
+          records = sorted(control)
+          out_rows = []
+          for name in records:
+              row = {'record': name}
+              for key in metrics:
+                  c = f(control[name], key)
+                  d = f(derived[name], key)
+                  row[key + '_control'] = c
+                  row[key + '_derived'] = d
+                  row[key + '_change_pct'] = pct(d, c)
+              tau = f(derived[name], 'tau_applied_s')
+              sigma = f(derived[name], 'sigma_applied_mps2')
+              qz = 2.0 * (0.0148 ** 2) * 0.005
+              qx = qz + 2.0 * (9.80665 ** 2) * ((0.96 ** 2) / 25.0) / (52.0 ** 2)
+              qy = max(qz, 4.0 * (0.819 * sigma) ** 2 * max(tau, 1.0e-3))
+              row['kx_final_nominal'] = (0.569 ** (6.0/7.0)) * ((qx/qz) ** (1.0/14.0))
+              row['ky_final_nominal'] = (0.819 ** (6.0/7.0)) * ((qy/qz) ** (1.0/14.0))
+              row['tau_final_s'] = tau
+              row['sigma_final_mps2'] = sigma
+              out_rows.append(row)
+
+          with Path('directional-comparison.csv').open('w', newline='') as fh:
+              writer = csv.DictWriter(fh, fieldnames=list(out_rows[0]))
+              writer.writeheader()
+              writer.writerows(out_rows)
+
+          lines = [
+              '# TFG directional SpectralMSE experiment', '',
+              'Control: current SpectralMSE with R_S std multipliers (1.15, 1.15, 1).',
+              'Derived: independent X/Y factors from the reduced directional 3-D MSE model.', '',
+              '| Record | X change | Y change | Z change | 3-D change | roll | pitch | yaw | kx | ky |',
+              '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|'
+          ]
+          for row in out_rows:
+              short = row['record'].replace('wave_data_', '').replace('.csv', '')
+              lines.append(
+                  f"| {short} | {row['disp_x_pct_hs_change_pct']:+.2f}% | "
+                  f"{row['disp_y_pct_hs_change_pct']:+.2f}% | "
+                  f"{row['disp_z_pct_hs_change_pct']:+.2f}% | "
+                  f"{row['disp_3d_pct_refmax_change_pct']:+.2f}% | "
+                  f"{row['roll_rms_deg_change_pct']:+.2f}% | "
+                  f"{row['pitch_rms_deg_change_pct']:+.2f}% | "
+                  f"{row['yaw_rms_deg_change_pct']:+.2f}% | "
+                  f"{row['kx_final_nominal']:.3f} | {row['ky_final_nominal']:.3f} |"
+              )
+
+          lines += ['', '## Aggregate means', '', '| Metric | control | derived | change |', '|---|---:|---:|---:|']
+          for key in metrics:
+              cmean = sum(f(control[n], key) for n in records) / len(records)
+              dmean = sum(f(derived[n], key) for n in records) / len(records)
+              lines.append(f'| {key} | {cmean:.6g} | {dmean:.6g} | {pct(dmean, cmean):+.3f}% |')
+
+          kxs = [r['kx_final_nominal'] for r in out_rows]
+          kys = [r['ky_final_nominal'] for r in out_rows]
+          lines += [
+              '', '## Factor range at final operating points', '',
+              f'- kx: {min(kxs):.3f} .. {max(kxs):.3f}',
+              f'- ky: {min(kys):.3f} .. {max(kys):.3f}',
+          ]
+
+          Path('directional-summary.md').write_text('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
+          PY
+
+      - name: Upload directional comparison
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tfg-directional-rs-experiment
+          path: |
+            tests/kalman_tfg/directional-control.log
+            tests/kalman_tfg/directional-derived.log
+            tests/kalman_tfg/directional-comparison.csv
+            tests/kalman_tfg/directional-summary.md
