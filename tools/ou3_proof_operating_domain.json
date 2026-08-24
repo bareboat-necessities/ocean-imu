@@ -27,12 +27,13 @@
   },
   "normal_live": {
     "vector_pe_recurrence_window_s": 1.0,
-    "specific_force_norm_lower_mps2": 0.001,
+    "specific_force_norm_lower_mps2": 5.0,
     "specific_force_norm_upper_mps2": 30.0,
-    "magnetic_vector_norm_lower_uT": 0.001,
+    "magnetic_vector_norm_lower_uT": 10.0,
     "magnetic_vector_norm_upper_uT": 200.0,
-    "vector_sine_separation_lower": 0.01,
-    "body_rate_norm_upper_deg_s": 30.0
+    "vector_sine_separation_lower": 0.1,
+    "body_rate_norm_upper_deg_s": 30.0,
+    "pe_scope_note": "The full-heading theorem excludes free-fall/near-free-fall and magnetic fields within 5.74 deg of gravity. The 5 m/s^2 force floor and 10 uT field floor are declared deployment assumptions, not replay-derived extrema; gravity-only/yaw-quotient operation is certified separately rather than pretending heading is observable outside this PE envelope."
   },
   "stochastic": {
     "finite_horizon_failure_probability_budget": 0.05
