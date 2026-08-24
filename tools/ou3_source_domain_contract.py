@@ -180,15 +180,64 @@ def parse_aw_sigma_floor(text: str) -> float:
     return float(_round_fraction_binary32(Fraction(m.group(1))))
 
 
+def _outward_point(x: float) -> list[float]:
+    """Return an explicit binary64 enclosure of an exact deployed binary32."""
+    x = float(x)
+    if not math.isfinite(x):
+        raise RuntimeError(f"non-finite source-domain endpoint {x!r}")
+    return [math.nextafter(x, -math.inf), math.nextafter(x, math.inf)]
+
+
+def _outward_box(lo: float, hi: float) -> list[float]:
+    """Return an outward-rounded binary64 box containing two source endpoints."""
+    lo = float(lo)
+    hi = float(hi)
+    if not (math.isfinite(lo) and math.isfinite(hi)) or lo > hi:
+        raise RuntimeError(f"invalid source interval [{lo!r}, {hi!r}]")
+    return [math.nextafter(lo, -math.inf), math.nextafter(hi, math.inf)]
+
+
 def build(header: Path) -> dict:
     text = header.read_text()
     c = {name: parse_const(text, name) for name in REQUIRED}
     sigma_floor = parse_aw_sigma_floor(text)
+    continuous = {
+        "wave_tune_frequency_hz": [c["MIN_TUNE_FREQ_HZ"], c["MAX_TUNE_FREQ_HZ"]],
+        "tau_aw_s": [c["MIN_TAU_S"], c["MAX_TAU_S"]],
+        "sigma_aw_mps2": [sigma_floor, c["MAX_SIGMA_A"]],
+        "R_S_base": [c["MIN_R_S"], c["MAX_R_S"]],
+        "pseudo_update_period_s": [
+            c["PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"], c["PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT"],
+        ],
+    }
+    timing = {
+        "mag_delay": c["MAG_DELAY_SEC"],
+        "online_tune_warmup": c["ONLINE_TUNE_WARMUP_SEC"],
+    }
+    parameter_box = {
+        "qualification": "SOURCE_DERIVED_OUTWARD_ROUNDED_PARAMETER_BOX",
+        "validated_arithmetic": True,
+        "outward_rounded": True,
+        "arithmetic_backend": "EXACT_BINARY32_SOURCE_PLUS_BINARY64_NEXTAFTER_OUTWARD",
+        "continuous_parameters": {
+            name: _outward_box(bounds[0], bounds[1])
+            for name, bounds in continuous.items()
+        },
+        "timing_constants_s": {
+            name: _outward_point(value)
+            for name, value in timing.items()
+        },
+        "continuous_word_enclosed": False,
+        "nonlinear_word_enclosed": False,
+        "theorem_promotion": "NOT_ESTABLISHED",
+    }
     return {
         "schema": 2,
         "claim": "OU3_SOURCE_COMPLETE_IMPLEMENTATION_DOMAIN_CONTRACT",
         "source_generated_not_trajectory_fit": True,
         "source_complete_parameter_domain": True,
+        # These top-level flags remain false until the whole H/A word is
+        # propagated with validated matrix/transcendental arithmetic.
         "validated_arithmetic": False,
         "outward_rounded": False,
         "implementation_header": str(header.relative_to(REPO)),
@@ -197,19 +246,9 @@ def build(header: Path) -> dict:
             "rounding": "ROUND_TO_NEAREST_TIES_TO_EVEN_EACH_OPERATION",
             "evaluation": "EXACT_RATIONAL_THEN_BINARY32_ROUND",
         },
-        "continuous_parameters": {
-            "wave_tune_frequency_hz": [c["MIN_TUNE_FREQ_HZ"], c["MAX_TUNE_FREQ_HZ"]],
-            "tau_aw_s": [c["MIN_TAU_S"], c["MAX_TAU_S"]],
-            "sigma_aw_mps2": [sigma_floor, c["MAX_SIGMA_A"]],
-            "R_S_base": [c["MIN_R_S"], c["MAX_R_S"]],
-            "pseudo_update_period_s": [
-                c["PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"], c["PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT"],
-            ],
-        },
-        "timing_constants_s": {
-            "mag_delay": c["MAG_DELAY_SEC"],
-            "online_tune_warmup": c["ONLINE_TUNE_WARMUP_SEC"],
-        },
+        "continuous_parameters": continuous,
+        "timing_constants_s": timing,
+        "validated_parameter_box": parameter_box,
         "discrete_source_branches": {
             "mode": ["H", "A"],
             "accelerometer_gate": ["accepted", "rejected"],
@@ -226,8 +265,9 @@ def build(header: Path) -> dict:
             "metric_consequence": "inverse-covariance information energy is nonexpansive",
         },
         "promotion_rule": (
-            "these implementation bounds define the source domain only; theorem promotion "
-            "still requires outward-rounded interval/Taylor-model propagation over the full domain"
+            "the validated_parameter_box closes only the source-boundary arithmetic; theorem "
+            "promotion still requires outward-rounded interval/Taylor-model propagation of "
+            "the complete H/A Riccati words, nonlinear SO(3) remainder and remaining jumps"
         ),
     }
 
