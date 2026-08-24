@@ -3,12 +3,15 @@ name: ou3-proof-fast
 on:
   pull_request:
     paths:
+      - "tools/ou3_interval.py"
+      - "tools/ou3_validated_transcendentals.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
       - "tools/ou3_deployment_gate.py"
       - "tools/ou3_hybrid_aw_sync_proof.py"
       - "tools/ou3_hybrid_contract.py"
       - "tools/ou3_source_domain_contract.py"
+      - "tests/validation/test_ou3_validated_transcendentals.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tests/validation/test_ou3_validate_enclosure.py"
       - "tests/validation/test_ou3_deployment_gate.py"
@@ -51,12 +54,15 @@ jobs:
       - name: Compile enclosure tools
         run: |
           python3 -m py_compile \
+            tools/ou3_interval.py \
+            tools/ou3_validated_transcendentals.py \
             tools/ou3_certificate_completion.py \
             tools/ou3_validate_enclosure.py
-      - name: Test enclosure and completion contracts
+      - name: Test validated scalar and enclosure contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_validated_transcendentals \
             test_ou3_certificate_completion \
             test_ou3_validate_enclosure
 
