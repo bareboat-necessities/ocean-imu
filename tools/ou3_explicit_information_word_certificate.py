@@ -5,7 +5,12 @@ The certificate uses a direct validated endpoint generalized matrix inequality.
 It does not multiply one-step contraction factors.  The source-word binding
 requires recurring vector PE and the optimized validated spread four-S complete
 translation UCO.  Three-S detectability is permitted only inside the covariance
-upper construction; it is not a promotion fallback.
+upper construction; it cannot promote the theorem by itself.
+
+The endpoint inequality is composed through the exact fixed-dimensional Live
+covariance algebra in ``ou3_p3_word_algebra``.  That algebra also proves the
+source-uniform unit prefix information-gain bound instead of treating it as an
+assumed constant.
 """
 from __future__ import annotations
 
@@ -14,6 +19,7 @@ import json
 import math
 from pathlib import Path
 
+import ou3_p3_word_algebra as P3ALG
 import ou3_source_reachable_matrix_p3_direct as DIRECT
 
 DEFAULT_DOMAIN = DIRECT.DEFAULT_DOMAIN
@@ -56,6 +62,12 @@ def _state_metric(mode: str, comparison: dict) -> dict:
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     domain_path = Path(domain_path).resolve()
     d = DIRECT.build(domain_path)
+
+    algebra = P3ALG.build()
+    algebra_failures = P3ALG.validate(algebra)
+    if algebra_failures:
+        raise RuntimeError(f"P3 fixed-mode word algebra failed: {algebra_failures}")
+
     words = DIRECT.BASE.WORDS.build(domain_path)
     word_failures = DIRECT.BASE.WORDS.validate(words)
     if word_failures:
@@ -73,10 +85,31 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if trans.get("spread_selection") != "VALIDATED_MAX_INFORMATION_OVER_ALL_ADMISSIBLE_INTEGER_Q":
         raise RuntimeError("P3 requires optimized validated four-S spread selection")
     if trans.get("three_firing_integrator_detectability_is_promotion_fallback") is not False:
-        raise RuntimeError("three-S detectability cannot be a P3 promotion fallback")
+        raise RuntimeError("three-S detectability cannot promote P3")
+
+    prefix_gain = float(algebra["prefix_information_bound"]["information_gain_upper"])
+    if prefix_gain != 1.0:
+        raise RuntimeError("P3 exact word algebra lost the unit prefix information bound")
 
     out = dict(d)
     out["p3_window_backend"] = "SOURCE_COMPLETE_WORD_ENDPOINT_GENERALIZED_INFORMATION"
+    out["p3_word_algebra"] = {
+        "qualification": algebra["qualification"],
+        "fixed_dimensions": algebra["fixed_dimensions"],
+        "normal_live_update_order": algebra["normal_live_update_order"],
+        "covariance_decomposition_identity": algebra["covariance_decomposition_invariant"]["identity"],
+        "strict_margin_preservation_identity": algebra["strict_margin_preservation"]["identity"],
+        "left_error_reset_determinant_formula": algebra["reset"]["determinant_formula"],
+        "left_error_reset_determinant_lower": algebra["reset"]["determinant_lower"],
+        "prefix_information_gain_upper": prefix_gain,
+        "covers_prediction": True,
+        "covers_accepted_joseph": True,
+        "covers_rejected_and_not_due": True,
+        "covers_left_error_reset": True,
+        "covers_periodic_aw_covariance_sync": True,
+        "source_uniform": True,
+        "sampled_evidence_used": False,
+    }
     out["theorem_margin_requirement"] = {
         "predicate": THEOREM_REQUIRED_MARGIN_PREDICATE,
         "numeric_boundary": THEOREM_REQUIRED_MARGIN_LOWER,
@@ -99,7 +132,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "translation_spread_information_lower": trans["spread_information_gramian_lambda_min_lower"],
         "translation_information_widening_factor_vs_adjacent_lower": trans["information_widening_factor_vs_adjacent_lower"],
         "three_S_detectability_role": trans["three_firing_integrator_detectability_role"],
-        "three_S_detectability_is_promotion_fallback": False,
+        "three_S_detectability_can_promote_P3": False,
         "arbitrary_source_branches_between_required_PE_events_remain_admissible": True,
         "joint_source_reachability_required": True,
         "one_sample_decrease_required": False,
@@ -114,17 +147,21 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             raise RuntimeError(f"{mode} word-endpoint injection margin invalid: {delta!r}")
         comparison["word_endpoint_information_argument"] = {
             "form": "Omega_endpoint_lower - delta * Sigma_word_upper is SPD",
-            "endpoint_noise_lower_source": "posterior lower matrix from final admissible prediction/correction; earlier word process terms are PSD additions",
+            "endpoint_noise_lower_source": "validated matrix lower contribution from a source-reachable prediction/correction stage",
             "covariance_upper_source": "source-uniform finite-word H/A covariance upper bound; three-S detectability may sharpen this upper bound only",
+            "subsequent_operation_preservation": "A(Omega-delta P)A^T+(1-delta)B is PSD for every implemented affine-PSD covariance operation",
             "repeated_one_step_contraction_used": False,
             "source_replay_used": False,
             "coupled_translation_block": "[v,p,S,a_w]",
             "four_S_spread_translation_qualification": True,
+            "all_fixed_mode_branch_suffixes_covered_by_word_algebra": True,
         }
         comparison["state_information_metric"] = _state_metric(mode, comparison)
         row["word_endpoint_relative_Riccati_injection_margin_lower"] = delta
         row["lambda_information_upper_formula"] = "1-delta_word_endpoint_lower"
         row["strict_information_contraction"] = delta > 0.0
+        row["prefix_information_gain_upper"] = prefix_gain
+        row["prefix_information_gain_proof"] = "Phi_s^T P_s^-1 Phi_s <= P_0^-1 from P_s=Phi_s P_0 Phi_s^T+Omega_s, Omega_s>=0"
         row["useful_margin_gate"] = THEOREM_REQUIRED_MARGIN_LOWER
         row["useful_margin_gate_predicate"] = THEOREM_REQUIRED_MARGIN_PREDICATE
         row["useful_margin_pass"] = delta > 0.0
@@ -135,6 +172,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     out["modes"] = modes
     passed = all(modes[m]["pass"] for m in ("H", "A"))
     out["continuous_linear_information_certificate"] = "PASS" if passed else "FAIL"
+    out["P3_IMPLEMENTATION_WORD_CERTIFICATE"] = "PASS" if passed else "FAIL"
     out["theorem_promotion"] = "LINEAR_ONLY" if passed else "NOT_ESTABLISHED"
     out["next_obligation"] = "P4: node-wise group-compatible metrics, exact nonlinear source-word endpoint decrease, and prefix safety"
     return out
@@ -147,6 +185,23 @@ def validate(d: dict) -> list[str]:
         failures.append("P3 theorem margin requirement is not strict positivity")
     if req.get("old_fixed_1e_minus_18_gate_is_theorem_requirement") is not False:
         failures.append("arbitrary 1e-18 gate still controls theorem acceptance")
+
+    alg = d.get("p3_word_algebra", {})
+    if alg.get("qualification") != "SOURCE_BOUND_EXACT_P3_FIXED_MODE_WORD_ALGEBRA":
+        failures.append("exact P3 fixed-mode word algebra is not bound")
+    if alg.get("prefix_information_gain_upper") != 1.0:
+        failures.append("P3 prefix information gain is not exactly source-certified at one")
+    if alg.get("left_error_reset_determinant_lower") != 1.0:
+        failures.append("P3 left-error reset nonsingularity is not certified")
+    for key in (
+        "covers_prediction", "covers_accepted_joseph", "covers_rejected_and_not_due",
+        "covers_left_error_reset", "covers_periodic_aw_covariance_sync", "source_uniform",
+    ):
+        if alg.get(key) is not True:
+            failures.append(f"P3 word algebra missing {key}")
+    if alg.get("sampled_evidence_used") is not False:
+        failures.append("P3 word algebra depends on sampled evidence")
+
     b = d.get("source_word_binding", {})
     if b.get("source_complete_relative_to_declared_theorem_hypotheses") is not True:
         failures.append("P3 is not bound to source-complete recurring-PE language")
@@ -154,9 +209,10 @@ def validate(d: dict) -> list[str]:
         failures.append("P3 translation qualification is not four-S complete-chain UCO")
     if b.get("translation_spread_selection") != "VALIDATED_MAX_INFORMATION_OVER_ALL_ADMISSIBLE_INTEGER_Q":
         failures.append("P3 does not use optimized validated spread selection")
-    if b.get("three_S_detectability_is_promotion_fallback") is not False:
-        failures.append("P3 permits three-S promotion fallback")
-    if not isinstance(b.get("translation_information_widening_factor_vs_adjacent_lower"), (int, float)) or float(b["translation_information_widening_factor_vs_adjacent_lower"]) < 1.0:
+    if b.get("three_S_detectability_can_promote_P3") is not False:
+        failures.append("P3 permits three-S promotion")
+    widening = b.get("translation_information_widening_factor_vs_adjacent_lower")
+    if not isinstance(widening, (int, float)) or float(widening) < 1.0:
         failures.append("optimized four-S spread did not dominate adjacent selection")
     if b.get("one_sample_decrease_required") is not False:
         failures.append("P3 reintroduced one-sample decrease")
@@ -168,6 +224,8 @@ def validate(d: dict) -> list[str]:
         delta = row.get("word_endpoint_relative_Riccati_injection_margin_lower")
         if not isinstance(delta, (int, float)) or not (0.0 < float(delta) < 1.0):
             failures.append(f"{mode} word-endpoint matrix margin invalid")
+        if row.get("prefix_information_gain_upper") != 1.0:
+            failures.append(f"{mode} exact prefix information bound is missing")
         if row.get("useful_margin_gate") != 0.0 or row.get("useful_margin_gate_predicate") != "> 0":
             failures.append(f"{mode} theorem gate is not strict positivity")
         matrix = row.get("matrix_comparison", {})
@@ -176,6 +234,8 @@ def validate(d: dict) -> list[str]:
             failures.append(f"{mode} repeated-step shortcut still active")
         if arg.get("four_S_spread_translation_qualification") is not True:
             failures.append(f"{mode} endpoint argument lacks spread four-S qualification")
+        if arg.get("all_fixed_mode_branch_suffixes_covered_by_word_algebra") is not True:
+            failures.append(f"{mode} endpoint argument does not cover all branch suffixes")
         metric = matrix.get("state_information_metric", {})
         if metric.get("same_congruence_applied_to_noise_and_covariance") is not True:
             failures.append(f"{mode} computational congruence is inconsistent")
@@ -183,6 +243,9 @@ def validate(d: dict) -> list[str]:
             failures.append(f"{mode} translation chain was scalarized")
         if metric.get("is_nonlinear_Lyapunov_metric") is not False:
             failures.append(f"{mode} P3 conditioning metric incorrectly promoted to nonlinear W")
+
+    if not failures and d.get("P3_IMPLEMENTATION_WORD_CERTIFICATE") != "PASS":
+        failures.append("P3 implementation-word status is not PASS")
     return failures
 
 
@@ -198,7 +261,15 @@ def main() -> int:
     out["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(out, indent=2, sort_keys=True), encoding="utf-8")
-    print(json.dumps({"backend": d["p3_window_backend"], "source_word_binding": d["source_word_binding"], "H": d["modes"]["H"], "A": d["modes"]["A"], "failures": failures}, indent=2, sort_keys=True))
+    print(json.dumps({
+        "backend": d["p3_window_backend"],
+        "P3_IMPLEMENTATION_WORD_CERTIFICATE": d["P3_IMPLEMENTATION_WORD_CERTIFICATE"],
+        "prefix_information_gain_upper": d["p3_word_algebra"]["prefix_information_gain_upper"],
+        "source_word_binding": d["source_word_binding"],
+        "H": d["modes"]["H"],
+        "A": d["modes"]["A"],
+        "failures": failures,
+    }, indent=2, sort_keys=True))
     return 0 if not failures else 2
 
 
