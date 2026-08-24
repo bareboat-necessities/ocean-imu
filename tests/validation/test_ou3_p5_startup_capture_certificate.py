@@ -44,6 +44,8 @@ class Ou3P5StartupCaptureCertificateTests(unittest.TestCase):
         self.assertGreater(d["P4_H_strict_decrease_W_threshold_lower"], d["P4_H_inner_level_W"])
         self.assertGreater(d["P4_inner_seed_to_decrease_threshold_W_factor"], 15.0)
         self.assertLess(d["P4_inner_seed_to_decrease_threshold_W_factor"], 17.0)
+        self.assertEqual(d["P4_H_strict_decrease_W_threshold_lower"], 5.26676120278833e-140)
+        self.assertEqual(d["P4_H_nonlinear_design_canonical_norm_radius"], 8.650578521054014e-13)
         rows = d["axis_witnesses"]
         self.assertEqual({r["group"] for r in rows}, {"b_g", "v", "p", "S", "a_w"})
         for row in rows:
@@ -56,11 +58,12 @@ class Ou3P5StartupCaptureCertificateTests(unittest.TestCase):
         d = self.d
         weak = d["weakest_axis_witness"]
         self.assertEqual(weak["group"], "b_g")
-        self.assertGreaterEqual(weak["axis_witness_canonical_norm"], 0.01)
-        self.assertGreater(weak["W_lower_over_strict_decrease_threshold"], 1.0e100)
+        self.assertEqual(weak["axis_witness_W_lower"], 9.999999999999996e-05)
+        self.assertEqual(weak["W_lower_over_strict_decrease_threshold"], 1.898700095744951e135)
         strong = d["largest_axis_witness"]
         self.assertEqual(strong["group"], "S")
-        self.assertGreater(strong["W_lower_over_strict_decrease_threshold"], weak["W_lower_over_strict_decrease_threshold"])
+        self.assertEqual(strong["axis_witness_W_lower"], 89999.99999999996)
+        self.assertEqual(strong["W_lower_over_strict_decrease_threshold"], 1.7088300861704558e144)
 
     def test_P5_does_not_fake_a_word_count_outside_P4_domain(self):
         d = self.d
