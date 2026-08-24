@@ -86,28 +86,37 @@ Make the normal-Live source language finite-window complete relative to explicit
 
 **PASS:** every normal-Live execution satisfying the declared PE/timing hypotheses belongs to the machine-defined language; no favorable-subset selection is possible.
 
-### P3 — Validated H/A Riccati/information-word certificate
+### P3 — Validated H/A Riccati/information-word certificate — COMPLETE
 
-Propagate the **actual implementation-derived** H/A matrices through the outward-rounded Kalman backend already introduced in this PR:
+P3 is now closed by two machine-checked layers.
 
-- prediction `F P F^T + Q`;
-- periodic full `S=0` Joseph correction;
-- accepted/rejected accelerometer branches;
-- due/not-due/accepted/rejected magnetometer branches;
-- covariance reset after attitude injection;
-- periodic PSD `a_w` covariance synchronization;
-- H held-bias dynamics and A active first-order Gauss-Markov bias dynamics.
+First, the outward-rounded direct matrix backend certifies the source-uniform H/A generalized endpoint inequality with the full coupled `[v,p,S,a_w]` translation block. Four `S=0` firings provide the complete translation observability qualification, with the validated integer spread search choosing the strongest rigorous admissible four-firing information bound. The three-firing `[v,p,S]` construction plus stable `a_w` is used only to sharpen a covariance upper bound; it cannot by itself satisfy the P3 observability qualification. The H and A endpoint margins are both strictly positive, and the arbitrary former `1e-18` threshold is not a theorem condition.
 
-Use source-dependent branch-and-bound/subdivision rather than one giant interval box when dependency blow-up prevents a strict result.
+Second, `tools/ou3_p3_word_algebra.py` binds the endpoint comparison to every fixed-dimensional normal-Live covariance operation in the shipping source. For each prefix it proves the exact decomposition
 
-For every source-complete H/A word, certify
+`P_s = Phi_s P_0 Phi_s^T + Omega_s`, with `Omega_s >= 0`.
 
-- `Sigma_min > 0` and finite `Sigma_max`;
-- positive process/Riccati injection;
-- strict information contraction `lambda_W < 1`;
-- finite worst prefix information gain.
+Prediction, accepted Joseph corrections, rejected/not-due identity branches, the left-error covariance reset, and the periodic PSD `a_w` covariance increment all have the common affine-PSD form
 
-**PASS:** strict source-uniform numerical linear contraction for both H and A with explicit margins.
+`P+ = A P A^T + B`, with `B >= 0`.
+
+Thus for every `0 < delta < 1`, an established information margin propagates exactly through any subsequent source branch:
+
+`Omega+ - delta P+ = A (Omega - delta P) A^T + (1-delta) B >= 0`.
+
+The implemented left-error reset has attitude block `G = I + 0.5 [dtheta]_x` and
+
+`det(G) = 1 + ||dtheta||^2 / 4 >= 1`,
+
+so reset congruence is nonsingular for every finite injected correction and does not require an additional small-angle hypothesis at P3. The same covariance decomposition gives, by Schur complement,
+
+`Phi_s^T P_s^-1 Phi_s <= P_0^-1`,
+
+hence the exact source-uniform worst prefix information gain is `1.0` rather than a replay estimate.
+
+The final producer `tools/ou3_explicit_information_word_certificate.py` emits `P3_IMPLEMENTATION_WORD_CERTIFICATE=PASS` only when the direct H/A interval inequalities, optimized four-S qualification, current source-word language, exact Live-operation algebra, reset nonsingularity, branch coverage, and unit prefix-information bound all validate together.
+
+**PASS:** strict source-uniform H and A information contraction with explicit positive endpoint margins and an exact finite prefix information-gain bound. P4 is the next unresolved normal-Live obligation.
 
 ### P4 — Exact nonlinear SO(3) word certificate
 
