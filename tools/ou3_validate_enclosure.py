@@ -10,7 +10,8 @@ provide a group-compatible node metric of the paper's form
     W_i = a_R_i (1-cos(theta)) + xi' P_xi_i xi.
 
 No inverse-covariance-as-W alias, repeated one-step contraction, common-
-Euclidean fallback, or replay-fitted promotion path is accepted.
+Euclidean fallback, replay-fitted promotion path, or legacy hybrid-name alias is
+accepted.
 """
 from __future__ import annotations
 
@@ -20,10 +21,15 @@ import math
 from pathlib import Path
 
 import ou3_numerical_certificate as BASE
+import ou3_source_domain_contract as SOURCE_DOMAIN
 
 SCHEMA = 3
 SOURCE_NOISE_SCHEMA = 1
 ANCHOR_REL_TOL = 5.0e-6
+# periodic_aw_covariance_sync is discharged independently by the analytic
+# PSD/Loewner proof in ou3_hybrid_contract; every other current source-domain
+# obligation must be present as an explicit validated jump row here.
+REQUIRED_HYBRID_ROWS = set(SOURCE_DOMAIN.HYBRID_OBLIGATIONS) - {"periodic_aw_covariance_sync"}
 
 
 def finite_positive(value) -> bool:
@@ -121,7 +127,6 @@ def validate_mode(mode: str, payload: dict, contract_mode: dict,
     ):
         failures.append(f"word_horizon_s {horizon} does not match contract horizon {expected_horizon}")
 
-    # No compatibility alias: schema 3 requires the endpoint field explicitly.
     eta = payload.get("word_endpoint_relative_Riccati_injection_margin_lower")
     sigma_lo = payload.get("Sigma_lambda_min_lower")
     sigma_hi = payload.get("Sigma_lambda_max_upper")
@@ -153,31 +158,25 @@ def validate_mode(mode: str, payload: dict, contract_mode: dict,
 
     linear_failures = list(failures)
     lambda_upper = 1.0 - float(eta) if finite_positive(eta) and float(eta) < 1.0 else None
-
-    # P3 inverse-covariance conditioning diagnostics remain diagnostics only.
     conditioning_lower = 1.0 / float(sigma_hi) if finite_positive(sigma_hi) else None
     conditioning_upper = 1.0 / float(sigma_lo) if finite_positive(sigma_lo) else None
 
     metric, metric_failures = _validate_group_metric(payload.get("path_metric", {}))
     failures.extend(metric_failures)
-
     theta = payload.get("theta_star")
     if not finite_positive(theta) or not float(theta) < math.pi:
         failures.append("theta_star is not in (0, pi)")
-
     endpoint_ratio = payload.get("endpoint_W_ratio_upper")
     mu = None
     if not finite_nonnegative(endpoint_ratio) or not float(endpoint_ratio) < 1.0:
         failures.append("endpoint_W_ratio_upper is not in [0,1)")
     else:
         mu = 1.0 - float(endpoint_ratio)
-
     certified_level = payload.get("certified_level_W")
     if not finite_positive(certified_level):
         failures.append("certified_level_W is not finite positive")
     if not payload.get("all_word_prefixes_safe", False):
         failures.append("nonlinear word prefixes are not validated safe")
-
     if sampled_mode and finite_positive(certified_level):
         first_fail = sampled_mode.get("first_fail_W")
         if finite_positive(first_fail) and float(certified_level) >= float(first_fail):
@@ -207,20 +206,22 @@ def validate_mode(mode: str, payload: dict, contract_mode: dict,
 
 
 def validate_hybrid(payload: list[dict], modes: dict) -> dict:
-    required = {"startup_handoff", "held_to_active", "magnetic_regauge", "tilt_reset", "cooldown"}
+    required = set(REQUIRED_HYBRID_ROWS)
     seen: set[str] = set()
     failures: list[str] = []
     rows = []
 
     for i, jump in enumerate(payload):
         kind = str(jump.get("kind", ""))
+        if kind not in required:
+            failures.append(f"hybrid[{i}] unknown or non-row obligation name: {kind}")
+            continue
         seen.add(kind)
         row_failures: list[str] = []
         if not jump.get("source_complete", False):
             row_failures.append("source family is not source-complete")
         if not jump.get("outward_rounded", False):
             row_failures.append("bounds are not outward-rounded")
-
         source = jump.get("source_level_W_upper")
         gain = jump.get("jump_gain_upper")
         additive = jump.get("additive_W_upper")
@@ -234,7 +235,6 @@ def validate_hybrid(payload: list[dict], modes: dict) -> dict:
                 row_failures.append(f"{label} missing/nonfinite/negative")
         if not finite_positive(dest):
             row_failures.append("destination_level_W missing/nonfinite/nonpositive")
-
         dest_mode = str(jump.get("destination_mode", ""))
         if dest_mode not in modes:
             row_failures.append("destination_mode must be H or A")
@@ -250,18 +250,16 @@ def validate_hybrid(payload: list[dict], modes: dict) -> dict:
                 row_failures.append("held_to_active dimensions must be 18 -> 21")
             if "new_coordinate_W_upper" not in jump:
                 row_failures.append("held_to_active must bound the new bias-coordinate energy")
-
         if kind == "tilt_reset":
             if jump.get("discarded_pre_reset_tilt_excluded_from_multiplicative_gain") is not True:
                 row_failures.append("tilt reset still charges discarded pre-reset tilt in multiplicative gain")
             if jump.get("reset_to_funnel_exact_map") is not True:
                 row_failures.append("tilt reset is not certified as exact reset-to-funnel map")
-
-        if kind == "cooldown":
+        if kind == "cooldown_reentry":
             if jump.get("reachable_word_product_used") is not True:
-                row_failures.append("cooldown does not use reachable word products")
+                row_failures.append("cooldown reentry does not use reachable word products")
             if jump.get("global_worst_word_power_used") is not False:
-                row_failures.append("cooldown uses a power of a global worst-word factor")
+                row_failures.append("cooldown reentry uses a power of a global worst-word factor")
 
         post = margin = None
         if (finite_nonnegative(source) and finite_nonnegative(gain)
@@ -271,21 +269,31 @@ def validate_hybrid(payload: list[dict], modes: dict) -> dict:
             margin = float(dest) - post
             if not margin > 0.0:
                 row_failures.append("recomputed inward margin is not strictly positive")
-
         if row_failures:
             failures.extend(f"hybrid[{i}] {kind}: {f}" for f in row_failures)
         rows.append({
-            "kind": kind, "destination_mode": dest_mode,
-            "source_level_W_upper": source, "jump_gain_upper": gain,
-            "additive_W_upper": additive, "new_coordinate_W_upper": new_coord,
-            "post_jump_W_upper": post, "destination_level_W": dest,
-            "inward_margin_lower": margin, "pass": not row_failures,
+            "kind": kind,
+            "destination_mode": dest_mode,
+            "source_level_W_upper": source,
+            "jump_gain_upper": gain,
+            "additive_W_upper": additive,
+            "new_coordinate_W_upper": new_coord,
+            "post_jump_W_upper": post,
+            "destination_level_W": dest,
+            "inward_margin_lower": margin,
+            "pass": not row_failures,
         })
 
     missing = sorted(required - seen)
     if missing:
         failures.append(f"missing hybrid obligations: {missing}")
-    return {"pass": not failures, "failures": failures, "seen": sorted(seen), "bounds": rows}
+    return {
+        "pass": not failures,
+        "failures": failures,
+        "seen": sorted(seen),
+        "analytic_obligation_separate": "periodic_aw_covariance_sync",
+        "bounds": rows,
+    }
 
 
 def source_noise_moments(payload: dict) -> tuple[dict, list[str]]:
@@ -443,17 +451,27 @@ def validate_stochastic(payload: dict, modes: dict, source_noise: dict) -> dict:
                     failures.append("recomputed finite-horizon stochastic failure probability is not < 1")
 
     return {
-        "pass": not failures, "failures": failures, "source_noise_moments": moments,
-        "lambda_W_upper": lambda_W, "lambda_s_upper": lambda_s,
-        "nu1_upper": nu1, "nu_W_upper": nu_W, "sigma_s2_upper": sigma_s2,
-        "funnel_level_a": a, "W0_upper": W0, "b_W_upper": b_W,
-        "v_W_upper": v_W, "V_W_upper": V_W,
+        "pass": not failures,
+        "failures": failures,
+        "source_noise_moments": moments,
+        "lambda_W_upper": lambda_W,
+        "lambda_s_upper": lambda_s,
+        "nu1_upper": nu1,
+        "nu_W_upper": nu_W,
+        "sigma_s2_upper": sigma_s2,
+        "funnel_level_a": a,
+        "W0_upper": W0,
+        "b_W_upper": b_W,
+        "v_W_upper": v_W,
+        "V_W_upper": V_W,
         "drift_envelope_max_upper": drift_max,
-        "excursion_margin_x_star_lower": x_star, "gaussian_t_star_lower": t_star,
+        "excursion_margin_x_star_lower": x_star,
+        "gaussian_t_star_lower": t_star,
         "localization_failure_probability_upper": p_localization,
         "freedman_failure_probability_upper": p_freedman,
         "finite_horizon_failure_probability_upper": p_total,
-        "word_samples_upper": ell, "finite_horizon_words": N,
+        "word_samples_upper": ell,
+        "finite_horizon_words": N,
     }
 
 
@@ -510,7 +528,9 @@ def main() -> int:
             "fallbacks": "NONE",
         },
         "validated_enclosure_provenance_pass": provenance_ok,
-        "modes": modes, "hybrid": hybrid, "stochastic": stochastic,
+        "modes": modes,
+        "hybrid": hybrid,
+        "stochastic": stochastic,
         "continuous_linear_information_certificate": "PASS" if linear_pass else "FAIL",
         "numerical_neighborhood_certificate": "PASS" if nonlinear_pass else "FAIL",
         "hybrid_funnel_certificate": "PASS" if hybrid_pass else "FAIL",
@@ -525,8 +545,10 @@ def main() -> int:
         "hybrid_funnel_certificate": out["hybrid_funnel_certificate"],
         "stochastic_certificate": out["stochastic_certificate"],
         "deployment_theorem_certificate": out["deployment_theorem_certificate"],
-        "H": modes["H"]["pass"], "A": modes["A"]["pass"],
-        "hybrid": hybrid["pass"], "stochastic": stochastic["pass"],
+        "H": modes["H"]["pass"],
+        "A": modes["A"]["pass"],
+        "hybrid": hybrid["pass"],
+        "stochastic": stochastic["pass"],
         "provenance": provenance_ok,
     }, indent=2, sort_keys=True))
     return 0 if deployment_pass else 2
