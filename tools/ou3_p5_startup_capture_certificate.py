@@ -159,7 +159,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     # Both normal and timeout branches share these declared physical-coordinate
     # bounds. Their attitude envelopes differ materially. Convert the validated
     # cosine bounds to exact Cayley-coordinate norm bounds so P5 can distinguish
-    # a merely nonlocal normal handoff from the large-angle timeout route.
+    # the tighter normal handoff from the wider finite-angle timeout handoff.
     normal_cos = float(p1["normal_handoff"]["true_gravity_cosine_lower"])
     timeout_cos = float(p1["timeout_handoff"]["combined_true_gravity_cosine_lower"])
     normal_cayley = _cayley_norm_upper_from_cos_lower(normal_cos)
@@ -174,29 +174,27 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     all_outside_design = all(r["outside_P4_nonlinear_design_radius"] for r in witnesses)
     obstruction = all_outside_capture and all_outside_design
 
+    promoted_limit = float(P4.PROMOTED_CAYLEY_NORM_LIMIT)
     outer_bridge_requirements = {
         "normal_handoff_cayley_norm_upper": normal_cayley,
         "timeout_handoff_cayley_norm_upper": timeout_cayley,
         "normal_over_current_P4_design_radius_factor": normal_cayley / q_design,
         "timeout_over_current_P4_design_radius_factor": timeout_cayley / q_design,
-        "current_P4_promoted_cayley_norm_limit": float(P4.PROMOTED_CAYLEY_NORM_LIMIT),
-        "normal_inside_current_promoted_cayley_norm_limit": (
-            normal_cayley < float(P4.PROMOTED_CAYLEY_NORM_LIMIT)
-        ),
-        "timeout_inside_current_promoted_cayley_norm_limit": (
-            timeout_cayley < float(P4.PROMOTED_CAYLEY_NORM_LIMIT)
-        ),
+        "current_P4_promoted_cayley_norm_limit": promoted_limit,
+        "normal_inside_current_promoted_cayley_norm_limit": normal_cayley < promoted_limit,
+        "timeout_inside_current_promoted_cayley_norm_limit": timeout_cayley < promoted_limit,
         "current_uniform_full_state_B_upper": B,
         "optimistic_uniform_B_cap_at_weakest_P1_axis_witness": weak_B_cap,
         "optimistic_uniform_B_cap_at_largest_P1_axis_witness": strong_B_cap,
         "uniform_B_reduction_factor_needed_at_weakest_witness": weak_B_reduction,
         "uniform_B_reduction_factor_needed_at_largest_witness": strong_B_reduction,
         "interpretation": (
-            "Simply enlarging q_design while retaining the current isotropic B*W perturbation recurrence "
-            "does not bridge P1 to P4. P5 needs a new outer estimate on the same exact source map."
+            "Both P1 attitude branches remain inside the current Cayley chart bootstrap, but they are eleven-plus "
+            "orders larger than q_design. Simply enlarging q_design while retaining the current isotropic B*W "
+            "perturbation recurrence does not bridge P1 to P4; P5 needs a new outer estimate on the same exact source map."
         ),
         "required_proof_structure": [
-            "branch-specific exact SO(3) large-angle measurement dissipation, especially for timeout",
+            "branch-specific exact SO(3) finite-angle measurement dissipation, with the timeout node wider than the normal node",
             "anisotropic nonlinear-defect enclosure that does not charge exactly-linear v/p/S coordinates as rotation defect",
             "source-node subdivision across early covariance/tuner/pseudo-phase staging after goLive",
             "prefix-safe coverage of the deployed polynomial-versus-axis-angle quaternion correction branches",
@@ -244,7 +242,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             if obstruction else None
         ),
         "required_next_certificate": (
-            "construct a source-reachable outer H capture bridge using exact large-angle attitude dissipation and "
+            "construct a source-reachable outer H capture bridge using exact finite-angle attitude dissipation and "
             "anisotropic nonlinear-driver bounds; prove safe source prefixes and overlap with the existing P4 inner seed; "
             "then compute the finite H-word count to W_*"
         ),
@@ -302,8 +300,8 @@ def validate(d: dict) -> list[str]:
         failures.append("invalid normal/timeout Cayley handoff bounds")
     if bridge.get("normal_inside_current_promoted_cayley_norm_limit") is not True:
         failures.append("normal handoff unexpectedly exceeds current promoted Cayley chart limit")
-    if bridge.get("timeout_inside_current_promoted_cayley_norm_limit") is not False:
-        failures.append("timeout handoff unexpectedly fits current promoted Cayley bootstrap")
+    if bridge.get("timeout_inside_current_promoted_cayley_norm_limit") is not True:
+        failures.append("timeout handoff unexpectedly exceeds current promoted Cayley chart limit")
     weak_reduce = bridge.get("uniform_B_reduction_factor_needed_at_weakest_witness")
     strong_reduce = bridge.get("uniform_B_reduction_factor_needed_at_largest_witness")
     if not (
