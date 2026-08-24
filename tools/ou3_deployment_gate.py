@@ -4,7 +4,9 @@
 This gate deliberately recomputes stochastic concentration and finite capture
 from primitive validated constants. It never trusts a supplied final failure
 probability, capture time, deployment PASS bit, or a self-asserted source-domain
-completeness flag.
+completeness flag. Hybrid closure is independently normalized against the
+current source-domain obligations, with periodic a_w covariance synchronization
+discharged by its source-bound PSD/Loewner proof rather than a replay margin.
 """
 from __future__ import annotations
 
@@ -13,6 +15,7 @@ import json
 import math
 from pathlib import Path
 
+import ou3_hybrid_contract as HYBRID
 import ou3_source_domain_contract as SOURCE_DOMAIN
 
 REQUIRED_HYBRID = set(SOURCE_DOMAIN.HYBRID_OBLIGATIONS)
@@ -185,25 +188,9 @@ def derive_capture(c: dict) -> dict:
     }
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--validated-check", type=Path, required=True)
-    ap.add_argument("--source-domain", type=Path, required=True)
-    ap.add_argument("--primitive-bounds", type=Path, required=True)
-    ap.add_argument("--output", type=Path, required=True)
-    args = ap.parse_args()
-
-    check = json.loads(args.validated_check.read_text())
-    source_domain_payload = json.loads(args.source_domain.read_text())
-    primitive = json.loads(args.primitive_bounds.read_text())
-
+def compose(check: dict, source_domain_payload: dict, primitive: dict) -> dict:
     source_domain = validate_source_domain(source_domain_payload)
-    seen = set(check.get("hybrid", {}).get("seen", []))
-    hybrid_pass = (
-        source_domain["pass"]
-        and bool(check.get("hybrid", {}).get("pass"))
-        and REQUIRED_HYBRID <= seen
-    )
+    hybrid = HYBRID.validate(check)
     modes = check.get("modes", {})
     continuous_pass = all(
         modes.get(m, {}).get("linear_pass") and modes.get(m, {}).get("nonlinear_pass")
@@ -228,30 +215,45 @@ def main() -> int:
         source_domain["pass"]
         and provenance_pass
         and continuous_pass
-        and hybrid_pass
+        and hybrid["pass"]
         and stochastic.get("pass")
         and capture_pass
     )
-    out = {
-        "schema": 2,
+    return {
+        "schema": 3,
         "qualification": "INDEPENDENT_DEPLOYMENT_THEOREM_COMPOSITION_GATE",
         "source_domain": source_domain,
         "source_domain_pass": source_domain["pass"],
         "validated_provenance_pass": provenance_pass,
         "continuous_linear_and_nonlinear_pass": continuous_pass,
-        "hybrid_pass": hybrid_pass,
+        "hybrid": hybrid,
+        "hybrid_pass": hybrid["pass"],
         "hybrid_required": sorted(REQUIRED_HYBRID),
-        "hybrid_seen": sorted(seen),
+        "hybrid_seen": hybrid["satisfied"],
         "stochastic": stochastic,
         "capture": capture,
         "finite_capture_pass": capture_pass,
         "arithmetic_error": arithmetic_error,
         "deployment_theorem_certificate": "PASS" if final_pass else "FAIL",
     }
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--validated-check", type=Path, required=True)
+    ap.add_argument("--source-domain", type=Path, required=True)
+    ap.add_argument("--primitive-bounds", type=Path, required=True)
+    ap.add_argument("--output", type=Path, required=True)
+    args = ap.parse_args()
+
+    check = json.loads(args.validated_check.read_text())
+    source_domain_payload = json.loads(args.source_domain.read_text())
+    primitive = json.loads(args.primitive_bounds.read_text())
+    out = compose(check, source_domain_payload, primitive)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(out, indent=2, sort_keys=True))
     print(json.dumps(out, indent=2, sort_keys=True))
-    return 0 if final_pass else 2
+    return 0 if out["deployment_theorem_certificate"] == "PASS" else 2
 
 
 if __name__ == "__main__":
