@@ -160,7 +160,10 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("gravity_gate_acc_world_lpf_.reset();", self.ou3_wrap)
         self.assertIn(r"\alpha_{g,k}=1-e^{-\Delta t_k/\SI{12}{s}}", self.ou3_init)
         self.assertIn("first valid sample initializes the EMA state directly", self.ou3_init)
-        self.assertIn(r"ignored until this world-frame average has run for\n\SI{5}{s}", self.ou3_init)
+        self.assertRegex(
+            self.ou3_init,
+            r"ignored until this world-frame average has run for\s+\\SI\{5\}\{s\}",
+        )
 
     def test_ou3_cadence_bias_and_outer_warmup_match_paper(self):
         for token in (
