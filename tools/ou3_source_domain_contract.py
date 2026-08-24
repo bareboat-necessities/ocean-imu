@@ -16,8 +16,11 @@ exact binary64 representation of the deployed binary32 value.
 The producer also contains the first transcendental enclosure used by the
 continuous-word proof. ``validated_ou_primitives`` bounds exp(-h/tau), phi_pa
 and phi_Sa using exact rational Taylor arithmetic plus an explicit Lagrange
-remainder. It is intentionally parameterized by an accepted-step interval:
-the deployed wrapper presently checks only dt>0 and finiteness, so the source
+remainder. ``validated_phi_axis4`` lifts those scalar bounds to the exact 4x4
+[v,p,S,a] transition used by IntegratedOUChain<T,3>::transition.
+
+Both are intentionally parameterized by an accepted-step interval: the
+deployed wrapper presently checks only dt>0 and finiteness, so the source
 contract records the missing finite upper step guard as an explicit theorem
 blocker instead of silently substituting the nominal 200 Hz period.
 """
@@ -79,12 +82,7 @@ def _bits_to_positive_fraction(bits: int) -> Fraction:
 
 
 def _round_fraction_binary32(value: Fraction) -> Fraction:
-    """Round an exact rational to finite binary32, nearest/ties-to-even.
-
-    Python binary64 is used only to locate a nearby candidate. The final choice
-    is made by exact rational distances over that candidate and its neighbours,
-    so possible binary64 double-rounding cannot change the selected binary32.
-    """
+    """Round an exact rational to finite binary32, nearest/ties-to-even."""
     if value == 0:
         return Fraction(0, 1)
     sign = -1 if value < 0 else 1
@@ -188,7 +186,6 @@ def parse_aw_sigma_floor(text: str) -> float:
 
 
 def _outward_point(x: float) -> list[float]:
-    """Return an explicit binary64 enclosure of an exact deployed binary32."""
     x = float(x)
     if not math.isfinite(x):
         raise RuntimeError(f"non-finite source-domain endpoint {x!r}")
@@ -196,7 +193,6 @@ def _outward_point(x: float) -> list[float]:
 
 
 def _outward_box(lo: float, hi: float) -> list[float]:
-    """Return an outward-rounded binary64 box containing two source endpoints."""
     lo = float(lo)
     hi = float(hi)
     if not (math.isfinite(lo) and math.isfinite(hi)) or lo > hi:
@@ -205,7 +201,6 @@ def _outward_box(lo: float, hi: float) -> list[float]:
 
 
 def _fraction_down(q: Fraction) -> float:
-    """Greatest convenient binary64 lower enclosure of exact rational q."""
     y = float(q)
     if Fraction.from_float(y) > q:
         y = math.nextafter(y, -math.inf)
@@ -213,7 +208,6 @@ def _fraction_down(q: Fraction) -> float:
 
 
 def _fraction_up(q: Fraction) -> float:
-    """Least convenient binary64 upper enclosure of exact rational q."""
     y = float(q)
     if Fraction.from_float(y) < q:
         y = math.nextafter(y, math.inf)
@@ -221,13 +215,7 @@ def _fraction_up(q: Fraction) -> float:
 
 
 def _exp_neg_point_rational(x: Fraction, order: int = 96) -> tuple[Fraction, Fraction]:
-    """Validated enclosure of exp(-x), x>=0, by exact Taylor arithmetic.
-
-    For f(x)=exp(-x), every derivative on [0,x] has magnitude <=1.  The
-    order-N Taylor polynomial at zero therefore has Lagrange remainder bounded
-    by x^(N+1)/(N+1)!.  All polynomial arithmetic here is exact Fraction
-    arithmetic, so only the final conversion to binary64 needs outward rounding.
-    """
+    """Validated enclosure of exp(-x), x>=0, by exact Taylor arithmetic."""
     if x < 0:
         raise ValueError("exp(-x) enclosure requires x>=0")
     if order < 1:
@@ -245,18 +233,7 @@ def _exp_neg_point_rational(x: Fraction, order: int = 96) -> tuple[Fraction, Fra
 def validated_ou_primitives(h_bounds: tuple[float, float] | list[float],
                             tau_bounds: tuple[float, float] | list[float],
                             order: int = 96) -> dict:
-    """Outward enclosure of the deployed scalar OU transition primitives.
-
-    The implementation uses
-      alpha  = exp(-x), x=h/tau
-      phi_pa = tau^2 (x + exp(-x) - 1)
-      phi_Sa = tau^3 (0.5 x^2 - x - exp(-x) + 1).
-
-    The returned bounds use exact-rational interval arithmetic. Correlation
-    between tau and x is deliberately discarded, which can widen the box but
-    cannot invalidate it. The nonnegative lower clamp uses the analytic fact
-    that both integral coefficients are >=0 for h>=0,tau>0.
-    """
+    """Outward enclosure of the deployed scalar OU transition primitives."""
     h_lo, h_hi = map(Fraction.from_float, map(float, h_bounds))
     t_lo, t_hi = map(Fraction.from_float, map(float, tau_bounds))
     if h_lo < 0 or h_hi < h_lo:
@@ -271,11 +248,8 @@ def validated_ou_primitives(h_bounds: tuple[float, float] | list[float],
     alpha_lo = max(Fraction(0, 1), alpha_lo)
     alpha_hi = min(Fraction(1, 1), alpha_hi)
 
-    # x + alpha - 1, with independent interval terms.
     pa_core_lo = max(Fraction(0, 1), x_lo + alpha_lo - 1)
     pa_core_hi = x_hi + alpha_hi - 1
-
-    # 0.5*x^2 - x - alpha + 1. Independent interval arithmetic is used.
     sa_core_lo = max(Fraction(0, 1), Fraction(1, 2) * x_lo * x_lo - x_hi - alpha_hi + 1)
     sa_core_hi = Fraction(1, 2) * x_hi * x_hi - x_lo - alpha_lo + 1
 
@@ -296,6 +270,55 @@ def validated_ou_primitives(h_bounds: tuple[float, float] | list[float],
         "alpha": [_fraction_down(alpha_lo), _fraction_up(alpha_hi)],
         "phi_pa_s2": [_fraction_down(phi_pa_lo), _fraction_up(phi_pa_hi)],
         "phi_Sa_s3": [_fraction_down(phi_sa_lo), _fraction_up(phi_sa_hi)],
+    }
+
+
+def _mul_nonnegative_bounds(a: list[float], b: list[float]) -> list[float]:
+    if a[0] < 0 or b[0] < 0:
+        raise ValueError("nonnegative interval multiplication received a negative lower bound")
+    return [
+        math.nextafter(float(a[0]) * float(b[0]), -math.inf),
+        math.nextafter(float(a[1]) * float(b[1]), math.inf),
+    ]
+
+
+def validated_phi_axis4(h_bounds: tuple[float, float] | list[float],
+                        tau_bounds: tuple[float, float] | list[float],
+                        order: int = 96) -> dict:
+    """Enclose the exact deployed IntegratedOUChain<T,3>::transition matrix."""
+    p = validated_ou_primitives(h_bounds, tau_bounds, order)
+    h_lo, h_hi = map(float, h_bounds)
+    t_lo, t_hi = map(float, tau_bounds)
+    if h_lo < 0 or h_hi < h_lo or t_lo <= 0 or t_hi < t_lo:
+        raise ValueError("invalid h/tau transition domain")
+
+    zero = [0.0, 0.0]
+    one = [1.0, 1.0]
+    h = _outward_box(h_lo, h_hi)
+    half_h2 = [
+        math.nextafter(0.5 * h_lo * h_lo, -math.inf),
+        math.nextafter(0.5 * h_hi * h_hi, math.inf),
+    ]
+    one_minus_alpha = [
+        max(0.0, math.nextafter(1.0 - p["alpha"][1], -math.inf)),
+        math.nextafter(1.0 - p["alpha"][0], math.inf),
+    ]
+    tau = _outward_box(t_lo, t_hi)
+    phi_va = _mul_nonnegative_bounds(tau, one_minus_alpha)
+
+    M = [
+        [one, zero, zero, phi_va],
+        [h, one, zero, p["phi_pa_s2"]],
+        [half_h2, h, one, p["phi_Sa_s3"]],
+        [zero, zero, zero, p["alpha"]],
+    ]
+    return {
+        "validated_arithmetic": True,
+        "outward_rounded": True,
+        "implementation": "IntegratedOUChain<T,3>::transition",
+        "state_order": ["v", "p", "S", "a_w"],
+        "scalar_primitives": p,
+        "Phi_interval": M,
     }
 
 
@@ -366,6 +389,7 @@ def build(header: Path) -> dict:
             "available": True,
             "requires_finite_h_upper": True,
             "backend": "EXACT_RATIONAL_TAYLOR_WITH_LAGRANGE_REMAINDER",
+            "transition_matrix_backend": "VALIDATED_INTERVAL_4X4_INTEGRATED_OU_CHAIN",
             "theorem_promotion": "BLOCKED_BY_UNBOUNDED_ACCEPTED_DT",
         },
         "discrete_source_branches": {
@@ -384,9 +408,9 @@ def build(header: Path) -> dict:
             "metric_consequence": "inverse-covariance information energy is nonexpansive",
         },
         "promotion_rule": (
-            "the validated_parameter_box closes source-boundary scalar arithmetic, and a validated "
-            "OU primitive backend now exists; deployment promotion still requires a finite source-derived "
-            "accepted-dt upper bound followed by full H/A matrix/Taylor propagation, nonlinear SO(3) "
+            "source-boundary scalar arithmetic and the exact per-axis transition enclosure are now "
+            "validated; deployment promotion still requires a finite source-derived accepted-dt upper "
+            "bound, validated process-covariance and full H/A Riccati propagation, nonlinear SO(3) "
             "remainder bounds and remaining jump certificates"
         ),
     }
