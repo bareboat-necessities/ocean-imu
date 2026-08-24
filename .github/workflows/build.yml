@@ -12,6 +12,80 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  classify:
+    name: classify latest push
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      run_build: ${{ steps.changes.outputs.run_build }}
+    steps:
+      - name: Checkout history for push delta
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect whether broad build is needed
+        id: changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$REF" == "refs/heads/main" ]]; then
+            echo "run_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$EVENT_NAME" == "pull_request" && "$EVENT_ACTION" != "synchronize" ]]; then
+            echo "run_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -z "$BEFORE" || -z "$AFTER" || "$BEFORE" =~ ^0+$ ]]; then
+            echo "run_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git diff --name-only "$BEFORE" "$AFTER" > /tmp/build-changed.txt
+          cat /tmp/build-changed.txt
+          if [[ ! -s /tmp/build-changed.txt ]]; then
+            echo "run_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          proof_only=true
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/ou3-proof-fast.yml|\
+              .github/workflows/ou3-proof-completion.yml|\
+              .github/workflows/ou3-numerical-certificate.yml|\
+              tools/ou3_certificate_completion.py|\
+              tools/ou3_validate_enclosure.py|\
+              tools/ou3_deployment_gate.py|\
+              tools/ou3_hybrid_aw_sync_proof.py|\
+              tools/ou3_hybrid_contract.py|\
+              tools/ou3_source_domain_contract.py|\
+              tests/validation/test_ou3_certificate_completion.py|\
+              tests/validation/test_ou3_validate_enclosure.py|\
+              tests/validation/test_ou3_deployment_gate.py|\
+              tests/validation/test_ou3_hybrid_aw_sync_proof.py|\
+              tests/validation/test_ou3_hybrid_contract.py|\
+              tests/validation/test_ou3_source_domain_contract.py)
+                ;;
+              *)
+                proof_only=false
+                break
+                ;;
+            esac
+          done < /tmp/build-changed.txt
+
+          if [[ "$proof_only" == true ]]; then
+            echo "run_build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_build=true" >> "$GITHUB_OUTPUT"
+          fi
+
   # A PDF cut from main has to quote numbers this code actually produces, so
   # the full study runs and lands its bundle on main before the article is
   # typeset. Off main this is skipped and the article builds against the
@@ -26,13 +100,14 @@ jobs:
       validation_mode: full
 
   build:
-    needs: [ou-evidence]
+    needs: [ou-evidence, classify]
     # Off main ou-evidence is skipped and ordinary branch/PR builds should use
     # the committed evidence. On main, however, publication must not proceed
     # after a failed full-evidence run: the PDF would otherwise be cut from a
     # tree whose numerical evidence was not validated for that source state.
     if: >-
       ${{ !cancelled()
+          && needs.classify.outputs.run_build == 'true'
           && (github.ref != 'refs/heads/main'
               || needs['ou-evidence'].result == 'success') }}
     runs-on: ubuntu-latest
@@ -367,6 +442,8 @@ jobs:
           file_glob: true
 
   build-MCU:
+    needs: classify
+    if: needs.classify.outputs.run_build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:

@@ -1,0 +1,99 @@
+name: ou3-proof-fast
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_certificate_completion.py"
+      - "tools/ou3_validate_enclosure.py"
+      - "tools/ou3_deployment_gate.py"
+      - "tools/ou3_hybrid_aw_sync_proof.py"
+      - "tools/ou3_hybrid_contract.py"
+      - "tools/ou3_source_domain_contract.py"
+      - "tests/validation/test_ou3_certificate_completion.py"
+      - "tests/validation/test_ou3_validate_enclosure.py"
+      - "tests/validation/test_ou3_deployment_gate.py"
+      - "tests/validation/test_ou3_hybrid_aw_sync_proof.py"
+      - "tests/validation/test_ou3_hybrid_contract.py"
+      - "tests/validation/test_ou3_source_domain_contract.py"
+      - ".github/workflows/ou3-proof-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-proof-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-domain:
+    name: source-complete implementation domain
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile source-domain producer
+        run: python3 -m py_compile tools/ou3_source_domain_contract.py
+      - name: Test source-domain contract
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_source_domain_contract
+
+  enclosure:
+    name: continuous and nonlinear enclosure arithmetic
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile enclosure tools
+        run: |
+          python3 -m py_compile \
+            tools/ou3_certificate_completion.py \
+            tools/ou3_validate_enclosure.py
+      - name: Test enclosure and completion contracts
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_certificate_completion \
+            test_ou3_validate_enclosure
+
+  hybrid:
+    name: hybrid jump certificates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile hybrid proof gates
+        run: |
+          python3 -m py_compile \
+            tools/ou3_hybrid_aw_sync_proof.py \
+            tools/ou3_hybrid_contract.py
+      - name: Test hybrid proof gates
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_hybrid_aw_sync_proof \
+            test_ou3_hybrid_contract
+
+  composition:
+    name: stochastic capture and final composition arithmetic
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile final composition gate
+        run: python3 -m py_compile tools/ou3_deployment_gate.py
+      - name: Test stochastic, capture, and deployment composition
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_deployment_gate

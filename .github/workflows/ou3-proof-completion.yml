@@ -1,24 +1,18 @@
 name: ou3-proof-completion
 
+# Expensive sampled replay is diagnostic-only and is never an automatic proof
+# gate.  Proof-only pull requests are covered by ou3-proof-fast; numerical
+# dependencies are covered by ou3-numerical-certificate, whose H/A searches
+# fan out in parallel.  Keep this exact-prefix workflow available only for an
+# explicit diagnostic rerun.
 on:
-  pull_request:
-    paths:
-      - "tools/ou3_neighborhood_prefix_driver.py"
-      - "tools/ou3_neighborhood_radius_search_fast.py"
-      - "tools/ou3_deployment_gate.py"
-      - "tools/ou3_source_domain_contract.py"
-      - "tools/ou3_information_enclosure_contract.py"
-      - "tests/validation/test_ou3_neighborhood_prefix_driver.py"
-      - "tests/validation/test_ou3_deployment_gate.py"
-      - "tests/validation/test_ou3_source_domain_contract.py"
-      - ".github/workflows/ou3-proof-completion.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ou3-proof-completion-${{ github.event.pull_request.number || github.ref }}
+  group: ou3-proof-completion-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

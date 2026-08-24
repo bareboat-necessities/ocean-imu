@@ -1,5 +1,7 @@
 import importlib.util
+from fractions import Fraction
 import pathlib
+import random
 import sys
 import types
 import unittest
@@ -7,6 +9,11 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 TOOL = ROOT / "tools" / "ou3_validate_enclosure.py"
+sys.path.insert(0, str(ROOT / "tools"))
+
+import ou3_source_domain_contract as SOURCE  # noqa: E402
+from ou3_interval import Interval  # noqa: E402
+import ou3_source_interval_box as SOURCE_BOX  # noqa: E402
 
 
 def load_tool():
@@ -45,6 +52,70 @@ def mode_payload(level=10.0, ratio=0.8):
         "certified_level_W": level,
         "all_word_prefixes_safe": True,
     }
+
+
+def exact(x: float) -> Fraction:
+    return Fraction.from_float(float(x))
+
+
+def assert_contains_exact(test: unittest.TestCase, interval: Interval, value: Fraction):
+    test.assertLessEqual(exact(interval.lo), value)
+    test.assertLessEqual(value, exact(interval.hi))
+
+
+class Ou3IntervalArithmeticTests(unittest.TestCase):
+    def test_basic_operations_enclose_exact_binary64_endpoint_arithmetic(self):
+        rng = random.Random(403)
+        for _ in range(300):
+            a0, a1 = sorted((rng.uniform(-20.0, 20.0), rng.uniform(-20.0, 20.0)))
+            b0, b1 = sorted((rng.uniform(-20.0, 20.0), rng.uniform(-20.0, 20.0)))
+            A = Interval(a0, a1)
+            B = Interval(b0, b1)
+
+            C = A + B
+            assert_contains_exact(self, C, exact(a0) + exact(b0))
+            assert_contains_exact(self, C, exact(a1) + exact(b1))
+
+            C = A - B
+            assert_contains_exact(self, C, exact(a0) - exact(b1))
+            assert_contains_exact(self, C, exact(a1) - exact(b0))
+
+            products = [exact(x) * exact(y) for x in (a0, a1) for y in (b0, b1)]
+            C = A * B
+            assert_contains_exact(self, C, min(products))
+            assert_contains_exact(self, C, max(products))
+
+    def test_division_encloses_exact_values_when_denominator_avoids_zero(self):
+        rng = random.Random(404)
+        for _ in range(200):
+            a0, a1 = sorted((rng.uniform(-10.0, 10.0), rng.uniform(-10.0, 10.0)))
+            b0, b1 = sorted((rng.uniform(0.2, 10.0), rng.uniform(0.2, 10.0)))
+            A = Interval(a0, a1)
+            B = Interval(b0, b1)
+            quotients = [exact(x) / exact(y) for x in (a0, a1) for y in (b0, b1)]
+            C = A / B
+            assert_contains_exact(self, C, min(quotients))
+            assert_contains_exact(self, C, max(quotients))
+
+    def test_square_handles_zero_crossing(self):
+        C = Interval(-3.0, 2.0).square()
+        self.assertEqual(C.lo, 0.0)
+        assert_contains_exact(self, C, Fraction(9, 1))
+
+    def test_source_box_encloses_every_source_domain_endpoint_without_promoting_theorem(self):
+        source = SOURCE.build(SOURCE.DEFAULT_HEADER.resolve())
+        box = SOURCE_BOX.build(SOURCE.DEFAULT_HEADER.resolve())
+        failures = SOURCE_BOX.validate(box, SOURCE.DEFAULT_HEADER.resolve())
+        self.assertEqual(failures, [])
+        self.assertTrue(box["validated_arithmetic"])
+        self.assertTrue(box["outward_rounded"])
+        self.assertEqual(box["theorem_promotion"], "NOT_ESTABLISHED")
+        self.assertFalse(box["continuous_word_enclosed"])
+        self.assertFalse(box["nonlinear_word_enclosed"])
+        for name, endpoints in source["continuous_parameters"].items():
+            I = Interval(*box["continuous_parameters"][name])
+            self.assertTrue(I.contains(endpoints[0]), name)
+            self.assertTrue(I.contains(endpoints[1]), name)
 
 
 class Ou3ValidatedEnclosureTests(unittest.TestCase):
