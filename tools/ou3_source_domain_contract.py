@@ -23,17 +23,18 @@ covariance using the positive impulse-response kernel
 
     Qd = (2 sigma^2 / tau) integral_0^h g(r) g(r)^T dr.
 
-The kernel integral is subdivided into cells.  Every cell uses the validated
+The kernel integral is subdivided into cells. Every cell uses the validated
 transition/OU primitive bounds, and every sum/product is accumulated as an
-exact Fraction.  This avoids the cancellation-heavy closed-form covariance
-expressions.  The claim is intentionally narrow: it encloses the mathematical
+exact Fraction. This avoids the cancellation-heavy closed-form covariance
+expressions. The claim is intentionally narrow: it encloses the mathematical
 continuous OU covariance, while the shipping binary32 closed-form computation
 and its PSD cleanup remain a separate implementation-arithmetic obligation.
 
-All word-level arithmetic is intentionally parameterized by an accepted-step
-interval: the deployed wrapper presently checks only dt>0 and finiteness, so
-the source contract records the missing finite upper step guard as an explicit
-theorem blocker instead of silently substituting the nominal 200 Hz period.
+The public wrapper accepts every positive finite binary32 ``dt``. That set is
+technically finite -- [2^-149, FLT_MAX] -- but it has no operational safety
+upper guard. A deployment theorem therefore still needs a source/configuration
+supported-step bound that is small enough for finite, physically meaningful
+transition and covariance enclosures; nominal 200 Hz is not silently assumed.
 """
 from __future__ import annotations
 
@@ -382,18 +383,7 @@ def validated_qd_axis4_kernel(h_bounds: tuple[float, float] | list[float],
                               tau_bounds: tuple[float, float] | list[float],
                               sigma2_bounds: tuple[float, float] | list[float],
                               cells: int = 24, order: int = 96) -> dict:
-    """Rigorous elementwise enclosure of the mathematical integrated-OU Qd.
-
-    The chain impulse response from the white driving noise to [v,p,S,a] is
-    exactly the fourth column of the transition matrix evaluated at elapsed
-    time r.  All four components are nonnegative for r>=0,tau>0. Therefore
-    each covariance entry is a monotone-in-h integral of a nonnegative product.
-
-    This routine bounds the minimum at h_lo and maximum at h_hi by cellwise
-    interval integration and then applies qc=2*sigma2/tau. Dependencies are
-    discarded conservatively.  It does not yet claim enclosure of the shipping
-    binary32 closed-form evaluation or regularize_psd_if_needed() perturbation.
-    """
+    """Rigorous elementwise enclosure of the mathematical integrated-OU Qd."""
     h_lo_f, h_hi_f = map(float, h_bounds)
     t_lo_f, t_hi_f = map(float, tau_bounds)
     s_lo_f, s_hi_f = map(float, sigma2_bounds)
@@ -477,6 +467,8 @@ def build(header: Path) -> dict:
         "nonlinear_word_enclosed": False,
         "theorem_promotion": "NOT_ESTABLISHED",
     }
+    min_positive_f32 = float(_bits_to_positive_fraction(1))
+    max_finite_f32 = float(_bits_to_positive_fraction(_FLOAT32_MAX_BITS))
     return {
         "schema": 2,
         "claim": "OU3_SOURCE_COMPLETE_IMPLEMENTATION_DOMAIN_CONTRACT",
@@ -494,27 +486,31 @@ def build(header: Path) -> dict:
         "timing_constants_s": timing,
         "validated_parameter_box": parameter_box,
         "accepted_update_step_domain_s": {
-            "lower_open": 0.0,
-            "upper": None,
-            "source_complete_finite_upper_bound": False,
+            "lower_closed": min_positive_f32,
+            "upper_closed": max_finite_f32,
+            "type_level_finite_upper_bound": True,
+            "operational_safety_upper_guard": False,
+            "proof_usable_supported_upper_bound": False,
             "implementation_observation": (
-                "SeaStateFusionFilter_OU_III::updateCore_ rejects nonpositive/nonfinite dt "
-                "but currently has no finite upper accepted-step guard"
+                "SeaStateFusionFilter_OU_III::updateCore_ accepts every positive finite binary32 dt; "
+                "the IEEE-754 type supplies a finite maximum but the implementation supplies no "
+                "operationally meaningful maximum supported step"
             ),
             "theorem_effect": (
-                "continuous H/A transition and process-noise enclosure cannot be source-complete "
-                "until accepted dt has a finite implementation/configuration upper bound"
+                "a source-complete type-level domain exists, but its FLT_MAX upper endpoint is not a "
+                "finite-state operational domain for the transition/covariance formulas; theorem "
+                "promotion requires a source/configuration supported-step guard or equivalent caller contract"
             ),
         },
         "validated_ou_primitive_backend": {
             "available": True,
-            "requires_finite_h_upper": True,
+            "requires_proof_usable_h_upper": True,
             "backend": "EXACT_RATIONAL_TAYLOR_WITH_LAGRANGE_REMAINDER",
             "transition_matrix_backend": "VALIDATED_INTERVAL_4X4_INTEGRATED_OU_CHAIN",
             "process_covariance_backend": "POSITIVE_KERNEL_CELL_INTERVAL_EXACT_RATIONAL_ACCUMULATION",
             "process_covariance_mathematical_integral_enclosed": True,
             "process_covariance_shipping_float_path_enclosed": False,
-            "theorem_promotion": "BLOCKED_BY_UNBOUNDED_ACCEPTED_DT_AND_SHIPPING_QD_FLOAT_PATH",
+            "theorem_promotion": "BLOCKED_BY_NO_PROOF_USABLE_ACCEPTED_DT_GUARD_AND_SHIPPING_QD_FLOAT_PATH",
         },
         "discrete_source_branches": {
             "mode": ["H", "A"],
@@ -533,9 +529,9 @@ def build(header: Path) -> dict:
         },
         "promotion_rule": (
             "source-boundary scalar arithmetic, exact per-axis transition and mathematical OU process "
-            "covariance are now enclosed; deployment promotion still requires a finite source-derived "
-            "accepted-dt upper bound, enclosure of the shipping binary32 Qd/PSD-cleanup path, full H/A "
-            "Riccati propagation, nonlinear SO(3) remainder bounds and remaining jump certificates"
+            "covariance are now enclosed; deployment promotion still requires a proof-usable source-derived "
+            "accepted-dt upper guard/contract, enclosure of the shipping binary32 Qd/PSD-cleanup path, full "
+            "H/A Riccati propagation, nonlinear SO(3) remainder bounds and remaining jump certificates"
         ),
     }
 
