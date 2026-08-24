@@ -6,7 +6,8 @@
 #include <iostream>
 
 // Keep the deployed horizontal operating point unchanged while proving that
-// X and Y regularization can now be overridden independently.
+// X and Y regularization can now be overridden independently. The default
+// remains (1.15, 1.15, 1.0), exactly matching current main numerically.
 namespace {
 
 using Fusion = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;
