@@ -1,12 +1,25 @@
 \subsection{Source-Reachable Path Lyapunov Certificate}
 \label{sec:stability-widening-source-path}
 
-The quantitative Live certificate is built only on source-reachable execution
-words.  The compact envelope of Sec.~\ref{sec:stability-widening-phase-a}
+The quantitative Live certificate is built only on jointly source-reachable
+execution words.  The compact envelope of Sec.~\ref{sec:stability-widening-phase-a}
 remains useful for existence, boundedness, and adaptation-law independence, but
 it is not used as a second quantitative certificate route.  Likewise, the
 certificate below does not introduce a common Euclidean contraction test, a
-common quadratic metric, or a one-step nonlinear alternative.
+common quadratic metric, a repeated one-step contraction construction, or a
+one-step nonlinear alternative.
+
+The translational part of every quantitative word uses the source-cadence-only
+complete-chain route of Lemma~\ref{lem:iss-axis-uco}: four usable $S=0$
+updates observe $(v,p,S,a_w)$.  On a word of duration $T_{S,W}$ the four rows
+are spread as $t_0,t_{q_W},t_{2q_W},t_{3q_W}$ with $q_W$ from
+Eq.~\eqref{eq:iss-S-spread-index}; the certificate therefore credits the
+$(q_W\Delta_{S,-})^6$ determinant factor rather than silently reverting to
+adjacent firings.  The three-$S$ integrator construction of
+Lemma~\ref{lem:iss-three-s-coupled} is supporting analysis only and is not a
+fallback certificate: it may be used quantitatively only when its separate
+conditional latent-acceleration information hypothesis is itself certified on
+the same source word.
 
 The homogeneous held-bias and active-bias systems have different active
 coordinates (18 and 21 states).  The construction is therefore applied
@@ -23,10 +36,10 @@ For mode $m$, introduce a finite proof graph
  \label{eq:widen-src-graph}
 \end{equation}
 whose nodes cover the compact source-reachable proof state in that mode.  Nodes
-encode the source quantities that affect the error map, including
-pseudo-measurement phase, accepted-update pattern, magnetic state, and declared
-compact cells of covariance and scheduled parameters.  Each edge
-$e=(i,j)\in\mathscr E_m$ carries the compact matrix family
+encode the source quantities that affect the error map, including pseudo-
+measurement phase, accepted-update pattern, magnetic state, covariance state,
+commit/hold state, and declared compact cells of the scheduled parameters.
+Each edge $e=(i,j)\in\mathscr E_m$ carries the compact matrix family
 \begin{equation}
  \mathscr A_e:=\left\{
  \widetilde{\mat A}_{k,m}^{\rm cl}:
@@ -49,8 +62,10 @@ $w=(i_0,e_0,i_1,\ldots,e_{r-1},i_r)$ define the source-correlated matrix family
  \right\}.
  \label{eq:widen-src-word-family}
 \end{equation}
-The joint reachability clause is essential: consecutive edge extrema that
-cannot occur on one estimator execution are not multiplied together.
+The joint reachability clause is essential.  Extrema of
+$(\tau,\sigma_{aw},r_S,T_S)$ or of gate/covariance state that cannot coexist on
+one estimator execution are not multiplied together merely because they lie in
+the same Cartesian envelope.
 
 Let $\mathscr W_{{\rm src},m}$ be a finite collection of words with
 \begin{equation}
@@ -61,8 +76,16 @@ It is \emph{source complete} when every infinite execution that remains in
 mode $m$ can be tiled successively by words in
 $\mathscr W_{{\rm src},m}$.
 
+A validated Riccati/information calculation may use any nonsingular
+conditioning congruence that is applied to both sides of a generalized matrix
+inequality.  Such a congruence is a numerical device and is not automatically
+the Lyapunov metric used below.  In particular, a source-varying
+$\Sigma_{\rm KF}^{-1}$ or a conditioned $RL^{-1}$ basis may certify a linear
+information margin without introducing attitude--linear cross terms into the
+nonlinear group energy.
+
 To keep the linear path certificate exactly compatible with the nonlinear
-SO(3) lift below, split the local error coordinate as
+$\SO(3)$ lift below, split the local error coordinate as
 $\vct z=(\delta\vct\theta,\vct\xi)$, where $\vct\xi$ contains every
 non-attitude coordinate in the fixed-dimensional mode.  For each graph node
 choose $a_{R,i}>0$ and a symmetric matrix $\mat P_{\xi,i}\succ0$, and define
@@ -77,9 +100,11 @@ the group-compatible local quadratic metric
 The coefficient $a_{R,i}/2$ is not an arbitrary restriction: because
 $V_R=1-\cos\theta=\tfrac12\|\delta\theta\|^2+O(\|\delta\theta\|^4)$,
 Eq.~\eqref{eq:widen-path-Pbar} is precisely the local quadratic of the exact
-group metric in Eq.~\eqref{eq:widen-path-group-metric}.  In particular, no
-attitude--linear cross term is introduced that would disappear when the
-attitude coordinate is lifted back to SO(3).
+group metric in Eq.~\eqref{eq:widen-path-group-metric}.  No attitude--linear
+cross term is admitted that would disappear when the attitude coordinate is
+lifted back to $\SO(3)$.  The matrices $P_{\xi,i}$ and weights $a_{R,i}$ may be
+optimized node by node; the theorem does not require a common quadratic metric
+or equality with the Kalman information matrix.
 
 Require uniform metric bounds
 \begin{equation}
@@ -147,9 +172,10 @@ and the source-prefix amplification
               \overline P_{i_0}^{-1/2}\right\|<\infty,
  \label{eq:widen-path-prefix}
 \end{equation}
-where the last supremum is restricted to complete source-reachable prefixes.
-These are the linear constants carried into the nonlinear and handoff
-certificates.
+where the last supremum is restricted to complete jointly source-reachable
+prefixes.  Individual $\lambda_w$ and reachable products are retained as long
+as possible; replacing them prematurely by powers of a global worst-word
+factor is not part of the certificate.
 
 \subsubsection{Exact group/path nonlinear metric}
 
@@ -161,9 +187,9 @@ Eq.~\eqref{eq:widen-path-Pbar}, define
  :=a_{R,i}V_R(\mat R_e)+\vct\xi^\top\mat P_{\xi,i}\vct\xi.}
  \label{eq:widen-path-group-metric}
 \end{equation}
-Thus the linear and nonlinear certificates use one metric geometry rather than
-independently optimized quadratic and group metrics.  The node domain
-$\mathcal D_i$ uses a certified geodesic chart
+Thus the linear and nonlinear certificates use one group-compatible metric
+geometry rather than independently optimized quadratic and group metrics.  The
+node domain $\mathcal D_i$ uses a certified geodesic chart
 $\theta_e\le\theta_{*,i}<\pi$ together with the source covariance,
 measurement, and state bounds.  No Euclidean attitude-radius replacement is
 made.
@@ -193,10 +219,8 @@ zero-input word dissipation margin
 The exact finite-correction identity of
 Eq.~\eqref{eq:widen-exact-energy-change} is used inside
 $\mathcal F_w$; the attitude contribution is therefore not replaced by a local
-Taylor remainder.  The large-angle sector of
-Eq.~\eqref{eq:widen-large-angle-sector} supplies a useful analytical lower
-bound when constructing the rigorous enclosure, while the final certificate is
-on the complete word map.
+Taylor remainder.  The final certificate is on the complete source-correlated
+word endpoint, not on a product of independently certified one-sample margins.
 
 \begin{theorem}[Source-word large-angle practical ISS]
 \label{thm:widen-path-direct-iss}
@@ -227,8 +251,11 @@ Dimension-changing or hard-reset transitions are certified by their exact jump
 maps between the corresponding node domains.  In particular, held-to-active
 bias release must map a certified held-mode sublevel into an active-mode node
 sublevel; magnetic re-gauging and tilt re-lock use the hybrid jump conditions of
-Sec.~\ref{sec:hybrid-live-stability}.  No square homogeneous transition is
-formed across a state-dimension change.
+Sec.~\ref{sec:hybrid-live-stability}.  A tilt reset does not charge discarded
+pre-reset tilt energy in its multiplicative gain, and cooldown contraction is
+formed from reachable word products rather than a power of a global worst-word
+factor.  No square homogeneous transition is formed across a state-dimension
+change.
 
 \subsubsection{Verification contract}
 
@@ -241,14 +268,17 @@ A rigorous deployed Live certificate reports
  \label{eq:widen-path-contract}
 \end{equation}
 The pass conditions are: every reachable same-mode transition is covered; the
-word family is source complete; all robust matrix and exact nonlinear word
-bounds cover the complete continuous source family; every prefix is safe; all
-dimension-changing jumps enter a certified destination domain; and the relevant
-word margins are strict.  Interval arithmetic, affine arithmetic, Taylor
-models, branch-and-bound, robust LMIs over certified matrix families, or another
-validated enclosure method may be used.  Monte Carlo and dense trajectory
-sampling are diagnostics only and do not establish the required suprema or
-infima.
+word family is source complete; the four-$S$ complete-chain and recurring
+vector-PE hypotheses are realized inside each tile; all robust matrix and exact
+nonlinear word bounds cover the complete continuous jointly source-reachable
+family; every prefix is safe; all dimension-changing jumps enter a certified
+destination domain; and the relevant word margins are strict.  Interval
+arithmetic, affine arithmetic, Taylor models, branch-and-bound, robust LMIs over
+certified matrix families, or another validated enclosure method may be used.
+Monte Carlo and dense trajectory sampling are diagnostics only and do not
+establish the required suprema or infima.
 
 This is the sole quantitative normal-Live certificate path used by the widened
-theory.  It changes neither the estimator nor the adaptation law.
+theory.  Older scalar, common-Euclidean, three-$S$-without-$\mu_a$, or repeated
+one-step alternatives are not promotion fallbacks.  The construction changes
+neither the estimator nor the adaptation law.
