@@ -91,7 +91,7 @@ def _constants() -> dict:
     )
     b0 = _one(r"float\s+b0\s*=\s*([0-9.eE+-]+)f", wrapper, "gyro bias RW b0")
     q_ba = _one(
-        r"Q_bacc_\s*=\s*Matrix3::Identity\(\)\s*\s*T\(([0-9.eE+-]+)\)",
+        r"Q_bacc_\s*=\s*Matrix3::Identity\(\)\s*\*\s*T\(([0-9.eE+-]+)\)",
         mekf, "accelerometer bias process density",
     )
     tau_ba = _one(
