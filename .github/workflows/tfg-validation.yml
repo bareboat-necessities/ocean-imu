@@ -9,7 +9,6 @@ on:
       - 'src/tuner/**'
       - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
-      - 'tools/materialize_tfg_independent_rs_xy.py'
       - 'docs/tfg-spectral-mse-ou3-parity.md'
       - '.github/workflows/tfg-validation.yml'
   pull_request:
@@ -24,32 +23,7 @@ on:
       - '.github/workflows/tfg-validation.yml'
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  materialize-axis-api:
-    if: github.event_name == 'push' && github.ref_name == 'tfg-independent-rs-xy-isotropic'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout experiment branch
-        uses: actions/checkout@v6
-        with:
-          ref: tfg-independent-rs-xy-isotropic
-      - name: Materialize source edit
-        run: |
-          set -euo pipefail
-          python3 tools/materialize_tfg_independent_rs_xy.py
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/kalman_tfg/SeaStateFusionFilter_TFG.h tests/kalman_tfg/kalman_tfg-sim.cpp
-          if git diff --cached --quiet; then
-            echo 'No source changes to commit.'
-            exit 0
-          fi
-          git commit -m 'Give TFG independent isotropic R_S axis factors'
-          git push origin HEAD:tfg-independent-rs-xy-isotropic
-
   unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -77,6 +51,7 @@ jobs:
           ./covariance_transport-test
           ./tfg_process_covariance-test
           ./tfg_orchestrator-test
+          ./tfg_rs_axis_factors-test
 
   wave-regression:
     runs-on: ubuntu-latest
@@ -113,14 +88,14 @@ jobs:
         run: make -C baseline-main/tests/kalman_tfg kalman_tfg-sim
 
       # The three arms deliberately use identical records, seeds and 900 s
-      # scoring windows. The historical simulator bars are left intact so the
-      # old operating point remains visible; the new default has its own gate
-      # below, derived from this PR's eight-record evidence with ~0.5% margin.
+      # scoring windows. Collect all record-level gates so a changed default
+      # cannot truncate the paired comparison at its first regression.
       - name: Run SpectralMSE TFG arm
         working-directory: tests/kalman_tfg
         env:
           W3D_WRITE_TIMESERIES: '0'
           W3D_VALIDATION_WINDOW_SEC: '900'
+          W3D_COLLECT_ALL_GATES: '1'
         run: ./kalman_tfg-sim | tee tfg-spectral-mse.log || true
 
       - name: Run legacy cubic TFG arm
@@ -128,6 +103,7 @@ jobs:
         env:
           W3D_WRITE_TIMESERIES: '0'
           W3D_VALIDATION_WINDOW_SEC: '900'
+          W3D_COLLECT_ALL_GATES: '1'
         run: ./kalman_tfg-legacy-sim | tee tfg-legacy-cubic.log || true
 
       - name: Run pre-PR main baseline arm
@@ -135,6 +111,7 @@ jobs:
         env:
           W3D_WRITE_TIMESERIES: '0'
           W3D_VALIDATION_WINDOW_SEC: '900'
+          W3D_COLLECT_ALL_GATES: '1'
         run: ./kalman_tfg-sim | tee ../../../tfg-main-baseline.log || true
 
       - name: Gate SpectralMSE default
