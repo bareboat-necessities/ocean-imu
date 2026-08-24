@@ -4,7 +4,8 @@
   "trajectory_fit": false,
   "note": "These are theorem/deployment assumptions, not extrema fitted from the eight reference replays. Existing replay remains a regression/falsification layer and may disprove this envelope but cannot establish it.",
   "configured_runtime": {
-    "imu_dt_s": 0.005
+    "imu_dt_s": 0.005,
+    "imu_lever_arm_enabled": false
   },
   "startup": {
     "gravity_mps2": 9.80665,
@@ -33,7 +34,7 @@
     "magnetic_vector_norm_upper_uT": 200.0,
     "vector_sine_separation_lower": 0.1,
     "body_rate_norm_upper_deg_s": 30.0,
-    "pe_scope_note": "The full-heading theorem excludes free-fall/near-free-fall and magnetic fields within 5.74 deg of gravity. The 5 m/s^2 force floor and 10 uT field floor are declared deployment assumptions, not replay-derived extrema; gravity-only/yaw-quotient operation is certified separately rather than pretending heading is observable outside this PE envelope."
+    "pe_scope_note": "The full-heading theorem excludes free-fall/near-free-fall and magnetic fields within 5.74 deg of gravity. The 5 m/s^2 force floor and 10 uT field floor are declared deployment assumptions, not replay-derived extrema; gravity-only/yaw-quotient operation is certified separately rather than pretending heading is observable outside this PE envelope. The quantitative P4 certificate also binds the deployed default with optional IMU lever-arm compensation disabled; enabling a nonzero lever arm requires extending the source-domain nonlinear remainder bound with the configured geometry."
   },
   "stochastic": {
     "finite_horizon_failure_probability_budget": 0.05
