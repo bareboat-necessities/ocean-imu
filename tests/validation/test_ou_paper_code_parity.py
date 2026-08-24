@@ -97,6 +97,15 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn(r"c_{\mathrm{adapt}}=0.40", self.ou3_impl)
         self.assertIn(r"m_{r_S}=1.5", self.ou3_impl)
         self.assertIn(r"\tau_b=\SI{5000}{s}", self.ou3_impl)
+        self.assertIn("float online_tune_warmup_sec = 10.0f;", self.ou3_wrap)
+        self.assertIn(
+            "impl_.setOnlineTuneWarmupSec(cfg_.online_tune_warmup_sec);",
+            self.ou3_wrap,
+        )
+        self.assertIn(
+            "online tuning warmup / magnetometer delay & $10/7$ s",
+            self.ou3_impl,
+        )
 
     def test_ou3_magnetic_refinement_uses_independent_proxy_tilt(self):
         self.assertIn(
