@@ -36,6 +36,7 @@ on:
       - "tools/ou3_p4_exact_word_map.py"
       - "tools/ou3_p4_node_metrics.py"
       - "tools/ou3_p4_nonlinear_word_certificate.py"
+      - "tools/ou3_p5_startup_capture_certificate.py"
       - "tools/ou3_proof_operating_domain.json"
       - "docs/ou-iii-implementation-stability-proof-plan.md"
       - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
@@ -61,6 +62,7 @@ on:
       - "tests/validation/test_ou3_p4_group_algebra.py"
       - "tests/validation/test_ou3_p4_word_map_and_metrics.py"
       - "tests/validation/test_ou3_p4_nonlinear_word_certificate.py"
+      - "tests/validation/test_ou3_p5_startup_capture_certificate.py"
       - "tests/validation/test_ou_stability_source_path_widening.py"
       - ".github/workflows/ou3-proof-fast.yml"
   workflow_dispatch:
@@ -245,6 +247,28 @@ jobs:
               print(f"P4_NUMERICAL {m} W_star={r['certified_level_W']:.17e} mu_W_lower={r['mu_W_lower']:.17e} gap_lower={r['endpoint_relative_W_decrease_lower']:.17e} prefix_norm={r['prefix_canonical_error_norm_upper']:.17e}")
           PY
 
+  p5-capture-identification:
+    name: P5 startup capture obstruction identification
+    needs: [startup-proof, p4-nonlinear]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile P5 capture identification
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_startup_capture_certificate.py \
+            tests/validation/test_ou3_p5_startup_capture_certificate.py
+      - name: Test P5 capture composition gate
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_startup_capture_certificate
+      - name: Emit P5 capture status and first obstruction
+        run: python3 tools/ou3_p5_startup_capture_certificate.py --output /tmp/ou3_p5_startup_capture_certificate.json
+
   hybrid:
     name: hybrid jump certificates
     runs-on: ubuntu-24.04
@@ -272,7 +296,7 @@ jobs:
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
       - name: Compile final composition gates
-        run: python3 -m py_compile tools/ou3_deployment_gate.py tools/ou3_implementation_stability_gate.py tests/validation/test_ou3_implementation_stability_gate.py
+        run: python3 -m py_compile tools/ou3_deployment_gate.py tools/ou3_p5_startup_capture_certificate.py tools/ou3_implementation_stability_gate.py tests/validation/test_ou3_p5_startup_capture_certificate.py tests/validation/test_ou3_implementation_stability_gate.py
       - name: Test stochastic, capture, deployment and implementation composition
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_deployment_gate test_ou3_implementation_stability_gate
+        run: python3 -m unittest -v test_ou3_deployment_gate test_ou3_p5_startup_capture_certificate test_ou3_implementation_stability_gate
