@@ -2,10 +2,10 @@
 """Compatibility entry point for the OU-III P3 information certificate.
 
 The scalar physical-unit min(Q)/trace(P) implementation has been retired.
-All callers now execute the source-reachable matrix-valued backend in
-``ou3_source_reachable_matrix_p3``.
+All callers execute the source-reachable matrix-valued backend with the
+algebraically factored small-x process representation.
 """
-from ou3_source_reachable_matrix_p3 import *  # noqa: F401,F403
+from ou3_source_reachable_matrix_p3_factored import *  # noqa: F401,F403
 
 
 if __name__ == "__main__":
