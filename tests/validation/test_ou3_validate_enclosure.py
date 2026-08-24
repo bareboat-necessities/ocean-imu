@@ -196,17 +196,30 @@ class Ou3ValidatedEnclosureTests(unittest.TestCase):
             {"kind": "held_to_active", **{**common, "destination_mode": "A"},
              "source_dimension": 18, "destination_dimension": 21,
              "dimension_change_handled_by_embedding": True, "new_coordinate_W_upper": 0.3},
-            {"kind": "magnetic_regauge", **common},
+            {"kind": "magnetic_lock", **common},
+            {"kind": "magnetic_regauge_refinement", **common},
             {"kind": "tilt_reset", **common,
              "discarded_pre_reset_tilt_excluded_from_multiplicative_gain": True,
              "reset_to_funnel_exact_map": True},
-            {"kind": "cooldown", **common,
+            {"kind": "tilt_relock", **common},
+            {"kind": "cooldown_reentry", **common,
              "reachable_word_product_used": True, "global_worst_word_power_used": False},
         ]
         out = tool.validate_hybrid(rows, modes)
         self.assertTrue(out["pass"], out["failures"])
+        self.assertEqual(out["analytic_obligation_separate"], "periodic_aw_covariance_sync")
         held = next(x for x in out["bounds"] if x["kind"] == "held_to_active")
         self.assertAlmostEqual(held["post_jump_W_upper"], 1.5)
+
+    def test_legacy_hybrid_names_are_rejected(self):
+        tool = load_tool()
+        modes = {"H": {"certified_level_W": 10.0}, "A": {"certified_level_W": 10.0}}
+        row = dict(kind="cooldown", source_complete=True, outward_rounded=True,
+                   source_level_W_upper=1.0, jump_gain_upper=0.5, additive_W_upper=0.0,
+                   destination_level_W=5.0, destination_mode="H")
+        out = tool.validate_hybrid([row], modes)
+        self.assertFalse(out["pass"])
+        self.assertTrue(any("unknown" in x for x in out["failures"]))
 
     @staticmethod
     def stochastic_payload(radius=20.0, level=100.0):
