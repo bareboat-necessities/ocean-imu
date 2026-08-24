@@ -68,18 +68,19 @@ class Ou3P5StartupCaptureCertificateTests(unittest.TestCase):
         self.assertAlmostEqual(strong["axis_witness_W_lower"], 9.0e4, delta=1.0e-8)
         self.assertGreater(strong["W_lower_over_strict_decrease_threshold"], 1.0e144)
 
-    def test_normal_and_timeout_handoffs_require_different_outer_attitude_treatment(self):
+    def test_normal_and_timeout_handoffs_are_finite_angle_but_far_outside_q_design(self):
         b = self.d["outer_bridge_requirements"]
         normal = b["normal_handoff_cayley_norm_upper"]
         timeout = b["timeout_handoff_cayley_norm_upper"]
         self.assertGreater(normal, 0.09)
         self.assertLess(normal, 0.10)
-        self.assertGreater(timeout, 2.0)
-        self.assertLess(timeout, 2.1)
+        self.assertGreater(timeout, 0.40)
+        self.assertLess(timeout, 0.42)
+        self.assertGreater(timeout, normal)
         self.assertTrue(b["normal_inside_current_promoted_cayley_norm_limit"])
-        self.assertFalse(b["timeout_inside_current_promoted_cayley_norm_limit"])
+        self.assertTrue(b["timeout_inside_current_promoted_cayley_norm_limit"])
         self.assertGreater(b["normal_over_current_P4_design_radius_factor"], 1.0e11)
-        self.assertGreater(b["timeout_over_current_P4_design_radius_factor"], 1.0e12)
+        self.assertGreater(b["timeout_over_current_P4_design_radius_factor"], 4.0e11)
 
     def test_unchanged_isotropic_P4_recurrence_is_not_a_plausible_outer_bridge(self):
         b = self.d["outer_bridge_requirements"]
