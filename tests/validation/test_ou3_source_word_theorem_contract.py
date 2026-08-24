@@ -1,0 +1,79 @@
+import importlib.util
+from pathlib import Path
+import sys
+import unittest
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+spec = importlib.util.spec_from_file_location(
+    "ou3_source_word_theorem_contract",
+    ROOT / "tools" / "ou3_source_word_theorem_contract.py",
+)
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+
+class SourceWordTheoremContractTests(unittest.TestCase):
+    def test_missing_pe_recurrence_blocks_source_complete_word_claim(self):
+        d = mod.build()
+        self.assertEqual(mod.validate(d), [])
+        self.assertFalse(d["conditional_word_language"]["ready"])
+        self.assertFalse(d["source_complete_relative_to_theorem_hypotheses"])
+        self.assertFalse(d["continuous_word_enclosed"])
+        self.assertFalse(d["nonlinear_word_enclosed"])
+        self.assertEqual(d["theorem_promotion"], "NOT_ESTABLISHED")
+        self.assertTrue(any("recurrence" in x for x in d["failures"]))
+
+    def test_declared_recurrence_creates_a_tileable_conditional_language(self):
+        d = mod.build(pe_recurrence_window_s=1.0)
+        self.assertEqual(mod.validate(d), [])
+        self.assertTrue(d["conditional_word_language"]["ready"])
+        self.assertTrue(d["source_complete_relative_to_theorem_hypotheses"])
+        self.assertGreaterEqual(
+            d["conditional_word_language"]["word_horizon_lower_s"], 1.0
+        )
+        self.assertGreater(
+            d["conditional_word_language"]["word_samples_upper_at_configured_dt"], 0
+        )
+        self.assertFalse(d["continuous_word_enclosed"])
+        self.assertEqual(d["theorem_promotion"], "NOT_ESTABLISHED")
+
+    def test_recurrence_cannot_be_shorter_than_vector_packet_span(self):
+        base = mod.build()
+        gap_hi = base["vector_persistent_excitation"]["packet_gap_s"][1]
+        d = mod.build(pe_recurrence_window_s=0.5 * gap_hi)
+        self.assertEqual(mod.validate(d), [])
+        self.assertFalse(d["conditional_word_language"]["ready"])
+        self.assertTrue(any("shorter" in x for x in d["failures"]))
+
+    def test_required_pe_event_does_not_forbid_other_source_branches(self):
+        d = mod.build(pe_recurrence_window_s=1.0)
+        branches = d["source_branch_language"]
+        self.assertEqual(branches["accelerometer_gate"], ["accepted", "rejected"])
+        self.assertEqual(
+            branches["magnetometer_gate"], ["not_due", "accepted", "rejected"]
+        )
+        pe = d["vector_persistent_excitation"]
+        self.assertTrue(pe["arbitrary_rejections_between_required_pe_events_allowed"])
+        self.assertTrue(pe["two_consecutive_accepted_magnetic_packets_required"])
+        self.assertTrue(pe["accelerometer_required_at_both_vector_times"])
+
+    def test_hybrid_events_are_not_multiplied_into_same_mode_words(self):
+        d = mod.build(pe_recurrence_window_s=1.0)
+        scope = d["normal_live_scope"]
+        self.assertTrue(scope["same_mode_only"])
+        self.assertFalse(scope["dimension_change_multiplied_as_square_word"])
+        self.assertIn("held_to_active", scope["hybrid_transitions_separate"])
+        self.assertIn("tilt_reset", scope["hybrid_transitions_separate"])
+
+    def test_contract_uses_no_replay_or_observed_extrema(self):
+        text = (ROOT / "tools" / "ou3_source_word_theorem_contract.py").read_text()
+        for forbidden in (
+            "ou3_exact_replay", "path_metrics", "neighborhood_radius_search",
+            "observed_min", "replay_min", "np.quantile",
+        ):
+            self.assertNotIn(forbidden, text)
+
+
+if __name__ == "__main__":
+    unittest.main()
