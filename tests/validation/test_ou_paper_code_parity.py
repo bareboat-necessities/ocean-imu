@@ -8,7 +8,6 @@ constants, cadence semantics, and startup source path.
 """
 
 from pathlib import Path
-import re
 import unittest
 
 
@@ -41,12 +40,19 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("BASE_N + 12", self.ou3_core)
 
         self.assertIn("N_X=21", self.ou3_state)
-        for token in (r"\delta\vct{\theta}", r"\vct b_g", r"\vct v",
-                      r"\vct p", r"\vct S", r"\vct a_w", r"\vct b_a"):
+        for token in (
+            r"\delta\vct{\theta}",
+            r"\delta\vct{b}_g",
+            r"\delta\vct{v}",
+            r"\delta\vct{p}",
+            r"\delta\vct{S}",
+            r"\delta\vct{a}_w",
+            r"\delta\vct{b}_a",
+        ):
             self.assertIn(token, self.ou3_state)
-        self.assertIn(r"\dot{\vct v}=\vct a_w", self.ou3_proc)
-        self.assertIn(r"\dot{\vct p}=\vct v", self.ou3_proc)
-        self.assertIn(r"\dot{\vct S}=\vct p", self.ou3_proc)
+        self.assertIn(r"\dot{\vct{v}}=\vct{a}_w", self.ou3_proc)
+        self.assertIn(r"\dot{\vct{p}}=\vct{v}", self.ou3_proc)
+        self.assertIn(r"\dot{\vct{S}}=\vct{p}", self.ou3_proc)
         self.assertIn(r"\vct{z}_S=0=\vct{S}+\vct{n}_S", self.ou3_meas)
 
     def test_ou3_spectral_mse_default_matches_paper(self):
