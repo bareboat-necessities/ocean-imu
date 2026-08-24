@@ -17,10 +17,13 @@ build:
 		../../tools/ou3_validate_enclosure.py \
 		../../tools/ou3_hybrid_aw_sync_proof.py \
 		../../tools/ou3_source_word_theorem_contract.py \
+		../../tools/ou3_translational_spread_uco.py \
 		../../tools/ou3_interval_linear_algebra.py \
 		../../tools/ou3_validated_kalman_interval.py \
 		../../tools/ou3_source_reachable_matrix_p3.py \
 		../../tools/ou3_source_reachable_matrix_p3_factored.py \
+		../../tools/ou3_source_reachable_matrix_p3_direct.py \
+		../../tools/ou3_p3_word_algebra.py \
 		../../tools/ou3_explicit_information_word_certificate.py \
 		../../tools/ou3_implementation_proof_manifest.py \
 		../../tools/ou3_startup_stability_certificate.py \
@@ -45,7 +48,9 @@ build:
 		test_ou3_validate_enclosure.py \
 		test_ou3_hybrid_aw_sync_proof.py \
 		test_ou3_source_word_theorem_contract.py \
+		test_ou3_translational_uco_ucc.py \
 		test_ou3_validated_kalman_interval.py \
+		test_ou3_p3_word_algebra.py \
 		test_ou3_explicit_information_word_certificate.py \
 		test_ou3_startup_stability_certificate.py \
 		test_ou3_implementation_word_language.py \
