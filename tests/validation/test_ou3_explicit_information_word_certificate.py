@@ -35,7 +35,21 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
         self.assertTrue(d["outward_rounded"])
         self.assertEqual(d["p3_window_backend"], "SOURCE_COMPLETE_WORD_ENDPOINT_GENERALIZED_INFORMATION")
         self.assertEqual(d["continuous_linear_information_certificate"], "PASS")
+        self.assertEqual(d["P3_IMPLEMENTATION_WORD_CERTIFICATE"], "PASS")
         self.assertEqual(d["theorem_promotion"], "LINEAR_ONLY")
+
+        algebra = d["p3_word_algebra"]
+        self.assertEqual(algebra["qualification"], "SOURCE_BOUND_EXACT_P3_FIXED_MODE_WORD_ALGEBRA")
+        self.assertEqual(algebra["fixed_dimensions"], {"H": 18, "A": 21})
+        self.assertEqual(algebra["left_error_reset_determinant_formula"], "1+||dtheta||^2/4")
+        self.assertEqual(algebra["left_error_reset_determinant_lower"], 1.0)
+        self.assertEqual(algebra["prefix_information_gain_upper"], 1.0)
+        self.assertTrue(algebra["covers_prediction"])
+        self.assertTrue(algebra["covers_accepted_joseph"])
+        self.assertTrue(algebra["covers_rejected_and_not_due"])
+        self.assertTrue(algebra["covers_left_error_reset"])
+        self.assertTrue(algebra["covers_periodic_aw_covariance_sync"])
+        self.assertFalse(algebra["sampled_evidence_used"])
 
         requirement = d["theorem_margin_requirement"]
         self.assertEqual(requirement["predicate"], "> 0")
@@ -55,7 +69,7 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
         self.assertGreater(b["translation_spread_information_lower"], 0.0)
         self.assertGreaterEqual(b["translation_information_widening_factor_vs_adjacent_lower"], 1.0)
         self.assertEqual(b["three_S_detectability_role"], "Riccati_covariance_upper_sharpening_only")
-        self.assertFalse(b["three_S_detectability_is_promotion_fallback"])
+        self.assertFalse(b["three_S_detectability_can_promote_P3"])
 
         for mode in ("H", "A"):
             row = d["modes"][mode]
@@ -65,6 +79,8 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
             self.assertEqual(row["useful_margin_gate"], 0.0)
             self.assertEqual(row["useful_margin_gate_predicate"], "> 0")
             self.assertTrue(row["useful_margin_pass"])
+            self.assertEqual(row["prefix_information_gain_upper"], 1.0)
+            self.assertIn("Omega_s>=0", row["prefix_information_gain_proof"])
             matrix = row["matrix_comparison"]
             self.assertGreater(matrix["direct_translation_generalized_margin_lower"], 0.0)
             g = matrix["generalized_matrix_inequality"]
@@ -74,6 +90,7 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
             self.assertFalse(arg["repeated_one_step_contraction_used"])
             self.assertFalse(arg["source_replay_used"])
             self.assertTrue(arg["four_S_spread_translation_qualification"])
+            self.assertTrue(arg["all_fixed_mode_branch_suffixes_covered_by_word_algebra"])
             self.assertEqual(arg["coupled_translation_block"], "[v,p,S,a_w]")
             metric = matrix["state_information_metric"]
             self.assertEqual(metric["kind"], "COMPUTATIONAL_CONGRUENCE_FOR_GENERALIZED_MATRIX_INEQUALITY")
