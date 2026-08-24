@@ -37,23 +37,27 @@ class Ou3P4WordMapAndMetricTests(unittest.TestCase):
         self.assertEqual(p["kind"], "exact_Euclidean_projection_onto_closed_ball")
         self.assertTrue(p["nonexpansive"])
 
-    def test_metric_is_exact_cayley_lift_of_full_P3_information_matrix(self):
+    def test_metric_is_mode_normalized_exact_cayley_information_geometry(self):
         d = METRIC.build()
         self.assertEqual(METRIC.validate(d), [])
         self.assertTrue(d["single_quantitative_metric_route"])
         self.assertFalse(d["retired_block_diagonal_route_available"])
+        self.assertTrue(d["global_scaling_does_not_change_physical_level_sets"])
         for mode, dim in (("H",18),("A",21)):
             m = d["modes"][mode]
             self.assertEqual(m["dimension"], dim)
             self.assertEqual(m["kind"], "CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC")
             self.assertTrue(m["source_covariance_inverse"])
+            self.assertGreater(m["mode_global_positive_scale"], 0.0)
+            self.assertTrue(m["same_scale_on_every_source_node_in_mode"])
             self.assertTrue(m["full_attitude_linear_cross_terms_retained"])
             self.assertFalse(m["block_diagonal_metric_used"])
             self.assertFalse(m["common_Euclidean_metric_used"])
             self.assertTrue(m["local_coordinate_matches_P3_delta_theta"])
-            self.assertTrue(m["local_quadratic_equals_P3_information_metric"])
+            self.assertTrue(m["local_quadratic_is_positive_scalar_multiple_of_P3_information_metric"])
             self.assertTrue(m["endpoint_metric_must_match_endpoint_source_covariance"])
             self.assertGreater(m["metric_lambda_min_lower"], 0.0)
+            self.assertLessEqual(m["metric_lambda_min_lower"], 1.0)
             self.assertGreaterEqual(m["metric_lambda_max_upper"], m["metric_lambda_min_lower"])
             self.assertGreater(m["P3_word_endpoint_margin_lower"], 0.0)
 
@@ -62,6 +66,7 @@ class Ou3P4WordMapAndMetricTests(unittest.TestCase):
         self.assertNotIn("schmidt", text)
         self.assertIn("retired_block_diagonal_route_available", text)
         self.assertIn("full_attitude_linear_cross_terms_retained", text)
+        self.assertIn("same_scale_on_every_source_node_in_mode", text)
 
 
 if __name__ == "__main__":
