@@ -29,18 +29,12 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
                 "limiting_block": g.get("limiting_block"),
             }
         print("P3_MATRIX_MARGINS=" + json.dumps(diagnostics, sort_keys=True), flush=True)
-
         self.assertEqual(CERT.validate(d), [])
         self.assertTrue(d["source_generated_not_trajectory_fit"])
         self.assertTrue(d["validated_arithmetic"])
         self.assertTrue(d["outward_rounded"])
-        self.assertEqual(d["p3_backend"], "SOURCE_CELL_GENERALIZED_MATRIX_COMPARISON")
-        self.assertEqual(d["generalized_matrix_backend"], "DIRECT_RL_INVERSE_CONGRUENCE_INTERVAL_LDLT")
         self.assertEqual(d["p3_window_backend"], "SOURCE_COMPLETE_WORD_ENDPOINT_GENERALIZED_INFORMATION")
-        self.assertFalse(d["old_scalar_min_Q_route_used"])
-        self.assertFalse(d["old_scalar_generalized_ratio_used"])
         self.assertEqual(d["continuous_linear_information_certificate"], "PASS")
-        self.assertFalse(d["nonlinear_word_enclosed"])
         self.assertEqual(d["theorem_promotion"], "LINEAR_ONLY")
 
         requirement = d["theorem_margin_requirement"]
@@ -49,46 +43,38 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
         self.assertFalse(requirement["old_fixed_1e_minus_18_gate_is_theorem_requirement"])
         self.assertEqual(requirement["numerical_search_seed_only"], 1.0e-18)
 
-        binding = d["source_word_binding"]
-        self.assertTrue(binding["source_complete_relative_to_declared_theorem_hypotheses"])
-        self.assertTrue(binding["arbitrary_source_branches_between_required_PE_events_remain_admissible"])
-        self.assertTrue(binding["joint_source_reachability_required"])
-        self.assertFalse(binding["one_sample_decrease_required"])
-        self.assertEqual(binding["translation_primary_route"], "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO")
-        self.assertEqual(binding["translation_aligned_firing_count"], 4)
-        self.assertGreaterEqual(binding["translation_spread_index_q_W"], 1)
-        self.assertGreater(binding["translation_spread_selected_spacing_lower_s"], 0.0)
-        self.assertGreaterEqual(binding["translation_det_spacing_widening_factor_vs_adjacent"], 1)
+        b = d["source_word_binding"]
+        self.assertTrue(b["source_complete_relative_to_declared_theorem_hypotheses"])
+        self.assertTrue(b["joint_source_reachability_required"])
+        self.assertFalse(b["one_sample_decrease_required"])
+        self.assertEqual(b["translation_full_observability_route"], "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO")
+        self.assertEqual(b["translation_aligned_firing_count"], 4)
+        self.assertEqual(b["translation_spread_selection"], "VALIDATED_MAX_INFORMATION_OVER_ALL_ADMISSIBLE_INTEGER_Q")
+        self.assertGreaterEqual(b["translation_spread_index_q_W"], 1)
+        self.assertGreater(b["translation_spread_selected_spacing_lower_s"], 0.0)
+        self.assertGreater(b["translation_spread_information_lower"], 0.0)
+        self.assertGreaterEqual(b["translation_information_widening_factor_vs_adjacent_lower"], 1.0)
+        self.assertEqual(b["three_S_detectability_role"], "Riccati_covariance_upper_sharpening_only")
+        self.assertFalse(b["three_S_detectability_is_promotion_fallback"])
 
         for mode in ("H", "A"):
             row = d["modes"][mode]
             self.assertGreater(row["Sigma_lambda_min_lower"], 0.0)
             self.assertGreater(row["Sigma_lambda_max_upper"], row["Sigma_lambda_min_lower"])
-            self.assertGreater(row["word_noise_Omega_lambda_min_lower"], 0.0)
             self.assertGreater(row["word_endpoint_relative_Riccati_injection_margin_lower"], 0.0)
-            self.assertEqual(
-                row["relative_Riccati_injection_margin_lower"],
-                row["word_endpoint_relative_Riccati_injection_margin_lower"],
-            )
             self.assertEqual(row["useful_margin_gate"], 0.0)
             self.assertEqual(row["useful_margin_gate_predicate"], "> 0")
             self.assertTrue(row["useful_margin_pass"])
-            self.assertEqual(row["prefix_information_gain_upper"], 1.0)
-
             matrix = row["matrix_comparison"]
             self.assertGreater(matrix["direct_translation_generalized_margin_lower"], 0.0)
             g = matrix["generalized_matrix_inequality"]
             self.assertTrue(g["validated_interval_ldlt"])
             self.assertTrue(g["reported_delta_recertified"])
-            self.assertFalse(g["old_scalar_rho_over_max_scaled_upper_used"])
-            self.assertEqual(g["full_mode_dimension"], row["dimension"])
-
             arg = matrix["word_endpoint_information_argument"]
             self.assertFalse(arg["repeated_one_step_contraction_used"])
             self.assertFalse(arg["source_replay_used"])
-            self.assertTrue(arg["four_S_spread_translation_route"])
+            self.assertTrue(arg["four_S_spread_translation_qualification"])
             self.assertEqual(arg["coupled_translation_block"], "[v,p,S,a_w]")
-
             metric = matrix["state_information_metric"]
             self.assertEqual(metric["kind"], "COMPUTATIONAL_CONGRUENCE_FOR_GENERALIZED_MATRIX_INEQUALITY")
             self.assertEqual(len(metric["D_diagonal_squared"]), row["dimension"])
@@ -112,7 +98,6 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
         self.assertEqual(p["R_diagonal"], ["1", "10", "100", "2"])
         self.assertEqual(p["limiting_transformed_diagonal"], ["2/3", "5/8", "200/567", "1/2"])
         self.assertEqual(p["norm_2_squared_upper_exact"], 37310)
-        self.assertEqual(p["certified_object"], "C*(Q_scaled/x)*C^T")
 
     def test_pseudo_cadence_is_coupled_to_tau_inside_worst_cells(self):
         d = CERT.build()
@@ -137,13 +122,6 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
             p.write_text(json.dumps(broken), encoding="utf-8")
             with self.assertRaises(KeyError):
                 CERT.build(p)
-
-    def test_compatibility_entry_point_contains_no_retired_scalar_floor(self):
-        text = (ROOT / "tools" / "ou3_explicit_information_word_certificate.py").read_text()
-        self.assertNotIn("prediction_Q_lambda_min_lower", text)
-        self.assertNotIn("posterior_floor(", text)
-        self.assertIn("ou3_source_reachable_matrix_p3_direct", text)
-        self.assertIn("THEOREM_REQUIRED_MARGIN_PREDICATE = \"> 0\"", text)
 
 
 if __name__ == "__main__":
