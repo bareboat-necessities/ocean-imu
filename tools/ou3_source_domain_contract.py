@@ -12,6 +12,14 @@ Python binary64. This parser therefore evaluates every literal and arithmetic
 operation as IEEE-754 binary32, using exact rationals between operations and an
 explicit nearest/ties-to-even rounding step. The returned Python float is an
 exact binary64 representation of the deployed binary32 value.
+
+The public ``updateTime(dt, ...)`` API accepts arbitrary positive finite ``dt``.
+The stability theorem in the manuscript, however, explicitly assumes a bounded
+sample interval.  Until shipping code enforces such a bound, this contract
+separates the implementation parameter domain from a configured-runtime timing
+assumption.  The validation deployment uses the source-defined nominal 200 Hz
+schedule ``FREQ_SMOOTHER_DT``.  That assumption is explicit and machine-bound;
+it is never smuggled into the claim as if the API itself enforced it.
 """
 from __future__ import annotations
 
@@ -31,7 +39,7 @@ REQUIRED = (
     "MIN_TUNE_FREQ_HZ", "MAX_TUNE_FREQ_HZ", "MIN_TAU_S", "MAX_TAU_S",
     "MAX_SIGMA_A", "MIN_R_S", "MAX_R_S",
     "PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT", "PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT",
-    "MAG_DELAY_SEC", "ONLINE_TUNE_WARMUP_SEC",
+    "MAG_DELAY_SEC", "ONLINE_TUNE_WARMUP_SEC", "FREQ_SMOOTHER_DT",
 )
 
 HYBRID_OBLIGATIONS = (
@@ -71,12 +79,7 @@ def _bits_to_positive_fraction(bits: int) -> Fraction:
 
 
 def _round_fraction_binary32(value: Fraction) -> Fraction:
-    """Round an exact rational to finite binary32, nearest/ties-to-even.
-
-    Python binary64 is used only to locate a nearby candidate. The final choice
-    is made by exact rational distances over that candidate and its neighbours,
-    so possible binary64 double-rounding cannot change the selected binary32.
-    """
+    """Round an exact rational to finite binary32, nearest/ties-to-even."""
     if value == 0:
         return Fraction(0, 1)
     sign = -1 if value < 0 else 1
@@ -88,7 +91,6 @@ def _round_fraction_binary32(value: Fraction) -> Fraction:
     candidate &= 0x7FFFFFFF
     if candidate > _FLOAT32_MAX_BITS:
         raise RuntimeError(f"binary32 constant overflow for {value}")
-
     choices: list[tuple[Fraction, int]] = []
     for bits in (candidate - 1, candidate, candidate + 1):
         if 0 <= bits <= _FLOAT32_MAX_BITS:
@@ -98,7 +100,6 @@ def _round_fraction_binary32(value: Fraction) -> Fraction:
 
     def rank(item: tuple[Fraction, int]) -> tuple[Fraction, int]:
         exact, bits = item
-        # Exact midpoint: ties-to-even means an even low significand bit.
         return (abs(exact - x), bits & 1)
 
     exact, _ = min(choices, key=rank)
@@ -214,6 +215,18 @@ def build(header: Path) -> dict:
         "mag_delay": c["MAG_DELAY_SEC"],
         "online_tune_warmup": c["ONLINE_TUNE_WARMUP_SEC"],
     }
+    configured_runtime = {
+        "qualification": "CONFIGURED_VALIDATION_RUNTIME_ASSUMPTION",
+        "sample_period_contract": "FIXED_SOURCE_NOMINAL",
+        "imu_dt_source_constant": "FREQ_SMOOTHER_DT",
+        "imu_dt_s": c["FREQ_SMOOTHER_DT"],
+        "imu_dt_outward_interval_s": _outward_point(c["FREQ_SMOOTHER_DT"]),
+        "api_enforces_this_bound": False,
+        "theorem_scope_note": (
+            "the quantitative certificate applies to the configured nominal scheduler; "
+            "arbitrary positive finite caller dt accepted by updateTime is outside this scope"
+        ),
+    }
     parameter_box = {
         "qualification": "SOURCE_DERIVED_OUTWARD_ROUNDED_PARAMETER_BOX",
         "validated_arithmetic": True,
@@ -227,15 +240,17 @@ def build(header: Path) -> dict:
             name: _outward_point(value)
             for name, value in timing.items()
         },
+        "configured_runtime": configured_runtime,
         "continuous_word_enclosed": False,
         "nonlinear_word_enclosed": False,
         "theorem_promotion": "NOT_ESTABLISHED",
     }
     return {
-        "schema": 2,
+        "schema": 3,
         "claim": "OU3_SOURCE_COMPLETE_IMPLEMENTATION_DOMAIN_CONTRACT",
         "source_generated_not_trajectory_fit": True,
         "source_complete_parameter_domain": True,
+        "configured_runtime_assumption": configured_runtime,
         # These top-level flags remain false until the whole H/A word is
         # propagated with validated matrix/transcendental arithmetic.
         "validated_arithmetic": False,
@@ -265,9 +280,9 @@ def build(header: Path) -> dict:
             "metric_consequence": "inverse-covariance information energy is nonexpansive",
         },
         "promotion_rule": (
-            "the validated_parameter_box closes only the source-boundary arithmetic; theorem "
-            "promotion still requires outward-rounded interval/Taylor-model propagation of "
-            "the complete H/A Riccati words, nonlinear SO(3) remainder and remaining jumps"
+            "the validated_parameter_box closes source-boundary arithmetic under the explicit "
+            "configured-runtime timing contract; theorem promotion still requires validated "
+            "continuous H/A words, nonlinear SO(3) closure and all source-reachable jumps"
         ),
     }
 
