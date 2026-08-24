@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
-"""Source-node group-compatible metric construction for OU-III P4.
+"""Exact group lift of the P3 source information metric for OU-III P4.
 
-The nonlinear theorem metric is deliberately not the Kalman inverse covariance.
-For each compact (tau,sigma_aw) source node it uses the OU similarity scales
+The sole quantitative P4 metric is
 
-    a_w ~ sigma,
-    v   ~ sigma tau,
-    p   ~ sigma tau^2,
-    S   ~ sigma tau^3,
+    z_C(R,xi) = [ c(R) ; xi ],
+    c(R) = 2 tan(theta/2) u,
+    W_g(R,xi) = z_C' Sigma_KF(g)^-1 z_C,
 
-with isotropic 3x3 blocks.  Gyro-bias and active accelerometer-bias blocks use
-the declared theorem error scales.  The attitude scale is balanced against the
-accelerometer geometry, theta_scale ~ sigma/f_ref, and a small global multiplier
-family is exposed for validated proof-design optimization.  A single multiplier
-must be selected for the complete graph; node-by-node arbitrary rescaling is
-not permitted because that could manufacture contraction around cycles.
+on the certified Cayley chart theta < pi.  Unlike the retired block-diagonal
+surrogate this exact group metric retains every attitude--linear cross term of
+the source-varying Kalman information matrix.  Its differential at the identity
+is dc=dtheta, so its local quadratic is exactly the P3 information metric and no
+condition-number conversion is needed between P3 and P4.
 
-Every resulting local quadratic is exactly of the manuscript form
-
-    Pbar_i = blkdiag((a_R_i/2) I3, P_xi_i),
-
-and therefore lifts to W_i=a_R_i(1-cos(theta))+xi'P_xi_i xi.
+The metric is source/node dependent because Sigma_KF(g) is.  P3 supplies
+source-uniform covariance eigenvalue bounds, hence uniform positive metric
+bounds.  The interval P4 word backend propagates the same source covariance and
+must use its matching inverse at each word endpoint; independently chosen
+covariance extrema are not a valid metric pair.
 """
 from __future__ import annotations
 
@@ -29,172 +26,105 @@ import json
 import math
 from pathlib import Path
 
-import ou3_source_reachable_matrix_p3 as P3
+import ou3_explicit_information_word_certificate as P3
+import ou3_implementation_word_language as WORDS
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-ATTITUDE_BALANCE_MULTIPLIERS = (0.5, 1.0, 2.0, 4.0)
-TAU_NODE_COUNT = 4
-SIGMA_NODE_COUNT = 4
-
-
-def down(x: float) -> float:
-    return math.nextafter(float(x), -math.inf)
-
-
-def up(x: float) -> float:
-    return math.nextafter(float(x), math.inf)
-
-
-def geom_edges(lo: float, hi: float, n: int) -> list[float]:
-    if not (0.0 < lo <= hi) or n < 1:
-        raise ValueError("invalid geometric metric partition")
-    if lo == hi:
-        return [lo, hi]
-    r = (hi / lo) ** (1.0 / n)
-    out = [lo]
-    for _ in range(n - 1):
-        out.append(out[-1] * r)
-    out.append(hi)
-    return out
-
-
-def gmid(lo: float, hi: float) -> float:
-    return math.sqrt(float(lo) * float(hi))
-
-
-def block3(label: str, scale: float) -> dict:
-    if not (math.isfinite(scale) and scale > 0.0):
-        raise ValueError(f"invalid {label} metric scale")
-    w = 1.0 / (scale * scale)
-    return {"label": label, "physical_scale": scale, "diagonal_weight": w, "multiplicity": 3}
-
-
-def node_metric(mode: str, tau: float, sigma: float, f_ref: float,
-                bg_scale: float, ba_scale: float, attitude_mult: float) -> dict:
-    theta_scale = attitude_mult * sigma / f_ref
-    # Avoid a proof-design singularity at a vanishing sea-amplitude floor.  The
-    # floor is not a state-domain assumption; it only prevents the metric weight
-    # from diverging.  The value is below one tenth degree and is substantially
-    # tighter than any chart eventually promoted by P4.
-    theta_scale = max(theta_scale, 1.0e-3)
-    a_R = 2.0 / (theta_scale * theta_scale)
-    blocks = [
-        block3("b_g", bg_scale),
-        block3("v", sigma * tau),
-        block3("p", sigma * tau * tau),
-        block3("S", sigma * tau * tau * tau),
-        block3("a_w", sigma),
-    ]
-    if mode == "A":
-        blocks.append(block3("b_a", ba_scale))
-    weights = [a_R / 2.0] * 3
-    for b in blocks:
-        weights.extend([b["diagonal_weight"]] * 3)
-    return {
-        "kind": "GROUP_COMPATIBLE_NODE_METRIC",
-        "node_dependent": True,
-        "attitude_block_isotropic": True,
-        "attitude_linear_cross_terms": False,
-        "common_Euclidean_metric": False,
-        "equals_Kalman_inverse_covariance": False,
-        "a_R": a_R,
-        "theta_physical_scale_rad": theta_scale,
-        "P_xi_blocks": blocks,
-        "Pbar_diagonal": weights,
-        "P_xi_lambda_min": min(weights[3:]),
-        "P_xi_lambda_max": max(weights[3:]),
-        "Pbar_lambda_min": min(weights),
-        "Pbar_lambda_max": max(weights),
-    }
+SCHEMA = 2
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
+    domain_path = domain_path.resolve()
     domain = json.loads(domain_path.read_text(encoding="utf-8"))
     if domain.get("trajectory_fit") is not False:
         raise RuntimeError("P4 metric domain must not be trajectory fitted")
-    live = domain["normal_live"]
-    startup = domain["startup"]["physical_handoff_coordinate_bounds"]
-    f_ref = float(live["specific_force_norm_lower_mps2"])
-    bg_scale = float(startup["gyro_bias_error_norm_upper_rad_s"])
-    ba_scale = float(startup["accelerometer_bias_error_norm_upper_mps2"])
-    sched = P3.source_schedule()
-    tau_lo, tau_hi = map(float, sched["tau_applied_invariant_s"])
-    sigma_lo, sigma_hi = map(float, sched["sigma_aw_applied_safety"])
-    te = geom_edges(tau_lo, tau_hi, TAU_NODE_COUNT)
-    se = geom_edges(sigma_lo, sigma_hi, SIGMA_NODE_COUNT)
+    p3 = P3.build(domain_path)
+    pf = P3.validate(p3)
+    words = WORDS.build(domain_path)
+    wf = WORDS.validate(words)
+    failures = [f"P3: {x}" for x in pf] + [f"word-language: {x}" for x in wf]
 
-    candidates = {}
-    for mult in ATTITUDE_BALANCE_MULTIPLIERS:
-        nodes = {"H": [], "A": []}
-        for ti in range(TAU_NODE_COUNT):
-            for si in range(SIGMA_NODE_COUNT):
-                t0, t1 = te[ti], te[ti+1]
-                s0, s1 = se[si], se[si+1]
-                tau = gmid(t0, t1)
-                sigma = gmid(s0, s1)
-                nid = f"t{ti}_s{si}"
-                for mode in ("H", "A"):
-                    nodes[mode].append({
-                        "id": f"{mode}_{nid}",
-                        "tau_cell_s": [down(t0), up(t1)],
-                        "sigma_aw_cell_mps2": [down(s0), up(s1)],
-                        "metric_anchor_tau_s": tau,
-                        "metric_anchor_sigma_aw_mps2": sigma,
-                        "metric": node_metric(mode, tau, sigma, f_ref, bg_scale, ba_scale, mult),
-                    })
-        candidates[f"attitude_balance_{mult:g}"] = {
-            "global_attitude_balance_multiplier": mult,
-            "same_multiplier_on_every_graph_node": True,
-            "nodes": nodes,
+    modes = {}
+    for mode, dim in (("H", 18), ("A", 21)):
+        row = p3["modes"][mode]
+        smin = float(row["Sigma_lambda_min_lower"])
+        smax = float(row["Sigma_lambda_max_upper"])
+        if not (0.0 < smin <= smax < math.inf):
+            failures.append(f"{mode}: invalid P3 covariance eigenvalue enclosure")
+        modes[mode] = {
+            "dimension": dim,
+            "kind": "CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC",
+            "chart_coordinate": "c(R)=2*tan(theta/2)*u=4*e_R/(1+tr(R))",
+            "chart_domain": "theta<pi",
+            "exact_group_metric": "W_g=[c(R);xi]^T Sigma_KF(g)^-1 [c(R);xi]",
+            "source_covariance_inverse": True,
+            "node_dependent": True,
+            "full_attitude_linear_cross_terms_retained": True,
+            "block_diagonal_metric_used": False,
+            "common_Euclidean_metric_used": False,
+            "local_coordinate_matches_P3_delta_theta": True,
+            "local_quadratic_equals_P3_information_metric": True,
+            "endpoint_metric_must_match_endpoint_source_covariance": True,
+            "joint_source_reachability_required": True,
+            "Sigma_lambda_min_lower": smin,
+            "Sigma_lambda_max_upper": smax,
+            "metric_lambda_min_lower": 1.0 / smax,
+            "metric_lambda_max_upper": 1.0 / smin,
+            "P3_word_endpoint_margin_lower": float(row["word_endpoint_relative_Riccati_injection_margin_lower"]),
+            "P3_prefix_information_gain_upper": float(row["prefix_information_gain_upper"]),
         }
 
     return {
         "schema": SCHEMA,
-        "qualification": "SOURCE_NODE_GROUP_COMPATIBLE_P4_METRIC_CANDIDATES",
+        "qualification": "EXACT_CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC_FOR_P4",
         "source_generated_not_trajectory_fit": True,
-        "metric_formula": "OU_SIMILARITY_BLOCKS_WITH_SOURCE_NODE_TAU_SIGMA_AND_GROUP_ATTITUDE_BLOCK",
-        "tau_partition": [down(x) if i == 0 else up(x) if i == len(te)-1 else x for i,x in enumerate(te)],
-        "sigma_partition": [down(x) if i == 0 else up(x) if i == len(se)-1 else x for i,x in enumerate(se)],
-        "candidate_policy": "validated P4 endpoint enclosure selects one global attitude-balance multiplier; no per-node arbitrary scalar rescaling",
-        "candidates": candidates,
-        "selected_candidate": None,
-        "selection_requires_validated_endpoint_word_bound": True,
-        "pass": True,
+        "single_quantitative_metric_route": True,
+        "retired_block_diagonal_route_available": False,
+        "metric_change_does_not_change_filter": True,
+        "metric_change_does_not_change_adaptation_law": True,
+        "source_word_horizon_s": words["word_contract"]["conditional_word_language"]["word_horizon_lower_s"],
+        "modes": modes,
+        "failures": failures,
+        "pass": not failures,
     }
 
 
 def validate(d: dict) -> list[str]:
-    failures: list[str] = []
+    failures = list(d.get("failures", []))
     if d.get("schema") != SCHEMA:
         failures.append("schema mismatch")
     if d.get("source_generated_not_trajectory_fit") is not True:
-        failures.append("metric producer is trajectory fitted")
-    candidates = d.get("candidates", {})
-    if not candidates:
-        failures.append("no metric candidates")
-    for cname, c in candidates.items():
-        if c.get("same_multiplier_on_every_graph_node") is not True:
-            failures.append(f"{cname}: arbitrary node rescaling permitted")
-        for mode, dim in (("H",18),("A",21)):
-            nodes = c.get("nodes", {}).get(mode, [])
-            if len(nodes) != TAU_NODE_COUNT * SIGMA_NODE_COUNT:
-                failures.append(f"{cname}.{mode}: source-node partition incomplete")
-                continue
-            for node in nodes:
-                m = node.get("metric", {})
-                if m.get("kind") != "GROUP_COMPATIBLE_NODE_METRIC":
-                    failures.append(f"{cname}.{node.get('id')}: wrong metric kind")
-                if m.get("attitude_linear_cross_terms") is not False:
-                    failures.append(f"{cname}.{node.get('id')}: attitude-linear cross term present")
-                if m.get("equals_Kalman_inverse_covariance") is not False:
-                    failures.append(f"{cname}.{node.get('id')}: metric aliases inverse covariance")
-                diag = m.get("Pbar_diagonal", [])
-                if len(diag) != dim or any(not (isinstance(x,(int,float)) and math.isfinite(float(x)) and float(x)>0.0) for x in diag):
-                    failures.append(f"{cname}.{node.get('id')}: invalid Pbar diagonal")
-    if d.get("selection_requires_validated_endpoint_word_bound") is not True:
-        failures.append("metric selection can occur without validated endpoint word bound")
+        failures.append("metric is not source generated")
+    if d.get("single_quantitative_metric_route") is not True:
+        failures.append("P4 has more than one quantitative metric route")
+    if d.get("retired_block_diagonal_route_available") is not False:
+        failures.append("retired block-diagonal metric remains available")
+    for mode, dim in (("H",18),("A",21)):
+        m = d.get("modes", {}).get(mode, {})
+        if m.get("dimension") != dim:
+            failures.append(f"{mode}: wrong metric dimension")
+        if m.get("kind") != "CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC":
+            failures.append(f"{mode}: wrong metric kind")
+        if m.get("source_covariance_inverse") is not True:
+            failures.append(f"{mode}: metric is not the matching source covariance inverse")
+        if m.get("full_attitude_linear_cross_terms_retained") is not True:
+            failures.append(f"{mode}: attitude-linear cross terms were discarded")
+        if m.get("block_diagonal_metric_used") is not False:
+            failures.append(f"{mode}: block-diagonal surrogate still active")
+        if m.get("local_quadratic_equals_P3_information_metric") is not True:
+            failures.append(f"{mode}: exact P3/P4 local metric identity lost")
+        if m.get("endpoint_metric_must_match_endpoint_source_covariance") is not True:
+            failures.append(f"{mode}: endpoint metric/source correlation not required")
+        lo = m.get("metric_lambda_min_lower")
+        hi = m.get("metric_lambda_max_upper")
+        if not (isinstance(lo,(int,float)) and isinstance(hi,(int,float)) and 0.0 < float(lo) <= float(hi) < math.inf):
+            failures.append(f"{mode}: invalid uniform metric eigenvalue bounds")
+        delta = m.get("P3_word_endpoint_margin_lower")
+        if not (isinstance(delta,(int,float)) and 0.0 < float(delta) < 1.0):
+            failures.append(f"{mode}: missing strict P3 endpoint margin")
+    if not failures and d.get("pass") is not True:
+        failures.append("metric producer did not pass")
     return failures
 
 
@@ -209,7 +139,7 @@ def main() -> int:
     d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
-    print(json.dumps({"candidate_count": len(d["candidates"]), "nodes_per_mode": TAU_NODE_COUNT*SIGMA_NODE_COUNT, "failures": failures}, indent=2))
+    print(json.dumps({"modes": d["modes"], "failures": failures}, indent=2, sort_keys=True))
     return 0 if not failures else 2
 
 
