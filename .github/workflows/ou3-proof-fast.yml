@@ -7,11 +7,13 @@ on:
       - "tools/ou3_validate_enclosure.py"
       - "tools/ou3_deployment_gate.py"
       - "tools/ou3_hybrid_aw_sync_proof.py"
+      - "tools/ou3_hybrid_contract.py"
       - "tools/ou3_source_domain_contract.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tests/validation/test_ou3_validate_enclosure.py"
       - "tests/validation/test_ou3_deployment_gate.py"
       - "tests/validation/test_ou3_hybrid_aw_sync_proof.py"
+      - "tests/validation/test_ou3_hybrid_contract.py"
       - "tests/validation/test_ou3_source_domain_contract.py"
       - ".github/workflows/ou3-proof-fast.yml"
   workflow_dispatch:
@@ -68,11 +70,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
-      - name: Compile hybrid proof
-        run: python3 -m py_compile tools/ou3_hybrid_aw_sync_proof.py
-      - name: Test hybrid proof
+      - name: Compile hybrid proof gates
+        run: |
+          python3 -m py_compile \
+            tools/ou3_hybrid_aw_sync_proof.py \
+            tools/ou3_hybrid_contract.py
+      - name: Test hybrid proof gates
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_hybrid_aw_sync_proof
+        run: |
+          python3 -m unittest -v \
+            test_ou3_hybrid_aw_sync_proof \
+            test_ou3_hybrid_contract
 
   composition:
     name: stochastic capture and final composition arithmetic
