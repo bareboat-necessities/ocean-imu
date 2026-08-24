@@ -1,0 +1,71 @@
+name: apply-tfg-split-defaults
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-tfg-split-defaults.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.ref_name == 'tfg-independent-rs-xy-isotropic'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: tfg-independent-rs-xy-isotropic
+      - name: Apply defaults and focused-test expectations
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              s = p.read_text()
+              n = s.count(old)
+              if n != 1:
+                  raise SystemExit(f'{path}: expected one match, got {n}: {old!r}')
+              p.write_text(s.replace(old, new, 1))
+
+          h = 'src/kalman_tfg/SeaStateFusionFilter_TFG.h'
+          replace_once(h,
+              '    // TFG-specific physical OU prior coefficients remain independently fitted.\n'
+              '    // Integral-state regularization is isotropic by default, matching OU-III;\n'
+              '    // X/Y factors are independent opt-in experiment/tuning knobs.\n',
+              '    // TFG-specific physical OU prior coefficients remain independently fitted.\n'
+              '    // Preserve the historical 1.15 horizontal regularization operating point,\n'
+              '    // while exposing X/Y as independent experiment/tuning knobs.\n')
+          replace_once(h, '    float R_S_x_factor_ = 1.0f;\n', '    float R_S_x_factor_ = 1.15f;\n')
+          replace_once(h, '    float R_S_y_factor_ = 1.0f;\n', '    float R_S_y_factor_ = 1.15f;\n')
+
+          t = 'tests/kalman_tfg/tfg_rs_axis_factors-test.cpp'
+          replace_once(t,
+              'void test_default_is_isotropic_without_changing_rs_law() {\n',
+              'void test_default_preserves_main_horizontal_factors_without_changing_rs_law() {\n')
+          replace_once(t,
+              '    check(near(f.getRSXFactor(), 1.0f), "default X R_S factor is not 1.0");\n'
+              '    check(near(f.getRSYFactor(), 1.0f), "default Y R_S factor is not 1.0");\n',
+              '    check(near(f.getRSXFactor(), 1.15f), "default X R_S factor is not 1.15");\n'
+              '    check(near(f.getRSYFactor(), 1.15f), "default Y R_S factor is not 1.15");\n')
+          replace_once(t,
+              '    check(near(R(0,0), 9.0f), "default X R_S is not isotropic");\n'
+              '    check(near(R(1,1), 9.0f), "default Y R_S is not isotropic");\n'
+              '    check(near(R(2,2), 9.0f), "default Z R_S changed");\n',
+              '    const float horizontal_var = (3.0f * 1.15f) * (3.0f * 1.15f);\n'
+              '    check(near(R(0,0), horizontal_var), "default X R_S no longer matches main");\n'
+              '    check(near(R(1,1), horizontal_var), "default Y R_S no longer matches main");\n'
+              '    check(near(R(2,2), 9.0f), "default Z R_S changed");\n')
+          replace_once(t,
+              '    test_default_is_isotropic_without_changing_rs_law();\n',
+              '    test_default_preserves_main_horizontal_factors_without_changing_rs_law();\n')
+          PY
+      - name: Remove one-shot workflow and commit
+        run: |
+          rm .github/workflows/apply-tfg-split-defaults.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/kalman_tfg/SeaStateFusionFilter_TFG.h tests/kalman_tfg/tfg_rs_axis_factors-test.cpp .github/workflows/apply-tfg-split-defaults.yml
+          git commit -m 'Keep split TFG X/Y factors at 1.15 defaults'
+          git push origin HEAD:tfg-independent-rs-xy-isotropic
