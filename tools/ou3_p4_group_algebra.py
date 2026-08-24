@@ -1,22 +1,33 @@
 #!/usr/bin/env python3
 """Trusted exact-group algebra for the OU-III P4 source-word certificate.
 
-This module mirrors the deployed attitude injection in KalmanOUCoreMath.h:
+The quantitative P4 chart uses the exact Cayley/Rodrigues coordinate
 
-* for ||dtheta|| < 1e-2 it uses the same polynomial quaternion coefficients
-  w = 1-theta^2/8+theta^4/384 and
-  k = 1/2-theta^2/48+theta^4/3840, followed by quaternion normalization;
-* otherwise it uses the exact axis-angle quaternion and normalization.
+    c(R) = 2 tan(theta/2) u = 4 e_R / (1 + tr R),   theta < pi.
 
-The result is converted to a rotation matrix with interval arithmetic.  The
-module also provides the exact group energy V_R=tr(I-R)/2 and the Rodrigues
-finite-correction energy identity used by the manuscript.  No small-angle
-linearized attitude update is present here.
+This chart is especially useful here because its local coordinate is exactly
+``delta_theta`` and a left group product has the rational composition law
+
+    c(R_d R) = (c_d + c + 0.5 c_d x c) /
+               (1 - 0.25 c_d' c).
+
+Thus the full source-varying Kalman information matrix from P3 can be lifted to
+an exact SO(3) Lyapunov metric without discarding attitude--linear cross terms.
+The antipodal set remains excluded exactly where the Cayley denominator
+vanishes.
+
+The deployed correction itself is mirrored exactly:
+
+* for ||dtheta|| < 1e-2, the source polynomial quaternion coefficients are used
+  and normalized;
+* otherwise the axis-angle quaternion is used and normalized.
+
+For Cayley composition the quaternion normalization cancels: if the unnormalized
+source quaternion is (w,v), its exact Cayley vector is 2v/w.  This avoids a
+spurious normalization dependency in the proof map.
 
 All algebraic operations use :mod:`ou3_interval`; trigonometric kernels use the
-validated rational-Taylor layer in :mod:`ou3_validated_transcendentals`.  The
-only square-root primitive is audited against exact binary64 rationals and
-outward corrected with nextafter.
+validated rational-Taylor layer in :mod:`ou3_validated_transcendentals`.
 """
 from __future__ import annotations
 
@@ -35,6 +46,7 @@ from ou3_interval import (
 import ou3_validated_transcendentals as VT
 
 SERIES_BRANCH_NORM = 1.0e-2
+CAYLEY_MONOTONE_NORM_MAX = 3.0
 
 
 def down(x: float) -> float:
@@ -61,8 +73,6 @@ def sqrt_point(x: float) -> Interval:
         lo = math.nextafter(lo, -math.inf)
     if fq * fq < q:
         hi = math.nextafter(hi, math.inf)
-    # One extra representable value makes the containment independent of any
-    # platform claim stronger than IEEE sqrt's usual near-correct rounding.
     return Interval(down(lo), up(hi))
 
 
@@ -77,6 +87,25 @@ def vector_norm_interval(v: Sequence[Interval]) -> Interval:
     for x in v:
         total = total + x.square()
     return sqrt_interval(total)
+
+
+def dot(a: Sequence[Interval], b: Sequence[Interval]) -> Interval:
+    if len(a) != len(b):
+        raise ValueError("dot product dimension mismatch")
+    total = Interval.point(0.0)
+    for x, y in zip(a, b):
+        total = total + x*y
+    return total
+
+
+def cross(a: Sequence[Interval], b: Sequence[Interval]) -> list[Interval]:
+    if len(a) != 3 or len(b) != 3:
+        raise ValueError("cross product requires three-vectors")
+    return [
+        a[1]*b[2]-a[2]*b[1],
+        a[2]*b[0]-a[0]*b[2],
+        a[0]*b[1]-a[1]*b[0],
+    ]
 
 
 def skew(v: Sequence[Interval]):
@@ -97,8 +126,13 @@ def _matrix_hull(A, B):
     return [[hull(A[i][j], B[i][j]) for j in range(len(A[0]))] for i in range(len(A))]
 
 
+def _vector_hull(a, b):
+    if len(a) != len(b):
+        raise ValueError("vector hull shape mismatch")
+    return [hull(x, y) for x, y in zip(a, b)]
+
+
 def quaternion_rotation(q: Sequence[Interval]):
-    """Rotation matrix of an already normalized interval quaternion [w,x,y,z]."""
     if len(q) != 4:
         raise ValueError("quaternion requires four components")
     w, x, y, z = q
@@ -132,38 +166,118 @@ def _series_quaternion(d: Sequence[Interval]):
 
 def _axis_angle_quaternion(d: Sequence[Interval]):
     theta = vector_norm_interval(d)
+    if theta.hi > CAYLEY_MONOTONE_NORM_MAX:
+        raise ValueError("axis-angle quaternion proof box exceeds promoted P4 chart range")
     half = Interval(down(0.5*theta.lo), up(0.5*theta.hi))
-    # The P4 chart/correction domain is kept below pi, so half-angle lies in a
-    # monotone cos sector.  Use point enclosures at endpoints, with the lower
-    # endpoint attained at the larger half-angle.
-    c_lo = VT.cos_point(half.hi).lo
-    c_hi = VT.cos_point(half.lo).hi
-    w = Interval(c_lo, c_hi)
-    sinc_half = VT.sinc_interval(half)
-    k = Interval.point(0.5) * sinc_half
+    w = Interval(VT.cos_point(half.hi).lo, VT.cos_point(half.lo).hi)
+    k = Interval.point(0.5) * VT.sinc_interval(half)
     return normalize_quaternion([w, k*d[0], k*d[1], k*d[2]])
 
 
 def deployed_injection_rotation(d: Sequence[Interval]):
-    """Outward enclosure of the exact deployed quat_from_delta_theta rotation."""
     theta = vector_norm_interval(d)
     if theta.hi < SERIES_BRANCH_NORM:
         return quaternion_rotation(_series_quaternion(d))
     if theta.lo >= SERIES_BRANCH_NORM:
         return quaternion_rotation(_axis_angle_quaternion(d))
-    # A source box may straddle the C++ branch.  Both exact branch images are
-    # enclosed and hulled; no branch is selected optimistically.
     return _matrix_hull(
         quaternion_rotation(_series_quaternion(d)),
         quaternion_rotation(_axis_angle_quaternion(d)),
     )
 
 
+def _series_injection_cayley(d: Sequence[Interval]) -> list[Interval]:
+    """Exact Cayley vector of the normalized source series quaternion.
+
+    Normalization cancels from 2v/w, so this is an exact rational expression
+    in the same source polynomial coefficients.
+    """
+    theta = vector_norm_interval(d)
+    t2 = theta.square()
+    t4 = t2.square()
+    w = Interval.point(1.0) - Interval.point(1.0/8.0)*t2 + Interval.point(1.0/384.0)*t4
+    if w.lo <= 0.0:
+        raise RuntimeError("series quaternion scalar part crosses zero")
+    k = Interval.point(0.5) - Interval.point(1.0/48.0)*t2 + Interval.point(1.0/3840.0)*t4
+    coeff = Interval.point(2.0) * k / w
+    return [coeff*x for x in d]
+
+
+def _axis_angle_injection_cayley(d: Sequence[Interval]) -> list[Interval]:
+    theta = vector_norm_interval(d)
+    if theta.hi > CAYLEY_MONOTONE_NORM_MAX:
+        raise ValueError("correction norm exceeds promoted Cayley chart range")
+    half = Interval(down(0.5*theta.lo), up(0.5*theta.hi))
+    cos_half = Interval(VT.cos_point(half.hi).lo, VT.cos_point(half.lo).hi)
+    if cos_half.lo <= 0.0:
+        raise RuntimeError("correction reaches Cayley antipode")
+    coeff = VT.sinc_interval(half) / cos_half
+    return [coeff*x for x in d]
+
+
+def deployed_injection_cayley(d: Sequence[Interval]) -> list[Interval]:
+    """Exact Cayley vector of the deployed normalized quaternion correction."""
+    theta = vector_norm_interval(d)
+    if theta.hi < SERIES_BRANCH_NORM:
+        return _series_injection_cayley(d)
+    if theta.lo >= SERIES_BRANCH_NORM:
+        return _axis_angle_injection_cayley(d)
+    return _vector_hull(_series_injection_cayley(d), _axis_angle_injection_cayley(d))
+
+
+def cayley_compose_left(c_left: Sequence[Interval], c_right: Sequence[Interval]) -> list[Interval]:
+    """Exact Cayley coordinate of R(c_left) R(c_right)."""
+    if len(c_left) != 3 or len(c_right) != 3:
+        raise ValueError("Cayley composition requires three-vectors")
+    denom = Interval.point(1.0) - Interval.point(0.25)*dot(c_left, c_right)
+    if denom.lo <= 0.0 <= denom.hi:
+        raise RuntimeError("Cayley composition denominator crosses antipodal singularity")
+    cr = cross(c_left, c_right)
+    num = [
+        c_left[i] + c_right[i] + Interval.point(0.5)*cr[i]
+        for i in range(3)
+    ]
+    return [x/denom for x in num]
+
+
+def cayley_coordinate(R) -> list[Interval]:
+    """Exact c(R)=4 e_R/(1+tr R), valid only off the antipodal set."""
+    if len(R) != 3 or any(len(row) != 3 for row in R):
+        raise ValueError("Cayley coordinate requires 3x3 matrix")
+    tr = R[0][0] + R[1][1] + R[2][2]
+    denom = Interval.point(1.0) + tr
+    if denom.lo <= 0.0:
+        raise RuntimeError("rotation interval reaches the Cayley antipodal set")
+    e = [
+        Interval.point(0.5)*(R[2][1]-R[1][2]),
+        Interval.point(0.5)*(R[0][2]-R[2][0]),
+        Interval.point(0.5)*(R[1][0]-R[0][1]),
+    ]
+    return [Interval.point(4.0)*x/denom for x in e]
+
+
+def rotation_from_cayley(c: Sequence[Interval]):
+    """Exact inverse Cayley map for c=2 tan(theta/2)u."""
+    if len(c) != 3:
+        raise ValueError("inverse Cayley map requires a three-vector")
+    c2 = dot(c, c)
+    denom = Interval.point(4.0) + c2
+    K = skew(c)
+    K2 = matrix_mul(K, K)
+    return matrix_add(
+        matrix_add(matrix_identity(3), _matrix_scale(K, Interval.point(4.0)/denom)),
+        _matrix_scale(K2, Interval.point(2.0)/denom),
+    )
+
+
+def deployed_correct_cayley(c_error: Sequence[Interval], dtheta: Sequence[Interval]) -> list[Interval]:
+    return cayley_compose_left(deployed_injection_cayley(dtheta), c_error)
+
+
 def rodrigues_rotation(rotation_vector: Sequence[Interval]):
-    """Exact exp([r]x) enclosure using sinc/cosc, for comparison/audit."""
     theta = vector_norm_interval(rotation_vector)
-    if theta.hi > VT.MAX_TRIG_ARGUMENT:
-        raise ValueError("Rodrigues rotation exceeds audited trig range")
+    if theta.hi > CAYLEY_MONOTONE_NORM_MAX:
+        raise ValueError("Rodrigues rotation exceeds promoted P4 chart range")
     K = skew(rotation_vector)
     K2 = matrix_mul(K, K)
     return matrix_add(
@@ -173,7 +287,6 @@ def rodrigues_rotation(rotation_vector: Sequence[Interval]):
 
 
 def group_energy(R) -> Interval:
-    """Exact V_R(R)=1/2 tr(I-R) interval."""
     if len(R) != 3 or any(len(row) != 3 for row in R):
         raise ValueError("group energy requires 3x3 matrix")
     tr = R[0][0] + R[1][1] + R[2][2]
@@ -185,23 +298,18 @@ def corrected_group_energy(R_error, dtheta: Sequence[Interval]) -> Interval:
 
 
 def exact_energy_change_identity(R_error, dtheta: Sequence[Interval]) -> Interval:
-    """Equation (widen-exact-energy-change), evaluated with validated intervals."""
     delta = vector_norm_interval(dtheta)
     S = VT.sinc_interval(delta)
     C = VT.cosc_interval(delta)
-    # e_R = vex((R-R')/2)
-    half = Interval.point(0.5)
     e = [
-        half*(R_error[2][1]-R_error[1][2]),
-        half*(R_error[0][2]-R_error[2][0]),
-        half*(R_error[1][0]-R_error[0][1]),
+        Interval.point(0.5)*(R_error[2][1]-R_error[1][2]),
+        Interval.point(0.5)*(R_error[0][2]-R_error[2][0]),
+        Interval.point(0.5)*(R_error[1][0]-R_error[0][1]),
     ]
-    dot = Interval.point(0.0)
-    for i in range(3):
-        dot = dot + dtheta[i]*e[i]
-    K2R = matrix_mul(matrix_mul(skew(dtheta), skew(dtheta)), R_error)
+    K = skew(dtheta)
+    K2R = matrix_mul(matrix_mul(K, K), R_error)
     tr = K2R[0][0] + K2R[1][1] + K2R[2][2]
-    return S*dot - Interval.point(0.5)*C*tr
+    return S*dot(dtheta, e) - Interval.point(0.5)*C*tr
 
 
 def point_vector(v: Sequence[float]) -> list[Interval]:
