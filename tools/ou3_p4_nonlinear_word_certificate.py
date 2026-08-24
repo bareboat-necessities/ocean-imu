@@ -151,7 +151,7 @@ def _source_configuration_checks(domain: dict, manifest: dict) -> list[str]:
     if runtime.get("imu_lever_arm_enabled") is not False:
         failures.append("configured P4 runtime does not explicitly disable optional IMU lever arm")
     mekf = MEKF.read_text(encoding="utf-8")
-    if "bool    use_imu_lever_arm_       = false;" not in mekf:
+    if "bool use_imu_lever_arm_ = false;" not in " ".join(mekf.split()):
         failures.append("source default no-lever-arm semantic changed")
     live = domain.get("normal_live", {})
     limit_source = float(manifest["mekf_defaults"]["acc_bias_limit_mps2"])
