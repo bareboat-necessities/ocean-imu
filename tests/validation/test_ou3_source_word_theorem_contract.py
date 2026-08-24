@@ -30,17 +30,16 @@ class SourceWordTheoremContractTests(unittest.TestCase):
         self.assertTrue(d["conditional_word_language"]["ready"])
         self.assertTrue(d["source_complete_relative_to_theorem_hypotheses"])
         tr = d["translation_recurrence"]
+        self.assertEqual(tr["full_observability_route"], "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO")
         self.assertEqual(tr["primary_route"], "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO")
         self.assertEqual(tr["aligned_firing_count"], 4)
         self.assertEqual(tr["primary_state_order"], ["v", "p", "S", "a_w"])
-        self.assertTrue(tr["three_firing_integrator_detectability_is_supporting_only"])
+        self.assertEqual(tr["three_firing_integrator_detectability_role"], "Riccati_covariance_upper_sharpening_only")
+        self.assertFalse(tr["three_firing_integrator_detectability_is_promotion_fallback"])
         self.assertGreaterEqual(tr["spread_index_q_W"], 1)
         self.assertGreater(tr["spread_selected_spacing_lower_s"], 0.0)
         self.assertGreaterEqual(tr["determinant_spacing_widening_factor_vs_adjacent"], 1)
-        self.assertGreaterEqual(
-            d["conditional_word_language"]["word_horizon_lower_s"],
-            tr["minimum_four_firing_window_s"],
-        )
+        self.assertGreaterEqual(d["conditional_word_language"]["word_horizon_lower_s"], tr["minimum_four_firing_window_s"])
         self.assertFalse(d["conditional_word_language"]["one_sample_decrease_required"])
         self.assertTrue(d["conditional_word_language"]["word_endpoint_decrease_required"])
 
@@ -82,10 +81,7 @@ class SourceWordTheoremContractTests(unittest.TestCase):
 
     def test_contract_uses_no_replay_or_observed_extrema(self):
         text = (ROOT / "tools" / "ou3_source_word_theorem_contract.py").read_text()
-        for forbidden in (
-            "ou3_exact_replay", "path_metrics", "neighborhood_radius_search",
-            "observed_min", "replay_min", "np.quantile",
-        ):
+        for forbidden in ("ou3_exact_replay", "path_metrics", "neighborhood_radius_search", "observed_min", "replay_min", "np.quantile"):
             self.assertNotIn(forbidden, text)
 
 
