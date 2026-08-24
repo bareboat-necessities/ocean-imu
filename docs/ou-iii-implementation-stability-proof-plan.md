@@ -116,27 +116,30 @@ hence the exact source-uniform worst prefix information gain is `1.0` rather tha
 
 The final producer `tools/ou3_explicit_information_word_certificate.py` emits `P3_IMPLEMENTATION_WORD_CERTIFICATE=PASS` only when the direct H/A interval inequalities, optimized four-S qualification, current source-word language, exact Live-operation algebra, reset nonsingularity, branch coverage, and unit prefix-information bound all validate together.
 
-**PASS:** strict source-uniform H and A information contraction with explicit positive endpoint margins and an exact finite prefix information-gain bound. P4 is the next unresolved normal-Live obligation.
+**PASS:** strict source-uniform H and A information contraction with explicit positive endpoint margins and an exact finite prefix information-gain bound. P4 consumes this information-word geometry directly through the exact Cayley lift below.
 
-### P4 — Exact nonlinear SO(3) word certificate
+### P4 — Exact nonlinear SO(3) word certificate — COMPLETE
 
-Lift P3 to the exact nonlinear implementation rather than a C1 existence argument.
+P4 is closed by `tools/ou3_p4_nonlinear_word_certificate.py` and the dependent `exact Cayley nonlinear H A source-word P4` proof-fast job. The sole quantitative nonlinear metric is the exact Cayley lift of the P3 source information geometry,
 
-Include:
+`c(R) = 2 tan(theta/2) u`,
 
-- exact Rodrigues/quaternion attitude correction;
-- actual vector measurement residual geometry;
-- complete `S -> attitude` cross-gain;
-- exact left-error reset;
-- all continuous source parameters and accepted branch guards.
+`W_g(R,xi) = s_m [c(R);xi]^T Sigma_KF(g)^-1 [c(R);xi]`,
 
-Use adaptive validated subdivision to prove, for an explicit `0 < theta_* < pi` and explicit source-node level,
+where one positive normalization `s_m` is shared by every source node in a fixed-dimensional mode. This preserves all attitude-linear information cross terms and does not change generalized contraction ratios or physical level sets.
 
-- `mu_W > 0` for every H/A source word;
-- every within-word prefix stays chart/domain safe;
-- the endpoint remains inside the destination source-node funnel.
+The validated word map follows the shipping order exactly: prediction; a due `S=0` correction inside `time_update()` before accelerometer correction; asynchronous magnetometer handling; and immediate quaternion injection plus left-error covariance reset after each accepted `S`, accelerometer, or magnetometer correction. The complete `S -> attitude` gain remains present. The deployed normalized polynomial quaternion branch is enclosed directly, rather than replaced by a linearized/exponential correction.
 
-**PASS:** nonzero explicit nonlinear H/A funnel levels with positive `mu_W` and prefix-safety margins. This is the quantitative normal-Live certificate required by the paper; a local existence theorem is insufficient.
+P3's exact prefix information gain upper bound of `1.0` transports source-uniform quadratic nonlinear defects through arbitrary admissible accepted/rejected/not-due placements, so P4 covers the complete source branch family without enumerating an exponential list of rejection strings. The prefix bootstrap proves the certified Cayley norm is below one, hence `theta < 1 < pi`, and proves every accepted correction remains below `1e-2`, fixing the exact deployed quaternion branch throughout the inner funnel. In A mode the certified prefix also stays strictly inside the shipping accelerometer-bias projection ball, so the exact projection branch is the smooth identity-interior branch there; the nonsmooth projection surface is not silently linearized.
+
+The final validated CI certificate reports:
+
+- H: `W_* = 3.29172575174270652e-141`, `mu_W >= 1.89616809385829038e-35`, endpoint relative decrease `>= 1.89616809385829092e-35`, prefix canonical norm `<= 1.14747126356047970e-70`;
+- A: `W_* = 3.29172573612719601e-141`, `mu_W >= 1.89616808936071053e-35`, endpoint relative decrease `>= 1.89616808936071107e-35`, prefix canonical norm `<= 1.14747126083875398e-70`.
+
+The tiny levels are theorem seeds, not practical-basin claims. Strict positivity is stored directly, so the proof never forms `1 - delta/2` when binary64 would round that quantity back to one. Source-node subdivision may later enlarge `W_*`, but it is only a widening of this same certificate route, not a fallback theorem.
+
+**PASS:** `P4_EXACT_NONLINEAR_WORD_CERTIFICATE=PASS` for both H and A with explicit positive `W_*`, positive `mu_W`, exact source-operation semantics, complete branch coverage, and prefix/chart safety. P5 finite startup-to-inner-funnel capture is the next unresolved obligation.
 
 ### P5 — Initialization-to-inner-funnel finite capture
 
