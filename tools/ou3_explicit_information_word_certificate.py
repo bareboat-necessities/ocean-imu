@@ -55,7 +55,7 @@ def _state_metric(mode: str, comparison: dict) -> dict:
         "same_congruence_applied_to_noise_and_covariance": True,
         "raw_Euclidean_eigenvalue_gate_used": False,
         "is_nonlinear_Lyapunov_metric": False,
-        "nonlinear_metric_requirement": "P4 must use node-wise blkdiag((a_R/2) I3, P_xi) on complete source-word endpoint maps",
+        "nonlinear_metric_requirement": "P4 uses the mode-global normalized exact Cayley lift s_m*[c(R);xi]^T*Sigma_KF(g)^-1*[c(R);xi], retaining full attitude-linear cross terms on complete source-word endpoint maps",
     }
 
 
@@ -174,7 +174,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     out["continuous_linear_information_certificate"] = "PASS" if passed else "FAIL"
     out["P3_IMPLEMENTATION_WORD_CERTIFICATE"] = "PASS" if passed else "FAIL"
     out["theorem_promotion"] = "LINEAR_ONLY" if passed else "NOT_ESTABLISHED"
-    out["next_obligation"] = "P4: node-wise group-compatible metrics, exact nonlinear source-word endpoint decrease, and prefix safety"
+    out["next_obligation"] = "P5: finite startup-to-inner-funnel capture using the certified exact Cayley P4 H funnel"
     return out
 
 
