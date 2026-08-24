@@ -89,7 +89,7 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("float tau_var_min_sec = 0.3f;", self.tuner)
         self.assertIn("float tau_var_max_sec = 60.0f;", self.tuner)
         self.assertIn("There is no second EWMA of the already-smoothed variance", self.ou3_obs)
-        self.assertIn("$K_{\mathrm{periods}}=4$", self.ou3_obs)
+        self.assertIn(r"$K_{\mathrm{periods}}=4$", self.ou3_obs)
         self.assertIn(r"\SI{30}{s} guard therefore binds on the largest", self.ou3_obs)
 
     def test_wave_period_ewmas_match_log_period_source_exactly(self):
@@ -147,8 +147,14 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("on non-commit samples it is exactly\nzero", self.ou3_iss)
 
     def test_ou3_startup_gravity_ema_matches_source(self):
-        self.assertIn("float mag_gravity_align_world_tau_sec = 12.0f;", self.ou3_wrap)
-        self.assertIn("float mag_gravity_align_world_warmup_sec = 5.0f;", self.ou3_wrap)
+        self.assertRegex(
+            self.ou3_wrap,
+            r"float\s+mag_gravity_align_world_tau_sec\s*=\s*12\.0f;",
+        )
+        self.assertRegex(
+            self.ou3_wrap,
+            r"float\s+mag_gravity_align_world_warmup_sec\s*=\s*5\.0f;",
+        )
         self.assertIn("const float alpha = 1.0f - std::exp(-dt / tau);", self.ou3_wrap)
         self.assertIn("state = x;\n                initialized = true;", self.ou3_wrap)
         self.assertIn("gravity_gate_acc_world_lpf_.reset();", self.ou3_wrap)
