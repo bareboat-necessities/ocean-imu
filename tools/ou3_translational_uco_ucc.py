@@ -161,8 +161,9 @@ def build(header: Path = DEFAULT_HEADER.resolve()) -> dict:
     )
 
     # Each row is [t^2/2,t,1,A3(t)], A3(t)<=t^3/6.  Four rows give the
-    # Frobenius upper bound 2*row_norm_max.
-    T = Interval.outward_bounds(0.0, window)
+    # Frobenius upper bound 2*row_norm_max.  Zero is an exact physical endpoint;
+    # widening it below zero would create a fictitious negative-time source.
+    T = Interval(0.0, math.nextafter(window, math.inf))
     row_norm2 = (
         _point(1.0)
         + T.square()
