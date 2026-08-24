@@ -1,15 +1,27 @@
 #!/usr/bin/env python3
-"""Validated scalar transcendental bounds used by the OU-III proof backend.
+"""Validated small-argument transcendental enclosures for OU-III proof work.
 
-The routines here avoid trusting platform ``libm`` for theorem promotion. Input
-binary64 endpoints are converted to exact rationals, Taylor series are evaluated
-with exact ``Fraction`` arithmetic, and the final rational bounds are converted
-back to binary64 with directed ``nextafter`` correction.
+The deployment proof must not promote bounds obtained from ordinary ``libm``
+round-to-nearest calls.  This module supplies the first transcendental layer on
+top of :mod:`ou3_interval` without using ``math.exp`` or ``math.expm1`` in any
+proof calculation.
 
-The first supported domain is the deployed OU one-step range ``0 <= h/tau <= 1``.
-That is enough for the 200 Hz OU transition once the source-domain timing guard
-is bound explicitly. Larger arguments are rejected rather than silently losing
-validation.
+For |x| <= 1/2, exp(x) is enclosed by an exact-rational Taylor polynomial plus
+its Lagrange remainder.  The elementary bound exp(|x|) < 2 on this interval is
+sufficient: for 0 <= u <= 1/2,
+
+    exp(u) = 1 + u + sum_{n>=2} u^n/n!
+           <= 1 + 1/2 + sum_{n>=2} (1/2)^n < 2.
+
+Binary64 inputs are converted exactly to ``Fraction``.  Only after the exact
+rational lower/upper endpoints have been obtained are they converted back to
+binary64, with an explicit nextafter correction if round-to-nearest landed on
+the wrong side.  Thus the enclosure does not rely on platform transcendental
+accuracy.
+
+The range is intentionally narrow.  The current nominal 200 Hz OU-III one-step
+source box has h/tau <= 0.25.  Larger ranges require a separately audited range
+reduction rather than silently extending the trusted core.
 """
 from __future__ import annotations
 
@@ -18,109 +30,141 @@ import math
 
 from ou3_interval import Interval
 
-MAX_EXP_NEG_X = Fraction(1, 1)
-SERIES_TERMS = 48
+MAX_ABS_ARGUMENT = 0.5
+DEFAULT_ORDER = 20
 
 
-def _q(x: float) -> Fraction:
+def _down_fraction(q: Fraction) -> float:
+    """Greatest convenient binary64 lower enclosure of exact rational ``q``."""
+    f = float(q)
+    if not math.isfinite(f):
+        raise OverflowError(f"rational does not fit finite binary64: {q!r}")
+    if Fraction.from_float(f) > q:
+        f = math.nextafter(f, -math.inf)
+    return f
+
+
+def _up_fraction(q: Fraction) -> float:
+    """Smallest convenient binary64 upper enclosure of exact rational ``q``."""
+    f = float(q)
+    if not math.isfinite(f):
+        raise OverflowError(f"rational does not fit finite binary64: {q!r}")
+    if Fraction.from_float(f) < q:
+        f = math.nextafter(f, math.inf)
+    return f
+
+
+def _check_point(x: float) -> Fraction:
     x = float(x)
-    if not math.isfinite(x):
-        raise ValueError("validated transcendental input must be finite")
+    if not math.isfinite(x) or abs(x) > MAX_ABS_ARGUMENT:
+        raise ValueError(
+            f"validated transcendental argument must be finite and |x| <= "
+            f"{MAX_ABS_ARGUMENT}, got {x!r}"
+        )
     return Fraction.from_float(x)
 
 
-def _down_q(x: Fraction) -> float:
-    y = float(x)
-    if Fraction.from_float(y) > x:
-        y = math.nextafter(y, -math.inf)
-    return math.nextafter(y, -math.inf)
+def _remainder_bound(x: Fraction, order: int) -> Fraction:
+    if order < 1:
+        raise ValueError("Taylor order must be positive")
+    # Lagrange remainder <= exp(|x|)|x|^(N+1)/(N+1)! and exp(|x|)<2.
+    return (
+        Fraction(2, 1)
+        * abs(x) ** (order + 1)
+        / Fraction(math.factorial(order + 1), 1)
+    )
 
 
-def _up_q(x: Fraction) -> float:
-    y = float(x)
-    if Fraction.from_float(y) < x:
-        y = math.nextafter(y, math.inf)
-    return math.nextafter(y, math.inf)
-
-
-def _exp_neg_q_bounds(x: Fraction) -> tuple[Fraction, Fraction]:
-    if x < 0 or x > MAX_EXP_NEG_X:
-        raise ValueError(f"validated exp(-x) requires 0 <= x <= 1, got {float(x)}")
+def exp_point(x: float, order: int = DEFAULT_ORDER) -> Interval:
+    """Outward enclosure of exp(x) for one binary64 point, without libm exp."""
+    q = _check_point(x)
     term = Fraction(1, 1)
     total = term
-    lower = None
-    upper = total
-    for k in range(1, SERIES_TERMS + 1):
-        term = term * x / k
-        total = total - term if k & 1 else total + term
-        if k & 1:
-            lower = total
-        else:
-            upper = total
-    assert lower is not None and upper is not None
-    # Alternating Taylor series with decreasing terms on x<=1: odd partial
-    # sums are lower bounds and even partial sums are upper bounds.
-    return lower, upper
+    for n in range(1, order + 1):
+        term = term * q / Fraction(n, 1)
+        total += term
+    rem = _remainder_bound(q, order)
+    return Interval(_down_fraction(total - rem), _up_fraction(total + rem))
 
 
-def exp_neg_scalar_bounds(x: float) -> tuple[float, float]:
-    lo, hi = _exp_neg_q_bounds(_q(x))
-    return _down_q(lo), _up_q(hi)
+def expm1_point(x: float, order: int = DEFAULT_ORDER) -> Interval:
+    """Outward enclosure of exp(x)-1 without cancellation or libm expm1."""
+    q = _check_point(x)
+    term = Fraction(1, 1)
+    total = Fraction(0, 1)
+    for n in range(1, order + 1):
+        term = term * q / Fraction(n, 1)
+        total += term
+    rem = _remainder_bound(q, order)
+    return Interval(_down_fraction(total - rem), _up_fraction(total + rem))
 
 
-def exp_neg(x: Interval) -> Interval:
-    if x.lo < 0.0 or x.hi > 1.0:
-        raise ValueError("validated exp(-x) interval requires [0,1]")
-    lo_q, _ = _exp_neg_q_bounds(_q(x.hi))
-    _, hi_q = _exp_neg_q_bounds(_q(x.lo))
-    return Interval(_down_q(lo_q), _up_q(hi_q))
+def exp_interval(x: Interval, order: int = DEFAULT_ORDER) -> Interval:
+    """Outward enclosure of exp(X), using monotonicity at interval endpoints."""
+    _check_point(x.lo)
+    _check_point(x.hi)
+    lo = exp_point(x.lo, order).lo
+    hi = exp_point(x.hi, order).hi
+    return Interval(lo, hi)
 
 
-def expm1_neg(x: Interval) -> Interval:
-    e = exp_neg(x)
-    return e - Interval.point(1.0)
+def expm1_interval(x: Interval, order: int = DEFAULT_ORDER) -> Interval:
+    """Outward enclosure of exp(X)-1, using monotonicity at endpoints."""
+    _check_point(x.lo)
+    _check_point(x.hi)
+    lo = expm1_point(x.lo, order).lo
+    hi = expm1_point(x.hi, order).hi
+    return Interval(lo, hi)
 
 
-def _phi_pa_factor_q_bounds(x: Fraction) -> tuple[Fraction, Fraction]:
-    elo, ehi = _exp_neg_q_bounds(x)
-    return x - 1 + elo, x - 1 + ehi
+def _positive_ou_kernel_point(
+    x: float, *, start_order: int, first_sign: int, order: int = DEFAULT_ORDER
+) -> Interval:
+    """Enclose a positive OU Taylor tail at one x in [0, 1/2]."""
+    q = _check_point(x)
+    if q < 0:
+        raise ValueError("OU kernel argument must be nonnegative")
+    total = Fraction(0, 1)
+    for n in range(start_order, order + 1):
+        sign = first_sign if (n - start_order) % 2 == 0 else -first_sign
+        total += Fraction(sign, 1) * q**n / Fraction(math.factorial(n), 1)
+    rem = _remainder_bound(q, order)
+    return Interval(_down_fraction(total - rem), _up_fraction(total + rem))
 
 
-def _phi_sa_factor_q_bounds(x: Fraction) -> tuple[Fraction, Fraction]:
-    elo, ehi = _exp_neg_q_bounds(x)
-    base = x * x / 2 - x + 1
-    return base - ehi, base - elo
+def ou_phi_pa_kernel_point(x: float, order: int = DEFAULT_ORDER) -> Interval:
+    """Enclose x + exp(-x) - 1 for x in [0, 1/2]."""
+    # x + exp(-x) - 1 = x^2/2! - x^3/3! + ...
+    return _positive_ou_kernel_point(
+        x, start_order=2, first_sign=1, order=order
+    )
 
 
-def ou_discrete_coefficients(h: Interval, tau: Interval) -> dict[str, Interval]:
-    """Enclose alpha, expm1(-h/tau), phi_pa and phi_Sa.
+def ou_phi_Sa_kernel_point(x: float, order: int = DEFAULT_ORDER) -> Interval:
+    """Enclose x^2/2 - x + 1 - exp(-x) for x in [0, 1/2]."""
+    # = x^3/3! - x^4/4! + ...
+    return _positive_ou_kernel_point(
+        x, start_order=3, first_sign=1, order=order
+    )
 
-    For h>=0 and tau>0, the two cancellation-prone coefficient factors are
-    monotone increasing in x=h/tau. We therefore evaluate exact-rational
-    endpoint Taylor bounds instead of interval-evaluating ``x + expm1(-x)``.
-    """
-    if h.lo < 0.0 or tau.lo <= 0.0:
-        raise ValueError("OU transition requires h>=0 and tau>0")
-    x = h / tau
-    if x.lo < 0.0 or x.hi > 1.0:
-        raise ValueError(f"validated OU transition requires h/tau <= 1, got {x}")
 
-    alpha = exp_neg(x)
-    em1 = alpha - Interval.point(1.0)
+def ou_phi_pa_kernel_interval(x: Interval, order: int = DEFAULT_ORDER) -> Interval:
+    """Enclose the monotone positive phi_pa kernel over X subset [0,1/2]."""
+    if x.lo < 0.0:
+        raise ValueError("OU kernel interval must be nonnegative")
+    # derivative 1-exp(-x) >= 0.
+    return Interval(
+        ou_phi_pa_kernel_point(x.lo, order).lo,
+        ou_phi_pa_kernel_point(x.hi, order).hi,
+    )
 
-    pa_lo_q, _ = _phi_pa_factor_q_bounds(_q(x.lo))
-    _, pa_hi_q = _phi_pa_factor_q_bounds(_q(x.hi))
-    sa_lo_q, _ = _phi_sa_factor_q_bounds(_q(x.lo))
-    _, sa_hi_q = _phi_sa_factor_q_bounds(_q(x.hi))
-    pa_factor = Interval(_down_q(pa_lo_q), _up_q(pa_hi_q))
-    sa_factor = Interval(_down_q(sa_lo_q), _up_q(sa_hi_q))
 
-    tau2 = tau.square()
-    tau3 = tau2 * tau
-    return {
-        "x": x,
-        "alpha": alpha,
-        "expm1_neg_x": em1,
-        "phi_pa": tau2 * pa_factor,
-        "phi_Sa": tau3 * sa_factor,
-    }
+def ou_phi_Sa_kernel_interval(x: Interval, order: int = DEFAULT_ORDER) -> Interval:
+    """Enclose the monotone positive phi_Sa kernel over X subset [0,1/2]."""
+    if x.lo < 0.0:
+        raise ValueError("OU kernel interval must be nonnegative")
+    # derivative x - 1 + exp(-x) = phi_pa kernel >= 0.
+    return Interval(
+        ou_phi_Sa_kernel_point(x.lo, order).lo,
+        ou_phi_Sa_kernel_point(x.hi, order).hi,
+    )
