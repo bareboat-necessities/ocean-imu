@@ -39,6 +39,27 @@ class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
             self.assertGreater(matrix["post_measurement_scaled_Omega_lambda_min_lower"], 0.0)
             self.assertGreater(matrix["Sigma_scaled_lambda_max_upper"], 0.0)
 
+    def test_exact_RL_inverse_process_congruence_is_bound_to_certificate(self):
+        d = CERT.build()
+        p = d["process_congruence_preconditioner"]
+        self.assertEqual(p["form"], "C=R*L_inverse")
+        self.assertTrue(p["exact_rational"])
+        self.assertEqual(p["R_diagonal"], ["1", "10", "100", "2"])
+        self.assertEqual(
+            p["L_inverse"],
+            [
+                ["1", "0", "0", "0"],
+                ["-3/8", "1", "0", "0"],
+                ["1/15", "-4/9", "1", "0"],
+                ["-15/2", "30", "-105/2", "1"],
+            ],
+        )
+        self.assertEqual(p["limiting_transformed_diagonal"], ["2/3", "5/8", "200/567", "1/2"])
+        self.assertEqual(p["norm_inf_exact"], 182)
+        self.assertEqual(p["norm_1_exact"], 205)
+        self.assertEqual(p["norm_2_squared_upper_exact"], 37310)
+        self.assertEqual(p["certified_object"], "C*(Q_scaled/x)*C^T")
+
     def test_pseudo_cadence_is_coupled_to_tau_inside_worst_cells(self):
         d = CERT.build()
         ratio = d["source_schedule"]["pseudo_ratio"]
