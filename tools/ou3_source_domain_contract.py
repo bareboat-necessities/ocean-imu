@@ -5,14 +5,23 @@ This producer intentionally does not infer bounds from the eight reference
 trajectories. It parses the shipping implementation's safety/clamp constants
 and records every discrete branch and hybrid transition the validated backend
 must cover.
+
+The implementation constants are C++ ``float`` constexpr expressions. For a
+proof-domain boundary it is not sufficient to evaluate those expressions as
+Python binary64. This parser therefore evaluates every literal and arithmetic
+operation as IEEE-754 binary32, using exact rationals between operations and an
+explicit nearest/ties-to-even rounding step. The returned Python float is an
+exact binary64 representation of the deployed binary32 value.
 """
 from __future__ import annotations
 
 import argparse
 import ast
+from fractions import Fraction
 import json
 import math
 import re
+import struct
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -39,38 +48,106 @@ HYBRID_OBLIGATIONS = (
 CONST_RE = re.compile(
     r"constexpr\s+float\s+([A-Za-z_]\w*)\s*=\s*([^;]+);", re.MULTILINE
 )
+_FLOAT32_MAX_BITS = 0x7F7FFFFF
 
 
 def _strip_float_suffixes(expr: str) -> str:
     return re.sub(r"(?<=\d)[fF]\b", "", expr)
 
 
-def _eval_constexpr(node: ast.AST, text: str, stack: tuple[str, ...]) -> float:
+def _bits_to_positive_fraction(bits: int) -> Fraction:
+    """Return the exact nonnegative finite binary32 value for ``bits``."""
+    if not 0 <= bits <= _FLOAT32_MAX_BITS:
+        raise ValueError(f"not a finite positive binary32 pattern: 0x{bits:08x}")
+    exponent = (bits >> 23) & 0xFF
+    mantissa = bits & 0x7FFFFF
+    if exponent == 0:
+        return Fraction(mantissa, 1 << 149)
+    significand = (1 << 23) | mantissa
+    power = exponent - 127 - 23
+    if power >= 0:
+        return Fraction(significand << power, 1)
+    return Fraction(significand, 1 << (-power))
+
+
+def _round_fraction_binary32(value: Fraction) -> Fraction:
+    """Round an exact rational to finite binary32, nearest/ties-to-even.
+
+    Python binary64 is used only to locate a nearby candidate. The final choice
+    is made by exact rational distances over that candidate and its neighbours,
+    so possible binary64 double-rounding cannot change the selected binary32.
+    """
+    if value == 0:
+        return Fraction(0, 1)
+    sign = -1 if value < 0 else 1
+    x = abs(value)
+    try:
+        candidate = struct.unpack(">I", struct.pack(">f", float(x)))[0]
+    except OverflowError as exc:
+        raise RuntimeError(f"binary32 constant overflow for {value}") from exc
+    candidate &= 0x7FFFFFFF
+    if candidate > _FLOAT32_MAX_BITS:
+        raise RuntimeError(f"binary32 constant overflow for {value}")
+
+    choices: list[tuple[Fraction, int]] = []
+    for bits in (candidate - 1, candidate, candidate + 1):
+        if 0 <= bits <= _FLOAT32_MAX_BITS:
+            choices.append((_bits_to_positive_fraction(bits), bits))
+    if not choices:
+        raise RuntimeError(f"cannot round binary32 constant {value}")
+
+    def rank(item: tuple[Fraction, int]) -> tuple[Fraction, int]:
+        exact, bits = item
+        # Exact midpoint: ties-to-even means an even low significand bit.
+        return (abs(exact - x), bits & 1)
+
+    exact, _ = min(choices, key=rank)
+    return exact if sign > 0 else -exact
+
+
+def _literal_fraction(expr: str, node: ast.Constant) -> Fraction:
+    token = ast.get_source_segment(expr, node)
+    if token is None:
+        token = repr(node.value)
+    try:
+        return Fraction(token)
+    except (ValueError, ZeroDivisionError) as exc:
+        raise RuntimeError(f"cannot parse constexpr literal {token!r}") from exc
+
+
+def _eval_constexpr32(node: ast.AST, expr: str, text: str,
+                      stack: tuple[str, ...]) -> Fraction:
     if isinstance(node, ast.Expression):
-        return _eval_constexpr(node.body, text, stack)
+        return _eval_constexpr32(node.body, expr, text, stack)
     if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
-        return float(node.value)
+        return _round_fraction_binary32(_literal_fraction(expr, node))
     if isinstance(node, ast.Name):
-        return parse_const(text, node.id, stack)
+        return parse_const_fraction(text, node.id, stack)
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
-        x = _eval_constexpr(node.operand, text, stack)
+        x = _eval_constexpr32(node.operand, expr, text, stack)
         return x if isinstance(node.op, ast.UAdd) else -x
     if isinstance(node, ast.BinOp):
-        a = _eval_constexpr(node.left, text, stack)
-        b = _eval_constexpr(node.right, text, stack)
+        a = _eval_constexpr32(node.left, expr, text, stack)
+        b = _eval_constexpr32(node.right, expr, text, stack)
         if isinstance(node.op, ast.Add):
-            return a + b
-        if isinstance(node.op, ast.Sub):
-            return a - b
-        if isinstance(node.op, ast.Mult):
-            return a * b
-        if isinstance(node.op, ast.Div):
-            return a / b
+            exact = a + b
+        elif isinstance(node.op, ast.Sub):
+            exact = a - b
+        elif isinstance(node.op, ast.Mult):
+            exact = a * b
+        elif isinstance(node.op, ast.Div):
+            if b == 0:
+                raise ZeroDivisionError("constexpr division by zero")
+            exact = a / b
+        else:
+            raise RuntimeError(f"unsupported constexpr operator: {ast.dump(node.op)}")
+        return _round_fraction_binary32(exact)
     raise RuntimeError(f"unsupported constexpr expression node: {ast.dump(node)}")
 
 
-def parse_const(text: str, name: str, stack: tuple[str, ...] = ()) -> float:
-    """Resolve a scalar constexpr using only names, numbers and +,-,*,/."""
+def parse_const_fraction(text: str, name: str,
+                         stack: tuple[str, ...] = ()) -> Fraction:
+    """Resolve a scalar ``constexpr float`` with deployed binary32 semantics."""
     if name in stack:
         raise RuntimeError(f"cyclic implementation constant alias: {' -> '.join((*stack, name))}")
     expressions = {n: expr for n, expr in CONST_RE.findall(text)}
@@ -79,12 +156,16 @@ def parse_const(text: str, name: str, stack: tuple[str, ...] = ()) -> float:
     expr = " ".join(_strip_float_suffixes(expressions[name]).split())
     try:
         tree = ast.parse(expr, mode="eval")
-        value = _eval_constexpr(tree, text, (*stack, name))
+        return _eval_constexpr32(tree, expr, text, (*stack, name))
     except (SyntaxError, ZeroDivisionError) as exc:
         raise RuntimeError(f"cannot evaluate implementation constant {name}: {expr!r}") from exc
+
+
+def parse_const(text: str, name: str, stack: tuple[str, ...] = ()) -> float:
+    value = float(parse_const_fraction(text, name, stack))
     if not math.isfinite(value):
-        raise RuntimeError(f"implementation constant {name} is non-finite: {expr!r}")
-    return float(value)
+        raise RuntimeError(f"implementation constant {name} is non-finite")
+    return value
 
 
 def parse_aw_sigma_floor(text: str) -> float:
@@ -96,7 +177,7 @@ def parse_aw_sigma_floor(text: str) -> float:
     m = pat.search(text)
     if not m:
         raise RuntimeError("cannot extract deployed a_w stationary-std floor")
-    return float(m.group(1))
+    return float(_round_fraction_binary32(Fraction(m.group(1))))
 
 
 def build(header: Path) -> dict:
@@ -111,14 +192,18 @@ def build(header: Path) -> dict:
         "validated_arithmetic": False,
         "outward_rounded": False,
         "implementation_header": str(header.relative_to(REPO)),
+        "implementation_scalar_semantics": {
+            "type": "IEEE754_BINARY32",
+            "rounding": "ROUND_TO_NEAREST_TIES_TO_EVEN_EACH_OPERATION",
+            "evaluation": "EXACT_RATIONAL_THEN_BINARY32_ROUND",
+        },
         "continuous_parameters": {
             "wave_tune_frequency_hz": [c["MIN_TUNE_FREQ_HZ"], c["MAX_TUNE_FREQ_HZ"]],
             "tau_aw_s": [c["MIN_TAU_S"], c["MAX_TAU_S"]],
             "sigma_aw_mps2": [sigma_floor, c["MAX_SIGMA_A"]],
             "R_S_base": [c["MIN_R_S"], c["MAX_R_S"]],
             "pseudo_update_period_s": [
-                c["PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"],
-                c["PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT"],
+                c["PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"], c["PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT"],
             ],
         },
         "timing_constants_s": {
