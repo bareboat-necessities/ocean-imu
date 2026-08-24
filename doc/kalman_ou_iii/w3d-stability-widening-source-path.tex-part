@@ -9,17 +9,37 @@ certificate below does not introduce a common Euclidean contraction test, a
 common quadratic metric, a repeated one-step contraction construction, or a
 one-step nonlinear alternative.
 
-The translational part of every quantitative word uses the source-cadence-only
-complete-chain route of Lemma~\ref{lem:iss-axis-uco}: four usable $S=0$
-updates observe $(v,p,S,a_w)$.  On a word of duration $T_{S,W}$ the four rows
-are spread as $t_0,t_{q_W},t_{2q_W},t_{3q_W}$ with $q_W$ from
-Eq.~\eqref{eq:iss-S-spread-index}; the certificate therefore credits the
-$(q_W\Delta_{S,-})^6$ determinant factor rather than silently reverting to
-adjacent firings.  The three-$S$ integrator construction of
-Lemma~\ref{lem:iss-three-s-coupled} is supporting analysis only and is not a
-fallback certificate: it may be used quantitatively only when its separate
-conditional latent-acceleration information hypothesis is itself certified on
-the same source word.
+The translational qualification of every quantitative word uses the
+source-cadence-only complete-chain route of Lemma~\ref{lem:iss-axis-uco}: four
+usable $S=0$ updates observe $(v,p,S,a_w)$.  Equation~\eqref{eq:iss-S-spread-index}
+defines $q_W$ as the largest spread index guaranteed to fit in the word.  The
+same determinant proof is valid for every integer $q$ with
+$1\le q\le q_W$, using rows
+$t_0,t_q,t_{2q},t_{3q}$ and the factor
+$(q\Delta_{S,-})^6$.  A quantitative certificate therefore need not choose the
+largest geometric spread blindly.  It evaluates every admissible integer $q$
+with validated arithmetic and selects
+\begin{equation}
+ q_W^*\in\arg\max_{1\le q\le q_W}
+ \underline\lambda_{S,W}(q),
+ \label{eq:widen-optimal-S-spread}
+\end{equation}
+where $\underline\lambda_{S,W}(q)>0$ is the rigorous information-Gramian lower
+bound after the corresponding OU-decay and row-norm penalties are included.
+Thus the proof credits all available separation while avoiding a longer spread
+when its additional OU decay or conditioning would reduce the certified lower
+bound.  This discrete proof-design optimization uses only source bounds and is
+not trajectory fitting.
+
+The three-$S$ integrator detectability construction remains useful for a
+different purpose.  Together with the uniform exponential stability of the
+omitted $a_w$ direction it can sharpen a Riccati/covariance upper bound without
+reconstructing $a_w$ through the exponentially small four-point determinant.
+It does not replace the four-$S$ complete-observability qualification and is not
+a theorem-promotion fallback.  The separate three-$S$ coupled observability
+route of Lemma~\ref{lem:iss-three-s-coupled} may be used as a full-observability
+argument only when its independent conditional latent-acceleration information
+hypothesis is itself certified on the same source word.
 
 The homogeneous held-bias and active-bias systems have different active
 coordinates (18 and 21 states).  The construction is therefore applied
@@ -65,7 +85,13 @@ $w=(i_0,e_0,i_1,\ldots,e_{r-1},i_r)$ define the source-correlated matrix family
 The joint reachability clause is essential.  Extrema of
 $(\tau,\sigma_{aw},r_S,T_S)$ or of gate/covariance state that cannot coexist on
 one estimator execution are not multiplied together merely because they lie in
-the same Cartesian envelope.
+the same Cartesian envelope.  At an arbitrary word entrance, however, the
+invariant applied-parameter box is retained unless source history excludes a
+combination: the independent $r_S$ smoothing state in particular prevents a
+static target-law correlation from being used to delete admissible entrance
+corners.  Correlation widening is obtained by propagating the actual source
+recurrences inside the word, not by assuming instantaneous algebraic coupling
+that the implementation does not enforce.
 
 Let $\mathscr W_{{\rm src},m}$ be a finite collection of words with
 \begin{equation}
@@ -268,17 +294,17 @@ A rigorous deployed Live certificate reports
  \label{eq:widen-path-contract}
 \end{equation}
 The pass conditions are: every reachable same-mode transition is covered; the
-word family is source complete; the four-$S$ complete-chain and recurring
-vector-PE hypotheses are realized inside each tile; all robust matrix and exact
-nonlinear word bounds cover the complete continuous jointly source-reachable
-family; every prefix is safe; all dimension-changing jumps enter a certified
-destination domain; and the relevant word margins are strict.  Interval
-arithmetic, affine arithmetic, Taylor models, branch-and-bound, robust LMIs over
-certified matrix families, or another validated enclosure method may be used.
-Monte Carlo and dense trajectory sampling are diagnostics only and do not
-establish the required suprema or infima.
+word family is source complete; the optimized four-$S$ complete-chain and
+recurring vector-PE hypotheses are realized inside each tile; all robust matrix
+and exact nonlinear word bounds cover the complete continuous jointly
+source-reachable family; every prefix is safe; all dimension-changing jumps
+enter a certified destination domain; and the relevant word margins are strict.
+Interval arithmetic, affine arithmetic, Taylor models, branch-and-bound, robust
+LMIs over certified matrix families, or another validated enclosure method may
+be used.  Monte Carlo and dense trajectory sampling are diagnostics only and do
+not establish the required suprema or infima.
 
 This is the sole quantitative normal-Live certificate path used by the widened
-theory.  Older scalar, common-Euclidean, three-$S$-without-$\mu_a$, or repeated
-one-step alternatives are not promotion fallbacks.  The construction changes
-neither the estimator nor the adaptation law.
+theory.  Older scalar, common-Euclidean, three-$S$ promotion substitutes, or
+repeated one-step alternatives are not promotion fallbacks.  The construction
+changes neither the estimator nor the adaptation law.
