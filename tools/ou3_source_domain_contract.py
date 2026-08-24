@@ -13,16 +13,27 @@ operation as IEEE-754 binary32, using exact rationals between operations and an
 explicit nearest/ties-to-even rounding step. The returned Python float is an
 exact binary64 representation of the deployed binary32 value.
 
-The producer also contains the first transcendental enclosure used by the
-continuous-word proof. ``validated_ou_primitives`` bounds exp(-h/tau), phi_pa
-and phi_Sa using exact rational Taylor arithmetic plus an explicit Lagrange
-remainder. ``validated_phi_axis4`` lifts those scalar bounds to the exact 4x4
-[v,p,S,a] transition used by IntegratedOUChain<T,3>::transition.
+The producer also contains the first validated continuous-word arithmetic:
+``validated_ou_primitives`` bounds exp(-h/tau), phi_pa and phi_Sa using exact
+rational Taylor arithmetic plus an explicit Lagrange remainder;
+``validated_phi_axis4`` lifts those scalar bounds to the exact 4x4
+[v,p,S,a] transition used by IntegratedOUChain<T,3>::transition; and
+``validated_qd_axis4_kernel`` encloses the exact mathematical OU process
+covariance using the positive impulse-response kernel
 
-Both are intentionally parameterized by an accepted-step interval: the
-deployed wrapper presently checks only dt>0 and finiteness, so the source
-contract records the missing finite upper step guard as an explicit theorem
-blocker instead of silently substituting the nominal 200 Hz period.
+    Qd = (2 sigma^2 / tau) integral_0^h g(r) g(r)^T dr.
+
+The kernel integral is subdivided into cells.  Every cell uses the validated
+transition/OU primitive bounds, and every sum/product is accumulated as an
+exact Fraction.  This avoids the cancellation-heavy closed-form covariance
+expressions.  The claim is intentionally narrow: it encloses the mathematical
+continuous OU covariance, while the shipping binary32 closed-form computation
+and its PSD cleanup remain a separate implementation-arithmetic obligation.
+
+All word-level arithmetic is intentionally parameterized by an accepted-step
+interval: the deployed wrapper presently checks only dt>0 and finiteness, so
+the source contract records the missing finite upper step guard as an explicit
+theorem blocker instead of silently substituting the nominal 200 Hz period.
 """
 from __future__ import annotations
 
@@ -322,6 +333,116 @@ def validated_phi_axis4(h_bounds: tuple[float, float] | list[float],
     }
 
 
+def _kernel_interval_on_cell(r_lo: Fraction, r_hi: Fraction,
+                             tau_bounds: tuple[float, float] | list[float],
+                             order: int) -> list[tuple[Fraction, Fraction]]:
+    """Return validated impulse-response intervals [v,p,S,a] on one r-cell."""
+    lo = _fraction_down(r_lo)
+    hi = _fraction_up(r_hi)
+    M = validated_phi_axis4((lo, hi), tau_bounds, order)["Phi_interval"]
+    ans: list[tuple[Fraction, Fraction]] = []
+    for i in range(4):
+        b = M[i][3]
+        blo = max(0.0, float(b[0]))
+        bhi = max(blo, float(b[1]))
+        ans.append((Fraction.from_float(blo), Fraction.from_float(bhi)))
+    return ans
+
+
+def _integrate_kernel_bounds(h: Fraction,
+                             tau_bounds: tuple[float, float] | list[float],
+                             cells: int, order: int) -> tuple[list[list[Fraction]], list[list[Fraction]]]:
+    """Bound integral_0^h g g^T dr by exact-rational cell sums."""
+    if h < 0:
+        raise ValueError("integration horizon must be nonnegative")
+    if cells <= 0:
+        raise ValueError("cells must be positive")
+    lower = [[Fraction(0, 1) for _ in range(4)] for _ in range(4)]
+    upper = [[Fraction(0, 1) for _ in range(4)] for _ in range(4)]
+    if h == 0:
+        return lower, upper
+    width = h / cells
+    for k in range(cells):
+        r0 = width * k
+        r1 = width * (k + 1)
+        g = _kernel_interval_on_cell(r0, r1, tau_bounds, order)
+        for i in range(4):
+            for j in range(i, 4):
+                cell_lo = width * g[i][0] * g[j][0]
+                cell_hi = width * g[i][1] * g[j][1]
+                lower[i][j] += cell_lo
+                upper[i][j] += cell_hi
+                if i != j:
+                    lower[j][i] += cell_lo
+                    upper[j][i] += cell_hi
+    return lower, upper
+
+
+def validated_qd_axis4_kernel(h_bounds: tuple[float, float] | list[float],
+                              tau_bounds: tuple[float, float] | list[float],
+                              sigma2_bounds: tuple[float, float] | list[float],
+                              cells: int = 24, order: int = 96) -> dict:
+    """Rigorous elementwise enclosure of the mathematical integrated-OU Qd.
+
+    The chain impulse response from the white driving noise to [v,p,S,a] is
+    exactly the fourth column of the transition matrix evaluated at elapsed
+    time r.  All four components are nonnegative for r>=0,tau>0. Therefore
+    each covariance entry is a monotone-in-h integral of a nonnegative product.
+
+    This routine bounds the minimum at h_lo and maximum at h_hi by cellwise
+    interval integration and then applies qc=2*sigma2/tau. Dependencies are
+    discarded conservatively.  It does not yet claim enclosure of the shipping
+    binary32 closed-form evaluation or regularize_psd_if_needed() perturbation.
+    """
+    h_lo_f, h_hi_f = map(float, h_bounds)
+    t_lo_f, t_hi_f = map(float, tau_bounds)
+    s_lo_f, s_hi_f = map(float, sigma2_bounds)
+    if h_lo_f < 0 or h_hi_f < h_lo_f:
+        raise ValueError("invalid h interval")
+    if t_lo_f <= 0 or t_hi_f < t_lo_f:
+        raise ValueError("invalid tau interval")
+    if s_lo_f < 0 or s_hi_f < s_lo_f:
+        raise ValueError("invalid sigma2 interval")
+
+    h_lo = Fraction.from_float(h_lo_f)
+    h_hi = Fraction.from_float(h_hi_f)
+    t_lo = Fraction.from_float(t_lo_f)
+    t_hi = Fraction.from_float(t_hi_f)
+    s_lo = Fraction.from_float(s_lo_f)
+    s_hi = Fraction.from_float(s_hi_f)
+
+    int_lo, _ = _integrate_kernel_bounds(h_lo, tau_bounds, cells, order)
+    _, int_hi = _integrate_kernel_bounds(h_hi, tau_bounds, cells, order)
+    qc_lo = Fraction(2, 1) * s_lo / t_hi
+    qc_hi = Fraction(2, 1) * s_hi / t_lo
+
+    Q: list[list[list[float]]] = []
+    for i in range(4):
+        row: list[list[float]] = []
+        for j in range(4):
+            qlo = qc_lo * int_lo[i][j]
+            qhi = qc_hi * int_hi[i][j]
+            row.append([_fraction_down(qlo), _fraction_up(qhi)])
+        Q.append(row)
+
+    return {
+        "validated_arithmetic": True,
+        "outward_rounded": True,
+        "claim": "MATHEMATICAL_INTEGRATED_OU_PROCESS_COVARIANCE_ENCLOSURE",
+        "backend": "POSITIVE_KERNEL_CELL_INTERVAL_EXACT_RATIONAL_ACCUMULATION",
+        "cells": cells,
+        "state_order": ["v", "p", "S", "a_w"],
+        "h_s": [_fraction_down(h_lo), _fraction_up(h_hi)],
+        "tau_s": [_fraction_down(t_lo), _fraction_up(t_hi)],
+        "sigma2_aw": [_fraction_down(s_lo), _fraction_up(s_hi)],
+        "Qd_interval": Q,
+        "mathematical_integral_enclosed": True,
+        "shipping_binary32_closed_form_enclosed": False,
+        "shipping_psd_cleanup_enclosed": False,
+        "theorem_promotion": "NOT_ESTABLISHED",
+    }
+
+
 def build(header: Path) -> dict:
     text = header.read_text()
     c = {name: parse_const(text, name) for name in REQUIRED}
@@ -390,7 +511,10 @@ def build(header: Path) -> dict:
             "requires_finite_h_upper": True,
             "backend": "EXACT_RATIONAL_TAYLOR_WITH_LAGRANGE_REMAINDER",
             "transition_matrix_backend": "VALIDATED_INTERVAL_4X4_INTEGRATED_OU_CHAIN",
-            "theorem_promotion": "BLOCKED_BY_UNBOUNDED_ACCEPTED_DT",
+            "process_covariance_backend": "POSITIVE_KERNEL_CELL_INTERVAL_EXACT_RATIONAL_ACCUMULATION",
+            "process_covariance_mathematical_integral_enclosed": True,
+            "process_covariance_shipping_float_path_enclosed": False,
+            "theorem_promotion": "BLOCKED_BY_UNBOUNDED_ACCEPTED_DT_AND_SHIPPING_QD_FLOAT_PATH",
         },
         "discrete_source_branches": {
             "mode": ["H", "A"],
@@ -408,10 +532,10 @@ def build(header: Path) -> dict:
             "metric_consequence": "inverse-covariance information energy is nonexpansive",
         },
         "promotion_rule": (
-            "source-boundary scalar arithmetic and the exact per-axis transition enclosure are now "
-            "validated; deployment promotion still requires a finite source-derived accepted-dt upper "
-            "bound, validated process-covariance and full H/A Riccati propagation, nonlinear SO(3) "
-            "remainder bounds and remaining jump certificates"
+            "source-boundary scalar arithmetic, exact per-axis transition and mathematical OU process "
+            "covariance are now enclosed; deployment promotion still requires a finite source-derived "
+            "accepted-dt upper bound, enclosure of the shipping binary32 Qd/PSD-cleanup path, full H/A "
+            "Riccati propagation, nonlinear SO(3) remainder bounds and remaining jump certificates"
         ),
     }
 
