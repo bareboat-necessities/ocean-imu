@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
 """Build the continuous-source promotion contract for adaptive OU-III.
 
-Executed replay values remain sanity anchors.  Deployment promotion requires
-validated source-word endpoint bounds in the paper's group-compatible node
-metrics; the Kalman inverse covariance may be used to construct/condition those
-bounds but is not itself required to be the nonlinear Lyapunov metric.
+Schema 4 binds P3 and P4 to one source-correlated information geometry.  P3
+proves the complete-word homogeneous inequality in the Kalman information
+metric.  P4 lifts that same local coordinate exactly to SO(3) with the Cayley
+coordinate
+
+    c(R)=2 tan(theta/2) u = 4 e_R/(1+tr R),
+    W_g(R,xi)=[c(R);xi]^T Sigma_KF(g)^-1[c(R);xi].
+
+The endpoint covariance in W_g must be the covariance of the same reachable
+source endpoint.  Full attitude--linear cross terms are retained.  The retired
+block-diagonal a_R/P_xi metric is not a promotion fallback.
+
+Executed replay values remain diagnostics/falsification anchors only; they do
+not choose the source-word horizon or the P4 metric.
 """
 from __future__ import annotations
 
@@ -15,17 +25,16 @@ from pathlib import Path
 import ou3_numerical_certificate as BASE
 import ou3_source_domain_contract as SOURCE_DOMAIN
 
-SCHEMA = 3
+SCHEMA = 4
 
 
 def mode_contract(info_mode: dict, completion_mode: dict, mode: str) -> dict:
     first = dict(info_mode.get("selected") or {})
     strongest = dict(info_mode.get("strongest_executed_margin") or first)
-    horizon = strongest.get("horizon_s", first.get("horizon_s"))
     executed = {
         "first_strict_horizon_s": first.get("horizon_s"),
         "first_strict_lambda_worst": first.get("lambda_worst_information"),
-        "recommended_horizon_s": horizon,
+        "strongest_executed_horizon_s": strongest.get("horizon_s"),
         "lambda_worst_information": strongest.get("lambda_worst_information"),
         "relative_Riccati_injection_margin_worst": strongest.get(
             "relative_Riccati_injection_margin_worst",
@@ -37,14 +46,15 @@ def mode_contract(info_mode: dict, completion_mode: dict, mode: str) -> dict:
             "asymptotic_floor_b_star_replay", completion_mode.get("invariant_level_b_replay")
         ),
         "replay_finite_capture_level_b_eta": completion_mode.get("finite_capture_level_b_eta_replay"),
+        "qualification": "DIAGNOSTIC_ONLY_NOT_A_THEOREM_HORIZON_OR_METRIC_SELECTOR",
     }
     return {
         "mode": mode,
-        "linear_information_metric_role": (
-            "Sigma_KF^-1 and equivalent congruences may certify Riccati/information bounds but are not automatically the nonlinear Lyapunov metric"
-        ),
-        "required_path_metric": "Pbar_i=blkdiag((a_R_i/2) I3, P_xi_i), a_R_i>0, P_xi_i>>0",
-        "recommended_word_horizon_s": horizon,
+        "required_path_metric": "CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC",
+        "required_group_coordinate": "c(R)=2*tan(theta/2)*u=4*e_R/(1+tr(R))",
+        "required_group_energy": "W_g=[c(R);xi]^T Sigma_KF(g)^-1[c(R);xi]",
+        "endpoint_metric_source_correlation_required": True,
+        "full_attitude_linear_cross_terms_retained": True,
         "executed_reference_only": executed,
         "required_continuous_bounds": {
             "source_complete": True,
@@ -62,11 +72,13 @@ def mode_contract(info_mode: dict, completion_mode: dict, mode: str) -> dict:
         },
         "required_nonlinear_bounds": {
             "theta_star": "0 < theta_star < pi",
-            "endpoint_W_ratio_upper": "0 <= ratio < 1; verifier derives mu_W=1-ratio",
             "certified_level_W": "> 0",
+            "endpoint_relative_W_decrease_lower": "> 0",
+            "mu_W_lower": "> 0",
             "all_word_prefixes_safe": True,
-            "metric_lift": "W_i=a_R_i(1-cos(theta))+xi^T P_xi_i xi",
-            "attitude_linear_cross_terms_in_Pbar": False,
+            "accepted_correction_uses_source_series_branch": True,
+            "metric_lift": "exact Cayley lift of matching source Kalman information metric",
+            "block_diagonal_metric_fallback": False,
         },
     }
 
@@ -86,16 +98,19 @@ def build_contract(info: dict, completion: dict) -> dict:
         ),
         "metric_policy": {
             "P3_conditioning_coordinate_invariant": True,
-            "P3_metric_need_not_equal_P4_metric": True,
-            "P4_group_compatible_node_metric_required": True,
-            "node_dependent_metrics_allowed": True,
+            "P4_local_quadratic_equals_P3_information_metric": True,
+            "P4_exact_Cayley_group_lift_required": True,
+            "P4_endpoint_metric_matches_source_covariance": True,
+            "P4_full_attitude_linear_cross_terms_retained": True,
+            "node_dependent_metrics_required": True,
+            "block_diagonal_group_metric_fallback_allowed": False,
             "common_Euclidean_or_common_quadratic_fallback_allowed": False,
         },
         "modes": modes,
         "source_domain_requirement": {
             "producer": "tools/ou3_source_domain_contract.py",
             "claim": "OU3_SOURCE_COMPLETE_IMPLEMENTATION_DOMAIN_CONTRACT",
-            "validation": "final deployment gate regenerates the source-domain contract from the current implementation",
+            "validation": "final deployment gate regenerates the source-domain contract from the current implementation and declared theorem operating domain",
         },
         "source_word_language_requirement": {
             "producer": "tools/ou3_source_word_theorem_contract.py",
@@ -110,7 +125,7 @@ def build_contract(info: dict, completion: dict) -> dict:
                 "dimension-changing/reference/reset events remain separate hybrid obligations",
             ],
             "anti_shortcut": (
-                "a single favorable vector pair, three-S integrator-only route without its independent a_w hypothesis, independently multiplied cell extrema, or a replay-observed acceptance pattern is not a source-complete word certificate"
+                "a single favorable vector pair, three-S integrator-only route without its independent a_w hypothesis, independently multiplied cell extrema, a replay-observed acceptance pattern, or a repeated one-sample decrease is not a source-complete word certificate"
             ),
         },
         "hybrid_requirements": {
@@ -154,10 +169,11 @@ def build_contract(info: dict, completion: dict) -> dict:
             "complete continuous source coverage relative to the declared theorem operating envelope",
             "joint source reachability across scheduled parameters and branch state",
             "finite recurring vector-PE hypothesis explicit rather than inferred from selected packets",
+            "exact deployed quaternion injection and source operation order",
             "source-domain artifact exactly matches current implementation-generated contract",
         ],
         "promotion_rule": (
-            "deployment PASS requires strict validated complete-word endpoint bounds, group-compatible node metrics, prefix safety, hybrid inward margins, Gaussian/Freedman stochastic concentration, finite capture, and exact current-source binding; no older scalar, common-Euclidean, or repeated-one-step fallback path may promote the theorem"
+            "deployment PASS requires strict validated complete-word P3 endpoint bounds, the exact Cayley lift of the matching source information metric, positive P4 mu_W and prefix safety, hybrid inward margins, Gaussian/Freedman stochastic concentration, finite capture, and exact current-source binding; no block-diagonal, scalar, common-Euclidean, replay-fitted, or repeated-one-step fallback path may promote the theorem"
         ),
     }
 
@@ -176,6 +192,7 @@ def main() -> int:
         "schema": contract["schema"],
         "linear": contract["upstream_executed_information_certificate"],
         "replay": contract["upstream_executed_replay_funnel"],
+        "P4_metric": contract["metric_policy"],
     }, indent=2, sort_keys=True))
     return 0
 
