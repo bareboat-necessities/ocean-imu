@@ -5,6 +5,8 @@
 #include <cmath>
 #include <iostream>
 
+// Keep the deployed horizontal operating point unchanged while proving that
+// X and Y regularization can now be overridden independently.
 namespace {
 
 using Fusion = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;
