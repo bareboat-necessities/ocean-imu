@@ -5,12 +5,18 @@ on:
     paths:
       - "src/kalman_ou_common/KalmanOUCoreMath.h"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h"
+      - "src/util/W3dSimCommon.h"
+      - "src/util/W3dSimCommon.cpp"
+      - "tests/kalman_ou_iii/ou3-certificate-sim.cpp"
       - "tools/ou3_interval.py"
       - "tools/ou3_validated_transcendentals.py"
       - "tools/ou3_scalar_ou_enclosure.py"
       - "tools/ou3_translational_uco_ucc.py"
       - "tools/ou3_vector_uco_certificate.py"
       - "tools/ou3_full_process_ucc.py"
+      - "tools/ou3_source_noise_certificate.py"
+      - "tools/ou3_stability_theorem_certificate.py"
       - "tools/ou3_source_interval_box.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
@@ -23,6 +29,8 @@ on:
       - "tests/validation/test_ou3_translational_uco_ucc.py"
       - "tests/validation/test_ou3_vector_uco_certificate.py"
       - "tests/validation/test_ou3_full_process_ucc.py"
+      - "tests/validation/test_ou3_source_noise_certificate.py"
+      - "tests/validation/test_ou3_stability_theorem_certificate.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tests/validation/test_ou3_validate_enclosure.py"
       - "tests/validation/test_ou3_deployment_gate.py"
@@ -118,6 +126,25 @@ jobs:
       - name: Test complete H/A prediction covariance bounds
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_full_process_ucc
+
+  stability-theorem:
+    name: composed conditional normal Live stability theorem
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile theorem composition producer
+        run: |
+          python3 -m py_compile \
+            tools/ou3_stability_theorem_certificate.py \
+            tests/validation/test_ou3_stability_theorem_certificate.py
+      - name: Test source-bound theorem composition
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_stability_theorem_certificate
+      - name: Materialize theorem certificate
+        run: |
+          python3 tools/ou3_stability_theorem_certificate.py \
+            --output /tmp/ou3_stability_theorem_certificate.json
 
   enclosure:
     name: continuous and nonlinear enclosure arithmetic
