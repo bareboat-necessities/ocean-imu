@@ -8,6 +8,7 @@ on:
       - "tools/ou3_interval.py"
       - "tools/ou3_validated_transcendentals.py"
       - "tools/ou3_scalar_ou_enclosure.py"
+      - "tools/ou3_translational_uco_ucc.py"
       - "tools/ou3_source_interval_box.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
@@ -17,6 +18,7 @@ on:
       - "tools/ou3_source_domain_contract.py"
       - "tests/validation/test_ou3_validated_transcendentals.py"
       - "tests/validation/test_ou3_scalar_ou_enclosure.py"
+      - "tests/validation/test_ou3_translational_uco_ucc.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tests/validation/test_ou3_validate_enclosure.py"
       - "tests/validation/test_ou3_deployment_gate.py"
@@ -67,6 +69,21 @@ jobs:
           python3 -m unittest -v \
             test_ou3_validated_transcendentals \
             test_ou3_scalar_ou_enclosure
+
+  translational-uco-ucc:
+    name: source-uniform translational UCO UCC
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile analytic translational producer
+        run: |
+          python3 -m py_compile \
+            tools/ou3_translational_uco_ucc.py \
+            tests/validation/test_ou3_translational_uco_ucc.py
+      - name: Test source-uniform translational certificate
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_translational_uco_ucc
 
   enclosure:
     name: continuous and nonlinear enclosure arithmetic
