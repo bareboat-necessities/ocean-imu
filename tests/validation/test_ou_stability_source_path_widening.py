@@ -59,7 +59,9 @@ class OUIIISourcePathStabilityWideningContractTests(unittest.TestCase):
         self.assertIn("No decrease is required at an individual sample inside the word", flat)
         self.assertNotIn(r"\kappa_{N,m}^{\rm src}", proof)
         self.assertNotIn("special choice", flat)
-        self.assertNotIn("fallback", flat.casefold())
+        for retired in ("widen-cylinder-iss", "widen-component-iss", "widen-direct-iss"):
+            self.assertNotIn(retired, proof)
+        self.assertIn("sole quantitative normal-Live certificate path", flat)
 
     def test_linear_metric_is_local_quadratic_of_group_metric(self):
         proof = _read(DOC / "w3d-stability-widening-source-path.tex-part")
@@ -67,8 +69,8 @@ class OUIIISourcePathStabilityWideningContractTests(unittest.TestCase):
         self.assertIn(r"\frac{a_{R,i}}{2}\mat I_3", proof)
         self.assertIn(r"\mat P_{\xi,i}", proof)
         self.assertIn("precisely the local quadratic of the exact group metric", flat)
-        self.assertIn("no attitude--linear cross term", flat)
-        self.assertIn("Using the same $a_{R,i}$ and $\\mat P_{\\xi,i}$", flat)
+        self.assertIn("no attitude--linear cross term", flat.casefold())
+        self.assertIn("using the same $a_{r,i}$ and $\\mat p_{\\xi,i}$", flat.casefold())
 
     def test_nonlinear_metric_uses_group_energy_and_exact_words(self):
         proof = _read(DOC / "w3d-stability-widening-source-path.tex-part")
@@ -90,7 +92,7 @@ class OUIIISourcePathStabilityWideningContractTests(unittest.TestCase):
         self.assertIn(r"\label{eq:widen-path-contract}", proof)
         flat = _flat(proof)
         self.assertIn("every reachable same-mode transition is covered", flat)
-        self.assertIn("complete continuous source family", flat)
+        self.assertIn("complete continuous jointly source-reachable family", flat)
         self.assertIn("Monte Carlo and dense trajectory sampling are diagnostics only", flat)
         self.assertIn("sole quantitative normal-Live certificate path", flat)
         self.assertIn("changes neither the estimator nor the adaptation law", flat)
