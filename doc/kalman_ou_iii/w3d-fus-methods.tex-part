@@ -48,25 +48,32 @@ with the sea-scaled horizon
 c_{\mathrm{adapt}}=0.40.
 \label{eq:adapt-ema-sea-time}
 \end{equation}
-The dynamically estimated time base used for this EMA is guarded in
-$[\SI{0.5}{s},\SI{6}{s}]$, and every dynamically generated EMA horizon is
-finally guarded in $[\SI{0.05}{s},\SI{30}{s}]$.  These are safety envelopes,
-not sea-state tuning points; all eight scored reference seas remain interior.
+Before forming this horizon, the source guards the estimated sea-time base in
+$[\SI{0.5}{s},\SI{6}{s}]$; the realized EMA horizon is then guarded in
+$[\SI{0.05}{s},\SI{30}{s}]$.  For this common $\tau/\sigma_{aw}$ channel the
+reference seas remain comfortably inside both limits.  The acceleration-moment
+channel has its own requested horizon and does reach the universal \SI{30}{s}
+ceiling on the largest reference sea, as described in
+Sec.~\ref{sec:adaptation-physical-sigma}.
 
 The regularizer candidate is smoothed separately,
 \begin{equation}
 \begin{aligned}
-\tau_{r_S}&=m_{r_S}\tau_\star,\qquad
-\alpha_{r_S}=1-e^{-\Delta t/\tau_{r_S}},\\
+\tau_{r_S,\mathrm{raw}}&=m_{r_S}\tau_\star,\\
+\tau_{r_S}&=\clip(\tau_{r_S,\mathrm{raw}},\tau_{\mathrm{EMA,min}},
+                    \tau_{\mathrm{EMA,max}}),\\
+\alpha_{r_S}&=1-e^{-\Delta t/\tau_{r_S}},\\
 \widetilde r_S&\leftarrow
  \widetilde r_S
  +\alpha_{r_S}(r_{S,\star}-\widetilde r_S),
 \end{aligned}
 \label{eq:adapt-RS}
 \end{equation}
-where the measured default is $m_{r_S}=1.5$ and the same universal dynamic-EMA
-guard is applied to the realized horizon.  Every valid physical sample
-contributes to the period statistic, acceleration statistic, and all adaptive
+where the measured default is $m_{r_S}=1.5$ and the deployed discrepancy-based
+horizon-shortening term is disabled.  Hence the source uses the proportional
+$1.5\tau_\star$ horizon followed by the same
+$[\SI{0.05}{s},\SI{30}{s}]$ guard.  Every valid physical sample contributes to
+the wave-period statistics, acceleration statistics, and all adaptive candidate
 EMAs.
 
 Candidate smoothing and parameter activation are distinct operations in the
@@ -142,7 +149,9 @@ base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
 & default coefficients $(c_\tau,c_\sigma,C_J)$ & $(1.0,0.9,0.0538)$ \\
 candidate EMA sampling / common EMA horizon & every valid sample / $0.40T_{\mathrm{sea}}$
 & $r_S$ smoothing horizon & $1.5\tau_\star$ \\
-frequency / variance horizons & $0.10T_{\mathrm{sea}}$ / $4T_{\mathrm{eff}}$
+wave-period moment EWMA & $\clip(4T_z,[20,180]\,\mathrm{s})$
+& log-period smoothing horizon & $0.05T_z=0.10T_{\mathrm{sea}}$ \\
+acceleration-variance horizon & $4T_{\mathrm{eff}}$ before clamps
 & dynamic time-base / EMA-horizon guards & $[0.5,6]$ s / $[0.05,30]$ s \\
 tuner-local variance request bounds & $[0.3,60]$ s
 & pseudo-update period bounds & $[5,250]$ ms \\
