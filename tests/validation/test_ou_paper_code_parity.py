@@ -4,7 +4,7 @@
 Numerical evidence has separate provenance tests.  This source-level publication
 contract protects state/model semantics and, deliberately, the complete adaptive
 smoothing chain: estimator EWMAs, scheduler EWMAs, clamps, activation/hold
-semantics, and magnetic exponential memory/slew.
+semantics, startup filtering, and magnetic exponential memory/slew.
 """
 
 from pathlib import Path
@@ -36,6 +36,7 @@ class OUPaperCodeParityTests(unittest.TestCase):
         cls.ou3_adapt = text("doc/kalman_ou_iii/w3d-adaptation-motivation.tex-part")
         cls.ou3_obs = text("doc/kalman_ou_iii/w3d-adaptation-observables.tex-part")
         cls.ou3_impl = text("doc/kalman_ou_iii/w3d-fus-methods.tex-part")
+        cls.ou3_iss = text("doc/kalman_ou_iii/w3d-iss-stability.tex-part")
         cls.ou3_init = text("doc/kalman_ou_iii/w3d-init.tex-part")
         cls.ou3_mag = text("doc/kalman_ou_iii/w3d-mag-hard-iron.tex-part")
         cls.ou2_paper = text("doc/kalman_ou_ii/ou2-dual-regularization-mse.tex")
@@ -137,6 +138,24 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("$1.5\\tau_\\star$", self.ou3_impl)
         self.assertIn("discrepancy-based\nhorizon-shortening term is disabled", self.ou3_impl)
 
+        # The stability source family must model the same two-layer recurrence,
+        # not silently apply the candidate EMA directly to the active MEKF.
+        self.assertIn(r"\widetilde x_{k+1}", self.ou3_iss)
+        self.assertIn(r"\label{eq:iss-source-hold-commit}", self.ou3_iss)
+        self.assertIn("active schedule is sample-and-hold", self.ou3_iss)
+        self.assertIn("activation timer", self.ou3_iss)
+        self.assertIn("on non-commit samples it is exactly\nzero", self.ou3_iss)
+
+    def test_ou3_startup_gravity_ema_matches_source(self):
+        self.assertIn("float mag_gravity_align_world_tau_sec = 12.0f;", self.ou3_wrap)
+        self.assertIn("float mag_gravity_align_world_warmup_sec = 5.0f;", self.ou3_wrap)
+        self.assertIn("const float alpha = 1.0f - std::exp(-dt / tau);", self.ou3_wrap)
+        self.assertIn("state = x;\n                initialized = true;", self.ou3_wrap)
+        self.assertIn("gravity_gate_acc_world_lpf_.reset();", self.ou3_wrap)
+        self.assertIn(r"\alpha_{g,k}=1-e^{-\Delta t_k/\SI{12}{s}}", self.ou3_init)
+        self.assertIn("first valid sample initializes the EMA state directly", self.ou3_init)
+        self.assertIn(r"ignored until this world-frame average has run for\n\SI{5}{s}", self.ou3_init)
+
     def test_ou3_cadence_bias_and_outer_warmup_match_paper(self):
         for token in (
             "PSEUDO_UPDATE_PERIOD_NOMINAL_S = 0.015f",
@@ -213,6 +232,15 @@ class OUPaperCodeParityTests(unittest.TestCase):
         self.assertIn("approximately \\SI{0.1}{s}", self.ou2_iss)
         self.assertIn("activation timer", self.ou2_charts)
         self.assertNotIn("candidate becomes active\nonly at step $k+1$", self.ou2_charts)
+
+        # OU-II uses the same tau-scaled pseudo cadence as OU-III, not a fixed
+        # 15 ms schedule.  The paper must describe the source scheduler.
+        self.assertIn("PSEUDO_UPDATE_TAU_RATIO_DEFAULT", self.ou2_wrap)
+        self.assertIn("PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT = FREQ_SMOOTHER_DT", self.ou2_wrap)
+        self.assertIn("PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.25f", self.ou2_wrap)
+        self.assertIn(r"\label{eq:ou2-iss-pseudo-cadence-source}", self.ou2_iss)
+        self.assertIn(r"\SI{5}{ms},\SI{250}{ms}", self.ou2_iss)
+        self.assertNotIn("OU--II retains the fixed pseudo-update period", self.ou2_iss)
 
     def test_ou2_residual_noise_parameter_is_not_a_live_tuner_alias(self):
         self.assertIn("float acc_noise_floor_sigma_ = ACC_NOISE_FLOOR_SIGMA_DEFAULT;", self.ou2_wrap)
