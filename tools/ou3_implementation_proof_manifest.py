@@ -22,7 +22,7 @@ REPO = Path(__file__).resolve().parents[1]
 WRAPPER = REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 CORE = REPO / "src" / "kalman_ou_common" / "KalmanOUCoreMath.h"
-SCHEMA = 1
+SCHEMA = 2
 
 
 def sha256(path: Path) -> str:
@@ -94,6 +94,10 @@ def build() -> dict:
         "joseph_update": "joseph_update3_",
         "quaternion_injection": "applyQuaternionCorrectionFromErrorState();",
         "left_error_reset": "apply_error_state_reset_jacobian_",
+        "prediction_before_acc": "mekf_->time_update(gyro, dt);\n            mekf_->measurement_update_acc_only(acc, tempC);",
+        "S_due_inside_time_update": "applyIntegralZeroPseudoMeas();",
+        "acc_injects_immediately": "last_acc_diag_.accepted = true;",
+        "mag_injects_immediately": "last_mag_diag_.accepted = true;",
         "aw_psd_floor": "Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;",
     }
     for label, marker in semantic_markers.items():
@@ -137,12 +141,19 @@ def build() -> dict:
         "normal_live_update_order": [
             "commit_previous_tune",
             "prediction",
-            "accelerometer_correction_or_rejection",
-            "periodic_S_zero_when_due",
-            "asynchronous_magnetometer_correction_or_rejection",
-            "quaternion_injection_and_left_error_reset",
-            "periodic_aw_covariance_psd_increment_when_due",
+            "apply_pending_aw_covariance_psd_increment",
+            "periodic_S_zero_when_due_then_immediate_quaternion_injection_and_left_error_reset",
+            "accelerometer_correction_or_rejection_then_immediate_quaternion_injection_and_left_error_reset_if_accepted",
+            "source_tuner_evolution_and_stage_next_tune",
+            "periodic_aw_covariance_sync_tick_stages_future_psd_increment",
+            "asynchronous_magnetometer_correction_or_rejection_then_immediate_quaternion_injection_and_left_error_reset_if_accepted",
         ],
+        "same_sample_reset_policy": {
+            "S_zero": "immediate after accepted pseudo correction",
+            "accelerometer": "immediate after accepted correction",
+            "magnetometer": "immediate after accepted correction",
+            "single_shared_end_of_sample_reset": False,
+        },
         "hybrid_events": [
             "startup_handoff",
             "held_to_active",
@@ -167,10 +178,6 @@ def validate(d: dict) -> list[str]:
     if d.get("pass") is not True:
         failures.append("manifest did not pass")
     s = d.get("startup", {})
-    # parse_const returns the exact deployed binary32 value represented in
-    # Python binary64, so decimal source literals such as 0.2f are not exactly
-    # equal to the real number 0.2.  Compare to the paper constants within one
-    # far-looser-than-binary32 ulp tolerance; source parsing itself remains exact.
     if not math.isclose(float(s.get("two_kp", math.nan)), 0.2, rel_tol=0.0, abs_tol=1.0e-8) or not math.isclose(
         float(s.get("two_ki", math.nan)), 0.02, rel_tol=0.0, abs_tol=1.0e-9
     ):
@@ -182,6 +189,18 @@ def validate(d: dict) -> list[str]:
     dims = d.get("state_coordinates", {})
     if dims.get("H_dimension") != 18 or dims.get("A_dimension") != 21:
         failures.append("H/A dimensions do not match theorem")
+    resets = d.get("same_sample_reset_policy", {})
+    if resets.get("single_shared_end_of_sample_reset") is not False:
+        failures.append("manifest incorrectly merges same-sample correction resets")
+    order = d.get("normal_live_update_order", [])
+    try:
+        iS = order.index("periodic_S_zero_when_due_then_immediate_quaternion_injection_and_left_error_reset")
+        ia = order.index("accelerometer_correction_or_rejection_then_immediate_quaternion_injection_and_left_error_reset_if_accepted")
+    except ValueError:
+        failures.append("manifest lacks exact S/accelerometer correction ordering")
+    else:
+        if not iS < ia:
+            failures.append("manifest places periodic S correction after accelerometer, contrary to time_update source")
     return failures
 
 
@@ -198,6 +217,7 @@ def main() -> int:
     print(json.dumps({
         "qualification": out["qualification"],
         "startup": out["startup"],
+        "normal_live_update_order": out["normal_live_update_order"],
         "hybrid_events": out["hybrid_events"],
         "validation_failures": failures,
     }, indent=2, sort_keys=True))
