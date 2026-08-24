@@ -12,6 +12,84 @@ mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
 
+def hybrid_row(kind):
+    return {
+        "kind": kind,
+        "destination_mode": "H",
+        "source_level_W_upper": 2.0,
+        "jump_gain_upper": 0.5,
+        "additive_W_upper": 0.2,
+        "new_coordinate_W_upper": 0.0,
+        "destination_level_W": 5.0,
+        "inward_margin_lower": 3.8,
+        "pass": True,
+    }
+
+
+def complete_check():
+    return {
+        "validated_enclosure_provenance_pass": True,
+        "modes": {
+            "H": {"linear_pass": True, "nonlinear_pass": True},
+            "A": {"linear_pass": True, "nonlinear_pass": True},
+        },
+        # Deliberately false: the old enclosure validator used a stale required
+        # set. The final gate must recompute source-domain-aligned hybrid closure
+        # from the per-jump rows plus the source-bound a_w sync proof.
+        "hybrid": {
+            "pass": False,
+            "bounds": [
+                hybrid_row("startup_handoff"),
+                hybrid_row("held_to_active"),
+                hybrid_row("magnetic_lock"),
+                hybrid_row("magnetic_regauge"),
+                hybrid_row("tilt_reset"),
+                hybrid_row("tilt_relock"),
+                hybrid_row("cooldown"),
+            ],
+        },
+    }
+
+
+def primitive_payload():
+    return {
+        "stochastic_primitives": {
+            "lambda_W_upper": 0.5,
+            "word_length_samples_upper": 2,
+            "L_X_upper": 0.5,
+            "G_bar_upper": 0.001,
+            "c_zw_upper": 0.0,
+            "r_star_upper": 1.0,
+            "c_ww_upper": 0.0,
+            "s2_upper": 1e-6,
+            "s4_upper": 3e-12,
+            "g_W_upper": 0.01,
+            "h_W_upper": 0.01,
+            "Sigma_trace_upper": 1e-6,
+            "Sigma_trace_square_upper": 1e-12,
+            "Sigma_norm_upper": 1e-6,
+            "localization_radius_lower": 0.1,
+            "word_horizon_count": 10,
+            "b_W_upper": 1e-3,
+            "v_W_upper": 1e-8,
+            "funnel_level_a_lower": 0.1,
+            "initial_W_upper": 0.01,
+            "failure_probability_budget": 0.1,
+        },
+        "capture_primitives": {
+            mode: {
+                "lambda_upper": 0.5,
+                "gamma_upper": 0.25,
+                "initial_level_upper": 8.0,
+                "strict_superlevel_factor": 1.001,
+                "strict_superlevel_absolute": 1e-12,
+                "word_horizon_s_upper": 16.0,
+            }
+            for mode in ("H", "A")
+        },
+    }
+
+
 class DeploymentGateTests(unittest.TestCase):
     def test_gaussian_threshold_is_recomputed(self):
         t = mod.t_star_for_radius(100.0, 1.0, 1.0, 1.0)
@@ -34,29 +112,7 @@ class DeploymentGateTests(unittest.TestCase):
         self.assertEqual(c["capture_time_s_upper"], 16.0 * c["capture_words_upper"])
 
     def test_stochastic_probability_is_derived_from_primitives(self):
-        s = mod.derive_stochastic({
-            "lambda_W_upper": 0.5,
-            "word_length_samples_upper": 2,
-            "L_X_upper": 0.5,
-            "G_bar_upper": 0.001,
-            "c_zw_upper": 0.0,
-            "r_star_upper": 1.0,
-            "c_ww_upper": 0.0,
-            "s2_upper": 1e-6,
-            "s4_upper": 3e-12,
-            "g_W_upper": 0.01,
-            "h_W_upper": 0.01,
-            "Sigma_trace_upper": 1e-6,
-            "Sigma_trace_square_upper": 1e-12,
-            "Sigma_norm_upper": 1e-6,
-            "localization_radius_lower": 0.1,
-            "word_horizon_count": 10,
-            "b_W_upper": 1e-3,
-            "v_W_upper": 1e-8,
-            "funnel_level_a_lower": 0.1,
-            "initial_W_upper": 0.01,
-            "failure_probability_budget": 0.1,
-        })
+        s = mod.derive_stochastic(primitive_payload()["stochastic_primitives"])
         self.assertTrue(s["pass"])
         self.assertLessEqual(s["finite_horizon_failure_probability_upper"], 0.1)
         self.assertLess(s["finite_horizon_failure_probability_upper"], 1.0)
@@ -87,6 +143,26 @@ class DeploymentGateTests(unittest.TestCase):
                 "periodic_aw_covariance_sync",
             },
         )
+
+    def test_final_gate_recomputes_hybrid_closure_from_current_contract(self):
+        source = mod.SOURCE_DOMAIN.build(mod.SOURCE_DOMAIN.DEFAULT_HEADER.resolve())
+        out = mod.compose(complete_check(), source, primitive_payload())
+        self.assertTrue(out["hybrid_pass"], out["hybrid"]["failures"])
+        self.assertEqual(out["hybrid"]["missing"], [])
+        self.assertTrue(out["hybrid"]["periodic_aw_covariance_sync"]["pass"])
+        self.assertFalse(out["hybrid"]["periodic_aw_covariance_sync"]["strict_inward_margin_required"])
+        self.assertEqual(out["deployment_theorem_certificate"], "PASS")
+
+    def test_final_gate_fails_if_current_hybrid_obligation_is_missing(self):
+        check = complete_check()
+        check["hybrid"]["bounds"] = [
+            x for x in check["hybrid"]["bounds"] if x["kind"] != "magnetic_lock"
+        ]
+        source = mod.SOURCE_DOMAIN.build(mod.SOURCE_DOMAIN.DEFAULT_HEADER.resolve())
+        out = mod.compose(check, source, primitive_payload())
+        self.assertFalse(out["hybrid_pass"])
+        self.assertEqual(out["deployment_theorem_certificate"], "FAIL")
+        self.assertIn("magnetic_lock", out["hybrid"]["missing"])
 
 
 if __name__ == "__main__":
