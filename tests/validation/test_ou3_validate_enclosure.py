@@ -29,7 +29,9 @@ def load_tool():
 
 def contract_mode():
     return {
-        "recommended_word_horizon_s": 16.0,
+        "required_path_metric": "CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC",
+        "endpoint_metric_source_correlation_required": True,
+        "full_attitude_linear_cross_terms_retained": True,
         "executed_reference_only": {
             "relative_Riccati_injection_margin_worst": 0.05,
             "Sigma_endpoint_lambda_min": 0.01,
@@ -40,36 +42,47 @@ def contract_mode():
 
 def path_metric():
     return {
-        "kind": "GROUP_COMPATIBLE_NODE_METRIC",
+        "kind": "CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC",
+        "chart_coordinate": "c(R)=2*tan(theta/2)*u=4*e_R/(1+tr(R))",
+        "chart_domain": "theta<pi",
+        "exact_group_metric": "W_g=[c(R);xi]^T Sigma_KF(g)^-1 [c(R);xi]",
+        "source_covariance_inverse": True,
         "node_dependent": True,
-        "attitude_block_isotropic": True,
-        "attitude_linear_cross_terms": False,
-        "common_Euclidean_metric": False,
-        "equals_Kalman_inverse_covariance": False,
-        "a_R_lower": 0.2,
-        "P_xi_lambda_min_lower": 0.01,
-        "P_xi_lambda_max_upper": 10.0,
-        "Pbar_lambda_min_lower": 0.01,
-        "Pbar_lambda_max_upper": 10.0,
+        "full_attitude_linear_cross_terms_retained": True,
+        "block_diagonal_metric_used": False,
+        "common_Euclidean_metric_used": False,
+        "local_coordinate_matches_P3_delta_theta": True,
+        "local_quadratic_equals_P3_information_metric": True,
+        "endpoint_metric_must_match_endpoint_source_covariance": True,
+        "joint_source_reachability_required": True,
+        "metric_lambda_min_lower": 1.0 / 120.0,
+        "metric_lambda_max_upper": 200.0,
     }
 
 
-def mode_payload(level=10.0, ratio=0.8):
+def mode_payload(level=10.0, decrease=0.2):
+    mu = decrease * (1.0 / 120.0)
     return {
         "source_complete": True,
         "outward_rounded": True,
         "joint_source_reachability": True,
         "one_sample_decrease_used": False,
-        "word_horizon_s": 16.0,
+        "source_replay_used": False,
+        "word_horizon_s": 1.0,
         "word_endpoint_relative_Riccati_injection_margin_lower": 0.04,
         "Sigma_lambda_min_lower": 0.005,
         "Sigma_lambda_max_upper": 120.0,
-        "prefix_information_gain_upper": 3.0,
+        "prefix_information_gain_upper": 1.0,
         "path_metric": path_metric(),
         "theta_star": 1.0,
-        "endpoint_W_ratio_upper": ratio,
+        "endpoint_relative_W_decrease_lower": decrease,
+        "mu_W_lower": mu,
         "certified_level_W": level,
         "all_word_prefixes_safe": True,
+        "accepted_correction_uses_source_series_branch": True,
+        "prefix_canonical_error_norm_upper": 1.0e-4,
+        "cayley_norm_limit": 1.0,
+        "accepted_correction_norm_prefix_upper": 1.0e-5,
     }
 
 
@@ -158,25 +171,42 @@ class Ou3IntervalArithmeticTests(unittest.TestCase):
 
 
 class Ou3ValidatedEnclosureTests(unittest.TestCase):
-    def test_nonlinear_margin_is_derived_from_endpoint_ratio(self):
-        out = load_tool().validate_mode("H", mode_payload(ratio=0.8), contract_mode())
+    def test_nonlinear_margin_uses_positive_direct_mu_without_one_minus_cancellation(self):
+        out = load_tool().validate_mode("H", mode_payload(decrease=0.2), contract_mode())
         self.assertTrue(out["pass"], out["failures"])
-        self.assertAlmostEqual(out["mu_W_lower"], 0.2)
-        self.assertEqual(out["path_metric"]["kind"], "GROUP_COMPATIBLE_NODE_METRIC")
+        self.assertAlmostEqual(out["mu_W_lower"], 0.2 / 120.0)
+        self.assertEqual(out["path_metric"]["kind"], "CAYLEY_LIFTED_SOURCE_INFORMATION_METRIC")
+        self.assertAlmostEqual(out["endpoint_W_ratio_upper"], 0.8)
 
-    def test_old_injection_field_is_not_a_schema3_fallback(self):
+    def test_tiny_positive_decrease_is_not_erased_by_forming_one_minus_gap(self):
+        p = mode_payload(decrease=1.0e-30)
+        p["mu_W_lower"] = 1.0e-30 / 120.0
+        out = load_tool().validate_mode("H", p, contract_mode())
+        self.assertTrue(out["pass"], out["failures"])
+        self.assertIsNone(out["endpoint_W_ratio_upper"])
+        self.assertGreater(out["mu_W_lower"], 0.0)
+
+    def test_old_injection_field_is_not_a_schema4_fallback(self):
         tool = load_tool()
         p = mode_payload()
         p.pop("word_endpoint_relative_Riccati_injection_margin_lower")
         p["relative_Riccati_injection_margin_lower"] = 0.04
         out = tool.validate_mode("H", p, contract_mode())
         self.assertFalse(out["linear_pass"])
-        self.assertTrue(any("word-endpoint" in x for x in out["linear_failures"]))
 
-    def test_inverse_covariance_cannot_masquerade_as_nonlinear_metric(self):
+    def test_retired_block_metric_is_rejected(self):
         tool = load_tool()
         p = mode_payload()
-        p["path_metric"]["equals_Kalman_inverse_covariance"] = True
+        p["path_metric"]["kind"] = "GROUP_COMPATIBLE_NODE_METRIC"
+        p["path_metric"]["block_diagonal_metric_used"] = True
+        out = tool.validate_mode("H", p, contract_mode())
+        self.assertFalse(out["nonlinear_pass"])
+        self.assertTrue(any("block-diagonal" in x or "CAYLEY" in x for x in out["failures"]))
+
+    def test_cross_terms_must_be_retained(self):
+        tool = load_tool()
+        p = mode_payload()
+        p["path_metric"]["full_attitude_linear_cross_terms_retained"] = False
         out = tool.validate_mode("H", p, contract_mode())
         self.assertFalse(out["nonlinear_pass"])
 
