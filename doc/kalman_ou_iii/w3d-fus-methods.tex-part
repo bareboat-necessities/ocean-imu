@@ -1,6 +1,6 @@
 % Implementation details for the deployed schedule of Sec.~\ref{sec:adaptation}.
 
-\subsection{Targets, smoothing, and one-sample staging}
+\subsection{Targets, smoothing, and predictable staging}
 \label{sec:adaptation-target-implementation}
 
 The OU targets and the target pseudo-update period are
@@ -31,14 +31,14 @@ than $\sigma_{aw}$, enters the distortion term; in code the tuner supplies
 $\sigma_{aw}=c_\sigma\widehat\sigma_{a,B}$ and the factor $c_\sigma$ is divided
 back out when evaluating the regularizer target.
 
-Applied $\tau$ and $\sigma_{aw}$ use a common EMA,
+Applied-target candidates for $\tau$ and $\sigma_{aw}$ use a common EMA,
 \begin{equation}
 \begin{aligned}
 \alpha&=1-e^{-\Delta t/\tau_{\mathrm{adapt}}},\\
-\tau_{\mathrm{appl}}&\leftarrow\tau_{\mathrm{appl}}
- +\alpha(\tau_\star-\tau_{\mathrm{appl}}),\\
-\sigma_{aw,\mathrm{appl}}&\leftarrow\sigma_{aw,\mathrm{appl}}
- +\alpha(\sigma_{aw,\star}-\sigma_{aw,\mathrm{appl}}),
+\widetilde\tau&\leftarrow\widetilde\tau
+ +\alpha(\tau_\star-\widetilde\tau),\\
+\widetilde\sigma_{aw}&\leftarrow\widetilde\sigma_{aw}
+ +\alpha(\sigma_{aw,\star}-\widetilde\sigma_{aw}),
 \end{aligned}
 \label{eq:adapt-ewma}
 \end{equation}
@@ -53,14 +53,14 @@ $[\SI{0.5}{s},\SI{6}{s}]$, and every dynamically generated EMA horizon is
 finally guarded in $[\SI{0.05}{s},\SI{30}{s}]$.  These are safety envelopes,
 not sea-state tuning points; all eight scored reference seas remain interior.
 
-The regularizer target is smoothed separately,
+The regularizer candidate is smoothed separately,
 \begin{equation}
 \begin{aligned}
 \tau_{r_S}&=m_{r_S}\tau_\star,\qquad
 \alpha_{r_S}=1-e^{-\Delta t/\tau_{r_S}},\\
-r_{S,\mathrm{appl}}&\leftarrow
- r_{S,\mathrm{appl}}
- +\alpha_{r_S}(r_{S,\star}-r_{S,\mathrm{appl}}),
+\widetilde r_S&\leftarrow
+ \widetilde r_S
+ +\alpha_{r_S}(r_{S,\star}-\widetilde r_S),
 \end{aligned}
 \label{eq:adapt-RS}
 \end{equation}
@@ -69,20 +69,25 @@ guard is applied to the realized horizon.  Every valid physical sample
 contributes to the period statistic, acceleration statistic, and all adaptive
 EMAs.
 
-The online schedule is predictable with respect to the current innovation.  At
-the beginning of IMU sample $k$, the filter commits only the candidate staged
-after sample $k-1$.  The current sample then runs with that already-determined
-schedule, and only afterward may update the tuner and stage a candidate for
-sample $k+1$.  Thus no physical samples are decimated and
+Candidate smoothing and parameter activation are distinct operations in the
+source.  The candidate tuple
+$\widetilde\vartheta=(\widetilde\tau,\widetilde\sigma_{aw},\widetilde r_S)$
+is updated from every valid sample, but the active MEKF schedule is held between
+activation instants.  The default activation timer is approximately
+\SI{0.1}{s}.  When that timer expires after physical sample $k$, the current
+candidate is marked pending; it is committed at the beginning of sample $k+1$,
+before that sample's innovation.  Consequently
 \begin{equation}
 \vartheta_k=(\tau_k,\sigma_{aw,k},r_{S,k})\in\mathcal F_{k-1},
 \label{eq:adapt-one-sample-staging}
 \end{equation}
-which is the predictability property used in Sec.~\ref{sec:iss-source-family}.
-At \SI{200}{Hz} the staging delay is approximately \SI{5}{ms}.  The separate
-approximately \SI{0.1}{s} timer in the implementation is used for bounded
-latent-$a_w$ covariance maintenance; it is not an adaptation-activation
-cadence.
+so the schedule remains predictable with respect to the current innovation,
+but it is a sample-and-hold schedule rather than a new committed schedule every
+\SI{5}{ms}.  At the nominal \SI{200}{Hz} IMU rate, the additional commit lag
+\emph{after an activation instant} is one sample, approximately \SI{5}{ms}.
+A second timer with the same approximately \SI{0.1}{s} default period performs
+bounded latent-$a_w$ covariance maintenance on an independent clock; it does not
+replace or bypass the parameter-activation gate.
 
 The actual pseudo-update cadence follows the applied OU time scale,
 \begin{equation}
@@ -135,16 +140,16 @@ SpectralMSE sensor standard deviation $\sqrt{R_a}$ & \SI{0.0148}{m.s^{-2}}
 & residual accelerometer-bias OU & $\tau_b=\SI{5000}{s}$ \\
 base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
 & default coefficients $(c_\tau,c_\sigma,C_J)$ & $(1.0,0.9,0.0538)$ \\
-one-sample candidate staging / common EMA horizon & $h$ / $0.40T_{\mathrm{sea}}$
+candidate EMA sampling / common EMA horizon & every valid sample / $0.40T_{\mathrm{sea}}$
 & $r_S$ smoothing horizon & $1.5\tau_\star$ \\
 frequency / variance horizons & $0.10T_{\mathrm{sea}}$ / $4T_{\mathrm{eff}}$
 & dynamic time-base / EMA-horizon guards & $[0.5,6]$ s / $[0.05,30]$ s \\
 tuner-local variance request bounds & $[0.3,60]$ s
 & pseudo-update period bounds & $[5,250]$ ms \\
-covariance-maintenance cadence & approximately $0.1$ s
-& online tuning warmup / magnetometer delay & $10/7$ s \\
-horizontal OU / $r_S$ scale & isotropic
-& & \\
+parameter activation cadence & approximately $0.1$ s
+& covariance-maintenance cadence & approximately $0.1$ s \\
+online tuning warmup / magnetometer delay & $10/7$ s
+& horizontal OU / $r_S$ scale & isotropic \\
 \bottomrule
 \end{tabular}
 \end{table*}
