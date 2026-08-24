@@ -15,6 +15,7 @@ build:
 		../../tools/ou3_neighborhood_radius_search.py \
 		../../tools/ou3_certificate_completion.py \
 		../../tools/ou3_validate_enclosure.py \
+		../../tools/ou3_hybrid_aw_sync_proof.py \
 		../../tools/ou3_result_contract.py \
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
@@ -32,6 +33,7 @@ build:
 		test_ou3_neighborhood_diagnostic.py \
 		test_ou3_neighborhood_radius_search.py \
 		test_ou3_validate_enclosure.py \
+		test_ou3_hybrid_aw_sync_proof.py \
 		test_ou3_result_determinism.py \
 		test_ou_article_ablations.py \
 		test_ou_legacy_law_cleanup.py \
