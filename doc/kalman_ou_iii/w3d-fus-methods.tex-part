@@ -20,10 +20,16 @@ r_{S,\star}&=C_Jq_{\mathrm{eff}}^{1/14}
 The last line is the deployed SpectralMSE law of
 Eq.~\eqref{eq:adapt-default-rs-law}, with $C_J=0.0538$.  The implementation
 uses the strong-observation reduced intensity $q_{\mathrm{eff}}\simeq2R_a h$
-and caches its $1/14$ power.  The physical wave statistic
-$\widehat\sigma_{a,B}$, rather than $\sigma_{aw}$, enters the distortion term;
-in code the tuner supplies $\sigma_{aw}=c_\sigma\widehat\sigma_{a,B}$ and the
-factor $c_\sigma$ is divided back out when evaluating the regularizer target.
+and caches its $1/14$ power.  Here $R_a$ is the separately configured
+accelerometer measurement-noise variance used by the reduced SpectralMSE
+model; its deployed default is $\sqrt{R_a}=\SI{0.0148}{m.s^{-2}}$.  It is not
+the \SI{0.12}{m.s^{-2}} variance-channel noise floor subtracted by the online
+tuner.  The two parameters therefore remain independently configurable even
+though both describe acceleration uncertainty at different points in the
+implementation.  The physical wave statistic $\widehat\sigma_{a,B}$, rather
+than $\sigma_{aw}$, enters the distortion term; in code the tuner supplies
+$\sigma_{aw}=c_\sigma\widehat\sigma_{a,B}$ and the factor $c_\sigma$ is divided
+back out when evaluating the regularizer target.
 
 Applied $\tau$ and $\sigma_{aw}$ use a common EMA,
 \begin{equation}
@@ -124,19 +130,21 @@ IMU period $h$ & \SI{0.005}{s}
 tuning-frequency floor & \SI{0.03}{Hz}
 & OU time scale $[\tau_{\min},\tau_{\max}]$ & $[0.02,12.0]$ s \\
 stationary scale ceiling $\sigma_{aw,\max}$ & \SI{6.0}{m.s^{-2}}
-& base acceleration-noise floor & \SI{0.12}{m.s^{-2}} \\
-base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
+& tuner variance-channel noise floor & \SI{0.12}{m.s^{-2}} \\
+SpectralMSE sensor standard deviation $\sqrt{R_a}$ & \SI{0.0148}{m.s^{-2}}
 & residual accelerometer-bias OU & $\tau_b=\SI{5000}{s}$ \\
-one-sample candidate staging / common EMA horizon & $h$ / $0.40T_{\mathrm{sea}}$
+base integral scale $[r_{S,\min},r_{S,\max}]$ & $[0.15,400]$ m\,s
 & default coefficients $(c_\tau,c_\sigma,C_J)$ & $(1.0,0.9,0.0538)$ \\
-$r_S$ smoothing horizon & $1.5\tau_\star$
-& frequency / variance horizons & $0.10T_{\mathrm{sea}}$ / $2T_{\mathrm{eff}}$ \\
-dynamic time-base / EMA-horizon guards & $[0.5,6]$ s / $[0.05,30]$ s
-& pseudo-update period bounds & $[5,250]$ ms \\
+one-sample candidate staging / common EMA horizon & $h$ / $0.40T_{\mathrm{sea}}$
+& $r_S$ smoothing horizon & $1.5\tau_\star$ \\
+frequency / variance horizons & $0.10T_{\mathrm{sea}}$ / $2T_{\mathrm{eff}}$
+& dynamic time-base / EMA-horizon guards & $[0.5,6]$ s / $[0.05,30]$ s \\
 tuner-local variance request bounds & $[0.3,60]$ s
-& covariance-maintenance cadence & approximately $0.1$ s \\
-online tuning warmup / magnetometer delay & $5/7$ s
-& horizontal OU / $r_S$ scale & isotropic \\
+& pseudo-update period bounds & $[5,250]$ ms \\
+covariance-maintenance cadence & approximately $0.1$ s
+& online tuning warmup / magnetometer delay & $5/7$ s \\
+horizontal OU / $r_S$ scale & isotropic
+& & \\
 \bottomrule
 \end{tabular}
 \end{table*}
