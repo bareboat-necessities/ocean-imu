@@ -195,7 +195,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         ),
         "required_proof_structure": [
             "branch-specific exact SO(3) finite-angle measurement dissipation, with the timeout node wider than the normal node",
-            "anisotropic nonlinear-defect enclosure that does not charge exactly-linear v/p/S coordinates as rotation defect",
+            "anisotropic nonlinear-driver enclosure: separate exact v/p transport, while retaining S in the finite correction because the full S-to-attitude gain is part of the shipping map",
             "source-node subdivision across early covariance/tuner/pseudo-phase staging after goLive",
             "prefix-safe coverage of the deployed polynomial-versus-axis-angle quaternion correction branches",
             "a validated outer H-word decrease or funnel-recursion inequality that overlaps the existing P4 inner seed",
