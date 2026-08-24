@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """Patch the Actions checkout with the derived separate TFG X/Y R_S law.
 
-Experimental PR only.  The production header on main is not changed.  The
+Experimental PR only. The production header on main is not changed. The
 registered tfg-validation workflow builds this checkout and an untouched exact
 base checkout, so its two simulator logs are a paired control/experiment.
 """
 from pathlib import Path
 
-path = Path(__file__).resolve().parents[2] / "src/kalman_tfg/SeaStateFusionFilter_TFG.h"
+root = Path(__file__).resolve().parents[2]
+path = root / "src/kalman_tfg/SeaStateFusionFilter_TFG.h"
 text = path.read_text()
 old = "        mekf_.set_RS_noise(Vector3f(rs * R_S_xy_factor_, rs * R_S_xy_factor_, rs));"
 new = r'''        // EXPERIMENT ONLY: separate TFG X/Y regularization from the
-        // reduced directional 3-D MSE model.  NED X is generator North and
+        // reduced directional 3-D MSE model. NED X is generator North and
         // NED Y is generator East, hence the swapped measured wave ratios.
         constexpr float sigma_x_over_z = 0.569f;
         constexpr float sigma_y_over_z = 0.819f;
@@ -20,7 +21,7 @@ new = r'''        // EXPERIMENT ONLY: separate TFG X/Y regularization from the
         const float sigma_z = std::max(tune_.sigma_applied / c_sigma, 1.0e-6f);
         const float qz = std::max(2.0f * rs_accel_noise_density_, 1.0e-12f);
 
-        // X/pitch channel: magnetometer-observed tilt contribution.  Use the
+        // X/pitch channel: magnetometer-observed tilt contribution. Use the
         // filter's configured magnetic measurement standard deviation and the
         // simulator's 25 Hz magnetic cadence; use the learned field norm once
         // it exists, otherwise the simulator's 52 uT WMM magnitude.
@@ -47,11 +48,25 @@ new = r'''        // EXPERIMENT ONLY: separate TFG X/Y regularization from the
         mekf_.set_RS_noise(Vector3f(rs * kx, rs * ky, rs));'''
 
 count = text.count(old)
-if count == 0:
-    # Idempotent in case make reaches the prerequisite twice in one checkout.
-    if "constexpr float sigma_x_over_z = 0.569f;" in text:
-        raise SystemExit(0)
-    raise SystemExit("production R_S assignment not found")
-if count != 1:
+if count == 1:
+    path.write_text(text.replace(old, new))
+elif count == 0 and "constexpr float sigma_x_over_z = 0.569f;" in text:
+    pass
+else:
     raise SystemExit(f"expected one production R_S assignment, found {count}")
-path.write_text(text.replace(old, new))
+
+# The production executable intentionally exits at the first failed sentinel.
+# This experiment needs all eight records, so force the existing collect-all
+# mode in the experimental simulator only. The workflow already uses `|| true`.
+sim = root / "tests/kalman_tfg/kalman_tfg-sim.cpp"
+sim_text = sim.read_text()
+needle = "int main(int argc, char* argv[]) {\n"
+insert = (
+    "int main(int argc, char* argv[]) {\n"
+    "    // EXPERIMENT ONLY: report every record even when a production gate fails.\n"
+    "    setenv(\"W3D_COLLECT_ALL_GATES\", \"1\", 1);\n"
+)
+if insert not in sim_text:
+    if sim_text.count(needle) != 1:
+        raise SystemExit("simulator main() insertion point not found")
+    sim.write_text(sim_text.replace(needle, insert))
