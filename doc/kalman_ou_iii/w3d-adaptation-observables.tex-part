@@ -104,6 +104,31 @@ therefore removed in variance units before taking a square root,
 This subtraction is necessary because independent variances add; subtracting
 standard deviations would not be statistically consistent.
 
+The shared low-motion detector adds one implementation-specific exponential
+path that is deliberately separate from the sea-scaled estimator and scheduler
+EMAs above.  On the low-pass acceleration-band tracker input it maintains
+\begin{equation}
+ E_k=0.95E_{k-1}+0.05\left(a_{\uparrow,k}^{\rm LP}/g\right)^2,
+ \label{eq:stillness-energy-ema}
+\end{equation}
+and declares stillness while $E_k<8\times10^{-4}$.  This is a fixed-gain
+sample-domain EMA; it is not parameterized by $T_{\rm sea}$ and should not be
+confused with Eqs.~\eqref{eq:sigma-variance-horizon} or
+\eqref{eq:adapt-ewma}.  Once still, the code attenuates the noise-corrected wave
+variance by the time-domain envelope
+\begin{equation}
+ \widehat\sigma_{\mathrm{wave}}^2
+ \leftarrow
+ e^{-t_{\rm still}/\SI{1}{s}}\widehat\sigma_{\mathrm{wave}}^2
+ \label{eq:stillness-wave-variance-decay}
+\end{equation}
+before the nonnegative floor and square root are applied.  The same detector
+also relaxes the separate acceleration-band carrier toward its target after
+\SI{2}{s} of stillness with a \SI{1}{s} time constant.  That relaxed carrier is
+used for direction/reporting; it is not the wave-period tuning frequency, which
+continues to come from the canonical estimator below.  OU--II uses the same
+shared detector and variance attenuation path.
+
 The nominal band corners are
 \begin{equation}
 f_L=0.5f_{\mathrm{tune}},
