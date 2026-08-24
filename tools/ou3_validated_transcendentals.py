@@ -15,9 +15,12 @@ For the P4 SO(3) certificate, sin/cos and the Rodrigues kernels
     sinc(x) = sin(x)/x,
     cosc(x) = (1-cos(x))/x^2
 
-are enclosed by exact-rational alternating Taylor polynomials with a rigorous
-next-term/Lagrange bound.  Their audited P4 range is |x| <= 4, which covers the
-entire geodesic chart [0, pi) and finite corrections used by the certificate.
+are enclosed by exact-rational Taylor polynomials with rigorous remainder
+bounds.  Their audited point range is |x| <= 4.  The interval sinc/cosc routines
+use the elementary monotonicity proofs only on [0,3], which lies strictly below
+pi; outside that interval they deliberately return broad global-safe hulls
+rather than silently assuming a critical-point location.
+
 The removable values sinc(0)=1 and cosc(0)=1/2 are evaluated from their direct
 series, so no zero-crossing division is present in the trusted path.
 
@@ -35,12 +38,12 @@ from ou3_interval import Interval
 
 MAX_ABS_ARGUMENT = 0.5
 MAX_TRIG_ARGUMENT = 4.0
+MONOTONE_TRIG_NORM_MAX = 3.0
 DEFAULT_ORDER = 20
 DEFAULT_TRIG_ORDER = 36
 
 
 def _down_fraction(q: Fraction) -> float:
-    """Greatest convenient binary64 lower enclosure of exact rational ``q``."""
     f = float(q)
     if not math.isfinite(f):
         raise OverflowError(f"rational does not fit finite binary64: {q!r}")
@@ -50,7 +53,6 @@ def _down_fraction(q: Fraction) -> float:
 
 
 def _up_fraction(q: Fraction) -> float:
-    """Smallest convenient binary64 upper enclosure of exact rational ``q``."""
     f = float(q)
     if not math.isfinite(f):
         raise OverflowError(f"rational does not fit finite binary64: {q!r}")
@@ -163,13 +165,12 @@ def _sin_fraction(q: Fraction, order: int) -> tuple[Fraction, Fraction]:
     if order < 3:
         raise ValueError("trigonometric Taylor order must be >= 3")
     total = Fraction(0, 1)
-    n = 0
-    while 2 * n + 1 <= order:
-        k = 2 * n + 1
+    for k in range(1, order + 1, 2):
+        n = (k - 1) // 2
         total += (-1 if n & 1 else 1) * q**k / Fraction(math.factorial(k), 1)
-        n += 1
-    next_k = 2 * n + 1
-    rem = abs(q) ** next_k / Fraction(math.factorial(next_k), 1)
+    # This is the ordinary Taylor polynomial through degree ``order``; even
+    # coefficients are exactly zero.  Every derivative of sin is bounded by 1.
+    rem = abs(q) ** (order + 1) / Fraction(math.factorial(order + 1), 1)
     return total - rem, total + rem
 
 
@@ -177,13 +178,12 @@ def _cos_fraction(q: Fraction, order: int) -> tuple[Fraction, Fraction]:
     if order < 2:
         raise ValueError("trigonometric Taylor order must be >= 2")
     total = Fraction(0, 1)
-    n = 0
-    while 2 * n <= order:
-        k = 2 * n
+    for k in range(0, order + 1, 2):
+        n = k // 2
         total += (-1 if n & 1 else 1) * q**k / Fraction(math.factorial(k), 1)
-        n += 1
-    next_k = 2 * n
-    rem = abs(q) ** next_k / Fraction(math.factorial(next_k), 1)
+    # Lagrange remainder for the degree-order Taylor polynomial.  Using
+    # order+1 (rather than the next nonzero even coefficient) is essential.
+    rem = abs(q) ** (order + 1) / Fraction(math.factorial(order + 1), 1)
     return total - rem, total + rem
 
 
@@ -201,18 +201,24 @@ def cos_point(x: float, order: int = DEFAULT_TRIG_ORDER) -> Interval:
 
 def sinc_point(x: float, order: int = DEFAULT_TRIG_ORDER) -> Interval:
     q = _check_trig_point(x)
+    if order < 12:
+        raise ValueError("sinc direct-series order must be >= 12 on the audited range")
     x2 = q * q
     total = Fraction(0, 1)
     n = 0
     while 2 * n <= order:
         total += (-1 if n & 1 else 1) * x2**n / Fraction(math.factorial(2 * n + 1), 1)
         n += 1
+    # From this truncation onward and |x|<=4 the alternating term magnitudes
+    # decrease strictly, so the first omitted term bounds the remaining tail.
     next_term = x2**n / Fraction(math.factorial(2 * n + 1), 1)
     return Interval(_down_fraction(total - abs(next_term)), _up_fraction(total + abs(next_term)))
 
 
 def cosc_point(x: float, order: int = DEFAULT_TRIG_ORDER) -> Interval:
     q = _check_trig_point(x)
+    if order < 12:
+        raise ValueError("cosc direct-series order must be >= 12 on the audited range")
     x2 = q * q
     total = Fraction(0, 1)
     n = 0
@@ -224,30 +230,28 @@ def cosc_point(x: float, order: int = DEFAULT_TRIG_ORDER) -> Interval:
 
 
 def sinc_interval(x: Interval, order: int = DEFAULT_TRIG_ORDER) -> Interval:
-    """Enclose sinc(X) for a nonnegative X subset [0,4].
+    """Enclose sinc(X) for nonnegative X subset [0,4].
 
-    On [0,pi] sinc is decreasing.  P4 only calls this routine for geodesic or
-    correction-norm intervals that are separately certified below pi.  For the
-    wider audited numerical range we conservatively include zero and both
-    endpoints rather than assert monotonicity beyond pi.
+    On [0,3], sinc decreases because sin(x)-x cos(x) has derivative x sin(x)>0
+    and vanishes at zero.  Wider intervals receive a global-safe hull.
     """
     if x.lo < 0.0 or x.hi > MAX_TRIG_ARGUMENT:
         raise ValueError("sinc interval must lie in [0,4]")
+    if x.hi <= MONOTONE_TRIG_NORM_MAX:
+        return Interval(sinc_point(x.hi, order).lo, sinc_point(x.lo, order).hi)
     a, b = sinc_point(x.lo, order), sinc_point(x.hi, order)
-    lo = min(a.lo, b.lo, 0.0 if x.hi >= 3.0 else min(a.lo, b.lo))
-    hi = max(a.hi, b.hi, 1.0 if x.lo == 0.0 else max(a.hi, b.hi))
-    return Interval(lo, hi)
+    return Interval(min(-1.0, a.lo, b.lo), max(1.0, a.hi, b.hi))
 
 
 def cosc_interval(x: Interval, order: int = DEFAULT_TRIG_ORDER) -> Interval:
-    """Enclose cosc(X) for a nonnegative X subset [0,4].
+    """Enclose cosc(X) for nonnegative X subset [0,4].
 
-    cosc is positive and decreasing on [0,pi].  Beyond that P4 does not promote
-    a chart, so the conservative hull additionally includes zero and 1/2.
+    On [0,3], cosc decreases because
+    2(1-cos x)-x sin x has derivative sin x-x cos x>0.  Wider intervals use the
+    global-safe 0<=cosc<=1/2 bound valid on [0,4].
     """
     if x.lo < 0.0 or x.hi > MAX_TRIG_ARGUMENT:
         raise ValueError("cosc interval must lie in [0,4]")
-    a, b = cosc_point(x.lo, order), cosc_point(x.hi, order)
-    lo = min(a.lo, b.lo, 0.0 if x.hi >= 3.0 else min(a.lo, b.lo))
-    hi = max(a.hi, b.hi, 0.5)
-    return Interval(lo, hi)
+    if x.hi <= MONOTONE_TRIG_NORM_MAX:
+        return Interval(cosc_point(x.hi, order).lo, cosc_point(x.lo, order).hi)
+    return Interval(0.0, 0.5)
