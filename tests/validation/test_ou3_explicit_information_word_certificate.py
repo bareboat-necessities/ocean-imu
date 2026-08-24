@@ -13,6 +13,24 @@ import ou3_explicit_information_word_certificate as CERT
 class Ou3ExplicitInformationWordCertificateTests(unittest.TestCase):
     def test_source_uniform_H_A_information_margins_are_matrix_certified(self):
         d = CERT.build()
+        diagnostics = {}
+        for mode in ("H", "A"):
+            row = d["modes"][mode]
+            c = row["matrix_comparison"]
+            diagnostics[mode] = {
+                "delta": row["relative_Riccati_injection_margin_lower"],
+                "gate": row["useful_margin_gate"],
+                "tau_s": c["tau_s"],
+                "sigma_aw_mps2": c["sigma_aw_mps2"],
+                "R_S_filter_std": c["R_S_filter_std"],
+                "cadence_s": c["cadence_s"],
+                "x_h_over_tau": c["x_h_over_tau"],
+                "process_scaled_lambda_min_lower": c["process_scaled_lambda_min_lower"],
+                "post_measurement_scaled_Omega_lambda_min_lower": c["post_measurement_scaled_Omega_lambda_min_lower"],
+                "Sigma_scaled_lambda_max_upper": c["Sigma_scaled_lambda_max_upper"],
+                "Sigma_lambda_max_upper": row["Sigma_lambda_max_upper"],
+            }
+        print("P3_MATRIX_MARGINS=" + json.dumps(diagnostics, sort_keys=True), flush=True)
         self.assertEqual(CERT.validate(d), [])
         self.assertTrue(d["source_generated_not_trajectory_fit"])
         self.assertTrue(d["validated_arithmetic"])
