@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Bind the OU-III paper's normal-Live theorem hypotheses to a source-word language.
 
-The quantitative theorem is word based.  A source-complete fixed-mode tile must
-cover both the declared recurring vector-PE event and the source-cadence-only
-four-S observability construction for the complete [v,p,S,a_w] chain.  The
-three-S detectable [v,p,S] construction remains a supporting bound only; it is
-not used as the primary theorem tile and is never a fallback certificate.
+A source-complete fixed-mode tile must cover the declared recurring vector-PE
+event and the source-cadence-only four-S observability construction for the
+complete [v,p,S,a_w] chain.  The source-valid three-S [v,p,S] detectability plus
+stable a_w route may sharpen a Riccati/covariance upper bound; it does not replace
+the four-S full-observability qualification and is not a promotion fallback.
 """
 from __future__ import annotations
 
@@ -56,22 +56,15 @@ def build(pe_recurrence_window_s: float | None = None,
         failures.append("PE recurrence window is shorter than one certified consecutive magnetic-packet span")
 
     ready = bool(not failures and recurrence_supplied)
-    word_horizon = None
-    word_samples_upper = None
-    q_W = None
-    selected_spacing_lower = None
-    spread_det_factor = None
+    word_horizon = word_samples_upper = q_W = selected_spacing_lower = spread_det_factor = None
     if ready:
-        # The primary theorem route is the complete four-state S-observation UCO.
         four_s_window = float(pseudo["aligned_window_s"])
         word_horizon = max(recurrence, four_s_window)
         word_samples_upper = int(math.ceil(word_horizon / dt)) + 1
-
         delta_min = float(pseudo["pseudo_gap_min_s"])
         delta_max = float(pseudo["pseudo_gap_max_s"])
         q_W = max(1, int(math.floor(word_horizon / (3.0 * delta_max))))
         selected_spacing_lower = q_W * delta_min
-        # Relative to adjacent four firings, the determinant spacing term widens by q_W^6.
         spread_det_factor = q_W ** 6
 
     pe = dict(vector["operating_envelope"])
@@ -110,6 +103,7 @@ def build(pe_recurrence_window_s: float | None = None,
             "cartesian_extrema_products_not_a_valid_word": True,
         },
         "translation_recurrence": {
+            "full_observability_route": "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO",
             "primary_route": "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO",
             "primary_state_order": ["v", "p", "S", "a_w"],
             "aligned_firing_count": 4,
@@ -119,7 +113,8 @@ def build(pe_recurrence_window_s: float | None = None,
             "spread_index_q_W": q_W,
             "spread_selected_spacing_lower_s": selected_spacing_lower,
             "determinant_spacing_widening_factor_vs_adjacent": spread_det_factor,
-            "three_firing_integrator_detectability_is_supporting_only": True,
+            "three_firing_integrator_detectability_role": "Riccati_covariance_upper_sharpening_only",
+            "three_firing_integrator_detectability_is_promotion_fallback": False,
             "three_firing_detectability_window_s": detect["aligned_window_s"],
             "stable_aw_alpha_upper": detect["stable_aw_alpha_upper"],
             "source_complete": trans["translation_source_complete"],
@@ -130,7 +125,7 @@ def build(pe_recurrence_window_s: float | None = None,
             "word_horizon_lower_s": word_horizon,
             "word_samples_upper_at_configured_dt": word_samples_upper,
             "tiling_rule": (
-                "tile every fixed-mode normal-Live execution by bounded source-correlated words that each cover one four-S complete translation observation and one declared vector-PE recurrence window"
+                "tile every fixed-mode normal-Live execution by bounded source-correlated words that each cover one spread four-S complete translation observation and one declared vector-PE recurrence window"
                 if ready else None
             ),
             "coverage_rule": (
@@ -147,7 +142,7 @@ def build(pe_recurrence_window_s: float | None = None,
             "finite vector-PE recurrence window is an explicit deployment theorem hypothesis and was not supplied"
         ]),
         "next_obligation": (
-            "outward-enclose the complete jointly source-reachable H/A word endpoint maps in a group-compatible node metric; no repeated one-step contraction shortcut is admissible"
+            "outward-enclose complete jointly source-reachable H/A endpoint maps in group-compatible node metrics; the three-S detectable block may sharpen covariance upper bounds but cannot replace the four-S full-observability word qualification"
         ),
     }
 
@@ -166,10 +161,12 @@ def validate(payload: dict) -> list[str]:
     tr = payload.get("translation_recurrence", {})
     if tr.get("source_complete") is not True:
         failures.append("translation recurrence is not source-complete")
-    if tr.get("primary_route") != "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO" or tr.get("aligned_firing_count") != 4:
-        failures.append("primary translation route is not four-S complete-chain UCO")
-    if tr.get("three_firing_integrator_detectability_is_supporting_only") is not True:
-        failures.append("three-S detectability is incorrectly promoted to primary theorem route")
+    if tr.get("full_observability_route") != "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO" or tr.get("aligned_firing_count") != 4:
+        failures.append("translation full-observability route is not four-S complete-chain UCO")
+    if tr.get("three_firing_integrator_detectability_role") != "Riccati_covariance_upper_sharpening_only":
+        failures.append("three-S detectability role is not restricted to covariance-upper sharpening")
+    if tr.get("three_firing_integrator_detectability_is_promotion_fallback") is not False:
+        failures.append("three-S detectability is incorrectly available as promotion fallback")
     alpha = tr.get("stable_aw_alpha_upper")
     if not _finite_positive(alpha) or not float(alpha) < 1.0:
         failures.append("stable a_w tail is not strictly contractive")
