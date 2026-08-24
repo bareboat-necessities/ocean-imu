@@ -2,309 +2,274 @@
 \label{sec:stability-widening-source-path}
 
 The quantitative Live certificate is built only on jointly source-reachable
-execution words.  The compact envelope of Sec.~\ref{sec:stability-widening-phase-a}
-remains useful for existence, boundedness, and adaptation-law independence, but
-it is not used as a second quantitative certificate route.  Likewise, the
-certificate below does not introduce a common Euclidean contraction test, a
-common quadratic metric, a repeated one-step contraction construction, or a
-one-step nonlinear alternative.
+execution words. It is not a Cartesian switching certificate and it does not
+introduce a common Euclidean metric, a repeated one-step contraction argument,
+or a replay-fitted acceptance pattern. Held-bias and active-bias operation are
+proved separately in their fixed dimensions, 18 and 21, respectively; bias
+release, magnetic re-gauging, tilt re-lock, and other dimension/reference/reset
+events remain explicit hybrid obligations.
 
-The translational qualification of every quantitative word uses the
-source-cadence-only complete-chain route of Lemma~\ref{lem:iss-axis-uco}: four
-usable $S=0$ updates observe $(v,p,S,a_w)$.  Equation~\eqref{eq:iss-S-spread-index}
-defines $q_W$ as the largest spread index guaranteed to fit in the word.  The
-same determinant proof is valid for every integer $q$ with
-$1\le q\le q_W$, using rows
-$t_0,t_q,t_{2q},t_{3q}$ and the factor
-$(q\Delta_{S,-})^6$.  A quantitative certificate therefore need not choose the
-largest geometric spread blindly.  It evaluates every admissible integer $q$
-with validated arithmetic and selects
+Every quantitative normal-Live word contains the recurring vector-PE event of
+the deployment hypothesis and the complete translational qualification. For
+translation, four usable $S=0$ updates observe the complete $(v,p,S,a_w)$ chain.
+If $q_W$ is the largest spread index that fits in a word, the determinant
+argument is valid for every integer $1\le q\le q_W$. The validated producer
+therefore chooses
 \begin{equation}
- q_W^*\in\arg\max_{1\le q\le q_W}
- \underline\lambda_{S,W}(q),
+ q_W^*\in\arg\max_{1\le q\le q_W}\underline\lambda_{S,W}(q),
  \label{eq:widen-optimal-S-spread}
 \end{equation}
-where $\underline\lambda_{S,W}(q)>0$ is the rigorous information-Gramian lower
-bound after the corresponding OU-decay and row-norm penalties are included.
-Thus the proof credits all available separation while avoiding a longer spread
-when its additional OU decay or conditioning would reduce the certified lower
-bound.  This discrete proof-design optimization uses only source bounds and is
-not trajectory fitting.
+where the rigorous lower bound includes both the $(q\Delta_{S,-})^6$ separation
+benefit and the corresponding OU-decay/conditioning penalty. The three-$S$
+detectability construction may sharpen a covariance upper bound when the stable
+$a_w$ direction is treated separately, but it is not a theorem-promotion
+fallback for the four-$S$ complete-chain qualification.
 
-The three-$S$ integrator detectability construction remains useful for a
-different purpose.  Together with the uniform exponential stability of the
-omitted $a_w$ direction it can sharpen a Riccati/covariance upper bound without
-reconstructing $a_w$ through the exponentially small four-point determinant.
-It does not replace the four-$S$ complete-observability qualification and is not
-a theorem-promotion fallback.  The separate three-$S$ coupled observability
-route of Lemma~\ref{lem:iss-three-s-coupled} may be used as a full-observability
-argument only when its independent conditional latent-acceleration information
-hypothesis is itself certified on the same source word.
+\subsubsection{Source graph and exact homogeneous information geometry}
 
-The homogeneous held-bias and active-bias systems have different active
-coordinates (18 and 21 states).  The construction is therefore applied
-separately to each fixed-dimensional normal-Live mode
-$m\in\{H,A\}$.  Bias release, hard magnetic re-gauging, and tilt re-lock are
-explicit source transitions between certified domains rather than fictitious
-square-matrix products across different state dimensions.
-
-\subsubsection{Finite source graph and path-dependent linear metric}
-
-For mode $m$, introduce a finite proof graph
+For each mode $m\in\{H,A\}$ let
 \begin{equation}
- \mathscr G_{{\rm src},m}=(\mathscr M_m,\mathscr E_m),
+ \mathscr G_{{\rm src},m}=(\mathscr M_m,\mathscr E_m)
  \label{eq:widen-src-graph}
 \end{equation}
-whose nodes cover the compact source-reachable proof state in that mode.  Nodes
-encode the source quantities that affect the error map, including pseudo-
-measurement phase, accepted-update pattern, magnetic state, covariance state,
-commit/hold state, and declared compact cells of the scheduled parameters.
-Each edge $e=(i,j)\in\mathscr E_m$ carries the compact matrix family
+cover the source-reachable covariance, scheduler, pseudo-measurement phase,
+accepted/rejected update state, magnetic state, and committed OU/$R_S$
+parameters. An edge $e=(i,j)$ carries the compact family
 \begin{equation}
- \mathscr A_e:=\left\{
- \widetilde{\mat A}_{k,m}^{\rm cl}:
- \text{the implemented source can move from node $i$ to node $j$}
- \right\}.
+ \mathscr A_e=\{A_{k,m}^{\rm cl}:\hbox{the source can move from $i$ to $j$}\}.
  \label{eq:widen-src-edge-family}
 \end{equation}
-Continuous covariance and tuning values remain continuous variables inside the
-edge family; they are not replaced by nominal point samples.
-
-For a graph word
-$w=(i_0,e_0,i_1,\ldots,e_{r-1},i_r)$ define the source-correlated matrix family
+For a graph word $w=(i_0,e_0,\ldots,e_{r-1},i_r)$ define
 \begin{equation}
- \mathscr P_w:=\left\{
- \mat\Phi_w=\mat A_{r-1}\cdots\mat A_0:
- \begin{array}{l}
- \mat A_s\in\mathscr A_{e_s},\\
- \text{the complete tuple is jointly source reachable}
- \end{array}
+ \mathscr P_w=
+ \left\{\Phi_w=A_{r-1}\cdots A_0:
+ A_s\in\mathscr A_{e_s},\ \hbox{the complete tuple is jointly source reachable}
  \right\}.
  \label{eq:widen-src-word-family}
 \end{equation}
-The joint reachability clause is essential.  Extrema of
-$(\tau,\sigma_{aw},r_S,T_S)$ or of gate/covariance state that cannot coexist on
-one estimator execution are not multiplied together merely because they lie in
-the same Cartesian envelope.  At an arbitrary word entrance, however, the
-invariant applied-parameter box is retained unless source history excludes a
-combination: the independent $r_S$ smoothing state in particular prevents a
-static target-law correlation from being used to delete admissible entrance
-corners.  Correlation widening is obtained by propagating the actual source
-recurrences inside the word, not by assuming instantaneous algebraic coupling
-that the implementation does not enforce.
-
-Let $\mathscr W_{{\rm src},m}$ be a finite collection of words with
+The word family $\mathscr W_{{\rm src},m}$ has bounded length
 \begin{equation}
- 1\le\ell_-\le\ell(w)\le\ell_+<\infty.
+ 1\le\ell_-\le\ell(w)\le\ell_+<\infty
  \label{eq:widen-src-word-length}
 \end{equation}
-It is \emph{source complete} when every infinite execution that remains in
-mode $m$ can be tiled successively by words in
-$\mathscr W_{{\rm src},m}$.
+and is source complete when every infinite same-mode execution can be tiled by
+such words. At an arbitrary word entrance the full invariant applied-parameter
+box is retained unless source history proves a combination unreachable; in
+particular, the separate $R_S$ smoothing memory prevents deleting entrance
+corners merely from the instantaneous target law.
 
-A validated Riccati/information calculation may use any nonsingular
-conditioning congruence that is applied to both sides of a generalized matrix
-inequality.  Such a congruence is a numerical device and is not automatically
-the Lyapunov metric used below.  In particular, a source-varying
-$\Sigma_{\rm KF}^{-1}$ or a conditioned $RL^{-1}$ basis may certify a linear
-information margin without introducing attitude--linear cross terms into the
-nonlinear group energy.
-
-To keep the linear path certificate exactly compatible with the nonlinear
-$\SO(3)$ lift below, split the local error coordinate as
-$\vct z=(\delta\vct\theta,\vct\xi)$, where $\vct\xi$ contains every
-non-attitude coordinate in the fixed-dimensional mode.  For each graph node
-choose $a_{R,i}>0$ and a symmetric matrix $\mat P_{\xi,i}\succ0$, and define
-the group-compatible local quadratic metric
+Let $\Sigma_i\succ0$ denote the estimator covariance at source node $i$. P3
+proves directly on every source-complete word that
 \begin{equation}
- \boxed{
- \overline{\mat P}_i:=
- \operatorname{blkdiag}\!\left(
-       \frac{a_{R,i}}{2}\mat I_3,\mat P_{\xi,i}\right).}
- \label{eq:widen-path-Pbar}
+ \boxed{\Phi_w^\top\Sigma_{i_r}^{-1}\Phi_w
+ \preceq(1-\delta_w)\Sigma_{i_0}^{-1},\qquad \delta_w>0,}
+ \label{eq:widen-path-information-word}
 \end{equation}
-The coefficient $a_{R,i}/2$ is not an arbitrary restriction: because
-$V_R=1-\cos\theta=\tfrac12\|\delta\theta\|^2+O(\|\delta\theta\|^4)$,
-Eq.~\eqref{eq:widen-path-Pbar} is precisely the local quadratic of the exact
-group metric in Eq.~\eqref{eq:widen-path-group-metric}.  No attitude--linear
-cross term is admitted that would disappear when the attitude coordinate is
-lifted back to $\SO(3)$.  The matrices $P_{\xi,i}$ and weights $a_{R,i}$ may be
-optimized node by node; the theorem does not require a common quadratic metric
-or equality with the Kalman information matrix.
-
-Require uniform metric bounds
+without multiplying one-sample decreases. The exact covariance decomposition
+$\Sigma_s=\Phi_s\Sigma_0\Phi_s^\top+\Omega_s$, $\Omega_s\succeq0$, also gives
 \begin{equation}
- p_-\mat I\preceq\overline{\mat P}_i\preceq p_+\mat I,
- \qquad i\in\mathscr M_m.
- \label{eq:widen-path-P-bounds}
-\end{equation}
-For every certified word impose the robust path inequality
-\begin{equation}
- \boxed{
- \mat\Phi_w^\top\overline{\mat P}_{i_r}\mat\Phi_w
- -\overline{\mat P}_{i_0}\preceq-\mat Q_w,
- \qquad
- \mat Q_w\succeq q_w\mat I,
- \quad q_w>0,}
- \label{eq:widen-path-lmi}
-\end{equation}
-for every $\mat\Phi_w\in\mathscr P_w$.
-
-\begin{theorem}[Source-complete path Lyapunov UES]
-\label{thm:widen-path-ues}
-For a fixed normal-Live mode $m$, suppose
-$\mathscr W_{{\rm src},m}$ is source complete,
-Eqs.~\eqref{eq:widen-path-P-bounds}--\eqref{eq:widen-path-lmi} hold over the
-complete compact word families, and every source-word prefix has finite matrix
-gain.  Then the homogeneous recursion is uniformly exponentially stable on all
-source-reachable executions in that mode.  At a word boundary,
-\begin{equation}
- V_{i_r}^+\le\lambda_w V_{i_0}^-,
- \qquad
- \lambda_w:=1-\frac{q_w}{p_+}<1,
- \qquad
- V_i(\vct z):=\vct z^\top\overline{\mat P}_i\vct z.
- \label{eq:widen-path-contraction}
-\end{equation}
-No decrease is required at an individual sample inside the word.
-\end{theorem}
-
-\begin{proof}
-Equation~\eqref{eq:widen-path-lmi} gives
-$V_{i_r}^+-V_{i_0}^-\le-q_w\|z^-\|^2\le-(q_w/p_+)V_{i_0}^-$.  Source
-completeness tiles every same-mode execution with contracting words of bounded
-length.  The compact prefix families bound the intermediate samples, and
-Eq.~\eqref{eq:widen-path-P-bounds} converts the word-boundary estimate to a
-sample-by-sample UES estimate.
-\end{proof}
-
-For quantitative use define the exact generalized word gain
-\begin{equation}
- \boxed{
- \lambda_w^{\rm gen}:=
- \sup_{\Phi_w\in\mathscr P_w}
- \lambda_{\max}\!\left(
- \overline P_{i_0}^{-1/2}\Phi_w^\top \overline P_{i_r}
- \Phi_w\overline P_{i_0}^{-1/2}\right)<1,}
- \label{eq:widen-path-generalized-gain}
-\end{equation}
-and the source-prefix amplification
-\begin{equation}
- B_{\rm pre}:=
- \sup_{w\in\mathscr W_{{\rm src},m}}
- \sup_{0\le s<\ell(w)}
- \sup_{\Phi_{w,s}}
- \left\|\overline P_{i_s}^{1/2}\Phi_{w,s}
-              \overline P_{i_0}^{-1/2}\right\|<\infty,
+ \boxed{\Phi_s^\top\Sigma_s^{-1}\Phi_s\preceq\Sigma_0^{-1}}
  \label{eq:widen-path-prefix}
 \end{equation}
-where the last supremum is restricted to complete jointly source-reachable
-prefixes.  Individual $\lambda_w$ and reachable products are retained as long
-as possible; replacing them prematurely by powers of a global worst-word
-factor is not part of the certificate.
+for every source-reachable prefix. Thus a homogeneous segment is nonexpansive
+in its matching source information metrics even though individual samples need
+not decrease any common scalar energy.
 
-\subsubsection{Exact group/path nonlinear metric}
-
-Using the same $a_{R,i}$ and $\mat P_{\xi,i}$ as in
-Eq.~\eqref{eq:widen-path-Pbar}, define
+For numerical normalization choose one positive constant $s_m$ for the entire
+fixed-dimensional mode and set
 \begin{equation}
- \boxed{
- W_i(\mat R_e,\vct\xi)
- :=a_{R,i}V_R(\mat R_e)+\vct\xi^\top\mat P_{\xi,i}\vct\xi.}
- \label{eq:widen-path-group-metric}
+ M_i:=s_m\Sigma_i^{-1},\qquad i\in\mathscr M_m.
+ \label{eq:widen-path-information-metric}
 \end{equation}
-Thus the linear and nonlinear certificates use one group-compatible metric
-geometry rather than independently optimized quadratic and group metrics.  The
-node domain $\mathcal D_i$ uses a certified geodesic chart
-$\theta_e\le\theta_{*,i}<\pi$ together with the source covariance,
-measurement, and state bounds.  No Euclidean attitude-radius replacement is
-made.
-
-For a word $w:i_0\to i_r$ let
+The implementation certificate takes
+$s_m=\overline\lambda(\Sigma)_m$, the source-uniform covariance eigenvalue upper
+bound. The same $s_m$ is used at every node in mode $m$, so this rescaling can
+neither manufacture path contraction nor change a physical level set. It only
+keeps the reported $W$ levels numerically well scaled. If
 \begin{equation}
- (\mat R_e^+,\vct\xi^+)
- =\mathcal F_w(\mat R_e,\vct\xi,\vct d)
- \label{eq:widen-path-nonlinear-lift}
+ m_-I\preceq M_i\preceq m_+I,
+ \label{eq:widen-path-P-bounds}
 \end{equation}
-be the exact lifted source map.  It composes prediction, all accepted vector
-corrections, the full $S=0$ attitude cross-gain, exact quaternion injection,
-covariance reset and propagation, source parameter evolution, and every
-same-mode guard along the word.
+then the chosen normalization gives a source-certified $m_->0$ while retaining
+the complete attitude--linear information cross terms. Multiplying
+Eq.~\eqref{eq:widen-path-information-word} by the common positive $s_m$ leaves
+its generalized contraction ratio unchanged.
 
-For compact node domains whose complete word prefixes remain safe, define the
-zero-input word dissipation margin
-\begin{equation}
- \mu_W:=
- \inf_{m}\inf_{w\in\mathscr W_{{\rm src},m}}
- \inf_{\substack{e\in\mathcal D_{i_0}\\e\ne0\\
-                  \text{all prefixes safe}}}
- \frac{W_{i_0}(e)-W_{i_r}(\mathcal F_w(e,0))}
- {V_R(\mat R_e)+\|\vct\xi\|^2}.
- \label{eq:widen-path-direct-margin}
-\end{equation}
-The exact finite-correction identity of
-Eq.~\eqref{eq:widen-exact-energy-change} is used inside
-$\mathcal F_w$; the attitude contribution is therefore not replaced by a local
-Taylor remainder.  The final certificate is on the complete source-correlated
-word endpoint, not on a product of independently certified one-sample margins.
-
-\begin{theorem}[Source-word large-angle practical ISS]
-\label{thm:widen-path-direct-iss}
-Suppose the source graph is complete in each fixed-dimensional normal-Live mode,
-all word prefixes remain in their certified domains, and
-\begin{equation}
- \boxed{\mu_W>0.}
- \label{eq:widen-path-direct-condition}
-\end{equation}
-Then sufficiently small endpoint sublevels of $W_i$ are robustly invariant for
-sufficiently small bounded deterministic input, every intermediate sample stays
-inside the declared source domain, and the complete same-mode execution obeys a
-practical-ISS estimate.  Positive one-sample changes of $W_i$ are allowed
-inside a word.
+\begin{theorem}[Source-complete homogeneous information-word stability]
+\label{thm:widen-path-ues}
+Suppose $\mathscr W_{{\rm src},m}$ is source complete, the covariance metric
+bounds of Eq.~\eqref{eq:widen-path-P-bounds} hold, and every certified word
+satisfies Eq.~\eqref{eq:widen-path-information-word} with $\delta_w>0$. Then
+the homogeneous fixed-mode recursion is uniformly exponentially stable on all
+source-reachable executions in that mode. No decrease is required at an
+individual sample inside the word.
 \end{theorem}
 
 \begin{proof}
-Condition~\eqref{eq:widen-path-direct-condition} gives strict exact endpoint
-decrease for every source word.  On the compact prefix-safe family the lifted
-map is uniformly Lipschitz in the bounded deterministic input, including the
-small series-branch injection defect.  Young inequalities preserve a strict
-inward endpoint margin for a sufficiently small input budget.  Iteration over
-the source-complete tiling gives practical ISS at word boundaries and
-Eq.~\eqref{eq:widen-path-prefix} supplies the sample-prefix bound.
+With $V_i(z)=z^\top M_i z$, Eq.~\eqref{eq:widen-path-information-word} gives
+$V_{i_r}(\Phi_w z)\le(1-\delta_w)V_{i_0}(z)$. Source completeness tiles every
+same-mode execution with bounded-length contracting words, while
+Eq.~\eqref{eq:widen-path-prefix} supplies the finite intermediate-prefix gain.
 \end{proof}
 
-Dimension-changing or hard-reset transitions are certified by their exact jump
-maps between the corresponding node domains.  In particular, held-to-active
-bias release must map a certified held-mode sublevel into an active-mode node
-sublevel; magnetic re-gauging and tilt re-lock use the hybrid jump conditions of
-Sec.~\ref{sec:hybrid-live-stability}.  A tilt reset does not charge discarded
-pre-reset tilt energy in its multiplicative gain, and cooldown contraction is
-formed from reachable word products rather than a power of a global worst-word
-factor.  No square homogeneous transition is formed across a state-dimension
-change.
+\subsubsection{Exact Cayley lift to $\SO(3)$}
+
+On the geodesic chart $0\le\theta<\pi$, define the exact Cayley coordinate
+\begin{equation}
+ \boxed{c(R_e):=2\tan\!\left(\frac{\theta_e}{2}\right)u_e
+       =\frac{4e_R}{1+\operatorname{tr}R_e}.}
+ \label{eq:widen-path-cayley-coordinate}
+\end{equation}
+It is smooth and one-to-one on the chart, with differential
+$dc|_{R=I}=d\theta$. For $z_C=(c(R_e),\xi)$ define
+\begin{equation}
+ \boxed{W_i(R_e,\xi):=z_C^\top M_i z_C
+ =s_m z_C^\top\Sigma_i^{-1}z_C.}
+ \label{eq:widen-path-group-metric}
+\end{equation}
+Unlike the retired block-diagonal lift, Eq.~\eqref{eq:widen-path-group-metric}
+retains all source information cross terms between attitude and the linear
+coordinates. Its local quadratic is exactly the P3 information geometry up to
+the single mode-global positive scalar $s_m$; hence no condition-number
+conversion is inserted between P3 and P4.
+
+The exact Cayley rotation is
+\begin{equation}
+ R(c)=I+\frac{4}{4+\|c\|^2}[c]_\times
+       +\frac{2}{4+\|c\|^2}[c]_\times^2,
+ \label{eq:widen-path-cayley-rotation}
+\end{equation}
+and for $\|c\|\le1$,
+\begin{equation}
+ \|R(c)-I-[c]_\times\|_2\le\frac34\|c\|^2.
+ \label{eq:widen-path-cayley-remainder}
+\end{equation}
+The implemented correction is not replaced by an exponential approximation.
+For $\|d\|<10^{-2}$ the source calls its normalized polynomial quaternion with
+\begin{equation}
+ w(d)=1-\frac{\|d\|^2}{8}+\frac{\|d\|^4}{384},\qquad
+ k(d)=\frac12-\frac{\|d\|^2}{48}+\frac{\|d\|^4}{3840},
+ \label{eq:widen-path-source-series-quaternion}
+\end{equation}
+and the corresponding exact correction Cayley vector is $c_d=(2k/w)d$. The
+validated arithmetic encloses this source branch directly. Outside that branch
+the source axis--angle quaternion is likewise enclosed directly; the final
+inner P4 level proves every accepted correction remains on the polynomial
+branch, so no branch fallback is needed.
+
+For two finite Cayley vectors the exact left-product identity is
+\begin{equation}
+ \boxed{c(R_dR)=\frac{c_d+c+\tfrac12c_d\times c}
+      {1-\tfrac14c_d^\top c}.}
+ \label{eq:widen-path-cayley-product}
+\end{equation}
+The denominator is explicitly bounded away from zero on the certified funnel.
+This identity is used after every accepted $S$, accelerometer, and magnetometer
+correction in the actual source order. In particular, a due $S=0$ correction
+occurs inside \texttt{time\_update} before the accelerometer correction, and
+each accepted correction performs its own quaternion injection and left-error
+covariance reset immediately. The full $S\to\theta$ gain is retained.
+
+Let the exact zero-input word map be
+\begin{equation}
+ (R_e^+,\xi^+)=\mathcal F_w(R_e,\xi,0).
+ \label{eq:widen-path-nonlinear-lift}
+\end{equation}
+It composes exact prediction, due/not-due $S$, accepted/rejected accelerometer,
+asynchronous not-due/accepted/rejected magnetometer, source parameter evolution,
+immediate quaternion/reset operations, and PSD $a_w$ covariance synchronization.
+Rejected branches contribute identity corrections; they are not deleted from
+the source language.
+
+Each implemented nonlinear state operation admits on a compact Cayley ball a
+source-uniform defect representation
+\begin{equation}
+ z_{s+1}=A_s z_s+r_s(z_s),\qquad \|r_s(z_s)\|\le C\|z_s\|^2.
+ \label{eq:widen-path-quadratic-defect}
+\end{equation}
+The constant $C$ is obtained from the exact Cayley residual and quaternion
+bounds, the source physical-vector envelope, and the full Kalman-gain bound
+$\|K\|\le\sqrt{\overline\lambda(\Sigma)/\underline\lambda(R)}$. Because
+Eq.~\eqref{eq:widen-path-prefix} transports every homogeneous suffix with
+information gain at most one, the defects may appear at arbitrary admissible
+branch positions without enumerating all rejection strings.
+
+If $N_{\rm op}$ bounds the number of state operations in a word and the bootstrap
+assumes $W_s\le4W_0$, then
+\begin{equation}
+ \|r_w\|_{M_{i_r}}\le B_m W_0,\qquad
+ B_m:=\frac{4N_{\rm op}\sqrt{m_+}\,C}{m_-}.
+ \label{eq:widen-path-word-defect}
+\end{equation}
+Choose the explicit inner level
+\begin{equation}
+ \boxed{\sqrt{W_{*,m}}\le\frac{\delta_m}{8B_m}.}
+ \label{eq:widen-path-W-star}
+\end{equation}
+Then the nonlinear defect consumes at most $\delta_m/8$ in the square-root
+metric and yields the direct positive-gap estimate
+\begin{equation}
+ \boxed{W_{i_r}(\mathcal F_w(e,0))
+ \le W_{i_0}(e)-\frac{\delta_m}{2}W_{i_0}(e).}
+ \label{eq:widen-path-direct-decrease}
+\end{equation}
+For the deployed numerical certificate $\delta_m$ is far below binary64 machine
+epsilon, so the implementation stores the positive decrement $\delta_m/2$
+directly; it does not evaluate $1-\delta_m/2$ and round the strict gap back to
+one.
+
+The same calculation implies every prefix is strictly inside the assumed
+$4W_0$ bootstrap, the Cayley norm is below one, and therefore
+$\theta_e<1<\pi$. It also proves every accepted correction norm is below
+$10^{-2}$, closing the exact source quaternion branch. In active-bias mode the
+configured normal-Live node satisfies $\|\hat b_a\|\le0.45\,\mathrm{m/s^2}$
+while the shipping projection radius is $0.5\,\mathrm{m/s^2}$. The certified
+inner error radius is smaller than the remaining $0.05\,\mathrm{m/s^2}$ margin,
+so the exact projection branch inside P4 is the identity interior branch.
+Saturated boundary states are an outer capture/hybrid obligation rather than a
+silently linearized P4 state.
+
+Define
+\begin{equation}
+ \mu_W:=\inf_{m,w,e\ne0}
+ \frac{W_{i_0}(e)-W_{i_r}(\mathcal F_w(e,0))}
+      {V_R(R_e)+\|\xi\|^2},
+ \label{eq:widen-path-direct-margin}
+\end{equation}
+over the certified prefix-safe source family. Since
+$V_R(R_e)\le\|c(R_e)\|^2$ and $W_i\ge m_-\|z_C\|^2$ on the chart,
+Eq.~\eqref{eq:widen-path-direct-decrease} gives
+\begin{equation}
+ \boxed{\mu_W\ge\frac{\delta_m}{2}m_->0.}
+ \label{eq:widen-path-direct-condition}
+\end{equation}
+
+\begin{theorem}[Exact source-word Cayley practical ISS seed]
+\label{thm:widen-path-direct-iss}
+Suppose the source graph is complete in each fixed-dimensional normal-Live mode,
+P3 supplies a strict source-word information margin $\delta_m>0$, and the
+validated bounds above establish $W_{*,m}>0$ with every prefix inside its
+declared source/chart domain. Then every zero-input same-mode word has the
+strict endpoint decrease of Eq.~\eqref{eq:widen-path-direct-decrease}, hence
+$\mu_W>0$. By compactness and continuity, sufficiently small bounded
+deterministic input yields a practical-ISS estimate on a nonzero inner funnel.
+Positive one-sample changes of $W_i$ are allowed inside a word.
+\end{theorem}
 
 \subsubsection{Verification contract}
 
-A rigorous deployed Live certificate reports
+The deployed P4 certificate reports, for both $H$ and $A$,
 \begin{equation}
- \boxed{
- \{\mathscr G_{{\rm src},m},\mathscr W_{{\rm src},m},
- P_{\xi,i},a_{R,i},\theta_{*,i},\lambda_w^{\rm gen},B_{\rm pre},
- \mu_W\}_{m\in\{H,A\}}.}
+ \boxed{\{\mathscr G_{{\rm src},m},\mathscr W_{{\rm src},m},s_m,
+ m_-,m_+,\theta_{*,m},W_{*,m},B_m,\mu_{W,m}\}.}
  \label{eq:widen-path-contract}
 \end{equation}
-The pass conditions are: every reachable same-mode transition is covered; the
-word family is source complete; the optimized four-$S$ complete-chain and
-recurring vector-PE hypotheses are realized inside each tile; all robust matrix
-and exact nonlinear word bounds cover the complete continuous jointly
-source-reachable family; every prefix is safe; all dimension-changing jumps
-enter a certified destination domain; and the relevant word margins are strict.
-Interval arithmetic, affine arithmetic, Taylor models, branch-and-bound, robust
-LMIs over certified matrix families, or another validated enclosure method may
-be used.  Monte Carlo and dense trajectory sampling are diagnostics only and do
-not establish the required suprema or infima.
-
-This is the sole quantitative normal-Live certificate path used by the widened
-theory.  Older scalar, common-Euclidean, three-$S$ promotion substitutes, or
-repeated one-step alternatives are not promotion fallbacks.  The construction
-changes neither the estimator nor the adaptation law.
+Passing requires every reachable same-mode transition to be covered; the word
+family to be source complete; recurring vector PE and optimized four-$S$
+complete translation qualification to occur in each tile; exact shipping
+operation order and immediate resets; outward-rounded continuous bounds; full
+attitude--linear information cross terms; safe prefixes; $W_{*,m}>0$; and
+$\mu_{W,m}>0$. Monte Carlo and dense trajectory sampling are diagnostics only
+and may falsify a claimed level but cannot establish one. The construction
+changes neither the estimator nor the adaptation law and is the sole
+quantitative normal-Live certificate path.
