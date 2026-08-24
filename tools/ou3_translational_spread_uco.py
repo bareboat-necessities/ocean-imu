@@ -105,9 +105,14 @@ def build(word_horizon_s: float, header: Path = DEFAULT_HEADER.resolve()) -> dic
         raise RuntimeError("no spread candidate retained a positive validated information bound")
     best = max(usable, key=lambda c: c["information_gramian_lambda_min_lower"])
     adjacent = candidates[0]
-    ratio = math.nextafter(
+    # This is a diagnostic ratio of two already-certified scalar lower bounds,
+    # not a new interval lower bound.  Since best is selected by max(), its
+    # stored certified bound is >= the q=1 stored certified bound exactly in
+    # binary64 ordering; applying nextafter(-inf) here would spuriously turn an
+    # exact ratio 1 into a value below 1.
+    ratio = (
         best["information_gramian_lambda_min_lower"] /
-        adjacent["information_gramian_lambda_min_lower"], -math.inf
+        adjacent["information_gramian_lambda_min_lower"]
     )
     return {
         "schema": SCHEMA,
@@ -135,6 +140,7 @@ def validate(d: dict) -> list[str]:
     if d.get("three_S_detectability_used_for_this_UCO") is not False:
         failures.append("spread four-S UCO incorrectly uses three-S detectability")
     best = d.get("best", {})
+    adjacent = d.get("adjacent_q1", {})
     if not isinstance(best.get("q"), int) or best.get("q", 0) < 1:
         failures.append("best spread index invalid")
     for key in ("selected_spacing_s_lower", "observation_det_lower",
@@ -142,9 +148,14 @@ def validate(d: dict) -> list[str]:
         x = best.get(key)
         if not isinstance(x, (int, float)) or not math.isfinite(float(x)) or float(x) <= 0.0:
             failures.append(f"best.{key} is not finite positive")
+    best_info = best.get("information_gramian_lambda_min_lower")
+    adjacent_info = adjacent.get("information_gramian_lambda_min_lower")
+    if not (isinstance(best_info, (int, float)) and isinstance(adjacent_info, (int, float))
+            and float(best_info) >= float(adjacent_info) > 0.0):
+        failures.append("optimized spread certified bound is worse than adjacent q=1")
     ratio = d.get("information_widening_factor_vs_adjacent_lower")
     if not isinstance(ratio, (int, float)) or not math.isfinite(float(ratio)) or float(ratio) < 1.0:
-        failures.append("optimized spread is worse than adjacent q=1")
+        failures.append("optimized spread diagnostic ratio is worse than adjacent q=1")
     if d.get("pass") is not True:
         failures.append("spread UCO did not pass")
     return failures
