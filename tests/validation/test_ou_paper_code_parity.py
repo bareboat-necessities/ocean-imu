@@ -25,6 +25,7 @@ class OUPaperCodeParityTests(unittest.TestCase):
         cls.ou3_wrap = text("src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h")
         cls.ou2_core = text("src/kalman_ou_ii/Kalman3D_Wave_OU_II.h")
         cls.ou2_wrap = text("src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h")
+        cls.tuner = text("src/tuner/SeaStateAutoTuner.h")
         cls.ou3_state = text("doc/kalman_ou_iii/w3d-state.tex-part")
         cls.ou3_proc = text("doc/kalman_ou_iii/w3d-proc-cont.tex-part")
         cls.ou3_meas = text("doc/kalman_ou_iii/w3d-meas.tex-part")
@@ -104,6 +105,17 @@ class OUPaperCodeParityTests(unittest.TestCase):
         )
         self.assertIn(
             "online tuning warmup / magnetometer delay & $10/7$ s",
+            self.ou3_impl,
+        )
+
+    def test_ou3_variance_horizon_matches_tuner_default(self):
+        self.assertIn(
+            "explicit SeaStateAutoTuner(float K_periods_ = 4.0f,",
+            self.tuner,
+        )
+        self.assertIn("K_periods * T_eff", self.tuner)
+        self.assertIn(
+            r"frequency / variance horizons & $0.10T_{\mathrm{sea}}$ / $4T_{\mathrm{eff}}$",
             self.ou3_impl,
         )
 
