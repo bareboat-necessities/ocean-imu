@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """Final independent composition gate for the deployed OU-III stability proof.
 
-This sits above the existing deployment-theorem gate.  It adds the two pieces a
-Live-only composition cannot establish by itself: source/implementation parity
-and the actual pre-Live reset/Mahony/goLive certificate.  It also instantiates
-the recurring-PE source-word language from the declared theorem domain.
+This sits above the existing deployment-theorem gate.  It adds the pieces a
+Live-only composition cannot establish by itself: source/implementation parity,
+the actual pre-Live reset/Mahony/goLive certificate, the recurring-PE source-word
+language, and the explicit P1-to-P4 finite-capture composition required by P5.
 
-No upstream PASS bit is sufficient.  The subordinate deployment gate
-independently regenerates the source domain and recomputes hybrid, stochastic,
-and finite-capture arithmetic; this gate independently rebuilds the source
-manifest, startup certificate, and word-language contract.  Only their
-conjunction may emit PASS_IMPLEMENTATION_STABLE.
+No upstream PASS bit is sufficient.  The subordinate deployment gate still
+recomputes its generic hybrid/stochastic/capture arithmetic, but that generic
+capture recursion is not a substitute for P5: the final implementation theorem
+also regenerates the source-bound P5 certificate and requires an actual finite
+startup-to-inner-H-funnel capture result.  Until that result exists, the final
+status must remain FAIL even if every other downstream arithmetic gate passes.
 """
 from __future__ import annotations
 
@@ -21,11 +22,12 @@ from pathlib import Path
 import ou3_deployment_gate as DEPLOY
 import ou3_implementation_proof_manifest as MANIFEST
 import ou3_implementation_word_language as WORDS
+import ou3_p5_startup_capture_certificate as P5
 import ou3_startup_stability_certificate as STARTUP
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 
 
 def compose(check: dict, source_domain: dict, primitive: dict,
@@ -36,6 +38,14 @@ def compose(check: dict, source_domain: dict, primitive: dict,
     startup_failures = STARTUP.validate(startup)
     words = WORDS.build(domain_path)
     word_failures = WORDS.validate(words)
+    p5 = P5.build(domain_path)
+    p5_validation_failures = P5.validate(p5)
+    p5_finite_capture_pass = bool(
+        not p5_validation_failures
+        and p5.get("P5_FINITE_CAPTURE_CERTIFICATE") == "PASS"
+        and isinstance(p5.get("N_H_words"), int)
+        and p5["N_H_words"] >= 0
+    )
     deployment = DEPLOY.compose(check, source_domain, primitive)
 
     downstream_pass = deployment.get("deployment_theorem_certificate") == "PASS"
@@ -43,6 +53,7 @@ def compose(check: dict, source_domain: dict, primitive: dict,
         not manifest_failures
         and not startup_failures
         and not word_failures
+        and p5_finite_capture_pass
         and downstream_pass
     )
 
@@ -50,6 +61,12 @@ def compose(check: dict, source_domain: dict, primitive: dict,
     failures.extend(f"implementation manifest: {x}" for x in manifest_failures)
     failures.extend(f"startup: {x}" for x in startup_failures)
     failures.extend(f"source-word language: {x}" for x in word_failures)
+    failures.extend(f"P5 validation: {x}" for x in p5_validation_failures)
+    if not p5_finite_capture_pass:
+        obstruction = p5.get("first_obstruction", "UNKNOWN_P5_OBSTRUCTION")
+        failures.append(
+            "P5 finite startup-to-inner-funnel capture not established: " + str(obstruction)
+        )
     if not downstream_pass:
         failures.append("continuous nonlinear/hybrid/capture/stochastic deployment certificate did not pass")
 
@@ -62,8 +79,13 @@ def compose(check: dict, source_domain: dict, primitive: dict,
         "startup": startup,
         "source_complete_word_language_pass": not word_failures,
         "word_language": words,
+        "P5": p5,
+        "P5_validation_failures": p5_validation_failures,
+        "P5_finite_startup_capture_pass": p5_finite_capture_pass,
+        "P5_first_obstruction": p5.get("first_obstruction"),
         "deployment": deployment,
         "downstream_deployment_theorem_pass": downstream_pass,
+        "generic_deployment_capture_is_not_P5": True,
         "performance_and_replay_role": (
             "retained existing main regression/falsification/evidence layer; not used to derive theorem bounds"
         ),
@@ -94,6 +116,8 @@ def main() -> int:
         "implementation_manifest_pass": out["implementation_manifest_pass"],
         "startup_certificate_pass": out["startup_certificate_pass"],
         "source_complete_word_language_pass": out["source_complete_word_language_pass"],
+        "P5_finite_startup_capture_pass": out["P5_finite_startup_capture_pass"],
+        "P5_first_obstruction": out["P5_first_obstruction"],
         "downstream_deployment_theorem_pass": out["downstream_deployment_theorem_pass"],
         "failures": out["failures"],
     }, indent=2, sort_keys=True))
