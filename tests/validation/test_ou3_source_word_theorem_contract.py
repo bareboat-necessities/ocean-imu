@@ -24,7 +24,7 @@ class SourceWordTheoremContractTests(unittest.TestCase):
         self.assertEqual(d["theorem_promotion"], "NOT_ESTABLISHED")
         self.assertTrue(any("recurrence" in x for x in d["failures"]))
 
-    def test_declared_recurrence_creates_four_S_tileable_language(self):
+    def test_declared_recurrence_creates_optimized_four_S_tileable_language(self):
         d = mod.build(pe_recurrence_window_s=1.0)
         self.assertEqual(mod.validate(d), [])
         self.assertTrue(d["conditional_word_language"]["ready"])
@@ -34,11 +34,16 @@ class SourceWordTheoremContractTests(unittest.TestCase):
         self.assertEqual(tr["primary_route"], "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO")
         self.assertEqual(tr["aligned_firing_count"], 4)
         self.assertEqual(tr["primary_state_order"], ["v", "p", "S", "a_w"])
+        self.assertEqual(tr["spread_selection"], "VALIDATED_MAX_INFORMATION_OVER_ALL_ADMISSIBLE_INTEGER_Q")
+        self.assertGreaterEqual(tr["spread_admissible_q_max"], 1)
+        self.assertGreaterEqual(tr["spread_index_q_W"], 1)
+        self.assertLessEqual(tr["spread_index_q_W"], tr["spread_admissible_q_max"])
+        self.assertGreater(tr["spread_selected_spacing_lower_s"], 0.0)
+        self.assertGreater(tr["spread_observation_det_lower"], 0.0)
+        self.assertGreater(tr["spread_information_gramian_lambda_min_lower"], 0.0)
+        self.assertGreaterEqual(tr["information_widening_factor_vs_adjacent_lower"], 1.0)
         self.assertEqual(tr["three_firing_integrator_detectability_role"], "Riccati_covariance_upper_sharpening_only")
         self.assertFalse(tr["three_firing_integrator_detectability_is_promotion_fallback"])
-        self.assertGreaterEqual(tr["spread_index_q_W"], 1)
-        self.assertGreater(tr["spread_selected_spacing_lower_s"], 0.0)
-        self.assertGreaterEqual(tr["determinant_spacing_widening_factor_vs_adjacent"], 1)
         self.assertGreaterEqual(d["conditional_word_language"]["word_horizon_lower_s"], tr["minimum_four_firing_window_s"])
         self.assertFalse(d["conditional_word_language"]["one_sample_decrease_required"])
         self.assertTrue(d["conditional_word_language"]["word_endpoint_decrease_required"])
