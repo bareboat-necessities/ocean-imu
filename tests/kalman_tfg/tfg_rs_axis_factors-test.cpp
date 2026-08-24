@@ -32,20 +32,21 @@ Matrix3f integral_R(Fusion& f) {
     return R;
 }
 
-void test_default_is_isotropic_without_changing_rs_law() {
+void test_default_preserves_main_horizontal_factors_without_changing_rs_law() {
     Fusion f;
     Fusion::Config cfg;
     f.begin(cfg);
 
     check(f.getRSLaw() == Fusion::RSLaw::SpectralMSE,
           "axis-factor API changed the deployed adaptation law");
-    check(near(f.getRSXFactor(), 1.0f), "default X R_S factor is not 1.0");
-    check(near(f.getRSYFactor(), 1.0f), "default Y R_S factor is not 1.0");
+    check(near(f.getRSXFactor(), 1.15f), "default X R_S factor is not 1.15");
+    check(near(f.getRSYFactor(), 1.15f), "default Y R_S factor is not 1.15");
 
     check(f.setFixedTuning(2.0f, 0.5f, 3.0f), "fixed tuning rejected");
     const Matrix3f R = integral_R(f);
-    check(near(R(0,0), 9.0f), "default X R_S is not isotropic");
-    check(near(R(1,1), 9.0f), "default Y R_S is not isotropic");
+    const float horizontal_var = (3.0f * 1.15f) * (3.0f * 1.15f);
+    check(near(R(0,0), horizontal_var), "default X R_S no longer matches main");
+    check(near(R(1,1), horizontal_var), "default Y R_S no longer matches main");
     check(near(R(2,2), 9.0f), "default Z R_S changed");
 }
 
@@ -74,7 +75,7 @@ void test_x_y_factors_are_independent() {
 }  // namespace
 
 int main() {
-    test_default_is_isotropic_without_changing_rs_law();
+    test_default_preserves_main_horizontal_factors_without_changing_rs_law();
     test_x_y_factors_are_independent();
     if (failures != 0) {
         std::cerr << failures << " TFG R_S axis-factor test(s) failed\n";

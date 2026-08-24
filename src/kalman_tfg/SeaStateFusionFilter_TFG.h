@@ -959,14 +959,14 @@ private:
     float RS_target_ = 0.5f;
 
     // TFG-specific physical OU prior coefficients remain independently fitted.
-    // Integral-state regularization is isotropic by default, matching OU-III;
-    // X/Y factors are independent opt-in experiment/tuning knobs.
+    // Preserve the historical 1.15 horizontal regularization operating point,
+    // while exposing X/Y as independent experiment/tuning knobs.
     float tau_coeff_ = 1.0f;
     float sigma_coeff_ = 1.0f;
     float R_S_coeff_ = 0.28f;
     float S_factor_ = 1.00f;
-    float R_S_x_factor_ = 1.0f;
-    float R_S_y_factor_ = 1.0f;
+    float R_S_x_factor_ = 1.15f;
+    float R_S_y_factor_ = 1.15f;
     float noise_floor_sigma_ = 0.12f;
 
     RSLaw rs_law_ = RSLaw::SpectralMSE;
