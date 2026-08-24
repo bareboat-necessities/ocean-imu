@@ -5,6 +5,7 @@ on:
     paths:
       - "src/kalman_ou_common/KalmanOUCoreMath.h"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h"
       - "tools/ou3_interval.py"
       - "tools/ou3_interval_linear_algebra.py"
       - "tools/ou3_validated_kalman_interval.py"
@@ -21,6 +22,10 @@ on:
       - "tools/ou3_hybrid_aw_sync_proof.py"
       - "tools/ou3_hybrid_contract.py"
       - "tools/ou3_source_domain_contract.py"
+      - "tools/ou3_implementation_proof_manifest.py"
+      - "tools/ou3_startup_stability_certificate.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "docs/ou-iii-implementation-stability-proof-plan.md"
       - "tests/validation/test_ou3_validated_kalman_interval.py"
       - "tests/validation/test_ou3_validated_transcendentals.py"
       - "tests/validation/test_ou3_scalar_ou_enclosure.py"
@@ -34,6 +39,7 @@ on:
       - "tests/validation/test_ou3_hybrid_aw_sync_proof.py"
       - "tests/validation/test_ou3_hybrid_contract.py"
       - "tests/validation/test_ou3_source_domain_contract.py"
+      - "tests/validation/test_ou3_startup_stability_certificate.py"
       - ".github/workflows/ou3-proof-fast.yml"
   workflow_dispatch:
 
@@ -57,7 +63,26 @@ jobs:
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_source_domain_contract
 
-  # Focused proof-only jobs: no replay, simulator, plots, PDFs, or broad build.
+  startup-proof:
+    name: deployed initialization and handoff proof
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile startup proof producers
+        run: |
+          python3 -m py_compile \
+            tools/ou3_implementation_proof_manifest.py \
+            tools/ou3_startup_stability_certificate.py \
+            tests/validation/test_ou3_startup_stability_certificate.py
+      - name: Test source-bound startup certificate
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_startup_stability_certificate
+      - name: Emit startup certificate
+        run: |
+          python3 tools/ou3_startup_stability_certificate.py \
+            --output /tmp/ou3_startup_stability_certificate.json
+
   scalar-ou:
     name: validated scalar OU transition
     runs-on: ubuntu-24.04
