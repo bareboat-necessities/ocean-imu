@@ -142,7 +142,7 @@ frequency / variance horizons & $0.10T_{\mathrm{sea}}$ / $2T_{\mathrm{eff}}$
 tuner-local variance request bounds & $[0.3,60]$ s
 & pseudo-update period bounds & $[5,250]$ ms \\
 covariance-maintenance cadence & approximately $0.1$ s
-& online tuning warmup / magnetometer delay & $5/7$ s \\
+& online tuning warmup / magnetometer delay & $10/7$ s \\
 horizontal OU / $r_S$ scale & isotropic
 & & \\
 \bottomrule
