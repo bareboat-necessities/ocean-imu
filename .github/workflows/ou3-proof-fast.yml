@@ -10,6 +10,7 @@ on:
       - "tools/ou3_scalar_ou_enclosure.py"
       - "tools/ou3_translational_uco_ucc.py"
       - "tools/ou3_vector_uco_certificate.py"
+      - "tools/ou3_source_word_theorem_contract.py"
       - "tools/ou3_full_process_ucc.py"
       - "tools/ou3_source_interval_box.py"
       - "tools/ou3_certificate_completion.py"
@@ -22,6 +23,7 @@ on:
       - "tests/validation/test_ou3_scalar_ou_enclosure.py"
       - "tests/validation/test_ou3_translational_uco_ucc.py"
       - "tests/validation/test_ou3_vector_uco_certificate.py"
+      - "tests/validation/test_ou3_source_word_theorem_contract.py"
       - "tests/validation/test_ou3_full_process_ucc.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tests/validation/test_ou3_validate_enclosure.py"
@@ -90,19 +92,24 @@ jobs:
         run: python3 -m unittest -v test_ou3_translational_uco_ucc
 
   vector-uco:
-    name: conditional vector packet UCO
+    name: conditional vector and source-word UCO
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      - name: Compile vector persistent-excitation producer
+      - name: Compile vector and source-word theorem producers
         run: |
           python3 -m py_compile \
             tools/ou3_vector_uco_certificate.py \
-            tests/validation/test_ou3_vector_uco_certificate.py
-      - name: Test conditional vector UCO certificate
+            tools/ou3_source_word_theorem_contract.py \
+            tests/validation/test_ou3_vector_uco_certificate.py \
+            tests/validation/test_ou3_source_word_theorem_contract.py
+      - name: Test conditional vector UCO and source-word language
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_vector_uco_certificate
+        run: |
+          python3 -m unittest -v \
+            test_ou3_vector_uco_certificate \
+            test_ou3_source_word_theorem_contract
 
   full-process-ucc:
     name: full H A process UCC
