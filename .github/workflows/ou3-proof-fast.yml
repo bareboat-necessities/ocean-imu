@@ -5,6 +5,7 @@ on:
     paths:
       - "tools/ou3_interval.py"
       - "tools/ou3_validated_transcendentals.py"
+      - "tools/ou3_ou_transition_enclosure.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
       - "tools/ou3_deployment_gate.py"
@@ -12,6 +13,7 @@ on:
       - "tools/ou3_hybrid_contract.py"
       - "tools/ou3_source_domain_contract.py"
       - "tests/validation/test_ou3_validated_transcendentals.py"
+      - "tests/validation/test_ou3_ou_transition_enclosure.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tests/validation/test_ou3_validate_enclosure.py"
       - "tests/validation/test_ou3_deployment_gate.py"
@@ -56,6 +58,7 @@ jobs:
           python3 -m py_compile \
             tools/ou3_interval.py \
             tools/ou3_validated_transcendentals.py \
+            tools/ou3_ou_transition_enclosure.py \
             tools/ou3_certificate_completion.py \
             tools/ou3_validate_enclosure.py
       - name: Test validated scalar and enclosure contracts
@@ -63,6 +66,7 @@ jobs:
         run: |
           python3 -m unittest -v \
             test_ou3_validated_transcendentals \
+            test_ou3_ou_transition_enclosure \
             test_ou3_certificate_completion \
             test_ou3_validate_enclosure
 
