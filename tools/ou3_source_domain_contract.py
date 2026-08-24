@@ -17,18 +17,19 @@ The producer also contains the first validated continuous-word arithmetic:
 ``validated_ou_primitives`` bounds exp(-h/tau), phi_pa and phi_Sa using exact
 rational Taylor arithmetic plus an explicit Lagrange remainder;
 ``validated_phi_axis4`` lifts those scalar bounds to the exact 4x4
-[v,p,S,a] transition used by IntegratedOUChain<T,3>::transition; and
+[v,p,S,a] transition used by IntegratedOUChain<T,3>::transition;
 ``validated_qd_axis4_kernel`` encloses the exact mathematical OU process
-covariance using the positive impulse-response kernel
+covariance using the positive impulse-response kernel; and
+``validated_covariance_predict_axis4`` performs the interval covariance
+prediction Phi P Phi^T + Qd with exact-rational interval matrix arithmetic.
 
-    Qd = (2 sigma^2 / tau) integral_0^h g(r) g(r)^T dr.
-
-The kernel integral is subdivided into cells. Every cell uses the validated
+The Qd kernel integral is subdivided into cells. Every cell uses the validated
 transition/OU primitive bounds, and every sum/product is accumulated as an
 exact Fraction. This avoids the cancellation-heavy closed-form covariance
 expressions. The claim is intentionally narrow: it encloses the mathematical
-continuous OU covariance, while the shipping binary32 closed-form computation
-and its PSD cleanup remain a separate implementation-arithmetic obligation.
+continuous OU covariance/prediction, while the shipping binary32 closed-form
+Qd computation and its PSD cleanup remain a separate implementation-arithmetic
+obligation.
 
 The public wrapper accepts every positive finite binary32 ``dt``. That set is
 technically finite -- [2^-149, FLT_MAX] -- but it has no operational safety
@@ -79,7 +80,6 @@ def _strip_float_suffixes(expr: str) -> str:
 
 
 def _bits_to_positive_fraction(bits: int) -> Fraction:
-    """Return the exact nonnegative finite binary32 value for ``bits``."""
     if not 0 <= bits <= _FLOAT32_MAX_BITS:
         raise ValueError(f"not a finite positive binary32 pattern: 0x{bits:08x}")
     exponent = (bits >> 23) & 0xFF
@@ -94,7 +94,6 @@ def _bits_to_positive_fraction(bits: int) -> Fraction:
 
 
 def _round_fraction_binary32(value: Fraction) -> Fraction:
-    """Round an exact rational to finite binary32, nearest/ties-to-even."""
     if value == 0:
         return Fraction(0, 1)
     sign = -1 if value < 0 else 1
@@ -106,18 +105,15 @@ def _round_fraction_binary32(value: Fraction) -> Fraction:
     candidate &= 0x7FFFFFFF
     if candidate > _FLOAT32_MAX_BITS:
         raise RuntimeError(f"binary32 constant overflow for {value}")
-
     choices: list[tuple[Fraction, int]] = []
     for bits in (candidate - 1, candidate, candidate + 1):
         if 0 <= bits <= _FLOAT32_MAX_BITS:
             choices.append((_bits_to_positive_fraction(bits), bits))
     if not choices:
         raise RuntimeError(f"cannot round binary32 constant {value}")
-
     def rank(item: tuple[Fraction, int]) -> tuple[Fraction, int]:
         exact, bits = item
         return (abs(exact - x), bits & 1)
-
     exact, _ = min(choices, key=rank)
     return exact if sign > 0 else -exact
 
@@ -164,7 +160,6 @@ def _eval_constexpr32(node: ast.AST, expr: str, text: str,
 
 def parse_const_fraction(text: str, name: str,
                          stack: tuple[str, ...] = ()) -> Fraction:
-    """Resolve a scalar ``constexpr float`` with deployed binary32 semantics."""
     if name in stack:
         raise RuntimeError(f"cyclic implementation constant alias: {' -> '.join((*stack, name))}")
     expressions = {n: expr for n, expr in CONST_RE.findall(text)}
@@ -186,7 +181,6 @@ def parse_const(text: str, name: str, stack: tuple[str, ...] = ()) -> float:
 
 
 def parse_aw_sigma_floor(text: str) -> float:
-    """Extract the deployed lower floor used before setting Sigma_aw_stat."""
     pat = re.compile(
         r"const\s+float\s+sigma_floor\s*=\s*std::max\(\s*"
         r"([0-9.+\-eE]+)f?\s*,\s*band_noise_floor_sigma_\(\)\s*\)\s*;"
@@ -227,7 +221,6 @@ def _fraction_up(q: Fraction) -> float:
 
 
 def _exp_neg_point_rational(x: Fraction, order: int = 96) -> tuple[Fraction, Fraction]:
-    """Validated enclosure of exp(-x), x>=0, by exact Taylor arithmetic."""
     if x < 0:
         raise ValueError("exp(-x) enclosure requires x>=0")
     if order < 1:
@@ -245,33 +238,28 @@ def _exp_neg_point_rational(x: Fraction, order: int = 96) -> tuple[Fraction, Fra
 def validated_ou_primitives(h_bounds: tuple[float, float] | list[float],
                             tau_bounds: tuple[float, float] | list[float],
                             order: int = 96) -> dict:
-    """Outward enclosure of the deployed scalar OU transition primitives."""
     h_lo, h_hi = map(Fraction.from_float, map(float, h_bounds))
     t_lo, t_hi = map(Fraction.from_float, map(float, tau_bounds))
     if h_lo < 0 or h_hi < h_lo:
         raise ValueError("invalid nonnegative step interval")
     if t_lo <= 0 or t_hi < t_lo:
         raise ValueError("invalid positive tau interval")
-
     x_lo = h_lo / t_hi
     x_hi = h_hi / t_lo
     alpha_lo, _ = _exp_neg_point_rational(x_hi, order)
     _, alpha_hi = _exp_neg_point_rational(x_lo, order)
     alpha_lo = max(Fraction(0, 1), alpha_lo)
     alpha_hi = min(Fraction(1, 1), alpha_hi)
-
     pa_core_lo = max(Fraction(0, 1), x_lo + alpha_lo - 1)
     pa_core_hi = x_hi + alpha_hi - 1
     sa_core_lo = max(Fraction(0, 1), Fraction(1, 2) * x_lo * x_lo - x_hi - alpha_hi + 1)
     sa_core_hi = Fraction(1, 2) * x_hi * x_hi - x_lo - alpha_lo + 1
-
     tau2_lo, tau2_hi = t_lo * t_lo, t_hi * t_hi
     tau3_lo, tau3_hi = tau2_lo * t_lo, tau2_hi * t_hi
     phi_pa_lo = tau2_lo * pa_core_lo
     phi_pa_hi = tau2_hi * max(Fraction(0, 1), pa_core_hi)
     phi_sa_lo = tau3_lo * sa_core_lo
     phi_sa_hi = tau3_hi * max(Fraction(0, 1), sa_core_hi)
-
     return {
         "validated_arithmetic": True,
         "outward_rounded": True,
@@ -297,13 +285,11 @@ def _mul_nonnegative_bounds(a: list[float], b: list[float]) -> list[float]:
 def validated_phi_axis4(h_bounds: tuple[float, float] | list[float],
                         tau_bounds: tuple[float, float] | list[float],
                         order: int = 96) -> dict:
-    """Enclose the exact deployed IntegratedOUChain<T,3>::transition matrix."""
     p = validated_ou_primitives(h_bounds, tau_bounds, order)
     h_lo, h_hi = map(float, h_bounds)
     t_lo, t_hi = map(float, tau_bounds)
     if h_lo < 0 or h_hi < h_lo or t_lo <= 0 or t_hi < t_lo:
         raise ValueError("invalid h/tau transition domain")
-
     zero = [0.0, 0.0]
     one = [1.0, 1.0]
     h = _outward_box(h_lo, h_hi)
@@ -317,7 +303,6 @@ def validated_phi_axis4(h_bounds: tuple[float, float] | list[float],
     ]
     tau = _outward_box(t_lo, t_hi)
     phi_va = _mul_nonnegative_bounds(tau, one_minus_alpha)
-
     M = [
         [one, zero, zero, phi_va],
         [h, one, zero, p["phi_pa_s2"]],
@@ -337,7 +322,6 @@ def validated_phi_axis4(h_bounds: tuple[float, float] | list[float],
 def _kernel_interval_on_cell(r_lo: Fraction, r_hi: Fraction,
                              tau_bounds: tuple[float, float] | list[float],
                              order: int) -> list[tuple[Fraction, Fraction]]:
-    """Return validated impulse-response intervals [v,p,S,a] on one r-cell."""
     lo = _fraction_down(r_lo)
     hi = _fraction_up(r_hi)
     M = validated_phi_axis4((lo, hi), tau_bounds, order)["Phi_interval"]
@@ -353,7 +337,6 @@ def _kernel_interval_on_cell(r_lo: Fraction, r_hi: Fraction,
 def _integrate_kernel_bounds(h: Fraction,
                              tau_bounds: tuple[float, float] | list[float],
                              cells: int, order: int) -> tuple[list[list[Fraction]], list[list[Fraction]]]:
-    """Bound integral_0^h g g^T dr by exact-rational cell sums."""
     if h < 0:
         raise ValueError("integration horizon must be nonnegative")
     if cells <= 0:
@@ -383,7 +366,6 @@ def validated_qd_axis4_kernel(h_bounds: tuple[float, float] | list[float],
                               tau_bounds: tuple[float, float] | list[float],
                               sigma2_bounds: tuple[float, float] | list[float],
                               cells: int = 24, order: int = 96) -> dict:
-    """Rigorous elementwise enclosure of the mathematical integrated-OU Qd."""
     h_lo_f, h_hi_f = map(float, h_bounds)
     t_lo_f, t_hi_f = map(float, tau_bounds)
     s_lo_f, s_hi_f = map(float, sigma2_bounds)
@@ -393,19 +375,16 @@ def validated_qd_axis4_kernel(h_bounds: tuple[float, float] | list[float],
         raise ValueError("invalid tau interval")
     if s_lo_f < 0 or s_hi_f < s_lo_f:
         raise ValueError("invalid sigma2 interval")
-
     h_lo = Fraction.from_float(h_lo_f)
     h_hi = Fraction.from_float(h_hi_f)
     t_lo = Fraction.from_float(t_lo_f)
     t_hi = Fraction.from_float(t_hi_f)
     s_lo = Fraction.from_float(s_lo_f)
     s_hi = Fraction.from_float(s_hi_f)
-
     int_lo, _ = _integrate_kernel_bounds(h_lo, tau_bounds, cells, order)
     _, int_hi = _integrate_kernel_bounds(h_hi, tau_bounds, cells, order)
     qc_lo = Fraction(2, 1) * s_lo / t_hi
     qc_hi = Fraction(2, 1) * s_hi / t_lo
-
     Q: list[list[list[float]]] = []
     for i in range(4):
         row: list[list[float]] = []
@@ -414,7 +393,6 @@ def validated_qd_axis4_kernel(h_bounds: tuple[float, float] | list[float],
             qhi = qc_hi * int_hi[i][j]
             row.append([_fraction_down(qlo), _fraction_up(qhi)])
         Q.append(row)
-
     return {
         "validated_arithmetic": True,
         "outward_rounded": True,
@@ -429,6 +407,88 @@ def validated_qd_axis4_kernel(h_bounds: tuple[float, float] | list[float],
         "mathematical_integral_enclosed": True,
         "shipping_binary32_closed_form_enclosed": False,
         "shipping_psd_cleanup_enclosed": False,
+        "theorem_promotion": "NOT_ESTABLISHED",
+    }
+
+
+def _iv_from_float(bounds: list[float]) -> tuple[Fraction, Fraction]:
+    if len(bounds) != 2:
+        raise ValueError("interval needs two endpoints")
+    lo, hi = map(float, bounds)
+    if not (math.isfinite(lo) and math.isfinite(hi)) or lo > hi:
+        raise ValueError(f"invalid finite interval {bounds!r}")
+    return Fraction.from_float(lo), Fraction.from_float(hi)
+
+
+def _iv_add(a: tuple[Fraction, Fraction],
+            b: tuple[Fraction, Fraction]) -> tuple[Fraction, Fraction]:
+    return a[0] + b[0], a[1] + b[1]
+
+
+def _iv_mul(a: tuple[Fraction, Fraction],
+            b: tuple[Fraction, Fraction]) -> tuple[Fraction, Fraction]:
+    p = (a[0] * b[0], a[0] * b[1], a[1] * b[0], a[1] * b[1])
+    return min(p), max(p)
+
+
+def _iv_matrix_from_float(M: list[list[list[float]]]) -> list[list[tuple[Fraction, Fraction]]]:
+    return [[_iv_from_float(x) for x in row] for row in M]
+
+
+def _iv_transpose(M: list[list[tuple[Fraction, Fraction]]]) -> list[list[tuple[Fraction, Fraction]]]:
+    return [list(row) for row in zip(*M)]
+
+
+def _iv_matmul(A: list[list[tuple[Fraction, Fraction]]],
+               B: list[list[tuple[Fraction, Fraction]]]) -> list[list[tuple[Fraction, Fraction]]]:
+    if not A or not B or len(A[0]) != len(B):
+        raise ValueError("interval matrix dimensions do not conform")
+    out: list[list[tuple[Fraction, Fraction]]] = []
+    for i in range(len(A)):
+        row: list[tuple[Fraction, Fraction]] = []
+        for j in range(len(B[0])):
+            acc = (Fraction(0, 1), Fraction(0, 1))
+            for k in range(len(B)):
+                acc = _iv_add(acc, _iv_mul(A[i][k], B[k][j]))
+            row.append(acc)
+        out.append(row)
+    return out
+
+
+def validated_covariance_predict_axis4(
+        P_interval: list[list[list[float]]],
+        h_bounds: tuple[float, float] | list[float],
+        tau_bounds: tuple[float, float] | list[float],
+        sigma2_bounds: tuple[float, float] | list[float],
+        cells: int = 24, order: int = 96) -> dict:
+    """Enclose one mathematical covariance prediction Phi P Phi^T + Qd."""
+    if len(P_interval) != 4 or any(len(row) != 4 for row in P_interval):
+        raise ValueError("P_interval must be 4x4")
+    phi = validated_phi_axis4(h_bounds, tau_bounds, order)
+    qd = validated_qd_axis4_kernel(h_bounds, tau_bounds, sigma2_bounds, cells, order)
+    A = _iv_matrix_from_float(phi["Phi_interval"])
+    P = _iv_matrix_from_float(P_interval)
+    Q = _iv_matrix_from_float(qd["Qd_interval"])
+    AP = _iv_matmul(A, P)
+    APA = _iv_matmul(AP, _iv_transpose(A))
+    pred: list[list[list[float]]] = []
+    for i in range(4):
+        row: list[list[float]] = []
+        for j in range(4):
+            lo, hi = _iv_add(APA[i][j], Q[i][j])
+            row.append([_fraction_down(lo), _fraction_up(hi)])
+        pred.append(row)
+    return {
+        "validated_arithmetic": True,
+        "outward_rounded": True,
+        "claim": "MATHEMATICAL_OU_AXIS_COVARIANCE_PREDICTION_ENCLOSURE",
+        "state_order": ["v", "p", "S", "a_w"],
+        "Phi": phi,
+        "Qd": qd,
+        "P_prior_interval": P_interval,
+        "P_predicted_interval": pred,
+        "mathematical_prediction_enclosed": True,
+        "shipping_covariance_prediction_enclosed": False,
         "theorem_promotion": "NOT_ESTABLISHED",
     }
 
@@ -510,6 +570,8 @@ def build(header: Path) -> dict:
             "process_covariance_backend": "POSITIVE_KERNEL_CELL_INTERVAL_EXACT_RATIONAL_ACCUMULATION",
             "process_covariance_mathematical_integral_enclosed": True,
             "process_covariance_shipping_float_path_enclosed": False,
+            "covariance_prediction_backend": "EXACT_RATIONAL_INTERVAL_PHI_P_PHIT_PLUS_Q",
+            "covariance_prediction_mathematical_path_enclosed": True,
             "theorem_promotion": "BLOCKED_BY_NO_PROOF_USABLE_ACCEPTED_DT_GUARD_AND_SHIPPING_QD_FLOAT_PATH",
         },
         "discrete_source_branches": {
@@ -528,10 +590,11 @@ def build(header: Path) -> dict:
             "metric_consequence": "inverse-covariance information energy is nonexpansive",
         },
         "promotion_rule": (
-            "source-boundary scalar arithmetic, exact per-axis transition and mathematical OU process "
-            "covariance are now enclosed; deployment promotion still requires a proof-usable source-derived "
-            "accepted-dt upper guard/contract, enclosure of the shipping binary32 Qd/PSD-cleanup path, full "
-            "H/A Riccati propagation, nonlinear SO(3) remainder bounds and remaining jump certificates"
+            "source-boundary scalar arithmetic, exact per-axis transition, mathematical OU process covariance "
+            "and one-step mathematical covariance prediction are now enclosed; deployment promotion still "
+            "requires a proof-usable source-derived accepted-dt upper guard/contract, enclosure of the shipping "
+            "binary32 Qd/PSD-cleanup path, measurement/Riccati updates over full H/A words, nonlinear SO(3) "
+            "remainder bounds and remaining jump certificates"
         ),
     }
 
