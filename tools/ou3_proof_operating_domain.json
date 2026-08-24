@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "qualification": "DECLARED_OU3_DEPLOYMENT_THEOREM_OPERATING_DOMAIN",
+  "trajectory_fit": false,
+  "note": "These are theorem/deployment assumptions, not extrema fitted from the eight reference replays. Existing replay remains a regression/falsification layer and may disprove this envelope but cannot establish it.",
+  "configured_runtime": {
+    "imu_dt_s": 0.005
+  },
+  "startup": {
+    "gravity_mps2": 9.80665,
+    "initial_non_gravitational_specific_force_norm_upper_mps2": 4.0,
+    "initial_tangent_gyro_bias_norm_upper_rad_s": 0.01,
+    "effective_deterministic_gyro_transport_disturbance_upper_rad_s": 0.0001,
+    "effective_deterministic_bias_transport_disturbance_upper_rad_s2": 0.00001,
+    "world_averaged_gravity_direction_error_upper_rad": 0.02,
+    "mahony_chart_theta_star_deg": 60.0,
+    "mahony_cross_term_delta_s": 5.0,
+    "internal_heading_gauge_error_upper_rad": 0.17453292519943295,
+    "physical_handoff_coordinate_bounds": {
+      "gyro_bias_error_norm_upper_rad_s": 0.01,
+      "velocity_error_norm_upper_mps": 5.0,
+      "position_error_norm_upper_m": 20.0,
+      "integral_displacement_error_norm_upper_m_s": 300.0,
+      "latent_acceleration_error_norm_upper_mps2": 10.0,
+      "accelerometer_bias_error_norm_upper_mps2": 0.5
+    }
+  },
+  "normal_live": {
+    "vector_pe_recurrence_window_s": 1.0,
+    "specific_force_norm_lower_mps2": 0.001,
+    "magnetic_vector_norm_lower_uT": 0.001,
+    "vector_sine_separation_lower": 0.01,
+    "body_rate_norm_upper_deg_s": 30.0
+  },
+  "stochastic": {
+    "finite_horizon_failure_probability_budget": 0.05
+  }
+}
