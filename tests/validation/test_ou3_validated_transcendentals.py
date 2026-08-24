@@ -1,52 +1,70 @@
-import math
+from decimal import Decimal, getcontext
 from pathlib import Path
 import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
-from ou3_interval import Interval
 import ou3_validated_transcendentals as mod
+
+getcontext().prec = 90
+
+
+def dec(x: float) -> Decimal:
+    return Decimal.from_float(float(x))
 
 
 class ValidatedTranscendentalTests(unittest.TestCase):
-    def test_exp_neg_contains_libm_reference_across_supported_domain(self):
-        points = [0.0, 1.0 / 2400.0, 0.005 / 0.02, 0.5, 1.0]
-        points += [i / 64.0 for i in range(65)]
-        for x in points:
-            lo, hi = mod.exp_neg_scalar_bounds(x)
-            self.assertLessEqual(lo, math.exp(-x))
-            self.assertGreaterEqual(hi, math.exp(-x))
+    def test_exp_and_expm1_enclose_high_precision_reference(self):
+        for x in (-0.5, -0.25, -0.01, -0.0004, 0.0, 0.01, 0.5):
+            with self.subTest(x=x):
+                exact_exp = dec(x).exp()
+                exact_em1 = exact_exp - Decimal(1)
+                E = mod.exp_point(x)
+                M = mod.expm1_point(x)
+                self.assertLessEqual(dec(E.lo), exact_exp)
+                self.assertGreaterEqual(dec(E.hi), exact_exp)
+                self.assertLessEqual(dec(M.lo), exact_em1)
+                self.assertGreaterEqual(dec(M.hi), exact_em1)
 
-    def test_interval_exp_neg_is_monotone_and_contains_endpoints(self):
-        for lo, hi in ((0.0, 0.25), (1e-4, 0.01), (0.2, 0.9)):
-            I = mod.exp_neg(Interval(lo, hi))
-            self.assertLessEqual(I.lo, math.exp(-hi))
-            self.assertGreaterEqual(I.hi, math.exp(-lo))
+    def test_ou_positive_kernels_avoid_expm1_cancellation(self):
+        for x in (0.0004, 0.01, 0.25, 0.5):
+            with self.subTest(x=x):
+                X = dec(x)
+                exp_neg = (-X).exp()
+                exact_pa = X + exp_neg - Decimal(1)
+                exact_Sa = X * X / Decimal(2) - X + Decimal(1) - exp_neg
+                pa = mod.ou_phi_pa_kernel_point(x)
+                Sa = mod.ou_phi_Sa_kernel_point(x)
+                self.assertLessEqual(dec(pa.lo), exact_pa)
+                self.assertGreaterEqual(dec(pa.hi), exact_pa)
+                self.assertLessEqual(dec(Sa.lo), exact_Sa)
+                self.assertGreaterEqual(dec(Sa.hi), exact_Sa)
+                self.assertGreaterEqual(pa.lo, 0.0)
+                self.assertGreaterEqual(Sa.lo, 0.0)
 
-    def test_ou_coefficients_enclose_direct_formulas(self):
-        h = Interval.outward_bounds(0.005, 0.005)
-        tau = Interval.outward_bounds(0.02, 12.0)
-        c = mod.ou_discrete_coefficients(h, tau)
-        for t in (0.02, 0.05, 0.5, 1.1, 4.0, 12.0):
-            x = 0.005 / t
-            alpha = math.exp(-x)
-            phi_pa = t * t * (x + math.expm1(-x))
-            phi_sa = t ** 3 * (0.5 * x * x - x - math.expm1(-x))
-            self.assertLessEqual(c["alpha"].lo, alpha)
-            self.assertGreaterEqual(c["alpha"].hi, alpha)
-            self.assertLessEqual(c["phi_pa"].lo, phi_pa)
-            self.assertGreaterEqual(c["phi_pa"].hi, phi_pa)
-            self.assertLessEqual(c["phi_Sa"].lo, phi_sa)
-            self.assertGreaterEqual(c["phi_Sa"].hi, phi_sa)
+    def test_interval_endpoints_use_monotonicity(self):
+        from ou3_interval import Interval
+        X = Interval(-0.25, -0.01)
+        E = mod.exp_interval(X)
+        self.assertLessEqual(dec(E.lo), dec(X.lo).exp())
+        self.assertGreaterEqual(dec(E.hi), dec(X.hi).exp())
+        K = mod.ou_phi_pa_kernel_interval(Interval(0.01, 0.25))
+        exact_lo = dec(0.01) + (-dec(0.01)).exp() - Decimal(1)
+        exact_hi = dec(0.25) + (-dec(0.25)).exp() - Decimal(1)
+        self.assertLessEqual(dec(K.lo), exact_lo)
+        self.assertGreaterEqual(dec(K.hi), exact_hi)
 
-    def test_rejects_unvalidated_large_argument(self):
+    def test_audited_range_is_explicit(self):
         with self.assertRaises(ValueError):
-            mod.exp_neg(Interval(0.0, 1.01))
+            mod.exp_point(0.5000001)
         with self.assertRaises(ValueError):
-            mod.ou_discrete_coefficients(
-                Interval.point(0.1), Interval.point(0.05)
-            )
+            mod.expm1_point(-0.5000001)
+
+    def test_proof_module_does_not_call_libm_exp(self):
+        text = (ROOT / "tools" / "ou3_validated_transcendentals.py").read_text(encoding="utf-8")
+        self.assertNotIn("math.exp(", text)
+        self.assertNotIn("math.expm1(", text)
 
 
 if __name__ == "__main__":
