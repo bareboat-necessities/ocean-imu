@@ -33,9 +33,6 @@ def complete_check():
             "H": {"linear_pass": True, "nonlinear_pass": True},
             "A": {"linear_pass": True, "nonlinear_pass": True},
         },
-        # Deliberately false: the old enclosure validator used a stale required
-        # set. The final gate must recompute source-domain-aligned hybrid closure
-        # from the per-jump rows plus the source-bound a_w sync proof.
         "hybrid": {
             "pass": False,
             "bounds": [
@@ -122,12 +119,22 @@ class DeploymentGateTests(unittest.TestCase):
         expected = mod.SOURCE_DOMAIN.build(mod.SOURCE_DOMAIN.DEFAULT_HEADER.resolve())
         out = mod.validate_source_domain(expected)
         self.assertTrue(out["pass"], out["failures"])
+        self.assertIn("configured_runtime_assumption", out)
+        self.assertFalse(out["configured_runtime_api_enforced"])
 
         stale = copy.deepcopy(expected)
         stale["continuous_parameters"].pop("tau_aw_s")
         out = mod.validate_source_domain(stale)
         self.assertFalse(out["pass"])
         self.assertTrue(any("continuous_parameters" in x for x in out["failures"]))
+
+    def test_source_domain_rejects_stale_or_mutated_runtime_timing_scope(self):
+        expected = mod.SOURCE_DOMAIN.build(mod.SOURCE_DOMAIN.DEFAULT_HEADER.resolve())
+        stale = copy.deepcopy(expected)
+        stale["configured_runtime_assumption"]["imu_dt_s"] *= 2.0
+        out = mod.validate_source_domain(stale)
+        self.assertFalse(out["pass"])
+        self.assertTrue(any("configured_runtime_assumption" in x for x in out["failures"]))
 
     def test_required_hybrid_set_is_complete(self):
         self.assertEqual(
@@ -152,6 +159,9 @@ class DeploymentGateTests(unittest.TestCase):
         self.assertTrue(out["hybrid"]["periodic_aw_covariance_sync"]["pass"])
         self.assertFalse(out["hybrid"]["periodic_aw_covariance_sync"]["strict_inward_margin_required"])
         self.assertEqual(out["deployment_theorem_certificate"], "PASS")
+        self.assertEqual(out["schema"], 4)
+        self.assertIn("configured runtime", out["deployment_theorem_scope"])
+        self.assertFalse(out["configured_runtime_api_enforced"])
 
     def test_final_gate_fails_if_current_hybrid_obligation_is_missing(self):
         check = complete_check()
