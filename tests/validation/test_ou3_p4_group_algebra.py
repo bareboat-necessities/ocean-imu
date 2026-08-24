@@ -65,12 +65,47 @@ class Ou3P4GroupAlgebraTests(unittest.TestCase):
         after = G.group_energy(matrix_mul(G.rodrigues_rotation(d), Re))
         direct = after - before
         identity = G.exact_energy_change_identity(Re, d)
-        # Both are independent outward enclosures of the same real quantity.
         self.assertLessEqual(max(direct.lo, identity.lo), min(direct.hi, identity.hi))
+
+    def test_cayley_coordinate_is_two_tan_half_angle(self):
+        theta = 0.7
+        R = G.rodrigues_rotation(G.point_vector([theta,0.0,0.0]))
+        c = G.cayley_coordinate(R)
+        exact = 2.0*math.tan(theta/2.0)
+        self.assertTrue(c[0].contains(exact))
+        self.assertTrue(c[1].contains(0.0))
+        self.assertTrue(c[2].contains(0.0))
+
+    def test_inverse_cayley_round_trip_contains_rotation(self):
+        c = G.point_vector([0.2,-0.05,0.03])
+        R = G.rotation_from_cayley(c)
+        cc = G.cayley_coordinate(R)
+        for i, exact in enumerate((0.2,-0.05,0.03)):
+            self.assertTrue(cc[i].contains(exact))
+
+    def test_left_cayley_composition_matches_matrix_product(self):
+        ca = G.point_vector([0.15,-0.02,0.01])
+        cb = G.point_vector([-0.04,0.08,0.03])
+        cc = G.cayley_compose_left(ca, cb)
+        Rprod = matrix_mul(G.rotation_from_cayley(ca), G.rotation_from_cayley(cb))
+        cref = G.cayley_coordinate(Rprod)
+        for i in range(3):
+            self.assertLessEqual(max(cc[i].lo, cref[i].lo), min(cc[i].hi, cref[i].hi))
+
+    def test_deployed_injection_cayley_matches_deployed_rotation(self):
+        for d in ([0.005,-0.002,0.001], [0.2,0.03,-0.01]):
+            with self.subTest(d=d):
+                D = G.point_vector(d)
+                c = G.deployed_injection_cayley(D)
+                R = G.deployed_injection_rotation(D)
+                cref = G.cayley_coordinate(R)
+                for i in range(3):
+                    self.assertLessEqual(max(c[i].lo, cref[i].lo), min(c[i].hi, cref[i].hi))
 
     def test_proof_module_does_not_use_linearized_attitude_injection(self):
         text = (ROOT / "tools" / "ou3_p4_group_algebra.py").read_text(encoding="utf-8")
-        self.assertIn("deployed_injection_rotation", text)
+        self.assertIn("deployed_injection_cayley", text)
+        self.assertIn("cayley_compose_left", text)
         self.assertIn("_series_quaternion", text)
         self.assertIn("_axis_angle_quaternion", text)
         self.assertNotIn("I + [dtheta]", text)
