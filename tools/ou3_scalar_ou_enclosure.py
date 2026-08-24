@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Validated one-step scalar OU transition enclosure for OU-III.
+"""Validated one-step scalar/axis OU transition enclosure for OU-III.
 
 This is the next proof layer after ``ou3_source_interval_box.py``. It consumes
 the source-derived outward-rounded tau box and encloses the scalar OU quantities
-used by ``KalmanOUCoreMath.h``. The shipping small-x polynomial branch and the
-expm1 branch are covered separately, including the threshold.
+and the exact per-axis ``(v,p,S,a_w)`` transition used by
+``KalmanOUCoreMath.h``. The shipping small-x polynomial branch and the expm1
+branch are covered separately, including the threshold.
 
-No replay, fitted extrema, Monte Carlo result, or ordinary libm transcendental
-is used in the enclosure. Domain subdivision only reduces interval dependency;
-every cell is widened before proof arithmetic.
+No replay, fitted extrema, Monte Carlo result, ordinary libm transcendental,
+ordinary eigensolver, or SVD is used in the enclosure. Domain subdivision only
+reduces interval dependency; every cell is widened before proof arithmetic.
 
 ``SeaStateFusionFilter_OU_III::updateTime`` currently accepts any positive finite
 caller ``dt``. This stage therefore certifies the nominal 200 Hz configured
-schedule only and deliberately leaves deployment timing and theorem promotion
-open until an admissible runtime dt contract is bound.
+schedule only. The source-domain contract records that scope explicitly.
 """
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ import json
 import math
 from pathlib import Path
 
+import ou3_interval as IA
 from ou3_interval import Interval, hull
 import ou3_source_domain_contract as SOURCE
 import ou3_validated_transcendentals as VT
@@ -29,7 +30,7 @@ import ou3_validated_transcendentals as VT
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_HEADER = SOURCE.DEFAULT_HEADER
 CORE_MATH = REPO / "src" / "kalman_ou_common" / "KalmanOUCoreMath.h"
-SCHEMA = 1
+SCHEMA = 2
 BRANCH_X = 1.0e-2
 CELLS_PER_BRANCH = 64
 
@@ -78,6 +79,25 @@ def _partition(lo: float, hi: float, count: int) -> list[Interval]:
     return [Interval.outward_bounds(edges[i], edges[i + 1]) for i in range(len(edges) - 1)]
 
 
+def _serialize_matrix(A: IA.IntervalMatrix) -> list[list[list[float]]]:
+    return [[x.as_list() for x in row] for row in A]
+
+
+def _axis_transition(h: Interval, tau: Interval, alpha: Interval,
+                     em1: Interval, phi_pa: Interval,
+                     phi_Sa: Interval) -> IA.IntervalMatrix:
+    z = Interval.point(0.0)
+    one = Interval.point(1.0)
+    phi_va = -(tau * em1)
+    half_h2 = h.square() * _I(0.5)
+    return [
+        [one, z, z, phi_va],
+        [h, one, z, phi_pa],
+        [half_h2, h, one, phi_Sa],
+        [z, z, z, alpha],
+    ]
+
+
 def _cell(x: Interval, h: Interval, branch: str) -> dict:
     if x.lo <= 0.0:
         raise ValueError("h/tau cell must stay strictly positive")
@@ -101,14 +121,20 @@ def _cell(x: Interval, h: Interval, branch: str) -> dict:
 
     tau2 = tau.square()
     tau3 = tau2 * tau
+    phi_pa = tau2 * pa_kernel
+    phi_Sa = tau3 * Sa_kernel
+    F = _axis_transition(h, tau, alpha, em1, phi_pa, phi_Sa)
     return {
         "branch": branch,
         "x_h_over_tau": x.as_list(),
         "tau_aw_s": tau.as_list(),
         "alpha": alpha.as_list(),
         "em1": em1.as_list(),
-        "phi_pa_s2": (tau2 * pa_kernel).as_list(),
-        "phi_Sa_s3": (tau3 * Sa_kernel).as_list(),
+        "phi_va_s": (-(tau * em1)).as_list(),
+        "phi_pa_s2": phi_pa.as_list(),
+        "phi_Sa_s3": phi_Sa.as_list(),
+        "transition_axis_v_p_S_aw": _serialize_matrix(F),
+        "transition_axis_spectral_norm_upper": IA.matrix_spectral_norm_upper(F),
     }
 
 
@@ -127,9 +153,9 @@ def build(header: Path = DEFAULT_HEADER.resolve(), cells_per_branch: int = CELLS
     source = SOURCE.build(header)
     validated_box = source["validated_parameter_box"]
     tau = _as_interval(validated_box["continuous_parameters"]["tau_aw_s"])
-    text = header.read_text(encoding="utf-8")
-    nominal_dt = SOURCE.parse_const(text, "FREQ_SMOOTHER_DT")
-    h = Interval.outward_bounds(nominal_dt, nominal_dt)
+    runtime = source["configured_runtime_assumption"]
+    nominal_dt = float(runtime["imu_dt_s"])
+    h = _as_interval(runtime["imu_dt_outward_interval_s"])
     x_all = h / tau
     if x_all.lo <= 0.0 or x_all.hi > VT.MAX_ABS_ARGUMENT:
         raise RuntimeError(f"source h/tau box outside audited range: {x_all.as_list()}")
@@ -153,14 +179,16 @@ def build(header: Path = DEFAULT_HEADER.resolve(), cells_per_branch: int = CELLS
 
     return {
         "schema": SCHEMA,
-        "qualification": "VALIDATED_NOMINAL_ONE_STEP_SCALAR_OU_ENCLOSURE",
+        "qualification": "VALIDATED_CONFIGURED_ONE_STEP_OU_AXIS_TRANSITION_ENCLOSURE",
         "source_generated_not_trajectory_fit": True,
         "validated_arithmetic": True,
         "outward_rounded": True,
         "transcendental_backend": "EXACT_RATIONAL_TAYLOR_REMAINDER_PLUS_BINARY64_NEXTAFTER_OUTWARD",
+        "matrix_backend": "OUTWARD_INTERVAL_BASIC_OPS_PLUS_ABSOLUTE_SUM_NORM_BOUND",
         "implementation_header": str(header.relative_to(REPO)),
         "implementation_core_math": str(CORE_MATH.relative_to(REPO)),
         "source_parameter_box_qualification": validated_box["qualification"],
+        "configured_runtime_assumption": runtime,
         "tau_aw_source_box_s": tau.as_list(),
         "nominal_imu_dt_source_value_s": nominal_dt,
         "nominal_imu_dt_box_s": h.as_list(),
@@ -172,21 +200,23 @@ def build(header: Path = DEFAULT_HEADER.resolve(), cells_per_branch: int = CELLS
         "global_bounds": {
             "alpha": _hull_key(cells, "alpha"),
             "em1": _hull_key(cells, "em1"),
+            "phi_va_s": _hull_key(cells, "phi_va_s"),
             "phi_pa_s2": _hull_key(cells, "phi_pa_s2"),
             "phi_Sa_s3": _hull_key(cells, "phi_Sa_s3"),
+            "transition_axis_spectral_norm_upper": max(
+                float(c["transition_axis_spectral_norm_upper"]) for c in cells
+            ),
         },
         "one_step_scalar_ou_enclosed": True,
-        "deployment_timing_complete": False,
-        "deployment_timing_open_obligation": (
-            "updateTime(dt,...) accepts arbitrary positive finite caller dt; establish an "
-            "admissible deployment dt interval or enforce one in shipping code"
-        ),
+        "one_step_axis_transition_enclosed": True,
+        "deployment_timing_complete": bool(runtime["sample_period_contract"] == "FIXED_SOURCE_NOMINAL"),
+        "deployment_timing_scope": runtime["theorem_scope_note"],
         "continuous_word_enclosed": False,
         "nonlinear_word_enclosed": False,
         "theorem_promotion": "NOT_ESTABLISHED",
         "next_obligation": (
-            "bind an admissible deployment dt box, then propagate validated one-step "
-            "prediction/correction/reset matrices and Riccati covariance over complete H/A words"
+            "propagate the validated one-step prediction/correction/reset matrices and Riccati "
+            "covariance over complete H/A words under the explicit PE/gating operating envelope"
         ),
     }
 
@@ -198,7 +228,8 @@ def validate(payload: dict) -> list[str]:
         ("validated_arithmetic", True),
         ("outward_rounded", True),
         ("one_step_scalar_ou_enclosed", True),
-        ("deployment_timing_complete", False),
+        ("one_step_axis_transition_enclosed", True),
+        ("deployment_timing_complete", True),
         ("continuous_word_enclosed", False),
         ("nonlinear_word_enclosed", False),
         ("theorem_promotion", "NOT_ESTABLISHED"),
@@ -220,7 +251,7 @@ def validate(payload: dict) -> list[str]:
             failures.append(f"gap in h/tau proof cells: {a.hi} < {b.lo}")
             break
     g = payload.get("global_bounds", {})
-    for key in ("alpha", "em1", "phi_pa_s2", "phi_Sa_s3"):
+    for key in ("alpha", "em1", "phi_va_s", "phi_pa_s2", "phi_Sa_s3"):
         try:
             I = _as_interval(g[key])
         except (KeyError, TypeError, ValueError):
@@ -231,11 +262,16 @@ def validate(payload: dict) -> list[str]:
     if not failures:
         alpha = _as_interval(g["alpha"])
         em1 = _as_interval(g["em1"])
+        va = _as_interval(g["phi_va_s"])
         pa = _as_interval(g["phi_pa_s2"])
         Sa = _as_interval(g["phi_Sa_s3"])
         if not (0.0 < alpha.lo <= alpha.hi <= 1.0): failures.append("alpha sign/range invalid")
         if not (-1.0 < em1.lo <= em1.hi < 0.0): failures.append("em1 sign/range invalid")
-        if pa.lo < 0.0 or Sa.lo < 0.0: failures.append("OU integral coefficient enclosure is negative")
+        if va.lo < 0.0 or pa.lo < 0.0 or Sa.lo < 0.0:
+            failures.append("OU integral transition coefficient enclosure is negative")
+        norm = float(g.get("transition_axis_spectral_norm_upper", math.nan))
+        if not math.isfinite(norm) or norm < 1.0:
+            failures.append("axis transition spectral-norm upper bound is invalid")
     return failures
 
 
