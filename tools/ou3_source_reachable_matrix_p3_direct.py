@@ -213,14 +213,8 @@ def mode_cell(mode: str, x: Interval, rho_trans: float, sigma: Interval,
     beta = _measurement_beta_upper(mode, sigma, rs, live, vector, process, sched)
     tO, tS, factor, qnorm = _translation_direct_blocks(x, sigma, raw, beta, sched)
     trans_delta = _certified_generalized_delta(tO, tS, MIN_USEFUL_DELTA)
-
-    fullO, fullS = _assemble_mode_matrices(mode, raw, tO, tS)
-    full_delta = _certified_generalized_delta(fullO, fullS, MIN_USEFUL_DELTA)
-    if full_delta <= 0.0:
-        raise RuntimeError(f"{mode} direct generalized matrix inequality lost positivity")
-    full_ok = _spd_at_delta(fullO, fullS, full_delta)
-    if not full_ok:
-        raise RuntimeError(f"{mode} reported direct generalized delta did not re-certify")
+    if trans_delta <= 0.0:
+        raise RuntimeError(f"{mode} direct translation generalized inequality lost positivity")
 
     other = math.inf
     qpost = float(raw["post_measurement_scaled_Omega_lambda_min_lower"])
@@ -229,6 +223,15 @@ def mode_cell(mode: str, x: Interval, rho_trans: float, sigma: Interval,
         if i in trans_indices:
             continue
         other = min(other, BASE.down(qpost / BASE.up(u / s2)))
+
+    full_delta = BASE.down(min(trans_delta, other))
+    if full_delta <= 0.0:
+        raise RuntimeError(f"{mode} direct generalized matrix inequality lost positivity")
+    fullO, fullS = _assemble_mode_matrices(mode, raw, tO, tS)
+    full_ok = _spd_at_delta(fullO, fullS, full_delta)
+    if not full_ok:
+        raise RuntimeError(f"{mode} reported direct generalized delta did not re-certify")
+
     limiting = "translation_RL_inverse_block" if trans_delta <= other else "attitude_bias_or_active_ba_block"
 
     out = dict(raw)
@@ -246,6 +249,7 @@ def mode_cell(mode: str, x: Interval, rho_trans: float, sigma: Interval,
         "translation_posterior_matrix_factor_lower": factor,
         "translation_process_representation": "x_lo*C*(Q_scaled/x)*C^T",
         "translation_congruence": "C=R*L_inverse applied to both Omega and Sigma",
+        "full_margin_composition": "min(certified_translation_block, certified_nontranslation_diagonal_blocks), followed by full H/A LDLT recertification",
         "old_scalar_rho_over_max_scaled_upper_used": False,
     }
     return out
