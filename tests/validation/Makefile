@@ -21,6 +21,8 @@ build:
 		../../tools/ou3_validated_kalman_interval.py \
 		../../tools/ou3_implementation_proof_manifest.py \
 		../../tools/ou3_startup_stability_certificate.py \
+		../../tools/ou3_implementation_word_language.py \
+		../../tools/ou3_implementation_stability_gate.py \
 		../../tools/ou3_result_contract.py \
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
@@ -42,6 +44,8 @@ build:
 		test_ou3_source_word_theorem_contract.py \
 		test_ou3_validated_kalman_interval.py \
 		test_ou3_startup_stability_certificate.py \
+		test_ou3_implementation_word_language.py \
+		test_ou3_implementation_stability_gate.py \
 		test_ou3_result_determinism.py \
 		test_ou_article_ablations.py \
 		test_ou_legacy_law_cleanup.py \
