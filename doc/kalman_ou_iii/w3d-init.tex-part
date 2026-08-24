@@ -36,6 +36,26 @@ minimum \SI{8}{s} startup prevents a quiet initial interval from passing
 prematurely.  The Mahony contribution to gate entry is bounded by $T_Q$ in
 Eq.~\eqref{eq:semiglobal-quality-entry-time}.
 
+The gravity-agreement test is itself evaluated on an explicitly smoothed
+measurement, not on instantaneous specific force.  Each valid accelerometer
+sample is first rotated into the current proxy/world frame and then passed
+through the source first-order vector EMA
+\begin{equation}
+ \bar{\vct f}_{k}
+ =\bar{\vct f}_{k-1}
+ +\alpha_{g,k}\bigl(\vct f^N_k-\bar{\vct f}_{k-1}\bigr),
+ \qquad
+ \alpha_{g,k}=1-e^{-\Delta t_k/\SI{12}{s}}.
+ \label{eq:init-gravity-gate-ema}
+\end{equation}
+The first valid sample initializes the EMA state directly rather than blending
+from zero.  A gate verdict is ignored until this world-frame average has run for
+\SI{5}{s}; only then can the separate \SI{2}{s} consecutive-good counter
+contribute to handoff.  Both the vector EMA and its elapsed/good-time counters
+are reset at outer initialization and when the inner filter re-enters the Cold
+startup stage.  These details matter because the \SI{12}{s} EMA removes
+zero-mean orbital acceleration before the gravity-direction residual is judged.
+
 The configured proxy timeout is \SI{150}{s}; with the deployed magnetic
 acquisition deadline the effective source timeout remains
 Eq.~\eqref{eq:semiglobal-timeout-150}.
