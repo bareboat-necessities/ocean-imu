@@ -56,6 +56,10 @@ def mode_contract(info_mode: dict, completion_mode: dict, mode: str) -> dict:
         "required_continuous_bounds": {
             "source_complete": True,
             "outward_rounded": True,
+            "pe_recurrence_window_s": (
+                "finite positive deployment theorem hypothesis; every such normal-Live "
+                "window contains a certified accepted two-packet vector-PE event"
+            ),
             "relative_Riccati_injection_margin_lower": "> 0",
             "Sigma_lambda_min_lower": "> 0",
             "Sigma_lambda_max_upper": "finite",
@@ -95,6 +99,22 @@ def build_contract(info: dict, completion: dict) -> dict:
             "validation": (
                 "final deployment gate regenerates the source-domain contract from the current "
                 "implementation and rejects stale, truncated, or self-asserted domain artifacts"
+            ),
+        },
+        "source_word_language_requirement": {
+            "producer": "tools/ou3_source_word_theorem_contract.py",
+            "claim": "OU3_CONDITIONAL_SOURCE_COMPLETE_NORMAL_LIVE_WORD_LANGUAGE",
+            "required_before_word_enclosure": [
+                "finite positive PE recurrence window supplied as a deployment theorem hypothesis",
+                "every recurrence window contains an accepted consecutive magnetic packet pair",
+                "accepted accelerometer vectors are present at both vector times",
+                "all source-reachable accepted/rejected branches between required PE events remain covered",
+                "H and A same-mode words remain fixed-dimensional",
+                "dimension-changing/reference/reset events remain separate hybrid obligations",
+            ],
+            "anti_shortcut": (
+                "a single favorable vector pair or a replay-observed acceptance pattern is not a "
+                "source-complete infinite-execution certificate"
             ),
         },
         "hybrid_requirements": {
@@ -139,14 +159,16 @@ def build_contract(info: dict, completion: dict) -> dict:
             "validated arithmetic",
             "outward rounding",
             "source-generated enclosure, not trajectory fitting",
-            "complete continuous source coverage",
+            "complete continuous source coverage relative to the declared theorem operating envelope",
+            "finite recurring vector-PE hypothesis is explicit rather than inferred from selected packets",
             "source-domain artifact exactly matches current implementation-generated contract",
         ],
         "promotion_rule": (
-            "executed replay values are sanity anchors only; deployment PASS requires "
-            "strict validated continuous-source linear and nonlinear bounds, recomputed "
-            "hybrid inward margins, recomputed stochastic concentration, independently "
-            "recomputed finite capture, and exact binding to the current implementation domain"
+            "executed replay values are sanity anchors only; deployment PASS requires an explicit "
+            "recurring PE theorem envelope, strict validated continuous-source linear and nonlinear "
+            "bounds over every admissible word in that conditional language, recomputed hybrid "
+            "inward margins, recomputed stochastic concentration, independently recomputed finite "
+            "capture, and exact binding to the current implementation domain"
         ),
     }
 
