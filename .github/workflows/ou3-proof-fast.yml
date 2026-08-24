@@ -26,6 +26,7 @@ on:
       - "tools/ou3_source_domain_contract.py"
       - "tools/ou3_implementation_proof_manifest.py"
       - "tools/ou3_startup_stability_certificate.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_explicit_information_word_certificate.py"
       - "tools/ou3_proof_operating_domain.json"
       - "docs/ou-iii-implementation-stability-proof-plan.md"
@@ -168,7 +169,7 @@ jobs:
         run: python3 -m unittest -v test_ou3_full_process_ucc
 
   enclosure:
-    name: continuous linear and nonlinear enclosure arithmetic
+    name: source-reachable matrix P3 and enclosure arithmetic
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -182,12 +183,13 @@ jobs:
           python3 -m py_compile \
             tools/ou3_interval_linear_algebra.py \
             tools/ou3_validated_kalman_interval.py \
+            tools/ou3_source_reachable_matrix_p3.py \
             tools/ou3_explicit_information_word_certificate.py \
             tools/ou3_certificate_completion.py \
             tools/ou3_validate_enclosure.py \
             tests/validation/test_ou3_validated_kalman_interval.py \
             tests/validation/test_ou3_explicit_information_word_certificate.py
-      - name: Test explicit H/A information and enclosure contracts
+      - name: Test matrix-valued H/A information and enclosure contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
@@ -195,7 +197,7 @@ jobs:
             test_ou3_explicit_information_word_certificate \
             test_ou3_certificate_completion \
             test_ou3_validate_enclosure
-      - name: Emit explicit H/A information certificate
+      - name: Emit source-reachable matrix H/A information certificate
         run: |
           python3 tools/ou3_explicit_information_word_certificate.py \
             --output /tmp/ou3_explicit_information_word_certificate.json
