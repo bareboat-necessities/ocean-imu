@@ -19,6 +19,7 @@ build:
 		../../tools/ou3_source_word_theorem_contract.py \
 		../../tools/ou3_interval_linear_algebra.py \
 		../../tools/ou3_validated_kalman_interval.py \
+		../../tools/ou3_explicit_information_word_certificate.py \
 		../../tools/ou3_implementation_proof_manifest.py \
 		../../tools/ou3_startup_stability_certificate.py \
 		../../tools/ou3_implementation_word_language.py \
@@ -43,6 +44,7 @@ build:
 		test_ou3_hybrid_aw_sync_proof.py \
 		test_ou3_source_word_theorem_contract.py \
 		test_ou3_validated_kalman_interval.py \
+		test_ou3_explicit_information_word_certificate.py \
 		test_ou3_startup_stability_certificate.py \
 		test_ou3_implementation_word_language.py \
 		test_ou3_implementation_stability_gate.py \
