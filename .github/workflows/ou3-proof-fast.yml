@@ -12,6 +12,7 @@ on:
       - "tools/ou3_validated_transcendentals.py"
       - "tools/ou3_scalar_ou_enclosure.py"
       - "tools/ou3_translational_uco_ucc.py"
+      - "tools/ou3_translational_spread_uco.py"
       - "tools/ou3_vector_uco_certificate.py"
       - "tools/ou3_source_word_theorem_contract.py"
       - "tools/ou3_implementation_word_language.py"
@@ -31,6 +32,8 @@ on:
       - "tools/ou3_explicit_information_word_certificate.py"
       - "tools/ou3_proof_operating_domain.json"
       - "docs/ou-iii-implementation-stability-proof-plan.md"
+      - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
+      - "doc/kalman_ou_iii/w3d-stability-widening-source-path.tex-part"
       - "tests/validation/test_ou3_validated_kalman_interval.py"
       - "tests/validation/test_ou3_validated_transcendentals.py"
       - "tests/validation/test_ou3_scalar_ou_enclosure.py"
@@ -125,10 +128,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      - name: Compile analytic translational producer
+      - name: Compile analytic translational producers
         run: |
           python3 -m py_compile \
             tools/ou3_translational_uco_ucc.py \
+            tools/ou3_translational_spread_uco.py \
             tests/validation/test_ou3_translational_uco_ucc.py
       - name: Test source-uniform translational certificate
         working-directory: tests/validation
