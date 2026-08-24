@@ -7,6 +7,11 @@ probability, capture time, deployment PASS bit, or a self-asserted source-domain
 completeness flag. Hybrid closure is independently normalized against the
 current source-domain obligations, with periodic a_w covariance synchronization
 discharged by its source-bound PSD/Loewner proof rather than a replay margin.
+
+The gate also regenerates and compares the configured-runtime sampling contract.
+The public filter API accepts arbitrary positive finite ``dt``; consequently a
+quantitative certificate scoped to the source-defined nominal scheduler must not
+be mistaken for an unconditional all-``dt`` theorem.
 """
 from __future__ import annotations
 
@@ -24,6 +29,7 @@ SOURCE_DOMAIN_KEYS = (
     "claim",
     "source_generated_not_trajectory_fit",
     "source_complete_parameter_domain",
+    "configured_runtime_assumption",
     "validated_arithmetic",
     "outward_rounded",
     "implementation_header",
@@ -52,7 +58,6 @@ def nonneg(x) -> float:
 def t_star_for_radius(radius2: float, m: float, v: float, b: float) -> float:
     if radius2 <= m:
         return 0.0
-    # Solve m + 2 sqrt(v t) + 2 b t = radius2 by monotone bisection.
     lo, hi = 0.0, 1.0
 
     def f(t: float) -> float:
@@ -78,11 +83,14 @@ def validate_source_domain(payload: dict) -> dict:
     for key in SOURCE_DOMAIN_KEYS:
         if payload.get(key) != expected.get(key):
             failures.append(f"source-domain field {key!r} does not match current implementation")
+    runtime = expected["configured_runtime_assumption"]
     return {
         "pass": not failures,
         "failures": failures,
         "implementation_header": expected["implementation_header"],
         "continuous_parameters": expected["continuous_parameters"],
+        "configured_runtime_assumption": runtime,
+        "configured_runtime_api_enforced": bool(runtime.get("api_enforces_this_bound")),
         "hybrid_obligations": expected["hybrid_obligations"],
     }
 
@@ -220,10 +228,12 @@ def compose(check: dict, source_domain_payload: dict, primitive: dict) -> dict:
         and capture_pass
     )
     return {
-        "schema": 3,
-        "qualification": "INDEPENDENT_DEPLOYMENT_THEOREM_COMPOSITION_GATE",
+        "schema": 4,
+        "qualification": "INDEPENDENT_CONFIGURED_RUNTIME_DEPLOYMENT_THEOREM_COMPOSITION_GATE",
         "source_domain": source_domain,
         "source_domain_pass": source_domain["pass"],
+        "configured_runtime_scope": source_domain["configured_runtime_assumption"],
+        "configured_runtime_api_enforced": source_domain["configured_runtime_api_enforced"],
         "validated_provenance_pass": provenance_pass,
         "continuous_linear_and_nonlinear_pass": continuous_pass,
         "hybrid": hybrid,
@@ -234,6 +244,9 @@ def compose(check: dict, source_domain_payload: dict, primitive: dict) -> dict:
         "capture": capture,
         "finite_capture_pass": capture_pass,
         "arithmetic_error": arithmetic_error,
+        "deployment_theorem_scope": (
+            "configured runtime with the exact source-bound sampling contract; not arbitrary caller dt"
+        ),
         "deployment_theorem_certificate": "PASS" if final_pass else "FAIL",
     }
 
