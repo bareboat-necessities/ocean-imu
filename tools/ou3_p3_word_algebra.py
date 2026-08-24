@@ -40,16 +40,22 @@ import ou3_implementation_proof_manifest as MANIFEST
 REPO = Path(__file__).resolve().parents[1]
 MEKF = REPO / "src" / "kalman_ou_iii" / "Kalman3D_Wave_OU_III.h"
 CORE = REPO / "src" / "kalman_ou_common" / "KalmanOUCoreMath.h"
-SCHEMA = 1
+SCHEMA = 2
 
+# This order is copied from the source-derived implementation manifest.  It is
+# intentionally more detailed than the covariance operation classes below: the
+# S pseudo update happens inside time_update() before the accelerometer update,
+# and every accepted correction performs its quaternion injection/reset
+# immediately rather than through one shared end-of-sample reset.
 EXPECTED_ORDER = [
     "commit_previous_tune",
     "prediction",
-    "accelerometer_correction_or_rejection",
-    "periodic_S_zero_when_due",
-    "asynchronous_magnetometer_correction_or_rejection",
-    "quaternion_injection_and_left_error_reset",
-    "periodic_aw_covariance_psd_increment_when_due",
+    "apply_pending_aw_covariance_psd_increment",
+    "periodic_S_zero_when_due_then_immediate_quaternion_injection_and_left_error_reset",
+    "accelerometer_correction_or_rejection_then_immediate_quaternion_injection_and_left_error_reset_if_accepted",
+    "source_tuner_evolution_and_stage_next_tune",
+    "periodic_aw_covariance_sync_tick_stages_future_psd_increment",
+    "asynchronous_magnetometer_correction_or_rejection_then_immediate_quaternion_injection_and_left_error_reset_if_accepted",
 ]
 
 
@@ -86,6 +92,9 @@ def build() -> dict:
 
     if manifest.get("normal_live_update_order") != EXPECTED_ORDER:
         failures.append("source manifest normal-Live update order changed")
+    reset_policy = manifest.get("same_sample_reset_policy", {})
+    if reset_policy.get("single_shared_end_of_sample_reset") is not False:
+        failures.append("source manifest merged immediate correction resets")
 
     # Bind the abstract affine-PSD operations to the exact shipping source.
     _require(k, "P_LL_new = F_LL * P_LL_old * F_LLᵀ + Q_LL", "linear prediction", failures)
@@ -116,6 +125,7 @@ def build() -> dict:
             "frozen_gain_rows_handled": (
                 "row freezing changes K but preserves the affine-PSD identity"
             ),
+            "immediate_quaternion_reset_order_handled": True,
         },
         "rejected_or_not_due": {
             "affine_map": "P+=P",
@@ -139,6 +149,7 @@ def build() -> dict:
             "determinant_lower": 1.0,
             "nonsingular_for_every_finite_injection": True,
             "generalized_information_margin_congruence_invariant": True,
+            "applied_after_each_accepted_correction": True,
         },
         "aw_covariance_sync": {
             "affine_map": "P+=P+E_aw Delta_plus E_aw^T",
@@ -157,6 +168,7 @@ def build() -> dict:
         "fixed_dimensions": {"H": 18, "A": 21},
         "dimension_change_inside_word": False,
         "normal_live_update_order": EXPECTED_ORDER,
+        "same_sample_reset_policy": "immediate_after_each_accepted_S_acc_mag_correction",
         "operation_classes": operations,
         "covariance_decomposition_invariant": {
             "identity": "P_s=Phi_s P_0 Phi_s^T+Omega_s",
@@ -199,6 +211,8 @@ def validate(d: dict) -> list[str]:
         failures.append("dimension change was admitted inside a P3 word")
     if d.get("normal_live_update_order") != EXPECTED_ORDER:
         failures.append("normal-Live order mismatch")
+    if d.get("same_sample_reset_policy") != "immediate_after_each_accepted_S_acc_mag_correction":
+        failures.append("same-sample reset order is not source-faithful")
 
     ops = d.get("operation_classes", {})
     required = {"prediction", "accepted_joseph", "rejected_or_not_due", "left_error_reset", "aw_covariance_sync"}
