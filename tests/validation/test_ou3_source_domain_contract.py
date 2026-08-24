@@ -83,9 +83,13 @@ class SourceDomainContractTests(unittest.TestCase):
         self.assertEqual(step["lower_open"], 0.0)
         self.assertIsNone(step["upper"])
         self.assertFalse(step["source_complete_finite_upper_bound"])
-        self.assertEqual(
+        self.assertIn(
+            "UNBOUNDED_ACCEPTED_DT",
             d["validated_ou_primitive_backend"]["theorem_promotion"],
-            "BLOCKED_BY_UNBOUNDED_ACCEPTED_DT",
+        )
+        self.assertFalse(
+            d["validated_ou_primitive_backend"]
+            ["process_covariance_shipping_float_path_enclosed"]
         )
 
     def test_rational_taylor_ou_primitive_box_contains_direct_evaluations(self):
@@ -136,6 +140,50 @@ class SourceDomainContractTests(unittest.TestCase):
                 for i in range(4):
                     for j in range(4):
                         contains(i, j, exact[i][j])
+
+    def test_validated_process_covariance_contains_midpoint_quadrature_samples(self):
+        # The interval construction itself is proof-producing; this numerical
+        # quadrature is only a regression oracle against several interior
+        # parameter points.  It must lie inside every elementwise interval.
+        box = mod.validated_qd_axis4_kernel(
+            (0.001, 0.05), (0.02, 2.0), (0.0025, 4.0), cells=12
+        )
+        self.assertTrue(box["validated_arithmetic"])
+        self.assertTrue(box["mathematical_integral_enclosed"])
+        self.assertFalse(box["shipping_binary32_closed_form_enclosed"])
+        self.assertFalse(box["shipping_psd_cleanup_enclosed"])
+        Q = box["Qd_interval"]
+
+        def approximate(h, tau, sigma2, n=4096):
+            dr = h / n
+            out = [[0.0] * 4 for _ in range(4)]
+            qc = 2.0 * sigma2 / tau
+            for k in range(n):
+                r = (k + 0.5) * dr
+                x = r / tau
+                a = math.exp(-x)
+                g = (
+                    tau * (1.0 - a),
+                    tau * tau * (x + math.expm1(-x)),
+                    tau ** 3 * (0.5 * x * x - x - math.expm1(-x)),
+                    a,
+                )
+                for i in range(4):
+                    for j in range(4):
+                        out[i][j] += qc * g[i] * g[j] * dr
+            return out
+
+        for h, tau, sigma2 in (
+            (0.001, 0.02, 0.0025),
+            (0.005, 0.1, 0.25),
+            (0.02, 1.0, 1.0),
+            (0.05, 2.0, 4.0),
+        ):
+            q = approximate(h, tau, sigma2)
+            for i in range(4):
+                for j in range(4):
+                    self.assertLessEqual(Q[i][j][0], q[i][j] + 1e-15)
+                    self.assertGreaterEqual(Q[i][j][1] + 1e-15, q[i][j])
 
     def test_contract_names_every_hybrid_transition_required_for_deployment(self):
         d = mod.build(mod.DEFAULT_HEADER)
