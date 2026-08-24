@@ -29,6 +29,7 @@ on:
       - "tools/ou3_startup_stability_certificate.py"
       - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_source_reachable_matrix_p3_factored.py"
+      - "tools/ou3_p3_word_algebra.py"
       - "tools/ou3_explicit_information_word_certificate.py"
       - "tools/ou3_proof_operating_domain.json"
       - "docs/ou-iii-implementation-stability-proof-plan.md"
@@ -50,6 +51,7 @@ on:
       - "tests/validation/test_ou3_hybrid_contract.py"
       - "tests/validation/test_ou3_source_domain_contract.py"
       - "tests/validation/test_ou3_startup_stability_certificate.py"
+      - "tests/validation/test_ou3_p3_word_algebra.py"
       - "tests/validation/test_ou3_explicit_information_word_certificate.py"
       - ".github/workflows/ou3-proof-fast.yml"
   workflow_dispatch:
@@ -190,16 +192,19 @@ jobs:
             tools/ou3_validated_kalman_interval.py \
             tools/ou3_source_reachable_matrix_p3.py \
             tools/ou3_source_reachable_matrix_p3_factored.py \
+            tools/ou3_p3_word_algebra.py \
             tools/ou3_explicit_information_word_certificate.py \
             tools/ou3_certificate_completion.py \
             tools/ou3_validate_enclosure.py \
             tests/validation/test_ou3_validated_kalman_interval.py \
+            tests/validation/test_ou3_p3_word_algebra.py \
             tests/validation/test_ou3_explicit_information_word_certificate.py
       - name: Test matrix-valued H/A information and enclosure contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_validated_kalman_interval \
+            test_ou3_p3_word_algebra \
             test_ou3_explicit_information_word_certificate \
             test_ou3_certificate_completion \
             test_ou3_validate_enclosure
