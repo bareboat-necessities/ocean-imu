@@ -96,6 +96,21 @@ class ScalarOUEnclosureTests(unittest.TestCase):
                 for c in candidates
             ))
 
+    def test_interval_ldlt_certifies_spd_without_eigensolver(self):
+        A = mod.IA.matrix_point([[4.0, 1.0], [1.0, 2.0]])
+        ok, pivots = mod.IA.symmetric_positive_definite_ldlt(A)
+        self.assertTrue(ok)
+        self.assertEqual(len(pivots), 2)
+        self.assertGreater(pivots[0].lo, 0.0)
+        self.assertGreater(pivots[1].lo, 0.0)
+
+        wide = [
+            [mod.Interval.outward_bounds(0.9, 1.1), mod.Interval.outward_bounds(-2.0, 2.0)],
+            [mod.Interval.outward_bounds(-2.0, 2.0), mod.Interval.outward_bounds(0.9, 1.1)],
+        ]
+        ok, _ = mod.IA.symmetric_positive_definite_ldlt(wide)
+        self.assertFalse(ok)
+
     def test_global_bounds_contain_every_cell_and_keep_expected_signs(self):
         g = self.payload["global_bounds"]
         self.assertGreater(g["alpha"][0], 0.0)
