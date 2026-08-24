@@ -80,6 +80,41 @@ class SourceDomainContractTests(unittest.TestCase):
             self.assertEqual(lo, math.nextafter(source_value, -math.inf))
             self.assertEqual(hi, math.nextafter(source_value, math.inf))
 
+    def test_deployment_step_domain_exposes_missing_finite_upper_guard(self):
+        d = mod.build(mod.DEFAULT_HEADER)
+        step = d["accepted_update_step_domain_s"]
+        self.assertEqual(step["lower_open"], 0.0)
+        self.assertIsNone(step["upper"])
+        self.assertFalse(step["source_complete_finite_upper_bound"])
+        self.assertEqual(
+            d["validated_ou_primitive_backend"]["theorem_promotion"],
+            "BLOCKED_BY_UNBOUNDED_ACCEPTED_DT",
+        )
+
+    def test_rational_taylor_ou_primitive_box_contains_direct_evaluations(self):
+        # This is the range the proof backend will use once deployment supplies
+        # a finite accepted-step upper guard.  It deliberately spans the full
+        # current tau safety range, including the x=h/tau=12.5 corner.
+        box = mod.validated_ou_primitives((0.001, 0.25), (0.02, 12.0))
+        self.assertTrue(box["validated_arithmetic"])
+        self.assertTrue(box["outward_rounded"])
+        self.assertLessEqual(box["alpha"][0], box["alpha"][1])
+        self.assertLessEqual(box["phi_pa_s2"][0], box["phi_pa_s2"][1])
+        self.assertLessEqual(box["phi_Sa_s3"][0], box["phi_Sa_s3"][1])
+
+        for h in (0.001, 0.005, 0.05, 0.25):
+            for tau in (0.02, 0.1, 1.0, 12.0):
+                x = h / tau
+                alpha = math.exp(-x)
+                phi_pa = tau * tau * (x + math.expm1(-x))
+                phi_sa = tau ** 3 * (0.5 * x * x - x - math.expm1(-x))
+                self.assertLessEqual(box["alpha"][0], alpha)
+                self.assertGreaterEqual(box["alpha"][1], alpha)
+                self.assertLessEqual(box["phi_pa_s2"][0], phi_pa)
+                self.assertGreaterEqual(box["phi_pa_s2"][1], phi_pa)
+                self.assertLessEqual(box["phi_Sa_s3"][0], phi_sa)
+                self.assertGreaterEqual(box["phi_Sa_s3"][1], phi_sa)
+
     def test_contract_names_every_hybrid_transition_required_for_deployment(self):
         d = mod.build(mod.DEFAULT_HEADER)
         self.assertEqual(
