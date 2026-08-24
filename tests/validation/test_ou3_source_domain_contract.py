@@ -1,4 +1,5 @@
 import importlib.util
+import math
 from pathlib import Path
 import struct
 import sys
@@ -55,6 +56,29 @@ class SourceDomainContractTests(unittest.TestCase):
         self.assertEqual(mod.parse_const(text, "C"), c)
         self.assertEqual(mod.parse_const(text, "DT"), dt)
         self.assertNotEqual(dt, 0.005)
+
+    def test_validated_parameter_box_outwardly_contains_every_source_endpoint(self):
+        d = mod.build(mod.DEFAULT_HEADER)
+        box = d["validated_parameter_box"]
+        self.assertTrue(box["validated_arithmetic"])
+        self.assertTrue(box["outward_rounded"])
+        self.assertEqual(box["theorem_promotion"], "NOT_ESTABLISHED")
+        self.assertFalse(box["continuous_word_enclosed"])
+        self.assertFalse(box["nonlinear_word_enclosed"])
+
+        for name, source_bounds in d["continuous_parameters"].items():
+            lo, hi = box["continuous_parameters"][name]
+            self.assertLess(lo, source_bounds[0])
+            self.assertGreater(hi, source_bounds[1])
+            self.assertEqual(lo, math.nextafter(source_bounds[0], -math.inf))
+            self.assertEqual(hi, math.nextafter(source_bounds[1], math.inf))
+
+        for name, source_value in d["timing_constants_s"].items():
+            lo, hi = box["timing_constants_s"][name]
+            self.assertLess(lo, source_value)
+            self.assertGreater(hi, source_value)
+            self.assertEqual(lo, math.nextafter(source_value, -math.inf))
+            self.assertEqual(hi, math.nextafter(source_value, math.inf))
 
     def test_contract_names_every_hybrid_transition_required_for_deployment(self):
         d = mod.build(mod.DEFAULT_HEADER)
