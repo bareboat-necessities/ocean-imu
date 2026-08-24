@@ -6,6 +6,8 @@ on:
       - "src/kalman_ou_common/KalmanOUCoreMath.h"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
       - "tools/ou3_interval.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_validated_kalman_interval.py"
       - "tools/ou3_validated_transcendentals.py"
       - "tools/ou3_scalar_ou_enclosure.py"
       - "tools/ou3_translational_uco_ucc.py"
@@ -19,6 +21,7 @@ on:
       - "tools/ou3_hybrid_aw_sync_proof.py"
       - "tools/ou3_hybrid_contract.py"
       - "tools/ou3_source_domain_contract.py"
+      - "tests/validation/test_ou3_validated_kalman_interval.py"
       - "tests/validation/test_ou3_validated_transcendentals.py"
       - "tests/validation/test_ou3_scalar_ou_enclosure.py"
       - "tests/validation/test_ou3_translational_uco_ucc.py"
@@ -139,12 +142,16 @@ jobs:
       - name: Compile enclosure tools
         run: |
           python3 -m py_compile \
+            tools/ou3_interval_linear_algebra.py \
+            tools/ou3_validated_kalman_interval.py \
             tools/ou3_certificate_completion.py \
-            tools/ou3_validate_enclosure.py
+            tools/ou3_validate_enclosure.py \
+            tests/validation/test_ou3_validated_kalman_interval.py
       - name: Test enclosure and completion contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_validated_kalman_interval \
             test_ou3_certificate_completion \
             test_ou3_validate_enclosure
 
