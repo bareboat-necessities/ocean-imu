@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 
@@ -76,8 +77,6 @@ def build() -> dict:
         "pseudo_update_period_default_sec": one_float(k, r"pseudo_update_period_s_\s*=\s*T\(([0-9.eE+-]+)\)", "pseudo_update_period_s_"),
     }
 
-    # Hard semantic bindings.  These markers are intentionally implementation
-    # statements rather than prose from the paper.
     semantic_markers = {
         "startup_policy_default_mahony": "StartupInitPolicy startup_init_policy = StartupInitPolicy::MahonyProxy;",
         "timeout_requires_aligned_branch": "(t_ >= timeout_sec) &&\n            mag_gravity_aligned_branch_",
@@ -168,7 +167,13 @@ def validate(d: dict) -> list[str]:
     if d.get("pass") is not True:
         failures.append("manifest did not pass")
     s = d.get("startup", {})
-    if s.get("two_kp") != 0.2 or s.get("two_ki") != 0.02:
+    # parse_const returns the exact deployed binary32 value represented in
+    # Python binary64, so decimal source literals such as 0.2f are not exactly
+    # equal to the real number 0.2.  Compare to the paper constants within one
+    # far-looser-than-binary32 ulp tolerance; source parsing itself remains exact.
+    if not math.isclose(float(s.get("two_kp", math.nan)), 0.2, rel_tol=0.0, abs_tol=1.0e-8) or not math.isclose(
+        float(s.get("two_ki", math.nan)), 0.02, rel_tol=0.0, abs_tol=1.0e-9
+    ):
         failures.append("startup Mahony gains do not match proved gains")
     if s.get("timeout_cannot_handoff_antipodal_branch") is not True:
         failures.append("timeout branch is not fail-closed on aligned gravity")
