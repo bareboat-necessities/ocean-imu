@@ -162,7 +162,8 @@ public:
         if (env_float("TFG_SIGMA_COEFF", v))    fusion_.setSigmaCoeff(v);
         if (env_float("TFG_R_S_COEFF", v))      fusion_.setRSCoeff(v);
         if (env_float("TFG_S_FACTOR", v))       fusion_.setSFactor(v);
-        if (env_float("TFG_R_S_XY_FACTOR", v))  fusion_.setRSXYFactor(v);
+        if (env_float("TFG_R_S_X_FACTOR", v))   fusion_.setRSXFactor(v);
+        if (env_float("TFG_R_S_Y_FACTOR", v))   fusion_.setRSYFactor(v);
         if (env_float("TFG_ADAPT_TAU_SEC", v))  fusion_.setAdaptationTimeConstants(v);
         if (env_float("TFG_ADAPT_RS_MULT", v))  fusion_.setRSAdaptMult(v);
         if (env_float("TFG_ADAPT_RS_SLEW_LOG", v)) fusion_.setRSAdaptSlewLog(v);
