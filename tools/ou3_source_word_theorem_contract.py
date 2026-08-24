@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Bind the OU-III paper's normal-Live theorem hypotheses to a source-word language.
 
-A source-complete fixed-mode tile must cover the declared recurring vector-PE
-event and the source-cadence-only four-S observability construction for the
-complete [v,p,S,a_w] chain.  The source-valid three-S [v,p,S] detectability plus
-stable a_w route may sharpen a Riccati/covariance upper bound; it does not replace
-the four-S full-observability qualification and is not a promotion fallback.
+A source-complete fixed-mode tile covers recurring vector PE and the four-S
+complete [v,p,S,a_w] observation.  Among every spread index admissible inside
+the declared word horizon, a validated proof-design search selects the strongest
+rigorous four-S information lower bound.  Three-S [v,p,S] detectability plus
+stable a_w may sharpen a Riccati covariance upper bound only; it is not a
+promotion fallback.
 """
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ import math
 from pathlib import Path
 
 import ou3_source_domain_contract as SOURCE
+import ou3_translational_spread_uco as SPREAD
 import ou3_translational_uco_ucc as TRANS
 import ou3_vector_uco_certificate as VECTOR
 
@@ -56,16 +58,16 @@ def build(pe_recurrence_window_s: float | None = None,
         failures.append("PE recurrence window is shorter than one certified consecutive magnetic-packet span")
 
     ready = bool(not failures and recurrence_supplied)
-    word_horizon = word_samples_upper = q_W = selected_spacing_lower = spread_det_factor = None
+    word_horizon = word_samples_upper = None
+    spread = None
     if ready:
-        four_s_window = float(pseudo["aligned_window_s"])
-        word_horizon = max(recurrence, four_s_window)
+        word_horizon = max(recurrence, float(pseudo["aligned_window_s"]))
         word_samples_upper = int(math.ceil(word_horizon / dt)) + 1
-        delta_min = float(pseudo["pseudo_gap_min_s"])
-        delta_max = float(pseudo["pseudo_gap_max_s"])
-        q_W = max(1, int(math.floor(word_horizon / (3.0 * delta_max))))
-        selected_spacing_lower = q_W * delta_min
-        spread_det_factor = q_W ** 6
+        spread = SPREAD.build(word_horizon, header)
+        spread_failures = SPREAD.validate(spread)
+        if spread_failures:
+            failures.extend(f"spread four-S UCO: {x}" for x in spread_failures)
+            ready = False
 
     pe = dict(vector["operating_envelope"])
     pe.update({
@@ -79,6 +81,7 @@ def build(pe_recurrence_window_s: float | None = None,
         "hypothesis_origin": "DEPLOYMENT_THEOREM_ASSUMPTION_NOT_TRAJECTORY_FIT",
     })
 
+    best = (spread or {}).get("best", {})
     return {
         "schema": SCHEMA,
         "claim": "OU3_CONDITIONAL_SOURCE_COMPLETE_NORMAL_LIVE_WORD_LANGUAGE",
@@ -110,14 +113,19 @@ def build(pe_recurrence_window_s: float | None = None,
             "pseudo_gap_min_s": pseudo["pseudo_gap_min_s"],
             "pseudo_gap_max_s": pseudo["pseudo_gap_max_s"],
             "minimum_four_firing_window_s": pseudo["aligned_window_s"],
-            "spread_index_q_W": q_W,
-            "spread_selected_spacing_lower_s": selected_spacing_lower,
-            "determinant_spacing_widening_factor_vs_adjacent": spread_det_factor,
+            "spread_selection": "VALIDATED_MAX_INFORMATION_OVER_ALL_ADMISSIBLE_INTEGER_Q",
+            "spread_admissible_q_max": (spread or {}).get("admissible_q_max"),
+            "spread_index_q_W": best.get("q"),
+            "spread_selected_window_s_upper": best.get("selected_window_s_upper"),
+            "spread_selected_spacing_lower_s": best.get("selected_spacing_s_lower"),
+            "spread_observation_det_lower": best.get("observation_det_lower"),
+            "spread_information_gramian_lambda_min_lower": best.get("information_gramian_lambda_min_lower"),
+            "information_widening_factor_vs_adjacent_lower": (spread or {}).get("information_widening_factor_vs_adjacent_lower"),
             "three_firing_integrator_detectability_role": "Riccati_covariance_upper_sharpening_only",
             "three_firing_integrator_detectability_is_promotion_fallback": False,
             "three_firing_detectability_window_s": detect["aligned_window_s"],
             "stable_aw_alpha_upper": detect["stable_aw_alpha_upper"],
-            "source_complete": trans["translation_source_complete"],
+            "source_complete": trans["translation_source_complete"] and ready,
         },
         "vector_persistent_excitation": pe,
         "conditional_word_language": {
@@ -125,7 +133,7 @@ def build(pe_recurrence_window_s: float | None = None,
             "word_horizon_lower_s": word_horizon,
             "word_samples_upper_at_configured_dt": word_samples_upper,
             "tiling_rule": (
-                "tile every fixed-mode normal-Live execution by bounded source-correlated words that each cover one spread four-S complete translation observation and one declared vector-PE recurrence window"
+                "tile every fixed-mode normal-Live execution by bounded source-correlated words that each contain the optimized spread four-S complete translation observation and one declared vector-PE recurrence event"
                 if ready else None
             ),
             "coverage_rule": (
@@ -142,7 +150,7 @@ def build(pe_recurrence_window_s: float | None = None,
             "finite vector-PE recurrence window is an explicit deployment theorem hypothesis and was not supplied"
         ]),
         "next_obligation": (
-            "outward-enclose complete jointly source-reachable H/A endpoint maps in group-compatible node metrics; the three-S detectable block may sharpen covariance upper bounds but cannot replace the four-S full-observability word qualification"
+            "outward-enclose complete jointly source-reachable H/A endpoint maps in group-compatible node metrics; three-S detectability may sharpen covariance upper bounds but cannot replace four-S word qualification"
         ),
     }
 
@@ -159,10 +167,10 @@ def validate(payload: dict) -> list[str]:
     if scope.get("dimension_change_multiplied_as_square_word") is not False:
         failures.append("dimension-changing transitions must remain hybrid")
     tr = payload.get("translation_recurrence", {})
-    if tr.get("source_complete") is not True:
-        failures.append("translation recurrence is not source-complete")
     if tr.get("full_observability_route") != "FOUR_S_SPREAD_COMPLETE_V_P_S_AW_UCO" or tr.get("aligned_firing_count") != 4:
         failures.append("translation full-observability route is not four-S complete-chain UCO")
+    if tr.get("spread_selection") != "VALIDATED_MAX_INFORMATION_OVER_ALL_ADMISSIBLE_INTEGER_Q":
+        failures.append("four-S spread is not selected by validated information optimization")
     if tr.get("three_firing_integrator_detectability_role") != "Riccati_covariance_upper_sharpening_only":
         failures.append("three-S detectability role is not restricted to covariance-upper sharpening")
     if tr.get("three_firing_integrator_detectability_is_promotion_fallback") is not False:
@@ -184,14 +192,21 @@ def validate(payload: dict) -> list[str]:
     ready = word.get("ready") is True
     recurrence = pe.get("recurrence_window_s")
     if ready:
+        if tr.get("source_complete") is not True:
+            failures.append("translation recurrence is not source-complete")
         if not _finite_positive(recurrence):
             failures.append("ready word language lacks a finite PE recurrence window")
         elif float(recurrence) < float(gap[1]):
             failures.append("PE recurrence window is shorter than the packet span")
         if payload.get("source_complete_relative_to_theorem_hypotheses") is not True:
             failures.append("ready word language must be conditionally source-complete")
-        if not _finite_positive(tr.get("spread_selected_spacing_lower_s")):
-            failures.append("spread-selected four-S spacing is not positive")
+        for key in ("spread_selected_spacing_lower_s", "spread_observation_det_lower",
+                    "spread_information_gramian_lambda_min_lower",
+                    "information_widening_factor_vs_adjacent_lower"):
+            if not _finite_positive(tr.get(key)):
+                failures.append(f"{key} is not finite positive")
+        if float(tr.get("information_widening_factor_vs_adjacent_lower", 0.0)) < 1.0:
+            failures.append("optimized spread is worse than adjacent four-S selection")
         if int(tr.get("spread_index_q_W", 0)) < 1:
             failures.append("spread-selected four-S index is invalid")
     elif payload.get("source_complete_relative_to_theorem_hypotheses") is not False:
