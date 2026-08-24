@@ -14,11 +14,13 @@ on:
       - "tools/ou3_translational_uco_ucc.py"
       - "tools/ou3_vector_uco_certificate.py"
       - "tools/ou3_source_word_theorem_contract.py"
+      - "tools/ou3_implementation_word_language.py"
       - "tools/ou3_full_process_ucc.py"
       - "tools/ou3_source_interval_box.py"
       - "tools/ou3_certificate_completion.py"
       - "tools/ou3_validate_enclosure.py"
       - "tools/ou3_deployment_gate.py"
+      - "tools/ou3_implementation_stability_gate.py"
       - "tools/ou3_hybrid_aw_sync_proof.py"
       - "tools/ou3_hybrid_contract.py"
       - "tools/ou3_source_domain_contract.py"
@@ -32,10 +34,12 @@ on:
       - "tests/validation/test_ou3_translational_uco_ucc.py"
       - "tests/validation/test_ou3_vector_uco_certificate.py"
       - "tests/validation/test_ou3_source_word_theorem_contract.py"
+      - "tests/validation/test_ou3_implementation_word_language.py"
       - "tests/validation/test_ou3_full_process_ucc.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tests/validation/test_ou3_validate_enclosure.py"
       - "tests/validation/test_ou3_deployment_gate.py"
+      - "tests/validation/test_ou3_implementation_stability_gate.py"
       - "tests/validation/test_ou3_hybrid_aw_sync_proof.py"
       - "tests/validation/test_ou3_hybrid_contract.py"
       - "tests/validation/test_ou3_source_domain_contract.py"
@@ -74,14 +78,21 @@ jobs:
           python3 -m py_compile \
             tools/ou3_implementation_proof_manifest.py \
             tools/ou3_startup_stability_certificate.py \
-            tests/validation/test_ou3_startup_stability_certificate.py
-      - name: Test source-bound startup certificate
+            tools/ou3_implementation_word_language.py \
+            tests/validation/test_ou3_startup_stability_certificate.py \
+            tests/validation/test_ou3_implementation_word_language.py
+      - name: Test startup and declared source-word certificate
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_startup_stability_certificate
-      - name: Emit startup certificate
+        run: |
+          python3 -m unittest -v \
+            test_ou3_startup_stability_certificate \
+            test_ou3_implementation_word_language
+      - name: Emit startup and word-language certificates
         run: |
           python3 tools/ou3_startup_stability_certificate.py \
             --output /tmp/ou3_startup_stability_certificate.json
+          python3 tools/ou3_implementation_word_language.py \
+            --output /tmp/ou3_implementation_word_language.json
 
   scalar-ou:
     name: validated scalar OU transition
@@ -212,8 +223,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
-      - name: Compile final composition gate
-        run: python3 -m py_compile tools/ou3_deployment_gate.py
-      - name: Test stochastic, capture, and deployment composition
+      - name: Compile final composition gates
+        run: |
+          python3 -m py_compile \
+            tools/ou3_deployment_gate.py \
+            tools/ou3_implementation_stability_gate.py \
+            tests/validation/test_ou3_implementation_stability_gate.py
+      - name: Test stochastic, capture, deployment and implementation composition
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_deployment_gate
+        run: |
+          python3 -m unittest -v \
+            test_ou3_deployment_gate \
+            test_ou3_implementation_stability_gate
