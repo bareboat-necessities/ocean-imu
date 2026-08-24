@@ -31,8 +31,52 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  classify:
+    name: classify latest push
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      numerical_changed: ${{ steps.changes.outputs.numerical_changed }}
+    steps:
+      - name: Checkout history for push delta
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Detect numerical dependency changes in this push
+        id: changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$EVENT_ACTION" != "synchronize" || -z "$BEFORE" || -z "$AFTER" ]]; then
+            echo "numerical_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git diff --name-only "$BEFORE" "$AFTER" > /tmp/ou3-changed.txt
+          cat /tmp/ou3-changed.txt
+          if grep -Eq '^(src/kalman_ou_iii/|src/kalman_ou_common/|src/kalman_common/|src/tuner/|src/util/W3dSimCommon\.|tests/kalman_ou_iii/|tools/ou3_exact_replay\.py$|tools/ou3_numerical_certificate\.py$|tools/ou3_information_certificate\.py$|tools/ou3_information_completion\.py$|tools/ou3_information_enclosure_contract\.py$|tools/ou3_source_noise_certificate\.py$|tools/ou3_neighborhood_diagnostic\.py$|tools/ou3_neighborhood_radius_search\.py$|tools/ou3_result_contract\.py$|tools/ou_sweep_common\.py$|docs/ou-iii-numerical-certificate\.md$)' /tmp/ou3-changed.txt; then
+            echo "numerical_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "numerical_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  proof_only_skip:
+    name: no numerical replay needed
+    needs: classify
+    if: needs.classify.outputs.numerical_changed != 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "Latest push changed only theorem/proof CI; reuse existing sampled diagnostics."
+
   prepare:
     name: prepare common certificate inputs
+    needs: classify
+    if: needs.classify.outputs.numerical_changed == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
