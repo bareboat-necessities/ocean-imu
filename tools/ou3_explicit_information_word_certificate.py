@@ -2,25 +2,23 @@
 """Explicit numerical H/A information-word certificate for deployed OU-III.
 
 This producer supplies the quantitative linear step of the implementation proof
-without replay promotion.  The construction deliberately avoids the two worst
-sources of artificial conservatism in the first version:
+without replay promotion.  The construction avoids global physical-unit box
+conditioning in the candidate-estimator upper bound:
 
-* S=0 observations are selected from well-separated guaranteed firing windows
-  instead of forcing four consecutive 5 ms firings into a Vandermonde bound;
+* S=0 observations are selected from well-separated guaranteed firing windows;
+* the three-firing (v,p,S) inverse is enclosed directly with validated interval
+  Gauss-Jordan arithmetic instead of det/Frobenius singular-value relaxation;
 * the full-heading information bound is evaluated on the declared physical PE
-  deployment envelope rather than on the intentionally near-zero guard values
-  used by the weakest generic vector-UCO lemma.
+  deployment envelope rather than on near-zero generic guard values;
+* the vector-UCO constant is used in its native noise-weighted information
+  metric, so measurement noise is not counted twice;
+* only a_w, not the complete translational state, is charged as nuisance in the
+  accelerometer vector observation.
 
-The selected S firings estimate the marginal (v,p,S) integrator chain.  The OU
-acceleration is a stable nuisance state with a source-derived stationary
-covariance cap; it is not reconstructed through a nearly singular four-point
-Vandermonde.  This is the detectability route stated in the paper.
-
-A strict covariance/noise lower bound is retained independently, so each H/A
-word has finite Sigma bounds and a positive relative information injection.
-That lower bound is still deliberately conservative and is reported separately
-from the much sharper upper-bound construction; P4 must not hide a poor linear
-margin behind a local-existence argument.
+The remaining scalar covariance/noise lower bound is deliberately reported
+separately.  If it is still the active conditioning bottleneck, P4 must replace
+that scalar floor with a block/source-scaled relative bound rather than hide it
+behind a tiny local-neighborhood claim.
 """
 from __future__ import annotations
 
@@ -29,6 +27,8 @@ import json
 import math
 from pathlib import Path
 
+from ou3_interval import Interval, up as ia_up
+from ou3_interval_linear_algebra import matrix_inverse_gauss_jordan
 import ou3_full_process_ucc as PROCESS
 import ou3_implementation_word_language as WORDS
 import ou3_source_domain_contract as SOURCE
@@ -37,7 +37,7 @@ import ou3_vector_uco_certificate as VECTOR
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
+SCHEMA = 3
 
 
 def down(x: float) -> float:
@@ -79,6 +79,50 @@ def attitude_bias_process_trace(qg: float, qb: float, T: float) -> float:
     return up(3.0 * per_axis)
 
 
+def interval_frobenius_upper(A) -> float:
+    total = 0.0
+    for row in A:
+        for x in row:
+            a = x.abs_upper()
+            total = ia_up(total + ia_up(a * a))
+    return ia_up(math.sqrt(total))
+
+
+def validated_integrator_inverse_bound(gap_max: float, spacing: float) -> dict:
+    """Enclose B^-1 for all three source-reachable selected S firing times.
+
+    The selected firings lie in windows
+        t0 in [0,g], t1 in [s,s+g], t2 in [2s,2s+g].
+    Use column order [S,p,v], so each row is [1,t,t^2/2].  Fixed-pivot interval
+    elimination is safe because the first pivot is exactly one and the later
+    divided-difference pivots remain strictly separated by s-g>0.
+    """
+    g = pos(gap_max, "pseudo gap max")
+    s = pos(spacing, "S window spacing")
+    if not s > g:
+        raise RuntimeError("selected S windows are not strictly separated")
+    windows = (
+        Interval.outward_bounds(0.0, g),
+        Interval.outward_bounds(s, s + g),
+        Interval.outward_bounds(2.0 * s, 2.0 * s + g),
+    )
+    half = Interval.point(0.5)
+    one = Interval.point(1.0)
+    B = [[one, t, half * t.square()] for t in windows]
+    Binv = matrix_inverse_gauss_jordan(B)
+    inv_frob = interval_frobenius_upper(Binv)
+    sigma_min = down(1.0 / inv_frob)
+    if not sigma_min > 0.0:
+        raise RuntimeError("validated three-firing integrator inverse lost rank")
+    return {
+        "time_windows_s": [t.as_list() for t in windows],
+        "inverse_frobenius_upper": inv_frob,
+        "observation_sigma_min_lower": sigma_min,
+        "inverse_interval": [[[x.lo, x.hi] for x in row] for row in Binv],
+        "backend": "OUTWARD_INTERVAL_FIXED_PIVOT_GAUSS_JORDAN",
+    }
+
+
 def declared_vector_information(live: dict, vector: dict) -> dict:
     """Re-evaluate the vector-UCO lemma on the declared deployment PE box."""
     base = vector["operating_envelope"]
@@ -98,9 +142,6 @@ def declared_vector_information(live: dict, vector: dict) -> dict:
     if not s < 1.0:
         raise RuntimeError("declared vector sine floor must be <1")
 
-    # The implementation-generic vector certificate is deliberately very weak.
-    # The deployment theorem may be narrower, never broader, than that source
-    # contract in the directions where the generic contract imposes a bound.
     if f_min < float(base["specific_force_norm_lower_mps2"]):
         raise RuntimeError("declared force floor is weaker than vector-UCO source floor")
     if m_min < float(base["magnetic_vector_norm_lower_uT"]):
@@ -171,37 +212,22 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     pseudo_gap_max = pos(
         trans["S_observation_uco"]["pseudo_gap_max_s"], "pseudo firing gap upper"
     )
-    # Every interval of length pseudo_gap_max contains a firing.  Select one
-    # firing in windows beginning at 0, spacing, 2*spacing.  Adjacent selected
-    # firings are therefore separated by at least spacing-pseudo_gap_max.
     spacing = up(max(T_pe, 2.0 * pseudo_gap_max))
     selected_gap = down(spacing - pseudo_gap_max)
     if not selected_gap > 0.0:
         raise RuntimeError("cannot construct separated S firing windows")
     T_obs = up(2.0 * spacing + pseudo_gap_max)
-    # After the third selected S firing, recurrence supplies a qualifying vector
-    # packet within one PE window.
     T_word = up(T_obs + T_pe)
 
     # ---------------- (v,p,S) finite-memory estimator ----------------------
-    # Rows [t^2/2,t,1].  For three ordered rows with both adjacent gaps >=d,
-    # |det| = .5*(t1-t0)*(t2-t0)*(t2-t1) >= d^3.
-    det_int = down(selected_gap**3)
-    row_norm2 = up(1.0 + T_obs**2 + T_obs**4 / 4.0)
-    frob = up(math.sqrt(up(3.0 * row_norm2)))
-    sigma_int = down(det_int / up(frob * frob))
-    if not sigma_int > 0.0:
-        raise RuntimeError("selected integrator observation matrix lost rank")
+    inv_cert = validated_integrator_inverse_bound(pseudo_gap_max, spacing)
+    sigma_int = pos(inv_cert["observation_sigma_min_lower"], "integrator sigma min")
     Lint2 = up(1.0 / down(sigma_int * sigma_int))
 
     rs_std_hi = pos(
         trans["S_observation_uco"]["R_S_filter_std_upper"], "R_S std upper"
     )
     rs_var_hi = up(rs_std_hi * rs_std_hi)
-    # Initial a_w is a stable nuisance.  Its S response is no larger than t^3/6
-    # when exponential decay is discarded.  Bound all three selected firing
-    # times by T_obs.  Correlation between firings is handled by trace/Frobenius
-    # bounds; no independence of repeated S observations is assumed.
     phiS_hi = up(T_obs**3 / 6.0)
     aw_nuisance_trace = up(9.0 * sigma_hi * sigma_hi * phiS_hi * phiS_hi)
     s_proc_var = s_process_variance_per_axis(qc_max, T_obs)
@@ -233,10 +259,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     rm_lo = down(pos(vc["mag_measurement_std_uT"], "mag std") ** 2)
     alpha6 = pos(vec_decl["alpha_6_information_lower"], "declared vector alpha6")
 
-    r_vec_min = min(ra_lo, rm_lo)
-    sigma_a2 = down(r_vec_min * alpha6)
-    La2 = up(1.0 / sigma_a2)
-
     pc = process["source_constants"]
     qg = down(pos(pc["gyro_noise_density_rad_sqrt_s"], "gyro noise density") ** 2)
     qb = pos(pc["gyro_bias_rw_variance_density"], "gyro bias RW density")
@@ -250,23 +272,20 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     qab_pair_trace = attitude_bias_process_trace(qg, qb, pair_gap)
     qaw_pair_trace = up(3.0 * qc_max * pair_gap)
     qba_pair_trace = up(3.0 * qba * pair_gap)
-    vector_measurement_trace = up(6.0 * ra_hi + 6.0 * rm_hi)
-    vector_process_output_trace = up(
-        up((f_hi * f_hi + m_hi * m_hi) * qab_pair_trace)
-        + qaw_pair_trace + qba_pair_trace
-    )
-    ba_packet_trace = up(6.0 * pba_cap)
-    n_a_trace = up(
-        vector_measurement_trace + vector_process_output_trace + ba_packet_trace
-    )
 
-    # Only a_w, not v/p/S, enters the accelerometer observation.  The earlier
-    # implementation multiplied the vector estimate by the complete translation
-    # MSE and thereby injected units/states that the measurement cannot see.
-    C2 = 2.0  # two accepted accelerometer packets in the vector proof pair
-    attitude_start_mse = up(
-        2.0 * La2 * n_a_trace + 2.0 * La2 * C2 * aw_cov_trace_upper
+    # alpha6 is already lambda_min(O^T R^-1 O), so weighted least squares has
+    # measurement-noise covariance <= alpha6^-1 I.  Additional process/nuisance
+    # outputs are charged in the same whitened measurement coordinates.
+    whitened_process_trace = up(
+        up((f_hi * f_hi / ra_lo + m_hi * m_hi / rm_lo) * qab_pair_trace)
+        + up(qaw_pair_trace / ra_lo)
+        + up(qba_pair_trace / ra_lo)
+        + up(6.0 * pba_cap / ra_lo)
     )
+    measurement_noise_state_trace = up(6.0 / alpha6)
+    nuisance_state_trace = up(whitened_process_trace / alpha6)
+    attitude_start_mse = up(measurement_noise_state_trace + nuisance_state_trace)
+
     L_ab = up(1.0 + T_word)
     q_ab_trace = attitude_bias_process_trace(qg, qb, T_word)
     attitude_endpoint_trace = up(
@@ -278,11 +297,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     sigma_max_A = up(sigma_max_H + ba_endpoint_trace)
 
     # ---------------- conservative covariance/noise lower bounds -----------
-    # This is independent of the upper-bound sharpening above.  It deliberately
-    # starts from the strict one-sample process floor, then applies the largest
-    # same-sample information removal.  P4 reports if this scalar lower bound is
-    # still the active source of conservatism; it may not be silently replaced
-    # by replay covariance.
     rs_std_lo = pos(
         trans["S_observation_uco"]["R_S_filter_std_lower"], "R_S std lower"
     )
@@ -344,7 +358,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "declared_vector_PE_information": vec_decl,
         "translation_candidate_estimator": {
             "state_order": ["v", "p", "S"],
-            "selected_observation_det_lower": det_int,
+            "validated_observation_inverse": inv_cert,
             "selected_observation_sigma_min_lower": sigma_int,
             "stacked_measurement_trace_upper": measurement_trace,
             "initial_aw_nuisance_trace_upper": aw_nuisance_trace,
@@ -353,16 +367,18 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "endpoint_MSE_trace_upper": translation_endpoint_trace,
             "endpoint_aw_trace_component_upper": aw_endpoint_trace,
             "process_trace_upper": q_t_trace,
-            "route": "detectable (v,p,S) + stable a_w tail",
+            "route": "validated three-firing inverse + detectable (v,p,S) + stable a_w tail",
         },
         "attitude_gyro_bias_candidate_estimator": {
-            "unweighted_observation_sigma_squared_lower": sigma_a2,
-            "stacked_noise_MSE_trace_upper": n_a_trace,
+            "weighted_information_lambda_min_lower": alpha6,
+            "measurement_noise_state_trace_upper": measurement_noise_state_trace,
+            "whitened_process_and_nuisance_trace_upper": whitened_process_trace,
+            "nuisance_state_trace_upper": nuisance_state_trace,
             "aw_only_translation_coupling_trace_upper": aw_cov_trace_upper,
-            "translation_coupling_norm_squared_upper": C2,
             "start_MSE_trace_upper": attitude_start_mse,
             "endpoint_MSE_trace_upper": attitude_endpoint_trace,
             "process_trace_upper": q_ab_trace,
+            "route": "noise-weighted vector UCO; no second measurement-variance scaling",
         },
         "active_accelerometer_bias": {
             "per_axis_covariance_cap_upper": pba_cap,
@@ -383,7 +399,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "nonlinear_word_enclosed": False,
         "theorem_promotion": "LINEAR_ONLY",
         "next_obligation": (
-            "use the explicit H/A information margins in the exact SO(3) word majorant; if the scalar covariance lower bound dominates, replace it with a source-dependent/block-scaled validated lower bound rather than shrinking the theorem to replay points"
+            "replace the isolated one-sample scalar covariance floor with a block/source-scaled relative word-noise bound, then use that metric in the exact SO(3) word majorant"
         ),
     }
 
@@ -403,6 +419,9 @@ def validate(d: dict) -> list[str]:
     pe = d.get("declared_vector_PE_information", {})
     if not float(pe.get("alpha_6_information_lower", 0.0)) > 0.0:
         failures.append("declared vector PE information is not strict")
+    inv = d.get("translation_candidate_estimator", {}).get("validated_observation_inverse", {})
+    if inv.get("backend") != "OUTWARD_INTERVAL_FIXED_PIVOT_GAUSS_JORDAN":
+        failures.append("integrator observation inverse is not validated")
     for mode in ("H", "A"):
         row = d.get("modes", {}).get(mode, {})
         for key in (
