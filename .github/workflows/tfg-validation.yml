@@ -9,6 +9,7 @@ on:
       - 'src/tuner/**'
       - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
+      - 'docs/tfg-spectral-mse-ou3-parity.md'
       - '.github/workflows/tfg-validation.yml'
   pull_request:
     paths:
@@ -18,6 +19,7 @@ on:
       - 'src/tuner/**'
       - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
+      - 'docs/tfg-spectral-mse-ou3-parity.md'
       - '.github/workflows/tfg-validation.yml'
   workflow_dispatch:
 
@@ -57,10 +59,12 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v6
 
-      - name: Checkout pre-PR main baseline
+      - name: Checkout exact pre-PR baseline
         uses: actions/checkout@v6
         with:
-          ref: main
+          # On PRs use the immutable base SHA. The fallback keeps manual/push
+          # runs reproducible against the baseline this comparison documents.
+          ref: ${{ github.event.pull_request.base.sha || '6d7fe815b1f218cce0007e481fb65c3f0d315f8a' }}
           path: baseline-main
 
       - name: Install simulation dependencies
@@ -83,9 +87,9 @@ jobs:
         run: make -C baseline-main/tests/kalman_tfg kalman_tfg-sim
 
       # The three arms deliberately use identical records, seeds and 900 s
-      # scoring windows. Existing quality bars are printed but comparison arms
-      # are nonfatal; after the evidence is reviewed the final default arm gets
-      # its own regression gate in a separate step.
+      # scoring windows. The historical simulator bars are left intact so the
+      # old operating point remains visible; the new default has its own gate
+      # below, derived from this PR's eight-record evidence with ~0.5% margin.
       - name: Run SpectralMSE TFG arm
         working-directory: tests/kalman_tfg
         env:
@@ -107,7 +111,56 @@ jobs:
           W3D_VALIDATION_WINDOW_SEC: '900'
         run: ./kalman_tfg-sim | tee ../../../tfg-main-baseline.log || true
 
+      - name: Gate SpectralMSE default
+        working-directory: tests/kalman_tfg
+        run: |
+          python3 - <<'PY'
+          import math
+          from pathlib import Path
+
+          rows = []
+          for line in Path('tfg-spectral-mse.log').read_text().splitlines():
+              if not line.startswith('VALIDATION_METRICS '):
+                  continue
+              fields = {}
+              for token in line.split()[1:]:
+                  if '=' in token:
+                      k, v = token.split('=', 1)
+                      fields[k] = v
+              rows.append(fields)
+
+          if len(rows) != 8:
+              raise SystemExit(f'expected 8 TFG validation rows, got {len(rows)}')
+
+          limits = {
+              'z_jonswap': 4.698,
+              'z_pmstokes': 4.631,
+              'yaw': 1.292,
+              'd3_jonswap': 20.43,
+              'd3_pmstokes': 20.15,
+          }
+          worst = {k: -math.inf for k in limits}
+          for r in rows:
+              name = r['input'].lower()
+              family = 'jonswap' if 'jonswap' in name else 'pmstokes'
+              z = float(r['disp_z_pct_hs'])
+              d3 = float(r['disp_3d_pct_refmax'])
+              yaw = float(r['yaw_rms_deg'])
+              worst[f'z_{family}'] = max(worst[f'z_{family}'], z)
+              worst[f'd3_{family}'] = max(worst[f'd3_{family}'], d3)
+              worst['yaw'] = max(worst['yaw'], yaw)
+
+          failures = []
+          for key, limit in limits.items():
+              if not math.isfinite(worst[key]) or worst[key] > limit:
+                  failures.append(f'{key}={worst[key]:.6g} > {limit}')
+              print(f'TFG_PARITY_GATE {key} worst={worst[key]:.6g} limit={limit}')
+          if failures:
+              raise SystemExit('TFG SpectralMSE regression: ' + '; '.join(failures))
+          PY
+
       - name: Upload comparison logs
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: tfg-rs-law-comparison
