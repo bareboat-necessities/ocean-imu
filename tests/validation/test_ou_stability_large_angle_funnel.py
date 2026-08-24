@@ -52,7 +52,7 @@ class OUIIILargeAngleFunnelContractTests(unittest.TestCase):
         for marker in (
             r"\label{eq:widen-src-graph}",
             r"\label{eq:widen-src-word-family}",
-            r"\label{eq:widen-path-lmi}",
+            r"\label{eq:widen-path-information-word}",
             r"\label{thm:widen-path-ues}",
             r"\label{eq:widen-path-group-metric}",
             r"\label{eq:widen-path-direct-margin}",
