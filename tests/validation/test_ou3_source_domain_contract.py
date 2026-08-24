@@ -18,6 +18,26 @@ def f32(value):
     return struct.unpack(">f", struct.pack(">f", float(value)))[0]
 
 
+def approximate_qd(h, tau, sigma2, n=4096):
+    dr = h / n
+    out = [[0.0] * 4 for _ in range(4)]
+    qc = 2.0 * sigma2 / tau
+    for k in range(n):
+        r = (k + 0.5) * dr
+        x = r / tau
+        a = math.exp(-x)
+        g = (
+            tau * (1.0 - a),
+            tau * tau * (x + math.expm1(-x)),
+            tau ** 3 * (0.5 * x * x - x - math.expm1(-x)),
+            a,
+        )
+        for i in range(4):
+            for j in range(4):
+                out[i][j] += qc * g[i] * g[j] * dr
+    return out
+
+
 class SourceDomainContractTests(unittest.TestCase):
     def test_contract_uses_shipping_clamps_and_keeps_theorem_unpromoted(self):
         d = mod.build(mod.DEFAULT_HEADER)
@@ -154,36 +174,54 @@ class SourceDomainContractTests(unittest.TestCase):
         self.assertFalse(box["shipping_psd_cleanup_enclosed"])
         Q = box["Qd_interval"]
 
-        def approximate(h, tau, sigma2, n=4096):
-            dr = h / n
-            out = [[0.0] * 4 for _ in range(4)]
-            qc = 2.0 * sigma2 / tau
-            for k in range(n):
-                r = (k + 0.5) * dr
-                x = r / tau
-                a = math.exp(-x)
-                g = (
-                    tau * (1.0 - a),
-                    tau * tau * (x + math.expm1(-x)),
-                    tau ** 3 * (0.5 * x * x - x - math.expm1(-x)),
-                    a,
-                )
-                for i in range(4):
-                    for j in range(4):
-                        out[i][j] += qc * g[i] * g[j] * dr
-            return out
-
         for h, tau, sigma2 in (
             (0.001, 0.02, 0.0025),
             (0.005, 0.1, 0.25),
             (0.02, 1.0, 1.0),
             (0.05, 2.0, 4.0),
         ):
-            q = approximate(h, tau, sigma2)
+            q = approximate_qd(h, tau, sigma2)
             for i in range(4):
                 for j in range(4):
                     self.assertLessEqual(Q[i][j][0], q[i][j] + 1e-15)
                     self.assertGreaterEqual(Q[i][j][1] + 1e-15, q[i][j])
+
+    def test_validated_covariance_prediction_contains_direct_point_prediction(self):
+        P0 = [
+            [[0.5, 0.5], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]],
+            [[0.0, 0.0], [1.0, 1.0], [0.0, 0.0], [0.0, 0.0]],
+            [[0.0, 0.0], [0.0, 0.0], [2.0, 2.0], [0.0, 0.0]],
+            [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.1, 0.1]],
+        ]
+        h, tau, sigma2 = 0.005, 1.0, 0.25
+        out = mod.validated_covariance_predict_axis4(
+            P0, (h, h), (tau, tau), (sigma2, sigma2), cells=12
+        )
+        self.assertTrue(out["validated_arithmetic"])
+        self.assertTrue(out["mathematical_prediction_enclosed"])
+        self.assertFalse(out["shipping_covariance_prediction_enclosed"])
+        Pbox = out["P_predicted_interval"]
+
+        x = h / tau
+        a = math.exp(-x)
+        Phi = [
+            [1.0, 0.0, 0.0, tau * (1.0 - a)],
+            [h, 1.0, 0.0, tau * tau * (x + math.expm1(-x))],
+            [0.5 * h * h, h, 1.0,
+             tau ** 3 * (0.5 * x * x - x - math.expm1(-x))],
+            [0.0, 0.0, 0.0, a],
+        ]
+        Ppoint = [[P0[i][j][0] for j in range(4)] for i in range(4)]
+        AP = [[sum(Phi[i][k] * Ppoint[k][j] for k in range(4))
+               for j in range(4)] for i in range(4)]
+        pred = [[sum(AP[i][k] * Phi[j][k] for k in range(4))
+                 for j in range(4)] for i in range(4)]
+        q = approximate_qd(h, tau, sigma2)
+        for i in range(4):
+            for j in range(4):
+                value = pred[i][j] + q[i][j]
+                self.assertLessEqual(Pbox[i][j][0], value + 1e-15)
+                self.assertGreaterEqual(Pbox[i][j][1] + 1e-15, value)
 
     def test_contract_names_every_hybrid_transition_required_for_deployment(self):
         d = mod.build(mod.DEFAULT_HEADER)
