@@ -66,6 +66,13 @@ class SourceWordTheoremContractTests(unittest.TestCase):
         self.assertIn("held_to_active", scope["hybrid_transitions_separate"])
         self.assertIn("tilt_reset", scope["hybrid_transitions_separate"])
 
+    def test_information_enclosure_contract_requires_the_same_word_language(self):
+        text = (ROOT / "tools" / "ou3_information_enclosure_contract.py").read_text()
+        self.assertIn("tools/ou3_source_word_theorem_contract.py", text)
+        self.assertIn("OU3_CONDITIONAL_SOURCE_COMPLETE_NORMAL_LIVE_WORD_LANGUAGE", text)
+        self.assertIn('"pe_recurrence_window_s"', text)
+        self.assertIn("single favorable vector pair", text)
+
     def test_contract_uses_no_replay_or_observed_extrema(self):
         text = (ROOT / "tools" / "ou3_source_word_theorem_contract.py").read_text()
         for forbidden in (
