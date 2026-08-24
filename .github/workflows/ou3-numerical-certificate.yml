@@ -9,15 +9,6 @@ on:
       - "src/tuner/**"
       - "src/util/W3dSimCommon.*"
       - "tests/kalman_ou_iii/**"
-      - "tests/validation/test_ou3_numerical_certificate.py"
-      - "tests/validation/test_ou3_information_certificate.py"
-      - "tests/validation/test_ou3_information_completion.py"
-      - "tests/validation/test_ou3_certificate_completion.py"
-      - "tests/validation/test_ou3_source_noise_certificate.py"
-      - "tests/validation/test_ou3_neighborhood_diagnostic.py"
-      - "tests/validation/test_ou3_neighborhood_radius_search.py"
-      - "tests/validation/test_ou3_validate_enclosure.py"
-      - "tests/validation/test_ou3_result_determinism.py"
       - "tools/ou3_exact_replay.py"
       - "tools/ou3_numerical_certificate.py"
       - "tools/ou3_information_certificate.py"
@@ -26,8 +17,6 @@ on:
       - "tools/ou3_source_noise_certificate.py"
       - "tools/ou3_neighborhood_diagnostic.py"
       - "tools/ou3_neighborhood_radius_search.py"
-      - "tools/ou3_certificate_completion.py"
-      - "tools/ou3_validate_enclosure.py"
       - "tools/ou3_result_contract.py"
       - "tools/ou_sweep_common.py"
       - "docs/ou-iii-numerical-certificate.md"
@@ -42,9 +31,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  certificate:
+  prepare:
+    name: prepare common certificate inputs
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -116,8 +106,67 @@ jobs:
           test -s "$OU3_NEIGHBOR_TRACE"
           grep -q ',1,A,' "$OU3_NEIGHBOR_TRACE"
 
+      - name: Upload common scientific inputs
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-certificate-common
+          path: reports/results/ou3_numerical_certificate/**
+          if-no-files-found: error
+          retention-days: 2
+
+      - name: Upload nonlinear observer
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-neighborhood-observer
+          path: tests/kalman_ou_iii/ou3-neighborhood-sim
+          if-no-files-found: error
+          retention-days: 2
+
+      - name: Upload common diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-certificate-common-diagnostics
+          path: reports/diagnostics/ou3_numerical_certificate/**
+          if-no-files-found: warn
+
+  baseline_neighborhood:
+    name: sampled W=0.05 neighborhood
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy unzip
+
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern sim-data-files.zip --clobber
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Download common certificate inputs
+        uses: actions/download-artifact@v8
+        with:
+          name: ou3-certificate-common
+          path: reports/results/ou3_numerical_certificate
+
+      - name: Download nonlinear observer
+        uses: actions/download-artifact@v8
+        with:
+          name: ou3-neighborhood-observer
+          path: tests/kalman_ou_iii
+
       - name: Run full information-normalized nonlinear neighborhood sweep
         run: |
+          chmod +x tests/kalman_ou_iii/ou3-neighborhood-sim
           python3 -u tools/ou3_neighborhood_diagnostic.py \
             --no-build \
             --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-neighborhood-sim" \
@@ -129,38 +178,165 @@ jobs:
             --target-W 0.05 \
             --jobs 4
 
-      - name: Locate sampled nonlinear H/A neighborhood boundaries
+      - name: Upload baseline neighborhood result
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-neighborhood-baseline
+          path: reports/results/ou3_numerical_certificate/neighborhood_diagnostic/**
+          if-no-files-found: error
+
+      - name: Upload baseline diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-neighborhood-baseline-diagnostics
+          path: reports/diagnostics/ou3_numerical_certificate/neighborhood_full/**
+          if-no-files-found: warn
+
+  radius:
+    name: sampled boundary ${{ matrix.mode }}
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [H, A]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install runtime dependencies
         run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy unzip
+
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v1.1.3 --repo bareboat-necessities/oceanography-waves-lib --pattern sim-data-files.zip --clobber
+          mkdir -p plots/kalman_ou_ii
+          unzip -o sim-data-files.zip -d plots/kalman_ou_ii >/dev/null
+
+      - name: Download common certificate inputs
+        uses: actions/download-artifact@v8
+        with:
+          name: ou3-certificate-common
+          path: reports/results/ou3_numerical_certificate
+
+      - name: Download nonlinear observer
+        uses: actions/download-artifact@v8
+        with:
+          name: ou3-neighborhood-observer
+          path: tests/kalman_ou_iii
+
+      - name: Locate sampled nonlinear ${{ matrix.mode }} boundary
+        run: |
+          chmod +x tests/kalman_ou_iii/ou3-neighborhood-sim
           python3 -u tools/ou3_neighborhood_radius_search.py \
             --sim "$GITHUB_WORKSPACE/tests/kalman_ou_iii/ou3-neighborhood-sim" \
             --certificate-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate" \
             --data-dir "$GITHUB_WORKSPACE/plots/kalman_ou_ii" \
-            --output-dir "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate/neighborhood_radius_search" \
-            --diagnostic-dir "$GITHUB_WORKSPACE/reports/diagnostics/ou3_numerical_certificate/neighborhood_radius" \
-            --modes H,A \
+            --output-dir "$GITHUB_WORKSPACE/reports/results/radius_${{ matrix.mode }}" \
+            --diagnostic-dir "$GITHUB_WORKSPACE/reports/diagnostics/radius_${{ matrix.mode }}" \
+            --modes "${{ matrix.mode }}" \
             --start-W 0.05 \
             --growth 16 \
             --max-W 838860.8 \
             --bisection-steps 5 \
             --jobs 4
 
+      - name: Upload ${{ matrix.mode }} boundary result
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-radius-${{ matrix.mode }}
+          path: reports/results/radius_${{ matrix.mode }}/neighborhood_radius_search.json
+          if-no-files-found: error
+
+      - name: Upload ${{ matrix.mode }} boundary diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ou3-radius-${{ matrix.mode }}-diagnostics
+          path: reports/diagnostics/radius_${{ matrix.mode }}/**
+          if-no-files-found: warn
+
+  validate:
+    name: merge and validate certificate payload
+    needs: [prepare, baseline_neighborhood, radius]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download common certificate inputs
+        uses: actions/download-artifact@v8
+        with:
+          name: ou3-certificate-common
+          path: reports/results/ou3_numerical_certificate
+
+      - name: Download baseline neighborhood result
+        uses: actions/download-artifact@v8
+        with:
+          name: ou3-neighborhood-baseline
+          path: reports/results/ou3_numerical_certificate/neighborhood_diagnostic
+
+      - name: Download H boundary result
+        uses: actions/download-artifact@v8
+        with:
+          name: ou3-radius-H
+          path: reports/results/radius_H
+
+      - name: Download A boundary result
+        uses: actions/download-artifact@v8
+        with:
+          name: ou3-radius-A
+          path: reports/results/radius_A
+
+      - name: Merge H/A sampled boundary reports
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('reports/results')
+          h = json.loads((root / 'radius_H/neighborhood_radius_search.json').read_text())
+          a = json.loads((root / 'radius_A/neighborhood_radius_search.json').read_text())
+          modes = {'H': h['modes']['H'], 'A': a['modes']['A']}
+          statuses = [modes['H']['status'], modes['A']['status']]
+          if all(s == 'BRACKETED_SAMPLED_BOUNDARY' for s in statuses):
+              status = 'BRACKETED_H_A_SAMPLED_BOUNDARIES'
+          elif all(s == 'NO_SAMPLED_FAILURE_THROUGH_MAX_W' for s in statuses):
+              status = 'NO_SAMPLED_FAILURE_THROUGH_MAX_W'
+          else:
+              status = 'INCOMPLETE_OR_MIXED_SAMPLED_BOUNDARIES'
+          merged = {
+              'schema': 2,
+              'status': status,
+              'qualification': 'SAMPLED_NUMERICAL_BASIN_ESTIMATE_ONLY_NOT_A_VALIDATED_CERTIFICATE',
+              'metric_radius_definition': 'W=zeta^T Sigma_nominal^-1 zeta',
+              'all_coordinates_both_signs': True,
+              'all_eight_reference_seas': True,
+              'search': h['search'],
+              'modes': modes,
+              'numerical_neighborhood_certificate': 'NOT_ESTABLISHED',
+              'deployment_theorem_certificate': 'NOT_ESTABLISHED',
+          }
+          out = root / 'ou3_numerical_certificate/neighborhood_radius_search'
+          out.mkdir(parents=True, exist_ok=True)
+          (out / 'neighborhood_radius_search.json').write_text(json.dumps(merged, indent=2, sort_keys=True))
+          PY
+
       - name: Validate deterministic scientific result payloads
         run: |
-          python3 tools/ou3_result_contract.py \
-            "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
+          python3 tools/ou3_result_contract.py "$GITHUB_WORKSPACE/reports/results/ou3_numerical_certificate"
 
       - name: Upload scientific certificate results
-        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: ou3-numerical-certificate
           path: reports/results/ou3_numerical_certificate/**
-          if-no-files-found: warn
-
-      - name: Upload diagnostic logs separately
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ou3-numerical-certificate-diagnostics
-          path: reports/diagnostics/ou3_numerical_certificate/**
-          if-no-files-found: warn
+          if-no-files-found: error
