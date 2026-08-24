@@ -73,7 +73,7 @@ Prove numerically:
 6. the exact `goLive` map into the H-mode source coordinates, including seeded covariance, linear-block enable, current OU/R_S state, and held accelerometer bias;
 7. full-heading and yaw-quotient startup branches separately.
 
-**PASS:** every source-reachable accepted startup/handoff branch has a finite numerical initial Lyapunov level strictly inside a certified H-mode capture funnel. No assumption that the handoff is “small enough” is permitted without a computed inequality.
+**PASS:** every source-reachable accepted startup/handoff branch has an explicit finite numerical handoff family in H-mode coordinates. Containment of that family in a Live capture funnel is a separate P5 obligation and is not assumed by P1.
 
 ### P2 — Complete source-word language
 
@@ -139,15 +139,29 @@ The final validated CI certificate reports:
 
 The tiny levels are theorem seeds, not practical-basin claims. Strict positivity is stored directly, so the proof never forms `1 - delta/2` when binary64 would round that quantity back to one. Source-node subdivision may later enlarge `W_*`, but it is only a widening of this same certificate route, not a fallback theorem.
 
-**PASS:** `P4_EXACT_NONLINEAR_WORD_CERTIFICATE=PASS` for both H and A with explicit positive `W_*`, positive `mu_W`, exact source-operation semantics, complete branch coverage, and prefix/chart safety. P5 finite startup-to-inner-funnel capture is the next unresolved obligation.
+**PASS:** `P4_EXACT_NONLINEAR_WORD_CERTIFICATE=PASS` for both H and A with explicit positive `W_*`, positive `mu_W`, exact source-operation semantics, complete branch coverage, and prefix/chart safety. P5 must now bridge the P1 handoff family to this inner H seed.
 
-### P5 — Initialization-to-inner-funnel finite capture
+### P5 — Initialization-to-inner-funnel finite capture — FIRST OBSTRUCTION IDENTIFIED, NOT CLOSED
 
-Propagate the P1 startup handoff level through the certified H-mode words from P4.
+`tools/ou3_p5_startup_capture_certificate.py` now evaluates the first legal P5 composition gate instead of blindly iterating the P4 local recurrence.
 
-Compute the source-node recurrence and a finite integer capture bound `N_H`, including the actual early covariance/tuner staging reachable immediately after `goLive`.
+For the H word, P4 supplies a homogeneous information gap `delta_H>0` and a transported nonlinear defect bound `B_H W`. A conservative square-root recurrence is
 
-**PASS:** every certified normal or timeout handoff reaches the inner H funnel in finite words/time without leaving a certified prefix-safe domain.
+`sqrt(W_next) <= (1-delta_H/2) sqrt(W) + B_H W`.
+
+Therefore strict word-to-word decrease is guaranteed only while
+
+`sqrt(W) < delta_H/(2 B_H)`.
+
+The certified P4 inner seed uses the still smaller safety choice `sqrt(W_*) <= delta_H/(8 B_H)`. With the current H certificate, `W_* = 3.29172575174270652e-141`, so the derived strict-decrease domain is only about `16 W_*`, approximately `5.27e-140` in the same normalized Cayley-information metric.
+
+P1, however, deliberately allows a physically useful source handoff family rather than a microscopic local set. Its declared H-coordinate radii include `||b_g|| <= 0.01 rad/s`, `||v|| <= 5 m/s`, `||p|| <= 20 m`, `||S|| <= 300 m s`, and `||a_w|| <= 10 m/s^2`. Because the normalized P4 metric has `m_-` essentially one, even the weakest admissible axis witness, `||b_g||=0.01` with the other coordinates zero, has `W >= ~1e-4`; the `S` witness has `W >= ~9e4`. Thus the complete P1 handoff family is not contained in either the P4 nonlinear design ball or the much smaller certified strict-decrease domain. The weakest witness already misses the current strict-decrease level by more than `10^135` in `W`.
+
+This is the first P5 obstruction. It would be mathematically invalid to compute an `N_H` by applying the P4 inner recurrence to the P1 handoff set: that would extrapolate a local nonlinear estimate outside the domain on which its defect bound and decrease are certified. Accordingly the P5 producer reports `P5_OBSTRUCTION_IDENTIFIED=PASS`, `P5_FINITE_CAPTURE_CERTIFICATE=NOT_ESTABLISHED`, and leaves `N_H_words` unset.
+
+The required next step is not a second theorem route and not a weaker gate. The same source-reachable Cayley-information construction must be widened into an **outer capture bridge** covering the P1 normal/timeout handoff family—most likely by source-node/state subdivision and sharper exact nonlinear word bounds—until a validated recurrence connects that outer family to the existing P4 inner seed. Only then may P5 compute a finite integer `N_H` and finite capture time, including early covariance/tuner staging.
+
+**PASS criterion for closing P5:** every certified normal or timeout handoff lies in a validated outer H capture funnel; every source-word prefix stays safe; the outer recurrence reaches `W_*` in a finite machine-certified number of H words/time. The current certificate does **not** yet satisfy this criterion.
 
 ### P6 — Prove every implemented hybrid jump
 
