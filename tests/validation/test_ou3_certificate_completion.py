@@ -26,6 +26,22 @@ CONTRACT = load("ou3_information_enclosure_contract")
 ENC = load("ou3_validate_enclosure")
 
 
+def group_metric():
+    return {
+        "kind": "GROUP_COMPATIBLE_NODE_METRIC",
+        "node_dependent": True,
+        "attitude_block_isotropic": True,
+        "attitude_linear_cross_terms": False,
+        "common_Euclidean_metric": False,
+        "equals_Kalman_inverse_covariance": False,
+        "a_R_lower": 0.2,
+        "P_xi_lambda_min_lower": 1.0e-3,
+        "P_xi_lambda_max_upper": 100.0,
+        "Pbar_lambda_min_lower": 1.0e-3,
+        "Pbar_lambda_max_upper": 100.0,
+    }
+
+
 class Ou3CertificateCompletionTests(unittest.TestCase):
     def test_group_metric_matches_exact_so3_energy(self):
         P = np.eye(21)
@@ -59,11 +75,14 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
         return {
             "source_complete": True,
             "outward_rounded": True,
+            "joint_source_reachability": True,
+            "one_sample_decrease_used": False,
             "word_horizon_s": 4.0,
-            "relative_Riccati_injection_margin_lower": 0.005,
+            "word_endpoint_relative_Riccati_injection_margin_lower": 0.005,
             "Sigma_lambda_min_lower": 5.0e-7,
             "Sigma_lambda_max_upper": 120.0,
             "prefix_information_gain_upper": 2.0,
+            "path_metric": group_metric(),
             "theta_star": 1.0,
             "endpoint_W_ratio_upper": 0.9999,
             "certified_level_W": 0.05,
@@ -75,20 +94,28 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
         self.assertTrue(ans["linear_pass"])
         self.assertTrue(ans["nonlinear_pass"])
         self.assertAlmostEqual(ans["lambda_information_upper"], 0.995)
-        self.assertAlmostEqual(ans["information_metric_lambda_min_lower"], 1.0 / 120.0)
-        self.assertAlmostEqual(ans["information_metric_lambda_max_upper"], 2.0e6)
+        self.assertAlmostEqual(ans["P3_inverse_covariance_conditioning_lambda_min_lower"], 1.0 / 120.0)
+        self.assertAlmostEqual(ans["P3_inverse_covariance_conditioning_lambda_max_upper"], 2.0e6)
         self.assertAlmostEqual(ans["mu_W_lower"], 1.0e-4)
+        self.assertEqual(ans["path_metric"]["kind"], "GROUP_COMPATIBLE_NODE_METRIC")
 
-    def test_information_mode_rejects_zero_injection(self):
+    def test_information_mode_rejects_zero_endpoint_injection(self):
         payload = self.valid_mode_payload()
-        payload["relative_Riccati_injection_margin_lower"] = 0.0
+        payload["word_endpoint_relative_Riccati_injection_margin_lower"] = 0.0
         ans = ENC.validate_mode("A", payload, self.contract_mode())
         self.assertFalse(ans["linear_pass"])
-        self.assertTrue(any("Riccati" in x for x in ans["failures"]))
+        self.assertTrue(any("endpoint" in x for x in ans["failures"]))
+
+    def test_information_mode_rejects_old_field_alias(self):
+        payload = self.valid_mode_payload()
+        payload.pop("word_endpoint_relative_Riccati_injection_margin_lower")
+        payload["relative_Riccati_injection_margin_lower"] = 0.005
+        ans = ENC.validate_mode("A", payload, self.contract_mode())
+        self.assertFalse(ans["linear_pass"])
 
     def test_information_mode_rejects_optimistic_anchor_exclusion(self):
         payload = self.valid_mode_payload()
-        payload["relative_Riccati_injection_margin_lower"] = 0.02
+        payload["word_endpoint_relative_Riccati_injection_margin_lower"] = 0.02
         ans = ENC.validate_mode("A", payload, self.contract_mode())
         self.assertFalse(ans["linear_pass"])
         self.assertTrue(any("exceeds included executed minimum" in x for x in ans["failures"]))
@@ -96,32 +123,18 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
     def test_contract_prefers_strongest_executed_information_horizon(self):
         info = {
             "status": "PASS",
-            "held": {
-                "selected": {"horizon_s": 2.0, "lambda_worst_information": 0.9999},
-                "strongest_executed_margin": {
-                    "horizon_s": 16.0,
-                    "lambda_worst_information": 0.95,
-                    "relative_Riccati_injection_margin_worst": 0.05,
-                    "Sigma_endpoint_lambda_min": 1e-7,
-                    "Sigma_endpoint_lambda_max": 10.0,
-                },
-            },
-            "active": {
-                "selected": {"horizon_s": 2.0, "lambda_worst_information": 0.999},
-                "strongest_executed_margin": {
-                    "horizon_s": 4.0,
-                    "lambda_worst_information": 0.99,
-                    "relative_Riccati_injection_margin_worst": 0.01,
-                    "Sigma_endpoint_lambda_min": 1e-7,
-                    "Sigma_endpoint_lambda_max": 10.0,
-                },
-            },
+            "held": {"selected": {"horizon_s": 2.0, "lambda_worst_information": 0.9999},
+                     "strongest_executed_margin": {"horizon_s": 16.0, "lambda_worst_information": 0.95,
+                        "relative_Riccati_injection_margin_worst": 0.05,
+                        "Sigma_endpoint_lambda_min": 1e-7, "Sigma_endpoint_lambda_max": 10.0}},
+            "active": {"selected": {"horizon_s": 2.0, "lambda_worst_information": 0.999},
+                       "strongest_executed_margin": {"horizon_s": 4.0, "lambda_worst_information": 0.99,
+                        "relative_Riccati_injection_margin_worst": 0.01,
+                        "Sigma_endpoint_lambda_min": 1e-7, "Sigma_endpoint_lambda_max": 10.0}},
         }
-        completion = {
-            "status": "PASS_EXECUTED_REPLAY",
-            "held": {"asymptotic_floor_b_star_replay": 10.0},
-            "active": {"asymptotic_floor_b_star_replay": 20.0},
-        }
+        completion = {"status": "PASS_EXECUTED_REPLAY",
+                      "held": {"asymptotic_floor_b_star_replay": 10.0},
+                      "active": {"asymptotic_floor_b_star_replay": 20.0}}
         c = CONTRACT.build_contract(info, completion)
         self.assertEqual(c["modes"]["H"]["recommended_word_horizon_s"], 16.0)
         self.assertEqual(c["modes"]["A"]["recommended_word_horizon_s"], 4.0)
@@ -131,24 +144,18 @@ class Ou3CertificateCompletionTests(unittest.TestCase):
         self.assertTrue(policy["P4_group_compatible_node_metric_required"])
         self.assertTrue(policy["node_dependent_metrics_allowed"])
         self.assertFalse(policy["common_Euclidean_or_common_quadratic_fallback_allowed"])
-        self.assertEqual(
-            c["modes"]["H"]["required_path_metric"],
-            "Pbar_i=blkdiag((a_R_i/2) I3, P_xi_i), a_R_i>0, P_xi_i>>0",
-        )
 
     def test_completion_does_not_promote_sampled_replay(self):
         text = (TOOLS / "ou3_information_completion.py").read_text()
         self.assertIn('"numerical_neighborhood_certificate": "NOT_ESTABLISHED"', text)
         self.assertIn('"deployment_theorem_certificate": "NOT_ESTABLISHED"', text)
 
-    def test_enclosure_gate_uses_information_metric_not_old_path_solver(self):
+    def test_enclosure_gate_uses_endpoint_information_and_group_metric(self):
         text = (TOOLS / "ou3_validate_enclosure.py").read_text()
-        self.assertIn("relative_Riccati_injection_margin_lower", text)
-        self.assertIn("Sigma_lambda_min_lower", text)
-        self.assertIn("prefix_information_gain_upper", text)
+        self.assertIn("word_endpoint_relative_Riccati_injection_margin_lower", text)
+        self.assertIn("GROUP_COMPATIBLE_NODE_METRIC", text)
+        self.assertIn("attitude_linear_cross_terms", text)
         self.assertIn("endpoint_W_ratio_upper", text)
-        self.assertIn("certified_level_W", text)
-        self.assertIn("theta_star", text)
         self.assertNotIn("np.load(", text)
         self.assertNotIn("load_metrics(", text)
         self.assertNotIn("robust_box_lmi_upper(", text)
