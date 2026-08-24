@@ -12,6 +12,14 @@ Python binary64. This parser therefore evaluates every literal and arithmetic
 operation as IEEE-754 binary32, using exact rationals between operations and an
 explicit nearest/ties-to-even rounding step. The returned Python float is an
 exact binary64 representation of the deployed binary32 value.
+
+The producer also contains the first transcendental enclosure used by the
+continuous-word proof. ``validated_ou_primitives`` bounds exp(-h/tau), phi_pa
+and phi_Sa using exact rational Taylor arithmetic plus an explicit Lagrange
+remainder. It is intentionally parameterized by an accepted-step interval:
+the deployed wrapper presently checks only dt>0 and finiteness, so the source
+contract records the missing finite upper step guard as an explicit theorem
+blocker instead of silently substituting the nominal 200 Hz period.
 """
 from __future__ import annotations
 
@@ -98,7 +106,6 @@ def _round_fraction_binary32(value: Fraction) -> Fraction:
 
     def rank(item: tuple[Fraction, int]) -> tuple[Fraction, int]:
         exact, bits = item
-        # Exact midpoint: ties-to-even means an even low significand bit.
         return (abs(exact - x), bits & 1)
 
     exact, _ = min(choices, key=rank)
@@ -197,6 +204,101 @@ def _outward_box(lo: float, hi: float) -> list[float]:
     return [math.nextafter(lo, -math.inf), math.nextafter(hi, math.inf)]
 
 
+def _fraction_down(q: Fraction) -> float:
+    """Greatest convenient binary64 lower enclosure of exact rational q."""
+    y = float(q)
+    if Fraction.from_float(y) > q:
+        y = math.nextafter(y, -math.inf)
+    return y
+
+
+def _fraction_up(q: Fraction) -> float:
+    """Least convenient binary64 upper enclosure of exact rational q."""
+    y = float(q)
+    if Fraction.from_float(y) < q:
+        y = math.nextafter(y, math.inf)
+    return y
+
+
+def _exp_neg_point_rational(x: Fraction, order: int = 96) -> tuple[Fraction, Fraction]:
+    """Validated enclosure of exp(-x), x>=0, by exact Taylor arithmetic.
+
+    For f(x)=exp(-x), every derivative on [0,x] has magnitude <=1.  The
+    order-N Taylor polynomial at zero therefore has Lagrange remainder bounded
+    by x^(N+1)/(N+1)!.  All polynomial arithmetic here is exact Fraction
+    arithmetic, so only the final conversion to binary64 needs outward rounding.
+    """
+    if x < 0:
+        raise ValueError("exp(-x) enclosure requires x>=0")
+    if order < 1:
+        raise ValueError("Taylor order must be positive")
+    term = Fraction(1, 1)
+    total = term
+    for n in range(1, order + 1):
+        term *= -x
+        term /= n
+        total += term
+    rem = x ** (order + 1) / math.factorial(order + 1)
+    return total - rem, total + rem
+
+
+def validated_ou_primitives(h_bounds: tuple[float, float] | list[float],
+                            tau_bounds: tuple[float, float] | list[float],
+                            order: int = 96) -> dict:
+    """Outward enclosure of the deployed scalar OU transition primitives.
+
+    The implementation uses
+      alpha  = exp(-x), x=h/tau
+      phi_pa = tau^2 (x + exp(-x) - 1)
+      phi_Sa = tau^3 (0.5 x^2 - x - exp(-x) + 1).
+
+    The returned bounds use exact-rational interval arithmetic. Correlation
+    between tau and x is deliberately discarded, which can widen the box but
+    cannot invalidate it. The nonnegative lower clamp uses the analytic fact
+    that both integral coefficients are >=0 for h>=0,tau>0.
+    """
+    h_lo, h_hi = map(Fraction.from_float, map(float, h_bounds))
+    t_lo, t_hi = map(Fraction.from_float, map(float, tau_bounds))
+    if h_lo < 0 or h_hi < h_lo:
+        raise ValueError("invalid nonnegative step interval")
+    if t_lo <= 0 or t_hi < t_lo:
+        raise ValueError("invalid positive tau interval")
+
+    x_lo = h_lo / t_hi
+    x_hi = h_hi / t_lo
+    alpha_lo, _ = _exp_neg_point_rational(x_hi, order)
+    _, alpha_hi = _exp_neg_point_rational(x_lo, order)
+    alpha_lo = max(Fraction(0, 1), alpha_lo)
+    alpha_hi = min(Fraction(1, 1), alpha_hi)
+
+    # x + alpha - 1, with independent interval terms.
+    pa_core_lo = max(Fraction(0, 1), x_lo + alpha_lo - 1)
+    pa_core_hi = x_hi + alpha_hi - 1
+
+    # 0.5*x^2 - x - alpha + 1. Independent interval arithmetic is used.
+    sa_core_lo = max(Fraction(0, 1), Fraction(1, 2) * x_lo * x_lo - x_hi - alpha_hi + 1)
+    sa_core_hi = Fraction(1, 2) * x_hi * x_hi - x_lo - alpha_lo + 1
+
+    tau2_lo, tau2_hi = t_lo * t_lo, t_hi * t_hi
+    tau3_lo, tau3_hi = tau2_lo * t_lo, tau2_hi * t_hi
+    phi_pa_lo = tau2_lo * pa_core_lo
+    phi_pa_hi = tau2_hi * max(Fraction(0, 1), pa_core_hi)
+    phi_sa_lo = tau3_lo * sa_core_lo
+    phi_sa_hi = tau3_hi * max(Fraction(0, 1), sa_core_hi)
+
+    return {
+        "validated_arithmetic": True,
+        "outward_rounded": True,
+        "backend": f"EXACT_RATIONAL_TAYLOR_ORDER_{order}_LAGRANGE_REMAINDER",
+        "h_s": [_fraction_down(h_lo), _fraction_up(h_hi)],
+        "tau_s": [_fraction_down(t_lo), _fraction_up(t_hi)],
+        "x_h_over_tau": [_fraction_down(x_lo), _fraction_up(x_hi)],
+        "alpha": [_fraction_down(alpha_lo), _fraction_up(alpha_hi)],
+        "phi_pa_s2": [_fraction_down(phi_pa_lo), _fraction_up(phi_pa_hi)],
+        "phi_Sa_s3": [_fraction_down(phi_sa_lo), _fraction_up(phi_sa_hi)],
+    }
+
+
 def build(header: Path) -> dict:
     text = header.read_text()
     c = {name: parse_const(text, name) for name in REQUIRED}
@@ -236,8 +338,6 @@ def build(header: Path) -> dict:
         "claim": "OU3_SOURCE_COMPLETE_IMPLEMENTATION_DOMAIN_CONTRACT",
         "source_generated_not_trajectory_fit": True,
         "source_complete_parameter_domain": True,
-        # These top-level flags remain false until the whole H/A word is
-        # propagated with validated matrix/transcendental arithmetic.
         "validated_arithmetic": False,
         "outward_rounded": False,
         "implementation_header": str(header.relative_to(REPO)),
@@ -249,6 +349,25 @@ def build(header: Path) -> dict:
         "continuous_parameters": continuous,
         "timing_constants_s": timing,
         "validated_parameter_box": parameter_box,
+        "accepted_update_step_domain_s": {
+            "lower_open": 0.0,
+            "upper": None,
+            "source_complete_finite_upper_bound": False,
+            "implementation_observation": (
+                "SeaStateFusionFilter_OU_III::updateCore_ rejects nonpositive/nonfinite dt "
+                "but currently has no finite upper accepted-step guard"
+            ),
+            "theorem_effect": (
+                "continuous H/A transition and process-noise enclosure cannot be source-complete "
+                "until accepted dt has a finite implementation/configuration upper bound"
+            ),
+        },
+        "validated_ou_primitive_backend": {
+            "available": True,
+            "requires_finite_h_upper": True,
+            "backend": "EXACT_RATIONAL_TAYLOR_WITH_LAGRANGE_REMAINDER",
+            "theorem_promotion": "BLOCKED_BY_UNBOUNDED_ACCEPTED_DT",
+        },
         "discrete_source_branches": {
             "mode": ["H", "A"],
             "accelerometer_gate": ["accepted", "rejected"],
@@ -265,9 +384,10 @@ def build(header: Path) -> dict:
             "metric_consequence": "inverse-covariance information energy is nonexpansive",
         },
         "promotion_rule": (
-            "the validated_parameter_box closes only the source-boundary arithmetic; theorem "
-            "promotion still requires outward-rounded interval/Taylor-model propagation of "
-            "the complete H/A Riccati words, nonlinear SO(3) remainder and remaining jumps"
+            "the validated_parameter_box closes source-boundary scalar arithmetic, and a validated "
+            "OU primitive backend now exists; deployment promotion still requires a finite source-derived "
+            "accepted-dt upper bound followed by full H/A matrix/Taylor propagation, nonlinear SO(3) "
+            "remainder bounds and remaining jump certificates"
         ),
     }
 
