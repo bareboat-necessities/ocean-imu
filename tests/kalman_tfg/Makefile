@@ -24,7 +24,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = lie_group-test convention-test ou_chain_identity-test tfg_propagation-test tfg_jacobians-test covariance_transport-test tfg_process_covariance-test tfg_orchestrator-test kalman_tfg-sim
+TARGETS = lie_group-test convention-test ou_chain_identity-test tfg_propagation-test tfg_jacobians-test covariance_transport-test tfg_process_covariance-test tfg_orchestrator-test kalman_tfg-sim kalman_tfg-legacy-sim
 
 all: build test
 
@@ -60,8 +60,11 @@ tfg_process_covariance-test: tfg_process_covariance-test.o
 tfg_orchestrator-test: tfg_orchestrator-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Needs W3dSimCommon for the shared runner, scoring and record loading.
+# Need W3dSimCommon for the shared runner, scoring and record loading.
 kalman_tfg-sim: kalman_tfg-sim.o W3dSimCommon.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+kalman_tfg-legacy-sim: kalman_tfg-legacy-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # -MMD -MP records the headers each object depends on, so editing a group or
