@@ -15,8 +15,7 @@ on:
       - "tools/ou3_p5_sample1_prefix_v2.py"
       - "tools/ou3_p5_sample1_rotation_gauge_refinement.py"
       - "tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py"
-      - "tools/ou3_p5_sample1_schur_gain_refinement.py"
-      - "tools/ou3_p5_sample1_crosscov_gain_refinement.py"
+      - "tools/ou3_p5_sample1_transported_crosscov_refinement.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v3.py"
@@ -25,7 +24,7 @@ on:
       - "tools/ou3_startup_stability_certificate.py"
       - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p5_sample1_crosscov_gain_refinement.py"
+      - "tests/validation/test_ou3_p5_sample1_transported_crosscov_refinement.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
 
@@ -37,13 +36,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-crosscov-refinement:
-    name: P5 sample-1 cross-covariance gain refinement
+  transported-crosscov:
+    name: P5 sample-1 transported first-posterior cross covariance
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - name: Compile focused producers
+      - name: Compile focused producer
         run: |
           python3 -m py_compile \
             tools/ou3_p5_first_accel_rotation_gauge.py \
@@ -58,27 +57,26 @@ jobs:
             tools/ou3_p5_sample1_prefix_v2.py \
             tools/ou3_p5_sample1_rotation_gauge_refinement.py \
             tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py \
-            tools/ou3_p5_sample1_schur_gain_refinement.py \
-            tools/ou3_p5_sample1_crosscov_gain_refinement.py \
-            tests/validation/test_ou3_p5_sample1_crosscov_gain_refinement.py
-      - name: Test cross-covariance refinement semantics
+            tools/ou3_p5_sample1_transported_crosscov_refinement.py \
+            tests/validation/test_ou3_p5_sample1_transported_crosscov_refinement.py
+      - name: Test transported cross-covariance semantics
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p5_sample1_crosscov_gain_refinement
-      - name: Emit cross-covariance result
+        run: python3 -m unittest -v test_ou3_p5_sample1_transported_crosscov_refinement
+      - name: Emit transported cross-covariance result
         run: |
-          python3 tools/ou3_p5_sample1_crosscov_gain_refinement.py \
+          python3 tools/ou3_p5_sample1_transported_crosscov_refinement.py \
             --source-pieces 2 --source-cell-index 0 \
             --delta-pieces 8 --force-pieces 4 \
-            --output /tmp/p5_crosscov.json
+            --output /tmp/p5_tcross.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_crosscov.json'))
-          print('P5_CROSSCOV_STATUS:',d['P5_SAMPLE1_CROSSCOV_GAIN_WITNESS_REFINEMENT'])
-          print('P5_CROSSCOV_CELLS:',d['evaluated_joint_cells'])
-          print('P5_CROSSCOV_MAX_C:',d['max_Ctheta_norm_upper'])
-          print('P5_CROSSCOV_MAX_K:',d['max_Ktheta_norm_upper'])
-          print('P5_CROSSCOV_MAX_RESIDUAL:',d['max_sample1_acc_residual_norm_upper_mps2'])
-          print('P5_CROSSCOV_MAX_D:',d['max_sample1_acc_correction_norm_upper_rad'])
-          print('P5_CROSSCOV_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
-          print('P5_CROSSCOV_NEXT:',d['next_obligation'])
+          d=json.load(open('/tmp/p5_tcross.json'))
+          print('P5_TCROSS_STATUS:',d['P5_SAMPLE1_TRANSPORTED_CROSSCOV_WITNESS_REFINEMENT'])
+          print('P5_TCROSS_CELLS:',d['evaluated_joint_cells'])
+          print('P5_TCROSS_MAX_REF_C:',d['max_transported_reference_Ctheta_norm_upper'])
+          print('P5_TCROSS_MAX_MISMATCH_C:',d['max_reference_mismatch_Ctheta_norm_upper'])
+          print('P5_TCROSS_MAX_ACTUAL_C:',d['max_actual_Ctheta_norm_upper'])
+          print('P5_TCROSS_MAX_D:',d['max_sample1_acc_correction_norm_upper_rad'])
+          print('P5_TCROSS_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
+          print('P5_TCROSS_NEXT:',d['next_obligation'])
           PY
