@@ -32,14 +32,17 @@ class Ou3P5CompleteWordTransportTests(unittest.TestCase):
         self.assertTrue(d["full_S_to_attitude_gain_retained"])
         self.assertTrue(d["sequential_immediate_quaternion_resets_retained"])
 
-    def test_gauged_word_now_names_first_S_exact_prefix_as_narrower_obstruction(self):
+    def test_gauged_word_consumes_widened_first_S_and_names_later_budget(self):
         g = self.d["gauged_H"]
         self.assertEqual(g["finite_angle_information_geometry"], "PASS")
         self.assertEqual(g["exact_correction_transport_algebra"], "PASS")
-        self.assertEqual(g["first_due_S_exact_prefix"], "NOT_ESTABLISHED")
+        self.assertEqual(g["first_due_S_exact_prefix"], "PASS_WIDENED_CHART")
+        self.assertFalse(g["diagnostic_q_lt_1_is_promotion_gate"])
+        self.assertGreater(g["widened_prefix_antipodal_margin_lower"], 0.0)
+        self.assertGreater(g["widened_prefix_vector_information_vs_goLive_metric_lower"], 0.0)
         self.assertEqual(
             g["first_unclosed_numerical_obligation"],
-            "FIRST_DUE_S_EXACT_CAYLEY_PREFIX_NOT_CERTIFIED_WITH_CURRENT_STAGED_BOUND",
+            "COMPLETE_WORD_ETA_RESET_INFORMATION_BUDGET_NOT_CERTIFIED",
         )
         self.assertEqual(g["complete_word_numerical_status"], "NOT_ESTABLISHED")
 
