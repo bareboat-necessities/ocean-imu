@@ -235,4 +235,5 @@ assume scalar Wahba gains, and does not resurrect a Euclidean-radius certificate
 The remaining P5 numerical task is to outward-enclose
 Eq.~\eqref{eq:widen-large-angle-sector} on the gauged $q\simeq0.27$ and
 $q\simeq0.60$ H nodes using the same correlated covariance/gain tuples and the
-exact quaternion/Rodrigues backend.
+exact quaternion/Rodrigues backend.  The chart excludes the antipodal set and
+all quantitative claims remain regional; no global MEKF claim is made.
