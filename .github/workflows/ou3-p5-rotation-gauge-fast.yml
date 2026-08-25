@@ -1,6 +1,6 @@
 name: ou3-p5-rotation-gauge-fast
 
-# Active focused route: exact source-reachable first accelerometer geometry.
+# Active focused route: exact source-reachable first accelerometer through deployed injection/reset.
 on:
   pull_request:
     paths:
@@ -9,6 +9,8 @@ on:
       - "tools/ou3_p5_first_accel_structured_gain.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
+      - "tools/ou3_p5_first_accel_post_reset.py"
+      - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells_v3.py"
@@ -19,6 +21,7 @@ on:
       - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p5_first_accel_exact_source.py"
+      - "tests/validation/test_ou3_p5_first_accel_post_reset.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
 
@@ -30,40 +33,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  exact-source-first-accel:
-    name: P5 exact-source first accelerometer
+  exact-source-first-accel-post-reset:
+    name: P5 exact-source first accelerometer through reset
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - name: Compile exact-source first-accelerometer producer
+      - name: Compile exact-source first-accelerometer/reset producers
         run: |
           python3 -m py_compile \
             tools/ou3_p5_first_accel_rotation_gauge_v3.py \
             tools/ou3_p5_first_accel_structured_gain.py \
             tools/ou3_p5_first_accel_exact_source.py \
             tools/ou3_p5_first_accel_exact_source_v2.py \
-            tests/validation/test_ou3_p5_first_accel_exact_source.py
-      - name: Test exact-source first-accelerometer semantics
+            tools/ou3_p5_first_accel_post_reset.py \
+            tests/validation/test_ou3_p5_first_accel_exact_source.py \
+            tests/validation/test_ou3_p5_first_accel_post_reset.py
+      - name: Test exact-source first-accelerometer/reset semantics
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p5_first_accel_exact_source
-      - name: Emit exact-source first-accelerometer result
         run: |
-          python3 tools/ou3_p5_first_accel_exact_source_v2.py \
+          python3 -m unittest -v \
+            test_ou3_p5_first_accel_exact_source \
+            test_ou3_p5_first_accel_post_reset
+      - name: Emit exact-source first-accelerometer post-reset result
+        run: |
+          python3 tools/ou3_p5_first_accel_post_reset.py \
             --source-pieces 2 \
-            --output /tmp/ou3_p5_first_accel_exact_source.json
+            --output /tmp/ou3_p5_first_accel_post_reset.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p5_first_accel_exact_source.json'))
-          print('P5_FIRST_ACCEL_EXACT_SOURCE:', d['P5_FIRST_ACCEL_EXACT_SOURCE_CERTIFICATE'])
-          print('P5_EXACT_SOURCE_CELLS:', d['evaluated_source_phase_cells'])
-          print('P5_EXACT_SOURCE_Q_FULL:', d['post_prediction_full_cayley_norm_upper'])
-          print('P5_EXACT_SOURCE_Q_TANGENT:', d['post_prediction_cayley_tangent_norm_upper'])
-          print('P5_EXACT_SOURCE_FORCE:', d['first_accel_specific_force_magnitude_mps2'])
-          print('P5_EXACT_SOURCE_MAX_K:', d['max_Ktheta_norm_upper'])
-          print('P5_EXACT_SOURCE_MAX_D:', d['max_first_accelerometer_correction_norm_upper_rad'])
-          print('P5_EXACT_SOURCE_MARGIN:', d['minimum_correction_range_margin_rad'])
-          print('P5_EXACT_SOURCE_OVER_LIMIT:', d['children_above_validated_correction_limit'])
-          print('P5_EXACT_SOURCE_FIRST_UNCLOSED:', d['first_unclosed_child'])
-          print('P5_EXACT_SOURCE_NEXT:', d['next_obligation'])
+          d=json.load(open('/tmp/ou3_p5_first_accel_post_reset.json'))
+          print('P5_FIRST_ACCEL_POST_RESET:', d['P5_FIRST_ACCEL_POST_RESET_PREFIX_CERTIFICATE'])
+          print('P5_POST_RESET_Q_BEFORE:', d['pre_accel_cayley_norm_upper'])
+          print('P5_POST_RESET_D_MAX:', d['accepted_accel_correction_norm_upper_rad'])
+          print('P5_POST_RESET_THETA_AFTER:', d['post_accel_geodesic_angle_upper_rad'])
+          print('P5_POST_RESET_Q_AFTER:', d['post_accel_cayley_norm_upper'])
+          print('P5_POST_RESET_OPERATOR_NORM:', d['reset_operator_norm_upper'])
+          print('P5_POST_RESET_COV_MULTIPLIER:', d['reset_covariance_quadratic_multiplier_upper'])
+          print('P5_POST_RESET_NEXT:', d['next_obligation'])
           PY
