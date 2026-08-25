@@ -37,7 +37,23 @@ class Ou3P5OuterHBridgeCertificateTests(unittest.TestCase):
             self.assertTrue(n["raw_V_R_sector_witness_inside_node"])
             self.assertFalse(n["raw_V_R_sector_is_P5_promotion_route"])
             self.assertTrue(n["source_shaped_Cayley_information_outer_sector_required"])
-            self.assertEqual(n["source_shaped_Cayley_information_outer_sector_status"], "NOT_ESTABLISHED")
+
+    def test_finite_angle_information_geometry_is_now_closed_on_both_nodes(self):
+        d = self.d
+        fi = d["finite_angle_information_geometry"]
+        self.assertEqual(fi["status"], "PASS")
+        self.assertEqual(fi["complete_word_sector"], "NOT_ESTABLISHED")
+        self.assertIn("eta^T R^-1 eta", fi["exact_joseph_tangent_information_identity"])
+        for n in d["gauged_full_heading_nodes"].values():
+            self.assertEqual(n["finite_angle_information_geometry_status"], "PASS")
+            self.assertGreater(n["exact_cayley_residual_factor_lower"], 0.0)
+            self.assertGreater(n["exact_pair_residual_information_per_cayley_norm_sq_lower"], 0.0)
+            self.assertGreater(n["exact_pair_residual_information_vs_goLive_attitude_metric_lower"], 0.0)
+            self.assertTrue(n["source_correlated_Joseph_information_identity_retained"])
+            self.assertEqual(
+                n["source_shaped_Cayley_information_outer_sector_status"],
+                "PARTIAL_GEOMETRY_PASS_WORD_TRANSPORT_PENDING",
+            )
 
     def test_bridge_uses_full_attitude_gauged_nodes_not_tilt_only_cosines(self):
         d = self.d
@@ -50,29 +66,35 @@ class Ou3P5OuterHBridgeCertificateTests(unittest.TestCase):
             self.assertTrue(n["inside_candidate_outer_cayley_bootstrap"])
             self.assertTrue(n["S_induced_correction_inside_group_helper"])
 
-    def test_yaw_only_quotient_zero_dynamics_is_consumed(self):
+    def test_detectable_gravity_quotient_replaces_false_yaw_only_route(self):
         d = self.d
         q = d["yaw_only_quotient_audit"]
         self.assertEqual(q["obstruction_identified"], "PASS")
         self.assertEqual(q["status"], "NOT_ESTABLISHED")
-        self.assertTrue(q["witness"]["zero_dynamics_source_word_valid"])
+        dq = d["detectable_gravity_quotient"]
+        self.assertEqual(dq["status"], "PASS")
+        self.assertEqual(dq["complete_word_status"], "NOT_ESTABLISHED")
+        self.assertGreater(dq["reduced_attitude_bias_information"]["alpha_4_quotient_information_lower"], 0.0)
+        self.assertTrue(dq["translation_word"]["source_complete"])
+        self.assertIn("NEUTRAL_BOUNDED", dq["axial_gyro_bias_role"])
         u = d["ungauged_timeout_route"]
         self.assertTrue(u["yaw_only_quotient_disproved"])
+        self.assertEqual(u["reduced_detectability_certificate"], "PASS")
         self.assertFalse(u["full_heading_cayley_bound_available"])
         self.assertIn("AXIAL_GYRO_BIAS", u["required_route"])
 
-    def test_next_obligations_are_the_corrected_metric_and_quotient(self):
+    def test_next_obligations_are_exact_complete_word_transport(self):
         d = self.d
         self.assertEqual(
             d["gauged_full_heading_first_failure"],
-            "SOURCE_SHAPED_CAYLEY_INFORMATION_OUTER_SECTOR_NOT_CERTIFIED",
+            "COMPLETE_SOURCE_WORD_EXACT_CAYLEY_INFORMATION_TRANSPORT_NOT_CERTIFIED",
         )
         self.assertEqual(
             d["first_failure"],
-            "OBSERVABLE_GRAVITY_ONLY_QUOTIENT_WORD_NOT_CERTIFIED",
+            "GRAVITY_QUOTIENT_NONLINEAR_SOURCE_WORD_NOT_CERTIFIED",
         )
-        self.assertIn("Cayley/information", d["next_full_heading_numerical_certificate"])
-        self.assertIn("axial gyro-bias", d["next_complete_startup_family_certificate"])
+        self.assertIn("complete 1 s source-correlated H word", d["next_full_heading_numerical_certificate"])
+        self.assertIn("b_g_parallel", d["next_complete_startup_family_certificate"])
         self.assertEqual(d["P5_OUTER_H_BRIDGE_CERTIFICATE"], "NOT_ESTABLISHED")
         self.assertIsNone(d["N_H_words"])
 
