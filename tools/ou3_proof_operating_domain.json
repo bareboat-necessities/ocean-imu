@@ -36,7 +36,15 @@
     "body_rate_norm_upper_deg_s": 30.0,
     "active_accelerometer_bias_state_norm_upper_mps2": 0.45,
     "active_accelerometer_bias_projection_limit_mps2": 0.5,
-    "pe_scope_note": "The full-heading theorem excludes free-fall/near-free-fall and magnetic fields within 5.74 deg of gravity. The 5 m/s^2 force floor and 10 uT field floor are declared deployment assumptions, not replay-derived extrema; gravity-only/yaw-quotient operation is certified separately rather than pretending heading is observable outside this PE envelope. The quantitative P4 certificate also binds the deployed default with optional IMU lever-arm compensation disabled; enabling a nonzero lever arm requires extending the source-domain nonlinear remainder bound with the configured geometry. In A mode the normal-Live source node is restricted to a 0.45 m/s^2 bias-state ball, strictly inside the shipping 0.5 m/s^2 projection ball, so the very small certified P4 inner funnel never crosses the nonsmooth saturation surface. Boundary/saturated bias states remain a separate outer/hybrid recapture obligation rather than being silently treated as differentiable."
+    "gravity_quotient": {
+      "accepted_packet_recurrence_window_s": 1.0,
+      "accepted_packet_separation_min_s": 0.04,
+      "accepted_packet_separation_max_s": 1.0,
+      "non_gravitational_specific_force_norm_upper_mps2": 4.0,
+      "axial_gyro_bias_is_neutral_input": true,
+      "note": "Conditional gravity-only theorem hypothesis: before magnetic regauging, every quotient word contains two accepted accelerometer packets separated inside the declared interval and satisfying the stated non-gravitational force bound. The axial body gyro-bias is carried as a bounded detectability input rather than assigned a fictitious strict contraction."
+    },
+    "pe_scope_note": "The full-heading theorem excludes free-fall/near-free-fall and magnetic fields within 5.74 deg of gravity. The 5 m/s^2 force floor and 10 uT field floor are declared deployment assumptions, not replay-derived extrema; gravity-only/yaw-quotient operation has its own explicit accepted-gravity-packet recurrence hypothesis rather than pretending heading or the gravity-parallel gyro-bias is observable. The quantitative P4 certificate also binds the deployed default with optional IMU lever-arm compensation disabled; enabling a nonzero lever arm requires extending the source-domain nonlinear remainder bound with the configured geometry. In A mode the normal-Live source node is restricted to a 0.45 m/s^2 bias-state ball, strictly inside the shipping 0.5 m/s^2 projection ball, so the very small certified P4 inner funnel never crosses the nonsmooth saturation surface. Boundary/saturated bias states remain a separate outer/hybrid recapture obligation rather than being silently treated as differentiable."
   },
   "stochastic": {
     "finite_horizon_failure_probability_budget": 0.05
