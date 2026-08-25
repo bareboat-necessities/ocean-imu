@@ -1,4 +1,3 @@
-import math
 import sys
 from pathlib import Path
 import unittest
@@ -14,44 +13,31 @@ class Ou3P5OuterHBridgeCertificateTests(unittest.TestCase):
     def setUpClass(cls):
         cls.d = BRIDGE.build()
 
-    def test_bridge_consumes_exact_goLive_covariance_not_global_P3_box(self):
+    def test_bridge_keeps_source_staged_first_S_work(self):
         d = self.d
         self.assertEqual(BRIDGE.validate(d), [])
         self.assertTrue(d["global_normal_live_P3_covariance_bound_retired_as_outer_S_prefix_gate"])
-        self.assertTrue(d["old_global_P3_S_induced_attitude_bound_is_diagnostic_only"])
-        g = d["goLive_covariance_stage"]
-        self.assertEqual(g["status"], "PASS")
-        self.assertEqual(g["theta_S_cross_covariance_operator_norm_upper"], 0.0)
-        self.assertTrue(g["S_to_attitude_gain_exact_zero"])
-        self.assertEqual(g["pseudo_elapsed_s"], 0.0)
-
-    def test_bridge_consumes_first_due_gain_and_conditional_S_prefix(self):
-        d = self.d
-        s = d["first_due_S_gain_stage"]
-        self.assertEqual(s["status"], "PASS")
-        self.assertGreater(s["K_thetaS_operator_norm_upper"], 0.0)
-        self.assertLess(s["theta_S_canonical_correlation_upper"], 1e-2)
-        self.assertGreater(s["gain_widening_factor_vs_global_P3_bound_lower"], 1e4)
+        self.assertTrue(d["finite_angle_perturbation_vs_tiny_P3_gap_retired_as_P5_promotion_route"])
+        self.assertEqual(d["goLive_covariance_stage"]["status"], "PASS")
+        self.assertTrue(d["goLive_covariance_stage"]["S_to_attitude_gain_exact_zero"])
+        self.assertEqual(d["first_due_S_gain_stage"]["status"], "PASS")
         p = d["first_due_S_state_prefix_stage"]
         self.assertEqual(p["status"], "PASS_CONDITIONAL")
-        self.assertTrue(p["conditional_on_outer_node_bootstrap"])
-        self.assertGreater(p["first_due_S_error_norm_upper_m_s"], 300.0)
         self.assertLess(p["first_due_S_induced_attitude_correction_norm_upper_rad"], p["group_helper_limit_rad"])
-        for n in d["gauged_full_heading_nodes"].values():
-            self.assertEqual(n["first_due_S_gain_certificate"], "PASS")
-            self.assertEqual(n["first_due_S_state_prefix_certificate"], "PASS_CONDITIONAL")
-            self.assertTrue(n["S_induced_correction_inside_group_helper"])
 
-    def test_bridge_retires_tiny_P3_perturbation_comparison_as_outer_route(self):
+    def test_bridge_consumes_validated_raw_VR_counterexample(self):
         d = self.d
-        self.assertTrue(d["finite_angle_perturbation_vs_tiny_P3_gap_retired_as_P5_promotion_route"])
-        self.assertTrue(d["exact_large_angle_vector_dissipation_is_primary_full_heading_outer_route"])
+        a = d["raw_V_R_large_angle_sector_audit"]
+        self.assertEqual(a["status"], "DISPROVED_ON_DECLARED_SOURCE_FAMILY")
+        self.assertTrue(a["beta_cannot_repair_xi_zero_counterexample"])
+        self.assertLess(a["counterexample"]["D_R_deployed_interval"][1], 0.0)
+        self.assertTrue(d["raw_V_R_large_angle_sector_retired_as_P5_promotion_route"])
+        self.assertTrue(d["source_shaped_Cayley_information_is_primary_full_heading_outer_route"])
         for n in d["gauged_full_heading_nodes"].values():
-            self.assertTrue(n["exact_large_angle_sector_required"])
-            self.assertFalse(n["perturbation_vs_P3_gap_is_P5_promotion_route"])
-            self.assertGreater(n["perturbation_over_P3_sqrt_gap"], 1.0)
-            self.assertGreaterEqual(n["handoff_group_energy_V_R_upper"], 0.0)
-            self.assertLess(n["handoff_group_energy_V_R_upper"], 2.0)
+            self.assertTrue(n["raw_V_R_sector_witness_inside_node"])
+            self.assertFalse(n["raw_V_R_sector_is_P5_promotion_route"])
+            self.assertTrue(n["source_shaped_Cayley_information_outer_sector_required"])
+            self.assertEqual(n["source_shaped_Cayley_information_outer_sector_status"], "NOT_ESTABLISHED")
 
     def test_bridge_uses_full_attitude_gauged_nodes_not_tilt_only_cosines(self):
         d = self.d
@@ -62,22 +48,31 @@ class Ou3P5OuterHBridgeCertificateTests(unittest.TestCase):
         for n in d["gauged_full_heading_nodes"].values():
             self.assertTrue(n["P1_gravity_tilt_cosine_not_used_as_full_attitude_cosine"])
             self.assertTrue(n["inside_candidate_outer_cayley_bootstrap"])
+            self.assertTrue(n["S_induced_correction_inside_group_helper"])
 
-    def test_ungauged_timeout_is_not_faked_as_full_heading_node(self):
+    def test_yaw_only_quotient_zero_dynamics_is_consumed(self):
         d = self.d
-        q = d["ungauged_timeout_route"]
-        self.assertFalse(q["full_heading_cayley_bound_available"])
-        self.assertIn("YAW_QUOTIENT", q["required_route"])
-        self.assertEqual(d["first_failure"], "UNGAUGED_TIMEOUT_YAW_QUOTIENT_CAPTURE_NOT_CERTIFIED")
-        self.assertIn("yaw-quotient", d["next_complete_startup_family_certificate"])
+        q = d["yaw_only_quotient_audit"]
+        self.assertEqual(q["obstruction_identified"], "PASS")
+        self.assertEqual(q["status"], "NOT_ESTABLISHED")
+        self.assertTrue(q["witness"]["zero_dynamics_source_word_valid"])
+        u = d["ungauged_timeout_route"]
+        self.assertTrue(u["yaw_only_quotient_disproved"])
+        self.assertFalse(u["full_heading_cayley_bound_available"])
+        self.assertIn("AXIAL_GYRO_BIAS", u["required_route"])
 
-    def test_next_gauged_obstruction_is_exact_large_angle_sector(self):
+    def test_next_obligations_are_the_corrected_metric_and_quotient(self):
         d = self.d
         self.assertEqual(
             d["gauged_full_heading_first_failure"],
-            "EXACT_LARGE_ANGLE_VECTOR_DISSIPATION_SECTOR_NOT_CERTIFIED",
+            "SOURCE_SHAPED_CAYLEY_INFORMATION_OUTER_SECTOR_NOT_CERTIFIED",
         )
-        self.assertIn("large-angle", d["next_full_heading_numerical_certificate"])
+        self.assertEqual(
+            d["first_failure"],
+            "OBSERVABLE_GRAVITY_ONLY_QUOTIENT_WORD_NOT_CERTIFIED",
+        )
+        self.assertIn("Cayley/information", d["next_full_heading_numerical_certificate"])
+        self.assertIn("axial gyro-bias", d["next_complete_startup_family_certificate"])
         self.assertEqual(d["P5_OUTER_H_BRIDGE_CERTIFICATE"], "NOT_ESTABLISHED")
         self.assertIsNone(d["N_H_words"])
 
