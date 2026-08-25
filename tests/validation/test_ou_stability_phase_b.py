@@ -85,12 +85,16 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         self.assertNotIn(r"\label{eq:hybrid-cycle-bounds}", hybrid)
         self.assertNotIn(r"\label{eq:hybrid-recurrent-bound}", hybrid)
 
-    def test_quotient_uses_same_source_funnel_construction(self):
+    def test_quotient_uses_detectable_schur_metric_and_neutral_axial_bias(self):
         hybrid = _read(DOC / "w3d-hybrid-stability.tex-part")
         flat = _flat(hybrid)
         for marker in (
             r"\label{sec:hybrid-quotient-capture}",
+            r"\label{eq:hybrid-quotient-bias-split}",
             r"\label{eq:hybrid-quotient-metric}",
+            r"\label{eq:hybrid-quotient-gravity-packet}",
+            r"\label{eq:hybrid-quotient-tilt-information}",
+            r"\label{eq:hybrid-quotient-detectability}",
             r"\label{eq:hybrid-quotient-word}",
             r"\label{thm:hybrid-quotient-capture}",
             r"\mathcal H^\perp",
@@ -98,7 +102,11 @@ class OUIIIStabilityPhaseBContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, hybrid)
         self.assertIn("source-complete funnel recursion", flat)
+        self.assertIn("No strict contraction of", flat)
+        self.assertIn("neutral/detectability input", flat)
+        self.assertIn("not an assertion that different axial gyro biases are physically equivalent", flat)
         self.assertNotIn("finite capture modulo yaw", flat)
+        self.assertNotIn("descends unchanged to the quotient state/mode space", flat)
 
     def test_source_tilt_relock_still_matches_proof(self):
         src = _read(SRC / "SeaStateFusionFilter_OU_III.h")
