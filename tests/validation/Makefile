@@ -36,7 +36,9 @@ build:
 		../../tools/ou3_p5_first_s_state_prefix_certificate.py \
 		../../tools/ou3_p5_heading_handoff_contract.py \
 		../../tools/ou3_p5_large_angle_sector_certificate.py \
+		../../tools/ou3_p5_outer_information_geometry.py \
 		../../tools/ou3_p5_yaw_quotient_word_certificate.py \
+		../../tools/ou3_p5_gravity_quotient_certificate.py \
 		../../tools/ou3_p5_outer_h_bridge_certificate.py \
 		../../tools/ou3_implementation_proof_manifest.py \
 		../../tools/ou3_startup_stability_certificate.py \
@@ -75,7 +77,9 @@ build:
 		test_ou3_p5_first_s_state_prefix_certificate.py \
 		test_ou3_p5_heading_handoff_contract.py \
 		test_ou3_p5_large_angle_sector_certificate.py \
+		test_ou3_p5_outer_information_geometry.py \
 		test_ou3_p5_yaw_quotient_word_certificate.py \
+		test_ou3_p5_gravity_quotient_certificate.py \
 		test_ou3_p5_outer_h_bridge_certificate.py \
 		test_ou3_startup_stability_certificate.py \
 		test_ou3_implementation_word_language.py \
