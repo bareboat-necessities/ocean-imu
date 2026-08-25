@@ -1,0 +1,156 @@
+name: actions-history-cleanup
+
+on:
+  schedule:
+    # Hourly, off the top of the hour to avoid the busiest scheduling slot.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'List the runs that would be deleted without deleting them'
+        type: boolean
+        default: false
+      min_age_minutes:
+        description: 'Only delete runs whose final state is at least this old'
+        type: string
+        default: '60'
+      max_deletions:
+        description: 'Safety cap on how many runs a single pass may delete'
+        type: string
+        default: '300'
+
+# Cancelled and skipped runs carry no evidence: a cancelled run produced no
+# verdict and a skipped one never executed. They accumulate in the Actions
+# history and bury the runs that do carry results (success, failure,
+# timed_out, ...), which are the record this project relies on. This job
+# removes only that no-evidence residue and nothing else. Note that the API
+# deletes whole runs, not individual jobs, so a run is removed only when the
+# run's own conclusion is cancelled or skipped.
+permissions:
+  contents: read
+
+concurrency:
+  group: actions-history-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      # Deleting workflow runs requires write access to Actions. Nothing else
+      # in this workflow touches repository contents.
+      actions: write
+
+    steps:
+      - name: Delete cancelled and skipped workflow runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SELF_RUN_ID: ${{ github.run_id }}
+          DRY_RUN: ${{ inputs.dry_run || false }}
+          MIN_AGE_MINUTES: ${{ inputs.min_age_minutes || '60' }}
+          MAX_DELETIONS: ${{ inputs.max_deletions || '300' }}
+        run: |
+          set -euo pipefail
+
+          case "$MIN_AGE_MINUTES" in
+            ''|*[!0-9]*) echo "min_age_minutes must be a non-negative integer" >&2; exit 1 ;;
+          esac
+          case "$MAX_DELETIONS" in
+            ''|*[!0-9]*|0) echo "max_deletions must be a positive integer" >&2; exit 1 ;;
+          esac
+
+          # Runs that reached their final state very recently are left alone:
+          # they may still be under inspection, and the next hourly pass will
+          # pick them up anyway.
+          cutoff="$(date -u -d "-${MIN_AGE_MINUTES} minutes" +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Repository:       $REPO"
+          echo "Deleting runs in conclusion cancelled/skipped older than $cutoff"
+          echo "Safety cap:       $MAX_DELETIONS deletions"
+          echo "Dry run:          $DRY_RUN"
+
+          candidates="$(mktemp)"
+
+          # The API's `status` filter accepts conclusion values, so each pass
+          # asks the server for one conclusion only. The jq filter then
+          # re-checks the run's own fields, so a server-side filter change
+          # can never widen what this job deletes.
+          for conclusion in cancelled skipped; do
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              --method GET \
+              --paginate \
+              --field per_page=100 \
+              --field status="$conclusion" \
+              --field exclude_pull_requests=true \
+              "repos/${REPO}/actions/runs" \
+              --jq '
+                .workflow_runs[]
+                | select(.status == "completed")
+                | select(.conclusion == "cancelled" or .conclusion == "skipped")
+                | [.id, .conclusion, .updated_at, .name] | @tsv
+              ' >> "$candidates"
+          done
+
+          # Apply the age window, exclude this very run, and cap the batch.
+          selected="$(mktemp)"
+          awk -F'\t' -v cutoff="$cutoff" -v self="$SELF_RUN_ID" -v cap="$MAX_DELETIONS" '
+            $1 != self && $3 < cutoff && n < cap { print; n++ }
+          ' "$candidates" | sort -u > "$selected"
+
+          total_candidates="$(wc -l < "$candidates" | tr -d ' ')"
+          total_selected="$(wc -l < "$selected" | tr -d ' ')"
+          echo "Cancelled/skipped runs found: $total_candidates"
+          echo "Eligible for deletion now:    $total_selected"
+
+          if [ "$total_selected" -eq 0 ]; then
+            echo "Nothing to clean up."
+            exit 0
+          fi
+
+          deleted=0
+          failed=0
+          while IFS=$'\t' read -r id conclusion updated name; do
+            [ -n "${id:-}" ] || continue
+            echo "  $conclusion  $updated  run $id  ($name)"
+            if [ "$DRY_RUN" = "true" ]; then
+              continue
+            fi
+            # Re-read the run immediately before deleting: this is the last
+            # line of defence against deleting anything that is not a
+            # completed cancelled/skipped run.
+            state="$(gh api "repos/${REPO}/actions/runs/${id}" \
+              --jq '"\(.status)/\(.conclusion)"' </dev/null 2>/dev/null || true)"
+            case "$state" in
+              completed/cancelled|completed/skipped) ;;
+              *)
+                echo "    skipped: run state is now '${state:-unknown}'"
+                continue
+                ;;
+            esac
+            if gh api --method DELETE "repos/${REPO}/actions/runs/${id}" --silent </dev/null; then
+              deleted=$((deleted + 1))
+            else
+              echo "    delete failed for run $id"
+              failed=$((failed + 1))
+            fi
+          done < "$selected"
+
+          {
+            echo "### Actions history cleanup"
+            echo
+            echo "- Cancelled/skipped runs found: \`$total_candidates\`"
+            echo "- Eligible this pass: \`$total_selected\`"
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "- Dry run: nothing was deleted"
+            else
+              echo "- Deleted: \`$deleted\`"
+              echo "- Failed: \`$failed\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$failed" -gt 0 ]; then
+            echo "$failed deletion(s) failed" >&2
+            exit 1
+          fi
