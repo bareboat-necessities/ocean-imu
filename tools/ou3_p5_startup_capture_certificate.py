@@ -61,6 +61,25 @@ def _axis_witnesses(bounds: dict, m_minus: float, q_design: float,
     return rows
 
 
+def _cayley_norm_upper_from_cos_lower(cos_lower: float) -> float:
+    """Tilt-only Cayley witness retained for the retired outer diagnostic.
+
+    P1's input cosine is a gravity-direction/tilt cosine.  The returned value
+    must not be interpreted as a full-heading handoff radius.  It remains only
+    so ``ou3_p5_outer_h_word_certificate`` can demonstrate that its retired
+    perturbative route already fails on an optimistic smaller attitude witness.
+    The actual P5 full-heading nodes come from ``HEADING.build()`` below.
+    """
+    c = float(cos_lower)
+    if not (-1.0 < c <= 1.0):
+        raise RuntimeError("invalid strict tilt cosine lower bound")
+    numerator = P4.up(1.0 - c)
+    denominator = P4.down(1.0 + c)
+    if not denominator > 0.0:
+        raise RuntimeError("tilt witness reaches Cayley singularity")
+    return P4.mul_up(2.0, P4.sqrt_up(P4.div_up(numerator, denominator)))
+
+
 def _uniform_recurrence_B_cap(delta: float, W_lower: float) -> float:
     if not (delta > 0.0 and W_lower > 0.0):
         raise RuntimeError("positive delta and witness W lower bound required")
