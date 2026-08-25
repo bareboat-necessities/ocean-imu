@@ -30,13 +30,21 @@ class Ou3ImplementationStabilityGateTests(unittest.TestCase):
         self.assertFalse(out["P5_finite_startup_capture_pass"])
         self.assertEqual(
             out["P5_first_obstruction"],
-            "UNGAUGED_TIMEOUT_YAW_QUOTIENT_CAPTURE_NOT_CERTIFIED",
+            "OBSERVABLE_GRAVITY_ONLY_QUOTIENT_WORD_NOT_CERTIFIED",
         )
         self.assertEqual(out["P5_identification"]["P5_OBSTRUCTION_IDENTIFIED"], "PASS")
         self.assertEqual(out["P5_bridge"]["P5_OUTER_H_BRIDGE_CERTIFICATE"], "NOT_ESTABLISHED")
         self.assertEqual(
             out["P5_bridge"]["gauged_full_heading_first_failure"],
-            "EXACT_LARGE_ANGLE_VECTOR_DISSIPATION_SECTOR_NOT_CERTIFIED",
+            "SOURCE_SHAPED_CAYLEY_INFORMATION_OUTER_SECTOR_NOT_CERTIFIED",
+        )
+        self.assertEqual(
+            out["P5_bridge"]["raw_V_R_large_angle_sector_audit"]["status"],
+            "DISPROVED_ON_DECLARED_SOURCE_FAMILY",
+        )
+        self.assertEqual(
+            out["P5_bridge"]["yaw_only_quotient_audit"]["obstruction_identified"],
+            "PASS",
         )
         self.assertIsNone(out["P5_bridge"]["N_H_words"])
         self.assertTrue(any("P5 finite startup-to-inner-funnel capture not established" in x for x in out["failures"]))
