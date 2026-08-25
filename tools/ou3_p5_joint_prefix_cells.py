@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""Active joint P5 prefix interface backed by the full 18x18 H cell.
+"""Active joint P5 prefix interface backed by the V3 full 18x18 H cell.
 
 The former version of this producer stopped after a directional P envelope and
 therefore could not form the signed correction direction required by the exact
 Cayley denominator.  The active interface now delegates covariance and
-correction propagation to :mod:`ou3_p5_full_h_prefix_cells`, which carries an
-outward full 18x18 H covariance cell and recomputes P,H,R,S,K,r,d_eff at every
-later prediction/vector/S prefix.
+correction propagation to :mod:`ou3_p5_full_h_prefix_cells_v3`, which carries
+an outward full 18x18 H covariance cell, uses the dependency-preserving OU
+kernel bounds, composes the deployed quaternion correction before forming the
+resulting Cayley coordinate, and recomputes P,H,R,S,K,r,d_eff at every later
+prediction/vector/S prefix.
 
-The old scalar/directional calculation is intentionally not retained as a
-fallback theorem route.  The exact tangent-only magnetic identity, effective
-accelerometer a_w input, signed a^T c denominator, Joseph update and immediate
-reset congruence are mandatory properties of the active backend.  If the broad
-source-complete cell cannot close q<=8, this interface reports its first full
-matrix obstruction and remains NOT_ESTABLISHED; it does not revert to the old
-norm-only word estimate.
+The old scalar/directional calculation and the V1/V2 experimental backends are
+intentionally not retained as fallback theorem routes.  The exact tangent-only
+magnetic identity, effective accelerometer a_w input, signed group composition,
+Joseph update and immediate reset congruence are mandatory properties of the
+active backend.  If the broad source-complete cell cannot close q<=8, this
+interface reports its first V3 full-matrix obstruction and remains
+NOT_ESTABLISHED; it does not revert to an older norm-only or 3-rad route.
 """
 from __future__ import annotations
 
@@ -25,7 +27,7 @@ from pathlib import Path
 
 import ou3_p5_effective_vector_input as VEFF
 import ou3_p5_first_s_exact_prefix as FIRSTS
-import ou3_p5_full_h_prefix_cells as FULL
+import ou3_p5_full_h_prefix_cells_v3 as FULL
 import ou3_p5_mag_information_reduction as MAGINFO
 import ou3_p5_signed_cayley_cell as SIGNED
 
@@ -50,7 +52,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     failures += [f"effective-vector: {x}" for x in VEFF.validate(veff)]
     failures += [f"mag-information: {x}" for x in MAGINFO.validate(mag)]
     failures += [f"signed-Cayley: {x}" for x in SIGNED.validate(signed)]
-    failures += [f"full-H-prefix: {x}" for x in FULL.validate(full)]
+    failures += [f"full-H-prefix-v3: {x}" for x in FULL.validate(full)]
 
     q8_closed = bool(full["complete_q_le_8_prefix_family_closed"])
     matrix_status = full["P5_FULL_H_PREFIX_MATRIX_CERTIFICATE"]
@@ -70,6 +72,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "source_replay_used": False,
         "filter_changed": False,
         "active_P_payload": "OUTWARD_FULL_18X18_H_COVARIANCE_CELL",
+        "active_full_matrix_backend": full["active_interval_backend"],
+        "active_backend_is_v3_deployed_quaternion": True,
         "directional_P_payload_retained_as_active_backend": False,
         "old_directional_scalar_route_used_for_promotion": False,
         "independent_global_extrema_product_used": False,
@@ -92,6 +96,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         },
         "full_matrix_prefix": {
             "status": matrix_status,
+            "active_interval_backend": full["active_interval_backend"],
+            "maximum_validated_deployed_correction_norm_rad": full["maximum_validated_deployed_correction_norm_rad"],
+            "correction_norm_three_rad_is_promotion_gate": full["correction_norm_three_rad_is_promotion_gate"],
+            "deployed_quaternion_composed_before_result_cayley": full["deployed_quaternion_composed_before_result_cayley"],
             "source_cell": full["source_cell"],
             "word_samples_upper": full["word_samples_upper"],
             "inverse_backend_counts": full["inverse_backend_counts"],
@@ -125,7 +133,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "next_obligation": (
             "compose the certified full-matrix H word with the P4 inner overlap and set N_H_words"
             if promoted else
-            "subdivide the reported full-matrix prefix obstruction without dropping P direction, effective-vector identities, signed a^T c, Joseph, or immediate reset congruence"
+            "subdivide the reported full-matrix prefix obstruction without dropping P direction, effective-vector identities, signed group composition, Joseph, or immediate reset congruence"
         ),
         "failures": failures,
     }
@@ -136,7 +144,8 @@ def validate(d: dict) -> list[str]:
     if d.get("schema") != SCHEMA:
         failures.append("schema mismatch")
     for key in (
-        "source_generated_not_trajectory_fit", "full_signed_matrix_covariance_cells_available",
+        "source_generated_not_trajectory_fit", "active_backend_is_v3_deployed_quaternion",
+        "full_signed_matrix_covariance_cells_available",
         "P_H_R_K_S_r_d_eff_recomputed_in_same_prefix_cell", "shipping_Joseph_update_used",
         "immediate_left_error_reset_congruence_used", "physical_attitude_correction_is_minus_Etheta_Kr",
         "signed_cayley_primitive_consumes_actual_interval_d", "magnetometer_radial_K_action_exact_zero",
@@ -155,12 +164,20 @@ def validate(d: dict) -> list[str]:
             failures.append(f"{key} is not false")
     if d.get("active_P_payload") != "OUTWARD_FULL_18X18_H_COVARIANCE_CELL":
         failures.append("active P payload is not the full matrix cell")
+    if "DEPLOYED_QUATERNION_COMPOSITION" not in str(d.get("active_full_matrix_backend", "")):
+        failures.append("active joint backend is not V3 deployed-quaternion backend")
     if d.get("P5_JOINT_PREFIX_SCALAR_CELL_CERTIFICATE") != "RETIRED_AS_ACTIVE_ROUTE":
         failures.append("old scalar route was not retired")
     sc = d.get("signed_cayley", {})
     if sc.get("signed_a_dot_c_retained") is not True or sc.get("independent_abs_a_abs_c_denominator_used") is not False:
         failures.append("signed Cayley denominator semantics changed")
     fm = d.get("full_matrix_prefix", {})
+    if float(fm.get("maximum_validated_deployed_correction_norm_rad", 0.0)) < 6.0:
+        failures.append("joint report regressed to pre-V3 correction range")
+    if fm.get("correction_norm_three_rad_is_promotion_gate") is not False:
+        failures.append("joint report restored retired 3-rad gate")
+    if fm.get("deployed_quaternion_composed_before_result_cayley") is not True:
+        failures.append("joint report is not using deployed quaternion composition")
     q = fm.get("max_reached_cayley_norm_upper")
     if not isinstance(q, (int, float)) or not math.isfinite(float(q)) or float(q) < 0.0:
         failures.append("full matrix prefix did not emit a finite reached Cayley bound")
