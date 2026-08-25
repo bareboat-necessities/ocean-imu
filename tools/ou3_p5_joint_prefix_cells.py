@@ -1,366 +1,131 @@
 #!/usr/bin/env python3
-"""Outward P5 source-cell propagation for the later H-word prefixes.
+"""Active joint P5 prefix interface backed by the full 18x18 H cell.
 
-This is the first numerical layer after the exact effective-vector-input
-lemmas.  It deliberately carries one *joint* source tuple through every scalar
-bound used for a correction cell instead of multiplying independently selected
-global extrema.  Each tuple contains
+The former version of this producer stopped after a directional P envelope and
+therefore could not form the signed correction direction required by the exact
+Cayley denominator.  The active interface now delegates covariance and
+correction propagation to :mod:`ou3_p5_full_h_prefix_cells`, which carries an
+outward full 18x18 H covariance cell and recomputes P,H,R,S,K,r,d_eff at every
+later prediction/vector/S prefix.
 
-  (tau, sigma_aw, R_S, q-cell, P envelope, H, R, S, K, r, d_eff).
-
-The source parameter partition is the same validated partition used by the P3
-matrix certificate.  The attitude Cayley partition is the outward annular
-partition already certified by P5.  For every product cell this module computes
-source-correlated innovation/gain envelopes for the shipping S, accelerometer,
-and magnetometer corrections.  The configured magnetometer uses the exact
-radial-null / tangent-only identity and the accelerometer uses the exact
-``a_w`` effective input; no standalone vector-eta penalty is reintroduced.
-
-This stage also makes an important fail-closed distinction.  The P3 source-cell
-producer currently exports a directional Loewner envelope, not the full signed
-matrix-valued covariance cell.  Such an envelope is sufficient for outward
-S/K norm bounds, but it is *not* sufficient to recover the signed ``a^T c``
-needed by the exact Cayley composition.  Therefore this producer propagates the
-complete scalar P/H/R/S/K/r/d_eff enclosure and records the first place where
-full matrix-direction correlation is still required.  It never replaces that
-missing correlation by ``-|a||c|`` and never promotes P5 from a norm-only cell.
-
-The purpose is twofold: (1) turn the previous prose obligation into numerical
-cells with explicit worst tuples and margins, and (2) identify whether the next
-subdivision must target covariance magnitude, effective-vector geometry, or the
-signed K*r direction.  A later full matrix interval cell producer can replace
-the directional P envelope without changing this interface.
+The old scalar/directional calculation is intentionally not retained as a
+fallback theorem route.  The exact tangent-only magnetic identity, effective
+accelerometer a_w input, signed a^T c denominator, Joseph update and immediate
+reset congruence are mandatory properties of the active backend.  If the broad
+source-complete cell cannot close q<=8, this interface reports its first full
+matrix obstruction and remains NOT_ESTABLISHED; it does not revert to the old
+norm-only word estimate.
 """
 from __future__ import annotations
 
 import argparse
-import functools
 import json
 import math
 from pathlib import Path
 
-import ou3_full_process_ucc as PROCESS
 import ou3_p5_effective_vector_input as VEFF
 import ou3_p5_first_s_exact_prefix as FIRSTS
-import ou3_p5_first_s_state_prefix_certificate as FIRSTSTATE
+import ou3_p5_full_h_prefix_cells as FULL
 import ou3_p5_mag_information_reduction as MAGINFO
-import ou3_source_reachable_matrix_p3 as P3CELL
-import ou3_vector_uco_certificate as VECTOR
-from ou3_interval import Interval
+import ou3_p5_signed_cayley_cell as SIGNED
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
-
-
-def down(x: float) -> float:
-    return math.nextafter(float(x), -math.inf)
-
-
-def up(x: float) -> float:
-    return math.nextafter(float(x), math.inf)
-
-
-def _sqrt_up(x: float) -> float:
-    if not (math.isfinite(x) and x >= 0.0):
-        raise ValueError("finite nonnegative square-root input required")
-    return up(math.sqrt(x))
-
-
-def _source_cells(domain: dict) -> tuple[list[dict], dict]:
-    """Regenerate the P3 H source partition and retain every joint tuple.
-
-    ``mode_cell`` is intentionally called with the same x/sigma/R_S cell.  No
-    extremum from another cell is substituted into its covariance envelope.
-    """
-    live = domain["normal_live"]
-    vector = VECTOR.build()
-    process = PROCESS.build()
-    vf = VECTOR.validate(vector)
-    pf = PROCESS.validate(process)
-    if vf or pf:
-        raise RuntimeError(f"source-cell prerequisites failed: vector={vf}, process={pf}")
-
-    sched = P3CELL.source_schedule()
-    h = float(sched["dt_s"])
-    tau_lo, tau_hi = map(float, sched["tau_applied_invariant_s"])
-    xlo, xhi = h / tau_hi, h / tau_lo
-    edges = P3CELL.geom_edges(xlo, xhi, 24)
-    if xlo < P3CELL.BRANCH_X < xhi:
-        edges = sorted(set(edges + [P3CELL.BRANCH_X]))
-    xcells: list[tuple[Interval, float]] = []
-    for x in P3CELL.interval_cells(edges):
-        xcells.extend(P3CELL.split_x_cell(x))
-    sigmas = P3CELL.interval_cells(P3CELL.geom_edges(0.05, 6.0, 5))
-    rs_lo, rs_hi = map(float, sched["R_S_applied_invariant"])
-    rss = P3CELL.interval_cells(P3CELL.geom_edges(rs_lo, rs_hi, 8))
-    alpha6 = P3CELL.pos(P3CELL.vector_alpha6(live, vector), "declared alpha6")
-
-    out: list[dict] = []
-    index = 0
-    for x, rho_t in xcells:
-        for sigma in sigmas:
-            for rs in rss:
-                c = P3CELL.mode_cell(
-                    "H", x, rho_t, sigma, rs, live, vector, process, sched, alpha6
-                )
-                out.append({
-                    "index": index,
-                    "x_h_over_tau": list(c["x_h_over_tau"]),
-                    "tau_s": list(c["tau_s"]),
-                    "sigma_aw_mps2": list(c["sigma_aw_mps2"]),
-                    "R_S_filter_std": list(c["R_S_filter_std"]),
-                    "P_directional_diagonal_upper": list(c["Sigma_diagonal_upper"]),
-                    "P_scaled_lambda_max_upper": float(c["Sigma_scaled_lambda_max_upper"]),
-                    "P_relative_Riccati_injection_margin_lower": float(c["relative_Riccati_injection_margin_lower"]),
-                    "word_horizon_s_upper": float(c["word_horizon_s_upper"]),
-                })
-                index += 1
-    return out, {
-        "x_cells": len(xcells),
-        "sigma_cells": len(sigmas),
-        "R_S_cells": len(rss),
-        "joint_source_cells": len(out),
-        "source_schedule": sched,
-        "vector": vector,
-    }
-
-
-def _mag_cell(src: dict, qrow: dict, live: dict, vc: dict) -> dict:
-    p = src["P_directional_diagonal_upper"]
-    ptheta = max(map(float, p[0:3]))
-    mlo = float(live["magnetic_vector_norm_lower_uT"])
-    mhi = float(live["magnetic_vector_norm_upper_uT"])
-    rm = up(float(vc["mag_measurement_std_uT"]) ** 2)
-    qlo, qhi = map(float, qrow["q_interval"])
-
-    s_lo = down(rm)
-    s_hi = up(rm + up(mhi * mhi * ptheta))
-    ktheta_hi = _sqrt_up(ptheta / rm)
-    geff_lo = float(qrow["effective_tangent_gain_lower"])
-    geff_hi = float(qrow["effective_tangent_gain_upper"])
-    deff_hi = up(geff_hi * qhi)
-    r_tangent_hi = up(mhi * deff_hi)
-    dtheta_hi = up(ktheta_hi * r_tangent_hi)
-
-    # Same source tuple and same q cell: the useful term is lower-bounded with
-    # its own innovation upper and the exact tangent-only d_eff coercivity.
-    useful_per_cperp2 = down((mlo * mlo * geff_lo * geff_lo) / s_hi)
-    tangent_penalty_ratio = float(
-        qrow["effective_vs_linear_tangent_penalty_information_ratio_upper"]
-    )
-    return {
-        "P_theta_lambda_upper": ptheta,
-        "H_theta_operator_norm_interval_uT": [down(mlo), up(mhi)],
-        "R_variance": rm,
-        "S_innovation_lambda_interval": [s_lo, s_hi],
-        "K_theta_operator_norm_upper": ktheta_hi,
-        "d_eff_norm_upper": deff_hi,
-        "r_tangent_norm_upper": r_tangent_hi,
-        "attitude_injection_norm_upper": dtheta_hi,
-        "effective_tangent_information_per_cperp2_lower": useful_per_cperp2,
-        "linear_cayley_tangent_penalty_ratio_upper": tangent_penalty_ratio,
-        "radial_K_action_exact_zero": True,
-        "radial_Joseph_information_exact_zero": True,
-        "standalone_eta_penalty_used": False,
-        "q_interval": [qlo, qhi],
-    }
-
-
-def _acc_cell(src: dict, qrow: dict, live: dict, vc: dict, aw_radius: float) -> dict:
-    p = src["P_directional_diagonal_upper"]
-    ptheta = max(map(float, p[0:3]))
-    paw = max(map(float, p[15:18]))
-    flo = float(live["specific_force_norm_lower_mps2"])
-    fhi = float(live["specific_force_norm_upper_mps2"])
-    ra = up(float(vc["acc_measurement_std_mps2"]) ** 2)
-    qlo, qhi = map(float, qrow["q_interval"])
-
-    # For the same source cell, Cauchy on the theta/a_w covariance gives
-    # H P H^T <= (|f| sqrt(Ptheta)+sqrt(Paw))^2.  This keeps the two blocks in
-    # one cell rather than selecting Ptheta and Paw from unrelated cells.
-    root = up(fhi * _sqrt_up(ptheta) + _sqrt_up(paw))
-    s_hi = up(ra + up(root * root))
-    ktheta_hi = _sqrt_up(ptheta / ra)
-
-    a_att = float(qrow["acc_effective_aw_attitude_eta_per_vector_norm_upper"])
-    a_lat = float(qrow["acc_effective_aw_latent_cross_gain_upper"])
-    eeta_hi = up(up(a_att * fhi) + up(a_lat * aw_radius))
-    return {
-        "P_theta_lambda_upper": ptheta,
-        "P_aw_lambda_upper": paw,
-        "H_att_operator_norm_interval_mps2": [down(flo), up(fhi)],
-        "H_aw_operator_norm": 1.0,
-        "R_variance": ra,
-        "S_innovation_lambda_interval": [down(ra), s_hi],
-        "K_theta_operator_norm_upper": ktheta_hi,
-        "effective_aw_input_norm_upper_mps2": eeta_hi,
-        "effective_aw_attitude_coefficient": a_att,
-        "effective_aw_latent_coefficient": a_lat,
-        "standalone_eta_penalty_used": False,
-        "exact_effective_input_identity_used": True,
-        "q_interval": [qlo, qhi],
-    }
-
-
-def _S_cell(src: dict, S_radius: float) -> dict:
-    p = src["P_directional_diagonal_upper"]
-    ptheta = max(map(float, p[0:3]))
-    pS = max(map(float, p[12:15]))
-    rs_lo, rs_hi = map(float, src["R_S_filter_std"])
-    if not rs_lo > 0.0:
-        raise RuntimeError("positive R_S standard deviation required")
-    rlo2 = down(rs_lo * rs_lo)
-    rhi2 = up(rs_hi * rs_hi)
-    # Functional-covariance extremum: ||C_thetaS(PSS+R)^-1|| <=
-    # sqrt(Ptheta)/(2 sqrt(R)) for every PSD joint covariance.  It keeps the
-    # complete S->attitude gain and is finite on each R_S source cell.
-    kthetaS = up(_sqrt_up(ptheta) / (2.0 * rs_lo))
-    return {
-        "P_theta_lambda_upper": ptheta,
-        "P_S_lambda_upper": pS,
-        "H_S_operator_norm": 1.0,
-        "R_std_interval": [rs_lo, rs_hi],
-        "R_variance_interval": [rlo2, rhi2],
-        "S_innovation_lambda_interval": [rlo2, up(pS + rhi2)],
-        "K_thetaS_operator_norm_upper": kthetaS,
-        "r_S_state_norm_upper": float(S_radius),
-        "attitude_injection_norm_upper": up(kthetaS * float(S_radius)),
-        "eta_exact_zero": True,
-        "full_S_to_attitude_gain_retained": True,
-    }
-
-
-def _worse(cur: dict | None, value: float, row: dict) -> dict:
-    if cur is None or value > float(cur["value"]):
-        return {"value": float(value), **row}
-    return cur
+SCHEMA = 2
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     domain_path = Path(domain_path).resolve()
     domain = json.loads(domain_path.read_text(encoding="utf-8"))
     if domain.get("trajectory_fit") is not False:
-        raise RuntimeError("joint-prefix source domain must not be trajectory fitted")
+        raise RuntimeError("joint full-matrix prefix domain must not be trajectory fitted")
 
     first = FIRSTS.build(domain_path)
-    firststate = FIRSTSTATE.build(domain_path)
     veff = VEFF.build(domain_path)
-    maginfo = MAGINFO.build(domain_path)
+    mag = MAGINFO.build(domain_path)
+    signed = SIGNED.build(domain_path)
+    full = FULL.build(domain_path)
+
     failures = [f"first-S: {x}" for x in FIRSTS.validate(first)]
-    failures += [f"first-S-state: {x}" for x in FIRSTSTATE.validate(firststate)]
     failures += [f"effective-vector: {x}" for x in VEFF.validate(veff)]
-    failures += [f"mag-information: {x}" for x in MAGINFO.validate(maginfo)]
+    failures += [f"mag-information: {x}" for x in MAGINFO.validate(mag)]
+    failures += [f"signed-Cayley: {x}" for x in SIGNED.validate(signed)]
+    failures += [f"full-H-prefix: {x}" for x in FULL.validate(full)]
 
-    source_cells, meta = _source_cells(domain)
-    qcells = list(maginfo["annular_information_cells"])
-    veff_by_index = {int(x["index"]): x for x in veff["annular_effective_input_cells"]}
-    if len(qcells) != len(veff_by_index):
-        failures.append("effective and magnetic q partitions differ")
-
-    live = domain["normal_live"]
-    vc = meta["vector"]["configured_measurement_bounds"]
-    aw_radius = float(domain["startup"]["physical_handoff_coordinate_bounds"]["latent_acceleration_error_norm_upper_mps2"])
-    S_radius = float(firststate["first_due_S_error_norm_upper_m_s"])
-
-    worst_mag_d = None
-    worst_acc_e = None
-    worst_S_d = None
-    min_mag_info = None
-    product_cells = 0
-    finite = True
-
-    # Do not serialize tens of thousands of cells.  The emitted witnesses retain
-    # the complete source tuple and q interval that attain each extremum.
-    for src in source_cells:
-        Scell = _S_cell(src, S_radius)
-        worst_S_d = _worse(
-            worst_S_d, Scell["attitude_injection_norm_upper"],
-            {"source_cell": {k: src[k] for k in ("index", "tau_s", "sigma_aw_mps2", "R_S_filter_std")}, "S_cell": Scell},
-        )
-        for qrow in qcells:
-            idx = int(qrow["index"])
-            vr = veff_by_index[idx]
-            # Merge the two exact q-cell payloads without taking data from a
-            # different annulus.
-            qjoint = dict(qrow)
-            qjoint.update({
-                "acc_effective_aw_attitude_eta_per_vector_norm_upper": vr["acc_effective_aw_attitude_eta_per_vector_norm_upper"],
-                "acc_effective_aw_latent_cross_gain_upper": vr["acc_effective_aw_latent_cross_gain_upper"],
-            })
-            m = _mag_cell(src, qjoint, live, vc)
-            a = _acc_cell(src, qjoint, live, vc, aw_radius)
-            product_cells += 1
-            values = (
-                m["S_innovation_lambda_interval"][1], m["K_theta_operator_norm_upper"],
-                m["d_eff_norm_upper"], m["attitude_injection_norm_upper"],
-                a["S_innovation_lambda_interval"][1], a["K_theta_operator_norm_upper"],
-                a["effective_aw_input_norm_upper_mps2"],
-            )
-            finite = finite and all(math.isfinite(float(x)) and float(x) >= 0.0 for x in values)
-            witness = {
-                "source_cell": {k: src[k] for k in ("index", "tau_s", "sigma_aw_mps2", "R_S_filter_std")},
-                "q_interval": list(qjoint["q_interval"]),
-            }
-            worst_mag_d = _worse(worst_mag_d, m["attitude_injection_norm_upper"], {**witness, "mag_cell": m})
-            worst_acc_e = _worse(worst_acc_e, a["effective_aw_input_norm_upper_mps2"], {**witness, "acc_cell": a})
-            info = float(m["effective_tangent_information_per_cperp2_lower"])
-            if min_mag_info is None or info < float(min_mag_info["value"]):
-                min_mag_info = {"value": info, **witness, "mag_cell": m}
-
-    if not source_cells or not qcells or product_cells <= 0:
-        failures.append("joint prefix cell partition is empty")
-    if not finite:
-        failures.append("joint prefix cell arithmetic emitted nonfinite bound")
-    if min_mag_info is None or not float(min_mag_info["value"]) > 0.0:
-        failures.append("tangent-only magnetometer information lost strict positivity")
-
-    # The current P3 source cells expose directional Loewner envelopes only.
-    # They do not expose a signed interval matrix P, hence K*r direction cannot
-    # be formed without inventing correlations.  Refuse to call a norm-only
-    # replacement a signed Cayley cell.
-    full_signed_matrix_cells_available = False
-    signed_dot_replaced_by_independent_norm_product = False
-    first_unclosed = "FULL_MATRIX_P_H_R_K_R_DIRECTION_CELL_NOT_YET_PROPAGATED"
+    q8_closed = bool(full["complete_q_le_8_prefix_family_closed"])
+    matrix_status = full["P5_FULL_H_PREFIX_MATRIX_CERTIFICATE"]
+    promoted = not failures and q8_closed and matrix_status == "PASS"
+    obstruction = full.get("first_failure")
+    if promoted:
+        first_unclosed = "NONE_AT_COMPLETE_GAUGED_H_PREFIX"
+    elif obstruction:
+        first_unclosed = "FULL_MATRIX_PREFIX_SUBDIVISION_REQUIRED"
+    else:
+        first_unclosed = "FULL_MATRIX_COMPLETE_WORD_NOT_CERTIFIED"
 
     return {
         "schema": SCHEMA,
-        "qualification": "OU3_P5_JOINT_SOURCE_PREFIX_CELL_ENCLOSURE",
+        "qualification": "OU3_P5_ACTIVE_JOINT_FULL_MATRIX_PREFIX_INTERFACE",
         "source_generated_not_trajectory_fit": True,
         "source_replay_used": False,
         "filter_changed": False,
-        "outward_rounded_scalar_arithmetic": True,
-        "joint_source_partition_reused_from_P3": True,
+        "active_P_payload": "OUTWARD_FULL_18X18_H_COVARIANCE_CELL",
+        "directional_P_payload_retained_as_active_backend": False,
+        "old_directional_scalar_route_used_for_promotion": False,
         "independent_global_extrema_product_used": False,
-        "standalone_vector_eta_penalty_used": False,
-        "magnetometer_radial_K_action_exact_zero": True,
+        "full_signed_matrix_covariance_cells_available": full["full_18x18_covariance_propagated"],
+        "P_H_R_K_S_r_d_eff_recomputed_in_same_prefix_cell": full["H_R_S_K_r_d_eff_recomputed_in_same_prefix_cell"],
+        "shipping_Joseph_update_used": full["shipping_Joseph_update_used"],
+        "immediate_left_error_reset_congruence_used": full["immediate_left_error_reset_congruence_used"],
+        "physical_attitude_correction_is_minus_Etheta_Kr": full["physical_attitude_correction_is_minus_Etheta_Kr"],
+        "signed_cayley_primitive_consumes_actual_interval_d": full["signed_cayley_primitive_consumes_actual_interval_d"],
+        "signed_a_dot_c_replaced_by_independent_abs_product": full["signed_a_dot_c_replaced_by_independent_abs_product"],
+        "magnetometer_radial_K_action_exact_zero": full["magnetometer_radial_K_action_exact_zero"],
         "magnetometer_radial_Joseph_information_exact_zero": True,
-        "accelerometer_effective_aw_input_used": True,
-        "full_S_to_attitude_gain_retained": True,
-        "source_cell_partition": {k: meta[k] for k in ("x_cells", "sigma_cells", "R_S_cells", "joint_source_cells")},
-        "attitude_q_cell_count": len(qcells),
-        "joint_prefix_product_cell_count": product_cells,
-        "word_samples_upper": int(math.ceil(float(domain["normal_live"]["vector_pe_recurrence_window_s"]) / float(meta["source_schedule"]["dt_s"]))) + 2,
+        "standalone_vector_eta_penalty_used": full["standalone_vector_eta_penalty_used"],
+        "accelerometer_effective_aw_input_used": full["accelerometer_effective_aw_input_used"],
+        "source_complete_rejection_identity_hulls": full["source_complete_rejection_identity_hulls"],
         "first_due_S_seed": {
+            "status": first["P5_FIRST_DUE_S_EXACT_CAYLEY_PREFIX_CERTIFICATE"],
             "widened_cayley_norm_upper": float(first["widened_prefix_cayley_norm_upper"]),
-            "first_due_S_state_norm_upper": S_radius,
-            "exact_first_S_prefix_status": first["P5_FIRST_DUE_S_EXACT_CAYLEY_PREFIX_CERTIFICATE"],
+            "required_post_cayley_norm_upper": float(first["required_first_S_post_cayley_norm_upper"]),
         },
-        "numerical_extrema": {
-            "worst_magnetometer_attitude_injection": worst_mag_d,
-            "worst_accelerometer_effective_aw_input": worst_acc_e,
-            "worst_S_attitude_injection": worst_S_d,
-            "minimum_tangent_only_magnetometer_information": min_mag_info,
+        "full_matrix_prefix": {
+            "status": matrix_status,
+            "source_cell": full["source_cell"],
+            "word_samples_upper": full["word_samples_upper"],
+            "inverse_backend_counts": full["inverse_backend_counts"],
+            "q_chart_upper": full["q_chart_upper"],
+            "max_reached_cayley_norm_upper": full["max_reached_cayley_norm_upper"],
+            "smaller_source_reachable_chart_upper": full["smaller_source_reachable_chart_upper"],
+            "numerical_extrema": full["numerical_extrema"],
+            "last_prefix_cells": full["last_prefix_cells"],
+            "final_covariance": full["final_covariance"],
+            "first_failure": obstruction,
         },
-        "P_H_R_K_S_r_d_eff_scalar_cell_enclosure_complete": not failures,
-        "full_signed_matrix_covariance_cells_available": full_signed_matrix_cells_available,
-        "signed_a_dot_c_replaced_by_independent_abs_product": signed_dot_replaced_by_independent_norm_product,
-        "signed_cayley_prefix_composition_closed": False,
-        "P5_JOINT_PREFIX_SCALAR_CELL_CERTIFICATE": "PASS" if not failures else "FAIL",
-        "P5_JOINT_PREFIX_FULL_MATRIX_CERTIFICATE": "NOT_ESTABLISHED",
+        "effective_vector_reductions": {
+            "magnetometer_exact_state_correction_identity": veff["magnetometer"]["exact_state_correction_identity"],
+            "magnetometer_radial_gain_action_exact_zero": veff["magnetometer"]["kalman_gain_radial_action_exact_zero"],
+            "accelerometer_exact_state_correction_identity": veff["accelerometer"]["exact_state_correction_identity"],
+            "standalone_vector_eta_penalty_retired": veff["standalone_vector_eta_penalty_retired_from_P5_numerical_route"],
+            "magnetometer_information_reduction_status": mag["P5_MAGNETOMETER_INFORMATION_REDUCTION_CERTIFICATE"],
+        },
+        "signed_cayley": {
+            "primitive_status": signed["P5_SIGNED_CAYLEY_CELL_PRIMITIVE"],
+            "signed_a_dot_c_retained": signed["signed_a_dot_c_retained"],
+            "independent_abs_a_abs_c_denominator_used": signed["independent_abs_a_abs_c_denominator_used"],
+            "complete_q_le_8_prefix_family_closed": q8_closed,
+        },
+        "signed_cayley_prefix_composition_closed": q8_closed,
+        "P5_JOINT_PREFIX_FULL_MATRIX_CERTIFICATE": "PASS" if promoted else "NOT_ESTABLISHED",
+        "P5_JOINT_PREFIX_SCALAR_CELL_CERTIFICATE": "RETIRED_AS_ACTIVE_ROUTE",
+        "P5_numerical_status_can_promote_from_this_stage": promoted,
+        "N_H_words_set_here": False,
         "first_unclosed_numerical_obligation": first_unclosed,
         "next_obligation": (
-            "replace each directional P envelope by a forward-propagated outward full matrix covariance cell from the exact goLive/first-S source state; compute H,R,S,K,r,d_eff in that same cell, then feed the resulting signed K*r correction vector directly to ou3_p5_signed_cayley_cell without an abs-norm denominator"
+            "compose the certified full-matrix H word with the P4 inner overlap and set N_H_words"
+            if promoted else
+            "subdivide the reported full-matrix prefix obstruction without dropping P direction, effective-vector identities, signed a^T c, Joseph, or immediate reset congruence"
         ),
         "failures": failures,
     }
@@ -371,33 +136,44 @@ def validate(d: dict) -> list[str]:
     if d.get("schema") != SCHEMA:
         failures.append("schema mismatch")
     for key in (
-        "source_generated_not_trajectory_fit", "outward_rounded_scalar_arithmetic",
-        "joint_source_partition_reused_from_P3", "magnetometer_radial_K_action_exact_zero",
+        "source_generated_not_trajectory_fit", "full_signed_matrix_covariance_cells_available",
+        "P_H_R_K_S_r_d_eff_recomputed_in_same_prefix_cell", "shipping_Joseph_update_used",
+        "immediate_left_error_reset_congruence_used", "physical_attitude_correction_is_minus_Etheta_Kr",
+        "signed_cayley_primitive_consumes_actual_interval_d", "magnetometer_radial_K_action_exact_zero",
         "magnetometer_radial_Joseph_information_exact_zero", "accelerometer_effective_aw_input_used",
-        "full_S_to_attitude_gain_retained", "P_H_R_K_S_r_d_eff_scalar_cell_enclosure_complete",
+        "source_complete_rejection_identity_hulls",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")
     for key in (
-        "source_replay_used", "filter_changed", "independent_global_extrema_product_used",
-        "standalone_vector_eta_penalty_used", "signed_a_dot_c_replaced_by_independent_abs_product",
-        "full_signed_matrix_covariance_cells_available", "signed_cayley_prefix_composition_closed",
+        "source_replay_used", "filter_changed", "directional_P_payload_retained_as_active_backend",
+        "old_directional_scalar_route_used_for_promotion", "independent_global_extrema_product_used",
+        "signed_a_dot_c_replaced_by_independent_abs_product", "standalone_vector_eta_penalty_used",
+        "N_H_words_set_here",
     ):
         if d.get(key) is not False:
             failures.append(f"{key} is not false")
-    part = d.get("source_cell_partition", {})
-    if int(part.get("joint_source_cells", 0)) <= 0 or int(d.get("joint_prefix_product_cell_count", 0)) <= 0:
-        failures.append("joint source-cell counts are empty")
-    ext = d.get("numerical_extrema", {})
-    mi = ext.get("minimum_tangent_only_magnetometer_information", {})
-    if not (isinstance(mi.get("value"), (int, float)) and math.isfinite(float(mi["value"])) and float(mi["value"]) > 0.0):
-        failures.append("minimum tangent-only magnetometer information is not strict")
-    if d.get("P5_JOINT_PREFIX_FULL_MATRIX_CERTIFICATE") != "NOT_ESTABLISHED":
-        failures.append("full matrix prefix certificate promoted without signed P/K*r cells")
-    if d.get("first_unclosed_numerical_obligation") != "FULL_MATRIX_P_H_R_K_R_DIRECTION_CELL_NOT_YET_PROPAGATED":
-        failures.append("unexpected next joint-prefix obligation")
-    if not failures and d.get("P5_JOINT_PREFIX_SCALAR_CELL_CERTIFICATE") != "PASS":
-        failures.append("joint scalar cell certificate did not pass")
+    if d.get("active_P_payload") != "OUTWARD_FULL_18X18_H_COVARIANCE_CELL":
+        failures.append("active P payload is not the full matrix cell")
+    if d.get("P5_JOINT_PREFIX_SCALAR_CELL_CERTIFICATE") != "RETIRED_AS_ACTIVE_ROUTE":
+        failures.append("old scalar route was not retired")
+    sc = d.get("signed_cayley", {})
+    if sc.get("signed_a_dot_c_retained") is not True or sc.get("independent_abs_a_abs_c_denominator_used") is not False:
+        failures.append("signed Cayley denominator semantics changed")
+    fm = d.get("full_matrix_prefix", {})
+    q = fm.get("max_reached_cayley_norm_upper")
+    if not isinstance(q, (int, float)) or not math.isfinite(float(q)) or float(q) < 0.0:
+        failures.append("full matrix prefix did not emit a finite reached Cayley bound")
+    if d.get("P5_JOINT_PREFIX_FULL_MATRIX_CERTIFICATE") == "PASS":
+        if d.get("signed_cayley_prefix_composition_closed") is not True:
+            failures.append("full matrix prefix promoted without signed composition closure")
+        if d.get("P5_numerical_status_can_promote_from_this_stage") is not True:
+            failures.append("PASS full matrix prefix not marked promotable")
+    else:
+        if d.get("P5_numerical_status_can_promote_from_this_stage") is not False:
+            failures.append("non-PASS full matrix prefix marked promotable")
+        if d.get("first_unclosed_numerical_obligation") == "NONE_AT_COMPLETE_GAUGED_H_PREFIX":
+            failures.append("non-PASS full matrix prefix has no obstruction")
     return failures
 
 
@@ -413,11 +189,9 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(out, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
-        "scalar_cells": out["P5_JOINT_PREFIX_SCALAR_CELL_CERTIFICATE"],
-        "full_matrix": out["P5_JOINT_PREFIX_FULL_MATRIX_CERTIFICATE"],
-        "partition": out["source_cell_partition"],
-        "product_cells": out["joint_prefix_product_cell_count"],
-        "extrema": out["numerical_extrema"],
+        "status": out["P5_JOINT_PREFIX_FULL_MATRIX_CERTIFICATE"],
+        "q8_closed": out["signed_cayley_prefix_composition_closed"],
+        "full_matrix": out["full_matrix_prefix"],
         "next": out["first_unclosed_numerical_obligation"],
         "validation_failures": vf,
     }, indent=2, sort_keys=True))
