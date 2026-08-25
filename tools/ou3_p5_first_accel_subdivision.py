@@ -79,12 +79,14 @@ def _ball_cover(radius: float, pieces_per_axis: int) -> list[list[Interval]]:
 
 
 def _source_children(src: dict, pieces: int) -> list[dict]:
+    sched = V1.P3CELL.source_schedule()
     out = []
     for tau in _geom_split(src["tau_s"], pieces):
+        cadence = V1.P3CELL.cadence_bounds(tau, sched)
         for sigma in _geom_split(src["sigma_aw_mps2"], pieces):
             for rs in _geom_split(src["R_S_filter_std"], pieces):
-                lo = max(src["pseudo_period_s"].lo, V1.P3CELL.cadence_bounds(tau, V1.P3CELL.source_schedule())[0])
-                hi = min(src["pseudo_period_s"].hi, V1.P3CELL.cadence_bounds(tau, V1.P3CELL.source_schedule())[1])
+                lo = max(src["pseudo_period_s"].lo, cadence[0])
+                hi = min(src["pseudo_period_s"].hi, cadence[1])
                 child = dict(src)
                 child["tau_s"] = tau
                 child["sigma_aw_mps2"] = sigma
@@ -94,40 +96,50 @@ def _source_children(src: dict, pieces: int) -> list[dict]:
     return out
 
 
-def _predict(Pm, e, c, src: dict, domain: dict):
+def _predict_state(Pm, e, src: dict, domain: dict):
     F, Q, Rstep = V1._transition_and_Q(src, domain)
     Pp = V1._psd_tighten(matrix_add(matrix_mul(matrix_mul(F, Pm), matrix_transpose(F)), Q))
     ep = V1._predict_error(e, F)
-    cp = V1._predict_c(c, Rstep, domain, float(src["dt_s"]))
-    return Pp, ep, cp
+    return Pp, ep, Rstep
 
 
-def _due_s(Pm, e, c, src: dict):
+def _due_s_state(Pm, e, src: dict):
     H = V1._H_S()
     R = V1._R_S(src)
     r = [-e[12 + i] for i in range(3)]
     cell = V1._measurement_cell(Pm, H, R, r)
     d = V1._vec_neg(cell["dx"][0:3])
-    signed = V1.SIGNED.compose_cell(c, d)
     e2 = list(e)
     for i in range(3, V1.N):
         e2[i] = e[i] - cell["dx"][i]
-    return cell["P_accepted"], e2, signed["c_plus"], cell
+    return cell["P_accepted"], e2, d, cell
 
 
-def _acc_correction(Pm, e, c, domain: dict):
+def _acc_gain(Pm, domain: dict, Racc):
+    H = V1._H_acc(domain)
+    PHt, S = V1._innovation(Pm, H, Racc)
+    Sinv, backend = V1._spd_inverse_enclosure(S, Racc)
+    return H, matrix_mul(PHt, Sinv), backend
+
+
+def _acc_correction_from_gain(K, H, e, c, domain: dict):
     q = min(8.0, V1._norm_upper(c))
-    H, r, eta = V1._acc_residual(e, c, domain, q)
-    PHt, S = V1._innovation(Pm, H, V1._R_diag(0.0)) if False else (None, None)
-    # Use the configured covariance exactly as the active full-H producer does.
-    vc = V1.VECTOR.build()["configured_measurement_bounds"]
-    R = V1._R_diag(float(vc["acc_measurement_std_mps2"]))
-    PHt, S = V1._innovation(Pm, H, R)
-    Sinv, backend = V1._spd_inverse_enclosure(S, R)
-    K = matrix_mul(PHt, Sinv)
+    fhi = float(domain["normal_live"]["specific_force_norm_upper_mps2"])
+    aw_hi = max(e[i].abs_upper() for i in V1.AW)
+    eta = V1.up(
+        V1.VEFF.accel_attitude_eta_per_vector_norm_upper(q) * fhi
+        + V1.VEFF.accel_latent_cross_gain_upper(q) * aw_hi
+    )
+    z = [V1.I(0.0) for _ in range(V1.N)]
+    for i in range(3):
+        z[i] = c[i]
+    for i in V1.AW:
+        z[i] = e[i] + V1._box(eta)
+    r = V1._mat_vec(H, z)
+    ba = float(domain["startup"]["physical_handoff_coordinate_bounds"]["accelerometer_bias_error_norm_upper_mps2"])
+    r = [x + V1._box(ba) for x in r]
     dx = V1._mat_vec(K, r)
-    d = V1._vec_neg(dx[0:3])
-    return V1._norm_upper(d), backend, eta
+    return V1._norm_upper(V1._vec_neg(dx[0:3])), eta
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2, cayley_axis_pieces: int = 4) -> dict:
@@ -143,8 +155,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2, cayley_
     source_cells = _source_children(src0, source_pieces)
     q0 = float(heading["gauged_timeout_subbranch"]["full_attitude_cayley_norm_upper"])
     c_cells = _ball_cover(q0, cayley_axis_pieces)
+    vc = V1.VECTOR.build()["configured_measurement_bounds"]
+    Racc = V1._R_diag(float(vc["acc_measurement_std_mps2"]))
 
-    rows = []
     max_d = 0.0
     min_d = math.inf
     over_limit = 0
@@ -154,16 +167,25 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2, cayley_
     for si, src in enumerate(source_cells):
         P0 = V1._initial_covariance(src, domain_path)
         e0 = V1._initial_error(domain)
+        Pp, ep, Rstep = _predict_state(P0, e0, src, domain)
+        Pdue, edue, dS, Scell = _due_s_state(Pp, ep, src)
+        phases = {
+            "not_due": (Pp, ep, None, None),
+            "due": (Pdue, edue, dS, Scell["inverse_backend"]),
+        }
+        phase_gain = {}
+        for phase, (P1, _e1, _dS, _sbackend) in phases.items():
+            H, K, backend = _acc_gain(P1, domain, Racc)
+            backend_counts[backend] += 1
+            phase_gain[phase] = (H, K, backend)
+
         for ci, c0 in enumerate(c_cells):
-            Pp, ep, cp = _predict(P0, e0, c0, src, domain)
-            for phase in ("not_due", "due"):
-                P1, e1, c1 = Pp, ep, cp
-                s_backend = None
-                if phase == "due":
-                    P1, e1, c1, scell = _due_s(Pp, ep, cp, src)
-                    s_backend = scell["inverse_backend"]
+            cp = V1._predict_c(c0, Rstep, domain, float(src["dt_s"]))
+            for phase, (_P1, e1, ds, s_backend) in phases.items():
+                c1 = cp if ds is None else V1.SIGNED.compose_cell(cp, ds)["c_plus"]
                 try:
-                    dnorm, backend, eta = _acc_correction(P1, e1, c1, domain)
+                    H, K, backend = phase_gain[phase]
+                    dnorm, eta = _acc_correction_from_gain(K, H, e1, c1, domain)
                 except Exception as exc:
                     row = {
                         "source_cell": si,
@@ -171,12 +193,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2, cayley_
                         "pseudo_phase": phase,
                         "exception": f"{type(exc).__name__}: {exc}",
                     }
-                    rows.append(row)
                     if first_over is None:
                         first_over = row
                     over_limit += 1
                     continue
-                backend_counts[backend] += 1
                 max_d = max(max_d, dnorm)
                 min_d = min(min_d, dnorm)
                 if dnorm > 6.0:
@@ -190,6 +210,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2, cayley_
                             "acc_effective_aw_eta_norm_upper": eta,
                             "inverse_backend": backend,
                             "S_inverse_backend": s_backend,
+                            "tau_s": src["tau_s"].as_list(),
+                            "sigma_aw_mps2": src["sigma_aw_mps2"].as_list(),
+                            "R_S_filter_std": src["R_S_filter_std"].as_list(),
+                            "cayley_cell_box": [x.as_list() for x in c0],
                         }
 
     total = len(source_cells) * len(c_cells) * 2
@@ -219,7 +243,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 2, cayley_
         "evaluated_child_count": total,
         "children_above_validated_correction_limit": over_limit,
         "all_first_accelerometer_children_inside_validated_correction_range": all_inside,
-        "min_first_accelerometer_correction_norm_upper_rad": None if min_d is math.inf else min_d,
+        "min_first_accelerometer_correction_norm_upper_rad": None if math.isinf(min_d) else min_d,
         "max_first_accelerometer_correction_norm_upper_rad": max_d,
         "first_unclosed_child": first_over,
         "inverse_backend_counts": backend_counts,
