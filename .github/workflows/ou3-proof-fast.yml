@@ -37,6 +37,7 @@ on:
       - "tools/ou3_p4_node_metrics.py"
       - "tools/ou3_p4_nonlinear_word_certificate.py"
       - "tools/ou3_p5_startup_capture_certificate.py"
+      - "tools/ou3_p5_outer_h_word_certificate.py"
       - "tools/ou3_proof_operating_domain.json"
       - "docs/ou-iii-implementation-stability-proof-plan.md"
       - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
@@ -63,6 +64,7 @@ on:
       - "tests/validation/test_ou3_p4_word_map_and_metrics.py"
       - "tests/validation/test_ou3_p4_nonlinear_word_certificate.py"
       - "tests/validation/test_ou3_p5_startup_capture_certificate.py"
+      - "tests/validation/test_ou3_p5_outer_h_word_certificate.py"
       - "tests/validation/test_ou_stability_source_path_widening.py"
       - ".github/workflows/ou3-proof-fast.yml"
   workflow_dispatch:
@@ -248,7 +250,7 @@ jobs:
           PY
 
   p5-capture-identification:
-    name: P5 startup capture obstruction identification
+    name: P5 outer-H word and startup capture gate
     needs: [startup-proof, p4-nonlinear]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -258,16 +260,20 @@ jobs:
         run: |
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
-      - name: Compile P5 capture identification
+      - name: Compile P5 outer-H and capture certificates
         run: |
           python3 -m py_compile \
             tools/ou3_p5_startup_capture_certificate.py \
-            tests/validation/test_ou3_p5_startup_capture_certificate.py
-      - name: Test P5 capture composition gate
+            tools/ou3_p5_outer_h_word_certificate.py \
+            tests/validation/test_ou3_p5_startup_capture_certificate.py \
+            tests/validation/test_ou3_p5_outer_h_word_certificate.py
+      - name: Test P5 outer-H word and capture composition gates
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p5_startup_capture_certificate
-      - name: Emit P5 capture status and first obstruction
-        run: python3 tools/ou3_p5_startup_capture_certificate.py --output /tmp/ou3_p5_startup_capture_certificate.json
+        run: python3 -m unittest -v test_ou3_p5_startup_capture_certificate test_ou3_p5_outer_h_word_certificate
+      - name: Emit P5 outer-H word and startup capture status
+        run: |
+          python3 tools/ou3_p5_startup_capture_certificate.py --output /tmp/ou3_p5_startup_capture_certificate.json
+          python3 tools/ou3_p5_outer_h_word_certificate.py --output /tmp/ou3_p5_outer_h_word_certificate.json
 
   hybrid:
     name: hybrid jump certificates
