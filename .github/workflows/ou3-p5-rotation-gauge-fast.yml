@@ -15,6 +15,7 @@ on:
       - "tools/ou3_p5_sample1_prefix_v2.py"
       - "tools/ou3_p5_sample1_rotation_gauge_refinement.py"
       - "tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py"
+      - "tools/ou3_p5_sample1_schur_gain_refinement.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v3.py"
@@ -23,9 +24,9 @@ on:
       - "tools/ou3_startup_stability_certificate.py"
       - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p5_sample1_prefix_v2.py"
       - "tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement.py"
       - "tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement_v2.py"
+      - "tests/validation/test_ou3_p5_sample1_schur_gain_refinement.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
 
@@ -37,8 +38,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-rotation-gauge-refinement:
-    name: P5 sample-1 rotation-gauge subdivision witness
+  sample1-schur-refinement:
+    name: P5 sample-1 Schur gain witness refinement
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -58,42 +59,25 @@ jobs:
             tools/ou3_p5_sample1_prefix_v2.py \
             tools/ou3_p5_sample1_rotation_gauge_refinement.py \
             tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py \
-            tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement.py \
-            tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement_v2.py
-      - name: Test focused semantics
+            tools/ou3_p5_sample1_schur_gain_refinement.py \
+            tests/validation/test_ou3_p5_sample1_schur_gain_refinement.py
+      - name: Test Schur refinement semantics
         working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_schur_gain_refinement
+      - name: Emit Schur witness result
         run: |
-          python3 -m unittest -v \
-            test_ou3_p5_sample1_rotation_gauge_refinement \
-            test_ou3_p5_sample1_rotation_gauge_refinement_v2
-      - name: Emit unsubdivided witness result
-        run: |
-          python3 tools/ou3_p5_sample1_rotation_gauge_refinement.py \
-            --source-pieces 2 --source-cell-index 0 \
-            --output /tmp/p5_rg1.json
+          python3 tools/ou3_p5_sample1_schur_gain_refinement.py \
+            --source-pieces 2 --source-cell-index 0 --delta-pieces 8 \
+            --output /tmp/p5_schur.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_rg1.json'))
-          print('P5_RG1_STATUS:',d['P5_SAMPLE1_ROTATION_GAUGE_WITNESS_REFINEMENT'])
-          print('P5_RG1_FIXED:',d['fixed_pivot_inverse_count'])
-          print('P5_RG1_FALLBACK:',d['spectral_fallback_inverse_count'])
-          print('P5_RG1_MAX_D:',d['max_sample1_correction_norm_upper_rad'])
-          PY
-      - name: Emit delta/force subdivided witness result
-        run: |
-          python3 tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py \
-            --source-pieces 2 --source-cell-index 0 \
-            --delta-pieces 4 --force-pieces 4 \
-            --output /tmp/p5_rg2.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/p5_rg2.json'))
-          print('P5_RG2_STATUS:',d['P5_SAMPLE1_DELTA_FORCE_SUBDIVIDED_WITNESS_REFINEMENT'])
-          print('P5_RG2_CELLS:',d['evaluated_joint_cells'])
-          print('P5_RG2_FIXED:',d['fixed_pivot_inverse_count'])
-          print('P5_RG2_FALLBACK:',d['spectral_fallback_inverse_count'])
-          print('P5_RG2_MAX_RESIDUAL:',d['max_sample1_residual_norm_upper_mps2'])
-          print('P5_RG2_MAX_D:',d['max_sample1_correction_norm_upper_rad'])
-          print('P5_RG2_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
-          print('P5_RG2_NEXT:',d['next_obligation'])
+          d=json.load(open('/tmp/p5_schur.json'))
+          print('P5_SCHUR_STATUS:',d['P5_SAMPLE1_SCHUR_GAIN_WITNESS_REFINEMENT'])
+          print('P5_SCHUR_DELTA_CELLS:',d['evaluated_delta_cells'])
+          print('P5_SCHUR_MAX_S_D:',d['max_sample1_S_attitude_correction_norm_upper_rad'])
+          print('P5_SCHUR_MAX_S_AW:',d['max_sample1_S_aw_correction_norm_upper_mps2'])
+          print('P5_SCHUR_MAX_RESIDUAL:',d['max_sample1_acc_residual_norm_upper_mps2'])
+          print('P5_SCHUR_MAX_ACC_D:',d['max_sample1_acc_correction_norm_upper_rad'])
+          print('P5_SCHUR_FIRST_UNCLOSED:',d['first_unclosed_delta_cell'])
+          print('P5_SCHUR_NEXT:',d['next_obligation'])
           PY
