@@ -1,31 +1,18 @@
 #!/usr/bin/env python3
-"""Identify the OU-III P5 startup-to-inner-funnel capture obligation.
+"""Identify the OU-III P5 startup-to-inner-funnel capture obstruction.
 
-P1 certifies the deployed startup/reset/handoff family and P4 certifies exact
-nonlinear H/A source-word decrease only on a very small Cayley-information
-sublevel. P5 is allowed to iterate a source-word recurrence only where the
-nonlinear defect estimate used by P4 is itself valid and decreasing.
+P4 proves exact nonlinear source-word decrease only on a very small inner
+Cayley-information sublevel.  This producer proves that the source-declared P1
+handoff family is not contained in that local decrease domain, so the P4
+recurrence may not be extrapolated outward.
 
-For H-mode, P4 gives
-
-    sqrt(W_next) <= (1-delta/2) sqrt(W) + B W,
-
-as a conservative consequence of the homogeneous information-word gap and the
-transported nonlinear word defect. A sufficient strict-decrease domain is
-therefore
-
-    sqrt(W) < delta/(2 B).
-
-This producer compares that certified domain, and the smaller P4 invariant
-inner seed W_*, with the source-declared P1 physical handoff family. It also
-quantifies what an outer bridge must add: the normal and timeout handoff attitude
-sizes in the exact Cayley chart, and the many-order reduction that would be
-required if one tried to preserve the current isotropic perturbative P4
-recurrence unchanged. The latter is a diagnostic of the proof construction,
-not a claim that no sharper outer theorem can exist.
-
-The producer never extrapolates the P4 recurrence outside its proof domain and
-does not infer capture from replay.
+Attitude bookkeeping is source faithful.  P1's gravity cosines are tilt-only.
+Full-heading Cayley radii are taken only from the separately verified gauged
+handoff contract; the timeout branch without a yaw gauge is explicitly routed
+to the gravity/yaw quotient instead of being assigned a fictitious SO(3)
+radius.  This file is an obstruction/requirements identifier, not the P5
+completion certificate; ``ou3_p5_outer_h_bridge_certificate`` is the current
+completion object.
 """
 from __future__ import annotations
 
@@ -35,16 +22,13 @@ import math
 from pathlib import Path
 
 import ou3_p4_nonlinear_word_certificate as P4
+import ou3_p5_heading_handoff_contract as HEADING
 import ou3_startup_stability_certificate as P1
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
+SCHEMA = 3
 
-# These are the H-mode error-coordinate groups present at goLive. Each declared
-# norm ball contains the axis witness with this group at its radius and the
-# other groups zero, so any one witness outside the P4 capture domain disproves
-# containment of the complete P1 handoff family.
 HANDOFF_GROUPS = (
     ("b_g", "gyro_bias_error_norm_upper_rad_s"),
     ("v", "velocity_error_norm_upper_mps"),
@@ -61,7 +45,6 @@ def _axis_witnesses(bounds: dict, m_minus: float, q_design: float,
         radius = float(bounds[key])
         if not (math.isfinite(radius) and radius >= 0.0):
             raise RuntimeError(f"invalid P1 handoff bound {key}")
-        # W=z^T M z >= m_minus ||z||^2. For the axis witness ||z||=radius.
         r2 = P4.mul_down(radius, radius)
         W_lower = P4.mul_down(m_minus, r2)
         rows.append({
@@ -78,34 +61,10 @@ def _axis_witnesses(bounds: dict, m_minus: float, q_design: float,
     return rows
 
 
-def _cayley_norm_upper_from_cos_lower(cos_lower: float) -> float:
-    """Outward upper bound for |c|=2 tan(theta/2) from cos(theta)>=cos_lower."""
-    c = float(cos_lower)
-    if not (-1.0 < c <= 1.0):
-        raise RuntimeError(f"invalid strict Cayley cosine lower bound {c!r}")
-    # |c|^2 = 4(1-cos theta)/(1+cos theta). The RHS decreases with cosine,
-    # hence the largest admitted norm occurs at the certified lower cosine.
-    numerator = P4.up(1.0 - c)
-    denominator = P4.down(1.0 + c)
-    if not denominator > 0.0:
-        raise RuntimeError("handoff attitude bound reaches Cayley singularity")
-    ratio = P4.div_up(numerator, denominator)
-    return P4.mul_up(2.0, P4.sqrt_up(ratio))
-
-
 def _uniform_recurrence_B_cap(delta: float, W_lower: float) -> float:
-    """Best certified B cap at a witness lower energy for the current P4 form.
-
-    The current perturbative sufficient condition is B*sqrt(W)<delta/2. Using
-    only a lower bound on witness energy yields an optimistic cap: the true
-    witness may require an even smaller B. It is therefore useful only to show
-    how far the existing uniform full-state defect construction is from the P1
-    handoff family.
-    """
     if not (delta > 0.0 and W_lower > 0.0):
         raise RuntimeError("positive delta and witness W lower bound required")
-    denom = P4.mul_up(2.0, P4.sqrt_up(W_lower))
-    return P4.div_down(delta, denom)
+    return P4.div_down(delta, P4.mul_up(2.0, P4.sqrt_up(W_lower)))
 
 
 def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
@@ -115,22 +74,22 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError("P5 operating domain must not be trajectory fitted")
 
     p1 = P1.build(domain_path)
-    p1_fail = P1.validate(p1)
     p4 = P4.build(domain_path)
-    p4_fail = P4.validate(p4)
-    prereq_failures = [f"P1: {x}" for x in p1_fail] + [f"P4: {x}" for x in p4_fail]
-    if prereq_failures:
+    heading = HEADING.build(domain_path)
+    prereq = [f"P1: {x}" for x in P1.validate(p1)]
+    prereq += [f"P4: {x}" for x in P4.validate(p4)]
+    prereq += [f"heading: {x}" for x in HEADING.validate(heading)]
+    if prereq:
         return {
             "schema": SCHEMA,
             "qualification": "OU3_P5_STARTUP_CAPTURE_IDENTIFICATION",
             "source_generated_not_trajectory_fit": True,
             "source_replay_used": False,
-            "prerequisite_failures": prereq_failures,
             "P5_FINITE_CAPTURE_CERTIFICATE": "NOT_ESTABLISHED",
             "P5_OBSTRUCTION_IDENTIFIED": "NOT_EVALUATED",
             "P5_OUTER_BRIDGE_REQUIREMENTS_IDENTIFIED": "NOT_EVALUATED",
-            "first_obstruction": "UPSTREAM_P1_OR_P4_FAILURE",
-            "failures": prereq_failures,
+            "first_obstruction": "UPSTREAM_P1_OR_P4_OR_HEADING_FAILURE",
+            "failures": prereq,
         }
 
     H = p4["modes"]["H"]
@@ -143,75 +102,66 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if not (0.0 < delta < 1.0 and math.isfinite(B) and B > 0.0 and m_minus > 0.0):
         raise RuntimeError("P4 H recurrence constants are invalid")
 
-    # From sqrt(W+)<=(1-delta/2)sqrt(W)+B W, strict decrease is guaranteed
-    # whenever B sqrt(W)<delta/2. Use the lower delta and upper B exactly as
-    # supplied by P4 and round the threshold downward.
     sqrt_W_capture = P4.div_down(delta, P4.mul_up(2.0, B))
     W_capture = P4.mul_down(sqrt_W_capture, sqrt_W_capture)
     if not (W_capture > W_inner > 0.0):
-        raise RuntimeError("P4 inner seed is not inside its derived strict-decrease domain")
+        raise RuntimeError("P4 inner seed is not inside derived strict-decrease domain")
 
     bounds = p1["go_live"]["physical_coordinate_bounds"]
     witnesses = _axis_witnesses(bounds, m_minus, q_design, W_inner, W_capture)
     weakest = min(witnesses, key=lambda x: x["axis_witness_W_lower"])
     strongest = max(witnesses, key=lambda x: x["axis_witness_W_lower"])
 
-    # Both normal and timeout branches share these declared physical-coordinate
-    # bounds. Their attitude envelopes differ materially. Convert the validated
-    # cosine bounds to exact Cayley-coordinate norm bounds so P5 can distinguish
-    # the tighter normal handoff from the wider finite-angle timeout handoff.
-    normal_cos = float(p1["normal_handoff"]["true_gravity_cosine_lower"])
-    timeout_cos = float(p1["timeout_handoff"]["combined_true_gravity_cosine_lower"])
-    normal_cayley = _cayley_norm_upper_from_cos_lower(normal_cos)
-    timeout_cayley = _cayley_norm_upper_from_cos_lower(timeout_cos)
-
     weak_B_cap = _uniform_recurrence_B_cap(delta, float(weakest["axis_witness_W_lower"]))
     strong_B_cap = _uniform_recurrence_B_cap(delta, float(strongest["axis_witness_W_lower"]))
-    weak_B_reduction = B / weak_B_cap
-    strong_B_reduction = B / strong_B_cap
+    obstruction = all(r["outside_P4_strict_decrease_domain"] for r in witnesses) and all(
+        r["outside_P4_nonlinear_design_radius"] for r in witnesses
+    )
 
-    all_outside_capture = all(r["outside_P4_strict_decrease_domain"] for r in witnesses)
-    all_outside_design = all(r["outside_P4_nonlinear_design_radius"] for r in witnesses)
-    obstruction = all_outside_capture and all_outside_design
-
+    qn = float(heading["gauged_quality_handoff"]["full_attitude_cayley_norm_upper"])
+    qt = float(heading["gauged_timeout_subbranch"]["full_attitude_cayley_norm_upper"])
     promoted_limit = float(P4.PROMOTED_CAYLEY_NORM_LIMIT)
-    outer_bridge_requirements = {
-        "normal_handoff_cayley_norm_upper": normal_cayley,
-        "timeout_handoff_cayley_norm_upper": timeout_cayley,
-        "normal_over_current_P4_design_radius_factor": normal_cayley / q_design,
-        "timeout_over_current_P4_design_radius_factor": timeout_cayley / q_design,
+    outer = {
+        "P1_gravity_cosines_are_tilt_only": True,
+        "normal_gauged_full_attitude_cayley_norm_upper": qn,
+        "timeout_gauged_full_attitude_cayley_norm_upper": qt,
+        "timeout_ungauged_full_heading_cayley_bound_available": False,
+        "timeout_ungauged_required_route": heading["ungauged_timeout_subbranch"]["required_route"],
+        "normal_gauged_over_current_P4_design_radius_factor": qn / q_design,
+        "timeout_gauged_over_current_P4_design_radius_factor": qt / q_design,
         "current_P4_promoted_cayley_norm_limit": promoted_limit,
-        "normal_inside_current_promoted_cayley_norm_limit": normal_cayley < promoted_limit,
-        "timeout_inside_current_promoted_cayley_norm_limit": timeout_cayley < promoted_limit,
+        "normal_gauged_inside_current_promoted_cayley_norm_limit": qn < promoted_limit,
+        "timeout_gauged_inside_current_promoted_cayley_norm_limit": qt < promoted_limit,
         "current_uniform_full_state_B_upper": B,
         "optimistic_uniform_B_cap_at_weakest_P1_axis_witness": weak_B_cap,
         "optimistic_uniform_B_cap_at_largest_P1_axis_witness": strong_B_cap,
-        "uniform_B_reduction_factor_needed_at_weakest_witness": weak_B_reduction,
-        "uniform_B_reduction_factor_needed_at_largest_witness": strong_B_reduction,
+        "uniform_B_reduction_factor_needed_at_weakest_witness": B / weak_B_cap,
+        "uniform_B_reduction_factor_needed_at_largest_witness": B / strong_B_cap,
         "interpretation": (
-            "Both P1 attitude branches remain inside the current Cayley chart bootstrap, but they are eleven-plus "
-            "orders larger than q_design. Simply enlarging q_design while retaining the current isotropic B*W "
-            "perturbation recurrence does not bridge P1 to P4; P5 needs a new outer estimate on the same exact source map."
+            "The gauged P1 attitude nodes remain inside the broad Cayley chart but are many orders larger than q_design. "
+            "Simply enlarging q_design while retaining the isotropic B*W perturbation recurrence is not a P5 bridge. "
+            "The ungauged timeout branch is not a full-heading node at all and must use the yaw quotient until gauge acquisition."
         ),
         "required_proof_structure": [
-            "branch-specific exact SO(3) finite-angle measurement dissipation, with the timeout node wider than the normal node",
-            "anisotropic nonlinear-driver enclosure: separate exact v/p transport, while retaining S in the finite correction because the full S-to-attitude gain is part of the shipping map",
-            "source-node subdivision across early covariance/tuner/pseudo-phase staging after goLive",
-            "prefix-safe coverage of the deployed polynomial-versus-axis-angle quaternion correction branches",
-            "a validated outer H-word decrease or funnel-recursion inequality that overlaps the existing P4 inner seed",
+            "branch-specific exact SO(3) finite-angle dissipation on gauged normal/timeout nodes",
+            "gravity-only yaw-quotient capture on the ungauged timeout branch until a magnetic gauge hybrid event",
+            "source-staged early covariance, pseudo-phase, and S-to-attitude bounds",
+            "prefix-safe exact quaternion correction coverage",
+            "validated outer H decrease/funnel recursion overlapping the existing P4 inner seed",
         ],
     }
 
     return {
         "schema": SCHEMA,
         "qualification": "OU3_P5_STARTUP_CAPTURE_IDENTIFICATION",
-        "claim": "FIRST_VALIDATED_P5_CAPTURE_OBSTRUCTION_AND_OUTER_BRIDGE_REQUIREMENTS",
+        "claim": "LOCAL_P4_CAPTURE_OBSTRUCTION_AND_SOURCE_FAITHFUL_OUTER_REQUIREMENTS",
         "source_generated_not_trajectory_fit": True,
         "source_replay_used": False,
         "P1_STARTUP_CERTIFICATE": "PASS",
         "P4_EXACT_NONLINEAR_WORD_CERTIFICATE": "PASS",
-        "handoff_modes": ["normal", "timeout"],
-        "handoff_coordinate_family": "product of the source-declared goLive physical norm balls",
+        "heading_branch_contract": "PASS",
+        "handoff_modes": ["normal_gauged", "timeout_gauged", "timeout_ungauged_yaw_quotient"],
+        "handoff_coordinate_family": "product of source-declared goLive physical norm balls with branch-correct attitude quotient",
         "H_word_horizon_s": H["word_horizon_s"],
         "P4_H_inner_level_W": W_inner,
         "P4_H_inner_level_sqrt_W": sqrt_W_inner,
@@ -225,33 +175,25 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "axis_witnesses": witnesses,
         "weakest_axis_witness": weakest,
         "largest_axis_witness": strongest,
-        "normal_handoff_true_gravity_cosine_lower": normal_cos,
-        "timeout_handoff_true_gravity_cosine_lower": timeout_cos,
-        "outer_bridge_requirements": outer_bridge_requirements,
+        "outer_bridge_requirements": outer,
         "first_required_P5_inequality": "P1_handoff_subset_of_P4_certified_outer_capture_domain",
         "first_required_P5_inequality_holds": not obstruction,
-        "first_obstruction": (
-            "P1_HANDOFF_OUTSIDE_P4_CERTIFIED_CAPTURE_DOMAIN" if obstruction
-            else "NONE_AT_INITIAL_CAPTURE_DOMAIN_GATE"
-        ),
+        "first_obstruction": "P1_HANDOFF_OUTSIDE_P4_CERTIFIED_CAPTURE_DOMAIN" if obstruction else "NONE_AT_INITIAL_CAPTURE_DOMAIN_GATE",
         "N_H_words": None if obstruction else "PENDING_RECURRENCE_COUNT",
         "finite_capture_iteration_permitted": not obstruction,
         "reason_iteration_is_not_permitted": (
-            "The current P4 nonlinear word bound is not valid/decreasing on the complete P1 handoff family; "
-            "iterating the inner recurrence from that family would extrapolate a local certificate outside its proof domain."
+            "The local P4 nonlinear word bound is not valid/decreasing on the complete P1 handoff family; iterating it would extrapolate outside its proof domain."
             if obstruction else None
         ),
         "required_next_certificate": (
-            "construct a source-reachable outer H capture bridge using exact finite-angle attitude dissipation and "
-            "anisotropic nonlinear-driver bounds; prove safe source prefixes and overlap with the existing P4 inner seed; "
-            "then compute the finite H-word count to W_*"
+            "use the staged outer-H bridge: exact early S/covariance bounds, exact large-angle gauged-vector dissipation, "
+            "and a yaw-quotient timeout route; only then compute finite H-word capture into W_*"
         ),
         "P5_FINITE_CAPTURE_CERTIFICATE": "NOT_ESTABLISHED" if obstruction else "PENDING_COUNT",
         "P5_OBSTRUCTION_IDENTIFIED": "PASS" if obstruction else "NOT_APPLICABLE",
         "P5_OUTER_BRIDGE_REQUIREMENTS_IDENTIFIED": "PASS" if obstruction else "NOT_APPLICABLE",
-        "next_obligation": (
-            "P5 exact outer H nonlinear capture bridge; do not proceed to a claimed finite N_H until this gate closes"
-        ),
+        "completion_object": "ou3_p5_outer_h_bridge_certificate.py",
+        "next_obligation": "P5 staged outer H bridge; no finite N_H before both gauged and quotient routes close",
         "failures": [],
     }
 
@@ -264,54 +206,34 @@ def validate(d: dict) -> list[str]:
         failures.append("P5 identification is not source generated")
     if d.get("source_replay_used") is not False:
         failures.append("P5 identification uses replay")
-    if d.get("P1_STARTUP_CERTIFICATE") != "PASS":
-        failures.append("P1 prerequisite did not pass")
-    if d.get("P4_EXACT_NONLINEAR_WORD_CERTIFICATE") != "PASS":
-        failures.append("P4 prerequisite did not pass")
+    if d.get("P1_STARTUP_CERTIFICATE") != "PASS" or d.get("P4_EXACT_NONLINEAR_WORD_CERTIFICATE") != "PASS":
+        failures.append("P1/P4 prerequisite did not pass")
+    if d.get("heading_branch_contract") != "PASS":
+        failures.append("heading branch contract did not pass")
     if d.get("P5_OBSTRUCTION_IDENTIFIED") != "PASS":
-        failures.append("current P5 first obstruction was not identified")
+        failures.append("current P5 local-capture obstruction not identified")
     if d.get("P5_OUTER_BRIDGE_REQUIREMENTS_IDENTIFIED") != "PASS":
-        failures.append("P5 outer bridge requirements were not identified")
+        failures.append("P5 outer requirements not identified")
     if d.get("P5_FINITE_CAPTURE_CERTIFICATE") != "NOT_ESTABLISHED":
-        failures.append("P5 was incorrectly promoted to finite capture")
+        failures.append("P5 identifier incorrectly promoted finite capture")
     if d.get("finite_capture_iteration_permitted") is not False:
-        failures.append("P5 permits recurrence iteration outside the certified P4 domain")
+        failures.append("P5 identifier permits local recurrence extrapolation")
     if d.get("first_required_P5_inequality_holds") is not False:
-        failures.append("P1 handoff was incorrectly declared inside P4 capture domain")
+        failures.append("P1 handoff incorrectly declared inside local P4 capture")
     if d.get("first_obstruction") != "P1_HANDOFF_OUTSIDE_P4_CERTIFIED_CAPTURE_DOMAIN":
-        failures.append("wrong P5 first obstruction")
-    W0 = d.get("P4_H_inner_level_W")
-    Wcap = d.get("P4_H_strict_decrease_W_threshold_lower")
+        failures.append("wrong local P5 obstruction")
+    W0, Wcap = d.get("P4_H_inner_level_W"), d.get("P4_H_strict_decrease_W_threshold_lower")
     if not (isinstance(W0, (int, float)) and isinstance(Wcap, (int, float)) and 0.0 < W0 < Wcap):
         failures.append("invalid P4 inner/capture levels")
-    witnesses = d.get("axis_witnesses", [])
-    if not witnesses or not all(x.get("outside_P4_strict_decrease_domain") is True for x in witnesses):
-        failures.append("P1 axis witnesses do not establish the capture-domain gap")
-    if not witnesses or not all(x.get("outside_P4_nonlinear_design_radius") is True for x in witnesses):
-        failures.append("P1 axis witnesses do not establish the nonlinear-design-domain gap")
-
-    bridge = d.get("outer_bridge_requirements", {})
-    normal_q = bridge.get("normal_handoff_cayley_norm_upper")
-    timeout_q = bridge.get("timeout_handoff_cayley_norm_upper")
-    if not (
-        isinstance(normal_q, (int, float)) and isinstance(timeout_q, (int, float))
-        and 0.0 < float(normal_q) < float(timeout_q) < math.inf
-    ):
-        failures.append("invalid normal/timeout Cayley handoff bounds")
-    if bridge.get("normal_inside_current_promoted_cayley_norm_limit") is not True:
-        failures.append("normal handoff unexpectedly exceeds current promoted Cayley chart limit")
-    if bridge.get("timeout_inside_current_promoted_cayley_norm_limit") is not True:
-        failures.append("timeout handoff unexpectedly exceeds current promoted Cayley chart limit")
-    weak_reduce = bridge.get("uniform_B_reduction_factor_needed_at_weakest_witness")
-    strong_reduce = bridge.get("uniform_B_reduction_factor_needed_at_largest_witness")
-    if not (
-        isinstance(weak_reduce, (int, float)) and isinstance(strong_reduce, (int, float))
-        and float(weak_reduce) > 1.0 and float(strong_reduce) > float(weak_reduce)
-    ):
-        failures.append("uniform P4 perturbative gap was not quantified")
-    structure = bridge.get("required_proof_structure", [])
-    if len(structure) < 5:
-        failures.append("outer bridge proof structure is incomplete")
+    outer = d.get("outer_bridge_requirements", {})
+    if outer.get("P1_gravity_cosines_are_tilt_only") is not True:
+        failures.append("gravity cosine still treated as full attitude")
+    if outer.get("timeout_ungauged_full_heading_cayley_bound_available") is not False:
+        failures.append("ungauged timeout assigned full-heading radius")
+    if "YAW_QUOTIENT" not in str(outer.get("timeout_ungauged_required_route", "")):
+        failures.append("ungauged timeout not routed to yaw quotient")
+    if d.get("completion_object") != "ou3_p5_outer_h_bridge_certificate.py":
+        failures.append("local obstruction identifier masquerades as completion object")
     return failures
 
 
@@ -320,24 +242,17 @@ def main() -> int:
     ap.add_argument("--domain", type=Path, default=DEFAULT_DOMAIN)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    out = build(args.domain.resolve())
-    failures = validate(out)
-    out["validation_pass"] = not failures
-    out["validation_failures"] = failures
+    d = build(args.domain.resolve())
+    failures = validate(d)
+    d["validation_pass"] = not failures
+    d["validation_failures"] = failures
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(out, indent=2, sort_keys=True), encoding="utf-8")
+    args.output.write_text(json.dumps(d, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({
-        "P5_FINITE_CAPTURE_CERTIFICATE": out.get("P5_FINITE_CAPTURE_CERTIFICATE"),
-        "P5_OBSTRUCTION_IDENTIFIED": out.get("P5_OBSTRUCTION_IDENTIFIED"),
-        "P5_OUTER_BRIDGE_REQUIREMENTS_IDENTIFIED": out.get("P5_OUTER_BRIDGE_REQUIREMENTS_IDENTIFIED"),
-        "first_obstruction": out.get("first_obstruction"),
-        "W_inner": out.get("P4_H_inner_level_W"),
-        "W_capture": out.get("P4_H_strict_decrease_W_threshold_lower"),
-        "q_design": out.get("P4_H_nonlinear_design_canonical_norm_radius"),
-        "weakest_axis_witness": out.get("weakest_axis_witness"),
-        "largest_axis_witness": out.get("largest_axis_witness"),
-        "outer_bridge_requirements": out.get("outer_bridge_requirements"),
-        "failures": failures,
+        "P5_FINITE_CAPTURE_CERTIFICATE": d.get("P5_FINITE_CAPTURE_CERTIFICATE"),
+        "first_obstruction": d.get("first_obstruction"),
+        "outer_bridge_requirements": d.get("outer_bridge_requirements"),
+        "validation_failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
 
