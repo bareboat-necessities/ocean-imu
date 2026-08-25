@@ -67,19 +67,19 @@ def _operation_calculus() -> list[dict]:
             "nonlinear_budget": "exact group prediction defect retained for numerical enclosure",
         },
         {
-            "operation": "pending_aw_covariance_psd_increment",
+            "operation": "apply_pending_aw_covariance_psd_increment",
             "state_map": "identity",
             "covariance_map": "P -> P + Delta_aw, Delta_aw >= 0",
             "nonlinear_budget": "information-nonexpansive in Loewner order",
         },
         {
-            "operation": "S_zero_due_or_not_due",
+            "operation": "S_zero_due_or_not_due_then_immediate_injection_reset",
             "state_map": "accepted full K_S correction or exact identity",
             "covariance_map": "Joseph then immediate left-error reset when due",
             "nonlinear_budget": "eta_S=0 exactly; only deployed Cayley/reset defect remains",
         },
         {
-            "operation": "accelerometer_accepted_or_rejected",
+            "operation": "accelerometer_accepted_or_rejected_then_immediate_injection_reset",
             "state_map": "exact nonlinear source residual, full K including linear cross terms, or identity",
             "covariance_map": "Joseph then immediate left-error reset when accepted",
             "nonlinear_budget": "eta_acc^T R_acc^-1 eta_acc plus exact Cayley/reset defect",
@@ -97,7 +97,7 @@ def _operation_calculus() -> list[dict]:
             "nonlinear_budget": "none at staging tick",
         },
         {
-            "operation": "asynchronous_magnetometer_not_due_accepted_or_rejected",
+            "operation": "asynchronous_magnetometer_not_due_accepted_or_rejected_then_immediate_injection_reset",
             "state_map": "exact nonlinear source residual and immediate injection/reset, or identity",
             "covariance_map": "Joseph then immediate left-error reset when accepted",
             "nonlinear_budget": "eta_mag^T R_mag^-1 eta_mag plus exact Cayley/reset defect",
@@ -129,23 +129,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
 
     calculus = _operation_calculus()
     calc_ops = [row["operation"] for row in calculus]
-    source_ops = list(word["operation_order"])
-    expected_source_ops = [
-        "commit_previous_tune",
-        "prediction",
-        "apply_pending_aw_covariance_psd_increment",
-        "S_zero_due_or_not_due_then_immediate_injection_reset",
-        "accelerometer_accepted_or_rejected_then_immediate_injection_reset",
-        "tuner_source_evolution_and_stage_next_tune",
-        "aw_sync_tick_stages_future_psd_increment",
-        "asynchronous_magnetometer_not_due_accepted_or_rejected_then_immediate_injection_reset",
-    ]
-    if source_ops != expected_source_ops:
-        failures.append("shipping exact word operation order changed")
-    if len(calc_ops) != len(source_ops):
-        failures.append("exact transport calculus does not cover every source operation class")
+    source_ops = list(word["shipping_operation_order"])
+    if calc_ops != source_ops:
+        failures.append("exact transport calculus does not match shipping source operation order")
 
-    horizon = float(word["word_horizon_s"])
+    horizon = float(word["source_word_horizon_s"])
     bg_bound = float(p1["go_live"]["physical_coordinate_bounds"]["gyro_bias_error_norm_upper_rad_s"])
     axial_coordinate_input = up(horizon * bg_bound)
     if not (horizon > 0.0 and bg_bound >= 0.0 and math.isfinite(axial_coordinate_input)):
@@ -183,7 +171,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         },
         "gravity_quotient_H": {
             "reduced_detectability": gquot["P5_GRAVITY_QUOTIENT_REDUCED_DETECTABILITY_CERTIFICATE"],
-            "strict_coordinates": gquot["quotient_state"]["strict_coordinates"],
+            "strict_coordinates": gquot["detectable_coordinates"],
             "axial_gyro_bias_role": gquot["axial_gyro_bias_role"],
             "axial_gyro_bias_norm_upper_rad_s": bg_bound,
             "one_word_axial_bias_full_attitude_coordinate_input_norm_upper_rad": axial_coordinate_input,
@@ -212,6 +200,8 @@ def validate(d: dict) -> list[str]:
         failures.append("complete-word transport uses replay")
     if d.get("filter_changed") is not False:
         failures.append("complete-word transport changes filter")
+    if d.get("all_source_operation_classes_bound_to_transport_calculus") is not True:
+        failures.append("complete-word transport calculus misses a source operation")
     if d.get("reset_condition_number_multiplier_used") is not False:
         failures.append("reset condition-number penalty reintroduced")
     for flag in (
