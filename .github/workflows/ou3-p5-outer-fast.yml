@@ -1,0 +1,71 @@
+name: ou3-p5-outer-fast
+
+on:
+  pull_request:
+    paths:
+      - "src/kalman_ou_common/KalmanOUCoreMath.h"
+      - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h"
+      - "tools/ou3_source_domain_contract.py"
+      - "tools/ou3_implementation_proof_manifest.py"
+      - "tools/ou3_startup_stability_certificate.py"
+      - "tools/ou3_p4_exact_word_map.py"
+      - "tools/ou3_p4_group_algebra.py"
+      - "tools/ou3_p4_nonlinear_word_certificate.py"
+      - "tools/ou3_p5_startup_capture_certificate.py"
+      - "tools/ou3_p5_outer_h_word_certificate.py"
+      - "tools/ou3_p5_go_live_covariance_stage.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_startup_capture_certificate.py"
+      - "tests/validation/test_ou3_p5_outer_h_word_certificate.py"
+      - "tests/validation/test_ou3_p5_go_live_covariance_stage.py"
+      - ".github/workflows/ou3-p5-outer-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-outer-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  p5-outer:
+    name: P5 source-staged outer-H bridge
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile P5 outer-H producers
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_startup_capture_certificate.py \
+            tools/ou3_p5_outer_h_word_certificate.py \
+            tools/ou3_p5_go_live_covariance_stage.py \
+            tests/validation/test_ou3_p5_startup_capture_certificate.py \
+            tests/validation/test_ou3_p5_outer_h_word_certificate.py \
+            tests/validation/test_ou3_p5_go_live_covariance_stage.py
+      - name: Test P5 source-staged outer-H bridge
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p5_startup_capture_certificate \
+            test_ou3_p5_outer_h_word_certificate \
+            test_ou3_p5_go_live_covariance_stage
+      - name: Emit P5 bridge certificates
+        run: |
+          python3 tools/ou3_p5_startup_capture_certificate.py --output /tmp/ou3_p5_startup_capture_certificate.json
+          python3 tools/ou3_p5_go_live_covariance_stage.py --output /tmp/ou3_p5_go_live_covariance_stage.json
+          python3 tools/ou3_p5_outer_h_word_certificate.py --output /tmp/ou3_p5_outer_h_word_certificate.json
+          python3 - <<'PY'
+          import json
+          s=json.load(open('/tmp/ou3_p5_go_live_covariance_stage.json'))
+          o=json.load(open('/tmp/ou3_p5_outer_h_word_certificate.json'))
+          print('P5_GOLIVE_STAGE:', s['P5_GOLIVE_COVARIANCE_STAGE_CERTIFICATE'])
+          print('P5_FIRST_DUE_CROSS:', s['P5_FIRST_DUE_CROSS_COVARIANCE_CERTIFICATE'])
+          print('P5_OUTER_H:', o['P5_OUTER_H_WORD_CERTIFICATE'], o['first_failure'])
+          PY
