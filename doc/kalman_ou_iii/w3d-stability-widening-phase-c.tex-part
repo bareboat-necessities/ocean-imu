@@ -230,10 +230,113 @@ result is the source-word funnel inequality used in the P5 recursion.  No
 per-correction monotonicity of the isotropic trace energy is invoked.
 \end{proof}
 
-The condition is source faithful: it keeps the full $S\to\theta$ path, does not
-assume scalar Wahba gains, and does not resurrect a Euclidean-radius certificate.
-The remaining P5 numerical task is to outward-enclose
-Eq.~\eqref{eq:widen-large-angle-sector} on the gauged $q\simeq0.27$ and
-$q\simeq0.60$ H nodes using the same correlated covariance/gain tuples and the
-exact quaternion/Rodrigues backend.  The chart excludes the antipodal set and
-all quantitative claims remain regional; no global MEKF claim is made.
+\subsubsection{Exact effective vector inputs for the outer P5 word}
+\label{sec:widen-effective-vector-input}
+
+The complete outer-word enclosure can be sharpened further without changing the
+filter.  The finite-angle vector residual need not be treated as an independent
+measurement-space remainder when the shipping Jacobian either annihilates or
+absorbs that residual exactly.
+
+For the configured magnetometer, let $\vct v$ be the predicted body-frame field.
+The source uses
+\begin{equation}
+ \mat H_m=-[\vct v]_\times,
+ \qquad \mat R_m=r_m\mat I .
+ \label{eq:widen-mag-effective-source}
+\end{equation}
+The deployed simulation/certificate configuration preserves this isotropy.  If
+$\mat S_m=\mat H_m\mat P\mat H_m^\top+r_m\mat I$, then
+\begin{equation}
+ \mat H_m^\top\vct v=0,
+ \qquad \mat S_m\vct v=r_m\vct v,
+ \qquad \mat K_m\vct v=0 .
+ \label{eq:widen-mag-radial-null}
+\end{equation}
+Thus the residual component parallel to $\vct v$ cannot change any estimator
+state and cannot generate a quaternion injection or reset correction.  For the
+exact rotational residual $\vct y_m=(\mat R(\vct c)-\mat I)\vct v$, define
+\begin{equation}
+ \boxed{
+ \vct d_m:=\frac{\mat H_m^\top\vct y_m}{\|\vct v\|^2},
+ \qquad
+ \mat K_m\vct y_m=\mat K_m\mat H_m\vct d_m .}
+ \label{eq:widen-mag-effective-coordinate}
+\end{equation}
+Writing $q=\|\vct c\|$, $\widehat{\vct v}=\vct v/\|\vct v\|$,
+$\vct c_\perp=(\mat I-\widehat{\vct v}\widehat{\vct v}^\top)\vct c$, and
+$\alpha=\vct c^\top\widehat{\vct v}$, the exact Cayley formula gives
+\begin{equation}
+ \vct d_m=
+ \frac{4}{4+q^2}\vct c_\perp
+ -\frac{2\alpha}{4+q^2}
+   (\vct c_\perp\times\widehat{\vct v}).
+ \label{eq:widen-mag-effective-formula}
+\end{equation}
+Consequently
+\begin{equation}
+ \boxed{
+ \|\vct d_m\|\le
+ \frac{2}{\sqrt{4+q^2}}\|\vct c_\perp\|
+ \le\|\vct c_\perp\|,
+ \qquad
+ \|\vct d_m-\vct c_\perp\|\le
+ \frac{q}{\sqrt{4+q^2}}\|\vct c_\perp\|.}
+ \label{eq:widen-mag-effective-bounds}
+\end{equation}
+The useful nonlinear magnetic residual is therefore an exact, nonexpansive
+effective tangent coordinate rather than an adverse independent $\eta_m$ term.
+
+The normal-Live accelerometer has an even stronger range property.  With the
+configured optional lever arm disabled, its source Jacobian contains
+\begin{equation}
+ \mat J_{a_w}=\mat R_{wb},
+ \qquad \mat J_{a_w}^\top\mat J_{a_w}=\mat I .
+ \label{eq:widen-acc-effective-source}
+\end{equation}
+For a signed residual decomposition
+$\vct y_a=\mat H_a\vct z+\vct\eta_a$, set
+\begin{equation}
+ \vct e_{\eta}:=\mat J_{a_w}^\top\vct\eta_a
+ \label{eq:widen-acc-effective-aw}
+\end{equation}
+and let $\mat E_{a_w}$ inject this vector only into the $a_w$ coordinates.  Then
+\begin{equation}
+ \boxed{
+ \mat H_a\mat E_{a_w}\vct e_\eta=\vct\eta_a,
+ \qquad
+ \mat K_a(\mat H_a\vct z+\vct\eta_a)
+ =\mat K_a\mat H_a(\vct z+\mat E_{a_w}\vct e_\eta),
+ \qquad
+ \|\vct e_\eta\|=\|\vct\eta_a\|.}
+ \label{eq:widen-acc-effective-identity}
+\end{equation}
+This is an exact reparameterization of the same implemented correction, not the
+claim $\vct\eta_a=0$.  The Joseph information identity remains valid.  The
+finite-angle Cayley geometry supplies the cellwise enclosure
+\begin{equation}
+ \|\vct e_\eta\|
+ \le\frac{q^2}{\sqrt{4+q^2}}\,\bar f
+ +\frac{2q}{\sqrt{4+q^2}}\,\|\delta\vct a_w\|,
+ \label{eq:widen-acc-effective-bound}
+\end{equation}
+for the rotational remainder and rotated latent-acceleration cross term.
+Additive bias/body terms remain in the linear source map.
+
+Equations~\eqref{eq:widen-mag-effective-coordinate} and
+\eqref{eq:widen-acc-effective-identity} retire the standalone vector-$\eta$
+penalty from the active P5 numerical route.  The outward backend instead carries
+$\mat P,\mat H,\mat R,\mat K,\vct r$ and the corresponding effective input in
+one jointly source-reachable cell through the immediate quaternion injection and
+left-error reset.  The same accelerometer reduction descends to the detectable
+gravity quotient; it does not assign strict contraction to the neutral
+$ b_{g,\parallel}$ coordinate.
+
+The condition remains source faithful: it keeps the full $S\to\theta$ path,
+does not assume scalar Wahba gains, and does not resurrect a Euclidean-radius
+certificate.  The first-$S$ finite Cayley prefix and the exact transport algebra
+are already certified.  The remaining P5 numerical task is therefore the
+outward source-correlated propagation of the later one-second prediction,
+vector, and $S$ prefixes, using the effective-input identities above and the
+signed Cayley reset denominator.  The chart excludes the antipodal set and all
+quantitative claims remain regional; no global MEKF claim is made.
