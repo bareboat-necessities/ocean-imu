@@ -1,6 +1,6 @@
 name: ou3-p5-rotation-gauge-fast
 
-# Active focused route: exact source-reachable first accelerometer through reset and sample-1 entry.
+# Active focused route: exact source-reachable first accelerometer through reset and tightened sample-1 entry.
 on:
   pull_request:
     paths:
@@ -11,6 +11,7 @@ on:
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_post_reset.py"
       - "tools/ou3_p5_sample1_entry.py"
+      - "tools/ou3_p5_sample1_entry_v2.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v2.py"
@@ -24,6 +25,7 @@ on:
       - "tests/validation/test_ou3_p5_first_accel_exact_source.py"
       - "tests/validation/test_ou3_p5_first_accel_post_reset.py"
       - "tests/validation/test_ou3_p5_sample1_entry.py"
+      - "tests/validation/test_ou3_p5_sample1_entry_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
 
@@ -36,7 +38,7 @@ concurrency:
 
 jobs:
   exact-source-through-sample1-entry:
-    name: P5 exact-source through sample-1 entry
+    name: P5 exact-source tightened sample-1 entry
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -50,32 +52,34 @@ jobs:
             tools/ou3_p5_first_accel_exact_source_v2.py \
             tools/ou3_p5_first_accel_post_reset.py \
             tools/ou3_p5_sample1_entry.py \
+            tools/ou3_p5_sample1_entry_v2.py \
             tests/validation/test_ou3_p5_first_accel_exact_source.py \
             tests/validation/test_ou3_p5_first_accel_post_reset.py \
-            tests/validation/test_ou3_p5_sample1_entry.py
+            tests/validation/test_ou3_p5_sample1_entry.py \
+            tests/validation/test_ou3_p5_sample1_entry_v2.py
       - name: Test exact-source prefix semantics
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p5_first_accel_exact_source \
             test_ou3_p5_first_accel_post_reset \
-            test_ou3_p5_sample1_entry
-      - name: Emit exact-source sample-1 entry result
+            test_ou3_p5_sample1_entry \
+            test_ou3_p5_sample1_entry_v2
+      - name: Emit tightened exact-source sample-1 entry result
         run: |
-          python3 tools/ou3_p5_sample1_entry.py \
+          python3 tools/ou3_p5_sample1_entry_v2.py \
             --source-pieces 2 \
-            --output /tmp/ou3_p5_sample1_entry.json
+            --output /tmp/ou3_p5_sample1_entry_v2.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p5_sample1_entry.json'))
-          print('P5_SAMPLE1_ENTRY:', d['P5_SAMPLE1_ENTRY_CERTIFICATE'])
-          print('P5_SAMPLE1_CELLS:', d['evaluated_source_phase_cells'])
-          print('P5_SAMPLE1_Q0_POST_RESET:', d['sample0_post_reset_cayley_norm_upper'])
-          print('P5_SAMPLE1_Q1_PRE_MEAS:', d['sample1_pre_measurement_cayley_norm_upper'])
-          print('P5_SAMPLE1_INVERSE_BACKENDS:', d['inverse_backend_counts'])
-          print('P5_SAMPLE1_MAX_COV_DIAG:', d['max_sample1_covariance_diagonal_upper'])
-          print('P5_SAMPLE1_MAX_COV_CROSS:', d['max_sample1_covariance_offdiagonal_abs_upper'])
-          print('P5_SAMPLE1_MAX_STATE:', d['max_sample1_state_group_norm_uppers'])
-          print('P5_SAMPLE1_FIRST_FAILURE:', d['first_failure'])
-          print('P5_SAMPLE1_NEXT:', d['next_obligation'])
+          d=json.load(open('/tmp/ou3_p5_sample1_entry_v2.json'))
+          print('P5_SAMPLE1_ENTRY_V2:', d['P5_SAMPLE1_ENTRY_CERTIFICATE'])
+          print('P5_SAMPLE1_V2_CELLS:', d['evaluated_source_phase_cells'])
+          print('P5_SAMPLE1_V2_Q1_PRE_MEAS:', d['sample1_pre_measurement_cayley_norm_upper'])
+          print('P5_SAMPLE1_V2_INVERSE_BACKENDS:', d['inverse_backend_counts'])
+          print('P5_SAMPLE1_V2_MAX_COV_DIAG:', d['max_sample1_covariance_diagonal_upper'])
+          print('P5_SAMPLE1_V2_MAX_COV_CROSS:', d['max_sample1_covariance_offdiagonal_abs_upper'])
+          print('P5_SAMPLE1_V2_MAX_STATE:', d['max_sample1_state_group_norm_uppers'])
+          print('P5_SAMPLE1_V2_FIRST_FAILURE:', d['first_failure'])
+          print('P5_SAMPLE1_V2_NEXT:', d['next_obligation'])
           PY
