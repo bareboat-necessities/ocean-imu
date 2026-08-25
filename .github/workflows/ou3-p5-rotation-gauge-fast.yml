@@ -1,6 +1,6 @@
 name: ou3-p5-rotation-gauge-fast
 
-# Active focused route: exact source-reachable first accelerometer through deployed injection/reset.
+# Active focused route: exact source-reachable first accelerometer through reset and sample-1 entry.
 on:
   pull_request:
     paths:
@@ -10,6 +10,7 @@ on:
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_post_reset.py"
+      - "tools/ou3_p5_sample1_entry.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v2.py"
@@ -22,6 +23,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p5_first_accel_exact_source.py"
       - "tests/validation/test_ou3_p5_first_accel_post_reset.py"
+      - "tests/validation/test_ou3_p5_sample1_entry.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
 
@@ -33,13 +35,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  exact-source-first-accel-post-reset:
-    name: P5 exact-source first accelerometer through reset
+  exact-source-through-sample1-entry:
+    name: P5 exact-source through sample-1 entry
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - name: Compile exact-source first-accelerometer/reset producers
+      - name: Compile exact-source prefix producers
         run: |
           python3 -m py_compile \
             tools/ou3_p5_first_accel_rotation_gauge_v3.py \
@@ -47,28 +49,33 @@ jobs:
             tools/ou3_p5_first_accel_exact_source.py \
             tools/ou3_p5_first_accel_exact_source_v2.py \
             tools/ou3_p5_first_accel_post_reset.py \
+            tools/ou3_p5_sample1_entry.py \
             tests/validation/test_ou3_p5_first_accel_exact_source.py \
-            tests/validation/test_ou3_p5_first_accel_post_reset.py
-      - name: Test exact-source first-accelerometer/reset semantics
+            tests/validation/test_ou3_p5_first_accel_post_reset.py \
+            tests/validation/test_ou3_p5_sample1_entry.py
+      - name: Test exact-source prefix semantics
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p5_first_accel_exact_source \
-            test_ou3_p5_first_accel_post_reset
-      - name: Emit exact-source first-accelerometer post-reset result
+            test_ou3_p5_first_accel_post_reset \
+            test_ou3_p5_sample1_entry
+      - name: Emit exact-source sample-1 entry result
         run: |
-          python3 tools/ou3_p5_first_accel_post_reset.py \
+          python3 tools/ou3_p5_sample1_entry.py \
             --source-pieces 2 \
-            --output /tmp/ou3_p5_first_accel_post_reset.json
+            --output /tmp/ou3_p5_sample1_entry.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p5_first_accel_post_reset.json'))
-          print('P5_FIRST_ACCEL_POST_RESET:', d['P5_FIRST_ACCEL_POST_RESET_PREFIX_CERTIFICATE'])
-          print('P5_POST_RESET_Q_BEFORE:', d['pre_accel_cayley_norm_upper'])
-          print('P5_POST_RESET_D_MAX:', d['accepted_accel_correction_norm_upper_rad'])
-          print('P5_POST_RESET_THETA_AFTER:', d['post_accel_geodesic_angle_upper_rad'])
-          print('P5_POST_RESET_Q_AFTER:', d['post_accel_cayley_norm_upper'])
-          print('P5_POST_RESET_OPERATOR_NORM:', d['reset_operator_norm_upper'])
-          print('P5_POST_RESET_COV_MULTIPLIER:', d['reset_covariance_quadratic_multiplier_upper'])
-          print('P5_POST_RESET_NEXT:', d['next_obligation'])
+          d=json.load(open('/tmp/ou3_p5_sample1_entry.json'))
+          print('P5_SAMPLE1_ENTRY:', d['P5_SAMPLE1_ENTRY_CERTIFICATE'])
+          print('P5_SAMPLE1_CELLS:', d['evaluated_source_phase_cells'])
+          print('P5_SAMPLE1_Q0_POST_RESET:', d['sample0_post_reset_cayley_norm_upper'])
+          print('P5_SAMPLE1_Q1_PRE_MEAS:', d['sample1_pre_measurement_cayley_norm_upper'])
+          print('P5_SAMPLE1_INVERSE_BACKENDS:', d['inverse_backend_counts'])
+          print('P5_SAMPLE1_MAX_COV_DIAG:', d['max_sample1_covariance_diagonal_upper'])
+          print('P5_SAMPLE1_MAX_COV_CROSS:', d['max_sample1_covariance_offdiagonal_abs_upper'])
+          print('P5_SAMPLE1_MAX_STATE:', d['max_sample1_state_group_norm_uppers'])
+          print('P5_SAMPLE1_FIRST_FAILURE:', d['first_failure'])
+          print('P5_SAMPLE1_NEXT:', d['next_obligation'])
           PY
