@@ -73,31 +73,31 @@ def _operation_calculus() -> list[dict]:
             "nonlinear_budget": "information-nonexpansive in Loewner order",
         },
         {
-            "operation": "S_zero_due_or_not_due_then_immediate_injection_reset",
+            "operation": "periodic_S_zero_when_due_then_immediate_quaternion_injection_and_left_error_reset",
             "state_map": "accepted full K_S correction or exact identity",
             "covariance_map": "Joseph then immediate left-error reset when due",
             "nonlinear_budget": "eta_S=0 exactly; only deployed Cayley/reset defect remains",
         },
         {
-            "operation": "accelerometer_accepted_or_rejected_then_immediate_injection_reset",
+            "operation": "accelerometer_correction_or_rejection_then_immediate_quaternion_injection_and_left_error_reset_if_accepted",
             "state_map": "exact nonlinear source residual, full K including linear cross terms, or identity",
             "covariance_map": "Joseph then immediate left-error reset when accepted",
             "nonlinear_budget": "eta_acc^T R_acc^-1 eta_acc plus exact Cayley/reset defect",
         },
         {
-            "operation": "tuner_source_evolution_and_stage_next_tune",
+            "operation": "source_tuner_evolution_and_stage_next_tune",
             "state_map": "no retroactive estimator-state correction",
             "covariance_map": "future source parameters only",
             "nonlinear_budget": "joint source tuple propagated; no independent extrema product",
         },
         {
-            "operation": "aw_sync_tick_stages_future_psd_increment",
+            "operation": "periodic_aw_covariance_sync_tick_stages_future_psd_increment",
             "state_map": "identity",
             "covariance_map": "future PSD increment only",
             "nonlinear_budget": "none at staging tick",
         },
         {
-            "operation": "asynchronous_magnetometer_not_due_accepted_or_rejected_then_immediate_injection_reset",
+            "operation": "asynchronous_magnetometer_correction_or_rejection_then_immediate_quaternion_injection_and_left_error_reset_if_accepted",
             "state_map": "exact nonlinear source residual and immediate injection/reset, or identity",
             "covariance_map": "Joseph then immediate left-error reset when accepted",
             "nonlinear_budget": "eta_mag^T R_mag^-1 eta_mag plus exact Cayley/reset defect",
@@ -184,7 +184,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P5_GAUGED_COMPLETE_WORD_NUMERICAL_CERTIFICATE": "NOT_ESTABLISHED",
         "P5_GRAVITY_QUOTIENT_COMPLETE_WORD_NUMERICAL_CERTIFICATE": "NOT_ESTABLISHED",
         "next_obligation": (
-            "first tighten the source-staged pre-first-S directional covariance/K_thetaS bound to close the exact timeout Cayley prefix; then use the same correction identities in source-correlated subdivision for all vector/prediction prefixes, with b_g_parallel entering only the quotient ISS input term"
+            "first tighten or widen the source-staged first-S prefix enclosure, then use the same correction identities in source-correlated subdivision for all vector/prediction prefixes, with b_g_parallel entering only the quotient ISS input term"
         ),
         "failures": failures,
     }
