@@ -23,13 +23,17 @@ on:
       - "tools/ou3_p5_effective_vector_input.py"
       - "tools/ou3_p5_mag_information_reduction.py"
       - "tools/ou3_p5_signed_cayley_cell.py"
+      - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_first_s_exact_prefix.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v2.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v3.py"
       - "tools/ou3_p5_joint_prefix_cells.py"
       - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tests/validation/test_ou3_p5_full_h_prefix_cells.py"
       - "tests/validation/test_ou3_p5_full_h_prefix_cells_v2.py"
+      - "tests/validation/test_ou3_p5_full_h_prefix_cells_v3.py"
       - "tests/validation/test_ou3_p5_joint_prefix_cells.py"
       - ".github/workflows/ou3-p5-full-matrix-fast.yml"
   workflow_dispatch:
@@ -51,36 +55,48 @@ jobs:
       - name: Compile full-matrix prefix producers
         run: |
           python3 -m py_compile \
+            tools/ou3_p5_deployed_quaternion_cayley_cell.py \
             tools/ou3_p5_full_h_prefix_cells.py \
             tools/ou3_p5_full_h_prefix_cells_v2.py \
+            tools/ou3_p5_full_h_prefix_cells_v3.py \
             tools/ou3_p5_joint_prefix_cells.py \
+            tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell.py \
             tests/validation/test_ou3_p5_full_h_prefix_cells.py \
             tests/validation/test_ou3_p5_full_h_prefix_cells_v2.py \
+            tests/validation/test_ou3_p5_full_h_prefix_cells_v3.py \
             tests/validation/test_ou3_p5_joint_prefix_cells.py
       - name: Test full-matrix prefix calculus
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_p5_deployed_quaternion_cayley_cell \
             test_ou3_p5_full_h_prefix_cells \
             test_ou3_p5_full_h_prefix_cells_v2 \
+            test_ou3_p5_full_h_prefix_cells_v3 \
             test_ou3_p5_joint_prefix_cells
       - name: Emit full-matrix prefix certificate
         run: |
+          python3 tools/ou3_p5_deployed_quaternion_cayley_cell.py --output /tmp/ou3_p5_deployed_quaternion_cayley_cell.json
           python3 tools/ou3_p5_full_h_prefix_cells.py --output /tmp/ou3_p5_full_h_prefix_cells_v1.json
           python3 tools/ou3_p5_full_h_prefix_cells_v2.py --output /tmp/ou3_p5_full_h_prefix_cells_v2.json
+          python3 tools/ou3_p5_full_h_prefix_cells_v3.py --output /tmp/ou3_p5_full_h_prefix_cells_v3.json
           python3 tools/ou3_p5_joint_prefix_cells.py --output /tmp/ou3_p5_joint_prefix_cells.json
           python3 - <<'PY'
           import json
+          qp=json.load(open('/tmp/ou3_p5_deployed_quaternion_cayley_cell.json'))
           v1=json.load(open('/tmp/ou3_p5_full_h_prefix_cells_v1.json'))
-          f=json.load(open('/tmp/ou3_p5_full_h_prefix_cells_v2.json'))
+          v2=json.load(open('/tmp/ou3_p5_full_h_prefix_cells_v2.json'))
+          f=json.load(open('/tmp/ou3_p5_full_h_prefix_cells_v3.json'))
           j=json.load(open('/tmp/ou3_p5_joint_prefix_cells.json'))
+          print('P5_DEPLOYED_QUATERNION_CELL:', qp['P5_DEPLOYED_QUATERNION_CAYLEY_CELL_PRIMITIVE'], qp['audit_cells']['crossing_pi'])
           print('P5_V1_FIRST_FAILURE:', v1['first_failure'])
-          print('P5_FULL_H_PREFIX_MATRIX_V2:', f['P5_FULL_H_PREFIX_MATRIX_CERTIFICATE'])
-          print('P5_V2_Q8_CLOSED:', f['complete_q_le_8_prefix_family_closed'])
-          print('P5_V2_MAX_Q:', f['max_reached_cayley_norm_upper'])
-          print('P5_V2_SMALLER_CHART:', f['smaller_source_reachable_chart_upper'])
-          print('P5_V2_INVERSE_BACKENDS:', f['inverse_backend_counts'])
-          print('P5_V2_FIRST_FAILURE:', f['first_failure'])
+          print('P5_V2_FIRST_FAILURE:', v2['first_failure'])
+          print('P5_FULL_H_PREFIX_MATRIX_V3:', f['P5_FULL_H_PREFIX_MATRIX_CERTIFICATE'])
+          print('P5_V3_Q8_CLOSED:', f['complete_q_le_8_prefix_family_closed'])
+          print('P5_V3_MAX_Q:', f['max_reached_cayley_norm_upper'])
+          print('P5_V3_SMALLER_CHART:', f['smaller_source_reachable_chart_upper'])
+          print('P5_V3_INVERSE_BACKENDS:', f['inverse_backend_counts'])
+          print('P5_V3_FIRST_FAILURE:', f['first_failure'])
           print('P5_JOINT_PREFIX_FULL_MATRIX:', j['P5_JOINT_PREFIX_FULL_MATRIX_CERTIFICATE'])
           print('P5_JOINT_NEXT:', j['first_unclosed_numerical_obligation'])
           PY
