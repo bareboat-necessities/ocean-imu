@@ -63,11 +63,20 @@ def _check_vec(v: Sequence[Interval], label: str) -> list[Interval]:
 
 
 def _norm_upper(v: Sequence[Interval]) -> float:
+    """Validated Euclidean-norm upper without manufacturing a negative zero sum."""
     v = _check_vec(v, "v")
-    s = I(0.0)
+    s = 0.0
     for x in v:
-        s = s + x.square()
-    return GROUP.sqrt_interval(s).hi
+        a = x.abs_upper()
+        term = a*a
+        if term > 0.0:
+            term = math.nextafter(term, math.inf)
+        s += term
+        if s > 0.0:
+            s = math.nextafter(s, math.inf)
+    if s == 0.0:
+        return 0.0
+    return math.nextafter(math.sqrt(s), math.inf)
 
 
 def _dot(a: Sequence[Interval], b: Sequence[Interval]) -> Interval:
