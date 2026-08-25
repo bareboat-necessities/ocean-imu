@@ -42,8 +42,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "a08f3ace85f4a10faaae123372953729b2b282ff",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 11982 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |   984 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   114 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1004 +-\n .../results/ou_robustness/ou_robustness_stress.svg |    92 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1090 +-\n 6 files changed, 7632 insertions(+), 7634 deletions(-)",
+  "git_commit": "1fb824c5dfb7793e6a8e4415aafa4b299ff8df05",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 6052 ++++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  572 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   44 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  776 +--\n .../results/ou_robustness/ou_robustness_stress.svg |    8 +-\n .../ou_robustness/ou_robustness_summary.csv        |  530 +-\n 6 files changed, 3990 insertions(+), 3992 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -285,8 +285,8 @@
       "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
     },
-    "generated_at": "2026-08-25T15:13:52+00:00",
-    "git_commit": "a08f3ace85f4a10faaae123372953729b2b282ff",
+    "generated_at": "2026-08-25T21:25:30+00:00",
+    "git_commit": "1fb824c5dfb7793e6a8e4415aafa4b299ff8df05",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -424,19 +424,19 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "ff3997aeb92a66a71eedf849c5cd98cfe103af681971943ae9c091f49054da5e",
-    "raw_rows_size_bytes": 195039,
+    "raw_rows_sha256": "ae7a17bc1e3e8570aa808e8aaf44f82e5c613beb05802585d34686b29ea396c2",
+    "raw_rows_size_bytes": 195042,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "32860093331",
+      "run_id": "32897417730",
       "workflow": "build"
     }
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1401471,
-      "sha256": "a4529c8989cefa93d730e6e2d6428b0888f2709c1858e2a96b808d76a97a0fb8"
+      "bytes": 1401466,
+      "sha256": "e22afa183e4a88b50ebb20dddf530693d1345bd20f344c61ab131d370cd77c46"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
@@ -444,27 +444,27 @@
     },
     "ou_robustness_paired_effects.csv": {
       "bytes": 143760,
-      "sha256": "1d6b5ac18300e1e17e8356d84f42f9c9e321b13b9ab5ded0326de60d60012942"
+      "sha256": "5d49d8c2bb318576a2ebedc099e77f85494dc0ecbaa2ec9dcac25b861abd82d2"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2903,
       "sha256": "15607d10b7883467748018e9a66d320fd60e7984c4a821407290c21fdcbeff75"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 195039,
-      "sha256": "ff3997aeb92a66a71eedf849c5cd98cfe103af681971943ae9c091f49054da5e"
+      "bytes": 195042,
+      "sha256": "ae7a17bc1e3e8570aa808e8aaf44f82e5c613beb05802585d34686b29ea396c2"
     },
     "ou_robustness_sensitivity.svg": {
       "bytes": 115821,
-      "sha256": "8b85c455604f3738a9a771633e6ea656fa6c4aee88d35e8d14b4699de109735a"
+      "sha256": "fd77dcb6a653ee6096d7b327dc720ed06bc8c025118f659725a0aa5700533f7e"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 44842,
-      "sha256": "7385db8f35263ea061511b25563497c0fa3057b6c3222f98b7bc90ab5cad9c47"
+      "bytes": 44844,
+      "sha256": "28e0e9b78406c8892ac4987973cf78909f3aa0cd2976f324d5a8c6db567545c4"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 126463,
-      "sha256": "3b5d26d3566c75723da7b6c66751298cb94ab96030265598d7758ff8fab4a422"
+      "bytes": 126455,
+      "sha256": "0d24f1be1a2be8270b5c0d7ef9934a7906264aec05ad08e09f2a1f45da943cc1"
     }
   },
   "schema_version": 2,
