@@ -1,0 +1,122 @@
+\subsection{Source-staged startup-to-Live capture qualification}
+\label{sec:p5-staged-capture}
+
+The startup gravity certificate and the full-heading Live certificate have
+different attitude quotients and must not be identified by reusing one scalar
+angle.  In particular, the normal and timeout quantities obtained from the
+startup gravity gate bound the error of the down direction only.  They are tilt
+bounds, not bounds on the complete element of $\SO(3)$.  A full-heading source
+node is formed only when the implementation has acquired a horizontal magnetic
+gauge.  If
+\begin{equation}
+ \cos\theta_{\perp,H}\ge c_H\ge0,
+ \qquad |\delta\psi_H|\le\bar\psi_H<1,
+ \label{eq:p5-tilt-yaw-components}
+\end{equation}
+then the composed full-attitude error satisfies the conservative source bound
+\begin{equation}
+ \boxed{
+ \cos\theta_H\ge
+ c_H\sqrt{1-\bar\psi_H^2}
+ -\sqrt{1-c_H^2}\,\bar\psi_H .}
+ \label{eq:p5-full-attitude-cosine}
+\end{equation}
+Hence the corresponding Cayley radius is bounded by
+\begin{equation}
+ \boxed{
+ \|\vct c_H\|
+ \le2\sqrt{\frac{1-\underline c_{R,H}}
+                   {1+\underline c_{R,H}}},
+ \qquad \underline c_{R,H}>-1.}
+ \label{eq:p5-full-attitude-cayley}
+\end{equation}
+Equation~\eqref{eq:p5-full-attitude-cosine} deliberately weakens
+$\cos\bar\psi_H$ to $\sqrt{1-\bar\psi_H^2}$ and
+$\sin\bar\psi_H$ to $\bar\psi_H$; it therefore requires no fitted trajectory
+angle or optimistic trigonometric evaluation.
+
+The implementation timeout is a distinct source branch.  Its gravity-alignment
+guard does not require the north-ready flag.  Consequently a timeout may enter
+held-bias Live mode before a magnetic heading gauge exists.  Such an execution
+is \emph{not} assigned the full-heading radius of
+Eq.~\eqref{eq:p5-full-attitude-cayley}.  Until magnetic lock or regauging, its
+attitude state is certified on the gravity quotient $\SO(3)/\SO(2)$, i.e. modulo
+rotation about gravity.  The magnetic gauge event is then a separate hybrid
+transition into the full-heading source family.  This branch split is necessary
+for the quantitative theorem: the free-yaw covariance used by the source at an
+ungauged handoff is not evidence for a finite true-heading error.
+
+The covariance at the instant of handoff is also substantially sharper than a
+generic normal-Live covariance envelope.  During startup the translational
+block is held.  The implemented attitude initialization clears the
+attitude--linear cross covariance; enabling the linear block resets the latent
+OU covariance and all of its cross blocks and resets the $S$-pseudo timer.
+Thus, at held-bias Live entrance,
+\begin{equation}
+ \boxed{
+ P_{\theta S}=P_{\theta a_w}=P_{a_wS}=0,
+ \qquad K_{\theta S}=0,}
+ \label{eq:p5-golive-cross-zero}
+\end{equation}
+while the independent constructor component of the $S$ covariance remains
+$P_{SS,0}=50^2I$ for the deployed initialization.  The first nonzero
+$S\to\theta$ gain is therefore bounded by propagating this particular source
+stage, rather than by inserting the translation-dominated global Live
+$\lambda_{\max}(P)$ into a cross-gain inequality.
+
+Before the first due $S=0$ correction, physical accelerometer and magnetometer
+measurements have no $S$ column.  The constructor $(S,p,v)$ covariance therefore
+contains a persistent component invisible to those measurements.  At time $T$
+its scalar per-axis contribution is
+\begin{equation}
+ \boxed{
+ D_S(T)=50^2+20^2T^2+\frac14T^4,}
+ \label{eq:p5-persistent-S-component}
+\end{equation}
+for the declared startup covariance seeds.  If $U_S(T)$ is a validated upper
+bound on the complete pre-first-pseudo $P_{SS}$, the remaining correlated
+component obeys
+\begin{equation}
+ E_S(T):=U_S(T)-D_S(T)\ge0.
+ \label{eq:p5-S-excess}
+\end{equation}
+For an isotropic physical measurement $R=\sigma^2I$, positivity of the joint
+covariance and
+$\max_{x\ge0}\sqrt{x}/(x+\sigma^2)=1/(2\sigma)$ give the directional bound
+\begin{equation}
+ \boxed{
+ \|L_SK\|_2\le\frac{\sqrt{E_S(T)}}{2\sigma},}
+ \label{eq:p5-final-S-physical-gain}
+\end{equation}
+where $L_S$ maps a correction at its source position to $S$ at the first due
+pseudo.  This bounds accepted physical corrections while rejected or not-due
+branches contribute zero; no favorable gating pattern is selected.
+
+Accordingly the deterministic pre-first-pseudo state satisfies a source-stage
+bound of the form
+\begin{align}
+ \|S(T)\|
+ &\le \bar S_0+T\bar p_0+\frac{T^2}{2}\bar v_0
+       +\frac{T^3}{6}\bar a_{w,0}
+ \nonumber\\
+ &\quad+
+ \sum_{k\in\mathcal A_a}\frac{\sqrt{E_S(T)}}{2\sigma_a}\|r_{a,k}\|
+ +\sum_{k\in\mathcal A_m}\frac{\sqrt{E_S(T)}}{2\sigma_m}\|r_{m,k}\|,
+ \label{eq:p5-first-S-state-prefix}
+\end{align}
+where the stable-OU inequality
+$|\phi_{Sa}(T)|\le T^3/6$ is used for the initial latent-acceleration term.
+Equation~\eqref{eq:p5-first-S-state-prefix} is evaluated on the same candidate
+outer source node as the finite-angle attitude calculation and is therefore a
+prefix lemma, not an independent assumption of capture.
+
+The remaining full-heading outer step uses the exact large-angle sector of
+Eq.~\eqref{eq:widen-large-angle-sector}.  In particular, the finite physical
+accelerometer/magnetometer correction is credited as group dissipation; it is
+not treated as an adverse perturbation that must fit inside the much smaller
+translation-limited local P3 gap.  The source-correlated covariance, gain,
+pseudo phase, and vector geometry must belong to one reachable tuple.  Once the
+large-angle sector closes the outer prefix bootstrap, the staged
+Eqs.~\eqref{eq:p5-golive-cross-zero}--\eqref{eq:p5-first-S-state-prefix} provide
+the early $S\to\theta$ contribution and the resulting outer H funnel can be
+iterated only after it overlaps the already-certified inner P4 level.
