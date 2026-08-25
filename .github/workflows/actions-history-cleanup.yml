@@ -2,8 +2,9 @@ name: actions-history-cleanup
 
 on:
   schedule:
-    # Hourly, off the top of the hour to avoid the busiest scheduling slot.
-    - cron: '17 * * * *'
+    # Weekly, Sunday 04:17 UTC. Off the hour and off midnight to avoid the
+    # busiest scheduling slots.
+    - cron: '17 4 * * 0'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -17,7 +18,7 @@ on:
       max_deletions:
         description: 'Safety cap on how many runs a single pass may delete'
         type: string
-        default: '300'
+        default: '5000'
 
 # Cancelled and skipped runs carry no evidence: a cancelled run produced no
 # verdict and a skipped one never executed. They accumulate in the Actions
@@ -26,6 +27,12 @@ on:
 # removes only that no-evidence residue and nothing else. Note that the API
 # deletes whole runs, not individual jobs, so a run is removed only when the
 # run's own conclusion is cancelled or skipped.
+#
+# This repository generates cancelled runs quickly: cancel-in-progress voids a
+# whole batch on every push. The pass is therefore parallel and the cap is set
+# well above a week's production rate, or the backlog never shrinks. Because
+# the pass runs weekly rather than hourly, anything it leaves behind waits a
+# week, so the cap has real headroom rather than a nominal one.
 permissions:
   contents: read
 
@@ -36,7 +43,7 @@ concurrency:
 jobs:
   cleanup:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       # Deleting workflow runs requires write access to Actions. Nothing else
       # in this workflow touches repository contents.
@@ -50,7 +57,8 @@ jobs:
           SELF_RUN_ID: ${{ github.run_id }}
           DRY_RUN: ${{ inputs.dry_run || false }}
           MIN_AGE_MINUTES: ${{ inputs.min_age_minutes || '60' }}
-          MAX_DELETIONS: ${{ inputs.max_deletions || '300' }}
+          MAX_DELETIONS: ${{ inputs.max_deletions || '5000' }}
+          PARALLELISM: '8'
         run: |
           set -euo pipefail
 
@@ -62,8 +70,8 @@ jobs:
           esac
 
           # Runs that reached their final state very recently are left alone:
-          # they may still be under inspection, and the next hourly pass will
-          # pick them up anyway.
+          # they may still be under inspection, and the next pass will pick
+          # them up anyway.
           cutoff="$(date -u -d "-${MIN_AGE_MINUTES} minutes" +%Y-%m-%dT%H:%M:%SZ)"
           echo "Repository:       $REPO"
           echo "Deleting runs in conclusion cancelled/skipped older than $cutoff"
@@ -106,51 +114,101 @@ jobs:
 
           if [ "$total_selected" -eq 0 ]; then
             echo "Nothing to clean up."
+            {
+              echo "### Actions history cleanup"
+              echo
+              echo "- Cancelled/skipped runs found: \`$total_candidates\`"
+              echo "- Nothing eligible this pass"
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
-          deleted=0
-          failed=0
-          while IFS=$'\t' read -r id conclusion updated name; do
-            [ -n "${id:-}" ] || continue
-            echo "  $conclusion  $updated  run $id  ($name)"
-            if [ "$DRY_RUN" = "true" ]; then
-              continue
+          echo "Selected, by workflow and conclusion:"
+          awk -F'\t' '{ printf "  %s\t%s\n", $2, $4 }' "$selected" \
+            | sort | uniq -c | sort -rn
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run - the runs above would be deleted:"
+            awk -F'\t' '{ printf "  %s  %s  run %s  (%s)\n", $2, $3, $1, $4 }' "$selected"
+            {
+              echo "### Actions history cleanup (dry run)"
+              echo
+              echo "- Cancelled/skipped runs found: \`$total_candidates\`"
+              echo "- Would delete: \`$total_selected\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          results="$(mktemp)"
+          worker="$(mktemp)"
+          export RESULTS="$results"
+
+          # One run per worker invocation. Each worker re-reads the run
+          # immediately before deleting it, so a run that has since been
+          # re-run (back to in_progress) is left alone even though the
+          # listing above saw it as cancelled.
+          cat > "$worker" <<'WORKER'
+          #!/usr/bin/env bash
+          set -uo pipefail
+          id="$1"
+          state="$(gh api "repos/${REPO}/actions/runs/${id}" \
+            --jq '"\(.status)/\(.conclusion)"' </dev/null 2>/dev/null || true)"
+          case "$state" in
+            completed/cancelled|completed/skipped) ;;
+            *)
+              printf 'SKIP\t%s\t%s\n' "$id" "${state:-unknown}" >> "$RESULTS"
+              exit 0
+              ;;
+          esac
+          # Transient 5xx from the Actions API is common on long passes.
+          # Retry before giving up; anything still failing is left for the
+          # next pass rather than failing the whole job.
+          for attempt in 1 2 3; do
+            if gh api --method DELETE "repos/${REPO}/actions/runs/${id}" \
+                --silent </dev/null 2>/dev/null; then
+              printf 'OK\t%s\n' "$id" >> "$RESULTS"
+              exit 0
             fi
-            # Re-read the run immediately before deleting: this is the last
-            # line of defence against deleting anything that is not a
-            # completed cancelled/skipped run.
-            state="$(gh api "repos/${REPO}/actions/runs/${id}" \
-              --jq '"\(.status)/\(.conclusion)"' </dev/null 2>/dev/null || true)"
-            case "$state" in
-              completed/cancelled|completed/skipped) ;;
-              *)
-                echo "    skipped: run state is now '${state:-unknown}'"
-                continue
-                ;;
-            esac
-            if gh api --method DELETE "repos/${REPO}/actions/runs/${id}" --silent </dev/null; then
-              deleted=$((deleted + 1))
-            else
-              echo "    delete failed for run $id"
-              failed=$((failed + 1))
-            fi
-          done < "$selected"
+            sleep "$attempt"
+          done
+          printf 'FAIL\t%s\n' "$id" >> "$RESULTS"
+          exit 0
+          WORKER
+          chmod +x "$worker"
+
+          cut -f1 "$selected" | xargs -r -P "$PARALLELISM" -n 1 "$worker"
+
+          deleted="$(grep -c '^OK' "$results" || true)"
+          left="$(grep -c '^SKIP' "$results" || true)"
+          failed="$(grep -c '^FAIL' "$results" || true)"
+
+          echo "Deleted: $deleted   Left in place: $left   Failed: $failed"
+          if [ "$left" -gt 0 ]; then
+            echo "Left in place because their state changed:"
+            grep '^SKIP' "$results" | awk -F'\t' '{ printf "  run %s is now %s\n", $2, $3 }'
+          fi
+          if [ "$failed" -gt 0 ]; then
+            echo "Failed to delete (will be retried next pass):"
+            grep '^FAIL' "$results" | awk -F'\t' '{ printf "  run %s\n", $2 }'
+          fi
 
           {
             echo "### Actions history cleanup"
             echo
             echo "- Cancelled/skipped runs found: \`$total_candidates\`"
             echo "- Eligible this pass: \`$total_selected\`"
-            if [ "$DRY_RUN" = "true" ]; then
-              echo "- Dry run: nothing was deleted"
-            else
-              echo "- Deleted: \`$deleted\`"
-              echo "- Failed: \`$failed\`"
-            fi
+            echo "- Deleted: \`$deleted\`"
+            echo "- Left in place (state changed): \`$left\`"
+            echo "- Failed, retried next pass: \`$failed\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [ "$failed" -gt 0 ]; then
-            echo "$failed deletion(s) failed" >&2
+          # A few transient failures are expected and self-heal on the next
+          # pass, so they must not turn the run red. Only a pass that deleted
+          # nothing at all points at a real problem (permissions, token).
+          if [ "$failed" -gt 0 ] && [ "$deleted" -eq 0 ]; then
+            echo "Every deletion failed - check the actions: write permission" >&2
             exit 1
+          fi
+          if [ "$failed" -gt 0 ]; then
+            echo "::warning::$failed run(s) could not be deleted; retrying next pass"
           fi

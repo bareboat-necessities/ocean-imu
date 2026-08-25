@@ -4,6 +4,13 @@ on:
   workflow_run:
     workflows: [build]
     types: [completed]
+    # Gate at the trigger, not in the job. build runs on every push and every
+    # pull request, so without this filter each one created a readme-results
+    # run that existed only to skip, burying the real history. branches
+    # matches the triggering run's head branch, so non-main builds no longer
+    # create a run at all. conclusion and event still have to be checked in
+    # the job below: workflow_run has no trigger-level filter for either.
+    branches: [main]
 
 # This workflow turns successful main-branch build products into stable,
 # versioned README assets. The main build first closes the full OU evidence
