@@ -141,27 +141,54 @@ The tiny levels are theorem seeds, not practical-basin claims. Strict positivity
 
 **PASS:** `P4_EXACT_NONLINEAR_WORD_CERTIFICATE=PASS` for both H and A with explicit positive `W_*`, positive `mu_W`, exact source-operation semantics, complete branch coverage, and prefix/chart safety. P5 must now bridge the P1 handoff family to this inner H seed.
 
-### P5 — Initialization-to-inner-funnel finite capture — FIRST OBSTRUCTION IDENTIFIED, NOT CLOSED
+### P5 — Initialization-to-inner-funnel finite capture — OUTER ALGEBRA CLOSED, LATER PREFIX ENCLOSURE PENDING
 
-`tools/ou3_p5_startup_capture_certificate.py` now evaluates the first legal P5 composition gate instead of blindly iterating the P4 local recurrence.
+The original composition audit correctly found that the useful P1 handoff family lies far outside the microscopic P4 inner seed. That result remains a guard against illegally extrapolating the P4 local recurrence, but it is no longer the current P5 obstruction. The outer bridge has since progressed through the source-staged startup covariance, first-`S`, large-angle geometry, quotient correction, and exact transport layers.
 
-For the H word, P4 supplies a homogeneous information gap `delta_H>0` and a transported nonlinear defect bound `B_H W`. A conservative square-root recurrence is
+The currently closed P5 prerequisites are:
 
-`sqrt(W_next) <= (1-delta_H/2) sqrt(W) + B_H W`.
+- the goLive H covariance seed and scheduler phase are source bound;
+- the first-due `S=0` gain is bounded with source-staged theta/`S` covariance structure rather than the translation-dominated global covariance box;
+- the conditional first-`S` state prefix is finite with the complete `S -> attitude` gain retained;
+- the first-due `S` quaternion/Cayley prefix is certified as `PASS_WIDENED_CHART`; the convenient `||c||<1` test is diagnostic only and is not a theorem gate;
+- exact finite-angle vector information is positive on both gauged H handoff nodes;
+- the isotropic raw `V_R` outer-sector route has a validated source counterexample and is retired rather than repaired by a larger adverse remainder;
+- the false yaw-only/full-gyro-bias gravity route is retired; the detectable gravity quotient carries the gravity-parallel gyro bias as an explicit bounded neutral input while retaining the complete translation word;
+- every shipping normal-Live operation class is bound to the exact Joseph/quaternion/reset transport calculus, including sequential immediate resets and PSD `a_w` covariance synchronization;
+- the exact Cayley vector-defect geometry and the signed Cayley correction primitive are validated, so the backend does not replace `1-a^T c/4` by `1-|a||c|/4`.
 
-Therefore strict word-to-word decrease is guaranteed only while
+A further exact reduction now removes the remaining standalone vector-`eta` penalty from the active P5 numerical route. For the configured isotropic magnetometer,
 
-`sqrt(W) < delta_H/(2 B_H)`.
+`H_m = -[v]_x`, `R_m = r_m I`, `H_m^T v = 0`, `S_m v = r_m v`, and therefore `K_m v = 0`.
 
-The certified P4 inner seed uses the still smaller safety choice `sqrt(W_*) <= delta_H/(8 B_H)`. The machine-checked P5 composition gives `W_* = 3.29172575174270652e-141`, nonlinear design canonical-norm radius `q_design = 8.650578521054014e-13`, and strict-decrease threshold `W_capture = 5.26676120278833e-140`, approximately `16 W_*`.
+If `y_m` is the exact finite-angle magnetic residual, define
 
-P1, however, deliberately allows a physically useful source handoff family rather than a microscopic local set. Its declared H-coordinate radii include `||b_g|| <= 0.01 rad/s`, `||v|| <= 5 m/s`, `||p|| <= 20 m`, `||S|| <= 300 m s`, and `||a_w|| <= 10 m/s^2`. Because the normalized P4 metric has `m_-` essentially one, even the weakest admissible axis witness, `||b_g||=0.01` with the other coordinates zero, has `W >= 9.999999999999996e-5`, or `1.898700095744951e135` times the current strict-decrease threshold. The `S` axis witness has `W >= 8.999999999999996e4`, or `1.7088300861704558e144` times that threshold. Both are also far outside `q_design`.
+`d_m = H_m^T y_m / ||v||^2`.
 
-This is the first P5 obstruction. It would be mathematically invalid to compute an `N_H` by applying the P4 inner recurrence to the P1 handoff set: that would extrapolate a local nonlinear estimate outside the domain on which its defect bound and decrease are certified. Accordingly the P5 producer reports `P5_OBSTRUCTION_IDENTIFIED=PASS`, `P5_FINITE_CAPTURE_CERTIFICATE=NOT_ESTABLISHED`, and leaves `N_H_words` unset.
+Then the implemented correction satisfies the exact identity
 
-The required next step is not a second theorem route and not a weaker gate. The same source-reachable Cayley-information construction must be widened into an **outer capture bridge** covering the P1 normal/timeout handoff family—most likely by source-node/state subdivision and sharper exact nonlinear word bounds—until a validated recurrence connects that outer family to the existing P4 inner seed. Only then may P5 compute a finite integer `N_H` and finite capture time, including early covariance/tuner staging.
+`K_m y_m = K_m H_m d_m`.
 
-The independent implementation-stability composition gate now consumes P5 directly. The older generic affine capture arithmetic in the deployment gate is explicitly not accepted as a substitute for this startup-to-P4 composition, so `PASS_IMPLEMENTATION_STABLE` is blocked while the P5 finite-capture status is `NOT_ESTABLISHED`.
+The radial finite-angle residual therefore produces no state correction, quaternion injection, or reset correction. In Cayley coordinates the effective tangent coordinate is nonexpansive and is enclosed cellwise by `tools/ou3_p5_effective_vector_input.py`.
+
+For the accelerometer, the shipping Jacobian contains the orthogonal full-rank block `J_aw = R_wb`. For `y_a = H_a z + eta_a`, define `e_eta = J_aw^T eta_a` and insert it in the `a_w` coordinate. Then
+
+`H_a E_aw e_eta = eta_a`,
+
+so exactly
+
+`K_a(H_a z + eta_a) = K_a H_a(z + E_aw e_eta)`.
+
+This does **not** declare `eta_a=0`; it represents the same source residual as a source-correlated effective `a_w` tangent input. The Joseph identity remains valid. The proof backend therefore propagates the joint `P,H,R,K,r,d_eff`/effective-`a_w` cells instead of subtracting an unrelated `eta^T R^-1 eta` norm budget. This reduction is scoped to the configured theorem domain with optional IMU lever-arm compensation disabled.
+
+The bridge remains fail-closed. Its current first unclosed numerical obligations are:
+
+- gauged H: `COMPLETE_WORD_EFFECTIVE_VECTOR_INPUT_RESET_PREFIX_BUDGET_NOT_CERTIFIED`;
+- gravity quotient H: `GRAVITY_QUOTIENT_EFFECTIVE_ACCEL_INPUT_RESET_PREFIX_BUDGET_NOT_CERTIFIED`.
+
+Thus the next work is the outward source-correlated subdivision over the **later** prefixes of the complete 1 s word: prediction, accepted/rejected vector corrections, due/not-due `S`, covariance/source-schedule evolution, and each immediate reset. Each cell must keep `P,H,R,K,r,d_eff` (or the effective accelerometer `a_w` input) jointly reachable and accumulate the exact reset/prediction budget. Only after those prefix cells prove an outer recurrence into the existing P4 inner seed may the certificate set a finite integer `N_H_words` and capture time. `N_H_words` remains intentionally unset today.
+
+The independent implementation-stability composition gate continues to consume P5 directly. The older generic affine deployment-capture arithmetic is not accepted as a substitute.
 
 **PASS criterion for closing P5:** every certified normal or timeout handoff lies in a validated outer H capture funnel; every source-word prefix stays safe; the outer recurrence reaches `W_*` in a finite machine-certified number of H words/time. The current certificate does **not** yet satisfy this criterion.
 
