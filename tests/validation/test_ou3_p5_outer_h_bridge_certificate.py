@@ -24,6 +24,11 @@ class Ou3P5OuterHBridgeCertificateTests(unittest.TestCase):
         p = d["first_due_S_state_prefix_stage"]
         self.assertEqual(p["status"], "PASS_CONDITIONAL")
         self.assertLess(p["first_due_S_induced_attitude_correction_norm_upper_rad"], p["group_helper_limit_rad"])
+        x = d["first_due_S_exact_prefix_stage"]
+        self.assertEqual(x["status"], "PASS_WIDENED_CHART")
+        self.assertFalse(x["diagnostic_q_lt_1_is_promotion_gate"])
+        self.assertGreater(x["antipodal_margin_lower"], 0.0)
+        self.assertGreater(x["vector_information_vs_goLive_metric_lower"], 0.0)
 
     def test_bridge_consumes_validated_raw_VR_counterexample(self):
         d = self.d
@@ -38,22 +43,33 @@ class Ou3P5OuterHBridgeCertificateTests(unittest.TestCase):
             self.assertFalse(n["raw_V_R_sector_is_P5_promotion_route"])
             self.assertTrue(n["source_shaped_Cayley_information_outer_sector_required"])
 
-    def test_finite_angle_information_geometry_is_now_closed_on_both_nodes(self):
+    def test_finite_angle_information_and_exact_transport_prerequisites_are_closed(self):
         d = self.d
         fi = d["finite_angle_information_geometry"]
         self.assertEqual(fi["status"], "PASS")
         self.assertEqual(fi["complete_word_sector"], "NOT_ESTABLISHED")
         self.assertIn("eta^T R^-1 eta", fi["exact_joseph_tangent_information_identity"])
+        tr = d["complete_word_transport_stage"]
+        self.assertEqual(tr["status"], "PASS")
+        self.assertTrue(tr["full_S_to_attitude_gain_retained"])
+        self.assertTrue(tr["sequential_immediate_quaternion_resets_retained"])
+        self.assertEqual(tr["gauged_numerical_status"], "NOT_ESTABLISHED")
+        eta = d["exact_eta_subdivision_stage"]
+        self.assertEqual(eta["status"], "PASS")
+        self.assertGreaterEqual(eta["annular_subdivision_cell_count"], 1)
+        self.assertFalse(eta["global_packet_count_times_Lipschitz_defect_used"])
+        signed = d["signed_cayley_cell_stage"]
+        self.assertEqual(signed["status"], "PASS")
+        self.assertTrue(signed["signed_a_dot_c_retained"])
+        self.assertFalse(signed["independent_abs_a_abs_c_denominator_used"])
         for n in d["gauged_full_heading_nodes"].values():
             self.assertEqual(n["finite_angle_information_geometry_status"], "PASS")
             self.assertGreater(n["exact_cayley_residual_factor_lower"], 0.0)
             self.assertGreater(n["exact_pair_residual_information_per_cayley_norm_sq_lower"], 0.0)
             self.assertGreater(n["exact_pair_residual_information_vs_goLive_attitude_metric_lower"], 0.0)
             self.assertTrue(n["source_correlated_Joseph_information_identity_retained"])
-            self.assertEqual(
-                n["source_shaped_Cayley_information_outer_sector_status"],
-                "PARTIAL_GEOMETRY_PASS_WORD_TRANSPORT_PENDING",
-            )
+            self.assertEqual(n["first_due_S_exact_prefix_certificate"], "PASS_WIDENED_CHART")
+            self.assertTrue(n["inside_widened_first_S_chart"])
 
     def test_bridge_uses_full_attitude_gauged_nodes_not_tilt_only_cosines(self):
         d = self.d
@@ -82,18 +98,19 @@ class Ou3P5OuterHBridgeCertificateTests(unittest.TestCase):
         self.assertEqual(u["reduced_detectability_certificate"], "PASS")
         self.assertFalse(u["full_heading_cayley_bound_available"])
         self.assertIn("AXIAL_GYRO_BIAS", u["required_route"])
+        self.assertEqual(u["current_numerical_obligation"], "GRAVITY_QUOTIENT_EXACT_ETA_RESET_PREFIX_BUDGET_NOT_CERTIFIED")
 
-    def test_next_obligations_are_exact_complete_word_transport(self):
+    def test_remaining_obligations_are_later_numerical_subdivision_only(self):
         d = self.d
         self.assertEqual(
             d["gauged_full_heading_first_failure"],
-            "COMPLETE_SOURCE_WORD_EXACT_CAYLEY_INFORMATION_TRANSPORT_NOT_CERTIFIED",
+            "COMPLETE_WORD_ETA_RESET_INFORMATION_BUDGET_NOT_CERTIFIED",
         )
         self.assertEqual(
             d["first_failure"],
-            "GRAVITY_QUOTIENT_NONLINEAR_SOURCE_WORD_NOT_CERTIFIED",
+            "GRAVITY_QUOTIENT_EXACT_ETA_RESET_PREFIX_BUDGET_NOT_CERTIFIED",
         )
-        self.assertIn("complete 1 s source-correlated H word", d["next_full_heading_numerical_certificate"])
+        self.assertIn("source-correlated covariance/gain/residual K*r cells", d["next_full_heading_numerical_certificate"])
         self.assertIn("b_g_parallel", d["next_complete_startup_family_certificate"])
         self.assertEqual(d["P5_OUTER_H_BRIDGE_CERTIFICATE"], "NOT_ESTABLISHED")
         self.assertIsNone(d["N_H_words"])
