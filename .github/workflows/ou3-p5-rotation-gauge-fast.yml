@@ -1,7 +1,5 @@
 name: ou3-p5-rotation-gauge-fast
 
-# Active focused route: exact source-reachable first accelerometer through the
-# corrected sample-1 prefix and the canonical rotation-gauge witness refinement.
 on:
   pull_request:
     paths:
@@ -12,16 +10,14 @@ on:
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_first_accel_post_reset.py"
       - "tools/ou3_p5_sample1_entry.py"
-      - "tools/ou3_p5_sample1_entry_v2.py"
       - "tools/ou3_p5_sample1_entry_v3.py"
       - "tools/ou3_p5_sample1_prefix.py"
       - "tools/ou3_p5_sample1_prefix_v2.py"
       - "tools/ou3_p5_sample1_rotation_gauge_refinement.py"
+      - "tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
-      - "tools/ou3_p5_full_h_prefix_cells_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells_v3.py"
-      - "tools/ou3_p5_effective_vector_input.py"
       - "tools/ou3_p5_go_live_covariance_stage.py"
       - "tools/ou3_p5_heading_handoff_contract.py"
       - "tools/ou3_startup_stability_certificate.py"
@@ -29,6 +25,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p5_sample1_prefix_v2.py"
       - "tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement.py"
+      - "tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
 
@@ -41,12 +38,12 @@ concurrency:
 
 jobs:
   sample1-rotation-gauge-refinement:
-    name: P5 sample-1 canonical rotation-gauge witness refinement
+    name: P5 sample-1 rotation-gauge subdivision witness
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - name: Compile sample-1 rotation-gauge producers
+      - name: Compile focused producers
         run: |
           python3 -m py_compile \
             tools/ou3_p5_first_accel_rotation_gauge.py \
@@ -60,29 +57,43 @@ jobs:
             tools/ou3_p5_sample1_prefix.py \
             tools/ou3_p5_sample1_prefix_v2.py \
             tools/ou3_p5_sample1_rotation_gauge_refinement.py \
-            tests/validation/test_ou3_p5_sample1_prefix_v2.py \
-            tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement.py
-      - name: Test sample-1 rotation-gauge semantics
+            tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py \
+            tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement.py \
+            tests/validation/test_ou3_p5_sample1_rotation_gauge_refinement_v2.py
+      - name: Test focused semantics
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
-            test_ou3_p5_sample1_prefix_v2 \
-            test_ou3_p5_sample1_rotation_gauge_refinement
-      - name: Emit canonical rotation-gauge witness result
+            test_ou3_p5_sample1_rotation_gauge_refinement \
+            test_ou3_p5_sample1_rotation_gauge_refinement_v2
+      - name: Emit unsubdivided witness result
         run: |
           python3 tools/ou3_p5_sample1_rotation_gauge_refinement.py \
-            --source-pieces 2 \
-            --source-cell-index 0 \
-            --output /tmp/ou3_p5_sample1_rotation_gauge_refinement.json
+            --source-pieces 2 --source-cell-index 0 \
+            --output /tmp/p5_rg1.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p5_sample1_rotation_gauge_refinement.json'))
-          print('P5_SAMPLE1_ROTATION_GAUGE:', d['P5_SAMPLE1_ROTATION_GAUGE_WITNESS_REFINEMENT'])
-          print('P5_SAMPLE1_ROTATION_GAUGE_BRANCHES:', d['evaluated_branch_count'])
-          print('P5_SAMPLE1_ROTATION_GAUGE_FIXED:', d['fixed_pivot_inverse_count'])
-          print('P5_SAMPLE1_ROTATION_GAUGE_FALLBACK:', d['spectral_fallback_inverse_count'])
-          print('P5_SAMPLE1_ROTATION_GAUGE_MAX_RESIDUAL:', d['max_sample1_residual_norm_upper_mps2'])
-          print('P5_SAMPLE1_ROTATION_GAUGE_MAX_D:', d['max_sample1_correction_norm_upper_rad'])
-          print('P5_SAMPLE1_ROTATION_GAUGE_FIRST_UNCLOSED:', d['first_unclosed_branch'])
-          print('P5_SAMPLE1_ROTATION_GAUGE_NEXT:', d['next_obligation'])
+          d=json.load(open('/tmp/p5_rg1.json'))
+          print('P5_RG1_STATUS:',d['P5_SAMPLE1_ROTATION_GAUGE_WITNESS_REFINEMENT'])
+          print('P5_RG1_FIXED:',d['fixed_pivot_inverse_count'])
+          print('P5_RG1_FALLBACK:',d['spectral_fallback_inverse_count'])
+          print('P5_RG1_MAX_D:',d['max_sample1_correction_norm_upper_rad'])
+          PY
+      - name: Emit delta/force subdivided witness result
+        run: |
+          python3 tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py \
+            --source-pieces 2 --source-cell-index 0 \
+            --delta-pieces 4 --force-pieces 4 \
+            --output /tmp/p5_rg2.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/p5_rg2.json'))
+          print('P5_RG2_STATUS:',d['P5_SAMPLE1_DELTA_FORCE_SUBDIVIDED_WITNESS_REFINEMENT'])
+          print('P5_RG2_CELLS:',d['evaluated_joint_cells'])
+          print('P5_RG2_FIXED:',d['fixed_pivot_inverse_count'])
+          print('P5_RG2_FALLBACK:',d['spectral_fallback_inverse_count'])
+          print('P5_RG2_MAX_RESIDUAL:',d['max_sample1_residual_norm_upper_mps2'])
+          print('P5_RG2_MAX_D:',d['max_sample1_correction_norm_upper_rad'])
+          print('P5_RG2_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
+          print('P5_RG2_NEXT:',d['next_obligation'])
           PY
