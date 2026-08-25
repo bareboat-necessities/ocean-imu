@@ -2,7 +2,7 @@
 """Source-staged covariance seed for the OU-III P5 outer-H bridge.
 
 This producer closes the *entrance* covariance semantics at the deployed
-startup->H handoff.  It does not use replay and it does not pretend that the
+startup->H handoff. It does not use replay and it does not pretend that the
 normal-Live P3 covariance box is already the covariance at goLive.
 
 The shipping sequence is
@@ -21,18 +21,18 @@ and the MEKF source gives two exact resets relevant to P5:
   and resets pseudo_update_elapsed_s_ to zero.
 
 During warmup the linear block is disabled, so the constructor's v/p/S
-covariance seed is not propagated.  Therefore at the instant H mode starts,
+covariance seed is not propagated. Therefore at the instant H mode starts,
 P_theta,S=P_theta,aw=P_aw,S=0 and P_SS=(50 m s)^2 I exactly (up to the source
-scalar semantics).  In particular the *entrance* S->attitude Kalman gain is
-exactly zero.  This removes the invalid use of the many-orders-looser global P3
+scalar semantics). In particular the *entrance* S->attitude Kalman gain is
+exactly zero. This removes the invalid use of the many-orders-looser global P3
 covariance eigenvalue bound at the handoff node.
 
-The first due S pseudo update is later.  Between goLive and that due event an
+The first due S pseudo update is later. Between goLive and that due event an
 accepted accelerometer correction can create attitude/linear cross covariance
-because its H matrix contains both attitude and a_w columns.  The producer
+because its H matrix contains both attitude and a_w columns. The producer
 therefore exposes a finite, source-derived first-pseudo stage and explicitly
 leaves that accepted-branch cross-covariance propagation as the next numerical
-sub-obligation.  No favorable rejection pattern is assumed.
+sub-obligation. No favorable rejection pattern is assumed.
 """
 from __future__ import annotations
 
@@ -79,7 +79,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if mf:
         raise RuntimeError(f"implementation manifest prerequisite failed: {mf}")
 
-    # Bind the exact source operations that create the H entrance covariance.
     markers = {
         "go_live_initializes_attitude": "mekf_->initialize_from_attitude(q_bw, tilt_sigma_rad, yaw_sigma_rad);",
         "go_live_enters_live": "enterLive_();",
@@ -96,8 +95,6 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     for label, marker in markers.items():
         _require(joined, marker, label)
 
-    # Constructor covariance seeds.  These remain unchanged while the linear
-    # block is disabled during warmup.
     sigma_v0 = _one(k, r"const\s+T\s+sigma_v0\s*=\s*T\(([0-9.eE+-]+)\)", "sigma_v0")
     sigma_p0 = _one(k, r"const\s+T\s+sigma_p0\s*=\s*T\(([0-9.eE+-]+)\)", "sigma_p0")
     sigma_S0 = _one(k, r"const\s+T\s+sigma_S0\s*=\s*T\(([0-9.eE+-]+)\)", "sigma_S0")
@@ -110,16 +107,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     dt = float(manifest["configured_runtime"]["imu_dt_s"])
     pbox = SOURCE.build(WRAPPER)["validated_parameter_box"]["continuous_parameters"]
     pseudo_lo, pseudo_hi = map(float, pbox["pseudo_update_period_s"])
-    # pbox is outward rounded, so use the upper endpoint directly and add one
-    # sample for the source floating-point tolerance / phase boundary.
+    sigma_aw_lo, sigma_aw_hi = map(float, pbox["sigma_aw_mps2"])
     first_due_steps_upper = int(math.ceil(pseudo_hi / dt)) + 1
     first_due_steps_lower = 1
     first_due_time_upper = first_due_steps_upper * dt
 
-    # The deployment magnetometer schedule used by the vector certificate is
-    # 25 Hz.  Before the first S pseudo it cannot create AL cross covariance
-    # from an exactly zero AL block because its H has attitude columns only;
-    # after an accepted accelerometer has created AL cross it may transform it.
     mag_corrections_upper = int(math.ceil(first_due_time_upper * 25.0)) + 1
 
     seed = {
@@ -137,7 +129,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P_pp_variance_per_axis": sigma_p0 * sigma_p0,
         "P_SS_variance_per_axis": sigma_S0 * sigma_S0,
         "P_awaw_reset_to_current_stationary_covariance": True,
-        "P_awaw_source_std_upper_mps2": float(domain["normal_live"]["sigma_aw_mps2"][1]),
+        "P_awaw_source_std_outward_mps2": [sigma_aw_lo, sigma_aw_hi],
         "attitude_covariance_seed": {
             "tilt_sigma_rad": tilt_sigma,
             "gauged_yaw_sigma_rad": yaw_sigma,
@@ -219,6 +211,10 @@ def validate(d: dict) -> list[str]:
             failures.append(f"goLive {key} is not exact zero")
     if not math.isclose(float(seed.get("P_SS_variance_per_axis", math.nan)), 2500.0, rel_tol=0.0, abs_tol=1e-12):
         failures.append("goLive P_SS seed is not source constructor value")
+    sigma_box = seed.get("P_awaw_source_std_outward_mps2")
+    if not (isinstance(sigma_box, list) and len(sigma_box) == 2
+            and 0.0 < float(sigma_box[0]) <= float(sigma_box[1])):
+        failures.append("goLive a_w source std box missing")
     stage = d.get("pre_first_S_stage", {})
     if not (isinstance(stage.get("first_due_prediction_samples_upper"), int)
             and stage["first_due_prediction_samples_upper"] >= 1):
