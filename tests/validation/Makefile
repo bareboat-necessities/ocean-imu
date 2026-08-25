@@ -39,6 +39,7 @@ build:
 		../../tools/ou3_p5_outer_information_geometry.py \
 		../../tools/ou3_p5_exact_correction_transport.py \
 		../../tools/ou3_p5_first_s_exact_prefix.py \
+		../../tools/ou3_p5_cayley_eta_geometry.py \
 		../../tools/ou3_p5_complete_word_transport.py \
 		../../tools/ou3_p5_yaw_quotient_word_certificate.py \
 		../../tools/ou3_p5_gravity_quotient_certificate.py \
@@ -83,6 +84,7 @@ build:
 		test_ou3_p5_outer_information_geometry.py \
 		test_ou3_p5_exact_correction_transport.py \
 		test_ou3_p5_first_s_exact_prefix.py \
+		test_ou3_p5_cayley_eta_geometry.py \
 		test_ou3_p5_complete_word_transport.py \
 		test_ou3_p5_yaw_quotient_word_certificate.py \
 		test_ou3_p5_gravity_quotient_certificate.py \
