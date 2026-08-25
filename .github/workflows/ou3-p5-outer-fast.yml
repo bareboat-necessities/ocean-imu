@@ -22,6 +22,7 @@ on:
       - "tools/ou3_p5_outer_information_geometry.py"
       - "tools/ou3_p5_exact_correction_transport.py"
       - "tools/ou3_p5_first_s_exact_prefix.py"
+      - "tools/ou3_p5_cayley_eta_geometry.py"
       - "tools/ou3_p5_complete_word_transport.py"
       - "tools/ou3_p5_yaw_quotient_word_certificate.py"
       - "tools/ou3_p5_gravity_quotient_certificate.py"
@@ -39,6 +40,7 @@ on:
       - "tests/validation/test_ou3_p5_outer_information_geometry.py"
       - "tests/validation/test_ou3_p5_exact_correction_transport.py"
       - "tests/validation/test_ou3_p5_first_s_exact_prefix.py"
+      - "tests/validation/test_ou3_p5_cayley_eta_geometry.py"
       - "tests/validation/test_ou3_p5_complete_word_transport.py"
       - "tests/validation/test_ou3_p5_yaw_quotient_word_certificate.py"
       - "tests/validation/test_ou3_p5_gravity_quotient_certificate.py"
@@ -77,6 +79,7 @@ jobs:
             tools/ou3_p5_outer_information_geometry.py \
             tools/ou3_p5_exact_correction_transport.py \
             tools/ou3_p5_first_s_exact_prefix.py \
+            tools/ou3_p5_cayley_eta_geometry.py \
             tools/ou3_p5_complete_word_transport.py \
             tools/ou3_p5_yaw_quotient_word_certificate.py \
             tools/ou3_p5_gravity_quotient_certificate.py \
@@ -91,6 +94,7 @@ jobs:
             tests/validation/test_ou3_p5_outer_information_geometry.py \
             tests/validation/test_ou3_p5_exact_correction_transport.py \
             tests/validation/test_ou3_p5_first_s_exact_prefix.py \
+            tests/validation/test_ou3_p5_cayley_eta_geometry.py \
             tests/validation/test_ou3_p5_complete_word_transport.py \
             tests/validation/test_ou3_p5_yaw_quotient_word_certificate.py \
             tests/validation/test_ou3_p5_gravity_quotient_certificate.py \
@@ -109,6 +113,7 @@ jobs:
             test_ou3_p5_outer_information_geometry \
             test_ou3_p5_exact_correction_transport \
             test_ou3_p5_first_s_exact_prefix \
+            test_ou3_p5_cayley_eta_geometry \
             test_ou3_p5_complete_word_transport \
             test_ou3_p5_yaw_quotient_word_certificate \
             test_ou3_p5_gravity_quotient_certificate \
@@ -124,6 +129,7 @@ jobs:
           python3 tools/ou3_p5_outer_information_geometry.py --output /tmp/ou3_p5_outer_information_geometry.json
           python3 tools/ou3_p5_exact_correction_transport.py --output /tmp/ou3_p5_exact_correction_transport.json
           python3 tools/ou3_p5_first_s_exact_prefix.py --output /tmp/ou3_p5_first_s_exact_prefix.json
+          python3 tools/ou3_p5_cayley_eta_geometry.py --output /tmp/ou3_p5_cayley_eta_geometry.json
           python3 tools/ou3_p5_complete_word_transport.py --output /tmp/ou3_p5_complete_word_transport.json
           python3 tools/ou3_p5_yaw_quotient_word_certificate.py --output /tmp/ou3_p5_yaw_quotient_word_certificate.json
           python3 tools/ou3_p5_gravity_quotient_certificate.py --output /tmp/ou3_p5_gravity_quotient_certificate.json
@@ -139,6 +145,7 @@ jobs:
           fi=json.load(open('/tmp/ou3_p5_outer_information_geometry.json'))
           ct=json.load(open('/tmp/ou3_p5_exact_correction_transport.json'))
           sx=json.load(open('/tmp/ou3_p5_first_s_exact_prefix.json'))
+          eg=json.load(open('/tmp/ou3_p5_cayley_eta_geometry.json'))
           wt=json.load(open('/tmp/ou3_p5_complete_word_transport.json'))
           q=json.load(open('/tmp/ou3_p5_yaw_quotient_word_certificate.json'))
           gq=json.load(open('/tmp/ou3_p5_gravity_quotient_certificate.json'))
@@ -151,7 +158,8 @@ jobs:
           print('P5_RAW_VR_SECTOR:', la['P5_RAW_VR_LARGE_ANGLE_SECTOR'], la['validated_counterexample']['D_R_deployed_interval'])
           print('P5_FINITE_ANGLE_INFO:', fi['P5_FINITE_ANGLE_INFORMATION_GEOMETRY_CERTIFICATE'], {k:v['exact_pair_residual_information_vs_goLive_attitude_metric_lower'] for k,v in fi['nodes'].items()})
           print('P5_EXACT_CORRECTION_TRANSPORT:', ct['P5_EXACT_CORRECTION_TRANSPORT_ALGEBRA_CERTIFICATE'], {k:(v['cayley_composition_denominator_lower'],v['reset_attitude_defect_norm_upper']) for k,v in ct['nodes'].items()})
-          print('P5_FIRST_S_EXACT_PREFIX:', sx['P5_FIRST_DUE_S_EXACT_CAYLEY_PREFIX_CERTIFICATE'], sx['first_failure'], {k:(v['certified_correction_radius_for_cayley_lt_1_rad'],v['directional_Ptheta_upper_target_if_other_first_S_factors_unchanged']) for k,v in sx['nodes'].items()})
+          print('P5_FIRST_S_EXACT_PREFIX:', sx['P5_FIRST_DUE_S_EXACT_CAYLEY_PREFIX_CERTIFICATE'], sx['first_failure'], 'required_q=', sx['required_first_S_post_cayley_norm_upper'], 'widened_q=', sx['widened_prefix_cayley_norm_upper'], 'diagnostic_targets=', {k:v['certified_correction_radius_for_diagnostic_cayley_lt_1_rad'] for k,v in sx['nodes'].items()})
+          print('P5_EXACT_ETA_GEOMETRY:', eg['P5_CAYLEY_ETA_GEOMETRY_CERTIFICATE'], 'q=', eg['widened_cayley_norm_upper'], 'eta_ratio=', eg['widened_eta_to_rotational_residual_information_ratio_upper'], 'cells=', eg['subdivision_cell_count'])
           print('P5_COMPLETE_WORD_TRANSPORT_ALGEBRA:', wt['P5_COMPLETE_WORD_TRANSPORT_ALGEBRA_CERTIFICATE'], 'gauged=', wt['gauged_H']['first_unclosed_numerical_obligation'], 'quotient=', wt['gravity_quotient_H']['first_unclosed_numerical_obligation'])
           print('P5_YAW_ONLY_QUOTIENT:', q['P5_UNGAUGED_TIMEOUT_QUOTIENT_WORD_CERTIFICATE'], q['P5_YAW_ONLY_QUOTIENT_OBSTRUCTION_IDENTIFIED'])
           print('P5_DETECTABLE_GRAVITY_QUOTIENT:', gq['P5_GRAVITY_QUOTIENT_REDUCED_DETECTABILITY_CERTIFICATE'], gq['reduced_attitude_bias_information']['alpha_4_quotient_information_lower'])
