@@ -72,7 +72,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "source_replay_used": False,
         "filter_changed": False,
         "active_P_payload": "OUTWARD_FULL_18X18_H_COVARIANCE_CELL",
-        "active_full_matrix_backend": full["active_interval_backend"],
+        "active_full_matrix_backend": full["active_full_matrix_backend"],
         "active_backend_is_v3_deployed_quaternion": True,
         "directional_P_payload_retained_as_active_backend": False,
         "old_directional_scalar_route_used_for_promotion": False,
@@ -96,7 +96,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         },
         "full_matrix_prefix": {
             "status": matrix_status,
-            "active_interval_backend": full["active_interval_backend"],
+            "active_full_matrix_backend": full["active_full_matrix_backend"],
             "maximum_validated_deployed_correction_norm_rad": full["maximum_validated_deployed_correction_norm_rad"],
             "correction_norm_three_rad_is_promotion_gate": full["correction_norm_three_rad_is_promotion_gate"],
             "deployed_quaternion_composed_before_result_cayley": full["deployed_quaternion_composed_before_result_cayley"],
