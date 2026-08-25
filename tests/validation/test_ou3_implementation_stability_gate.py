@@ -30,20 +30,23 @@ class Ou3ImplementationStabilityGateTests(unittest.TestCase):
         self.assertFalse(out["P5_finite_startup_capture_pass"])
         self.assertEqual(
             out["P5_first_obstruction"],
-            "GRAVITY_QUOTIENT_NONLINEAR_SOURCE_WORD_NOT_CERTIFIED",
+            "GRAVITY_QUOTIENT_EFFECTIVE_ACCEL_INPUT_RESET_PREFIX_BUDGET_NOT_CERTIFIED",
         )
         self.assertEqual(out["P5_identification"]["P5_OBSTRUCTION_IDENTIFIED"], "PASS")
         bridge = out["P5_bridge"]
         self.assertEqual(bridge["P5_OUTER_H_BRIDGE_CERTIFICATE"], "NOT_ESTABLISHED")
         self.assertEqual(
             bridge["gauged_full_heading_first_failure"],
-            "COMPLETE_SOURCE_WORD_EXACT_CAYLEY_INFORMATION_TRANSPORT_NOT_CERTIFIED",
+            "COMPLETE_WORD_EFFECTIVE_VECTOR_INPUT_RESET_PREFIX_BUDGET_NOT_CERTIFIED",
         )
         self.assertEqual(
             bridge["raw_V_R_large_angle_sector_audit"]["status"],
             "DISPROVED_ON_DECLARED_SOURCE_FAMILY",
         )
         self.assertEqual(bridge["finite_angle_information_geometry"]["status"], "PASS")
+        self.assertEqual(bridge["first_due_S_exact_prefix_stage"]["status"], "PASS_WIDENED_CHART")
+        self.assertEqual(bridge["effective_vector_input_stage"]["status"], "PASS")
+        self.assertTrue(bridge["effective_vector_input_stage"]["standalone_vector_eta_penalty_retired"])
         self.assertEqual(
             bridge["yaw_only_quotient_audit"]["obstruction_identified"],
             "PASS",
