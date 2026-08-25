@@ -1,5 +1,6 @@
 name: ou3-p5-rotation-gauge-fast
 
+# Active focused route: V2 axis-hulled rotation gauge.
 on:
   pull_request:
     paths:
