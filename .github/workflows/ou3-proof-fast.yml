@@ -5,30 +5,67 @@ on:
     paths:
       - "src/kalman_ou_common/KalmanOUCoreMath.h"
       - "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+      - "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h"
       - "tools/ou3_interval.py"
+      - "tools/ou3_interval_linear_algebra.py"
+      - "tools/ou3_validated_kalman_interval.py"
       - "tools/ou3_validated_transcendentals.py"
       - "tools/ou3_scalar_ou_enclosure.py"
       - "tools/ou3_translational_uco_ucc.py"
+      - "tools/ou3_translational_spread_uco.py"
       - "tools/ou3_vector_uco_certificate.py"
+      - "tools/ou3_source_word_theorem_contract.py"
+      - "tools/ou3_implementation_word_language.py"
       - "tools/ou3_full_process_ucc.py"
       - "tools/ou3_source_interval_box.py"
       - "tools/ou3_certificate_completion.py"
+      - "tools/ou3_information_enclosure_contract.py"
       - "tools/ou3_validate_enclosure.py"
       - "tools/ou3_deployment_gate.py"
+      - "tools/ou3_implementation_stability_gate.py"
       - "tools/ou3_hybrid_aw_sync_proof.py"
       - "tools/ou3_hybrid_contract.py"
       - "tools/ou3_source_domain_contract.py"
+      - "tools/ou3_implementation_proof_manifest.py"
+      - "tools/ou3_startup_stability_certificate.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
+      - "tools/ou3_source_reachable_matrix_p3_factored.py"
+      - "tools/ou3_p3_word_algebra.py"
+      - "tools/ou3_explicit_information_word_certificate.py"
+      - "tools/ou3_p4_group_algebra.py"
+      - "tools/ou3_p4_exact_word_map.py"
+      - "tools/ou3_p4_node_metrics.py"
+      - "tools/ou3_p4_nonlinear_word_certificate.py"
+      - "tools/ou3_p5_startup_capture_certificate.py"
+      - "tools/ou3_p5_outer_h_word_certificate.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "docs/ou-iii-implementation-stability-proof-plan.md"
+      - "doc/kalman_ou_iii/w3d-iss-stability.tex-part"
+      - "doc/kalman_ou_iii/w3d-stability-widening-source-path.tex-part"
+      - "tests/validation/test_ou3_validated_kalman_interval.py"
       - "tests/validation/test_ou3_validated_transcendentals.py"
       - "tests/validation/test_ou3_scalar_ou_enclosure.py"
       - "tests/validation/test_ou3_translational_uco_ucc.py"
       - "tests/validation/test_ou3_vector_uco_certificate.py"
+      - "tests/validation/test_ou3_source_word_theorem_contract.py"
+      - "tests/validation/test_ou3_implementation_word_language.py"
       - "tests/validation/test_ou3_full_process_ucc.py"
       - "tests/validation/test_ou3_certificate_completion.py"
       - "tests/validation/test_ou3_validate_enclosure.py"
       - "tests/validation/test_ou3_deployment_gate.py"
+      - "tests/validation/test_ou3_implementation_stability_gate.py"
       - "tests/validation/test_ou3_hybrid_aw_sync_proof.py"
       - "tests/validation/test_ou3_hybrid_contract.py"
       - "tests/validation/test_ou3_source_domain_contract.py"
+      - "tests/validation/test_ou3_startup_stability_certificate.py"
+      - "tests/validation/test_ou3_p3_word_algebra.py"
+      - "tests/validation/test_ou3_explicit_information_word_certificate.py"
+      - "tests/validation/test_ou3_p4_group_algebra.py"
+      - "tests/validation/test_ou3_p4_word_map_and_metrics.py"
+      - "tests/validation/test_ou3_p4_nonlinear_word_certificate.py"
+      - "tests/validation/test_ou3_p5_startup_capture_certificate.py"
+      - "tests/validation/test_ou3_p5_outer_h_word_certificate.py"
+      - "tests/validation/test_ou_stability_source_path_widening.py"
       - ".github/workflows/ou3-proof-fast.yml"
   workflow_dispatch:
 
@@ -52,7 +89,31 @@ jobs:
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_source_domain_contract
 
-  # Focused proof-only jobs: no replay, simulator, plots, PDFs, or broad build.
+  startup-proof:
+    name: deployed initialization and handoff proof
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile startup proof producers
+        run: |
+          python3 -m py_compile \
+            tools/ou3_implementation_proof_manifest.py \
+            tools/ou3_startup_stability_certificate.py \
+            tools/ou3_implementation_word_language.py \
+            tests/validation/test_ou3_startup_stability_certificate.py \
+            tests/validation/test_ou3_implementation_word_language.py
+      - name: Test startup and declared source-word certificate
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_startup_stability_certificate \
+            test_ou3_implementation_word_language
+      - name: Emit startup and word-language certificates
+        run: |
+          python3 tools/ou3_startup_stability_certificate.py --output /tmp/ou3_startup_stability_certificate.json
+          python3 tools/ou3_implementation_word_language.py --output /tmp/ou3_implementation_word_language.json
+
   scalar-ou:
     name: validated scalar OU transition
     runs-on: ubuntu-24.04
@@ -69,10 +130,7 @@ jobs:
             tests/validation/test_ou3_scalar_ou_enclosure.py
       - name: Test validated transcendental and scalar OU enclosures
         working-directory: tests/validation
-        run: |
-          python3 -m unittest -v \
-            test_ou3_validated_transcendentals \
-            test_ou3_scalar_ou_enclosure
+        run: python3 -m unittest -v test_ou3_validated_transcendentals test_ou3_scalar_ou_enclosure
 
   translational-uco-ucc:
     name: source-uniform translational UCO UCC
@@ -80,29 +138,23 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      - name: Compile analytic translational producer
-        run: |
-          python3 -m py_compile \
-            tools/ou3_translational_uco_ucc.py \
-            tests/validation/test_ou3_translational_uco_ucc.py
+      - name: Compile analytic translational producers
+        run: python3 -m py_compile tools/ou3_translational_uco_ucc.py tools/ou3_translational_spread_uco.py tests/validation/test_ou3_translational_uco_ucc.py
       - name: Test source-uniform translational certificate
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_translational_uco_ucc
 
   vector-uco:
-    name: conditional vector packet UCO
+    name: conditional vector and source-word UCO
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      - name: Compile vector persistent-excitation producer
-        run: |
-          python3 -m py_compile \
-            tools/ou3_vector_uco_certificate.py \
-            tests/validation/test_ou3_vector_uco_certificate.py
-      - name: Test conditional vector UCO certificate
+      - name: Compile vector and source-word theorem producers
+        run: python3 -m py_compile tools/ou3_vector_uco_certificate.py tools/ou3_source_word_theorem_contract.py tests/validation/test_ou3_vector_uco_certificate.py tests/validation/test_ou3_source_word_theorem_contract.py
+      - name: Test conditional vector UCO and source-word language
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_vector_uco_certificate
+        run: python3 -m unittest -v test_ou3_vector_uco_certificate test_ou3_source_word_theorem_contract
 
   full-process-ucc:
     name: full H A process UCC
@@ -111,16 +163,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Compile complete process excitation producer
-        run: |
-          python3 -m py_compile \
-            tools/ou3_full_process_ucc.py \
-            tests/validation/test_ou3_full_process_ucc.py
+        run: python3 -m py_compile tools/ou3_full_process_ucc.py tests/validation/test_ou3_full_process_ucc.py
       - name: Test complete H/A prediction covariance bounds
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_full_process_ucc
 
   enclosure:
-    name: continuous and nonlinear enclosure arithmetic
+    name: source-reachable matrix P3 and enclosure arithmetic
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -132,14 +181,99 @@ jobs:
       - name: Compile enclosure tools
         run: |
           python3 -m py_compile \
+            tools/ou3_interval_linear_algebra.py \
+            tools/ou3_validated_kalman_interval.py \
+            tools/ou3_source_reachable_matrix_p3.py \
+            tools/ou3_source_reachable_matrix_p3_factored.py \
+            tools/ou3_p3_word_algebra.py \
+            tools/ou3_explicit_information_word_certificate.py \
             tools/ou3_certificate_completion.py \
-            tools/ou3_validate_enclosure.py
-      - name: Test enclosure and completion contracts
+            tools/ou3_information_enclosure_contract.py \
+            tools/ou3_validate_enclosure.py \
+            tests/validation/test_ou3_validated_kalman_interval.py \
+            tests/validation/test_ou3_p3_word_algebra.py \
+            tests/validation/test_ou3_explicit_information_word_certificate.py \
+            tests/validation/test_ou3_certificate_completion.py \
+            tests/validation/test_ou3_validate_enclosure.py
+      - name: Test matrix-valued H/A information and enclosure contracts
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
+            test_ou3_validated_kalman_interval \
+            test_ou3_p3_word_algebra \
+            test_ou3_explicit_information_word_certificate \
             test_ou3_certificate_completion \
             test_ou3_validate_enclosure
+      - name: Emit source-reachable matrix H/A information certificate
+        run: python3 tools/ou3_explicit_information_word_certificate.py --output /tmp/ou3_explicit_information_word_certificate.json
+
+  p4-nonlinear:
+    name: exact Cayley nonlinear H A source-word P4
+    needs: enclosure
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile exact nonlinear P4 producers
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p4_group_algebra.py \
+            tools/ou3_p4_exact_word_map.py \
+            tools/ou3_p4_node_metrics.py \
+            tools/ou3_p4_nonlinear_word_certificate.py \
+            tests/validation/test_ou3_p4_group_algebra.py \
+            tests/validation/test_ou3_p4_word_map_and_metrics.py \
+            tests/validation/test_ou3_p4_nonlinear_word_certificate.py \
+            tests/validation/test_ou_stability_source_path_widening.py
+      - name: Test exact P4 algebra, source map, metric and publication contract
+        working-directory: tests/validation
+        run: |
+          python3 -m unittest -v \
+            test_ou3_p4_group_algebra \
+            test_ou3_p4_word_map_and_metrics \
+            test_ou3_p4_nonlinear_word_certificate \
+            test_ou_stability_source_path_widening
+      - name: Emit exact nonlinear P4 certificate and numerical margins
+        run: |
+          python3 tools/ou3_p4_nonlinear_word_certificate.py --output /tmp/ou3_p4_nonlinear_word_certificate.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/ou3_p4_nonlinear_word_certificate.json'))
+          print('P4_EXACT_NONLINEAR_WORD_CERTIFICATE:',p['P4_EXACT_NONLINEAR_WORD_CERTIFICATE'])
+          for m in ('H','A'):
+              r=p['modes'][m]
+              print(f"P4_NUMERICAL {m} W_star={r['certified_level_W']:.17e} mu_W_lower={r['mu_W_lower']:.17e} gap_lower={r['endpoint_relative_W_decrease_lower']:.17e} prefix_norm={r['prefix_canonical_error_norm_upper']:.17e}")
+          PY
+
+  p5-capture-identification:
+    name: P5 outer-H word and startup capture gate
+    needs: [startup-proof, p4-nonlinear]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install numerical dependency
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
+      - name: Compile P5 outer-H and capture certificates
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_startup_capture_certificate.py \
+            tools/ou3_p5_outer_h_word_certificate.py \
+            tests/validation/test_ou3_p5_startup_capture_certificate.py \
+            tests/validation/test_ou3_p5_outer_h_word_certificate.py
+      - name: Test P5 outer-H word and capture composition gates
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_startup_capture_certificate test_ou3_p5_outer_h_word_certificate
+      - name: Emit P5 outer-H word and startup capture status
+        run: |
+          python3 tools/ou3_p5_startup_capture_certificate.py --output /tmp/ou3_p5_startup_capture_certificate.json
+          python3 tools/ou3_p5_outer_h_word_certificate.py --output /tmp/ou3_p5_outer_h_word_certificate.json
 
   hybrid:
     name: hybrid jump certificates
@@ -152,16 +286,10 @@ jobs:
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
       - name: Compile hybrid proof gates
-        run: |
-          python3 -m py_compile \
-            tools/ou3_hybrid_aw_sync_proof.py \
-            tools/ou3_hybrid_contract.py
+        run: python3 -m py_compile tools/ou3_hybrid_aw_sync_proof.py tools/ou3_hybrid_contract.py
       - name: Test hybrid proof gates
         working-directory: tests/validation
-        run: |
-          python3 -m unittest -v \
-            test_ou3_hybrid_aw_sync_proof \
-            test_ou3_hybrid_contract
+        run: python3 -m unittest -v test_ou3_hybrid_aw_sync_proof test_ou3_hybrid_contract
 
   composition:
     name: stochastic capture and final composition arithmetic
@@ -173,8 +301,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3-numpy
-      - name: Compile final composition gate
-        run: python3 -m py_compile tools/ou3_deployment_gate.py
-      - name: Test stochastic, capture, and deployment composition
+      - name: Compile final composition gates
+        run: python3 -m py_compile tools/ou3_deployment_gate.py tools/ou3_p5_startup_capture_certificate.py tools/ou3_implementation_stability_gate.py tests/validation/test_ou3_p5_startup_capture_certificate.py tests/validation/test_ou3_implementation_stability_gate.py
+      - name: Test stochastic, capture, deployment and implementation composition
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_deployment_gate
+        run: python3 -m unittest -v test_ou3_deployment_gate test_ou3_p5_startup_capture_certificate test_ou3_implementation_stability_gate

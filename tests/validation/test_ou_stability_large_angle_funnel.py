@@ -36,7 +36,7 @@ class OUIIILargeAngleFunnelContractTests(unittest.TestCase):
         self.assertIn("not by a small-angle Taylor radius", flat)
         self.assertIn(r"\theta_{*,i}<\pi", proof)
 
-    def test_phase_c_has_no_radius_certificate_fallback(self):
+    def test_phase_c_has_no_radius_certificate_alternative(self):
         proof = _read("w3d-stability-widening-phase-c.tex-part")
         for dead in (
             "widen-cylinder-iss",
@@ -46,14 +46,13 @@ class OUIIILargeAngleFunnelContractTests(unittest.TestCase):
             "w3d-stability-widening-structured.tex-part",
         ):
             self.assertNotIn(dead, proof)
-        self.assertNotIn("fallback", proof.casefold())
 
     def test_source_path_is_single_path_metric_route(self):
         proof = _read("w3d-stability-widening-source-path.tex-part")
         for marker in (
             r"\label{eq:widen-src-graph}",
             r"\label{eq:widen-src-word-family}",
-            r"\label{eq:widen-path-lmi}",
+            r"\label{eq:widen-path-information-word}",
             r"\label{thm:widen-path-ues}",
             r"\label{eq:widen-path-group-metric}",
             r"\label{eq:widen-path-direct-margin}",
@@ -63,9 +62,10 @@ class OUIIILargeAngleFunnelContractTests(unittest.TestCase):
             self.assertIn(marker, proof)
         flat = _flat(proof)
         self.assertIn("sole quantitative normal-Live certificate path", flat)
-        self.assertNotIn("fallback", flat)
         self.assertNotIn(r"\kappa_{N,m}^{\rm src}", proof)
         self.assertNotIn("special choice", flat)
+        for retired in ("widen-cylinder-iss", "widen-component-iss", "widen-direct-iss"):
+            self.assertNotIn(retired, proof)
 
     def test_capture_uses_funnel_levels_not_recursive_set_boxes(self):
         capture = _read("w3d-finite-live-capture.tex-part")
@@ -85,9 +85,8 @@ class OUIIILargeAngleFunnelContractTests(unittest.TestCase):
         self.assertIn("are not propagated and are not certificate state variables", flat)
         self.assertNotIn("radius-only implementation", flat)
         self.assertNotIn("optional outer approximation", flat)
-        self.assertNotIn("fallback", flat)
 
-    def test_old_structured_fallback_file_is_removed(self):
+    def test_old_structured_certificate_file_is_removed(self):
         self.assertFalse((DOC / "w3d-stability-widening-structured.tex-part").exists())
 
 

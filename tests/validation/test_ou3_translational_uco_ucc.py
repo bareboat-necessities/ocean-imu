@@ -6,11 +6,17 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
-spec = importlib.util.spec_from_file_location(
-    "ou3_translational_uco_ucc", ROOT / "tools" / "ou3_translational_uco_ucc.py"
-)
-mod = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(mod)
+
+
+def load(name):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "tools" / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+mod = load("ou3_translational_uco_ucc")
+spread = load("ou3_translational_spread_uco")
 
 
 class TranslationalUcoUccTests(unittest.TestCase):
@@ -21,9 +27,7 @@ class TranslationalUcoUccTests(unittest.TestCase):
         self.assertTrue(d["process_ucc"]["pass"])
         self.assertTrue(d["S_observation_uco"]["pass"])
         self.assertGreater(d["process_ucc"]["Q_axis_lambda_min_lower"], 0.0)
-        self.assertGreater(
-            d["S_observation_uco"]["information_gramian_lambda_min_lower"], 0.0
-        )
+        self.assertGreater(d["S_observation_uco"]["information_gramian_lambda_min_lower"], 0.0)
         self.assertFalse(d["continuous_word_enclosed"])
         self.assertEqual(d["theorem_promotion"], "NOT_ESTABLISHED")
 
@@ -34,11 +38,7 @@ class TranslationalUcoUccTests(unittest.TestCase):
         box = source["validated_parameter_box"]["continuous_parameters"]
         self.assertEqual(p["tau_s"], box["tau_aw_s"])
         self.assertEqual(p["sigma_aw_mps2"], box["sigma_aw_mps2"])
-        # The continuous driving intensity 2 sigma^2/tau must use the
-        # low-sigma/high-tau corner, never an observed replay minimum.
-        sigma_lo = box["sigma_aw_mps2"][0]
-        tau_hi = box["tau_aw_s"][1]
-        expected = 2.0 * sigma_lo * sigma_lo / tau_hi
+        expected = 2.0 * box["sigma_aw_mps2"][0] ** 2 / box["tau_aw_s"][1]
         self.assertLessEqual(p["ou_driving_intensity_lower"], expected)
         self.assertGreater(p["ou_driving_intensity_lower"], 0.0)
 
@@ -53,9 +53,26 @@ class TranslationalUcoUccTests(unittest.TestCase):
         self.assertGreaterEqual(s["aligned_window_s"], 3.0 * s["pseudo_gap_max_s"])
         self.assertEqual(s["aligned_firing_count"], 4)
 
+    def test_spread_search_selects_best_validated_information_bound(self):
+        # Deployment theorem currently declares a 1 s recurring-PE word.
+        d = spread.build(1.0, mod.DEFAULT_HEADER)
+        self.assertEqual(spread.validate(d), [])
+        self.assertGreaterEqual(d["admissible_q_max"], 1)
+        self.assertGreaterEqual(d["best"]["q"], 1)
+        self.assertLessEqual(d["best"]["q"], d["admissible_q_max"])
+        self.assertGreater(d["best"]["information_gramian_lambda_min_lower"], 0.0)
+        self.assertGreaterEqual(d["information_widening_factor_vs_adjacent_lower"], 1.0)
+        self.assertFalse(d["three_S_detectability_used_for_this_UCO"])
+
+    def test_spread_search_never_worse_than_adjacent_for_longer_word(self):
+        d = spread.build(4.0, mod.DEFAULT_HEADER)
+        self.assertEqual(spread.validate(d), [])
+        self.assertGreaterEqual(
+            d["best"]["information_gramian_lambda_min_lower"],
+            d["adjacent_q1"]["information_gramian_lambda_min_lower"],
+        )
+
     def test_wide_exp_reduction_contains_libm_reference_for_diagnostics(self):
-        # math.exp is used only here as an independent unit-test oracle, not by
-        # the producer.  Exercise the long S-observability exponent (> 1/2).
         I = mod.Interval.outward_bounds(38.25, 38.25)
         E = mod._exp_negative_wide(I)
         ref = math.exp(-38.25)
@@ -64,12 +81,11 @@ class TranslationalUcoUccTests(unittest.TestCase):
         self.assertGreater(E.lo, 0.0)
 
     def test_certificate_does_not_use_replay_modules(self):
-        text = (ROOT / "tools" / "ou3_translational_uco_ucc.py").read_text()
-        for forbidden in (
-            "ou3_exact_replay", "ou3_numerical_certificate", "ou_sweep_common",
-            "path_metrics.npz", "neighborhood_radius_search",
-        ):
-            self.assertNotIn(forbidden, text)
+        for filename in ("ou3_translational_uco_ucc.py", "ou3_translational_spread_uco.py"):
+            text = (ROOT / "tools" / filename).read_text()
+            for forbidden in ("ou3_exact_replay", "ou3_numerical_certificate", "ou_sweep_common",
+                              "path_metrics.npz", "neighborhood_radius_search"):
+                self.assertNotIn(forbidden, text)
 
 
 if __name__ == "__main__":

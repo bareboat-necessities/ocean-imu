@@ -16,6 +16,40 @@ build:
 		../../tools/ou3_certificate_completion.py \
 		../../tools/ou3_validate_enclosure.py \
 		../../tools/ou3_hybrid_aw_sync_proof.py \
+		../../tools/ou3_source_word_theorem_contract.py \
+		../../tools/ou3_translational_spread_uco.py \
+		../../tools/ou3_interval_linear_algebra.py \
+		../../tools/ou3_validated_kalman_interval.py \
+		../../tools/ou3_source_reachable_matrix_p3.py \
+		../../tools/ou3_source_reachable_matrix_p3_factored.py \
+		../../tools/ou3_source_reachable_matrix_p3_direct.py \
+		../../tools/ou3_p3_word_algebra.py \
+		../../tools/ou3_explicit_information_word_certificate.py \
+		../../tools/ou3_p4_group_algebra.py \
+		../../tools/ou3_p4_exact_word_map.py \
+		../../tools/ou3_p4_node_metrics.py \
+		../../tools/ou3_p4_nonlinear_word_certificate.py \
+		../../tools/ou3_p5_startup_capture_certificate.py \
+		../../tools/ou3_p5_outer_h_word_certificate.py \
+		../../tools/ou3_p5_go_live_covariance_stage.py \
+		../../tools/ou3_p5_first_s_gain_certificate.py \
+		../../tools/ou3_p5_first_s_state_prefix_certificate.py \
+		../../tools/ou3_p5_heading_handoff_contract.py \
+		../../tools/ou3_p5_large_angle_sector_certificate.py \
+		../../tools/ou3_p5_outer_information_geometry.py \
+		../../tools/ou3_p5_exact_correction_transport.py \
+		../../tools/ou3_p5_first_s_exact_prefix.py \
+		../../tools/ou3_p5_cayley_eta_geometry.py \
+		../../tools/ou3_p5_effective_vector_input.py \
+		../../tools/ou3_p5_signed_cayley_cell.py \
+		../../tools/ou3_p5_complete_word_transport.py \
+		../../tools/ou3_p5_yaw_quotient_word_certificate.py \
+		../../tools/ou3_p5_gravity_quotient_certificate.py \
+		../../tools/ou3_p5_outer_h_bridge_certificate.py \
+		../../tools/ou3_implementation_proof_manifest.py \
+		../../tools/ou3_startup_stability_certificate.py \
+		../../tools/ou3_implementation_word_language.py \
+		../../tools/ou3_implementation_stability_gate.py \
 		../../tools/ou3_result_contract.py \
 		../../tools/ou_evidence_provenance.py \
 		../../tools/ou_evidence_contract.py \
@@ -34,6 +68,34 @@ build:
 		test_ou3_neighborhood_radius_search.py \
 		test_ou3_validate_enclosure.py \
 		test_ou3_hybrid_aw_sync_proof.py \
+		test_ou3_source_word_theorem_contract.py \
+		test_ou3_translational_uco_ucc.py \
+		test_ou3_validated_kalman_interval.py \
+		test_ou3_p3_word_algebra.py \
+		test_ou3_explicit_information_word_certificate.py \
+		test_ou3_p4_group_algebra.py \
+		test_ou3_p4_word_map_and_metrics.py \
+		test_ou3_p4_nonlinear_word_certificate.py \
+		test_ou3_p5_startup_capture_certificate.py \
+		test_ou3_p5_outer_h_word_certificate.py \
+		test_ou3_p5_go_live_covariance_stage.py \
+		test_ou3_p5_first_s_gain_certificate.py \
+		test_ou3_p5_first_s_state_prefix_certificate.py \
+		test_ou3_p5_heading_handoff_contract.py \
+		test_ou3_p5_large_angle_sector_certificate.py \
+		test_ou3_p5_outer_information_geometry.py \
+		test_ou3_p5_exact_correction_transport.py \
+		test_ou3_p5_first_s_exact_prefix.py \
+		test_ou3_p5_cayley_eta_geometry.py \
+		test_ou3_p5_effective_vector_input.py \
+		test_ou3_p5_signed_cayley_cell.py \
+		test_ou3_p5_complete_word_transport.py \
+		test_ou3_p5_yaw_quotient_word_certificate.py \
+		test_ou3_p5_gravity_quotient_certificate.py \
+		test_ou3_p5_outer_h_bridge_certificate.py \
+		test_ou3_startup_stability_certificate.py \
+		test_ou3_implementation_word_language.py \
+		test_ou3_implementation_stability_gate.py \
 		test_ou3_result_determinism.py \
 		test_ou_article_ablations.py \
 		test_ou_legacy_law_cleanup.py \

@@ -1,0 +1,252 @@
+# OU-III implementation stability proof-completion plan
+
+## Objective
+
+Prove stability of the **actual deployed OU-III implementation**, including the initialization sequence before the MEKF enters Live mode. The target is not an existential local result of the form “there exists a sufficiently small neighborhood.” The target is a numerical, machine-checked certificate for the source-realizable hybrid implementation.
+
+The proof target is:
+
+> Under an explicit configured-runtime and marine operating envelope, the deployed startup reset/Mahony observer reaches a certified Live handoff set; the exact held-bias Live mode (H), the exact held-to-active transition, the exact active-bias Live mode (A), magnetic lock/refinement, tilt reset/re-lock/cooldown, and periodic covariance synchronization remain inside source-node Lyapunov funnels; the exact nonlinear source-word maps enter a certified invariant inner funnel in finite time and thereafter satisfy the practical-ISS theorem. The stochastic layer must separately satisfy the paper's localized mean-square/concentration theorem.
+
+“Actual implementation” means `SeaStateFusionFilter_OU_III` together with `Kalman3D_Wave_OU_III`, using the shipping update order, gains, adaptation law, clamps, covariance operations, reset maps, and startup state machine.
+
+## Existing evidence retained from `main`
+
+The existing tuning, eight-sea replay, multi-seed validation, exact executed-map replay, RMS gates, and evidence/provenance machinery stay in place. They remain important for performance regression, falsification, and locating active constraints.
+
+They are **not** reimplemented in this PR and are **not** substituted for source-complete theorem bounds. A replay counterexample can invalidate a proposed bound; replay success alone cannot promote a theorem claim.
+
+## Proof scope and unavoidable qualifications
+
+The final claim is conditional only where the physics makes an unconditional theorem impossible:
+
+1. **Configured runtime timing.** The public API accepts arbitrary positive finite `dt`; until code enforces a bounded interval, the numerical theorem is scoped to the source-defined configured scheduler.
+2. **Heading persistent excitation.** Full-heading convergence requires recurring accepted, non-collinear gravity/magnetic (or equivalent heading) information. Permanent rejection/collinearity is unobservable. Gravity-only operation is treated on the yaw quotient.
+3. **Physical startup/motion/noise envelope.** Specific force, initial gyro bias, heading-reference error, and stochastic noise must be bounded by explicit numerical theorem inputs. These are deployment assumptions, never fitted from the eight trajectories.
+4. **SO(3) topology.** The smooth observer cannot have a globally asymptotically stable attitude equilibrium. However, the implemented first-accelerometer reset discards prior attitude and maps every stored prior attitude into a physical hemisphere whenever the non-gravitational specific force is smaller than gravity. The proof is therefore global with respect to the discarded pre-startup estimate and regional/almost-global with respect to the physical measurement ambiguity described in the paper.
+
+## Non-negotiable proof rules
+
+- No proof-specific filter, retuning, Schmidt restriction, fixed gain, disabled cross-gain, or altered covariance.
+- Keep the complete `S=0` Kalman gain, including `S -> attitude` coupling.
+- Bind each proof primitive to source and invalidate the certificate when source changes.
+- Use outward-rounded/validated arithmetic for every continuous-source bound used for promotion.
+- Cover accepted/rejected measurement branches that satisfy the theorem hypotheses, not only favorable replay words.
+- Keep H (18-state) and A (21-state) fixed-dimensional words separate; H→A is an explicit dimension-changing hybrid jump.
+- Include quaternion injection and left-error covariance reset in every applicable source word.
+- Initialization is part of the final theorem composition.
+- The final result must contain numerical margins and finite capture counts/times. `exists epsilon > 0` is not a completion criterion.
+
+## Execution plan
+
+### P0 — Freeze the exact implemented hybrid system
+
+Create/extend a source-derived manifest containing:
+
+- H/A state dimensions and order;
+- prediction and process-noise construction;
+- `S=0`, accelerometer, and asynchronous magnetometer update order;
+- Joseph covariance updates and complete Kalman gains;
+- quaternion injection and left-error reset;
+- `tau`, `sigma_aw`, `R_S`, pseudo-update cadence and source clamps;
+- startup Mahony gains, gravity gate, aligned-branch test, hold times, rate veto and timeout;
+- `goLive` state/covariance initialization and bias-held entry;
+- H→A bias release;
+- magnetic lock/refinement/re-gauge;
+- tilt reset/re-lock/cooldown;
+- periodic `a_w` covariance synchronization;
+- configured runtime sampling contract.
+
+**PASS:** the proof manifest is regenerated from the source tree and semantic parity tests pin every operation used in the theorem.
+
+### P1 — Numerical startup/reset certificate before Live
+
+Instantiate the paper's Mahony/reset theorem with the deployed gains `2 k_P = 0.2`, `2 k_I = 0.02` and validated arithmetic.
+
+Prove numerically:
+
+1. the first accepted accelerometer reset is independent of stored prior attitude and maps into the desired gravity hemisphere for the declared `|a_f| < g` envelope;
+2. positive startup Lyapunov/chart margins for the declared initial gyro-bias and disturbance bounds;
+3. the normal gravity-gate tilt bound from the implemented `0.075` sine gate plus the declared measured-gravity error;
+4. the finite normal-gate comparison time `T_Q` when its robust disturbance floor permits it;
+5. the implemented timeout path at 150 s, including the aligned-branch constraint;
+6. the exact `goLive` map into the H-mode source coordinates, including seeded covariance, linear-block enable, current OU/R_S state, and held accelerometer bias;
+7. full-heading and yaw-quotient startup branches separately.
+
+**PASS:** every source-reachable accepted startup/handoff branch has an explicit finite numerical handoff family in H-mode coordinates. Containment of that family in a Live capture funnel is a separate P5 obligation and is not assumed by P1.
+
+### P2 — Complete source-word language
+
+Make the normal-Live source language finite-window complete relative to explicit theorem hypotheses.
+
+- Supply an explicit finite vector-PE recurrence window as a deployment theorem input.
+- Preserve arbitrary accepted/rejected branches between required PE packets.
+- Combine it with the rigorous pseudo-measurement firing-gap bound.
+- Tile every fixed-mode normal-Live execution by bounded H/A words.
+
+**PASS:** every normal-Live execution satisfying the declared PE/timing hypotheses belongs to the machine-defined language; no favorable-subset selection is possible.
+
+### P3 — Validated H/A Riccati/information-word certificate — COMPLETE
+
+P3 is now closed by two machine-checked layers.
+
+First, the outward-rounded direct matrix backend certifies the source-uniform H/A generalized endpoint inequality with the full coupled `[v,p,S,a_w]` translation block. Four `S=0` firings provide the complete translation observability qualification, with the validated integer spread search choosing the strongest rigorous admissible four-firing information bound. The three-firing `[v,p,S]` construction plus stable `a_w` is used only to sharpen a covariance upper bound; it cannot by itself satisfy the P3 observability qualification. The H and A endpoint margins are both strictly positive, and the arbitrary former `1e-18` threshold is not a theorem condition.
+
+Second, `tools/ou3_p3_word_algebra.py` binds the endpoint comparison to every fixed-dimensional normal-Live covariance operation in the shipping source. For each prefix it proves the exact decomposition
+
+`P_s = Phi_s P_0 Phi_s^T + Omega_s`, with `Omega_s >= 0`.
+
+Prediction, accepted Joseph corrections, rejected/not-due identity branches, the left-error covariance reset, and the periodic PSD `a_w` covariance increment all have the common affine-PSD form
+
+`P+ = A P A^T + B`, with `B >= 0`.
+
+Thus for every `0 < delta < 1`, an established information margin propagates exactly through any subsequent source branch:
+
+`Omega+ - delta P+ = A (Omega - delta P) A^T + (1-delta) B >= 0`.
+
+The implemented left-error reset has attitude block `G = I + 0.5 [dtheta]_x` and
+
+`det(G) = 1 + ||dtheta||^2 / 4 >= 1`,
+
+so reset congruence is nonsingular for every finite injected correction and does not require an additional small-angle hypothesis at P3. The same covariance decomposition gives, by Schur complement,
+
+`Phi_s^T P_s^-1 Phi_s <= P_0^-1`,
+
+hence the exact source-uniform worst prefix information gain is `1.0` rather than a replay estimate.
+
+The final producer `tools/ou3_explicit_information_word_certificate.py` emits `P3_IMPLEMENTATION_WORD_CERTIFICATE=PASS` only when the direct H/A interval inequalities, optimized four-S qualification, current source-word language, exact Live-operation algebra, reset nonsingularity, branch coverage, and unit prefix-information bound all validate together.
+
+**PASS:** strict source-uniform H and A information contraction with explicit positive endpoint margins and an exact finite prefix information-gain bound. P4 consumes this information-word geometry directly through the exact Cayley lift below.
+
+### P4 — Exact nonlinear SO(3) word certificate — COMPLETE
+
+P4 is closed by `tools/ou3_p4_nonlinear_word_certificate.py` and the dependent `exact Cayley nonlinear H A source-word P4` proof-fast job. The sole quantitative nonlinear metric is the exact Cayley lift of the P3 source information geometry,
+
+`c(R) = 2 tan(theta/2) u`,
+
+`W_g(R,xi) = s_m [c(R);xi]^T Sigma_KF(g)^-1 [c(R);xi]`,
+
+where one positive normalization `s_m` is shared by every source node in a fixed-dimensional mode. This preserves all attitude-linear information cross terms and does not change generalized contraction ratios or physical level sets.
+
+The validated word map follows the shipping order exactly: prediction; a due `S=0` correction inside `time_update()` before accelerometer correction; asynchronous magnetometer handling; and immediate quaternion injection plus left-error covariance reset after each accepted `S`, accelerometer, or magnetometer correction. The complete `S -> attitude` gain remains present. The deployed normalized polynomial quaternion branch is enclosed directly, rather than replaced by a linearized/exponential correction.
+
+P3's exact prefix information gain upper bound of `1.0` transports source-uniform quadratic nonlinear defects through arbitrary admissible accepted/rejected/not-due placements, so P4 covers the complete source branch family without enumerating an exponential list of rejection strings. The prefix bootstrap proves the certified Cayley norm is below one, hence `theta < 1 < pi`, and proves every accepted correction remains below `1e-2`, fixing the exact deployed quaternion branch throughout the inner funnel. In A mode the certified prefix also stays strictly inside the shipping accelerometer-bias projection ball, so the exact projection branch is the smooth identity-interior branch there; the nonsmooth projection surface is not silently linearized.
+
+The final validated CI certificate reports:
+
+- H: `W_* = 3.29172575174270652e-141`, `mu_W >= 1.89616809385829038e-35`, endpoint relative decrease `>= 1.89616809385829092e-35`, prefix canonical norm `<= 1.14747126356047970e-70`;
+- A: `W_* = 3.29172573612719601e-141`, `mu_W >= 1.89616808936071053e-35`, endpoint relative decrease `>= 1.89616808936071107e-35`, prefix canonical norm `<= 1.14747126083875398e-70`.
+
+The tiny levels are theorem seeds, not practical-basin claims. Strict positivity is stored directly, so the proof never forms `1 - delta/2` when binary64 would round that quantity back to one. Source-node subdivision may later enlarge `W_*`, but it is only a widening of this same certificate route, not a fallback theorem.
+
+**PASS:** `P4_EXACT_NONLINEAR_WORD_CERTIFICATE=PASS` for both H and A with explicit positive `W_*`, positive `mu_W`, exact source-operation semantics, complete branch coverage, and prefix/chart safety. P5 must now bridge the P1 handoff family to this inner H seed.
+
+### P5 — Initialization-to-inner-funnel finite capture — OUTER ALGEBRA CLOSED, LATER PREFIX ENCLOSURE PENDING
+
+The original composition audit correctly found that the useful P1 handoff family lies far outside the microscopic P4 inner seed. That result remains a guard against illegally extrapolating the P4 local recurrence, but it is no longer the current P5 obstruction. The outer bridge has since progressed through the source-staged startup covariance, first-`S`, large-angle geometry, quotient correction, and exact transport layers.
+
+The currently closed P5 prerequisites are:
+
+- the goLive H covariance seed and scheduler phase are source bound;
+- the first-due `S=0` gain is bounded with source-staged theta/`S` covariance structure rather than the translation-dominated global covariance box;
+- the conditional first-`S` state prefix is finite with the complete `S -> attitude` gain retained;
+- the first-due `S` quaternion/Cayley prefix is certified as `PASS_WIDENED_CHART`; the convenient `||c||<1` test is diagnostic only and is not a theorem gate;
+- exact finite-angle vector information is positive on both gauged H handoff nodes;
+- the isotropic raw `V_R` outer-sector route has a validated source counterexample and is retired rather than repaired by a larger adverse remainder;
+- the false yaw-only/full-gyro-bias gravity route is retired; the detectable gravity quotient carries the gravity-parallel gyro bias as an explicit bounded neutral input while retaining the complete translation word;
+- every shipping normal-Live operation class is bound to the exact Joseph/quaternion/reset transport calculus, including sequential immediate resets and PSD `a_w` covariance synchronization;
+- the exact Cayley vector-defect geometry and the signed Cayley correction primitive are validated, so the backend does not replace `1-a^T c/4` by `1-|a||c|/4`.
+
+A further exact reduction now removes the remaining standalone vector-`eta` penalty from the active P5 numerical route. For the configured isotropic magnetometer,
+
+`H_m = -[v]_x`, `R_m = r_m I`, `H_m^T v = 0`, `S_m v = r_m v`, and therefore `K_m v = 0`.
+
+If `y_m` is the exact finite-angle magnetic residual, define
+
+`d_m = H_m^T y_m / ||v||^2`.
+
+Then the implemented correction satisfies the exact identity
+
+`K_m y_m = K_m H_m d_m`.
+
+The radial finite-angle residual therefore produces no state correction, quaternion injection, or reset correction. In Cayley coordinates the effective tangent coordinate is nonexpansive and is enclosed cellwise by `tools/ou3_p5_effective_vector_input.py`.
+
+For the accelerometer, the shipping Jacobian contains the orthogonal full-rank block `J_aw = R_wb`. For `y_a = H_a z + eta_a`, define `e_eta = J_aw^T eta_a` and insert it in the `a_w` coordinate. Then
+
+`H_a E_aw e_eta = eta_a`,
+
+so exactly
+
+`K_a(H_a z + eta_a) = K_a H_a(z + E_aw e_eta)`.
+
+This does **not** declare `eta_a=0`; it represents the same source residual as a source-correlated effective `a_w` tangent input. The Joseph identity remains valid. The proof backend therefore propagates the joint `P,H,R,K,r,d_eff`/effective-`a_w` cells instead of subtracting an unrelated `eta^T R^-1 eta` norm budget. This reduction is scoped to the configured theorem domain with optional IMU lever-arm compensation disabled.
+
+The bridge remains fail-closed. Its current first unclosed numerical obligations are:
+
+- gauged H: `COMPLETE_WORD_EFFECTIVE_VECTOR_INPUT_RESET_PREFIX_BUDGET_NOT_CERTIFIED`;
+- gravity quotient H: `GRAVITY_QUOTIENT_EFFECTIVE_ACCEL_INPUT_RESET_PREFIX_BUDGET_NOT_CERTIFIED`.
+
+Thus the next work is the outward source-correlated subdivision over the **later** prefixes of the complete 1 s word: prediction, accepted/rejected vector corrections, due/not-due `S`, covariance/source-schedule evolution, and each immediate reset. Each cell must keep `P,H,R,K,r,d_eff` (or the effective accelerometer `a_w` input) jointly reachable and accumulate the exact reset/prediction budget. Only after those prefix cells prove an outer recurrence into the existing P4 inner seed may the certificate set a finite integer `N_H_words` and capture time. `N_H_words` remains intentionally unset today.
+
+The independent implementation-stability composition gate continues to consume P5 directly. The older generic affine deployment-capture arithmetic is not accepted as a substitute.
+
+**PASS criterion for closing P5:** every certified normal or timeout handoff lies in a validated outer H capture funnel; every source-word prefix stays safe; the outer recurrence reaches `W_*` in a finite machine-certified number of H words/time. The current certificate does **not** yet satisfy this criterion.
+
+### P6 — Prove every implemented hybrid jump
+
+For each source-reachable hard event, validate the exact jump image and a strict destination inequality:
+
+1. startup handoff;
+2. H→A accelerometer-bias release (18→21 dimensions, including new-coordinate energy);
+3. magnetic lock;
+4. magnetic refinement/re-gauge;
+5. tilt reset;
+6. tilt re-lock;
+7. cooldown re-entry;
+8. periodic `a_w` covariance synchronization (nonexpansive PSD/Loewner proof, with strict decrease supplied by surrounding words).
+
+After any jump that lands in an outer funnel, recompute finite recapture to the inner funnel.
+
+**PASS:** every source-reachable jump lands strictly inside a certified destination funnel and the hybrid execution cannot escape through an unproved branch.
+
+### P7 — Gravity-only quotient route
+
+Machine-certify the no-magnetometer route on the yaw quotient using the same startup, translation, nonlinear, prefix and hybrid machinery, but without making an absolute-yaw convergence claim.
+
+**PASS:** regional practical stability modulo yaw for the source-complete gravity-only implementation.
+
+### P8 — Stochastic localized theorem
+
+Using the same certified source words/funnels from P4-P6, validate the paper's Gaussian/localized drift and finite-horizon concentration constants from primitive source/noise bounds.
+
+**PASS:** positive stochastic drift margin, localization radius inside the deterministic funnel, and recomputed finite-horizon failure probability below the declared theorem budget.
+
+### P9 — Independent final implementation-stability composition gate
+
+The final gate must regenerate source contracts and recompute all composition arithmetic. It must not trust an upstream `PASS` field.
+
+The final status may be `PASS_IMPLEMENTATION_STABLE` only if all of the following are true simultaneously:
+
+- source/implementation parity P0;
+- startup/reset/handoff P1;
+- source-word completeness P2;
+- H linear certificate P3;
+- A linear certificate P3;
+- H nonlinear/prefix certificate P4;
+- A nonlinear/prefix certificate P4;
+- finite initialization capture P5;
+- all hybrid jumps P6;
+- gravity-only quotient result P7 when that mode is claimed;
+- stochastic theorem P8 when the stochastic claim is requested;
+- existing `main` performance/regression/evidence gates remain green.
+
+Anything less is reported by its first failed proof obligation, never as “stable by existence.”
+
+## PR completion criterion
+
+This PR is complete only when it either:
+
+1. produces `PASS_IMPLEMENTATION_STABLE` with the numerical margins/capture bounds above; or
+2. identifies a mathematically genuine obstruction in the implemented filter/theorem assumptions, with the first failing validated inequality and no weakening of the proof gate.
+
+A tiny unspecified local basin, replay-only success, or an analytical existence theorem is explicitly not an acceptable completion result.

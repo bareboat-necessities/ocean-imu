@@ -7,11 +7,32 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 import ou3_validated_transcendentals as mod
 
-getcontext().prec = 90
+getcontext().prec = 100
 
 
 def dec(x: float) -> Decimal:
     return Decimal.from_float(float(x))
+
+
+def dec_sin(x: Decimal, terms: int = 90) -> Decimal:
+    total = Decimal(0)
+    term = x
+    total += term
+    x2 = x * x
+    for n in range(1, terms):
+        term *= -x2 / Decimal((2 * n) * (2 * n + 1))
+        total += term
+    return total
+
+
+def dec_cos(x: Decimal, terms: int = 90) -> Decimal:
+    total = Decimal(1)
+    term = Decimal(1)
+    x2 = x * x
+    for n in range(1, terms):
+        term *= -x2 / Decimal((2 * n - 1) * (2 * n))
+        total += term
+    return total
 
 
 class ValidatedTranscendentalTests(unittest.TestCase):
@@ -55,16 +76,48 @@ class ValidatedTranscendentalTests(unittest.TestCase):
         self.assertLessEqual(dec(K.lo), exact_lo)
         self.assertGreaterEqual(dec(K.hi), exact_hi)
 
-    def test_audited_range_is_explicit(self):
+    def test_sin_cos_enclose_high_precision_reference_on_entire_p4_range(self):
+        for x in (-4.0, -3.0, -1.5, -0.01, 0.0, 0.01, 1.5, 3.0, 4.0):
+            with self.subTest(x=x):
+                X = dec(x)
+                s = dec_sin(X)
+                c = dec_cos(X)
+                S = mod.sin_point(x)
+                C = mod.cos_point(x)
+                self.assertLessEqual(dec(S.lo), s)
+                self.assertGreaterEqual(dec(S.hi), s)
+                self.assertLessEqual(dec(C.lo), c)
+                self.assertGreaterEqual(dec(C.hi), c)
+
+    def test_sinc_cosc_are_regular_at_zero_and_enclose_reference(self):
+        self.assertTrue(mod.sinc_point(0.0).contains(1.0))
+        self.assertTrue(mod.cosc_point(0.0).contains(0.5))
+        for x in (1.0e-8, 0.01, 0.5, 1.5, 3.0):
+            with self.subTest(x=x):
+                X = dec(x)
+                sinc = dec_sin(X) / X
+                cosc = (Decimal(1) - dec_cos(X)) / (X * X)
+                S = mod.sinc_point(x)
+                C = mod.cosc_point(x)
+                self.assertLessEqual(dec(S.lo), sinc)
+                self.assertGreaterEqual(dec(S.hi), sinc)
+                self.assertLessEqual(dec(C.lo), cosc)
+                self.assertGreaterEqual(dec(C.hi), cosc)
+
+    def test_audited_ranges_are_explicit(self):
         with self.assertRaises(ValueError):
             mod.exp_point(0.5000001)
         with self.assertRaises(ValueError):
             mod.expm1_point(-0.5000001)
+        with self.assertRaises(ValueError):
+            mod.sin_point(4.0000001)
+        with self.assertRaises(ValueError):
+            mod.cosc_point(-4.0000001)
 
-    def test_proof_module_does_not_call_libm_exp(self):
+    def test_proof_module_does_not_call_libm_transcendentals(self):
         text = (ROOT / "tools" / "ou3_validated_transcendentals.py").read_text(encoding="utf-8")
-        self.assertNotIn("math.exp(", text)
-        self.assertNotIn("math.expm1(", text)
+        for dead in ("math.exp(", "math.expm1(", "math.sin(", "math.cos("):
+            self.assertNotIn(dead, text)
 
 
 if __name__ == "__main__":
