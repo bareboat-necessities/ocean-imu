@@ -16,9 +16,6 @@ class Ou3ImplementationStabilityGateTests(unittest.TestCase):
         cls.out = GATE.compose({}, source, {})
 
     def test_live_only_or_missing_downstream_proof_cannot_report_stable(self):
-        # Empty downstream proof artifacts must fail, even though the source
-        # manifest, startup certificate, and declared word language are rebuilt
-        # and may themselves pass.
         out = self.out
         self.assertTrue(out["implementation_manifest_pass"])
         self.assertTrue(out["startup_certificate_pass"])
@@ -26,17 +23,22 @@ class Ou3ImplementationStabilityGateTests(unittest.TestCase):
         self.assertFalse(out["downstream_deployment_theorem_pass"])
         self.assertEqual(out["implementation_stability_certificate"], "FAIL")
 
-    def test_current_P5_obstruction_blocks_final_promotion(self):
+    def test_current_staged_P5_bridge_blocks_final_promotion(self):
         out = self.out
         self.assertTrue(out["generic_deployment_capture_is_not_P5"])
+        self.assertTrue(out["P5_local_capture_identifier_is_not_completion_certificate"])
         self.assertFalse(out["P5_finite_startup_capture_pass"])
         self.assertEqual(
             out["P5_first_obstruction"],
-            "P1_HANDOFF_OUTSIDE_P4_CERTIFIED_CAPTURE_DOMAIN",
+            "UNGAUGED_TIMEOUT_YAW_QUOTIENT_CAPTURE_NOT_CERTIFIED",
         )
-        self.assertEqual(out["P5"]["P5_OBSTRUCTION_IDENTIFIED"], "PASS")
-        self.assertEqual(out["P5"]["P5_FINITE_CAPTURE_CERTIFICATE"], "NOT_ESTABLISHED")
-        self.assertIsNone(out["P5"]["N_H_words"])
+        self.assertEqual(out["P5_identification"]["P5_OBSTRUCTION_IDENTIFIED"], "PASS")
+        self.assertEqual(out["P5_bridge"]["P5_OUTER_H_BRIDGE_CERTIFICATE"], "NOT_ESTABLISHED")
+        self.assertEqual(
+            out["P5_bridge"]["gauged_full_heading_first_failure"],
+            "EXACT_LARGE_ANGLE_VECTOR_DISSIPATION_SECTOR_NOT_CERTIFIED",
+        )
+        self.assertIsNone(out["P5_bridge"]["N_H_words"])
         self.assertTrue(any("P5 finite startup-to-inner-funnel capture not established" in x for x in out["failures"]))
         self.assertEqual(out["implementation_stability_certificate"], "FAIL")
 
