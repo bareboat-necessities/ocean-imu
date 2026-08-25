@@ -1,6 +1,6 @@
 name: ou3-p5-rotation-gauge-fast
 
-# Active focused route: exact source-reachable first accelerometer through sample-1 S/accelerometer prefix.
+# Active focused route: exact source-reachable first accelerometer through the corrected sample-1 S/accelerometer prefix.
 on:
   pull_request:
     paths:
@@ -14,6 +14,7 @@ on:
       - "tools/ou3_p5_sample1_entry_v2.py"
       - "tools/ou3_p5_sample1_entry_v3.py"
       - "tools/ou3_p5_sample1_prefix.py"
+      - "tools/ou3_p5_sample1_prefix_v2.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v2.py"
@@ -30,6 +31,7 @@ on:
       - "tests/validation/test_ou3_p5_sample1_entry_v2.py"
       - "tests/validation/test_ou3_p5_sample1_entry_v3.py"
       - "tests/validation/test_ou3_p5_sample1_prefix.py"
+      - "tests/validation/test_ou3_p5_sample1_prefix_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
 
@@ -42,12 +44,12 @@ concurrency:
 
 jobs:
   sample1-prefix:
-    name: P5 source-correlated sample-1 S/accelerometer prefix
+    name: P5 corrected source-correlated sample-1 S/accelerometer prefix
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - name: Compile exact-source sample-1 prefix producers
+      - name: Compile sample-1 prefix producers
         run: |
           python3 -m py_compile \
             tools/ou3_p5_first_accel_rotation_gauge_v3.py \
@@ -59,38 +61,27 @@ jobs:
             tools/ou3_p5_sample1_entry_v2.py \
             tools/ou3_p5_sample1_entry_v3.py \
             tools/ou3_p5_sample1_prefix.py \
-            tests/validation/test_ou3_p5_first_accel_exact_source.py \
-            tests/validation/test_ou3_p5_first_accel_post_reset.py \
-            tests/validation/test_ou3_p5_sample1_entry.py \
-            tests/validation/test_ou3_p5_sample1_entry_v2.py \
-            tests/validation/test_ou3_p5_sample1_entry_v3.py \
-            tests/validation/test_ou3_p5_sample1_prefix.py
-      - name: Test source-correlated sample-1 prefix semantics
+            tools/ou3_p5_sample1_prefix_v2.py \
+            tests/validation/test_ou3_p5_sample1_prefix_v2.py
+      - name: Test corrected sample-1 prefix semantics
         working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_prefix_v2
+      - name: Emit corrected sample-1 S/accelerometer result
         run: |
-          python3 -m unittest -v \
-            test_ou3_p5_first_accel_exact_source \
-            test_ou3_p5_first_accel_post_reset \
-            test_ou3_p5_sample1_entry \
-            test_ou3_p5_sample1_entry_v2 \
-            test_ou3_p5_sample1_entry_v3 \
-            test_ou3_p5_sample1_prefix
-      - name: Emit source-correlated sample-1 S/accelerometer result
-        run: |
-          python3 tools/ou3_p5_sample1_prefix.py \
+          python3 tools/ou3_p5_sample1_prefix_v2.py \
             --source-pieces 2 \
-            --output /tmp/ou3_p5_sample1_prefix.json
+            --output /tmp/ou3_p5_sample1_prefix_v2.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/ou3_p5_sample1_prefix.json'))
-          print('P5_SAMPLE1_PREFIX:', d['P5_SAMPLE1_S_ACCEL_PREFIX_CERTIFICATE'])
-          print('P5_SAMPLE1_PATHS:', d['evaluated_sample1_paths'])
-          print('P5_SAMPLE1_PHASE_COUNTS:', d['sample1_phase_counts'])
-          print('P5_SAMPLE1_INVERSE_BACKENDS:', d['inverse_backend_counts'])
-          print('P5_SAMPLE1_MAX_S_D:', d['max_sample1_S_correction_norm_upper_rad'])
-          print('P5_SAMPLE1_MAX_Q_AFTER_S:', d['max_sample1_q_after_S_upper'])
-          print('P5_SAMPLE1_MAX_ACC_RESIDUAL:', d['max_sample1_acc_residual_norm_upper_mps2'])
-          print('P5_SAMPLE1_MAX_ACC_D:', d['max_sample1_acc_correction_norm_upper_rad'])
-          print('P5_SAMPLE1_FIRST_FAILURE:', d['first_failure'])
-          print('P5_SAMPLE1_NEXT:', d['next_obligation'])
+          d=json.load(open('/tmp/ou3_p5_sample1_prefix_v2.json'))
+          print('P5_SAMPLE1_PREFIX_V2:', d['P5_SAMPLE1_S_ACCEL_PREFIX_CERTIFICATE'])
+          print('P5_SAMPLE1_V2_PATHS:', d['evaluated_sample1_paths'])
+          print('P5_SAMPLE1_V2_PHASE_COUNTS:', d['sample1_phase_counts'])
+          print('P5_SAMPLE1_V2_INVERSE_BACKENDS:', d['inverse_backend_counts'])
+          print('P5_SAMPLE1_V2_MAX_S_D:', d['max_sample1_S_correction_norm_upper_rad'])
+          print('P5_SAMPLE1_V2_MAX_Q_AFTER_S:', d['max_sample1_q_after_S_upper'])
+          print('P5_SAMPLE1_V2_MAX_ACC_RESIDUAL:', d['max_sample1_acc_residual_norm_upper_mps2'])
+          print('P5_SAMPLE1_V2_MAX_ACC_D:', d['max_sample1_acc_correction_norm_upper_rad'])
+          print('P5_SAMPLE1_V2_FIRST_FAILURE:', d['first_failure'])
+          print('P5_SAMPLE1_V2_NEXT:', d['next_obligation'])
           PY
