@@ -29,7 +29,7 @@ def _source_semantics() -> tuple[dict, list[str]]:
         "S_state_update_is_gain_times_residual": "xext.noalias() += K * r;            // State update",
         "first_accel_reads_aw_mean": "const Vector3 aw = xext.template segment<3>(OFF_AW);",
         "first_accel_force_is_aw_minus_gravity": "f_cog_b = R_wb() * (aw - g_world);",
-        "yaw_covariance_axis_is_body_world_down": "const Vector3 u_down_body = R_wb() * world_down;",
+        "yaw_covariance_axis_is_body_world_down": "Vector3 u_down_body = R_wb() * world_down;",
     }
     joined = k + "\n" + w
     missing = [name for name, marker in markers.items() if marker not in joined]
