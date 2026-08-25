@@ -17,6 +17,7 @@ on:
       - "tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py"
       - "tools/ou3_p5_sample1_transported_crosscov_refinement.py"
       - "tools/ou3_p5_sample1_force_cone_crosscov_refinement.py"
+      - "tools/ou3_p5_sample1_forward_crosscov_refinement.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
       - "tools/ou3_p5_full_h_prefix_cells_v3.py"
@@ -25,7 +26,7 @@ on:
       - "tools/ou3_startup_stability_certificate.py"
       - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p5_sample1_force_cone_crosscov_refinement.py"
+      - "tests/validation/test_ou3_p5_sample1_forward_crosscov_refinement.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
 
@@ -37,8 +38,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  force-cone-crosscov:
-    name: P5 sample-1 source-reachable force-cone cross covariance
+  forward-crosscov:
+    name: P5 sample-1 forward-map cross covariance
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -60,30 +61,28 @@ jobs:
             tools/ou3_p5_sample1_rotation_gauge_refinement_v2.py \
             tools/ou3_p5_sample1_transported_crosscov_refinement.py \
             tools/ou3_p5_sample1_force_cone_crosscov_refinement.py \
-            tests/validation/test_ou3_p5_sample1_force_cone_crosscov_refinement.py
-      - name: Test force-cone cross-covariance semantics
+            tools/ou3_p5_sample1_forward_crosscov_refinement.py \
+            tests/validation/test_ou3_p5_sample1_forward_crosscov_refinement.py
+      - name: Test forward cross-covariance semantics
         working-directory: tests/validation
-        run: python3 -m unittest -v test_ou3_p5_sample1_force_cone_crosscov_refinement
-      - name: Emit force-cone result
+        run: python3 -m unittest -v test_ou3_p5_sample1_forward_crosscov_refinement
+      - name: Emit forward cross-covariance result
         run: |
-          python3 tools/ou3_p5_sample1_force_cone_crosscov_refinement.py \
+          python3 tools/ou3_p5_sample1_forward_crosscov_refinement.py \
             --source-pieces 2 --source-cell-index 0 \
             --delta-pieces 8 --axial-pieces 8 \
-            --output /tmp/p5_fcone.json
+            --output /tmp/p5_forward_crosscov.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_fcone.json'))
-          print('P5_FCONE_STATUS:',d['P5_SAMPLE1_FORCE_CONE_CROSSCOV_WITNESS_REFINEMENT'])
-          print('P5_FCONE_CELLS:',d['evaluated_joint_cells'])
-          print('P5_FCONE_KAW_T:',d['first_aw_tangent_gain_norm_upper'])
-          print('P5_FCONE_AW_T1:',d['sample1_aw_tangent_mean_norm_upper_mps2'])
-          print('P5_FCONE_MAX_REF:',d['max_transported_reference_Ctheta_norm_upper'])
-          print('P5_FCONE_MAX_THETA_MISMATCH:',d['max_theta_mismatch_contribution_norm_upper'])
-          print('P5_FCONE_MAX_BG_MISMATCH:',d['max_bg_mismatch_contribution_norm_upper'])
-          print('P5_FCONE_MAX_AW_MISMATCH:',d['max_aw_mismatch_contribution_norm_upper'])
-          print('P5_FCONE_MAX_MISMATCH:',d['max_total_mismatch_Ctheta_norm_upper'])
-          print('P5_FCONE_MAX_C:',d['max_actual_Ctheta_norm_upper'])
-          print('P5_FCONE_MAX_D:',d['max_sample1_acc_correction_norm_upper_rad'])
-          print('P5_FCONE_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
-          print('P5_FCONE_NEXT:',d['next_obligation'])
+          d=json.load(open('/tmp/p5_forward_crosscov.json'))
+          print('P5_FORWARD_STATUS:',d['P5_SAMPLE1_FORWARD_CROSSCOV_WITNESS_REFINEMENT'])
+          print('P5_FORWARD_CELLS:',d['evaluated_joint_cells'])
+          print('P5_FORWARD_MAX_ETHETA:',d['max_E_theta_norm_upper'])
+          print('P5_FORWARD_MAX_EBG:',d['max_E_bg_norm_upper'])
+          print('P5_FORWARD_MAX_EAW:',d['max_E_aw_norm_upper'])
+          print('P5_FORWARD_MAX_PJE:',d['max_Pj_Et_first6_norm_upper'])
+          print('P5_FORWARD_MAX_C:',d['max_actual_Ctheta_norm_upper'])
+          print('P5_FORWARD_MAX_D:',d['max_sample1_acc_correction_norm_upper_rad'])
+          print('P5_FORWARD_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
+          print('P5_FORWARD_NEXT:',d['next_obligation'])
           PY
