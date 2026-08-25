@@ -30,23 +30,26 @@ class Ou3ImplementationStabilityGateTests(unittest.TestCase):
         self.assertFalse(out["P5_finite_startup_capture_pass"])
         self.assertEqual(
             out["P5_first_obstruction"],
-            "OBSERVABLE_GRAVITY_ONLY_QUOTIENT_WORD_NOT_CERTIFIED",
+            "GRAVITY_QUOTIENT_NONLINEAR_SOURCE_WORD_NOT_CERTIFIED",
         )
         self.assertEqual(out["P5_identification"]["P5_OBSTRUCTION_IDENTIFIED"], "PASS")
-        self.assertEqual(out["P5_bridge"]["P5_OUTER_H_BRIDGE_CERTIFICATE"], "NOT_ESTABLISHED")
+        bridge = out["P5_bridge"]
+        self.assertEqual(bridge["P5_OUTER_H_BRIDGE_CERTIFICATE"], "NOT_ESTABLISHED")
         self.assertEqual(
-            out["P5_bridge"]["gauged_full_heading_first_failure"],
-            "SOURCE_SHAPED_CAYLEY_INFORMATION_OUTER_SECTOR_NOT_CERTIFIED",
+            bridge["gauged_full_heading_first_failure"],
+            "COMPLETE_SOURCE_WORD_EXACT_CAYLEY_INFORMATION_TRANSPORT_NOT_CERTIFIED",
         )
         self.assertEqual(
-            out["P5_bridge"]["raw_V_R_large_angle_sector_audit"]["status"],
+            bridge["raw_V_R_large_angle_sector_audit"]["status"],
             "DISPROVED_ON_DECLARED_SOURCE_FAMILY",
         )
+        self.assertEqual(bridge["finite_angle_information_geometry"]["status"], "PASS")
         self.assertEqual(
-            out["P5_bridge"]["yaw_only_quotient_audit"]["obstruction_identified"],
+            bridge["yaw_only_quotient_audit"]["obstruction_identified"],
             "PASS",
         )
-        self.assertIsNone(out["P5_bridge"]["N_H_words"])
+        self.assertEqual(bridge["detectable_gravity_quotient"]["status"], "PASS")
+        self.assertIsNone(bridge["N_H_words"])
         self.assertTrue(any("P5 finite startup-to-inner-funnel capture not established" in x for x in out["failures"]))
         self.assertEqual(out["implementation_stability_certificate"], "FAIL")
 
