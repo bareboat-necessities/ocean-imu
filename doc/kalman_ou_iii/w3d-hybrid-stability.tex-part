@@ -163,7 +163,7 @@ propagate the same metric until the next jump.  Induction over any finite hard
 jump sequence proves domain safety and the post-jump practical-ISS bound.
 \end{proof}
 
-\subsection{Regional gravity-only certification on the yaw quotient}
+\subsection{Regional gravity-only certification on the detectable yaw quotient}
 \label{sec:hybrid-quotient-capture}
 
 The gravity-only symmetry acts on the complete estimator representation.  Let
@@ -177,61 +177,151 @@ by congruence,
 \end{equation}
 Scalar schedules and enable flags are unchanged.  Denote this action on the
 complete state/mode pair by $\mathcal G_\alpha(e,\pi)$ and its orbit by
-$[(e,\pi)]$.
+$[(e,\pi)]$.  This removes the horizontal attitude gauge, but it does not make
+the body-frame gyro-bias component parallel to gravity observable.
 
-For a full-heading source-node metric $W_i$ define
+Let $\vct u_g$ be the predicted unit gravity direction in body coordinates and
+split gyro-bias error into
+\begin{equation}
+ \delta\vct b_{g,\perp}:=\mat\Pi_g\delta\vct b_g,
+ \qquad b_{g,\parallel}:=\vct u_g^\top\delta\vct b_g,
+ \qquad \mat\Pi_g:=\mat I-\vct u_g\vct u_g^\top.
+ \label{eq:hybrid-quotient-bias-split}
+\end{equation}
+A zero-rate gravity-only execution with
+$\delta\vct b_g=b_{g,\parallel}\vct u_g$ produces only yaw.  Quotienting that
+yaw therefore leaves $b_{g,\parallel}$ unchanged.  The computer-assisted source
+audit verifies this exact zero dynamics and also verifies that the corresponding
+covariance receives positive gyro-bias process noise.  Consequently a metric
+that quotients yaw but still assigns a strict positive contraction weight to
+$b_{g,\parallel}$ cannot satisfy a uniform $\lambda<1$ word inequality.  The
+parallel bias is not declared a symmetry; it is a neutral/detectability input
+until gravity-direction excitation or a magnetic gauge makes it observable.
+
+Write the full source information metric in coordinates
+$z=(z_d,b_{g,\parallel})$, after minimizing over horizontal gauge, as
+\begin{equation}
+ \mat M_i^\perp=
+ \begin{bmatrix}
+   \mat A_i^\perp&\vct B_i^\perp\\
+   (\vct B_i^\perp)^\top&C_i^\parallel
+ \end{bmatrix},
+ \qquad C_i^\parallel>0.
+\end{equation}
+The detectable Schur metric is
 \begin{equation}
  \boxed{
- W_i^\perp([(e,\pi)])
- :=\inf_{\alpha\in[-\pi,\pi)}
- W_i\!\left(\mathcal G_\alpha(e,\pi)\right).}
+ W_{i,d}^\perp([(e,\pi)])
+ :=\inf_{\alpha\in[-\pi,\pi)}\inf_{\nu\in\mathbb R}
+ W_i\!\left(\mathcal G_\alpha(e,\pi)+\nu E_\parallel\right)
+ =z_d^\top\!\left(
+ \mat A_i^\perp-
+ \frac{\vct B_i^\perp(\vct B_i^\perp)^\top}{C_i^\parallel}
+ \right)z_d .}
  \label{eq:hybrid-quotient-metric}
 \end{equation}
+Here the auxiliary minimization over $\nu$ is a Schur-complement elimination,
+not an assertion that different axial gyro biases are physically equivalent.
+It removes the neutral coordinate only from the strict Lyapunov seminorm while
+retaining its coupling as an input to the detectable dynamics.
+
+For an accepted gravity packet suppose
+\begin{equation}
+ \vct f_b=-g\vct u_g+\vct\epsilon_q,
+ \qquad \|\vct\epsilon_q\|\le\bar f_q<g.
+ \label{eq:hybrid-quotient-gravity-packet}
+\end{equation}
+Then $f_-:=g-\bar f_q>0$ and the cosine between
+$-\vct f_b/\|f_b\|$ and $\vct u_g$ is at least
+$c_q:=(g-\bar f_q)/(g+\bar f_q)>0$.  For every tangent tilt vector
+$x\perp\vct u_g$,
+\begin{equation}
+ x^\top[\vct f_b]_\times^\top[\vct f_b]_\times x
+ \ge f_-^2c_q^2\|x\|^2.
+ \label{eq:hybrid-quotient-tilt-information}
+\end{equation}
+Thus one accepted packet is coercive on the two-dimensional tilt quotient.  Two
+accepted packets separated by
+$\Delta_q\in[\Delta_{q,-},\Delta_{q,+}]$ expose the transverse gyro-bias by the
+same exact skew-transport argument used in
+Lemma~\ref{lem:widen-two-packet-bg}.  If
+$\bar\omega\Delta_{q,+}<2$, then
+\begin{equation}
+ \gamma_{q,-}:=\frac{\Delta_{q,-}}{T_{bg}}
+ \left(1-\frac12\bar\omega\Delta_{q,+}\right)>0,
+ \qquad
+ \alpha_{4,q}:=
+ \frac{f_-^2c_q^2/r_{a,+}}{1+2/\gamma_{q,-}^2}>0.
+ \label{eq:hybrid-quotient-detectability}
+\end{equation}
+This is the reduced four-state $(\theta_\perp,b_{g,\perp})$ information bound.
+The complete $(v,p,S,a_w)$ coordinates remain in the same source word and use
+the already-certified four-$S$ translational qualification; they are not
+removed from the quotient certificate.
+
 In gravity-only mode, exact prediction, covariance propagation, accelerometer
 correction, $S=0$ correction, quaternion reset, and the scalar source schedule
-commute with the complete action.  The exact source-word map therefore descends
-to a well-defined quotient map $\mathcal F_w^\perp$.
-
-Let $\mathcal F_i^\perp(c):=\{[e]:W_i^\perp([e])\le c\}$ be a quotient funnel
-section.  For every source-complete gravity-only word require
+commute with the horizontal gauge action.  The exact source-word map therefore
+descends to a well-defined quotient map $\mathcal F_w^\perp$.  The strict
+funnel recursion is imposed only on the detectable Schur metric.  For every
+source-complete gravity-only word require
 \begin{equation}
  \boxed{
- W_j^\perp(\mathcal F_w^\perp([e],d))
- \le\lambda_w^\perp W_i^\perp([e])
- +\gamma_w^\perp(\bar d),
- \qquad \lambda_w^\perp<1,}
+ W_{j,d}^\perp(\mathcal F_w^\perp([e],d))
+ \le\lambda_{w,d}^\perp W_{i,d}^\perp([e])
+ +\gamma_{w,\parallel}^\perp |b_{g,\parallel}|^2
+ +\gamma_{w,d}^\perp(\bar d),
+ \qquad \lambda_{w,d}^\perp<1.}
  \label{eq:hybrid-quotient-word}
 \end{equation}
-with the same prefix-safety requirement on quotient source nodes.
+The same source-complete funnel recursion and prefix-safety requirement apply to
+the detectable quotient nodes.  No strict contraction of
+$b_{g,\parallel}$ is assumed.
 
-\begin{theorem}[Regional gravity-only source-funnel stability modulo yaw]
+\begin{theorem}[Regional gravity-only detectable source-funnel stability modulo yaw]
 \label{thm:hybrid-quotient-capture}
-If the compact quotient handoff family $\mathcal H^\perp$ initializes certified
-quotient funnel levels and Eq.~\eqref{eq:hybrid-quotient-word} holds on a
-source-complete quotient word family, then gravity-only Live operation is
-regionally practically ISS modulo yaw.  With
-$\lambda_B^\perp:=\max_w\lambda_w^\perp<1$ and
-$\gamma_B^\perp:=\max_w\gamma_w^\perp$, word-boundary energy satisfies
+Suppose the compact quotient handoff family $\mathcal H^\perp$ initializes
+certified detectable funnel levels, the accepted gravity-packet recurrence
+satisfies Eqs.~\eqref{eq:hybrid-quotient-gravity-packet}--
+\eqref{eq:hybrid-quotient-detectability}, and
+Eq.~\eqref{eq:hybrid-quotient-word} holds on a source-complete quotient word
+family.  If $|b_{g,\parallel}|\le\bar b_\parallel$ on the deterministic quotient
+interval, then gravity-only Live operation is regionally practically ISS on the
+detectable quotient coordinates.  With
+$\lambda_{B,d}^\perp:=\max_w\lambda_{w,d}^\perp<1$ and finite source-uniform
+input coefficients,
 \begin{equation}
  \boxed{
- W_n^\perp
- \le(\lambda_B^\perp)^nW_0^\perp
- +\frac{1-(\lambda_B^\perp)^n}{1-\lambda_B^\perp}
- \gamma_B^\perp(\bar d).}
+ W_{n,d}^\perp
+ \le(\lambda_{B,d}^\perp)^nW_{0,d}^\perp
+ +\frac{1-(\lambda_{B,d}^\perp)^n}{1-\lambda_{B,d}^\perp}
+ \left(
+   \gamma_{B,\parallel}^\perp\bar b_\parallel^2
+   +\gamma_{B,d}^\perp(\bar d)
+ \right).}
  \label{eq:hybrid-quotient-practical}
 \end{equation}
-No convergence of absolute yaw is asserted.
+No convergence of absolute yaw is asserted, and no convergence of the neutral
+axial gyro-bias component is asserted before additional excitation or magnetic
+regauging makes that direction observable.
 \end{theorem}
 
 \begin{proof}
-Equivariance makes the quotient word map independent of the chosen horizontal
-representative.  The source-complete funnel recursion therefore descends
-unchanged to the quotient state/mode space, and iteration of
-Eq.~\eqref{eq:hybrid-quotient-word} gives the result.
+Equivariance makes the horizontal-gauge quotient word map independent of the
+chosen yaw representative.  Schur-complement elimination removes the axial
+bias only from the strict metric; its actual value remains in the source state
+and is charged by the explicit input term in
+Eq.~\eqref{eq:hybrid-quotient-word}.  The packet bound
+Eq.~\eqref{eq:hybrid-quotient-detectability} supplies strict information on the
+transverse attitude/bias coordinates, while the four-$S$ source word supplies
+the translational qualification.  Iterating the resulting source-complete
+funnel recursion gives Eq.~\eqref{eq:hybrid-quotient-practical}.
 \end{proof}
 
 If magnetic north is acquired after an ungauged Live handoff, the magnetic jump
 selects one horizontal representative and changes the source mode from quotient
 to full-heading operation.  The full-heading chain resumes exactly when the
 jump satisfies Eq.~\eqref{eq:hybrid-jump-entry} for a certified full-heading
-destination node.
+destination node.  The magnetic event may then make the formerly axial bias
+direction observable; the quotient proof does not claim that this happened
+earlier.
