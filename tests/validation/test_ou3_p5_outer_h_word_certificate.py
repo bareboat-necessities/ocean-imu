@@ -66,10 +66,12 @@ class Ou3P5OuterHWordCertificateTests(unittest.TestCase):
             self.assertTrue(math.isfinite(t["outer_vector_nonlinear_information_ratio_upper"]))
             self.assertTrue(math.isfinite(t["outer_vector_word_decrease_margin_lower"]))
 
-    def test_certificate_never_promotes_without_both_prefix_and_word_decrease(self):
+    def test_certificate_never_promotes_without_prefix_S_bound_vector_decrease_and_bootstrap(self):
         tests = self.d["node_word_tests"]
         expected = all(
-            t["prefix_group_correction_pass"] and t["vector_word_decrease_pass"]
+            t["S_prefix_group_correction_pass"]
+            and t["vector_word_decrease_pass"]
+            and t["candidate_outer_prefix_domain_bootstrap_pass"]
             for t in tests.values()
         )
         self.assertEqual(self.d["outer_word_decrease_all_nodes"], expected)
