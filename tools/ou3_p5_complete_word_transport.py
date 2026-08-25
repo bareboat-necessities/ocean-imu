@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bind every P5 H source-word operation to the exact nonlinear transport law.
 
-This stage closes a semantic hole between the positive outer geometry and the
+This stage closes the semantic gap between the positive outer geometry and the
 numerical P5 word.  It does not replace the remaining interval/subdivision
 calculation with a norm-only recurrence.
 
@@ -15,18 +15,20 @@ Prediction retains the complete tangent H map and its exact finite-angle group
 defect.  Tuner staging changes future source parameters but is not silently
 turned into a state contraction.
 
+The first-due S correction is also composed exactly.  Its coarse source-staged
+bound does not stay in the convenient |c|<1 diagnostic set, but the Cayley chart
+has no singularity there.  ``ou3_p5_first_s_exact_prefix`` therefore widens to a
+finite dyadic prefix chart that contains the exact first-S image and still has a
+strict positive finite-angle vector-information factor.  The remaining gauged
+obligation is now the source-correlated eta/reset/prediction budget over later
+prefixes, not an artificial q<1 gate.
+
 For the gravity quotient the same calculus is used after quotient projection.
 The gravity-parallel gyro-bias component remains an actual filter state but is
 excluded from the strict quotient energy and is charged as a bounded input.  A
 source-uniform coordinate bound over one word follows from the exact rotational
 transport norm: |Delta theta| <= T_word |b_g,parallel|.  No strict contraction
 of that neutral zero dynamics is requested.
-
-The output deliberately distinguishes algebraic/source completeness from the
-remaining numerical word budget.  In particular the current staged first-S
-bound is now known to preserve the correction Cayley denominator but not the
-common |c|<1 outer bootstrap, so the gauged obstruction is narrower than the
-former generic COMPLETE_SOURCE_WORD transport placeholder.
 """
 from __future__ import annotations
 
@@ -45,7 +47,7 @@ import ou3_startup_stability_certificate as P1
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 
 
 def up(x: float) -> float:
@@ -139,9 +141,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     if not (horizon > 0.0 and bg_bound >= 0.0 and math.isfinite(axial_coordinate_input)):
         failures.append("axial gyro-bias quotient input bound invalid")
 
-    gauged_failure = firstex["first_failure"]
-    if firstex["current_first_S_prefix_inside_outer_bootstrap"]:
-        gauged_failure = "COMPLETE_WORD_ETA_RESET_INFORMATION_BUDGET_NOT_CERTIFIED"
+    if firstex["P5_FIRST_DUE_S_EXACT_CAYLEY_PREFIX_CERTIFICATE"] != "PASS_WIDENED_CHART":
+        failures.append("first-S exact widened Cayley prefix did not close")
 
     return {
         "schema": SCHEMA,
@@ -165,9 +166,13 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "finite_angle_information_geometry": outinfo["P5_FINITE_ANGLE_INFORMATION_GEOMETRY_CERTIFICATE"],
             "exact_correction_transport_algebra": corr["P5_EXACT_CORRECTION_TRANSPORT_ALGEBRA_CERTIFICATE"],
             "first_due_S_exact_prefix": firstex["P5_FIRST_DUE_S_EXACT_CAYLEY_PREFIX_CERTIFICATE"],
+            "diagnostic_q_lt_1_is_promotion_gate": firstex["diagnostic_q_lt_1_is_promotion_gate"],
+            "widened_prefix_cayley_norm_upper": firstex["widened_prefix_cayley_norm_upper"],
+            "widened_prefix_antipodal_margin_lower": firstex["widened_prefix_antipodal_one_plus_cosine_margin_lower"],
+            "widened_prefix_vector_information_vs_goLive_metric_lower": firstex["widened_prefix_pair_information_vs_goLive_attitude_metric_lower"],
             "first_due_S_nodes": firstex["nodes"],
             "complete_word_numerical_status": "NOT_ESTABLISHED",
-            "first_unclosed_numerical_obligation": gauged_failure,
+            "first_unclosed_numerical_obligation": "COMPLETE_WORD_ETA_RESET_INFORMATION_BUDGET_NOT_CERTIFIED",
         },
         "gravity_quotient_H": {
             "reduced_detectability": gquot["P5_GRAVITY_QUOTIENT_REDUCED_DETECTABILITY_CERTIFICATE"],
@@ -184,7 +189,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P5_GAUGED_COMPLETE_WORD_NUMERICAL_CERTIFICATE": "NOT_ESTABLISHED",
         "P5_GRAVITY_QUOTIENT_COMPLETE_WORD_NUMERICAL_CERTIFICATE": "NOT_ESTABLISHED",
         "next_obligation": (
-            "first tighten or widen the source-staged first-S prefix enclosure, then use the same correction identities in source-correlated subdivision for all vector/prediction prefixes, with b_g_parallel entering only the quotient ISS input term"
+            "outward-subdivide later exact vector/prediction/S prefixes in the widened source-correlated Cayley/information chart and close their eta/reset budgets; use b_g_parallel only as the quotient ISS input term"
         ),
         "failures": failures,
     }
@@ -220,6 +225,14 @@ def validate(d: dict) -> list[str]:
         failures.append("gauged finite-angle prerequisite missing")
     if g.get("exact_correction_transport_algebra") != "PASS":
         failures.append("gauged correction transport algebra missing")
+    if g.get("first_due_S_exact_prefix") != "PASS_WIDENED_CHART":
+        failures.append("gauged first-S widened chart missing")
+    if g.get("diagnostic_q_lt_1_is_promotion_gate") is not False:
+        failures.append("gauged transport reinstated q<1 gate")
+    if not float(g.get("widened_prefix_antipodal_margin_lower", 0.0)) > 0.0:
+        failures.append("gauged widened prefix has no antipodal margin")
+    if not float(g.get("widened_prefix_vector_information_vs_goLive_metric_lower", 0.0)) > 0.0:
+        failures.append("gauged widened prefix loses vector information")
     if g.get("complete_word_numerical_status") != "NOT_ESTABLISHED":
         failures.append("gauged word promoted before numerical enclosure")
     q = d.get("gravity_quotient_H", {})
