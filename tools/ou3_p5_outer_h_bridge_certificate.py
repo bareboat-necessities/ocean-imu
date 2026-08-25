@@ -7,19 +7,26 @@ the exact transport algebra now available for the complete H word.
 For gauged H, the false raw V_R sector is retired.  Exact finite-angle
 Cayley/vector information is positive on the normal and timeout handoff nodes,
 the first due S correction is source-staged through the deployed quaternion map
-into a finite widened Cayley chart, vector eta has an exact Cayley identity, and
-signed Cayley correction cells preserve the actual ``a^T c`` denominator rather
-than replacing it by an independent norm product.
+into a finite widened Cayley chart, and signed Cayley correction cells preserve
+the actual ``a^T c`` denominator rather than replacing it by an independent
+norm product.  The exact Cayley eta geometry is retained only as an algebraic
+support lemma: the active numerical route now uses
+``ou3_p5_effective_vector_input``.  For the configured magnetometer the radial
+finite-angle residual is annihilated exactly by the Kalman gain and the useful
+residual is ``H_theta d_eff``; for the accelerometer the orthogonal full-rank
+``J_aw=R_wb`` absorbs the nonlinear residual as a source-correlated effective
+``a_w`` tangent input.  No standalone vector-eta information penalty remains in
+the P5 route.
 
 For ungauged H, the false yaw-only/full-gyro-bias contraction is retired.  The
 corrected gravity quotient has strict transverse attitude/bias detectability,
 retains the complete four-S translation word, and carries gravity-parallel gyro
-bias as a bounded neutral input.  The same exact Joseph/quaternion/reset
-calculus applies after quotient projection.
+bias as a bounded neutral input.  The same effective accelerometer-input and
+exact Joseph/quaternion/reset calculus applies after quotient projection.
 
-What remains is numerical rather than semantic: source-correlated covariance,
-gain, residual and correction cells must be propagated through all later
-prefixes of the 1 s word and their exact eta/reset budgets accumulated.  No
+What remains is numerical rather than semantic: source-correlated ``P,H,R,K,r``
+and effective correction-input cells must be propagated through all later
+prefixes of the 1 s word, together with exact reset and prediction budgets.  No
 filter/tuning value, S-to-attitude gain, or theorem gate is changed.
 """
 from __future__ import annotations
@@ -32,6 +39,7 @@ from pathlib import Path
 import ou3_p4_nonlinear_word_certificate as P4
 import ou3_p5_cayley_eta_geometry as ETA
 import ou3_p5_complete_word_transport as TRANSPORT
+import ou3_p5_effective_vector_input as VEFF
 import ou3_p5_first_s_exact_prefix as FIRSTEX
 import ou3_p5_first_s_gain_certificate as FIRSTS
 import ou3_p5_first_s_state_prefix_certificate as SPREFIX
@@ -47,7 +55,7 @@ import ou3_startup_stability_certificate as P1
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 6
+SCHEMA = 7
 
 
 def _gauged_node(name: str, heading_row: dict, outer_name: str,
@@ -110,7 +118,7 @@ def _gauged_node(name: str, heading_row: dict, outer_name: str,
         "exact_pair_residual_information_vs_goLive_attitude_metric_lower": ir["exact_pair_residual_information_vs_goLive_attitude_metric_lower"],
         "source_correlated_Joseph_information_identity_retained": True,
         "source_shaped_Cayley_information_outer_sector_required": True,
-        "source_shaped_Cayley_information_outer_sector_status": "GEOMETRY_AND_FIRST_S_PASS_LATER_NUMERICAL_SUBDIVISION_PENDING",
+        "source_shaped_Cayley_information_outer_sector_status": "GEOMETRY_FIRST_S_AND_EFFECTIVE_VECTOR_INPUT_PASS_LATER_CELL_PROPAGATION_PENDING",
         "exact_group_backend_retained": True,
         "outer_S_state_prefix_status": "PASS_CONDITIONAL_ON_OUTER_NODE",
         "outer_prefix_domain_bootstrap_status": "PASS_THROUGH_FIRST_S_IN_WIDENED_CHART_LATER_PREFIXES_PENDING",
@@ -133,9 +141,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     oldq = OLDQUOT.build(domain_path)
     outinfo = OUTINFO.build(domain_path)
     gquot = GQUOT.build(domain_path)
-    transport = TRANSPORT.build(domain_path)
     eta = ETA.build(domain_path)
+    veff = VEFF.build(domain_path)
     signed = SIGNED.build(domain_path)
+    transport = TRANSPORT.build(domain_path)
 
     prereq = []
     prereq += [f"P1: {x}" for x in P1.validate(p1)]
@@ -150,9 +159,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     prereq += [f"yaw-only-audit: {x}" for x in OLDQUOT.validate(oldq)]
     prereq += [f"outer-information: {x}" for x in OUTINFO.validate(outinfo)]
     prereq += [f"gravity-quotient: {x}" for x in GQUOT.validate(gquot)]
-    prereq += [f"complete-word-transport: {x}" for x in TRANSPORT.validate(transport)]
-    prereq += [f"Cayley-eta: {x}" for x in ETA.validate(eta)]
+    prereq += [f"Cayley-eta-geometry: {x}" for x in ETA.validate(eta)]
+    prereq += [f"effective-vector-input: {x}" for x in VEFF.validate(veff)]
     prereq += [f"signed-Cayley-cell: {x}" for x in SIGNED.validate(signed)]
+    prereq += [f"complete-word-transport: {x}" for x in TRANSPORT.validate(transport)]
     if prereq:
         return {
             "schema": SCHEMA,
@@ -217,6 +227,30 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "vector_information_vs_goLive_metric_lower": firstex["widened_prefix_pair_information_vs_goLive_attitude_metric_lower"],
             "diagnostic_q_lt_1_is_promotion_gate": firstex["diagnostic_q_lt_1_is_promotion_gate"],
         },
+        "exact_eta_geometry_support_stage": {
+            "status": eta["P5_CAYLEY_ETA_GEOMETRY_CERTIFICATE"],
+            "exact_eta_identity": eta["exact_eta_identity"],
+            "widened_cayley_norm_upper": eta["widened_cayley_norm_upper"],
+            "annular_subdivision_cell_count": eta["subdivision_cell_count"],
+            "global_packet_count_times_Lipschitz_defect_used": eta["global_packet_count_times_Lipschitz_defect_used"],
+            "standalone_eta_penalty_is_active_P5_route": False,
+        },
+        "effective_vector_input_stage": {
+            "status": veff["P5_EFFECTIVE_VECTOR_INPUT_CERTIFICATE"],
+            "standalone_vector_eta_penalty_retired": veff["standalone_vector_eta_penalty_retired_from_P5_numerical_route"],
+            "magnetometer_radial_gain_action_exact_zero": veff["magnetometer"]["kalman_gain_radial_action_exact_zero"],
+            "magnetometer_exact_state_correction_identity": veff["magnetometer"]["exact_state_correction_identity"],
+            "magnetometer_effective_coordinate_nonexpansive": veff["magnetometer"]["effective_coordinate_nonexpansive"],
+            "accelerometer_exact_state_correction_identity": veff["accelerometer"]["exact_state_correction_identity"],
+            "accelerometer_effective_aw_norm_preserved": veff["accelerometer"]["effective_aw_defect_norm_equals_eta_norm"],
+            "gravity_quotient_uses_effective_accelerometer_input": veff["gravity_quotient"]["accelerometer_effective_aw_input_descends_to_quotient"],
+            "subdivision_cell_count": veff["subdivision_cell_count"],
+        },
+        "signed_cayley_cell_stage": {
+            "status": signed["P5_SIGNED_CAYLEY_CELL_PRIMITIVE"],
+            "signed_a_dot_c_retained": signed["signed_a_dot_c_retained"],
+            "independent_abs_a_abs_c_denominator_used": signed["independent_abs_a_abs_c_denominator_used"],
+        },
         "complete_word_transport_stage": {
             "status": transport["P5_COMPLETE_WORD_TRANSPORT_ALGEBRA_CERTIFICATE"],
             "gauged_numerical_status": transport["P5_GAUGED_COMPLETE_WORD_NUMERICAL_CERTIFICATE"],
@@ -224,18 +258,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "source_operation_order": transport["source_operation_order"],
             "full_S_to_attitude_gain_retained": transport["full_S_to_attitude_gain_retained"],
             "sequential_immediate_quaternion_resets_retained": transport["sequential_immediate_quaternion_resets_retained"],
-        },
-        "exact_eta_subdivision_stage": {
-            "status": eta["P5_CAYLEY_ETA_GEOMETRY_CERTIFICATE"],
-            "exact_eta_identity": eta["exact_eta_identity"],
-            "widened_cayley_norm_upper": eta["widened_cayley_norm_upper"],
-            "annular_subdivision_cell_count": eta["subdivision_cell_count"],
-            "global_packet_count_times_Lipschitz_defect_used": eta["global_packet_count_times_Lipschitz_defect_used"],
-        },
-        "signed_cayley_cell_stage": {
-            "status": signed["P5_SIGNED_CAYLEY_CELL_PRIMITIVE"],
-            "signed_a_dot_c_retained": signed["signed_a_dot_c_retained"],
-            "independent_abs_a_abs_c_denominator_used": signed["independent_abs_a_abs_c_denominator_used"],
+            "standalone_vector_eta_penalty_used": transport["standalone_vector_eta_penalty_used"],
         },
         "heading_handoff_contract": {
             "P1_gravity_cosines_are_tilt_only": True,
@@ -272,11 +295,12 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "finite_angle_perturbation_vs_tiny_P3_gap_retired_as_P5_promotion_route": True,
         "raw_V_R_large_angle_sector_retired_as_P5_promotion_route": True,
         "source_shaped_Cayley_information_is_primary_full_heading_outer_route": True,
+        "standalone_vector_eta_penalty_retired_as_P5_promotion_route": True,
         "yaw_only_full_bias_quotient_retired": True,
         "detectable_gravity_quotient_is_primary_ungauged_route": True,
         "gauged_full_heading_nodes": nodes,
         "ungauged_timeout_route": {
-            "status": "REDUCED_DETECTABILITY_AND_EXACT_TRANSPORT_PASS_NUMERICAL_SUBDIVISION_PENDING",
+            "status": "REDUCED_DETECTABILITY_EFFECTIVE_ACCEL_INPUT_AND_EXACT_TRANSPORT_PASS_CELL_PROPAGATION_PENDING",
             "full_heading_cayley_bound_available": False,
             "yaw_only_quotient_disproved": True,
             "reduced_detectability_certificate": "PASS",
@@ -287,10 +311,10 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "gauged_full_heading_first_failure": gauged_failure,
         "first_failure": quotient_failure,
         "next_full_heading_numerical_certificate": (
-            "outward-propagate source-correlated covariance/gain/residual K*r cells through every later prefix of the complete 1 s gauged H word; use the exact Cayley eta identity and signed a^T c quaternion denominator, retaining full S-to-attitude and all non-attitude coordinates"
+            "outward-propagate source-correlated P,H,R,K,r,d_eff cells through every later prefix of the complete 1 s gauged H word; use the exact magnetometer radial-null/effective-tangent reduction, accelerometer effective a_w input, and signed a^T c quaternion denominator, retaining full S-to-attitude and all non-attitude coordinates"
         ),
         "next_complete_startup_family_certificate": (
-            "perform the analogous outward K*r cell propagation in the detectable gravity quotient, charging b_g_parallel only as the explicit bounded input, then certify the magnetic-gauge jump into a full-heading node"
+            "perform the analogous outward P,H,R,K,r,e_aw_eff cell propagation in the detectable gravity quotient, charging b_g_parallel only as the explicit bounded input, then certify the magnetic-gauge jump into a full-heading node"
         ),
         "P5_OUTER_H_BRIDGE_CERTIFICATE": "NOT_ESTABLISHED",
         "N_H_words": None,
@@ -313,6 +337,7 @@ def validate(d: dict) -> list[str]:
         "finite_angle_perturbation_vs_tiny_P3_gap_retired_as_P5_promotion_route",
         "raw_V_R_large_angle_sector_retired_as_P5_promotion_route",
         "source_shaped_Cayley_information_is_primary_full_heading_outer_route",
+        "standalone_vector_eta_penalty_retired_as_P5_promotion_route",
         "yaw_only_full_bias_quotient_retired",
         "detectable_gravity_quotient_is_primary_ungauged_route",
     ):
@@ -343,6 +368,36 @@ def validate(d: dict) -> list[str]:
     if not float(sx.get("antipodal_margin_lower", 0.0)) > 0.0:
         failures.append("first-S widened chart has no antipodal margin")
 
+    eg = d.get("exact_eta_geometry_support_stage", {})
+    if eg.get("status") != "PASS":
+        failures.append("exact Cayley eta support geometry did not pass")
+    if eg.get("global_packet_count_times_Lipschitz_defect_used") is not False:
+        failures.append("bridge uses retired packet-count Lipschitz eta penalty")
+    if eg.get("standalone_eta_penalty_is_active_P5_route") is not False:
+        failures.append("eta support geometry remains an active standalone penalty route")
+    if int(eg.get("annular_subdivision_cell_count", 0)) < 1:
+        failures.append("bridge has no Cayley geometry subdivision")
+
+    ev = d.get("effective_vector_input_stage", {})
+    if ev.get("status") != "PASS":
+        failures.append("effective vector-input reduction did not pass")
+    if ev.get("standalone_vector_eta_penalty_retired") is not True:
+        failures.append("standalone vector eta penalty was not retired")
+    if ev.get("magnetometer_radial_gain_action_exact_zero") is not True:
+        failures.append("magnetometer radial finite-angle residual is not gain-null")
+    if ev.get("magnetometer_effective_coordinate_nonexpansive") is not True:
+        failures.append("magnetometer effective tangent coordinate is not nonexpansive")
+    if ev.get("accelerometer_effective_aw_norm_preserved") is not True:
+        failures.append("accelerometer effective aw-input norm identity missing")
+    if ev.get("gravity_quotient_uses_effective_accelerometer_input") is not True:
+        failures.append("gravity quotient does not consume effective accelerometer input")
+
+    sc = d.get("signed_cayley_cell_stage", {})
+    if sc.get("status") != "PASS":
+        failures.append("signed Cayley correction primitive did not pass")
+    if sc.get("signed_a_dot_c_retained") is not True or sc.get("independent_abs_a_abs_c_denominator_used") is not False:
+        failures.append("bridge loses signed Cayley correction/source correlation")
+
     tr = d.get("complete_word_transport_stage", {})
     if tr.get("status") != "PASS":
         failures.append("complete-word exact transport algebra did not pass")
@@ -350,22 +405,10 @@ def validate(d: dict) -> list[str]:
         failures.append("complete-word transport drops S-to-attitude gain")
     if tr.get("sequential_immediate_quaternion_resets_retained") is not True:
         failures.append("complete-word transport drops sequential resets")
+    if tr.get("standalone_vector_eta_penalty_used") is not False:
+        failures.append("complete-word transport reintroduced standalone vector eta")
     if tr.get("gauged_numerical_status") != "NOT_ESTABLISHED" or tr.get("quotient_numerical_status") != "NOT_ESTABLISHED":
         failures.append("bridge consumed a numerical word promotion that is not established")
-
-    eg = d.get("exact_eta_subdivision_stage", {})
-    if eg.get("status") != "PASS":
-        failures.append("exact Cayley eta geometry did not pass")
-    if eg.get("global_packet_count_times_Lipschitz_defect_used") is not False:
-        failures.append("bridge uses retired packet-count Lipschitz eta penalty")
-    if int(eg.get("annular_subdivision_cell_count", 0)) < 1:
-        failures.append("bridge has no eta annular subdivision")
-
-    sc = d.get("signed_cayley_cell_stage", {})
-    if sc.get("status") != "PASS":
-        failures.append("signed Cayley correction primitive did not pass")
-    if sc.get("signed_a_dot_c_retained") is not True or sc.get("independent_abs_a_abs_c_denominator_used") is not False:
-        failures.append("bridge loses signed Cayley correction/source correlation")
 
     oldq = d.get("yaw_only_quotient_audit", {})
     if oldq.get("obstruction_identified") != "PASS" or oldq.get("status") != "NOT_ESTABLISHED":
@@ -422,9 +465,9 @@ def validate(d: dict) -> list[str]:
     if "AXIAL_GYRO_BIAS" not in str(u.get("required_route", "")):
         failures.append("ungauged route does not name axial gyro-bias neutral direction")
 
-    if d.get("gauged_full_heading_first_failure") != "COMPLETE_WORD_ETA_RESET_INFORMATION_BUDGET_NOT_CERTIFIED":
+    if d.get("gauged_full_heading_first_failure") != "COMPLETE_WORD_EFFECTIVE_VECTOR_INPUT_RESET_PREFIX_BUDGET_NOT_CERTIFIED":
         failures.append("wrong gauged numerical obstruction")
-    if d.get("first_failure") != "GRAVITY_QUOTIENT_EXACT_ETA_RESET_PREFIX_BUDGET_NOT_CERTIFIED":
+    if d.get("first_failure") != "GRAVITY_QUOTIENT_EFFECTIVE_ACCEL_INPUT_RESET_PREFIX_BUDGET_NOT_CERTIFIED":
         failures.append("wrong complete-family numerical obstruction")
     if d.get("P5_OUTER_H_BRIDGE_CERTIFICATE") != "NOT_ESTABLISHED":
         failures.append("P5 bridge promoted before complete nonlinear words close")
@@ -449,8 +492,8 @@ def main() -> int:
         "first_failure": out.get("first_failure"),
         "gauged_first_failure": out.get("gauged_full_heading_first_failure"),
         "first_S_exact": out.get("first_due_S_exact_prefix_stage"),
+        "effective_vector_input": out.get("effective_vector_input_stage"),
         "transport": out.get("complete_word_transport_stage"),
-        "eta": out.get("exact_eta_subdivision_stage"),
         "signed_cayley": out.get("signed_cayley_cell_stage"),
         "validation_failures": failures,
     }, indent=2, sort_keys=True))
