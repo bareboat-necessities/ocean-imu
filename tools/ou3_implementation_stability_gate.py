@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Final independent composition gate for the deployed OU-III stability proof.
 
-This sits above the existing deployment-theorem gate.  It adds the pieces a
-Live-only composition cannot establish by itself: source/implementation parity,
-the actual pre-Live reset/Mahony/goLive certificate, the recurring-PE source-word
-language, and the explicit P1-to-P4 finite-capture composition required by P5.
+This sits above the existing deployment-theorem gate.  It adds source and
+implementation parity, the actual pre-Live reset/Mahony/goLive certificate, the
+recurring-PE source-word language, and the explicit startup-to-inner-H capture
+composition required by P5.
 
-No upstream PASS bit is sufficient.  The subordinate deployment gate still
-recomputes its generic hybrid/stochastic/capture arithmetic, but that generic
-capture recursion is not a substitute for P5: the final implementation theorem
-also regenerates the source-bound P5 certificate and requires an actual finite
-startup-to-inner-H-funnel capture result.  Until that result exists, the final
-status must remain FAIL even if every other downstream arithmetic gate passes.
+The older ``ou3_p5_startup_capture_certificate`` remains an obstruction
+identifier: it proves that the tiny local P4 seed cannot be extrapolated to the
+P1 handoff family.  It is not the current P5 completion object.  The final gate
+also regenerates ``ou3_p5_outer_h_bridge_certificate`` and requires that staged
+bridge to close before a finite H-word count can contribute to implementation
+stability.  This prevents a stale obstruction diagnostic or the generic
+deployment capture arithmetic from standing in for the actual source-faithful
+outer bridge.
 """
 from __future__ import annotations
 
@@ -22,12 +24,13 @@ from pathlib import Path
 import ou3_deployment_gate as DEPLOY
 import ou3_implementation_proof_manifest as MANIFEST
 import ou3_implementation_word_language as WORDS
-import ou3_p5_startup_capture_certificate as P5
+import ou3_p5_outer_h_bridge_certificate as P5BRIDGE
+import ou3_p5_startup_capture_certificate as P5ID
 import ou3_startup_stability_certificate as STARTUP
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 2
+SCHEMA = 3
 
 
 def compose(check: dict, source_domain: dict, primitive: dict,
@@ -38,16 +41,20 @@ def compose(check: dict, source_domain: dict, primitive: dict,
     startup_failures = STARTUP.validate(startup)
     words = WORDS.build(domain_path)
     word_failures = WORDS.validate(words)
-    p5 = P5.build(domain_path)
-    p5_validation_failures = P5.validate(p5)
-    p5_finite_capture_pass = bool(
-        not p5_validation_failures
-        and p5.get("P5_FINITE_CAPTURE_CERTIFICATE") == "PASS"
-        and isinstance(p5.get("N_H_words"), int)
-        and p5["N_H_words"] >= 0
-    )
-    deployment = DEPLOY.compose(check, source_domain, primitive)
 
+    p5_id = P5ID.build(domain_path)
+    p5_id_failures = P5ID.validate(p5_id)
+    p5_bridge = P5BRIDGE.build(domain_path)
+    p5_bridge_failures = P5BRIDGE.validate(p5_bridge)
+    p5_finite_capture_pass = bool(
+        not p5_id_failures
+        and not p5_bridge_failures
+        and p5_bridge.get("P5_OUTER_H_BRIDGE_CERTIFICATE") == "PASS"
+        and isinstance(p5_bridge.get("N_H_words"), int)
+        and p5_bridge["N_H_words"] >= 0
+    )
+
+    deployment = DEPLOY.compose(check, source_domain, primitive)
     downstream_pass = deployment.get("deployment_theorem_certificate") == "PASS"
     final_pass = bool(
         not manifest_failures
@@ -61,9 +68,13 @@ def compose(check: dict, source_domain: dict, primitive: dict,
     failures.extend(f"implementation manifest: {x}" for x in manifest_failures)
     failures.extend(f"startup: {x}" for x in startup_failures)
     failures.extend(f"source-word language: {x}" for x in word_failures)
-    failures.extend(f"P5 validation: {x}" for x in p5_validation_failures)
+    failures.extend(f"P5 identification validation: {x}" for x in p5_id_failures)
+    failures.extend(f"P5 staged bridge validation: {x}" for x in p5_bridge_failures)
     if not p5_finite_capture_pass:
-        obstruction = p5.get("first_obstruction", "UNKNOWN_P5_OBSTRUCTION")
+        obstruction = p5_bridge.get(
+            "first_failure",
+            p5_id.get("first_obstruction", "UNKNOWN_P5_OBSTRUCTION"),
+        )
         failures.append(
             "P5 finite startup-to-inner-funnel capture not established: " + str(obstruction)
         )
@@ -79,10 +90,15 @@ def compose(check: dict, source_domain: dict, primitive: dict,
         "startup": startup,
         "source_complete_word_language_pass": not word_failures,
         "word_language": words,
-        "P5": p5,
-        "P5_validation_failures": p5_validation_failures,
+        "P5_identification": p5_id,
+        "P5_identification_validation_failures": p5_id_failures,
+        "P5_bridge": p5_bridge,
+        "P5_bridge_validation_failures": p5_bridge_failures,
         "P5_finite_startup_capture_pass": p5_finite_capture_pass,
-        "P5_first_obstruction": p5.get("first_obstruction"),
+        "P5_first_obstruction": p5_bridge.get(
+            "first_failure", p5_id.get("first_obstruction")
+        ),
+        "P5_local_capture_identifier_is_not_completion_certificate": True,
         "deployment": deployment,
         "downstream_deployment_theorem_pass": downstream_pass,
         "generic_deployment_capture_is_not_P5": True,
