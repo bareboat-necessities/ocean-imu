@@ -16,12 +16,16 @@ on:
       - "tools/ou3_p5_outer_h_word_certificate.py"
       - "tools/ou3_p5_go_live_covariance_stage.py"
       - "tools/ou3_p5_first_s_gain_certificate.py"
+      - "tools/ou3_p5_first_s_state_prefix_certificate.py"
+      - "tools/ou3_p5_heading_handoff_contract.py"
       - "tools/ou3_p5_outer_h_bridge_certificate.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p5_startup_capture_certificate.py"
       - "tests/validation/test_ou3_p5_outer_h_word_certificate.py"
       - "tests/validation/test_ou3_p5_go_live_covariance_stage.py"
       - "tests/validation/test_ou3_p5_first_s_gain_certificate.py"
+      - "tests/validation/test_ou3_p5_first_s_state_prefix_certificate.py"
+      - "tests/validation/test_ou3_p5_heading_handoff_contract.py"
       - "tests/validation/test_ou3_p5_outer_h_bridge_certificate.py"
       - ".github/workflows/ou3-p5-outer-fast.yml"
   workflow_dispatch:
@@ -51,11 +55,15 @@ jobs:
             tools/ou3_p5_outer_h_word_certificate.py \
             tools/ou3_p5_go_live_covariance_stage.py \
             tools/ou3_p5_first_s_gain_certificate.py \
+            tools/ou3_p5_first_s_state_prefix_certificate.py \
+            tools/ou3_p5_heading_handoff_contract.py \
             tools/ou3_p5_outer_h_bridge_certificate.py \
             tests/validation/test_ou3_p5_startup_capture_certificate.py \
             tests/validation/test_ou3_p5_outer_h_word_certificate.py \
             tests/validation/test_ou3_p5_go_live_covariance_stage.py \
             tests/validation/test_ou3_p5_first_s_gain_certificate.py \
+            tests/validation/test_ou3_p5_first_s_state_prefix_certificate.py \
+            tests/validation/test_ou3_p5_heading_handoff_contract.py \
             tests/validation/test_ou3_p5_outer_h_bridge_certificate.py
       - name: Test P5 source-staged outer-H bridge
         working-directory: tests/validation
@@ -65,22 +73,31 @@ jobs:
             test_ou3_p5_outer_h_word_certificate \
             test_ou3_p5_go_live_covariance_stage \
             test_ou3_p5_first_s_gain_certificate \
+            test_ou3_p5_first_s_state_prefix_certificate \
+            test_ou3_p5_heading_handoff_contract \
             test_ou3_p5_outer_h_bridge_certificate
       - name: Emit P5 bridge certificates
         run: |
           python3 tools/ou3_p5_startup_capture_certificate.py --output /tmp/ou3_p5_startup_capture_certificate.json
           python3 tools/ou3_p5_go_live_covariance_stage.py --output /tmp/ou3_p5_go_live_covariance_stage.json
           python3 tools/ou3_p5_first_s_gain_certificate.py --output /tmp/ou3_p5_first_s_gain_certificate.json
+          python3 tools/ou3_p5_first_s_state_prefix_certificate.py --output /tmp/ou3_p5_first_s_state_prefix_certificate.json
+          python3 tools/ou3_p5_heading_handoff_contract.py --output /tmp/ou3_p5_heading_handoff_contract.json
           python3 tools/ou3_p5_outer_h_word_certificate.py --output /tmp/ou3_p5_outer_h_word_certificate.json
           python3 tools/ou3_p5_outer_h_bridge_certificate.py --output /tmp/ou3_p5_outer_h_bridge_certificate.json
           python3 - <<'PY'
           import json
           s=json.load(open('/tmp/ou3_p5_go_live_covariance_stage.json'))
           f=json.load(open('/tmp/ou3_p5_first_s_gain_certificate.json'))
+          p=json.load(open('/tmp/ou3_p5_first_s_state_prefix_certificate.json'))
+          h=json.load(open('/tmp/ou3_p5_heading_handoff_contract.json'))
           o=json.load(open('/tmp/ou3_p5_outer_h_word_certificate.json'))
           b=json.load(open('/tmp/ou3_p5_outer_h_bridge_certificate.json'))
           print('P5_GOLIVE_STAGE:', s['P5_GOLIVE_COVARIANCE_STAGE_CERTIFICATE'])
           print('P5_FIRST_DUE_S_GAIN:', f['P5_FIRST_DUE_S_GAIN_CERTIFICATE'], 'rho=', f['theta_S_canonical_correlation_upper'], 'K=', f['K_thetaS_operator_norm_upper_first_due'])
+          print('P5_FIRST_S_STATE_PREFIX:', p['P5_FIRST_S_STATE_PREFIX_CERTIFICATE'], 'S=', p['first_due_S_error_norm_upper_m_s'], 'dtheta_S=', p['first_due_S_induced_attitude_correction_norm_upper_rad'])
+          print('P5_HEADING_GAUGED_Q:', h['gauged_quality_handoff']['full_attitude_cayley_norm_upper'], h['gauged_timeout_subbranch']['full_attitude_cayley_norm_upper'])
+          print('P5_TIMEOUT_UNGAUGED_ROUTE:', h['ungauged_timeout_subbranch']['required_route'])
           print('P5_OUTER_DIAGNOSTIC:', o['P5_OUTER_H_WORD_CERTIFICATE'], o['first_failure'])
-          print('P5_STAGED_BRIDGE:', b['P5_OUTER_H_BRIDGE_CERTIFICATE'], b['first_failure'])
+          print('P5_STAGED_BRIDGE:', b['P5_OUTER_H_BRIDGE_CERTIFICATE'], b['first_failure'], 'gauged=', b['gauged_full_heading_first_failure'])
           PY
