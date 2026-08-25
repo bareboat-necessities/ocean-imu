@@ -30,6 +30,7 @@ build:
 		../../tools/ou3_p4_node_metrics.py \
 		../../tools/ou3_p4_nonlinear_word_certificate.py \
 		../../tools/ou3_p5_startup_capture_certificate.py \
+		../../tools/ou3_p5_outer_h_word_certificate.py \
 		../../tools/ou3_implementation_proof_manifest.py \
 		../../tools/ou3_startup_stability_certificate.py \
 		../../tools/ou3_implementation_word_language.py \
@@ -61,6 +62,7 @@ build:
 		test_ou3_p4_word_map_and_metrics.py \
 		test_ou3_p4_nonlinear_word_certificate.py \
 		test_ou3_p5_startup_capture_certificate.py \
+		test_ou3_p5_outer_h_word_certificate.py \
 		test_ou3_startup_stability_certificate.py \
 		test_ou3_implementation_word_language.py \
 		test_ou3_implementation_stability_gate.py \
