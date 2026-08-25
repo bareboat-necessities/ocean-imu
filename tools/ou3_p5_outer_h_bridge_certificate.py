@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 """Compose the staged OU-III P5 outer-H capture bridge.
 
-The bridge is fail-closed and now consumes both corrected outer-route
-prerequisites:
+The bridge is fail-closed and consumes the corrected outer routes together with
+the exact transport algebra now available for the complete H word.
 
-* gauged H: the false raw V_R sector is retired, while the exact finite-angle
-  Cayley/vector residual information geometry is certified on both q~=0.27 and
-  q~=0.60 handoff nodes using the actual goLive attitude covariance and the
-  source-correlated Joseph information identity;
-* ungauged H: the false yaw-only/full-gyro-bias contraction is retired and the
-  corrected detectable quotient has a strict transverse attitude/bias
-  information lower bound, with the gravity-parallel gyro bias carried as a
-  bounded neutral input and the complete four-S translation word retained.
+For gauged H, the false raw V_R sector is retired.  Exact finite-angle
+Cayley/vector information is positive on the normal and timeout handoff nodes,
+the first due S correction is source-staged through the deployed quaternion map
+into a finite widened Cayley chart, vector eta has an exact Cayley identity, and
+signed Cayley correction cells preserve the actual ``a^T c`` denominator rather
+than replacing it by an independent norm product.
 
-Neither prerequisite by itself is the complete nonlinear P5 word.  The gauged
-route still needs validated exact source-word transport of nonlinear residuals,
-quaternion/Cayley injections, Joseph/reset metric changes, S cross-gain and all
-non-attitude coordinates.  The ungauged route needs the analogous complete
-quotient word with the axial-bias input term.  No filter/tuning value changes.
+For ungauged H, the false yaw-only/full-gyro-bias contraction is retired.  The
+corrected gravity quotient has strict transverse attitude/bias detectability,
+retains the complete four-S translation word, and carries gravity-parallel gyro
+bias as a bounded neutral input.  The same exact Joseph/quaternion/reset
+calculus applies after quotient projection.
+
+What remains is numerical rather than semantic: source-correlated covariance,
+gain, residual and correction cells must be propagated through all later
+prefixes of the 1 s word and their exact eta/reset budgets accumulated.  No
+filter/tuning value, S-to-attitude gain, or theorem gate is changed.
 """
 from __future__ import annotations
 
@@ -27,6 +30,9 @@ import math
 from pathlib import Path
 
 import ou3_p4_nonlinear_word_certificate as P4
+import ou3_p5_cayley_eta_geometry as ETA
+import ou3_p5_complete_word_transport as TRANSPORT
+import ou3_p5_first_s_exact_prefix as FIRSTEX
 import ou3_p5_first_s_gain_certificate as FIRSTS
 import ou3_p5_first_s_state_prefix_certificate as SPREFIX
 import ou3_p5_go_live_covariance_stage as GOLIVE
@@ -35,17 +41,18 @@ import ou3_p5_heading_handoff_contract as HEADING
 import ou3_p5_large_angle_sector_certificate as SECTOR
 import ou3_p5_outer_h_word_certificate as OUTER
 import ou3_p5_outer_information_geometry as OUTINFO
+import ou3_p5_signed_cayley_cell as SIGNED
 import ou3_p5_yaw_quotient_word_certificate as OLDQUOT
 import ou3_startup_stability_certificate as P1
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 5
+SCHEMA = 6
 
 
 def _gauged_node(name: str, heading_row: dict, outer_name: str,
                  outer: dict, p4: dict, first_s: dict, s_prefix: dict,
-                 sector: dict, outinfo: dict) -> dict:
+                 sector: dict, outinfo: dict, firstex: dict) -> dict:
     o = outer["node_word_tests"][outer_name]
     cfull = float(heading_row["full_attitude_cosine_lower"])
     qfull = float(heading_row["full_attitude_cayley_norm_upper"])
@@ -68,6 +75,9 @@ def _gauged_node(name: str, heading_row: dict, outer_name: str,
         raise RuntimeError(f"{name}: finite-angle source information prerequisite is not strict")
     if not math.isclose(float(ir["cayley_norm_upper"]), qfull, rel_tol=1e-12, abs_tol=1e-12):
         raise RuntimeError(f"{name}: finite-angle information node does not match handoff node")
+    sx = firstex["nodes"][name]
+    if sx.get("inside_widened_prefix_chart") is not True:
+        raise RuntimeError(f"{name}: first-S exact image is outside widened prefix chart")
 
     return {
         "node": name,
@@ -86,6 +96,9 @@ def _gauged_node(name: str, heading_row: dict, outer_name: str,
         "first_due_S_error_norm_upper_m_s": Sbound,
         "first_due_S_induced_attitude_correction_norm_upper_rad": Sinjection,
         "S_induced_correction_inside_group_helper": True,
+        "first_due_S_exact_prefix_certificate": firstex["P5_FIRST_DUE_S_EXACT_CAYLEY_PREFIX_CERTIFICATE"],
+        "first_due_S_post_cayley_norm_upper": sx["post_injection_cayley_norm_upper"],
+        "inside_widened_first_S_chart": sx["inside_widened_prefix_chart"],
         "retired_global_outer_diagnostic_ratio_upper": float(o["outer_vector_nonlinear_information_ratio_upper"]),
         "retired_P3_translation_limited_sqrt_gap_lower": float(o["P3_homogeneous_sqrt_decrease_lower"]),
         "raw_V_R_large_angle_sector_status": raw_status,
@@ -97,10 +110,10 @@ def _gauged_node(name: str, heading_row: dict, outer_name: str,
         "exact_pair_residual_information_vs_goLive_attitude_metric_lower": ir["exact_pair_residual_information_vs_goLive_attitude_metric_lower"],
         "source_correlated_Joseph_information_identity_retained": True,
         "source_shaped_Cayley_information_outer_sector_required": True,
-        "source_shaped_Cayley_information_outer_sector_status": "PARTIAL_GEOMETRY_PASS_WORD_TRANSPORT_PENDING",
+        "source_shaped_Cayley_information_outer_sector_status": "GEOMETRY_AND_FIRST_S_PASS_LATER_NUMERICAL_SUBDIVISION_PENDING",
         "exact_group_backend_retained": True,
         "outer_S_state_prefix_status": "PASS_CONDITIONAL_ON_OUTER_NODE",
-        "outer_prefix_domain_bootstrap_status": "NOT_ESTABLISHED",
+        "outer_prefix_domain_bootstrap_status": "PASS_THROUGH_FIRST_S_IN_WIDENED_CHART_LATER_PREFIXES_PENDING",
         "P4_inner_overlap_target_W": float(p4["modes"]["H"]["certified_level_W"]),
         "pass": False,
     }
@@ -114,11 +127,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     stage = GOLIVE.build(domain_path)
     first_s = FIRSTS.build(domain_path)
     s_prefix = SPREFIX.build(domain_path)
+    firstex = FIRSTEX.build(domain_path)
     heading = HEADING.build(domain_path)
     sector = SECTOR.build(domain_path)
     oldq = OLDQUOT.build(domain_path)
     outinfo = OUTINFO.build(domain_path)
     gquot = GQUOT.build(domain_path)
+    transport = TRANSPORT.build(domain_path)
+    eta = ETA.build(domain_path)
+    signed = SIGNED.build(domain_path)
 
     prereq = []
     prereq += [f"P1: {x}" for x in P1.validate(p1)]
@@ -127,11 +144,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     prereq += [f"goLive-stage: {x}" for x in GOLIVE.validate(stage)]
     prereq += [f"first-S-gain: {x}" for x in FIRSTS.validate(first_s)]
     prereq += [f"first-S-state-prefix: {x}" for x in SPREFIX.validate(s_prefix)]
+    prereq += [f"first-S-exact: {x}" for x in FIRSTEX.validate(firstex)]
     prereq += [f"heading-handoff: {x}" for x in HEADING.validate(heading)]
     prereq += [f"raw-VR-audit: {x}" for x in SECTOR.validate(sector)]
     prereq += [f"yaw-only-audit: {x}" for x in OLDQUOT.validate(oldq)]
     prereq += [f"outer-information: {x}" for x in OUTINFO.validate(outinfo)]
     prereq += [f"gravity-quotient: {x}" for x in GQUOT.validate(gquot)]
+    prereq += [f"complete-word-transport: {x}" for x in TRANSPORT.validate(transport)]
+    prereq += [f"Cayley-eta: {x}" for x in ETA.validate(eta)]
+    prereq += [f"signed-Cayley-cell: {x}" for x in SIGNED.validate(signed)]
     if prereq:
         return {
             "schema": SCHEMA,
@@ -152,14 +173,16 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     nodes = {
         "normal_gauged": _gauged_node(
             "normal_gauged", heading["gauged_quality_handoff"], "normal",
-            outer, p4, first_s, s_prefix, sector, outinfo,
+            outer, p4, first_s, s_prefix, sector, outinfo, firstex,
         ),
         "timeout_gauged": _gauged_node(
             "timeout_gauged", heading["gauged_timeout_subbranch"], "timeout",
-            outer, p4, first_s, s_prefix, sector, outinfo,
+            outer, p4, first_s, s_prefix, sector, outinfo, firstex,
         ),
     }
 
+    gauged_failure = transport["gauged_H"]["first_unclosed_numerical_obligation"]
+    quotient_failure = transport["gravity_quotient_H"]["first_unclosed_numerical_obligation"]
     return {
         "schema": SCHEMA,
         "qualification": "OU3_P5_STAGED_OUTER_H_BRIDGE",
@@ -185,6 +208,34 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
             "first_due_S_error_norm_upper_m_s": s_prefix["first_due_S_error_norm_upper_m_s"],
             "first_due_S_induced_attitude_correction_norm_upper_rad": s_prefix["first_due_S_induced_attitude_correction_norm_upper_rad"],
             "group_helper_limit_rad": s_prefix["deployed_group_helper_correction_limit_rad"],
+        },
+        "first_due_S_exact_prefix_stage": {
+            "status": firstex["P5_FIRST_DUE_S_EXACT_CAYLEY_PREFIX_CERTIFICATE"],
+            "required_post_cayley_norm_upper": firstex["required_first_S_post_cayley_norm_upper"],
+            "widened_cayley_norm_upper": firstex["widened_prefix_cayley_norm_upper"],
+            "antipodal_margin_lower": firstex["widened_prefix_antipodal_one_plus_cosine_margin_lower"],
+            "vector_information_vs_goLive_metric_lower": firstex["widened_prefix_pair_information_vs_goLive_attitude_metric_lower"],
+            "diagnostic_q_lt_1_is_promotion_gate": firstex["diagnostic_q_lt_1_is_promotion_gate"],
+        },
+        "complete_word_transport_stage": {
+            "status": transport["P5_COMPLETE_WORD_TRANSPORT_ALGEBRA_CERTIFICATE"],
+            "gauged_numerical_status": transport["P5_GAUGED_COMPLETE_WORD_NUMERICAL_CERTIFICATE"],
+            "quotient_numerical_status": transport["P5_GRAVITY_QUOTIENT_COMPLETE_WORD_NUMERICAL_CERTIFICATE"],
+            "source_operation_order": transport["source_operation_order"],
+            "full_S_to_attitude_gain_retained": transport["full_S_to_attitude_gain_retained"],
+            "sequential_immediate_quaternion_resets_retained": transport["sequential_immediate_quaternion_resets_retained"],
+        },
+        "exact_eta_subdivision_stage": {
+            "status": eta["P5_CAYLEY_ETA_GEOMETRY_CERTIFICATE"],
+            "exact_eta_identity": eta["exact_eta_identity"],
+            "widened_cayley_norm_upper": eta["widened_cayley_norm_upper"],
+            "annular_subdivision_cell_count": eta["subdivision_cell_count"],
+            "global_packet_count_times_Lipschitz_defect_used": eta["global_packet_count_times_Lipschitz_defect_used"],
+        },
+        "signed_cayley_cell_stage": {
+            "status": signed["P5_SIGNED_CAYLEY_CELL_PRIMITIVE"],
+            "signed_a_dot_c_retained": signed["signed_a_dot_c_retained"],
+            "independent_abs_a_abs_c_denominator_used": signed["independent_abs_a_abs_c_denominator_used"],
         },
         "heading_handoff_contract": {
             "P1_gravity_cosines_are_tilt_only": True,
@@ -225,20 +276,21 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "detectable_gravity_quotient_is_primary_ungauged_route": True,
         "gauged_full_heading_nodes": nodes,
         "ungauged_timeout_route": {
-            "status": "PARTIAL_REDUCED_DETECTABILITY_PASS_WORD_TRANSPORT_PENDING",
+            "status": "REDUCED_DETECTABILITY_AND_EXACT_TRANSPORT_PASS_NUMERICAL_SUBDIVISION_PENDING",
             "full_heading_cayley_bound_available": False,
             "yaw_only_quotient_disproved": True,
             "reduced_detectability_certificate": "PASS",
             "required_route": "DETECTABLE_GRAVITY_ONLY_QUOTIENT_WITH_AXIAL_GYRO_BIAS_NEUTRAL_BOUNDED_INPUT",
             "promotion_to_full_heading_requires": "magnetic_lock_or_regauge_hybrid_gauge_event",
+            "current_numerical_obligation": quotient_failure,
         },
-        "gauged_full_heading_first_failure": "COMPLETE_SOURCE_WORD_EXACT_CAYLEY_INFORMATION_TRANSPORT_NOT_CERTIFIED",
-        "first_failure": "GRAVITY_QUOTIENT_NONLINEAR_SOURCE_WORD_NOT_CERTIFIED",
+        "gauged_full_heading_first_failure": gauged_failure,
+        "first_failure": quotient_failure,
         "next_full_heading_numerical_certificate": (
-            "outward-enclose the complete 1 s source-correlated H word in the exact Cayley/information metric, using the now-certified finite-angle vector-information lower on both q~0.27 and q~0.60 nodes and retaining sequential quaternion/Joseph/reset/S prefixes"
+            "outward-propagate source-correlated covariance/gain/residual K*r cells through every later prefix of the complete 1 s gauged H word; use the exact Cayley eta identity and signed a^T c quaternion denominator, retaining full S-to-attitude and all non-attitude coordinates"
         ),
         "next_complete_startup_family_certificate": (
-            "outward-enclose the complete detectable gravity-only H quotient word with b_g_parallel as an explicit input term, then certify the magnetic-gauge jump into a full-heading node"
+            "perform the analogous outward K*r cell propagation in the detectable gravity quotient, charging b_g_parallel only as the explicit bounded input, then certify the magnetic-gauge jump into a full-heading node"
         ),
         "P5_OUTER_H_BRIDGE_CERTIFICATE": "NOT_ESTABLISHED",
         "N_H_words": None,
@@ -283,6 +335,38 @@ def validate(d: dict) -> list[str]:
         if row.get("strict") is not True:
             failures.append(f"{name}: finite-angle information prerequisite not strict")
 
+    sx = d.get("first_due_S_exact_prefix_stage", {})
+    if sx.get("status") != "PASS_WIDENED_CHART":
+        failures.append("first-S exact widened chart was not consumed")
+    if sx.get("diagnostic_q_lt_1_is_promotion_gate") is not False:
+        failures.append("bridge reinstated diagnostic q<1 gate")
+    if not float(sx.get("antipodal_margin_lower", 0.0)) > 0.0:
+        failures.append("first-S widened chart has no antipodal margin")
+
+    tr = d.get("complete_word_transport_stage", {})
+    if tr.get("status") != "PASS":
+        failures.append("complete-word exact transport algebra did not pass")
+    if tr.get("full_S_to_attitude_gain_retained") is not True:
+        failures.append("complete-word transport drops S-to-attitude gain")
+    if tr.get("sequential_immediate_quaternion_resets_retained") is not True:
+        failures.append("complete-word transport drops sequential resets")
+    if tr.get("gauged_numerical_status") != "NOT_ESTABLISHED" or tr.get("quotient_numerical_status") != "NOT_ESTABLISHED":
+        failures.append("bridge consumed a numerical word promotion that is not established")
+
+    eg = d.get("exact_eta_subdivision_stage", {})
+    if eg.get("status") != "PASS":
+        failures.append("exact Cayley eta geometry did not pass")
+    if eg.get("global_packet_count_times_Lipschitz_defect_used") is not False:
+        failures.append("bridge uses retired packet-count Lipschitz eta penalty")
+    if int(eg.get("annular_subdivision_cell_count", 0)) < 1:
+        failures.append("bridge has no eta annular subdivision")
+
+    sc = d.get("signed_cayley_cell_stage", {})
+    if sc.get("status") != "PASS":
+        failures.append("signed Cayley correction primitive did not pass")
+    if sc.get("signed_a_dot_c_retained") is not True or sc.get("independent_abs_a_abs_c_denominator_used") is not False:
+        failures.append("bridge loses signed Cayley correction/source correlation")
+
     oldq = d.get("yaw_only_quotient_audit", {})
     if oldq.get("obstruction_identified") != "PASS" or oldq.get("status") != "NOT_ESTABLISHED":
         failures.append("yaw-only quotient obstruction not consumed")
@@ -321,6 +405,8 @@ def validate(d: dict) -> list[str]:
             failures.append(f"{name}: handoff reaches antipodal set")
         if n.get("S_induced_correction_inside_group_helper") is not True:
             failures.append(f"{name}: first-S correction outside group helper")
+        if n.get("first_due_S_exact_prefix_certificate") != "PASS_WIDENED_CHART" or n.get("inside_widened_first_S_chart") is not True:
+            failures.append(f"{name}: exact first-S prefix not closed")
         if n.get("raw_V_R_sector_is_P5_promotion_route") is not False:
             failures.append(f"{name}: disproved raw V_R route still promotes")
         if n.get("finite_angle_information_geometry_status") != "PASS":
@@ -336,10 +422,10 @@ def validate(d: dict) -> list[str]:
     if "AXIAL_GYRO_BIAS" not in str(u.get("required_route", "")):
         failures.append("ungauged route does not name axial gyro-bias neutral direction")
 
-    if d.get("gauged_full_heading_first_failure") != "COMPLETE_SOURCE_WORD_EXACT_CAYLEY_INFORMATION_TRANSPORT_NOT_CERTIFIED":
-        failures.append("wrong gauged next obstruction")
-    if d.get("first_failure") != "GRAVITY_QUOTIENT_NONLINEAR_SOURCE_WORD_NOT_CERTIFIED":
-        failures.append("wrong complete-family next obstruction")
+    if d.get("gauged_full_heading_first_failure") != "COMPLETE_WORD_ETA_RESET_INFORMATION_BUDGET_NOT_CERTIFIED":
+        failures.append("wrong gauged numerical obstruction")
+    if d.get("first_failure") != "GRAVITY_QUOTIENT_EXACT_ETA_RESET_PREFIX_BUDGET_NOT_CERTIFIED":
+        failures.append("wrong complete-family numerical obstruction")
     if d.get("P5_OUTER_H_BRIDGE_CERTIFICATE") != "NOT_ESTABLISHED":
         failures.append("P5 bridge promoted before complete nonlinear words close")
     if d.get("N_H_words") is not None:
@@ -362,8 +448,10 @@ def main() -> int:
         "status": out.get("P5_OUTER_H_BRIDGE_CERTIFICATE"),
         "first_failure": out.get("first_failure"),
         "gauged_first_failure": out.get("gauged_full_heading_first_failure"),
-        "finite_angle_information": out.get("finite_angle_information_geometry"),
-        "detectable_gravity_quotient": out.get("detectable_gravity_quotient"),
+        "first_S_exact": out.get("first_due_S_exact_prefix_stage"),
+        "transport": out.get("complete_word_transport_stage"),
+        "eta": out.get("exact_eta_subdivision_stage"),
+        "signed_cayley": out.get("signed_cayley_cell_stage"),
         "validation_failures": failures,
     }, indent=2, sort_keys=True))
     return 0 if not failures else 2
