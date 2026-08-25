@@ -2,7 +2,7 @@
 """Validated first outer-H source-word/decrease certificate for OU-III P5.
 
 This is deliberately *not* the local P4 ``B W`` recurrence with a larger
-radius.  It constructs a finite-angle, anisotropic sufficient inequality on the
+radius. It constructs a finite-angle, anisotropic sufficient inequality on the
 actual P1 H-mode handoff nodes.
 
 The error coordinates are
@@ -17,8 +17,8 @@ The source map is split according to its real nonlinear structure:
   remainder;
 * the accelerometer nonlinear innovation depends on c and a_w, not on v or p;
 * the magnetometer nonlinear innovation depends on c only;
-* the S=0 innovation r_S=-S is exactly linear.  Its complete Kalman correction,
-  including S->attitude, remains in the homogeneous map.  Only the finite
+* the S=0 innovation r_S=-S is exactly linear. Its complete Kalman correction,
+  including S->attitude, remains in the homogeneous map. Only the finite
   quaternion/Cayley injection is nonlinear, and the certificate exposes the
   source-uniform S->attitude prefix bound needed to control it.
 
@@ -32,15 +32,21 @@ one has, for |c|<=q,
     ||R(c)-I||       <= 2 q/sqrt(4+q^2).
 
 These identities give state-proportional (rather than global ``C |z|^2``)
-innovation-defect ratios on each P1 node.  For any linear Kalman correction
-K=P H'(H P H'+R)^-1 and nonlinear innovation defect eta,
+innovation-defect ratios on each P1 node. For a Kalman correction
+K=P H'(H P H'+R)^-1=P+ H' R^-1, a defect eta is inserted at the posterior node.
+The exact information identity therefore gives
 
-    ||K eta||_{P^-1} <= 1/2 ||eta||_{R^-1}.
+    K' (P+)^-1 K = R^-1 H P+ H' R^-1 <= R^-1,
 
-After the mode-global P4 normalization this becomes an exact source-uniform
-information-metric injection bound.  The resulting outer word test is a valid
-sufficient condition.  Failure is reported as a first failing inequality; it
-never promotes P5 by replay or by extrapolating the P4 local recurrence.
+hence ||K eta||_(P+)^-1 <= ||eta||_R^-1. The left-error covariance reset is an
+exact congruence, so this endpoint defect norm is transported through that reset
+without an additional condition-number factor.
+
+The resulting outer word test is a valid sufficient test conditional on a
+source-safe candidate outer prefix domain. The producer does not silently assume
+that bootstrap: full P5 promotion additionally requires a prefix-domain proof.
+Failure is reported as a first failing inequality; it never promotes P5 by
+replay or by extrapolating the P4 local recurrence.
 """
 from __future__ import annotations
 
@@ -58,7 +64,7 @@ import ou3_startup_stability_certificate as P1
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_DOMAIN = REPO / "tools" / "ou3_proof_operating_domain.json"
-SCHEMA = 1
+SCHEMA = 2
 
 
 def down(x: float) -> float:
@@ -96,7 +102,6 @@ def _rotation_bounds(q: float) -> dict:
     den = down(4.0 + q2)
     rem = div_up(mul_up(q2, add_up(q, 2.0)), den)
     diff = div_up(mul_up(2.0, q), down(math.sqrt(4.0 + q2)))
-    # Write the quadratic rotation remainder as rem <= rem_over_q * |c|.
     rem_over_q = 0.0 if q == 0.0 else div_up(rem, q)
     return {
         "cayley_norm_upper": q,
@@ -136,39 +141,36 @@ def _node(name: str, q: float, bounds: dict) -> dict:
     }
 
 
-def _kalman_metric_gain(scale: float, measurement_std: float) -> float:
-    """Return sqrt(scale)/(2 sigma) for the exact K'P^-1K <= R^-1/4 lemma."""
+def _kalman_posterior_metric_gain(scale: float, measurement_std: float) -> float:
+    """sqrt(scale)/sigma from K'(P+)^-1 K <= R^-1."""
     if not (scale > 0.0 and measurement_std > 0.0):
         raise RuntimeError("positive metric scale and measurement std required")
-    return div_up(sqrt_up(scale), mul_up(2.0, measurement_std))
+    return div_up(sqrt_up(scale), measurement_std)
 
 
 def _vector_defect(node: dict, H: dict, domain: dict) -> dict:
     q = float(node["rotation"]["cayley_norm_upper"])
     rot_ratio = float(node["rotation"]["R_minus_I_minus_skew_linearized_ratio_upper"])
-    # ||R-I|| = a(q)|c| with a(q)=2/sqrt(4+q^2), so the bilinear
-    # attitude/a_w term is <= a(q) q_aw |c| and, on the product node,
-    # <= a(q) q * ||a_w||.  For a state-proportional ratio relative to the
-    # canonical driver norm use |c|*|a_w| <= min(q,aw_max)*||z_driver||.
     a_ratio = div_up(2.0, down(math.sqrt(4.0 + q*q)))
     live = domain["normal_live"]
     fmax = float(live["specific_force_norm_upper_mps2"])
     mmax = float(live["magnetic_vector_norm_upper_uT"])
     awmax = float(node["coordinate_norm_radii"]["a_w"])
 
-    # eta_acc <= fmax*rot_ratio*|c| + a_ratio*|c|*|a_w|.
-    # Both |c| and |a_w| are components of the driver norm.
+    # Exact finite-angle source structure:
+    # eta_acc <= fmax*rem_ratio*|c| + a_ratio*|c|*|a_w|.
+    # On the product driver ball |c||a_w| <= min(q,awmax)||z_driver||.
     acc_residual_ratio = add_up(
         mul_up(fmax, rot_ratio),
         mul_up(a_ratio, min(q, awmax)),
     )
     mag_residual_ratio = mul_up(mmax, rot_ratio)
 
-    acc_metric_gain = _kalman_metric_gain(
+    acc_metric_gain = _kalman_posterior_metric_gain(
         float(H["metric_mode_global_positive_scale"]),
         float(H["measurement_bounds"]["acc_measurement_std_mps2"]),
     )
-    mag_metric_gain = _kalman_metric_gain(
+    mag_metric_gain = _kalman_posterior_metric_gain(
         float(H["metric_mode_global_positive_scale"]),
         float(H["measurement_bounds"]["mag_measurement_std_uT"]),
     )
@@ -177,45 +179,34 @@ def _vector_defect(node: dict, H: dict, domain: dict) -> dict:
     return {
         "finite_angle_accel_residual_defect_per_driver_norm_upper": acc_residual_ratio,
         "finite_angle_mag_residual_defect_per_driver_norm_upper": mag_residual_ratio,
-        "kalman_information_gain_for_accel_defect_upper": acc_metric_gain,
-        "kalman_information_gain_for_mag_defect_upper": mag_metric_gain,
+        "kalman_posterior_information_gain_for_accel_defect_upper": acc_metric_gain,
+        "kalman_posterior_information_gain_for_mag_defect_upper": mag_metric_gain,
         "accel_nonlinear_information_norm_per_driver_norm_upper": acc_info_ratio,
         "mag_nonlinear_information_norm_per_driver_norm_upper": mag_info_ratio,
+        "posterior_metric_lemma": "K^T(P_plus)^-1K <= R^-1",
         "v_or_p_charged_as_vector_nonlinearity": False,
         "S_charged_as_vector_measurement_nonlinearity": False,
     }
 
 
-def _s_to_attitude_prefix_bound(H: dict, domain: dict, node: dict) -> dict:
+def _s_to_attitude_prefix_bound(H: dict, node: dict) -> dict:
     """Full S->attitude gain bound from the source-uniform covariance envelope.
 
-    R_S is isotropic in the proved deployment.  For a PSD covariance block,
+    R_S is isotropic in the proved deployment. For a PSD covariance block,
+    P_th,S=P_th,th^(1/2) C P_SS^(1/2), ||C||<=1. With
+    R_S=sigma_S^2 I, spectral calculus gives
+    ||P_SS^(1/2)(P_SS+sigma_S^2 I)^-1||<=1/(2 sigma_S), hence
+    ||K_th,S||<=sqrt(lambda_max(P_th,th))/(2 sigma_S).
 
-      P_th,S = P_th,th^(1/2) C P_SS^(1/2), ||C||<=1,
-
-    and with R_S=sigma_S^2 I,
-
-      ||P_SS^(1/2)(P_SS+sigma_S^2 I)^-1|| <= 1/(2 sigma_S).
-
-    Hence ||K_th,S|| <= sqrt(lambda_max(P_th,th))/(2 sigma_S).
-    We deliberately use the current source-uniform word covariance upper here,
-    not a replay covariance.  A later source-staged covariance enclosure may
-    tighten this term without changing the inequality.
+    The current calculation deliberately starts with the source-uniform P3
+    covariance eigenvalue upper. If it fails, P5 must replace that global box by
+    a source-staged post-goLive theta/S cross-covariance enclosure; replay
+    covariance is not admissible.
     """
-    p3diag = H["path_metric"].get("Sigma_lambda_max_upper")
-    # P4 path metric also records the source-uniform covariance eigenvalue
-    # upper.  The full eigenvalue bound is conservative but source complete.
     ptheta_upper = float(H["Sigma_lambda_max_upper"])
-    rs_std = 0.15
-    # Bind to the theorem source domain rather than silently hard coding if the
-    # domain is later widened.  The base R_S field is a standard deviation at
-    # the filter API used by P4.
-    try:
-        import ou3_source_domain_contract as SOURCE
-        text = (REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h").read_text(encoding="utf-8")
-        rs_std = float(SOURCE.parse_const(text, "MIN_R_S"))
-    except Exception:
-        raise RuntimeError("cannot source-bind MIN_R_S for outer S correction")
+    import ou3_source_domain_contract as SOURCE
+    text = (REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h").read_text(encoding="utf-8")
+    rs_std = float(SOURCE.parse_const(text, "MIN_R_S"))
     Smax = float(node["coordinate_norm_radii"]["S"])
     gain = div_up(sqrt_up(ptheta_upper), mul_up(2.0, rs_std))
     dtheta = mul_up(gain, Smax)
@@ -240,18 +231,12 @@ def _word_counts(H: dict, domain: dict) -> dict:
     samples = int(H["word_samples_upper"])
     dt = float(domain["configured_runtime"]["imu_dt_s"])
     horizon = float(H["word_horizon_s"])
-    # At most one accel correction per IMU sample.  Magnetometer is configured
-    # at 25 Hz in the source-bound vector certificate; P4's word contract already
-    # requires accepted vector packets but arbitrary extra accepted packets remain
-    # admissible, so use a conservative ceil(horizon*25)+1.
+    # The configured deployment's magnetometer runs at 25 Hz. The source word
+    # allows arbitrary accepted/rejected packets, so charge every due packet.
     mag = int(math.ceil(horizon * 25.0)) + 1
-    pseudo_min = 0.005
-    try:
-        import ou3_source_domain_contract as SOURCE
-        text = (REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h").read_text(encoding="utf-8")
-        pseudo_min = float(SOURCE.parse_const(text, "PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"))
-    except Exception:
-        raise RuntimeError("cannot source-bind pseudo update minimum period")
+    import ou3_source_domain_contract as SOURCE
+    text = (REPO / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h").read_text(encoding="utf-8")
+    pseudo_min = float(SOURCE.parse_const(text, "PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT"))
     pseudo = int(math.ceil(horizon / pseudo_min)) + 1
     return {
         "word_horizon_s": horizon,
@@ -260,21 +245,16 @@ def _word_counts(H: dict, domain: dict) -> dict:
         "accepted_accel_corrections_upper": samples,
         "accepted_mag_corrections_upper": mag,
         "S_zero_corrections_upper": pseudo,
-        "note": "counts are source-safe maxima; the outer inequality does not select a favorable rejection pattern",
+        "note": "source-safe maxima; no favorable rejection pattern is selected",
     }
 
 
 def _node_word_test(node: dict, H: dict, domain: dict) -> dict:
     vec = _vector_defect(node, H, domain)
-    sterm = _s_to_attitude_prefix_bound(H, domain, node)
+    sterm = _s_to_attitude_prefix_bound(H, node)
     counts = _word_counts(H, domain)
     delta = float(H["P3_word_endpoint_delta_lower"])
 
-    # New outer finite-angle perturbation ratio.  Unlike P4 B*W this is linear
-    # in sqrt(W) on the finite P1 node and does not charge v/p.  It is still a
-    # perturbative sufficient test for the vector nonlinearities; when it fails
-    # the next legal widening is the exact large-angle dissipation sector, not a
-    # larger local Taylor radius.
     rho_vec = add_up(
         mul_up(float(counts["accepted_accel_corrections_upper"]),
                float(vec["accel_nonlinear_information_norm_per_driver_norm_upper"])),
@@ -284,13 +264,20 @@ def _node_word_test(node: dict, H: dict, domain: dict) -> dict:
     homogeneous_sqrt_decrease_lower = down(0.5 * delta)
     vector_margin = down(homogeneous_sqrt_decrease_lower - rho_vec)
 
-    prefix_pass = bool(sterm["prefix_correction_inside_current_validated_group_helper"])
+    s_prefix_pass = bool(sterm["prefix_correction_inside_current_validated_group_helper"])
     vector_decrease_pass = vector_margin > 0.0
-    pass_ = prefix_pass and vector_decrease_pass
-    if not prefix_pass:
+    # The node radii currently come from P1. They are the candidate outer proof
+    # domain, but a complete word certificate must also prove every intermediate
+    # source image remains in the domain on which these ratios were evaluated.
+    # Do not infer that bootstrap from endpoint decrease.
+    prefix_domain_bootstrap_pass = False
+    pass_ = s_prefix_pass and vector_decrease_pass and prefix_domain_bootstrap_pass
+    if not s_prefix_pass:
         first = "S_TO_ATTITUDE_OUTER_PREFIX_BOUND_NOT_CERTIFIED"
     elif not vector_decrease_pass:
         first = "FINITE_ANGLE_VECTOR_PERTURBATION_EXCEEDS_P3_OUTER_WORD_GAP"
+    elif not prefix_domain_bootstrap_pass:
+        first = "OUTER_SOURCE_PREFIX_DOMAIN_BOOTSTRAP_NOT_CERTIFIED"
     else:
         first = "NONE"
     return {
@@ -302,7 +289,8 @@ def _node_word_test(node: dict, H: dict, domain: dict) -> dict:
         "outer_vector_nonlinear_information_ratio_upper": rho_vec,
         "outer_vector_word_decrease_margin_lower": vector_margin,
         "vector_word_decrease_pass": vector_decrease_pass,
-        "prefix_group_correction_pass": prefix_pass,
+        "S_prefix_group_correction_pass": s_prefix_pass,
+        "candidate_outer_prefix_domain_bootstrap_pass": prefix_domain_bootstrap_pass,
         "outer_word_decrease_pass": pass_,
         "first_failure": first,
     }
@@ -368,7 +356,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "exact_linear_coordinates_not_charged_as_nonlinearity": ["v", "p"],
         "S_innovation_treated_as_exact_linear_selector": True,
         "finite_angle_rotation_identity_used": True,
-        "kalman_nonlinear_defect_lemma": "K^T P^-1 K <= (1/4) R^-1",
+        "kalman_nonlinear_defect_lemma": "K^T(P_plus)^-1K <= R^-1",
+        "candidate_outer_prefix_domain_requires_separate_bootstrap": True,
         "handoff_nodes": nodes,
         "node_word_tests": tests,
         "outer_to_P4_inner_overlap_target_W": float(H["certified_level_W"]),
@@ -376,7 +365,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         "P5_OUTER_H_WORD_CERTIFICATE": "PASS" if pass_ else "NOT_ESTABLISHED",
         "first_failure": first,
         "next_widening_if_not_established": (
-            "replace the failed perturbative term by a validated exact large-angle source correction sector and/or a source-staged post-goLive covariance cross-block enclosure; do not enlarge the local P4 radius or drop S-to-attitude"
+            "replace the failed perturbative term by a validated exact large-angle source correction sector and a source-staged post-goLive covariance/cross-block prefix enclosure; do not enlarge the local P4 radius or drop S-to-attitude"
             if not pass_ else "compute finite outer-to-inner H funnel recursion"
         ),
         "failures": [],
@@ -401,6 +390,10 @@ def validate(d: dict) -> list[str]:
         failures.append("outer H certificate incorrectly charges S innovation as measurement nonlinearity")
     if d.get("finite_angle_rotation_identity_used") is not True:
         failures.append("outer H certificate does not use finite-angle rotation geometry")
+    if d.get("kalman_nonlinear_defect_lemma") != "K^T(P_plus)^-1K <= R^-1":
+        failures.append("outer H defect is not measured in the posterior information metric")
+    if d.get("candidate_outer_prefix_domain_requires_separate_bootstrap") is not True:
+        failures.append("outer H certificate silently assumes prefix-domain invariance")
     tests = d.get("node_word_tests", {})
     if set(tests) != {"normal", "timeout"}:
         failures.append("outer H normal/timeout nodes missing")
@@ -413,10 +406,6 @@ def validate(d: dict) -> list[str]:
         s = t.get("S_to_attitude_prefix", {})
         if s.get("full_S_to_attitude_gain_retained") is not True:
             failures.append(f"{name}: S-to-attitude gain omitted")
-    # This validator checks that the calculation is a complete honest attempt;
-    # it intentionally does not require PASS.  The P5 promotion gate separately
-    # requires P5_OUTER_H_WORD_CERTIFICATE == PASS before finite capture can be
-    # claimed.
     return failures
 
 
