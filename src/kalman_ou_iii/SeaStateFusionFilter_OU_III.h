@@ -1962,10 +1962,34 @@ private:
     // Horizontal integral-regularization scale relative to the vertical one.
     // 0.36 made the horizontal high-pass 2.8x stronger than the vertical one,
     // which was a small-sea optimum applied to every sea state: with the
-    // operating point now tied to the wave band, every stationary record scores
-    // better with the two equal, by 7 to 27 percent of 3D RMS in the two
-    // largest seas.  Retained as a setter because the bound is a real one.
-    float R_S_xy_factor_ = 1.0f;
+    // operating point now tied to the wave band, every stationary record scored
+    // better at 1 than at 0.36, by 7 to 27 percent of 3D RMS in the two largest
+    // seas.  Nothing in between was measured at the time, and the two-knob
+    // anisotropy study that followed only reached below 1 at S_factor = 1.87,
+    // where the inflated horizontal prior already supplied a 23 percent
+    // stronger horizontal corner and further tightening lost.  S_factor is now
+    // 1, so that implicit tightening is gone, and the interval is open again.
+    //
+    // Swept there over the eight scored records and three IMU seed triplets
+    // (tools/ou_low_sea_error_study.py xy), 3D displacement RMS has an interior
+    // minimum at 0.72: -3.33 percent against 1, with the same sign in all 24
+    // record x seed cells, and 0.8 and 0.6 bracketing it at -2.90 and -2.72.
+    // Both horizontal axes gain there -- x by 1.1 percent and y by 7.8 percent,
+    // y unanimously -- which is what stops the sweep at 0.72 rather than at the
+    // pooled minimum: below it x turns over (+1.2 percent at 0.6, +5.3 at 0.5)
+    // and the parameter goes back to trading the two horizontal axes against
+    // each other, which is the failure mode of the old 0.36.
+    //
+    // Vertical is untouched (-0.01 percent), so this is not a vertical-versus-
+    // horizontal trade; attitude moves under a half percent in either
+    // direction.  0.72 sits below the reduced-model reference of 0.86 -- the
+    // per-axis MSE optimum (q_h/q_z)^(1/14) (m_h/m_z)^(3/7) evaluated on the
+    // records by tools/ou_axis_rs_optimum.py, with m_h/m_z = 1/2 from the
+    // deep-water orbit -- for the reason the C_R calibration also sits off its
+    // analytical reference: the scalar reduction omits the tilt-leakage and
+    // residual-bias drift the horizontal channels actually reject.
+    // See docs/ou-iii-horizontal-anisotropy-retune.md.
+    float R_S_xy_factor_ = 0.72f;
     // Horizontal stationary acceleration scale relative to the vertical one.
     // 1.87 was carried from the acceleration-band operating point and never
     // re-measured against the records, which put it at 0.81 (x) and 0.55 (y)

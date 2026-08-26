@@ -987,17 +987,29 @@ private:
 // 3D is 0.9998 [0.9972, 1.0023], yaw 0.9980 [0.9786, 1.0178], roll 1.0463
 // [0.9430, 1.1611] -- while gyro bias is 0.9650 [0.9410, 0.9896], better at
 // 95%.  Seven of the ten bars come down, the gyro-bias aggregate by 16%.
+//
+// Re-cut again for R_S_xy_factor 1 -> 0.72 (the horizontal integral-regularizer
+// retune, docs/ou-iii-horizontal-anisotropy-retune.md).  Against the bars
+// immediately above, only pitch fails: 0.1965 -> 0.1996 on pmstokes H4.0,
+// +1.6% on a bar carrying half a percent.  Every other bar holds, and the two
+// 3D bars come down hard because 3D RMS is what the retune buys -- JONSWAP
+// 13.98 -> 12.77 and PM-Stokes 14.51 -> 13.43, 8.6% and 7.4% tighter.  Yaw's
+// bar still holds but re-cuts 0.9004 -> 0.9023, +0.2%, inside the same
+// record's own seed scatter (1.05 to 6.57 deg across five IMU seeds); pooled
+// over eight
+// records and three seed triplets the retune moves yaw +0.06% and pitch
+// +0.42%, against 3D -3.33% with every one of the 24 cells agreeing in sign.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 4.489f,  // was 4.489,  worst 4.4664 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 4.462f,  // was 4.462,  worst 4.4392 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 0.9004f, // was 0.887,  worst 0.8959 (jonswap H1.5)
-    .err_limit_roll_deg            = 0.3513f, // was 0.3625, worst 0.3495 (pmstokes H4.0)
-    .err_limit_pitch_deg           = 0.1975f, // was 0.1969, worst 0.1965 (pmstokes H4.0)
-    .err_limit_percent_3d_jonswap  = 13.98f,  // was 13.7,   worst 13.9042 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 14.51f,  // was 14.68,  worst 14.4313 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.301f,  // was 4.492,  worst 4.2788 (pmstokes H8.5)
-    .bias_3d_percent               = 78.92f,  // was 78.84,  worst 78.5198 (pmstokes H4.0, accel)
-    .gyro_bias_3d_percent          = 15.76f,  // was 18.8,   worst 15.6765 (pmstokes H0.27, gyro)
+    .err_limit_percent_z_jonswap   = 4.489f,  // was 4.489,  worst 4.4666 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 4.462f,  // was 4.462,  worst 4.4391 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 0.9023f, // was 0.9004, worst 0.8977 (jonswap H1.5)
+    .err_limit_roll_deg            = 0.3493f, // was 0.3513, worst 0.3475 (pmstokes H4.0)
+    .err_limit_pitch_deg           = 0.2007f, // was 0.1975, worst 0.1996 (pmstokes H4.0)
+    .err_limit_percent_3d_jonswap  = 12.77f,  // was 13.98,  worst 12.7031 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 13.43f,  // was 14.51,  worst 13.3545 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.3f,    // was 4.301,  worst 4.2785 (pmstokes H8.5)
+    .bias_3d_percent               = 79.0f,   // was 78.92,  worst 78.6042 (pmstokes H4.0, accel)
+    .gyro_bias_3d_percent          = 15.73f,  // was 15.76,  worst 15.6511 (pmstokes H0.27, gyro)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

@@ -57,6 +57,8 @@ import sys
 
 import numpy as np
 
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 # Fraction of reference displacement power left below the wave band.  The
 # bottom edge found this way is where the sea's own energy starts; below it the
 # synthetic records carry nothing, so it is also the honest floor for the
@@ -132,6 +134,14 @@ def negative_fourth_moment(w: np.ndarray, psd: np.ndarray, w_lo: float,
     if sel.sum() < 2:
         return float("nan")
     return float(np.trapezoid(psd[sel] / w[sel] ** 4, w[sel]))
+
+
+def _deployed_rho_xy() -> float:
+    """The wrapper's deployed R_S_xy_factor_, so the comparison line cannot go stale."""
+    src = os.path.join(REPO_ROOT, "src", "kalman_ou_iii", "SeaStateFusionFilter_OU_III.h")
+    m = re.search(r"float\s+R_S_xy_factor_\s*=\s*([0-9.eE+-]+)f\s*;",
+                  open(src, encoding="utf-8").read())
+    return float(m.group(1)) if m else float("nan")
 
 
 def scenario_label(path: str) -> str:
@@ -254,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {ax}: q/qz={geo([r[ax]['q_eff'] / r['z']['q_eff'] for r in rows]):6.2f}"
               f"  m4/m4z={geo([r[ax]['m4'] / r['z']['m4'] for r in rows]):6.3f}"
               f"  rS*/rS*z={geo([rs_ratio(r[ax]['q_eff'], r['z']['q_eff'], r[ax]['m4'], r['z']['m4']) for r in rows]):6.3f}")
-    print("  deployed: rSx/rSz = rSy/rSz = 1.000 (isotropic R_S_xy_factor)")
+    print(f"  deployed: rSx/rSz = rSy/rSz = {_deployed_rho_xy():.3f} (R_S_xy_factor)")
 
     if args.csv_out:
         with open(args.csv_out, "w", newline="") as fh:

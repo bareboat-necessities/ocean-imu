@@ -54,6 +54,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 from pathlib import Path
 
 import ou3_explicit_information_word_certificate as P3
@@ -116,6 +117,14 @@ def sqrt_up(x: float) -> float:
     return GROUP.sqrt_point(float(x)).hi
 
 
+def _deployed_member_float(text: str, name: str) -> float:
+    """Value of a deployed `float <name> = <literal>f;` member of the wrapper."""
+    m = re.search(rf"float\s+{re.escape(name)}\s*=\s*([0-9.eE+-]+)f\s*;", text)
+    if m is None:
+        raise RuntimeError(f"cannot extract deployed member {name}")
+    return float(m.group(1))
+
+
 def _source_measurement_bounds() -> dict:
     v = VECTOR.build()
     vf = VECTOR.validate(v)
@@ -129,9 +138,16 @@ def _source_measurement_bounds() -> dict:
 
     wrapper = WRAPPER.read_text(encoding="utf-8")
     rs_min = float(SOURCE.parse_const(wrapper, "MIN_R_S"))
-    if "float R_S_xy_factor_ = 1.0f;" not in wrapper:
-        raise RuntimeError("P4 requires source-bound deployed isotropic R_S_xy_factor_=1")
-    rs_var_lo = down(rs_min * rs_min)
+    # The S=0 correction covariance is diag(rho_xy r_S, rho_xy r_S, r_S)^2, so
+    # its smallest eigenvalue is bounded below by (min(rho_xy, 1) MIN_R_S)^2 --
+    # the isotropic case rho_xy = 1 this used to assert is the special case.
+    # Read rho_xy from the deployed member so the bound follows the source
+    # rather than a literal that has to be re-asserted on every retune.
+    rho_xy = _deployed_member_float(wrapper, "R_S_xy_factor_")
+    if not (0.0 < rho_xy <= 4.0):
+        raise RuntimeError(f"deployed R_S_xy_factor_ out of setter range: {rho_xy}")
+    rs_min_axis = mul_down(min(rho_xy, 1.0), rs_min)
+    rs_var_lo = down(rs_min_axis * rs_min_axis)
     rmin = min(acc_var_lo, mag_var_lo, rs_var_lo)
     if not (math.isfinite(rmin) and rmin > 0.0):
         raise RuntimeError("measurement covariance lower bound is not positive")

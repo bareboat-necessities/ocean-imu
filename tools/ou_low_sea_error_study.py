@@ -23,6 +23,14 @@ question.
                    noise, which splits the error into a sensor-driven part and a
                    sensor-independent one.
 
+    stage `screen` Sweep every other operating-point knob one at a time on the
+                   four JONSWAP records, to say which of them has any vertical
+                   headroom left at all.  Most have none.
+
+    stage `xy`     Paired multi-seed sweep of the horizontal-anisotropy knob --
+                   the one thing the screen did turn up.  It buys 3D RMS, not
+                   vertical; see docs/ou-iii-horizontal-anisotropy-retune.md.
+
 The amplitude stage rescales `roll_deg`/`pitch_deg` along with the linear
 columns, exactly as `ou_validation.scale_wave_motion` does, so scale factors
 much above 2 produce attitude excursions the sensor model was never meant to
@@ -33,6 +41,8 @@ Typical use:
     python3 tools/ou_low_sea_error_study.py cj
     python3 tools/ou_low_sea_error_study.py amp --scales 0.0625,0.125,0.25,0.5,1,2
     python3 tools/ou_low_sea_error_study.py noise
+    python3 tools/ou_low_sea_error_study.py screen
+    python3 tools/ou_low_sea_error_study.py xy --family OU_II
 """
 
 from __future__ import annotations
@@ -54,6 +64,50 @@ sys.path.insert(0, str(REPO_ROOT / "tools"))
 SIM_DIR = REPO_ROOT / "tests" / "kalman_ou_iii"
 SIM_BIN = SIM_DIR / "kalman_ou_iii-sim"
 
+# The `xy` stage is the only one that runs against either wrapper, because the
+# horizontal-anisotropy knob is the only one both expose under its own name.
+FAMILIES = {
+    "OU_III": {
+        "dir": REPO_ROOT / "tests" / "kalman_ou_iii",
+        "bin": "kalman_ou_iii-sim",
+        "knob": "OU_III_R_S_XY_FACTOR",
+        "grid": (1.0, 0.8, 0.72, 0.6, 0.5),
+    },
+    "OU_II": {
+        "dir": REPO_ROOT / "tests" / "kalman_ou_ii",
+        "bin": "kalman_ou_ii-sim",
+        "knob": "OU_II_R_P0_XY_FACTOR",
+        "grid": (1.0, 0.8, 0.65, 0.55),
+    },
+}
+
+# The eight scored records, smallest sea first within each spectrum.
+ALL_RECORDS = tuple(
+    f"wave_data_{fam}_H{h}.csv"
+    for fam in ("jonswap", "pmstokes")
+    for h in ("0.270_L14.047_A30.00_P60.00",
+              "1.500_L50.710_A-30.00_P120.00",
+              "4.000_L112.766_A30.00_P30.00",
+              "8.500_L202.839_A-30.00_P72.00")
+)
+
+# One-factor-at-a-time screen of section 1: knob -> (grid, deployed value).
+SCREEN = {
+    "OU_III_RS_MSE_COEFF":      ((0.027, 0.0538, 0.108), 0.0538),
+    "OU_ACC_NOISE_FLOOR_SIGMA": ((0.0148, 0.04, 0.12, 0.18), 0.12),
+    "OU_III_TAU_COEFF":         ((0.9, 1.0, 1.15), 1.0),
+    "OU_III_ACC_BIAS_INIT_STD": ((0.004, 0.025, 0.08), 0.004),
+    "OU_III_SIGMA_COEFF":       ((0.4, 0.6, 0.9, 1.4), 0.9),
+    "OU_III_R_S_XY_FACTOR":     ((0.6, 0.72, 1.0), 1.0),
+}
+
+# Paired metrics reported by the xy stage, in the order the note tabulates them.
+PAIRED_METRICS = ("disp_x_rms_m", "disp_y_rms_m", "disp_z_rms_m", "disp_3d_rms_m",
+                  "roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg",
+                  "accel_bias_3d_rms_mps2", "dir_travel_correct_pct")
+
+SEEDS = ("1", "7", "99")
+
 # The four JONSWAP records, smallest sea first.  H_s and T_z rise together
 # across them, which is exactly the confound the `amp` stage removes.
 RECORDS = (
@@ -74,7 +128,8 @@ R_S_MIN_RELEASED = 0.001
 SCORE = "disp_z_pct_refrms"
 
 
-def run_sim(record: Path, env_extra: dict[str, str], args: list[str]) -> dict[str, str]:
+def run_sim(record: Path, env_extra: dict[str, str], args: list[str],
+            binary: Path | None = None) -> dict[str, str]:
     env = dict(os.environ)
     env["W3D_VALIDATION_WINDOW_SEC"] = "900"
     env["W3D_WRITE_TIMESERIES"] = "0"
@@ -84,7 +139,7 @@ def run_sim(record: Path, env_extra: dict[str, str], args: list[str]) -> dict[st
     # an off-grid C_J and a rescaled record trip them by construction.  The exit
     # status carries no information here; the metrics line does.
     proc = subprocess.run(
-        [str(SIM_BIN), *args, "--input", record.name],
+        [str(binary or SIM_BIN), *args, "--input", record.name],
         cwd=record.parent,
         env=env,
         capture_output=True,
@@ -196,13 +251,81 @@ def stage_noise(args) -> None:
           "the\nsensor model contributes, which no filter tuning can remove.")
 
 
+def geo_mean(values) -> float:
+    return math.exp(sum(map(math.log, values)) / len(values))
+
+
+def stage_screen(args) -> None:
+    """One knob at a time on the four JONSWAP records, scored vertically."""
+    records = [r for r in ALL_RECORDS if "jonswap" in r]
+    jobs = []
+    for knob, (grid, _deployed) in SCREEN.items():
+        for value in grid:
+            for rec in records:
+                jobs.append(((knob, value, rec), SIM_DIR / rec, {knob: repr(value)}, []))
+    got = dict(parallel(jobs, args.jobs))
+
+    print("Vertical RMS as % of reference RMS, geometric mean over the four "
+          "JONSWAP records.\n")
+    print(f"{'knob':30s}{'deployed':>10s}{'best':>10s}{'at':>10s}{'gain %':>9s}")
+    for knob, (grid, deployed) in SCREEN.items():
+        scores = {v: geo_mean([float(got[(knob, v, r)][SCORE]) for r in records])
+                  for v in grid}
+        base = scores[deployed]
+        best = min(scores, key=scores.__getitem__)
+        gain = 100.0 * (base - scores[best]) / base
+        print(f"{knob:30s}{base:10.3f}{scores[best]:10.3f}{best:10g}{gain:9.2f}")
+    print("\nA knob whose best is its deployed value has no headroom on this "
+          "ensemble.")
+
+
+def stage_xy(args) -> None:
+    """Paired multi-seed sweep of the horizontal-anisotropy knob."""
+    fam = FAMILIES[args.family]
+    sim_dir, binary, knob = fam["dir"], fam["dir"] / fam["bin"], fam["knob"]
+    if not binary.exists():
+        raise SystemExit(f"{binary} is missing; run `make -C {sim_dir} build`")
+    grid = ([float(g) for g in args.grid.split(",")] if args.grid else list(fam["grid"]))
+    base = grid[0]
+
+    jobs = [((seed, value, rec), sim_dir / rec,
+             {knob: repr(value), "W3D_SEED": seed}, [], binary)
+            for seed in SEEDS for value in grid for rec in ALL_RECORDS]
+    got = dict(parallel(jobs, args.jobs))
+
+    cells = [(s, r) for s in SEEDS for r in ALL_RECORDS]
+    print(f"{args.family} {knob}: paired % change against {base}, "
+          f"n = {len(cells)} record x seed cells.")
+    print("Negative is better; * marks a delta with the same sign in every cell.\n")
+    print(f"{'metric':26s}" + "".join(f"{v:>15g}" for v in grid[1:]))
+    for metric in PAIRED_METRICS:
+        row = f"{metric:26s}"
+        for value in grid[1:]:
+            deltas = []
+            for seed, rec in cells:
+                b = float(got[(seed, base, rec)][metric])
+                v = float(got[(seed, value, rec)][metric])
+                if b > 0.0:
+                    deltas.append(100.0 * (v - b) / b)
+            unanimous = all(d < 0 for d in deltas) or all(d > 0 for d in deltas)
+            row += f"{sum(deltas)/len(deltas):+13.2f}{'*' if unanimous else ' '} "
+        print(row)
+    print("\nTake the smallest value at which BOTH horizontal axes still gain: "
+          "below it\nthe knob trades x against y, which depends on the records' "
+          "fixed heading.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("stage", choices=("cj", "amp", "noise"))
+    parser.add_argument("stage", choices=("cj", "amp", "noise", "screen", "xy"))
     parser.add_argument("--jobs", type=int, default=max(1, os.cpu_count() or 1))
     parser.add_argument("--scales", default="0.0625,0.125,0.25,0.5,1,2")
     parser.add_argument("--amp-source", default=RECORDS[1])
+    parser.add_argument("--family", choices=tuple(FAMILIES), default="OU_III",
+                        help="xy stage only: which wrapper to sweep")
+    parser.add_argument("--grid", default=None,
+                        help="xy stage only: comma-separated values, baseline first")
     parser.add_argument("--amp-trust-roll", type=float, default=0.35,
                         help="roll RMS in deg above which a rescaled record is "
                              "flagged as outside the sensor model")
@@ -213,7 +336,8 @@ def main() -> None:
     if not (SIM_DIR / RECORDS[0]).exists():
         raise SystemExit("simulation records are missing; run `make fetch-sim-data`")
 
-    {"cj": stage_cj, "amp": stage_amp, "noise": stage_noise}[args.stage](args)
+    {"cj": stage_cj, "amp": stage_amp, "noise": stage_noise,
+     "screen": stage_screen, "xy": stage_xy}[args.stage](args)
 
 
 if __name__ == "__main__":

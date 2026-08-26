@@ -87,17 +87,17 @@ FAMILIES = {
         "shipped": {
             "err_limit_percent_z_jonswap":   4.489,
             "err_limit_percent_z_pmstokes":  4.462,
-            "err_limit_yaw_deg":             0.887,
-            "err_limit_roll_deg":            0.3625,
-            "err_limit_pitch_deg":           0.1969,
-            "err_limit_percent_3d_jonswap":  13.7,
-            "err_limit_percent_3d_pmstokes": 14.68,
-            "acc_z_bias_percent":            4.492,
-            "bias_3d_percent":               78.84,
+            "err_limit_yaw_deg":             0.9023,
+            "err_limit_roll_deg":            0.3493,
+            "err_limit_pitch_deg":           0.2007,
+            "err_limit_percent_3d_jonswap":  12.77,
+            "err_limit_percent_3d_pmstokes": 13.43,
+            "acc_z_bias_percent":            4.3,
+            "bias_3d_percent":               79.0,
             # The first family to gate the gyro's 3D bias on its own bar.  The
             # shared one is the accelerometer's, and the gyro sits four times
             # under it.
-            "gyro_bias_3d_percent":          18.8,
+            "gyro_bias_3d_percent":          15.73,
         },
     },
     # TFG is gated by the same rule on the same protocol and had been

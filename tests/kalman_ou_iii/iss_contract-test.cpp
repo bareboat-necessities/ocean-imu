@@ -81,8 +81,8 @@ int main() {
     }
     if (!near(f.S_factor_, 1.0f))
         return fail("default OU-III acceleration anisotropy changed");
-    if (!near(f.R_S_xy_factor_, 1.0f))
-        return fail("default OU-III integral regularizer is no longer isotropic");
+    if (!near(f.R_S_xy_factor_, 0.72f))
+        return fail("default OU-III horizontal integral-regularizer scale changed");
 
     {
         Filter probe;

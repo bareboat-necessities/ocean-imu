@@ -32,11 +32,16 @@ If P_SS <= U I, the theta/S canonical-correlation norm therefore satisfies
 
     rho_thetaS <= sqrt((U-D)/D).
 
-For isotropic R_S = r I and lambda(P_SS)>=D>>r,
+For R_S with smallest eigenvalue r and lambda(P_SS)>=D>>r,
 
     ||K_thetaS||
       <= sqrt(lambda_max(P_theta)) rho_thetaS
          sqrt(D)/(D+r).
+
+sqrt(D)/(D+r) decreases in r, so taking r as the *smallest* eigenvalue of the
+deployed S=0 covariance diag(rho_xy r_S, rho_xy r_S, r_S)^2 keeps the bound
+valid whether or not that covariance is isotropic; rho_xy = 1 is the isotropic
+special case this certificate was first written against.
 
 The theta bound is taken from the *directional theta block* of the source-uniform
 P3 covariance enclosure, not from the translation-dominated global eigenvalue.
@@ -53,6 +58,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 from pathlib import Path
 
 import ou3_explicit_information_word_certificate as P3
@@ -93,6 +99,14 @@ def sqrt_up(x: float) -> float:
     if not (math.isfinite(x) and x >= 0.0):
         raise RuntimeError("finite nonnegative square-root input required")
     return up(math.sqrt(x))
+
+
+def _deployed_member_float(text: str, name: str) -> float:
+    """Value of a deployed `float <name> = <literal>f;` member of the wrapper."""
+    m = re.search(rf"float\s+{re.escape(name)}\s*=\s*([0-9.eE+-]+)f\s*;", text)
+    if m is None:
+        raise RuntimeError(f"cannot extract deployed member {name}")
+    return float(m.group(1))
 
 
 def _source_timing() -> dict:
@@ -152,8 +166,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
     wrapper = WRAPPER.read_text(encoding="utf-8")
     if "float S_factor_      = 1.0f;" not in wrapper:
         raise RuntimeError("configured first-S proof requires deployed S_factor_=1")
-    if "float R_S_xy_factor_ = 1.0f;" not in wrapper:
-        raise RuntimeError("configured first-S proof requires deployed isotropic R_S")
+    rho_xy = _deployed_member_float(wrapper, "R_S_xy_factor_")
+    if not (0.0 < rho_xy <= 4.0):
+        raise RuntimeError(f"deployed R_S_xy_factor_ out of setter range: {rho_xy}")
     if domain.get("configured_runtime", {}).get("imu_lever_arm_enabled") is not False:
         raise RuntimeError("configured first-S proof requires lever arm disabled")
 
@@ -197,7 +212,8 @@ def build(domain_path: Path = DEFAULT_DOMAIN) -> dict:
         raise RuntimeError("P3 H directional covariance upper is incomplete")
     Ptheta_upper = up(max(diag[0:3]))
 
-    rs_std = float(SOURCE.parse_const(wrapper, "MIN_R_S"))
+    # Smallest per-axis S=0 standard deviation the deployed schedule can reach.
+    rs_std = down(min(rho_xy, 1.0) * float(SOURCE.parse_const(wrapper, "MIN_R_S")))
     rmin = down(rs_std * rs_std)
     if not D > rmin:
         raise RuntimeError("first-S persistent variance no longer dominates minimum R_S")
