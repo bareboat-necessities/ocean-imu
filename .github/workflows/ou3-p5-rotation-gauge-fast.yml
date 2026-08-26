@@ -14,6 +14,7 @@ on:
       - "tools/ou3_p5_sample1_structured_S_prefix.py"
       - "tools/ou3_p5_sample1_reset_perp_scalar_channel.py"
       - "tools/ou3_p5_sample1_reset_perp_scalar_channel_v2.py"
+      - "tools/ou3_p5_sample1_reset_perp_scalar_channel_v3.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
@@ -29,6 +30,7 @@ on:
       - "tests/validation/test_ou3_p5_sample1_structured_S_prefix.py"
       - "tests/validation/test_ou3_p5_sample1_reset_perp_scalar_channel.py"
       - "tests/validation/test_ou3_p5_sample1_reset_perp_scalar_channel_v2.py"
+      - "tests/validation/test_ou3_p5_sample1_reset_perp_scalar_channel_v3.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
@@ -42,8 +44,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-perp-v2:
-    name: P5 sample-1 positive-determinant perpendicular core
+  sample1-perp-v3:
+    name: P5 sample-1 source-correlated perpendicular core
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -62,6 +64,7 @@ jobs:
             tools/ou3_p5_sample1_structured_S_prefix.py \
             tools/ou3_p5_sample1_reset_perp_scalar_channel.py \
             tools/ou3_p5_sample1_reset_perp_scalar_channel_v2.py \
+            tools/ou3_p5_sample1_reset_perp_scalar_channel_v3.py \
             tools/ou3_p5_deployed_quaternion_cayley_cell.py \
             tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py \
             tests/validation/test_ou3_p5_sample1_repeated_tangent_channel.py \
@@ -70,6 +73,7 @@ jobs:
             tests/validation/test_ou3_p5_sample1_structured_S_prefix.py \
             tests/validation/test_ou3_p5_sample1_reset_perp_scalar_channel.py \
             tests/validation/test_ou3_p5_sample1_reset_perp_scalar_channel_v2.py \
+            tests/validation/test_ou3_p5_sample1_reset_perp_scalar_channel_v3.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
       - name: Test focused semantics
@@ -82,25 +86,26 @@ jobs:
             test_ou3_p5_sample1_structured_S_prefix \
             test_ou3_p5_sample1_reset_perp_scalar_channel \
             test_ou3_p5_sample1_reset_perp_scalar_channel_v2 \
+            test_ou3_p5_sample1_reset_perp_scalar_channel_v3 \
             test_ou3_p5_deployed_quaternion_cayley_cell \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
-      - name: Emit positive-determinant perpendicular scalar core
+      - name: Emit source-correlated perpendicular scalar core
         run: |
-          python3 tools/ou3_p5_sample1_reset_perp_scalar_channel_v2.py \
+          python3 tools/ou3_p5_sample1_reset_perp_scalar_channel_v3.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 32 --d-pieces 32 --axial-pieces 32 \
-            --output /tmp/p5_sample1_perp_v2.json
+            --output /tmp/p5_sample1_perp_v3.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_sample1_perp_v2.json'))
-          print('P5_PERP_V2_STATUS:',d['P5_SAMPLE1_RESET_PERP_SCALAR_CHANNEL_V2'])
-          print('P5_PERP_V2_CELLS:',d['evaluated_joint_cells'])
-          print('P5_PERP_V2_RHO:',d['tangent_residual_norm_upper_mps2'])
-          print('P5_PERP_V2_MIN_DET:',d['minimum_predicted_determinant_lower'])
-          print('P5_PERP_V2_MIN_A:',d['minimum_A_lower'])
-          print('P5_PERP_V2_MAX_T:',d['max_predicted_tangent_variance'])
-          print('P5_PERP_V2_MAX_K:',d['max_Ktheta_abs_upper'])
-          print('P5_PERP_V2_MAX_D:',d['max_correction_norm_upper_rad'])
-          print('P5_PERP_V2_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
-          print('P5_PERP_V2_NEXT:',d['next_obligation'])
+          d=json.load(open('/tmp/p5_sample1_perp_v3.json'))
+          print('P5_PERP_V3_STATUS:',d['P5_SAMPLE1_RESET_PERP_SCALAR_CHANNEL_V3'])
+          print('P5_PERP_V3_CELLS:',d['evaluated_joint_cells'])
+          print('P5_PERP_V3_CHORD0:',d['pre_first_gravity_chord_upper'])
+          print('P5_PERP_V3_CHORD_MAX:',d['max_post_first_plus_prediction_gravity_chord_upper'])
+          print('P5_PERP_V3_MAX_EAW_X:',d['max_post_prediction_perpendicular_aw_error_abs_upper_mps2'])
+          print('P5_PERP_V3_MAX_RHO:',d['max_source_correlated_perp_residual_abs_upper_mps2'])
+          print('P5_PERP_V3_MAX_D:',d['max_correction_norm_upper_rad'])
+          print('P5_PERP_V3_HEADROOM:',d['minimum_range_headroom_rad_lower'])
+          print('P5_PERP_V3_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
+          print('P5_PERP_V3_NEXT:',d['next_obligation'])
           PY
