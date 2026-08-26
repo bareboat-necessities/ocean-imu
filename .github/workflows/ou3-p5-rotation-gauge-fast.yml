@@ -69,7 +69,7 @@ jobs:
       - name: Emit coupled tangent result
         run: |
           python3 tools/ou3_p5_sample1_coupled_tangent_refinement.py \
-            --source-pieces 2 --source-cell-index 0 \
+            --source-pieces 4 --source-cell-index 0 \
             --delta-pieces 16 \
             --output /tmp/p5_coupled_tangent.json
           python3 - <<'PY'
@@ -77,7 +77,7 @@ jobs:
           d=json.load(open('/tmp/p5_coupled_tangent.json'))
           print('P5_COUPLED_STATUS:',d['P5_SAMPLE1_COUPLED_TANGENT_WITNESS_REFINEMENT'])
           print('P5_COUPLED_CELLS:',d['evaluated_delta_cells'])
-          print('P5_COUPLED_BETA:',d['beta_mps2_per_rad'])
+          print('P5_COUPLED_BETA:',d['beta_interval_mps2_per_rad'])
           print('P5_COUPLED_COMBO_GAIN:',d['first_tangent_combined_gain_norm_upper'])
           print('P5_COUPLED_REM0:',d['first_tangent_relation_remainder_norm_upper_mps2'])
           print('P5_COUPLED_FIXED:',d['fixed_pivot_inverse_count'])
