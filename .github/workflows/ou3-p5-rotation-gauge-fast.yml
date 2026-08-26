@@ -54,7 +54,7 @@ concurrency:
 
 jobs:
   sample1-signed-cayley-q8-v14d:
-    name: P5 sample-1 signed Cayley q8 composition V14D
+    name: P5 sample-1 signed Cayley q8 coarse cover V14D
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -84,12 +84,12 @@ jobs:
             test_ou3_p5_sample1_signed_cayley_q8_v14c \
             test_ou3_p5_sample1_signed_cayley_q8_v14d \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
-      - name: Emit source-correlated sample-1 q8 composition
+      - name: Emit source-correlated sample-1 q8 coarse cover
         run: |
           python3 tools/ou3_p5_sample1_signed_cayley_q8_v14d.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
-            --residual-x-pieces 6 --parallel-pieces 6 \
+            --residual-x-pieces 2 --parallel-pieces 2 \
             --output /tmp/p5_sample1_v14d.json
           python3 - <<'PY'
           import json
