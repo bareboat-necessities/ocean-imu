@@ -10,6 +10,7 @@ on:
       - "tools/ou3_p5_sample1_structured_full_gain_v5.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v6.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v7.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v8.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
@@ -19,7 +20,7 @@ on:
       - "tools/ou3_startup_stability_certificate.py"
       - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
-      - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v7.py"
+      - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v8.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
@@ -32,8 +33,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-full-v7:
-    name: P5 sample-1 analytic 1+2 block gain
+  sample1-full-v8:
+    name: P5 sample-1 positive-ratio analytic block gain
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -45,33 +46,34 @@ jobs:
             tools/ou3_p5_sample1_structured_full_gain_v5.py \
             tools/ou3_p5_sample1_structured_full_gain_v6.py \
             tools/ou3_p5_sample1_structured_full_gain_v7.py \
-            tests/validation/test_ou3_p5_sample1_structured_full_gain_v7.py \
+            tools/ou3_p5_sample1_structured_full_gain_v8.py \
+            tests/validation/test_ou3_p5_sample1_structured_full_gain_v8.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
       - name: Test focused semantics
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
-            test_ou3_p5_sample1_structured_full_gain_v7 \
+            test_ou3_p5_sample1_structured_full_gain_v8 \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
-      - name: Emit analytic block full-gain core
+      - name: Emit positive-ratio analytic block core
         run: |
-          python3 tools/ou3_p5_sample1_structured_full_gain_v7.py \
+          python3 tools/ou3_p5_sample1_structured_full_gain_v8.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
-            --output /tmp/p5_sample1_full_v7.json
+            --output /tmp/p5_sample1_full_v8.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_sample1_full_v7.json'))
-          print('P5_FULL_V7_STATUS:',d['P5_SAMPLE1_ANALYTIC_BLOCK_GAIN_V7'])
-          print('P5_FULL_V7_CELLS:',d['evaluated_joint_cells'])
-          print('P5_FULL_V7_PRUNED:',d['residual_incompatible_joint_cells_pruned'])
-          print('P5_FULL_V7_MIN_SX:',d['minimum_scalar_innovation_lower'])
-          print('P5_FULL_V7_MIN_DET2:',d['minimum_two_by_two_determinant_lower'])
-          print('P5_FULL_V7_MAX_FORCE:',d['max_sample1_force_norm_upper_mps2'])
-          print('P5_FULL_V7_MAX_EAW1:',d['max_post_prediction_aw_error_norm_upper_mps2'])
-          print('P5_FULL_V7_MAX_RHO:',d['max_sample1_residual_norm_upper_mps2'])
-          print('P5_FULL_V7_MAX_K:',d['max_Ktheta_operator_norm_upper'])
-          print('P5_FULL_V7_MAX_D:',d['max_correction_norm_upper_rad'])
-          print('P5_FULL_V7_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
-          print('P5_FULL_V7_NEXT:',d['next_obligation'])
+          d=json.load(open('/tmp/p5_sample1_full_v8.json'))
+          print('P5_FULL_V8_STATUS:',d['P5_SAMPLE1_POSITIVE_RATIO_BLOCK_GAIN_V8'])
+          print('P5_FULL_V8_CELLS:',d['evaluated_joint_cells'])
+          print('P5_FULL_V8_PRUNED:',d['residual_incompatible_joint_cells_pruned'])
+          print('P5_FULL_V8_MIN_SX:',d['minimum_scalar_innovation_lower'])
+          print('P5_FULL_V8_MIN_DET2:',d['minimum_two_by_two_determinant_lower'])
+          print('P5_FULL_V8_MAX_FORCE:',d['max_sample1_force_norm_upper_mps2'])
+          print('P5_FULL_V8_MAX_EAW1:',d['max_post_prediction_aw_error_norm_upper_mps2'])
+          print('P5_FULL_V8_MAX_RHO:',d['max_sample1_residual_norm_upper_mps2'])
+          print('P5_FULL_V8_MAX_K:',d['max_Ktheta_operator_norm_upper'])
+          print('P5_FULL_V8_MAX_D:',d['max_correction_norm_upper_rad'])
+          print('P5_FULL_V8_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
+          print('P5_FULL_V8_NEXT:',d['next_obligation'])
           PY
