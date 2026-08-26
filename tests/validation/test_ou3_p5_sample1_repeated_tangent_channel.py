@@ -13,9 +13,13 @@ class RepeatedTangentTests(unittest.TestCase):
   self.assertTrue(self.d["exact_first_structured_posterior_used"])
   self.assertTrue(self.d["dependency_preserving_positive_repeated_innovation_formula_used"])
   self.assertTrue(self.d["signed_aligned_sample1_force_used"])
+  self.assertTrue(self.d["rowwise_tangent_residual_bound_used"])
+  self.assertFalse(self.d["temporal_force_slew_assumed"])
+  self.assertFalse(self.d["latent_aw_error_double_counted_in_raw_residual"])
   self.assertFalse(self.d["reset_process_and_tangent_force_perturbations_included"])
  def test_positive_finite(self):
   self.assertGreater(self.d["minimum_scalar_innovation_variance_lower"],0.0)
+  self.assertEqual(self.d["sample1_tangent_residual_norm_upper_mps2"],30.5)
   for k in ("max_scalar_Ktheta_abs_upper","max_scalar_correction_norm_upper_rad"):
    self.assertTrue(math.isfinite(float(self.d[k])))
   self.assertEqual(self.d["evaluated_joint_cells"],16)
