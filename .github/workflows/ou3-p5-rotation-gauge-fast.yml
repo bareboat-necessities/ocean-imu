@@ -8,7 +8,6 @@ on:
       - "tools/ou3_p5_first_accel_structured_gain.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
-      - "tools/ou3_p5_first_accel_post_reset.py"
       - "tools/ou3_p5_sample1_coupled_tangent_gauge_v2.py"
       - "tools/ou3_p5_sample1_repeated_tangent_channel.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
@@ -60,7 +59,7 @@ jobs:
           d=json.load(open('/tmp/p5_repeated_tangent.json'))
           print('P5_REPEAT_STATUS:',d['P5_SAMPLE1_REPEATED_TANGENT_CORE_WITNESS'])
           print('P5_REPEAT_CELLS:',d['evaluated_joint_cells'])
-          print('P5_REPEAT_RHO:',d['sample1_residual_norm_upper_mps2'])
+          print('P5_REPEAT_RHO_TANGENT:',d['sample1_tangent_residual_norm_upper_mps2'])
           print('P5_REPEAT_MIN_S:',d['minimum_scalar_innovation_variance_lower'])
           print('P5_REPEAT_MAX_K:',d['max_scalar_Ktheta_abs_upper'])
           print('P5_REPEAT_MAX_D:',d['max_scalar_correction_norm_upper_rad'])
