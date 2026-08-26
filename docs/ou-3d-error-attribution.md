@@ -6,6 +6,10 @@ primary ones, and that `disp_y_rms_m` is higher in all nine scenarios. This note
 attributes that result to a specific band and a specific mechanism. It is a
 diagnosis of the committed filters, not a proposal to change them.
 
+The companion question -- why the *vertical* error is a larger fraction of the
+sea on the small records than on the large ones, in all three families -- is
+measured in [`ou-low-sea-percent-error.md`](ou-low-sea-percent-error.md).
+
 ## What the committed bundle already says
 
 From `reports/results/ou_validation/ou_validation_paired_effects.csv`
