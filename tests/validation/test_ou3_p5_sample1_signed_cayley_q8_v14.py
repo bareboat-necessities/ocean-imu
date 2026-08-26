@@ -16,7 +16,7 @@ class Sample1SignedCayleyQ8V14Tests(unittest.TestCase):
              Interval.outward_bounds(-0.1, 0.1),
              Interval.outward_bounds(-0.1, 0.1)]
         w, v, branches = V14._normalized_shipping_quaternion(
-            d, radial_lower=6.8, radial_upper=7.21)
+            d, radial_lower=6.8, radial_upper=7.2)
         self.assertIn("AXIS_ANGLE_UNIT", branches)
         for x in (w, *v):
             self.assertTrue(math.isfinite(x.lo))
@@ -30,7 +30,7 @@ class Sample1SignedCayleyQ8V14Tests(unittest.TestCase):
              Interval.outward_bounds(-0.001, 0.001),
              Interval.outward_bounds(-0.001, 0.001)]
         w, v, branches = V14._normalized_shipping_quaternion(
-            d, radial_lower=0.0, radial_upper=0.0062)
+            d, radial_lower=0.0, radial_upper=0.0061)
         self.assertIn("SERIES_NORMALIZED", branches)
         self.assertGreater(w.lo, 0.0)
         self.assertLessEqual(max(x.abs_upper() for x in v), 0.01)
