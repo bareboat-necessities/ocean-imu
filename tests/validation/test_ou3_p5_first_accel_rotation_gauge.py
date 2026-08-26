@@ -9,6 +9,8 @@ import ou3_p5_first_accel_rotation_gauge as G
 
 
 class Ou3P5FirstAccelRotationGaugeTests(unittest.TestCase):
+    """Historical V1 route: retain its concrete nonclosure as negative evidence."""
+
     @classmethod
     def setUpClass(cls):
         cls.d = G.build(
@@ -19,7 +21,6 @@ class Ou3P5FirstAccelRotationGaugeTests(unittest.TestCase):
 
     def test_stage_is_source_bound_and_does_not_change_filter_or_range(self):
         d = self.d
-        self.assertEqual(G.validate(d), [])
         self.assertTrue(d["source_generated_not_trajectory_fit"])
         self.assertFalse(d["source_replay_used"])
         self.assertFalse(d["filter_changed"])
@@ -37,29 +38,26 @@ class Ou3P5FirstAccelRotationGaugeTests(unittest.TestCase):
         self.assertTrue(d["yaw_axis_cube_face_cover_complete"])
         self.assertTrue(d["pseudo_phase_coupled_to_tau_before_branching"])
 
-    def test_loose_innovation_inverse_fallback_is_retired_for_this_stage(self):
+    def test_loose_inverse_fallback_is_preserved_as_historical_nonclosure(self):
         d = self.d
         self.assertGreater(d["evaluated_child_count"], 0)
         self.assertGreater(d["fixed_pivot_inverse_count"], 0)
-        self.assertEqual(d["spectral_fallback_inverse_count"], 0)
+        self.assertGreater(d["spectral_fallback_inverse_count"], 0)
+        self.assertEqual(
+            G.validate(d),
+            ["rotation-gauged innovation still required loose spectral inverse fallback"],
+        )
+        self.assertEqual(d["P5_FIRST_ACCEL_ROTATION_GAUGED_CERTIFICATE"], "NOT_ESTABLISHED")
 
-    def test_first_stage_never_promotes_complete_word(self):
+    def test_historical_stage_never_promotes_complete_word(self):
         d = self.d
         self.assertFalse(d["whole_word_promoted_here"])
         self.assertFalse(d["N_H_words_set_here"])
-        if d["P5_FIRST_ACCEL_ROTATION_GAUGED_CERTIFICATE"] == "PASS":
-            self.assertTrue(d["all_first_accelerometer_children_inside_validated_correction_range"])
-            self.assertIsNone(d["first_unclosed_child"])
-            self.assertEqual(
-                d["next_obligation"],
-                "PROPAGATE_ROTATION_GAUGED_CHILDREN_THROUGH_ACCEL_JOSEPH_RESET_AND_LATER_PREFIXES",
-            )
-        else:
-            self.assertIsNotNone(d["first_unclosed_child"])
-            self.assertEqual(
-                d["next_obligation"],
-                "REFINE_FIRST_ACCEL_ATTITUDE_COVARIANCE_AND_EFFECTIVE_AW_DIRECTION_COUPLING",
-            )
+        self.assertIsNotNone(d["first_unclosed_child"])
+        self.assertEqual(
+            d["next_obligation"],
+            "REFINE_FIRST_ACCEL_ATTITUDE_COVARIANCE_AND_EFFECTIVE_AW_DIRECTION_COUPLING",
+        )
 
 
 if __name__ == "__main__":
