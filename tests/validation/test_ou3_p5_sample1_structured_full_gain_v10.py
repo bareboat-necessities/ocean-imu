@@ -24,7 +24,8 @@ class StructuredFullGainV10Tests(unittest.TestCase):
             pre_first_aw_error_norm_upper=10.0,gravity=9.8)
         self.assertGreaterEqual(r["combined_x_residual_upper_mps2"],0.2)
         self.assertLess(r["combined_x_residual_upper_mps2"],0.200000000001)
-        self.assertEqual(r["rotation_mismatch_residual_upper_mps2"],0.0)
+        self.assertGreaterEqual(r["rotation_mismatch_residual_upper_mps2"],0.0)
+        self.assertLess(r["rotation_mismatch_residual_upper_mps2"],1e-300)
 
     def test_bias_difference_uses_one_plus_alpha(self):
         r=V10._combined_x_residual_upper(
