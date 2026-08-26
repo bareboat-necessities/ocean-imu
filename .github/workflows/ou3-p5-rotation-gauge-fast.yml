@@ -8,12 +8,14 @@ on:
       - "tools/ou3_p5_sample1_signed_radial_subcells_v13d.py"
       - "tools/ou3_p5_sample1_signed_radial_subcells_v13e.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14b.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_sample1_prefix_v2.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14b.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   pull_request:
@@ -23,12 +25,14 @@ on:
       - "tools/ou3_p5_sample1_signed_radial_subcells_v13d.py"
       - "tools/ou3_p5_sample1_signed_radial_subcells_v13e.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14b.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_first_accel_exact_source.py"
       - "tools/ou3_p5_sample1_prefix_v2.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14b.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
@@ -41,8 +45,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-signed-cayley-q8-v14:
-    name: P5 sample-1 signed Cayley q8 composition
+  sample1-signed-cayley-q8-v14b:
+    name: P5 sample-1 signed Cayley q8 composition V14B
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -55,33 +59,36 @@ jobs:
             tools/ou3_p5_sample1_signed_radial_subcells_v13d.py \
             tools/ou3_p5_sample1_signed_radial_subcells_v13e.py \
             tools/ou3_p5_sample1_signed_cayley_q8_v14.py \
+            tools/ou3_p5_sample1_signed_cayley_q8_v14b.py \
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14.py \
+            tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14b.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
       - name: Test focused semantics
         working-directory: tests/validation
         run: |
           python3 -m unittest -v \
             test_ou3_p5_sample1_signed_cayley_q8_v14 \
+            test_ou3_p5_sample1_signed_cayley_q8_v14b \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
       - name: Emit source-correlated sample-1 q8 composition
         run: |
-          python3 tools/ou3_p5_sample1_signed_cayley_q8_v14.py \
+          python3 tools/ou3_p5_sample1_signed_cayley_q8_v14b.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
             --residual-x-pieces 6 --parallel-pieces 6 \
-            --output /tmp/p5_sample1_v14.json
+            --output /tmp/p5_sample1_v14b.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_sample1_v14.json'))
-          print('P5_V14_STATUS:',d['P5_SAMPLE1_SIGNED_CAYLEY_Q8_V14'])
-          print('P5_V14_CELLS:',d['evaluated_signed_cayley_cells'])
-          print('P5_V14_RADIAL_NOT_READY:',d['radial_not_ready_cells'])
-          print('P5_V14_ANTIPODE_CELLS:',d['product_scalar_antipode_cells'])
-          print('P5_V14_UNCLOSED:',d['unclosed_q8_cells'])
-          print('P5_V14_MIN_ABS_W:',d['minimum_abs_product_scalar_lower'])
-          print('P5_V14_MAX_Q_PLUS:',d['max_post_sample1_cayley_norm_upper'])
-          print('P5_V14_FIRST_UNCLOSED:',d['first_unclosed_q8_cell'])
-          print('P5_V14_WORST:',d['worst_q8_cell'])
-          print('P5_V14_NEXT:',d['next_obligation'])
-          print('P5_V14_VALIDATION:',d['validation_failures'])
+          d=json.load(open('/tmp/p5_sample1_v14b.json'))
+          print('P5_V14B_STATUS:',d['P5_SAMPLE1_SIGNED_CAYLEY_Q8_V14B'])
+          print('P5_V14B_CELLS:',d['evaluated_signed_cayley_cells'])
+          print('P5_V14B_RADIAL_NOT_READY:',d['radial_not_ready_cells'])
+          print('P5_V14B_ANTIPODE_CELLS:',d['product_scalar_antipode_cells'])
+          print('P5_V14B_UNCLOSED:',d['unclosed_q8_cells'])
+          print('P5_V14B_MIN_ABS_W:',d['minimum_abs_product_scalar_lower'])
+          print('P5_V14B_MAX_Q_PLUS:',d['max_post_sample1_cayley_norm_upper'])
+          print('P5_V14B_FIRST_UNCLOSED:',d['first_unclosed_q8_cell'])
+          print('P5_V14B_WORST:',d['worst_q8_cell'])
+          print('P5_V14B_NEXT:',d['next_obligation'])
+          print('P5_V14B_VALIDATION:',d['validation_failures'])
           PY
