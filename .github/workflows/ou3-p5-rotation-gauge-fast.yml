@@ -10,6 +10,7 @@ on:
       - "tools/ou3_p5_first_accel_exact_source_v2.py"
       - "tools/ou3_p5_sample1_coupled_tangent_gauge_v2.py"
       - "tools/ou3_p5_sample1_repeated_tangent_channel.py"
+      - "tools/ou3_p5_sample1_correction_range_bridge.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
@@ -20,6 +21,7 @@ on:
       - "tools/ou3_source_reachable_matrix_p3.py"
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p5_sample1_repeated_tangent_channel.py"
+      - "tests/validation/test_ou3_p5_sample1_correction_range_bridge.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
@@ -34,7 +36,7 @@ concurrency:
 
 jobs:
   sample1-range:
-    name: P5 sample-1 scalar core + 9-rad quaternion range
+    name: P5 sample-1 scalar correction range bridge
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -48,9 +50,11 @@ jobs:
             tools/ou3_p5_first_accel_exact_source.py \
             tools/ou3_p5_first_accel_exact_source_v2.py \
             tools/ou3_p5_sample1_repeated_tangent_channel.py \
+            tools/ou3_p5_sample1_correction_range_bridge.py \
             tools/ou3_p5_deployed_quaternion_cayley_cell.py \
             tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py \
             tests/validation/test_ou3_p5_sample1_repeated_tangent_channel.py \
+            tests/validation/test_ou3_p5_sample1_correction_range_bridge.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
       - name: Test focused semantics
@@ -58,29 +62,19 @@ jobs:
         run: |
           python3 -m unittest -v \
             test_ou3_p5_sample1_repeated_tangent_channel \
+            test_ou3_p5_sample1_correction_range_bridge \
             test_ou3_p5_deployed_quaternion_cayley_cell \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
-      - name: Emit repeated tangent core and extended range
+      - name: Emit range bridge
         run: |
-          python3 tools/ou3_p5_sample1_repeated_tangent_channel.py \
-            --source-pieces 4 --source-cell-index 0 \
-            --p-pieces 32 --axial-pieces 32 \
-            --output /tmp/p5_repeated_tangent.json
-          python3 tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py \
-            --output /tmp/p5_quaternion_v2.json
+          python3 tools/ou3_p5_sample1_correction_range_bridge.py \
+            --output /tmp/p5_sample1_range_bridge.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_repeated_tangent.json'))
-          q=json.load(open('/tmp/p5_quaternion_v2.json'))
-          print('P5_REPEAT_STATUS:',d['P5_SAMPLE1_REPEATED_TANGENT_CORE_WITNESS'])
-          print('P5_REPEAT_CELLS:',d['evaluated_joint_cells'])
-          print('P5_REPEAT_RHO_TANGENT:',d['sample1_tangent_residual_norm_upper_mps2'])
-          print('P5_REPEAT_MIN_S:',d['minimum_scalar_innovation_variance_lower'])
-          print('P5_REPEAT_MAX_K:',d['max_scalar_Ktheta_abs_upper'])
-          print('P5_REPEAT_MAX_D:',d['max_scalar_correction_norm_upper_rad'])
-          print('P5_REPEAT_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
-          print('P5_QUAT_V2_STATUS:',q['P5_DEPLOYED_QUATERNION_CAYLEY_CELL_V2_PRIMITIVE'])
-          print('P5_QUAT_V2_MAX_RAD:',q['maximum_validated_correction_norm_rad'])
-          print('P5_QUAT_V2_AUDIT:',q['audit_extended_over_2pi'])
-          print('P5_QUAT_V2_NEXT:',q['next_obligation'])
+          d=json.load(open('/tmp/p5_sample1_range_bridge.json'))
+          print('P5_RANGE_BRIDGE_STATUS:',d['P5_SAMPLE1_SCALAR_CORRECTION_RANGE_BRIDGE'])
+          print('P5_RANGE_BRIDGE_DMAX:',d['scalar_core_correction_norm_upper_rad'])
+          print('P5_RANGE_BRIDGE_VALIDATED_RANGE:',d['deployed_quaternion_v2_range_upper_rad'])
+          print('P5_RANGE_BRIDGE_HEADROOM:',d['scalar_range_headroom_rad_lower'])
+          print('P5_RANGE_BRIDGE_NEXT:',d['next_obligation'])
           PY
