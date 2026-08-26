@@ -1,7 +1,11 @@
 from __future__ import annotations
 import math
+import sys
+from pathlib import Path
 import unittest
 
+ROOT=Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(ROOT/"tools"))
 import ou3_p5_sample1_structured_full_gain_v5 as V5
 
 
