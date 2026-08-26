@@ -17,15 +17,25 @@ class Ou3P5Sample1CoupledTangentRefinementTests(unittest.TestCase):
 
     def test_coupling_semantics(self):
         self.assertTrue(self.d["same_first_residual_attitude_aw_coupling_used"])
-        self.assertTrue(self.d["beta_source_derived_from_certified_first_gain"])
+        self.assertTrue(self.d["structured_tangent_gain_cancellation_used_before_interval_inversion"])
+        self.assertTrue(self.d["beta_source_derived_from_structured_covariance"])
+        self.assertTrue(self.d["attitude_PSD_remainder_resolvent_defect_retained"])
         self.assertTrue(self.d["coupling_remainder_retained"])
         self.assertTrue(self.d["forward_E_formed_before_posterior_multiplication"])
         self.assertTrue(self.d["sample1_innovation_reconstructed_from_same_forward_map"])
         self.assertTrue(self.d["sample1_S_identity_subbranch_only"])
-        self.assertGreater(self.d["beta_mps2_per_rad"], 0.0)
+        b = self.d["beta_interval_mps2_per_rad"]
+        self.assertEqual(len(b), 2)
+        self.assertGreater(b[0], 0.0)
+        self.assertGreaterEqual(b[1], b[0])
 
     def test_finite_diagnostics(self):
         for k in (
+            "tangent_innovation_floor",
+            "attitude_PSD_remainder_upper",
+            "tangent_inverse_perturbation_norm_upper",
+            "tangent_Kaw_perturbation_norm_upper",
+            "tangent_Ktheta_perturbation_norm_upper",
             "first_tangent_combined_gain_norm_upper",
             "first_tangent_relation_remainder_norm_upper_mps2",
             "max_E_theta_norm_upper",
