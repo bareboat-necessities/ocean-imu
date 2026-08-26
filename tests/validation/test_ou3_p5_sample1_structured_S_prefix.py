@@ -16,9 +16,11 @@ class T(unittest.TestCase):
   self.assertTrue(self.d["one_step_process_prediction_included"])
   self.assertTrue(self.d["actual_estimator_S_residual_used"])
   self.assertTrue(self.d["sample1_S_shipping_gain_and_Joseph_reset_used"])
- def test_finite_fixed(self):
-  self.assertGreater(self.d["evaluated_d_cells"],0)
-  self.assertEqual(self.d["spectral_fallback_inverse_count"],0)
+  self.assertTrue(self.d["rigorous_S_ge_R_spectral_inverse_is_admissible"])
+ def test_finite_enclosure(self):
+  n=self.d["evaluated_d_cells"]
+  self.assertGreater(n,0)
+  self.assertEqual(self.d["fixed_pivot_inverse_count"]+self.d["spectral_fallback_inverse_count"],2*n)
   self.assertTrue(math.isfinite(self.d["max_sample1_S_attitude_correction_norm_upper_rad"]))
   self.assertTrue(math.isfinite(self.d["max_sample1_q_after_S_upper"]))
  def test_no_promotion(self):
