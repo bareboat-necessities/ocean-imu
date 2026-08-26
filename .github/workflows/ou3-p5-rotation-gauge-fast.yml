@@ -15,6 +15,7 @@ on:
       - "tools/ou3_p5_sample1_structured_full_gain_v10.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v11.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tools/ou3_p5_sample1_signed_radial_subcells_v13.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_exact_correction_transport.py"
@@ -28,6 +29,7 @@ on:
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_radial_subcells_v13.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   pull_request:
@@ -44,6 +46,7 @@ on:
       - "tools/ou3_p5_sample1_structured_full_gain_v10.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v11.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tools/ou3_p5_sample1_signed_radial_subcells_v13.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_exact_correction_transport.py"
@@ -57,6 +60,7 @@ on:
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_radial_subcells_v13.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
@@ -87,9 +91,11 @@ jobs:
             tools/ou3_p5_sample1_structured_full_gain_v10.py \
             tools/ou3_p5_sample1_structured_full_gain_v11.py \
             tools/ou3_p5_sample1_structured_full_gain_v12.py \
+            tools/ou3_p5_sample1_signed_radial_subcells_v13.py \
             tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py \
             tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py \
             tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py \
+            tests/validation/test_ou3_p5_sample1_signed_radial_subcells_v13.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
       - name: Test focused semantics
         working-directory: tests/validation
@@ -98,6 +104,7 @@ jobs:
             test_ou3_p5_sample1_structured_full_gain_v10 \
             test_ou3_p5_sample1_structured_full_gain_v11 \
             test_ou3_p5_sample1_structured_full_gain_v12 \
+            test_ou3_p5_sample1_signed_radial_subcells_v13 \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
       - name: Emit actual-innovation PSD/S closure
         run: |
