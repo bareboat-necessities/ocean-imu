@@ -71,7 +71,7 @@ concurrency:
 jobs:
   sample1-full-v12:
     name: P5 sample-1 actual-innovation PSD/S closure
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
