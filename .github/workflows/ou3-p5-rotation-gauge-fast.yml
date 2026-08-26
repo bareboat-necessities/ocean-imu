@@ -15,6 +15,7 @@ on:
       - "tools/ou3_p5_sample1_structured_full_gain_v10.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v11.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12b.py"
       - "tools/ou3_p5_sample1_signed_radial_subcells_v13.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
@@ -29,6 +30,7 @@ on:
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12b.py"
       - "tests/validation/test_ou3_p5_sample1_signed_radial_subcells_v13.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
@@ -46,6 +48,7 @@ on:
       - "tools/ou3_p5_sample1_structured_full_gain_v10.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v11.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12b.py"
       - "tools/ou3_p5_sample1_signed_radial_subcells_v13.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
@@ -60,6 +63,7 @@ on:
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12b.py"
       - "tests/validation/test_ou3_p5_sample1_signed_radial_subcells_v13.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
@@ -73,8 +77,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-full-v12:
-    name: P5 sample-1 actual-innovation PSD/S closure
+  sample1-full-v12b:
+    name: P5 sample-1 PSD-preserving resolvent closure
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -91,10 +95,12 @@ jobs:
             tools/ou3_p5_sample1_structured_full_gain_v10.py \
             tools/ou3_p5_sample1_structured_full_gain_v11.py \
             tools/ou3_p5_sample1_structured_full_gain_v12.py \
+            tools/ou3_p5_sample1_structured_full_gain_v12b.py \
             tools/ou3_p5_sample1_signed_radial_subcells_v13.py \
             tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py \
             tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py \
             tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py \
+            tests/validation/test_ou3_p5_sample1_structured_full_gain_v12b.py \
             tests/validation/test_ou3_p5_sample1_signed_radial_subcells_v13.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
       - name: Test focused semantics
@@ -104,61 +110,28 @@ jobs:
             test_ou3_p5_sample1_structured_full_gain_v10 \
             test_ou3_p5_sample1_structured_full_gain_v11 \
             test_ou3_p5_sample1_structured_full_gain_v12 \
+            test_ou3_p5_sample1_structured_full_gain_v12b \
             test_ou3_p5_sample1_signed_radial_subcells_v13 \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
-      - name: Emit actual-innovation PSD/S closure
+      - name: Emit PSD-preserving sample-1 closure
         run: |
-          python3 tools/ou3_p5_sample1_structured_full_gain_v12.py \
+          python3 tools/ou3_p5_sample1_structured_full_gain_v12b.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
-            --output /tmp/p5_sample1_full_v12.json
+            --output /tmp/p5_sample1_full_v12b.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_sample1_full_v12.json'))
-          print('P5_FULL_V12_STATUS:',d['P5_SAMPLE1_PSD_S_ACTUAL_INNOVATION_V12'])
-          print('P5_FULL_V12_CELLS:',d['evaluated_joint_cells'])
-          print('P5_FULL_V12_UNCLOSED:',d['unclosed_joint_cells'])
-          print('P5_FULL_V12_MIN_NOMINAL_LAMBDA:',d['minimum_nominal_innovation_lambda_lower'])
-          print('P5_FULL_V12_MAX_DS:',d['max_innovation_perturbation_upper'])
-          print('P5_FULL_V12_MIN_PERTURBED_LAMBDA:',d['minimum_perturbed_innovation_lambda_lower'])
-          print('P5_FULL_V12_MAX_DRHO:',d['max_total_residual_perturbation_upper_mps2'])
-          print('P5_FULL_V12_MAX_DP:',d['max_total_reduced_covariance_perturbation_upper'])
-          print('P5_FULL_V12_MAX_DK:',d['max_sample1_gain_operator_perturbation_upper'])
-          print('P5_FULL_V12_MAX_D:',d['max_V12_correction_norm_upper_rad'])
-          print('P5_FULL_V12_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
-          print('P5_FULL_V12_WORST:',d['worst_joint_cell'])
-          print('P5_FULL_V12_NEXT:',d['next_obligation'])
-          PY
-      - name: Gate signed radial stage
-        id: v12gate
-        run: |
-          python3 - <<'PY'
-          import json, os
-          d=json.load(open('/tmp/p5_sample1_full_v12.json'))
-          passed=d['P5_SAMPLE1_PSD_S_ACTUAL_INNOVATION_V12']=='PASS'
-          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as f:
-              f.write('pass=' + ('true' if passed else 'false') + '\n')
-          print('V13_GATE_V12_PASS:', passed)
-          PY
-      - name: Emit signed radial sample-1 correction cells
-        if: steps.v12gate.outputs.pass == 'true'
-        run: |
-          python3 tools/ou3_p5_sample1_signed_radial_subcells_v13.py \
-            --source-pieces 4 --source-cell-index 0 \
-            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
-            --residual-x-pieces 12 --parallel-pieces 12 \
-            --output /tmp/p5_sample1_v13.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/p5_sample1_v13.json'))
-          print('P5_V13_STATUS:',d['P5_SAMPLE1_SIGNED_RADIAL_SUBCELLS_V13'])
-          print('P5_V13_SOURCE_ROWS:',d['evaluated_source_rows'])
-          print('P5_V13_SIGNED_SUBCELLS:',d['evaluated_signed_subcells'])
-          print('P5_V13_ABOVE_6:',d['above_6rad_subcells'])
-          print('P5_V13_UNCLOSED:',d['unclosed_radial_subcells'])
-          print('P5_V13_MAX_RADIAL_UPPER:',d['max_radial_upper'])
-          print('P5_V13_MIN_RADIAL_LOWER_ABOVE_6:',d['minimum_radial_lower_above_6'])
-          print('P5_V13_FIRST_UNCLOSED:',d['first_unclosed_radial_subcell'])
-          print('P5_V13_WORST:',d.get('worst_radial_subcell'))
-          print('P5_V13_NEXT:',d['next_obligation'])
+          d=json.load(open('/tmp/p5_sample1_full_v12b.json'))
+          print('P5_FULL_V12B_STATUS:',d['P5_SAMPLE1_PSD_S_PSD_RESOLVENT_V12B'])
+          print('P5_FULL_V12B_CELLS:',d['evaluated_joint_cells'])
+          print('P5_FULL_V12B_UNCLOSED:',d['unclosed_joint_cells'])
+          print('P5_FULL_V12B_MAX_DRHO:',d['max_total_residual_perturbation_upper_mps2'])
+          print('P5_FULL_V12B_MAX_DP:',d['max_total_reduced_covariance_perturbation_upper'])
+          print('P5_FULL_V12B_MAX_DH:',d['max_sample1_H_perturbation_upper'])
+          print('P5_FULL_V12B_MAX_DS:',d['max_sample1_innovation_perturbation_upper'])
+          print('P5_FULL_V12B_MAX_DK:',d['max_sample1_gain_operator_perturbation_upper'])
+          print('P5_FULL_V12B_MAX_D:',d['max_V12B_correction_norm_upper_rad'])
+          print('P5_FULL_V12B_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
+          print('P5_FULL_V12B_WORST:',d['worst_joint_cell'])
+          print('P5_FULL_V12B_NEXT:',d['next_obligation'])
           PY
