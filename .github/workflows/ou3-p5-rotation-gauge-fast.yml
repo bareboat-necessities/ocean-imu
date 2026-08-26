@@ -1,6 +1,35 @@
 name: ou3-p5-rotation-gauge-fast
 
 on:
+  push:
+    paths:
+      - "tools/ou3_p5_first_accel_rotation_gauge.py"
+      - "tools/ou3_p5_first_accel_exact_source.py"
+      - "tools/ou3_p5_first_accel_exact_source_v2.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v4.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v5.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v6.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v7.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v8.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v9.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v10.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v11.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
+      - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
+      - "tools/ou3_p5_exact_correction_transport.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v3.py"
+      - "tools/ou3_p5_go_live_covariance_stage.py"
+      - "tools/ou3_p5_heading_handoff_contract.py"
+      - "tools/ou3_startup_stability_certificate.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py"
+      - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py"
+      - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py"
+      - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
+      - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   pull_request:
     paths:
       - "tools/ou3_p5_first_accel_rotation_gauge.py"
