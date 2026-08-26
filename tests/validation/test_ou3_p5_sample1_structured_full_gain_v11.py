@@ -12,10 +12,15 @@ import ou3_p5_sample1_structured_full_gain_v11 as V11
 class StructuredFullGainV11Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # This deliberately coarse fixture is a semantic/fail-closed test, not
+        # the authoritative V10/V11 numerical certificate. V10 requires the
+        # focused 24^3 grid to close; the workflow emitter below supplies that.
         cls.d=V11.build(source_pieces=4,source_cell_index=0,p_pieces=4,tangent_pieces=4,axial_pieces=4)
 
-    def test_validate(self):
-        self.assertEqual(V11.validate(self.d),[])
+    def test_validate_fail_closed_coarse_prerequisite(self):
+        failures=V11.validate(self.d)
+        self.assertEqual(failures,["V10 prerequisite did not pass"])
+        self.assertEqual(self.d["P5_SAMPLE1_PSD_S_PERTURBATION_V11"],"NOT_ESTABLISHED")
 
     def test_omitted_covariance_terms_are_now_explicit(self):
         for k in (
