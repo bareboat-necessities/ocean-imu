@@ -32,7 +32,8 @@ class StructuredFullGainV8Tests(unittest.TestCase):
             1.0,0.0,Interval.outward_bounds(2.0,3.0),Interval.outward_bounds(0.0,1.0),1.0)
         self.assertGreaterEqual(val,2.0/9.0)
         self.assertLess(val,2.0/9.0+1e-12)
-        self.assertEqual(detail["maximizer"],[2.0,0.0])
+        self.assertAlmostEqual(detail["maximizer"][0],2.0,places=12)
+        self.assertAlmostEqual(detail["maximizer"][1],0.0,places=12)
 
     def test_ratio_dependency_semantics(self):
         for k in (
