@@ -321,12 +321,12 @@ make -C tests/kalman_tfg build
 # one knob at a time, eight records, three IMU seed triplets
 tools/ou_ema_adapt_study.py confirm --family TFG \
     --records jonswap,pmstokes --seeds default,7,99 \
-    --point S=1:TFG_S_FACTOR=1 --point xy=1:TFG_R_S_XY_FACTOR=1
+    --point S=1:TFG_S_FACTOR=1 --point xy=1:TFG_R_S_X_FACTOR=1:TFG_R_S_Y_FACTOR=1
 
 # the horizontal pair, jointly
 tools/ou_ema_adapt_study.py confirm --family TFG \
     --records jonswap,pmstokes --seeds default,7,99 \
-    --point S1/xy1.15:TFG_S_FACTOR=1:TFG_R_S_XY_FACTOR=1.15
+    --point S1/xy1.15:TFG_S_FACTOR=1:TFG_R_S_X_FACTOR=1.15:TFG_R_S_Y_FACTOR=1.15
 
 # the finalists at six seed triplets
 tools/ou_ema_adapt_study.py confirm --family TFG \

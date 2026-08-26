@@ -5,9 +5,11 @@
 #include <cmath>
 #include <iostream>
 
-// Keep the deployed horizontal operating point unchanged while proving that
-// X and Y regularization can now be overridden independently. The default
-// remains (1.15, 1.15, 1.0), exactly matching current main numerically.
+// Pin the deployed horizontal operating point and prove that X and Y
+// regularization are independently overridable. The default stays (1.15, 1.15,
+// 1.0): unlike OU-II and OU-III, which both retuned their horizontal
+// regularizer down to 0.72, TFG measures 1.15 as its own interior minimum and
+// moves the other way. See docs/ou-horizontal-anisotropy-per-axis-split.md.
 namespace {
 
 using Fusion = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;
@@ -35,7 +37,7 @@ Matrix3f integral_R(Fusion& f) {
     return R;
 }
 
-void test_default_preserves_main_horizontal_factors_without_changing_rs_law() {
+void test_default_horizontal_factors_without_changing_rs_law() {
     Fusion f;
     Fusion::Config cfg;
     f.begin(cfg);
@@ -48,8 +50,8 @@ void test_default_preserves_main_horizontal_factors_without_changing_rs_law() {
     check(f.setFixedTuning(2.0f, 0.5f, 3.0f), "fixed tuning rejected");
     const Matrix3f R = integral_R(f);
     const float horizontal_var = (3.0f * 1.15f) * (3.0f * 1.15f);
-    check(near(R(0,0), horizontal_var), "default X R_S no longer matches main");
-    check(near(R(1,1), horizontal_var), "default Y R_S no longer matches main");
+    check(near(R(0,0), horizontal_var), "default X R_S is not rho_x^2 times Z");
+    check(near(R(1,1), horizontal_var), "default Y R_S is not rho_y^2 times Z");
     check(near(R(2,2), 9.0f), "default Z R_S changed");
 }
 
@@ -78,7 +80,7 @@ void test_x_y_factors_are_independent() {
 }  // namespace
 
 int main() {
-    test_default_preserves_main_horizontal_factors_without_changing_rs_law();
+    test_default_horizontal_factors_without_changing_rs_law();
     test_x_y_factors_are_independent();
     if (failures != 0) {
         std::cerr << failures << " TFG R_S axis-factor test(s) failed\n";

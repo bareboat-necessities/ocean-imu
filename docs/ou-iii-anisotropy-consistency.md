@@ -1,6 +1,11 @@
 # Is the OU-III anisotropy self-consistent?
 
-**Outcome: `S_factor` is now 1.0, `R_S_xy_factor` stays 1.** The filter is
+**Outcome: `S_factor` is now 1.0, `R_S_xy_factor` stays 1.**
+(Both have since moved: the horizontal regularizer was retuned to 0.72 and then
+split into independent x and y knobs. See
+[`ou-iii-horizontal-anisotropy-retune.md`](ou-iii-horizontal-anisotropy-retune.md)
+and [`ou-horizontal-anisotropy-per-axis-split.md`](ou-horizontal-anisotropy-per-axis-split.md);
+this note describes the state at the time it was written.) The filter is
 isotropic in both, which is the measured optimum and the axis-consistent point.
 The rest of this note is how that was established; it describes the filter as
 it stood at `S_factor = 1.87` unless it says otherwise.
@@ -316,7 +321,7 @@ summary. A single arm by hand:
 
 ```bash
 cd tests/kalman_ou_iii
-OU_III_S_FACTOR=1.87 OU_III_R_S_XY_FACTOR=1.87 W3D_SEED=1 \
+OU_III_S_FACTOR=1.87 OU_III_R_S_X_FACTOR=1.87 OU_III_R_S_Y_FACTOR=1.87 W3D_SEED=1 \
   W3D_WRITE_TIMESERIES=0 W3D_VALIDATION_WINDOW_SEC=900 \
   ./kalman_ou_iii-sim --input wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv
 ```

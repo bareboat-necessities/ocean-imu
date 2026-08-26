@@ -81,7 +81,8 @@ OU_III_COMMON_SPECS = {
 # clamp into it, as they already did against the old one.
 OU_II_EXTRA_SPECS = {
     "OU_R_P0_COEFF": (0.35, 1.30, "log"),
-    "OU_R_P0_XY_FACTOR": (0.30, 1.00, "log"),
+    "OU_R_P0_X_FACTOR": (0.30, 1.00, "log"),
+    "OU_R_P0_Y_FACTOR": (0.30, 1.00, "log"),
     "OU_P_FACTOR": (1.20, 1.80, "log"),
     "OU_R_V0_COEFF": (0.70, 2.60, "log"),
     # Smoothing horizons of the two drift-correction channels, in units of
@@ -94,7 +95,8 @@ OU_II_EXTRA_SPECS = {
 # OU_III-specific analogues missing from the sweep.
 OU_III_EXTRA_SPECS = {
     "OU_III_R_S_COEFF": (0.70, 3.20, "log"),
-    "OU_III_R_S_XY_FACTOR": (0.20, 0.65, "log"),
+    "OU_III_R_S_X_FACTOR": (0.20, 1.00, "log"),
+    "OU_III_R_S_Y_FACTOR": (0.20, 1.00, "log"),
     "OU_ADAPT_RS_MULT": (0.80, 8.00, "log"),
 }
 
@@ -367,7 +369,7 @@ def probe_candidates(space, fam):
     floor_key = find_space_key(space, "OU_ACC_NOISE_FLOOR_SIGMA")
     freq_key = find_space_key(space, "OU_FREQ_INPUT_CUTOFF_HZ")
 
-    rs_xy_key = find_space_key(space, "OU_R_P0_XY_FACTOR", "OU_III_R_S_XY_FACTOR")
+    rs_xy_key = find_space_key(space, "OU_R_P0_X_FACTOR", "OU_III_R_S_X_FACTOR")
     rs_coeff_key = find_space_key(space, "OU_R_P0_COEFF", "OU_III_R_S_COEFF")
     rv0_coeff_key = find_space_key(space, "OU_R_V0_COEFF", "OU_III_R_V0_COEFF")
 

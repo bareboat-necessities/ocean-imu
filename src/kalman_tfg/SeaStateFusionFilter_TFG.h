@@ -959,8 +959,21 @@ private:
     float RS_target_ = 0.5f;
 
     // TFG-specific physical OU prior coefficients remain independently fitted.
-    // Preserve the historical 1.15 horizontal regularization operating point,
-    // while exposing X/Y as independent experiment/tuning knobs.
+    // X and Y have always been independent knobs here, and 1.15 was carried
+    // from the historical horizontal operating point rather than measured.  It
+    // has now been measured, and it is right: swept over the eight scored
+    // records and three IMU seed triplets against OU-II's and OU-III's
+    // retuned 0.72, TFG moves the *other* way.  Paired 3D displacement RMS
+    // against 1.15 is +1.03 percent at 1.4, +2.23 at 0.9 and +7.31 at 0.72,
+    // the last with the same sign in all 24 record x seed cells, and 0.72 also
+    // costs 0.55 percent of vertical RMS unanimously and 17.45 percent of x.
+    // 1.15 is the interior minimum.
+    //
+    // So the horizontal anisotropy is NOT a shared constant across the three
+    // families: the two OU wrappers want a tighter horizontal anchor than
+    // vertical and TFG wants a looser one.  Do not carry 0.72 here without
+    // re-running that sweep; see
+    // docs/ou-horizontal-anisotropy-per-axis-split.md.
     float tau_coeff_ = 1.0f;
     float sigma_coeff_ = 1.0f;
     float R_S_coeff_ = 0.28f;

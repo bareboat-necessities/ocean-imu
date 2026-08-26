@@ -125,11 +125,19 @@ public:
                 filter.setPFactor(v);
             }
 
-            if (env_float("OU_R_P0_XY_FACTOR", v)) {
-                filter.setR_p0_XYFactor(v);
+            // X and Y are independent; there is deliberately no combined knob,
+            // so a sweep that means to move both has to say so twice.
+            if (env_float("OU_R_P0_X_FACTOR", v)) {
+                filter.setR_p0_XFactor(v);
             }
-            if (env_float("OU_II_R_P0_XY_FACTOR", v)) {
-                filter.setR_p0_XYFactor(v);
+            if (env_float("OU_II_R_P0_X_FACTOR", v)) {
+                filter.setR_p0_XFactor(v);
+            }
+            if (env_float("OU_R_P0_Y_FACTOR", v)) {
+                filter.setR_p0_YFactor(v);
+            }
+            if (env_float("OU_II_R_P0_Y_FACTOR", v)) {
+                filter.setR_p0_YFactor(v);
             }
 
             if (env_float("OU_TAU_COEFF", v)) {
@@ -985,16 +993,23 @@ private:
 // effect, while vertical error is 0.9966 [0.9940, 0.9992] and gyro bias
 // 0.9628 [0.9374, 0.9889], both better at 95%.  Seven of the nine bars come
 // down, one of them (the accelerometer bias aggregate) by 9%.
+//
+// Re-cut for R_p0_x_factor = R_p0_y_factor 1 -> 0.72, the horizontal
+// position-regularizer retune that came with the per-axis split; see
+// docs/ou-horizontal-anisotropy-per-axis-split.md.  Every bar holds or comes
+// down, and the two the retune aims at come down hard: 3D JONSWAP
+// 17.18 -> 15.54 and PM-Stokes 17.94 -> 16.62, 9.6% and 7.4% tighter.  Nothing
+// here is a loosening.
 static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.672f,  // was 6.708,  worst 6.6386 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.605f,  // was 6.65,   worst 6.5714 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.048f,  // was 1.084,  worst 1.0419 (jonswap H4.0)
-    .err_limit_roll_deg            = 0.3896f, // was 0.4377, worst 0.3876 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.3296f, // was 0.281,  worst 0.3280 (jonswap H8.5)
-    .err_limit_percent_3d_jonswap  = 17.18f,  // was 16.86,  worst 17.0920 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 17.94f,  // was 18.31,  worst 17.8496 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.67f,   // was 4.79,   worst 4.6466 (jonswap H8.5)
-    .bias_3d_percent               = 84.2f,   // was 92.67,  worst 83.7737 (jonswap H4.0, accel)
+    .err_limit_percent_z_jonswap   = 6.674f,  // was 6.672,  worst 6.6408 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 6.605f,  // was 6.605,  worst 6.5717 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 1.041f,  // was 1.048,  worst 1.0357 (jonswap H4.0)
+    .err_limit_roll_deg            = 0.3866f, // was 0.3896, worst 0.3846 (jonswap H4.0)
+    .err_limit_pitch_deg           = 0.3237f, // was 0.3296, worst 0.3221 (jonswap H8.5)
+    .err_limit_percent_3d_jonswap  = 15.54f,  // was 17.18,  worst 15.4571 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 16.62f,  // was 17.94,  worst 16.5347 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.663f,  // was 4.67,   worst 4.6391 (jonswap H8.5)
+    .bias_3d_percent               = 83.97f,  // was 84.2,   worst 83.5458 (jonswap H4.0, accel)
 };
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{

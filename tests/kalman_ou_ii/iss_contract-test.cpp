@@ -64,7 +64,8 @@ int main() {
         !near(ACC_NOISE_FLOOR_SIGMA_DEFAULT, 0.12f)) {
         return fail("proof-relevant OU-II wrapper clamps changed");
     }
-    if (!near(f.P_factor_, 1.5f) || !near(f.R_p0_xy_factor_, 1.0f))
+    if (!near(f.P_factor_, 1.5f) ||
+        !near(f.R_p0_x_factor_, 0.72f) || !near(f.R_p0_y_factor_, 0.72f))
         return fail("default OU-II anisotropy no longer matches proof audit");
 
     // ---- Pseudo-update cadence contract ---------------------------------
