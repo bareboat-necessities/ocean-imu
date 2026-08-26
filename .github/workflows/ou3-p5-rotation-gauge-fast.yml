@@ -11,6 +11,7 @@ on:
       - "tools/ou3_p5_sample1_repeated_tangent_channel.py"
       - "tools/ou3_p5_sample1_correction_range_bridge.py"
       - "tools/ou3_p5_sample1_reset_tangent_structure.py"
+      - "tools/ou3_p5_sample1_structured_S_prefix.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_full_h_prefix_cells.py"
@@ -23,6 +24,7 @@ on:
       - "tests/validation/test_ou3_p5_sample1_repeated_tangent_channel.py"
       - "tests/validation/test_ou3_p5_sample1_correction_range_bridge.py"
       - "tests/validation/test_ou3_p5_sample1_reset_tangent_structure.py"
+      - "tests/validation/test_ou3_p5_sample1_structured_S_prefix.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
@@ -36,8 +38,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-reset:
-    name: P5 sample-1 exact reset tangent structure
+  sample1-S:
+    name: P5 sample-1 structured consecutive S prefix
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -53,11 +55,13 @@ jobs:
             tools/ou3_p5_sample1_repeated_tangent_channel.py \
             tools/ou3_p5_sample1_correction_range_bridge.py \
             tools/ou3_p5_sample1_reset_tangent_structure.py \
+            tools/ou3_p5_sample1_structured_S_prefix.py \
             tools/ou3_p5_deployed_quaternion_cayley_cell.py \
             tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py \
             tests/validation/test_ou3_p5_sample1_repeated_tangent_channel.py \
             tests/validation/test_ou3_p5_sample1_correction_range_bridge.py \
             tests/validation/test_ou3_p5_sample1_reset_tangent_structure.py \
+            tests/validation/test_ou3_p5_sample1_structured_S_prefix.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
       - name: Test focused semantics
@@ -67,23 +71,24 @@ jobs:
             test_ou3_p5_sample1_repeated_tangent_channel \
             test_ou3_p5_sample1_correction_range_bridge \
             test_ou3_p5_sample1_reset_tangent_structure \
+            test_ou3_p5_sample1_structured_S_prefix \
             test_ou3_p5_deployed_quaternion_cayley_cell \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
-      - name: Emit reset tangent structure
+      - name: Emit structured consecutive S prefix
         run: |
-          python3 tools/ou3_p5_sample1_reset_tangent_structure.py \
-            --source-pieces 4 --source-cell-index 0 \
-            --p-pieces 32 --d-pieces 32 \
-            --output /tmp/p5_sample1_reset_tangent.json
+          python3 tools/ou3_p5_sample1_structured_S_prefix.py \
+            --source-pieces 4 --source-cell-index 0 --d-pieces 32 \
+            --output /tmp/p5_sample1_S.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_sample1_reset_tangent.json'))
-          print('P5_RESET_STATUS:',d['P5_SAMPLE1_RESET_TANGENT_STRUCTURE_DIAGNOSTIC'])
-          print('P5_RESET_CELLS:',d['evaluated_cells'])
-          print('P5_RESET_DMAX:',d['first_accel_correction_norm_upper_rad'])
-          print('P5_RESET_MAX_TANGENT_VAR:',d['max_post_reset_gauge_tangent_variance'])
-          print('P5_RESET_MAX_YAW_VAR:',d['max_post_reset_gauge_yaw_variance'])
-          print('P5_RESET_MAX_CROSS:',d['max_post_reset_gauge_tangent_yaw_covariance_abs'])
-          print('P5_RESET_MAX_MULTIPLIER:',d['max_tangent_variance_multiplier_upper'])
-          print('P5_RESET_NEXT:',d['next_obligation'])
+          d=json.load(open('/tmp/p5_sample1_S.json'))
+          print('P5_S_STATUS:',d['P5_SAMPLE1_STRUCTURED_S_PREFIX_DIAGNOSTIC'])
+          print('P5_S_CELLS:',d['evaluated_d_cells'])
+          print('P5_S_FIXED:',d['fixed_pivot_inverse_count'])
+          print('P5_S_FALLBACK:',d['spectral_fallback_inverse_count'])
+          print('P5_S_MAX_RESIDUAL:',d['max_sample1_S_residual_norm_upper_m_s'])
+          print('P5_S_MAX_D:',d['max_sample1_S_attitude_correction_norm_upper_rad'])
+          print('P5_S_MAX_Q:',d['max_sample1_q_after_S_upper'])
+          print('P5_S_FIRST_UNCLOSED:',d['first_unclosed_cell'])
+          print('P5_S_NEXT:',d['next_obligation'])
           PY
