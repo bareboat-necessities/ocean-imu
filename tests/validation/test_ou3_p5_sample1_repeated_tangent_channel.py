@@ -19,7 +19,7 @@ class RepeatedTangentTests(unittest.TestCase):
   self.assertFalse(self.d["reset_process_and_tangent_force_perturbations_included"])
  def test_positive_finite(self):
   self.assertGreater(self.d["minimum_scalar_innovation_variance_lower"],0.0)
-  self.assertEqual(self.d["sample1_tangent_residual_norm_upper_mps2"],30.5)
+  self.assertTrue(math.isclose(self.d["sample1_tangent_residual_norm_upper_mps2"],30.5,rel_tol=0.0,abs_tol=1e-12))
   for k in ("max_scalar_Ktheta_abs_upper","max_scalar_correction_norm_upper_rad"):
    self.assertTrue(math.isfinite(float(self.d[k])))
   self.assertEqual(self.d["evaluated_joint_cells"],16)
