@@ -97,3 +97,38 @@ vertical RMS improves 4.4519 -> 4.0300 -> 3.9841 %Hs, yaw improves
 The comparison was produced by `tfg-validation` workflow run `32760913213`.
 The workflow builds and runs all three arms and uploads their complete logs as
 `tfg-rs-law-comparison`.
+
+## Re-gauged deterministic gates
+
+Both copies of TFG's eight-record quality gate — the `kRegressionBars` block in
+`tests/kalman_tfg/kalman_tfg-sim.cpp` and the `Gate SpectralMSE default` step of
+`.github/workflows/tfg-validation.yml` — are fitted by the rule in
+`docs/quality-gate-regauge.md`: the worst value across the eight scored records
+plus about half a percent, rounded up at the quantum the channel is quoted in.
+The workflow copy was re-derived when this change landed and the in-binary copy
+was not, so `tests/kalman_tfg/run_tests.sh` failed on the last record — PM/Stokes
+3-D at 20.0469 against a bar of 19.64 — on every run after the merge. Both now
+carry the same seven numbers, from `tools/ou_regauge_gates.py --family tfg`:
+
+| gate | was | now | worst observed | margin |
+| --- | --- | --- | --- | --- |
+| Z %Hs JONSWAP | 4.812 | **4.698** | 4.6736 (jonswap H0.27) | 0.52% |
+| Z %Hs PM-Stokes | 4.71 | **4.631** | 4.6077 (pmstokes H0.27) | 0.51% |
+| yaw deg | 1.352 | **1.292** | 1.2851 (jonswap H1.50) | 0.54% |
+| 3D % JONSWAP | 20.43 | **20.43** | 20.3211 (jonswap H1.50) | 0.54% |
+| 3D % PM-Stokes | 19.64 | **20.15** | 20.0469 (pmstokes H8.50) | 0.51% |
+| acc Z bias % | 5.12 | **4.532** | 4.5086 (jonswap H8.50) | 0.52% |
+| bias 3D % | 164.9 | **155.6** | 154.786 (pmstokes H4.00, accel) | 0.53% |
+
+Six bars come down and one is unchanged; the PM-Stokes 3-D bar is the only one
+that rises, for the reason the table above this section gives — the binding
+record moves from PM/Stokes 0.27 (19.5357 before, 18.9993 now) to PM/Stokes
+8.50, whose rise is almost entirely front-end parity rather than the new law,
+while the mean 3-D figure improves. `bias_3d_percent` gates the gyro channel
+too; the accelerometer still sets it, with the gyro worst at 71.72% (PM/Stokes
+8.50) against 155.6.
+
+Rebuilding the simulator at `-march=x86-64` instead of the host's native
+architecture moves the binding records by at most 4.1e-4 relative, so the
+thinnest of these margins is about twelve times the spread it has to survive.
+All seven pass under both builds.

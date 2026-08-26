@@ -109,13 +109,13 @@ FAMILIES = {
     "tfg": {
         "sim": REPO_ROOT / "tests" / "kalman_tfg" / "kalman_tfg-sim",
         "shipped": {
-            "err_limit_percent_z_jonswap":   4.812,
-            "err_limit_percent_z_pmstokes":  4.71,
-            "err_limit_yaw_deg":             1.352,
+            "err_limit_percent_z_jonswap":   4.698,
+            "err_limit_percent_z_pmstokes":  4.631,
+            "err_limit_yaw_deg":             1.292,
             "err_limit_percent_3d_jonswap":  20.43,
-            "err_limit_percent_3d_pmstokes": 19.64,
-            "acc_z_bias_percent":            5.12,
-            "bias_3d_percent":               164.9,
+            "err_limit_percent_3d_pmstokes": 20.15,
+            "acc_z_bias_percent":            4.532,
+            "bias_3d_percent":               155.6,
         },
     },
 }

@@ -411,14 +411,52 @@ void process_one(const std::string& filename,
     // of that motion.  An error at 164 percent of the true bias means the
     // error already exceeds the thing being estimated, which was true before
     // this change and is true after it.
+    // Re-derived for the SpectralMSE default and the OU-III front-end parity,
+    // docs/tfg-spectral-mse-ou3-parity.md.  That change moved every gated
+    // quantity and only the tfg-validation workflow's copy of the bars was
+    // re-gauged with it; this block was left on the pre-parity set, so
+    // `run_tests.sh` has failed on the last record ever since -- 20.0469
+    // against a bar of 19.64.  The two gates now carry the same seven numbers,
+    // all from tools/ou_regauge_gates.py --family tfg.
+    //
+    //   channel          worst    this bar   margin   previous bar
+    //   Z RMS  jonswap    4.6736   4.698      0.52%    4.812
+    //   Z RMS  pmstokes   4.6077   4.631      0.51%    4.71
+    //   yaw               1.2851   1.292      0.54%    1.352
+    //   3D     jonswap   20.3211  20.43       0.54%   20.43   (unchanged)
+    //   3D     pmstokes  20.0469  20.15       0.51%   19.64   <-- raised
+    //   acc bias Z        4.5086   4.532      0.52%    5.12
+    //   acc bias 3D     154.786  155.6        0.53%   164.9
+    //
+    // THE PM-STOKES 3D BAR GOES UP 2.6% AND 3D ERROR DOES NOT GET WORSE.  Mean
+    // 3D over the eight records is 18.6974 against 18.7159 before the change,
+    // and mean vertical RMS improves about 2.0%.  What moved is which record
+    // binds: it was pmstokes H0.27 at 19.5357, and that record now scores
+    // 18.9993.  The new binding record, pmstokes H8.5, went 19.2593 (pre-parity
+    // main) -> 19.9851 (parity, legacy cubic law) -> 20.0491, so all but 0.064
+    // of its 0.79 point rise is the front-end parity work rather than the new
+    // law.  The parity note argues that trade where it is made; the sentinel
+    // follows the filter that shipped.
+    //
+    // The other six all come down, and by more than rounding: worst vertical
+    // -2.4% on JONSWAP and -1.7% on PM-Stokes, worst yaw -4.4%, worst
+    // accelerometer Z bias -11.5% and 3D bias -5.7%.  Accelerometer bias
+    // remains the standing finding at 154.8% of the true bias -- still above
+    // 100% on two records of eight -- and remains recorded rather than
+    // endorsed.
+    //
+    // bias_3d_percent gates the gyro channel too.  The accelerometer still sets
+    // it, but by a smaller factor than before: the gyro's worst is now 71.72%
+    // on pmstokes H8.5 against a bar of 155.6, so a gyro-bias regression has to
+    // roughly double before this bar sees it.
     static constexpr W3dFailureLimits kRegressionBars{
-        .err_limit_percent_z_jonswap   = 4.812f,  // was 4.807, worst 4.7874 (jonswap H0.27)
-        .err_limit_percent_z_pmstokes  = 4.71f,   // was 4.707, worst 4.6858 (pmstokes H0.27)
-        .err_limit_yaw_deg             = 1.352f,  // was 1.59,  worst 1.3449 (jonswap H8.5)
-        .err_limit_percent_3d_jonswap  = 20.43f,  // was 21.13, worst 20.3196 (jonswap H1.5)
-        .err_limit_percent_3d_pmstokes = 19.64f,  // was 20.74, worst 19.5357 (pmstokes H0.27)
-        .acc_z_bias_percent            = 5.12f,   // was 5.022, worst 5.0940 (pmstokes H8.5)
-        .bias_3d_percent               = 164.9f,  // was 164.5, worst 164.050 (pmstokes H4.0, accel)
+        .err_limit_percent_z_jonswap   = 4.698f,  // was 4.812, worst 4.6736 (jonswap H0.27)
+        .err_limit_percent_z_pmstokes  = 4.631f,  // was 4.71,  worst 4.6077 (pmstokes H0.27)
+        .err_limit_yaw_deg             = 1.292f,  // was 1.352, worst 1.2851 (jonswap H1.5)
+        .err_limit_percent_3d_jonswap  = 20.43f,  // unchanged, worst 20.3211 (jonswap H1.5)
+        .err_limit_percent_3d_pmstokes = 20.15f,  // was 19.64, worst 20.0469 (pmstokes H8.5)
+        .acc_z_bias_percent            = 4.532f,  // was 5.12,  worst 4.5086 (jonswap H8.5)
+        .bias_3d_percent               = 155.6f,  // was 164.9, worst 154.786 (pmstokes H4.0, accel)
     };
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
