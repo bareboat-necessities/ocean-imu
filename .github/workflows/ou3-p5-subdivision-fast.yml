@@ -1,0 +1,56 @@
+name: ou3-p5-subdivision-fast
+
+on:
+  pull_request:
+    paths:
+      - "tools/ou3_p5_first_accel_subdivision.py"
+      - "tools/ou3_p5_full_h_prefix_cells.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v2.py"
+      - "tools/ou3_p5_full_h_prefix_cells_v3.py"
+      - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
+      - "tools/ou3_p5_heading_handoff_contract.py"
+      - "tools/ou3_source_reachable_matrix_p3.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_first_accel_subdivision.py"
+      - ".github/workflows/ou3-p5-subdivision-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-subdivision-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  first-accel-subdivision:
+    name: P5 first accelerometer source subdivision
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile subdivision producer
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_first_accel_subdivision.py \
+            tests/validation/test_ou3_p5_first_accel_subdivision.py
+      - name: Test subdivision semantics
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_first_accel_subdivision
+      - name: Emit first-accelerometer subdivision result
+        run: |
+          python3 tools/ou3_p5_first_accel_subdivision.py \
+            --source-pieces 2 \
+            --cayley-axis-pieces 4 \
+            --output /tmp/ou3_p5_first_accel_subdivision.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/ou3_p5_first_accel_subdivision.json'))
+          print('P5_FIRST_ACCEL_SUBDIVISION:', d['P5_FIRST_ACCEL_SOURCE_CAYLEY_SUBDIVISION'])
+          print('P5_FIRST_ACCEL_CHILDREN:', d['evaluated_child_count'])
+          print('P5_FIRST_ACCEL_OVER_LIMIT:', d['children_above_validated_correction_limit'])
+          print('P5_FIRST_ACCEL_MIN_D:', d['min_first_accelerometer_correction_norm_upper_rad'])
+          print('P5_FIRST_ACCEL_MAX_D:', d['max_first_accelerometer_correction_norm_upper_rad'])
+          print('P5_FIRST_ACCEL_FIRST_UNCLOSED:', d['first_unclosed_child'])
+          print('P5_FIRST_ACCEL_NEXT:', d['next_obligation'])
+          PY

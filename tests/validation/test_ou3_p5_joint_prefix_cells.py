@@ -22,6 +22,17 @@ class Ou3P5JointPrefixCellsTests(unittest.TestCase):
         self.assertFalse(d["old_directional_scalar_route_used_for_promotion"])
         self.assertEqual(d["P5_JOINT_PREFIX_SCALAR_CELL_CERTIFICATE"], "RETIRED_AS_ACTIVE_ROUTE")
 
+    def test_active_joint_interface_uses_v3_deployed_quaternion_backend(self):
+        d = self.d
+        self.assertTrue(d["active_backend_is_v3_deployed_quaternion"])
+        self.assertIn("DEPLOYED_QUATERNION_COMPOSITION", d["active_full_matrix_backend"])
+        fm = d["full_matrix_prefix"]
+        self.assertGreaterEqual(fm["maximum_validated_deployed_correction_norm_rad"], 6.0)
+        self.assertFalse(fm["correction_norm_three_rad_is_promotion_gate"])
+        self.assertTrue(fm["deployed_quaternion_composed_before_result_cayley"])
+        if fm["first_failure"] is not None:
+            self.assertNotIn("range [0,3]", fm["first_failure"]["reason"])
+
     def test_exact_signed_measurement_reset_calculus_is_mandatory(self):
         d = self.d
         self.assertTrue(d["P_H_R_K_S_r_d_eff_recomputed_in_same_prefix_cell"])
