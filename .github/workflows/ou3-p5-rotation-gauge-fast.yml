@@ -63,6 +63,7 @@ jobs:
             --output /tmp/p5_sample1_full_v8.json
           python3 - <<'PY'
           import json
+          from collections import Counter
           d=json.load(open('/tmp/p5_sample1_full_v8.json'))
           print('P5_FULL_V8_STATUS:',d['P5_SAMPLE1_POSITIVE_RATIO_BLOCK_GAIN_V8'])
           print('P5_FULL_V8_CELLS:',d['evaluated_joint_cells'])
@@ -75,5 +76,21 @@ jobs:
           print('P5_FULL_V8_MAX_K:',d['max_Ktheta_operator_norm_upper'])
           print('P5_FULL_V8_MAX_D:',d['max_correction_norm_upper_rad'])
           print('P5_FULL_V8_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
+          bad=[r for r in d['rows'] if not r['inside_9rad_range']]
+          print('P5_FULL_V8_UNCLOSED_COUNT:',len(bad))
+          if bad:
+              worst=max(bad,key=lambda r:r['correction_norm_upper_rad'])
+              slim=lambda r:{k:r[k] for k in (
+                  'p_cell','tangent_residual_cell','axial_residual_cell',
+                  'first_tangent_residual_magnitude_mps2','first_axial_residual_mps2',
+                  'sample1_force_norm_upper_mps2','post_prediction_aw_error_norm_upper_mps2',
+                  'sample1_residual_norm_upper_mps2','Ktheta_operator_norm_upper',
+                  'correction_norm_upper_rad')}
+              print('P5_FULL_V8_WORST_UNCLOSED:',slim(worst))
+              top=sorted(bad,key=lambda r:r['correction_norm_upper_rad'],reverse=True)[:10]
+              print('P5_FULL_V8_TOP10_UNCLOSED:',[slim(r) for r in top])
+              print('P5_FULL_V8_UNCLOSED_P_COUNTS:',Counter(r['p_cell'] for r in bad).most_common())
+              print('P5_FULL_V8_UNCLOSED_T_COUNTS:',Counter(r['tangent_residual_cell'] for r in bad).most_common())
+              print('P5_FULL_V8_UNCLOSED_Z_COUNTS:',Counter(r['axial_residual_cell'] for r in bad).most_common())
           print('P5_FULL_V8_NEXT:',d['next_obligation'])
           PY
