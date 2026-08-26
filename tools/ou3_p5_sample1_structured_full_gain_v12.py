@@ -35,16 +35,16 @@ import ou3_p5_sample1_structured_full_gain_v11 as V11
 DEFAULT_DOMAIN=V11.DEFAULT_DOMAIN
 SCHEMA=12
 RANGE=V11.RANGE
-FULL=V11.FULL
 
 
 def _shift(A, lam:float):
-    z=FULL.I(lam)
-    return [[A[i][j]-(z if i==j else FULL.I(0.0)) for j in range(len(A))] for i in range(len(A))]
+    z=V11.FULL.I(lam)
+    return [[A[i][j]-(z if i==j else V11.FULL.I(0.0)) for j in range(len(A))] for i in range(len(A))]
 
 
 def _nominal_lambda_min_lower(S)->float:
     """Validated lower bound on lambda_min(S) by interval LDLT bisection."""
+    FULL=V11.FULL
     ok,_=symmetric_positive_definite_ldlt(S)
     if not ok:
         return 0.0
@@ -64,6 +64,8 @@ def _nominal_lambda_min_lower(S)->float:
 
 def build(domain_path:Path=DEFAULT_DOMAIN,*,source_pieces:int=4,source_cell_index:int=0,
           p_pieces:int=24,tangent_pieces:int=24,axial_pieces:int=24)->dict:
+    # Certification-only refinement: proof domain and shipping correction limit are unchanged.
+    FULL=V11.FULL
     V11.FULL3._install_backend(); path=Path(domain_path).resolve(); dom=json.loads(path.read_text(encoding="utf-8"))
     core=V11.V10.build(path,source_pieces=source_pieces,source_cell_index=source_cell_index,
                        p_pieces=p_pieces,tangent_pieces=tangent_pieces,axial_pieces=axial_pieces)
@@ -225,7 +227,7 @@ def main()->int:
         "min_perturbed_lambda":d["minimum_perturbed_innovation_lambda_lower"],"max_drho":d["max_total_residual_perturbation_upper_mps2"],
         "max_dP":d["max_total_reduced_covariance_perturbation_upper"],"max_dK":d["max_sample1_gain_operator_perturbation_upper"],
         "max_d":d["max_V12_correction_norm_upper_rad"],"first_unclosed":d["first_unclosed_joint_cell"],
-        "worst":d["worst_joint_cell"],"next":d["next_obligation"],"validation_failures":vf,
-    },indent=2,sort_keys=True)); return 0 if not vf else 2
+        "worst":d["worst_joint_cell"],"next":d["next_obligation"],"validation_failures":vf},indent=2,sort_keys=True))
+    return 0 if not vf else 2
 
 if __name__=="__main__": raise SystemExit(main())
