@@ -14,6 +14,7 @@ on:
       - "tools/ou3_p5_sample1_structured_full_gain_v9.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v10.py"
       - "tools/ou3_p5_sample1_structured_full_gain_v11.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - "tools/ou3_p5_exact_correction_transport.py"
@@ -26,6 +27,7 @@ on:
       - "tools/ou3_proof_operating_domain.json"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py"
       - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py"
+      - "tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
       - ".github/workflows/ou3-p5-rotation-gauge-fast.yml"
   workflow_dispatch:
@@ -38,8 +40,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-full-v11:
-    name: P5 sample-1 PSD and S perturbation closure
+  sample1-full-v12:
+    name: P5 sample-1 actual-innovation PSD/S closure
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -55,8 +57,10 @@ jobs:
             tools/ou3_p5_sample1_structured_full_gain_v9.py \
             tools/ou3_p5_sample1_structured_full_gain_v10.py \
             tools/ou3_p5_sample1_structured_full_gain_v11.py \
+            tools/ou3_p5_sample1_structured_full_gain_v12.py \
             tests/validation/test_ou3_p5_sample1_structured_full_gain_v10.py \
             tests/validation/test_ou3_p5_sample1_structured_full_gain_v11.py \
+            tests/validation/test_ou3_p5_sample1_structured_full_gain_v12.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
       - name: Test focused semantics
         working-directory: tests/validation
@@ -64,28 +68,28 @@ jobs:
           python3 -m unittest -v \
             test_ou3_p5_sample1_structured_full_gain_v10 \
             test_ou3_p5_sample1_structured_full_gain_v11 \
+            test_ou3_p5_sample1_structured_full_gain_v12 \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
-      - name: Emit PSD and S perturbation closure
+      - name: Emit actual-innovation PSD/S closure
         run: |
-          python3 tools/ou3_p5_sample1_structured_full_gain_v11.py \
+          python3 tools/ou3_p5_sample1_structured_full_gain_v12.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
-            --output /tmp/p5_sample1_full_v11.json
+            --output /tmp/p5_sample1_full_v12.json
           python3 - <<'PY'
           import json
-          d=json.load(open('/tmp/p5_sample1_full_v11.json'))
-          print('P5_FULL_V11_STATUS:',d['P5_SAMPLE1_PSD_S_PERTURBATION_V11'])
-          print('P5_FULL_V11_CELLS:',d['evaluated_joint_cells'])
-          print('P5_FULL_V11_UNCLOSED:',d['unclosed_joint_cells'])
-          print('P5_FULL_V11_EPS:',d['attitude_covariance_remainder_spectral_upper'])
-          print('P5_FULL_V11_S_BOUNDS:',d['sample1_S_perturbation_bounds'])
-          print('P5_FULL_V11_MAX_DRHO:',d['max_total_residual_perturbation_upper_mps2'])
-          print('P5_FULL_V11_MAX_DP:',d['max_total_reduced_covariance_perturbation_upper'])
-          print('P5_FULL_V11_MAX_DK:',d['max_sample1_gain_operator_perturbation_upper'])
-          print('P5_FULL_V11_MAX_DS:',d['max_innovation_perturbation_upper'])
-          print('P5_FULL_V11_MIN_LAMBDA:',d['minimum_perturbed_innovation_lambda_lower'])
-          print('P5_FULL_V11_MAX_D:',d['max_V11_correction_norm_upper_rad'])
-          print('P5_FULL_V11_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
-          print('P5_FULL_V11_WORST:',d['worst_joint_cell'])
-          print('P5_FULL_V11_NEXT:',d['next_obligation'])
+          d=json.load(open('/tmp/p5_sample1_full_v12.json'))
+          print('P5_FULL_V12_STATUS:',d['P5_SAMPLE1_PSD_S_ACTUAL_INNOVATION_V12'])
+          print('P5_FULL_V12_CELLS:',d['evaluated_joint_cells'])
+          print('P5_FULL_V12_UNCLOSED:',d['unclosed_joint_cells'])
+          print('P5_FULL_V12_MIN_NOMINAL_LAMBDA:',d['minimum_nominal_innovation_lambda_lower'])
+          print('P5_FULL_V12_MAX_DS:',d['max_innovation_perturbation_upper'])
+          print('P5_FULL_V12_MIN_PERTURBED_LAMBDA:',d['minimum_perturbed_innovation_lambda_lower'])
+          print('P5_FULL_V12_MAX_DRHO:',d['max_total_residual_perturbation_upper_mps2'])
+          print('P5_FULL_V12_MAX_DP:',d['max_total_reduced_covariance_perturbation_upper'])
+          print('P5_FULL_V12_MAX_DK:',d['max_sample1_gain_operator_perturbation_upper'])
+          print('P5_FULL_V12_MAX_D:',d['max_V12_correction_norm_upper_rad'])
+          print('P5_FULL_V12_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
+          print('P5_FULL_V12_WORST:',d['worst_joint_cell'])
+          print('P5_FULL_V12_NEXT:',d['next_obligation'])
           PY
