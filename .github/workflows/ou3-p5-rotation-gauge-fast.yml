@@ -40,7 +40,7 @@ concurrency:
 
 jobs:
   coupled-tangent:
-    name: P5 sample-1 coupled tangent refinement
+    name: P5 sample-1 coupled tangent + axial refinement
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -66,26 +66,29 @@ jobs:
       - name: Test coupled tangent semantics
         working-directory: tests/validation
         run: python3 -m unittest -v test_ou3_p5_sample1_coupled_tangent_refinement
-      - name: Emit coupled tangent result
+      - name: Emit coupled tangent + axial result
         run: |
           python3 tools/ou3_p5_sample1_coupled_tangent_refinement.py \
             --source-pieces 4 --source-cell-index 0 \
-            --delta-pieces 16 \
+            --delta-pieces 16 --axial-pieces 16 \
             --output /tmp/p5_coupled_tangent.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/p5_coupled_tangent.json'))
           print('P5_COUPLED_STATUS:',d['P5_SAMPLE1_COUPLED_TANGENT_WITNESS_REFINEMENT'])
-          print('P5_COUPLED_CELLS:',d['evaluated_delta_cells'])
+          print('P5_COUPLED_JOINT_CELLS:',d['evaluated_joint_cells'])
+          print('P5_COUPLED_DELTA_CELLS:',d['evaluated_delta_cells'])
+          print('P5_COUPLED_AXIAL_CELLS:',d['axial_cell_count'])
           print('P5_COUPLED_BETA:',d['beta_interval_mps2_per_rad'])
           print('P5_COUPLED_COMBO_GAIN:',d['first_tangent_combined_gain_norm_upper'])
           print('P5_COUPLED_REM0:',d['first_tangent_relation_remainder_norm_upper_mps2'])
+          print('P5_COUPLED_AXIAL_ABS:',d['first_axial_aw_correction_abs_upper_mps2'])
           print('P5_COUPLED_FIXED:',d['fixed_pivot_inverse_count'])
           print('P5_COUPLED_FALLBACK:',d['spectral_fallback_inverse_count'])
           print('P5_COUPLED_MAX_ETHETA:',d['max_E_theta_norm_upper'])
           print('P5_COUPLED_MAX_PJE:',d['max_Pj_Et_first6_norm_upper'])
           print('P5_COUPLED_MAX_C:',d['max_actual_Ctheta_norm_upper'])
           print('P5_COUPLED_MAX_D:',d['max_sample1_acc_correction_norm_upper_rad'])
-          print('P5_COUPLED_FIRST_UNCLOSED:',d['first_unclosed_delta_cell'])
+          print('P5_COUPLED_FIRST_UNCLOSED:',d['first_unclosed_joint_cell'])
           print('P5_COUPLED_NEXT:',d['next_obligation'])
           PY
