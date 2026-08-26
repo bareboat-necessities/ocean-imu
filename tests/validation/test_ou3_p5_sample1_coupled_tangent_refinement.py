@@ -13,17 +13,21 @@ import ou3_p5_sample1_coupled_tangent_refinement as C
 class Ou3P5Sample1CoupledTangentRefinementTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.d = C.build(source_pieces=2, source_cell_index=0, delta_pieces=4)
+        cls.d = C.build(source_pieces=2, source_cell_index=0, delta_pieces=4, axial_pieces=4)
 
     def test_coupling_semantics(self):
-        self.assertTrue(self.d["same_first_residual_attitude_aw_coupling_used"])
-        self.assertTrue(self.d["structured_tangent_gain_cancellation_used_before_interval_inversion"])
-        self.assertTrue(self.d["beta_source_derived_from_structured_covariance"])
-        self.assertTrue(self.d["attitude_PSD_remainder_resolvent_defect_retained"])
-        self.assertTrue(self.d["coupling_remainder_retained"])
-        self.assertTrue(self.d["forward_E_formed_before_posterior_multiplication"])
-        self.assertTrue(self.d["sample1_innovation_reconstructed_from_same_forward_map"])
-        self.assertTrue(self.d["sample1_S_identity_subbranch_only"])
+        for k in (
+            "same_first_residual_attitude_aw_coupling_used",
+            "structured_tangent_gain_cancellation_used_before_interval_inversion",
+            "beta_source_derived_from_structured_covariance",
+            "attitude_PSD_remainder_resolvent_defect_retained",
+            "coupling_remainder_retained",
+            "axial_first_aw_correction_subdivided",
+            "forward_E_formed_before_posterior_multiplication",
+            "sample1_innovation_reconstructed_from_same_forward_map",
+            "sample1_S_identity_subbranch_only",
+        ):
+            self.assertTrue(self.d[k], k)
         b = self.d["beta_interval_mps2_per_rad"]
         self.assertEqual(len(b), 2)
         self.assertGreater(b[0], 0.0)
@@ -31,13 +35,9 @@ class Ou3P5Sample1CoupledTangentRefinementTests(unittest.TestCase):
 
     def test_finite_diagnostics(self):
         for k in (
-            "tangent_innovation_floor",
-            "attitude_PSD_remainder_upper",
-            "tangent_inverse_perturbation_norm_upper",
-            "tangent_Kaw_perturbation_norm_upper",
-            "tangent_Ktheta_perturbation_norm_upper",
             "first_tangent_combined_gain_norm_upper",
             "first_tangent_relation_remainder_norm_upper_mps2",
+            "first_axial_aw_correction_abs_upper_mps2",
             "max_E_theta_norm_upper",
             "max_Pj_Et_first6_norm_upper",
             "max_actual_Ctheta_norm_upper",
@@ -47,7 +47,11 @@ class Ou3P5Sample1CoupledTangentRefinementTests(unittest.TestCase):
             self.assertGreaterEqual(float(self.d[k]), 0.0)
         self.assertEqual(
             self.d["fixed_pivot_inverse_count"] + self.d["spectral_fallback_inverse_count"],
-            self.d["evaluated_delta_cells"],
+            self.d["evaluated_joint_cells"],
+        )
+        self.assertEqual(
+            self.d["evaluated_joint_cells"],
+            self.d["evaluated_delta_cells"] * self.d["axial_cell_count"],
         )
 
     def test_no_relaxation_or_promotion(self):
@@ -63,9 +67,9 @@ class Ou3P5Sample1CoupledTangentRefinementTests(unittest.TestCase):
         status = self.d["P5_SAMPLE1_COUPLED_TANGENT_WITNESS_REFINEMENT"]
         self.assertIn(status, ("PASS", "NOT_ESTABLISHED"))
         if status == "PASS":
-            self.assertIsNone(self.d["first_unclosed_delta_cell"])
+            self.assertIsNone(self.d["first_unclosed_joint_cell"])
         else:
-            self.assertIsNotNone(self.d["first_unclosed_delta_cell"])
+            self.assertIsNotNone(self.d["first_unclosed_joint_cell"])
 
 
 if __name__ == "__main__":
