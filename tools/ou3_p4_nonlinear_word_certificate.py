@@ -138,15 +138,20 @@ def _source_measurement_bounds() -> dict:
 
     wrapper = WRAPPER.read_text(encoding="utf-8")
     rs_min = float(SOURCE.parse_const(wrapper, "MIN_R_S"))
-    # The S=0 correction covariance is diag(rho_xy r_S, rho_xy r_S, r_S)^2, so
-    # its smallest eigenvalue is bounded below by (min(rho_xy, 1) MIN_R_S)^2 --
-    # the isotropic case rho_xy = 1 this used to assert is the special case.
-    # Read rho_xy from the deployed member so the bound follows the source
+    # The S=0 correction covariance is diag(rho_x r_S, rho_y r_S, r_S)^2, so its
+    # smallest eigenvalue is bounded below by (min(rho_x, rho_y, 1) MIN_R_S)^2 --
+    # the isotropic case this used to assert is the special case.
+    # Read the factors from the deployed members so the bound follows the source
     # rather than a literal that has to be re-asserted on every retune.
-    rho_xy = _deployed_member_float(wrapper, "R_S_xy_factor_")
-    if not (0.0 < rho_xy <= 4.0):
-        raise RuntimeError(f"deployed R_S_xy_factor_ out of setter range: {rho_xy}")
-    rs_min_axis = mul_down(min(rho_xy, 1.0), rs_min)
+    # The two horizontal axes are independent knobs, so the bound has to take
+    # the smaller of them rather than assume one horizontal scale.
+    rho_x = _deployed_member_float(wrapper, "R_S_x_factor_")
+    rho_y = _deployed_member_float(wrapper, "R_S_y_factor_")
+    for name_, value in (("R_S_x_factor_", rho_x), ("R_S_y_factor_", rho_y)):
+        if not (0.0 < value <= 4.0):
+            raise RuntimeError(f"deployed {name_} out of setter range: {value}")
+    rho_h = min(rho_x, rho_y)
+    rs_min_axis = mul_down(min(rho_h, 1.0), rs_min)
     rs_var_lo = down(rs_min_axis * rs_min_axis)
     rmin = min(acc_var_lo, mag_var_lo, rs_var_lo)
     if not (math.isfinite(rmin) and rmin > 0.0):

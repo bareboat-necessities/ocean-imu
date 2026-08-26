@@ -1,11 +1,16 @@
 # Retuning the horizontal integral-regularizer scale
 
-**Outcome: `R_S_xy_factor` moves from 1.0 to 0.72 in OU-III.** 3D displacement
+**Outcome: OU-III's horizontal integral-regularizer scale moves from 1.0 to
+0.72.** It was a single scalar `R_S_xy_factor` when this was measured and is now
+the pair `R_S_x_factor` / `R_S_y_factor`, both at 0.72; see
+[`ou-horizontal-anisotropy-per-axis-split.md`](ou-horizontal-anisotropy-per-axis-split.md). 3D displacement
 RMS falls 3.33% pooled over the eight scored records and three IMU seed
 triplets, with the same sign in all 24 record x seed cells. Vertical RMS is
-unchanged to the fourth digit. OU-II's analogous `R_p0_xy_factor` reproduces the
-effect independently and its optimum is 0.65; that change is measured here but
-**not** applied, for the reason in section 6.
+unchanged to the fourth digit. OU-II's analogous horizontal factor reproduces
+the effect independently and its optimum is 0.65; it was measured here and left
+alone at the time, and has since been applied at the shared 0.72 -- see
+[`ou-horizontal-anisotropy-per-axis-split.md`](ou-horizontal-anisotropy-per-axis-split.md),
+which also measures TFG and finds it wants the *opposite* sign.
 
 This note came out of asking why every family reports a higher vertical error as
 a fraction of `H_s` on the small seas
@@ -26,7 +31,7 @@ point scores 16.231):
 | `OU_III_TAU_COEFF` (`c_tau`) | 1.0 | 1.0 | 16.231 | none, argmin on every record |
 | `OU_III_ACC_BIAS_INIT_STD` | 0.004 | 0.08 | 16.209 | 0.14% |
 | `OU_III_SIGMA_COEFF` (`c_sigma`) | 0.9 | 0.4 | 16.151 | 0.50%, but 3D moves the other way |
-| `OU_III_R_S_XY_FACTOR` | 1.0 | 0.72 | 16.233 | none vertically -- see below |
+| `OU_III_R_S_X/Y_FACTOR` | 1.0 | 0.72 | 16.233 | none vertically -- see below |
 
 Two of these deserve a line each, because they were the two the question
 predicted.
@@ -189,9 +194,11 @@ Both now read `rho_xy` from the deployed member instead of asserting a literal,
 so a future retune does not silently invalidate either bound, and both still
 pass: P4 `PASS`, P5 `PASS` with the gain retained.
 
-**OU-II is deliberately left at 1.0.** The same sweep protocol -- eight records,
+**OU-II was left at 1.0 by this change, and has since moved to 0.72** in the
+per-axis split; the measurement that justified it is the one below. The same
+sweep protocol -- eight records,
 three seed triplets, 24 paired cells -- gives the same picture on
-`OU_II_R_P0_XY_FACTOR`, with the optimum at 0.65 by the same
+`OU_II_R_P0_X/Y_FACTOR`, with the optimum at 0.65 by the same
 both-axes-must-gain rule:
 
 | metric | 0.8 | **0.65** | 0.55 |
@@ -201,16 +208,16 @@ both-axes-must-gain rule:
 | `disp_z_rms_m` | -0.01 | **-0.01** | -0.02 |
 | `disp_3d_rms_m` | -2.95\* | **-3.56\*** | -2.80\* |
 
-That is an independent family reproducing the effect at nearly the same value,
-which is the strongest evidence here that it is structural rather than a fit to
-one wrapper. It is not applied because it has not been carried through the rest
-of the checklist this note ran for OU-III: its own gate re-cut, its own contract
-test, and its own paper statements. Doing that is the obvious next change and
-nothing measured so far argues against it.
+That is an independent family reproducing the effect at nearly the same value.
+It was not applied in this change because it had not been carried through the
+rest of the checklist this note ran for OU-III; that was done subsequently.
 
-TFG is untouched and unmeasured. Its `R_S_x_factor` and `R_S_y_factor` are
-separate per-axis knobs already sitting at 1.15, so it is not the same starting
-point and deserves its own sweep rather than an assumed carry-over.
+TFG was untouched and unmeasured here. Its `R_S_x_factor` and `R_S_y_factor`
+were separate per-axis knobs already sitting at 1.15, so it was not the same
+starting point and deserved its own sweep rather than an assumed carry-over.
+That sweep has since been run, and the caution was warranted: TFG's 3D RMS is
+*worse* at 0.72 by 7.31% with every cell agreeing, and 1.15 is its own interior
+minimum. The horizontal anisotropy is not a constant the families share.
 
 ## 7. What is still stale
 

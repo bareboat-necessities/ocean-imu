@@ -70,13 +70,13 @@ FAMILIES = {
     "OU_III": {
         "dir": REPO_ROOT / "tests" / "kalman_ou_iii",
         "bin": "kalman_ou_iii-sim",
-        "knob": "OU_III_R_S_XY_FACTOR",
+        "knobs": ("OU_III_R_S_X_FACTOR", "OU_III_R_S_Y_FACTOR"),
         "grid": (1.0, 0.8, 0.72, 0.6, 0.5),
     },
     "OU_II": {
         "dir": REPO_ROOT / "tests" / "kalman_ou_ii",
         "bin": "kalman_ou_ii-sim",
-        "knob": "OU_II_R_P0_XY_FACTOR",
+        "knobs": ("OU_II_R_P0_X_FACTOR", "OU_II_R_P0_Y_FACTOR"),
         "grid": (1.0, 0.8, 0.65, 0.55),
     },
 }
@@ -98,7 +98,7 @@ SCREEN = {
     "OU_III_TAU_COEFF":         ((0.9, 1.0, 1.15), 1.0),
     "OU_III_ACC_BIAS_INIT_STD": ((0.004, 0.025, 0.08), 0.004),
     "OU_III_SIGMA_COEFF":       ((0.4, 0.6, 0.9, 1.4), 0.9),
-    "OU_III_R_S_XY_FACTOR":     ((0.6, 0.72, 1.0), 1.0),
+
 }
 
 # Paired metrics reported by the xy stage, in the order the note tabulates them.
@@ -282,19 +282,23 @@ def stage_screen(args) -> None:
 def stage_xy(args) -> None:
     """Paired multi-seed sweep of the horizontal-anisotropy knob."""
     fam = FAMILIES[args.family]
-    sim_dir, binary, knob = fam["dir"], fam["dir"] / fam["bin"], fam["knob"]
+    sim_dir, binary, knobs = fam["dir"], fam["dir"] / fam["bin"], fam["knobs"]
     if not binary.exists():
         raise SystemExit(f"{binary} is missing; run `make -C {sim_dir} build`")
     grid = ([float(g) for g in args.grid.split(",")] if args.grid else list(fam["grid"]))
     base = grid[0]
 
+    # Both horizontal axes are moved together: this stage measures the common
+    # horizontal scale, which is what a deployment that does not know its
+    # heading relative to the sea can actually set.  Per-axis splits are what
+    # the `axis` reading of tools/ou_axis_rs_optimum.py is for.
     jobs = [((seed, value, rec), sim_dir / rec,
-             {knob: repr(value), "W3D_SEED": seed}, [], binary)
+             {**{k: repr(value) for k in knobs}, "W3D_SEED": seed}, [], binary)
             for seed in SEEDS for value in grid for rec in ALL_RECORDS]
     got = dict(parallel(jobs, args.jobs))
 
     cells = [(s, r) for s in SEEDS for r in ALL_RECORDS]
-    print(f"{args.family} {knob}: paired % change against {base}, "
+    print(f"{args.family} {' + '.join(knobs)}: paired % change against {base}, "
           f"n = {len(cells)} record x seed cells.")
     print("Negative is better; * marks a delta with the same sign in every cell.\n")
     print(f"{'metric':26s}" + "".join(f"{v:>15g}" for v in grid[1:]))

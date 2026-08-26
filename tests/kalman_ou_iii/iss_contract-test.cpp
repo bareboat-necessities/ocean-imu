@@ -81,20 +81,30 @@ int main() {
     }
     if (!near(f.S_factor_, 1.0f))
         return fail("default OU-III acceleration anisotropy changed");
-    if (!near(f.R_S_xy_factor_, 0.72f))
+    if (!near(f.R_S_x_factor_, 0.72f) || !near(f.R_S_y_factor_, 0.72f))
         return fail("default OU-III horizontal integral-regularizer scale changed");
 
     {
+        // The two horizontal axes must be independently settable, and setting
+        // one must not disturb the other -- that separability is the whole
+        // point of the split.
         Filter probe;
-        probe.setRSXYFactor(1.87f);
-        if (!near(probe.R_S_xy_factor_, 1.87f))
-            return fail("rho_xy > 1 is not expressible");
-        probe.setRSXYFactor(9.0f);
-        if (!near(probe.R_S_xy_factor_, 4.0f))
-            return fail("rho_xy upper bound changed");
-        probe.setRSXYFactor(-1.0f);
-        if (!near(probe.R_S_xy_factor_, 0.0f))
-            return fail("rho_xy lower bound changed");
+        probe.setRSXFactor(1.87f);
+        if (!near(probe.R_S_x_factor_, 1.87f))
+            return fail("rho_x > 1 is not expressible");
+        if (!near(probe.R_S_y_factor_, 0.72f))
+            return fail("setting rho_x moved rho_y");
+        probe.setRSYFactor(0.4f);
+        if (!near(probe.R_S_y_factor_, 0.4f) || !near(probe.R_S_x_factor_, 1.87f))
+            return fail("rho_x and rho_y are not independent");
+        probe.setRSXFactor(9.0f);
+        probe.setRSYFactor(9.0f);
+        if (!near(probe.R_S_x_factor_, 4.0f) || !near(probe.R_S_y_factor_, 4.0f))
+            return fail("horizontal rho upper bound changed");
+        probe.setRSXFactor(-1.0f);
+        probe.setRSYFactor(-1.0f);
+        if (!near(probe.R_S_x_factor_, 0.0f) || !near(probe.R_S_y_factor_, 0.0f))
+            return fail("horizontal rho lower bound changed");
     }
 
     if (!near(PSEUDO_UPDATE_PERIOD_MIN_S_DEFAULT, 0.005f) ||

@@ -3,9 +3,9 @@
 
 OU-III scales the stationary acceleration standard deviation horizontally by
 S_factor = 1.87 and leaves the integral pseudo-measurement noise isotropic
-(R_S_xy_factor = 1).  The similarity theorem the r_S schedule is derived from
+(R_S_x_factor = R_S_y_factor = 1).  The similarity theorem the r_S schedule is derived from
 gives sigma_S ~ sigma_aw tau^3 componentwise, so the axis-consistent choice
-would be R_S_xy_factor = S_factor.  The deployed pair is not that point.
+would be R_S_x_factor = R_S_y_factor = S_factor.  The deployed pair is not that point.
 
 This driver sweeps both constants together over the four stationary JONSWAP
 records and several IMU/initialization seeds, and reports paired per-seed
@@ -15,7 +15,8 @@ rho_xy = S_sigma; the others isolate one knob at a time.
     python3 tools/ou_anisotropy_ablation.py --seeds 1,2,3,4,5
 
 Results and reading: docs/ou-iii-anisotropy-consistency.md.  Note that
-setRSXYFactor() clamped rho_xy to 1 before this study, so rho_xy > 1 arms run
+The former combined setRSXYFactor() clamped the horizontal scale to 1 before this
+study, so > 1 arms run
 against an older build silently reproduce the deployed arm.
 """
 
@@ -53,7 +54,7 @@ RECORDS_BY_FAMILY = {
 }
 RECORDS = RECORDS_BY_FAMILY["jonswap"]
 
-# label -> (S_factor, R_S_xy_factor).  A is the deployed pair and the baseline
+# label -> (S_factor, horizontal R_S factor, applied to both axes).  A is the deployed pair and the baseline
 # every other arm is paired against.
 ARMS: dict[str, tuple[str, str]] = {
     "A_S1.87_rho1.00_deployed":   ("1.87", "1.00"),
@@ -83,7 +84,8 @@ def run_one(job: tuple[str, str, int], window_s: int) -> dict:
     env = os.environ.copy()
     env.update({
         "OU_III_S_FACTOR": s_factor,
-        "OU_III_R_S_XY_FACTOR": rho,
+        "OU_III_R_S_X_FACTOR": rho,
+        "OU_III_R_S_Y_FACTOR": rho,
         "W3D_SEED": str(seed),
         "W3D_WRITE_TIMESERIES": "0",          # keeps parallel arms from colliding
         "W3D_VALIDATION_WINDOW_SEC": str(window_s),

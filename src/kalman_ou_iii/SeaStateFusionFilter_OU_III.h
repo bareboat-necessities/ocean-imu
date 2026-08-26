@@ -781,7 +781,8 @@ public:
 
     // Anisotropy configuration (runtime)
     // S-factor scales horizontal vs vertical stationary std of a_w.
-    // RS XY factor scales pseudo-measurement noise in X/Y vs Z.
+    // The R_S x/y factors scale pseudo-measurement noise per horizontal axis
+    // against Z.
     void setSFactor(float s) {
         if (std::isfinite(s) && s > 0.0f) {
             S_factor_ = s;
@@ -794,12 +795,17 @@ public:
     // state is S_factor times the vertical one (Theorem "Nondimensional
     // similarity of the OU-III chain", sigma_S ~ sigma_aw tau^3), so the
     // dimensionless regularizer r_S/(sigma_aw tau^3) is equal on all three axes
-    // only at R_S_xy_factor = S_factor > 1.  Under the old clamp that
-    // configuration was accepted and then silently reduced to 1, so an ablation
-    // of it measured nothing and looked like a null result.
-    void setRSXYFactor(float k) {
+    // only at R_S_x_factor = R_S_y_factor = S_factor > 1.  Under the old clamp
+    // that configuration was accepted and then silently reduced to 1, so an
+    // ablation of it measured nothing and looked like a null result.
+    void setRSXFactor(float k) {
         if (std::isfinite(k)) {
-            R_S_xy_factor_ = std::min(std::max(k, 0.0f), 4.0f);
+            R_S_x_factor_ = std::min(std::max(k, 0.0f), 4.0f);
+        }
+    }
+    void setRSYFactor(float k) {
+        if (std::isfinite(k)) {
+            R_S_y_factor_ = std::min(std::max(k, 0.0f), 4.0f);
         }
     }
 
@@ -1602,11 +1608,11 @@ private:
                         : 1.0f;
         const float RSbase = std::min(std::max(tune_.RS_applied, min_R_S_), max_R_S_);
         const float RSb = RSbase * pseudo_update_information_rate_scale_();
-        const float rs_xy = RSb * s * R_S_xy_factor_;
+        const float rs_z = RSb * s;
         mekf_->set_RS_noise(Eigen::Vector3f(
-            rs_xy,
-            rs_xy,
-            RSb * s
+            rs_z * R_S_x_factor_,
+            rs_z * R_S_y_factor_,
+            rs_z
         ));
     }
 
@@ -1959,7 +1965,10 @@ private:
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
     float mag_delay_sec_          = MAG_DELAY_SEC;
 
-    // Horizontal integral-regularization scale relative to the vertical one.
+    // Per-axis horizontal integral-regularization scale, against the vertical
+    // one.  These were a single scalar rho_xy until the split; the history
+    // below is that scalar's, and both axes start from the value it carried.
+    //
     // 0.36 made the horizontal high-pass 2.8x stronger than the vertical one,
     // which was a small-sea optimum applied to every sea state: with the
     // operating point now tied to the wave band, every stationary record scored
@@ -1989,7 +1998,20 @@ private:
     // analytical reference: the scalar reduction omits the tilt-leakage and
     // residual-bias drift the horizontal channels actually reject.
     // See docs/ou-iii-horizontal-anisotropy-retune.md.
-    float R_S_xy_factor_ = 0.72f;
+    //
+    // The two axes are separate knobs because the same measurement says they
+    // do not want the same number: tools/ou_axis_rs_optimum.py puts the
+    // per-axis MSE optimum at 1.004 (x) and 0.685 (y) on these records, and it
+    // was the single scalar's inability to serve both that stopped the sweep
+    // at 0.72 rather than at the pooled minimum.  They are equal by default
+    // because that x/y split is a property of the record set -- every record is
+    // generated at +/-30 degrees, so world x carries three times the horizontal
+    // displacement world y does -- and not of the sea.  A deployment that knows
+    // its own heading relative to the dominant sea can use that; one that does
+    // not must leave them equal.  See
+    // docs/ou-horizontal-anisotropy-per-axis-split.md.
+    float R_S_x_factor_ = 0.72f;
+    float R_S_y_factor_ = 0.72f;
     // Horizontal stationary acceleration scale relative to the vertical one.
     // 1.87 was carried from the acceleration-band operating point and never
     // re-measured against the records, which put it at 0.81 (x) and 0.55 (y)
@@ -2006,7 +2028,8 @@ private:
     // Note that 1 is also the axis-consistent value: with sigma_aw isotropic,
     // an isotropic r_S is what the similarity law sigma_S ~ sigma_aw tau^3
     // asks for.  Closing that gap the other way -- keeping 1.87 and setting
-    // R_S_xy_factor to match -- was measured and is 13.7 percent worse; see
+    // the R_S horizontal factors to match -- was measured and is 13.7 percent
+    // worse; see
     // docs/ou-iii-anisotropy-consistency.md.
     float S_factor_      = 1.0f;
 

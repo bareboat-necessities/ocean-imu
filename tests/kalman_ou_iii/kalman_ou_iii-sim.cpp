@@ -146,8 +146,13 @@ public:
 
             // OU_III-specific R_S anisotropy and coefficient.
             // These are the real setter names in SeaStateFusionFilter_OU_III.
-            if (env_float("OU_III_R_S_XY_FACTOR", v)) {
-                filter.setRSXYFactor(v);
+            // X and Y are independent; there is deliberately no combined knob,
+            // so a sweep that means to move both has to say so twice.
+            if (env_float("OU_III_R_S_X_FACTOR", v)) {
+                filter.setRSXFactor(v);
+            }
+            if (env_float("OU_III_R_S_Y_FACTOR", v)) {
+                filter.setRSYFactor(v);
             }
 
             if (env_float("OU_III_R_S_COEFF", v)) {

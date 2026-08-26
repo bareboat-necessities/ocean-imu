@@ -836,14 +836,24 @@ public:
 
     // Anisotropy configuration (runtime)
     // P-factor scales horizontal vs vertical stationary std of a_w.
-    // R_p0 XY factor scales pseudo-measurement noise in X/Y vs Z.
+    // The R_p0 x/y factors scale the position pseudo-measurement noise per
+    // horizontal axis against Z.
     void setPFactor(float p) {
         if (std::isfinite(p) && p > 0.0f) P_factor_ = p;
     }
 
-    void setR_p0_XYFactor(float k) {
+    // The ceiling is 4, matching OU-III's.  A ceiling of 1 would encode the
+    // assumption that a horizontal position anchor can only ever be tighter
+    // than the vertical one, which is the assumption these knobs exist to
+    // measure rather than one they should impose.
+    void setR_p0_XFactor(float k) {
         if (std::isfinite(k)) {
-            R_p0_xy_factor_ = std::min(std::max(k, 0.0f), 1.0f);
+            R_p0_x_factor_ = std::min(std::max(k, 0.0f), 4.0f);
+        }
+    }
+    void setR_p0_YFactor(float k) {
+        if (std::isfinite(k)) {
+            R_p0_y_factor_ = std::min(std::max(k, 0.0f), 4.0f);
         }
     }
 
@@ -1537,8 +1547,11 @@ private:
         const float p = (std::isfinite(rp_scale) && rp_scale > 0.0f) ? std::min(rp_scale, 1.0f) : 1.0f;
         const float R_p0_base = std::min(std::max(tune_.R_p0_std_applied, MIN_R_p0_std_), MAX_R_p0_std_);
         const float R_p0_b = R_p0_base * pseudo_update_information_rate_scale_();
-        const float rp_xy = R_p0_b * p * R_p0_xy_factor_;
-        mekf_->set_Rp0_noise_std(Eigen::Vector3f(rp_xy, rp_xy, R_p0_b * p));
+        const float rp_z = R_p0_b * p;
+        mekf_->set_Rp0_noise_std(Eigen::Vector3f(
+            rp_z * R_p0_x_factor_,
+            rp_z * R_p0_y_factor_,
+            rp_z));
     }
 
     void apply_R_v0_tune_(float rv_scale = 1.0f) {
@@ -1877,16 +1890,37 @@ private:
     float online_tune_warmup_sec_ = ONLINE_TUNE_WARMUP_SEC;
     float mag_delay_sec_          = MAG_DELAY_SEC;
 
-    // Horizontal p-regularization scale relative to the vertical one.  0.31 was
-    // fitted against the acceleration-band operating point, where it made the
-    // horizontal high-pass 3.2x stronger than the vertical one.  That was a
-    // small-sea optimum applied to every sea state; with tau tied to the wave
-    // band the horizontal axes no longer need any extra suppression at all.
-    // Sweeping it leaves normalized vertical error flat to within 0.03
-    // percentage points while 1.0 takes about 10 percent off the mean 3D RMS
-    // across the four stationary records.  OU-III reached the same conclusion
-    // for its own rho_xy.  Retained as a setter because the bound is a real one.
-    float R_p0_xy_factor_ = 1.0f;
+    // Per-axis horizontal p-regularization scale, against the vertical one.
+    // These were a single scalar until the split; the history below is that
+    // scalar's, and both axes start from the same value.
+    //
+    // 0.31 was fitted against the acceleration-band operating point, where it
+    // made the horizontal high-pass 3.2x stronger than the vertical one.  That
+    // was a small-sea optimum applied to every sea state; with tau tied to the
+    // wave band, 1.0 took about 10 percent off the mean 3D RMS across the four
+    // stationary records while leaving normalized vertical error flat to within
+    // 0.03 percentage points, and 1.0 is what shipped.
+    //
+    // Nothing between 0.31 and 1.0 was scored at that time.  Swept there over
+    // the eight scored records and three IMU seed triplets
+    // (tools/ou_low_sea_error_study.py xy --family OU_II), 3D displacement RMS
+    // has an interior minimum at 0.65 -- -3.56 percent against 1, with the same
+    // sign in all 24 record x seed cells -- and 0.8 and 0.55 bracket it at
+    // -2.95 and -2.80.  Vertical is unchanged at -0.01 percent.  That is the
+    // same shape and nearly the same optimum OU-III's own regularizer has, on a
+    // different pseudo-measurement, which is the strongest evidence either
+    // family offers that the effect is structural rather than a fit to one
+    // wrapper.
+    //
+    // The deployed 0.72 is OU-III's measured optimum, carried here so the three
+    // families share one horizontal-anisotropy constant.  It is not this
+    // family's own argmin -- 0.65 is -- but the basin is flat enough that the
+    // difference does not matter: measured on the same 24 cells, 0.72 scores
+    // -3.50 percent of 3D RMS against 1 where 0.65 scores -3.56, so the shared
+    // constant gives up six hundredths of a point.
+    // See docs/ou-horizontal-anisotropy-per-axis-split.md.
+    float R_p0_x_factor_ = 0.72f;
+    float R_p0_y_factor_ = 0.72f;
     float P_factor_       = 1.5f;
 
     TrackingPolicy               tracker_policy_{};
