@@ -48,6 +48,7 @@ from ou3_interval import Interval
 import ou3_p5_sample1_signed_cayley_q8_v14 as V14
 import ou3_p5_sample1_signed_cayley_q8_v16 as V16
 import ou3_p5_sample1_signed_cayley_q8_v17 as V17
+import ou3_p5_signed_full_angle_trig as SIGNED_TRIG
 
 DEFAULT_DOMAIN = V17.DEFAULT_DOMAIN
 SCHEMA = 1800
@@ -66,7 +67,7 @@ def _intersect(a: Interval, b: Interval) -> Interval:
 def _rotate_yz_rx_transpose(cy: Interval, cz: Interval,
                             angle: Interval) -> tuple[Interval, Interval]:
     """Interval image of the y/z pair under R_x(angle)^T."""
-    _sin, _cos = V14.CAYLEY2._trig_interval(angle.lo, angle.hi)
+    _sin, _cos, _broad = SIGNED_TRIG.signed_full_angle_trig_interval(angle)
     # R_x(a)^T has yz block [[cos(a), sin(a)],[-sin(a), cos(a)]].
     return _cos * cy + _sin * cz, -(_sin * cy) + _cos * cz
 

@@ -17,6 +17,7 @@ import argparse
 import json
 from pathlib import Path
 
+import ou3_p5_first_accel_rotation_gauge as RG
 import ou3_p5_sample1_signed_radial_subcells_v13e as V13E
 import ou3_p5_sample1_signed_cayley_q8_v14d as V14D
 
@@ -29,6 +30,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 4,
           tangent_pieces: int = 24, axial_pieces: int = 24,
           residual_x_pieces: int = 2, parallel_pieces: int = 2) -> dict:
     path = Path(domain_path).resolve()
+    source_children = RG._source_phase_children(source_pieces)
+    if source_cell_index < 0 or source_cell_index >= len(source_children):
+        raise ValueError(
+            f"source_cell_index must be in [0,{len(source_children) - 1}]"
+        )
     kwargs = dict(
         source_pieces=source_pieces,
         source_cell_index=source_cell_index,

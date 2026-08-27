@@ -22,6 +22,14 @@ class Sample1SignedCayleyQ8V18Tests(unittest.TestCase):
         self.assertLessEqual(z.lo, cz.lo)
         self.assertGreaterEqual(z.hi, cz.hi)
 
+    def test_signed_negative_proof_gauge_rotation_is_supported(self):
+        cy = Interval.outward_bounds(-0.3, 0.4)
+        cz = Interval.outward_bounds(0.2, 0.5)
+        y, z = V18._rotate_yz_rx_transpose(
+            cy, cz, Interval.outward_bounds(-1.0, -0.5))
+        self.assertLessEqual(y.lo, y.hi)
+        self.assertLessEqual(z.lo, z.hi)
+
     def test_quarter_turn_proof_gauge_rotation_has_expected_orientation(self):
         one = Interval.point(1.0)
         zero = Interval.point(0.0)

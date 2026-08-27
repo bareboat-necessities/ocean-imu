@@ -1,29 +1,12 @@
 #!/usr/bin/env python3
-"""V18B: repair V18's proof-gauge rotation with validated signed full-angle trig.
+"""V18B: audited accounting wrapper for V18's signed full-angle proof gauge.
 
-V18's current-y/z support construction is sound in intent, but its first fine
-run exposed an implementation-domain error before any q8 cell was evaluated:
-the proof-coordinate rotation R_x(d0)^T passed the full signed angle d0 to the
-V2 helper ``_trig_interval``.  That helper is deliberately restricted to a
-nonnegative half-angle radial interval and therefore rejected the first chart.
-
-V18B changes only that proof-coordinate transcendental enclosure.  For a signed
-angle interval X=[lo,hi], write x=m+h with binary64 midpoint m and
-|h|<=delta.  When |m|<=4.5, the already validated exact-rational V2 point
-sin/cos enclosures are used at m, together with the global elementary bounds
-
-    |sin h| <= min(1, |h|),
-    max(-1, 1-h^2/2) <= cos h <= 1.
-
-The angle-addition identities then give an outward interval enclosure of
-sin(X), cos(X) without monotonicity, range reduction, or libm proof calls.  If
-the midpoint lies outside the audited point range, V18B fails wide rather than
-unsafe by returning the universal [-1,1] hull for both functions.
-
-The resulting helper is installed only while V18 builds.  All V18 current-y/z
-support algebra, V17 sample-0 product-radius tightening, V16 axis cone, V15
-geodesic parent, source family, shipping six-radian correction limit, q<8
-target, and theorem-promotion guards are unchanged.
+V18's first implementation used the deployed-quaternion nonnegative half-angle
+radial helper on a full signed proof-gauge angle.  The shared
+``ou3_p5_signed_full_angle_trig`` primitive now supplies the validated signed
+full-angle enclosure directly to V18.  V18B retains the historical accounting
+contract: it counts every signed-angle call and every deliberate broad fallback
+while leaving all V18 current-y/z algebra and earlier parents unchanged.
 """
 from __future__ import annotations
 
@@ -35,40 +18,14 @@ from pathlib import Path
 from ou3_interval import Interval
 import ou3_p5_sample1_signed_cayley_q8_v14 as V14
 import ou3_p5_sample1_signed_cayley_q8_v18 as V18
+import ou3_p5_signed_full_angle_trig as SIGNED_TRIG
 
 DEFAULT_DOMAIN = V18.DEFAULT_DOMAIN
 SCHEMA = 1801
 FULL = V14.FULL
 Q_TARGET = V14.Q_TARGET
-AUDITED_POINT_ABS_MAX = 4.5
-
-
-def _signed_full_angle_trig_interval(x: Interval) -> tuple[Interval, Interval, bool]:
-    """Return rigorous (sin(X), cos(X), broad_fallback_used) for signed X."""
-    lo = float(x.lo); hi = float(x.hi)
-    if not (math.isfinite(lo) and math.isfinite(hi) and lo <= hi):
-        raise ValueError("signed proof-gauge angle interval must be finite and ordered")
-
-    mid = 0.5 * (lo + hi)
-    if not math.isfinite(mid) or abs(mid) > AUDITED_POINT_ABS_MAX:
-        whole = Interval(-1.0, 1.0)
-        return whole, whole, True
-
-    delta = FULL.up(max(abs(hi - mid), abs(mid - lo)))
-    sm = V14.CAYLEY2._sin_point(mid)
-    cm = V14.CAYLEY2._cos_point(mid)
-
-    srad = min(1.0, delta)
-    sh = Interval(FULL.down(-srad), FULL.up(srad))
-    d2 = FULL.up(delta * delta)
-    ch_lo = max(-1.0, FULL.down(1.0 - FULL.up(0.5 * d2)))
-    ch = Interval(ch_lo, 1.0)
-
-    sinx = sm * ch + cm * sh
-    cosx = cm * ch - sm * sh
-    sinx = Interval(max(-1.0, sinx.lo), min(1.0, sinx.hi))
-    cosx = Interval(max(-1.0, cosx.lo), min(1.0, cosx.hi))
-    return sinx, cosx, False
+AUDITED_POINT_ABS_MAX = SIGNED_TRIG.AUDITED_POINT_ABS_MAX
+_signed_full_angle_trig_interval = SIGNED_TRIG.signed_full_angle_trig_interval
 
 
 def _rotate_yz_rx_transpose(cy: Interval, cz: Interval,
@@ -117,6 +74,7 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 4,
         "signed_full_angle_trig_uses_validated_point_backend": True,
         "signed_full_angle_trig_uses_no_range_reduction": True,
         "signed_full_angle_trig_uses_no_libm_proof_call": True,
+        "signed_full_angle_trig_shared_with_V18": True,
         "signed_full_angle_trig_calls": int(context["calls"]),
         "signed_full_angle_trig_broad_fallback_calls": int(context["broad"]),
         "deployed_correction_limit_rad": 6.0,
@@ -150,6 +108,7 @@ def validate(d: dict) -> list[str]:
         "signed_full_angle_trig_uses_validated_point_backend",
         "signed_full_angle_trig_uses_no_range_reduction",
         "signed_full_angle_trig_uses_no_libm_proof_call",
+        "signed_full_angle_trig_shared_with_V18",
     ):
         if d.get(key) is not True:
             failures.append(f"{key} is not true")

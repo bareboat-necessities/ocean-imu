@@ -11,6 +11,18 @@ import ou3_p5_sample1_signed_cayley_q8_gate as G
 
 
 class Sample1V13EToV14DGateTests(unittest.TestCase):
+    def test_invalid_source_cell_index_is_rejected_before_v13e(self):
+        with mock.patch.object(G.V13E, "build") as radial_build:
+            with self.assertRaises(ValueError):
+                G.build(source_cell_index=-1)
+            radial_build.assert_not_called()
+
+        source_count = len(G.RG._source_phase_children(4))
+        with mock.patch.object(G.V13E, "build") as radial_build:
+            with self.assertRaises(ValueError):
+                G.build(source_cell_index=source_count)
+            radial_build.assert_not_called()
+
     def test_v13e_nonclosure_blocks_v14d_and_keeps_witness(self):
         witness = {"source_row": 3, "radial_upper_rad": 6.2}
         radial = {
