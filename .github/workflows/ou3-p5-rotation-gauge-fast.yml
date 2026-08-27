@@ -16,6 +16,7 @@ on:
       - "tools/ou3_p5_sample1_signed_cayley_q8_v17.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v18.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v18b.py"
+      - "tools/ou3_p5_signed_full_angle_trig.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_gate.py"
       - "tools/ou3_p5_sample1_source_phase_manifest.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
@@ -51,6 +52,7 @@ on:
       - "tools/ou3_p5_sample1_signed_cayley_q8_v17.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v18.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v18b.py"
+      - "tools/ou3_p5_signed_full_angle_trig.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_gate.py"
       - "tools/ou3_p5_sample1_source_phase_manifest.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
@@ -101,6 +103,7 @@ jobs:
             tools/ou3_p5_sample1_signed_cayley_q8_v15.py \
             tools/ou3_p5_sample1_signed_cayley_q8_v16.py \
             tools/ou3_p5_sample1_signed_cayley_q8_v17.py \
+            tools/ou3_p5_signed_full_angle_trig.py \
             tools/ou3_p5_sample1_signed_cayley_q8_v18.py \
             tools/ou3_p5_sample1_signed_cayley_q8_v18b.py \
             tools/ou3_p5_sample1_signed_cayley_q8_gate.py \

@@ -1,0 +1,56 @@
+name: ou3-p5-v20-base-row-direction-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p5_sample1_base_row_direction_v20.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v6.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v7.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v10.py"
+      - "tools/ou3_p5_first_accel_exact_source.py"
+      - "tools/ou3_p5_first_accel_exact_source_v2.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_base_row_direction_v20.py"
+      - ".github/workflows/ou3-p5-v20-base-row-direction-fast.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p5_sample1_base_row_direction_v20.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v6.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v7.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v10.py"
+      - "tools/ou3_p5_first_accel_exact_source.py"
+      - "tools/ou3_p5_first_accel_exact_source_v2.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_base_row_direction_v20.py"
+      - ".github/workflows/ou3-p5-v20-base-row-direction-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-v20-base-row-direction-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sample1-base-row-direction-v20:
+    name: P5 sample-1 source-correlated base-row direction V20
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile V20 producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_sample1_base_row_direction_v20.py \
+            tests/validation/test_ou3_p5_sample1_base_row_direction_v20.py
+      - name: Test V20 semantics
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_base_row_direction_v20
+      - name: Emit V20 source-correlated base-row direction audit
+        run: |
+          python3 tools/ou3_p5_sample1_base_row_direction_v20.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --tangent-direction-pieces 4 --yaw-direction-pieces 4 \
+            --output /tmp/p5_sample1_v20_base_row_direction.json
