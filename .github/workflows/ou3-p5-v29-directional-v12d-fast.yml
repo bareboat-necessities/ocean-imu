@@ -1,0 +1,47 @@
+name: ou3-p5-v29-directional-v12d-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_*.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_directional_v12d_remainder_v29.py"
+      - ".github/workflows/ou3-p5-v29-directional-v12d-fast.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_*.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_directional_v12d_remainder_v29.py"
+      - ".github/workflows/ou3-p5-v29-directional-v12d-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-v29-directional-v12d-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sample1-v29:
+    name: P5 sample-1 directional V12D remainder V29
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile V29 producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_sample1_directional_v12d_remainder_v29.py \
+            tests/validation/test_ou3_p5_sample1_directional_v12d_remainder_v29.py
+      - name: Test V29 semantics
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_directional_v12d_remainder_v29
+      - name: Emit V29 directional V12D audit
+        run: |
+          python3 tools/ou3_p5_sample1_directional_v12d_remainder_v29.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --residual-x-pieces 6 --parallel-pieces 6 \
+            --current-component-pieces 4 \
+            --output /tmp/p5_sample1_v29_directional_v12d.json
