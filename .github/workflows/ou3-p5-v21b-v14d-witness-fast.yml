@@ -1,0 +1,66 @@
+name: ou3-p5-v21b-v14d-witness-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p5_sample1_effective_input_correction_v21b.py"
+      - "tools/ou3_p5_sample1_effective_input_correction_v21.py"
+      - "tools/ou3_p5_effective_vector_input.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14d.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v15.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v17.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v18.py"
+      - "tools/ou3_p5_sample1_signed_radial_subcells_v13.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_effective_input_correction_v21b.py"
+      - ".github/workflows/ou3-p5-v21b-v14d-witness-fast.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p5_sample1_effective_input_correction_v21b.py"
+      - "tools/ou3_p5_sample1_effective_input_correction_v21.py"
+      - "tools/ou3_p5_effective_vector_input.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14d.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v15.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v17.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v18.py"
+      - "tools/ou3_p5_sample1_signed_radial_subcells_v13.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_effective_input_correction_v21b.py"
+      - ".github/workflows/ou3-p5-v21b-v14d-witness-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-v21b-v14d-witness-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sample1-v14d-bound-effective-input-v21b:
+    name: P5 sample-1 V14D-bound effective-input witness V21B
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile V21B producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_sample1_effective_input_correction_v21b.py \
+            tests/validation/test_ou3_p5_sample1_effective_input_correction_v21b.py
+      - name: Test V21B semantics
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_effective_input_correction_v21b
+      - name: Emit V21B V14D-bound first-witness audit
+        run: |
+          python3 tools/ou3_p5_sample1_effective_input_correction_v21b.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --residual-x-pieces 6 --parallel-pieces 6 \
+            --output /tmp/p5_sample1_v21b_effective_input_witness.json
