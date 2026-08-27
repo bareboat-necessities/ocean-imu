@@ -27,8 +27,8 @@ class Sample1SignedCayleyQ8V18Tests(unittest.TestCase):
         zero = Interval.point(0.0)
         y, z = V18._rotate_yz_rx_transpose(
             one, zero, Interval.point(math.pi / 2.0))
-        self.assertLessEqual(y.lo, 0.0)
-        self.assertGreaterEqual(y.hi, 0.0)
+        self.assertLessEqual(abs(y.lo), 2e-16)
+        self.assertLessEqual(abs(y.hi), 2e-16)
         self.assertLessEqual(z.lo, -1.0)
         self.assertGreaterEqual(z.hi, -1.0)
 
