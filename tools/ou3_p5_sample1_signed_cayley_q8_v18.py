@@ -87,7 +87,7 @@ def _support_product_scalar(parent_W: Interval, wd: Interval, vd,
     cyz = float(chart["cyz_norm_upper"])
 
     yz_box = vd[1] * cy + vd[2] * cz
-    vdyz = V14._norm2_upper([vd[1], vd[2]])
+    vdyz = _yz_norm_upper(vd[1], vd[2])
     yz_abs = FULL.up(vdyz * cyz)
     yz_ball = Interval.outward_bounds(-yz_abs, yz_abs)
     yz_joint = _intersect(yz_box, yz_ball)
