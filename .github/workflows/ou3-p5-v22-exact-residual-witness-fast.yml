@@ -1,0 +1,62 @@
+name: ou3-p5-v22-exact-residual-witness-fast
+
+on:
+  push:
+    paths:
+      - "tools/ou3_p5_sample1_exact_nonlinear_residual_v22.py"
+      - "tools/ou3_p5_sample1_effective_input_correction_v21b.py"
+      - "tools/ou3_p5_sample1_effective_input_correction_v21.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14d.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v15.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v18.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_exact_nonlinear_residual_v22.py"
+      - ".github/workflows/ou3-p5-v22-exact-residual-witness-fast.yml"
+  pull_request:
+    paths:
+      - "tools/ou3_p5_sample1_exact_nonlinear_residual_v22.py"
+      - "tools/ou3_p5_sample1_effective_input_correction_v21b.py"
+      - "tools/ou3_p5_sample1_effective_input_correction_v21.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v14d.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v15.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v18.py"
+      - "tools/ou3_p5_sample1_structured_full_gain_v12d.py"
+      - "tools/ou3_proof_operating_domain.json"
+      - "tests/validation/test_ou3_p5_sample1_exact_nonlinear_residual_v22.py"
+      - ".github/workflows/ou3-p5-v22-exact-residual-witness-fast.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ou3-p5-v22-exact-residual-witness-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sample1-exact-nonlinear-residual-v22:
+    name: P5 sample-1 exact nonlinear residual witness V22
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compile V22 producer and test
+        run: |
+          python3 -m py_compile \
+            tools/ou3_p5_sample1_exact_nonlinear_residual_v22.py \
+            tests/validation/test_ou3_p5_sample1_exact_nonlinear_residual_v22.py
+      - name: Test V22 semantics
+        working-directory: tests/validation
+        run: python3 -m unittest -v test_ou3_p5_sample1_exact_nonlinear_residual_v22
+      - name: Emit V22 exact nonlinear residual witness audit
+        run: |
+          python3 tools/ou3_p5_sample1_exact_nonlinear_residual_v22.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --residual-x-pieces 6 --parallel-pieces 6 \
+            --output /tmp/p5_sample1_v22_exact_nonlinear_residual.json
