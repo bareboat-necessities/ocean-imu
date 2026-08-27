@@ -13,6 +13,7 @@ on:
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14d.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v15.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v17.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_gate.py"
       - "tools/ou3_p5_sample1_source_phase_manifest.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
@@ -26,6 +27,7 @@ on:
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14d.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v15.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v17.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_gate.py"
       - "tests/validation/test_ou3_p5_sample1_source_phase_manifest.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
@@ -42,6 +44,7 @@ on:
       - "tools/ou3_p5_sample1_signed_cayley_q8_v14d.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v15.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tools/ou3_p5_sample1_signed_cayley_q8_v17.py"
       - "tools/ou3_p5_sample1_signed_cayley_q8_gate.py"
       - "tools/ou3_p5_sample1_source_phase_manifest.py"
       - "tools/ou3_p5_deployed_quaternion_cayley_cell.py"
@@ -55,6 +58,7 @@ on:
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14d.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v15.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v16.py"
+      - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v17.py"
       - "tests/validation/test_ou3_p5_sample1_signed_cayley_q8_gate.py"
       - "tests/validation/test_ou3_p5_sample1_source_phase_manifest.py"
       - "tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py"
@@ -69,8 +73,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sample1-axis-cone-geodesic-signed-cayley-q8-v16:
-    name: P5 sample-1 axis-cone geodesic signed Cayley q8 V16
+  sample1-product-radius-axis-cone-q8-v17:
+    name: P5 sample-1 product-radius axis-cone signed Cayley q8 V17
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -88,6 +92,7 @@ jobs:
             tools/ou3_p5_sample1_signed_cayley_q8_v14d.py \
             tools/ou3_p5_sample1_signed_cayley_q8_v15.py \
             tools/ou3_p5_sample1_signed_cayley_q8_v16.py \
+            tools/ou3_p5_sample1_signed_cayley_q8_v17.py \
             tools/ou3_p5_sample1_signed_cayley_q8_gate.py \
             tools/ou3_p5_sample1_source_phase_manifest.py \
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14.py \
@@ -96,6 +101,7 @@ jobs:
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v14d.py \
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v15.py \
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v16.py \
+            tests/validation/test_ou3_p5_sample1_signed_cayley_q8_v17.py \
             tests/validation/test_ou3_p5_sample1_signed_cayley_q8_gate.py \
             tests/validation/test_ou3_p5_sample1_source_phase_manifest.py \
             tests/validation/test_ou3_p5_deployed_quaternion_cayley_cell_v2.py
@@ -109,6 +115,7 @@ jobs:
             test_ou3_p5_sample1_signed_cayley_q8_v14d \
             test_ou3_p5_sample1_signed_cayley_q8_v15 \
             test_ou3_p5_sample1_signed_cayley_q8_v16 \
+            test_ou3_p5_sample1_signed_cayley_q8_v17 \
             test_ou3_p5_sample1_signed_cayley_q8_gate \
             test_ou3_p5_sample1_source_phase_manifest \
             test_ou3_p5_deployed_quaternion_cayley_cell_v2
@@ -117,10 +124,17 @@ jobs:
           python3 tools/ou3_p5_sample1_source_phase_manifest.py \
             --source-pieces 4 \
             --output /tmp/p5_sample1_source_phase_manifest.json
-      - name: Emit fine V16 axis-cone geodesic signed-Cayley cover
+      - name: Evaluate V13E-to-V14D diagnostic gate
         run: |
-          python3 tools/ou3_p5_sample1_signed_cayley_q8_v16.py \
+          python3 tools/ou3_p5_sample1_signed_cayley_q8_gate.py \
+            --source-pieces 4 --source-cell-index 0 \
+            --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
+            --residual-x-pieces 2 --parallel-pieces 2 \
+            --output /tmp/p5_sample1_v13e_to_v14d_gate.json
+      - name: Emit fine V17 product-radius axis-cone signed-Cayley cover
+        run: |
+          python3 tools/ou3_p5_sample1_signed_cayley_q8_v17.py \
             --source-pieces 4 --source-cell-index 0 \
             --p-pieces 24 --tangent-pieces 24 --axial-pieces 24 \
             --residual-x-pieces 6 --parallel-pieces 6 \
-            --output /tmp/p5_sample1_v16.json
+            --output /tmp/p5_sample1_v17.json
