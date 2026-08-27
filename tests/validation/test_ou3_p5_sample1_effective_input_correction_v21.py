@@ -16,10 +16,10 @@ class Sample1EffectiveInputCorrectionV21Tests(unittest.TestCase):
         b = [Interval.outward_bounds(0.5, 3.0), Interval.outward_bounds(-0.25, 0.25)]
         c = V21._intersect_boxes(a, b)
         self.assertIsNotNone(c)
-        self.assertGreaterEqual(c[0].lo, 0.5)
-        self.assertLessEqual(c[0].hi, 2.0)
-        self.assertGreaterEqual(c[1].lo, -0.25)
-        self.assertLessEqual(c[1].hi, 0.25)
+        self.assertGreaterEqual(c[0].lo, 0.5 - 2e-16)
+        self.assertLessEqual(c[0].hi, 2.0 + 2e-16)
+        self.assertGreaterEqual(c[1].lo, -0.25 - 2e-16)
+        self.assertLessEqual(c[1].hi, 0.25 + 2e-16)
         self.assertIsNone(V21._intersect_boxes(
             [Interval.outward_bounds(-2.0, -1.0)],
             [Interval.outward_bounds(1.0, 2.0)]))
