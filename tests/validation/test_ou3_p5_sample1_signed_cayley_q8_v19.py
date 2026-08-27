@@ -17,7 +17,9 @@ class Sample1JointYzDirectionSubdivisionV19Tests(unittest.TestCase):
         self.assertEqual(len(parts), 2)
         self.assertLessEqual(parts[0].lo, parent.lo)
         self.assertGreaterEqual(parts[-1].hi, parent.hi)
-        self.assertLessEqual(parts[0].hi, parts[1].lo)
+        # Outward rounding may overlap the pieces by a few ulps; it must never
+        # leave a gap at the shared midpoint.
+        self.assertGreaterEqual(parts[0].hi, parts[1].lo)
 
     def test_joint_subdivision_can_strictly_tighten_global_parent(self):
         vd = [
