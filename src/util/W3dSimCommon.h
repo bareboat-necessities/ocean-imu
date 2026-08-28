@@ -15,6 +15,7 @@
 #include <fstream>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <random>
 #include <string>
@@ -363,6 +364,151 @@ struct SimulationNoiseModels {
     std::vector<MagNoiseInjector> extra_mag_noise_models;
 };
 
+// ---------------------------------------------------------------------------
+// Inboard-diesel engine vibration
+// ---------------------------------------------------------------------------
+//
+// Models what a hull-mounted IMU records on a mid-size recreational cruising
+// sailboat (35-45 ft) motoring under its inboard auxiliary diesel.  The
+// archetype is a naturally aspirated three-cylinder four-stroke of the
+// Yanmar 3YM30 / Volvo D1-30 / Beta 25 class on flexible mounts, driving a
+// three-blade fixed propeller through a 2.6:1 reduction gear.
+//
+// The model is a sensor-path model.  It leaves the vessel's rigid-body wave
+// response untouched and adds only what the engine and driveline put into the
+// accelerometer and gyroscope channels:
+//
+//   * discrete crank orders (half order, first order, the firing order
+//     n_cyl/2 and its harmonics) plus driveline shaft-rate and
+//     propeller-blade-rate lines,
+//   * an elevated broadband structural floor above a few Hz,
+//   * governor hunting and combustion variability, which turn each line into
+//     a narrow band rather than a pure tone,
+//   * the flexible-mount transmissibility, which amplifies near the mount
+//     resonance and rolls off above it,
+//   * the sensor's finite anti-alias bandwidth, after which every remaining
+//     component is folded into [0, 1/(2 dt)] by the sample-rate phase
+//     accumulation -- this is the mechanism that puts engine energy into the
+//     wave band,
+//   * accelerometer vibration rectification and gyroscope g-sensitivity.
+//
+// Amplitudes are physical rather than fitted: for a line of order k at crank
+// frequency f_c the excitation is inertial and grows as f^2, and the flexible
+// mount transmits it with
+//
+//   T(f) = sqrt( (1 + (2 zeta r)^2) / ((1 - r^2)^2 + (2 zeta r)^2) ),  r = f/f_n
+//
+// so a single overall gain, calibrated once so the hull broadband RMS equals
+// level_mps2 at reference_rpm, fixes the level at every other speed.  The
+// resulting speed dependence is the familiar one: a diesel auxiliary is rough
+// at idle, where the low orders sit near the mount resonance, and does not
+// simply fall as rpm^2.
+struct EngineVibrationConfig {
+    // Engine speed in rpm.  Zero or negative disables the model entirely.
+    float rpm = 0.0f;
+    // Four-stroke cylinder count; the firing order is cylinders/2.
+    int cylinders = 3;
+    // Reduction-gear ratio, engine rev per shaft rev.
+    float gear_ratio = 2.6f;
+    // Propeller blade count, for the blade-rate line.
+    int blades = 3;
+    // Hull broadband vibration RMS over all three axes at reference_rpm,
+    // before the sensor's anti-alias filter.  0.60 m/s^2 is about 0.061 g and
+    // corresponds to roughly 3 mm/s RMS velocity near 30 Hz, i.e. the ISO 6954
+    // comfort range for small-craft accommodation adjacent to the engine bay.
+    float level_mps2 = 0.60f;
+    float reference_rpm = 2400.0f;
+    // Flexible engine mount: natural frequency and damping ratio.  Marine
+    // mounts for this engine class are chosen around 8-12 Hz.
+    float mount_hz = 10.0f;
+    float mount_zeta = 0.12f;
+    // Sensor bandwidth ahead of the sample rate, as a two-pole rolloff.  A
+    // consumer MEMS IMU delivering 200 Hz typically leaves 50-100 Hz of
+    // usable bandwidth, so the high crank orders are attenuated but not
+    // removed before they fold.
+    float sensor_bandwidth_hz = 80.0f;
+    // Effective lever arm converting hull linear vibration into the angular
+    // vibration the gyroscope sees.
+    float gyro_lever_m = 1.5f;
+    // Gyroscope linear-acceleration sensitivity.  1.78e-4 (rad/s)/(m/s^2) is
+    // 0.1 deg/s/g, the typical figure for a BMI270-class part.
+    float gyro_g_sensitivity = 1.78e-4f;
+    // Accelerometer vibration rectification, in mg per g^2 of vibration.
+    float vre_mg_per_g2 = 1.0f;
+    unsigned seed = 20260828u;
+};
+
+struct EngineVibrationLine {
+    // True, unaliased line frequency in Hz.
+    float freq_hz = 0.0f;
+    // Multiplier taking the instantaneous crank frequency to this line's
+    // frequency, so governor wander moves every line coherently.
+    float freq_ratio = 0.0f;
+    // Recorded per-axis amplitude in m/s^2, after the anti-alias rolloff.
+    Vector3f amp = Vector3f::Zero();
+    // Fixed per-axis phase offset from the structural transfer path.
+    Vector3f phase_offset = Vector3f::Zero();
+    // Running phase, advanced at the instantaneous frequency.
+    float phase = 0.0f;
+    // Slow multiplicative amplitude modulation state.
+    float mod = 0.0f;
+};
+
+struct EngineVibrationModel {
+    EngineVibrationConfig cfg;
+    std::mt19937 rng;
+    std::normal_distribution<float> n01;
+
+    float crank_hz = 0.0f;
+    float shaft_hz = 0.0f;
+    float firing_order = 1.5f;
+
+    std::vector<EngineVibrationLine> lines;
+
+    // Governor: an Ornstein-Uhlenbeck speed deviation plus a periodic hunt.
+    float rpm_ou = 0.0f;
+    float rpm_ou_alpha = 0.0f;
+    float rpm_ou_sigma = 0.0f;
+    float hunt_phase = 0.0f;
+    float hunt_hz = 0.35f;
+    float hunt_amplitude = 0.002f;
+
+    // Amplitude modulation from cycle-to-cycle combustion variability.
+    float mod_alpha = 0.0f;
+    float mod_sigma = 0.0f;
+    float mod_depth = 0.12f;
+
+    // Broadband structural floor: white noise through a one-pole high pass,
+    // so the engine contributes little directly below a few Hz.
+    Vector3f broadband_sigma = Vector3f::Zero();
+    Vector3f hp_prev_in = Vector3f::Zero();
+    Vector3f hp_out = Vector3f::Zero();
+    float hp_alpha = 0.0f;
+
+    // Constant accelerometer offset from vibration rectification, and the
+    // hull vibration RMS per axis it was computed from.
+    Vector3f vre_offset = Vector3f::Zero();
+    Vector3f hull_rms = Vector3f::Zero();
+    Vector3f recorded_rms = Vector3f::Zero();
+};
+
+EngineVibrationModel make_engine_vibration_model(const EngineVibrationConfig& cfg, float dt);
+
+void apply_engine_vibration(Vector3f& acc_body_zu,
+                            Vector3f& gyr_body_zu,
+                            EngineVibrationModel& model,
+                            float dt);
+
+// Reads W3D_ENGINE_RPM and the optional W3D_ENGINE_* overrides.  Returns
+// nullopt when no engine is configured, which is the default and reproduces
+// the historical noise realization bit for bit.
+std::optional<EngineVibrationConfig> w3d_engine_vibration_from_env();
+
+// Builds the model from the environment, prints an ENGINE_VIBRATION banner
+// describing it, and appends it to the simulator's extra IMU noise models.
+// A no-op when no engine is configured.
+void w3d_install_engine_vibration_from_env(SimulationNoiseModels& noise_models, float dt);
+
 // Default values preserve the historical deterministic validation realization.
 // When W3D_SEED, W3D_IMU_SEED, or W3D_INIT_SEED is supplied, the simulator
 // expands the corresponding base seed into independent sensor streams.
@@ -539,6 +685,11 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
     noise_models.mag_noise = make_mag_noise_model(
         mag_sigma_uT, 2.0f, 0.01f, 0.015f, 0.010f, 1.0f,
         seeds.mag_noise, seeds.mag_initialization);
+
+    // Optional inboard-diesel vibration, on top of the sensor noise models
+    // and identical for every filter family.  Absent unless W3D_ENGINE_RPM is
+    // set, so the historical realization is untouched by default.
+    w3d_install_engine_vibration_from_env(noise_models, dt);
 
     const Vector3f sigma_a_init(2.8f * acc_sigma, 2.8f * acc_sigma, 2.8f * acc_sigma);
     const Vector3f sigma_g(2.0f * gyr_sigma, 2.0f * gyr_sigma, 2.0f * gyr_sigma);

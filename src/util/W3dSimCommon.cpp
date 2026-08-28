@@ -14,6 +14,7 @@ extern const float g_std = 9.80665f;
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <numbers>
 #include <sstream>
 #include <stdexcept>
@@ -227,6 +228,450 @@ MagNoiseModel make_mag_noise_model(float sigma_white_uT,
 
     m.Mis = Rz(rz) * Ry(ry) * Rx(rx) * A;
     return m;
+}
+
+namespace {
+
+constexpr float kTwoPi = 6.28318530717958647692f;
+
+// Crank-order weights for a four-stroke.  The firing order carries the
+// dominant gas-torque line; the non-firing half and whole orders come from
+// reciprocating unbalance and cylinder-to-cylinder variability, which an
+// inline engine with an odd cylinder count never fully cancels.
+struct EngineOrderWeight {
+    float order;
+    float weight;
+};
+
+constexpr EngineOrderWeight kFiringHarmonicWeights[] = {
+    {1.0f, 1.00f},
+    {2.0f, 0.55f},
+    {3.0f, 0.30f},
+    {4.0f, 0.18f},
+};
+
+constexpr EngineOrderWeight kNonFiringOrderWeights[] = {
+    {0.5f, 0.25f},
+    {1.0f, 0.50f},
+    {2.0f, 0.20f},
+};
+
+// Driveline weights, on shaft-rate orders.  The blade-rate line is the
+// propeller's pressure pulse on the hull above the aperture; shaft order one
+// is residual shaft unbalance and coupling misalignment.
+constexpr float kDrivelineShaftWeight = 0.35f;
+constexpr float kDrivelineBladeWeight = 0.45f;
+constexpr float kDrivelineBladeSecondWeight = 0.18f;
+
+// RMS split at the reference speed, relative to the engine harmonic RMS.
+constexpr float kDrivelineRmsFraction = 0.45f;
+constexpr float kBroadbandRmsFraction = 0.55f;
+
+// Body-frame ZU anisotropy: x is athwartships, y is fore-and-aft, z is
+// vertical.  The vertical path through the mounts and the hull bottom is the
+// stiffest and carries the most; the fore-and-aft axis, aligned with the
+// shaft, carries the least.
+constexpr float kAxisGainX = 0.75f;
+constexpr float kAxisGainY = 0.55f;
+constexpr float kAxisGainZ = 1.00f;
+
+// High-pass corner of the broadband structural floor.
+constexpr float kBroadbandHighPassHz = 5.0f;
+
+// Reference sensor bandwidth at which level_mps2 is stated, so the default
+// configuration records exactly the configured broadband level and a narrower
+// or wider anti-alias filter records proportionally less or more power.
+constexpr float kReferenceBandwidthHz = 80.0f;
+
+float engine_mount_transmissibility(float freq_hz, float mount_hz, float zeta)
+{
+    if (!(mount_hz > 0.0f)) return 1.0f;
+    const float r = freq_hz / mount_hz;
+    const float num = 1.0f + (2.0f * zeta * r) * (2.0f * zeta * r);
+    const float one_minus = 1.0f - r * r;
+    const float den = one_minus * one_minus + (2.0f * zeta * r) * (2.0f * zeta * r);
+    if (!(den > 0.0f)) return 1.0f;
+    return std::sqrt(num / den);
+}
+
+// Two-pole magnitude response of the sensor's anti-alias path.
+float engine_antialias_gain(float freq_hz, float bandwidth_hz)
+{
+    if (!(bandwidth_hz > 0.0f)) return 1.0f;
+    const float r = freq_hz / bandwidth_hz;
+    const float r2 = r * r;
+    return 1.0f / std::sqrt(1.0f + r2 * r2);
+}
+
+struct EngineHarmonicSpec {
+    float freq_ratio = 0.0f;   // multiplier on crank frequency
+    float weight = 0.0f;
+    bool driveline = false;
+};
+
+std::vector<EngineHarmonicSpec> engine_harmonic_specs(const EngineVibrationConfig& cfg,
+                                                      float firing_order)
+{
+    std::vector<EngineHarmonicSpec> specs;
+
+    auto push_engine = [&specs](float order, float weight) {
+        for (auto& spec : specs) {
+            if (!spec.driveline && std::fabs(spec.freq_ratio - order) < 1e-4f) {
+                spec.weight = std::max(spec.weight, weight);
+                return;
+            }
+        }
+        specs.push_back(EngineHarmonicSpec{order, weight, false});
+    };
+
+    for (const auto& entry : kFiringHarmonicWeights) {
+        push_engine(entry.order * firing_order, entry.weight);
+    }
+    for (const auto& entry : kNonFiringOrderWeights) {
+        push_engine(entry.order, entry.weight);
+    }
+
+    const float gear = (cfg.gear_ratio > 0.0f) ? cfg.gear_ratio : 1.0f;
+    const float shaft_ratio = 1.0f / gear;
+    const float blades = static_cast<float>(std::max(2, cfg.blades));
+    specs.push_back(EngineHarmonicSpec{shaft_ratio, kDrivelineShaftWeight, true});
+    specs.push_back(EngineHarmonicSpec{shaft_ratio * blades, kDrivelineBladeWeight, true});
+    specs.push_back(
+        EngineHarmonicSpec{shaft_ratio * 2.0f * blades, kDrivelineBladeSecondWeight, true});
+
+    return specs;
+}
+
+// Unit-gain amplitude of one engine harmonic: inertial f^2 excitation through
+// the flexible mount, referred to the firing line at the reference speed.
+float engine_unit_amplitude(const EngineVibrationConfig& cfg, float freq_hz, float ref_firing_hz)
+{
+    if (!(ref_firing_hz > 0.0f)) return 0.0f;
+    const float ratio = freq_hz / ref_firing_hz;
+    return ratio * ratio *
+        engine_mount_transmissibility(freq_hz, cfg.mount_hz, cfg.mount_zeta);
+}
+
+float engine_harmonic_rms(const EngineVibrationConfig& cfg,
+                          const std::vector<EngineHarmonicSpec>& specs,
+                          float crank_hz,
+                          float ref_firing_hz,
+                          bool driveline,
+                          float driveline_speed_ratio)
+{
+    double sum = 0.0;
+    for (const auto& spec : specs) {
+        if (spec.driveline != driveline) continue;
+        const float freq_hz = spec.freq_ratio * crank_hz;
+        const float amp = driveline
+            ? (spec.weight * driveline_speed_ratio * driveline_speed_ratio)
+            : (spec.weight * engine_unit_amplitude(cfg, freq_hz, ref_firing_hz));
+        sum += 0.5 * static_cast<double>(amp) * static_cast<double>(amp);
+    }
+    return static_cast<float>(std::sqrt(sum));
+}
+
+} // namespace
+
+EngineVibrationModel make_engine_vibration_model(const EngineVibrationConfig& cfg, float dt)
+{
+    EngineVibrationModel m;
+    m.cfg = cfg;
+    m.rng = std::mt19937(cfg.seed);
+    m.n01 = std::normal_distribution<float>(0.0f, 1.0f);
+
+    if (!(cfg.rpm > 0.0f) || !(dt > 0.0f)) {
+        return m;
+    }
+
+    const float cylinders = static_cast<float>(std::max(1, cfg.cylinders));
+    m.firing_order = 0.5f * cylinders;
+    m.crank_hz = cfg.rpm / 60.0f;
+    const float gear = (cfg.gear_ratio > 0.0f) ? cfg.gear_ratio : 1.0f;
+    m.shaft_hz = m.crank_hz / gear;
+
+    const float reference_rpm = (cfg.reference_rpm > 0.0f) ? cfg.reference_rpm : cfg.rpm;
+    const float reference_crank_hz = reference_rpm / 60.0f;
+    const float reference_firing_hz = m.firing_order * reference_crank_hz;
+
+    const auto specs = engine_harmonic_specs(cfg, m.firing_order);
+
+    // One overall gain, calibrated so the hull broadband RMS is level_mps2 at
+    // the reference speed.  Everything else follows from the physics above.
+    const float engine_rms_ref =
+        engine_harmonic_rms(cfg, specs, reference_crank_hz, reference_firing_hz, false, 1.0f);
+    if (!(engine_rms_ref > 0.0f)) {
+        return m;
+    }
+    const float shape = std::sqrt(1.0f +
+                                  kDrivelineRmsFraction * kDrivelineRmsFraction +
+                                  kBroadbandRmsFraction * kBroadbandRmsFraction);
+    const float gain = cfg.level_mps2 / (shape * engine_rms_ref);
+
+    const float speed_ratio = m.crank_hz / reference_crank_hz;
+    const float driveline_rms_ref =
+        engine_harmonic_rms(cfg, specs, reference_crank_hz, reference_firing_hz, true, 1.0f);
+    const float driveline_gain = (driveline_rms_ref > 0.0f)
+        ? (kDrivelineRmsFraction * engine_rms_ref / driveline_rms_ref)
+        : 0.0f;
+
+    const Vector3f axis_gain_raw(kAxisGainX, kAxisGainY, kAxisGainZ);
+    const Vector3f axis_gain = axis_gain_raw / axis_gain_raw.norm();
+
+    std::uniform_real_distribution<float> uphase(0.0f, kTwoPi);
+
+    Vector3f hull_ms = Vector3f::Zero();
+    Vector3f recorded_ms = Vector3f::Zero();
+
+    for (const auto& spec : specs) {
+        EngineVibrationLine line;
+        line.freq_ratio = spec.freq_ratio;
+        line.freq_hz = spec.freq_ratio * m.crank_hz;
+
+        const float hull_amp = spec.driveline
+            ? (gain * driveline_gain * spec.weight * speed_ratio * speed_ratio)
+            : (gain * spec.weight *
+               engine_unit_amplitude(cfg, line.freq_hz, reference_firing_hz));
+        if (!(hull_amp > 0.0f)) continue;
+
+        // The mechanical vibration reaches the sensing element in full; the
+        // anti-alias path is what limits the part that survives to the sample.
+        const float recorded_amp =
+            hull_amp * engine_antialias_gain(line.freq_hz, cfg.sensor_bandwidth_hz);
+
+        line.amp = axis_gain * recorded_amp;
+        line.phase = uphase(m.rng);
+        line.phase_offset = Vector3f(uphase(m.rng), uphase(m.rng), uphase(m.rng));
+        // Anchor the per-axis offsets on the line phase so the axes stay
+        // physically correlated rather than independent.
+        line.phase_offset -= Vector3f::Constant(line.phase_offset.x());
+        line.mod = 0.0f;
+        m.lines.push_back(line);
+
+        const Vector3f hull_axis = axis_gain * hull_amp;
+        hull_ms += 0.5f * hull_axis.cwiseProduct(hull_axis);
+        recorded_ms += 0.5f * line.amp.cwiseProduct(line.amp);
+    }
+
+    // Broadband structural floor.  Its recorded power scales with the sensor's
+    // noise bandwidth, so a narrower anti-alias filter folds in less of it.
+    const float engine_rms_now =
+        engine_harmonic_rms(cfg, specs, m.crank_hz, reference_firing_hz, false, 1.0f);
+    const float broadband_hull = gain * kBroadbandRmsFraction * engine_rms_now;
+    const float bandwidth_ratio = (cfg.sensor_bandwidth_hz > 0.0f)
+        ? std::sqrt(cfg.sensor_bandwidth_hz / kReferenceBandwidthHz)
+        : 1.0f;
+    m.broadband_sigma = axis_gain * (broadband_hull * bandwidth_ratio);
+    hull_ms += (axis_gain * broadband_hull).cwiseAbs2();
+    recorded_ms += m.broadband_sigma.cwiseAbs2();
+
+    m.hp_alpha = 1.0f - std::exp(-kTwoPi * kBroadbandHighPassHz * dt);
+
+    m.hull_rms = hull_ms.cwiseSqrt();
+    m.recorded_rms = recorded_ms.cwiseSqrt();
+
+    // Vibration rectification is a mechanical effect in the proof mass, so it
+    // responds to the full hull vibration rather than to the filtered signal.
+    // The specification is in mg of offset per g^2 of vibration.
+    for (int i = 0; i < 3; ++i) {
+        const float a_g = m.hull_rms[i] / g_std;
+        m.vre_offset[i] = cfg.vre_mg_per_g2 * a_g * a_g * 1e-3f * g_std;
+    }
+
+    // Governor: 0.4 percent RMS speed deviation with a 2 s correlation time,
+    // plus a slow periodic hunt.  This is what widens each order from a line
+    // into a narrow band, and it is why an alias that lands near DC wanders
+    // through the wave band instead of sitting at exactly zero.
+    const float ou_tau_s = 2.0f;
+    m.rpm_ou_alpha = 1.0f - std::exp(-dt / ou_tau_s);
+    m.rpm_ou_sigma = 0.004f * std::sqrt(2.0f * m.rpm_ou_alpha);
+    m.hunt_phase = uphase(m.rng);
+
+    const float mod_tau_s = 1.5f;
+    m.mod_alpha = 1.0f - std::exp(-dt / mod_tau_s);
+    m.mod_sigma = std::sqrt(2.0f * m.mod_alpha);
+
+    return m;
+}
+
+void apply_engine_vibration(Vector3f& acc_body_zu,
+                            Vector3f& gyr_body_zu,
+                            EngineVibrationModel& m,
+                            float dt)
+{
+    if (m.lines.empty() && !(m.broadband_sigma.norm() > 0.0f)) return;
+
+    // Instantaneous crank frequency: nominal, plus governor wander.
+    m.rpm_ou += -m.rpm_ou_alpha * m.rpm_ou + m.rpm_ou_sigma * m.n01(m.rng);
+    m.hunt_phase += kTwoPi * m.hunt_hz * dt;
+    if (m.hunt_phase > kTwoPi) m.hunt_phase -= kTwoPi;
+    const float speed_factor =
+        1.0f + m.rpm_ou + m.hunt_amplitude * std::sin(m.hunt_phase);
+    const float crank_hz_now = m.crank_hz * speed_factor;
+
+    Vector3f vib = Vector3f::Zero();
+
+    for (auto& line : m.lines) {
+        // Advancing the phase at the sample rate is exactly what a sampled
+        // sensor does, so a line above Nyquist folds on its own.
+        line.phase += kTwoPi * line.freq_ratio * crank_hz_now * dt;
+        if (line.phase > kTwoPi) line.phase -= kTwoPi;
+        else if (line.phase < 0.0f) line.phase += kTwoPi;
+
+        line.mod += -m.mod_alpha * line.mod + m.mod_sigma * m.n01(m.rng);
+        const float envelope = std::max(0.0f, 1.0f + m.mod_depth * line.mod);
+
+        for (int i = 0; i < 3; ++i) {
+            vib[i] += line.amp[i] * envelope *
+                std::sin(line.phase + line.phase_offset[i]);
+        }
+    }
+
+    if (m.broadband_sigma.norm() > 0.0f) {
+        const Vector3f white(m.broadband_sigma.x() * m.n01(m.rng),
+                             m.broadband_sigma.y() * m.n01(m.rng),
+                             m.broadband_sigma.z() * m.n01(m.rng));
+        // One-pole high pass, so the engine adds little directly in the wave
+        // band and what does arrive there comes from the folded lines.
+        m.hp_out = (1.0f - m.hp_alpha) * (m.hp_out + white - m.hp_prev_in);
+        m.hp_prev_in = white;
+        vib += m.hp_out;
+    }
+
+    acc_body_zu += vib + m.vre_offset;
+
+    // The gyroscope sees hull angular vibration about the mounts, modeled by
+    // an effective lever arm (a line of linear amplitude A at frequency f
+    // corresponds to an angular rate A / (r 2 pi f)), plus the part of the
+    // linear vibration its own g-sensitivity converts into rate.
+    Vector3f rate = m.cfg.gyro_g_sensitivity * vib;
+    if (m.cfg.gyro_lever_m > 0.0f) {
+        for (const auto& line : m.lines) {
+            const float omega = kTwoPi * line.freq_hz;
+            if (!(omega > 0.0f)) continue;
+            const float scale = 1.0f / (m.cfg.gyro_lever_m * omega);
+            // Angular vibration is about the axes orthogonal to the linear
+            // motion that drives it: vertical shake rocks the boat in roll and
+            // pitch, athwartships shake rolls it.
+            rate.x() += line.amp.z() * scale *
+                std::sin(line.phase + line.phase_offset.z());
+            rate.y() += line.amp.x() * scale *
+                std::sin(line.phase + line.phase_offset.x());
+            rate.z() += line.amp.y() * scale *
+                std::sin(line.phase + line.phase_offset.y());
+        }
+    }
+    gyr_body_zu += rate;
+}
+
+namespace {
+
+bool w3d_engine_float_from_env(const char* name, float& out)
+{
+    const char* text = std::getenv(name);
+    if (!text || *text == '\0') return false;
+
+    errno = 0;
+    char* end = nullptr;
+    const double value = std::strtod(text, &end);
+    if (errno == ERANGE || end == text || *end != '\0' || !std::isfinite(value)) {
+        throw std::invalid_argument(std::string(name) + " must be a finite number");
+    }
+    out = static_cast<float>(value);
+    return true;
+}
+
+bool w3d_engine_int_from_env(const char* name, int& out)
+{
+    float value = 0.0f;
+    if (!w3d_engine_float_from_env(name, value)) return false;
+    if (value < 1.0f || value != std::floor(value)) {
+        throw std::invalid_argument(std::string(name) + " must be a positive integer");
+    }
+    out = static_cast<int>(value);
+    return true;
+}
+
+} // namespace
+
+std::optional<EngineVibrationConfig> w3d_engine_vibration_from_env()
+{
+    EngineVibrationConfig cfg;
+    if (!w3d_engine_float_from_env("W3D_ENGINE_RPM", cfg.rpm)) {
+        return std::nullopt;
+    }
+    if (!(cfg.rpm > 0.0f)) {
+        return std::nullopt;
+    }
+
+    w3d_engine_int_from_env("W3D_ENGINE_CYLINDERS", cfg.cylinders);
+    w3d_engine_int_from_env("W3D_ENGINE_BLADES", cfg.blades);
+    w3d_engine_float_from_env("W3D_ENGINE_GEAR_RATIO", cfg.gear_ratio);
+    w3d_engine_float_from_env("W3D_ENGINE_LEVEL_MPS2", cfg.level_mps2);
+    w3d_engine_float_from_env("W3D_ENGINE_REFERENCE_RPM", cfg.reference_rpm);
+    w3d_engine_float_from_env("W3D_ENGINE_MOUNT_HZ", cfg.mount_hz);
+    w3d_engine_float_from_env("W3D_ENGINE_MOUNT_ZETA", cfg.mount_zeta);
+    w3d_engine_float_from_env("W3D_ENGINE_BANDWIDTH_HZ", cfg.sensor_bandwidth_hz);
+    w3d_engine_float_from_env("W3D_ENGINE_GYRO_LEVER_M", cfg.gyro_lever_m);
+    w3d_engine_float_from_env("W3D_ENGINE_GYRO_G_SENS", cfg.gyro_g_sensitivity);
+    w3d_engine_float_from_env("W3D_ENGINE_VRE_MG_PER_G2", cfg.vre_mg_per_g2);
+
+    float seed = static_cast<float>(cfg.seed);
+    if (w3d_engine_float_from_env("W3D_ENGINE_SEED", seed)) {
+        if (seed < 0.0f || seed != std::floor(seed)) {
+            throw std::invalid_argument("W3D_ENGINE_SEED must be an unsigned integer");
+        }
+        cfg.seed = static_cast<unsigned>(seed);
+    }
+
+    if (!(cfg.level_mps2 >= 0.0f)) {
+        throw std::invalid_argument("W3D_ENGINE_LEVEL_MPS2 must be non-negative");
+    }
+    return cfg;
+}
+
+void w3d_install_engine_vibration_from_env(SimulationNoiseModels& noise_models, float dt)
+{
+    const auto cfg = w3d_engine_vibration_from_env();
+    if (!cfg) return;
+
+    auto model = std::make_shared<EngineVibrationModel>(
+        make_engine_vibration_model(*cfg, dt));
+
+    const float nyquist_hz = (dt > 0.0f) ? (0.5f / dt) : 0.0f;
+    auto alias_hz = [nyquist_hz](float freq_hz) {
+        if (!(nyquist_hz > 0.0f)) return freq_hz;
+        const float fs = 2.0f * nyquist_hz;
+        float folded = std::fmod(freq_hz, fs);
+        if (folded < 0.0f) folded += fs;
+        if (folded > nyquist_hz) folded = fs - folded;
+        return folded;
+    };
+
+    std::cout << "ENGINE_VIBRATION rpm=" << cfg->rpm
+              << " cylinders=" << cfg->cylinders
+              << " firing_hz=" << (model->firing_order * model->crank_hz)
+              << " shaft_hz=" << model->shaft_hz
+              << " blade_hz=" << (model->shaft_hz * static_cast<float>(cfg->blades))
+              << " level_mps2=" << cfg->level_mps2
+              << " bandwidth_hz=" << cfg->sensor_bandwidth_hz
+              << " hull_rms_mps2=" << model->hull_rms.norm()
+              << " recorded_rms_mps2=" << model->recorded_rms.norm()
+              << " vre_offset_mps2=" << model->vre_offset.norm()
+              << " lines=" << model->lines.size()
+              << "\n";
+    for (const auto& line : model->lines) {
+        std::cout << "ENGINE_LINE order=" << (line.freq_ratio)
+                  << " freq_hz=" << line.freq_hz
+                  << " alias_hz=" << alias_hz(line.freq_hz)
+                  << " amp_mps2=" << line.amp.norm()
+                  << "\n";
+    }
+
+    noise_models.extra_imu_noise_models.push_back(
+        [model](Vector3f& acc_body_zu, Vector3f& gyr_body_zu, float step) {
+            apply_engine_vibration(acc_body_zu, gyr_body_zu, *model, step);
+        });
 }
 
 unsigned w3d_expand_seed(unsigned base_seed, unsigned stream_id)
@@ -1066,6 +1511,15 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
     RMSReport x, y, z, roll, pitch, yaw;
     RMSReport acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z;
     RMSReport ref_z_rms;
+    // Mean error alongside the RMS.  An RMS cannot tell a zero-mean
+    // fluctuation from a constant offset, and several deployed error sources
+    // -- attitude rectification under vibration among them -- show up almost
+    // entirely as an offset.  The angles use a circular mean so a yaw error
+    // near the +/-180 wrap does not average to zero.
+    double mean_x = 0.0, mean_y = 0.0, mean_z = 0.0;
+    double roll_c = 0.0, roll_s = 0.0;
+    double pitch_c = 0.0, pitch_s = 0.0;
+    double yaw_c = 0.0, yaw_s = 0.0;
     float ref_max_3d = 0.0f;
     for (size_t i = start; i < stop; ++i) {
         ref_z_rms.add(result.ref_z[i]);
@@ -1075,6 +1529,18 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
         roll.add(result.errs_roll[i]);
         pitch.add(result.errs_pitch[i]);
         yaw.add(result.errs_yaw[i]);
+        mean_x += static_cast<double>(result.errs_x[i]);
+        mean_y += static_cast<double>(result.errs_y[i]);
+        mean_z += static_cast<double>(result.errs_z[i]);
+        const double roll_rad = static_cast<double>(deg_to_rad(result.errs_roll[i]));
+        const double pitch_rad = static_cast<double>(deg_to_rad(result.errs_pitch[i]));
+        const double yaw_rad = static_cast<double>(deg_to_rad(result.errs_yaw[i]));
+        roll_c += std::cos(roll_rad);
+        roll_s += std::sin(roll_rad);
+        pitch_c += std::cos(pitch_rad);
+        pitch_s += std::sin(pitch_rad);
+        yaw_c += std::cos(yaw_rad);
+        yaw_s += std::sin(yaw_rad);
         acc_x.add(result.accb_err_x[i]);
         acc_y.add(result.accb_err_y[i]);
         acc_z.add(result.accb_err_z[i]);
@@ -1090,6 +1556,17 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
     const float x_rms = x.rms();
     const float y_rms = y.rms();
     const float z_rms = z.rms();
+    const double inv_count = 1.0 / static_cast<double>(count);
+    const float x_mean = static_cast<float>(mean_x * inv_count);
+    const float y_mean = static_cast<float>(mean_y * inv_count);
+    const float z_mean = static_cast<float>(mean_z * inv_count);
+    auto circular_mean_deg = [](double cos_sum, double sin_sum) -> float {
+        if (std::fabs(cos_sum) < 1e-12 && std::fabs(sin_sum) < 1e-12) return NAN;
+        return rad_to_deg(std::atan2(sin_sum, cos_sum));
+    };
+    const float roll_mean = circular_mean_deg(roll_c, roll_s);
+    const float pitch_mean = circular_mean_deg(pitch_c, pitch_s);
+    const float yaw_mean = circular_mean_deg(yaw_c, yaw_s);
     const float disp_3d = std::sqrt(
         x_rms * x_rms + y_rms * y_rms + z_rms * z_rms);
     const float acc_3d = std::sqrt(
@@ -1255,6 +1732,26 @@ void emit_window_metrics(const W3dSimulationRunResult& result,
               << " frequency_hz=" << result.final_freq_hz
               << " period_s=" << result.final_period_sec
               << " accel_variance_m2ps4=" << result.final_accel_variance
+              << "\n";
+
+    // Mean error on its own line.  An RMS cannot separate a zero-mean
+    // fluctuation from a constant offset, and some deployed error sources --
+    // attitude rectification under vibration among them -- are almost purely
+    // an offset.  This is deliberately *not* folded into VALIDATION_METRICS:
+    // that line is parsed into the committed validation and robustness
+    // evidence, and adding columns to it would rewrite files the evidence
+    // fingerprint covers without any of their numbers having changed.
+    std::cout << record_tag << "_MEANS"
+              << " family=" << family
+              << " input=" << std::filesystem::path(result.input_name).filename().string()
+              << " segment=" << (segment_name.empty() ? "window" : segment_name)
+              << " samples=" << count
+              << " disp_x_mean_m=" << x_mean
+              << " disp_y_mean_m=" << y_mean
+              << " disp_z_mean_m=" << z_mean
+              << " roll_mean_deg=" << roll_mean
+              << " pitch_mean_deg=" << pitch_mean
+              << " yaw_mean_deg=" << yaw_mean
               << "\n";
     std::cout.precision(old_precision);
 }
