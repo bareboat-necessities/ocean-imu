@@ -211,6 +211,18 @@ public:
                 filter.setAccNoiseFloorSigma(v);
             }
 
+            // Out-of-band accelerometer guard ahead of the proxy and the
+            // MEKF.  Absent, the measurement path is unconditioned, which is
+            // the deployed default.
+            {
+                float guard_hz = 0.0f;
+                int guard_poles = 2;
+                env_int("OU_III_ACC_GUARD_POLES", guard_poles);
+                if (env_float("OU_III_ACC_GUARD_HZ", guard_hz)) {
+                    filter.setAccelVibrationGuard(guard_hz, guard_poles);
+                }
+            }
+
             if (env_float("OU_ADAPT_TAU_SEC", v)) {
                 filter.setAdaptationTimeConstants(v);
             }
@@ -501,6 +513,21 @@ public:
                   fixed_RS_);
         if (!ok) throw std::runtime_error("invalid OU-III tuning point");
         fixed_tuning_applied_ = true;
+    }
+
+    // Vibration-guard telemetry, so a replay can say whether the guard engaged
+    // and how much out-of-band accelerometer content it was seeing.  The shared
+    // runner owns the adapter, so end-of-record is the destructor; silent
+    // unless a cutoff was configured, which keeps default runs unchanged.
+    ~FusionAdapter_OU_III() override {
+        const auto& filter = fusion_.raw();
+        if (!(filter.accelVibrationGuardCutoffHz() > 0.0f)) return;
+        std::cout << "ACC_GUARD cutoff_hz=" << filter.accelVibrationGuardCutoffHz()
+                  << " poles=" << filter.accelVibrationGuardPoles()
+                  << " engagement=" << filter.accelVibrationGuardEngagement()
+                  << " out_of_band_rms_mps2=" << filter.accelVibrationRms()
+                  << " delay_sec=" << filter.accelVibrationGuardDelaySec()
+                  << "\n";
     }
 
     FilterSnapshot snapshot() const override {

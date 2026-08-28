@@ -184,6 +184,107 @@ not.
   \end{figure}
 }{}
 
+\subsubsection{A front-end guard, and what it recovers}
+\label{sec:engine-noise-guard}
+
+The attribution above is narrow enough to act on.  The damage is done by
+out-of-band power in one sensor, its size follows how much of that power
+survives to the sample, and the wave band it has to be separated from is a
+decade below it.  Nothing about that requires the estimator to change: it
+requires the vibration not to reach it.
+
+\texttt{AccelVibrationGuard} is placed at the single point in
+\texttt{updateCore\_} where raw measurements arrive, so the Mahony proxy, the
+MEKF, and the tilt watchdog all read the same conditioned accelerometer and no
+consumer can be left on a different version of it.  It is a two-pole cascade at
+\SI{14}{Hz}, in the empty spectrum between the two bands.
+
+The corner is chosen against delay rather than against rejection.  A low pass
+costs group delay $\tau = n_{\rm poles}/(2\pi f_c)$, flat across the wave band,
+and acceleration delayed by $\tau$ yields displacement delayed by $\tau$: an
+error of $A \, 2\pi f \tau$ that grows with wave amplitude, so an
+unconditional filter charges the biggest seas the most.  Two poles at
+\SI{14}{Hz} cost \SI{22.7}{ms}.  Sweeping the alternatives, \SI{10}{Hz} costs
+\SI{32}{ms} for no better result and \SI{20}{Hz} costs \SI{16}{ms} for a
+markedly worse one; at matched delay a longer cascade rejects less of what
+matters here, because the damaging content sits just above the corner rather
+than deep in the stopband.
+
+Because the delay is only worth paying when there is something to remove, the
+guard engages on a measurement rather than always.  A separate two-pole
+high-pass at \SI{25}{Hz} watches the accelerometer, and the guard ramps in over
+\SI{5}{s} as that reading crosses \SIrange{0.03}{0.08}{m.s^{-2}}.  The detector
+is deliberately placed well above the conditioning corner: at the corner it
+would be reading the top of the sea spectrum, which grows with wave height, and
+would then engage hardest in big seas, which is exactly backwards.  Placed
+above the sea it reads \SIrange{0.00796}{0.00805}{m.s^{-2}} across the eight
+stationary records --- a one percent spread over a \num{31}:1 range of $H_s$ ---
+against \SI{0.087}{m.s^{-2}} at idle and \SI{0.144}{m.s^{-2}} at the nominal
+cruise condition.
+
+Table~\ref{tab:engine-noise-guard} is the result.  At the nominal cruise
+condition pooled 3-D RMS falls from \SI{4.232}{m} to \SI{0.596}{m}, so the
+penalty against the engine-off baseline goes from a factor of \num{8.1} to
+\num{1.14}.  The standing tilt offset the guard targets falls from
+\SI{3.075}{\degree} to \SI{1.180}{\degree} and yaw from \SI{45.4}{\degree} to
+\SI{4.2}{\degree}.  The worst condition swept --- a sensor at the engine bed,
+which unguarded loses lock at \SI{37.5}{m} --- returns to \SI{0.834}{m}, a
+factor of \num{1.6}.
+
+\begin{table}[t]
+  \centering
+  \caption{OU--III pooled over the eight stationary records with the front-end
+  vibration guard off and on.  ``Offset'' is the systematic part of the 3-D
+  error.  The engine-off rows are identical to every digit.}
+  \label{tab:engine-noise-guard}
+  \footnotesize
+  \setlength{\tabcolsep}{3.0pt}
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    & \multicolumn{2}{c}{3-D [m]} & \multicolumn{2}{c}{Pitch offset [\si{\degree}]} & \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    Condition & off & on & off & on & $\times$ base \\
+    \midrule
+    Engine off      &  0.522 & 0.522 & 0.144 & 0.144 & 1.00 \\
+    \SI{800}{rpm}   &  0.877 & 0.598 & 2.014 & 1.327 & 1.15 \\
+    \SI{1600}{rpm}  &  1.402 & 0.589 & 1.211 & 1.125 & 1.13 \\
+    \SI{2400}{rpm}  &  4.232 & 0.596 & 3.075 & 1.180 & 1.14 \\
+    \SI{3200}{rpm}  &  8.651 & 0.675 & 3.283 & 1.773 & 1.29 \\
+    Quiet mount     &  1.372 & 0.567 & 2.744 & 0.584 & 1.09 \\
+    Engine bed      & 37.531 & 0.834 & 7.705 & 2.260 & 1.60 \\
+    Wide sensor     &  7.570 & 0.580 & 2.360 & 0.520 & 1.11 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\IfFileExists{ou_engine_noise_guard.svg}{%
+  \begin{figure}[t]
+    \centering
+    \includesvg[width=\columnwidth,inkscapelatex=false]{ou_engine_noise_guard}
+    \caption{Pooled displacement error and standing tilt offset with the
+    front-end guard off and on, over the same eight records.  Both panels are
+    logarithmic and the dotted line is the engine-off baseline.  The guard
+    holds every engine condition within a factor of \num{1.6} of that baseline,
+    against factors from \num{1.7} to \num{72} without it.}
+    \label{fig:engine-noise-guard}
+  \end{figure}
+}{}
+
+The engine-off row is the other half of the claim.  With no machinery running
+the detector never reaches its lower rail, the guard returns its input
+unchanged, and the replay is bit-identical to the unguarded one on all eight
+records.  The mitigation therefore costs nothing where it is not needed, and
+carries no re-cut of the fitted quality gates and no invalidation of committed
+evidence --- which is what makes an always-armed default defensible.
+
+Two limits are worth stating.  The guard conditions the measurement but does
+not make the estimator vibration-aware: the accelerometer measurement
+covariance is unchanged, so the filter still treats a conditioned sample as
+though it were a quiet one, and inflating $R_{\rm acc}$ from the same detector
+reading is the obvious next step.  And no front-end filter can help with
+machinery whose orders reach into the wave band, because there is nothing there
+to separate them from the sea.
+
 \subsubsection{Scope}
 
 This is a sensor-path result and should not be read as the full cost of
@@ -193,8 +294,9 @@ change: a real passage under power also alters the encounter spectrum, adds
 propeller-induced surge, and runs the engine at a speed that itself varies
 with the sea.  Nor is the estimator retuned for the condition.  The
 measurement covariances, adaptation law, pseudo-measurements, startup logic,
-and regularization are exactly those deployed, which is the point --- the
+and regularization are exactly those deployed, which is the point: the
 numbers above are what the shipped configuration does when the boat starts its
-engine, and they indicate that vibration-aware measurement covariance, or a
-motoring detector gating the accelerometer update, is the natural next piece
-of work rather than a refinement of the wave model.
+engine.  What they indicate is that the remedy belongs in the measurement path
+rather than in the wave model, which is where
+Sec.~\ref{sec:engine-noise-guard} puts it.
+

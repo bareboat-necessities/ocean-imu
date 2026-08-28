@@ -19,6 +19,9 @@ ENGINE_FIGURES = (
     "ou_engine_noise_speed.svg",
     "ou_engine_noise_mechanism.svg",
 )
+GUARD_RESULTS = ROOT / "reports" / "results" / "engine_noise_mitigation"
+GUARD_SUMMARY = GUARD_RESULTS / "guard_summary.csv"
+GUARD_FIGURE = "ou_engine_noise_guard.svg"
 
 
 class OuArticleAblationContractTests(unittest.TestCase):
@@ -314,6 +317,151 @@ class OuArticleEngineNoiseContractTests(unittest.TestCase):
         parser = (ROOT / "tools" / "ou_validation.py").read_text(encoding="utf-8")
         for name in ("pitch_mean_deg", "disp_z_mean_m", "yaw_mean_deg"):
             self.assertNotIn(name, parser)
+
+
+class OuArticleVibrationGuardContractTests(unittest.TestCase):
+    """The mitigation section must agree with the committed guard study."""
+
+    def summary(self) -> dict[tuple[str, str], dict[str, str]]:
+        with GUARD_SUMMARY.open(encoding="utf-8", newline="") as stream:
+            return {
+                (row["condition"], row["guard"]): row for row in csv.DictReader(stream)
+            }
+
+    def test_guard_is_bit_transparent_with_no_engine(self):
+        """The claim that lets the guard ship armed by default."""
+
+        rows = self.summary()
+        off = rows[("engine off", "off")]
+        on = rows[("engine off", "on")]
+        for name in ("disp_3d_rms_m", "disp_z_rms_m", "pitch_rms_deg",
+                     "yaw_rms_deg", "pitch_mean_deg", "disp_z_mean_m"):
+            with self.subTest(name=name):
+                self.assertEqual(off[name], on[name])
+        self.assertEqual(float(on["guard_engagement"]), 0.0)
+
+    def test_guard_holds_every_engine_condition_near_the_baseline(self):
+        rows = self.summary()
+        baseline = float(rows[("engine off", "off")]["disp_3d_rms_m"])
+        for (condition, guard), row in rows.items():
+            if guard != "on" or condition == "engine off":
+                continue
+            ratio = float(row["disp_3d_rms_m"]) / baseline
+            with self.subTest(condition=condition):
+                # Unguarded these run from 1.7x to 72x; the section claims the
+                # guard holds all of them inside 1.6x.
+                self.assertLess(ratio, 1.7, f"{condition}: {ratio:.2f}x")
+
+    def test_guard_improves_every_engine_condition(self):
+        rows = self.summary()
+        for condition, _ in list(rows):
+            if condition == "engine off":
+                continue
+            off = float(rows[(condition, "off")]["disp_3d_rms_m"])
+            on = float(rows[(condition, "on")]["disp_3d_rms_m"])
+            with self.subTest(condition=condition):
+                self.assertLess(on, off)
+
+    def test_detector_is_independent_of_wave_height(self):
+        """A detector placed above the sea must not read the sea.
+
+        This is what stops the guard engaging hardest in big seas, so it is
+        checked on the per-record rows rather than the pooled ones.
+        """
+
+        with (GUARD_RESULTS / "guard_runs.csv").open(encoding="utf-8", newline="") as s:
+            clean = [
+                row for row in csv.DictReader(s)
+                if row["condition"] == "engine off" and row["guard"] == "on"
+            ]
+        self.assertEqual(len(clean), 8)
+        readings = [float(row["guard_out_of_band_rms_mps2"]) for row in clean]
+        heights = [float(row["hs_m"]) for row in clean]
+        self.assertGreater(max(heights) / min(heights), 30.0)
+        self.assertLess(max(readings) / min(readings), 1.05, readings)
+        for row in clean:
+            self.assertEqual(float(row["guard_engagement"]), 0.0)
+
+    def test_guard_table_matches_committed_summary(self):
+        text = (DOC / "w3d-engine-noise-degradation.tex-part").read_text(
+            encoding="utf-8"
+        )
+        normalized = " ".join(text.split())
+        rows = self.summary()
+        tex_rows = {
+            "engine off": "Engine off",
+            "800 rpm": r"\SI{800}{rpm}",
+            "1600 rpm": r"\SI{1600}{rpm}",
+            "2400 rpm": r"\SI{2400}{rpm}",
+            "3200 rpm": r"\SI{3200}{rpm}",
+            "2400 rpm, quiet mount": "Quiet mount",
+            "2400 rpm, engine bed": "Engine bed",
+            "2400 rpm, wide sensor": "Wide sensor",
+        }
+        baseline = float(rows[("engine off", "off")]["disp_3d_rms_m"])
+        for condition, label in tex_rows.items():
+            off = rows[(condition, "off")]
+            on = rows[(condition, "on")]
+            expected = " ".join((
+                label, "&",
+                f"{float(off['disp_3d_rms_m']):.3f}", "&",
+                f"{float(on['disp_3d_rms_m']):.3f}", "&",
+                f"{abs(float(off['pitch_mean_deg'])):.3f}", "&",
+                f"{abs(float(on['pitch_mean_deg'])):.3f}", "&",
+                f"{float(on['disp_3d_rms_m']) / baseline:.2f}",
+            ))
+            with self.subTest(condition=condition):
+                self.assertIn(expected, normalized)
+
+    def test_section_renders_the_guard_figure(self):
+        text = (DOC / "w3d-engine-noise-degradation.tex-part").read_text(
+            encoding="utf-8"
+        )
+        stem = GUARD_FIGURE.removesuffix(".svg")
+        self.assertIn(rf"\IfFileExists{{{GUARD_FIGURE}}}", text)
+        self.assertIn(
+            rf"\includesvg[width=\columnwidth,inkscapelatex=false]{{{stem}}}", text
+        )
+        self.assertIn(r"\label{sec:engine-noise-guard}", text)
+        self.assertIn(r"\label{fig:engine-noise-guard}", text)
+        # The scope note must point at the remedy rather than call it future work.
+        self.assertIn(r"Sec.~\ref{sec:engine-noise-guard}", text)
+
+    def test_guard_figure_is_mirrored_from_generated_evidence(self):
+        generated = GUARD_RESULTS / GUARD_FIGURE
+        mirrored = DOC / GUARD_FIGURE
+        self.assertTrue(generated.exists(), generated)
+        self.assertEqual(generated.read_bytes(), mirrored.read_bytes())
+
+    def test_guard_is_off_unless_a_cutoff_is_configured(self):
+        """Every committed replay depends on the guard staying opt-in."""
+
+        header = (ROOT / "src" / "tuner" / "AccelVibrationGuard.h").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("float cutoff_hz_ = 0.0f;", header)
+        self.assertIn("if (!enabled()", header)
+
+        filt = (ROOT / "src" / "kalman_ou_iii"
+                / "SeaStateFusionFilter_OU_III.h").read_text(encoding="utf-8")
+        # One conditioning point, feeding every consumer.
+        self.assertIn("const Eigen::Vector3f acc_in = accel_guard_.step(acc, dt);", filt)
+        self.assertIn("vertical_accel_comp_.update(dt, gyro, acc_in, g_std);", filt)
+        self.assertIn("mekf_->measurement_update_acc_only(acc_in, tempC);", filt)
+        self.assertNotIn("measurement_update_acc_only(acc,", filt)
+
+    def test_generator_publishes_the_guard_figure(self):
+        tool = (ROOT / "tools" / "ou3_engine_noise_mitigation.py").read_text(
+            encoding="utf-8"
+        )
+        for token in (
+            "write_plot",
+            "ou_engine_noise_guard.svg",
+            'rcParams["svg.hashsalt"]',
+            'metadata={"Date": None}',
+            "GUARD_CUTOFF_HZ",
+        ):
+            self.assertIn(token, tool)
 
 
 if __name__ == "__main__":

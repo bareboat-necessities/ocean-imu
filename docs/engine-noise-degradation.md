@@ -244,3 +244,119 @@ mirrored byte-for-byte into `doc/kalman_ou_iii/` for the article.  The figures
 use a fixed Matplotlib hash salt and carry no creation timestamp, so repeated
 runs on the same evidence are byte-identical; `--no-plots` skips them where
 Matplotlib is unavailable.
+
+## Mitigation: the front-end vibration guard
+
+`src/tuner/AccelVibrationGuard.h`, wired into
+`SeaStateFusionFilter_OU_III::updateCore_`, acts on the attribution above: the
+damage comes from out-of-band power in one sensor, its size follows how much of
+that power survives to the sample, and the wave band it must be separated from
+is a decade below it.  So the fix is to keep the vibration out of the
+measurement path rather than to change the estimator.
+
+The guard sits at the single point where raw measurements arrive, so the Mahony
+proxy, the MEKF, and the tilt watchdog all read the same conditioned
+accelerometer.
+
+**Conditioning.** A two-pole one-pole cascade at 14 Hz, in the empty spectrum
+between the wave band and the machinery band.
+
+**Why 14 Hz.** A low pass costs group delay `tau = poles / (2 pi fc)`, flat
+across the wave band, and acceleration delayed by `tau` yields displacement
+delayed by `tau` — an error of `A * 2 pi f * tau` that grows with wave
+amplitude.  The corner is therefore chosen against delay, not against
+rejection.  Measured on one record, unconditionally engaged:
+
+| Config | Group delay | Clean 3-D | 2400 rpm 3-D |
+| --- | ---: | ---: | ---: |
+| off | 0 | 0.1555 | 0.8999 |
+| 2 poles @ 20 Hz | 16 ms | 0.1560 | 0.2007 |
+| 2 poles @ 15 Hz | 21 ms | 0.1579 | 0.1713 |
+| 2 poles @ 10 Hz | 32 ms | 0.1652 | 0.1671 |
+| 2 poles @ 5 Hz | 64 ms | 0.2122 | 0.2123 |
+| 3 poles @ 22 Hz | 22 ms | 0.1572 | 0.1732 |
+| 4 poles @ 30 Hz | 21 ms | 0.1564 | 0.1828 |
+
+At matched group delay a longer cascade rejects *less* of what matters, because
+the damaging content sits just above the corner rather than deep in the
+stopband.  Hence two poles, and a corner near 14 Hz.
+
+**Engagement.** Because the delay is only worth paying when there is something
+to remove, the guard engages on a measurement.  A separate two-pole high-pass
+at 25 Hz watches the accelerometer, and the guard ramps in over 5 s as that
+reading crosses 0.03 to 0.08 m/s².
+
+The detector corner is well above the conditioning corner on purpose.  At the
+conditioning corner it would be reading the top of the sea spectrum, which
+grows with wave height, and would engage the guard hardest in big seas —
+exactly backwards.  (`acc - lowpass` is the same trap: for a two-pole cascade
+that difference is only *first* order near DC, so it leaks wave-band content
+into the reading.  The detector is two cascaded one-pole high-passes instead.)
+
+Placed above the sea, the detector reads:
+
+| Condition | Detector RMS [m/s²] | Engagement |
+| --- | ---: | ---: |
+| clean, all eight records | 0.00796 – 0.00805 | 0.000 |
+| 2400 rpm, quiet mount | 0.072 | 0.83 |
+| 800 rpm | 0.087 | 1.00 |
+| 2400 rpm | 0.144 | 1.00 |
+| 2400 rpm, engine bed | 0.288 | 1.00 |
+
+A one percent spread across a 31:1 range of `Hs` is what a detector placed
+above the sea should look like.
+
+### What it recovers
+
+`tools/ou3_engine_noise_mitigation.py`, pooled over the same eight records:
+
+| Condition | 3-D off [m] | 3-D on [m] | Pitch offset off | on | × baseline (off → on) |
+| --- | ---: | ---: | ---: | ---: | --- |
+| engine off | 0.5224 | 0.5224 | 0.144 | 0.144 | 1.00 → 1.00 |
+| 800 rpm | 0.8770 | 0.5982 | 2.014 | 1.327 | 1.68 → 1.15 |
+| 1600 rpm | 1.4021 | 0.5889 | 1.211 | 1.125 | 2.68 → 1.13 |
+| 2400 rpm | 4.2318 | 0.5961 | 3.075 | 1.180 | 8.10 → 1.14 |
+| 3200 rpm | 8.6509 | 0.6746 | 3.283 | 1.773 | 16.56 → 1.29 |
+| 2400 rpm, quiet mount | 1.3724 | 0.5673 | 2.744 | 0.584 | 2.63 → 1.09 |
+| 2400 rpm, engine bed | 37.5310 | 0.8345 | 7.705 | 2.260 | 71.84 → 1.60 |
+| 2400 rpm, wide sensor | 7.5696 | 0.5795 | 2.360 | 0.520 | 14.49 → 1.11 |
+
+Every engine condition is held within a factor of 1.6 of the engine-off
+baseline, against factors of 1.7 to 72 without the guard.  At nominal cruise
+yaw goes from 45.4 to 4.2 deg.
+
+### It is bit-transparent with no engine running
+
+With no machinery the detector never reaches its lower rail, so the guard
+returns its input unchanged and the replay is **bit-identical** to the
+unguarded one on all eight records.  The mitigation costs nothing where it is
+not needed, which is what makes an always-armed default defensible: no fitted
+quality gate has to be re-cut and no committed replay is invalidated.
+
+### Configuration
+
+| Variable | Default | Meaning |
+| --- | ---: | --- |
+| `OU_III_ACC_GUARD_HZ` | off | conditioning corner; unset leaves the path unconditioned |
+| `OU_III_ACC_GUARD_POLES` | 2 | conditioning cascade length |
+
+In code: `SeaStateFusionFilter_OU_III::setAccelVibrationGuard(cutoff_hz, poles)`,
+with `AccelVibrationGuard::setEngagement()` and `setDetectHz()` for the
+detector.  `accelVibrationRms()` and `accelVibrationGuardEngagement()` read
+back the health signal.  The simulator prints an `ACC_GUARD` line per record
+when a cutoff is configured.
+
+The engagement thresholds are absolute levels referenced to the accelerometer
+white noise this repository injects (1.51e-3 g per axis).  A noisier part
+raises the clean floor proportionally and wants `setEngagement()` called to
+match.
+
+### What it does not do
+
+The guard conditions the measurement; it does not make the estimator
+vibration-aware.  The accelerometer measurement covariance is unchanged, so the
+filter still treats a conditioned sample as though it were a quiet one —
+inflating `R_acc` from the same detector reading is the obvious next step, and
+would attack the residual the guard leaves.  No front-end filter can help with
+machinery whose orders reach into the wave band, since there is nothing there
+to separate them from the sea.
