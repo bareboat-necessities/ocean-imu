@@ -10,7 +10,7 @@ import ou3_p5_sample1_v38_exact_psd_current_subbox_lift_v39 as V39
 
 
 class Sample1V38ExactPSDCurrentSubboxLiftV39Tests(unittest.TestCase):
-    def test_build_isolates_refined_psd_from_authoritative_current_chart(self):
+    def test_build_isolates_refined_psd_and_captures_authoritative_chart_q(self):
         original_v12_build = V39.V12D.build
         original_v12_validate = V39.V12D.validate
         original_v34_build = V39.V34.build
@@ -22,12 +22,13 @@ class Sample1V38ExactPSDCurrentSubboxLiftV39Tests(unittest.TestCase):
         original_matches = V39.V21B._matches_reference
         seen = {}
 
+        qref = 0.6415230535178351
         baseline_row = {"first_offaxis_attitude_correction_upper_rad": 0.25}
 
         V39.V12D.build = lambda *a, **k: {"rows": [baseline_row]}
         V39.V12D.validate = lambda _d: []
         V39.V30._witness_row = lambda _d: baseline_row
-        V39.V21B._matches_reference = lambda q: abs(float(q) - 0.6415230535178351) < 1e-12
+        V39.V21B._matches_reference = lambda q: abs(float(q) - qref) < 1e-12
 
         def fake_exact(**kwargs):
             seen["exact_kwargs"] = dict(kwargs)
@@ -35,7 +36,7 @@ class Sample1V38ExactPSDCurrentSubboxLiftV39Tests(unittest.TestCase):
 
         def fake_chart(*, first, base, vr, dom, src, sample1_s_angle):
             seen["chart_vr"] = vr
-            return {"q1": 0.6415230535178351}
+            return {"q1": qref}
 
         def fake_v34_build(*args, **kwargs):
             seen["helper_patched"] = V39.V12D._first_psd_perturbation_tangent is not original_helper
@@ -47,10 +48,11 @@ class Sample1V38ExactPSDCurrentSubboxLiftV39Tests(unittest.TestCase):
             chart = V39.V21._current_component_chart(
                 first={}, base={}, vr={"refined": True}, dom={}, src={},
                 sample1_s_angle=0.0)
-            self.assertEqual(chart["q1"], 0.6415230535178351)
+            self.assertEqual(chart["q1"], qref)
+            # Deliberately do not copy sample1_current_cayley_norm_upper here:
+            # V31/V34 do not own that focused V21 provenance field.
             return {
                 "P5_SAMPLE1_DIRECTIONAL_INNOVATION_ROW_LIFT_V34": "PASS",
-                "sample1_current_cayley_norm_upper": 0.6415230535178351,
                 "open_current_subboxes": 1,
             }
 
@@ -78,6 +80,9 @@ class Sample1V38ExactPSDCurrentSubboxLiftV39Tests(unittest.TestCase):
         self.assertIs(V39.V21._current_component_chart, original_chart)
         self.assertEqual(d["V38_exact_first_PSD_helper_calls"], 1)
         self.assertEqual(d["authoritative_V18B_current_chart_freeze_calls"], 1)
+        self.assertTrue(d["authoritative_V18B_current_q_captured_from_frozen_chart"])
+        self.assertEqual(d["sample1_current_cayley_norm_upper"], qref)
+        self.assertTrue(d["current_q_matches_authoritative_V18B_reference"])
         self.assertEqual(
             d["next_obligation"],
             "REFINE_FIRST_REMAINING_V39_SUBBOX_WITH_EXACT_FIRST_PSD_JOSEPH_COMPONENT_MATRIX",
@@ -95,6 +100,7 @@ class Sample1V38ExactPSDCurrentSubboxLiftV39Tests(unittest.TestCase):
             "V38_exact_canonical_tangent_geometry_retained": True,
             "V36_full_Joseph_gain_operator_parent_retained": True,
             "authoritative_V18B_current_chart_frozen_to_baseline_V12D_witness": True,
+            "authoritative_V18B_current_q_captured_from_frozen_chart": True,
             "current_q_matches_authoritative_V18B_reference": True,
             "refined_PSD_used_only_outside_authoritative_current_chart": True,
             "temporary_helpers_restored_after_build": True,
