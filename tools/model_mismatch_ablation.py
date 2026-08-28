@@ -24,6 +24,7 @@ import json
 import math
 import os
 import subprocess
+import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -106,6 +107,11 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=DEFAULT_WINDOW_SEC,
         help="trailing scoring window in seconds (default: 900)",
+    )
+    parser.add_argument(
+        "--no-plots",
+        action="store_true",
+        help="skip the SVG charts (for environments without Matplotlib)",
     )
     parser.add_argument(
         "--jobs",
@@ -237,7 +243,8 @@ def fmt(value: Any, digits: int = 4) -> str:
 
 
 def markdown_report(rows: list[dict[str, Any]], summaries: list[dict[str, Any]],
-                    window_sec: float, commit: str | None) -> str:
+                    window_sec: float, commit: str | None,
+                    plots: bool = True) -> str:
     lines = [
         "# Noise-free model-mismatch ablation",
         "",
@@ -315,6 +322,21 @@ def markdown_report(rows: list[dict[str, Any]], summaries: list[dict[str, Any]],
             )
         )
 
+    if plots:
+        lines.extend(
+            [
+                "",
+                "## Figures",
+                "",
+                f"- `{FLOOR_PLOT_NAME}`: pooled floor per family across the",
+                "  displacement, attitude, and estimator-generated bias channels.",
+                f"- `{SCALING_PLOT_NAME}`: per-record residual against `Hs`, with a",
+                "  slope-one guide and the `Hs`-normalized vertical residual.",
+                "",
+                "Both are mirrored byte-for-byte into `doc/kalman_ou_iii/` for the article.",
+            ]
+        )
+
     lines.extend(
         [
             "",
@@ -330,6 +352,229 @@ def markdown_report(rows: list[dict[str, Any]], summaries: list[dict[str, Any]],
         ]
     )
     return "\n".join(lines)
+
+
+# Charts published with the article.  The palette and marker set are fixed here
+# so the two figures stay mutually consistent and legible in grayscale print.
+FAMILY_COLORS = {
+    "OU-II": "#1b6ca8",
+    "OU-III": "#c0392b",
+    "TFG": "#2e8b57",
+}
+FAMILY_MARKERS = {
+    "OU-II": "o",
+    "OU-III": "s",
+    "TFG": "^",
+}
+SPECTRUM_FILL = {"JONSWAP": True, "PM-Stokes": False}
+
+FLOOR_PLOT_NAME = "ou_model_mismatch_floor.svg"
+SCALING_PLOT_NAME = "ou_model_mismatch_scaling.svg"
+
+
+def reproducible_pyplot():
+    """Matplotlib configured for byte-reproducible published SVGs."""
+
+    cache_dir = Path(tempfile.gettempdir()) / "ocean-imu-matplotlib-cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    os.environ.setdefault("MPLCONFIGDIR", str(cache_dir))
+    import matplotlib
+
+    matplotlib.use("Agg")
+    # Without these the figure cannot be reproduced: matplotlib derives svg
+    # element ids from a per-process salt and stamps a creation date, so two
+    # identical runs disagree on bytes the evidence fingerprint hashes.
+    matplotlib.rcParams["svg.hashsalt"] = "ocean-imu-model-mismatch"
+    import matplotlib.pyplot as plt
+
+    return plt
+
+
+def _save_svg(figure: Any, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    figure.savefig(path, format="svg", metadata={"Date": None})
+
+
+def write_floor_plot(path: Path, summaries: list[dict[str, Any]]) -> None:
+    """Pooled noise-free floor per family, by channel."""
+
+    plt = reproducible_pyplot()
+    by_family = {summary["family"]: summary for summary in summaries}
+    families = [family for family in FAMILIES if family in by_family]
+    figure, axes = plt.subplots(2, 2, figsize=(7.6, 5.4))
+
+    def grouped(axis, fields, labels, ylabel, title) -> None:
+        width = 0.8 / max(1, len(families))
+        base = [float(index) for index in range(len(fields))]
+        for offset, family in enumerate(families):
+            values = [float(by_family[family][field]) for field in fields]
+            positions = [
+                value + (offset - (len(families) - 1) / 2.0) * width for value in base
+            ]
+            axis.bar(
+                positions,
+                values,
+                width=width,
+                color=FAMILY_COLORS[family],
+                edgecolor="#222222",
+                linewidth=0.5,
+                label=family,
+            )
+        axis.set_xticks(base)
+        axis.set_xticklabels(labels)
+        axis.set_ylabel(ylabel)
+        axis.set_title(title, fontsize=10)
+        axis.grid(axis="y", alpha=0.25)
+
+    grouped(
+        axes[0][0],
+        ("disp_x_rms_m", "disp_y_rms_m", "disp_z_rms_m", "disp_3d_rms_m"),
+        ("X", "Y", "Z", "3-D"),
+        "RMS error (m)",
+        "Displacement floor",
+    )
+    grouped(
+        axes[0][1],
+        ("roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg"),
+        ("Roll", "Pitch", "Yaw"),
+        "RMS error (deg)",
+        "Attitude floor",
+    )
+
+    def per_family(axis, field, ylabel, title, log=False) -> None:
+        values = [float(by_family[family][field]) for family in families]
+        positions = [float(index) for index in range(len(families))]
+        axis.bar(
+            positions,
+            values,
+            width=0.55,
+            color=[FAMILY_COLORS[family] for family in families],
+            edgecolor="#222222",
+            linewidth=0.5,
+        )
+        axis.set_xticks(positions)
+        axis.set_xticklabels(families)
+        axis.set_xlim(-0.6, len(families) - 0.4)
+        axis.set_ylabel(ylabel)
+        axis.set_title(title, fontsize=10)
+        axis.grid(axis="y", alpha=0.25)
+        if log:
+            # The gyro-bias state spans more than an order of magnitude between
+            # the OU families and TFG, so a linear axis hides the OU bars.
+            axis.set_yscale("log")
+            axis.set_ylim(min(values) / 3.0, max(values) * 2.0)
+
+    per_family(
+        axes[1][0],
+        "accel_bias_3d_rms_mps2",
+        r"RMS (m s$^{-2}$)",
+        "Estimator-generated accel bias",
+    )
+    per_family(
+        axes[1][1],
+        "gyro_bias_3d_rms_radps",
+        r"RMS (rad s$^{-1}$)",
+        "Estimator-generated gyro bias",
+        log=True,
+    )
+
+    handles, labels = axes[0][0].get_legend_handles_labels()
+    figure.legend(
+        handles,
+        labels,
+        frameon=False,
+        ncol=len(families),
+        fontsize=9,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.0),
+    )
+    figure.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
+    _save_svg(figure, path)
+    plt.close(figure)
+
+
+def write_scaling_plot(path: Path, rows: list[dict[str, Any]]) -> None:
+    """Per-record residual against significant wave height."""
+
+    plt = reproducible_pyplot()
+    families = [
+        family for family in FAMILIES if any(row["family"] == family for row in rows)
+    ]
+    figure, axes = plt.subplots(1, 3, figsize=(10.2, 3.5))
+    panels = (
+        ("disp_z_rms_m", "Vertical residual", "RMS error (m)", "log"),
+        (
+            "disp_z_pct_hs",
+            "Vertical residual, normalized",
+            r"RMS error (% of $H_s$)",
+            "linear",
+        ),
+        ("disp_x_rms_m", "Along-$x$ residual", "RMS error (m)", "log"),
+    )
+    for axis, (field, title, ylabel, yscale) in zip(axes, panels):
+        for family in families:
+            for spectrum, filled in SPECTRUM_FILL.items():
+                selected = sorted(
+                    (
+                        row for row in rows
+                        if row["family"] == family and row["spectrum"] == spectrum
+                    ),
+                    key=lambda row: float(row["hs_m"]),
+                )
+                if not selected:
+                    continue
+                x = [float(row["hs_m"]) for row in selected]
+                y = [float(row[field]) for row in selected]
+                axis.plot(
+                    x,
+                    y,
+                    marker=FAMILY_MARKERS[family],
+                    markersize=5.0,
+                    linewidth=1.4,
+                    color=FAMILY_COLORS[family],
+                    linestyle="-" if filled else "--",
+                    markerfacecolor=FAMILY_COLORS[family] if filled else "none",
+                    label=f"{family} {spectrum}",
+                )
+        axis.set_xscale("log")
+        axis.set_yscale(yscale)
+        axis.set_xlabel(r"$H_s$ (m)")
+        axis.set_ylabel(ylabel)
+        axis.set_title(title, fontsize=10)
+        heights = sorted({float(record.hs_m) for record in RECORDS})
+        axis.set_xticks(heights)
+        axis.set_xticklabels([f"{height:g}" for height in heights])
+        axis.grid(True, which="major", alpha=0.25)
+        if yscale == "linear":
+            axis.set_ylim(bottom=0.0)
+        else:
+            # A slope-1 guide makes the claim explicit: the noise-free residual
+            # is proportional to wave amplitude, not a fixed electronics floor.
+            low = min(float(row[field]) for row in rows)
+            hs_low, hs_high = heights[0], heights[-1]
+            anchor = low / 1.9
+            axis.plot(
+                (hs_low, hs_high),
+                (anchor, anchor * hs_high / hs_low),
+                color="#555555",
+                linewidth=0.9,
+                linestyle=":",
+                label=r"$\propto H_s$" if field == "disp_z_rms_m" else None,
+            )
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    figure.legend(
+        handles,
+        labels,
+        frameon=False,
+        ncol=4,
+        fontsize=8,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.0),
+    )
+    figure.tight_layout(rect=(0.0, 0.0, 1.0, 0.88))
+    _save_svg(figure, path)
+    plt.close(figure)
 
 
 def write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: Iterable[str]) -> None:
@@ -386,8 +631,18 @@ def main() -> int:
     summary_fields = ("family", "records", *RMS_FIELDS, "disp_z_ref_rms_m", "disp_z_pct_refrms")
     write_csv(out / "model_mismatch_summary.csv", summaries, summary_fields)
     (out / "model_mismatch_report.md").write_text(
-        markdown_report(rows, summaries, args.window_sec, commit), encoding="utf-8"
+        markdown_report(rows, summaries, args.window_sec, commit, not args.no_plots),
+        encoding="utf-8",
     )
+    outputs = [
+        "model_mismatch_runs.csv",
+        "model_mismatch_summary.csv",
+        "model_mismatch_report.md",
+    ]
+    if not args.no_plots:
+        write_floor_plot(out / FLOOR_PLOT_NAME, summaries)
+        write_scaling_plot(out / SCALING_PLOT_NAME, rows)
+        outputs.extend((FLOOR_PLOT_NAME, SCALING_PLOT_NAME))
     manifest = {
         "study": "noise-free model-mismatch ablation",
         "source_commit": commit,
@@ -401,11 +656,7 @@ def main() -> int:
         "sensor_noise_injected": False,
         "simulator_switch": "--no-noise",
         "filter_covariance_and_tuning_unchanged": True,
-        "outputs": [
-            "model_mismatch_runs.csv",
-            "model_mismatch_summary.csv",
-            "model_mismatch_report.md",
-        ],
+        "outputs": outputs,
     }
     (out / "manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"

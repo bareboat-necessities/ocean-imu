@@ -1,12 +1,8 @@
 # README result gallery provenance
 
-This file is intentionally outside `reports/results/`: README gallery provenance
-contains build-specific identifiers and is not scientific validation evidence.
+These SVGs are copied verbatim from the successful OU-III build on
+main; they are not screenshots or raster conversions.
 
-Initial gallery seeded verbatim from the successful OU-III build artifact
-`release-svgs-kalman_ou_iii` produced by workflow run 32621747215
-(source SHA d0f99e101472bfd7c953757f1a247036bd20c37c).
-
-Subsequent successful main builds refresh this file and the presentation-only
-`reports/results/readme/` gallery through
-`.github/workflows/readme-results-publish.yml`.
+- build workflow run: https://github.com/bareboat-necessities/ocean-imu/actions/runs/33179537687
+- triggering source SHA: ca599fe5c35f1d7a462baec0fcacbfc3da70f762
+- source artifact: release-svgs-kalman_ou_iii
