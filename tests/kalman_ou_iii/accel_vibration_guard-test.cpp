@@ -1,3 +1,5 @@
+#define EIGEN_NON_ARDUINO
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>

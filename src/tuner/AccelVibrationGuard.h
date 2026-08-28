@@ -4,10 +4,14 @@
   Copyright 2025-2026, Mikhail Grushinskiy
 */
 
+#ifdef EIGEN_NON_ARDUINO
+#include <Eigen/Dense>
+#else
+#include <ArduinoEigenDense.h>
+#endif
+
 #include <algorithm>
 #include <cmath>
-
-#include <Eigen/Dense>
 
 namespace seastate::tuner {
 
