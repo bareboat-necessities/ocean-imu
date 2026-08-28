@@ -15,6 +15,9 @@ V12D witness row.  During the refined V34/V31 lift:
   * V21._current_component_chart is wrapped so its ``vr`` argument is replaced
     by that baseline V12D witness, preserving the authoritative V18B current
     Cayley geometry and V21B equality check;
+  * the q1 value returned by that frozen chart is captured directly as the
+    authoritative current-radius provenance witness; downstream V31/V34
+    wrappers are not required to copy that focused V21 field;
   * every other V12D consumer receives V38's exact canonical first-PSD
     correction geometry, so residual/covariance/gain perturbation bounds are
     tightened on the correction side;
@@ -65,7 +68,11 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 4,
     baseline_vr = V30._witness_row(baseline_v12)
     baseline_dd = float(baseline_vr["first_offaxis_attitude_correction_upper_rad"])
 
-    context = {"exact_psd_calls": 0, "frozen_chart_calls": 0}
+    context = {
+        "exact_psd_calls": 0,
+        "frozen_chart_calls": 0,
+        "frozen_chart_q": None,
+    }
     original_psd = V12D._first_psd_perturbation_tangent
     original_chart = V21._current_component_chart
 
@@ -75,9 +82,15 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 4,
 
     def frozen_current_chart(*, first, base, vr, dom, src, sample1_s_angle):
         context["frozen_chart_calls"] += 1
-        return original_chart(
+        chart = original_chart(
             first=first, base=base, vr=baseline_vr, dom=dom, src=src,
             sample1_s_angle=sample1_s_angle)
+        q = float(chart["q1"])
+        old = context["frozen_chart_q"]
+        if old is not None and not V21B._matches_reference(q):
+            raise RuntimeError("repeated frozen V21 chart lost authoritative V18B q")
+        context["frozen_chart_q"] = q
+        return chart
 
     V12D._first_psd_perturbation_tangent = tracked_exact_psd
     V21._current_component_chart = frozen_current_chart
@@ -101,9 +114,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 4,
     if context["frozen_chart_calls"] <= 0:
         failures.append("authoritative V21 current-chart freeze was not exercised")
 
-    q_current = float(parent.get("sample1_current_cayley_norm_upper", math.inf))
     q_ref = float(V21B.V18B_FIRST_WITNESS_CURRENT_Q)
-    q_matches = V21B._matches_reference(q_current)
+    q_current = context["frozen_chart_q"]
+    q_matches = isinstance(q_current, (int, float)) and V21B._matches_reference(float(q_current))
     if not q_matches:
         failures.append("V39 did not preserve authoritative V18B first-witness current q")
 
@@ -119,7 +132,9 @@ def build(domain_path: Path = DEFAULT_DOMAIN, *, source_pieces: int = 4,
         "V36_full_Joseph_gain_operator_parent_retained": True,
         "authoritative_V18B_current_chart_frozen_to_baseline_V12D_witness": True,
         "authoritative_V18B_current_chart_freeze_calls": int(context["frozen_chart_calls"]),
+        "authoritative_V18B_current_q_captured_from_frozen_chart": True,
         "baseline_V12D_first_offaxis_correction_upper_rad": baseline_dd,
+        "sample1_current_cayley_norm_upper": q_current,
         "authoritative_V18B_first_witness_current_q_reference": q_ref,
         "current_q_matches_authoritative_V18B_reference": q_matches,
         "refined_PSD_used_only_outside_authoritative_current_chart": True,
@@ -158,6 +173,7 @@ def validate(d: dict) -> list[str]:
         "V38_exact_canonical_tangent_geometry_retained",
         "V36_full_Joseph_gain_operator_parent_retained",
         "authoritative_V18B_current_chart_frozen_to_baseline_V12D_witness",
+        "authoritative_V18B_current_q_captured_from_frozen_chart",
         "current_q_matches_authoritative_V18B_reference",
         "refined_PSD_used_only_outside_authoritative_current_chart",
         "temporary_helpers_restored_after_build",
