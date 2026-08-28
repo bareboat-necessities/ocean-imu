@@ -203,6 +203,15 @@
       "rpm": 2400.0
     },
     {
+      "arm": "path",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.6,
+      "label": "accelerometer only",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.454334,
+      "rpm": 2400.0
+    },
+    {
       "arm": "matched",
       "bandwidth_hz": 20.0,
       "hull_rms_mps2": 1.46202,
@@ -231,8 +240,8 @@
     }
   ],
   "simulation_data": "oceanography-waves-lib v1.1.3",
-  "source_commit": "a86d6cf7d88aca32e9b8e1298f698fe9eb6739cc",
+  "source_commit": "1e9b4e15098af637466a3b54373cb0787bca5b37",
   "study": "engine-noise degradation",
-  "total_replays": 432,
+  "total_replays": 456,
   "window_sec": 900.0
 }

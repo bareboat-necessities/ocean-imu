@@ -33,6 +33,12 @@ matched
     RMS as the nominal cruise cell.  If degradation tracked where the folded
     lines land, these cells would still differ; if it tracks recorded power,
     they collapse.
+
+path
+    Attribution between the two sensors.  The cruise cell rerun with the
+    model's gyroscope terms -- hull angular vibration and the gyroscope's own
+    linear-acceleration sensitivity -- switched off, so only the accelerometer
+    is perturbed.
 """
 
 from __future__ import annotations
@@ -106,6 +112,8 @@ class Setting:
     bandwidth_hz: float = NOMINAL_BANDWIDTH_HZ
     # Set for the matched arm: the recorded RMS this cell was rescaled onto.
     matched_to_mps2: float = float("nan")
+    # Set for the path arm: drop the model's gyroscope coupling terms.
+    gyro_path: bool = True
 
     @property
     def engine_on(self) -> bool:
@@ -114,11 +122,15 @@ class Setting:
     def env(self) -> dict[str, str]:
         if not self.engine_on:
             return {}
-        return {
+        env = {
             "W3D_ENGINE_RPM": f"{self.rpm:.9g}",
             "W3D_ENGINE_LEVEL_MPS2": f"{self.level_mps2:.9g}",
             "W3D_ENGINE_BANDWIDTH_HZ": f"{self.bandwidth_hz:.9g}",
         }
+        if not self.gyro_path:
+            env["W3D_ENGINE_GYRO_LEVER_M"] = "0"
+            env["W3D_ENGINE_GYRO_G_SENS"] = "0"
+        return env
 
 
 # Mean error over the scored window.  The RMS alone cannot say whether the
@@ -463,6 +475,15 @@ def build_settings(probe_binary: Path, probe_input: Path) -> list[Setting]:
             )
         )
 
+    settings.append(
+        Setting(
+            arm="path",
+            label="accelerometer only",
+            rpm=CRUISE_RPM,
+            gyro_path=False,
+        )
+    )
+
     # The matched arm needs the recorded RMS each bandwidth actually produces,
     # so probe the simulator rather than reimplementing the model here.
     nominal = Setting(arm="speed", label="probe", rpm=CRUISE_RPM)
@@ -616,6 +637,18 @@ def markdown_report(summaries: list[dict[str, Any]], window_sec: float,
         ]
     )
     lines.extend(arm_table(summaries, "matched", "Bandwidth [Hz]", "bandwidth_hz", 0))
+
+    lines.extend(
+        [
+            "",
+            "## Sensor attribution",
+            "",
+            "The nominal cruise cell rerun with the model's gyroscope terms switched",
+            "off, so the accelerometer is the only perturbed sensor.  Compare against",
+            f"the {CRUISE_RPM:.0f} rpm row of the engine-speed table.",
+        ]
+    )
+    lines.extend(arm_table(summaries, "path", "Engine speed [rpm]", "rpm", 0))
 
     if plots:
         lines.extend(

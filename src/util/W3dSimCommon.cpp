@@ -513,10 +513,14 @@ void apply_engine_vibration(Vector3f& acc_body_zu,
 
     for (auto& line : m.lines) {
         // Advancing the phase at the sample rate is exactly what a sampled
-        // sensor does, so a line above Nyquist folds on its own.
-        line.phase += kTwoPi * line.freq_ratio * crank_hz_now * dt;
-        if (line.phase > kTwoPi) line.phase -= kTwoPi;
-        else if (line.phase < 0.0f) line.phase += kTwoPi;
+        // sensor does, so a line above Nyquist folds on its own.  The wrap has
+        // to be a real modulus rather than one conditional subtraction: a line
+        // above Nyquist advances by more than 2 pi per sample, so subtracting
+        // at most one turn would let the phase run away and lose float
+        // precision over a long record.
+        line.phase = std::fmod(
+            line.phase + kTwoPi * line.freq_ratio * crank_hz_now * dt, kTwoPi);
+        if (line.phase < 0.0f) line.phase += kTwoPi;
 
         line.mod += -m.mod_alpha * line.mod + m.mod_sigma * m.n01(m.rng);
         const float envelope = std::max(0.0f, 1.0f + m.mod_depth * line.mod);
