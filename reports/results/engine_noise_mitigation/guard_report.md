@@ -17,7 +17,7 @@ high-pass detector says there is machinery to remove.
 Scoring uses the trailing **900 s** of each 1200 s record,
 pooled over the eight stationary records as `sqrt(mean(record_RMS^2))`.
 
-Source commit used for the replay: `d0ce9cbe5ee9701ce3cca18cff9d4a96ff5b99b9`.
+Source commit used for the replay: `fde5d29873b4b30c8f7c645284d029bbc59bce2e`.
 
 ## Result
 

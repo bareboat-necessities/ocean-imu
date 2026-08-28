@@ -111,6 +111,28 @@ bool test_clean_input_never_engages_the_guard() {
     return ok;
 }
 
+bool test_detector_floor_does_not_follow_the_motion() {
+    // The property the whole default rests on: the detector reads the sensor,
+    // not the sea, so a big sea never looks like machinery and a near-still one
+    // does not lower the bar.  Swept over a 100:1 range of wave amplitude.
+    bool ok = true;
+    float lowest = 1e9f, highest = 0.0f;
+    for (const float amplitude : {0.05f, 0.5f, 1.5f, 5.0f}) {
+        AccelVibrationGuard guard;
+        guard.setCutoffHz(14.0f);
+        const Outcome out = run(guard, /*with_engine=*/false, 0.25f, amplitude, 300.0f);
+        ok &= check(out.engagement == 0.0f, "no wave amplitude engages the guard");
+        ok &= check(!out.ever_moved, "no wave amplitude alters a sample");
+        lowest = std::min(lowest, out.removed_rms);
+        highest = std::max(highest, out.removed_rms);
+    }
+    ok &= check(highest < 1.15f * lowest,
+                "detector floor is within 15% across a 100:1 amplitude range");
+    std::cout << "  detector floor over 100:1 wave amplitude = " << lowest
+              << " to " << highest << " m/s^2\n";
+    return ok;
+}
+
 bool test_engine_vibration_engages_and_is_removed() {
     AccelVibrationGuard guard;
     guard.setCutoffHz(14.0f);
@@ -192,6 +214,7 @@ int main() {
     bool ok = true;
     ok &= test_disabled_guard_is_bit_transparent();
     ok &= test_clean_input_never_engages_the_guard();
+    ok &= test_detector_floor_does_not_follow_the_motion();
     ok &= test_engine_vibration_engages_and_is_removed();
     ok &= test_separation_between_clean_and_engine_is_wide();
     ok &= test_group_delay_follows_the_configuration();

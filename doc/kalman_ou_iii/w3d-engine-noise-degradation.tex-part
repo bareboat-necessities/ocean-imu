@@ -53,6 +53,10 @@ from a quieter installation to a sensor near the engine bed.
 
 Table~\ref{tab:engine-noise-cruise} replays the eight stationary records
 through each family with the engine off and at the nominal cruise condition.
+This is the comparison that motivates the remedy of
+Sec.~\ref{sec:engine-noise-guard}, so it holds all three families in the same
+unconditioned configuration: OU--III's front-end guard, which ships armed, is
+switched off throughout this subsection and switched on again there.
 All three degrade by a large factor.  OU--III's pooled 3-D displacement RMS
 goes from \SI{0.522}{m} to \SI{4.232}{m}, a factor of \num{8.1}; vertical RMS
 goes from \SI{0.179}{m} to \SI{0.828}{m}.  OU--II degrades by \num{5.2} and
@@ -270,12 +274,19 @@ factor of \num{1.6}.
   \end{figure}
 }{}
 
-The engine-off row is the other half of the claim.  With no machinery running
+The engine-off row is the other half of the claim, and it is why the guard is
+armed by default rather than offered as an option.  With no machinery running
 the detector never reaches its lower rail, the guard returns its input
-unchanged, and the replay is bit-identical to the unguarded one on all eight
-records.  The mitigation therefore costs nothing where it is not needed, and
-carries no re-cut of the fitted quality gates and no invalidation of committed
-evidence --- which is what makes an always-armed default defensible.
+unchanged, and the replay is bit-identical to the unguarded one --- on all
+eight stationary records, and on every record shipped with the simulation
+archive.  There is therefore no quiet-water case to trade away: no fitted
+quality gate is re-cut and no committed replay is invalidated by arming it.
+
+The measurement above is what makes that safe, and it is a property of the
+detector rather than a coincidence.  Because the detector sits well above the
+sea, its clean reading is set by the accelerometer's own white noise: across a
+\num{100}:1 range of wave amplitude it varies by \pct{0.02}.  A big sea cannot
+look like machinery to it, and a near-still one cannot lower the bar.
 
 Two limits are worth stating.  The guard conditions the measurement but does
 not make the estimator vibration-aware: the accelerometer measurement

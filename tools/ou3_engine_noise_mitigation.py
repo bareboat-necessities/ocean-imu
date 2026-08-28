@@ -205,9 +205,10 @@ def run_one(record: Record, input_path: Path, condition: Condition,
         "W3D_COLLECT_ALL_GATES": "1",
     })
     env.update(condition.engine)
-    if guard:
-        env["OU_III_ACC_GUARD_HZ"] = f"{GUARD_CUTOFF_HZ:.9g}"
-        env["OU_III_ACC_GUARD_POLES"] = str(GUARD_POLES)
+    # Both arms are explicit: the guard is armed by default in the filter, so
+    # the off arm has to switch it off rather than say nothing.
+    env["OU_III_ACC_GUARD_HZ"] = f"{GUARD_CUTOFF_HZ:.9g}" if guard else "0"
+    env["OU_III_ACC_GUARD_POLES"] = str(GUARD_POLES)
 
     completed = subprocess.run(
         [str(SIMULATOR), "--input", str(input_path.resolve())],
@@ -225,7 +226,7 @@ def run_one(record: Record, input_path: Path, condition: Condition,
     if guard and "ACC_GUARD" not in completed.stdout:
         raise RuntimeError(f"{condition.label}: guard was requested but not armed")
     if not guard and "ACC_GUARD" in completed.stdout:
-        raise RuntimeError(f"{condition.label}: guard reported without being armed")
+        raise RuntimeError(f"{condition.label}: guard was not switched off")
 
     metrics = ouv.parse_validation_metrics(completed.stdout)
     means = parse_keyed(MEANS_RE, completed.stdout)

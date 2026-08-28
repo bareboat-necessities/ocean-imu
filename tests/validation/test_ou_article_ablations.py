@@ -433,22 +433,46 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         self.assertTrue(generated.exists(), generated)
         self.assertEqual(generated.read_bytes(), mirrored.read_bytes())
 
-    def test_guard_is_off_unless_a_cutoff_is_configured(self):
-        """Every committed replay depends on the guard staying opt-in."""
+    def test_guard_is_armed_by_default_and_can_be_removed(self):
+        """The guard ships armed; every committed replay depends on the gate."""
 
         header = (ROOT / "src" / "tuner" / "AccelVibrationGuard.h").read_text(
             encoding="utf-8"
         )
+        # The component itself stays inert until given a cutoff, so it is the
+        # filter that makes the arming decision and one place states it.
         self.assertIn("float cutoff_hz_ = 0.0f;", header)
         self.assertIn("if (!enabled()", header)
 
         filt = (ROOT / "src" / "kalman_ou_iii"
                 / "SeaStateFusionFilter_OU_III.h").read_text(encoding="utf-8")
+        self.assertIn("constexpr float ACC_VIBRATION_GUARD_HZ_DEFAULT = 14.0f;", filt)
+        self.assertIn("constexpr int   ACC_VIBRATION_GUARD_POLES_DEFAULT = 2;", filt)
+        self.assertIn("setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT,", filt)
         # One conditioning point, feeding every consumer.
         self.assertIn("const Eigen::Vector3f acc_in = accel_guard_.step(acc, dt);", filt)
         self.assertIn("vertical_accel_comp_.update(dt, gyro, acc_in, g_std);", filt)
         self.assertIn("mekf_->measurement_update_acc_only(acc_in, tempC);", filt)
         self.assertNotIn("measurement_update_acc_only(acc,", filt)
+
+    def test_degradation_study_pins_the_guard_off(self):
+        """It is the unguarded comparison, and OU-III now arms the guard.
+
+        Without this the degradation study would silently measure a guarded
+        OU-III against an unguarded OU-II and TFG.
+        """
+
+        tool = (ROOT / "tools" / "engine_noise_degradation.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('"OU_III_ACC_GUARD_HZ": "0"', tool)
+
+        mitigation = (ROOT / "tools" / "ou3_engine_noise_mitigation.py").read_text(
+            encoding="utf-8"
+        )
+        # Both arms explicit, so neither inherits the filter default.
+        self.assertIn('env["OU_III_ACC_GUARD_HZ"] = ', mitigation)
+        self.assertIn('if guard else "0"', mitigation)
 
     def test_generator_publishes_the_guard_figure(self):
         tool = (ROOT / "tools" / "ou3_engine_noise_mitigation.py").read_text(

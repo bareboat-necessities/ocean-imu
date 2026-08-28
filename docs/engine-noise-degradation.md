@@ -95,7 +95,14 @@ JONSWAP and PM-Stokes cases from `oceanography-waves-lib` release `v1.1.3`, at
 ordinary sensor noise models stay on and the engine vibration is added on top;
 the filters keep their deployed covariances, adaptation, pseudo-measurements,
 startup, and regularization.  456 replays run across five arms and a common
-engine-off baseline:
+engine-off baseline.
+
+This study is the controlled comparison that *motivates* the mitigation below,
+across three families of which only one has a guard, so it sets
+`OU_III_ACC_GUARD_HZ=0` throughout and keeps measuring the unconditioned
+measurement path.  What the shipped default actually does is the subject of
+`tools/ou3_engine_noise_mitigation.py`.
+
 
 | Arm | What varies | Held fixed |
 | --- | --- | --- |
@@ -329,15 +336,26 @@ yaw goes from 45.4 to 4.2 deg.
 
 With no machinery the detector never reaches its lower rail, so the guard
 returns its input unchanged and the replay is **bit-identical** to the
-unguarded one on all eight records.  The mitigation costs nothing where it is
-not needed, which is what makes an always-armed default defensible: no fitted
-quality gate has to be re-cut and no committed replay is invalidated.
+unguarded one — on all eight stationary records, and on all 20 records shipped
+with the simulation archive (jonswap, pmstokes, cnoidal, fenton, gerstner).
+No fitted quality gate has to be re-cut and no committed replay is invalidated.
+
+That is a property of the detector, not a coincidence.  Because it sits well
+above the sea, its clean reading is set by the accelerometer's own white noise:
+over a 100:1 range of wave amplitude it varies by 0.02 %, which the unit test
+pins.  A big sea cannot look like machinery to it, and a near-still one cannot
+lower the bar.  This is what makes arming it by default safe.
 
 ### Configuration
 
+The guard is **armed by default**: the OU-III filter constructor sets
+`ACC_VIBRATION_GUARD_HZ_DEFAULT = 14 Hz` with two poles.  Arming it is free
+because it is gated on its own detector, so there is no quiet-water case to
+trade away.
+
 | Variable | Default | Meaning |
 | --- | ---: | --- |
-| `OU_III_ACC_GUARD_HZ` | off | conditioning corner; unset leaves the path unconditioned |
+| `OU_III_ACC_GUARD_HZ` | 14 | conditioning corner; **0 removes the guard entirely** |
 | `OU_III_ACC_GUARD_POLES` | 2 | conditioning cascade length |
 
 In code: `SeaStateFusionFilter_OU_III::setAccelVibrationGuard(cutoff_hz, poles)`,

@@ -104,7 +104,7 @@
     }
   ],
   "simulation_data": "oceanography-waves-lib v1.1.3",
-  "source_commit": "d0ce9cbe5ee9701ce3cca18cff9d4a96ff5b99b9",
+  "source_commit": "fde5d29873b4b30c8f7c645284d029bbc59bce2e",
   "study": "engine-noise mitigation (OU-III accelerometer vibration guard)",
   "total_replays": 128,
   "window_sec": 900.0
